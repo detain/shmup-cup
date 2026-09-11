@@ -30,6 +30,7 @@ import {
   type PlayerShip,
 } from '../../src/player/index.js';
 import type { InputDeviceKind } from '../../src/input/index.js';
+import { createShieldState } from '../../src/shields/index.js';
 import { measureHeapGrowth } from '../helpers/alloc.js';
 
 /** A mutable camera for the tests. */
@@ -346,6 +347,7 @@ describe('core/player edge cases — fly-in and state', () => {
       hitCause: 0,
       hitTick: -1,
       hits: 0,
+      shield: createShieldState(),
     });
   });
 });

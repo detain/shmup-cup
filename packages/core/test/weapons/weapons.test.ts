@@ -632,7 +632,9 @@ describe('core/weapons', () => {
   it('starts fully powered with loadout "full" and fires lasers and missiles from every shooter', () => {
     const w = world({ loadout: 'full', stage: 't' });
     const l = w.weapons.loadouts[0];
-    expect([l.main, l.missile, l.options, l.shield]).toEqual([MainWeapon.Laser, true, 4, 0]);
+    expect([l.main, l.missile, l.options]).toEqual([MainWeapon.Laser, true, 4]);
+    // M1-11: the full loadout also carries a fresh Force Field (on the ship).
+    expect(w.players[0].shield.hits).toBe(5);
     expect(w.players[0].speedLevel).toBe(FULL_LOADOUT_SPEED_LEVEL);
     expect(w.weapons.loadouts[1].options).toBe(4); // P2's loadout too (inactive until co-op)
     const input = createInputSnapshot();

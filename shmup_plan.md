@@ -1215,6 +1215,57 @@ the browser dev app and as a Tizen 5.5 bundle.
 - **Manual (optional):** on the M7, equip with OK while holding an arrow; note whether the arrow drops (input probe
   question 2).
 - **Refs:** `shmup_feat.md` §6A, §6C, §7A (`!` slot), §9 (Force Field), §4 rule 4.
+- **As built:**
+  - **Config.** `DEFAULT_GAME_CONFIG.powerUpMode` is `'meter'`; `resolveGameConfig` throws
+    "GameConfig.powerUpMode 'direct' is not implemented until M2-05" (and rejects any other string).
+    New sim options `autoPowerUp` (false), `autoPowerUpOrder` (`DEFAULT_AUTO_POWER_UP_ORDER`, ≤ 32
+    names, validated, stored as a frozen copy) and `pickupMagnet` (**true** — D33 makes the magnet
+    the remote-friendly default). The slot **names** live in `config` (`MeterSlotName`,
+    `METER_SLOT_NAMES`: `speed missile double laser option shield mega` — `?` = `shield`, `!` =
+    `mega`; the placeholder's `special` is gone) so `config` never imports `powerups`; `powerups`
+    numbers them (`MeterSlot` 0–6).
+  - **Meter.** `PowerMeter { cursor }` per player (`world.powerups.meters`), `advanceMeter`,
+    `canEquipSlot(slot, ship, loadout, maxSpeedLevel)` / `equipSlot` (the plan's `canEquip(slot)`
+    needs the state), `PowerUpSystem.canEquip(player, slot)`, `equippable(player)` (bit mask for
+    the M1-16 HUD's greyed slots — the meter is **not drawn** until M1-16), `equipHighlighted`,
+    `collect` (a capsule's effect). The Speed cap is the ship spec's `speeds.length − 1` (5 for the
+    KESTREL). The press is read in phase 2 between `updatePlayer` and the weapons (a new weapon or
+    Option fires that tick), for every active ship that is not `dying` / `dead`.
+  - **Auto Power-Up.** The "next wanted slot" is the first order entry the loadout does not
+    satisfy yet, re-evaluated at every pickup (so a broken shield or a lost level is wanted again):
+    a slot listed `n` times wants level `n` capped at its maximum, a Double / Laser entry is also
+    satisfied by any later Double / Laser entry (no ping-pong), `mega` is never satisfied.
+  - **Items.** SoA pool `items` (32: `x, y, vx, vy, kind, age, flags`) with a built-in kind table
+    (`ITEM_KINDS`: the capsule, sprite `items/capsule` — an engine sprite, 300 points) instead of
+    content. Capsules stay in world space (`vx/vy` 0) and are culled 32 px outside the view; the
+    magnet pulls an item within 16 px of an alive ship's pickup box towards the nearest such ship
+    at 2 px/tick; pickups (item radius 5 vs the pickup box, closed) are found in phase 6 and applied
+    in phase 7 in item order (lowest player slot wins a tie). `PowerUpSystem.outcomes` lists the
+    tick's pickups with their points for M1-12's scoring. Every capsule of the enemy outcomes'
+    drops (carriers, completed formations) is spawned at the end of phase 7; drops of kills made
+    between ticks (tools) are picked up at the next phase 3 (`beginTick`, `dropsTaken` hashed).
+  - **Events.** Pickup = `SFX MeterAdvance` (the "ding"); equip = `SFX PowerUpEquip` + the new
+    `SimEventKind.PowerUp` (8: id = slot, param = player — for callouts / HUD flash); denied = the
+    new `SFX_CUES.PowerUpDenied` (22); shield hit = `SFX ShieldHit`; break = `SFX ShieldBreak` + the
+    new `FX_CUES.ShieldBreak` (4); Mega Crash = `SFX MegaCrash` + `SimEventKind.Flash` (param 12).
+  - **Force Field.** The shield lives on the ship (`PlayerShip.shield: ShieldState`, like
+    `speedLevel`); `Loadout.shield` was removed. `playerHit` hands every hit to
+    `absorbShieldHit` first: an absorbed hit is accepted (the bullet is used up) but not recorded on
+    the ship; bullets, lasers and contact are absorbed, terrain never. Shield-hit i-frames swallow
+    hits for free, also for the bare ship right after the break (not terrain); they count down in
+    phase 7 but not on the hit's own tick, so a hit on tick `t` blocks ticks `t+1 … t+8`. The M1-03
+    sprite has **four** wear frames (fresh / worn / damaged / critical — fresh at 5 and 4 hits), not
+    three; the shield blinks during its i-frames and is drawn from a `LayerId.Player` batch after
+    the ships. `GameConfig.loadout: 'full'` now includes a Force Field.
+  - **Mega Crash.** Equipping `!` arms it; it detonates in phase 7 of the same tick (after the shot
+    hits), so its kills are scored and drop capsules like any other. New
+    `EnemySystem.megaCrash(by)` (compiled `megaCrashImmune` table) kills every live non-ghost enemy
+    that is not immune — armour does not protect; boss parts arrive with M1-13 and are not enemies.
+  - **World / hash.** `World.powerups`; batches: the shields and the items are appended after the
+    enemy bullets (earlier batch indices unchanged). `hashWorld` adds the meters, pending Mega
+    Crashes, every ship's shield and `dropsTaken`. Rare events (a press, a pickup) run in cold code
+    and cost a few bytes each; `test/powerups/powerups-alloc.test.ts` measures ≈ 20 KB over 10,000
+    busy ticks (budget 64 KB).
 
 ### M1-12 — Death, respawn, checkpoints, lives & score
 

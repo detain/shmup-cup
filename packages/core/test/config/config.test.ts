@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  DEFAULT_AUTO_POWER_UP_ORDER,
   DEFAULT_GAME_CONFIG,
   HUD_BAR_HEIGHT,
+  MAX_AUTO_POWER_UP_ORDER,
+  METER_SLOT_NAMES,
   PLAYFIELD_H,
   PLAYFIELD_W,
   PLAYFIELD_Y,
@@ -63,6 +66,65 @@ describe('core/config', () => {
     }
     const bad = { loadout: 'max' } as unknown as Partial<GameConfig>;
     expect(() => resolveGameConfig(bad)).toThrow(/loadout/);
+  });
+});
+
+describe('core/config power-up options (M1-11)', () => {
+  it('defaults to the meter, Auto Power-Up off with its default order, and the magnet on', () => {
+    expect(DEFAULT_GAME_CONFIG.powerUpMode).toBe('meter');
+    expect(DEFAULT_GAME_CONFIG.autoPowerUp).toBe(false);
+    expect(DEFAULT_GAME_CONFIG.pickupMagnet).toBe(true);
+    expect(DEFAULT_GAME_CONFIG.autoPowerUpOrder).toEqual([
+      'speed',
+      'missile',
+      'laser',
+      'option',
+      'option',
+      'option',
+      'option',
+      'shield',
+    ]);
+    expect(DEFAULT_GAME_CONFIG.autoPowerUpOrder).toBe(DEFAULT_AUTO_POWER_UP_ORDER);
+    expect(Object.isFrozen(DEFAULT_AUTO_POWER_UP_ORDER)).toBe(true);
+    expect(METER_SLOT_NAMES).toEqual([
+      'speed',
+      'missile',
+      'double',
+      'laser',
+      'option',
+      'shield',
+      'mega',
+    ]);
+  });
+
+  it('rejects Direct mode until M2-05 (and anything that is not a mode)', () => {
+    expect(() => resolveGameConfig({ powerUpMode: 'direct' })).toThrow(
+      "GameConfig.powerUpMode 'direct' is not implemented until M2-05",
+    );
+    const bad = { powerUpMode: 'items' } as unknown as Partial<GameConfig>;
+    expect(() => resolveGameConfig(bad)).toThrow(RangeError);
+  });
+
+  it('validates and copies the Auto Power-Up order', () => {
+    const order: GameConfig['autoPowerUpOrder'] = ['double', 'option', 'mega'];
+    const config = resolveGameConfig({ autoPowerUp: true, autoPowerUpOrder: order });
+    expect(config.autoPowerUpOrder).toEqual(order);
+    expect(config.autoPowerUpOrder).not.toBe(order);
+    expect(Object.isFrozen(config.autoPowerUpOrder)).toBe(true);
+    expect(resolveGameConfig({ autoPowerUpOrder: [] }).autoPowerUpOrder).toEqual([]);
+    const full = new Array<'speed'>(MAX_AUTO_POWER_UP_ORDER).fill('speed');
+    expect(resolveGameConfig({ autoPowerUpOrder: full }).autoPowerUpOrder).toHaveLength(32);
+    for (const bad of [
+      [...full, 'speed'],
+      ['speed', 'bomb'],
+      'speed',
+      null,
+      [3],
+    ] as unknown as GameConfig['autoPowerUpOrder'][]) {
+      expect(() => resolveGameConfig({ autoPowerUpOrder: bad }), String(bad)).toThrow(RangeError);
+    }
+    // Still plain JSON for replay headers.
+    expect(JSON.parse(JSON.stringify(config))).toEqual(config);
   });
 });
 

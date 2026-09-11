@@ -155,7 +155,6 @@ function referenceHash(w: World): number {
     num(l.main);
     word(l.missile ? 1 : 0);
     num(l.options);
-    num(l.shield);
     const g = weapons.options[p];
     num(g.count);
     num(g.stolen);
@@ -169,6 +168,22 @@ function referenceHash(w: World): number {
     if (table <= 0) continue;
     for (let e = 0; e < 64; e++) word(weapons.cooldowns[(table - 1) * 64 + e]);
   }
+  // Power-ups (M1-11): per player the meter cursor, pending Mega Crash and shield; taken drops.
+  const powerups = w.powerups;
+  for (let p = 0; p < powerups.meters.length; p++) {
+    num(powerups.meters[p].cursor);
+    word(powerups.megaPending[p]);
+    const shield = w.players[p].shield;
+    word(shield.kind);
+    num(shield.hits);
+    num(shield.maxHits);
+    num(shield.iFrames);
+    word(shield.absorbsTerrain ? 1 : 0);
+    num(shield.hitTick);
+    num(shield.brokeTick);
+    num(shield.absorbed);
+  }
+  num(powerups.dropsTaken);
   let h = FNV_OFFSET_BASIS;
   for (const b of bytes) h = Math.imul(h ^ b, FNV_PRIME) >>> 0;
   return h;

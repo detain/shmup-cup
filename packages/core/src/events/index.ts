@@ -66,6 +66,11 @@ export const SimEventKind = {
    * drops), `id` = the formation slot, `param` = the bonus points from the stage event.
    */
   FormationBonus: 7,
+  /**
+   * A power-meter slot was equipped (M1-11; callouts, HUD flash): `id` = the `core/powerups`
+   * `MeterSlot` code, `x`/`y` = the ship (whole pixels), `param` = the player slot.
+   */
+  PowerUp: 8,
 } as const;
 
 /** One of the {@link SimEventKind} codes. */
@@ -81,6 +86,7 @@ export const SIM_EVENT_KIND_NAMES: readonly string[] = Object.freeze([
   'hitstop',
   'rumble',
   'formationBonus',
+  'powerUp',
 ]);
 
 /**
@@ -135,6 +141,8 @@ export const SFX_CUES = {
   WarningSiren: 20,
   /** A player shot bounces off an armoured (invulnerable) enemy part (M1-10). */
   Clink: 21,
+  /** The power-up button was pressed on an empty or un-equippable meter slot (M1-11). */
+  PowerUpDenied: 22,
 } as const;
 
 /** One of the {@link SFX_CUES} ids. */
@@ -204,6 +212,8 @@ export const FX_CUES = {
   ExplosionLarge: 2,
   /** An enemy bullet is cancelled (sparkle — `core/bullets` `cancelAllBullets`, M1-09). */
   BulletCancel: 3,
+  /** A shield broke (its last hit — `core/shields`, M1-11): `x`/`y` = the ship. */
+  ShieldBreak: 4,
 } as const;
 
 /** One of the {@link FX_CUES} ids. */

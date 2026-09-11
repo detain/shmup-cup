@@ -55,7 +55,9 @@
  *
  * **Tick outcomes.** Kills and drops of the current tick are listed in
  * {@link EnemySystem.outcomes} (reset at the start of phase 3) for the systems that turn them
- * into score (M1-12) and capsules (M1-11).
+ * into score (M1-12) and capsules (`core/powerups` spawns an item per drop at the end of phase 7,
+ * M1-11). {@link EnemySystem.megaCrash} kills every enemy that is not `megaCrashImmune` (the
+ * meter's `!` slot).
  *
  * **Zero allocation.** Every enemy, script API, track and table is built by
  * {@link createEnemySystem}; the per-tick methods only write numbers. The allocations left are
@@ -768,6 +770,26 @@ export interface EnemySystem {
   kill(enemy: Enemy, by?: number): boolean;
   /** Phase 8: frees the slots removed this tick. */
   flush(): void;
+  /**
+   * Mega Crash (the power meter's `!` slot — `core/powerups`, M1-11): kills every live enemy
+   * whose spec is not `megaCrashImmune`, credited to `by`.
+   *
+   * @remarks
+   * Each kill goes through {@link EnemySystem.kill} in slot order — kill records (score), explosion
+   * events, drops and formation completion (a formation wiped out by it drops its capsule and
+   * pays its bonus). Armour (`EnemyFlag.Invulnerable`) does not protect; ghost leaders are not
+   * enemies any more and are skipped. Boss parts (M1-13) are not in this system and take no damage.
+   * Never allocates.
+   *
+   * @param by - Player slot credited with the kills (default -1 = nobody).
+   * @returns Enemies killed.
+   *
+   * @example
+   * ```ts
+   * world.enemies.megaCrash(0); // → how many enemies player 1's Mega Crash destroyed
+   * ```
+   */
+  megaCrash(by?: number): number;
   /** Removes every enemy and formation at once (checkpoint restart). */
   clear(): void;
   /** Phase 9: refills the ground and air sprite batches. */
@@ -904,6 +926,8 @@ interface SpecTable {
   readonly explosion: Uint8Array;
   /** {@link DropKind}. */
   readonly drop: Uint8Array;
+  /** 1 = `megaCrashImmune` (Mega Crash does not kill it). */
+  readonly immune: Uint8Array;
   /** Starting `MoverKind`. */
   readonly mover: Uint8Array;
   /** Starting mover parameters, 6 per spec (a `path` mover's path: -1 = the spawn's). */
@@ -937,6 +961,7 @@ function compileSpecs(specs: readonly EnemySpec[], behaviors: EnemyBehaviorLooku
     settle: new Float64Array(n),
     explosion: new Uint8Array(n),
     drop: new Uint8Array(n),
+    immune: new Uint8Array(n),
     mover: new Uint8Array(n),
     moverParams: new Float64Array(n * 6),
     behavior,
@@ -956,6 +981,7 @@ function compileSpecs(specs: readonly EnemySpec[], behaviors: EnemyBehaviorLooku
     table.settle[i] = spec.settleTicks;
     table.explosion[i] = ENEMY_EXPLOSIONS.indexOf(spec.explosion);
     table.drop[i] = spec.drop === 'capsule' ? DropKind.Capsule : DropKind.None;
+    table.immune[i] = spec.megaCrashImmune ? 1 : 0;
     const mover = spec.mover;
     const p = i * 6;
     if (mover !== null) {
@@ -1971,6 +1997,20 @@ class EnemySystemImpl implements EnemySystem {
       this.apis[i].spec = NO_SPEC;
       this.used--;
     }
+  }
+
+  /** See {@link EnemySystem.megaCrash}. */
+  megaCrash(by = -1): number {
+    const enemies = this.enemies;
+    const immune = this.specs.immune;
+    let killed = 0;
+    for (let i = 0; i < enemies.length; i++) {
+      const e = enemies[i];
+      if (e.state !== EnemyState.Live || (e.flags & EnemyFlag.Ghost) !== 0) continue;
+      if (immune[e.specIndex] === 1) continue;
+      if (this.kill(e, by)) killed++;
+    }
+    return killed;
   }
 
   /** See {@link EnemySystem.clear}. */

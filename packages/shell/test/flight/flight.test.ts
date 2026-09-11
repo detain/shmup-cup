@@ -69,6 +69,8 @@ describe('shell/flight', () => {
       LayerId.Player,
       LayerId.Player,
       LayerId.EnemyBullets,
+      LayerId.Player,
+      LayerId.Items,
     ]);
     expect(flight.world.batches.slice(2)).toEqual(game.world.view.batches);
     expect(flight.world.batches[2]).toBe(game.world.enemies.groundBatch);
@@ -77,6 +79,8 @@ describe('shell/flight', () => {
     expect(flight.world.batches[5]).toBe(game.world.weapons.optionBatch);
     expect(flight.world.batches[6]).toBe(game.world.playerBatch);
     expect(flight.world.batches[7]).toBe(game.world.bullets.batch);
+    expect(flight.world.batches[8]).toBe(game.world.powerups.shieldBatch); // M1-11
+    expect(flight.world.batches[9]).toBe(game.world.powerups.itemBatch);
     expect(flight.world.lasers).toBe(game.world.bullets.laserView); // M1-09
   });
 

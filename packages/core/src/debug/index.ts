@@ -17,17 +17,19 @@
  * registered pool's live slots (fields in sorted name order, slots `0 … count-1` — the enemy
  * bullets and lasers of M1-09 and the player shots of M1-10 among them), then the enemies
  * (every slot's state, and the numeric fields of each slot in use — M1-08), the formation table
- * (the fields of every active slot, and each track's recorded count), and the player weapons
- * (M1-10: each player's loadout and option group — count, stolen, trail head, the whole trail
- * and the option positions — the autofire timers, and the hit-cooldown table of every live
- * piercing shot). Scripts are covered by their `wakeTick`; a coroutine's internal position
- * cannot be hashed. Numbers are
- * hashed as their little-endian IEEE-754 double bytes, so the hash is identical on every engine
- * and platform, and two worlds that simulated the same inputs from the same seed hash equal.
- * Golden replays (M1-19) compare these hashes. The hash reads state only — it never draws from an
- * RNG — and works in module-level scratch buffers, so the only allocation left is the engine
- * boxing the returned unsigned 32-bit value (a 16-byte heap number when it does not fit a small
- * integer); call it every few ticks, not per entity.
+ * (the fields of every active slot, and each track's recorded count), the player weapons (M1-10:
+ * each player's loadout — main, missile, options — and option group — count, stolen, trail head,
+ * the whole trail and the option positions — the autofire timers, and the hit-cooldown table of
+ * every live piercing shot), then the power-ups (M1-11: each player's meter cursor, pending Mega
+ * Crash and shield — kind, hits, max hits, i-frames, terrain flag, hit and break ticks, absorbed
+ * count — and the count of enemy drops already turned into items; the items themselves are a
+ * registered pool). Scripts are covered by their `wakeTick`; a coroutine's internal position
+ * cannot be hashed. Numbers are hashed as their little-endian IEEE-754 double bytes, so the hash
+ * is identical on every engine and platform, and two worlds that simulated the same inputs from
+ * the same seed hash equal. Golden replays (M1-19) compare these hashes. The hash reads state only
+ * — it never draws from an RNG — and works in module-level scratch buffers, so the only
+ * allocation left is the engine boxing the returned unsigned 32-bit value (a 16-byte heap number
+ * when it does not fit a small integer); call it every few ticks, not per entity.
  *
  * **Implements.**
  * - shmup_feat.md §24 Dev tooling & debug features
@@ -222,7 +224,6 @@ function mixWeapons(weapons: World['weapons']): void {
     mixNumber(l.main);
     mixWord(l.missile ? 1 : 0);
     mixNumber(l.options);
-    mixNumber(l.shield);
     const g = weapons.options[p];
     mixNumber(g.count);
     mixNumber(g.stolen);
@@ -242,6 +243,32 @@ function mixWeapons(weapons: World['weapons']): void {
     const base = (table - 1) * MAX_ENEMIES;
     for (let e = base; e < base + MAX_ENEMIES; e++) mixWord(cooldowns[e]);
   }
+}
+
+/**
+ * Mixes the power-up state (meters, pending Mega Crashes, the ships' shields, taken drops) into
+ * {@link accumulator}.
+ *
+ * @param world - The world.
+ */
+function mixPowerUps(world: World): void {
+  const powerups = world.powerups;
+  const players = world.players;
+  for (let p = 0; p < powerups.meters.length; p++) {
+    mixNumber(powerups.meters[p].cursor);
+    mixWord(powerups.megaPending[p]);
+    if (p >= players.length) continue;
+    const shield = players[p].shield;
+    mixWord(shield.kind);
+    mixNumber(shield.hits);
+    mixNumber(shield.maxHits);
+    mixNumber(shield.iFrames);
+    mixWord(shield.absorbsTerrain ? 1 : 0);
+    mixNumber(shield.hitTick);
+    mixNumber(shield.brokeTick);
+    mixNumber(shield.absorbed);
+  }
+  mixNumber(powerups.dropsTaken);
 }
 
 /**
@@ -341,6 +368,7 @@ export function hashWorld(world: World): number {
   }
   mixFormations(world.enemies.formations);
   mixWeapons(world.weapons);
+  mixPowerUps(world);
   return accumulator[0];
 }
 

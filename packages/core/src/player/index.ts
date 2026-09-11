@@ -30,6 +30,10 @@
  * M1-12 it only records the hit on the ship (`hitCause`, `hitTick`, `hits`) — the ship flies on.
  * Ships that are not `alive`, still invulnerable, or protected by the debug god mode ignore hits.
  *
+ * **Shields (M1-11).** Every ship carries its {@link PlayerShip.shield} (`core/shields`); a hit
+ * goes to the shield first (`absorbShieldHit`): an absorbed hit is accepted — the bullet is used
+ * up — but never recorded on the ship. The Force Field does not absorb terrain.
+ *
  * **Implements.**
  * - shmup_feat.md §5 Player ship
  * - shmup_feat.md §10 Death, respawn & checkpoints
@@ -53,6 +57,12 @@ import { EASINGS } from '../math/index.js';
 import { defineModule } from '../module-info.js';
 import type { CameraView } from '../presentation/index.js';
 import type { DebugFlags } from '../debug/index.js';
+import {
+  ShieldHit,
+  absorbShieldHit,
+  createShieldState,
+  type ShieldState,
+} from '../shields/index.js';
 
 /** Module descriptor (see {@link defineModule}). */
 export const moduleInfo = defineModule({
@@ -120,6 +130,12 @@ export interface PlayerShip {
   hitTick: number;
   /** Accepted hits so far (until M1-12 a hit does not kill, so contact counts every tick). */
   hits: number;
+  /**
+   * The ship's shield (`core/shields`; M1-11): the meter's `?` slot grants a Force Field here, and
+   * {@link playerHit} lets it absorb hits first. Like {@link PlayerShip.speedLevel}, part of the
+   * player's power-up state that lives on the ship.
+   */
+  readonly shield: ShieldState;
 }
 
 /**
@@ -238,6 +254,7 @@ export function createPlayer(slot: number, lives: number): PlayerShip {
     hitCause: PlayerHitCause.None,
     hitTick: -1,
     hits: 0,
+    shield: createShieldState(),
   };
 }
 
@@ -247,15 +264,19 @@ export function createPlayer(slot: number, lives: number): PlayerShip {
  *
  * @remarks
  * The hit is ignored when the ship is inactive, not `alive` (fly-in, dying, dead), still
- * invulnerable (`invulnTicks > 0`) or when the debug god mode is on. An accepted hit is recorded
- * on the ship (`hitCause`, `hitTick`, `hits`); until the death sequence of M1-12 nothing else
- * happens — the ship keeps flying.
+ * invulnerable (`invulnTicks > 0`) or when the debug god mode is on. Otherwise the ship's
+ * {@link PlayerShip.shield} gets it first (`core/shields` `absorbShieldHit`: the Force Field takes
+ * bullets, lasers and contact — not terrain — and swallows hits during its shield-hit i-frames);
+ * an absorbed hit is accepted (`true`) without touching the ship. A hit that gets through is
+ * recorded on the ship (`hitCause`, `hitTick`, `hits`); until the death sequence of M1-12 nothing
+ * else happens — the ship keeps flying.
  *
  * @param ship - The ship.
  * @param cause - What hit it.
  * @param tick - The current tick (`world.tick`).
  * @param debug - The world's debug switches (god mode).
- * @returns `true` when the hit was accepted.
+ * @returns `true` when the hit was accepted — by the ship or absorbed by its shield (callers
+ *   remove the bullet that caused it).
  *
  * @example
  * ```ts
@@ -272,6 +293,9 @@ export function playerHit(
 ): boolean {
   if (!ship.active || ship.state !== 'alive' || ship.invulnTicks > 0 || debug.godMode) {
     return false;
+  }
+  if (absorbShieldHit(ship.shield, cause === PlayerHitCause.Terrain, tick) !== ShieldHit.None) {
+    return true;
   }
   ship.hitCause = cause;
   ship.hitTick = tick;

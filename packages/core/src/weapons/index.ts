@@ -13,9 +13,10 @@
  *   **shooter** — the ship or one of its four Options ({@link SHOOTERS_PER_PLAYER} per player) —
  *   and a **role** ({@link WeaponRole}: main shot, Double, Laser, Missile), and flies by its
  *   role's behaviour ({@link ShotKind}).
- * - **Loadouts** — one {@link Loadout} per player: `main` (basic / double / laser), `missile`,
- *   `options` (0–4) and `shield`, plus the ship's own `speedLevel` (`core/player`). The meter of
- *   M1-11 changes them; `GameConfig.loadout: 'full'` starts a session fully powered (dev).
+ * - **Loadouts** — one {@link Loadout} per player: `main` (basic / double / laser), `missile` and
+ *   `options` (0–4), plus the ship's own `speedLevel` and `shield` (`core/player`,
+ *   `core/shields`). The power meter of M1-11 (`core/powerups`) changes them;
+ *   `GameConfig.loadout: 'full'` starts a session fully powered (dev).
  * - **Options** — one `core/options` {@link OptionGroup} per player (the trail of decision D26);
  *   every Option fires every weapon of the loadout with its own caps.
  * - **Hits** — enemy hurtboxes are in the World's grid (phase 6); each shot queries the cells
@@ -130,6 +131,7 @@ import {
 import type { PlayerCamera, PlayerIntent, PlayerShip } from '../player/index.js';
 import { createSoaPool, type SoaPool, type SoaSchema } from '../pools/index.js';
 import { LayerId, SpriteFlag, createSpriteBatch, type SpriteBatch } from '../presentation/index.js';
+import { clearShield, grantShield } from '../shields/index.js';
 
 /** Module descriptor (see {@link defineModule}). */
 export const moduleInfo = defineModule({
@@ -321,8 +323,9 @@ export const SHOT_SCHEMA = Object.freeze({
 export type ShotSchema = typeof SHOT_SCHEMA;
 
 /**
- * One player's meter-mode loadout (plan M1-10). The ship's speed level lives on the ship
- * (`PlayerShip.speedLevel`); M1-11's power meter equips these fields.
+ * One player's meter-mode loadout (plan M1-10). The ship's speed level and shield live on the ship
+ * (`PlayerShip.speedLevel`, `PlayerShip.shield`); the power meter (`core/powerups`, M1-11) equips
+ * these fields.
  */
 export class Loadout {
   /** The main weapon ({@link MainWeapon}). */
@@ -331,8 +334,6 @@ export class Loadout {
   missile = false;
   /** Options owned (0–{@link MAX_OPTIONS}). */
   options = 0;
-  /** Shield hits left (0 = none; the Force Field of M1-11 uses it). */
-  shield = 0;
 }
 
 /**
@@ -341,10 +342,10 @@ export class Loadout {
  * @remarks
  * `'default'` = the basic shot, no missile, no options, no shield, speed level 0. `'full'` (the
  * web app's `?loadout=full` dev override) = speed level {@link FULL_LOADOUT_SPEED_LEVEL}, the
- * Missile, the Laser and four Options (shields arrive with M1-11).
+ * Missile, the Laser, four Options and a fresh Force Field (`core/shields`).
  *
  * @param loadout - The player's loadout.
- * @param ship - The player's ship (its speed level).
+ * @param ship - The player's ship (its speed level and shield).
  * @param preset - Which loadout.
  *
  * @example
@@ -361,8 +362,9 @@ export function applyLoadoutPreset(
   loadout.main = full ? MainWeapon.Laser : MainWeapon.Basic;
   loadout.missile = full;
   loadout.options = full ? MAX_OPTIONS : 0;
-  loadout.shield = 0;
   ship.speedLevel = full ? FULL_LOADOUT_SPEED_LEVEL : 0;
+  if (full) grantShield(ship.shield);
+  else clearShield(ship.shield);
 }
 
 /**

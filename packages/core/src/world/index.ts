@@ -65,6 +65,17 @@
  * the `LayerId.PlayerShots` batch and the Options' batch (below the ships). The Option sprite is
  * one of the {@link ENGINE_SPRITES}.
  *
+ * **Power-ups (M1-11).** {@link World.powerups} (`core/powerups`, shields from `core/shields`)
+ * owns the power meters, the `items` pool (capsules) and Mega Crash: in phase 2, between the
+ * ships' movement and the weapons, the PowerUp press equips the highlighted slot (so a new weapon
+ * fires at once); phase 3 turns drops of kills made between ticks into capsules; items move and
+ * feel the pickup magnet in phase 5, are collected in phase 6 and applied in phase 7 (meter
+ * advance, Auto Power-Up), where an armed Mega Crash then detonates, the shields' i-frames count
+ * down and their hit / break events are pushed, and the tick's enemy drops become capsules. Every
+ * ship's Force Field (`PlayerShip.shield`) absorbs hits inside `playerHit`. The view carries the
+ * items (`LayerId.Items`) and the shields (`LayerId.Player`, over the ships); their sprites are
+ * {@link ENGINE_SPRITES} too.
+ *
  * **Zero allocation.** Everything is allocated by {@link createWorld}; {@link stepWorld} and the
  * systems only write numbers into existing objects and typed arrays.
  *
@@ -98,6 +109,8 @@ import type { ContentDb, PlayerShipSpec, StageMusicEvent, StageSpec } from '../d
 import { createDebugFlags, type DebugFlags } from '../debug/index.js';
 import { createEnemySystem, type EnemyBehaviorLookup, type EnemySystem } from '../enemies/index.js';
 import { OPTION_SPRITE } from '../options/index.js';
+import { ITEM_SPRITES, createPowerUpSystem, type PowerUpSystem } from '../powerups/index.js';
+import { FORCE_FIELD_SPRITE } from '../shields/index.js';
 import { applyLoadoutPreset, createWeaponSystem, type WeaponSystem } from '../weapons/index.js';
 import { SimEventKind, createEventQueue, type EventQueue } from '../events/index.js';
 import { defineModule } from '../module-info.js';
@@ -254,6 +267,8 @@ export interface World {
   readonly bullets: BulletSystem;
   /** The players' weapons, loadouts and Options (`core/weapons`, `core/options`). */
   readonly weapons: WeaponSystem;
+  /** Power meters, capsules, Mega Crash and the shields' feedback (`core/powerups`). */
+  readonly powerups: PowerUpSystem;
   /** The session's rank (`core/rank`; constant in M1: the difficulty's base). */
   rank: number;
   /** What the renderer draws: live references, refreshed at the end of every tick. */
@@ -359,7 +374,9 @@ const inputSystem: WorldSystem = (world, input) => {
 };
 
 /**
- * Phase 2: moves the ships, then the weapons follow them: option trails, autofire.
+ * Phase 2: moves the ships, then the PowerUp presses equip the meter (before the weapons, so a new
+ * weapon or Option fires on this tick), then the weapons follow the ships: option trails,
+ * autofire.
  *
  * @param world - The world.
  */
@@ -368,6 +385,7 @@ const playersSystem: WorldSystem = (world) => {
   for (let i = 0; i < players.length; i++) {
     updatePlayer(players[i], world.ship, world.intents[i], world.camera);
   }
+  world.powerups.updatePlayers();
   world.weapons.updatePlayers();
 };
 
@@ -380,6 +398,7 @@ const playersSystem: WorldSystem = (world) => {
  */
 const stageSystem: WorldSystem = (world) => {
   const enemies = world.enemies;
+  world.powerups.beginTick();
   enemies.beginTick();
   const stage = world.stage;
   if (stage !== null) {
@@ -405,7 +424,7 @@ const scriptsSystem: WorldSystem = (world) => {
 
 /**
  * Phase 5: enemy movers and the off-screen rules, then enemy bullets and lasers, then the player
- * shots (items join in M1-11).
+ * shots, then the items (drift, pickup magnet, culling).
  *
  * @param world - The world.
  */
@@ -413,12 +432,14 @@ const movementSystem: WorldSystem = (world) => {
   world.enemies.move();
   world.bullets.update();
   world.weapons.update();
+  world.powerups.update();
 };
 
 /**
  * Phase 6: rebuilds the broad-phase grid around the camera view with the enemy hurtboxes, then
  * the overlap tests: enemies × players (contact), player shots × enemies (hits found here, applied
- * in phase 7), bullets / lasers × players, terrain × players.
+ * in phase 7), bullets / lasers × players, terrain × players, items × players (pickups, applied
+ * in phase 7).
  *
  * @remarks
  * The grid origin is the camera position floored to whole pixels: it only decides which cell a
@@ -440,6 +461,7 @@ const collisionSystem: WorldSystem = (world) => {
   world.bullets.collidePlayers();
   const terrain = world.terrain;
   if (terrain !== null) terrainSystem(world, terrain);
+  world.powerups.collide();
 };
 
 /**
@@ -469,13 +491,15 @@ function terrainSystem(world: World, terrain: TerrainMap): void {
 }
 
 /**
- * Phase 7: applies the player shots' hits (damage, deaths, drops, kill records — `core/weapons`);
- * score and respawn join in M1-12.
+ * Phase 7: applies the player shots' hits (damage, deaths, drops, kill records — `core/weapons`),
+ * then the power-ups (`core/powerups`: pickups and Auto Power-Up, Mega Crash, shield feedback,
+ * capsules from the tick's drops); score and respawn join in M1-12.
  *
  * @param world - The world.
  */
 const damageSystem: WorldSystem = (world) => {
   world.weapons.applyHits();
+  world.powerups.resolve();
 };
 
 /**
@@ -571,7 +595,10 @@ export function resolveWorldStage(config: GameConfig, content: ContentDb): Stage
 }
 
 /** A {@link World} while {@link createWorld} assembles it (the stage fields are set last). */
-type WorldUnderConstruction = Omit<World, 'stage' | 'enemies' | 'bullets' | 'weapons'> & {
+type WorldUnderConstruction = Omit<
+  World,
+  'stage' | 'enemies' | 'bullets' | 'weapons' | 'powerups'
+> & {
   /** See {@link World.stage}. */
   stage: StageRunner | null;
   /** See {@link World.enemies}. */
@@ -580,15 +607,24 @@ type WorldUnderConstruction = Omit<World, 'stage' | 'enemies' | 'bullets' | 'wea
   bullets: BulletSystem;
   /** See {@link World.weapons}. */
   weapons: WeaponSystem;
+  /** See {@link World.powerups}. */
+  powerups: PowerUpSystem;
 };
 
 /**
  * The sprites the engine draws on its own, whatever the content: the enemy bullet kinds and the
- * laser beam (`core/bullets` `BULLET_SPRITES`), then the Option (`core/options` `OPTION_SPRITE`).
- * Hosts pass it as `loadContent`'s `extraSprites` (the shell's loader does by default) so the
- * World can resolve their sprite ids and `pnpm content:check` verifies them against the atlas.
+ * laser beam (`core/bullets` `BULLET_SPRITES`), the Option (`core/options` `OPTION_SPRITE`), the
+ * items (`core/powerups` `ITEM_SPRITES`: the power capsule) and the Force Field
+ * (`core/shields` `FORCE_FIELD_SPRITE`). Hosts pass it as `loadContent`'s `extraSprites` (the
+ * shell's loader does by default) so the World can resolve their sprite ids and
+ * `pnpm content:check` verifies them against the atlas.
  */
-export const ENGINE_SPRITES: readonly string[] = Object.freeze([...BULLET_SPRITES, OPTION_SPRITE]);
+export const ENGINE_SPRITES: readonly string[] = Object.freeze([
+  ...BULLET_SPRITES,
+  OPTION_SPRITE,
+  ...ITEM_SPRITES,
+  FORCE_FIELD_SPRITE,
+]);
 
 /**
  * Creates a gameplay session: RNG streams from `config.seed`, the ship from `content`, the stage
@@ -667,6 +703,7 @@ export function createWorld(
     enemies: null as unknown as EnemySystem,
     bullets: null as unknown as BulletSystem,
     weapons: null as unknown as WeaponSystem,
+    powerups: null as unknown as PowerUpSystem,
     rank: computeRank(difficultyRankInputs(config.difficulty)),
     view,
   };
@@ -674,10 +711,11 @@ export function createWorld(
   world.bullets.setRank(world.rank);
   world.enemies = createEnemySystem(world, options.behaviors ?? DEFAULT_BEHAVIORS, stageSpec);
   world.weapons = createWeaponSystem(world);
+  world.powerups = createPowerUpSystem(world);
   for (let slot = 0; slot < MAX_PLAYERS; slot++) {
     applyLoadoutPreset(world.weapons.loadouts[slot], players[slot], config.loadout);
   }
-  // Same-layer batches draw in list order: the Options below the ships.
+  // Same-layer batches draw in list order: the Options below the ships, the shields over them.
   batches.push(
     world.enemies.groundBatch,
     world.enemies.airBatch,
@@ -685,6 +723,8 @@ export function createWorld(
     world.weapons.optionBatch,
     playerBatch,
     world.bullets.batch,
+    world.powerups.shieldBatch,
+    world.powerups.itemBatch,
   );
   view.lasers = world.bullets.laserView;
   if (stageSpec !== null) {
@@ -722,11 +762,12 @@ function createWorldStageHooks(world: WorldUnderConstruction): StageHooks {
       }
       // warning / boss → bosses (M1-13).
     },
-    /** A checkpoint restart: empties every registered pool, the enemy and weapon systems. */
+    /** A checkpoint restart: empties every pool and the enemy, weapon and power-up systems. */
     clear() {
       world.pools.clearAll();
       world.enemies.clear();
       world.weapons.clear();
+      world.powerups.clear();
     },
   };
 }
@@ -757,8 +798,8 @@ export function stepWorld(world: World, input: Readonly<InputSnapshot>): void {
 
 /**
  * Refreshes the mirror batches of {@link World.view} (the enemies, the player shots and Options,
- * the player ships) and scrolls the parallax bands with the camera. Runs at the end of every
- * tick (phase 9) and once at creation. Never allocates.
+ * the items and shields, the player ships) and scrolls the parallax bands with the camera. Runs
+ * at the end of every tick (phase 9) and once at creation. Never allocates.
  *
  * @remarks
  * A ship is drawn when its slot is active, it is not `dying` / `dead` and its spec has a sprite;
@@ -771,6 +812,7 @@ export function syncWorldView(world: World): void {
   if (parallax !== null) updateParallaxView(parallax, world.camera.x, world.camera.y);
   world.enemies.sync();
   world.weapons.sync();
+  world.powerups.sync();
   const batch = world.playerBatch;
   batch.count = 0;
   const spec = world.ship;

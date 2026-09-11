@@ -237,7 +237,8 @@ describe('core/events — cue registries', () => {
     expect(SFX_CUES.MegaCrash).toBe(15);
     expect(SFX_CUES.WarningSiren).toBe(20);
     expect(SFX_CUES.Clink).toBe(21);
-    expect(SFX_CUE_NAMES.length).toBe(22);
+    expect(SFX_CUES.PowerUpDenied).toBe(22);
+    expect(SFX_CUE_NAMES.length).toBe(23);
 
     expect(MUSIC_CUES.Silence).toBe(0);
     expect(MUSIC_CUES.Title).toBe(1);
@@ -246,7 +247,7 @@ describe('core/events — cue registries', () => {
     expect(MUSIC_CUES.Escape).toBe(14);
     expect(MUSIC_CUE_NAMES.length).toBe(15);
 
-    expect(Object.values(SimEventKind)).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
+    expect(Object.values(SimEventKind)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8]);
     expect(SIM_EVENT_KIND_NAMES).toEqual([
       'sfx',
       'music',
@@ -256,18 +257,21 @@ describe('core/events — cue registries', () => {
       'hitstop',
       'rumble',
       'formationBonus',
+      'powerUp',
     ]);
     expect(FX_CUES).toEqual({
       ExplosionSmall: 0,
       ExplosionMedium: 1,
       ExplosionLarge: 2,
       BulletCancel: 3,
+      ShieldBreak: 4,
     });
     expect(FX_CUE_NAMES).toEqual([
       'ExplosionSmall',
       'ExplosionMedium',
       'ExplosionLarge',
       'BulletCancel',
+      'ShieldBreak',
     ]);
     expect(Object.isFrozen(FX_CUE_NAMES)).toBe(true);
   });

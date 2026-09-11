@@ -183,7 +183,12 @@ describe('core/bullets', () => {
     expect(BULLET_KINDS).toHaveLength(9);
     expect(BULLET_KINDS[BulletKind.NeedlePurple].sprite).toBe('bullets/needle-purple');
     expect(BULLET_SPRITES).toEqual([...BULLET_KINDS.map((k) => k.sprite), LASER_SPRITE]);
-    expect(ENGINE_SPRITES).toEqual([...BULLET_SPRITES, 'options/orb']);
+    expect(ENGINE_SPRITES).toEqual([
+      ...BULLET_SPRITES,
+      'options/orb',
+      'items/capsule',
+      'shields/force-field',
+    ]);
     for (const kind of BULLET_KINDS) {
       expect(kind.flags).toBe(BulletFlag.DieOnTerrain | BulletFlag.Cancelable);
       expect(kind.frames).toBe(kind.sprite.includes('round') ? 1 : 8);

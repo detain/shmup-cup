@@ -9,7 +9,7 @@
  * This entry point exports the implemented (and partial) public API. Placeholder modules
  * under `src/<module>/` (weapons, bosses, scoring, …) are exported here as they get
  * implemented — `bullets` and `rank` joined with plan step M1-09, `weapons` and `options` with
- * M1-10.
+ * M1-10, `powerups` and `shields` with M1-11.
  *
  * @packageDocumentation
  */
@@ -110,8 +110,11 @@ export {
 } from './platform/index.js';
 
 export {
+  DEFAULT_AUTO_POWER_UP_ORDER,
   DEFAULT_GAME_CONFIG,
   HUD_BAR_HEIGHT,
+  MAX_AUTO_POWER_UP_ORDER,
+  METER_SLOT_NAMES,
   PLAYFIELD_H,
   PLAYFIELD_W,
   PLAYFIELD_Y,
@@ -119,6 +122,7 @@ export {
   type DeathPenaltyPreset,
   type DifficultyPreset,
   type GameConfig,
+  type MeterSlotName,
   type PowerUpMode,
   type StartingLoadout,
 } from './config/index.js';
@@ -462,6 +466,61 @@ export {
   type WeaponHost,
   type WeaponSystem,
 } from './weapons/index.js';
+
+export {
+  FORCE_FIELD,
+  FORCE_FIELD_HITS,
+  FORCE_FIELD_SPRITE,
+  FORCE_FIELD_WEAR_FRAMES,
+  SHIELD_HIT_IFRAMES,
+  SHIELD_KIND_NAMES,
+  SHIELD_SPECS,
+  ShieldHit,
+  ShieldKind,
+  ShieldState,
+  absorbShieldHit,
+  clearShield,
+  createShieldState,
+  grantShield,
+  shieldActive,
+  shieldWearFrame,
+  tickShield,
+  type ShieldSpec,
+} from './shields/index.js';
+
+export {
+  CAPSULE_SCORE,
+  CAPSULE_SPRITE,
+  ITEM_BLINK_TICKS,
+  ITEM_CULL_MARGIN,
+  ITEM_KINDS,
+  ITEM_RADIUS,
+  ITEM_SCHEMA,
+  ITEM_SPRITES,
+  ItemFlag,
+  ItemKind,
+  MAX_ITEMS,
+  MEGA_CRASH_FLASH_TICKS,
+  METER_LABELS,
+  METER_SLOT_COUNT,
+  MeterSlot,
+  PICKUP_MAGNET_RANGE,
+  PICKUP_MAGNET_SPEED,
+  PowerMeter,
+  advanceMeter,
+  canEquipSlot,
+  createPowerMeter,
+  createPowerUpSystem,
+  equipSlot,
+  equippableSlots,
+  meterSlotOf,
+  type DirectItem,
+  type ItemKindSpec,
+  type ItemSchema,
+  type PowerUpHost,
+  type PowerUpOutcomes,
+  type PowerUpSystem,
+} from './powerups/index.js';
 
 export {
   ENGINE_SPRITES,

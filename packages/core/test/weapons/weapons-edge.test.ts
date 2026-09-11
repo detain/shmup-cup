@@ -516,7 +516,7 @@ describe('core/weapons edge cases — tables, content and roles', () => {
 
   it('defaults a Loadout to the basic shot and resets it with the default preset', () => {
     const l = new Loadout();
-    expect([l.main, l.missile, l.options, l.shield]).toEqual([MainWeapon.Basic, false, 0, 0]);
+    expect([l.main, l.missile, l.options]).toEqual([MainWeapon.Basic, false, 0]);
     const ship = createPlayer(0, 3);
     applyLoadoutPreset(l, ship, 'full');
     expect([l.main, l.missile, l.options, ship.speedLevel]).toEqual([
@@ -525,9 +525,10 @@ describe('core/weapons edge cases — tables, content and roles', () => {
       MAX_OPTIONS,
       FULL_LOADOUT_SPEED_LEVEL,
     ]);
-    l.shield = 3;
+    // M1-11: 'full' puts up a Force Field on the ship; 'default' clears it.
+    expect(ship.shield.hits).toBe(5);
     applyLoadoutPreset(l, ship, 'default');
-    expect([l.main, l.missile, l.options, l.shield, ship.speedLevel]).toEqual([
+    expect([l.main, l.missile, l.options, ship.shield.hits, ship.speedLevel]).toEqual([
       MainWeapon.Basic,
       false,
       0,
@@ -1698,7 +1699,7 @@ describe('core/weapons edge cases — presentation and restart', () => {
       ['count', () => g.count--, () => g.count++],
       ['main', () => (l.main = MainWeapon.Double), () => (l.main = MainWeapon.Laser)],
       ['missile', () => (l.missile = false), () => (l.missile = true)],
-      ['shield', () => (l.shield = 1), () => (l.shield = 0)],
+      ['shield', () => (w.players[0].shield.hits = 1), () => (w.players[0].shield.hits = 5)],
       [
         'player 2 loadout',
         () => w.weapons.loadouts[1].options--,
