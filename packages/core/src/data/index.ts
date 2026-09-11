@@ -652,7 +652,7 @@ export function isContentKind(kind: string): kind is ContentKind {
  * @param list - Target list.
  * @param index - Target id → position map.
  * @param entry - The entry (its `id` must be unique across all files of the kind).
- * @param path - Issue path of the entry.
+ * @param idPath - Issue path of the entry's `id` field (`<file>:<json path>`, built with `at`).
  * @param kind - Name used in the duplicate message.
  * @param issues - Collector.
  */
@@ -660,12 +660,12 @@ function addEntry<T extends { readonly id: string }>(
   list: T[],
   index: Map<string, number>,
   entry: T,
-  path: string,
+  idPath: string,
   kind: string,
   issues: ValidationIssue[],
 ): void {
   if (index.has(entry.id)) {
-    issues.push({ path: path + '.id', message: 'duplicate ' + kind + ' id "' + entry.id + '"' });
+    issues.push({ path: idPath, message: 'duplicate ' + kind + ' id "' + entry.id + '"' });
     return;
   }
   index.set(entry.id, list.length);
@@ -994,7 +994,7 @@ function collect(
           db.ships,
           db.shipIndex,
           ships[i],
-          at(path, 'ships[' + String(i) + ']'),
+          at(path, 'ships[' + String(i) + '].id'),
           'ship',
           issues,
         );
@@ -1008,7 +1008,7 @@ function collect(
           db.weapons,
           db.weaponIndex,
           weapons[i],
-          at(path, 'weapons[' + String(i) + ']'),
+          at(path, 'weapons[' + String(i) + '].id'),
           'weapon',
           issues,
         );
@@ -1019,7 +1019,7 @@ function collect(
           db.weaponPresets,
           db.weaponPresetIndex,
           presets[i],
-          at(path, 'presets[' + String(i) + ']'),
+          at(path, 'presets[' + String(i) + '].id'),
           'weapon preset',
           issues,
         );
@@ -1033,7 +1033,7 @@ function collect(
           db.enemies,
           db.enemyIndex,
           enemies[i],
-          at(path, 'enemies[' + String(i) + ']'),
+          at(path, 'enemies[' + String(i) + '].id'),
           'enemy',
           issues,
         );
@@ -1041,7 +1041,14 @@ function collect(
       return;
     }
     case 'stage':
-      addEntry(db.stages, db.stageIndex, parsed as unknown as StageSpec, path, 'stage', issues);
+      addEntry(
+        db.stages,
+        db.stageIndex,
+        parsed as unknown as StageSpec,
+        at(path, 'id'),
+        'stage',
+        issues,
+      );
       return;
   }
 }

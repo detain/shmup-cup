@@ -215,6 +215,36 @@ describe('core/data loadContent', () => {
     ]);
   });
 
+  it('reports a duplicate stage id at the file:id path', () => {
+    const { db, issues } = loadContent([
+      { ...stageFile('dup'), path: 'stages/b.stage.json' },
+      { ...stageFile('dup'), path: 'stages/a.stage.json' },
+      enemiesFile(),
+    ]);
+    expect(db.stages).toHaveLength(1);
+    expect(issues).toEqual([
+      { path: 'stages/b.stage.json:id', message: 'duplicate stage id "dup"' },
+    ]);
+  });
+
+  it('reports duplicate ids inside a secondary list at the entry id path', () => {
+    const { db, issues } = loadContent([
+      weaponsFile(),
+      { ...weaponsFile(), path: 'weapons/z.weapons.json' },
+    ]);
+    expect(db.weaponPresets).toHaveLength(1);
+    expect(issues).toEqual([
+      {
+        path: 'weapons/z.weapons.json:weapons[0].id',
+        message: 'duplicate weapon id "shot.basic"',
+      },
+      {
+        path: 'weapons/z.weapons.json:presets[0].id',
+        message: 'duplicate weapon preset id "type-a"',
+      },
+    ]);
+  });
+
   it('prefixes schema issues with the file path and keeps loading the other files', () => {
     const broken = playerFile();
     (broken.data as { ships: { speeds: unknown }[] }).ships[0].speeds = [];
