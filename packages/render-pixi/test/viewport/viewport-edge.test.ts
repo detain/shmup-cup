@@ -10,25 +10,31 @@ const BASE_H = 216;
 
 describe('render-pixi/viewport invariants', () => {
   it('always picks the largest integer scale that fits, centred, for every display size', () => {
+    // ~7 000 sizes × 9 checks: collect violations and assert once — one `expect` per check
+    // took ~4 s on a GitHub Actions runner, too close to the 5 s test timeout.
+    const failures: string[] = [];
+    const check = (ok: boolean, what: string, context: string): void => {
+      if (!ok) failures.push(`${context}: ${what}`);
+    };
     for (let w = 384; w <= 4000; w += 37) {
       for (let h = 216; h <= 2300; h += 29) {
         const vp = computeIntegerViewport(w, h, BASE_W, BASE_H);
-        const context = `${w}x${h}`;
-        expect(Number.isInteger(vp.scale), context).toBe(true);
-        expect(vp.width, context).toBe(BASE_W * vp.scale);
-        expect(vp.height, context).toBe(BASE_H * vp.scale);
+        const context = `${w}x${h} → ${JSON.stringify(vp)}`;
+        check(Number.isInteger(vp.scale), 'integer scale', context);
+        check(vp.width === BASE_W * vp.scale, 'width = base × scale', context);
+        check(vp.height === BASE_H * vp.scale, 'height = base × scale', context);
         // Fits…
-        expect(vp.width, context).toBeLessThanOrEqual(w);
-        expect(vp.height, context).toBeLessThanOrEqual(h);
+        check(vp.width <= w && vp.height <= h, 'fits the display', context);
         // …and one step larger would not.
         const next = vp.scale + 1;
-        expect(BASE_W * next > w || BASE_H * next > h, context).toBe(true);
+        check(BASE_W * next > w || BASE_H * next > h, 'scale + 1 would not fit', context);
         // Centred on whole pixels.
-        expect(Number.isInteger(vp.x) && Number.isInteger(vp.y), context).toBe(true);
-        expect(Math.abs(w - vp.width - 2 * vp.x), context).toBeLessThanOrEqual(1);
-        expect(Math.abs(h - vp.height - 2 * vp.y), context).toBeLessThanOrEqual(1);
+        check(Number.isInteger(vp.x) && Number.isInteger(vp.y), 'whole-pixel offset', context);
+        check(Math.abs(w - vp.width - 2 * vp.x) <= 1, 'centred horizontally', context);
+        check(Math.abs(h - vp.height - 2 * vp.y) <= 1, 'centred vertically', context);
       }
     }
+    expect(failures).toEqual([]);
   });
 
   it('drops to the next scale one pixel below an exact fit', () => {

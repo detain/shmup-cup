@@ -42,6 +42,7 @@ import {
 import { decodePng, encodePng } from '../../../scripts/assets/png.mjs';
 import { PROCEDURAL_GENERATORS } from '../../../scripts/assets/procedural/index.mjs';
 import { TERRAIN_TILES } from '../../../scripts/assets/procedural/terrain.mjs';
+import { comparableSprites } from './sprite-compare.js';
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const tmp = mkdtempSync(join(tmpdir(), 'shmup-asset-pipeline-'));
@@ -294,7 +295,9 @@ describe('scripts/assets/pipeline — buildAtlas', () => {
 describe('scripts/assets/procedural — generators', () => {
   it('are deterministic: two runs draw identical pixels', () => {
     for (const generator of PROCEDURAL_GENERATORS) {
-      expect(generator.generate(), generator.id).toEqual(generator.generate());
+      expect(comparableSprites(generator.generate()), generator.id).toEqual(
+        comparableSprites(generator.generate()),
+      );
     }
   });
 

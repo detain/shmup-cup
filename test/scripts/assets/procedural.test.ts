@@ -35,6 +35,7 @@ import * as starfield from '../../../scripts/assets/procedural/starfield.mjs';
 import * as terrain from '../../../scripts/assets/procedural/terrain.mjs';
 import * as ui from '../../../scripts/assets/procedural/ui.mjs';
 import type { SpriteDef } from '../../../scripts/assets/sprite-source.mjs';
+import { comparableSprite } from './sprite-compare.js';
 
 const proceduralDir = join(
   dirname(fileURLToPath(import.meta.url)),
@@ -266,7 +267,9 @@ describe('scripts/assets/procedural — registry', () => {
       .reverse()
       .flatMap((g) => g.generate());
     expect(forward).toHaveLength(reversed.length);
-    for (const sprite of forward) expect(byName(reversed, sprite.name)).toEqual(sprite);
+    for (const sprite of forward) {
+      expect(comparableSprite(byName(reversed, sprite.name))).toEqual(comparableSprite(sprite));
+    }
   });
 });
 
