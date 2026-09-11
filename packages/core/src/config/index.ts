@@ -50,8 +50,11 @@ export interface GameConfig {
   readonly maxTicksPerFrame: number;
   /** Seed of the gameplay RNG stream. Unsigned 32-bit. */
   readonly seed: number;
+  /** Difficulty preset (drives rank base/growth, lives and extends in later steps). */
   readonly difficulty: DifficultyPreset;
+  /** Power-up model: `'meter'` (Gradius-style bar) or `'direct'` (Darius-style items). */
   readonly powerUpMode: PowerUpMode;
+  /** How much power a death costs (shmup_feat.md §10). */
   readonly deathPenalty: DeathPenaltyPreset;
   /** Lives at game start (1–5). */
   readonly startingLives: number;
@@ -79,9 +82,21 @@ export const DEFAULT_GAME_CONFIG: GameConfig = Object.freeze({
 /**
  * Merges overrides onto {@link DEFAULT_GAME_CONFIG} and validates the result.
  *
+ * @remarks
+ * Validated ranges (all integers, inclusive): `internalWidth` / `internalHeight`
+ * 16–4096, `tickRate` 1–1000, `maxTicksPerFrame` 1–60, `seed` 0–0xFFFFFFFF,
+ * `startingLives` 1–5. String presets and booleans are not validated at runtime —
+ * the types cover them.
+ *
  * @param overrides - Fields to change.
  * @returns A frozen, validated config.
- * @throws RangeError when a numeric field is out of range.
+ * @throws RangeError when a numeric field is not an integer or is out of range.
+ *
+ * @example
+ * ```ts
+ * const config = resolveGameConfig({ seed: 42, startingLives: 5 });
+ * resolveGameConfig({ tickRate: 0 }); // throws RangeError
+ * ```
  */
 export function resolveGameConfig(overrides: Partial<GameConfig> = {}): GameConfig {
   const config: GameConfig = { ...DEFAULT_GAME_CONFIG, ...overrides };
@@ -101,6 +116,7 @@ export function resolveGameConfig(overrides: Partial<GameConfig> = {}): GameConf
  * @param value - Value to check.
  * @param min - Inclusive lower bound.
  * @param max - Inclusive upper bound.
+ * @throws RangeError naming the field, the range and the offending value.
  */
 function requireInteger(name: string, value: number, min: number, max: number): void {
   if (!Number.isInteger(value) || value < min || value > max) {

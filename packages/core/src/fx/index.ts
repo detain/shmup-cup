@@ -34,6 +34,7 @@ export interface FxState {
   hitStopTicks: number;
   /** Current shake magnitude in pixels (0 = none). */
   shakeMagnitude: number;
+  /** Ticks of shake remaining; the magnitude decays to 0 over them. */
   shakeTicks: number;
   /** Full-screen flash ticks remaining (rate-limited for photosensitivity). */
   flashTicks: number;

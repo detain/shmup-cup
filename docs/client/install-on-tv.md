@@ -2,8 +2,9 @@
 
 Shmup Cup builds are not in the Samsung store. During development they are installed ("side-loaded") from the
 Windows desktop that sits on the same network as the monitors. This page covers the one-time setup of a
-monitor and the PC, and how to install, start and remove an app. Today the only installable app is the
-**Input Probe** ([input-probe.md](input-probe.md)); the game will use the same flow.
+monitor and the PC, and how to install, start and remove an app. Two apps can be installed today: the
+**Input Probe** ([input-probe.md](input-probe.md)) and the **game preview**, which shows a calibration screen
+([preview-build.md](preview-build.md)). Both use the same one-time setup.
 
 Test hardware: 2× Samsung Smart Monitor M7 43" (LS43AM702UNXZA / M70A, Tizen 5.5).
 
@@ -50,6 +51,34 @@ options, the VS Code extension route): [`tools/input-probe/README.md`](../../too
 
 After installation the app stays in the monitor's **Apps** panel and can be started from there without the PC.
 
+## Installing the game preview
+
+The game lives in the main part of the repository, which uses **pnpm** instead of npm and needs a slightly
+newer Node.js: **Node 24.15+** (or 22.22.2+) and **pnpm 12** (`npm i -g pnpm@latest`; `pnpm -v` must print 12.x).
+From the repository root, in a Command Prompt:
+
+```bat
+set ELECTRON_SKIP_BINARY_DOWNLOAD=1
+pnpm install
+pnpm --filter @shmup/tizen build
+
+set TIZEN_PROFILE=shmupcup
+set TV_IP=192.168.1.50
+pnpm --filter @shmup/tizen tizen:package
+pnpm --filter @shmup/tizen tizen:install
+pnpm --filter @shmup/tizen tizen:run
+```
+
+- `ELECTRON_SKIP_BINARY_DOWNLOAD=1` skips the desktop (Electron) download, which the TV does not need.
+- `build` creates `apps\tizen\dist`; `tizen:package` signs it into a `.wgt` in the same folder.
+- `tizen:install` and `tizen:run` handle **one monitor per run**: for the second monitor change `TV_IP` and run
+  those two commands again. (The input probe's `deploy` accepts a comma-separated list; the game scripts do not.)
+- After every new `build`, run `tizen:package` again before installing.
+- PowerShell: `$env:TIZEN_PROFILE = "shmupcup"; $env:TV_IP = "192.168.1.50"` instead of `set`.
+
+The app appears in the Apps panel as **Shmup Cup**. What it should look like: [preview-build.md](preview-build.md).
+More options (custom `tizen`/`sdb` paths): [`apps/tizen/README.md`](../../apps/tizen/README.md).
+
 ## Removing an app
 
 Remove it from the monitor's Apps panel like any other app (highlight it and use its options menu), or with the
@@ -66,3 +95,7 @@ unless it was signed with a *different* author certificate (see below).
 | `install failed` | The distributor certificate does not include this monitor's DUID (re-create the certificate with both DUIDs), or an older build signed with a different author certificate is installed (remove it on the monitor first) |
 | App installed but not visible | Look at the end of the Apps list; start it once with `npm run deploy` (it launches the app) |
 | Worked before, now `sdb connect` fails | Check that Developer Mode is still on and the Host PC IP still matches the PC (it changes if the PC gets a new DHCP address) — repeat step 2 on the monitor |
+| Game preview: `ERR_PNPM_BROKEN_LOCKFILE` during `pnpm install` | An old pnpm is being used. `pnpm -v` must print 12.x — run `npm i -g pnpm@latest` and open a new Command Prompt |
+| Game preview: `Missing environment variable TIZEN_PROFILE` | `set TIZEN_PROFILE=<profile name>` in the same Command Prompt before `tizen:package` |
+| Game preview: `apps/tizen/dist is missing` | Run `pnpm --filter @shmup/tizen build` first |
+| Game preview: `No .wgt found` | Run `tizen:package` after the build (a new build removes the old `.wgt`) |

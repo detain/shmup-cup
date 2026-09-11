@@ -47,19 +47,38 @@ export type SceneId =
 
 /** A scene on the stack. */
 export interface Scene {
+  /** Which scene this is. */
   readonly id: SceneId;
   /** Overlays (pause, options) let the scene below keep rendering. */
   readonly overlay: boolean;
+  /** Called when the scene becomes active (pushed or replaced in). */
   enter(): void;
-  /** One simulation tick with this tick's input. */
+  /**
+   * One simulation tick with this tick's input. Only the top scene ticks.
+   *
+   * @param input - This tick's input snapshot (read-only).
+   */
   tick(input: InputSnapshot): void;
+  /** Called when the scene leaves the stack (popped or replaced). */
   exit(): void;
 }
 
 /** The scene stack. */
 export interface SceneStack {
+  /** The active scene, or `null` when the stack is empty. */
   readonly top: Scene | null;
+  /**
+   * Pushes a scene on top (e.g. the pause overlay); calls its `enter()`.
+   *
+   * @param scene - Scene to activate.
+   */
   push(scene: Scene): void;
+  /** Removes the top scene (calls its `exit()`); the one below resumes. */
   pop(): void;
+  /**
+   * Swaps the top scene for another (title → game); calls `exit()` then `enter()`.
+   *
+   * @param scene - Scene to activate.
+   */
   replace(scene: Scene): void;
 }

@@ -25,9 +25,21 @@ export interface ShmupProjectOptions {
  * Builds a Vitest project config with the repo conventions: tests live in
  * `test/` (never next to sources) and workspace packages resolve to source.
  *
+ * @remarks
+ * Both the client and the SSR resolver get the `@shmup/source` condition first, so a
+ * test importing `@shmup/core` runs `packages/core/src` directly — no package build is
+ * needed before `pnpm test`.
+ *
  * @param name - Project name shown in Vitest output (e.g. `core`).
  * @param options - Optional overrides.
  * @returns A Vitest project config.
+ *
+ * @example
+ * ```ts
+ * // packages/foo/vitest.config.ts
+ * import { defineShmupProject } from '../../vitest.shared.js';
+ * export default defineShmupProject('foo');
+ * ```
  */
 export function defineShmupProject(
   name: string,

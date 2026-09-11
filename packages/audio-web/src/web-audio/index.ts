@@ -31,18 +31,51 @@ export const moduleInfo = defineModule({
 
 /** The subset of `GainNode` this module uses (lets tests pass a fake). */
 export interface GainNodeLike {
-  readonly gain: { value: number };
+  /** The gain parameter; only its `value` is written (no automation yet). */
+  readonly gain: {
+    /** Linear gain, 0…1 as set by this module. */
+    value: number;
+  };
+  /**
+   * Routes this node's output into another node.
+   *
+   * @param destination - Target node (another gain node or `context.destination`).
+   * @returns Whatever the implementation returns (ignored).
+   */
   connect(destination: unknown): unknown;
+  /** Detaches every outgoing connection. */
   disconnect(): void;
 }
 
 /** The subset of `AudioContext` this module uses (lets tests pass a fake). */
 export interface AudioContextLike {
+  /** `'suspended'`, `'running'` or `'closed'` (Safari may report `'interrupted'`). */
   readonly state: string;
+  /** Final output node (the speakers). */
   readonly destination: unknown;
+  /**
+   * Creates a gain node (used for every bus).
+   *
+   * @returns A new, unconnected gain node.
+   */
   createGain(): GainNodeLike;
+  /**
+   * Starts / restarts audio processing.
+   *
+   * @returns Resolves when running.
+   */
   resume(): Promise<void>;
+  /**
+   * Pauses audio processing.
+   *
+   * @returns Resolves when suspended.
+   */
   suspend(): Promise<void>;
+  /**
+   * Releases the audio device; the context cannot be used afterwards.
+   *
+   * @returns Resolves when closed.
+   */
   close(): Promise<void>;
 }
 
@@ -50,7 +83,11 @@ export interface AudioContextLike {
 export interface WebAudioOptions {
   /**
    * Creates the audio context. Defaults to `new AudioContext({ latencyHint: 'interactive' })`
-   * (with the `webkitAudioContext` fallback). Return `null` when audio is unavailable.
+   * (with the `webkitAudioContext` fallback). Called at most once, by the first
+   * `unlock()`.
+   *
+   * @returns The new context, or `null` when audio is unavailable (the back-end then
+   *   stays `'uninitialized'` and every call is a no-op).
    */
   readonly createContext?: () => AudioContextLike | null;
 }
@@ -60,14 +97,15 @@ export interface WebAudio extends IAudio {
   /** The live context, or `null` before the first {@link IAudio.unlock}. */
   readonly context: AudioContextLike | null;
   /**
-   * The gain node of a bus (`null` before the context exists). Other audio modules
-   * connect their sources here.
+   * The gain node of a bus. Other audio modules connect their sources here.
    *
    * @param bus - Bus name.
+   * @returns The bus node, or `null` before the context exists / after `destroy()`.
    */
   bus(bus: AudioBus): GainNodeLike | null;
 }
 
+/** Every bus, master first (it must exist before the others connect to it). */
 const BUSES: readonly AudioBus[] = ['master', 'music', 'sfx', 'ui'];
 
 /**
@@ -99,8 +137,25 @@ function clampVolume(volume: number): number {
  * Creates the Web Audio back-end. The context is created lazily by the first
  * {@link IAudio.unlock} call, which the host should make from a user gesture.
  *
+ * @remarks
+ * - `suspend()` only acts on a running context and `resume()` only on a suspended one,
+ *   so both are idempotent and safe to call from visibility handlers.
+ * - `setBusVolume()` clamps to 0…1 (NaN → 0) and works before the context exists;
+ *   the value is applied when the buses are created.
+ * - After `destroy()` the state is `'closed'` for good; `unlock()` never recreates it.
+ *
  * @param options - Optional context factory.
  * @returns The {@link WebAudio} instance.
+ *
+ * @example
+ * ```ts
+ * const audio = createWebAudio();
+ * audio.setBusVolume('music', 0.6);
+ * window.addEventListener('keydown', () => void audio.unlock(), { once: true });
+ * document.addEventListener('visibilitychange', () => {
+ *   void (document.hidden ? audio.suspend() : audio.resume());
+ * });
+ * ```
  */
 export function createWebAudio(options: WebAudioOptions = {}): WebAudio {
   const createContext = options.createContext ?? createDefaultContext;
@@ -109,6 +164,11 @@ export function createWebAudio(options: WebAudioOptions = {}): WebAudio {
   let context: AudioContextLike | null = null;
   let closed = false;
 
+  /**
+   * Creates the context and the bus graph on first use.
+   *
+   * @returns The context, or `null` when it is unavailable or the back-end is destroyed.
+   */
   const ensureContext = (): AudioContextLike | null => {
     if (context !== null || closed) return context;
     context = createContext();

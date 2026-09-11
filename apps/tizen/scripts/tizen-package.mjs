@@ -10,6 +10,7 @@
 import { DIST_DIR, findWgt, requireBuild, requireEnv, run, tizenCli } from './tizen-env.mjs';
 
 requireBuild();
+/** Certificate profile used to sign the widget (required). */
 const profile = requireEnv(
   'TIZEN_PROFILE',
   'name of the Tizen certificate profile (author + Samsung distributor certificate).',

@@ -44,11 +44,24 @@ export interface Viewport {
  * Largest integer scale of `baseWidth × baseHeight` that fits in the display, centred.
  * Displays smaller than the base frame get scale 1 (the frame is cropped, never blurred).
  *
+ * @remarks
+ * Offsets are floored, so an odd leftover puts the extra pixel on the right/bottom.
+ * When the display is smaller than the frame, `x` / `y` are negative (the frame is
+ * centred and cropped on both sides).
+ *
  * @param displayWidth - Available width in pixels.
  * @param displayHeight - Available height in pixels.
  * @param baseWidth - Internal frame width (e.g. 384).
  * @param baseHeight - Internal frame height (e.g. 216).
  * @returns The integer viewport.
+ *
+ * @example
+ * ```ts
+ * computeIntegerViewport(1920, 1080, 384, 216);
+ * // → { scale: 5, x: 0, y: 0, width: 1920, height: 1080 }
+ * computeIntegerViewport(1280, 720, 384, 216);
+ * // → { scale: 3, x: 64, y: 36, width: 1152, height: 648 }
+ * ```
  */
 export function computeIntegerViewport(
   displayWidth: number,

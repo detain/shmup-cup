@@ -33,12 +33,19 @@ export const moduleInfo = defineModule({
 
 /** The fields of `KeyboardEvent` this module reads (lets tests dispatch plain objects). */
 export interface KeyEventLike {
+  /** `'keydown'`, `'keyup'` or `'blur'` (other types are ignored). */
   readonly type: string;
+  /** Physical key id, e.g. `'KeyZ'`; empty for many TV remote keys. */
   readonly code: string;
+  /** Legacy numeric key code, e.g. `10009` for remote Back. */
   readonly keyCode: number;
+  /** `true` for auto-repeat keydowns (ignored). */
   readonly repeat: boolean;
+  /** Ctrl held — the event is not `preventDefault()`-ed so browser shortcuts work. */
   readonly ctrlKey?: boolean;
+  /** Cmd/Meta held — same as `ctrlKey`. */
   readonly metaKey?: boolean;
+  /** Stops the browser / TV default action (scrolling, Back navigation). */
   preventDefault(): void;
 }
 
@@ -46,7 +53,11 @@ export interface KeyEventLike {
 export interface KeyboardSource {
   /** Actions currently held. */
   readonly held: ActionMask;
-  /** Returns actions pressed since the previous call and clears the latch. */
+  /**
+   * Reads and clears the tap latch.
+   *
+   * @returns Actions pressed since the previous call (even if already released).
+   */
   consumeLatched(): ActionMask;
   /** Forgets all held keys (window blur, scene change). */
   clear(): void;
@@ -60,14 +71,30 @@ export interface KeyboardSource {
   detach(): void;
 }
 
+/** Number of action bits tracked per key (covers every `Action` with room to grow). */
 const BIT_COUNT = 16;
 
 /**
  * Creates a keyboard source and attaches it to `target`.
  *
+ * @remarks
+ * `keydown` / `keyup` are captured in the capture phase; `blur` is listened to normally.
+ * A physical key is identified by `code`, or by `keyCode:<n>` when `code` is empty
+ * (TV remotes). A `keyup` for a key that was never seen down is ignored.
+ *
  * @param target - Event target to listen on (normally `window`); `null` = manual feeding.
  * @param bindings - Key → action bindings.
  * @returns The source.
+ *
+ * @example
+ * ```ts
+ * const keys = createKeyboardSource(window, DEFAULT_KEY_BINDINGS);
+ * // once per tick:
+ * const held = keys.held;
+ * const taps = keys.consumeLatched();
+ * // on teardown:
+ * keys.detach();
+ * ```
  */
 export function createKeyboardSource(
   target: EventTarget | null,
@@ -80,6 +107,13 @@ export function createKeyboardSource(
   let held = 0;
   let latched = 0;
 
+  /**
+   * Adjusts the per-bit key counts for one key going down (`+1`) or up (`-1`) and
+   * recomputes `held` for the affected bits.
+   *
+   * @param mask - Actions bound to the key.
+   * @param delta - `1` on keydown, `-1` on keyup (counts are clamped at 0).
+   */
   const addBits = (mask: ActionMask, delta: number): void => {
     for (let bit = 0; bit < BIT_COUNT; bit++) {
       if ((mask & (1 << bit)) === 0) continue;
@@ -91,12 +125,18 @@ export function createKeyboardSource(
     }
   };
 
+  /** Forgets every held key (the tap latch is kept). */
   const clear = (): void => {
     downKeys.clear();
     bitCounts.fill(0);
     held = 0;
   };
 
+  /**
+   * Applies one event to the key state.
+   *
+   * @param raw - A `keydown`, `keyup` or `blur` event (DOM event or test object).
+   */
   const handleEvent = (raw: KeyEventLike | Event): void => {
     if (raw.type === 'blur') {
       clear();

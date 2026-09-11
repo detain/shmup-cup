@@ -22,7 +22,18 @@ export const moduleInfo = defineModule({
 
 /** The two rAF functions (a `Window` satisfies this; tests pass fakes). */
 export interface FrameScheduler {
+  /**
+   * Schedules `callback` for the next display refresh.
+   *
+   * @param callback - Receives the frame timestamp in ms (`performance.now()` clock).
+   * @returns A handle for {@link FrameScheduler.cancelAnimationFrame}.
+   */
   requestAnimationFrame(callback: (now: number) => void): number;
+  /**
+   * Cancels a pending callback.
+   *
+   * @param handle - Value returned by {@link FrameScheduler.requestAnimationFrame}.
+   */
   cancelAnimationFrame(handle: number): void;
 }
 
@@ -35,9 +46,24 @@ export interface FrameLoop {
 /**
  * Starts calling `onFrame` every animation frame.
  *
+ * @remarks
+ * The next frame is requested *before* `onFrame` runs, so an exception in `onFrame`
+ * does not kill the loop (it is reported by the browser and the next frame still
+ * comes). The first callback arrives on the next refresh, not synchronously.
+ *
  * @param scheduler - Normally `window`.
  * @param onFrame - Receives the rAF timestamp in ms.
  * @returns A handle to stop the loop.
+ *
+ * @example
+ * ```ts
+ * const loop = startFrameLoop(window, (now) => {
+ *   game.frame(now);
+ *   renderer.render(game.renderFrame());
+ * });
+ * // later:
+ * loop.stop();
+ * ```
  */
 export function startFrameLoop(
   scheduler: FrameScheduler,
@@ -45,6 +71,11 @@ export function startFrameLoop(
 ): FrameLoop {
   let handle = 0;
   let running = true;
+  /**
+   * rAF callback: re-arms itself, then forwards the timestamp.
+   *
+   * @param now - Frame timestamp in ms.
+   */
   const tick = (now: number): void => {
     if (!running) return;
     handle = scheduler.requestAnimationFrame(tick);

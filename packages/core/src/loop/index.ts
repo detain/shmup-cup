@@ -77,9 +77,25 @@ export interface FixedStepLoop {
 /**
  * Creates a {@link FixedStepLoop}.
  *
+ * @remarks
+ * The first `advance()` call (and the first after `reset()`) only records the
+ * timestamp and runs no tick. Non-positive deltas (clock went backwards, duplicate
+ * timestamp) run nothing. `maxTicksPerFrame` is floored.
+ *
  * @param options - Tick rate, per-frame cap and tick callback.
  * @returns The loop; call `advance(now)` from the host's frame callback.
- * @throws RangeError for a non-positive tick rate or cap.
+ * @throws RangeError when `tickRate` is not > 0 or `maxTicksPerFrame` is < 1.
+ *
+ * @example
+ * ```ts
+ * const loop = createFixedStepLoop({ tickRate: 60, maxTicksPerFrame: 4, onTick: step });
+ * const frame = (now: number): void => {
+ *   loop.advance(now); // 0..4 calls to step()
+ *   render(loop.alpha); // interpolate by the leftover fraction
+ *   requestAnimationFrame(frame);
+ * };
+ * requestAnimationFrame(frame);
+ * ```
  */
 export function createFixedStepLoop(options: FixedStepLoopOptions): FixedStepLoop {
   if (!(options.tickRate > 0)) throw new RangeError('tickRate must be > 0');

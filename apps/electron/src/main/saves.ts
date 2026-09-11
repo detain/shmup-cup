@@ -16,7 +16,20 @@
 
 /** File-backed key/value store used by the IPC handlers. */
 export interface FileStore {
+  /**
+   * Reads one key's file.
+   *
+   * @param key - Storage key (sanitised into a file name).
+   * @returns Resolves with the file contents, or `null` when the file does not exist.
+   */
   get(key: string): Promise<string | null>;
+  /**
+   * Writes one key's file atomically (temp file + rename).
+   *
+   * @param key - Storage key.
+   * @param value - Contents to write.
+   * @returns Resolves once the file is on disk.
+   */
   set(key: string, value: string): Promise<void>;
 }
 

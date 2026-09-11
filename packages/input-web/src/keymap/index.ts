@@ -29,7 +29,14 @@ export const moduleInfo = defineModule({
   specRefs: ['shmup_feat.md §4', 'shmup_tech.md §2.3'],
 });
 
-/** Samsung TV remote key codes (shmup_tech.md §2.3; verify with tools/input-probe). */
+/**
+ * Samsung TV remote key codes (shmup_tech.md §2.3; verify with tools/input-probe).
+ *
+ * @remarks
+ * Only arrows, Enter (OK) and Back are delivered to a Tizen web app by default; the
+ * media, channel and colour keys must be registered first with
+ * `tizen.tvinputdevice.registerKey()` (the Tizen platform adapter does this).
+ */
 export const TIZEN_KEY_CODES = Object.freeze({
   Enter: 13,
   ArrowLeft: 37,
@@ -48,7 +55,9 @@ export const TIZEN_KEY_CODES = Object.freeze({
 
 /** A binding table: `code` string → actions, and `keyCode` number → actions. */
 export interface KeyBindings {
+  /** `KeyboardEvent.code` (e.g. `'KeyZ'`, `'ArrowUp'`) → actions. Checked first. */
   readonly byCode: Readonly<Record<string, ActionMask>>;
+  /** Legacy `KeyboardEvent.keyCode` (e.g. `10009` Back) → actions. Fallback only. */
   readonly byKeyCode: Readonly<Record<number, ActionMask>>;
 }
 
@@ -97,10 +106,21 @@ export const DEFAULT_KEY_BINDINGS: KeyBindings = Object.freeze({
 /**
  * Resolves a key event to actions: `code` first, `keyCode` as fallback.
  *
+ * @remarks
+ * The `keyCode` table is consulted only when `code` is empty or not bound, so a
+ * keyboard arrow (bound by `code`) is never counted a second time via its key code.
+ *
  * @param code - `KeyboardEvent.code` (may be empty on TV remotes).
  * @param keyCode - `KeyboardEvent.keyCode`.
  * @param bindings - Binding table.
  * @returns The action mask, 0 when the key is unbound.
+ *
+ * @example
+ * ```ts
+ * resolveKeyActions('KeyZ', 90, DEFAULT_KEY_BINDINGS); // → Action.Shot | Action.Confirm
+ * resolveKeyActions('', 10009, DEFAULT_KEY_BINDINGS);  // → Action.Back (remote Back)
+ * resolveKeyActions('KeyQ', 81, DEFAULT_KEY_BINDINGS); // → 0 (unbound)
+ * ```
  */
 export function resolveKeyActions(
   code: string,

@@ -34,6 +34,7 @@ export type ShieldKind =
 export interface ShieldState {
   /** Active shield, `null` when unshielded. */
   kind: ShieldKind | null;
+  /** Hits the shield can still absorb. */
   hitsLeft: number;
   /** Direct-mode tier (0 = Arm, 1 = Super Arm, 2 = Hyper Arm). */
   tier: number;

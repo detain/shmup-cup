@@ -36,6 +36,7 @@ export type ContentKind = 'enemies' | 'weapons' | 'stage';
 export interface ContentFileHeader {
   /** Bumped on breaking format changes; loaders migrate or reject. */
   readonly formatVersion: number;
+  /** Which schema the file follows. */
   readonly kind: ContentKind;
 }
 
@@ -43,6 +44,7 @@ export interface ContentFileHeader {
 export interface ValidationIssue {
   /** JSON path, e.g. `enemies[3].hp`. */
   readonly path: string;
+  /** Human-readable description, e.g. `must be a positive integer`. */
   readonly message: string;
 }
 

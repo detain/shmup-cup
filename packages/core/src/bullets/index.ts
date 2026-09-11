@@ -31,7 +31,9 @@ export const moduleInfo = defineModule({
 
 /** Parameters for spawning one enemy bullet (reused object — no per-shot allocation). */
 export interface BulletSpawn {
+  /** Spawn X in playfield pixels. */
   x: number;
+  /** Spawn Y in playfield pixels. */
   y: number;
   /** Pixels per tick. */
   speed: number;

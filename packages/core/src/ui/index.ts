@@ -33,8 +33,11 @@ export type WidgetKind = 'list' | 'slider' | 'toggle' | 'rebind' | 'nameEntry' |
 
 /** Base state of a widget. */
 export interface Widget {
+  /** Which widget this is (selects the tick/draw behaviour). */
   readonly kind: WidgetKind;
+  /** Text drawn with the bitmap font. */
   label: string;
+  /** `true` for the widget that receives directional / Confirm input. */
   focused: boolean;
 }
 
@@ -42,6 +45,7 @@ export interface Widget {
 export interface HudModel {
   /** Score per player. */
   readonly scores: number[];
+  /** Best score shown at the top of the HUD. */
   hiScore: number;
   /** Lives per player. */
   readonly lives: number[];
@@ -51,8 +55,15 @@ export interface HudModel {
 
 /** Bitmap-font metrics used for layout. */
 export interface TextMetrics {
-  /** Width in pixels of `text` in the given font. */
+  /**
+   * Measures a single line of text.
+   *
+   * @param text - Text to measure (no line breaks).
+   * @param fontId - Bitmap font id.
+   * @returns Width in pixels of `text` in the given font.
+   */
   measure(text: string, fontId: string): number;
+  /** Line advance in pixels. */
   readonly lineHeight: number;
 }
 

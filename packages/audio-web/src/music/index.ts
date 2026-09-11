@@ -30,14 +30,19 @@ export const moduleInfo = defineModule({
 
 /** Loop points of a track, in samples. */
 export interface MusicLoop {
+  /** First sample of the looped section (the intro plays once before it). */
   readonly loopStart: number;
+  /** Sample at which playback jumps back to `loopStart`. */
   readonly loopEnd: number;
 }
 
 /** A music track definition. */
 export interface MusicTrack {
+  /** Track id referenced by stage data and sim `music` events. */
   readonly id: string;
+  /** Asset URL relative to the app root (OGG/M4A chosen by the loader). */
   readonly url: string;
+  /** Loop points, or `null` for a one-shot track (jingles, ending). */
   readonly loop: MusicLoop | null;
   /** Stream through a media element instead of decoding (long tracks). */
   readonly stream: boolean;

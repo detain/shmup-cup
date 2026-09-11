@@ -40,11 +40,36 @@ export interface ScriptContext {
   readonly rank: number;
 }
 
-/** A node of the planned pattern DSL (JSON-serialisable). */
+/**
+ * A node of the planned pattern DSL (JSON-serialisable).
+ *
+ * @remarks
+ * Numeric parameters are strings so they can be expressions over `$rank` and
+ * `$rand`, e.g. `"2 + $rank / 8"` (BulletML-style), compiled once at load time.
+ */
 export type PatternNode =
-  | { readonly op: 'fire'; readonly direction?: string; readonly speed?: string }
-  | { readonly op: 'wait'; readonly ticks: string }
-  | { readonly op: 'repeat'; readonly times: string; readonly body: readonly PatternNode[] };
+  | {
+      /** Discriminant: fire one bullet. */
+      readonly op: 'fire';
+      /** Direction expression (binary-angle units; default: aimed at the player). */
+      readonly direction?: string;
+      /** Speed expression in pixels per tick (default: the enemy's base speed). */
+      readonly speed?: string;
+    }
+  | {
+      /** Discriminant: pause the pattern. */
+      readonly op: 'wait';
+      /** Tick-count expression. */
+      readonly ticks: string;
+    }
+  | {
+      /** Discriminant: run `body` several times. */
+      readonly op: 'repeat';
+      /** Repetition-count expression. */
+      readonly times: string;
+      /** Nodes to repeat, in order. */
+      readonly body: readonly PatternNode[];
+    };
 
 // Planned: wait(ticks), createScriptRunner(), aimed/nWay/ring/spiral/stack/spray primitives,
 //          compilePattern(nodes: readonly PatternNode[]): (ctx: ScriptContext) => Script.

@@ -139,3 +139,7 @@ pnpm test:all           # every Vitest project in one process
 pnpm --filter @shmup/tizen build    # TV bundle + bundle check
 pnpm clean              # remove dist/ coverage/ .turbo/ everywhere
 ```
+
+More: [build-test-deploy.md](build-test-deploy.md) (every script, TV deployment, CI,
+troubleshooting), [architecture.md](architecture.md) (how the pieces work together at
+runtime), [api-reference.md](api-reference.md) and [conventions.md](conventions.md).

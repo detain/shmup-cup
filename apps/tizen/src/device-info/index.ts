@@ -29,14 +29,23 @@ export const moduleInfo = defineModule({
 
 /** Environment snapshot. */
 export interface DeviceInfo {
+  /** `navigator.userAgent` verbatim. */
   readonly userAgent: string;
+  /** Chrome major version parsed from the user agent (69 on Tizen 5.5), `null` if absent. */
   readonly chromeMajor: number | null;
+  /** `innerWidth` in CSS pixels (expect 1920). */
   readonly cssWidth: number;
+  /** `innerHeight` in CSS pixels (expect 1080). */
   readonly cssHeight: number;
+  /** `window.devicePixelRatio` (expect 1). */
   readonly devicePixelRatio: number;
+  /** WebGL version the renderer obtained, `null` without WebGL. */
   readonly webglVersion: 1 | 2 | null;
+  /** `MAX_TEXTURE_SIZE` of the WebGL context, `null` without WebGL. */
   readonly maxTextureSize: number | null;
+  /** Samsung `webapis.productinfo` model code, `null` when unavailable. */
   readonly model: string | null;
+  /** Samsung `webapis.productinfo` firmware version, `null` when unavailable. */
   readonly firmware: string | null;
 }
 

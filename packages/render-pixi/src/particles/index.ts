@@ -33,9 +33,17 @@ export type ParticlePreset =
 
 /** The particle system. */
 export interface ParticleSystem {
+  /**
+   * Spawns one preset burst (drops it silently when the pool is full).
+   *
+   * @param preset - Which burst to emit.
+   * @param x - Centre X in internal-frame pixels.
+   * @param y - Centre Y in internal-frame pixels.
+   */
   emit(preset: ParticlePreset, x: number, y: number): void;
   /** Advances all live particles by one displayed frame. */
   update(): void;
+  /** Number of particles currently alive (debug overlay). */
   readonly liveCount: number;
 }
 

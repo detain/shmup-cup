@@ -76,11 +76,24 @@ export type AudioState = 'uninitialized' | 'suspended' | 'running' | 'closed';
 export interface IAudio {
   /** Current state of the underlying audio context. */
   readonly state: AudioState;
-  /** Creates/resumes the context; call from a user gesture on the web. */
+  /**
+   * Creates/resumes the context; call from a user gesture on the web.
+   *
+   * @returns Resolves when the context is running (or could not be created — audio
+   *   is optional and never blocks the game).
+   */
   unlock(): Promise<void>;
-  /** Suspends output (app hidden / paused). */
+  /**
+   * Suspends output (app hidden / paused).
+   *
+   * @returns Resolves when the context is suspended (immediately if there is none).
+   */
   suspend(): Promise<void>;
-  /** Resumes output after {@link IAudio.suspend}. */
+  /**
+   * Resumes output after {@link IAudio.suspend}.
+   *
+   * @returns Resolves when the context is running again (immediately if there is none).
+   */
   resume(): Promise<void>;
   /**
    * Sets a bus volume.
@@ -89,6 +102,10 @@ export interface IAudio {
    * @param volume - Linear gain, clamped to 0…1.
    */
   setBusVolume(bus: AudioBus, volume: number): void;
-  /** Closes the context and releases resources. */
+  /**
+   * Closes the context and releases resources. The object is unusable afterwards.
+   *
+   * @returns Resolves when the context is closed.
+   */
   destroy(): Promise<void>;
 }

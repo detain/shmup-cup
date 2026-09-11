@@ -27,7 +27,9 @@ export const moduleInfo = defineModule({
 
 /** Toggleable debug switches. */
 export interface DebugFlags {
+  /** Player hits are ignored. */
   godMode: boolean;
+  /** Renderer draws hurtboxes, terrain boxes and bullet circles. */
   showHitboxes: boolean;
   /** When `true`, ticks run only on explicit frame-advance requests. */
   frameAdvance: boolean;
@@ -37,10 +39,15 @@ export interface DebugFlags {
 
 /** Counters for the debug overlay. */
 export interface DebugCounters {
+  /** Live enemy instances. */
   enemies: number;
+  /** Live enemy bullets (budget ~512). */
   enemyBullets: number;
+  /** Live player shots (budget 64). */
   playerShots: number;
+  /** Gameplay RNG draws this tick (determinism debugging). */
   rngCalls: number;
+  /** Hash of the sim state, compared against replay checkpoints. */
   stateHash: number;
 }
 

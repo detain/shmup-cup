@@ -33,9 +33,18 @@ export interface SoaPool {
   readonly capacity: number;
   /** Live slots, packed in `[0, count)`. */
   readonly count: number;
-  /** Reserves a slot; returns its index or -1 when full. */
+  /**
+   * Reserves a slot.
+   *
+   * @returns The new slot index, or -1 when the pool is full (the spawn is dropped).
+   */
   alloc(): number;
-  /** Marks a slot for removal at the next {@link SoaPool.flush}. */
+  /**
+   * Marks a slot for removal at the next {@link SoaPool.flush}. Removal is deferred so
+   * indices stay stable while systems iterate during a tick.
+   *
+   * @param index - Slot index in `[0, count)`.
+   */
   free(index: number): void;
   /** Applies deferred removals (swap-remove). Call once at the end of a tick. */
   flush(): void;
@@ -43,12 +52,21 @@ export interface SoaPool {
 
 /** A pool of reusable objects (pooled enemy instances). */
 export interface Pool<T> {
+  /** Number of objects preallocated at creation. */
   readonly capacity: number;
   /** Objects currently acquired. */
   readonly inUse: number;
-  /** Takes an object, or `null` when exhausted (callers must handle it). */
+  /**
+   * Takes an object from the pool.
+   *
+   * @returns A reset object, or `null` when exhausted (callers must handle it).
+   */
   acquire(): T | null;
-  /** Returns an object to the pool. */
+  /**
+   * Returns an object to the pool.
+   *
+   * @param item - An object previously returned by {@link Pool.acquire}.
+   */
   release(item: T): void;
 }
 

@@ -31,11 +31,19 @@ export const moduleInfo = defineModule({
 
 /** Data-driven enemy definition (from `content/enemies/*.json`). */
 export interface EnemySpec {
+  /** Unique id referenced by stage events, e.g. `'fan'`. */
   readonly id: string;
+  /** Hit points at rank 0. */
   readonly hp: number;
+  /** Points awarded on kill. */
   readonly score: number;
   /** Hurtbox half-extents in pixels. */
-  readonly hurtbox: { readonly hw: number; readonly hh: number };
+  readonly hurtbox: {
+    /** Half width. */
+    readonly hw: number;
+    /** Half height. */
+    readonly hh: number;
+  };
   /** Id of the behaviour script (see `patterns`). */
   readonly script: string;
   /** Drop on death, e.g. `'capsule'` or `null`. */
@@ -44,10 +52,15 @@ export interface EnemySpec {
 
 /** Runtime state of one pooled enemy instance. */
 export interface Enemy {
+  /** `false` while the pooled instance is free. */
   active: boolean;
+  /** {@link EnemySpec.id} this instance was spawned from. */
   specId: string;
+  /** Position X in playfield pixels. */
   x: number;
+  /** Position Y in playfield pixels. */
   y: number;
+  /** Remaining hit points. */
   hp: number;
   /** Formation / wave id for "all killed" detection (-1 = none). */
   formationId: number;

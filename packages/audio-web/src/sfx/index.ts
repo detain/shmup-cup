@@ -32,10 +32,13 @@ export type SfxPriority = 'low' | 'normal' | 'high' | 'critical';
 
 /** Static description of one sound effect. */
 export interface SfxSpec {
+  /** Effect id referenced by sim `sfx` events. */
   readonly id: string;
+  /** Voice-stealing tier. */
   readonly priority: SfxPriority;
   /** Maximum simultaneous instances of this effect. */
   readonly maxInstances: number;
+  /** Bus the effect plays on (`'ui'` for menu sounds). */
   readonly bus: 'sfx' | 'ui';
 }
 

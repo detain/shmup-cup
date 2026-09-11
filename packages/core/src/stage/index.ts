@@ -34,16 +34,23 @@ export const moduleInfo = defineModule({
 export interface StageEvent {
   /** Camera X (pixels) at which the event fires. */
   readonly x: number;
+  /** Event type, e.g. `'spawn'`, `'formation'`, `'boss'`, `'music'`, `'scroll'`. */
   readonly type: string;
+  /** Enemy spec id to spawn (spawn / formation events). */
   readonly enemy?: string;
+  /** Formation id — enemies sharing it drop an item when all are killed. */
   readonly formation?: string;
+  /** Movement path id for the spawned enemies. */
   readonly path?: string;
+  /** Zone branch the event belongs to (Darius-style route splits). */
   readonly branch?: string;
 }
 
 /** Camera state (playfield pixels). */
 export interface CameraState {
+  /** Scroll position X (left edge of the view) in playfield pixels. */
   x: number;
+  /** Scroll position Y (top edge of the view) in playfield pixels. */
   y: number;
   /** Pixels per tick. */
   speed: number;
@@ -53,17 +60,25 @@ export interface CameraState {
 
 /** An invisible restart point. */
 export interface Checkpoint {
+  /** Camera X to restart from. */
   readonly scrollX: number;
+  /** Index of the first timeline event not yet fired at `scrollX`. */
   readonly eventCursor: number;
 }
 
 /** Drives one stage. */
 export interface StageRunner {
+  /** Current camera (read-only outside the stage module). */
   readonly camera: Readonly<CameraState>;
+  /** Index of the next timeline event to fire. */
   readonly eventCursor: number;
   /** Advances camera and fires due events. */
   tick(): void;
-  /** Restarts from a checkpoint (death penalty "arcade"). */
+  /**
+   * Restarts from a checkpoint (death penalty "arcade").
+   *
+   * @param checkpoint - Where to put the camera and the event cursor.
+   */
   restartAt(checkpoint: Checkpoint): void;
 }
 

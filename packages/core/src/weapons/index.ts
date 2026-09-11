@@ -32,20 +32,27 @@ export type WeaponBehaviorId = string;
 
 /** Data-driven weapon tunables (loaded from `content/weapons/*.json`). */
 export interface WeaponSpec {
+  /** Unique id referenced by loadouts, e.g. `'twin-laser'`. */
   readonly id: string;
+  /** Coded behaviour that interprets the tunables. */
   readonly behavior: WeaponBehaviorId;
+  /** Damage per hit. */
   readonly damage: number;
   /** Pixels per tick. */
   readonly speed: number;
   /** Maximum simultaneous projectiles on screen. */
   readonly cap: number;
+  /** Projectiles pass through enemies instead of being consumed. */
   readonly pierce: boolean;
 }
 
 /** Meter-mode loadout (weapon id per slot, `null` = not equipped). */
 export interface Loadout {
+  /** Weapon id for the Missile slot. */
   missile: string | null;
+  /** Weapon id for the Double slot. */
   double: string | null;
+  /** Weapon id for the Laser slot. */
   laser: string | null;
 }
 

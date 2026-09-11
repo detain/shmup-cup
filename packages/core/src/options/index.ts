@@ -32,6 +32,7 @@ export type OptionFormation = 'trail' | 'snake' | 'formation' | 'rotate';
 export interface OptionGroup {
   /** Options owned (0–4). */
   count: number;
+  /** Current positioning mode. */
   formation: OptionFormation;
   /** Options stolen by an Option Hunter and waiting to be re-collected. */
   stolen: number;

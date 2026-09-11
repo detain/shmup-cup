@@ -21,7 +21,7 @@ export const IPC_CHANNELS = Object.freeze({
 
 /** API exposed on `window.shmupElectron` by the preload script. */
 export interface ShmupElectronApi {
-  /** Always `'electron'`, lets the web platform adapter detect the host. */
+  /** Always `'electron'`; lets renderer code detect the desktop host (not read yet). */
   readonly platform: 'electron';
   /** Asks the main process to quit. */
   quit(): void;

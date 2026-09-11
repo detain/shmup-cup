@@ -29,10 +29,15 @@ export const moduleInfo = defineModule({
 
 /** A solid rectangle in pixel coordinates. */
 export interface PixelRect {
+  /** Left edge in pixels. */
   readonly x: number;
+  /** Top edge in pixels. */
   readonly y: number;
+  /** Width in pixels (≥ 1). */
   readonly width: number;
+  /** Height in pixels (always 1 for rects produced by {@link pixelArtToRects}). */
   readonly height: number;
+  /** Fill colour as 0xRRGGBB. */
   readonly color: number;
 }
 
@@ -60,7 +65,14 @@ export const PLACEHOLDER_SHIP: readonly string[] = [
  * @param colors - Character → 0xRRGGBB; characters not in the map are transparent.
  * @param originX - X of the top-left pixel.
  * @param originY - Y of the top-left pixel.
- * @returns Rectangles covering every opaque pixel exactly once.
+ * @returns Rectangles covering every opaque pixel exactly once, in row-major order.
+ *
+ * @example
+ * ```ts
+ * pixelArtToRects(['aab.'], { a: 0xff0000, b: 0x00ff00 });
+ * // → [{ x: 0, y: 0, width: 2, height: 1, color: 0xff0000 },
+ * //    { x: 2, y: 0, width: 1, height: 1, color: 0x00ff00 }]
+ * ```
  */
 export function pixelArtToRects(
   rows: readonly string[],
@@ -102,6 +114,12 @@ export interface TestPattern {
 
 /**
  * Builds the calibration pattern for a `width × height` frame.
+ *
+ * @remarks
+ * Everything static is drawn once into one `Graphics`; only the marker moves. The
+ * marker advances one pixel per tick and wraps every `width - 16` ticks, so at 60
+ * ticks/s on a ×5 display it should glide smoothly — any stutter means dropped or
+ * doubled ticks.
  *
  * @param width - Internal frame width (384).
  * @param height - Internal frame height (216).

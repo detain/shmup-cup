@@ -9,5 +9,6 @@
  */
 import { APP_ID, resolveTarget, run, tizenCli } from './tizen-env.mjs';
 
+/** sdb serial of the monitor (after `sdb connect $TV_IP`), or null for the only device. */
 const target = resolveTarget();
 run(tizenCli(), ['run', '-p', APP_ID, ...(target ? ['-s', target] : [])]);

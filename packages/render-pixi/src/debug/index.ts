@@ -27,6 +27,7 @@ export const moduleInfo = defineModule({
 
 /** Debug overlay handle. */
 export interface DebugOverlay {
+  /** Shows / hides the overlay (hidden overlays cost nothing per frame). */
   visible: boolean;
   /** Redraws the overlay for the current frame. */
   update(): void;

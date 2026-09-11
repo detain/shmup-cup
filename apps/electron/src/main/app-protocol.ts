@@ -25,10 +25,25 @@ export const APP_ENTRY_URL = `${APP_SCHEME}://${APP_HOST}/index.html`;
 /**
  * Resolves an `app://game/<path>` URL to a file path inside `rootDir`.
  *
+ * @remarks
+ * Rejected (→ `null`): unparsable URLs, other schemes or hosts, malformed percent
+ * escapes, NUL bytes, backslashes, and any path that normalises to `rootDir` itself or
+ * outside it (`..` traversal, encoded or not). An empty path or a trailing `/` maps to
+ * `index.html`. Query strings and fragments are ignored. The function does not check
+ * that the file exists — the protocol handler's `net.fetch` reports missing files.
+ *
  * @param rootDir - Absolute directory holding the web build.
  * @param requestUrl - The requested URL.
  * @returns The absolute file path, or `null` for foreign hosts/schemes or paths that
  *   escape `rootDir`.
+ *
+ * @example
+ * ```ts
+ * resolveAppFile('/opt/game/renderer', 'app://game/assets/app.js');
+ * // → '/opt/game/renderer/assets/app.js'
+ * resolveAppFile('/opt/game/renderer', 'app://game/..%2f..%2fsecret'); // → null (escapes)
+ * resolveAppFile('/opt/game/renderer', 'app://other/index.html'); // → null (foreign host)
+ * ```
  */
 export function resolveAppFile(rootDir: string, requestUrl: string): string | null {
   let url: URL;

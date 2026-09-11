@@ -45,7 +45,12 @@ const MAX_PADS = 4;
 export interface WebInputOptions {
   /** Where key events arrive (normally `window`); `null` disables the keyboard. */
   readonly keyTarget: EventTarget | null;
-  /** Returns the current gamepads (normally `() => navigator.getGamepads()`). */
+  /**
+   * Gamepad accessor, called once per poll (normally `() => navigator.getGamepads()`).
+   * Omit it to disable gamepads.
+   *
+   * @returns The current gamepads by slot; `null` entries are empty slots.
+   */
   readonly getGamepads?: () => ArrayLike<GamepadLike | null>;
   /** Key bindings (defaults to {@link DEFAULT_KEY_BINDINGS}). */
   readonly bindings?: KeyBindings;
@@ -66,8 +71,24 @@ export interface WebInput extends PlatformInput {
 /**
  * Creates the browser input adapter.
  *
+ * @remarks
+ * `poll()` must be called exactly once per simulation tick (it consumes the keyboard
+ * tap latch). Only gamepad slots 0 and 1 produce input (players 1 and 2); slots 2–3
+ * are read but ignored until join-in lands. A player's `device` only changes when that
+ * device produced input on this poll.
+ *
  * @param options - Event target, gamepad accessor and bindings.
  * @returns A {@link WebInput} whose `poll()` feeds the core.
+ *
+ * @example
+ * ```ts
+ * const input = createWebInput({
+ *   keyTarget: window,
+ *   getGamepads: () => navigator.getGamepads(),
+ *   keyDevice: 'remote', // on Tizen
+ * });
+ * const platform: Platform = { ...rest, input };
+ * ```
  */
 export function createWebInput(options: WebInputOptions): WebInput {
   const keyboard = createKeyboardSource(
@@ -80,6 +101,11 @@ export function createWebInput(options: WebInputOptions): WebInput {
   const padStates: GamepadReadState[] = [];
   for (let i = 0; i < MAX_PADS; i++) padStates.push({ stickDirections: 0 });
 
+  /**
+   * Merges keyboard and pads into the reused snapshot.
+   *
+   * @returns The adapter-owned snapshot for this tick.
+   */
   const poll = (): InputSnapshot => {
     const keyHeld = keyboard.held;
     const keyLatched = keyboard.consumeLatched();

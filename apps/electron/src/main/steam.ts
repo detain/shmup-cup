@@ -17,7 +17,13 @@
 
 /** Minimal Steam service surface the game would use. */
 export interface SteamService {
+  /** `false` when the game was not launched through Steam (every call is a no-op). */
   readonly available: boolean;
+  /**
+   * Unlocks an achievement (idempotent).
+   *
+   * @param id - Achievement API name from the Steamworks partner site.
+   */
   unlockAchievement(id: string): void;
 }
 

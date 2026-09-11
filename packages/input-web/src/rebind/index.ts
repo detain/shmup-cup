@@ -28,6 +28,7 @@ export const moduleInfo = defineModule({
 
 /** Serialisable bindings for one device. */
 export interface DeviceBindings {
+  /** Device kind the table applies to. */
   readonly device: 'keyboard' | 'remote' | 'gamepad';
   /** Key `code` / button index → action mask. */
   readonly bindings: Readonly<Record<string, number>>;

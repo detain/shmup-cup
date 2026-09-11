@@ -30,8 +30,14 @@ export const moduleInfo = defineModule({
 
 /** A preallocated set of sprites mirroring one simulation pool. */
 export interface SpritePoolView {
+  /** Number of preallocated sprites (matches the mirrored pool's capacity). */
   readonly capacity: number;
-  /** Syncs `count` sprites from the pool's arrays; hides the rest. */
+  /**
+   * Syncs `count` sprites from the pool's arrays; hides the rest.
+   *
+   * @param count - Live slots in the pool (`SoaPool.count`).
+   * @param alpha - Render interpolation factor between the previous and current tick.
+   */
   sync(count: number, alpha: number): void;
 }
 

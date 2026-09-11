@@ -28,9 +28,11 @@ export const moduleInfo = defineModule({
 
 /** Post-processing options exposed in the Display settings. */
 export interface EffectSettings {
+  /** Apply sim-requested screen shake to the scene container. */
   screenShake: boolean;
   /** Reduced flashing (< 3 flashes / s) for accessibility. */
   reduceFlashing: boolean;
+  /** CRT post-filter strength (scanlines / mask); `'off'` on weak TV GPUs by default. */
   crt: 'off' | 'light' | 'full';
 }
 

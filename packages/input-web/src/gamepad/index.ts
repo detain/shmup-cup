@@ -37,10 +37,18 @@ export const STICK_HYSTERESIS = 0.1;
 
 /** The parts of `Gamepad` this module reads. */
 export interface GamepadLike {
+  /** Slot index assigned by the browser (0–3). */
   readonly index: number;
+  /** `false` once the pad was unplugged (the object may linger for a poll). */
   readonly connected: boolean;
+  /** `'standard'` when the browser knows the W3C standard layout, else `''`. */
   readonly mapping: string;
-  readonly buttons: ReadonlyArray<{ readonly pressed: boolean }>;
+  /** Buttons in standard-mapping order; only `pressed` is read (triggers are digital). */
+  readonly buttons: ReadonlyArray<{
+    /** `true` while the button is down. */
+    readonly pressed: boolean;
+  }>;
+  /** Axes; `[0]` / `[1]` are the left stick X / Y (−1 … +1, +Y = down). */
   readonly axes: readonly number[];
 }
 
@@ -70,6 +78,7 @@ export const DEFAULT_GAMEPAD_BUTTONS: readonly ActionMask[] = Object.freeze([
   Action.Right, // 15 D-pad right
 ]);
 
+/** The four direction bits (used to tell whether the stick was active last poll). */
 const DIRECTION_MASK = Action.Up | Action.Down | Action.Left | Action.Right;
 
 /**
@@ -102,10 +111,22 @@ function stickDirections(x: number, y: number, previous: ActionMask): ActionMask
 /**
  * Reads one pad into an action mask.
  *
+ * @remarks
+ * The mapping is not checked: a non-standard pad is read as if it were standard (best
+ * effort until rebinding lands). A disconnected pad returns 0 and resets its stick
+ * state. Button bits and stick directions are OR-ed, so D-pad and stick combine.
+ *
  * @param pad - The gamepad (should use `mapping === 'standard'`).
  * @param state - Per-pad state, updated in place.
  * @param buttons - Button index → actions table.
  * @returns Held actions for this pad.
+ *
+ * @example
+ * ```ts
+ * const state: GamepadReadState = { stickDirections: 0 };
+ * const pad = navigator.getGamepads()[0];
+ * const held = pad ? readGamepadActions(pad, state) : 0;
+ * ```
  */
 export function readGamepadActions(
   pad: GamepadLike,

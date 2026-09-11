@@ -124,7 +124,12 @@ function main() {
     for (const problem of problems) console.error(`  - ${problem}`);
     process.exit(1);
   }
-  /** @param {number} bytes - Size in bytes. */
+  /**
+   * Formats a byte count for the report.
+   *
+   * @param {number} bytes - Size in bytes.
+   * @returns {string} e.g. `"812.4 KB"`.
+   */
   const kb = (bytes) => `${(bytes / 1024).toFixed(1)} KB`;
   console.log(
     `Tizen bundle OK: app.js ${kb(code.length)} (${kb(gzipSync(code).length)} gzip), classic script, ES2018, ${files.length} files in dist/`,

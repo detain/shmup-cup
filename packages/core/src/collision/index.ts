@@ -32,22 +32,73 @@ export const moduleInfo = defineModule({
 
 /** Collision shapes (sizes in pixels, centred on the entity position). */
 export type Shape =
-  | { readonly kind: 'circle'; readonly r: number }
-  | { readonly kind: 'aabb'; readonly hw: number; readonly hh: number }
-  | { readonly kind: 'capsule'; readonly length: number; readonly r: number };
+  | {
+      /** Discriminant: a circle (bullets, player hurtbox). */
+      readonly kind: 'circle';
+      /** Radius. */
+      readonly r: number;
+    }
+  | {
+      /** Discriminant: an axis-aligned box (enemies, terrain box). */
+      readonly kind: 'aabb';
+      /** Half width. */
+      readonly hw: number;
+      /** Half height. */
+      readonly hh: number;
+    }
+  | {
+      /** Discriminant: a capsule (straight lasers — a segment swept by a circle). */
+      readonly kind: 'capsule';
+      /** Length of the core segment, starting at the entity position. */
+      readonly length: number;
+      /** Radius around the segment. */
+      readonly r: number;
+    };
 
 /** Uniform-grid broad phase over pool indices. */
 export interface SpatialGrid {
+  /** Empties every cell (called once at the start of each tick before re-inserting). */
   clear(): void;
+  /**
+   * Adds a pool index to every cell its box overlaps.
+   *
+   * @param index - Pool slot of the entity.
+   * @param x - Box centre X in playfield pixels.
+   * @param y - Box centre Y in playfield pixels.
+   * @param hw - Half width.
+   * @param hh - Half height.
+   */
   insert(index: number, x: number, y: number, hw: number, hh: number): void;
-  /** Visits every index whose cell overlaps the box (may repeat; callers dedupe). */
+  /**
+   * Visits every index whose cell overlaps the box (may repeat; callers dedupe).
+   *
+   * @param x - Query box centre X.
+   * @param y - Query box centre Y.
+   * @param hw - Query box half width.
+   * @param hh - Query box half height.
+   * @param visit - Called with each candidate index; must not allocate.
+   */
   query(x: number, y: number, hw: number, hh: number, visit: (index: number) => void): void;
 }
 
 /** Terrain queries against the stage's collision tilemap. */
 export interface TerrainQuery {
+  /**
+   * Tests one playfield pixel against the collision layer.
+   *
+   * @param x - Playfield X in pixels.
+   * @param y - Playfield Y in pixels.
+   * @returns `true` when the pixel is solid (including destructible tiles still intact).
+   */
   isSolid(x: number, y: number): boolean;
-  /** Y of the first floor pixel below `y` within `maxDistance`, or -1. */
+  /**
+   * Finds the floor below a point (crawlers, ground missiles).
+   *
+   * @param x - Playfield X in pixels.
+   * @param y - Start Y in pixels; the search goes downwards.
+   * @param maxDistance - Maximum number of pixels to search.
+   * @returns Y of the first floor pixel below `y` within `maxDistance`, or -1.
+   */
   findFloor(x: number, y: number, maxDistance: number): number;
 }
 

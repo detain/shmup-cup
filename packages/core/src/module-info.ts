@@ -31,7 +31,16 @@ export interface ModuleInfo {
  * freezes the object so tests can rely on it).
  *
  * @param info - The module description.
- * @returns The same description, frozen.
+ * @returns A frozen shallow copy of `info` (its `specRefs` array is copied and frozen too).
+ *
+ * @example
+ * ```ts
+ * export const moduleInfo = defineModule({
+ *   name: 'rng',
+ *   status: 'placeholder',
+ *   specRefs: ['shmup_feat.md §22'],
+ * });
+ * ```
  */
 export function defineModule(info: ModuleInfo): ModuleInfo {
   return Object.freeze({ ...info, specRefs: Object.freeze(info.specRefs.slice()) });

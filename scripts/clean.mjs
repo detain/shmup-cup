@@ -9,7 +9,9 @@
 import { rmSync } from 'node:fs';
 import { relative, resolve } from 'node:path';
 
+/** Directory every target is resolved against (and must stay inside). */
 const cwd = process.cwd();
+/** Paths to delete, from the command line. */
 const targets = process.argv.slice(2);
 
 if (targets.length === 0) {

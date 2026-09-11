@@ -63,8 +63,30 @@ export interface PixiRenderer extends IRenderer {
 /**
  * Creates and initialises the renderer.
  *
+ * @remarks
+ * - Pixi is initialised with `resolution: 1`, `autoDensity: false`, no antialiasing and
+ *   `roundPixels`, so one canvas pixel is one CSS pixel and nothing is filtered.
+ * - `preferWebGLVersion` defaults to 1; if WebGL1 is unavailable Pixi tries WebGL2.
+ *   Read {@link PixiRenderer.webGLVersion} to see what was obtained.
+ * - `render()` makes two passes: scene → 384×216 render texture, then the texture as
+ *   one integer-scaled sprite → canvas. `resize()` floors its arguments and never goes
+ *   below 1×1.
+ *
  * @param options - Canvas, display size and internal resolution.
- * @returns A ready {@link PixiRenderer}.
+ * @returns A promise of a ready {@link PixiRenderer}.
+ * @throws Rejects when Pixi cannot create a WebGL context at all (no WebGL on the
+ *   device, context creation blocked).
+ *
+ * @example
+ * ```ts
+ * const renderer = await createPixiRenderer({
+ *   canvas,
+ *   displayWidth: window.innerWidth,
+ *   displayHeight: window.innerHeight,
+ * });
+ * renderer.render(game.renderFrame());
+ * window.addEventListener('resize', () => renderer.resize(innerWidth, innerHeight));
+ * ```
  */
 export async function createPixiRenderer(options: PixiRendererOptions): Promise<PixiRenderer> {
   const width = options.width ?? 384;
@@ -105,6 +127,7 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
 
   let viewport = computeIntegerViewport(options.displayWidth, options.displayHeight, width, height);
 
+  /** Positions and scales the frame sprite according to the current `viewport`. */
   const applyViewport = (): void => {
     frameSprite.scale.set(viewport.scale);
     frameSprite.position.set(viewport.x, viewport.y);

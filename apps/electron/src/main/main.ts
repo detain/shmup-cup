@@ -24,8 +24,11 @@ import { IPC_CHANNELS } from '../shared/ipc.js';
 import { APP_ENTRY_URL, APP_SCHEME, resolveAppFile } from './app-protocol.js';
 import { createWindowOptions } from './window-options.js';
 
+/** Directory of the compiled main script (`dist/main/`). */
 const here = dirname(fileURLToPath(import.meta.url));
+/** Web build served over `app://game/` (`dist/renderer/` unless `SHMUP_RENDERER_DIR` is set). */
 const rendererDir = process.env.SHMUP_RENDERER_DIR ?? join(here, '..', 'renderer');
+/** Vite dev-server URL; when set it replaces the bundled renderer (HMR during development). */
 const devUrl = process.env.SHMUP_DEV_URL;
 
 protocol.registerSchemesAsPrivileged([
@@ -35,7 +38,14 @@ protocol.registerSchemesAsPrivileged([
   },
 ]);
 
-/** Creates the game window and loads the renderer. */
+/**
+ * Creates the game window and loads the renderer.
+ *
+ * @remarks
+ * The window is created hidden and shown on `ready-to-show` (no white flash). It loads
+ * `SHMUP_DEV_URL` when set, otherwise `app://game/index.html`. A load failure is not
+ * handled yet (the promise is deliberately ignored).
+ */
 function createGameWindow(): void {
   const gameWindow = new BrowserWindow(
     createWindowOptions({

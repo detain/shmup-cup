@@ -32,11 +32,13 @@ export type SimEventKind = 'sfx' | 'music' | 'particles' | 'shake' | 'flash' | '
 
 /** One event record (fields are reused — never keep a reference after `drain`). */
 export interface SimEvent {
+  /** Which subsystem handles the event. */
   kind: SimEventKind;
   /** Content id (SFX id, particle preset, track id …). */
   id: number;
-  /** Position in playfield pixels, when meaningful. */
+  /** X position in playfield pixels, when meaningful. */
   x: number;
+  /** Y position in playfield pixels, when meaningful. */
   y: number;
   /** Kind-specific parameter (priority, magnitude, duration in ticks …). */
   param: number;
@@ -46,9 +48,23 @@ export interface SimEvent {
 export interface EventQueue {
   /** Number of pending events. */
   readonly length: number;
-  /** Appends an event; must not allocate. */
+  /**
+   * Appends an event; must not allocate. When the ring is full the oldest event is
+   * dropped (presentation events are best-effort).
+   *
+   * @param kind - Event category.
+   * @param id - Content id (SFX id, particle preset, track id …).
+   * @param x - X position in playfield pixels (0 when not meaningful).
+   * @param y - Y position in playfield pixels (0 when not meaningful).
+   * @param param - Kind-specific parameter.
+   */
   push(kind: SimEventKind, id: number, x: number, y: number, param: number): void;
-  /** Visits and removes all pending events in push order. */
+  /**
+   * Visits and removes all pending events in push order.
+   *
+   * @param visit - Called once per event with a reused record — copy fields out, never
+   *   keep the reference.
+   */
   drain(visit: (event: Readonly<SimEvent>) => void): void;
   /** Drops all pending events. */
   clear(): void;

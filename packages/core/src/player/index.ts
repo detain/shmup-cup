@@ -31,14 +31,17 @@ export const moduleInfo = defineModule({
 export interface PlayerShip {
   /** 0 = player 1, 1 = player 2. */
   readonly slot: number;
-  /** Sub-pixel position in playfield pixels (renderer rounds). */
+  /** Sub-pixel X position in playfield pixels (renderer rounds). */
   x: number;
+  /** Sub-pixel Y position in playfield pixels (renderer rounds). */
   y: number;
   /** 0 = base speed; meter mode adds Speed Ups. */
   speedLevel: number;
+  /** Remaining lives (including the current one). */
   lives: number;
   /** Remaining respawn-invincibility ticks (blinking). */
   invincibleTicks: number;
+  /** `false` between death and respawn. */
   alive: boolean;
 }
 

@@ -44,6 +44,16 @@ export const moduleInfo = defineModule({
  *
  * Menus reuse the same bits (`Confirm`, `Back`, directions), so one input path drives
  * both gameplay and the canvas-drawn UI.
+ *
+ * @remarks
+ * Bit positions are part of the replay format (snapshots are recorded as raw masks):
+ * append new actions at the end, never renumber existing ones.
+ *
+ * @example
+ * ```ts
+ * const mask = Action.Up | Action.Shot;
+ * hasAction(mask, Action.Shot); // → true
+ * ```
  */
 export const Action = {
   /** Move / focus up. */
@@ -126,7 +136,12 @@ export interface InputSnapshot {
 /**
  * Allocates a snapshot with {@link MAX_PLAYERS} idle players. Call once at startup.
  *
- * @returns A fresh, empty snapshot.
+ * @returns A fresh, empty snapshot (all masks `0`, every `device` `'none'`).
+ *
+ * @example
+ * ```ts
+ * const snapshot = createInputSnapshot(); // owned by the adapter, mutated every poll
+ * ```
  */
 export function createInputSnapshot(): InputSnapshot {
   const players: PlayerInput[] = [];
@@ -138,6 +153,10 @@ export function createInputSnapshot(): InputSnapshot {
 
 /**
  * Clears every player's actions (e.g. on window blur or scene change).
+ *
+ * @remarks
+ * Only the masks are cleared; `device` keeps the last device kind so UI prompts do not
+ * flicker back to a default glyph set.
  *
  * @param snapshot - Snapshot to reset in place.
  */
@@ -158,9 +177,22 @@ export function resetInputSnapshot(snapshot: InputSnapshot): void {
  * between two polls — a quick remote tap must still register). `released` = bits
  * that were held last tick and are not held now.
  *
+ * @remarks
+ * A latched tap that is no longer held shows up in `pressed` but not in `held` or
+ * `released` for that tick. `device` is left untouched — adapters set it themselves.
+ *
  * @param player - Player entry to update in place.
  * @param held - Actions currently held.
  * @param latchedPressed - Actions pressed at any time since the previous poll.
+ *
+ * @example
+ * ```ts
+ * const p = createInputSnapshot().players[0];
+ * commitPlayerInput(p, Action.Shot);       // pressed = Shot, held = Shot
+ * commitPlayerInput(p, Action.Shot);       // pressed = 0 (still held)
+ * commitPlayerInput(p, 0);                 // released = Shot
+ * commitPlayerInput(p, 0, Action.Confirm); // a tap between polls: pressed = Confirm
+ * ```
  */
 export function commitPlayerInput(
   player: PlayerInput,
@@ -175,6 +207,10 @@ export function commitPlayerInput(
 
 /**
  * Copies `source` into `target` without allocating (replay recording/playback).
+ *
+ * @remarks
+ * Copies `min(source.players.length, target.players.length)` entries; extra players in
+ * `target` are left as they were.
  *
  * @param source - Snapshot to read.
  * @param target - Snapshot to overwrite.
@@ -197,6 +233,12 @@ export function copyInputSnapshot(source: InputSnapshot, target: InputSnapshot):
  * @param mask - An action mask (`held`, `pressed` or `released`).
  * @param action - One or more {@link Action} bits.
  * @returns `true` when at least one of the bits is set.
+ *
+ * @example
+ * ```ts
+ * if (hasAction(input.pressed, Action.Pause)) game.pause();
+ * hasAction(Action.Left, Action.Left | Action.Right); // → true (any bit)
+ * ```
  */
 export function hasAction(mask: ActionMask, action: ActionMask): boolean {
   return (mask & action) !== 0;

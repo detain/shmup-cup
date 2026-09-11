@@ -10,10 +10,12 @@
  */
 import { DIST_DIR, findWgt, resolveTarget, run, tizenCli } from './tizen-env.mjs';
 
+/** File name of the newest .wgt in dist/ (produced by tizen:package). */
 const wgt = findWgt();
 if (wgt === null) {
   console.error(`No .wgt found in ${DIST_DIR} — run tizen:package first.`);
   process.exit(1);
 }
+/** sdb serial of the monitor (after `sdb connect $TV_IP`), or null for the only device. */
 const target = resolveTarget();
 run(tizenCli(), ['install', '-n', wgt, ...(target ? ['-s', target] : []), '--', DIST_DIR]);

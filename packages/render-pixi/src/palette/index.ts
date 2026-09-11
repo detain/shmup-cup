@@ -32,18 +32,23 @@ export const PALETTE = Object.freeze({
   space: 0x10173a,
   /** Faint 16-px grid. */
   grid: 0x1d2a5c,
-  /** Border checker (two tones). */
+  /** Border checker, light tone (also the centre cross-hair). */
   borderA: 0xf4f4f4,
+  /** Border checker, dark tone. */
   borderB: 0x2a3a78,
   /** Colour bars (SNES-ish saturated ramp). */
   bars: [0xe8e8e8, 0xf8d030, 0x38c8e8, 0x40d858, 0xe050c8, 0xe83838, 0x3858f0, 0x282828] as const,
-  /** Player ship. */
+  /** Player ship hull. */
   shipHull: 0xc8d0e0,
+  /** Player ship trim stripe. */
   shipTrim: 0x3858f0,
+  /** Player ship canopy. */
   shipCanopy: 0x38c8e8,
+  /** Player ship thruster flame. */
   shipThruster: 0xf89830,
   /** Enemy-bullet test colour (pink/red family — shmup_feat.md §12 readability rules). */
   bullet: 0xff5aa0,
+  /** Bright bullet core pixel (keeps the bullet readable on any background). */
   bulletCore: 0xffffff,
 });
 

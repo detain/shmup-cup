@@ -40,10 +40,15 @@ export const moduleInfo = defineModule({
 
 /** Handles to the running TV app. */
 export interface TizenApp {
+  /** The running game session (`remoteMode: true`, `autofire: true`). */
   readonly game: Game;
+  /** The Tizen platform adapter (`exit` is `null` outside a TV). */
   readonly platform: Platform;
+  /** The Pixi renderer (WebGL1 preferred). */
   readonly renderer: PixiRenderer;
+  /** The Web Audio back-end (unlocked at boot — no gesture needed on TV). */
   readonly audio: WebAudio;
+  /** Remote / keyboard + gamepad input adapter (`keyDevice: 'remote'`). */
   readonly input: WebInput;
   /** Stops the loop and releases resources. */
   stop(): void;
@@ -66,9 +71,16 @@ function safeLocalStorage(win: Window): StorageLike | null {
 /**
  * Boots the game on the TV (or in a desktop browser for development).
  *
+ * @remarks
+ * Registers the extra remote keys (via {@link createTizenPlatform}), unlocks audio
+ * immediately, and exits the app on Back while the calibration screen is the root
+ * screen. Suspend (Home / multitasking) clears held input and suspends audio; resume
+ * resumes audio and the game resets its loop accumulator.
+ *
  * @param canvas - Full-screen canvas.
  * @param win - The window.
- * @returns The running app.
+ * @returns A promise of the running app.
+ * @throws Rejects when the renderer cannot be created (no WebGL).
  */
 export async function bootTizenApp(
   canvas: HTMLCanvasElement,
@@ -114,6 +126,7 @@ export async function bootTizenApp(
     if (exit !== null) exit();
   });
 
+  /** Keeps the canvas and the integer viewport in sync with the window size. */
   const onResize = (): void => {
     renderer.resize(win.innerWidth, win.innerHeight);
   };

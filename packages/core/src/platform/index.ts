@@ -36,36 +36,72 @@ export type PlatformId = 'web' | 'tizen' | 'electron' | 'webos' | 'android' | 'h
 export interface PlatformInput {
   /**
    * Returns the input for the upcoming simulation tick. Called exactly once per tick.
-   * Implementations reuse one snapshot object (no per-tick allocation).
+   *
+   * @remarks
+   * Implementations reuse one snapshot object (no per-tick allocation) and derive the
+   * `pressed` / `released` edges relative to the previous poll, so calling it more than
+   * once per tick would lose edges.
+   *
+   * @returns The adapter-owned snapshot, filled in for this tick. Treat it as read-only
+   *   and do not keep it across ticks (copy with `copyInputSnapshot` for replays).
    */
   poll(): InputSnapshot;
 }
 
 /** Async key/value persistence (localStorage, IndexedDB, files on Electron). */
 export interface PlatformStorage {
-  /** Reads a value; resolves `null` when missing. */
+  /**
+   * Reads a value.
+   *
+   * @param key - Storage key, e.g. `'save'`.
+   * @returns Resolves with the stored string, or `null` when the key is missing.
+   */
   get(key: string): Promise<string | null>;
-  /** Writes a value. */
+  /**
+   * Writes (or overwrites) a value.
+   *
+   * @param key - Storage key.
+   * @param value - Serialised value (callers JSON-encode structured data).
+   * @returns Resolves once the value is stored. Adapters that can fail silently (full
+   *   or disabled `localStorage`) still resolve — persistence is best-effort.
+   */
   set(key: string, value: string): Promise<void>;
 }
 
 /** Audio policy hooks the core needs (the mixer itself lives in the presentation layer). */
 export interface PlatformAudio {
-  /** Gesture-unlock on the web; resolves immediately on TV / Electron. */
+  /**
+   * Unlocks audio output: browsers only start an `AudioContext` from a user gesture;
+   * TV and Electron have no such policy.
+   *
+   * @returns Resolves when audio may play (immediately on TV / Electron).
+   */
   unlock(): Promise<void>;
 }
 
 /** App lifecycle notifications (Tizen multitasking, browser tab visibility, …). */
 export interface PlatformLifecycle {
-  /** Registers a callback for when the app is hidden / backgrounded. */
+  /**
+   * Registers a callback for when the app is hidden / backgrounded (Tizen
+   * multitasking, `document.hidden`, window minimised).
+   *
+   * @param callback - Called once per suspend; there is no way to unregister it
+   *   (callers live as long as the app).
+   */
   onSuspend(callback: () => void): void;
-  /** Registers a callback for when the app becomes visible again. */
+  /**
+   * Registers a callback for when the app becomes visible again.
+   *
+   * @param callback - Called once per resume.
+   */
   onResume(callback: () => void): void;
 }
 
 /** Display facts (CSS pixels), used to pick the integer scale factor. */
 export interface PlatformDisplay {
+  /** Width of the available viewport in CSS pixels (1920 on a Tizen 1080p web app). */
   readonly cssWidth: number;
+  /** Height of the available viewport in CSS pixels (1080 on a Tizen 1080p web app). */
   readonly cssHeight: number;
 }
 
@@ -82,17 +118,29 @@ export interface PlatformCaps {
 /**
  * Everything the core needs from the host. Implemented once per platform.
  *
+ * @remarks
+ * Implementations: `createHeadlessPlatform` (here), `createBrowserPlatform`
+ * (`apps/web`), `createTizenPlatform` (`apps/tizen`). Electron reuses the browser
+ * platform inside its renderer.
+ *
  * @see shmup_tech.md §3.2
  */
 export interface Platform {
+  /** Which host this is (drives platform-specific defaults, never game rules). */
   readonly id: PlatformId;
+  /** Per-tick action snapshots (keyboard / remote / gamepads already merged). */
   readonly input: PlatformInput;
+  /** Save data persistence. */
   readonly storage: PlatformStorage;
+  /** Audio unlock policy. */
   readonly audio: PlatformAudio;
+  /** Suspend / resume notifications. */
   readonly lifecycle: PlatformLifecycle;
   /** Quits the app; `null` means the platform cannot quit (hide "Quit" in menus). */
   readonly exit: (() => void) | null;
+  /** Viewport size used to pick the integer scale. */
   readonly display: PlatformDisplay;
+  /** Capability flags. */
   readonly caps: PlatformCaps;
 }
 
@@ -100,8 +148,16 @@ export interface Platform {
  * Creates an in-memory {@link PlatformStorage} (tests, headless runs, fallback when
  * `localStorage` is unavailable).
  *
- * @param initial - Optional initial key/value pairs.
- * @returns A storage backed by a `Map`.
+ * @param initial - Optional initial key/value pairs (copied; entries whose value is
+ *   `undefined` are skipped).
+ * @returns A storage backed by a `Map`; data is lost when the object is dropped.
+ *
+ * @example
+ * ```ts
+ * const storage = createMemoryStorage({ save: '{"version":1}' });
+ * await storage.set('options', '{}');
+ * await storage.get('missing'); // → null
+ * ```
  */
 export function createMemoryStorage(initial?: Readonly<Record<string, string>>): PlatformStorage {
   const data = new Map<string, string>();
@@ -137,8 +193,22 @@ export interface HeadlessPlatform extends Platform {
  * Creates a platform with no devices, in-memory storage and manually triggered
  * lifecycle events — for Vitest, benchmarks and replay verification in Node.
  *
+ * @remarks
+ * `exit` is `null`, every capability flag is `false` and `audio.unlock()` resolves
+ * immediately. `input.poll()` returns {@link HeadlessPlatform.snapshot} unchanged —
+ * the test is responsible for setting `held` / `pressed` bits before each tick.
+ *
  * @param display - Optional display size (defaults to 1920×1080, the Tizen UHD web size).
  * @returns A {@link HeadlessPlatform}.
+ *
+ * @example
+ * ```ts
+ * const platform = createHeadlessPlatform();
+ * const game = createGame(platform);
+ * commitPlayerInput(platform.snapshot.players[0], Action.Shot);
+ * game.step();
+ * platform.suspend(); // game.state.suspended === true
+ * ```
  */
 export function createHeadlessPlatform(
   display: PlatformDisplay = { cssWidth: 1920, cssHeight: 1080 },

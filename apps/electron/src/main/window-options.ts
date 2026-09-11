@@ -24,8 +24,18 @@ export interface WindowSettings {
 /**
  * Creates the `BrowserWindow` options for the game window.
  *
+ * @remarks
+ * 1152×648 (384×216 ×3) by default, minimum 384×216, hidden until ready, menu bar
+ * auto-hidden. `webPreferences`: `contextIsolation`, `sandbox`, no `nodeIntegration`,
+ * `backgroundThrottling: false`, no spellcheck.
+ *
  * @param settings - Preload path and fullscreen flag.
  * @returns Constructor options.
+ *
+ * @example
+ * ```ts
+ * new BrowserWindow(createWindowOptions({ preloadPath, fullscreen: false }));
+ * ```
  */
 export function createWindowOptions(settings: WindowSettings): BrowserWindowConstructorOptions {
   return {

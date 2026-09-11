@@ -15,6 +15,7 @@ import { fileURLToPath } from 'node:url';
 import { defineConfig, type Plugin } from 'vite';
 import { clientConditions } from '../../vite.shared.js';
 
+/** Source of `polyfills/global-this.js`, prepended to `app.js` as the post-minify banner. */
 const globalThisPolyfill = readFileSync(
   fileURLToPath(new URL('./polyfills/global-this.js', import.meta.url)),
   'utf8',

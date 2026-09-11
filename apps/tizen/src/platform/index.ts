@@ -63,16 +63,40 @@ export const REMOTE_KEYS_TO_REGISTER: readonly string[] = Object.freeze([
 
 /** The subset of the Tizen Web Device API used by the app. */
 export interface TizenApi {
+  /** `tizen.tvinputdevice` — remote key registration (needs the `tv.inputdevice` privilege). */
   readonly tvinputdevice?: {
+    /**
+     * Registers one key so its events reach the app.
+     *
+     * @param keyName - Key name from `getSupportedKeys()`, e.g. `'MediaPlayPause'`.
+     * @throws WebAPIException `InvalidValuesError` when the device does not support it.
+     */
     registerKey(keyName: string): void;
+    /**
+     * Registers several keys in one call (Tizen 4.0+).
+     *
+     * @param keyNames - Key names to register.
+     * @param onSuccess - Called when every key was registered.
+     * @param onError - Called asynchronously when a key is unsupported (the batch may be
+     *   partially applied).
+     */
     registerKeyBatch?(
       keyNames: string[],
       onSuccess?: () => void,
       onError?: (error: unknown) => void,
     ): void;
   };
+  /** `tizen.application` — app control (used for exit). */
   readonly application?: {
-    getCurrentApplication(): { exit(): void };
+    /**
+     * Gets the running application.
+     *
+     * @returns An object whose `exit()` closes the app and returns to the TV UI.
+     */
+    getCurrentApplication(): {
+      /** Terminates the app. */
+      exit(): void;
+    };
   };
 }
 
@@ -80,7 +104,13 @@ export interface TizenApi {
  * Reads `window.tizen` (absent in desktop browsers).
  *
  * @param win - The window.
- * @returns The Tizen API or `null`.
+ * @returns The Tizen API, or `null` outside a Tizen web app.
+ *
+ * @example
+ * ```ts
+ * const tizen = getTizenApi(window);
+ * if (tizen !== null) registerRemoteKeys(tizen, REMOTE_KEYS_TO_REGISTER);
+ * ```
  */
 export function getTizenApi(win: Window): TizenApi | null {
   const api = (win as Window & { tizen?: TizenApi }).tizen;
@@ -147,11 +177,27 @@ function registerEachKey(
 /**
  * Calls `onBack` for every (non-repeat) Back key press and stops the browser default.
  *
+ * @remarks
+ * Matches on `keyCode === 10009` only (the remote's Back has no useful `code`).
+ * Auto-repeat keydowns are `preventDefault()`-ed but do not call `onBack`.
+ *
  * @param target - Event target (normally `window`).
  * @param onBack - Handler.
  * @returns A function that removes the listener.
+ *
+ * @example
+ * ```ts
+ * const stop = watchBackKey(window, () => sceneStack.back());
+ * // on teardown:
+ * stop();
+ * ```
  */
 export function watchBackKey(target: EventTarget, onBack: () => void): () => void {
+  /**
+   * Filters keydowns down to Back presses.
+   *
+   * @param event - Any keydown on `target`.
+   */
   const listener = (event: Event): void => {
     const key = event as KeyboardEvent;
     if (key.keyCode !== TIZEN_BACK_KEY_CODE) return;
@@ -166,12 +212,33 @@ export function watchBackKey(target: EventTarget, onBack: () => void): () => voi
 
 /** The parts of the Web Storage API used here. */
 export interface StorageLike {
+  /**
+   * Reads a value.
+   *
+   * @param key - Full (already prefixed) key.
+   * @returns The value, or `null` when missing.
+   * @throws DOMException when storage access is denied (the adapter then falls back
+   *   to memory).
+   */
   getItem(key: string): string | null;
+  /**
+   * Writes a value.
+   *
+   * @param key - Full (already prefixed) key.
+   * @param value - Value to store.
+   * @throws DOMException `QuotaExceededError` when storage is full or disabled (the
+   *   adapter then falls back to memory).
+   */
   setItem(key: string, value: string): void;
 }
 
 /**
- * Wraps `localStorage` as async storage; errors degrade to memory.
+ * Wraps `localStorage` as async storage (keys prefixed `shmup-cup:`); the first
+ * storage error switches to an in-memory store for the rest of the session.
+ *
+ * @remarks
+ * Tizen deletes an app's `localStorage` on uninstall (a store requirement), so no
+ * extra cleanup is needed.
  *
  * @param storage - `window.localStorage` or `null`.
  * @returns Platform storage.
@@ -207,12 +274,24 @@ function createTvStorage(storage: StorageLike | null): PlatformStorage {
 
 /** A document-like visibility source. */
 export interface VisibilitySource {
+  /** `'visible'` or `'hidden'` (anything but `'hidden'` counts as visible). */
   readonly visibilityState: string;
+  /**
+   * Registers the change listener (never removed — lives as long as the app).
+   *
+   * @param type - Always `'visibilitychange'`.
+   * @param listener - Called after `visibilityState` changed.
+   */
   addEventListener(type: 'visibilitychange', listener: () => void): void;
 }
 
 /**
  * Lifecycle from `visibilitychange` (Tizen multitasking: Home, source switch, …).
+ *
+ * @remarks
+ * `'hidden'` fires the suspend callbacks, any other state the resume callbacks, in
+ * registration order. JS is frozen while the app is hidden, so resume handlers must
+ * not assume any time passed "normally".
  *
  * @param source - Normally `document`.
  * @returns Suspend/resume registration.
@@ -238,20 +317,53 @@ function createTvLifecycle(source: VisibilitySource): PlatformLifecycle {
 export interface TizenPlatformOptions {
   /** `window.tizen`, or `null` in a desktop browser. */
   readonly tizen: TizenApi | null;
+  /** Input adapter (`createWebInput` with `keyDevice: 'remote'`). */
   readonly input: PlatformInput;
+  /** Audio unlock hook (the `WebAudio` instance). */
   readonly audio: PlatformAudio;
+  /** `window.localStorage`, or `null` for memory only. */
   readonly storage: StorageLike | null;
+  /** Visibility source (`document`). */
   readonly visibility: VisibilitySource;
-  readonly displaySize: () => { readonly width: number; readonly height: number };
+  /**
+   * Reads the current display size (1920×1080 CSS px on the M7 monitors).
+   *
+   * @returns Width and height in CSS pixels.
+   */
+  readonly displaySize: () => {
+    /** Width in CSS pixels. */
+    readonly width: number;
+    /** Height in CSS pixels. */
+    readonly height: number;
+  };
+  /** Gamepad API present. */
   readonly gamepad: boolean;
+  /** WebGL2 context obtained by the renderer. */
   readonly webgl2: boolean;
 }
 
 /**
  * Creates the Tizen platform and registers the extra remote keys.
  *
+ * @remarks
+ * `id` is `'tizen'` and `caps.remoteOnly` is `true` even in a desktop browser (the
+ * build is meant for the TV). `exit` is `null` when `tizen.application` is missing.
+ *
  * @param options - Tizen API and browser services.
  * @returns The `Platform` for `createGame`.
+ *
+ * @example
+ * ```ts
+ * const platform = createTizenPlatform({
+ *   tizen: getTizenApi(window),
+ *   input, audio,
+ *   storage: window.localStorage,
+ *   visibility: document,
+ *   displaySize: () => ({ width: innerWidth, height: innerHeight }),
+ *   gamepad: typeof navigator.getGamepads === 'function',
+ *   webgl2: renderer.webGLVersion === 2,
+ * });
+ * ```
  */
 export function createTizenPlatform(options: TizenPlatformOptions): Platform {
   const tizen = options.tizen;

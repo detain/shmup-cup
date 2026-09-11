@@ -35,6 +35,7 @@ export interface RankInputs {
   readonly stage: number;
   /** Power contribution (Missile +1, Double +2, Laser +3, each Option +1, Shield +4 …). */
   readonly power: number;
+  /** Extra rank from special conditions (no-miss streaks, loop bonuses, debug overrides). */
   readonly special: number;
 }
 

@@ -48,33 +48,60 @@ export interface GameState {
 
 /** A running game session. */
 export interface Game {
+  /** The resolved, frozen configuration of this session. */
   readonly config: GameConfig;
+  /** The host platform the game was created on. */
   readonly platform: Platform;
   /** Current state. Do not mutate from outside the core. */
   readonly state: Readonly<GameState>;
-  /** Runs exactly one simulation tick (no-op while paused). */
+  /**
+   * Runs exactly one simulation tick: polls `platform.input` once, then advances the
+   * simulation. No-op (and no poll) while paused or suspended.
+   */
   step(): void;
   /**
    * Host frame callback: runs the due fixed ticks for this timestamp.
    *
    * @param nowMs - Monotonic timestamp in ms (rAF argument).
-   * @returns Number of ticks run.
+   * @returns Number of ticks run (0 while paused or suspended, at most
+   *   `config.maxTicksPerFrame`).
    */
   frame(nowMs: number): number;
-  /** The frame description to hand to an `IRenderer`. Reused object — do not keep it. */
+  /**
+   * Builds the frame description to hand to an `IRenderer`.
+   *
+   * @returns A reused object (do not keep it across frames); `alpha` is 0 while
+   *   frozen so a paused picture does not wobble.
+   */
   renderFrame(): RenderFrame;
-  /** Pauses the simulation. */
+  /** Pauses the simulation (user pause; survives platform suspend/resume). */
   pause(): void;
-  /** Resumes the simulation and resets the loop accumulator. */
+  /**
+   * Clears the user pause and resets the loop accumulator (so no catch-up burst runs).
+   * Does not override a platform suspend.
+   */
   resume(): void;
 }
 
 /**
  * Creates a game session on the given platform.
  *
+ * @remarks
+ * Registers suspend/resume callbacks on `platform.lifecycle` (they cannot be removed,
+ * so create one game per platform). Nothing runs until the host calls
+ * {@link Game.frame} (or {@link Game.step} directly in tests).
+ *
  * @param platform - Host platform adapter.
  * @param overrides - Config fields to change from the defaults.
  * @returns The {@link Game}.
+ * @throws RangeError when `overrides` fail validation (see `resolveGameConfig`).
+ *
+ * @example
+ * ```ts
+ * const game = createGame(createHeadlessPlatform(), { seed: 1 });
+ * for (let i = 0; i < 60; i++) game.step(); // one simulated second
+ * game.state.tick; // → 60
+ * ```
  */
 export function createGame(platform: Platform, overrides: Partial<GameConfig> = {}): Game {
   const config = resolveGameConfig(overrides);
@@ -82,6 +109,7 @@ export function createGame(platform: Platform, overrides: Partial<GameConfig> = 
   const isFrozen = (): boolean => state.paused || state.suspended;
   const frameView = { tick: 0, alpha: 0 };
 
+  /** One simulation tick; the systems run here in the fixed tick order. */
   const step = (): void => {
     if (isFrozen()) return;
     state.input = platform.input.poll();

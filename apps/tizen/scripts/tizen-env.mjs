@@ -29,20 +29,33 @@ export const DIST_DIR = join(APP_DIR, 'dist');
 /** Tizen application id from public/config.xml (`<package>.<name>`). */
 export const APP_ID = 'ShmpCupGam.ShmupCup';
 
+/** `true` on Windows, where the Tizen CLI is a `.bat` and must run through a shell. */
 const isWindows = process.platform === 'win32';
 
-/** @returns The Tizen CLI command. */
+/**
+ * The Tizen CLI to invoke.
+ *
+ * @returns {string} `$TIZEN_CLI` when set, else `tizen.bat` on Windows / `tizen` elsewhere
+ *   (resolved through PATH).
+ */
 export function tizenCli() {
   return process.env.TIZEN_CLI || (isWindows ? 'tizen.bat' : 'tizen');
 }
 
-/** @returns The sdb command. */
+/**
+ * The Smart Development Bridge (sdb) executable to invoke.
+ *
+ * @returns {string} `$SDB` when set, else `sdb` (resolved through PATH).
+ */
 export function sdbCli() {
   return process.env.SDB || 'sdb';
 }
 
 /**
  * Reads a required environment variable or exits with a helpful message.
+ *
+ * @remarks An empty value counts as missing. On failure the process exits with code 1
+ * (these are CLI scripts), so callers never see an undefined value.
  *
  * @param {string} name - Variable name.
  * @param {string} hint - What the variable is for.
@@ -60,6 +73,9 @@ export function requireEnv(name, hint) {
 /**
  * The sdb serial to target, connecting to TV_IP first when it is set.
  *
+ * @remarks Side effect: runs `sdb connect $TV_IP` (exits the process if sdb cannot be
+ * started or fails). `TIZEN_TARGET` wins over the `${TV_IP}:26101` default.
+ *
  * @returns {string | null} The serial, or null to let the CLI pick the only device.
  */
 export function resolveTarget() {
@@ -71,8 +87,14 @@ export function resolveTarget() {
 /**
  * Quotes one argument for a Windows shell command line.
  *
+ * @remarks Only arguments containing whitespace or cmd.exe metacharacters are quoted;
+ * embedded double quotes are backslash-escaped.
+ *
  * @param {string} arg - Argument.
  * @returns {string} Quoted argument.
+ *
+ * @example
+ * quoteForShell('C:\\My Certs'); // → '"C:\\My Certs"'
  */
 function quoteForShell(arg) {
   return /[\s"&|<>^]/.test(arg) ? `"${arg.replace(/"/g, '\\"')}"` : arg;
@@ -81,9 +103,17 @@ function quoteForShell(arg) {
 /**
  * Runs a command, streaming its output; exits the process on failure.
  *
+ * @remarks Echoes the command line first. On Windows the command runs through the
+ * shell (needed for `.bat` files) with every argument passed through quoteForShell.
+ * If the executable cannot be started, or exits non-zero, this process exits with
+ * code 1 / the child's exit code — it never returns on failure.
+ *
  * @param {string} command - Executable.
  * @param {string[]} args - Arguments.
  * @param {{ cwd?: string }} [options] - Working directory.
+ *
+ * @example
+ * run(tizenCli(), ['package', '-t', 'wgt', '-s', profile, '--', DIST_DIR]);
  */
 export function run(command, args, options = {}) {
   console.log(`> ${command} ${args.join(' ')}`);
@@ -116,7 +146,10 @@ export function findWgt() {
   return candidates.length > 0 ? candidates[0].file : null;
 }
 
-/** Exits unless `pnpm --filter @shmup/tizen build` has produced dist/. */
+/**
+ * Exits (code 1) unless `pnpm --filter @shmup/tizen build` has produced dist/ — checks
+ * for `dist/config.xml` and `dist/app.js`.
+ */
 export function requireBuild() {
   if (!existsSync(join(DIST_DIR, 'config.xml')) || !existsSync(join(DIST_DIR, 'app.js'))) {
     console.error('apps/tizen/dist is missing — run `pnpm --filter @shmup/tizen build` first.');

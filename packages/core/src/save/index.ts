@@ -28,16 +28,28 @@ export const moduleInfo = defineModule({
 
 /** Root of the persisted save document. */
 export interface SaveData {
+  /** Save format version; older documents are migrated on load. */
   readonly version: number;
+  /** Hi-score tables (typed as `HiScoreEntry` rows once `scoring` lands). */
   readonly hiScores: readonly unknown[];
+  /** Persisted user options (audio, display, controls). */
   readonly options: Readonly<Record<string, unknown>>;
+  /** Unlocked content ids (modes, ships, stages). */
   readonly unlocks: readonly string[];
 }
 
 /** One migration step between save versions. */
 export interface SaveMigration {
+  /** Version this step reads. */
   readonly from: number;
+  /** Version this step produces (normally `from + 1`). */
   readonly to: number;
+  /**
+   * Converts a save document from version `from` to version `to`.
+   *
+   * @param data - Parsed document at version `from`.
+   * @returns The document at version `to`.
+   */
   migrate(data: unknown): unknown;
 }
 

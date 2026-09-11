@@ -31,15 +31,37 @@ export type RngState = readonly [number, number, number, number];
 
 /** A deterministic 32-bit PRNG stream (planned: sfc32). */
 export interface Rng {
-  /** Next unsigned 32-bit integer. */
+  /**
+   * Advances the stream.
+   *
+   * @returns The next unsigned 32-bit integer.
+   */
   nextU32(): number;
-  /** Next float in [0, 1). */
+  /**
+   * Advances the stream.
+   *
+   * @returns The next float in [0, 1).
+   */
   nextFloat(): number;
-  /** Integer in [min, max], inclusive. */
+  /**
+   * Draws a uniformly distributed integer.
+   *
+   * @param min - Inclusive lower bound.
+   * @param max - Inclusive upper bound (must be ≥ `min`).
+   * @returns An integer in [min, max].
+   */
   rangeInt(min: number, max: number): number;
-  /** Snapshot of the internal state. */
+  /**
+   * Captures the internal state.
+   *
+   * @returns A snapshot that {@link Rng.setState} can restore.
+   */
   getState(): RngState;
-  /** Restores a snapshot taken with {@link Rng.getState}. */
+  /**
+   * Restores a snapshot taken with {@link Rng.getState}.
+   *
+   * @param state - The snapshot to restore.
+   */
   setState(state: RngState): void;
 }
 

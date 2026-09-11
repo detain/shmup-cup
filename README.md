@@ -5,7 +5,9 @@ retro SNES-era look, fast and fluid 60 fps gameplay — targeting **Samsung Tize
 with the browser and Electron as additional targets.
 
 **Status:** research & planning done; monorepo skeleton in place (every planned system has a
-placeholder module; the apps show a pixel-art calibration test pattern). No gameplay yet.
+placeholder module with its API declared and TSDoc-documented; the apps show a pixel-art
+calibration test pattern — see [what it should look like](docs/client/preview-build.md)).
+No gameplay yet.
 The **input probe** — a diagnostic Tizen app that measures the Samsung remote, gamepads and
 display on the real monitors — is built and tested ([`tools/input-probe/`](tools/input-probe/README.md));
 it is waiting to be packaged and run on the M7 monitors.
@@ -18,6 +20,12 @@ it is waiting to be packaged and run on the M7 monitors.
 | [`shmup_tech.md`](shmup_tech.md) | Language/platform verdict, Tizen 5.5 constraints, test-hardware notes, library comparisons, recommended stack |
 | [`input_probe_spec.md`](input_probe_spec.md) | Spec for the first spike: a diagnostic Tizen app that measures the Samsung remote / gamepad / display behavior |
 | [`docs/`](docs/README.md) | Player and developer documentation (start with [`docs/dev/repo-layout.md`](docs/dev/repo-layout.md)) |
+
+Game docs — testers: [preview build (calibration screen)](docs/client/preview-build.md) ·
+[controls](docs/client/controls.md) · [monitor setup & install](docs/client/install-on-tv.md).
+Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/architecture.md) ·
+[API reference](docs/dev/api-reference.md) · [build, test & deploy](docs/dev/build-test-deploy.md) ·
+[conventions](docs/dev/conventions.md).
 
 Input probe docs: [tester guide](docs/client/input-probe.md) · [monitor setup & install](docs/client/install-on-tv.md) ·
 [developer guide](docs/dev/input-probe.md) · [build / package / deploy README](tools/input-probe/README.md).
@@ -39,6 +47,7 @@ supported) and pnpm 12 (`npm i -g pnpm@latest`; the exact version is pinned in
 versions (`devEngines.runtime`).
 
 ```sh
+pnpm -v               # must print 12.x — an older global pnpm fails with ERR_PNPM_BROKEN_LOCKFILE
 pnpm install          # set ELECTRON_SKIP_BINARY_DOWNLOAD=1 to skip the Electron binary
 pnpm dev              # browser dev app → http://localhost:5173 (arrows/WASD, gamepad)
 pnpm lint             # ESLint (typescript-eslint + compat: chrome >= 69)
@@ -50,8 +59,13 @@ pnpm clean            # remove build output
 ```
 
 Samsung TV: `pnpm --filter @shmup/tizen build`, then the `tizen:package` / `tizen:install` /
-`tizen:run` scripts on a machine with the Tizen CLI and certificate — see
+`tizen:run` scripts on a machine with the Tizen CLI and certificate — step by step in
+[`docs/client/install-on-tv.md`](docs/client/install-on-tv.md#installing-the-game-preview); all
+variables and the Chromium 69 build contract in
+[`docs/dev/build-test-deploy.md`](docs/dev/build-test-deploy.md) and
 [`apps/tizen/README.md`](apps/tizen/README.md).
+
+Desktop: `pnpm build && pnpm --filter @shmup/electron start` (needs the Electron binary).
 
 ### Input probe (standalone npm project)
 

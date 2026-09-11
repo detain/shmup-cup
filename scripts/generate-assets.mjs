@@ -14,8 +14,11 @@ import { existsSync, mkdirSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+/** Repository root (this script lives in scripts/). */
 const repo = join(dirname(fileURLToPath(import.meta.url)), '..');
+/** Editable art/audio sources, committed to git. */
 const sourceDir = join(repo, 'assets', 'source');
+/** Pipeline output, git-ignored and recreated on every run. */
 const outputDir = join(repo, 'assets', 'generated');
 
 /**
@@ -36,6 +39,7 @@ function listSources(dir) {
 
 mkdirSync(outputDir, { recursive: true });
 
+/** Planned pipeline stages: [source sub-folder, what it will produce]. */
 const stages = [
   ['sprites', 'sprite atlases'],
   ['tilesets', 'tilemaps'],

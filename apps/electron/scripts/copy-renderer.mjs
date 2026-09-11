@@ -8,8 +8,11 @@ import { cpSync, existsSync, rmSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+/** apps/electron (this script lives in apps/electron/scripts). */
 const appDir = join(dirname(fileURLToPath(import.meta.url)), '..');
+/** The browser build produced by `pnpm --filter @shmup/web build`. */
 const source = join(appDir, '..', 'web', 'dist');
+/** Where the compiled main process expects the renderer (`dist/main/../renderer`). */
 const target = join(appDir, 'dist', 'renderer');
 
 if (!existsSync(join(source, 'index.html'))) {

@@ -29,10 +29,13 @@ export const moduleInfo = defineModule({
 
 /** Score state of one player. */
 export interface PlayerScore {
+  /** Current score. */
   score: number;
+  /** Remaining lives. */
   lives: number;
   /** Next extend threshold. */
   nextExtendAt: number;
+  /** Continues used (shown on the hi-score entry). */
   continues: number;
 }
 
@@ -40,10 +43,13 @@ export interface PlayerScore {
 export interface HiScoreEntry {
   /** Three letters. */
   readonly name: string;
+  /** Final score. */
   readonly score: number;
   /** Stage / zone reached. */
   readonly reached: string;
+  /** Game mode the score was set in (arcade, boss rush, …). */
   readonly mode: string;
+  /** Difficulty preset of the run. */
   readonly difficulty: string;
 }
 

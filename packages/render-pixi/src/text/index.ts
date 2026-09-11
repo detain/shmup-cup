@@ -29,8 +29,18 @@ export const moduleInfo = defineModule({
 
 /** A reusable text display bound to one bitmap font. */
 export interface BitmapTextView {
-  /** Updates the text; no-op (and no allocation) when unchanged. */
+  /**
+   * Updates the text; no-op (and no allocation) when unchanged.
+   *
+   * @param text - New text (at most the view's `maxChars`).
+   */
   setText(text: string): void;
+  /**
+   * Moves the text.
+   *
+   * @param x - Left edge in internal-frame pixels (integers keep glyphs crisp).
+   * @param y - Top edge in internal-frame pixels.
+   */
   setPosition(x: number, y: number): void;
 }
 

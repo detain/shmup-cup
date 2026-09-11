@@ -31,17 +31,23 @@ export const moduleInfo = defineModule({
 
 /** Replay file header. */
 export interface ReplayHeader {
+  /** Replay file format version; bumped on breaking changes. */
   readonly formatVersion: number;
+  /** Build identifier — replays only play back on the build that recorded them. */
   readonly buildHash: string;
+  /** Gameplay RNG seed of the recorded run. */
   readonly seed: number;
   /** All sim-affecting options. */
   readonly config: GameConfig;
+  /** Stage id the run started in. */
   readonly startStage: string;
+  /** Checkpoint index the run started from (0 = stage start). */
   readonly startCheckpoint: number;
 }
 
 /** A decoded replay. */
 export interface Replay {
+  /** Everything needed to recreate the starting state. */
   readonly header: ReplayHeader;
   /** One `held` mask per tick, per player. */
   readonly inputs: readonly Uint16Array[];

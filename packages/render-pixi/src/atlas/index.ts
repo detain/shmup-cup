@@ -32,7 +32,12 @@ export type FrameId = number;
 
 /** A loaded atlas. */
 export interface Atlas {
-  /** Resolves a frame name (e.g. `'ship/idle/0'`) to its id; -1 when missing. */
+  /**
+   * Resolves a frame name to its numeric id (do this once at load, not per frame).
+   *
+   * @param name - Frame name, e.g. `'ship/idle/0'`.
+   * @returns The frame id, or -1 when the atlas has no such frame.
+   */
   frameId(name: string): FrameId;
   /** Number of frames. */
   readonly size: number;
