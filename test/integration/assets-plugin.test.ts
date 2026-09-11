@@ -5,14 +5,14 @@
  * and regenerates on source edits, both apps use the plugin, and Turborepo runs
  * `//#assets` before `build` / `dev` with the right inputs and outputs.
  */
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createContext, runInContext } from 'node:vm';
-import { build, createServer, type Rollup } from 'vite';
+import { build, createLogger, createServer, type Rollup } from 'vite';
 import { afterAll, describe, expect, it } from 'vitest';
-import { buildAtlas } from '../../scripts/assets/pipeline.mjs';
+import { DEFAULT_SOURCE_DIR, PIPELINE_DIR, buildAtlas } from '../../scripts/assets/pipeline.mjs';
 import { ASSETS_MODULE_ID, ATLAS_URL_DIR, shmupAssets } from '../../vite.shared.js';
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -121,6 +121,51 @@ describe('integration: shmupAssets() dev server', () => {
       expect(((await json.json()) as typeof manifest).formatVersion).toBe(1);
       const traversal = await fetch(`${base}${ATLAS_URL_DIR}/..%2F.asset-cache.json`);
       expect(traversal.headers.get('content-type')).not.toBe('application/json');
+    } finally {
+      await server.close();
+    }
+  }, 60_000);
+
+  it('regenerates on asset-source edits, never in-process on pipeline edits', async () => {
+    const outDir = join(tmp, 'generated-watch');
+    const warnings: string[] = [];
+    const logger = createLogger('silent');
+    const server = await createServer({
+      root: tmp,
+      configFile: false,
+      logLevel: 'silent',
+      customLogger: {
+        ...logger,
+        warn: (message) => {
+          warnings.push(message);
+        },
+      },
+      plugins: [shmupAssets({ outDir })],
+      server: { port: 0, strictPort: false, host: '127.0.0.1', ws: false },
+    });
+    try {
+      await server.listen(); // buildStart generates the atlas
+      const manifestFile = join(outDir, 'atlas', 'main.json');
+      expect(existsSync(manifestFile)).toBe(true);
+      rmSync(manifestFile); // any regeneration would put it back
+
+      // The loaded pipeline code is the old code: regenerating now would store stale pixels.
+      // With an inline config no restart is coming, so the plugin asks for one instead.
+      server.watcher.emit('change', join(PIPELINE_DIR, 'procedural', 'ui.mjs'));
+      expect(existsSync(manifestFile)).toBe(false);
+      expect(warnings).toEqual([
+        '[shmup:assets] scripts/assets/procedural/ui.mjs changed; restart the dev server to ' +
+          'regenerate the atlas with the new pipeline code',
+      ]);
+      server.watcher.emit('change', join(PIPELINE_DIR, 'README.md')); // not code: silent
+      expect(warnings).toHaveLength(1);
+      expect(existsSync(manifestFile)).toBe(false);
+
+      server.watcher.emit(
+        'change',
+        join(DEFAULT_SOURCE_DIR, 'sprites', 'items', 'bonus.sprite.json'),
+      );
+      expect(existsSync(manifestFile)).toBe(true);
     } finally {
       await server.close();
     }

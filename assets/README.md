@@ -7,7 +7,9 @@
 
 Regenerate with `pnpm assets` ([`scripts/generate-assets.mjs`](../scripts/README.md)). It
 also runs automatically before every `pnpm build` / `pnpm dev` (Turborepo task `//#assets`)
-and from the `shmupAssets()` Vite plugin, and skips the work when no input changed.
+and from the `shmupAssets()` Vite plugin, and skips the work when no input changed. In
+`pnpm dev`, edits under `assets/source/` regenerate the atlas and reload the page; edits
+to the pipeline code in `scripts/assets/` restart the dev server, which then regenerates.
 
 ## The placeholder pipeline ("art as code", decision D24)
 

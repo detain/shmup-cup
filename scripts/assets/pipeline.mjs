@@ -13,7 +13,8 @@
  *
  * {@link buildAtlas} does the work in memory (tests use it directly);
  * {@link generateAssets} adds the disk side: an **input-hash cache** (every pipeline
- * script, every source file, the zlib and pngjs versions) that skips unchanged runs,
+ * script as loaded by this process, every source file, the zlib and pngjs versions) that
+ * skips unchanged runs,
  * atomic writes (parallel builds may run it concurrently) and removal of stale pages.
  * Output is deterministic: two runs over the same inputs are byte-identical.
  *
@@ -309,35 +310,60 @@ export function buildAtlas(options = {}) {
 }
 
 /**
- * Hashes everything that can change the pipeline's output.
+ * Feeds every file below `dir` (sorted, with its path and length) into `hash`.
  *
- * @param {string} [sourceDir] - Source root (default `assets/source/`).
- * @returns {string} Hex SHA-256 of the pipeline scripts, the sprite and font sources,
- *   the zlib version (deflate output) and the pngjs version (decoding).
+ * @param {import('node:crypto').Hash} hash - Running hash.
+ * @param {string} label - Prefix that keeps the trees apart (`pipeline`, `sprites`, …).
+ * @param {string} dir - Directory (missing → nothing).
+ * @param {boolean} skipDocs - Skip `*.md` and `.gitkeep` (documentation, not input).
  */
-export function computeInputHash(sourceDir = DEFAULT_SOURCE_DIR) {
+function hashTree(hash, label, dir, skipDocs) {
+  for (const file of listFiles(dir)) {
+    const base = file.slice(file.lastIndexOf('/') + 1);
+    if (skipDocs && (base.endsWith('.md') || base === '.gitkeep')) continue;
+    const bytes = readFileSync(join(dir, file));
+    hash.update(`${label}/${file}\0${bytes.length}\0`);
+    hash.update(bytes);
+  }
+}
+
+/**
+ * Hash of the code this process runs: the pipeline scripts (`scripts/assets/**`) as they
+ * were **when this module was loaded**, plus the zlib (deflate output) and pngjs
+ * (decoding) versions.
+ *
+ * @remarks
+ * Snapshotted once on purpose. A long-lived importer (the `pnpm dev` server) keeps
+ * running the modules it loaded even after a pipeline script is edited on disk; hashing
+ * the files anew on every run would record the new code's hash next to pixels drawn by
+ * the old code, and every later run would take that stale atlas for current. With the
+ * snapshot, such a process keeps writing (and cache-hitting) under its own code's hash,
+ * and the next fresh process sees a different hash and rebuilds. Node reads the modules
+ * just before this runs, so only an edit within those milliseconds could slip through.
+ */
+const CODE_HASH = (() => {
   const hash = createHash('sha256');
   const pngjsVersion = /** @type {{ version: string }} */ (
     createRequire(import.meta.url)('pngjs/package.json')
   ).version;
-  hash.update(
-    `shmup-assets cache ${CACHE_VERSION}\0zlib ${process.versions.zlib}\0pngjs ${pngjsVersion}\0`,
-  );
-  /** @type {[string, string][]} */
-  const roots = [
-    ['pipeline', PIPELINE_DIR],
-    ['sprites', join(sourceDir, 'sprites')],
-    ['fonts', join(sourceDir, 'fonts')],
-  ];
-  for (const [label, dir] of roots) {
-    for (const file of listFiles(dir)) {
-      const base = file.slice(file.lastIndexOf('/') + 1);
-      if (label !== 'pipeline' && (base.endsWith('.md') || base === '.gitkeep')) continue;
-      const bytes = readFileSync(join(dir, file));
-      hash.update(`${label}/${file}\0${bytes.length}\0`);
-      hash.update(bytes);
-    }
-  }
+  hash.update(`zlib ${process.versions.zlib}\0pngjs ${pngjsVersion}\0`);
+  hashTree(hash, 'pipeline', PIPELINE_DIR, false);
+  return hash.digest('hex');
+})();
+
+/**
+ * Hashes everything that can change the pipeline's output.
+ *
+ * @param {string} [sourceDir] - Source root (default `assets/source/`).
+ * @returns {string} Hex SHA-256 of the loaded pipeline code (see {@link CODE_HASH}: the
+ *   scripts as loaded by this process, the zlib and pngjs versions) and of the sprite and
+ *   font sources as they are on disk now.
+ */
+export function computeInputHash(sourceDir = DEFAULT_SOURCE_DIR) {
+  const hash = createHash('sha256');
+  hash.update(`shmup-assets cache ${CACHE_VERSION}\0code ${CODE_HASH}\0`);
+  hashTree(hash, 'sprites', join(sourceDir, 'sprites'), true);
+  hashTree(hash, 'fonts', join(sourceDir, 'fonts'), true);
   return hash.digest('hex');
 }
 

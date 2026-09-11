@@ -505,8 +505,13 @@ the browser dev app and as a Tizen 5.5 bundle.
     and test-time builds work without a prior `pnpm assets` (CI runs `pnpm test` before
     `pnpm build`). `virtual:shmup-assets` exports `manifest`, `pageUrls`
     (`assets/atlas/main.png`, relative) and a default `{ manifest, pageUrls }`; the dev
-    middleware serves `<base>assets/atlas/*` and edits under `assets/source/` or
-    `scripts/assets/` regenerate + full-reload. Both apps register it now (pages ship in
+    middleware serves `<base>assets/atlas/*` and edits under `assets/source/` regenerate +
+    full-reload. Edits under `scripts/assets/` are not regenerated in-process (the loaded
+    pipeline code is the old code): they are config dependencies of the app configs, so
+    Vite restarts the server and the new `buildStart` regenerates (a warning asks for a
+    restart when none is coming). The input hash uses the pipeline scripts **as loaded by
+    the process** (snapshotted at import), so a long-lived process can never record new
+    code's hash next to old code's pixels. Both apps register it now (pages ship in
     `dist/assets/atlas/`; the shell consumes the module in M1-04).
   - **Tooling.** `tsconfig.tooling.json` gained `allowJs` (the Node-side TS imports the
     JSDoc-typed `.mjs` pipeline; no `checkJs`); `pngjs` is loaded untyped (no `@types`

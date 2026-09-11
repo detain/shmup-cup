@@ -23,12 +23,13 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { isAbsolute, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { defaultClientConditions, defaultServerConditions, type Plugin } from 'vite';
+import { defaultClientConditions, defaultServerConditions, normalizePath, type Plugin } from 'vite';
 import {
   ATLAS_DIR,
   DEFAULT_OUT_DIR,
   DEFAULT_SOURCE_DIR,
   PIPELINE_DIR,
+  REPO_ROOT,
   generateAssets,
   type GenerateResult,
 } from './scripts/assets/pipeline.mjs';
@@ -249,9 +250,12 @@ const ATLAS_FILE_PATTERN = /^[a-z0-9-]+\.(png|json)$/;
  * - **Build:** every atlas page is emitted into `dist/assets/atlas/` with `emitFile`
  *   (fixed names, no hash — the manifest refers to them by name).
  * - **Dev server:** a middleware serves `<base>assets/atlas/*` from the output directory,
- *   and edits under the asset sources or `scripts/assets/` regenerate the atlas and
- *   full-reload the page. Invalid sources are reported in the terminal; the last good
- *   atlas stays in use.
+ *   and edits under the asset sources regenerate the atlas and full-reload the page.
+ *   Invalid sources are reported in the terminal; the last good atlas stays in use.
+ *   Edits under `scripts/assets/` are **not** regenerated in-process (the loaded pipeline
+ *   code is the old code): Vite restarts the server for them (they are config
+ *   dependencies of the app configs) and the restarted `buildStart` regenerates; when no
+ *   restart is coming, a warning says to restart.
  *
  * @param options - Source/output directory overrides (tests).
  * @returns The Vite plugin.
@@ -356,12 +360,35 @@ export function shmupAssets(options: ShmupAssetsOptions = {}): Plugin {
 
       server.watcher.add([sourceDir, PIPELINE_DIR]);
       /**
-       * Regenerates the atlas after an asset-source or pipeline edit and reloads the page.
+       * A pipeline script changed. This process keeps running the pipeline modules it
+       * loaded with the config, so regenerating here would draw the atlas with the OLD
+       * code — nothing to do in-process. When the file is a config dependency (the app
+       * configs bundle `vite.shared.ts` and every pipeline module it imports), Vite
+       * restarts the server itself and the new instance's `buildStart` runs the new code;
+       * otherwise (inline config, `--configLoader native`, a module nothing imports yet)
+       * say that a restart is needed.
+       *
+       * @param file - Absolute path of the changed file.
+       */
+      const onPipelineChange = (file: string): void => {
+        if (!file.endsWith('.mjs')) return;
+        if (server.config.configFileDependencies.includes(normalizePath(file))) return;
+        server.config.logger.warn(
+          `[shmup:assets] ${normalizePath(relative(REPO_ROOT, file))} changed; ` +
+            'restart the dev server to regenerate the atlas with the new pipeline code',
+        );
+      };
+      /**
+       * Regenerates the atlas after an asset-source edit and reloads the page.
        *
        * @param file - Absolute path of the changed file.
        */
       const onChange = (file: string): void => {
-        if (!isInside(sourceDir, file) && !isInside(PIPELINE_DIR, file)) return;
+        if (isInside(PIPELINE_DIR, file)) {
+          onPipelineChange(file);
+          return;
+        }
+        if (!isInside(sourceDir, file)) return;
         try {
           generate();
         } catch (error) {

@@ -8,6 +8,7 @@
  * silhouettes; the initial original sprite set is present; missing sprite names are
  * reported as issues.
  */
+import { execFileSync } from 'node:child_process';
 import {
   cpSync,
   existsSync,
@@ -16,11 +17,12 @@ import {
   readdirSync,
   readFileSync,
   rmSync,
+  symlinkSync,
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { afterAll, describe, expect, it } from 'vitest';
 import { getPixel } from '../../../scripts/assets/image.mjs';
 import {
@@ -406,6 +408,62 @@ describe('scripts/assets/pipeline — generateAssets (disk, cache)', () => {
     writeFileSync(join(src, 'fonts', 'extra.font.json'), '{}');
     expect(computeInputHash(src)).not.toBe(hash);
   });
+
+  it('caches against the pipeline code that ran, not the code on disk now', () => {
+    // A long-lived process (the `pnpm dev` server) loads the pipeline once. If a pipeline
+    // script is edited afterwards and that process regenerates, it runs the OLD code; the
+    // cache must record the old code's hash, so the next fresh process rebuilds instead of
+    // treating the stale atlas as current. Both processes run the pipeline from a scratch
+    // copy (with the repo's node_modules linked in for pngjs), so the edit touches no repo file.
+    const root = join(tmp, 'stale-code');
+    const pipelineDir = join(root, 'scripts', 'assets');
+    cpSync(join(repo, 'scripts', 'assets'), pipelineDir, { recursive: true });
+    symlinkSync(join(repo, 'node_modules'), join(root, 'node_modules'), 'junction');
+    const ui = join(pipelineDir, 'procedural', 'ui.mjs');
+    const options = { sourceDir: DEFAULT_SOURCE_DIR, outDir: join(root, 'generated') };
+    const prelude =
+      "import { readFileSync, writeFileSync } from 'node:fs';\n" +
+      `const pipeline = await import(${JSON.stringify(pathToFileURL(join(pipelineDir, 'pipeline.mjs')).href)});\n` +
+      `const options = ${JSON.stringify(options)};\n` +
+      `const ui = ${JSON.stringify(ui)};\n` +
+      `const png = ${JSON.stringify(join(options.outDir, 'atlas', 'main.png'))};\n`;
+    /**
+     * Runs an ES-module snippet (after the prelude) in a fresh Node process.
+     *
+     * @param code - Snippet that prints one JSON line.
+     * @returns The parsed JSON.
+     */
+    const node = (code: string): Record<string, unknown> =>
+      JSON.parse(
+        execFileSync(process.execPath, ['--input-type=module', '-e', prelude + code], {
+          cwd: root,
+          encoding: 'utf8',
+        }),
+      ) as Record<string, unknown>;
+
+    const longLived = node(
+      'const first = pipeline.generateAssets(options).cached;\n' +
+        "writeFileSync(ui, readFileSync(ui, 'utf8').replace(\"'#ff00ff'\", \"'#00ff00'\"));\n" +
+        'const second = pipeline.generateAssets(options).cached;\n' +
+        'console.log(JSON.stringify({ first, second }));\n',
+    );
+    expect(readFileSync(ui, 'utf8')).toContain("'#00ff00'");
+    // Same code ran, same sources: nothing to do (the old code cannot draw the new colour).
+    expect(longLived).toEqual({ first: false, second: true });
+
+    const fresh = node(
+      'const { cached } = pipeline.generateAssets(options);\n' +
+        'const expected = pipeline.buildAtlas({ sourceDir: options.sourceDir }).pages[0].png;\n' +
+        'const current = Buffer.compare(readFileSync(png), expected) === 0;\n' +
+        'console.log(JSON.stringify({ cached, current }));\n',
+    );
+    expect(fresh).toEqual({ cached: false, current: true });
+    const written = readFileSync(join(options.outDir, 'atlas', 'main.png'));
+    expect(Buffer.compare(written, atlas.pages[0].png)).not.toBe(0); // the edit shows
+    expect(
+      node('console.log(JSON.stringify({ cached: pipeline.generateAssets(options).cached }));\n'),
+    ).toEqual({ cached: true });
+  }, 60_000);
 
   it('writes nothing when the sources are invalid', () => {
     const src = copySources('bad-out');
