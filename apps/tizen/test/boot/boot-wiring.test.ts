@@ -327,6 +327,23 @@ describe('tizen/boot bootTizenApp wiring', () => {
     expect(fakes.renderer.frames.map((frame) => frame.tick)).toEqual([0, 1, 2, 3]);
   });
 
+  it('autofires with no key held and ignores the web-only ?loadout=full (M1-10)', async () => {
+    // A development build opened with the web app's dev override must not power up the TV game.
+    Object.assign(win, { location: { search: '?loadout=full' } });
+    const { app } = await boot();
+    expect(app.game.config.loadout).toBe('default');
+    const world = app.game.world;
+    expect(world.weapons.loadouts[0].options).toBe(0);
+    win.frame(0);
+    // The 40-tick fly-in, then remote rule 1: the main shot fires without any button.
+    for (let i = 1; i <= 60; i++) win.frame(i * STEP);
+    expect(app.game.state.tick).toBe(60);
+    expect(app.game.state.input?.players[0]?.held).toBe(0);
+    expect(world.players[0].state).toBe('alive');
+    expect(world.weapons.countShots(0, 0)).toBeGreaterThan(0);
+    expect(world.weapons.options[0].count).toBe(0);
+  });
+
   it('delivers remote arrows to player 1 as a remote device', async () => {
     const { app } = await boot();
     win.frame(0);

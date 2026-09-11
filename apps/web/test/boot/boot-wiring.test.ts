@@ -465,6 +465,17 @@ describe('web/boot loadoutFromSearch', () => {
     expect(loadoutFromSearch('?loadout')).toBeNull();
     expect(loadoutFromSearch('')).toBeNull();
   });
+
+  it('matches name and value exactly (case, extra "=", empty pairs, other parameters)', () => {
+    expect(loadoutFromSearch('?LOADOUT=full')).toBeNull();
+    expect(loadoutFromSearch('?loadout=Full')).toBeNull();
+    expect(loadoutFromSearch('?loadout=full=1')).toBeNull();
+    expect(loadoutFromSearch('?xloadout=full&loadoutx=full')).toBeNull();
+    expect(loadoutFromSearch('?&&loadout=full&')).toBe('full');
+    expect(loadoutFromSearch('?loadout=full&loadout=')).toBe('full');
+    expect(loadoutFromSearch('?stage=test-range&profile=x&loadout=default')).toBe('default');
+    expect(loadoutFromSearch('?')).toBeNull();
+  });
 });
 
 describe('web/boot stageFromSearch / contentStageIds', () => {

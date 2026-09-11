@@ -1182,6 +1182,11 @@ the browser dev app and as a Tizen 5.5 bundle.
     helper, every guard allocated). `enemies-runtime` integration tests that assume "nobody shoots" now turn
     autofire off; a new one checks the autofiring KESTREL kills test-range enemies. New
     `test/e2e/weapons.spec.ts`.
+  - **Test pass fixes.** A falling missile at a non-finite position (a NaN / infinite spawn
+    through `spawnShot`) had its terrain pixel read as row 0 (`| 0`), so rock along the map's top
+    row "landed" it: it slid on at y −2, inside the cull margin, instead of being removed. The
+    landing test now only runs for finite positions and such a missile is culled on its first
+    move (finite positions behave exactly as before; no hash changes).
 
 ### M1-11 — Power meter, capsules, Force Field & Mega Crash
 

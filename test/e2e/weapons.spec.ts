@@ -3,11 +3,18 @@
  * KESTREL autofires its Type A main shot — the `shots/basic` sprites must show up in the playfield
  * to the right of the ship and move between two screenshots — and `?loadout=full` (the web-only
  * dev override) draws the Options (`options/orb`, an engine sprite) and laser beams, with no
- * console errors and no "unknown sprite" warning from the atlas. Screenshots are ×3 (viewport
- * 1152×648): frame pixel (x, y) is screenshot pixel (3x + 1, 3y + 1).
+ * console errors and no "unknown sprite" warning from the atlas. The Tizen build opened from disk
+ * autofires too without any key (remote rule 1) and ignores the web-only `?loadout=full`.
+ * Screenshots are ×3 (viewport 1152×648): frame pixel (x, y) is screenshot pixel (3x + 1, 3y + 1).
  */
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
+
+/** The Tizen build's page, as a `file://` URL. */
+const TIZEN_INDEX = pathToFileURL(
+  fileURLToPath(new URL('../../apps/tizen/dist/index.html', import.meta.url)),
+).href;
 
 /** `shots/basic` rim colour (palette `b`, #1e5a9a) — nothing else on screen uses it. */
 const SHOT_RIM = [0x1e, 0x5a, 0x9a] as const;
@@ -161,6 +168,33 @@ test.describe('player weapons (web build)', () => {
     if (found === null) return;
     expect(found[0].hud).toBe(0);
     expect(found[1].hud).toBe(0);
+    expect(errors).toEqual([]);
+  });
+});
+
+test.describe('player weapons (Tizen build via file://)', () => {
+  test('autofires with no key held and ignores the web-only ?loadout=full', async ({ page }) => {
+    test.setTimeout(90_000);
+    const errors = collectErrors(page);
+    await page.goto(TIZEN_INDEX + '?loadout=full');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    let found: ColourPixels[] | null = null;
+    for (let poll = 0; poll < 60 && found === null; poll++) {
+      await waitFrames(page, 10);
+      const pixels = await findColours(page, [SHOT_RIM, KESTREL_HULL]);
+      if (pixels[0].count >= 2 && pixels[1].count > 0) found = pixels;
+    }
+    expect(found, 'no shot appeared within 600 frames').not.toBeNull();
+    if (found === null) return;
+    expect(found[0].hud).toBe(0);
+    expect(found[0].minX).toBeGreaterThan(found[1].minX);
+    // Still the default loadout: no Options, no laser beams, ever.
+    for (let poll = 0; poll < 3; poll++) {
+      await waitFrames(page, 10);
+      const [orbs, beams] = await findColours(page, [OPTION_BODY, LASER_BODY]);
+      expect(orbs.count + orbs.hud).toBe(0);
+      expect(beams.count + beams.hud).toBe(0);
+    }
     expect(errors).toEqual([]);
   });
 });

@@ -1188,7 +1188,9 @@ class WeaponSystemImpl implements WeaponSystem {
           const y = f.y[i] + dy + f.vy[i];
           f.x[i] = x;
           f.y[i] = y;
-          if (map !== null) {
+          // A non-finite position (`| 0` would read it as pixel 0 and land it on row 0's rock)
+          // never touches terrain: the cull below removes it.
+          if (map !== null && x - x === 0 && y - y === 0) {
             const px = Math.floor(x) | 0;
             const low = Math.floor(y + hh) | 0;
             if (terrainAt(map, px, low) !== TerrainType.Empty) {
