@@ -7,6 +7,8 @@
  *   the hatch's children included) spawns, the 64-slot pool is never exceeded, every formation
  *   spawns all its members and resolves; with nobody shooting nothing is killed, so no
  *   formation bonus is awarded and every member counts as escaped.
+ * - With the default always-on autofire the KESTREL's Type A main shot (M1-10) kills enemies:
+ *   kills credited to player 1, and formations shot down completely award their bonus.
  * - Ground enemies stand on (or hang from) the generated terrain when they appear, and the
  *   walkers stay on the surface over the rolling slopes for their whole lives.
  * - Killing every enemy on its first on-screen tick (perfect play through the public damage
@@ -57,13 +59,21 @@ const DB = shipped();
 const STAGE = DB.stages[DB.stageIndex.get('test-range') ?? -1];
 
 /**
- * A headless game on the test range.
+ * A headless game on the test range whose ship does not shoot (autofire off, no button held —
+ * the player weapons of M1-10 would kill the enemies these tests watch).
  *
  * @param seed - Seed.
+ * @param shoot - Let the ship autofire (the default config) instead.
  * @returns The game.
  */
-function game(seed = 21): Game {
-  return createGame(createHeadlessPlatform(), { seed, stage: 'test-range' }, DB);
+function game(seed = 21, shoot = false): Game {
+  return createGame(
+    createHeadlessPlatform(),
+    shoot
+      ? { seed, stage: 'test-range' }
+      : { seed, stage: 'test-range', autofire: false, remoteMode: false },
+    DB,
+  );
 }
 
 /**
@@ -84,6 +94,26 @@ function playThrough(g: Game, after: (tick: number) => void, extra = 0): void {
 }
 
 describe('integration: the test-range timeline', () => {
+  it('lets the autofiring KESTREL shoot enemies down (kills, formation bonuses — M1-10)', () => {
+    const g = game(21, true);
+    const w = g.world;
+    let kills = 0;
+    let bonuses = 0;
+    playThrough(g, () => {
+      const o = w.enemies.outcomes;
+      for (let k = 0; k < o.killCount; k++) {
+        expect(o.killBy[k]).toBe(0);
+        kills++;
+      }
+      w.events.drain((event) => {
+        if (event.kind === SimEventKind.FormationBonus) bonuses++;
+      });
+    });
+    expect(w.weapons.roleWeapons[0]?.id).toBe('shot.basic');
+    expect(kills).toBeGreaterThan(10);
+    expect(bonuses).toBeGreaterThan(0);
+  });
+
   it('spawns every roster enemy, stays within the pool and resolves every formation', () => {
     const g = game();
     const w = g.world;

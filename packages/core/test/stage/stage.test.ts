@@ -571,6 +571,7 @@ describe('core/stage allocation', () => {
       },
       10_000,
       10_000,
+      3,
     );
     expect(fired).toBeGreaterThan(100);
     expect(growth.bytes).toBeLessThan(64 * 1024);

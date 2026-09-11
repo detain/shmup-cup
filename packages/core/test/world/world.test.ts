@@ -121,19 +121,23 @@ describe('core/world', () => {
     expect(w.rng.gameplay.nextU32()).toBe(createRng(9).nextU32());
   });
 
-  it('exposes a WorldView: live camera, no parallax/terrain yet, enemy, player and bullet batches', () => {
+  it('exposes a WorldView: live camera, no parallax/terrain yet, enemy, shot, option, player and bullet batches', () => {
     const w = world();
     expect(w.view.camera).toBe(w.camera);
     expect([w.view.parallax, w.view.terrain]).toEqual([null, null]);
-    expect(w.view.batches).toHaveLength(4);
+    expect(w.view.batches).toHaveLength(6);
     expect(w.view.batches[0]).toBe(w.enemies.groundBatch);
     expect(w.view.batches[1]).toBe(w.enemies.airBatch);
-    expect(w.view.batches[2]).toBe(w.playerBatch);
-    expect(w.view.batches[3]).toBe(w.bullets.batch);
+    expect(w.view.batches[2]).toBe(w.weapons.batch);
+    expect(w.view.batches[3]).toBe(w.weapons.optionBatch);
+    expect(w.view.batches[4]).toBe(w.playerBatch);
+    expect(w.view.batches[5]).toBe(w.bullets.batch);
     expect(w.view.lasers).toBe(w.bullets.laserView);
     expect(w.view.batches.map((b) => b.layer)).toEqual([
       LayerId.GroundEnemies,
       LayerId.AirEnemies,
+      LayerId.PlayerShots,
+      LayerId.Player,
       LayerId.Player,
       LayerId.EnemyBullets,
     ]);
@@ -245,9 +249,14 @@ describe('core/world', () => {
     expect(() => w.pools.register('bullets', createSoaPool(4, { x: 'f64' }))).toThrow(
       /already registered/,
     );
-    // The bullet system registered its pools first (M1-09).
-    expect(w.pools.entries.map((e) => e.name)).toEqual(['enemyBullets', 'enemyLasers', 'bullets']);
-    expect(w.pools.entries[2].arrays).toEqual([pool.fields.x, pool.fields.y]);
+    // The bullet and weapon systems registered their pools first (M1-09, M1-10).
+    expect(w.pools.entries.map((e) => e.name)).toEqual([
+      'enemyBullets',
+      'enemyLasers',
+      'playerShots',
+      'bullets',
+    ]);
+    expect(w.pools.entries[3].arrays).toEqual([pool.fields.x, pool.fields.y]);
     pool.alloc();
     pool.alloc();
     pool.free(1);

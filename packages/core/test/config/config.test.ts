@@ -7,6 +7,7 @@ import {
   PLAYFIELD_Y,
   moduleInfo,
   resolveGameConfig,
+  type GameConfig,
 } from '../../src/config/index.js';
 
 describe('core/config', () => {
@@ -44,6 +45,24 @@ describe('core/config', () => {
     for (const n of [2, 12, 33, 2048, 16.5, Number.NaN]) {
       expect(() => resolveGameConfig({ aimDirections: n }), String(n)).toThrow(RangeError);
     }
+  });
+
+  it('autofires every 4 ticks, missiles every 10, with the default loadout (M1-10)', () => {
+    expect(DEFAULT_GAME_CONFIG.autofireInterval).toBe(4);
+    expect(DEFAULT_GAME_CONFIG.missileInterval).toBe(10);
+    expect(DEFAULT_GAME_CONFIG.loadout).toBe('default');
+    const config = resolveGameConfig({ autofireInterval: 1, missileInterval: 60, loadout: 'full' });
+    expect([config.autofireInterval, config.missileInterval, config.loadout]).toEqual([
+      1,
+      60,
+      'full',
+    ]);
+    for (const n of [0, 61, 2.5, Number.NaN]) {
+      expect(() => resolveGameConfig({ autofireInterval: n }), String(n)).toThrow(RangeError);
+      expect(() => resolveGameConfig({ missileInterval: n }), String(n)).toThrow(RangeError);
+    }
+    const bad = { loadout: 'max' } as unknown as Partial<GameConfig>;
+    expect(() => resolveGameConfig(bad)).toThrow(/loadout/);
   });
 });
 

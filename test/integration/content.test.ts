@@ -10,7 +10,8 @@
  * Kinds the core does not own go to their owning package, like the shell does at boot
  * (plan §3.5): `input-profiles` → `@shmup/input-web` (M1-05). The shipped set is loaded with the
  * engine's script registry (`KNOWN_SCRIPT_IDS`, M1-08), so an unknown behaviour id is an issue,
- * and its enemies are checked against their behaviours' tunables (`checkEnemyBehaviors`).
+ * and its enemies and weapons are checked against their behaviours' tunables
+ * (`checkEnemyBehaviors`, `checkWeaponBehaviors`).
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -19,6 +20,7 @@ import {
   ENGINE_SPRITES,
   KNOWN_SCRIPT_IDS,
   checkEnemyBehaviors,
+  checkWeaponBehaviors,
   loadContent,
   type ContentFile,
   type ValidationIssue,
@@ -129,6 +131,7 @@ describe('integration: content/ validates', () => {
     const { db, issues, foreign } = loadContent(shippedFiles, { knownScripts: KNOWN_SCRIPT_IDS });
     expect(issues).toEqual([]);
     expect(checkEnemyBehaviors(db)).toEqual([]);
+    expect(checkWeaponBehaviors(db)).toEqual([]);
     // Foreign kinds go to their owner; a kind nobody owns must not silently fall through.
     expect(foreign.map((file) => file.path)).toEqual(['input/remote.input-profiles.json']);
     expect(ownerIssues(foreign)).toEqual([]);

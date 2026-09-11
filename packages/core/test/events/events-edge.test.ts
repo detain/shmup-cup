@@ -236,7 +236,8 @@ describe('core/events — cue registries', () => {
     expect(SFX_CUES.PlayerDeath).toBe(8);
     expect(SFX_CUES.MegaCrash).toBe(15);
     expect(SFX_CUES.WarningSiren).toBe(20);
-    expect(SFX_CUE_NAMES.length).toBe(21);
+    expect(SFX_CUES.Clink).toBe(21);
+    expect(SFX_CUE_NAMES.length).toBe(22);
 
     expect(MUSIC_CUES.Silence).toBe(0);
     expect(MUSIC_CUES.Title).toBe(1);

@@ -16,8 +16,11 @@
  * its state array), the session status, hit-stop and rank, every player's fields, every
  * registered pool's live slots (fields in sorted name order, slots `0 … count-1` — the enemy
  * bullets and lasers of M1-09 among them), then the enemies (every
- * slot's state, and the numeric fields of each slot in use — M1-08) and the formation table
- * (the fields of every active slot, and each track's recorded count). Scripts are covered by
+ * slot's state, and the numeric fields of each slot in use — M1-08), the formation table
+ * (the fields of every active slot, and each track's recorded count), and the player weapons
+ * (M1-10: each player's loadout and option group — count, trail head, the whole trail and the
+ * option positions — the autofire timers, and the hit-cooldown table of every live piercing
+ * shot; the shots themselves are the `playerShots` pool). Scripts are covered by
  * their `wakeTick`; a coroutine's internal position cannot be hashed. Numbers are
  * hashed as their little-endian IEEE-754 double bytes, so the hash is identical on every engine
  * and platform, and two worlds that simulated the same inputs from the same seed hash equal.
@@ -38,7 +41,13 @@
  *
  * @module
  */
-import { EnemyState, MAX_FORMATIONS, type Enemy, type FormationTable } from '../enemies/index.js';
+import {
+  EnemyState,
+  MAX_ENEMIES,
+  MAX_FORMATIONS,
+  type Enemy,
+  type FormationTable,
+} from '../enemies/index.js';
 import { defineModule } from '../module-info.js';
 import { PLAYER_STATES } from '../player/index.js';
 import { RNG_STATE_WORDS } from '../rng/index.js';
@@ -78,7 +87,7 @@ export interface DebugCounters {
   enemies: number;
   /** Live enemy bullets (budget ~512). */
   enemyBullets: number;
-  /** Live player shots (budget 64). */
+  /** Live player shots (budget 96). */
   playerShots: number;
   /** Gameplay RNG draws this tick (determinism debugging). */
   rngCalls: number;
@@ -201,6 +210,41 @@ function mixEnemy(e: Enemy): void {
 }
 
 /**
+ * Mixes the player weapons' own state (loadouts, option groups, timers, the cooldown tables of
+ * live piercing shots) into {@link accumulator}.
+ *
+ * @param weapons - The World's weapon system.
+ */
+function mixWeapons(weapons: World['weapons']): void {
+  const loadouts = weapons.loadouts;
+  for (let p = 0; p < loadouts.length; p++) {
+    const l = loadouts[p];
+    mixNumber(l.main);
+    mixWord(l.missile ? 1 : 0);
+    mixNumber(l.options);
+    mixNumber(l.shield);
+    const g = weapons.options[p];
+    mixNumber(g.count);
+    mixNumber(g.stolen);
+    mixNumber(g.head);
+    mixArray(g.trailX, g.trailX.length);
+    mixArray(g.trailY, g.trailY.length);
+    mixArray(g.x, g.x.length);
+    mixArray(g.y, g.y.length);
+  }
+  mixArray(weapons.timers, weapons.timers.length);
+  const f = weapons.pool.fields;
+  const n = weapons.pool.count;
+  const cooldowns = weapons.cooldowns;
+  for (let i = 0; i < n; i++) {
+    const table = f.table[i];
+    if (table <= 0) continue;
+    const base = (table - 1) * MAX_ENEMIES;
+    for (let e = base; e < base + MAX_ENEMIES; e++) mixWord(cooldowns[e]);
+  }
+}
+
+/**
  * Mixes the active slots of the formation table into {@link accumulator}.
  *
  * @param f - The table.
@@ -296,6 +340,7 @@ export function hashWorld(world: World): number {
     if (e.state !== EnemyState.Free) mixEnemy(e);
   }
   mixFormations(world.enemies.formations);
+  mixWeapons(world.weapons);
   return accumulator[0];
 }
 

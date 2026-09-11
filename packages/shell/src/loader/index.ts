@@ -9,6 +9,7 @@
  * - {@link loadGameContent} validates the inlined `virtual:shmup-content` files: the core
  *   kinds through `loadContent()` (script ids checked against the engine's registry,
  *   `KNOWN_SCRIPT_IDS`, and enemies against their behaviours, `checkEnemyBehaviors` — M1-08;
+ *   weapons against theirs, `checkWeaponBehaviors` — M1-10;
  *   the engine's own sprites, `ENGINE_SPRITES`, interned into the sprite table — M1-09),
  *   every other kind through the **owner** registered for it
  *   (plan §3.5 — {@link DEFAULT_CONTENT_OWNERS}: `input-profiles` → `@shmup/input-web`,
@@ -31,6 +32,7 @@ import {
   ENGINE_SPRITES,
   KNOWN_SCRIPT_IDS,
   checkEnemyBehaviors,
+  checkWeaponBehaviors,
   defineModule,
   loadContent,
   type ContentFile,
@@ -167,9 +169,10 @@ export interface LoadGameContentOptions extends LoadContentOptions {
  * @remarks
  * `knownScripts` defaults to the core's `KNOWN_SCRIPT_IDS`, so content naming a behaviour the
  * engine does not have is an issue; `extraSprites` defaults to the core's `ENGINE_SPRITES`, so
- * the World can draw its enemy bullets and lasers (pass `extraSprites: []` to leave them out —
- * bullets then simulate but are not drawn). Issues are the core's (file and reference order),
- * then the behaviour checks of the enemies (`checkEnemyBehaviors`), then per foreign kind in
+ * the World can draw its enemy bullets, lasers and the Options (pass `extraSprites: []` to leave
+ * them out — they then simulate but are not drawn). Issues are the core's (file and reference order),
+ * then the behaviour checks of the enemies (`checkEnemyBehaviors`) and of the weapons
+ * (`checkWeaponBehaviors`), then per foreign kind in
  * first-seen order the owner's issues — or one issue per file when no owner claims the kind
  * (`"<path>: no loader for content kind \"<kind>\""`). Owners come from `options.owners`,
  * then {@link DEFAULT_CONTENT_OWNERS}. Never throws for bad data.
@@ -196,6 +199,7 @@ export function loadGameContent(
   });
   const issues: ValidationIssue[] = result.issues.slice();
   for (const issue of checkEnemyBehaviors(result.db)) issues.push(issue);
+  for (const issue of checkWeaponBehaviors(result.db)) issues.push(issue);
   const owners = options.owners ?? {};
   /**
    * Own-property test (a kind named like an `Object.prototype` member is never an owner).

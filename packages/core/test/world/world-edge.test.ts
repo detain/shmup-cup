@@ -307,9 +307,15 @@ describe('core/world edge cases — pools, grid and view', () => {
     const w = world();
     const a = w.pools.register('a', createSoaPool(4, { z: 'f64', a: 'u8', m: 'i32' }));
     const b = w.pools.register('b', createSoaPool(4, { x: 'f32' }));
-    expect(w.pools.entries.map((e) => e.name)).toEqual(['enemyBullets', 'enemyLasers', 'a', 'b']);
-    expect(w.pools.entries[2].arrays).toEqual([a.fields.a, a.fields.m, a.fields.z]);
-    expect(w.pools.entries[3].pool).toBe(b);
+    expect(w.pools.entries.map((e) => e.name)).toEqual([
+      'enemyBullets',
+      'enemyLasers',
+      'playerShots',
+      'a',
+      'b',
+    ]);
+    expect(w.pools.entries[3].arrays).toEqual([a.fields.a, a.fields.m, a.fields.z]);
+    expect(w.pools.entries[4].pool).toBe(b);
     a.alloc();
     a.alloc();
     b.alloc();
@@ -344,7 +350,7 @@ describe('core/world edge cases — pools, grid and view', () => {
     run(w, createInputSnapshot(), 100, Action.Up);
     expect(w.view).toBe(view);
     expect(w.view.batches).toBe(batches);
-    expect(w.view.batches[2]).toBe(batch);
+    expect(w.view.batches[4]).toBe(batch);
     expect(w.view.batches[0]).toBe(w.enemies.groundBatch);
     expect(w.view.camera).toBe(w.camera);
     expect(w.view.camera.x).toBe(100);

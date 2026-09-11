@@ -65,14 +65,18 @@ describe('shell/flight', () => {
       LayerId.BgMid,
       LayerId.GroundEnemies,
       LayerId.AirEnemies,
+      LayerId.PlayerShots,
+      LayerId.Player,
       LayerId.Player,
       LayerId.EnemyBullets,
     ]);
     expect(flight.world.batches.slice(2)).toEqual(game.world.view.batches);
     expect(flight.world.batches[2]).toBe(game.world.enemies.groundBatch);
     expect(flight.world.batches[3]).toBe(game.world.enemies.airBatch);
-    expect(flight.world.batches[4]).toBe(game.world.playerBatch);
-    expect(flight.world.batches[5]).toBe(game.world.bullets.batch);
+    expect(flight.world.batches[4]).toBe(game.world.weapons.batch); // M1-10
+    expect(flight.world.batches[5]).toBe(game.world.weapons.optionBatch);
+    expect(flight.world.batches[6]).toBe(game.world.playerBatch);
+    expect(flight.world.batches[7]).toBe(game.world.bullets.batch);
     expect(flight.world.lasers).toBe(game.world.bullets.laserView); // M1-09
   });
 
@@ -149,7 +153,7 @@ describe('shell/flight', () => {
     const { game, platform } = realGame();
     const flight = createFlightScene(game);
     for (let i = 0; i < 40; i++) game.step();
-    const player = flight.world.batches[4];
+    const player = flight.world.batches[6];
     expect(player).toBe(game.world.playerBatch);
     flight.update(game.renderFrame());
     const x = player.x[0];

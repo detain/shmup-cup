@@ -148,6 +148,27 @@ function referenceHash(w: World): number {
     }
     num(f.tracks[slot].recorded);
   }
+  // Player weapons (M1-10): loadouts and option groups, timers, live piercing shots' tables.
+  const weapons = w.weapons;
+  for (let p = 0; p < weapons.loadouts.length; p++) {
+    const l = weapons.loadouts[p];
+    num(l.main);
+    word(l.missile ? 1 : 0);
+    num(l.options);
+    num(l.shield);
+    const g = weapons.options[p];
+    num(g.count);
+    num(g.stolen);
+    num(g.head);
+    for (const array of [g.trailX, g.trailY, g.x, g.y]) for (const value of array) num(value);
+  }
+  for (const value of weapons.timers) num(value);
+  const shots = weapons.pool;
+  for (let i = 0; i < shots.count; i++) {
+    const table = shots.fields.table[i];
+    if (table <= 0) continue;
+    for (let e = 0; e < 64; e++) word(weapons.cooldowns[(table - 1) * 64 + e]);
+  }
   let h = FNV_OFFSET_BASIS;
   for (const b of bytes) h = Math.imul(h ^ b, FNV_PRIME) >>> 0;
   return h;
@@ -301,6 +322,14 @@ describe('core/debug hashWorld — what it ignores, odd values, purity', () => {
       moving: a.players[0].moving,
       stateTicks: a.players[0].stateTicks,
     });
+    // The option trail recorded B's movement too (M1-10).
+    const ga = a.weapons.options[0];
+    const gb = b.weapons.options[0];
+    gb.trailX.set(ga.trailX);
+    gb.trailY.set(ga.trailY);
+    gb.x.set(ga.x);
+    gb.y.set(ga.y);
+    gb.head = ga.head;
     expect(hashWorld(b)).toBe(hashWorld(a));
   });
 });

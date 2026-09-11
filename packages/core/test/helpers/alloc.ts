@@ -22,6 +22,11 @@
  * that allocates nothing reports (close to) zero; one object per iteration shows up as tens of
  * bytes per iteration.
  *
+ * With `attempts > 1` steps 2–4 repeat and the window with the fewest bytes is returned: V8 can
+ * still drop a hot function back to a lower tier during one window (the stage runner guards
+ * failed that way now and then on a loaded machine — hundreds of KB in one window, nothing in the
+ * next), whereas code that really allocates per iteration does so in every window.
+ *
  * @module
  */
 import { GCProfiler } from 'node:v8';
@@ -63,6 +68,8 @@ function requireGc(): () => void {
  *   what it allocates *for the test's sake* — the measurement counts allocations, retained or not.
  * @param iterations - Measured calls.
  * @param warmup - Unmeasured calls first (default: `min(iterations, 1000)`).
+ * @param attempts - Measured windows of `iterations` calls each (default 1); the steadiest one —
+ *   the fewest bytes — is returned.
  * @returns The measurement.
  * @throws {Error} Without `--expose-gc`.
  *
@@ -76,28 +83,39 @@ export function measureHeapGrowth(
   fn: (iteration: number) => void,
   iterations: number,
   warmup: number = Math.min(iterations, 1000),
+  attempts = 1,
 ): HeapGrowth {
   const gc = requireGc();
   // Clear what earlier code left behind first, so the warm-up re-optimises (see the module docs).
   gc();
   gc();
   for (let i = 0; i < warmup; i++) fn(i);
-  gc();
-  gc();
-  const profiler = new GCProfiler();
-  const before = process.memoryUsage().heapUsed;
-  profiler.start();
-  for (let i = 0; i < iterations; i++) fn(i);
-  const after = process.memoryUsage().heapUsed;
-  const result = profiler.stop();
-  let reclaimed = 0;
-  const stats = result?.statistics ?? [];
-  for (const entry of stats) {
-    const freed =
-      entry.beforeGC.heapStatistics.usedHeapSize - entry.afterGC.heapStatistics.usedHeapSize;
-    if (freed > 0) reclaimed += freed;
+  // The measured loop stays in this function, right after the warm-up loop: V8 optimises the
+  // warm-up on stack (OSR) with `fn` inlined, and the measured loop runs in that same code. In a
+  // separate, cold helper `fn` would run in a lower tier and box its doubles.
+  let best: HeapGrowth | null = null;
+  for (let attempt = 0; attempt < attempts || best === null; attempt++) {
+    gc();
+    gc();
+    const profiler = new GCProfiler();
+    const before = process.memoryUsage().heapUsed;
+    profiler.start();
+    for (let i = 0; i < iterations; i++) fn(i);
+    const after = process.memoryUsage().heapUsed;
+    const result = profiler.stop();
+    let reclaimed = 0;
+    const stats = result?.statistics ?? [];
+    for (const entry of stats) {
+      const freed =
+        entry.beforeGC.heapStatistics.usedHeapSize - entry.afterGC.heapStatistics.usedHeapSize;
+      if (freed > 0) reclaimed += freed;
+    }
+    const growth = after - before;
+    const bytes = Math.max(0, growth) + reclaimed;
+    if (best === null || bytes < best.bytes) {
+      best = { bytes, growth, collections: stats.length, bytesPerIteration: bytes / iterations };
+    }
+    if (bytes === 0) break;
   }
-  const growth = after - before;
-  const bytes = Math.max(0, growth) + reclaimed;
-  return { bytes, growth, collections: stats.length, bytesPerIteration: bytes / iterations };
+  return best;
 }

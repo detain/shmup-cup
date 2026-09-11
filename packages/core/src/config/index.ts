@@ -3,7 +3,8 @@
  *
  * **Responsibility.** The typed {@link GameConfig} that parameterises a run: internal
  * resolution, tick rate, seed and every *sim-affecting* option (difficulty, power-up
- * model, death penalty, lives, autofire, remote mode, the stage). Everything here is copied
+ * model, death penalty, lives, autofire and its intervals, remote mode, the stage, the starting
+ * loadout). Everything here is copied
  * into replay headers, so it must stay plain serialisable data.
  *
  * **Implements.**
@@ -12,8 +13,8 @@
  * - shmup_feat.md §15 (lives 1–5), §21 Options menu (sim-affecting subset)
  *
  * **Public API (implemented now).** {@link GameConfig}, {@link DEFAULT_GAME_CONFIG},
- * {@link resolveGameConfig}, the preset types and the screen layout constants
- * {@link HUD_BAR_HEIGHT}, {@link PLAYFIELD_Y}, {@link PLAYFIELD_W}, {@link PLAYFIELD_H}
+ * {@link resolveGameConfig}, the preset types ({@link StartingLoadout} …) and the screen layout
+ * constants {@link HUD_BAR_HEIGHT}, {@link PLAYFIELD_Y}, {@link PLAYFIELD_W}, {@link PLAYFIELD_H}
  * (decision D20: two 8-px HUD bars outside a 384×200 playfield).
  *
  * **Planned API.** `UserOptions` (audio/display/controls options that do *not* affect
@@ -39,6 +40,9 @@ export type DeathPenaltyPreset = 'arcade' | 'classic' | 'casual';
 
 /** Difficulty presets (shmup_feat.md §15). */
 export type DifficultyPreset = 'easy' | 'normal' | 'hard' | 'arcade';
+
+/** Starting loadouts of {@link GameConfig.loadout}. */
+export type StartingLoadout = 'default' | 'full';
 
 /** Parameters of one game session. All fields are sim-affecting and replay-recorded. */
 export interface GameConfig {
@@ -74,6 +78,19 @@ export interface GameConfig {
    * planned for Easy). A power of two from 4 to 1024 (the binary-angle circle).
    */
   readonly aimDirections: number;
+  /**
+   * Ticks between main-weapon shots under autofire (shmup_feat.md §4: configurable rate, replay
+   * recorded); a weapon's own `refireTicks` overrides it. 1–60.
+   */
+  readonly autofireInterval: number;
+  /** Ticks between missile launches under autofire (a weapon's `refireTicks` overrides it). 1–60. */
+  readonly missileInterval: number;
+  /**
+   * The loadout every player starts with (`core/weapons` `applyLoadoutPreset`): `'default'` (the
+   * basic shot) or `'full'` (speed 2, Missile, Laser, four Options — the web app's
+   * `?loadout=full` dev override).
+   */
+  readonly loadout: StartingLoadout;
 }
 
 /** Height in pixels of each HUD bar outside the playfield (decision D20). */
@@ -106,6 +123,9 @@ export const DEFAULT_GAME_CONFIG: GameConfig = Object.freeze({
   remoteMode: true,
   stage: null,
   aimDirections: 32,
+  autofireInterval: 4,
+  missileInterval: 10,
+  loadout: 'default',
 });
 
 /**
@@ -114,14 +134,16 @@ export const DEFAULT_GAME_CONFIG: GameConfig = Object.freeze({
  * @remarks
  * Validated ranges (all integers, inclusive): `internalWidth` / `internalHeight`
  * 16–4096, `tickRate` 1–1000, `maxTicksPerFrame` 1–60, `seed` 0–0xFFFFFFFF,
- * `startingLives` 1–5, `aimDirections` a power of two in 4–1024. `stage` must be `null` or a
- * non-empty string (whether the id exists is checked by `createWorld` against the content).
- * String presets and booleans are not validated at runtime — the types cover them.
+ * `startingLives` 1–5, `aimDirections` a power of two in 4–1024, `autofireInterval` /
+ * `missileInterval` 1–60. `stage` must be `null` or a non-empty string (whether the id exists is
+ * checked by `createWorld` against the content); `loadout` must be `'default'` or `'full'`.
+ * Other string presets and booleans are not validated at runtime — the types cover them.
  *
  * @param overrides - Fields to change.
  * @returns A frozen, validated config.
  * @throws RangeError when a numeric field is not an integer or is out of range,
- *   `aimDirections` is not a power of two, or `stage` is neither `null` nor a non-empty string.
+ *   `aimDirections` is not a power of two, `stage` is neither `null` nor a non-empty string, or
+ *   `loadout` is not a {@link StartingLoadout}.
  *
  * @example
  * ```ts
@@ -138,6 +160,8 @@ export function resolveGameConfig(overrides: Partial<GameConfig> = {}): GameConf
   requireInteger('seed', config.seed, 0, 0xffffffff);
   requireInteger('startingLives', config.startingLives, 1, 5);
   requireInteger('aimDirections', config.aimDirections, 4, 1024);
+  requireInteger('autofireInterval', config.autofireInterval, 1, 60);
+  requireInteger('missileInterval', config.missileInterval, 1, 60);
   if ((config.aimDirections & (config.aimDirections - 1)) !== 0) {
     throw new RangeError(
       `GameConfig.aimDirections must be a power of two, got ${config.aimDirections}`,
@@ -148,6 +172,10 @@ export function resolveGameConfig(overrides: Partial<GameConfig> = {}): GameConf
     throw new RangeError(
       `GameConfig.stage must be null or a non-empty stage id, got ${typeof stage === 'string' ? '""' : typeof stage}`,
     );
+  }
+  const loadout: unknown = config.loadout;
+  if (loadout !== 'default' && loadout !== 'full') {
+    throw new RangeError(`GameConfig.loadout must be 'default' or 'full', got ${String(loadout)}`);
   }
   return Object.freeze(config);
 }

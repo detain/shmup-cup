@@ -133,6 +133,8 @@ export const SFX_CUES = {
   PauseToggle: 19,
   /** The boss WARNING siren (shmup_feat.md §19). */
   WarningSiren: 20,
+  /** A player shot bounces off an armoured (invulnerable) enemy part (M1-10). */
+  Clink: 21,
 } as const;
 
 /** One of the {@link SFX_CUES} ids. */

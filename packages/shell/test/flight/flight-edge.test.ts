@@ -150,8 +150,8 @@ describe('shell/flight edge cases', () => {
     expect(flight.spriteNames).toEqual(FLIGHT_SPRITES);
     flight.update(game.renderFrame());
     expect(flight.world.batches[0].spriteId[0]).toBe(0);
-    expect(flight.world.batches[4]).toBe(game.world.playerBatch);
-    expect(flight.world.batches[4].count).toBe(0);
+    expect(flight.world.batches[6]).toBe(game.world.playerBatch);
+    expect(flight.world.batches[6].count).toBe(0);
   });
 
   it('allocates nothing per displayed frame', () => {

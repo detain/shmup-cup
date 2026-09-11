@@ -5,8 +5,9 @@
  * with their kill tracking, the behaviour coroutines and movers, the off-screen / settle rules,
  * hit points, hit flash, deaths (explosion events, drops, formation bonus), enemy–player contact
  * and the sprite mirror are implemented (plan M1-08); behaviours fire bullets and lasers through
- * the `ScriptApi` fire primitives (plan M1-09). Rank modifiers and revenge bullets arrive with
- * M2-01, the Option Hunter with M2-04; shots start damaging enemies in M1-10.
+ * the `ScriptApi` fire primitives (plan M1-09); the player shots of `core/weapons` damage them
+ * (plan M1-10). Rank modifiers and revenge bullets arrive with M2-01, the Option Hunter with
+ * M2-04.
  *
  * **Responsibility.** Enemies are pooled class instances ({@link Enemy}, {@link MAX_ENEMIES}
  * slots — the plan's "`Pool` (64)") composed of a mover (`core/patterns`), a hurtbox, hit points
@@ -21,8 +22,8 @@
  *   animation, on-screen / settle / despawn rules;
  * - phase 6 (collision): hurtboxes go into the World's grid (ids = slots); the players' hurt
  *   circles against the hurtboxes → `playerHit(Contact)`;
- * - phase 7 (damage): {@link EnemySystem.damage} (shots from M1-10) → deaths, drops, formation
- *   bonus;
+ * - phase 7 (damage): {@link EnemySystem.damage} (the player shots, `core/weapons`) → deaths,
+ *   drops, formation bonus;
  * - phase 8 (removal): removed slots are freed;
  * - phase 9 (fx): the ground / air sprite batches are refilled.
  *
@@ -613,6 +614,8 @@ export interface EnemyOutcomes {
   readonly killY: Float64Array;
   /** Score of the killed enemy (scoring: M1-12). */
   readonly killScore: Float64Array;
+  /** Player slot credited with each kill (the shot's owner, M1-10), -1 = nobody (Mega Crash …). */
+  readonly killBy: Int8Array;
   /** Drops this tick (enemy drops, then completed formations, in kill order). */
   readonly dropCount: number;
   /** {@link DropKind} per drop. */
@@ -729,37 +732,40 @@ export interface EnemySystem {
    */
   collidePlayers(grid: SpatialGrid): void;
   /**
-   * Damages an enemy (phase 7; shots from M1-10). Starts the hit flash; at 0 hp the enemy dies:
-   * explosion events, its drop, formation accounting.
+   * Damages an enemy (phase 7; the player shots of `core/weapons`). Starts the hit flash; at 0
+   * hp the enemy dies: explosion events, its drop, formation accounting.
    *
    * @remarks
    * Ignored (→ `false`, no flash) for a slot that is not `Live`, a ghost leader and an
-   * `Invulnerable` enemy. A hit that leaves hit points pushes `Sfx EnemyHit`; the killing hit
-   * goes through {@link EnemySystem.kill}. Any amount counts, 0 included (it flashes).
+   * `Invulnerable` enemy (the weapons answer armour with a `Clink` themselves). A hit that leaves
+   * hit points pushes `Sfx EnemyHit`; the killing hit goes through {@link EnemySystem.kill}
+   * (credited to `by`). Any amount counts, 0 included (it flashes).
    *
    * @param enemy - The enemy.
    * @param amount - Damage.
+   * @param by - Player slot credited with the kill (default -1 = nobody).
    * @returns `true` when it died from this hit.
    *
    * @example
    * ```ts
-   * if (world.enemies.damage(enemy, weapon.damage)) shotsThatKilled++;
+   * if (world.enemies.damage(enemy, weapon.damage, 0)) shotsThatKilled++;
    * ```
    */
-  damage(enemy: Enemy, amount: number): boolean;
+  damage(enemy: Enemy, amount: number, by?: number): boolean;
   /**
    * Kills an enemy outright (Mega Crash, debug): as if its hit points ran out.
    *
    * @remarks
-   * Records the kill in {@link EnemySystem.outcomes} (spec, position, score), pushes the
+   * Records the kill in {@link EnemySystem.outcomes} (spec, position, score, killer), pushes the
    * explosion `Sfx` + `Particles` events of its spec's size, adds its own drop, then resolves
    * its formation membership (killed count, last-kill position, completion check — which may add
    * the formation's drop and `FormationBonus` in the same tick). The slot is freed in phase 8.
    *
    * @param enemy - The enemy.
+   * @param by - Player slot credited with the kill (default -1 = nobody).
    * @returns `true` when it was alive (and not a ghost).
    */
-  kill(enemy: Enemy): boolean;
+  kill(enemy: Enemy, by?: number): boolean;
   /** Phase 8: frees the slots removed this tick. */
   flush(): void;
   /** Removes every enemy and formation at once (checkpoint restart). */
@@ -815,6 +821,8 @@ class OutcomeLists implements EnemyOutcomes {
   readonly killY = new Float64Array(OUTCOME_CAPACITY);
   /** See {@link EnemyOutcomes.killScore}. */
   readonly killScore = new Float64Array(OUTCOME_CAPACITY);
+  /** See {@link EnemyOutcomes.killBy}. */
+  readonly killBy = new Int8Array(OUTCOME_CAPACITY);
   /** See {@link EnemyOutcomes.dropCount}. */
   dropCount = 0;
   /** See {@link EnemyOutcomes.dropKind}. */
@@ -1817,7 +1825,7 @@ class EnemySystemImpl implements EnemySystem {
   }
 
   /** See {@link EnemySystem.damage}. */
-  damage(enemy: Enemy, amount: number): boolean {
+  damage(enemy: Enemy, amount: number, by = -1): boolean {
     if (enemy.state !== EnemyState.Live) return false;
     const flags = enemy.flags;
     if ((flags & (EnemyFlag.Ghost | EnemyFlag.Invulnerable)) !== 0) return false;
@@ -1827,11 +1835,11 @@ class EnemySystemImpl implements EnemySystem {
       this.host.events.push(SimEventKind.Sfx, SFX_CUES.EnemyHit, enemy.x, enemy.y, 0);
       return false;
     }
-    return this.kill(enemy);
+    return this.kill(enemy, by);
   }
 
   /** See {@link EnemySystem.kill}. */
-  kill(enemy: Enemy): boolean {
+  kill(enemy: Enemy, by = -1): boolean {
     if (enemy.state !== EnemyState.Live || (enemy.flags & EnemyFlag.Ghost) !== 0) return false;
     const specs = this.specs;
     const spec = enemy.specIndex;
@@ -1844,6 +1852,7 @@ class EnemySystemImpl implements EnemySystem {
       o.killX[k] = x;
       o.killY[k] = y;
       o.killScore[k] = specs.score[spec];
+      o.killBy[k] = by;
       o.killCount = k + 1;
     }
     const size = specs.explosion[spec];

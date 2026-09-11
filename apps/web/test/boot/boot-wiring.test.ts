@@ -18,6 +18,7 @@ import {
   bootWebApp,
   contentStageIds,
   inputOverridesFromSearch,
+  loadoutFromSearch,
   stageFromSearch,
   type WebAppResources,
 } from '../../src/boot/index.js';
@@ -358,6 +359,18 @@ describe('web/boot bootWebApp wiring', () => {
     expect(app.game.world.camera.x).toBeGreaterThan(20);
   });
 
+  it('starts fully powered with ?loadout=full (M1-10), the default loadout otherwise', async () => {
+    win.location.search = '?loadout=full';
+    const { app } = await boot();
+    expect(app.game.config.loadout).toBe('full');
+    expect(app.game.world.weapons.loadouts[0].options).toBe(4);
+    app.stop();
+    win = new FakeWindow();
+    const plain = await boot();
+    expect(plain.app.game.config.loadout).toBe('default');
+    expect(plain.app.game.world.weapons.loadouts[0].options).toBe(0);
+  });
+
   it('warns about an unknown ?stage= and flies in open space', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     win.location.search = '?stage=nope';
@@ -439,6 +452,18 @@ describe('web/boot bootWebApp wiring', () => {
     expect(fakes.renderer.sizes).toEqual([]);
     expect(fakes.audioContext.resumes).toBe(0);
     expect(app.input.keyboard.held).toBe(0);
+  });
+});
+
+describe('web/boot loadoutFromSearch', () => {
+  it('reads the last known ?loadout= value (M1-10 dev override)', () => {
+    expect(loadoutFromSearch('?loadout=full')).toBe('full');
+    expect(loadoutFromSearch('stage=test-range&loadout=full')).toBe('full');
+    expect(loadoutFromSearch('?loadout=full&loadout=default')).toBe('default');
+    expect(loadoutFromSearch('?loadout=full&loadout=bogus')).toBe('full');
+    expect(loadoutFromSearch('?loadout=')).toBeNull();
+    expect(loadoutFromSearch('?loadout')).toBeNull();
+    expect(loadoutFromSearch('')).toBeNull();
   });
 });
 

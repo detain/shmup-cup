@@ -8,7 +8,8 @@
  *
  * This entry point exports the implemented (and partial) public API. Placeholder modules
  * under `src/<module>/` (weapons, bosses, scoring, …) are exported here as they get
- * implemented — `bullets` and `rank` joined with plan step M1-09.
+ * implemented — `bullets` and `rank` joined with plan step M1-09, `weapons` and `options` with
+ * M1-10.
  *
  * @packageDocumentation
  */
@@ -119,6 +120,7 @@ export {
   type DifficultyPreset,
   type GameConfig,
   type PowerUpMode,
+  type StartingLoadout,
 } from './config/index.js';
 
 export {
@@ -409,13 +411,57 @@ export {
   DEFAULT_BEHAVIORS,
   DEFAULT_BEHAVIOR_DEFS,
   KNOWN_SCRIPT_IDS,
-  WEAPON_SCRIPT_IDS,
   checkEnemyBehaviors,
   createBehaviorRegistry,
   defineBehavior,
   type BehaviorDef,
   type BehaviorRegistry,
 } from './behaviors/index.js';
+
+export {
+  MAX_OPTIONS,
+  OPTION_ANIM_TICKS,
+  OPTION_SPACING,
+  OPTION_SPRITE,
+  OPTION_TRAIL_CAPACITY,
+  OptionGroup,
+  createOptionGroup,
+  type OptionFormation,
+} from './options/index.js';
+
+export {
+  DEFAULT_WEAPON_PRESET,
+  FULL_LOADOUT_SPEED_LEVEL,
+  LASER_SEGMENT_LENGTH,
+  Loadout,
+  MAX_PLAYER_SHOTS,
+  MAX_SHOOTERS,
+  MAX_SHOT_HITS,
+  MainWeapon,
+  PIERCE_TABLES,
+  SFX_RATE_TICKS,
+  SHOOTERS_PER_PLAYER,
+  SHOT_BATCH_CAPACITY,
+  SHOT_CULL_MARGIN,
+  SHOT_SCHEMA,
+  ShotFlag,
+  ShotKind,
+  WEAPON_BEHAVIOR_KINDS,
+  WEAPON_BEHAVIOR_PARAMS,
+  WEAPON_BEHAVIOR_SLOTS,
+  WEAPON_ROLE_COUNT,
+  WEAPON_SCRIPT_IDS,
+  WeaponRole,
+  applyLoadoutPreset,
+  checkWeaponBehaviors,
+  createWeaponSystem,
+  resolveRoleWeapons,
+  resolveWeaponPreset,
+  type ShotSchema,
+  type WeaponBehaviorId,
+  type WeaponHost,
+  type WeaponSystem,
+} from './weapons/index.js';
 
 export {
   ENGINE_SPRITES,

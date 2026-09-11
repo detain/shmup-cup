@@ -1127,6 +1127,57 @@ the browser dev app and as a Tizen 5.5 bundle.
   slopes and dies at walls, options bunch when idle during scrolling and spread when moving, grid-based hits equal a
   brute-force reference, score/explosion events on kills, allocation guard with full loadout.
 - **Refs:** `shmup_feat.md` §7A (Type A), §7C, §8 (standard Option), §4 (autofire).
+- **As built:**
+  - **Content.** `type-a.weapons.json` lost its `refireTicks` so the new sim options
+    `GameConfig.autofireInterval` (4) and `missileInterval` (10, both 1–60) drive Type A; a
+    weapon's own `refireTicks` still overrides them. `shot.double` now draws `shots/double` (its
+    angled shot; the forward shot of the pair is drawn, offset and sized like the main shot).
+    Behaviour tunables live in `params` with defaults (`WEAPON_BEHAVIOR_PARAMS`: `ox` / `oy`
+    spawn offset, `hw` / `hh` hitbox, `angle` for the Double's climb and the missile's fall,
+    `maxLength` / `hitCooldownTicks`, `slideSpeed`, `frames`). New `checkWeaponBehaviors`
+    (unknown params, a behaviour in the wrong slot, a non-weapon behaviour) runs in the shell's
+    loader and `pnpm content:check`. Roles come from preset `type-a` (else the first preset, else
+    the first weapon of each slot); **content without weapons fires nothing** (no built-in
+    arsenal). `WEAPON_SCRIPT_IDS` moved to `core/weapons` (`core/behaviors` re-exports it).
+  - **Config / loadout.** `GameConfig.loadout: 'default' | 'full'` (validated) is applied to every
+    player at world creation (`applyLoadoutPreset`); `'full'` = speed level 2, Missile, Laser,
+    four Options (shields: M1-11). `Loadout` is a class `{ main: MainWeapon, missile, options,
+    shield }`; the speed level stays `PlayerShip.speedLevel`. Firing needs no button when
+    `autofire || remoteMode` (remote mode forces autofire, as `GameConfig` documents).
+  - **Shots.** `World.weapons` (`createWeaponSystem`) registers `playerShots` (96). Shooter id =
+    `player × 5 + k` (k 0 = ship, 1–4 = Options); caps count per shooter and role, recounted
+    at the start of phase 2; autofire timers per shooter (main, missile) restart only when
+    something fired. Shots ride the camera like enemy bullets. The laser stores its head `x` and
+    `length`, follows its shooter's `y` while that shooter is in play, is stopped by terrain at
+    its head (then shrinks away), hits with its whole tail→head box and is drawn as 8-px
+    `shots/laser` segments (a 192-slot `PlayerShots` mirror batch). The missile lands when its
+    bottom pixel meets terrain (a solid pixel at the scan start = a wall → it dies), slides
+    screen-relative at `slideSpeed` re-snapping with `findFloor` (steps of `ceil(slideSpeed) + 1`
+    px up or down), dies at a higher step, falls again over a cliff.
+  - **Hits.** Phase 6 `collide(grid)` records hits (non-piercing: the overlapping enemy with the
+    lowest slot; piercing: every overlapping enemy with a zero cooldown, armour always, in slot
+    order), phase 7 `applyHits()` applies them; a hit on an enemy already killed this tick is
+    skipped (the shot flies on). The per-shot cooldown tables are a pool of `PIERCE_TABLES`
+    (32) 64-entry `Uint8Array` tables (shot field `table` = index + 1) instead of one per shot
+    slot; a piercing shot with no free table is not fired. `EnemySystem.damage` / `kill` gained
+    `by` (the player credited) → `EnemyOutcomes.killBy`. New `SFX_CUES.Clink` (21); SFX are
+    rate-limited per cue and pushed at whole pixels (fractional event arguments were boxed — the
+    allocation guard caught it).
+  - **Options.** `core/options` `OptionGroup` (class: trail ring buffer of 49 screen-space
+    entries, `head`, `count`, positions). The trail also records every tick of a fly-in
+    (`entering` / `respawning` move the ship without input) and is reset on its first tick;
+    options hide while the ship is not `alive`. Drawn from their own batch on `LayerId.Player`
+    before the ships; `OPTION_SPRITE` (`options/orb`) joined `ENGINE_SPRITES`.
+  - **World / hash / apps.** Batches: ground, air, player shots, Options, ships, enemy bullets.
+    `hashWorld` covers loadouts, option groups, autofire timers and the cooldown tables of live
+    piercing shots. `apps/web` reads `?loadout=full` (`loadoutFromSearch`).
+  - **Tests infrastructure.** `measureHeapGrowth` gained `attempts` (the steadiest of N measured
+    windows): the stage-runner allocation guards already failed now and then on `master` (one
+    window in a lower V8 tier); they use 3. The measured loop must stay in the same function as
+    the warm-up loop (V8 optimises it on stack with `fn` inlined — moved into a helper, every
+    guard allocated). `enemies-runtime` integration tests that assume "nobody shoots" now turn
+    autofire off; a new one checks the autofiring KESTREL kills test-range enemies. New
+    `test/e2e/weapons.spec.ts`.
 
 ### M1-11 — Power meter, capsules, Force Field & Mega Crash
 

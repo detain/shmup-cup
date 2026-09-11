@@ -11,7 +11,6 @@
       "cap": 2,
       "pierce": false,
       "sprite": "shots/basic",
-      "refireTicks": 4,
       "sfx": "PlayerShot"
     },
     {
@@ -22,8 +21,7 @@
       "speed": 7,
       "cap": 2,
       "pierce": false,
-      "sprite": "shots/basic",
-      "refireTicks": 4,
+      "sprite": "shots/double",
       "sfx": "PlayerShot",
       "params": { "angle": 128 }
     },
@@ -36,7 +34,6 @@
       "cap": 1,
       "pierce": true,
       "sprite": "shots/laser",
-      "refireTicks": 4,
       "sfx": "PlayerShot",
       "params": { "maxLength": 64, "hitCooldownTicks": 6 }
     },
@@ -49,7 +46,6 @@
       "cap": 1,
       "pierce": false,
       "sprite": "shots/missile",
-      "refireTicks": 10,
       "sfx": "PlayerMissile",
       "params": { "slideSpeed": 3 }
     }

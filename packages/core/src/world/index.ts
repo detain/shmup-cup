@@ -57,6 +57,14 @@
  * bullet speeds and fire intervals by it. The engine's own sprites (bullets, laser beam) are
  * {@link ENGINE_SPRITES} — hosts load content with `extraSprites: ENGINE_SPRITES` so they draw.
  *
+ * **Player weapons (M1-10).** {@link World.weapons} (`core/weapons`, Options from `core/options`)
+ * owns the `playerShots` pool, one loadout (`config.loadout` at creation) and one option group per
+ * player: after the ships move in phase 2 the option trails advance and every shooter (ship and
+ * Options) autofires; shots move in phase 5 (after the enemies and bullets), find their hits
+ * through the grid in phase 6 and apply them in phase 7 (`EnemySystem.damage`); the view carries
+ * the `LayerId.PlayerShots` batch and the Options' batch (below the ships). The Option sprite is
+ * one of the {@link ENGINE_SPRITES}.
+ *
  * **Zero allocation.** Everything is allocated by {@link createWorld}; {@link stepWorld} and the
  * systems only write numbers into existing objects and typed arrays.
  *
@@ -89,6 +97,8 @@ import { BULLET_SPRITES, createBulletSystem, type BulletSystem } from '../bullet
 import type { ContentDb, PlayerShipSpec, StageMusicEvent, StageSpec } from '../data/index.js';
 import { createDebugFlags, type DebugFlags } from '../debug/index.js';
 import { createEnemySystem, type EnemyBehaviorLookup, type EnemySystem } from '../enemies/index.js';
+import { OPTION_SPRITE } from '../options/index.js';
+import { applyLoadoutPreset, createWeaponSystem, type WeaponSystem } from '../weapons/index.js';
 import { SimEventKind, createEventQueue, type EventQueue } from '../events/index.js';
 import { defineModule } from '../module-info.js';
 import {
@@ -242,6 +252,8 @@ export interface World {
   readonly enemies: EnemySystem;
   /** Enemy bullets and lasers (`core/bullets`). */
   readonly bullets: BulletSystem;
+  /** The players' weapons, loadouts and Options (`core/weapons`, `core/options`). */
+  readonly weapons: WeaponSystem;
   /** The session's rank (`core/rank`; constant in M1: the difficulty's base). */
   rank: number;
   /** What the renderer draws: live references, refreshed at the end of every tick. */
@@ -347,7 +359,7 @@ const inputSystem: WorldSystem = (world, input) => {
 };
 
 /**
- * Phase 2: moves the ships.
+ * Phase 2: moves the ships, then the weapons follow them: option trails, autofire.
  *
  * @param world - The world.
  */
@@ -356,6 +368,7 @@ const playersSystem: WorldSystem = (world) => {
   for (let i = 0; i < players.length; i++) {
     updatePlayer(players[i], world.ship, world.intents[i], world.camera);
   }
+  world.weapons.updatePlayers();
 };
 
 /**
@@ -391,19 +404,21 @@ const scriptsSystem: WorldSystem = (world) => {
 };
 
 /**
- * Phase 5: enemy movers and the off-screen rules, then enemy bullets and lasers (shots and items
- * join in M1-10 / M1-11).
+ * Phase 5: enemy movers and the off-screen rules, then enemy bullets and lasers, then the player
+ * shots (items join in M1-11).
  *
  * @param world - The world.
  */
 const movementSystem: WorldSystem = (world) => {
   world.enemies.move();
   world.bullets.update();
+  world.weapons.update();
 };
 
 /**
- * Phase 6: rebuilds the broad-phase grid around the camera view; the overlap tests of M1-08 …
- * M1-11 insert their boxes and query it here.
+ * Phase 6: rebuilds the broad-phase grid around the camera view with the enemy hurtboxes, then
+ * the overlap tests: enemies × players (contact), player shots × enemies (hits found here, applied
+ * in phase 7), bullets / lasers × players, terrain × players.
  *
  * @remarks
  * The grid origin is the camera position floored to whole pixels: it only decides which cell a
@@ -421,6 +436,7 @@ const collisionSystem: WorldSystem = (world) => {
   enemies.insertColliders(grid);
   grid.build();
   enemies.collidePlayers(grid);
+  world.weapons.collide(grid);
   world.bullets.collidePlayers();
   const terrain = world.terrain;
   if (terrain !== null) terrainSystem(world, terrain);
@@ -453,12 +469,13 @@ function terrainSystem(world: World, terrain: TerrainMap): void {
 }
 
 /**
- * Phase 7: hits, deaths, drops, score, respawn (M1-10 … M1-12). Empty slot.
+ * Phase 7: applies the player shots' hits (damage, deaths, drops, kill records — `core/weapons`);
+ * score and respawn join in M1-12.
  *
- * @param _world - The world.
+ * @param world - The world.
  */
-const damageSystem: WorldSystem = (_world) => {
-  // Filled by M1-10 onwards.
+const damageSystem: WorldSystem = (world) => {
+  world.weapons.applyHits();
 };
 
 /**
@@ -554,22 +571,24 @@ export function resolveWorldStage(config: GameConfig, content: ContentDb): Stage
 }
 
 /** A {@link World} while {@link createWorld} assembles it (the stage fields are set last). */
-type WorldUnderConstruction = Omit<World, 'stage' | 'enemies' | 'bullets'> & {
+type WorldUnderConstruction = Omit<World, 'stage' | 'enemies' | 'bullets' | 'weapons'> & {
   /** See {@link World.stage}. */
   stage: StageRunner | null;
   /** See {@link World.enemies}. */
   enemies: EnemySystem;
   /** See {@link World.bullets}. */
   bullets: BulletSystem;
+  /** See {@link World.weapons}. */
+  weapons: WeaponSystem;
 };
 
 /**
  * The sprites the engine draws on its own, whatever the content: the enemy bullet kinds and the
- * laser beam (`core/bullets` `BULLET_SPRITES`). Hosts pass it as `loadContent`'s
- * `extraSprites` (the shell's loader does by default) so the World can resolve their sprite ids
- * and `pnpm content:check` verifies them against the atlas.
+ * laser beam (`core/bullets` `BULLET_SPRITES`), then the Option (`core/options` `OPTION_SPRITE`).
+ * Hosts pass it as `loadContent`'s `extraSprites` (the shell's loader does by default) so the
+ * World can resolve their sprite ids and `pnpm content:check` verifies them against the atlas.
  */
-export const ENGINE_SPRITES: readonly string[] = BULLET_SPRITES;
+export const ENGINE_SPRITES: readonly string[] = Object.freeze([...BULLET_SPRITES, OPTION_SPRITE]);
 
 /**
  * Creates a gameplay session: RNG streams from `config.seed`, the ship from `content`, the stage
@@ -647,13 +666,26 @@ export function createWorld(
     // Replaced right below: the enemy and bullet systems read the World they belong to.
     enemies: null as unknown as EnemySystem,
     bullets: null as unknown as BulletSystem,
+    weapons: null as unknown as WeaponSystem,
     rank: computeRank(difficultyRankInputs(config.difficulty)),
     view,
   };
   world.bullets = createBulletSystem(world);
   world.bullets.setRank(world.rank);
   world.enemies = createEnemySystem(world, options.behaviors ?? DEFAULT_BEHAVIORS, stageSpec);
-  batches.push(world.enemies.groundBatch, world.enemies.airBatch, playerBatch, world.bullets.batch);
+  world.weapons = createWeaponSystem(world);
+  for (let slot = 0; slot < MAX_PLAYERS; slot++) {
+    applyLoadoutPreset(world.weapons.loadouts[slot], players[slot], config.loadout);
+  }
+  // Same-layer batches draw in list order: the Options below the ships.
+  batches.push(
+    world.enemies.groundBatch,
+    world.enemies.airBatch,
+    world.weapons.batch,
+    world.weapons.optionBatch,
+    playerBatch,
+    world.bullets.batch,
+  );
   view.lasers = world.bullets.laserView;
   if (stageSpec !== null) {
     world.stage = createStageRunner(stageSpec, createWorldStageHooks(world), camera);
@@ -690,10 +722,11 @@ function createWorldStageHooks(world: WorldUnderConstruction): StageHooks {
       }
       // warning / boss → bosses (M1-13).
     },
-    /** A checkpoint restart: empties every registered pool and the enemy system. */
+    /** A checkpoint restart: empties every registered pool, the enemy and weapon systems. */
     clear() {
       world.pools.clearAll();
       world.enemies.clear();
+      world.weapons.clear();
     },
   };
 }
@@ -723,8 +756,8 @@ export function stepWorld(world: World, input: Readonly<InputSnapshot>): void {
 }
 
 /**
- * Refreshes the object-based mirror batches of {@link World.view} (the enemies and the player
- * ships) and scrolls the parallax bands with the camera. Runs at the end of every tick (phase 9)
+ * Refreshes the mirror batches of {@link World.view} (the enemies, the player shots and Options,
+ * the player ships) and scrolls the parallax bands with the camera. Runs at the end of every tick (phase 9)
  * and once at creation. Never allocates.
  *
  * @remarks
@@ -737,6 +770,7 @@ export function syncWorldView(world: World): void {
   const parallax = world.parallax;
   if (parallax !== null) updateParallaxView(parallax, world.camera.x, world.camera.y);
   world.enemies.sync();
+  world.weapons.sync();
   const batch = world.playerBatch;
   batch.count = 0;
   const spec = world.ship;

@@ -25,6 +25,24 @@ describe('test helper measureHeapGrowth', () => {
     expect(growth.bytesPerIteration).toBeGreaterThan(10);
   });
 
+  it('keeps the steadiest of several windows, but still sees steady allocation', () => {
+    const keep: object[] = [];
+    const growth = measureHeapGrowth(
+      () => {
+        keep.length = 0;
+        keep.push({ a: 1 });
+      },
+      10_000,
+      1000,
+      3,
+    );
+    expect(growth.bytesPerIteration).toBeGreaterThan(10);
+    let calls = 0;
+    const quiet = measureHeapGrowth(() => void calls++, 1000, 10, 3);
+    expect(quiet.bytes).toBeLessThan(64 * 1024);
+    expect(calls).toBeGreaterThanOrEqual(1010);
+  });
+
   it('counts garbage that a collection already reclaimed', () => {
     const growth = measureHeapGrowth(() => {
       // ~1 MB per call: several scavenges must run during the loop.

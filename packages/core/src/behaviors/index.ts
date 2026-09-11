@@ -51,6 +51,7 @@
  * @module
  */
 import { BulletKind } from '../bullets/index.js';
+import { WEAPON_SCRIPT_IDS } from '../weapons/index.js';
 import type { ContentDb, ValidationIssue } from '../data/index.js';
 import type { EnemyBehavior, EnemyBehaviorLookup, ScriptApi } from '../enemies/index.js';
 import { EnemyFlag } from '../enemies/index.js';
@@ -343,20 +344,11 @@ export const DEFAULT_BEHAVIORS: BehaviorRegistry = createBehaviorRegistry(DEFAUL
 export const BEHAVIOR_IDS: readonly string[] = DEFAULT_BEHAVIORS.ids;
 
 /**
- * The weapon behaviour ids of the Type A arsenal (plan M1-10: `shot.straight`, `shot.double`,
- * `laser.beam`, `missile.groundSlide`) that `content/weapons/` names.
- *
- * @remarks
- * Weapon and enemy behaviours share the content's one script table, so script-id validation
- * needs these before the weapons of M1-10 implement them; that step moves the list next to its
- * weapon behaviour registry in `core/weapons`.
+ * The weapon behaviour ids (`core/weapons` `WEAPON_SCRIPT_IDS`: `laser.beam`,
+ * `missile.groundSlide`, `shot.double`, `shot.straight`), re-exported here next to
+ * {@link KNOWN_SCRIPT_IDS}: weapon and enemy behaviours share the content's one script table.
  */
-export const WEAPON_SCRIPT_IDS: readonly string[] = Object.freeze([
-  'laser.beam',
-  'missile.groundSlide',
-  'shot.double',
-  'shot.straight',
-]);
+export { WEAPON_SCRIPT_IDS };
 
 /**
  * Every script id the engine knows: the enemy behaviours plus {@link WEAPON_SCRIPT_IDS} — both

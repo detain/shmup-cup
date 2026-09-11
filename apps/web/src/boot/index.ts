@@ -12,7 +12,9 @@
  * suspends audio. The default scene is free flight (the KESTREL under keyboard / gamepad
  * control, plan M1-06); `?stage=<id>` runs that stage instead of open space (scrolling camera,
  * terrain, parallax — plan M1-07; `?stage=test-range` is the dev stage); `?scene=showcase`
- * shows the M1-04 sprite showcase and `?scene=calibration` the test pattern.
+ * shows the M1-04 sprite showcase and `?scene=calibration` the test pattern; `?loadout=full`
+ * starts fully powered — speed 2, Missile, Laser, four Options (dev override, plan M1-10;
+ * {@link loadoutFromSearch}).
  *
  * **Input profiles** (decisions D13–D15). The `input-profiles` content is parsed into a
  * registry during boot. Keys use `?profile=<id>` when given (dev override — e.g.
@@ -26,12 +28,12 @@
  *
  * **Public API.** {@link bootWebApp}, {@link WebApp}, {@link WebAppResources},
  * {@link inputOverridesFromSearch}, {@link InputOverrides}, {@link stageFromSearch},
- * {@link contentStageIds}.
+ * {@link contentStageIds}, {@link loadoutFromSearch}.
  *
  * @module
  */
 import { createWebAudio, type WebAudio } from '@shmup/audio-web';
-import { defineModule, type ContentFile, type Game } from '@shmup/core';
+import { defineModule, type ContentFile, type Game, type StartingLoadout } from '@shmup/core';
 import {
   DEFAULT_GAMEPAD_PROFILE_ID,
   DEFAULT_KEYBOARD_PROFILE_ID,
@@ -187,6 +189,30 @@ export function stageFromSearch(search: string): string | null {
 }
 
 /**
+ * Reads the `?loadout=<preset>` dev parameter (the last non-empty value wins).
+ *
+ * @param search - `location.search` (with or without the leading `?`).
+ * @returns `'full'` or `'default'` when asked for, `null` when absent, empty or unknown (the
+ *   session then starts with the default loadout).
+ *
+ * @example
+ * ```ts
+ * loadoutFromSearch('?stage=test-range&loadout=full'); // → 'full'
+ * ```
+ */
+export function loadoutFromSearch(search: string): StartingLoadout | null {
+  const query = search.charAt(0) === '?' ? search.slice(1) : search;
+  let loadout: StartingLoadout | null = null;
+  for (const pair of query.split('&')) {
+    const eq = pair.indexOf('=');
+    if (eq < 0 || pair.slice(0, eq) !== 'loadout') continue;
+    const value = pair.slice(eq + 1);
+    if (value === 'full' || value === 'default') loadout = value;
+  }
+  return loadout;
+}
+
+/**
  * The ids of every `stage` file among the content files (before validation — for choosing a
  * stage; the shell validates the content itself).
  *
@@ -300,7 +326,7 @@ export async function bootWebApp(
         webgl2: renderer.webGLVersion === 2,
       });
     },
-    gameConfig: { remoteMode: false, stage },
+    gameConfig: { remoteMode: false, stage, loadout: loadoutFromSearch(search) ?? 'default' },
     scene: sceneFromSearch(search),
     audioUnlock: 'gesture',
   });
