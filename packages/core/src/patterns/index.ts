@@ -640,7 +640,8 @@ function moveWaypoint(body: MoverBody, ctx: MoverContext): void {
       body.vy = dy;
       body.x = tx;
       body.y = ty;
-      body.s0 = 1;
+      // Every hold tick is a tick in phase 1, so `hold` 0 skips it (leaves on the next tick).
+      body.s0 = body.m3 > 0 ? 1 : 2;
       body.s1 = 0;
       return;
     }

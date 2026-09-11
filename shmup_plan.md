@@ -997,6 +997,9 @@ the browser dev app and as a Tizen 5.5 bundle.
     `enemies/hatch`. The e2e stage test compares the terrain 30 frames apart (was 60): with the
     enemies drawn, parallel e2e workers ran up to 4 ticks per frame and the scroll left the
     test's 250-px shift window.
+  - **Test pass fixes.** A `waypoint` with `hold: 0` now leaves on the tick after it arrives (it
+    held one tick, like `hold: 1`); `EnemySystem.spawn` / `ScriptApi.spawn` return `null` for a
+    fractional spec index (it passed the range check and threw a `TypeError`).
 
 ### M1-09 — Enemy bullets, lasers & attack patterns
 

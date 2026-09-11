@@ -1045,7 +1045,8 @@ class EnemySystemImpl implements EnemySystem {
     fromScript: boolean,
   ): Enemy | null {
     const specs = this.specs;
-    if (!(enemyIndex >= 0 && enemyIndex < specs.hp.length)) return null;
+    // A whole index in range (a fractional one would read `undefined` from the spec tables).
+    if (!(enemyIndex >= 0 && enemyIndex < specs.hp.length && enemyIndex % 1 === 0)) return null;
     const enemies = this.enemies;
     let enemy: Enemy | null = null;
     for (let i = 0; i < enemies.length; i++) {
