@@ -108,6 +108,7 @@ import {
 } from '../config/index.js';
 import type {
   ContentDb,
+  PlayerShipSpec,
   ValidationIssue,
   WeaponPresetSpec,
   WeaponSlot,
@@ -487,6 +488,11 @@ export interface WeaponHost {
   readonly camera: PlayerCamera;
   /** The player ships (shooters). */
   readonly players: readonly PlayerShip[];
+  /**
+   * The spec the ships fly (`enterTicks`: a fly-in of at most one tick ends inside the same
+   * phase 2 that starts it, so the ship is `alive` the first time the weapons see it).
+   */
+  readonly ship: Readonly<Pick<PlayerShipSpec, 'enterTicks'>>;
   /** Per-player intents of the tick (`Shot` / `Sub` held). */
   readonly intents: readonly PlayerIntent[];
   /** The stage's collision map, or `null`. */
@@ -579,10 +585,13 @@ export interface WeaponSystem {
    * @remarks
    * Recounts {@link WeaponSystem.liveCounts} and the tables in use, counts every timer down,
    * then per active ship: a fly-in resets the trail on its first tick and records every tick
-   * (no firing); a `dying` / `dead` ship hides its options; an `alive` ship places its options
-   * (the trail records only with movement input) and every shooter — ship first, then the
-   * options in order — fires its main weapon and its missile when its timer is 0, its cap has
-   * room and firing is wanted (see the module docs); a successful fire restarts that timer.
+   * (no firing) — a fly-in of 0 or 1 ticks (`enterTicks ≤ 1`) is over before the weapons see it,
+   * so an `alive` ship with `stateTicks` 0 then resets the trail instead; a `dying` / `dead`
+   * ship hides its options; an `alive` ship places its options (the trail records with movement
+   * input, and on the tick its fly-in ended — the fly-in's last step) and every shooter — ship
+   * first, then the options in order — fires its main weapon and its missile when its timer is
+   * 0, its cap has room and firing is wanted (see the module docs); a successful fire restarts
+   * that timer.
    */
   updatePlayers(): void;
   /**
@@ -900,7 +909,14 @@ class WeaponSystemImpl implements WeaponSystem {
         group.hide();
         continue;
       }
-      group.follow(ship, camera, loadout.options, ship.moving);
+      // `stateTicks` 0: the fly-in ended in this phase 2 (updatePlayer moved the ship its last
+      // step and switched it to `alive`), so that step is recorded like every fly-in step. A
+      // fly-in of at most one tick ended before the weapons ever saw it: the fresh trail starts
+      // here, or the options would stay on the zeroed trail (the view's corner) or on the trail
+      // from before a death.
+      const entered = ship.stateTicks === 0;
+      if (entered && host.ship.enterTicks <= 1) group.reset(ship, camera);
+      group.follow(ship, camera, loadout.options, entered || ship.moving);
       const held = p < intents.length ? intents[p].held : 0;
       const wantMain = this.alwaysFire || (held & Action.Shot) !== 0;
       const wantSub =

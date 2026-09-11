@@ -1165,7 +1165,9 @@ the browser dev app and as a Tizen 5.5 bundle.
     allocation guard caught it).
   - **Options.** `core/options` `OptionGroup` (class: trail ring buffer of 49 screen-space
     entries, `head`, `count`, positions). The trail also records every tick of a fly-in
-    (`entering` / `respawning` move the ship without input) and is reset on its first tick;
+    (`entering` / `respawning` move the ship without input), including the tick it ends, and is
+    reset on its first tick (a fly-in of `enterTicks` ≤ 1 is over within that tick: the reset
+    then happens on the ship's first `alive` tick, `stateTicks` 0);
     options hide while the ship is not `alive`. Drawn from their own batch on `LayerId.Player`
     before the ships; `OPTION_SPRITE` (`options/orb`) joined `ENGINE_SPRITES`.
   - **World / hash / apps.** Batches: ground, air, player shots, Options, ships, enemy bullets.

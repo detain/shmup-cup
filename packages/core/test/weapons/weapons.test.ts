@@ -25,6 +25,7 @@ import {
   type InputSnapshot,
 } from '../../src/input/index.js';
 import { OPTION_SPACING } from '../../src/options/index.js';
+import { ENTER_END_X, ENTER_START_X, SPAWN_Y, spawnPlayer } from '../../src/player/index.js';
 import { LayerId } from '../../src/presentation/index.js';
 import { createRng } from '../../src/rng/index.js';
 import {
@@ -90,11 +91,19 @@ const ENEMIES = [
  * and a static stage `t` with a flat 32-px floor.
  *
  * @param weapons - The weapons file (default: the shipped Type A), or `null` for none.
+ * @param enterTicks - The KESTREL's fly-in length (default: the shipped one).
  * @returns The DB.
  */
-function db(weapons: ContentFile | null = shipped('weapons/type-a.weapons.json')): ContentDb {
+function db(
+  weapons: ContentFile | null = shipped('weapons/type-a.weapons.json'),
+  enterTicks?: number,
+): ContentDb {
+  const player = shipped('player/kestrel.player.json');
+  if (enterTicks !== undefined) {
+    (player.data as { ships: { enterTicks: number }[] }).ships[0].enterTicks = enterTicks;
+  }
   const files: ContentFile[] = [
-    shipped('player/kestrel.player.json'),
+    player,
     shipped('tilesets/terrain-a.tileset.json'),
     {
       path: 'enemies/t.enemies.json',
@@ -406,6 +415,53 @@ describe('core/weapons', () => {
     }
     // The options are drawn below the ship.
     expect(w.weapons.optionBatch.count).toBe(4);
+  });
+
+  it('starts a fresh trail on the ship however short the fly-in (enterTicks 0, 1, 2, 40)', () => {
+    for (const enterTicks of [0, 1, 2, 40]) {
+      const label = `enterTicks ${String(enterTicks)}`;
+      const w = createWorld(
+        resolveGameConfig({ seed: 5, loadout: 'full' }),
+        db(undefined, enterTicks),
+      );
+      const ship = w.players[0];
+      const group = w.weapons.options[0];
+      /** Every option is on the fly-in path (exactly on the ship when the fly-in is ≤ 1 tick). */
+      const onFlyInPath = (): void => {
+        expect(ship.state, label).toBe('alive');
+        expect(ship.x - w.camera.x, label).toBe(ENTER_END_X);
+        expect(ship.y - w.camera.y, label).toBe(SPAWN_Y);
+        expect(group.count, label).toBe(4);
+        for (let k = 0; k < 4; k++) {
+          expect(group.y[k], label).toBe(ship.y);
+          if (enterTicks <= 1) expect(group.x[k], label).toBe(ship.x);
+          const sx = group.x[k] - w.camera.x;
+          expect(sx, label).toBeGreaterThanOrEqual(ENTER_START_X);
+          expect(sx, label).toBeLessThanOrEqual(ENTER_END_X);
+        }
+      };
+      stepWorld(w, createInputSnapshot());
+      if (enterTicks <= 1) {
+        // Alive after the first tick: the options — and every laser they fire — are on the ship.
+        onFlyInPath();
+        const lasers = shots(w, ShotKind.Laser);
+        expect(lasers.length, label).toBe(SHOOTERS_PER_PLAYER);
+        for (const laser of lasers) expect(laser.y, label).toBe(ship.y);
+      }
+      run(w, 59);
+      onFlyInPath();
+      // The fly-in's last step is recorded: the newest trail entry is the ship.
+      expect(group.trailX[group.head], label).toBe(ENTER_END_X);
+
+      // Spread the options out, then respawn: the stale trail is gone.
+      const input = createInputSnapshot();
+      commitPlayerInput(input.players[0], Action.Down);
+      run(w, 20, input);
+      expect(group.y[0], label).toBeLessThan(ship.y);
+      spawnPlayer(ship, w.camera, 'respawning');
+      run(w, enterTicks <= 1 ? 1 : 60);
+      onFlyInPath();
+    }
   });
 
   it('finds the same hits through the grid as a brute-force test of every shot × enemy', () => {
