@@ -57,11 +57,21 @@
  * - shmup_feat.md §22 Stage runtime — camera path runner, event cursor, checkpoint system,
  *   tilemap collider, parallax manager
  *
- * **Public API.** {@link createStageRunner}, {@link StageRunner}, {@link StageHooks},
- * {@link StageCamera}, {@link createStageCamera}, {@link StageEventCode}, {@link StageSlot}, {@link STAGE_STATE_SLOTS},
- * {@link findEventCursor}, {@link createStageTerrain}, {@link createTerrainView},
- * {@link createParallaxView}, {@link updateParallaxView}, {@link StageParallaxView},
- * {@link stageMapWidth}.
+ * **Public API.** Runner {@link createStageRunner}, {@link StageRunner}, {@link StageHooks},
+ * {@link StageEventCode}, {@link StageSlot}, {@link STAGE_STATE_SLOTS}, {@link findEventCursor};
+ * camera {@link StageCamera}, {@link createStageCamera}; terrain {@link createStageTerrain},
+ * {@link createTerrainView}, {@link stageMapWidth}; parallax {@link createParallaxView},
+ * {@link updateParallaxView}, {@link StageParallaxView}.
+ *
+ * @example
+ * ```ts
+ * const stage = db.stages[db.stageIndex.get('test-range')!];
+ * const runner = createStageRunner(stage, { event() {}, clear() {} });
+ * const terrain = createStageTerrain(stage, db); // null for open space
+ * runner.tick(); // once per sim tick (the World's phase 3)
+ * if (terrain && boxHitsTerrain(terrain, x, y, 5, 3)) { … } // ship touched rock
+ * runner.restartAt(runner.checkpoint); // after a death with the `arcade` penalty
+ * ```
  *
  * **Planned API.** Time-keyed events during scroll stops and boss fights, diagonal scrolling,
  * in-stage branches and the zone map (M2-07, M2-10).
@@ -265,11 +275,27 @@ export interface StageRunner {
    * the event cursor at the first event with `x ≥` the checkpoint (binary search; those events
    * re-fire on the next tick for the hooks), then `hooks.clear()`.
    *
+   * @remarks
+   * Deterministic: the result depends only on the stage data and the index, never on how the
+   * run got there, so a restart matches what live play had at the checkpoint (exact for keys and
+   * events sharing an x; see "Restart order" in the module docs for the one approximation). A
+   * lock key before the checkpoint does not re-lock the camera. Calling it from inside
+   * {@link StageHooks.event} is allowed: the current tick's event loop stops there.
+   *
    * @param checkpoint - Index into `stage.checkpoints`, or -1 for the stage start.
    * @throws {RangeError} When the index is not an integer in `[-1, checkpoints.length)`.
+   *
+   * @example
+   * ```ts
+   * runner.restartAt(runner.checkpoint); // back to the last checkpoint passed (-1 = start)
+   * ```
    */
   restartAt(checkpoint: number): void;
-  /** Releases a scroll lock (the boss died): scrolling resumes at the current speed. */
+  /**
+   * Releases a scroll lock (the boss died): scrolling resumes at the current speed — the lock
+   * key's speed once its ramp is done. Calling it before the camera reaches the lock key does
+   * nothing (the key locks when it applies).
+   */
   unlock(): void;
 }
 
@@ -415,9 +441,11 @@ class StageRunnerImpl implements StageRunner {
   private readonly compiled: CompiledStage;
 
   /**
+   * Compiles the timeline and puts the runner at the stage start (no `hooks.clear()`).
+   *
    * @param stage - The stage.
    * @param hooks - The hooks.
-   * @param camera - The camera to drive.
+   * @param camera - The camera to drive (its fields are overwritten).
    * @throws {RangeError} When an event has a type the runtime does not know.
    */
   constructor(stage: StageSpec, hooks: StageHooks, camera: StageCamera) {
@@ -750,6 +778,11 @@ export function createStageRunner(
  * @param length - Stage length in pixels.
  * @param tileSize - Tile edge in pixels.
  * @returns Columns.
+ *
+ * @example
+ * ```ts
+ * stageMapWidth(4800, 8); // → 648 (test-range: (4800 + 384) / 8)
+ * ```
  */
 export function stageMapWidth(length: number, tileSize: number): number {
   return Math.ceil((length + PLAYFIELD_W) / tileSize);
@@ -758,6 +791,10 @@ export function stageMapWidth(length: number, tileSize: number): number {
 /**
  * Builds the collision map of a stage: a private copy of its expanded tile grid plus its
  * tileset's lookup tables (load time).
+ *
+ * @remarks
+ * The tile grid is copied so that a World may change its map (destructible terrain, M2-07)
+ * without touching the shared content; the tileset tables are shared read-only references.
  *
  * @param stage - The stage.
  * @param content - The content DB holding its tileset.
@@ -783,11 +820,21 @@ export function createStageTerrain(stage: StageSpec, content: ContentDb): Terrai
  * The terrain view the renderer draws: live references to a collision map's grid, plus the
  * tileset's sprite and per-tile frames.
  *
+ * @remarks
+ * `tiles` is the map's own array, not a copy, so a later change to the collision map (the
+ * destructible tiles of M2-07) is what the renderer draws once the cell scrolls into view.
+ *
  * @param map - The stage's collision map ({@link createStageTerrain}).
  * @param stage - The stage.
  * @param content - The content DB holding its tileset.
  * @returns The view (the renderer re-reads `tiles` as the camera crosses tile columns).
  * @throws {RangeError} When the stage has no expanded terrain or its tileset is missing.
+ *
+ * @example
+ * ```ts
+ * const map = createStageTerrain(stage, db);
+ * const view = map === null ? null : createTerrainView(map, stage, db);
+ * ```
  */
 export function createTerrainView(
   map: TerrainMap,
@@ -867,6 +914,12 @@ export function createParallaxView(stage: StageSpec): StageParallaxView | null {
  * @param view - The view.
  * @param cameraX - Camera x.
  * @param cameraY - Camera y.
+ *
+ * @example
+ * ```ts
+ * // A band with factor 0.25 and spacing 128, camera at x 1000:
+ * updateParallaxView(view, 1000, 0); // view.offsetX[i] → 122 (250 mod 128)
+ * ```
  */
 export function updateParallaxView(
   view: StageParallaxView,

@@ -2,7 +2,8 @@
 
 How a simulation state becomes pixels, and how the web and TV apps boot. Filled in by plan
 step **M1-04**. Later steps *fill* the contract (the World in M1-06, see
-[sim-world.md](sim-world.md); terrain and parallax in M1-07; the HUD and menus in M1-16;
+[sim-world.md](sim-world.md); terrain and parallax in M1-07, see
+[stage-runtime.md](stage-runtime.md); the HUD and menus in M1-16;
 particles and screen effects in M1-14) without changing its shape.
 
 This page is the *how and why*. Exact signatures are in
@@ -24,7 +25,8 @@ TV), **D30** (hit flash = white sibling sprite) and **D34** (one shared browser 
 ┌──────────────────────────────────────────────┐        ┌────────────────────────────────────────┐
 │ game.renderFrame() → RenderFrame (reused)    │        │ renderer.render(frame)                 │
 │   tick, alpha                                │        │   bindWorld() if frame.world is new    │
-│   world: WorldView | null                    │ ─────► │   binding[i].sync(batch[i], camX, camY)│
+│   world: WorldView | null                    │ ─────► │   parallax.sync, terrain.sync(camera)  │
+│                                              │        │   binding[i].sync(batch[i], camX, camY)│
 │     camera, parallax, terrain                │        │   world group ← round(shakeX, shakeY)  │
 │     batches: SpriteBatchView[] (typed arrays)│        │   flash / dim quads                    │
 │   hud, ui: DrawList (typed-array commands)   │        │   hudView.draw(hud), uiView.draw(ui)   │
@@ -45,9 +47,9 @@ Strings enter only through a draw list's string slots, and only when the text ch
 
 | Code | Layer | Group | Drawn from |
 |---|---|---|---|
-| 0 | `BgFar` | world | parallax (M1-07); the free-flight and showcase far stars |
-| 1 | `BgMid` | world | parallax (M1-07) |
-| 2 | `Terrain` | world | tile terrain (M1-07) |
+| 0 | `BgFar` | world | a stage's `far` parallax bands (M1-07); the free-flight and showcase far stars |
+| 1 | `BgMid` | world | a stage's `mid` parallax bands (M1-07); the free-flight mid / near stars |
+| 2 | `Terrain` | world | the stage's tile terrain (M1-07) |
 | 3 | `GroundEnemies` | world | turrets, walkers |
 | 4 | `AirEnemies` | world | flying enemies, bosses |
 | 5 | `PlayerShots` | world | shots, lasers, missiles |
@@ -90,9 +92,20 @@ reference into sim state; the renderer reads and never writes. **`batches` is re
 the view is bound**: the renderer creates one preallocated binding per entry, and syncs
 binding `i` from `batches[i]` every frame. To change the list, hand the renderer a different
 `WorldView` object (it rebinds automatically, which allocates — do it at stage or scene
-changes, not per frame). `parallax` (`count`, `layer`, `spriteId`, `offsetX`, `y`) and
-`terrain` (`tileSize`, `cols`, `rows`, `tiles`, `tilesetSpriteId`) are minimal shapes today;
-M1-07 draws them and may grow them.
+changes, not per frame). The same holds for the structure of `parallax` (band count, layers,
+spacings) and `terrain` (map size, tile size); their per-frame values are read every frame:
+
+- `ParallaxView` — `count` bands; per band `layer` (`BgFar` / `BgMid` only), `spriteId` (frame 0
+  is repeated), `spacing` (repeat distance), `offsetX` (`0 ≤ offsetX < spacing`, the band is
+  shifted left by it) and `y` (the band's playfield row after the vertical scroll). The stage
+  runtime fills it (`offsetX = (camera.x · factor) mod spacing`, `y = baseY − camera.y ·
+  factor`); the renderer rounds both.
+- `TerrainView` — `tileSize`, `cols`, `rows`, `tiles` (row-major tile ids, 0 = empty; a live
+  array, read when a cell scrolls into view), `tilesetSpriteId` and `tileFrame` (tile id →
+  frame of the tileset sprite, `-1` = not drawn). Cell `(col, row)` sits at world
+  `(col · tileSize, row · tileSize)`.
+
+How the stage builds these views: [stage-runtime.md](stage-runtime.md#parallax-and-the-terrain-view).
 
 ### Draw lists (`DrawList`)
 
@@ -185,6 +198,18 @@ error screen.
   immediate-mode pool. `begin()`, then each `frame(...)` / `rect(...)` takes the next sprite
   (later calls draw on top), `end()` hides the leftovers. Rectangles are the atlas's 1×1
   white `ui/pixel` scaled and tinted. A full pool counts `dropped` and draws nothing more.
+- **`TerrainBinding`** (`createTerrainBinding`, one per bound `TerrainView`, on `TERRAIN`): a
+  preallocated ring of tile sprites one tile wider and taller than the playfield — **49 × 26**
+  for 8-px tiles (rows capped at the map's). Slot column `s` shows the map column `≡ s (mod
+  49)` inside the view, so `sync(view, camera)` re-textures only the column (or row, for
+  vertical pans) that scrolled in, and moves the whole grid as one container at
+  `round(−camera.x)`, `PLAYFIELD_Y + round(−camera.y)` — which lands integer world positions on
+  exactly the pixels the sprite bindings use. `updatedCells` reports how many cells the last
+  sync touched (0 inside one tile). New sprite tables re-texture everything.
+- **`ParallaxBinding`** (`createParallaxBinding`, one per bound `ParallaxView`): per band one
+  container on its layer holding `ceil(width / spacing) + 1` sprites `spacing` pixels apart,
+  placed once; `sync(view)` only moves each container to `round(−offsetX)`, `PLAYFIELD_Y +
+  round(y)`. No `TilingSprite` — WebGL1 cannot repeat non-power-of-two textures.
 
 `createDrawListView()` (`ui`) draws a `DrawList` into a quad pool in command order: rects,
 sprites (`Hidden` skips the command, `Flash` swaps to the sibling), `text` and `number` via
@@ -213,7 +238,8 @@ uncovers an edge), a dim quad (first child of the UI layer) and the HUD / UI dra
 `render(frame)` then:
 
 1. updates the calibration pattern (when enabled);
-2. rebinds if `frame.world` is a different object, then syncs every binding;
+2. rebinds if `frame.world` is a different object, then syncs the parallax bands, the terrain
+   grid and every sprite binding;
 3. offsets the world group by the rounded shake, sets flash / dim alpha and visibility;
 4. draws the HUD and UI lists (skipped when unchanged);
 5. renders the scene into the 384×216 render texture, then that texture as one sprite,
@@ -224,7 +250,9 @@ into the object it gets (`target`, `clear`, `clearColor`, a cached `transform`),
 `resetPass()` restores those fields before each call — without it, the second frame would
 reuse the first frame's cached state.
 
-**Allocation budget.** Pixi objects are created in `createPixiRenderer` and in `bindWorld()`.
+**Allocation budget.** Pixi objects are created in `createPixiRenderer` and in `bindWorld()`
+(which also creates the parallax sprites and the terrain grid, below the batches, and
+validates every band's layer before creating anything).
 The shell pre-binds its scene at load, so a running frame only assigns numbers and existing
 textures. Tint is set only when it changes, because Pixi's `tint` setter allocates before it
 compares (a HUD redrawn every frame used to allocate ~1 KB per frame).
@@ -247,7 +275,7 @@ const shell = await bootShell({
   input, // createWebInput(...) — also the platform's input; destroyed by stop()
   audio, // createWebAudio()   — also behind the platform's audio; destroyed by stop()
   platform: (renderer) => createWebPlatform({ input, audio, webgl2: renderer.webGLVersion === 2 /* … */ }),
-  gameConfig: { remoteMode: false },
+  gameConfig: { remoteMode: false, stage: stageFromSearch(location.search) }, // apps/web: ?stage=
   scene: sceneFromSearch(location.search), // 'flight' (default) | 'showcase' | 'calibration'
   audioUnlock: 'gesture', // 'immediate' on the TV
   contentOwners: { [INPUT_PROFILES_KIND]: profiles.load }, // optional: merged over DEFAULT_CONTENT_OWNERS
@@ -321,12 +349,14 @@ M1-15.
 
 | `?scene=` | What is drawn | Sprite name table |
 |---|---|---|
-| (none) / `flight` | **Free flight** (`createFlightScene(game)`, M1-06): the game's World — the KESTREL flying in, then moving under the player's control — over three drifting star layers, both HUD bars (`1P`, a zero score, `FREE FLIGHT`, stock ships, `ARROWS MOVE`) | `content.db.sprites.names` + `FLIGHT_SPRITES` |
+| (none) / `flight` | **Free flight** (`createFlightScene(game)`, M1-06): the game's World — the KESTREL flying in, then moving under the player's control — over three drifting star layers, both HUD bars (`1P`, a zero score, `FREE FLIGHT`, stock ships, `ARROWS MOVE`). With a stage (`gameConfig.stage`, the web app's `?stage=<id>`, M1-07): the stage's parallax bands and scrolling terrain instead of the starfield, the stage name as the title | `content.db.sprites.names` + `FLIGHT_SPRITES` |
 | `showcase` | The **sprite showcase** (`createShowcase()`): three scrolling star layers, the KESTREL flying a figure-eight with its thruster and two Options replaying its path, five drifters with periodic hit flashes, a rotating ring of twelve bullets, both HUD bars (scores via the `number` op, lives, power meter with a moving highlight) and the title "SHMUP CUP" / "SPRITE SHOWCASE" in the bitmap font | `SHOWCASE_SPRITES` |
 | `calibration` | The skeleton's test pattern (checker border, grid, colour bars, placeholder ship, moving marker) under empty layers | `content.db.sprites.names` |
 
 **Free flight** owns a `WorldView` whose batches are two starfield batches **followed by the
-game World's own batches**, on the World's camera object — a batch the World adds later is
+game World's own batches**, on the World's camera object and with the World's `parallax` /
+`terrain` views passed through (the starfield batches are left out when the World has
+parallax bands — a stage brings its own background) — a batch the World adds later is
 drawn without changing the scene (the view is bound once, so the World's batch list must be
 complete at creation). Its sprite ids index one table: the content's names, then
 `FLIGHT_SPRITES`. `update(frame)` copies tick, alpha and screen effects, refills the stars
@@ -353,7 +383,7 @@ resolve virtual modules, so the boot functions receive them as arguments.
 
 | | `apps/web` | `apps/tizen` |
 |---|---|---|
-| `gameConfig` | `{ remoteMode: false }` | `{ remoteMode: true, autofire: true }` |
+| `gameConfig` | `{ remoteMode: false, stage }` — `stage` from `?stage=<id>` (`stageFromSearch`; an id missing from `contentStageIds(contentFiles)` → `console.warn`, `null`) | `{ remoteMode: true, autofire: true }` — no stage parameter (free flight) |
 | `audioUnlock` | `'gesture'` (autoplay policy) | `'immediate'` |
 | Input profiles | `?profile=` › saved choice › `keyboard-default`; `?debounce=`; `gamepad-standard` | saved choice › `tizen-remote-safe` (its `register` keys registered); `gamepad-standard` |
 | Back | Esc / Backspace → `Pause` (game) / `Back` (menus) | remote Back (10009) exits — the watcher is installed **before** boot, so Back also leaves the boot error screen |
@@ -383,6 +413,10 @@ pnpm test:e2e                                        # builds web + tizen, then 
   hull colour, a pixel diff between captures) while it stays put without input; holding a
   direction stops it at the playfield margin, never over the HUD bars; the Tizen build from
   `file://` moves it with the remote's arrow key codes.
+- `stage.spec.ts` — `?stage=test-range` shows the generated terrain (the placeholder tileset's
+  colours) inside the playfield and never in the HUD bars, and scrolls it left between two
+  screenshots while the ship stays put on screen; an unknown `?stage=` warns and boots free
+  flight without terrain (M1-07).
 - `shell.spec.ts` — an aborted atlas request ends on the boot error screen (overlay canvas,
   state `error`); a 1000×600 window gets a centred ×2 frame on the letterbox colour and a
   resize to 1920×1080 re-fits it to ×5; free flight animates.
@@ -439,7 +473,8 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | `packages/core/test/presentation/` | `createSpriteBatch` / `pushSprite` bounds, `DrawList` encoding of every op, rounding, clamps, string slots and `revision`, `dropped`, layer tables |
 | `packages/render-pixi/test/atlas/` | Frame numbering, sprite / flash tables, `ui/missing` fallback and warn-once, stale / oversized / corrupt manifests |
 | `packages/render-pixi/test/sprites/`, `ui/`, `text/`, `layers/` | Binding sync (camera, `PLAYFIELD_Y`, anchors, flips, blink, flash, shrinking batches), quad-pool ordering and overflow, draw-list views (revision skipping, hidden sprites), text layout and metrics, number formatting, layer order |
-| `packages/render-pixi/test/renderer/` | The renderer wired with a fake `WebGLRenderer`: passes, rebinding, shake / flash / dim, reused pass options (fails if `resetPass` is removed), allocation probes |
+| `packages/render-pixi/test/layers/layers-stage*.test.ts` | Terrain grid size (49 × 26, capped at the map's rows), textures and positions, the ring (nothing re-textured inside a tile, one column / row per tile edge, all after a jump or new tables; after a long random camera walk it equals a freshly built grid), pixel agreement with the sprite bindings at half-pixel cameras, parallax coverage for any offset / spacing, validation, allocation-free syncs |
+| `packages/render-pixi/test/renderer/` | The renderer wired with a fake `WebGLRenderer`: passes, rebinding (incl. parallax / terrain bindings below the batches), shake / flash / dim, reused pass options (fails if `resetPass` is removed), allocation probes |
 | `packages/shell/test/` | Boot happy path and every failure (error screen, state attribute, cleanup), content owners (the default `input-profiles` owner, an app owner replacing it), the input context forwarded before a frame's polls, image loading and progress, dispatch (copy-on-write unsubscribe), overlay drawing, the free-flight scene (sprite ids, starfield drift / wrap / pause, HUD, empty content, zero allocation per frame), showcase determinism and allocation |
 | `test/e2e/` | The real browser path, both builds (above) |
 
@@ -456,6 +491,9 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | Opening `apps/tizen/dist/index.html` by double-click in desktop Chrome shows WebGL errors | Desktop Chrome treats each `file://` URL as its own origin, so WebGL refuses to upload the atlas page. Start Chrome with `--allow-file-access-from-files`, or use `pnpm --filter @shmup/tizen dev`; the TV serves the widget's files as same-origin |
 | `pnpm test:e2e` hangs creating WebGL contexts | A stale forwarded X display (`DISPLAY=localhost:11.0` in an SSH session) makes SwiftShader try XCB. The config already scrubs `DISPLAY` for the browser; unset it if you launch Chromium yourself |
 | Allocation appears per frame in a profile | Pixi objects created in `render()` (a new `WorldView` each frame), a tint written every frame on a hand-made sprite, or option literals passed to Pixi — keep all three out of the frame |
+| A stage runs but shows no terrain | The stage has no `tilemap`, its tileset failed to load (see the boot issues), or no atlas was given; tiles whose `frame` the atlas lacks draw `ui/missing` |
+| `bindWorld` throws `parallax band i has layer …` | A `ParallaxView` band is not on `BG_FAR` / `BG_MID` — stage content only produces those; check a hand-made view |
+| Terrain and sprites disagree by one pixel | Something moved the terrain container by other than `round(−camera.x)`: sprite bindings draw `round(x − camera.x)`, and only that formula agrees for integer world positions (a test checks half-pixel cameras) |
 | `?scene=calibration` does nothing on the TV | The widget has no query string; the calibration scene is for browsers (`pnpm dev`, `vite preview`, the Tizen dev server) |
 
 ## Next steps that build on this page
@@ -465,6 +503,7 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
   ([input-profiles.md](input-profiles.md)).
 - **M1-06** (done) — the World fills `RenderFrame.world` (players batch); "free flight" is the
   default scene, the showcase moved to `?scene=showcase` ([sim-world.md](sim-world.md)).
-- **M1-07** — terrain and parallax drawn from `TerrainView` / `ParallaxView`.
+- **M1-07** (done) — terrain and parallax drawn from `TerrainView` / `ParallaxView`; the flight
+  scene runs a stage with `?stage=<id>` ([stage-runtime.md](stage-runtime.md)).
 - **M1-14 / M1-15** — particles, shake, flash and audio handlers registered on the dispatcher.
 - **M1-16** — core `ui` fills the HUD and UI draw lists (menus, HUD model).

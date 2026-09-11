@@ -200,9 +200,12 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   atlas request shows the boot error screen; resizing re-fits the integer scale; the input
   profiles reach the page
   (bound keys prevented, `?profile=keyboard-remote-emulation` knows only the remote's keys, an
-  unknown `?profile=` warns and boots). Output goes to `test/e2e/test-results/` (git- and
+  unknown `?profile=` warns and boots); `?stage=test-range` shows the generated terrain inside
+  the playfield and scrolls it (an unknown `?stage=` warns and boots free flight). Output goes to `test/e2e/test-results/` (git- and
   Prettier-ignored).
-- **Dev query parameters** of the web build (`pnpm dev`, `vite preview`): `?scene=showcase`
+- **Dev query parameters** of the web build (`pnpm dev`, `vite preview`): `?stage=<id>` (run
+  that stage instead of open space, e.g. `test-range` — see
+  [stage-runtime.md](stage-runtime.md#running-a-stage)), `?scene=showcase`
   (the M1-04 sprite showcase instead of free flight), `?scene=calibration` (test pattern), `?profile=<id>` (another keyboard / remote input profile, e.g.
   `keyboard-remote-emulation` or `tizen-remote-safe`) and `?debounce=<0…10>` (release debounce
   override) — see [input-profiles.md](input-profiles.md#choosing-the-active-profile). The TV

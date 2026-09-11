@@ -4,7 +4,8 @@ How one gameplay session is simulated inside `@shmup/core`: the `World` object, 
 9-phase tick that `stepWorld` runs, the KESTREL's movement, the collision toolkit, the state
 hash that golden replays will compare, and the allocation guard that keeps all of it free of
 garbage. Built in plan step **M1-06**; later steps fill the empty tick phases without
-changing their order.
+changing their order — **M1-07** filled phase 3 with the stage runner and added terrain
+contact to phase 6 (the stage runtime itself is [stage-runtime.md](stage-runtime.md)).
 
 This page is the *how and why*. Exact signatures are in
 [api-reference.md](api-reference.md#world--the-gameplay-session-and-the-tick-pipeline); the
@@ -28,10 +29,10 @@ game.step()                                        core/game (one fixed tick)
  └─ stepWorld(world, input)                         core/world
      ├─ 1 input      readPlayerIntent × 2           world.intents: masks + moveX / moveY
      ├─ 2 players    updatePlayer × 2               ride the scroll, move, clamp, bank, fly-in
-     ├─ 3 stage      camera += (vx, vy)             records camera.dx / dy        (M1-07 fills)
+     ├─ 3 stage      stage.tick() | camera += (vx, vy)  keys, ramps, pans, locks, timeline events
      ├─ 4 scripts    —                                                            (M1-08, M1-09)
      ├─ 5 movement   —                                                            (M1-08 … M1-11)
-     ├─ 6 collision  grid.begin → insert → build → query                          (M1-08 … M1-11)
+     ├─ 6 collision  grid.begin → build; terrain box × tiles → playerHit          (M1-08 … M1-11)
      ├─ 7 damage     —                                                            (M1-10 … M1-12)
      ├─ 8 removal    pools.flushAll()               deferred SoA frees
      ├─ 9 fx         hitStop--, syncWorldView       mirror batches for the renderer
@@ -55,8 +56,9 @@ M1-16 decides when a World exists, every session hosts one from the start.
 | `rng` | `{ gameplay, cosmetic }` streams seeded from `config.seed` (nothing draws yet) |
 | `events` | The presentation event queue — the same object as `game.events`, drained by the host once per frame |
 | `players`, `intents` | Exactly `MAX_PLAYERS` (2) ships and their per-tick intents; index 0 = player 1 |
-| `camera` | `WorldCamera { x, y, dx, dy, vx, vy }` — also the view's `CameraView` |
-| `status` | `WorldStatus`: `'playing'` \| `'bossWarning'` \| `'stageClear'` \| `'gameOver'` (always `'playing'` today) |
+| `camera` | `WorldCamera { x, y, dx, dy, vx, vy }` — also the view's `CameraView`; a class instance from `createStageCamera()` (see [stage-runtime.md](stage-runtime.md#gotchas)) |
+| `stage`, `terrain`, `parallax` | The `StageRunner` of `config.stage`, the stage's collision `TerrainMap` (a private copy of the tiles) and its `StageParallaxView` — each `null` in free flight (`stage: null`) or when the stage has no tilemap / bands (M1-07) |
+| `status` | `WorldStatus`: `'playing'` \| `'bossWarning'` \| `'stageClear'` \| `'gameOver'` (`'stageClear'` once a stage's `end` event fired; the others arrive with M1-12 / M1-13) |
 | `hitStop` | Remaining hit-stop ticks (M1-12 and the fx of M1-14 request it) |
 | `debugFlags` | `createDebugFlags()`: `godMode`, `showHitboxes`, `frameAdvance`, `slowMo` (acted on from M1-19) |
 | `pools` | The `PoolRegistry` of every SoA pool the systems create |
@@ -71,14 +73,14 @@ plan §3.2 order; `WorldPhase` gives each position a name (`Input` 0 … `Fx` 8)
 instead of calls scattered through `game.step()`, so the order is data a test can check and a
 debug overlay can profile.
 
-| # | Phase | M1-06 | Filled by |
+| # | Phase | Today | Filled by |
 |---|---|---|---|
 | 1 | `input` | copies each player's `PlayerInput` into its `PlayerIntent` (all slots, active or not) | — |
 | 2 | `players` | `updatePlayer` for each ship | M1-10 (fire requests, option trail), M1-12 (death / respawn) |
-| 3 | `stage` | moves the camera by its scroll velocity and records the step | M1-07 (camera path, timeline, spawns, checkpoints) |
+| 3 | `stage` | with a stage: `world.stage.tick()` — camera keys, ramps, pans, locks, then the due timeline events through the World's hooks; in free flight: moves the camera by its scroll velocity. Either way records the step | M1-07 (done); M1-08 / M1-13 act on `spawn` / `formation` / `warning` / `boss` events |
 | 4 | `scripts` | empty | M1-08 (behaviour coroutines), M1-09 (patterns) |
 | 5 | `movement` | empty | M1-08 onwards (enemies, bullets, shots, items, lasers) |
-| 6 | `collision` | starts and builds the grid (nothing is inserted yet) | M1-08 … M1-11 (every overlap test) |
+| 6 | `collision` | starts and builds the grid (nothing is inserted yet); each alive ship's terrain box against the stage terrain → `playerHit(ship, PlayerHitCause.Terrain, …)` (M1-07) | M1-08 … M1-11 (every overlap test) |
 | 7 | `damage` | empty | M1-10 … M1-12 (hits, deaths, drops, score, respawn) |
 | 8 | `removal` | `pools.flushAll()` | — |
 | 9 | `fx` | counts hit-stop down, `syncWorldView` | M1-14 (shake / flash timers, presentation events) |
@@ -96,11 +98,13 @@ replay format.
 ### The camera
 
 `camera.x` / `camera.y` are the world coordinates of the playfield's top-left corner
-(world `y` maps to screen `y − camera.y + PLAYFIELD_Y`, D20). The stage phase copies the scroll
-velocity `vx` / `vy` (px/tick, 0 = static) into `dx` / `dy` and adds it to the position. The
+(world `y` maps to screen `y − camera.y + PLAYFIELD_Y`, D20). With a stage, the stage runner
+moves it in phase 3 along the stage's camera path and writes the step into `dx` / `dy` and
+`vx` / `vy` ([stage-runtime.md](stage-runtime.md#the-camera-path)). In free flight
+(`config.stage === null`) the stage phase copies the scroll velocity `vx` / `vy` (px/tick,
+0 = static) into `dx` / `dy` and adds it to the position; tests set `camera.vx` directly. The
 players phase runs *before* the stage phase, so a ship rides along with the step the camera
-made in the previous tick. Until the stage runner of M1-07 sets the velocity from the stage's
-camera path, the camera is static; tests set `camera.vx` directly.
+made in the previous tick.
 
 ### The pool registry
 
@@ -112,9 +116,10 @@ restart (`clearAll`). A pool that is not registered is never flushed or hashed.
 
 ### The view
 
-`world.view` is created once — `{ camera, parallax: null, terrain: null, batches:
-[playerBatch] }` — and keeps its identity forever, so the renderer binds it once. Phase 9
-(and `createWorld` itself, so the first frame already shows the ship) refills the players'
+`world.view` is created once — `{ camera, parallax, terrain, batches: [playerBatch] }`, where
+`parallax` / `terrain` are the stage's views (`null` in free flight) — and keeps its identity
+forever, so the renderer binds it once. Phase 9 (and `createWorld` itself, so the first frame
+already shows the ship) scrolls the parallax bands with the camera and refills the players'
 mirror batch with `syncWorldView`: a ship is drawn when its slot is active, it is neither
 `dying` nor `dead`, and the spec has a sprite (`spriteId >= 0`); while `invulnTicks > 0` it
 blinks (`SpriteFlag.Hidden` four ticks on, four off). The frame is the bank frame (below).
@@ -127,7 +132,7 @@ SoA-backed batches (bullets, shots) will be the pools' own arrays; object-based 
 
 `PlayerShip` is a plain object (two per session): `slot`, `active`, `x` / `y` (world-space
 centre, sub-pixel), `state`, `stateTicks`, `speedLevel`, `invulnTicks`, `bank`, `device`,
-`lives` and `moving`. The tunables come from `content/player/kestrel.player.json` through
+`lives`, `moving` and the last accepted hit (`hitCause`, `hitTick`, `hits` — M1-07). The tunables come from `content/player/kestrel.player.json` through
 `PlayerShipSpec`:
 
 | Tunable | KESTREL | Used for |
@@ -136,7 +141,7 @@ centre, sub-pixel), `state`, `stateTicks`, `speedLevel`, `invulnTicks`, `bank`, 
 | `margins` | left 8, right 8, top 6, bottom 6 | clamp to the camera view minus these |
 | `enterTicks` | 40 | fly-in length |
 | `bankFrames` | 1 | bank steps each way (frames 0 level, 1 up, 2 down) |
-| `hurtRadius`, `terrainBox`, `pickupBox` | 1.5; 5×3; 8×6 (half sizes) | collision, from M1-07 / M1-11 / M1-12 |
+| `hurtRadius`, `terrainBox`, `pickupBox` | 1.5; 5×3; 8×6 (half sizes) | collision: the terrain box since M1-07, the others from M1-12 / M1-11 |
 | `respawnInvulnTicks` | 120 | respawn blink, M1-12 |
 
 `resolvePlayerShip(content, id = 'kestrel')` picks the ship: that id, else the first ship,
@@ -155,6 +160,13 @@ the playfield), then flies to `ENTER_END_X` (64) on a cubic ease-out over `enter
 ignoring input, and turns `alive`. `spawnPlayer(ship, camera, 'respawning')` flies in the same
 way after a death (M1-12 decides when). `setPlayerState` switches state and restarts
 `stateTicks`. `dying` and `dead` only advance their timers today.
+
+**Hits.** `playerHit(ship, cause, tick, debugFlags)` is the one entry point for anything that
+would kill a ship (`PlayerHitCause`: `Terrain` now; `Contact`, `Bullet`, `Laser` from M1-08 /
+M1-09). It ignores inactive ships, ships that are not `alive` (the fly-in included), ships
+with `invulnTicks > 0` and god mode, and otherwise records `hitCause`, `hitTick` and `hits++`
+(all hashed) and returns `true`. Until the death sequence of M1-12 nothing else happens — the
+ship keeps flying, so a ship resting in rock counts a hit every tick.
 
 Player 2's ship exists from the start but stays inactive (never updated, never drawn) until
 co-op joins it (M2-06); the input phase still reads its intent, so a joining device is known.
@@ -244,7 +256,10 @@ grid.query(shotX - 2, shotY - 1, shotX + 2, shotY + 1, onHit); // for every shot
   `query` before `build` (after an insert) throws.
 - Today the World only begins and builds the grid; M1-08 onwards insert and query.
 
-`TerrainQuery` (`isSolid`, `findFloor`) is the contract the stage runtime implements in M1-07.
+**Terrain** has its own queries over a stage's `TerrainMap` (`terrainAt`, `boxHitsTerrain`,
+`terrainRectHit`, `findFloor`, `findCeiling` — pixel-exact and half-open, unlike the closed
+shape tests above); they replaced M1-06's placeholder `TerrainQuery` interface and are
+described in [stage-runtime.md](stage-runtime.md#terrain-queries).
 
 ## The state hash (`core/debug`)
 
@@ -254,14 +269,18 @@ little-endian IEEE-754 double bytes (so the hash is the same on every engine):
 1. `tick`;
 2. the gameplay and the cosmetic RNG state (4 words each);
 3. the camera: `x`, `y`, `dx`, `dy`, `vx`, `vy`;
-4. the status code (`WORLD_STATUSES` order) and `hitStop`;
-5. per player: `active`, `x`, `y`, the state code (`PLAYER_STATES` order), `stateTicks`,
-   `speedLevel`, `invulnTicks`, `bank`, `lives`, `moving`;
-6. per registered pool, in registration order: `count`, then every field (sorted by name) for
+4. the stage runner: `0` in free flight, else `1` and every slot of `world.stage.state`
+   (speed, ramp, pan, lock, cursor, next key / checkpoint, checkpoint, flags, ended, ticks,
+   restarts, replay — `StageSlot` order);
+5. the status code (`WORLD_STATUSES` order) and `hitStop`;
+6. per player: `active`, `x`, `y`, the state code (`PLAYER_STATES` order), `stateTicks`,
+   `speedLevel`, `invulnTicks`, `bank`, `lives`, `moving`, `hitCause`, `hitTick`, `hits`;
+7. per registered pool, in registration order: `count`, then every field (sorted by name) for
    slots `0 … count − 1`.
 
-Not hashed: config and content (fixed per session), intents, `device`, `slot`, debug flags,
-the event queue, the grid and the view — presentation or derived state. Two worlds created
+Not hashed: config and content (fixed per session — the terrain map included, which nothing
+modifies yet), intents, `device`, `slot`, debug flags, the event queue, the grid and the
+view (parallax offsets are derived from the camera) — presentation or derived state. Two worlds created
 from the same seed and content and fed the same inputs hash equal after any number of ticks
 (`world.test.ts` runs 5,000; `world-flight.test.ts` replays a recorded remote session through
 a fresh game). A new piece of simulated state must be added to the hash — in a fixed place in
@@ -280,7 +299,10 @@ KESTREL flying in and then moving under the remote, keyboard or gamepad — over
 starfield, with the D20 HUD bars (`1P`, a zero score, `FREE FLIGHT`, stock ships, the hint
 `ARROWS MOVE`). `createFlightScene(game)` builds its own `WorldView` whose batches are two
 starfield batches **followed by the World's own batches**, sharing the World's camera — a
-batch the World adds later is drawn without touching the scene. Its sprite name table is the
+batch the World adds later is drawn without touching the scene. When the World runs a stage
+(`?stage=<id>` in the web app) the scene passes the World's parallax and terrain views through,
+drops its own starfield when the stage has parallax bands, and shows the stage name as the HUD
+title. Its sprite name table is the
 content's names followed by `FLIGHT_SPRITES` (`bg/stars-far`, `bg/stars-mid`,
 `bg/stars-near`, `hud/life`), so ids of both kinds index one table. `update(frame)` refills the
 stars from the tick (they pause with the game) and rebuilds the HUD only when player 1's lives
@@ -367,6 +389,7 @@ Inside the game, use `createGame(platform, overrides, db)` and `game.step()` /
 
 | Where | Covers |
 |---|---|
+| `packages/core/test/world/world-stage*.test.ts` | the World with a stage (M1-07): `config.stage` selection, the runner driving the camera, music / `end` / restart hooks, terrain hits through `playerHit` (fly-in, god mode, hazard, decoration, ceilings, player 2), hit-stop freezing the timeline, determinism and zero allocation — details in [stage-runtime.md](stage-runtime.md#tests) |
 | `packages/core/test/world/` | phase order and names, hit-stop (only input + fx, exact lengths, view refresh), camera scroll and riding across hit-stop, P2 inactive / active, pools (register, flush, clear, duplicate names), grid placement, stable view objects, 5,000-tick lockstep hashes, one flipped input bit diverges, zero allocation per tick (scrolling on both axes, default ship) |
 | `packages/core/test/player/` | speed per level, diagonal scale, SOCD, clamps (far outside, asymmetric margins, corners, vertical scroll), fly-in curve (also while scrolling), banking, state timers, invulnerability, device tracking, `resolvePlayerShip`, zero allocation |
 | `packages/core/test/collision/` | every shape test incl. edge contact and degenerate shapes, `segmentAabb` against an exact reference (4,000 cases), the layer matrix, grid = brute force (1,000 random boxes, several cell sizes, fractional origins), the 9-cell overflow, capacity, `build`/`query` protocol, zero allocation |
@@ -394,8 +417,9 @@ Inside the game, use `createGame(platform, overrides, db)` and `game.step()` /
 
 ## Next steps that build on this page
 
-- **M1-07** — the stage runner drives `camera.vx/vy` from the camera path in phase 3; terrain
-  queries (`TerrainQuery`) and the terrain box.
+- **M1-07** (done) — the stage runner drives the camera in phase 3, the terrain box is tested
+  against the stage terrain in phase 6 and hits are recorded by `playerHit`
+  ([stage-runtime.md](stage-runtime.md)).
 - **M1-08 / M1-09** — enemies and bullets fill phases 4–6 (SoA pools registered with the
   World, grid inserts and queries).
 - **M1-10 / M1-11** — shots, Options (the `moving` trail), items and the pickup box.

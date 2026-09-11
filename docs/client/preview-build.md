@@ -9,8 +9,10 @@ whole chain works — the controls reach the ship quickly and reliably, the 60 t
 simulation runs smoothly, the picture is pixel-perfect at the monitor's resolution — and to
 catch control, smoothness or scaling problems early.
 
-The earlier start-up pictures are still available in a browser: the animated **sprite
-showcase** and the **calibration screen** — see [below](#other-screens-browser-only).
+In a browser you can also fly the first **scrolling stage** — the *Test Range*, with rocky
+ground, caves and speed changes (see [The scrolling test stage](#the-scrolling-test-stage-browser-only)) —
+and the earlier start-up pictures are still there: the animated **sprite showcase** and the
+**calibration screen** (see [below](#other-screens-browser-only)).
 
 This page explains how to open the preview on each device, what you should see, how the ship
 should behave, and what to report if something is wrong. The full button layouts are in
@@ -77,13 +79,21 @@ ship may move in four directions only; the game is designed to be fully playable
 
 ### What changed lately
 
-The ship is now **under your control**, and free flight has replaced the sprite showcase as
-the start-up picture (the showcase is still there in a browser, see below). The simulation
-behind it is the real game engine: from here on, every build adds to this world — scrolling
-stages, enemies, weapons.
+**New in this build: scrolling stages.** The game can now run a stage — the view scrolls
+along a scripted path, speeding up and slowing down, over rocky floors and caves drawn from
+small tiles, with star layers moving behind at their own speeds. For now the only stage is the
+*Test Range*, and it can only be opened in a browser
+([below](#the-scrolling-test-stage-browser-only)); the TV and desktop builds still start in
+free flight, which works exactly as before. Touching the rock does nothing yet (the ship flies
+through it) — crashing arrives together with lives and respawning in a later build.
+
+Before that: the ship came **under your control**, and free flight replaced the sprite
+showcase as the start-up picture. The simulation behind it is the real game engine: every
+build adds to this world — next come enemies, then weapons.
 
 **Please re-test on the monitors:** install the new build and run through the checks in the
-next section — how the ship responds to the remote is the most valuable report right now.
+next section — how the ship responds to the remote is still the most valuable report. On a
+PC, please also fly the test stage once and report anything from its checklist.
 
 The game data and the sprite sheet travel **inside** the app (the sprite sheet is a small
 picture file packed into the same `.wgt`, in its `assets/` folder). There are no extra files
@@ -125,8 +135,8 @@ Things to check on the monitor and report:
 8. After Home → reopen, the app comes back without a black screen and the ship is where you
    left it.
 
-The TV always starts with free flight; the showcase and the calibration screen can only be
-opened in a browser.
+The TV always starts with free flight; the test stage, the showcase and the calibration
+screen can only be opened in a browser.
 
 ## In a desktop browser
 
@@ -150,10 +160,49 @@ delay as on the TV — open http://localhost:5173/?profile=keyboard-remote-emula
 browser instead. It behaves the same, except that Back does nothing (there is no TV
 system to return to).
 
+### The scrolling test stage (browser only)
+
+Open http://localhost:5173/?stage=test-range (add `&profile=keyboard-remote-emulation` to fly
+it with the TV remote's limits). The top bar's title reads **TEST RANGE** instead of FREE
+FLIGHT, and the view scrolls to the right on its own while you fly — the ship keeps its place
+on screen unless you move it, and the world slides past from right to left. The whole run
+takes about a minute and a quarter:
+
+| Time (about) | What happens |
+|---|---|
+| 0–1 s | The ship flies in while the scrolling speeds up to its normal pace (one screen width every six seconds or so) |
+| from the start | Rolling **rocky ground** along the bottom: gentle hills with 45° and shallower slopes, a light green rim on top of darker rock |
+| 19 s | A **cave** comes into view on the right: rock along the top *and* the bottom |
+| 25 s | As the view enters the cave, the scrolling **doubles** its speed |
+| 33–36 s | The cave ends; the scrolling eases off, then slows to a crawl in open space |
+| 36–45 s | A second, **deeper cave** creeps into view — the ceiling hangs lower, the floor is flatter; at about 45 s the scrolling is back to normal speed |
+| 62–68 s | The rock ends; open space |
+| 75 s | The stage ends and the scrolling stops for good. Nothing else happens yet (no "stage clear" screen) — reload the page to fly it again |
+
+Two star layers move behind everything: the far stars at a quarter of the scrolling speed,
+the nearer ones at half. They only move while the view scrolls (unlike free flight's stars,
+which drift by themselves), and they stop when the stage ends.
+
+What "good" looks like:
+
+- The rock is made of crisp square pixels with **no seams or gaps** between the little
+  tiles, and slopes join the flat pieces cleanly.
+- Rock scrolls in smoothly at the right edge — nothing pops into view late, nothing flickers,
+  and the ground never jumps or shimmers relative to the ship.
+- Rock is only ever inside the playfield: it never covers the top or bottom HUD bar.
+- There is always a gap tall enough to fly through; the ship can reach every part of it.
+- Touching the rock does nothing yet — the ship passes through it. That is expected in this
+  build.
+
+If the address names a stage that does not exist (for example a typo in `?stage=`), the game
+starts in ordinary free flight instead; the browser's developer console then says `no stage
+"…"; flying in open space`.
+
 ### Other screens (browser only)
 
 | Address | Screen |
 |---|---|
+| http://localhost:5173/?stage=test-range | The **Test Range**, the first scrolling stage (above) |
 | http://localhost:5173/?scene=showcase | The **sprite showcase** the previous builds started with: the KESTREL flying a figure-eight with two Options, five enemies with hit flashes, a ring of bullets, both HUD bars with a counting score and a blinking power meter. Nothing reacts to the controls |
 | http://localhost:5173/?scene=calibration | The **calibration screen**, for judging scaling and colours on a new display (below) |
 
@@ -207,6 +256,10 @@ mean the build itself is broken; they are not caused by anything you did.
 | The ship moves only up, down, left and right | Normal on remotes that report one direction at a time, and with `?profile=keyboard-remote-emulation` in a browser. With a keyboard or gamepad and no `?profile=` in the address, please report it |
 | The ship keeps moving after I let go (TV) | A tiny delay (1/30 of a second) is intentional. If it clearly keeps going, report it — and film it if you can |
 | The ship stutters or stops for a moment while I hold a direction (TV) | Please report it with the remote model: the game's hiccup protection is supposed to hide exactly this |
+| `?stage=test-range` shows free flight (title FREE FLIGHT, no rock) | The stage name in the address is misspelled — check the spelling (`test-range`); the browser console names the unknown stage |
+| The ship flies through the rock in the test stage | Expected in this build: hits are only noted, crashing comes later |
+| The test stage stopped scrolling | At the end of the stage (after about 75 seconds) that is expected; reload the page to start again. If it stops earlier, please report where |
+| Gaps, seams or flickering in the rock, or rock over a HUD bar | Please report it with a screenshot and roughly how far into the stage it was |
 | The ship flies in from the left again | Not expected in this build — the ship only flies in at start-up. Please report what you were doing |
 | Error screen with a pink title | See [When the app shows an error screen](#when-the-app-shows-an-error-screen) — photograph it and report it |
 | Error screen `WEBGL IS NOT AVAILABLE` in a browser | Hardware acceleration is off or blocked: enable it in the browser settings (Chrome: Settings → System → "Use graphics acceleration when available") and reload. On the TV, report it together with the monitor's firmware version |

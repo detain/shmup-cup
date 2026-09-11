@@ -115,7 +115,12 @@ ES5 and linted with `ecmaVersion: 5`.
   positions: keep fractional state in typed arrays or object fields rather than in closure
   `let`s, pass whole numbers across calls that only need whole numbers (e.g.
   `grid.begin(Math.floor(camera.x) - margin, …)`), and make both arms of a conditional produce
-  the same kind of number (`a * (diagonal ? k : 1)`, not `diagonal ? a * k : a`).
+  the same kind of number (`a * (diagonal ? k : 1)`, not `diagonal ? a * k : a`). Give a hot
+  object with fractional fields (the camera) its own class instead of an object literal: V8
+  shares hidden classes between literals with the same key order, and another literal of that
+  shape holding objects (a content schema, say) turns the fields "tagged" — every fractional
+  write then allocates. Per-tick code reads compiled typed arrays, not content objects (their
+  shapes vary with optional fields) — see [stage-runtime.md](stage-runtime.md#gotchas).
 - Prove it with the allocation guard: `measureHeapGrowth(fn, iterations)`
   (`packages/core/test/helpers/alloc.ts`, needs `--expose-gc` through
   `defineShmupProject(name, { execArgv })`) — every per-tick or per-frame entry point gets a

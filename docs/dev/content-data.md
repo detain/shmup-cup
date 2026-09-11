@@ -43,9 +43,10 @@ local file fails on Chromium 69, and the Tizen bundle must be one classic script
 also makes the build reproducible: the generated module is byte-identical for the same
 content on every machine.
 
-**Status today.** The loader, the combinators, the `player` and `weapons` formats, the
-plugin and `pnpm content:check` are done. `enemies` and `stage` are *stub* schemas that match
-the example files; M1-07 … M1-13 extend them. Both apps register the plugin and their
+**Status today.** The loader, the combinators, the `player`, `weapons`, `stage` and
+`tileset` formats (the last two since M1-07 — see [stage-runtime.md](stage-runtime.md)), the
+plugin and `pnpm content:check` are done. `enemies` is a *stub* schema that matches the
+example files; M1-08 … M1-13 extend it. Both apps register the plugin and their
 `main.ts` imports `virtual:shmup-content`; `@shmup/shell`'s `bootShell()` validates it with
 `loadGameContent()` (core kinds through `loadContent()`, foreign kinds through the
 `contentOwners` the apps pass — an unowned kind is an issue), stops on the boot error screen
@@ -57,7 +58,7 @@ when there is any issue, and passes `db` to `createGame` (M1-04,
 - Every file is a JSON object with a header: `"formatVersion": 1` and `"kind"`. The `kind`
   selects the schema; the loader does not care about folder or file name (the content test
   does: files must be named `<folder>/<name>.<kind>.json`).
-- Core kinds (`CONTENT_KINDS`): `player`, `weapons`, `enemies`, `stage`. Any other kind is
+- Core kinds (`CONTENT_KINDS`): `player`, `weapons`, `enemies`, `stage`, `tileset`. Any other kind is
   returned untouched in `foreign`, in path order, for its owning package to validate
   (`input-profiles` → input-web `rebind` since M1-05 — see
   [input-profiles.md](input-profiles.md); `sfx`/`music` → audio-web in M1-15, `fx` →
@@ -65,9 +66,10 @@ when there is any issue, and passes `db` to `createGame` (M1-04,
 - `example.*.json` files are format samples. The plugin never ships them;
   `pnpm content:check` validates them as their own set.
 - `CONTENT_FORMAT_VERSION` is **1**. An older file is upgraded by `CONTENT_MIGRATIONS`
-  (`0 → 1` exists for `weapons`, `enemies`, `stage` — format 0 was structurally identical);
-  `player` has no format 0, so a format-0 player file reports `no migration for player from
-  formatVersion 0`. A file from a *newer* version is rejected: an old build never guesses at
+  (`0 → 1` exists for `weapons`, `enemies`, `stage` — format 0 was structurally identical;
+  the stage migration stays the identity although M1-07 rewrote the stage format, so a
+  format-0 stage stub now reports ordinary schema issues); `player` and `tileset` have no
+  format 0, so such a file reports `no migration for <kind> from formatVersion 0`. A file from a *newer* version is rejected: an old build never guesses at
   a future format.
 
 ## What `loadContent` does
@@ -95,6 +97,14 @@ const game = createGame(platform, { seed }, db);
 7. **Intern** sprite and script names: every distinct name gets an index in *sorted* order
    (`db.sprites`, `db.scripts`), independent of which file mentioned it first.
 8. **Resolve** every recorded reference and write the index into `<field>Id`.
+9. **Expand stage terrain** (third pass, M1-07): every stage with a `tilemap` whose tileset
+   resolved gets its tile grid built from the `heightfield` generator and / or RLE rows into
+   `StageSpec.terrain` (`core/data/tilemap.ts`). Its issues (a tile the generator needs is
+   missing, bad RLE rows) come last. Stages are also checked beyond the schema at collect
+   time (sorted keys / checkpoints / events, the first key at 0, nothing past `length`,
+   `yTicks` without `yTo`, `to ≤ from` segments, > 32 flags) and their `flag` names are
+   numbered (`flagNames`, `event.flagId`); tilesets get their lookup `tables`. Details in
+   [stage-runtime.md](stage-runtime.md#stage-data-and-loading).
 
 A bad file is skipped, never fatal: one load reports every problem in every file.
 `loadContent` only throws (`TypeError`) when `files` is not an array — a programming error,
@@ -108,13 +118,16 @@ Every issue is `{ path, message }` with `path = <file>:<json path>`:
 ```text
 enemies/zone-a.enemies.json:enemies[3].hurtbox.hw   must be an integer in 1..512
 weapons/type-a.weapons.json:weapons[1].sfx          unknown sfx id "PlayerShoot"
-stages/zone-a.stage.json:events[12].type            type must be one of: spawn, boss, midboss, …
+stages/zone-a.stage.json:events[12].type            type must be one of: spawn, formation, warning, …
+stages/zone-a.stage.json:events[13].x               must be >= events[12].x (events are sorted by x)
+stages/zone-a.stage.json:tilemap.rle[3]             tile id 40 does not exist (the tileset has 17)
 player/kestrel.player.json:ships[0].speedz          unknown field
 stages/b.stage.json:id                              duplicate stage id "zone-a"
 ```
 
-Order: header, migration, schema and duplicate-id issues in file-then-document order, then
-the reference issues of the resolve pass in the same order.
+Order: header, migration, schema, stage / tileset checks and duplicate-id issues in
+file-then-document order, then the reference issues of the resolve pass in the same order,
+then the terrain-expansion issues.
 
 ### Id resolution: the `<field>Id` convention
 
@@ -126,7 +139,7 @@ absent optional reference, or an id that did not resolve (which is also an issue
 |---|---|---|
 | `sprite` | interned: `db.sprites` (sorted names) | never an issue here — `pnpm content:check` checks the names against the atlas (M1-03) |
 | `script` | interned: `db.scripts` (sorted names) | an issue only when `options.knownScripts` is given (M1-08 passes the behaviour registry) |
-| `ship`, `weapon`, `enemy`, `stage` | `db.shipIndex`, `weaponIndex`, `enemyIndex`, `stageIndex` — across all files, in any order | issue |
+| `ship`, `weapon`, `enemy`, `stage`, `tileset` | `db.shipIndex`, `weaponIndex`, `enemyIndex`, `stageIndex`, `tilesetIndex` — across all files, in any order | issue |
 | `sfx`, `music` | `SFX_CUES` / `MUSIC_CUES` in `core/events` (own properties only, so `"toString"` does not resolve) | issue |
 
 Examples from today's schemas: `sprite → spriteId`, `behavior → behaviorId` (weapons),
@@ -209,7 +222,7 @@ Rules the combinators follow:
 4. Tests in `packages/core/test/data/`: accept, each failure message, and the resolved id
    if it is a reference.
 
-### Adding a new kind (e.g. `paths` in M1-07)
+### Adding a new kind (e.g. `paths` in M1-08)
 
 1. Append it to `CONTENT_KINDS`; add a spec interface, a file schema (`...HEADER_SHAPE` +
    `kind: s.enumOf(['paths'] as const)`), a `case` in `parseFile` and in `collect`, and
@@ -317,5 +330,7 @@ M1-03 (done) checks every name in `db.sprites` against the generated atlas
 `createGame`; M1-05 (done) — the shell routes `input-profiles` files out of `foreign` to
 input-web's owner; M1-06 (done) — the World flies the KESTREL spec
 (`resolvePlayerShip(db)`: `kestrel` › first ship › the built-in `DEFAULT_PLAYER_SHIP`,
-[sim-world.md](sim-world.md#the-player-ship-coreplayer)); M1-07 extends `stage` (and adds `paths`/`tileset`); M1-08 passes `knownScripts` and
+[sim-world.md](sim-world.md#the-player-ship-coreplayer)); M1-07 (done) — the full M1 `stage`
+format, the new `tileset` kind and the third (terrain) load pass
+([stage-runtime.md](stage-runtime.md)); M1-08 adds `paths`, passes `knownScripts` and
 extends `enemies`; M1-10 reads the Type A weapons.

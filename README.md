@@ -10,8 +10,8 @@ The monorepo skeleton is in place (every planned system has a module with its AP
 and TSDoc-documented) and the **engine foundations** are implemented: seeded RNG streams,
 committed trigonometry tables with binary angles, the sim → presentation event queue and the
 zero-GC pools ([developer guide](docs/dev/engine-foundations.md)). **Game data** is
-schema-validated JSON under [`content/`](content/README.md) — the KESTREL ship and the Type A
-weapons so far — checked by `pnpm content:check`, served to the app builds as the virtual
+schema-validated JSON under [`content/`](content/README.md) — the KESTREL ship, the Type A
+weapons, the test-range stage and its terrain tileset so far — checked by `pnpm content:check`, served to the app builds as the virtual
 module `virtual:shmup-content` and loaded by `loadContent()` with every string id resolved
 to a number ([developer guide](docs/dev/content-data.md)). **Placeholder art** is code:
 sprite pixel maps under [`assets/source/`](assets/README.md), seeded procedural generators
@@ -37,6 +37,15 @@ flight** — the ship over an empty starfield between the HUD bars — with the 
 showcase at `?scene=showcase` and the test pattern at `?scene=calibration`; there are no
 enemies or weapons yet ([developer guide](docs/dev/sim-world.md),
 [what testers should check](docs/client/preview-build.md)).
+**Stages scroll** (M1-07): a stage file carries a scripted camera path (speed keys with
+linear ramps, eased vertical pans, boss locks that stop the camera exactly), invisible
+checkpoints with a deterministic restart, parallax star bands and tile terrain — generated at
+load by a deterministic heightfield generator (or given as RLE rows) over a
+[tileset](content/tilesets/README.md) whose per-tile column-height masks give pixel-exact
+slopes. The stage runner fires the sorted event timeline through a cursor, the World tests
+the ship's terrain box against the tiles (hits are recorded until the death sequence of
+M1-12), and the renderer draws the terrain as a ring-buffered sprite grid. Fly the dev stage
+with `pnpm dev` and `?stage=test-range` ([developer guide](docs/dev/stage-runtime.md)).
 **Input is remote-first and data-driven** (M1-05): control profiles in
 [`content/input/`](content/input/README.md) map keys, remote buttons and gamepad buttons to
 actions with separate **game** and **menu** tables, and carry the Samsung remote's quirks as
@@ -68,6 +77,7 @@ Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/ar
 [asset pipeline](docs/dev/asset-pipeline.md) ·
 [rendering & browser shell](docs/dev/rendering-and-shell.md) ·
 [sim World & collision](docs/dev/sim-world.md) ·
+[stage runtime](docs/dev/stage-runtime.md) ·
 [input profiles](docs/dev/input-profiles.md) ·
 [API reference](docs/dev/api-reference.md) ·
 [build, test & deploy](docs/dev/build-test-deploy.md) · [conventions](docs/dev/conventions.md).
@@ -94,7 +104,7 @@ versions (`devEngines.runtime`).
 ```sh
 pnpm -v               # must print 12.x — an older global pnpm fails with ERR_PNPM_BROKEN_LOCKFILE
 pnpm install          # set ELECTRON_SKIP_BINARY_DOWNLOAD=1 to skip the Electron binary
-pnpm dev              # browser dev app → http://localhost:5173: fly the KESTREL (arrows/WASD, gamepad; ?profile=keyboard-remote-emulation feels like the TV remote; ?scene=showcase / ?scene=calibration)
+pnpm dev              # browser dev app → http://localhost:5173: fly the KESTREL (arrows/WASD, gamepad; ?stage=test-range scrolls the test stage; ?profile=keyboard-remote-emulation feels like the TV remote; ?scene=showcase / ?scene=calibration)
 pnpm lint             # ESLint (typescript-eslint + compat: chrome >= 69)
 pnpm typecheck        # tsc --noEmit everywhere
 pnpm test             # Vitest per package + repo integration tests
@@ -155,7 +165,7 @@ pnpm workspace (`packages/*`, `apps/*`) + Turborepo. Full annotated tree:
 | [`apps/web`](apps/web/README.md) | Vite browser dev target (also Electron's renderer) |
 | [`apps/tizen`](apps/tizen/README.md) | Samsung Tizen `.wgt` (Chromium 69 classic IIFE build, config.xml, CLI scripts) |
 | [`apps/electron`](apps/electron/README.md) | Electron desktop shell |
-| [`content/`](content/README.md) | Game data: player ships, stages, enemies, weapons, input profiles (JSON, `formatVersion` 1) |
+| [`content/`](content/README.md) | Game data: player ships, stages, terrain tilesets, enemies, weapons, input profiles (JSON, `formatVersion` 1) |
 | `types/` | Ambient declarations for the Vite virtual modules (`virtual:shmup-content`, `virtual:shmup-assets`) |
 | [`assets/`](assets/README.md) | Art/audio sources (`source/`: sprite pixel maps, fonts) and pipeline output (`generated/`: atlas pages + manifest, ignored) |
 | [`scripts/`](scripts/README.md) | Repo-level Node scripts |
@@ -173,9 +183,9 @@ the game — the shipped Tizen bundle still targets Chromium 69.
 
 ## Next step
 
-Code: plan step **M1-07** (the stage runtime: the scrolling camera path, the event timeline
-and checkpoints, tile terrain and parallax) — the per-step status board is
-[`shmup_progress.md`](shmup_progress.md).
+Code: plan step **M1-08** (enemies, behaviour scripts and movement: data-defined enemies
+spawned by the stage timeline, movers, sleeping coroutines, formations that drop capsules) —
+the per-step status board is [`shmup_progress.md`](shmup_progress.md).
 
 On hardware (unchanged, and still the gate for the remote control scheme): package and
 deploy the input probe from the **Windows desktop** that sits on the same LAN as the monitors and holds

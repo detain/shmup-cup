@@ -108,7 +108,7 @@ Each module exports `generate(): SpriteDef[]` and is registered in
 | `items` | `items/capsule` (12×8 × 2, `blink`) |
 | `shields` | `shields/force-field` (30×24 × 4 wear states: `fresh`, `worn`, `damaged`, `critical`) |
 | `starfield` | `bg/stars-far`, `bg/stars-mid`, `bg/stars-near` — seamless 128×128 transparent tiles |
-| `terrain` | `tiles/terrain-a` — 17 8×8 tiles (solid, floor, ceiling, walls, 45° and 22.5° slopes); every tile is also a one-frame animation named after it (`floor → [1]`, list in `TERRAIN_TILES`) |
+| `terrain` | `tiles/terrain-a` — 17 8×8 tiles (solid, floor, ceiling, walls, 45° and 22.5° slopes); every tile is also a one-frame animation named after it (`floor → [1]`, list in `TERRAIN_TILES`); collision masks and frames live in `content/tilesets/terrain-a.tileset.json` — change both together |
 | `hud` | `hud/meter-slot` (40×8: `normal`, `highlighted`, `disabled`), `hud/meter-labels` (36×5 × 7 slot labels in meter order) |
 | `ui` | `ui/pixel` (1×1 white, for rectangles), `ui/missing` (8×8 magenta checker the renderer shows for an unknown name) |
 
@@ -397,7 +397,9 @@ pnpm exec vitest run --project integration test/scripts/assets   # pipeline unit
 
 M1-04 (done) loads `virtual:shmup-assets` through the shell into render-pixi's `atlas`
 module (numeric frame ids, nearest sampling, `ui/missing` for unknown names) and draws text
-with `font/pixel` ([rendering-and-shell.md](rendering-and-shell.md)); M1-07
-uses `tiles/terrain-a` and the star layers; M1-08 … M1-13 add enemy, bullet and boss sprites
+with `font/pixel` ([rendering-and-shell.md](rendering-and-shell.md)); M1-07 (done) draws
+`tiles/terrain-a` through `content/tilesets/terrain-a.tileset.json` (whose masks a test
+compares with these frames' pixels) and the star layers as parallax bands
+([stage-runtime.md](stage-runtime.md)); M1-08 … M1-13 add enemy, bullet and boss sprites
 (with `hitFlash`); M1-14 uses the explosions and particles; M1-16 builds the HUD from
 `hud/*` and `ui/pixel`; M1-18 adds the Zone A art.

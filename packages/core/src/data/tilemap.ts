@@ -27,8 +27,11 @@
  * **Implements.** shmup_feat.md §14 — tilemap terrain (8×8 tiles, collision types, slopes via
  * per-tile height masks), stage data format.
  *
- * **Public API.** Internal to `core/data` (re-exported types only): {@link TilesetTables},
- * {@link buildTilesetTables}, {@link expandTilemap}, {@link decodeRleRow}.
+ * **Public API.** Internal to `core/data` — only {@link TilesetTables} is re-exported (by
+ * `core/data` and the package root): {@link buildTilesetTables}, {@link expandTilemap},
+ * {@link decodeRleRow} and their input shapes {@link TileTableInput}, {@link TilemapInput},
+ * {@link HeightfieldSegmentInput}, {@link HeightfieldProfileInput} (structural subsets of the
+ * `core/data` specs, so this file does not import `core/data`).
  *
  * @remarks
  * Load-time code: it allocates freely and reports every problem as a `ValidationIssue`
@@ -122,6 +125,13 @@ export function buildTilesetTables(
  * @param path - Issue path of the row.
  * @param issues - Collector.
  * @returns `true` when the row decoded cleanly (on failure nothing is written).
+ *
+ * @example
+ * ```ts
+ * const row = new Uint8Array(8);
+ * decodeRleRow('2*0, 3*1, 2', 8, 17, row, 0, 'x.stage.json:tilemap.rle[0]', issues);
+ * // row → [0, 0, 1, 1, 1, 2, 0, 0]
+ * ```
  */
 export function decodeRleRow(
   text: string,
@@ -458,6 +468,15 @@ function fillProfile(
  * @param path - Issue path of the tilemap block (`<file>:tilemap`).
  * @param issues - Collector.
  * @returns The grid (`cols × rowsTall`, row-major), or `null` when the RLE rows are unusable.
+ *   Generator problems (a missing named or slope tile) are reported as issues but still return
+ *   a grid (the `solid` tile stands in for a missing slope; a missing named tile skips the
+ *   generator).
+ *
+ * @example
+ * ```ts
+ * const tiles = expandTilemap(stage.tilemap, stageMapWidth(stage.length, 8), tileset.tables,
+ *   tileset.id, 'stages/x.stage.json:tilemap', issues);
+ * ```
  */
 export function expandTilemap(
   tilemap: TilemapInput,

@@ -51,9 +51,9 @@ browser, TV).
 
 | Export | Kind | Summary |
 |---|---|---|
-| `GameConfig` | interface | `internalWidth` 384, `internalHeight` 216, `tickRate` 60, `maxTicksPerFrame` 4, `seed`, `difficulty`, `powerUpMode`, `deathPenalty`, `startingLives` 3, `autofire`, `remoteMode` |
+| `GameConfig` | interface | `internalWidth` 384, `internalHeight` 216, `tickRate` 60, `maxTicksPerFrame` 4, `seed`, `difficulty`, `powerUpMode`, `deathPenalty`, `startingLives` 3, `autofire`, `remoteMode`, `stage` (a `content/stages/` id, or `null` = free flight in open space — the default until M1-16) |
 | `DEFAULT_GAME_CONFIG` | const | Frozen defaults (remote-first: `autofire` and `remoteMode` true, `'direct'` items, `'classic'` penalty, `'normal'`) |
-| `resolveGameConfig(overrides?)` | function | → frozen, validated config; throws `RangeError` for out-of-range integers |
+| `resolveGameConfig(overrides?)` | function | → frozen, validated config; throws `RangeError` for out-of-range integers or a `stage` that is neither `null` nor a non-empty string (whether the id exists is checked by `createWorld`) |
 | `PowerUpMode`, `DeathPenaltyPreset`, `DifficultyPreset` | types | `'meter' \| 'direct'`; `'arcade' \| 'classic' \| 'casual'`; `'easy' \| 'normal' \| 'hard' \| 'arcade'` |
 | `HUD_BAR_HEIGHT`, `PLAYFIELD_Y`, `PLAYFIELD_W`, `PLAYFIELD_H` | const | Screen layout (decision D20): `8`, `8`, `384`, `200` — two 8-px HUD bars outside a 384×200 playfield; world `y` maps to screen `y − camera.y + PLAYFIELD_Y` |
 
@@ -70,7 +70,7 @@ browser, TV).
 
 | Export | Kind | Summary |
 |---|---|---|
-| `createGame(platform, overrides?, content?)` | function | → `Game`; registers suspend/resume handlers on the platform. `content` defaults to `EMPTY_CONTENT_DB` |
+| `createGame(platform, overrides?, content?)` | function | → `Game`; registers suspend/resume handlers on the platform. `content` defaults to `EMPTY_CONTENT_DB`; throws `RangeError` for invalid overrides or an `overrides.stage` the content does not have |
 | `Game` | interface | `config`, `content`, `platform`, `events` (the World's `EventQueue`, `=== world.events`; the host drains it once per frame), `world` (the session's `World`, created by `createWorld(config, content)`; only `step()` advances it), `state`, `inputContext` (getter: the binding context the top scene wants — `'game'` until M1-16), `step()` (one `platform.input.poll()`, then `stepWorld`), `frame(nowMs) → ticks`, `renderFrame()` (*reused* `RenderFrame`: `world` = `game.world.view`, empty `hud` / `ui` draw lists, zero `screen`), `pause()`, `resume()` |
 | `GameState` | interface | `tick`, `paused`, `suspended`, `input` (last snapshot) |
 
@@ -91,7 +91,8 @@ The per-frame contract between the simulation and a renderer (plan §3.4). Guide
 | `SpriteFlag` | const + type | `FlipX 1`, `FlipY 2`, `Hidden 4` (blink), `Flash 8` (draw the `<sprite>@flash` sibling, D30) |
 | `LayerId` | const + type | Draw order `BgFar 0, BgMid 1, Terrain 2, GroundEnemies 3, AirEnemies 4, PlayerShots 5, Player 6, Hitbox 7, Items 8, Fx 9, EnemyBullets 10, Hud 11, Ui 12, Debug 13` — append, never renumber |
 | `LAYER_COUNT`, `LAYER_NAMES` | const | `14`; `'BG_FAR'` … `'DEBUG'` by code |
-| `ParallaxView`, `TerrainView` | interfaces | Minimal shapes drawn from M1-07: `count`, `layer`, `spriteId`, `offsetX`, `y`; `tileSize`, `cols`, `rows`, `tiles`, `tilesetSpriteId` |
+| `ParallaxView` | interface | The stage's background bands (drawn since M1-07): `count`, per band `layer` (`BgFar` / `BgMid`), `spriteId` (frame 0, repeated), `offsetX` (`0 ≤ offsetX < spacing`), `y` (playfield row after the vertical scroll), `spacing` (repeat distance) — `core/stage` `updateParallaxView` fills it |
+| `TerrainView` | interface | The stage's tile terrain: `tileSize`, `cols`, `rows`, `tiles` (row-major tile ids, 0 = empty — live, re-read as cells scroll in), `tilesetSpriteId`, `tileFrame` (tile id → frame of the tileset sprite, `-1` = not drawn) |
 | `ScreenView` | interface | `shakeX`, `shakeY` (px, rounded by the renderer), `flash` (0…1 white over the playfield), `dim` (0…1 black under the UI) |
 | `createDrawList(capacity = 256, stringCapacity = 32)` | function | → `DrawList`; throws `RangeError` for non-positive capacities |
 | `DrawList` | interface | Column-wise typed arrays `op, x, y, w, h, color, alpha, ref, frame, flags, value` + `strings`; `count`, `dropped`, `revision`; `clear()`, `rect()`, `sprite()`, `text(slot, …)`, `number(value, …, minDigits)`, `setString(slot, text) → changed` (`text`/`setString` throw `RangeError` for a bad slot). Commands return their index or `-1` when full |
@@ -191,34 +192,48 @@ at load (decision D28: in-house combinators, no runtime dependency). Guide:
 | `loadContent(files, options?)` | function | → `LoadContentResult { db, issues, foreign }`; never throws on bad data, only on a bad `files` argument (`TypeError`). Pure: same files in any order → identical result; input never mutated |
 | `LoadContentOptions` | interface | `knownScripts?` (array or `Set`; unknown `script` refs become issues — M1-08 passes it), `migrations?` (defaults to `CONTENT_MIGRATIONS`) |
 | `ContentFile` | interface | `{ path, data }` — one parsed JSON document, as `virtual:shmup-content` provides it |
-| `ContentDb` | interface | `sprites`, `scripts` (`StringTable`), `ships`, `weapons`, `weaponPresets`, `enemies`, `stages`, each with an id → position `…Index` map (`shipIndex`, `weaponIndex`, `weaponPresetIndex`, `enemyIndex`, `stageIndex`) |
+| `ContentDb` | interface | `sprites`, `scripts` (`StringTable`), `ships`, `weapons`, `weaponPresets`, `enemies`, `stages`, `tilesets`, each with an id → position `…Index` map (`shipIndex`, `weaponIndex`, `weaponPresetIndex`, `enemyIndex`, `stageIndex`, `tilesetIndex`) |
 | `StringTable` | interface | `{ names, index }` — interned names in ascending order; `names[i]` is index `i` |
 | `EMPTY_CONTENT_DB` | const | Frozen, shared empty database (the default for `createGame`) |
-| `CONTENT_KINDS`, `ContentKind`, `isContentKind(kind)` | const/type/function | `player`, `weapons`, `enemies`, `stage`; other kinds come back in `foreign` |
+| `CONTENT_KINDS`, `ContentKind`, `isContentKind(kind)` | const/type/function | `player`, `weapons`, `enemies`, `stage`, `tileset`; other kinds come back in `foreign` |
 | `ContentFileHeader` | interface | `{ formatVersion, kind }` — first two fields of every file |
 | `CONTENT_FORMAT_VERSION` | const | `1`; a newer version is rejected with an issue |
 | `CONTENT_MIGRATIONS`, `ContentMigration`, `ContentMigrationTable` | const/types | Per-kind `fromVersion → (data) => newData` table; ships `0 → 1` for `weapons`, `enemies`, `stage` (none for `player`) |
 | `PlayerShipSpec`, `BoxSpec`, `MarginSpec` | types | A ship of a `player` file: `speeds` (D3), `hurtRadius`, `terrainBox`, `pickupBox`, `margins`, timers, `spriteId` |
 | `WeaponSpec`, `WeaponSlot`, `WEAPON_SLOTS`, `WeaponPresetSpec` | types/const | A weapon (`slot`, `behaviorId`, `damage`, `speed`, `cap`, `pierce`, `spriteId`, optional `refireTicks`, `sfxId`, `params`) and a meter-mode loadout (`mainId`/`missileId`/`doubleId`/`laserId`, `-1` = none) |
 | `EnemySpec`, `EnemyRankSpec` | types | Stub (M1-08 extends): `hp`, `score`, `hurtbox`, `scriptId`, `spriteId`, `drop`, `rank?` |
-| `StageSpec`, `StageCameraKey`, `StageCheckpoint`, `StageParallaxLayer`, `StageTilemapRef` | types | Stub (M1-07 extends): `length`, `camera`, `checkpoints`, `parallax`, `tilemap`, `events` |
-| `StageEvent` = `StageSpawnEvent` \| `StageBossEvent` \| `StageMusicEvent` \| `StageScrollEvent` \| `StageCheckpointEvent` | types | Timeline entries by `type`: `spawn` (`enemyId`), `boss`/`midboss`/`warning` (`enemyId`), `music` (`cueId`), `scroll`, `checkpoint` |
+| `StageSpec` | type | A stage (M1-07): `id`, `name`, `music: StageMusic` (`stage` / `boss` cues + `stageId` / `bossId`), `length`, `camera`, `checkpoints`, `parallax`, `tilemap` (`StageTilemapSpec \| null`), `events`, and two fields the loader adds: `flagNames` (sorted; index = flag bit) and `terrain` (`StageTerrain \| null`) |
+| `StageCameraKey` | type | `x`, `speed` (px/tick, 0 = stop), optional `ramp` (ticks, linear), `yTo` + `yTicks` (eased vertical pan), `lock` (boolean — stop exactly at `x` until `runner.unlock()`) |
+| `StageCheckpoint`, `StageParallaxLayer`, `StageParallaxLayerName` | types | `{ x }`; a band `{ layer: 'far' \| 'mid', sprite, spriteId, factor, y, spacing }`; `'far' \| 'mid'` |
+| `StageTilemapSpec`, `HeightfieldSpec`, `HeightfieldSegment`, `HeightfieldProfile` | types | `{ tileSize: 8, tileset, tilesetId, rowsTall, rle?, generator? }`; `{ type: 'heightfield', segments }`; `{ from, to, floor?, ceiling? }`; `{ base, amp, period, seed }` |
+| `StageTerrain` | type | The expanded grid (never in the JSON): `tileSize`, `cols` = `ceil((length + 384) / 8)`, `rows`, `tiles` (`Uint8Array`, shared content — copy before mutating), `tilesetId` |
+| `StageEvent` = `StageSpawnEvent` \| `StageFormationEvent` \| `StageBossEvent` \| `StageMusicEvent` \| `StageSpeedEvent` \| `StageFlagEvent` \| `StageEndEvent` | types | Timeline entries by `type`: `spawn` (`enemyId`, `y?`, `path?`), `formation` (`enemyId`, `count`, `interval`, `y?`, `path?`), `warning` / `boss` (`enemyId`), `music` (`cueId`), `speed` (`speed`, `ramp?`), `flag` (`flag`, `flagId`, `value?` default `true`), `end` |
+| `STAGE_EVENT_TYPES`, `MAX_STAGE_FLAGS` | const | The eight types in schema order (index = `StageEventCode`); `32` |
+| `TilesetSpec`, `TileSpec` | types | A `tileset` file: `id`, `sprite`, `spriteId`, `tileSize` (8), `tiles` (≤ 255; tile id = index + 1), `tables`; a tile: `name`, `type`, `frame`, `anchor`, `mask` (8 column heights) |
+| `TilesetTables` | type | Per tile id (0 = empty cell): `count`, `type`, `anchor`, `mask` (`[id * tileSize + column]`), `frame` (`-1` = not drawn), `byName` |
+| `TileType`, `TILE_TYPES`, `TileAnchor`, `TILE_ANCHORS`, `TILE_SIZE` | types/const | `'empty' \| 'solid' \| 'hazard'` (index = `TerrainType` code); `'floor' \| 'ceiling'` (index = `TerrainAnchor` code); `8` |
 | `ValidationIssue` | interface | `{ path, message }`, e.g. `enemies/x.enemies.json:enemies[3].hurtbox.hw` / `must be an integer in 1..512` |
 | `s` | const | The combinators: `int`, `num`, `str`, `bool`, `enumOf`, `array`, `object`, `record`, `nullable`, `ref`, `oneOf` |
 | `Schema<T>`, `Infer<S>`, `ObjectShape`, `ObjectValue<S, O>` | types | `parse(value, path, issues, refs?) → T \| undefined` (+ `typeName`, `refKind`); `Infer` extracts `T` |
-| `RefSite`, `ContentRefKind` | types | A recorded `s.ref` site (`path`, `kind`, `id`, `container`, `field`); kinds `ship`, `weapon`, `enemy`, `stage`, `sprite`, `script`, `sfx`, `music` |
+| `RefSite`, `ContentRefKind` | types | A recorded `s.ref` site (`path`, `kind`, `id`, `container`, `field`); kinds `ship`, `weapon`, `enemy`, `stage`, `tileset`, `sprite`, `script`, `sfx`, `music` |
 
 Every `s.ref` field `foo` gains a numeric sibling `fooId` after loading. Sprite and script
 names are *interned* (sorted, then numbered, so ids never depend on file order);
-ship/weapon/enemy/stage ids and `sfx`/`music` cue names must resolve or an issue is reported
-and the id becomes `-1` (also the value for `null` and absent optional references).
+ship/weapon/enemy/stage/tileset ids and `sfx`/`music` cue names must resolve or an issue is
+reported and the id becomes `-1` (also the value for `null` and absent optional references).
 `s.array(s.ref(…))` and `s.record(s.ref(…))` throw a `TypeError` at construction — wrap
 references in objects. `pnpm content:check` runs the loader over `content/`.
 
-The placeholder modules `weapons`, `enemies` and `stage` still declare their own
-`WeaponSpec` / `EnemySpec` / `StageEvent` (not exported); the package entry exports the
-`data` versions above. The steps that implement those systems (M1-07 stage, M1-08
-enemies, M1-10 weapons) reconcile the two — import the `data` types in the meantime.
+A stage gets checks beyond its schema (sorted keys / checkpoints / events, the first key at 0,
+nothing past `length`, `yTicks` needs `yTo`, ≤ 32 flags) and a **third load pass** expands its
+tilemap (`heightfield` generator and / or RLE rows, `core/data/tilemap.ts`) into
+`StageSpec.terrain` once tileset ids are resolved. Guide:
+[stage-runtime.md](stage-runtime.md#stage-data-and-loading).
+
+The placeholder modules `weapons` and `enemies` still declare their own `WeaponSpec` /
+`EnemySpec` (not exported); the package entry exports the `data` versions above. The steps
+that implement those systems (M1-08 enemies, M1-10 weapons) reconcile the two — import the
+`data` types in the meantime. (`stage` did so in M1-07: it uses the `data` stage types.)
 
 ### `world` — the gameplay session and the tick pipeline
 
@@ -227,26 +242,27 @@ One gameplay session and the fixed 9-phase tick of plan §3.2. Guide:
 
 | Export | Kind | Summary |
 |---|---|---|
-| `createWorld(config, content)` | function | → `World` at tick 0: RNG streams from `config.seed`, the ship from `resolvePlayerShip(content)`, player 1 starting its fly-in, player 2 inactive, view already filled |
+| `createWorld(config, content)` | function | → `World` at tick 0: RNG streams from `config.seed`, the ship from `resolvePlayerShip(content)`, the stage `config.stage` (runner at its start, collision map, parallax / terrain views, the stage theme queued as a `Music` event) or a static camera, player 1 starting its fly-in, player 2 inactive, view already filled; throws `RangeError` for an unknown stage id |
+| `resolveWorldStage(config, content)` | function | → the `StageSpec` `config.stage` names, `null` for free flight; throws `RangeError` for an unknown id |
 | `stepWorld(world, input)` | function | Runs `WORLD_PHASES` in order (phases 2–8 skipped while `hitStop > 0` at the start of the tick), then `world.tick++`; never allocates |
-| `World` | interface | `config`, `content`, `ship`, `tick`, `rng`, `events`, `players` (2), `intents` (2), `camera`, `status`, `hitStop`, `debugFlags`, `pools`, `grid`, `playerBatch`, `view` |
-| `WorldCamera` | interface | `x`, `y` (playfield top-left in world pixels), `dx`, `dy` (last stage-phase step), `vx`, `vy` (scroll velocity px/tick, 0 = static; M1-07 drives it) |
+| `World` | interface | `config`, `content`, `ship`, `tick`, `rng`, `events`, `players` (2), `intents` (2), `camera`, `status`, `hitStop`, `debugFlags`, `pools`, `grid`, `playerBatch`, `stage` (`StageRunner \| null`), `terrain` (`TerrainMap \| null`, a private copy of the tiles), `parallax` (`StageParallaxView \| null`), `view` |
+| `WorldCamera` | interface | `x`, `y` (playfield top-left in world pixels), `dx`, `dy` (last stage-phase step), `vx`, `vy` (scroll velocity px/tick; the stage runner writes it every tick, in free flight 0 = static unless a test sets it). A class instance (`createStageCamera()`), not a literal — see the V8 note in [stage-runtime.md](stage-runtime.md#gotchas) |
 | `WorldStatus`, `WORLD_STATUSES` | type, const | `'playing' \| 'bossWarning' \| 'stageClear' \| 'gameOver'`; the list (index = hash code) |
 | `WorldPhase`, `WORLD_PHASE_NAMES` | const + type, const | `Input 0, Players 1, Stage 2, Scripts 3, Movement 4, Collision 5, Damage 6, Removal 7, Fx 8`; `'input'` … `'fx'` |
 | `WORLD_PHASES` | const | Frozen `WorldPhaseEntry[]` in tick order; only `input` and `fx` have `runsDuringHitStop` |
 | `WorldPhaseEntry`, `WorldSystem` | interface, type | `{ phase, name, runsDuringHitStop, run }`; `(world, input) => void` |
 | `PoolRegistry`, `RegisteredPool` | interfaces | `entries`, `register(name, pool) → pool` (throws `Error` for a duplicate name), `flushAll()` (phase 8), `clearAll()`; `{ name, pool, arrays }` with the field arrays in sorted name order (the hash order) |
-| `syncWorldView(world)` | function | Refills the players' mirror batch (active, not `dying` / `dead`, sprite present; blinks while invulnerable); phase 9 and `createWorld` call it |
+| `syncWorldView(world)` | function | Scrolls the parallax bands with the camera and refills the players' mirror batch (active, not `dying` / `dead`, sprite present; blinks while invulnerable); phase 9 and `createWorld` call it |
 | `GRID_MARGIN` | const | `64` — px around the camera view covered by `world.grid` |
 
 ### `player` — the player ship (partial)
 
-Movement, speed levels, clamping, banking and the fly-in (M1-06); hits, death and respawn
-arrive in M1-12.
+Movement, speed levels, clamping, banking and the fly-in (M1-06); hits are *recorded* by
+`playerHit` since M1-07 (terrain contact); death and respawn arrive in M1-12.
 
 | Export | Kind | Summary |
 |---|---|---|
-| `PlayerShip` | interface | `slot`, `active`, `x`, `y` (world centre, sub-pixel), `state`, `stateTicks`, `speedLevel`, `invulnTicks`, `bank`, `device`, `lives`, `moving` |
+| `PlayerShip` | interface | `slot`, `active`, `x`, `y` (world centre, sub-pixel), `state`, `stateTicks`, `speedLevel`, `invulnTicks`, `bank`, `device`, `lives`, `moving`, `hitCause` / `hitTick` / `hits` (last accepted hit, `None` / `-1` / `0` when never hit) |
 | `PlayerState`, `PLAYER_STATES` | type, const | `'entering' \| 'alive' \| 'dying' \| 'dead' \| 'respawning'`; the list (index = hash code) |
 | `PlayerIntent` | interface | `held`, `pressed`, `released`, `device`, `moveX`, `moveY` (−1 / 0 / 1; opposites cancel) |
 | `PlayerCamera` | interface | `CameraView` + `dx`, `dy` (the world camera satisfies it) |
@@ -260,10 +276,13 @@ arrive in M1-12.
 | `resolvePlayerShip(content, id = 'kestrel')` | function | → that ship, else the first, else `DEFAULT_PLAYER_SHIP` (load time) |
 | `DEFAULT_PLAYER_SHIP` | const | Frozen built-in spec with the KESTREL tunables and `spriteId: -1` (not drawn) — for empty content |
 | `DIAGONAL_SCALE`, `ENTER_START_X`, `ENTER_END_X`, `SPAWN_Y` | const | `0.7071` (D4); `-24`, `64` (camera-relative fly-in); `100` (`PLAYFIELD_H / 2`) |
+| `playerHit(ship, cause, tick, debug)` | function | The one entry point for anything that would kill a ship → `true` when accepted: ignored for inactive, not-`alive`, invulnerable and god-mode ships; records `hitCause`, `hitTick`, `hits++` (hashed). Until M1-12 nothing else happens; never allocates |
+| `PlayerHitCause`, `PLAYER_HIT_CAUSE_NAMES` | const + type, const | `None 0, Terrain 1, Contact 2, Bullet 3, Laser 4` — append, never renumber; `'none'` … `'laser'` |
 
-### `collision` — shapes, layers, broad phase (partial)
+### `collision` — shapes, layers, broad phase, terrain (partial)
 
-Terrain queries arrive with the stage runtime (M1-07), circle chains for bending lasers in M2-02.
+Terrain queries arrived with the stage runtime (M1-07); circle chains for bending lasers come in
+M2-02, destructible tiles in M2-07.
 
 | Export | Kind | Summary |
 |---|---|---|
@@ -279,11 +298,20 @@ Terrain queries arrive with the stage runtime (M1-07), circle chains for bending
 | `SpatialGrid` | interface | `cellSize`, `cols`, `rows`, `capacity`, `count`, `dropped`, `begin(originX, originY)`, `insert(id, minX, minY, maxX, maxY) → false when full`, `build()` (counting sort), `query(minX, minY, maxX, maxY, visit) → visited` (exact — equals brute force; throws `Error` before `build`) |
 | `SpatialGridVisitor` | type | `(id) => void` — create once, not per query |
 | `DEFAULT_GRID_CELL_SIZE`, `DEFAULT_GRID_CAPACITY` | const | `32`, `256` |
-| `Shape`, `TerrainQuery` | types | Circle / AABB / capsule union; `isSolid(x, y)`, `findFloor(x, y, maxDistance)` (implemented by M1-07) |
+| `Shape` | type | Circle / AABB / capsule union |
+| `TerrainMap` | interface | A stage's collision grid + its tileset's tables: `tileSize`, `cols`, `rows`, `tiles` (row-major tile ids, 0 = empty), `tileType`, `tileAnchor`, `tileMask` (`[tileId * tileSize + column]`, heights from the anchor edge). Top-left = world (0, 0); outside the map is open space. Built by `core/stage` `createStageTerrain` |
+| `TerrainType`, `TerrainAnchor` | const + type | `Empty 0, Solid 1, Hazard 2` (higher wins); `Floor 0, Ceiling 1` |
+| `terrainAt(map, x, y)` | function | → the `TerrainType` of the world pixel `(floor(x), floor(y))` — `Empty` outside the map, in empty cells, decorative tiles and outside a tile's mask |
+| `terrainSolidAt(map, x, y)` | function | → `true` when `terrainAt` is not `Empty` (hazards included) |
+| `boxHitsTerrain(map, cx, cy, hw, hh)` | function | Box (centre + half sizes) → highest `TerrainType` touched (`Hazard` beats `Solid`), `0` = none. Half-open and pixel-exact: covers pixels `floor(cx − hw) … ceil(cx + hw) − 1` (at least one), so a box resting on a surface does not touch it |
+| `terrainRectHit(map, x0, y0, x1, y1)` | function | Inclusive rectangle of **whole** pixels → highest `TerrainType` (the core of `boxHitsTerrain`; per-tick callers use it with floored / ceiled bounds to avoid V8 boxing fractional arguments) |
+| `findFloor(map, x, y, maxDist)`, `findCeiling(map, x, y, maxDist)` | function | Scan the pixel column down / up, tile by tile → the surface y (top edge of the first colliding pixel / bottom edge + 1 of the first one above) or `NaN` when none within `maxDist`; ceiling tiles count as floors for what is below them and vice versa |
 
 All shape tests take scalars (no temporaries) and treat touching as a hit. Grid boxes
 outside the covered area clamp into the border cells; boxes over 9 cells go to an overflow
 list every query scans. Pass whole numbers to `begin()` (fractional arguments get boxed).
+Terrain queries, unlike the shape tests, are **half-open** on pixels (see
+[stage-runtime.md](stage-runtime.md#terrain-queries)); none of them allocates.
 
 ### `debug` — state hash and debug switches (partial)
 
@@ -291,11 +319,35 @@ The debug controls (god mode, frame advance, slow motion, stage skip) arrive in 
 
 | Export | Kind | Summary |
 |---|---|---|
-| `hashWorld(world)` | function | → unsigned 32-bit FNV-1a over tick, both RNG states, camera, status, hit-stop, every player's simulated fields and every registered pool's live slots (fixed order, numbers as little-endian doubles); reads only; ≤ 16 B allocated per call |
+| `hashWorld(world)` | function | → unsigned 32-bit FNV-1a over tick, both RNG states, camera, the stage runner (`0`, or `1` + every slot of `runner.state`), status, hit-stop, every player's simulated fields (incl. `hitCause`, `hitTick`, `hits`) and every registered pool's live slots (fixed order, numbers as little-endian doubles); reads only; ≤ 16 B allocated per call |
 | `createDebugFlags()` | function | → `DebugFlags` all off, `slowMo` 1 |
 | `DebugFlags` | interface | `godMode`, `showHitboxes`, `frameAdvance`, `slowMo` |
 | `DebugCounters` | interface | `enemies`, `enemyBullets`, `playerShots`, `rngCalls`, `stateHash` (overlay, M1-19) |
 | `FNV_OFFSET_BASIS`, `FNV_PRIME` | const | `0x811c9dc5`, `0x01000193` |
+
+### `stage` — stage runtime
+
+The scrolling stage: camera path, event timeline, checkpoints, and the terrain / parallax
+views (M1-07). Guide: [stage-runtime.md](stage-runtime.md).
+
+| Export | Kind | Summary |
+|---|---|---|
+| `createStageRunner(stage, hooks, camera = createStageCamera())` | function | → `StageRunner` at the stage start (camera 0, 0; speed 0 — the first key applies on the first tick). Compiles the timeline into typed arrays; throws `RangeError` for an event type the runtime does not know (content that skipped `loadContent`) |
+| `StageRunner` | interface | `stage`, `camera`, `eventCodes` (`Uint8Array`), `state` (`Float64Array` indexed by `StageSlot` — hashed), getters `speed`, `targetSpeed`, `locked`, `eventCursor`, `checkpoint` (last passed, `-1` before the first), `flags` (bit `i` = `stage.flagNames[i]`), `ended`, `ticks`; `tick()` (never allocates), `restartAt(checkpoint)` (`-1` = start; throws `RangeError` unless an integer in `[-1, checkpoints.length)`), `unlock()` |
+| `StageHooks` | interface | `event(code, event, index)` — every fired event, in timeline order, after the runner applied its own part (`speed`, `flag`, `end`); `clear()` — a checkpoint restart |
+| `StageEventCode` | const + type | `Spawn 0, Formation 1, Warning 2, Boss 3, Music 4, Speed 5, Flag 6, End 7` (= `STAGE_EVENT_TYPES` order) |
+| `StageSlot`, `STAGE_STATE_SLOTS` | const, const | Slots of `runner.state`: `Speed 0, Target 1, RampFrom 2, RampTicks 3, RampElapsed 4, PanFrom 5, PanTo 6, PanTicks 7, PanElapsed 8, Locked 9, Cursor 10, NextKey 11, NextCheckpoint 12, Checkpoint 13, Flags 14, Ended 15, Ticks 16, Restarts 17, Replay 18`; `19` |
+| `StageCamera`, `createStageCamera()` | interface, function | `x`, `y`, `dx`, `dy`, `vx`, `vy`; → a camera at (0, 0) whose class keeps the fields unboxed doubles (the World's camera is one) |
+| `findEventCursor(events, scrollX)` | function | → index of the first event with `x ≥ scrollX` (binary search) |
+| `createStageTerrain(stage, content)` | function | → `TerrainMap` (a private copy of `stage.terrain.tiles` + the tileset's tables) or `null` for open space |
+| `createTerrainView(map, stage, content)` | function | → `TerrainView` over the map's live tiles + tileset sprite / frames; throws `RangeError` without terrain |
+| `createParallaxView(stage)`, `updateParallaxView(view, cameraX, cameraY)` | functions | → `StageParallaxView` (one band per `stage.parallax` entry) or `null`; scrolls it: `offsetX = (cameraX · factor) mod spacing`, `y = baseY − cameraY · factor` (never allocates) |
+| `StageParallaxView` | interface | `ParallaxView` with typed arrays + `factor`, `baseY` |
+| `stageMapWidth(length, tileSize)` | function | → `ceil((length + PLAYFIELD_W) / tileSize)` columns |
+
+Tick order: apply reached keys → advance ramp and pan → move (clamped to the first pending
+lock key and to `length`) → fire due events → update the checkpoint. An event fires on the
+tick the camera reaches its `x`, a key applies one tick later (except at `x` 0).
 
 ### `module-info`
 
@@ -307,8 +359,8 @@ The debug controls (god mode, frame advance, slow motion, stage skip) arrive in 
 Types only. They are **not** exported from the package entry yet (the `exports` map has
 only `"."`), so today they can only be imported with relative paths from inside
 `packages/core`. A module's exports join `src/index.ts` when it is implemented — as
-`rng`, `math`, `events` and `pools` did in M1-01 and `world`, `player`, `collision` and
-`debug` in M1-06.
+`rng`, `math`, `events` and `pools` did in M1-01, `world`, `player`, `collision` and
+`debug` in M1-06 and `stage` in M1-07.
 
 | Module | Declared types | Planned functions (from the source comments) |
 |---|---|---|
@@ -320,7 +372,6 @@ only `"."`), so today they can only be imported with relative paths from inside
 | `bullets` | `BulletSpawn` | `createBulletPool(512)`, `spawnBullet`, `updateBullets`, `cancelAllBullets` |
 | `patterns` | `Script`, `ScriptContext`, `PatternNode` | `wait`, `createScriptRunner`, pattern primitives, `compilePattern` |
 | `bosses` | `Boss`, `BossPart`, `BossPhase` | `createBoss`, `updateBoss`, `damagePart`, `bossDeathSequence` |
-| `stage` | `StageEvent`, `CameraState`, `Checkpoint`, `StageRunner` | `createStageRunner(stageData, spawner)` |
 | `scoring` | `PlayerScore`, `HiScoreEntry` | `addScore`, `checkExtend`, `insertHiScore` |
 | `rank` | `RankInputs` | `computeRank(inputs) → 0–31`, `rankScale` |
 | `scenes` | `Scene`, `SceneId`, `SceneStack` | scene-stack implementation |
@@ -329,10 +380,10 @@ only `"."`), so today they can only be imported with relative paths from inside
 | `save` | `SaveData`, `SaveMigration` | `loadSave(storage)`, `writeSave`, `SAVE_MIGRATIONS` |
 | `fx` | `FxState` | `requestHitStop`, `requestShake`, `tickFx` |
 
-Still planned inside the partial modules: `player` — `playerHit`, `killPlayer`, respawn by
-death-penalty preset (M1-12), terrain-box checks (M1-07); `collision` — `terrainSolidAt`,
-`boxHitsTerrain`, `findFloor`, `findCeiling` (M1-07), circle chains (M2-02); `debug` —
-`createDebugControls(game)` (M1-19).
+Still planned inside the partial modules: `player` — `killPlayer`, respawn by death-penalty
+preset (M1-12; `playerHit` then starts the death sequence); `collision` — circle chains
+(M2-02), destructible tiles (M2-07); `debug` — `createDebugControls(game)` (M1-19); `stage`
+(implemented for P0) — time-keyed events, diagonal scrolling, branches (M2-07, M2-10).
 
 ## `@shmup/input-web`
 
@@ -401,7 +452,7 @@ per-frame allocation. Guide: [rendering-and-shell.md](rendering-and-shell.md).
 | Export | Module | Summary |
 |---|---|---|
 | `createPixiRenderer({ canvas, displayWidth, displayHeight, width?, height?, preferWebGLVersion?, atlas?, font?, testPattern?, glyphCapacity? })` | `renderer` | → `Promise<PixiRenderer>`; rejects without WebGL. Defaults: 384×216, WebGL1, font `'pixel'`, no test pattern, 1024 quads per HUD / UI layer |
-| `PixiRenderer` | `renderer` | `IRenderer` + `webGLVersion`, `viewport`, `scene` (384×216 root), `layers`, `atlas`, `metrics` (`TextMetrics` or `null`), `bindings`, `setSpriteNames(names)`, `bindWorld(world \| null)` (throws `RangeError` for a batch on an unknown layer; `render()` calls it when `frame.world` changes identity) |
+| `PixiRenderer` | `renderer` | `IRenderer` + `webGLVersion`, `viewport`, `scene` (384×216 root), `layers`, `atlas`, `metrics` (`TextMetrics` or `null`), `bindings`, `terrain` (`TerrainBinding \| null`), `parallax` (`ParallaxBinding \| null`), `setSpriteNames(names)`, `bindWorld(world \| null)` (creates the parallax, terrain and batch bindings; throws `RangeError` for a batch on an unknown layer or a parallax band not on `BG_FAR` / `BG_MID`; `render()` calls it when `frame.world` changes identity) |
 | `PixiRendererOptions` | `renderer` | Options above |
 | `createAtlas(manifest, images, { onWarning? })` | `atlas` | → `Atlas`: one nearest `TextureSource` per page, a `Texture` per frame, frame ids consecutive per sprite. Throws `RangeError` for an image/page count or size mismatch (stale atlas), a page over 2048², a frame outside its page, a missing or shared frame |
 | `Atlas` | `atlas` | `manifest`, `size`, `pages`, `textures`, `anchorX/Y`, `frameWidth/Height`, `framesLeft`, `missingFrame`, `pixelFrame`, `frameId(name)`, `spriteBase(sprite)` (→ id or `-1`), `resolveSpriteTable(names)` / `resolveFlashTable(names)` (→ `Int32Array`; unknown → `missingFrame`, warned once), `destroy()` |
@@ -409,6 +460,9 @@ per-frame allocation. Guide: [rendering-and-shell.md](rendering-and-shell.md).
 | `MAX_ATLAS_SIZE`, `MISSING_SPRITE`, `PIXEL_SPRITE` | `atlas` | `2048`; `'ui/missing'` (magenta checker for anything unresolved); `'ui/pixel'` (1×1 white for rects) |
 | `createLayerStack()` | `layers` | → `LayerStack { root, world, layers }`: one container per `LayerId`, world layers inside `world` (shake) |
 | `WORLD_LAYER_COUNT` | `layers` | `LayerId.Hud` (11) — layers below it form the world group |
+| `createTerrainBinding({ atlas, tables, view, width?, height?, offsetY? })` | `layers` | → `TerrainBinding { container, columns, rows, updatedCells, sync(view, camera), destroy() }`: a preallocated ring of (`width / tileSize + 1`) × (`height / tileSize + 1`, ≤ map rows) tile sprites — 49 × 26 for the playfield — re-textured one column / row as the camera crosses tile edges, moved as one container at `round(−camera.x)`; `sync` never allocates |
+| `createParallaxBinding({ atlas, tables, view, width?, offsetY? })` | `layers` | → `ParallaxBinding { containers, layers, sync(view), destroy() }`: `ceil(width / spacing) + 1` sprites per band, one container offset per frame; throws `RangeError` for a band not on `BG_FAR` / `BG_MID` or a non-positive-integer spacing |
+| `TerrainBindingOptions`, `ParallaxBindingOptions` | `layers` | Option types (defaults `PLAYFIELD_W`, `PLAYFIELD_H`, `PLAYFIELD_Y`) |
 | `createSpriteTables(atlas, names)` | `sprites` | → `SpriteTables { base, flash }` (load time) |
 | `resolveFrame(atlas, tables, spriteId, frame, flags)` | `sprites` | → frame id to draw (`Flash` picks the flash table; out of range → `missingFrame`); never allocates |
 | `createSpriteLayerBinding({ atlas, tables, capacity, layer, offsetY? })` | `sprites` | → `SpriteLayerBinding { layer, capacity, container, visibleCount, sync(view, camX, camY), destroy() }`; `offsetY` defaults to `PLAYFIELD_Y`; throws `RangeError` for a bad capacity |
@@ -455,7 +509,7 @@ Guide: [rendering-and-shell.md](rendering-and-shell.md#the-browser-shell-shmupsh
 | `drawProgress(ctx, w, h, fraction, label)`, `drawErrorScreen(ctx, w, h, title, lines) → lines shown`, `formatIssues(issues)` | `error-screen` | Canvas 2D drawing (`Canvas2DLike`) and `path: message` lines |
 | `BOOT_SCREEN_COLORS`, `Canvas2DLike` | `error-screen` | Background `#10173a`, text, title `#ff5aa0`, track; the 2D context subset used |
 | `startFrameLoop(scheduler, onFrame)` | `frame-loop` | → `FrameLoop { stop() }`; `FrameScheduler` = the two rAF functions (moved here from both apps) |
-| `createFlightScene(game, { starTileSize? })` | `flight` | → `FlightScene { spriteNames, world, frame, update(gameFrame) → frame }`: the default scene — two starfield batches followed by the game World's batches on the World's camera, the D20 HUD (`1P`, score, `FREE FLIGHT`, stock ships, `ARROWS MOVE`); *reused* frame, no per-frame allocation |
+| `createFlightScene(game, { starTileSize? })` | `flight` | → `FlightScene { spriteNames, world, frame, update(gameFrame) → frame }`: the default scene — the game World's batches on the World's camera with the World's parallax and terrain, preceded by two starfield batches in open space only (a stage brings its own bands), and the D20 HUD (`1P`, score, `FREE FLIGHT` or the stage name upper-cased, stock ships, `ARROWS MOVE`); *reused* frame, no per-frame allocation |
 | `FLIGHT_SPRITES`, `FlightSceneOptions` | `flight` | The scene's own sprites (`bg/stars-far`, `bg/stars-mid`, `bg/stars-near`, `hud/life`), appended after the content's sprite names; options type |
 | `createShowcase({ starTileSize? })` | `showcase` | → `Showcase { spriteNames, world, frame, update(gameFrame) → frame }` (*reused*, pure function of the tick) — `?scene=showcase` |
 | `SHOWCASE_SPRITES`, `ShowcaseOptions` | `showcase` | The showcase's sprite name table (11 names) |
@@ -468,8 +522,10 @@ These are not libraries, but their modules export testable functions.
 
 | Export | Module | Summary |
 |---|---|---|
-| `bootWebApp(canvas, resources, win?)` | `boot` | → `Promise<WebApp>` (`game`, `renderer`, `audio`, `input`, `profiles` (`InputProfileRegistry`), `shell`, `stop()`); `resources` = `WebAppResources { contentFiles, assets }` from the virtual modules. Key profile: `?profile=` › saved choice (applied once storage answers) › `keyboard-default`; pads `gamepad-standard`; an unknown `?profile=` → `console.warn`. Rejects with `ShellBootError` |
+| `bootWebApp(canvas, resources, win?)` | `boot` | → `Promise<WebApp>` (`game`, `renderer`, `audio`, `input`, `profiles` (`InputProfileRegistry`), `shell`, `stop()`); `resources` = `WebAppResources { contentFiles, assets }` from the virtual modules. Key profile: `?profile=` › saved choice (applied once storage answers) › `keyboard-default`; pads `gamepad-standard`; an unknown `?profile=` → `console.warn`. `?stage=<id>` → `gameConfig.stage`. Rejects with `ShellBootError` |
 | `inputOverridesFromSearch(search)` | `boot` | → `InputOverrides { profile: string \| null, debounce: number \| null }` from `?profile=<id>` / `?debounce=<0…10>`; percent-decoded, last valid value wins |
+| `stageFromSearch(search)` | `boot` | → the `?stage=<id>` value (percent-decoded, last non-empty wins; malformed escapes ignored) or `null` |
+| `contentStageIds(files)` | `boot` | → ids of every `stage` file among the raw content files (before validation); `bootWebApp` checks `?stage=` against it — an unknown id → `console.warn`, free flight |
 | `createWebPlatform(options)` | `platform` | → `Platform` (`id: 'web'`, `exit: null`) |
 | `createLocalStorage(storage \| null, prefix = 'shmup-cup:')` | `platform` | → `PlatformStorage`; first error → memory for the session |
 | `createVisibilityLifecycle(source)` | `platform` | → `PlatformLifecycle` from `visibilitychange` |

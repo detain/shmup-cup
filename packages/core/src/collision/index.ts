@@ -759,6 +759,11 @@ export function terrainAt(map: TerrainMap, x: number, y: number): number {
  * @param x - World x in pixels.
  * @param y - World y in pixels.
  * @returns `true` when {@link terrainAt} is not `Empty`.
+ *
+ * @example
+ * ```ts
+ * if (terrainSolidAt(map, shot.x, shot.y)) removeShot(shot); // shots die on rock
+ * ```
  */
 export function terrainSolidAt(map: TerrainMap, x: number, y: number): boolean {
   return terrainAt(map, x, y) !== TerrainType.Empty;
@@ -848,6 +853,15 @@ export function boxHitsTerrain(
  * @param y1 - Last pixel row (inclusive, ≥ `y0`).
  * @returns The highest {@link TerrainType} in the rectangle, `Empty` (0) for none (also for
  *   NaN bounds and rectangles outside the map).
+ *
+ * @example
+ * ```ts
+ * // The pixels a box of half size (hw, hh) at (x, y) covers, as boxHitsTerrain computes them:
+ * const x0 = Math.floor(x - hw);
+ * const y0 = Math.floor(y - hh);
+ * const hit = terrainRectHit(map, x0, y0, Math.max(x0, Math.ceil(x + hw) - 1),
+ *   Math.max(y0, Math.ceil(y + hh) - 1));
+ * ```
  */
 export function terrainRectHit(
   map: TerrainMap,
@@ -965,6 +979,12 @@ export function findFloor(map: TerrainMap, x: number, y: number, maxDist: number
  * @returns The world y of the ceiling surface (the bottom edge of the first colliding pixel,
  *   i.e. its row + 1 — `floor(y) + 1` when the start pixel already collides), or `NaN` when there
  *   is none in range.
+ *
+ * @example
+ * ```ts
+ * const roof = findCeiling(map, turret.x, turret.y, 48);
+ * if (roof === roof) turret.y = roof; // hang from it (not NaN)
+ * ```
  */
 export function findCeiling(map: TerrainMap, x: number, y: number, maxDist: number): number {
   const size = map.tileSize;

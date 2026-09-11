@@ -475,6 +475,11 @@ function createPoolRegistry(): PoolRegistry {
  * @param content - Validated content.
  * @returns The stage spec, or `null` when `config.stage` is `null` (free flight).
  * @throws {RangeError} When `config.stage` names a stage the content does not have.
+ *
+ * @example
+ * ```ts
+ * resolveWorldStage(resolveGameConfig({ stage: 'test-range' }), db)?.name; // → 'TEST RANGE'
+ * ```
  */
 export function resolveWorldStage(config: GameConfig, content: ContentDb): StageSpec | null {
   const id = config.stage;
@@ -576,6 +581,13 @@ export function createWorld(config: GameConfig, content: ContentDb): World {
  */
 function createWorldStageHooks(world: WorldUnderConstruction): StageHooks {
   return {
+    /**
+     * `music` → a `SimEventKind.Music` presentation event, `end` → status `stageClear`; the
+     * other types wait for their systems. Never allocates (the event queue stores numbers).
+     *
+     * @param code - The event's code.
+     * @param event - The event (content data).
+     */
     event(code, event) {
       if (code === StageEventCode.Music) {
         world.events.push(SimEventKind.Music, (event as StageMusicEvent).cueId, 0, 0, 0);
@@ -584,6 +596,7 @@ function createWorldStageHooks(world: WorldUnderConstruction): StageHooks {
       }
       // spawn / formation → the enemy spawner (M1-08); warning / boss → bosses (M1-13).
     },
+    /** A checkpoint restart: empties every registered pool (enemies, bullets, items). */
     clear() {
       world.pools.clearAll();
     },

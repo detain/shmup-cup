@@ -23,7 +23,7 @@ in `math`). Enforced by `tsconfig.json` (`lib: ["ES2018"]`, no `types`) and ESLi
 | `createStageRunner`, `StageRunner`, `StageHooks`, `StageEventCode`, `createStageTerrain`, `createParallaxView`, `createTerrainView`, `findEventCursor`, … | `stage` | Stage runtime (M1-07): camera keys with ramps, vertical pans and boss locks; the sorted event timeline fired through a cursor; checkpoints with restart by binary search; the terrain map and the parallax / terrain views the renderer draws |
 | `PlayerShip`, `createPlayer`, `spawnPlayer`, `updatePlayer`, `readPlayerIntent`, `resolvePlayerShip`, `playerHit`, `PlayerHitCause`, `DIAGONAL_SCALE`, … | `player` (partial) | KESTREL movement: speed levels from `content/player/`, diagonal × 0.7071 (D4), no inertia, clamp to the camera view minus margins, rides the camera scroll, banking, 40-tick fly-in; hits recorded by `playerHit` (death/respawn: M1-12) |
 | `circleCircle`, `aabbAabb`, `circleAabb`, `capsuleCircle`, `segmentAabb`, `CollisionLayer`, `createSpatialGrid`, `TerrainMap`, `terrainAt`, `boxHitsTerrain`, `terrainRectHit`, `findFloor`, `findCeiling` | `collision` (partial) | Scalar-argument shape tests (closed shapes: touching hits), layer masks, uniform grid broad phase rebuilt by counting sort, pixel-exact terrain queries over per-tile column-height masks (bending-laser chains: M2) |
-| `hashWorld`, `createDebugFlags`, `DebugFlags` | `debug` (partial) | FNV-1a 32 state hash over tick, RNG states, camera, players and every pool's live slots (golden replays); debug switches (controls: M1-19) |
+| `hashWorld`, `createDebugFlags`, `DebugFlags` | `debug` (partial) | FNV-1a 32 state hash over tick, RNG states, camera, the stage runner's state, players and every pool's live slots (golden replays); debug switches (controls: M1-19) |
 | `IRenderer`, `IAudio`, `RenderFrame`, `WorldView`, `SpriteBatchView`, `createSpriteBatch`, `pushSprite`, `SpriteFlag`, `LayerId`, `DrawList`, `createDrawList`, `TextMetrics` | `presentation` | Back-end contracts and the render contract (plan §3.4): world sprite batches in typed arrays, HUD / UI command lists (rect, sprite, text slot, number), draw layers, screen effects — implemented by `@shmup/render-pixi` / `@shmup/audio-web` |
 | `createRng`, `createRngStreams`, `RNG_STATE_WORDS` | `rng` | sfc32 seeded from one 32-bit seed; independent gameplay + cosmetic streams, zero-alloc state snapshots |
 | `sinB`, `cosB`, `atan2B`, `quantizeAngle`, `angleDelta`, `turnToward`, `wrapAngle`, `clamp`, `lerp`, `approach`, `EASINGS` | `math` | Binary angles (1024/turn) on committed lookup tables + easing curves |
@@ -71,7 +71,9 @@ loader and schema combinators (`data`) theirs:
 (`presentation`) is explained with its renderer in
 [`docs/dev/rendering-and-shell.md`](../../docs/dev/rendering-and-shell.md); the World, its tick
 pipeline, the player ship, collision and the state hash (`world`, `player`, `collision`,
-`debug`) in [`docs/dev/sim-world.md`](../../docs/dev/sim-world.md). `src/math/trig-table.ts`
+`debug`) in [`docs/dev/sim-world.md`](../../docs/dev/sim-world.md); the stage runtime (`stage`,
+the terrain queries of `collision`, the `stage` / `tileset` data and the tilemap expansion) in
+[`docs/dev/stage-runtime.md`](../../docs/dev/stage-runtime.md). `src/math/trig-table.ts`
 is **generated** — edit `scripts/gen-trig-tables.mjs`, not the table.
 
 Consumers inside the workspace resolve `@shmup/core` to `src/index.ts` through the

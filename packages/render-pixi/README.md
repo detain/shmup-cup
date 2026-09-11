@@ -40,8 +40,9 @@ renderer.render(game.renderFrame());
 | `effects` | placeholder | Shake/flash application, raster & palette effects, CRT |
 | `debug` | placeholder | Debug overlay |
 
-Guide (sprite ids → frames, bindings, quad pools, text, the two passes, gotchas):
-[`docs/dev/rendering-and-shell.md`](../../docs/dev/rendering-and-shell.md).
+Guide (sprite ids → frames, bindings, quad pools, the terrain ring and parallax bands, text,
+the two passes, gotchas): [`docs/dev/rendering-and-shell.md`](../../docs/dev/rendering-and-shell.md);
+what the terrain and parallax views contain: [`docs/dev/stage-runtime.md`](../../docs/dev/stage-runtime.md).
 
 Tests run in Node: pure modules are tested fully; Pixi display objects need no GPU, so the
 atlas (over fake page images), bindings, quad pools and the renderer (with WebGL faked) are
