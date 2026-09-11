@@ -5,6 +5,13 @@
  * - rAF loop → frame stats, tracker tick, gamepad polling, ship lanes, arena canvas;
  * - ~10 Hz → text panels and checklist; every 3 s → optional report POST.
  *
+ * All decisions (classification, verdicts, statistics, formatting) live in the pure modules; this file only
+ * reads browser / Tizen state, forwards plain values and writes results back to the DOM. It is exercised
+ * end-to-end by `test/build.test.ts`, which runs the built `app.js` in a fake Tizen 5.5 realm.
+ *
+ * @remarks
+ * Import order matters: `polyfills.ts` must run before anything else in the bundle.
+ *
  * @module main
  */
 
@@ -44,6 +51,13 @@ const UI_PERIOD_MS = 100;
 /** Gamepad polling period while no pad has been seen (frames). */
 const GAMEPAD_IDLE_POLL_FRAMES = 30;
 
+/**
+ * Boots the probe: creates the pure-logic objects, registers the Tizen keys, installs every event listener
+ * and starts the rAF loop. Runs once, after `DOMContentLoaded`.
+ *
+ * @throws Error when required markup (`#arena`, `#stage` or a panel element) is missing, or when Canvas2D is
+ *   unavailable — the page is then unusable anyway.
+ */
 function start(): void {
   const ui = new ProbeUI(document);
   const canvas = document.getElementById('arena') as HTMLCanvasElement | null;
@@ -81,6 +95,11 @@ function start(): void {
     queue.push(e);
   }
 
+  /**
+   * Emits an `info` line (lifecycle, registration results, checklist ticks, errors).
+   *
+   * @param text - the message.
+   */
   function info(text: string): void {
     emit({ t: round1(performance.now()) as number, type: 'info', text });
   }
@@ -100,6 +119,11 @@ function start(): void {
     info('no tizen global — desktop browser mode (keyboard R = reset stats)');
   }
 
+  /**
+   * (Re-)collects the environment facts and logs the headline; failures are logged, never thrown.
+   *
+   * @param reason - shown in the log line (`startup`, `webapis loaded`).
+   */
   function refreshEnv(reason: string): void {
     try {
       env = collectEnv();
@@ -120,6 +144,14 @@ function start(): void {
   }, 250);
 
   // ---------------------------------------------------------------- keyboard / remote
+  /**
+   * Handles one `keydown` / `keyup` (capture-phase listener on `window`): measures dispatch delay, applies the
+   * `preventDefault()` policy, feeds the tracker with the exact event time, logs the event and triggers the
+   * flash box on every keydown without the `repeat` flag.
+   *
+   * @param ev - the DOM event.
+   * @param down - true for `keydown`.
+   */
   function onKey(ev: KeyboardEvent, down: boolean): void {
     const now = performance.now();
     const time = chooseEventTime(ev.timeStamp, now);
@@ -146,6 +178,13 @@ function start(): void {
     }
   }
 
+  /**
+   * Reacts to a new logical press (repeats and bounces never get here): Back feeds the triple-Back exit
+   * gesture; Play/Pause or keyboard `R` resets the hold/repeat/frame statistics.
+   *
+   * @param code - DOM `keyCode`.
+   * @param t - press time in ms.
+   */
   function onPress(code: number, t: number): void {
     if (code === KeyCode.Back) {
       if (backExit.press(t)) {
@@ -187,21 +226,45 @@ function start(): void {
   ui.fit(window.innerWidth, window.innerHeight);
 
   // ---------------------------------------------------------------- gamepads
+  /**
+   * Logs a gamepad edge (`GP0 b3 down`, connect / disconnect, axis zone change).
+   *
+   * @param edge - the edge reported by the monitor.
+   */
   const onPadEdge = (edge: GamepadEdge): void => {
     emit({ t: round1(performance.now()) as number, type: 'gamepad', text: edge.text });
   };
+  /** Shared empty list used when the Gamepad API is missing (avoids a per-poll allocation). */
   const noPads: GamepadLike[] = [];
+  /** Polls `navigator.getGamepads()` and feeds the snapshot to the monitor. */
   function pollPads(): void {
     const list = typeof navigator.getGamepads === 'function' ? navigator.getGamepads() : null;
     pads.update((list as ArrayLike<GamepadLike | null> | null) ?? noPads, onPadEdge);
   }
 
   // ---------------------------------------------------------------- snapshots / UI
+  /**
+   * Captures all statistics at one point in time.
+   *
+   * @param now - current time in ms (for holds still in progress).
+   * @returns a fresh snapshot (allocates; UI / report rate only).
+   */
   function snapshot(now: number): ProbeSnapshot {
     return { keys: tracker.getStats(now), frames: frames.summary(), dispatch: dispatch.summary() };
   }
+  /**
+   * Name lookup without learning (the DOM `event.key` is only available in the key handler).
+   *
+   * @param code - DOM `keyCode`.
+   * @returns the display name.
+   */
   const keyName = (code: number): string => names.name(code);
 
+  /**
+   * Updates the sticky checklist from a snapshot and logs newly ticked items.
+   *
+   * @param snap - current statistics.
+   */
   function updateChecklist(snap: ProbeSnapshot): void {
     const newly = checklist.update({
       seenCodes: tracker.seenKeys().filter((s) => s.downs > 0).map((s) => s.code),
@@ -214,6 +277,11 @@ function start(): void {
     for (const id of newly) info('checklist ✓ ' + CHECKLIST_LABELS[id]);
   }
 
+  /**
+   * Refreshes every text panel (~10 Hz). {@link ProbeUI.set} skips panels whose text did not change.
+   *
+   * @param now - current time in ms.
+   */
   function updateUI(now: number): void {
     const snap = snapshot(now);
     updateChecklist(snap);
@@ -231,6 +299,12 @@ function start(): void {
     ui.set('report', reportStatusText(now));
   }
 
+  /**
+   * Builds the header's report status line.
+   *
+   * @param now - current time in ms (for "ok N s ago").
+   * @returns `report: off (…)`, or the endpoint with last success, last error and in-flight state.
+   */
   function reportStatusText(now: number): string {
     const st = reporter.status;
     if (st.endpoint === null) return 'report: off (build with VITE_REPORT_URL)';
@@ -241,6 +315,12 @@ function start(): void {
     return s;
   }
 
+  /**
+   * Sends one report payload (no-op while a request is in flight); the payload parts are only built when a
+   * request will actually go out.
+   *
+   * @param now - current time in ms.
+   */
   function sendReport(now: number): void {
     reporter.send(
       () =>
@@ -263,8 +343,16 @@ function start(): void {
   let lastUi = -Infinity;
   let lastReport = -Infinity;
   let frameNo = 0;
+  /** Reused per-frame input for {@link Arena.draw} (mutated in place: no per-frame allocation). */
   const frameState = { lanes, frames, flashFrames: 0, flashLabel: '—' };
 
+  /**
+   * rAF callback: records the frame delta, ticks the tracker, polls gamepads (every frame once a pad was
+   * seen, otherwise every {@link GAMEPAD_IDLE_POLL_FRAMES} frames), steps the lanes, draws the arena, and
+   * refreshes the panels / sends reports at their own rates.
+   *
+   * @param now - rAF timestamp (ms, `performance.now()` clock).
+   */
   function frame(now: number): void {
     requestAnimationFrame(frame);
     if (!Number.isNaN(lastFrame)) frames.push(now - lastFrame);

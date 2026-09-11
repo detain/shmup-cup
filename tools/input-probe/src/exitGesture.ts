@@ -6,8 +6,25 @@
  * @module exitGesture
  */
 
-/** Detects N presses within a time window. */
+/**
+ * Detects N presses within a time window.
+ *
+ * @remarks
+ * The probe registers almost every remote key and handles Back itself (a single Back must not leave the
+ * app, or testers would exit by accident while tapping it). Triple-Back is the in-app way out; long-press
+ * Back and Home still leave through the system. Only logical presses are fed in (`main.ts` ignores repeats
+ * and bounces), so holding Back does not trigger it.
+ *
+ * @example
+ * ```ts
+ * const d = new MultiPressDetector(3, 1500);
+ * d.press(0);    // false
+ * d.press(400);  // false
+ * d.press(900);  // true — three presses within 1.5 s
+ * ```
+ */
 export class MultiPressDetector {
+  /** Press times inside the current window, oldest first. */
   private readonly times: number[] = [];
 
   /**
@@ -22,6 +39,7 @@ export class MultiPressDetector {
   /**
    * Records a press.
    *
+   * @param t - press time in ms (monotonic clock).
    * @returns true when this press completes the gesture (the history is then cleared).
    */
   press(t: number): boolean {

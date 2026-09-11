@@ -9,37 +9,57 @@
 import type { FrameStats } from './frameStats';
 import { TIMELINE_FRAMES, TRAIL_LENGTH, type Lanes, type Ship } from './ships';
 
-/** Canvas size (must match `index.html`). */
+/** Canvas width in px (must match the `width` attribute of `#arena` in `index.html`). */
 export const ARENA_WIDTH = 820;
+/** Canvas height in px (must match the `height` attribute of `#arena` in `index.html`). */
 export const ARENA_HEIGHT = 726;
-/** Height of one ship lane. */
+/** Height of one ship lane (px); the three lanes fill the top 450 px. */
 export const LANE_HEIGHT = 150;
 
+/** Lane colors A (cyan), B (green), C (orange) — also used for the timeline labels. */
 const LANE_COLORS = ['#4fd1ff', '#9cff6e', '#ffb347'];
+/** Lane captions drawn in the top-left corner of each lane. */
 const LANE_LABELS = [
   'A · raw — held between keydown and keyup',
   'B · debounced — held, or released < 50 ms ago',
   'C · naive — fixed step on every keydown (incl. repeats)',
 ];
+/** Timeline strips: left edge (px). */
 const TL_X = 60;
+/** Timeline strips: top of the first strip (px). */
 const TL_Y = 470;
+/** Timeline strips: strip height (px). */
 const TL_H = 18;
+/** Timeline strips: vertical distance between strips (px). */
 const TL_STEP = 24;
+/** Timeline strips: width of one frame (px). */
 const TL_PX = 3;
+/** Frame-time graph: left edge (px). */
 const GRAPH_X = 60;
+/** Frame-time graph: top edge (px). */
 const GRAPH_Y = 572;
+/** Frame-time graph: height (px). */
 const GRAPH_H = 146;
+/** Frame-time graph: width of one frame (px). */
 const GRAPH_PX = 2;
+/** Frame-time graph: frames shown. */
 const GRAPH_FRAMES = 240;
+/** Frame-time graph: value at the top edge (ms); larger deltas are clamped. */
 const GRAPH_MAX_MS = 50;
+/** Flash box: left edge (px). */
 const FLASH_X = 580;
+/** Flash box: top edge (px). */
 const FLASH_Y = 572;
+/** Flash box: width (px). */
 const FLASH_W = 230;
+/** Flash box: height (px). */
 const FLASH_H = 146;
 
 /** Per-frame inputs for {@link Arena.draw}. */
 export interface ArenaFrame {
+  /** The three ships (already stepped for this frame). */
   lanes: Lanes;
+  /** Frame-time ring for the graph. */
   frames: FrameStats;
   /** Frames left for the white flash (0 = off). */
   flashFrames: number;
@@ -47,18 +67,31 @@ export interface ArenaFrame {
   flashLabel: string;
 }
 
-/** Draws the arena canvas. */
+/**
+ * Draws the arena canvas.
+ *
+ * Layout (820×726): lanes A/B/C at y 0–450, the three 240-frame timeline strips below them, then the
+ * frame-time graph (left) and the latency flash box (right) at the bottom.
+ */
 export class Arena {
+  /** Opaque 2D context of the `#arena` canvas. */
   private readonly ctx: CanvasRenderingContext2D;
 
-  /** @throws if Canvas2D is unavailable. */
+  /**
+   * @param canvas - the `#arena` canvas (its size must be {@link ARENA_WIDTH} × {@link ARENA_HEIGHT}).
+   * @throws Error if Canvas2D is unavailable.
+   */
   constructor(canvas: HTMLCanvasElement) {
     const ctx = canvas.getContext('2d', { alpha: false });
     if (!ctx) throw new Error('Canvas2D unavailable');
     this.ctx = ctx;
   }
 
-  /** Renders one frame. */
+  /**
+   * Renders one frame (full repaint).
+   *
+   * @param f - lanes, frame stats and flash state for this frame.
+   */
   draw(f: ArenaFrame): void {
     const ctx = this.ctx;
     ctx.fillStyle = '#0d1633';
@@ -81,6 +114,12 @@ export class Arena {
     this.drawFlash(f.flashFrames > 0, f.flashLabel);
   }
 
+  /**
+   * Draws one lane: background, caption, fading trail and the ship (a right-pointing arrowhead).
+   *
+   * @param i - lane index (0 = A, 1 = B, 2 = C).
+   * @param ship - the lane's ship.
+   */
   private drawLane(i: number, ship: Ship): void {
     const ctx = this.ctx;
     const y0 = i * LANE_HEIGHT;
@@ -112,6 +151,13 @@ export class Arena {
     ctx.fill();
   }
 
+  /**
+   * Draws one timeline strip: newest frame on the right, runs of "moving" frames as filled bars — so a
+   * steady hold is one solid bar and stutter shows up as gaps.
+   *
+   * @param i - lane index (0 = A, 1 = B, 2 = C).
+   * @param ship - the lane's ship.
+   */
   private drawTimeline(i: number, ship: Ship): void {
     const ctx = this.ctx;
     const y = TL_Y + i * TL_STEP;
@@ -133,6 +179,12 @@ export class Arena {
     }
   }
 
+  /**
+   * Draws the frame-time graph: the last {@link GRAPH_FRAMES} rAF deltas as a line (newest on the right),
+   * guide lines at 16.7 ms (60 Hz) and 33.3 ms (30 Hz), and red ticks under frames above 20 ms.
+   *
+   * @param frames - frame-time ring.
+   */
   private drawGraph(frames: FrameStats): void {
     const ctx = this.ctx;
     const w = GRAPH_FRAMES * GRAPH_PX;
@@ -168,11 +220,23 @@ export class Arena {
     }
   }
 
+  /**
+   * Maps a frame time to a graph y coordinate.
+   *
+   * @param ms - frame time (clamped to [0, {@link GRAPH_MAX_MS}]).
+   * @returns canvas y (bottom edge = 0 ms).
+   */
   private graphY(ms: number): number {
     const clamped = ms > GRAPH_MAX_MS ? GRAPH_MAX_MS : ms < 0 ? 0 : ms;
     return GRAPH_Y + GRAPH_H - (clamped / GRAPH_MAX_MS) * GRAPH_H;
   }
 
+  /**
+   * Draws the latency flash box: solid white with black text while `on`, dark otherwise.
+   *
+   * @param on - whether the flash is active this frame.
+   * @param label - name of the key that triggered the latest flash.
+   */
   private drawFlash(on: boolean, label: string): void {
     const ctx = this.ctx;
     ctx.fillStyle = on ? '#ffffff' : '#1a2754';

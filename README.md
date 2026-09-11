@@ -6,6 +6,9 @@ with the browser and Electron as additional targets.
 
 **Status:** research & planning done; monorepo skeleton in place (every planned system has a
 placeholder module; the apps show a pixel-art calibration test pattern). No gameplay yet.
+The **input probe** — a diagnostic Tizen app that measures the Samsung remote, gamepads and
+display on the real monitors — is built and tested ([`tools/input-probe/`](tools/input-probe/README.md));
+it is waiting to be packaged and run on the M7 monitors.
 
 ## Documents
 
@@ -15,6 +18,9 @@ placeholder module; the apps show a pixel-art calibration test pattern). No game
 | [`shmup_tech.md`](shmup_tech.md) | Language/platform verdict, Tizen 5.5 constraints, test-hardware notes, library comparisons, recommended stack |
 | [`input_probe_spec.md`](input_probe_spec.md) | Spec for the first spike: a diagnostic Tizen app that measures the Samsung remote / gamepad / display behavior |
 | [`docs/`](docs/README.md) | Player and developer documentation (start with [`docs/dev/repo-layout.md`](docs/dev/repo-layout.md)) |
+
+Input probe docs: [tester guide](docs/client/input-probe.md) · [monitor setup & install](docs/client/install-on-tv.md) ·
+[developer guide](docs/dev/input-probe.md) · [build / package / deploy README](tools/input-probe/README.md).
 
 ## Key decisions so far
 
@@ -47,6 +53,30 @@ Samsung TV: `pnpm --filter @shmup/tizen build`, then the `tizen:package` / `tize
 `tizen:run` scripts on a machine with the Tizen CLI and certificate — see
 [`apps/tizen/README.md`](apps/tizen/README.md).
 
+### Input probe (standalone npm project)
+
+```sh
+cd tools/input-probe
+npm install
+npm run dev           # desktop-browser preview → http://localhost:5173 (arrows / Enter / R)
+npm run verify        # typecheck + tests + build + Chromium 69 compat check
+```
+
+On the Windows desktop with the Tizen CLI and the Samsung certificate (`cmd.exe`):
+
+```bat
+cd tools\input-probe
+set TIZEN_PROFILE=shmupcup
+set TV_IP=192.168.1.50,192.168.1.51
+npm run package
+npm run deploy
+```
+
+`package` builds and signs `dist\InputProbe.wgt`; `deploy` runs `sdb connect` → `tizen install` → `tizen run` for
+each monitor.
+
+Then follow the on-device test protocol in [`docs/client/input-probe.md`](docs/client/input-probe.md).
+
 ## Repository layout
 
 pnpm workspace (`packages/*`, `apps/*`) + Turborepo. Full annotated tree:
@@ -67,6 +97,7 @@ pnpm workspace (`packages/*`, `apps/*`) + Turborepo. Full annotated tree:
 | [`test/`](test/README.md) | Cross-package integration tests |
 | [`docs/`](docs/README.md) | Player (`client/`) and developer (`dev/`) documentation |
 | `tools/` | Standalone dev tools with their own npm projects (not workspace members) |
+| [`tools/input-probe`](tools/input-probe/README.md) | Input probe `.wgt`: remote / gamepad / display diagnostics for the M7 monitors (npm, Vite, Vitest; log server) |
 
 Toolchain note: TypeScript is pinned to **6.0.x** — TypeScript 7 (native) has no JS API
 until 7.1 and typescript-eslint 8.x requires `typescript < 6.1`. The Node floor is
@@ -77,11 +108,13 @@ the game — the shipped Tizen bundle still targets Chromium 69.
 
 ## Next step
 
-Build the input probe (`tools/input-probe/`, see [`input_probe_spec.md`](input_probe_spec.md)) on the **Windows desktop**
-that sits on the same LAN as the monitors and holds the Samsung certificate profile.
+Package and deploy the input probe from the **Windows desktop** that sits on the same LAN as the monitors and holds
+the Samsung certificate profile, run the test protocol on both monitors, and record the results in `shmup_tech.md`
+§2.7 (they decide the remote control scheme in `shmup_feat.md` §4).
 
-Desktop prerequisites: Git, Node 20+, Tizen Studio **or** VS Code + Samsung Tizen extension (with a Samsung certificate
-profile whose distributor cert includes both monitors' DUIDs), monitors in Developer Mode pointing at the desktop's IP.
+Desktop prerequisites: Git, Node 24 (22.12+), Tizen Studio **or** VS Code + Samsung Tizen extension (with a Samsung
+certificate profile whose distributor cert includes both monitors' DUIDs), monitors in Developer Mode pointing at the
+desktop's IP — step by step in [`docs/client/install-on-tv.md`](docs/client/install-on-tv.md).
 
 ## License
 

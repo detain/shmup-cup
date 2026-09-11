@@ -2,11 +2,24 @@
  * Collects environment facts from browser / Tizen / Samsung globals (DOM glue).
  * Every probe is wrapped so a missing API never breaks the app.
  *
+ * The shape and all text formatting of the result live in the pure module `envInfo.ts`; this file only
+ * touches the globals.
+ *
  * @module env
  */
 
 import { parseChromeVersion, parseTizenVersion, type EnvInfo, type WebGLInfo } from './envInfo';
 
+/**
+ * Runs one probe, turning an exception into an error-list entry and a fallback value.
+ *
+ * @typeParam T - probe result type.
+ * @param errors - collects `label: message` for every failure.
+ * @param label - probe name used in the error entry.
+ * @param fn - the probe.
+ * @param fallback - value returned when `fn` throws.
+ * @returns the probe result or `fallback`.
+ */
 function safe<T>(errors: string[], label: string, fn: () => T, fallback: T): T {
   try {
     return fn();
@@ -16,6 +29,14 @@ function safe<T>(errors: string[], label: string, fn: () => T, fallback: T): T {
   }
 }
 
+/**
+ * Creates a throw-away 1×1 canvas context to read WebGL limits and the (unmasked, when allowed) GPU strings,
+ * then releases it via `WEBGL_lose_context` so the probe does not hold a GPU context.
+ *
+ * @param kind - `'webgl'` (WebGL 1) or `'webgl2'`.
+ * @param errors - error collector.
+ * @returns the context facts (`supported: false` when no context could be created).
+ */
 function probeWebGL(kind: 'webgl' | 'webgl2', errors: string[]): WebGLInfo {
   const none: WebGLInfo = { supported: false, maxTextureSize: null, renderer: null, vendor: null, version: null };
   return safe(
@@ -43,14 +64,29 @@ function probeWebGL(kind: 'webgl' | 'webgl2', errors: string[]): WebGLInfo {
   );
 }
 
+/** Constructor of `AudioContext` / the prefixed `webkitAudioContext`. */
 type AudioContextCtor = new () => AudioContext;
 
+/** What {@link probeAudio} learns. */
 interface AudioFacts {
+  /** `AudioContext.sampleRate` (Hz). */
   sampleRate: number | null;
+  /** `AudioContext.baseLatency` (s), when reported. */
   baseLatency: number | null;
+  /** AudioWorklet support. */
   worklet: boolean;
 }
 
+/**
+ * Opens a temporary `AudioContext` to read its sample rate / base latency and closes it again.
+ *
+ * @param errors - error collector.
+ * @returns audio facts; nulls when Web Audio is missing or the constructor throws.
+ *
+ * @remarks
+ * The context is created without a user gesture, so it may start `suspended` — that does not affect the
+ * properties read here.
+ */
 function probeAudio(errors: string[]): AudioFacts {
   const w = window as unknown as { AudioContext?: AudioContextCtor; webkitAudioContext?: AudioContextCtor };
   const Ctor = w.AudioContext ?? w.webkitAudioContext;
@@ -73,11 +109,25 @@ function probeAudio(errors: string[]): AudioFacts {
   );
 }
 
+/**
+ * Normalizes an optional API result to a string.
+ *
+ * @param v - any value.
+ * @returns null for undefined / null / `""`, otherwise `String(v)`.
+ */
 function str(v: unknown): string | null {
   return v === undefined || v === null || v === '' ? null : String(v);
 }
 
-/** Probes the runtime. Safe to call repeatedly (e.g. again after `webapis.js` finished loading). */
+/**
+ * Probes the runtime. Safe to call repeatedly (e.g. again after `webapis.js` finished loading).
+ *
+ * @returns the environment facts; individual probe failures are listed in `errors` instead of throwing.
+ *
+ * @remarks
+ * Creates (and releases) two WebGL contexts and one AudioContext, so it is called once after startup (from a
+ * 250 ms timeout, off the first frames) and once more if `webapis.js` loads late — never per frame.
+ */
 export function collectEnv(): EnvInfo {
   const errors: string[] = [];
   const ua = navigator.userAgent;

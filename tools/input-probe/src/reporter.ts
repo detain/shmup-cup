@@ -3,6 +3,9 @@
  *
  * Uses `Content-Type: text/plain` so the POST is a CORS "simple request" (no preflight).
  *
+ * XMLHttpRequest rather than `fetch` because it gives a built-in `timeout` and works identically on
+ * Chromium 69; payload building and retry bookkeeping live in the pure module `report.ts`.
+ *
  * @module reporter
  */
 
@@ -10,15 +13,31 @@ import type { ReportPayload, ReportQueue } from './report';
 
 /** Sender status shown in the header. */
 export interface ReporterStatus {
+  /** POST URL, or null when reporting is off. */
   endpoint: string | null;
+  /** Whether a request is currently outstanding. */
   inFlight: boolean;
+  /** `seq` of the last payload the server accepted (0 = none yet). */
   lastOkSeq: number;
+  /** Performance-clock time of the last success (ms). */
   lastOkAt: number;
+  /** Failed requests so far (never reset). */
   failures: number;
+  /** Reason of the latest failure, cleared on the next success. */
   lastError: string | null;
 }
 
-/** Periodically POSTs payloads; at most one request in flight. */
+/**
+ * Periodically POSTs payloads; at most one request in flight. A failed request (network error, 2.5 s
+ * timeout, non-2xx status) puts its events back into the queue so the next payload carries them.
+ *
+ * @example
+ * ```ts
+ * const queue = new ReportQueue(session);
+ * const reporter = new Reporter(reportEndpoint(import.meta.env.VITE_REPORT_URL), queue);
+ * if (reporter.enabled) reporter.send(() => buildReportParts(inputs), performance.now());
+ * ```
+ */
 export class Reporter {
   /** Current status (mutated in place). */
   readonly status: ReporterStatus;
@@ -42,8 +61,11 @@ export class Reporter {
   /**
    * Builds and sends a payload unless disabled or a request is still in flight.
    *
-   * @param makeParts - returns env / verdicts / stats at send time.
+   * @param makeParts - returns env / verdicts / stats at send time (only called when a request goes out).
    * @param nowMs - performance-clock time, for status display.
+   *
+   * @remarks
+   * Never throws: serialization errors and `send()` exceptions are recorded as failures in {@link status}.
    */
   send(makeParts: () => { env: unknown; verdicts: unknown; stats: unknown }, nowMs: number): void {
     const url = this.status.endpoint;
@@ -88,6 +110,12 @@ export class Reporter {
     }
   }
 
+  /**
+   * Records a failure and re-queues the payload's events.
+   *
+   * @param payload - the payload that could not be delivered.
+   * @param reason - short reason for the header (`HTTP 500`, `timeout`, `network error`, …).
+   */
   private fail(payload: ReportPayload, reason: string): void {
     this.status.failures++;
     this.status.lastError = reason;

@@ -17,23 +17,33 @@ export const MAX_AXES = 16;
 
 /** Structural subset of `GamepadButton`. */
 export interface GamepadButtonLike {
+  /** Whether the button is pressed. */
   readonly pressed: boolean;
+  /** Analog value in [0, 1] (triggers); not used for edge detection. */
   readonly value: number;
 }
 
 /** Structural subset of `Gamepad`. */
 export interface GamepadLike {
+  /** Pad slot index assigned by the browser (need not equal the position in the list). */
   readonly index: number;
+  /** Device id string (vendor / product), e.g. `"Xbox Wireless Controller (STANDARD GAMEPAD …)"`. */
   readonly id: string;
+  /** `"standard"` when the browser maps the pad to the W3C standard layout, `""` otherwise. */
   readonly mapping: string;
+  /** Whether the pad is still connected. */
   readonly connected: boolean;
+  /** Buttons in browser order (standard mapping: 0 = A/bottom, 12–15 = D-pad). */
   readonly buttons: ArrayLike<GamepadButtonLike>;
+  /** Axis values in [-1, 1] (standard mapping: 0/1 = left stick x/y, 2/3 = right stick x/y). */
   readonly axes: ArrayLike<number>;
 }
 
 /** An edge detected by {@link GamepadMonitor.update}. */
 export interface GamepadEdge {
+  /** Pad index (`Gamepad.index`). */
   pad: number;
+  /** What changed. */
   kind: 'button' | 'axis' | 'connect' | 'disconnect';
   /** Button or axis index (-1 for connect/disconnect). */
   index: number;
@@ -43,13 +53,19 @@ export interface GamepadEdge {
   text: string;
 }
 
-/** Latest known state of one pad. */
+/** Latest known state of one pad (kept after disconnect so the panel can still show it). */
 export interface PadState {
+  /** Pad index (`Gamepad.index`). */
   index: number;
+  /** Device id at the last connect. */
   id: string;
+  /** Mapping at the last connect (`"standard"` or `""`). */
   mapping: string;
+  /** Whether the pad was in the latest snapshot. */
   connected: boolean;
+  /** Buttons reported (capped at {@link MAX_BUTTONS}). */
   buttonCount: number;
+  /** Axes reported (capped at {@link MAX_AXES}). */
   axisCount: number;
   /** 1 = pressed. */
   buttons: Uint8Array;
@@ -61,14 +77,32 @@ export interface PadState {
   presses: number;
 }
 
-/** Converts an axis value to a zone: -1, 0 or +1. */
+/**
+ * Converts an axis value to a zone.
+ *
+ * @param v - axis value in [-1, 1].
+ * @param threshold - deflection needed to leave the dead zone (default {@link AXIS_THRESHOLD}).
+ * @returns -1, 0 or +1.
+ *
+ * @example
+ * ```ts
+ * axisZone(0.7);  // 1
+ * axisZone(-0.2); // 0
+ * ```
+ */
 export function axisZone(v: number, threshold = AXIS_THRESHOLD): number {
   if (v >= threshold) return 1;
   if (v <= -threshold) return -1;
   return 0;
 }
 
-/** Whether `list` holds a connected pad whose index (or list position, when it has none) is `index`. */
+/**
+ * Looks for a connected pad in a `getGamepads()` snapshot.
+ *
+ * @param list - the snapshot (entries may be null).
+ * @param index - pad index to look for.
+ * @returns whether `list` holds a connected pad whose index (or list position, when it has none) is `index`.
+ */
 function listHasConnected(list: ArrayLike<GamepadLike | null | undefined>, index: number): boolean {
   for (let i = 0; i < list.length; i++) {
     const g = list[i];
@@ -78,9 +112,23 @@ function listHasConnected(list: ArrayLike<GamepadLike | null | undefined>, index
   return false;
 }
 
-/** Tracks all pads and reports edges. */
+/**
+ * Tracks all pads and reports edges.
+ *
+ * @remarks
+ * Browsers only expose a pad after its first button press ("activation"), so a pad appears here — and
+ * `connect` is reported — on that first press, not when it is paired.
+ *
+ * @example
+ * ```ts
+ * const mon = new GamepadMonitor();
+ * mon.update(navigator.getGamepads(), (edge) => console.log(edge.text)); // "GP0 connected id=… mapping=…", "GP0 b0 down"
+ * ```
+ */
 export class GamepadMonitor {
+  /** Pad states by `Gamepad.index` (sparse). */
   private readonly pads: (PadState | undefined)[] = [];
+  /** Whether any pad has ever connected. */
   private seen = false;
 
   /** Whether any pad has ever been seen. */
@@ -92,7 +140,12 @@ export class GamepadMonitor {
    * Compares the current pads with the previous snapshot.
    *
    * @param list - `navigator.getGamepads()` result (entries may be null).
-   * @param onEdge - called for every edge.
+   * @param onEdge - called synchronously for every edge, in this order: disconnects, then per pad its
+   *   connect, button and axis edges.
+   *
+   * @remarks
+   * Chromium returns *snapshots* from `getGamepads()`, so this must be called every frame (or at a lower idle
+   * rate while no pad has been seen, as `main.ts` does) to catch short presses.
    */
   update(list: ArrayLike<GamepadLike | null | undefined>, onEdge: (edge: GamepadEdge) => void): void {
     // Mark pads missing from the list as disconnected. Pads are keyed by `Gamepad.index`, which need not equal
@@ -177,7 +230,11 @@ export class GamepadMonitor {
     }
   }
 
-  /** Known pads (connected or not), by index. */
+  /**
+   * Lists every pad seen so far.
+   *
+   * @returns the live {@link PadState} objects (connected or not), ordered by index. Do not mutate them.
+   */
   states(): PadState[] {
     const out: PadState[] = [];
     for (const st of this.pads) if (st !== undefined) out.push(st);
@@ -192,7 +249,19 @@ export class GamepadMonitor {
   }
 }
 
-/** Human-readable lines describing the pads, for the stats panel. */
+/**
+ * Human-readable lines describing the pads, for the Gamepads panel.
+ *
+ * @param states - pads from {@link GamepadMonitor.states}.
+ * @returns two lines per pad (header with index / mapping / id, then pressed buttons and axis values), or a
+ *   single hint line when no pad has been seen.
+ *
+ * @example
+ * ```text
+ * GP0 mapping=standard Xbox Wireless Controller (STANDARD GAMEPAD Vendor: 045e Product: 02fd)
+ *    buttons[17] pressed: 0 12  axes: 0.00 -0.02 0.00 0.00
+ * ```
+ */
 export function describePads(states: readonly PadState[]): string[] {
   if (states.length === 0) return ['(none — press a button on the pad to activate it)'];
   const out: string[] = [];
@@ -211,7 +280,12 @@ export function describePads(states: readonly PadState[]): string[] {
   return out;
 }
 
-/** JSON-friendly pad summary for the report. */
+/**
+ * JSON-friendly pad summary for the report payload (`stats.gamepads`).
+ *
+ * @param states - pads from {@link GamepadMonitor.states}.
+ * @returns one plain object per pad: index, id, mapping, connected, button / axis counts and total presses.
+ */
 export function padsForReport(states: readonly PadState[]): Array<{
   index: number;
   id: string;

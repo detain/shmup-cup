@@ -9,13 +9,20 @@
 import type { KeyDownKind } from './keyTracker';
 import { padLeft, padRight } from './format';
 
-/** Kind of a logged event. */
+/**
+ * Kind of a logged event: `down` / `up` for key events, `info` for lifecycle / status lines, `gamepad` for
+ * gamepad edges.
+ */
 export type ProbeEventType = 'down' | 'up' | 'info' | 'gamepad';
 
-/** One event as logged on screen, to the console and to the report server. */
+/**
+ * One event as logged on screen, to the console and to the report server (the `newEvents` array of a report
+ * payload, and therefore of every JSONL line written by the log server).
+ */
 export interface ProbeEvent {
   /** Event time (ms, `performance.now()` clock). */
   t: number;
+  /** Event kind; decides which of the optional fields are set. */
   type: ProbeEventType;
   /** Key code (key events only). */
   code?: number;
@@ -47,6 +54,10 @@ export const KIND_LABELS: Readonly<Record<KeyDownKind, string>> = {
  * Formats an event as a single compact log line (fits the ~60-column log panel), e.g.
  * `   8123.4 DOWN ArrowRight(39)     repeat=0 press  Δ95.2` or
  * `   8200.1 UP   ArrowRight(39)     held=77ms       Δ76.9`.
+ *
+ * @param e - the event.
+ * @returns one line without a trailing newline. Info lines render as `t ·  text`, gamepad lines as
+ *   `t GP  text`; a keyup without a matching keydown shows `held=stray`.
  */
 export function formatEvent(e: ProbeEvent): string {
   const t = padLeft(e.t.toFixed(1), 9);
@@ -63,15 +74,30 @@ export function formatEvent(e: ProbeEvent): string {
   return line;
 }
 
-/** Fixed-capacity list of the most recent log lines (newest last). */
+/**
+ * Fixed-capacity list of the most recent log lines (newest last).
+ *
+ * @example
+ * ```ts
+ * const log = new LineLog(2);
+ * log.push('a'); log.push('b'); log.push('c');
+ * log.text(); // "b\nc"
+ * ```
+ */
 export class LineLog {
+  /** Stored lines, oldest first. */
   private readonly lines: string[] = [];
+  /** Push counter backing {@link LineLog.changeCount}. */
   private version = 0;
 
   /** @param capacity - lines kept (spec: ~28). */
   constructor(readonly capacity = 28) {}
 
-  /** Appends a line, dropping the oldest when full. */
+  /**
+   * Appends a line, dropping the oldest when full.
+   *
+   * @param line - text to append (should not contain newlines).
+   */
   push(line: string): void {
     this.lines.push(line);
     if (this.lines.length > this.capacity) this.lines.splice(0, this.lines.length - this.capacity);
@@ -83,12 +109,20 @@ export class LineLog {
     return this.version;
   }
 
-  /** The lines joined with newlines (oldest first). */
+  /**
+   * Renders the log for a `<pre>` panel.
+   *
+   * @returns the lines joined with newlines (oldest first).
+   */
   text(): string {
     return this.lines.join('\n');
   }
 
-  /** Copy of the current lines. */
+  /**
+   * Copies the lines.
+   *
+   * @returns a new array, oldest first.
+   */
   toArray(): string[] {
     return this.lines.slice();
   }

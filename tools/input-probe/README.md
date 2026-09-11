@@ -8,6 +8,10 @@ remote control scheme in `shmup_feat.md` §4.
 This is a **standalone npm project** — it is not part of the pnpm workspace at the repo root. Always run `npm`
 commands from `tools/input-probe/`.
 
+More documentation: [tester guide](../../docs/client/input-probe.md) (screen, protocol, reading the verdicts) ·
+[monitor setup & install](../../docs/client/install-on-tv.md) · [developer guide](../../docs/dev/input-probe.md)
+(architecture, module APIs, report format, extension points, gotchas).
+
 ## What it shows
 
 One 1920×1080 stage (scaled to the window), everything visible at once — no navigation needed:
@@ -49,7 +53,8 @@ All thresholds live in `src/keyTracker.ts` (`DEFAULT_KEY_TRACKER_OPTIONS`).
 
 ## Prerequisites
 
-- **Node 20.19+** (22 or 24 recommended) and npm.
+- **Node 24** (or 22.12+) and npm. Node 20.19 is enough for `build` / `package` / `deploy` / `log-server`, but the
+  tests (`npm test`, `npm run verify`) use Vitest 5, which needs Node 22.12+.
 - To package / deploy (Windows desktop on the monitors' LAN):
   - **Tizen Studio** (with the TV extensions) **or** **VS Code + the Samsung Tizen extension** and its SDK — anything that
     provides the `tizen` CLI (`tizen.bat` on Windows) and `sdb`.

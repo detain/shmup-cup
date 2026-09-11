@@ -17,6 +17,15 @@
  *   GET  /health   "ok"
  *
  * On Windows, allow Node through the firewall (private network) when prompted, or the TV cannot reach it.
+ *
+ * Environment: PORT (default 8787), HOST (default 0.0.0.0 = all interfaces), LOG_DIR (default
+ * `tools/input-probe/logs`). Each JSONL line is the payload plus `receivedAt` (ISO time) and `from` (the
+ * sender's IP). Bodies above {@link MAX_BODY_BYTES} are rejected with 413; invalid JSON / payloads with 400.
+ *
+ * The exported functions are used by `test/logServer.test.ts` (and the end-to-end build test) to run the
+ * server in-process on 127.0.0.1.
+ *
+ * @module server/log-server
  */
 
 import { appendFileSync, mkdirSync, readdirSync, statSync } from 'node:fs';
@@ -31,8 +40,16 @@ export const MAX_BODY_BYTES = 2 * 1024 * 1024;
 /**
  * Makes a session id safe to use as a file name: keeps `[A-Za-z0-9._-]`, max 64 chars.
  *
- * @param {unknown} session
- * @returns {string | null} null when nothing usable remains
+ * @param {unknown} session - the payload's `session` field.
+ * @returns {string | null} null when nothing usable remains (or `session` is not a string).
+ *
+ * @remarks
+ * Other characters become `_` and leading dots are removed, so `../x` cannot escape LOG_DIR and no hidden
+ * files are created.
+ *
+ * @example
+ * sanitizeSession('ip-lx2k3a-7f3k'); // 'ip-lx2k3a-7f3k'
+ * sanitizeSession('../../etc');      // '_.._etc'
  */
 export function sanitizeSession(session) {
   if (typeof session !== 'string') return null;
@@ -41,10 +58,11 @@ export function sanitizeSession(session) {
 }
 
 /**
- * Validates a parsed payload.
+ * Validates a parsed payload (deliberately lenient: only what the server itself relies on).
  *
- * @param {unknown} p
- * @returns {string | null} error message, or null when valid
+ * @param {unknown} p - the parsed request body.
+ * @returns {string | null} error message, or null when valid (a JSON object with a usable `session`, a
+ *   numeric `seq` and, if present, an array `newEvents`).
  */
 export function validatePayload(p) {
   if (p === null || typeof p !== 'object' || Array.isArray(p)) return 'payload must be a JSON object';
@@ -59,7 +77,8 @@ export function validatePayload(p) {
  * One-line-per-item console summary of a payload.
  *
  * @param {Record<string, any>} p - a valid payload
- * @returns {string}
+ * @returns {string} a header line (session, seq, event counts), two verdict lines, then the last 12 events
+ *   (with a note when earlier ones were omitted).
  */
 export function formatSummary(p) {
   const v = p.verdicts ?? {};
@@ -76,11 +95,23 @@ export function formatSummary(p) {
   return lines.join('\n');
 }
 
+/**
+ * Formats an optional number.
+ *
+ * @param {unknown} v - value from the payload.
+ * @returns {string} the number as text, or `—` for anything else.
+ */
 function fmt(v) {
   return typeof v === 'number' ? String(v) : '—';
 }
 
-/** Compact text for one probe event. */
+/**
+ * Compact text for one probe event (a server-side mirror of `formatEvent` in `src/eventLog.ts`; kept
+ * separate so the server stays dependency-free and never trusts the payload's shape).
+ *
+ * @param {any} e - one entry of `newEvents`.
+ * @returns {string} e.g. `   8123.4 DOWN ArrowRight(39) repeat=0 press Δ95.2`.
+ */
 function formatEvent(e) {
   if (!e || typeof e !== 'object') return String(e);
   const t = typeof e.t === 'number' ? e.t.toFixed(1).padStart(9) : '        ?';
@@ -94,7 +125,12 @@ function formatEvent(e) {
   return `${t} ${e.type === 'gamepad' ? 'GP' : '· '} ${e.text ?? ''}`;
 }
 
-/** LAN IPv4 addresses of this machine (to put into VITE_REPORT_URL). */
+/**
+ * LAN IPv4 addresses of this machine (to put into VITE_REPORT_URL).
+ *
+ * @returns {string[]} non-internal IPv4 addresses of all interfaces (may include VPN / virtual adapters —
+ *   pick the one on the monitors' subnet).
+ */
 export function lanAddresses() {
   const out = [];
   for (const list of Object.values(networkInterfaces())) {
@@ -106,15 +142,30 @@ export function lanAddresses() {
 /**
  * Creates (but does not start) the HTTP server.
  *
- * @param {{ logDir: string, log?: (msg: string) => void }} opts
+ * @param {{ logDir: string, log?: (msg: string) => void }} opts - `logDir`: where `<session>.jsonl` files
+ *   go (created if missing); `log`: receives the per-payload summary (default `console.log`).
+ * @returns {import('node:http').Server} the server; call `.listen(port, host)` to start it.
+ *
+ * @example
+ * const server = createLogServer({ logDir: './logs' });
+ * server.listen(8787, '0.0.0.0');
  */
 export function createLogServer({ logDir, log = console.log }) {
   mkdirSync(logDir, { recursive: true });
+  /** Permissive CORS headers on every response (the probe's POST needs none, but browsers testing GET do). */
   const cors = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
   };
+  /**
+   * Sends a plain-text response.
+   *
+   * @param {import('node:http').ServerResponse} res - the response.
+   * @param {number} status - HTTP status.
+   * @param {string} text - body.
+   * @returns {void}
+   */
   const reply = (res, status, text) => {
     res.writeHead(status, { ...cors, 'Content-Type': 'text/plain; charset=utf-8' });
     res.end(text);
@@ -171,6 +222,7 @@ export function createLogServer({ logDir, log = console.log }) {
 }
 
 // ------------------------------------------------------------------ CLI
+/** True when run as a script (`node server/log-server.mjs`), false when imported (tests). */
 const isMain = process.argv[1] !== undefined && import.meta.url === pathToFileURL(resolve(process.argv[1])).href;
 if (isMain) {
   const here = dirname(fileURLToPath(import.meta.url));

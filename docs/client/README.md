@@ -1,12 +1,15 @@
 # Player & tester documentation
 
-User-facing guides go here as the game takes shape. Planned pages:
+| Page | Contents |
+|---|---|
+| [`install-on-tv.md`](install-on-tv.md) | One-time Developer Mode + certificate setup, installing / starting / removing development builds on the Samsung Smart Monitor M7 (Windows desktop), install troubleshooting |
+| [`input-probe.md`](input-probe.md) | Tester guide for the **Input Probe** diagnostic app: screen tour, remote controls, the 9-step on-device test protocol, how to read the verdicts, measuring latency with a 240 fps camera, recording results, troubleshooting |
 
-- **Installing on a Samsung TV / Smart Monitor** (Developer Mode, `.wgt` install) — for
-  testers of alpha builds.
+Planned pages, as the game takes shape:
+
 - **Controls** — Samsung Smart Remote (primary), gamepads, keyboard; remote-mode autofire.
 - **Options** — audio, display (scale modes, screen shake, flashing), controls, difficulty.
 - **Troubleshooting** — black screen, input lag (the M7 has no Game Mode for apps),
   audio issues.
 
-Nothing here yet: the game is at the skeleton stage (it shows a calibration test pattern).
+The game itself is at the skeleton stage (it shows a calibration test pattern).

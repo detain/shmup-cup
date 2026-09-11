@@ -84,7 +84,8 @@ shmup-cup/
 ├── docs/
 │   ├── client/             player/tester docs
 │   └── dev/                contributor docs (this file)
-├── tools/                  standalone tools, NOT workspace members (e.g. tools/input-probe — own package.json/lockfile)
+├── tools/                  standalone tools, NOT workspace members (own package.json/lockfile, npm not pnpm)
+│   └── input-probe/        Tizen diagnostic .wgt: remote/gamepad/display measurements (see input-probe.md)
 └── shmup_feat.md  shmup_tech.md  input_probe_spec.md  README.md  LICENSE (MPL-2.0)
 ```
 

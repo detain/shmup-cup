@@ -12,10 +12,16 @@
  *   npm run package -- --skip-build            (package the existing dist/)
  *   npm run package -- --tizen "C:\tizen-studio\tools\ide\bin\tizen.bat"   (instead of TIZEN_CLI)
  *   npm run package -- --dry-run               (print the commands only)
+ *
+ * Exit code 0 on success; 1 (with a hint) when the profile / CLI is missing or packaging fails. Set
+ * VITE_REPORT_URL before running to bake the log-server URL into the build.
+ *
+ * @module scripts/package
  */
 
 import { packageWgt, parseArgs } from './lib/tizen.mjs';
 
+/** Parsed command-line options. */
 const args = parseArgs(process.argv.slice(2));
 
 if (args.help || args.h) {

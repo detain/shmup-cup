@@ -16,6 +16,11 @@
  *   npm run deploy -- --package --profile shmupcup     (rebuild + repackage first)
  *   npm run deploy -- --no-run                         (install only)
  *   npm run deploy -- --dry-run                        (print the commands only)
+ *
+ * Each target is handled independently: a failure on one monitor is reported and the next one is still
+ * tried; the exit code is 1 if any target failed.
+ *
+ * @module scripts/deploy
  */
 
 import { basename } from 'node:path';
@@ -35,7 +40,9 @@ import {
   TIZEN_CLI_HINT,
 } from './lib/tizen.mjs';
 
+/** Parsed command-line options. */
 const args = parseArgs(process.argv.slice(2));
+/** Print commands instead of running them. */
 const dryRun = Boolean(args['dry-run']);
 
 if (args.help || args.h) {
@@ -76,6 +83,7 @@ if (args.package || !wgt) {
 }
 const wgtName = basename(wgt);
 
+/** Per-target failure messages, reported at the end. */
 const failures = [];
 for (const serial of serials) {
   step('Connecting to ' + serial);

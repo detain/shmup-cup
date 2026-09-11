@@ -8,6 +8,12 @@
  * 3. `dist/config.xml` and `dist/icon.png` are present (and config.xml references them).
  *
  * Usage: node scripts/check-compat.mjs [distDir]   (exit code 1 on failure)
+ *
+ * Run as `npm run check:compat` after `npm run build` (also part of `npm run verify` and of every
+ * `npm run package`). It checks syntax only — use of post-Chromium-69 *runtime APIs* is caught by the
+ * end-to-end test in `test/build.test.ts` instead.
+ *
+ * @module scripts/check-compat
  */
 
 import { existsSync, readFileSync, statSync } from 'node:fs';
@@ -15,10 +21,25 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parse } from 'acorn';
 
+/** Directory of this script. */
 const here = dirname(fileURLToPath(import.meta.url));
+/** Build output to check: the first CLI argument, default `../dist`. */
 const dist = resolve(process.argv[2] ?? join(here, '..', 'dist'));
+/** Collected failure messages; any entry makes the script exit with code 1. */
 const failures = [];
+/**
+ * Prints a passed check.
+ *
+ * @param {string} msg - what was verified.
+ * @returns {void}
+ */
 const ok = (msg) => console.log('  ok   ' + msg);
+/**
+ * Records and prints a failed check.
+ *
+ * @param {string} msg - what is wrong.
+ * @returns {void}
+ */
 const fail = (msg) => {
   failures.push(msg);
   console.log('  FAIL ' + msg);

@@ -15,36 +15,69 @@ import type { RegisterResult } from './keys';
 
 /** Everything measured, at one point in time. */
 export interface ProbeSnapshot {
+  /** Key statistics and verdicts from `KeyTracker.getStats()`. */
   keys: KeyStats;
+  /** Frame-time summary from `FrameStats.summary()`. */
   frames: FrameSummary;
   /** `performance.now() - event.timeStamp` statistics. */
   dispatch: RunningSummary;
 }
 
-/** Compact, human-readable verdicts (also sent to the log server). */
+/**
+ * Compact, human-readable verdicts (also sent to the log server as the payload's `verdicts`).
+ *
+ * @remarks
+ * Numbers are rounded to one decimal (`null` = no data yet). The field names are a de-facto contract with
+ * `server/log-server.mjs` (`formatSummary`) and with anyone post-processing the JSONL logs — rename with care.
+ */
 export interface Verdicts {
+  /** Question 1 — can two arrows be held at once? */
   diagonals: 'YES' | 'NO' | 'not tested';
+  /** Question 2 — does an arrow stay held when OK is pressed? */
   okWhileArrowHeld: 'arrow kept' | 'arrow kept (release blip)' | 'arrow dropped' | 'not tested';
+  /** Question 3 — dominant key-repeat style while holding. */
   repeatStyle: 'clean (repeat flag)' | 'keydown without repeat flag' | 'fake keyup/keydown pairs' | 'not observed';
+  /** Average press → first repeat (ms). */
   repeatDelayMs: number | null;
+  /** Average time between repeats (ms). */
   repeatIntervalMs: number | null;
+  /** Repeat rate (Hz). */
   repeatHz: number | null;
+  /** Fake keyup/keydown pairs seen. */
   bounces: number;
+  /** Shortest bounce gap (ms). */
   bounceMinGapMs: number | null;
+  /** Average bounce gap (ms). */
   bounceAvgGapMs: number | null;
+  /** Most keys raw-held at the same time. */
   maxSimultaneous: number;
+  /** Longest logical hold (ms, rounded to an integer). */
   longestHoldMs: number;
+  /** Name of the key with the longest hold. */
   longestHoldKey: string | null;
+  /** Average event dispatch delay (ms). */
   dispatchDelayAvgMs: number | null;
+  /** Worst event dispatch delay (ms). */
   dispatchDelayMaxMs: number | null;
+  /** Median rAF delta (ms). */
   frameMedianMs: number | null;
+  /** 1000 / median (Hz). */
   frameHz: number | null;
+  /** 95th-percentile rAF delta (ms). */
   frameP95Ms: number | null;
+  /** Largest rAF delta in the window (ms). */
   frameMaxMs: number | null;
+  /** Frames above 20 ms since the last reset. */
   hitches: number;
 }
 
-/** Derives the verdicts from a snapshot. */
+/**
+ * Derives the verdicts from a snapshot.
+ *
+ * @param s - measured statistics.
+ * @param keyName - maps a key code to its display name (for `longestHoldKey`).
+ * @returns the verdict record (fresh object).
+ */
 export function buildVerdicts(s: ProbeSnapshot, keyName: (code: number) => string): Verdicts {
   const k = s.keys;
   return {
@@ -84,7 +117,21 @@ export function buildVerdicts(s: ProbeSnapshot, keyName: (code: number) => strin
   };
 }
 
-/** Lines for the Verdicts & stats panel. */
+/**
+ * Lines for the Verdicts & stats panel.
+ *
+ * @param v - verdicts built from `s` by {@link buildVerdicts}.
+ * @param s - the same snapshot (for the raw counters shown next to the verdicts).
+ * @returns 12 lines: dotted labels (15 columns) followed by values; continuation lines are indented
+ *   under the values.
+ *
+ * @example
+ * ```text
+ * Diagonals ..... YES  (2 together, 0 replaced)
+ * OK+arrow ...... arrow kept
+ *                 1 kept · 0 blip · 0 dropped
+ * ```
+ */
 export function verdictLines(v: Verdicts, s: ProbeSnapshot): string[] {
   const k = s.keys;
   const f = s.frames;
@@ -111,7 +158,20 @@ export function verdictLines(v: Verdicts, s: ProbeSnapshot): string[] {
   ];
 }
 
-/** Lines for the seen-keys table, `name(code) d/u/r`, laid out in `columns` columns. */
+/**
+ * Lines for the seen-keys table, `name(code) d/u/r`, laid out in `columns` columns.
+ *
+ * @param seen - per-key counters (first-seen order).
+ * @param keyName - maps a key code to its display name.
+ * @param columns - cells per line (default 2).
+ * @param width - cell width in characters (default 34); names are truncated to `width - 14`.
+ * @returns the table lines (trailing spaces trimmed), or `(no keys yet)`.
+ *
+ * @example
+ * ```text
+ * ArrowRight(39) 12/3/9              Enter(13) 1/1/0
+ * ```
+ */
 export function seenKeyLines(seen: readonly SeenKey[], keyName: (code: number) => string, columns = 2, width = 34): string[] {
   if (seen.length === 0) return ['(no keys yet)'];
   const cells = seen.map((s) =>
@@ -122,7 +182,15 @@ export function seenKeyLines(seen: readonly SeenKey[], keyName: (code: number) =
   return lines;
 }
 
-/** Lines describing the key-registration results. */
+/**
+ * Lines describing the key-registration results (Registered keys panel).
+ *
+ * @param supportedCount - size of the `getSupportedKeys()` list.
+ * @param results - one entry per `registerKey()` call.
+ * @param tizenPresent - whether the app runs on Tizen.
+ * @returns a summary line, the `ok:` list and one `FAIL name(code): error` line per failure; a single
+ *   placeholder line in a desktop browser.
+ */
 export function registerLines(supportedCount: number, results: readonly RegisterResult[], tizenPresent: boolean): string[] {
   if (!tizenPresent) return ['(no tizen.tvinputdevice — desktop browser)'];
   const ok = results.filter((r) => r.ok).map((r) => r.name);
@@ -133,24 +201,43 @@ export function registerLines(supportedCount: number, results: readonly Register
   return lines;
 }
 
-/** Lines for the checklist panel. */
+/**
+ * Lines for the checklist panel.
+ *
+ * @param items - checklist rows in display order.
+ * @returns `[x] label` / `[ ] label` lines.
+ */
 export function checklistLines(items: readonly ChecklistItem[]): string[] {
   return items.map((it) => (it.done ? '[x] ' : '[ ] ') + it.label);
 }
 
 /** Inputs to {@link buildReportParts}. */
 export interface ReportInputs {
+  /** Environment facts, or null while not collected yet. */
   env: EnvInfo | null;
+  /** Measured statistics. */
   snapshot: ProbeSnapshot;
+  /** Maps a key code to its display name. */
   keyName: (code: number) => string;
+  /** Per-key counters. */
   seen: readonly SeenKey[];
+  /** Key-registration results. */
   registered: readonly RegisterResult[];
+  /** Size of the `getSupportedKeys()` list. */
   supportedKeys: number;
+  /** Checklist rows. */
   checklist: readonly ChecklistItem[];
+  /** Gamepad summary (see `padsForReport` in `gamepad.ts`); passed through unchanged. */
   gamepads: unknown;
 }
 
-/** Assembles the `env`, `verdicts` and `stats` parts of a report payload. */
+/**
+ * Assembles the `env`, `verdicts` and `stats` parts of a report payload.
+ *
+ * @param i - everything the report needs.
+ * @returns `{ env, verdicts, stats }` — `stats` holds the full key / frame / dispatch statistics, named seen
+ *   keys, registration results, checklist state (`{id, done}`) and gamepads.
+ */
 export function buildReportParts(i: ReportInputs): { env: EnvInfo | null; verdicts: Verdicts; stats: unknown } {
   return {
     env: i.env,

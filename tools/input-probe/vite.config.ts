@@ -5,6 +5,8 @@
  * IIFE script (`app.js`) transpiled for `chrome69`, and a build-only plugin strips `type="module"` and
  * `crossorigin` from the generated `index.html`. `base: './'` keeps every URL relative (the app is served
  * from the widget package, not a web server root).
+ *
+ * Build-time environment: `VITE_REPORT_URL` (optional log-server base URL, baked into `app.js`).
  */
 
 import { defineConfig, type Plugin } from 'vite';
@@ -12,6 +14,20 @@ import { defineConfig, type Plugin } from 'vite';
 /**
  * Rewrites the built `index.html` so the bundle loads as a classic script: removes `type="module"` and
  * `crossorigin` from `<script>`/`<link>` tags and adds `defer` to the app script (it is placed in `<head>`).
+ *
+ * @param html - the HTML Vite generated.
+ * @returns the rewritten HTML. Scripts that are not `type="module"` (e.g. the `$WEBAPIS` tag) are untouched.
+ *
+ * @remarks
+ * `crossorigin` must go because the widget is loaded from `file://`-like package URLs, where a CORS-mode
+ * script request can fail; `defer` keeps the "run after the DOM is parsed" semantics that module scripts
+ * had.
+ *
+ * @example
+ * ```ts
+ * classicScriptHtml('<script type="module" crossorigin src="./app.js"></script>');
+ * // '<script defer src="./app.js"></script>'
+ * ```
  */
 export function classicScriptHtml(html: string): string {
   return html
@@ -24,6 +40,12 @@ export function classicScriptHtml(html: string): string {
     .replace(/<link\b([^>]*)>/g, (_m, attrs: string) => '<link' + attrs.replace(/\s+crossorigin(\s*=\s*["'][^"']*["'])?/, '') + '>');
 }
 
+/**
+ * Build-only Vite plugin that applies {@link classicScriptHtml} as the last `transformIndexHtml` step
+ * (the dev server keeps serving real modules).
+ *
+ * @returns the plugin object.
+ */
 function classicScriptPlugin(): Plugin {
   return {
     name: 'input-probe:classic-script',
@@ -36,6 +58,7 @@ function classicScriptPlugin(): Plugin {
   };
 }
 
+/** The Vite configuration (dev server on all interfaces; build → `dist/` widget files). */
 export default defineConfig({
   base: './',
   plugins: [classicScriptPlugin()],

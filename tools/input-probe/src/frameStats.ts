@@ -38,17 +38,35 @@ export interface FrameSummary {
 
 /**
  * Ring buffer of the most recent frame deltas plus hitch counters.
+ *
+ * @example
+ * ```ts
+ * const fs = new FrameStats();
+ * fs.push(16.7);
+ * fs.push(16.6);
+ * fs.push(33.4);   // a hitch (> 20 ms)
+ * fs.push(2000);   // app was hidden: counted as a pause, not stored
+ * const s = fs.summary(); // { samples: 3, medianMs: 16.7, hitches: 1, pauses: 1, ... }
+ * ```
  */
 export class FrameStats {
   /** Ring capacity (number of deltas kept). */
   readonly capacity: number;
+  /** Stored deltas (ring buffer). */
   private readonly ring: Float64Array;
+  /** Preallocated sort buffer for {@link FrameStats.summary}. */
   private readonly scratch: Float64Array;
+  /** Next ring slot to write. */
   private head = 0;
+  /** Deltas stored (saturates at `capacity`). */
   private count = 0;
+  /** Deltas above {@link HITCH_MS} since the last counter reset. */
   private hitches = 0;
+  /** Largest stored delta since the last counter reset. */
   private worst = 0;
+  /** Deltas above {@link PAUSE_MS} since the last counter reset. */
   private pauses = 0;
+  /** Deltas stored since the last counter reset. */
   private frames = 0;
 
   /** @param capacity - deltas kept for the stats window and graph (default 600 = 10 s at 60 Hz). */
@@ -58,7 +76,12 @@ export class FrameStats {
     this.scratch = new Float64Array(capacity);
   }
 
-  /** Records one frame delta in ms. Deltas above {@link PAUSE_MS} only increment the pause counter. */
+  /**
+   * Records one frame delta. Allocation-free.
+   *
+   * @param deltaMs - time since the previous rAF callback, in ms. Negative / NaN values are ignored; values
+   *   above {@link PAUSE_MS} only increment the pause counter.
+   */
   push(deltaMs: number): void {
     if (!(deltaMs >= 0)) return;
     if (deltaMs > PAUSE_MS) {
@@ -79,8 +102,10 @@ export class FrameStats {
   }
 
   /**
-   * Returns the i-th most recent delta (0 = newest), or NaN if not available. Allocation-free; used by
-   * the frame-time graph.
+   * Reads the ring by age. Allocation-free; used by the frame-time graph.
+   *
+   * @param i - age (0 = newest delta).
+   * @returns the i-th most recent delta in ms, or NaN if not available.
    */
   recent(i: number): number {
     if (i < 0 || i >= this.count) return NaN;
@@ -97,7 +122,15 @@ export class FrameStats {
     this.frames = 0;
   }
 
-  /** Computes median / p95 / max over the stored window. */
+  /**
+   * Computes median / p95 / max over the stored window.
+   *
+   * @returns a fresh {@link FrameSummary}; the statistics are null when nothing is stored yet.
+   *
+   * @remarks
+   * Sorts a copy of the window into the preallocated scratch buffer (O(n log n), n ≤ capacity), so call it
+   * at UI rate, not per frame. Percentiles use the nearest-rank method ({@link percentileSorted}).
+   */
   summary(): FrameSummary {
     const n = this.count;
     const base = { hitches: this.hitches, worstMs: this.worst, pauses: this.pauses, frames: this.frames };
@@ -122,8 +155,15 @@ export class FrameStats {
 /**
  * Nearest-rank percentile of an ascending-sorted array.
  *
- * @param sorted - ascending values (non-empty).
+ * @param sorted - ascending values.
  * @param p - percentile in [0, 1].
+ * @returns the value at rank `ceil(p·n)` (1-based, clamped to the array), or NaN for an empty array.
+ *
+ * @example
+ * ```ts
+ * percentileSorted([10, 20, 30, 40], 0.5);  // 20
+ * percentileSorted([10, 20, 30, 40], 0.95); // 40
+ * ```
  */
 export function percentileSorted(sorted: ArrayLike<number>, p: number): number {
   const n = sorted.length;
@@ -134,20 +174,41 @@ export function percentileSorted(sorted: ArrayLike<number>, p: number): number {
 
 /** Summary of a {@link RunningStats}. */
 export interface RunningSummary {
+  /** Number of samples. */
   count: number;
+  /** Mean, or null when empty. */
   avg: number | null;
+  /** Smallest sample, or null when empty. */
   min: number | null;
+  /** Largest sample, or null when empty. */
   max: number | null;
 }
 
-/** Count / sum / min / max accumulator (e.g. event dispatch delay). */
+/**
+ * Count / sum / min / max accumulator (e.g. event dispatch delay). Constant memory, allocation-free `add`.
+ *
+ * @example
+ * ```ts
+ * const rs = new RunningStats();
+ * rs.add(1); rs.add(3); rs.add(NaN);
+ * rs.summary(); // { count: 2, avg: 2, min: 1, max: 3 }
+ * ```
+ */
 export class RunningStats {
+  /** Sample count. */
   private n = 0;
+  /** Sample sum. */
   private sum = 0;
+  /** Minimum so far. */
   private lo = Infinity;
+  /** Maximum so far. */
   private hi = -Infinity;
 
-  /** Adds a sample; non-finite values are ignored. */
+  /**
+   * Adds a sample.
+   *
+   * @param v - the value; non-finite values are ignored.
+   */
   add(v: number): void {
     if (!Number.isFinite(v)) return;
     this.n++;
@@ -164,7 +225,11 @@ export class RunningStats {
     this.hi = -Infinity;
   }
 
-  /** Current summary (nulls when empty). */
+  /**
+   * Summarizes the samples.
+   *
+   * @returns count / avg / min / max (nulls when empty).
+   */
   summary(): RunningSummary {
     if (this.n === 0) return { count: 0, avg: null, min: null, max: null };
     return { count: this.n, avg: this.sum / this.n, min: this.lo, max: this.hi };
@@ -178,6 +243,17 @@ export class RunningStats {
  * @param eventTimeStamp - `event.timeStamp`.
  * @param now - `performance.now()` at handler time.
  * @returns `{ t, delay }` where `delay` is `now - t` (NaN when the event timestamp was unusable).
+ *
+ * @remarks
+ * "Plausible" = finite, positive, at most 5 ms in the future and less than 5 s in the past. Older engines
+ * (and some embedded runtimes) report `event.timeStamp` as epoch milliseconds or 0; those fall back to `now`
+ * and are excluded from the dispatch-delay statistics.
+ *
+ * @example
+ * ```ts
+ * chooseEventTime(1000, 1003);          // { t: 1000, delay: 3 }
+ * chooseEventTime(1.7e12, 1003);        // { t: 1003, delay: NaN } (epoch timestamp)
+ * ```
  */
 export function chooseEventTime(eventTimeStamp: number, now: number): { t: number; delay: number } {
   if (Number.isFinite(eventTimeStamp) && eventTimeStamp > 0 && eventTimeStamp <= now + 5 && now - eventTimeStamp < 5000) {

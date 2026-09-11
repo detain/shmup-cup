@@ -64,12 +64,32 @@ export interface ChecklistFacts {
 
 /** One checklist row. */
 export interface ChecklistItem {
+  /** Item identifier. */
   id: ChecklistId;
+  /** Display label from {@link CHECKLIST_LABELS}. */
   label: string;
+  /** Whether the item has been ticked. */
   done: boolean;
 }
 
-/** Computes which items the given facts satisfy (not sticky; see {@link Checklist}). */
+/**
+ * Computes which items the given facts satisfy (not sticky; see {@link Checklist}).
+ *
+ * @param f - current observations.
+ * @returns a done flag per item.
+ *
+ * @example
+ * ```ts
+ * evaluateChecklist({
+ *   seenCodes: [37, 38, 39, 40, 13, 10009],
+ *   longestHoldMs: 3000,
+ *   diagonalAttempts: 0,
+ *   chordAttempts: 0,
+ *   gamepadSeen: false,
+ *   leftAndReturned: false,
+ * }); // { arrows: true, okBack: true, longHold: true, extraKey: false, ...rest false }
+ * ```
+ */
 export function evaluateChecklist(f: ChecklistFacts): Record<ChecklistId, boolean> {
   const has = (c: number): boolean => f.seenCodes.indexOf(c) >= 0;
   let allArrows = true;
@@ -88,8 +108,20 @@ export function evaluateChecklist(f: ChecklistFacts): Record<ChecklistId, boolea
   };
 }
 
-/** Sticky checklist state. */
+/**
+ * Sticky checklist state: once an item is ticked it stays ticked for the rest of the session, even after
+ * Play/Pause resets the hold statistics.
+ *
+ * @example
+ * ```ts
+ * const cl = new Checklist();
+ * cl.update({ ...facts, gamepadSeen: true }); // ['gamepad'] — newly ticked
+ * cl.update({ ...facts, gamepadSeen: false }); // [] — still ticked
+ * cl.isDone('gamepad');                        // true
+ * ```
+ */
 export class Checklist {
+  /** Tick state per item. */
   private readonly done: Record<ChecklistId, boolean> = {
     arrows: false,
     okBack: false,
@@ -104,7 +136,8 @@ export class Checklist {
   /**
    * Ticks every item the facts satisfy.
    *
-   * @returns ids that became done during this call (for logging).
+   * @param f - current observations.
+   * @returns ids that became done during this call (for logging), in display order.
    */
   update(f: ChecklistFacts): ChecklistId[] {
     const now = evaluateChecklist(f);
@@ -118,12 +151,21 @@ export class Checklist {
     return newly;
   }
 
-  /** Whether an item is ticked. */
+  /**
+   * Tells whether an item is ticked.
+   *
+   * @param id - item identifier.
+   * @returns the sticky done flag.
+   */
   isDone(id: ChecklistId): boolean {
     return this.done[id];
   }
 
-  /** Items in display order. */
+  /**
+   * Lists the items for display.
+   *
+   * @returns fresh {@link ChecklistItem} rows in {@link CHECKLIST_ORDER}.
+   */
   items(): ChecklistItem[] {
     return CHECKLIST_ORDER.map((id) => ({ id, label: CHECKLIST_LABELS[id], done: this.done[id] }));
   }
