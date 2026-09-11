@@ -27,8 +27,10 @@ placeholder module; the apps show a pixel-art calibration test pattern). No game
 
 ## Quick start
 
-Prerequisites: Node 20.19+ (24 recommended, see `.nvmrc`) and pnpm 12
-(`npm i -g pnpm@latest`; the exact version is pinned in `package.json` → `packageManager`).
+Prerequisites: Node 22.22.2+ or 24.15+ (24 recommended, see `.nvmrc`; Node 23/25 are not
+supported) and pnpm 12 (`npm i -g pnpm@latest`; the exact version is pinned in
+`package.json` → `packageManager`). pnpm refuses to install or run scripts on other Node
+versions (`devEngines.runtime`).
 
 ```sh
 pnpm install          # set ELECTRON_SKIP_BINARY_DOWNLOAD=1 to skip the Electron binary
@@ -67,7 +69,11 @@ pnpm workspace (`packages/*`, `apps/*`) + Turborepo. Full annotated tree:
 | `tools/` | Standalone dev tools with their own npm projects (not workspace members) |
 
 Toolchain note: TypeScript is pinned to **6.0.x** — TypeScript 7 (native) has no JS API
-until 7.1 and typescript-eslint 8.x requires `typescript < 6.1`.
+until 7.1 and typescript-eslint 8.x requires `typescript < 6.1`. The Node floor is
+`^22.22.2 || ^24.15.0 || >=26` rather than the original `>=20` because the pinned dev
+toolchain requires it: Vitest 5 (`^22.12 || ^24 || >=26`), Electron 44 (`>=22.12`) and
+eslint-plugin-jsdoc 64 (`^22.22.2 || >=24.15`). This only affects the machines that build
+the game — the shipped Tizen bundle still targets Chromium 69.
 
 ## Next step
 

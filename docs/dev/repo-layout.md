@@ -15,7 +15,7 @@ exports a `moduleInfo` descriptor (`status: 'placeholder' | 'partial' | 'impleme
 
 ```text
 shmup-cup/
-├── package.json            root scripts (dev/build/typecheck/lint/test/format/clean), packageManager pnpm@12, engines
+├── package.json            root scripts (dev/build/typecheck/lint/test/format/clean), packageManager pnpm@12, engines/devEngines (Node floor)
 ├── pnpm-workspace.yaml     members packages/* + apps/* (NOT tools/*), version catalog, allowed build scripts
 ├── pnpm-lock.yaml          committed; CI installs with --frozen-lockfile
 ├── turbo.json              task graph: build (^build → dist/**), typecheck/lint/test (via "transit"), dev, clean, root tasks
@@ -120,6 +120,7 @@ Each package's `exports` has a custom **`@shmup/source`** condition pointing at
 | Area | Choice | Notes |
 |---|---|---|
 | Package manager | pnpm 12 (`packageManager` field), catalog for shared versions | `allowBuilds` limits install scripts to electron + esbuild |
+| Node.js | `^22.22.2 \|\| ^24.15.0 \|\| >=26.0.0` (`engines.node` + `devEngines.runtime`, keep them identical); `.nvmrc` = 24 | Not the spec's `>=20`: this is the intersection of the pinned toolchain's own requirements — Vitest 5 `^22.12 \|\| ^24 \|\| >=26`, Electron 44 `>=22.12`, eslint-plugin-jsdoc 64 `^22.22.2 \|\| >=24.15`, ESLint 10 `^22.13 \|\| >=24`. `devEngines.runtime.onFail: "error"` makes pnpm reject other Node versions up front instead of failing later inside a tool. Re-derive it whenever those tools are bumped |
 | Orchestration | Turborepo 2 | `transit` task makes typecheck/lint/test caches depend on upstream sources without forcing builds |
 | TypeScript | **6.0.x** (pinned via catalog) | TypeScript 7.0 (native) is current, but it has no JS API until 7.1 and typescript-eslint 8.x supports `typescript < 6.1`; revisit when typescript-eslint supports 7.x |
 | Lint | ESLint 10 flat config + typescript-eslint (type-aware) + eslint-plugin-compat + eslint-plugin-jsdoc | compat target `chrome >= 69`; extra rules ban `.at()`, `replaceAll`, `structuredClone`, `Object.hasOwn`, `import.meta` (Tizen) |
