@@ -2,7 +2,8 @@
  * Browser test of the stage runtime (plan M1-07) in headless Chromium: `?stage=test-range` boots
  * the dev stage — its generated terrain is visible (the placeholder tileset's surface and rock
  * colours inside the playfield, never in the HUD bars) and it scrolls: the terrain pixels move
- * left between two screenshots while the ship stays where it is on screen. Screenshots are ×3
+ * left between two screenshots while the ship stays where it is on screen; an unknown stage id
+ * warns and boots free flight without terrain. Screenshots are ×3
  * (viewport 1152×648): frame pixel (x, y) is screenshot pixel (3x + 1, 3y + 1).
  */
 import { expect, test, type Page } from '@playwright/test';
@@ -123,6 +124,25 @@ test.describe('stage runtime (web build, ?stage=test-range)', () => {
     const moved = leftShift(first.profile, second.profile);
     expect(moved.shift).toBeGreaterThan(10);
     expect(moved.error).toBeLessThan(1);
+    expect(errors).toEqual([]);
+  });
+
+  test('warns about an unknown ?stage= and flies in open space without terrain', async ({
+    page,
+  }) => {
+    const warnings: string[] = [];
+    const errors: string[] = [];
+    page.on('console', (message) => {
+      if (message.type() === 'warning') warnings.push(message.text());
+      if (message.type() === 'error') errors.push(message.text());
+    });
+    page.on('pageerror', (error) => errors.push(error.message));
+    await page.goto('./?stage=no-such-stage');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await waitFrames(page, 30);
+    const pixels = await terrainPixels(page);
+    expect(pixels.playfield + pixels.hud).toBe(0);
+    expect(warnings.some((text) => text.includes('no stage "no-such-stage"'))).toBe(true);
     expect(errors).toEqual([]);
   });
 });

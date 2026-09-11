@@ -130,26 +130,41 @@ export function forceGc(): void {
  * most ~100 calls' worth per collection, never high. Short-lived garbage counts (that is the
  * point: per-frame code must not produce any), retained memory counts too.
  *
+ * The measured calls run in `rounds` windows of `iterations` calls each (garbage collected
+ * before the warm-up and before every window) and the smallest window wins: allocation by the
+ * code under test happens in every window, while V8's tier-up (the first windows can still run
+ * in the lower tiers, which box doubles — hundreds of kilobytes) and collections clearing
+ * earlier tests' hidden classes (which deoptimise shared code) only disturb some. One window
+ * made these guards flaky.
+ *
  * @param step - The per-frame work; receives the iteration index.
- * @param iterations - Measured calls.
+ * @param iterations - Measured calls per window.
  * @param warmUp - Unmeasured calls first (default 2000).
- * @returns Estimated bytes allocated.
+ * @param rounds - Measured windows (default 3).
+ * @returns Estimated bytes allocated by `iterations` calls in the steadiest window.
  */
 export function measureAllocation(
   step: (i: number) => void,
   iterations: number,
   warmUp = 2000,
+  rounds = 3,
 ): number {
-  for (let i = 0; i < warmUp; i++) step(i);
   forceGc();
-  let previous = process.memoryUsage().heapUsed;
-  let total = 0;
-  for (let done = 0; done < iterations;) {
-    const end = Math.min(iterations, done + 100);
-    for (; done < end; done++) step(warmUp + done);
-    const now = process.memoryUsage().heapUsed;
-    if (now > previous) total += now - previous;
-    previous = now;
+  for (let i = 0; i < warmUp; i++) step(i);
+  let best = Number.POSITIVE_INFINITY;
+  let index = warmUp;
+  for (let round = 0; round < rounds; round++) {
+    forceGc();
+    let previous = process.memoryUsage().heapUsed;
+    let total = 0;
+    for (let done = 0; done < iterations;) {
+      const end = Math.min(iterations, done + 100);
+      for (; done < end; done++) step(index++);
+      const now = process.memoryUsage().heapUsed;
+      if (now > previous) total += now - previous;
+      previous = now;
+    }
+    if (total < best) best = total;
   }
-  return total;
+  return best;
 }

@@ -29,15 +29,18 @@
  * before it — and at `length`), recording `dx`/`dy`, 4 fire the due events, 5 update the last
  * passed checkpoint. So an event fires on the tick the camera reaches its x and a key applies
  * one tick later: on a tie (and whenever one tick's movement crosses both) the event's speed
- * is overridden by the key's.
+ * is overridden by the key's. The stage start is the exception: the camera is at x 0 from the
+ * outset, so the first tick applies the key at 0 and then fires the events at 0 — a `speed`
+ * event at 0 overrides the first key.
  *
  * **Restart order.** {@link StageRunner.restartAt} replays that order by x: keys and events
- * before the checkpoint at once, an event before a key at the same x; then the events at
- * exactly the checkpoint's x (as live play fired them on arrival: speed ramps start, flags and
- * `end` apply), which re-fire on the next tick for the hooks only; keys at the checkpoint's x
- * apply on that tick, as live play applied them the tick after arriving. Exact for ties; a key
- * and a speed event less than one tick's movement apart (key first) are replayed key → event,
- * while live play may have crossed both in one tick (event → key).
+ * before the checkpoint at once, an event before a key at the same x (but the key at 0 before
+ * the events at 0, as the first tick applies them); then the events at exactly the checkpoint's
+ * x (as live play fired them on arrival: speed ramps start, flags and `end` apply), which
+ * re-fire on the next tick for the hooks only; keys at the checkpoint's x apply on that tick, as
+ * live play applied them the tick after arriving. Exact for ties; a key and a speed event less
+ * than one tick's movement apart (key first) are replayed key → event, while live play may have
+ * crossed both in one tick (event → key).
  *
  * **Zero allocation.** All numeric runner state lives in one `Float64Array`
  * ({@link StageRunner.state}, also what `hashWorld` hashes); at creation the camera keys, events
@@ -257,9 +260,10 @@ export interface StageRunner {
   /**
    * Restarts from a checkpoint (death penalty `arcade`, continues): camera x at the checkpoint,
    * speed / pan / flags as the stage had them there (keys and events before it applied at once,
-   * in live order — an event before a key at the same x — then the runner part of the events at
-   * exactly its x), the event cursor at the first event with `x ≥` the checkpoint (binary
-   * search; those events re-fire on the next tick for the hooks), then `hooks.clear()`.
+   * in live order — an event before a key at the same x, except the key at 0, which the first
+   * tick applies before the events at 0 — then the runner part of the events at exactly its x),
+   * the event cursor at the first event with `x ≥` the checkpoint (binary search; those events
+   * re-fire on the next tick for the hooks), then `hooks.clear()`.
    *
    * @param checkpoint - Index into `stage.checkpoints`, or -1 for the stage start.
    * @throws {RangeError} When the index is not an integer in `[-1, checkpoints.length)`.
@@ -672,10 +676,11 @@ class StageRunnerImpl implements StageRunner {
     camera.vy = 0;
     // Re-derive the state at x in live order (see "Restart order" in the module docs): an event
     // fires on the tick the camera reaches its x, a key applies one tick later, so on a tie the
-    // event goes first. Keys and events before x apply at once; the events at exactly x as live
-    // play fired them on arrival (they re-fire next tick for the hooks only — `Replay`); keys at
-    // x stay pending for the next tick. At x 0 nothing was reached yet: the first tick applies
-    // the keys at 0 and fires the events at 0, like a fresh stage.
+    // event goes first — except at x 0, where the camera starts: the first tick applies the key
+    // at 0 before it fires the events at 0. Keys and events before x apply at once; the events
+    // at exactly x as live play fired them on arrival (they re-fire next tick for the hooks
+    // only — `Replay`); keys at x stay pending for the next tick. At x 0 nothing was reached
+    // yet: the first tick applies the keys at 0 and fires the events at 0, like a fresh stage.
     const keyX = compiled.keyX;
     const eventX = compiled.eventX;
     const cursor = findEventCursor(this.stage.events, x);
@@ -687,7 +692,7 @@ class StageRunnerImpl implements StageRunner {
       const keyDue = k < keyX.length && keyX[k] < x;
       const eventDue = e < replay;
       if (!keyDue && !eventDue) break;
-      if (keyDue && (!eventDue || keyX[k] < eventX[e])) {
+      if (keyDue && (!eventDue || keyX[k] < eventX[e] || keyX[k] === 0)) {
         const speed = compiled.keySpeed[k];
         state[StageSlot.Speed] = speed;
         state[StageSlot.Target] = speed;

@@ -59,7 +59,8 @@ over `yTicks` ticks, at once without them — `yTicks` needs `yTo`); `lock: true
 exactly at `x` until the boss releases it, then it scrolls on at `speed`. The camera never
 scrolls past `length`; the terrain map is `length + 384` pixels wide. A key applies one tick
 after the camera reaches it, events on that tick itself: a key and a `speed` event at the same
-`x` leave the key's speed.
+`x` leave the key's speed — except at `x` 0, where the camera starts: the first tick applies the
+first key and then fires the events at 0, so a `speed` event at 0 overrides it.
 
 ## Events
 

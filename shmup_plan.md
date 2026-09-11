@@ -862,8 +862,9 @@ the browser dev app and as a Tizen 5.5 bundle.
   - **Runner.** `createStageRunner(stage, hooks, camera?)`; hooks are `event(code, event, index)`
     (numeric `StageEventCode`, every event, after the runner applied `speed` / `flag` / `end`) and
     `clear()`. `restartAt(checkpointIndex)` (-1 = stage start) re-derives speed, pan and flags from
-    the keys and events before the checkpoint in live order (event before key on a tie), applies
-    the runner part of the events at exactly its x as live play did on arriving (they re-fire on
+    the keys and events before the checkpoint in live order (event before key on a tie, but the
+    key at 0 before the events at 0 — the first tick applies it first), applies the runner part
+    of the events at exactly its x as live play did on arriving (they re-fire on
     the next tick for the hooks only — `StageSlot.Replay`; keys at its x apply on that tick), sets
     the cursor by binary search, then calls `clear()`; `unlock()` releases a lock. It is a class whose
     timeline is compiled into typed arrays at creation and whose state is one `Float64Array`
