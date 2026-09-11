@@ -40,3 +40,6 @@ a numeric index and reports every problem as `path: message`.
 `pnpm content:check` validates this folder. It loads the shipped files as one set and the
 `example.*.json` samples as a second, independent set, so an example may reuse the ids of
 the real content without clashing with it.
+
+How the loader works, how to add fields or a new kind, and what each error means:
+[`docs/dev/content-data.md`](../docs/dev/content-data.md).

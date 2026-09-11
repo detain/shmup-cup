@@ -5,6 +5,14 @@
  * {@link shmupContent} turns `content/` into the virtual module `virtual:shmup-content`
  * so the Tizen bundle can ship game data inside its single classic script (decision D25).
  *
+ * **Public API.** Resolve conditions: {@link SOURCE_CONDITION}, {@link clientConditions},
+ * {@link serverConditions}. Content: {@link shmupContent}, {@link readContentFiles},
+ * {@link CONTENT_MODULE_ID}, {@link ContentFileRecord}, {@link ShmupContentOptions}.
+ *
+ * @remarks
+ * Node-only tooling (it reads the file system); it is never part of a shipped bundle, so
+ * the Chromium 69 rules do not apply here. Guide: `docs/dev/content-data.md`.
+ *
  * @module
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
@@ -140,13 +148,35 @@ export function shmupContent(options: ShmupContentOptions = {}): Plugin {
   const root = options.root ?? DEFAULT_CONTENT_ROOT;
   return {
     name: 'shmup:content',
+    /**
+     * Claims the virtual module id.
+     *
+     * @param id - The import specifier being resolved.
+     * @returns The `\0`-prefixed resolved id for {@link CONTENT_MODULE_ID}, else `null`
+     *   (let other plugins resolve it).
+     */
     resolveId(id) {
       return id === CONTENT_MODULE_ID ? RESOLVED_CONTENT_MODULE_ID : null;
     },
+    /**
+     * Generates the virtual module's source.
+     *
+     * @param id - The resolved module id.
+     * @returns `export default [...]` with every shipped content file, or `null` for any
+     *   other module.
+     * @throws SyntaxError when a content file is not valid JSON (see {@link readContentFiles});
+     *   Vite reports it as a build / dev-server error.
+     */
     load(id) {
       if (id !== RESOLVED_CONTENT_MODULE_ID) return null;
       return `export default ${JSON.stringify(readContentFiles(root), null, 2)};\n`;
     },
+    /**
+     * Dev server only: watches the content root and full-reloads the page on any `*.json`
+     * add / change / delete inside it.
+     *
+     * @param server - The Vite dev server.
+     */
     configureServer(server) {
       server.watcher.add(root);
       /**

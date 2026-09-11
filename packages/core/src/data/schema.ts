@@ -28,7 +28,11 @@
 
 /** A validation problem found while loading content. */
 export interface ValidationIssue {
-  /** Where the problem is: `<file>:<json path>`, e.g. `content/x.json:enemies[3].hp`. */
+  /**
+   * Where the problem is. {@link Schema.parse} reports the bare JSON path it was given
+   * (`enemies[3].hp`, `''` for the root); `loadContent` prefixes it with the file:
+   * `<file>:<json path>`, e.g. `enemies/x.enemies.json:enemies[3].hp`.
+   */
   readonly path: string;
   /** Human-readable description, e.g. `must be an integer >= 1`. */
   readonly message: string;
@@ -54,7 +58,10 @@ export interface RefSite {
   path: string;
   /** What the id points at. */
   readonly kind: ContentRefKind;
-  /** The id as written, or `null` for a `nullable` reference that was `null` or an absent optional one. */
+  /**
+   * The id as written, or `null` for a `nullable` reference that was `null` and for an
+   * absent optional one.
+   */
   readonly id: string | null;
   /** Object that holds the reference; the resolved index is written to `<field>Id`. */
   readonly container: Record<string, unknown>;
@@ -205,7 +212,12 @@ function matches(pattern: RegExp, value: string): boolean {
   return pattern.test(value);
 }
 
-/** Plain (non-array, non-null) object test. */
+/**
+ * Plain (non-array, non-null) object test.
+ *
+ * @param value - Any parsed JSON value.
+ * @returns `true` for a JSON object.
+ */
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
@@ -518,6 +530,25 @@ function oneOf<V extends Record<string, Schema<unknown>>>(
 
 /**
  * The schema combinators (decision D28: in-house, no runtime dependency).
+ *
+ * @remarks
+ * | Combinator | Accepts | Failure message |
+ * |---|---|---|
+ * | `int({min,max})` | an integer in bounds | `must be an integer in 1..5` |
+ * | `num({min,max})` | a finite number in bounds | `must be a finite number >= 0` |
+ * | `str(options)` | a string, non-empty by default | `must be a non-empty string` |
+ * | `bool()` | `true` / `false` | `must be a boolean` |
+ * | `enumOf(values)` | one of the literals | `must be one of: a, b` |
+ * | `array(item,{min,max})` | `item`s | `must be an array`, `must have at most 4 items` |
+ * | `object(shape,{optional})` | exactly the declared fields | `is required`, `unknown field` |
+ * | `record(value,keyPattern?)` | a string-keyed map of `value` | `is not a valid key` |
+ * | `nullable(inner)` | `null` or `inner` | (the inner message) |
+ * | `ref(kind)` | a non-empty id string; the loader resolves it | `must be a non-empty enemy id` |
+ * | `oneOf(tag,variants)` | the variant named by the tag field | `type must be one of: …` |
+ *
+ * Every schema is frozen and keeps no state between calls (pattern `lastIndex` is reset),
+ * so one instance can be shared by any number of parents. Build schemas once at module
+ * load, never per call.
  *
  * @example
  * ```ts

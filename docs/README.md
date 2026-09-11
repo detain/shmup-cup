@@ -16,9 +16,10 @@
 | [`dev/repo-layout.md`](dev/repo-layout.md) | Contributors | Annotated monorepo tree, tooling decisions, package resolution, common commands |
 | [`dev/architecture.md`](dev/architecture.md) | Contributors | Layers, sim/presentation split, one frame end to end, input/render/audio pipelines, lifecycle, `Platform` per host, determinism rules, extension points |
 | [`dev/engine-foundations.md`](dev/engine-foundations.md) | Contributors | The deterministic engine primitives (`core/rng`, `math`, `events`, `pools`): determinism and zero-allocation rules, usage recipes, regenerating the trig tables, tests, gotchas |
+| [`dev/content-data.md`](dev/content-data.md) | Contributors | Game data end to end: content files and versions, the `virtual:shmup-content` Vite plugin, `loadContent()` and id resolution, the schema combinators, extending kinds and formats, `pnpm content:check`, gotchas |
 | [`dev/api-reference.md`](dev/api-reference.md) | Contributors | Map of every public export (packages, apps, tooling) and the declared API of the placeholder modules |
 | [`dev/build-test-deploy.md`](dev/build-test-deploy.md) | Contributors | Prerequisites, scripts, Turborepo, build outputs, Chromium 69 Tizen build contract, TV packaging/installing, Electron, tests, CI, troubleshooting |
-| [`dev/conventions.md`](dev/conventions.md) | Contributors | Module layout, TSDoc, TypeScript, core purity, Chromium 69 API rules, zero allocation, tests, formatting, checklists |
+| [`dev/conventions.md`](dev/conventions.md) | Contributors | Module layout, TSDoc, TypeScript, core purity, Chromium 69 API rules, zero allocation, tests, formatting, content rules, checklists |
 | [`dev/input-probe.md`](dev/input-probe.md) | Contributors | Input probe architecture, modules & APIs, verdict rules, Chromium 69 build contract, configuration, packaging / deploying, remote-logging format, tests, extension points, gotchas |
 
 ## Elsewhere in the repository
@@ -31,6 +32,8 @@ Design and research documents live at the repository root:
 | [`../shmup_tech.md`](../shmup_tech.md) | Platform constraints, library research, recommended stack |
 | [`../input_probe_spec.md`](../input_probe_spec.md) | Spec of the Tizen input-probe spike (`tools/input-probe/`) |
 | [`../shmup_plan.md`](../shmup_plan.md) | Implementation plan: decisions, milestones M1–M3, ordered build steps, manual on-device checklist |
+| [`../shmup_progress.md`](../shmup_progress.md) | Execution progress: one row per plan step (status, review rounds, tests, commits, as-built notes) |
+| [`../content/README.md`](../content/README.md) | Content formats for authors (player ships, weapons, enemies, stages), one README per folder |
 
 Per-project READMEs sit next to the code (e.g. [`../tools/input-probe/README.md`](../tools/input-probe/README.md),
 [`../apps/tizen/README.md`](../apps/tizen/README.md)).

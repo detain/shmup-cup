@@ -18,6 +18,11 @@ pnpm --filter @shmup/tizen dev     # desktop-browser preview (no window.tizen; B
   `<script type="module">` is rewritten to `<script defer src="./app.js">`;
 - a hand-written ES5 **`globalThis` polyfill** (`polyfills/global-this.js`, Chrome 71+ API
   used by PixiJS) is prepended after minification.
+- the repo's **`shmupContent()`** plugin (`vite.shared.ts`) serves `virtual:shmup-content`:
+  every shipped `content/**/*.json` inlined into `app.js`, because a widget on `file://`
+  cannot `fetch()` local files (decision D25). No content files are copied into `dist/`.
+  The shell imports the module from M1-04 on; see
+  [`docs/dev/content-data.md`](../../docs/dev/content-data.md).
 
 `scripts/check-bundle.mjs` fails the build unless: exactly one script exists, it is loaded
 as a classic deferred script, **it parses with acorn as an ES2018 script**, it starts with

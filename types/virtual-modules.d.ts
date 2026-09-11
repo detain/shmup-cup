@@ -13,6 +13,14 @@
  * Inlining is decision D25: Tizen widgets run from `file://`, where `fetch()` fails on
  * Chromium 69, so game data has to be part of the script. Hand the array to
  * `loadContent()` from `@shmup/core`.
+ *
+ * @example
+ * ```ts
+ * import contentFiles from 'virtual:shmup-content';
+ * import { loadContent } from '@shmup/core';
+ *
+ * const { db, issues } = loadContent(contentFiles);
+ * ```
  */
 declare module 'virtual:shmup-content' {
   /** One content JSON document. */

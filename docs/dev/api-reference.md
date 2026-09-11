@@ -160,25 +160,42 @@ if a reference must survive a flush.
 ### `data` — content schemas and loader
 
 Validates everything under `content/` and turns the string ids into numeric indices once,
-at load (decision D28: in-house combinators, no runtime dependency).
+at load (decision D28: in-house combinators, no runtime dependency). Guide:
+[content-data.md](content-data.md).
 
 | Export | Kind | Summary |
 |---|---|---|
-| `loadContent(files, options?)` | function | → `{ db, issues, foreign }`; never throws on bad data, only on a bad `files` argument (`TypeError`) |
-| `LoadContentOptions` | interface | `knownScripts?` (array or `Set`; checked from M1-08 on), `migrations?` (defaults to `CONTENT_MIGRATIONS`) |
+| `loadContent(files, options?)` | function | → `LoadContentResult { db, issues, foreign }`; never throws on bad data, only on a bad `files` argument (`TypeError`). Pure: same files in any order → identical result; input never mutated |
+| `LoadContentOptions` | interface | `knownScripts?` (array or `Set`; unknown `script` refs become issues — M1-08 passes it), `migrations?` (defaults to `CONTENT_MIGRATIONS`) |
 | `ContentFile` | interface | `{ path, data }` — one parsed JSON document, as `virtual:shmup-content` provides it |
-| `ContentDb` | interface | `sprites`, `scripts` (`StringTable`), `ships`, `weapons`, `weaponPresets`, `enemies`, `stages` + a `…Index` map per list |
-| `EMPTY_CONTENT_DB` | const | Frozen empty database (the default for `createGame`) |
+| `ContentDb` | interface | `sprites`, `scripts` (`StringTable`), `ships`, `weapons`, `weaponPresets`, `enemies`, `stages`, each with an id → position `…Index` map (`shipIndex`, `weaponIndex`, `weaponPresetIndex`, `enemyIndex`, `stageIndex`) |
+| `StringTable` | interface | `{ names, index }` — interned names in ascending order; `names[i]` is index `i` |
+| `EMPTY_CONTENT_DB` | const | Frozen, shared empty database (the default for `createGame`) |
 | `CONTENT_KINDS`, `ContentKind`, `isContentKind(kind)` | const/type/function | `player`, `weapons`, `enemies`, `stage`; other kinds come back in `foreign` |
-| `CONTENT_FORMAT_VERSION`, `CONTENT_MIGRATIONS` | const | `1`; per-kind `fromVersion → migration` table (a newer version is rejected) |
-| `PlayerShipSpec`, `WeaponSpec`, `WeaponPresetSpec`, `EnemySpec`, `StageSpec`, `StageEvent`, … | types | The resolved shapes; every `foo` reference also carries a numeric `fooId` |
-| `ValidationIssue` | interface | `{ path, message }`, e.g. `enemies/x.json:enemies[3].hurtbox.hw` / `must be an integer >= 1` |
+| `ContentFileHeader` | interface | `{ formatVersion, kind }` — first two fields of every file |
+| `CONTENT_FORMAT_VERSION` | const | `1`; a newer version is rejected with an issue |
+| `CONTENT_MIGRATIONS`, `ContentMigration`, `ContentMigrationTable` | const/types | Per-kind `fromVersion → (data) => newData` table; ships `0 → 1` for `weapons`, `enemies`, `stage` (none for `player`) |
+| `PlayerShipSpec`, `BoxSpec`, `MarginSpec` | types | A ship of a `player` file: `speeds` (D3), `hurtRadius`, `terrainBox`, `pickupBox`, `margins`, timers, `spriteId` |
+| `WeaponSpec`, `WeaponSlot`, `WEAPON_SLOTS`, `WeaponPresetSpec` | types/const | A weapon (`slot`, `behaviorId`, `damage`, `speed`, `cap`, `pierce`, `spriteId`, optional `refireTicks`, `sfxId`, `params`) and a meter-mode loadout (`mainId`/`missileId`/`doubleId`/`laserId`, `-1` = none) |
+| `EnemySpec`, `EnemyRankSpec` | types | Stub (M1-08 extends): `hp`, `score`, `hurtbox`, `scriptId`, `spriteId`, `drop`, `rank?` |
+| `StageSpec`, `StageCameraKey`, `StageCheckpoint`, `StageParallaxLayer`, `StageTilemapRef` | types | Stub (M1-07 extends): `length`, `camera`, `checkpoints`, `parallax`, `tilemap`, `events` |
+| `StageEvent` = `StageSpawnEvent` \| `StageBossEvent` \| `StageMusicEvent` \| `StageScrollEvent` \| `StageCheckpointEvent` | types | Timeline entries by `type`: `spawn` (`enemyId`), `boss`/`midboss`/`warning` (`enemyId`), `music` (`cueId`), `scroll`, `checkpoint` |
+| `ValidationIssue` | interface | `{ path, message }`, e.g. `enemies/x.enemies.json:enemies[3].hurtbox.hw` / `must be an integer in 1..512` |
 | `s` | const | The combinators: `int`, `num`, `str`, `bool`, `enumOf`, `array`, `object`, `record`, `nullable`, `ref`, `oneOf` |
-| `Schema<T>`, `Infer<S>`, `RefSite`, `ContentRefKind` | types | `parse(value, path, issues, refs?) → T \| undefined`; a `ref` site resolves into `<field>Id` |
+| `Schema<T>`, `Infer<S>`, `ObjectShape`, `ObjectValue<S, O>` | types | `parse(value, path, issues, refs?) → T \| undefined` (+ `typeName`, `refKind`); `Infer` extracts `T` |
+| `RefSite`, `ContentRefKind` | types | A recorded `s.ref` site (`path`, `kind`, `id`, `container`, `field`); kinds `ship`, `weapon`, `enemy`, `stage`, `sprite`, `script`, `sfx`, `music` |
 
-Sprite and script names are *interned* (sorted, then numbered, so ids never depend on file
-order); ship/weapon/enemy/stage ids and `sfx`/`music` cue names must resolve or an issue is
-reported and the id becomes `-1`. `pnpm content:check` runs this over `content/`.
+Every `s.ref` field `foo` gains a numeric sibling `fooId` after loading. Sprite and script
+names are *interned* (sorted, then numbered, so ids never depend on file order);
+ship/weapon/enemy/stage ids and `sfx`/`music` cue names must resolve or an issue is reported
+and the id becomes `-1` (also the value for `null` and absent optional references).
+`s.array(s.ref(…))` and `s.record(s.ref(…))` throw a `TypeError` at construction — wrap
+references in objects. `pnpm content:check` runs the loader over `content/`.
+
+The placeholder modules `weapons`, `enemies` and `stage` still declare their own
+`WeaponSpec` / `EnemySpec` / `StageEvent` (not exported); the package entry exports the
+`data` versions above. The steps that implement those systems (M1-07 stage, M1-08
+enemies, M1-10 weapons) reconcile the two — import the `data` types in the meantime.
 
 ### `module-info`
 
@@ -309,4 +326,5 @@ Placeholders: `FileStore` (`saves.ts`), `SteamService` (`steam.ts`).
 | `SOURCE_CONDITION` (`'@shmup/source'`), `clientConditions`, `serverConditions` | `vite.shared.ts` | Resolve workspace packages to `src/` in Vite/Vitest |
 | `defineShmupProject(name, { environment?, include? })` | `vitest.shared.ts` | Per-project Vitest config (tests under `test/`, Node environment) |
 | `shmupContent({ root? })` | `vite.shared.ts` | Vite plugin → `virtual:shmup-content`: every shipped `content/**/*.json` inlined into the bundle, sorted by path, `example.*.json` skipped, full reload on change |
-| `readContentFiles(root?)`, `CONTENT_MODULE_ID`, `ContentFileRecord` | `vite.shared.ts` | The Node-side reader behind the plugin (also used by `pnpm content:check`) |
+| `readContentFiles(root?)`, `CONTENT_MODULE_ID`, `ContentFileRecord`, `ShmupContentOptions` | `vite.shared.ts` | The Node-side reader behind the plugin (also used by `pnpm content:check`): recursive, `example.*` skipped, sorted by path; `SyntaxError` naming the file on bad JSON, `[]` for a missing root |
+| `virtual:shmup-content` | `types/virtual-modules.d.ts` | Ambient module declaration: `default: readonly { path, data }[]` |

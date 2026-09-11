@@ -9,7 +9,12 @@ step is tracked in [`shmup_progress.md`](shmup_progress.md).
 The monorepo skeleton is in place (every planned system has a module with its API declared
 and TSDoc-documented) and the **engine foundations** are implemented: seeded RNG streams,
 committed trigonometry tables with binary angles, the sim → presentation event queue and the
-zero-GC pools ([developer guide](docs/dev/engine-foundations.md)).
+zero-GC pools ([developer guide](docs/dev/engine-foundations.md)). **Game data** is
+schema-validated JSON under [`content/`](content/README.md) — the KESTREL ship and the Type A
+weapons so far — checked by `pnpm content:check`, served to the app builds as the virtual
+module `virtual:shmup-content` and loaded by `loadContent()` with every string id resolved
+to a number ([developer guide](docs/dev/content-data.md)); the game starts reading it once
+the shared browser shell lands (M1-04).
 The apps still show a pixel-art calibration test pattern —
 see [what it should look like](docs/client/preview-build.md) — so there is no gameplay yet.
 The **input probe** — a diagnostic Tizen app that measures the Samsung remote, gamepads and
@@ -31,7 +36,8 @@ it is waiting to be packaged and run on the M7 monitors.
 Game docs — testers: [preview build (calibration screen)](docs/client/preview-build.md) ·
 [controls](docs/client/controls.md) · [monitor setup & install](docs/client/install-on-tv.md).
 Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/architecture.md) ·
-[engine foundations](docs/dev/engine-foundations.md) · [API reference](docs/dev/api-reference.md) ·
+[engine foundations](docs/dev/engine-foundations.md) · [content data](docs/dev/content-data.md) ·
+[API reference](docs/dev/api-reference.md) ·
 [build, test & deploy](docs/dev/build-test-deploy.md) · [conventions](docs/dev/conventions.md).
 
 Input probe docs: [tester guide](docs/client/input-probe.md) · [monitor setup & install](docs/client/install-on-tv.md) ·
@@ -63,7 +69,7 @@ pnpm test             # Vitest per package + repo integration tests
 pnpm build            # packages → dist/, apps/web, apps/tizen (one ES2018 IIFE), apps/electron
 pnpm format           # Prettier
 pnpm trig:tables      # regenerate the committed core trig tables (a test checks they are current)
-pnpm content:check    # validate every JSON under content/ against the core schemas
+pnpm content:check    # validate every JSON under content/ against the core schemas (part of pnpm test)
 pnpm clean            # remove build output
 ```
 
@@ -115,6 +121,7 @@ pnpm workspace (`packages/*`, `apps/*`) + Turborepo. Full annotated tree:
 | [`apps/tizen`](apps/tizen/README.md) | Samsung Tizen `.wgt` (Chromium 69 classic IIFE build, config.xml, CLI scripts) |
 | [`apps/electron`](apps/electron/README.md) | Electron desktop shell |
 | [`content/`](content/README.md) | Game data: player ships, stages, enemies, weapons (JSON, `formatVersion` 1) |
+| `types/` | Ambient declarations for the Vite virtual modules (`virtual:shmup-content`) |
 | [`assets/`](assets/README.md) | Art/audio sources (`source/`) and pipeline output (`generated/`, ignored) |
 | [`scripts/`](scripts/README.md) | Repo-level Node scripts |
 | [`test/`](test/README.md) | Cross-package integration tests |
@@ -131,8 +138,9 @@ the game — the shipped Tizen bundle still targets Chromium 69.
 
 ## Next step
 
-Code: plan step **M1-02** (content schemas, loader and the `core/data` module) — the
-per-step status board is [`shmup_progress.md`](shmup_progress.md).
+Code: plan step **M1-03** (placeholder asset pipeline: code-defined pixel art → sprite
+atlases and a bitmap font, with every sprite name used by content checked against the atlas)
+— the per-step status board is [`shmup_progress.md`](shmup_progress.md).
 
 On hardware (unchanged, and still the gate for the remote control scheme): package and
 deploy the input probe from the **Windows desktop** that sits on the same LAN as the monitors and holds

@@ -18,12 +18,12 @@ shmup-cup/
 ├── package.json            root scripts (dev/build/typecheck/lint/test/format/clean), packageManager pnpm@12, engines/devEngines (Node floor)
 ├── pnpm-workspace.yaml     members packages/* + apps/* (NOT tools/*), version catalog, allowed build scripts
 ├── pnpm-lock.yaml          committed; CI installs with --frozen-lockfile
-├── turbo.json              task graph: build (^build → dist/**), typecheck/lint/test (via "transit"), dev, clean, root tasks
+├── turbo.json              task graph: build (^build → dist/**), typecheck/lint/test (via "transit"), dev, clean, root tasks; globalDependencies incl. content/** types/**
 ├── tsconfig.base.json      strict compiler options shared by everything (ES2018 target/lib, NodeNext, @shmup/source)
 ├── tsconfig.tooling.json   Node-side base (tests, Vite/Vitest configs): ES2023 + DOM + node types, noEmit
 ├── tsconfig.json           type-checks repo-root tooling files
 ├── eslint.config.js        flat config: typescript-eslint (type-aware), compat (chrome >= 69), jsdoc, core purity rules
-├── vite.shared.ts          @shmup/source resolve conditions shared by Vite + Vitest
+├── vite.shared.ts          @shmup/source resolve conditions shared by Vite + Vitest; shmupContent() plugin → virtual:shmup-content
 ├── vitest.shared.ts        defineShmupProject(): per-project Vitest defaults (tests in test/, Node env)
 ├── vitest.config.ts        Vitest *projects*: packages/*, apps/*, test (→ `pnpm test:all`)
 ├── .browserslistrc         chrome >= 69 (Tizen 5.5) for eslint-plugin-compat
@@ -42,12 +42,13 @@ shmup-cup/
 │   │   │   ├── game/           ✔ createGame(): composition root, suspend/resume
 │   │   │   ├── presentation/   ✔ IRenderer / IAudio / RenderFrame contracts
 │   │   │   ├── rng/ math/ events/ pools/                 ✔ engine foundations (sfc32, trig tables, event ring, SoA pools)
+│   │   │   ├── data/           ✔ (partial) content loader: schema.ts combinators, loadContent(), ContentDb, migrations
 │   │   │   ├── player/ weapons/ options/ shields/ powerups/ player-side systems (placeholders)
 │   │   │   ├── enemies/ bullets/ patterns/ bosses/         enemy-side systems (placeholders)
 │   │   │   ├── collision/ stage/                           world (placeholders)
 │   │   │   ├── scoring/ rank/ fx/                          rules & feel (placeholders)
 │   │   │   ├── scenes/ ui/                                 flow & canvas UI model (placeholders)
-│   │   │   └── replay/ save/ data/ debug/                  meta & tooling (placeholders)
+│   │   │   └── replay/ save/ debug/                        meta & tooling (placeholders)
 │   │   ├── test/<module>/  one folder per module + index.test.ts (module tree invariants)
 │   │   ├── tsconfig.json   src only, lib ES2018, no types (purity)
 │   │   ├── tsconfig.build.json  emits dist/ (customConditions off)
@@ -85,7 +86,7 @@ shmup-cup/
 ├── test/                   cross-package integration tests (Vitest project "integration", part of `pnpm test`)
 ├── docs/
 │   ├── client/             player/tester docs
-│   └── dev/                contributor docs (this file)
+│   └── dev/                contributor docs (this file, architecture, engine-foundations, content-data, api-reference, …)
 ├── tools/                  standalone tools, NOT workspace members (own package.json/lockfile, npm not pnpm)
 │   └── input-probe/        Tizen diagnostic .wgt: remote/gamepad/display measurements (see input-probe.md)
 └── shmup_feat.md  shmup_tech.md  input_probe_spec.md  README.md  LICENSE (MPL-2.0)
@@ -139,9 +140,11 @@ pnpm dev                # browser dev app on http://localhost:5173
 pnpm lint | typecheck | test | build
 pnpm test:all           # every Vitest project in one process
 pnpm --filter @shmup/tizen build    # TV bundle + bundle check
+pnpm content:check      # validate content/ against the core schemas
 pnpm clean              # remove dist/ coverage/ .turbo/ everywhere
 ```
 
 More: [build-test-deploy.md](build-test-deploy.md) (every script, TV deployment, CI,
 troubleshooting), [architecture.md](architecture.md) (how the pieces work together at
-runtime), [api-reference.md](api-reference.md) and [conventions.md](conventions.md).
+runtime), [content-data.md](content-data.md) (game data and its loader),
+[api-reference.md](api-reference.md) and [conventions.md](conventions.md).

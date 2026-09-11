@@ -24,7 +24,7 @@ in `math`). Enforced by `tsconfig.json` (`lib: ["ES2018"]`, no `types`) and ESLi
 | `sinB`, `cosB`, `atan2B`, `quantizeAngle`, `angleDelta`, `turnToward`, `wrapAngle`, `clamp`, `lerp`, `approach`, `EASINGS` | `math` | Binary angles (1024/turn) on committed lookup tables + easing curves |
 | `createEventQueue`, `SimEventKind`, `SFX_CUES`, `MUSIC_CUES` | `events` | Sim → presentation ring of typed arrays (drop-oldest) and the canonical cue registries |
 | `createSoaPool`, `createPool` | `pools` | Struct-of-arrays typed-array pools (deferred free + swap-remove) and object pools |
-| `loadContent`, `ContentDb`, `EMPTY_CONTENT_DB`, `s`, `Schema` | `data` | Schema-validated `content/` (player, weapons; stub enemies/stage) with string ids resolved to numeric indices |
+| `loadContent`, `ContentDb`, `EMPTY_CONTENT_DB`, `CONTENT_MIGRATIONS`, `s`, `Schema`, `Infer`, the `…Spec` types | `data` | Schema-validated `content/` (player, weapons; stub enemies/stage): issues with `<file>:<json path>`, migrations, every `s.ref` string resolved to a numeric `<field>Id` at load |
 
 ## Placeholder modules (API declared, logic comes later)
 
@@ -58,12 +58,15 @@ and exports `moduleInfo`; `test/<module>/` holds its smoke test.
 ```sh
 pnpm --filter @shmup/core test        # Vitest (Node, headless)
 pnpm trig:tables                      # regenerate src/math/trig-table.ts (repo root; a test diffs it)
+pnpm content:check                    # validate content/ with loadContent() (repo root)
 pnpm --filter @shmup/core typecheck   # src (pure) + test/ (Node) programs
 pnpm --filter @shmup/core build       # tsc → dist/ (ES2018 + .d.ts)
 ```
 
 The deterministic primitives (`rng`, `math`, `events`, `pools`) have their own guide:
-[`docs/dev/engine-foundations.md`](../../docs/dev/engine-foundations.md). `src/math/trig-table.ts`
+[`docs/dev/engine-foundations.md`](../../docs/dev/engine-foundations.md); the content
+loader and schema combinators (`data`) theirs:
+[`docs/dev/content-data.md`](../../docs/dev/content-data.md). `src/math/trig-table.ts`
 is **generated** — edit `scripts/gen-trig-tables.mjs`, not the table.
 
 Consumers inside the workspace resolve `@shmup/core` to `src/index.ts` through the

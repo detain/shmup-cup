@@ -31,6 +31,7 @@ Related pages: [repo-layout.md](repo-layout.md) (where files live),
                     │ @shmup/core — pure TS, deterministic           │
                     │ Platform / IRenderer / IAudio contracts,       │
                     │ input snapshots, config, fixed-step loop,      │
+                    │ engine primitives, content loader (data),      │
                     │ createGame(), every game system (placeholders) │
                     └────────────────────────────────────────────────┘
 ```
@@ -123,6 +124,27 @@ The deterministic primitives every later system builds on. Details and usage rul
   deferred and `flush()` swap-removes at the end of a tick. `createPool(factory, capacity,
   reset)` for the ≤ 100 pooled objects (enemies, boss parts). Nothing allocates after
   creation.
+
+### Content pipeline (`content/` → `core/data`)
+
+Game data is JSON under `content/`, validated and turned into numbers once, at boot. Details:
+[content-data.md](content-data.md).
+
+- **Build time (Node).** The `shmupContent()` Vite plugin (`vite.shared.ts`) reads every
+  shipped `content/**/*.json` (not `example.*.json`), sorts it by path and serves it as the
+  virtual module `virtual:shmup-content` — inlined into the bundle, because a Tizen widget
+  on `file://` cannot `fetch()` local files (decision D25).
+- **Boot.** The host passes that array to `loadContent()` (`core/data`), which checks each
+  file's `kind` / `formatVersion` header, migrates old formats, validates the body with the
+  in-house `s` combinators (D28), and resolves every string reference to a numeric index in
+  a sibling `<field>Id`. Problems come back as `ValidationIssue { path, message }` (for the
+  boot error screen), never as exceptions; files of kinds other packages own come back in
+  `foreign`.
+- **Run time.** `createGame(platform, overrides, db)` stores the `ContentDb` as
+  `game.content`. Systems look up what they need at session/stage start and keep integer
+  indices; the tick reads arrays only.
+- Today the apps register the plugin but do not import the module yet — `@shmup/shell`
+  (M1-04) does, so `createGame` still runs on `EMPTY_CONTENT_DB`.
 
 ### Input pipeline (`@shmup/input-web` → `core/input`)
 
@@ -230,7 +252,7 @@ a matching `test/<module>/` folder, and spec references that point at real numbe
 sections of `shmup_feat.md` / `shmup_tech.md`.
 
 Implemented or partial today: core `platform`, `input`, `config`, `loop`, `game`,
-`presentation`, `rng`, `math`, `events`, `pools`; input-web `keymap`, `keyboard`, `gamepad`, `web-input`; audio-web
+`presentation`, `rng`, `math`, `events`, `pools`, `data` (partial: `enemies` / `stage` are stubs); input-web `keymap`, `keyboard`, `gamepad`, `web-input`; audio-web
 `web-audio`; render-pixi `renderer`, `viewport`, `test-pattern`, `palette`; the apps'
 `boot`, `platform`, `frame-loop`. Everything else declares its intended API only.
 
@@ -243,7 +265,7 @@ Implemented or partial today: core `platform`, `input`, `config`, `loop`, `game`
 | An input device | Produce an action mask per tick and feed it through `commitPlayerInput()` (see `createWebInput`); never expose device codes to the core |
 | A game action | Append a bit to `Action` (never renumber — masks are recorded in replays), add it to `ACTION_NAMES` and the default bindings in `input-web/keymap` / `gamepad` |
 | A game system | Fill in its placeholder module in `packages/core/src/<module>/`, set `moduleInfo.status`, export it from `packages/core/src/index.ts`, call it from `step()` in the fixed tick order |
-| Content (enemies, weapons, stages) | JSON under `content/` following its README; validation belongs to `core/data` |
+| Content (enemies, weapons, stages) | JSON under `content/` following its README, then `pnpm content:check`. New fields or a new kind: extend the schemas in `core/data` — checklist in [content-data.md](content-data.md#extending-it) |
 | A sound or music cue | Append a name to `SFX_CUES` / `MUSIC_CUES` in `core/events` (never renumber — ids are recorded in replays and bound by `content/audio/`) |
 | A presentation event kind | Append a code to `SimEventKind` and a name to `SIM_EVENT_KIND_NAMES`, then handle it in the host's drain dispatcher |
 | A new entity kind | Give it an SoA pool (`createSoaPool`) or an object pool (`createPool`) sized from the budgets in `shmup_feat.md` §22, `flush()` it in the deferred-removal phase of the tick |

@@ -14,4 +14,6 @@ Planned pages, as the game takes shape:
   audio issues.
 
 The game itself is at the skeleton stage: it shows a calibration test pattern
-([preview-build.md](preview-build.md)).
+([preview-build.md](preview-build.md)). Behind the scenes the engine foundations and the
+first game data (the KESTREL ship and its weapons) are in place; nothing new is visible
+yet.

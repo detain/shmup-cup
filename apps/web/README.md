@@ -13,6 +13,12 @@ pnpm --filter @shmup/web build    # → apps/web/dist (relocatable, base './')
 Workspace packages are resolved to their TypeScript sources (`@shmup/source` export
 condition), so edits in `packages/*` hot-reload without a package build.
 
+`vite.config.ts` registers the repo's `shmupContent()` plugin, which serves every shipped
+`content/**/*.json` as the virtual module `virtual:shmup-content` (typed by
+`types/virtual-modules.d.ts`, listed in this app's `tsconfig.json`). In `pnpm dev`, saving a
+content JSON file reloads the page. The app starts importing the module with the shared
+shell (M1-04); see [`docs/dev/content-data.md`](../../docs/dev/content-data.md).
+
 ## Modules
 
 | Module | Status | Responsibility |

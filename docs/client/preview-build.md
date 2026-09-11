@@ -35,9 +35,15 @@ There is no sound yet.
 ### What changed lately
 
 Work has moved to the game engine itself — the seeded randomness, angle tables, event
-queue and object storage the real game needs. None of it is visible on screen yet, so the
+queue and object storage the real game needs — and to the **game data**: the first ship
+(KESTREL, with its six speed levels) and its Type A weapons are now written down as data
+files that the build checks automatically. None of it is visible on screen yet, so the
 calibration screen looks exactly as it did before and there is nothing new to test on the
 monitors. Re-test only when this page says the picture changed.
+
+Good to know for later: the game data travels **inside** the app. There are no extra files
+to copy to the monitor or to a USB stick — installing the `.wgt` (or opening the browser
+build) is all it takes, and the TV never needs a network connection to load it.
 
 ## On the Samsung Smart Monitor / TV
 

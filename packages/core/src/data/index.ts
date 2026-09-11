@@ -17,20 +17,36 @@
  * - shmup_feat.md §22 — data-driven content (`enemies.json`, `weapons.json`, `stages/*.json`)
  * - shmup_feat.md §7 / §11 — weapons and enemies defined in data
  *
- * **Public API.** {@link loadContent}, {@link ContentDb}, {@link EMPTY_CONTENT_DB},
- * {@link CONTENT_FORMAT_VERSION}, {@link CONTENT_KINDS}, {@link CONTENT_MIGRATIONS},
- * the per-kind spec types ({@link PlayerShipSpec}, {@link WeaponSpec}, {@link WeaponPresetSpec},
- * {@link EnemySpec}, {@link StageSpec}) and everything re-exported from
- * {@link ./schema.js | data/schema}.
+ * **Public API.**
+ * - Loading: {@link loadContent} (+ {@link LoadContentOptions}, {@link LoadContentResult},
+ *   {@link ContentFile}), {@link isContentKind}.
+ * - The database: {@link ContentDb}, {@link StringTable}, {@link EMPTY_CONTENT_DB}.
+ * - File format: {@link CONTENT_FORMAT_VERSION}, {@link CONTENT_KINDS} / {@link ContentKind},
+ *   {@link ContentFileHeader}, {@link CONTENT_MIGRATIONS} ({@link ContentMigration},
+ *   {@link ContentMigrationTable}).
+ * - Per-kind spec types: {@link PlayerShipSpec} ({@link BoxSpec}, {@link MarginSpec}),
+ *   {@link WeaponSpec} ({@link WeaponSlot}, {@link WEAPON_SLOTS}), {@link WeaponPresetSpec},
+ *   {@link EnemySpec} ({@link EnemyRankSpec}), {@link StageSpec} and its parts
+ *   ({@link StageCameraKey}, {@link StageCheckpoint}, {@link StageParallaxLayer},
+ *   {@link StageTilemapRef}, {@link StageEvent} and its variants).
+ * - Everything re-exported from {@link ./schema.js | data/schema}: the combinators `s`,
+ *   `Schema`, `Infer`, `ObjectShape`, `ObjectValue`, `RefSite`, `ContentRefKind`,
+ *   `ValidationIssue`.
+ *
+ * **Id resolution convention.** A field declared with `s.ref(kind)` keeps its string and
+ * gains a sibling `<field>Id` holding the resolved numeric index (`sprite` → `spriteId`,
+ * `behavior` → `behaviorId`, `enemy` → `enemyId`, `cue` → `cueId`); `-1` means null, absent
+ * or unresolved. Systems read only the numbers.
  *
  * **Planned API (later steps).** Kinds `paths`, `tilesets`, `rules`, `patterns`, `campaign`,
  * `strings` (M1-07 … M2); `input-profiles`, `sfx`/`music` and `fx` files stay *foreign* here
- * and are validated by their owning packages (see plan §3.5).
+ * and are validated by their owning packages (see plan §3.5). M1-08 passes
+ * `knownScripts` so behaviour ids are checked, M1-03 checks `db.sprites` against the atlas.
  *
  * @remarks
  * Nothing in this module runs per tick: it allocates freely, uses `Map`s and reports **all**
  * problems of a load instead of throwing. {@link loadContent} throws only for a programming
- * error (a bad `files` argument).
+ * error (a bad `files` argument). Developer guide: `docs/dev/content-data.md`.
  *
  * @module
  */
@@ -65,7 +81,15 @@ export const moduleInfo = defineModule({
  */
 export const CONTENT_FORMAT_VERSION = 1;
 
-/** Kinds of content file this module owns. Other kinds are returned as *foreign*. */
+/**
+ * Kinds of content file this module owns. Other kinds are returned as *foreign*.
+ *
+ * @remarks
+ * The `kind` header field selects the schema; the file's folder and name do not matter to
+ * the loader (the `pnpm content:check` test additionally checks that `*.<kind>.json` names
+ * match). A later step that adds a kind appends it here, to {@link ContentDb} and to the
+ * internal `parseFile` / `collect` switches.
+ */
 export const CONTENT_KINDS = Object.freeze(['player', 'weapons', 'enemies', 'stage'] as const);
 
 /** Kinds of content file this module owns (`content/player/`, `weapons/`, …). */
@@ -87,15 +111,39 @@ export interface ContentFile {
   readonly data: unknown;
 }
 
-/** Upgrades one file body from format `v` to `v + 1`. */
+/**
+ * Upgrades one file body from format `v` to `v + 1`.
+ *
+ * @param data - The file body at format `v` (a JSON object; treat it as read-only).
+ * @returns A new body in format `v + 1`.
+ *
+ * @remarks
+ * Return a fresh object instead of mutating `data` — the caller's parsed JSON must stay
+ * untouched. The loader writes `formatVersion = v + 1` into the result itself, so a
+ * migration only has to reshape the fields that changed.
+ */
 export type ContentMigration = (data: Readonly<Record<string, unknown>>) => Record<string, unknown>;
 
-/** Per-kind migrations, keyed by the version they upgrade *from*. */
+/**
+ * Per-kind migrations, keyed by the version they upgrade *from*.
+ *
+ * @example
+ * ```ts
+ * const table: ContentMigrationTable = {
+ *   weapons: { 0: (data) => ({ ...data }), 1: (data) => ({ ...data, presets: [] }) },
+ * };
+ * ```
+ */
 export type ContentMigrationTable = {
   readonly [K in ContentKind]?: { readonly [fromVersion: number]: ContentMigration };
 };
 
-/** Returns its input unchanged (a format change that only relaxed validation). */
+/**
+ * Returns a shallow copy of its input (a format change that did not reshape the body).
+ *
+ * @param data - The file body.
+ * @returns A copy; the loader then bumps its `formatVersion`.
+ */
 const identityMigration: ContentMigration = (data) => ({ ...data });
 
 /**
@@ -370,7 +418,15 @@ export interface StageSpec {
   readonly events: readonly StageEvent[];
 }
 
-/** Interned string ids: `names[i]` is the name of index `i`. */
+/**
+ * Interned string ids: `names[i]` is the name of index `i`.
+ *
+ * @remarks
+ * Used for names the content only *mentions* (atlas sprites, behaviour scripts): every
+ * distinct name referenced by any file gets an index, whether or not something defines it.
+ * Later steps check the names against their registries (M1-03 the atlas, M1-08 the
+ * behaviour table).
+ */
 export interface StringTable {
   /** Names in ascending order (so indices do not depend on file order). */
   readonly names: readonly string[];
@@ -378,7 +434,15 @@ export interface StringTable {
   readonly index: ReadonlyMap<string, number>;
 }
 
-/** Everything the simulation needs from `content/`, with string ids already resolved. */
+/**
+ * Everything the simulation needs from `content/`, with string ids already resolved.
+ *
+ * @remarks
+ * Built once at boot by {@link loadContent} and handed to `createGame`. Systems keep the
+ * numeric indices (`spriteId`, `enemyId`, …) and index the arrays per tick; the `…Index`
+ * maps are for load-time lookups only (convention 1.5: no string lookups per tick). Lists
+ * are in the order their files sort by path, then in document order.
+ */
 export interface ContentDb {
   /** Atlas sprite names used by content (M1-03 checks them against the atlas). */
   readonly sprites: StringTable;
@@ -431,7 +495,11 @@ export interface LoadContentResult {
   readonly foreign: readonly ContentFile[];
 }
 
-/** `formatVersion` and `kind` fields shared by every file schema. */
+/**
+ * The `formatVersion` field shared by every file schema. Each file schema adds its own
+ * `kind: s.enumOf([...])`; by the time a body reaches it, migration has already raised the
+ * version to {@link CONTENT_FORMAT_VERSION}.
+ */
 const HEADER_SHAPE = {
   formatVersion: s.int({ min: CONTENT_FORMAT_VERSION, max: CONTENT_FORMAT_VERSION }),
 } as const;
@@ -588,15 +656,25 @@ const STAGE_FILE_SCHEMA = s.object({
 
 /** Mutable working copy of a {@link ContentDb} while a load runs. */
 interface DbBuilder {
+  /** Collected player ships (see {@link ContentDb.ships}). */
   ships: PlayerShipSpec[];
+  /** Ship id → position in {@link DbBuilder.ships}. */
   shipIndex: Map<string, number>;
+  /** Collected weapons. */
   weapons: WeaponSpec[];
+  /** Weapon id → position in {@link DbBuilder.weapons}. */
   weaponIndex: Map<string, number>;
+  /** Collected meter-mode presets. */
   weaponPresets: WeaponPresetSpec[];
+  /** Preset id → position in {@link DbBuilder.weaponPresets}. */
   weaponPresetIndex: Map<string, number>;
+  /** Collected enemies. */
   enemies: EnemySpec[];
+  /** Enemy id → position in {@link DbBuilder.enemies}. */
   enemyIndex: Map<string, number>;
+  /** Collected stages. */
   stages: StageSpec[];
+  /** Stage id → position in {@link DbBuilder.stages}. */
   stageIndex: Map<string, number>;
 }
 
@@ -610,7 +688,10 @@ const EMPTY_STRING_TABLE: StringTable = Object.freeze({
  * An empty database — what {@link createGame} uses when no content is supplied.
  *
  * @remarks
- * Frozen and shared: every lookup misses, so systems fall back to their defaults.
+ * Frozen and shared: every lookup misses, so systems fall back to their defaults. The
+ * arrays are frozen; the `Map`s are typed `ReadonlyMap` but are ordinary maps at runtime —
+ * never cast them to `Map` and write to them, or every game created without content sees
+ * the change.
  */
 export const EMPTY_CONTENT_DB: ContentDb = Object.freeze({
   sprites: EMPTY_STRING_TABLE,
@@ -645,6 +726,12 @@ const at = (file: string, path: string): string => (path === '' ? file : file + 
  *
  * @param kind - The `kind` field of a content file.
  * @returns `true` for {@link CONTENT_KINDS} members.
+ *
+ * @example
+ * ```ts
+ * isContentKind('weapons'); // → true
+ * isContentKind('input-profiles'); // → false (loadContent returns such files in `foreign`)
+ * ```
  */
 export function isContentKind(kind: string): kind is ContentKind {
   return (CONTENT_KINDS as readonly string[]).indexOf(kind) >= 0;
@@ -850,7 +937,14 @@ function assertFileList(files: unknown): void {
  * stages or audio cues must resolve, or an issue is reported and the id becomes `-1`.
  *
  * Bad files are skipped, not fatal: the caller (the boot error screen, `pnpm content:check`)
- * shows `issues` and may still run with the partial database.
+ * shows `issues` and may still run with the partial database. A file with a bad header or
+ * no migration path is skipped whole; a file that fails its schema contributes nothing,
+ * but the references it recorded are still resolved, so one load reports every problem.
+ *
+ * The input is never mutated: migrations return new bodies and the schemas build new
+ * objects, so the resolved `<field>Id` values only appear on the returned specs. The
+ * function is pure and deterministic — the same files give a byte-identical database and
+ * issue list in any input order.
  *
  * @param files - The content files, typically from `virtual:shmup-content`.
  * @param options - Known script ids and a migration table override.

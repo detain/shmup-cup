@@ -131,6 +131,13 @@ sets UTF-8, LF (CRLF for `.bat`/`.cmd`/`.ps1`), 2-space indentation.
 Only original names, art and music — never Konami or Taito names or assets
 (`shmup_feat.md` §26). Placeholder art (e.g. `PLACEHOLDER_SHIP`) is original too.
 
+| Rule | Enforced by |
+|---|---|
+| Every `content/` folder has a `README.md` (format sample) and an `example.*.json`; every JSON in it has the current `formatVersion` and a `kind` | `test/integration/workspace-layout.test.ts` |
+| Shipped content and the examples validate with zero issues; files are named `<folder>/<name>.<kind>.json`; README samples still match the schema | `pnpm content:check` (`test/integration/content.test.ts`) |
+| Content refers to other content, sprites, scripts and cues by string id declared with `s.ref(kind)`; systems read the resolved `<field>Id`, never the string | review; [content-data.md](content-data.md) |
+| A bare array or record of references is not allowed — wrap each id in an object | `s.array` / `s.record` throw a `TypeError` at construction |
+
 ## Checklists
 
 **New module in an existing package**
