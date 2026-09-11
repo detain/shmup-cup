@@ -46,3 +46,26 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+  input-probe:
+    # tools/input-probe is a standalone npm project (not in the pnpm workspace), so it gets its own job.
+    name: input probe · typecheck · test · build · compat
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: tools/input-probe
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: tools/input-probe/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck, test, build, Chromium 69 compat check
+        run: npm run verify

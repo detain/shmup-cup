@@ -15,6 +15,10 @@ assets/generated/*
 coverage/
 .turbo/
 .caliber/
+.playwright-mcp/
+
+# Claude Code local state (agent worktrees, settings)
+.claude/
 
 # Logs
 logs/
