@@ -81,6 +81,71 @@ function referenceHash(w: World): number {
     word(count);
     for (const array of entry.arrays) for (let i = 0; i < count; i++) num(array[i]);
   }
+  for (const e of w.enemies.enemies) {
+    word(e.state);
+    if (e.state === 0) continue;
+    for (const value of [
+      e.specIndex,
+      e.x,
+      e.y,
+      e.vx,
+      e.vy,
+      e.hp,
+      e.flashTicks,
+      e.age,
+      e.spawnTick,
+      e.formation,
+      e.member,
+      e.anchor,
+      e.mover,
+      e.m0,
+      e.m1,
+      e.m2,
+      e.m3,
+      e.m4,
+      e.m5,
+      e.s0,
+      e.s1,
+      e.s2,
+      e.s3,
+      e.moverTicks,
+    ]) {
+      num(value);
+    }
+    word(e.script === null ? 0 : 1);
+    num(e.wakeTick);
+    word(e.flags);
+    num(e.firstSeenTick);
+    num(e.animFrame);
+    num(e.pathId);
+    num(e.camX);
+    num(e.camY);
+  }
+  const f = w.enemies.formations;
+  for (let slot = 0; slot < f.active.length; slot++) {
+    word(f.active[slot]);
+    if (f.active[slot] === 0) continue;
+    for (const array of [
+      f.enemy,
+      f.total,
+      f.spawned,
+      f.killed,
+      f.escaped,
+      f.interval,
+      f.nextTick,
+      f.screenX,
+      f.screenY,
+      f.path,
+      f.drop,
+      f.bonus,
+      f.lastX,
+      f.lastY,
+      f.leader,
+    ]) {
+      num(array[slot]);
+    }
+    num(f.tracks[slot].recorded);
+  }
   let h = FNV_OFFSET_BASIS;
   for (const b of bytes) h = Math.imul(h ^ b, FNV_PRIME) >>> 0;
   return h;

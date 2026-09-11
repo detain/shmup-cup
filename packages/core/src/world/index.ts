@@ -20,26 +20,33 @@
  * 9 fx         hit-stop/shake/flash timers, emit presentation events, view mirrors, debug counters
  * ```
  *
- * Later steps fill the slots (M1-07 stage, M1-08 scripts/movement, M1-09 … M1-12 collision and
- * damage); the order never changes. While {@link World.hitStop} is non-zero at the start of a
+ * Later steps fill the slots (M1-07 stage, M1-08 enemies, M1-09 … M1-12 bullets, shots, items
+ * and damage); the order never changes. While {@link World.hitStop} is non-zero at the start of a
  * tick, phases 2–8 are skipped but the tick counter and phase 9 (which counts the hit-stop down)
  * still run, so hit-stop is deterministic and replays stay in sync.
  *
  * **State built in M1-06.** Player 1's KESTREL (spec from `content/player/`, fly-in at session
- * start); player 2's ship exists but stays inactive until co-op (M2-06). The view has one sprite
- * batch so far, the players (`LayerId.Player`), mirrored from the ship objects at the end of
- * every tick.
+ * start); player 2's ship exists but stays inactive until co-op (M2-06). The view's sprite
+ * batches — the ground and flying enemies (M1-08) and the players (`LayerId.Player`) — are
+ * mirrored from the objects at the end of every tick.
  *
  * **The stage (M1-07).** With `config.stage` set, the World runs that stage: its
  * {@link World.stage | runner} drives the camera in phase 3 (keys, ramps, pans, locks) and fires
  * the timeline through the World's stage hooks — `music` events become `SimEventKind.Music`
  * presentation events (the stage theme is queued at creation), `end` sets the status to
- * `stageClear`, a checkpoint restart clears every pool; `spawn` / `formation` wait for the
- * enemies of M1-08 and `warning` / `boss` for M1-13. Phase 6 tests each alive ship's terrain box
- * against the stage's {@link World.terrain | collision map} and reports contact through
- * `playerHit` (recorded only until the death sequence of M1-12). The view carries the stage's
- * parallax bands (scrolled in phase 9) and terrain. Without a stage (`stage: null`) the camera
- * is static unless something sets its scroll velocity (`camera.vx` / `camera.vy`) — free flight.
+ * `stageClear`, `spawn` / `formation` go to the enemy system, a checkpoint restart clears every
+ * pool and every enemy; `warning` / `boss` wait for M1-13. Phase 6 tests each alive ship's
+ * terrain box against the stage's {@link World.terrain | collision map} and reports contact
+ * through `playerHit` (recorded only until the death sequence of M1-12). The view carries the
+ * stage's parallax bands (scrolled in phase 9) and terrain. Without a stage (`stage: null`) the
+ * camera is static unless something sets its scroll velocity (`camera.vx` / `camera.vy`) — free
+ * flight.
+ *
+ * **Enemies (M1-08).** {@link World.enemies} (`core/enemies`, behaviours from `core/behaviors`)
+ * takes part in phases 3 (spawns: stage events and due formation members), 4 (behaviour
+ * coroutines that wake), 5 (movers, off-screen rules), 6 (hurtboxes into the grid, contact with
+ * the ships → `playerHit(Contact)`), 8 (freeing removed slots) and 9 (the ground / air sprite
+ * batches, drawn below the ships).
  *
  * **Zero allocation.** Everything is allocated by {@link createWorld}; {@link stepWorld} and the
  * systems only write numbers into existing objects and typed arrays.
@@ -50,7 +57,8 @@
  * - shmup_feat.md §5 — the player ship inside the session
  * - shmup_feat.md §18 — hit-stop freezes the simulation, not the presentation
  *
- * **Public API.** {@link createWorld}, {@link stepWorld}, {@link World}, {@link WorldCamera},
+ * **Public API.** {@link createWorld}, {@link WorldOptions}, {@link stepWorld}, {@link World},
+ * {@link WorldCamera},
  * {@link WorldStatus}, {@link WORLD_STATUSES}, {@link WorldPhase}, {@link WORLD_PHASE_NAMES},
  * {@link WORLD_PHASES}, {@link WorldPhaseEntry}, {@link WorldSystem}, {@link PoolRegistry},
  * {@link RegisteredPool}, {@link syncWorldView}, {@link GRID_MARGIN}, {@link resolveWorldStage}.
@@ -66,8 +74,10 @@ import {
   type SpatialGrid,
   type TerrainMap,
 } from '../collision/index.js';
+import { DEFAULT_BEHAVIORS } from '../behaviors/index.js';
 import type { ContentDb, PlayerShipSpec, StageMusicEvent, StageSpec } from '../data/index.js';
 import { createDebugFlags, type DebugFlags } from '../debug/index.js';
+import { createEnemySystem, type EnemyBehaviorLookup, type EnemySystem } from '../enemies/index.js';
 import { SimEventKind, createEventQueue, type EventQueue } from '../events/index.js';
 import { defineModule } from '../module-info.js';
 import {
@@ -91,6 +101,7 @@ import {
   createSpriteBatch,
   pushSprite,
   type SpriteBatch,
+  type SpriteBatchView,
   type WorldView,
 } from '../presentation/index.js';
 import { createRngStreams, type RngStreams } from '../rng/index.js';
@@ -214,8 +225,16 @@ export interface World {
   readonly terrain: TerrainMap | null;
   /** The stage's parallax bands (also `view.parallax`), or `null`. */
   readonly parallax: StageParallaxView | null;
+  /** The enemies (spawns, formations, scripts, movers, contact; `core/enemies`). */
+  readonly enemies: EnemySystem;
   /** What the renderer draws: live references, refreshed at the end of every tick. */
   readonly view: WorldView;
+}
+
+/** Options of {@link createWorld} beyond the config (tests and tools). */
+export interface WorldOptions {
+  /** Enemy behaviours by script id (default: `core/behaviors` `DEFAULT_BEHAVIORS`). */
+  readonly behaviors?: EnemyBehaviorLookup;
 }
 
 /**
@@ -314,34 +333,38 @@ const playersSystem: WorldSystem = (world) => {
  * @param world - The world.
  */
 const stageSystem: WorldSystem = (world) => {
+  const enemies = world.enemies;
+  enemies.beginTick();
   const stage = world.stage;
   if (stage !== null) {
     stage.tick();
-    return;
+  } else {
+    const camera = world.camera;
+    camera.dx = camera.vx;
+    camera.dy = camera.vy;
+    camera.x += camera.dx;
+    camera.y += camera.dy;
   }
-  const camera = world.camera;
-  camera.dx = camera.vx;
-  camera.dy = camera.vy;
-  camera.x += camera.dx;
-  camera.y += camera.dy;
+  enemies.spawnPending();
 };
 
 /**
- * Phase 4: enemy / boss scripts (M1-08). Empty slot.
+ * Phase 4: resumes the enemy coroutines that wake this tick (patterns fire from M1-09).
  *
- * @param _world - The world.
+ * @param world - The world.
  */
-const scriptsSystem: WorldSystem = (_world) => {
-  // Filled by M1-08 (behaviour coroutines) and M1-09 (patterns).
+const scriptsSystem: WorldSystem = (world) => {
+  world.enemies.runScripts();
 };
 
 /**
- * Phase 5: movers, bullets, shots, items, lasers (M1-08 … M1-11). Empty slot.
+ * Phase 5: enemy movers and the off-screen rules (bullets, shots, items and lasers join from
+ * M1-09 … M1-11).
  *
- * @param _world - The world.
+ * @param world - The world.
  */
-const movementSystem: WorldSystem = (_world) => {
-  // Filled by M1-08 onwards.
+const movementSystem: WorldSystem = (world) => {
+  world.enemies.move();
 };
 
 /**
@@ -359,8 +382,11 @@ const movementSystem: WorldSystem = (_world) => {
 const collisionSystem: WorldSystem = (world) => {
   const grid = world.grid;
   const camera = world.camera;
+  const enemies = world.enemies;
   grid.begin(Math.floor(camera.x) - GRID_MARGIN, Math.floor(camera.y) - GRID_MARGIN);
+  enemies.insertColliders(grid);
   grid.build();
+  enemies.collidePlayers(grid);
   const terrain = world.terrain;
   if (terrain !== null) terrainSystem(world, terrain);
 };
@@ -407,6 +433,7 @@ const damageSystem: WorldSystem = (_world) => {
  */
 const removalSystem: WorldSystem = (world) => {
   world.pools.flushAll();
+  world.enemies.flush();
 };
 
 /**
@@ -492,9 +519,11 @@ export function resolveWorldStage(config: GameConfig, content: ContentDb): Stage
 }
 
 /** A {@link World} while {@link createWorld} assembles it (the stage fields are set last). */
-type WorldUnderConstruction = Omit<World, 'stage'> & {
+type WorldUnderConstruction = Omit<World, 'stage' | 'enemies'> & {
   /** See {@link World.stage}. */
   stage: StageRunner | null;
+  /** See {@link World.enemies}. */
+  enemies: EnemySystem;
 };
 
 /**
@@ -505,6 +534,7 @@ type WorldUnderConstruction = Omit<World, 'stage'> & {
  * @param config - The resolved session config (`resolveGameConfig`).
  * @param content - Validated content (`loadContent(...).db`; `EMPTY_CONTENT_DB` gives the
  *   built-in default ship, which is not drawn).
+ * @param options - Extra options (a behaviour registry for tests).
  * @returns The world at tick 0, view already filled (the first frame shows the ship).
  * @throws {RangeError} When `config.stage` names a stage the content does not have.
  *
@@ -516,7 +546,11 @@ type WorldUnderConstruction = Omit<World, 'stage'> & {
  * world.players[0].state; // → 'alive' (the 40-tick fly-in is over)
  * ```
  */
-export function createWorld(config: GameConfig, content: ContentDb): World {
+export function createWorld(
+  config: GameConfig,
+  content: ContentDb,
+  options: WorldOptions = {},
+): World {
   const ship = resolvePlayerShip(content);
   const stageSpec = resolveWorldStage(config, content);
   // A class instance, not a literal: see `createStageCamera` (keeps the fields unboxed doubles).
@@ -533,6 +567,7 @@ export function createWorld(config: GameConfig, content: ContentDb): World {
   const playerBatch = createSpriteBatch(LayerId.Player, MAX_PLAYERS);
   const terrain = stageSpec === null ? null : createStageTerrain(stageSpec, content);
   const parallax = stageSpec === null ? null : createParallaxView(stageSpec);
+  const batches: SpriteBatchView[] = [];
   const view: WorldView = {
     camera,
     parallax,
@@ -540,7 +575,7 @@ export function createWorld(config: GameConfig, content: ContentDb): World {
       stageSpec === null || terrain === null
         ? null
         : createTerrainView(terrain, stageSpec, content),
-    batches: [playerBatch],
+    batches,
   };
   const world: WorldUnderConstruction = {
     config,
@@ -561,8 +596,12 @@ export function createWorld(config: GameConfig, content: ContentDb): World {
     stage: null,
     terrain,
     parallax,
+    // Replaced right below: the enemy system reads the World it belongs to.
+    enemies: null as unknown as EnemySystem,
     view,
   };
+  world.enemies = createEnemySystem(world, options.behaviors ?? DEFAULT_BEHAVIORS, stageSpec);
+  batches.push(world.enemies.groundBatch, world.enemies.airBatch, playerBatch);
   if (stageSpec !== null) {
     world.stage = createStageRunner(stageSpec, createWorldStageHooks(world), camera);
     if (stageSpec.music.stageId >= 0) {
@@ -588,17 +627,20 @@ function createWorldStageHooks(world: WorldUnderConstruction): StageHooks {
      * @param code - The event's code.
      * @param event - The event (content data).
      */
-    event(code, event) {
-      if (code === StageEventCode.Music) {
+    event(code, event, index) {
+      if (code === StageEventCode.Spawn || code === StageEventCode.Formation) {
+        world.enemies.onStageEvent(index);
+      } else if (code === StageEventCode.Music) {
         world.events.push(SimEventKind.Music, (event as StageMusicEvent).cueId, 0, 0, 0);
       } else if (code === StageEventCode.End) {
         world.status = 'stageClear';
       }
-      // spawn / formation → the enemy spawner (M1-08); warning / boss → bosses (M1-13).
+      // warning / boss → bosses (M1-13).
     },
-    /** A checkpoint restart: empties every registered pool (enemies, bullets, items). */
+    /** A checkpoint restart: empties every registered pool and the enemy system. */
     clear() {
       world.pools.clearAll();
+      world.enemies.clear();
     },
   };
 }
@@ -628,9 +670,9 @@ export function stepWorld(world: World, input: Readonly<InputSnapshot>): void {
 }
 
 /**
- * Refreshes the object-based mirror batches of {@link World.view} (today: the player ships) and
- * scrolls the parallax bands with the camera. Runs at the end of every tick (phase 9) and once
- * at creation. Never allocates.
+ * Refreshes the object-based mirror batches of {@link World.view} (the enemies and the player
+ * ships) and scrolls the parallax bands with the camera. Runs at the end of every tick (phase 9)
+ * and once at creation. Never allocates.
  *
  * @remarks
  * A ship is drawn when its slot is active, it is not `dying` / `dead` and its spec has a sprite;
@@ -641,6 +683,7 @@ export function stepWorld(world: World, input: Readonly<InputSnapshot>): void {
 export function syncWorldView(world: World): void {
   const parallax = world.parallax;
   if (parallax !== null) updateParallaxView(parallax, world.camera.x, world.camera.y);
+  world.enemies.sync();
   const batch = world.playerBatch;
   batch.count = 0;
   const spec = world.ship;

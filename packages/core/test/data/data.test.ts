@@ -77,7 +77,26 @@ const enemiesFile = (id = 'drifter'): ContentFile => ({
   },
 });
 
-/** A minimal valid `stage` file referring to `enemy`. */
+/** A minimal valid `paths` file with the path the stage fixture uses. */
+const pathsFile = (): ContentFile => ({
+  path: 'paths/zone-a.paths.json',
+  data: {
+    formatVersion: 1,
+    kind: 'paths',
+    paths: [
+      {
+        id: 'sine-low',
+        points: [
+          { x: 0, y: 0 },
+          { x: -100, y: 20 },
+          { x: -200, y: 0 },
+        ],
+      },
+    ],
+  },
+});
+
+/** A minimal valid `stage` file referring to `enemy` (and the `sine-low` path). */
 const stageFile = (id = 'zone-a', enemy = 'drifter'): ContentFile => ({
   path: 'stages/' + id + '.stage.json',
   data: {
@@ -107,7 +126,14 @@ describe('core/data module', () => {
   });
 
   it('knows its own kinds', () => {
-    expect([...CONTENT_KINDS]).toEqual(['player', 'weapons', 'enemies', 'stage', 'tileset']);
+    expect([...CONTENT_KINDS]).toEqual([
+      'player',
+      'weapons',
+      'enemies',
+      'paths',
+      'stage',
+      'tileset',
+    ]);
     expect(isContentKind('weapons')).toBe(true);
     expect(isContentKind('input-profiles')).toBe(false);
   });
@@ -127,9 +153,11 @@ describe('core/data loadContent', () => {
       playerFile(),
       weaponsFile(),
       enemiesFile(),
+      pathsFile(),
     ]);
     expect(issues).toEqual([]);
     expect(foreign).toEqual([]);
+    expect(db.paths[db.pathIndex.get('sine-low') ?? -1]?.table.count).toBeGreaterThan(200);
     expect(db.ships[db.shipIndex.get('kestrel') ?? -1]?.name).toBe('KESTREL');
     expect(db.weapons[0]?.slot).toBe('main');
     expect(db.weaponPresets[0]?.id).toBe('type-a');
@@ -153,17 +181,23 @@ describe('core/data loadContent', () => {
   });
 
   it('resolves cross-kind references, audio cues and null references', () => {
-    const { db, issues } = loadContent([stageFile(), enemiesFile(), weaponsFile()]);
+    const { db, issues } = loadContent([stageFile(), enemiesFile(), weaponsFile(), pathsFile()]);
     expect(issues).toEqual([]);
     const stage = db.stages[0];
-    expect(stage?.events[0]).toMatchObject({ type: 'spawn', enemy: 'drifter', enemyId: 0 });
+    expect(stage?.events[0]).toMatchObject({
+      type: 'spawn',
+      enemy: 'drifter',
+      enemyId: 0,
+      path: 'sine-low',
+      pathId: 0,
+    });
     expect(stage?.events[1]).toMatchObject({ type: 'music', cue: 'Stage', cueId: 4 });
     expect(db.weapons[0]?.sfxId).toBe(0);
     expect(db.weaponPresets[0]).toMatchObject({ missileId: -1, doubleId: -1, laserId: 0 });
   });
 
   it('reports unresolved references with the file and JSON path', () => {
-    const { db, issues } = loadContent([stageFile('zone-a', 'ghost'), enemiesFile()]);
+    const { db, issues } = loadContent([stageFile('zone-a', 'ghost'), enemiesFile(), pathsFile()]);
     expect(issues).toEqual([
       {
         path: 'stages/zone-a.stage.json:events[0].enemy',
@@ -180,7 +214,7 @@ describe('core/data loadContent', () => {
   it('reports unknown audio cues', () => {
     const file = stageFile();
     (file.data as { events: { cue: string }[] }).events[1].cue = 'NoSuchTrack';
-    const { issues } = loadContent([file, enemiesFile()]);
+    const { issues } = loadContent([file, enemiesFile(), pathsFile()]);
     expect(issues).toEqual([
       {
         path: 'stages/zone-a.stage.json:events[1].cue',
@@ -223,6 +257,7 @@ describe('core/data loadContent', () => {
       { ...stageFile('dup'), path: 'stages/b.stage.json' },
       { ...stageFile('dup'), path: 'stages/a.stage.json' },
       enemiesFile(),
+      pathsFile(),
     ]);
     expect(db.stages).toHaveLength(1);
     expect(issues).toEqual([
@@ -334,7 +369,7 @@ describe('core/data loadContent', () => {
   });
 
   it('is independent of the order the host listed the files in', () => {
-    const files = [stageFile(), playerFile(), weaponsFile(), enemiesFile()];
+    const files = [stageFile(), playerFile(), weaponsFile(), enemiesFile(), pathsFile()];
     const forward = JSON.stringify(loadContent(files).db.stages);
     const reversed = JSON.stringify(loadContent(files.slice().reverse()).db.stages);
     expect(reversed).toBe(forward);

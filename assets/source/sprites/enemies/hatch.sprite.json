@@ -1,0 +1,37 @@
+{
+  "name": "enemies/hatch",
+  "description": "Ground enemy: armoured hatch that releases small fliers; frame 1 has the lid open.",
+  "palette": { ".": null, "o": "#141026", "g": "#7a8296", "d": "#434a60", "l": "#b8c0d0", "r": "#d83850", "y": "#f8c838", "k": "#05030c" },
+  "hitFlash": true,
+  "frames": [
+    {
+      "rows": [
+        "......oooooooo......",
+        "....oollllllggoo....",
+        "...ogllggggggddgo...",
+        "..ogggggddddggggdo..",
+        ".ogddrrggggggrrddgo.",
+        ".ogdryyrggggryyrdgo.",
+        "oggddrrgddddgrrddggo",
+        "oggggggggggggggggggo",
+        "oddddddddddddddddddo",
+        "oooooooooooooooooooo"
+      ]
+    },
+    {
+      "rows": [
+        ".oooo..........oooo.",
+        "ollgo..........oglo.",
+        "oggo.oooooooooo.oggo",
+        "..o.okkkkkkkkkko.o..",
+        ".ogdokkkkyykkkkodgo.",
+        ".ogdrokkkkkkkkordgo.",
+        "oggddrooooooooddggo.",
+        "oggggggggggggggggggo",
+        "oddddddddddddddddddo",
+        "oooooooooooooooooooo"
+      ]
+    }
+  ],
+  "animations": { "closed": [0], "open": [1] }
+}

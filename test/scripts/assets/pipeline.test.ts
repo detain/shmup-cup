@@ -182,7 +182,10 @@ describe('scripts/assets/pipeline — buildAtlas', () => {
     const enemies = Object.keys(manifest.sprites).filter(
       (n) => n.startsWith('enemies/') && !n.endsWith('@flash'),
     );
-    expect(enemies).toHaveLength(6);
+    // The six initial enemies plus the ground hatch of M1-08.
+    expect(enemies).toHaveLength(7);
+    expect(count('enemies/hatch')).toBe(2);
+    expect(manifest.sprites['enemies/hatch'].flash).toBe('enemies/hatch@flash');
     for (const part of ['core', 'shield-plate', 'hull-block', 'emitter']) {
       expect(count(`bosses/${part}`)).toBeGreaterThan(0);
       expect(manifest.sprites[`bosses/${part}`].flash).toBe(`bosses/${part}@flash`);

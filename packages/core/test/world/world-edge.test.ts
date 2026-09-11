@@ -344,7 +344,8 @@ describe('core/world edge cases — pools, grid and view', () => {
     run(w, createInputSnapshot(), 100, Action.Up);
     expect(w.view).toBe(view);
     expect(w.view.batches).toBe(batches);
-    expect(w.view.batches[0]).toBe(batch);
+    expect(w.view.batches[2]).toBe(batch);
+    expect(w.view.batches[0]).toBe(w.enemies.groundBatch);
     expect(w.view.camera).toBe(w.camera);
     expect(w.view.camera.x).toBe(100);
   });

@@ -121,11 +121,19 @@ describe('core/world', () => {
     expect(w.rng.gameplay.nextU32()).toBe(createRng(9).nextU32());
   });
 
-  it('exposes a WorldView: live camera, no parallax/terrain yet, the players batch', () => {
+  it('exposes a WorldView: live camera, no parallax/terrain yet, the enemy and player batches', () => {
     const w = world();
     expect(w.view.camera).toBe(w.camera);
     expect([w.view.parallax, w.view.terrain]).toEqual([null, null]);
-    expect(w.view.batches).toEqual([w.playerBatch]);
+    expect(w.view.batches).toHaveLength(3);
+    expect(w.view.batches[0]).toBe(w.enemies.groundBatch);
+    expect(w.view.batches[1]).toBe(w.enemies.airBatch);
+    expect(w.view.batches[2]).toBe(w.playerBatch);
+    expect(w.view.batches.map((b) => b.layer)).toEqual([
+      LayerId.GroundEnemies,
+      LayerId.AirEnemies,
+      LayerId.Player,
+    ]);
     expect(w.playerBatch.layer).toBe(LayerId.Player);
     // Filled at creation, so the first frame already shows the ship.
     expect(w.playerBatch.count).toBe(1);

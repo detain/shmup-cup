@@ -7,7 +7,9 @@
  *   (decision D25: Tizen widgets run from `file://`, where `fetch()` fails on Chromium 69 —
  *   an `HTMLImageElement` works everywhere), in parallel, reporting progress.
  * - {@link loadGameContent} validates the inlined `virtual:shmup-content` files: the core
- *   kinds through `loadContent()`, every other kind through the **owner** registered for it
+ *   kinds through `loadContent()` (script ids checked against the engine's registry,
+ *   `KNOWN_SCRIPT_IDS`, and enemies against their behaviours, `checkEnemyBehaviors` — M1-08),
+ *   every other kind through the **owner** registered for it
  *   (plan §3.5 — {@link DEFAULT_CONTENT_OWNERS}: `input-profiles` → `@shmup/input-web`,
  *   M1-05; hosts may replace an owner, e.g. to keep the parsed profiles). A file whose kind
  *   has no owner is an issue, so a new content kind cannot ship unvalidated. All problems
@@ -25,6 +27,8 @@
  * @module
  */
 import {
+  KNOWN_SCRIPT_IDS,
+  checkEnemyBehaviors,
   defineModule,
   loadContent,
   type ContentFile,
@@ -159,8 +163,10 @@ export interface LoadGameContentOptions extends LoadContentOptions {
  * owners.
  *
  * @remarks
- * Issues are the core's (file and reference order), then per foreign kind in first-seen order
- * the owner's issues — or one issue per file when no owner claims the kind
+ * `knownScripts` defaults to the core's `KNOWN_SCRIPT_IDS`, so content naming a behaviour the
+ * engine does not have is an issue. Issues are the core's (file and reference order), then the
+ * behaviour checks of the enemies (`checkEnemyBehaviors`), then per foreign kind in first-seen
+ * order the owner's issues — or one issue per file when no owner claims the kind
  * (`"<path>: no loader for content kind \"<kind>\""`). Owners come from `options.owners`,
  * then {@link DEFAULT_CONTENT_OWNERS}. Never throws for bad data.
  *
@@ -179,8 +185,12 @@ export function loadGameContent(
   files: readonly ContentFile[],
   options: LoadGameContentOptions = {},
 ): LoadContentResult {
-  const result = loadContent(files, options);
+  const result = loadContent(files, {
+    knownScripts: options.knownScripts ?? KNOWN_SCRIPT_IDS,
+    migrations: options.migrations,
+  });
   const issues: ValidationIssue[] = result.issues.slice();
+  for (const issue of checkEnemyBehaviors(result.db)) issues.push(issue);
   const owners = options.owners ?? {};
   /**
    * Own-property test (a kind named like an `Object.prototype` member is never an owner).

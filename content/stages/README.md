@@ -69,13 +69,21 @@ tick, in file order.
 
 | `type` | Fields | Effect |
 |---|---|---|
-| `spawn` | `enemy`, optional `y`, `path` | one enemy (spawner: M1-08) |
-| `formation` | `enemy`, `count` (1–64), `interval` ticks, optional `y`, `path` | a timed group; all killed → capsule (M1-08) |
+| `spawn` | `enemy`, optional `y`, `screenX`, `path` | one enemy |
+| `formation` | `enemy`, `count` (1–64), `interval` ticks, optional `y`, `screenX`, `path`, `drop` (`"capsule"` default, or `null`), `bonus` (points, default 0) | a timed group, every member at the same spawn point; all killed (none escaped) → the drop at the last kill + the bonus |
 | `warning` / `boss` | `enemy` | the WARNING intro / the boss (M1-13) |
 | `music` | `cue` (a `MUSIC_CUES` name) | change the track |
 | `speed` | `speed`, optional `ramp` | new target scroll speed |
 | `flag` | `flag` (lower-case kebab), optional `value` (default `true`) | set / clear a stage flag (branches, M2; ≤ 32 per stage) |
 | `end` | — | the stage is cleared |
+
+**Spawn points** are in playfield pixels relative to the camera: `screenX` defaults to 400
+(16 px beyond the right edge; negative = behind the player), `y` to the middle of the
+playfield. Flying enemies ride the camera scroll; ground enemies (`"ground"` in their enemy
+definition) stand on the floor below — or hang from the ceiling above — their spawn point.
+`path` names a curve in `content/paths/` for path movers and path-following behaviours. An
+enemy that leaves the view by 32 px after having been on screen is gone (it *escaped*: its
+formation can no longer be completed).
 
 ## Checkpoints
 
@@ -100,7 +108,8 @@ Besides the schema the loader reports: unsorted camera keys / checkpoints / even
 key not at 0, anything past `length`, `yTicks` without `yTo`, heightfield segments with
 `to ≤ from`, more than 32 flags, an unknown tileset, bad RLE rows (syntax, unknown tile id,
 longer than the map, wrong row count) and generated heights the tileset has no tile for.
-`enemy` ids must resolve against `content/enemies/`; stage ids are unique across all files.
+`enemy` ids must resolve against `content/enemies/` and `path` ids against `content/paths/`;
+stage ids are unique across all files.
 
 Later: authoring in **Tiled** or **LDtk** with an exporter to this format (`shmup_feat.md`
 §14 [P1]); the runtime format stays the same.

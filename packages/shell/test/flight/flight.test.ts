@@ -60,9 +60,17 @@ describe('shell/flight', () => {
     const flight = createFlightScene(game);
     expect(flight.world.camera).toBe(game.world.camera);
     const layers = flight.world.batches.map((batch) => batch.layer);
-    expect(layers).toEqual([LayerId.BgFar, LayerId.BgMid, LayerId.Player]);
+    expect(layers).toEqual([
+      LayerId.BgFar,
+      LayerId.BgMid,
+      LayerId.GroundEnemies,
+      LayerId.AirEnemies,
+      LayerId.Player,
+    ]);
     expect(flight.world.batches.slice(2)).toEqual(game.world.view.batches);
-    expect(flight.world.batches[2]).toBe(game.world.playerBatch);
+    expect(flight.world.batches[2]).toBe(game.world.enemies.groundBatch);
+    expect(flight.world.batches[3]).toBe(game.world.enemies.airBatch);
+    expect(flight.world.batches[4]).toBe(game.world.playerBatch);
   });
 
   it('copies the game frame and reuses its own', () => {
@@ -138,7 +146,8 @@ describe('shell/flight', () => {
     const { game, platform } = realGame();
     const flight = createFlightScene(game);
     for (let i = 0; i < 40; i++) game.step();
-    const player = flight.world.batches[2];
+    const player = flight.world.batches[4];
+    expect(player).toBe(game.world.playerBatch);
     flight.update(game.renderFrame());
     const x = player.x[0];
     commitPlayerInput(platform.snapshot.players[0], Action.Right | Action.Down);

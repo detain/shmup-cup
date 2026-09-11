@@ -27,9 +27,12 @@ in `math`). Enforced by `tsconfig.json` (`lib: ["ES2018"]`, no `types`) and ESLi
 | `IRenderer`, `IAudio`, `RenderFrame`, `WorldView`, `SpriteBatchView`, `createSpriteBatch`, `pushSprite`, `SpriteFlag`, `LayerId`, `DrawList`, `createDrawList`, `TextMetrics` | `presentation` | Back-end contracts and the render contract (plan §3.4): world sprite batches in typed arrays, HUD / UI command lists (rect, sprite, text slot, number), draw layers, screen effects — implemented by `@shmup/render-pixi` / `@shmup/audio-web` |
 | `createRng`, `createRngStreams`, `RNG_STATE_WORDS` | `rng` | sfc32 seeded from one 32-bit seed; independent gameplay + cosmetic streams, zero-alloc state snapshots |
 | `sinB`, `cosB`, `atan2B`, `quantizeAngle`, `angleDelta`, `turnToward`, `wrapAngle`, `clamp`, `lerp`, `approach`, `EASINGS` | `math` | Binary angles (1024/turn) on committed lookup tables + easing curves |
-| `createEventQueue`, `SimEventKind`, `SFX_CUES`, `MUSIC_CUES` | `events` | Sim → presentation ring of typed arrays (drop-oldest) and the canonical cue registries |
+| `createEventQueue`, `SimEventKind`, `SFX_CUES`, `MUSIC_CUES`, `FX_CUES` | `events` | Sim → presentation ring of typed arrays (drop-oldest) and the canonical cue registries |
 | `createSoaPool`, `createPool` | `pools` | Struct-of-arrays typed-array pools (deferred free + swap-remove) and object pools |
-| `loadContent`, `ContentDb`, `EMPTY_CONTENT_DB`, `CONTENT_MIGRATIONS`, `s`, `Schema`, `Infer`, the `…Spec` types | `data` | Schema-validated `content/` (player, weapons, stage, tileset; stub enemies): issues with `<file>:<json path>`, migrations, every `s.ref` string resolved to a numeric `<field>Id` at load, stage tilemaps expanded (heightfield generator / RLE rows) |
+| `loadContent`, `ContentDb`, `EMPTY_CONTENT_DB`, `CONTENT_MIGRATIONS`, `s`, `Schema`, `Infer`, `bakePath`, the `…Spec` types | `data` | Schema-validated `content/` (player, weapons, enemies, paths, stage, tileset): issues with `<file>:<json path>`, migrations, every `s.ref` string resolved to a numeric `<field>Id` at load, stage tilemaps expanded (heightfield generator / RLE rows), paths baked into arc-length tables |
+| `createEnemySystem`, `EnemySystem`, `Enemy`, `EnemyFlag`, `ScriptApi`, `FormationTable`, `DropKind`, `MAX_ENEMIES`, … | `enemies` (partial) | Enemies (M1-08): 64 pooled instances spawned by stage `spawn` / `formation` events, formations with kill tracking (bonus + capsule when all killed), off-screen / settle / despawn rules, hit flash and deaths, contact with the ships, ground / air sprite batches (rank modifiers: M2) |
+| `Script`, `resumeScript`, `SLEEP_FOREVER`, `MoverKind`, `setMover`, `updateMover`, `FollowTrack`, `samplePath`, … | `patterns` (partial) | Behaviour coroutines resumed only on wake (D29) and the per-tick movers: straight, sine, arc-length path, waypoint, follow, ground crawl, homing, aimed dash (fire primitives: M1-09, DSL: M2-02) |
+| `DEFAULT_BEHAVIORS`, `KNOWN_SCRIPT_IDS`, `defineBehavior`, `createBehaviorRegistry`, `checkEnemyBehaviors`, … | `behaviors` (partial) | Registry of enemy behaviour scripts referenced by content (`script` ids) with per-enemy tunables; the M1 roster (`drifter.sine`, `fan.loop`, `carrier.straight`, `turret.floor`, `walker.floor`, `hatch.spawner`, `rammer.aimed`, `orbiter.loop`) |
 
 ## Placeholder modules (API declared, logic comes later)
 
@@ -42,9 +45,7 @@ and exports `moduleInfo`; `test/<module>/` holds its smoke test.
 | `options` | Trailing options / multiples | feat §8 |
 | `shields` | Force field, pods, Arm tiers | feat §9 |
 | `powerups` | Power meter + direct items, pickups | feat §6 |
-| `enemies` | Pooled enemies, movement primitives, formations | feat §11 |
 | `bullets` | Enemy bullet pool, lasers, cancel | feat §12 |
-| `patterns` | Generator coroutines + bullet-pattern DSL | feat §12, tech §4.6 |
 | `bosses` | Multi-part bosses, phases, WARNING intro | feat §13 |
 | `scoring` | Score, hi-scores, lives, extends | feat §15 |
 | `rank` | Dynamic difficulty 0–31 | feat §15 |

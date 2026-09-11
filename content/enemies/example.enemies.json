@@ -9,6 +9,8 @@
       "hurtbox": { "hw": 6, "hh": 5 },
       "script": "drifter.sine",
       "sprite": "enemies/drifter",
+      "anim": { "frames": 2, "ticks": 8 },
+      "params": { "amp": 20 },
       "drop": null
     },
     {
@@ -18,17 +20,44 @@
       "hurtbox": { "hw": 7, "hh": 6 },
       "script": "carrier.straight",
       "sprite": "enemies/carrier-red",
-      "drop": "capsule"
+      "drop": "capsule",
+      "explosion": "medium"
     },
     {
       "id": "turret-floor",
       "hp": 4,
       "score": 300,
       "hurtbox": { "hw": 8, "hh": 6 },
-      "script": "turret.aimed16",
+      "script": "turret.floor",
       "sprite": "enemies/turret",
       "drop": null,
+      "ground": "floor",
+      "settleTicks": 45,
+      "explosion": "medium",
       "rank": { "fireRate": 0.5, "bulletSpeed": 0.25 }
+    },
+    {
+      "id": "hatch",
+      "hp": 8,
+      "score": 500,
+      "hurtbox": { "hw": 10, "hh": 5 },
+      "script": "hatch.spawner",
+      "sprite": "enemies/hatch",
+      "drop": null,
+      "ground": "ceiling",
+      "child": "darter",
+      "params": { "interval": 90, "max": 4 }
+    },
+    {
+      "id": "darter",
+      "hp": 1,
+      "score": 50,
+      "hurtbox": { "hw": 6, "hh": 3 },
+      "script": "rammer.aimed",
+      "sprite": "enemies/darter",
+      "mover": { "type": "straight", "vx": 0, "vy": 1.25 },
+      "drop": null,
+      "megaCrashImmune": false
     },
     {
       "id": "example-warden",
@@ -37,7 +66,9 @@
       "hurtbox": { "hw": 24, "hh": 20 },
       "script": "boss.warden",
       "sprite": "enemies/example-warden",
-      "drop": null
+      "drop": null,
+      "explosion": "large",
+      "megaCrashImmune": true
     }
   ]
 }

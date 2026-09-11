@@ -99,7 +99,7 @@ function permutations<T>(items: readonly T[]): T[][] {
   return out;
 }
 
-/** A complete set of the four kinds that resolves without issues. */
+/** A complete set of the five kinds that resolves without issues. */
 const fullSet = (): ContentFile[] => [
   file('player/kestrel.player.json', 'player', { ships: [ship('kestrel'), ship('wren')] }),
   file('weapons/type-a.weapons.json', 'weapons', {
@@ -117,6 +117,18 @@ const fullSet = (): ContentFile[] => [
   }),
   file('enemies/zone-a.enemies.json', 'enemies', {
     enemies: [enemy('drifter'), { ...enemy('warden'), script: 'boss.warden' }],
+  }),
+  file('paths/zone-a.paths.json', 'paths', {
+    paths: [
+      {
+        id: 'sine',
+        points: [
+          { x: 0, y: 0 },
+          { x: -64, y: 16 },
+          { x: -128, y: 0 },
+        ],
+      },
+    ],
   }),
   file(
     'stages/zone-a.stage.json',
@@ -265,11 +277,14 @@ describe('core/data loadContent — migrations', () => {
   });
 
   it('migrates every kind that existed in format 0 without touching the input', () => {
-    // (`tileset` did not exist in format 0 either; the full set has none.)
-    const files = fullSet().filter((f) => !f.path.startsWith('player/'));
+    // (`tileset` did not exist in format 0 either; the full set has none. Nor did `paths`.)
+    const files = fullSet().filter(
+      (f) => !f.path.startsWith('player/') && !f.path.startsWith('paths/'),
+    );
+    const paths = fullSet().filter((f) => f.path.startsWith('paths/'));
     for (const f of files) (f.data as { formatVersion: number }).formatVersion = 0;
     const before = clone(files);
-    const { db, issues } = loadContent(files);
+    const { db, issues } = loadContent([...files, ...paths]);
     expect(issues).toEqual([]);
     expect(db.weapons).toHaveLength(2);
     expect(db.enemies).toHaveLength(2);
@@ -396,7 +411,36 @@ describe('core/data loadContent — per-kind schemas', () => {
     ['hp', 0, 'enemies[0].hp', 'must be an integer in 1..100000'],
     ['score', -1, 'enemies[0].score', 'must be an integer in 0..1000000'],
     ['hurtbox', { hw: 1 }, 'enemies[0].hurtbox.hh', 'is required'],
-    ['drop', '', 'enemies[0].drop', 'must be a non-empty string'],
+    ['drop', '', 'enemies[0].drop', 'must be one of: capsule'],
+    ['drop', 'item:red', 'enemies[0].drop', 'must be one of: capsule'],
+    ['ground', 'wall', 'enemies[0].ground', 'must be one of: floor, ceiling'],
+    ['explosion', 'huge', 'enemies[0].explosion', 'must be one of: small, medium, large'],
+    ['anim', { frames: 0, ticks: 1 }, 'enemies[0].anim.frames', 'must be an integer in 1..64'],
+    ['settleTicks', -1, 'enemies[0].settleTicks', 'must be an integer in 0..36000'],
+    [
+      'params',
+      { 'bad key': 1 },
+      'enemies[0].params.bad key',
+      'is not a valid key (must match /^[a-zA-Z][a-zA-Z0-9]*$/)',
+    ],
+    [
+      'mover',
+      { type: 'spiral' },
+      'enemies[0].mover.type',
+      'type must be one of: straight, sine, path, waypoint, follow, groundCrawl, homing, aimedDash',
+    ],
+    [
+      'mover',
+      { type: 'sine', vx: -1, amp: 8, period: 0 },
+      'enemies[0].mover.period',
+      'must be an integer in 1..36000',
+    ],
+    [
+      'mover',
+      { type: 'homing', speed: 1, turnRate: 1.5 },
+      'enemies[0].mover.turnRate',
+      'must be an integer in 0..512',
+    ],
     ['rank', { fireRate: 9 }, 'enemies[0].rank.fireRate', 'must be a finite number in 0..8'],
     ['rank', { spread: 1 }, 'enemies[0].rank.spread', 'unknown field'],
     ['script', null, 'enemies[0].script', 'must be a non-empty script id'],
@@ -406,17 +450,17 @@ describe('core/data loadContent — per-kind schemas', () => {
     );
   });
 
-  it('enemies: rank is optional, its fields too, and drops are plain strings (not refs)', () => {
+  it('enemies: rank is optional, its fields too, and drops are plain names (not refs)', () => {
     const { db, issues } = loadContent([
       file('e.json', 'enemies', {
         enemies: [
           { ...enemy('a'), rank: {} },
-          { ...enemy('b'), rank: { bulletSpeed: 8 }, drop: 'item:red' },
+          { ...enemy('b'), rank: { bulletSpeed: 8 }, drop: 'capsule' },
         ],
       }),
     ]);
     expect(issues).toEqual([]);
-    expect(db.enemies[1]).toMatchObject({ drop: 'item:red', rank: { bulletSpeed: 8 } });
+    expect(db.enemies[1]).toMatchObject({ drop: 'capsule', rank: { bulletSpeed: 8 } });
     expect(db.enemies[1]).not.toHaveProperty('dropId');
   });
 
@@ -440,7 +484,9 @@ describe('core/data loadContent — per-kind schemas', () => {
       count: 5,
       interval: 8,
       y: 40,
+      pathId: db.pathIndex.get('sine'),
     });
+    expect(events[1]).toMatchObject({ pathId: -1 });
     for (const e of events.slice(1, 4)) expect(e).toMatchObject({ enemyId: warden });
     expect(events[4]).toMatchObject({ cueId: MUSIC_CUES.Boss });
     expect(events[6]).toMatchObject({ flag: 'lower-path', flagId: 0, value: false });
@@ -730,7 +776,7 @@ describe('core/data loadContent — purity and determinism', () => {
     const files = fullSet();
     const expected = dump(loadContent(files).db);
     const orders = permutations(files);
-    expect(orders).toHaveLength(24);
+    expect(orders).toHaveLength(120);
     for (const order of orders) expect(dump(loadContent(order).db)).toBe(expected);
   });
 

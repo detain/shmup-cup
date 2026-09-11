@@ -43,11 +43,20 @@ export interface ValidationIssue {
  *
  * @remarks
  * `sprite` and `script` ids are *interned* (any name is accepted and gets an index);
- * `ship`/`weapon`/`enemy`/`stage`/`tileset` must name an item defined by some content file;
+ * `ship`/`weapon`/`enemy`/`stage`/`tileset`/`path` must name an item defined by some content file;
  * `sfx`/`music` must name a cue of the registries in `core/events`.
  */
 export type ContentRefKind =
-  'ship' | 'weapon' | 'enemy' | 'stage' | 'tileset' | 'sprite' | 'script' | 'sfx' | 'music';
+  | 'ship'
+  | 'weapon'
+  | 'enemy'
+  | 'stage'
+  | 'tileset'
+  | 'path'
+  | 'sprite'
+  | 'script'
+  | 'sfx'
+  | 'music';
 
 /**
  * One place where content referred to another item by string id, recorded while parsing

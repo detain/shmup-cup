@@ -1,0 +1,122 @@
+{
+  "formatVersion": 1,
+  "kind": "enemies",
+  "enemies": [
+    {
+      "id": "drifter",
+      "hp": 1,
+      "score": 100,
+      "hurtbox": { "hw": 5, "hh": 5 },
+      "script": "drifter.sine",
+      "sprite": "enemies/drifter",
+      "anim": { "frames": 2, "ticks": 8 },
+      "params": { "speed": 1.25, "amp": 20, "period": 90 },
+      "drop": null
+    },
+    {
+      "id": "fan",
+      "hp": 1,
+      "score": 100,
+      "hurtbox": { "hw": 4, "hh": 4 },
+      "script": "fan.loop",
+      "sprite": "enemies/spinner",
+      "anim": { "frames": 2, "ticks": 6 },
+      "params": { "speed": 1.75 },
+      "drop": null
+    },
+    {
+      "id": "carrier",
+      "hp": 2,
+      "score": 200,
+      "hurtbox": { "hw": 6, "hh": 4 },
+      "script": "carrier.straight",
+      "sprite": "enemies/carrier-red",
+      "anim": { "frames": 2, "ticks": 10 },
+      "params": { "speed": 0.75 },
+      "drop": "capsule",
+      "explosion": "medium"
+    },
+    {
+      "id": "turret",
+      "hp": 3,
+      "score": 300,
+      "hurtbox": { "hw": 5, "hh": 4 },
+      "script": "turret.floor",
+      "sprite": "enemies/turret",
+      "drop": null,
+      "ground": "floor",
+      "explosion": "medium"
+    },
+    {
+      "id": "turret-ceiling",
+      "hp": 3,
+      "score": 300,
+      "hurtbox": { "hw": 5, "hh": 4 },
+      "script": "turret.floor",
+      "sprite": "enemies/turret",
+      "drop": null,
+      "ground": "ceiling",
+      "explosion": "medium"
+    },
+    {
+      "id": "walker",
+      "hp": 2,
+      "score": 200,
+      "hurtbox": { "hw": 5, "hh": 6 },
+      "script": "walker.floor",
+      "sprite": "enemies/hopper",
+      "anim": { "frames": 2, "ticks": 12 },
+      "drop": null,
+      "ground": "floor"
+    },
+    {
+      "id": "hatch",
+      "hp": 8,
+      "score": 500,
+      "hurtbox": { "hw": 9, "hh": 5 },
+      "script": "hatch.spawner",
+      "sprite": "enemies/hatch",
+      "anim": { "frames": 2, "ticks": 40 },
+      "params": { "interval": 75, "max": 6 },
+      "drop": null,
+      "ground": "floor",
+      "child": "hatchling",
+      "explosion": "large"
+    },
+    {
+      "id": "hatchling",
+      "hp": 1,
+      "score": 50,
+      "hurtbox": { "hw": 5, "hh": 3 },
+      "script": "rammer.aimed",
+      "sprite": "enemies/darter",
+      "anim": { "frames": 2, "ticks": 4 },
+      "mover": { "type": "straight", "vx": -0.5, "vy": -1.25 },
+      "params": { "enterTicks": 30, "windup": 10, "speed": 2 },
+      "drop": null
+    },
+    {
+      "id": "rammer",
+      "hp": 1,
+      "score": 150,
+      "hurtbox": { "hw": 5, "hh": 3 },
+      "script": "rammer.aimed",
+      "sprite": "enemies/darter",
+      "anim": { "frames": 2, "ticks": 4 },
+      "mover": { "type": "straight", "vx": -1.5, "vy": 0 },
+      "params": { "enterTicks": 60, "windup": 20, "speed": 2.5 },
+      "drop": null
+    },
+    {
+      "id": "orbiter",
+      "hp": 3,
+      "score": 300,
+      "hurtbox": { "hw": 4, "hh": 4 },
+      "script": "orbiter.loop",
+      "sprite": "enemies/spinner",
+      "anim": { "frames": 2, "ticks": 5 },
+      "params": { "speed": 1.5 },
+      "drop": null
+    }
+  ]
+}

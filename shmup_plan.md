@@ -938,6 +938,65 @@ the browser dev app and as a Tizen 5.5 bundle.
   `next()` while sleeping (spy), formation bonus only when complete, ground crawler stays on slopes, despawn/escape
   rules, spawner spacing, unknown script id is a content issue, allocation guard over a 64-enemy tick loop.
 - **Refs:** `shmup_feat.md` §11 (archetypes, requirements), §22 (hybrid data layout); `shmup_tech.md` §4.6.
+- **As built:**
+  - **Content.** New kind `paths` (`content/paths/*.paths.json`: `paths: [{ id, points: [{ x, y }] }]`,
+    2–64 points, consecutive points distinct, ≤ 16,384 px): a **centripetal** Catmull-Rom spline
+    (no cusps between close points) baked by `core/data` `bakePath` into a 1-px arc-length table
+    relative to the first point; the `path` mover translates it to where it starts and continues
+    along the end tangent past the end. The enemy spec gained two fields the plan lacked —
+    `params` (behaviour tunables by name, like weapons) and `child` (enemy ref for spawners) — and
+    its optional fields get defaults at load (`anim` 1 frame, `mover` null, `ground` null,
+    `settleTicks` 30, `explosion` small, `megaCrashImmune` false); `drop` is now
+    `"capsule" | null`. Stage `path` is a `paths` ref (`pathId`); `spawn` / `formation` gained
+    `screenX` (default 400 = 16 px past the right edge; negative = behind), `formation` gained
+    `drop` (default capsule) and `bonus` (default 0). `homing.turnRate` is whole binary units.
+  - **Script ids.** Weapon and enemy behaviours share `ContentDb.scripts`, so `KNOWN_SCRIPT_IDS` =
+    the roster ∪ `WEAPON_SCRIPT_IDS` (the four M1-10 ids, kept in `behaviors` because a
+    placeholder module may not export runtime values; M1-10 moves them to `weapons`). The shell's
+    `loadGameContent` passes it by default and appends `checkEnemyBehaviors` (unknown `params`
+    names, spawners without a `child`); `pnpm content:check` does the same.
+  - **Behaviours.** `BehaviorDef { id, params (defaults), create(api, params), needsChild }`,
+    `defineBehavior`, `createBehaviorRegistry`, `DEFAULT_BEHAVIORS` / `DEFAULT_BEHAVIOR_DEFS`;
+    `createWorld(config, content, { behaviors })` takes a registry (tests). Roster:
+    `drifter.sine`, `fan.loop` (leader on the spawn path, others `follow`), `carrier.straight`,
+    `turret.floor` (faces the player; floor or ceiling by its spec), `walker.floor` (walk / stop),
+    `hatch.spawner` (releases `child` while it may fire, at most `max`), `rammer.aimed` (enters
+    with its spec mover, then `aimedDash`), `orbiter.loop` (spawn path, else waypoint). Fire
+    patterns join in M1-09.
+  - **Enemies.** 64 `Enemy` class instances in slot order (lowest free slot; `createPool` has no
+    deterministic iteration) with states Free / Live / Removed (freed in phase 8). Flying enemies
+    ride the camera by the camera position they last saw (`camX/camY`), so a spawn in phases 3–4
+    (after this tick's camera move) is not moved twice; ground enemies are world-anchored and snap
+    to the surface below / above their spawn y (mid-view by default; the view edge without
+    terrain). `ScriptApi`: `self`, `spec`, `tick`, `rng`, `target()`, `setMover`, `spawn`,
+    `onScreen()`, `canFire()`; `EnemySystem.damage` / `kill` (for M1-10 / M1-11) emit
+    `Sfx EnemyExplode*` + `Particles` with the new `FX_CUES` registry and record the tick's kills,
+    drops and bonus points in `EnemySystem.outcomes` (reset in phase 3) for M1-11 / M1-12.
+  - **Formations.** The "pending-spawn ring" is the formation table itself (32 slots, next spawn
+    tick per slot); every member spawns at the same view point; a member that cannot spawn counts
+    as escaped. Completion (all killed, none escaped) → capsule drop at the last kill + the new
+    `SimEventKind.FormationBonus` (7, param = bonus). The leader records a 256-entry
+    `FollowTrack` in its frame; a leader killed or escaped while members are still out becomes an
+    invisible, intangible **ghost** that keeps recording until the formation resolves (or it is
+    128 px outside the view), so followers keep the path.
+  - **Off-screen rules.** Escaped = was on screen and 32 px outside the view; an enemy never seen
+    is removed 128 px outside or after 600 ticks. `canFire` = on screen, settled, not a ghost.
+  - **Collision.** Hurtboxes enter the World grid with whole-pixel bounds (the grid is only the
+    broad phase); contact is an exact circle-vs-box test → `playerHit(Contact)`, at most one
+    accepted hit per ship and tick. `hashWorld` covers every enemy slot and the formation table.
+  - **Allocation.** D29's coroutines keep two allocations: a generator object per spawned enemy
+    and V8's `{ value, done }` result per wake (≈ 40 B); sleeping scripts cost nothing — the
+    64-enemy guard measures ≈ 5 KB over 10,000 ticks. Hot-path rules found on the way (documented
+    in the modules): no fractional arguments or return values across calls V8 may not inline
+    (table sines inline, `atan2B` on scaled integers, `samplePath` / `pushSprite` / the track
+    record inlined), `| 0` on `Math.ceil` bounds (−0 is not a small integer), and no
+    `{ x: <schema>, y: <schema> }` literal (it made every `{ x, y }` literal's fields tagged —
+    the render-pixi terrain guard doubled — so the path point shape is built by adding keys).
+  - **Content / art.** `test-range` got a roster (`content/enemies/test-range.enemies.json`),
+    three paths and a timeline using all eight behaviours; new pixel-map sprite
+    `enemies/hatch`. The e2e stage test compares the terrain 30 frames apart (was 60): with the
+    enemies drawn, parallel e2e workers ran up to 4 ticks per frame and the scroll left the
+    test's 250-px shift window.
 
 ### M1-09 — Enemy bullets, lasers & attack patterns
 

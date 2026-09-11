@@ -8,12 +8,20 @@
  * Every sprite name the shipped content uses must exist in the atlas the asset pipeline
  * builds (M1-03) — a typo is reported as an issue here, not as a magenta box in the game.
  * Kinds the core does not own go to their owning package, like the shell does at boot
- * (plan §3.5): `input-profiles` → `@shmup/input-web` (M1-05).
+ * (plan §3.5): `input-profiles` → `@shmup/input-web` (M1-05). The shipped set is loaded with the
+ * engine's script registry (`KNOWN_SCRIPT_IDS`, M1-08), so an unknown behaviour id is an issue,
+ * and its enemies are checked against their behaviours' tunables (`checkEnemyBehaviors`).
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { loadContent, type ContentFile, type ValidationIssue } from '@shmup/core';
+import {
+  KNOWN_SCRIPT_IDS,
+  checkEnemyBehaviors,
+  loadContent,
+  type ContentFile,
+  type ValidationIssue,
+} from '@shmup/core';
 import { loadInputProfiles, parseInputProfiles } from '@shmup/input-web';
 import { describe, expect, it } from 'vitest';
 import { findMissingSprites } from '../../scripts/assets/manifest.mjs';
@@ -117,13 +125,34 @@ describe('integration: content/ validates', () => {
   });
 
   it('loads the shipped content without a single issue', () => {
-    const { db, issues, foreign } = loadContent(shippedFiles);
+    const { db, issues, foreign } = loadContent(shippedFiles, { knownScripts: KNOWN_SCRIPT_IDS });
     expect(issues).toEqual([]);
+    expect(checkEnemyBehaviors(db)).toEqual([]);
     // Foreign kinds go to their owner; a kind nobody owns must not silently fall through.
     expect(foreign.map((file) => file.path)).toEqual(['input/remote.input-profiles.json']);
     expect(ownerIssues(foreign)).toEqual([]);
     expect(db.ships.map((ship) => ship.id)).toContain('kestrel');
     expect(db.weaponPresets.map((preset) => preset.id)).toContain('type-a');
+  });
+
+  it('reports a shipped enemy whose script the engine does not know', () => {
+    const edited = shippedFiles.map((file) =>
+      file.path === 'enemies/test-range.enemies.json'
+        ? {
+            ...file,
+            data: JSON.parse(
+              JSON.stringify(file.data).replace('"drifter.sine"', '"drifter.sinus"'),
+            ) as unknown,
+          }
+        : file,
+    );
+    const { issues } = loadContent(edited, { knownScripts: KNOWN_SCRIPT_IDS });
+    expect(issues).toEqual([
+      {
+        path: 'enemies/test-range.enemies.json:enemies[0].script',
+        message: 'unknown script id "drifter.sinus"',
+      },
+    ]);
   });
 
   it('resolves every sprite and script name the shipped content uses', () => {
@@ -154,6 +183,7 @@ describe('integration: content/ validates', () => {
       player: 'player',
       weapons: 'weapons',
       enemies: 'enemies',
+      paths: 'paths',
       stages: 'stage',
       tilesets: 'tileset',
       input: 'input-profiles',

@@ -116,7 +116,9 @@ test.describe('stage runtime (web build, ?stage=test-range)', () => {
     const first = await terrainPixels(page);
     expect(first.playfield).toBeGreaterThan(400); // the floor of the first segment
     expect(first.hud).toBe(0);
-    await waitFrames(page, 60);
+    // 30 frames: a busy machine runs up to 4 ticks per frame (the loop catches up), and the
+    // shift must stay inside the 250-px search window of `leftShift`.
+    await waitFrames(page, 30);
     const second = await terrainPixels(page);
     expect(second.playfield).toBeGreaterThan(400);
     expect(second.hud).toBe(0);

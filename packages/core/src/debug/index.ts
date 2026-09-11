@@ -13,8 +13,11 @@
  *
  * **State hash.** {@link hashWorld} is FNV-1a (32-bit) over a fixed sequence of values: the tick,
  * both RNG states, the camera, the stage runner's state (whether there is one, then every slot of
- * its state array), the session status and hit-stop, every player's fields, then every
- * registered pool's live slots (fields in sorted name order, slots `0 … count-1`). Numbers are
+ * its state array), the session status and hit-stop, every player's fields, every registered
+ * pool's live slots (fields in sorted name order, slots `0 … count-1`), then the enemies (every
+ * slot's state, and the numeric fields of each slot in use — M1-08) and the formation table
+ * (the fields of every active slot, and each track's recorded count). Scripts are covered by
+ * their `wakeTick`; a coroutine's internal position cannot be hashed. Numbers are
  * hashed as their little-endian IEEE-754 double bytes, so the hash is identical on every engine
  * and platform, and two worlds that simulated the same inputs from the same seed hash equal.
  * Golden replays (M1-19) compare these hashes. The hash reads state only — it never draws from an
@@ -34,6 +37,7 @@
  *
  * @module
  */
+import { EnemyState, MAX_FORMATIONS, type Enemy, type FormationTable } from '../enemies/index.js';
 import { defineModule } from '../module-info.js';
 import { PLAYER_STATES } from '../player/index.js';
 import { RNG_STATE_WORDS } from '../rng/index.js';
@@ -156,6 +160,74 @@ function mixPlayer(p: World['players'][number]): void {
 }
 
 /**
+ * Mixes one enemy slot's fields into {@link accumulator} (fixed order).
+ *
+ * @param e - The enemy (a slot in use).
+ */
+function mixEnemy(e: Enemy): void {
+  mixNumber(e.specIndex);
+  mixNumber(e.x);
+  mixNumber(e.y);
+  mixNumber(e.vx);
+  mixNumber(e.vy);
+  mixNumber(e.hp);
+  mixNumber(e.flashTicks);
+  mixNumber(e.age);
+  mixNumber(e.spawnTick);
+  mixNumber(e.formation);
+  mixNumber(e.member);
+  mixNumber(e.anchor);
+  mixNumber(e.mover);
+  mixNumber(e.m0);
+  mixNumber(e.m1);
+  mixNumber(e.m2);
+  mixNumber(e.m3);
+  mixNumber(e.m4);
+  mixNumber(e.m5);
+  mixNumber(e.s0);
+  mixNumber(e.s1);
+  mixNumber(e.s2);
+  mixNumber(e.s3);
+  mixNumber(e.moverTicks);
+  mixWord(e.script === null ? 0 : 1);
+  mixNumber(e.wakeTick);
+  mixWord(e.flags);
+  mixNumber(e.firstSeenTick);
+  mixNumber(e.animFrame);
+  mixNumber(e.pathId);
+  mixNumber(e.camX);
+  mixNumber(e.camY);
+}
+
+/**
+ * Mixes the active slots of the formation table into {@link accumulator}.
+ *
+ * @param f - The table.
+ */
+function mixFormations(f: FormationTable): void {
+  for (let slot = 0; slot < MAX_FORMATIONS; slot++) {
+    mixWord(f.active[slot]);
+    if (f.active[slot] === 0) continue;
+    mixNumber(f.enemy[slot]);
+    mixNumber(f.total[slot]);
+    mixNumber(f.spawned[slot]);
+    mixNumber(f.killed[slot]);
+    mixNumber(f.escaped[slot]);
+    mixNumber(f.interval[slot]);
+    mixNumber(f.nextTick[slot]);
+    mixNumber(f.screenX[slot]);
+    mixNumber(f.screenY[slot]);
+    mixNumber(f.path[slot]);
+    mixNumber(f.drop[slot]);
+    mixNumber(f.bonus[slot]);
+    mixNumber(f.lastX[slot]);
+    mixNumber(f.lastY[slot]);
+    mixNumber(f.leader[slot]);
+    mixNumber(f.tracks[slot].recorded);
+  }
+}
+
+/**
  * Hashes the simulation state of a world (see the module docs for what is covered and in which
  * order). Does not change the world.
  *
@@ -214,6 +286,14 @@ export function hashWorld(world: World): number {
     const arrays = entry.arrays;
     for (let f = 0; f < arrays.length; f++) mixArray(arrays[f], count);
   }
+
+  const enemies = world.enemies.enemies;
+  for (let i = 0; i < enemies.length; i++) {
+    const e = enemies[i];
+    mixWord(e.state);
+    if (e.state !== EnemyState.Free) mixEnemy(e);
+  }
+  mixFormations(world.enemies.formations);
   return accumulator[0];
 }
 

@@ -42,9 +42,81 @@
     }
   },
   "events": [
+    {
+      "x": 60,
+      "type": "formation",
+      "enemy": "drifter",
+      "count": 5,
+      "interval": 14,
+      "y": 60,
+      "bonus": 500
+    },
+    { "x": 240, "type": "spawn", "enemy": "carrier", "y": 100 },
+    {
+      "x": 360,
+      "type": "formation",
+      "enemy": "fan",
+      "count": 5,
+      "interval": 10,
+      "y": 130,
+      "path": "fan-loop",
+      "bonus": 1000
+    },
+    { "x": 500, "type": "spawn", "enemy": "turret" },
+    { "x": 580, "type": "spawn", "enemy": "walker" },
+    { "x": 700, "type": "spawn", "enemy": "hatch" },
+    { "x": 840, "type": "spawn", "enemy": "rammer", "y": 50 },
+    {
+      "x": 1000,
+      "type": "formation",
+      "enemy": "drifter",
+      "count": 6,
+      "interval": 12,
+      "y": 130,
+      "drop": null,
+      "bonus": 300
+    },
+    { "x": 1200, "type": "spawn", "enemy": "turret" },
     { "x": 1500, "type": "flag", "flag": "high-speed" },
+    { "x": 1600, "type": "spawn", "enemy": "turret-ceiling" },
+    { "x": 1800, "type": "spawn", "enemy": "orbiter", "y": 70, "path": "orbit-loop" },
+    {
+      "x": 2000,
+      "type": "formation",
+      "enemy": "fan",
+      "count": 4,
+      "interval": 10,
+      "y": 80,
+      "path": "dive-down",
+      "bonus": 800
+    },
+    { "x": 2300, "type": "spawn", "enemy": "carrier", "y": 110 },
     { "x": 2600, "type": "speed", "speed": 1.5, "ramp": 60 },
     { "x": 2700, "type": "flag", "flag": "high-speed", "value": false },
+    { "x": 3100, "type": "spawn", "enemy": "walker" },
+    { "x": 3200, "type": "spawn", "enemy": "hatch" },
+    { "x": 3300, "type": "spawn", "enemy": "turret-ceiling" },
+    {
+      "x": 3500,
+      "type": "formation",
+      "enemy": "drifter",
+      "count": 5,
+      "interval": 14,
+      "y": 90,
+      "bonus": 500
+    },
+    { "x": 3800, "type": "spawn", "enemy": "orbiter", "y": 60 },
+    {
+      "x": 4000,
+      "type": "formation",
+      "enemy": "fan",
+      "count": 5,
+      "interval": 10,
+      "y": 140,
+      "path": "fan-loop",
+      "bonus": 1000
+    },
+    { "x": 4200, "type": "spawn", "enemy": "carrier", "y": 90 },
     { "x": 4800, "type": "end" }
   ]
 }

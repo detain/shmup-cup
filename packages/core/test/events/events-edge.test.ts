@@ -5,6 +5,8 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
+  FX_CUES,
+  FX_CUE_NAMES,
   MUSIC_CUES,
   MUSIC_CUE_NAMES,
   SFX_CUES,
@@ -243,7 +245,7 @@ describe('core/events — cue registries', () => {
     expect(MUSIC_CUES.Escape).toBe(14);
     expect(MUSIC_CUE_NAMES.length).toBe(15);
 
-    expect(Object.values(SimEventKind)).toEqual([0, 1, 2, 3, 4, 5, 6]);
+    expect(Object.values(SimEventKind)).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
     expect(SIM_EVENT_KIND_NAMES).toEqual([
       'sfx',
       'music',
@@ -252,6 +254,10 @@ describe('core/events — cue registries', () => {
       'flash',
       'hitstop',
       'rumble',
+      'formationBonus',
     ]);
+    expect(FX_CUES).toEqual({ ExplosionSmall: 0, ExplosionMedium: 1, ExplosionLarge: 2 });
+    expect(FX_CUE_NAMES).toEqual(['ExplosionSmall', 'ExplosionMedium', 'ExplosionLarge']);
+    expect(Object.isFrozen(FX_CUE_NAMES)).toBe(true);
   });
 });

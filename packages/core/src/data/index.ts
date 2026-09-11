@@ -1,9 +1,9 @@
 /**
- * # data — content schemas and loaders (player, weapons, enemies, stages, tilesets JSON)
+ * # data — content schemas and loaders (player, weapons, enemies, paths, stages, tilesets JSON)
  *
- * **Status: partial.** The loader, the schema combinators and the `player`, `weapons`, `stage`
- * and `tileset` formats are implemented; `enemies` has a working *stub* schema that the steps
- * owning enemies and bosses (M1-08 … M1-13) extend, and later steps add their kinds.
+ * **Status: partial.** The loader, the schema combinators and the `player`, `weapons`,
+ * `enemies`, `paths`, `stage` and `tileset` formats are implemented; the boss section of the
+ * `enemies` kind arrives with M1-13 and later steps add their kinds.
  *
  * **Responsibility.** Data-driven content (design pillar 4). Declares the shape of every
  * file under `content/`, validates it at load time with the in-house combinators in
@@ -19,6 +19,15 @@
  * in a third pass once tileset ids are resolved — expands the tilemap (`heightfield` generator
  * and/or RLE rows, {@link ./tilemap.js | data/tilemap}) into {@link StageSpec.terrain}. Tilesets
  * get per-tile-id lookup tables ({@link TilesetSpec.tables}) the terrain queries read.
+ *
+ * **Enemies and paths (M1-08).** An enemy names its behaviour coroutine (`script`, checked against
+ * the engine's registry when `knownScripts` is given), its sprite and animation, hit points,
+ * score, hurtbox, ground anchor, settle time, explosion size, drop, behaviour tunables
+ * (`params`), an optional starting mover and an optional `child` enemy (spawners); optional
+ * fields get their defaults at load, so every {@link EnemySpec} has the same fields. Paths
+ * (`content/paths/`) are control-point lists baked at load into arc-length tables
+ * ({@link ./paths.js | data/paths}); stage `spawn` / `formation` events and `path` movers refer to
+ * them by id.
  *
  * **Implements.**
  * - shmup_feat.md §14 — stage data format (JSON validated with a schema), tilemap terrain with
@@ -36,7 +45,12 @@
  *   {@link ContentMigrationTable}).
  * - Per-kind spec types: {@link PlayerShipSpec} ({@link BoxSpec}, {@link MarginSpec}),
  *   {@link WeaponSpec} ({@link WeaponSlot}, {@link WEAPON_SLOTS}), {@link WeaponPresetSpec},
- *   {@link EnemySpec} ({@link EnemyRankSpec}), {@link StageSpec} and its parts
+ *   {@link EnemySpec} ({@link EnemyRankSpec}, {@link EnemyAnimSpec}, {@link EnemyMoverSpec},
+ *   {@link MoverType}, {@link MOVER_TYPES}, {@link EnemyGround}, {@link ENEMY_GROUNDS},
+ *   {@link EnemyExplosion}, {@link ENEMY_EXPLOSIONS}, {@link EnemyDrop}, {@link ENEMY_DROPS},
+ *   {@link DEFAULT_SETTLE_TICKS}), {@link PathSpec} ({@link PathPointSpec}, {@link PathTable},
+ *   {@link bakePath}, {@link PATH_SAMPLE_STEP}, {@link MAX_PATH_LENGTH}), {@link StageSpec} and its
+ *   parts
  *   ({@link StageMusic}, {@link StageCameraKey}, {@link StageCheckpoint},
  *   {@link StageParallaxLayer}, {@link StageParallaxLayerName}, {@link StageTilemapSpec},
  *   {@link HeightfieldSpec}, {@link HeightfieldSegment}, {@link HeightfieldProfile},
@@ -50,13 +64,15 @@
  *
  * **Id resolution convention.** A field declared with `s.ref(kind)` keeps its string and
  * gains a sibling `<field>Id` holding the resolved numeric index (`sprite` → `spriteId`,
- * `behavior` → `behaviorId`, `enemy` → `enemyId`, `cue` → `cueId`, `tileset` → `tilesetId`);
- * `-1` means null, absent or unresolved. Systems read only the numbers.
+ * `behavior` → `behaviorId`, `enemy` → `enemyId`, `cue` → `cueId`, `tileset` → `tilesetId`,
+ * `path` → `pathId`, `child` → `childId`); `-1` means null, absent or unresolved. Systems read
+ * only the numbers.
  *
- * **Planned API (later steps).** Kinds `paths` (M1-08), `rules`, `patterns`, `campaign`,
- * `strings` (M2); `input-profiles`, `sfx`/`music` and `fx` files stay *foreign* here
- * and are validated by their owning packages (see plan §3.5). M1-08 passes
- * `knownScripts` so behaviour ids are checked, M1-03 checks `db.sprites` against the atlas.
+ * **Planned API (later steps).** The boss section of `enemies` (M1-13); kinds `rules`,
+ * `patterns`, `campaign`, `strings` (M2); `input-profiles`, `sfx`/`music` and `fx` files stay
+ * *foreign* here and are validated by their owning packages (see plan §3.5). Hosts pass
+ * `knownScripts` (`core/behaviors` `KNOWN_SCRIPT_IDS`) so script ids are checked; M1-03 checks
+ * `db.sprites` against the atlas.
  *
  * @remarks
  * Nothing in this module runs per tick: it allocates freely, uses `Map`s and reports **all**
@@ -68,10 +84,12 @@
 import { PLAYFIELD_W } from '../config/index.js';
 import { MUSIC_CUES, SFX_CUES } from '../events/index.js';
 import { defineModule } from '../module-info.js';
+import { bakePath, type PathTable } from './paths.js';
 import { s, type RefSite, type Schema, type ValidationIssue } from './schema.js';
 import { buildTilesetTables, expandTilemap, type TilesetTables } from './tilemap.js';
 
 export type { TilesetTables } from './tilemap.js';
+export { MAX_PATH_LENGTH, PATH_SAMPLE_STEP, bakePath, type PathTable } from './paths.js';
 
 export {
   s,
@@ -113,6 +131,7 @@ export const CONTENT_KINDS = Object.freeze([
   'player',
   'weapons',
   'enemies',
+  'paths',
   'stage',
   'tileset',
 ] as const);
@@ -301,7 +320,136 @@ export interface EnemyRankSpec {
   readonly bulletSpeed?: number;
 }
 
-/** One enemy (`content/enemies/*.enemies.json`, shmup_feat.md §11). Stub — M1-08 extends it. */
+/** Sprite animation of an enemy: `frames` frames of its sprite, `ticks` ticks each, looping. */
+export interface EnemyAnimSpec {
+  /** Frames in the loop (1 = a still sprite). */
+  readonly frames: number;
+  /** Ticks each frame is shown. */
+  readonly ticks: number;
+}
+
+/** Where a ground enemy is anchored (shmup_feat.md §11 turrets, walkers, hatches). */
+export type EnemyGround = 'floor' | 'ceiling';
+
+/** Every {@link EnemyGround}, in code order (the index + 1 is the anchor code; 0 = flying). */
+export const ENEMY_GROUNDS = Object.freeze(['floor', 'ceiling'] as const);
+
+/** Size of an enemy's death explosion (effects and SFX). */
+export type EnemyExplosion = 'small' | 'medium' | 'large';
+
+/** Every {@link EnemyExplosion}, in code order. */
+export const ENEMY_EXPLOSIONS = Object.freeze(['small', 'medium', 'large'] as const);
+
+/** What an enemy (or a completed formation) leaves behind (M1: power capsules). */
+export type EnemyDrop = 'capsule';
+
+/** Every {@link EnemyDrop}, in code order (the index + 1 is the drop code; 0 = none). */
+export const ENEMY_DROPS = Object.freeze(['capsule'] as const);
+
+/** Default {@link EnemySpec.settleTicks}: half a second on screen before an enemy may fire. */
+export const DEFAULT_SETTLE_TICKS = 30;
+
+/**
+ * The movers (per-tick motion primitives of `core/patterns`, shmup_feat.md §11), by their content
+ * name; the position + 1 is the `MoverKind` code (0 = none).
+ */
+export const MOVER_TYPES = Object.freeze([
+  'straight',
+  'sine',
+  'path',
+  'waypoint',
+  'follow',
+  'groundCrawl',
+  'homing',
+  'aimedDash',
+] as const);
+
+/** A mover's content name. */
+export type MoverType = (typeof MOVER_TYPES)[number];
+
+/**
+ * An enemy's starting mover (`core/patterns` documents each one). Velocities are in pixels per
+ * tick, relative to the view for flying enemies (they ride the camera scroll) and to the world
+ * for ground enemies; angles are binary units (1024 per turn).
+ */
+export type EnemyMoverSpec =
+  | {
+      /** Constant velocity. */
+      readonly type: 'straight';
+      /** Horizontal velocity. */
+      readonly vx: number;
+      /** Vertical velocity. */
+      readonly vy: number;
+    }
+  | {
+      /** Horizontal drift with a vertical sine wave. */
+      readonly type: 'sine';
+      /** Horizontal velocity. */
+      readonly vx: number;
+      /** Wave amplitude in pixels. */
+      readonly amp: number;
+      /** Wave period in ticks. */
+      readonly period: number;
+      /** Starting phase in binary-angle units (default 0). */
+      readonly phase?: number;
+    }
+  | {
+      /** Follow a path from `content/paths/` at constant speed. */
+      readonly type: 'path';
+      /** Path id; omitted = the spawn event's `path`. */
+      readonly path?: string;
+      /** Resolved {@link ContentDb.paths} index (-1 = use the spawn event's path). */
+      readonly pathId: number;
+      /** Pixels per tick along the curve. */
+      readonly speed: number;
+    }
+  | {
+      /** Enter → stop → leave: fly to a point of the view, hold, fly off. */
+      readonly type: 'waypoint';
+      /** Target x in playfield pixels (camera-relative). */
+      readonly x: number;
+      /** Target y in playfield pixels. */
+      readonly y: number;
+      /** Approach speed in pixels per tick. */
+      readonly speed: number;
+      /** Ticks to hold at the target. */
+      readonly hold: number;
+      /** Leaving velocity x. */
+      readonly leaveVx: number;
+      /** Leaving velocity y. */
+      readonly leaveVy: number;
+    }
+  | {
+      /** Formation member: replay the formation leader's recorded path with a delay. */
+      readonly type: 'follow';
+    }
+  | {
+      /** Walk along the floor / ceiling, turning at walls and edges (ground enemies). */
+      readonly type: 'groundCrawl';
+      /** Signed walking speed (negative = left). */
+      readonly speed: number;
+    }
+  | {
+      /** Steer towards the nearest player with a capped turn rate. */
+      readonly type: 'homing';
+      /** Pixels per tick. */
+      readonly speed: number;
+      /** Largest turn per tick, in whole binary-angle units. */
+      readonly turnRate: number;
+    }
+  | {
+      /** Hold for `windup` ticks, aim at the nearest player once, then dash straight. */
+      readonly type: 'aimedDash';
+      /** Dash speed in pixels per tick. */
+      readonly speed: number;
+      /** Ticks before the dash. */
+      readonly windup: number;
+    };
+
+/**
+ * One enemy (`content/enemies/*.enemies.json`, shmup_feat.md §11). Optional fields of the file
+ * get their defaults at load, so every spec has every field.
+ */
 export interface EnemySpec {
   /** Unique id, referenced by stage events. */
   readonly id: string;
@@ -309,9 +457,9 @@ export interface EnemySpec {
   readonly hp: number;
   /** Score awarded on death. */
   readonly score: number;
-  /** Half-extents of the hurtbox, in pixels. */
+  /** Half-extents of the hurtbox, in pixels (also the contact box against players). */
   readonly hurtbox: BoxSpec;
-  /** Behaviour coroutine id (core `behaviors`, M1-08). */
+  /** Behaviour coroutine id (core `behaviors`). */
   readonly script: string;
   /** Resolved {@link ContentDb.scripts} index of {@link EnemySpec.script}. */
   readonly scriptId: number;
@@ -319,10 +467,49 @@ export interface EnemySpec {
   readonly sprite: string;
   /** Resolved {@link ContentDb.sprites} index of {@link EnemySpec.sprite}. */
   readonly spriteId: number;
-  /** What the enemy drops (`capsule`, `item:red`, …) or `null`. */
-  readonly drop: string | null;
+  /** Sprite animation (default: frame 0, still). */
+  readonly anim: EnemyAnimSpec;
+  /** Behaviour tunables by name (default none; each behaviour documents its names). */
+  readonly params: Readonly<Record<string, number>>;
+  /** Starting mover (default `null`: none — scripts set one). */
+  readonly mover: EnemyMoverSpec | null;
+  /** What the enemy drops on death, or `null`. */
+  readonly drop: EnemyDrop | null;
+  /** Ground anchor, or `null` for a flying enemy (default). */
+  readonly ground: EnemyGround | null;
+  /** Ticks on screen before the enemy may fire (default {@link DEFAULT_SETTLE_TICKS}). */
+  readonly settleTicks: number;
+  /** Death explosion size (default `small`). */
+  readonly explosion: EnemyExplosion;
+  /** Whether the Mega Crash leaves it alive (M1-11; default `false`). */
+  readonly megaCrashImmune: boolean;
+  /** Enemy a spawner releases (`hatch.spawner`), or `null` (default). */
+  readonly child: string | null;
+  /** Resolved {@link ContentDb.enemies} index of {@link EnemySpec.child} (-1 = none). */
+  readonly childId: number;
   /** Rank modifiers. */
   readonly rank?: EnemyRankSpec;
+}
+
+/** One control point of a path, in pixels relative to where the mover starts. */
+export interface PathPointSpec {
+  /** X offset. */
+  readonly x: number;
+  /** Y offset (down is positive). */
+  readonly y: number;
+}
+
+/**
+ * A movement path (`content/paths/*.paths.json`): control points of a centripetal Catmull-Rom
+ * spline, baked at load into an arc-length table (plan M1-08).
+ */
+export interface PathSpec {
+  /** Unique id, referenced by stage events and `path` movers. */
+  readonly id: string;
+  /** Control points (2–64), relative to the start; consecutive points differ. */
+  readonly points: readonly PathPointSpec[];
+  /** The baked table the `path` mover samples. */
+  readonly table: PathTable;
 }
 
 /**
@@ -449,7 +636,7 @@ export interface StageTerrain {
   readonly tilesetId: number;
 }
 
-/** Spawn one enemy when the camera reaches `x` (M1-08 implements the spawner). */
+/** Spawn one enemy when the camera reaches `x` (`core/enemies` spawns it). */
 export interface StageSpawnEvent {
   /** Camera X that fires the event. */
   readonly x: number;
@@ -459,15 +646,22 @@ export interface StageSpawnEvent {
   readonly enemy: string;
   /** Resolved {@link ContentDb.enemies} index. */
   readonly enemyId: number;
-  /** Spawn y in playfield pixels; the enemy's mover decides when omitted. */
+  /**
+   * Spawn y in playfield pixels (camera-relative). Omitted: mid-playfield for a flying enemy;
+   * ground enemies snap to the floor / ceiling below / above it.
+   */
   readonly y?: number;
-  /** Movement path id (`content/paths/`, M1-08). */
+  /** Spawn x in playfield pixels (default 400: just beyond the right edge; negative = behind). */
+  readonly screenX?: number;
+  /** Movement path id (`content/paths/`) for `path` movers and path-following behaviours. */
   readonly path?: string;
+  /** Resolved {@link ContentDb.paths} index (-1 = none). */
+  readonly pathId: number;
 }
 
 /**
- * Spawn a formation: `count` enemies, one every `interval` ticks; killing all of them drops a
- * capsule (M1-08).
+ * Spawn a formation: `count` enemies, one every `interval` ticks, all at the same spawn point;
+ * killing every member (none escaped) drops a capsule and awards the bonus (`core/enemies`).
  */
 export interface StageFormationEvent {
   /** Camera X that fires the event. */
@@ -482,10 +676,18 @@ export interface StageFormationEvent {
   readonly count: number;
   /** Ticks between two members. */
   readonly interval: number;
-  /** Spawn y in playfield pixels. */
+  /** Spawn y in playfield pixels (see {@link StageSpawnEvent.y}). */
   readonly y?: number;
+  /** Spawn x in playfield pixels (see {@link StageSpawnEvent.screenX}). */
+  readonly screenX?: number;
   /** Movement path id. */
   readonly path?: string;
+  /** Resolved {@link ContentDb.paths} index (-1 = none). */
+  readonly pathId: number;
+  /** What the completed formation drops (default `capsule`; `null` = nothing). */
+  readonly drop?: EnemyDrop | null;
+  /** Bonus points for destroying the whole formation (default 0; scoring: M1-12). */
+  readonly bonus?: number;
 }
 
 /** Start a boss or its WARNING intro (shmup_feat.md §13, M1-13). */
@@ -691,6 +893,10 @@ export interface ContentDb {
   readonly enemies: readonly EnemySpec[];
   /** Enemy id → {@link ContentDb.enemies} index. */
   readonly enemyIndex: ReadonlyMap<string, number>;
+  /** Movement paths, in file order. */
+  readonly paths: readonly PathSpec[];
+  /** Path id → {@link ContentDb.paths} index. */
+  readonly pathIndex: ReadonlyMap<string, number>;
   /** Stages, in file order. */
   readonly stages: readonly StageSpec[];
   /** Stage id → {@link ContentDb.stages} index. */
@@ -704,8 +910,10 @@ export interface ContentDb {
 /** Options of {@link loadContent}. */
 export interface LoadContentOptions {
   /**
-   * Behaviour ids the engine implements. When given, content referring to an unknown
-   * script reports an issue; when omitted (M1-02 … M1-07) script ids are only interned.
+   * Script ids the engine implements (enemy behaviours and weapon behaviours share the
+   * {@link ContentDb.scripts} table — pass `core/behaviors` `KNOWN_SCRIPT_IDS`). When given,
+   * content referring to an unknown script reports an issue; when omitted, script ids are only
+   * interned.
    */
   readonly knownScripts?: readonly string[] | ReadonlySet<string>;
   /** Migration table; defaults to {@link CONTENT_MIGRATIONS} (tests inject their own). */
@@ -811,8 +1019,54 @@ const WEAPONS_FILE_SCHEMA = s.object(
   { optional: ['presets'] },
 );
 
-/** One entry of `enemies` in an `enemies` file. */
-const ENEMY_SCHEMA: Schema<Omit<EnemySpec, 'scriptId' | 'spriteId'>> = s.object(
+/** A velocity component in pixels per tick. */
+const VELOCITY = s.num({ min: -16, max: 16 });
+
+/** A positive speed in pixels per tick. */
+const MOVER_SPEED = s.num({ min: 0, max: 16 });
+
+/** An enemy's starting mover. */
+const MOVER_SCHEMA: Schema<Omit<EnemyMoverSpec, 'pathId'>> = s.oneOf('type', {
+  straight: s.object({ type: s.enumOf(['straight'] as const), vx: VELOCITY, vy: VELOCITY }),
+  sine: s.object(
+    {
+      type: s.enumOf(['sine'] as const),
+      vx: VELOCITY,
+      amp: s.num({ min: 0, max: 256 }),
+      period: s.int({ min: 1, max: 36000 }),
+      phase: s.int({ min: 0, max: 1023 }),
+    },
+    { optional: ['phase'] },
+  ),
+  path: s.object(
+    { type: s.enumOf(['path'] as const), path: s.ref('path'), speed: MOVER_SPEED },
+    { optional: ['path'] },
+  ),
+  waypoint: s.object({
+    type: s.enumOf(['waypoint'] as const),
+    x: s.num({ min: -64, max: 448 }),
+    y: s.num({ min: -64, max: 264 }),
+    speed: s.num({ min: 0.01, max: 16 }),
+    hold: s.int({ min: 0, max: 36000 }),
+    leaveVx: VELOCITY,
+    leaveVy: VELOCITY,
+  }),
+  follow: s.object({ type: s.enumOf(['follow'] as const) }),
+  groundCrawl: s.object({ type: s.enumOf(['groundCrawl'] as const), speed: VELOCITY }),
+  homing: s.object({
+    type: s.enumOf(['homing'] as const),
+    speed: MOVER_SPEED,
+    turnRate: s.int({ min: 0, max: 512 }),
+  }),
+  aimedDash: s.object({
+    type: s.enumOf(['aimedDash'] as const),
+    speed: MOVER_SPEED,
+    windup: s.int({ min: 0, max: 36000 }),
+  }),
+});
+
+/** One entry of `enemies` in an `enemies` file (optional fields are filled in by the loader). */
+const ENEMY_SCHEMA = s.object(
   {
     id: s.str(),
     hp: s.int({ min: 1, max: 100000 }),
@@ -820,13 +1074,33 @@ const ENEMY_SCHEMA: Schema<Omit<EnemySpec, 'scriptId' | 'spriteId'>> = s.object(
     hurtbox: BOX_SCHEMA,
     script: s.ref('script'),
     sprite: s.ref('sprite'),
-    drop: s.nullable(s.str()),
+    anim: s.object({ frames: s.int({ min: 1, max: 64 }), ticks: s.int({ min: 1, max: 600 }) }),
+    params: s.record(s.num(), /^[a-zA-Z][a-zA-Z0-9]*$/),
+    mover: s.nullable(MOVER_SCHEMA),
+    drop: s.nullable(s.enumOf(ENEMY_DROPS)),
+    ground: s.nullable(s.enumOf(ENEMY_GROUNDS)),
+    settleTicks: s.int({ min: 0, max: 36000 }),
+    explosion: s.enumOf(ENEMY_EXPLOSIONS),
+    megaCrashImmune: s.bool(),
+    child: s.nullable(s.ref('enemy')),
     rank: s.object(
       { fireRate: s.num({ min: 0, max: 8 }), bulletSpeed: s.num({ min: 0, max: 8 }) },
       { optional: ['fireRate', 'bulletSpeed'] },
     ),
   },
-  { optional: ['rank'] },
+  {
+    optional: [
+      'anim',
+      'params',
+      'mover',
+      'ground',
+      'settleTicks',
+      'explosion',
+      'megaCrashImmune',
+      'child',
+      'rank',
+    ],
+  },
 );
 
 /** A `content/enemies/*.enemies.json` file. */
@@ -834,6 +1108,38 @@ const ENEMIES_FILE_SCHEMA = s.object({
   ...HEADER_SHAPE,
   kind: s.enumOf(['enemies'] as const),
   enemies: s.array(ENEMY_SCHEMA, { min: 1 }),
+});
+
+/** A path control-point coordinate in pixels. */
+const PATH_COORD = s.num({ min: -4096, max: 4096 });
+
+/**
+ * The shape of one path control point, built by adding the keys to an empty object instead of
+ * writing an `{ x, y }` literal.
+ *
+ * @remarks
+ * V8 shares hidden classes between object literals with the same number of keys in the same
+ * order: an `{ x: <schema>, y: <schema> }` literal would turn the fields of every `{ x, y }`
+ * literal holding numbers (cameras, points in hot code) "tagged", and each fractional write to
+ * them would then allocate a heap number (see `docs/dev/stage-runtime.md` gotchas).
+ */
+const PATH_POINT_SHAPE: { x: Schema<number>; y: Schema<number> } = Object.create(
+  Object.prototype,
+) as { x: Schema<number>; y: Schema<number> };
+PATH_POINT_SHAPE.x = PATH_COORD;
+PATH_POINT_SHAPE.y = PATH_COORD;
+
+/** One entry of `paths` in a `paths` file. */
+const PATH_SCHEMA = s.object({
+  id: s.str(),
+  points: s.array(s.object(PATH_POINT_SHAPE), { min: 2, max: 64 }),
+});
+
+/** A `content/paths/*.paths.json` file. */
+const PATHS_FILE_SCHEMA = s.object({
+  ...HEADER_SHAPE,
+  kind: s.enumOf(['paths'] as const),
+  paths: s.array(PATH_SCHEMA, { min: 1 }),
 });
 
 /** Camera-X of a timeline entry. */
@@ -848,19 +1154,22 @@ const TICKS = s.int({ min: 0, max: 36000 });
 /** Spawn y in playfield pixels. */
 const SPAWN_Y = s.num({ min: -64, max: 320 });
 
+/** Spawn x in playfield pixels. */
+const SPAWN_SCREEN_X = s.num({ min: -128, max: 512 });
+
 /** One entry of `events` in a `stage` file. */
-const STAGE_EVENT_SCHEMA: Schema<Omit<StageEvent, 'enemyId' | 'cueId' | 'flagId'>> = s.oneOf(
-  'type',
-  {
+const STAGE_EVENT_SCHEMA: Schema<Omit<StageEvent, 'enemyId' | 'cueId' | 'flagId' | 'pathId'>> =
+  s.oneOf('type', {
     spawn: s.object(
       {
         x: EVENT_X,
         type: s.enumOf(['spawn'] as const),
         enemy: s.ref('enemy'),
         y: SPAWN_Y,
-        path: s.str(),
+        screenX: SPAWN_SCREEN_X,
+        path: s.ref('path'),
       },
-      { optional: ['y', 'path'] },
+      { optional: ['y', 'screenX', 'path'] },
     ),
     formation: s.object(
       {
@@ -870,9 +1179,12 @@ const STAGE_EVENT_SCHEMA: Schema<Omit<StageEvent, 'enemyId' | 'cueId' | 'flagId'
         count: s.int({ min: 1, max: 64 }),
         interval: s.int({ min: 1, max: 600 }),
         y: SPAWN_Y,
-        path: s.str(),
+        screenX: SPAWN_SCREEN_X,
+        path: s.ref('path'),
+        drop: s.nullable(s.enumOf(ENEMY_DROPS)),
+        bonus: s.int({ min: 0, max: 1000000 }),
       },
-      { optional: ['y', 'path'] },
+      { optional: ['y', 'screenX', 'path', 'drop', 'bonus'] },
     ),
     warning: s.object({ x: EVENT_X, type: s.enumOf(['warning'] as const), enemy: s.ref('enemy') }),
     boss: s.object({ x: EVENT_X, type: s.enumOf(['boss'] as const), enemy: s.ref('enemy') }),
@@ -891,8 +1203,7 @@ const STAGE_EVENT_SCHEMA: Schema<Omit<StageEvent, 'enemyId' | 'cueId' | 'flagId'
       { optional: ['value'] },
     ),
     end: s.object({ x: EVENT_X, type: s.enumOf(['end'] as const) }),
-  },
-);
+  });
 
 /** One wave profile of a heightfield segment. */
 const HEIGHTFIELD_PROFILE_SCHEMA = s.object({
@@ -1002,6 +1313,10 @@ interface DbBuilder {
   enemies: EnemySpec[];
   /** Enemy id → position in {@link DbBuilder.enemies}. */
   enemyIndex: Map<string, number>;
+  /** Collected paths. */
+  paths: PathSpec[];
+  /** Path id → position in {@link DbBuilder.paths}. */
+  pathIndex: Map<string, number>;
   /** Collected stages. */
   stages: StageSpec[];
   /** Stage id → position in {@link DbBuilder.stages}. */
@@ -1040,6 +1355,8 @@ export const EMPTY_CONTENT_DB: ContentDb = Object.freeze({
   weaponPresetIndex: new Map<string, number>(),
   enemies: Object.freeze([]),
   enemyIndex: new Map<string, number>(),
+  paths: Object.freeze([]),
+  pathIndex: new Map<string, number>(),
   stages: Object.freeze([]),
   stageIndex: new Map<string, number>(),
   tilesets: Object.freeze([]),
@@ -1240,6 +1557,9 @@ function resolveRef(
     case 'tileset':
       resolved = db.tilesetIndex.get(id);
       break;
+    case 'path':
+      resolved = db.pathIndex.get(id);
+      break;
     case 'sfx':
       resolved = hasOwn(SFX_CUES, id) ? (SFX_CUES as Record<string, number>)[id] : undefined;
       break;
@@ -1327,6 +1647,8 @@ export function loadContent(
     weaponPresetIndex: new Map(),
     enemies: [],
     enemyIndex: new Map(),
+    paths: [],
+    pathIndex: new Map(),
     stages: [],
     stageIndex: new Map(),
     stagePaths: [],
@@ -1380,6 +1702,8 @@ export function loadContent(
       weaponPresetIndex: db.weaponPresetIndex,
       enemies: db.enemies,
       enemyIndex: db.enemyIndex,
+      paths: db.paths,
+      pathIndex: db.pathIndex,
       stages: db.stages,
       stageIndex: db.stageIndex,
       tilesets: db.tilesets,
@@ -1412,6 +1736,8 @@ function parseFile(
       return WEAPONS_FILE_SCHEMA.parse(data, '', issues, refs);
     case 'enemies':
       return ENEMIES_FILE_SCHEMA.parse(data, '', issues, refs);
+    case 'paths':
+      return PATHS_FILE_SCHEMA.parse(data, '', issues, refs);
     case 'stage':
       return STAGE_FILE_SCHEMA.parse(data, '', issues, refs);
     case 'tileset':
@@ -1476,14 +1802,32 @@ function collect(
       return;
     }
     case 'enemies': {
-      const enemies = parsed['enemies'] as EnemySpec[];
+      const enemies = parsed['enemies'] as MutableEnemy[];
       for (let i = 0; i < enemies.length; i++) {
         addEntry(
           db.enemies,
           db.enemyIndex,
-          enemies[i],
+          completeEnemy(enemies[i]),
           at(path, 'enemies[' + String(i) + '].id'),
           'enemy',
+          issues,
+        );
+      }
+      return;
+    }
+    case 'paths': {
+      const paths = parsed['paths'] as Array<Omit<PathSpec, 'table'> & { table?: PathTable }>;
+      for (let i = 0; i < paths.length; i++) {
+        const entry = paths[i];
+        const table = bakePathEntry(entry, at(path, 'paths[' + String(i) + ']'), issues);
+        if (table === null) continue;
+        entry.table = table;
+        addEntry(
+          db.paths,
+          db.pathIndex,
+          entry as PathSpec,
+          at(path, 'paths[' + String(i) + '].id'),
+          'path',
           issues,
         );
       }
@@ -1513,6 +1857,67 @@ function collect(
       );
       return;
     }
+  }
+}
+
+/** An enemy as the schema parsed it: the optional fields may still be missing. */
+type MutableEnemy = { -readonly [K in keyof EnemySpec]?: EnemySpec[K] };
+
+/**
+ * Fills the defaults of an enemy's optional fields in place (the parsed object is the loader's
+ * own), so every {@link EnemySpec} has the same fields.
+ *
+ * @param enemy - The parsed enemy.
+ * @returns The same object, complete.
+ */
+function completeEnemy(enemy: MutableEnemy): EnemySpec {
+  if (enemy.anim === undefined) enemy.anim = { frames: 1, ticks: 1 };
+  if (enemy.params === undefined) enemy.params = {};
+  if (enemy.mover === undefined) enemy.mover = null;
+  if (enemy.ground === undefined) enemy.ground = null;
+  if (enemy.settleTicks === undefined) enemy.settleTicks = DEFAULT_SETTLE_TICKS;
+  if (enemy.explosion === undefined) enemy.explosion = 'small';
+  if (enemy.megaCrashImmune === undefined) enemy.megaCrashImmune = false;
+  if (enemy.child === undefined) enemy.child = null;
+  return enemy as EnemySpec;
+}
+
+/**
+ * Bakes one path entry, reporting problems instead of throwing.
+ *
+ * @param entry - The parsed path.
+ * @param path - Issue path of the entry (`<file>:paths[i]`).
+ * @param issues - Collector.
+ * @returns The table, or `null` when the path is unusable.
+ */
+function bakePathEntry(
+  entry: Omit<PathSpec, 'table'>,
+  path: string,
+  issues: ValidationIssue[],
+): PathTable | null {
+  const points = entry.points;
+  let ok = true;
+  for (let i = 1; i < points.length; i++) {
+    if (points[i].x === points[i - 1].x && points[i].y === points[i - 1].y) {
+      ok = issue(
+        issues,
+        path + '.points[' + String(i) + ']',
+        'must differ from points[' + String(i - 1) + ']',
+      );
+    }
+  }
+  if (!ok) return null;
+  const xs: number[] = [];
+  const ys: number[] = [];
+  for (const point of points) {
+    xs.push(point.x);
+    ys.push(point.y);
+  }
+  try {
+    return bakePath(xs, ys);
+  } catch (error) {
+    issue(issues, path + '.points', error instanceof Error ? error.message : String(error));
+    return null;
   }
 }
 

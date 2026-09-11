@@ -18,7 +18,8 @@
  *
  * **Public API (implemented now).** {@link SimEventKind}, {@link SIM_EVENT_KIND_NAMES},
  * {@link SFX_CUES}, {@link SFX_CUE_NAMES}, {@link SfxCue}, {@link MUSIC_CUES},
- * {@link MUSIC_CUE_NAMES}, {@link MusicCue}, {@link SimEvent}, {@link EventQueue},
+ * {@link MUSIC_CUE_NAMES}, {@link MusicCue}, {@link FX_CUES}, {@link FX_CUE_NAMES}, {@link FxCue},
+ * {@link SimEvent}, {@link EventQueue},
  * {@link DEFAULT_EVENT_QUEUE_CAPACITY}, {@link createEventQueue}.
  *
  * **Planned API (later steps).** More cue names as weapons, bosses and menus land; a
@@ -57,6 +58,11 @@ export const SimEventKind = {
   HitStop: 5,
   /** Rumble a gamepad: `id` is the player index, `param` the magnitude. */
   Rumble: 6,
+  /**
+   * A formation was destroyed completely (M1-08): `x`/`y` = the last kill (where its capsule
+   * drops), `id` = the formation slot, `param` = the bonus points from the stage event.
+   */
+  FormationBonus: 7,
 } as const;
 
 /** One of the {@link SimEventKind} codes. */
@@ -71,6 +77,7 @@ export const SIM_EVENT_KIND_NAMES: readonly string[] = Object.freeze([
   'flash',
   'hitstop',
   'rumble',
+  'formationBonus',
 ]);
 
 /**
@@ -175,6 +182,28 @@ export type MusicCue = (typeof MUSIC_CUES)[keyof typeof MUSIC_CUES];
 
 /** Music cue names indexed by id — the order audio content is validated against. */
 export const MUSIC_CUE_NAMES: readonly string[] = Object.freeze(Object.keys(MUSIC_CUES));
+
+/**
+ * Canonical particle-effect cues: the `id` of {@link SimEventKind.Particles} events.
+ *
+ * @remarks
+ * The simulation emits these ids; `content/fx/` binds each to a particle preset (M1-14, e.g.
+ * `explosion.small`). Ids are stable: append, never renumber.
+ */
+export const FX_CUES = {
+  /** A small enemy explodes (popcorn, fliers). */
+  ExplosionSmall: 0,
+  /** A medium enemy explodes (carriers, turrets, hatches). */
+  ExplosionMedium: 1,
+  /** A large enemy explodes. */
+  ExplosionLarge: 2,
+} as const;
+
+/** One of the {@link FX_CUES} ids. */
+export type FxCue = (typeof FX_CUES)[keyof typeof FX_CUES];
+
+/** FX cue names indexed by id. */
+export const FX_CUE_NAMES: readonly string[] = Object.freeze(Object.keys(FX_CUES));
 
 /** One event record (fields are reused — never keep a reference after `drain`). */
 export interface SimEvent {
