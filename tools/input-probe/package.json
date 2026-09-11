@@ -1,0 +1,32 @@
+{
+  "name": "shmup-cup-input-probe",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Diagnostic Tizen web app that measures Samsung Smart Remote / gamepad / display behavior on the Smart Monitor M7 (Tizen 5.5).",
+  "license": "MPL-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20.19"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check:compat": "node scripts/check-compat.mjs",
+    "verify": "npm run typecheck && npm test && npm run build && npm run check:compat",
+    "icon": "node scripts/make-icon.mjs",
+    "package": "node scripts/package.mjs",
+    "deploy": "node scripts/deploy.mjs",
+    "log-server": "node server/log-server.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.4",
+    "acorn": "^8.18.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.0",
+    "vitest": "^5.0.0"
+  }
+}

@@ -1,0 +1,187 @@
+/*
+ * Input probe layout: one fixed 1920×1080 stage, scaled to the window by ui.ts.
+ * Chromium 69 constraints: no flexbox `gap` (M84) — margins only; CSS grid is fine.
+ * Background is a lifted navy rather than pure black (VA panel smearing).
+ */
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #070b1a;
+}
+
+#stage {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  transform-origin: 0 0;
+  display: grid;
+  grid-template-columns: 540px 820px 560px;
+  grid-template-rows: 96px 984px;
+  background: #0d1633;
+  color: #dfe6ff;
+  font-family: 'DejaVu Sans Mono', 'Consolas', 'Menlo', monospace;
+  font-size: 13px;
+  line-height: 17px;
+}
+
+#hdr {
+  grid-column: 1 / 4;
+  grid-row: 1;
+  position: relative;
+  padding: 10px 16px 0 16px;
+  background: #121f47;
+  border-bottom: 2px solid #2b3f7a;
+  box-sizing: border-box;
+}
+
+#hdr .title {
+  font-size: 26px;
+  line-height: 32px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  color: #ffffff;
+}
+
+#hdr .sub {
+  font-size: 15px;
+  font-weight: normal;
+  letter-spacing: 0;
+  color: #9fb0e0;
+  margin-left: 12px;
+}
+
+#hdr .headline {
+  font-size: 16px;
+  line-height: 24px;
+  color: #ffe38a;
+}
+
+#hdr .hint {
+  font-size: 14px;
+  line-height: 20px;
+  color: #b8c4ea;
+}
+
+#hdr .report {
+  position: absolute;
+  right: 16px;
+  top: 14px;
+  font-size: 14px;
+  color: #9fb0e0;
+  text-align: right;
+}
+
+.col {
+  grid-row: 2;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 6px 12px;
+  box-sizing: border-box;
+}
+
+#left {
+  grid-column: 1;
+  border-right: 1px solid #2b3f7a;
+}
+
+#center {
+  grid-column: 2;
+  padding: 0;
+}
+
+#right {
+  grid-column: 3;
+  border-left: 1px solid #2b3f7a;
+}
+
+h2 {
+  margin: 6px 0 3px 0;
+  font-size: 15px;
+  line-height: 20px;
+  color: #7fd4ff;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  flex: none;
+}
+
+#center h2 {
+  margin: 8px 12px 3px 12px;
+}
+
+h2 .dim,
+.dim {
+  color: #6c7bab;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: normal;
+  font-size: 12px;
+}
+
+pre {
+  margin: 0;
+  font: inherit;
+  white-space: pre;
+  overflow: hidden;
+  flex: none;
+}
+
+pre.wrap {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+pre.log {
+  height: 480px;
+  color: #cfe3ff;
+}
+
+pre.verdicts {
+  font-size: 14px;
+  line-height: 19px;
+  color: #ffffff;
+}
+
+#env {
+  flex: 1 1 auto;
+  color: #b8c4ea;
+}
+
+#seen {
+  max-height: 190px;
+}
+
+#keys {
+  max-height: 170px;
+  color: #b8c4ea;
+}
+
+#pads {
+  flex: 1 1 auto;
+}
+
+canvas#arena {
+  display: block;
+  width: 820px;
+  height: 726px;
+  flex: none;
+}
+
+#protocol {
+  margin: 0 12px 0 34px;
+  padding: 0;
+  font-size: 15px;
+  line-height: 22px;
+  color: #dfe6ff;
+}
+
+code {
+  color: #ffe38a;
+}

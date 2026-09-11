@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>InputProbe</title>
+    <!-- Samsung product-info APIs; resolved by the Tizen web runtime. 404s harmlessly in a desktop browser.
+         `vite-ignore` keeps Vite from trying to bundle it (Vite strips the attribute). -->
+    <script vite-ignore src="$WEBAPIS/webapis/webapis.js"></script>
+    <script type="module" src="./src/main.ts"></script>
+  </head>
+  <body>
+    <div id="stage">
+      <header id="hdr">
+        <div class="title">INPUT PROBE <span class="sub">Shmup Cup · remote / gamepad / display diagnostics</span></div>
+        <div id="report" class="report">report: off</div>
+        <div id="headline" class="headline">collecting environment…</div>
+        <div class="hint">
+          <b>Back ×3 quickly</b> = exit · <b>Play/Pause</b> (or <b>R</b>) = reset hold/repeat stats · all events also go
+          to <code>console.log</code>
+        </div>
+      </header>
+
+      <section id="left" class="col">
+        <h2>Event log <span class="dim">t(ms) DOWN/UP name(code) repeat kind Δ</span></h2>
+        <pre id="log" class="log"></pre>
+        <h2>Environment</h2>
+        <pre id="env" class="wrap"></pre>
+      </section>
+
+      <section id="center" class="col">
+        <canvas id="arena" width="820" height="726"></canvas>
+        <h2>On-device test protocol</h2>
+        <ol id="protocol">
+          <li>Tap each arrow, OK and Back once.</li>
+          <li>Hold → for 3 s; release. Repeat with ↑.</li>
+          <li>Hold →, then also press ↑ (diagonal attempt).</li>
+          <li>Hold →, then tap OK (chord attempt).</li>
+          <li>Press every other remote button: Play/Pause, Ch±, Vol±, Color/Number pad keys.</li>
+          <li>Film the flash box with a 240 fps phone camera while tapping OK ~10 times.</li>
+          <li>Pair a gamepad (and a second one); press buttons / move sticks.</li>
+          <li>Press Home, then return to the app.</li>
+          <li>Photograph the Verdicts panel, or collect the JSONL log from the log server.</li>
+        </ol>
+      </section>
+
+      <section id="right" class="col">
+        <h2>Verdicts &amp; stats</h2>
+        <pre id="verdicts" class="verdicts"></pre>
+        <h2>Checklist</h2>
+        <pre id="checklist"></pre>
+        <h2>Seen keys <span class="dim">downs/ups/repeats</span></h2>
+        <pre id="seen"></pre>
+        <h2>Registered keys <span class="dim">(Vol± registration takes volume control away)</span></h2>
+        <pre id="keys" class="wrap"></pre>
+        <h2>Gamepads</h2>
+        <pre id="pads" class="wrap"></pre>
+      </section>
+    </div>
+  </body>
+</html>
