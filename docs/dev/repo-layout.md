@@ -41,7 +41,7 @@ shmup-cup/
 │   │   │   ├── loop/           ✔ fixed-step accumulator (snap, cap, reset)
 │   │   │   ├── game/           ✔ createGame(): composition root, suspend/resume
 │   │   │   ├── presentation/   ✔ IRenderer / IAudio / RenderFrame contracts
-│   │   │   ├── rng/ math/ events/ pools/                   engine foundations (placeholders)
+│   │   │   ├── rng/ math/ events/ pools/                 ✔ engine foundations (sfc32, trig tables, event ring, SoA pools)
 │   │   │   ├── player/ weapons/ options/ shields/ powerups/ player-side systems (placeholders)
 │   │   │   ├── enemies/ bullets/ patterns/ bosses/         enemy-side systems (placeholders)
 │   │   │   ├── collision/ stage/                           world (placeholders)
@@ -79,7 +79,7 @@ shmup-cup/
 ├── assets/
 │   ├── source/             editable art/audio sources (sprites, tilesets, fonts, audio/music, audio/sfx) — in git
 │   └── generated/          pipeline output (atlases, fonts, OGG) — ignored
-├── scripts/                repo-level Node scripts: clean.mjs, generate-assets.mjs (placeholder)
+├── scripts/                repo-level Node scripts: clean.mjs, generate-assets.mjs (placeholder), gen-trig-tables.mjs
 ├── test/                   cross-package integration tests (Vitest project "integration", part of `pnpm test`)
 ├── docs/
 │   ├── client/             player/tester docs

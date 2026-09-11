@@ -29,7 +29,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "clean": "turbo run clean && node scripts/clean.mjs .turbo coverage",
-    "assets": "node scripts/generate-assets.mjs"
+    "assets": "node scripts/generate-assets.mjs",
+    "trig:tables": "node scripts/gen-trig-tables.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

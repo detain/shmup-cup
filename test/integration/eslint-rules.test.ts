@@ -1,8 +1,9 @@
 /**
  * Proves the ESLint flat config enforces the architecture rules on virtual files:
- * packages/core stays free of DOM / WebGL / audio / Node / platform APIs, clocks and
- * Math.random; runtime code shipped to Tizen 5.5 is limited to Chromium 69 APIs; the
- * web dev app may use import.meta; tests may use Node.
+ * packages/core stays free of DOM / WebGL / audio / Node / platform APIs, clocks,
+ * Math.random and the engine-dependent transcendentals (Math.sin & friends, `**`);
+ * runtime code shipped to Tizen 5.5 is limited to Chromium 69 APIs; the web dev app may
+ * use import.meta; tests may use Node.
  *
  * Type-aware rules are switched off for these virtual files (they are not on disk, so the
  * TypeScript project service cannot load them); every rule checked here is syntactic.
@@ -80,6 +81,40 @@ describe('eslint: packages/core purity', () => {
     expect(await rulesFor(CORE, code)).toContain('no-restricted-properties');
   });
 
+  it.each([
+    ['Math.sin', 'export const a = Math.sin(1);'],
+    ['Math.cos', 'export const a = Math.cos(1);'],
+    ['Math.tan', 'export const a = Math.tan(1);'],
+    ['Math.asin', 'export const a = Math.asin(1);'],
+    ['Math.acos', 'export const a = Math.acos(1);'],
+    ['Math.atan', 'export const a = Math.atan(1);'],
+    ['Math.atan2', 'export const a = Math.atan2(1, 2);'],
+    ['Math.exp', 'export const a = Math.exp(1);'],
+    ['Math.log', 'export const a = Math.log(1);'],
+    ['Math.pow', 'export const a = Math.pow(2, 3);'],
+    ['Math.hypot', 'export const a = Math.hypot(3, 4);'],
+    ['Math.cbrt', 'export const a = Math.cbrt(8);'],
+  ])('forbids the engine-dependent %s (use core/math tables)', async (_label, code) => {
+    expect(await rulesFor(CORE, code)).toContain('no-restricted-properties');
+  });
+
+  it.each([
+    ['the ** operator', 'export const a = 2 ** 3;'],
+    ['the **= operator', 'export let a = 2;\na **= 3;'],
+  ])('forbids %s', async (_label, code) => {
+    expect(await rulesFor(CORE, code)).toContain('no-restricted-syntax');
+  });
+
+  it('allows the exactly specified IEEE operations', async () => {
+    const code =
+      'export const a = Math.sqrt(2) + Math.floor(1.5) * Math.abs(-1) - Math.round(0.5);';
+    expect(await rulesFor(CORE, code)).toEqual([]);
+  });
+
+  it('leaves Math.sin alone outside packages/core', async () => {
+    expect(await rulesFor(RUNTIME, 'export const a = Math.sin(1);')).toEqual([]);
+  });
+
   it('forbids performance.now (both as a global and as a clock)', async () => {
     const rules = await rulesFor(CORE, 'export const a = performance.now();');
     expect(rules).toContain('no-restricted-globals');
@@ -103,7 +138,7 @@ describe('eslint: packages/core purity', () => {
     const code = [
       'export const table = new Float32Array(256);',
       'export const ids = new Map<number, string>();',
-      'export const done = Promise.resolve(Math.floor(Math.sin(1) * 100));',
+      'export const done = Promise.resolve(Math.floor(Math.sqrt(2) * 100));',
       'export const frozen = Object.freeze({ a: [1, 2, 3].map((n) => n * 2) });',
       'export const bits = new Int16Array(16).fill(0);',
     ].join('\n');

@@ -176,7 +176,8 @@ export default defineConfig([
     },
   },
 
-  // 4. packages/core must stay platform-agnostic and deterministic.
+  // 4. packages/core must stay platform-agnostic and deterministic
+  //    (no clocks, no Math.random, no engine-dependent transcendentals or **).
   {
     files: ['packages/core/src/**/*.ts'],
     languageOptions: { globals: {} },
@@ -191,6 +192,23 @@ export default defineConfig([
       'no-restricted-imports': [
         'error',
         {
+          // Exact module names: `patterns` uses gitignore-style matching, where a bare
+          // name like "events" would also match the core's own './events/index.js'.
+          paths: [
+            'fs',
+            'path',
+            'os',
+            'child_process',
+            'url',
+            'util',
+            'events',
+            'crypto',
+            'stream',
+            'buffer',
+          ].map((name) => ({
+            name,
+            message: 'packages/core must not import Node built-ins.',
+          })),
           patterns: [
             {
               group: ['pixi.js', 'pixi.js/*', '@pixi/*', 'howler', 'electron', 'electron/*'],
@@ -202,17 +220,7 @@ export default defineConfig([
                 'packages/core is the bottom of the dependency graph; it may not import other workspace packages.',
             },
             {
-              group: [
-                'node:*',
-                'fs',
-                'path',
-                'os',
-                'child_process',
-                'url',
-                'util',
-                'events',
-                'crypto',
-              ],
+              group: ['node:*'],
               message: 'packages/core must not import Node built-ins.',
             },
             {
@@ -229,6 +237,26 @@ export default defineConfig([
           property: 'random',
           message: 'Use the seeded RNG streams (core/rng) — Math.random breaks replays.',
         },
+        // Transcendentals are not exactly specified by IEEE 754: engines round them
+        // differently, which would desynchronise replays (shmup_feat.md §22).
+        ...[
+          'sin',
+          'cos',
+          'tan',
+          'asin',
+          'acos',
+          'atan',
+          'atan2',
+          'exp',
+          'log',
+          'pow',
+          'hypot',
+          'cbrt',
+        ].map((property) => ({
+          object: 'Math',
+          property,
+          message: `Math.${property} may differ between JS engines: use the committed tables in core/math (sinB, cosB, atan2B, EASINGS). + - * / and Math.sqrt are fine.`,
+        })),
         {
           object: 'Date',
           property: 'now',
@@ -252,6 +280,32 @@ export default defineConfig([
           message: 'Promise.allSettled needs Chrome 76.',
         },
         { object: 'Promise', property: 'any', message: 'Promise.any needs Chrome 85.' },
+      ],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "BinaryExpression[operator='**'], AssignmentExpression[operator='**=']",
+          message:
+            'The ** operator is not exactly specified across engines: use repeated multiplication or Math.sqrt (shmup_feat.md §22).',
+        },
+        // Re-list the Chrome 69 restrictions (this block replaces the array from layer 2).
+        {
+          selector: "CallExpression[callee.property.name='replaceAll']",
+          message: 'String.prototype.replaceAll needs Chrome 85 (Tizen 5.5 = Chrome 69).',
+        },
+        {
+          selector: "CallExpression[callee.property.name='at']",
+          message: '.at() needs Chrome 92 (Tizen 5.5 = Chrome 69); index directly.',
+        },
+        {
+          selector: "CallExpression[callee.name='structuredClone']",
+          message: 'structuredClone needs Chrome 98 (Tizen 5.5 = Chrome 69).',
+        },
+        {
+          selector: 'MetaProperty[meta.name="import"][property.name="meta"]',
+          message:
+            'import.meta is a syntax error in the classic IIFE script shipped to Tizen; pass values in via config instead.',
+        },
       ],
       'no-console': 'error',
     },

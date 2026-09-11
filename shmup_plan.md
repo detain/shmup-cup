@@ -330,6 +330,33 @@ the browser dev app and as a Tizen 5.5 bundle.
     alloc/free/flush order and exhaustion.
   - Lint fixture proves `Math.sin(x)` and `x ** 2` fail in `packages/core`.
 - **Refs:** `shmup_feat.md` §22 (determinism, pools), §12 (quantized angles); `shmup_tech.md` §4.2, §4.6.
+- **As built:**
+  - `scripts/gen-trig-tables.mjs` computes both tables with **BigInt fixed-point arithmetic**
+    (Machin's formula for π, Taylor series for sin, tangent boundaries for `ATAN_TABLE`) instead of
+    `Math.sin` / `Math.atan`, and formats its output through Prettier. That makes "re-running the
+    script reproduces `trig-table.ts` byte-for-byte" true on *any* engine, not just the one that
+    generated the committed copy, and keeps the file `format:check`-clean. It cross-checks itself
+    against the host `Math` before writing. `--check` (also `pnpm trig:tables`) verifies the
+    committed file; `--out FILE` writes elsewhere (used by the test).
+  - `ANGLE_UNITS` / `ANGLE_MASK` / `ANGLE_QUARTER` / `TRIG_SCALE` / `ATAN_TABLE_STEPS` live in the
+    generated `math/trig-table.ts` (the script owns their values) and are re-exported from
+    `math/index.ts`.
+  - `math` also exports `wrapAngle` (needed by every caller that keeps an angle in a variable) and
+    the planned 16.16 helpers are dropped, as the step's implementation notes require.
+  - `events`: `SimEventKind` became a numeric const object (`SimEventKind.Sfx === 0`) plus
+    `SIM_EVENT_KIND_NAMES`; the placeholder's string union is gone. `EventQueue` gained `capacity`
+    and `dropped`; `clear()` resets the drop counter too.
+  - `pools`: `SoaPool<S>` is generic over its schema so `pool.fields.x` is typed; it also exposes
+    `pendingFreeCount` and `clear()`. Field arrays are created in sorted field-name order so a
+    future state hash does not depend on how the schema literal was written.
+  - `rng`: `setState` accepts a `Uint32Array` as well as an `RngState`, and `RNG_STATE_WORDS` is
+    exported so callers can size the `getStateInto` buffer. `callCount` is diagnostic and is not
+    restored by `setState`.
+  - ESLint: adding the `**` ban meant re-listing the Chrome-69 `no-restricted-syntax` entries inside
+    the `packages/core` block (a flat-config block replaces, not merges, a rule's options). While
+    adding the rules, the Node-built-in `no-restricted-imports` **patterns** were moved to `paths`:
+    ESLint ≥ 9 matches patterns gitignore-style, so the bare pattern `events` also matched the
+    core's own `./events/index.js`.
 
 ### M1-02 — Content schemas, loader & content module
 
