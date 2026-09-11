@@ -16,7 +16,8 @@ ship, collision and the state hash), [stage-runtime.md](stage-runtime.md) (scrol
 camera path, timeline, checkpoints, tile terrain, parallax),
 [enemies-and-behaviors.md](enemies-and-behaviors.md) (enemies, formations, behaviour coroutines,
 movers, spline paths), [bullets-and-patterns.md](bullets-and-patterns.md) (enemy bullets,
-lasers, fire primitives, rank).
+lasers, fire primitives, rank), [weapons-and-options.md](weapons-and-options.md) (player
+weapons, loadouts, autofire, hits on enemies, trailing Options).
 
 ## Layers
 
@@ -51,7 +52,8 @@ lasers, fire primitives, rank).
                     │ loop, engine primitives, content loader,       │
                     │ createGame(), the World + tick pipeline,       │
                     │ stage, player, collision, enemies, behaviour   │
-                    │ scripts + movers, bullets + lasers, rank;      │
+                    │ scripts + movers, bullets + lasers, rank,      │
+                    │ player weapons + Options;                      │
                     │ other systems: placeholders                    │
                     └────────────────────────────────────────────────┘
 ```
@@ -82,7 +84,8 @@ calls the renderer or the mixer. Each displayed frame the host:
    registries and the dispatcher exist (`core/events`, shell `dispatch`), and since M1-06 the
    queue belongs to the World (`game.events === game.world.events`); the stage pushes `Music`
    (M1-07), the enemies push explosion `Sfx` / `Particles` and `FormationBonus` (M1-08), bullet
-   cancels push `Particles` (`FX_CUES.BulletCancel`, M1-09), and the handlers arrive with the
+   cancels push `Particles` (`FX_CUES.BulletCancel`, M1-09), the player weapons push their
+   `Sfx` cues (`PlayerShot`, `PlayerMissile`, `Clink` — M1-10), and the handlers arrive with the
    FX/audio steps (M1-14, M1-15);
 3. reads the read-only `RenderFrame` with `game.renderFrame()` — world sprite batches, HUD and
    UI draw lists, screen effects (plan §3.4) — and hands it to `renderer.render()`.
@@ -170,14 +173,17 @@ The deterministic primitives every later system builds on. Details and usage rul
 ### The World (`core/world`, `stage`, `player`, `collision`, `debug`)
 
 One gameplay session, built in M1-06; the stage runtime joined in M1-07, the enemies in
-M1-08 and the enemy bullets, lasers and rank in M1-09. Details: [sim-world.md](sim-world.md),
-[stage-runtime.md](stage-runtime.md), [enemies-and-behaviors.md](enemies-and-behaviors.md),
-[bullets-and-patterns.md](bullets-and-patterns.md).
+M1-08, the enemy bullets, lasers and rank in M1-09 and the player weapons and Options in M1-10.
+Details: [sim-world.md](sim-world.md), [stage-runtime.md](stage-runtime.md),
+[enemies-and-behaviors.md](enemies-and-behaviors.md),
+[bullets-and-patterns.md](bullets-and-patterns.md),
+[weapons-and-options.md](weapons-and-options.md).
 
 - **`world`** — `createWorld(config, content)` allocates the session: tick counter, RNG
   streams, event queue, two `PlayerShip`s (P2 inactive until co-op), the camera, the stage
   `config.stage` names (runner, collision map, parallax and terrain views — or none: free
-  flight with a static camera), the enemy system, the rank and the bullet system, status,
+  flight with a static camera), the enemy system, the rank, the bullet system and the weapon
+  system (with `config.loadout` applied), status,
   hit-stop, debug flags, the SoA pool
   registry (flushed in phase 8, hashed), a broad-phase grid over the camera view and the
   `WorldView` the renderer draws. `stepWorld(world, input)` runs one tick and never allocates; `createGame`
@@ -204,6 +210,16 @@ M1-08 and the enemy bullets, lasers and rank in M1-09. Details: [sim-world.md](s
   The fire primitives of `patterns` (aimed, N-way, ring, spiral, stack, spray, homing,
   delayed) scale bullet speeds and fire intervals by the session's rank — constant in M1 (the
   difficulty's base, Normal = 2, where every curve is exactly 1).
+- **`weapons`**, **`options`** — the player shots (a 96-slot SoA pool drawn through a mirror
+  batch, lasers as rows of segments) of meter mode's Type A arsenal compiled from
+  `content/weapons/` (main shot, Double pair, piercing Laser that grows and follows its shooter,
+  Missile that falls and slides along the floor), one loadout per player (`GameConfig.loadout`
+  at creation), always-on autofire paced by `GameConfig.autofireInterval` / `missileInterval`
+  with caps per shooter; shots ride the camera, die on terrain, and hit the enemies through the
+  grid (phase 6 finds the hits — equal to brute force — phase 7 applies them: armour clinks,
+  piercing shots keep per-enemy cooldowns, kills are credited to a player). Up to four Options
+  per ship follow a screen-space trail that advances only with movement input (D26) and fire
+  every weapon with their own caps.
 - **`player`** — KESTREL movement from `content/player/`: speed levels (D3), diagonals × 0.7071
   (D4), no inertia, riding the camera scroll, clamped to the camera view minus margins,
   banking, a 40-tick fly-in; `playerHit` records hits (terrain contact since M1-07, enemy
@@ -212,8 +228,8 @@ M1-08 and the enemy bullets, lasers and rank in M1-09. Details: [sim-world.md](s
 - **`collision`** — closed scalar shape tests (circle, AABB, circle–AABB, capsule–circle,
   segment–AABB), layer masks, a counting-sort uniform grid whose queries equal brute force,
   and pixel-exact terrain queries over per-tile column-height masks (phase 6 tests the ship's
-  terrain box and the ships against the enemies' hurtboxes; the bullet system tests bullets and
-  laser capsules against the ships by brute force).
+  terrain box, the ships and the player shots against the enemies' hurtboxes; the bullet system
+  tests bullets and laser capsules against the ships by brute force).
 - **`debug`** — `hashWorld(world)`: FNV-1a over every piece of simulated state in a fixed
   order; two worlds with the same seed and input hash equal (golden replays, M1-19).
 
@@ -412,7 +428,9 @@ no death / respawn yet), `collision` (partial: no bending-laser chains yet), `de
 state hash and flags, no controls yet), `enemies` (partial: no rank modifiers / Option Hunter
 yet), `patterns` (partial: runner, movers and fire primitives — no pattern DSL yet),
 `behaviors` (partial: the M1 roster), `bullets` (implemented for P0 — bending lasers and cancel
-into points come with M2-02), `rank` (partial: constant rank, no growth yet); input-web `keymap`, `keyboard`, `gamepad`, `web-input`, `remote`, `rebind`
+into points come with M2-02), `rank` (partial: constant rank, no growth yet), `weapons`
+(partial: Type A — loadouts B–D and Direct mode later), `options` (partial: the standard trail);
+input-web `keymap`, `keyboard`, `gamepad`, `web-input`, `remote`, `rebind`
 (partial: profiles, contexts, persistence hook — the rebinding UI comes in M2-16); audio-web
 `web-audio`;
 render-pixi `renderer`, `viewport`, `test-pattern`, `palette`, `atlas`, `layers`, `sprites`,
@@ -438,7 +456,8 @@ plugins in `vite.shared.ts`) has no `moduleInfo`; it is covered by the tests und
 | A game action | Append a bit to `Action` (never renumber — masks are recorded in replays), add it to `ACTION_NAMES`, the shipped input profiles and the built-in bindings in `input-web/keymap` / `gamepad` |
 | An enemy, a path, a behaviour or a mover | Enemies and paths are JSON (`content/enemies/`, `content/paths/`); a behaviour is a `defineBehavior` coroutine added to `DEFAULT_BEHAVIOR_DEFS`; a mover a new `MoverKind` — [enemies-and-behaviors.md](enemies-and-behaviors.md#extending-it) |
 | A bullet pattern, bullet kind or laser | A behaviour calling the `ScriptApi` fire primitives (`aimed`, `nWay`, `ring`, …, `laser`, `fireWait`); a new primitive in `core/patterns` with its `ScriptApi` wrapper; a kind in `BULLET_KINDS` — [bullets-and-patterns.md](bullets-and-patterns.md#extending-it) |
-| Something the engine draws whatever the content | Add its sprite name to `ENGINE_SPRITES` (via `core/bullets` `BULLET_SPRITES` today): hosts pass it as `loadContent`'s `extraSprites` and `pnpm content:check` verifies it against the atlas |
+| A weapon, a weapon behaviour or an Option formation | A weapon is JSON in `content/weapons/` (tunables in `params`); a behaviour is a `ShotKind` plus its tables and a branch of the weapon system's `update()`; formations branch in `OptionGroup.follow` — [weapons-and-options.md](weapons-and-options.md#extending-it) |
+| Something the engine draws whatever the content | Add its sprite name to `ENGINE_SPRITES` (`core/bullets` `BULLET_SPRITES` and `core/options` `OPTION_SPRITE` today): hosts pass it as `loadContent`'s `extraSprites` and `pnpm content:check` verifies it against the atlas |
 | A game system | Fill in its placeholder module in `packages/core/src/<module>/`, set `moduleInfo.status`, export it from `packages/core/src/index.ts`, call it from its phase function in `core/world` (never reorder `WORLD_PHASES`), allocate its state in `createWorld` and add simulated state to `hashWorld` — [sim-world.md](sim-world.md#extending-it) |
 | Content (enemies, weapons, stages, tilesets) | JSON under `content/` following its README, then `pnpm content:check` (try a stage with `pnpm dev` and `?stage=<id>`). New fields or a new kind: extend the schemas in `core/data` — checklist in [content-data.md](content-data.md#extending-it) |
 | A stage event type or camera feature | [stage-runtime.md](stage-runtime.md#extending-it): schema in `core/data`, a `StageEventCode`, the runner's own part (if any) and the World's hook |

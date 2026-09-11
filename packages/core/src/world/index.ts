@@ -757,8 +757,8 @@ export function stepWorld(world: World, input: Readonly<InputSnapshot>): void {
 
 /**
  * Refreshes the mirror batches of {@link World.view} (the enemies, the player shots and Options,
- * the player ships) and scrolls the parallax bands with the camera. Runs at the end of every tick (phase 9)
- * and once at creation. Never allocates.
+ * the player ships) and scrolls the parallax bands with the camera. Runs at the end of every
+ * tick (phase 9) and once at creation. Never allocates.
  *
  * @remarks
  * A ship is drawn when its slot is active, it is not `dying` / `dead` and its spec has a sprite;

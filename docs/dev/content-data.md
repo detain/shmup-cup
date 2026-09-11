@@ -364,6 +364,8 @@ format, the new `tileset` kind and the third (terrain) load pass
 ([stage-runtime.md](stage-runtime.md)); M1-08 (done) — the `paths` kind, the full M1
 `enemies` format, `knownScripts` passed by the hosts and `checkEnemyBehaviors`
 ([enemies-and-behaviors.md](enemies-and-behaviors.md)); M1-09 (done) — `extraSprites` and the
-engine's own sprites ([bullets-and-patterns.md](bullets-and-patterns.md)); M1-10 reads the Type A
-weapons (and moves `WEAPON_SCRIPT_IDS` to `weapons`); the pattern content kind arrives with the
-DSL of M2-02.
+engine's own sprites ([bullets-and-patterns.md](bullets-and-patterns.md)); M1-10 (done) — the
+Type A weapons drive the weapon system (`refireTicks` optional, behaviour tunables in `params`
+checked by `checkWeaponBehaviors`, `WEAPON_SCRIPT_IDS` moved to `weapons`, `options/orb` joined
+`ENGINE_SPRITES` — [weapons-and-options.md](weapons-and-options.md#content-the-type-a-arsenal));
+the pattern content kind arrives with the DSL of M2-02.

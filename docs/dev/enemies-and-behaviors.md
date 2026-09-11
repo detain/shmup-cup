@@ -48,7 +48,7 @@ stepWorld, every tick
  │               on-screen / settle / despawn rules
  ├─ 6 collision  insertColliders (hurtboxes → grid, id = slot) → grid.build() →
  │               collidePlayers (hurt circle × box → playerHit(Contact))
- ├─ 7 damage     (shots of M1-10 call enemies.damage / kill)
+ ├─ 7 damage     weapons.applyHits → enemies.damage(enemy, amount, player) / kill (M1-10)
  ├─ 8 removal    flush: Removed slots → Free
  └─ 9 fx         sync: live, non-ghost enemies → groundBatch / airBatch (flash, flips, frame)
 ```
@@ -81,9 +81,8 @@ without `path` uses the spawn event's path. Bounds are checked by the schema (ve
 Weapon and enemy behaviours share one interned table, `ContentDb.scripts`. `loadContent`
 reports an unknown script id only when it is given `knownScripts`; the hosts pass
 `KNOWN_SCRIPT_IDS` (`core/behaviors`) = the eight enemy behaviours ∪ `WEAPON_SCRIPT_IDS` (the
-four Type A ids of M1-10 — kept in `behaviors` for now because a placeholder module may not
-export runtime values; M1-10 moves them to `weapons`). `checkEnemyBehaviors(db, registry?)`
-then reports what the schema cannot know:
+four Type A ids, defined in `core/weapons` since M1-10 and re-exported by `behaviors`).
+`checkEnemyBehaviors(db, registry?)` then reports what the schema cannot know:
 
 | Issue path | Message |
 |---|---|
@@ -297,12 +296,16 @@ and runs the exact closed circle-vs-box test (inlined `circleAabb`) on the candi
 contact calls `playerHit(ship, PlayerHitCause.Contact, tick, debugFlags)`, at most **one
 accepted hit per ship and tick**. Until M1-12 a hit is only recorded on the ship.
 
-Phase 7 is where M1-10's shots will call `damage(enemy, amount)`: ignored for non-live,
-ghost and `Invulnerable` enemies; otherwise `hp −= amount`, `flashTicks = 4` (drawn with
+Phase 7 is where the player shots (M1-10, `weapons.applyHits()`) call `damage(enemy, amount,
+by)` — `by` is the player credited with a kill (default `-1` = nobody). It is ignored for
+non-live, ghost and `Invulnerable` enemies (armour: the weapons answer with a `Clink` and the
+shot dies — [weapons-and-options.md](weapons-and-options.md#hits-phases-67-collide--applyhits));
+otherwise `hp −= amount`, `flashTicks = 4` (drawn with
 `SpriteFlag.Flash`, the `@flash` sibling of D30), `Sfx EnemyHit` while it survives; at 0 hp
 → `kill(enemy)` (also the Mega Crash / debug entry point):
 
-1. the kill is recorded in `outcomes` (spec, x, y, score);
+1. the kill is recorded in `outcomes` (spec, x, y, score, and `killBy` — the player credited,
+   M1-10);
 2. `Sfx EnemyExplodeSmall | Medium | Large` and `Particles` with `FX_CUES.ExplosionSmall |
    Medium | Large` (intensity 1) are pushed at its position;
 3. its own drop is added to the outcomes;
@@ -411,10 +414,12 @@ document it in the module docblock and in `content/enemies/README.md`, and test 
 and 4200 (formations of drifters and fans with bonuses, one drifter formation with `drop:
 null`, carriers, turrets on the floor and the ceiling, walkers and hatches on the rolling
 ground). The new pixel-map sprite `enemies/hatch` (2 frames, lid closed / open, `hitFlash`)
-joined the atlas; the others reuse M1-03's small-enemy sprites. With nobody shooting (weapons
-come in M1-10) every enemy flies past; at most 11 are alive at once. Since M1-09 the turrets,
-walkers and the two orbiters fire (at most about a dozen bullets are alive at once with a ship
-that stands still; no laser is fired).
+joined the atlas; the others reuse M1-03's small-enemy sprites. With nobody shooting every
+enemy flies past; at most 11 are alive at once. Since M1-09 the turrets, walkers and the two
+orbiters fire (at most about a dozen bullets are alive at once with a ship that stands still;
+no laser is fired). Since M1-10 the KESTREL autofires, so enemies in front of it die (hit
+flash first for those with more than 1 hp); a test that needs them all alive turns autofire
+off (`{ autofire: false, remoteMode: false }`). No shipped enemy is armoured.
 
 Fly it with `pnpm dev` → `http://localhost:5173/?stage=test-range`; headless:
 
@@ -489,7 +494,8 @@ code):
 | The allocation guard fails after a behaviour change | A closure, array, object literal or string in the generator body, or a `yield 1` loop resuming every tick. Sleep longer, keep state in `let`s of whole numbers or on the `Enemy` |
 | The ship flies through enemies | Expected until M1-12: contact is recorded (`ship.hitCause = Contact`, `hits`), not fatal; ignored during the fly-in, while invulnerable and in god mode. The same holds for bullets (`Bullet`, the bullet is removed) and lasers (`Laser`) |
 | A behaviour's shot never appears | `canFire()` was false (off screen, unsettled, ghost) — the wrappers return `-1` / `0` then; or the content was loaded without `ENGINE_SPRITES`, so bullets are hidden ([bullets-and-patterns.md](bullets-and-patterns.md#gotchas)) |
-| Enemies never die | Nothing shoots yet (M1-10); tests call `world.enemies.damage` / `kill` |
+| Enemies never die | The ship is not shooting at them: it is still flying in, the content has no weapons, or autofire is off; tests can also call `world.enemies.damage` / `kill` |
+| Enemies die in a test that expects them to fly past | The KESTREL autofires by default since M1-10 — pass `{ autofire: false, remoteMode: false }` |
 | A new `Enemy` field diverges in replays unnoticed | Add it to `mixEnemy` in `core/debug` |
 | A path has an odd kink | Control points are relative to the *start*; the first point is normally `(0, 0)`. Centripetal splines never cusp between close points — a kink is a point where the curve really turns |
 | An e2e screenshot test that tracks scrolling became flaky | With enemies drawn and parallel workers the loop may run up to 4 ticks per frame; compare frames closer together (the stage test moved from 60 to 30 frames) |
@@ -499,8 +505,9 @@ code):
 - **M1-09** (done) — enemy bullets and lasers: fire primitives on `ScriptApi`, the roster fires
   (turret aimed, orbiter ring, walker aimed 3-way), `canFire()` gates them
   ([bullets-and-patterns.md](bullets-and-patterns.md)).
-- **M1-10** — player shots query the enemy grid entries and call `damage` (armour → `clink`);
-  `WEAPON_SCRIPT_IDS` moves to `weapons`.
+- **M1-10** (done) — player shots query the enemy grid entries and call `damage` with the
+  player credited (`outcomes.killBy`), armour → `Clink`; `WEAPON_SCRIPT_IDS` moved to `weapons`
+  ([weapons-and-options.md](weapons-and-options.md)).
 - **M1-11** — capsules from `outcomes.drop*`; the Mega Crash `kill`s every enemy without
   `megaCrashImmune`.
 - **M1-12** — score from `outcomes.killScore` / `bonusPoints`; contact kills the ship.

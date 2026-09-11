@@ -4,7 +4,8 @@ How a simulation state becomes pixels, and how the web and TV apps boot. Filled 
 step **M1-04**. Later steps *fill* the contract (the World in M1-06, see
 [sim-world.md](sim-world.md); terrain and parallax in M1-07, see
 [stage-runtime.md](stage-runtime.md); the enemy bullets and the new `LaserView` in M1-09, see
-[bullets-and-patterns.md](bullets-and-patterns.md); the HUD and menus in M1-16;
+[bullets-and-patterns.md](bullets-and-patterns.md); the player shots and Options in M1-10, see
+[weapons-and-options.md](weapons-and-options.md); the HUD and menus in M1-16;
 particles and screen effects in M1-14) without changing its shape.
 
 This page is the *how and why*. Exact signatures are in
@@ -54,8 +55,8 @@ Strings enter only through a draw list's string slots, and only when the text ch
 | 2 | `Terrain` | world | the stage's tile terrain (M1-07) |
 | 3 | `GroundEnemies` | world | turrets, walkers, hatches (the enemy system's ground batch, M1-08) |
 | 4 | `AirEnemies` | world | flying enemies (the enemy system's air batch, M1-08), bosses |
-| 5 | `PlayerShots` | world | shots, lasers, missiles |
-| 6 | `Player` | world | ships, Options, shields |
+| 5 | `PlayerShots` | world | shots, lasers (rows of 8-px segments), missiles — the weapon system's mirror batch (M1-10) |
+| 6 | `Player` | world | Options (their own batch, listed before the ships so they draw below them — M1-10), ships, shields |
 | 7 | `Hitbox` | world | hitbox marker |
 | 8 | `Items` | world | capsules |
 | 9 | `Fx` | world | explosions, particles |
@@ -155,8 +156,8 @@ hud.sprite(lifeSpriteId, 0, 4, 209);
 `RenderFrame = { tick, alpha, world, hud, ui, screen }`. `createGame()` builds one and
 returns the same object from every `renderFrame()` call: `world` is the World's view
 (`game.world.view`, the same object for the whole session — its batches are the enemies'
-ground / air mirrors (M1-08), the players' mirror on `LayerId.Player` (M1-06) and the enemy
-bullet pool (M1-09), plus the laser view), `hud` / `ui` are the session's (empty) draw lists,
+ground / air mirrors (M1-08), the player-shot and Option mirrors (M1-10), the players' mirror
+on `LayerId.Player` (M1-06) and the enemy bullet pool (M1-09), plus the laser view), `hud` / `ui` are the session's (empty) draw lists,
 `screen` is all zeros until the fx system (M1-14). `screen.shakeX/Y` are rounded by the renderer; `flash` (white over the
 playfield, under the HUD) and `dim` (black under the UI layer) are 0…1 and clamped.
 
@@ -359,14 +360,15 @@ kind throws `RangeError`). Dispatching is a table lookup and a loop — no alloc
 Handlers receive the queue's **reused** record: copy fields out, never keep it. Events with
 no handler are counted in `unhandled` and dropped; the queue is the World's (M1-06). The stage
 pushes `Music` (M1-07) and the enemies push explosion `Sfx` / `Particles` (`FX_CUES`) and
-`FormationBonus` (M1-08), but the audio and FX handlers only arrive in M1-14 / M1-15 — until
-then these events are counted as unhandled.
+`FormationBonus` (M1-08) and the player weapons push `Sfx` (`PlayerShot`, `PlayerMissile`,
+`Clink` — M1-10), but the audio and FX handlers only arrive in M1-14 / M1-15 — until then these
+events are counted as unhandled.
 
 ### Scenes until the scene stack exists
 
 | `?scene=` | What is drawn | Sprite name table |
 |---|---|---|
-| (none) / `flight` | **Free flight** (`createFlightScene(game)`, M1-06): the game's World — the KESTREL flying in, then moving under the player's control — over three drifting star layers, both HUD bars (`1P`, a zero score, `FREE FLIGHT`, stock ships, `ARROWS MOVE`). With a stage (`gameConfig.stage`, the web app's `?stage=<id>`, M1-07): the stage's parallax bands and scrolling terrain instead of the starfield, the stage name as the title, the enemies its timeline spawns (M1-08) and their bullets (M1-09) | `content.db.sprites.names` + `FLIGHT_SPRITES` |
+| (none) / `flight` | **Free flight** (`createFlightScene(game)`, M1-06): the game's World — the KESTREL flying in, then moving under the player's control — over three drifting star layers, both HUD bars (`1P`, a zero score, `FREE FLIGHT`, stock ships, `ARROWS MOVE`). With a stage (`gameConfig.stage`, the web app's `?stage=<id>`, M1-07): the stage's parallax bands and scrolling terrain instead of the starfield, the stage name as the title, the enemies its timeline spawns (M1-08) and their bullets (M1-09). The ship autofires in every build, with Options and lasers under the web app's `?loadout=full` (M1-10) | `content.db.sprites.names` + `FLIGHT_SPRITES` |
 | `showcase` | The **sprite showcase** (`createShowcase()`): three scrolling star layers, the KESTREL flying a figure-eight with its thruster and two Options replaying its path, five drifters with periodic hit flashes, a rotating ring of twelve bullets, both HUD bars (scores via the `number` op, lives, power meter with a moving highlight) and the title "SHMUP CUP" / "SPRITE SHOWCASE" in the bitmap font | `SHOWCASE_SPRITES` |
 | `calibration` | The skeleton's test pattern (checker border, grid, colour bars, placeholder ship, moving marker) under empty layers | `content.db.sprites.names` |
 
@@ -442,6 +444,11 @@ pnpm test:e2e                                        # builds web + tizen, then 
   settled, enemy bullets in the readability palette's body colours appear inside the playfield
   (never in the HUD bars) and move between two screenshots; no console errors or atlas
   `unknown sprite` warnings (M1-09).
+- `weapons.spec.ts` — in free flight the KESTREL autofires: `shots/basic` sprites (found by
+  their rim colour) appear to the right of the ship, never in the HUD bars, and move between
+  two screenshots; `?loadout=full` draws the Options' orbs and laser beams; the Tizen build
+  opened from disk autofires with no key held and ignores `?loadout=full`; no console errors or
+  atlas `unknown sprite` warnings (M1-10).
 - `shell.spec.ts` — an aborted atlas request ends on the boot error screen (overlay canvas,
   state `error`); a 1000×600 window gets a centred ×2 frame on the letterbox colour and a
   resize to 1920×1080 re-fits it to ×5; free flight animates.
@@ -518,6 +525,8 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | `pnpm test:e2e` hangs creating WebGL contexts | A stale forwarded X display (`DISPLAY=localhost:11.0` in an SSH session) makes SwiftShader try XCB. The config already scrubs `DISPLAY` for the browser; unset it if you launch Chromium yourself |
 | Allocation appears per frame in a profile | Pixi objects created in `render()` (a new `WorldView` each frame), a tint written every frame on a hand-made sprite, or option literals passed to Pixi — keep all three out of the frame |
 | Enemy bullets simulate but are invisible | The content was loaded without the engine's sprites — `loadGameContent` passes `ENGINE_SPRITES` by default; a hand-made `loadContent` call needs `extraSprites: ENGINE_SPRITES` |
+| Options fly and fire but are invisible | `options/orb` is an engine sprite: the content was loaded without `extraSprites: ENGINE_SPRITES` (the shell's `loadGameContent` passes it by default) |
+| A scene or test that picks a World batch by index shows the wrong sprites | M1-10 inserted the player-shot and Option batches: the World's order is ground enemies, air enemies, player shots, Options, ships, enemy bullets (the flight scene puts its star batches first) |
 | Lasers never appear | The bound `WorldView` has no `lasers` (a scene that builds its own view must pass `world.view.lasers` through, as the flight scene does), or the view was bound before it was set |
 | A stage runs but shows no terrain | The stage has no `tilemap`, its tileset failed to load (see the boot issues), or no atlas was given; tiles whose `frame` the atlas lacks draw `ui/missing` |
 | `bindWorld` throws `parallax band i has layer …` | A `ParallaxView` band is not on `BG_FAR` / `BG_MID` — stage content only produces those; check a hand-made view |
@@ -540,5 +549,9 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 - **M1-09** (done) — the enemy bullets are one more batch (the bullet pool itself, on
   `ENEMY_BULLETS`); the new `LaserView` is drawn by the laser binding above it; the loader
   interns the engine's own sprites ([bullets-and-patterns.md](bullets-and-patterns.md)).
+- **M1-10** (done) — the player shots (a mirror batch on `PLAYER_SHOTS`, lasers as rows of
+  segments) and the Options (a mirror batch on `PLAYER`, before the ships) join the World's
+  batches; `options/orb` joins the engine sprites
+  ([weapons-and-options.md](weapons-and-options.md#drawing-shots-and-options)).
 - **M1-14 / M1-15** — particles, shake, flash and audio handlers registered on the dispatcher.
 - **M1-16** — core `ui` fills the HUD and UI draw lists (menus, HUD model).

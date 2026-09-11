@@ -170,10 +170,10 @@ export interface LoadGameContentOptions extends LoadContentOptions {
  * `knownScripts` defaults to the core's `KNOWN_SCRIPT_IDS`, so content naming a behaviour the
  * engine does not have is an issue; `extraSprites` defaults to the core's `ENGINE_SPRITES`, so
  * the World can draw its enemy bullets, lasers and the Options (pass `extraSprites: []` to leave
- * them out — they then simulate but are not drawn). Issues are the core's (file and reference order),
- * then the behaviour checks of the enemies (`checkEnemyBehaviors`) and of the weapons
- * (`checkWeaponBehaviors`), then per foreign kind in
- * first-seen order the owner's issues — or one issue per file when no owner claims the kind
+ * them out — they then simulate but are not drawn). Issues are the core's (file and reference
+ * order), then the behaviour checks of the enemies (`checkEnemyBehaviors`) and of the weapons
+ * (`checkWeaponBehaviors`), then per foreign kind in first-seen order the owner's issues — or
+ * one issue per file when no owner claims the kind
  * (`"<path>: no loader for content kind \"<kind>\""`). Owners come from `options.owners`,
  * then {@link DEFAULT_CONTENT_OWNERS}. Never throws for bad data.
  *

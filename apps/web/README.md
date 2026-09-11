@@ -13,8 +13,12 @@ the turrets, walkers and orbiters fire bullets at the ship; an unknown id
 logs a `console.warn` and flies in open space; guides:
 [`docs/dev/stage-runtime.md`](../../docs/dev/stage-runtime.md),
 [`docs/dev/enemies-and-behaviors.md`](../../docs/dev/enemies-and-behaviors.md),
-[`docs/dev/bullets-and-patterns.md`](../../docs/dev/bullets-and-patterns.md)). There are no
-weapons yet, and hits are only recorded (no death until M1-12).
+[`docs/dev/bullets-and-patterns.md`](../../docs/dev/bullets-and-patterns.md)). Since M1-10
+the KESTREL **autofires** (`GameConfig.autofire` stays on although this app sets
+`remoteMode: false`) and shoots the enemies down; `?loadout=full` starts it fully powered —
+speed 2, Missile, Laser and four Options (dev override, `loadoutFromSearch`; guide:
+[`docs/dev/weapons-and-options.md`](../../docs/dev/weapons-and-options.md)). Hits on the ship
+are only recorded (no death until M1-12).
 
 Input uses the data-driven profiles of `content/input/` (decision D13): `keyboard-default`
 (or the saved choice) and `gamepad-standard`. Dev overrides: `?profile=<id>` picks another
@@ -26,7 +30,7 @@ Guide: [`docs/dev/input-profiles.md`](../../docs/dev/input-profiles.md).
 
 ```sh
 pnpm dev                          # from the repo root (= turbo run dev --filter=@shmup/web)
-# → http://localhost:5173 (free flight) · ?stage=test-range (scrolling test stage) · ?scene=showcase (sprite showcase) · ?scene=calibration (test pattern)
+# → http://localhost:5173 (free flight) · ?stage=test-range (scrolling test stage) · &loadout=full (fully powered) · ?scene=showcase (sprite showcase) · ?scene=calibration (test pattern)
 pnpm --filter @shmup/web build    # → apps/web/dist (relocatable, base './')
 pnpm --filter @shmup/web exec vite preview   # serve the production build (what pnpm test:e2e opens)
 ```
@@ -54,7 +58,7 @@ the shell loads the pages with `new Image()`; see
 | Module | Status | Responsibility |
 |---|---|---|
 | `main.ts` | — | Entry: boots into `#game`, disposes on HMR |
-| `boot` | implemented | Composition root: keyboard/gamepad input with the input profiles (`?profile=`, `?debounce=`, saved choice), Web Audio and the browser platform handed to `@shmup/shell`'s `bootShell` (content + atlas loading, boot error screen, renderer, game, rAF loop, audio unlock on first gesture); free flight by default, `?stage=<id>` (`stageFromSearch`, checked with `contentStageIds`), `?scene=showcase` / `?scene=calibration` |
+| `boot` | implemented | Composition root: keyboard/gamepad input with the input profiles (`?profile=`, `?debounce=`, saved choice), Web Audio and the browser platform handed to `@shmup/shell`'s `bootShell` (content + atlas loading, boot error screen, renderer, game, rAF loop, audio unlock on first gesture); free flight by default, `?stage=<id>` (`stageFromSearch`, checked with `contentStageIds`), `?loadout=full` (`loadoutFromSearch`, M1-10), `?scene=showcase` / `?scene=calibration` |
 | `platform` | partial | Browser `Platform`: localStorage (memory fallback), visibility lifecycle, no `exit` |
 
 The rAF frame loop moved to [`@shmup/shell`](../../packages/shell/README.md) (M1-04).

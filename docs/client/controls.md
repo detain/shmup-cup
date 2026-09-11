@@ -24,8 +24,8 @@ and selects a menu entry in menus; Back pauses the game and goes back in menus.
 | Action | What it does |
 |---|---|
 | Move | Game: fly the ship (8 directions where the device allows it; diagonals are no faster than straight moves, and the ship stops as soon as you let go). Menus: move the highlight |
-| Shot | Main gun — held for autofire; always firing in remote mode |
-| Sub | Missiles / sub-weapon (also automatic in remote mode) |
+| Shot | Main gun. Today it fires **on its own** on every device (automatic fire is on by default, and always on with the TV remote), so you never need to press it; once automatic fire can be switched off in the Options menu, hold it to fire |
+| Sub | Missiles / sub-weapon, once you have them — automatic in the same way |
 | PowerUp | Power-meter mode: take the highlighted power-up |
 | Special | Screen-clearing special, when you have one |
 | Speed | Cycle ship speed (item mode) |
@@ -48,8 +48,9 @@ not suddenly press Back. Release it and press again.
 | Channel up | Special | — |
 | Channel down | Speed | — |
 
-- In remote mode the ship fires its main gun **and** its missiles automatically, so no button
-  is needed for shooting. Channel up / down are optional extras — nothing ever requires them.
+- On the TV the ship fires its main gun **and** its missiles automatically, so no button is
+  ever needed for shooting (in the current build the gun starts firing as soon as the ship has
+  flown in). Channel up / down are optional extras — nothing ever requires them.
 - Some TV remotes briefly report a held button as released and pressed again. The game hides
   such hiccups (up to about 1/30 of a second), so a held direction never stutters; in return,
   letting go of a button registers two frames later — too short to notice.
@@ -152,4 +153,5 @@ its default.
 | The game shows a start-up error screen mentioning `input-profiles.json` | The control profiles in this build are broken. Report the lines on the screen — see [preview-build.md](preview-build.md) |
 | Back closes the game on the TV instead of pausing | Expected in the current preview — free flight is the first screen. Pausing with Back arrives with the playable game |
 | The ship does not react for a moment after the app starts | It is flying in (about ⅔ of a second) and ignores the controls until it arrives — see [preview-build.md](preview-build.md#flying-the-ship) |
-| Shot, PowerUp, Pause and the other buttons do nothing | Expected in the current preview — only the directions are used so far |
+| Holding Shot (Z / Space, A / Cross) or Sub (X, B / Circle) changes nothing | Expected: the gun already fires on its own (automatic fire is on by default), and missiles come later with power-ups (in a browser, `?loadout=full` gives them to you right away) |
+| PowerUp, Pause and the other buttons do nothing | Expected in the current preview — only the directions are used so far, and the gun fires by itself |

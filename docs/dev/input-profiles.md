@@ -355,8 +355,10 @@ measures ~30 KB of test noise).
 
 - **M1-06** (done) — the ship moves with these masks: `readPlayerIntent` turns the direction
   bits into `moveX` / `moveY` (opposites cancel once more), diagonals are × 0.7071 (D4)
-  ([sim-world.md](sim-world.md#the-player-ship-coreplayer)). Forced autofire in remote mode
-  arrives with the weapons (M1-10).
+  ([sim-world.md](sim-world.md#the-player-ship-coreplayer)).
+- **M1-10** (done) — `Shot` fires the main weapon and `Sub` the missiles while held; with
+  `GameConfig.autofire` (the default) or `remoteMode` (the TV) they fire without a button
+  (feat §4 rule 1, [weapons-and-options.md](weapons-and-options.md#shooters-autofire-and-caps-phase-2-updateplayers)).
 - **M1-16** — the scene stack returns `'menu'` from `Game.inputContext` for menus and the
   pause screen; Back handling moves from `watchBackKey` to the scenes.
 - **M2-16** — Options: profile choice (writes `input.profile`), per-device rebinding, conflict

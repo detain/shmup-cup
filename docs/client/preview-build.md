@@ -3,15 +3,17 @@
 The game is not a game yet, but for the first time you can **fly the ship**. Every build —
 browser, Samsung TV and desktop — starts with a short loading bar and then **free flight**:
 the KESTREL, the player ship, flies in from the left edge of an empty starfield and from then
-on follows the directional buttons of the TV remote, the arrow keys or a gamepad. Free flight
-has no enemies, and there is no shooting and no sound yet. Free flight exists to prove on each device that the
+on follows the directional buttons of the TV remote, the arrow keys or a gamepad — and, since
+this build, **its gun fires on its own**. Free flight has no enemies and there is no sound yet.
+Free flight exists to prove on each device that the
 whole chain works — the controls reach the ship quickly and reliably, the 60 ticks per second
 simulation runs smoothly, the picture is pixel-perfect at the monitor's resolution — and to
 catch control, smoothness or scaling problems early.
 
 In a browser you can also fly the first **scrolling stage** — the *Test Range*, with rocky
-ground, caves, speed changes, the first enemies flying and walking past and, since this build,
-**enemies that shoot at you** (see [The scrolling test stage](#the-scrolling-test-stage-browser-only)) — and the earlier
+ground, caves, speed changes, enemies that fly and walk past and shoot at you and, since this
+build, **your ship shooting them down** (see [The scrolling test stage](#the-scrolling-test-stage-browser-only)
+and [Your weapons](#your-weapons)) — and the earlier
 start-up pictures are still there: the animated **sprite showcase** and the **calibration
 screen** (see [below](#other-screens-browser-only)).
 
@@ -38,6 +40,7 @@ transitions) framed by two thin bars, one along the top edge and one along the b
 |---|---|---|
 | **Star field** in three layers | Whole picture behind the ship | Stars drift to the left at three different speeds (the far ones slowest), steadily, with no jumps; the pattern repeats seamlessly |
 | **KESTREL**, the player ship | Enters from the left edge | Glides in from off-screen during the first ⅔ of a second, slowing down as it arrives, and stops at mid-height about a sixth of the way across. Then it is yours to fly |
+| **Shots** from the ship's nose | In front of the ship, flying right | As soon as the ship has arrived, small cyan-and-white darts leave its nose and race to the right edge, two at a time — see [Your weapons](#your-weapons) |
 | **Top bar** | Top edge | `1P` (cyan) and the score `00000000` on the left; **FREE FLIGHT** (yellow) in the middle |
 | **Bottom bar** | Bottom edge | Two small ship icons on the left (your spare lives); the hint `ARROWS MOVE` (grey) in the middle |
 
@@ -70,8 +73,8 @@ How it should feel:
 - **It tilts** while climbing or diving and levels out when you stop moving up or down.
 - **It cannot leave the playfield.** Holding a direction stops it a few pixels before the
   edge; it never covers the top or bottom bar and never disappears off the side.
-- Nothing else reacts yet: no shooting, no power-ups, no pause screen. Those arrive in the
-  next steps.
+- **The gun fires by itself** — you never press a button to shoot ([Your weapons](#your-weapons)).
+- Nothing else reacts yet: no power-ups, no pause screen. Those arrive in the next steps.
 
 On the TV remote the ship stops about 1/30 of a second after you let go of a button — the
 game waits that long to hide the remote's occasional "released and pressed again" hiccup, so a
@@ -80,18 +83,23 @@ ship may move in four directions only; the game is designed to be fully playable
 
 ### What changed lately
 
-**New in this build: the enemies shoot back.** In the *Test Range* stage the gun turrets now
-fire single pink bullets straight at your ship, the walkers fire a fan of three red bullets
-whenever they stop, and the looping spinners send out rings of eight purple bullets
-([what to look for](#enemy-bullets)). Bullets fly in straight lines at a speed you can dodge
-with the four arrow directions alone, vanish when they hit the rock or leave the screen, and
-only ever come from an enemy you can see. Being hit does nothing yet: the bullet simply
-disappears when it touches your ship — losing a life comes later, together with crashing. You
-still cannot shoot back; weapons come next. As before, the stage can only be opened in a
-browser; the TV and desktop builds still start in free flight, which works exactly as before
-and has no enemies or bullets.
+**New in this build: your ship shoots.** Everywhere — on the TV, in the browser and on the
+desktop — the KESTREL's gun now fires **on its own** once the ship has flown in: small darts,
+at most two on screen at a time, like the classic games this one follows. No button is needed
+(the TV remote has none to spare). In the *Test Range* stage the shots destroy the enemies: an
+enemy that takes more than one hit flashes white each time, and one that is destroyed simply
+disappears — the explosions, sounds and the score counter come in later builds. In a browser
+you can also start **fully powered** with `?loadout=full`: a faster ship, a long piercing
+**laser** instead of the darts, **missiles** that drop to the ground and slide along it, and
+four glowing **Options** that follow your ship and fire everything it fires
+([what to look for](#your-weapons)). As before, the stage and the fully powered ship can only
+be opened in a browser; the TV and desktop builds start in free flight, where the ship now
+shoots into empty space.
 
-Before that: **the first enemies** — rows of small pods weaving on a wave, spinners that fly
+Before that: **enemies that shoot back** — gun turrets firing single pink bullets straight at
+your ship, walkers firing fans of three red bullets, looping spinners sending out rings of
+eight purple bullets ([what to look for](#enemy-bullets)); being hit by a bullet still does
+nothing (it just disappears); **the first enemies** — rows of small pods weaving on a wave, spinners that fly
 loops one behind the other, red saucers, gun turrets on the ground and hanging from cave
 ceilings, walkers that stroll along the rocky slopes, hatches that open and release small
 fighters, and fighters that stop, aim and dash at you ([what to look for](#enemies-in-the-test-stage));
@@ -102,10 +110,12 @@ flight replaced the sprite showcase as the start-up picture. The simulation behi
 build adds to this world — next come your weapons, then power-ups.
 
 **Please re-test on the monitors:** install the new build and run through the checks in the
-next section — how the ship responds to the remote is still the most valuable report. On a
-PC, please also fly the test stage once and report anything from its checklists (the rock,
-the enemies and their bullets) — in particular whether every bullet pattern can be dodged with
-single arrow presses (try `?profile=keyboard-remote-emulation`, which moves like the remote).
+next section — how the ship responds to the remote is still the most valuable report, and now
+also whether the shots look right and stream smoothly. On a PC, please also fly the test stage
+once, normally and fully powered (`?stage=test-range&loadout=full`), and report anything from
+its checklists (the rock, the enemies, their bullets, your weapons) — in particular whether
+every bullet pattern can be dodged with single arrow presses (try
+`?profile=keyboard-remote-emulation`, which moves like the remote).
 
 The game data and the sprite sheet travel **inside** the app (the sprite sheet is a small
 picture file packed into the same `.wgt`, in its `assets/` folder). There are no extra files
@@ -123,7 +133,7 @@ the first install it appears in the monitor's **Apps** list as **Shmup Cup**.
 | Directional pad (◀ ▲ ▶ ▼) | Flies the ship |
 | **Back** (↩) | Closes the app and returns to the monitor's home screen — also from the error screen |
 | **Home** | Leaves the app; everything freezes while it is in the background. Reopening it continues exactly where it stopped — nothing jumps ahead |
-| Everything else | Read by the game every tick, but nothing reacts to it yet |
+| Everything else | Read by the game every tick, but nothing reacts to it yet (the gun fires without any button) |
 
 Things to check on the monitor and report:
 
@@ -144,11 +154,16 @@ Things to check on the monitor and report:
 6. Fly into every edge: the ship stops before each edge, stays fully visible and never
    covers a HUD bar.
 7. The stars drift **smoothly**.
-8. After Home → reopen, the app comes back without a black screen and the ship is where you
+8. **The gun fires on its own** as soon as the ship has flown in, without touching any button:
+   small cyan-and-white darts leave the ship's nose, two at a time, and fly straight to the
+   right edge at an even speed. They never appear over the HUD bars, and they keep coming
+   wherever you fly — also while you hold a direction. Report if they stutter, flicker, show
+   up as magenta-and-black squares, or stop.
+9. After Home → reopen, the app comes back without a black screen and the ship is where you
    left it.
 
-The TV always starts with free flight; the test stage, the showcase and the calibration
-screen can only be opened in a browser.
+The TV always starts with free flight; the test stage, the fully powered ship, the showcase and
+the calibration screen can only be opened in a browser.
 
 ## In a desktop browser
 
@@ -214,9 +229,10 @@ starts in ordinary free flight instead; the browser's developer console then say
 
 The enemies are placeholders too (original designs) and come on a fixed schedule — the same
 every run. Most fly in from the right edge; ground enemies scroll in standing on the rock.
-Nothing can hurt them yet, so they simply fly past and leave the screen; the turrets, walkers
-and the two lone spinners shoot at you on the way ([Enemy bullets](#enemy-bullets) below).
-Never more than about a dozen enemies are on screen at once.
+Your shots destroy them ([Your weapons](#your-weapons) below); the ones you miss fly past and
+leave the screen. The turrets, walkers and the two lone spinners shoot at you on the way
+([Enemy bullets](#enemy-bullets) below). Never more than about a dozen enemies are on screen at
+once.
 
 | Time (about) | What comes |
 |---|---|
@@ -253,7 +269,7 @@ What "good" looks like:
 - Enemies only ever appear inside the playfield, never over the top or bottom bar.
 - An enemy that has left the screen does not come back.
 - Flying into an enemy does nothing yet — the ship passes through it. That is expected in
-  this build, and so is not being able to shoot.
+  this build.
 
 #### Enemy bullets
 
@@ -286,11 +302,54 @@ What "good" looks like:
   through it.
 - The enemies never fire long beams (lasers) yet; those come with later enemies and bosses.
 
+## Your weapons
+
+The KESTREL's gun fires **by itself** as soon as the ship has flown in — on the TV, in the
+browser and on the desktop, in free flight and in the test stage. There is no fire button to
+press (holding Shot or Sub changes nothing); this "always-on" fire is what makes the game
+playable with the TV remote. The pictures are placeholders (original designs).
+
+**The normal ship** (every build) has the basic gun:
+
+- Small **cyan-and-white darts** leave the ship's nose and fly straight to the right, fast —
+  they cross the whole picture in under a second.
+- **At most two are on screen at a time**, as in the classic games: a new pair follows as soon
+  as the earlier darts hit something or leave the screen. So the gun fires faster at enemies
+  close in front of you — that is intentional.
+- A dart disappears when it hits an enemy, the rock or the edge of the screen.
+- One hit destroys the small enemies (pods, spinners, arrowhead fighters); the others need more
+  — saucers and walkers two, turrets and lone spinners three, the armoured hatch eight — and
+  **flash white** every time they are hit. A destroyed enemy simply disappears: no explosion,
+  sound or points yet (they come in later builds), and the saucer does not leave a power-up yet.
+
+**Fully powered** (browser only, for testing): add `&loadout=full` to the address, e.g.
+http://localhost:5173/?stage=test-range&loadout=full (or `?loadout=full` for free flight). You
+start with what the power-ups will give you later:
+
+| What | What "good" looks like |
+|---|---|
+| **Faster ship** | The ship moves noticeably faster than normal (speed level 3 of 6) |
+| **Laser** instead of the darts | A thin pale-blue beam shoots out of the nose, grows to about a sixth of the screen's width and races right. It passes **through** enemies, damaging each one it touches up to ten times a second, and it moves up and down with the ship that fired it. It stops at rock: the beam's front stays at the wall while its tail catches up and it vanishes. One beam per ship or Option at a time |
+| **Missiles** | Small grey missiles with a flickering orange flame drop diagonally forward and down — one at a time from the ship and from each Option; the next follows as soon as the last one is gone. On the ground they **slide along the rock**, following slopes up and down; a steep wall stops them, and over a drop they fall again. In free flight (no ground) they simply fall off the bottom of the screen |
+| **Four Options** | Four glowing red-and-orange orbs that pulse gently. They follow the path your ship has flown: **when you move, they string out behind you** along your path; **when you stop, they stay where they are on screen** (even while the stage scrolls); pushing against the edge of the screen gathers them onto the ship. Each one fires the laser and the missiles too. They float through rock, cannot be hurt, and start on top of the ship when it flies in |
+
+What "good" looks like, with either loadout:
+
+- Shots, beams, missiles and orbs only ever appear inside the playfield — never over the top or
+  bottom bar — and never as magenta-and-black checkered squares.
+- Everything moves smoothly and keeps its speed on screen while the stage speeds up or slows
+  down.
+- Darts and beams never fly through rock; missiles rest exactly on the ground while sliding
+  (not floating above it, not sunk into it).
+- Enemies that are hit flash white; destroyed ones disappear at once and never come back.
+- The frame rate stays smooth even with everything firing.
+
 ### Other screens (browser only)
 
 | Address | Screen |
 |---|---|
 | http://localhost:5173/?stage=test-range | The **Test Range**, the first scrolling stage (above) |
+| http://localhost:5173/?stage=test-range&loadout=full | The Test Range with the **fully powered** ship: laser, missiles, four Options ([Your weapons](#your-weapons)) |
 | http://localhost:5173/?scene=showcase | The **sprite showcase** the previous builds started with: the KESTREL flying a figure-eight with two Options, five enemies with hit flashes, a ring of bullets, both HUD bars with a counting score and a blinking power meter. Nothing reacts to the controls |
 | http://localhost:5173/?scene=calibration | The **calibration screen**, for judging scaling and colours on a new display (below) |
 
@@ -346,8 +405,15 @@ mean the build itself is broken; they are not caused by anything you did.
 | The ship stutters or stops for a moment while I hold a direction (TV) | Please report it with the remote model: the game's hiccup protection is supposed to hide exactly this |
 | `?stage=test-range` shows free flight (title FREE FLIGHT, no rock) | The stage name in the address is misspelled — check the spelling (`test-range`); the browser console names the unknown stage |
 | The ship flies through the rock in the test stage | Expected in this build: hits are only noted, crashing comes later |
-| The ship flies through enemies, and nothing happens | Expected in this build: touching an enemy is only noted; crashing comes with lives and respawning |
-| I cannot shoot the enemies / they never explode | Expected: weapons arrive in the next build (the enemies are there first so the weapons have something to hit) |
+| The ship flies through enemies, and nothing happens | Expected in this build: touching an enemy is only noted; crashing comes with lives and respawning (your shots do destroy them) |
+| The ship does not shoot | It starts firing only once it has flown in (⅔ of a second). If it never fires — on the TV or in a browser — please report it; no button is needed |
+| Only two shots are on screen at a time | Expected: the basic gun allows two at a time, like the classic games; it fires again as soon as one hits something or leaves the screen |
+| Destroyed enemies just vanish — no explosion, no sound, the score stays at zero | Expected in this build: explosions, sounds and scoring come later. An enemy that needs several hits flashes white on each |
+| The red saucer leaves nothing behind | Expected: power-up capsules come in the next build |
+| `?loadout=full` shows the normal ship (no orbs, no laser) | Check the spelling (`loadout=full`, lower case) and that it is joined with `&` after `?stage=…`. It only works in a browser — the TV and desktop builds always start with the normal ship |
+| The orbs, laser or missiles are magenta-and-black checkered squares | Their pictures are missing from the sprite sheet; please report it (the build is broken) |
+| A dart or beam flies through rock, or a missile floats above the ground or sinks into it | Please report it with a screenshot and the time into the stage |
+| The Options trail behind the ship while it stands still | Expected only while you are moving; once you stop they should hold their places on screen. If they drift away while you stand still, please report it |
 | An enemy bullet hits my ship and just disappears | Expected in this build: hits are only noted; losing a life and the explosion come later |
 | Bullets fly through my ship while it flies in at the start | Expected: the ship cannot be hit while it is flying in |
 | No bullets at all in the test stage | Check the address says `?stage=test-range`. The first turret starts shooting about ten seconds in; the pods, saucers and spinner formations never shoot. Free flight (the TV and desktop builds) has no enemies and no bullets |

@@ -189,7 +189,12 @@ export function stageFromSearch(search: string): string | null {
 }
 
 /**
- * Reads the `?loadout=<preset>` dev parameter (the last non-empty value wins).
+ * Reads the `?loadout=<preset>` dev parameter (the last valid value wins).
+ *
+ * @remarks
+ * Name and value must match exactly — case-sensitive, not percent-decoded — so `?LOADOUT=full`,
+ * `?loadout=Full` and `?loadout=full=1` are ignored, as are unknown values
+ * (`?loadout=full&loadout=bogus` → `'full'`). The Tizen app has no such parameter.
  *
  * @param search - `location.search` (with or without the leading `?`).
  * @returns `'full'` or `'default'` when asked for, `null` when absent, empty or unknown (the
@@ -240,8 +245,11 @@ export function contentStageIds(files: readonly ContentFile[]): string[] {
  * applied there) and the game. Without a `?profile=` override the saved profile choice is
  * applied once storage has answered. An unknown `?profile=` id is reported with
  * `console.warn` and the default is used; so is an unknown `?stage=` id (the game then flies in
- * open space). Everything is released by {@link WebApp.stop}; on a
- * failed boot the shell has already released it and shows the boot error screen.
+ * open space). The game config sets `remoteMode: false` (keyboard / gamepad play; `autofire`
+ * keeps its default, on), the `?stage=` id and the `?loadout=` preset
+ * ({@link loadoutFromSearch}, default `'default'`). Everything is released by
+ * {@link WebApp.stop}; on a failed boot the shell has already released it and shows the boot
+ * error screen.
  *
  * @param canvas - Target canvas (fills the window).
  * @param resources - The inlined content files and atlas (`virtual:shmup-*` modules).

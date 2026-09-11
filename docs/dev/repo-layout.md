@@ -45,7 +45,9 @@ shmup-cup/
 │   │   │   ├── rng/ math/ events/ pools/                 ✔ engine foundations (sfc32, trig tables, event ring, SoA pools)
 │   │   │   ├── data/           ✔ (partial) content loader: schema.ts combinators, loadContent(), ContentDb, migrations, tilemap.ts (tileset tables, heightfield / RLE expansion), paths.ts (spline → arc-length tables)
 │   │   │   ├── player/         ✔ (partial) KESTREL movement, speed levels, clamp, banking, fly-in (death/respawn: M1-12)
-│   │   │   ├── weapons/ options/ shields/ powerups/         player-side systems (placeholders)
+│   │   │   ├── weapons/        ✔ (partial) player shots (96-slot SoA pool), Type A roles from content, loadouts, autofire + caps per shooter, grid hits (Type B–D / Direct: M2)
+│   │   │   ├── options/        ✔ (partial) trailing Options: screen-space trail ring buffer (Snake / Formation / Rotate: M2-04)
+│   │   │   ├── shields/ powerups/                          player-side systems (placeholders)
 │   │   │   ├── enemies/        ✔ (partial) 64 enemy slots: spawns, formations, off-screen rules, contact, damage, sprite mirror
 │   │   │   ├── patterns/       ✔ (partial) sleeping behaviour coroutines (runner) + per-tick movers + fire primitives (DSL: M2-02)
 │   │   │   ├── behaviors/      ✔ (partial) behaviour registry referenced by content script ids; the M1 roster
@@ -90,7 +92,7 @@ shmup-cup/
 │   ├── tilesets/           ✔ terrain tilesets: per tile collision type, column-height mask, atlas frame (+ README, example)
 │   ├── enemies/            ✔ enemy definitions: hp, score, hurtbox, behaviour script + tunables, mover, ground anchor, drop, child; test-range roster (+ README, example)
 │   ├── paths/              ✔ movement paths: spline control points, baked to arc-length tables at load (+ README, example)
-│   ├── weapons/            ✔ weapon tunables + preset loadouts (+ README, example)
+│   ├── weapons/            ✔ weapon tunables + preset loadouts: the Type A arsenal the game fires (+ README, example)
 │   └── input/              ✔ input profiles (kind input-profiles, validated by input-web rebind): per-context key/button tables, remote debounce/diagonal/SOCD, Tizen keys to register
 ├── assets/
 │   ├── source/             editable sources — in git: sprites/**/*.sprite.json pixel maps (+ real-art PNG overrides), fonts/*.font.json, tilesets, audio

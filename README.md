@@ -36,7 +36,7 @@ place, and `hashWorld` fingerprints the simulated state for lockstep and replay 
 allocation-guard test keeps the tick free of garbage. Every build now starts into **free
 flight** — the ship over an empty starfield between the HUD bars — with the M1-04 sprite
 showcase at `?scene=showcase` and the test pattern at `?scene=calibration`; free flight has no
-enemies and there are no weapons yet ([developer guide](docs/dev/sim-world.md),
+enemies ([developer guide](docs/dev/sim-world.md),
 [what testers should check](docs/client/preview-build.md)).
 **Stages scroll** (M1-07): a stage file carries a scripted camera path (speed keys with
 linear ramps, eased vertical pans, boss locks that stop the camera exactly), invisible
@@ -70,8 +70,19 @@ shots, three-way fans and rings. Telegraphed lasers (a blinking warning line, th
 whose hitbox exists only at full width) and bullet cancel with sparkle events are in place for
 the bosses to come, and rank runs at the difficulty's constant base (Normal = 2) with curves
 that growth will scale in M2. Bullet and laser hits are recorded on the ship (death comes with
-M1-12); nothing can be shot yet — weapons are next
-([developer guide](docs/dev/bullets-and-patterns.md), [what testers should check](docs/client/preview-build.md#enemy-bullets)).
+M1-12) ([developer guide](docs/dev/bullets-and-patterns.md), [what testers should check](docs/client/preview-build.md#enemy-bullets)).
+**The ship shoots back** (M1-10): the KESTREL fires on its own — always-on autofire, the
+remote-first rule — with the Gradius-style Type A arsenal defined in
+[`content/weapons/`](content/weapons/README.md): a main shot limited to two on screen, the
+Double's forward-and-climbing pair, a piercing Laser that grows to 64 px, follows the ship up
+and down and hurts each enemy at most every sixth tick, and a Missile that drops to the ground
+and slides along the slopes until a wall stops it. Shots live in a 96-slot pool, ride the
+scroll, die on the rock and hit enemies through the collision grid (armoured parts clink, every
+kill is credited to a player for the scoring to come). Up to four **Options** follow the ship's
+flown path — bunched while it idles during scrolling, spread out when it moves — and copy every
+weapon with their own caps. The power meter that equips all this comes next; until then
+`?loadout=full` in a browser starts fully powered
+([developer guide](docs/dev/weapons-and-options.md), [what testers should check](docs/client/preview-build.md#your-weapons)).
 **Input is remote-first and data-driven** (M1-05): control profiles in
 [`content/input/`](content/input/README.md) map keys, remote buttons and gamepad buttons to
 actions with separate **game** and **menu** tables, and carry the Samsung remote's quirks as
@@ -96,7 +107,7 @@ it is waiting to be packaged and run on the M7 monitors.
 | [`shmup_prompt.md`](shmup_prompt.md) | Paste-into-a-new-session prompt that drives execution of the plan (workflow: build → review/fix loop → tests → docs → CI gate per step, progress in `shmup_progress.md`) |
 | [`docs/`](docs/README.md) | Player and developer documentation (start with [`docs/dev/repo-layout.md`](docs/dev/repo-layout.md)) |
 
-Game docs — testers: [preview build (free flight, test stage, its enemies and their bullets)](docs/client/preview-build.md) ·
+Game docs — testers: [preview build (free flight, test stage, its enemies and their bullets, your weapons)](docs/client/preview-build.md) ·
 [controls](docs/client/controls.md) · [monitor setup & install](docs/client/install-on-tv.md).
 Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/architecture.md) ·
 [engine foundations](docs/dev/engine-foundations.md) · [content data](docs/dev/content-data.md) ·
@@ -106,6 +117,7 @@ Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/ar
 [stage runtime](docs/dev/stage-runtime.md) ·
 [enemies & behaviours](docs/dev/enemies-and-behaviors.md) ·
 [bullets, lasers & patterns](docs/dev/bullets-and-patterns.md) ·
+[weapons & Options](docs/dev/weapons-and-options.md) ·
 [input profiles](docs/dev/input-profiles.md) ·
 [API reference](docs/dev/api-reference.md) ·
 [build, test & deploy](docs/dev/build-test-deploy.md) · [conventions](docs/dev/conventions.md).
@@ -211,9 +223,10 @@ the game — the shipped Tizen bundle still targets Chromium 69.
 
 ## Next step
 
-Code: plan step **M1-10** (player weapons and Options: always-on autofire with the Type A
-weapons — shot, double, piercing laser, ground-sliding missiles — in a player-shot pool that
-damages enemies, and up to four trailing Options that copy them) — the per-step status board is
+Code: plan step **M1-11** (the Gradius power meter, capsules, Force Field and Mega Crash:
+capsules dropped by carriers and completed formations advance the meter, OK on the remote
+equips the highlighted slot — Speed, Missile, Double / Laser, Option, the Force Field, the
+screen-clearing Mega Crash — with an optional Auto Power-Up) — the per-step status board is
 [`shmup_progress.md`](shmup_progress.md).
 
 On hardware (unchanged, and still the gate for the remote control scheme): package and

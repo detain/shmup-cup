@@ -4,8 +4,8 @@
  * **Responsibility.** The typed {@link GameConfig} that parameterises a run: internal
  * resolution, tick rate, seed and every *sim-affecting* option (difficulty, power-up
  * model, death penalty, lives, autofire and its intervals, remote mode, the stage, the starting
- * loadout). Everything here is copied
- * into replay headers, so it must stay plain serialisable data.
+ * loadout). Everything here is copied into replay headers, so it must stay plain serialisable
+ * data.
  *
  * **Implements.**
  * - shmup_feat.md §2 (design forks: Meter vs Direct, death-penalty presets, difficulty)
@@ -83,7 +83,10 @@ export interface GameConfig {
    * recorded); a weapon's own `refireTicks` overrides it. 1–60.
    */
   readonly autofireInterval: number;
-  /** Ticks between missile launches under autofire (a weapon's `refireTicks` overrides it). 1–60. */
+  /**
+   * Ticks between missile launches under autofire (a weapon's `refireTicks` overrides it).
+   * 1–60.
+   */
   readonly missileInterval: number;
   /**
    * The loadout every player starts with (`core/weapons` `applyLoadoutPreset`): `'default'` (the

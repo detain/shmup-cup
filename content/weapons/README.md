@@ -43,9 +43,11 @@ across all weapon files.
 slice (`shot.basic`, `shot.double`, `laser.pierce`, `missile.ground`; preset `type-a`, which the
 game uses — else the first preset, else the first weapon of each slot).
 
-Coded behaviours (`packages/core/src/weapons`) and their `params` (defaults in brackets; angles in
-binary units, 1024 per turn; `ox` / `oy` = spawn offset from the shooter, `hw` / `hh` = hitbox half
-size); `checkWeaponBehaviors` reports unknown params and a behaviour in the wrong slot:
+Coded behaviours (`packages/core/src/weapons`) and their `params` with the defaults used when a
+param is omitted (angles in binary units, 1024 per turn; `ox` / `oy` = spawn offset from the
+shooter, `hw` / `hh` = hitbox half size); `checkWeaponBehaviors` (run at boot and by
+`pnpm content:check`) reports a behaviour that is not a weapon behaviour, unknown params and a
+behaviour in the wrong slot:
 
 | Behaviour | Slot | Params |
 |---|---|---|
@@ -53,6 +55,12 @@ size); `checkWeaponBehaviors` reports unknown params and a behaviour in the wron
 | `shot.double` | double | `angle` 128 (climb of the second shot), `ox` 4, `oy` -2, `hw` 3, `hh` 3 |
 | `laser.beam` | laser | `maxLength` 64, `hitCooldownTicks` 6, `ox` 8, `oy` 0, `hh` 2 |
 | `missile.groundSlide` | missile | `slideSpeed` 3, `angle` 128 (fall), `ox` 0, `oy` 4, `hw` 4, `hh` 1.5, `frames` 2 |
+
+`cap` counts per **shooter**: the ship and each of its (up to four) Options may have that many
+of the weapon's projectiles on screen. The Double fires a pair (forward + climbing) and refires
+only when both are gone. How the game uses these numbers:
+[`docs/dev/weapons-and-options.md`](../../docs/dev/weapons-and-options.md).
+
 Direct-mode families (9 levels each) will be expressed as `levels: [...]` arrays per
 family id.
 

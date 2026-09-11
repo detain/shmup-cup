@@ -53,11 +53,13 @@ page exists under `dist/assets/atlas/` (the shell cannot boot without it). The c
 
 `pnpm test:e2e` (repo root) also opens the built `dist/index.html` via `file://` in headless
 Chromium, like the TV runs the widget, and checks it boots, loads the atlas, draws free
-flight and that the remote's arrow key codes move the KESTREL. To open `dist/index.html` from disk in desktop Chrome yourself, start Chrome with
+flight and that the remote's arrow key codes move the KESTREL, and that the ship autofires
+with no key held (remote mode, M1-10) while the web-only `?loadout=full` is ignored. To open `dist/index.html` from disk in desktop Chrome yourself, start Chrome with
 `--allow-file-access-from-files` — otherwise Chrome treats the atlas page as cross-origin and
 WebGL refuses it (the TV serves the widget's files as same-origin). On the TV the app always
-starts into free flight — the KESTREL flown with the remote's directional pad — because a
-widget has no `?scene=` query string.
+starts into free flight — the KESTREL flown with the remote's directional pad, its main gun
+firing on its own (`remoteMode` forces autofire, `shmup_feat.md` §4 rule 1) — because a
+widget has no `?scene=` query string (and so no `?stage=` or `?loadout=` either).
 
 ## Package, install, run (desktop with Tizen CLI + certificate — never in CI)
 

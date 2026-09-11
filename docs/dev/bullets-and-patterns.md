@@ -440,8 +440,9 @@ world.players[0].hits; // hits recorded by playerHit (no death until M1-12)
 
 ## Next steps that build on this page
 
-- **M1-10** — player shots in their own pool; missiles and the laser weapon reuse the capsule
-  test.
+- **M1-10** (done) — player shots in their own pool (`playerShots`, 96), riding the camera and
+  culled at view ± 16 px like bullets; they hit enemies through the grid (boxes, not capsules —
+  the laser weapon's box spans its whole length) ([weapons-and-options.md](weapons-and-options.md)).
 - **M1-11** — the Mega Crash calls `cancelAllBullets`; the Force Field absorbs bullet hits.
 - **M1-12** — `playerHit(Bullet / Laser)` starts the death sequence; death cancels bullets.
 - **M1-13** — bosses fire through the same primitives (and lasers); boss death cancels.

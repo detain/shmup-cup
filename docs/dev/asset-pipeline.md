@@ -313,8 +313,8 @@ runs `findMissingSprites(manifest, db.sprites.names)`, so a typo fails the check
 message that names the missing sprite and how to add it — instead of a magenta
 `ui/missing` box in the game. Only the shipped content is checked: the example files'
 `ships/example` and `enemies/example-warden` are documentation. The sprites the engine draws on
-its own — the nine bullet kinds and `lasers/beam-pink`, `core/world` `ENGINE_SPRITES` (M1-09)
-— are checked the same way; hosts intern them with `loadContent`'s `extraSprites`.
+its own — the nine bullet kinds and `lasers/beam-pink` (M1-09) and `options/orb` (M1-10),
+`core/world` `ENGINE_SPRITES` — are checked the same way; hosts intern them with `loadContent`'s `extraSprites`.
 
 ## Extending it
 
@@ -407,6 +407,8 @@ compares with these frames' pixels) and the star layers as parallax bands
 enemy sprites through the World's ground / air batches with their `@flash` siblings
 ([enemies-and-behaviors.md](enemies-and-behaviors.md)); M1-09 (done) draws the nine bullet
 sprites through the World's enemy-bullet batch and added the `lasers` generator
-([bullets-and-patterns.md](bullets-and-patterns.md)); M1-10 … M1-13 add shot and boss sprites
-(with `hitFlash`); M1-14 uses the explosions and particles; M1-16 builds the HUD from
+([bullets-and-patterns.md](bullets-and-patterns.md)); M1-10 (done) draws the four `shots/*`
+sprites (a laser as a row of `shots/laser` segments) and `options/orb`, which joined
+`ENGINE_SPRITES` ([weapons-and-options.md](weapons-and-options.md#drawing-shots-and-options));
+M1-11 … M1-13 add item and boss sprites (with `hitFlash`); M1-14 uses the explosions and particles; M1-16 builds the HUD from
 `hud/*` and `ui/pixel`; M1-18 adds the Zone A art.

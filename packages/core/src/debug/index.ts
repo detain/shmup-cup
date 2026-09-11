@@ -15,13 +15,13 @@
  * both RNG states, the camera, the stage runner's state (whether there is one, then every slot of
  * its state array), the session status, hit-stop and rank, every player's fields, every
  * registered pool's live slots (fields in sorted name order, slots `0 … count-1` — the enemy
- * bullets and lasers of M1-09 among them), then the enemies (every
- * slot's state, and the numeric fields of each slot in use — M1-08), the formation table
+ * bullets and lasers of M1-09 and the player shots of M1-10 among them), then the enemies
+ * (every slot's state, and the numeric fields of each slot in use — M1-08), the formation table
  * (the fields of every active slot, and each track's recorded count), and the player weapons
- * (M1-10: each player's loadout and option group — count, trail head, the whole trail and the
- * option positions — the autofire timers, and the hit-cooldown table of every live piercing
- * shot; the shots themselves are the `playerShots` pool). Scripts are covered by
- * their `wakeTick`; a coroutine's internal position cannot be hashed. Numbers are
+ * (M1-10: each player's loadout and option group — count, stolen, trail head, the whole trail
+ * and the option positions — the autofire timers, and the hit-cooldown table of every live
+ * piercing shot). Scripts are covered by their `wakeTick`; a coroutine's internal position
+ * cannot be hashed. Numbers are
  * hashed as their little-endian IEEE-754 double bytes, so the hash is identical on every engine
  * and platform, and two worlds that simulated the same inputs from the same seed hash equal.
  * Golden replays (M1-19) compare these hashes. The hash reads state only — it never draws from an

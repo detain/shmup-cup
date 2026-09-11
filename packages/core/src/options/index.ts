@@ -96,6 +96,10 @@ export class OptionGroup {
    * Starts a fresh trail at the ship (stage start, respawn): every entry — and so every option —
    * is the ship's screen position.
    *
+   * @remarks
+   * `head` goes back to 0 and all {@link MAX_OPTIONS} positions become the ship's; `count` is left
+   * alone (the next {@link OptionGroup.follow} sets it). Never allocates.
+   *
    * @param ship - The ship.
    * @param camera - The camera (its `x` / `y` convert world to screen space).
    */
@@ -145,7 +149,7 @@ export class OptionGroup {
     this.count = n;
   }
 
-  /** Hides every option (the ship is not in play); the trail is kept. */
+  /** Hides every option (the ship is not in play): `count` 0; the trail and positions are kept. */
   hide(): void {
     this.count = 0;
   }

@@ -317,9 +317,12 @@ M1-08 its timeline also spawns the test roster between x 60 and 4200 — drifter
 formations (on the `fan-loop` / `dive-down` paths), capsule carriers, floor and ceiling
 turrets, walkers and hatches on the rolling ground, a rammer and orbiters
 ([enemies-and-behaviors.md](enemies-and-behaviors.md#the-test-range-roster)); since M1-09 the
-turrets, walkers and orbiters fire on it ([bullets-and-patterns.md](bullets-and-patterns.md)).
-A checkpoint restart empties the enemy bullet and laser pools with every other registered pool
-(`pools.clearAll()`).
+turrets, walkers and orbiters fire on it ([bullets-and-patterns.md](bullets-and-patterns.md)),
+and since M1-10 the KESTREL shoots them down (with `?loadout=full`: lasers, missiles sliding
+over its slopes and four Options — [weapons-and-options.md](weapons-and-options.md)).
+A checkpoint restart empties the enemy bullet and laser pools and the player shots with every
+other registered pool (`pools.clearAll()`) and resets the weapon system's hit list and batches
+(`weapons.clear()`).
 `example.stage.json` shows the rest of the format (RLE rows over `example.tileset.json`,
 formations, a pan, a boss lock).
 
@@ -389,6 +392,10 @@ world.stage!.restartAt(1); // back to x 1500: speed, pan and flags as live play 
 - **M1-09** (done) — enemy bullets ride the camera like flying enemies and die on the terrain
   (one `terrainAt` lookup per bullet); the restart hook clears their pools
   ([bullets-and-patterns.md](bullets-and-patterns.md)).
+- **M1-10** (done) — player shots ride the camera too and die on terrain; the laser head stops
+  at the first solid column; ground missiles land on and slide along `findFloor` surfaces
+  (climbing slopes, dying at walls, falling over cliffs); the restart hook also clears the
+  weapon system ([weapons-and-options.md](weapons-and-options.md)).
 - **M1-12** — `playerHit` starts the death sequence; the `arcade` penalty restarts at
   `runner.checkpoint` with `restartAt`.
 - **M1-13** — `warning` / `boss` events, the boss lock released by `unlock()`, the boss music.

@@ -132,6 +132,11 @@ ES5 and linted with `ecmaVersion: 5`.
   wrapper and boxed); run an allocation guard in its own test file, away from suites that
   create many small worlds
   ([bullets-and-patterns.md](bullets-and-patterns.md#zero-allocation-and-the-hot-path-rules)).
+  And from M1-10: presentation events are pushed with whole-pixel positions
+  (`Math.floor(x) | 0`) — the event push is a call V8 does not inline, so a fractional `x`
+  allocated per sound; pass hot objects (the ship, the camera) to a method that reads their
+  fields instead of passing their fractional coordinates
+  ([weapons-and-options.md](weapons-and-options.md#zero-allocation-and-the-hot-path-rules)).
 - Behaviour coroutines (generators, D29) allocate a small result object on every resume:
   scripts **sleep** (`yield ticks`) and are resumed only when they wake; per-tick motion
   belongs in a mover (numbers on the body), never in a `yield 1` loop.
@@ -139,6 +144,10 @@ ES5 and linted with `ecmaVersion: 5`.
   (`packages/core/test/helpers/alloc.ts`, needs `--expose-gc` through
   `defineShmupProject(name, { execArgv })`) — every per-tick or per-frame entry point gets a
   test asserting its bytes stay under budget ([sim-world.md](sim-world.md#zero-allocation-and-the-allocation-guard)).
+  It keeps the steadiest of three measured windows by default (`attempts`, stopping at the
+  first within `settled` = 32 KiB); give short, cheap loops a long `warmup` (e.g. 20,000), and
+  never move its measured loop into a separate helper — V8 optimises the warm-up loop on stack
+  with `fn` inlined, and only that code runs allocation-free.
 
 ## Tests
 

@@ -424,12 +424,18 @@ export function resolveRoleWeapons(
 }
 
 /**
- * Checks weapons against their behaviours: every `params` name must be a tunable of the
- * behaviour, and the weapon's `slot` must suit it. (Unknown behaviour ids are `loadContent`'s
- * job, through `knownScripts`.)
+ * Checks weapons against their behaviours: the `behavior` must be a weapon behaviour, every
+ * `params` name must be a tunable of it, and the weapon's `slot` must suit it.
+ *
+ * @remarks
+ * Ids the engine does not know at all are `loadContent`'s job (through `knownScripts`); this
+ * catches a known **enemy** behaviour named by a weapon (`weapons:<id>.behavior`, and its params
+ * are then not checked). Names are tested as own properties, so `constructor` or `__proto__`
+ * are never taken for a behaviour or a tunable. Load time only (it allocates).
  *
  * @param db - Validated content.
- * @returns Issues with paths `weapons:<id>.params.<name>` / `weapons:<id>.slot`.
+ * @returns Issues with paths `weapons:<id>.behavior`, `weapons:<id>.params.<name>` and
+ *   `weapons:<id>.slot`, in weapon order.
  *
  * @example
  * ```ts
@@ -544,9 +550,15 @@ export interface WeaponSystem {
   readonly roleWeapons: readonly (WeaponSpec | null)[];
   /** Autofire timers per shooter: `[shooter × 2]` main, `[shooter × 2 + 1]` missile (hashed). */
   readonly timers: Int32Array;
-  /** Live shots per shooter and role, `[shooter × WEAPON_ROLE_COUNT + role]` (recounted in phase 2). */
+  /**
+   * Live shots per shooter and role, `[shooter × WEAPON_ROLE_COUNT + role]` (recounted at the
+   * start of phase 2, raised by every shot fired).
+   */
   readonly liveCounts: Int32Array;
-  /** Hit-cooldown tables of piercing shots: table `t` is `[t × MAX_ENEMIES, (t + 1) × MAX_ENEMIES)`. */
+  /**
+   * Hit-cooldown tables of piercing shots ({@link PIERCE_TABLES} of them): table `t` is
+   * `[t × MAX_ENEMIES, (t + 1) × MAX_ENEMIES)`, one entry per enemy slot (ticks left).
+   */
   readonly cooldowns: Uint8Array;
   /** Shot slot per hit found by the last {@link WeaponSystem.collide}. */
   readonly hitShot: Int32Array;
@@ -597,6 +609,22 @@ export interface WeaponSystem {
   /**
    * Phase 5: moves every shot (camera ride, behaviour), removes those on terrain or outside the
    * view, counts hit cooldowns down. Never allocates.
+   *
+   * @remarks
+   * Per live shot: `age + 1`, its cooldown table (if any) counted down by one per entry, then by
+   * kind —
+   * - Straight / Double: `x += camera.dx + vx`, `y += camera.dy + vy`; removed outside the view
+   *   ± {@link SHOT_CULL_MARGIN} or on a non-empty terrain pixel;
+   * - Laser: its row follows the shooter while that shooter is in play; unblocked, the head
+   *   rides the camera and advances `speed`, stopping at the first non-empty terrain column it
+   *   crosses (→ `Blocked`), and the length grows by the step up to `maxLength`; blocked, the
+   *   head stays put and the length shrinks by `speed + camera.dx` until the beam is gone.
+   *   Removed when tail > right edge, head < left edge or its row is outside the view (± margin);
+   * - Missile: falling, it rides the camera along its heading and lands when its bottom pixel
+   *   meets terrain (a solid pixel at the top of the scan = a wall → removed); sliding, it moves
+   *   `slideSpeed` screen-relative and re-snaps to `findFloor` within
+   *   `ceil(slideSpeed) + 1` px up or down — a higher step removes it, no floor makes it fall
+   *   again. Non-finite positions never touch terrain and are culled.
    */
   update(): void;
   /**
@@ -625,9 +653,22 @@ export interface WeaponSystem {
    * piercing one starts its cooldown for that enemy.
    */
   applyHits(): void;
-  /** Phase 9: refills the shot and option batches. Never allocates. */
+  /**
+   * Phase 9: refills the shot and option batches. Never allocates.
+   *
+   * @remarks
+   * Live, drawable shots go into {@link WeaponSystem.batch} in pool order; a laser takes
+   * `ceil(length / LASER_SEGMENT_LENGTH)` sprites, laid back from its head, the last one clamped
+   * to the tail. A full batch ({@link SHOT_BATCH_CAPACITY}) drops what does not fit (drawing only
+   * — the shots still simulate). Every option flying this tick goes into
+   * {@link WeaponSystem.optionBatch} with the pulse frame `floor(tick / OPTION_ANIM_TICKS) & 1`;
+   * nothing when the content's sprites lack `options/orb`.
+   */
   sync(): void;
-  /** Checkpoint restart: forgets the hits and empties the batches (the pool is cleared by the World). */
+  /**
+   * Checkpoint restart: forgets the hits and empties the batches (the pool is cleared by the
+   * World).
+   */
   clear(): void;
 }
 
