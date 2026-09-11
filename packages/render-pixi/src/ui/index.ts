@@ -3,7 +3,8 @@
  *
  * **Responsibility.** Draws a core `DrawList` (the renderer-agnostic command buffer the HUD
  * and the canvas menus produce — plan §3.4) into the HUD or UI layer: `rect` commands become
- * the atlas's white pixel scaled and tinted, `sprite` commands atlas frames, `text` and
+ * the atlas's white pixel scaled and tinted, `sprite` commands atlas frames (`SpriteFlag.Hidden`
+ * skips one, `Flash` draws the white sibling, flips mirror around the anchor), `text` and
  * `number` commands bitmap-font glyphs. All commands of a list share one ordered quad pool, so
  * later commands are drawn over earlier ones (a panel, then its text). A list whose
  * `revision` did not change since the last draw is skipped entirely. No DOM, no allocation.
@@ -19,7 +20,7 @@
  *
  * @module
  */
-import { DrawOp, defineModule, type DrawList } from '@shmup/core';
+import { DrawOp, SpriteFlag, defineModule, type DrawList } from '@shmup/core';
 import type { Container } from 'pixi.js';
 import type { Atlas } from '../atlas/index.js';
 import {
@@ -113,6 +114,8 @@ export function createDrawListView(options: DrawListViewOptions): DrawListView {
           pool.rect(x, y, list.w[i], list.h[i], color, alpha);
         } else if (op === DrawOp.Sprite) {
           const flags = list.flags[i];
+          // `Hidden` (blinking HUD / menu sprites) skips the command, as in world batches.
+          if ((flags & SpriteFlag.Hidden) !== 0) continue;
           const frame = resolveFrame(atlas, tables, list.ref[i], list.frame[i], flags);
           pool.frame(frame, x, y, flags, color, alpha);
         } else if (font !== null && op === DrawOp.Text) {

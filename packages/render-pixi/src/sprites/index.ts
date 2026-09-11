@@ -130,6 +130,18 @@ function place(
   }
 }
 
+/**
+ * Sets a sprite's tint only when it changes. Pixi's `tint` setter normalises the value through
+ * `Color` (array destructuring → an iterator per call) before it compares, so assigning the same
+ * tint every frame would allocate; the getter is plain integer maths.
+ *
+ * @param sprite - The Pixi sprite.
+ * @param tint - Tint 0xRRGGBB.
+ */
+function setTint(sprite: Sprite, tint: number): void {
+  if (sprite.tint !== tint) sprite.tint = tint;
+}
+
 /** Options of {@link createSpriteLayerBinding}. */
 export interface SpriteLayerBindingOptions {
   /** The atlas the frames come from. */
@@ -349,7 +361,7 @@ export function createQuadPool(options: QuadPoolOptions): QuadPool {
       const sprite = sprites[used++];
       const id = frameId >= 0 && frameId < atlas.size ? frameId : atlas.missingFrame;
       place(sprite, atlas, id, Math.round(x), Math.round(y), flags);
-      sprite.tint = tint;
+      setTint(sprite, tint);
       sprite.alpha = alpha / 255;
       sprite.visible = true;
       return true;
@@ -365,7 +377,7 @@ export function createQuadPool(options: QuadPoolOptions): QuadPool {
       sprite.y = Math.round(y);
       sprite.scale.x = w;
       sprite.scale.y = h;
-      sprite.tint = color;
+      setTint(sprite, color);
       sprite.alpha = alpha / 255;
       sprite.visible = w > 0 && h > 0;
       return true;

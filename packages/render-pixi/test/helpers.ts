@@ -1,8 +1,11 @@
 /**
  * Shared fixtures for the render-pixi tests: a small hand-written atlas manifest (two pages,
  * a sprite with a hit-flash sibling, the fallback sprites and a tiny bitmap font) and fake page
- * images, so atlases can be built in Node without a GPU or real PNGs.
+ * images, so atlases can be built in Node without a GPU or real PNGs — plus an allocation probe
+ * for the zero-allocation rule of the per-frame paths (plan §1.3).
  */
+import { setFlagsFromString } from 'node:v8';
+import { runInNewContext } from 'node:vm';
 import type { AtlasFrameInfo, AtlasManifest, AtlasPageImage } from '../src/atlas/index.js';
 
 /**
@@ -101,4 +104,52 @@ export function fakeImage(width: number, height: number): AtlasPageImage {
  */
 export function pageImages(manifest: AtlasManifest): AtlasPageImage[] {
   return manifest.pages.map((page) => fakeImage(page.w, page.h));
+}
+
+/** `gc()` of the V8 isolate (exposed on first use through `--expose-gc`). */
+let collect: (() => void) | null = null;
+
+/**
+ * Runs a full garbage collection.
+ */
+export function forceGc(): void {
+  if (collect === null) {
+    setFlagsFromString('--expose-gc');
+    collect = runInNewContext('gc') as () => void;
+  }
+  collect();
+  collect();
+}
+
+/**
+ * Estimates the bytes `step` allocates over `iterations` calls, after `warmUp` calls (JIT).
+ *
+ * @remarks
+ * Samples `heapUsed` every 100 calls and sums only the growing intervals, so a scavenge in the
+ * middle loses one interval instead of hiding the whole run — the estimate can err low by at
+ * most ~100 calls' worth per collection, never high. Short-lived garbage counts (that is the
+ * point: per-frame code must not produce any), retained memory counts too.
+ *
+ * @param step - The per-frame work; receives the iteration index.
+ * @param iterations - Measured calls.
+ * @param warmUp - Unmeasured calls first (default 2000).
+ * @returns Estimated bytes allocated.
+ */
+export function measureAllocation(
+  step: (i: number) => void,
+  iterations: number,
+  warmUp = 2000,
+): number {
+  for (let i = 0; i < warmUp; i++) step(i);
+  forceGc();
+  let previous = process.memoryUsage().heapUsed;
+  let total = 0;
+  for (let done = 0; done < iterations;) {
+    const end = Math.min(iterations, done + 100);
+    for (; done < end; done++) step(warmUp + done);
+    const now = process.memoryUsage().heapUsed;
+    if (now > previous) total += now - previous;
+    previous = now;
+  }
+  return total;
 }
