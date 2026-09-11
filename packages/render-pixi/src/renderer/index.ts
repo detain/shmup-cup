@@ -18,7 +18,8 @@
  * **Allocation.** Pixi objects are created in {@link createPixiRenderer} and when a new
  * `WorldView` object is bound ({@link PixiRenderer.bindWorld} — once per world, called
  * automatically by `render()` when `frame.world` changes identity). A frame showing an already
- * bound world only assigns numbers and existing textures.
+ * bound world only assigns numbers and existing textures; the two passes reuse option objects
+ * allocated with the renderer.
  *
  * **Implements.** shmup_tech.md §2.2 (WebGL1-first, low-res render texture + one
  * nearest upscale quad), §4.1 (Pixi as renderer only), shmup_feat.md §3 (integer
@@ -37,7 +38,14 @@ import {
   type TextMetrics,
   type WorldView,
 } from '@shmup/core';
-import { Container, RenderTexture, Sprite, Texture, WebGLRenderer } from 'pixi.js';
+import {
+  Container,
+  RenderTexture,
+  Sprite,
+  Texture,
+  WebGLRenderer,
+  type RenderOptions,
+} from 'pixi.js';
 import type { Atlas } from '../atlas/index.js';
 import { createLayerStack, type LayerStack } from '../layers/index.js';
 import { PALETTE } from '../palette/index.js';
@@ -143,6 +151,32 @@ export interface PixiRenderer extends IRenderer {
  * @returns Clamped value.
  */
 const unit = (value: number): number => (value > 0 ? (value < 1 ? value : 1) : 0);
+
+/**
+ * Restores a preallocated pass-options object to what a fresh `{ container, target, clear }`
+ * literal would be, and returns it.
+ *
+ * Pixi's `render(options)` writes into the object it is given: it fills `target` (the canvas)
+ * and, for the canvas, `clearColor` and `clear`; it caches `transform` (and then skips
+ * `updateLocalTransform()`); the back-buffer system may swap `target` for its own texture. Resetting
+ * those fields before every call keeps each frame independent of the last without allocating.
+ *
+ * @param pass - The pass options (its `container` is left as is).
+ * @param target - Render target, or `undefined` for the canvas.
+ * @param clear - Clear flag, or `undefined` for Pixi's default.
+ * @returns `pass`.
+ */
+const resetPass = (
+  pass: RenderOptions,
+  target: RenderTexture | undefined,
+  clear: boolean | undefined,
+): RenderOptions => {
+  pass.target = target;
+  pass.clear = clear;
+  pass.clearColor = undefined;
+  pass.transform = undefined;
+  return pass;
+};
 
 /**
  * Creates and initialises the renderer.
@@ -268,6 +302,11 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
   };
   applyViewport();
 
+  // The two passes' render options, allocated once (no per-frame literals — plan §1.3);
+  // `resetPass` restores them before every call.
+  const scenePass: RenderOptions = { container: scene, target: frameTexture, clear: true };
+  const screenPass: RenderOptions = { container: screen };
+
   let boundWorld: WorldView | null = null;
   let bindings: SpriteLayerBinding[] = [];
 
@@ -359,8 +398,8 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
       dim.visible = dimAlpha > 0;
       if (hudView !== null) hudView.draw(frame.hud);
       if (uiView !== null) uiView.draw(frame.ui);
-      renderer.render({ container: scene, target: frameTexture, clear: true });
-      renderer.render({ container: screen });
+      renderer.render(resetPass(scenePass, frameTexture, true));
+      renderer.render(resetPass(screenPass, undefined, undefined));
     },
     destroy() {
       bindWorld(null);

@@ -24,9 +24,21 @@ import { PALETTE } from '../../src/palette/index.js';
 import { createPixiRenderer } from '../../src/renderer/index.js';
 import { pageImages, testManifest } from '../helpers.js';
 
+/** The render-options fields the tests look at. */
+interface RenderPass {
+  container: unknown;
+  target?: unknown;
+  clear?: boolean;
+  clearColor?: unknown;
+  transform?: unknown;
+}
+
 const record = vi.hoisted(() => ({
   init: null as Record<string, unknown> | null,
-  renders: [] as Array<{ container: unknown; target?: unknown; clear?: boolean }>,
+  /** What each `render()` call saw on entry (a copy, taken before the fake writes into it). */
+  renders: [] as Array<RenderPass>,
+  /** The option objects passed to `render()`, by identity. */
+  renderOptions: [] as Array<RenderPass>,
   resizes: [] as Array<[number, number]>,
   textureOptions: [] as Array<Record<string, unknown>>,
   textures: [] as unknown[],
@@ -37,6 +49,7 @@ const record = vi.hoisted(() => ({
 
 vi.mock('pixi.js', async (importOriginal) => {
   const real = await importOriginal<typeof Pixi>();
+  const CANVAS_TARGET = { label: 'canvas render target' };
   class FakeWebGLRenderer {
     readonly context = {
       get webGLVersion() {
@@ -50,8 +63,16 @@ vi.mock('pixi.js', async (importOriginal) => {
     resize(width: number, height: number): void {
       record.resizes.push([width, height]);
     }
-    render(options: { container: unknown; target?: unknown; clear?: boolean }): void {
-      record.renders.push(options);
+    render(options: RenderPass): void {
+      record.renders.push({ ...options });
+      record.renderOptions.push(options);
+      // Pixi 8's AbstractRenderer.render writes into its options like this.
+      options.target ??= CANVAS_TARGET;
+      if (options.target === CANVAS_TARGET) {
+        options.clearColor ??= [0, 0, 0, 1];
+        options.clear ??= true;
+      }
+      options.transform ??= (options.container as Pixi.Container).localTransform;
     }
     destroy(): void {
       record.rendererDestroyed++;
@@ -133,6 +154,7 @@ function oneShipWorld() {
 beforeEach(() => {
   record.init = null;
   record.renders.length = 0;
+  record.renderOptions.length = 0;
   record.resizes.length = 0;
   record.textureOptions.length = 0;
   record.textures.length = 0;
@@ -206,6 +228,40 @@ describe('render-pixi/renderer createPixiRenderer (mocked WebGL)', () => {
     expect(quad.texture).toBe(record.textures[0]);
     expect([quad.scale.x, quad.x, quad.y]).toEqual([5, 0, 0]);
     expect(renderer.viewport).toEqual({ scale: 5, x: 0, y: 0, width: 1920, height: 1080 });
+  });
+
+  it('reuses its two pass-option objects every frame and restores what Pixi wrote into them', async () => {
+    const renderer = await createPixiRenderer({ canvas, displayWidth: 1920, displayHeight: 1080 });
+    const frame = frameOf(0);
+    renderer.render(frame);
+    frame.tick = 1;
+    renderer.render(frame);
+    renderer.render(frame);
+    const [scenePass, screenPass] = record.renderOptions;
+    expect(record.renderOptions).toHaveLength(6);
+    expect(scenePass).not.toBe(screenPass);
+    for (let i = 0; i < record.renderOptions.length; i++) {
+      expect(record.renderOptions[i]).toBe(i % 2 === 0 ? scenePass : screenPass);
+    }
+    // Every call sees what a fresh literal would, whatever the previous call wrote into it.
+    const screen = screenPass?.container;
+    for (let i = 0; i < record.renders.length; i += 2) {
+      expect(record.renders[i]).toStrictEqual({
+        container: renderer.scene,
+        target: record.textures[0],
+        clear: true,
+        clearColor: undefined,
+        transform: undefined,
+      });
+      expect(record.renders[i + 1]).toStrictEqual({
+        container: screen,
+        target: undefined,
+        clear: undefined,
+        clearColor: undefined,
+        transform: undefined,
+      });
+    }
+    expect(screenPass?.target).not.toBeUndefined(); // the fake did write into it
   });
 
   it('paints a lifted navy background under the layer stack (never black)', async () => {
