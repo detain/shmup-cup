@@ -63,7 +63,11 @@ Per project: `pnpm --filter <name> <script>`, e.g. `pnpm --filter @shmup/core te
 - Root tasks (`//#typecheck:root`, `//#lint:root`, `//#test:integration`) and `dev` /
   `clean` are never cached.
 - `globalDependencies` (`eslint.config.js`, `tsconfig.base.json`, `.browserslistrc`,
-  shared Vite/Vitest configs …) invalidate every cache when they change.
+  shared Vite/Vitest configs …) invalidate every cache when they change. They also list
+  `content/**` and `types/**`: both live outside any package, yet the app builds inline
+  `content/` through `virtual:shmup-content` and the app tsconfigs include
+  `types/virtual-modules.d.ts`. Without them, editing only a content file would replay a
+  cached `dist/` with stale inlined content. Any new root-level input a task reads belongs here too.
 
 A cache hit prints `cache hit, replaying logs`. To force a rerun: `pnpm turbo run test --force`.
 

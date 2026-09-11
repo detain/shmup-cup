@@ -3,9 +3,11 @@
   "ui": "stream",
   "globalDependencies": [
     ".browserslistrc",
+    "content/**",
     "eslint.config.js",
     "tsconfig.base.json",
     "tsconfig.tooling.json",
+    "types/**",
     "vite.shared.ts",
     "vitest.shared.ts"
   ],
