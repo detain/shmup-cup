@@ -19,6 +19,11 @@ export interface ShmupProjectOptions {
   readonly environment?: 'node';
   /** Test file globs, relative to the project directory. */
   readonly include?: readonly string[];
+  /**
+   * Extra `node` arguments for the test workers, e.g. `['--expose-gc']` for the allocation
+   * guard of `@shmup/core` (`test/helpers/alloc.ts`).
+   */
+  readonly execArgv?: readonly string[];
 }
 
 /**
@@ -52,6 +57,7 @@ export function defineShmupProject(
       name,
       environment: options.environment ?? 'node',
       include: [...(options.include ?? ['test/**/*.test.ts'])],
+      ...(options.execArgv === undefined ? {} : { execArgv: [...options.execArgv] }),
     },
   });
 }

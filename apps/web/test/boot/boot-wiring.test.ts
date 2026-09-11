@@ -243,9 +243,9 @@ describe('web/boot bootWebApp wiring', () => {
     expect(app.shell.atlas.manifest).toBe(manifest);
   });
 
-  it('shows the sprite showcase by default and the test pattern with ?scene=calibration', async () => {
+  it('shows free flight by default and the test pattern with ?scene=calibration', async () => {
     const { app } = await boot();
-    expect(app.shell.scene).toBe('showcase');
+    expect(app.shell.scene).toBe('flight');
     app.stop();
     win = new FakeWindow();
     win.location.search = '?scene=calibration';

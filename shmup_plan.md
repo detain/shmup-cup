@@ -744,6 +744,51 @@ the browser dev app and as a Tizen 5.5 bundle.
   and inputs give equal `hashWorld` after 5,000 ticks; heap growth < 256 KB over 10,000 `stepWorld` calls after
   warm-up; e2e: pressing arrow keys moves the ship (pixel diff).
 - **Refs:** `shmup_feat.md` §5, §22 (architecture, tick order, collision), §3 (pixel-perfect camera).
+- **As built:**
+  - **World.** `WORLD_PHASES` is a frozen array of `{ phase, name, runsDuringHitStop, run }` in the
+    §3.2 order (`WorldPhase` codes 0–8, `WORLD_PHASE_NAMES`); only `input` and `fx` run during
+    hit-stop. Phase 1 writes per-player `PlayerIntent`s (`world.intents`: masks + `moveX/moveY`,
+    opposites cancel); phase 3 applies a camera **scroll velocity** `camera.vx/vy` (0 = static)
+    and records `dx/dy` — the hook M1-07's stage runner drives; phase 6 begins/builds
+    `world.grid` (camera view + `GRID_MARGIN` 64 px); phase 8 flushes every registered pool;
+    phase 9 counts hit-stop down and refreshes the view mirrors. `World` also carries `config`,
+    `content`, `ship` (the resolved spec) and `playerBatch`; `WorldStatus` is
+    `playing | bossWarning | stageClear | gameOver`. The pool registry (`register`, `flushAll`,
+    `clearAll`) keeps each pool's arrays in sorted field order for the hash. The view has one
+    batch (`LayerId.Player`), filled at creation too, so the first frame shows the ship.
+  - **Player.** `PlayerShip` adds `slot`, `active` (P2 inactive until M2-06), `lives` and
+    `moving` (movement input this tick — the D26 option trail). Extra API: `createPlayer(slot,
+    lives)`, `spawnPlayer`, `setPlayerState`, `readPlayerIntent`, `playerBankFrame`,
+    `resolvePlayerShip` (`kestrel` › first ship › `DEFAULT_PLAYER_SHIP`, the built-in fallback
+    for an empty content DB, which is not drawn). Fly-in: camera-relative `ENTER_START_X` −24 →
+    `ENTER_END_X` 64 at mid-playfield, cubic ease-out over the content's `enterTicks`;
+    `respawning` flies in the same way (M1-12 decides when). Banking moves one step per tick up
+    to `bankFrames` (frames: 0 level, 1…N up, N+1…2N down — the `ships/kestrel` order). Only
+    `ships/kestrel` is drawn (the thruster sprite is not referenced by content).
+  - **Collision.** `createSpatialGrid(width, height, cellSize = 32, capacity = 256)` instead of a
+    leading default parameter; per tick `begin(originX, originY)` → `insert` → `build()` →
+    `query`. Queries test the stored boxes exactly (closed boxes), so they *equal* brute force
+    instead of returning cell candidates; boxes outside the area clamp into the border cells, and
+    boxes spanning more than 9 cells go to an overflow list every query scans (no silent misses,
+    no allocation). All shape tests are closed (touching = hit). Extra exports:
+    `pointSegmentDistanceSq`, `COLLISION_MASKS`, `layersInteract`.
+  - **Debug.** `hashWorld` also covers camera velocity, status, hit-stop and the players'
+    `active` / `lives` / `moving`; numbers are hashed as little-endian doubles (`DataView`), the
+    running hash lives in a `Uint32Array`, so the only allocation is the engine boxing the
+    returned 32-bit value (≤ 16 bytes per call) — call it every few ticks, not per entity.
+    `createDebugFlags()` added.
+  - **Allocation guard.** `measureHeapGrowth(fn, iterations, warmup?)` runs the loop under V8's
+    `GCProfiler` and adds the bytes in-loop collections reclaimed, so it measures *allocations*,
+    not only retained growth (self-test in `test/helpers/alloc.test.ts`). `--expose-gc` reaches the
+    core's workers through a new `execArgv` option of `defineShmupProject`.
+  - **Game / shell.** `game.world` is the session's World, `game.events === world.events`,
+    `renderFrame().world === world.view`. New shell module `flight` (the free-flight scene): its
+    own `WorldView` = two starfield batches + the World's batches on the World's camera, its
+    sprite table = the content's names + `FLIGHT_SPRITES`, and a HUD (bars, `1P`, `FREE FLIGHT`,
+    stock icons, `ARROWS MOVE`). `ShellScene` is `flight` (default) | `showcase`
+    (`?scene=showcase`) | `calibration`; `Shell.flight` added; the calibration scene renders the
+    game frame without its world. `test/e2e/flight.spec.ts` finds the KESTREL by its hull colour.
+  - The D20 playfield constants already existed (added in M1-04).
 
 ### M1-07 — Stage runtime: camera, timeline, checkpoints, terrain, parallax
 

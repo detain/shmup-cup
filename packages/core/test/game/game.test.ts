@@ -94,4 +94,25 @@ describe('core/game createGame', () => {
     game.step();
     expect(game.inputContext).toBe('game');
   });
+
+  it('hosts a World: each step advances it once and the input moves the KESTREL', () => {
+    const platform = createHeadlessPlatform();
+    const game = createGame(platform, { seed: 3 });
+    expect(game.world.config).toBe(game.config);
+    expect(game.world.tick).toBe(0);
+    for (let i = 0; i < 40; i++) game.step();
+    expect(game.world.tick).toBe(40);
+    const ship = game.world.players[0];
+    expect(ship.state).toBe('alive');
+    const x = ship.x;
+    commitPlayerInput(platform.snapshot.players[0], Action.Right);
+    game.step();
+    expect(ship.x).toBe(x + 1.5);
+    expect(game.world.tick).toBe(game.state.tick);
+    // Frozen: neither the world nor the ship moves.
+    game.pause();
+    game.step();
+    expect(game.world.tick).toBe(41);
+    expect(ship.x).toBe(x + 1.5);
+  });
 });

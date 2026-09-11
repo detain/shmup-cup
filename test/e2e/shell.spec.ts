@@ -14,7 +14,7 @@ import { decodePng } from '../../scripts/assets/png.mjs';
 /** Letterbox colour around the scaled frame (render-pixi `PALETTE.letterbox`). */
 const LETTERBOX = [0x05, 0x07, 0x0f] as const;
 
-/** HUD bar fill of the showcase (0x1d2a5c) — frame rows 0–7 and 208–215. */
+/** HUD bar fill of the free-flight scene (0x1d2a5c) — frame rows 0–7 and 208–215. */
 const HUD_BAR = [0x1d, 0x2a, 0x5c] as const;
 
 /** Boot screen background (`BOOT_SCREEN_COLORS.background`). */
@@ -176,7 +176,7 @@ test.describe('integer scaling (web build)', () => {
 });
 
 test.describe('frame loop (web build)', () => {
-  test('the showcase animates: captures a few frames apart differ', async ({ page }) => {
+  test('free flight animates: captures a few frames apart differ', async ({ page }) => {
     await openRunning(page);
     const first = await shoot(page, '#game');
     await waitFrames(page, 20);

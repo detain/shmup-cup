@@ -199,4 +199,71 @@ export {
   type WeaponSpec,
 } from './data/index.js';
 
+export {
+  COLLISION_MASKS,
+  CollisionLayer,
+  DEFAULT_GRID_CAPACITY,
+  DEFAULT_GRID_CELL_SIZE,
+  aabbAabb,
+  capsuleCircle,
+  circleAabb,
+  circleCircle,
+  createSpatialGrid,
+  layersInteract,
+  pointSegmentDistanceSq,
+  segmentAabb,
+  type Shape,
+  type SpatialGrid,
+  type SpatialGridVisitor,
+  type TerrainQuery,
+} from './collision/index.js';
+
+export {
+  DEFAULT_PLAYER_SHIP,
+  DIAGONAL_SCALE,
+  ENTER_END_X,
+  ENTER_START_X,
+  PLAYER_STATES,
+  SPAWN_Y,
+  createPlayer,
+  createPlayerIntent,
+  playerBankFrame,
+  readPlayerIntent,
+  resolvePlayerShip,
+  setPlayerState,
+  spawnPlayer,
+  updatePlayer,
+  type PlayerCamera,
+  type PlayerIntent,
+  type PlayerShip,
+  type PlayerState,
+} from './player/index.js';
+
+export {
+  FNV_OFFSET_BASIS,
+  FNV_PRIME,
+  createDebugFlags,
+  hashWorld,
+  type DebugCounters,
+  type DebugFlags,
+} from './debug/index.js';
+
+export {
+  GRID_MARGIN,
+  WORLD_PHASES,
+  WORLD_PHASE_NAMES,
+  WORLD_STATUSES,
+  WorldPhase,
+  createWorld,
+  stepWorld,
+  syncWorldView,
+  type PoolRegistry,
+  type RegisteredPool,
+  type World,
+  type WorldCamera,
+  type WorldPhaseEntry,
+  type WorldStatus,
+  type WorldSystem,
+} from './world/index.js';
+
 export { createGame, type Game, type GameState } from './game/index.js';

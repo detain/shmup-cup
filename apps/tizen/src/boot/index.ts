@@ -16,7 +16,7 @@
  * `REMOTE_KEYS_TO_REGISTER` when the content has no remote profile).
  *
  * **Back key.** Until the title scene with its exit-confirmation dialog exists
- * (shmup_feat.md §17/§23, M1-16), the showcase *is* the app's root screen, so Back exits
+ * (shmup_feat.md §17/§23, M1-16), the free-flight scene *is* the app's root screen, so Back exits
  * directly — the correct Tizen behaviour for a root screen. The Back watcher is installed
  * before boot, so Back also leaves the boot error screen. Later the scene stack consumes
  * `Action.Back` and this shortcut goes away.

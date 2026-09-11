@@ -18,7 +18,11 @@ in `math`). Enforced by `tsconfig.json` (`lib: ["ES2018"]`, no `types`) and ESLi
 | `Action`, `InputSnapshot`, `PlayerInput`, `commitPlayerInput`, `InputContext`, `INPUT_CONTEXTS`, … | `input` | Action bitmasks + per-tick snapshots with edge latching; the `game` / `menu` binding context (D15) the input adapters resolve keys with |
 | `GameConfig`, `DEFAULT_GAME_CONFIG`, `resolveGameConfig`, `HUD_BAR_HEIGHT`, `PLAYFIELD_Y/W/H` | `config` | Sim-affecting session options (384×216, 60 Hz, remote-first defaults) and the D20 screen layout (8-px HUD bars around a 384×200 playfield) |
 | `createFixedStepLoop` | `loop` | 60 Hz accumulator with delta snapping, per-frame cap, reset on resume |
-| `createGame` | `game` | Composition root: platform + loop + content + (empty) simulation; suspend/resume; `game.events` queue; `renderFrame()` returns the reused render contract; `inputContext` (`'game'` until the scene stack, M1-16) |
+| `createGame` | `game` | Composition root: platform + loop + content + the gameplay `World` (`game.world`, one `stepWorld` per tick); suspend/resume; `game.events` queue (the World's); `renderFrame()` returns the reused render contract with `world` = the World's view; `inputContext` (`'game'` until the scene stack, M1-16) |
+| `createWorld`, `stepWorld`, `World`, `WORLD_PHASES`, `WorldPhase`, `syncWorldView`, `PoolRegistry` | `world` | The session state (tick, RNG streams, events, players, camera, status, hit-stop, debug flags, pools, `view`) and the fixed 9-phase tick pipeline of plan §3.2; hit-stop skips phases 2–8; zero allocation per tick |
+| `PlayerShip`, `createPlayer`, `spawnPlayer`, `updatePlayer`, `readPlayerIntent`, `resolvePlayerShip`, `DIAGONAL_SCALE`, … | `player` (partial) | KESTREL movement: speed levels from `content/player/`, diagonal × 0.7071 (D4), no inertia, clamp to the camera view minus margins, rides the camera scroll, banking, 40-tick fly-in (death/respawn: M1-12) |
+| `circleCircle`, `aabbAabb`, `circleAabb`, `capsuleCircle`, `segmentAabb`, `CollisionLayer`, `createSpatialGrid` | `collision` (partial) | Scalar-argument shape tests (closed shapes: touching hits), layer masks, uniform grid broad phase rebuilt by counting sort (terrain queries: M1-07) |
+| `hashWorld`, `createDebugFlags`, `DebugFlags` | `debug` (partial) | FNV-1a 32 state hash over tick, RNG states, camera, players and every pool's live slots (golden replays); debug switches (controls: M1-19) |
 | `IRenderer`, `IAudio`, `RenderFrame`, `WorldView`, `SpriteBatchView`, `createSpriteBatch`, `pushSprite`, `SpriteFlag`, `LayerId`, `DrawList`, `createDrawList`, `TextMetrics` | `presentation` | Back-end contracts and the render contract (plan §3.4): world sprite batches in typed arrays, HUD / UI command lists (rect, sprite, text slot, number), draw layers, screen effects — implemented by `@shmup/render-pixi` / `@shmup/audio-web` |
 | `createRng`, `createRngStreams`, `RNG_STATE_WORDS` | `rng` | sfc32 seeded from one 32-bit seed; independent gameplay + cosmetic streams, zero-alloc state snapshots |
 | `sinB`, `cosB`, `atan2B`, `quantizeAngle`, `angleDelta`, `turnToward`, `wrapAngle`, `clamp`, `lerp`, `approach`, `EASINGS` | `math` | Binary angles (1024/turn) on committed lookup tables + easing curves |
@@ -33,7 +37,6 @@ and exports `moduleInfo`; `test/<module>/` holds its smoke test.
 
 | Module | Responsibility | Spec |
 |---|---|---|
-| `player` | Ship movement, hitboxes, death/respawn | feat §5, §10 |
 | `weapons` | Meter + direct weapon families, shot caps, piercing | feat §7 |
 | `options` | Trailing options / multiples | feat §8 |
 | `shields` | Force field, pods, Arm tiers | feat §9 |
@@ -42,7 +45,6 @@ and exports `moduleInfo`; `test/<module>/` holds its smoke test.
 | `bullets` | Enemy bullet pool, lasers, cancel | feat §12 |
 | `patterns` | Generator coroutines + bullet-pattern DSL | feat §12, tech §4.6 |
 | `bosses` | Multi-part bosses, phases, WARNING intro | feat §13 |
-| `collision` | Shapes, uniform grid, terrain queries | feat §22, tech §4.5 |
 | `stage` | Timeline, camera path, checkpoints, tilemap, parallax | feat §14, §10 |
 | `scoring` | Score, hi-scores, lives, extends | feat §15 |
 | `rank` | Dynamic difficulty 0–31 | feat §15 |
@@ -51,7 +53,6 @@ and exports `moduleInfo`; `test/<module>/` holds its smoke test.
 | `replay` | Input recording/playback, state hashes | feat §21 |
 | `save` | Versioned persistence via `Platform.storage` | feat §21 |
 | `fx` | Hit-stop, shake, flash (sim side) | feat §18, §20 |
-| `debug` | God mode, frame advance, overlay counters | feat §24 |
 
 ## Scripts
 

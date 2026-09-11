@@ -17,10 +17,12 @@
  * 5. wires the lifecycle (suspend clears held input and suspends audio), the audio unlock
  *    (first gesture on the web, immediately on TV), window resizes, and
  * 6. runs the rAF frame loop: `game.frame(now)` → `game.events.drain(dispatch)` →
- *    `renderer.render(frame)` (plan §3.3), with the sprite showcase (default) or the
- *    calibration pattern (`?scene=calibration`) as the scene until the World arrives (M1-06).
- *    Before the ticks of each frame it forwards a change of `game.inputContext` to the input
- *    adapter (`input.setContext` — the `game` / `menu` binding tables of decision D15).
+ *    `renderer.render(frame)` (plan §3.3). The scene decides what the frame shows until the
+ *    scene stack exists (M1-16): **free flight** (default — the game's World with the KESTREL
+ *    under the player's control over a starfield, `flight` module), the sprite **showcase**
+ *    (`?scene=showcase`) or the **calibration** pattern (`?scene=calibration`, the World is not
+ *    drawn). Before the ticks of each frame it forwards a change of `game.inputContext` to the
+ *    input adapter (`input.setContext` — the `game` / `menu` binding tables of decision D15).
  *
  * The canvas carries `data-shmup-state="loading" | "running" | "error"` so tests and the TV's
  * remote inspector can tell where boot stands.
@@ -46,8 +48,11 @@ import {
   type IAudio,
   type InputContext,
   type LoadContentResult,
+  type DrawList,
   type Platform,
   type PlatformInput,
+  type RenderFrame,
+  type ScreenView,
   type ValidationIssue,
 } from '@shmup/core';
 import {
@@ -68,6 +73,7 @@ import {
   type ContentOwners,
   type LoadableImage,
 } from '../loader/index.js';
+import { createFlightScene, type FlightScene } from '../flight/index.js';
 import { createShowcase, type Showcase } from '../showcase/index.js';
 
 /** Module descriptor. */
@@ -80,22 +86,29 @@ export const moduleInfo = defineModule({
 /** Attribute on the game canvas that reports the boot state. */
 export const BOOT_STATE_ATTRIBUTE = 'data-shmup-state';
 
-/** Dev scenes the shell can show until real scenes exist. */
-export type ShellScene = 'showcase' | 'calibration';
+/**
+ * Dev scenes the shell can show until real scenes exist (M1-16): `flight` (the game's World —
+ * free flight), `showcase` (the M1-04 sprite showcase) and `calibration` (the test pattern).
+ */
+export type ShellScene = 'flight' | 'showcase' | 'calibration';
 
 /** Every {@link ShellScene}, default first. */
-export const SHELL_SCENES: readonly ShellScene[] = Object.freeze(['showcase', 'calibration']);
+export const SHELL_SCENES: readonly ShellScene[] = Object.freeze([
+  'flight',
+  'showcase',
+  'calibration',
+]);
 
 /**
  * Reads the `scene` query parameter (`?scene=calibration`).
  *
  * @param search - `location.search` (with or without the leading `?`).
- * @returns The scene; unknown or missing values give `'showcase'`.
+ * @returns The scene; unknown or missing values give `'flight'`.
  *
  * @example
  * ```ts
  * sceneFromSearch('?scene=calibration'); // → 'calibration'
- * sceneFromSearch(''); // → 'showcase'
+ * sceneFromSearch(''); // → 'flight'
  * ```
  */
 export function sceneFromSearch(search: string): ShellScene {
@@ -107,7 +120,7 @@ export function sceneFromSearch(search: string): ShellScene {
     const value = eq < 0 ? '' : pair.slice(eq + 1);
     for (const scene of SHELL_SCENES) if (scene === value) return scene;
   }
-  return 'showcase';
+  return 'flight';
 }
 
 /** The inlined `virtual:shmup-assets` module (manifest + relative page URLs). */
@@ -157,7 +170,7 @@ export interface ShellOptions {
   readonly platform: (renderer: PixiRenderer) => Platform;
   /** Game config overrides (`remoteMode`, `autofire`, …). */
   readonly gameConfig?: Partial<GameConfig>;
-  /** Scene to show (default `'showcase'`). */
+  /** Scene to show (default `'flight'`). */
   readonly scene?: ShellScene;
   /**
    * When to unlock audio: `'gesture'` (default — first key or pointer press, the browser
@@ -201,6 +214,8 @@ export interface Shell {
   readonly content: LoadContentResult;
   /** The scene being shown. */
   readonly scene: ShellScene;
+  /** The free-flight scene when `scene === 'flight'`, else `null`. */
+  readonly flight: FlightScene | null;
   /** The showcase scene when `scene === 'showcase'`, else `null`. */
   readonly showcase: Showcase | null;
   /** Stops the frame loop and releases listeners, input, renderer, atlas and audio. */
@@ -260,6 +275,44 @@ function describe(error: unknown): string {
   return String(error);
 }
 
+/** The calibration scene's frame: the game frame without its world (test pattern only). */
+interface CalibrationFrame {
+  /**
+   * Copies the game frame's tick, alpha and draw lists into the reused calibration frame.
+   *
+   * @param source - The game's frame.
+   * @returns The calibration frame (`world` always `null`; reused).
+   */
+  update(source: RenderFrame): RenderFrame;
+}
+
+/**
+ * Creates the calibration scene's frame wrapper. Never allocates per frame.
+ *
+ * @param first - The game's frame (`game.renderFrame()`, the same object every frame).
+ * @returns The wrapper.
+ */
+function createCalibrationFrame(first: RenderFrame): CalibrationFrame {
+  const frame: {
+    tick: number;
+    alpha: number;
+    readonly world: null;
+    hud: DrawList;
+    ui: DrawList;
+    screen: ScreenView;
+  } = { tick: 0, alpha: 0, world: null, hud: first.hud, ui: first.ui, screen: first.screen };
+  return {
+    update(source) {
+      frame.tick = source.tick;
+      frame.alpha = source.alpha;
+      frame.hud = source.hud;
+      frame.ui = source.ui;
+      frame.screen = source.screen;
+      return frame;
+    },
+  };
+}
+
 /**
  * Boots the game into a canvas (see the module docs for the sequence).
  *
@@ -270,9 +323,11 @@ function describe(error: unknown): string {
  * `game.inputContext` to `input.setContext`, calls `game.frame`, drains the event queue through
  * the dispatcher's bound visitor and renders the reused frame.
  *
- * The renderer's sprite name table depends on the scene: the showcase hands over its own
- * `SHOWCASE_SPRITES` table (`showcase` module) and pre-binds its world (so the first frame creates no Pixi
- * objects); the calibration scene uses `content.db.sprites.names`. Audio unlock listeners
+ * The renderer's sprite name table depends on the scene: free flight hands over the content's
+ * names plus its own starfield / HUD sprites (`flight` module), the showcase its own
+ * `SHOWCASE_SPRITES` table (`showcase` module); both pre-bind their world view (so the first
+ * frame creates no Pixi objects). The calibration scene uses `content.db.sprites.names` and a
+ * frame without a world (only the test pattern, HUD and UI lists). Audio unlock listeners
  * are registered in the capture phase and removed after the first gesture; `stop()` is
  * idempotent.
  *
@@ -298,7 +353,7 @@ function describe(error: unknown): string {
  */
 export async function bootShell(options: ShellOptions): Promise<Shell> {
   const { canvas, win, input, audio } = options;
-  const scene = options.scene ?? 'showcase';
+  const scene = options.scene ?? 'flight';
   const overlay = options.overlay !== undefined ? options.overlay : createBootOverlay(canvas);
   const createImage = options.createImage ?? ((): HTMLImageElement => new Image());
   markState(canvas, 'loading');
@@ -387,13 +442,16 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   const readyAtlas = atlas;
   const readyRenderer = renderer;
 
+  const flight = scene === 'flight' ? createFlightScene(game) : null;
   const showcase = scene === 'showcase' ? createShowcase() : null;
-  if (showcase !== null) {
-    readyRenderer.setSpriteNames(showcase.spriteNames);
-    readyRenderer.bindWorld(showcase.world);
+  const sceneView = flight ?? showcase;
+  if (sceneView !== null) {
+    readyRenderer.setSpriteNames(sceneView.spriteNames);
+    readyRenderer.bindWorld(sceneView.world);
   } else {
     readyRenderer.setSpriteNames(content.db.sprites.names);
   }
+  const calibration = createCalibrationFrame(game.renderFrame());
   const events = createEventDispatcher();
 
   // 5. Lifecycle, audio unlock, resize.
@@ -448,7 +506,7 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     game.frame(now);
     game.events.drain(visit);
     const frame = game.renderFrame();
-    readyRenderer.render(showcase === null ? frame : showcase.update(frame));
+    readyRenderer.render(sceneView !== null ? sceneView.update(frame) : calibration.update(frame));
   };
   const loop = startFrameLoop(win, onFrame);
 
@@ -464,6 +522,7 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     events,
     content,
     scene,
+    flight,
     showcase,
     stop() {
       if (stopped) return;

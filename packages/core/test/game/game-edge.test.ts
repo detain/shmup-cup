@@ -37,7 +37,9 @@ describe('core/game edge cases', () => {
     expect(game.state).toEqual({ tick: 0, paused: false, suspended: false, input: null });
     expect(game.config).toEqual(DEFAULT_GAME_CONFIG);
     const frame = game.renderFrame();
-    expect([frame.tick, frame.alpha, frame.world]).toEqual([0, 0, null]);
+    expect([frame.tick, frame.alpha, frame.world]).toEqual([0, 0, game.world.view]);
+    expect(frame.world).toBe(game.world.view);
+    expect(game.events).toBe(game.world.events);
     expect(frame.screen).toEqual({ shakeX: 0, shakeY: 0, flash: 0, dim: 0 });
     expect([frame.hud.count, frame.ui.count]).toEqual([0, 0]);
     expect(frame.hud).not.toBe(frame.ui);

@@ -50,6 +50,12 @@ export {
 } from './error-screen/index.js';
 export { startFrameLoop, type FrameLoop, type FrameScheduler } from './frame-loop/index.js';
 export {
+  FLIGHT_SPRITES,
+  createFlightScene,
+  type FlightScene,
+  type FlightSceneOptions,
+} from './flight/index.js';
+export {
   SHOWCASE_SPRITES,
   createShowcase,
   type Showcase,

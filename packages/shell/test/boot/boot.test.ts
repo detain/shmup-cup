@@ -1,7 +1,7 @@
 /**
  * Tests for bootShell() with a fake window, fake images and a fake renderer (no WebGL in
- * Node; the atlas is built for real over fake page images): the boot order, the showcase and
- * calibration scenes, the frame loop (ticks → event dispatch → render), audio unlock policies,
+ * Node; the atlas is built for real over fake page images): the boot order, the free-flight,
+ * showcase and calibration scenes, the frame loop (ticks → event dispatch → render), audio unlock policies,
  * lifecycle and resize wiring, stop(), and every failure path of the boot error screen.
  */
 import {
@@ -28,6 +28,7 @@ import {
 } from '../../src/boot/index.js';
 import type { BootOverlay } from '../../src/error-screen/index.js';
 import type { LoadableImage } from '../../src/loader/index.js';
+import { FLIGHT_SPRITES } from '../../src/flight/index.js';
 import { SHOWCASE_SPRITES } from '../../src/showcase/index.js';
 
 const fakes = vi.hoisted(() => ({
@@ -241,16 +242,17 @@ function boot(overrides: Partial<ShellOptions> = {}) {
 describe('shell/boot sceneFromSearch', () => {
   it('describes itself and knows its scenes', () => {
     expect(moduleInfo.name).toBe('boot');
-    expect(SHELL_SCENES).toEqual(['showcase', 'calibration']);
+    expect(SHELL_SCENES).toEqual(['flight', 'showcase', 'calibration']);
   });
 
-  it('reads ?scene= and defaults to the showcase', () => {
+  it('reads ?scene= and defaults to free flight', () => {
     expect(sceneFromSearch('?scene=calibration')).toBe('calibration');
     expect(sceneFromSearch('debug=1&scene=calibration')).toBe('calibration');
     expect(sceneFromSearch('?scene=showcase')).toBe('showcase');
-    expect(sceneFromSearch('?scene=nope')).toBe('showcase');
-    expect(sceneFromSearch('?scene')).toBe('showcase');
-    expect(sceneFromSearch('')).toBe('showcase');
+    expect(sceneFromSearch('?scene=flight')).toBe('flight');
+    expect(sceneFromSearch('?scene=nope')).toBe('flight');
+    expect(sceneFromSearch('?scene')).toBe('flight');
+    expect(sceneFromSearch('')).toBe('flight');
   });
 });
 
@@ -274,16 +276,27 @@ describe('shell/boot bootShell', () => {
     expect(shown[shown.length - 1]).toBe('removed');
   });
 
-  it('shows the showcase by default: its sprite names and world are handed to the renderer', async () => {
+  it('shows free flight by default: the content names plus its own, its world bound', async () => {
     const shell = await boot().promise;
-    expect(shell.scene).toBe('showcase');
+    expect(shell.scene).toBe('flight');
+    expect(shell.showcase).toBeNull();
+    expect(fakes.spriteNames).toEqual([[...shell.game.content.sprites.names, ...FLIGHT_SPRITES]]);
+    expect(fakes.bound).toEqual([shell.flight?.world]);
+    expect(shell.flight?.world.batches.slice(2)).toEqual(shell.game.world.view.batches);
+  });
+
+  it('?scene=showcase: its sprite names and world are handed to the renderer', async () => {
+    const shell = await boot({ scene: 'showcase' }).promise;
+    expect(shell.flight).toBeNull();
     expect(fakes.spriteNames).toEqual([SHOWCASE_SPRITES]);
     expect(fakes.bound).toEqual([shell.showcase?.world]);
+    win.frame(0);
+    expect(fakes.frames[0]).toMatchObject({ tick: 0, world: shell.showcase?.world });
   });
 
   it('calibration scene: the test pattern, the content sprite table and the game frame', async () => {
     const shell = await boot({ scene: 'calibration' }).promise;
-    expect(shell.showcase).toBeNull();
+    expect([shell.showcase, shell.flight]).toEqual([null, null]);
     expect(fakes.rendererOptions?.testPattern).toBe(true);
     expect(fakes.spriteNames).toEqual([shell.game.content.sprites.names]);
     win.frame(0);
@@ -302,7 +315,7 @@ describe('shell/boot bootShell', () => {
     expect(shell.game.state.tick).toBe(2);
     expect(shakes).toEqual([3]);
     expect(fakes.frames.map((frame) => frame.tick)).toEqual([0, 1, 2]);
-    expect(fakes.frames.every((frame) => frame.world === shell.showcase?.world)).toBe(true);
+    expect(fakes.frames.every((frame) => frame.world === shell.flight?.world)).toBe(true);
     expect(fakes.frames[0].hudCount).toBeGreaterThan(0);
   });
 
@@ -440,7 +453,7 @@ describe('shell/boot failures (boot error screen)', () => {
 
   it('boots without an overlay when none can be created (fake canvas)', async () => {
     const shell = await boot({ overlay: undefined }).promise;
-    expect(shell.scene).toBe('showcase');
+    expect(shell.scene).toBe('flight');
   });
 });
 

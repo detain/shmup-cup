@@ -15,11 +15,17 @@ const TIZEN_INDEX = pathToFileURL(
   fileURLToPath(new URL('../../apps/tizen/dist/index.html', import.meta.url)),
 ).href;
 
-/** Title tint of the showcase ("SHMUP CUP", white glyphs × 0xf8d030). */
+/**
+ * Title tint of the free-flight HUD ("FREE FLIGHT") and of the showcase ("SHMUP CUP"): white
+ * glyphs × 0xf8d030.
+ */
 const TITLE_YELLOW = [0xf8, 0xd0, 0x30] as const;
 
-/** HUD bar fill of the showcase (0x1d2a5c). */
+/** HUD bar fill of the free-flight scene and the showcase (0x1d2a5c). */
 const HUD_BAR = [0x1d, 0x2a, 0x5c] as const;
+
+/** KESTREL hull colour (`ships/kestrel` palette `h`, #c8d0e0) — only the ship uses it. */
+const KESTREL_HULL = [0xc8, 0xd0, 0xe0] as const;
 
 /** Light tone of the calibration pattern's checker border (0xf4f4f4). */
 const BORDER_LIGHT = [0xf4, 0xf4, 0xf4] as const;
@@ -176,13 +182,22 @@ async function expectHealthyBoot(page: Page, errors: string[]): Promise<Capture>
 }
 
 test.describe('web build (vite preview)', () => {
-  test('boots the sprite showcase: atlas loaded, bitmap title and HUD drawn, no errors', async ({
+  test('boots free flight: atlas loaded, KESTREL, HUD and its title drawn, no errors', async ({
     page,
   }) => {
     const errors = watchErrors(page);
     const atlas = page.waitForResponse((response) => response.url().endsWith('/main.png'));
     await page.goto('./');
     expect((await atlas).status()).toBe(200);
+    const shot = await expectHealthyBoot(page, errors);
+    expect(shot.contains(TITLE_YELLOW)).toBe(true);
+    expect(shot.contains(KESTREL_HULL)).toBe(true);
+    expect(shot.frameRgb(0, 0)).toEqual([...HUD_BAR]);
+  });
+
+  test('?scene=showcase still shows the sprite showcase', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('./?scene=showcase');
     const shot = await expectHealthyBoot(page, errors);
     expect(shot.contains(TITLE_YELLOW)).toBe(true);
     expect(shot.frameRgb(0, 0)).toEqual([...HUD_BAR]);
@@ -197,7 +212,7 @@ test.describe('web build (vite preview)', () => {
 });
 
 test.describe('Tizen build (dist/ via file://)', () => {
-  test('boots from disk as one classic script: atlas loaded, showcase drawn, no errors', async ({
+  test('boots from disk as one classic script: atlas loaded, free flight drawn, no errors', async ({
     page,
   }) => {
     const errors = watchErrors(page);
@@ -210,6 +225,7 @@ test.describe('Tizen build (dist/ via file://)', () => {
     expect(scripts).toEqual([['./app.js', null]]);
     const shot = await expectHealthyBoot(page, errors);
     expect(shot.contains(TITLE_YELLOW)).toBe(true);
+    expect(shot.contains(KESTREL_HULL)).toBe(true);
     expect(shot.frameRgb(0, 0)).toEqual([...HUD_BAR]);
   });
 });

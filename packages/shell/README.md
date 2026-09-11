@@ -18,7 +18,7 @@ const shell = await bootShell({
   audio, // createWebAudio()
   platform: (renderer) => createWebPlatform({ input, audio, webgl2: renderer.webGLVersion === 2, ... }),
   gameConfig: { remoteMode: false },
-  scene: sceneFromSearch(location.search), // 'showcase' (default) | 'calibration'
+  scene: sceneFromSearch(location.search), // 'flight' (default) | 'showcase' | 'calibration'
   audioUnlock: 'gesture', // 'immediate' on TV
   contentOwners: { 'input-profiles': profiles.load }, // optional: keep the parsed input profiles
 });
@@ -43,7 +43,8 @@ canvas carries `data-shmup-state="loading" | "running" | "error"`.
 | `dispatch` | implemented | Sim event → presentation handler routing, allocation-free |
 | `error-screen` | implemented | Boot overlay: progress bar and error screen (Canvas 2D) |
 | `frame-loop` | implemented | `requestAnimationFrame` driver (moved here from the apps) |
-| `showcase` | implemented | Default dev scene until the World exists (M1-06): parallax stars, KESTREL, HUD, bitmap text |
+| `flight` | implemented | Default dev scene since M1-06 ("free flight"): the game's World (the KESTREL under player control) over a drifting starfield, HUD bars; its sprites are appended to the content's sprite table |
+| `showcase` | implemented | The M1-04 sprite showcase (`?scene=showcase`): parallax stars, KESTREL, HUD, bitmap text |
 
 Boot error screen titles: `CONTENT COULD NOT BE READ`, `CONTENT ERRORS: N PROBLEMS` (one
 `<file>:<json path>: message` line per issue), `ATLAS PAGE FAILED TO LOAD`,

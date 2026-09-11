@@ -2,11 +2,11 @@
  * # game — top-level game object (composition root of the core)
  *
  * **Responsibility.** {@link createGame} wires a {@link Platform} to the fixed-step
- * loop and owns the per-session state. Each tick it polls input and advances the
- * simulation. Today the simulation is empty (it only counts ticks); later steps plug
- * the scene stack, stage runner and game systems into {@link Game.step} in the fixed
- * order `input → player move → stage events/spawns → scripts → movement → collision →
- * damage → deferred removal → emit events` (shmup_feat.md §22).
+ * loop and owns the per-session state. Each tick it polls input once and advances the
+ * gameplay {@link World} with `stepWorld` — the fixed tick pipeline `input → players → stage →
+ * scripts → movement → collision → damage → removal → fx` (plan §3.2, shmup_feat.md §22). The
+ * scene stack of M1-16 will decide when a World exists; until then every session hosts one World
+ * from the start (free flight with the KESTREL).
  *
  * Lifecycle: `platform.lifecycle.onSuspend` freezes the game (`state.suspended`);
  * `onResume` unfreezes it and resets the loop accumulator so no burst of catch-up
@@ -18,10 +18,11 @@
  *
  * **Public API.** {@link createGame}, {@link Game}, {@link GameState}. A session carries the
  * validated {@link ContentDb} it was created with (`game.content`), so systems read tunables
- * from data instead of constants, the {@link EventQueue} its systems push presentation events
- * into (`game.events`, drained by the host once per frame) and builds the reused
- * {@link RenderFrame} of the render contract (`game.renderFrame()`: `world` is `null` until the
- * World arrives in M1-06; the HUD and UI draw lists are empty until the scenes of M1-16).
+ * from data instead of constants, its gameplay {@link World} (`game.world`), the
+ * {@link EventQueue} its systems push presentation events into (`game.events` — the World's
+ * queue, drained by the host once per frame) and builds the reused {@link RenderFrame} of the
+ * render contract (`game.renderFrame()`: `world` is the World's view; the HUD and UI draw lists
+ * are empty until the scenes of M1-16).
  * `game.inputContext` names the binding context (`'game'` / `'menu'`, decision D15) the host's
  * input adapter should use — `'game'` until the scene stack of M1-16 decides.
  *
@@ -29,11 +30,12 @@
  */
 import { resolveGameConfig, type GameConfig } from '../config/index.js';
 import { EMPTY_CONTENT_DB, type ContentDb } from '../data/index.js';
-import { createEventQueue, type EventQueue } from '../events/index.js';
+import type { EventQueue } from '../events/index.js';
 import type { InputContext, InputSnapshot } from '../input/index.js';
 import { createFixedStepLoop } from '../loop/index.js';
 import { defineModule } from '../module-info.js';
 import type { Platform } from '../platform/index.js';
+import { createWorld, stepWorld, type World } from '../world/index.js';
 import {
   createDrawList,
   type DrawList,
@@ -70,11 +72,17 @@ export interface Game {
   /** The host platform the game was created on. */
   readonly platform: Platform;
   /**
-   * Presentation events pushed by the simulation (SFX, music, particles, shake …). The host
-   * drains it once per displayed frame (`game.events.drain(dispatch)`); a headless run may
-   * ignore it (the ring drops the oldest events when full).
+   * Presentation events pushed by the simulation (SFX, music, particles, shake …) — the same
+   * queue as `world.events`. The host drains it once per displayed frame
+   * (`game.events.drain(dispatch)`); a headless run may ignore it (the ring drops the oldest
+   * events when full).
    */
   readonly events: EventQueue;
+  /**
+   * The gameplay session: players, camera, RNG streams, pools and the view the renderer draws.
+   * Read-only to hosts (debug overlays, tests); only {@link Game.step} advances it.
+   */
+  readonly world: World;
   /** Current state. Do not mutate from outside the core. */
   readonly state: Readonly<GameState>;
   /**
@@ -89,7 +97,7 @@ export interface Game {
   readonly inputContext: InputContext;
   /**
    * Runs exactly one simulation tick: polls `platform.input` once, then advances the
-   * simulation. No-op (and no poll) while paused or suspended.
+   * {@link Game.world} by one tick (`stepWorld`). No-op (and no poll) while paused or suspended.
    */
   step(): void;
   /**
@@ -104,8 +112,9 @@ export interface Game {
    * Builds the frame description to hand to an `IRenderer`.
    *
    * @returns A reused object (do not keep it across frames); `alpha` is 0 while
-   *   frozen so a paused picture does not wobble. `world` is `null` until the World exists
-   *   (M1-06); `hud` / `ui` are the session's draw lists; `screen` carries no effects yet.
+   *   frozen so a paused picture does not wobble. `world` is the World's view
+   *   (`game.world.view`, the same object every frame); `hud` / `ui` are the session's draw
+   *   lists; `screen` carries no effects yet.
    */
   renderFrame(): RenderFrame;
   /** Pauses the simulation (user pause; survives platform suspend/resume). */
@@ -139,6 +148,7 @@ export interface Game {
  * const game = createGame(createHeadlessPlatform(), { seed: 1 }, db);
  * for (let i = 0; i < 60; i++) game.step(); // one simulated second
  * game.state.tick; // → 60
+ * game.world.players[0].state; // → 'alive' (the fly-in took 40 ticks)
  * ```
  */
 export function createGame(
@@ -149,7 +159,8 @@ export function createGame(
   const config = resolveGameConfig(overrides);
   const state: GameState = { tick: 0, paused: false, suspended: false, input: null };
   const isFrozen = (): boolean => state.paused || state.suspended;
-  const events = createEventQueue();
+  const world = createWorld(config, content);
+  const events = world.events;
   const screen: ScreenView = { shakeX: 0, shakeY: 0, flash: 0, dim: 0 };
   const frameView: {
     tick: number;
@@ -158,13 +169,21 @@ export function createGame(
     hud: DrawList;
     ui: DrawList;
     screen: ScreenView;
-  } = { tick: 0, alpha: 0, world: null, hud: createDrawList(), ui: createDrawList(), screen };
+  } = {
+    tick: 0,
+    alpha: 0,
+    world: world.view,
+    hud: createDrawList(),
+    ui: createDrawList(),
+    screen,
+  };
 
   /** One simulation tick; the systems run here in the fixed tick order. */
   const step = (): void => {
     if (isFrozen()) return;
-    state.input = platform.input.poll();
-    // Game systems run here in the fixed tick order (filled in by later steps).
+    const input = platform.input.poll();
+    state.input = input;
+    stepWorld(world, input);
     state.tick++;
   };
 
@@ -179,6 +198,7 @@ export function createGame(
     content,
     platform,
     events,
+    world,
     state,
     get inputContext(): InputContext {
       // The scene stack (M1-16) picks the context of its top scene; until then only gameplay.

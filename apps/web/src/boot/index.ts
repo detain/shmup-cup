@@ -9,7 +9,9 @@
  * event dispatch and the rAF frame loop). Keyboard-first (`remoteMode: false`); audio is
  * unlocked by the first key or pointer gesture (autoplay policy — gamepad buttons do not count
  * as a user activation); the tab being hidden suspends the game, clears held input and
- * suspends audio. `?scene=calibration` shows the test pattern instead of the sprite showcase.
+ * suspends audio. The default scene is free flight (the KESTREL under keyboard / gamepad
+ * control, plan M1-06); `?scene=showcase` shows the M1-04 sprite showcase and
+ * `?scene=calibration` the test pattern.
  *
  * **Input profiles** (decisions D13–D15). The `input-profiles` content is parsed into a
  * registry during boot. Keys use `?profile=<id>` when given (dev override — e.g.

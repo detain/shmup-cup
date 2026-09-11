@@ -253,7 +253,7 @@ describe('tizen/boot bootTizenApp wiring', () => {
       testPattern: false,
       atlas: app.shell.atlas,
     });
-    expect(app.shell.scene).toBe('showcase');
+    expect(app.shell.scene).toBe('flight');
   });
 
   it('builds a remote-first Tizen platform and game (keys registered, autofire forced)', async () => {
@@ -337,7 +337,7 @@ describe('tizen/boot bootTizenApp wiring', () => {
     expect(p1?.device).toBe('remote');
   });
 
-  it('exits the app on Back (the showcase is the root screen) and ignores repeats', async () => {
+  it('exits the app on Back (free flight is the root screen) and ignores repeats', async () => {
     const { app } = await boot();
     const back = win.key('keydown', 10009);
     expect(back.defaultPrevented).toBe(true);
