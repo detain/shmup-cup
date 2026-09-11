@@ -1,0 +1,41 @@
+{
+  "name": "enemies/drifter",
+  "description": "Small enemy: spinning pod.",
+  "palette": { ".": null, "o": "#1a1030", "g": "#58b040", "d": "#2a6a30", "w": "#c8f080" },
+  "hitFlash": true,
+  "frames": [
+    {
+      "rows": [
+        "....oooo....",
+        "...oggggo...",
+        "..oggddggo..",
+        ".ogddwwddgo.",
+        ".ogdwwwwdgo.",
+        "oggdwwwwdggo",
+        "oggdwwwwdggo",
+        ".ogdwwwwdgo.",
+        ".ogddwwddgo.",
+        "..oggddggo..",
+        "...oggggo...",
+        "....oooo...."
+      ]
+    },
+    {
+      "rows": [
+        ".o..oooo..o.",
+        "oo.oggggo.oo",
+        ".ooggddggoo.",
+        ".ogddwwddgo.",
+        ".ogdwddwdgo.",
+        "oggdwddwdggo",
+        "oggdwddwdggo",
+        ".ogdwddwdgo.",
+        ".ogddwwddgo.",
+        ".ooggddggoo.",
+        "oo.oggggo.oo",
+        ".o..oooo..o."
+      ]
+    }
+  ],
+  "animations": { "spin": [0, 1] }
+}

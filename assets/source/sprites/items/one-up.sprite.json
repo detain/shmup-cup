@@ -1,0 +1,20 @@
+{
+  "name": "items/one-up",
+  "description": "Extra-life item.",
+  "palette": { ".": null, "o": "#0a2a14", "g": "#40d858", "d": "#1c7a34", "w": "#e8ffe8" },
+  "hitFlash": false,
+  "frames": [
+    {
+      "rows": [
+        "....oooo....",
+        "..oowwggoo..",
+        ".owwggggggo.",
+        "owggggggggdo",
+        "owggggggggdo",
+        ".oggggggddo.",
+        "..ooggddoo..",
+        "....oooo...."
+      ]
+    }
+  ]
+}

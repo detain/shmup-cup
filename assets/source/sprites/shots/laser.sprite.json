@@ -1,0 +1,16 @@
+{
+  "name": "shots/laser",
+  "description": "Laser beam segment; tiles horizontally (anchor at its left end).",
+  "palette": { ".": null, "c": "#9fe8ff", "w": "#ffffff" },
+  "anchor": [0, 1],
+  "hitFlash": false,
+  "frames": [
+    {
+      "rows": [
+        "cccccccc",
+        "wwwwwwww",
+        "cccccccc"
+      ]
+    }
+  ]
+}

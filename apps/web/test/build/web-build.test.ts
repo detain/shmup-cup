@@ -57,4 +57,10 @@ describe('web build output', () => {
     expect(readdirSync(join(outDir, 'assets'))).toContain(script?.replace(/^assets\//, ''));
     expect(html).toContain('<canvas id="game"></canvas>');
   });
+
+  it('ships the atlas pages under assets/atlas/ with fixed names (shmupAssets())', () => {
+    expect(readdirSync(join(outDir, 'assets', 'atlas'))).toContain('main.png');
+    const png = readFileSync(join(outDir, 'assets', 'atlas', 'main.png'));
+    expect([...png.subarray(1, 4)].map((c) => String.fromCharCode(c)).join('')).toBe('PNG');
+  });
 });

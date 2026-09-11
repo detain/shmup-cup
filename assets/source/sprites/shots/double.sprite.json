@@ -1,0 +1,17 @@
+{
+  "name": "shots/double",
+  "description": "Double (diagonal) shot, travelling up and to the right.",
+  "palette": { ".": null, "c": "#38c8e8", "w": "#ffffff" },
+  "hitFlash": false,
+  "frames": [
+    {
+      "rows": [
+        "...cw",
+        "..cwc",
+        ".cwc.",
+        "cwc..",
+        "wc..."
+      ]
+    }
+  ]
+}

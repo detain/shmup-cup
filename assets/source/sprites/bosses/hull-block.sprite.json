@@ -1,0 +1,28 @@
+{
+  "name": "bosses/hull-block",
+  "description": "Boss part: riveted hull block; tiles into larger hulls.",
+  "palette": { ".": null, "o": "#0c1424", "m": "#3a4a68", "l": "#5a6a90", "d": "#26324a" },
+  "hitFlash": true,
+  "frames": [
+    {
+      "rows": [
+        "oooooooooooooooo",
+        "olllllllllllllmo",
+        "olmmmmmmmmmmmmdo",
+        "olmdmmmmmmmmdmdo",
+        "olmmmmmmmmmmmmdo",
+        "olmmmmoooommmmdo",
+        "olmmmollllommmdo",
+        "olmmmolmmdommmdo",
+        "olmmmolmmdommmdo",
+        "olmmmoddddommmdo",
+        "olmmmmoooommmmdo",
+        "olmmmmmmmmmmmmdo",
+        "olmdmmmmmmmmdmdo",
+        "olmmmmmmmmmmmmdo",
+        "omddddddddddddmo",
+        "oooooooooooooooo"
+      ]
+    }
+  ]
+}

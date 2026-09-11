@@ -1,0 +1,33 @@
+{
+  "name": "options/orb",
+  "description": "Option (trailing multiple): a glowing orb, two pulse frames.",
+  "palette": { ".": null, "o": "#6a1a1a", "r": "#e83838", "y": "#f8a030", "w": "#fff0c0" },
+  "hitFlash": false,
+  "frames": [
+    {
+      "rows": [
+        "..oooo..",
+        ".orrrro.",
+        "orryyrro",
+        "oryywyro",
+        "oryyyyro",
+        "orryyrro",
+        ".orrrro.",
+        "..oooo.."
+      ]
+    },
+    {
+      "rows": [
+        "..oooo..",
+        ".oryyro.",
+        "oryyyyro",
+        "oyywwyyo",
+        "oyywwyyo",
+        "oryyyyro",
+        ".oryyro.",
+        "..oooo.."
+      ]
+    }
+  ],
+  "animations": { "pulse": [0, 1] }
+}

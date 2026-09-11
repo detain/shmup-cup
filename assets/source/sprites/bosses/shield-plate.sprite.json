@@ -1,0 +1,49 @@
+{
+  "name": "bosses/shield-plate",
+  "description": "Boss part: armour plate in front of the core; frame 1 is cracked.",
+  "palette": { ".": null, "o": "#101828", "a": "#9aa4b8", "s": "#5a6478", "h": "#d8e0f0" },
+  "hitFlash": true,
+  "frames": [
+    {
+      "rows": [
+        ".oooooo.",
+        "ohhhhaso",
+        "ohaaaaso",
+        "ohaaaaso",
+        "ohaaaaso",
+        "ohaaaaso",
+        "ohaaaaso",
+        "ohaaaaso",
+        "ohaaaaso",
+        "ohaaaaso",
+        "ohaaaaso",
+        "ohaaaaso",
+        "ohaaaaso",
+        "ohaaaaso",
+        "osssssso",
+        ".oooooo."
+      ]
+    },
+    {
+      "rows": [
+        ".oooooo.",
+        "ohhhhaso",
+        "ohaaaaso",
+        "ohaaaaso",
+        "ohaaaaso",
+        "ohaoaaso",
+        "ohaaoaso",
+        "ohaoaaso",
+        "ohoaaaso",
+        "ohaaaaso",
+        "ohaaaoso",
+        "ohaaoaso",
+        "ohaaaaso",
+        "ohaaaaso",
+        "osssssso",
+        ".oooooo."
+      ]
+    }
+  ],
+  "animations": { "intact": [0], "cracked": [1] }
+}

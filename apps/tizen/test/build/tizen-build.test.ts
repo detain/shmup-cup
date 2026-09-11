@@ -13,11 +13,15 @@ import { parse } from 'acorn';
 import { build } from 'vite';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { POLYFILL_BANNER, checkTizenBundle } from '../../scripts/check-bundle.mjs';
+import { buildAtlas } from '../../../../scripts/assets/pipeline.mjs';
 
 const appDir = fileURLToPath(new URL('../../', import.meta.url));
 let outDir = '';
 let code = '';
 let html = '';
+/** The atlas the build ships (the pipeline is deterministic, so this equals its output). */
+const atlas = buildAtlas();
+const { manifest } = atlas;
 
 beforeAll(async () => {
   outDir = mkdtempSync(join(tmpdir(), 'shmup-tizen-build-'));
@@ -47,13 +51,18 @@ describe('tizen build output (vite build → dist/)', () => {
     expect(checkTizenBundle(outDir).problems).toEqual([]);
   });
 
-  it('contains exactly the widget files: one script, index.html, config.xml, icon.png', () => {
-    expect(checkTizenBundle(outDir).files.sort()).toEqual([
-      'app.js',
-      'config.xml',
-      'icon.png',
-      'index.html',
-    ]);
+  it('contains exactly the widget files plus the atlas pages: one script, index.html, config.xml, icon.png, assets/atlas/*.png', () => {
+    const pages = manifest.pages.map((page) => `assets/atlas/${page.file}`);
+    expect(checkTizenBundle(outDir).files.sort()).toEqual(
+      ['app.js', 'config.xml', 'icon.png', 'index.html', ...pages].sort(),
+    );
+  });
+
+  it('ships the atlas pages byte-identical to the pipeline output (shmupAssets(), D25)', () => {
+    for (const page of atlas.pages) {
+      const shipped = readFileSync(join(outDir, 'assets', 'atlas', page.file));
+      expect(Buffer.compare(shipped, page.png)).toBe(0);
+    }
   });
 
   it('app.js parses with acorn as an ES2018 classic script (no module syntax)', () => {

@@ -473,6 +473,52 @@ the browser dev app and as a Tizen 5.5 bundle.
   integration test: every sprite name in `db.sprites` exists in the manifest (missing → issue list); Tizen check-bundle
   tests updated; `pnpm build` green.
 - **Refs:** `shmup_feat.md` §18 (atlas, palette, VA-friendly colours), §25; `shmup_tech.md` §4.7; `assets/README.md`.
+- **As built:**
+  - **Naming.** Sprite names are the source path below `assets/source/sprites/` (the names
+    content already uses: `ships/kestrel`, `shots/basic`); the `name` field of a
+    `*.sprite.json` must match it. Frame names are `<sprite>#<index>`. The hit-flash
+    silhouettes form a **sibling sprite** `<sprite>@flash` with the same frame count (frame
+    `i` = white silhouette of frame `i`, same anchor) instead of one `<frame>@flash` per
+    frame, so the renderer swaps a sprite id, not frame names.
+  - **Manifest additions** beyond the planned keys: `sprites: { name: { frames: [frame
+    names], flash: name | null } }` (a sprite's frames in index order — what
+    `resolveSpriteTable` needs), `animations` keyed per sprite (`animations[sprite][tag]`),
+    and fonts carry `sprite`, `cellWidth`, `cellHeight` next to `lineHeight` / `glyphs`
+    (glyphs keyed by decimal code point). Pages are `main.png`, `main-1.png`, …; sizes are
+    powers of two. Today everything fits one 512×256 page (55 sprites, 272 frames).
+  - **Files.** Besides the listed modules, `scripts/assets/` has `image.mjs` (RGBA raster
+    helpers), `rng.mjs` (sfc32 + splitmix32, same as `core/rng`), `manifest.mjs` (format,
+    serialiser, `findMissingSprites()`) and `pipeline.mjs` (`buildAtlas()` in memory,
+    `generateAssets()` with the input-hash cache in `assets/generated/.asset-cache.json`,
+    atomic writes, stale-page removal). The procedural generators use only exactly-rounded
+    maths (22.5° rotations from square roots), so the output is engine-independent.
+  - **Initial sprites.** KESTREL is `ships/kestrel` (frames level / up / down) plus a separate
+    `ships/kestrel-thruster` (2 frames) drawn behind it; the six small enemies are `drifter`,
+    `turret`, `carrier-red`, `hopper`, `spinner`, `darter` (covering the example content's
+    names); bullets are `bullets/{round,oval,needle}-{pink,red,purple}` (oval/needle with 8
+    directional frames, `frame = ((angle + 32) >> 6) & 7`); the terrain tileset
+    `tiles/terrain-a` has 17 tiles, each also listed as a one-frame animation named after its
+    shape; HUD: `hud/meter-slot` (normal/highlighted/disabled), `hud/meter-labels` (7 slot
+    labels), `hud/life`; `ui/pixel` and `ui/missing` (magenta checker for M1-04's missing
+    frame).
+  - **Plugin.** `shmupAssets()` runs the (cached) pipeline in `buildStart`, so a fresh clone
+    and test-time builds work without a prior `pnpm assets` (CI runs `pnpm test` before
+    `pnpm build`). `virtual:shmup-assets` exports `manifest`, `pageUrls`
+    (`assets/atlas/main.png`, relative) and a default `{ manifest, pageUrls }`; the dev
+    middleware serves `<base>assets/atlas/*` and edits under `assets/source/` or
+    `scripts/assets/` regenerate + full-reload. Both apps register it now (pages ship in
+    `dist/assets/atlas/`; the shell consumes the module in M1-04).
+  - **Tooling.** `tsconfig.tooling.json` gained `allowJs` (the Node-side TS imports the
+    JSDoc-typed `.mjs` pipeline; no `checkJs`); `pngjs` is loaded untyped (no `@types`
+    dependency). `assets/source/` is excluded from Prettier (hand-laid pixel rows).
+    `turbo.json`: `//#assets` (inputs `assets/source/**`, `scripts/assets/**`,
+    `scripts/generate-assets.mjs`; outputs `assets/generated/**`) before `build`, `dev`
+    and a `test:e2e` task entry reserved for M1-04; `assets/source/**` and
+    `scripts/assets/**` joined `globalDependencies` (test tasks run real builds).
+  - **Checks.** `check-bundle.mjs` rule 6: every file other than the four widget files must
+    be under `dist/assets/` (still exactly one script anywhere). `pnpm content:check` also
+    asserts that every sprite name of the shipped content exists in the atlas (the example
+    files' `ships/example` / `enemies/example-warden` are documentation and not checked).
 
 ### M1-04 — Rendering foundations & shared browser shell
 

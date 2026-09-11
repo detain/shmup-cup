@@ -1,0 +1,33 @@
+{
+  "name": "enemies/darter",
+  "description": "Small enemy: arrowhead fighter flying left; flickering engine.",
+  "palette": { ".": null, "o": "#101820", "y": "#e8c040", "d": "#8a6a18", "w": "#fff8c0", "r": "#e84818" },
+  "hitFlash": true,
+  "frames": [
+    {
+      "rows": [
+        "......oooo....",
+        "....ooyyydoo..",
+        "..ooyywyyyddo.",
+        "ooyyywwyyyyydo",
+        "ooyyyyyyyyyydr",
+        "..ooyyyyyyddo.",
+        "....ooyyydoo..",
+        "......oooo...."
+      ]
+    },
+    {
+      "rows": [
+        "......oooo....",
+        "....ooyyydoo..",
+        "..ooyywyyyddo.",
+        "ooyyywwyyyyydr",
+        "ooyyyyyyyyyydo",
+        "..ooyyyyyyddo.",
+        "....ooyyydoo..",
+        "......oooo...."
+      ]
+    }
+  ],
+  "animations": { "fly": [0, 1] }
+}

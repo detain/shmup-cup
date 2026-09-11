@@ -6,6 +6,10 @@ coverage/
 assets/generated/
 pnpm-lock.yaml
 
+# Hand-laid pixel art (sprite rows / font glyphs one per line — Prettier would fold short
+# row arrays onto one line and destroy the picture)
+assets/source/
+
 # Standalone tool projects own their formatting
 tools/
 

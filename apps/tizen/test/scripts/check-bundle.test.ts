@@ -6,7 +6,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { POLYFILL_BANNER, checkTizenBundle } from '../../scripts/check-bundle.mjs';
+import { POLYFILL_BANNER, WIDGET_FILES, checkTizenBundle } from '../../scripts/check-bundle.mjs';
 
 const polyfill = readFileSync(new URL('../../polyfills/global-this.js', import.meta.url), 'utf8');
 const GOOD_HTML =
@@ -46,6 +46,40 @@ describe('tizen/scripts/check-bundle checkTizenBundle', () => {
     expect(result.problems).toEqual([]);
     expect(result.files.sort()).toEqual(['app.js', 'config.xml', 'icon.png', 'index.html']);
     expect(result.code.startsWith(POLYFILL_BANNER)).toBe(true);
+  });
+
+  it('accepts non-script assets under dist/assets/ (atlas pages) next to the one script', () => {
+    put('assets/atlas/main.png', 'png');
+    put('assets/atlas/main-1.png', 'png');
+    const result = checkTizenBundle(dir);
+    expect(result.problems).toEqual([]);
+    expect(result.files.sort()).toEqual([
+      'app.js',
+      'assets/atlas/main-1.png',
+      'assets/atlas/main.png',
+      'config.xml',
+      'icon.png',
+      'index.html',
+    ]);
+  });
+
+  it('rejects stray files outside dist/assets/ (they would end up in the .wgt)', () => {
+    put('notes.txt', 'oops');
+    put('atlas/main.png', 'png');
+    expect(checkTizenBundle(dir).problems).toEqual([
+      'unexpected files outside dist/assets/: atlas/main.png, notes.txt',
+    ]);
+  });
+
+  it('still rejects a script hidden under dist/assets/ (reported once, as a second script)', () => {
+    put('assets/atlas/loader.js', 'void 0;');
+    const { problems } = checkTizenBundle(dir);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain('assets/atlas/loader.js');
+  });
+
+  it('lists the widget files', () => {
+    expect([...WIDGET_FILES].sort()).toEqual(['app.js', 'config.xml', 'icon.png', 'index.html']);
   });
 
   it('the polyfill banner constant matches the first line of polyfills/global-this.js', () => {

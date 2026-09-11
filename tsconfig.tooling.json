@@ -7,6 +7,9 @@
     "lib": ["ES2023", "DOM"],
     "types": ["node"],
     "noEmit": true,
+    // Node-side TS (vite.shared.ts, tests) imports the plain-Node scripts in scripts/**/*.mjs;
+    // their JSDoc provides the types (they are not type-checked themselves: no checkJs).
+    "allowJs": true,
     "declaration": false,
     "declarationMap": false,
     "sourceMap": false

@@ -45,7 +45,7 @@ desktop app, run `pnpm rebuild electron` without the variable set.
 | `pnpm test:integration` | Only the repo-level `test/` project |
 | `pnpm format` / `pnpm format:check` | Prettier write / check (research docs at the root are ignored) |
 | `pnpm clean` | Removes `dist/`, `coverage/`, `.turbo/` everywhere (never `node_modules`) |
-| `pnpm assets` | Placeholder asset pipeline (`scripts/generate-assets.mjs`) |
+| `pnpm assets` | Placeholder asset pipeline (`scripts/generate-assets.mjs`): sprite pixel maps, procedural generators, PNG overrides and fonts → `assets/generated/atlas/main.png` + `main.json`; skipped when inputs are unchanged, `--force` to rebuild; also runs before every `build` / `dev` (Turborepo `//#assets`) |
 | `pnpm content:check` | Validates every JSON file under `content/` with `loadContent()` from `@shmup/core` — the shipped files and the `example.*.json` samples as two independent sets, plus the README format samples (`test/integration/content.test.ts`; also part of `pnpm test`). See [content-data.md](content-data.md#commands) |
 | `pnpm trig:tables` | Regenerates the committed `packages/core/src/math/trig-table.ts` (`scripts/gen-trig-tables.mjs`; `--check` verifies, `--out FILE` writes elsewhere). Re-run it in the same commit whenever the script changes — a test diffs the committed file |
 

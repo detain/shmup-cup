@@ -5,12 +5,16 @@
  * The shipped files (what `virtual:shmup-content` inlines into a build) and the
  * `example.*.json` format samples are loaded as two independent sets: the examples are
  * documentation, so they may reuse the ids of the real content without clashing with it.
+ * Every sprite name the shipped content uses must exist in the atlas the asset pipeline
+ * builds (M1-03) — a typo is reported as an issue here, not as a magenta box in the game.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadContent, type ContentFile } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
+import { findMissingSprites } from '../../scripts/assets/manifest.mjs';
+import { buildAtlas } from '../../scripts/assets/pipeline.mjs';
 import { readContentFiles } from '../../vite.shared.js';
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -185,5 +189,33 @@ describe('integration: content/ validates', () => {
     const kestrel = db.ships[db.shipIndex.get('kestrel') ?? -1];
     expect(kestrel?.speeds).toEqual([1.5, 2, 2.5, 3, 3.5, 4]);
     expect(kestrel?.hurtRadius).toBe(1.5);
+  });
+});
+
+describe('integration: content/ sprites exist in the atlas', () => {
+  const { manifest } = buildAtlas();
+
+  it('finds every sprite name of the shipped content in the atlas manifest', () => {
+    const { db } = loadContent(shippedFiles);
+    expect(db.sprites.names.length).toBeGreaterThan(0);
+    expect(findMissingSprites(manifest, db.sprites.names, 'db.sprites.names')).toEqual([]);
+  });
+
+  it('reports a sprite name that is not in the atlas as an issue', () => {
+    const edited = shippedFiles.map((file) =>
+      file.path === 'player/kestrel.player.json'
+        ? {
+            ...file,
+            data: JSON.parse(
+              JSON.stringify(file.data).replace('ships/kestrel', 'ships/kestrell'),
+            ) as unknown,
+          }
+        : file,
+    );
+    const { db, issues } = loadContent(edited);
+    expect(issues).toEqual([]);
+    const missing = findMissingSprites(manifest, db.sprites.names, 'db.sprites.names');
+    expect(missing).toHaveLength(1);
+    expect(missing[0]?.message).toContain('"ships/kestrell"');
   });
 });

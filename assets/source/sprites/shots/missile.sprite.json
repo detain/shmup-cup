@@ -1,0 +1,24 @@
+{
+  "name": "shots/missile",
+  "description": "Ground missile with a flickering exhaust.",
+  "palette": { ".": null, "o": "#2a3a4a", "g": "#a0a8b8", "w": "#ffffff", "r": "#e84818", "y": "#f8c030" },
+  "anchor": [4, 1],
+  "hitFlash": false,
+  "frames": [
+    {
+      "rows": [
+        "..ooooo.",
+        "yrogggwo",
+        "..ooooo."
+      ]
+    },
+    {
+      "rows": [
+        "..ooooo.",
+        "rrogggwo",
+        "..ooooo."
+      ]
+    }
+  ],
+  "animations": { "fly": [0, 1] }
+}

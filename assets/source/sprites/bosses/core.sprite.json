@@ -1,0 +1,49 @@
+{
+  "name": "bosses/core",
+  "description": "Boss part: glowing core (the weak point); two pulse frames.",
+  "palette": { ".": null, "o": "#0a1020", "m": "#4a5a78", "l": "#8898b8", "c": "#38c8e8", "b": "#1858c8", "w": "#e8ffff" },
+  "hitFlash": true,
+  "frames": [
+    {
+      "rows": [
+        ".....oooooo.....",
+        "...oommmmmmoo...",
+        "..ommllllllmmo..",
+        ".omllbbbbbbllmo.",
+        ".omlbbccccbblmo.",
+        "omlbbcwwwwcbblmo",
+        "omlbcwwwwwwcblmo",
+        "omlbcwwwwwwcblmo",
+        "omlbcwwwwwwcblmo",
+        "omlbcwwwwwwcblmo",
+        "omlbbcwwwwcbblmo",
+        ".omlbbccccbblmo.",
+        ".omllbbbbbbllmo.",
+        "..ommllllllmmo..",
+        "...oommmmmmoo...",
+        ".....oooooo....."
+      ]
+    },
+    {
+      "rows": [
+        ".....oooooo.....",
+        "...oommmmmmoo...",
+        "..ommllllllmmo..",
+        ".omllbbbbbbllmo.",
+        ".omlbbbbbbbblmo.",
+        "omlbbbccccbbblmo",
+        "omlbbccccccbblmo",
+        "omlbbccccccbblmo",
+        "omlbbccccccbblmo",
+        "omlbbccccccbblmo",
+        "omlbbbccccbbblmo",
+        ".omlbbbbbbbblmo.",
+        ".omllbbbbbbllmo.",
+        "..ommllllllmmo..",
+        "...oommmmmmoo...",
+        ".....oooooo....."
+      ]
+    }
+  ],
+  "animations": { "pulse": [0, 1] }
+}

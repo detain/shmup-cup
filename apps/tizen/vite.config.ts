@@ -2,7 +2,9 @@
  * Vite config for the Samsung Tizen TV build (Tizen 5.5+ = Chromium 69).
  *
  * Output (dist/): index.html + ONE classic (non-module) IIFE script `app.js` + the
- * files in public/ (config.xml, icon.png). Rules from shmup_tech.md §2.1:
+ * files in public/ (config.xml, icon.png) + the atlas pages in `assets/atlas/`
+ * (`shmupAssets()`; the manifest itself is inlined into app.js, decision D25).
+ * Rules from shmup_tech.md §2.1:
  *  - syntax lowered for Chrome 69 (and ES2018, so optional catch binding etc. are
  *    lowered too and the bundle parses as ES2018 — verified by scripts/check-bundle.mjs);
  *  - no `<script type="module">` (Samsung lists ES modules as only partially supported),
@@ -13,7 +15,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, type Plugin } from 'vite';
-import { clientConditions, shmupContent } from '../../vite.shared.js';
+import { clientConditions, shmupAssets, shmupContent } from '../../vite.shared.js';
 
 /** Source of `polyfills/global-this.js`, prepended to `app.js` as the post-minify banner. */
 const globalThisPolyfill = readFileSync(
@@ -55,7 +57,7 @@ export default defineConfig({
   resolve: {
     conditions: clientConditions,
   },
-  plugins: [shmupContent(), classicScriptTag()],
+  plugins: [shmupContent(), shmupAssets(), classicScriptTag()],
   server: {
     host: true,
     port: 5174,

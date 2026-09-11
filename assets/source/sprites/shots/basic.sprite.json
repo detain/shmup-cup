@@ -1,0 +1,16 @@
+{
+  "name": "shots/basic",
+  "description": "Main shot.",
+  "palette": { ".": null, "b": "#1e5a9a", "c": "#38c8e8", "w": "#ffffff" },
+  "anchor": [4, 1],
+  "hitFlash": false,
+  "frames": [
+    {
+      "rows": [
+        "..bccc..",
+        "bcwwwwww",
+        "..bccc.."
+      ]
+    }
+  ]
+}

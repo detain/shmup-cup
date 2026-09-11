@@ -1,0 +1,41 @@
+{
+  "name": "bosses/emitter",
+  "description": "Boss part: bullet emitter; frame 1 is charging.",
+  "palette": { ".": null, "o": "#10101c", "g": "#7a8298", "d": "#3a4058", "r": "#e83838", "y": "#f8d030", "w": "#ffffff" },
+  "hitFlash": true,
+  "frames": [
+    {
+      "rows": [
+        "..oooooooo..",
+        ".oggggggggo.",
+        "oggddddddggo",
+        "ogdoooooodgo",
+        "ogdorrrrodgo",
+        "ogdorrrrodgo",
+        "ogdorrrrodgo",
+        "ogdorrrrodgo",
+        "ogdoooooodgo",
+        "oggddddddggo",
+        ".oggggggggo.",
+        "..oooooooo.."
+      ]
+    },
+    {
+      "rows": [
+        "..oooooooo..",
+        ".oggggggggo.",
+        "oggddddddggo",
+        "ogdoooooodgo",
+        "ogdoyyyyodgo",
+        "ogdoywwyodgo",
+        "ogdoywwyodgo",
+        "ogdoyyyyodgo",
+        "ogdoooooodgo",
+        "oggddddddggo",
+        ".oggggggggo.",
+        "..oooooooo.."
+      ]
+    }
+  ],
+  "animations": { "idle": [0], "charge": [0, 1] }
+}

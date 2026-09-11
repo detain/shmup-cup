@@ -10,6 +10,9 @@
  *     class fields and optional catch binding that would slip through).
  *  4. app.js starts with the globalThis polyfill banner.
  *  5. config.xml and icon.png were copied from public/.
+ *  6. Every other file is a non-script asset under dist/assets/ (atlas pages emitted by
+ *     the shmupAssets() plugin, M1-03); anything else in dist/ would be packaged into the
+ *     .wgt by accident.
  *
  * Exits non-zero with a readable report on failure. The checks are also exported as
  * {@link checkTizenBundle} so the unit tests can run them against fixture folders.
@@ -20,6 +23,9 @@ import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 import { parse } from 'acorn';
 import { DIST_DIR } from './tizen-env.mjs';
+
+/** Files that make up the widget itself; everything else must live under `assets/`. */
+export const WIDGET_FILES = ['app.js', 'config.xml', 'icon.png', 'index.html'];
 
 /** First characters of the globalThis polyfill banner that must open app.js. */
 export const POLYFILL_BANNER = '/* Shmup Cup — globalThis polyfill';
@@ -111,6 +117,15 @@ export function checkTizenBundle(distDir) {
   // 5. Tizen widget files.
   for (const required of ['config.xml', 'icon.png', 'index.html', 'app.js']) {
     if (!files.includes(required)) problems.push(`dist/${required} is missing`);
+  }
+
+  // 6. Non-script assets only under assets/ (scripts anywhere are already reported by 1).
+  const stray = files.filter(
+    (file) =>
+      !WIDGET_FILES.includes(file) && !file.startsWith('assets/') && !scripts.includes(file),
+  );
+  if (stray.length > 0) {
+    problems.push(`unexpected files outside dist/assets/: ${stray.join(', ')}`);
   }
 
   return { problems, files, code };

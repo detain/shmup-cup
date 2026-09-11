@@ -1,0 +1,22 @@
+{
+  "name": "items/bonus",
+  "description": "Score bonus gem (gold: never used by enemy bullets).",
+  "palette": { ".": null, "o": "#3a2a08", "y": "#f8d030", "w": "#fff8d0", "d": "#b88a18" },
+  "hitFlash": false,
+  "frames": [
+    {
+      "rows": [
+        "....oo....",
+        "...owyo...",
+        "..owyyyo..",
+        ".owyyyyyo.",
+        "owyyyyyydo",
+        "oyyyyyyddo",
+        ".oyyyyddo.",
+        "..oyyddo..",
+        "...oddo...",
+        "....oo...."
+      ]
+    }
+  ]
+}

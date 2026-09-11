@@ -2,12 +2,16 @@
 
 | Folder | Tools (`shmup_tech.md` §4.7) | Output (in `assets/generated/`) |
 |---|---|---|
-| `sprites/` | Aseprite (or Pixelorama) `.aseprite` files, one per sprite family; tags = animations | Packed atlas PNG + JSON (Aseprite CLI `--sheet --data` or free-tex-packer) |
+| `sprites/` | **Today:** `*.sprite.json` pixel maps (palette + rows, one file per sprite; see [`../README.md`](../README.md)). **Real art:** a `*.png` named like the sprite (+ Aseprite `--sheet --data` JSON export for frames / tags / pivot) overrides its frames; keep the `.aseprite` next to it | `generated/atlas/main.png` + `main.json` (`pnpm assets`) |
 | `tilesets/` | Tile sheets + Tiled (`.tmx`/`.tsx`) or LDtk (`.ldtk`) projects | Tilemap JSON consumed by `content/stages/` |
-| `fonts/` | Bitmap-font sources (BMFont / Hiero / SnowB BMF projects or grid PNGs) | `.fnt` + PNG |
+| `fonts/` | `*.font.json` glyph maps (`pixel6x8.font.json`: original 6×8 font) | Glyph frames in the atlas + metrics in `main.json` |
 | `audio/music/` | Furnace (`.fur`) / OpenMPT project files | OGG Vorbis with loop points |
 | `audio/sfx/` | jsfxr / ChipTone presets (`.json`), ZzFX parameter lists | OGG / WAV, pre-decoded at load |
 
 Naming: `kebab-case`, grouped by theme, e.g. `sprites/enemies/drifter.aseprite`,
 `audio/music/stage-01-orbit.fur`. Keep a `LICENSES.md` in any folder that contains
 third-party material.
+
+Pixel-art JSON here is hand-laid (one row per line) and excluded from Prettier
+(`.prettierignore`); the pipeline validates it and reports every problem as
+`<file>:<json path> message`.

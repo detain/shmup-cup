@@ -1,0 +1,37 @@
+{
+  "name": "enemies/turret",
+  "description": "Small enemy: ground turret; frame 1 is the muzzle flash.",
+  "palette": { ".": null, "o": "#1a1030", "g": "#8890a0", "d": "#4a5068", "r": "#e83838", "y": "#f8d030" },
+  "hitFlash": true,
+  "frames": [
+    {
+      "rows": [
+        ".......oo...",
+        "......ogdo..",
+        ".....ogdo...",
+        "....ogdo....",
+        "..oooooooo..",
+        ".oggggggggo.",
+        "oggdrrrrdggo",
+        "oggdryyrdggo",
+        "oddddddddddo",
+        "oooooooooooo"
+      ]
+    },
+    {
+      "rows": [
+        "......yoo...",
+        "......ogdo..",
+        ".....ogdo...",
+        "....ogdo....",
+        "..oooooooo..",
+        ".oggggggggo.",
+        "oggdryyrdggo",
+        "oggdyyyydggo",
+        "oddddddddddo",
+        "oooooooooooo"
+      ]
+    }
+  ],
+  "animations": { "idle": [0], "fire": [1, 0] }
+}

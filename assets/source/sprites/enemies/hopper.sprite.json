@@ -1,0 +1,41 @@
+{
+  "name": "enemies/hopper",
+  "description": "Small enemy: legged walker; frame 1 has the legs tucked (mid-jump).",
+  "palette": { ".": null, "o": "#101830", "b": "#3878e8", "d": "#1c3c88", "w": "#b8d8ff", "l": "#6a7088" },
+  "hitFlash": true,
+  "frames": [
+    {
+      "rows": [
+        "...oooooo...",
+        "..obbbbbbo..",
+        ".obwwbbbbbo.",
+        ".obwbbbbbbo.",
+        ".obbbbbbddo.",
+        "..oddddddo..",
+        "...oooooo...",
+        "...ol..lo...",
+        "..ol....lo..",
+        "..ol....lo..",
+        ".ol......lo.",
+        ".oo......oo."
+      ]
+    },
+    {
+      "rows": [
+        "............",
+        "...oooooo...",
+        "..obbbbbbo..",
+        ".obwwbbbbbo.",
+        ".obwbbbbbbo.",
+        ".obbbbbbddo.",
+        "..oddddddo..",
+        "...oooooo...",
+        "..olo..olo..",
+        ".ol......lo.",
+        ".ol......lo.",
+        ".oo......oo."
+      ]
+    }
+  ],
+  "animations": { "walk": [0, 1] }
+}

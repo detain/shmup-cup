@@ -1,0 +1,49 @@
+{
+  "name": "ships/kestrel",
+  "description": "KESTREL, the meter ship (original; derived from the skeleton PLACEHOLDER_SHIP). Frames: 0 level, 1 banking up, 2 banking down. The thruster flame is the separate sprite ships/kestrel-thruster.",
+  "palette": { ".": null, "o": "#1b2a4a", "h": "#c8d0e0", "s": "#7880a8", "b": "#3858f0", "c": "#38c8e8", "e": "#f89830" },
+  "anchor": [8, 4],
+  "hitFlash": false,
+  "frames": [
+    {
+      "rows": [
+        "....ooo.........",
+        "...ohhho........",
+        "..oshhhhooo.....",
+        ".oeshhhhcccoooo.",
+        "oeeshhhhhhhhhhho",
+        ".oeshhbbbbbhhoo.",
+        "..oshhhhooo.....",
+        "...ohhho........",
+        "....ooo........."
+      ]
+    },
+    {
+      "rows": [
+        "....ooo.........",
+        "...ohhho........",
+        "..oshhhhooo.....",
+        ".oeshhhhcccoooo.",
+        "oeeshhhhhhhhhhho",
+        ".oesbbbbbhhhoo..",
+        "..ooosshoo......",
+        ".....ooo........",
+        "................"
+      ]
+    },
+    {
+      "rows": [
+        "................",
+        ".....ooo........",
+        "..ooohhhoo......",
+        ".oeshhhhcccoooo.",
+        "oeeshhhhhhhhhhho",
+        ".oeshhbbbbbhhoo.",
+        "..oshhhhooo.....",
+        "...ohhho........",
+        "....ooo........."
+      ]
+    }
+  ],
+  "animations": { "level": [0], "up": [1], "down": [2] }
+}

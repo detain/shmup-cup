@@ -1,0 +1,37 @@
+{
+  "name": "enemies/spinner",
+  "description": "Small enemy: four-bladed spinner.",
+  "palette": { ".": null, "o": "#200a30", "p": "#b040e0", "d": "#6a1a8a", "w": "#f0c0ff" },
+  "hitFlash": true,
+  "frames": [
+    {
+      "rows": [
+        "....oo....",
+        "...opdo...",
+        "...opdo...",
+        ".oooppooo.",
+        "oppppwwddo",
+        "oddwwppppo",
+        ".ooodpooo.",
+        "...odpo...",
+        "...odpo...",
+        "....oo...."
+      ]
+    },
+    {
+      "rows": [
+        ".oo....oo.",
+        "opdo..opdo",
+        ".odpoopdo.",
+        "..opwwdo..",
+        "...owwo...",
+        "...owwo...",
+        "..odwwpo..",
+        ".odpoopdo.",
+        "opdo..opdo",
+        ".oo....oo."
+      ]
+    }
+  ],
+  "animations": { "spin": [0, 1] }
+}

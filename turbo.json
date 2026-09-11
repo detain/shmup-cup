@@ -3,8 +3,10 @@
   "ui": "stream",
   "globalDependencies": [
     ".browserslistrc",
+    "assets/source/**",
     "content/**",
     "eslint.config.js",
+    "scripts/assets/**",
     "tsconfig.base.json",
     "tsconfig.tooling.json",
     "types/**",
@@ -17,7 +19,7 @@
       "dependsOn": ["^transit"]
     },
     "build": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^build", "//#assets"],
       "outputs": ["dist/**"]
     },
     "typecheck": {
@@ -32,7 +34,12 @@
     },
     "dev": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "dependsOn": ["//#assets"]
+    },
+    "test:e2e": {
+      "dependsOn": ["^build", "//#assets"],
+      "cache": false
     },
     "clean": {
       "cache": false
@@ -45,6 +52,10 @@
     },
     "//#test:integration": {
       "cache": false
+    },
+    "//#assets": {
+      "inputs": ["assets/source/**", "scripts/assets/**", "scripts/generate-assets.mjs"],
+      "outputs": ["assets/generated/**"]
     }
   }
 }

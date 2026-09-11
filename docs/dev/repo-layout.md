@@ -18,12 +18,12 @@ shmup-cup/
 ├── package.json            root scripts (dev/build/typecheck/lint/test/format/clean), packageManager pnpm@12, engines/devEngines (Node floor)
 ├── pnpm-workspace.yaml     members packages/* + apps/* (NOT tools/*), version catalog, allowed build scripts
 ├── pnpm-lock.yaml          committed; CI installs with --frozen-lockfile
-├── turbo.json              task graph: build (^build → dist/**), typecheck/lint/test (via "transit"), dev, clean, root tasks; globalDependencies incl. content/** types/**
+├── turbo.json              task graph: build (^build + //#assets → dist/**), typecheck/lint/test (via "transit"), dev, clean, root tasks; globalDependencies incl. content/** types/** assets/source/**
 ├── tsconfig.base.json      strict compiler options shared by everything (ES2018 target/lib, NodeNext, @shmup/source)
-├── tsconfig.tooling.json   Node-side base (tests, Vite/Vitest configs): ES2023 + DOM + node types, noEmit
+├── tsconfig.tooling.json   Node-side base (tests, Vite/Vitest configs): ES2023 + DOM + node types, noEmit, allowJs (JSDoc-typed scripts/*.mjs)
 ├── tsconfig.json           type-checks repo-root tooling files
 ├── eslint.config.js        flat config: typescript-eslint (type-aware), compat (chrome >= 69), jsdoc, core purity rules
-├── vite.shared.ts          @shmup/source resolve conditions shared by Vite + Vitest; shmupContent() plugin → virtual:shmup-content
+├── vite.shared.ts          @shmup/source resolve conditions shared by Vite + Vitest; shmupContent() → virtual:shmup-content; shmupAssets() → virtual:shmup-assets + dist/assets/atlas/
 ├── vitest.shared.ts        defineShmupProject(): per-project Vitest defaults (tests in test/, Node env)
 ├── vitest.config.ts        Vitest *projects*: packages/*, apps/*, test (→ `pnpm test:all`)
 ├── .browserslistrc         chrome >= 69 (Tizen 5.5) for eslint-plugin-compat
@@ -79,10 +79,10 @@ shmup-cup/
 │   ├── enemies/            enemy definitions: hp, score, hurtbox, script id, drop (+ README, example)
 │   └── weapons/            ✔ weapon tunables + preset loadouts (+ README, example)
 ├── assets/
-│   ├── source/             editable art/audio sources (sprites, tilesets, fonts, audio/music, audio/sfx) — in git
-│   └── generated/          pipeline output (atlases, fonts, OGG) — ignored
-├── scripts/                repo-level Node scripts: clean.mjs, generate-assets.mjs (placeholder), gen-trig-tables.mjs
-├── types/                  ambient declarations for the Vite virtual modules (virtual:shmup-content)
+│   ├── source/             editable sources — in git: sprites/**/*.sprite.json pixel maps (+ real-art PNG overrides), fonts/*.font.json, tilesets, audio
+│   └── generated/          pipeline output (atlas/main.png + main.json, cache) — ignored
+├── scripts/                repo-level Node scripts: clean.mjs, generate-assets.mjs (pnpm assets) + assets/ (PNG encoder, sprite sources, procedural generators, packer, font), gen-trig-tables.mjs
+├── types/                  ambient declarations for the Vite virtual modules (virtual:shmup-content, virtual:shmup-assets)
 ├── test/                   cross-package integration tests (Vitest project "integration", part of `pnpm test`)
 ├── docs/
 │   ├── client/             player/tester docs
@@ -140,7 +140,8 @@ pnpm dev                # browser dev app on http://localhost:5173
 pnpm lint | typecheck | test | build
 pnpm test:all           # every Vitest project in one process
 pnpm --filter @shmup/tizen build    # TV bundle + bundle check
-pnpm content:check      # validate content/ against the core schemas
+pnpm content:check      # validate content/ against the core schemas (+ sprite names exist in the atlas)
+pnpm assets             # regenerate the placeholder atlas (skipped when nothing changed)
 pnpm clean              # remove dist/ coverage/ .turbo/ everywhere
 ```
 

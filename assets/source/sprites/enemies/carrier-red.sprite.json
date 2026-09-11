@@ -1,0 +1,35 @@
+{
+  "name": "enemies/carrier-red",
+  "description": "Small enemy: red carrier saucer (drops a capsule); blinking lights.",
+  "palette": { ".": null, "o": "#2a0a14", "r": "#e83838", "d": "#9a1828", "w": "#ffd0d0", "y": "#f8d030" },
+  "hitFlash": true,
+  "frames": [
+    {
+      "rows": [
+        ".....oooo.....",
+        "...oowwwwoo...",
+        "..orrwwwwrro..",
+        ".orrrrrrrrrro.",
+        "orrdrrdrrdrrro",
+        "oyrdyrdyrdyrro",
+        ".orrrrrrrrrro.",
+        "..oddddddddo..",
+        "...oooooooo..."
+      ]
+    },
+    {
+      "rows": [
+        ".....oooo.....",
+        "...oowwwwoo...",
+        "..orrwwwwrro..",
+        ".orrrrrrrrrro.",
+        "orrdrrdrrdrrro",
+        "orydrydrydryro",
+        ".orrrrrrrrrro.",
+        "..oddddddddo..",
+        "...oooooooo..."
+      ]
+    }
+  ],
+  "animations": { "blink": [0, 1] }
+}

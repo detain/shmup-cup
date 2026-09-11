@@ -4,14 +4,19 @@
  *
  * {@link shmupContent} turns `content/` into the virtual module `virtual:shmup-content`
  * so the Tizen bundle can ship game data inside its single classic script (decision D25).
+ * {@link shmupAssets} runs the placeholder asset pipeline, inlines the atlas manifest as
+ * `virtual:shmup-assets` and ships the atlas pages next to the bundle.
  *
  * **Public API.** Resolve conditions: {@link SOURCE_CONDITION}, {@link clientConditions},
  * {@link serverConditions}. Content: {@link shmupContent}, {@link readContentFiles},
  * {@link CONTENT_MODULE_ID}, {@link ContentFileRecord}, {@link ShmupContentOptions}.
+ * Assets: {@link shmupAssets}, {@link ASSETS_MODULE_ID}, {@link ATLAS_URL_DIR},
+ * {@link ShmupAssetsOptions}.
  *
  * @remarks
  * Node-only tooling (it reads the file system); it is never part of a shipped bundle, so
- * the Chromium 69 rules do not apply here. Guide: `docs/dev/content-data.md`.
+ * the Chromium 69 rules do not apply here. Guides: `docs/dev/content-data.md`,
+ * `assets/README.md`.
  *
  * @module
  */
@@ -19,6 +24,14 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { isAbsolute, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defaultClientConditions, defaultServerConditions, type Plugin } from 'vite';
+import {
+  ATLAS_DIR,
+  DEFAULT_OUT_DIR,
+  DEFAULT_SOURCE_DIR,
+  PIPELINE_DIR,
+  generateAssets,
+  type GenerateResult,
+} from './scripts/assets/pipeline.mjs';
 
 /**
  * Custom package.json `exports` condition that points workspace packages at their
@@ -187,6 +200,175 @@ export function shmupContent(options: ShmupContentOptions = {}): Plugin {
       const onChange = (file: string): void => {
         if (!isInside(root, file) || !file.endsWith('.json')) return;
         const module = server.moduleGraph.getModuleById(RESOLVED_CONTENT_MODULE_ID);
+        if (module !== undefined) server.moduleGraph.invalidateModule(module);
+        server.ws.send({ type: 'full-reload' });
+      };
+      server.watcher.on('add', onChange);
+      server.watcher.on('change', onChange);
+      server.watcher.on('unlink', onChange);
+    },
+  };
+}
+
+/**
+ * Module id the {@link shmupAssets} plugin serves; `types/virtual-modules.d.ts` declares it.
+ */
+export const ASSETS_MODULE_ID = 'virtual:shmup-assets';
+
+/** Rollup's convention for a virtual module's resolved id. */
+const RESOLVED_ASSETS_MODULE_ID = '\0' + ASSETS_MODULE_ID;
+
+/**
+ * Where atlas pages live relative to the page that loads the game (`dist/assets/atlas/`
+ * in builds, served from `assets/generated/atlas/` by the dev server). Relative, so the
+ * build works from `file://` (Tizen) and `app://` (Electron).
+ */
+export const ATLAS_URL_DIR = 'assets/atlas';
+
+/** Options of {@link shmupAssets}. */
+export interface ShmupAssetsOptions {
+  /** Asset source root; defaults to the repo's `assets/source/`. */
+  readonly sourceDir?: string;
+  /** Pipeline output root; defaults to the repo's `assets/generated/`. */
+  readonly outDir?: string;
+}
+
+/** Atlas file names the dev middleware may serve (no paths, no traversal). */
+const ATLAS_FILE_PATTERN = /^[a-z0-9-]+\.(png|json)$/;
+
+/**
+ * Vite plugin for the placeholder asset pipeline (decisions D24, D25).
+ *
+ * @remarks
+ * - **Every command:** on `buildStart` it runs `generateAssets()` (input-hash cached, so
+ *   an unchanged tree costs one hash) — a fresh checkout builds without a prior
+ *   `pnpm assets`.
+ * - **`virtual:shmup-assets`:** `export const manifest = {…}` (the atlas manifest,
+ *   **inlined** — no `fetch()` on the TV), `export const pageUrls = ['assets/atlas/main.png',
+ *   …]` (relative, one per manifest page) and a default export `{ manifest, pageUrls }`.
+ * - **Build:** every atlas page is emitted into `dist/assets/atlas/` with `emitFile`
+ *   (fixed names, no hash — the manifest refers to them by name).
+ * - **Dev server:** a middleware serves `<base>assets/atlas/*` from the output directory,
+ *   and edits under the asset sources or `scripts/assets/` regenerate the atlas and
+ *   full-reload the page. Invalid sources are reported in the terminal; the last good
+ *   atlas stays in use.
+ *
+ * @param options - Source/output directory overrides (tests).
+ * @returns The Vite plugin.
+ * @throws AssetSourceError (from the build hooks) when an asset source is invalid; Vite
+ *   reports it as a build error.
+ *
+ * @example
+ * ```ts
+ * // apps/web/vite.config.ts
+ * export default defineConfig({ plugins: [shmupContent(), shmupAssets()] });
+ * ```
+ */
+export function shmupAssets(options: ShmupAssetsOptions = {}): Plugin {
+  const sourceDir = options.sourceDir ?? DEFAULT_SOURCE_DIR;
+  const outDir = options.outDir ?? DEFAULT_OUT_DIR;
+  let command: 'build' | 'serve' = 'build';
+  let result: GenerateResult | null = null;
+
+  /**
+   * Runs the (cached) pipeline and remembers its result.
+   *
+   * @returns The pipeline result.
+   */
+  const generate = (): GenerateResult => {
+    result = generateAssets({ sourceDir, outDir });
+    return result;
+  };
+
+  return {
+    name: 'shmup:assets',
+    /**
+     * Remembers whether this is a build or the dev server.
+     *
+     * @param config - The resolved Vite config.
+     */
+    configResolved(config) {
+      command = config.command;
+    },
+    /**
+     * Generates the atlas (cached) and, in builds, emits its pages into `assets/atlas/`.
+     */
+    buildStart() {
+      const generated = generate();
+      if (command !== 'build') return;
+      for (const page of generated.manifest.pages) {
+        this.emitFile({
+          type: 'asset',
+          fileName: `${ATLAS_URL_DIR}/${page.file}`,
+          source: readFileSync(join(generated.atlasDir, page.file)),
+        });
+      }
+    },
+    /**
+     * Claims the virtual module id.
+     *
+     * @param id - The import specifier being resolved.
+     * @returns The `\0`-prefixed resolved id for {@link ASSETS_MODULE_ID}, else `null`.
+     */
+    resolveId(id) {
+      return id === ASSETS_MODULE_ID ? RESOLVED_ASSETS_MODULE_ID : null;
+    },
+    /**
+     * Generates the virtual module's source.
+     *
+     * @param id - The resolved module id.
+     * @returns The module with the inlined manifest and relative page URLs, or `null` for
+     *   any other module.
+     */
+    load(id) {
+      if (id !== RESOLVED_ASSETS_MODULE_ID) return null;
+      const { manifest } = result ?? generate();
+      const pageUrls = manifest.pages.map((page) => `${ATLAS_URL_DIR}/${page.file}`);
+      return (
+        `export const manifest = ${JSON.stringify(manifest)};\n` +
+        `export const pageUrls = ${JSON.stringify(pageUrls)};\n` +
+        'export default { manifest, pageUrls };\n'
+      );
+    },
+    /**
+     * Dev server only: serves the atlas files and regenerates them on source edits.
+     *
+     * @param server - The Vite dev server.
+     */
+    configureServer(server) {
+      const prefix = `${server.config.base}${ATLAS_URL_DIR}/`;
+      server.middlewares.use((req, res, next) => {
+        const url = (req.url ?? '').split('?')[0] ?? '';
+        if (!url.startsWith(prefix)) {
+          next();
+          return;
+        }
+        const file = decodeURIComponent(url.slice(prefix.length));
+        const path = join(outDir, ATLAS_DIR, file);
+        if (!ATLAS_FILE_PATTERN.test(file) || !existsSync(path)) {
+          next();
+          return;
+        }
+        res.setHeader('Content-Type', file.endsWith('.png') ? 'image/png' : 'application/json');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.end(readFileSync(path));
+      });
+
+      server.watcher.add([sourceDir, PIPELINE_DIR]);
+      /**
+       * Regenerates the atlas after an asset-source or pipeline edit and reloads the page.
+       *
+       * @param file - Absolute path of the changed file.
+       */
+      const onChange = (file: string): void => {
+        if (!isInside(sourceDir, file) && !isInside(PIPELINE_DIR, file)) return;
+        try {
+          generate();
+        } catch (error) {
+          server.config.logger.error(`[shmup:assets] ${(error as Error).message}`);
+          return;
+        }
+        const module = server.moduleGraph.getModuleById(RESOLVED_ASSETS_MODULE_ID);
         if (module !== undefined) server.moduleGraph.invalidateModule(module);
         server.ws.send({ type: 'full-reload' });
       };
