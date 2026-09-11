@@ -11,12 +11,13 @@ and TSDoc-documented) and the **engine foundations** are implemented: seeded RNG
 committed trigonometry tables with binary angles, the sim → presentation event queue and the
 zero-GC pools ([developer guide](docs/dev/engine-foundations.md)). **Game data** is
 schema-validated JSON under [`content/`](content/README.md) — the KESTREL ship, the Type A
-weapons, the test-range stage and its terrain tileset so far — checked by `pnpm content:check`, served to the app builds as the virtual
+weapons, the test-range stage with its terrain tileset, enemy roster and movement paths so
+far — checked by `pnpm content:check`, served to the app builds as the virtual
 module `virtual:shmup-content` and loaded by `loadContent()` with every string id resolved
 to a number ([developer guide](docs/dev/content-data.md)). **Placeholder art** is code:
 sprite pixel maps under [`assets/source/`](assets/README.md), seeded procedural generators
 and an original 6×8 pixel font are packed by `pnpm assets` into a texture atlas plus
-manifest (the KESTREL, shots, six small enemies, boss parts, bullets, explosions, items,
+manifest (the KESTREL, shots, seven enemies, boss parts, bullets, explosions, items,
 HUD pieces, terrain tiles, star layers), served to the builds as `virtual:shmup-assets`;
 real art can later replace any frame by name ([developer guide](docs/dev/asset-pipeline.md)).
 Both apps now boot through the shared browser shell [`@shmup/shell`](packages/shell/README.md)
@@ -34,8 +35,8 @@ flies** under remote, keyboard or gamepad control (six speed levels from content
 place, and `hashWorld` fingerprints the simulated state for lockstep and replay tests. An
 allocation-guard test keeps the tick free of garbage. Every build now starts into **free
 flight** — the ship over an empty starfield between the HUD bars — with the M1-04 sprite
-showcase at `?scene=showcase` and the test pattern at `?scene=calibration`; there are no
-enemies or weapons yet ([developer guide](docs/dev/sim-world.md),
+showcase at `?scene=showcase` and the test pattern at `?scene=calibration`; free flight has no
+enemies and there are no weapons yet ([developer guide](docs/dev/sim-world.md),
 [what testers should check](docs/client/preview-build.md)).
 **Stages scroll** (M1-07): a stage file carries a scripted camera path (speed keys with
 linear ramps, eased vertical pans, boss locks that stop the camera exactly), invisible
@@ -46,6 +47,19 @@ slopes. The stage runner fires the sorted event timeline through a cursor, the W
 the ship's terrain box against the tiles (hits are recorded until the death sequence of
 M1-12), and the renderer draws the terrain as a ring-buffered sprite grid. Fly the dev stage
 with `pnpm dev` and `?stage=test-range` ([developer guide](docs/dev/stage-runtime.md)).
+**Enemies fly** (M1-08): data-defined enemies from [`content/enemies/`](content/enemies/README.md)
+are spawned by the stage timeline — alone or as formations whose members fly one behind the
+other and drop a capsule (and pay a bonus) only when every one of them is destroyed. What an
+enemy does is a TypeScript **behaviour coroutine** that sleeps between decisions (resumed only
+on the tick it wakes) — the M1 roster covers popcorn, formation fliers, capsule carriers,
+floor and ceiling turrets, walkers, hatches that release fighters, rammers and orbiters —
+while per-tick **movers** do the moving: straight, sine waves, centripetal Catmull-Rom
+[paths](content/paths/README.md) baked at load into 1-px arc-length tables, enter-hold-leave
+waypoints, follow-the-leader, ground crawling over the terrain slopes, capped-turn homing and
+aimed dashes. Off-screen / settle rules, contact with the ship, hit flash, explosion events and
+the tick's kill / drop outcomes are in place; 64 scripted enemies stay within the allocation
+guard, and enemies are part of `hashWorld`. The test stage now sends all eight behaviours at
+you (nothing can be shot yet — weapons are next) ([developer guide](docs/dev/enemies-and-behaviors.md)).
 **Input is remote-first and data-driven** (M1-05): control profiles in
 [`content/input/`](content/input/README.md) map keys, remote buttons and gamepad buttons to
 actions with separate **game** and **menu** tables, and carry the Samsung remote's quirks as
@@ -70,7 +84,7 @@ it is waiting to be packaged and run on the M7 monitors.
 | [`shmup_prompt.md`](shmup_prompt.md) | Paste-into-a-new-session prompt that drives execution of the plan (workflow: build → review/fix loop → tests → docs → CI gate per step, progress in `shmup_progress.md`) |
 | [`docs/`](docs/README.md) | Player and developer documentation (start with [`docs/dev/repo-layout.md`](docs/dev/repo-layout.md)) |
 
-Game docs — testers: [preview build (free flight)](docs/client/preview-build.md) ·
+Game docs — testers: [preview build (free flight, test stage and its enemies)](docs/client/preview-build.md) ·
 [controls](docs/client/controls.md) · [monitor setup & install](docs/client/install-on-tv.md).
 Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/architecture.md) ·
 [engine foundations](docs/dev/engine-foundations.md) · [content data](docs/dev/content-data.md) ·
@@ -78,6 +92,7 @@ Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/ar
 [rendering & browser shell](docs/dev/rendering-and-shell.md) ·
 [sim World & collision](docs/dev/sim-world.md) ·
 [stage runtime](docs/dev/stage-runtime.md) ·
+[enemies & behaviours](docs/dev/enemies-and-behaviors.md) ·
 [input profiles](docs/dev/input-profiles.md) ·
 [API reference](docs/dev/api-reference.md) ·
 [build, test & deploy](docs/dev/build-test-deploy.md) · [conventions](docs/dev/conventions.md).
@@ -104,7 +119,7 @@ versions (`devEngines.runtime`).
 ```sh
 pnpm -v               # must print 12.x — an older global pnpm fails with ERR_PNPM_BROKEN_LOCKFILE
 pnpm install          # set ELECTRON_SKIP_BINARY_DOWNLOAD=1 to skip the Electron binary
-pnpm dev              # browser dev app → http://localhost:5173: fly the KESTREL (arrows/WASD, gamepad; ?stage=test-range scrolls the test stage; ?profile=keyboard-remote-emulation feels like the TV remote; ?scene=showcase / ?scene=calibration)
+pnpm dev              # browser dev app → http://localhost:5173: fly the KESTREL (arrows/WASD, gamepad; ?stage=test-range scrolls the test stage and its enemies; ?profile=keyboard-remote-emulation feels like the TV remote; ?scene=showcase / ?scene=calibration)
 pnpm lint             # ESLint (typescript-eslint + compat: chrome >= 69)
 pnpm typecheck        # tsc --noEmit everywhere
 pnpm test             # Vitest per package + repo integration tests
@@ -165,7 +180,7 @@ pnpm workspace (`packages/*`, `apps/*`) + Turborepo. Full annotated tree:
 | [`apps/web`](apps/web/README.md) | Vite browser dev target (also Electron's renderer) |
 | [`apps/tizen`](apps/tizen/README.md) | Samsung Tizen `.wgt` (Chromium 69 classic IIFE build, config.xml, CLI scripts) |
 | [`apps/electron`](apps/electron/README.md) | Electron desktop shell |
-| [`content/`](content/README.md) | Game data: player ships, stages, terrain tilesets, enemies, weapons, input profiles (JSON, `formatVersion` 1) |
+| [`content/`](content/README.md) | Game data: player ships, stages, terrain tilesets, enemies, movement paths, weapons, input profiles (JSON, `formatVersion` 1) |
 | `types/` | Ambient declarations for the Vite virtual modules (`virtual:shmup-content`, `virtual:shmup-assets`) |
 | [`assets/`](assets/README.md) | Art/audio sources (`source/`: sprite pixel maps, fonts) and pipeline output (`generated/`: atlas pages + manifest, ignored) |
 | [`scripts/`](scripts/README.md) | Repo-level Node scripts |
@@ -183,9 +198,10 @@ the game — the shipped Tizen bundle still targets Chromium 69.
 
 ## Next step
 
-Code: plan step **M1-08** (enemies, behaviour scripts and movement: data-defined enemies
-spawned by the stage timeline, movers, sleeping coroutines, formations that drop capsules) —
-the per-step status board is [`shmup_progress.md`](shmup_progress.md).
+Code: plan step **M1-09** (enemy bullets, lasers and attack patterns: a 512-bullet pool with
+aimed / N-way / ring / spiral / spray patterns fired from the behaviour scripts, telegraphed
+lasers, player vs bullet collision, bullet cancel, constant rank) — the per-step status board is
+[`shmup_progress.md`](shmup_progress.md).
 
 On hardware (unchanged, and still the gate for the remote control scheme): package and
 deploy the input probe from the **Windows desktop** that sits on the same LAN as the monitors and holds

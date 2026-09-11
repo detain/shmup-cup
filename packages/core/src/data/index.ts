@@ -1595,9 +1595,12 @@ function assertFileList(files: unknown): void {
  * so the result never depends on how the host listed the files), then every string id
  * recorded by {@link s.ref} is resolved and written back as `<field>Id`. Sprite and script
  * names are *interned* (sorted, then numbered); ids pointing at ships, weapons, enemies,
- * stages, tilesets or audio cues must resolve, or an issue is reported and the id becomes `-1`.
- * A third pass expands every stage tilemap against its resolved tileset
- * ({@link StageSpec.terrain}); its issues come last.
+ * paths, stages, tilesets or audio cues must resolve, or an issue is reported and the id becomes
+ * `-1`. With `options.knownScripts` an interned script id outside that list is an issue too. A
+ * third pass expands every stage tilemap against its resolved tileset
+ * ({@link StageSpec.terrain}); its issues come last. While collecting, enemies get the defaults
+ * of their optional fields and paths are baked into arc-length tables ({@link bakePath}; a path
+ * with coincident neighbours or an overlong curve is an issue and is left out).
  *
  * Bad files are skipped, not fatal: the caller (the boot error screen, `pnpm content:check`)
  * shows `issues` and may still run with the partial database. A file with a bad header or
@@ -1616,7 +1619,7 @@ function assertFileList(files: unknown): void {
  *
  * @example
  * ```ts
- * const { db, issues } = loadContent(contentFiles);
+ * const { db, issues } = loadContent(contentFiles, { knownScripts: KNOWN_SCRIPT_IDS });
  * if (issues.length > 0) showBootErrors(issues);
  * const ship = db.ships[db.shipIndex.get('kestrel') ?? 0];
  * ```

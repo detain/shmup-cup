@@ -231,9 +231,25 @@ export interface World {
   readonly view: WorldView;
 }
 
-/** Options of {@link createWorld} beyond the config (tests and tools). */
+/**
+ * Options of {@link createWorld} beyond the config (tests and tools). Not part of `GameConfig`:
+ * nothing here is recorded in a replay header, so a session must use the defaults.
+ *
+ * @example
+ * ```ts
+ * const probe = defineBehavior('probe', {}, function* (api) {
+ *   api.setMover(MoverKind.Straight, -1, 0);
+ *   yield SLEEP_FOREVER;
+ * });
+ * const behaviors = createBehaviorRegistry([...DEFAULT_BEHAVIOR_DEFS, probe]);
+ * const world = createWorld(config, db, { behaviors });
+ * ```
+ */
 export interface WorldOptions {
-  /** Enemy behaviours by script id (default: `core/behaviors` `DEFAULT_BEHAVIORS`). */
+  /**
+   * Enemy behaviours by script id (default: `core/behaviors` `DEFAULT_BEHAVIORS`). A spec whose
+   * `script` the lookup does not know spawns without a script (it only runs its spec mover).
+   */
   readonly behaviors?: EnemyBehaviorLookup;
 }
 
@@ -529,7 +545,8 @@ type WorldUnderConstruction = Omit<World, 'stage' | 'enemies'> & {
 /**
  * Creates a gameplay session: RNG streams from `config.seed`, the ship from `content`, the stage
  * `config.stage` (camera at its start, stage theme queued as a music event) or a static camera,
- * player 1 starting its fly-in at the left edge of the view, player 2 inactive.
+ * the enemy system (specs and the stage's spawn events compiled, 64 free slots), player 1
+ * starting its fly-in at the left edge of the view, player 2 inactive.
  *
  * @param config - The resolved session config (`resolveGameConfig`).
  * @param content - Validated content (`loadContent(...).db`; `EMPTY_CONTENT_DB` gives the

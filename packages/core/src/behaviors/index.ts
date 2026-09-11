@@ -96,6 +96,14 @@ export interface BehaviorRegistry extends EnemyBehaviorLookup {
 /**
  * Declares a behaviour with typed tunables.
  *
+ * @remarks
+ * `params` is copied and frozen. When an enemy spawns, the enemy system calls `create` with the
+ * defaults merged with the spec's `params` (resolved once per spec at world creation — keys and
+ * key order always those of the defaults) and resumes the returned generator from the spawn tick
+ * on (the tick after, for a script spawn). The body should read `api.spec` / `api.self` once at
+ * the start, switch movers with `api.setMover` and `yield` tick counts; it must not allocate
+ * between yields (no closures, arrays or object literals — see `core/patterns`).
+ *
  * @typeParam P - The tunables' shape.
  * @param id - Script id.
  * @param params - Tunables with defaults.

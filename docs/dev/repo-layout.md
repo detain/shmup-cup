@@ -43,10 +43,13 @@ shmup-cup/
 │   │   │   ├── world/          ✔ createWorld / stepWorld: session state + the fixed 9-phase tick pipeline (plan §3.2), pool registry, view
 │   │   │   ├── presentation/   ✔ IRenderer / IAudio contracts + the render contract (RenderFrame, WorldView, SpriteBatchView, DrawList, LayerId)
 │   │   │   ├── rng/ math/ events/ pools/                 ✔ engine foundations (sfc32, trig tables, event ring, SoA pools)
-│   │   │   ├── data/           ✔ (partial) content loader: schema.ts combinators, loadContent(), ContentDb, migrations, tilemap.ts (tileset tables, heightfield / RLE expansion)
+│   │   │   ├── data/           ✔ (partial) content loader: schema.ts combinators, loadContent(), ContentDb, migrations, tilemap.ts (tileset tables, heightfield / RLE expansion), paths.ts (spline → arc-length tables)
 │   │   │   ├── player/         ✔ (partial) KESTREL movement, speed levels, clamp, banking, fly-in (death/respawn: M1-12)
 │   │   │   ├── weapons/ options/ shields/ powerups/         player-side systems (placeholders)
-│   │   │   ├── enemies/ bullets/ patterns/ bosses/         enemy-side systems (placeholders)
+│   │   │   ├── enemies/        ✔ (partial) 64 enemy slots: spawns, formations, off-screen rules, contact, damage, sprite mirror
+│   │   │   ├── patterns/       ✔ (partial) sleeping behaviour coroutines (runner) + per-tick movers (fire primitives: M1-09)
+│   │   │   ├── behaviors/      ✔ (partial) behaviour registry referenced by content script ids; the M1 roster
+│   │   │   ├── bullets/ bosses/                            enemy-side systems (placeholders)
 │   │   │   ├── collision/      ✔ (partial) scalar shape tests, layer masks, counting-sort uniform grid, pixel-exact terrain queries
 │   │   │   ├── stage/          ✔ stage runtime: camera keys / ramps / pans / locks, event cursor, checkpoints, terrain map + parallax / terrain views
 │   │   │   ├── scoring/ rank/ fx/                          rules & feel (placeholders)
@@ -83,7 +86,8 @@ shmup-cup/
 │   ├── player/             ✔ one file per ship: speed levels, hitboxes, margins, timers (+ README, example)
 │   ├── stages/             ✔ one file per stage: music, camera path, checkpoints, parallax, tilemap (heightfield / RLE), event timeline; test-range (+ README, example)
 │   ├── tilesets/           ✔ terrain tilesets: per tile collision type, column-height mask, atlas frame (+ README, example)
-│   ├── enemies/            enemy definitions: hp, score, hurtbox, script id, drop (+ README, example)
+│   ├── enemies/            ✔ enemy definitions: hp, score, hurtbox, behaviour script + tunables, mover, ground anchor, drop, child; test-range roster (+ README, example)
+│   ├── paths/              ✔ movement paths: spline control points, baked to arc-length tables at load (+ README, example)
 │   ├── weapons/            ✔ weapon tunables + preset loadouts (+ README, example)
 │   └── input/              ✔ input profiles (kind input-profiles, validated by input-web rebind): per-context key/button tables, remote debounce/diagonal/SOCD, Tizen keys to register
 ├── assets/
@@ -94,7 +98,7 @@ shmup-cup/
 ├── test/                   cross-package integration tests (Vitest project "integration", part of `pnpm test`); e2e/ = Playwright browser smoke tests (`pnpm test:e2e`)
 ├── docs/
 │   ├── client/             player/tester docs
-│   └── dev/                contributor docs (this file, architecture, engine-foundations, content-data, asset-pipeline, rendering-and-shell, sim-world, stage-runtime, api-reference, …)
+│   └── dev/                contributor docs (this file, architecture, engine-foundations, content-data, asset-pipeline, rendering-and-shell, sim-world, stage-runtime, enemies-and-behaviors, api-reference, …)
 ├── tools/                  standalone tools, NOT workspace members (own package.json/lockfile, npm not pnpm)
 │   └── input-probe/        Tizen diagnostic .wgt: remote/gamepad/display measurements (see input-probe.md)
 └── shmup_feat.md  shmup_tech.md  input_probe_spec.md  README.md  LICENSE (MPL-2.0)

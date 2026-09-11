@@ -3,16 +3,17 @@
 The game is not a game yet, but for the first time you can **fly the ship**. Every build —
 browser, Samsung TV and desktop — starts with a short loading bar and then **free flight**:
 the KESTREL, the player ship, flies in from the left edge of an empty starfield and from then
-on follows the directional buttons of the TV remote, the arrow keys or a gamepad. There are no
-enemies, no shooting and no sound yet. Free flight exists to prove on each device that the
+on follows the directional buttons of the TV remote, the arrow keys or a gamepad. Free flight
+has no enemies, and there is no shooting and no sound yet. Free flight exists to prove on each device that the
 whole chain works — the controls reach the ship quickly and reliably, the 60 ticks per second
 simulation runs smoothly, the picture is pixel-perfect at the monitor's resolution — and to
 catch control, smoothness or scaling problems early.
 
 In a browser you can also fly the first **scrolling stage** — the *Test Range*, with rocky
-ground, caves and speed changes (see [The scrolling test stage](#the-scrolling-test-stage-browser-only)) —
-and the earlier start-up pictures are still there: the animated **sprite showcase** and the
-**calibration screen** (see [below](#other-screens-browser-only)).
+ground, caves, speed changes and, since this build, the **first enemies** flying and walking
+past (see [The scrolling test stage](#the-scrolling-test-stage-browser-only)) — and the earlier
+start-up pictures are still there: the animated **sprite showcase** and the **calibration
+screen** (see [below](#other-screens-browser-only)).
 
 This page explains how to open the preview on each device, what you should see, how the ship
 should behave, and what to report if something is wrong. The full button layouts are in
@@ -79,21 +80,26 @@ ship may move in four directions only; the game is designed to be fully playable
 
 ### What changed lately
 
-**New in this build: scrolling stages.** The game can now run a stage — the view scrolls
-along a scripted path, speeding up and slowing down, over rocky floors and caves drawn from
-small tiles, with star layers moving behind at their own speeds. For now the only stage is the
-*Test Range*, and it can only be opened in a browser
-([below](#the-scrolling-test-stage-browser-only)); the TV and desktop builds still start in
-free flight, which works exactly as before. Touching the rock does nothing yet (the ship flies
-through it) — crashing arrives together with lives and respawning in a later build.
+**New in this build: the first enemies.** The *Test Range* stage now sends enemies at you:
+rows of small pods weaving on a wave, spinners that fly loops one behind the other, red
+saucers, gun turrets on the ground and hanging from cave ceilings, walkers that stroll along
+the rocky slopes, hatches that open and release small fighters, and fighters that stop, aim
+and dash at you ([what to look for](#enemies-in-the-test-stage)). You cannot shoot them yet,
+they do not shoot back yet, and flying into one does nothing yet — weapons come next, enemy
+bullets right after, crashing with lives and respawning later. As before, the stage can only
+be opened in a browser; the TV and desktop builds still start in free flight, which works
+exactly as before and has no enemies.
 
-Before that: the ship came **under your control**, and free flight replaced the sprite
-showcase as the start-up picture. The simulation behind it is the real game engine: every
+Before that: **scrolling stages** — the view scrolls along a scripted path, speeding up and
+slowing down, over rocky floors and caves drawn from small tiles, with star layers moving
+behind at their own speeds; and before that the ship came **under your control**, and free
+flight replaced the sprite showcase as the start-up picture. The simulation behind it is the real game engine: every
 build adds to this world — next come enemies, then weapons.
 
 **Please re-test on the monitors:** install the new build and run through the checks in the
 next section — how the ship responds to the remote is still the most valuable report. On a
-PC, please also fly the test stage once and report anything from its checklist.
+PC, please also fly the test stage once and report anything from its checklists (the rock and
+the enemies).
 
 The game data and the sprite sheet travel **inside** the app (the sprite sheet is a small
 picture file packed into the same `.wgt`, in its `assets/` folder). There are no extra files
@@ -198,6 +204,50 @@ If the address names a stage that does not exist (for example a typo in `?stage=
 starts in ordinary free flight instead; the browser's developer console then says `no stage
 "…"; flying in open space`.
 
+#### Enemies in the test stage
+
+The enemies are placeholders too (original designs) and come on a fixed schedule — the same
+every run. Most fly in from the right edge; ground enemies scroll in standing on the rock.
+Nothing can hurt them yet and they do not shoot, so they simply fly past and leave the screen.
+Never more than about a dozen are on screen at once.
+
+| Time (about) | What comes |
+|---|---|
+| 2 s | Five **green pods** in a row, weaving up and down on a wave through the upper part of the screen |
+| 5 s | A **red saucer** with blinking lights, drifting slowly through the middle (later it will carry a power-up) |
+| 7 s | Five **four-bladed spinners** in single file along the lower part of the screen: each flies a loop-the-loop, exactly on the path of the one in front |
+| 9 s | A **gun turret** on the ground; it turns to face your ship as you pass it |
+| 10 s | A **walker** on legs, strolling along the rolling ground towards your ship, stopping, then walking on — up and down the slopes |
+| 12 s | An **armoured hatch** on the ground: once it is on screen it releases a small **arrowhead fighter** every second and a quarter or so (six at most); each one rises, stops, turns towards your ship and dashes at it |
+| 15 s | An **arrowhead fighter** high up: it flies in, stops for a moment and dashes straight at where your ship is |
+| 17 s | Six green pods, lower down |
+| 21 s | Another ground turret |
+| 27 s | Inside the first cave: a turret hanging **upside down from the ceiling** |
+| 29 s | A spinner flying a wide loop |
+| 30 s | Four spinners diving down along a curve, one behind the other |
+| 33 s | Another red saucer |
+| 46–50 s | In the deeper cave: a walker, a hatch with its fighters and a ceiling turret |
+| 53 s | Five green pods |
+| 58 s | A spinner that flies to a spot a little right of the screen's centre, hovers there for about a second and a half and then leaves to the left |
+| 62 s | Five spinners flying the loop-the-loop again |
+| 65 s | A last red saucer |
+
+What "good" looks like:
+
+- Every enemy is a crisp little sprite — never a **magenta-and-black checkered square**
+  (that would be a missing picture).
+- Enemies move smoothly, without jumps or stutters, also while the scrolling speeds up or
+  slows down. Enemies in a row keep their spacing, and the spinners behind the first one follow
+  its loop exactly.
+- Ground turrets, walkers and hatches **stand exactly on the rock** (no gap below them, not
+  sunk into it); walkers follow the slopes as they walk; ceiling turrets hang upside down
+  right under the rock. They scroll along with the rock.
+- Turrets and walkers turn round to face your ship when you pass them.
+- Enemies only ever appear inside the playfield, never over the top or bottom bar.
+- An enemy that has left the screen does not come back.
+- Flying into an enemy does nothing yet — the ship passes through it. That is expected in
+  this build, and so is not being able to shoot.
+
 ### Other screens (browser only)
 
 | Address | Screen |
@@ -258,13 +308,18 @@ mean the build itself is broken; they are not caused by anything you did.
 | The ship stutters or stops for a moment while I hold a direction (TV) | Please report it with the remote model: the game's hiccup protection is supposed to hide exactly this |
 | `?stage=test-range` shows free flight (title FREE FLIGHT, no rock) | The stage name in the address is misspelled — check the spelling (`test-range`); the browser console names the unknown stage |
 | The ship flies through the rock in the test stage | Expected in this build: hits are only noted, crashing comes later |
+| The ship flies through enemies, and nothing happens | Expected in this build: touching an enemy is only noted; crashing comes with lives and respawning |
+| I cannot shoot the enemies / they never explode | Expected: weapons arrive in the next build (the enemies are there first so the weapons have something to hit) |
+| An enemy floats above the ground, sinks into it, or walks through a wall | Please report it with a screenshot and roughly how far into the stage it was |
+| An enemy jumps, stutters or suddenly vanishes in the middle of the screen | Please report it with the time into the stage — enemies should only disappear after leaving the screen |
+| No enemies at all in the test stage | Check the address says `?stage=test-range` (the title bar reads TEST RANGE). Free flight — the TV and desktop builds — has no enemies |
 | The test stage stopped scrolling | At the end of the stage (after about 75 seconds) that is expected; reload the page to start again. If it stops earlier, please report where |
 | Gaps, seams or flickering in the rock, or rock over a HUD bar | Please report it with a screenshot and roughly how far into the stage it was |
 | The ship flies in from the left again | Not expected in this build — the ship only flies in at start-up. Please report what you were doing |
 | Error screen with a pink title | See [When the app shows an error screen](#when-the-app-shows-an-error-screen) — photograph it and report it |
 | Error screen `WEBGL IS NOT AVAILABLE` in a browser | Hardware acceleration is off or blocked: enable it in the browser settings (Chrome: Settings → System → "Use graphics acceleration when available") and reload. On the TV, report it together with the monitor's firmware version |
 | Black or empty screen that stays black | Should not happen any more — the app shows an error screen instead. In a browser open the developer console: the message "Shmup Cup failed to start" gives the reason. On the TV, report it with the firmware version |
-| Magenta-and-black checkered squares instead of some pictures | A picture the game asked for is missing from the sprite sheet. Report which element shows it (e.g. "the ship") |
+| Magenta-and-black checkered squares instead of some pictures | A picture the game asked for is missing from the sprite sheet. Report which element shows it (e.g. "the ship", "the second enemy") |
 | Blurry picture in the browser | Browser zoom is not 100 % (press Ctrl+0), or the operating system scales the window unevenly. At 100 % zoom the pixels stay sharp on any display |
 | Stars or ship stutter in the browser | Expected on 120/144 Hz monitors for now (smooth-motion interpolation is not in the preview yet); on a 60 Hz display it should be smooth. Also check the PC is not busy |
 | Stars or ship stutter on the TV | Please report it — the M7 runs at 60 Hz and should show one step per refresh |

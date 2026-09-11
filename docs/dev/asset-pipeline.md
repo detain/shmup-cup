@@ -174,7 +174,7 @@ For every sprite with `hitFlash: true` the pipeline adds a **sibling sprite**
 turned white with its alpha kept. The renderer shows a hit by drawing
 `manifest.sprites[name].flash` with the same frame index — one sprite-id swap, still one
 atlas page and one batch. (The plan sketched one `<frame>@flash` per frame; a whole sprite
-is simpler for the renderer.) Today the six small enemies and the four boss parts flash.
+is simpler for the renderer.) Today the seven enemies and the four boss parts flash.
 
 ## The initial sprite set
 
@@ -182,7 +182,7 @@ is simpler for the renderer.) Today the six small enemies and the four boss part
 |---|---|---|
 | Player | `ships/kestrel` (16×9: `level`, `up`, `down`, from `PLACEHOLDER_SHIP`), `ships/kestrel-thruster` (6×3 × 2, `burn`, drawn behind the ship), `options/orb` (`pulse`) | pixel maps |
 | Player shots | `shots/basic`, `shots/double`, `shots/laser` (a segment, anchor on its left edge), `shots/missile` (`fly`) | pixel maps |
-| Small enemies | `enemies/drifter`, `turret`, `carrier-red`, `hopper`, `spinner`, `darter` (2 frames each, all with `@flash`) | pixel maps |
+| Enemies | `enemies/drifter`, `turret`, `carrier-red`, `hopper`, `spinner`, `darter`, and since M1-08 the ground `hatch` (20 px wide, lid closed / open) — 2 frames each, all with `@flash` | pixel maps |
 | Boss parts | `bosses/core`, `shield-plate` (`intact`, `cracked`), `hull-block`, `emitter` (`idle`, `charge`), all with `@flash` | pixel maps |
 | Items | `items/capsule` (generated), `items/bonus`, `items/one-up` | both |
 | HUD | `hud/meter-slot`, `hud/meter-labels` (generated), `hud/life` | both |
@@ -190,8 +190,8 @@ is simpler for the renderer.) Today the six small enemies and the four boss part
 | FX / bullets / shield | explosions, spark, debris, 9 enemy bullets, `shields/force-field` | generated |
 | Utility | `ui/pixel`, `ui/missing`, `font/pixel` | generated / font |
 
-The enemy names cover every name the example content uses, so `pnpm content:check`
-passes for the shipped files.
+The enemy names cover every name the shipped and example content use (the `test-range`
+roster of M1-08 included), so `pnpm content:check` passes.
 
 ## Packing and pages (`packer.mjs`)
 
@@ -400,6 +400,8 @@ module (numeric frame ids, nearest sampling, `ui/missing` for unknown names) and
 with `font/pixel` ([rendering-and-shell.md](rendering-and-shell.md)); M1-07 (done) draws
 `tiles/terrain-a` through `content/tilesets/terrain-a.tileset.json` (whose masks a test
 compares with these frames' pixels) and the star layers as parallax bands
-([stage-runtime.md](stage-runtime.md)); M1-08 … M1-13 add enemy, bullet and boss sprites
-(with `hitFlash`); M1-14 uses the explosions and particles; M1-16 builds the HUD from
+([stage-runtime.md](stage-runtime.md)); M1-08 (done) added `enemies/hatch` and draws the
+enemy sprites through the World's ground / air batches with their `@flash` siblings
+([enemies-and-behaviors.md](enemies-and-behaviors.md)); M1-09 … M1-13 add bullet and boss
+sprites (with `hitFlash`); M1-14 uses the explosions and particles; M1-16 builds the HUD from
 `hud/*` and `ui/pixel`; M1-18 adds the Zone A art.

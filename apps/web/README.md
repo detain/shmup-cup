@@ -8,8 +8,10 @@ flight** (M1-06): the game's World with the KESTREL under keyboard / gamepad con
 empty starfield. `?scene=showcase` shows the M1-04 sprite showcase and `?scene=calibration`
 the pixel-art calibration test pattern instead. `?stage=<id>` runs that stage instead of
 open space (M1-07 — `?stage=test-range` is the dev stage: scrolling camera, generated
-terrain, star parallax; an unknown id logs a `console.warn` and flies in open space; guide:
-[`docs/dev/stage-runtime.md`](../../docs/dev/stage-runtime.md)). There are no enemies or
+terrain, star parallax and, since M1-08, its enemy roster flying the timeline; an unknown id
+logs a `console.warn` and flies in open space; guides:
+[`docs/dev/stage-runtime.md`](../../docs/dev/stage-runtime.md),
+[`docs/dev/enemies-and-behaviors.md`](../../docs/dev/enemies-and-behaviors.md)). There are no
 weapons yet.
 
 Input uses the data-driven profiles of `content/input/` (decision D13): `keyboard-default`

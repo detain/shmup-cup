@@ -35,7 +35,8 @@ createWorld({ stage: 'test-range' }, db)                                      co
 
 stepWorld, every tick
  ├─ 3 stage      runner.tick(): keys → ramp / pan → move camera → fire events → checkpoint
- │                 hooks.event: music → SimEventKind.Music, end → status 'stageClear'
+ │                 hooks.event: spawn / formation → world.enemies, music → SimEventKind.Music,
+ │                 end → status 'stageClear'
  ├─ 6 collision  terrainRectHit(terrain, ship's terrain box) → playerHit(Terrain)
  └─ 9 fx         updateParallaxView(parallax, camera.x, camera.y)
 
@@ -190,7 +191,7 @@ its index:
 
 | `type` | Runner's own part | The World's hook today |
 |---|---|---|
-| `spawn`, `formation` | — | nothing yet — the spawner arrives in M1-08 |
+| `spawn`, `formation` | — | `world.enemies.onStageEvent(index)`: one enemy at the view point (`screenX`, `y`), or a formation whose members spawn every `interval` ticks (M1-08 — [enemies-and-behaviors.md](enemies-and-behaviors.md#spawning)) |
 | `warning`, `boss` | — | nothing yet — bosses arrive in M1-13 |
 | `music` | — | pushes `SimEventKind.Music` with the cue id |
 | `speed` | new target speed / ramp | — |
@@ -217,7 +218,7 @@ is the index of the last one the camera passed (`-1` before the first). `restart
    hooks only** (`StageSlot.Replay` marks them) — so spawns at the checkpoint come back;
    keys at that x apply on the next tick, as live play applied them the tick after arriving;
 4. the event cursor is found by binary search (`findEventCursor`), then `hooks.clear()` runs
-   (the World empties every pool).
+   (the World empties every pool and the enemy system: every enemy and formation).
 
 The result depends only on the stage and the index, so a restart matches what live play had
 at the checkpoint — `stage-edge.test.ts` checks it on 60 random stages. One approximation
@@ -311,9 +312,13 @@ widget has no query string) and stays in free flight.
 `content/stages/test-range.stage.json` is the dev / test stage: 4800 px long (about 75 s),
 checkpoints at 0 / 1500 / 3000, speed 1 → 2 (a high-speed cave with floor and ceiling from
 1500, flag `high-speed`) → a `speed` event to 1.5 at 2600 → 0.5 at 2700 (a slow section) → 1 at
-3000 (a deeper cave), star parallax on both background layers, and `end` at 4800. It has no
-spawn events until M1-08 ships enemies. `example.stage.json` shows the rest of the format
-(RLE rows over `example.tileset.json`, formations, a pan, a boss lock).
+3000 (a deeper cave), star parallax on both background layers, and `end` at 4800. Since
+M1-08 its timeline also spawns the test roster between x 60 and 4200 — drifter and fan
+formations (on the `fan-loop` / `dive-down` paths), capsule carriers, floor and ceiling
+turrets, walkers and hatches on the rolling ground, a rammer and orbiters
+([enemies-and-behaviors.md](enemies-and-behaviors.md#the-test-range-roster)).
+`example.stage.json` shows the rest of the format (RLE rows over `example.tileset.json`,
+formations, a pan, a boss lock).
 
 Headless:
 
@@ -349,7 +354,7 @@ world.stage!.restartAt(1); // back to x 1500: speed, pan and flags as live play 
 | `packages/render-pixi/test/layers/layers-stage*.test.ts`, `renderer/` | The terrain ring and parallax bands ([rendering-and-shell.md](rendering-and-shell.md#tests)) |
 | `packages/shell/test/flight/`, `apps/web/test/boot/` | The flight scene with a stage (no starfield, stage name, the World's views); `stageFromSearch`, `contentStageIds`, the unknown-id warning |
 | `test/integration/stage-terrain.test.ts`, `stage-runtime.test.ts` | Tileset masks = atlas pixels; `test-range` expands with existing frames, a pinned grid fingerprint, a ≥ 48-px corridor in every pixel column and a clear spawn at every checkpoint; every shipped stage plays to `stageClear` deterministically, also after a restart at each checkpoint; the World collides with the tiles the renderer draws |
-| `test/e2e/stage.spec.ts` | In Chromium: `?stage=test-range` shows terrain inside the playfield only and scrolls it while the ship stays put; an unknown id boots free flight |
+| `test/e2e/stage.spec.ts` | In Chromium: `?stage=test-range` shows terrain inside the playfield only and scrolls it while the ship stays put (captures 30 frames apart since M1-08 — see Gotchas); an unknown id boots free flight |
 
 ## Gotchas
 
@@ -371,11 +376,13 @@ world.stage!.restartAt(1); // back to x 1500: speed, pan and flags as live play 
 | A stage loads without terrain | Its tileset id did not resolve, the tile sizes differ, or its RLE rows failed — all reported as issues; the heightfield issues (missing tile names or masks) keep the terrain |
 | `?stage=` does nothing on the TV | The widget has no query string; stages are picked by the scene flow from M1-16 |
 | The `test-range` fingerprint test fails | The stage file or the generator changed. If intended, re-pin the value in `stage-runtime.test.ts` and say why in the commit |
+| A browser test that measures the scroll between two screenshots misses the shift | With enemies drawn and e2e files running in parallel, the frame loop may run up to 4 ticks per frame; keep captures close together (the stage test compares frames 30 apart) so the shift stays inside the search window |
 
 ## Next steps that build on this page
 
-- **M1-08** — enemies spawned from `spawn` / `formation` events (the World's hooks), `paths`
-  content, crawlers using `findFloor` / `findCeiling`.
+- **M1-08** (done) — enemies spawned from `spawn` / `formation` events (the World's hooks),
+  `paths` content, ground enemies and crawlers on `findFloor` / `findCeiling`
+  ([enemies-and-behaviors.md](enemies-and-behaviors.md)).
 - **M1-12** — `playerHit` starts the death sequence; the `arcade` penalty restarts at
   `runner.checkpoint` with `restartAt`.
 - **M1-13** — `warning` / `boss` events, the boss lock released by `unlock()`, the boss music.

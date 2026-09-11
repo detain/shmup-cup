@@ -187,8 +187,11 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   `packages/core/test/helpers/alloc.ts` measures the bytes a hot path allocates (heap growth
   plus what in-loop GCs reclaimed, via V8's `GCProfiler`). It needs `--expose-gc`, which
   `defineShmupProject(name, { execArgv: ['--expose-gc'] })` passes to the Vitest workers of
-  `@shmup/core` and `@shmup/shell`. `stepWorld` must stay under 256 KB per 10,000 ticks — see
-  [sim-world.md](sim-world.md#zero-allocation-and-the-allocation-guard).
+  `@shmup/core` and `@shmup/shell`. `stepWorld` must stay under 256 KB per 10,000 ticks, a
+  64-enemy World under 64 KB — see
+  [sim-world.md](sim-world.md#zero-allocation-and-the-allocation-guard) and
+  [enemies-and-behaviors.md](enemies-and-behaviors.md#zero-allocation-and-the-hot-path-rules).
+  The long 64-enemy tests carry explicit timeouts (several seconds on a CI runner).
 - Repo-level integration tests (`test/`) cover cross-package behaviour, lint-rule
   enforcement and skeleton invariants, plus the root Node scripts (`test/scripts/`,
   including every asset-pipeline module) and the Vite plugins, some of which start a real
@@ -201,8 +204,9 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   profiles reach the page
   (bound keys prevented, `?profile=keyboard-remote-emulation` knows only the remote's keys, an
   unknown `?profile=` warns and boots); `?stage=test-range` shows the generated terrain inside
-  the playfield and scrolls it (an unknown `?stage=` warns and boots free flight). Output goes to `test/e2e/test-results/` (git- and
-  Prettier-ignored).
+  the playfield and scrolls it (an unknown `?stage=` warns and boots free flight), and its
+  first drifter formation appears in the playfield and flies left (M1-08). Output goes to
+  `test/e2e/test-results/` (git- and Prettier-ignored).
 - **Dev query parameters** of the web build (`pnpm dev`, `vite preview`): `?stage=<id>` (run
   that stage instead of open space, e.g. `test-range` — see
   [stage-runtime.md](stage-runtime.md#running-a-stage)), `?scene=showcase`

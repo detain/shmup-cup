@@ -154,10 +154,11 @@ fixed-point arithmetic, so the output is byte-identical on every engine.
 | `createEventQueue(capacity = DEFAULT_EVENT_QUEUE_CAPACITY)` | function | → `EventQueue`; throws `RangeError` unless `capacity` is a positive integer |
 | `EventQueue` | interface | `capacity`, `length`, `dropped`, `push(kind, id, x, y, param)`, `drain(visit)`, `clear()` |
 | `SimEvent` | interface | `kind`, `id`, `x`, `y`, `param` — the single *reused* record `drain` hands to `visit` |
-| `SimEventKind` | const + type | `Sfx 0, Music 1, Particles 2, Shake 3, Flash 4, HitStop 5, Rumble 6` |
+| `SimEventKind` | const + type | `Sfx 0, Music 1, Particles 2, Shake 3, Flash 4, HitStop 5, Rumble 6, FormationBonus 7` (M1-08: `id` = formation slot, `x` / `y` = last kill, `param` = bonus points) |
 | `SIM_EVENT_KIND_NAMES` | const | Names indexed by code (`'sfx'`, `'music'`, …) |
 | `SFX_CUES`, `SfxCue`, `SFX_CUE_NAMES` | const/type | 21 cues, `PlayerShot 0` … `WarningSiren 20` (shmup_feat.md §19) |
 | `MUSIC_CUES`, `MusicCue`, `MUSIC_CUE_NAMES` | const/type | 15 cues, `Silence 0` … `Escape 14` |
+| `FX_CUES`, `FxCue`, `FX_CUE_NAMES` | const/type | Particle cues — the `id` of `Particles` events (M1-08): `ExplosionSmall 0, ExplosionMedium 1, ExplosionLarge 2`; `content/fx/` binds them to presets in M1-14 |
 | `DEFAULT_EVENT_QUEUE_CAPACITY` | const | `256` |
 
 Ids and kind codes are part of the replay/debug format: **append, never renumber.** The
@@ -190,24 +191,30 @@ at load (decision D28: in-house combinators, no runtime dependency). Guide:
 | Export | Kind | Summary |
 |---|---|---|
 | `loadContent(files, options?)` | function | → `LoadContentResult { db, issues, foreign }`; never throws on bad data, only on a bad `files` argument (`TypeError`). Pure: same files in any order → identical result; input never mutated |
-| `LoadContentOptions` | interface | `knownScripts?` (array or `Set`; unknown `script` refs become issues — M1-08 passes it), `migrations?` (defaults to `CONTENT_MIGRATIONS`) |
+| `LoadContentOptions` | interface | `knownScripts?` (array or `Set`; unknown `script` refs become issues — hosts pass `core/behaviors` `KNOWN_SCRIPT_IDS`), `migrations?` (defaults to `CONTENT_MIGRATIONS`) |
 | `ContentFile` | interface | `{ path, data }` — one parsed JSON document, as `virtual:shmup-content` provides it |
-| `ContentDb` | interface | `sprites`, `scripts` (`StringTable`), `ships`, `weapons`, `weaponPresets`, `enemies`, `stages`, `tilesets`, each with an id → position `…Index` map (`shipIndex`, `weaponIndex`, `weaponPresetIndex`, `enemyIndex`, `stageIndex`, `tilesetIndex`) |
+| `ContentDb` | interface | `sprites`, `scripts` (`StringTable`), `ships`, `weapons`, `weaponPresets`, `enemies`, `paths`, `stages`, `tilesets`, each with an id → position `…Index` map (`shipIndex`, `weaponIndex`, `weaponPresetIndex`, `enemyIndex`, `pathIndex`, `stageIndex`, `tilesetIndex`) |
 | `StringTable` | interface | `{ names, index }` — interned names in ascending order; `names[i]` is index `i` |
 | `EMPTY_CONTENT_DB` | const | Frozen, shared empty database (the default for `createGame`) |
-| `CONTENT_KINDS`, `ContentKind`, `isContentKind(kind)` | const/type/function | `player`, `weapons`, `enemies`, `stage`, `tileset`; other kinds come back in `foreign` |
+| `CONTENT_KINDS`, `ContentKind`, `isContentKind(kind)` | const/type/function | `player`, `weapons`, `enemies`, `paths`, `stage`, `tileset`; other kinds come back in `foreign` |
 | `ContentFileHeader` | interface | `{ formatVersion, kind }` — first two fields of every file |
 | `CONTENT_FORMAT_VERSION` | const | `1`; a newer version is rejected with an issue |
 | `CONTENT_MIGRATIONS`, `ContentMigration`, `ContentMigrationTable` | const/types | Per-kind `fromVersion → (data) => newData` table; ships `0 → 1` for `weapons`, `enemies`, `stage` (none for `player`) |
 | `PlayerShipSpec`, `BoxSpec`, `MarginSpec` | types | A ship of a `player` file: `speeds` (D3), `hurtRadius`, `terrainBox`, `pickupBox`, `margins`, timers, `spriteId` |
 | `WeaponSpec`, `WeaponSlot`, `WEAPON_SLOTS`, `WeaponPresetSpec` | types/const | A weapon (`slot`, `behaviorId`, `damage`, `speed`, `cap`, `pierce`, `spriteId`, optional `refireTicks`, `sfxId`, `params`) and a meter-mode loadout (`mainId`/`missileId`/`doubleId`/`laserId`, `-1` = none) |
-| `EnemySpec`, `EnemyRankSpec` | types | Stub (M1-08 extends): `hp`, `score`, `hurtbox`, `scriptId`, `spriteId`, `drop`, `rank?` |
+| `EnemySpec`, `EnemyRankSpec` | types | An enemy (M1-08; every optional field filled with its default at load): `id`, `hp`, `score`, `hurtbox`, `script` / `scriptId`, `sprite` / `spriteId`, `anim` (default 1 frame), `params` (behaviour tunables, default `{}`), `mover` (`EnemyMoverSpec \| null`), `drop` (`'capsule' \| null`), `ground` (`'floor' \| 'ceiling' \| null`), `settleTicks` (default `DEFAULT_SETTLE_TICKS` 30), `explosion` (default `'small'`), `megaCrashImmune` (default `false`), `child` / `childId` (spawners; `null` / `-1`), `rank?` |
+| `EnemyAnimSpec`, `EnemyGround`, `EnemyExplosion`, `EnemyDrop` | types | `{ frames, ticks }`; `'floor' \| 'ceiling'`; `'small' \| 'medium' \| 'large'`; `'capsule'` |
+| `ENEMY_GROUNDS`, `ENEMY_EXPLOSIONS`, `ENEMY_DROPS`, `DEFAULT_SETTLE_TICKS` | const | The code tables (ground / drop code = index + 1, 0 = none; explosion code = index); `30` |
+| `EnemyMoverSpec`, `MoverType`, `MOVER_TYPES` | types/const | A starting mover by `type`: `straight { vx, vy }`, `sine { vx, amp, period, phase? }`, `path { path?, pathId, speed }` (`pathId -1` = the spawn event's path), `waypoint { x, y, speed, hold, leaveVx, leaveVy }`, `follow`, `groundCrawl { speed }`, `homing { speed, turnRate }` (whole binary units), `aimedDash { speed, windup }`; the eight names in `MoverKind` order |
+| `PathSpec`, `PathPointSpec` | types | A `paths` entry (M1-08): `id`, `points` (2–64 `{ x, y }`, relative to the start, consecutive points distinct), `table` (`PathTable`, baked at load) |
+| `bakePath(xs, ys)`, `PathTable` | function, type | Centripetal Catmull-Rom through the points → `{ length, samples (x, y interleaved, relative to the first point, one per PATH_SAMPLE_STEP px of arc length, the last = the end point), count, endDx, endDy }`; throws `RangeError` for < 2 points, coincident neighbours or a curve over `MAX_PATH_LENGTH` (load time only — it allocates) |
+| `PATH_SAMPLE_STEP`, `MAX_PATH_LENGTH` | const | `1` px between samples; `16384` px |
 | `StageSpec` | type | A stage (M1-07): `id`, `name`, `music: StageMusic` (`stage` / `boss` cues + `stageId` / `bossId`), `length`, `camera`, `checkpoints`, `parallax`, `tilemap` (`StageTilemapSpec \| null`), `events`, and two fields the loader adds: `flagNames` (sorted; index = flag bit) and `terrain` (`StageTerrain \| null`) |
 | `StageCameraKey` | type | `x`, `speed` (px/tick, 0 = stop), optional `ramp` (ticks, linear), `yTo` + `yTicks` (eased vertical pan), `lock` (boolean — stop exactly at `x` until `runner.unlock()`) |
 | `StageCheckpoint`, `StageParallaxLayer`, `StageParallaxLayerName` | types | `{ x }`; a band `{ layer: 'far' \| 'mid', sprite, spriteId, factor, y, spacing }`; `'far' \| 'mid'` |
 | `StageTilemapSpec`, `HeightfieldSpec`, `HeightfieldSegment`, `HeightfieldProfile` | types | `{ tileSize: 8, tileset, tilesetId, rowsTall, rle?, generator? }`; `{ type: 'heightfield', segments }`; `{ from, to, floor?, ceiling? }`; `{ base, amp, period, seed }` |
 | `StageTerrain` | type | The expanded grid (never in the JSON): `tileSize`, `cols` = `ceil((length + 384) / 8)`, `rows`, `tiles` (`Uint8Array`, shared content — copy before mutating), `tilesetId` |
-| `StageEvent` = `StageSpawnEvent` \| `StageFormationEvent` \| `StageBossEvent` \| `StageMusicEvent` \| `StageSpeedEvent` \| `StageFlagEvent` \| `StageEndEvent` | types | Timeline entries by `type`: `spawn` (`enemyId`, `y?`, `path?`), `formation` (`enemyId`, `count`, `interval`, `y?`, `path?`), `warning` / `boss` (`enemyId`), `music` (`cueId`), `speed` (`speed`, `ramp?`), `flag` (`flag`, `flagId`, `value?` default `true`), `end` |
+| `StageEvent` = `StageSpawnEvent` \| `StageFormationEvent` \| `StageBossEvent` \| `StageMusicEvent` \| `StageSpeedEvent` \| `StageFlagEvent` \| `StageEndEvent` | types | Timeline entries by `type`: `spawn` (`enemyId`, `y?` (default mid-playfield), `screenX?` (default 400), `path?` / `pathId`), `formation` (the same + `count`, `interval`, `drop?` (default `'capsule'`, `null` = none), `bonus?` (default 0)), `warning` / `boss` (`enemyId`), `music` (`cueId`), `speed` (`speed`, `ramp?`), `flag` (`flag`, `flagId`, `value?` default `true`), `end` |
 | `STAGE_EVENT_TYPES`, `MAX_STAGE_FLAGS` | const | The eight types in schema order (index = `StageEventCode`); `32` |
 | `TilesetSpec`, `TileSpec` | types | A `tileset` file: `id`, `sprite`, `spriteId`, `tileSize` (8), `tiles` (≤ 255; tile id = index + 1), `tables`; a tile: `name`, `type`, `frame`, `anchor`, `mask` (8 column heights) |
 | `TilesetTables` | type | Per tile id (0 = empty cell): `count`, `type`, `anchor`, `mask` (`[id * tileSize + column]`), `frame` (`-1` = not drawn), `byName` |
@@ -215,14 +222,18 @@ at load (decision D28: in-house combinators, no runtime dependency). Guide:
 | `ValidationIssue` | interface | `{ path, message }`, e.g. `enemies/x.enemies.json:enemies[3].hurtbox.hw` / `must be an integer in 1..512` |
 | `s` | const | The combinators: `int`, `num`, `str`, `bool`, `enumOf`, `array`, `object`, `record`, `nullable`, `ref`, `oneOf` |
 | `Schema<T>`, `Infer<S>`, `ObjectShape`, `ObjectValue<S, O>` | types | `parse(value, path, issues, refs?) → T \| undefined` (+ `typeName`, `refKind`); `Infer` extracts `T` |
-| `RefSite`, `ContentRefKind` | types | A recorded `s.ref` site (`path`, `kind`, `id`, `container`, `field`); kinds `ship`, `weapon`, `enemy`, `stage`, `tileset`, `sprite`, `script`, `sfx`, `music` |
+| `RefSite`, `ContentRefKind` | types | A recorded `s.ref` site (`path`, `kind`, `id`, `container`, `field`); kinds `ship`, `weapon`, `enemy`, `stage`, `tileset`, `path`, `sprite`, `script`, `sfx`, `music` |
 
 Every `s.ref` field `foo` gains a numeric sibling `fooId` after loading. Sprite and script
 names are *interned* (sorted, then numbered, so ids never depend on file order);
-ship/weapon/enemy/stage/tileset ids and `sfx`/`music` cue names must resolve or an issue is
+ship/weapon/enemy/path/stage/tileset ids and `sfx`/`music` cue names must resolve or an issue is
 reported and the id becomes `-1` (also the value for `null` and absent optional references).
 `s.array(s.ref(…))` and `s.record(s.ref(…))` throw a `TypeError` at construction — wrap
 references in objects. `pnpm content:check` runs the loader over `content/`.
+
+Enemies get the defaults of their optional fields and paths are baked into arc-length tables
+while collecting (a path with coincident neighbours or an overlong curve is an issue and is left
+out). Guide: [enemies-and-behaviors.md](enemies-and-behaviors.md#data-as-loaded).
 
 A stage gets checks beyond its schema (sorted keys / checkpoints / events, the first key at 0,
 nothing past `length`, `yTicks` needs `yTo`, ≤ 32 flags) and a **third load pass** expands its
@@ -230,10 +241,10 @@ tilemap (`heightfield` generator and / or RLE rows, `core/data/tilemap.ts`) into
 `StageSpec.terrain` once tileset ids are resolved. Guide:
 [stage-runtime.md](stage-runtime.md#stage-data-and-loading).
 
-The placeholder modules `weapons` and `enemies` still declare their own `WeaponSpec` /
-`EnemySpec` (not exported); the package entry exports the `data` versions above. The steps
-that implement those systems (M1-08 enemies, M1-10 weapons) reconcile the two — import the
-`data` types in the meantime. (`stage` did so in M1-07: it uses the `data` stage types.)
+The placeholder module `weapons` still declares its own `WeaponSpec` (not exported); the
+package entry exports the `data` version above, and M1-10 reconciles the two — import the
+`data` type in the meantime. (`stage` did so in M1-07 and `enemies` in M1-08: they use the
+`data` types.)
 
 ### `world` — the gameplay session and the tick pipeline
 
@@ -242,23 +253,25 @@ One gameplay session and the fixed 9-phase tick of plan §3.2. Guide:
 
 | Export | Kind | Summary |
 |---|---|---|
-| `createWorld(config, content)` | function | → `World` at tick 0: RNG streams from `config.seed`, the ship from `resolvePlayerShip(content)`, the stage `config.stage` (runner at its start, collision map, parallax / terrain views, the stage theme queued as a `Music` event) or a static camera, player 1 starting its fly-in, player 2 inactive, view already filled; throws `RangeError` for an unknown stage id |
+| `createWorld(config, content, options?)` | function | → `World` at tick 0: RNG streams from `config.seed`, the ship from `resolvePlayerShip(content)`, the stage `config.stage` (runner at its start, collision map, parallax / terrain views, the stage theme queued as a `Music` event) or a static camera, the enemy system (M1-08), player 1 starting its fly-in, player 2 inactive, view already filled; throws `RangeError` for an unknown stage id |
+| `WorldOptions` | interface | `behaviors?` — an `EnemyBehaviorLookup` replacing `DEFAULT_BEHAVIORS` (tests, tools; not in `GameConfig`, so never in a real session) |
 | `resolveWorldStage(config, content)` | function | → the `StageSpec` `config.stage` names, `null` for free flight; throws `RangeError` for an unknown id |
 | `stepWorld(world, input)` | function | Runs `WORLD_PHASES` in order (phases 2–8 skipped while `hitStop > 0` at the start of the tick), then `world.tick++`; never allocates |
-| `World` | interface | `config`, `content`, `ship`, `tick`, `rng`, `events`, `players` (2), `intents` (2), `camera`, `status`, `hitStop`, `debugFlags`, `pools`, `grid`, `playerBatch`, `stage` (`StageRunner \| null`), `terrain` (`TerrainMap \| null`, a private copy of the tiles), `parallax` (`StageParallaxView \| null`), `view` |
+| `World` | interface | `config`, `content`, `ship`, `tick`, `rng`, `events`, `players` (2), `intents` (2), `camera`, `status`, `hitStop`, `debugFlags`, `pools`, `grid`, `playerBatch`, `stage` (`StageRunner \| null`), `terrain` (`TerrainMap \| null`, a private copy of the tiles), `parallax` (`StageParallaxView \| null`), `enemies` (`EnemySystem`, M1-08), `view` (batches: ground enemies, air enemies, players) |
 | `WorldCamera` | interface | `x`, `y` (playfield top-left in world pixels), `dx`, `dy` (last stage-phase step), `vx`, `vy` (scroll velocity px/tick; the stage runner writes it every tick, in free flight 0 = static unless a test sets it). A class instance (`createStageCamera()`), not a literal — see the V8 note in [stage-runtime.md](stage-runtime.md#gotchas) |
 | `WorldStatus`, `WORLD_STATUSES` | type, const | `'playing' \| 'bossWarning' \| 'stageClear' \| 'gameOver'`; the list (index = hash code) |
 | `WorldPhase`, `WORLD_PHASE_NAMES` | const + type, const | `Input 0, Players 1, Stage 2, Scripts 3, Movement 4, Collision 5, Damage 6, Removal 7, Fx 8`; `'input'` … `'fx'` |
 | `WORLD_PHASES` | const | Frozen `WorldPhaseEntry[]` in tick order; only `input` and `fx` have `runsDuringHitStop` |
 | `WorldPhaseEntry`, `WorldSystem` | interface, type | `{ phase, name, runsDuringHitStop, run }`; `(world, input) => void` |
 | `PoolRegistry`, `RegisteredPool` | interfaces | `entries`, `register(name, pool) → pool` (throws `Error` for a duplicate name), `flushAll()` (phase 8), `clearAll()`; `{ name, pool, arrays }` with the field arrays in sorted name order (the hash order) |
-| `syncWorldView(world)` | function | Scrolls the parallax bands with the camera and refills the players' mirror batch (active, not `dying` / `dead`, sprite present; blinks while invulnerable); phase 9 and `createWorld` call it |
+| `syncWorldView(world)` | function | Scrolls the parallax bands with the camera, refills the enemies' ground / air batches (`enemies.sync()`) and the players' mirror batch (active, not `dying` / `dead`, sprite present; blinks while invulnerable); phase 9 and `createWorld` call it |
 | `GRID_MARGIN` | const | `64` — px around the camera view covered by `world.grid` |
 
 ### `player` — the player ship (partial)
 
 Movement, speed levels, clamping, banking and the fly-in (M1-06); hits are *recorded* by
-`playerHit` since M1-07 (terrain contact); death and respawn arrive in M1-12.
+`playerHit` since M1-07 (terrain contact) and M1-08 (enemy contact); death and respawn arrive in
+M1-12.
 
 | Export | Kind | Summary |
 |---|---|---|
@@ -319,7 +332,7 @@ The debug controls (god mode, frame advance, slow motion, stage skip) arrive in 
 
 | Export | Kind | Summary |
 |---|---|---|
-| `hashWorld(world)` | function | → unsigned 32-bit FNV-1a over tick, both RNG states, camera, the stage runner (`0`, or `1` + every slot of `runner.state`), status, hit-stop, every player's simulated fields (incl. `hitCause`, `hitTick`, `hits`) and every registered pool's live slots (fixed order, numbers as little-endian doubles); reads only; ≤ 16 B allocated per call |
+| `hashWorld(world)` | function | → unsigned 32-bit FNV-1a over tick, both RNG states, camera, the stage runner (`0`, or `1` + every slot of `runner.state`), status, hit-stop, every player's simulated fields (incl. `hitCause`, `hitTick`, `hits`), every registered pool's live slots, then every enemy slot's state (+ its fields when in use; a script as present / absent and its `wakeTick`) and the formation table's active slots with each track's `recorded` count (fixed order, numbers as little-endian doubles); reads only; ≤ 16 B allocated per call |
 | `createDebugFlags()` | function | → `DebugFlags` all off, `slowMo` 1 |
 | `DebugFlags` | interface | `godMode`, `showHitboxes`, `frameAdvance`, `slowMo` |
 | `DebugCounters` | interface | `enemies`, `enemyBullets`, `playerShots`, `rngCalls`, `stateHash` (overlay, M1-19) |
@@ -349,6 +362,68 @@ Tick order: apply reached keys → advance ramp and pan → move (clamped to the
 lock key and to `length`) → fire due events → update the checkpoint. An event fires on the
 tick the camera reaches its `x`, a key applies one tick later (except at `x` 0).
 
+### `patterns` — behaviour coroutines and movers (partial)
+
+The script runner and the per-tick movers of decision D29 (M1-08); fire primitives arrive with
+M1-09, the pattern DSL with M2-02. Guide: [enemies-and-behaviors.md](enemies-and-behaviors.md#movers-corepatterns).
+
+| Export | Kind | Summary |
+|---|---|---|
+| `Script` | type | `Generator<number, void, void>` — each `yield n` sleeps `n` ticks (`< 1`, `NaN` → next tick; fractions floored) |
+| `SLEEP_FOREVER` | const | `Infinity` — yield it to never wake again (the mover carries on) |
+| `ScriptHolder` | interface | `script` (`Script \| null`), `wakeTick` |
+| `resumeScript(holder, tick)` | function | → `true` when resumed: calls `next()` only when `wakeTick ≤ tick`, stores `wakeTick = tick + ⌊yielded⌋`, drops a finished script; exceptions propagate. The only place `next()` is called |
+| `MoverKind` | const + type | `None 0, Straight 1, Sine 2, Path 3, Waypoint 4, Follow 5, GroundCrawl 6, Homing 7, AimedDash 8` (= `MOVER_TYPES` order + 1; hashed — append, never renumber) |
+| `MOVER_NAMES`, `moverKindOf(type)` | const, function | `'none'` + the content names; content name → `MoverKind` |
+| `BodyAnchor` | const + type | `Air 0` (view frame, rides the camera), `Floor 1`, `Ceiling 2` (world frame) |
+| `MoverBody` | interface | What movers read / write: `x`, `y`, `vx`, `vy`, `hh`, `anchor`, `age`, `mover`, `m0…m5`, `s0…s3`, `moverTicks`, `track` (`Enemy` implements it) |
+| `MoverContext`, `createMoverContext(camera, terrain, paths)` | interface, function | `camera`, `terrain` (`TerrainMap \| null`), `paths` (baked), `targetX`, `targetY`, `hasTarget` (set per body by the caller) — one per system, load time |
+| `setMover(body, ctx, kind, p0…p5)` | function | Switches mover, resets its state, keeps the position continuous (`Sine` picks its centre line, `Path` translates to the body, `Homing` keeps the heading); never allocates |
+| `updateMover(body, ctx)` | function | One tick (phase 5; flying bodies must already have ridden the camera and `age` counts this tick); parameters per kind in the guide; never allocates |
+| `FollowTrack`, `FOLLOW_HISTORY` | class, const | A leader's recorded positions by age (ring of `256`): `x`, `y` (`Float64Array`), `recorded`, `record(age, x, y)`, `has(age)`, `reset()` |
+| `samplePath(path, distance, out)` | function | Baked path position at an arc length (clamped at 0, continued along the end tangent past the end) into `out[0..1]`; never allocates |
+| `CRAWL_STEP`, `AIM_DIRECTIONS` | const | `8` — the largest step a crawler takes before turning round; `32` — aimed dash headings (D17) |
+| `PatternNode` | type | The planned pattern DSL node (`fire` / `wait` / `repeat`, M2-02) |
+
+### `enemies` — the enemy system (partial)
+
+Spawning, formations, scripts, movers, off-screen rules, contact, damage and the sprite mirror
+(M1-08); rank modifiers (M2-01), the Option Hunter (M2-04) and boss parts (M1-13) come later.
+Guide: [enemies-and-behaviors.md](enemies-and-behaviors.md).
+
+| Export | Kind | Summary |
+|---|---|---|
+| `createEnemySystem(host, behaviors, stage)` | function | → `EnemySystem` (load time — `createWorld` calls it with the World as host): 64 slots + script APIs, the formation table, ground / air batches, specs and the stage's spawn events compiled into typed arrays |
+| `EnemySystem` | interface | `enemies` (64 `Enemy`, index = slot), `count` (slots in use), `formations`, `outcomes`, `groundBatch`, `airBatch`, `movers`; `spawn(enemyIndex, x, y, pathId?)` → `Enemy \| null` (lowest free slot; `NaN` y = mid-view / surface snap; bad or fractional index, no free slot → `null`), `startFormation(enemyIndex, count, interval, screenX, screenY, pathId, drop, bonus)` → slot or `-1`, `damage(enemy, amount)` → died (ignored for ghosts / invulnerable; flash, `Sfx EnemyHit`), `kill(enemy)` → was alive (outcomes, explosion SFX + particles, drop, formation accounting), `clear()`; the World's per-phase calls `onStageEvent(i)`, `beginTick()`, `spawnPending()`, `runScripts()`, `move()`, `insertColliders(grid)`, `collidePlayers(grid)`, `flush()`, `sync()` — none allocates beyond the coroutines' own (a generator per spawn, a result per wake) |
+| `EnemyHost` | interface | What the system reads from its World: `tick`, `camera`, `players`, `ship`, `terrain`, `content`, `rng`, `events`, `debugFlags` |
+| `Enemy` | class | One pooled enemy (`MoverBody` + `ScriptHolder`): `slot`, `state`, `specIndex`, `x`, `y`, `vx`, `vy`, `hw`, `hh`, `hp`, `flashTicks`, `age`, `spawnTick`, `formation`, `member`, `anchor`, mover fields, `track`, `script`, `wakeTick`, `flags`, `firstSeenTick`, `spriteId`, `animFrame`, `pathId`, `camX`, `camY` |
+| `EnemyState` | const + type | `Free 0`, `Live 1` (ghosts too), `Removed 2` (freed in phase 8) |
+| `EnemyFlag` | const | Bits `Invulnerable 1, Settled 2, WasOnScreen 4, OnScreen 8, Ghost 16, FaceRight 32, Leader 64` |
+| `ScriptApi` | interface | One reused object per slot: `self`, `spec`, `tick`, `rng` (gameplay), `target()` (nearest active `alive` ship or `null`), `setMover(kind, p0…p5)`, `spawn(enemyIndex, dx, dy)` (script starts next tick; ghosts spawn nothing), `onScreen()`, `canFire()` (on screen, settled, not a ghost) |
+| `EnemyBehavior`, `EnemyBehaviorLookup` | interfaces | `{ id, params, create(api, params) → Script }`; `get(id)` (`core/behaviors` provides both) |
+| `FormationTable` | interface | 32 slots of typed arrays: `active`, `enemy`, `total`, `spawned`, `killed`, `escaped`, `interval`, `nextTick`, `screenX`, `screenY`, `path`, `drop`, `bonus`, `lastX`, `lastY`, `leader`, + `tracks` (`FollowTrack` per slot) — hashed |
+| `EnemyOutcomes` | interface | This tick's `killCount`, `killSpec`, `killX`, `killY`, `killScore`, `dropCount`, `dropKind`, `dropX`, `dropY`, `bonusPoints` (reset in phase 3; for M1-11 / M1-12) |
+| `DropKind` | const + type | `None 0`, `Capsule 1` |
+| `MAX_ENEMIES`, `MAX_FORMATIONS` | const | `64`, `32` |
+| `DEFAULT_SPAWN_SCREEN_X` | const | `400` (`PLAYFIELD_W + 16`) |
+| `DESPAWN_MARGIN`, `UNSEEN_MARGIN`, `UNSEEN_TICKS`, `GHOST_MARGIN` | const | `32` px (escaped after being seen), `128` px / `600` ticks (never seen), `128` px (ghost leader) |
+| `HIT_FLASH_TICKS` | const | `4` (D30) |
+
+### `behaviors` — enemy behaviour registry (partial)
+
+The script ids content refers to (M1-08). Guide:
+[enemies-and-behaviors.md](enemies-and-behaviors.md#behaviours-corebehaviors).
+
+| Export | Kind | Summary |
+|---|---|---|
+| `defineBehavior(id, params, create, needsChild = false)` | function | → frozen `BehaviorDef` (tunables copied and frozen) |
+| `BehaviorDef` | interface | `EnemyBehavior` + `id`, `params` (defaults), `create(api, params)`, `needsChild` (spawners) |
+| `createBehaviorRegistry(defs)` | function | → `BehaviorRegistry { ids (sorted), get(id) }`; throws `Error` for a duplicate id |
+| `DEFAULT_BEHAVIOR_DEFS`, `DEFAULT_BEHAVIORS`, `BEHAVIOR_IDS` | const | The M1 roster: `drifter.sine`, `fan.loop`, `carrier.straight`, `turret.floor`, `walker.floor`, `hatch.spawner`, `rammer.aimed`, `orbiter.loop` (tunables in the guide); as a registry (what the World uses); its sorted ids |
+| `WEAPON_SCRIPT_IDS` | const | `laser.beam`, `missile.groundSlide`, `shot.double`, `shot.straight` — the Type A weapon behaviours M1-10 implements (they share the content's script table; moves to `weapons` then) |
+| `KNOWN_SCRIPT_IDS` | const | `BEHAVIOR_IDS` ∪ `WEAPON_SCRIPT_IDS`, sorted — pass it to `loadContent` as `knownScripts` |
+| `checkEnemyBehaviors(db, registry = DEFAULT_BEHAVIORS)` | function | → `ValidationIssue[]`: `enemies:<id>.params.<name>` (unknown tunable), `enemies:<id>.child` (spawner without a child) |
+
 ### `module-info`
 
 `defineModule({ name, status, specRefs })` → frozen `ModuleInfo`; `ModuleStatus` =
@@ -360,7 +435,8 @@ Types only. They are **not** exported from the package entry yet (the `exports` 
 only `"."`), so today they can only be imported with relative paths from inside
 `packages/core`. A module's exports join `src/index.ts` when it is implemented — as
 `rng`, `math`, `events` and `pools` did in M1-01, `world`, `player`, `collision` and
-`debug` in M1-06 and `stage` in M1-07.
+`debug` in M1-06, `stage` in M1-07 and `enemies`, `patterns` and the new `behaviors` in
+M1-08.
 
 | Module | Declared types | Planned functions (from the source comments) |
 |---|---|---|
@@ -368,9 +444,7 @@ only `"."`), so today they can only be imported with relative paths from inside
 | `options` | `OptionGroup`, `OptionFormation` | `createOptionGroup`, `recordShipPosition`, `optionPosition` |
 | `shields` | `ShieldState`, `ShieldKind` | `applyShieldHit`, `grantShield`, `shieldAbsorbsTerrain` |
 | `powerups` | `PowerMeter`, `MeterSlot`, `DirectItem` | `advanceMeter`, `equipHighlighted`, `applyDirectItem` |
-| `enemies` | `EnemySpec`, `Enemy` | `spawnEnemy`, `updateEnemies`, `damageEnemy` |
 | `bullets` | `BulletSpawn` | `createBulletPool(512)`, `spawnBullet`, `updateBullets`, `cancelAllBullets` |
-| `patterns` | `Script`, `ScriptContext`, `PatternNode` | `wait`, `createScriptRunner`, pattern primitives, `compilePattern` |
 | `bosses` | `Boss`, `BossPart`, `BossPhase` | `createBoss`, `updateBoss`, `damagePart`, `bossDeathSequence` |
 | `scoring` | `PlayerScore`, `HiScoreEntry` | `addScore`, `checkExtend`, `insertHiScore` |
 | `rank` | `RankInputs` | `computeRank(inputs) → 0–31`, `rankScale` |
@@ -383,7 +457,11 @@ only `"."`), so today they can only be imported with relative paths from inside
 Still planned inside the partial modules: `player` — `killPlayer`, respawn by death-penalty
 preset (M1-12; `playerHit` then starts the death sequence); `collision` — circle chains
 (M2-02), destructible tiles (M2-07); `debug` — `createDebugControls(game)` (M1-19); `stage`
-(implemented for P0) — time-keyed events, diagonal scrolling, branches (M2-07, M2-10).
+(implemented for P0) — time-keyed events, diagonal scrolling, branches (M2-07, M2-10);
+`patterns` — fire primitives on `ScriptApi` (M1-09: `aimed`, `nWay`, `ring`, `spiral`, `stack`,
+`spray`, `homing`, `delayed`), `compilePattern` (M2-02); `enemies` — rank modifiers and revenge
+bullets (M2-01), the Option Hunter (M2-04), boss parts on the damage path (M1-13); `behaviors`
+— the zone and boss behaviours (M1-13, M1-18).
 
 ## `@shmup/input-web`
 
@@ -500,7 +578,7 @@ Guide: [rendering-and-shell.md](rendering-and-shell.md#the-browser-shell-shmupsh
 | `sceneFromSearch(search)`, `SHELL_SCENES` | `boot` | `?scene=` → `ShellScene` (unknown or missing → `'flight'`); the scene list, default first |
 | `BOOT_STATE_ATTRIBUTE` | `boot` | `'data-shmup-state'` — `loading` / `running` / `error` on the game canvas |
 | `loadImages(urls, createImage, onProgress?)` | `loader` | → `Promise<images>` in `urls` order, parallel; rejects with `AssetLoadError { url }` on the first failure |
-| `loadGameContent(files, { owners?, …LoadContentOptions })` | `loader` | → `LoadContentResult`: core issues, then each foreign kind's owner issues (`owners`, then `DEFAULT_CONTENT_OWNERS`), or `no loader for content kind` per unowned file; throws only `TypeError` for a non-array |
+| `loadGameContent(files, { owners?, …LoadContentOptions })` | `loader` | → `LoadContentResult`: core issues (with `knownScripts` defaulting to the core's `KNOWN_SCRIPT_IDS`), then `checkEnemyBehaviors` issues (M1-08), then each foreign kind's owner issues (`owners`, then `DEFAULT_CONTENT_OWNERS`), or `no loader for content kind` per unowned file; throws only `TypeError` for a non-array |
 | `DEFAULT_CONTENT_OWNERS` | `loader` | Frozen owners of today's foreign kinds: `input-profiles` → input-web `loadInputProfiles` (issues only). An app entry of the same kind replaces it |
 | `ContentOwner`, `ContentOwners`, `LoadGameContentOptions`, `ImageFactory`, `LoadableImage` | `loader` | `(files) => ValidationIssue[]`; owners by kind; option and image types |
 | `createEventDispatcher()` | `dispatch` | → `EventDispatcher { on(kind, handler) → unsubscribe, visit, drain(queue), handlerCount(kind), dispatched, unhandled }`; `on` throws `RangeError` for an unknown kind |

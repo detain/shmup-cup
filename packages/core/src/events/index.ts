@@ -48,7 +48,10 @@ export const SimEventKind = {
   Sfx: 0,
   /** Change music: `id` is a {@link MUSIC_CUES} value, `param` a fade length in ticks. */
   Music: 1,
-  /** Spawn a particle burst: `id` is an FX preset, `param` an intensity. */
+  /**
+   * Spawn a particle burst at `x`/`y`: `id` is an {@link FX_CUES} value, `param` an intensity
+   * (enemy explosions push 1).
+   */
   Particles: 2,
   /** Shake the screen: `param` is the magnitude in pixels. */
   Shake: 3,

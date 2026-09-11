@@ -50,8 +50,8 @@ Strings enter only through a draw list's string slots, and only when the text ch
 | 0 | `BgFar` | world | a stage's `far` parallax bands (M1-07); the free-flight and showcase far stars |
 | 1 | `BgMid` | world | a stage's `mid` parallax bands (M1-07); the free-flight mid / near stars |
 | 2 | `Terrain` | world | the stage's tile terrain (M1-07) |
-| 3 | `GroundEnemies` | world | turrets, walkers |
-| 4 | `AirEnemies` | world | flying enemies, bosses |
+| 3 | `GroundEnemies` | world | turrets, walkers, hatches (the enemy system's ground batch, M1-08) |
+| 4 | `AirEnemies` | world | flying enemies (the enemy system's air batch, M1-08), bosses |
 | 5 | `PlayerShots` | world | shots, lasers, missiles |
 | 6 | `Player` | world | ships, Options, shields |
 | 7 | `Hitbox` | world | hitbox marker |
@@ -341,15 +341,16 @@ startFrameLoop(win, onFrame); // requests the next frame before calling onFrame
 load time with `shell.events.on(kind, handler)` (returns an unsubscribe function; an unknown
 kind throws `RangeError`). Dispatching is a table lookup and a loop — no allocation.
 Handlers receive the queue's **reused** record: copy fields out, never keep it. Events with
-no handler are counted in `unhandled` and dropped; the queue is the World's (M1-06) but no
-system pushes events yet (M1-08 onward), and the audio and FX handlers arrive in M1-14 /
-M1-15.
+no handler are counted in `unhandled` and dropped; the queue is the World's (M1-06). The stage
+pushes `Music` (M1-07) and the enemies push explosion `Sfx` / `Particles` (`FX_CUES`) and
+`FormationBonus` (M1-08), but the audio and FX handlers only arrive in M1-14 / M1-15 — until
+then these events are counted as unhandled.
 
 ### Scenes until the scene stack exists
 
 | `?scene=` | What is drawn | Sprite name table |
 |---|---|---|
-| (none) / `flight` | **Free flight** (`createFlightScene(game)`, M1-06): the game's World — the KESTREL flying in, then moving under the player's control — over three drifting star layers, both HUD bars (`1P`, a zero score, `FREE FLIGHT`, stock ships, `ARROWS MOVE`). With a stage (`gameConfig.stage`, the web app's `?stage=<id>`, M1-07): the stage's parallax bands and scrolling terrain instead of the starfield, the stage name as the title | `content.db.sprites.names` + `FLIGHT_SPRITES` |
+| (none) / `flight` | **Free flight** (`createFlightScene(game)`, M1-06): the game's World — the KESTREL flying in, then moving under the player's control — over three drifting star layers, both HUD bars (`1P`, a zero score, `FREE FLIGHT`, stock ships, `ARROWS MOVE`). With a stage (`gameConfig.stage`, the web app's `?stage=<id>`, M1-07): the stage's parallax bands and scrolling terrain instead of the starfield, the stage name as the title, and the enemies its timeline spawns (M1-08) | `content.db.sprites.names` + `FLIGHT_SPRITES` |
 | `showcase` | The **sprite showcase** (`createShowcase()`): three scrolling star layers, the KESTREL flying a figure-eight with its thruster and two Options replaying its path, five drifters with periodic hit flashes, a rotating ring of twelve bullets, both HUD bars (scores via the `number` op, lives, power meter with a moving highlight) and the title "SHMUP CUP" / "SPRITE SHOWCASE" in the bitmap font | `SHOWCASE_SPRITES` |
 | `calibration` | The skeleton's test pattern (checker border, grid, colour bars, placeholder ship, moving marker) under empty layers | `content.db.sprites.names` |
 
@@ -415,8 +416,12 @@ pnpm test:e2e                                        # builds web + tizen, then 
   `file://` moves it with the remote's arrow key codes.
 - `stage.spec.ts` — `?stage=test-range` shows the generated terrain (the placeholder tileset's
   colours) inside the playfield and never in the HUD bars, and scrolls it left between two
-  screenshots while the ship stays put on screen; an unknown `?stage=` warns and boots free
-  flight without terrain (M1-07).
+  screenshots (30 frames apart) while the ship stays put on screen; an unknown `?stage=` warns
+  and boots free flight without terrain (M1-07).
+- `enemies.spec.ts` — on `?stage=test-range` the first formation of drifters (found by their
+  placeholder colours, which no other sprite uses) appears inside the playfield, never in the
+  HUD bars, and flies left; no console errors and no atlas `unknown sprite` warnings while the
+  timeline spawns (M1-08).
 - `shell.spec.ts` — an aborted atlas request ends on the boot error screen (overlay canvas,
   state `error`); a 1000×600 window gets a centred ×2 frame on the letterbox colour and a
   resize to 1920×1080 re-fits it to ×5; free flight animates.
@@ -505,5 +510,9 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
   default scene, the showcase moved to `?scene=showcase` ([sim-world.md](sim-world.md)).
 - **M1-07** (done) — terrain and parallax drawn from `TerrainView` / `ParallaxView`; the flight
   scene runs a stage with `?stage=<id>` ([stage-runtime.md](stage-runtime.md)).
+- **M1-08** (done) — the World's view gains the `GROUND_ENEMIES` and `AIR_ENEMIES` batches
+  (animation frames, facing flips, ceiling flips, the D30 hit flash); the flight scene draws
+  them without a change because it appends the World's batches
+  ([enemies-and-behaviors.md](enemies-and-behaviors.md)).
 - **M1-14 / M1-15** — particles, shake, flash and audio handlers registered on the dispatcher.
 - **M1-16** — core `ui` fills the HUD and UI draw lists (menus, HUD model).

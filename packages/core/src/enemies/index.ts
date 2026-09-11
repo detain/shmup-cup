@@ -266,6 +266,8 @@ export class Enemy implements MoverBody, ScriptHolder {
   camY = 0;
 
   /**
+   * Creates a free slot (the enemy system builds all {@link MAX_ENEMIES} at load time).
+   *
    * @param slot - The slot index.
    */
   constructor(slot: number) {
@@ -316,10 +318,22 @@ export interface ScriptApi {
    * Spawns another enemy relative to this one (hatches, splitters). It starts moving this tick
    * and runs its script from the next one. Ghosts spawn nothing.
    *
-   * @param enemyIndex - `ContentDb.enemies` index (e.g. `spec.childId`).
+   * @remarks
+   * The child takes the lowest free slot and belongs to no formation; its spawn position is a
+   * world position (a flying child rides the camera from there, a ground child keeps it — no
+   * surface snap). A spawn that finds no free slot is dropped quietly.
+   *
+   * @param enemyIndex - `ContentDb.enemies` index (e.g. `spec.childId`); must be a whole number
+   *   in range.
    * @param dx - X offset from this enemy's centre.
    * @param dy - Y offset.
-   * @returns The new enemy, or `null` (no free slot, bad index, or a ghost).
+   * @returns The new enemy, or `null` (no free slot, a bad or fractional index, or a ghost).
+   *
+   * @example
+   * ```ts
+   * // inside a behaviour: release the spec's child from the top edge of a floor hatch
+   * if (api.canFire()) api.spawn(api.spec.childId, 0, -api.self.hh);
+   * ```
    */
   spawn(enemyIndex: number, dx: number, dy: number): Enemy | null;
   /**
@@ -470,16 +484,35 @@ export interface EnemySystem {
   /**
    * Spawns one enemy at a world position, outside any formation (tests, debug tools).
    *
-   * @param enemyIndex - `ContentDb.enemies` index.
+   * @remarks
+   * The enemy takes the lowest free slot, starts its spec's mover at once and its script on the
+   * current tick (it runs in phase 4 when called before that phase). `y` = `NaN` means "the
+   * default height": mid-view for a flying enemy, and for a ground enemy the surface below
+   * (floor) / above (ceiling) mid-view — the view's edge without terrain.
+   *
+   * @param enemyIndex - `ContentDb.enemies` index (a whole number in range).
    * @param x - World x.
-   * @param y - World y (`NaN` for a ground enemy: snap to the surface below / above mid-view).
+   * @param y - World y (`NaN` = mid-view; a ground enemy snaps to the surface below / above it).
    * @param pathId - Path for `path` movers and path behaviours (-1 = none).
-   * @returns The enemy, or `null` (bad index or no free slot — the spawn is dropped).
+   * @returns The enemy, or `null` (a bad or fractional index or no free slot — the spawn is
+   *   dropped).
+   *
+   * @example
+   * ```ts
+   * const turret = world.enemies.spawn(db.enemyIndex.get('turret')!, world.camera.x + 300, NaN);
+   * ```
    */
   spawn(enemyIndex: number, x: number, y: number, pathId?: number): Enemy | null;
   /**
    * Starts a formation (a stage `formation` event): members spawn one every `interval` ticks
    * from this tick's phase 3 on.
+   *
+   * @remarks
+   * Takes the lowest free formation slot and resets its counters and track. `count < 1` starts
+   * nothing (→ -1); an `interval` below 1 counts as 1. The first member spawns in the next
+   * `spawnPending` call on or after this tick (the World calls it right after the stage runner,
+   * so a stage event's first member appears on the event's tick). A member that cannot spawn
+   * (no free enemy slot, bad spec) counts as escaped.
    *
    * @param enemyIndex - Spec index of every member.
    * @param count - Members (≥ 1).
@@ -489,7 +522,15 @@ export interface EnemySystem {
    * @param pathId - Path index (-1 = none).
    * @param drop - {@link DropKind} when completed.
    * @param bonus - Bonus points when completed.
-   * @returns The formation slot, or -1 when the table is full (the formation is dropped).
+   * @returns The formation slot, or -1 when the table is full or `count < 1` (the formation is
+   *   dropped).
+   *
+   * @example
+   * ```ts
+   * // five drifters, 14 ticks apart, 60 px down at the view's right edge, 500 bonus points
+   * const drifter = db.enemyIndex.get('drifter')!;
+   * enemies.startFormation(drifter, 5, 14, 400, 60, -1, DropKind.Capsule, 500);
+   * ```
    */
   startFormation(
     enemyIndex: number,
@@ -531,13 +572,29 @@ export interface EnemySystem {
    * Damages an enemy (phase 7; shots from M1-10). Starts the hit flash; at 0 hp the enemy dies:
    * explosion events, its drop, formation accounting.
    *
+   * @remarks
+   * Ignored (→ `false`, no flash) for a slot that is not `Live`, a ghost leader and an
+   * `Invulnerable` enemy. A hit that leaves hit points pushes `Sfx EnemyHit`; the killing hit
+   * goes through {@link EnemySystem.kill}. Any amount counts, 0 included (it flashes).
+   *
    * @param enemy - The enemy.
    * @param amount - Damage.
    * @returns `true` when it died from this hit.
+   *
+   * @example
+   * ```ts
+   * if (world.enemies.damage(enemy, weapon.damage)) shotsThatKilled++;
+   * ```
    */
   damage(enemy: Enemy, amount: number): boolean;
   /**
    * Kills an enemy outright (Mega Crash, debug): as if its hit points ran out.
+   *
+   * @remarks
+   * Records the kill in {@link EnemySystem.outcomes} (spec, position, score), pushes the
+   * explosion `Sfx` + `Particles` events of its spec's size, adds its own drop, then resolves
+   * its formation membership (killed count, last-kill position, completion check — which may add
+   * the formation's drop and `FormationBonus` in the same tick). The slot is freed in phase 8.
    *
    * @param enemy - The enemy.
    * @returns `true` when it was alive (and not a ghost).
@@ -871,6 +928,8 @@ class EnemyScriptApi implements ScriptApi {
   private readonly system: EnemySystemImpl;
 
   /**
+   * Creates the API of one slot (load time; reused by every enemy that slot ever holds).
+   *
    * @param self - The slot's enemy.
    * @param system - The system.
    */
@@ -955,6 +1014,8 @@ class EnemySystemImpl implements EnemySystem {
   private readonly onContact: SpatialGridVisitor;
 
   /**
+   * Builds everything the system will ever use (see {@link createEnemySystem}).
+   *
    * @param host - The World.
    * @param behaviors - Behaviour lookup.
    * @param stage - The stage, or `null`.

@@ -120,7 +120,14 @@ ES5 and linted with `ecmaVersion: 5`.
   shares hidden classes between literals with the same key order, and another literal of that
   shape holding objects (a content schema, say) turns the fields "tagged" — every fractional
   write then allocates. Per-tick code reads compiled typed arrays, not content objects (their
-  shapes vary with optional fields) — see [stage-runtime.md](stage-runtime.md#gotchas).
+  shapes vary with optional fields) — see [stage-runtime.md](stage-runtime.md#gotchas). Two
+  more from M1-08: `Math.ceil` can return `-0`, which V8 boxes like a fraction — write
+  `Math.ceil(x) | 0` for whole-pixel bounds passed to a call; and a schema whose shape is
+  `{ x, y }` is built by adding keys to an empty object, never as an `{ x: …, y: … }` literal
+  ([enemies-and-behaviors.md](enemies-and-behaviors.md#zero-allocation-and-the-hot-path-rules)).
+- Behaviour coroutines (generators, D29) allocate a small result object on every resume:
+  scripts **sleep** (`yield ticks`) and are resumed only when they wake; per-tick motion
+  belongs in a mover (numbers on the body), never in a `yield 1` loop.
 - Prove it with the allocation guard: `measureHeapGrowth(fn, iterations)`
   (`packages/core/test/helpers/alloc.ts`, needs `--expose-gc` through
   `defineShmupProject(name, { execArgv })`) — every per-tick or per-frame entry point gets a
@@ -166,6 +173,7 @@ Only original names, art and music — never Konami or Taito names or assets
 | Placeholder art is source data, never a hand-drawn binary: a `*.sprite.json` pixel map under `assets/source/sprites/` or a seeded generator in `scripts/assets/procedural/` (plan §1.5). PNGs there are real-art overrides only | review; [asset-pipeline.md](asset-pipeline.md) |
 | A sprite's name is its path below `assets/source/sprites/` (lower-case kebab segments, `/`-separated) and the file's `name` field repeats it | `scripts/assets/sprite-source.mjs` (source issue) |
 | Every sprite name the shipped content uses exists in the atlas | `pnpm content:check` (`findMissingSprites`) |
+| Every `script` id names a registered behaviour (`KNOWN_SCRIPT_IDS`), every enemy `params` name a tunable of its behaviour, every spawner a `child` | `pnpm content:check` and the shell's boot (`knownScripts`, `checkEnemyBehaviors`) |
 | Procedural generators seed from the sprite name (`seedOf`) and use only exactly rounded maths (no `Math.sin`/`cos`), so the atlas is byte-identical on every machine | review; `test/scripts/assets/pipeline*.test.ts` (byte-identical runs) |
 
 ## Checklists

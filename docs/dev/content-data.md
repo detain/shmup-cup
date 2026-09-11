@@ -6,7 +6,7 @@ every tick. Filled in by plan step **M1-02**; every later step that adds a conte
 
 This page is the *how and why*. File formats for content authors are in each folder's
 README ([`content/README.md`](../../content/README.md) and the `player/`, `weapons/`,
-`enemies/`, `stages/` READMEs); exact signatures are in
+`enemies/`, `paths/`, `stages/`, `tilesets/` READMEs); exact signatures are in
 [api-reference.md](api-reference.md#data--content-schemas-and-loader); the source TSDoc in
 `packages/core/src/data/` is the authoritative reference.
 
@@ -45,8 +45,9 @@ content on every machine.
 
 **Status today.** The loader, the combinators, the `player`, `weapons`, `stage` and
 `tileset` formats (the last two since M1-07 — see [stage-runtime.md](stage-runtime.md)), the
-plugin and `pnpm content:check` are done. `enemies` is a *stub* schema that matches the
-example files; M1-08 … M1-13 extend it. Both apps register the plugin and their
+`enemies` and `paths` formats (M1-08 — see
+[enemies-and-behaviors.md](enemies-and-behaviors.md#data-as-loaded)), the plugin and
+`pnpm content:check` are done; the boss section of `enemies` arrives with M1-13. Both apps register the plugin and their
 `main.ts` imports `virtual:shmup-content`; `@shmup/shell`'s `bootShell()` validates it with
 `loadGameContent()` (core kinds through `loadContent()`, foreign kinds through the
 `contentOwners` the apps pass — an unowned kind is an issue), stops on the boot error screen
@@ -138,19 +139,33 @@ absent optional reference, or an id that did not resolve (which is also an issue
 | `ContentRefKind` | Resolved against | Unknown id |
 |---|---|---|
 | `sprite` | interned: `db.sprites` (sorted names) | never an issue here — `pnpm content:check` checks the names against the atlas (M1-03) |
-| `script` | interned: `db.scripts` (sorted names) | an issue only when `options.knownScripts` is given (M1-08 passes the behaviour registry) |
-| `ship`, `weapon`, `enemy`, `stage`, `tileset` | `db.shipIndex`, `weaponIndex`, `enemyIndex`, `stageIndex`, `tilesetIndex` — across all files, in any order | issue |
+| `script` | interned: `db.scripts` (sorted names) | an issue only when `options.knownScripts` is given — the shell and `pnpm content:check` pass `KNOWN_SCRIPT_IDS` (`core/behaviors`: enemy behaviours + Type A weapon behaviours) |
+| `ship`, `weapon`, `enemy`, `path`, `stage`, `tileset` | `db.shipIndex`, `weaponIndex`, `enemyIndex`, `pathIndex`, `stageIndex`, `tilesetIndex` — across all files, in any order | issue |
 | `sfx`, `music` | `SFX_CUES` / `MUSIC_CUES` in `core/events` (own properties only, so `"toString"` does not resolve) | issue |
 
 Examples from today's schemas: `sprite → spriteId`, `behavior → behaviorId` (weapons),
-`script → scriptId` (enemies), `sfx → sfxId`, presets' `main/missile/double/laser →
-mainId/missileId/doubleId/laserId`, stage events' `enemy → enemyId` and `cue → cueId`.
+`script → scriptId` and `child → childId` (enemies), a `path` mover's `path → pathId`,
+`sfx → sfxId`, presets' `main/missile/double/laser → mainId/missileId/doubleId/laserId`, stage
+events' `enemy → enemyId`, `path → pathId` and `cue → cueId`.
+
+Beyond the reference checks, the enemies are checked against the behaviour registry by
+`checkEnemyBehaviors(db)` (`core/behaviors`): every `params` name must be a tunable of the
+enemy's behaviour, and spawners (`hatch.spawner`) need a `child`. `loadContent` itself does not
+know the registry; the shell's `loadGameContent` and `pnpm content:check` append these issues.
+
+**Defaults filled at load.** An `enemies` entry may omit `anim`, `params`, `mover`, `ground`,
+`settleTicks`, `explosion`, `megaCrashImmune` and `child`; the loader fills them in
+(`completeEnemy`), so every `EnemySpec` has every field in the same order. **Baked at load.**
+Every `paths` entry gets a `table` — its centripetal Catmull-Rom spline resampled at 1-px arc
+length (`bakePath`); a path with coincident neighbours or longer than 16,384 px is an issue and
+is left out.
 
 ### The database
 
 `ContentDb` holds `sprites` / `scripts` (`StringTable { names, index }`) and, per kind, a
 list plus an id → position map: `ships`/`shipIndex`, `weapons`/`weaponIndex`,
-`weaponPresets`/`weaponPresetIndex`, `enemies`/`enemyIndex`, `stages`/`stageIndex`. Lists are
+`weaponPresets`/`weaponPresetIndex`, `enemies`/`enemyIndex`, `paths`/`pathIndex`,
+`stages`/`stageIndex`, `tilesets`/`tilesetIndex`. Lists are
 in path-then-document order. Systems resolve what they need **once** (at session or stage
 start) and keep the numbers; per-tick code indexes arrays only — no `Map.get`, no string
 compares (zero-allocation rule, [conventions.md](conventions.md#performance-zero-allocation-in-hot-paths)).
@@ -222,11 +237,13 @@ Rules the combinators follow:
 4. Tests in `packages/core/test/data/`: accept, each failure message, and the resolved id
    if it is a reference.
 
-### Adding a new kind (e.g. `paths` in M1-08)
+### Adding a new kind (as `paths` did in M1-08)
 
 1. Append it to `CONTENT_KINDS`; add a spec interface, a file schema (`...HEADER_SHAPE` +
    `kind: s.enumOf(['paths'] as const)`), a `case` in `parseFile` and in `collect`, and
-   the list + `…Index` map to `ContentDb`, `DbBuilder` and `EMPTY_CONTENT_DB`.
+   the list + `…Index` map to `ContentDb`, `DbBuilder` and `EMPTY_CONTENT_DB`. Anything
+   derived at load (the paths' baked tables) is computed in `collect`, reporting problems as
+   issues instead of throwing (`bakePathEntry`).
 2. If other content refers to it, add the name to `ContentRefKind` and a `case` in
    `resolveRef`.
 3. New folder `content/<folder>/` with `README.md` and an `example.*.json` —
@@ -236,8 +253,9 @@ Rules the combinators follow:
 
 A kind that a *different* package owns (plan §3.5) is not added here: it arrives in
 `foreign`, and the owner validates it with the same `s` combinators and `ValidationIssue`
-shape. The shipped-content test currently expects `foreign` to be empty — the step that
-adds such a kind routes it to its owner and updates that assertion.
+shape. The shipped-content test lists the `foreign` files it expects (today only
+`input/remote.input-profiles.json`, owned by input-web since M1-05) — the step that adds such a
+kind routes it to its owner and updates that assertion.
 
 ### Changing a format (bumping `formatVersion`)
 
@@ -281,8 +299,10 @@ pnpm test:integration                       # includes content:check and the plu
 
 `pnpm content:check` runs `test/integration/content.test.ts`. It checks that:
 
-- the shipped files load with **zero issues** and no `foreign` files, and every sprite and
-  script id maps back to its name;
+- the shipped files load with **zero issues** — with `knownScripts: KNOWN_SCRIPT_IDS` and
+  `checkEnemyBehaviors`, so an unknown behaviour id or tunable fails — and every sprite and
+  script id maps back to its name; the only `foreign` file is the input profiles, which
+  input-web's owner validates;
 - the `example.*.json` samples load with zero issues as an **independent set** (so they may
   reuse real ids such as `kestrel` without a duplicate-id clash);
 - every file is named `<folder>/<name>.<kind>.json`;
@@ -302,6 +322,7 @@ A failure prints the issue list (`path` + `message`) in the Vitest diff.
 |---|---|
 | `packages/core/test/data/schema.test.ts`, `schema-edge.test.ts` | Every combinator: valid input, each failure message, inclusive bounds, nested paths, reference-site recording through objects/records/unions, construction-time `TypeError`s, frozen schemas, a seeded fuzz (the parser never throws and fails exactly when it reports an issue), `Infer<>` type assertions |
 | `packages/core/test/data/data.test.ts`, `data-edge.test.ts` | Headers, migrations (and missing ones), per-kind bounds, every stage event variant, cue and id resolution (including prototype names), cross-file references, interning order, duplicates, issue order, input immutability, byte-identical output for every file order |
+| `packages/core/test/data/enemies-edge.test.ts`, `paths-edge.test.ts` | Enemy defaults, `child` refs, every mover variant and bound, stage spawn fields (M1-08); `bakePath` properties and the `paths` loader ([enemies-and-behaviors.md](enemies-and-behaviors.md#tests)) |
 | `test/integration/content.test.ts` | `pnpm content:check` (above) |
 | `test/integration/content-plugin.test.ts`, `content-plugin-edge.test.ts` | The generated module evaluates to `readContentFiles()`, is byte-stable, honours custom roots, skips examples, names the file in JSON errors; dev-server watcher behaviour (including a sibling `content-old/` folder that must *not* trigger a reload); a real Vite IIFE build whose inlined content `loadContent()` accepts |
 | `test/integration/content-wiring.test.ts` | `turbo.json` hashes `content/**` and `types/**`; both apps use the plugin and type the module; `content:check` targets the content test; a headless game runs on the shipped content |
@@ -321,6 +342,8 @@ A failure prints the issue list (`path` + `message`) in the Vitest diff.
 | A content edit does not show up after `pnpm build` | Should not happen (`content/**` is a Turborepo global dependency); if a new root-level input is added, list it in `globalDependencies` too |
 | Sprite/script indices changed after adding a file | Expected: interned names are numbered in sorted order. Never persist these indices (replays record input, not ids) |
 | `pnpm content:check` fails on a README | The JSONC format sample in that README no longer matches the schema — update the sample with the schema |
+| `unknown script id "…"` only in the shell / `content:check`, not in a unit test | Script ids are checked only when `knownScripts` is passed; tests that call `loadContent(files)` alone intern any name |
+| A new `{ x, y }`-shaped schema makes hot code allocate | Build the shape object by adding keys (`PATH_POINT_SHAPE`), never as an `{ x: …, y: … }` literal — V8 shares hidden classes between literals ([enemies-and-behaviors.md](enemies-and-behaviors.md#zero-allocation-and-the-hot-path-rules)) |
 
 ## Next steps that build on this page
 
@@ -332,5 +355,7 @@ input-web's owner; M1-06 (done) — the World flies the KESTREL spec
 (`resolvePlayerShip(db)`: `kestrel` › first ship › the built-in `DEFAULT_PLAYER_SHIP`,
 [sim-world.md](sim-world.md#the-player-ship-coreplayer)); M1-07 (done) — the full M1 `stage`
 format, the new `tileset` kind and the third (terrain) load pass
-([stage-runtime.md](stage-runtime.md)); M1-08 adds `paths`, passes `knownScripts` and
-extends `enemies`; M1-10 reads the Type A weapons.
+([stage-runtime.md](stage-runtime.md)); M1-08 (done) — the `paths` kind, the full M1
+`enemies` format, `knownScripts` passed by the hosts and `checkEnemyBehaviors`
+([enemies-and-behaviors.md](enemies-and-behaviors.md)); M1-10 reads the Type A weapons (and
+moves `WEAPON_SCRIPT_IDS` to `weapons`).

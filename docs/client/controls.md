@@ -6,8 +6,9 @@ work too, and every device drives both the game and the menus.
 > **Status:** these controls are built into the game as **control profiles** and are read
 > every frame. In the current build ("free flight", [preview-build.md](preview-build.md))
 > the **directions fly the ship** on every device — the same in the scrolling test stage
-> (`?stage=test-range` in a browser), where the view scrolls by itself and the ship keeps its
-> place on screen unless you move it; the other buttons do nothing yet, except
+> (`?stage=test-range` in a browser), where the view scrolls by itself, the ship keeps its
+> place on screen unless you move it and the first enemies fly past (they cannot be shot yet);
+> the other buttons do nothing yet, except
 > **Back** on the TV, which closes the app (also from the start-up error screen). Shooting,
 > power-ups and the pause screen arrive in the next steps. The remote's settings may still
 > change once the input probe results from the M7 monitors are in, and a menu for choosing a

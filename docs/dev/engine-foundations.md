@@ -161,9 +161,13 @@ const i = bullets.alloc();                  // -1 when full: drop the spawn
 if (i >= 0) { bullets.fields.x[i] = px; bullets.fields.y[i] = py; }
 
 // few, behaviour-rich → pooled objects
-const enemies = createPool(() => new Enemy(), 64, (e) => e.reset());
-const enemy = enemies.acquire();            // null when exhausted
+const parts = createPool(() => new BossPart(), 16, (p) => p.reset());
+const part = parts.acquire();               // null when exhausted
 ```
+
+(`createPool` does not iterate its objects. A system that must visit its objects in a fixed
+order every tick keeps a fixed array of slots instead — the enemy system's 64 `Enemy` slots,
+[enemies-and-behaviors.md](enemies-and-behaviors.md#slots-not-createpool).)
 
 - `alloc()` returns `count++` and **zero-fills** the slot, or `-1` when full — a full pool
   drops the spawn, it never grows.

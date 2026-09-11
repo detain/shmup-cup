@@ -173,10 +173,15 @@ export type MoverKind = (typeof MoverKind)[keyof typeof MoverKind];
 export const MOVER_NAMES: readonly string[] = Object.freeze(['none', ...MOVER_TYPES]);
 
 /**
- * The code of a mover's content name.
+ * The code of a mover's content name (load time: the enemy system compiles spec movers with it).
  *
  * @param type - A {@link MoverType}.
  * @returns Its {@link MoverKind}.
+ *
+ * @example
+ * ```ts
+ * moverKindOf('groundCrawl'); // → MoverKind.GroundCrawl (6)
+ * ```
  */
 export function moverKindOf(type: MoverType): MoverKind {
   return ((MOVER_TYPES as readonly string[]).indexOf(type) + 1) as MoverKind;
@@ -208,6 +213,20 @@ export const FOLLOW_HISTORY = 256;
  * The recorded path of a formation leader, in the leader's frame (view-relative for flying
  * leaders): entry `age` is where the leader was `age` ticks after it spawned. A ring buffer of
  * {@link FOLLOW_HISTORY} entries; a class so its fields keep one hidden class.
+ *
+ * @remarks
+ * A `Follow` body of age `a` stands where the leader stood at age `a`; members spawned
+ * `k · interval` ticks after the leader therefore trail it by exactly that many ticks, at most
+ * {@link FOLLOW_HISTORY} − 1 (older entries are overwritten — the follower then keeps its last
+ * velocity).
+ *
+ * @example
+ * ```ts
+ * const track = new FollowTrack();
+ * track.record(0, 400, 60); // the leader at spawn
+ * track.record(1, 398.5, 60);
+ * track.has(1); // → true: a follower aged 1 moves to (398.5, 60) + the camera
+ * ```
  */
 export class FollowTrack {
   /** X per age (ring). */
@@ -329,6 +348,8 @@ class MoverContextImpl implements MoverContext {
   hasTarget = false;
 
   /**
+   * Creates the context (see {@link createMoverContext}).
+   *
    * @param camera - The camera.
    * @param terrain - The collision map or `null`.
    * @param paths - The baked paths.
@@ -347,6 +368,11 @@ class MoverContextImpl implements MoverContext {
  * @param terrain - The stage's collision map, or `null`.
  * @param paths - The content's baked paths (`ContentDb.paths`).
  * @returns The context (no target yet).
+ *
+ * @example
+ * ```ts
+ * const ctx = createMoverContext(world.camera, world.terrain, db.paths);
+ * ```
  */
 export function createMoverContext(
   camera: CameraView,
