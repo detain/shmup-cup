@@ -63,6 +63,7 @@ pnpm test             # Vitest per package + repo integration tests
 pnpm build            # packages → dist/, apps/web, apps/tizen (one ES2018 IIFE), apps/electron
 pnpm format           # Prettier
 pnpm trig:tables      # regenerate the committed core trig tables (a test checks they are current)
+pnpm content:check    # validate every JSON under content/ against the core schemas
 pnpm clean            # remove build output
 ```
 
@@ -113,7 +114,7 @@ pnpm workspace (`packages/*`, `apps/*`) + Turborepo. Full annotated tree:
 | [`apps/web`](apps/web/README.md) | Vite browser dev target (also Electron's renderer) |
 | [`apps/tizen`](apps/tizen/README.md) | Samsung Tizen `.wgt` (Chromium 69 classic IIFE build, config.xml, CLI scripts) |
 | [`apps/electron`](apps/electron/README.md) | Electron desktop shell |
-| [`content/`](content/README.md) | Game data: stages, enemies, weapons (JSON) |
+| [`content/`](content/README.md) | Game data: player ships, stages, enemies, weapons (JSON, `formatVersion` 1) |
 | [`assets/`](assets/README.md) | Art/audio sources (`source/`) and pipeline output (`generated/`, ignored) |
 | [`scripts/`](scripts/README.md) | Repo-level Node scripts |
 | [`test/`](test/README.md) | Cross-package integration tests |

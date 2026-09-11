@@ -18,12 +18,13 @@ in `math`). Enforced by `tsconfig.json` (`lib: ["ES2018"]`, no `types`) and ESLi
 | `Action`, `InputSnapshot`, `PlayerInput`, `commitPlayerInput`, … | `input` | Action bitmasks + per-tick snapshots with edge latching |
 | `GameConfig`, `DEFAULT_GAME_CONFIG`, `resolveGameConfig` | `config` | Sim-affecting session options (384×216, 60 Hz, remote-first defaults) |
 | `createFixedStepLoop` | `loop` | 60 Hz accumulator with delta snapping, per-frame cap, reset on resume |
-| `createGame` | `game` | Composition root: platform + loop + (empty) simulation; suspend/resume |
+| `createGame` | `game` | Composition root: platform + loop + content + (empty) simulation; suspend/resume |
 | `IRenderer`, `IAudio`, `RenderFrame` | `presentation` | Contracts implemented by `@shmup/render-pixi` / `@shmup/audio-web` |
 | `createRng`, `createRngStreams`, `RNG_STATE_WORDS` | `rng` | sfc32 seeded from one 32-bit seed; independent gameplay + cosmetic streams, zero-alloc state snapshots |
 | `sinB`, `cosB`, `atan2B`, `quantizeAngle`, `angleDelta`, `turnToward`, `wrapAngle`, `clamp`, `lerp`, `approach`, `EASINGS` | `math` | Binary angles (1024/turn) on committed lookup tables + easing curves |
 | `createEventQueue`, `SimEventKind`, `SFX_CUES`, `MUSIC_CUES` | `events` | Sim → presentation ring of typed arrays (drop-oldest) and the canonical cue registries |
 | `createSoaPool`, `createPool` | `pools` | Struct-of-arrays typed-array pools (deferred free + swap-remove) and object pools |
+| `loadContent`, `ContentDb`, `EMPTY_CONTENT_DB`, `s`, `Schema` | `data` | Schema-validated `content/` (player, weapons; stub enemies/stage) with string ids resolved to numeric indices |
 
 ## Placeholder modules (API declared, logic comes later)
 
@@ -49,7 +50,6 @@ and exports `moduleInfo`; `test/<module>/` holds its smoke test.
 | `ui` | Canvas UI kit model, HUD model, text layout | feat §17, tech §4.10 |
 | `replay` | Input recording/playback, state hashes | feat §21 |
 | `save` | Versioned persistence via `Platform.storage` | feat §21 |
-| `data` | Content schemas & loaders for `content/` | feat §14, §22 |
 | `fx` | Hit-stop, shake, flash (sim side) | feat §18, §20 |
 | `debug` | God mode, frame advance, overlay counters | feat §24 |
 

@@ -4,11 +4,11 @@ Enemy (and later boss-part) definitions, loaded by the core's `enemies` module
 (`packages/core/src/enemies`). Implements `shmup_feat.md` §11 ("HP, score value, hurtbox,
 flash-on-hit, death explosion, drops — defined in `enemies.json`") and §15 (score values).
 
-## Planned format (formatVersion 0)
+## Format (formatVersion 1)
 
 ```jsonc
 {
-  "formatVersion": 0,
+  "formatVersion": 1,
   "kind": "enemies",
   "enemies": [
     {
@@ -24,6 +24,10 @@ flash-on-hit, death explosion, drops — defined in `enemies.json`") and §15 (s
   ]
 }
 ```
+
+`script` (behaviour coroutine) and `sprite` (atlas frame) are resolved to numeric ids at
+load (`scriptId`, `spriteId`). From M1-08 on, the loader also checks `script` against the
+behaviours the engine registers.
 
 Several files may exist (e.g. one per theme); ids must be unique across all of them.
 Formation-kill drops are configured on the stage event (`formation`), not here.

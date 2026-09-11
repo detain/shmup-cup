@@ -60,18 +60,27 @@ describe('integration: repository skeleton', () => {
     expect(workspace).not.toMatch(/^\s*- ['"]?tools/m);
   });
 
-  it('ships a parseable example for every content format', () => {
-    for (const kind of ['stages', 'enemies', 'weapons']) {
-      const dir = join(repo, 'content', kind);
+  it('ships a documented, parseable example for every content format', () => {
+    const contentRoot = join(repo, 'content');
+    expect(existsSync(join(contentRoot, 'README.md'))).toBe(true);
+    const kinds = readdirSync(contentRoot).filter((entry) =>
+      statSync(join(contentRoot, entry)).isDirectory(),
+    );
+    expect(kinds.length).toBeGreaterThan(0);
+    for (const kind of kinds) {
+      const dir = join(contentRoot, kind);
       expect(existsSync(join(dir, 'README.md')), `content/${kind}/README.md`).toBe(true);
-      const examples = readdirSync(dir).filter((file) => file.endsWith('.json'));
-      expect(examples.length, `content/${kind} example`).toBeGreaterThan(0);
-      for (const file of examples) {
+      const files = readdirSync(dir).filter((file) => file.endsWith('.json'));
+      expect(
+        files.filter((file) => file.startsWith('example.')).length,
+        `content/${kind}/example.*.json`,
+      ).toBeGreaterThan(0);
+      for (const file of files) {
         const data = JSON.parse(readFileSync(join(dir, file), 'utf8')) as {
           formatVersion?: unknown;
           kind?: unknown;
         };
-        expect(data.formatVersion, file).toBe(0);
+        expect(data.formatVersion, file).toBe(1);
         expect(typeof data.kind, file).toBe('string');
       }
     }

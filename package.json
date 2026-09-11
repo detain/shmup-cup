@@ -25,6 +25,7 @@
     "lint:root": "eslint --max-warnings=0 --ignore-pattern \"packages/**\" --ignore-pattern \"apps/**\" .",
     "test": "turbo run test test:integration",
     "test:integration": "vitest run --project integration",
+    "content:check": "vitest run --project integration test/integration/content.test.ts",
     "test:all": "vitest run",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

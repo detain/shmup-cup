@@ -4,11 +4,11 @@ One file per stage (zone), e.g. `stage-01-orbit.stage.json`. Loaded by the core'
 runtime (`packages/core/src/stage`). Implements `shmup_feat.md` §14 (scroll-driven timeline,
 scripted camera, tilemap terrain, parallax) and §10 (invisible checkpoints).
 
-## Planned format (formatVersion 0)
+## Format (formatVersion 1)
 
 ```jsonc
 {
-  "formatVersion": 0,
+  "formatVersion": 1,
   "kind": "stage",
   "id": "example",                 // unique id, referenced by the zone map
   "name": "Example Orbit",         // shown on the stage intro / zone map
@@ -29,8 +29,11 @@ scripted camera, tilemap terrain, parallax) and §10 (invisible checkpoints).
 }
 ```
 
-Event `type`s planned: `spawn`, `formation`, `boss`, `midboss`, `music`, `scroll`
-(speed / direction change), `checkpoint`, `branch` (in-stage paths), `warning` (boss intro).
+Event `type`s validated today: `spawn` (`enemy`, optional `formation`, `path`, `y`,
+`count`), `boss`, `midboss` and `warning` (`enemy`), `music` (`cue`, a `MUSIC_CUES` name),
+`scroll` (`speed`) and `checkpoint`. `formation` and `branch` (in-stage paths) arrive with
+the stage runtime (M1-07). `enemy` ids must resolve against `content/enemies/`; stage ids
+must be unique across all stage files.
 
 Later: authoring in **Tiled** or **LDtk** with an exporter to this format (`shmup_feat.md`
 §14 [P1]); the runtime format stays the same.

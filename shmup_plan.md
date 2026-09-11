@@ -397,6 +397,46 @@ the browser dev app and as a Tizen 5.5 bundle.
   deterministic `db.sprites` order; plugin test (Node) — the generated module contains every non-example file in path
   order; `pnpm content:check` green; web and Tizen builds still pass.
 - **Refs:** `shmup_feat.md` §14 (stage data format), §22 (data-driven content), §7C, §11.
+- **As built:**
+  - `Schema.parse(value, path, issues, refs?)` takes an optional fourth argument: the collector
+    of **reference sites**. The plan's three-argument call still validates; only a loader that
+    wants ids resolved passes `refs`. `s.object` records a site for every field declared with
+    `s.ref` (also through `s.nullable`) and `loadContent` writes the resolved index into the
+    sibling field `<field>Id` (`sprite` → `spriteId`, `behavior` → `behaviorId`, `enemy` →
+    `enemyId`, `-1` for a null or unresolved reference). Consequently `s.array(s.ref(...))`
+    throws a `TypeError` at schema-construction time: a bare array of references has nowhere to
+    put the numeric ids, so references are wrapped in objects.
+  - Added combinator `s.record(value, keyPattern?)` (string-keyed maps of one value type) for
+    weapon `params` and the palettes/tunable tables later kinds need.
+  - `s.object` reports **unknown fields** as issues (typos in content are the common failure)
+    and uses `NoInfer` on its return type, so a schema const annotated with its spec type does
+    not back-infer the `optional` key set.
+  - Reference kinds: `ship`, `weapon`, `enemy`, `stage` must resolve against the loaded content;
+    `sprite` and `script` are **interned** (collected, sorted, numbered — indices never depend on
+    file order), with `script` additionally checked against `options.knownScripts` when a caller
+    supplies it (M1-08); `sfx` / `music` resolve against the `SFX_CUES` / `MUSIC_CUES` registries
+    from `core/events`.
+  - `db` shape: `sprites` / `scripts` are `StringTable { names, index }`; the per-kind lists are
+    `ships`/`shipIndex`, `weapons`/`weaponIndex`, `weaponPresets`/`weaponPresetIndex`,
+    `enemies`/`enemyIndex`, `stages`/`stageIndex`. Issue paths are `<file>:<json path>`
+    (`content/enemies/x.json:enemies[3].hurtbox.hw`). Duplicate ids across files are issues.
+  - `CONTENT_MIGRATIONS` ships real `0 → 1` migrations for `weapons`, `enemies` and `stage`
+    (format 0 is structurally identical); the new `player` kind deliberately has none, so a
+    format-0 player file reports "no migration" — both paths are covered by tests, and
+    `loadContent` takes a `migrations` override for testing.
+  - `pnpm content:check` validates `content/` as **two independent sets**: the shipped files
+    (what `virtual:shmup-content` inlines) and the `example.*.json` samples. Examples are
+    documentation and may reuse the ids of real content without clashing with it. Added
+    `content/player/example.player.json` (+ `content/player/README.md`) and an `example-warden`
+    enemy so the example stage's `warning`/`boss` events resolve.
+  - Stage and enemy schemas are the stubs the step asks for and match the existing examples;
+    stage events validated today are `spawn`, `boss`, `midboss`, `warning`, `music`, `scroll`,
+    `checkpoint` (`formation` and `branch` come with the stage runtime in M1-07).
+  - `shmupContent()` defaults its root to the repo's `content/` (it is resolved from
+    `vite.shared.ts`'s own URL), exports `CONTENT_MODULE_ID` and `readContentFiles(root?)`, and
+    triggers a full reload on any `*.json` change under the root. `types/virtual-modules.d.ts`
+    is listed in the root `tsconfig.json` as well as in both apps, so ESLint's project service
+    can type it.
 
 ### M1-03 — Placeholder asset pipeline (sprites, font, atlas)
 

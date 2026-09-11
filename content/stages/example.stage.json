@@ -1,5 +1,5 @@
 {
-  "formatVersion": 0,
+  "formatVersion": 1,
   "kind": "stage",
   "id": "example",
   "name": "Example Orbit",

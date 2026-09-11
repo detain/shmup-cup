@@ -13,7 +13,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, type Plugin } from 'vite';
-import { clientConditions } from '../../vite.shared.js';
+import { clientConditions, shmupContent } from '../../vite.shared.js';
 
 /** Source of `polyfills/global-this.js`, prepended to `app.js` as the post-minify banner. */
 const globalThisPolyfill = readFileSync(
@@ -55,7 +55,7 @@ export default defineConfig({
   resolve: {
     conditions: clientConditions,
   },
-  plugins: [classicScriptTag()],
+  plugins: [shmupContent(), classicScriptTag()],
   server: {
     host: true,
     port: 5174,

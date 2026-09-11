@@ -1,0 +1,19 @@
+{
+  "formatVersion": 1,
+  "kind": "player",
+  "ships": [
+    {
+      "id": "kestrel",
+      "name": "KESTREL",
+      "sprite": "ships/kestrel",
+      "speeds": [1.5, 2.0, 2.5, 3.0, 3.5, 4.0],
+      "hurtRadius": 1.5,
+      "terrainBox": { "hw": 5, "hh": 3 },
+      "pickupBox": { "hw": 8, "hh": 6 },
+      "margins": { "left": 8, "right": 8, "top": 6, "bottom": 6 },
+      "enterTicks": 40,
+      "respawnInvulnTicks": 120,
+      "bankFrames": 1
+    }
+  ]
+}

@@ -9,5 +9,5 @@
     "types": [],
     "noEmit": true
   },
-  "include": ["src"]
+  "include": ["src", "../../types/virtual-modules.d.ts"]
 }

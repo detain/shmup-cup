@@ -72,14 +72,16 @@ shmup-cup/
 │       ├── scripts/        copy-renderer.mjs (apps/web/dist → dist/renderer)
 │       └── src/ main/ (main.ts, app-protocol.ts, window-options.ts ✔ · saves.ts steam.ts placeholders) · preload/preload.cts · shared/ipc.ts
 │
-├── content/                game DATA (JSON, validated at load by core/data)
+├── content/                game DATA (JSON, formatVersion 1, validated at load by core/data ✔)
+│   ├── player/             ✔ one file per ship: speed levels, hitboxes, margins, timers (+ README, example)
 │   ├── stages/             one file per stage: camera path, checkpoints, parallax, event timeline (+ README, example)
 │   ├── enemies/            enemy definitions: hp, score, hurtbox, script id, drop (+ README, example)
-│   └── weapons/            weapon tunables + preset loadouts (+ README, example)
+│   └── weapons/            ✔ weapon tunables + preset loadouts (+ README, example)
 ├── assets/
 │   ├── source/             editable art/audio sources (sprites, tilesets, fonts, audio/music, audio/sfx) — in git
 │   └── generated/          pipeline output (atlases, fonts, OGG) — ignored
 ├── scripts/                repo-level Node scripts: clean.mjs, generate-assets.mjs (placeholder), gen-trig-tables.mjs
+├── types/                  ambient declarations for the Vite virtual modules (virtual:shmup-content)
 ├── test/                   cross-package integration tests (Vitest project "integration", part of `pnpm test`)
 ├── docs/
 │   ├── client/             player/tester docs

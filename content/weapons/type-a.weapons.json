@@ -1,0 +1,66 @@
+{
+  "formatVersion": 1,
+  "kind": "weapons",
+  "weapons": [
+    {
+      "id": "shot.basic",
+      "slot": "main",
+      "behavior": "shot.straight",
+      "damage": 1,
+      "speed": 7,
+      "cap": 2,
+      "pierce": false,
+      "sprite": "shots/basic",
+      "refireTicks": 4,
+      "sfx": "PlayerShot"
+    },
+    {
+      "id": "shot.double",
+      "slot": "double",
+      "behavior": "shot.double",
+      "damage": 1,
+      "speed": 7,
+      "cap": 2,
+      "pierce": false,
+      "sprite": "shots/basic",
+      "refireTicks": 4,
+      "sfx": "PlayerShot",
+      "params": { "angle": 128 }
+    },
+    {
+      "id": "laser.pierce",
+      "slot": "laser",
+      "behavior": "laser.beam",
+      "damage": 1,
+      "speed": 10,
+      "cap": 1,
+      "pierce": true,
+      "sprite": "shots/laser",
+      "refireTicks": 4,
+      "sfx": "PlayerShot",
+      "params": { "maxLength": 64, "hitCooldownTicks": 6 }
+    },
+    {
+      "id": "missile.ground",
+      "slot": "missile",
+      "behavior": "missile.groundSlide",
+      "damage": 2,
+      "speed": 2.5,
+      "cap": 1,
+      "pierce": false,
+      "sprite": "shots/missile",
+      "refireTicks": 10,
+      "sfx": "PlayerMissile",
+      "params": { "slideSpeed": 3 }
+    }
+  ],
+  "presets": [
+    {
+      "id": "type-a",
+      "main": "shot.basic",
+      "missile": "missile.ground",
+      "double": "shot.double",
+      "laser": "laser.pierce"
+    }
+  ]
+}

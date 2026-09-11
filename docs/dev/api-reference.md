@@ -68,8 +68,8 @@ browser, TV).
 
 | Export | Kind | Summary |
 |---|---|---|
-| `createGame(platform, overrides?)` | function | → `Game`; registers suspend/resume handlers on the platform |
-| `Game` | interface | `config`, `platform`, `state`, `step()`, `frame(nowMs) → ticks`, `renderFrame()` (*reused*), `pause()`, `resume()` |
+| `createGame(platform, overrides?, content?)` | function | → `Game`; registers suspend/resume handlers on the platform. `content` defaults to `EMPTY_CONTENT_DB` |
+| `Game` | interface | `config`, `content`, `platform`, `state`, `step()`, `frame(nowMs) → ticks`, `renderFrame()` (*reused*), `pause()`, `resume()` |
 | `GameState` | interface | `tick`, `paused`, `suspended`, `input` (last snapshot) |
 
 ### `presentation` — back-end contracts
@@ -157,6 +157,29 @@ drain ends there.
 (highest index first), which moves the last live entries. Store an id, not a slot index,
 if a reference must survive a flush.
 
+### `data` — content schemas and loader
+
+Validates everything under `content/` and turns the string ids into numeric indices once,
+at load (decision D28: in-house combinators, no runtime dependency).
+
+| Export | Kind | Summary |
+|---|---|---|
+| `loadContent(files, options?)` | function | → `{ db, issues, foreign }`; never throws on bad data, only on a bad `files` argument (`TypeError`) |
+| `LoadContentOptions` | interface | `knownScripts?` (array or `Set`; checked from M1-08 on), `migrations?` (defaults to `CONTENT_MIGRATIONS`) |
+| `ContentFile` | interface | `{ path, data }` — one parsed JSON document, as `virtual:shmup-content` provides it |
+| `ContentDb` | interface | `sprites`, `scripts` (`StringTable`), `ships`, `weapons`, `weaponPresets`, `enemies`, `stages` + a `…Index` map per list |
+| `EMPTY_CONTENT_DB` | const | Frozen empty database (the default for `createGame`) |
+| `CONTENT_KINDS`, `ContentKind`, `isContentKind(kind)` | const/type/function | `player`, `weapons`, `enemies`, `stage`; other kinds come back in `foreign` |
+| `CONTENT_FORMAT_VERSION`, `CONTENT_MIGRATIONS` | const | `1`; per-kind `fromVersion → migration` table (a newer version is rejected) |
+| `PlayerShipSpec`, `WeaponSpec`, `WeaponPresetSpec`, `EnemySpec`, `StageSpec`, `StageEvent`, … | types | The resolved shapes; every `foo` reference also carries a numeric `fooId` |
+| `ValidationIssue` | interface | `{ path, message }`, e.g. `enemies/x.json:enemies[3].hurtbox.hw` / `must be an integer >= 1` |
+| `s` | const | The combinators: `int`, `num`, `str`, `bool`, `enumOf`, `array`, `object`, `record`, `nullable`, `ref`, `oneOf` |
+| `Schema<T>`, `Infer<S>`, `RefSite`, `ContentRefKind` | types | `parse(value, path, issues, refs?) → T \| undefined`; a `ref` site resolves into `<field>Id` |
+
+Sprite and script names are *interned* (sorted, then numbered, so ids never depend on file
+order); ship/weapon/enemy/stage ids and `sfx`/`music` cue names must resolve or an issue is
+reported and the id becomes `-1`. `pnpm content:check` runs this over `content/`.
+
 ### `module-info`
 
 `defineModule({ name, status, specRefs })` → frozen `ModuleInfo`; `ModuleStatus` =
@@ -188,7 +211,6 @@ only `"."`), so today they can only be imported with relative paths from inside
 | `ui` | `Widget`, `WidgetKind`, `HudModel`, `TextMetrics` | `createMenu`, `menuTick`, `buildHudModel`, `layoutText` |
 | `replay` | `Replay`, `ReplayHeader` | `createRecorder`, `recordTick`, `encodeReplay` / `decodeReplay`, `createPlayback` |
 | `save` | `SaveData`, `SaveMigration` | `loadSave(storage)`, `writeSave`, `SAVE_MIGRATIONS` |
-| `data` | `ContentKind`, `ContentFileHeader`, `ValidationIssue` | `validateContent(json)`, `buildContentIndex(files)` |
 | `fx` | `FxState` | `requestHitStop`, `requestShake`, `tickFx` |
 | `debug` | `DebugFlags`, `DebugCounters` | `hashState(game)`, `createDebugControls(game)` |
 
@@ -286,3 +308,5 @@ Placeholders: `FileStore` (`saves.ts`), `SteamService` (`steam.ts`).
 |---|---|---|
 | `SOURCE_CONDITION` (`'@shmup/source'`), `clientConditions`, `serverConditions` | `vite.shared.ts` | Resolve workspace packages to `src/` in Vite/Vitest |
 | `defineShmupProject(name, { environment?, include? })` | `vitest.shared.ts` | Per-project Vitest config (tests under `test/`, Node environment) |
+| `shmupContent({ root? })` | `vite.shared.ts` | Vite plugin → `virtual:shmup-content`: every shipped `content/**/*.json` inlined into the bundle, sorted by path, `example.*.json` skipped, full reload on change |
+| `readContentFiles(root?)`, `CONTENT_MODULE_ID`, `ContentFileRecord` | `vite.shared.ts` | The Node-side reader behind the plugin (also used by `pnpm content:check`) |

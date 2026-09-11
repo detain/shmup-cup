@@ -16,11 +16,14 @@
  * **Implements.** shmup_tech.md §3.2 (core consumes `Platform`), shmup_feat.md §22
  * (tick order), §3 (pause on visibility change).
  *
- * **Public API.** {@link createGame}, {@link Game}, {@link GameState}.
+ * **Public API.** {@link createGame}, {@link Game}, {@link GameState}. A session carries the
+ * validated {@link ContentDb} it was created with (`game.content`), so systems read tunables
+ * from data instead of constants.
  *
  * @module
  */
 import { resolveGameConfig, type GameConfig } from '../config/index.js';
+import { EMPTY_CONTENT_DB, type ContentDb } from '../data/index.js';
 import type { InputSnapshot } from '../input/index.js';
 import { createFixedStepLoop } from '../loop/index.js';
 import { defineModule } from '../module-info.js';
@@ -50,6 +53,8 @@ export interface GameState {
 export interface Game {
   /** The resolved, frozen configuration of this session. */
   readonly config: GameConfig;
+  /** Validated game content with string ids already resolved to indices. */
+  readonly content: ContentDb;
   /** The host platform the game was created on. */
   readonly platform: Platform;
   /** Current state. Do not mutate from outside the core. */
@@ -93,17 +98,25 @@ export interface Game {
  *
  * @param platform - Host platform adapter.
  * @param overrides - Config fields to change from the defaults.
+ * @param content - Validated content database (`loadContent(...).db`). Defaults to
+ *   {@link EMPTY_CONTENT_DB}, which lets tests and the calibration scenes run with no
+ *   `content/` at all; systems then fall back to their built-in defaults.
  * @returns The {@link Game}.
  * @throws RangeError when `overrides` fail validation (see `resolveGameConfig`).
  *
  * @example
  * ```ts
- * const game = createGame(createHeadlessPlatform(), { seed: 1 });
+ * const { db } = loadContent(contentFiles);
+ * const game = createGame(createHeadlessPlatform(), { seed: 1 }, db);
  * for (let i = 0; i < 60; i++) game.step(); // one simulated second
  * game.state.tick; // → 60
  * ```
  */
-export function createGame(platform: Platform, overrides: Partial<GameConfig> = {}): Game {
+export function createGame(
+  platform: Platform,
+  overrides: Partial<GameConfig> = {},
+  content: ContentDb = EMPTY_CONTENT_DB,
+): Game {
   const config = resolveGameConfig(overrides);
   const state: GameState = { tick: 0, paused: false, suspended: false, input: null };
   const isFrozen = (): boolean => state.paused || state.suspended;
@@ -125,6 +138,7 @@ export function createGame(platform: Platform, overrides: Partial<GameConfig> = 
 
   const game: Game = {
     config,
+    content,
     platform,
     state,
     step,

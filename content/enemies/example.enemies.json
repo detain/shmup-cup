@@ -1,5 +1,5 @@
 {
-  "formatVersion": 0,
+  "formatVersion": 1,
   "kind": "enemies",
   "enemies": [
     {
@@ -29,6 +29,15 @@
       "sprite": "enemies/turret",
       "drop": null,
       "rank": { "fireRate": 0.5, "bulletSpeed": 0.25 }
+    },
+    {
+      "id": "example-warden",
+      "hp": 60,
+      "score": 5000,
+      "hurtbox": { "hw": 24, "hh": 20 },
+      "script": "boss.warden",
+      "sprite": "enemies/example-warden",
+      "drop": null
     }
   ]
 }

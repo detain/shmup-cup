@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { EMPTY_CONTENT_DB, loadContent } from '../../src/data/index.js';
 import { Action, commitPlayerInput } from '../../src/input/index.js';
 import { createGame, moduleInfo } from '../../src/game/index.js';
 import { createHeadlessPlatform } from '../../src/platform/index.js';
@@ -8,6 +9,34 @@ const STEP = 1000 / 60;
 describe('core/game createGame', () => {
   it('describes itself', () => {
     expect(moduleInfo.name).toBe('game');
+  });
+
+  it('runs on the empty content database unless one is supplied', () => {
+    expect(createGame(createHeadlessPlatform()).content).toBe(EMPTY_CONTENT_DB);
+    const { db } = loadContent([
+      {
+        path: 'weapons/w.weapons.json',
+        data: {
+          formatVersion: 1,
+          kind: 'weapons',
+          weapons: [
+            {
+              id: 'shot.basic',
+              slot: 'main',
+              behavior: 'shot.straight',
+              damage: 1,
+              speed: 7,
+              cap: 2,
+              pierce: false,
+              sprite: 'shots/basic',
+            },
+          ],
+        },
+      },
+    ]);
+    const game = createGame(createHeadlessPlatform(), {}, db);
+    expect(game.content).toBe(db);
+    expect(game.content.weapons[0]?.id).toBe('shot.basic');
   });
 
   it('runs one tick per 60 Hz frame and polls input each tick', () => {

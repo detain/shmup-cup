@@ -7,10 +7,11 @@
  * loaded by apps/electron through its `app://` protocol).
  */
 import { defineConfig } from 'vite';
-import { clientConditions } from '../../vite.shared.js';
+import { clientConditions, shmupContent } from '../../vite.shared.js';
 
 export default defineConfig({
   base: './',
+  plugins: [shmupContent()],
   resolve: {
     conditions: clientConditions,
   },
