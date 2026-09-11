@@ -4,8 +4,9 @@
  * **Status: partial.** Spawning (stage `spawn` / `formation` events, script spawns), formations
  * with their kill tracking, the behaviour coroutines and movers, the off-screen / settle rules,
  * hit points, hit flash, deaths (explosion events, drops, formation bonus), enemy–player contact
- * and the sprite mirror are implemented (plan M1-08). Rank modifiers and revenge bullets arrive
- * with M2-01, the Option Hunter with M2-04; shots start damaging enemies in M1-10.
+ * and the sprite mirror are implemented (plan M1-08); behaviours fire bullets and lasers through
+ * the `ScriptApi` fire primitives (plan M1-09). Rank modifiers and revenge bullets arrive with
+ * M2-01, the Option Hunter with M2-04; shots start damaging enemies in M1-10.
  *
  * **Responsibility.** Enemies are pooled class instances ({@link Enemy}, {@link MAX_ENEMIES}
  * slots — the plan's "`Pool` (64)") composed of a mover (`core/patterns`), a hurtbox, hit points
@@ -15,6 +16,7 @@
  * - phase 3 (stage): `spawn` / `formation` events spawn enemies; formation members due this tick
  *   spawn;
  * - phase 4 (scripts): scripts whose `wakeTick` has come are resumed (`next()` only on wake);
+ *   they fire through the {@link ScriptApi} primitives (`core/patterns`, `core/bullets`);
  * - phase 5 (movement): age, hit flash, camera ride (flying enemies), mover, leader track,
  *   animation, on-screen / settle / despawn rules;
  * - phase 6 (collision): hurtboxes go into the World's grid (ids = slots); the players' hurt
@@ -38,7 +40,9 @@
  *
  * **Off-screen rules** (shmup_feat.md §11). An enemy is on screen while its hurtbox overlaps the
  * view; {@link ScriptApi.canFire} is `true` only on screen and at least `settleTicks` after its
- * first on-screen tick. An enemy that was on screen and leaves the view by {@link DESPAWN_MARGIN}
+ * first on-screen tick — the fire primitives of the {@link ScriptApi} check it themselves, so an
+ * enemy never fires off screen or before it settled. Lasers attached to an enemy are detached
+ * (`BulletSystem.detachLasers`) when it is removed or becomes a ghost. An enemy that was on screen and leaves the view by {@link DESPAWN_MARGIN}
  * pixels is removed and counts as **escaped**; one that never shows up is removed once it is
  * {@link UNSEEN_MARGIN} pixels away or after {@link UNSEEN_TICKS} ticks.
  *
@@ -71,6 +75,16 @@
  * @module
  */
 import {
+  AIM_AT_TARGET,
+  BulletOrigin,
+  LASER_ACTIVE_TICKS,
+  LASER_FADE_TICKS,
+  LASER_GROW_TICKS,
+  LASER_TELEGRAPH_TICKS,
+  LASER_WIDTH,
+  type BulletSystem,
+} from '../bullets/index.js';
+import {
   findCeiling,
   findFloor,
   type SpatialGrid,
@@ -97,7 +111,16 @@ import {
   FollowTrack,
   MoverKind,
   createMoverContext,
+  fireAimed,
+  fireDelayed,
+  fireHoming,
+  fireNWay,
+  fireRing,
+  fireSpiral,
+  fireSpray,
+  fireStack,
   moverKindOf,
+  rankedWait,
   resumeScript,
   setMover,
   updateMover,
@@ -276,8 +299,13 @@ export class Enemy implements MoverBody, ScriptHolder {
 }
 
 /**
- * What a behaviour coroutine can use — one reused object per enemy slot (decision D29). Fire
- * primitives (`aimed`, `ring`, …) join it with M1-09.
+ * What a behaviour coroutine can use — one reused object per enemy slot (decision D29).
+ *
+ * @remarks
+ * The fire primitives (`aimed` … `laser`) fire from the enemy's centre through `core/patterns`
+ * (rank-scaled speeds, `AIM_AT_TARGET` angles — the default of every optional angle) and do
+ * nothing while {@link ScriptApi.canFire} is `false` (off screen, not settled, a ghost): they
+ * return -1 / 0 then. Bullet slots they return are only valid until the end of the tick.
  */
 export interface ScriptApi {
   /** The enemy the script drives. */
@@ -349,6 +377,130 @@ export interface ScriptApi {
    * @returns Whether the enemy may fire (or release children) now.
    */
   canFire(): boolean;
+  /** The World's bullet system (raw access: `setMotion`, `setChange`, custom patterns). */
+  readonly bullets: BulletSystem;
+  /**
+   * A fire interval scaled by the rank's fire rate (`core/patterns` `rankedWait`): yield it
+   * between volleys.
+   *
+   * @param ticks - The interval on Normal.
+   * @returns Ticks (≥ 1).
+   */
+  fireWait(ticks: number): number;
+  /**
+   * One bullet at the nearest player (`core/patterns` `fireAimed`).
+   *
+   * @param speed - Speed on Normal.
+   * @param kind - `BulletKind`.
+   * @returns The bullet slot, or -1.
+   */
+  aimed(speed: number, kind: number): number;
+  /**
+   * An N-way spread (`fireNWay`).
+   *
+   * @param count - Bullets.
+   * @param step - Units between neighbours.
+   * @param speed - Speed on Normal.
+   * @param kind - `BulletKind`.
+   * @param angle - Centre (default `AIM_AT_TARGET`).
+   * @returns Bullets fired.
+   */
+  nWay(count: number, step: number, speed: number, kind: number, angle?: number): number;
+  /**
+   * A ring (`fireRing`).
+   *
+   * @param count - Bullets.
+   * @param speed - Speed on Normal.
+   * @param kind - `BulletKind`.
+   * @param offset - First heading (default 0).
+   * @returns Bullets fired.
+   */
+  ring(count: number, speed: number, kind: number, offset?: number): number;
+  /**
+   * One spiral volley (`fireSpiral`); keep the returned angle in the script.
+   *
+   * @param angle - This volley's heading.
+   * @param arms - Bullets per volley.
+   * @param step - Turn per volley.
+   * @param speed - Speed on Normal.
+   * @param kind - `BulletKind`.
+   * @returns The next heading (advanced even when the enemy may not fire, so the spiral keeps
+   *   turning).
+   */
+  spiral(angle: number, arms: number, step: number, speed: number, kind: number): number;
+  /**
+   * A stack on one heading (`fireStack`).
+   *
+   * @param count - Bullets.
+   * @param speed - Slowest speed on Normal.
+   * @param speedStep - Extra speed per bullet.
+   * @param kind - `BulletKind`.
+   * @param angle - Heading (default `AIM_AT_TARGET`).
+   * @returns Bullets fired.
+   */
+  stack(count: number, speed: number, speedStep: number, kind: number, angle?: number): number;
+  /**
+   * A random spray from the gameplay RNG (`fireSpray`).
+   *
+   * @param count - Bullets.
+   * @param spread - Cone width in binary units.
+   * @param minSpeed - Slowest speed on Normal.
+   * @param maxSpeed - Fastest speed on Normal.
+   * @param kind - `BulletKind`.
+   * @param angle - Cone centre (default `AIM_AT_TARGET`).
+   * @returns Bullets fired.
+   */
+  spray(
+    count: number,
+    spread: number,
+    minSpeed: number,
+    maxSpeed: number,
+    kind: number,
+    angle?: number,
+  ): number;
+  /**
+   * One homing bullet (`fireHoming`).
+   *
+   * @param speed - Speed on Normal.
+   * @param kind - `BulletKind`.
+   * @param turnRate - Maximum turn per tick.
+   * @param lifetime - Homing ticks.
+   * @param angle - Starting heading (default `AIM_AT_TARGET`).
+   * @returns The bullet slot, or -1.
+   */
+  homing(speed: number, kind: number, turnRate: number, lifetime: number, angle?: number): number;
+  /**
+   * One delayed bullet (`fireDelayed`).
+   *
+   * @param delay - Ticks it waits.
+   * @param speed - Speed on Normal after launch.
+   * @param kind - `BulletKind`.
+   * @param angle - Heading (default `AIM_AT_TARGET`: aimed at launch).
+   * @returns The bullet slot, or -1.
+   */
+  delayed(delay: number, speed: number, kind: number, angle?: number): number;
+  /**
+   * A straight laser attached to this enemy (`core/bullets`): warning line, grow, full-width
+   * beam (the only phase with a hitbox), fade. Detached when the enemy is removed.
+   *
+   * @param angle - Direction (default `AIM_AT_TARGET`).
+   * @param length - Length in pixels (default 384).
+   * @param width - Width (default `LASER_WIDTH`).
+   * @param telegraph - Warning ticks (default `LASER_TELEGRAPH_TICKS`).
+   * @param grow - Grow ticks (default `LASER_GROW_TICKS`).
+   * @param active - Hitbox ticks (default `LASER_ACTIVE_TICKS`).
+   * @param fade - Fade ticks (default `LASER_FADE_TICKS`).
+   * @returns The laser slot, or -1.
+   */
+  laser(
+    angle?: number,
+    length?: number,
+    width?: number,
+    telegraph?: number,
+    grow?: number,
+    active?: number,
+    fade?: number,
+  ): number;
 }
 
 /** An enemy behaviour as the enemy system uses it (`core/behaviors` provides them). */
@@ -399,6 +551,8 @@ export interface EnemyHost {
   readonly events: EventQueue;
   /** Debug switches (god mode for contact). */
   readonly debugFlags: DebugFlags;
+  /** The enemy bullets and lasers (fire primitives; lasers detach when their enemy goes). */
+  readonly bullets: BulletSystem;
 }
 
 /**
@@ -974,9 +1128,156 @@ class EnemyScriptApi implements ScriptApi {
   canFire(): boolean {
     const flags = this.self.flags;
     return (
+      this.self.state === EnemyState.Live &&
       (flags & (EnemyFlag.OnScreen | EnemyFlag.Settled)) ===
-        (EnemyFlag.OnScreen | EnemyFlag.Settled) && (flags & EnemyFlag.Ghost) === 0
+        (EnemyFlag.OnScreen | EnemyFlag.Settled) &&
+      (flags & EnemyFlag.Ghost) === 0
     );
+  }
+
+  /** See {@link ScriptApi.bullets}. */
+  get bullets(): BulletSystem {
+    return this.system.host.bullets;
+  }
+
+  /**
+   * The shared fire origin set to this enemy's centre (or `null` when it may not fire).
+   *
+   * @returns The origin, or `null`.
+   */
+  private gun(): BulletOrigin | null {
+    if (!this.canFire()) return null;
+    const origin = this.system.origin;
+    origin.x = this.self.x;
+    origin.y = this.self.y;
+    return origin;
+  }
+
+  /** See {@link ScriptApi.fireWait}. */
+  fireWait(ticks: number): number {
+    return rankedWait(this.system.host.bullets, ticks);
+  }
+
+  /** See {@link ScriptApi.aimed}. */
+  aimed(speed: number, kind: number): number {
+    const gun = this.gun();
+    return gun === null ? -1 : fireAimed(this.system.host.bullets, gun, speed, kind);
+  }
+
+  /** See {@link ScriptApi.nWay}. */
+  nWay(count: number, step: number, speed: number, kind: number, angle = AIM_AT_TARGET): number {
+    const gun = this.gun();
+    return gun === null
+      ? 0
+      : fireNWay(this.system.host.bullets, gun, count, step, speed, kind, angle);
+  }
+
+  /** See {@link ScriptApi.ring}. */
+  ring(count: number, speed: number, kind: number, offset = 0): number {
+    const gun = this.gun();
+    return gun === null ? 0 : fireRing(this.system.host.bullets, gun, count, speed, kind, offset);
+  }
+
+  /** See {@link ScriptApi.spiral}. */
+  spiral(angle: number, arms: number, step: number, speed: number, kind: number): number {
+    const gun = this.gun();
+    return fireSpiral(
+      this.system.host.bullets,
+      gun ?? this.system.origin,
+      angle,
+      gun === null ? 0 : arms,
+      step,
+      speed,
+      kind,
+    );
+  }
+
+  /** See {@link ScriptApi.stack}. */
+  stack(
+    count: number,
+    speed: number,
+    speedStep: number,
+    kind: number,
+    angle = AIM_AT_TARGET,
+  ): number {
+    const gun = this.gun();
+    return gun === null
+      ? 0
+      : fireStack(this.system.host.bullets, gun, count, speed, speedStep, kind, angle);
+  }
+
+  /** See {@link ScriptApi.spray}. */
+  spray(
+    count: number,
+    spread: number,
+    minSpeed: number,
+    maxSpeed: number,
+    kind: number,
+    angle = AIM_AT_TARGET,
+  ): number {
+    const gun = this.gun();
+    const host = this.system.host;
+    return gun === null
+      ? 0
+      : fireSpray(
+          host.bullets,
+          gun,
+          host.rng.gameplay,
+          count,
+          spread,
+          minSpeed,
+          maxSpeed,
+          kind,
+          angle,
+        );
+  }
+
+  /** See {@link ScriptApi.homing}. */
+  homing(
+    speed: number,
+    kind: number,
+    turnRate: number,
+    lifetime: number,
+    angle = AIM_AT_TARGET,
+  ): number {
+    const gun = this.gun();
+    return gun === null
+      ? -1
+      : fireHoming(this.system.host.bullets, gun, speed, kind, turnRate, lifetime, angle);
+  }
+
+  /** See {@link ScriptApi.delayed}. */
+  delayed(delay: number, speed: number, kind: number, angle = AIM_AT_TARGET): number {
+    const gun = this.gun();
+    return gun === null
+      ? -1
+      : fireDelayed(this.system.host.bullets, gun, delay, speed, kind, angle);
+  }
+
+  /** See {@link ScriptApi.laser}. */
+  laser(
+    angle = AIM_AT_TARGET,
+    length = PLAYFIELD_W,
+    width = LASER_WIDTH,
+    telegraph = LASER_TELEGRAPH_TICKS,
+    grow = LASER_GROW_TICKS,
+    active = LASER_ACTIVE_TICKS,
+    fade = LASER_FADE_TICKS,
+  ): number {
+    const gun = this.gun();
+    return gun === null
+      ? -1
+      : this.system.host.bullets.fireLaser(
+          gun,
+          angle,
+          length,
+          width,
+          telegraph,
+          grow,
+          active,
+          fade,
+          this.self.slot,
+        );
   }
 }
 
@@ -996,6 +1297,8 @@ class EnemySystemImpl implements EnemySystem {
   readonly movers: MoverContext;
   /** The World. */
   readonly host: EnemyHost;
+  /** The fire origin every script API shares (set before each primitive). */
+  readonly origin = new BulletOrigin();
   /** Script API per slot. */
   private readonly apis: readonly EnemyScriptApi[];
   /** The compiled specs. */
@@ -1583,6 +1886,7 @@ class EnemySystemImpl implements EnemySystem {
     const unresolved = f.killed[slot] + f.escaped[slot] < f.total[slot];
     if ((enemy.flags & EnemyFlag.Leader) !== 0 && (pending || unresolved)) {
       enemy.flags = (enemy.flags | EnemyFlag.Ghost) & ~(EnemyFlag.OnScreen | EnemyFlag.Settled);
+      this.host.bullets.detachLasers(enemy.slot);
     } else {
       if ((enemy.flags & EnemyFlag.Leader) !== 0) f.leader[slot] = -1;
       this.remove(enemy);
@@ -1637,6 +1941,7 @@ class EnemySystemImpl implements EnemySystem {
     enemy.state = EnemyState.Removed;
     enemy.script = null;
     enemy.flags &= ~(EnemyFlag.OnScreen | EnemyFlag.Settled);
+    this.host.bullets.detachLasers(enemy.slot);
   }
 
   /** See {@link EnemySystem.flush}. */

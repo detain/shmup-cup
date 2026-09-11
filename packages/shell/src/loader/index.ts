@@ -8,7 +8,8 @@
  *   an `HTMLImageElement` works everywhere), in parallel, reporting progress.
  * - {@link loadGameContent} validates the inlined `virtual:shmup-content` files: the core
  *   kinds through `loadContent()` (script ids checked against the engine's registry,
- *   `KNOWN_SCRIPT_IDS`, and enemies against their behaviours, `checkEnemyBehaviors` — M1-08),
+ *   `KNOWN_SCRIPT_IDS`, and enemies against their behaviours, `checkEnemyBehaviors` — M1-08;
+ *   the engine's own sprites, `ENGINE_SPRITES`, interned into the sprite table — M1-09),
  *   every other kind through the **owner** registered for it
  *   (plan §3.5 — {@link DEFAULT_CONTENT_OWNERS}: `input-profiles` → `@shmup/input-web`,
  *   M1-05; hosts may replace an owner, e.g. to keep the parsed profiles). A file whose kind
@@ -27,6 +28,7 @@
  * @module
  */
 import {
+  ENGINE_SPRITES,
   KNOWN_SCRIPT_IDS,
   checkEnemyBehaviors,
   defineModule,
@@ -164,7 +166,8 @@ export interface LoadGameContentOptions extends LoadContentOptions {
  *
  * @remarks
  * `knownScripts` defaults to the core's `KNOWN_SCRIPT_IDS`, so content naming a behaviour the
- * engine does not have is an issue. Issues are the core's (file and reference order), then the
+ * engine does not have is an issue; `extraSprites` defaults to the core's `ENGINE_SPRITES`, so
+ * the World can draw its enemy bullets and lasers. Issues are the core's (file and reference order), then the
  * behaviour checks of the enemies (`checkEnemyBehaviors`), then per foreign kind in first-seen
  * order the owner's issues — or one issue per file when no owner claims the kind
  * (`"<path>: no loader for content kind \"<kind>\""`). Owners come from `options.owners`,
@@ -188,6 +191,7 @@ export function loadGameContent(
   const result = loadContent(files, {
     knownScripts: options.knownScripts ?? KNOWN_SCRIPT_IDS,
     migrations: options.migrations,
+    extraSprites: options.extraSprites ?? ENGINE_SPRITES,
   });
   const issues: ValidationIssue[] = result.issues.slice();
   for (const issue of checkEnemyBehaviors(result.db)) issues.push(issue);

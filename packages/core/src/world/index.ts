@@ -48,6 +48,15 @@
  * the ships → `playerHit(Contact)`), 8 (freeing removed slots) and 9 (the ground / air sprite
  * batches, drawn below the ships).
  *
+ * **Enemy bullets and lasers (M1-09).** {@link World.bullets} (`core/bullets`) owns the
+ * `enemyBullets` / `enemyLasers` pools: scripts fire in phase 4, bullets and lasers move in
+ * phase 5 (after the enemies, so attached lasers follow their enemy's new position) and hit the
+ * players in phase 6 (`playerHit(Bullet / Laser)`); the view carries the bullet pool as the
+ * `LayerId.EnemyBullets` batch and the lasers as `view.lasers`. {@link World.rank} is the
+ * session's rank (`core/rank`: the difficulty's base, constant in M1); the bullet system scales
+ * bullet speeds and fire intervals by it. The engine's own sprites (bullets, laser beam) are
+ * {@link ENGINE_SPRITES} — hosts load content with `extraSprites: ENGINE_SPRITES` so they draw.
+ *
  * **Zero allocation.** Everything is allocated by {@link createWorld}; {@link stepWorld} and the
  * systems only write numbers into existing objects and typed arrays.
  *
@@ -61,7 +70,8 @@
  * {@link WorldCamera},
  * {@link WorldStatus}, {@link WORLD_STATUSES}, {@link WorldPhase}, {@link WORLD_PHASE_NAMES},
  * {@link WORLD_PHASES}, {@link WorldPhaseEntry}, {@link WorldSystem}, {@link PoolRegistry},
- * {@link RegisteredPool}, {@link syncWorldView}, {@link GRID_MARGIN}, {@link resolveWorldStage}.
+ * {@link RegisteredPool}, {@link syncWorldView}, {@link GRID_MARGIN}, {@link resolveWorldStage},
+ * {@link ENGINE_SPRITES}.
  *
  * @module
  */
@@ -75,6 +85,7 @@ import {
   type TerrainMap,
 } from '../collision/index.js';
 import { DEFAULT_BEHAVIORS } from '../behaviors/index.js';
+import { BULLET_SPRITES, createBulletSystem, type BulletSystem } from '../bullets/index.js';
 import type { ContentDb, PlayerShipSpec, StageMusicEvent, StageSpec } from '../data/index.js';
 import { createDebugFlags, type DebugFlags } from '../debug/index.js';
 import { createEnemySystem, type EnemyBehaviorLookup, type EnemySystem } from '../enemies/index.js';
@@ -101,9 +112,11 @@ import {
   createSpriteBatch,
   pushSprite,
   type SpriteBatch,
+  type LaserView,
   type SpriteBatchView,
   type WorldView,
 } from '../presentation/index.js';
+import { computeRank, difficultyRankInputs } from '../rank/index.js';
 import { createRngStreams, type RngStreams } from '../rng/index.js';
 import {
   StageEventCode,
@@ -227,6 +240,10 @@ export interface World {
   readonly parallax: StageParallaxView | null;
   /** The enemies (spawns, formations, scripts, movers, contact; `core/enemies`). */
   readonly enemies: EnemySystem;
+  /** Enemy bullets and lasers (`core/bullets`). */
+  readonly bullets: BulletSystem;
+  /** The session's rank (`core/rank`; constant in M1: the difficulty's base). */
+  rank: number;
   /** What the renderer draws: live references, refreshed at the end of every tick. */
   readonly view: WorldView;
 }
@@ -365,7 +382,7 @@ const stageSystem: WorldSystem = (world) => {
 };
 
 /**
- * Phase 4: resumes the enemy coroutines that wake this tick (patterns fire from M1-09).
+ * Phase 4: resumes the enemy coroutines that wake this tick (they fire bullets and lasers).
  *
  * @param world - The world.
  */
@@ -374,13 +391,14 @@ const scriptsSystem: WorldSystem = (world) => {
 };
 
 /**
- * Phase 5: enemy movers and the off-screen rules (bullets, shots, items and lasers join from
- * M1-09 … M1-11).
+ * Phase 5: enemy movers and the off-screen rules, then enemy bullets and lasers (shots and items
+ * join in M1-10 / M1-11).
  *
  * @param world - The world.
  */
 const movementSystem: WorldSystem = (world) => {
   world.enemies.move();
+  world.bullets.update();
 };
 
 /**
@@ -403,6 +421,7 @@ const collisionSystem: WorldSystem = (world) => {
   enemies.insertColliders(grid);
   grid.build();
   enemies.collidePlayers(grid);
+  world.bullets.collidePlayers();
   const terrain = world.terrain;
   if (terrain !== null) terrainSystem(world, terrain);
 };
@@ -535,12 +554,22 @@ export function resolveWorldStage(config: GameConfig, content: ContentDb): Stage
 }
 
 /** A {@link World} while {@link createWorld} assembles it (the stage fields are set last). */
-type WorldUnderConstruction = Omit<World, 'stage' | 'enemies'> & {
+type WorldUnderConstruction = Omit<World, 'stage' | 'enemies' | 'bullets'> & {
   /** See {@link World.stage}. */
   stage: StageRunner | null;
   /** See {@link World.enemies}. */
   enemies: EnemySystem;
+  /** See {@link World.bullets}. */
+  bullets: BulletSystem;
 };
+
+/**
+ * The sprites the engine draws on its own, whatever the content: the enemy bullet kinds and the
+ * laser beam (`core/bullets` `BULLET_SPRITES`). Hosts pass it as `loadContent`'s
+ * `extraSprites` (the shell's loader does by default) so the World can resolve their sprite ids
+ * and `pnpm content:check` verifies them against the atlas.
+ */
+export const ENGINE_SPRITES: readonly string[] = BULLET_SPRITES;
 
 /**
  * Creates a gameplay session: RNG streams from `config.seed`, the ship from `content`, the stage
@@ -585,7 +614,8 @@ export function createWorld(
   const terrain = stageSpec === null ? null : createStageTerrain(stageSpec, content);
   const parallax = stageSpec === null ? null : createParallaxView(stageSpec);
   const batches: SpriteBatchView[] = [];
-  const view: WorldView = {
+  // Mutable until the bullet system exists (its laser view is filled in below).
+  const view = {
     camera,
     parallax,
     terrain:
@@ -593,6 +623,7 @@ export function createWorld(
         ? null
         : createTerrainView(terrain, stageSpec, content),
     batches,
+    lasers: null as LaserView | null,
   };
   const world: WorldUnderConstruction = {
     config,
@@ -613,12 +644,17 @@ export function createWorld(
     stage: null,
     terrain,
     parallax,
-    // Replaced right below: the enemy system reads the World it belongs to.
+    // Replaced right below: the enemy and bullet systems read the World they belong to.
     enemies: null as unknown as EnemySystem,
+    bullets: null as unknown as BulletSystem,
+    rank: computeRank(difficultyRankInputs(config.difficulty)),
     view,
   };
+  world.bullets = createBulletSystem(world);
+  world.bullets.setRank(world.rank);
   world.enemies = createEnemySystem(world, options.behaviors ?? DEFAULT_BEHAVIORS, stageSpec);
-  batches.push(world.enemies.groundBatch, world.enemies.airBatch, playerBatch);
+  batches.push(world.enemies.groundBatch, world.enemies.airBatch, playerBatch, world.bullets.batch);
+  view.lasers = world.bullets.laserView;
   if (stageSpec !== null) {
     world.stage = createStageRunner(stageSpec, createWorldStageHooks(world), camera);
     if (stageSpec.music.stageId >= 0) {

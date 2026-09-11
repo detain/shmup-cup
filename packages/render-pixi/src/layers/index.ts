@@ -19,6 +19,12 @@
  *   (enough to cover the playfield plus one repeat), placed once; per frame only the band's
  *   container offset changes. No `TilingSprite` (WebGL1 NPOT restrictions).
  *
+ * And the enemy lasers of plan M1-09 — {@link createLaserBinding}: two preallocated sprites per
+ * `LaserView` slot, pivoting on the laser's origin and rotated to its angle; a telegraphing laser
+ * (drawn width 0) shows the atlas' white pixel stretched into a 1-px line tinted
+ * {@link LASER_WARNING_TINT} (its blink is the view's `Hidden` flag), a beam the frame of the
+ * beam sprite whose band matches the drawn width, stretched along the laser.
+ *
  * Pixel snapping: the renderer is created with `roundPixels: true` and every binding writes
  * integer positions (`Math.round`), so nothing in the stack is drawn at sub-pixel offsets. The
  * terrain container sits at `round(−camera.x)`, which lands integer world positions on exactly
@@ -26,13 +32,16 @@
  *
  * **Implements.**
  * - shmup_feat.md §18 — draw order
- * - shmup_feat.md §12 — bullets drawn above explosions and items
+ * - shmup_feat.md §12 — bullets drawn above explosions and items; lasers (warning line, beam)
+ * - shmup_feat.md §20 — telegraphing (the blinking warning line)
  * - shmup_feat.md §14 — tilemap terrain and parallax background layers (integer-snapped)
  * - shmup_feat.md §22 — tilemap renderer, parallax manager, no per-frame allocation
  *
  * **Public API.** {@link createLayerStack}, {@link LayerStack}, {@link WORLD_LAYER_COUNT},
  * {@link createTerrainBinding}, {@link TerrainBinding}, {@link TerrainBindingOptions},
- * {@link createParallaxBinding}, {@link ParallaxBinding}, {@link ParallaxBindingOptions}.
+ * {@link createParallaxBinding}, {@link ParallaxBinding}, {@link ParallaxBindingOptions},
+ * {@link createLaserBinding}, {@link LaserBinding}, {@link LaserBindingOptions},
+ * {@link LASER_WARNING_TINT}.
  *
  * @module
  */
@@ -43,8 +52,10 @@ import {
   PLAYFIELD_H,
   PLAYFIELD_W,
   PLAYFIELD_Y,
+  SpriteFlag,
   defineModule,
   type CameraView,
+  type LaserView,
   type ParallaxView,
   type TerrainView,
 } from '@shmup/core';
@@ -56,7 +67,13 @@ import { resolveFrame, type SpriteTables } from '../sprites/index.js';
 export const moduleInfo = defineModule({
   name: 'layers',
   status: 'implemented',
-  specRefs: ['shmup_feat.md §18', 'shmup_feat.md §12', 'shmup_feat.md §14', 'shmup_feat.md §22'],
+  specRefs: [
+    'shmup_feat.md §18',
+    'shmup_feat.md §12',
+    'shmup_feat.md §14',
+    'shmup_feat.md §20',
+    'shmup_feat.md §22',
+  ],
 });
 
 /** Layers `0 … WORLD_LAYER_COUNT - 1` belong to the world group (moved by screen shake). */
@@ -367,6 +384,167 @@ export function createParallaxBinding(options: ParallaxBindingOptions): Parallax
     },
     destroy() {
       for (const container of containers) container.destroy({ children: true });
+    },
+  };
+}
+
+/** Tint of the laser warning line: the pink of the enemy bullets (shmup_feat.md §12). */
+export const LASER_WARNING_TINT = 0xff5aa0;
+
+/** Radians per binary-angle unit (1024 units per turn). */
+const RADIANS_PER_UNIT = (2 * Math.PI) / 1024;
+
+/** Options of {@link createLaserBinding}. */
+export interface LaserBindingOptions {
+  /** The atlas (beam sprites and the white pixel of the warning line). */
+  readonly atlas: Atlas;
+  /** The renderer's sprite tables. */
+  readonly tables: SpriteTables;
+  /** Sprites to preallocate — the laser view's capacity. */
+  readonly capacity: number;
+  /** Screen row of world row 0 at camera y 0 (default `PLAYFIELD_Y`). */
+  readonly offsetY?: number;
+}
+
+/** The preallocated sprites of one laser view. */
+export interface LaserBinding {
+  /** Holds the sprites (add it to the `ENEMY_BULLETS` layer). */
+  readonly container: Container;
+  /** Laser slots (two preallocated sprites each: the warning line and the beam). */
+  readonly capacity: number;
+  /** Lasers drawn by the last sync (hidden ones excluded). */
+  readonly visibleCount: number;
+  /**
+   * Draws the view's live lasers and hides the rest. Never allocates.
+   *
+   * @remarks
+   * Each slot has two sprites pivoting on the laser's origin (`round(x − camera.x)`,
+   * `round(y − camera.y) + offsetY`), rotated to its angle: the warning line (the white pixel
+   * scaled to `length × 1`, tinted {@link LASER_WARNING_TINT} at creation) shown while the width
+   * is 0, otherwise the beam: frame `round(width) − 1` of the beam sprite (its frame `k` is a
+   * band `k + 1` px tall — `lasers/beam-*`) stretched to the length, or its last frame scaled
+   * across when the beam is wider than its frames. Hidden
+   * (`SpriteFlag.Hidden`) and zero-length lasers show neither. A rotation is only written when a
+   * slot's angle changes (Pixi's transform setters allocate).
+   *
+   * @param view - The laser view the binding was created for.
+   * @param camera - The world camera.
+   */
+  sync(view: LaserView, camera: CameraView): void;
+  /** Destroys the sprites and the container. */
+  destroy(): void;
+}
+
+/**
+ * Creates the laser sprites for a laser view (load time).
+ *
+ * @param options - Atlas, tables, capacity and y offset.
+ * @returns The binding (two sprites per slot created now, hidden).
+ * @throws {RangeError} When `capacity` is not a positive integer.
+ *
+ * @example
+ * ```ts
+ * const lasers = createLaserBinding({ atlas, tables, capacity: world.lasers.capacity });
+ * layers.layers[LayerId.EnemyBullets].addChild(lasers.container);
+ * lasers.sync(world.lasers, world.camera); // every frame
+ * ```
+ */
+export function createLaserBinding(options: LaserBindingOptions): LaserBinding {
+  const { atlas, tables, capacity } = options;
+  if (!Number.isInteger(capacity) || capacity <= 0) {
+    throw new RangeError('laser binding capacity must be a positive integer');
+  }
+  const offsetY = options.offsetY ?? PLAYFIELD_Y;
+  const container = new Container({ label: 'lasers' });
+  const pixel = atlas.textures[atlas.pixelFrame];
+  // Two sprites per slot — the warning line (tinted once, here) and the beam — so a phase change
+  // only toggles visibility: Pixi's tint setter allocates, and so does a rotation write, which is
+  // therefore only made when the slot's angle changed (`angles`).
+  const lines: Sprite[] = [];
+  const beams: Sprite[] = [];
+  for (let i = 0; i < capacity; i++) {
+    // Built the same way (texture, anchor, tint), so both kinds share one hidden class.
+    const line = new Sprite(pixel);
+    line.anchor.set(0, 0.5);
+    line.tint = LASER_WARNING_TINT;
+    line.visible = false;
+    const beam = new Sprite(pixel);
+    beam.anchor.set(0, 0.5);
+    beam.tint = 0xffffff;
+    beam.visible = false;
+    lines.push(line);
+    beams.push(beam);
+    container.addChild(line, beam);
+  }
+  const angles = new Float64Array(capacity * 2).fill(Number.NaN);
+  let used = 0;
+  let visible = 0;
+
+  return {
+    container,
+    capacity,
+    get visibleCount(): number {
+      return visible;
+    },
+    sync(view, camera) {
+      const count = view.count < capacity ? view.count : capacity;
+      const camX = camera.x;
+      const camY = camera.y;
+      visible = 0;
+      for (let i = 0; i < count; i++) {
+        const line = lines[i];
+        const beam = beams[i];
+        const length = view.length[i];
+        if ((view.flags[i] & SpriteFlag.Hidden) !== 0 || !(length > 0)) {
+          line.visible = false;
+          beam.visible = false;
+          continue;
+        }
+        const width = view.width[i];
+        const angle = view.angle[i] & 1023;
+        // `| 0`: `Math.round` may return −0, which V8 stores as a heap number.
+        const sx = Math.round(view.x[i] - camX) | 0;
+        const sy = (Math.round(view.y[i] - camY) + offsetY) | 0;
+        if (width > 0) {
+          line.visible = false;
+          // Frame k of the beam sprite is a band k + 1 px tall (M1-09 art), so a growing or fading
+          // beam switches frames instead of scaling across: a fractional scale written every frame
+          // allocated in Pixi's transform. Beams wider than the sprite's frames scale the last one.
+          const base = resolveFrame(atlas, tables, view.spriteId[i], 0, 0);
+          const frames = atlas.framesLeft[base];
+          const band = Math.round(width) | 0;
+          const frameId = band <= 1 ? base : band <= frames ? base + band - 1 : base + frames - 1;
+          beam.texture = atlas.textures[frameId];
+          beam.scale.x = length / atlas.frameWidth[frameId];
+          beam.scale.y = band <= frames ? 1 : width / atlas.frameHeight[frameId];
+          if (angles[2 * i + 1] !== angle) {
+            angles[2 * i + 1] = angle;
+            beam.rotation = angle * RADIANS_PER_UNIT;
+          }
+          beam.x = sx;
+          beam.y = sy;
+          beam.visible = true;
+        } else {
+          beam.visible = false;
+          line.scale.x = length;
+          if (angles[2 * i] !== angle) {
+            angles[2 * i] = angle;
+            line.rotation = angle * RADIANS_PER_UNIT;
+          }
+          line.x = sx;
+          line.y = sy;
+          line.visible = true;
+        }
+        visible++;
+      }
+      for (let i = count; i < used; i++) {
+        lines[i].visible = false;
+        beams[i].visible = false;
+      }
+      used = count;
+    },
+    destroy() {
+      container.destroy({ children: true });
     },
   };
 }

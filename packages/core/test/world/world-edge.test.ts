@@ -307,9 +307,9 @@ describe('core/world edge cases — pools, grid and view', () => {
     const w = world();
     const a = w.pools.register('a', createSoaPool(4, { z: 'f64', a: 'u8', m: 'i32' }));
     const b = w.pools.register('b', createSoaPool(4, { x: 'f32' }));
-    expect(w.pools.entries.map((e) => e.name)).toEqual(['a', 'b']);
-    expect(w.pools.entries[0].arrays).toEqual([a.fields.a, a.fields.m, a.fields.z]);
-    expect(w.pools.entries[1].pool).toBe(b);
+    expect(w.pools.entries.map((e) => e.name)).toEqual(['enemyBullets', 'enemyLasers', 'a', 'b']);
+    expect(w.pools.entries[2].arrays).toEqual([a.fields.a, a.fields.m, a.fields.z]);
+    expect(w.pools.entries[3].pool).toBe(b);
     a.alloc();
     a.alloc();
     b.alloc();

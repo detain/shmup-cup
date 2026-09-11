@@ -13,8 +13,9 @@
  *
  * **State hash.** {@link hashWorld} is FNV-1a (32-bit) over a fixed sequence of values: the tick,
  * both RNG states, the camera, the stage runner's state (whether there is one, then every slot of
- * its state array), the session status and hit-stop, every player's fields, every registered
- * pool's live slots (fields in sorted name order, slots `0 … count-1`), then the enemies (every
+ * its state array), the session status, hit-stop and rank, every player's fields, every
+ * registered pool's live slots (fields in sorted name order, slots `0 … count-1` — the enemy
+ * bullets and lasers of M1-09 among them), then the enemies (every
  * slot's state, and the numeric fields of each slot in use — M1-08) and the formation table
  * (the fields of every active slot, and each track's recorded count). Scripts are covered by
  * their `wakeTick`; a coroutine's internal position cannot be hashed. Numbers are
@@ -274,6 +275,7 @@ export function hashWorld(world: World): number {
 
   mixWord(statusCode(world));
   mixNumber(world.hitStop);
+  mixNumber(world.rank);
 
   const players = world.players;
   for (let i = 0; i < players.length; i++) mixPlayer(players[i]);

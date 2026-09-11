@@ -9,8 +9,8 @@
  * presentation only — they never touch the simulation: the scene owns its own
  * {@link FlightScene.world | WorldView} that lists its starfield batches (`BG_FAR`, `BG_MID`,
  * open space only) **followed by the game world's own batches**, and shares the game's live
- * camera, parallax and terrain views, so a batch the World adds later (enemies, bullets …) is
- * drawn without changing this scene.
+ * camera, parallax, terrain and laser views, so a batch the World adds later (enemies,
+ * bullets …) is drawn without changing this scene.
  *
  * **Sprite ids.** The world's batches carry ids of the content's sprite table
  * (`ContentDb.sprites.names`); the scene appends its own starfield and HUD sprites after them
@@ -142,6 +142,7 @@ export function createFlightScene(game: Game, options: FlightSceneOptions = {}):
     parallax: gameView.parallax,
     terrain: gameView.terrain,
     batches: starfield ? [far, mid, ...gameView.batches] : gameView.batches.slice(),
+    lasers: gameView.lasers ?? null,
   };
   const stage = game.world.stage;
 

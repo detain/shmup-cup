@@ -503,6 +503,47 @@ describe('render-pixi/renderer render contract (plan §3.4)', () => {
     expect(parallax.containers[0].destroyed).toBe(true);
   });
 
+  it('binds the lasers on ENEMY_BULLETS above the bullet batch and syncs them (M1-09)', async () => {
+    const renderer = await createPixiRenderer({
+      canvas,
+      displayWidth: 1920,
+      displayHeight: 1080,
+      atlas: testAtlas(),
+    });
+    renderer.setSpriteNames(['ships/a', 'bg/tile']);
+    const bullets = createSpriteBatch(LayerId.EnemyBullets, 4);
+    const lasers = {
+      capacity: 2,
+      count: 1,
+      x: new Float64Array([100, 0]),
+      y: new Float64Array([50, 0]),
+      angle: new Float64Array([512, 0]),
+      length: new Float64Array([80, 0]),
+      width: new Float64Array([0, 0]),
+      spriteId: new Uint16Array(2),
+      flags: new Uint8Array(2),
+    };
+    const world: WorldView = {
+      camera: { x: 20, y: 0 },
+      parallax: null,
+      terrain: null,
+      batches: [bullets],
+      lasers,
+    };
+    renderer.render(frameOf(0, world));
+    const binding = renderer.lasers;
+    expect(binding).not.toBeNull();
+    if (binding === null) return;
+    const layer = renderer.layers.layers[LayerId.EnemyBullets].children;
+    expect(layer).toEqual([renderer.bindings[0].container, binding.container]);
+    const line = binding.container.children[0] as Pixi.Sprite;
+    expect([line.visible, line.x, line.y]).toEqual([true, 80, 50 + PLAYFIELD_Y]);
+    expect(binding.visibleCount).toBe(1);
+    renderer.bindWorld({ camera: { x: 0, y: 0 }, parallax: null, terrain: null, batches: [] });
+    expect(renderer.lasers).toBeNull();
+    expect(binding.container.destroyed).toBe(true);
+  });
+
   it('rejects a parallax band off the background layers before binding anything', async () => {
     const renderer = await createPixiRenderer({
       canvas,

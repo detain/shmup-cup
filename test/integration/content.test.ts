@@ -16,6 +16,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+  ENGINE_SPRITES,
   KNOWN_SCRIPT_IDS,
   checkEnemyBehaviors,
   loadContent,
@@ -269,6 +270,13 @@ describe('integration: content/ sprites exist in the atlas', () => {
   it('finds every sprite name of the shipped content in the atlas manifest', () => {
     const { db } = loadContent(shippedFiles);
     expect(db.sprites.names.length).toBeGreaterThan(0);
+    expect(findMissingSprites(manifest, db.sprites.names, 'db.sprites.names')).toEqual([]);
+  });
+
+  it("finds the engine's own sprites (enemy bullets, laser beams — M1-09) in the atlas", () => {
+    expect(ENGINE_SPRITES.length).toBeGreaterThan(0);
+    expect(findMissingSprites(manifest, ENGINE_SPRITES, 'ENGINE_SPRITES')).toEqual([]);
+    const { db } = loadContent(shippedFiles, { extraSprites: ENGINE_SPRITES });
     expect(findMissingSprites(manifest, db.sprites.names, 'db.sprites.names')).toEqual([]);
   });
 

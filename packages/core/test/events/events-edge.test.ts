@@ -256,8 +256,18 @@ describe('core/events — cue registries', () => {
       'rumble',
       'formationBonus',
     ]);
-    expect(FX_CUES).toEqual({ ExplosionSmall: 0, ExplosionMedium: 1, ExplosionLarge: 2 });
-    expect(FX_CUE_NAMES).toEqual(['ExplosionSmall', 'ExplosionMedium', 'ExplosionLarge']);
+    expect(FX_CUES).toEqual({
+      ExplosionSmall: 0,
+      ExplosionMedium: 1,
+      ExplosionLarge: 2,
+      BulletCancel: 3,
+    });
+    expect(FX_CUE_NAMES).toEqual([
+      'ExplosionSmall',
+      'ExplosionMedium',
+      'ExplosionLarge',
+      'BulletCancel',
+    ]);
     expect(Object.isFrozen(FX_CUE_NAMES)).toBe(true);
   });
 });

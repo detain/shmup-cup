@@ -42,10 +42,14 @@ export {
   type FrameId,
 } from './atlas/index.js';
 export {
+  LASER_WARNING_TINT,
   WORLD_LAYER_COUNT,
+  createLaserBinding,
   createLayerStack,
   createParallaxBinding,
   createTerrainBinding,
+  type LaserBinding,
+  type LaserBindingOptions,
   type LayerStack,
   type ParallaxBinding,
   type ParallaxBindingOptions,

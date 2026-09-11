@@ -1,9 +1,8 @@
 /**
  * # patterns — behaviour coroutines, movers and attack patterns
  *
- * **Status: partial.** The script runner and the movers are implemented (plan M1-08); the fire
- * primitives (aimed, N-way, ring, spiral, stack, spray, homing, delayed bullets) arrive with the
- * enemy bullets of M1-09 and the BulletML-inspired pattern DSL with M2-02.
+ * **Status: partial.** The script runner and the movers (plan M1-08) and the fire primitives
+ * (plan M1-09) are implemented; the BulletML-inspired pattern DSL arrives with M2-02.
  *
  * **Responsibility.** Scripting for enemy/boss behaviour and bullet patterns, split the way
  * decision D29 describes:
@@ -43,6 +42,26 @@
  * - `AimedDash (speed, windup)` — hold `windup` ticks, aim at the target once (quantised to
  *   {@link AIM_DIRECTIONS}), dash straight.
  *
+ * **Fire primitives** (shmup_feat.md §12 "pattern primitives") spawn enemy bullets through a
+ * `core/bullets` {@link BulletSystem} from a {@link BulletOrigin} (the enemy `ScriptApi` fills
+ * it with the enemy's centre and applies the fire rules). Every speed is multiplied by the
+ * rank's `speedScale`; an angle argument may be {@link AIM_AT_TARGET} (at the nearest living
+ * player, snapped to `config.aimDirections` — 32 directions, decision D17):
+ *
+ * - {@link fireAimed} — one bullet at the player;
+ * - {@link fireNWay} — `count` bullets `step` units apart, centred on the angle;
+ * - {@link fireRing} — `count` bullets evenly round the circle from `offset`;
+ * - {@link fireSpiral} — `arms` evenly spaced bullets at a script-held angle; returns the angle
+ *   advanced by `step` for the next call;
+ * - {@link fireStack} — `count` bullets on one heading at speeds `speed + k · speedStep`;
+ * - {@link fireSpray} — `count` bullets at random headings within `spread` and random speeds
+ *   (the gameplay RNG — replay-safe);
+ * - {@link fireHoming} — one bullet that homes for `lifetime` ticks at `turnRate`;
+ * - {@link fireDelayed} — one bullet that waits `delay` ticks, then launches (re-aimed when the
+ *   angle is `AIM_AT_TARGET`).
+ *
+ * {@link rankedWait} scales a fire interval by the rank's fire rate.
+ *
  * **Zero allocation.** Movers only read typed arrays (the baked path tables, the collision map,
  * the sine table) and write numbers; the terrain queries get whole pixels (V8 boxes fractional
  * arguments of calls it does not inline). Resuming a generator allocates its `{ value, done }`
@@ -57,14 +76,16 @@
  * {@link SLEEP_FOREVER}. Movers: {@link MoverKind}, {@link MOVER_NAMES}, {@link moverKindOf},
  * {@link BodyAnchor}, {@link MoverBody}, {@link MoverContext}, {@link createMoverContext},
  * {@link setMover}, {@link updateMover}, {@link FollowTrack}, {@link FOLLOW_HISTORY},
- * {@link samplePath}, {@link CRAWL_STEP}, {@link AIM_DIRECTIONS}. The planned DSL node type
- * {@link PatternNode}.
+ * {@link samplePath}, {@link CRAWL_STEP}, {@link AIM_DIRECTIONS}. Fire primitives:
+ * {@link fireAimed}, {@link fireNWay}, {@link fireRing}, {@link fireSpiral}, {@link fireStack},
+ * {@link fireSpray}, {@link fireHoming}, {@link fireDelayed}, {@link rankedWait}. The planned DSL
+ * node type {@link PatternNode}.
  *
- * **Planned API.** Fire primitives on the enemy `ScriptApi` (M1-09): `aimed`, `nWay`, `ring`,
- * `spiral`, `stack`, `spray`, `homing`, `delayed`; `compilePattern(nodes)` (M2-02).
+ * **Planned API.** `compilePattern(nodes)` (M2-02).
  *
  * @module
  */
+import { AIM_AT_TARGET, type BulletOrigin, type BulletSystem } from '../bullets/index.js';
 import { findCeiling, findFloor, type TerrainMap } from '../collision/index.js';
 import { MOVER_TYPES, PATH_SAMPLE_STEP, type MoverType, type PathSpec } from '../data/index.js';
 import {
@@ -79,6 +100,7 @@ import {
 import { SIN_TABLE_Q16, TRIG_SCALE } from '../math/trig-table.js';
 import { defineModule } from '../module-info.js';
 import type { CameraView } from '../presentation/index.js';
+import type { Rng } from '../rng/index.js';
 
 /** Module descriptor (see {@link defineModule}). */
 export const moduleInfo = defineModule({
@@ -802,6 +824,342 @@ function moveAimedDash(body: MoverBody, ctx: MoverContext): void {
   body.vy = (SIN_TABLE_Q16[angle] / TRIG_SCALE) * speed;
   body.x += body.vx;
   body.y += body.vy;
+}
+
+// ------------------------------------------------------------------------------ fire primitives
+
+/*
+ * The primitives run when a script wakes (not per tick), so a fractional speed argument boxed by
+ * a call V8 does not inline costs a few bytes per volley at most; they take no object literals,
+ * arrays or closures.
+ */
+
+/**
+ * An angle argument resolved: {@link AIM_AT_TARGET} → the quantised aim from the origin.
+ *
+ * @param bullets - The bullet system.
+ * @param origin - The origin.
+ * @param angle - Angle or `AIM_AT_TARGET`.
+ * @returns The angle.
+ */
+function resolveAngle(bullets: BulletSystem, origin: BulletOrigin, angle: number): number {
+  return angle === AIM_AT_TARGET ? bullets.aimFrom(origin) : angle;
+}
+
+/**
+ * A count argument as a whole number ≥ 0.
+ *
+ * @param count - The argument.
+ * @returns `floor(count)`, 0 for anything below 1 or non-finite.
+ */
+function wholeCount(count: number): number {
+  return count >= 1 && count - count === 0 ? Math.floor(count) : 0;
+}
+
+/**
+ * A fire interval scaled by the rank's fire rate (`bullets.fireScale`): `round(ticks /
+ * fireScale)`, at least 1 — exactly `ticks` on Normal.
+ *
+ * @param bullets - The bullet system.
+ * @param ticks - The interval on Normal.
+ * @returns Ticks to wait.
+ *
+ * @example
+ * ```ts
+ * yield rankedWait(bullets, 90); // 90 ticks on Normal, fewer at higher rank
+ * ```
+ */
+export function rankedWait(bullets: BulletSystem, ticks: number): number {
+  const wait = Math.round(ticks / bullets.fireScale);
+  return wait >= 1 ? wait : 1;
+}
+
+/**
+ * Fires one bullet at the nearest living player (quantised to `config.aimDirections`; straight
+ * left without a target).
+ *
+ * @param bullets - The bullet system.
+ * @param origin - Where it starts.
+ * @param speed - Speed on Normal (× the rank's `speedScale`).
+ * @param kind - `BulletKind`.
+ * @returns The bullet slot, or -1 (dropped: full pool or bad kind).
+ *
+ * @example
+ * ```ts
+ * origin.x = turret.x; origin.y = turret.y;
+ * fireAimed(world.bullets, origin, 1.5, BulletKind.RoundPink);
+ * ```
+ */
+export function fireAimed(
+  bullets: BulletSystem,
+  origin: BulletOrigin,
+  speed: number,
+  kind: number,
+): number {
+  return bullets.emit(origin, bullets.aimFrom(origin), speed * bullets.speedScale, kind);
+}
+
+/**
+ * Fires an N-way spread: `count` bullets `step` binary units apart, centred on `angle`.
+ *
+ * @param bullets - The bullet system.
+ * @param origin - Where they start.
+ * @param count - Bullets (1 = a single shot on `angle`).
+ * @param step - Units between neighbours (64 = 22.5°).
+ * @param speed - Speed on Normal.
+ * @param kind - `BulletKind`.
+ * @param angle - Centre heading (default {@link AIM_AT_TARGET}).
+ * @returns Bullets spawned.
+ *
+ * @example
+ * ```ts
+ * fireNWay(bullets, origin, 3, 48, 1.25, BulletKind.OvalRed); // aimed 3-way
+ * ```
+ */
+export function fireNWay(
+  bullets: BulletSystem,
+  origin: BulletOrigin,
+  count: number,
+  step: number,
+  speed: number,
+  kind: number,
+  angle: number = AIM_AT_TARGET,
+): number {
+  const n = wholeCount(count);
+  if (n === 0) return 0;
+  const centre = resolveAngle(bullets, origin, angle);
+  const s = speed * bullets.speedScale;
+  let fired = 0;
+  for (let k = 0; k < n; k++) {
+    if (bullets.emit(origin, centre + (k - (n - 1) / 2) * step, s, kind) >= 0) fired++;
+  }
+  return fired;
+}
+
+/**
+ * Fires a ring: `count` bullets evenly round the circle, the first at `offset`.
+ *
+ * @param bullets - The bullet system.
+ * @param origin - Where they start.
+ * @param count - Bullets.
+ * @param speed - Speed on Normal.
+ * @param kind - `BulletKind`.
+ * @param offset - Heading of the first bullet (default 0 = +x; may be {@link AIM_AT_TARGET}).
+ * @returns Bullets spawned.
+ *
+ * @example
+ * ```ts
+ * fireRing(bullets, origin, 12, 1, BulletKind.RoundPurple);
+ * ```
+ */
+export function fireRing(
+  bullets: BulletSystem,
+  origin: BulletOrigin,
+  count: number,
+  speed: number,
+  kind: number,
+  offset = 0,
+): number {
+  const n = wholeCount(count);
+  if (n === 0) return 0;
+  const first = resolveAngle(bullets, origin, offset);
+  const s = speed * bullets.speedScale;
+  let fired = 0;
+  for (let k = 0; k < n; k++) {
+    if (bullets.emit(origin, first + (k * ANGLE_UNITS) / n, s, kind) >= 0) fired++;
+  }
+  return fired;
+}
+
+/**
+ * Fires one volley of a spiral: `arms` evenly spaced bullets starting at `angle`. The script
+ * keeps the angle between calls (the result).
+ *
+ * @param bullets - The bullet system.
+ * @param origin - Where they start.
+ * @param angle - This volley's heading (binary units).
+ * @param arms - Bullets per volley (evenly spaced).
+ * @param step - How far the spiral turns per volley (units; negative = anticlockwise).
+ * @param speed - Speed on Normal.
+ * @param kind - `BulletKind`.
+ * @returns `angle + step` wrapped into `[0, 1024)` — pass it to the next call.
+ *
+ * @example
+ * ```ts
+ * let a = 0;
+ * for (;;) { a = fireSpiral(bullets, origin, a, 2, 40, 1.2, BulletKind.NeedlePink); yield 6; }
+ * ```
+ */
+export function fireSpiral(
+  bullets: BulletSystem,
+  origin: BulletOrigin,
+  angle: number,
+  arms: number,
+  step: number,
+  speed: number,
+  kind: number,
+): number {
+  const n = wholeCount(arms);
+  const s = speed * bullets.speedScale;
+  for (let k = 0; k < n; k++) bullets.emit(origin, angle + (k * ANGLE_UNITS) / n, s, kind);
+  const next = (angle + step) % ANGLE_UNITS;
+  return next < 0 ? next + ANGLE_UNITS : next;
+}
+
+/**
+ * Fires a stack: `count` bullets on one heading at speeds `speed`, `speed + speedStep`, …
+ *
+ * @param bullets - The bullet system.
+ * @param origin - Where they start.
+ * @param count - Bullets.
+ * @param speed - Speed of the slowest on Normal.
+ * @param speedStep - Extra speed per bullet on Normal.
+ * @param kind - `BulletKind`.
+ * @param angle - Heading (default {@link AIM_AT_TARGET}).
+ * @returns Bullets spawned.
+ *
+ * @example
+ * ```ts
+ * fireStack(bullets, origin, 4, 1, 0.25, BulletKind.NeedleRed); // 1, 1.25, 1.5, 1.75 px/tick
+ * ```
+ */
+export function fireStack(
+  bullets: BulletSystem,
+  origin: BulletOrigin,
+  count: number,
+  speed: number,
+  speedStep: number,
+  kind: number,
+  angle: number = AIM_AT_TARGET,
+): number {
+  const n = wholeCount(count);
+  if (n === 0) return 0;
+  const heading = resolveAngle(bullets, origin, angle);
+  const scale = bullets.speedScale;
+  let fired = 0;
+  for (let k = 0; k < n; k++) {
+    if (bullets.emit(origin, heading, (speed + k * speedStep) * scale, kind) >= 0) fired++;
+  }
+  return fired;
+}
+
+/**
+ * Fires a random spray: `count` bullets at headings uniformly within `angle ± spread / 2` and
+ * speeds uniformly in `[minSpeed, maxSpeed)`, drawn from the given (gameplay) RNG — two draws per
+ * bullet, whether or not it spawns, so replays stay in sync.
+ *
+ * @param bullets - The bullet system.
+ * @param origin - Where they start.
+ * @param rng - The gameplay RNG stream (`world.rng.gameplay`).
+ * @param count - Bullets.
+ * @param spread - Total width of the cone in binary units.
+ * @param minSpeed - Slowest speed on Normal.
+ * @param maxSpeed - Fastest speed on Normal.
+ * @param kind - `BulletKind`.
+ * @param angle - Cone centre (default {@link AIM_AT_TARGET}).
+ * @returns Bullets spawned.
+ *
+ * @example
+ * ```ts
+ * fireSpray(bullets, origin, world.rng.gameplay, 6, 128, 0.8, 1.6, BulletKind.RoundRed);
+ * ```
+ */
+export function fireSpray(
+  bullets: BulletSystem,
+  origin: BulletOrigin,
+  rng: Rng,
+  count: number,
+  spread: number,
+  minSpeed: number,
+  maxSpeed: number,
+  kind: number,
+  angle: number = AIM_AT_TARGET,
+): number {
+  const n = wholeCount(count);
+  if (n === 0) return 0;
+  const centre = resolveAngle(bullets, origin, angle);
+  const scale = bullets.speedScale;
+  let fired = 0;
+  for (let k = 0; k < n; k++) {
+    const heading = centre + (rng.nextFloat() - 0.5) * spread;
+    const speed = minSpeed + rng.nextFloat() * (maxSpeed - minSpeed);
+    if (bullets.emit(origin, heading, speed * scale, kind) >= 0) fired++;
+  }
+  return fired;
+}
+
+/**
+ * Fires one homing bullet: it starts on `angle`, then for `lifetime` ticks turns towards the
+ * nearest living player by at most `turnRate` units per tick, then flies straight.
+ *
+ * @param bullets - The bullet system.
+ * @param origin - Where it starts.
+ * @param speed - Speed on Normal.
+ * @param kind - `BulletKind`.
+ * @param turnRate - Maximum turn per tick (binary units).
+ * @param lifetime - Homing ticks.
+ * @param angle - Starting heading (default {@link AIM_AT_TARGET}).
+ * @returns The bullet slot, or -1.
+ *
+ * @example
+ * ```ts
+ * fireHoming(bullets, origin, 1.25, BulletKind.OvalPurple, 6, 90, ANGLE_UNITS / 2);
+ * ```
+ */
+export function fireHoming(
+  bullets: BulletSystem,
+  origin: BulletOrigin,
+  speed: number,
+  kind: number,
+  turnRate: number,
+  lifetime: number,
+  angle: number = AIM_AT_TARGET,
+): number {
+  const i = bullets.emit(
+    origin,
+    resolveAngle(bullets, origin, angle),
+    speed * bullets.speedScale,
+    kind,
+  );
+  if (i >= 0) bullets.setHoming(i, turnRate, lifetime);
+  return i;
+}
+
+/**
+ * Fires one delayed bullet: it sits at the origin (riding the camera, able to hit) for `delay`
+ * ticks, then launches at `speed` — re-aimed at the nearest living player at launch when `angle`
+ * is {@link AIM_AT_TARGET}.
+ *
+ * @param bullets - The bullet system.
+ * @param origin - Where it waits.
+ * @param delay - Ticks to wait.
+ * @param speed - Speed on Normal after launch.
+ * @param kind - `BulletKind`.
+ * @param angle - Heading (default {@link AIM_AT_TARGET}: aimed when it launches).
+ * @returns The bullet slot, or -1.
+ *
+ * @example
+ * ```ts
+ * for (let k = 0; k < 4; k++) fireDelayed(bullets, origin, 20 + k * 10, 1.75, BulletKind.OvalPink);
+ * ```
+ */
+export function fireDelayed(
+  bullets: BulletSystem,
+  origin: BulletOrigin,
+  delay: number,
+  speed: number,
+  kind: number,
+  angle: number = AIM_AT_TARGET,
+): number {
+  const aim = angle === AIM_AT_TARGET;
+  const i = bullets.emit(
+    origin,
+    aim ? bullets.aimFrom(origin) : angle,
+    speed * bullets.speedScale,
+    kind,
+  );
+  if (i >= 0) bullets.setDelay(i, delay, aim);
+  return i;
 }
 
 // ------------------------------------------------------------------------------ DSL (M2-02)

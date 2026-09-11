@@ -1027,6 +1027,73 @@ the browser dev app and as a Tizen 5.5 bundle.
   terrain/off-screen culling, laser hitbox inactive during telegraph/grow, deterministic `spray`, cancel clears
   cancelable only, allocation guard with 512 live bullets.
 - **Refs:** `shmup_feat.md` §12, §15 (rank hook), §20 (telegraphing), §22 (collision).
+- **As built:**
+  - **Bullet system.** `World.bullets` (`createBulletSystem(host)`, host = the World) owns both
+    pools, registered as `enemyBullets` / `enemyLasers` (flushed in phase 8, hashed). The bullet
+    pool *is* the `ENEMY_BULLETS` sprite batch (`bullets.batch`, a live view — no mirror). Fields
+    as planned except: `anim` → `frame` (directional frame, `((a + 32) >> 6) & 7` for the 8-frame
+    kinds) + `kind`; homing needs `turnRate` + `homing` (ticks left); `draw` holds the sprite flags;
+    `flags` adds internal `AimOnLaunch` / `Dead` bits (a removed bullet stays in `[0, count)`
+    until phase 8, so every loop skips `Dead`). Bullets **ride the camera** like flying enemies
+    (`x += camera.dx`, delayed ones too), so patterns keep their shape and aimed shots stay aimed
+    while the stage scrolls; lasers without a source ride it too. `delay n` = the first move `n`
+    ticks after the tick's own (age counts moving ticks); a change at age `changeAt` (speed /
+    angle `NaN` = keep, `AIM_AT_TARGET` = re-aim) applies before that tick's kinematics;
+    acceleration clamps to `[minSpeed 0, maxSpeed 16]` (defaults). Culling is exact at view ±
+    16 px; terrain is one `terrainAt` pixel lookup (bullets with `DieOnTerrain`).
+  - **Kinds and sprites.** Bullet kinds are a built-in table (`BULLET_KINDS`, 9 kinds: round / oval
+    / needle × pink / red / purple, M1-03's art, hit radius 2 / 2 / 1.5), not content (the pattern
+    DSL of M2-02 brings content). Their sprites and the laser beam are **engine sprites**
+    (`BULLET_SPRITES`, world `ENGINE_SPRITES`): `loadContent` got `extraSprites` (interned into
+    `db.sprites`), the shell's `loadGameContent` passes `ENGINE_SPRITES` by default and
+    `pnpm content:check` checks them against the atlas; without them bullets simulate but are
+    hidden. New procedural art `lasers/beam-<colour>` (`scripts/assets/procedural/lasers.mjs`):
+    8 frames of 4×8, frame `k` a band `k + 1` px tall.
+  - **API.** `spawnBullet(owner, x, y, angle, speed, kind)` / `fireLaser(owner, src, angle,
+    length, telegraph = 40, grow = 8, active = 60, width = 6, fade = 8)` /
+    `cancelAllBullets(owner, mode)` take anything with `.bullets` (the World); positional timings
+    instead of the plan's options literal (no per-call allocation); `src` is a `LaserSource`
+    (`{ slot, x, y }` — an `Enemy` works; slot -1 = fixed). Angles accept `AIM_AT_TARGET`
+    (nearest living player, snapped to the new sim option `GameConfig.aimDirections` = 32, a power
+    of two 4–1024; straight left without a target). Bad kinds / angles and a full pool return -1
+    quietly. Raw spawns are not rank-scaled; the primitives are.
+  - **Fire primitives** (`core/patterns`): `fireAimed`, `fireNWay` (`step` = units between
+    neighbours), `fireRing` (from `offset`), `fireSpiral` (returns the next angle — the
+    script-held state), `fireStack`, `fireSpray` (two gameplay-RNG draws per bullet), `fireHoming`,
+    `fireDelayed` (aimed at launch by default), `rankedWait`; they take the bullet system and a
+    reused `BulletOrigin`. The enemy `ScriptApi` wraps them (`aimed`, `nWay`, `ring`, `spiral`,
+    `stack`, `spray`, `homing`, `delayed`, `laser`, `fireWait`, `bullets`) from the enemy's
+    centre and enforces the fire rule itself (off screen / unsettled / ghost → -1 / 0 fired).
+  - **Lasers.** Each phase lasts exactly its tick count (one fired in phase 4 spends its first
+    telegraph tick in that tick's update); drawn width `w·k/(grow+1)` growing, `w·(fade+1−k)/
+    (fade+1)` fading; the warning line blinks 4 on / 4 off. Attached lasers keep their offset to
+    the enemy; when it is removed or turns ghost, `detachLasers` removes a warning / growing
+    laser and fades an active one. Hits use `PlayerHitCause.Laser` (the plan wrote `bullet`).
+    At most one accepted bullet hit and one laser hit per ship and tick; an accepted bullet is
+    removed; god mode / invulnerability let bullets pass.
+  - **Cancel.** `CancelMode.Sparkle` only (points: M2-02); removes cancelable bullets **and**
+    lasers; new `FX_CUES.BulletCancel` (3) particle events, at most `CANCEL_SPARKLE_LIMIT` (64)
+    per call, evenly spread (the event ring is shared).
+  - **Rank.** `computeRank` = the preset base rounded / clamped (`DIFFICULTY_RANK_BASE`: easy 0,
+    normal 2, hard 4, arcade 6 — the "very hard" base); `rankScale(rank, curve)` with `RankCurve
+    { perRank, perRankSq }` is exactly 1 at Normal (`1 + a(r−2) + b(r²−4)`), so content speeds and
+    intervals are Normal values. `World.rank` (hashed) → `bullets.setRank` → `speedScale`
+    (`BULLET_SPEED_RANK_CURVE`) / `fireScale` (`FIRE_RATE_RANK_CURVE`).
+  - **Roster.** New tunables: `turret.floor` `fireTicks` 90 / `bulletSpeed` 1.5 (counted in
+    `aimTicks` steps), `walker.floor` `spread` 48 / `bulletSpeed` 1.25, `orbiter.loop`
+    `ringTicks` 120 / `ringCount` 8 / `bulletSpeed` 1.
+  - **Render.** Render contract: `LaserView` + optional `WorldView.lasers`; render-pixi
+    `createLaserBinding` (two sprites per slot — the line tinted once at creation, the beam picks
+    the frame of its rounded width — because Pixi's tint and fractional scale writes allocate),
+    bound by the renderer on `ENEMY_BULLETS` after the batches (`renderer.lasers`); the shell's
+    flight scene passes the World's laser view through.
+  - **Zero allocation (V8 findings).** The collision tests read the ship position from class
+    fields copied once per call and the hurt radius from a field cached at creation (loads through
+    `ship` / `host.ship` allocated heap numbers); `update()` holds both the bullet and the laser
+    loop (a small loop-free wrapper stayed in Maglev and inlined the laser loop, boxing a number per
+    tick); camera deltas are read once per update. The guards live in
+    `test/bullets/bullets-alloc.test.ts` (own worker, 20k-tick warm-up): type feedback from the
+    many small worlds of the functional suites skewed the measurement by an order of magnitude.
 
 ### M1-10 — Player weapons (Type A) & Options
 

@@ -44,10 +44,13 @@ registers, every `params` name against the behaviour's tunables, and that spawne
 
 **Behaviours (M1 roster).** `drifter.sine` (popcorn on a sine wave), `fan.loop` (formation
 flier: the leader flies the spawn event's path, the others follow its track), `carrier.straight`
-(capsule carrier), `turret.floor` (ground turret facing the player), `walker.floor` (walks,
-stops, walks), `hatch.spawner` (releases its `child`), `rammer.aimed` (enters with its mover,
-then dashes at the player), `orbiter.loop` (loops along the spawn event's path). Their tunables
-and defaults are listed in `packages/core/src/behaviors`.
+(capsule carrier), `turret.floor` (ground turret facing the player, firing aimed shots —
+`fireTicks`, `bulletSpeed`), `walker.floor` (walks, stops and fires an aimed 3-way — `spread`,
+`bulletSpeed` — walks), `hatch.spawner` (releases its `child`), `rammer.aimed` (enters with its
+mover, then dashes at the player), `orbiter.loop` (loops along the spawn event's path, firing
+rings — `ringTicks`, `ringCount`, `bulletSpeed`). Their tunables and defaults are listed in
+`packages/core/src/behaviors`. Bullet speeds are px/tick on Normal (rank scales them) and fire
+intervals are ticks on Normal.
 
 **Movers** (`"mover"`, or set by the behaviour): `straight { vx, vy }`, `sine { vx, amp,
 period, phase? }`, `path { path?, speed }`, `waypoint { x, y, speed, hold, leaveVx, leaveVy }`,

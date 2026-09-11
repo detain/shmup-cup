@@ -4,7 +4,7 @@
  * their owners (and reports kinds nobody owns).
  */
 import { readContentFiles } from '../../../../vite.shared.js';
-import type { ContentFile } from '@shmup/core';
+import { ENGINE_SPRITES, type ContentFile } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
 import {
   AssetLoadError,
@@ -89,6 +89,13 @@ describe('shell/loader loadGameContent', () => {
     const result = loadGameContent(readContentFiles());
     expect(result.issues).toEqual([]);
     expect(result.db.ships.length).toBeGreaterThan(0);
+  });
+
+  it("interns the engine's own sprites (bullets, laser beam) unless told otherwise (M1-09)", () => {
+    const names = loadGameContent(readContentFiles()).db.sprites.names;
+    for (const name of ENGINE_SPRITES) expect(names).toContain(name);
+    const bare = loadGameContent(readContentFiles(), { extraSprites: [] }).db.sprites.names;
+    expect(bare).not.toContain('lasers/beam-pink');
   });
 
   it('hands the default input-profiles owner every file at once (ids unique across files)', () => {

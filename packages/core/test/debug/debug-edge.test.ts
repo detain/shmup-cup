@@ -11,6 +11,7 @@
  * - a stepped world's hash is a pure function of its state, however it was reached.
  */
 import { describe, expect, it } from 'vitest';
+import { fireLaser } from '../../src/bullets/index.js';
 import { resolveGameConfig } from '../../src/config/index.js';
 import { EMPTY_CONTENT_DB } from '../../src/data/index.js';
 import { FNV_OFFSET_BASIS, FNV_PRIME, hashWorld } from '../../src/debug/index.js';
@@ -61,6 +62,7 @@ function referenceHash(w: World): number {
   }
   word(WORLD_STATUSES.indexOf(w.status));
   num(w.hitStop);
+  num(w.rank);
   for (const p of w.players) {
     word(p.active ? 1 : 0);
     num(p.x);
@@ -202,6 +204,9 @@ describe('core/debug hashWorld — reference and coverage', () => {
     ['player 2 x', (w: World) => void (w.players[1].x = 3)],
     ['player 2 lives', (w: World) => void (w.players[1].lives = 0)],
     ['status (each code)', (w: World) => void (w.status = 'stageClear')],
+    ['rank', (w: World) => void (w.rank = 3)],
+    ['an enemy bullet', (w: World) => void w.bullets.spawn(100, 100, 0, 1, 0)],
+    ['an enemy laser', (w: World) => void fireLaser(w, { slot: -1, x: 50, y: 50 }, 0, 100)],
   ])('changes when the %s changes', (_label, mutate) => {
     const a = world();
     const b = world();

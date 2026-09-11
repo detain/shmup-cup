@@ -12,7 +12,9 @@
  * a lifted navy background, the layer stack (`layers`), one sprite binding per
  * `SpriteBatchView` of the frame's `WorldView` (`sprites`), the HUD and UI draw lists
  * (`ui` + `text`), the world's parallax bands and tile terrain (`layers`: repeated sprites on
- * `BG_FAR` / `BG_MID`, a ring-buffered tile-sprite grid on `TERRAIN` — plan M1-07), screen shake
+ * `BG_FAR` / `BG_MID`, a ring-buffered tile-sprite grid on `TERRAIN` — plan M1-07), the enemy
+ * lasers (`layers`: rotated warning lines / stretched beams on `ENEMY_BULLETS`, above the bullet
+ * batch — plan M1-09), screen shake
  * (the world group is offset by the rounded `shakeX/Y`) and the flash / dim overlays. Optionally
  * the calibration test pattern sits below the layers (`?scene=calibration`).
  *
@@ -50,8 +52,10 @@ import {
 import type { Atlas } from '../atlas/index.js';
 import {
   createLayerStack,
+  createLaserBinding,
   createParallaxBinding,
   createTerrainBinding,
+  type LaserBinding,
   type LayerStack,
   type ParallaxBinding,
   type TerrainBinding,
@@ -137,6 +141,8 @@ export interface PixiRenderer extends IRenderer {
   readonly terrain: TerrainBinding | null;
   /** Band sprites of the bound world's parallax (`null` without parallax or atlas). */
   readonly parallax: ParallaxBinding | null;
+  /** Laser sprites of the bound world (`null` without a laser view or atlas). */
+  readonly lasers: LaserBinding | null;
   /**
    * Sets the sprite name table that `spriteId`s in world batches and draw lists index —
    * normally `ContentDb.sprites.names`. Resolved against the atlas now (load time); unknown
@@ -147,8 +153,9 @@ export interface PixiRenderer extends IRenderer {
   setSpriteNames(names: readonly string[]): void;
   /**
    * Binds a world view: creates the parallax band sprites (on `BG_FAR` / `BG_MID`), the terrain
-   * tile grid (on `TERRAIN`) and one sprite binding per batch (in its layer, batch order), and
-   * destroys the previous world's bindings. `render()` does this automatically when
+   * tile grid (on `TERRAIN`), one sprite binding per batch (in its layer, batch order) and the
+   * laser sprites of `world.lasers` (on `ENEMY_BULLETS`, after the batches), and destroys the
+   * previous world's bindings. `render()` does this automatically when
    * `frame.world` is a different object; hosts call it at load time so the first frame does
    * not create Pixi objects.
    *
@@ -341,6 +348,7 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
   let bindings: SpriteLayerBinding[] = [];
   let terrain: TerrainBinding | null = null;
   let parallax: ParallaxBinding | null = null;
+  let lasers: LaserBinding | null = null;
 
   /**
    * Replaces the world bindings (see {@link PixiRenderer.bindWorld}).
@@ -354,6 +362,8 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
     terrain = null;
     parallax?.destroy();
     parallax = null;
+    lasers?.destroy();
+    lasers = null;
     boundWorld = null;
     if (world !== null) {
       // Validate first, so a bad view leaves nothing half-bound.
@@ -394,6 +404,11 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
           layers.layers[batch.layer].addChild(binding.container);
           bindings.push(binding);
         }
+        const laserView = world.lasers ?? null;
+        if (laserView !== null) {
+          lasers = createLaserBinding({ atlas, tables, capacity: laserView.capacity });
+          layers.layers[LayerId.EnemyBullets].addChild(lasers.container);
+        }
       }
     }
     boundWorld = world;
@@ -416,6 +431,9 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
     },
     get parallax() {
       return parallax;
+    },
+    get lasers() {
+      return lasers;
     },
     get viewport() {
       return viewport;
@@ -451,6 +469,10 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
         const batches = world.batches;
         for (let i = 0; i < bindings.length; i++) {
           bindings[i].sync(batches[i], camX, camY);
+        }
+        const laserView = world.lasers;
+        if (lasers !== null && laserView !== undefined && laserView !== null) {
+          lasers.sync(laserView, world.camera);
         }
       }
       const effects = frame.screen;

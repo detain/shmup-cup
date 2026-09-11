@@ -6,7 +6,8 @@
  * of tunables with defaults (overridden per enemy by its `params`) and a factory returning the
  * {@link Script} generator. The enemy system (`core/enemies`) creates one coroutine per spawned
  * enemy and resumes it only when it wakes; the coroutine steers the enemy by switching movers
- * (`core/patterns`) and, from M1-09, by firing patterns. Content validation uses the registry
+ * (`core/patterns`) and by firing patterns through the `ScriptApi` fire primitives (M1-09 —
+ * they respect the off-screen / settle rule themselves). Content validation uses the registry
  * ({@link KNOWN_SCRIPT_IDS}) as `loadContent`'s `knownScripts`, so an unknown id is a content
  * issue, and {@link checkEnemyBehaviors} reports unknown tunables and spawners without a child.
  *
@@ -18,15 +19,22 @@
  *   one) [`speed` 1.5]; every other member replays the leader's track (`follow`).
  * - `carrier.straight` — capsule carrier: flies straight left [`speed` 1]; its drop is data.
  * - `turret.floor` — ground turret (floor or ceiling, per its spec): stands still and turns to
- *   face the nearest player every [`aimTicks` 30] ticks (M1-09 adds its aimed shots).
+ *   face the nearest player every [`aimTicks` 30] ticks; every [`fireTicks` 90] ticks (rank-scaled,
+ *   counted in `aimTicks` steps) it fires an aimed round pink bullet at [`bulletSpeed` 1.5].
  * - `walker.floor` — walks along its floor / ceiling towards the player for [`walkTicks` 90] at
- *   [`speed` 0.75], stops for [`stopTicks` 45] (M1-09 shoots then), repeats.
+ *   [`speed` 0.75], stops for [`stopTicks` 45] and fires an aimed 3-way of red ovals
+ *   [`spread` 48 binary units apart, `bulletSpeed` 1.25] as it stops, repeats.
  * - `hatch.spawner` — ground hatch: while it may fire (on screen, settled) it releases its
  *   `child` enemy every [`interval` 60] ticks, at most [`max` 8] in all (0 = no limit).
  * - `rammer.aimed` — enters with its spec's mover for [`enterTicks` 40] ticks, then holds for
  *   [`windup` 20], aims at the nearest player and dashes at [`speed` 2.5].
  * - `orbiter.loop` — flies the spawn event's path (a loop) at [`speed` 1.25]; without a path it
  *   flies to view point [`x` 256, `y` 100], holds [`hold` 90] and leaves left at [`leaveSpeed` 2].
+ *   Every [`ringTicks` 120] ticks (rank-scaled) it fires a ring of [`ringCount` 8] purple bullets
+ *   at [`bulletSpeed` 1], each ring turned half a gap from the last.
+ *
+ * `drifter.sine`, `fan.loop`, `carrier.straight`, `hatch.spawner` and `rammer.aimed` do not fire.
+ * Every shot goes through the primitives, so nothing fires off screen or before `settleTicks`.
  *
  * **Implements.**
  * - shmup_feat.md §11 — archetypes (popcorn, formation fliers, capsule carriers, turrets,
@@ -38,15 +46,16 @@
  * {@link BEHAVIOR_IDS}, {@link WEAPON_SCRIPT_IDS}, {@link KNOWN_SCRIPT_IDS},
  * {@link checkEnemyBehaviors}.
  *
- * **Planned API.** More behaviours with the zone content (M1-18) and the bosses (M1-13); the
- * roster's fire patterns (M1-09).
+ * **Planned API.** More behaviours with the zone content (M1-18) and the bosses (M1-13).
  *
  * @module
  */
+import { BulletKind } from '../bullets/index.js';
 import type { ContentDb, ValidationIssue } from '../data/index.js';
 import type { EnemyBehavior, EnemyBehaviorLookup, ScriptApi } from '../enemies/index.js';
 import { EnemyFlag } from '../enemies/index.js';
 import { defineModule } from '../module-info.js';
+import { ANGLE_UNITS } from '../math/index.js';
 import { BodyAnchor, MoverKind, SLEEP_FOREVER, type Script } from '../patterns/index.js';
 
 /** Module descriptor (see {@link defineModule}). */
@@ -207,15 +216,24 @@ const carrierStraight = defineBehavior(
   },
 );
 
-/** `turret.floor` — a ground turret that keeps facing the nearest player. */
+/** `turret.floor` — a ground turret that keeps facing the nearest player and shoots at it. */
 const turretFloor = defineBehavior(
   'turret.floor',
-  { aimTicks: 30 },
+  { aimTicks: 30, fireTicks: 90, bulletSpeed: 1.5 },
   function* turret(api, p): Script {
     api.setMover(MoverKind.None);
+    const step = p.aimTicks >= 1 ? p.aimTicks : 1;
+    let sinceShot = 0;
     for (;;) {
       faceTarget(api);
-      yield p.aimTicks;
+      if (
+        sinceShot >= api.fireWait(p.fireTicks) &&
+        api.aimed(p.bulletSpeed, BulletKind.RoundPink) >= 0
+      ) {
+        sinceShot = 0;
+      }
+      yield step;
+      sinceShot += step;
     }
   },
 );
@@ -223,7 +241,7 @@ const turretFloor = defineBehavior(
 /** `walker.floor` — walk towards the player, stop, repeat. */
 const walkerFloor = defineBehavior(
   'walker.floor',
-  { speed: 0.75, walkTicks: 90, stopTicks: 45 },
+  { speed: 0.75, walkTicks: 90, stopTicks: 45, bulletSpeed: 1.25, spread: 48 },
   function* walker(api, p): Script {
     for (;;) {
       const target = api.target();
@@ -232,6 +250,7 @@ const walkerFloor = defineBehavior(
       yield p.walkTicks;
       api.setMover(MoverKind.None);
       faceTarget(api);
+      api.nWay(3, p.spread, p.bulletSpeed, BulletKind.OvalRed);
       yield p.stopTicks;
     }
   },
@@ -275,7 +294,16 @@ const rammerAimed = defineBehavior(
 /** `orbiter.loop` — loop on the spawn path, or enter → hold → leave. */
 const orbiterLoop = defineBehavior(
   'orbiter.loop',
-  { speed: 1.25, x: 256, y: 100, hold: 90, leaveSpeed: 2 },
+  {
+    speed: 1.25,
+    x: 256,
+    y: 100,
+    hold: 90,
+    leaveSpeed: 2,
+    ringTicks: 120,
+    ringCount: 8,
+    bulletSpeed: 1,
+  },
   function* orbiter(api, p): Script {
     const self = api.self;
     if (self.pathId >= 0) {
@@ -283,7 +311,16 @@ const orbiterLoop = defineBehavior(
     } else {
       api.setMover(MoverKind.Waypoint, p.x, p.y, p.speed, p.hold, -p.leaveSpeed, 0);
     }
-    yield SLEEP_FOREVER;
+    const count = p.ringCount >= 1 ? Math.floor(p.ringCount) : 0;
+    if (count === 0) yield SLEEP_FOREVER;
+    const halfGap = ANGLE_UNITS / count / 2;
+    let rings = 0;
+    for (;;) {
+      yield api.fireWait(p.ringTicks);
+      if (api.ring(count, p.bulletSpeed, BulletKind.RoundPurple, (rings & 1) * halfGap) > 0) {
+        rings++;
+      }
+    }
   },
 );
 

@@ -873,7 +873,10 @@ export interface StringTable {
  * are in the order their files sort by path, then in document order.
  */
 export interface ContentDb {
-  /** Atlas sprite names used by content (M1-03 checks them against the atlas). */
+  /**
+   * Atlas sprite names used by content, plus `LoadContentOptions.extraSprites` (the engine's own
+   * sprites); `pnpm content:check` checks them against the atlas.
+   */
   readonly sprites: StringTable;
   /** Behaviour/script ids used by content (M1-08 registers the implementations). */
   readonly scripts: StringTable;
@@ -918,6 +921,14 @@ export interface LoadContentOptions {
   readonly knownScripts?: readonly string[] | ReadonlySet<string>;
   /** Migration table; defaults to {@link CONTENT_MIGRATIONS} (tests inject their own). */
   readonly migrations?: ContentMigrationTable;
+  /**
+   * Sprite names the engine draws on its own (core `world` `ENGINE_SPRITES`: enemy bullets and
+   * laser beams, plan M1-09), interned into {@link ContentDb.sprites} even though no content file
+   * mentions them — so the World resolves them to sprite ids and the atlas check of
+   * `pnpm content:check` covers them. Hosts pass `ENGINE_SPRITES` (the shell's loader does by
+   * default); omitted, the engine's sprites are not in the table and are not drawn.
+   */
+  readonly extraSprites?: readonly string[];
 }
 
 /** What {@link loadContent} produces. */
@@ -1596,8 +1607,8 @@ function assertFileList(files: unknown): void {
  * recorded by {@link s.ref} is resolved and written back as `<field>Id`. Sprite and script
  * names are *interned* (sorted, then numbered); ids pointing at ships, weapons, enemies,
  * paths, stages, tilesets or audio cues must resolve, or an issue is reported and the id becomes
- * `-1`. With `options.knownScripts` an interned script id outside that list is an issue too. A
- * third pass expands every stage tilemap against its resolved tileset
+ * `-1`. With `options.knownScripts` an interned script id outside that list is an issue too;
+ * `options.extraSprites` are interned with the content's sprite names. A third pass expands every stage tilemap against its resolved tileset
  * ({@link StageSpec.terrain}); its issues come last. While collecting, enemies get the defaults
  * of their optional fields and paths are baked into arc-length tables ({@link bakePath}; a path
  * with coincident neighbours or an overlong curve is an issue and is left out).
@@ -1613,7 +1624,8 @@ function assertFileList(files: unknown): void {
  * issue list in any input order.
  *
  * @param files - The content files, typically from `virtual:shmup-content`.
- * @param options - Known script ids and a migration table override.
+ * @param options - Known script ids, the engine's extra sprite names and a migration table
+ *   override.
  * @returns The database, every {@link ValidationIssue} found and the files of foreign kinds.
  * @throws TypeError when `files` is not an array (a programming error, unlike bad content).
  *
@@ -1688,6 +1700,9 @@ export function loadContent(
     collect(header.kind, parsed, file.path, db, issues);
   }
 
+  if (options.extraSprites !== undefined) {
+    for (const name of options.extraSprites) spriteNames.add(name);
+  }
   const sprites = buildStringTable(spriteNames);
   const scripts = buildStringTable(scriptNames);
   for (const site of refs) resolveRef(site, db, sprites, scripts, knownScripts, issues);

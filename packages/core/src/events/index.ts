@@ -200,6 +200,8 @@ export const FX_CUES = {
   ExplosionMedium: 1,
   /** A large enemy explodes. */
   ExplosionLarge: 2,
+  /** An enemy bullet is cancelled (sparkle — `core/bullets` `cancelAllBullets`, M1-09). */
+  BulletCancel: 3,
 } as const;
 
 /** One of the {@link FX_CUES} ids. */

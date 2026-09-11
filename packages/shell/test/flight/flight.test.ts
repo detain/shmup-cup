@@ -66,11 +66,14 @@ describe('shell/flight', () => {
       LayerId.GroundEnemies,
       LayerId.AirEnemies,
       LayerId.Player,
+      LayerId.EnemyBullets,
     ]);
     expect(flight.world.batches.slice(2)).toEqual(game.world.view.batches);
     expect(flight.world.batches[2]).toBe(game.world.enemies.groundBatch);
     expect(flight.world.batches[3]).toBe(game.world.enemies.airBatch);
     expect(flight.world.batches[4]).toBe(game.world.playerBatch);
+    expect(flight.world.batches[5]).toBe(game.world.bullets.batch);
+    expect(flight.world.lasers).toBe(game.world.bullets.laserView); // M1-09
   });
 
   it('copies the game frame and reuses its own', () => {

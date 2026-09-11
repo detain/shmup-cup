@@ -352,18 +352,19 @@ builds a lookup (throws on duplicate ids). `DEFAULT_BEHAVIORS` (from `DEFAULT_BE
 is what the World uses; `createWorld(config, db, { behaviors })` swaps in another registry
 (tests, tools — not part of `GameConfig`, so never in a real session).
 
-The M1 roster (tunables and their defaults in brackets; fire patterns arrive in M1-09):
+The M1 roster (tunables and their defaults in brackets; the fire patterns are M1-09's — they go
+through the `ScriptApi` primitives, so nothing fires off screen or before `settleTicks`):
 
 | Id | Archetype | What it does |
 |---|---|---|
 | `drifter.sine` | popcorn | `Sine` left at [`speed` 1.25], [`amp` 24], [`period` 96], [`phase` 0] + member × [`memberPhase` 0] |
 | `fan.loop` | formation flier | the leader flies the spawn event's path at [`speed` 1.5] (straight left without one); every other member `Follow`s |
 | `carrier.straight` | capsule carrier | `Straight` left at [`speed` 1]; its drop is data (`"drop": "capsule"`) |
-| `turret.floor` | ground turret | stands still, turns to face the nearest player every [`aimTicks` 30]; floor or ceiling per its spec |
-| `walker.floor` | walker | `GroundCrawl` towards the player for [`walkTicks` 90] at [`speed` 0.75], stops for [`stopTicks` 45], repeats |
+| `turret.floor` | ground turret | stands still, turns to face the nearest player every [`aimTicks` 30]; floor or ceiling per its spec; every [`fireTicks` 90] (rank-scaled, counted in `aimTicks` steps) an aimed round pink bullet at [`bulletSpeed` 1.5] |
+| `walker.floor` | walker | `GroundCrawl` towards the player for [`walkTicks` 90] at [`speed` 0.75], stops for [`stopTicks` 45] firing an aimed 3-way of red ovals [`spread` 48 units apart, `bulletSpeed` 1.25], repeats |
 | `hatch.spawner` | hatch (`needsChild`) | every [`interval` 60] ticks, while `canFire()`, releases its `child` from its open side; at most [`max` 8] (0 = no limit) |
 | `rammer.aimed` | rammer | enters with its spec mover for [`enterTicks` 40], then `AimedDash` with [`windup` 20] at [`speed` 2.5] |
-| `orbiter.loop` | orbiter | flies the spawn event's path at [`speed` 1.25]; without one: `Waypoint` to [`x` 256, `y` 100], hold [`hold` 90], leave left at [`leaveSpeed` 2] |
+| `orbiter.loop` | orbiter | flies the spawn event's path at [`speed` 1.25]; without one: `Waypoint` to [`x` 256, `y` 100], hold [`hold` 90], leave left at [`leaveSpeed` 2]; every [`ringTicks` 120] (rank-scaled) a ring of [`ringCount` 8] purple bullets at [`bulletSpeed` 1], each ring turned half a gap |
 
 Writing one:
 

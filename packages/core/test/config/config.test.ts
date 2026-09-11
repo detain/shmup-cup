@@ -36,6 +36,15 @@ describe('core/config', () => {
     expect(() => resolveGameConfig({ tickRate: 59.5 })).toThrow(RangeError);
     expect(() => resolveGameConfig({ seed: -1 })).toThrow(RangeError);
   });
+
+  it('aims at 32 directions by default and accepts powers of two from 4 to 1024 (M1-09)', () => {
+    expect(DEFAULT_GAME_CONFIG.aimDirections).toBe(32);
+    for (const n of [4, 16, 32, 1024])
+      expect(resolveGameConfig({ aimDirections: n }).aimDirections).toBe(n);
+    for (const n of [2, 12, 33, 2048, 16.5, Number.NaN]) {
+      expect(() => resolveGameConfig({ aimDirections: n }), String(n)).toThrow(RangeError);
+    }
+  });
 });
 
 describe('core/config screen layout (decision D20)', () => {

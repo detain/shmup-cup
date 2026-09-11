@@ -180,6 +180,23 @@ describe('core/data loadContent', () => {
     expect(forward.weapons[0]?.behaviorId).toBe(forward.scripts.index.get('shot.straight'));
   });
 
+  it("interns the engine's extra sprites (M1-09) with the content's, sorted and deduplicated", () => {
+    const files = [playerFile(), weaponsFile(), enemiesFile()];
+    const { db, issues } = loadContent(files, {
+      extraSprites: ['bullets/round-pink', 'ships/kestrel', 'aaa/first'],
+    });
+    expect(issues).toEqual([]);
+    expect(db.sprites.names).toEqual([
+      'aaa/first',
+      'bullets/round-pink',
+      'enemies/drifter',
+      'ships/kestrel',
+      'shots/basic',
+    ]);
+    expect(db.ships[0]?.spriteId).toBe(3);
+    expect(loadContent([], { extraSprites: ['x/y'] }).db.sprites.names).toEqual(['x/y']);
+  });
+
   it('resolves cross-kind references, audio cues and null references', () => {
     const { db, issues } = loadContent([stageFile(), enemiesFile(), weaponsFile(), pathsFile()]);
     expect(issues).toEqual([]);

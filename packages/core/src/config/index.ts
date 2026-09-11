@@ -69,6 +69,11 @@ export interface GameConfig {
    * space with a static camera (the dev default until the scene flow of M1-16 picks stages).
    */
   readonly stage: string | null;
+  /**
+   * Directions aimed enemy shots snap to (decision D17: 32 on Normal for the retro feel, 16
+   * planned for Easy). A power of two from 4 to 1024 (the binary-angle circle).
+   */
+  readonly aimDirections: number;
 }
 
 /** Height in pixels of each HUD bar outside the playfield (decision D20). */
@@ -100,6 +105,7 @@ export const DEFAULT_GAME_CONFIG: GameConfig = Object.freeze({
   autofire: true,
   remoteMode: true,
   stage: null,
+  aimDirections: 32,
 });
 
 /**
@@ -108,14 +114,14 @@ export const DEFAULT_GAME_CONFIG: GameConfig = Object.freeze({
  * @remarks
  * Validated ranges (all integers, inclusive): `internalWidth` / `internalHeight`
  * 16–4096, `tickRate` 1–1000, `maxTicksPerFrame` 1–60, `seed` 0–0xFFFFFFFF,
- * `startingLives` 1–5. `stage` must be `null` or a non-empty string (whether the id exists is
- * checked by `createWorld` against the content). String presets and booleans are not validated
- * at runtime — the types cover them.
+ * `startingLives` 1–5, `aimDirections` a power of two in 4–1024. `stage` must be `null` or a
+ * non-empty string (whether the id exists is checked by `createWorld` against the content).
+ * String presets and booleans are not validated at runtime — the types cover them.
  *
  * @param overrides - Fields to change.
  * @returns A frozen, validated config.
- * @throws RangeError when a numeric field is not an integer or is out of range, or `stage` is
- *   neither `null` nor a non-empty string.
+ * @throws RangeError when a numeric field is not an integer or is out of range,
+ *   `aimDirections` is not a power of two, or `stage` is neither `null` nor a non-empty string.
  *
  * @example
  * ```ts
@@ -131,6 +137,12 @@ export function resolveGameConfig(overrides: Partial<GameConfig> = {}): GameConf
   requireInteger('maxTicksPerFrame', config.maxTicksPerFrame, 1, 60);
   requireInteger('seed', config.seed, 0, 0xffffffff);
   requireInteger('startingLives', config.startingLives, 1, 5);
+  requireInteger('aimDirections', config.aimDirections, 4, 1024);
+  if ((config.aimDirections & (config.aimDirections - 1)) !== 0) {
+    throw new RangeError(
+      `GameConfig.aimDirections must be a power of two, got ${config.aimDirections}`,
+    );
+  }
   const stage: unknown = config.stage;
   if (stage !== null && (typeof stage !== 'string' || stage === '')) {
     throw new RangeError(

@@ -7,7 +7,8 @@
  * - the back-end interfaces presentation packages implement (`@shmup/render-pixi` →
  *   {@link IRenderer}, `@shmup/audio-web` → {@link IAudio});
  * - the **render contract** (plan §3.4): the per-frame {@link RenderFrame} with a read-only
- *   {@link WorldView} (camera, parallax, terrain and a list of {@link SpriteBatchView}s),
+ *   {@link WorldView} (camera, parallax, terrain, a list of {@link SpriteBatchView}s and the
+ *   enemy lasers, {@link LaserView}),
  *   two {@link DrawList} command buffers (HUD and UI) and the {@link ScreenView} effects;
  * - the draw layers ({@link LayerId}), sprite flags ({@link SpriteFlag}) and the bitmap-text
  *   measuring contract ({@link TextMetrics}) the renderer implements for layout code.
@@ -32,6 +33,7 @@
  * **Public API.** Back-ends: {@link IRenderer}, {@link IAudio}, {@link AudioBus},
  * {@link AudioState}. Frame: {@link RenderFrame}, {@link ScreenView}. World:
  * {@link WorldView}, {@link CameraView}, {@link ParallaxView}, {@link TerrainView},
+ * {@link LaserView},
  * {@link SpriteBatchView}, {@link SpriteBatch}, {@link createSpriteBatch}, {@link pushSprite},
  * {@link SpriteFlag}. Layers: {@link LayerId}, {@link LAYER_COUNT}, {@link LAYER_NAMES}.
  * Command lists: {@link DrawList}, {@link createDrawList}, {@link DrawOp}, {@link TextAlign},
@@ -305,6 +307,40 @@ export interface TerrainView {
 }
 
 /**
+ * The enemy lasers of the world (`core/bullets`, plan M1-09), drawn on `LayerId.EnemyBullets`:
+ * laser `i` starts at world `(x[i], y[i])` and runs `length[i]` pixels in direction `angle[i]`
+ * (binary units, 1024 per turn, 0 = +x, clockwise on screen).
+ *
+ * @remarks
+ * `width[i]` is the beam's **drawn** width: 0 while the laser only telegraphs — the renderer
+ * draws a 1-px warning line then — and otherwise the beam sprite `spriteId[i]` stretched along
+ * the laser at that width (its frame `k` is a horizontal band `k + 1` px tall; the renderer picks
+ * the frame of the rounded width, so growing / fading beams never scale across). `flags[i]`
+ * carries {@link SpriteFlag} bits: `Hidden` is the warning line's blink. Slots `[0, count)` are
+ * drawn; the arrays are live sim state.
+ */
+export interface LaserView {
+  /** Slots in every array (the most lasers the view can show). */
+  readonly capacity: number;
+  /** Live lasers, packed in `[0, count)`. */
+  readonly count: number;
+  /** World x of each laser's origin. */
+  readonly x: ArrayLike<number>;
+  /** World y of each laser's origin. */
+  readonly y: ArrayLike<number>;
+  /** Direction in binary-angle units. */
+  readonly angle: ArrayLike<number>;
+  /** Length in pixels. */
+  readonly length: ArrayLike<number>;
+  /** Drawn width in pixels (0 = the telegraph line). */
+  readonly width: ArrayLike<number>;
+  /** Sprite id of the beam strip. */
+  readonly spriteId: ArrayLike<number>;
+  /** {@link SpriteFlag} bits (`Hidden` = not drawn this frame). */
+  readonly flags: ArrayLike<number>;
+}
+
+/**
  * Read-only view of the gameplay world for one frame (plan §3.4). All members are
  * references to live sim state — the renderer reads, never writes.
  */
@@ -321,6 +357,11 @@ export interface WorldView {
    * binds one sprite binding per entry the first time it sees this view.
    */
   readonly batches: readonly SpriteBatchView[];
+  /**
+   * The enemy lasers (plan M1-09), or `null` / absent for a world without them. Read once when
+   * the view is bound, like the batches.
+   */
+  readonly lasers?: LaserView | null;
 }
 
 /** Whole-screen effects for one frame (filled by the fx system, M1-14). */
