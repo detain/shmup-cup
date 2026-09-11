@@ -16,6 +16,10 @@
  *
  * Exits non-zero with a readable report on failure. The checks are also exported as
  * {@link checkTizenBundle} so the unit tests can run them against fixture folders.
+ *
+ * **Public API.** {@link checkTizenBundle}, {@link WIDGET_FILES}, {@link POLYFILL_BANNER}.
+ *
+ * @module
  */
 import { existsSync, readdirSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
@@ -24,7 +28,10 @@ import { gzipSync } from 'node:zlib';
 import { parse } from 'acorn';
 import { DIST_DIR } from './tizen-env.mjs';
 
-/** Files that make up the widget itself; everything else must live under `assets/`. */
+/**
+ * Files that make up the widget itself (rule 5 requires them); every other file in `dist/`
+ * must live under `assets/` (rule 6).
+ */
 export const WIDGET_FILES = ['app.js', 'config.xml', 'icon.png', 'index.html'];
 
 /** First characters of the globalThis polyfill banner that must open app.js. */

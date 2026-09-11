@@ -18,6 +18,14 @@
  * atomic writes (parallel builds may run it concurrently) and removal of stale pages.
  * Output is deterministic: two runs over the same inputs are byte-identical.
  *
+ * **Public API.** {@link generateAssets} (disk, cached — `pnpm assets`, the Vite plugin),
+ * {@link buildAtlas} (in memory), {@link collectSprites}, {@link computeInputHash},
+ * {@link AssetSourceError}, {@link pageFileName}, the path constants ({@link PIPELINE_DIR},
+ * {@link REPO_ROOT}, {@link DEFAULT_SOURCE_DIR}, {@link DEFAULT_OUT_DIR}, {@link ATLAS_DIR},
+ * {@link ATLAS_NAME}, {@link CACHE_FILE}) and the layout constants ({@link ATLAS_PADDING},
+ * {@link ATLAS_EXTRUDE}); typedef {@link GenerateResult}. Guide:
+ * `docs/dev/asset-pipeline.md`.
+ *
  * @module
  */
 import { createHash, randomBytes } from 'node:crypto';
@@ -75,13 +83,31 @@ export const CACHE_FILE = '.asset-cache.json';
 /** Bump to invalidate every cache when the output format changes without a code change. */
 const CACHE_VERSION = 1;
 
-/** Atlas layout: 1-px transparent padding and 1-px edge extrusion around every frame. */
+/** Atlas layout: transparent pixels to the right of and below every frame's border. */
 export const ATLAS_PADDING = 1;
+
+/**
+ * Atlas layout: width of the border around every frame that repeats its edge pixels, so
+ * sampling at a fractional offset never picks up a neighbour (tiles, the stretched
+ * `ui/pixel`). Frames can be at most `2048 - 2 * ATLAS_EXTRUDE` pixels per side.
+ */
 export const ATLAS_EXTRUDE = 1;
 
-/** Error thrown when source files are invalid; `issues` lists every problem. */
+/**
+ * Error thrown when source files are invalid; `issues` lists every problem and the message
+ * lists them one per line (`  - <path> <message>`), ready for a terminal.
+ *
+ * @example
+ * try {
+ *   buildAtlas();
+ * } catch (error) {
+ *   if (error instanceof AssetSourceError) console.error(error.issues.length, error.message);
+ * }
+ */
 export class AssetSourceError extends Error {
   /**
+   * Creates the error from the collected issues.
+   *
    * @param {AssetIssue[]} issues - The problems (at least one).
    */
   constructor(issues) {
@@ -90,7 +116,11 @@ export class AssetSourceError extends Error {
         issues.map((issue) => `  - ${issue.path} ${issue.message}`).join('\n'),
     );
     this.name = 'AssetSourceError';
-    /** @type {AssetIssue[]} */
+    /**
+     * Every problem found, in source order (`path` = `<file>:<json path>`).
+     *
+     * @type {AssetIssue[]}
+     */
     this.issues = issues;
   }
 }
@@ -110,6 +140,13 @@ function displayPath(path) {
 /**
  * Collects every sprite and font from the sources and generators, applies PNG overrides,
  * adds hit-flash silhouettes and resolves default anchors.
+ *
+ * @remarks
+ * Order of work: pixel maps and procedural sprites (a name defined twice is an issue) →
+ * PNG overrides by name → font sprites (`font/<name>`) → `<name>@flash` siblings for
+ * `hitFlash` sprites → default anchors (centre of frame 0). Never throws for bad sources:
+ * everything is reported in `issues`, and the caller decides ({@link buildAtlas} throws
+ * {@link AssetSourceError}).
  *
  * @param {{ sourceDir?: string }} [options] - Source root (default `assets/source/`).
  * @returns {{ sprites: SpriteDef[], fonts: Record<string, FontMetrics>, issues: AssetIssue[] }}

@@ -3,10 +3,13 @@
  *
  * **Status: placeholder.** Declares the intended public API only; no logic yet.
  *
- * **Responsibility.** Loads the sprite atlas(es) produced by the asset pipeline (`assets/generated/`,
- * Aseprite / free-tex-packer JSON + PNG), keeps every atlas ≤ 2048² (safe on TV GPUs),
- * sets nearest-neighbour sampling and resolves frame names to texture handles once at
- * load time so per-frame code works with numeric ids.
+ * **Responsibility.** Loads the sprite atlas produced by the M1-03 asset pipeline
+ * (`scripts/assets/`, `pnpm assets`): the manifest arrives inlined through
+ * `virtual:shmup-assets` (format: `scripts/assets/manifest.mjs`, typed in
+ * `types/virtual-modules.d.ts`), the pages (power-of-two, ≤ 2048² — safe on TV GPUs) are
+ * images loaded from the relative `pageUrls`. Sets nearest-neighbour sampling and resolves
+ * sprite and frame names (`ships/kestrel`, `ships/kestrel#0`) to numeric ids once at load
+ * time so per-frame code works with numbers; unknown names map to `ui/missing`.
  *
  * **Implements.**
  * - shmup_feat.md §18 — single 2048² sprite atlas where possible, batched rendering
@@ -35,7 +38,7 @@ export interface Atlas {
   /**
    * Resolves a frame name to its numeric id (do this once at load, not per frame).
    *
-   * @param name - Frame name, e.g. `'ship/idle/0'`.
+   * @param name - Frame name, `<sprite>#<index>`, e.g. `'ships/kestrel#0'`.
    * @returns The frame id, or -1 when the atlas has no such frame.
    */
   frameId(name: string): FrameId;

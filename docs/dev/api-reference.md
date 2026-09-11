@@ -274,7 +274,8 @@ Placeholders: `sfx` (`SfxSpec`, `SfxPriority`), `music` (`MusicTrack`, `MusicLoo
 | `PALETTE`, `PaletteColor` | `palette` | Placeholder colours (lifted navy background for the VA panels) |
 
 Placeholders: `atlas`, `layers`, `sprites`, `text`, `ui`, `particles`, `effects`,
-`debug`.
+`debug`. The `atlas` module (M1-04) will consume the manifest of `virtual:shmup-assets`
+(see [Asset pipeline](#asset-pipeline-scriptsassets) below).
 
 ## Apps
 
@@ -303,7 +304,7 @@ These are not libraries, but their modules export testable functions.
 | `TizenApi`, `TizenPlatformOptions`, `StorageLike`, `VisibilitySource` | `platform` | Types |
 | `REMOTE_KEYS_TO_REGISTER`, `TIZEN_BACK_KEY_CODE` | `platform` | `MediaPlayPause`, `ChannelUp/Down`, `ColorF0Red…ColorF3Blue`; `10009` |
 | `startFrameLoop`, `FrameLoop`, `FrameScheduler` | `frame-loop` | Same as the web app |
-| `checkTizenBundle(distDir)` | `scripts/check-bundle.mjs` | → `{ problems, files, code }`; `POLYFILL_BANNER` |
+| `checkTizenBundle(distDir)` | `scripts/check-bundle.mjs` | → `{ problems, files, code }`: one script `app.js`, classic deferred tag, ES2018 parse, polyfill banner, widget files present, every other file under `dist/assets/`; `POLYFILL_BANNER`, `WIDGET_FILES` (`app.js`, `config.xml`, `icon.png`, `index.html`) |
 | `tizenCli()`, `sdbCli()`, `requireEnv()`, `resolveTarget()`, `run()`, `findWgt()`, `requireBuild()`, `APP_DIR`, `DIST_DIR`, `APP_ID` | `scripts/tizen-env.mjs` | Helpers of the Tizen CLI wrappers |
 
 Placeholders: `device-info` (`DeviceInfo`), `live-reload` (`LiveReloadOptions`).
@@ -328,3 +329,40 @@ Placeholders: `FileStore` (`saves.ts`), `SteamService` (`steam.ts`).
 | `shmupContent({ root? })` | `vite.shared.ts` | Vite plugin → `virtual:shmup-content`: every shipped `content/**/*.json` inlined into the bundle, sorted by path, `example.*.json` skipped, full reload on change |
 | `readContentFiles(root?)`, `CONTENT_MODULE_ID`, `ContentFileRecord`, `ShmupContentOptions` | `vite.shared.ts` | The Node-side reader behind the plugin (also used by `pnpm content:check`): recursive, `example.*` skipped, sorted by path; `SyntaxError` naming the file on bad JSON, `[]` for a missing root |
 | `virtual:shmup-content` | `types/virtual-modules.d.ts` | Ambient module declaration: `default: readonly { path, data }[]` |
+| `shmupAssets({ sourceDir?, outDir? })` | `vite.shared.ts` | Vite plugin: runs the cached asset pipeline in `buildStart`, serves `virtual:shmup-assets`, emits the atlas pages into `dist/assets/atlas/` in builds; dev middleware for `<base>assets/atlas/*`, regenerate + full reload on `assets/source/` edits (pipeline-code edits: Vite restarts, or a warning). Throws `AssetSourceError` from the build hooks on invalid sources |
+| `ASSETS_MODULE_ID` (`'virtual:shmup-assets'`), `ATLAS_URL_DIR` (`'assets/atlas'`), `ShmupAssetsOptions` | `vite.shared.ts` | The virtual id, the relative page directory used by `pageUrls` and the build, the options type |
+| `virtual:shmup-assets` | `types/virtual-modules.d.ts` | `manifest: AtlasManifest` (inlined), `pageUrls: readonly string[]` (relative, one per page), `default: { manifest, pageUrls }`; types `AtlasManifest`, `AtlasPage`, `AtlasFrame`, `AtlasSprite`, `AtlasFont`, `AtlasGlyph` |
+
+### Asset pipeline (`scripts/assets/`)
+
+Plain Node ES modules with JSDoc types (Node-side TypeScript imports them through
+`allowJs`). Guide: [asset-pipeline.md](asset-pipeline.md). Entry point:
+`scripts/generate-assets.mjs` (`pnpm assets`; exports `parseArgs(argv)` →
+`{ force, quiet, outDir?, sourceDir? }`, throws on unknown flags).
+
+| Export | File | Summary |
+|---|---|---|
+| `generateAssets({ sourceDir?, outDir?, force?, log? })` | `pipeline.mjs` | → `GenerateResult { cached, inputHash, manifest, atlasDir, files }`; writes `atlas/main*.png` + `atlas/main.json` + `.asset-cache.json` atomically, skips when the input hash and every output digest match, removes stale pages; throws `AssetSourceError` (nothing written) |
+| `buildAtlas({ sourceDir?, maxPageSize? })` | `pipeline.mjs` | In memory → `{ manifest, pages: { file, image, png }[], sprites }`; throws `AssetSourceError` (invalid sources, a frame too large for a page) or `RangeError` (`maxPageSize` not a power of two) |
+| `collectSprites({ sourceDir? })` | `pipeline.mjs` | → `{ sprites, fonts, issues }`: pixel maps + generators, PNG overrides, fonts, `@flash` siblings, default anchors, sorted by name |
+| `computeInputHash(sourceDir?)` | `pipeline.mjs` | Hex SHA-256 of the pipeline code as loaded by this process (+ zlib, pngjs versions) and the current sprite/font sources |
+| `AssetSourceError` | `pipeline.mjs` | `Error` with `issues: AssetIssue[]`; the message lists every issue |
+| `pageFileName(i)`, `PIPELINE_DIR`, `REPO_ROOT`, `DEFAULT_SOURCE_DIR`, `DEFAULT_OUT_DIR`, `ATLAS_DIR` (`'atlas'`), `ATLAS_NAME` (`'main'`), `CACHE_FILE`, `ATLAS_PADDING` (1), `ATLAS_EXTRUDE` (1) | `pipeline.mjs` | Paths and layout constants; `pageFileName(0)` = `main.png`, `pageFileName(1)` = `main-1.png` |
+| `AtlasManifest`, `ManifestPage`, `ManifestFrame`, `ManifestSprite` | `manifest.mjs` | JSDoc typedefs of the manifest (mirrored by `virtual:shmup-assets`) |
+| `MANIFEST_FORMAT_VERSION` (1), `frameName(sprite, i)` (→ `<sprite>#<i>`), `formatManifest(m)` | `manifest.mjs` | Format version, frame naming, byte-stable serialiser (sorted keys, one entry per line) |
+| `findMissingSprites(manifest, names, label = 'sprites')` | `manifest.mjs` | → `AssetIssue[]`, one per name not in `manifest.sprites` (`<label>[<i>]`); used by `pnpm content:check` |
+| `parseSpriteSource(json, file, expectedName?)` | `sprite-source.mjs` | Validates one `*.sprite.json` → `{ sprite: SpriteDef \| null, issues }`; never throws on bad data |
+| `loadSpriteSources(dir, displayRoot)` | `sprite-source.mjs` | → `{ sprites, overrides: PngSprite[], issues }` for a `sprites/` tree |
+| `readPngFrames(image, sidecar, file, issues)`, `applyPngOverrides(sprites, overrides)` | `sprite-source.mjs` | Cut frames / tags / pivot out of a PNG + Aseprite export; merge overrides by name (frames by index, extras appended, inputs untouched) |
+| `listFiles(dir)`, `SPRITE_NAME_PATTERN`, `ANIMATION_NAME_PATTERN`, `SPRITE_SOURCE_SUFFIX` | `sprite-source.mjs` | Sorted recursive listing (`/` separators, `[]` for a missing dir); name rules |
+| `SpriteDef`, `PngSprite`, `AssetIssue` | `sprite-source.mjs` | Typedefs: `{ name, anchor, hitFlash, frames, animations, origin }`; `{ path, message }` (same shape as `ValidationIssue`) |
+| `parseFontSource(json, file)`, `loadFontSources(dir, displayRoot)`, `buildFontSprite(font)` | `font.mjs` | Validate `*.font.json`; → `{ sprite: font/<name>, metrics: FontMetrics }` |
+| `FontDef`, `FontMetrics`, `FONT_SOURCE_SUFFIX`, `FONT_NAME_PATTERN`, `ASCII_PRINTABLE` | `font.mjs` | Font typedefs and rules; `ASCII_PRINTABLE` = code points 32…126 |
+| `packRects(items, { maxSize?, minSize?, padding?, extrude? })` | `packer.mjs` | Deterministic MaxRects → `PackResult { pages, placements }` (input order); throws `RangeError` on duplicates, bad sizes/options, an item too large for `maxSize²`. `MAX_PAGE_SIZE` = 2048; typedefs `PackItem`, `PackOptions`, `Placement`, `PackResult` |
+| `encodePng(image)`, `decodePng(bytes)`, `crc32(bytes, crc?)`, `PNG_SIGNATURE` | `png.mjs` | Zero-dependency RGBA encoder (deterministic per zlib version; `RangeError` on a bad buffer); `pngjs` decoder for any PNG → RGBA |
+| `createImage`, `parseColor`, `setPixel`, `getPixel`, `blit`, `crop`, `flipHorizontal`, `flipVertical`, `imageFromRows`, `imagesEqual`; `Image`, `Rgba` | `image.mjs` | Straight-alpha RGBA rasters `{ width, height, data }` |
+| `whiteSilhouette(frame)`, `makeFlashSprite(sprite)`, `FLASH_SUFFIX` (`'@flash'`) | `flash.mjs` | D30 hit-flash sprites |
+| `createAssetRng(seed)` → `AssetRng { nextU32, nextFloat, rangeInt, chance }`, `hash2(x, y, seed)` | `rng.mjs` | sfc32 with its own splitmix32 seeding (sequences differ from `core/rng`); stateless position hash for tiling textures |
+| `PROCEDURAL_GENERATORS`, `generateProceduralSprites()` | `procedural/index.mjs` | Registry `{ id, generate }[]`; every generator's sprites in registry order |
+| `DIRECTIONS_8`, `color`, `mix`, `withAlpha`, `seedOf`, `makeSprite` | `procedural/common.mjs` | Exact 22.5° headings, colour helpers, FNV-1a name seed, `SpriteDef` builder (`origin: procedural:<id>`) |
+| `generate()` per module; `BULLET_COLORS`, `METER_LABELS`, `TERRAIN_TILES`, `TILE_SIZE` (8), `STAR_TILE_SIZE` (128) | `procedural/*.mjs` | The generators (`bullets`, `explosions`, `hud`, `items`, `particles`, `shields`, `starfield`, `terrain`, `ui`) and their data |

@@ -33,8 +33,10 @@ Player weapon definitions for both power-up models, loaded by the core's `weapon
 ```
 
 `behavior` names a coded behaviour in `packages/core/src/weapons`; `sprite` names an atlas
-frame. Both are resolved to numeric ids at load (`behaviorId`, `spriteId`), so nothing looks
-up a string per tick. Weapon ids must be unique across all weapon files.
+sprite (e.g. `shots/basic` = `assets/source/sprites/shots/basic.sprite.json`;
+`pnpm content:check` fails if it does not exist). Both are resolved to numeric ids at load
+(`behaviorId`, `spriteId`), so nothing looks up a string per tick. Weapon ids must be unique
+across all weapon files.
 
 [`type-a.weapons.json`](type-a.weapons.json) is the meter-mode Type A arsenal of the M1
 slice (`shot.basic`, `shot.double`, `laser.pierce`, `missile.ground`; preset `type-a`).

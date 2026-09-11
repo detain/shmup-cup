@@ -6,6 +6,10 @@
  * a generator changes no existing pixels. Real art replaces any of these frames by
  * dropping a PNG with the same sprite name into `assets/source/sprites/`.
  *
+ * **Public API.** {@link PROCEDURAL_GENERATORS}, {@link generateProceduralSprites}. To add a
+ * generator: write `procedural/<id>.mjs` exporting `generate()`, register it here, and test
+ * its shapes in `test/scripts/assets/procedural.test.ts`.
+ *
  * @module
  */
 import * as bullets from './bullets.mjs';

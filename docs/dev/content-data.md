@@ -120,7 +120,7 @@ absent optional reference, or an id that did not resolve (which is also an issue
 
 | `ContentRefKind` | Resolved against | Unknown id |
 |---|---|---|
-| `sprite` | interned: `db.sprites` (sorted names) | never an issue here — M1-03 checks names against the atlas |
+| `sprite` | interned: `db.sprites` (sorted names) | never an issue here — `pnpm content:check` checks the names against the atlas (M1-03) |
 | `script` | interned: `db.scripts` (sorted names) | an issue only when `options.knownScripts` is given (M1-08 passes the behaviour registry) |
 | `ship`, `weapon`, `enemy`, `stage` | `db.shipIndex`, `weaponIndex`, `enemyIndex`, `stageIndex` — across all files, in any order | issue |
 | `sfx`, `music` | `SFX_CUES` / `MUSIC_CUES` in `core/events` (own properties only, so `"toString"` does not resolve) | issue |
@@ -271,7 +271,10 @@ pnpm test:integration                       # includes content:check and the plu
 - weapon presets only use weapons of the matching slot, every shipped weapon has a sound
   cue, and the KESTREL has the six D3 speed levels;
 - the JSONC format samples in the content READMEs still validate (unknown-id issues
-  ignored, since samples refer to ids defined elsewhere).
+  ignored, since samples refer to ids defined elsewhere);
+- every sprite name of the shipped content (`db.sprites.names`) exists in the atlas the
+  asset pipeline builds (`findMissingSprites`, M1-03 — see
+  [asset-pipeline.md](asset-pipeline.md#sprite-names-used-by-content)).
 
 A failure prints the issue list (`path` + `message`) in the Vitest diff.
 
@@ -303,7 +306,8 @@ A failure prints the issue list (`path` + `message`) in the Vitest diff.
 
 ## Next steps that build on this page
 
-M1-03 checks every name in `db.sprites` against the generated atlas; M1-04's `@shmup/shell`
+M1-03 (done) checks every name in `db.sprites` against the generated atlas
+([asset-pipeline.md](asset-pipeline.md)); M1-04's `@shmup/shell`
 imports `virtual:shmup-content`, shows `issues` on the boot error screen and passes `db` to
 `createGame`; M1-05 routes `input-profiles` files out of `foreign`; M1-06 reads the KESTREL
 spec; M1-07 extends `stage` (and adds `paths`/`tileset`); M1-08 passes `knownScripts` and

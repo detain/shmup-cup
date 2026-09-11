@@ -30,6 +30,10 @@
  * (frame names `font/<name>#<i>`, anchor `[0, 0]` = the cell's top-left); the metrics are
  * `{ sprite, lineHeight, cellWidth, cellHeight, glyphs: { "<code point>": { frame, advance } } }`.
  *
+ * **Public API.** {@link loadFontSources}, {@link parseFontSource}, {@link buildFontSprite},
+ * {@link FONT_SOURCE_SUFFIX}, {@link FONT_NAME_PATTERN}, {@link ASCII_PRINTABLE}; typedefs
+ * {@link FontDef}, {@link FontMetrics}.
+ *
  * @module
  */
 import { readFileSync } from 'node:fs';

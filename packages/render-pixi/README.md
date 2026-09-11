@@ -26,9 +26,9 @@ renderer.render(game.renderFrame());
 | `viewport` | partial | Integer-scale letterbox math (pure) |
 | `test-pattern` | implemented | Calibration scene |
 | `palette` | partial | Placeholder colours (VA-panel-friendly, no pure black) |
-| `atlas` | placeholder | Texture atlases ≤ 2048² |
+| `atlas` | placeholder | Texture atlases ≤ 2048² — will load the `virtual:shmup-assets` manifest and pages built by the asset pipeline ([`docs/dev/asset-pipeline.md`](../../docs/dev/asset-pipeline.md), M1-04) |
 | `layers` | placeholder | Draw-order layer stack (bullets above explosions) |
-| `sprites` | placeholder | Sprite views over sim pools, interpolation, tint flash |
+| `sprites` | placeholder | Sprite views over sim pools, interpolation, hit flash (swap to the `<name>@flash` sprite) |
 | `text` | placeholder | Bitmap-font text |
 | `ui` | placeholder | HUD + canvas menus |
 | `particles` | placeholder | Pooled cosmetic particles |

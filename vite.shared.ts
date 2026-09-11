@@ -296,6 +296,14 @@ export function shmupAssets(options: ShmupAssetsOptions = {}): Plugin {
     },
     /**
      * Generates the atlas (cached) and, in builds, emits its pages into `assets/atlas/`.
+     *
+     * @remarks
+     * Runs for the dev server too, so a fresh checkout serves an atlas without a prior
+     * `pnpm assets`. Pages are emitted under fixed names (no content hash): the inlined
+     * manifest refers to them by file name.
+     *
+     * @throws AssetSourceError when an asset source is invalid; Vite reports it as a build
+     *   (or dev-server start-up) error.
      */
     buildStart() {
       const generated = generate();
@@ -341,6 +349,10 @@ export function shmupAssets(options: ShmupAssetsOptions = {}): Plugin {
      */
     configureServer(server) {
       const prefix = `${server.config.base}${ATLAS_URL_DIR}/`;
+      // Serves `<base>assets/atlas/<file>` from the output directory. Only plain atlas file
+      // names (`ATLAS_FILE_PATTERN`) that exist are answered; anything else — other paths,
+      // traversal attempts, malformed percent-encoding — falls through to Vite (404).
+      // Responses are `no-cache`, so a regenerated atlas shows up on the next reload.
       server.middlewares.use((req, res, next) => {
         const url = (req.url ?? '').split('?')[0] ?? '';
         if (!url.startsWith(prefix)) {

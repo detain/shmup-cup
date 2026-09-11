@@ -61,3 +61,7 @@ assets/source/fonts/*.font.json ────────┘                     
 The shipped apps read only `assets/generated/` — the `shmupAssets()` plugin (in
 [`vite.shared.ts`](../vite.shared.ts)) inlines the manifest and copies the atlas pages to
 `dist/assets/atlas/` — never `assets/source/`.
+
+Developer guide (every format in detail, the packer, the cache, the Vite plugin, how to add
+a sprite, a generator or real art, gotchas):
+[`docs/dev/asset-pipeline.md`](../docs/dev/asset-pipeline.md).

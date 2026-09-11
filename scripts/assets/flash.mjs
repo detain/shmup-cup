@@ -7,6 +7,8 @@
  * frame index, same anchor), which keeps every sprite on one atlas page and one batch —
  * Pixi's tint is multiply-only, so tinting cannot turn a sprite white.
  *
+ * **Public API.** {@link makeFlashSprite}, {@link whiteSilhouette}, {@link FLASH_SUFFIX}.
+ *
  * @module
  */
 import { createImage } from './image.mjs';

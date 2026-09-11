@@ -122,7 +122,8 @@ ES5 and linted with `ecmaVersion: 5`.
 
 Prettier 3 (`.prettierrc.json`: 100 columns, single quotes, trailing commas): run
 `pnpm format` before committing. Markdown and XML are excluded on purpose (hand-made
-tables and the Tizen `config.xml`); keep Markdown tables readable by hand. Prettier does
+tables and the Tizen `config.xml`), and so is `assets/source/` (pixel rows and font glyphs
+are laid out one row per line); keep Markdown tables readable by hand. Prettier does
 not wrap comments — keep docblock lines within 100 columns yourself. `.editorconfig`
 sets UTF-8, LF (CRLF for `.bat`/`.cmd`/`.ps1`), 2-space indentation.
 
@@ -137,6 +138,10 @@ Only original names, art and music — never Konami or Taito names or assets
 | Shipped content and the examples validate with zero issues; files are named `<folder>/<name>.<kind>.json`; README samples still match the schema | `pnpm content:check` (`test/integration/content.test.ts`) |
 | Content refers to other content, sprites, scripts and cues by string id declared with `s.ref(kind)`; systems read the resolved `<field>Id`, never the string | review; [content-data.md](content-data.md) |
 | A bare array or record of references is not allowed — wrap each id in an object | `s.array` / `s.record` throw a `TypeError` at construction |
+| Placeholder art is source data, never a hand-drawn binary: a `*.sprite.json` pixel map under `assets/source/sprites/` or a seeded generator in `scripts/assets/procedural/` (plan §1.5). PNGs there are real-art overrides only | review; [asset-pipeline.md](asset-pipeline.md) |
+| A sprite's name is its path below `assets/source/sprites/` (lower-case kebab segments, `/`-separated) and the file's `name` field repeats it | `scripts/assets/sprite-source.mjs` (source issue) |
+| Every sprite name the shipped content uses exists in the atlas | `pnpm content:check` (`findMissingSprites`) |
+| Procedural generators seed from the sprite name (`seedOf`) and use only exactly rounded maths (no `Math.sin`/`cos`), so the atlas is byte-identical on every machine | review; `test/scripts/assets/pipeline*.test.ts` (byte-identical runs) |
 
 ## Checklists
 

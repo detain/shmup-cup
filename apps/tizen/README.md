@@ -10,8 +10,8 @@ pnpm --filter @shmup/tizen build   # vite build + scripts/check-bundle.mjs
 pnpm --filter @shmup/tizen dev     # desktop-browser preview (no window.tizen; Back does nothing)
 ```
 
-`dist/` then contains `index.html`, **one classic IIFE script `app.js`**, `config.xml` and
-`icon.png`. The build (`vite.config.ts`) follows `shmup_tech.md` §2.1:
+`dist/` then contains `index.html`, **one classic IIFE script `app.js`**, `config.xml`,
+`icon.png` and the sprite-atlas pages under `assets/atlas/` (`main.png`). The build (`vite.config.ts`) follows `shmup_tech.md` §2.1:
 
 - syntax lowered with `build.target: ['chrome69', 'es2018']`;
 - `format: 'iife'`, no code splitting, no module preload; Vite's
@@ -23,10 +23,16 @@ pnpm --filter @shmup/tizen dev     # desktop-browser preview (no window.tizen; B
   cannot `fetch()` local files (decision D25). No content files are copied into `dist/`.
   The shell imports the module from M1-04 on; see
   [`docs/dev/content-data.md`](../../docs/dev/content-data.md).
+- **`shmupAssets()`** (same file) runs the placeholder asset pipeline, inlines the atlas
+  manifest into `app.js` as `virtual:shmup-assets` and emits the atlas pages into
+  `dist/assets/atlas/` with fixed names; the app loads them with relative URLs, which work
+  from `file://` (decision D25). See
+  [`docs/dev/asset-pipeline.md`](../../docs/dev/asset-pipeline.md).
 
 `scripts/check-bundle.mjs` fails the build unless: exactly one script exists, it is loaded
 as a classic deferred script, **it parses with acorn as an ES2018 script**, it starts with
-the polyfill, and `config.xml` / `icon.png` are present. The checks are also exported as
+the polyfill, `config.xml` / `icon.png` are present, and every other file lives under
+`dist/assets/` (so nothing unexpected is packaged into the `.wgt`). The checks are also exported as
 `checkTizenBundle(distDir)` for the tests.
 
 ## Tests
@@ -35,7 +41,9 @@ the polyfill, and `config.xml` / `icon.png` are present. The checks are also exp
 
 - `test/build/tizen-build.test.ts` runs the real Vite build into a temp folder, applies the
   bundle checks, parses `app.js` with acorn (ES2018, script) and executes it in a V8 realm
-  with `globalThis` removed (like Chrome 69) up to the app entry;
+  with `globalThis` removed (like Chrome 69) up to the app entry; it also checks that
+  `dist/` holds exactly the widget files plus the atlas pages, byte-identical to the
+  pipeline output;
 - `test/build/vite-config.test.ts` covers the classic-script rewrite, the build target and
   the polyfill; `test/scripts/` covers the bundle checker and the Tizen CLI wrappers (with
   `spawnSync` mocked — nothing is ever executed);

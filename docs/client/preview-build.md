@@ -35,15 +35,21 @@ There is no sound yet.
 ### What changed lately
 
 Work has moved to the game engine itself — the seeded randomness, angle tables, event
-queue and object storage the real game needs — and to the **game data**: the first ship
-(KESTREL, with its six speed levels) and its Type A weapons are now written down as data
-files that the build checks automatically. None of it is visible on screen yet, so the
-calibration screen looks exactly as it did before and there is nothing new to test on the
-monitors. Re-test only when this page says the picture changed.
+queue and object storage the real game needs — to the **game data** (the first ship,
+KESTREL, with its six speed levels, and its Type A weapons, written down as data files the
+build checks automatically) and now to the **game's graphics**: the build produces a
+sprite sheet with placeholder art for the ship, its shots and Options, six small enemies,
+boss parts, enemy bullets, explosions, items, the power meter, terrain tiles, star layers
+and an original pixel font. The game does not draw any of it yet, so the calibration
+screen looks exactly as it did before and there is nothing new to test on the monitors.
+Re-test only when this page says the picture changed.
 
-Good to know for later: the game data travels **inside** the app. There are no extra files
-to copy to the monitor or to a USB stick — installing the `.wgt` (or opening the browser
-build) is all it takes, and the TV never needs a network connection to load it.
+Good to know for later: the game data travels **inside** the app, and the sprite sheet is a
+small picture file packed into the same `.wgt` (in its `assets/` folder). There are no extra
+files to copy to the monitor or to a USB stick — installing the `.wgt` (or opening the
+browser build) is all it takes, and the TV never needs a network connection to load it.
+The placeholder art is original and will be swapped for finished art later without
+changing how you install or play.
 
 ## On the Samsung Smart Monitor / TV
 
@@ -105,3 +111,4 @@ last command to start in fullscreen. Close the window (or Alt+F4 / Cmd+Q) to qui
 | Edges of the checker border missing on the TV | Check the monitor's picture size setting ("Fit to screen" / no overscan) and report which edge is missing |
 | The app does not appear on the TV | See the troubleshooting table in [install-on-tv.md](install-on-tv.md#troubleshooting) |
 | Electron says it is not installed | It was skipped during installation; run `pnpm rebuild electron` |
+| `pnpm dev` or `pnpm build` stops with "asset sources are invalid" | A graphics source file in the checkout is broken. Update to the latest version of the repository; if it persists, report the file names the message lists |

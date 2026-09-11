@@ -24,6 +24,12 @@
  *   code point.
  * - Every object is written with sorted keys, so the file is byte-stable.
  *
+ * **Public API.** {@link MANIFEST_FORMAT_VERSION}, {@link frameName},
+ * {@link formatManifest}, {@link findMissingSprites}; typedefs {@link AtlasManifest},
+ * {@link ManifestPage}, {@link ManifestFrame}, {@link ManifestSprite}. The TypeScript view
+ * of the same format is the `virtual:shmup-assets` declaration in
+ * `types/virtual-modules.d.ts` — change both together (and bump the version).
+ *
  * @module
  */
 

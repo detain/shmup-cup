@@ -45,8 +45,8 @@ desktop app, run `pnpm rebuild electron` without the variable set.
 | `pnpm test:integration` | Only the repo-level `test/` project |
 | `pnpm format` / `pnpm format:check` | Prettier write / check (research docs at the root are ignored) |
 | `pnpm clean` | Removes `dist/`, `coverage/`, `.turbo/` everywhere (never `node_modules`) |
-| `pnpm assets` | Placeholder asset pipeline (`scripts/generate-assets.mjs`): sprite pixel maps, procedural generators, PNG overrides and fonts → `assets/generated/atlas/main.png` + `main.json`; skipped when inputs are unchanged, `--force` to rebuild; also runs before every `build` / `dev` (Turborepo `//#assets`) |
-| `pnpm content:check` | Validates every JSON file under `content/` with `loadContent()` from `@shmup/core` — the shipped files and the `example.*.json` samples as two independent sets, plus the README format samples (`test/integration/content.test.ts`; also part of `pnpm test`). See [content-data.md](content-data.md#commands) |
+| `pnpm assets` | Placeholder asset pipeline (`scripts/generate-assets.mjs`): sprite pixel maps, procedural generators, PNG overrides and fonts → `assets/generated/atlas/main.png` + `main.json`; skipped when inputs are unchanged; `--force` rebuilds, `--out DIR` / `--source DIR` redirect, `--quiet` silences; exit 1 lists invalid sources. Also runs before every `build` / `dev` (Turborepo `//#assets`) and inside Vite builds (`shmupAssets()`). See [asset-pipeline.md](asset-pipeline.md#running-it) |
+| `pnpm content:check` | Validates every JSON file under `content/` with `loadContent()` from `@shmup/core` — the shipped files and the `example.*.json` samples as two independent sets, plus the README format samples — and checks that every sprite name of the shipped content exists in the atlas (`test/integration/content.test.ts`; also part of `pnpm test`). See [content-data.md](content-data.md#commands) |
 | `pnpm trig:tables` | Regenerates the committed `packages/core/src/math/trig-table.ts` (`scripts/gen-trig-tables.mjs`; `--check` verifies, `--out FILE` writes elsewhere). Re-run it in the same commit whenever the script changes — a test diffs the committed file |
 
 Per project: `pnpm --filter <name> <script>`, e.g. `pnpm --filter @shmup/core test`,
@@ -57,7 +57,13 @@ Per project: `pnpm --filter <name> <script>`, e.g. `pnpm --filter @shmup/core te
 
 `turbo.json` defines the task graph:
 
-- `build` depends on `^build` (dependencies first) and caches `dist/**`.
+- `build` depends on `^build` (dependencies first) and on the root task `//#assets`, and
+  caches `dist/**`.
+- `//#assets` runs `pnpm assets` (inputs `assets/source/**`, `scripts/assets/**`,
+  `scripts/generate-assets.mjs`; outputs `assets/generated/**`). `dev` and the `test:e2e`
+  entry (reserved for M1-04) depend on it too. The pipeline also runs from the
+  `shmupAssets()` Vite plugin and has its own input-hash cache, so a Turborepo cache miss
+  costs one hash when nothing changed ([asset-pipeline.md](asset-pipeline.md#running-it)).
 - `typecheck`, `lint` and `test` depend on the no-op `transit` task, so their caches are
   invalidated by upstream *source* changes without forcing upstream builds — they read
   workspace packages from source (`@shmup/source` condition), not from `dist/`.
@@ -65,10 +71,12 @@ Per project: `pnpm --filter <name> <script>`, e.g. `pnpm --filter @shmup/core te
   `clean` are never cached.
 - `globalDependencies` (`eslint.config.js`, `tsconfig.base.json`, `.browserslistrc`,
   shared Vite/Vitest configs …) invalidate every cache when they change. They also list
-  `content/**` and `types/**`: both live outside any package, yet the app builds inline
-  `content/` through `virtual:shmup-content` and the app tsconfigs include
-  `types/virtual-modules.d.ts`. Without them, editing only a content file would replay a
-  cached `dist/` with stale inlined content. Any new root-level input a task reads belongs here too.
+  `content/**`, `types/**`, `assets/source/**` and `scripts/assets/**`: all live outside
+  any package, yet the app builds inline `content/` through `virtual:shmup-content` and the
+  atlas manifest through `virtual:shmup-assets`, the app tsconfigs include
+  `types/virtual-modules.d.ts`, and the test tasks run real builds. Without them, editing
+  only a content file or a sprite would replay a cached `dist/` with stale inlined data.
+  Any new root-level input a task reads belongs here too.
 
 A cache hit prints `cache hit, replaying logs`. To force a rerun: `pnpm turbo run test --force`.
 
@@ -77,8 +85,9 @@ A cache hit prints `cache hit, replaying logs`. To force a rerun: `pnpm turbo ru
 | Project | Output | Notes |
 |---|---|---|
 | `packages/*` | `dist/*.js` + `.d.ts` (ES2018) | `tsconfig.build.json` switches the `@shmup/source` condition off so dependents' types come from `dist/` |
-| `apps/web` | `apps/web/dist/` | Vite default (modern) target, `base: './'` (relocatable — required by Electron's `app://`) |
-| `apps/tizen` | `apps/tizen/dist/`: `index.html`, `app.js`, `config.xml`, `icon.png` | Chromium 69 contract below; packaging adds a `.wgt` next to them |
+| `apps/web` | `apps/web/dist/` (+ `assets/atlas/main.png`) | Vite default (modern) target, `base: './'` (relocatable — required by Electron's `app://`) |
+| `apps/tizen` | `apps/tizen/dist/`: `index.html`, `app.js`, `config.xml`, `icon.png`, `assets/atlas/main.png` | Chromium 69 contract below; packaging adds a `.wgt` next to them |
+| repo root | `assets/generated/atlas/main.png` (+ `main-1.png` …), `main.json`, `assets/generated/.asset-cache.json` | `pnpm assets` / `//#assets`; git-ignored. The app builds copy the pages and inline the manifest |
 | `apps/electron` | `dist/main/*.js`, `dist/preload/preload.cjs`, `dist/renderer/` (copy of `apps/web/dist`) | Needs `@shmup/web` built first (Turborepo does it) |
 
 ## The Tizen build contract (Chromium 69)
@@ -97,9 +106,11 @@ Tizen 5.5 runs web apps in **Chromium 69** (`shmup_tech.md` §2.1). `apps/tizen/
 
 `scripts/check-bundle.mjs` runs after every Tizen build and fails it unless dist/ has
 exactly one script `app.js`, `index.html` loads it as a deferred classic script, `app.js`
-**parses with acorn as an ES2018 script** and starts with the polyfill banner, and
-`config.xml` / `icon.png` are present. `apps/tizen/test/build/tizen-build.test.ts` also
-executes the bundle in a V8 realm with `globalThis` deleted.
+**parses with acorn as an ES2018 script** and starts with the polyfill banner,
+`config.xml` / `icon.png` are present, and every other file lives under `dist/assets/`
+(the atlas pages — anything else would be packaged into the `.wgt` by accident).
+`apps/tizen/test/build/tizen-build.test.ts` also executes the bundle in a V8 realm with
+`globalThis` deleted.
 
 Syntax is lowered by the build, **APIs are not polyfilled** — so runtime APIs newer than
 Chrome 69 must not be used in shipped code. `eslint-plugin-compat` (browserslist
@@ -166,7 +177,9 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   folders — the slowest tests in the repo.
 - The Tizen CLI wrappers are tested with `spawnSync` mocked; nothing is ever executed.
 - Repo-level integration tests (`test/`) cover cross-package behaviour, lint-rule
-  enforcement and skeleton invariants (see [../../test/README.md](../../test/README.md)).
+  enforcement and skeleton invariants, plus the root Node scripts (`test/scripts/`,
+  including every asset-pipeline module) and the Vite plugins, some of which start a real
+  dev server or build (see [../../test/README.md](../../test/README.md)).
 
 ## CI
 
@@ -190,4 +203,8 @@ whenever dependencies change, or the frozen install fails.
 | Electron window blank: "Web build not found" at build | Build `@shmup/web` first (`pnpm build` does it via Turborepo) |
 | `pnpm content:check` (or `pnpm test`) lists `path` / `message` issues | A content file breaks its schema (`unknown field`, a bound, an id that does not resolve). The path is `<file>:<json path>`; fix the file or, if the format changed on purpose, the schema in `packages/core/src/data` — see [content-data.md](content-data.md#gotchas) |
 | Build fails with `SyntaxError: <file>.json: …` from `shmup:content` | A file under `content/` is not valid JSON (comments and trailing commas are not allowed; only the README samples are JSONC) |
+| `asset sources are invalid (N issues)` from `pnpm assets`, `pnpm build` or `pnpm dev` | A sprite pixel map, PNG override or font breaks its format; every line names `<file>:<json path>`. See [asset-pipeline.md](asset-pipeline.md#gotchas) |
+| `pnpm content:check` reports `sprite "…" is not in the atlas` | Content names a sprite no pixel map, generator or PNG defines — fix the name or add the sprite |
+| `pnpm dev` keeps the old atlas after editing `scripts/assets/` | Vite should restart the server on its own; if it logged `restart the dev server to regenerate the atlas …`, restart `pnpm dev` |
+| Tizen build fails with `unexpected files outside dist/assets/` | Something (a new `public/` file, a plugin) put a file into `dist/` outside `assets/`; move it under `assets/` or keep it out of the widget |
 | Type errors about `@shmup/*` imports only in `pnpm build` | The library build uses `dist/` typings: a dependency's `build` failed or was skipped — run `pnpm build` from the root so `^build` runs first |

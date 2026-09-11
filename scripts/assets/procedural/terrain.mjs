@@ -47,8 +47,13 @@ export const TERRAIN_TILES = /** @type {const} */ ([
 /** Tile side in pixels. */
 export const TILE_SIZE = 8;
 
+/** Colour of the outermost solid pixel facing open space (the light rim). */
 const SURFACE = color('#8ad0a8');
+
+/** Colour of the pixel just below the surface rim. */
 const SUBSURFACE = color('#4a9a7a');
+
+/** Interior rock tones, picked per pixel by a position hash (index 0 most common). */
 const ROCK = [color('#2a5a58'), color('#1e4448'), color('#336a64')];
 
 /**

@@ -86,7 +86,7 @@ shmup-cup/
 ├── test/                   cross-package integration tests (Vitest project "integration", part of `pnpm test`)
 ├── docs/
 │   ├── client/             player/tester docs
-│   └── dev/                contributor docs (this file, architecture, engine-foundations, content-data, api-reference, …)
+│   └── dev/                contributor docs (this file, architecture, engine-foundations, content-data, asset-pipeline, api-reference, …)
 ├── tools/                  standalone tools, NOT workspace members (own package.json/lockfile, npm not pnpm)
 │   └── input-probe/        Tizen diagnostic .wgt: remote/gamepad/display measurements (see input-probe.md)
 └── shmup_feat.md  shmup_tech.md  input_probe_spec.md  README.md  LICENSE (MPL-2.0)
@@ -148,4 +148,5 @@ pnpm clean              # remove dist/ coverage/ .turbo/ everywhere
 More: [build-test-deploy.md](build-test-deploy.md) (every script, TV deployment, CI,
 troubleshooting), [architecture.md](architecture.md) (how the pieces work together at
 runtime), [content-data.md](content-data.md) (game data and its loader),
+[asset-pipeline.md](asset-pipeline.md) (placeholder art → atlas),
 [api-reference.md](api-reference.md) and [conventions.md](conventions.md).

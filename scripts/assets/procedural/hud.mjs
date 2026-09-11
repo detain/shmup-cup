@@ -46,8 +46,10 @@ const MICRO = /** @type {Record<string, string[]>} */ ({
   '!': ['.#.', '.#.', '.#.', '...', '.#.'],
 });
 
-/** Label frame size. */
+/** Label frame width: the longest label (`MISSILE`, 7 glyphs × 4 px − 1) fits with a margin. */
 const LABEL_W = 36;
+
+/** Label frame height: one row of 3×5 micro glyphs. */
 const LABEL_H = 5;
 
 /**

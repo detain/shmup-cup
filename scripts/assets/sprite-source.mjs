@@ -31,6 +31,11 @@
  * same name; frames the PNG does not provide keep their code-defined pixels, extra PNG
  * frames are appended. A PNG with no code-defined counterpart adds a new sprite.
  *
+ * **Public API.** {@link loadSpriteSources}, {@link parseSpriteSource},
+ * {@link readPngFrames}, {@link applyPngOverrides}, {@link listFiles},
+ * {@link SPRITE_NAME_PATTERN}, {@link ANIMATION_NAME_PATTERN}, {@link SPRITE_SOURCE_SUFFIX};
+ * typedefs {@link SpriteDef}, {@link PngSprite}, {@link AssetIssue}.
+ *
  * @module
  */
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';

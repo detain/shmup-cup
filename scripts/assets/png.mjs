@@ -12,6 +12,9 @@
  * (`assets/source/sprites/**\/*.png`); it goes through `pngjs`, which handles every
  * colour type, bit depth and interlacing mode.
  *
+ * **Public API.** {@link encodePng}, {@link decodePng}, {@link crc32},
+ * {@link PNG_SIGNATURE}.
+ *
  * @module
  */
 import { deflateSync } from 'node:zlib';

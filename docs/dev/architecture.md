@@ -8,7 +8,8 @@ interface) and `shmup_feat.md` §3 / §22 (loop, tick order, determinism).
 Related pages: [repo-layout.md](repo-layout.md) (where files live),
 [api-reference.md](api-reference.md) (every public export),
 [build-test-deploy.md](build-test-deploy.md) (commands, Tizen build, CI),
-[conventions.md](conventions.md) (rules for new code).
+[conventions.md](conventions.md) (rules for new code), [content-data.md](content-data.md)
+and [asset-pipeline.md](asset-pipeline.md) (game data and art, from source to bundle).
 
 ## Layers
 
@@ -146,6 +147,27 @@ Game data is JSON under `content/`, validated and turned into numbers once, at b
 - Today the apps register the plugin but do not import the module yet — `@shmup/shell`
   (M1-04) does, so `createGame` still runs on `EMPTY_CONTENT_DB`.
 
+### Asset pipeline (`assets/source/` → atlas → `virtual:shmup-assets`)
+
+Every picture is built from committed source data by Node scripts at build time (decision
+D24, "art as code"); nothing is drawn at run time and nothing is fetched on the TV. Details:
+[asset-pipeline.md](asset-pipeline.md).
+
+- **Build time (Node).** `scripts/assets/` turns sprite pixel maps
+  (`assets/source/sprites/**/*.sprite.json`), seeded procedural generators, real-art PNG
+  overrides and the bitmap font into packed, power-of-two atlas pages (≤ 2048²) and a JSON
+  manifest in `assets/generated/atlas/`. Hit-flash sprites get a white `<name>@flash`
+  sibling (D30). An input-hash cache skips unchanged runs; output is byte-identical.
+- **Wiring.** Turborepo runs `//#assets` before `build` / `dev`, and the `shmupAssets()`
+  Vite plugin (`vite.shared.ts`) runs the same cached pipeline in `buildStart`, inlines the
+  manifest as `virtual:shmup-assets` and emits the pages into `dist/assets/atlas/`
+  (relative URLs — `file://` on Tizen, `app://` in Electron; D25).
+- **Boot (from M1-04).** render-pixi's `atlas` module loads the pages as images, resolves
+  every sprite name to a numeric id once and hands the sim/renderer integers only; content's
+  `sprite` names are checked against the manifest by `pnpm content:check`.
+- **Real art later** replaces frames by sprite name (a PNG + optional Aseprite export next
+  to the pixel map) — no code change.
+
 ### Input pipeline (`@shmup/input-web` → `core/input`)
 
 - The core only knows **actions** (`Action.Up … Action.Back`, 12 bits) packed into masks.
@@ -254,7 +276,10 @@ sections of `shmup_feat.md` / `shmup_tech.md`.
 Implemented or partial today: core `platform`, `input`, `config`, `loop`, `game`,
 `presentation`, `rng`, `math`, `events`, `pools`, `data` (partial: `enemies` / `stage` are stubs); input-web `keymap`, `keyboard`, `gamepad`, `web-input`; audio-web
 `web-audio`; render-pixi `renderer`, `viewport`, `test-pattern`, `palette`; the apps'
-`boot`, `platform`, `frame-loop`. Everything else declares its intended API only.
+`boot`, `platform`, `frame-loop`. Everything else declares its intended API only. The
+build-time tooling outside the packages (the asset pipeline in `scripts/assets/`, the Vite
+plugins in `vite.shared.ts`) has no `moduleInfo`; it is covered by the tests under
+`test/scripts/` and `test/integration/`.
 
 ## Extension points
 
@@ -266,6 +291,7 @@ Implemented or partial today: core `platform`, `input`, `config`, `loop`, `game`
 | A game action | Append a bit to `Action` (never renumber — masks are recorded in replays), add it to `ACTION_NAMES` and the default bindings in `input-web/keymap` / `gamepad` |
 | A game system | Fill in its placeholder module in `packages/core/src/<module>/`, set `moduleInfo.status`, export it from `packages/core/src/index.ts`, call it from `step()` in the fixed tick order |
 | Content (enemies, weapons, stages) | JSON under `content/` following its README, then `pnpm content:check`. New fields or a new kind: extend the schemas in `core/data` — checklist in [content-data.md](content-data.md#extending-it) |
+| A sprite or animation | A `*.sprite.json` pixel map under `assets/source/sprites/` (its path is its name) or a generator in `scripts/assets/procedural/`; `hitFlash: true` for anything the player can shoot. Real art: a PNG (+ Aseprite export) of the same name — [asset-pipeline.md](asset-pipeline.md#extending-it) |
 | A sound or music cue | Append a name to `SFX_CUES` / `MUSIC_CUES` in `core/events` (never renumber — ids are recorded in replays and bound by `content/audio/`) |
 | A presentation event kind | Append a code to `SimEventKind` and a name to `SIM_EVENT_KIND_NAMES`, then handle it in the host's drain dispatcher |
 | A new entity kind | Give it an SoA pool (`createSoaPool`) or an object pool (`createPool`) sized from the budgets in `shmup_feat.md` §22, `flush()` it in the deferred-removal phase of the tick |

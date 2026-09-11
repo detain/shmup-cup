@@ -18,7 +18,7 @@ the Direct-mode ship (**MANTA**) arrives in M2.
     {
       "id": "kestrel",                 // unique across all player files
       "name": "KESTREL",               // shown on the ship-select screen
-      "sprite": "ships/kestrel",       // atlas frame prefix; resolved to a numeric id at load
+      "sprite": "ships/kestrel",       // atlas sprite name; resolved to a numeric id at load
       "speeds": [1.5, 2, 2.5, 3, 3.5, 4], // px/tick per speed level (index = Speed Ups taken)
       "hurtRadius": 1.5,               // tiny centred hitbox, in pixels
       "terrainBox": { "hw": 5, "hh": 3 },  // half-extents used against terrain

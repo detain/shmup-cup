@@ -6,6 +6,11 @@
  * `width * height * 4` bytes, row-major, **straight (non-premultiplied) alpha** — the
  * layout PNG stores and pngjs decodes to.
  *
+ * **Public API.** {@link createImage}, {@link parseColor}, {@link setPixel},
+ * {@link getPixel}, {@link blit}, {@link crop}, {@link flipHorizontal},
+ * {@link flipVertical}, {@link imageFromRows}, {@link imagesEqual}; typedefs {@link Image},
+ * {@link Rgba}.
+ *
  * @module
  */
 

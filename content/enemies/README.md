@@ -17,7 +17,7 @@ flash-on-hit, death explosion, drops — defined in `enemies.json`") and §15 (s
       "score": 100,
       "hurtbox": { "hw": 6, "hh": 5 }, // half-extents in pixels
       "script": "drifter.sine",      // behaviour coroutine id (TypeScript, core/patterns)
-      "sprite": "enemies/drifter",   // atlas frame prefix (render-pixi)
+      "sprite": "enemies/drifter",   // atlas sprite name (assets/source/sprites/)
       "drop": null,                  // "capsule" | "item:red" | … | null
       "rank": { "fireRate": 0.5 }    // optional rank modifiers (§15)
     }
@@ -25,7 +25,8 @@ flash-on-hit, death explosion, drops — defined in `enemies.json`") and §15 (s
 }
 ```
 
-`script` (behaviour coroutine) and `sprite` (atlas frame) are resolved to numeric ids at
+`script` (behaviour coroutine) and `sprite` (atlas sprite name, e.g. `enemies/drifter` =
+`assets/source/sprites/enemies/drifter.sprite.json`) are resolved to numeric ids at
 load (`scriptId`, `spriteId`). From M1-08 on, the loader also checks `script` against the
 behaviours the engine registers.
 

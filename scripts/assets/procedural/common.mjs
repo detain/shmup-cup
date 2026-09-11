@@ -6,6 +6,9 @@
  * used for geometry, so the generated pixels are identical on every engine — no
  * `Math.sin`/`Math.cos` (rotations use the exact 22.5° constants below).
  *
+ * **Public API.** {@link DIRECTIONS_8}, {@link color}, {@link mix}, {@link withAlpha},
+ * {@link seedOf}, {@link makeSprite}.
+ *
  * @module
  */
 import { parseColor } from '../image.mjs';

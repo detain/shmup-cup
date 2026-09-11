@@ -12,6 +12,9 @@
  * every decision uses integer comparisons with a fixed tie-break, so the same input list
  * always yields the same layout, independent of input order.
  *
+ * **Public API.** {@link packRects}, {@link MAX_PAGE_SIZE}; typedefs {@link PackItem},
+ * {@link PackOptions}, {@link Placement}, {@link PackResult}.
+ *
  * @module
  */
 
@@ -58,6 +61,8 @@
 export const MAX_PAGE_SIZE = 2048;
 
 /**
+ * An integer rectangle in bin coordinates (top-left `x`/`y`, size `w`×`h`).
+ *
  * @typedef {{ x: number, y: number, w: number, h: number }} Rect
  */
 
@@ -66,6 +71,8 @@ export const MAX_PAGE_SIZE = 2048;
  */
 class MaxRectsBin {
   /**
+   * Creates an empty bin: one free rectangle covering the whole area.
+   *
    * @param {number} width - Bin width.
    * @param {number} height - Bin height.
    */

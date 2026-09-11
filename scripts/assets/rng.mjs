@@ -8,6 +8,8 @@
  * sequence and `pnpm assets` stays byte-identical between runs and machines.
  * Every generator owns its own seed: adding a generator never changes another one's art.
  *
+ * **Public API.** {@link createAssetRng}, {@link hash2}; typedef {@link AssetRng}.
+ *
  * @module
  */
 
