@@ -1,6 +1,7 @@
 # Shmup Cup — Implementation Plan
 
-> **Status:** plan draft (2026-09-10), **not yet approved for execution**. Turns the feature catalog
+> **Status:** **approved — executing** (2026-09-10). Progress is tracked in [`shmup_progress.md`](shmup_progress.md).
+> Turns the feature catalog
 > ([`shmup_feat.md`](shmup_feat.md)) into an ordered sequence of agent-sized build steps on top of the
 > monorepo skeleton and the input probe that already exist.
 >
