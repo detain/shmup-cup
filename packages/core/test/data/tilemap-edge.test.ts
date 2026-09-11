@@ -131,15 +131,17 @@ describe('core/data heightfield edge — random single profiles', () => {
       expect(heights, label).toHaveLength(cols * 8);
       const c0 = Math.floor(from / 8);
       const c1 = Math.min(cols, Math.ceil(to / 8));
+      // ~230k pixel columns in all: check each in plain code and call `expect` only on a
+      // mismatch (a per-pixel `expect` + label made this test time out on a loaded CI runner).
       for (let x = 0; x < heights.length; x++) {
-        expect(heights[x], `${label} x ${String(x)}`).toBeLessThanOrEqual(rows * 8);
-        if (x < c0 * 8 || x >= c1 * 8) expect(heights[x], `${label} x ${String(x)}`).toBe(0);
-        if (x > 0) {
-          expect(
-            Math.abs(heights[x] - heights[x - 1]),
-            `${label} x ${String(x)}`,
-          ).toBeLessThanOrEqual(1);
-        }
+        const h = heights[x];
+        const outside = x < c0 * 8 || x >= c1 * 8;
+        const step = x > 0 ? Math.abs(h - heights[x - 1]) : 0;
+        if (h <= rows * 8 && (!outside || h === 0) && step <= 1) continue;
+        const at = `${label} x ${String(x)}`;
+        expect(h, at).toBeLessThanOrEqual(rows * 8);
+        if (outside) expect(h, at).toBe(0);
+        expect(step, at).toBeLessThanOrEqual(1);
       }
       if (new Set(heights).size > 4) wavy++;
       // The collision queries see exactly that surface.
@@ -147,11 +149,11 @@ describe('core/data heightfield edge — random single profiles', () => {
       if (map === null) throw new Error(label);
       for (let x = 0; x < heights.length; x += 3) {
         const h = heights[x];
-        if (ceiling) {
-          expect(findCeiling(map, x, rows * 8 - 1, rows * 8), label).toBe(h === 0 ? NaN : h);
-        } else {
-          expect(findFloor(map, x, 0, rows * 8), label).toBe(h === 0 ? NaN : rows * 8 - h);
-        }
+        const got = ceiling
+          ? findCeiling(map, x, rows * 8 - 1, rows * 8)
+          : findFloor(map, x, 0, rows * 8);
+        const want = h === 0 ? NaN : ceiling ? h : rows * 8 - h;
+        if (!Object.is(got, want)) expect(got, `${label} x ${String(x)}`).toBe(want);
       }
     }
     expect(wavy).toBeGreaterThan(60);

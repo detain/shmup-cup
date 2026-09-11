@@ -581,16 +581,27 @@ describe('core/stage edge — randomised invariants', () => {
         const before = runner.camera.x;
         runner.tick();
         const x = runner.camera.x;
-        const label = `trial ${String(trial)} tick ${String(t)}`;
-        expect(x, label).toBeGreaterThanOrEqual(before);
-        expect(x, label).toBeLessThanOrEqual(spec.length);
-        expect(before + runner.camera.dx, label).toBe(x);
-        expect(runner.camera.vx, label).toBe(runner.camera.dx);
-        expect(runner.eventCursor, label).toBe(hooks.fired.length);
-        expect(runner.checkpoint, label).toBe(
-          spec.checkpoints.reduce((last, cp, i) => (cp.x <= x ? i : last), -1),
-        );
-        expect(runner.ticks, label).toBe(t);
+        const checkpoint = spec.checkpoints.reduce((last, cp, i) => (cp.x <= x ? i : last), -1);
+        // Up to 360k ticks in all: check in plain code and call `expect` only on a mismatch (a
+        // per-tick `expect` + label brought this test close to the 5 s timeout on CI).
+        if (!(
+          x >= before &&
+          x <= spec.length &&
+          Object.is(before + runner.camera.dx, x) &&
+          Object.is(runner.camera.vx, runner.camera.dx) &&
+          runner.eventCursor === hooks.fired.length &&
+          runner.checkpoint === checkpoint &&
+          runner.ticks === t
+        )) {
+          const label = `trial ${String(trial)} tick ${String(t)}`;
+          expect(x, label).toBeGreaterThanOrEqual(before);
+          expect(x, label).toBeLessThanOrEqual(spec.length);
+          expect(before + runner.camera.dx, label).toBe(x);
+          expect(runner.camera.vx, label).toBe(runner.camera.dx);
+          expect(runner.eventCursor, label).toBe(hooks.fired.length);
+          expect(runner.checkpoint, label).toBe(checkpoint);
+          expect(runner.ticks, label).toBe(t);
+        }
         xs.push(x);
         if (runner.locked) {
           if (lockedFor === 0) stops.push(x);

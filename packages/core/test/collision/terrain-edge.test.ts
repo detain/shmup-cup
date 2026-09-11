@@ -167,10 +167,13 @@ describe('core/collision terrain edge — against a pixel reference', () => {
           const expected = refAt(map, px, py);
           const fx = px + rng.nextFloat() * 0.999;
           const fy = py + rng.nextFloat() * 0.999;
-          expect(terrainAt(map, fx, fy), `${String(trial)}: ${String(px)},${String(py)}`).toBe(
-            expected,
-          );
-          expect(terrainSolidAt(map, px, py)).toBe(expected !== TerrainType.Empty);
+          const at = terrainAt(map, fx, fy);
+          const solid = terrainSolidAt(map, px, py);
+          // Per-pixel `expect` only on a mismatch, to keep this loop fast on a loaded CI runner.
+          if (at === expected && solid === (expected !== TerrainType.Empty)) continue;
+          const label = `${String(trial)}: ${String(px)},${String(py)}`;
+          expect(at, label).toBe(expected);
+          expect(solid, label).toBe(expected !== TerrainType.Empty);
         }
       }
     }
