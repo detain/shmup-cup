@@ -10,8 +10,9 @@
  * solid tiles join seamlessly.
  *
  * Solid pixels per column for the floor slopes (heights from the tile bottom):
- * `slope-up` 1…8 (45°), `slope-up-low` 1…4 and `slope-up-high` 5…8 (22.5°); `-down`
- * variants are mirrored left ↔ right, `ceil-` variants top ↔ bottom.
+ * `slope-up` 1…8 (45°); `slope-up-low` 0,1,1,2,2,3,3,4 and `slope-up-high`
+ * 4,5,5,6,6,7,7,8 (22.5°: equal pairs, so low → high → the next row's low keeps the
+ * rhythm); `-down` variants are mirrored left ↔ right, `ceil-` variants top ↔ bottom.
  *
  * @module
  */

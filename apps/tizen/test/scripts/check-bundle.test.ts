@@ -71,6 +71,21 @@ describe('tizen/scripts/check-bundle checkTizenBundle', () => {
     ]);
   });
 
+  it('matches dist/assets/ as a folder, not as a name prefix (assetsx/, a file named "assets")', () => {
+    put('assetsx/main.png', 'png');
+    put('assets.png', 'png');
+    put('assets/deep/nested/data.bin', 'bin');
+    expect(checkTizenBundle(dir).problems).toEqual([
+      'unexpected files outside dist/assets/: assets.png, assetsx/main.png',
+    ]);
+  });
+
+  it('allows the atlas manifest and any number of pages under dist/assets/atlas/', () => {
+    for (let i = 0; i < 4; i++) put(`assets/atlas/main${i === 0 ? '' : `-${i}`}.png`, 'png');
+    put('assets/atlas/main.json', '{}');
+    expect(checkTizenBundle(dir).problems).toEqual([]);
+  });
+
   it('still rejects a script hidden under dist/assets/ (reported once, as a second script)', () => {
     put('assets/atlas/loader.js', 'void 0;');
     const { problems } = checkTizenBundle(dir);

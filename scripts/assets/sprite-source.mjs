@@ -345,6 +345,11 @@ export function readPngFrames(image, sidecar, file, issues) {
     return { frames: [], animations: {}, anchor: null };
   }
   const entries = Array.isArray(sidecar.frames) ? sidecar.frames : Object.values(sidecar.frames);
+  if (entries.length === 0) {
+    // A sprite needs at least one frame (a PNG-only sprite would otherwise have none).
+    issues.push({ path: `${file}:frames`, message: 'the Aseprite export lists no frames' });
+    return { frames: [], animations: {}, anchor: null };
+  }
   /** @type {Image[]} */
   const frames = [];
   entries.forEach((entry, i) => {

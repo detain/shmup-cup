@@ -31,7 +31,9 @@ assets/source/fonts/*.font.json ────────┘                     
 - **Real art replaces placeholders by name** — drop `sprites/ships/kestrel.png` (optionally
   with an Aseprite JSON export `ships/kestrel.json` for several frames, tags and a slice
   pivot) and it overrides the frames of `ships/kestrel`; frames it does not provide keep
-  their code-defined pixels.
+  their code-defined pixels. An export must list at least one frame, and every frame must
+  fit an atlas page with its border (at most 2046×2046); anything else is reported as a
+  source issue naming the file.
 - **Hit flash** — `hitFlash: true` adds the sibling sprite `<name>@flash` (white
   silhouettes, same frames and anchor); the renderer swaps sprite ids on a hit (D30).
 - **Fonts** — `pixel6x8.font.json` is an original 6×8 font (ASCII 32–126 + `← ↑ → ↓ ● ✕ ★`);

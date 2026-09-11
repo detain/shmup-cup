@@ -30,6 +30,12 @@ export const BULLET_COLORS = /** @type {const} */ ({
 /**
  * Draws an ellipse bullet with rim / body / core bands.
  *
+ * @remarks
+ * The rim is the outer band of the ellipse **and** every pixel on the silhouette edge (a
+ * 4-neighbour outside the shape): on thin shapes (needles, the diagonal ovals) the band
+ * alone is narrower than a pixel across the heading and would leave the body colour
+ * exposed on the long sides, losing the dark outline §12 asks for.
+ *
  * @param {number} size - Frame side (odd).
  * @param {number} along - Semi-axis along the heading.
  * @param {number} across - Semi-axis across the heading.
@@ -43,15 +49,36 @@ function drawEllipse(size, along, across, direction, palette, rimFrom, coreTo) {
   const image = createImage(size, size);
   const centre = (size - 1) / 2;
   const [c, s] = direction;
+  /**
+   * Normalised elliptic radius of a pixel centre (> 1 = outside the bullet).
+   *
+   * @param {number} x - Column (may lie outside the frame).
+   * @param {number} y - Row (may lie outside the frame).
+   * @returns {number} The radius.
+   */
+  const radius = (x, y) => {
+    if (x < 0 || y < 0 || x >= size || y >= size) return Infinity;
+    const dx = x - centre;
+    const dy = y - centre;
+    const u = (dx * c + dy * s) / along;
+    const v = (-dx * s + dy * c) / across;
+    return Math.sqrt(u * u + v * v);
+  };
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
-      const dx = x - centre;
-      const dy = y - centre;
-      const u = (dx * c + dy * s) / along;
-      const v = (-dx * s + dy * c) / across;
-      const e = Math.sqrt(u * u + v * v);
+      const e = radius(x, y);
       if (e > 1) continue;
-      setPixel(image, x, y, e > rimFrom ? palette.rim : e <= coreTo ? palette.core : palette.body);
+      const edge =
+        radius(x - 1, y) > 1 ||
+        radius(x + 1, y) > 1 ||
+        radius(x, y - 1) > 1 ||
+        radius(x, y + 1) > 1;
+      setPixel(
+        image,
+        x,
+        y,
+        edge || e > rimFrom ? palette.rim : e <= coreTo ? palette.core : palette.body,
+      );
     }
   }
   return image;

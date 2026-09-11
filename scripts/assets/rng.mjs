@@ -1,9 +1,11 @@
 /**
  * Seeded random numbers for the procedural placeholder generators.
  *
- * sfc32 seeded through splitmix32 — the same generator `@shmup/core`'s `rng` module
- * uses — implemented with 32-bit integer operations only, so every engine produces the
- * same sequence and `pnpm assets` stays byte-identical between runs and machines.
+ * sfc32 — the same step function as `@shmup/core`'s `rng` module — seeded through a
+ * splitmix32 variant of its own (Murmur3 finaliser constants, no warm-up rounds), so a
+ * seed gives a different sequence here than in core; nothing needs them to match.
+ * Implemented with 32-bit integer operations only, so every engine produces the same
+ * sequence and `pnpm assets` stays byte-identical between runs and machines.
  * Every generator owns its own seed: adding a generator never changes another one's art.
  *
  * @module

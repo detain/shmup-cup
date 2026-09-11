@@ -35,7 +35,7 @@ import { createRequire } from 'node:module';
 import { dirname, isAbsolute, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { generateProceduralSprites } from './procedural/index.mjs';
-import { makeFlashSprite } from './flash.mjs';
+import { FLASH_SUFFIX, makeFlashSprite } from './flash.mjs';
 import { buildFontSprite, loadFontSources } from './font.mjs';
 import { createImage, blit, getPixel, setPixel } from './image.mjs';
 import { MANIFEST_FORMAT_VERSION, formatManifest, frameName } from './manifest.mjs';
@@ -225,7 +225,9 @@ export const pageFileName = (index) =>
  *   page-size limit (power of two, default 2048).
  * @returns {{ manifest: AtlasManifest, pages: { file: string, image: Image, png: Buffer }[],
  *   sprites: SpriteDef[] }} The manifest, the pages (pixels + PNG bytes) and the sprites.
- * @throws {AssetSourceError} When any source file is invalid.
+ * @throws {AssetSourceError} When any source file is invalid, or a frame is too large for
+ *   an atlas page.
+ * @throws {RangeError} When `maxPageSize` is not a power of two.
  *
  * @example
  * const { manifest, pages } = buildAtlas();
@@ -235,6 +237,28 @@ export function buildAtlas(options = {}) {
   const collected = collectSprites(options);
   if (collected.issues.length > 0) throw new AssetSourceError(collected.issues);
   const sprites = collected.sprites;
+  const maxPageSize = options.maxPageSize ?? MAX_PAGE_SIZE;
+
+  // A frame that cannot fit a page (real art can be any size) is a source problem: report
+  // it with its file instead of letting the packer throw a bare RangeError.
+  const limit = maxPageSize - 2 * ATLAS_EXTRUDE;
+  /** @type {AssetIssue[]} */
+  const oversized = [];
+  for (const sprite of sprites) {
+    if (sprite.name.endsWith(FLASH_SUFFIX)) continue; // reported for its source sprite
+    sprite.frames.forEach((frame, i) => {
+      if (frame.width > limit || frame.height > limit) {
+        oversized.push({
+          path: `${sprite.origin}:frames[${i}]`,
+          message:
+            `sprite "${sprite.name}" frame ${i} is ${frame.width}×${frame.height}; frames can ` +
+            `be at most ${limit}×${limit} (a ${maxPageSize}² atlas page minus the ` +
+            `${ATLAS_EXTRUDE}-px border)`,
+        });
+      }
+    });
+  }
+  if (oversized.length > 0) throw new AssetSourceError(oversized);
 
   const items = sprites.flatMap((sprite) =>
     sprite.frames.map((frame, i) => ({
@@ -244,7 +268,7 @@ export function buildAtlas(options = {}) {
     })),
   );
   const packing = packRects(items, {
-    maxSize: options.maxPageSize ?? MAX_PAGE_SIZE,
+    maxSize: maxPageSize,
     padding: ATLAS_PADDING,
     extrude: ATLAS_EXTRUDE,
   });

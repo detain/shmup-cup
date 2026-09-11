@@ -487,7 +487,7 @@ the browser dev app and as a Tizen 5.5 bundle.
     (glyphs keyed by decimal code point). Pages are `main.png`, `main-1.png`, …; sizes are
     powers of two. Today everything fits one 512×256 page (55 sprites, 272 frames).
   - **Files.** Besides the listed modules, `scripts/assets/` has `image.mjs` (RGBA raster
-    helpers), `rng.mjs` (sfc32 + splitmix32, same as `core/rng`), `manifest.mjs` (format,
+    helpers), `rng.mjs` (sfc32 with the `core/rng` step, own splitmix32 seeding), `manifest.mjs` (format,
     serialiser, `findMissingSprites()`) and `pipeline.mjs` (`buildAtlas()` in memory,
     `generateAssets()` with the input-hash cache in `assets/generated/.asset-cache.json`,
     atomic writes, stale-page removal). The procedural generators use only exactly-rounded

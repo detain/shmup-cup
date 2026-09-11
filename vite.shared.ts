@@ -347,7 +347,15 @@ export function shmupAssets(options: ShmupAssetsOptions = {}): Plugin {
           next();
           return;
         }
-        const file = decodeURIComponent(url.slice(prefix.length));
+        let file: string;
+        try {
+          file = decodeURIComponent(url.slice(prefix.length));
+        } catch {
+          // Malformed percent-encoding cannot name an atlas file: let Vite answer (404),
+          // instead of the URIError turning into a 500.
+          next();
+          return;
+        }
         const path = join(outDir, ATLAS_DIR, file);
         if (!ATLAS_FILE_PATTERN.test(file) || !existsSync(path)) {
           next();
