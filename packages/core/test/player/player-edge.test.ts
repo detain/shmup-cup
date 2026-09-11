@@ -343,6 +343,9 @@ describe('core/player edge cases — fly-in and state', () => {
       device: 'none',
       lives: 5,
       moving: false,
+      hitCause: 0,
+      hitTick: -1,
+      hits: 0,
     });
   });
 });

@@ -10,8 +10,9 @@
  * unlocked by the first key or pointer gesture (autoplay policy — gamepad buttons do not count
  * as a user activation); the tab being hidden suspends the game, clears held input and
  * suspends audio. The default scene is free flight (the KESTREL under keyboard / gamepad
- * control, plan M1-06); `?scene=showcase` shows the M1-04 sprite showcase and
- * `?scene=calibration` the test pattern.
+ * control, plan M1-06); `?stage=<id>` runs that stage instead of open space (scrolling camera,
+ * terrain, parallax — plan M1-07; `?stage=test-range` is the dev stage); `?scene=showcase`
+ * shows the M1-04 sprite showcase and `?scene=calibration` the test pattern.
  *
  * **Input profiles** (decisions D13–D15). The `input-profiles` content is parsed into a
  * registry during boot. Keys use `?profile=<id>` when given (dev override — e.g.
@@ -24,7 +25,8 @@
  * visibility change, integer scaling), §19 (resume audio on first input), §4 (input profiles).
  *
  * **Public API.** {@link bootWebApp}, {@link WebApp}, {@link WebAppResources},
- * {@link inputOverridesFromSearch}, {@link InputOverrides}.
+ * {@link inputOverridesFromSearch}, {@link InputOverrides}, {@link stageFromSearch},
+ * {@link contentStageIds}.
  *
  * @module
  */
@@ -158,6 +160,51 @@ export function inputOverridesFromSearch(search: string): InputOverrides {
 }
 
 /**
+ * Reads the `?stage=<id>` dev parameter (percent-decoded; the last non-empty value wins).
+ *
+ * @param search - `location.search` (with or without the leading `?`).
+ * @returns The stage id, or `null` when absent or empty (free flight in open space).
+ *
+ * @example
+ * ```ts
+ * stageFromSearch('?stage=test-range&profile=keyboard-default'); // → 'test-range'
+ * ```
+ */
+export function stageFromSearch(search: string): string | null {
+  const query = search.charAt(0) === '?' ? search.slice(1) : search;
+  let stage: string | null = null;
+  for (const pair of query.split('&')) {
+    const eq = pair.indexOf('=');
+    if (eq < 0 || pair.slice(0, eq) !== 'stage') continue;
+    try {
+      const value = decodeURIComponent(pair.slice(eq + 1));
+      if (value !== '') stage = value;
+    } catch (_error) {
+      // A malformed escape: ignore the pair.
+    }
+  }
+  return stage;
+}
+
+/**
+ * The ids of every `stage` file among the content files (before validation — for choosing a
+ * stage; the shell validates the content itself).
+ *
+ * @param files - `virtual:shmup-content`.
+ * @returns The ids, in file order.
+ */
+export function contentStageIds(files: readonly ContentFile[]): string[] {
+  const ids: string[] = [];
+  for (const file of files) {
+    const data = file.data as { kind?: unknown; id?: unknown } | null;
+    if (data !== null && typeof data === 'object' && data.kind === 'stage') {
+      if (typeof data.id === 'string') ids.push(data.id);
+    }
+  }
+  return ids;
+}
+
+/**
  * Boots the game into a canvas.
  *
  * @remarks
@@ -166,7 +213,8 @@ export function inputOverridesFromSearch(search: string): InputOverrides {
  * platform (through the factory, once WebGL2 support is known — the input profiles are
  * applied there) and the game. Without a `?profile=` override the saved profile choice is
  * applied once storage has answered. An unknown `?profile=` id is reported with
- * `console.warn` and the default is used. Everything is released by {@link WebApp.stop}; on a
+ * `console.warn` and the default is used; so is an unknown `?stage=` id (the game then flies in
+ * open space). Everything is released by {@link WebApp.stop}; on a
  * failed boot the shell has already released it and shows the boot error screen.
  *
  * @param canvas - Target canvas (fills the window).
@@ -202,6 +250,11 @@ export async function bootWebApp(
   const profiles = createInputProfileRegistry();
   const search = searchOf(win);
   const overrides = inputOverridesFromSearch(search);
+  let stage = stageFromSearch(search);
+  if (stage !== null && contentStageIds(resources.contentFiles).indexOf(stage) < 0) {
+    console.warn(`Shmup Cup: no stage "${stage}"; flying in open space`);
+    stage = null;
+  }
   /**
    * Applies a keyboard / remote profile with the `?debounce=` override.
    *
@@ -247,7 +300,7 @@ export async function bootWebApp(
         webgl2: renderer.webGLVersion === 2,
       });
     },
-    gameConfig: { remoteMode: false },
+    gameConfig: { remoteMode: false, stage },
     scene: sceneFromSearch(search),
     audioUnlock: 'gesture',
   });

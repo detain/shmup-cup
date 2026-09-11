@@ -11,9 +11,10 @@
  * The low-res scene is the render contract of plan §3.4 drawn from a core `RenderFrame`:
  * a lifted navy background, the layer stack (`layers`), one sprite binding per
  * `SpriteBatchView` of the frame's `WorldView` (`sprites`), the HUD and UI draw lists
- * (`ui` + `text`), screen shake (the world group is offset by the rounded `shakeX/Y`) and the
- * flash / dim overlays. Optionally the calibration test pattern sits below the layers
- * (`?scene=calibration`). Parallax and terrain views are drawn from M1-07.
+ * (`ui` + `text`), the world's parallax bands and tile terrain (`layers`: repeated sprites on
+ * `BG_FAR` / `BG_MID`, a ring-buffered tile-sprite grid on `TERRAIN` — plan M1-07), screen shake
+ * (the world group is offset by the rounded `shakeX/Y`) and the flash / dim overlays. Optionally
+ * the calibration test pattern sits below the layers (`?scene=calibration`).
  *
  * **Allocation.** Pixi objects are created in {@link createPixiRenderer} and when a new
  * `WorldView` object is bound ({@link PixiRenderer.bindWorld} — once per world, called
@@ -47,7 +48,14 @@ import {
   type RenderOptions,
 } from 'pixi.js';
 import type { Atlas } from '../atlas/index.js';
-import { createLayerStack, type LayerStack } from '../layers/index.js';
+import {
+  createLayerStack,
+  createParallaxBinding,
+  createTerrainBinding,
+  type LayerStack,
+  type ParallaxBinding,
+  type TerrainBinding,
+} from '../layers/index.js';
 import { PALETTE } from '../palette/index.js';
 import {
   createSpriteLayerBinding,
@@ -125,6 +133,10 @@ export interface PixiRenderer extends IRenderer {
   readonly metrics: TextMetrics | null;
   /** Sprite bindings of the currently bound world, in `WorldView.batches` order. */
   readonly bindings: readonly SpriteLayerBinding[];
+  /** Tile grid of the bound world's terrain (`null` without terrain or atlas). */
+  readonly terrain: TerrainBinding | null;
+  /** Band sprites of the bound world's parallax (`null` without parallax or atlas). */
+  readonly parallax: ParallaxBinding | null;
   /**
    * Sets the sprite name table that `spriteId`s in world batches and draw lists index —
    * normally `ContentDb.sprites.names`. Resolved against the atlas now (load time); unknown
@@ -134,21 +146,24 @@ export interface PixiRenderer extends IRenderer {
    */
   setSpriteNames(names: readonly string[]): void;
   /**
-   * Binds a world view: creates one sprite binding per batch (in its layer, batch order) and
+   * Binds a world view: creates the parallax band sprites (on `BG_FAR` / `BG_MID`), the terrain
+   * tile grid (on `TERRAIN`) and one sprite binding per batch (in its layer, batch order), and
    * destroys the previous world's bindings. `render()` does this automatically when
    * `frame.world` is a different object; hosts call it at load time so the first frame does
    * not create Pixi objects.
    *
    * @remarks
-   * The batch array is read once, here: bindings are created per `world.batches` entry and
-   * `render()` syncs binding `i` from `batches[i]` — replace the whole `WorldView` object to
-   * change the batch list. Without an atlas nothing is bound (the world is remembered but not
-   * drawn). Every batch's layer is validated before anything is created, so a bad view leaves
-   * the renderer unbound rather than half-bound.
+   * The view's structure is read once, here: bindings are created per `world.batches` entry
+   * and `render()` syncs binding `i` from `batches[i]`; the parallax band count / spacings and
+   * the terrain's size are fixed too — replace the whole `WorldView` object to change them.
+   * Parallax and terrain containers are added before the batches, so batches on the same layer
+   * draw on top. Without an atlas nothing is bound (the world is remembered but not drawn).
+   * Every batch's layer and every parallax band is validated before anything is created, so a
+   * bad view leaves the renderer unbound rather than half-bound.
    *
    * @param world - The world to draw, or `null` to unbind.
-   * @throws {RangeError} When a batch's `layer` is not a core `LayerId` (the previous world's
-   *   bindings are already destroyed at that point).
+   * @throws {RangeError} When a batch's `layer` is not a core `LayerId`, or a parallax band is
+   *   not on `BG_FAR` / `BG_MID` (the previous world's bindings are already destroyed then).
    */
   bindWorld(world: WorldView | null): void;
 }
@@ -324,6 +339,8 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
 
   let boundWorld: WorldView | null = null;
   let bindings: SpriteLayerBinding[] = [];
+  let terrain: TerrainBinding | null = null;
+  let parallax: ParallaxBinding | null = null;
 
   /**
    * Replaces the world bindings (see {@link PixiRenderer.bindWorld}).
@@ -333,6 +350,10 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
   const bindWorld = (world: WorldView | null): void => {
     for (const binding of bindings) binding.destroy();
     bindings = [];
+    terrain?.destroy();
+    terrain = null;
+    parallax?.destroy();
+    parallax = null;
     boundWorld = null;
     if (world !== null) {
       // Validate first, so a bad view leaves nothing half-bound.
@@ -341,7 +362,28 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
           throw new RangeError(`sprite batch has an unknown layer ${batch.layer}`);
         }
       }
+      const bands = world.parallax;
+      if (bands !== null) {
+        for (let i = 0; i < bands.count; i++) {
+          const layer = bands.layer[i];
+          if (layer !== LayerId.BgFar && layer !== LayerId.BgMid) {
+            throw new RangeError(
+              `parallax band ${i} has layer ${layer} (BG_FAR or BG_MID expected)`,
+            );
+          }
+        }
+      }
       if (atlas !== null) {
+        if (bands !== null) {
+          parallax = createParallaxBinding({ atlas, tables, view: bands });
+          for (let i = 0; i < parallax.containers.length; i++) {
+            layers.layers[parallax.layers[i]].addChild(parallax.containers[i]);
+          }
+        }
+        if (world.terrain !== null) {
+          terrain = createTerrainBinding({ atlas, tables, view: world.terrain });
+          layers.layers[LayerId.Terrain].addChild(terrain.container);
+        }
         for (const batch of world.batches) {
           const binding = createSpriteLayerBinding({
             atlas,
@@ -368,6 +410,12 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
     },
     get bindings() {
       return bindings;
+    },
+    get terrain() {
+      return terrain;
+    },
+    get parallax() {
+      return parallax;
     },
     get viewport() {
       return viewport;
@@ -398,6 +446,8 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
       if (world !== null) {
         const camX = world.camera.x;
         const camY = world.camera.y;
+        if (parallax !== null && world.parallax !== null) parallax.sync(world.parallax);
+        if (terrain !== null && world.terrain !== null) terrain.sync(world.terrain, world.camera);
         const batches = world.batches;
         for (let i = 0; i < bindings.length; i++) {
           bindings[i].sync(batches[i], camX, camY);

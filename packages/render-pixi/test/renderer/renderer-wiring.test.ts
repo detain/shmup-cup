@@ -448,4 +448,83 @@ describe('render-pixi/renderer render contract (plan §3.4)', () => {
     expect(renderer.bindings).toEqual([]);
     expect(renderer.layers.layers[LayerId.Fx].children).toHaveLength(0);
   });
+
+  it('binds parallax bands and the terrain grid below the batches and syncs them (M1-07)', async () => {
+    const atlas = testAtlas();
+    const renderer = await createPixiRenderer({
+      canvas,
+      displayWidth: 1920,
+      displayHeight: 1080,
+      atlas,
+    });
+    renderer.setSpriteNames(['ships/a', 'bg/tile']);
+    const stars = createSpriteBatch(LayerId.BgFar, 1);
+    const tiles = new Uint8Array(100 * 25);
+    tiles[24 * 100 + 3] = 1;
+    const camera = { x: 10.5, y: 0 };
+    const world: WorldView = {
+      camera,
+      parallax: {
+        count: 1,
+        layer: new Uint8Array([LayerId.BgFar]),
+        spriteId: new Uint16Array([1]),
+        offsetX: new Float64Array([3]),
+        y: new Float64Array([0]),
+        spacing: new Uint16Array([16]),
+      },
+      terrain: {
+        tileSize: 8,
+        cols: 100,
+        rows: 25,
+        tiles,
+        tilesetSpriteId: 0,
+        tileFrame: new Int16Array([-1, 2]),
+      },
+      batches: [stars],
+    };
+    renderer.render(frameOf(0, world));
+    const { parallax, terrain } = renderer;
+    expect(parallax).not.toBeNull();
+    expect(terrain).not.toBeNull();
+    if (parallax === null || terrain === null) return;
+    const far = renderer.layers.layers[LayerId.BgFar].children;
+    expect(far[0]).toBe(parallax.containers[0]);
+    expect(far[1]).toBe(renderer.bindings[0].container); // batches on top of the band
+    expect(renderer.layers.layers[LayerId.Terrain].children).toEqual([terrain.container]);
+    expect([parallax.containers[0].x, terrain.container.x]).toEqual([-3, -10]);
+    const tile = terrain.container.children[24 * terrain.columns + 3] as Pixi.Sprite;
+    expect([tile.visible, tile.texture]).toEqual([true, atlas.textures[17 + 2]]);
+    camera.x = 30;
+    renderer.render(frameOf(1, world));
+    expect(terrain.container.x).toBe(-30);
+    renderer.bindWorld(null);
+    expect([renderer.parallax, renderer.terrain]).toEqual([null, null]);
+    expect(terrain.container.destroyed).toBe(true);
+    expect(parallax.containers[0].destroyed).toBe(true);
+  });
+
+  it('rejects a parallax band off the background layers before binding anything', async () => {
+    const renderer = await createPixiRenderer({
+      canvas,
+      displayWidth: 640,
+      displayHeight: 360,
+      atlas: testAtlas(),
+    });
+    expect(() =>
+      renderer.bindWorld({
+        camera: { x: 0, y: 0 },
+        parallax: {
+          count: 1,
+          layer: new Uint8Array([LayerId.Player]),
+          spriteId: new Uint16Array([0]),
+          offsetX: new Float64Array(1),
+          y: new Float64Array(1),
+          spacing: new Uint16Array([16]),
+        },
+        terrain: null,
+        batches: [createSpriteBatch(LayerId.Fx, 1)],
+      }),
+    ).toThrow(RangeError);
+    expect([renderer.bindings, renderer.parallax]).toEqual([[], null]);
+  });
 });

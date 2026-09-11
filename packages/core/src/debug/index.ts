@@ -12,7 +12,8 @@
  * release builds; never affects a replay unless flagged in its header.
  *
  * **State hash.** {@link hashWorld} is FNV-1a (32-bit) over a fixed sequence of values: the tick,
- * both RNG states, the camera, the session status and hit-stop, every player's fields, then every
+ * both RNG states, the camera, the stage runner's state (whether there is one, then every slot of
+ * its state array), the session status and hit-stop, every player's fields, then every
  * registered pool's live slots (fields in sorted name order, slots `0 … count-1`). Numbers are
  * hashed as their little-endian IEEE-754 double bytes, so the hash is identical on every engine
  * and platform, and two worlds that simulated the same inputs from the same seed hash equal.
@@ -149,6 +150,9 @@ function mixPlayer(p: World['players'][number]): void {
   mixNumber(p.bank);
   mixNumber(p.lives);
   mixWord(p.moving ? 1 : 0);
+  mixWord(p.hitCause);
+  mixNumber(p.hitTick);
+  mixNumber(p.hits);
 }
 
 /**
@@ -187,6 +191,14 @@ export function hashWorld(world: World): number {
   mixNumber(camera.dy);
   mixNumber(camera.vx);
   mixNumber(camera.vy);
+
+  const stage = world.stage;
+  if (stage === null) {
+    mixWord(0);
+  } else {
+    mixWord(1);
+    mixArray(stage.state, stage.state.length);
+  }
 
   mixWord(statusCode(world));
   mixNumber(world.hitStop);

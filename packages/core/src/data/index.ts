@@ -1,9 +1,9 @@
 /**
- * # data — content schemas and loaders (player, weapons, enemies, stages JSON)
+ * # data — content schemas and loaders (player, weapons, enemies, stages, tilesets JSON)
  *
- * **Status: partial.** The loader, the schema combinators and the `player` / `weapons`
- * formats are implemented; `enemies` and `stage` have working *stub* schemas that the
- * steps owning those systems (M1-07 … M1-13) extend.
+ * **Status: partial.** The loader, the schema combinators and the `player`, `weapons`, `stage`
+ * and `tileset` formats are implemented; `enemies` has a working *stub* schema that the steps
+ * owning enemies and bosses (M1-08 … M1-13) extend, and later steps add their kinds.
  *
  * **Responsibility.** Data-driven content (design pillar 4). Declares the shape of every
  * file under `content/`, validates it at load time with the in-house combinators in
@@ -12,8 +12,18 @@
  * per-tick path only touches numbers (convention 1.5). Behaviour lives in TypeScript and is
  * referenced from data by id; tunables live in data.
  *
+ * **Stages (M1-07).** A stage carries its music, length, camera keys, checkpoints, parallax
+ * bands, an optional tilemap and an event timeline. Beyond the schema the loader checks that
+ * camera keys, checkpoints and events are sorted by `x` (keys and checkpoints strictly, the
+ * first key at 0), that nothing lies past the stage `length`, numbers the `flag` names, and —
+ * in a third pass once tileset ids are resolved — expands the tilemap (`heightfield` generator
+ * and/or RLE rows, {@link ./tilemap.js | data/tilemap}) into {@link StageSpec.terrain}. Tilesets
+ * get per-tile-id lookup tables ({@link TilesetSpec.tables}) the terrain queries read.
+ *
  * **Implements.**
- * - shmup_feat.md §14 — stage data format (JSON validated with a schema)
+ * - shmup_feat.md §14 — stage data format (JSON validated with a schema), tilemap terrain with
+ *   collision types and slope masks, parallax layers, sorted event timeline
+ * - shmup_feat.md §10 — invisible checkpoints in the stage data
  * - shmup_feat.md §22 — data-driven content (`enemies.json`, `weapons.json`, `stages/*.json`)
  * - shmup_feat.md §7 / §11 — weapons and enemies defined in data
  *
@@ -27,19 +37,24 @@
  * - Per-kind spec types: {@link PlayerShipSpec} ({@link BoxSpec}, {@link MarginSpec}),
  *   {@link WeaponSpec} ({@link WeaponSlot}, {@link WEAPON_SLOTS}), {@link WeaponPresetSpec},
  *   {@link EnemySpec} ({@link EnemyRankSpec}), {@link StageSpec} and its parts
- *   ({@link StageCameraKey}, {@link StageCheckpoint}, {@link StageParallaxLayer},
- *   {@link StageTilemapRef}, {@link StageEvent} and its variants).
+ *   ({@link StageMusic}, {@link StageCameraKey}, {@link StageCheckpoint},
+ *   {@link StageParallaxLayer}, {@link StageParallaxLayerName}, {@link StageTilemapSpec},
+ *   {@link HeightfieldSpec}, {@link HeightfieldSegment}, {@link HeightfieldProfile},
+ *   {@link StageTerrain}, {@link StageEvent} and its variants, {@link STAGE_EVENT_TYPES},
+ *   {@link MAX_STAGE_FLAGS}), {@link TilesetSpec} ({@link TileSpec}, {@link TileType},
+ *   {@link TILE_TYPES}, {@link TileAnchor}, {@link TILE_ANCHORS}, {@link TILE_SIZE},
+ *   {@link TilesetTables}).
  * - Everything re-exported from {@link ./schema.js | data/schema}: the combinators `s`,
  *   `Schema`, `Infer`, `ObjectShape`, `ObjectValue`, `RefSite`, `ContentRefKind`,
  *   `ValidationIssue`.
  *
  * **Id resolution convention.** A field declared with `s.ref(kind)` keeps its string and
  * gains a sibling `<field>Id` holding the resolved numeric index (`sprite` → `spriteId`,
- * `behavior` → `behaviorId`, `enemy` → `enemyId`, `cue` → `cueId`); `-1` means null, absent
- * or unresolved. Systems read only the numbers.
+ * `behavior` → `behaviorId`, `enemy` → `enemyId`, `cue` → `cueId`, `tileset` → `tilesetId`);
+ * `-1` means null, absent or unresolved. Systems read only the numbers.
  *
- * **Planned API (later steps).** Kinds `paths`, `tilesets`, `rules`, `patterns`, `campaign`,
- * `strings` (M1-07 … M2); `input-profiles`, `sfx`/`music` and `fx` files stay *foreign* here
+ * **Planned API (later steps).** Kinds `paths` (M1-08), `rules`, `patterns`, `campaign`,
+ * `strings` (M2); `input-profiles`, `sfx`/`music` and `fx` files stay *foreign* here
  * and are validated by their owning packages (see plan §3.5). M1-08 passes
  * `knownScripts` so behaviour ids are checked, M1-03 checks `db.sprites` against the atlas.
  *
@@ -50,9 +65,13 @@
  *
  * @module
  */
+import { PLAYFIELD_W } from '../config/index.js';
 import { MUSIC_CUES, SFX_CUES } from '../events/index.js';
 import { defineModule } from '../module-info.js';
 import { s, type RefSite, type Schema, type ValidationIssue } from './schema.js';
+import { buildTilesetTables, expandTilemap, type TilesetTables } from './tilemap.js';
+
+export type { TilesetTables } from './tilemap.js';
 
 export {
   s,
@@ -90,7 +109,13 @@ export const CONTENT_FORMAT_VERSION = 1;
  * match). A later step that adds a kind appends it here, to {@link ContentDb} and to the
  * internal `parseFile` / `collect` switches.
  */
-export const CONTENT_KINDS = Object.freeze(['player', 'weapons', 'enemies', 'stage'] as const);
+export const CONTENT_KINDS = Object.freeze([
+  'player',
+  'weapons',
+  'enemies',
+  'stage',
+  'tileset',
+] as const);
 
 /** Kinds of content file this module owns (`content/player/`, `weapons/`, …). */
 export type ContentKind = (typeof CONTENT_KINDS)[number];
@@ -300,39 +325,131 @@ export interface EnemySpec {
   readonly rank?: EnemyRankSpec;
 }
 
-/** One camera-path key of a stage (speed in px/tick from this camera-X on). */
+/**
+ * One camera-path key of a stage (shmup_feat.md §14 "scripted camera path"). Keys are sorted by
+ * `x` (strictly increasing, the first at 0); each takes effect when the camera reaches its `x`.
+ */
 export interface StageCameraKey {
   /** Camera X where the key takes effect. */
   readonly x: number;
-  /** Scroll speed in pixels per tick from here on. */
+  /** Target scroll speed in pixels per tick (0 = scroll stop). */
   readonly speed: number;
-  /** Optional lock reason (`boss` stops the camera until the boss dies). */
-  readonly lock?: string;
+  /** Ticks to reach `speed` linearly from the current speed (0 / omitted = at once). */
+  readonly ramp?: number;
+  /** Vertical pan: world y of the camera's top edge to move to (vertical sections). */
+  readonly yTo?: number;
+  /** Ticks the vertical pan takes (0 / omitted = at once; needs `yTo`). */
+  readonly yTicks?: number;
+  /**
+   * Scroll lock (bosses): the camera stops exactly at `x` and stays until the runner is
+   * unlocked (the boss dies, M1-13); then it scrolls on at `speed`.
+   */
+  readonly lock?: boolean;
 }
 
-/** A restart point for the `arcade` death penalty (shmup_feat.md §10). */
+/** An invisible restart point (shmup_feat.md §10); sorted by `x`, strictly increasing. */
 export interface StageCheckpoint {
   /** Camera X the player restarts at. */
   readonly x: number;
 }
 
-/** One parallax background layer. */
+/** Which background layer a parallax band is drawn on. */
+export type StageParallaxLayerName = 'far' | 'mid';
+
+/**
+ * One parallax background band: a sprite repeated every `spacing` pixels along x at playfield row
+ * `y`, scrolling at `factor` × the camera (shmup_feat.md §14, integer-snapped by the renderer).
+ */
 export interface StageParallaxLayer {
-  /** Layer id (resolved against the atlas/tileset in M1-07). */
-  readonly id: string;
+  /** `far` (`BG_FAR`) or `mid` (`BG_MID`). */
+  readonly layer: StageParallaxLayerName;
+  /** Atlas sprite repeated along the band (frame 0). */
+  readonly sprite: string;
+  /** Resolved {@link ContentDb.sprites} index of {@link StageParallaxLayer.sprite}. */
+  readonly spriteId: number;
   /** Scroll factor relative to the camera (0 = static, 1 = playfield speed). */
   readonly factor: number;
+  /** Playfield row of the band's top edge (at camera y 0). */
+  readonly y: number;
+  /** Horizontal repeat distance in pixels (normally the sprite's width). */
+  readonly spacing: number;
 }
 
-/** Reference to an exported tilemap (Tiled/LDtk), resolved in M1-07. */
-export interface StageTilemapRef {
-  /** Tile edge length in pixels. */
+/** Music of a stage (cue names from `MUSIC_CUES`). */
+export interface StageMusic {
+  /** Cue of the stage theme. */
+  readonly stage: string;
+  /** Resolved music cue id of {@link StageMusic.stage}. */
+  readonly stageId: number;
+  /** Cue of the boss theme. */
+  readonly boss: string;
+  /** Resolved music cue id of {@link StageMusic.boss}. */
+  readonly bossId: number;
+}
+
+/** One wave profile of a heightfield segment (floor or ceiling). */
+export interface HeightfieldProfile {
+  /** Average height in pixels, measured from the map's bottom (floor) or top (ceiling). */
+  readonly base: number;
+  /** Wave amplitude in pixels. */
+  readonly amp: number;
+  /** Wavelength in pixels. */
+  readonly period: number;
+  /** Seed of the wave's phases (unsigned 32-bit). */
+  readonly seed: number;
+}
+
+/** A stretch of generated terrain: `[from, to)` in world pixels. */
+export interface HeightfieldSegment {
+  /** First world x (pixels). */
+  readonly from: number;
+  /** End world x (exclusive, > `from`). */
+  readonly to: number;
+  /** Floor profile (omit for no floor). */
+  readonly floor?: HeightfieldProfile;
+  /** Ceiling profile (omit for no ceiling). */
+  readonly ceiling?: HeightfieldProfile;
+}
+
+/** Procedural terrain, expanded deterministically at load (`data/tilemap`). */
+export interface HeightfieldSpec {
+  /** Generator kind. */
+  readonly type: 'heightfield';
+  /** Segments, any order. */
+  readonly segments: readonly HeightfieldSegment[];
+}
+
+/** A stage's terrain block: where its tiles come from. */
+export interface StageTilemapSpec {
+  /** Tile edge in pixels (8). */
   readonly tileSize: number;
-  /** Path of the tilemap file, relative to `content/`. */
-  readonly file: string;
+  /** Tileset id (`content/tilesets/`). */
+  readonly tileset: string;
+  /** Resolved {@link ContentDb.tilesets} index of {@link StageTilemapSpec.tileset}. */
+  readonly tilesetId: number;
+  /** Map height in tiles (25 = the 200-px playfield). */
+  readonly rowsTall: number;
+  /** Explicit run-length encoded rows, top to bottom (`"40*0, 3*2"`), applied last. */
+  readonly rle?: readonly string[];
+  /** Procedural terrain. */
+  readonly generator?: HeightfieldSpec;
 }
 
-/** Spawn one enemy (or a formation of them) when the camera reaches `x`. */
+/** A stage's expanded tile grid (built by {@link loadContent}; never in the JSON). */
+export interface StageTerrain {
+  /** Tile edge in pixels. */
+  readonly tileSize: number;
+  /** Width in tiles: `ceil((length + PLAYFIELD_W) / tileSize)`. */
+  readonly cols: number;
+  /** Height in tiles (`rowsTall`). */
+  readonly rows: number;
+  /** Tile id per cell, row-major; 0 = empty. Shared content — copy it before mutating. */
+  readonly tiles: Uint8Array;
+  /** {@link ContentDb.tilesets} index. */
+  readonly tilesetId: number;
+}
+
+/** Spawn one enemy when the camera reaches `x` (M1-08 implements the spawner). */
 export interface StageSpawnEvent {
   /** Camera X that fires the event. */
   readonly x: number;
@@ -342,22 +459,41 @@ export interface StageSpawnEvent {
   readonly enemy: string;
   /** Resolved {@link ContentDb.enemies} index. */
   readonly enemyId: number;
-  /** Formation id (M1-08); a single enemy when omitted. */
-  readonly formation?: string;
-  /** Movement path id (M1-07). */
-  readonly path?: string;
-  /** Spawn Y in playfield pixels; the path decides when omitted. */
+  /** Spawn y in playfield pixels; the enemy's mover decides when omitted. */
   readonly y?: number;
-  /** How many enemies the formation spawns. */
-  readonly count?: number;
+  /** Movement path id (`content/paths/`, M1-08). */
+  readonly path?: string;
 }
 
-/** Start a boss, mid-boss or its WARNING intro (shmup_feat.md §13). */
+/**
+ * Spawn a formation: `count` enemies, one every `interval` ticks; killing all of them drops a
+ * capsule (M1-08).
+ */
+export interface StageFormationEvent {
+  /** Camera X that fires the event. */
+  readonly x: number;
+  /** Discriminator. */
+  readonly type: 'formation';
+  /** Enemy id of every member. */
+  readonly enemy: string;
+  /** Resolved {@link ContentDb.enemies} index. */
+  readonly enemyId: number;
+  /** Members (1–64). */
+  readonly count: number;
+  /** Ticks between two members. */
+  readonly interval: number;
+  /** Spawn y in playfield pixels. */
+  readonly y?: number;
+  /** Movement path id. */
+  readonly path?: string;
+}
+
+/** Start a boss or its WARNING intro (shmup_feat.md §13, M1-13). */
 export interface StageBossEvent {
   /** Camera X that fires the event. */
   readonly x: number;
   /** Discriminator. */
-  readonly type: 'boss' | 'midboss' | 'warning';
+  readonly type: 'boss' | 'warning';
   /** Boss enemy id. */
   readonly enemy: string;
   /** Resolved {@link ContentDb.enemies} index. */
@@ -376,46 +512,137 @@ export interface StageMusicEvent {
   readonly cueId: number;
 }
 
-/** Change the scroll speed outside the camera key list (scripted sections). */
-export interface StageScrollEvent {
+/** Change the scroll speed between camera keys (scripted sections, high-speed runs). */
+export interface StageSpeedEvent {
   /** Camera X that fires the event. */
   readonly x: number;
   /** Discriminator. */
-  readonly type: 'scroll';
-  /** New scroll speed in pixels per tick. */
+  readonly type: 'speed';
+  /** New target speed in pixels per tick. */
   readonly speed: number;
+  /** Ticks to reach it (0 / omitted = at once). */
+  readonly ramp?: number;
 }
 
-/** Mark a restart point inline in the timeline. */
-export interface StageCheckpointEvent {
+/** Set or clear a named stage flag (in-stage branches, M2). */
+export interface StageFlagEvent {
   /** Camera X that fires the event. */
   readonly x: number;
   /** Discriminator. */
-  readonly type: 'checkpoint';
+  readonly type: 'flag';
+  /** Flag name (per stage). */
+  readonly flag: string;
+  /** Index of the flag in {@link StageSpec.flagNames} (its bit in the runner's `flags`). */
+  readonly flagId: number;
+  /** `true` (default) sets the flag, `false` clears it. */
+  readonly value?: boolean;
+}
+
+/** The end of the stage (stage clear). */
+export interface StageEndEvent {
+  /** Camera X that fires the event. */
+  readonly x: number;
+  /** Discriminator. */
+  readonly type: 'end';
 }
 
 /** One entry of a stage timeline, fired when the camera reaches its `x`. */
 export type StageEvent =
-  StageSpawnEvent | StageBossEvent | StageMusicEvent | StageScrollEvent | StageCheckpointEvent;
+  | StageSpawnEvent
+  | StageFormationEvent
+  | StageBossEvent
+  | StageMusicEvent
+  | StageSpeedEvent
+  | StageFlagEvent
+  | StageEndEvent;
 
-/** One stage/zone (`content/stages/*.stage.json`, shmup_feat.md §14). Stub — M1-07 extends it. */
+/** Every stage event `type`, in schema order. */
+export const STAGE_EVENT_TYPES = Object.freeze([
+  'spawn',
+  'formation',
+  'warning',
+  'boss',
+  'music',
+  'speed',
+  'flag',
+  'end',
+] as const);
+
+/** Most distinct flags one stage may use (they are bits of one 32-bit mask). */
+export const MAX_STAGE_FLAGS = 32;
+
+/** One stage/zone (`content/stages/*.stage.json`, shmup_feat.md §14). */
 export interface StageSpec {
   /** Unique id, referenced by the zone map. */
   readonly id: string;
   /** Display name. */
   readonly name: string;
-  /** Camera-X length in pixels. */
+  /** Stage and boss music. */
+  readonly music: StageMusic;
+  /** Camera-X length in pixels (the camera never scrolls past it). */
   readonly length: number;
-  /** Camera path keys, sorted by `x`. */
+  /** Camera path keys, sorted by `x` (the first at 0). */
   readonly camera: readonly StageCameraKey[];
-  /** Restart points. */
+  /** Restart points, sorted by `x`. */
   readonly checkpoints: readonly StageCheckpoint[];
-  /** Background layers, far to near. */
+  /** Background bands, far to near. */
   readonly parallax: readonly StageParallaxLayer[];
-  /** Terrain tilemap, or `null` for an open-space stage. */
-  readonly tilemap: StageTilemapRef | null;
-  /** Timeline, sorted by `x`. */
+  /** Terrain block, or `null` for an open-space stage. */
+  readonly tilemap: StageTilemapSpec | null;
+  /** Timeline, sorted by `x` (several events may share one `x`; they fire in file order). */
   readonly events: readonly StageEvent[];
+  /** Distinct flag names of the `flag` events, sorted (a flag's index is its bit). */
+  readonly flagNames: readonly string[];
+  /** The expanded tile grid (`null` without a tilemap or when it failed to expand). */
+  readonly terrain: StageTerrain | null;
+}
+
+/** Collision type of a tile (shmup_feat.md §14): the index is the `TerrainType` code. */
+export type TileType = 'empty' | 'solid' | 'hazard';
+
+/** Every {@link TileType}, in code order. */
+export const TILE_TYPES = Object.freeze(['empty', 'solid', 'hazard'] as const);
+
+/** Edge a tile's column heights grow from: the index is the `TerrainAnchor` code. */
+export type TileAnchor = 'floor' | 'ceiling';
+
+/** Every {@link TileAnchor}, in code order. */
+export const TILE_ANCHORS = Object.freeze(['floor', 'ceiling'] as const);
+
+/** Tile edge in pixels every tileset and tilemap uses (M1). */
+export const TILE_SIZE = 8;
+
+/** One tile of a tileset. */
+export interface TileSpec {
+  /** Name, unique inside the tileset (`solid`, `floor`, `slope-up` …). */
+  readonly name: string;
+  /** Collision type (`empty` = decoration only). */
+  readonly type: TileType;
+  /** Frame of the tileset sprite that draws the tile. */
+  readonly frame: number;
+  /** Edge the heights grow from. */
+  readonly anchor: TileAnchor;
+  /** Solid height of every pixel column (`tileSize` entries, 0 … tileSize). */
+  readonly mask: readonly number[];
+}
+
+/**
+ * A terrain tileset (`content/tilesets/*.tileset.json`): collision shape and art frame of every
+ * tile id. Tile id `i + 1` is `tiles[i]`; id 0 is the empty cell.
+ */
+export interface TilesetSpec {
+  /** Unique id, referenced by `stage.tilemap.tileset`. */
+  readonly id: string;
+  /** Atlas sprite whose frames draw the tiles. */
+  readonly sprite: string;
+  /** Resolved {@link ContentDb.sprites} index of {@link TilesetSpec.sprite}. */
+  readonly spriteId: number;
+  /** Tile edge in pixels (8). */
+  readonly tileSize: number;
+  /** The tiles (at most 255). */
+  readonly tiles: readonly TileSpec[];
+  /** Lookup tables by tile id (built at load). */
+  readonly tables: TilesetTables;
 }
 
 /**
@@ -468,6 +695,10 @@ export interface ContentDb {
   readonly stages: readonly StageSpec[];
   /** Stage id → {@link ContentDb.stages} index. */
   readonly stageIndex: ReadonlyMap<string, number>;
+  /** Terrain tilesets, in file order. */
+  readonly tilesets: readonly TilesetSpec[];
+  /** Tileset id → {@link ContentDb.tilesets} index. */
+  readonly tilesetIndex: ReadonlyMap<string, number>;
 }
 
 /** Options of {@link loadContent}. */
@@ -608,31 +839,94 @@ const ENEMIES_FILE_SCHEMA = s.object({
 /** Camera-X of a timeline entry. */
 const EVENT_X = s.num({ min: 0, max: 1000000 });
 
-/** One entry of `events` in a `stage` file (stub — M1-07 adds `formation` and `branch`). */
-const STAGE_EVENT_SCHEMA: Schema<Omit<StageEvent, 'enemyId' | 'cueId'>> = s.oneOf('type', {
-  spawn: s.object(
-    {
-      x: EVENT_X,
-      type: s.enumOf(['spawn'] as const),
-      enemy: s.ref('enemy'),
-      formation: s.str(),
-      path: s.str(),
-      y: s.num({ min: -64, max: 320 }),
-      count: s.int({ min: 1, max: 64 }),
-    },
-    { optional: ['formation', 'path', 'y', 'count'] },
-  ),
-  boss: s.object({ x: EVENT_X, type: s.enumOf(['boss'] as const), enemy: s.ref('enemy') }),
-  midboss: s.object({ x: EVENT_X, type: s.enumOf(['midboss'] as const), enemy: s.ref('enemy') }),
-  warning: s.object({ x: EVENT_X, type: s.enumOf(['warning'] as const), enemy: s.ref('enemy') }),
-  music: s.object({ x: EVENT_X, type: s.enumOf(['music'] as const), cue: s.ref('music') }),
-  scroll: s.object({
-    x: EVENT_X,
-    type: s.enumOf(['scroll'] as const),
-    speed: s.num({ min: 0, max: 16 }),
-  }),
-  checkpoint: s.object({ x: EVENT_X, type: s.enumOf(['checkpoint'] as const) }),
+/** Scroll speed in pixels per tick. */
+const SPEED = s.num({ min: 0, max: 16 });
+
+/** A ramp or pan length in ticks. */
+const TICKS = s.int({ min: 0, max: 36000 });
+
+/** Spawn y in playfield pixels. */
+const SPAWN_Y = s.num({ min: -64, max: 320 });
+
+/** One entry of `events` in a `stage` file. */
+const STAGE_EVENT_SCHEMA: Schema<Omit<StageEvent, 'enemyId' | 'cueId' | 'flagId'>> = s.oneOf(
+  'type',
+  {
+    spawn: s.object(
+      {
+        x: EVENT_X,
+        type: s.enumOf(['spawn'] as const),
+        enemy: s.ref('enemy'),
+        y: SPAWN_Y,
+        path: s.str(),
+      },
+      { optional: ['y', 'path'] },
+    ),
+    formation: s.object(
+      {
+        x: EVENT_X,
+        type: s.enumOf(['formation'] as const),
+        enemy: s.ref('enemy'),
+        count: s.int({ min: 1, max: 64 }),
+        interval: s.int({ min: 1, max: 600 }),
+        y: SPAWN_Y,
+        path: s.str(),
+      },
+      { optional: ['y', 'path'] },
+    ),
+    warning: s.object({ x: EVENT_X, type: s.enumOf(['warning'] as const), enemy: s.ref('enemy') }),
+    boss: s.object({ x: EVENT_X, type: s.enumOf(['boss'] as const), enemy: s.ref('enemy') }),
+    music: s.object({ x: EVENT_X, type: s.enumOf(['music'] as const), cue: s.ref('music') }),
+    speed: s.object(
+      { x: EVENT_X, type: s.enumOf(['speed'] as const), speed: SPEED, ramp: TICKS },
+      { optional: ['ramp'] },
+    ),
+    flag: s.object(
+      {
+        x: EVENT_X,
+        type: s.enumOf(['flag'] as const),
+        flag: s.str({ maxLength: 64, pattern: /^[a-z][a-z0-9-]*$/ }),
+        value: s.bool(),
+      },
+      { optional: ['value'] },
+    ),
+    end: s.object({ x: EVENT_X, type: s.enumOf(['end'] as const) }),
+  },
+);
+
+/** One wave profile of a heightfield segment. */
+const HEIGHTFIELD_PROFILE_SCHEMA = s.object({
+  base: s.num({ min: 0, max: 2048 }),
+  amp: s.num({ min: 0, max: 1024 }),
+  period: s.num({ min: 16, max: 65536 }),
+  seed: s.int({ min: 0, max: 0xffffffff }),
 });
+
+/** A `stage.tilemap` block. */
+const TILEMAP_SCHEMA: Schema<Omit<StageTilemapSpec, 'tilesetId'>> = s.object(
+  {
+    tileSize: s.int({ min: TILE_SIZE, max: TILE_SIZE }),
+    tileset: s.ref('tileset'),
+    rowsTall: s.int({ min: 1, max: 255 }),
+    rle: s.array(s.str({ minLength: 0, maxLength: 100000 }), { max: 255 }),
+    generator: s.object({
+      type: s.enumOf(['heightfield'] as const),
+      segments: s.array(
+        s.object(
+          {
+            from: s.int({ min: 0, max: 1000000 }),
+            to: s.int({ min: 1, max: 1001000 }),
+            floor: HEIGHTFIELD_PROFILE_SCHEMA,
+            ceiling: HEIGHTFIELD_PROFILE_SCHEMA,
+          },
+          { optional: ['floor', 'ceiling'] },
+        ),
+        { min: 1, max: 256 },
+      ),
+    }),
+  },
+  { optional: ['rle', 'generator'] },
+);
 
 /** A `content/stages/*.stage.json` file. */
 const STAGE_FILE_SCHEMA = s.object({
@@ -640,18 +934,54 @@ const STAGE_FILE_SCHEMA = s.object({
   kind: s.enumOf(['stage'] as const),
   id: s.str(),
   name: s.str(),
+  music: s.object({ stage: s.ref('music'), boss: s.ref('music') }),
   length: s.int({ min: 1, max: 1000000 }),
   camera: s.array(
     s.object(
-      { x: EVENT_X, speed: s.num({ min: 0, max: 16 }), lock: s.str() },
-      { optional: ['lock'] },
+      {
+        x: EVENT_X,
+        speed: SPEED,
+        ramp: TICKS,
+        yTo: s.num({ min: 0, max: 4096 }),
+        yTicks: TICKS,
+        lock: s.bool(),
+      },
+      { optional: ['ramp', 'yTo', 'yTicks', 'lock'] },
     ),
     { min: 1 },
   ),
   checkpoints: s.array(s.object({ x: EVENT_X })),
-  parallax: s.array(s.object({ id: s.str(), factor: s.num({ min: 0, max: 4 }) })),
-  tilemap: s.nullable(s.object({ tileSize: s.int({ min: 1, max: 64 }), file: s.str() })),
+  parallax: s.array(
+    s.object({
+      layer: s.enumOf(['far', 'mid'] as const),
+      sprite: s.ref('sprite'),
+      factor: s.num({ min: 0, max: 4 }),
+      y: s.num({ min: -512, max: 512 }),
+      spacing: s.int({ min: 8, max: 1024 }),
+    }),
+    { max: 8 },
+  ),
+  tilemap: s.nullable(TILEMAP_SCHEMA),
   events: s.array(STAGE_EVENT_SCHEMA),
+});
+
+/** One entry of `tiles` in a `tileset` file. */
+const TILE_SCHEMA: Schema<TileSpec> = s.object({
+  name: s.str({ maxLength: 64 }),
+  type: s.enumOf(TILE_TYPES),
+  frame: s.int({ min: 0, max: 1023 }),
+  anchor: s.enumOf(TILE_ANCHORS),
+  mask: s.array(s.int({ min: 0, max: 64 }), { min: 1, max: 64 }),
+});
+
+/** A `content/tilesets/*.tileset.json` file (one tileset per file). */
+const TILESET_FILE_SCHEMA = s.object({
+  ...HEADER_SHAPE,
+  kind: s.enumOf(['tileset'] as const),
+  id: s.str(),
+  sprite: s.ref('sprite'),
+  tileSize: s.int({ min: TILE_SIZE, max: TILE_SIZE }),
+  tiles: s.array(TILE_SCHEMA, { min: 1, max: 255 }),
 });
 
 /** Mutable working copy of a {@link ContentDb} while a load runs. */
@@ -676,6 +1006,12 @@ interface DbBuilder {
   stages: StageSpec[];
   /** Stage id → position in {@link DbBuilder.stages}. */
   stageIndex: Map<string, number>;
+  /** Repo-relative file path of every collected stage (issue paths of the terrain pass). */
+  stagePaths: string[];
+  /** Collected tilesets. */
+  tilesets: TilesetSpec[];
+  /** Tileset id → position in {@link DbBuilder.tilesets}. */
+  tilesetIndex: Map<string, number>;
 }
 
 /** Empty {@link StringTable}. */
@@ -706,6 +1042,8 @@ export const EMPTY_CONTENT_DB: ContentDb = Object.freeze({
   enemyIndex: new Map<string, number>(),
   stages: Object.freeze([]),
   stageIndex: new Map<string, number>(),
+  tilesets: Object.freeze([]),
+  tilesetIndex: new Map<string, number>(),
 });
 
 /** `Object.prototype.hasOwnProperty` (Chromium 69 has no `Object.hasOwn`). */
@@ -899,6 +1237,9 @@ function resolveRef(
     case 'stage':
       resolved = db.stageIndex.get(id);
       break;
+    case 'tileset':
+      resolved = db.tilesetIndex.get(id);
+      break;
     case 'sfx':
       resolved = hasOwn(SFX_CUES, id) ? (SFX_CUES as Record<string, number>)[id] : undefined;
       break;
@@ -930,11 +1271,13 @@ function assertFileList(files: unknown): void {
  * Validates content files and builds the {@link ContentDb} the simulation reads.
  *
  * @remarks
- * Two passes: every file is validated and its entries collected (in ascending path order,
+ * Three passes: every file is validated and its entries collected (in ascending path order,
  * so the result never depends on how the host listed the files), then every string id
  * recorded by {@link s.ref} is resolved and written back as `<field>Id`. Sprite and script
  * names are *interned* (sorted, then numbered); ids pointing at ships, weapons, enemies,
- * stages or audio cues must resolve, or an issue is reported and the id becomes `-1`.
+ * stages, tilesets or audio cues must resolve, or an issue is reported and the id becomes `-1`.
+ * A third pass expands every stage tilemap against its resolved tileset
+ * ({@link StageSpec.terrain}); its issues come last.
  *
  * Bad files are skipped, not fatal: the caller (the boot error screen, `pnpm content:check`)
  * shows `issues` and may still run with the partial database. A file with a bad header or
@@ -986,6 +1329,9 @@ export function loadContent(
     enemyIndex: new Map(),
     stages: [],
     stageIndex: new Map(),
+    stagePaths: [],
+    tilesets: [],
+    tilesetIndex: new Map(),
   };
 
   const sorted = files.slice().sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
@@ -1020,6 +1366,7 @@ export function loadContent(
   const sprites = buildStringTable(spriteNames);
   const scripts = buildStringTable(scriptNames);
   for (const site of refs) resolveRef(site, db, sprites, scripts, knownScripts, issues);
+  expandStageTerrains(db, issues);
 
   return {
     db: {
@@ -1035,6 +1382,8 @@ export function loadContent(
       enemyIndex: db.enemyIndex,
       stages: db.stages,
       stageIndex: db.stageIndex,
+      tilesets: db.tilesets,
+      tilesetIndex: db.tilesetIndex,
     },
     issues,
     foreign,
@@ -1065,6 +1414,8 @@ function parseFile(
       return ENEMIES_FILE_SCHEMA.parse(data, '', issues, refs);
     case 'stage':
       return STAGE_FILE_SCHEMA.parse(data, '', issues, refs);
+    case 'tileset':
+      return TILESET_FILE_SCHEMA.parse(data, '', issues, refs);
   }
 }
 
@@ -1138,15 +1489,219 @@ function collect(
       }
       return;
     }
-    case 'stage':
+    case 'stage': {
+      const stage = parsed as unknown as MutableStage;
+      if (!checkStage(stage, path, issues)) return;
+      const before = db.stages.length;
+      addEntry(db.stages, db.stageIndex, stage as StageSpec, at(path, 'id'), 'stage', issues);
+      if (db.stages.length > before) db.stagePaths.push(path);
+      return;
+    }
+    case 'tileset': {
+      const tileset = parsed as unknown as Omit<TilesetSpec, 'tables'> & {
+        tables?: TilesetTables;
+      };
+      if (!checkTileset(tileset, path, issues)) return;
+      tileset.tables = buildTilesetTables(tileset.tiles, tileset.tileSize);
       addEntry(
-        db.stages,
-        db.stageIndex,
-        parsed as unknown as StageSpec,
+        db.tilesets,
+        db.tilesetIndex,
+        tileset as TilesetSpec,
         at(path, 'id'),
-        'stage',
+        'tileset',
         issues,
       );
       return;
+    }
+  }
+}
+
+/** A stage while the loader completes it (the fields it adds after the schema). */
+type MutableStage = Omit<StageSpec, 'flagNames' | 'terrain' | 'events'> & {
+  /** See {@link StageSpec.events}. */
+  events: Array<StageEvent & { flagId?: number }>;
+  /** See {@link StageSpec.flagNames}. */
+  flagNames: string[];
+  /** See {@link StageSpec.terrain}. */
+  terrain: StageTerrain | null;
+};
+
+/**
+ * Reports `path: message` and returns `false`.
+ *
+ * @param issues - Collector.
+ * @param path - Issue path.
+ * @param message - Message.
+ * @returns `false`.
+ */
+function issue(issues: ValidationIssue[], path: string, message: string): false {
+  issues.push({ path, message });
+  return false;
+}
+
+/**
+ * The checks a stage needs beyond its schema: sorted camera keys (the first at 0), checkpoints
+ * and events inside the stage length, pan keys with a target, heightfield segments with
+ * `from < to`, at most {@link MAX_STAGE_FLAGS} flags. Assigns the flag ids and initialises
+ * `terrain` (filled by {@link expandStageTerrains}).
+ *
+ * @param stage - The parsed stage.
+ * @param file - Repo-relative file path.
+ * @param issues - Collector.
+ * @returns `true` when the stage is usable.
+ */
+function checkStage(stage: MutableStage, file: string, issues: ValidationIssue[]): boolean {
+  let ok = true;
+  const length = stage.length;
+  const keys = stage.camera;
+  if (keys[0].x !== 0) {
+    ok = issue(
+      issues,
+      at(file, 'camera[0].x'),
+      'must be 0 (the camera path starts at the stage start)',
+    );
+  }
+  for (let i = 0; i < keys.length; i++) {
+    const key = keys[i];
+    const path = 'camera[' + String(i) + ']';
+    if (i > 0 && key.x <= keys[i - 1].x) {
+      ok = issue(
+        issues,
+        at(file, path + '.x'),
+        'must be greater than camera[' + String(i - 1) + '].x (keys are sorted by x)',
+      );
+    }
+    if (key.x > length) ok = issue(issues, at(file, path + '.x'), 'must be <= length');
+    if (key.yTicks !== undefined && key.yTo === undefined) {
+      ok = issue(issues, at(file, path + '.yTicks'), 'needs yTo');
+    }
+  }
+  const checkpoints = stage.checkpoints;
+  for (let i = 0; i < checkpoints.length; i++) {
+    const path = 'checkpoints[' + String(i) + '].x';
+    if (i > 0 && checkpoints[i].x <= checkpoints[i - 1].x) {
+      ok = issue(
+        issues,
+        at(file, path),
+        'must be greater than checkpoints[' + String(i - 1) + '].x (checkpoints are sorted by x)',
+      );
+    }
+    if (checkpoints[i].x > length) ok = issue(issues, at(file, path), 'must be <= length');
+  }
+  const events = stage.events;
+  const flags: string[] = [];
+  for (let i = 0; i < events.length; i++) {
+    const event = events[i];
+    const path = 'events[' + String(i) + '].x';
+    if (i > 0 && event.x < events[i - 1].x) {
+      ok = issue(
+        issues,
+        at(file, path),
+        'must be >= events[' + String(i - 1) + '].x (events are sorted by x)',
+      );
+    }
+    if (event.x > length) ok = issue(issues, at(file, path), 'must be <= length');
+    if (event.type === 'flag' && flags.indexOf(event.flag) < 0) flags.push(event.flag);
+  }
+  flags.sort();
+  if (flags.length > MAX_STAGE_FLAGS) {
+    ok = issue(
+      issues,
+      at(file, 'events'),
+      'uses ' + String(flags.length) + ' flags (at most ' + String(MAX_STAGE_FLAGS) + ')',
+    );
+  }
+  for (const event of events) if (event.type === 'flag') event.flagId = flags.indexOf(event.flag);
+  stage.flagNames = flags;
+  const segments = stage.tilemap?.generator?.segments ?? [];
+  for (let i = 0; i < segments.length; i++) {
+    if (segments[i].to <= segments[i].from) {
+      ok = issue(
+        issues,
+        at(file, 'tilemap.generator.segments[' + String(i) + '].to'),
+        'must be greater than from',
+      );
+    }
+  }
+  stage.terrain = null;
+  return ok;
+}
+
+/**
+ * The checks a tileset needs beyond its schema: unique tile names, masks of `tileSize` columns
+ * with heights in `0 … tileSize`.
+ *
+ * @param tileset - The parsed tileset.
+ * @param file - Repo-relative file path.
+ * @param issues - Collector.
+ * @returns `true` when the tileset is usable.
+ */
+function checkTileset(
+  tileset: Omit<TilesetSpec, 'tables'>,
+  file: string,
+  issues: ValidationIssue[],
+): boolean {
+  let ok = true;
+  const size = tileset.tileSize;
+  const names = new Set<string>();
+  for (let i = 0; i < tileset.tiles.length; i++) {
+    const tile = tileset.tiles[i];
+    const path = 'tiles[' + String(i) + ']';
+    if (names.has(tile.name))
+      ok = issue(issues, at(file, path + '.name'), 'duplicate tile name "' + tile.name + '"');
+    names.add(tile.name);
+    if (tile.mask.length !== size) {
+      ok = issue(
+        issues,
+        at(file, path + '.mask'),
+        'must have tileSize (' + String(size) + ') entries',
+      );
+    }
+    for (let c = 0; c < tile.mask.length; c++) {
+      if (tile.mask[c] > size) {
+        ok = issue(
+          issues,
+          at(file, path + '.mask[' + String(c) + ']'),
+          'must be <= tileSize (' + String(size) + ')',
+        );
+      }
+    }
+  }
+  return ok;
+}
+
+/**
+ * Third pass of {@link loadContent}: expands every stage's tilemap against its (now resolved)
+ * tileset into {@link StageSpec.terrain}.
+ *
+ * @param db - The builder (references already resolved).
+ * @param issues - Collector.
+ */
+function expandStageTerrains(db: DbBuilder, issues: ValidationIssue[]): void {
+  for (let i = 0; i < db.stages.length; i++) {
+    const stage = db.stages[i] as unknown as MutableStage;
+    const tilemap = stage.tilemap;
+    if (tilemap === null) continue;
+    const tileset = tilemap.tilesetId >= 0 ? db.tilesets[tilemap.tilesetId] : undefined;
+    if (tileset === undefined) continue; // the unknown id is already an issue
+    const path = at(db.stagePaths[i], 'tilemap');
+    if (tileset.tileSize !== tilemap.tileSize) {
+      issue(
+        issues,
+        path + '.tileSize',
+        "must equal the tileset's tileSize (" + String(tileset.tileSize) + ')',
+      );
+      continue;
+    }
+    const cols = Math.ceil((stage.length + PLAYFIELD_W) / tilemap.tileSize);
+    const tiles = expandTilemap(tilemap, cols, tileset.tables, tileset.id, path, issues);
+    if (tiles === null) continue;
+    stage.terrain = {
+      tileSize: tilemap.tileSize,
+      cols,
+      rows: tilemap.rowsTall,
+      tiles,
+      tilesetId: tilemap.tilesetId,
+    };
   }
 }

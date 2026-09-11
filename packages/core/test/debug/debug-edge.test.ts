@@ -53,6 +53,12 @@ function referenceHash(w: World): number {
   for (const x of w.rng.cosmetic.getState()) word(x);
   const c = w.camera;
   for (const value of [c.x, c.y, c.dx, c.dy, c.vx, c.vy]) num(value);
+  if (w.stage === null) {
+    word(0);
+  } else {
+    word(1);
+    for (const value of w.stage.state) num(value);
+  }
   word(WORLD_STATUSES.indexOf(w.status));
   num(w.hitStop);
   for (const p of w.players) {
@@ -66,6 +72,9 @@ function referenceHash(w: World): number {
     num(p.bank);
     num(p.lives);
     word(p.moving ? 1 : 0);
+    word(p.hitCause);
+    num(p.hitTick);
+    num(p.hits);
   }
   for (const entry of w.pools.entries) {
     const count = entry.pool.count;
@@ -122,6 +131,9 @@ describe('core/debug hashWorld — reference and coverage', () => {
     ['player state timer', (w: World) => void (w.players[0].stateTicks = 1)],
     ['player lives', (w: World) => void (w.players[0].lives = 2)],
     ['player moving flag', (w: World) => void (w.players[0].moving = true)],
+    ['player hit cause', (w: World) => void (w.players[0].hitCause = 1)],
+    ['player hit tick', (w: World) => void (w.players[0].hitTick = 7)],
+    ['player hit count', (w: World) => void (w.players[0].hits = 1)],
     ['player 2 x', (w: World) => void (w.players[1].x = 3)],
     ['player 2 lives', (w: World) => void (w.players[1].lives = 0)],
     ['status (each code)', (w: World) => void (w.status = 'stageClear')],

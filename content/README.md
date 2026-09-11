@@ -6,7 +6,8 @@ weapons and stages do not need engine changes (design pillar 4, `shmup_feat.md` 
 | Folder | Holds | Loaded by |
 |---|---|---|
 | [`player/`](player/README.md) | One JSON file per player ship: speed levels, hitboxes, playfield margins, timers | `@shmup/core` `player` + `data` modules |
-| [`stages/`](stages/README.md) | One JSON file per stage/zone: camera path, checkpoints, parallax/tilemap references, the spawn/event timeline | `@shmup/core` `stage` + `data` modules |
+| [`stages/`](stages/README.md) | One JSON file per stage/zone: music, camera path, checkpoints, parallax bands, tilemap (heightfield generator / RLE rows), the event timeline | `@shmup/core` `stage` + `data` modules |
+| [`tilesets/`](tilesets/README.md) | Terrain tilesets: per tile the collision type, column-height mask (slopes) and atlas frame | `@shmup/core` `data` + `collision` modules, `@shmup/render-pixi` `layers` |
 | [`enemies/`](enemies/README.md) | Enemy definitions: HP, score, hurtbox, behaviour script id, drops | `@shmup/core` `enemies` + `data` modules |
 | [`weapons/`](weapons/README.md) | Player weapon tunables: damage, speed, on-screen cap, piercing, behaviour id | `@shmup/core` `weapons` + `data` modules |
 | [`input/`](input/README.md) | Input profiles: key / button → action tables per binding context (`game`, `menu`), remote quirks (release debounce, diagonal and SOCD policy), Tizen keys to register | `@shmup/input-web` `rebind` (kind `input-profiles`, validated by the shell's content owner) |

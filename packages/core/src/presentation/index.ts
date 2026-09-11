@@ -39,8 +39,7 @@
  * {@link TextMetrics}.
  *
  * **Planned API.** `IAudio` grows `playSfx(id, priority)`, `playMusic(trackId)`,
- * `duck(amount, ticks)` with the audio engine (M1-15, shmup_feat.md §19); the parallax and
- * terrain views are drawn from M1-07 (their shapes may grow then).
+ * `duck(amount, ticks)` with the audio engine (M1-15, shmup_feat.md §19).
  *
  * @module
  */
@@ -261,23 +260,35 @@ export interface CameraView {
 }
 
 /**
- * Parallax background layers (stage data, M1-07). Drawn from M1-07 as repeated sprites
- * (no `TilingSprite` — WebGL1 NPOT restrictions).
+ * Parallax background bands of the current stage (`core/stage`, shmup_feat.md §14): band `i` is
+ * sprite `spriteId[i]` (frame 0) repeated every `spacing[i]` pixels along x, drawn on layer
+ * `layer[i]` with its top edge at playfield row `y[i]`, shifted left by `offsetX[i]`. Drawn as
+ * preallocated repeated sprites (no `TilingSprite` — WebGL1 NPOT restrictions), integer-snapped.
  */
 export interface ParallaxView {
-  /** Active parallax layers, packed in `[0, count)`. */
+  /** Bands, packed in `[0, count)` (fixed for the view's lifetime). */
   readonly count: number;
-  /** {@link LayerId} per parallax layer (`BgFar` or `BgMid`). */
+  /** {@link LayerId} per band (`BgFar` or `BgMid`). */
   readonly layer: ArrayLike<number>;
-  /** Sprite id of the repeated tile. */
+  /** Sprite id of the repeated sprite. */
   readonly spriteId: ArrayLike<number>;
-  /** Current horizontal scroll offset in pixels. */
+  /** Current horizontal scroll offset in pixels, `0 ≤ offsetX < spacing`. */
   readonly offsetX: ArrayLike<number>;
-  /** Screen row (playfield-relative) of the layer's top edge. */
+  /** Playfield row of the band's top edge (may be fractional; the renderer rounds). */
   readonly y: ArrayLike<number>;
+  /** Horizontal repeat distance in pixels (fixed for the view's lifetime). */
+  readonly spacing: ArrayLike<number>;
 }
 
-/** Tile terrain of the current stage (M1-07). Drawn from M1-07 as a tile-sprite grid. */
+/**
+ * Tile terrain of the current stage (`core/stage`). Drawn as a preallocated tile-sprite grid
+ * that is re-textured column by column as the camera crosses tile columns.
+ *
+ * @remarks
+ * Cell `(col, row)` sits at world `(col · tileSize, row · tileSize)`; tile id `t` draws frame
+ * `tileFrame[t]` of the tileset sprite (`-1` = nothing). The grid and the tables are live
+ * references; the renderer reads a cell when it scrolls into view.
+ */
 export interface TerrainView {
   /** Tile edge in pixels (8). */
   readonly tileSize: number;
@@ -285,10 +296,12 @@ export interface TerrainView {
   readonly cols: number;
   /** Map height in tiles. */
   readonly rows: number;
-  /** Tile per cell, row-major (`tiles[row * cols + col]`); 0 = empty. */
+  /** Tile id per cell, row-major (`tiles[row * cols + col]`); 0 = empty. */
   readonly tiles: ArrayLike<number>;
-  /** Sprite id of the tileset (tile `n` draws frame `n - 1`). */
+  /** Sprite id of the tileset. */
   readonly tilesetSpriteId: number;
+  /** Frame of the tileset sprite per tile id (index 0 = the empty cell, `-1`). */
+  readonly tileFrame: ArrayLike<number>;
 }
 
 /**

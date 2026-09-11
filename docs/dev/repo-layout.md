@@ -43,12 +43,12 @@ shmup-cup/
 │   │   │   ├── world/          ✔ createWorld / stepWorld: session state + the fixed 9-phase tick pipeline (plan §3.2), pool registry, view
 │   │   │   ├── presentation/   ✔ IRenderer / IAudio contracts + the render contract (RenderFrame, WorldView, SpriteBatchView, DrawList, LayerId)
 │   │   │   ├── rng/ math/ events/ pools/                 ✔ engine foundations (sfc32, trig tables, event ring, SoA pools)
-│   │   │   ├── data/           ✔ (partial) content loader: schema.ts combinators, loadContent(), ContentDb, migrations
+│   │   │   ├── data/           ✔ (partial) content loader: schema.ts combinators, loadContent(), ContentDb, migrations, tilemap.ts (tileset tables, heightfield / RLE expansion)
 │   │   │   ├── player/         ✔ (partial) KESTREL movement, speed levels, clamp, banking, fly-in (death/respawn: M1-12)
 │   │   │   ├── weapons/ options/ shields/ powerups/         player-side systems (placeholders)
 │   │   │   ├── enemies/ bullets/ patterns/ bosses/         enemy-side systems (placeholders)
-│   │   │   ├── collision/      ✔ (partial) scalar shape tests, layer masks, counting-sort uniform grid (terrain: M1-07)
-│   │   │   ├── stage/                                      stage runtime (placeholder)
+│   │   │   ├── collision/      ✔ (partial) scalar shape tests, layer masks, counting-sort uniform grid, pixel-exact terrain queries
+│   │   │   ├── stage/          ✔ stage runtime: camera keys / ramps / pans / locks, event cursor, checkpoints, terrain map + parallax / terrain views
 │   │   │   ├── scoring/ rank/ fx/                          rules & feel (placeholders)
 │   │   │   ├── scenes/ ui/                                 flow & canvas UI model (placeholders)
 │   │   │   ├── debug/          ✔ (partial) hashWorld state hash, debug flags (controls: M1-19)
@@ -58,7 +58,7 @@ shmup-cup/
 │   │   ├── tsconfig.build.json  emits dist/ (customConditions off)
 │   │   └── test/tsconfig.json   Node-side program for tests
 │   ├── render-pixi/        @shmup/render-pixi — PixiJS v8 IRenderer: WebGL1-first, 384×216 RT, integer upscale
-│   │   └── src/ renderer ✔ viewport ✔ test-pattern ✔ palette ✔ atlas ✔ layers ✔ sprites ✔ text ✔ ui ✔ · particles effects debug (placeholders)
+│   │   └── src/ renderer ✔ viewport ✔ test-pattern ✔ palette ✔ atlas ✔ layers ✔ (+ terrain grid, parallax bands) sprites ✔ text ✔ ui ✔ · particles effects debug (placeholders)
 │   ├── audio-web/          @shmup/audio-web — Web Audio IAudio: interactive latency, buses, suspend/resume
 │   │   └── src/ web-audio ✔ · sfx music loader (placeholders)
 │   ├── input-web/          @shmup/input-web — keyboard/remote + Gamepad API → InputSnapshot
@@ -81,7 +81,8 @@ shmup-cup/
 │
 ├── content/                game DATA (JSON, formatVersion 1, validated at load by core/data ✔)
 │   ├── player/             ✔ one file per ship: speed levels, hitboxes, margins, timers (+ README, example)
-│   ├── stages/             one file per stage: camera path, checkpoints, parallax, event timeline (+ README, example)
+│   ├── stages/             ✔ one file per stage: music, camera path, checkpoints, parallax, tilemap (heightfield / RLE), event timeline; test-range (+ README, example)
+│   ├── tilesets/           ✔ terrain tilesets: per tile collision type, column-height mask, atlas frame (+ README, example)
 │   ├── enemies/            enemy definitions: hp, score, hurtbox, script id, drop (+ README, example)
 │   ├── weapons/            ✔ weapon tunables + preset loadouts (+ README, example)
 │   └── input/              ✔ input profiles (kind input-profiles, validated by input-web rebind): per-context key/button tables, remote debounce/diagonal/SOCD, Tizen keys to register

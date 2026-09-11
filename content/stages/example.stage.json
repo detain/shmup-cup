@@ -3,23 +3,68 @@
   "kind": "stage",
   "id": "example",
   "name": "Example Orbit",
+  "music": { "stage": "Stage", "boss": "Boss" },
   "length": 4096,
   "camera": [
     { "x": 0, "speed": 1 },
-    { "x": 2048, "speed": 1.5 },
-    { "x": 3840, "speed": 0, "lock": "boss" }
+    { "x": 2048, "speed": 1.5, "ramp": 60 },
+    { "x": 3200, "speed": 1, "yTo": 0, "yTicks": 60 },
+    { "x": 3840, "speed": 1, "lock": true }
   ],
   "checkpoints": [{ "x": 0 }, { "x": 2048 }],
   "parallax": [
-    { "id": "stars-far", "factor": 0.25 },
-    { "id": "stars-near", "factor": 0.5 }
+    { "layer": "far", "sprite": "bg/stars-far", "factor": 0.25, "y": 0, "spacing": 128 },
+    { "layer": "mid", "sprite": "bg/stars-near", "factor": 0.5, "y": 0, "spacing": 128 }
   ],
-  "tilemap": null,
+  "tilemap": {
+    "tileSize": 8,
+    "tileset": "example",
+    "rowsTall": 25,
+    "rle": [
+      "60*0, 12*3",
+      "62*0, 8*3",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "48*0, 7, 2*0, 7",
+      "48*0, 4, 4*2, 6*6, 4*2, 5",
+      "47*0, 4, 16*1, 5",
+      "40*0, 26*1, 6*2"
+    ]
+  },
   "events": [
-    { "x": 384, "type": "spawn", "enemy": "drifter", "formation": "line5", "path": "sine-low" },
+    {
+      "x": 384,
+      "type": "formation",
+      "enemy": "drifter",
+      "count": 5,
+      "interval": 12,
+      "y": 60,
+      "path": "sine-low"
+    },
     { "x": 768, "type": "spawn", "enemy": "carrier-red", "path": "straight-mid" },
-    { "x": 1536, "type": "spawn", "enemy": "drifter", "formation": "v5", "path": "dive-high" },
+    { "x": 1536, "type": "formation", "enemy": "drifter", "count": 5, "interval": 8 },
+    { "x": 2048, "type": "speed", "speed": 2, "ramp": 120 },
+    { "x": 2048, "type": "flag", "flag": "fast-lane" },
     { "x": 3700, "type": "warning", "enemy": "example-warden" },
-    { "x": 3840, "type": "boss", "enemy": "example-warden" }
+    { "x": 3840, "type": "music", "cue": "Boss" },
+    { "x": 3840, "type": "boss", "enemy": "example-warden" },
+    { "x": 4096, "type": "end" }
   ]
 }

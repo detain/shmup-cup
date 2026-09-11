@@ -2,8 +2,9 @@
  * # player — player ship
  *
  * **Status: partial.** Movement, speed levels, clamping to the camera view, banking and the
- * fly-in are implemented (plan M1-06); hits, the death sequence, respawn by death-penalty preset
- * and lives arrive in M1-12, terrain kills with the stage runtime (M1-07).
+ * fly-in are implemented (plan M1-06); hits are *recorded* by {@link playerHit} (the World's
+ * collision phase reports terrain contact since M1-07); the death sequence, respawn by
+ * death-penalty preset and lives arrive in M1-12.
  *
  * **Responsibility.** The player ship: 8-way movement with no inertia, speed levels (meter Speed Ups or
  * a fixed Direct-mode speed), a tiny centred hurtbox plus a separate terrain box,
@@ -24,6 +25,11 @@
  * - `entering` / `respawning`: an uncontrollable `spec.enterTicks`-tick fly-in from the left edge
  *   ({@link ENTER_START_X} → {@link ENTER_END_X}, camera-relative, cubic ease-out), then `alive`.
  *
+ * **Hits (M1-07).** {@link playerHit} is the single entry point for anything that would kill the
+ * ship (terrain now; contact, bullets and lasers from M1-08/M1-09). Until the death sequence of
+ * M1-12 it only records the hit on the ship (`hitCause`, `hitTick`, `hits`) — the ship flies on.
+ * Ships that are not `alive`, still invulnerable, or protected by the debug god mode ignore hits.
+ *
  * **Implements.**
  * - shmup_feat.md §5 Player ship
  * - shmup_feat.md §10 Death, respawn & checkpoints
@@ -32,10 +38,11 @@
  * {@link PlayerIntent}, {@link PlayerCamera}, {@link createPlayer}, {@link createPlayerIntent},
  * {@link readPlayerIntent}, {@link spawnPlayer}, {@link setPlayerState}, {@link updatePlayer},
  * {@link playerBankFrame}, {@link resolvePlayerShip}, {@link DEFAULT_PLAYER_SHIP},
- * {@link DIAGONAL_SCALE}, {@link ENTER_START_X}, {@link ENTER_END_X}, {@link SPAWN_Y}.
+ * {@link DIAGONAL_SCALE}, {@link ENTER_START_X}, {@link ENTER_END_X}, {@link SPAWN_Y},
+ * {@link playerHit}, {@link PlayerHitCause}, {@link PLAYER_HIT_CAUSE_NAMES}.
  *
- * **Planned API.** `playerHit(world, player, cause)`, `killPlayer`, `respawnPlayer` by
- * death-penalty preset (M1-12); terrain-box checks (M1-07).
+ * **Planned API.** `killPlayer`, `respawnPlayer` by death-penalty preset (M1-12); `playerHit`
+ * then starts the death sequence.
  *
  * @module
  */
@@ -45,6 +52,7 @@ import { Action, type InputDeviceKind, type PlayerInput } from '../input/index.j
 import { EASINGS } from '../math/index.js';
 import { defineModule } from '../module-info.js';
 import type { CameraView } from '../presentation/index.js';
+import type { DebugFlags } from '../debug/index.js';
 
 /** Module descriptor (see {@link defineModule}). */
 export const moduleInfo = defineModule({
@@ -106,7 +114,42 @@ export interface PlayerShip {
   lives: number;
   /** `true` when the ship had movement input this tick (the Option trail records only then, D26). */
   moving: boolean;
+  /** {@link PlayerHitCause} of the last accepted hit (`None` = never hit). */
+  hitCause: PlayerHitCause;
+  /** Tick of the last accepted hit (-1 = never). */
+  hitTick: number;
+  /** Accepted hits so far (until M1-12 a hit does not kill, so contact counts every tick). */
+  hits: number;
 }
+
+/**
+ * What hit a ship ({@link playerHit}). Numeric codes, stored on the ship and hashed; append new
+ * causes, never renumber.
+ */
+export const PlayerHitCause = {
+  /** No hit recorded. */
+  None: 0,
+  /** The terrain box touched solid or hazard terrain (M1-07). */
+  Terrain: 1,
+  /** An enemy's body touched the hurtbox (M1-08). */
+  Contact: 2,
+  /** An enemy bullet (M1-09). */
+  Bullet: 3,
+  /** An enemy laser (M1-09). */
+  Laser: 4,
+} as const;
+
+/** A {@link PlayerHitCause} code. */
+export type PlayerHitCause = (typeof PlayerHitCause)[keyof typeof PlayerHitCause];
+
+/** Names of the {@link PlayerHitCause} codes, by code (debug overlays, logs). */
+export const PLAYER_HIT_CAUSE_NAMES: readonly string[] = Object.freeze([
+  'none',
+  'terrain',
+  'contact',
+  'bullet',
+  'laser',
+]);
 
 /** One player's intents for the tick, derived from the input snapshot (tick phase 1). */
 export interface PlayerIntent {
@@ -192,7 +235,48 @@ export function createPlayer(slot: number, lives: number): PlayerShip {
     device: 'none',
     lives,
     moving: false,
+    hitCause: PlayerHitCause.None,
+    hitTick: -1,
+    hits: 0,
   };
+}
+
+/**
+ * Reports that something would kill a ship (the one entry point for every hit cause). Never
+ * allocates.
+ *
+ * @remarks
+ * The hit is ignored when the ship is inactive, not `alive` (fly-in, dying, dead), still
+ * invulnerable (`invulnTicks > 0`) or when the debug god mode is on. An accepted hit is recorded
+ * on the ship (`hitCause`, `hitTick`, `hits`); until the death sequence of M1-12 nothing else
+ * happens — the ship keeps flying.
+ *
+ * @param ship - The ship.
+ * @param cause - What hit it.
+ * @param tick - The current tick (`world.tick`).
+ * @param debug - The world's debug switches (god mode).
+ * @returns `true` when the hit was accepted.
+ *
+ * @example
+ * ```ts
+ * if (boxHitsTerrain(map, ship.x, ship.y, box.hw, box.hh) !== TerrainType.Empty) {
+ *   playerHit(ship, PlayerHitCause.Terrain, world.tick, world.debugFlags);
+ * }
+ * ```
+ */
+export function playerHit(
+  ship: PlayerShip,
+  cause: PlayerHitCause,
+  tick: number,
+  debug: Readonly<DebugFlags>,
+): boolean {
+  if (!ship.active || ship.state !== 'alive' || ship.invulnTicks > 0 || debug.godMode) {
+    return false;
+  }
+  ship.hitCause = cause;
+  ship.hitTick = tick;
+  ship.hits++;
+  return true;
 }
 
 /**

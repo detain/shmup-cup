@@ -155,6 +155,7 @@ describe('integration: content/ validates', () => {
       weapons: 'weapons',
       enemies: 'enemies',
       stages: 'stage',
+      tilesets: 'tileset',
       input: 'input-profiles',
     };
     for (const file of [...shippedFiles, ...read(examplePaths)]) {

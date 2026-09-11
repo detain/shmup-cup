@@ -41,7 +41,17 @@ export {
   type AtlasSpriteInfo,
   type FrameId,
 } from './atlas/index.js';
-export { WORLD_LAYER_COUNT, createLayerStack, type LayerStack } from './layers/index.js';
+export {
+  WORLD_LAYER_COUNT,
+  createLayerStack,
+  createParallaxBinding,
+  createTerrainBinding,
+  type LayerStack,
+  type ParallaxBinding,
+  type ParallaxBindingOptions,
+  type TerrainBinding,
+  type TerrainBindingOptions,
+} from './layers/index.js';
 export {
   createQuadPool,
   createSpriteLayerBinding,

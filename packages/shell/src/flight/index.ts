@@ -1,13 +1,16 @@
 /**
  * # flight — "free flight", the default dev scene since the World exists (M1-06)
  *
- * **Responsibility.** Shows the real simulation: the game's {@link WorldView} (today the KESTREL,
- * moved by the player's remote, keyboard or gamepad through `stepWorld`) over an empty,
- * slowly drifting starfield, with the HUD bars of decision D20. The starfield and the HUD are
+ * **Responsibility.** Shows the real simulation: the game's {@link WorldView} (the KESTREL,
+ * moved by the player's remote, keyboard or gamepad through `stepWorld`) with the HUD bars of
+ * decision D20. In open space (no `GameConfig.stage`) it adds a slowly drifting starfield; when
+ * the game runs a stage (`?stage=<id>` in the web app, M1-07) the stage's own parallax bands and
+ * terrain are drawn instead and the HUD names the stage. The starfield and the HUD are
  * presentation only — they never touch the simulation: the scene owns its own
- * {@link FlightScene.world | WorldView} that lists two starfield batches (`BG_FAR`, `BG_MID`)
- * **followed by the game world's own batches** and shares the game's live camera object, so a
- * batch the World adds later (enemies, bullets …) is drawn without changing this scene.
+ * {@link FlightScene.world | WorldView} that lists its starfield batches (`BG_FAR`, `BG_MID`,
+ * open space only) **followed by the game world's own batches**, and shares the game's live
+ * camera, parallax and terrain views, so a batch the World adds later (enemies, bullets …) is
+ * drawn without changing this scene.
  *
  * **Sprite ids.** The world's batches carry ids of the content's sprite table
  * (`ContentDb.sprites.names`); the scene appends its own starfield and HUD sprites after them
@@ -77,8 +80,9 @@ export interface FlightScene {
   /** Sprite names by sprite id: the content's names, then {@link FLIGHT_SPRITES}. */
   readonly spriteNames: readonly string[];
   /**
-   * The scene's world view: starfield batches, then the game world's batches, with the game's
-   * camera. Bind it once at load (`renderer.bindWorld(scene.world)`).
+   * The scene's world view: starfield batches (open space only), then the game world's batches,
+   * with the game's camera, parallax and terrain. Bind it once at load
+   * (`renderer.bindWorld(scene.world)`).
    */
   readonly world: WorldView;
   /** The scene's render frame (reused). */
@@ -131,16 +135,19 @@ export function createFlightScene(game: Game, options: FlightSceneOptions = {}):
   const far = createSpriteBatch(LayerId.BgFar, columns * rows);
   const mid = createSpriteBatch(LayerId.BgMid, 2 * columns * rows);
   const gameView = game.world.view;
+  // A stage brings its own background: the drifting starfield is for open space only.
+  const starfield = gameView.parallax === null;
   const world: WorldView = {
     camera: gameView.camera,
-    parallax: null,
-    terrain: null,
-    batches: [far, mid, ...gameView.batches],
+    parallax: gameView.parallax,
+    terrain: gameView.terrain,
+    batches: starfield ? [far, mid, ...gameView.batches] : gameView.batches.slice(),
   };
+  const stage = game.world.stage;
 
   const hud = createDrawList(32, 4);
   hud.setString(STRING.p1, '1P');
-  hud.setString(STRING.title, 'FREE FLIGHT');
+  hud.setString(STRING.title, stage === null ? 'FREE FLIGHT' : stage.stage.name.toUpperCase());
   hud.setString(STRING.hint, 'ARROWS MOVE');
   const ui = createDrawList(1, 1);
 
@@ -173,8 +180,8 @@ export function createFlightScene(game: Game, options: FlightSceneOptions = {}):
   };
 
   /**
-   * Rebuilds the HUD: both bars, the 1P label and score, the scene title, stock ships and a
-   * control hint.
+   * Rebuilds the HUD: both bars, the 1P label and score, the scene title (`FREE FLIGHT` or the
+   * stage name), stock ships and a control hint.
    *
    * @param lives - Player 1's ships (the HUD shows `lives - 1` in stock).
    */
@@ -201,7 +208,7 @@ export function createFlightScene(game: Game, options: FlightSceneOptions = {}):
       frame.screen = source.screen;
       far.count = 0;
       mid.count = 0;
-      for (let i = 0; i < STAR_LAYERS.length; i++) {
+      for (let i = 0; starfield && i < STAR_LAYERS.length; i++) {
         const layer = STAR_LAYERS[i];
         fillStars(
           layer.layer === LayerId.BgFar ? far : mid,

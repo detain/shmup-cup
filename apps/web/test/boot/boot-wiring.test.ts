@@ -3,8 +3,9 @@
  * images, a fake renderer (no WebGL in Node) and a fake AudioContext, booted through the real
  * `@shmup/shell`. Checks the wiring: keyboard-first input, audio unlocked by the first user
  * gesture only, visibility → suspend/resume, rAF → fixed ticks → render, resize forwarding,
- * storage fallbacks, the `?scene=` switch, the input profiles (`keyboard-default`, the
- * `?profile=` / `?debounce=` dev overrides, the saved choice) and a clean stop().
+ * storage fallbacks, the `?scene=` switch, the `?stage=` dev stage (M1-07), the input profiles
+ * (`keyboard-default`, the `?profile=` / `?debounce=` dev overrides, the saved choice) and a
+ * clean stop().
  */
 import type * as AudioWeb from '@shmup/audio-web';
 import { Action, type PlatformStorage } from '@shmup/core';
@@ -15,7 +16,9 @@ import { buildAtlas } from '../../../../scripts/assets/pipeline.mjs';
 import { readContentFiles } from '../../../../vite.shared.js';
 import {
   bootWebApp,
+  contentStageIds,
   inputOverridesFromSearch,
+  stageFromSearch,
   type WebAppResources,
 } from '../../src/boot/index.js';
 
@@ -345,6 +348,25 @@ describe('web/boot bootWebApp wiring', () => {
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('"nope"'));
   });
 
+  it('runs the ?stage= stage: scrolling camera, the stage name in the HUD', async () => {
+    win.location.search = '?stage=test-range';
+    const { app } = await boot();
+    expect(app.game.config.stage).toBe('test-range');
+    expect(app.game.world.stage?.stage.id).toBe('test-range');
+    expect(app.shell.flight?.world.terrain).not.toBeNull();
+    for (let i = 0; i <= 90; i++) win.frame(i * STEP);
+    expect(app.game.world.camera.x).toBeGreaterThan(20);
+  });
+
+  it('warns about an unknown ?stage= and flies in open space', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    win.location.search = '?stage=nope';
+    const { app } = await boot();
+    expect(app.game.config.stage).toBeNull();
+    expect(app.game.world.stage).toBeNull();
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('no stage "nope"'));
+  });
+
   it('applies the saved profile choice unless ?profile= overrides it', async () => {
     win.stored.set('shmup-cup:input.profile', 'keyboard-remote-emulation');
     const saved = await boot();
@@ -417,6 +439,30 @@ describe('web/boot bootWebApp wiring', () => {
     expect(fakes.renderer.sizes).toEqual([]);
     expect(fakes.audioContext.resumes).toBe(0);
     expect(app.input.keyboard.held).toBe(0);
+  });
+});
+
+describe('web/boot stageFromSearch / contentStageIds', () => {
+  it('reads the last non-empty, decodable ?stage= value', () => {
+    expect(stageFromSearch('?stage=test-range')).toBe('test-range');
+    expect(stageFromSearch('scene=flight&stage=a&stage=b')).toBe('b');
+    expect(stageFromSearch('?stage=a&stage=')).toBe('a');
+    expect(stageFromSearch('?stage=%E0%A4%A&x=1')).toBeNull();
+    expect(stageFromSearch('?stage=zone%2Da')).toBe('zone-a');
+    expect(stageFromSearch('?stage')).toBeNull();
+    expect(stageFromSearch('')).toBeNull();
+  });
+
+  it('lists the ids of the stage files among the content files', () => {
+    expect(contentStageIds(readContentFiles())).toContain('test-range');
+    expect(
+      contentStageIds([
+        { path: 'a', data: { kind: 'stage', id: 'x' } },
+        { path: 'b', data: { kind: 'player', id: 'y' } },
+        { path: 'c', data: { kind: 'stage' } },
+        { path: 'd', data: null },
+      ]),
+    ).toEqual(['x']);
   });
 });
 

@@ -148,4 +148,21 @@ describe('shell/flight', () => {
     expect(player.x[0]).toBeGreaterThan(x + 10);
     expect(player.frame[0]).toBe(2); // banking down
   });
+
+  it('draws a stage with its own parallax and terrain instead of the starfield (M1-07)', () => {
+    const { db } = loadContent(readContentFiles());
+    const game = createGame(createHeadlessPlatform(), { seed: 1, stage: 'test-range' }, db);
+    const flight = createFlightScene(game);
+    const view = game.world.view;
+    expect(flight.world.camera).toBe(view.camera);
+    expect(flight.world.parallax).toBe(view.parallax);
+    expect(flight.world.terrain).toBe(view.terrain);
+    expect(flight.world.parallax).not.toBeNull();
+    expect(flight.world.terrain).not.toBeNull();
+    expect(flight.world.batches).toEqual(view.batches);
+    flight.update(game.renderFrame());
+    expect(flight.frame.hud.strings[1]).toBe('TEST RANGE');
+    for (let i = 0; i < 120; i++) game.step();
+    expect(game.world.camera.x).toBeGreaterThan(60);
+  });
 });

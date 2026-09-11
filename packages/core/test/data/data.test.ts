@@ -85,10 +85,11 @@ const stageFile = (id = 'zone-a', enemy = 'drifter'): ContentFile => ({
     kind: 'stage',
     id,
     name: 'Zone A',
+    music: { stage: 'Stage', boss: 'Boss' },
     length: 4096,
     camera: [{ x: 0, speed: 1 }],
     checkpoints: [{ x: 0 }],
-    parallax: [{ id: 'stars-far', factor: 0.25 }],
+    parallax: [{ layer: 'far', sprite: 'bg/stars-far', factor: 0.25, y: 0, spacing: 128 }],
     tilemap: null,
     events: [
       { x: 384, type: 'spawn', enemy, path: 'sine-low' },
@@ -106,7 +107,7 @@ describe('core/data module', () => {
   });
 
   it('knows its own kinds', () => {
-    expect([...CONTENT_KINDS]).toEqual(['player', 'weapons', 'enemies', 'stage']);
+    expect([...CONTENT_KINDS]).toEqual(['player', 'weapons', 'enemies', 'stage', 'tileset']);
     expect(isContentKind('weapons')).toBe(true);
     expect(isContentKind('input-profiles')).toBe(false);
   });
@@ -142,6 +143,8 @@ describe('core/data loadContent', () => {
     const forward = loadContent(files).db;
     const reversed = loadContent(files.slice().reverse()).db;
     expect(forward.sprites.names).toEqual(['enemies/drifter', 'ships/kestrel', 'shots/basic']);
+    const withStage = loadContent([...files, stageFile()]).db;
+    expect(withStage.sprites.names).toContain('bg/stars-far');
     expect(reversed.sprites.names).toEqual(forward.sprites.names);
     expect(forward.scripts.names).toEqual(['drifter.sine', 'shot.straight']);
     expect(forward.ships[0]?.spriteId).toBe(forward.sprites.index.get('ships/kestrel'));

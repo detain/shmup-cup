@@ -1,0 +1,58 @@
+{
+  "formatVersion": 1,
+  "kind": "tileset",
+  "id": "example",
+  "sprite": "tiles/terrain-a",
+  "tileSize": 8,
+  "tiles": [
+    {
+      "name": "solid",
+      "type": "solid",
+      "frame": 0,
+      "anchor": "floor",
+      "mask": [8, 8, 8, 8, 8, 8, 8, 8]
+    },
+    {
+      "name": "floor",
+      "type": "solid",
+      "frame": 1,
+      "anchor": "floor",
+      "mask": [8, 8, 8, 8, 8, 8, 8, 8]
+    },
+    {
+      "name": "ceiling",
+      "type": "solid",
+      "frame": 2,
+      "anchor": "ceiling",
+      "mask": [8, 8, 8, 8, 8, 8, 8, 8]
+    },
+    {
+      "name": "slope-up",
+      "type": "solid",
+      "frame": 5,
+      "anchor": "floor",
+      "mask": [1, 2, 3, 4, 5, 6, 7, 8]
+    },
+    {
+      "name": "slope-down",
+      "type": "solid",
+      "frame": 6,
+      "anchor": "floor",
+      "mask": [8, 7, 6, 5, 4, 3, 2, 1]
+    },
+    {
+      "name": "spikes",
+      "type": "hazard",
+      "frame": 7,
+      "anchor": "floor",
+      "mask": [0, 1, 1, 2, 2, 3, 3, 4]
+    },
+    {
+      "name": "moss",
+      "type": "empty",
+      "frame": 10,
+      "anchor": "floor",
+      "mask": [0, 0, 0, 0, 0, 0, 0, 0]
+    }
+  ]
+}

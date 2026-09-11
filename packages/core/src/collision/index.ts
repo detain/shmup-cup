@@ -1,16 +1,16 @@
 /**
  * # collision — collision shapes, broad phase and terrain queries
  *
- * **Status: partial.** The narrow-phase shape tests, the layer bits and the uniform-grid broad
- * phase are implemented (plan M1-06); terrain queries against the stage tilemap arrive with the
- * stage runtime (M1-07).
+ * **Status: partial.** The narrow-phase shape tests, the layer bits, the uniform-grid broad
+ * phase (plan M1-06) and the terrain queries against a stage's tilemap (plan M1-07) are
+ * implemented; circle chains for bending lasers arrive in M2-02.
  *
  * **Responsibility.** All collision detection. Narrow phase: circle-vs-circle for bullets (squared
  * distances), AABB for enemies/terrain, capsule (point-to-segment) for straight lasers,
  * circle chains for bending lasers. Broad phase: a uniform grid (~32 px cells, rebuilt
  * each tick via counting sort) for player shots × enemies; brute force for enemy bullets ×
- * players. Layer/mask bitfields. Terrain: tilemap collision layer lookups (solid,
- * destructible, hazard), per-tile height masks for slopes and a "find floor" query for
+ * players. Layer/mask bitfields. Terrain: tilemap collision lookups (solid, hazard; destructible
+ * in M2), per-tile column-height masks for slopes and "find floor / ceiling" queries for
  * crawlers and ground missiles.
  *
  * **Shape tests take scalars.** Every test receives plain numbers (`circleCircle(ax, ay, ar, bx,
@@ -20,21 +20,29 @@
  * `Math.abs` / `Math.min` / `Math.max` are used (no square roots — distances are compared
  * squared), so results are bit-identical on every engine.
  *
+ * **Terrain is pixel-exact.** A {@link TerrainMap} is the stage's tile grid plus its tileset's
+ * per-tile type, anchor and column heights; {@link terrainAt} / {@link terrainSolidAt} test one
+ * pixel, {@link boxHitsTerrain} a box (a pixel counts when the box overlaps its interior), and
+ * {@link findFloor} / {@link findCeiling} scan a pixel column tile by tile. All of them only read
+ * typed arrays and return numbers (`NaN` = nothing found).
+ *
  * **Implements.**
  * - shmup_feat.md §22 Collision (circle, AABB, capsule, uniform grid via counting sort, layer
- *   bits)
+ *   bits, terrain tile lookups with per-tile masks and a find-floor query)
  * - shmup_feat.md §5 — separate hurtbox and terrain box
+ * - shmup_feat.md §14 — tile terrain with solid / hazard collision types and slopes
  * - shmup_tech.md §4.5 — custom circle/AABB/capsule + grid + tile masks, no physics engine
  *
  * **Public API.** Shape tests {@link circleCircle}, {@link aabbAabb}, {@link circleAabb},
  * {@link capsuleCircle}, {@link segmentAabb}, {@link pointSegmentDistanceSq}; layers
  * {@link CollisionLayer}, {@link COLLISION_MASKS}, {@link layersInteract}; broad phase
  * {@link createSpatialGrid}, {@link SpatialGrid}, {@link SpatialGridVisitor},
- * {@link DEFAULT_GRID_CELL_SIZE}, {@link DEFAULT_GRID_CAPACITY}; the {@link Shape} union and
- * the {@link TerrainQuery} contract M1-07 implements.
+ * {@link DEFAULT_GRID_CELL_SIZE}, {@link DEFAULT_GRID_CAPACITY}; the {@link Shape} union;
+ * terrain {@link TerrainMap}, {@link TerrainType}, {@link TerrainAnchor}, {@link terrainAt},
+ * {@link terrainSolidAt}, {@link boxHitsTerrain}, {@link terrainRectHit}, {@link findFloor},
+ * {@link findCeiling}.
  *
- * **Planned API.** Terrain queries `terrainSolidAt`, `boxHitsTerrain`, `findFloor`,
- * `findCeiling` (M1-07); circle chains for bending lasers (M2-02).
+ * **Planned API.** Circle chains for bending lasers (M2-02); destructible tiles (M2-07).
  *
  * @module
  */
@@ -44,7 +52,7 @@ import { defineModule } from '../module-info.js';
 export const moduleInfo = defineModule({
   name: 'collision',
   status: 'partial',
-  specRefs: ['shmup_feat.md §22', 'shmup_feat.md §5', 'shmup_tech.md §4.5'],
+  specRefs: ['shmup_feat.md §22', 'shmup_feat.md §5', 'shmup_feat.md §14', 'shmup_tech.md §4.5'],
 });
 
 /** Collision shapes (sizes in pixels, centred on the entity position). */
@@ -646,23 +654,346 @@ export function createSpatialGrid(
 
 // ------------------------------------------------------------------------------ terrain
 
-/** Terrain queries against the stage's collision tilemap (implemented by M1-07). */
-export interface TerrainQuery {
-  /**
-   * Tests one world pixel against the collision layer.
-   *
-   * @param x - World x in pixels.
-   * @param y - World y in pixels.
-   * @returns `true` when the pixel is solid (including destructible tiles still intact).
-   */
-  isSolid(x: number, y: number): boolean;
-  /**
-   * Finds the floor below a point (crawlers, ground missiles).
-   *
-   * @param x - World x in pixels.
-   * @param y - Start y in pixels; the search goes downwards.
-   * @param maxDistance - Maximum number of pixels to search.
-   * @returns Y of the first floor pixel below `y` within `maxDistance`, or -1.
-   */
-  findFloor(x: number, y: number, maxDistance: number): number;
+/**
+ * Collision type of a terrain tile (the code stored in {@link TerrainMap.tileType}). Higher codes
+ * win when a box touches several types ({@link boxHitsTerrain}).
+ *
+ * @remarks
+ * The codes are the positions of the content names in `TILE_TYPES` (`core/data`): `empty` tiles
+ * are drawn but never collide (decoration), `solid` tiles block and kill the ship, `hazard`
+ * tiles kill without being part of a floor (spikes, lava). Append new types, never renumber.
+ */
+export const TerrainType = {
+  /** No collision (an empty cell, or a decorative tile). */
+  Empty: 0,
+  /** Rock: blocks shots and crawlers, kills the ship (shmup_feat.md §14). */
+  Solid: 1,
+  /** Kills on touch (spikes, lava). */
+  Hazard: 2,
+} as const;
+
+/** A {@link TerrainType} code. */
+export type TerrainType = (typeof TerrainType)[keyof typeof TerrainType];
+
+/**
+ * Which edge of a tile its column heights grow from (the code stored in
+ * {@link TerrainMap.tileAnchor}; the positions of `TILE_ANCHORS` in `core/data`).
+ */
+export const TerrainAnchor = {
+  /** Heights are measured up from the tile's bottom edge (floors, floor slopes). */
+  Floor: 0,
+  /** Heights are measured down from the tile's top edge (ceilings, ceiling slopes). */
+  Ceiling: 1,
+} as const;
+
+/** A {@link TerrainAnchor} code. */
+export type TerrainAnchor = (typeof TerrainAnchor)[keyof typeof TerrainAnchor];
+
+/**
+ * A stage's collision tilemap plus the per-tile lookup tables of its tileset — everything the
+ * terrain queries read. Built once when a stage starts (`core/stage` `createStageTerrain`); the
+ * queries only index these typed arrays.
+ *
+ * @remarks
+ * The map's top-left corner is world (0, 0); cell `(col, row)` covers world pixels
+ * `[col·tileSize, (col+1)·tileSize) × [row·tileSize, (row+1)·tileSize)`. Everything outside the
+ * map is open space. A tile id `t` (1…255; 0 = empty cell) has the collision type
+ * `tileType[t]`, the anchor `tileAnchor[t]` and the column heights
+ * `tileMask[t·tileSize + column]` (0 … tileSize pixels, measured from the anchor edge) — a
+ * full block is all `tileSize`, a 45° slope `1, 2, … 8` (shmup_feat.md §22 "per-tile
+ * height/mask for slopes").
+ */
+export interface TerrainMap {
+  /** Tile edge in pixels (8). */
+  readonly tileSize: number;
+  /** Map width in tiles. */
+  readonly cols: number;
+  /** Map height in tiles. */
+  readonly rows: number;
+  /** Tile id per cell, row-major (`tiles[row * cols + col]`); 0 = empty. */
+  readonly tiles: Uint8Array;
+  /** {@link TerrainType} code per tile id (index 0 = the empty cell). */
+  readonly tileType: Uint8Array;
+  /** {@link TerrainAnchor} code per tile id. */
+  readonly tileAnchor: Uint8Array;
+  /** Column heights: `tileMask[tileId * tileSize + column]`, 0 … tileSize. */
+  readonly tileMask: Uint8Array;
+}
+
+/**
+ * Collision type of one world pixel.
+ *
+ * @param map - The terrain.
+ * @param x - World x in pixels (floored to the pixel column).
+ * @param y - World y in pixels (floored to the pixel row).
+ * @returns The {@link TerrainType} of the pixel: `Empty` (0) outside the map, in an empty cell,
+ *   in a decorative tile or outside the tile's mask; otherwise the tile's type.
+ *
+ * @example
+ * ```ts
+ * terrainAt(map, 100, 196); // → TerrainType.Solid when the floor is there
+ * ```
+ */
+export function terrainAt(map: TerrainMap, x: number, y: number): number {
+  const size = map.tileSize;
+  const px = Math.floor(x);
+  const py = Math.floor(y);
+  if (!(px >= 0 && py >= 0)) return TerrainType.Empty;
+  const col = Math.floor(px / size);
+  const row = Math.floor(py / size);
+  if (col >= map.cols || row >= map.rows) return TerrainType.Empty;
+  const tile = map.tiles[row * map.cols + col];
+  if (tile === 0) return TerrainType.Empty;
+  const type = map.tileType[tile];
+  if (type === TerrainType.Empty) return TerrainType.Empty;
+  const height = map.tileMask[tile * size + (px - col * size)];
+  const ly = py - row * size;
+  const solid = map.tileAnchor[tile] === TerrainAnchor.Ceiling ? ly < height : ly >= size - height;
+  return solid ? type : TerrainType.Empty;
+}
+
+/**
+ * Whether one world pixel collides (any non-empty {@link TerrainType}, hazards included).
+ *
+ * @param map - The terrain.
+ * @param x - World x in pixels.
+ * @param y - World y in pixels.
+ * @returns `true` when {@link terrainAt} is not `Empty`.
+ */
+export function terrainSolidAt(map: TerrainMap, x: number, y: number): boolean {
+  return terrainAt(map, x, y) !== TerrainType.Empty;
+}
+
+/**
+ * Whether any column of a tile's mask is solid inside a tile-local pixel rectangle.
+ *
+ * @param map - The terrain.
+ * @param tile - Tile id (non-zero).
+ * @param lx0 - First tile-local column.
+ * @param ly0 - First tile-local row.
+ * @param lx1 - Last tile-local column (inclusive).
+ * @param ly1 - Last tile-local row (inclusive).
+ * @returns `true` when a solid pixel lies in the rectangle.
+ */
+function tileRectSolid(
+  map: TerrainMap,
+  tile: number,
+  lx0: number,
+  ly0: number,
+  lx1: number,
+  ly1: number,
+): boolean {
+  const size = map.tileSize;
+  const base = tile * size;
+  const ceiling = map.tileAnchor[tile] === TerrainAnchor.Ceiling;
+  for (let lx = lx0; lx <= lx1; lx++) {
+    const height = map.tileMask[base + lx];
+    if (height === 0) continue;
+    if (ceiling ? ly0 < height : ly1 >= size - height) return true;
+  }
+  return false;
+}
+
+/**
+ * Tests an axis-aligned box (the ship's terrain box, a crawler's feet) against the terrain,
+ * pixel-exactly. Never allocates — but see the remarks about fractional arguments.
+ *
+ * @remarks
+ * A pixel counts when the box overlaps its interior: the box `[cx − hw, cx + hw] × [cy − hh,
+ * cy + hh]` covers pixel columns `floor(cx − hw) … ceil(cx + hw) − 1` (at least one) and the
+ * matching rows, so a box resting exactly on a floor surface does not touch it. The work is done
+ * by {@link terrainRectHit}; per-tick callers with fractional positions should compute the pixel
+ * bounds themselves and call that (whole numbers never box), as the World's collision phase does.
+ *
+ * @param map - The terrain.
+ * @param cx - Box centre x (world pixels).
+ * @param cy - Box centre y (world pixels).
+ * @param hw - Half width (≥ 0).
+ * @param hh - Half height (≥ 0).
+ * @returns The highest {@link TerrainType} the box touches (`Hazard` beats `Solid`), or
+ *   `Empty` (0) when it touches nothing — usable as a truthy "hit" value.
+ *
+ * @example
+ * ```ts
+ * boxHitsTerrain(map, 100.5, 180, 5, 3); // → TerrainType.Solid when the floor is there
+ * ```
+ */
+export function boxHitsTerrain(
+  map: TerrainMap,
+  cx: number,
+  cy: number,
+  hw: number,
+  hh: number,
+): number {
+  const x0 = Math.floor(cx - hw);
+  const y0 = Math.floor(cy - hh);
+  const x1 = Math.ceil(cx + hw) - 1;
+  const y1 = Math.ceil(cy + hh) - 1;
+  return terrainRectHit(map, x0, y0, x1 < x0 ? x0 : x1, y1 < y0 ? y0 : y1);
+}
+
+/**
+ * Tests an inclusive rectangle of whole world pixels against the terrain (the core of
+ * {@link boxHitsTerrain}). Never allocates.
+ *
+ * @remarks
+ * Only the tiles under the rectangle are visited, and inside them only the covered mask
+ * columns. Pass whole numbers (`Math.floor` / `Math.ceil` of fractional positions): V8 boxes a
+ * fractional argument of a call it does not inline — a heap allocation per call.
+ *
+ * @param map - The terrain.
+ * @param x0 - First pixel column.
+ * @param y0 - First pixel row.
+ * @param x1 - Last pixel column (inclusive, ≥ `x0`).
+ * @param y1 - Last pixel row (inclusive, ≥ `y0`).
+ * @returns The highest {@link TerrainType} in the rectangle, `Empty` (0) for none (also for
+ *   NaN bounds and rectangles outside the map).
+ */
+export function terrainRectHit(
+  map: TerrainMap,
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+): number {
+  const size = map.tileSize;
+  const maxX = map.cols * size - 1;
+  const maxY = map.rows * size - 1;
+  // Negated so that NaN bounds also miss.
+  if (!(x1 >= 0 && y1 >= 0 && x0 <= maxX && y0 <= maxY)) return TerrainType.Empty;
+  const px0 = x0 < 0 ? 0 : x0;
+  const py0 = y0 < 0 ? 0 : y0;
+  const px1 = x1 > maxX ? maxX : x1;
+  const py1 = y1 > maxY ? maxY : y1;
+  const c0 = Math.floor(px0 / size);
+  const c1 = Math.floor(px1 / size);
+  const r0 = Math.floor(py0 / size);
+  const r1 = Math.floor(py1 / size);
+  const cols = map.cols;
+  let found: number = TerrainType.Empty;
+  for (let row = r0; row <= r1; row++) {
+    const top = row * size;
+    const ly0 = py0 > top ? py0 - top : 0;
+    const ly1 = py1 < top + size - 1 ? py1 - top : size - 1;
+    for (let col = c0; col <= c1; col++) {
+      const tile = map.tiles[row * cols + col];
+      if (tile === 0) continue;
+      const type = map.tileType[tile];
+      if (type <= found) continue;
+      const left = col * size;
+      const lx0 = px0 > left ? px0 - left : 0;
+      const lx1 = px1 < left + size - 1 ? px1 - left : size - 1;
+      if (tileRectSolid(map, tile, lx0, ly0, lx1, ly1)) {
+        found = type;
+        if (found === TerrainType.Hazard) return found;
+      }
+    }
+  }
+  return found;
+}
+
+/**
+ * Finds the floor below a point: scans the pixel column `floor(x)` downwards from row
+ * `floor(y)` for the first colliding pixel (crawlers, ground missiles — shmup_feat.md §22).
+ * Never allocates.
+ *
+ * @remarks
+ * Rows `floor(y) … floor(y) + floor(maxDist)` are scanned (rows above the map count as open
+ * space, the scan stops at the map's bottom). Ceiling tiles count too — their rock is a floor for
+ * whatever is below them. Tile by tile, not pixel by pixel. Pass whole pixels from per-tick code
+ * (see {@link terrainRectHit}).
+ *
+ * @param map - The terrain.
+ * @param x - World x in pixels.
+ * @param y - Start y in pixels; the search goes down.
+ * @param maxDist - Pixels to search (≥ 0): the surface may lie up to `maxDist` below `floor(y)`.
+ * @returns The world y of the floor surface (the top edge of the first colliding pixel — equal
+ *   to `floor(y)` when the start pixel already collides), or `NaN` when there is none in range.
+ *
+ * @example
+ * ```ts
+ * const ground = findFloor(map, crawler.x, crawler.y, 32);
+ * if (ground === ground) crawler.y = ground; // not NaN
+ * ```
+ */
+export function findFloor(map: TerrainMap, x: number, y: number, maxDist: number): number {
+  const size = map.tileSize;
+  const px = Math.floor(x);
+  if (!(px >= 0 && px < map.cols * size && maxDist >= 0)) return NaN;
+  let py = Math.floor(y);
+  let end = py + Math.floor(maxDist);
+  const maxY = map.rows * size - 1;
+  if (end > maxY) end = maxY;
+  if (py < 0) py = 0;
+  const col = Math.floor(px / size);
+  const lx = px - col * size;
+  while (py <= end) {
+    const row = Math.floor(py / size);
+    const top = row * size;
+    const tile = map.tiles[row * map.cols + col];
+    if (tile !== 0 && map.tileType[tile] !== TerrainType.Empty) {
+      const height = map.tileMask[tile * size + lx];
+      if (height > 0) {
+        if (map.tileAnchor[tile] === TerrainAnchor.Ceiling) {
+          if (py - top < height) return py;
+        } else {
+          const surface = top + size - height;
+          const hit = py > surface ? py : surface;
+          if (hit <= end) return hit;
+        }
+      }
+    }
+    py = top + size;
+  }
+  return NaN;
+}
+
+/**
+ * Finds the ceiling above a point: scans the pixel column `floor(x)` upwards from row
+ * `floor(y)` for the first colliding pixel (ceiling crawlers, hanging turrets). Never allocates.
+ *
+ * @remarks
+ * Rows `floor(y) … floor(y) − floor(maxDist) − 1` are scanned, so the surface (a row's bottom
+ * edge) lies at most `maxDist` above `floor(y)` — the mirror of {@link findFloor} (rows below the
+ * map count as open space, the scan stops at the map's top). Floor tiles count too. Tile by
+ * tile. Pass whole pixels from per-tick code (see {@link terrainRectHit}).
+ *
+ * @param map - The terrain.
+ * @param x - World x in pixels.
+ * @param y - Start y in pixels; the search goes up.
+ * @param maxDist - Pixels to search (≥ 0): the surface may lie up to `maxDist` above `floor(y)`.
+ * @returns The world y of the ceiling surface (the bottom edge of the first colliding pixel,
+ *   i.e. its row + 1 — `floor(y) + 1` when the start pixel already collides), or `NaN` when there
+ *   is none in range.
+ */
+export function findCeiling(map: TerrainMap, x: number, y: number, maxDist: number): number {
+  const size = map.tileSize;
+  const px = Math.floor(x);
+  if (!(px >= 0 && px < map.cols * size && maxDist >= 0)) return NaN;
+  let py = Math.floor(y);
+  let end = py - Math.floor(maxDist) - 1;
+  if (end < 0) end = 0;
+  const maxY = map.rows * size - 1;
+  if (py > maxY) py = maxY;
+  const col = Math.floor(px / size);
+  const lx = px - col * size;
+  while (py >= end) {
+    const row = Math.floor(py / size);
+    const top = row * size;
+    const tile = map.tiles[row * map.cols + col];
+    if (tile !== 0 && map.tileType[tile] !== TerrainType.Empty) {
+      const height = map.tileMask[tile * size + lx];
+      if (height > 0) {
+        if (map.tileAnchor[tile] === TerrainAnchor.Ceiling) {
+          const bottom = top + height - 1;
+          const hit = py < bottom ? py : bottom;
+          if (hit >= end) return hit + 1;
+        } else if (py - top >= size - height) {
+          return py + 1;
+        }
+      }
+    }
+    py = top - 1;
+  }
+  return NaN;
 }

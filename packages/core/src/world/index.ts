@@ -26,10 +26,20 @@
  * still run, so hit-stop is deterministic and replays stay in sync.
  *
  * **State built in M1-06.** Player 1's KESTREL (spec from `content/player/`, fly-in at session
- * start); player 2's ship exists but stays inactive until co-op (M2-06). The camera is static
- * unless something sets its scroll velocity (`camera.vx` / `camera.vy`) — the stage runner of
- * M1-07 will drive it. The view has one sprite batch so far, the players (`LayerId.Player`),
- * mirrored from the ship objects at the end of every tick.
+ * start); player 2's ship exists but stays inactive until co-op (M2-06). The view has one sprite
+ * batch so far, the players (`LayerId.Player`), mirrored from the ship objects at the end of
+ * every tick.
+ *
+ * **The stage (M1-07).** With `config.stage` set, the World runs that stage: its
+ * {@link World.stage | runner} drives the camera in phase 3 (keys, ramps, pans, locks) and fires
+ * the timeline through the World's stage hooks — `music` events become `SimEventKind.Music`
+ * presentation events (the stage theme is queued at creation), `end` sets the status to
+ * `stageClear`, a checkpoint restart clears every pool; `spawn` / `formation` wait for the
+ * enemies of M1-08 and `warning` / `boss` for M1-13. Phase 6 tests each alive ship's terrain box
+ * against the stage's {@link World.terrain | collision map} and reports contact through
+ * `playerHit` (recorded only until the death sequence of M1-12). The view carries the stage's
+ * parallax bands (scrolled in phase 9) and terrain. Without a stage (`stage: null`) the camera
+ * is static unless something sets its scroll velocity (`camera.vx` / `camera.vy`) — free flight.
  *
  * **Zero allocation.** Everything is allocated by {@link createWorld}; {@link stepWorld} and the
  * systems only write numbers into existing objects and typed arrays.
@@ -43,21 +53,29 @@
  * **Public API.** {@link createWorld}, {@link stepWorld}, {@link World}, {@link WorldCamera},
  * {@link WorldStatus}, {@link WORLD_STATUSES}, {@link WorldPhase}, {@link WORLD_PHASE_NAMES},
  * {@link WORLD_PHASES}, {@link WorldPhaseEntry}, {@link WorldSystem}, {@link PoolRegistry},
- * {@link RegisteredPool}, {@link syncWorldView}, {@link GRID_MARGIN}.
+ * {@link RegisteredPool}, {@link syncWorldView}, {@link GRID_MARGIN}, {@link resolveWorldStage}.
  *
  * @module
  */
 import { MAX_PLAYERS, type InputSnapshot } from '../input/index.js';
 import { PLAYFIELD_H, PLAYFIELD_W, type GameConfig } from '../config/index.js';
-import { createSpatialGrid, type SpatialGrid } from '../collision/index.js';
-import type { ContentDb, PlayerShipSpec } from '../data/index.js';
+import {
+  TerrainType,
+  createSpatialGrid,
+  terrainRectHit,
+  type SpatialGrid,
+  type TerrainMap,
+} from '../collision/index.js';
+import type { ContentDb, PlayerShipSpec, StageMusicEvent, StageSpec } from '../data/index.js';
 import { createDebugFlags, type DebugFlags } from '../debug/index.js';
-import { createEventQueue, type EventQueue } from '../events/index.js';
+import { SimEventKind, createEventQueue, type EventQueue } from '../events/index.js';
 import { defineModule } from '../module-info.js';
 import {
+  PlayerHitCause,
   createPlayer,
   createPlayerIntent,
   playerBankFrame,
+  playerHit,
   readPlayerIntent,
   resolvePlayerShip,
   spawnPlayer,
@@ -76,6 +94,18 @@ import {
   type WorldView,
 } from '../presentation/index.js';
 import { createRngStreams, type RngStreams } from '../rng/index.js';
+import {
+  StageEventCode,
+  createParallaxView,
+  createStageCamera,
+  createStageRunner,
+  createStageTerrain,
+  createTerrainView,
+  updateParallaxView,
+  type StageHooks,
+  type StageParallaxView,
+  type StageRunner,
+} from '../stage/index.js';
 
 /** Module descriptor (see {@link defineModule}). */
 export const moduleInfo = defineModule({
@@ -108,7 +138,7 @@ export interface WorldCamera extends PlayerCamera {
   dx: number;
   /** Camera y movement of the last stage phase. */
   dy: number;
-  /** Horizontal scroll velocity in px/tick (0 = static; the stage runner sets it from M1-07). */
+  /** Horizontal scroll velocity in px/tick (0 = static; the stage runner sets it every tick). */
   vx: number;
   /** Vertical scroll velocity in px/tick. */
   vy: number;
@@ -178,6 +208,12 @@ export interface World {
   readonly grid: SpatialGrid;
   /** The player ships' mirror batch (`LayerId.Player`). */
   readonly playerBatch: SpriteBatch;
+  /** The stage runner (`config.stage`), or `null` in free flight. */
+  readonly stage: StageRunner | null;
+  /** The stage's collision map (a private copy of its tiles), or `null` in open space. */
+  readonly terrain: TerrainMap | null;
+  /** The stage's parallax bands (also `view.parallax`), or `null`. */
+  readonly parallax: StageParallaxView | null;
   /** What the renderer draws: live references, refreshed at the end of every tick. */
   readonly view: WorldView;
 }
@@ -271,12 +307,18 @@ const playersSystem: WorldSystem = (world) => {
 };
 
 /**
- * Phase 3: moves the camera by its scroll velocity (static until the stage runner of M1-07
- * sets it) and records the step players ride along with next tick.
+ * Phase 3: the stage runner moves the camera and fires the due timeline events; without a stage
+ * the camera moves by its scroll velocity (`vx` / `vy`, static by default). Either way `dx` /
+ * `dy` record the step players ride along with next tick.
  *
  * @param world - The world.
  */
 const stageSystem: WorldSystem = (world) => {
+  const stage = world.stage;
+  if (stage !== null) {
+    stage.tick();
+    return;
+  }
   const camera = world.camera;
   camera.dx = camera.vx;
   camera.dy = camera.vy;
@@ -319,7 +361,35 @@ const collisionSystem: WorldSystem = (world) => {
   const camera = world.camera;
   grid.begin(Math.floor(camera.x) - GRID_MARGIN, Math.floor(camera.y) - GRID_MARGIN);
   grid.build();
+  const terrain = world.terrain;
+  if (terrain !== null) terrainSystem(world, terrain);
 };
+
+/**
+ * Part of phase 6: each alive ship's terrain box against the stage terrain; contact is reported
+ * through `playerHit` (cause `Terrain` — recorded only until the death sequence of M1-12).
+ *
+ * @param world - The world.
+ * @param terrain - The stage's collision map.
+ */
+function terrainSystem(world: World, terrain: TerrainMap): void {
+  const box = world.ship.terrainBox;
+  const players = world.players;
+  for (let i = 0; i < players.length; i++) {
+    const ship = players[i];
+    if (!ship.active || ship.state !== 'alive') continue;
+    // Whole-pixel bounds (as `boxHitsTerrain` computes them): fractional arguments would be
+    // boxed into heap numbers by a call V8 does not inline.
+    const x0 = Math.floor(ship.x - box.hw);
+    const y0 = Math.floor(ship.y - box.hh);
+    const x1 = Math.ceil(ship.x + box.hw) - 1;
+    const y1 = Math.ceil(ship.y + box.hh) - 1;
+    const hit = terrainRectHit(terrain, x0, y0, x1 < x0 ? x0 : x1, y1 < y0 ? y0 : y1);
+    if (hit !== TerrainType.Empty) {
+      playerHit(ship, PlayerHitCause.Terrain, world.tick, world.debugFlags);
+    }
+  }
+}
 
 /**
  * Phase 7: hits, deaths, drops, score, respawn (M1-10 … M1-12). Empty slot.
@@ -399,13 +469,39 @@ function createPoolRegistry(): PoolRegistry {
 }
 
 /**
- * Creates a gameplay session: RNG streams from `config.seed`, the ship from `content`, player 1
- * starting its fly-in at the left edge of a static camera, player 2 inactive.
+ * Looks up the stage a config asks for.
+ *
+ * @param config - The session config.
+ * @param content - Validated content.
+ * @returns The stage spec, or `null` when `config.stage` is `null` (free flight).
+ * @throws {RangeError} When `config.stage` names a stage the content does not have.
+ */
+export function resolveWorldStage(config: GameConfig, content: ContentDb): StageSpec | null {
+  const id = config.stage;
+  if (id === null) return null;
+  const index = content.stageIndex.get(id);
+  if (index === undefined) {
+    throw new RangeError(`GameConfig.stage: no stage "${id}" in the content`);
+  }
+  return content.stages[index];
+}
+
+/** A {@link World} while {@link createWorld} assembles it (the stage fields are set last). */
+type WorldUnderConstruction = Omit<World, 'stage'> & {
+  /** See {@link World.stage}. */
+  stage: StageRunner | null;
+};
+
+/**
+ * Creates a gameplay session: RNG streams from `config.seed`, the ship from `content`, the stage
+ * `config.stage` (camera at its start, stage theme queued as a music event) or a static camera,
+ * player 1 starting its fly-in at the left edge of the view, player 2 inactive.
  *
  * @param config - The resolved session config (`resolveGameConfig`).
  * @param content - Validated content (`loadContent(...).db`; `EMPTY_CONTENT_DB` gives the
  *   built-in default ship, which is not drawn).
  * @returns The world at tick 0, view already filled (the first frame shows the ship).
+ * @throws {RangeError} When `config.stage` names a stage the content does not have.
  *
  * @example
  * ```ts
@@ -417,7 +513,9 @@ function createPoolRegistry(): PoolRegistry {
  */
 export function createWorld(config: GameConfig, content: ContentDb): World {
   const ship = resolvePlayerShip(content);
-  const camera: WorldCamera = { x: 0, y: 0, dx: 0, dy: 0, vx: 0, vy: 0 };
+  const stageSpec = resolveWorldStage(config, content);
+  // A class instance, not a literal: see `createStageCamera` (keeps the fields unboxed doubles).
+  const camera: WorldCamera = createStageCamera();
   const players: PlayerShip[] = [];
   const intents: PlayerIntent[] = [];
   for (let slot = 0; slot < MAX_PLAYERS; slot++) {
@@ -428,8 +526,18 @@ export function createWorld(config: GameConfig, content: ContentDb): World {
   spawnPlayer(players[0], camera);
 
   const playerBatch = createSpriteBatch(LayerId.Player, MAX_PLAYERS);
-  const view: WorldView = { camera, parallax: null, terrain: null, batches: [playerBatch] };
-  const world: World = {
+  const terrain = stageSpec === null ? null : createStageTerrain(stageSpec, content);
+  const parallax = stageSpec === null ? null : createParallaxView(stageSpec);
+  const view: WorldView = {
+    camera,
+    parallax,
+    terrain:
+      stageSpec === null || terrain === null
+        ? null
+        : createTerrainView(terrain, stageSpec, content),
+    batches: [playerBatch],
+  };
+  const world: WorldUnderConstruction = {
     config,
     content,
     ship,
@@ -445,10 +553,41 @@ export function createWorld(config: GameConfig, content: ContentDb): World {
     pools: createPoolRegistry(),
     grid: createSpatialGrid(PLAYFIELD_W + 2 * GRID_MARGIN, PLAYFIELD_H + 2 * GRID_MARGIN),
     playerBatch,
+    stage: null,
+    terrain,
+    parallax,
     view,
   };
+  if (stageSpec !== null) {
+    world.stage = createStageRunner(stageSpec, createWorldStageHooks(world), camera);
+    if (stageSpec.music.stageId >= 0) {
+      world.events.push(SimEventKind.Music, stageSpec.music.stageId, 0, 0, 0);
+    }
+  }
   syncWorldView(world);
   return world;
+}
+
+/**
+ * The World's side of the stage runner: timeline events it acts on now, and checkpoint clears.
+ *
+ * @param world - The world being built.
+ * @returns The hooks.
+ */
+function createWorldStageHooks(world: WorldUnderConstruction): StageHooks {
+  return {
+    event(code, event) {
+      if (code === StageEventCode.Music) {
+        world.events.push(SimEventKind.Music, (event as StageMusicEvent).cueId, 0, 0, 0);
+      } else if (code === StageEventCode.End) {
+        world.status = 'stageClear';
+      }
+      // spawn / formation → the enemy spawner (M1-08); warning / boss → bosses (M1-13).
+    },
+    clear() {
+      world.pools.clearAll();
+    },
+  };
 }
 
 /**
@@ -476,8 +615,9 @@ export function stepWorld(world: World, input: Readonly<InputSnapshot>): void {
 }
 
 /**
- * Refreshes the object-based mirror batches of {@link World.view} (today: the player ships).
- * Runs at the end of every tick (phase 9) and once at creation. Never allocates.
+ * Refreshes the object-based mirror batches of {@link World.view} (today: the player ships) and
+ * scrolls the parallax bands with the camera. Runs at the end of every tick (phase 9) and once
+ * at creation. Never allocates.
  *
  * @remarks
  * A ship is drawn when its slot is active, it is not `dying` / `dead` and its spec has a sprite;
@@ -486,6 +626,8 @@ export function stepWorld(world: World, input: Readonly<InputSnapshot>): void {
  * @param world - The world.
  */
 export function syncWorldView(world: World): void {
+  const parallax = world.parallax;
+  if (parallax !== null) updateParallaxView(parallax, world.camera.x, world.camera.y);
   const batch = world.playerBatch;
   batch.count = 0;
   const spec = world.ship;

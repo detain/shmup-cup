@@ -32,7 +32,7 @@ renderer.render(game.renderFrame());
 | `test-pattern` | implemented | Calibration scene (`?scene=calibration`) |
 | `palette` | partial | Placeholder colours (VA-panel-friendly, no pure black) |
 | `atlas` | implemented | `createAtlas(manifest, images)`: one nearest-neighbour source per page, consecutive frame ids per sprite, `resolveSpriteTable` / `resolveFlashTable` (unknown → `ui/missing`, warned once) |
-| `layers` | implemented | One container per core `LayerId` in §18 draw order; world group (shake) under HUD / UI / DEBUG |
+| `layers` | implemented | One container per core `LayerId` in §18 draw order; world group (shake) under HUD / UI / DEBUG; the stage's terrain as a ring-buffered 49 × 26 tile-sprite grid (re-textured one column / row as the camera crosses tile edges) and its parallax bands as repeated sprites (M1-07) |
 | `sprites` | implemented | `createSpriteLayerBinding` (preallocated sprites per `SpriteBatchView`: camera, `PLAYFIELD_Y`, anchors, flips, blink, hit flash), ordered `QuadPool` |
 | `text` | implemented | Bitmap font from the atlas, `TextMetrics`, allocation-free text and number layout |
 | `ui` | partial | Draws a core `DrawList` (rect, sprite, text, number) into the HUD or UI layer |

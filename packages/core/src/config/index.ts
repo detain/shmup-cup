@@ -3,7 +3,7 @@
  *
  * **Responsibility.** The typed {@link GameConfig} that parameterises a run: internal
  * resolution, tick rate, seed and every *sim-affecting* option (difficulty, power-up
- * model, death penalty, lives, autofire, remote mode). Everything here is copied
+ * model, death penalty, lives, autofire, remote mode, the stage). Everything here is copied
  * into replay headers, so it must stay plain serialisable data.
  *
  * **Implements.**
@@ -64,6 +64,11 @@ export interface GameConfig {
   readonly autofire: boolean;
   /** Remote-first control scheme: forced autofire, 4-way-friendly defaults. */
   readonly remoteMode: boolean;
+  /**
+   * Id of the stage the session plays (`content/stages/`), or `null` for free flight in open
+   * space with a static camera (the dev default until the scene flow of M1-16 picks stages).
+   */
+  readonly stage: string | null;
 }
 
 /** Height in pixels of each HUD bar outside the playfield (decision D20). */
@@ -94,6 +99,7 @@ export const DEFAULT_GAME_CONFIG: GameConfig = Object.freeze({
   startingLives: 3,
   autofire: true,
   remoteMode: true,
+  stage: null,
 });
 
 /**
@@ -102,12 +108,14 @@ export const DEFAULT_GAME_CONFIG: GameConfig = Object.freeze({
  * @remarks
  * Validated ranges (all integers, inclusive): `internalWidth` / `internalHeight`
  * 16–4096, `tickRate` 1–1000, `maxTicksPerFrame` 1–60, `seed` 0–0xFFFFFFFF,
- * `startingLives` 1–5. String presets and booleans are not validated at runtime —
- * the types cover them.
+ * `startingLives` 1–5. `stage` must be `null` or a non-empty string (whether the id exists is
+ * checked by `createWorld` against the content). String presets and booleans are not validated
+ * at runtime — the types cover them.
  *
  * @param overrides - Fields to change.
  * @returns A frozen, validated config.
- * @throws RangeError when a numeric field is not an integer or is out of range.
+ * @throws RangeError when a numeric field is not an integer or is out of range, or `stage` is
+ *   neither `null` nor a non-empty string.
  *
  * @example
  * ```ts
@@ -123,6 +131,12 @@ export function resolveGameConfig(overrides: Partial<GameConfig> = {}): GameConf
   requireInteger('maxTicksPerFrame', config.maxTicksPerFrame, 1, 60);
   requireInteger('seed', config.seed, 0, 0xffffffff);
   requireInteger('startingLives', config.startingLives, 1, 5);
+  const stage: unknown = config.stage;
+  if (stage !== null && (typeof stage !== 'string' || stage === '')) {
+    throw new RangeError(
+      `GameConfig.stage must be null or a non-empty stage id, got ${typeof stage === 'string' ? '""' : typeof stage}`,
+    );
+  }
   return Object.freeze(config);
 }
 

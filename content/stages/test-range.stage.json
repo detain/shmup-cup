@@ -1,0 +1,50 @@
+{
+  "formatVersion": 1,
+  "kind": "stage",
+  "id": "test-range",
+  "name": "TEST RANGE",
+  "music": { "stage": "Stage", "boss": "Boss" },
+  "length": 4800,
+  "camera": [
+    { "x": 0, "speed": 1, "ramp": 60 },
+    { "x": 1500, "speed": 2, "ramp": 120 },
+    { "x": 2700, "speed": 0.5, "ramp": 90 },
+    { "x": 3000, "speed": 1, "ramp": 60 }
+  ],
+  "checkpoints": [{ "x": 0 }, { "x": 1500 }, { "x": 3000 }],
+  "parallax": [
+    { "layer": "far", "sprite": "bg/stars-far", "factor": 0.25, "y": 0, "spacing": 128 },
+    { "layer": "far", "sprite": "bg/stars-far", "factor": 0.25, "y": 128, "spacing": 128 },
+    { "layer": "mid", "sprite": "bg/stars-mid", "factor": 0.5, "y": 0, "spacing": 128 },
+    { "layer": "mid", "sprite": "bg/stars-mid", "factor": 0.5, "y": 128, "spacing": 128 }
+  ],
+  "tilemap": {
+    "tileSize": 8,
+    "tileset": "terrain-a",
+    "rowsTall": 25,
+    "generator": {
+      "type": "heightfield",
+      "segments": [
+        { "from": 96, "to": 1400, "floor": { "base": 28, "amp": 16, "period": 320, "seed": 1 } },
+        {
+          "from": 1500,
+          "to": 2700,
+          "floor": { "base": 32, "amp": 20, "period": 400, "seed": 2 },
+          "ceiling": { "base": 24, "amp": 16, "period": 256, "seed": 3 }
+        },
+        {
+          "from": 3000,
+          "to": 4400,
+          "floor": { "base": 16, "amp": 8, "period": 200, "seed": 5 },
+          "ceiling": { "base": 40, "amp": 24, "period": 360, "seed": 4 }
+        }
+      ]
+    }
+  },
+  "events": [
+    { "x": 1500, "type": "flag", "flag": "high-speed" },
+    { "x": 2600, "type": "speed", "speed": 1.5, "ramp": 60 },
+    { "x": 2700, "type": "flag", "flag": "high-speed", "value": false },
+    { "x": 4800, "type": "end" }
+  ]
+}

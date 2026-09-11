@@ -69,6 +69,7 @@ const file = (path: string, kind: string, body: Record<string, unknown>): Conten
 const stageBody = (id: string, events: unknown[]): Record<string, unknown> => ({
   id,
   name: 'Zone',
+  music: { stage: 'Stage', boss: 'Boss' },
   length: 4096,
   camera: [{ x: 0, speed: 1 }],
   checkpoints: [],
@@ -121,13 +122,14 @@ const fullSet = (): ContentFile[] => [
     'stages/zone-a.stage.json',
     'stage',
     stageBody('zone-a', [
-      { x: 10, type: 'spawn', enemy: 'drifter', formation: 'line5', path: 'sine', y: 40, count: 5 },
-      { x: 20, type: 'midboss', enemy: 'warden' },
+      { x: 10, type: 'formation', enemy: 'drifter', path: 'sine', y: 40, count: 5, interval: 8 },
+      { x: 20, type: 'spawn', enemy: 'warden', y: -8 },
       { x: 30, type: 'warning', enemy: 'warden' },
       { x: 40, type: 'boss', enemy: 'warden' },
       { x: 50, type: 'music', cue: 'Boss' },
-      { x: 60, type: 'scroll', speed: 0 },
-      { x: 70, type: 'checkpoint' },
+      { x: 60, type: 'speed', speed: 0, ramp: 30 },
+      { x: 70, type: 'flag', flag: 'lower-path', value: false },
+      { x: 70, type: 'end' },
     ]),
   ),
 ];
@@ -263,6 +265,7 @@ describe('core/data loadContent — migrations', () => {
   });
 
   it('migrates every kind that existed in format 0 without touching the input', () => {
+    // (`tileset` did not exist in format 0 either; the full set has none.)
     const files = fullSet().filter((f) => !f.path.startsWith('player/'));
     for (const f of files) (f.data as { formatVersion: number }).formatVersion = 0;
     const before = clone(files);
@@ -423,36 +426,55 @@ describe('core/data loadContent — per-kind schemas', () => {
     const events = db.stages[0]?.events ?? [];
     const warden = db.enemyIndex.get('warden');
     expect(events.map((e) => e.type)).toEqual([
+      'formation',
       'spawn',
-      'midboss',
       'warning',
       'boss',
       'music',
-      'scroll',
-      'checkpoint',
+      'speed',
+      'flag',
+      'end',
     ]);
-    expect(events[0]).toMatchObject({ enemyId: db.enemyIndex.get('drifter'), count: 5, y: 40 });
+    expect(events[0]).toMatchObject({
+      enemyId: db.enemyIndex.get('drifter'),
+      count: 5,
+      interval: 8,
+      y: 40,
+    });
     for (const e of events.slice(1, 4)) expect(e).toMatchObject({ enemyId: warden });
     expect(events[4]).toMatchObject({ cueId: MUSIC_CUES.Boss });
+    expect(events[6]).toMatchObject({ flag: 'lower-path', flagId: 0, value: false });
+    expect(db.stages[0]?.flagNames).toEqual(['lower-path']);
+    expect(db.stages[0]?.music).toMatchObject({
+      stageId: MUSIC_CUES.Stage,
+      bossId: MUSIC_CUES.Boss,
+    });
   });
 
   it.each([
     [
-      { x: 0, type: 'formation', enemy: 'a' },
+      { x: 0, type: 'midboss', enemy: 'a' },
       'events[0].type',
-      'type must be one of: spawn, boss, midboss, warning, music, scroll, checkpoint',
+      'type must be one of: spawn, formation, warning, boss, music, speed, flag, end',
     ],
     [
       { x: 0, type: 'branch' },
       'events[0].type',
-      'type must be one of: spawn, boss, midboss, warning, music, scroll, checkpoint',
+      'type must be one of: spawn, formation, warning, boss, music, speed, flag, end',
     ],
-    [{ x: -1, type: 'checkpoint' }, 'events[0].x', 'must be a finite number in 0..1000000'],
-    [{ x: 0, type: 'scroll', speed: 17 }, 'events[0].speed', 'must be a finite number in 0..16'],
+    [{ x: -1, type: 'end' }, 'events[0].x', 'must be a finite number in 0..1000000'],
+    [{ x: 0, type: 'speed', speed: 17 }, 'events[0].speed', 'must be a finite number in 0..16'],
     [
-      { x: 0, type: 'spawn', enemy: 'a', count: 0 },
+      { x: 0, type: 'formation', enemy: 'a', count: 0, interval: 4 },
       'events[0].count',
       'must be an integer in 1..64',
+    ],
+    [{ x: 0, type: 'formation', enemy: 'a', count: 3 }, 'events[0].interval', 'is required'],
+    [{ x: 0, type: 'spawn', enemy: 'a', count: 3 }, 'events[0].count', 'unknown field'],
+    [
+      { x: 0, type: 'flag', flag: 'Upper Path' },
+      'events[0].flag',
+      'must be a string of length in 1..64 matching /^[a-z][a-z0-9-]*$/',
     ],
     [
       { x: 0, type: 'spawn', enemy: 'a', y: 321 },
@@ -477,23 +499,34 @@ describe('core/data loadContent — per-kind schemas', () => {
       issuesOf('s.json', 'stage', {
         ...stageBody('s', []),
         camera: [{ x: 0, speed: 1, lock: 'boss' }],
-        tilemap: { tileSize: 65, file: 'maps/a.json' },
-        parallax: [{ id: 'far', factor: 5 }],
+        tilemap: { tileSize: 16, tileset: 't', rowsTall: 25 },
+        parallax: [{ layer: 'near', sprite: 'bg/x', factor: 5, y: 0, spacing: 4 }],
         length: 0,
       }),
     ).toEqual([
       { path: 's.json:length', message: 'must be an integer in 1..1000000' },
+      { path: 's.json:camera[0].lock', message: 'must be a boolean' },
+      { path: 's.json:parallax[0].layer', message: 'must be one of: far, mid' },
       { path: 's.json:parallax[0].factor', message: 'must be a finite number in 0..4' },
-      { path: 's.json:tilemap.tileSize', message: 'must be an integer in 1..64' },
+      { path: 's.json:parallax[0].spacing', message: 'must be an integer in 8..1024' },
+      { path: 's.json:tilemap.tileSize', message: 'must be an integer in 8..8' },
+      // References of an invalid file are still resolved (one load reports everything).
+      { path: 's.json:tilemap.tileset', message: 'unknown tileset id "t"' },
     ]);
     const { db, issues } = loadContent([
       file('s.json', 'stage', {
         ...stageBody('s', []),
-        tilemap: { tileSize: 16, file: 'maps/a.json' },
+        tilemap: { tileSize: 8, tileset: 't', rowsTall: 25 },
       }),
     ]);
-    expect(issues).toEqual([]);
-    expect(db.stages[0]?.tilemap).toEqual({ tileSize: 16, file: 'maps/a.json' });
+    expect(issues).toEqual([{ path: 's.json:tilemap.tileset', message: 'unknown tileset id "t"' }]);
+    expect(db.stages[0]?.tilemap).toEqual({
+      tileSize: 8,
+      tileset: 't',
+      tilesetId: -1,
+      rowsTall: 25,
+    });
+    expect(db.stages[0]?.terrain).toBeNull();
   });
 });
 

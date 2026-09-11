@@ -6,7 +6,8 @@
  * gameplay {@link World} with `stepWorld` — the fixed tick pipeline `input → players → stage →
  * scripts → movement → collision → damage → removal → fx` (plan §3.2, shmup_feat.md §22). The
  * scene stack of M1-16 will decide when a World exists; until then every session hosts one World
- * from the start (free flight with the KESTREL).
+ * from the start: free flight with the KESTREL, or the stage `config.stage` names (M1-07 — the
+ * web app's `?stage=<id>`).
  *
  * Lifecycle: `platform.lifecycle.onSuspend` freezes the game (`state.suspended`);
  * `onResume` unfreezes it and resets the loop accumulator so no burst of catch-up
@@ -140,7 +141,8 @@ export interface Game {
  *   {@link EMPTY_CONTENT_DB}, which lets tests and the calibration scenes run with no
  *   `content/` at all; systems then fall back to their built-in defaults.
  * @returns The {@link Game}.
- * @throws RangeError when `overrides` fail validation (see `resolveGameConfig`).
+ * @throws RangeError when `overrides` fail validation (see `resolveGameConfig`) or
+ *   `overrides.stage` names a stage `content` does not have (see `createWorld`).
  *
  * @example
  * ```ts

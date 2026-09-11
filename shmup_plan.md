@@ -819,6 +819,86 @@ the browser dev app and as a Tizen 5.5 bundle.
   checkpoint restart cursor; heightfield generator deterministic; slope masks and `findFloor` on each tile shape;
   stage validation errors (unsorted events, unknown tileset); e2e: test-range scrolls with terrain visible.
 - **Refs:** `shmup_feat.md` §14 (structure, data format), §10 (checkpoints), §22 (stage runtime, terrain collision).
+- **As built:**
+  - **Stage schema.** `music` is `{ stage, boss }` of `MUSIC_CUES` names (resolved to `stageId` /
+    `bossId`); `lock` is a boolean (the M1-02 stub had a string). Keys: the first at x 0, strictly
+    increasing; checkpoints strictly increasing; events non-decreasing (ties fire in file order);
+    nothing past `length`; `yTicks` needs `yTo` — all load issues. Event types are exactly the M1
+    list: the stub's `midboss` (back with M2-09), `scroll` (→ `speed`, with an optional `ramp`) and
+    inline `checkpoint` (→ the `checkpoints` array) are gone; `spawn` lost `formation` / `count`
+    (the `formation` event has `count` + `interval`); `path` stays a plain string until M1-08's
+    `paths` kind. `flag` names (lower-case kebab, ≤ 32 per stage) are numbered per stage
+    (`stage.flagNames` sorted, `event.flagId` = bit). The 0 → 1 stage migration stays identity
+    (format-0 stubs now report schema issues; nothing shipped used them).
+  - **Camera semantics.** A key applies at the start of the tick the camera reaches its x; its
+    speed ramp is linear (exact at the end), its pan eased (`inOutQuad`, `yTicks` 0 / absent = one
+    tick). A lock key stops the camera **exactly** at its x (movement is clamped to it) and stays
+    locked until `runner.unlock()`; scrolling then resumes at the key's speed. `speed` events take
+    effect from the next tick. The camera never passes `length`.
+  - **Tilesets** are a new content kind `tileset` (`content/tilesets/<id>.tileset.json`, one per
+    file: `id, sprite, tileSize, tiles[]`); tile id = index + 1. Each tile has a `name` and a
+    `frame` (not in the plan — the art frame is data, not "tile n = frame n − 1"), `type`
+    `empty | solid | hazard` (`empty` = decoration) and `anchor` + 8-column `mask`. `tileSize` is
+    fixed at 8 (`TILE_SIZE`). `terrain-a.tileset.json` mirrors the M1-03 generator's 17 tiles; an
+    integration test compares every mask with the opaque pixels of its atlas frame.
+  - **Tilemap expansion** (`core/data/tilemap.ts`) runs as a third `loadContent` pass (tilesets
+    are resolved by then) into `StageSpec.terrain` (`Uint8Array`, `cols = ceil((length + 384) / 8)`).
+    `generator` is an object `{ type: 'heightfield', segments }` (the plan wrote the bare string):
+    wave profiles sampled per tile boundary, quantised to half tiles, ≤ one tile per column, half
+    heights left by half steps (the 22.5° pairs), ramping in from 0 at `from` and out by `to`; cells
+    get the tile named `solid` (buried), `floor` / `ceiling` (flat, exposed) or the solid tile whose
+    anchor + mask match (slopes) — a missing one is an issue. A floor wins over an overlapping
+    ceiling. `rle` rows (`"<count>*<id>, <id>"`, numeric ids, exactly `rowsTall` rows) may be
+    combined with the generator and overwrite it where non-zero.
+  - **Terrain queries** (`core/collision`) take the map first: `terrainAt(map, x, y)` (the
+    `TerrainType` code), `terrainSolidAt`, `boxHitsTerrain(map, cx, cy, hw, hh)` (returns the
+    highest `TerrainType`, 0 = none; hazard beats solid), `findFloor` / `findCeiling` (surface y or
+    `NaN`), plus `terrainRectHit(map, x0, y0, x1, y1)` on whole pixels (the World uses it — V8 boxes
+    fractional arguments of calls it does not inline). Terrain tests are pixel-exact and half-open
+    (a box resting on a surface does not touch it), unlike the closed shape tests. The placeholder
+    `TerrainQuery` interface was replaced by `TerrainMap` + these functions.
+  - **Runner.** `createStageRunner(stage, hooks, camera?)`; hooks are `event(code, event, index)`
+    (numeric `StageEventCode`, every event, after the runner applied `speed` / `flag` / `end`) and
+    `clear()`. `restartAt(checkpointIndex)` (-1 = stage start) re-derives speed, pan and flags from
+    the keys and events before the checkpoint, sets the cursor by binary search (events at exactly
+    its x fire again), then calls `clear()`; `unlock()` releases a lock. It is a class whose
+    timeline is compiled into typed arrays at creation and whose state is one `Float64Array`
+    (`runner.state`, hashed by `hashWorld`): per-instance closures ("wrong call target") and
+    megamorphic loads of the content objects (their shapes vary with optional fields) kept `tick()`
+    out of optimised code and allocating in the allocation guard.
+  - **World.** New sim option `GameConfig.stage: string | null` (default `null` = free flight with a
+    static camera, the dev default until M1-16); `createWorld` throws a `RangeError` for an unknown
+    id. `World` gained `stage`, `terrain` (a private copy of the tiles) and `parallax`; the World's
+    hooks turn `music` into `SimEventKind.Music` (the stage theme is queued at creation), `end` into
+    status `stageClear`, and `clear()` empties every pool (`spawn` / `formation` / `warning` / `boss`
+    wait for M1-08 / M1-13). The camera is now a class instance (`createStageCamera()`): V8 shares
+    the hidden-class tree of object literals by key order, and the new 6-key camera-key schema
+    literal starting with `x` generalised the literal camera's `x` field to "tagged", so every
+    fractional camera write allocated (caught by the M1-06 allocation guard).
+  - **`playerHit`** lives in `core/player` as `playerHit(ship, cause, tick, debugFlags)` with the
+    numeric `PlayerHitCause` (`Terrain`, `Contact`, `Bullet`, `Laser`); it ignores inactive,
+    not-`alive`, invulnerable and god-mode ships and records `hitCause` / `hitTick` / `hits` on the
+    ship (hashed). Phase 6 tests each alive ship's `terrainBox`.
+  - **Render contract.** `ParallaxView` gained `spacing`; its `y` is the band's playfield row after
+    the vertical camera scroll (`baseY − camera.y · factor`), `offsetX = (camera.x · factor) mod
+    spacing` (both computed by `updateParallaxView` in phase 9). Bands are limited to `BG_FAR` /
+    `BG_MID`, ≤ 8 per stage; a band repeats horizontally only (list it twice for two rows of
+    128-px star tiles). `TerrainView` gained `tileFrame` (tile id → frame, -1 = undrawn).
+  - **Renderer.** `layers` gained `createTerrainBinding` (a ring-buffered grid of **49 × 26**
+    sprites — one extra row for vertical pans, capped at the map's rows — re-textured one column /
+    row as the camera crosses tile edges, moved as one container at `round(−camera.x)`, which lands
+    integer world positions on the sprite bindings' pixels) and `createParallaxBinding` (fixed
+    sprites per band, one container offset per frame). `TerrainBinding.sync(view, camera)` takes the
+    camera object (no boxed arguments). `PixiRenderer.bindWorld` binds them below the batches;
+    `renderer.terrain` / `renderer.parallax` expose them.
+  - **Shell / apps.** The free-flight scene passes the World's parallax and terrain through and
+    drops its own starfield when a stage runs; the HUD title shows the stage name. `apps/web` reads
+    `?stage=<id>` (`stageFromSearch`, checked against the content's stage ids by `contentStageIds`;
+    an unknown id warns and flies in open space). The Tizen app has no stage parameter.
+  - **Content.** `test-range.stage.json` (4800 px, speed ramps, a 2 px/tick section, a slow
+    section, three heightfield segments with floors and ceilings, star parallax, checkpoints at 0 /
+    1500 / 3000, `flag` and `end` events — no spawns until M1-08 ships enemies). The example stage
+    was rewritten to the new format (RLE rows over `example.tileset.json`, formations, a boss lock).
 
 ### M1-08 — Enemies, behaviour scripts & movement
 
