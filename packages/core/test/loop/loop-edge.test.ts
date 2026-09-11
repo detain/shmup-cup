@@ -1,9 +1,11 @@
 /**
  * Edge cases of the fixed-step loop: other refresh rates, long runs without drift,
- * clock anomalies, snapping tolerance and option validation.
+ * clock anomalies, snapping tolerance, option validation, reading `alpha` / calling `reset()`
+ * from inside a tick, and zero allocation per frame (regression, found by the M1-06 tests).
  */
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_SNAP_TOLERANCE_MS, createFixedStepLoop } from '../../src/loop/index.js';
+import { measureHeapGrowth } from '../helpers/alloc.js';
 
 /**
  * Creates a loop that counts ticks.
@@ -166,5 +168,65 @@ describe('core/loop edge cases', () => {
     }
     expect(counter.ticks).toBe(reported);
     expect(loop.totalTicks).toBe(reported);
+  });
+
+  it('shows the partly consumed accumulator to a tick that reads alpha', () => {
+    const seen: number[] = [];
+    const loop = createFixedStepLoop({
+      tickRate: 100, // 10 ms steps
+      maxTicksPerFrame: 8,
+      snapToleranceMs: 0,
+      onTick: () => {
+        seen.push(Math.round(loop.alpha * 1000) / 1000);
+      },
+    });
+    loop.advance(0);
+    loop.advance(35); // 3 ticks, 5 ms left
+    expect(seen).toEqual([3.5, 2.5, 1.5]);
+    expect(loop.alpha).toBeCloseTo(0.5, 12);
+  });
+
+  it('a reset() from inside a tick ends the frame with an empty accumulator', () => {
+    let ticks = 0;
+    const loop = createFixedStepLoop({
+      tickRate: 100,
+      maxTicksPerFrame: 8,
+      onTick: () => {
+        ticks++;
+        if (ticks === 1) loop.reset();
+      },
+    });
+    loop.advance(0);
+    expect(loop.advance(50)).toBe(1); // the reset drained the accumulator
+    expect(loop.alpha).toBe(0);
+    expect(loop.advance(60)).toBe(0); // first call after a reset only records the time
+    expect(loop.advance(70)).toBe(1);
+  });
+
+  it('allocates nothing per frame on a millisecond clock (regression)', () => {
+    // Regression: the accumulator and the last timestamp were closure variables; a fractional
+    // number stored in one is re-boxed on every assignment (16 B each, every frame).
+    let ticks = 0;
+    const loop = createFixedStepLoop({
+      tickRate: 60,
+      maxTicksPerFrame: 4,
+      onTick: () => {
+        ticks++;
+      },
+    });
+    loop.advance(0);
+    let alphaSum = 0;
+    const growth = measureHeapGrowth(
+      (frame) => {
+        // A 1-ms-resolution rAF clock (reduced timer precision): 16/17/17 ms frames.
+        loop.advance(Math.floor(((frame + 1) * 1000) / 60));
+        alphaSum += loop.alpha > 0.5 ? 1 : 0;
+      },
+      10_000,
+      20_000,
+    );
+    expect(ticks).toBeGreaterThan(29_000);
+    expect(alphaSum).toBeGreaterThanOrEqual(0);
+    expect(growth.bytes).toBeLessThan(64 * 1024);
   });
 });

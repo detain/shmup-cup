@@ -107,14 +107,18 @@ export function createFixedStepLoop(options: FixedStepLoopOptions): FixedStepLoo
   const onTick = options.onTick;
 
   let started = false;
-  let lastMs = 0;
-  let accumulator = 0;
   let totalTicks = 0;
+  // The fractional times live in a typed array, not in closure variables: a closure variable
+  // holding a non-integer number is a heap-allocated box, re-created on every assignment — two
+  // allocations per frame on a real rAF clock. Typed-array slots are stored in place.
+  const time = new Float64Array(2);
+  const LAST = 0;
+  const ACCUMULATOR = 1;
 
   return {
     stepMs,
     get alpha() {
-      return accumulator / stepMs;
+      return time[ACCUMULATOR] / stepMs;
     },
     get totalTicks() {
       return totalTicks;
@@ -122,11 +126,11 @@ export function createFixedStepLoop(options: FixedStepLoopOptions): FixedStepLoo
     advance(nowMs: number): number {
       if (!started) {
         started = true;
-        lastMs = nowMs;
+        time[LAST] = nowMs;
         return 0;
       }
-      let delta = nowMs - lastMs;
-      lastMs = nowMs;
+      let delta = nowMs - time[LAST];
+      time[LAST] = nowMs;
       if (delta <= 0) return 0;
 
       // Delta snapping: a frame that is "about" k steps long counts as exactly k steps.
@@ -135,22 +139,22 @@ export function createFixedStepLoop(options: FixedStepLoopOptions): FixedStepLoo
         delta = steps * stepMs;
       }
 
-      accumulator += delta;
+      time[ACCUMULATOR] += delta;
       let ran = 0;
-      while (accumulator + EPSILON_MS >= stepMs && ran < maxTicks) {
+      while (time[ACCUMULATOR] + EPSILON_MS >= stepMs && ran < maxTicks) {
         onTick();
-        accumulator -= stepMs;
+        time[ACCUMULATOR] -= stepMs;
         ran++;
       }
-      if (accumulator < 0) accumulator = 0;
+      if (time[ACCUMULATOR] < 0) time[ACCUMULATOR] = 0;
       // Spiral-of-death guard: drop time we could not simulate this frame.
-      if (accumulator + EPSILON_MS >= stepMs) accumulator = accumulator % stepMs;
+      if (time[ACCUMULATOR] + EPSILON_MS >= stepMs) time[ACCUMULATOR] %= stepMs;
       totalTicks += ran;
       return ran;
     },
     reset(): void {
       started = false;
-      accumulator = 0;
+      time[ACCUMULATOR] = 0;
     },
   };
 }

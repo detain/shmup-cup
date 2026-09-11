@@ -322,7 +322,9 @@ export function updatePlayer(
     const speeds = spec.speeds;
     const top = speeds.length - 1;
     const level = ship.speedLevel < 0 ? 0 : ship.speedLevel > top ? top : ship.speedLevel;
-    const speed = mx !== 0 && my !== 0 ? speeds[level] * DIAGONAL_SCALE : speeds[level];
+    // Always a product (× 1 is exact): a branch returning the bare array element would merge
+    // a tagged value with a computed double, which V8 boxes on diagonal ticks (an allocation).
+    const speed = speeds[level] * (mx !== 0 && my !== 0 ? DIAGONAL_SCALE : 1);
     ship.x += mx * speed;
     ship.y += my * speed;
     ship.moving = true;

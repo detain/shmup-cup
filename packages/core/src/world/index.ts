@@ -306,11 +306,18 @@ const movementSystem: WorldSystem = (_world) => {
  * Phase 6: rebuilds the broad-phase grid around the camera view; the overlap tests of M1-08 …
  * M1-11 insert their boxes and query it here.
  *
+ * @remarks
+ * The grid origin is the camera position floored to whole pixels: it only decides which cell a
+ * box lands in (queries test the stored boxes exactly), and whole numbers travel as small
+ * integers, whereas a fractional camera position would be boxed into a 16-byte heap number per
+ * argument whenever V8 does not inline the call — an allocation per scrolling axis per tick.
+ *
  * @param world - The world.
  */
 const collisionSystem: WorldSystem = (world) => {
   const grid = world.grid;
-  grid.begin(world.camera.x - GRID_MARGIN, world.camera.y - GRID_MARGIN);
+  const camera = world.camera;
+  grid.begin(Math.floor(camera.x) - GRID_MARGIN, Math.floor(camera.y) - GRID_MARGIN);
   grid.build();
 };
 

@@ -6,9 +6,13 @@
  * Needs `--expose-gc` (the core's Vitest project passes it to its workers — see
  * `packages/core/vitest.config.ts`). The measurement:
  *
- * 1. runs `warmup` iterations first (JIT tiers, inline caches and lazily created hidden classes
- *    allocate once and must not count);
- * 2. forces two full collections and reads `heapUsed`;
+ * 1. forces two full collections, then runs `warmup` iterations (JIT tiers, inline caches and
+ *    lazily created hidden classes allocate once and must not count). Collecting *before* the
+ *    warm-up matters: a full GC that clears the dead hidden classes of earlier tests deoptimises
+ *    every function whose optimised code embedded them, and if that happened at step 2 instead,
+ *    the measured loop would run in V8's lower tiers, which box double temporaries (hundreds of
+ *    bytes per `stepWorld` that the optimised steady state never allocates);
+ * 2. forces two more full collections and reads `heapUsed`;
  * 3. runs `iterations` calls under a V8 `GCProfiler`, which reports every collection that
  *    happened during the loop with the heap size before and after it;
  * 4. reads `heapUsed` again **without** collecting.
@@ -74,6 +78,9 @@ export function measureHeapGrowth(
   warmup: number = Math.min(iterations, 1000),
 ): HeapGrowth {
   const gc = requireGc();
+  // Clear what earlier code left behind first, so the warm-up re-optimises (see the module docs).
+  gc();
+  gc();
   for (let i = 0; i < warmup; i++) fn(i);
   gc();
   gc();
