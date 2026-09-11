@@ -105,6 +105,12 @@ ES5 and linted with `ecmaVersion: 5`.
   (`createEventQueue`). Free SoA slots with `free()` during the tick and `flush()` once at
   the end — slot indices are only stable within a tick.
 - Resolve string ids to numeric indices at load time, never per tick.
+- Rendering: never create Pixi objects or option literals in `render()`. Sprite bindings
+  are created when a new `WorldView` is bound (load time), draw lists are replayed into
+  preallocated quad pools, and Pixi setters that allocate (e.g. `tint`) are only called
+  when the value changes — see [rendering-and-shell.md](rendering-and-shell.md).
+- Text reaches the screen through `DrawList` string slots (`setString` only when the text
+  changes) or the `number` command; never build a string per frame.
 
 ## Tests
 
@@ -117,6 +123,9 @@ ES5 and linted with `ecmaVersion: 5`.
 - Determinism-sensitive code gets a headless test against `createHeadlessPlatform()`.
 - Generated sources that are committed (today `packages/core/src/math/trig-table.ts`) get
   a test that regenerates them and diffs the committed copy.
+- Pixi display objects need no GPU, so render code is unit-tested in Node with the
+  `WebGLRenderer` faked; the real WebGL path is covered by the Playwright browser tests in
+  `test/e2e/` (`pnpm test:e2e`, part of the definition of done from M1-04 on).
 
 ## Formatting
 

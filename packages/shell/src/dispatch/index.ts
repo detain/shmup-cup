@@ -66,7 +66,7 @@ export interface EventDispatcher {
    * Number of handlers of a kind.
    *
    * @param kind - Event kind.
-   * @returns Registered handlers.
+   * @returns Registered handlers (0 for an unknown kind — never throws).
    */
   handlerCount(kind: SimEventKind): number;
   /** Events dispatched since creation (diagnostics). */

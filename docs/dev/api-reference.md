@@ -54,6 +54,7 @@ browser, TV).
 | `DEFAULT_GAME_CONFIG` | const | Frozen defaults (remote-first: `autofire` and `remoteMode` true, `'direct'` items, `'classic'` penalty, `'normal'`) |
 | `resolveGameConfig(overrides?)` | function | → frozen, validated config; throws `RangeError` for out-of-range integers |
 | `PowerUpMode`, `DeathPenaltyPreset`, `DifficultyPreset` | types | `'meter' \| 'direct'`; `'arcade' \| 'classic' \| 'casual'`; `'easy' \| 'normal' \| 'hard' \| 'arcade'` |
+| `HUD_BAR_HEIGHT`, `PLAYFIELD_Y`, `PLAYFIELD_W`, `PLAYFIELD_H` | const | Screen layout (decision D20): `8`, `8`, `384`, `200` — two 8-px HUD bars outside a 384×200 playfield; world `y` maps to screen `y − camera.y + PLAYFIELD_Y` |
 
 ### `loop` — fixed timestep
 
@@ -69,18 +70,39 @@ browser, TV).
 | Export | Kind | Summary |
 |---|---|---|
 | `createGame(platform, overrides?, content?)` | function | → `Game`; registers suspend/resume handlers on the platform. `content` defaults to `EMPTY_CONTENT_DB` |
-| `Game` | interface | `config`, `content`, `platform`, `state`, `step()`, `frame(nowMs) → ticks`, `renderFrame()` (*reused*), `pause()`, `resume()` |
+| `Game` | interface | `config`, `content`, `platform`, `events` (`EventQueue` the systems push presentation events into; the host drains it once per frame), `state`, `step()`, `frame(nowMs) → ticks`, `renderFrame()` (*reused* `RenderFrame`: `world` `null` until M1-06, empty `hud` / `ui` draw lists, zero `screen`), `pause()`, `resume()` |
 | `GameState` | interface | `tick`, `paused`, `suspended`, `input` (last snapshot) |
 
-### `presentation` — back-end contracts
+### `presentation` — back-end contracts and the render contract
+
+The per-frame contract between the simulation and a renderer (plan §3.4). Guide:
+[rendering-and-shell.md](rendering-and-shell.md).
 
 | Export | Kind | Summary |
 |---|---|---|
 | `IRenderer` | interface | `width`, `height`, `resize(cssW, cssH)`, `render(frame)`, `destroy()` |
-| `RenderFrame` | interface | `tick`, `alpha` (grows sim views + events later) |
+| `RenderFrame` | interface | `tick`, `alpha`, `world: WorldView \| null`, `hud: DrawList`, `ui: DrawList`, `screen: ScreenView` — *reused* by the game |
+| `WorldView` | interface | `camera: CameraView { x, y }`, `parallax: ParallaxView \| null`, `terrain: TerrainView \| null`, `batches: SpriteBatchView[]` (read once when a renderer binds the view) |
+| `SpriteBatchView` | interface | `layer`, `capacity`, `count`, per slot `x`, `y` (world pixels of the anchor), `spriteId` (sprite name table index), `frame`, `flags` — `ArrayLike<number>`, so SoA pools implement it directly |
+| `SpriteBatch` | interface | Writable batch with canonical arrays (`Float64Array` x/y, `Uint16Array` spriteId/frame, `Uint8Array` flags) |
+| `createSpriteBatch(layer, capacity)` | function | → empty `SpriteBatch`; throws `RangeError` for a non-positive capacity or an unknown layer |
+| `pushSprite(batch, x, y, spriteId, frame, flags = 0)` | function | Appends a slot → its index, or `-1` when full; never allocates |
+| `SpriteFlag` | const + type | `FlipX 1`, `FlipY 2`, `Hidden 4` (blink), `Flash 8` (draw the `<sprite>@flash` sibling, D30) |
+| `LayerId` | const + type | Draw order `BgFar 0, BgMid 1, Terrain 2, GroundEnemies 3, AirEnemies 4, PlayerShots 5, Player 6, Hitbox 7, Items 8, Fx 9, EnemyBullets 10, Hud 11, Ui 12, Debug 13` — append, never renumber |
+| `LAYER_COUNT`, `LAYER_NAMES` | const | `14`; `'BG_FAR'` … `'DEBUG'` by code |
+| `ParallaxView`, `TerrainView` | interfaces | Minimal shapes drawn from M1-07: `count`, `layer`, `spriteId`, `offsetX`, `y`; `tileSize`, `cols`, `rows`, `tiles`, `tilesetSpriteId` |
+| `ScreenView` | interface | `shakeX`, `shakeY` (px, rounded by the renderer), `flash` (0…1 white over the playfield), `dim` (0…1 black under the UI) |
+| `createDrawList(capacity = 256, stringCapacity = 32)` | function | → `DrawList`; throws `RangeError` for non-positive capacities |
+| `DrawList` | interface | Column-wise typed arrays `op, x, y, w, h, color, alpha, ref, frame, flags, value` + `strings`; `count`, `dropped`, `revision`; `clear()`, `rect()`, `sprite()`, `text(slot, …)`, `number(value, …, minDigits)`, `setString(slot, text) → changed` (`text`/`setString` throw `RangeError` for a bad slot). Commands return their index or `-1` when full |
+| `DrawOp`, `TextAlign` | const + type | `Rect 1, Sprite 2, Text 3, Number 4`; `Left 0, Center 1, Right 2` |
+| `DEFAULT_DRAW_LIST_CAPACITY`, `DEFAULT_DRAW_LIST_STRINGS` | const | `256`, `32` |
+| `TextMetrics` | interface | `measure(text, fontId)` (widest line; throws `RangeError` for an unknown font), `lineHeight` — implemented by render-pixi `text` (moved here from the placeholder `ui`, which re-exports it) |
 | `IAudio` | interface | `state`, `unlock()`, `suspend()`, `resume()`, `setBusVolume(bus, 0…1)`, `destroy()` |
 | `AudioBus` | type | `'master' \| 'music' \| 'sfx' \| 'ui'` |
 | `AudioState` | type | `'uninitialized' \| 'suspended' \| 'running' \| 'closed'` |
+
+Positions in batches are world pixels; draw-list coordinates are screen pixels of the
+384×216 frame (rounded, `Int16`). Colours are `0xRRGGBB`, opacities `0…255`.
 
 ### `rng` — seeded PRNG streams
 
@@ -225,7 +247,7 @@ only `"."`), so today they can only be imported with relative paths from inside
 | `scoring` | `PlayerScore`, `HiScoreEntry` | `addScore`, `checkExtend`, `insertHiScore` |
 | `rank` | `RankInputs` | `computeRank(inputs) → 0–31`, `rankScale` |
 | `scenes` | `Scene`, `SceneId`, `SceneStack` | scene-stack implementation |
-| `ui` | `Widget`, `WidgetKind`, `HudModel`, `TextMetrics` | `createMenu`, `menuTick`, `buildHudModel`, `layoutText` |
+| `ui` | `Widget`, `WidgetKind`, `HudModel` (+ `TextMetrics` re-exported from `presentation`) | `createMenu`, `menuTick`, `buildHudModel`, `layoutText` |
 | `replay` | `Replay`, `ReplayHeader` | `createRecorder`, `recordTick`, `encodeReplay` / `decodeReplay`, `createPlayback` |
 | `save` | `SaveData`, `SaveMigration` | `loadSave(storage)`, `writeSave`, `SAVE_MIGRATIONS` |
 | `fx` | `FxState` | `requestHitStop`, `requestShake`, `tickFx` |
@@ -263,19 +285,66 @@ Placeholders: `sfx` (`SfxSpec`, `SfxPriority`), `music` (`MusicTrack`, `MusicLoo
 
 ## `@shmup/render-pixi`
 
+Draws the core's render contract with PixiJS v8 (renderer only, WebGL1 first) and zero
+per-frame allocation. Guide: [rendering-and-shell.md](rendering-and-shell.md).
+
 | Export | Module | Summary |
 |---|---|---|
-| `createPixiRenderer({ canvas, displayWidth, displayHeight, width?, height?, preferWebGLVersion? })` | `renderer` | → `Promise<PixiRenderer>`; rejects without WebGL |
-| `PixiRenderer` | `renderer` | `IRenderer` + `webGLVersion`, `viewport`, `scene` (384×216 root `Container`) |
+| `createPixiRenderer({ canvas, displayWidth, displayHeight, width?, height?, preferWebGLVersion?, atlas?, font?, testPattern?, glyphCapacity? })` | `renderer` | → `Promise<PixiRenderer>`; rejects without WebGL. Defaults: 384×216, WebGL1, font `'pixel'`, no test pattern, 1024 quads per HUD / UI layer |
+| `PixiRenderer` | `renderer` | `IRenderer` + `webGLVersion`, `viewport`, `scene` (384×216 root), `layers`, `atlas`, `metrics` (`TextMetrics` or `null`), `bindings`, `setSpriteNames(names)`, `bindWorld(world \| null)` (throws `RangeError` for a batch on an unknown layer; `render()` calls it when `frame.world` changes identity) |
+| `PixiRendererOptions` | `renderer` | Options above |
+| `createAtlas(manifest, images, { onWarning? })` | `atlas` | → `Atlas`: one nearest `TextureSource` per page, a `Texture` per frame, frame ids consecutive per sprite. Throws `RangeError` for an image/page count or size mismatch (stale atlas), a page over 2048², a frame outside its page, a missing or shared frame |
+| `Atlas` | `atlas` | `manifest`, `size`, `pages`, `textures`, `anchorX/Y`, `frameWidth/Height`, `framesLeft`, `missingFrame`, `pixelFrame`, `frameId(name)`, `spriteBase(sprite)` (→ id or `-1`), `resolveSpriteTable(names)` / `resolveFlashTable(names)` (→ `Int32Array`; unknown → `missingFrame`, warned once), `destroy()` |
+| `AtlasManifest`, `AtlasPageInfo`, `AtlasFrameInfo`, `AtlasSpriteInfo`, `AtlasFontInfo`, `AtlasGlyphInfo`, `AtlasPageImage`, `AtlasOptions`, `FrameId` | `atlas` | Manifest shape (mirrors `virtual:shmup-assets`), page image type, options, frame handle |
+| `MAX_ATLAS_SIZE`, `MISSING_SPRITE`, `PIXEL_SPRITE` | `atlas` | `2048`; `'ui/missing'` (magenta checker for anything unresolved); `'ui/pixel'` (1×1 white for rects) |
+| `createLayerStack()` | `layers` | → `LayerStack { root, world, layers }`: one container per `LayerId`, world layers inside `world` (shake) |
+| `WORLD_LAYER_COUNT` | `layers` | `LayerId.Hud` (11) — layers below it form the world group |
+| `createSpriteTables(atlas, names)` | `sprites` | → `SpriteTables { base, flash }` (load time) |
+| `resolveFrame(atlas, tables, spriteId, frame, flags)` | `sprites` | → frame id to draw (`Flash` picks the flash table; out of range → `missingFrame`); never allocates |
+| `createSpriteLayerBinding({ atlas, tables, capacity, layer, offsetY? })` | `sprites` | → `SpriteLayerBinding { layer, capacity, container, visibleCount, sync(view, camX, camY), destroy() }`; `offsetY` defaults to `PLAYFIELD_Y`; throws `RangeError` for a bad capacity |
+| `createQuadPool({ atlas, capacity, label? })` | `sprites` | → `QuadPool { capacity, used, dropped, container, begin(), frame(frameId, x, y, flags, tint, alpha), rect(x, y, w, h, color, alpha), end(), destroy() }` — ordered screen-space quads; `frame` / `rect` return `false` when full |
+| `SpriteLayerBindingOptions`, `QuadPoolOptions` | `sprites` | Option types |
+| `createBitmapFont(atlas, name = 'pixel')` | `text` | → `BitmapFont { name, lineHeight, cellWidth, cellHeight, glyphFrame(code), advance(code), measureLine(text, start), measure(text) }`; throws `RangeError` for an unknown font |
+| `createTextMetrics(fonts)` | `text` | → core `TextMetrics` (first font's `lineHeight`); throws `RangeError` for an empty list |
+| `drawText(sink, font, text, x, y, color, align, alpha = 255)` | `text` | Emits one quad per glyph into a `GlyphSink` → glyphs emitted; `\n` = new line, per-line alignment, missing → `?`; never allocates |
+| `drawNumber(sink, font, value, x, y, minDigits, color, align, alpha = 255)`, `measureNumber(font, value, minDigits)` | `text` | Digits without strings (NaN / ±Infinity → 0, capped at `MAX_SAFE_INTEGER`, padding ≤ 20) |
+| `GlyphSink` | `text` | `frame(frameId, x, y, flags, tint, alpha) → boolean` (a `QuadPool` is one) |
+| `DEFAULT_GLYPH_CAPACITY`, `DEFAULT_FONT` | `text` | `1024`; `'pixel'` |
+| `createDrawListView({ atlas, font, tables, capacity?, label? })` | `ui` | → `DrawListView { container, pool, draw(list), invalidate(), destroy() }`: draws a `DrawList` in command order, skipped when list and `revision` are unchanged |
 | `computeIntegerViewport(dispW, dispH, baseW, baseH)` | `viewport` | → `Viewport { scale, x, y, width, height }` (pure) |
-| `createTestPattern(width, height)` | `test-pattern` | → `TestPattern { root, update(tick) }` |
+| `createTestPattern(width, height)` | `test-pattern` | → `TestPattern { root, update(tick) }` (`?scene=calibration`) |
 | `pixelArtToRects(rows, colors, x?, y?)` | `test-pattern` | → merged horizontal runs as `PixelRect[]` (pure) |
 | `PLACEHOLDER_SHIP` | `test-pattern` | 16×9 original pixel map |
-| `PALETTE`, `PaletteColor` | `palette` | Placeholder colours (lifted navy background for the VA panels) |
+| `PALETTE`, `PaletteColor` | `palette` | Placeholder colours (lifted navy background for the VA panels, letterbox) |
 
-Placeholders: `atlas`, `layers`, `sprites`, `text`, `ui`, `particles`, `effects`,
-`debug`. The `atlas` module (M1-04) will consume the manifest of `virtual:shmup-assets`
-(see [Asset pipeline](#asset-pipeline-scriptsassets) below).
+Placeholders: `particles`, `effects`, `debug`.
+
+## `@shmup/shell`
+
+The shared browser host of `apps/web` and `apps/tizen` (decision D34). Depends on
+`@shmup/core` and `@shmup/render-pixi`; input and audio come in through core interfaces.
+Guide: [rendering-and-shell.md](rendering-and-shell.md#the-browser-shell-shmupshell).
+
+| Export | Module | Summary |
+|---|---|---|
+| `bootShell(options)` | `boot` | → `Promise<Shell>`; rejects with `ShellBootError` (after showing the boot error screen and releasing everything) for invalid content, a failed or stale atlas page, no WebGL, or a failing platform / game |
+| `ShellOptions` | `boot` | `canvas`, `win`, `contentFiles`, `assets`, `input`, `audio`, `platform: (renderer) => Platform`, `gameConfig?`, `scene?` (`'showcase'`), `audioUnlock?` (`'gesture'` \| `'immediate'`), `preferWebGLVersion?` (1), `contentOwners?`, `createImage?`, `overlay?` (`null` disables it) |
+| `Shell` | `boot` | `game`, `platform`, `renderer`, `atlas`, `events` (dispatcher), `content`, `scene`, `showcase`, `stop()` (idempotent; releases loop, listeners, input, renderer, atlas, audio) |
+| `ShellAssets`, `ShellInput`, `ShellScene` | `boot` | `{ manifest, pageUrls }`; `PlatformInput` + `clear()` + `destroy()`; `'showcase' \| 'calibration'` |
+| `ShellBootError` | `boot` | `Error` with `lines`, `issues`, `reason` |
+| `sceneFromSearch(search)`, `SHELL_SCENES` | `boot` | `?scene=` → `ShellScene` (unknown → `'showcase'`); the scene list, default first |
+| `BOOT_STATE_ATTRIBUTE` | `boot` | `'data-shmup-state'` — `loading` / `running` / `error` on the game canvas |
+| `loadImages(urls, createImage, onProgress?)` | `loader` | → `Promise<images>` in `urls` order, parallel; rejects with `AssetLoadError { url }` on the first failure |
+| `loadGameContent(files, { owners?, …LoadContentOptions })` | `loader` | → `LoadContentResult`: core issues, then each foreign kind's owner issues, or `no loader for content kind` per unowned file; throws only `TypeError` for a non-array |
+| `ContentOwner`, `ContentOwners`, `LoadGameContentOptions`, `ImageFactory`, `LoadableImage` | `loader` | `(files) => ValidationIssue[]`; owners by kind; option and image types |
+| `createEventDispatcher()` | `dispatch` | → `EventDispatcher { on(kind, handler) → unsubscribe, visit, drain(queue), handlerCount(kind), dispatched, unhandled }`; `on` throws `RangeError` for an unknown kind |
+| `SimEventHandler` | `dispatch` | `(event: Readonly<SimEvent>) => void` — the record is reused |
+| `createBootOverlay(gameCanvas)` | `error-screen` | → `BootOverlay { canvas, showProgress(fraction, label), showError(title, lines), remove() }` or `null` (no document / no 2D context) |
+| `drawProgress(ctx, w, h, fraction, label)`, `drawErrorScreen(ctx, w, h, title, lines) → lines shown`, `formatIssues(issues)` | `error-screen` | Canvas 2D drawing (`Canvas2DLike`) and `path: message` lines |
+| `BOOT_SCREEN_COLORS`, `Canvas2DLike` | `error-screen` | Background `#10173a`, text, title `#ff5aa0`, track; the 2D context subset used |
+| `startFrameLoop(scheduler, onFrame)` | `frame-loop` | → `FrameLoop { stop() }`; `FrameScheduler` = the two rAF functions (moved here from both apps) |
+| `createShowcase({ starTileSize? })` | `showcase` | → `Showcase { spriteNames, world, frame, update(gameFrame) → frame }` (*reused*, pure function of the tick) |
+| `SHOWCASE_SPRITES`, `ShowcaseOptions` | `showcase` | The showcase's sprite name table (11 names) |
 
 ## Apps
 
@@ -285,26 +354,26 @@ These are not libraries, but their modules export testable functions.
 
 | Export | Module | Summary |
 |---|---|---|
-| `bootWebApp(canvas, win?)` | `boot` | → `Promise<WebApp>` (`game`, `renderer`, `audio`, `input`, `stop()`) |
+| `bootWebApp(canvas, resources, win?)` | `boot` | → `Promise<WebApp>` (`game`, `renderer`, `audio`, `input`, `shell`, `stop()`); `resources` = `WebAppResources { contentFiles, assets }` from the virtual modules. Rejects with `ShellBootError` |
 | `createWebPlatform(options)` | `platform` | → `Platform` (`id: 'web'`, `exit: null`) |
 | `createLocalStorage(storage \| null, prefix = 'shmup-cup:')` | `platform` | → `PlatformStorage`; first error → memory for the session |
 | `createVisibilityLifecycle(source)` | `platform` | → `PlatformLifecycle` from `visibilitychange` |
 | `WebPlatformOptions`, `StorageLike`, `VisibilitySource` | `platform` | Injected browser services |
-| `startFrameLoop(scheduler, onFrame)` | `frame-loop` | → `FrameLoop { stop() }`; `FrameScheduler` = the two rAF functions |
+
+The frame loop moved to `@shmup/shell` (`startFrameLoop`).
 
 ### `apps/tizen`
 
 | Export | Module | Summary |
 |---|---|---|
-| `bootTizenApp(canvas, win?)` | `boot` | → `Promise<TizenApp>` (`game`, `platform`, `renderer`, `audio`, `input`, `stop()`) |
+| `bootTizenApp(canvas, resources, win?)` | `boot` | → `Promise<TizenApp>` (`game`, `platform`, `renderer`, `audio`, `input`, `shell`, `stop()`); `resources` = `TizenAppResources { contentFiles, assets }`. The Back watcher is installed before boot (Back also exits the boot error screen) |
 | `createTizenPlatform(options)` | `platform` | → `Platform` (`id: 'tizen'`, `remoteOnly: true`); registers remote keys |
 | `registerRemoteKeys(tizen, keys)` | `platform` | Batch registration with per-key fallback → names registered |
 | `watchBackKey(target, onBack)` | `platform` | Calls `onBack` on non-repeat keyCode 10009 → unsubscribe function |
 | `getTizenApi(win)` | `platform` | → `window.tizen` or `null` |
 | `TizenApi`, `TizenPlatformOptions`, `StorageLike`, `VisibilitySource` | `platform` | Types |
 | `REMOTE_KEYS_TO_REGISTER`, `TIZEN_BACK_KEY_CODE` | `platform` | `MediaPlayPause`, `ChannelUp/Down`, `ColorF0Red…ColorF3Blue`; `10009` |
-| `startFrameLoop`, `FrameLoop`, `FrameScheduler` | `frame-loop` | Same as the web app |
-| `checkTizenBundle(distDir)` | `scripts/check-bundle.mjs` | → `{ problems, files, code }`: one script `app.js`, classic deferred tag, ES2018 parse, polyfill banner, widget files present, every other file under `dist/assets/`; `POLYFILL_BANNER`, `WIDGET_FILES` (`app.js`, `config.xml`, `icon.png`, `index.html`) |
+| `checkTizenBundle(distDir)` | `scripts/check-bundle.mjs` | → `{ problems, files, code }`: one script `app.js`, classic deferred tag, ES2018 parse, polyfill banner, widget files present, every other file under `dist/assets/`, at least one atlas page under `dist/assets/atlas/`; `POLYFILL_BANNER`, `WIDGET_FILES` (`app.js`, `config.xml`, `icon.png`, `index.html`) |
 | `tizenCli()`, `sdbCli()`, `requireEnv()`, `resolveTarget()`, `run()`, `findWgt()`, `requireBuild()`, `APP_DIR`, `DIST_DIR`, `APP_ID` | `scripts/tizen-env.mjs` | Helpers of the Tizen CLI wrappers |
 
 Placeholders: `device-info` (`DeviceInfo`), `live-reload` (`LiveReloadOptions`).
@@ -332,6 +401,7 @@ Placeholders: `FileStore` (`saves.ts`), `SteamService` (`steam.ts`).
 | `shmupAssets({ sourceDir?, outDir? })` | `vite.shared.ts` | Vite plugin: runs the cached asset pipeline in `buildStart`, serves `virtual:shmup-assets`, emits the atlas pages into `dist/assets/atlas/` in builds; dev middleware for `<base>assets/atlas/*`, regenerate + full reload on `assets/source/` edits (pipeline-code edits: Vite restarts, or a warning). Throws `AssetSourceError` from the build hooks on invalid sources |
 | `ASSETS_MODULE_ID` (`'virtual:shmup-assets'`), `ATLAS_URL_DIR` (`'assets/atlas'`), `ShmupAssetsOptions` | `vite.shared.ts` | The virtual id, the relative page directory used by `pageUrls` and the build, the options type |
 | `virtual:shmup-assets` | `types/virtual-modules.d.ts` | `manifest: AtlasManifest` (inlined), `pageUrls: readonly string[]` (relative, one per page), `default: { manifest, pageUrls }`; types `AtlasManifest`, `AtlasPage`, `AtlasFrame`, `AtlasSprite`, `AtlasFont`, `AtlasGlyph` |
+| `WEB_PORT` (`4173`), default config | `test/e2e/playwright.config.ts` | Playwright config of `pnpm test:e2e`: headless Chromium (SwiftShader, `--allow-file-access-from-files`, no `DISPLAY`), 1152×648 viewport, `vite preview` of `apps/web/dist` |
 
 ### Asset pipeline (`scripts/assets/`)
 

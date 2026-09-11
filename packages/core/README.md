@@ -16,10 +16,10 @@ in `math`). Enforced by `tsconfig.json` (`lib: ["ES2018"]`, no `types`) and ESLi
 |---|---|---|
 | `Platform` + parts, `createHeadlessPlatform`, `createMemoryStorage` | `platform` | Host contract (`shmup_tech.md` §3.2) and a Node/test implementation |
 | `Action`, `InputSnapshot`, `PlayerInput`, `commitPlayerInput`, … | `input` | Action bitmasks + per-tick snapshots with edge latching |
-| `GameConfig`, `DEFAULT_GAME_CONFIG`, `resolveGameConfig` | `config` | Sim-affecting session options (384×216, 60 Hz, remote-first defaults) |
+| `GameConfig`, `DEFAULT_GAME_CONFIG`, `resolveGameConfig`, `HUD_BAR_HEIGHT`, `PLAYFIELD_Y/W/H` | `config` | Sim-affecting session options (384×216, 60 Hz, remote-first defaults) and the D20 screen layout (8-px HUD bars around a 384×200 playfield) |
 | `createFixedStepLoop` | `loop` | 60 Hz accumulator with delta snapping, per-frame cap, reset on resume |
-| `createGame` | `game` | Composition root: platform + loop + content + (empty) simulation; suspend/resume |
-| `IRenderer`, `IAudio`, `RenderFrame` | `presentation` | Contracts implemented by `@shmup/render-pixi` / `@shmup/audio-web` |
+| `createGame` | `game` | Composition root: platform + loop + content + (empty) simulation; suspend/resume; `game.events` queue; `renderFrame()` returns the reused render contract |
+| `IRenderer`, `IAudio`, `RenderFrame`, `WorldView`, `SpriteBatchView`, `createSpriteBatch`, `pushSprite`, `SpriteFlag`, `LayerId`, `DrawList`, `createDrawList`, `TextMetrics` | `presentation` | Back-end contracts and the render contract (plan §3.4): world sprite batches in typed arrays, HUD / UI command lists (rect, sprite, text slot, number), draw layers, screen effects — implemented by `@shmup/render-pixi` / `@shmup/audio-web` |
 | `createRng`, `createRngStreams`, `RNG_STATE_WORDS` | `rng` | sfc32 seeded from one 32-bit seed; independent gameplay + cosmetic streams, zero-alloc state snapshots |
 | `sinB`, `cosB`, `atan2B`, `quantizeAngle`, `angleDelta`, `turnToward`, `wrapAngle`, `clamp`, `lerp`, `approach`, `EASINGS` | `math` | Binary angles (1024/turn) on committed lookup tables + easing curves |
 | `createEventQueue`, `SimEventKind`, `SFX_CUES`, `MUSIC_CUES` | `events` | Sim → presentation ring of typed arrays (drop-oldest) and the canonical cue registries |
@@ -66,7 +66,9 @@ pnpm --filter @shmup/core build       # tsc → dist/ (ES2018 + .d.ts)
 The deterministic primitives (`rng`, `math`, `events`, `pools`) have their own guide:
 [`docs/dev/engine-foundations.md`](../../docs/dev/engine-foundations.md); the content
 loader and schema combinators (`data`) theirs:
-[`docs/dev/content-data.md`](../../docs/dev/content-data.md). `src/math/trig-table.ts`
+[`docs/dev/content-data.md`](../../docs/dev/content-data.md); the render contract
+(`presentation`) is explained with its renderer in
+[`docs/dev/rendering-and-shell.md`](../../docs/dev/rendering-and-shell.md). `src/math/trig-table.ts`
 is **generated** — edit `scripts/gen-trig-tables.mjs`, not the table.
 
 Consumers inside the workspace resolve `@shmup/core` to `src/index.ts` through the

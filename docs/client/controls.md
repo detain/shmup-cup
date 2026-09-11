@@ -4,9 +4,9 @@ Shmup Cup is designed for the **Samsung Smart Remote** first; a gamepad or a key
 work too, and every device drives both the game and the menus.
 
 > **Status:** these default bindings are already built into the input layer and are read
-> every frame, but the current build only shows the calibration screen
-> ([preview-build.md](preview-build.md)) — nothing on it reacts to buttons yet except
-> **Back** on the TV, which closes the app. Bindings may still change once the input
+> every frame, but the current build only shows an animated sprite showcase
+> ([preview-build.md](preview-build.md)) — nothing in it reacts to buttons yet except
+> **Back** on the TV, which closes the app (also from the start-up error screen). Bindings may still change once the input
 > probe results from the M7 monitors are in, and a rebinding menu is planned.
 
 ## What the actions do

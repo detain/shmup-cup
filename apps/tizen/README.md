@@ -31,8 +31,9 @@ pnpm --filter @shmup/tizen dev     # desktop-browser preview (no window.tizen; B
 
 `scripts/check-bundle.mjs` fails the build unless: exactly one script exists, it is loaded
 as a classic deferred script, **it parses with acorn as an ES2018 script**, it starts with
-the polyfill, `config.xml` / `icon.png` are present, and every other file lives under
-`dist/assets/` (so nothing unexpected is packaged into the `.wgt`). The checks are also exported as
+the polyfill, `config.xml` / `icon.png` are present, every other file lives under
+`dist/assets/` (so nothing unexpected is packaged into the `.wgt`), and at least one atlas
+page exists under `dist/assets/atlas/` (the shell cannot boot without it). The checks are also exported as
 `checkTizenBundle(distDir)` for the tests.
 
 ## Tests
@@ -49,6 +50,13 @@ the polyfill, `config.xml` / `icon.png` are present, and every other file lives 
   `spawnSync` mocked — nothing is ever executed);
 - `test/boot/boot-wiring.test.ts` boots the app against a fake window, `window.tizen`,
   renderer and AudioContext.
+
+`pnpm test:e2e` (repo root) also opens the built `dist/index.html` via `file://` in headless
+Chromium, like the TV runs the widget, and checks it boots, loads the atlas and draws the
+showcase. To open `dist/index.html` from disk in desktop Chrome yourself, start Chrome with
+`--allow-file-access-from-files` — otherwise Chrome treats the atlas page as cross-origin and
+WebGL refuses it (the TV serves the widget's files as same-origin). On the TV the app always
+shows the showcase (a widget has no `?scene=` query string).
 
 ## Package, install, run (desktop with Tizen CLI + certificate — never in CI)
 

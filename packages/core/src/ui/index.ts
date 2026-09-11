@@ -15,7 +15,10 @@
  * - shmup_tech.md §4.10 — no UI framework; scene stack + canvas menus + bitmap font
  *
  * **Intended public API.** The declarations below (and the `Planned` notes at the
- * end of the file) are the contract later steps implement.
+ * end of the file) are the contract later steps implement. The draw commands the HUD and
+ * menus will emit (`DrawList`) and the bitmap-font measuring contract (`TextMetrics`,
+ * implemented by `@shmup/render-pixi` `text`) already exist in `presentation` (M1-04);
+ * `TextMetrics` is re-exported here for the planned layout code.
  *
  * @module
  */

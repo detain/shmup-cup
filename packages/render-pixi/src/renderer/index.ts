@@ -139,7 +139,16 @@ export interface PixiRenderer extends IRenderer {
    * `frame.world` is a different object; hosts call it at load time so the first frame does
    * not create Pixi objects.
    *
+   * @remarks
+   * The batch array is read once, here: bindings are created per `world.batches` entry and
+   * `render()` syncs binding `i` from `batches[i]` — replace the whole `WorldView` object to
+   * change the batch list. Without an atlas nothing is bound (the world is remembered but not
+   * drawn). Every batch's layer is validated before anything is created, so a bad view leaves
+   * the renderer unbound rather than half-bound.
+   *
    * @param world - The world to draw, or `null` to unbind.
+   * @throws {RangeError} When a batch's `layer` is not a core `LayerId` (the previous world's
+   *   bindings are already destroyed at that point).
    */
   bindWorld(world: WorldView | null): void;
 }
@@ -191,6 +200,12 @@ const resetPass = (
  *   below 1×1.
  * - The HUD and UI layers each get a quad pool of `glyphCapacity` sprites; world batches get
  *   bindings sized to their capacity when bound.
+ * - `render(frame)` binds `frame.world` itself when it is a new object (so it throws the
+ *   {@link PixiRenderer.bindWorld} `RangeError` for a batch on an unknown layer), skips a HUD /
+ *   UI draw list whose `revision` did not change, and never allocates for an already bound
+ *   world.
+ * - Without `setSpriteNames()` every sprite id draws `ui/missing`; call it once the content
+ *   (or a dev scene's name table) is known.
  *
  * @param options - Canvas, display size, internal resolution, atlas and scene options.
  * @returns A promise of a ready {@link PixiRenderer}.

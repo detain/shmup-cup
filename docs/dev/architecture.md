@@ -9,7 +9,9 @@ Related pages: [repo-layout.md](repo-layout.md) (where files live),
 [api-reference.md](api-reference.md) (every public export),
 [build-test-deploy.md](build-test-deploy.md) (commands, Tizen build, CI),
 [conventions.md](conventions.md) (rules for new code), [content-data.md](content-data.md)
-and [asset-pipeline.md](asset-pipeline.md) (game data and art, from source to bundle).
+and [asset-pipeline.md](asset-pipeline.md) (game data and art, from source to bundle),
+[rendering-and-shell.md](rendering-and-shell.md) (the render contract, the renderer and the
+shared browser boot).
 
 ## Layers
 
@@ -18,21 +20,30 @@ and [asset-pipeline.md](asset-pipeline.md) (game data and art, from source to bu
 │ apps/web       Vite dev app; also the renderer Electron loads                           │
 │ apps/tizen     Samsung TV .wgt (Chromium 69, one classic IIFE script)                   │
 │ apps/electron  desktop shell: main process + sandboxed preload, loads apps/web's build  │
-└───────────────┬───────────────────────────┬───────────────────────────┬─────────────────┘
-                │ implements Platform       │ creates                   │ creates
-                ▼                           ▼                           ▼
+└──────┬─────────────────────────────┬───────────────────────────────────┬────────────────┘
+       │ create input + audio,       │ bootShell({ content, assets,      │
+       │ implement Platform          ▼   input, audio, platform })       │
+       │              ┌─────────────────────────────────────────────┐    │
+       │              │ @shmup/shell — shared browser host (D34)    │    │
+       │              │ loading bar + boot error screen, content    │    │
+       │              │ validation, atlas pages, renderer + game,   │    │
+       │              │ event dispatch, rAF frame loop, dev scenes  │    │
+       │              └──────────────────────┬──────────────────────┘    │
+       ▼                                     ▼ creates                   ▼
 ┌──────────────────────┐  ┌────────────────────────────┐  ┌──────────────────────────────┐
 │ @shmup/input-web     │  │ @shmup/render-pixi         │  │ @shmup/audio-web             │
 │ keys/remote/pads →   │  │ IRenderer over PixiJS v8   │  │ IAudio over Web Audio        │
-│ InputSnapshot        │  │ (WebGL1, 384×216 → ×N)     │  │ (interactive, buses)         │
+│ InputSnapshot        │  │ atlas, layers, sprites,    │  │ (interactive, buses)         │
+│                      │  │ bitmap text, draw lists    │  │                              │
 └──────────┬───────────┘  └─────────────┬──────────────┘  └──────────────┬───────────────┘
            └─────────────────────────────┼────────────────────────────────┘
                                          ▼  (types + helpers only)
                     ┌────────────────────────────────────────────────┐
                     │ @shmup/core — pure TS, deterministic           │
                     │ Platform / IRenderer / IAudio contracts,       │
-                    │ input snapshots, config, fixed-step loop,      │
-                    │ engine primitives, content loader (data),      │
+                    │ render contract (RenderFrame, batches, draw    │
+                    │ lists), input snapshots, config, fixed-step    │
+                    │ loop, engine primitives, content loader,       │
                     │ createGame(), every game system (placeholders) │
                     └────────────────────────────────────────────────┘
 ```
@@ -42,10 +53,13 @@ and [asset-pipeline.md](asset-pipeline.md) (game data and art, from source to bu
   ESLint layer 4 rejects the globals and imports (see [conventions.md](conventions.md)).
 - **Presentation packages depend only on core.** They implement core's contracts
   (`IRenderer`, `IAudio`, `PlatformInput`) and never call each other.
-- **Apps are composition roots.** `src/boot/` in each app creates the input adapter,
-  audio back-end, renderer, `Platform` and game, then drives them from
-  `requestAnimationFrame`. Electron has no game code of its own — it serves the
-  `apps/web` build over `app://game/`.
+- **`@shmup/shell` is the one boot path of the browser hosts** (M1-04, decision D34). It
+  depends on core and render-pixi; input and audio reach it through core interfaces
+  (`PlatformInput`, `IAudio`), so the shell never imports input-web or audio-web itself.
+- **Apps are thin composition roots.** `src/boot/` in each app creates the input adapter,
+  audio back-end and a `Platform` factory and calls `bootShell()`, which creates the atlas,
+  renderer and game and drives them from `requestAnimationFrame`. Electron has no game code
+  of its own — it serves the `apps/web` build over `app://game/`.
 
 ## The hard sim / presentation split
 
@@ -53,11 +67,13 @@ The simulation (`createGame` and, later, every system under `packages/core/src/`
 calls the renderer or the mixer. Each displayed frame the host:
 
 1. calls `game.frame(now)` — the core runs 0…`maxTicksPerFrame` fixed ticks;
-2. reads a read-only view with `game.renderFrame()` and hands it to `renderer.render()`;
-3. (later) drains the core's `events` queue into the renderer (particles, shake) and the
-   mixer (SFX, music). The queue and its cue registries exist today (`core/events`); the
-   systems that fill it and the host-side dispatcher arrive with the sim (M1-06) and the
-   FX/audio steps (M1-14, M1-15).
+2. drains `game.events` through the shell's dispatcher into the handlers registered per
+   event kind (particles, shake → renderer; SFX, music → mixer). The queue, its cue
+   registries and the dispatcher exist (`core/events`, shell `dispatch`); the systems that
+   push events and the handlers arrive with the sim (M1-06) and the FX/audio steps (M1-14,
+   M1-15);
+3. reads the read-only `RenderFrame` with `game.renderFrame()` — world sprite batches, HUD and
+   UI draw lists, screen effects (plan §3.4) — and hands it to `renderer.render()`.
 
 Because nothing flows from presentation back into the sim except input, the same core
 runs headless in Vitest (`createHeadlessPlatform`), can fast-forward, and will replay
@@ -67,7 +83,7 @@ input side of that contract).
 ## One frame, end to end
 
 ```text
-requestAnimationFrame(now)                       apps/*/src/frame-loop
+requestAnimationFrame(now)                       shell/frame-loop
  └─ game.frame(now)                              core/game
      └─ loop.advance(now)                        core/loop: delta snapping, accumulator, cap
          └─ repeat 0..4×: step()
@@ -76,9 +92,14 @@ requestAnimationFrame(now)                       apps/*/src/frame-loop
              │   ├─ readGamepadActions(pad 0..3)       input-web/gamepad
              │   └─ commitPlayerInput(p1/p2, …)        core/input: pressed/released edges
              └─ state.tick++                     (game systems will run here, fixed order)
- └─ renderer.render(game.renderFrame())          render-pixi/renderer
-     ├─ testPattern.update(tick)                 render-pixi/test-pattern (marker x = tick)
-     ├─ pass 1: scene → 384×216 RenderTexture    nearest sampling, no antialias
+ └─ game.events.drain(dispatcher.visit)          shell/dispatch → registered handlers
+ └─ renderer.render(frame)                       render-pixi/renderer
+     │   frame = game.renderFrame(), or showcase.update(it) until the World exists
+     ├─ bindWorld(frame.world) if it is a new object   (load time only)
+     ├─ binding.sync(batch, camX, camY) per batch      render-pixi/sprites
+     ├─ shake offset, flash / dim quads
+     ├─ hudView.draw(hud), uiView.draw(ui)             render-pixi/ui + text (skipped if unchanged)
+     ├─ pass 1: scene → 384×216 RenderTexture          nearest sampling, no antialias
      └─ pass 2: one sprite, integer scale ×N, centred on the canvas (letterbox around it)
 ```
 
@@ -93,7 +114,8 @@ deferred removal → emit events`.
   number of ticks counts as exactly that many ticks. On a 60 Hz display this yields
   exactly one tick per rAF despite timer jitter.
 - Other refresh rates (50/120/144 Hz) accumulate time; `alpha` (0 ≤ α < 1) is the
-  leftover fraction for interpolated rendering (not used by the test pattern yet).
+  leftover fraction for interpolated rendering (carried in `RenderFrame`, not used by the
+  renderer until M2 — decision D32).
 - **Spiral-of-death cap:** at most `maxTicksPerFrame` (default 4) ticks per frame; any
   excess time is dropped, so a stall slows the game down instead of freezing it.
 - The first `advance()` after creation or `reset()` only records the timestamp.
@@ -144,8 +166,10 @@ Game data is JSON under `content/`, validated and turned into numbers once, at b
 - **Run time.** `createGame(platform, overrides, db)` stores the `ContentDb` as
   `game.content`. Systems look up what they need at session/stage start and keep integer
   indices; the tick reads arrays only.
-- Today the apps register the plugin but do not import the module yet — `@shmup/shell`
-  (M1-04) does, so `createGame` still runs on `EMPTY_CONTENT_DB`.
+- Since M1-04 the apps' `main.ts` imports the module and `bootShell()` validates it with
+  `loadGameContent()`: core kinds through `loadContent()`, other kinds through the owner
+  registered for them (plan §3.5; a kind without an owner is an issue). Any issue stops the
+  boot on the boot error screen; otherwise `createGame` receives the `ContentDb`.
 
 ### Asset pipeline (`assets/source/` → atlas → `virtual:shmup-assets`)
 
@@ -162,9 +186,12 @@ D24, "art as code"); nothing is drawn at run time and nothing is fetched on the 
   Vite plugin (`vite.shared.ts`) runs the same cached pipeline in `buildStart`, inlines the
   manifest as `virtual:shmup-assets` and emits the pages into `dist/assets/atlas/`
   (relative URLs — `file://` on Tizen, `app://` in Electron; D25).
-- **Boot (from M1-04).** render-pixi's `atlas` module loads the pages as images, resolves
-  every sprite name to a numeric id once and hands the sim/renderer integers only; content's
-  `sprite` names are checked against the manifest by `pnpm content:check`.
+- **Boot.** The shell loads the pages with `new Image()` from their relative URLs,
+  render-pixi's `createAtlas` turns them into one nearest-neighbour texture source per page,
+  and `renderer.setSpriteNames(names)` resolves every sprite name to a frame id once — the
+  sim and the renderer exchange integers only. Content's `sprite` names are checked against
+  the manifest by `pnpm content:check`; anything unresolved at run time draws the magenta
+  `ui/missing`.
 - **Real art later** replaces frames by sprite name (a PNG + optional Aseprite export next
   to the pixel map) — no code change.
 
@@ -187,6 +214,8 @@ D24, "art as code"); nothing is drawn at run time and nothing is fetched on the 
 
 ### Rendering pipeline (`@shmup/render-pixi`)
 
+Details: [rendering-and-shell.md](rendering-and-shell.md).
+
 - Pixi v8 `WebGLRenderer` created directly (no `Application`, no Pixi ticker), WebGL**1**
   preferred because WebGL2 on Tizen 5.5 GPUs is unverified; Pixi falls back to WebGL2
   only if WebGL1 is unavailable.
@@ -195,8 +224,19 @@ D24, "art as code"); nothing is drawn at run time and nothing is fetched on the 
 - `computeIntegerViewport()` picks the largest integer scale that fits: 1920×1080 → ×5
   exactly (the M7 monitors), 1280×720 → ×3 with a 64/36 px letterbox, smaller than
   384×216 → ×1 cropped (never blurred).
-- `PixiRenderer.scene` is the 384×216 root container later steps attach layers to
-  (`layers`, `sprites`, `ui`, `text`, `particles`, `effects`, `debug` are placeholders).
+- The 384×216 scene is a lifted-navy background, one container per core `LayerId` in the
+  §18 draw order (the world layers in a group offset by screen shake; HUD, UI and DEBUG
+  fixed), a flash quad over the world and a dim quad under the UI.
+- **World sprites:** one preallocated `SpriteLayerBinding` per `SpriteBatchView` of the
+  frame's `WorldView`, created when a new world object is bound; each frame it copies
+  `spriteTable[spriteId] + frame`, `round(x − camX)`, `round(y − camY) + PLAYFIELD_Y`, flips,
+  blink and the hit-flash sibling (D30). Every page is one texture source, so a layer's
+  sprites batch into one draw call.
+- **HUD and menus:** each `DrawList` (rect, sprite, text, number) is drawn into an ordered
+  quad pool of 1024 sprites with the atlas's bitmap font; a list whose `revision` did not
+  change is skipped.
+- Zero per-frame allocation: Pixi objects are only created at load / bind time, pass options
+  are reused (and reset, because Pixi writes into them), tints are only set when they change.
 
 ### Audio (`@shmup/audio-web`)
 
@@ -211,10 +251,11 @@ via `WebAudio.bus(name)`.
 
 | Event | Browser (`apps/web`) | TV (`apps/tizen`) | Effect |
 |---|---|---|---|
+| Boot | loading bar → content / atlas / WebGL checks → running | same, pages from `file://` | canvas `data-shmup-state` = `loading` → `running`, or `error` with the boot error screen listing every problem |
 | App hidden | tab hidden (`visibilitychange`) | Home, source switch, multitasking (`visibilitychange`) | `platform.lifecycle` suspend → `game.state.suspended = true` (no ticks), held input cleared, audio suspended |
 | App visible | tab visible | back to the app | resume → `suspended = false`, loop accumulator reset, audio resumed |
 | User pause | `game.pause()` (no UI yet) | same | `state.paused`; survives suspend/resume — resuming the platform does not un-pause |
-| Back | — (Esc/Backspace map to `Action.Back`) | remote Back (10009) → `watchBackKey` → `platform.exit()` | Today the calibration screen is the root screen, so Back exits the TV app; the scene stack will take over Back handling |
+| Back | — (Esc/Backspace map to `Action.Back`) | remote Back (10009) → `watchBackKey` → `platform.exit()` (before the platform exists: `tizen.application` directly) | Today the showcase is the root screen, so Back exits the TV app — also from the boot error screen, because the watcher is installed before boot; the scene stack will take over Back handling (M1-16) |
 | Resize | `resize` → `renderer.resize()` | same (rare on TV) | new integer viewport |
 
 JavaScript is frozen while a Tizen app is hidden, so nothing in the core may assume wall
@@ -262,7 +303,8 @@ These are enforced now so that replays, golden tests and attract mode work later
   numbers the sim reads are always in the source tree.
 - **Zero allocations in per-tick and per-frame paths**: reuse snapshot/frame objects,
   preallocate pools (`pools` module), no closures or arrays created inside `step()` or
-  `render()`.
+  `render()`; the renderer creates Pixi objects only at load and when a new `WorldView`
+  is bound.
 
 ## Module status tracking
 
@@ -274,9 +316,11 @@ a matching `test/<module>/` folder, and spec references that point at real numbe
 sections of `shmup_feat.md` / `shmup_tech.md`.
 
 Implemented or partial today: core `platform`, `input`, `config`, `loop`, `game`,
-`presentation`, `rng`, `math`, `events`, `pools`, `data` (partial: `enemies` / `stage` are stubs); input-web `keymap`, `keyboard`, `gamepad`, `web-input`; audio-web
-`web-audio`; render-pixi `renderer`, `viewport`, `test-pattern`, `palette`; the apps'
-`boot`, `platform`, `frame-loop`. Everything else declares its intended API only. The
+`presentation`, `rng`, `math`, `events`, `pools`, `data` (partial: `enemies` / `stage` are
+stubs); input-web `keymap`, `keyboard`, `gamepad`, `web-input`; audio-web `web-audio`;
+render-pixi `renderer`, `viewport`, `test-pattern`, `palette`, `atlas`, `layers`, `sprites`,
+`text`, `ui`; shell `boot`, `loader`, `dispatch`, `error-screen`, `frame-loop`, `showcase`;
+the apps' `boot` and `platform`. Everything else declares its intended API only. The
 build-time tooling outside the packages (the asset pipeline in `scripts/assets/`, the Vite
 plugins in `vite.shared.ts`) has no `moduleInfo`; it is covered by the tests under
 `test/scripts/` and `test/integration/`.
@@ -285,7 +329,11 @@ plugins in `vite.shared.ts`) has no `moduleInfo`; it is covered by the tests und
 
 | To add… | Do this |
 |---|---|
-| A new host platform (webOS, Android TV) | New `apps/<name>/` implementing `Platform` (copy `apps/tizen/src/platform/` as a start) and a `boot` composition root; reuse `@shmup/input-web` / `render-pixi` / `audio-web` if it is a browser engine |
+| A new host platform (webOS, Android TV) | New `apps/<name>/` implementing `Platform` (copy `apps/tizen/src/platform/` as a start) and a thin `boot` that calls `bootShell()` if it is a browser engine (reuse `@shmup/input-web` / `audio-web`) |
+| Something drawn in the world | A `SpriteBatchView` (an SoA pool or a `createSpriteBatch` mirror) in the `WorldView.batches` list — no renderer change ([rendering-and-shell.md](rendering-and-shell.md#extending-it)) |
+| HUD or menu drawing | Commands into `RenderFrame.hud` / `ui` (`DrawList`: rect, sprite, text slot, number) |
+| A handler for a sim event | `shell.events.on(SimEventKind.X, handler)` at load time; copy fields out of the reused record |
+| A content kind validated outside core | A `ContentOwner` passed to `bootShell({ contentOwners })` from both apps — unowned kinds stop the boot |
 | A renderer or audio back-end | Implement `IRenderer` / `IAudio` from `@shmup/core` in a new package; the apps choose which one to create |
 | An input device | Produce an action mask per tick and feed it through `commitPlayerInput()` (see `createWebInput`); never expose device codes to the core |
 | A game action | Append a bit to `Action` (never renumber — masks are recorded in replays), add it to `ACTION_NAMES` and the default bindings in `input-web/keymap` / `gamepad` |
@@ -293,5 +341,5 @@ plugins in `vite.shared.ts`) has no `moduleInfo`; it is covered by the tests und
 | Content (enemies, weapons, stages) | JSON under `content/` following its README, then `pnpm content:check`. New fields or a new kind: extend the schemas in `core/data` — checklist in [content-data.md](content-data.md#extending-it) |
 | A sprite or animation | A `*.sprite.json` pixel map under `assets/source/sprites/` (its path is its name) or a generator in `scripts/assets/procedural/`; `hitFlash: true` for anything the player can shoot. Real art: a PNG (+ Aseprite export) of the same name — [asset-pipeline.md](asset-pipeline.md#extending-it) |
 | A sound or music cue | Append a name to `SFX_CUES` / `MUSIC_CUES` in `core/events` (never renumber — ids are recorded in replays and bound by `content/audio/`) |
-| A presentation event kind | Append a code to `SimEventKind` and a name to `SIM_EVENT_KIND_NAMES`, then handle it in the host's drain dispatcher |
+| A presentation event kind | Append a code to `SimEventKind` and a name to `SIM_EVENT_KIND_NAMES`, then register a handler on the shell's dispatcher (`shell.events.on`) |
 | A new entity kind | Give it an SoA pool (`createSoaPool`) or an object pool (`createPool`) sized from the budgets in `shmup_feat.md` §22, `flush()` it in the deferred-removal phase of the tick |

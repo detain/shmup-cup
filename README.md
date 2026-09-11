@@ -25,8 +25,8 @@ error screen listing every problem), and renders the core's render contract — 
 bitmap text, HUD / UI command lists — with zero per-frame allocation. The default scene is a
 **sprite showcase** (parallax stars, the KESTREL with Options, drifters, bullets, HUD and the
 bitmap-font title); `?scene=calibration` shows the pixel-art test pattern — there is no
-gameplay yet. `pnpm test:e2e` boots the web build and the Tizen `dist/` (via `file://`) in
-headless Chromium.
+gameplay yet ([developer guide](docs/dev/rendering-and-shell.md)). `pnpm test:e2e` boots the
+web build and the Tizen `dist/` (via `file://`) in headless Chromium.
 The **input probe** — a diagnostic Tizen app that measures the Samsung remote, gamepads and
 display on the real monitors — is built and tested ([`tools/input-probe/`](tools/input-probe/README.md));
 it is waiting to be packaged and run on the M7 monitors.
@@ -43,11 +43,12 @@ it is waiting to be packaged and run on the M7 monitors.
 | [`shmup_prompt.md`](shmup_prompt.md) | Paste-into-a-new-session prompt that drives execution of the plan (workflow: build → review/fix loop → tests → docs → CI gate per step, progress in `shmup_progress.md`) |
 | [`docs/`](docs/README.md) | Player and developer documentation (start with [`docs/dev/repo-layout.md`](docs/dev/repo-layout.md)) |
 
-Game docs — testers: [preview build (calibration screen)](docs/client/preview-build.md) ·
+Game docs — testers: [preview build (sprite showcase)](docs/client/preview-build.md) ·
 [controls](docs/client/controls.md) · [monitor setup & install](docs/client/install-on-tv.md).
 Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/architecture.md) ·
 [engine foundations](docs/dev/engine-foundations.md) · [content data](docs/dev/content-data.md) ·
 [asset pipeline](docs/dev/asset-pipeline.md) ·
+[rendering & browser shell](docs/dev/rendering-and-shell.md) ·
 [API reference](docs/dev/api-reference.md) ·
 [build, test & deploy](docs/dev/build-test-deploy.md) · [conventions](docs/dev/conventions.md).
 
@@ -77,6 +78,7 @@ pnpm dev              # browser dev app → http://localhost:5173 (arrows/WASD, 
 pnpm lint             # ESLint (typescript-eslint + compat: chrome >= 69)
 pnpm typecheck        # tsc --noEmit everywhere
 pnpm test             # Vitest per package + repo integration tests
+pnpm test:e2e         # build web + Tizen, boot both in headless Chromium (once: pnpm exec playwright install --with-deps chromium)
 pnpm build            # packages → dist/, apps/web, apps/tizen (one ES2018 IIFE), apps/electron
 pnpm format           # Prettier
 pnpm trig:tables      # regenerate the committed core trig tables (a test checks they are current)

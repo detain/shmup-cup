@@ -464,6 +464,11 @@ export interface DrawList {
    * Adds a number drawn digit by digit (no string is built). The integer part is drawn;
    * negative values get a leading `-`.
    *
+   * @remarks
+   * The value is stored as given (a `Float64Array` entry). The renderer draws NaN and
+   * ±Infinity as 0 and caps the magnitude at `Number.MAX_SAFE_INTEGER` (the largest value
+   * whose digits can be extracted exactly); `minDigits` outside `0…20` is clamped here.
+   *
    * @param value - Value to draw.
    * @param x - Alignment point (see `align`).
    * @param y - Top edge.

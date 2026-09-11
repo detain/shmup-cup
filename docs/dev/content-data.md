@@ -26,7 +26,7 @@ vite.shared.ts  readContentFiles()    walk, skip example.*.json, JSON.parse, sor
    │  shmupContent() Vite plugin
    ▼
 virtual:shmup-content                 export default [{ path, data }, …]  — inlined in app.js
-   │  (boot, in the browser / on the TV — the shell does this from M1-04 on)
+   │  (boot, in the browser / on the TV — @shmup/shell loadGameContent())
    ▼
 @shmup/core  loadContent(files)       header → migrate → validate → collect → resolve ids
    │                                  ─► issues: ValidationIssue[]   (boot error screen)
@@ -45,9 +45,12 @@ content on every machine.
 
 **Status today.** The loader, the combinators, the `player` and `weapons` formats, the
 plugin and `pnpm content:check` are done. `enemies` and `stage` are *stub* schemas that match
-the example files; M1-07 … M1-13 extend them. Both apps register the plugin, but nothing
-imports `virtual:shmup-content` yet — `@shmup/shell` (M1-04) does, then passes `db` to
-`createGame`. Until then `createGame` uses `EMPTY_CONTENT_DB`.
+the example files; M1-07 … M1-13 extend them. Both apps register the plugin and their
+`main.ts` imports `virtual:shmup-content`; `@shmup/shell`'s `bootShell()` validates it with
+`loadGameContent()` (core kinds through `loadContent()`, foreign kinds through the
+`contentOwners` the apps pass — an unowned kind is an issue), stops on the boot error screen
+when there is any issue, and passes `db` to `createGame` (M1-04,
+[rendering-and-shell.md](rendering-and-shell.md#the-boot-sequence)).
 
 ## Files, kinds and versions
 
@@ -138,8 +141,9 @@ in path-then-document order. Systems resolve what they need **once** (at session
 start) and keep the numbers; per-tick code indexes arrays only — no `Map.get`, no string
 compares (zero-allocation rule, [conventions.md](conventions.md#performance-zero-allocation-in-hot-paths)).
 
-`EMPTY_CONTENT_DB` is the frozen, shared default of `createGame`; tests and the calibration
-scene run with it, and systems fall back to built-in defaults.
+`EMPTY_CONTENT_DB` is the frozen, shared default of `createGame`; tests that need no content
+run with it, and systems fall back to built-in defaults. The apps always boot with the
+validated shipped content.
 
 ## The schema combinators (`core/data/schema`)
 
@@ -307,8 +311,8 @@ A failure prints the issue list (`path` + `message`) in the Vitest diff.
 ## Next steps that build on this page
 
 M1-03 (done) checks every name in `db.sprites` against the generated atlas
-([asset-pipeline.md](asset-pipeline.md)); M1-04's `@shmup/shell`
-imports `virtual:shmup-content`, shows `issues` on the boot error screen and passes `db` to
+([asset-pipeline.md](asset-pipeline.md)); M1-04 (done) — `@shmup/shell` validates
+`virtual:shmup-content` at boot, shows `issues` on the boot error screen and passes `db` to
 `createGame`; M1-05 routes `input-profiles` files out of `foreign`; M1-06 reads the KESTREL
 spec; M1-07 extends `stage` (and adds `paths`/`tileset`); M1-08 passes `knownScripts` and
 extends `enemies`; M1-10 reads the Type A weapons.

@@ -124,6 +124,16 @@ function apiExit(tizen: TizenApi | null): (() => void) | null {
  * @returns A promise of the running app.
  * @throws Rejects with the shell's `ShellBootError` when content is invalid, the atlas cannot
  *   load or WebGL is unavailable (Back still exits the app afterwards).
+ *
+ * @example
+ * ```ts
+ * import contentFiles from 'virtual:shmup-content';
+ * import assets from 'virtual:shmup-assets';
+ *
+ * bootTizenApp(canvas, { contentFiles, assets }).catch((error: unknown) => {
+ *   console.error('Shmup Cup failed to start', error); // remote Web Inspector
+ * });
+ * ```
  */
 export async function bootTizenApp(
   canvas: HTMLCanvasElement,

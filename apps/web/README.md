@@ -2,12 +2,16 @@
 
 The **browser dev target** (Vite dev server with HMR) and the renderer that
 `apps/electron` loads. Wires `@shmup/core` + `@shmup/render-pixi` + `@shmup/audio-web` +
-`@shmup/input-web` together and, for now, shows the pixel-art calibration test pattern.
+`@shmup/input-web` together through the shared shell [`@shmup/shell`](../../packages/shell/README.md).
+It boots behind a loading bar (or a boot error screen listing every problem) into the
+**sprite showcase**; `?scene=calibration` shows the pixel-art calibration test pattern
+instead. There is no gameplay yet.
 
 ```sh
 pnpm dev                          # from the repo root (= turbo run dev --filter=@shmup/web)
-# → http://localhost:5173 — arrows/WASD, gamepads; the marker moves 60 px per second
+# → http://localhost:5173 (showcase) · http://localhost:5173/?scene=calibration (test pattern)
 pnpm --filter @shmup/web build    # → apps/web/dist (relocatable, base './')
+pnpm --filter @shmup/web exec vite preview   # serve the production build (what pnpm test:e2e opens)
 ```
 
 Workspace packages are resolved to their TypeScript sources (`@shmup/source` export

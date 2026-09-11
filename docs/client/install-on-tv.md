@@ -3,8 +3,8 @@
 Shmup Cup builds are not in the Samsung store. During development they are installed ("side-loaded") from the
 Windows desktop that sits on the same network as the monitors. This page covers the one-time setup of a
 monitor and the PC, and how to install, start and remove an app. Two apps can be installed today: the
-**Input Probe** ([input-probe.md](input-probe.md)) and the **game preview**, which shows a calibration screen
-([preview-build.md](preview-build.md)). Both use the same one-time setup.
+**Input Probe** ([input-probe.md](input-probe.md)) and the **game preview**, which shows an animated sprite
+showcase ([preview-build.md](preview-build.md)). Both use the same one-time setup.
 
 Test hardware: 2× Samsung Smart Monitor M7 43" (LS43AM702UNXZA / M70A, Tizen 5.5).
 
@@ -77,6 +77,8 @@ pnpm --filter @shmup/tizen tizen:run
 - PowerShell: `$env:TIZEN_PROFILE = "shmupcup"; $env:TV_IP = "192.168.1.50"` instead of `set`.
 
 The app appears in the Apps panel as **Shmup Cup**. What it should look like: [preview-build.md](preview-build.md).
+If it opens on a navy screen with a pink error title instead, the build is broken — photograph the screen, press
+**Back** to close the app, and see [preview-build.md](preview-build.md#when-the-app-shows-an-error-screen).
 More options (custom `tizen`/`sdb` paths): [`apps/tizen/README.md`](../../apps/tizen/README.md).
 
 ## Removing an app

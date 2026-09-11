@@ -39,9 +39,11 @@ dist/assets/atlas/*.png    emitted next to the bundle (web and Tizen builds)
 
 **Status today.** The whole pipeline, the initial sprite set (55 sprites, 272 frames on one
 512×256 page), the pixel font, the Vite plugin and the sprite-name check in
-`pnpm content:check` are done. Both apps register `shmupAssets()` and ship the pages, but
-nothing imports `virtual:shmup-assets` yet — render-pixi's `atlas` module and
-`@shmup/shell` (M1-04) do, so the screen still shows the calibration pattern.
+`pnpm content:check` are done. Both apps register `shmupAssets()` and ship the pages; since
+M1-04 their `main.ts` imports `virtual:shmup-assets`, `@shmup/shell` loads the pages with
+`new Image()` and render-pixi's `createAtlas` turns them into textures, and the default scene
+(the sprite showcase) draws the real sprites and the pixel font
+([rendering-and-shell.md](rendering-and-shell.md)).
 
 Why this design:
 
@@ -252,8 +254,8 @@ assets up to date (assets/generated/atlas/, input c635e061a9cb)
 
 You rarely need to run it by hand. It runs:
 
-1. as the Turborepo root task **`//#assets`**, before every `build`, `dev` and (from M1-04)
-   `test:e2e` — inputs `assets/source/**`, `scripts/assets/**`,
+1. as the Turborepo root task **`//#assets`**, before every `build`, `dev` and the (reserved)
+   turbo `test:e2e` task — inputs `assets/source/**`, `scripts/assets/**`,
    `scripts/generate-assets.mjs`; outputs `assets/generated/**`;
 2. in the **`shmupAssets()` plugin's `buildStart`**, for every Vite build and dev server —
    so a fresh clone works without a prior `pnpm assets`, and the tests that run real Vite
@@ -348,7 +350,8 @@ Add a key to `glyphs` in `pixel6x8.font.json` (exactly one character, `cellHeigh
 
 Bump `MANIFEST_FORMAT_VERSION` in `manifest.mjs`, update the typedefs there and the
 `virtual:shmup-assets` declaration in `types/virtual-modules.d.ts` in the same commit, and
-update the consumers (render-pixi `atlas` from M1-04).
+update the consumers: render-pixi `atlas` (`AtlasManifest` mirrors the typedefs) and the
+shell's `ShellAssets`.
 
 ## Commands
 
@@ -382,7 +385,8 @@ pnpm exec vitest run --project integration test/scripts/assets   # pipeline unit
 | `sprite "x" is not in the atlas` in `pnpm content:check` | Content names a sprite nobody defines — fix the name or add the sprite |
 | `pnpm format:check` wants to reflow a sprite | Should not happen: `assets/source/` is in `.prettierignore`. A pixel map anywhere else is not a source |
 | Edited a generator, the dev server shows the old art | Vite restarts on a pipeline edit; if it logged `restart the dev server …` instead, restart `pnpm dev` |
-| An atlas page appears in `dist/` but the app shows nothing new | Expected until M1-04: nothing imports `virtual:shmup-assets` yet |
+| A sprite shows as a magenta checker in the app | The renderer's sprite name table names a sprite the atlas lacks (the console warns once per name) — see [rendering-and-shell.md](rendering-and-shell.md#gotchas) |
+| The app stops on `ATLAS DOES NOT MATCH ITS MANIFEST` | A page image from another pipeline run is served with this bundle (browser cache, a hand-copied file) — rebuild and hard-reload |
 | The atlas differs on another machine | Only a different zlib (Node version) can change the PNG bytes; the pixels never change. The zlib version is part of the input hash, so the cache rebuilds |
 | `pngjs` has no types in the editor | Deliberate — it is loaded untyped (no `@types/pngjs` dependency); only `png.mjs` and the hash in `pipeline.mjs` touch it |
 | TypeScript cannot see a new export of a `scripts/assets/*.mjs` module | The Node-side TS reads the JSDoc types through `allowJs` in `tsconfig.tooling.json` (no `checkJs`): give the export a JSDoc `@param` / `@returns` type |
@@ -390,8 +394,9 @@ pnpm exec vitest run --project integration test/scripts/assets   # pipeline unit
 
 ## Next steps that build on this page
 
-M1-04 loads `virtual:shmup-assets` in render-pixi's `atlas` module (numeric frame ids,
-nearest sampling, `ui/missing` for unknown names) and draws text with `font/pixel`; M1-07
+M1-04 (done) loads `virtual:shmup-assets` through the shell into render-pixi's `atlas`
+module (numeric frame ids, nearest sampling, `ui/missing` for unknown names) and draws text
+with `font/pixel` ([rendering-and-shell.md](rendering-and-shell.md)); M1-07
 uses `tiles/terrain-a` and the star layers; M1-08 … M1-13 add enemy, bullet and boss sprites
 (with `hitFlash`); M1-14 uses the explosions and particles; M1-16 builds the HUD from
 `hud/*` and `ui/pixel`; M1-18 adds the Zone A art.

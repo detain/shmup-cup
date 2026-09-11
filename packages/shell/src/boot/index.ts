@@ -255,6 +255,12 @@ function describe(error: unknown): string {
  * `game.frame`, drains the event queue through the dispatcher's bound visitor and renders the
  * reused frame.
  *
+ * The renderer's sprite name table depends on the scene: the showcase hands over its own
+ * `SHOWCASE_SPRITES` table (`showcase` module) and pre-binds its world (so the first frame creates no Pixi
+ * objects); the calibration scene uses `content.db.sprites.names`. Audio unlock listeners
+ * are registered in the capture phase and removed after the first gesture; `stop()` is
+ * idempotent.
+ *
  * @param options - Canvas, window, content, assets, adapters and the platform factory.
  * @returns A promise of the running {@link Shell}.
  * @throws Rejects with {@link ShellBootError} when content is invalid, an atlas page cannot

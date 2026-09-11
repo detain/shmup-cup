@@ -169,6 +169,12 @@ export interface SpriteLayerBinding {
   /**
    * Copies the batch's live slots into the sprites and hides the rest. Never allocates.
    *
+   * @remarks
+   * Slots flagged `SpriteFlag.Hidden` are skipped (and not counted in `visibleCount`); an
+   * unknown sprite id or a frame outside its sprite draws `ui/missing` ({@link resolveFrame}).
+   * Sprites beyond `count` that the previous sync used are hidden, so a shrinking batch never
+   * leaves stale sprites on screen.
+   *
    * @param view - The batch to draw (`count` is clamped to the binding's capacity).
    * @param camX - Camera x (world pixels).
    * @param camY - Camera y (world pixels).
@@ -270,6 +276,10 @@ export interface QuadPool {
   begin(): void;
   /**
    * Draws an atlas frame with its anchor at `(x, y)`.
+   *
+   * @remarks
+   * A `frameId` outside `[0, atlas.size)` draws {@link Atlas.missingFrame}. The tint is only
+   * written to the Pixi sprite when it changed (Pixi's tint setter allocates).
    *
    * @param frameId - Frame to draw.
    * @param x - Screen x of the anchor (rounded).

@@ -42,6 +42,19 @@ carries `data-shmup-state="loading" | "running" | "error"`.
 | `frame-loop` | implemented | `requestAnimationFrame` driver (moved here from the apps) |
 | `showcase` | implemented | Default dev scene until the World exists (M1-06): parallax stars, KESTREL, HUD, bitmap text |
 
-Dependency direction: `apps/* → @shmup/shell → {render-pixi, audio-web, input-web} → core`.
+Boot error screen titles: `CONTENT COULD NOT BE READ`, `CONTENT ERRORS: N PROBLEMS` (one
+`<file>:<json path>: message` line per issue), `ATLAS PAGE FAILED TO LOAD`,
+`ATLAS DOES NOT MATCH ITS MANIFEST`, `WEBGL IS NOT AVAILABLE`, `SHMUP CUP FAILED TO START`.
+`bootShell` then rejects with a `ShellBootError` (`lines`, `issues`, `reason`) after releasing
+everything it created. Content kinds that are neither core kinds nor claimed by a
+`contentOwners` entry are issues, so a new kind cannot ship unvalidated.
+
+Dependency direction (plan §3.1): `apps/* → @shmup/shell → {render-pixi, audio-web, input-web}
+→ core`. Today the shell imports only `@shmup/core` and `@shmup/render-pixi`; the apps create
+the input and audio adapters and pass them in as core interfaces (`PlatformInput`, `IAudio`).
+
+Guide: [`docs/dev/rendering-and-shell.md`](../../docs/dev/rendering-and-shell.md#the-browser-shell-shmupshell);
+exports: [`docs/dev/api-reference.md`](../../docs/dev/api-reference.md#shmupshell).
+
 Tests run in Node with fakes for the window, images and the WebGL renderer; the real browser
 path is covered by `pnpm test:e2e` (headless Chromium, `test/e2e/`).

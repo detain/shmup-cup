@@ -125,6 +125,10 @@ events.push(SimEventKind.Sfx, SFX_CUES.EnemyExplodeSmall, x, y, 0);
 events.drain((e) => dispatch(e.kind, e.id, e.x, e.y, e.param));
 ```
 
+In the apps the queue is `game.events` and the host is `@shmup/shell`: its frame loop calls
+`game.events.drain(dispatcher.visit)`, which routes each record to the handlers registered
+with `shell.events.on(kind, handler)` ([rendering-and-shell.md](rendering-and-shell.md#the-frame-loop-and-event-dispatch)).
+
 - Storage is a ring of typed arrays (`kind: Uint8Array`, `id: Uint16Array`,
   `x`/`y`/`param`: `Float64Array`), so `push` never allocates. `drain` hands `visit` **one
   reused record** — copy the fields out, never keep the reference.

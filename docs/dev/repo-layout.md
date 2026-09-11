@@ -88,7 +88,7 @@ shmup-cup/
 ├── test/                   cross-package integration tests (Vitest project "integration", part of `pnpm test`); e2e/ = Playwright browser smoke tests (`pnpm test:e2e`)
 ├── docs/
 │   ├── client/             player/tester docs
-│   └── dev/                contributor docs (this file, architecture, engine-foundations, content-data, asset-pipeline, api-reference, …)
+│   └── dev/                contributor docs (this file, architecture, engine-foundations, content-data, asset-pipeline, rendering-and-shell, api-reference, …)
 ├── tools/                  standalone tools, NOT workspace members (own package.json/lockfile, npm not pnpm)
 │   └── input-probe/        Tizen diagnostic .wgt: remote/gamepad/display measurements (see input-probe.md)
 └── shmup_feat.md  shmup_tech.md  input_probe_spec.md  README.md  LICENSE (MPL-2.0)
@@ -109,7 +109,10 @@ apps/electron ─► (loads apps/web build; no package imports)
 ```
 
 `@shmup/shell` (M1-04) is the shared boot path of the two browser hosts; the apps still create
-their own input / audio adapters and platform and hand them to it (plan §3.1).
+their own input / audio adapters and platform and hand them to it (plan §3.1). The plan
+allows the shell to import render-pixi, audio-web and input-web; today it imports only
+render-pixi and core — input and audio arrive as core interfaces. Guide:
+[rendering-and-shell.md](rendering-and-shell.md).
 
 `@shmup/core` imports nothing from the workspace (lint-enforced). Presentation packages
 depend only on core. Apps compose everything.
@@ -145,6 +148,7 @@ pnpm install            # also links workspace packages
 pnpm dev                # browser dev app on http://localhost:5173
 pnpm lint | typecheck | test | build
 pnpm test:all           # every Vitest project in one process
+pnpm test:e2e           # build web + tizen, then browser smoke tests (headless Chromium, Playwright)
 pnpm --filter @shmup/tizen build    # TV bundle + bundle check
 pnpm content:check      # validate content/ against the core schemas (+ sprite names exist in the atlas)
 pnpm assets             # regenerate the placeholder atlas (skipped when nothing changed)
@@ -155,4 +159,5 @@ More: [build-test-deploy.md](build-test-deploy.md) (every script, TV deployment,
 troubleshooting), [architecture.md](architecture.md) (how the pieces work together at
 runtime), [content-data.md](content-data.md) (game data and its loader),
 [asset-pipeline.md](asset-pipeline.md) (placeholder art → atlas),
-[api-reference.md](api-reference.md) and [conventions.md](conventions.md).
+[rendering-and-shell.md](rendering-and-shell.md) (render contract, renderer, shared boot,
+`pnpm test:e2e`), [api-reference.md](api-reference.md) and [conventions.md](conventions.md).

@@ -9,7 +9,7 @@
 
 | Page | Audience | Contents |
 |---|---|---|
-| [`client/preview-build.md`](client/preview-build.md) | Testers / owner | The current game build (calibration screen): opening it on the TV, in a browser and in Electron, what a correct picture looks like, what to report, troubleshooting |
+| [`client/preview-build.md`](client/preview-build.md) | Testers / owner | The current game build (sprite showcase, calibration screen on request): opening it on the TV, in a browser and in Electron, the loading bar and the boot error screen, what a correct picture looks like, what to report, troubleshooting |
 | [`client/controls.md`](client/controls.md) | Players / testers | Default controls: Samsung Smart Remote, gamepad, keyboard; what each action does |
 | [`client/install-on-tv.md`](client/install-on-tv.md) | Testers / owner | Developer Mode + certificate setup on the Smart Monitor M7, installing / starting / removing dev builds (input probe and game preview), install troubleshooting |
 | [`client/input-probe.md`](client/input-probe.md) | Testers / owner | Input Probe tester guide: screen, controls, 9-step test protocol, reading the verdicts, latency filming, recording results, troubleshooting |
@@ -18,8 +18,9 @@
 | [`dev/engine-foundations.md`](dev/engine-foundations.md) | Contributors | The deterministic engine primitives (`core/rng`, `math`, `events`, `pools`): determinism and zero-allocation rules, usage recipes, regenerating the trig tables, tests, gotchas |
 | [`dev/content-data.md`](dev/content-data.md) | Contributors | Game data end to end: content files and versions, the `virtual:shmup-content` Vite plugin, `loadContent()` and id resolution, the schema combinators, extending kinds and formats, `pnpm content:check`, gotchas |
 | [`dev/asset-pipeline.md`](dev/asset-pipeline.md) | Contributors | Placeholder art end to end: pixel maps, procedural generators, real-art overrides, the pixel font, hit-flash sprites, the packer and atlas manifest, `pnpm assets`, the `virtual:shmup-assets` Vite plugin, extending it, gotchas |
+| [`dev/rendering-and-shell.md`](dev/rendering-and-shell.md) | Contributors | The render contract (`RenderFrame`, sprite batches, draw lists, layers), the zero-allocation Pixi renderer (atlas, bindings, bitmap text), the shared browser boot `@shmup/shell` (boot error screen, content owners, event dispatch, frame loop, showcase), `pnpm test:e2e`, extending it, gotchas |
 | [`dev/api-reference.md`](dev/api-reference.md) | Contributors | Map of every public export (packages, apps, tooling) and the declared API of the placeholder modules |
-| [`dev/build-test-deploy.md`](dev/build-test-deploy.md) | Contributors | Prerequisites, scripts, Turborepo, build outputs, Chromium 69 Tizen build contract, TV packaging/installing, Electron, tests, CI, troubleshooting |
+| [`dev/build-test-deploy.md`](dev/build-test-deploy.md) | Contributors | Prerequisites, scripts, Turborepo, build outputs, Chromium 69 Tizen build contract, TV packaging/installing, Electron, tests (incl. `pnpm test:e2e`), CI, troubleshooting |
 | [`dev/conventions.md`](dev/conventions.md) | Contributors | Module layout, TSDoc, TypeScript, core purity, Chromium 69 API rules, zero allocation, tests, formatting, content rules, checklists |
 | [`dev/input-probe.md`](dev/input-probe.md) | Contributors | Input probe architecture, modules & APIs, verdict rules, Chromium 69 build contract, configuration, packaging / deploying, remote-logging format, tests, extension points, gotchas |
 

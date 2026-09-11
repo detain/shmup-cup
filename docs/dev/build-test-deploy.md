@@ -43,6 +43,7 @@ desktop app, run `pnpm rebuild electron` without the variable set.
 | `pnpm test` | Every project's `vitest run` plus `test:integration` (repo-level `test/`) |
 | `pnpm test:all` | One Vitest process over all projects (root `vitest.config.ts`) — quickest full run |
 | `pnpm test:integration` | Only the repo-level `test/` project |
+| `pnpm test:e2e` | Browser smoke tests: `turbo run build` for `@shmup/web` and `@shmup/tizen`, then Playwright (`test/e2e/playwright.config.ts`) in headless Chromium with SwiftShader WebGL — the web build via `vite preview` (port 4173) and the Tizen `dist/index.html` via `file://`. Needs Chromium once per machine: `pnpm exec playwright install --with-deps chromium`. See [rendering-and-shell.md](rendering-and-shell.md#browser-tests-pnpm-teste2e) |
 | `pnpm format` / `pnpm format:check` | Prettier write / check (research docs at the root are ignored) |
 | `pnpm clean` | Removes `dist/`, `coverage/`, `.turbo/` everywhere (never `node_modules`) |
 | `pnpm assets` | Placeholder asset pipeline (`scripts/generate-assets.mjs`): sprite pixel maps, procedural generators, PNG overrides and fonts → `assets/generated/atlas/main.png` + `main.json`; skipped when inputs are unchanged; `--force` rebuilds, `--out DIR` / `--source DIR` redirect, `--quiet` silences; exit 1 lists invalid sources. Also runs before every `build` / `dev` (Turborepo `//#assets`) and inside Vite builds (`shmupAssets()`). See [asset-pipeline.md](asset-pipeline.md#running-it) |
@@ -61,7 +62,8 @@ Per project: `pnpm --filter <name> <script>`, e.g. `pnpm --filter @shmup/core te
   caches `dist/**`.
 - `//#assets` runs `pnpm assets` (inputs `assets/source/**`, `scripts/assets/**`,
   `scripts/generate-assets.mjs`; outputs `assets/generated/**`). `dev` and the `test:e2e`
-  entry (reserved for M1-04) depend on it too. The pipeline also runs from the
+  entry depend on it too (that turbo task stays unused: the root `pnpm test:e2e` script
+  chains `turbo run build` and Playwright itself). The pipeline also runs from the
   `shmupAssets()` Vite plugin and has its own input-hash cache, so a Turborepo cache miss
   costs one hash when nothing changed ([asset-pipeline.md](asset-pipeline.md#running-it)).
 - `typecheck`, `lint` and `test` depend on the no-op `transit` task, so their caches are
@@ -107,8 +109,10 @@ Tizen 5.5 runs web apps in **Chromium 69** (`shmup_tech.md` §2.1). `apps/tizen/
 `scripts/check-bundle.mjs` runs after every Tizen build and fails it unless dist/ has
 exactly one script `app.js`, `index.html` loads it as a deferred classic script, `app.js`
 **parses with acorn as an ES2018 script** and starts with the polyfill banner,
-`config.xml` / `icon.png` are present, and every other file lives under `dist/assets/`
-(the atlas pages — anything else would be packaged into the `.wgt` by accident).
+`config.xml` / `icon.png` are present, every other file lives under `dist/assets/`
+(the atlas pages — anything else would be packaged into the `.wgt` by accident), and at
+least one atlas page exists under `dist/assets/atlas/` (without it the widget can only show
+the boot error screen).
 `apps/tizen/test/build/tizen-build.test.ts` also executes the bundle in a V8 realm with
 `globalThis` deleted.
 
@@ -118,7 +122,10 @@ Chrome 69 must not be used in shipped code. `eslint-plugin-compat` (browserslist
 [conventions.md](conventions.md#chromium-69-rules)).
 
 `pnpm --filter @shmup/tizen dev` serves the Tizen entry in a desktop browser on port 5174
-(no `window.tizen`: key registration is skipped and Back does nothing).
+(no `window.tizen`: key registration is skipped and Back does nothing). Opening
+`apps/tizen/dist/index.html` straight from disk in desktop Chrome needs
+`--allow-file-access-from-files`: Chrome gives every `file://` URL its own origin, so WebGL
+refuses to upload the atlas page; the TV serves the widget's files as same-origin.
 
 ## Deploying to a Samsung TV / Smart Monitor
 
@@ -180,6 +187,11 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   enforcement and skeleton invariants, plus the root Node scripts (`test/scripts/`,
   including every asset-pipeline module) and the Vite plugins, some of which start a real
   dev server or build (see [../../test/README.md](../../test/README.md)).
+- **Browser tests** (`test/e2e/`, `pnpm test:e2e`, not part of `pnpm test`): both builds boot
+  in headless Chromium to `data-shmup-state="running"`, load the atlas, render a
+  non-uniform picture with known pixels and log no errors; a failing atlas request shows the
+  boot error screen; resizing re-fits the integer scale. Output goes to
+  `test/e2e/test-results/` (git- and Prettier-ignored).
 
 ## CI
 
@@ -187,7 +199,9 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
 `pnpm/action-setup` (version from `packageManager`) → `actions/setup-node` (`.nvmrc`,
 pnpm cache) → `pnpm install --frozen-lockfile` → `pnpm lint` → `pnpm typecheck` →
 `pnpm test` → `pnpm build`, with `ELECTRON_SKIP_BINARY_DOWNLOAD=1` (Electron is only
-type-checked, tested and compiled) and Turborepo telemetry off. Commit `pnpm-lock.yaml`
+type-checked, tested and compiled) and Turborepo telemetry off. A parallel **`e2e`** job
+installs the same way, runs `pnpm exec playwright install --with-deps chromium` and then
+`pnpm test:e2e`; the `input-probe` job builds and tests `tools/input-probe` with npm. Commit `pnpm-lock.yaml`
 whenever dependencies change, or the frozen install fails.
 
 ## Troubleshooting
@@ -207,4 +221,8 @@ whenever dependencies change, or the frozen install fails.
 | `pnpm content:check` reports `sprite "…" is not in the atlas` | Content names a sprite no pixel map, generator or PNG defines — fix the name or add the sprite |
 | `pnpm dev` keeps the old atlas after editing `scripts/assets/` | Vite should restart the server on its own; if it logged `restart the dev server to regenerate the atlas …`, restart `pnpm dev` |
 | Tizen build fails with `unexpected files outside dist/assets/` | Something (a new `public/` file, a plugin) put a file into `dist/` outside `assets/`; move it under `assets/` or keep it out of the widget |
+| The game shows a navy screen with a pink title such as `CONTENT ERRORS: 2 PROBLEMS` or `ATLAS PAGE FAILED TO LOAD` | The shell's boot error screen: every line is one problem (`<file>:<json path>: message` for content). Fix the listed content, rebuild a stale atlas (`ATLAS DOES NOT MATCH ITS MANIFEST`), or check WebGL (`WEBGL IS NOT AVAILABLE`). The console logs "Shmup Cup failed to start" with the `ShellBootError` — see [rendering-and-shell.md](rendering-and-shell.md#the-boot-sequence) |
+| `pnpm test:e2e`: `Executable doesn't exist … chromium` | Playwright's browser is not installed: `pnpm exec playwright install --with-deps chromium` |
+| `pnpm test:e2e` hangs or times out creating WebGL contexts | A stale `DISPLAY` (forwarded X display of an SSH session) — the config already strips it for the browser; if you launch Chromium by hand, unset `DISPLAY` |
+| `pnpm test:e2e`: port 4173 already in use | Another `vite preview` is running; locally it is reused (`reuseExistingServer`), so make sure it serves a current `apps/web/dist`, or stop it |
 | Type errors about `@shmup/*` imports only in `pnpm build` | The library build uses `dist/` typings: a dependency's `build` failed or was skipped — run `pnpm build` from the root so `^build` runs first |
