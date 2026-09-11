@@ -4,14 +4,17 @@ A modern TypeScript 2D horizontal-scrolling shoot-'em-up in the spirit of **Grad
 retro SNES-era look, fast and fluid 60 fps gameplay — targeting **Samsung Tizen** (TVs / Smart Monitors, Tizen 5.5+),
 with the browser and Electron as additional targets.
 
-**Status:** research & planning done; monorepo skeleton in place (every planned system has a
-placeholder module with its API declared and TSDoc-documented; the apps show a pixel-art
-calibration test pattern — see [what it should look like](docs/client/preview-build.md)).
-No gameplay yet.
+**Status:** the [implementation plan](shmup_plan.md) is approved and under way; progress per
+step is tracked in [`shmup_progress.md`](shmup_progress.md).
+The monorepo skeleton is in place (every planned system has a module with its API declared
+and TSDoc-documented) and the **engine foundations** are implemented: seeded RNG streams,
+committed trigonometry tables with binary angles, the sim → presentation event queue and the
+zero-GC pools ([developer guide](docs/dev/engine-foundations.md)).
+The apps still show a pixel-art calibration test pattern —
+see [what it should look like](docs/client/preview-build.md) — so there is no gameplay yet.
 The **input probe** — a diagnostic Tizen app that measures the Samsung remote, gamepads and
 display on the real monitors — is built and tested ([`tools/input-probe/`](tools/input-probe/README.md));
 it is waiting to be packaged and run on the M7 monitors.
-The step-by-step **implementation plan** is drafted in [`shmup_plan.md`](shmup_plan.md) (awaiting approval).
 
 ## Documents
 
@@ -20,15 +23,16 @@ The step-by-step **implementation plan** is drafted in [`shmup_plan.md`](shmup_p
 | [`shmup_feat.md`](shmup_feat.md) | Feature & functionality catalog (P0/P1/P2), design decisions, reference data from both source games |
 | [`shmup_tech.md`](shmup_tech.md) | Language/platform verdict, Tizen 5.5 constraints, test-hardware notes, library comparisons, recommended stack |
 | [`input_probe_spec.md`](input_probe_spec.md) | Spec for the first spike: a diagnostic Tizen app that measures the Samsung remote / gamepad / display behavior |
-| [`shmup_plan.md`](shmup_plan.md) | Implementation plan: resolved design decisions, milestones M1 (vertical slice) → M2 (v1.0) → M3, ordered agent-sized build steps, manual on-device checklist (draft, awaiting approval) |
+| [`shmup_plan.md`](shmup_plan.md) | Implementation plan: resolved design decisions, milestones M1 (vertical slice) → M2 (v1.0) → M3, ordered agent-sized build steps, manual on-device checklist, "as built" notes per step |
+| [`shmup_progress.md`](shmup_progress.md) | Execution progress: one row per plan step (status, review rounds, tests, commits, deviations) |
 | [`shmup_prompt.md`](shmup_prompt.md) | Paste-into-a-new-session prompt that drives execution of the plan (workflow: build → review/fix loop → tests → docs → CI gate per step, progress in `shmup_progress.md`) |
 | [`docs/`](docs/README.md) | Player and developer documentation (start with [`docs/dev/repo-layout.md`](docs/dev/repo-layout.md)) |
 
 Game docs — testers: [preview build (calibration screen)](docs/client/preview-build.md) ·
 [controls](docs/client/controls.md) · [monitor setup & install](docs/client/install-on-tv.md).
 Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/architecture.md) ·
-[API reference](docs/dev/api-reference.md) · [build, test & deploy](docs/dev/build-test-deploy.md) ·
-[conventions](docs/dev/conventions.md).
+[engine foundations](docs/dev/engine-foundations.md) · [API reference](docs/dev/api-reference.md) ·
+[build, test & deploy](docs/dev/build-test-deploy.md) · [conventions](docs/dev/conventions.md).
 
 Input probe docs: [tester guide](docs/client/input-probe.md) · [monitor setup & install](docs/client/install-on-tv.md) ·
 [developer guide](docs/dev/input-probe.md) · [build / package / deploy README](tools/input-probe/README.md).
@@ -58,6 +62,7 @@ pnpm typecheck        # tsc --noEmit everywhere
 pnpm test             # Vitest per package + repo integration tests
 pnpm build            # packages → dist/, apps/web, apps/tizen (one ES2018 IIFE), apps/electron
 pnpm format           # Prettier
+pnpm trig:tables      # regenerate the committed core trig tables (a test checks they are current)
 pnpm clean            # remove build output
 ```
 
@@ -125,7 +130,11 @@ the game — the shipped Tizen bundle still targets Chromium 69.
 
 ## Next step
 
-Package and deploy the input probe from the **Windows desktop** that sits on the same LAN as the monitors and holds
+Code: plan step **M1-02** (content schemas, loader and the `core/data` module) — the
+per-step status board is [`shmup_progress.md`](shmup_progress.md).
+
+On hardware (unchanged, and still the gate for the remote control scheme): package and
+deploy the input probe from the **Windows desktop** that sits on the same LAN as the monitors and holds
 the Samsung certificate profile, run the test protocol on both monitors, and record the results in `shmup_tech.md`
 §2.7 (they decide the remote control scheme in `shmup_feat.md` §4).
 

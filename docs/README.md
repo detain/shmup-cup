@@ -15,6 +15,7 @@
 | [`client/input-probe.md`](client/input-probe.md) | Testers / owner | Input Probe tester guide: screen, controls, 9-step test protocol, reading the verdicts, latency filming, recording results, troubleshooting |
 | [`dev/repo-layout.md`](dev/repo-layout.md) | Contributors | Annotated monorepo tree, tooling decisions, package resolution, common commands |
 | [`dev/architecture.md`](dev/architecture.md) | Contributors | Layers, sim/presentation split, one frame end to end, input/render/audio pipelines, lifecycle, `Platform` per host, determinism rules, extension points |
+| [`dev/engine-foundations.md`](dev/engine-foundations.md) | Contributors | The deterministic engine primitives (`core/rng`, `math`, `events`, `pools`): determinism and zero-allocation rules, usage recipes, regenerating the trig tables, tests, gotchas |
 | [`dev/api-reference.md`](dev/api-reference.md) | Contributors | Map of every public export (packages, apps, tooling) and the declared API of the placeholder modules |
 | [`dev/build-test-deploy.md`](dev/build-test-deploy.md) | Contributors | Prerequisites, scripts, Turborepo, build outputs, Chromium 69 Tizen build contract, TV packaging/installing, Electron, tests, CI, troubleshooting |
 | [`dev/conventions.md`](dev/conventions.md) | Contributors | Module layout, TSDoc, TypeScript, core purity, Chromium 69 API rules, zero allocation, tests, formatting, checklists |

@@ -53,7 +53,9 @@ calls the renderer or the mixer. Each displayed frame the host:
 1. calls `game.frame(now)` — the core runs 0…`maxTicksPerFrame` fixed ticks;
 2. reads a read-only view with `game.renderFrame()` and hands it to `renderer.render()`;
 3. (later) drains the core's `events` queue into the renderer (particles, shake) and the
-   mixer (SFX, music).
+   mixer (SFX, music). The queue and its cue registries exist today (`core/events`); the
+   systems that fill it and the host-side dispatcher arrive with the sim (M1-06) and the
+   FX/audio steps (M1-14, M1-15).
 
 Because nothing flows from presentation back into the sim except input, the same core
 runs headless in Vitest (`createHeadlessPlatform`), can fast-forward, and will replay
@@ -95,6 +97,32 @@ deferred removal → emit events`.
 - The first `advance()` after creation or `reset()` only records the timestamp.
 - `reset()` is called on resume (user un-pause and platform resume) so no catch-up burst
   runs after the app was hidden.
+
+### Engine foundations (`core/rng`, `core/math`, `core/events`, `core/pools`)
+
+The deterministic primitives every later system builds on. Details and usage rules:
+[engine-foundations.md](engine-foundations.md); exact signatures:
+[api-reference.md](api-reference.md).
+
+- **`rng`** — sfc32 seeded by four splitmix32 words. A session owns two streams
+  (`createRngStreams(seed)`): **gameplay**, whose draws are part of the simulation and are
+  reproduced from the replay seed, and **cosmetic**, which presentation code may consume
+  freely. Drawing never allocates; `getStateInto(out)` snapshots the state into a
+  caller-owned `Uint32Array` for checkpoints.
+- **`math`** — binary angles (1024 units per turn, 0 = +x, clockwise on screen) with
+  `sinB` / `cosB` / `atan2B` reading committed tables, because engines round the `Math`
+  transcendentals differently. Positions stay IEEE doubles: `+ − × ÷` and `Math.sqrt` are
+  bit-exact everywhere, so no fixed-point layer is needed. Also `quantizeAngle`,
+  `angleDelta`, `turnToward`, `clamp`, `lerp`, `approach` and the `EASINGS` table.
+- **`events`** — the one-way sim → presentation channel: a preallocated ring of typed
+  arrays (kind, id, x, y, param), drop-oldest with a `dropped` counter, drained once per
+  displayed frame into one reused record. It owns the canonical `SFX_CUES` / `MUSIC_CUES`
+  registries, so the simulation emits numbers and never strings.
+- **`pools`** — `createSoaPool(capacity, schema)` for the high-count, homogeneous things
+  (bullets, shots, particles): parallel typed arrays, `alloc()` zero-fills, `free()` is
+  deferred and `flush()` swap-removes at the end of a tick. `createPool(factory, capacity,
+  reset)` for the ≤ 100 pooled objects (enemies, boss parts). Nothing allocates after
+  creation.
 
 ### Input pipeline (`@shmup/input-web` → `core/input`)
 
@@ -179,8 +207,15 @@ These are enforced now so that replays, golden tests and attract mode work later
   headers). Presentation-only options will live elsewhere.
 - Input reaches the sim only through `InputSnapshot` masks; `copyInputSnapshot()` records
   and replays them without allocating.
-- Randomness will come from the seeded `rng` streams (gameplay stream seeded from
-  `GameConfig.seed`, a separate cosmetic stream for presentation).
+- Randomness comes from the seeded `rng` streams only (gameplay stream seeded from
+  `GameConfig.seed`, a separate cosmetic stream for presentation) — never `Math.random`.
+- Trigonometry comes from `core/math`'s committed tables: `Math.sin/cos/tan/asin/acos/
+  atan/atan2/exp/log/pow/hypot/cbrt` and the `**` operator are lint errors in
+  `packages/core` because engines round them differently. `+ − × ÷` and `Math.sqrt` are
+  bit-exact by IEEE 754 and stay allowed.
+- `packages/core/src/math/trig-table.ts` is generated and committed
+  (`pnpm trig:tables`); a test regenerates it and fails if the copy is stale, so the
+  numbers the sim reads are always in the source tree.
 - **Zero allocations in per-tick and per-frame paths**: reuse snapshot/frame objects,
   preallocate pools (`pools` module), no closures or arrays created inside `step()` or
   `render()`.
@@ -195,7 +230,7 @@ a matching `test/<module>/` folder, and spec references that point at real numbe
 sections of `shmup_feat.md` / `shmup_tech.md`.
 
 Implemented or partial today: core `platform`, `input`, `config`, `loop`, `game`,
-`presentation`; input-web `keymap`, `keyboard`, `gamepad`, `web-input`; audio-web
+`presentation`, `rng`, `math`, `events`, `pools`; input-web `keymap`, `keyboard`, `gamepad`, `web-input`; audio-web
 `web-audio`; render-pixi `renderer`, `viewport`, `test-pattern`, `palette`; the apps'
 `boot`, `platform`, `frame-loop`. Everything else declares its intended API only.
 
@@ -209,3 +244,6 @@ Implemented or partial today: core `platform`, `input`, `config`, `loop`, `game`
 | A game action | Append a bit to `Action` (never renumber — masks are recorded in replays), add it to `ACTION_NAMES` and the default bindings in `input-web/keymap` / `gamepad` |
 | A game system | Fill in its placeholder module in `packages/core/src/<module>/`, set `moduleInfo.status`, export it from `packages/core/src/index.ts`, call it from `step()` in the fixed tick order |
 | Content (enemies, weapons, stages) | JSON under `content/` following its README; validation belongs to `core/data` |
+| A sound or music cue | Append a name to `SFX_CUES` / `MUSIC_CUES` in `core/events` (never renumber — ids are recorded in replays and bound by `content/audio/`) |
+| A presentation event kind | Append a code to `SimEventKind` and a name to `SIM_EVENT_KIND_NAMES`, then handle it in the host's drain dispatcher |
+| A new entity kind | Give it an SoA pool (`createSoaPool`) or an object pool (`createPool`) sized from the budgets in `shmup_feat.md` §22, `flush()` it in the deferred-removal phase of the tick |

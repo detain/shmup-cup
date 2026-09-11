@@ -12,6 +12,11 @@
  * **Implements.** shmup_feat.md §22 (precomputed sin/cos tables with binary angles,
  * table-based atan2), shmup_feat.md §12 (quantised aim directions).
  *
+ * **Public API.** `ANGLE_UNITS`, `ANGLE_MASK`, `ANGLE_QUARTER`, `TRIG_SCALE`,
+ * `ATAN_TABLE_STEPS`, `SIN_TABLE_Q16`, `ATAN_TABLE`. Gameplay code does not read the
+ * tables directly — it calls `sinB` / `cosB` / `atan2B` from `core/math`, which turns
+ * them into floats once at module load.
+ *
  * @module
  */
 

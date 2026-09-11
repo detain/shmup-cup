@@ -32,6 +32,13 @@ sharp.
 
 There is no sound yet.
 
+### What changed lately
+
+Work has moved to the game engine itself — the seeded randomness, angle tables, event
+queue and object storage the real game needs. None of it is visible on screen yet, so the
+calibration screen looks exactly as it did before and there is nothing new to test on the
+monitors. Re-test only when this page says the picture changed.
+
 ## On the Samsung Smart Monitor / TV
 
 The TV build is installed from the development PC like the input probe — see

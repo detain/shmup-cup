@@ -4,9 +4,11 @@ The platform-agnostic heart of Shmup Cup: the deterministic fixed-step simulatio
 game system, and the `Platform` contract the host apps implement.
 
 **Hard rule:** pure TypeScript — no DOM, WebGL, Web Audio, Node or platform APIs
-(`tizen.*`, `webapis.*`, `electron`), no key codes, no clocks, no `Math.random`. Enforced by
-`tsconfig.json` (`lib: ["ES2018"]`, no `types`) and ESLint (`no-restricted-globals` /
-`no-restricted-imports` / `no-restricted-properties` for `packages/core/src`).
+(`tizen.*`, `webapis.*`, `electron`), no key codes, no clocks, no `Math.random`, and no
+engine-dependent maths (`Math.sin`/`cos`/`atan2`/`pow`/… or `**` — use the committed tables
+in `math`). Enforced by `tsconfig.json` (`lib: ["ES2018"]`, no `types`) and ESLint
+(`no-restricted-globals` / `no-restricted-imports` / `no-restricted-properties` /
+`no-restricted-syntax` for `packages/core/src`).
 
 ## Implemented now
 
@@ -18,6 +20,10 @@ game system, and the `Platform` contract the host apps implement.
 | `createFixedStepLoop` | `loop` | 60 Hz accumulator with delta snapping, per-frame cap, reset on resume |
 | `createGame` | `game` | Composition root: platform + loop + (empty) simulation; suspend/resume |
 | `IRenderer`, `IAudio`, `RenderFrame` | `presentation` | Contracts implemented by `@shmup/render-pixi` / `@shmup/audio-web` |
+| `createRng`, `createRngStreams`, `RNG_STATE_WORDS` | `rng` | sfc32 seeded from one 32-bit seed; independent gameplay + cosmetic streams, zero-alloc state snapshots |
+| `sinB`, `cosB`, `atan2B`, `quantizeAngle`, `angleDelta`, `turnToward`, `wrapAngle`, `clamp`, `lerp`, `approach`, `EASINGS` | `math` | Binary angles (1024/turn) on committed lookup tables + easing curves |
+| `createEventQueue`, `SimEventKind`, `SFX_CUES`, `MUSIC_CUES` | `events` | Sim → presentation ring of typed arrays (drop-oldest) and the canonical cue registries |
+| `createSoaPool`, `createPool` | `pools` | Struct-of-arrays typed-array pools (deferred free + swap-remove) and object pools |
 
 ## Placeholder modules (API declared, logic comes later)
 
@@ -26,10 +32,6 @@ and exports `moduleInfo`; `test/<module>/` holds its smoke test.
 
 | Module | Responsibility | Spec |
 |---|---|---|
-| `rng` | Seeded PRNG, gameplay + cosmetic streams | feat §22 |
-| `math` | Binary angles, sin/cos/atan2 tables, fixed point, easing | feat §22, §12 |
-| `events` | Sim → presentation event queue | feat §22 |
-| `pools` | SoA typed-array pools, object pools | feat §22, tech §4.2 |
 | `player` | Ship movement, hitboxes, death/respawn | feat §5, §10 |
 | `weapons` | Meter + direct weapon families, shot caps, piercing | feat §7 |
 | `options` | Trailing options / multiples | feat §8 |
@@ -55,9 +57,14 @@ and exports `moduleInfo`; `test/<module>/` holds its smoke test.
 
 ```sh
 pnpm --filter @shmup/core test        # Vitest (Node, headless)
+pnpm trig:tables                      # regenerate src/math/trig-table.ts (repo root; a test diffs it)
 pnpm --filter @shmup/core typecheck   # src (pure) + test/ (Node) programs
 pnpm --filter @shmup/core build       # tsc → dist/ (ES2018 + .d.ts)
 ```
+
+The deterministic primitives (`rng`, `math`, `events`, `pools`) have their own guide:
+[`docs/dev/engine-foundations.md`](../../docs/dev/engine-foundations.md). `src/math/trig-table.ts`
+is **generated** — edit `scripts/gen-trig-tables.mjs`, not the table.
 
 Consumers inside the workspace resolve `@shmup/core` to `src/index.ts` through the
 `@shmup/source` export condition (no build needed for dev/test); `dist/` is for `tsc`

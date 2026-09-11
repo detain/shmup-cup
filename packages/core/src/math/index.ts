@@ -26,7 +26,9 @@
  * {@link ANGLE_QUARTER}, {@link BinaryAngle}, {@link sinB}, {@link cosB}, {@link atan2B},
  * {@link wrapAngle}, {@link quantizeAngle}, {@link angleDelta}, {@link turnToward},
  * {@link clamp}, {@link lerp}, {@link approach}, {@link EasingFn}, {@link EasingName},
- * {@link EASINGS}.
+ * {@link EASINGS}. The raw table data (`SIN_TABLE_Q16`, `ATAN_TABLE`, `TRIG_SCALE`,
+ * `ATAN_TABLE_STEPS`) stays in `./trig-table.js`; the package entry re-exports it from
+ * there for tests and tools, not for gameplay code — call the functions above instead.
  *
  * **Planned API (later steps).** Curve sampling helpers for camera paths (M1-07) and a
  * `distance`/`lengthSq` pair if profiling shows call sites want them.

@@ -59,6 +59,12 @@ tests — the "Enforced by" column says where, so a red check points you here.
 - no imports of `pixi.js`, `howler`, `electron`, Node built-ins, `tizen*` / `*webapis*`
   or other `@shmup/*` packages — `no-restricted-imports`;
 - no `Math.random`, `Date.now`, `performance.now` (determinism) — `no-restricted-properties`;
+- no engine-dependent maths: `Math.sin/cos/tan/asin/acos/atan/atan2/exp/log/pow/hypot/cbrt`
+  (`no-restricted-properties`) and the `**` operator (`no-restricted-syntax`). Use the
+  committed tables in `core/math` (`sinB`, `cosB`, `atan2B`, `EASINGS`) and repeated
+  multiplication; `+ - * /`, `Math.sqrt`, `Math.abs/floor/round/min/max/imul` are exactly
+  specified by IEEE 754 and stay allowed — see
+  [engine-foundations.md](engine-foundations.md);
 - no `console` — `no-console`.
 
 `test/integration/eslint-rules.test.ts` lints fixture snippets to prove these rules stay
@@ -94,8 +100,10 @@ ES5 and linted with `ecmaVersion: 5`.
   `map`/`filter`, string building or `new` in those paths.
 - Reuse output objects (`PlatformInput.poll()` and `Game.renderFrame()` return the same
   object every call) and document it in the TSDoc (*reused — do not keep it*).
-- Preallocate: struct-of-arrays pools with fixed capacity (`pools` module), sprite views
-  sized to the pool, event rings of plain numbers.
+- Preallocate: struct-of-arrays pools with fixed capacity (`createSoaPool`), pooled
+  objects (`createPool`), sprite views sized to the pool, event rings of plain numbers
+  (`createEventQueue`). Free SoA slots with `free()` during the tick and `flush()` once at
+  the end — slot indices are only stable within a tick.
 - Resolve string ids to numeric indices at load time, never per tick.
 
 ## Tests
@@ -107,6 +115,8 @@ ES5 and linted with `ecmaVersion: 5`.
 - Each package has `test/tsconfig.json` (Node types, DOM lib) separate from the pure
   `src` program.
 - Determinism-sensitive code gets a headless test against `createHeadlessPlatform()`.
+- Generated sources that are committed (today `packages/core/src/math/trig-table.ts`) get
+  a test that regenerates them and diffs the committed copy.
 
 ## Formatting
 

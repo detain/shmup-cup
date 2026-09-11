@@ -17,8 +17,8 @@
  * - shmup_tech.md §4.2 — "no ECS": SoA typed-array pools + a generic `Pool<T>`
  *
  * **Public API (implemented now).** {@link SoaFieldType}, {@link SoaSchema},
- * {@link SoaFields}, {@link SoaPool}, {@link createSoaPool}, {@link Pool},
- * {@link createPool}.
+ * {@link SoaArray}, {@link SoaArrayFor}, {@link SoaFields}, {@link SoaPool},
+ * {@link createSoaPool}, {@link Pool}, {@link createPool}.
  *
  * **Planned API (later steps).** State hashing of a pool's live slots for golden
  * replays (M1-19).

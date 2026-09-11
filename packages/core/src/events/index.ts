@@ -17,9 +17,9 @@
  * - shmup_feat.md §18 / §19 / §20 — effects, audio cues and "juice" triggered by sim events
  *
  * **Public API (implemented now).** {@link SimEventKind}, {@link SIM_EVENT_KIND_NAMES},
- * {@link SFX_CUES}, {@link SFX_CUE_NAMES}, {@link MUSIC_CUES}, {@link MUSIC_CUE_NAMES},
- * {@link SimEvent}, {@link EventQueue}, {@link DEFAULT_EVENT_QUEUE_CAPACITY},
- * {@link createEventQueue}.
+ * {@link SFX_CUES}, {@link SFX_CUE_NAMES}, {@link SfxCue}, {@link MUSIC_CUES},
+ * {@link MUSIC_CUE_NAMES}, {@link MusicCue}, {@link SimEvent}, {@link EventQueue},
+ * {@link DEFAULT_EVENT_QUEUE_CAPACITY}, {@link createEventQueue}.
  *
  * **Planned API (later steps).** More cue names as weapons, bosses and menus land; a
  * replay-side event log for attract mode (M2-15).

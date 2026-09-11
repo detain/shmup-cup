@@ -46,6 +46,7 @@ desktop app, run `pnpm rebuild electron` without the variable set.
 | `pnpm format` / `pnpm format:check` | Prettier write / check (research docs at the root are ignored) |
 | `pnpm clean` | Removes `dist/`, `coverage/`, `.turbo/` everywhere (never `node_modules`) |
 | `pnpm assets` | Placeholder asset pipeline (`scripts/generate-assets.mjs`) |
+| `pnpm trig:tables` | Regenerates the committed `packages/core/src/math/trig-table.ts` (`scripts/gen-trig-tables.mjs`; `--check` verifies, `--out FILE` writes elsewhere). Re-run it in the same commit whenever the script changes — a test diffs the committed file |
 
 Per project: `pnpm --filter <name> <script>`, e.g. `pnpm --filter @shmup/core test`,
 `pnpm --filter @shmup/tizen build`. Extra arguments go to the tool:
