@@ -428,7 +428,9 @@ export function parseInputProfiles(data: unknown, path = ''): InputProfilesResul
  *
  * @example
  * ```ts
- * const { profiles, issues } = loadInputProfiles(contentFiles.filter(isInputProfileFile));
+ * // The shell's loader hands an owner exactly the files of its kind (result.foreign by kind).
+ * const { profiles, issues } = loadInputProfiles(inputProfileFiles);
+ * for (const issue of issues) console.warn(issue.path + ': ' + issue.message);
  * ```
  */
 export function loadInputProfiles(files: readonly ContentFile[]): InputProfilesResult {
@@ -466,6 +468,11 @@ export interface InputProfileRegistry {
 
 /**
  * Creates an empty {@link InputProfileRegistry}.
+ *
+ * @remarks
+ * Every `load` call replaces the previous result (profiles *and* issues) — it does not merge.
+ * `get` is a linear scan (a handful of profiles, called at boot and on an Options change,
+ * never per tick).
  *
  * @returns The registry.
  *
@@ -528,9 +535,20 @@ export function chooseInputProfile(
  * A copy of a profile with some tuning replaced (dev overrides such as `?debounce=2`).
  *
  * @param profile - The profile.
+ * @remarks
+ * A non-finite or negative `releaseDebounceTicks` becomes 0; a fractional one is floored. The
+ * original profile is untouched, so the registry keeps the values from the content file.
+ *
+ * @param profile - The profile.
  * @param overrides - Tuning fields to replace; `releaseDebounceTicks` is clamped to
  *   `0 … MAX_RELEASE_DEBOUNCE_TICKS` (and forced to 0 for gamepads).
  * @returns A new frozen profile (the tables are shared).
+ *
+ * @example
+ * ```ts
+ * // apps/web: ?debounce=2
+ * input.setProfile(overrideInputTuning(profile, { releaseDebounceTicks: 2 }));
+ * ```
  */
 export function overrideInputTuning(
   profile: InputProfile,
@@ -555,6 +573,10 @@ export const INPUT_PROFILE_STORAGE_KEY = 'input.profile';
 /**
  * Reads the saved keyboard / remote profile choice.
  *
+ * @remarks
+ * Never rejects: a storage error resolves with `null` (the platform default is used). The id
+ * is returned as saved, even if no profile has it any more.
+ *
  * @param storage - `Platform.storage`.
  * @returns Resolves with the saved id, or `null` when none is saved or storage fails.
  *
@@ -573,9 +595,19 @@ export function loadInputProfileChoice(storage: PlatformStorage): Promise<string
 /**
  * Saves the keyboard / remote profile choice (the Options screen calls this).
  *
+ * @remarks
+ * The id is not checked here — {@link loadInputProfileChoice} callers pass it through
+ * {@link chooseInputProfile}, which skips an id that no longer names a profile.
+ *
  * @param storage - `Platform.storage`.
  * @param id - Profile id.
  * @returns Resolves once stored (best effort — storage adapters swallow quota errors).
+ * @throws Rejects only when the storage adapter itself rejects.
+ *
+ * @example
+ * ```ts
+ * await saveInputProfileChoice(platform.storage, 'tizen-remote-diagonal');
+ * ```
  */
 export function saveInputProfileChoice(storage: PlatformStorage, id: string): Promise<void> {
   return storage.set(INPUT_PROFILE_STORAGE_KEY, id);

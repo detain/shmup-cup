@@ -262,6 +262,11 @@ export function createKeyboardSource(
     }
   };
 
+  /**
+   * The DOM listener (one function for all three event types, so `detach` can remove it).
+   *
+   * @param event - A `keydown`, `keyup` or `blur` event.
+   */
   const listener = (event: Event): void => {
     handleEvent(event);
   };

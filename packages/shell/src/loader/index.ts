@@ -182,6 +182,13 @@ export function loadGameContent(
   const result = loadContent(files, options);
   const issues: ValidationIssue[] = result.issues.slice();
   const owners = options.owners ?? {};
+  /**
+   * Own-property test (a kind named like an `Object.prototype` member is never an owner).
+   *
+   * @param table - Owners by kind.
+   * @param kind - Content kind.
+   * @returns `true` when `table` itself lists `kind`.
+   */
   const hasOwn = (table: ContentOwners, kind: string): boolean =>
     Object.prototype.hasOwnProperty.call(table, kind);
   const byKind = new Map<string, ContentFile[]>();

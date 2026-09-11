@@ -27,6 +27,14 @@ bitmap text, HUD / UI command lists — with zero per-frame allocation. The defa
 bitmap-font title); `?scene=calibration` shows the pixel-art test pattern — there is no
 gameplay yet ([developer guide](docs/dev/rendering-and-shell.md)). `pnpm test:e2e` boots the
 web build and the Tizen `dist/` (via `file://`) in headless Chromium.
+**Input is remote-first and data-driven** (M1-05): control profiles in
+[`content/input/`](content/input/README.md) map keys, remote buttons and gamepad buttons to
+actions with separate **game** and **menu** tables, and carry the Samsung remote's quirks as
+settings — a release debounce against fake key-up/key-down pairs, diagonal and SOCD policies,
+the Tizen keys to register. The TV uses `tizen-remote-safe`, the browser `keyboard-default`
+(`?profile=keyboard-remote-emulation` lets a desktop keyboard feel like the remote), so the
+input probe's results will change a JSON file, not code
+([developer guide](docs/dev/input-profiles.md), [controls](docs/client/controls.md)).
 The **input probe** — a diagnostic Tizen app that measures the Samsung remote, gamepads and
 display on the real monitors — is built and tested ([`tools/input-probe/`](tools/input-probe/README.md));
 it is waiting to be packaged and run on the M7 monitors.
@@ -49,6 +57,7 @@ Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/ar
 [engine foundations](docs/dev/engine-foundations.md) · [content data](docs/dev/content-data.md) ·
 [asset pipeline](docs/dev/asset-pipeline.md) ·
 [rendering & browser shell](docs/dev/rendering-and-shell.md) ·
+[input profiles](docs/dev/input-profiles.md) ·
 [API reference](docs/dev/api-reference.md) ·
 [build, test & deploy](docs/dev/build-test-deploy.md) · [conventions](docs/dev/conventions.md).
 
@@ -74,7 +83,7 @@ versions (`devEngines.runtime`).
 ```sh
 pnpm -v               # must print 12.x — an older global pnpm fails with ERR_PNPM_BROKEN_LOCKFILE
 pnpm install          # set ELECTRON_SKIP_BINARY_DOWNLOAD=1 to skip the Electron binary
-pnpm dev              # browser dev app → http://localhost:5173 (arrows/WASD, gamepad)
+pnpm dev              # browser dev app → http://localhost:5173 (arrows/WASD, gamepad; ?profile=keyboard-remote-emulation feels like the TV remote)
 pnpm lint             # ESLint (typescript-eslint + compat: chrome >= 69)
 pnpm typecheck        # tsc --noEmit everywhere
 pnpm test             # Vitest per package + repo integration tests
@@ -130,12 +139,12 @@ pnpm workspace (`packages/*`, `apps/*`) + Turborepo. Full annotated tree:
 | [`packages/core`](packages/core/README.md) | `@shmup/core` — pure-TS deterministic simulation, all game systems, the `Platform` interface |
 | [`packages/render-pixi`](packages/render-pixi/README.md) | `@shmup/render-pixi` — PixiJS v8 renderer (WebGL1, 384×216 → integer upscale) |
 | [`packages/audio-web`](packages/audio-web/README.md) | `@shmup/audio-web` — Web Audio mixer |
-| [`packages/input-web`](packages/input-web/README.md) | `@shmup/input-web` — keyboard / Samsung remote / gamepad → action snapshots |
+| [`packages/input-web`](packages/input-web/README.md) | `@shmup/input-web` — keyboard / Samsung remote / gamepad → action snapshots, driven by the input profiles (debounce, diagonal / SOCD policies, game / menu tables) |
 | [`packages/shell`](packages/shell/README.md) | `@shmup/shell` — shared browser host of web + Tizen: boot / loading, boot error screen, event dispatch, frame loop |
 | [`apps/web`](apps/web/README.md) | Vite browser dev target (also Electron's renderer) |
 | [`apps/tizen`](apps/tizen/README.md) | Samsung Tizen `.wgt` (Chromium 69 classic IIFE build, config.xml, CLI scripts) |
 | [`apps/electron`](apps/electron/README.md) | Electron desktop shell |
-| [`content/`](content/README.md) | Game data: player ships, stages, enemies, weapons (JSON, `formatVersion` 1) |
+| [`content/`](content/README.md) | Game data: player ships, stages, enemies, weapons, input profiles (JSON, `formatVersion` 1) |
 | `types/` | Ambient declarations for the Vite virtual modules (`virtual:shmup-content`, `virtual:shmup-assets`) |
 | [`assets/`](assets/README.md) | Art/audio sources (`source/`: sprite pixel maps, fonts) and pipeline output (`generated/`: atlas pages + manifest, ignored) |
 | [`scripts/`](scripts/README.md) | Repo-level Node scripts |
@@ -153,14 +162,16 @@ the game — the shipped Tizen bundle still targets Chromium 69.
 
 ## Next step
 
-Code: plan step **M1-05** (remote-first input profiles: the Samsung remote mapping and its
-quirks as data, binding contexts for game and menus) — the per-step status board is
-[`shmup_progress.md`](shmup_progress.md).
+Code: plan step **M1-06** (the sim World with its fixed tick pipeline, the KESTREL ship
+moving under remote / keyboard / gamepad input, and the collision toolkit) — the per-step
+status board is [`shmup_progress.md`](shmup_progress.md).
 
 On hardware (unchanged, and still the gate for the remote control scheme): package and
 deploy the input probe from the **Windows desktop** that sits on the same LAN as the monitors and holds
 the Samsung certificate profile, run the test protocol on both monitors, and record the results in `shmup_tech.md`
-§2.7 (they decide the remote control scheme in `shmup_feat.md` §4).
+§2.7 (they decide the remote control scheme in `shmup_feat.md` §4). Since M1-05 the verdicts
+become edits to `content/input/remote.input-profiles.json` (`releaseDebounceTicks`,
+`diagonals`, `register`) — recipes in [`content/input/README.md`](content/input/README.md).
 
 Desktop prerequisites: Git, Node 24 (22.12+), Tizen Studio **or** VS Code + Samsung Tizen extension (with a Samsung
 certificate profile whose distributor cert includes both monitors' DUIDs), monitors in Developer Mode pointing at the

@@ -249,7 +249,7 @@ const shell = await bootShell({
   gameConfig: { remoteMode: false },
   scene: sceneFromSearch(location.search), // 'showcase' | 'calibration'
   audioUnlock: 'gesture', // 'immediate' on the TV
-  contentOwners: {}, // validators of foreign content kinds (M1-05: 'input-profiles')
+  contentOwners: { [INPUT_PROFILES_KIND]: profiles.load }, // optional: merged over DEFAULT_CONTENT_OWNERS
 });
 ```
 
@@ -273,8 +273,11 @@ far (input and audio included) is released, and the promise rejects with a `Shel
 
 A file whose kind is neither a core kind nor claimed by an owner is an issue
 (`<path>: no loader for content kind "<kind>"`), so a new content kind cannot ship
-unvalidated — when M1-05 adds `content/input/`, the apps must pass the `input-profiles` owner
-in `contentOwners` or the game will not boot.
+unvalidated. Owners come from `contentOwners`, then the shell's `DEFAULT_CONTENT_OWNERS`
+(today `input-profiles` → `@shmup/input-web` `loadInputProfiles`, M1-05 — the one reason the
+shell imports input-web). Both apps pass an input-profile registry's `load` for that kind
+instead, so they keep the parsed profiles and apply them in the platform factory, which runs
+after validation ([input-profiles.md](input-profiles.md#choosing-the-active-profile)).
 
 ### The overlay canvas
 
@@ -290,7 +293,13 @@ when there are more lines than fit, the last one reads `… and N more`. Colours
 ### The frame loop and event dispatch
 
 ```ts
+let inputContext = game.inputContext;
+input.setContext(inputContext); // once at boot
 const onFrame = (now: number): void => {
+  if (game.inputContext !== inputContext) {
+    inputContext = game.inputContext;
+    input.setContext(inputContext); // game / menu binding tables (D15), before this frame's ticks
+  }
   game.frame(now); // 0…4 fixed ticks
   game.events.drain(events.visit); // sim events → registered handlers
   const frame = game.renderFrame();
@@ -323,8 +332,9 @@ driven by the real World.
 ## The apps
 
 Both `boot` modules are thin: they create `createWebInput(...)` (`keyDevice: 'keyboard'` on
-the web, `'remote'` on the TV), `createWebAudio()` and a platform factory, and call
-`bootShell`. `main.ts` imports the virtual modules and passes them as
+the web, `'remote'` on the TV), `createWebAudio()`, an input-profile registry (its `load` is
+the `input-profiles` content owner) and a platform factory that applies the chosen profiles,
+and call `bootShell`. `main.ts` imports the virtual modules and passes them as
 `bootWebApp(canvas, { contentFiles, assets }, win)` / `bootTizenApp(...)` — unit tests cannot
 resolve virtual modules, so the boot functions receive them as arguments.
 
@@ -332,7 +342,8 @@ resolve virtual modules, so the boot functions receive them as arguments.
 |---|---|---|
 | `gameConfig` | `{ remoteMode: false }` | `{ remoteMode: true, autofire: true }` |
 | `audioUnlock` | `'gesture'` (autoplay policy) | `'immediate'` |
-| Back | Esc / Backspace → `Action.Back` | remote Back (10009) exits — the watcher is installed **before** boot, so Back also leaves the boot error screen |
+| Input profiles | `?profile=` › saved choice › `keyboard-default`; `?debounce=`; `gamepad-standard` | saved choice › `tizen-remote-safe` (its `register` keys registered); `gamepad-standard` |
+| Back | Esc / Backspace → `Pause` (game) / `Back` (menus) | remote Back (10009) exits — the watcher is installed **before** boot, so Back also leaves the boot error screen |
 | Atlas URLs | `assets/atlas/main.png` under the page (`vite preview`, dev middleware) | the same relative path inside the widget (`file://`) |
 
 `apps/tizen/scripts/check-bundle.mjs` rule 7 fails the Tizen build unless `dist/assets/atlas/`
@@ -392,7 +403,10 @@ Copy the fields you need; the record is reused.
 ### A new content kind owned outside core
 
 Write its validator as a `ContentOwner` (`(files) => ValidationIssue[]`) in the owning
-package and pass it to `bootShell({ contentOwners: { '<kind>': owner } })` from both apps.
+package and either add it to `DEFAULT_CONTENT_OWNERS` in `shell/loader` (every host then
+validates it) or pass it to `bootShell({ contentOwners: { '<kind>': owner } })` from both apps.
+An app that needs the parsed result passes a closure that keeps it (see
+`createInputProfileRegistry().load`).
 
 ### A new draw layer
 
@@ -408,7 +422,7 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | `packages/render-pixi/test/atlas/` | Frame numbering, sprite / flash tables, `ui/missing` fallback and warn-once, stale / oversized / corrupt manifests |
 | `packages/render-pixi/test/sprites/`, `ui/`, `text/`, `layers/` | Binding sync (camera, `PLAYFIELD_Y`, anchors, flips, blink, flash, shrinking batches), quad-pool ordering and overflow, draw-list views (revision skipping, hidden sprites), text layout and metrics, number formatting, layer order |
 | `packages/render-pixi/test/renderer/` | The renderer wired with a fake `WebGLRenderer`: passes, rebinding, shake / flash / dim, reused pass options (fails if `resetPass` is removed), allocation probes |
-| `packages/shell/test/` | Boot happy path and every failure (error screen, state attribute, cleanup), content owners, image loading and progress, dispatch (copy-on-write unsubscribe), overlay drawing, showcase determinism and allocation |
+| `packages/shell/test/` | Boot happy path and every failure (error screen, state attribute, cleanup), content owners (the default `input-profiles` owner, an app owner replacing it), the input context forwarded before a frame's polls, image loading and progress, dispatch (copy-on-write unsubscribe), overlay drawing, showcase determinism and allocation |
 | `test/e2e/` | The real browser path, both builds (above) |
 
 ## Gotchas
@@ -420,7 +434,7 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | A HUD edit does not show | The list was modified by writing its arrays directly, so `revision` did not move. Use the `DrawList` methods (or call the view's `invalidate()`) |
 | Some HUD glyphs are missing | The draw list is full (`hud.dropped > 0`) or the layer's quad pool is (`pool.dropped > 0`); raise the capacity |
 | Boot error `ATLAS DOES NOT MATCH ITS MANIFEST` | A page image from another pipeline run is next to this bundle (browser cache, a hand-copied file). Rebuild; in a browser, hard-reload |
-| Boot error `no loader for content kind "…"` | A content file of a kind no owner validates. Register the owner in both apps' `contentOwners` |
+| Boot error `no loader for content kind "…"` | A content file of a kind no owner validates. Add the owner to `DEFAULT_CONTENT_OWNERS` or to both apps' `contentOwners` |
 | Opening `apps/tizen/dist/index.html` by double-click in desktop Chrome shows WebGL errors | Desktop Chrome treats each `file://` URL as its own origin, so WebGL refuses to upload the atlas page. Start Chrome with `--allow-file-access-from-files`, or use `pnpm --filter @shmup/tizen dev`; the TV serves the widget's files as same-origin |
 | `pnpm test:e2e` hangs creating WebGL contexts | A stale forwarded X display (`DISPLAY=localhost:11.0` in an SSH session) makes SwiftShader try XCB. The config already scrubs `DISPLAY` for the browser; unset it if you launch Chromium yourself |
 | Allocation appears per frame in a profile | Pixi objects created in `render()` (a new `WorldView` each frame), a tint written every frame on a hand-made sprite, or option literals passed to Pixi — keep all three out of the frame |
@@ -428,8 +442,9 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 
 ## Next steps that build on this page
 
-- **M1-05** — the shell switches the input context from the top scene; `content/input/` gets
-  its `input-profiles` owner.
+- **M1-05** (done) — the shell forwards `game.inputContext` to `input.setContext()` and
+  validates `content/input/` through its default `input-profiles` owner
+  ([input-profiles.md](input-profiles.md)).
 - **M1-06** — the World fills `RenderFrame.world` (players batch); the showcase becomes "free
   flight".
 - **M1-07** — terrain and parallax drawn from `TerrainView` / `ParallaxView`.

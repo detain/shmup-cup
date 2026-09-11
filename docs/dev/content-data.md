@@ -59,7 +59,8 @@ when there is any issue, and passes `db` to `createGame` (M1-04,
   does: files must be named `<folder>/<name>.<kind>.json`).
 - Core kinds (`CONTENT_KINDS`): `player`, `weapons`, `enemies`, `stage`. Any other kind is
   returned untouched in `foreign`, in path order, for its owning package to validate
-  (`input-profiles` → input-web in M1-05, `sfx`/`music` → audio-web in M1-15, `fx` →
+  (`input-profiles` → input-web `rebind` since M1-05 — see
+  [input-profiles.md](input-profiles.md); `sfx`/`music` → audio-web in M1-15, `fx` →
   render-pixi in M1-14).
 - `example.*.json` files are format samples. The plugin never ships them;
   `pnpm content:check` validates them as their own set.
@@ -313,6 +314,7 @@ A failure prints the issue list (`path` + `message`) in the Vitest diff.
 M1-03 (done) checks every name in `db.sprites` against the generated atlas
 ([asset-pipeline.md](asset-pipeline.md)); M1-04 (done) — `@shmup/shell` validates
 `virtual:shmup-content` at boot, shows `issues` on the boot error screen and passes `db` to
-`createGame`; M1-05 routes `input-profiles` files out of `foreign`; M1-06 reads the KESTREL
+`createGame`; M1-05 (done) — the shell routes `input-profiles` files out of `foreign` to
+input-web's owner; M1-06 reads the KESTREL
 spec; M1-07 extends `stage` (and adds `paths`/`tileset`); M1-08 passes `knownScripts` and
 extends `enemies`; M1-10 reads the Type A weapons.

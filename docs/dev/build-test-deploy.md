@@ -190,8 +190,15 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
 - **Browser tests** (`test/e2e/`, `pnpm test:e2e`, not part of `pnpm test`): both builds boot
   in headless Chromium to `data-shmup-state="running"`, load the atlas, render a
   non-uniform picture with known pixels and log no errors; a failing atlas request shows the
-  boot error screen; resizing re-fits the integer scale. Output goes to
-  `test/e2e/test-results/` (git- and Prettier-ignored).
+  boot error screen; resizing re-fits the integer scale; the input profiles reach the page
+  (bound keys prevented, `?profile=keyboard-remote-emulation` knows only the remote's keys, an
+  unknown `?profile=` warns and boots). Output goes to `test/e2e/test-results/` (git- and
+  Prettier-ignored).
+- **Dev query parameters** of the web build (`pnpm dev`, `vite preview`): `?scene=calibration`
+  (test pattern), `?profile=<id>` (another keyboard / remote input profile, e.g.
+  `keyboard-remote-emulation` or `tizen-remote-safe`) and `?debounce=<0…10>` (release debounce
+  override) — see [input-profiles.md](input-profiles.md#choosing-the-active-profile). The TV
+  widget starts without a query string.
 
 ## CI
 

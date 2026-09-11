@@ -45,6 +45,7 @@ browser, TV).
 | `commitPlayerInput(p, held, latched = 0)` | function | Writes one tick; derives `pressed = newly held ∪ latched`, `released = previously held − held` |
 | `copyInputSnapshot(src, dst)` | function | Allocation-free copy (replays) |
 | `hasAction(mask, action)` | function | → `true` if any bit of `action` is set |
+| `InputContext`, `INPUT_CONTEXTS` | type, const | `'game' \| 'menu'` — which binding table the input adapters use (decision D15); `['game', 'menu']`. Presentation routing only, never recorded in replays |
 
 ### `config` — session configuration
 
@@ -70,7 +71,7 @@ browser, TV).
 | Export | Kind | Summary |
 |---|---|---|
 | `createGame(platform, overrides?, content?)` | function | → `Game`; registers suspend/resume handlers on the platform. `content` defaults to `EMPTY_CONTENT_DB` |
-| `Game` | interface | `config`, `content`, `platform`, `events` (`EventQueue` the systems push presentation events into; the host drains it once per frame), `state`, `step()`, `frame(nowMs) → ticks`, `renderFrame()` (*reused* `RenderFrame`: `world` `null` until M1-06, empty `hud` / `ui` draw lists, zero `screen`), `pause()`, `resume()` |
+| `Game` | interface | `config`, `content`, `platform`, `events` (`EventQueue` the systems push presentation events into; the host drains it once per frame), `state`, `inputContext` (getter: the binding context the top scene wants — `'game'` until M1-16), `step()`, `frame(nowMs) → ticks`, `renderFrame()` (*reused* `RenderFrame`: `world` `null` until M1-06, empty `hud` / `ui` draw lists, zero `screen`), `pause()`, `resume()` |
 | `GameState` | interface | `tick`, `paused`, `suspended`, `input` (last snapshot) |
 
 ### `presentation` — back-end contracts and the render contract
@@ -255,21 +256,50 @@ only `"."`), so today they can only be imported with relative paths from inside
 
 ## `@shmup/input-web`
 
+Keyboard / remote / gamepad → the core's `InputSnapshot`, driven by the data-driven input
+profiles of `content/input/` (decisions D13–D15). Guide: [input-profiles.md](input-profiles.md).
+
 | Export | Module | Summary |
 |---|---|---|
-| `createWebInput({ keyTarget, getGamepads?, bindings?, keyDevice? })` | `web-input` | → `WebInput` (`PlatformInput` + `keyboard`, `clear()`, `destroy()`). `poll()` once per tick; *reused* snapshot |
-| `createKeyboardSource(target \| null, bindings)` | `keyboard` | → `KeyboardSource`: `held`, `consumeLatched()`, `clear()`, `handleEvent(e)`, `detach()` |
+| `createWebInput({ keyTarget, getGamepads?, bindings?, keyDevice? })` | `web-input` | → `WebInput`. `poll()` once per tick (ages the debounce first); *reused* snapshot. `poll()`, `setContext()` and the event handlers never allocate |
+| `WebInput` | `web-input` | `PlatformInput` + `keyboard`, `context` (`'game'` initially), `keyProfile`, `gamepadProfile` (`null` = built-in defaults), `setProfile(profile)` (key profiles → keyboard source and reported device; gamepad profiles → every pad), `setContext(ctx)` (no-op when unchanged; remembered without a profile), `clear()`, `destroy()` |
+| `WebInputOptions` | `web-input` | `keyTarget`, `getGamepads?`, `bindings?` and `keyDevice?` (used until a profile is applied) |
+| `createKeyboardSource(target \| null, bindings, tuning = DEFAULT_INPUT_TUNING)` | `keyboard` | → `KeyboardSource`: `held` (tracked keys, SOCD + diagonal policy applied; computed on read), `bindings`, `tuning`, `consumeLatched()`, `advance()` (one debounce poll per tick), `setBindings(table)` (held keys keep only actions common to both tables), `setTuning(t)`, `clear()`, `handleEvent(e)`, `detach()` |
 | `KeyEventLike` | `keyboard` | The `KeyboardEvent` fields read (tests pass plain objects) |
-| `readGamepadActions(pad, state, buttons?)` | `gamepad` | → held mask of one pad; updates stick hysteresis state |
-| `GamepadLike`, `GamepadReadState` | `gamepad` | Pad fields read; per-pad `stickDirections` |
-| `DEFAULT_GAMEPAD_BUTTONS`, `STICK_DEADZONE` (0.2), `STICK_HYSTERESIS` (0.1) | `gamepad` | Standard-mapping button → actions table and stick tuning |
-| `resolveKeyActions(code, keyCode, bindings)` | `keymap` | → mask; `code` first, `keyCode` fallback |
-| `KeyBindings` | `keymap` | `{ byCode, byKeyCode }` |
-| `DEFAULT_CODE_BINDINGS`, `DEFAULT_KEYCODE_BINDINGS`, `DEFAULT_KEY_BINDINGS` | `keymap` | Defaults (table in [../client/controls.md](../client/controls.md)) |
+| `MAX_TRACKED_KEYS` | `keyboard` | `32` — physical keys tracked at once (fixed slots) |
+| `readGamepadActions(pad, state, buttons?, previousButtons?)` | `gamepad` | → held mask of one pad; updates stick hysteresis, `pressedButtons`, clears released `staleButtons` (a stale button gives `buttons[i] & previousButtons[i]`) |
+| `GamepadLike`, `GamepadReadState` | `gamepad` | Pad fields read; per-pad `stickDirections`, optional `pressedButtons` / `staleButtons` bitmasks (indices 0–31) |
+| `DEFAULT_GAMEPAD_BUTTONS`, `STICK_DEADZONE` (0.2), `STICK_HYSTERESIS` (0.1) | `gamepad` | Built-in standard-mapping button → actions table (fallback before a profile) and stick tuning |
+| `findKeyActions(code, keyCode, bindings)` | `keymap` | → mask, `0` (known, no action in this table) or `-1` (unknown key); `code` first, and a `code` entry of `0` falls through to the `keyCode` table |
+| `resolveKeyActions(code, keyCode, bindings)` | `keymap` | → mask; unknown → `0` |
+| `KeyBindings` | `keymap` | `{ byCode, byKeyCode }` → `ActionMask` |
+| `DEFAULT_CODE_BINDINGS`, `DEFAULT_KEYCODE_BINDINGS`, `DEFAULT_KEY_BINDINGS` | `keymap` | Built-in fallback tables used before a profile is applied (one merged table, no contexts) |
 | `TIZEN_KEY_CODES` | `keymap` | Remote key codes: arrows 37–40, Enter 13, Back 10009, MediaPlayPause 10252, Ch± 427/428, colours 403–406 |
+| `createReleaseDebouncer(ticks, capacity = 32)` | `remote` | → `ReleaseDebouncer { ticks, capacity, setTicks, press(slot) → 'new' \| 'resumed' \| 'held', release(slot) → released now, isHeld, isReleasing, poll() → released count, reset, clear }`. A keyup between polls N and N+1 stays held through poll N+`ticks`, released on N+`ticks`+1; a keydown inside the window resumes without an edge. `ticks` clamped to 0…10, capacity floored, ≥ 1 (also for `NaN`); never allocates |
+| `resolveDirections(mask, order, diagonals, socd)` | `remote` | → mask: SOCD per axis, then the diagonal policy (`order[bit]` = press order, higher = newer; ties: SOCD → neutral, `lastWins` → vertical, `firstWins` → horizontal). Pure, non-direction bits untouched |
+| `createDirectionOrder()` | `remote` | → `DirectionOrder { order: Int32Array(4), update(mask), reset() }` — press order for polled devices (one per pad) |
+| `InputTuning`, `DEFAULT_INPUT_TUNING` | `remote` | `{ releaseDebounceTicks, diagonals, socd }`; default `0` / `'combine'` / `'neutral'` |
+| `DiagonalPolicy`, `DIAGONAL_POLICIES`, `SocdPolicy`, `SOCD_POLICIES` | `remote` | `'combine' \| 'lastWins' \| 'firstWins'`; `'neutral' \| 'lastWins'` |
+| `MAX_RELEASE_DEBOUNCE_TICKS`, `DIRECTION_MASK`, `DIRECTION_COUNT` | `remote` | `10`; `Up \| Down \| Left \| Right` (bits 0–3); `4` |
+| `parseInputProfiles(data, path = '')` | `rebind` | One `input-profiles` body → `InputProfilesResult { profiles, issues }`; schema (core combinators) + semantic checks; a bad profile is dropped, the others kept; never throws for bad data |
+| `loadInputProfiles(files)` | `rebind` | All files (sorted by path) → `InputProfilesResult`; ids unique across files (first wins). The owner of kind `input-profiles` |
+| `createInputProfileRegistry()` | `rebind` | → `InputProfileRegistry { profiles, issues, load(files) → issues, get(id) → profile \| null }`; `load` (safe unbound) is the content owner an app passes to `bootShell`; each load replaces the last |
+| `chooseInputProfile(profiles, candidateIds, devices)` | `rebind` | → the first candidate id naming a profile of one of `devices`, or `null` (`null` / unknown / wrong-device ids skipped) |
+| `overrideInputTuning(profile, tuning)` | `rebind` | → new frozen profile with tuning replaced (`?debounce=`); debounce clamped 0…10, floored, forced 0 for gamepads; tables shared |
+| `loadInputProfileChoice(storage)`, `saveInputProfileChoice(storage, id)` | `rebind` | Persistence hook (`Platform.storage` key `INPUT_PROFILE_STORAGE_KEY` = `'input.profile'`); load resolves `null` on a missing / empty value or a storage error |
+| `InputProfile` | `rebind` | `InputTuning` + `id`, `label`, `device`, `context: { game, menu }` (as written), `register`, `tables: { game, menu }` (compiled); frozen |
+| `ProfileBindings`, `ContextTables` | `rebind` | As written: `{ byCode, byKeyCode, buttons? }` → action names; compiled: `{ keys: KeyBindings, buttons: ActionMask[] }` — keys bound only in the other context have mask `0` |
+| `InputProfileDevice`, `INPUT_PROFILE_DEVICES`, `KEY_PROFILE_DEVICES` | `rebind` | `'keyboard' \| 'remote' \| 'gamepad'`; all three; `keyboard` + `remote` (profiles the keyboard source takes) |
+| `INPUT_PROFILES_KIND` | `rebind` | `'input-profiles'` |
+| `REQUIRED_CONTEXT_ACTIONS` | `rebind` | `game`: `Up, Down, Left, Right, Pause`; `menu`: `Up, Down, Left, Right, Confirm, Back` |
+| `SYSTEM_REMOTE_KEYS` | `rebind` | `Exit`, `VolumeUp`, `VolumeDown`, `VolumeMute` — never registered |
+| `DEFAULT_KEYBOARD_PROFILE_ID`, `DEFAULT_REMOTE_PROFILE_ID`, `DEFAULT_GAMEPAD_PROFILE_ID` | `rebind` | `'keyboard-default'`, `'tizen-remote-safe'`, `'gamepad-standard'` |
+| `InputProfilesResult`, `InputProfileRegistry` | `rebind` | Types above |
 
-Placeholders: `rebind` (`DeviceBindings`), `remote` (`RemoteTuning`: release debounce,
-diagonal support — tuned from the input-probe results).
+`rebind` is `partial`: the rebinding UI helpers (capture the next input, conflict detection,
+reset to defaults, a per-device choice) arrive with the Options screen (M2-16). The
+placeholder types `RemoteTuning` and `DeviceBindings` of the skeleton were replaced by
+`InputTuning` and the profile types.
 
 ## `@shmup/audio-web`
 
@@ -322,20 +352,22 @@ Placeholders: `particles`, `effects`, `debug`.
 ## `@shmup/shell`
 
 The shared browser host of `apps/web` and `apps/tizen` (decision D34). Depends on
-`@shmup/core` and `@shmup/render-pixi`; input and audio come in through core interfaces.
+`@shmup/core`, `@shmup/render-pixi` and — only for the default `input-profiles` content owner
+— `@shmup/input-web`; the input and audio adapters come in through core interfaces.
 Guide: [rendering-and-shell.md](rendering-and-shell.md#the-browser-shell-shmupshell).
 
 | Export | Module | Summary |
 |---|---|---|
 | `bootShell(options)` | `boot` | → `Promise<Shell>`; rejects with `ShellBootError` (after showing the boot error screen and releasing everything) for invalid content, a failed or stale atlas page, no WebGL, or a failing platform / game |
-| `ShellOptions` | `boot` | `canvas`, `win`, `contentFiles`, `assets`, `input`, `audio`, `platform: (renderer) => Platform`, `gameConfig?`, `scene?` (`'showcase'`), `audioUnlock?` (`'gesture'` \| `'immediate'`), `preferWebGLVersion?` (1), `contentOwners?`, `createImage?`, `overlay?` (`null` disables it) |
+| `ShellOptions` | `boot` | `canvas`, `win`, `contentFiles`, `assets`, `input`, `audio`, `platform: (renderer) => Platform` (called after content validation — the apps apply the input profiles there), `gameConfig?`, `scene?` (`'showcase'`), `audioUnlock?` (`'gesture'` \| `'immediate'`), `preferWebGLVersion?` (1), `contentOwners?` (merged over `DEFAULT_CONTENT_OWNERS`), `createImage?`, `overlay?` (`null` disables it) |
 | `Shell` | `boot` | `game`, `platform`, `renderer`, `atlas`, `events` (dispatcher), `content`, `scene`, `showcase`, `stop()` (idempotent; releases loop, listeners, input, renderer, atlas, audio) |
-| `ShellAssets`, `ShellInput`, `ShellScene` | `boot` | `{ manifest, pageUrls }`; `PlatformInput` + `clear()` + `destroy()`; `'showcase' \| 'calibration'` |
+| `ShellAssets`, `ShellInput`, `ShellScene` | `boot` | `{ manifest, pageUrls }`; `PlatformInput` + `clear()` + `setContext(ctx)` (required; called once at boot and before a frame's ticks whenever `game.inputContext` changed) + `destroy()`; `'showcase' \| 'calibration'` |
 | `ShellBootError` | `boot` | `Error` with `lines`, `issues`, `reason` |
 | `sceneFromSearch(search)`, `SHELL_SCENES` | `boot` | `?scene=` → `ShellScene` (unknown → `'showcase'`); the scene list, default first |
 | `BOOT_STATE_ATTRIBUTE` | `boot` | `'data-shmup-state'` — `loading` / `running` / `error` on the game canvas |
 | `loadImages(urls, createImage, onProgress?)` | `loader` | → `Promise<images>` in `urls` order, parallel; rejects with `AssetLoadError { url }` on the first failure |
-| `loadGameContent(files, { owners?, …LoadContentOptions })` | `loader` | → `LoadContentResult`: core issues, then each foreign kind's owner issues, or `no loader for content kind` per unowned file; throws only `TypeError` for a non-array |
+| `loadGameContent(files, { owners?, …LoadContentOptions })` | `loader` | → `LoadContentResult`: core issues, then each foreign kind's owner issues (`owners`, then `DEFAULT_CONTENT_OWNERS`), or `no loader for content kind` per unowned file; throws only `TypeError` for a non-array |
+| `DEFAULT_CONTENT_OWNERS` | `loader` | Frozen owners of today's foreign kinds: `input-profiles` → input-web `loadInputProfiles` (issues only). An app entry of the same kind replaces it |
 | `ContentOwner`, `ContentOwners`, `LoadGameContentOptions`, `ImageFactory`, `LoadableImage` | `loader` | `(files) => ValidationIssue[]`; owners by kind; option and image types |
 | `createEventDispatcher()` | `dispatch` | → `EventDispatcher { on(kind, handler) → unsubscribe, visit, drain(queue), handlerCount(kind), dispatched, unhandled }`; `on` throws `RangeError` for an unknown kind |
 | `SimEventHandler` | `dispatch` | `(event: Readonly<SimEvent>) => void` — the record is reused |
@@ -354,7 +386,8 @@ These are not libraries, but their modules export testable functions.
 
 | Export | Module | Summary |
 |---|---|---|
-| `bootWebApp(canvas, resources, win?)` | `boot` | → `Promise<WebApp>` (`game`, `renderer`, `audio`, `input`, `shell`, `stop()`); `resources` = `WebAppResources { contentFiles, assets }` from the virtual modules. Rejects with `ShellBootError` |
+| `bootWebApp(canvas, resources, win?)` | `boot` | → `Promise<WebApp>` (`game`, `renderer`, `audio`, `input`, `profiles` (`InputProfileRegistry`), `shell`, `stop()`); `resources` = `WebAppResources { contentFiles, assets }` from the virtual modules. Key profile: `?profile=` › saved choice (applied once storage answers) › `keyboard-default`; pads `gamepad-standard`; an unknown `?profile=` → `console.warn`. Rejects with `ShellBootError` |
+| `inputOverridesFromSearch(search)` | `boot` | → `InputOverrides { profile: string \| null, debounce: number \| null }` from `?profile=<id>` / `?debounce=<0…10>`; percent-decoded, last valid value wins |
 | `createWebPlatform(options)` | `platform` | → `Platform` (`id: 'web'`, `exit: null`) |
 | `createLocalStorage(storage \| null, prefix = 'shmup-cup:')` | `platform` | → `PlatformStorage`; first error → memory for the session |
 | `createVisibilityLifecycle(source)` | `platform` | → `PlatformLifecycle` from `visibilitychange` |
@@ -366,13 +399,13 @@ The frame loop moved to `@shmup/shell` (`startFrameLoop`).
 
 | Export | Module | Summary |
 |---|---|---|
-| `bootTizenApp(canvas, resources, win?)` | `boot` | → `Promise<TizenApp>` (`game`, `platform`, `renderer`, `audio`, `input`, `shell`, `stop()`); `resources` = `TizenAppResources { contentFiles, assets }`. The Back watcher is installed before boot (Back also exits the boot error screen) |
-| `createTizenPlatform(options)` | `platform` | → `Platform` (`id: 'tizen'`, `remoteOnly: true`); registers remote keys |
-| `registerRemoteKeys(tizen, keys)` | `platform` | Batch registration with per-key fallback → names registered |
+| `bootTizenApp(canvas, resources, win?)` | `boot` | → `Promise<TizenApp>` (`game`, `platform`, `renderer`, `audio`, `input`, `profiles` (`InputProfileRegistry`), `shell`, `stop()`); `resources` = `TizenAppResources { contentFiles, assets }`. Key profile: saved choice (applied and its keys registered once storage answers) › `tizen-remote-safe`; pads `gamepad-standard`. The Back watcher is installed before boot (Back also exits the boot error screen) |
+| `createTizenPlatform(options)` | `platform` | → `Platform` (`id: 'tizen'`, `remoteOnly: true`); registers `options.registerKeys` (the key profile's `register` list), else `REMOTE_KEYS_TO_REGISTER` |
+| `registerRemoteKeys(tizen, requested)` | `platform` | Batch registration with per-key fallback → names registered; drops `SYSTEM_REMOTE_KEYS` (`Exit`, volume) whatever the list says; an empty list registers nothing |
 | `watchBackKey(target, onBack)` | `platform` | Calls `onBack` on non-repeat keyCode 10009 → unsubscribe function |
 | `getTizenApi(win)` | `platform` | → `window.tizen` or `null` |
-| `TizenApi`, `TizenPlatformOptions`, `StorageLike`, `VisibilitySource` | `platform` | Types |
-| `REMOTE_KEYS_TO_REGISTER`, `TIZEN_BACK_KEY_CODE` | `platform` | `MediaPlayPause`, `ChannelUp/Down`, `ColorF0Red…ColorF3Blue`; `10009` |
+| `TizenApi`, `TizenPlatformOptions` (+ `registerKeys?`), `StorageLike`, `VisibilitySource` | `platform` | Types |
+| `REMOTE_KEYS_TO_REGISTER`, `TIZEN_BACK_KEY_CODE` | `platform` | Fallback when no input profile gives a `register` list: `MediaPlayPause`, `ChannelUp/Down`, `ColorF0Red…ColorF3Blue`; `10009` |
 | `checkTizenBundle(distDir)` | `scripts/check-bundle.mjs` | → `{ problems, files, code }`: one script `app.js`, classic deferred tag, ES2018 parse, polyfill banner, widget files present, every other file under `dist/assets/`, at least one atlas page under `dist/assets/atlas/`; `POLYFILL_BANNER`, `WIDGET_FILES` (`app.js`, `config.xml`, `icon.png`, `index.html`) |
 | `tizenCli()`, `sdbCli()`, `requireEnv()`, `resolveTarget()`, `run()`, `findWgt()`, `requireBuild()`, `APP_DIR`, `DIST_DIR`, `APP_ID` | `scripts/tizen-env.mjs` | Helpers of the Tizen CLI wrappers |
 

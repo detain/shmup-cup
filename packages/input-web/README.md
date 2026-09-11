@@ -59,3 +59,20 @@ table, e.g. Z = Shot + Confirm).
 | `web-input` | partial | Merges sources into the `InputSnapshot`; profiles + contexts; player assignment |
 | `remote` | implemented | Release debounce, diagonal policy, SOCD — tuned from the input-probe results |
 | `rebind` | partial | Input profiles: validation, compiled `game`/`menu` tables, choice + persistence |
+
+Profile choice (done by the apps in their platform factory): the web uses `?profile=<id>` ›
+the saved choice (`Platform.storage` key `input.profile`, `loadInputProfileChoice`) ›
+`keyboard-default`, with `?debounce=<ticks>` as a dev override (`overrideInputTuning`); the TV
+uses the saved choice › `tizen-remote-safe` and registers its `register` keys. Validation
+beyond the schema: every `game` table binds the directions + Pause, every `menu` table the
+directions + Confirm + Back; gamepad profiles bind buttons only with debounce 0; only remote
+profiles register keys, never `Exit` / volume; ids unique. A bad profile is dropped, the others
+kept, and the issue stops the boot on the error screen.
+
+`poll()`, `setContext()`, the key handlers and `advance()` never allocate; profiles are
+compiled once at load.
+
+Guide: [`docs/dev/input-profiles.md`](../../docs/dev/input-profiles.md) · exports:
+[`docs/dev/api-reference.md`](../../docs/dev/api-reference.md#shmupinput-web) · file format:
+[`content/input/README.md`](../../content/input/README.md) · player controls:
+[`docs/client/controls.md`](../../docs/client/controls.md).

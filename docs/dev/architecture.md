@@ -54,8 +54,10 @@ shared browser boot).
 - **Presentation packages depend only on core.** They implement core's contracts
   (`IRenderer`, `IAudio`, `PlatformInput`) and never call each other.
 - **`@shmup/shell` is the one boot path of the browser hosts** (M1-04, decision D34). It
-  depends on core and render-pixi; input and audio reach it through core interfaces
-  (`PlatformInput`, `IAudio`), so the shell never imports input-web or audio-web itself.
+  depends on core and render-pixi, and on input-web only for the default owner of the
+  `input-profiles` content (M1-05, allowed by plan §3.1); the input and audio *adapters* reach
+  it through interfaces (`ShellInput` = `PlatformInput` + `clear` / `setContext` / `destroy`,
+  `IAudio`), so the shell never creates them itself.
 - **Apps are thin composition roots.** `src/boot/` in each app creates the input adapter,
   audio back-end and a `Platform` factory and calls `bootShell()`, which creates the atlas,
   renderer and game and drives them from `requestAnimationFrame`. Electron has no game code
@@ -84,12 +86,14 @@ input side of that contract).
 
 ```text
 requestAnimationFrame(now)                       shell/frame-loop
+ └─ game.inputContext changed? → input.setContext(ctx)   shell/boot → input-web: game/menu tables
  └─ game.frame(now)                              core/game
      └─ loop.advance(now)                        core/loop: delta snapping, accumulator, cap
          └─ repeat 0..4×: step()
              ├─ platform.input.poll()            input-web/web-input (once per tick)
-             │   ├─ keyboard.held + consumeLatched()   input-web/keyboard
-             │   ├─ readGamepadActions(pad 0..3)       input-web/gamepad
+             │   ├─ keyboard.advance()                 age the release debounce (input-web/remote)
+             │   ├─ keyboard.held + consumeLatched()   input-web/keyboard: SOCD + diagonal policy
+             │   ├─ readGamepadActions(pad 0..3)       input-web/gamepad (+ the same policies)
              │   └─ commitPlayerInput(p1/p2, …)        core/input: pressed/released edges
              └─ state.tick++                     (game systems will run here, fixed order)
  └─ game.events.drain(dispatcher.visit)          shell/dispatch → registered handlers
@@ -200,13 +204,27 @@ D24, "art as code"); nothing is drawn at run time and nothing is fetched on the 
 - The core only knows **actions** (`Action.Up … Action.Back`, 12 bits) packed into masks.
   Per tick and player it receives `held`, `pressed` (went down since the last tick) and
   `released` (went up), plus the device kind that produced the input.
+- **Bindings are data** (decisions D13–D15): input profiles in `content/input/` are validated
+  at boot (`rebind`, the `input-profiles` content owner) and applied by the apps — one
+  keyboard / remote profile (`keyboard-default` on the web, `tizen-remote-safe` on the TV, a
+  saved choice, `?profile=` on the web) and `gamepad-standard`. Each profile has a **`game`**
+  and a **`menu`** table; the shell forwards `Game.inputContext` to `input.setContext()`
+  before a frame's ticks, and a key held across a switch keeps only the actions both tables
+  give it. Before a profile is applied the built-in `keymap` / `gamepad` tables are used.
+  Guide: [input-profiles.md](input-profiles.md).
 - Keys resolve by `KeyboardEvent.code` first and fall back to `keyCode` for TV-remote keys
-  that have no `code` (Back 10009, Play/Pause 10252, Ch± 427/428).
+  that have no `code` (Back 10009, Play/Pause 10252, Ch± 427/428). Remote profiles bind by
+  `keyCode` only.
 - **Held state comes from keydown/keyup only** — auto-repeat keydowns are ignored and each
   physical key is counted separately, so two keys bound to one action keep it held until
   both are released. `blur` clears all held keys.
 - **Taps are latched:** a key pressed and released between two polls still appears in
   `pressed` for the next tick (important for the remote's short OK/Back presses).
+- **Device quirks are profile knobs** (`input-web/remote`): a release debounce (a released
+  key stays held for `releaseDebounceTicks` more ticks; a keydown inside the window resumes it
+  without a new edge — hides the remote's fake keyup/keydown pairs), SOCD (`neutral` /
+  `lastWins`) and a diagonal policy (`combine` / `lastWins` / `firstWins`) applied to the held
+  mask with the press order.
 - Pads are polled once per tick: standard-mapping buttons + left stick (radial deadzone
   0.2, 8-way with hysteresis 0.1). Pad 0 and the keyboard/remote feed player 1, pad 1
   feeds player 2.
@@ -255,7 +273,7 @@ via `WebAudio.bus(name)`.
 | App hidden | tab hidden (`visibilitychange`) | Home, source switch, multitasking (`visibilitychange`) | `platform.lifecycle` suspend → `game.state.suspended = true` (no ticks), held input cleared, audio suspended |
 | App visible | tab visible | back to the app | resume → `suspended = false`, loop accumulator reset, audio resumed |
 | User pause | `game.pause()` (no UI yet) | same | `state.paused`; survives suspend/resume — resuming the platform does not un-pause |
-| Back | — (Esc/Backspace map to `Action.Back`) | remote Back (10009) → `watchBackKey` → `platform.exit()` (before the platform exists: `tizen.application` directly) | Today the showcase is the root screen, so Back exits the TV app — also from the boot error screen, because the watcher is installed before boot; the scene stack will take over Back handling (M1-16) |
+| Back | — (`keyboard-default`: Esc / Backspace = `Pause` in the game, `Back` in menus) | remote Back (10009) → `watchBackKey` → `platform.exit()` (before the platform exists: `tizen.application` directly); `tizen-remote-safe` also maps it to `Pause` (game) / `Back` (menus) | Today the showcase is the root screen, so Back exits the TV app — also from the boot error screen, because the watcher is installed before boot; the scene stack will take over Back handling (M1-16) |
 | Resize | `resize` → `renderer.resize()` | same (rare on TV) | new integer viewport |
 
 JavaScript is frozen while a Tizen app is hidden, so nothing in the core may assume wall
@@ -269,7 +287,7 @@ may ask of a host:
 | Member | Web | Tizen | Headless (tests) |
 |---|---|---|---|
 | `id` | `'web'` | `'tizen'` | `'headless'` |
-| `input.poll()` | `createWebInput` (`keyDevice: 'keyboard'`) | `createWebInput` (`keyDevice: 'remote'`) | returns `platform.snapshot` (tests set bits) |
+| `input.poll()` | `createWebInput` (`keyDevice: 'keyboard'`) + `keyboard-default` / `gamepad-standard` profiles | `createWebInput` (`keyDevice: 'remote'`) + `tizen-remote-safe` / `gamepad-standard` profiles | returns `platform.snapshot` (tests set bits) |
 | `storage` | `localStorage`, prefix `shmup-cup:`, memory fallback | same | in-memory `Map` |
 | `audio.unlock()` | the `WebAudio` instance | the `WebAudio` instance | resolves immediately |
 | `lifecycle` | Page Visibility | Page Visibility | `platform.suspend()` / `resume()` |
@@ -277,9 +295,12 @@ may ask of a host:
 | `display` | live `innerWidth`/`innerHeight` | same | fixed, default 1920×1080 |
 | `caps` | `remoteOnly: false`, `gamepad`, `webgl2` from the renderer | `remoteOnly: true` | all `false` |
 
-Tizen extras live in `apps/tizen/src/platform/`: `registerRemoteKeys()` registers
-Play/Pause, Ch± and the colour keys at startup (never `Exit` or volume), falling back to
-per-key registration when the batch call reports an unsupported key.
+Tizen extras live in `apps/tizen/src/platform/`: `registerRemoteKeys()` registers the
+active input profile's `register` list at startup (Play/Pause and Ch± for
+`tizen-remote-safe`; the fallback `REMOTE_KEYS_TO_REGISTER` adds the colour keys when no
+profile is known), never `Exit` or volume (filtered whatever the list says), falling back to
+per-key registration when the batch call reports an unsupported key. A saved profile choice
+re-registers its keys once storage answers.
 
 ## Determinism rules
 
@@ -317,7 +338,9 @@ sections of `shmup_feat.md` / `shmup_tech.md`.
 
 Implemented or partial today: core `platform`, `input`, `config`, `loop`, `game`,
 `presentation`, `rng`, `math`, `events`, `pools`, `data` (partial: `enemies` / `stage` are
-stubs); input-web `keymap`, `keyboard`, `gamepad`, `web-input`; audio-web `web-audio`;
+stubs); input-web `keymap`, `keyboard`, `gamepad`, `web-input`, `remote`, `rebind`
+(partial: profiles, contexts, persistence hook — the rebinding UI comes in M2-16); audio-web
+`web-audio`;
 render-pixi `renderer`, `viewport`, `test-pattern`, `palette`, `atlas`, `layers`, `sprites`,
 `text`, `ui`; shell `boot`, `loader`, `dispatch`, `error-screen`, `frame-loop`, `showcase`;
 the apps' `boot` and `platform`. Everything else declares its intended API only. The
@@ -333,10 +356,11 @@ plugins in `vite.shared.ts`) has no `moduleInfo`; it is covered by the tests und
 | Something drawn in the world | A `SpriteBatchView` (an SoA pool or a `createSpriteBatch` mirror) in the `WorldView.batches` list — no renderer change ([rendering-and-shell.md](rendering-and-shell.md#extending-it)) |
 | HUD or menu drawing | Commands into `RenderFrame.hud` / `ui` (`DrawList`: rect, sprite, text slot, number) |
 | A handler for a sim event | `shell.events.on(SimEventKind.X, handler)` at load time; copy fields out of the reused record |
-| A content kind validated outside core | A `ContentOwner` passed to `bootShell({ contentOwners })` from both apps — unowned kinds stop the boot |
+| A content kind validated outside core | A `ContentOwner` in the shell's `DEFAULT_CONTENT_OWNERS`, or passed to `bootShell({ contentOwners })` from both apps (an app entry replaces the default — the apps do this for `input-profiles` to keep the parsed profiles) — unowned kinds stop the boot |
 | A renderer or audio back-end | Implement `IRenderer` / `IAudio` from `@shmup/core` in a new package; the apps choose which one to create |
-| An input device | Produce an action mask per tick and feed it through `commitPlayerInput()` (see `createWebInput`); never expose device codes to the core |
-| A game action | Append a bit to `Action` (never renumber — masks are recorded in replays), add it to `ACTION_NAMES` and the default bindings in `input-web/keymap` / `gamepad` |
+| An input device | Produce an action mask per tick and feed it through `commitPlayerInput()` (see `createWebInput`); never expose device codes to the core. Its bindings belong in an input profile ([input-profiles.md](input-profiles.md#extending-it)) |
+| An input profile or a remote tuning change | Edit `content/input/*.input-profiles.json` (format in [`content/input/README.md`](../../content/input/README.md)) — no code change |
+| A game action | Append a bit to `Action` (never renumber — masks are recorded in replays), add it to `ACTION_NAMES`, the shipped input profiles and the built-in bindings in `input-web/keymap` / `gamepad` |
 | A game system | Fill in its placeholder module in `packages/core/src/<module>/`, set `moduleInfo.status`, export it from `packages/core/src/index.ts`, call it from `step()` in the fixed tick order |
 | Content (enemies, weapons, stages) | JSON under `content/` following its README, then `pnpm content:check`. New fields or a new kind: extend the schemas in `core/data` — checklist in [content-data.md](content-data.md#extending-it) |
 | A sprite or animation | A `*.sprite.json` pixel map under `assets/source/sprites/` (its path is its name) or a generator in `scripts/assets/procedural/`; `hitFlash: true` for anything the player can shoot. Real art: a PNG (+ Aseprite export) of the same name — [asset-pipeline.md](asset-pipeline.md#extending-it) |

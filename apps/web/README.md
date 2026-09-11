@@ -12,7 +12,8 @@ Input uses the data-driven profiles of `content/input/` (decision D13): `keyboar
 keyboard/remote profile — `?profile=keyboard-remote-emulation` makes the keyboard behave like
 the Samsung remote (arrows only, the second arrow replaces the first, Enter = OK,
 Backspace = Back, P = Play/Pause) — and `?debounce=<ticks>` (0–10) overrides its release
-debounce.
+debounce. An unknown `?profile=` logs a `console.warn` and falls back to `keyboard-default`.
+Guide: [`docs/dev/input-profiles.md`](../../docs/dev/input-profiles.md).
 
 ```sh
 pnpm dev                          # from the repo root (= turbo run dev --filter=@shmup/web)

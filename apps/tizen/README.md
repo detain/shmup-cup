@@ -98,4 +98,5 @@ and `internet`, application id `ShmpCupGam.ShmupCup` (package id = 10 alphanumer
 Input device facts (diagonals, repeat behaviour, extra keys, latency) come from
 `tools/input-probe` (a separate npm project) — results change the input profiles in
 `content/input/remote.input-profiles.json` (release debounce, diagonal policy, keys to
-register), read by `@shmup/input-web`'s `rebind` and `remote` modules — data, not code.
+register), read by `@shmup/input-web`'s `rebind` and `remote` modules — data, not code
+([`docs/dev/input-profiles.md`](../../docs/dev/input-profiles.md)).

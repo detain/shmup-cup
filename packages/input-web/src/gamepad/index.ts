@@ -9,14 +9,19 @@
  * button to activate".
  *
  * Default button map (standard layout): A(0)=Shot+Confirm, B(1)=Sub+Back,
- * X(2)=PowerUp, Y(3)=Special, LB(4)/RB(5)=Speed, Select(8)=Back, Start(9)=Pause.
+ * X(2)=PowerUp, Y(3)=Special, LB(4)/RB(5)=Speed, Select(8)=Back, Start(9)=Pause. It is the
+ * fallback used before a `gamepad` input profile is applied; `gamepad-standard` in
+ * `content/input/` splits it into `game` and `menu` tables (decision D15). A button held while
+ * the table changes is *stale* until released: it keeps only the actions both tables give it
+ * ({@link GamepadReadState.staleButtons}).
  *
  * **Implements.** shmup_feat.md §4 input requirements (Gamepad API standard mapping,
  * D-pad 12–15, radial deadzone ~0.2, stick → 8-way with hysteresis, polled once per
  * frame), shmup_tech.md §2.3 (≤ 4 pads, activation by first press).
  *
  * **Public API.** {@link readGamepadActions}, {@link GamepadLike},
- * {@link GamepadReadState}, {@link DEFAULT_GAMEPAD_BUTTONS}, {@link STICK_DEADZONE}.
+ * {@link GamepadReadState}, {@link DEFAULT_GAMEPAD_BUTTONS}, {@link STICK_DEADZONE},
+ * {@link STICK_HYSTERESIS}.
  *
  * @module
  */

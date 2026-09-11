@@ -100,14 +100,37 @@ export interface WebInput extends PlatformInput {
    * `gamepad` profile to every pad — its table for the current context, its debounce and
    * direction policies.
    *
+   * @remarks
+   * One key profile and one gamepad profile are active at a time; applying a profile of the
+   * same kind replaces the previous one, the other kind is untouched. A key profile also sets
+   * the device kind reported to the core (`remote` for `keyboard-remote-emulation`, so the
+   * core sees a remote). Keys and buttons held while the profile changes keep only the
+   * actions both tables give them until released (no phantom press). Load-time call —
+   * allocation-free, but not meant per tick.
+   *
    * @param profile - A profile from `rebind` (`parseInputProfiles`, the registry).
+   *
+   * @example
+   * ```ts
+   * const keys = chooseInputProfile(registry.profiles, [saved, DEFAULT_REMOTE_PROFILE_ID], KEY_PROFILE_DEVICES);
+   * if (keys !== null) input.setProfile(keys);
+   * ```
    */
   setProfile(profile: InputProfile): void;
   /**
    * Switches keys and pads to the profiles' `game` or `menu` table (decision D15). Call it when
    * `Game.inputContext` changes; a no-op when the context is unchanged or no profile is set.
    *
+   * @remarks
+   * The context is remembered even without a profile, so a profile applied later starts in the
+   * right table. The built-in default tables have no contexts. Allocation-free.
+   *
    * @param context - The new context.
+   *
+   * @example
+   * ```ts
+   * if (game.inputContext !== input.context) input.setContext(game.inputContext);
+   * ```
    */
   setContext(context: InputContext): void;
   /** Clears all held input (blur, suspend, scene change). */

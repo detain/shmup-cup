@@ -118,6 +118,11 @@ export interface InputOverrides {
 /**
  * Reads the input dev overrides `?profile=<id>` and `?debounce=<ticks>`.
  *
+ * @remarks
+ * Values are percent-decoded; a pair that fails to decode is skipped. When a key repeats, the
+ * last *valid* value wins (an invalid later `debounce` does not clear an earlier one). The
+ * profile id is not checked here — `bootWebApp` warns about an id no key profile has.
+ *
  * @param search - `location.search` (with or without the leading `?`).
  * @returns The overrides; a missing or empty `profile` and a `debounce` that is not an integer
  *   in `0 … MAX_RELEASE_DEBOUNCE_TICKS` give `null`.
