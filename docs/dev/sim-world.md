@@ -7,7 +7,9 @@ garbage. Built in plan step **M1-06**; later steps fill the empty tick phases wi
 changing their order — **M1-07** filled phase 3 with the stage runner and added terrain
 contact to phase 6 (the stage runtime itself is [stage-runtime.md](stage-runtime.md)), and
 **M1-08** added the enemy system to phases 3–9 (the enemies themselves are
-[enemies-and-behaviors.md](enemies-and-behaviors.md)).
+[enemies-and-behaviors.md](enemies-and-behaviors.md)), and **M1-09** the enemy bullets and
+lasers to phases 4–8 and the session's rank (the bullet system is
+[bullets-and-patterns.md](bullets-and-patterns.md)).
 
 This page is the *how and why*. Exact signatures are in
 [api-reference.md](api-reference.md#world--the-gameplay-session-and-the-tick-pipeline); the
@@ -33,10 +35,10 @@ game.step()                                        core/game (one fixed tick)
      ├─ 2 players    updatePlayer × 2               ride the scroll, move, clamp, bank, fly-in
      ├─ 3 stage      stage.tick() | camera += (vx, vy)  keys, ramps, pans, locks, timeline events;
      │               enemies: spawn events, due formation members
-     ├─ 4 scripts    enemies.runScripts()           wake the sleeping behaviour coroutines (M1-09: fire)
-     ├─ 5 movement   enemies.move()                 movers, camera ride, off-screen rules  (M1-09 … M1-11)
+     ├─ 4 scripts    enemies.runScripts()           wake the behaviour coroutines; they fire bullets / lasers
+     ├─ 5 movement   enemies.move(), bullets.update()  movers, off-screen rules; bullets / lasers move, cull
      ├─ 6 collision  grid.begin → enemy hurtboxes → build → ships × enemies (Contact);
-     │               terrain box × tiles → playerHit                              (M1-09 … M1-11)
+     │               bullets.collidePlayers() (Bullet / Laser); terrain box × tiles    (M1-10 … M1-11)
      ├─ 7 damage     —                                                            (M1-10 … M1-12)
      ├─ 8 removal    pools.flushAll(), enemies.flush()  deferred frees
      ├─ 9 fx         hitStop--, syncWorldView       mirror batches for the renderer
@@ -62,6 +64,7 @@ M1-16 decides when a World exists, every session hosts one from the start.
 | `players`, `intents` | Exactly `MAX_PLAYERS` (2) ships and their per-tick intents; index 0 = player 1 |
 | `camera` | `WorldCamera { x, y, dx, dy, vx, vy }` — also the view's `CameraView`; a class instance from `createStageCamera()` (see [stage-runtime.md](stage-runtime.md#gotchas)) |
 | `stage`, `terrain`, `parallax` | The `StageRunner` of `config.stage`, the stage's collision `TerrainMap` (a private copy of the tiles) and its `StageParallaxView` — each `null` in free flight (`stage: null`) or when the stage has no tilemap / bands (M1-07) |
+| `bullets`, `rank` | The `BulletSystem` (M1-09): the `enemyBullets` (512) and `enemyLasers` (16) pools, the enemy-bullet batch and the laser view; the session's rank (`computeRank` of `config.difficulty` — constant in M1, hashed), which scales bullet speeds and fire intervals ([bullets-and-patterns.md](bullets-and-patterns.md)) |
 | `enemies` | The `EnemySystem` (M1-08): 64 enemy slots, the formation table, the tick's kill / drop outcomes, the ground / air sprite batches — spawned by the stage's `spawn` / `formation` events ([enemies-and-behaviors.md](enemies-and-behaviors.md)); `createWorld(config, content, { behaviors })` swaps the behaviour registry in tests |
 | `status` | `WorldStatus`: `'playing'` \| `'bossWarning'` \| `'stageClear'` \| `'gameOver'` (`'stageClear'` once a stage's `end` event fired; the others arrive with M1-12 / M1-13) |
 | `hitStop` | Remaining hit-stop ticks (M1-12 and the fx of M1-14 request it) |
@@ -83,11 +86,11 @@ debug overlay can profile.
 | 1 | `input` | copies each player's `PlayerInput` into its `PlayerIntent` (all slots, active or not) | — |
 | 2 | `players` | `updatePlayer` for each ship | M1-10 (fire requests, option trail), M1-12 (death / respawn) |
 | 3 | `stage` | `enemies.beginTick()` (reset the tick's outcomes); with a stage: `world.stage.tick()` — camera keys, ramps, pans, locks, then the due timeline events through the World's hooks (`spawn` / `formation` → `enemies.onStageEvent`); in free flight: moves the camera by its scroll velocity, recording the step; then `enemies.spawnPending()` (formation members due this tick) | M1-07, M1-08 (done); M1-13 acts on `warning` / `boss` events |
-| 4 | `scripts` | `enemies.runScripts()` — resumes the behaviour coroutines whose `wakeTick` has come (M1-08) | M1-09 (patterns fire bullets), M1-13 (boss scripts) |
-| 5 | `movement` | `enemies.move()` — age, hit flash, camera ride, movers, leader tracks, animation, on-screen / settle / despawn rules (M1-08) | M1-09 … M1-11 (bullets, shots, items, lasers) |
-| 6 | `collision` | `grid.begin(camera − 64)`, `enemies.insertColliders(grid)` (hurtboxes, id = slot), `grid.build()`, `enemies.collidePlayers(grid)` → `playerHit(ship, PlayerHitCause.Contact, …)` (M1-08); each alive ship's terrain box against the stage terrain → `playerHit(…, Terrain, …)` (M1-07) | M1-09 … M1-11 (bullets, lasers, shots, items) |
+| 4 | `scripts` | `enemies.runScripts()` — resumes the behaviour coroutines whose `wakeTick` has come (M1-08); they fire bullets and lasers through the `ScriptApi` primitives (M1-09) | M1-13 (boss scripts) |
+| 5 | `movement` | `enemies.move()` — age, hit flash, camera ride, movers, leader tracks, animation, on-screen / settle / despawn rules (M1-08); then `bullets.update()` — bullets ride the camera, delay / change / home / accelerate, move, die outside the view ± 16 px or on terrain; lasers follow their enemy (it has already moved) and step their phases (M1-09) | M1-10, M1-11 (shots, items) |
+| 6 | `collision` | `grid.begin(camera − 64)`, `enemies.insertColliders(grid)` (hurtboxes, id = slot), `grid.build()`, `enemies.collidePlayers(grid)` → `playerHit(ship, PlayerHitCause.Contact, …)` (M1-08); `bullets.collidePlayers()` — bullet circles and active laser capsules × each ship's hurt radius → `playerHit(…, Bullet / Laser, …)` (M1-09); each alive ship's terrain box against the stage terrain → `playerHit(…, Terrain, …)` (M1-07) | M1-10, M1-11 (shots, items) |
 | 7 | `damage` | empty (`enemies.damage` / `kill` exist for the shots of M1-10) | M1-10 … M1-12 (hits, deaths, drops, score, respawn) |
-| 8 | `removal` | `pools.flushAll()`, `enemies.flush()` (removed enemy slots → free) | — |
+| 8 | `removal` | `pools.flushAll()` (the enemy bullet and laser pools since M1-09), `enemies.flush()` (removed enemy slots → free) | — |
 | 9 | `fx` | counts hit-stop down, `syncWorldView` (parallax, enemy batches, player batch) | M1-14 (shake / flash timers, presentation events) |
 
 **Hit-stop.** `stepWorld` reads `world.hitStop > 0` once, at the start of the tick. While it
@@ -122,8 +125,10 @@ restart (`clearAll`). A pool that is not registered is never flushed or hashed.
 ### The view
 
 `world.view` is created once — `{ camera, parallax, terrain, batches: [groundEnemies,
-airEnemies, playerBatch] }`, where `parallax` / `terrain` are the stage's views (`null` in free
-flight) and the two enemy batches belong to the enemy system (M1-08) — and keeps its identity
+airEnemies, playerBatch, enemyBullets], lasers }`, where `parallax` / `terrain` are the stage's
+views (`null` in free flight), the two enemy batches belong to the enemy system (M1-08) and the
+enemy-bullet batch (the bullet pool itself) and `lasers` (the laser pool as a `LaserView`) to
+the bullet system (M1-09) — and keeps its identity
 forever, so the renderer binds it once. Phase 9 (and `createWorld` itself, so the first frame
 already shows the ship) scrolls the parallax bands with the camera, refills the enemy batches
 (`enemies.sync()`: live, non-ghost enemies with their animation frame, facing, ceiling flip and
@@ -131,7 +136,8 @@ hit flash) and the players' mirror batch with `syncWorldView`: a ship is drawn w
 `dying` nor `dead`, and the spec has a sprite (`spriteId >= 0`); while `invulnTicks > 0` it
 blinks (`SpriteFlag.Hidden` four ticks on, four off). The frame is the bank frame (below).
 
-SoA-backed batches (bullets, shots) will be the pools' own arrays; object-based systems
+SoA-backed batches are the pools' own arrays (the enemy bullets since M1-09; shots in M1-10);
+object-based systems
 (enemies since M1-08, bosses later) fill a mirror batch in phase 9 like the players do. A new
 batch must be in `view.batches` from the start — see
 [rendering-and-shell.md](rendering-and-shell.md#gotchas).
@@ -171,7 +177,9 @@ way after a death (M1-12 decides when). `setPlayerState` switches state and rest
 
 **Hits.** `playerHit(ship, cause, tick, debugFlags)` is the one entry point for anything that
 would kill a ship (`PlayerHitCause`: `Terrain` since M1-07, `Contact` since M1-08 — at most one
-accepted enemy contact per ship and tick; `Bullet`, `Laser` from M1-09). It ignores inactive ships, ships that are not `alive` (the fly-in included), ships
+accepted enemy contact per ship and tick; `Bullet` and `Laser` since M1-09 — at most one of
+each per ship and tick, and an accepted bullet is removed). It ignores inactive ships, ships
+that are not `alive` (the fly-in included), ships
 with `invulnTicks > 0` and god mode, and otherwise records `hitCause`, `hitTick` and `hits++`
 (all hashed) and returns `true`. Until the death sequence of M1-12 nothing else happens — the
 ship keeps flying, so a ship resting in rock counts a hit every tick.
@@ -263,7 +271,9 @@ grid.query(shotX - 2, shotY - 1, shotX + 2, shotY + 1, onHit); // for every shot
 - `insert` returns `false` and counts `dropped` when `capacity` boxes are already in;
   `query` before `build` (after an insert) throws.
 - Since M1-08 the enemies insert their hurtboxes (id = enemy slot, whole-pixel bounds) and the
-  ships query them for contact; bullets, shots and items join in M1-09 … M1-11.
+  ships query them for contact; shots and items join in M1-10 / M1-11. Enemy bullets and lasers
+  (M1-09) do not use the grid: with at most two ships, brute force per ship is cheaper than
+  inserting 512 bullets.
 
 **Terrain** has its own queries over a stage's `TerrainMap` (`terrainAt`, `boxHitsTerrain`,
 `terrainRectHit`, `findFloor`, `findCeiling` — pixel-exact and half-open, unlike the closed
@@ -281,11 +291,12 @@ little-endian IEEE-754 double bytes (so the hash is the same on every engine):
 4. the stage runner: `0` in free flight, else `1` and every slot of `world.stage.state`
    (speed, ramp, pan, lock, cursor, next key / checkpoint, checkpoint, flags, ended, ticks,
    restarts, replay — `StageSlot` order);
-5. the status code (`WORLD_STATUSES` order) and `hitStop`;
+5. the status code (`WORLD_STATUSES` order), `hitStop` and `rank` (M1-09);
 6. per player: `active`, `x`, `y`, the state code (`PLAYER_STATES` order), `stateTicks`,
    `speedLevel`, `invulnTicks`, `bank`, `lives`, `moving`, `hitCause`, `hitTick`, `hits`;
 7. per registered pool, in registration order: `count`, then every field (sorted by name) for
-   slots `0 … count − 1`;
+   slots `0 … count − 1` — today `enemyBullets` and `enemyLasers` (M1-09), removed-this-tick
+   slots included until the flush;
 8. per enemy slot (M1-08): its `EnemyState`, and for a slot in use every numeric field
    (spec, position, velocity, hp, flash, age, spawn tick, formation / member, anchor, mover
    code / parameters / state / ticks, script present, `wakeTick`, flags, first-seen tick,
@@ -317,7 +328,8 @@ starfield, with the D20 HUD bars (`1P`, a zero score, `FREE FLIGHT`, stock ships
 `ARROWS MOVE`). `createFlightScene(game)` builds its own `WorldView` whose batches are two
 starfield batches **followed by the World's own batches**, sharing the World's camera — a
 batch the World adds later is drawn without touching the scene. When the World runs a stage
-(`?stage=<id>` in the web app) the scene passes the World's parallax and terrain views through,
+(`?stage=<id>` in the web app) the scene passes the World's parallax and terrain views through
+(and always its laser view),
 drops its own starfield when the stage has parallax bands, and shows the stage name as the HUD
 title. Its sprite name table is the
 content's names followed by `FLIGHT_SPRITES` (`bg/stars-far`, `bg/stars-mid`,
@@ -406,6 +418,7 @@ Inside the game, use `createGame(platform, overrides, db)` and `game.step()` /
 
 | Where | Covers |
 |---|---|
+| `packages/core/test/bullets/`, `test/integration/bullets-runtime.test.ts` | the bullet system inside the World (M1-09): kinematics, lasers, collision, cancel, pools flushed and hashed, the 512-bullet allocation guards — details in [bullets-and-patterns.md](bullets-and-patterns.md#tests) |
 | `packages/core/test/enemies/`, `test/integration/enemies-runtime.test.ts` | the enemy system inside the World (M1-08): spawns through the stage hooks, formations, scripts, movers, off-screen rules, contact, hashes, the 64-enemy allocation guard — details in [enemies-and-behaviors.md](enemies-and-behaviors.md#tests) |
 | `packages/core/test/world/world-stage*.test.ts` | the World with a stage (M1-07): `config.stage` selection, the runner driving the camera, music / `end` / restart hooks, terrain hits through `playerHit` (fly-in, god mode, hazard, decoration, ceilings, player 2), hit-stop freezing the timeline, determinism and zero allocation — details in [stage-runtime.md](stage-runtime.md#tests) |
 | `packages/core/test/world/` | phase order and names, hit-stop (only input + fx, exact lengths, view refresh), camera scroll and riding across hit-stop, P2 inactive / active, pools (register, flush, clear, duplicate names), grid placement, stable view objects, 5,000-tick lockstep hashes, one flipped input bit diverges, zero allocation per tick (scrolling on both axes, default ship) |
@@ -440,7 +453,9 @@ Inside the game, use `createGame(platform, overrides, db)` and `game.step()` /
   ([stage-runtime.md](stage-runtime.md)).
 - **M1-08** (done) — the enemy system in phases 3–9: spawns, coroutines, movers, grid inserts,
   contact through `playerHit` ([enemies-and-behaviors.md](enemies-and-behaviors.md)).
-- **M1-09** — enemy bullets and lasers (an SoA pool registered with the World) in phases 4–6.
+- **M1-09** (done) — enemy bullets and lasers (two SoA pools registered with the World) in
+  phases 4–8, `playerHit(Bullet / Laser)`, the constant rank
+  ([bullets-and-patterns.md](bullets-and-patterns.md)).
 - **M1-10 / M1-11** — shots, Options (the `moving` trail), items and the pickup box.
 - **M1-12** — hits on the hurt radius, the death sequence, hit-stop requests, respawn with
   `spawnPlayer(ship, camera, 'respawning')` and invulnerability.

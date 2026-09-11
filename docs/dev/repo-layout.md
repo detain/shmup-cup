@@ -47,12 +47,14 @@ shmup-cup/
 │   │   │   ├── player/         ✔ (partial) KESTREL movement, speed levels, clamp, banking, fly-in (death/respawn: M1-12)
 │   │   │   ├── weapons/ options/ shields/ powerups/         player-side systems (placeholders)
 │   │   │   ├── enemies/        ✔ (partial) 64 enemy slots: spawns, formations, off-screen rules, contact, damage, sprite mirror
-│   │   │   ├── patterns/       ✔ (partial) sleeping behaviour coroutines (runner) + per-tick movers (fire primitives: M1-09)
+│   │   │   ├── patterns/       ✔ (partial) sleeping behaviour coroutines (runner) + per-tick movers + fire primitives (DSL: M2-02)
 │   │   │   ├── behaviors/      ✔ (partial) behaviour registry referenced by content script ids; the M1 roster
-│   │   │   ├── bullets/ bosses/                            enemy-side systems (placeholders)
+│   │   │   ├── bullets/        ✔ enemy bullets (512-slot SoA pool = the ENEMY_BULLETS batch) + telegraphed lasers, player collision, cancel
+│   │   │   ├── bosses/                                     enemy-side system (placeholder)
 │   │   │   ├── collision/      ✔ (partial) scalar shape tests, layer masks, counting-sort uniform grid, pixel-exact terrain queries
 │   │   │   ├── stage/          ✔ stage runtime: camera keys / ramps / pans / locks, event cursor, checkpoints, terrain map + parallax / terrain views
-│   │   │   ├── scoring/ rank/ fx/                          rules & feel (placeholders)
+│   │   │   ├── rank/           ✔ (partial) constant rank from the difficulty, rankScale curves (growth: M2-01)
+│   │   │   ├── scoring/ fx/                                rules & feel (placeholders)
 │   │   │   ├── scenes/ ui/                                 flow & canvas UI model (placeholders)
 │   │   │   ├── debug/          ✔ (partial) hashWorld state hash, debug flags (controls: M1-19)
 │   │   │   └── replay/ save/                               meta & tooling (placeholders)
@@ -61,7 +63,7 @@ shmup-cup/
 │   │   ├── tsconfig.build.json  emits dist/ (customConditions off)
 │   │   └── test/tsconfig.json   Node-side program for tests
 │   ├── render-pixi/        @shmup/render-pixi — PixiJS v8 IRenderer: WebGL1-first, 384×216 RT, integer upscale
-│   │   └── src/ renderer ✔ viewport ✔ test-pattern ✔ palette ✔ atlas ✔ layers ✔ (+ terrain grid, parallax bands) sprites ✔ text ✔ ui ✔ · particles effects debug (placeholders)
+│   │   └── src/ renderer ✔ viewport ✔ test-pattern ✔ palette ✔ atlas ✔ layers ✔ (+ terrain grid, parallax bands, laser sprites) sprites ✔ text ✔ ui ✔ · particles effects debug (placeholders)
 │   ├── audio-web/          @shmup/audio-web — Web Audio IAudio: interactive latency, buses, suspend/resume
 │   │   └── src/ web-audio ✔ · sfx music loader (placeholders)
 │   ├── input-web/          @shmup/input-web — keyboard/remote + Gamepad API → InputSnapshot

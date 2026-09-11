@@ -39,11 +39,11 @@ canvas carries `data-shmup-state="loading" | "running" | "error"`.
 | Module | Status | Responsibility |
 |---|---|---|
 | `boot` | implemented | `bootShell()`, `sceneFromSearch()`, `ShellBootError` |
-| `loader` | implemented | Atlas page images (`loadImages`), content validation routed by kind (`loadGameContent`, `DEFAULT_CONTENT_OWNERS`; script ids checked against the core's `KNOWN_SCRIPT_IDS` and enemies against their behaviours since M1-08) |
+| `loader` | implemented | Atlas page images (`loadImages`), content validation routed by kind (`loadGameContent`, `DEFAULT_CONTENT_OWNERS`; script ids checked against the core's `KNOWN_SCRIPT_IDS` and enemies against their behaviours since M1-08; the core's `ENGINE_SPRITES` — bullets, laser beam — interned by default since M1-09) |
 | `dispatch` | implemented | Sim event → presentation handler routing, allocation-free |
 | `error-screen` | implemented | Boot overlay: progress bar and error screen (Canvas 2D) |
 | `frame-loop` | implemented | `requestAnimationFrame` driver (moved here from the apps) |
-| `flight` | implemented | Default dev scene since M1-06 ("free flight"): the game's World (the KESTREL under player control) over a drifting starfield — or, with a stage (`?stage=` in the web app, M1-07), the stage's parallax and terrain and the enemies its timeline spawns (M1-08) — HUD bars; its sprites are appended to the content's sprite table |
+| `flight` | implemented | Default dev scene since M1-06 ("free flight"): the game's World (the KESTREL under player control) over a drifting starfield — or, with a stage (`?stage=` in the web app, M1-07), the stage's parallax and terrain, the enemies its timeline spawns (M1-08) and their bullets and lasers (M1-09) — HUD bars; its sprites are appended to the content's sprite table |
 | `showcase` | implemented | The M1-04 sprite showcase (`?scene=showcase`): parallax stars, KESTREL, HUD, bitmap text |
 
 Boot error screen titles: `CONTENT COULD NOT BE READ`, `CONTENT ERRORS: N PROBLEMS` (one

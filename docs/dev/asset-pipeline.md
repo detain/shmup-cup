@@ -103,6 +103,7 @@ Each module exports `generate(): SpriteDef[]` and is registered in
 | Module | Sprites |
 |---|---|
 | `bullets` | `bullets/{round,oval,needle}-{pink,red,purple}` — bright core, saturated body, dark rim (`shmup_feat.md` §12). Round 7×7 × 1 frame; oval 9×9 and needle 11×11 × 8 directional frames |
+| `lasers` | `lasers/beam-{pink,red,purple}` (M1-09) — enemy laser beams in the bullet colours: 8 frames of 4×8 px, frame `k` a horizontal band `k + 1` px tall (dark rim rows from 3 px, body rows from 5 px, a bright core). Every column is identical, so the renderer stretches a frame to any length and picks the frame of the beam's drawn width |
 | `explosions` | `fx/explosion-small` (16×16 × 6), `-medium` (32×32 × 7), `-large` (48×48 × 8); animation `burst` |
 | `particles` | `fx/spark` (5×5 × 3, `fade`), `fx/debris` (6×6 × 4, `tumble`) |
 | `items` | `items/capsule` (12×8 × 2, `blink`) |
@@ -187,7 +188,7 @@ is simpler for the renderer.) Today the seven enemies and the four boss parts fl
 | Items | `items/capsule` (generated), `items/bonus`, `items/one-up` | both |
 | HUD | `hud/meter-slot`, `hud/meter-labels` (generated), `hud/life` | both |
 | World | `bg/stars-{far,mid,near}`, `tiles/terrain-a` | generated |
-| FX / bullets / shield | explosions, spark, debris, 9 enemy bullets, `shields/force-field` | generated |
+| FX / bullets / shield | explosions, spark, debris, 9 enemy bullets, 3 laser beams (M1-09), `shields/force-field` | generated |
 | Utility | `ui/pixel`, `ui/missing`, `font/pixel` | generated / font |
 
 The enemy names cover every name the shipped and example content use (the `test-range`
@@ -311,7 +312,9 @@ those names into `db.sprites` (M1-02). `pnpm content:check` builds the atlas in 
 runs `findMissingSprites(manifest, db.sprites.names)`, so a typo fails the check with a
 message that names the missing sprite and how to add it — instead of a magenta
 `ui/missing` box in the game. Only the shipped content is checked: the example files'
-`ships/example` and `enemies/example-warden` are documentation.
+`ships/example` and `enemies/example-warden` are documentation. The sprites the engine draws on
+its own — the nine bullet kinds and `lasers/beam-pink`, `core/world` `ENGINE_SPRITES` (M1-09)
+— are checked the same way; hosts intern them with `loadContent`'s `extraSprites`.
 
 ## Extending it
 
@@ -402,6 +405,8 @@ with `font/pixel` ([rendering-and-shell.md](rendering-and-shell.md)); M1-07 (don
 compares with these frames' pixels) and the star layers as parallax bands
 ([stage-runtime.md](stage-runtime.md)); M1-08 (done) added `enemies/hatch` and draws the
 enemy sprites through the World's ground / air batches with their `@flash` siblings
-([enemies-and-behaviors.md](enemies-and-behaviors.md)); M1-09 … M1-13 add bullet and boss
-sprites (with `hitFlash`); M1-14 uses the explosions and particles; M1-16 builds the HUD from
+([enemies-and-behaviors.md](enemies-and-behaviors.md)); M1-09 (done) draws the nine bullet
+sprites through the World's enemy-bullet batch and added the `lasers` generator
+([bullets-and-patterns.md](bullets-and-patterns.md)); M1-10 … M1-13 add shot and boss sprites
+(with `hitFlash`); M1-14 uses the explosions and particles; M1-16 builds the HUD from
 `hud/*` and `ui/pixel`; M1-18 adds the Zone A art.

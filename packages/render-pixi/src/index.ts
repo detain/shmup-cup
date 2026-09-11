@@ -4,10 +4,11 @@
  * WebGL1-first, draws the game into a 384×216 render texture and presents it with a
  * single nearest-neighbour, integer-scaled quad. Pixi is a renderer only (no
  * `Application`, no ticker). The simulation never imports this package: it fills the core's
- * render contract (`RenderFrame`: world sprite batches, HUD / UI draw lists, screen effects)
- * and the host hands it to {@link createPixiRenderer | the renderer}, which draws it from the
- * sprite atlas ({@link createAtlas}) in the fixed layer order ({@link createLayerStack}) without
- * per-frame allocation.
+ * render contract (`RenderFrame`: world sprite batches, the stage's terrain and parallax, the
+ * enemy lasers, HUD / UI draw lists, screen effects) and the host hands it to
+ * {@link createPixiRenderer | the renderer}, which draws it from the sprite atlas
+ * ({@link createAtlas}) in the fixed layer order ({@link createLayerStack}) without per-frame
+ * allocation.
  *
  * @packageDocumentation
  */

@@ -316,7 +316,10 @@ checkpoints at 0 / 1500 / 3000, speed 1 → 2 (a high-speed cave with floor and 
 M1-08 its timeline also spawns the test roster between x 60 and 4200 — drifter and fan
 formations (on the `fan-loop` / `dive-down` paths), capsule carriers, floor and ceiling
 turrets, walkers and hatches on the rolling ground, a rammer and orbiters
-([enemies-and-behaviors.md](enemies-and-behaviors.md#the-test-range-roster)).
+([enemies-and-behaviors.md](enemies-and-behaviors.md#the-test-range-roster)); since M1-09 the
+turrets, walkers and orbiters fire on it ([bullets-and-patterns.md](bullets-and-patterns.md)).
+A checkpoint restart empties the enemy bullet and laser pools with every other registered pool
+(`pools.clearAll()`).
 `example.stage.json` shows the rest of the format (RLE rows over `example.tileset.json`,
 formations, a pan, a boss lock).
 
@@ -383,6 +386,9 @@ world.stage!.restartAt(1); // back to x 1500: speed, pan and flags as live play 
 - **M1-08** (done) — enemies spawned from `spawn` / `formation` events (the World's hooks),
   `paths` content, ground enemies and crawlers on `findFloor` / `findCeiling`
   ([enemies-and-behaviors.md](enemies-and-behaviors.md)).
+- **M1-09** (done) — enemy bullets ride the camera like flying enemies and die on the terrain
+  (one `terrainAt` lookup per bullet); the restart hook clears their pools
+  ([bullets-and-patterns.md](bullets-and-patterns.md)).
 - **M1-12** — `playerHit` starts the death sequence; the `arcade` penalty restarts at
   `runner.checkpoint` with `restartAt`.
 - **M1-13** — `warning` / `boss` events, the boss lock released by `unlock()`, the boss music.

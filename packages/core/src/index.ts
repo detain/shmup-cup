@@ -6,9 +6,9 @@
  * Hosts provide a {@link Platform}; presentation packages implement
  * {@link IRenderer} / {@link IAudio}.
  *
- * This entry point exports the implemented public API. Placeholder modules under
- * `src/<module>/` (player, weapons, enemies, …) are exported here as they get
- * implemented.
+ * This entry point exports the implemented (and partial) public API. Placeholder modules
+ * under `src/<module>/` (weapons, bosses, scoring, …) are exported here as they get
+ * implemented — `bullets` and `rank` joined with plan step M1-09.
  *
  * @packageDocumentation
  */

@@ -167,14 +167,15 @@ export interface LoadGameContentOptions extends LoadContentOptions {
  * @remarks
  * `knownScripts` defaults to the core's `KNOWN_SCRIPT_IDS`, so content naming a behaviour the
  * engine does not have is an issue; `extraSprites` defaults to the core's `ENGINE_SPRITES`, so
- * the World can draw its enemy bullets and lasers. Issues are the core's (file and reference order), then the
- * behaviour checks of the enemies (`checkEnemyBehaviors`), then per foreign kind in first-seen
- * order the owner's issues — or one issue per file when no owner claims the kind
+ * the World can draw its enemy bullets and lasers (pass `extraSprites: []` to leave them out —
+ * bullets then simulate but are not drawn). Issues are the core's (file and reference order),
+ * then the behaviour checks of the enemies (`checkEnemyBehaviors`), then per foreign kind in
+ * first-seen order the owner's issues — or one issue per file when no owner claims the kind
  * (`"<path>: no loader for content kind \"<kind>\""`). Owners come from `options.owners`,
  * then {@link DEFAULT_CONTENT_OWNERS}. Never throws for bad data.
  *
  * @param files - The content files (`virtual:shmup-content`).
- * @param options - Owners and `loadContent` options (`knownScripts`, …).
+ * @param options - Owners and `loadContent` options (`knownScripts`, `extraSprites`, …).
  * @returns The core database, all issues and the foreign files.
  * @throws {TypeError} Only for a programming error (not a file list — see `loadContent`).
  *

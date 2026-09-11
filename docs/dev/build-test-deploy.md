@@ -205,7 +205,8 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   (bound keys prevented, `?profile=keyboard-remote-emulation` knows only the remote's keys, an
   unknown `?profile=` warns and boots); `?stage=test-range` shows the generated terrain inside
   the playfield and scrolls it (an unknown `?stage=` warns and boots free flight), and its
-  first drifter formation appears in the playfield and flies left (M1-08). Output goes to
+  first drifter formation appears in the playfield and flies left (M1-08), and the turrets'
+  bullets appear in the playfield and move (M1-09). Output goes to
   `test/e2e/test-results/` (git- and Prettier-ignored).
 - **Dev query parameters** of the web build (`pnpm dev`, `vite preview`): `?stage=<id>` (run
   that stage instead of open space, e.g. `test-range` — see

@@ -3,7 +3,8 @@
 How a simulation state becomes pixels, and how the web and TV apps boot. Filled in by plan
 step **M1-04**. Later steps *fill* the contract (the World in M1-06, see
 [sim-world.md](sim-world.md); terrain and parallax in M1-07, see
-[stage-runtime.md](stage-runtime.md); the HUD and menus in M1-16;
+[stage-runtime.md](stage-runtime.md); the enemy bullets and the new `LaserView` in M1-09, see
+[bullets-and-patterns.md](bullets-and-patterns.md); the HUD and menus in M1-16;
 particles and screen effects in M1-14) without changing its shape.
 
 This page is the *how and why*. Exact signatures are in
@@ -27,8 +28,9 @@ TV), **D30** (hit flash = white sibling sprite) and **D34** (one shared browser 
 │   tick, alpha                                │        │   bindWorld() if frame.world is new    │
 │   world: WorldView | null                    │ ─────► │   parallax.sync, terrain.sync(camera)  │
 │                                              │        │   binding[i].sync(batch[i], camX, camY)│
-│     camera, parallax, terrain                │        │   world group ← round(shakeX, shakeY)  │
-│     batches: SpriteBatchView[] (typed arrays)│        │   flash / dim quads                    │
+│     camera, parallax, terrain                │        │   lasers.sync(view.lasers, camera)     │
+│     batches: SpriteBatchView[] (typed arrays)│        │   world group ← round(shakeX, shakeY)  │
+│     lasers: LaserView | null (M1-09)         │        │   flash / dim quads                    │
 │   hud, ui: DrawList (typed-array commands)   │        │   hudView.draw(hud), uiView.draw(ui)   │
 │   screen: { shakeX, shakeY, flash, dim }     │        │   pass 1: scene → 384×216 texture      │
 └──────────────────────────────────────────────┘        │   pass 2: texture ×N → canvas          │
@@ -57,7 +59,7 @@ Strings enter only through a draw list's string slots, and only when the text ch
 | 7 | `Hitbox` | world | hitbox marker |
 | 8 | `Items` | world | capsules |
 | 9 | `Fx` | world | explosions, particles |
-| 10 | `EnemyBullets` | world | enemy bullets — above explosions and items so they stay readable (§12) |
+| 10 | `EnemyBullets` | world | enemy bullets (the bullet pool itself, M1-09), then the enemy lasers — above explosions and items so they stay readable (§12) |
 | 11 | `Hud` | screen | `RenderFrame.hud` |
 | 12 | `Ui` | screen | `RenderFrame.ui` |
 | 13 | `Debug` | screen | debug overlay (M1-19) |
@@ -87,7 +89,7 @@ and per slot `x`, `y`, `spriteId`, `frame`, `flags`. Slots `[0, count)` are draw
 
 ### The world view
 
-`WorldView = { camera: { x, y }, parallax, terrain, batches }`. Everything is a live
+`WorldView = { camera: { x, y }, parallax, terrain, batches, lasers? }`. Everything is a live
 reference into sim state; the renderer reads and never writes. **`batches` is read once, when
 the view is bound**: the renderer creates one preallocated binding per entry, and syncs
 binding `i` from `batches[i]` every frame. To change the list, hand the renderer a different
@@ -104,6 +106,12 @@ spacings) and `terrain` (map size, tile size); their per-frame values are read e
   array, read when a cell scrolls into view), `tilesetSpriteId` and `tileFrame` (tile id →
   frame of the tileset sprite, `-1` = not drawn). Cell `(col, row)` sits at world
   `(col · tileSize, row · tileSize)`.
+
+- `LaserView` (optional `lasers`, M1-09) — `capacity`, `count` and per slot `x`, `y` (world
+  origin), `angle` (binary units), `length`, `width` (the **drawn** width: 0 while the laser
+  only telegraphs — the renderer draws a 1-px warning line then), `spriteId` (the beam strip)
+  and `flags` (`Hidden` = the warning line's blink). The bullet system's laser pool implements
+  it directly ([bullets-and-patterns.md](bullets-and-patterns.md#drawing-bullets-and-lasers)).
 
 How the stage builds these views: [stage-runtime.md](stage-runtime.md#parallax-and-the-terrain-view).
 
@@ -146,8 +154,9 @@ hud.sprite(lifeSpriteId, 0, 4, 209);
 
 `RenderFrame = { tick, alpha, world, hud, ui, screen }`. `createGame()` builds one and
 returns the same object from every `renderFrame()` call: `world` is the World's view
-(`game.world.view`, the same object for the whole session — since M1-06 its only batch is the
-players' mirror on `LayerId.Player`), `hud` / `ui` are the session's (empty) draw lists,
+(`game.world.view`, the same object for the whole session — its batches are the enemies'
+ground / air mirrors (M1-08), the players' mirror on `LayerId.Player` (M1-06) and the enemy
+bullet pool (M1-09), plus the laser view), `hud` / `ui` are the session's (empty) draw lists,
 `screen` is all zeros until the fx system (M1-14). `screen.shakeX/Y` are rounded by the renderer; `flash` (white over the
 playfield, under the HUD) and `dim` (black under the UI layer) are 0…1 and clamped.
 
@@ -210,6 +219,13 @@ error screen.
   container on its layer holding `ceil(width / spacing) + 1` sprites `spacing` pixels apart,
   placed once; `sync(view)` only moves each container to `round(−offsetX)`, `PLAYFIELD_Y +
   round(y)`. No `TilingSprite` — WebGL1 cannot repeat non-power-of-two textures.
+- **`LaserBinding`** (`createLaserBinding`, one per bound `LaserView`, on `ENEMY_BULLETS` after
+  the batches, M1-09): two preallocated sprites per slot pivoting on the laser's origin and
+  rotated to its angle — the white pixel stretched into a 1-px line tinted `LASER_WARNING_TINT`
+  (set once at creation) while the width is 0, otherwise frame `round(width) − 1` of the beam
+  sprite (frame `k` is a band `k + 1` px tall) stretched along the laser. Switching frames
+  instead of scaling across and writing a rotation only when the angle changed keep the sync
+  allocation-free (Pixi's tint and transform setters allocate).
 
 `createDrawListView()` (`ui`) draws a `DrawList` into a quad pool in command order: rects,
 sprites (`Hidden` skips the command, `Flash` swaps to the sibling), `text` and `number` via
@@ -239,7 +255,7 @@ uncovers an edge), a dim quad (first child of the UI layer) and the HUD / UI dra
 
 1. updates the calibration pattern (when enabled);
 2. rebinds if `frame.world` is a different object, then syncs the parallax bands, the terrain
-   grid and every sprite binding;
+   grid, every sprite binding and the laser binding;
 3. offsets the world group by the rounded shake, sets flash / dim alpha and visibility;
 4. draws the HUD and UI lists (skipped when unchanged);
 5. renders the scene into the 384×216 render texture, then that texture as one sprite,
@@ -251,8 +267,8 @@ into the object it gets (`target`, `clear`, `clearColor`, a cached `transform`),
 reuse the first frame's cached state.
 
 **Allocation budget.** Pixi objects are created in `createPixiRenderer` and in `bindWorld()`
-(which also creates the parallax sprites and the terrain grid, below the batches, and
-validates every band's layer before creating anything).
+(which also creates the parallax sprites and the terrain grid, below the batches, the laser
+sprites above them, and validates every band's layer before creating anything).
 The shell pre-binds its scene at load, so a running frame only assigns numbers and existing
 textures. Tint is set only when it changes, because Pixi's `tint` setter allocates before it
 compares (a HUD redrawn every frame used to allocate ~1 KB per frame).
@@ -350,13 +366,13 @@ then these events are counted as unhandled.
 
 | `?scene=` | What is drawn | Sprite name table |
 |---|---|---|
-| (none) / `flight` | **Free flight** (`createFlightScene(game)`, M1-06): the game's World — the KESTREL flying in, then moving under the player's control — over three drifting star layers, both HUD bars (`1P`, a zero score, `FREE FLIGHT`, stock ships, `ARROWS MOVE`). With a stage (`gameConfig.stage`, the web app's `?stage=<id>`, M1-07): the stage's parallax bands and scrolling terrain instead of the starfield, the stage name as the title, and the enemies its timeline spawns (M1-08) | `content.db.sprites.names` + `FLIGHT_SPRITES` |
+| (none) / `flight` | **Free flight** (`createFlightScene(game)`, M1-06): the game's World — the KESTREL flying in, then moving under the player's control — over three drifting star layers, both HUD bars (`1P`, a zero score, `FREE FLIGHT`, stock ships, `ARROWS MOVE`). With a stage (`gameConfig.stage`, the web app's `?stage=<id>`, M1-07): the stage's parallax bands and scrolling terrain instead of the starfield, the stage name as the title, the enemies its timeline spawns (M1-08) and their bullets (M1-09) | `content.db.sprites.names` + `FLIGHT_SPRITES` |
 | `showcase` | The **sprite showcase** (`createShowcase()`): three scrolling star layers, the KESTREL flying a figure-eight with its thruster and two Options replaying its path, five drifters with periodic hit flashes, a rotating ring of twelve bullets, both HUD bars (scores via the `number` op, lives, power meter with a moving highlight) and the title "SHMUP CUP" / "SPRITE SHOWCASE" in the bitmap font | `SHOWCASE_SPRITES` |
 | `calibration` | The skeleton's test pattern (checker border, grid, colour bars, placeholder ship, moving marker) under empty layers | `content.db.sprites.names` |
 
 **Free flight** owns a `WorldView` whose batches are two starfield batches **followed by the
 game World's own batches**, on the World's camera object and with the World's `parallax` /
-`terrain` views passed through (the starfield batches are left out when the World has
+`terrain` / `lasers` views passed through (the starfield batches are left out when the World has
 parallax bands — a stage brings its own background) — a batch the World adds later is
 drawn without changing the scene (the view is bound once, so the World's batch list must be
 complete at creation). Its sprite ids index one table: the content's names, then
@@ -422,6 +438,10 @@ pnpm test:e2e                                        # builds web + tizen, then 
   placeholder colours, which no other sprite uses) appears inside the playfield, never in the
   HUD bars, and flies left; no console errors and no atlas `unknown sprite` warnings while the
   timeline spawns (M1-08).
+- `bullets.spec.ts` — on `?stage=test-range`, once the first turrets have scrolled in and
+  settled, enemy bullets in the readability palette's body colours appear inside the playfield
+  (never in the HUD bars) and move between two screenshots; no console errors or atlas
+  `unknown sprite` warnings (M1-09).
 - `shell.spec.ts` — an aborted atlas request ends on the boot error screen (overlay canvas,
   state `error`); a 1000×600 window gets a centred ×2 frame on the letterbox colour and a
   resize to 1920×1080 re-fits it to ×5; free flight animates.
@@ -479,6 +499,7 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | `packages/render-pixi/test/atlas/` | Frame numbering, sprite / flash tables, `ui/missing` fallback and warn-once, stale / oversized / corrupt manifests |
 | `packages/render-pixi/test/sprites/`, `ui/`, `text/`, `layers/` | Binding sync (camera, `PLAYFIELD_Y`, anchors, flips, blink, flash, shrinking batches), quad-pool ordering and overflow, draw-list views (revision skipping, hidden sprites), text layout and metrics, number formatting, layer order |
 | `packages/render-pixi/test/layers/layers-stage*.test.ts` | Terrain grid size (49 × 26, capped at the map's rows), textures and positions, the ring (nothing re-textured inside a tile, one column / row per tile edge, all after a jump or new tables; after a long random camera walk it equals a freshly built grid), pixel agreement with the sprite bindings at half-pixel cameras, parallax coverage for any offset / spacing, validation, allocation-free syncs |
+| `packages/render-pixi/test/layers/layers-lasers*.test.ts` | The laser binding (M1-09): two hidden sprites per slot, the tinted telegraph line vs the beam frame of the rounded width (band / frame boundaries, wider-than-frames scaling), blink and zero / NaN lengths hidden, rotation written only on change, camera rounding without `-0`, shrinking views, capacity validation, destroy, zero allocation through a whole laser life |
 | `packages/render-pixi/test/renderer/` | The renderer wired with a fake `WebGLRenderer`: passes, rebinding (incl. parallax / terrain bindings below the batches), shake / flash / dim, reused pass options (fails if `resetPass` is removed), allocation probes |
 | `packages/shell/test/` | Boot happy path and every failure (error screen, state attribute, cleanup), content owners (the default `input-profiles` owner, an app owner replacing it), the input context forwarded before a frame's polls, image loading and progress, dispatch (copy-on-write unsubscribe), overlay drawing, the free-flight scene (sprite ids, starfield drift / wrap / pause, HUD, empty content, zero allocation per frame), showcase determinism and allocation |
 | `test/e2e/` | The real browser path, both builds (above) |
@@ -496,6 +517,8 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | Opening `apps/tizen/dist/index.html` by double-click in desktop Chrome shows WebGL errors | Desktop Chrome treats each `file://` URL as its own origin, so WebGL refuses to upload the atlas page. Start Chrome with `--allow-file-access-from-files`, or use `pnpm --filter @shmup/tizen dev`; the TV serves the widget's files as same-origin |
 | `pnpm test:e2e` hangs creating WebGL contexts | A stale forwarded X display (`DISPLAY=localhost:11.0` in an SSH session) makes SwiftShader try XCB. The config already scrubs `DISPLAY` for the browser; unset it if you launch Chromium yourself |
 | Allocation appears per frame in a profile | Pixi objects created in `render()` (a new `WorldView` each frame), a tint written every frame on a hand-made sprite, or option literals passed to Pixi — keep all three out of the frame |
+| Enemy bullets simulate but are invisible | The content was loaded without the engine's sprites — `loadGameContent` passes `ENGINE_SPRITES` by default; a hand-made `loadContent` call needs `extraSprites: ENGINE_SPRITES` |
+| Lasers never appear | The bound `WorldView` has no `lasers` (a scene that builds its own view must pass `world.view.lasers` through, as the flight scene does), or the view was bound before it was set |
 | A stage runs but shows no terrain | The stage has no `tilemap`, its tileset failed to load (see the boot issues), or no atlas was given; tiles whose `frame` the atlas lacks draw `ui/missing` |
 | `bindWorld` throws `parallax band i has layer …` | A `ParallaxView` band is not on `BG_FAR` / `BG_MID` — stage content only produces those; check a hand-made view |
 | Terrain and sprites disagree by one pixel | Something moved the terrain container by other than `round(−camera.x)`: sprite bindings draw `round(x − camera.x)`, and only that formula agrees for integer world positions (a test checks half-pixel cameras) |
@@ -514,5 +537,8 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
   (animation frames, facing flips, ceiling flips, the D30 hit flash); the flight scene draws
   them without a change because it appends the World's batches
   ([enemies-and-behaviors.md](enemies-and-behaviors.md)).
+- **M1-09** (done) — the enemy bullets are one more batch (the bullet pool itself, on
+  `ENEMY_BULLETS`); the new `LaserView` is drawn by the laser binding above it; the loader
+  interns the engine's own sprites ([bullets-and-patterns.md](bullets-and-patterns.md)).
 - **M1-14 / M1-15** — particles, shake, flash and audio handlers registered on the dispatcher.
 - **M1-16** — core `ui` fills the HUD and UI draw lists (menus, HUD model).

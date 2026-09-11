@@ -5,7 +5,9 @@ system** that spawns, moves, collides, damages and removes them in the World's t
 **formations** with their kill tracking and capsule drop, the **behaviour coroutines** that
 sleep between decisions, the per-tick **movers** that do the actual moving (including
 arc-length **spline paths**), the off-screen rules, and the hot-path rules that keep 64
-scripted enemies free of garbage. Built in plan step **M1-08**.
+scripted enemies free of garbage. Built in plan step **M1-08**; since **M1-09** the behaviours
+fire bullets and lasers through the `ScriptApi` — the bullet side is
+[bullets-and-patterns.md](bullets-and-patterns.md).
 
 This page is the *how and why*. Exact signatures are in
 [api-reference.md](api-reference.md#enemies--the-enemy-system-partial); the TSDoc in
@@ -41,6 +43,7 @@ stepWorld, every tick
  ├─ 3 stage      beginTick (reset outcomes) → stage.tick() → hooks → onStageEvent → spawn /
  │               startFormation → spawnPending (formation members due this tick)
  ├─ 4 scripts    runScripts: resumeScript(enemy) only where wakeTick ≤ tick     core/patterns
+ │               (a woken script may fire: api.aimed / nWay / ring / … → core/bullets)
  ├─ 5 movement   move: age, flash, ride camera (flying), updateMover, leader track, animation,
  │               on-screen / settle / despawn rules
  ├─ 6 collision  insertColliders (hurtboxes → grid, id = slot) → grid.build() →
@@ -126,7 +129,7 @@ members of a formation spawn at the same view point.
 
 `createEnemySystem(host, behaviors, stage)` is called by `createWorld` (`world.enemies`); the
 host is the World itself (`EnemyHost`: tick, camera, players, ship spec, terrain, content,
-RNG streams, events, debug flags). It allocates everything up front:
+RNG streams, events, debug flags and — since M1-09 — the bullet system). It allocates everything up front:
 
 - `MAX_ENEMIES` (64, the §22 budget) `Enemy` **class instances**, one per slot, and one
   reused `ScriptApi` per slot;
@@ -256,9 +259,15 @@ One reused object per slot (D29):
 | `target()` | The nearest active, `alive` player ship, or `null` (during the fly-in, after death) |
 | `setMover(kind, p0 … p5)` | Switch the mover (parameters per kind below) |
 | `spawn(enemyIndex, dx, dy)` | Spawn another enemy relative to this one → the `Enemy` or `null` |
-| `onScreen()`, `canFire()` | Hurtbox overlaps the view; the §11 fire rule (on screen, settled, not a ghost) |
+| `onScreen()`, `canFire()` | Hurtbox overlaps the view; the §11 fire rule (live, on screen, settled, not a ghost) |
+| `aimed`, `nWay`, `ring`, `spiral`, `stack`, `spray`, `homing`, `delayed` | Fire a pattern from the enemy's centre (M1-09) — the `core/patterns` primitives, rank-scaled; each returns `-1` / `0` and fires nothing while `canFire()` is false (`spiral` still returns the advanced angle) |
+| `laser(angle?, length?, …)` | A straight laser **attached** to this enemy (warning line → grow → beam → fade); detached when the enemy is removed or turns ghost |
+| `fireWait(ticks)` | A fire interval on Normal scaled by the rank (`rankedWait`) — `yield` it between volleys |
+| `bullets` | The World's `BulletSystem` for raw access (`setMotion`, `setChange`, custom patterns) |
 
-Fire primitives (`aimed`, `nWay`, `ring`, …) join the API with the enemy bullets of M1-09.
+Every wrapper shares the system's one `BulletOrigin`, set to the enemy's centre just before the
+primitive runs. Bullets outlive the enemy that fired them. Details, the primitives' parameters
+and the rank: [bullets-and-patterns.md](bullets-and-patterns.md#the-scriptapi-wrappers-and-the-fire-rule).
 
 ### Movement, off-screen and settle rules (phase 5)
 
@@ -271,7 +280,7 @@ is `⌊age / anim.ticks⌋ mod anim.frames`, then the view rules:
 |---|---|
 | On screen (`OnScreen`, `WasOnScreen` on the first time → `firstSeenTick`) | the hurtbox overlaps the camera view (closed: touching counts) |
 | Settled (`Settled`, for good) | `tick − firstSeenTick ≥ settleTicks` |
-| `canFire()` | `OnScreen` and `Settled` and not `Ghost` |
+| `canFire()` | `Live` and `OnScreen` and `Settled` and not `Ghost` — every fire primitive checks it |
 | Escaped → removed | was on screen and is now more than `DESPAWN_MARGIN` (32) px outside the view |
 | Never seen → removed | more than `UNSEEN_MARGIN` (128) px outside the view, or `age ≥ UNSEEN_TICKS` (600) |
 | Ghost removed | more than `GHOST_MARGIN` (128) px outside the view |
@@ -307,6 +316,9 @@ consumes it yet: M1-11 turns drops into capsules, M1-12 turns kills and bonuses 
 
 ### Removal, drawing, restart and hashing
 
+- **Removing an enemy** (killed, escaped, or a leader turning ghost) also calls
+  `bullets.detachLasers(slot)`: its warning / growing lasers vanish, an active one fades
+  (M1-09).
 - **Phase 8** `flush()` turns `Removed` slots back into `Free` (and drops their script and
   track).
 - **Phase 9** `sync()` refills the two batches in slot order: live, drawn (`spriteId ≥ 0`),
@@ -353,7 +365,8 @@ is what the World uses; `createWorld(config, db, { behaviors })` swaps in anothe
 (tests, tools — not part of `GameConfig`, so never in a real session).
 
 The M1 roster (tunables and their defaults in brackets; the fire patterns are M1-09's — they go
-through the `ScriptApi` primitives, so nothing fires off screen or before `settleTicks`):
+through the `ScriptApi` primitives, so nothing fires off screen or before `settleTicks`; bullet
+speeds are px/tick and intervals ticks, both Normal values scaled by the rank):
 
 | Id | Archetype | What it does |
 |---|---|---|
@@ -399,7 +412,9 @@ and 4200 (formations of drifters and fans with bonuses, one drifter formation wi
 null`, carriers, turrets on the floor and the ceiling, walkers and hatches on the rolling
 ground). The new pixel-map sprite `enemies/hatch` (2 frames, lid closed / open, `hitFlash`)
 joined the atlas; the others reuse M1-03's small-enemy sprites. With nobody shooting (weapons
-come in M1-10) every enemy flies past; at most 11 are alive at once.
+come in M1-10) every enemy flies past; at most 11 are alive at once. Since M1-09 the turrets,
+walkers and the two orbiters fire (at most about a dozen bullets are alive at once with a ship
+that stands still; no laser is fired).
 
 Fly it with `pnpm dev` → `http://localhost:5173/?stage=test-range`; headless:
 
@@ -451,7 +466,7 @@ code):
 | `packages/core/test/enemies/enemies.test.ts` | Stage spawns and formation spacing, pool exhaustion (a formation counts it as escaped), ground snapping, bonus + capsule only when every member died (not after an escape, not before the last spawn), follow delay and the ghost leader, the settle / fire rule, escape and never-seen removal, the runner never resuming a sleeping script (spy), script spawns starting next tick, target and RNG, damage / flash / explosion events / outcomes, invulnerability, contact once per tick, the air batch (animation, facing, hidden ghosts), checkpoint clears, lockstep hashes, the 64-enemy allocation guard |
 | `packages/core/test/enemies/enemies-edge.test.ts` | Spawn defaults and bounds, camera ride without a double move, slot order and reuse, unknown behaviours, bad and fractional spec indices (regression), formation arguments and a full table, outcome order, two formations completing in one tick, ghosts removed at `GHOST_MARGIN`, the off-screen rules at their exact boundaries in all four directions, contact boundaries, the sprite mirror |
 | `packages/core/test/patterns/patterns*.test.ts` | The runner (randomised spy, sub-tick waits, `SLEEP_FOREVER`, exceptions), `FollowTrack` ring limits, `setMover` state, every mover's maths (sine on the table, path speed vs `samplePath` on random curves, waypoint incl. `hold: 0` regression, follow, homing turn cap, 32 aim directions), crawling on the shipped tileset's slopes and hand-built steps of exactly `CRAWL_STEP` |
-| `packages/core/test/behaviors/behaviors*.test.ts` | Registry (sorted, frozen, duplicates), `KNOWN_SCRIPT_IDS`, `checkEnemyBehaviors`, every roster behaviour driving its enemy in a World, the documented details of each |
+| `packages/core/test/behaviors/behaviors*.test.ts` | Registry (sorted, frozen, duplicates), `KNOWN_SCRIPT_IDS`, `checkEnemyBehaviors`, every roster behaviour driving its enemy in a World, the documented details of each; `behaviors-fire*.test.ts` (M1-09): the roster's patterns, intervals and rank scaling, the `ScriptApi` fire rule, `laser()` defaults and detaching |
 | `packages/core/test/data/enemies-edge.test.ts`, `paths-edge.test.ts` | Enemy defaults (same keys, same order), `child` refs, every mover variant and bound, the code tables, stage `screenX` / `drop` / `bonus`; `bakePath` properties on random curves (uniform 1-px spacing ±0.5 px, ends, translation invariance, unit end tangent, exact `MAX_PATH_LENGTH`), the centripetal no-overshoot property, loader issues and `pathId` resolution |
 | `packages/core/test/debug/debug-edge.test.ts` | `hashWorld` covers every enemy field and the formation table |
 | `test/integration/enemies-runtime.test.ts` | The shipped `test-range` timeline end to end: every roster enemy spawns within 64 slots, every formation resolves, ground enemies on the generated terrain and walkers on the slopes, perfect play yields one `FormationBonus` per formation and the expected capsules, lockstep hashes |
@@ -472,7 +487,8 @@ code):
 | A child spawned by a script does nothing on its first tick | By design: a script spawn's script starts on the next tick (it spawned during phase 4) |
 | `yield 0` did not run the next step in the same tick | `0` (and anything below 1) means the next tick |
 | The allocation guard fails after a behaviour change | A closure, array, object literal or string in the generator body, or a `yield 1` loop resuming every tick. Sleep longer, keep state in `let`s of whole numbers or on the `Enemy` |
-| The ship flies through enemies | Expected until M1-12: contact is recorded (`ship.hitCause = Contact`, `hits`), not fatal; ignored during the fly-in, while invulnerable and in god mode |
+| The ship flies through enemies | Expected until M1-12: contact is recorded (`ship.hitCause = Contact`, `hits`), not fatal; ignored during the fly-in, while invulnerable and in god mode. The same holds for bullets (`Bullet`, the bullet is removed) and lasers (`Laser`) |
+| A behaviour's shot never appears | `canFire()` was false (off screen, unsettled, ghost) — the wrappers return `-1` / `0` then; or the content was loaded without `ENGINE_SPRITES`, so bullets are hidden ([bullets-and-patterns.md](bullets-and-patterns.md#gotchas)) |
 | Enemies never die | Nothing shoots yet (M1-10); tests call `world.enemies.damage` / `kill` |
 | A new `Enemy` field diverges in replays unnoticed | Add it to `mixEnemy` in `core/debug` |
 | A path has an odd kink | Control points are relative to the *start*; the first point is normally `(0, 0)`. Centripetal splines never cusp between close points — a kink is a point where the curve really turns |
@@ -480,8 +496,9 @@ code):
 
 ## Next steps that build on this page
 
-- **M1-09** — enemy bullets and lasers: fire primitives on `ScriptApi`, the roster starts
-  firing (turret aimed, orbiter ring, walker aimed 3-way), `canFire()` gates them.
+- **M1-09** (done) — enemy bullets and lasers: fire primitives on `ScriptApi`, the roster fires
+  (turret aimed, orbiter ring, walker aimed 3-way), `canFire()` gates them
+  ([bullets-and-patterns.md](bullets-and-patterns.md)).
 - **M1-10** — player shots query the enemy grid entries and call `damage` (armour → `clink`);
   `WEAPON_SCRIPT_IDS` moves to `weapons`.
 - **M1-11** — capsules from `outcomes.drop*`; the Mega Crash `kill`s every enemy without

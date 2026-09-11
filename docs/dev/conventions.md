@@ -125,6 +125,13 @@ ES5 and linted with `ecmaVersion: 5`.
   `Math.ceil(x) | 0` for whole-pixel bounds passed to a call; and a schema whose shape is
   `{ x, y }` is built by adding keys to an empty object, never as an `{ x: …, y: … }` literal
   ([enemies-and-behaviors.md](enemies-and-behaviors.md#zero-allocation-and-the-hot-path-rules)).
+  And from M1-09: copy fields of a hot object that is reached through another object (the
+  ship's `x` / `y`) or has several shapes (a spec from content vs a built-in default) into
+  class fields once per call before a loop reads them; keep a hot per-tick loop in the method
+  the World calls instead of behind a tiny wrapper (V8's mid tier inlined the loop into the
+  wrapper and boxed); run an allocation guard in its own test file, away from suites that
+  create many small worlds
+  ([bullets-and-patterns.md](bullets-and-patterns.md#zero-allocation-and-the-hot-path-rules)).
 - Behaviour coroutines (generators, D29) allocate a small result object on every resume:
   scripts **sleep** (`yield ticks`) and are resumed only when they wake; per-tick motion
   belongs in a mover (numbers on the body), never in a `yield 1` loop.

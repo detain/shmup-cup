@@ -213,6 +213,8 @@ order every tick keeps a fixed array of slots instead — the enemy system's 64 
 
 M1-06 (done) wired the RNG streams, the event queue and the pool registry into the World
 and its tick pipeline, and `hashWorld` already hashes the RNG states and every registered
-pool's live slots ([sim-world.md](sim-world.md)). M1-09 uses `quantizeAngle` and `atan2B` for
-aimed patterns, M1-14/M1-15 consume the event kinds and cue registries, and M1-19 compares
-those hashes in golden replays.
+pool's live slots ([sim-world.md](sim-world.md)). M1-09 (done) aims enemy bullets with
+`atan2B` and `quantizeAngle`, moves them with the sine table, keeps them in two SoA pools
+registered with the World and draws `fireSpray`'s randomness from the gameplay stream
+([bullets-and-patterns.md](bullets-and-patterns.md)); M1-14/M1-15 consume the event kinds and cue
+registries, and M1-19 compares those hashes in golden replays.

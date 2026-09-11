@@ -222,7 +222,14 @@ export const BodyAnchor = {
 /** A {@link BodyAnchor} code. */
 export type BodyAnchor = (typeof BodyAnchor)[keyof typeof BodyAnchor];
 
-/** Aimed movers snap their heading to this many directions (decision D17, retro feel). */
+/**
+ * Aimed movers snap their heading to this many directions (decision D17, retro feel).
+ *
+ * @remarks
+ * A constant for the `AimedDash` mover only. Aimed *bullets* (the fire primitives, `core/bullets`
+ * `AIM_AT_TARGET`) snap to the session's `GameConfig.aimDirections` instead (default 32 too), so
+ * a difficulty preset can change them without touching enemy movement.
+ */
 export const AIM_DIRECTIONS = 32;
 
 /** Highest step (up or down, in pixels) a crawler takes in one tick before it turns round. */
@@ -901,6 +908,12 @@ export function fireAimed(
 
 /**
  * Fires an N-way spread: `count` bullets `step` binary units apart, centred on `angle`.
+ *
+ * @remarks
+ * Bullet `k` flies at `angle + (k − (count − 1) / 2) · step`, so with an even count no bullet
+ * takes the centre heading itself (the middle two are `step / 2` either side — an aimed 2-way
+ * brackets the player). `count` is floored (below 1 fires nothing); a full pool drops the rest
+ * quietly and the result counts only the bullets that spawned.
  *
  * @param bullets - The bullet system.
  * @param origin - Where they start.

@@ -10,8 +10,8 @@ simulation runs smoothly, the picture is pixel-perfect at the monitor's resoluti
 catch control, smoothness or scaling problems early.
 
 In a browser you can also fly the first **scrolling stage** — the *Test Range*, with rocky
-ground, caves, speed changes and, since this build, the **first enemies** flying and walking
-past (see [The scrolling test stage](#the-scrolling-test-stage-browser-only)) — and the earlier
+ground, caves, speed changes, the first enemies flying and walking past and, since this build,
+**enemies that shoot at you** (see [The scrolling test stage](#the-scrolling-test-stage-browser-only)) — and the earlier
 start-up pictures are still there: the animated **sprite showcase** and the **calibration
 screen** (see [below](#other-screens-browser-only)).
 
@@ -80,26 +80,32 @@ ship may move in four directions only; the game is designed to be fully playable
 
 ### What changed lately
 
-**New in this build: the first enemies.** The *Test Range* stage now sends enemies at you:
-rows of small pods weaving on a wave, spinners that fly loops one behind the other, red
-saucers, gun turrets on the ground and hanging from cave ceilings, walkers that stroll along
-the rocky slopes, hatches that open and release small fighters, and fighters that stop, aim
-and dash at you ([what to look for](#enemies-in-the-test-stage)). You cannot shoot them yet,
-they do not shoot back yet, and flying into one does nothing yet — weapons come next, enemy
-bullets right after, crashing with lives and respawning later. As before, the stage can only
-be opened in a browser; the TV and desktop builds still start in free flight, which works
-exactly as before and has no enemies.
+**New in this build: the enemies shoot back.** In the *Test Range* stage the gun turrets now
+fire single pink bullets straight at your ship, the walkers fire a fan of three red bullets
+whenever they stop, and the looping spinners send out rings of eight purple bullets
+([what to look for](#enemy-bullets)). Bullets fly in straight lines at a speed you can dodge
+with the four arrow directions alone, vanish when they hit the rock or leave the screen, and
+only ever come from an enemy you can see. Being hit does nothing yet: the bullet simply
+disappears when it touches your ship — losing a life comes later, together with crashing. You
+still cannot shoot back; weapons come next. As before, the stage can only be opened in a
+browser; the TV and desktop builds still start in free flight, which works exactly as before
+and has no enemies or bullets.
 
-Before that: **scrolling stages** — the view scrolls along a scripted path, speeding up and
+Before that: **the first enemies** — rows of small pods weaving on a wave, spinners that fly
+loops one behind the other, red saucers, gun turrets on the ground and hanging from cave
+ceilings, walkers that stroll along the rocky slopes, hatches that open and release small
+fighters, and fighters that stop, aim and dash at you ([what to look for](#enemies-in-the-test-stage));
+**scrolling stages** — the view scrolls along a scripted path, speeding up and
 slowing down, over rocky floors and caves drawn from small tiles, with star layers moving
 behind at their own speeds; and before that the ship came **under your control**, and free
 flight replaced the sprite showcase as the start-up picture. The simulation behind it is the real game engine: every
-build adds to this world — next come enemies, then weapons.
+build adds to this world — next come your weapons, then power-ups.
 
 **Please re-test on the monitors:** install the new build and run through the checks in the
 next section — how the ship responds to the remote is still the most valuable report. On a
-PC, please also fly the test stage once and report anything from its checklists (the rock and
-the enemies).
+PC, please also fly the test stage once and report anything from its checklists (the rock,
+the enemies and their bullets) — in particular whether every bullet pattern can be dodged with
+single arrow presses (try `?profile=keyboard-remote-emulation`, which moves like the remote).
 
 The game data and the sprite sheet travel **inside** the app (the sprite sheet is a small
 picture file packed into the same `.wgt`, in its `assets/` folder). There are no extra files
@@ -208,27 +214,28 @@ starts in ordinary free flight instead; the browser's developer console then say
 
 The enemies are placeholders too (original designs) and come on a fixed schedule — the same
 every run. Most fly in from the right edge; ground enemies scroll in standing on the rock.
-Nothing can hurt them yet and they do not shoot, so they simply fly past and leave the screen.
-Never more than about a dozen are on screen at once.
+Nothing can hurt them yet, so they simply fly past and leave the screen; the turrets, walkers
+and the two lone spinners shoot at you on the way ([Enemy bullets](#enemy-bullets) below).
+Never more than about a dozen enemies are on screen at once.
 
 | Time (about) | What comes |
 |---|---|
 | 2 s | Five **green pods** in a row, weaving up and down on a wave through the upper part of the screen |
 | 5 s | A **red saucer** with blinking lights, drifting slowly through the middle (later it will carry a power-up) |
 | 7 s | Five **four-bladed spinners** in single file along the lower part of the screen: each flies a loop-the-loop, exactly on the path of the one in front |
-| 9 s | A **gun turret** on the ground; it turns to face your ship as you pass it |
-| 10 s | A **walker** on legs, strolling along the rolling ground towards your ship, stopping, then walking on — up and down the slopes |
+| 9 s | A **gun turret** on the ground; it turns to face your ship as you pass it and **shoots** at it |
+| 10 s | A **walker** on legs, strolling along the rolling ground towards your ship, stopping (and **shooting**), then walking on — up and down the slopes |
 | 12 s | An **armoured hatch** on the ground: once it is on screen it releases a small **arrowhead fighter** every second and a quarter or so (six at most); each one rises, stops, turns towards your ship and dashes at it |
 | 15 s | An **arrowhead fighter** high up: it flies in, stops for a moment and dashes straight at where your ship is |
 | 17 s | Six green pods, lower down |
-| 21 s | Another ground turret |
-| 27 s | Inside the first cave: a turret hanging **upside down from the ceiling** |
-| 29 s | A spinner flying a wide loop |
+| 21 s | Another ground turret (shoots) |
+| 27 s | Inside the first cave: a turret hanging **upside down from the ceiling**, shooting down at you |
+| 29 s | A spinner flying a wide loop, sending out **rings of bullets** |
 | 30 s | Four spinners diving down along a curve, one behind the other |
 | 33 s | Another red saucer |
-| 46–50 s | In the deeper cave: a walker, a hatch with its fighters and a ceiling turret |
+| 46–50 s | In the deeper cave: a walker, a hatch with its fighters and a ceiling turret (the walker and the turret shoot) |
 | 53 s | Five green pods |
-| 58 s | A spinner that flies to a spot a little right of the screen's centre, hovers there for about a second and a half and then leaves to the left |
+| 58 s | A spinner that flies to a spot a little right of the screen's centre, hovers there for about a second and a half and then leaves to the left — firing rings of bullets |
 | 62 s | Five spinners flying the loop-the-loop again |
 | 65 s | A last red saucer |
 
@@ -247,6 +254,37 @@ What "good" looks like:
 - An enemy that has left the screen does not come back.
 - Flying into an enemy does nothing yet — the ship passes through it. That is expected in
   this build, and so is not being able to shoot.
+
+#### Enemy bullets
+
+Enemy bullets are small glowing dots and ovals with a bright centre and a dark outline, drawn
+on top of everything else in the playfield so they stay visible. Three kinds of enemy shoot in
+this build — always the same way, so you can learn them:
+
+| Who | What it fires | How often |
+|---|---|---|
+| **Gun turret** (floor or ceiling) | One **pink round** bullet aimed at your ship — it crosses the whole picture in about four seconds | Every second and a half, starting shortly after it comes into view |
+| **Walker** | A fan of **three red oval** bullets, the middle one aimed at your ship, the others a little to either side | Each time it stops walking (about every two and a quarter seconds) |
+| **Lone spinner** (29 s and 58 s) | A **ring of eight purple** bullets flying outwards in every direction; the next ring is turned half a gap, so you can slip between them | Every two seconds |
+
+Aimed bullets point at where your ship **is** when they are fired, snapped to one of 32
+directions (the retro feel), so a bullet can pass a few pixels beside a ship that stands still.
+The pods, spinner formations, saucers, hatches and arrowhead fighters never shoot.
+
+What "good" looks like:
+
+- Bullets only appear **at an enemy you can see** — never out of thin air, never from an enemy
+  that is still off screen or has only just appeared.
+- They fly in **smooth straight lines** at a steady speed and keep going while the scrolling
+  speeds up or slows down; the ovals point the way they fly.
+- A bullet **disappears when it hits the rock** or leaves the screen; it never comes back.
+- Bullets never cover the top or bottom HUD bar.
+- Every pattern can be dodged by moving in the four arrow directions only (no diagonals
+  needed) — please report any spot where you could not get out of the way.
+- **A bullet that touches your ship disappears**, and nothing else happens yet (no explosion,
+  no lost life — that comes later). While the ship is flying in at the start, bullets pass
+  through it.
+- The enemies never fire long beams (lasers) yet; those come with later enemies and bosses.
 
 ### Other screens (browser only)
 
@@ -310,9 +348,16 @@ mean the build itself is broken; they are not caused by anything you did.
 | The ship flies through the rock in the test stage | Expected in this build: hits are only noted, crashing comes later |
 | The ship flies through enemies, and nothing happens | Expected in this build: touching an enemy is only noted; crashing comes with lives and respawning |
 | I cannot shoot the enemies / they never explode | Expected: weapons arrive in the next build (the enemies are there first so the weapons have something to hit) |
+| An enemy bullet hits my ship and just disappears | Expected in this build: hits are only noted; losing a life and the explosion come later |
+| Bullets fly through my ship while it flies in at the start | Expected: the ship cannot be hit while it is flying in |
+| No bullets at all in the test stage | Check the address says `?stage=test-range`. The first turret starts shooting about ten seconds in; the pods, saucers and spinner formations never shoot. Free flight (the TV and desktop builds) has no enemies and no bullets |
+| Bullets appear out of nowhere, from an enemy still off screen, or keep flying through rock | Please report it with the time into the stage and which enemy fired |
+| A bullet pattern cannot be dodged with the arrow directions alone | Please report it with the time into the stage — every pattern is meant to be dodgeable on the TV remote |
+| Bullets are magenta-and-black checkered squares | The bullet pictures are missing from the sprite sheet; please report it (the build is broken) |
 | An enemy floats above the ground, sinks into it, or walks through a wall | Please report it with a screenshot and roughly how far into the stage it was |
 | An enemy jumps, stutters or suddenly vanishes in the middle of the screen | Please report it with the time into the stage — enemies should only disappear after leaving the screen |
 | No enemies at all in the test stage | Check the address says `?stage=test-range` (the title bar reads TEST RANGE). Free flight — the TV and desktop builds — has no enemies |
+| The screen slows down or stutters when many bullets are around | Not expected — the game is built for hundreds of bullets. Please report it with the time into the stage and the browser or TV model |
 | The test stage stopped scrolling | At the end of the stage (after about 75 seconds) that is expected; reload the page to start again. If it stops earlier, please report where |
 | Gaps, seams or flickering in the rock, or rock over a HUD bar | Please report it with a screenshot and roughly how far into the stage it was |
 | The ship flies in from the left again | Not expected in this build — the ship only flies in at start-up. Please report what you were doing |

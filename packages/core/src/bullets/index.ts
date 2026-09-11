@@ -575,9 +575,32 @@ export interface BulletSystem {
    * @param slot - The enemy slot.
    */
   detachLasers(slot: number): void;
-  /** Phase 5: moves bullets and lasers, culls, steps laser phases. */
+  /**
+   * Phase 5: moves bullets and lasers, culls, steps laser phases. Never allocates.
+   *
+   * @remarks
+   * Per live bullet, in slot order: ride the camera step (`camera.dx` / `dy`); a delayed bullet
+   * counts down (and re-aims on launch when asked); a moving one ages, applies a due change,
+   * homes, accelerates (clamped to `[minSpeed, maxSpeed]`) and turns, recomputes its velocity
+   * only if speed or heading changed, and moves; then it is removed when it is not inside the
+   * view ± {@link BULLET_CULL_MARGIN} px (NaN positions included) or, with
+   * {@link BulletFlag.DieOnTerrain}, when its centre pixel is terrain. Then every live laser
+   * follows its source enemy (or rides the camera) and steps its phase — each phase lasts
+   * exactly its tick count; the last one ends with the laser's removal. Removed slots stay in
+   * `[0, count)` (flagged dead, hidden) until the World flushes the pools in phase 8.
+   */
   update(): void;
-  /** Phase 6: bullets and active lasers against the players. */
+  /**
+   * Phase 6: bullets and active lasers against the players. Never allocates.
+   *
+   * @remarks
+   * Brute force per active, `alive` ship: bullet circles (`radius`) against the ship's
+   * `hurtRadius` (closed — touching hits), then — if the ship is still alive — the capsules of
+   * lasers in the `Active` phase (half the width + the hurt radius). The first overlap ends
+   * each test for that ship, so at most one bullet hit and one laser hit are offered per ship
+   * and tick (`playerHit(Bullet)` / `playerHit(Laser)`). An accepted bullet hit removes the
+   * bullet; a refused one (fly-in, invulnerable, god mode) leaves it flying.
+   */
   collidePlayers(): void;
   /**
    * Removes every cancelable bullet and laser (see {@link cancelAllBullets}).
@@ -685,7 +708,12 @@ class LaserPoolView implements LaserView {
 /** Sub-pixel scale of the vectors handed to `atan2B` (whole-number arguments, never boxed). */
 const AIM_SCALE = 64;
 
-/** Normalises an angle into `[0, 1024)` (fractions kept). */
+/**
+ * Normalises an angle into `[0, 1024)` (fractions kept — the velocity tables round later).
+ *
+ * @param angle - Any finite binary angle (negative or past one turn).
+ * @returns The same heading in `[0, 1024)`.
+ */
 function wrapUnits(angle: number): number {
   const a = angle % ANGLE_UNITS;
   return a < 0 ? a + ANGLE_UNITS : a;
@@ -1433,6 +1461,15 @@ const laserOrigin = new BulletOrigin();
  * Fires a straight laser from a source: an enemy (`slot` ≥ 0 — the laser follows it) or a fixed
  * point (`slot` -1 — the laser rides the camera).
  *
+ * @remarks
+ * A raw call, like {@link spawnBullet}: no fire rule (the enemy `ScriptApi.laser` checks
+ * `canFire()` first) and no rank scaling. Timings are floored and a timing of 0 skips its
+ * phase; the laser warns for `telegraph` ticks (blinking line, no hitbox), widens for `grow`,
+ * has its capsule hitbox for `active` ticks at full `width`, then narrows for `fade` and is
+ * removed. Positional timings instead of an options object keep the call allocation-free
+ * (plan M1-09 as built). An attached laser detaches when its enemy is removed or turns ghost:
+ * warning / growing lasers vanish, an active one fades.
+ *
  * @param owner - The World.
  * @param src - The source (an `Enemy` works as it is).
  * @param angle - Direction in binary units, or {@link AIM_AT_TARGET}.
@@ -1442,7 +1479,9 @@ const laserOrigin = new BulletOrigin();
  * @param active - Full-width ticks (default {@link LASER_ACTIVE_TICKS}).
  * @param width - Width in pixels (default {@link LASER_WIDTH}).
  * @param fade - Fade ticks (default {@link LASER_FADE_TICKS}).
- * @returns The laser slot, or -1.
+ * @returns The laser slot (stable within this tick), or -1 when nothing was fired: the 16-slot
+ *   pool is full, every timing is 0, the length or width is not positive, or the angle is
+ *   neither finite nor {@link AIM_AT_TARGET}.
  *
  * @example
  * ```ts

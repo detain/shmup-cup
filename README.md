@@ -17,7 +17,7 @@ module `virtual:shmup-content` and loaded by `loadContent()` with every string i
 to a number ([developer guide](docs/dev/content-data.md)). **Placeholder art** is code:
 sprite pixel maps under [`assets/source/`](assets/README.md), seeded procedural generators
 and an original 6×8 pixel font are packed by `pnpm assets` into a texture atlas plus
-manifest (the KESTREL, shots, seven enemies, boss parts, bullets, explosions, items,
+manifest (the KESTREL, shots, seven enemies, boss parts, bullets, laser beams, explosions, items,
 HUD pieces, terrain tiles, star layers), served to the builds as `virtual:shmup-assets`;
 real art can later replace any frame by name ([developer guide](docs/dev/asset-pipeline.md)).
 Both apps now boot through the shared browser shell [`@shmup/shell`](packages/shell/README.md)
@@ -59,7 +59,19 @@ waypoints, follow-the-leader, ground crawling over the terrain slopes, capped-tu
 aimed dashes. Off-screen / settle rules, contact with the ship, hit flash, explosion events and
 the tick's kill / drop outcomes are in place; 64 scripted enemies stay within the allocation
 guard, and enemies are part of `hashWorld`. The test stage now sends all eight behaviours at
-you (nothing can be shot yet — weapons are next) ([developer guide](docs/dev/enemies-and-behaviors.md)).
+you ([developer guide](docs/dev/enemies-and-behaviors.md)).
+**Enemies shoot back** (M1-09): a 512-slot enemy bullet pool — which is also the renderer's
+enemy-bullet sprite batch — with acceleration, turning, delayed launches, mid-flight changes
+and capped homing; bullets ride the camera, die on the rock or just off screen, and are aimed
+on 32 directions (decision D17). Behaviour scripts fire through rank-scaled pattern primitives
+(aimed, N-way, ring, spiral, stack, seeded spray, homing, delayed) that only fire from an enemy
+on screen and settled; the turrets, walkers and orbiters of the test stage now shoot aimed
+shots, three-way fans and rings. Telegraphed lasers (a blinking warning line, then a beam
+whose hitbox exists only at full width) and bullet cancel with sparkle events are in place for
+the bosses to come, and rank runs at the difficulty's constant base (Normal = 2) with curves
+that growth will scale in M2. Bullet and laser hits are recorded on the ship (death comes with
+M1-12); nothing can be shot yet — weapons are next
+([developer guide](docs/dev/bullets-and-patterns.md), [what testers should check](docs/client/preview-build.md#enemy-bullets)).
 **Input is remote-first and data-driven** (M1-05): control profiles in
 [`content/input/`](content/input/README.md) map keys, remote buttons and gamepad buttons to
 actions with separate **game** and **menu** tables, and carry the Samsung remote's quirks as
@@ -84,7 +96,7 @@ it is waiting to be packaged and run on the M7 monitors.
 | [`shmup_prompt.md`](shmup_prompt.md) | Paste-into-a-new-session prompt that drives execution of the plan (workflow: build → review/fix loop → tests → docs → CI gate per step, progress in `shmup_progress.md`) |
 | [`docs/`](docs/README.md) | Player and developer documentation (start with [`docs/dev/repo-layout.md`](docs/dev/repo-layout.md)) |
 
-Game docs — testers: [preview build (free flight, test stage and its enemies)](docs/client/preview-build.md) ·
+Game docs — testers: [preview build (free flight, test stage, its enemies and their bullets)](docs/client/preview-build.md) ·
 [controls](docs/client/controls.md) · [monitor setup & install](docs/client/install-on-tv.md).
 Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/architecture.md) ·
 [engine foundations](docs/dev/engine-foundations.md) · [content data](docs/dev/content-data.md) ·
@@ -93,6 +105,7 @@ Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/ar
 [sim World & collision](docs/dev/sim-world.md) ·
 [stage runtime](docs/dev/stage-runtime.md) ·
 [enemies & behaviours](docs/dev/enemies-and-behaviors.md) ·
+[bullets, lasers & patterns](docs/dev/bullets-and-patterns.md) ·
 [input profiles](docs/dev/input-profiles.md) ·
 [API reference](docs/dev/api-reference.md) ·
 [build, test & deploy](docs/dev/build-test-deploy.md) · [conventions](docs/dev/conventions.md).
@@ -119,7 +132,7 @@ versions (`devEngines.runtime`).
 ```sh
 pnpm -v               # must print 12.x — an older global pnpm fails with ERR_PNPM_BROKEN_LOCKFILE
 pnpm install          # set ELECTRON_SKIP_BINARY_DOWNLOAD=1 to skip the Electron binary
-pnpm dev              # browser dev app → http://localhost:5173: fly the KESTREL (arrows/WASD, gamepad; ?stage=test-range scrolls the test stage and its enemies; ?profile=keyboard-remote-emulation feels like the TV remote; ?scene=showcase / ?scene=calibration)
+pnpm dev              # browser dev app → http://localhost:5173: fly the KESTREL (arrows/WASD, gamepad; ?stage=test-range scrolls the test stage, its enemies and their bullets; ?profile=keyboard-remote-emulation feels like the TV remote; ?scene=showcase / ?scene=calibration)
 pnpm lint             # ESLint (typescript-eslint + compat: chrome >= 69)
 pnpm typecheck        # tsc --noEmit everywhere
 pnpm test             # Vitest per package + repo integration tests
@@ -198,9 +211,9 @@ the game — the shipped Tizen bundle still targets Chromium 69.
 
 ## Next step
 
-Code: plan step **M1-09** (enemy bullets, lasers and attack patterns: a 512-bullet pool with
-aimed / N-way / ring / spiral / spray patterns fired from the behaviour scripts, telegraphed
-lasers, player vs bullet collision, bullet cancel, constant rank) — the per-step status board is
+Code: plan step **M1-10** (player weapons and Options: always-on autofire with the Type A
+weapons — shot, double, piercing laser, ground-sliding missiles — in a player-shot pool that
+damages enemies, and up to four trailing Options that copy them) — the per-step status board is
 [`shmup_progress.md`](shmup_progress.md).
 
 On hardware (unchanged, and still the gate for the remote control scheme): package and

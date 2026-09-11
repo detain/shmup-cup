@@ -423,9 +423,10 @@ export interface LaserBinding {
    * scaled to `length × 1`, tinted {@link LASER_WARNING_TINT} at creation) shown while the width
    * is 0, otherwise the beam: frame `round(width) − 1` of the beam sprite (its frame `k` is a
    * band `k + 1` px tall — `lasers/beam-*`) stretched to the length, or its last frame scaled
-   * across when the beam is wider than its frames. Hidden
-   * (`SpriteFlag.Hidden`) and zero-length lasers show neither. A rotation is only written when a
-   * slot's angle changes (Pixi's transform setters allocate).
+   * across when the beam is wider than its frames. Hidden (`SpriteFlag.Hidden`) and zero-length
+   * (or NaN-length) lasers show neither. A rotation is only written when a slot's angle changes
+   * (Pixi's transform setters allocate). Views larger than the binding draw their first
+   * `capacity` lasers.
    *
    * @param view - The laser view the binding was created for.
    * @param camera - The world camera.
@@ -483,9 +484,16 @@ export function createLaserBinding(options: LaserBindingOptions): LaserBinding {
   return {
     container,
     capacity,
+    /** See {@link LaserBinding.visibleCount}. */
     get visibleCount(): number {
       return visible;
     },
+    /**
+     * See {@link LaserBinding.sync}.
+     *
+     * @param view - The laser view.
+     * @param camera - The world camera.
+     */
     sync(view, camera) {
       const count = view.count < capacity ? view.count : capacity;
       const camX = camera.x;
@@ -543,6 +551,7 @@ export function createLaserBinding(options: LaserBindingOptions): LaserBinding {
       }
       used = count;
     },
+    /** See {@link LaserBinding.destroy}. */
     destroy() {
       container.destroy({ children: true });
     },

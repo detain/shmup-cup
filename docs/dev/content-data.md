@@ -96,7 +96,10 @@ const game = createGame(platform, { seed }, db);
 6. **Collect** the entries into the per-kind lists and `…Index` maps. A duplicate id
    (across all files of the kind) is an issue; the first file in path order wins.
 7. **Intern** sprite and script names: every distinct name gets an index in *sorted* order
-   (`db.sprites`, `db.scripts`), independent of which file mentioned it first.
+   (`db.sprites`, `db.scripts`), independent of which file mentioned it first. The names in
+   `options.extraSprites` join the sprite names first (M1-09: hosts pass `core/world`
+   `ENGINE_SPRITES` — the enemy bullet kinds and the laser beam, which the engine draws although
+   no content file names them).
 8. **Resolve** every recorded reference and write the index into `<field>Id`.
 9. **Expand stage terrain** (third pass, M1-07): every stage with a `tilemap` whose tileset
    resolved gets its tile grid built from the `heightfield` generator and / or RLE rows into
@@ -138,7 +141,7 @@ absent optional reference, or an id that did not resolve (which is also an issue
 
 | `ContentRefKind` | Resolved against | Unknown id |
 |---|---|---|
-| `sprite` | interned: `db.sprites` (sorted names) | never an issue here — `pnpm content:check` checks the names against the atlas (M1-03) |
+| `sprite` | interned: `db.sprites` (sorted names, `extraSprites` included) | never an issue here — `pnpm content:check` checks the names against the atlas (M1-03) |
 | `script` | interned: `db.scripts` (sorted names) | an issue only when `options.knownScripts` is given — the shell and `pnpm content:check` pass `KNOWN_SCRIPT_IDS` (`core/behaviors`: enemy behaviours + Type A weapon behaviours) |
 | `ship`, `weapon`, `enemy`, `path`, `stage`, `tileset` | `db.shipIndex`, `weaponIndex`, `enemyIndex`, `pathIndex`, `stageIndex`, `tilesetIndex` — across all files, in any order | issue |
 | `sfx`, `music` | `SFX_CUES` / `MUSIC_CUES` in `core/events` (own properties only, so `"toString"` does not resolve) | issue |
@@ -312,7 +315,9 @@ pnpm test:integration                       # includes content:check and the plu
   ignored, since samples refer to ids defined elsewhere);
 - every sprite name of the shipped content (`db.sprites.names`) exists in the atlas the
   asset pipeline builds (`findMissingSprites`, M1-03 — see
-  [asset-pipeline.md](asset-pipeline.md#sprite-names-used-by-content)).
+  [asset-pipeline.md](asset-pipeline.md#sprite-names-used-by-content)), and so does every
+  engine sprite (`ENGINE_SPRITES`, M1-09), which `loadContent(files, { extraSprites })`
+  interns.
 
 A failure prints the issue list (`path` + `message`) in the Vitest diff.
 
@@ -343,6 +348,7 @@ A failure prints the issue list (`path` + `message`) in the Vitest diff.
 | Sprite/script indices changed after adding a file | Expected: interned names are numbered in sorted order. Never persist these indices (replays record input, not ids) |
 | `pnpm content:check` fails on a README | The JSONC format sample in that README no longer matches the schema — update the sample with the schema |
 | `unknown script id "…"` only in the shell / `content:check`, not in a unit test | Script ids are checked only when `knownScripts` is passed; tests that call `loadContent(files)` alone intern any name |
+| Enemy bullets are invisible in a headless test's view (their slots are `Hidden`) | The test called `loadContent(files)` without `extraSprites: ENGINE_SPRITES`, so the bullet sprites have no ids; the shell's `loadGameContent` passes them by default |
 | A new `{ x, y }`-shaped schema makes hot code allocate | Build the shape object by adding keys (`PATH_POINT_SHAPE`), never as an `{ x: …, y: … }` literal — V8 shares hidden classes between literals ([enemies-and-behaviors.md](enemies-and-behaviors.md#zero-allocation-and-the-hot-path-rules)) |
 
 ## Next steps that build on this page
@@ -357,5 +363,7 @@ input-web's owner; M1-06 (done) — the World flies the KESTREL spec
 format, the new `tileset` kind and the third (terrain) load pass
 ([stage-runtime.md](stage-runtime.md)); M1-08 (done) — the `paths` kind, the full M1
 `enemies` format, `knownScripts` passed by the hosts and `checkEnemyBehaviors`
-([enemies-and-behaviors.md](enemies-and-behaviors.md)); M1-10 reads the Type A weapons (and
-moves `WEAPON_SCRIPT_IDS` to `weapons`).
+([enemies-and-behaviors.md](enemies-and-behaviors.md)); M1-09 (done) — `extraSprites` and the
+engine's own sprites ([bullets-and-patterns.md](bullets-and-patterns.md)); M1-10 reads the Type A
+weapons (and moves `WEAPON_SCRIPT_IDS` to `weapons`); the pattern content kind arrives with the
+DSL of M2-02.

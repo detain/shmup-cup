@@ -42,9 +42,15 @@
  * view; {@link ScriptApi.canFire} is `true` only on screen and at least `settleTicks` after its
  * first on-screen tick — the fire primitives of the {@link ScriptApi} check it themselves, so an
  * enemy never fires off screen or before it settled. Lasers attached to an enemy are detached
- * (`BulletSystem.detachLasers`) when it is removed or becomes a ghost. An enemy that was on screen and leaves the view by {@link DESPAWN_MARGIN}
- * pixels is removed and counts as **escaped**; one that never shows up is removed once it is
- * {@link UNSEEN_MARGIN} pixels away or after {@link UNSEEN_TICKS} ticks.
+ * (`BulletSystem.detachLasers`) when it is removed or becomes a ghost. An enemy that was on
+ * screen and leaves the view by {@link DESPAWN_MARGIN} pixels is removed and counts as
+ * **escaped**; one that never shows up is removed once it is {@link UNSEEN_MARGIN} pixels away or
+ * after {@link UNSEEN_TICKS} ticks.
+ *
+ * **Firing** (plan M1-09). Every script API shares one `BulletOrigin` of the system; each fire
+ * primitive sets it to the enemy's centre, then calls the `core/patterns` primitive with the
+ * World's bullet system (`EnemyHost.bullets`), so speeds are rank-scaled and `AIM_AT_TARGET`
+ * angles aim at the nearest living player. Bullets outlive the enemy that fired them.
  *
  * **Tick outcomes.** Kills and drops of the current tick are listed in
  * {@link EnemySystem.outcomes} (reset at the start of phase 3) for the systems that turn them
