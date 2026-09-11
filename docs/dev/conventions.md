@@ -111,6 +111,15 @@ ES5 and linted with `ecmaVersion: 5`.
   when the value changes — see [rendering-and-shell.md](rendering-and-shell.md).
 - Text reaches the screen through `DrawList` string slots (`setString` only when the text
   changes) or the `number` command; never build a string per frame.
+- Mind V8's number boxing — a non-integer number becomes a 16-byte heap object in some
+  positions: keep fractional state in typed arrays or object fields rather than in closure
+  `let`s, pass whole numbers across calls that only need whole numbers (e.g.
+  `grid.begin(Math.floor(camera.x) - margin, …)`), and make both arms of a conditional produce
+  the same kind of number (`a * (diagonal ? k : 1)`, not `diagonal ? a * k : a`).
+- Prove it with the allocation guard: `measureHeapGrowth(fn, iterations)`
+  (`packages/core/test/helpers/alloc.ts`, needs `--expose-gc` through
+  `defineShmupProject(name, { execArgv })`) — every per-tick or per-frame entry point gets a
+  test asserting its bytes stay under budget ([sim-world.md](sim-world.md#zero-allocation-and-the-allocation-guard)).
 
 ## Tests
 
@@ -120,7 +129,9 @@ ES5 and linted with `ecmaVersion: 5`.
   pass fakes instead of touching globals.
 - Each package has `test/tsconfig.json` (Node types, DOM lib) separate from the pure
   `src` program.
-- Determinism-sensitive code gets a headless test against `createHeadlessPlatform()`.
+- Determinism-sensitive code gets a headless test against `createHeadlessPlatform()`; code
+  that changes simulated state is covered by a lockstep test comparing `hashWorld` of two
+  worlds fed the same input.
 - Generated sources that are committed (today `packages/core/src/math/trig-table.ts`) get
   a test that regenerates them and diffs the committed copy.
 - Pixi display objects need no GPU, so render code is unit-tested in Node with the

@@ -3,8 +3,9 @@
 Shmup Cup builds are not in the Samsung store. During development they are installed ("side-loaded") from the
 Windows desktop that sits on the same network as the monitors. This page covers the one-time setup of a
 monitor and the PC, and how to install, start and remove an app. Two apps can be installed today: the
-**Input Probe** ([input-probe.md](input-probe.md)) and the **game preview**, which shows an animated sprite
-showcase ([preview-build.md](preview-build.md)). Both use the same one-time setup.
+**Input Probe** ([input-probe.md](input-probe.md)) and the **game preview**, in which you fly the KESTREL ship
+around an empty starfield with the remote ([preview-build.md](preview-build.md)). Both use the same one-time
+setup.
 
 Test hardware: 2× Samsung Smart Monitor M7 43" (LS43AM702UNXZA / M70A, Tizen 5.5).
 

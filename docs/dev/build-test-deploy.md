@@ -183,19 +183,27 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
 - `apps/tizen/test/build/` and `apps/web/test/build/` run **real Vite builds** into temp
   folders — the slowest tests in the repo.
 - The Tizen CLI wrappers are tested with `spawnSync` mocked; nothing is ever executed.
+- **Allocation guard** (plan §1.4): `measureHeapGrowth(fn, iterations)` in
+  `packages/core/test/helpers/alloc.ts` measures the bytes a hot path allocates (heap growth
+  plus what in-loop GCs reclaimed, via V8's `GCProfiler`). It needs `--expose-gc`, which
+  `defineShmupProject(name, { execArgv: ['--expose-gc'] })` passes to the Vitest workers of
+  `@shmup/core` and `@shmup/shell`. `stepWorld` must stay under 256 KB per 10,000 ticks — see
+  [sim-world.md](sim-world.md#zero-allocation-and-the-allocation-guard).
 - Repo-level integration tests (`test/`) cover cross-package behaviour, lint-rule
   enforcement and skeleton invariants, plus the root Node scripts (`test/scripts/`,
   including every asset-pipeline module) and the Vite plugins, some of which start a real
   dev server or build (see [../../test/README.md](../../test/README.md)).
 - **Browser tests** (`test/e2e/`, `pnpm test:e2e`, not part of `pnpm test`): both builds boot
-  in headless Chromium to `data-shmup-state="running"`, load the atlas, render a
-  non-uniform picture with known pixels and log no errors; a failing atlas request shows the
-  boot error screen; resizing re-fits the integer scale; the input profiles reach the page
+  in headless Chromium to `data-shmup-state="running"`, load the atlas, render free flight
+  with known pixels (HUD, title, the KESTREL's hull) and log no errors; arrow keys move the
+  ship and holding one stops it at the playfield margin (web and Tizen builds); a failing
+  atlas request shows the boot error screen; resizing re-fits the integer scale; the input
+  profiles reach the page
   (bound keys prevented, `?profile=keyboard-remote-emulation` knows only the remote's keys, an
   unknown `?profile=` warns and boots). Output goes to `test/e2e/test-results/` (git- and
   Prettier-ignored).
-- **Dev query parameters** of the web build (`pnpm dev`, `vite preview`): `?scene=calibration`
-  (test pattern), `?profile=<id>` (another keyboard / remote input profile, e.g.
+- **Dev query parameters** of the web build (`pnpm dev`, `vite preview`): `?scene=showcase`
+  (the M1-04 sprite showcase instead of free flight), `?scene=calibration` (test pattern), `?profile=<id>` (another keyboard / remote input profile, e.g.
   `keyboard-remote-emulation` or `tizen-remote-safe`) and `?debounce=<0…10>` (release debounce
   override) — see [input-profiles.md](input-profiles.md#choosing-the-active-profile). The TV
   widget starts without a query string.
@@ -232,4 +240,6 @@ whenever dependencies change, or the frozen install fails.
 | `pnpm test:e2e`: `Executable doesn't exist … chromium` | Playwright's browser is not installed: `pnpm exec playwright install --with-deps chromium` |
 | `pnpm test:e2e` hangs or times out creating WebGL contexts | A stale `DISPLAY` (forwarded X display of an SSH session) — the config already strips it for the browser; if you launch Chromium by hand, unset `DISPLAY` |
 | `pnpm test:e2e`: port 4173 already in use | Another `vite preview` is running; locally it is reused (`reuseExistingServer`), so make sure it serves a current `apps/web/dist`, or stop it |
+| A test fails with `measureHeapGrowth needs node --expose-gc` | The package's `vitest.config.ts` lacks `defineShmupProject(name, { execArgv: ['--expose-gc'] })` |
+| An allocation test (`… toBeLessThan(…)` on `growth.bytes`) fails | A hot path allocates: a new object / array / closure per tick, or a fractional number V8 boxes (a fractional `let` in a closure, a mixed ternary, a fractional argument) — see [sim-world.md](sim-world.md#zero-allocation-and-the-allocation-guard). If it fails only now and then in a full `pnpm test` (Turborepo runs every package at once) and always passes alone (`pnpm --filter <package> test`), it is JIT / GC noise under load — seen occasionally in core's `game-world.test.ts` and render-pixi's `sprites-edge.test.ts`; rerun, and report it if it keeps happening |
 | Type errors about `@shmup/*` imports only in `pnpm build` | The library build uses `dist/` typings: a dependency's `build` failed or was skipped — run `pnpm build` from the root so `^build` runs first |

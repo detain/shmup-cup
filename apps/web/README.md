@@ -3,9 +3,10 @@
 The **browser dev target** (Vite dev server with HMR) and the renderer that
 `apps/electron` loads. Wires `@shmup/core` + `@shmup/render-pixi` + `@shmup/audio-web` +
 `@shmup/input-web` together through the shared shell [`@shmup/shell`](../../packages/shell/README.md).
-It boots behind a loading bar (or a boot error screen listing every problem) into the
-**sprite showcase**; `?scene=calibration` shows the pixel-art calibration test pattern
-instead. There is no gameplay yet.
+It boots behind a loading bar (or a boot error screen listing every problem) into **free
+flight** (M1-06): the game's World with the KESTREL under keyboard / gamepad control over an
+empty starfield. `?scene=showcase` shows the M1-04 sprite showcase and `?scene=calibration`
+the pixel-art calibration test pattern instead. There are no enemies or weapons yet.
 
 Input uses the data-driven profiles of `content/input/` (decision D13): `keyboard-default`
 (or the saved choice) and `gamepad-standard`. Dev overrides: `?profile=<id>` picks another
@@ -17,7 +18,7 @@ Guide: [`docs/dev/input-profiles.md`](../../docs/dev/input-profiles.md).
 
 ```sh
 pnpm dev                          # from the repo root (= turbo run dev --filter=@shmup/web)
-# → http://localhost:5173 (showcase) · http://localhost:5173/?scene=calibration (test pattern)
+# → http://localhost:5173 (free flight) · ?scene=showcase (sprite showcase) · ?scene=calibration (test pattern)
 pnpm --filter @shmup/web build    # → apps/web/dist (relocatable, base './')
 pnpm --filter @shmup/web exec vite preview   # serve the production build (what pnpm test:e2e opens)
 ```
@@ -45,7 +46,7 @@ the shell loads the pages with `new Image()`; see
 | Module | Status | Responsibility |
 |---|---|---|
 | `main.ts` | — | Entry: boots into `#game`, disposes on HMR |
-| `boot` | implemented | Composition root: keyboard/gamepad input with the input profiles (`?profile=`, `?debounce=`, saved choice), Web Audio and the browser platform handed to `@shmup/shell`'s `bootShell` (content + atlas loading, boot error screen, renderer, game, rAF loop, audio unlock on first gesture); `?scene=calibration` for the test pattern |
+| `boot` | implemented | Composition root: keyboard/gamepad input with the input profiles (`?profile=`, `?debounce=`, saved choice), Web Audio and the browser platform handed to `@shmup/shell`'s `bootShell` (content + atlas loading, boot error screen, renderer, game, rAF loop, audio unlock on first gesture); free flight by default, `?scene=showcase` / `?scene=calibration` |
 | `platform` | partial | Browser `Platform`: localStorage (memory fallback), visibility lifecycle, no `exit` |
 
 The rAF frame loop moved to [`@shmup/shell`](../../packages/shell/README.md) (M1-04).

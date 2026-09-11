@@ -22,11 +22,21 @@ real art can later replace any frame by name ([developer guide](docs/dev/asset-p
 Both apps now boot through the shared browser shell [`@shmup/shell`](packages/shell/README.md)
 (M1-04): it validates the content, loads the atlas pages behind a loading bar (or shows a boot
 error screen listing every problem), and renders the core's render contract — sprite batches,
-bitmap text, HUD / UI command lists — with zero per-frame allocation. The default scene is a
-**sprite showcase** (parallax stars, the KESTREL with Options, drifters, bullets, HUD and the
-bitmap-font title); `?scene=calibration` shows the pixel-art test pattern — there is no
-gameplay yet ([developer guide](docs/dev/rendering-and-shell.md)). `pnpm test:e2e` boots the
-web build and the Tizen `dist/` (via `file://`) in headless Chromium.
+bitmap text, HUD / UI command lists — with zero per-frame allocation
+([developer guide](docs/dev/rendering-and-shell.md)). `pnpm test:e2e` boots the web build and
+the Tizen `dist/` (via `file://`) in headless Chromium.
+**The simulation World runs** (M1-06): `createWorld` / `stepWorld` advance one gameplay
+session through the fixed 9-phase tick pipeline (input → players → stage → scripts →
+movement → collision → damage → removal → fx, with deterministic hit-stop), the **KESTREL
+flies** under remote, keyboard or gamepad control (six speed levels from content, diagonals ×
+0.7071, no inertia, clamped to the playfield, banking, a 40-tick fly-in), the collision toolkit
+(closed shape tests, layer masks, a counting-sort grid whose queries equal brute force) is in
+place, and `hashWorld` fingerprints the simulated state for lockstep and replay tests. An
+allocation-guard test keeps the tick free of garbage. Every build now starts into **free
+flight** — the ship over an empty starfield between the HUD bars — with the M1-04 sprite
+showcase at `?scene=showcase` and the test pattern at `?scene=calibration`; there are no
+enemies or weapons yet ([developer guide](docs/dev/sim-world.md),
+[what testers should check](docs/client/preview-build.md)).
 **Input is remote-first and data-driven** (M1-05): control profiles in
 [`content/input/`](content/input/README.md) map keys, remote buttons and gamepad buttons to
 actions with separate **game** and **menu** tables, and carry the Samsung remote's quirks as
@@ -51,12 +61,13 @@ it is waiting to be packaged and run on the M7 monitors.
 | [`shmup_prompt.md`](shmup_prompt.md) | Paste-into-a-new-session prompt that drives execution of the plan (workflow: build → review/fix loop → tests → docs → CI gate per step, progress in `shmup_progress.md`) |
 | [`docs/`](docs/README.md) | Player and developer documentation (start with [`docs/dev/repo-layout.md`](docs/dev/repo-layout.md)) |
 
-Game docs — testers: [preview build (sprite showcase)](docs/client/preview-build.md) ·
+Game docs — testers: [preview build (free flight)](docs/client/preview-build.md) ·
 [controls](docs/client/controls.md) · [monitor setup & install](docs/client/install-on-tv.md).
 Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/architecture.md) ·
 [engine foundations](docs/dev/engine-foundations.md) · [content data](docs/dev/content-data.md) ·
 [asset pipeline](docs/dev/asset-pipeline.md) ·
 [rendering & browser shell](docs/dev/rendering-and-shell.md) ·
+[sim World & collision](docs/dev/sim-world.md) ·
 [input profiles](docs/dev/input-profiles.md) ·
 [API reference](docs/dev/api-reference.md) ·
 [build, test & deploy](docs/dev/build-test-deploy.md) · [conventions](docs/dev/conventions.md).
@@ -83,7 +94,7 @@ versions (`devEngines.runtime`).
 ```sh
 pnpm -v               # must print 12.x — an older global pnpm fails with ERR_PNPM_BROKEN_LOCKFILE
 pnpm install          # set ELECTRON_SKIP_BINARY_DOWNLOAD=1 to skip the Electron binary
-pnpm dev              # browser dev app → http://localhost:5173 (arrows/WASD, gamepad; ?profile=keyboard-remote-emulation feels like the TV remote)
+pnpm dev              # browser dev app → http://localhost:5173: fly the KESTREL (arrows/WASD, gamepad; ?profile=keyboard-remote-emulation feels like the TV remote; ?scene=showcase / ?scene=calibration)
 pnpm lint             # ESLint (typescript-eslint + compat: chrome >= 69)
 pnpm typecheck        # tsc --noEmit everywhere
 pnpm test             # Vitest per package + repo integration tests
@@ -136,11 +147,11 @@ pnpm workspace (`packages/*`, `apps/*`) + Turborepo. Full annotated tree:
 
 | Path | What |
 |---|---|
-| [`packages/core`](packages/core/README.md) | `@shmup/core` — pure-TS deterministic simulation, all game systems, the `Platform` interface |
+| [`packages/core`](packages/core/README.md) | `@shmup/core` — pure-TS deterministic simulation: the World and its tick pipeline, all game systems, the `Platform` interface |
 | [`packages/render-pixi`](packages/render-pixi/README.md) | `@shmup/render-pixi` — PixiJS v8 renderer (WebGL1, 384×216 → integer upscale) |
 | [`packages/audio-web`](packages/audio-web/README.md) | `@shmup/audio-web` — Web Audio mixer |
 | [`packages/input-web`](packages/input-web/README.md) | `@shmup/input-web` — keyboard / Samsung remote / gamepad → action snapshots, driven by the input profiles (debounce, diagonal / SOCD policies, game / menu tables) |
-| [`packages/shell`](packages/shell/README.md) | `@shmup/shell` — shared browser host of web + Tizen: boot / loading, boot error screen, event dispatch, frame loop |
+| [`packages/shell`](packages/shell/README.md) | `@shmup/shell` — shared browser host of web + Tizen: boot / loading, boot error screen, event dispatch, frame loop, the free-flight scene |
 | [`apps/web`](apps/web/README.md) | Vite browser dev target (also Electron's renderer) |
 | [`apps/tizen`](apps/tizen/README.md) | Samsung Tizen `.wgt` (Chromium 69 classic IIFE build, config.xml, CLI scripts) |
 | [`apps/electron`](apps/electron/README.md) | Electron desktop shell |
@@ -162,9 +173,9 @@ the game — the shipped Tizen bundle still targets Chromium 69.
 
 ## Next step
 
-Code: plan step **M1-06** (the sim World with its fixed tick pipeline, the KESTREL ship
-moving under remote / keyboard / gamepad input, and the collision toolkit) — the per-step
-status board is [`shmup_progress.md`](shmup_progress.md).
+Code: plan step **M1-07** (the stage runtime: the scrolling camera path, the event timeline
+and checkpoints, tile terrain and parallax) — the per-step status board is
+[`shmup_progress.md`](shmup_progress.md).
 
 On hardware (unchanged, and still the gate for the remote control scheme): package and
 deploy the input probe from the **Windows desktop** that sits on the same LAN as the monitors and holds
@@ -172,6 +183,9 @@ the Samsung certificate profile, run the test protocol on both monitors, and rec
 §2.7 (they decide the remote control scheme in `shmup_feat.md` §4). Since M1-05 the verdicts
 become edits to `content/input/remote.input-profiles.json` (`releaseDebounceTicks`,
 `diagonals`, `register`) — recipes in [`content/input/README.md`](content/input/README.md).
+Since M1-06 the preview build is worth installing too: flying the KESTREL with the real remote
+is the first hands-on check of the control scheme (checklist in
+[`docs/client/preview-build.md`](docs/client/preview-build.md#on-the-samsung-smart-monitor--tv)).
 
 Desktop prerequisites: Git, Node 24 (22.12+), Tizen Studio **or** VS Code + Samsung Tizen extension (with a Samsung
 certificate profile whose distributor cert includes both monitors' DUIDs), monitors in Developer Mode pointing at the

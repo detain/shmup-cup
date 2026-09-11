@@ -264,7 +264,7 @@ an unsupported key). `registerRemoteKeys()` filters `SYSTEM_REMOTE_KEYS` itself,
 edit that slipped past validation can never take `Exit` or the volume keys from the system.
 The shipped profiles register only D14's three keys; the colour keys (403–406) stay in the
 no-profile fallback `REMOTE_KEYS_TO_REGISTER` until something uses them. Back is still also
-watched by `watchBackKey`: until the scene stack exists (M1-16) the showcase is the root
+watched by `watchBackKey`: until the scene stack exists (M1-16) free flight is the root
 screen, so Back exits the TV app regardless of the profile's `Pause` binding.
 
 ## Using it in code
@@ -348,13 +348,15 @@ measures ~30 KB of test noise).
 | Diagonals impossible on the keyboard | `keyboard-remote-emulation` is active (the URL, or a saved choice in `shmup-cup:input.profile`) — `lastWins` keeps one arrow |
 | Holding a key through a menu switch "loses" it | By design: a held key keeps only the actions common to both tables until released. Release and press again |
 | A remote key never arrives on the TV | It must be in the active profile's `register` list (and supported by that remote model); Play/Pause and Ch± are registered by default, the colour keys only without a profile |
-| Back closes the TV app instead of pausing | Expected until the scene stack (M1-16): the showcase is the root screen and `watchBackKey` exits from it |
+| Back closes the TV app instead of pausing | Expected until the scene stack (M1-16): free flight is the root screen and `watchBackKey` exits from it |
 | A profile edit does not show in `pnpm dev` | Content edits reload the page; a saved choice in `localStorage` (`shmup-cup:input.profile`) may be overriding the default — remove it or use `?profile=` |
 
 ## Next steps that build on this page
 
-- **M1-06** — the ship moves with these masks (remote diagonals × 0.7071, D4); forced
-  autofire in remote mode.
+- **M1-06** (done) — the ship moves with these masks: `readPlayerIntent` turns the direction
+  bits into `moveX` / `moveY` (opposites cancel once more), diagonals are × 0.7071 (D4)
+  ([sim-world.md](sim-world.md#the-player-ship-coreplayer)). Forced autofire in remote mode
+  arrives with the weapons (M1-10).
 - **M1-16** — the scene stack returns `'menu'` from `Game.inputContext` for menus and the
   pause screen; Back handling moves from `watchBackKey` to the scenes.
 - **M2-16** — Options: profile choice (writes `input.profile`), per-device rebinding, conflict

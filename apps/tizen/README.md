@@ -52,11 +52,12 @@ page exists under `dist/assets/atlas/` (the shell cannot boot without it). The c
   renderer and AudioContext.
 
 `pnpm test:e2e` (repo root) also opens the built `dist/index.html` via `file://` in headless
-Chromium, like the TV runs the widget, and checks it boots, loads the atlas and draws the
-showcase. To open `dist/index.html` from disk in desktop Chrome yourself, start Chrome with
+Chromium, like the TV runs the widget, and checks it boots, loads the atlas, draws free
+flight and that the remote's arrow key codes move the KESTREL. To open `dist/index.html` from disk in desktop Chrome yourself, start Chrome with
 `--allow-file-access-from-files` — otherwise Chrome treats the atlas page as cross-origin and
 WebGL refuses it (the TV serves the widget's files as same-origin). On the TV the app always
-shows the showcase (a widget has no `?scene=` query string).
+starts into free flight — the KESTREL flown with the remote's directional pad — because a
+widget has no `?scene=` query string.
 
 ## Package, install, run (desktop with Tizen CLI + certificate — never in CI)
 

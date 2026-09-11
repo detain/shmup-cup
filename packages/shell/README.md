@@ -67,5 +67,8 @@ input and audio adapters and pass them in as interfaces (`ShellInput`, `IAudio`)
 Guide: [`docs/dev/rendering-and-shell.md`](../../docs/dev/rendering-and-shell.md#the-browser-shell-shmupshell);
 exports: [`docs/dev/api-reference.md`](../../docs/dev/api-reference.md#shmupshell).
 
-Tests run in Node with fakes for the window, images and the WebGL renderer; the real browser
-path is covered by `pnpm test:e2e` (headless Chromium, `test/e2e/`).
+Tests run in Node with fakes for the window, images and the WebGL renderer; the workers get
+`--expose-gc`, so the free-flight scene's per-frame `update()` is checked with the core's
+allocation guard. The real browser path is covered by `pnpm test:e2e` (headless Chromium,
+`test/e2e/` — `flight.spec.ts` flies the KESTREL with arrow keys in both builds). How the World
+the scene draws works: [`docs/dev/sim-world.md`](../../docs/dev/sim-world.md).

@@ -80,7 +80,9 @@ export interface FixedStepLoop {
  * @remarks
  * The first `advance()` call (and the first after `reset()`) only records the
  * timestamp and runs no tick. Non-positive deltas (clock went backwards, duplicate
- * timestamp) run nothing. `maxTicksPerFrame` is floored.
+ * timestamp) run nothing. `maxTicksPerFrame` is floored. `advance()`, `alpha` and `reset()`
+ * never allocate: the fractional last timestamp and accumulator live in a `Float64Array`
+ * rather than in closure variables, which V8 would re-box on every assignment (M1-06).
  *
  * @param options - Tick rate, per-frame cap and tick callback.
  * @returns The loop; call `advance(now)` from the host's frame callback.

@@ -24,7 +24,7 @@ shmup-cup/
 ├── tsconfig.json           type-checks repo-root tooling files
 ├── eslint.config.js        flat config: typescript-eslint (type-aware), compat (chrome >= 69), jsdoc, core purity rules
 ├── vite.shared.ts          @shmup/source resolve conditions shared by Vite + Vitest; shmupContent() → virtual:shmup-content; shmupAssets() → virtual:shmup-assets + dist/assets/atlas/
-├── vitest.shared.ts        defineShmupProject(): per-project Vitest defaults (tests in test/, Node env)
+├── vitest.shared.ts        defineShmupProject(): per-project Vitest defaults (tests in test/, Node env, optional worker execArgv such as --expose-gc)
 ├── vitest.config.ts        Vitest *projects*: packages/*, apps/*, test (→ `pnpm test:all`)
 ├── .browserslistrc         chrome >= 69 (Tizen 5.5) for eslint-plugin-compat
 ├── .editorconfig  .prettierrc.json  .prettierignore  .nvmrc (Node 24)  .gitignore
@@ -39,17 +39,21 @@ shmup-cup/
 │   │   │   ├── input/          ✔ Action bits, InputSnapshot, edge latching (feat §4)
 │   │   │   ├── config/         ✔ GameConfig + defaults + validation
 │   │   │   ├── loop/           ✔ fixed-step accumulator (snap, cap, reset)
-│   │   │   ├── game/           ✔ createGame(): composition root, suspend/resume
+│   │   │   ├── game/           ✔ createGame(): composition root, suspend/resume, hosts the World
+│   │   │   ├── world/          ✔ createWorld / stepWorld: session state + the fixed 9-phase tick pipeline (plan §3.2), pool registry, view
 │   │   │   ├── presentation/   ✔ IRenderer / IAudio contracts + the render contract (RenderFrame, WorldView, SpriteBatchView, DrawList, LayerId)
 │   │   │   ├── rng/ math/ events/ pools/                 ✔ engine foundations (sfc32, trig tables, event ring, SoA pools)
 │   │   │   ├── data/           ✔ (partial) content loader: schema.ts combinators, loadContent(), ContentDb, migrations
-│   │   │   ├── player/ weapons/ options/ shields/ powerups/ player-side systems (placeholders)
+│   │   │   ├── player/         ✔ (partial) KESTREL movement, speed levels, clamp, banking, fly-in (death/respawn: M1-12)
+│   │   │   ├── weapons/ options/ shields/ powerups/         player-side systems (placeholders)
 │   │   │   ├── enemies/ bullets/ patterns/ bosses/         enemy-side systems (placeholders)
-│   │   │   ├── collision/ stage/                           world (placeholders)
+│   │   │   ├── collision/      ✔ (partial) scalar shape tests, layer masks, counting-sort uniform grid (terrain: M1-07)
+│   │   │   ├── stage/                                      stage runtime (placeholder)
 │   │   │   ├── scoring/ rank/ fx/                          rules & feel (placeholders)
 │   │   │   ├── scenes/ ui/                                 flow & canvas UI model (placeholders)
-│   │   │   └── replay/ save/ debug/                        meta & tooling (placeholders)
-│   │   ├── test/<module>/  one folder per module + index.test.ts (module tree invariants)
+│   │   │   ├── debug/          ✔ (partial) hashWorld state hash, debug flags (controls: M1-19)
+│   │   │   └── replay/ save/                               meta & tooling (placeholders)
+│   │   ├── test/<module>/  one folder per module + index.test.ts (module tree invariants); test/helpers/alloc.ts = allocation guard (measureHeapGrowth)
 │   │   ├── tsconfig.json   src only, lib ES2018, no types (purity)
 │   │   ├── tsconfig.build.json  emits dist/ (customConditions off)
 │   │   └── test/tsconfig.json   Node-side program for tests
@@ -60,7 +64,7 @@ shmup-cup/
 │   ├── input-web/          @shmup/input-web — keyboard/remote + Gamepad API → InputSnapshot
 │   │   └── src/ keymap ✔ keyboard ✔ gamepad ✔ web-input ✔ remote ✔ (debounce, diagonal/SOCD policies) rebind ✔ (partial: input profiles, game/menu tables, profile choice)
 │   └── shell/              @shmup/shell — shared browser host of apps/web + apps/tizen (decision D34)
-│       └── src/ boot ✔ loader ✔ dispatch ✔ error-screen ✔ frame-loop ✔ showcase ✔
+│       └── src/ boot ✔ loader ✔ dispatch ✔ error-screen ✔ frame-loop ✔ flight ✔ (default scene: free flight) showcase ✔
 │
 ├── apps/                   deployable hosts (thin adapters around the packages)
 │   ├── web/                @shmup/web — Vite dev app (HMR), browser Platform; also Electron's renderer

@@ -42,7 +42,8 @@ dist/assets/atlas/*.png    emitted next to the bundle (web and Tizen builds)
 `pnpm content:check` are done. Both apps register `shmupAssets()` and ship the pages; since
 M1-04 their `main.ts` imports `virtual:shmup-assets`, `@shmup/shell` loads the pages with
 `new Image()` and render-pixi's `createAtlas` turns them into textures, and the default scene
-(the sprite showcase) draws the real sprites and the pixel font
+(free flight since M1-06 — the KESTREL's bank frames, the star layers, the HUD; the sprite
+showcase with `?scene=showcase`) draws the real sprites and the pixel font
 ([rendering-and-shell.md](rendering-and-shell.md)).
 
 Why this design:

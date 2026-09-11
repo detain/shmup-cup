@@ -62,7 +62,7 @@ browser, TV).
 | Export | Kind | Summary |
 |---|---|---|
 | `createFixedStepLoop({ tickRate, maxTicksPerFrame, onTick, snapToleranceMs? })` | function | → `FixedStepLoop`; throws `RangeError` for `tickRate ≤ 0` or cap `< 1` |
-| `FixedStepLoop` | interface | `stepMs`, `alpha`, `totalTicks`, `advance(nowMs) → ticks run`, `reset()` |
+| `FixedStepLoop` | interface | `stepMs`, `alpha`, `totalTicks`, `advance(nowMs) → ticks run`, `reset()` — none of them allocates (the fractional times live in a `Float64Array`) |
 | `FixedStepLoopOptions` | interface | Options above |
 | `DEFAULT_SNAP_TOLERANCE_MS` | const | `1` |
 
@@ -71,7 +71,7 @@ browser, TV).
 | Export | Kind | Summary |
 |---|---|---|
 | `createGame(platform, overrides?, content?)` | function | → `Game`; registers suspend/resume handlers on the platform. `content` defaults to `EMPTY_CONTENT_DB` |
-| `Game` | interface | `config`, `content`, `platform`, `events` (`EventQueue` the systems push presentation events into; the host drains it once per frame), `state`, `inputContext` (getter: the binding context the top scene wants — `'game'` until M1-16), `step()`, `frame(nowMs) → ticks`, `renderFrame()` (*reused* `RenderFrame`: `world` `null` until M1-06, empty `hud` / `ui` draw lists, zero `screen`), `pause()`, `resume()` |
+| `Game` | interface | `config`, `content`, `platform`, `events` (the World's `EventQueue`, `=== world.events`; the host drains it once per frame), `world` (the session's `World`, created by `createWorld(config, content)`; only `step()` advances it), `state`, `inputContext` (getter: the binding context the top scene wants — `'game'` until M1-16), `step()` (one `platform.input.poll()`, then `stepWorld`), `frame(nowMs) → ticks`, `renderFrame()` (*reused* `RenderFrame`: `world` = `game.world.view`, empty `hud` / `ui` draw lists, zero `screen`), `pause()`, `resume()` |
 | `GameState` | interface | `tick`, `paused`, `suspended`, `input` (last snapshot) |
 
 ### `presentation` — back-end contracts and the render contract
@@ -220,6 +220,83 @@ The placeholder modules `weapons`, `enemies` and `stage` still declare their own
 `data` versions above. The steps that implement those systems (M1-07 stage, M1-08
 enemies, M1-10 weapons) reconcile the two — import the `data` types in the meantime.
 
+### `world` — the gameplay session and the tick pipeline
+
+One gameplay session and the fixed 9-phase tick of plan §3.2. Guide:
+[sim-world.md](sim-world.md).
+
+| Export | Kind | Summary |
+|---|---|---|
+| `createWorld(config, content)` | function | → `World` at tick 0: RNG streams from `config.seed`, the ship from `resolvePlayerShip(content)`, player 1 starting its fly-in, player 2 inactive, view already filled |
+| `stepWorld(world, input)` | function | Runs `WORLD_PHASES` in order (phases 2–8 skipped while `hitStop > 0` at the start of the tick), then `world.tick++`; never allocates |
+| `World` | interface | `config`, `content`, `ship`, `tick`, `rng`, `events`, `players` (2), `intents` (2), `camera`, `status`, `hitStop`, `debugFlags`, `pools`, `grid`, `playerBatch`, `view` |
+| `WorldCamera` | interface | `x`, `y` (playfield top-left in world pixels), `dx`, `dy` (last stage-phase step), `vx`, `vy` (scroll velocity px/tick, 0 = static; M1-07 drives it) |
+| `WorldStatus`, `WORLD_STATUSES` | type, const | `'playing' \| 'bossWarning' \| 'stageClear' \| 'gameOver'`; the list (index = hash code) |
+| `WorldPhase`, `WORLD_PHASE_NAMES` | const + type, const | `Input 0, Players 1, Stage 2, Scripts 3, Movement 4, Collision 5, Damage 6, Removal 7, Fx 8`; `'input'` … `'fx'` |
+| `WORLD_PHASES` | const | Frozen `WorldPhaseEntry[]` in tick order; only `input` and `fx` have `runsDuringHitStop` |
+| `WorldPhaseEntry`, `WorldSystem` | interface, type | `{ phase, name, runsDuringHitStop, run }`; `(world, input) => void` |
+| `PoolRegistry`, `RegisteredPool` | interfaces | `entries`, `register(name, pool) → pool` (throws `Error` for a duplicate name), `flushAll()` (phase 8), `clearAll()`; `{ name, pool, arrays }` with the field arrays in sorted name order (the hash order) |
+| `syncWorldView(world)` | function | Refills the players' mirror batch (active, not `dying` / `dead`, sprite present; blinks while invulnerable); phase 9 and `createWorld` call it |
+| `GRID_MARGIN` | const | `64` — px around the camera view covered by `world.grid` |
+
+### `player` — the player ship (partial)
+
+Movement, speed levels, clamping, banking and the fly-in (M1-06); hits, death and respawn
+arrive in M1-12.
+
+| Export | Kind | Summary |
+|---|---|---|
+| `PlayerShip` | interface | `slot`, `active`, `x`, `y` (world centre, sub-pixel), `state`, `stateTicks`, `speedLevel`, `invulnTicks`, `bank`, `device`, `lives`, `moving` |
+| `PlayerState`, `PLAYER_STATES` | type, const | `'entering' \| 'alive' \| 'dying' \| 'dead' \| 'respawning'`; the list (index = hash code) |
+| `PlayerIntent` | interface | `held`, `pressed`, `released`, `device`, `moveX`, `moveY` (−1 / 0 / 1; opposites cancel) |
+| `PlayerCamera` | interface | `CameraView` + `dx`, `dy` (the world camera satisfies it) |
+| `createPlayer(slot, lives)` | function | → a `dead`, inactive ship (allocate once) |
+| `createPlayerIntent()` | function | → an empty intent |
+| `readPlayerIntent(intent, input)` | function | `PlayerInput` → intent (tick phase 1); never allocates |
+| `spawnPlayer(ship, camera, state = 'entering')` | function | Starts a fly-in at camera-relative (`ENTER_START_X`, `SPAWN_Y`), level; `'respawning'` after a death |
+| `setPlayerState(ship, state)` | function | Switches state, `stateTicks = 0` |
+| `updatePlayer(ship, spec, intent, camera)` | function | One tick (phase 2): timers, fly-in (cubic ease-out over `spec.enterTicks`, input ignored), ride `camera.dx/dy`, move at `speeds[speedLevel]` (× `DIAGONAL_SCALE` per axis on diagonals, no inertia), clamp to the view minus `margins`, bank one step per tick; inactive ships skipped; never allocates |
+| `playerBankFrame(bank, bankFrames)` | function | → sprite frame: 0 level, `1…N` up, `N+1…2N` down |
+| `resolvePlayerShip(content, id = 'kestrel')` | function | → that ship, else the first, else `DEFAULT_PLAYER_SHIP` (load time) |
+| `DEFAULT_PLAYER_SHIP` | const | Frozen built-in spec with the KESTREL tunables and `spriteId: -1` (not drawn) — for empty content |
+| `DIAGONAL_SCALE`, `ENTER_START_X`, `ENTER_END_X`, `SPAWN_Y` | const | `0.7071` (D4); `-24`, `64` (camera-relative fly-in); `100` (`PLAYFIELD_H / 2`) |
+
+### `collision` — shapes, layers, broad phase (partial)
+
+Terrain queries arrive with the stage runtime (M1-07), circle chains for bending lasers in M2-02.
+
+| Export | Kind | Summary |
+|---|---|---|
+| `circleCircle(ax, ay, ar, bx, by, br)` | function | → overlap or touch (squared distances) |
+| `aabbAabb(ax, ay, ahw, ahh, bx, by, bhw, bhh)` | function | Boxes as centre + half sizes; sharing an edge / corner is a hit |
+| `circleAabb(cx, cy, r, bx, by, hw, hh)` | function | Circle vs box |
+| `capsuleCircle(x1, y1, x2, y2, capsuleR, cx, cy, r)` | function | Straight laser (segment swept by `capsuleR`) vs circle |
+| `segmentAabb(x1, y1, x2, y2, bx, by, hw, hh)` | function | Slab test: any point of the segment in the closed box |
+| `pointSegmentDistanceSq(px, py, x1, y1, x2, y2)` | function | → squared distance (a zero-length segment is a point) |
+| `CollisionLayer` | const + type | Bits `Player 1, PlayerShot 2, Enemy 4, EnemyBullet 8, EnemyLaser 16, Item 32, Terrain 64` — append, never renumber |
+| `COLLISION_MASKS`, `layersInteract(a, b)` | const, function | Symmetric layer → mask table (plan §3.2 phase 6 pairs); → `true` when `a`'s mask has `b` |
+| `createSpatialGrid(width, height, cellSize = 32, capacity = 256)` | function | → `SpatialGrid`; throws `RangeError` for non-positive sizes or a non-integer capacity |
+| `SpatialGrid` | interface | `cellSize`, `cols`, `rows`, `capacity`, `count`, `dropped`, `begin(originX, originY)`, `insert(id, minX, minY, maxX, maxY) → false when full`, `build()` (counting sort), `query(minX, minY, maxX, maxY, visit) → visited` (exact — equals brute force; throws `Error` before `build`) |
+| `SpatialGridVisitor` | type | `(id) => void` — create once, not per query |
+| `DEFAULT_GRID_CELL_SIZE`, `DEFAULT_GRID_CAPACITY` | const | `32`, `256` |
+| `Shape`, `TerrainQuery` | types | Circle / AABB / capsule union; `isSolid(x, y)`, `findFloor(x, y, maxDistance)` (implemented by M1-07) |
+
+All shape tests take scalars (no temporaries) and treat touching as a hit. Grid boxes
+outside the covered area clamp into the border cells; boxes over 9 cells go to an overflow
+list every query scans. Pass whole numbers to `begin()` (fractional arguments get boxed).
+
+### `debug` — state hash and debug switches (partial)
+
+The debug controls (god mode, frame advance, slow motion, stage skip) arrive in M1-19.
+
+| Export | Kind | Summary |
+|---|---|---|
+| `hashWorld(world)` | function | → unsigned 32-bit FNV-1a over tick, both RNG states, camera, status, hit-stop, every player's simulated fields and every registered pool's live slots (fixed order, numbers as little-endian doubles); reads only; ≤ 16 B allocated per call |
+| `createDebugFlags()` | function | → `DebugFlags` all off, `slowMo` 1 |
+| `DebugFlags` | interface | `godMode`, `showHitboxes`, `frameAdvance`, `slowMo` |
+| `DebugCounters` | interface | `enemies`, `enemyBullets`, `playerShots`, `rngCalls`, `stateHash` (overlay, M1-19) |
+| `FNV_OFFSET_BASIS`, `FNV_PRIME` | const | `0x811c9dc5`, `0x01000193` |
+
 ### `module-info`
 
 `defineModule({ name, status, specRefs })` → frozen `ModuleInfo`; `ModuleStatus` =
@@ -230,11 +307,11 @@ enemies, M1-10 weapons) reconcile the two — import the `data` types in the mea
 Types only. They are **not** exported from the package entry yet (the `exports` map has
 only `"."`), so today they can only be imported with relative paths from inside
 `packages/core`. A module's exports join `src/index.ts` when it is implemented — as
-`rng`, `math`, `events` and `pools` did in M1-01.
+`rng`, `math`, `events` and `pools` did in M1-01 and `world`, `player`, `collision` and
+`debug` in M1-06.
 
 | Module | Declared types | Planned functions (from the source comments) |
 |---|---|---|
-| `player` | `PlayerShip` | `createPlayer`, `updatePlayer`, `killPlayer`, `respawnPlayer` |
 | `weapons` | `WeaponSpec`, `WeaponBehaviorId`, `Loadout` | `fireWeapons`, `updateShots`, `PRESET_LOADOUTS` |
 | `options` | `OptionGroup`, `OptionFormation` | `createOptionGroup`, `recordShipPosition`, `optionPosition` |
 | `shields` | `ShieldState`, `ShieldKind` | `applyShieldHit`, `grantShield`, `shieldAbsorbsTerrain` |
@@ -243,7 +320,6 @@ only `"."`), so today they can only be imported with relative paths from inside
 | `bullets` | `BulletSpawn` | `createBulletPool(512)`, `spawnBullet`, `updateBullets`, `cancelAllBullets` |
 | `patterns` | `Script`, `ScriptContext`, `PatternNode` | `wait`, `createScriptRunner`, pattern primitives, `compilePattern` |
 | `bosses` | `Boss`, `BossPart`, `BossPhase` | `createBoss`, `updateBoss`, `damagePart`, `bossDeathSequence` |
-| `collision` | `Shape`, `SpatialGrid`, `TerrainQuery` | `circleVsCircle`, `aabbVsAabb`, `capsuleVsCircle`, `createSpatialGrid(32)` |
 | `stage` | `StageEvent`, `CameraState`, `Checkpoint`, `StageRunner` | `createStageRunner(stageData, spawner)` |
 | `scoring` | `PlayerScore`, `HiScoreEntry` | `addScore`, `checkExtend`, `insertHiScore` |
 | `rank` | `RankInputs` | `computeRank(inputs) → 0–31`, `rankScale` |
@@ -252,7 +328,11 @@ only `"."`), so today they can only be imported with relative paths from inside
 | `replay` | `Replay`, `ReplayHeader` | `createRecorder`, `recordTick`, `encodeReplay` / `decodeReplay`, `createPlayback` |
 | `save` | `SaveData`, `SaveMigration` | `loadSave(storage)`, `writeSave`, `SAVE_MIGRATIONS` |
 | `fx` | `FxState` | `requestHitStop`, `requestShake`, `tickFx` |
-| `debug` | `DebugFlags`, `DebugCounters` | `hashState(game)`, `createDebugControls(game)` |
+
+Still planned inside the partial modules: `player` — `playerHit`, `killPlayer`, respawn by
+death-penalty preset (M1-12), terrain-box checks (M1-07); `collision` — `terrainSolidAt`,
+`boxHitsTerrain`, `findFloor`, `findCeiling` (M1-07), circle chains (M2-02); `debug` —
+`createDebugControls(game)` (M1-19).
 
 ## `@shmup/input-web`
 
@@ -359,11 +439,11 @@ Guide: [rendering-and-shell.md](rendering-and-shell.md#the-browser-shell-shmupsh
 | Export | Module | Summary |
 |---|---|---|
 | `bootShell(options)` | `boot` | → `Promise<Shell>`; rejects with `ShellBootError` (after showing the boot error screen and releasing everything) for invalid content, a failed or stale atlas page, no WebGL, or a failing platform / game |
-| `ShellOptions` | `boot` | `canvas`, `win`, `contentFiles`, `assets`, `input`, `audio`, `platform: (renderer) => Platform` (called after content validation — the apps apply the input profiles there), `gameConfig?`, `scene?` (`'showcase'`), `audioUnlock?` (`'gesture'` \| `'immediate'`), `preferWebGLVersion?` (1), `contentOwners?` (merged over `DEFAULT_CONTENT_OWNERS`), `createImage?`, `overlay?` (`null` disables it) |
-| `Shell` | `boot` | `game`, `platform`, `renderer`, `atlas`, `events` (dispatcher), `content`, `scene`, `showcase`, `stop()` (idempotent; releases loop, listeners, input, renderer, atlas, audio) |
-| `ShellAssets`, `ShellInput`, `ShellScene` | `boot` | `{ manifest, pageUrls }`; `PlatformInput` + `clear()` + `setContext(ctx)` (required; called once at boot and before a frame's ticks whenever `game.inputContext` changed) + `destroy()`; `'showcase' \| 'calibration'` |
+| `ShellOptions` | `boot` | `canvas`, `win`, `contentFiles`, `assets`, `input`, `audio`, `platform: (renderer) => Platform` (called after content validation — the apps apply the input profiles there), `gameConfig?`, `scene?` (`'flight'`), `audioUnlock?` (`'gesture'` \| `'immediate'`), `preferWebGLVersion?` (1), `contentOwners?` (merged over `DEFAULT_CONTENT_OWNERS`), `createImage?`, `overlay?` (`null` disables it) |
+| `Shell` | `boot` | `game`, `platform`, `renderer`, `atlas`, `events` (dispatcher), `content`, `scene`, `flight` (the `FlightScene` or `null`), `showcase` (or `null`), `stop()` (idempotent; releases loop, listeners, input, renderer, atlas, audio) |
+| `ShellAssets`, `ShellInput`, `ShellScene` | `boot` | `{ manifest, pageUrls }`; `PlatformInput` + `clear()` + `setContext(ctx)` (required; called once at boot and before a frame's ticks whenever `game.inputContext` changed) + `destroy()`; `'flight' \| 'showcase' \| 'calibration'` (the calibration scene renders the game frame without its world) |
 | `ShellBootError` | `boot` | `Error` with `lines`, `issues`, `reason` |
-| `sceneFromSearch(search)`, `SHELL_SCENES` | `boot` | `?scene=` → `ShellScene` (unknown → `'showcase'`); the scene list, default first |
+| `sceneFromSearch(search)`, `SHELL_SCENES` | `boot` | `?scene=` → `ShellScene` (unknown or missing → `'flight'`); the scene list, default first |
 | `BOOT_STATE_ATTRIBUTE` | `boot` | `'data-shmup-state'` — `loading` / `running` / `error` on the game canvas |
 | `loadImages(urls, createImage, onProgress?)` | `loader` | → `Promise<images>` in `urls` order, parallel; rejects with `AssetLoadError { url }` on the first failure |
 | `loadGameContent(files, { owners?, …LoadContentOptions })` | `loader` | → `LoadContentResult`: core issues, then each foreign kind's owner issues (`owners`, then `DEFAULT_CONTENT_OWNERS`), or `no loader for content kind` per unowned file; throws only `TypeError` for a non-array |
@@ -375,7 +455,9 @@ Guide: [rendering-and-shell.md](rendering-and-shell.md#the-browser-shell-shmupsh
 | `drawProgress(ctx, w, h, fraction, label)`, `drawErrorScreen(ctx, w, h, title, lines) → lines shown`, `formatIssues(issues)` | `error-screen` | Canvas 2D drawing (`Canvas2DLike`) and `path: message` lines |
 | `BOOT_SCREEN_COLORS`, `Canvas2DLike` | `error-screen` | Background `#10173a`, text, title `#ff5aa0`, track; the 2D context subset used |
 | `startFrameLoop(scheduler, onFrame)` | `frame-loop` | → `FrameLoop { stop() }`; `FrameScheduler` = the two rAF functions (moved here from both apps) |
-| `createShowcase({ starTileSize? })` | `showcase` | → `Showcase { spriteNames, world, frame, update(gameFrame) → frame }` (*reused*, pure function of the tick) |
+| `createFlightScene(game, { starTileSize? })` | `flight` | → `FlightScene { spriteNames, world, frame, update(gameFrame) → frame }`: the default scene — two starfield batches followed by the game World's batches on the World's camera, the D20 HUD (`1P`, score, `FREE FLIGHT`, stock ships, `ARROWS MOVE`); *reused* frame, no per-frame allocation |
+| `FLIGHT_SPRITES`, `FlightSceneOptions` | `flight` | The scene's own sprites (`bg/stars-far`, `bg/stars-mid`, `bg/stars-near`, `hud/life`), appended after the content's sprite names; options type |
+| `createShowcase({ starTileSize? })` | `showcase` | → `Showcase { spriteNames, world, frame, update(gameFrame) → frame }` (*reused*, pure function of the tick) — `?scene=showcase` |
 | `SHOWCASE_SPRITES`, `ShowcaseOptions` | `showcase` | The showcase's sprite name table (11 names) |
 
 ## Apps
@@ -427,7 +509,8 @@ Placeholders: `FileStore` (`saves.ts`), `SteamService` (`steam.ts`).
 | Export | File | Summary |
 |---|---|---|
 | `SOURCE_CONDITION` (`'@shmup/source'`), `clientConditions`, `serverConditions` | `vite.shared.ts` | Resolve workspace packages to `src/` in Vite/Vitest |
-| `defineShmupProject(name, { environment?, include? })` | `vitest.shared.ts` | Per-project Vitest config (tests under `test/`, Node environment) |
+| `defineShmupProject(name, { environment?, include?, execArgv? })` | `vitest.shared.ts` | Per-project Vitest config (tests under `test/`, Node environment); `execArgv` goes to the worker pool (`['--expose-gc']` in core and shell) |
+| `measureHeapGrowth(fn, iterations, warmup = min(iterations, 1000))` | `packages/core/test/helpers/alloc.ts` | Allocation guard (plan §1.4) → `HeapGrowth { bytes, growth, collections, bytesPerIteration }`: heap growth plus the bytes in-loop GCs reclaimed (V8 `GCProfiler`); throws without `--expose-gc`. Test-only, imported by relative path |
 | `shmupContent({ root? })` | `vite.shared.ts` | Vite plugin → `virtual:shmup-content`: every shipped `content/**/*.json` inlined into the bundle, sorted by path, `example.*.json` skipped, full reload on change |
 | `readContentFiles(root?)`, `CONTENT_MODULE_ID`, `ContentFileRecord`, `ShmupContentOptions` | `vite.shared.ts` | The Node-side reader behind the plugin (also used by `pnpm content:check`): recursive, `example.*` skipped, sorted by path; `SyntaxError` naming the file on bad JSON, `[]` for a missing root |
 | `virtual:shmup-content` | `types/virtual-modules.d.ts` | Ambient module declaration: `default: readonly { path, data }[]` |

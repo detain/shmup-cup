@@ -57,7 +57,7 @@ and exports `moduleInfo`; `test/<module>/` holds its smoke test.
 ## Scripts
 
 ```sh
-pnpm --filter @shmup/core test        # Vitest (Node, headless)
+pnpm --filter @shmup/core test        # Vitest (Node, headless; workers get --expose-gc for the allocation guard)
 pnpm trig:tables                      # regenerate src/math/trig-table.ts (repo root; a test diffs it)
 pnpm content:check                    # validate content/ with loadContent() (repo root)
 pnpm --filter @shmup/core typecheck   # src (pure) + test/ (Node) programs
@@ -69,9 +69,16 @@ The deterministic primitives (`rng`, `math`, `events`, `pools`) have their own g
 loader and schema combinators (`data`) theirs:
 [`docs/dev/content-data.md`](../../docs/dev/content-data.md); the render contract
 (`presentation`) is explained with its renderer in
-[`docs/dev/rendering-and-shell.md`](../../docs/dev/rendering-and-shell.md). `src/math/trig-table.ts`
+[`docs/dev/rendering-and-shell.md`](../../docs/dev/rendering-and-shell.md); the World, its tick
+pipeline, the player ship, collision and the state hash (`world`, `player`, `collision`,
+`debug`) in [`docs/dev/sim-world.md`](../../docs/dev/sim-world.md). `src/math/trig-table.ts`
 is **generated** — edit `scripts/gen-trig-tables.mjs`, not the table.
 
 Consumers inside the workspace resolve `@shmup/core` to `src/index.ts` through the
 `@shmup/source` export condition (no build needed for dev/test); `dist/` is for `tsc`
 builds of dependent packages and any future external consumer.
+
+`test/helpers/alloc.ts` is the **allocation guard** (plan §1.4): `measureHeapGrowth(fn,
+iterations)` measures the bytes a hot path allocates (V8 `GCProfiler`, needs `--expose-gc`,
+which `vitest.config.ts` passes to the workers). Every per-tick entry point (`stepWorld`,
+`updatePlayer`, the grid, `hashWorld`, `game.frame`) has a test that keeps it under budget.

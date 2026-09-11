@@ -1,9 +1,9 @@
 # Rendering and the browser shell: render contract, `render-pixi`, `@shmup/shell`
 
 How a simulation state becomes pixels, and how the web and TV apps boot. Filled in by plan
-step **M1-04**. Later steps *fill* the contract (the World in M1-06, terrain and parallax in
-M1-07, the HUD and menus in M1-16, particles and screen effects in M1-14) without changing
-its shape.
+step **M1-04**. Later steps *fill* the contract (the World in M1-06, see
+[sim-world.md](sim-world.md); terrain and parallax in M1-07; the HUD and menus in M1-16;
+particles and screen effects in M1-14) without changing its shape.
 
 This page is the *how and why*. Exact signatures are in
 [api-reference.md](api-reference.md); the TSDoc in the sources is the authoritative
@@ -45,7 +45,7 @@ Strings enter only through a draw list's string slots, and only when the text ch
 
 | Code | Layer | Group | Drawn from |
 |---|---|---|---|
-| 0 | `BgFar` | world | parallax (M1-07); the showcase's far stars |
+| 0 | `BgFar` | world | parallax (M1-07); the free-flight and showcase far stars |
 | 1 | `BgMid` | world | parallax (M1-07) |
 | 2 | `Terrain` | world | tile terrain (M1-07) |
 | 3 | `GroundEnemies` | world | turrets, walkers |
@@ -132,9 +132,10 @@ hud.sprite(lifeSpriteId, 0, 4, 209);
 ### The frame
 
 `RenderFrame = { tick, alpha, world, hud, ui, screen }`. `createGame()` builds one and
-returns the same object from every `renderFrame()` call: `world` is `null` until the World
-exists (M1-06), `hud` / `ui` are the session's (empty) draw lists, `screen` is all zeros until
-the fx system (M1-14). `screen.shakeX/Y` are rounded by the renderer; `flash` (white over the
+returns the same object from every `renderFrame()` call: `world` is the World's view
+(`game.world.view`, the same object for the whole session — since M1-06 its only batch is the
+players' mirror on `LayerId.Player`), `hud` / `ui` are the session's (empty) draw lists,
+`screen` is all zeros until the fx system (M1-14). `screen.shakeX/Y` are rounded by the renderer; `flash` (white over the
 playfield, under the HUD) and `dim` (black under the UI layer) are 0…1 and clamped.
 
 The layout constants are in core `config`: `HUD_BAR_HEIGHT` 8, `PLAYFIELD_Y` 8,
@@ -247,7 +248,7 @@ const shell = await bootShell({
   audio, // createWebAudio()   — also behind the platform's audio; destroyed by stop()
   platform: (renderer) => createWebPlatform({ input, audio, webgl2: renderer.webGLVersion === 2 /* … */ }),
   gameConfig: { remoteMode: false },
-  scene: sceneFromSearch(location.search), // 'showcase' | 'calibration'
+  scene: sceneFromSearch(location.search), // 'flight' (default) | 'showcase' | 'calibration'
   audioUnlock: 'gesture', // 'immediate' on the TV
   contentOwners: { [INPUT_PROFILES_KIND]: profiles.load }, // optional: merged over DEFAULT_CONTENT_OWNERS
 });
@@ -263,7 +264,7 @@ const shell = await bootShell({
 | 3 | `createAtlas(manifest, images)` | `ATLAS DOES NOT MATCH ITS MANIFEST` |
 | 4 | `createPixiRenderer(...)` — WebGL1 first | `WEBGL IS NOT AVAILABLE` |
 | 5 | `options.platform(renderer)`, then `createGame(platform, gameConfig, content.db)` | `SHMUP CUP FAILED TO START` |
-| 6 | Scene set up (showcase: its name table + `bindWorld`; calibration: content's names), dispatcher created | — |
+| 6 | Scene set up (free flight / showcase: the scene's name table + `bindWorld(scene.world)`; calibration: content's names and a frame without a world), dispatcher created | — |
 | 7 | Suspend → `input.clear()` + `audio.suspend()`; resume → `audio.resume()`; audio unlock (first `keydown` / `pointerdown` in the capture phase, or immediately); `resize` → `renderer.resize()` | — |
 | 8 | rAF loop started, overlay removed, canvas marked `running` | — |
 
@@ -303,7 +304,7 @@ const onFrame = (now: number): void => {
   game.frame(now); // 0…4 fixed ticks
   game.events.drain(events.visit); // sim events → registered handlers
   const frame = game.renderFrame();
-  renderer.render(showcase === null ? frame : showcase.update(frame));
+  renderer.render(scene !== null ? scene.update(frame) : calibration.update(frame));
 };
 startFrameLoop(win, onFrame); // requests the next frame before calling onFrame
 ```
@@ -312,22 +313,34 @@ startFrameLoop(win, onFrame); // requests the next frame before calling onFrame
 load time with `shell.events.on(kind, handler)` (returns an unsubscribe function; an unknown
 kind throws `RangeError`). Dispatching is a table lookup and a loop — no allocation.
 Handlers receive the queue's **reused** record: copy fields out, never keep it. Events with
-no handler are counted in `unhandled` and dropped; today nothing pushes events yet (M1-06
-onward), and the audio and FX handlers arrive in M1-14 / M1-15.
+no handler are counted in `unhandled` and dropped; the queue is the World's (M1-06) but no
+system pushes events yet (M1-08 onward), and the audio and FX handlers arrive in M1-14 /
+M1-15.
 
-### Scenes until the World exists
+### Scenes until the scene stack exists
 
 | `?scene=` | What is drawn | Sprite name table |
 |---|---|---|
-| (none) / `showcase` | The **sprite showcase** (`createShowcase()`): three scrolling star layers, the KESTREL flying a figure-eight with its thruster and two Options replaying its path, five drifters with periodic hit flashes, a rotating ring of twelve bullets, both HUD bars (scores via the `number` op, lives, power meter with a moving highlight) and the title "SHMUP CUP" / "SPRITE SHOWCASE" in the bitmap font | `SHOWCASE_SPRITES` |
+| (none) / `flight` | **Free flight** (`createFlightScene(game)`, M1-06): the game's World — the KESTREL flying in, then moving under the player's control — over three drifting star layers, both HUD bars (`1P`, a zero score, `FREE FLIGHT`, stock ships, `ARROWS MOVE`) | `content.db.sprites.names` + `FLIGHT_SPRITES` |
+| `showcase` | The **sprite showcase** (`createShowcase()`): three scrolling star layers, the KESTREL flying a figure-eight with its thruster and two Options replaying its path, five drifters with periodic hit flashes, a rotating ring of twelve bullets, both HUD bars (scores via the `number` op, lives, power meter with a moving highlight) and the title "SHMUP CUP" / "SPRITE SHOWCASE" in the bitmap font | `SHOWCASE_SPRITES` |
 | `calibration` | The skeleton's test pattern (checker border, grid, colour bars, placeholder ship, moving marker) under empty layers | `content.db.sprites.names` |
+
+**Free flight** owns a `WorldView` whose batches are two starfield batches **followed by the
+game World's own batches**, on the World's camera object — a batch the World adds later is
+drawn without changing the scene (the view is bound once, so the World's batch list must be
+complete at creation). Its sprite ids index one table: the content's names, then
+`FLIGHT_SPRITES`. `update(frame)` copies tick, alpha and screen effects, refills the stars
+from the tick (world space relative to the camera, so they pause with the game) and rebuilds
+the HUD only when player 1's lives change. How the World itself works is in
+[sim-world.md](sim-world.md).
 
 The showcase owns its own `RenderFrame` and derives every position from the game's tick with
 `sinB` / `cosB`, so it pauses and resumes with the game and allocates nothing per frame. Its
 UI list is built once (the renderer never redraws it); its HUD list is rebuilt every frame.
-`sceneFromSearch()` ignores unknown values. On the TV the widget starts without a query
-string, so the TV always shows the showcase. M1-06 replaces the showcase with "free flight"
-driven by the real World.
+The calibration scene renders the game's frame through a small wrapper whose `world` is always
+`null`, so only the test pattern and the (empty) HUD / UI lists show. `sceneFromSearch()`
+ignores unknown values. On the TV the widget starts without a query string, so the TV always
+shows free flight.
 
 ## The apps
 
@@ -362,12 +375,17 @@ pnpm test:e2e                                        # builds web + tizen, then 
 `vite preview` on port 4173 and the Tizen `dist/index.html` opened via `file://`.
 
 - `boot.spec.ts` — both builds reach `running`, the atlas page loads through its relative
-  URL, the screenshot is not uniform and has known pixels (the showcase title's yellow and the
-  HUD bar; the calibration border with `?scene=calibration`), and nothing is logged as a
-  console error, page error or failed request.
+  URL, the screenshot is not uniform and has known pixels (free flight's title yellow, the HUD
+  bar and the KESTREL's hull colour; the showcase with `?scene=showcase`; the calibration
+  border with `?scene=calibration`), and nothing is logged as a console error, page error or
+  failed request.
+- `flight.spec.ts` — after the fly-in, holding an arrow key moves the KESTREL (found by its
+  hull colour, a pixel diff between captures) while it stays put without input; holding a
+  direction stops it at the playfield margin, never over the HUD bars; the Tizen build from
+  `file://` moves it with the remote's arrow key codes.
 - `shell.spec.ts` — an aborted atlas request ends on the boot error screen (overlay canvas,
   state `error`); a 1000×600 window gets a centred ×2 frame on the letterbox colour and a
-  resize to 1920×1080 re-fits it to ×5; the showcase animates.
+  resize to 1920×1080 re-fits it to ×5; free flight animates.
 
 Chromium flags (why each exists is in the config's docblock): `--use-angle=swiftshader
 --enable-unsafe-swiftshader` (software WebGL), `--allow-file-access-from-files` (see
@@ -422,7 +440,7 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | `packages/render-pixi/test/atlas/` | Frame numbering, sprite / flash tables, `ui/missing` fallback and warn-once, stale / oversized / corrupt manifests |
 | `packages/render-pixi/test/sprites/`, `ui/`, `text/`, `layers/` | Binding sync (camera, `PLAYFIELD_Y`, anchors, flips, blink, flash, shrinking batches), quad-pool ordering and overflow, draw-list views (revision skipping, hidden sprites), text layout and metrics, number formatting, layer order |
 | `packages/render-pixi/test/renderer/` | The renderer wired with a fake `WebGLRenderer`: passes, rebinding, shake / flash / dim, reused pass options (fails if `resetPass` is removed), allocation probes |
-| `packages/shell/test/` | Boot happy path and every failure (error screen, state attribute, cleanup), content owners (the default `input-profiles` owner, an app owner replacing it), the input context forwarded before a frame's polls, image loading and progress, dispatch (copy-on-write unsubscribe), overlay drawing, showcase determinism and allocation |
+| `packages/shell/test/` | Boot happy path and every failure (error screen, state attribute, cleanup), content owners (the default `input-profiles` owner, an app owner replacing it), the input context forwarded before a frame's polls, image loading and progress, dispatch (copy-on-write unsubscribe), overlay drawing, the free-flight scene (sprite ids, starfield drift / wrap / pause, HUD, empty content, zero allocation per frame), showcase determinism and allocation |
 | `test/e2e/` | The real browser path, both builds (above) |
 
 ## Gotchas
@@ -445,8 +463,8 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 - **M1-05** (done) — the shell forwards `game.inputContext` to `input.setContext()` and
   validates `content/input/` through its default `input-profiles` owner
   ([input-profiles.md](input-profiles.md)).
-- **M1-06** — the World fills `RenderFrame.world` (players batch); the showcase becomes "free
-  flight".
+- **M1-06** (done) — the World fills `RenderFrame.world` (players batch); "free flight" is the
+  default scene, the showcase moved to `?scene=showcase` ([sim-world.md](sim-world.md)).
 - **M1-07** — terrain and parallax drawn from `TerrainView` / `ParallaxView`.
 - **M1-14 / M1-15** — particles, shake, flash and audio handlers registered on the dispatcher.
 - **M1-16** — core `ui` fills the HUD and UI draw lists (menus, HUD model).

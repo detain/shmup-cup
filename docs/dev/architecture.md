@@ -11,7 +11,8 @@ Related pages: [repo-layout.md](repo-layout.md) (where files live),
 [conventions.md](conventions.md) (rules for new code), [content-data.md](content-data.md)
 and [asset-pipeline.md](asset-pipeline.md) (game data and art, from source to bundle),
 [rendering-and-shell.md](rendering-and-shell.md) (the render contract, the renderer and the
-shared browser boot).
+shared browser boot), [sim-world.md](sim-world.md) (the World, its tick pipeline, the player
+ship, collision and the state hash).
 
 ## Layers
 
@@ -44,7 +45,8 @@ shared browser boot).
                     │ render contract (RenderFrame, batches, draw    │
                     │ lists), input snapshots, config, fixed-step    │
                     │ loop, engine primitives, content loader,       │
-                    │ createGame(), every game system (placeholders) │
+                    │ createGame(), the World + tick pipeline,       │
+                    │ player, collision; other systems: placeholders │
                     └────────────────────────────────────────────────┘
 ```
 
@@ -71,9 +73,10 @@ calls the renderer or the mixer. Each displayed frame the host:
 1. calls `game.frame(now)` — the core runs 0…`maxTicksPerFrame` fixed ticks;
 2. drains `game.events` through the shell's dispatcher into the handlers registered per
    event kind (particles, shake → renderer; SFX, music → mixer). The queue, its cue
-   registries and the dispatcher exist (`core/events`, shell `dispatch`); the systems that
-   push events and the handlers arrive with the sim (M1-06) and the FX/audio steps (M1-14,
-   M1-15);
+   registries and the dispatcher exist (`core/events`, shell `dispatch`), and since M1-06 the
+   queue belongs to the World (`game.events === game.world.events`); the systems that push
+   events and the handlers arrive with the gameplay steps (M1-08 onwards) and the FX/audio
+   steps (M1-14, M1-15);
 3. reads the read-only `RenderFrame` with `game.renderFrame()` — world sprite batches, HUD and
    UI draw lists, screen effects (plan §3.4) — and hands it to `renderer.render()`.
 
@@ -95,10 +98,11 @@ requestAnimationFrame(now)                       shell/frame-loop
              │   ├─ keyboard.held + consumeLatched()   input-web/keyboard: SOCD + diagonal policy
              │   ├─ readGamepadActions(pad 0..3)       input-web/gamepad (+ the same policies)
              │   └─ commitPlayerInput(p1/p2, …)        core/input: pressed/released edges
-             └─ state.tick++                     (game systems will run here, fixed order)
+             ├─ stepWorld(world, input)          core/world: the 9 phases below, world.tick++
+             └─ state.tick++
  └─ game.events.drain(dispatcher.visit)          shell/dispatch → registered handlers
  └─ renderer.render(frame)                       render-pixi/renderer
-     │   frame = game.renderFrame(), or showcase.update(it) until the World exists
+     │   frame = scene.update(game.renderFrame()) — free flight (default), showcase, calibration
      ├─ bindWorld(frame.world) if it is a new object   (load time only)
      ├─ binding.sync(batch, camX, camY) per batch      render-pixi/sprites
      ├─ shake offset, flash / dim quads
@@ -107,9 +111,10 @@ requestAnimationFrame(now)                       shell/frame-loop
      └─ pass 2: one sprite, integer scale ×N, centred on the canvas (letterbox around it)
 ```
 
-The fixed tick order the systems will follow inside `step()` (`shmup_feat.md` §22):
-`input → player move → stage events/spawns → scripts → movement → collision → damage →
-deferred removal → emit events`.
+Inside `stepWorld` the systems run in a fixed order (plan §3.2, `shmup_feat.md` §22), kept as
+the explicit array `WORLD_PHASES`: `input → players → stage → scripts → movement → collision →
+damage → removal → fx`. While hit-stop is active only `input` and `fx` run (the tick still
+counts). Details: [sim-world.md](sim-world.md).
 
 ### Fixed-step loop (`core/loop`)
 
@@ -151,6 +156,24 @@ The deterministic primitives every later system builds on. Details and usage rul
   deferred and `flush()` swap-removes at the end of a tick. `createPool(factory, capacity,
   reset)` for the ≤ 100 pooled objects (enemies, boss parts). Nothing allocates after
   creation.
+
+### The World (`core/world`, `player`, `collision`, `debug`)
+
+One gameplay session, built in M1-06. Details: [sim-world.md](sim-world.md).
+
+- **`world`** — `createWorld(config, content)` allocates the session: tick counter, RNG
+  streams, event queue, two `PlayerShip`s (P2 inactive until co-op), the camera (scroll
+  velocity `vx`/`vy`, static until the M1-07 stage runner drives it), status, hit-stop, debug
+  flags, the SoA pool registry (flushed in phase 8, hashed), a broad-phase grid over the
+  camera view and the `WorldView` the renderer draws. `stepWorld(world, input)` runs one tick
+  and never allocates; `createGame` hosts one World per session (`game.world`).
+- **`player`** — KESTREL movement from `content/player/`: speed levels (D3), diagonals × 0.7071
+  (D4), no inertia, riding the camera scroll, clamped to the camera view minus margins,
+  banking, a 40-tick fly-in; death and respawn arrive in M1-12.
+- **`collision`** — closed scalar shape tests (circle, AABB, circle–AABB, capsule–circle,
+  segment–AABB), layer masks and a counting-sort uniform grid whose queries equal brute force.
+- **`debug`** — `hashWorld(world)`: FNV-1a over every piece of simulated state in a fixed
+  order; two worlds with the same seed and input hash equal (golden replays, M1-19).
 
 ### Content pipeline (`content/` → `core/data`)
 
@@ -273,7 +296,7 @@ via `WebAudio.bus(name)`.
 | App hidden | tab hidden (`visibilitychange`) | Home, source switch, multitasking (`visibilitychange`) | `platform.lifecycle` suspend → `game.state.suspended = true` (no ticks), held input cleared, audio suspended |
 | App visible | tab visible | back to the app | resume → `suspended = false`, loop accumulator reset, audio resumed |
 | User pause | `game.pause()` (no UI yet) | same | `state.paused`; survives suspend/resume — resuming the platform does not un-pause |
-| Back | — (`keyboard-default`: Esc / Backspace = `Pause` in the game, `Back` in menus) | remote Back (10009) → `watchBackKey` → `platform.exit()` (before the platform exists: `tizen.application` directly); `tizen-remote-safe` also maps it to `Pause` (game) / `Back` (menus) | Today the showcase is the root screen, so Back exits the TV app — also from the boot error screen, because the watcher is installed before boot; the scene stack will take over Back handling (M1-16) |
+| Back | — (`keyboard-default`: Esc / Backspace = `Pause` in the game, `Back` in menus) | remote Back (10009) → `watchBackKey` → `platform.exit()` (before the platform exists: `tizen.application` directly); `tizen-remote-safe` also maps it to `Pause` (game) / `Back` (menus) | Today free flight is the root screen, so Back exits the TV app — also from the boot error screen, because the watcher is installed before boot; the scene stack will take over Back handling (M1-16) |
 | Resize | `resize` → `renderer.resize()` | same (rare on TV) | new integer viewport |
 
 JavaScript is frozen while a Tizen app is hidden, so nothing in the core may assume wall
@@ -325,7 +348,11 @@ These are enforced now so that replays, golden tests and attract mode work later
 - **Zero allocations in per-tick and per-frame paths**: reuse snapshot/frame objects,
   preallocate pools (`pools` module), no closures or arrays created inside `step()` or
   `render()`; the renderer creates Pixi objects only at load and when a new `WorldView`
-  is bound.
+  is bound. The allocation guard `measureHeapGrowth` (core `test/helpers/alloc.ts`) checks
+  it: `stepWorld` must stay under 256 KB over 10,000 ticks (plan §1.4).
+- **State hashes**: `hashWorld(world)` covers every piece of simulated state; tests run two
+  worlds in lockstep and compare hashes, and golden replays (M1-19) will compare them at
+  checkpoints. New simulated state must be added to the hash.
 
 ## Module status tracking
 
@@ -338,11 +365,13 @@ sections of `shmup_feat.md` / `shmup_tech.md`.
 
 Implemented or partial today: core `platform`, `input`, `config`, `loop`, `game`,
 `presentation`, `rng`, `math`, `events`, `pools`, `data` (partial: `enemies` / `stage` are
-stubs); input-web `keymap`, `keyboard`, `gamepad`, `web-input`, `remote`, `rebind`
+stubs), `world`, `player` (partial: no death / respawn yet), `collision` (partial: no
+terrain yet), `debug` (partial: state hash and flags, no controls yet); input-web `keymap`, `keyboard`, `gamepad`, `web-input`, `remote`, `rebind`
 (partial: profiles, contexts, persistence hook — the rebinding UI comes in M2-16); audio-web
 `web-audio`;
 render-pixi `renderer`, `viewport`, `test-pattern`, `palette`, `atlas`, `layers`, `sprites`,
-`text`, `ui`; shell `boot`, `loader`, `dispatch`, `error-screen`, `frame-loop`, `showcase`;
+`text`, `ui`; shell `boot`, `loader`, `dispatch`, `error-screen`, `frame-loop`, `flight`,
+`showcase`;
 the apps' `boot` and `platform`. Everything else declares its intended API only. The
 build-time tooling outside the packages (the asset pipeline in `scripts/assets/`, the Vite
 plugins in `vite.shared.ts`) has no `moduleInfo`; it is covered by the tests under
@@ -361,9 +390,9 @@ plugins in `vite.shared.ts`) has no `moduleInfo`; it is covered by the tests und
 | An input device | Produce an action mask per tick and feed it through `commitPlayerInput()` (see `createWebInput`); never expose device codes to the core. Its bindings belong in an input profile ([input-profiles.md](input-profiles.md#extending-it)) |
 | An input profile or a remote tuning change | Edit `content/input/*.input-profiles.json` (format in [`content/input/README.md`](../../content/input/README.md)) — no code change |
 | A game action | Append a bit to `Action` (never renumber — masks are recorded in replays), add it to `ACTION_NAMES`, the shipped input profiles and the built-in bindings in `input-web/keymap` / `gamepad` |
-| A game system | Fill in its placeholder module in `packages/core/src/<module>/`, set `moduleInfo.status`, export it from `packages/core/src/index.ts`, call it from `step()` in the fixed tick order |
+| A game system | Fill in its placeholder module in `packages/core/src/<module>/`, set `moduleInfo.status`, export it from `packages/core/src/index.ts`, call it from its phase function in `core/world` (never reorder `WORLD_PHASES`), allocate its state in `createWorld` and add simulated state to `hashWorld` — [sim-world.md](sim-world.md#extending-it) |
 | Content (enemies, weapons, stages) | JSON under `content/` following its README, then `pnpm content:check`. New fields or a new kind: extend the schemas in `core/data` — checklist in [content-data.md](content-data.md#extending-it) |
 | A sprite or animation | A `*.sprite.json` pixel map under `assets/source/sprites/` (its path is its name) or a generator in `scripts/assets/procedural/`; `hitFlash: true` for anything the player can shoot. Real art: a PNG (+ Aseprite export) of the same name — [asset-pipeline.md](asset-pipeline.md#extending-it) |
 | A sound or music cue | Append a name to `SFX_CUES` / `MUSIC_CUES` in `core/events` (never renumber — ids are recorded in replays and bound by `content/audio/`) |
 | A presentation event kind | Append a code to `SimEventKind` and a name to `SIM_EVENT_KIND_NAMES`, then register a handler on the shell's dispatcher (`shell.events.on`) |
-| A new entity kind | Give it an SoA pool (`createSoaPool`) or an object pool (`createPool`) sized from the budgets in `shmup_feat.md` §22, `flush()` it in the deferred-removal phase of the tick |
+| A new entity kind | Give it an SoA pool (`createSoaPool`) registered with `world.pools.register(name, pool)` (flushed in the removal phase and hashed automatically) or an object pool (`createPool`) with a mirror batch, sized from the budgets in `shmup_feat.md` §22 |

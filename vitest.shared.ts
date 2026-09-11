@@ -35,8 +35,11 @@ export interface ShmupProjectOptions {
  * test importing `@shmup/core` runs `packages/core/src` directly — no package build is
  * needed before `pnpm test`.
  *
+ * `execArgv` is passed to Vitest's worker pool unchanged; `@shmup/core` and `@shmup/shell`
+ * use it for `--expose-gc`, which the allocation guard (`measureHeapGrowth`) needs.
+ *
  * @param name - Project name shown in Vitest output (e.g. `core`).
- * @param options - Optional overrides.
+ * @param options - Optional overrides (environment, test globs, worker `execArgv`).
  * @returns A Vitest project config.
  *
  * @example
@@ -44,6 +47,8 @@ export interface ShmupProjectOptions {
  * // packages/foo/vitest.config.ts
  * import { defineShmupProject } from '../../vitest.shared.js';
  * export default defineShmupProject('foo');
+ * // or, with the allocation guard available in the workers:
+ * export default defineShmupProject('foo', { execArgv: ['--expose-gc'] });
  * ```
  */
 export function defineShmupProject(

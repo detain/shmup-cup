@@ -207,6 +207,8 @@ const enemy = enemies.acquire();            // null when exhausted
 
 ## Next steps that build on this page
 
-M1-06 wires the pools and the event queue into the tick pipeline, M1-09 uses `quantizeAngle`
-and `atan2B` for aimed patterns, M1-14/M1-15 consume the event kinds and cue registries,
-and M1-19 hashes pool contents and RNG state for the golden replays.
+M1-06 (done) wired the RNG streams, the event queue and the pool registry into the World
+and its tick pipeline, and `hashWorld` already hashes the RNG states and every registered
+pool's live slots ([sim-world.md](sim-world.md)). M1-09 uses `quantizeAngle` and `atan2B` for
+aimed patterns, M1-14/M1-15 consume the event kinds and cue registries, and M1-19 compares
+those hashes in golden replays.

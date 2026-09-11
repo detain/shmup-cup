@@ -1,46 +1,42 @@
-# The preview build (sprite showcase)
+# The preview build (free flight)
 
-The game is not playable yet. Every build — browser, Samsung TV and desktop — starts with
-a short loading bar and then shows a **sprite showcase**: a little animated scene that uses
-the game's real (placeholder) graphics the way the finished game will draw them. Nothing
-reacts to the controls yet. The showcase exists to prove on each device that the whole
-chain works — the app starts, the graphics load, the 60 ticks per second simulation runs,
-the picture is pixel-perfect at the monitor's resolution — and to catch scaling,
-smoothness or colour problems early.
+The game is not a game yet, but for the first time you can **fly the ship**. Every build —
+browser, Samsung TV and desktop — starts with a short loading bar and then **free flight**:
+the KESTREL, the player ship, flies in from the left edge of an empty starfield and from then
+on follows the directional buttons of the TV remote, the arrow keys or a gamepad. There are no
+enemies, no shooting and no sound yet. Free flight exists to prove on each device that the
+whole chain works — the controls reach the ship quickly and reliably, the 60 ticks per second
+simulation runs smoothly, the picture is pixel-perfect at the monitor's resolution — and to
+catch control, smoothness or scaling problems early.
 
-The older **calibration screen** (checker border, grid, colour bars) is still available in
-a browser; see [below](#the-calibration-screen-browser-only).
+The earlier start-up pictures are still available in a browser: the animated **sprite
+showcase** and the **calibration screen** — see [below](#other-screens-browser-only).
 
-This page explains how to open the preview on each device, what you should see, and what
-to report if it looks wrong. Controls for the finished game are listed in
+This page explains how to open the preview on each device, what you should see, how the ship
+should behave, and what to report if something is wrong. The full button layouts are in
 [controls.md](controls.md).
 
 ## Starting up: the loading screen
 
 For a moment after the app opens you see a deep navy screen with **SHMUP CUP**, the word
 **LOADING** and a progress bar that fills from left to right. On the TV and on a PC this
-takes well under a second, so you may only see a flash of it. Then the showcase appears.
+takes well under a second, so you may only see a flash of it. Then free flight starts.
 
 If something is wrong with the build, the app stops on the **error screen** instead (see
 [When the app shows an error screen](#when-the-app-shows-an-error-screen)) — it never just
 stays black.
 
-## What you should see: the sprite showcase
+## What you should see
 
 A deep navy picture (never pure black — the M7 monitors' VA panels smear dark-to-bright
 transitions) framed by two thin bars, one along the top edge and one along the bottom:
 
 | Element | Where | What "good" looks like |
 |---|---|---|
-| **Star field** in three layers | Whole picture behind everything | Stars drift to the left at three different speeds (the far ones slowest), steadily, with no jumps; the pattern repeats seamlessly |
-| **KESTREL**, the player ship, with a flickering engine flame | Left half | Flies a slow figure-eight; the ship tilts slightly while it climbs or dives |
-| **Two Options** (small glowing orbs) | Behind the ship | Follow exactly the path the ship flew a moment earlier |
-| **Five small enemies** ("drifters") | Moving right to left across the picture | Bob up and down in a wave; every now and then one of them flashes white for an instant — that is the "hit" flash the game will use |
-| **Ring of twelve pink bullets** | Right side, middle | Turns slowly and evenly |
-| **Top bar** | Top edge | `1P` (cyan) with a score counting up by 600 a second, `HI 00050000` (yellow), `2P 00000000` (grey) |
-| **Bottom bar** | Bottom edge | Three ship icons (lives) on the left, then the seven-slot power meter; one slot blinks and the highlight moves on to the next slot about twice a second |
-| **Title text** | Upper middle | **SHMUP CUP** in yellow and **SPRITE SHOWCASE** in cyan below it, in the game's own blocky pixel font |
-| **Hint line** | Just above the bottom bar | `?SCENE=CALIBRATION FOR THE TEST PATTERN` in grey |
+| **Star field** in three layers | Whole picture behind the ship | Stars drift to the left at three different speeds (the far ones slowest), steadily, with no jumps; the pattern repeats seamlessly |
+| **KESTREL**, the player ship | Enters from the left edge | Glides in from off-screen during the first ⅔ of a second, slowing down as it arrives, and stops at mid-height about a sixth of the way across. Then it is yours to fly |
+| **Top bar** | Top edge | `1P` (cyan) and the score `00000000` on the left; **FREE FLIGHT** (yellow) in the middle |
+| **Bottom bar** | Bottom edge | Two small ship icons on the left (your spare lives); the hint `ARROWS MOVE` (grey) in the middle |
 
 Every pixel should be a crisp little square. The game draws at 384×216 and scales that up
 by a whole number: on the 1080p M7 monitors (and any 1920×1080 browser window) the scale is
@@ -49,19 +45,45 @@ whole-number scale that fits is used and a very dark border fills the rest — t
 intentional, it keeps the pixels sharp.
 
 The graphics are placeholders made for this project (original designs, not taken from any
-other game) and will be replaced by finished art later. There is no sound yet.
+other game) and will be replaced by finished art later.
+
+## Flying the ship
+
+| Device | Move the ship |
+|---|---|
+| Samsung remote | Directional pad ◀ ▲ ▶ ▼ |
+| Keyboard | Arrow keys or W A S D |
+| Gamepad | D-pad or left stick (press any button once first, so the browser or TV notices the pad) |
+
+How it should feel:
+
+- **While the ship flies in** (the first ⅔ of a second, and again whenever it re-enters) it
+  ignores the controls. That is intentional.
+- **It moves the moment you press and stops the moment you let go** — no drifting, no
+  acceleration. At its normal speed it crosses the whole picture in a little over four
+  seconds.
+- **Diagonals** (two directions at once, where the device allows it) are not faster than
+  straight moves: the ship covers the same distance per second in every direction.
+- **It tilts** while climbing or diving and levels out when you stop moving up or down.
+- **It cannot leave the playfield.** Holding a direction stops it a few pixels before the
+  edge; it never covers the top or bottom bar and never disappears off the side.
+- Nothing else reacts yet: no shooting, no power-ups, no pause screen. Those arrive in the
+  next steps.
+
+On the TV remote the ship stops about 1/30 of a second after you let go of a button — the
+game waits that long to hide the remote's occasional "released and pressed again" hiccup, so a
+held direction never stutters. Many remotes can only report one direction at a time, so the
+ship may move in four directions only; the game is designed to be fully playable that way.
 
 ### What changed lately
 
-The calibration screen has been replaced by the showcase as the start-up picture: the game
-now **draws its own graphics** — sprites from the built-in sprite sheet, the pixel font, the
-HUD bars — instead of a test pattern. Both the browser build and the TV build now start the
-same way: a loading bar, a check of the built-in game data and graphics, and then the
-picture. If anything is missing or broken, you get a readable error screen instead of a
-black one.
+The ship is now **under your control**, and free flight has replaced the sprite showcase as
+the start-up picture (the showcase is still there in a browser, see below). The simulation
+behind it is the real game engine: from here on, every build adds to this world — scrolling
+stages, enemies, weapons.
 
 **Please re-test on the monitors:** install the new build and run through the checks in the
-next section.
+next section — how the ship responds to the remote is the most valuable report right now.
 
 The game data and the sprite sheet travel **inside** the app (the sprite sheet is a small
 picture file packed into the same `.wgt`, in its `assets/` folder). There are no extra files
@@ -76,26 +98,35 @@ the first install it appears in the monitor's **Apps** list as **Shmup Cup**.
 
 | Remote button | What it does in the preview |
 |---|---|
+| Directional pad (◀ ▲ ▶ ▼) | Flies the ship |
 | **Back** (↩) | Closes the app and returns to the monitor's home screen — also from the error screen |
-| **Home** | Leaves the app; the animation pauses while it is in the background. Reopening it continues exactly where it stopped — nothing jumps ahead |
-| Everything else | Read by the game every tick, but nothing in the showcase reacts to it yet |
+| **Home** | Leaves the app; everything freezes while it is in the background. Reopening it continues exactly where it stopped — nothing jumps ahead |
+| Everything else | Read by the game every tick, but nothing reacts to it yet |
 
 Things to check on the monitor and report:
 
-1. A loading bar (or nothing at all, if it is very quick) and then the showcase — never a
-   black screen that stays black.
-2. **Both HUD bars are complete**: the top bar's `1P` label and the `2P` score, and the
-   bottom bar's ship icons and power meter, are fully visible. If one edge is cut off, note
-   which — that would mean the monitor overscans or the app runs at a different resolution.
+1. A loading bar (or nothing at all, if it is very quick) and then the stars and the ship
+   flying in — never a black screen that stays black.
+2. **Both HUD bars are complete**: the top bar's `1P` and score on the left, **FREE FLIGHT**
+   in the middle; the bottom bar's two ship icons and `ARROWS MOVE`. If one edge is cut off,
+   note which — that would mean the monitor overscans or the app runs at a different
+   resolution.
 3. Everything is sharp: the pixel-font text, the ship and the stars have crisp square
    pixels, nothing is blurry.
-4. The stars scroll and the ship flies **smoothly**. Film it with a phone if it looks uneven.
-5. The white flashes on the enemies are brief and not uncomfortable to look at.
-6. After Home → reopen, the app comes back without a black screen and the score continues
-   from where it was.
+4. **The ship answers the directional pad right away** and moves smoothly while you hold a
+   direction. Report if it hesitates when you press, stutters or stops for a moment while
+   you hold a button, or keeps moving noticeably after you let go. Film it with a phone
+   (ideally in slow motion) if it looks uneven.
+5. Press two directions at once (for example ▲ and ▶): note whether the ship moves
+   diagonally or only in one direction — this tells us what your remote can report.
+6. Fly into every edge: the ship stops before each edge, stays fully visible and never
+   covers a HUD bar.
+7. The stars drift **smoothly**.
+8. After Home → reopen, the app comes back without a black screen and the ship is where you
+   left it.
 
-The TV always starts with the showcase; the calibration screen can only be opened in a
-browser.
+The TV always starts with free flight; the showcase and the calibration screen can only be
+opened in a browser.
 
 ## In a desktop browser
 
@@ -107,19 +138,26 @@ pnpm dev
 ```
 
 Open http://localhost:5173 (other devices on the same network can use the PC's IP
-address, e.g. `http://192.168.1.20:5173`). Resize the window to see the whole-number
-scaling at work: the picture snaps between sizes instead of stretching. Switching to
-another tab pauses the animation; coming back continues it.
+address, e.g. `http://192.168.1.20:5173`) and fly with the arrow keys, W A S D or a gamepad.
+Resize the window to see the whole-number scaling at work: the picture snaps between sizes
+instead of stretching. Switching to another tab freezes the game; coming back continues it.
+
+To feel the TV remote's limits on a keyboard — one direction at a time, the same release
+delay as on the TV — open http://localhost:5173/?profile=keyboard-remote-emulation (details in
+[controls.md](controls.md#feeling-the-remote-on-a-desktop-keyboard)).
 
 `pnpm --filter @shmup/tizen dev` (http://localhost:5174) opens the *TV* build in the
 browser instead. It behaves the same, except that Back does nothing (there is no TV
 system to return to).
 
-### The calibration screen (browser only)
+### Other screens (browser only)
 
-Add `?scene=calibration` to the address — http://localhost:5173/?scene=calibration — to get
-the calibration screen the earlier builds started with. It is useful when you want to judge
-scaling and colours on a new display:
+| Address | Screen |
+|---|---|
+| http://localhost:5173/?scene=showcase | The **sprite showcase** the previous builds started with: the KESTREL flying a figure-eight with two Options, five enemies with hit flashes, a ring of bullets, both HUD bars with a counting score and a blinking power meter. Nothing reacts to the controls |
+| http://localhost:5173/?scene=calibration | The **calibration screen**, for judging scaling and colours on a new display (below) |
+
+The calibration screen:
 
 | Element | What it tests | What "good" looks like |
 |---|---|---|
@@ -138,8 +176,9 @@ pnpm build
 pnpm --filter @shmup/electron start
 ```
 
-A 1152×648 window (×3) opens with the same showcase. Set `SHMUP_FULLSCREEN=1` before the
-last command to start in fullscreen. Close the window (or Alt+F4 / Cmd+Q) to quit.
+A 1152×648 window (×3) opens with the same free flight; fly with the keyboard or a gamepad.
+Set `SHMUP_FULLSCREEN=1` before the last command to start in fullscreen. Close the window (or
+Alt+F4 / Cmd+Q) to quit.
 
 ## When the app shows an error screen
 
@@ -164,6 +203,11 @@ mean the build itself is broken; they are not caused by anything you did.
 
 | Symptom | What to do |
 |---|---|
+| The ship does not move | Wait until it has finished flying in (⅔ of a second). In a browser, click once into the page so it has the keyboard focus; with a gamepad, press any button first. On the TV, report it together with the remote model |
+| The ship moves only up, down, left and right | Normal on remotes that report one direction at a time, and with `?profile=keyboard-remote-emulation` in a browser. With a keyboard or gamepad and no `?profile=` in the address, please report it |
+| The ship keeps moving after I let go (TV) | A tiny delay (1/30 of a second) is intentional. If it clearly keeps going, report it — and film it if you can |
+| The ship stutters or stops for a moment while I hold a direction (TV) | Please report it with the remote model: the game's hiccup protection is supposed to hide exactly this |
+| The ship flies in from the left again | Not expected in this build — the ship only flies in at start-up. Please report what you were doing |
 | Error screen with a pink title | See [When the app shows an error screen](#when-the-app-shows-an-error-screen) — photograph it and report it |
 | Error screen `WEBGL IS NOT AVAILABLE` in a browser | Hardware acceleration is off or blocked: enable it in the browser settings (Chrome: Settings → System → "Use graphics acceleration when available") and reload. On the TV, report it together with the monitor's firmware version |
 | Black or empty screen that stays black | Should not happen any more — the app shows an error screen instead. In a browser open the developer console: the message "Shmup Cup failed to start" gives the reason. On the TV, report it with the firmware version |

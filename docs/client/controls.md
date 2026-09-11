@@ -4,12 +4,12 @@ Shmup Cup is designed for the **Samsung Smart Remote** first; a gamepad or a key
 work too, and every device drives both the game and the menus.
 
 > **Status:** these controls are built into the game as **control profiles** and are read
-> every frame, but the current build only shows an animated sprite showcase
-> ([preview-build.md](preview-build.md)). Nothing in it reacts to buttons yet except
-> **Back** on the TV, which closes the app (also from the start-up error screen). The ship
-> becomes controllable in the next step. The remote's settings may still change once the
-> input probe results from the M7 monitors are in, and a menu for choosing a profile and
-> rebinding buttons is planned.
+> every frame. In the current build ("free flight", [preview-build.md](preview-build.md))
+> the **directions fly the ship** on every device; the other buttons do nothing yet, except
+> **Back** on the TV, which closes the app (also from the start-up error screen). Shooting,
+> power-ups and the pause screen arrive in the next steps. The remote's settings may still
+> change once the input probe results from the M7 monitors are in, and a menu for choosing a
+> profile and rebinding buttons is planned.
 
 ## In the game and in menus
 
@@ -19,7 +19,7 @@ and selects a menu entry in menus; Back pauses the game and goes back in menus.
 
 | Action | What it does |
 |---|---|
-| Move | Game: fly the ship (8 directions where the device allows it). Menus: move the highlight |
+| Move | Game: fly the ship (8 directions where the device allows it; diagonals are no faster than straight moves, and the ship stops as soon as you let go). Menus: move the highlight |
 | Shot | Main gun — held for autofire; always firing in remote mode |
 | Sub | Missiles / sub-weapon (also automatic in remote mode) |
 | PowerUp | Power-meter mode: take the highlighted power-up |
@@ -56,8 +56,8 @@ not suddenly press Back. Release it and press again.
   return. Long-pressing Back and the volume keys belong to the TV and are never used by the
   game. The colour buttons (red/green/yellow/blue on the on-screen number pad) are reserved
   for later use.
-- Today Back still closes the app from the showcase, because the showcase is the first
-  screen; once the title screen exists, Back there asks before quitting.
+- Today Back still closes the app from free flight, because it is the first screen; once
+  the title screen exists, Back there asks before quitting.
 
 ## Gamepad
 
@@ -146,4 +146,6 @@ its default.
 | `?profile=…` seems to be ignored | The name is misspelled or is not a keyboard/remote profile (a gamepad profile cannot drive the keyboard). The game then uses the normal keyboard profile and writes a warning in the browser's developer console |
 | A button does something in the game but nothing in a menu (or the other way round) | Expected — see the two tables above; for example C (PowerUp) has no menu function |
 | The game shows a start-up error screen mentioning `input-profiles.json` | The control profiles in this build are broken. Report the lines on the screen — see [preview-build.md](preview-build.md) |
-| Back closes the game on the TV instead of pausing | Expected in the current preview — the showcase is the first screen. Pausing with Back arrives with the playable game |
+| Back closes the game on the TV instead of pausing | Expected in the current preview — free flight is the first screen. Pausing with Back arrives with the playable game |
+| The ship does not react for a moment after the app starts | It is flying in (about ⅔ of a second) and ignores the controls until it arrives — see [preview-build.md](preview-build.md#flying-the-ship) |
+| Shot, PowerUp, Pause and the other buttons do nothing | Expected in the current preview — only the directions are used so far |

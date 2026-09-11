@@ -372,10 +372,12 @@ export type SpatialGridVisitor = (id: number) => void;
  * {@link SpatialGrid.insert} → {@link SpatialGrid.build} (counting sort: count per cell →
  * prefix sum → fill, all in preallocated `Int32Array`s) → any number of
  * {@link SpatialGrid.query}. Boxes outside the covered area are clamped into the border cells,
- * so nothing is ever lost — far-away boxes are just checked a little more often. A query visits
- * each entry at most once (a per-query stamp array) and only when the stored box really overlaps
- * the query box (closed boxes, like {@link aabbAabb}), so its result equals a brute-force scan.
- * Nothing allocates after creation.
+ * so nothing is ever lost — far-away boxes are just checked a little more often. A box that
+ * spans more than 9 cells (3×3) is not written into the cells at all but into an overflow list
+ * that every query scans, so the cell storage (`capacity × 9` slots) can never run out. A query
+ * visits each entry at most once (a per-query stamp array) and only when the stored box really
+ * overlaps the query box (closed boxes, like {@link aabbAabb}), so its result equals a
+ * brute-force scan. Nothing allocates after creation.
  */
 export interface SpatialGrid {
   /** Cell edge in pixels. */
@@ -392,6 +394,12 @@ export interface SpatialGrid {
   readonly dropped: number;
   /**
    * Starts a new tick: forgets every box and places the grid's top-left corner.
+   *
+   * @remarks
+   * The origin only decides which cell a box lands in — queries compare the stored boxes
+   * exactly — so pass whole numbers (`Math.floor(camera.x) - margin`): V8 boxes a fractional
+   * argument into a 16-byte heap number whenever the call is not inlined, which would be an
+   * allocation per tick while the camera scrolls.
    *
    * @param originX - World x of the covered area's left edge (e.g. `camera.x - margin`).
    * @param originY - World y of the covered area's top edge.
@@ -439,7 +447,7 @@ export interface SpatialGrid {
  * const grid = createSpatialGrid(PLAYFIELD_W + 64, PLAYFIELD_H + 64);
  * const onCandidate: SpatialGridVisitor = (id) => { hits[hitCount++] = id; };
  * // every tick:
- * grid.begin(camera.x - 32, camera.y - 32);
+ * grid.begin(Math.floor(camera.x) - 32, Math.floor(camera.y) - 32);
  * grid.insert(enemySlot, x - hw, y - hh, x + hw, y + hh);
  * grid.build();
  * grid.query(shotX - 2, shotY - 1, shotX + 2, shotY + 1, onCandidate);

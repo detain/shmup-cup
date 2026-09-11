@@ -34,4 +34,13 @@ the Direct-mode ship (**MANTA**) arrives in M2.
 
 Units: pixels in the 384×216 internal resolution, time in ticks (60 per second).
 
+**Used today (M1-06):** `speeds`, `margins`, `enterTicks` and `bankFrames` drive free flight —
+the ship moves at `speeds[0]` px/tick (diagonals × 0.7071 per axis, decision D4), stops
+`margins` pixels inside the 384×200 playfield, flies in over `enterTicks` ticks, and tilts
+through `bankFrames` frames each way (the sprite needs `1 + 2 × bankFrames` frames: level,
+then the up frames, then the down frames). The session flies the ship with id `kestrel`, else
+the first ship listed. `hurtRadius`, `terrainBox`, `pickupBox` and `respawnInvulnTicks` are
+validated now and used from M1-07 / M1-11 / M1-12. Edit a value and reload `pnpm dev` to feel
+the change; details in [`docs/dev/sim-world.md`](../../docs/dev/sim-world.md#the-player-ship-coreplayer).
+
 See [`example.player.json`](example.player.json).
