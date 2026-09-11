@@ -1,14 +1,18 @@
 /**
  * Composition-root test for the TV app: bootTizenApp() with a fake window, a fake
- * `window.tizen`, a fake renderer (no WebGL in Node) and a fake AudioContext. Checks the
- * wiring the TV depends on: remote-first input, key registration, Back → exit, audio
- * unlocked without a gesture, visibility → suspend/resume, rAF → fixed ticks → render,
- * and a clean stop().
+ * `window.tizen`, fake atlas images, a fake renderer (no WebGL in Node) and a fake
+ * AudioContext, booted through the real `@shmup/shell`. Checks the wiring the TV depends on:
+ * remote-first input, key registration, Back → exit (also from the boot error screen), audio
+ * unlocked without a gesture, visibility → suspend/resume, rAF → fixed ticks → render, and a
+ * clean stop().
  */
 import type * as AudioWeb from '@shmup/audio-web';
-import { Action, type RenderFrame } from '@shmup/core';
+import { Action } from '@shmup/core';
+import type * as RenderPixi from '@shmup/render-pixi';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { bootTizenApp } from '../../src/boot/index.js';
+import { buildAtlas } from '../../../../scripts/assets/pipeline.mjs';
+import { readContentFiles } from '../../../../vite.shared.js';
+import { bootTizenApp, type TizenAppResources } from '../../src/boot/index.js';
 
 const fakes = vi.hoisted(() => {
   const renderer = {
@@ -20,7 +24,9 @@ const fakes = vi.hoisted(() => {
     frames: [] as Array<{ tick: number; alpha: number }>,
     sizes: [] as Array<[number, number]>,
     destroyed: 0,
-    options: null as unknown,
+    options: null as Record<string, unknown> | null,
+    setSpriteNames() {},
+    bindWorld() {},
     resize(w: number, h: number) {
       renderer.sizes.push([w, h]);
     },
@@ -51,12 +57,16 @@ const fakes = vi.hoisted(() => {
   return { renderer, audioContext };
 });
 
-vi.mock('@shmup/render-pixi', () => ({
-  createPixiRenderer: (options: unknown) => {
-    fakes.renderer.options = options;
-    return Promise.resolve(fakes.renderer);
-  },
-}));
+vi.mock('@shmup/render-pixi', async (importOriginal) => {
+  const real = await importOriginal<typeof RenderPixi>();
+  return {
+    ...real,
+    createPixiRenderer: (options: Record<string, unknown>) => {
+      fakes.renderer.options = options;
+      return Promise.resolve(fakes.renderer);
+    },
+  };
+});
 
 vi.mock('@shmup/audio-web', async (importOriginal) => {
   const real = await importOriginal<typeof AudioWeb>();
@@ -64,6 +74,36 @@ vi.mock('@shmup/audio-web', async (importOriginal) => {
 });
 
 const STEP = 1000 / 60;
+const { manifest } = buildAtlas();
+const resources: TizenAppResources = {
+  contentFiles: readContentFiles(),
+  assets: { manifest, pageUrls: manifest.pages.map((page) => `assets/atlas/${page.file}`) },
+};
+
+/** Stand-in for `Image`: "loads" asynchronously with the atlas page size. */
+class FakeImage {
+  onload: (() => void) | null = null;
+  onerror: (() => void) | null = null;
+  width = 0;
+  height = 0;
+  naturalWidth = 0;
+  naturalHeight = 0;
+  private url = '';
+
+  get src(): string {
+    return this.url;
+  }
+
+  set src(value: string) {
+    this.url = value;
+    const page = manifest.pages.find((p) => value.endsWith(p.file));
+    setTimeout(() => {
+      this.width = this.naturalWidth = page?.w ?? 1;
+      this.height = this.naturalHeight = page?.h ?? 1;
+      this.onload?.();
+    }, 0);
+  }
+}
 
 /** A minimal browser window + document + Tizen API. */
 class FakeWindow extends EventTarget {
@@ -160,7 +200,9 @@ const flush = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 
 let win: FakeWindow;
 
 beforeEach(() => {
+  vi.stubGlobal('Image', FakeImage);
   win = new FakeWindow();
+  fakes.renderer.options = null;
   fakes.renderer.frames.length = 0;
   fakes.renderer.sizes.length = 0;
   fakes.renderer.destroyed = 0;
@@ -169,24 +211,28 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 /** Boots the app into the fake window. */
 async function boot() {
   const canvas = {} as HTMLCanvasElement;
-  const app = await bootTizenApp(canvas, win as unknown as Window);
+  const app = await bootTizenApp(canvas, resources, win as unknown as Window);
   return { app, canvas };
 }
 
 describe('tizen/boot bootTizenApp wiring', () => {
-  it('creates a WebGL1-first renderer sized to the window', async () => {
-    const { canvas } = await boot();
-    expect(fakes.renderer.options).toEqual({
+  it('creates a WebGL1-first renderer sized to the window, with the atlas', async () => {
+    const { app, canvas } = await boot();
+    expect(fakes.renderer.options).toMatchObject({
       canvas,
       displayWidth: 1920,
       displayHeight: 1080,
       preferWebGLVersion: 1,
+      testPattern: false,
+      atlas: app.shell.atlas,
     });
+    expect(app.shell.scene).toBe('showcase');
   });
 
   it('builds a remote-first Tizen platform and game (keys registered, autofire forced)', async () => {
@@ -210,7 +256,7 @@ describe('tizen/boot bootTizenApp wiring', () => {
     win.frame(1000);
     for (let i = 1; i <= 3; i++) win.frame(1000 + i * STEP);
     expect(app.game.state.tick).toBe(3);
-    expect(fakes.renderer.frames.map((frame: RenderFrame) => frame.tick)).toEqual([0, 1, 2, 3]);
+    expect(fakes.renderer.frames.map((frame) => frame.tick)).toEqual([0, 1, 2, 3]);
   });
 
   it('delivers remote arrows to player 1 as a remote device', async () => {
@@ -223,7 +269,7 @@ describe('tizen/boot bootTizenApp wiring', () => {
     expect(p1?.device).toBe('remote');
   });
 
-  it('exits the app on Back (the calibration screen is the root screen) and ignores repeats', async () => {
+  it('exits the app on Back (the showcase is the root screen) and ignores repeats', async () => {
     const { app } = await boot();
     const back = win.key('keydown', 10009);
     expect(back.defaultPrevented).toBe(true);
@@ -290,5 +336,21 @@ describe('tizen/boot bootTizenApp wiring', () => {
     expect(fakes.renderer.sizes).toEqual([]);
     win.key('keydown', 37);
     expect(app.input.keyboard.held).toBe(0);
+  });
+
+  it('Back still exits from the boot error screen (boot failed before the platform existed)', async () => {
+    const broken: TizenAppResources = {
+      ...resources,
+      contentFiles: [
+        ...resources.contentFiles,
+        { path: 'player/zz.player.json', data: { formatVersion: 1, kind: 'player' } },
+      ],
+    };
+    await expect(
+      bootTizenApp({} as HTMLCanvasElement, broken, win as unknown as Window),
+    ).rejects.toThrow(/CONTENT ERRORS/);
+    expect(fakes.renderer.options).toBeNull();
+    win.key('keydown', 10009);
+    expect(win.exits).toBe(1);
   });
 });

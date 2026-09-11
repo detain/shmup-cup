@@ -12,7 +12,9 @@
  * - shmup_feat.md §15 (lives 1–5), §21 Options menu (sim-affecting subset)
  *
  * **Public API (implemented now).** {@link GameConfig}, {@link DEFAULT_GAME_CONFIG},
- * {@link resolveGameConfig} and the preset types.
+ * {@link resolveGameConfig}, the preset types and the screen layout constants
+ * {@link HUD_BAR_HEIGHT}, {@link PLAYFIELD_Y}, {@link PLAYFIELD_W}, {@link PLAYFIELD_H}
+ * (decision D20: two 8-px HUD bars outside a 384×200 playfield).
  *
  * **Planned API.** `UserOptions` (audio/display/controls options that do *not* affect
  * the sim, persisted by `save`), difficulty-preset tables mapping to rank base/growth,
@@ -63,6 +65,21 @@ export interface GameConfig {
   /** Remote-first control scheme: forced autofire, 4-way-friendly defaults. */
   readonly remoteMode: boolean;
 }
+
+/** Height in pixels of each HUD bar outside the playfield (decision D20). */
+export const HUD_BAR_HEIGHT = 8;
+
+/**
+ * Screen row where the playfield starts: the top HUD bar occupies rows `0…7`
+ * (decision D20). World-space `y` maps to screen `y - camera.y + PLAYFIELD_Y`.
+ */
+export const PLAYFIELD_Y = HUD_BAR_HEIGHT;
+
+/** Playfield width in pixels — the full internal width (decision D20). */
+export const PLAYFIELD_W = 384;
+
+/** Playfield height in pixels: 216 − two 8-px HUD bars (decision D20). */
+export const PLAYFIELD_H = 200;
 
 /** Defaults: remote-first, Normal difficulty, Direct items, Classic death penalty. */
 export const DEFAULT_GAME_CONFIG: GameConfig = Object.freeze({

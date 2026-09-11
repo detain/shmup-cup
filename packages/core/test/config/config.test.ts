@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_GAME_CONFIG, moduleInfo, resolveGameConfig } from '../../src/config/index.js';
+import {
+  DEFAULT_GAME_CONFIG,
+  HUD_BAR_HEIGHT,
+  PLAYFIELD_H,
+  PLAYFIELD_W,
+  PLAYFIELD_Y,
+  moduleInfo,
+  resolveGameConfig,
+} from '../../src/config/index.js';
 
 describe('core/config', () => {
   it('describes itself', () => {
@@ -27,5 +35,13 @@ describe('core/config', () => {
     expect(() => resolveGameConfig({ startingLives: 0 })).toThrow(RangeError);
     expect(() => resolveGameConfig({ tickRate: 59.5 })).toThrow(RangeError);
     expect(() => resolveGameConfig({ seed: -1 })).toThrow(RangeError);
+  });
+});
+
+describe('core/config screen layout (decision D20)', () => {
+  it('puts a 384×200 playfield between two 8-px HUD bars of the 384×216 frame', () => {
+    expect([HUD_BAR_HEIGHT, PLAYFIELD_Y, PLAYFIELD_W, PLAYFIELD_H]).toEqual([8, 8, 384, 200]);
+    expect(PLAYFIELD_W).toBe(DEFAULT_GAME_CONFIG.internalWidth);
+    expect(PLAYFIELD_Y + PLAYFIELD_H + HUD_BAR_HEIGHT).toBe(DEFAULT_GAME_CONFIG.internalHeight);
   });
 });

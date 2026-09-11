@@ -13,6 +13,8 @@
  *  6. Every other file is a non-script asset under dist/assets/ (atlas pages emitted by
  *     the shmupAssets() plugin, M1-03); anything else in dist/ would be packaged into the
  *     .wgt by accident.
+ *  7. At least one atlas page (`dist/assets/atlas/*.png`) is present — the shell's boot
+ *     loads the pages with `new Image()` and shows the boot error screen without them (M1-04).
  *
  * Exits non-zero with a readable report on failure. The checks are also exported as
  * {@link checkTizenBundle} so the unit tests can run them against fixture folders.
@@ -133,6 +135,11 @@ export function checkTizenBundle(distDir) {
   );
   if (stray.length > 0) {
     problems.push(`unexpected files outside dist/assets/: ${stray.join(', ')}`);
+  }
+
+  // 7. The atlas pages the shell loads at boot.
+  if (!files.some((file) => /^assets\/atlas\/[^/]+\.png$/.test(file))) {
+    problems.push('no atlas page in dist/assets/atlas/ (the game cannot boot without it)');
   }
 
   return { problems, files, code };

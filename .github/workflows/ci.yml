@@ -47,6 +47,34 @@ jobs:
       - name: Build
         run: pnpm build
 
+  e2e:
+    # Browser smoke tests (plan §1.4): builds the web and Tizen apps and opens them in
+    # headless Chromium with SwiftShader WebGL (web via `vite preview`, Tizen via file://).
+    name: e2e · headless Chromium (web + Tizen builds)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+      TURBO_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Browser smoke tests
+        run: pnpm test:e2e
+
   input-probe:
     # tools/input-probe is a standalone npm project (not in the pnpm workspace), so it gets its own job.
     name: input probe · typecheck · test · build · compat

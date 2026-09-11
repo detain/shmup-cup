@@ -21,7 +21,7 @@ pnpm --filter @shmup/tizen dev     # desktop-browser preview (no window.tizen; B
 - the repo's **`shmupContent()`** plugin (`vite.shared.ts`) serves `virtual:shmup-content`:
   every shipped `content/**/*.json` inlined into `app.js`, because a widget on `file://`
   cannot `fetch()` local files (decision D25). No content files are copied into `dist/`.
-  The shell imports the module from M1-04 on; see
+  `main.ts` imports the module and the shell validates it at boot; see
   [`docs/dev/content-data.md`](../../docs/dev/content-data.md).
 - **`shmupAssets()`** (same file) runs the placeholder asset pipeline, inlines the atlas
   manifest into `app.js` as `virtual:shmup-assets` and emits the atlas pages into
@@ -82,9 +82,8 @@ and `internet`, application id `ShmpCupGam.ShmupCup` (package id = 10 alphanumer
 | Module | Status | Responsibility |
 |---|---|---|
 | `main.ts` | — | Entry (no `import.meta`, no top-level await) |
-| `boot` | partial | Composition root: remote-first input, audio, renderer, Tizen platform, loop; Back exits from the root screen until the title/exit-confirm scene exists |
+| `boot` | implemented | Composition root: remote-first input, Web Audio and the Tizen platform handed to `@shmup/shell`'s `bootShell` (content + atlas from `file://`, boot error screen, renderer, game, rAF loop, audio unlocked at boot); Back exits from the root screen (also the boot error screen) until the title/exit-confirm scene exists |
 | `platform` | partial | `registerKeyBatch` (Play/Pause, Ch±, colours — never Exit/volume; falls back to per-key `registerKey` when the batch fails, so one key a model lacks does not block the rest), Back 10009 watcher, `visibilitychange` lifecycle, `exit()`, localStorage |
-| `frame-loop` | implemented | rAF driver (one tick per frame on the 60 Hz M7) |
 | `device-info` | placeholder | UA / resolution / WebGL / product-info diagnostics |
 | `live-reload` | placeholder | Dev-only reload-on-change on the TV |
 

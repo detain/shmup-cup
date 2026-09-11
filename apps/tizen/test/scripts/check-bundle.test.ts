@@ -33,6 +33,7 @@ beforeEach(() => {
   put('app.js', GOOD_APP);
   put('config.xml', '<widget/>');
   put('icon.png', 'png');
+  put('assets/atlas/main.png', 'png');
 });
 
 afterEach(() => {
@@ -44,12 +45,17 @@ describe('tizen/scripts/check-bundle checkTizenBundle', () => {
     put('app.js', `${GOOD_APP}\n(function () { var o = { ...{ a: 1 } }; void o; })();\n`);
     const result = checkTizenBundle(dir);
     expect(result.problems).toEqual([]);
-    expect(result.files.sort()).toEqual(['app.js', 'config.xml', 'icon.png', 'index.html']);
+    expect(result.files.sort()).toEqual([
+      'app.js',
+      'assets/atlas/main.png',
+      'config.xml',
+      'icon.png',
+      'index.html',
+    ]);
     expect(result.code.startsWith(POLYFILL_BANNER)).toBe(true);
   });
 
   it('accepts non-script assets under dist/assets/ (atlas pages) next to the one script', () => {
-    put('assets/atlas/main.png', 'png');
     put('assets/atlas/main-1.png', 'png');
     const result = checkTizenBundle(dir);
     expect(result.problems).toEqual([]);
@@ -191,6 +197,15 @@ describe('tizen/scripts/check-bundle checkTizenBundle', () => {
   it.each(['config.xml', 'icon.png', 'index.html'])('reports a missing %s', (name) => {
     unlinkSync(join(dir, name));
     expect(checkTizenBundle(dir).problems).toContain(`dist/${name} is missing`);
+  });
+
+  it('reports a bundle without any atlas page (rule 7: the shell cannot boot without it)', () => {
+    unlinkSync(join(dir, 'assets', 'atlas', 'main.png'));
+    put('assets/atlas/main.json', '{}');
+    put('assets/other/main.png', 'png');
+    expect(checkTizenBundle(dir).problems).toEqual([
+      'no atlas page in dist/assets/atlas/ (the game cannot boot without it)',
+    ]);
   });
 
   it('reports a missing build folder instead of throwing', () => {

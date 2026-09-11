@@ -1,13 +1,17 @@
 /**
- * Composition-root test for the browser app: bootWebApp() with a fake window, a fake
- * renderer (no WebGL in Node) and a fake AudioContext. Checks the wiring: keyboard-first
- * input, audio unlocked by the first user gesture only, visibility → suspend/resume,
- * rAF → fixed ticks → render, resize forwarding, storage fallbacks and a clean stop().
+ * Composition-root test for the browser app: bootWebApp() with a fake window, fake atlas
+ * images, a fake renderer (no WebGL in Node) and a fake AudioContext, booted through the real
+ * `@shmup/shell`. Checks the wiring: keyboard-first input, audio unlocked by the first user
+ * gesture only, visibility → suspend/resume, rAF → fixed ticks → render, resize forwarding,
+ * storage fallbacks, the `?scene=` switch and a clean stop().
  */
 import type * as AudioWeb from '@shmup/audio-web';
 import { Action } from '@shmup/core';
+import type * as RenderPixi from '@shmup/render-pixi';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { bootWebApp } from '../../src/boot/index.js';
+import { buildAtlas } from '../../../../scripts/assets/pipeline.mjs';
+import { readContentFiles } from '../../../../vite.shared.js';
+import { bootWebApp, type WebAppResources } from '../../src/boot/index.js';
 
 const fakes = vi.hoisted(() => {
   const renderer = {
@@ -19,7 +23,12 @@ const fakes = vi.hoisted(() => {
     ticks: [] as number[],
     sizes: [] as Array<[number, number]>,
     destroyed: 0,
-    options: null as unknown,
+    options: null as Record<string, unknown> | null,
+    spriteNames: [] as Array<readonly string[]>,
+    setSpriteNames(names: readonly string[]) {
+      renderer.spriteNames.push(names);
+    },
+    bindWorld() {},
     resize(w: number, h: number) {
       renderer.sizes.push([w, h]);
     },
@@ -52,12 +61,16 @@ const fakes = vi.hoisted(() => {
   return { renderer, audioContext };
 });
 
-vi.mock('@shmup/render-pixi', () => ({
-  createPixiRenderer: (options: unknown) => {
-    fakes.renderer.options = options;
-    return Promise.resolve(fakes.renderer);
-  },
-}));
+vi.mock('@shmup/render-pixi', async (importOriginal) => {
+  const real = await importOriginal<typeof RenderPixi>();
+  return {
+    ...real,
+    createPixiRenderer: (options: Record<string, unknown>) => {
+      fakes.renderer.options = options;
+      return Promise.resolve(fakes.renderer);
+    },
+  };
+});
 
 vi.mock('@shmup/audio-web', async (importOriginal) => {
   const real = await importOriginal<typeof AudioWeb>();
@@ -65,6 +78,36 @@ vi.mock('@shmup/audio-web', async (importOriginal) => {
 });
 
 const STEP = 1000 / 60;
+const { manifest } = buildAtlas();
+const resources: WebAppResources = {
+  contentFiles: readContentFiles(),
+  assets: { manifest, pageUrls: manifest.pages.map((page) => `assets/atlas/${page.file}`) },
+};
+
+/** Stand-in for `Image`: "loads" asynchronously with the atlas page size. */
+class FakeImage {
+  onload: (() => void) | null = null;
+  onerror: (() => void) | null = null;
+  width = 0;
+  height = 0;
+  naturalWidth = 0;
+  naturalHeight = 0;
+  private url = '';
+
+  get src(): string {
+    return this.url;
+  }
+
+  set src(value: string) {
+    this.url = value;
+    const page = manifest.pages.find((p) => value.endsWith(p.file));
+    setTimeout(() => {
+      this.width = this.naturalWidth = page?.w ?? 1;
+      this.height = this.naturalHeight = page?.h ?? 1;
+      this.onload?.();
+    }, 0);
+  }
+}
 
 /** A minimal browser window + document. */
 class FakeWindow extends EventTarget {
@@ -72,6 +115,7 @@ class FakeWindow extends EventTarget {
   innerHeight = 720;
   readonly document = Object.assign(new EventTarget(), { visibilityState: 'visible' });
   readonly navigator: { getGamepads?: () => never[] } = { getGamepads: () => [] };
+  readonly location = { search: '' };
   readonly stored = new Map<string, string>();
   storageThrows = false;
   private pending: ((now: number) => void) | null = null;
@@ -138,7 +182,10 @@ const flush = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 
 let win: FakeWindow;
 
 beforeEach(() => {
+  vi.stubGlobal('Image', FakeImage);
   win = new FakeWindow();
+  fakes.renderer.options = null;
+  fakes.renderer.spriteNames.length = 0;
   fakes.renderer.ticks.length = 0;
   fakes.renderer.sizes.length = 0;
   fakes.renderer.destroyed = 0;
@@ -148,19 +195,45 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 /** Boots the app into the fake window. */
 async function boot() {
   const canvas = {} as HTMLCanvasElement;
-  const app = await bootWebApp(canvas, win as unknown as Window);
+  const app = await bootWebApp(canvas, resources, win as unknown as Window);
   return { app, canvas };
 }
 
 describe('web/boot bootWebApp wiring', () => {
-  it('creates the renderer for the canvas at the window size', async () => {
-    const { canvas } = await boot();
-    expect(fakes.renderer.options).toEqual({ canvas, displayWidth: 1280, displayHeight: 720 });
+  it('creates the renderer for the canvas at the window size, with the atlas', async () => {
+    const { app, canvas } = await boot();
+    expect(fakes.renderer.options).toMatchObject({
+      canvas,
+      displayWidth: 1280,
+      displayHeight: 720,
+      preferWebGLVersion: 1,
+      testPattern: false,
+      atlas: app.shell.atlas,
+    });
+    expect(app.shell.atlas.manifest).toBe(manifest);
+  });
+
+  it('shows the sprite showcase by default and the test pattern with ?scene=calibration', async () => {
+    const { app } = await boot();
+    expect(app.shell.scene).toBe('showcase');
+    app.stop();
+    win = new FakeWindow();
+    win.location.search = '?scene=calibration';
+    const calibration = await boot();
+    expect(calibration.app.shell.scene).toBe('calibration');
+    expect(fakes.renderer.options?.testPattern).toBe(true);
+  });
+
+  it('runs the game on the validated content', async () => {
+    const { app } = await boot();
+    expect(app.shell.content.issues).toEqual([]);
+    expect(app.game.content.ships.length).toBeGreaterThan(0);
   });
 
   it('builds a keyboard-first web game (no forced remote mode) with detected capabilities', async () => {

@@ -16,6 +16,9 @@ coverage/
 .turbo/
 .caliber/
 .playwright-mcp/
+# Playwright e2e output (pnpm test:e2e)
+test-results/
+playwright-report/
 
 # Claude Code local state (agent worktrees, settings)
 .claude/

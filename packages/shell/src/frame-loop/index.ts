@@ -1,11 +1,14 @@
 /**
  * # frame-loop — `requestAnimationFrame` driver
  *
- * **Responsibility.** Calls `onFrame(now)` once per display refresh with the rAF
- * timestamp. The core's fixed-step loop turns those timestamps into simulation ticks,
- * so this module stays trivial: no timing logic, no allocation per frame.
+ * **Responsibility.** Calls `onFrame(now)` once per display refresh with the rAF timestamp.
+ * The core's fixed-step loop turns those timestamps into simulation ticks (on the 60 Hz M7
+ * monitors exactly one tick per frame — the loop snaps rAF jitter), so this module stays
+ * trivial: no timing logic, no allocation per frame. Shared by the web and TV hosts (it
+ * used to live, twice, in `apps/web` and `apps/tizen`).
  *
- * **Implements.** shmup_feat.md §3 (rAF-driven, one sim tick per rAF on 60 Hz).
+ * **Implements.** shmup_feat.md §3 (rAF-driven fixed step), shmup_tech.md §2.7 (60 Hz
+ * fixed, one tick per rAF).
  *
  * **Public API.** {@link startFrameLoop}, {@link FrameLoop}, {@link FrameScheduler}.
  *
@@ -17,7 +20,7 @@ import { defineModule } from '@shmup/core';
 export const moduleInfo = defineModule({
   name: 'frame-loop',
   status: 'implemented',
-  specRefs: ['shmup_feat.md §3'],
+  specRefs: ['shmup_feat.md §3', 'shmup_tech.md §2.7'],
 });
 
 /** The two rAF functions (a `Window` satisfies this; tests pass fakes). */

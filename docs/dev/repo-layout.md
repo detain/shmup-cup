@@ -28,7 +28,7 @@ shmup-cup/
 ├── vitest.config.ts        Vitest *projects*: packages/*, apps/*, test (→ `pnpm test:all`)
 ├── .browserslistrc         chrome >= 69 (Tizen 5.5) for eslint-plugin-compat
 ├── .editorconfig  .prettierrc.json  .prettierignore  .nvmrc (Node 24)  .gitignore
-├── .github/workflows/ci.yml   install (frozen) → lint → typecheck → test → build; ELECTRON_SKIP_BINARY_DOWNLOAD=1
+├── .github/workflows/ci.yml   install (frozen) → lint → typecheck → test → build; job e2e (Playwright Chromium → pnpm test:e2e); ELECTRON_SKIP_BINARY_DOWNLOAD=1
 │
 ├── packages/               reusable libraries (the "engine + game")
 │   ├── core/               @shmup/core — PURE TS: no DOM/WebGL/audio/Node/platform APIs, no clocks, no Math.random
@@ -40,7 +40,7 @@ shmup-cup/
 │   │   │   ├── config/         ✔ GameConfig + defaults + validation
 │   │   │   ├── loop/           ✔ fixed-step accumulator (snap, cap, reset)
 │   │   │   ├── game/           ✔ createGame(): composition root, suspend/resume
-│   │   │   ├── presentation/   ✔ IRenderer / IAudio / RenderFrame contracts
+│   │   │   ├── presentation/   ✔ IRenderer / IAudio contracts + the render contract (RenderFrame, WorldView, SpriteBatchView, DrawList, LayerId)
 │   │   │   ├── rng/ math/ events/ pools/                 ✔ engine foundations (sfc32, trig tables, event ring, SoA pools)
 │   │   │   ├── data/           ✔ (partial) content loader: schema.ts combinators, loadContent(), ContentDb, migrations
 │   │   │   ├── player/ weapons/ options/ shields/ powerups/ player-side systems (placeholders)
@@ -54,21 +54,23 @@ shmup-cup/
 │   │   ├── tsconfig.build.json  emits dist/ (customConditions off)
 │   │   └── test/tsconfig.json   Node-side program for tests
 │   ├── render-pixi/        @shmup/render-pixi — PixiJS v8 IRenderer: WebGL1-first, 384×216 RT, integer upscale
-│   │   └── src/ renderer ✔ viewport ✔ test-pattern ✔ palette ✔ · atlas layers sprites text ui particles effects debug (placeholders)
+│   │   └── src/ renderer ✔ viewport ✔ test-pattern ✔ palette ✔ atlas ✔ layers ✔ sprites ✔ text ✔ ui ✔ · particles effects debug (placeholders)
 │   ├── audio-web/          @shmup/audio-web — Web Audio IAudio: interactive latency, buses, suspend/resume
 │   │   └── src/ web-audio ✔ · sfx music loader (placeholders)
-│   └── input-web/          @shmup/input-web — keyboard/remote + Gamepad API → InputSnapshot
-│       └── src/ keymap ✔ keyboard ✔ gamepad ✔ web-input ✔ · rebind remote (placeholders)
+│   ├── input-web/          @shmup/input-web — keyboard/remote + Gamepad API → InputSnapshot
+│   │   └── src/ keymap ✔ keyboard ✔ gamepad ✔ web-input ✔ · rebind remote (placeholders)
+│   └── shell/              @shmup/shell — shared browser host of apps/web + apps/tizen (decision D34)
+│       └── src/ boot ✔ loader ✔ dispatch ✔ error-screen ✔ frame-loop ✔ showcase ✔
 │
 ├── apps/                   deployable hosts (thin adapters around the packages)
 │   ├── web/                @shmup/web — Vite dev app (HMR), browser Platform; also Electron's renderer
-│   │   └── src/ main.ts · boot ✔ platform ✔ frame-loop ✔
+│   │   └── src/ main.ts · boot ✔ platform ✔
 │   ├── tizen/              @shmup/tizen — Samsung TV .wgt (Tizen 5.5+, Chromium 69)
 │   │   ├── public/         config.xml (tv-samsung, tv.inputdevice + internet), icon.png → copied to dist/
 │   │   ├── polyfills/      global-this.js (ES5, prepended to app.js)
 │   │   ├── scripts/        check-bundle.mjs (one classic ES2018 script) · tizen-package/install/run.mjs (env-driven, Windows-friendly)
 │   │   ├── vite.config.ts  target chrome69+es2018, IIFE, no code splitting, classic <script defer>
-│   │   └── src/ main.ts · boot ✔ platform ✔ (keys, Back 10009, visibility, exit) frame-loop ✔ · device-info live-reload (placeholders)
+│   │   └── src/ main.ts · boot ✔ platform ✔ (keys, Back 10009, visibility, exit) · device-info live-reload (placeholders)
 │   └── electron/           @shmup/electron — desktop shell; compiles in CI, binary never downloaded there
 │       ├── scripts/        copy-renderer.mjs (apps/web/dist → dist/renderer)
 │       └── src/ main/ (main.ts, app-protocol.ts, window-options.ts ✔ · saves.ts steam.ts placeholders) · preload/preload.cts · shared/ipc.ts
@@ -83,7 +85,7 @@ shmup-cup/
 │   └── generated/          pipeline output (atlas/main.png + main.json, cache) — ignored
 ├── scripts/                repo-level Node scripts: clean.mjs, generate-assets.mjs (pnpm assets) + assets/ (PNG encoder, sprite sources, procedural generators, packer, font), gen-trig-tables.mjs
 ├── types/                  ambient declarations for the Vite virtual modules (virtual:shmup-content, virtual:shmup-assets)
-├── test/                   cross-package integration tests (Vitest project "integration", part of `pnpm test`)
+├── test/                   cross-package integration tests (Vitest project "integration", part of `pnpm test`); e2e/ = Playwright browser smoke tests (`pnpm test:e2e`)
 ├── docs/
 │   ├── client/             player/tester docs
 │   └── dev/                contributor docs (this file, architecture, engine-foundations, content-data, asset-pipeline, api-reference, …)
@@ -98,12 +100,16 @@ API declared.
 ## Dependency direction
 
 ```text
-apps/web ─┐
-apps/tizen ├─► render-pixi ─┐
-          ├─► audio-web ────┼─► core
-          └─► input-web ────┘
+apps/web ──┐
+apps/tizen ├─► shell ──► render-pixi ─┐
+           │    └──────────────────────┤
+           ├─► audio-web ──────────────┼─► core
+           └─► input-web ──────────────┘
 apps/electron ─► (loads apps/web build; no package imports)
 ```
+
+`@shmup/shell` (M1-04) is the shared boot path of the two browser hosts; the apps still create
+their own input / audio adapters and platform and hand them to it (plan §3.1).
 
 `@shmup/core` imports nothing from the workspace (lint-enforced). Presentation packages
 depend only on core. Apps compose everything.

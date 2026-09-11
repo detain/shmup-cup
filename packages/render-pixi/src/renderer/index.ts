@@ -8,31 +8,71 @@
  * used as a *renderer only*: no `Application`, no Pixi ticker — the host's fixed-step
  * loop calls {@link PixiRenderer.render}.
  *
- * Today the low-res scene contains only the calibration test pattern; later steps add
- * the layer stack (`layers`), sprite views over sim pools (`sprites`), HUD/menus (`ui`),
- * text, particles, effects and the debug overlay.
+ * The low-res scene is the render contract of plan §3.4 drawn from a core `RenderFrame`:
+ * a lifted navy background, the layer stack (`layers`), one sprite binding per
+ * `SpriteBatchView` of the frame's `WorldView` (`sprites`), the HUD and UI draw lists
+ * (`ui` + `text`), screen shake (the world group is offset by the rounded `shakeX/Y`) and the
+ * flash / dim overlays. Optionally the calibration test pattern sits below the layers
+ * (`?scene=calibration`). Parallax and terrain views are drawn from M1-07.
+ *
+ * **Allocation.** Pixi objects are created in {@link createPixiRenderer} and when a new
+ * `WorldView` object is bound ({@link PixiRenderer.bindWorld} — once per world, called
+ * automatically by `render()` when `frame.world` changes identity). A frame showing an already
+ * bound world only assigns numbers and existing textures.
  *
  * **Implements.** shmup_tech.md §2.2 (WebGL1-first, low-res render texture + one
  * nearest upscale quad), §4.1 (Pixi as renderer only), shmup_feat.md §3 (integer
- * scaling, pixel-perfect), §22 Rendering pipeline.
+ * scaling, pixel-perfect), §18 (draw order, one atlas, flash/dim), §22 Rendering pipeline.
  *
  * **Public API.** {@link createPixiRenderer}, {@link PixiRenderer},
  * {@link PixiRendererOptions}.
  *
  * @module
  */
-import { defineModule, type IRenderer, type RenderFrame } from '@shmup/core';
-import { Container, RenderTexture, Sprite, WebGLRenderer } from 'pixi.js';
+import {
+  LayerId,
+  defineModule,
+  type IRenderer,
+  type RenderFrame,
+  type TextMetrics,
+  type WorldView,
+} from '@shmup/core';
+import { Container, RenderTexture, Sprite, Texture, WebGLRenderer } from 'pixi.js';
+import type { Atlas } from '../atlas/index.js';
+import { createLayerStack, type LayerStack } from '../layers/index.js';
 import { PALETTE } from '../palette/index.js';
-import { createTestPattern } from '../test-pattern/index.js';
+import {
+  createSpriteLayerBinding,
+  createSpriteTables,
+  type SpriteLayerBinding,
+  type SpriteTables,
+} from '../sprites/index.js';
+import { createTestPattern, type TestPattern } from '../test-pattern/index.js';
+import {
+  DEFAULT_FONT,
+  DEFAULT_GLYPH_CAPACITY,
+  createBitmapFont,
+  createTextMetrics,
+  type BitmapFont,
+} from '../text/index.js';
+import { createDrawListView, type DrawListView } from '../ui/index.js';
 import { computeIntegerViewport, type Viewport } from '../viewport/index.js';
 
 /** Module descriptor. */
 export const moduleInfo = defineModule({
   name: 'renderer',
   status: 'partial',
-  specRefs: ['shmup_tech.md §2.2', 'shmup_tech.md §4.1', 'shmup_feat.md §3', 'shmup_feat.md §22'],
+  specRefs: [
+    'shmup_tech.md §2.2',
+    'shmup_tech.md §4.1',
+    'shmup_feat.md §3',
+    'shmup_feat.md §18',
+    'shmup_feat.md §22',
+  ],
 });
+
+/** Pixels the flash overlay extends past each frame edge (it moves with screen shake). */
+const OVERLAY_MARGIN = 32;
 
 /** Options for {@link createPixiRenderer}. */
 export interface PixiRendererOptions {
@@ -48,6 +88,17 @@ export interface PixiRendererOptions {
   readonly height?: number;
   /** WebGL version to try first (default 1; Pixi falls back automatically). */
   readonly preferWebGLVersion?: 1 | 2;
+  /**
+   * Sprite atlas. Without one the renderer can only show the background and the test
+   * pattern (world batches and draw lists need textures).
+   */
+  readonly atlas?: Atlas | null;
+  /** Bitmap font for draw-list text (default `'pixel'`; ignored when the atlas lacks it). */
+  readonly font?: string;
+  /** Show the calibration test pattern below the layers (default `false`). */
+  readonly testPattern?: boolean;
+  /** Quads preallocated for each of the HUD and UI layers (default 1024). */
+  readonly glyphCapacity?: number;
 }
 
 /** The Pixi-backed renderer. */
@@ -56,9 +107,42 @@ export interface PixiRenderer extends IRenderer {
   readonly webGLVersion: number;
   /** Current placement of the scaled frame on the canvas. */
   readonly viewport: Viewport;
-  /** Low-res scene root (384×216 coordinates). Later steps attach layers here. */
+  /** Low-res scene root (384×216 coordinates). */
   readonly scene: Container;
+  /** The layer containers (one per core `LayerId`). */
+  readonly layers: LayerStack;
+  /** The atlas the renderer draws from (`null` when created without one). */
+  readonly atlas: Atlas | null;
+  /** Bitmap-text metrics for layout code (`null` without an atlas font). */
+  readonly metrics: TextMetrics | null;
+  /** Sprite bindings of the currently bound world, in `WorldView.batches` order. */
+  readonly bindings: readonly SpriteLayerBinding[];
+  /**
+   * Sets the sprite name table that `spriteId`s in world batches and draw lists index —
+   * normally `ContentDb.sprites.names`. Resolved against the atlas now (load time); unknown
+   * names draw `ui/missing`. Until it is called every sprite id draws `ui/missing`.
+   *
+   * @param names - Sprite names by sprite id.
+   */
+  setSpriteNames(names: readonly string[]): void;
+  /**
+   * Binds a world view: creates one sprite binding per batch (in its layer, batch order) and
+   * destroys the previous world's bindings. `render()` does this automatically when
+   * `frame.world` is a different object; hosts call it at load time so the first frame does
+   * not create Pixi objects.
+   *
+   * @param world - The world to draw, or `null` to unbind.
+   */
+  bindWorld(world: WorldView | null): void;
 }
+
+/**
+ * Clamps to 0…1 (NaN → 0).
+ *
+ * @param value - Value.
+ * @returns Clamped value.
+ */
+const unit = (value: number): number => (value > 0 ? (value < 1 ? value : 1) : 0);
 
 /**
  * Creates and initialises the renderer.
@@ -71,8 +155,10 @@ export interface PixiRenderer extends IRenderer {
  * - `render()` makes two passes: scene → 384×216 render texture, then the texture as
  *   one integer-scaled sprite → canvas. `resize()` floors its arguments and never goes
  *   below 1×1.
+ * - The HUD and UI layers each get a quad pool of `glyphCapacity` sprites; world batches get
+ *   bindings sized to their capacity when bound.
  *
- * @param options - Canvas, display size and internal resolution.
+ * @param options - Canvas, display size, internal resolution, atlas and scene options.
  * @returns A promise of a ready {@link PixiRenderer}.
  * @throws Rejects when Pixi cannot create a WebGL context at all (no WebGL on the
  *   device, context creation blocked).
@@ -83,7 +169,9 @@ export interface PixiRenderer extends IRenderer {
  *   canvas,
  *   displayWidth: window.innerWidth,
  *   displayHeight: window.innerHeight,
+ *   atlas,
  * });
+ * renderer.setSpriteNames(game.content.sprites.names);
  * renderer.render(game.renderFrame());
  * window.addEventListener('resize', () => renderer.resize(innerWidth, innerHeight));
  * ```
@@ -91,6 +179,7 @@ export interface PixiRenderer extends IRenderer {
 export async function createPixiRenderer(options: PixiRendererOptions): Promise<PixiRenderer> {
   const width = options.width ?? 384;
   const height = options.height ?? 216;
+  const atlas = options.atlas ?? null;
 
   const renderer = new WebGLRenderer();
   await renderer.init({
@@ -116,12 +205,57 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
     scaleMode: 'nearest',
   });
 
-  const scene = new Container();
-  const pattern = createTestPattern(width, height);
-  scene.addChild(pattern.root);
+  const scene = new Container({ label: 'scene' });
+  // Lifted navy, never black (VA panels — shmup_feat.md §18).
+  const background = new Sprite(Texture.WHITE);
+  background.scale.set(width, height);
+  background.tint = PALETTE.space;
+  scene.addChild(background);
+
+  let pattern: TestPattern | null = null;
+  if (options.testPattern === true) {
+    pattern = createTestPattern(width, height);
+    scene.addChild(pattern.root);
+  }
+
+  const layers = createLayerStack();
+  scene.addChild(layers.root);
+
+  // Screen flash: last child of the world group (over every world layer, under the HUD).
+  const flash = new Sprite(Texture.WHITE);
+  flash.position.set(-OVERLAY_MARGIN, -OVERLAY_MARGIN);
+  flash.scale.set(width + 2 * OVERLAY_MARGIN, height + 2 * OVERLAY_MARGIN);
+  flash.visible = false;
+  layers.world.addChild(flash);
+
+  // Dim: first child of the UI layer (darkens world + HUD under a menu).
+  const uiLayer = layers.layers[LayerId.Ui];
+  const dim = new Sprite(Texture.WHITE);
+  dim.scale.set(width, height);
+  dim.tint = 0x000000;
+  dim.visible = false;
+  uiLayer.addChild(dim);
+
+  const tables: SpriteTables = { base: new Int32Array(0), flash: new Int32Array(0) };
+  let font: BitmapFont | null = null;
+  let metrics: TextMetrics | null = null;
+  let hudView: DrawListView | null = null;
+  let uiView: DrawListView | null = null;
+  if (atlas !== null) {
+    const fontName = options.font ?? DEFAULT_FONT;
+    if (Object.prototype.hasOwnProperty.call(atlas.manifest.fonts, fontName)) {
+      font = createBitmapFont(atlas, fontName);
+      metrics = createTextMetrics([font]);
+    }
+    const capacity = options.glyphCapacity ?? DEFAULT_GLYPH_CAPACITY;
+    hudView = createDrawListView({ atlas, font, tables, capacity, label: 'hud' });
+    uiView = createDrawListView({ atlas, font, tables, capacity, label: 'ui' });
+    layers.layers[LayerId.Hud].addChild(hudView.container);
+    uiLayer.addChild(uiView.container);
+  }
 
   // Pass 2: one sprite showing the frame texture, integer-scaled and centred.
-  const screen = new Container();
+  const screen = new Container({ label: 'screen' });
   const frameSprite = new Sprite(frameTexture);
   screen.addChild(frameSprite);
 
@@ -134,16 +268,68 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
   };
   applyViewport();
 
+  let boundWorld: WorldView | null = null;
+  let bindings: SpriteLayerBinding[] = [];
+
+  /**
+   * Replaces the world bindings (see {@link PixiRenderer.bindWorld}).
+   *
+   * @param world - World to bind or `null`.
+   */
+  const bindWorld = (world: WorldView | null): void => {
+    for (const binding of bindings) binding.destroy();
+    bindings = [];
+    boundWorld = null;
+    if (world !== null) {
+      // Validate first, so a bad view leaves nothing half-bound.
+      for (const batch of world.batches) {
+        if (!(batch.layer >= 0 && batch.layer < layers.layers.length)) {
+          throw new RangeError(`sprite batch has an unknown layer ${batch.layer}`);
+        }
+      }
+      if (atlas !== null) {
+        for (const batch of world.batches) {
+          const binding = createSpriteLayerBinding({
+            atlas,
+            tables,
+            capacity: batch.capacity,
+            layer: batch.layer,
+          });
+          layers.layers[batch.layer].addChild(binding.container);
+          bindings.push(binding);
+        }
+      }
+    }
+    boundWorld = world;
+  };
+
   return {
     width,
     height,
     scene,
+    layers,
+    atlas,
+    get metrics() {
+      return metrics;
+    },
+    get bindings() {
+      return bindings;
+    },
     get viewport() {
       return viewport;
     },
     get webGLVersion() {
       return renderer.context.webGLVersion;
     },
+    setSpriteNames(names) {
+      if (atlas === null) return;
+      const resolved = createSpriteTables(atlas, names);
+      tables.base = resolved.base;
+      tables.flash = resolved.flash;
+      hudView?.invalidate();
+      uiView?.invalidate();
+    },
+    bindWorld,
     resize(cssWidth, cssHeight) {
       const w = Math.max(1, Math.floor(cssWidth));
       const h = Math.max(1, Math.floor(cssHeight));
@@ -152,11 +338,35 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
       applyViewport();
     },
     render(frame: RenderFrame) {
-      pattern.update(frame.tick);
+      if (pattern !== null) pattern.update(frame.tick);
+      const world = frame.world;
+      if (world !== boundWorld) bindWorld(world);
+      if (world !== null) {
+        const camX = world.camera.x;
+        const camY = world.camera.y;
+        const batches = world.batches;
+        for (let i = 0; i < bindings.length; i++) {
+          bindings[i].sync(batches[i], camX, camY);
+        }
+      }
+      const effects = frame.screen;
+      layers.world.position.set(Math.round(effects.shakeX), Math.round(effects.shakeY));
+      const flashAlpha = unit(effects.flash);
+      flash.alpha = flashAlpha;
+      flash.visible = flashAlpha > 0;
+      const dimAlpha = unit(effects.dim);
+      dim.alpha = dimAlpha;
+      dim.visible = dimAlpha > 0;
+      if (hudView !== null) hudView.draw(frame.hud);
+      if (uiView !== null) uiView.draw(frame.ui);
       renderer.render({ container: scene, target: frameTexture, clear: true });
       renderer.render({ container: screen });
     },
     destroy() {
+      bindWorld(null);
+      hudView?.destroy();
+      uiView?.destroy();
+      scene.destroy({ children: true });
       frameTexture.destroy(true);
       renderer.destroy();
     },

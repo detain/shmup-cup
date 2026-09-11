@@ -5,6 +5,8 @@ coverage/
 .turbo/
 assets/generated/
 pnpm-lock.yaml
+test-results/
+playwright-report/
 
 # Hand-laid pixel art (sprite rows / font glyphs one per line — Prettier would fold short
 # row arrays onto one line and destroy the picture)

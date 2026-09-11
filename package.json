@@ -27,6 +27,7 @@
     "test:integration": "vitest run --project integration",
     "content:check": "vitest run --project integration test/integration/content.test.ts",
     "test:all": "vitest run",
+    "test:e2e": "turbo run build --filter=@shmup/web --filter=@shmup/tizen && playwright test --config test/e2e/playwright.config.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "clean": "turbo run clean && node scripts/clean.mjs .turbo coverage",
@@ -35,6 +36,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.63.0",
     "@shmup/core": "workspace:*",
     "@shmup/input-web": "workspace:*",
     "@types/node": "catalog:",

@@ -200,6 +200,7 @@ describe('tooling: TypeScript and browser targets', () => {
       'packages/input-web',
       'packages/audio-web',
       'packages/render-pixi',
+      'packages/shell',
       'apps/web',
       'apps/tizen',
     ]) {

@@ -1,0 +1,36 @@
+{
+  "name": "@shmup/shell",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Shared browser host for apps/web and apps/tizen: boot sequence (atlas + content loading, boot error screen), event dispatch and the rAF frame loop.",
+  "license": "MPL-2.0",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "@shmup/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p test/tsconfig.json",
+    "lint": "eslint --max-warnings=0 .",
+    "test": "vitest run",
+    "clean": "node ../../scripts/clean.mjs dist coverage .turbo"
+  },
+  "dependencies": {
+    "@shmup/core": "workspace:*",
+    "@shmup/render-pixi": "workspace:*"
+  },
+  "devDependencies": {
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

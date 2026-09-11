@@ -563,6 +563,65 @@ the browser dev app and as a Tizen 5.5 bundle.
 - **Manual (optional):** deploy the Tizen build; the showcase renders crisp at ×5 on the M7.
 - **Refs:** `shmup_feat.md` §3, §17 (canvas UI), §18 (draw order, atlas), §22 (rendering pipeline); `shmup_tech.md`
   §2.2, §4.1, §4.10.
+- **As built:**
+  - **Core `presentation`.** `LayerId` is a numeric const object (`LayerId.BgFar` … `LayerId.Debug`,
+    codes 0…13) with `LAYER_COUNT` and `LAYER_NAMES` (the §3.4 spellings). `SpriteFlag` =
+    `FlipX | FlipY | Hidden` (blink) `| Flash` (draw the `<sprite>@flash` sibling). `SpriteBatchView`
+    also carries `capacity` and types its arrays `ArrayLike<number>` so SoA pools of any numeric
+    field type implement it; `createSpriteBatch(layer, capacity)` + `pushSprite()` build the mirror
+    views of object-based systems. `ParallaxView` / `TerrainView` are minimal shapes that M1-07 fills
+    and draws. `DrawList` stores commands column-wise (`op, x, y, w, h, color, alpha, ref, frame,
+    flags, value`), `ref` = sprite id or string slot, `frame` = sprite frame or the `number` op's
+    zero-pad width, `flags` = sprite flags or `TextAlign`; it counts `dropped` commands and bumps a
+    `revision` on every change (the renderer skips unchanged lists). `TextMetrics` moved here from the
+    placeholder core `ui` (which re-exports it) so it can be public API.
+  - **Core `config` / `game`.** The D20 layout constants `HUD_BAR_HEIGHT`, `PLAYFIELD_Y`,
+    `PLAYFIELD_W`, `PLAYFIELD_H` were added now (M1-06 lists them) because the sprite binding needs
+    `PLAYFIELD_Y`. `Game` gained `events: EventQueue` (the shell drains it; M1-06's systems push into
+    it) and `renderFrame()` returns the full frame (`world: null`, empty HUD / UI lists, no effects).
+  - **Sprite ids → frames.** A world batch's or draw list's `spriteId` indexes the *sprite name table*
+    the host hands the renderer (`renderer.setSpriteNames(game.content.sprites.names)`); `createAtlas`
+    assigns frame ids sprite by sprite, so frame = `table[spriteId] + frame`, validated against a
+    per-frame `framesLeft` array. Unknown names and out-of-range frames draw `ui/missing` (the M1-03
+    name, not `@missing`), warned once per name. `resolveFlashTable` serves `SpriteFlag.Flash`. The
+    atlas rejects a page image whose size differs from its manifest entry (a stale atlas → boot error
+    screen).
+  - **render-pixi.** `createSpriteLayerBinding({ atlas, tables, capacity, layer, offsetY })`; flips
+    mirror around the anchor point. `sprites` also exports an ordered `QuadPool`: the HUD and UI layers
+    each own one (1024 quads = the planned glyph pool) and a `DrawListView` (`ui`) draws rects, sprites,
+    text and numbers into it in command order; `text` provides `createBitmapFont`,
+    `createTextMetrics`, `drawText` / `drawNumber` into a `GlyphSink` (numbers without strings; values
+    capped at `Number.MAX_SAFE_INTEGER` so digit extraction stays exact). The renderer takes `atlas`,
+    `testPattern`, `font`, `glyphCapacity`; adds `setSpriteNames()`, `bindWorld()` (bindings are created
+    when a new `WorldView` object appears — the shell pre-binds its scene at load, so frames never
+    create Pixi objects), a lifted-navy background quad, shake as a world-group offset, a flash quad
+    over the world layers and a dim quad under the UI. Parallax and terrain are drawn from M1-07.
+  - **`@shmup/shell` modules:** `boot`, `loader`, `dispatch`, `error-screen` as planned, plus
+    `frame-loop` (moved from `apps/web` and `apps/tizen`, which each had a copy) and `showcase` (the
+    default scene lives in the shell so web and TV show the same thing). `bootShell`'s `platform`
+    option is a factory `(renderer) => Platform` (the platform's `caps.webgl2` is only known once the
+    renderer exists); further options `scene`, `audioUnlock` (`'gesture'` web / `'immediate'` TV),
+    `preferWebGLVersion`, `contentOwners`, `createImage`, `overlay`. The progress bar and the boot error
+    screen are drawn on a separate 2D **overlay canvas** (a canvas that had a 2D context can never get
+    WebGL, and the error screen must work when WebGL is the problem). The game canvas carries
+    `data-shmup-state="loading" | "running" | "error"`. Foreign content kinds without an owner are
+    issues (plan §3.5). `sceneFromSearch()` reads `?scene=`; the calibration pattern is shown only
+    with `?scene=calibration`.
+  - **Apps.** `bootWebApp(canvas, resources, win)` / `bootTizenApp(canvas, resources, win)` receive the
+    virtual modules from `main.ts` (unit tests cannot resolve virtual modules). The Tizen Back watcher
+    is installed before boot, so Back also exits from the boot error screen.
+  - **Tizen bundle check** rule 7: at least one atlas page under `dist/assets/atlas/`.
+  - **e2e.** `@playwright/test` (root dev dependency), `test/e2e/playwright.config.ts` + `boot.spec.ts`;
+    `pnpm test:e2e` runs `turbo run build` for both apps, then Playwright (the reserved turbo
+    `test:e2e` task stays unused — the root script chains the build). Chromium flags: SwiftShader,
+    `--allow-file-access-from-files` (desktop Chrome treats every `file://` URL as its own origin and
+    WebGL refuses the atlas upload — verified; the Tizen runtime serves the widget's files as
+    same-origin) and `--autoplay-policy=no-user-gesture-required`; the browser environment drops
+    `DISPLAY` (a stale forwarded X display made ANGLE's SwiftShader pick XCB and hang every WebGL
+    context). Checks: running state, non-uniform ×3 screenshot with known pixels (showcase title
+    yellow and HUD bar; calibration border), atlas reachable via its relative URL, no console errors,
+    page errors or failed requests. New CI job `e2e`; `test-results/` and `playwright-report/` are
+    git- and Prettier-ignored.
 
 ### M1-05 — Remote-first input profiles
 

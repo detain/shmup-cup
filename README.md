@@ -19,9 +19,14 @@ and an original 6×8 pixel font are packed by `pnpm assets` into a texture atlas
 manifest (the KESTREL, shots, six small enemies, boss parts, bullets, explosions, items,
 HUD pieces, terrain tiles, star layers), served to the builds as `virtual:shmup-assets`;
 real art can later replace any frame by name ([developer guide](docs/dev/asset-pipeline.md)).
-The game starts reading the data and the atlas once the shared browser shell lands (M1-04).
-The apps still show a pixel-art calibration test pattern —
-see [what it should look like](docs/client/preview-build.md) — so there is no gameplay yet.
+Both apps now boot through the shared browser shell [`@shmup/shell`](packages/shell/README.md)
+(M1-04): it validates the content, loads the atlas pages behind a loading bar (or shows a boot
+error screen listing every problem), and renders the core's render contract — sprite batches,
+bitmap text, HUD / UI command lists — with zero per-frame allocation. The default scene is a
+**sprite showcase** (parallax stars, the KESTREL with Options, drifters, bullets, HUD and the
+bitmap-font title); `?scene=calibration` shows the pixel-art test pattern — there is no
+gameplay yet. `pnpm test:e2e` boots the web build and the Tizen `dist/` (via `file://`) in
+headless Chromium.
 The **input probe** — a diagnostic Tizen app that measures the Samsung remote, gamepads and
 display on the real monitors — is built and tested ([`tools/input-probe/`](tools/input-probe/README.md));
 it is waiting to be packaged and run on the M7 monitors.
@@ -124,6 +129,7 @@ pnpm workspace (`packages/*`, `apps/*`) + Turborepo. Full annotated tree:
 | [`packages/render-pixi`](packages/render-pixi/README.md) | `@shmup/render-pixi` — PixiJS v8 renderer (WebGL1, 384×216 → integer upscale) |
 | [`packages/audio-web`](packages/audio-web/README.md) | `@shmup/audio-web` — Web Audio mixer |
 | [`packages/input-web`](packages/input-web/README.md) | `@shmup/input-web` — keyboard / Samsung remote / gamepad → action snapshots |
+| [`packages/shell`](packages/shell/README.md) | `@shmup/shell` — shared browser host of web + Tizen: boot / loading, boot error screen, event dispatch, frame loop |
 | [`apps/web`](apps/web/README.md) | Vite browser dev target (also Electron's renderer) |
 | [`apps/tizen`](apps/tizen/README.md) | Samsung Tizen `.wgt` (Chromium 69 classic IIFE build, config.xml, CLI scripts) |
 | [`apps/electron`](apps/electron/README.md) | Electron desktop shell |
@@ -131,7 +137,7 @@ pnpm workspace (`packages/*`, `apps/*`) + Turborepo. Full annotated tree:
 | `types/` | Ambient declarations for the Vite virtual modules (`virtual:shmup-content`, `virtual:shmup-assets`) |
 | [`assets/`](assets/README.md) | Art/audio sources (`source/`: sprite pixel maps, fonts) and pipeline output (`generated/`: atlas pages + manifest, ignored) |
 | [`scripts/`](scripts/README.md) | Repo-level Node scripts |
-| [`test/`](test/README.md) | Cross-package integration tests |
+| [`test/`](test/README.md) | Cross-package integration tests; `test/e2e/` browser smoke tests (Playwright) |
 | [`docs/`](docs/README.md) | Player (`client/`) and developer (`dev/`) documentation |
 | `tools/` | Standalone dev tools with their own npm projects (not workspace members) |
 | [`tools/input-probe`](tools/input-probe/README.md) | Input probe `.wgt`: remote / gamepad / display diagnostics for the M7 monitors (npm, Vite, Vitest; log server) |
@@ -145,10 +151,8 @@ the game — the shipped Tizen bundle still targets Chromium 69.
 
 ## Next step
 
-Code: plan step **M1-04** (rendering foundations and the shared browser shell
-`@shmup/shell`: the atlas and bitmap text in render-pixi, sprite layers fed from sim views,
-one boot path for web and Tizen that loads content and the atlas, a boot error screen, and
-the first headless-browser smoke tests) — the per-step status board is
+Code: plan step **M1-05** (remote-first input profiles: the Samsung remote mapping and its
+quirks as data, binding contexts for game and menus) — the per-step status board is
 [`shmup_progress.md`](shmup_progress.md).
 
 On hardware (unchanged, and still the gate for the remote control scheme): package and

@@ -4,6 +4,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_GAME_CONFIG } from '../../src/config/index.js';
+import { DEFAULT_EVENT_QUEUE_CAPACITY, SimEventKind } from '../../src/events/index.js';
 import { createGame } from '../../src/game/index.js';
 import { Action, commitPlayerInput } from '../../src/input/index.js';
 import { createHeadlessPlatform, type HeadlessPlatform } from '../../src/platform/index.js';
@@ -35,7 +36,11 @@ describe('core/game edge cases', () => {
     const game = createGame(createHeadlessPlatform());
     expect(game.state).toEqual({ tick: 0, paused: false, suspended: false, input: null });
     expect(game.config).toEqual(DEFAULT_GAME_CONFIG);
-    expect(game.renderFrame()).toEqual({ tick: 0, alpha: 0 });
+    const frame = game.renderFrame();
+    expect([frame.tick, frame.alpha, frame.world]).toEqual([0, 0, null]);
+    expect(frame.screen).toEqual({ shakeX: 0, shakeY: 0, flash: 0, dim: 0 });
+    expect([frame.hud.count, frame.ui.count]).toEqual([0, 0]);
+    expect(frame.hud).not.toBe(frame.ui);
   });
 
   it('polls input exactly once per tick — never while frozen', () => {
@@ -77,6 +82,18 @@ describe('core/game edge cases', () => {
     expect(second).toBe(first);
     expect(second.alpha).toBe(0);
     expect(second.tick).toBe(game.state.tick);
+    expect(second.hud).toBe(first.hud);
+  });
+
+  it('owns an event queue for presentation events; ticking does not touch it yet', () => {
+    const game = createGame(createHeadlessPlatform());
+    expect(game.events.capacity).toBe(DEFAULT_EVENT_QUEUE_CAPACITY);
+    for (let i = 0; i < 10; i++) game.step();
+    expect(game.events.length).toBe(0);
+    game.events.push(SimEventKind.Shake, 0, 0, 0, 2);
+    const seen: number[] = [];
+    game.events.drain((event) => seen.push(event.param));
+    expect(seen).toEqual([2]);
   });
 
   it('resume() after a user pause re-anchors time (no catch-up burst)', () => {

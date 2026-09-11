@@ -1,42 +1,54 @@
 /**
  * # boot — composition root of the Tizen TV app
  *
- * **Responsibility.** Same wiring as the browser app, tuned for the TV: remote-first
- * input (`keyDevice: 'remote'`, `remoteMode: true` in the game config), the Tizen
- * {@link createTizenPlatform | platform adapter} (key registration, lifecycle, exit), and
- * the rAF → fixed-step → render loop. Audio needs no gesture on TV, so it is unlocked
- * immediately.
+ * **Responsibility.** Creates the TV-specific adapters — remote-first input
+ * (`keyDevice: 'remote'`), Web Audio and the Tizen {@link createTizenPlatform | platform
+ * adapter} (key registration, lifecycle, exit) — and hands them with the inlined content and
+ * atlas to the shared boot sequence of `@shmup/shell` (`bootShell`: loading bar, content
+ * validation and boot error screen, atlas pages from relative `file://` URLs, renderer, game,
+ * event dispatch and the rAF frame loop). The game runs with `remoteMode: true` and forced
+ * autofire; audio needs no gesture on TV, so it is unlocked immediately.
  *
  * **Back key.** Until the title scene with its exit-confirmation dialog exists
- * (shmup_feat.md §17/§23), the calibration screen *is* the app's root screen, so Back
- * exits directly — the correct Tizen behaviour for a root screen. Later the scene stack
- * consumes `Action.Back` and this shortcut goes away.
+ * (shmup_feat.md §17/§23, M1-16), the showcase *is* the app's root screen, so Back exits
+ * directly — the correct Tizen behaviour for a root screen. The Back watcher is installed
+ * before boot, so Back also leaves the boot error screen. Later the scene stack consumes
+ * `Action.Back` and this shortcut goes away.
  *
  * **Implements.** shmup_feat.md §23 (Tizen: Back, registerKeyBatch, visibilitychange,
  * exit), §3 (fixed step, pause on hidden), §4 (remote-first).
  *
- * **Public API.** {@link bootTizenApp}, {@link TizenApp}.
+ * **Public API.** {@link bootTizenApp}, {@link TizenApp}, {@link TizenAppResources}.
  *
  * @module
  */
 import { createWebAudio, type WebAudio } from '@shmup/audio-web';
-import { createGame, defineModule, type Game, type Platform } from '@shmup/core';
+import { defineModule, type ContentFile, type Game, type Platform } from '@shmup/core';
 import { createWebInput, type GamepadLike, type WebInput } from '@shmup/input-web';
-import { createPixiRenderer, type PixiRenderer } from '@shmup/render-pixi';
-import { startFrameLoop } from '../frame-loop/index.js';
+import type { PixiRenderer } from '@shmup/render-pixi';
+import { bootShell, sceneFromSearch, type Shell, type ShellAssets } from '@shmup/shell';
 import {
   createTizenPlatform,
   getTizenApi,
   watchBackKey,
   type StorageLike,
+  type TizenApi,
 } from '../platform/index.js';
 
 /** Module descriptor. */
 export const moduleInfo = defineModule({
   name: 'boot',
-  status: 'partial',
+  status: 'implemented',
   specRefs: ['shmup_feat.md §23', 'shmup_feat.md §3', 'shmup_feat.md §4'],
 });
+
+/** What the app boots with: the inlined virtual modules (see `main.ts`). */
+export interface TizenAppResources {
+  /** `virtual:shmup-content`. */
+  readonly contentFiles: readonly ContentFile[];
+  /** `virtual:shmup-assets`. */
+  readonly assets: ShellAssets;
+}
 
 /** Handles to the running TV app. */
 export interface TizenApp {
@@ -50,6 +62,8 @@ export interface TizenApp {
   readonly audio: WebAudio;
   /** Remote / keyboard + gamepad input adapter (`keyDevice: 'remote'`). */
   readonly input: WebInput;
+  /** The shared shell (atlas, event dispatcher, scene). */
+  readonly shell: Shell;
   /** Stops the loop and releases resources. */
   stop(): void;
 }
@@ -69,23 +83,60 @@ function safeLocalStorage(win: Window): StorageLike | null {
 }
 
 /**
+ * `location.search` of the window, or `''` when there is no location (test fakes).
+ *
+ * @param win - The window.
+ * @returns The query string.
+ */
+function searchOf(win: Window): string {
+  const location = (win as Partial<Window>).location;
+  return location === undefined ? '' : location.search;
+}
+
+/**
+ * Exits through the Tizen API directly (used by Back before the platform exists, i.e. on the
+ * boot error screen).
+ *
+ * @param tizen - The Tizen API, or `null` outside a TV.
+ * @returns An exit function, or `null` when the app cannot exit.
+ */
+function apiExit(tizen: TizenApi | null): (() => void) | null {
+  const application = tizen?.application;
+  if (application === undefined) return null;
+  return () => {
+    application.getCurrentApplication().exit();
+  };
+}
+
+/**
  * Boots the game on the TV (or in a desktop browser for development).
  *
  * @remarks
- * Registers the extra remote keys (via {@link createTizenPlatform}), unlocks audio
- * immediately, and exits the app on Back while the calibration screen is the root
- * screen. Suspend (Home / multitasking) clears held input and suspends audio; resume
+ * Installs the Back watcher first (Back exits from the root screen — including the boot error
+ * screen), creates input and audio, then runs `bootShell`, which creates the renderer, this
+ * app's platform (registering the extra remote keys) and the game, and unlocks audio
+ * immediately. Suspend (Home / multitasking) clears held input and suspends audio; resume
  * resumes audio and the game resets its loop accumulator.
  *
  * @param canvas - Full-screen canvas.
+ * @param resources - The inlined content files and atlas (`virtual:shmup-*` modules).
  * @param win - The window.
  * @returns A promise of the running app.
- * @throws Rejects when the renderer cannot be created (no WebGL).
+ * @throws Rejects with the shell's `ShellBootError` when content is invalid, the atlas cannot
+ *   load or WebGL is unavailable (Back still exits the app afterwards).
  */
 export async function bootTizenApp(
   canvas: HTMLCanvasElement,
+  resources: TizenAppResources,
   win: Window = window,
 ): Promise<TizenApp> {
+  const tizen = getTizenApi(win);
+  let platform: Platform | null = null;
+  const stopBack = watchBackKey(win, () => {
+    const exit = platform !== null ? platform.exit : apiExit(tizen);
+    if (exit !== null) exit();
+  });
+
   const nav = win.navigator;
   const hasGamepadApi = typeof nav.getGamepads === 'function';
   const input = createWebInput({
@@ -94,62 +145,42 @@ export async function bootTizenApp(
     getGamepads: hasGamepadApi ? (): ArrayLike<GamepadLike | null> => nav.getGamepads() : undefined,
   });
   const audio = createWebAudio();
-  const renderer = await createPixiRenderer({
+  const shell = await bootShell({
     canvas,
-    displayWidth: win.innerWidth,
-    displayHeight: win.innerHeight,
-    preferWebGLVersion: 1,
-  });
-  const platform = createTizenPlatform({
-    tizen: getTizenApi(win),
+    win,
+    contentFiles: resources.contentFiles,
+    assets: resources.assets,
     input,
     audio,
-    storage: safeLocalStorage(win),
-    visibility: win.document,
-    displaySize: () => ({ width: win.innerWidth, height: win.innerHeight }),
-    gamepad: hasGamepadApi,
-    webgl2: renderer.webGLVersion === 2,
-  });
-  const game = createGame(platform, { remoteMode: true, autofire: true });
-
-  platform.lifecycle.onSuspend(() => {
-    input.clear();
-    void audio.suspend();
-  });
-  platform.lifecycle.onResume(() => {
-    void audio.resume();
-  });
-  void platform.audio.unlock();
-
-  const exit = platform.exit;
-  const stopBack = watchBackKey(win, () => {
-    if (exit !== null) exit();
-  });
-
-  /** Keeps the canvas and the integer viewport in sync with the window size. */
-  const onResize = (): void => {
-    renderer.resize(win.innerWidth, win.innerHeight);
-  };
-  win.addEventListener('resize', onResize);
-
-  const loop = startFrameLoop(win, (now) => {
-    game.frame(now);
-    renderer.render(game.renderFrame());
+    platform: (renderer) => {
+      platform = createTizenPlatform({
+        tizen,
+        input,
+        audio,
+        storage: safeLocalStorage(win),
+        visibility: win.document,
+        displaySize: () => ({ width: win.innerWidth, height: win.innerHeight }),
+        gamepad: hasGamepadApi,
+        webgl2: renderer.webGLVersion === 2,
+      });
+      return platform;
+    },
+    gameConfig: { remoteMode: true, autofire: true },
+    scene: sceneFromSearch(searchOf(win)),
+    audioUnlock: 'immediate',
+    preferWebGLVersion: 1,
   });
 
   return {
-    game,
-    platform,
-    renderer,
+    game: shell.game,
+    platform: shell.platform,
+    renderer: shell.renderer,
     audio,
     input,
+    shell,
     stop() {
-      loop.stop();
+      shell.stop();
       stopBack();
-      win.removeEventListener('resize', onResize);
-      input.destroy();
-      renderer.destroy();
-      void audio.destroy();
     },
   };
 }

@@ -18,17 +18,27 @@
  *
  * **Public API.** {@link createGame}, {@link Game}, {@link GameState}. A session carries the
  * validated {@link ContentDb} it was created with (`game.content`), so systems read tunables
- * from data instead of constants.
+ * from data instead of constants, the {@link EventQueue} its systems push presentation events
+ * into (`game.events`, drained by the host once per frame) and builds the reused
+ * {@link RenderFrame} of the render contract (`game.renderFrame()`: `world` is `null` until the
+ * World arrives in M1-06; the HUD and UI draw lists are empty until the scenes of M1-16).
  *
  * @module
  */
 import { resolveGameConfig, type GameConfig } from '../config/index.js';
 import { EMPTY_CONTENT_DB, type ContentDb } from '../data/index.js';
+import { createEventQueue, type EventQueue } from '../events/index.js';
 import type { InputSnapshot } from '../input/index.js';
 import { createFixedStepLoop } from '../loop/index.js';
 import { defineModule } from '../module-info.js';
 import type { Platform } from '../platform/index.js';
-import type { RenderFrame } from '../presentation/index.js';
+import {
+  createDrawList,
+  type DrawList,
+  type RenderFrame,
+  type ScreenView,
+  type WorldView,
+} from '../presentation/index.js';
 
 /** Module descriptor (see {@link defineModule}). */
 export const moduleInfo = defineModule({
@@ -57,6 +67,12 @@ export interface Game {
   readonly content: ContentDb;
   /** The host platform the game was created on. */
   readonly platform: Platform;
+  /**
+   * Presentation events pushed by the simulation (SFX, music, particles, shake …). The host
+   * drains it once per displayed frame (`game.events.drain(dispatch)`); a headless run may
+   * ignore it (the ring drops the oldest events when full).
+   */
+  readonly events: EventQueue;
   /** Current state. Do not mutate from outside the core. */
   readonly state: Readonly<GameState>;
   /**
@@ -76,7 +92,8 @@ export interface Game {
    * Builds the frame description to hand to an `IRenderer`.
    *
    * @returns A reused object (do not keep it across frames); `alpha` is 0 while
-   *   frozen so a paused picture does not wobble.
+   *   frozen so a paused picture does not wobble. `world` is `null` until the World exists
+   *   (M1-06); `hud` / `ui` are the session's draw lists; `screen` carries no effects yet.
    */
   renderFrame(): RenderFrame;
   /** Pauses the simulation (user pause; survives platform suspend/resume). */
@@ -120,7 +137,16 @@ export function createGame(
   const config = resolveGameConfig(overrides);
   const state: GameState = { tick: 0, paused: false, suspended: false, input: null };
   const isFrozen = (): boolean => state.paused || state.suspended;
-  const frameView = { tick: 0, alpha: 0 };
+  const events = createEventQueue();
+  const screen: ScreenView = { shakeX: 0, shakeY: 0, flash: 0, dim: 0 };
+  const frameView: {
+    tick: number;
+    alpha: number;
+    world: WorldView | null;
+    hud: DrawList;
+    ui: DrawList;
+    screen: ScreenView;
+  } = { tick: 0, alpha: 0, world: null, hud: createDrawList(), ui: createDrawList(), screen };
 
   /** One simulation tick; the systems run here in the fixed tick order. */
   const step = (): void => {
@@ -140,6 +166,7 @@ export function createGame(
     config,
     content,
     platform,
+    events,
     state,
     step,
     frame(nowMs) {

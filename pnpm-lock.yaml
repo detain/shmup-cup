@@ -139,6 +139,9 @@ importers:
       '@eslint/js':
         specifier: ^10.0.1
         version: 10.0.1(eslint@10.10.0)
+      '@playwright/test':
+        specifier: ^1.63.0
+        version: 1.63.0
       '@shmup/core':
         specifier: workspace:*
         version: link:packages/core
@@ -223,6 +226,9 @@ importers:
       '@shmup/render-pixi':
         specifier: workspace:*
         version: link:../../packages/render-pixi
+      '@shmup/shell':
+        specifier: workspace:*
+        version: link:../../packages/shell
     devDependencies:
       acorn:
         specifier: 'catalog:'
@@ -254,6 +260,9 @@ importers:
       '@shmup/render-pixi':
         specifier: workspace:*
         version: link:../../packages/render-pixi
+      '@shmup/shell':
+        specifier: workspace:*
+        version: link:../../packages/shell
     devDependencies:
       eslint:
         specifier: 'catalog:'
@@ -320,6 +329,25 @@ importers:
       pixi.js:
         specifier: 'catalog:'
         version: 8.20.1
+    devDependencies:
+      eslint:
+        specifier: 'catalog:'
+        version: 10.10.0
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+      vitest:
+        specifier: 'catalog:'
+        version: 5.0.0(@types/node@24.13.4)(vite@8.3.0(@types/node@24.13.4))
+
+  packages/shell:
+    dependencies:
+      '@shmup/core':
+        specifier: workspace:*
+        version: link:../core
+      '@shmup/render-pixi':
+        specifier: workspace:*
+        version: link:../render-pixi
     devDependencies:
       eslint:
         specifier: 'catalog:'
@@ -444,6 +472,11 @@ packages:
 
   '@pixi/colord@2.9.6':
     resolution: {integrity: sha512-nezytU2pw587fQstUu1AsJZDVEynjskwOL+kibwcdxsMBFqPsFFNA7xl0ii/gXuDi6M0xj3mfRJj8pBSc2jCfA==}
+
+  '@playwright/test@1.63.0':
+    resolution: {integrity: sha512-oxMK4vllB9RK5NQ2l1pq1IfOf2AvnEuj/vYGDj0H2nMtmtZpKtCwt/l00GEO6xjGfpBNAvjovvYdCm50dRQkpQ==}
+    engines: {node: '>=20'}
+    hasBin: true
 
   '@rolldown/binding-android-arm-eabi@1.2.8':
     resolution: {integrity: sha512-tN5aztYkKCte4i5SIrrz5yK/HMjEuCqCSCJa418jOV8tZ1cBY3YF2otxB1ktPxzsLA1BeTqwapK0bfjxNvHJVw==}
@@ -1117,6 +1150,16 @@ packages:
   pixi.js@8.20.1:
     resolution: {integrity: sha512-akLVBMLvQbaEViqsmVraK0Njer1q4Q4lm4iNKuzvBiFrV8q+6/+HluJN3sWIwO663IBeQtUUS/CaXFJZs6ffXQ==}
 
+  playwright-core@1.63.0:
+    resolution: {integrity: sha512-rYCsBF/M5HjUch52bbtVONEFjv6Xu8sm8h72dNlR5bzIE1fvC/bxgspzkjSfU+MweEMmPM8KJebG6nnyxo5mCg==}
+    engines: {node: '>=20'}
+    hasBin: true
+
+  playwright@1.63.0:
+    resolution: {integrity: sha512-+7ziBLidS4NaNCdt57SUDT+wYmmd5fmiQejUic/kb+YsYSCPyOOE9sebzMjNmQrsnNpDJqd4WHvV/8lfKfUDUg==}
+    engines: {node: '>=20'}
+    hasBin: true
+
   pngjs@7.0.0:
     resolution: {integrity: sha512-LKWqWJRhstyYo9pGvgor/ivk2w94eSjE3RGVuzLGlr3NmD8bf7RcYGze1mNdEHRP6TRP6rMuDHk5t44hnTRyow==}
     engines: {node: '>=14.19.0'}
@@ -1474,6 +1517,10 @@ snapshots:
   '@oxc-project/types@0.149.0': {}
 
   '@pixi/colord@2.9.6': {}
+
+  '@playwright/test@1.63.0':
+    dependencies:
+      playwright: 1.63.0
 
   '@rolldown/binding-android-arm-eabi@1.2.8':
     optional: true
@@ -2075,6 +2122,12 @@ snapshots:
       ismobilejs: 1.1.1
       parse-svg-path: 0.2.0
       tiny-lru: 11.4.7
+
+  playwright-core@1.63.0: {}
+
+  playwright@1.63.0:
+    dependencies:
+      playwright-core: 1.63.0
 
   pngjs@7.0.0: {}
 

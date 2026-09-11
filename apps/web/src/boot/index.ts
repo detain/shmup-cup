@@ -1,37 +1,44 @@
 /**
  * # boot — composition root of the browser app
  *
- * **Responsibility.** Wires the packages together for the browser: input
- * (`@shmup/input-web`), audio (`@shmup/audio-web`), renderer (`@shmup/render-pixi`),
- * the web {@link createWebPlatform | platform adapter} and the core game, then drives
- * everything from `requestAnimationFrame`: `game.frame(now)` runs the due fixed ticks,
- * `renderer.render(game.renderFrame())` draws. Until real scenes exist the renderer
- * shows the calibration test pattern with a tick-driven marker.
+ * **Responsibility.** Creates the browser-specific adapters — keyboard + gamepad input
+ * (`@shmup/input-web`), Web Audio (`@shmup/audio-web`) and the web
+ * {@link createWebPlatform | platform adapter} (localStorage, page visibility) — and hands them
+ * with the inlined content and atlas to the shared boot sequence of `@shmup/shell`
+ * (`bootShell`: loading bar, content validation and boot error screen, atlas, renderer, game,
+ * event dispatch and the rAF frame loop). Keyboard-first (`remoteMode: false`); audio is
+ * unlocked by the first key or pointer gesture (autoplay policy — gamepad buttons do not count
+ * as a user activation); the tab being hidden suspends the game, clears held input and
+ * suspends audio. `?scene=calibration` shows the test pattern instead of the sprite showcase.
  *
- * Audio is unlocked on the first key or pointer gesture (autoplay policy — gamepad
- * buttons do not count as a user activation in browsers); the tab being hidden
- * suspends the game, clears held input and suspends audio.
+ * **Implements.** shmup_feat.md §23 (web dev target), §3 (rAF-driven fixed step, pause on
+ * visibility change, integer scaling), §19 (resume audio on first input).
  *
- * **Implements.** shmup_feat.md §23 (web dev target), §3 (rAF-driven fixed step,
- * pause on visibility change, integer scaling), §19 (resume audio on first input).
- *
- * **Public API.** {@link bootWebApp}, {@link WebApp}.
+ * **Public API.** {@link bootWebApp}, {@link WebApp}, {@link WebAppResources}.
  *
  * @module
  */
 import { createWebAudio, type WebAudio } from '@shmup/audio-web';
-import { createGame, defineModule, type Game } from '@shmup/core';
+import { defineModule, type ContentFile, type Game } from '@shmup/core';
 import { createWebInput, type GamepadLike, type WebInput } from '@shmup/input-web';
-import { createPixiRenderer, type PixiRenderer } from '@shmup/render-pixi';
-import { startFrameLoop } from '../frame-loop/index.js';
+import type { PixiRenderer } from '@shmup/render-pixi';
+import { bootShell, sceneFromSearch, type Shell, type ShellAssets } from '@shmup/shell';
 import { createWebPlatform, type StorageLike } from '../platform/index.js';
 
 /** Module descriptor. */
 export const moduleInfo = defineModule({
   name: 'boot',
-  status: 'partial',
+  status: 'implemented',
   specRefs: ['shmup_feat.md §23', 'shmup_feat.md §3', 'shmup_feat.md §19'],
 });
+
+/** What the app boots with: the inlined virtual modules (see `main.ts`). */
+export interface WebAppResources {
+  /** `virtual:shmup-content`. */
+  readonly contentFiles: readonly ContentFile[];
+  /** `virtual:shmup-assets`. */
+  readonly assets: ShellAssets;
+}
 
 /** Handles to the running app (for HMR disposal and debugging in the console). */
 export interface WebApp {
@@ -43,6 +50,8 @@ export interface WebApp {
   readonly audio: WebAudio;
   /** Keyboard + gamepad input adapter. */
   readonly input: WebInput;
+  /** The shared shell (atlas, event dispatcher, scene). */
+  readonly shell: Shell;
   /** Stops the frame loop and releases listeners, GPU and audio resources. */
   stop(): void;
 }
@@ -63,26 +72,47 @@ function safeLocalStorage(win: Window): StorageLike | null {
 }
 
 /**
+ * `location.search` of the window, or `''` when there is no location (test fakes).
+ *
+ * @param win - The window.
+ * @returns The query string.
+ */
+function searchOf(win: Window): string {
+  const location = (win as Partial<Window>).location;
+  return location === undefined ? '' : location.search;
+}
+
+/**
  * Boots the game into a canvas.
  *
  * @remarks
- * Order: input → audio (no context yet) → renderer (async WebGL init) → platform →
- * game → lifecycle hooks → gesture/resize listeners → frame loop. Everything created
- * here is released by {@link WebApp.stop}.
+ * Creates input and audio (no context yet), then runs `bootShell`, which creates the
+ * renderer, then this app's platform (through the factory, once WebGL2 support is known) and
+ * the game. Everything is released by {@link WebApp.stop}; on a failed boot the shell has
+ * already released it and shows the boot error screen.
  *
  * @param canvas - Target canvas (fills the window).
+ * @param resources - The inlined content files and atlas (`virtual:shmup-*` modules).
  * @param win - The browser window (injectable for tests).
  * @returns A promise of the running app.
- * @throws Rejects when the renderer cannot be created (no WebGL).
+ * @throws Rejects with the shell's `ShellBootError` when content is invalid, the atlas cannot
+ *   load or WebGL is unavailable.
  *
  * @example
  * ```ts
- * const app = await bootWebApp(document.getElementById('game') as HTMLCanvasElement);
+ * import contentFiles from 'virtual:shmup-content';
+ * import assets from 'virtual:shmup-assets';
+ *
+ * const app = await bootWebApp(canvas, { contentFiles, assets });
  * // in the devtools console: app.game.state.tick
  * app.stop();
  * ```
  */
-export async function bootWebApp(canvas: HTMLCanvasElement, win: Window = window): Promise<WebApp> {
+export async function bootWebApp(
+  canvas: HTMLCanvasElement,
+  resources: WebAppResources,
+  win: Window = window,
+): Promise<WebApp> {
   const nav = win.navigator;
   const hasGamepadApi = typeof nav.getGamepads === 'function';
   const input = createWebInput({
@@ -91,62 +121,36 @@ export async function bootWebApp(canvas: HTMLCanvasElement, win: Window = window
     getGamepads: hasGamepadApi ? (): ArrayLike<GamepadLike | null> => nav.getGamepads() : undefined,
   });
   const audio = createWebAudio();
-  const renderer = await createPixiRenderer({
+  const shell = await bootShell({
     canvas,
-    displayWidth: win.innerWidth,
-    displayHeight: win.innerHeight,
-  });
-  const platform = createWebPlatform({
+    win,
+    contentFiles: resources.contentFiles,
+    assets: resources.assets,
     input,
     audio,
-    storage: safeLocalStorage(win),
-    visibility: win.document,
-    displaySize: () => ({ width: win.innerWidth, height: win.innerHeight }),
-    gamepad: hasGamepadApi,
-    webgl2: renderer.webGLVersion === 2,
-  });
-  const game = createGame(platform, { remoteMode: false });
-
-  platform.lifecycle.onSuspend(() => {
-    input.clear();
-    void audio.suspend();
-  });
-  platform.lifecycle.onResume(() => {
-    void audio.resume();
-  });
-
-  /** One-shot gesture handler that unlocks audio (autoplay policy). */
-  const unlockAudio = (): void => {
-    void platform.audio.unlock();
-  };
-  const gestureOptions: AddEventListenerOptions = { once: true, capture: true };
-  win.addEventListener('keydown', unlockAudio, gestureOptions);
-  win.addEventListener('pointerdown', unlockAudio, gestureOptions);
-
-  /** Keeps the canvas and the integer viewport in sync with the window size. */
-  const onResize = (): void => {
-    renderer.resize(win.innerWidth, win.innerHeight);
-  };
-  win.addEventListener('resize', onResize);
-
-  const loop = startFrameLoop(win, (now) => {
-    game.frame(now);
-    renderer.render(game.renderFrame());
+    platform: (renderer) =>
+      createWebPlatform({
+        input,
+        audio,
+        storage: safeLocalStorage(win),
+        visibility: win.document,
+        displaySize: () => ({ width: win.innerWidth, height: win.innerHeight }),
+        gamepad: hasGamepadApi,
+        webgl2: renderer.webGLVersion === 2,
+      }),
+    gameConfig: { remoteMode: false },
+    scene: sceneFromSearch(searchOf(win)),
+    audioUnlock: 'gesture',
   });
 
   return {
-    game,
-    renderer,
+    game: shell.game,
+    renderer: shell.renderer,
     audio,
     input,
+    shell,
     stop() {
-      loop.stop();
-      win.removeEventListener('resize', onResize);
-      win.removeEventListener('keydown', unlockAudio, gestureOptions);
-      win.removeEventListener('pointerdown', unlockAudio, gestureOptions);
-      input.destroy();
-      renderer.destroy();
-      void audio.destroy();
+      shell.stop();
     },
   };
 }

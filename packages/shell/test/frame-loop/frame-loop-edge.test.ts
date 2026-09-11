@@ -38,7 +38,7 @@ function scheduler(): FrameScheduler & {
   };
 }
 
-describe('web/frame-loop edge cases', () => {
+describe('shell/frame-loop edge cases', () => {
   it('keeps exactly one rAF request outstanding while running', () => {
     const rAF = scheduler();
     startFrameLoop(rAF, () => {});

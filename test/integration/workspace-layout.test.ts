@@ -32,6 +32,7 @@ describe('integration: repository skeleton', () => {
         'packages/core',
         'packages/input-web',
         'packages/render-pixi',
+        'packages/shell',
       ].sort(),
     );
   });

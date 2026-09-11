@@ -105,6 +105,10 @@ export {
 
 export {
   DEFAULT_GAME_CONFIG,
+  HUD_BAR_HEIGHT,
+  PLAYFIELD_H,
+  PLAYFIELD_W,
+  PLAYFIELD_Y,
   resolveGameConfig,
   type DeathPenaltyPreset,
   type DifficultyPreset,
@@ -119,7 +123,33 @@ export {
   type FixedStepLoopOptions,
 } from './loop/index.js';
 
-export type { AudioBus, AudioState, IAudio, IRenderer, RenderFrame } from './presentation/index.js';
+export {
+  DEFAULT_DRAW_LIST_CAPACITY,
+  DEFAULT_DRAW_LIST_STRINGS,
+  DrawOp,
+  LAYER_COUNT,
+  LAYER_NAMES,
+  LayerId,
+  SpriteFlag,
+  TextAlign,
+  createDrawList,
+  createSpriteBatch,
+  pushSprite,
+  type AudioBus,
+  type AudioState,
+  type CameraView,
+  type DrawList,
+  type IAudio,
+  type IRenderer,
+  type ParallaxView,
+  type RenderFrame,
+  type ScreenView,
+  type SpriteBatch,
+  type SpriteBatchView,
+  type TerrainView,
+  type TextMetrics,
+  type WorldView,
+} from './presentation/index.js';
 
 export {
   CONTENT_FORMAT_VERSION,

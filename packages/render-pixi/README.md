@@ -8,13 +8,18 @@ no Pixi ticker; the host's fixed-step loop calls `render()` (`shmup_tech.md` §4
 - The game is drawn into a **384×216 render texture** (nearest-neighbour), then presented
   with **one integer-scaled quad**, centred with a letterbox: ×5 on 1080p, ×3 on 720p,
   ×10 on 4K (`shmup_feat.md` §3, `shmup_tech.md` §2.2).
-- Until real scenes exist it shows a **calibration test pattern**: 1-px checker border,
-  16-px grid, colour bars, a placeholder ship and a marker that moves one pixel per tick.
+- It draws the core's render contract (plan §3.4) from the sprite atlas with zero per-frame
+  allocation: world sprite batches bound once per `WorldView`, HUD / UI draw lists as glyph and
+  rect quads, screen shake / flash / dim. With `testPattern: true` it also shows the
+  **calibration test pattern** (1-px checker border, 16-px grid, colour bars, a placeholder
+  ship, a marker moving one pixel per tick).
 
 ```ts
-import { createPixiRenderer } from '@shmup/render-pixi';
+import { createAtlas, createPixiRenderer } from '@shmup/render-pixi';
 
-const renderer = await createPixiRenderer({ canvas, displayWidth: innerWidth, displayHeight: innerHeight });
+const atlas = createAtlas(assets.manifest, pageImages); // pages loaded with new Image()
+const renderer = await createPixiRenderer({ canvas, displayWidth: innerWidth, displayHeight: innerHeight, atlas });
+renderer.setSpriteNames(game.content.sprites.names);
 renderer.render(game.renderFrame());
 ```
 
@@ -22,21 +27,22 @@ renderer.render(game.renderFrame());
 
 | Module | Status | Responsibility |
 |---|---|---|
-| `renderer` | partial | Pixi WebGL renderer, low-res target, upscale pass |
+| `renderer` | partial | Pixi WebGL renderer, low-res target, upscale pass; draws a core `RenderFrame` (world batches, HUD / UI draw lists, shake, flash, dim); optional calibration pattern |
 | `viewport` | partial | Integer-scale letterbox math (pure) |
-| `test-pattern` | implemented | Calibration scene |
+| `test-pattern` | implemented | Calibration scene (`?scene=calibration`) |
 | `palette` | partial | Placeholder colours (VA-panel-friendly, no pure black) |
-| `atlas` | placeholder | Texture atlases ≤ 2048² — will load the `virtual:shmup-assets` manifest and pages built by the asset pipeline ([`docs/dev/asset-pipeline.md`](../../docs/dev/asset-pipeline.md), M1-04) |
-| `layers` | placeholder | Draw-order layer stack (bullets above explosions) |
-| `sprites` | placeholder | Sprite views over sim pools, interpolation, hit flash (swap to the `<name>@flash` sprite) |
-| `text` | placeholder | Bitmap-font text |
-| `ui` | placeholder | HUD + canvas menus |
+| `atlas` | implemented | `createAtlas(manifest, images)`: one nearest-neighbour source per page, consecutive frame ids per sprite, `resolveSpriteTable` / `resolveFlashTable` (unknown → `ui/missing`, warned once) |
+| `layers` | implemented | One container per core `LayerId` in §18 draw order; world group (shake) under HUD / UI / DEBUG |
+| `sprites` | implemented | `createSpriteLayerBinding` (preallocated sprites per `SpriteBatchView`: camera, `PLAYFIELD_Y`, anchors, flips, blink, hit flash), ordered `QuadPool` |
+| `text` | implemented | Bitmap font from the atlas, `TextMetrics`, allocation-free text and number layout |
+| `ui` | partial | Draws a core `DrawList` (rect, sprite, text, number) into the HUD or UI layer |
 | `particles` | placeholder | Pooled cosmetic particles |
 | `effects` | placeholder | Shake/flash application, raster & palette effects, CRT |
 | `debug` | placeholder | Debug overlay |
 
-Tests run in Node: pure modules are tested fully; Pixi objects that need no GPU (the test
-pattern's display tree) are exercised too. The WebGL path runs in `apps/web` / `apps/tizen`.
+Tests run in Node: pure modules are tested fully; Pixi display objects need no GPU, so the
+atlas (over fake page images), bindings, quad pools and the renderer (with WebGL faked) are
+exercised too. The real WebGL path is covered by `pnpm test:e2e` (headless Chromium).
 
 **Bundle size note:** importing from `'pixi.js'` pulls Pixi's default extension set; the
 whole Tizen `app.js` is ~129 KB gzip today. Dropping unused Pixi subsystems

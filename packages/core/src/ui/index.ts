@@ -53,18 +53,7 @@ export interface HudModel {
   meterCursor: number;
 }
 
-/** Bitmap-font metrics used for layout. */
-export interface TextMetrics {
-  /**
-   * Measures a single line of text.
-   *
-   * @param text - Text to measure (no line breaks).
-   * @param fontId - Bitmap font id.
-   * @returns Width in pixels of `text` in the given font.
-   */
-  measure(text: string, fontId: string): number;
-  /** Line advance in pixels. */
-  readonly lineHeight: number;
-}
+// Bitmap-font metrics for layout live in `presentation` (the renderer implements them).
+export type { TextMetrics } from '../presentation/index.js';
 
 // Planned: createMenu(items), menuTick(menu, input), buildHudModel(state), layoutText(...).

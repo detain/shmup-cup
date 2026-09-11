@@ -21,7 +21,8 @@
     "@shmup/audio-web": "workspace:*",
     "@shmup/core": "workspace:*",
     "@shmup/input-web": "workspace:*",
-    "@shmup/render-pixi": "workspace:*"
+    "@shmup/render-pixi": "workspace:*",
+    "@shmup/shell": "workspace:*"
   },
   "devDependencies": {
     "acorn": "catalog:",

@@ -24,7 +24,7 @@ function fakeScheduler(): FrameScheduler & { flush(now: number): void; cancelled
   };
 }
 
-describe('web/frame-loop startFrameLoop', () => {
+describe('shell/frame-loop startFrameLoop', () => {
   it('describes itself', () => {
     expect(moduleInfo.name).toBe('frame-loop');
   });
