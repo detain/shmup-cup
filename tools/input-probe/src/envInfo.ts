@@ -48,9 +48,14 @@ export interface EnvInfo {
   errors: string[];
 }
 
-/** Extracts the Chromium major version from a user-agent string. */
+/**
+ * Extracts the Chromium major version from a user-agent string.
+ *
+ * Handles desktop `Chrome/NN…` / `Chromium/NN…` tokens and the Samsung TV form without a `Chrome/` prefix,
+ * e.g. Tizen 5.5: `… (KHTML, like Gecko) 69.0.3497.106.1/5.5 TV Safari/537.36` (Tizen 6.0: `76.0.3809.146/6.0 TV`).
+ */
 export function parseChromeVersion(ua: string): number | null {
-  const m = /Chrom(?:e|ium)\/(\d+)/.exec(ua);
+  const m = /Chrom(?:e|ium)\/(\d+)/.exec(ua) ?? /\s(\d+)\.\d+\.\d+\.\d+(?:\.\d+)*\/[\d.]+\s+TV\b/.exec(ua);
   return m ? Number(m[1]) : null;
 }
 

@@ -51,7 +51,7 @@ export function die(msg, hint) {
 }
 
 /**
- * Parses `--flag`, `--key value` and `--key=value` arguments.
+ * Parses `--flag`, `--key value` and `--key=value` arguments (plus `-h` as `h`).
  *
  * @param {string[]} argv
  * @returns {Record<string, string | boolean>}
@@ -61,6 +61,7 @@ export function parseArgs(argv) {
   const out = {};
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
+    if (a === '-h') out.h = true;
     if (!a.startsWith('--')) continue;
     const eq = a.indexOf('=');
     if (eq > 0) out[a.slice(2, eq)] = a.slice(eq + 1);
@@ -237,7 +238,7 @@ export async function packageWgt(opts = {}) {
   if (!opts.skipBuild) await buildApp({ dryRun: opts.dryRun });
   else if (!existsSync(join(DIST_DIR, 'index.html')) && !opts.dryRun) die('dist/ is empty — run without --skip-build');
 
-  cleanPackagingArtifacts();
+  if (!opts.dryRun) cleanPackagingArtifacts(); // a dry run must not touch the filesystem
   step('Packaging ' + WGT_NAME + ' with profile "' + profile + '"');
   const { output } = run(cli, ['package', '-t', 'wgt', '-s', profile, '--', DIST_DIR], { dryRun: opts.dryRun });
   if (opts.dryRun) return join(DIST_DIR, WGT_NAME);

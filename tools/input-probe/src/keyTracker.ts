@@ -132,7 +132,10 @@ interface KeyState {
   rawDownAt: number;
   rawUpAt: number;
   held: boolean;
+  /** Start of the current logical hold (never moved by {@link KeyTracker.resetStats}). */
   pressAt: number;
+  /** Start used for the "longest hold" statistic: `pressAt`, or the reset time for holds spanning a reset. */
+  holdStatFrom: number;
   /** Raw keyup time awaiting confirmation (NaN when none). */
   pendingUpAt: number;
   gotRepeat: boolean;
@@ -238,6 +241,7 @@ export class KeyTracker {
       this.setRawDown(s, t);
       s.held = true;
       s.pressAt = t;
+      s.holdStatFrom = t;
       s.gotRepeat = false;
       this.onLogicalPress(s, t);
     }
@@ -363,11 +367,9 @@ export class KeyTracker {
     this.longestHoldCode = null;
     for (let i = 0; i < this.list.length; i++) {
       const s = this.list[i] as KeyState;
-      // Restart ongoing holds so their pre-reset duration is not counted.
-      if (s.held) {
-        s.gotRepeat = false;
-        s.pressAt = this.clock;
-      }
+      // Ongoing holds only count their post-reset duration towards "longest hold". Their true press time is
+      // kept: it feeds the repeat delay and the verdicts' min-hold filters, which must not be skewed by a reset.
+      if (s.held) s.holdStatFrom = this.clock;
     }
   }
 
@@ -381,8 +383,11 @@ export class KeyTracker {
     let longestCode = this.longestHoldCode;
     for (let i = 0; i < this.list.length; i++) {
       const s = this.list[i] as KeyState;
-      if (s.held && now - s.pressAt > longest) {
-        longest = now - s.pressAt;
+      if (!s.held) continue;
+      // A hold whose keyup is only awaiting bounce confirmation ended at that keyup, not at `now`.
+      const end = hasPending(s) ? s.pendingUpAt : now;
+      if (end - s.holdStatFrom > longest) {
+        longest = end - s.holdStatFrom;
         longestCode = s.code;
       }
     }
@@ -436,6 +441,7 @@ export class KeyTracker {
         rawUpAt: -Infinity,
         held: false,
         pressAt: 0,
+        holdStatFrom: 0,
         pendingUpAt: NaN,
         gotRepeat: false,
         lastRepeatAt: 0,
@@ -489,7 +495,7 @@ export class KeyTracker {
     s.pendingUpAt = NaN;
     if (!s.held) return;
     s.held = false;
-    const hold = upAt - s.pressAt;
+    const hold = upAt - s.holdStatFrom;
     if (hold > this.longestHoldMs) {
       this.longestHoldMs = hold;
       this.longestHoldCode = s.code;

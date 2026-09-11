@@ -74,8 +74,8 @@ Individual scripts:
 | `npm run dev` | Vite dev server (desktop browser; `$WEBAPIS/webapis/webapis.js` 404s harmlessly) |
 | `npm run build` | Production build into `dist/`: `index.html`, classic IIFE `app.js` (target `chrome69`), `app.css`, `config.xml`, `icon.png` |
 | `npm run preview` | Serve `dist/` locally |
-| `npm run typecheck` | `tsc --noEmit` for the app (strict, ES2018 lib) and for tests/config |
-| `npm test` | Vitest (pure logic modules run in Node, no DOM) |
+| `npm run typecheck` | `tsc --noEmit` for the app (strict, ES2018 lib), the build config and the tests |
+| `npm test` | Vitest suite, headless in Node (see [Tests](#tests)) |
 | `npm run check:compat` | Checks `dist/`: `app.js` parses with acorn at **ecmaVersion 2018** as a classic script, `index.html` has no `type="module"`/`crossorigin`, `config.xml` + `icon.png` present |
 | `npm run icon` | Regenerates `public/icon.png` (dependency-free Node PNG writer) |
 | `npm run package` | Build → check → `tizen package -t wgt -s $TIZEN_PROFILE -- dist` ⇒ `dist/InputProbe.wgt` |
@@ -199,8 +199,10 @@ like (initial pause, then repeat-rate steps).
 tools/input-probe/
   package.json / package-lock.json   standalone npm project
   tsconfig.json                      app: strict, target/lib ES2018 + DOM, moduleResolution bundler
-  tsconfig.node.json                 tests + vite config (no DOM lib ⇒ pure modules must stay DOM-free)
+  tsconfig.node.json                 vite/vitest config (Node lib)
+  tsconfig.test.json                 tests (ES2023 + DOM lib, imports src/, scripts/*.mjs, server/*.mjs)
   vite.config.ts                     base './', target chrome69 (+es2018), single IIFE app.js, classic <script>
+  vitest.config.ts                   test runner config (Node environment, test/**/*.test.ts)
   index.html                         stage markup, $WEBAPIS/webapis/webapis.js tag
   public/config.xml, public/icon.png Tizen widget config & icon (icon from scripts/make-icon.mjs)
   src/
@@ -219,7 +221,30 @@ tools/input-probe/
     format.ts        number/text helpers                                              (pure)
     arena.ts, ui.ts, env.ts, platform.ts, reporter.ts, polyfills.ts   thin DOM/Tizen glue
     tizen.d.ts, vite-env.d.ts, style.css
-  test/              Vitest (Node environment)
+  test/              Vitest suite (Node environment) + helpers/ (fake browser/Tizen realm, fake XHR/canvas, PNG reader)
   scripts/           package.mjs, deploy.mjs, lib/tizen.mjs, check-compat.mjs, make-icon.mjs
   server/log-server.mjs
 ```
+
+## Tests
+
+`npm test` runs everything headless in Node on Linux, macOS or Windows (no jsdom, no Tizen SDK, no monitor; a few
+POSIX-only tests of the package/deploy scripts are skipped on Windows):
+
+- **Pure logic** — `keyTracker` (press/repeat/flagless/bounce classification, raw/logical/debounced/naive views,
+  repeat delay & interval, bounce gaps, max held, longest hold, diagonal and OK-chord verdicts incl. window
+  boundaries, `releaseAll`, stats reset), `keys`, `checklist`, `frameStats`, `ships`, `gamepad`, `eventLog`,
+  `format`, `exitGesture`, `report`, `summary`, `envInfo` (incl. Samsung's published Tizen 5.5/6.0 user agents).
+- **DOM/Tizen glue** with small fakes — `platform` (key registration without `Exit`, exit), `env`, `ui`, `arena`,
+  `reporter` (XHR retry/in-flight rules).
+- **Build output** — a real `vite build` into a temp dir: exactly the widget files, `index.html` loads `app.js` once
+  as a classic deferred script, relative URLs only, `app.js` is a single IIFE that parses with acorn at
+  `ecmaVersion: 2018`, no post-Chromium-69 APIs, `check:compat` passes.
+- **End-to-end** — the built `app.js` runs in a `node:vm` realm made to look like the Tizen 5.5 runtime (fake DOM,
+  `tizen`, `webapis`, gamepads; post-Chromium-69 builtins and `globalThis` removed): the on-device protocol is played
+  as key events and the panels are checked (verdicts, checklist, key registration, environment, flash box, Back ×3
+  exit). A `VITE_REPORT_URL` build's POSTs are replayed into the real log server.
+- **Scripts** — `check-compat.mjs` against pass/fail fixtures, `make-icon.mjs` reproduces the committed icon,
+  `lib/tizen.mjs` (argument parsing, cmd.exe quoting, CLI/sdb discovery incl. a simulated Windows), and
+  `package.mjs` / `deploy.mjs` run from a temp copy of the project against fake `tizen`/`sdb` executables.
+- **Log server** — HTTP end-to-end on 127.0.0.1 (JSONL per session, validation, 404/413, CORS, path sanitizing).

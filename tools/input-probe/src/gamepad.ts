@@ -68,6 +68,16 @@ export function axisZone(v: number, threshold = AXIS_THRESHOLD): number {
   return 0;
 }
 
+/** Whether `list` holds a connected pad whose index (or list position, when it has none) is `index`. */
+function listHasConnected(list: ArrayLike<GamepadLike | null | undefined>, index: number): boolean {
+  for (let i = 0; i < list.length; i++) {
+    const g = list[i];
+    if (g === null || g === undefined || !g.connected) continue;
+    if ((typeof g.index === 'number' ? g.index : i) === index) return true;
+  }
+  return false;
+}
+
 /** Tracks all pads and reports edges. */
 export class GamepadMonitor {
   private readonly pads: (PadState | undefined)[] = [];
@@ -85,12 +95,12 @@ export class GamepadMonitor {
    * @param onEdge - called for every edge.
    */
   update(list: ArrayLike<GamepadLike | null | undefined>, onEdge: (edge: GamepadEdge) => void): void {
-    // Mark pads missing from the list as disconnected.
+    // Mark pads missing from the list as disconnected. Pads are keyed by `Gamepad.index`, which need not equal
+    // the list position (e.g. a compact array), so look the pad up by index.
     for (let i = 0; i < this.pads.length; i++) {
       const st = this.pads[i];
       if (st === undefined || !st.connected) continue;
-      const g = i < list.length ? list[i] : null;
-      if (g === null || g === undefined || !g.connected) {
+      if (!listHasConnected(list, i)) {
         st.connected = false;
         st.buttons.fill(0);
         st.zones.fill(0);
