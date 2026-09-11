@@ -1,0 +1,3 @@
+# Runtime browser target for shipped code: Tizen 5.5 = Chromium 69.
+# Read by eslint-plugin-compat (see eslint.config.js). Vite targets are set in each app's vite.config.ts.
+chrome >= 69

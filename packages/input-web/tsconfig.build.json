@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "@shmup/input-web — library build (emits dist/)",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "customConditions": []
+  },
+  "exclude": ["test", "dist"]
+}

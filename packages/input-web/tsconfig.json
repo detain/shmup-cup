@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "@shmup/input-web — runtime sources (ES2018 + DOM, Chromium 69 target)",
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2018", "DOM"],
+    "types": [],
+    "rootDir": "src"
+  },
+  "include": ["src"]
+}

@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "Shmup Cup — repo-root tooling files",
+  "extends": "./tsconfig.tooling.json",
+  "include": ["vitest.config.ts", "vitest.shared.ts", "vite.shared.ts"]
+}

@@ -1,0 +1,32 @@
+{
+  "name": "@shmup/core",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Platform-agnostic game core: deterministic fixed-step simulation, game systems and the Platform contract. No DOM/WebGL/audio/platform globals.",
+  "license": "MPL-2.0",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "@shmup/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p test/tsconfig.json",
+    "lint": "eslint --max-warnings=0 .",
+    "test": "vitest run",
+    "clean": "node ../../scripts/clean.mjs dist coverage .turbo"
+  },
+  "devDependencies": {
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

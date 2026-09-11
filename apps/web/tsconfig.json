@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "@shmup/web — browser app sources (bundled by Vite)",
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2018", "DOM"],
+    "types": ["vite/client"],
+    "noEmit": true
+  },
+  "include": ["src"]
+}

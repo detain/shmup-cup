@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.wgt
+*.tsbuildinfo
+.vite/
+
+# Generated assets (see assets/README.md); keep the folder itself
+assets/generated/*
+!assets/generated/.gitkeep
+
+# Test / tool output
+coverage/
+.turbo/
+.caliber/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Environment / secrets (Tizen certificate profiles, signing passwords, ...)
+.env
+.env.*
+!.env.example
+*.p12
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+*.swp

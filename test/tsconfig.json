@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "Repo-level integration tests (Node side)",
+  "extends": "../tsconfig.tooling.json",
+  "include": ["./**/*.ts"]
+}

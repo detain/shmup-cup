@@ -1,0 +1,25 @@
+{
+  "name": "@shmup/electron",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Electron desktop shell (Windows/macOS/Linux/Steam Deck): minimal main + sandboxed preload loading the apps/web build.",
+  "license": "MPL-2.0",
+  "type": "module",
+  "main": "dist/main/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node scripts/copy-renderer.mjs",
+    "start": "electron .",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p test/tsconfig.json",
+    "lint": "eslint --max-warnings=0 .",
+    "test": "vitest run",
+    "clean": "node ../../scripts/clean.mjs dist coverage .turbo"
+  },
+  "devDependencies": {
+    "@shmup/web": "workspace:*",
+    "@types/node": "catalog:",
+    "electron": "catalog:",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

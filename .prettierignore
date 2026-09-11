@@ -1,0 +1,18 @@
+# Generated / vendored
+node_modules/
+dist/
+coverage/
+.turbo/
+assets/generated/
+pnpm-lock.yaml
+
+# Standalone tool projects own their formatting
+tools/
+
+# Markdown keeps its hand-made layout (Prettier would re-pad every table, causing noisy
+# diffs and merge conflicts between docs authors)
+*.md
+/LICENSE
+
+# Hand-formatted XML (Tizen widget config)
+*.xml

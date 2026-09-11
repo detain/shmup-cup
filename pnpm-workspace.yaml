@@ -1,0 +1,36 @@
+# pnpm workspace for Shmup Cup.
+#
+# Only the game packages and the platform apps are workspace members.
+# tools/* is deliberately EXCLUDED: dev tools (e.g. tools/input-probe) are standalone
+# npm projects with their own lockfiles, so they can be built on machines that only
+# have npm (e.g. the Windows desktop that talks to the Tizen monitors).
+packages:
+  - packages/*
+  - apps/*
+
+# Single source of truth for versions shared by several workspace projects.
+# Reference them from a package.json as "<name>": "catalog:".
+catalog:
+  '@types/node': ^24.13.4
+  acorn: ^8.18.0
+  electron: ^44.3.0
+  eslint: ^10.10.0
+  pixi.js: ^8.20.1
+  # TypeScript 7 (native Go compiler) has no JS API until 7.1, and typescript-eslint
+  # 8.x requires typescript <6.1 — so the toolchain is pinned to the newest 6.0.x.
+  typescript: ~6.0.3
+  vite: ^8.3.0
+  vitest: ^5.0.0
+
+# Dependencies whose install scripts are allowed to run (pnpm blocks all others).
+#  - electron: downloads the Electron binary (skipped when ELECTRON_SKIP_BINARY_DOWNLOAD=1, as in CI)
+#  - esbuild:  installs its native binary (used by Vite/Vitest tooling)
+allowBuilds:
+  electron: true
+  esbuild: true
+
+# Added by pnpm: these versions were younger than pnpm's default 24 h release-age gate
+# when the lockfile was created (safe to drop once they are older).
+minimumReleaseAgeExclude:
+  - eslint-plugin-jsdoc@64.3.9
+  - vite@8.3.0

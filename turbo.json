@@ -1,0 +1,48 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "ui": "stream",
+  "globalDependencies": [
+    ".browserslistrc",
+    "eslint.config.js",
+    "tsconfig.base.json",
+    "tsconfig.tooling.json",
+    "vite.shared.ts",
+    "vitest.shared.ts"
+  ],
+  "globalEnv": ["NODE_ENV"],
+  "tasks": {
+    "transit": {
+      "dependsOn": ["^transit"]
+    },
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
+    },
+    "typecheck": {
+      "dependsOn": ["transit"]
+    },
+    "lint": {
+      "dependsOn": ["transit"]
+    },
+    "test": {
+      "dependsOn": ["transit"],
+      "outputs": ["coverage/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "clean": {
+      "cache": false
+    },
+    "//#typecheck:root": {
+      "cache": false
+    },
+    "//#lint:root": {
+      "cache": false
+    },
+    "//#test:integration": {
+      "cache": false
+    }
+  }
+}

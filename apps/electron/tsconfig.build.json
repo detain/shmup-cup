@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "@shmup/electron — compile to dist/ (main/*.js ESM, preload/*.cjs CommonJS)",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "dist",
+    "declaration": false,
+    "declarationMap": false
+  },
+  "exclude": ["test", "dist"]
+}

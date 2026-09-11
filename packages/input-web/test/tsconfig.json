@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "@shmup/input-web — tests and tool configs (Node side)",
+  "extends": "../../../tsconfig.tooling.json",
+  "include": ["./**/*.ts", "../vitest.config.ts"]
+}

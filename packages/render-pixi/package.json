@@ -1,0 +1,36 @@
+{
+  "name": "@shmup/render-pixi",
+  "version": "0.0.0",
+  "private": true,
+  "description": "IRenderer implementation on PixiJS v8 (renderer only): WebGL1-first, 384x216 low-res render texture, nearest-neighbour integer upscale.",
+  "license": "MPL-2.0",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "@shmup/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p test/tsconfig.json",
+    "lint": "eslint --max-warnings=0 .",
+    "test": "vitest run",
+    "clean": "node ../../scripts/clean.mjs dist coverage .turbo"
+  },
+  "dependencies": {
+    "@shmup/core": "workspace:*",
+    "pixi.js": "catalog:"
+  },
+  "devDependencies": {
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

@@ -1,0 +1,139 @@
+# Repository layout
+
+Shmup Cup is a **pnpm workspace monorepo** orchestrated by **Turborepo**
+(`shmup_tech.md` §3.1). Workspace members are `packages/*` and `apps/*` only — `tools/*`
+holds standalone npm projects (own lockfile) and is deliberately outside the workspace.
+
+Every workspace project has the same shape: `package.json`, `tsconfig.json` (runtime
+sources), `README.md`, `src/` and a **separate `test/`** folder (tests never sit next to
+sources). Each planned system is a directory `src/<module>/index.ts` whose docblock states
+its responsibility, the spec sections it implements and its intended public API, and which
+exports a `moduleInfo` descriptor (`status: 'placeholder' | 'partial' | 'implemented'`).
+`test/<module>/` mirrors it with at least a smoke test.
+
+## Annotated tree
+
+```text
+shmup-cup/
+├── package.json            root scripts (dev/build/typecheck/lint/test/format/clean), packageManager pnpm@12, engines
+├── pnpm-workspace.yaml     members packages/* + apps/* (NOT tools/*), version catalog, allowed build scripts
+├── pnpm-lock.yaml          committed; CI installs with --frozen-lockfile
+├── turbo.json              task graph: build (^build → dist/**), typecheck/lint/test (via "transit"), dev, clean, root tasks
+├── tsconfig.base.json      strict compiler options shared by everything (ES2018 target/lib, NodeNext, @shmup/source)
+├── tsconfig.tooling.json   Node-side base (tests, Vite/Vitest configs): ES2023 + DOM + node types, noEmit
+├── tsconfig.json           type-checks repo-root tooling files
+├── eslint.config.js        flat config: typescript-eslint (type-aware), compat (chrome >= 69), jsdoc, core purity rules
+├── vite.shared.ts          @shmup/source resolve conditions shared by Vite + Vitest
+├── vitest.shared.ts        defineShmupProject(): per-project Vitest defaults (tests in test/, Node env)
+├── vitest.config.ts        Vitest *projects*: packages/*, apps/*, test (→ `pnpm test:all`)
+├── .browserslistrc         chrome >= 69 (Tizen 5.5) for eslint-plugin-compat
+├── .editorconfig  .prettierrc.json  .prettierignore  .nvmrc (Node 24)  .gitignore
+├── .github/workflows/ci.yml   install (frozen) → lint → typecheck → test → build; ELECTRON_SKIP_BINARY_DOWNLOAD=1
+│
+├── packages/               reusable libraries (the "engine + game")
+│   ├── core/               @shmup/core — PURE TS: no DOM/WebGL/audio/Node/platform APIs, no clocks, no Math.random
+│   │   ├── src/
+│   │   │   ├── index.ts        public API (implemented parts only)
+│   │   │   ├── module-info.ts  ModuleInfo / defineModule
+│   │   │   ├── platform/       ✔ Platform interface (tech §3.2), headless platform, memory storage
+│   │   │   ├── input/          ✔ Action bits, InputSnapshot, edge latching (feat §4)
+│   │   │   ├── config/         ✔ GameConfig + defaults + validation
+│   │   │   ├── loop/           ✔ fixed-step accumulator (snap, cap, reset)
+│   │   │   ├── game/           ✔ createGame(): composition root, suspend/resume
+│   │   │   ├── presentation/   ✔ IRenderer / IAudio / RenderFrame contracts
+│   │   │   ├── rng/ math/ events/ pools/                   engine foundations (placeholders)
+│   │   │   ├── player/ weapons/ options/ shields/ powerups/ player-side systems (placeholders)
+│   │   │   ├── enemies/ bullets/ patterns/ bosses/         enemy-side systems (placeholders)
+│   │   │   ├── collision/ stage/                           world (placeholders)
+│   │   │   ├── scoring/ rank/ fx/                          rules & feel (placeholders)
+│   │   │   ├── scenes/ ui/                                 flow & canvas UI model (placeholders)
+│   │   │   └── replay/ save/ data/ debug/                  meta & tooling (placeholders)
+│   │   ├── test/<module>/  one folder per module + index.test.ts (module tree invariants)
+│   │   ├── tsconfig.json   src only, lib ES2018, no types (purity)
+│   │   ├── tsconfig.build.json  emits dist/ (customConditions off)
+│   │   └── test/tsconfig.json   Node-side program for tests
+│   ├── render-pixi/        @shmup/render-pixi — PixiJS v8 IRenderer: WebGL1-first, 384×216 RT, integer upscale
+│   │   └── src/ renderer ✔ viewport ✔ test-pattern ✔ palette ✔ · atlas layers sprites text ui particles effects debug (placeholders)
+│   ├── audio-web/          @shmup/audio-web — Web Audio IAudio: interactive latency, buses, suspend/resume
+│   │   └── src/ web-audio ✔ · sfx music loader (placeholders)
+│   └── input-web/          @shmup/input-web — keyboard/remote + Gamepad API → InputSnapshot
+│       └── src/ keymap ✔ keyboard ✔ gamepad ✔ web-input ✔ · rebind remote (placeholders)
+│
+├── apps/                   deployable hosts (thin adapters around the packages)
+│   ├── web/                @shmup/web — Vite dev app (HMR), browser Platform; also Electron's renderer
+│   │   └── src/ main.ts · boot ✔ platform ✔ frame-loop ✔
+│   ├── tizen/              @shmup/tizen — Samsung TV .wgt (Tizen 5.5+, Chromium 69)
+│   │   ├── public/         config.xml (tv-samsung, tv.inputdevice + internet), icon.png → copied to dist/
+│   │   ├── polyfills/      global-this.js (ES5, prepended to app.js)
+│   │   ├── scripts/        check-bundle.mjs (one classic ES2018 script) · tizen-package/install/run.mjs (env-driven, Windows-friendly)
+│   │   ├── vite.config.ts  target chrome69+es2018, IIFE, no code splitting, classic <script defer>
+│   │   └── src/ main.ts · boot ✔ platform ✔ (keys, Back 10009, visibility, exit) frame-loop ✔ · device-info live-reload (placeholders)
+│   └── electron/           @shmup/electron — desktop shell; compiles in CI, binary never downloaded there
+│       ├── scripts/        copy-renderer.mjs (apps/web/dist → dist/renderer)
+│       └── src/ main/ (main.ts, app-protocol.ts, window-options.ts ✔ · saves.ts steam.ts placeholders) · preload/preload.cts · shared/ipc.ts
+│
+├── content/                game DATA (JSON, validated at load by core/data)
+│   ├── stages/             one file per stage: camera path, checkpoints, parallax, event timeline (+ README, example)
+│   ├── enemies/            enemy definitions: hp, score, hurtbox, script id, drop (+ README, example)
+│   └── weapons/            weapon tunables + preset loadouts (+ README, example)
+├── assets/
+│   ├── source/             editable art/audio sources (sprites, tilesets, fonts, audio/music, audio/sfx) — in git
+│   └── generated/          pipeline output (atlases, fonts, OGG) — ignored
+├── scripts/                repo-level Node scripts: clean.mjs, generate-assets.mjs (placeholder)
+├── test/                   cross-package integration tests (Vitest project "integration", part of `pnpm test`)
+├── docs/
+│   ├── client/             player/tester docs
+│   └── dev/                contributor docs (this file)
+├── tools/                  standalone tools, NOT workspace members (e.g. tools/input-probe — own package.json/lockfile)
+└── shmup_feat.md  shmup_tech.md  input_probe_spec.md  README.md  LICENSE (MPL-2.0)
+```
+
+✔ = implemented or partially implemented today; everything else is a placeholder with its
+API declared.
+
+## Dependency direction
+
+```text
+apps/web ─┐
+apps/tizen ├─► render-pixi ─┐
+          ├─► audio-web ────┼─► core
+          └─► input-web ────┘
+apps/electron ─► (loads apps/web build; no package imports)
+```
+
+`@shmup/core` imports nothing from the workspace (lint-enforced). Presentation packages
+depend only on core. Apps compose everything.
+
+## How packages resolve each other
+
+Each package's `exports` has a custom **`@shmup/source`** condition pointing at
+`src/index.ts`, plus `types`/`default` pointing at `dist/`:
+
+- **Dev server, app builds, tests, type-checking** use the source condition (set in
+  `tsconfig.base.json` `customConditions`, and in Vite/Vitest via `vite.shared.ts`) —
+  no package build needed, HMR reaches into packages.
+- **`tsc` library builds** (`tsconfig.build.json`) switch the condition off and use the
+  dependencies' `dist/` typings; Turborepo builds dependencies first (`^build`).
+
+## Tooling decisions
+
+| Area | Choice | Notes |
+|---|---|---|
+| Package manager | pnpm 12 (`packageManager` field), catalog for shared versions | `allowBuilds` limits install scripts to electron + esbuild |
+| Orchestration | Turborepo 2 | `transit` task makes typecheck/lint/test caches depend on upstream sources without forcing builds |
+| TypeScript | **6.0.x** (pinned via catalog) | TypeScript 7.0 (native) is current, but it has no JS API until 7.1 and typescript-eslint 8.x supports `typescript < 6.1`; revisit when typescript-eslint supports 7.x |
+| Lint | ESLint 10 flat config + typescript-eslint (type-aware) + eslint-plugin-compat + eslint-plugin-jsdoc | compat target `chrome >= 69`; extra rules ban `.at()`, `replaceAll`, `structuredClone`, `Object.hasOwn`, `import.meta` (Tizen) |
+| Tests | Vitest 5, Node environment, tests in `test/` | Vitest projects config at the root |
+| Bundler | Vite 8 (Rolldown/Oxc) | Tizen: `target ['chrome69','es2018']`, IIFE, `codeSplitting: false` |
+| Format | Prettier 3 (`pnpm format`, `pnpm format:check`) | research docs at the root are excluded |
+
+## Common commands
+
+```sh
+pnpm install            # also links workspace packages
+pnpm dev                # browser dev app on http://localhost:5173
+pnpm lint | typecheck | test | build
+pnpm test:all           # every Vitest project in one process
+pnpm --filter @shmup/tizen build    # TV bundle + bundle check
+pnpm clean              # remove dist/ coverage/ .turbo/ everywhere
+```

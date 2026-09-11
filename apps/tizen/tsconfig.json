@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "@shmup/tizen — TV app sources (bundled to one chrome69 IIFE; no import.meta / vite/client types)",
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2018", "DOM"],
+    "types": [],
+    "noEmit": true
+  },
+  "include": ["src"]
+}

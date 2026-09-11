@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "@shmup/core — runtime sources (pure TS: ES2018 lib only, no DOM, no Node types)",
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2018"],
+    "types": [],
+    "rootDir": "src"
+  },
+  "include": ["src"]
+}

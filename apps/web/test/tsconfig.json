@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "@shmup/web — tests and tool configs (Node side)",
+  "extends": "../../../tsconfig.tooling.json",
+  "compilerOptions": {
+    "types": ["node", "vite/client"]
+  },
+  "include": ["./**/*.ts", "../vite.config.ts", "../vitest.config.ts"]
+}

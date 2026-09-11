@@ -1,0 +1,33 @@
+{
+  "name": "@shmup/tizen",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Samsung Tizen TV web app (.wgt), Tizen 5.5+ / Chromium 69: one classic IIFE script, remote-first input, Tizen lifecycle.",
+  "license": "MPL-2.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && node scripts/check-bundle.mjs",
+    "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p test/tsconfig.json",
+    "lint": "eslint --max-warnings=0 .",
+    "test": "vitest run",
+    "clean": "node ../../scripts/clean.mjs dist coverage .turbo",
+    "tizen:package": "node scripts/tizen-package.mjs",
+    "tizen:install": "node scripts/tizen-install.mjs",
+    "tizen:run": "node scripts/tizen-run.mjs"
+  },
+  "dependencies": {
+    "@shmup/audio-web": "workspace:*",
+    "@shmup/core": "workspace:*",
+    "@shmup/input-web": "workspace:*",
+    "@shmup/render-pixi": "workspace:*"
+  },
+  "devDependencies": {
+    "acorn": "catalog:",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
+  }
+}

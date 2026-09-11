@@ -1,0 +1,43 @@
+{
+  "name": "shmup-cup",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Shmup Cup — a TypeScript 2D horizontal shoot-'em-up for Samsung Tizen TVs, the browser and Electron.",
+  "license": "MPL-2.0",
+  "type": "module",
+  "packageManager": "pnpm@12.3.4",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "dev": "turbo run dev --filter=@shmup/web",
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck typecheck:root",
+    "typecheck:root": "tsc -p tsconfig.json && tsc -p test/tsconfig.json",
+    "lint": "turbo run lint lint:root",
+    "lint:root": "eslint --max-warnings=0 --ignore-pattern \"packages/**\" --ignore-pattern \"apps/**\" .",
+    "test": "turbo run test test:integration",
+    "test:integration": "vitest run --project integration",
+    "test:all": "vitest run",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "clean": "turbo run clean && node scripts/clean.mjs .turbo coverage",
+    "assets": "node scripts/generate-assets.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@shmup/core": "workspace:*",
+    "@shmup/input-web": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "eslint-plugin-compat": "^7.0.2",
+    "eslint-plugin-jsdoc": "^64.3.9",
+    "globals": "^17.12.0",
+    "prettier": "^3.9.6",
+    "turbo": "^2.10.12",
+    "typescript": "catalog:",
+    "typescript-eslint": "^8.70.0",
+    "vite": "catalog:",
+    "vitest": "catalog:"
+  }
+}

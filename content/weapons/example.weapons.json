@@ -1,0 +1,39 @@
+{
+  "formatVersion": 0,
+  "kind": "weapons",
+  "weapons": [
+    {
+      "id": "shot.basic",
+      "slot": "main",
+      "behavior": "shot.straight",
+      "damage": 1,
+      "speed": 8,
+      "cap": 4,
+      "pierce": false,
+      "sprite": "shots/basic"
+    },
+    {
+      "id": "missile.ground",
+      "slot": "missile",
+      "behavior": "missile.groundSlide",
+      "damage": 2,
+      "speed": 3,
+      "cap": 2,
+      "pierce": false,
+      "sprite": "shots/missile"
+    },
+    {
+      "id": "laser.pierce",
+      "slot": "laser",
+      "behavior": "laser.beam",
+      "damage": 1,
+      "speed": 12,
+      "cap": 1,
+      "pierce": true,
+      "sprite": "shots/laser"
+    }
+  ],
+  "presets": [
+    { "id": "type-1", "missile": "missile.ground", "double": null, "laser": "laser.pierce" }
+  ]
+}

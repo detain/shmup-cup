@@ -1,0 +1,29 @@
+{
+  "name": "@shmup/web",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Browser dev target: Vite dev server with HMR, keyboard + gamepad, localStorage. Also the renderer loaded by apps/electron.",
+  "license": "MPL-2.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p test/tsconfig.json",
+    "lint": "eslint --max-warnings=0 .",
+    "test": "vitest run",
+    "clean": "node ../../scripts/clean.mjs dist coverage .turbo"
+  },
+  "dependencies": {
+    "@shmup/audio-web": "workspace:*",
+    "@shmup/core": "workspace:*",
+    "@shmup/input-web": "workspace:*",
+    "@shmup/render-pixi": "workspace:*"
+  },
+  "devDependencies": {
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
+  }
+}

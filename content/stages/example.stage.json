@@ -1,0 +1,25 @@
+{
+  "formatVersion": 0,
+  "kind": "stage",
+  "id": "example",
+  "name": "Example Orbit",
+  "length": 4096,
+  "camera": [
+    { "x": 0, "speed": 1 },
+    { "x": 2048, "speed": 1.5 },
+    { "x": 3840, "speed": 0, "lock": "boss" }
+  ],
+  "checkpoints": [{ "x": 0 }, { "x": 2048 }],
+  "parallax": [
+    { "id": "stars-far", "factor": 0.25 },
+    { "id": "stars-near", "factor": 0.5 }
+  ],
+  "tilemap": null,
+  "events": [
+    { "x": 384, "type": "spawn", "enemy": "drifter", "formation": "line5", "path": "sine-low" },
+    { "x": 768, "type": "spawn", "enemy": "carrier-red", "path": "straight-mid" },
+    { "x": 1536, "type": "spawn", "enemy": "drifter", "formation": "v5", "path": "dive-high" },
+    { "x": 3700, "type": "warning", "enemy": "example-warden" },
+    { "x": 3840, "type": "boss", "enemy": "example-warden" }
+  ]
+}

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Shmup Cup — Tizen TV widget configuration (copied verbatim into dist/ by Vite).
+  Target: Tizen 5.5+ (2020+ Samsung TVs / Smart Monitors, Chromium 69).
+  - tizen:application package id must be exactly 10 alphanumeric characters.
+  - Privileges: tv.inputdevice (registerKey for Play/Pause, Ch+/-, colour keys),
+    internet (optional remote logging / future online features).
+  - Long-press Back (Exit) is never registered; Back (10009) is handled by the app.
+-->
+<widget xmlns="http://www.w3.org/ns/widgets" xmlns:tizen="http://tizen.org/ns/widgets"
+        id="http://shmupcup.dev/ShmupCup" version="0.0.1" viewmodes="maximized">
+  <tizen:application id="ShmpCupGam.ShmupCup" package="ShmpCupGam" required_version="5.5"/>
+  <content src="index.html"/>
+  <icon src="icon.png"/>
+  <name>Shmup Cup</name>
+  <access origin="*" subdomains="true"/>
+  <tizen:privilege name="http://tizen.org/privilege/internet"/>
+  <tizen:privilege name="http://tizen.org/privilege/tv.inputdevice"/>
+  <tizen:profile name="tv-samsung"/>
+  <tizen:setting screen-orientation="landscape" context-menu="disable" background-support="disable"
+                 encryption="disable" install-location="auto" hwkey-event="enable"/>
+</widget>
