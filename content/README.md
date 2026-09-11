@@ -9,6 +9,7 @@ weapons and stages do not need engine changes (design pillar 4, `shmup_feat.md` 
 | [`stages/`](stages/README.md) | One JSON file per stage/zone: camera path, checkpoints, parallax/tilemap references, the spawn/event timeline | `@shmup/core` `stage` + `data` modules |
 | [`enemies/`](enemies/README.md) | Enemy definitions: HP, score, hurtbox, behaviour script id, drops | `@shmup/core` `enemies` + `data` modules |
 | [`weapons/`](weapons/README.md) | Player weapon tunables: damage, speed, on-screen cap, piercing, behaviour id | `@shmup/core` `weapons` + `data` modules |
+| [`input/`](input/README.md) | Input profiles: key / button → action tables per binding context (`game`, `menu`), remote quirks (release debounce, diagonal and SOCD policy), Tizen keys to register | `@shmup/input-web` `rebind` (kind `input-profiles`, validated by the shell's content owner) |
 
 ## Rules
 

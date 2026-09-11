@@ -18,11 +18,16 @@
  * - {@link InputSnapshot}, {@link PlayerInput}, {@link InputDeviceKind}, {@link MAX_PLAYERS}
  * - {@link createInputSnapshot}, {@link resetInputSnapshot}, {@link commitPlayerInput},
  *   {@link copyInputSnapshot}, {@link hasAction}
+ * - {@link InputContext}, {@link INPUT_CONTEXTS} — which binding table the adapters use
+ *   (decision D15: `game` vs `menu`; the top scene decides, `Game.inputContext`)
+ *
+ * Device quirks — release debounce, the diagonal policy and SOCD resolution — are applied by
+ * the adapters before a mask reaches the snapshot (`@shmup/input-web` `remote`, plan M1-05),
+ * driven by the data-driven input profiles; the core only ever sees resolved actions.
  *
  * **Planned API (later steps).**
- * - `RemotePolicy` — forced autofire for Shot/Sub, 4-way assumption, release debounce hints
+ * - `RemotePolicy` — forced autofire for Shot/Sub, 4-way assumption
  *   (shmup_feat.md §4 "Design rules for remote play")
- * - `SocdMode` (`'neutral' | 'last-wins'`) + `resolveSocd(mask, prev)` (shmup_feat.md §4 [P1])
  * - `InputBuffer` — 8–16 tick ring buffer for menu / power-meter presses (shmup_tech.md §4.4)
  * - `AutofireState` — deterministic autofire cadence whose rate is stored in replay headers
  *
@@ -103,6 +108,25 @@ export const ACTION_NAMES: readonly ActionName[] = Object.freeze([
   'Confirm',
   'Back',
 ] as ActionName[]);
+
+/**
+ * Which binding table input adapters resolve keys and buttons with (decision D15).
+ *
+ * `'game'` while a stage is being played, `'menu'` while a menu, the pause screen or any other
+ * UI scene is on top. Separate tables end the old action collisions: keyboard X is Sub in the
+ * game but Back in menus, remote OK is PowerUp in the game but Confirm in menus.
+ *
+ * @remarks
+ * The context is presentation-side routing only — the simulation still receives plain action
+ * masks, so replays do not record it.
+ */
+export type InputContext = 'game' | 'menu';
+
+/** Every {@link InputContext}, `'game'` first. */
+export const INPUT_CONTEXTS: readonly InputContext[] = Object.freeze([
+  'game',
+  'menu',
+] as InputContext[]);
 
 /** Maximum simultaneous local players (2-player co-op, shmup_feat.md §16). */
 export const MAX_PLAYERS = 2;

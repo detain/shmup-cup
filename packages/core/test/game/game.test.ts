@@ -86,4 +86,12 @@ describe('core/game createGame', () => {
     const game = createGame(createHeadlessPlatform(), { tickRate: 30 });
     expect(game.config.tickRate).toBe(30);
   });
+
+  it("asks for the 'game' binding context until the scene stack decides (M1-16)", () => {
+    const game = createGame(createHeadlessPlatform());
+    expect(game.inputContext).toBe('game');
+    game.pause();
+    game.step();
+    expect(game.inputContext).toBe('game');
+  });
 });

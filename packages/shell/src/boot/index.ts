@@ -7,8 +7,9 @@
  * {@link bootShell}, which:
  *
  * 1. shows a progress bar on a plain 2D overlay canvas (`error-screen`);
- * 2. validates the content — core kinds plus the owners of foreign kinds (`loader`); any
- *    issue stops the boot on the **boot error screen** listing every `path: message`;
+ * 2. validates the content — core kinds plus the owners of foreign kinds (`loader`; the input
+ *    profiles by default); any issue stops the boot on the **boot error screen** listing every
+ *    `path: message`;
  * 3. loads the atlas pages with `new Image()` from their relative URLs (no `fetch` — D25) and
  *    builds the atlas (`@shmup/render-pixi` `createAtlas`);
  * 4. creates the renderer (WebGL1 first) and, through the app's factory, the platform, then
@@ -18,6 +19,8 @@
  * 6. runs the rAF frame loop: `game.frame(now)` → `game.events.drain(dispatch)` →
  *    `renderer.render(frame)` (plan §3.3), with the sprite showcase (default) or the
  *    calibration pattern (`?scene=calibration`) as the scene until the World arrives (M1-06).
+ *    Before the ticks of each frame it forwards a change of `game.inputContext` to the input
+ *    adapter (`input.setContext` — the `game` / `menu` binding tables of decision D15).
  *
  * The canvas carries `data-shmup-state="loading" | "running" | "error"` so tests and the TV's
  * remote inspector can tell where boot stands.
@@ -41,6 +44,7 @@ import {
   type Game,
   type GameConfig,
   type IAudio,
+  type InputContext,
   type LoadContentResult,
   type Platform,
   type PlatformInput,
@@ -118,6 +122,13 @@ export interface ShellAssets {
 export interface ShellInput extends PlatformInput {
   /** Clears all held input (the app was hidden — its key-ups will never arrive). */
   clear(): void;
+  /**
+   * Switches the binding tables to the context the top scene wants (decision D15). The shell
+   * calls it once at boot and whenever `game.inputContext` changes.
+   *
+   * @param context - `'game'` or `'menu'`.
+   */
+  setContext(context: InputContext): void;
   /** Removes the adapter's event listeners. */
   destroy(): void;
 }
@@ -155,7 +166,11 @@ export interface ShellOptions {
   readonly audioUnlock?: 'gesture' | 'immediate';
   /** WebGL version to try first (default 1). */
   readonly preferWebGLVersion?: 1 | 2;
-  /** Validators for foreign content kinds (plan §3.5; M1-05 adds `input-profiles`). */
+  /**
+   * Validators for foreign content kinds (plan §3.5), merged over the shell's
+   * `DEFAULT_CONTENT_OWNERS` — e.g. an input-profile registry's `load`, so the app keeps the
+   * parsed profiles (M1-05).
+   */
   readonly contentOwners?: ContentOwners;
   /**
    * Image factory for the atlas pages (default `() => new Image()`).
@@ -251,9 +266,9 @@ function describe(error: unknown): string {
  * @remarks
  * On failure the boot error screen stays up, the canvas is marked `error`, everything created
  * so far (input and audio included) is released, and the promise rejects with a
- * {@link ShellBootError}. Nothing is created per frame: the frame loop calls
- * `game.frame`, drains the event queue through the dispatcher's bound visitor and renders the
- * reused frame.
+ * {@link ShellBootError}. Nothing is created per frame: the frame loop forwards a changed
+ * `game.inputContext` to `input.setContext`, calls `game.frame`, drains the event queue through
+ * the dispatcher's bound visitor and renders the reused frame.
  *
  * The renderer's sprite name table depends on the scene: the showcase hands over its own
  * `SHOWCASE_SPRITES` table (`showcase` module) and pre-binds its world (so the first frame creates no Pixi
@@ -417,12 +432,19 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
 
   // 6. Frame loop (plan §3.3) — allocation-free.
   const visit = events.visit;
+  let inputContext: InputContext = game.inputContext;
+  input.setContext(inputContext);
   /**
-   * One displayed frame: fixed ticks, event dispatch, render.
+   * One displayed frame: input context, fixed ticks, event dispatch, render.
    *
    * @param now - rAF timestamp.
    */
   const onFrame = (now: number): void => {
+    const context = game.inputContext;
+    if (context !== inputContext) {
+      inputContext = context;
+      input.setContext(context);
+    }
     game.frame(now);
     game.events.drain(visit);
     const frame = game.renderFrame();

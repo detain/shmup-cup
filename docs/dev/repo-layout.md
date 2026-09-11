@@ -58,7 +58,7 @@ shmup-cup/
 │   ├── audio-web/          @shmup/audio-web — Web Audio IAudio: interactive latency, buses, suspend/resume
 │   │   └── src/ web-audio ✔ · sfx music loader (placeholders)
 │   ├── input-web/          @shmup/input-web — keyboard/remote + Gamepad API → InputSnapshot
-│   │   └── src/ keymap ✔ keyboard ✔ gamepad ✔ web-input ✔ · rebind remote (placeholders)
+│   │   └── src/ keymap ✔ keyboard ✔ gamepad ✔ web-input ✔ remote ✔ (debounce, diagonal/SOCD policies) rebind ✔ (partial: input profiles, game/menu tables, profile choice)
 │   └── shell/              @shmup/shell — shared browser host of apps/web + apps/tizen (decision D34)
 │       └── src/ boot ✔ loader ✔ dispatch ✔ error-screen ✔ frame-loop ✔ showcase ✔
 │
@@ -79,7 +79,8 @@ shmup-cup/
 │   ├── player/             ✔ one file per ship: speed levels, hitboxes, margins, timers (+ README, example)
 │   ├── stages/             one file per stage: camera path, checkpoints, parallax, event timeline (+ README, example)
 │   ├── enemies/            enemy definitions: hp, score, hurtbox, script id, drop (+ README, example)
-│   └── weapons/            ✔ weapon tunables + preset loadouts (+ README, example)
+│   ├── weapons/            ✔ weapon tunables + preset loadouts (+ README, example)
+│   └── input/              ✔ input profiles (kind input-profiles, validated by input-web rebind): per-context key/button tables, remote debounce/diagonal/SOCD, Tizen keys to register
 ├── assets/
 │   ├── source/             editable sources — in git: sprites/**/*.sprite.json pixel maps (+ real-art PNG overrides), fonts/*.font.json, tilesets, audio
 │   └── generated/          pipeline output (atlas/main.png + main.json, cache) — ignored
@@ -110,8 +111,9 @@ apps/electron ─► (loads apps/web build; no package imports)
 
 `@shmup/shell` (M1-04) is the shared boot path of the two browser hosts; the apps still create
 their own input / audio adapters and platform and hand them to it (plan §3.1). The plan
-allows the shell to import render-pixi, audio-web and input-web; today it imports only
-render-pixi and core — input and audio arrive as core interfaces. Guide:
+allows the shell to import render-pixi, audio-web and input-web; today it imports render-pixi,
+input-web (only to validate the `input-profiles` content by default, M1-05) and core — the
+input and audio adapters themselves arrive as interfaces. Guide:
 [rendering-and-shell.md](rendering-and-shell.md).
 
 `@shmup/core` imports nothing from the workspace (lint-enforced). Presentation packages

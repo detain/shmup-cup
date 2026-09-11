@@ -11,16 +11,39 @@
  * as a user activation); the tab being hidden suspends the game, clears held input and
  * suspends audio. `?scene=calibration` shows the test pattern instead of the sprite showcase.
  *
- * **Implements.** shmup_feat.md §23 (web dev target), §3 (rAF-driven fixed step, pause on
- * visibility change, integer scaling), §19 (resume audio on first input).
+ * **Input profiles** (decisions D13–D15). The `input-profiles` content is parsed into a
+ * registry during boot. Keys use `?profile=<id>` when given (dev override — e.g.
+ * `keyboard-remote-emulation` to feel the remote's limits on a desktop, or a `tizen-remote-*`
+ * profile), else the saved choice (`Platform.storage`, applied once read), else
+ * `keyboard-default`; gamepads use `gamepad-standard`. `?debounce=<ticks>` overrides the key
+ * profile's release debounce ({@link inputOverridesFromSearch}).
  *
- * **Public API.** {@link bootWebApp}, {@link WebApp}, {@link WebAppResources}.
+ * **Implements.** shmup_feat.md §23 (web dev target), §3 (rAF-driven fixed step, pause on
+ * visibility change, integer scaling), §19 (resume audio on first input), §4 (input profiles).
+ *
+ * **Public API.** {@link bootWebApp}, {@link WebApp}, {@link WebAppResources},
+ * {@link inputOverridesFromSearch}, {@link InputOverrides}.
  *
  * @module
  */
 import { createWebAudio, type WebAudio } from '@shmup/audio-web';
 import { defineModule, type ContentFile, type Game } from '@shmup/core';
-import { createWebInput, type GamepadLike, type WebInput } from '@shmup/input-web';
+import {
+  DEFAULT_GAMEPAD_PROFILE_ID,
+  DEFAULT_KEYBOARD_PROFILE_ID,
+  INPUT_PROFILES_KIND,
+  KEY_PROFILE_DEVICES,
+  MAX_RELEASE_DEBOUNCE_TICKS,
+  chooseInputProfile,
+  createInputProfileRegistry,
+  createWebInput,
+  loadInputProfileChoice,
+  overrideInputTuning,
+  type GamepadLike,
+  type InputProfile,
+  type InputProfileRegistry,
+  type WebInput,
+} from '@shmup/input-web';
 import type { PixiRenderer } from '@shmup/render-pixi';
 import { bootShell, sceneFromSearch, type Shell, type ShellAssets } from '@shmup/shell';
 import { createWebPlatform, type StorageLike } from '../platform/index.js';
@@ -50,6 +73,8 @@ export interface WebApp {
   readonly audio: WebAudio;
   /** Keyboard + gamepad input adapter. */
   readonly input: WebInput;
+  /** The input profiles from `content/input/` (the active ones: `input.keyProfile`, …). */
+  readonly profiles: InputProfileRegistry;
   /** The shared shell (atlas, event dispatcher, scene). */
   readonly shell: Shell;
   /** Stops the frame loop and releases listeners, GPU and audio resources. */
@@ -82,14 +107,60 @@ function searchOf(win: Window): string {
   return location === undefined ? '' : location.search;
 }
 
+/** Input dev overrides read from the query string. */
+export interface InputOverrides {
+  /** `?profile=<id>`: the keyboard / remote profile to use, or `null`. */
+  readonly profile: string | null;
+  /** `?debounce=<ticks>`: release debounce override (`0 … 10`), or `null`. */
+  readonly debounce: number | null;
+}
+
+/**
+ * Reads the input dev overrides `?profile=<id>` and `?debounce=<ticks>`.
+ *
+ * @param search - `location.search` (with or without the leading `?`).
+ * @returns The overrides; a missing or empty `profile` and a `debounce` that is not an integer
+ *   in `0 … MAX_RELEASE_DEBOUNCE_TICKS` give `null`.
+ *
+ * @example
+ * ```ts
+ * inputOverridesFromSearch('?profile=keyboard-remote-emulation&debounce=2');
+ * // → { profile: 'keyboard-remote-emulation', debounce: 2 }
+ * ```
+ */
+export function inputOverridesFromSearch(search: string): InputOverrides {
+  const query = search.charAt(0) === '?' ? search.slice(1) : search;
+  let profile: string | null = null;
+  let debounce: number | null = null;
+  for (const pair of query.split('&')) {
+    const eq = pair.indexOf('=');
+    const key = eq < 0 ? pair : pair.slice(0, eq);
+    let value = eq < 0 ? '' : pair.slice(eq + 1);
+    try {
+      value = decodeURIComponent(value);
+    } catch (_error) {
+      continue;
+    }
+    if (key === 'profile' && value !== '') profile = value;
+    if (key === 'debounce' && /^[0-9]+$/.test(value)) {
+      const ticks = Number(value);
+      if (ticks <= MAX_RELEASE_DEBOUNCE_TICKS) debounce = ticks;
+    }
+  }
+  return { profile, debounce };
+}
+
 /**
  * Boots the game into a canvas.
  *
  * @remarks
- * Creates input and audio (no context yet), then runs `bootShell`, which creates the
- * renderer, then this app's platform (through the factory, once WebGL2 support is known) and
- * the game. Everything is released by {@link WebApp.stop}; on a failed boot the shell has
- * already released it and shows the boot error screen.
+ * Creates input and audio (no context yet), then runs `bootShell`, which validates the content
+ * (the input profiles into this app's registry), creates the renderer, then this app's
+ * platform (through the factory, once WebGL2 support is known — the input profiles are
+ * applied there) and the game. Without a `?profile=` override the saved profile choice is
+ * applied once storage has answered. An unknown `?profile=` id is reported with
+ * `console.warn` and the default is used. Everything is released by {@link WebApp.stop}; on a
+ * failed boot the shell has already released it and shows the boot error screen.
  *
  * @param canvas - Target canvas (fills the window).
  * @param resources - The inlined content files and atlas (`virtual:shmup-*` modules).
@@ -121,6 +192,21 @@ export async function bootWebApp(
     getGamepads: hasGamepadApi ? (): ArrayLike<GamepadLike | null> => nav.getGamepads() : undefined,
   });
   const audio = createWebAudio();
+  const profiles = createInputProfileRegistry();
+  const search = searchOf(win);
+  const overrides = inputOverridesFromSearch(search);
+  /**
+   * Applies a keyboard / remote profile with the `?debounce=` override.
+   *
+   * @param profile - The profile.
+   */
+  const applyKeyProfile = (profile: InputProfile): void => {
+    input.setProfile(
+      overrides.debounce === null
+        ? profile
+        : overrideInputTuning(profile, { releaseDebounceTicks: overrides.debounce }),
+    );
+  };
   const shell = await bootShell({
     canvas,
     win,
@@ -128,8 +214,23 @@ export async function bootWebApp(
     assets: resources.assets,
     input,
     audio,
-    platform: (renderer) =>
-      createWebPlatform({
+    contentOwners: { [INPUT_PROFILES_KIND]: profiles.load },
+    platform: (renderer) => {
+      const keys = chooseInputProfile(
+        profiles.profiles,
+        [overrides.profile, DEFAULT_KEYBOARD_PROFILE_ID],
+        KEY_PROFILE_DEVICES,
+      );
+      if (overrides.profile !== null && keys?.id !== overrides.profile) {
+        console.warn(
+          `Shmup Cup: no keyboard or remote input profile "${overrides.profile}"; ` +
+            `using ${keys?.id ?? 'the built-in bindings'}`,
+        );
+      }
+      if (keys !== null) applyKeyProfile(keys);
+      const pads = chooseInputProfile(profiles.profiles, [DEFAULT_GAMEPAD_PROFILE_ID], ['gamepad']);
+      if (pads !== null) input.setProfile(pads);
+      return createWebPlatform({
         input,
         audio,
         storage: safeLocalStorage(win),
@@ -137,19 +238,34 @@ export async function bootWebApp(
         displaySize: () => ({ width: win.innerWidth, height: win.innerHeight }),
         gamepad: hasGamepadApi,
         webgl2: renderer.webGLVersion === 2,
-      }),
+      });
+    },
     gameConfig: { remoteMode: false },
-    scene: sceneFromSearch(searchOf(win)),
+    scene: sceneFromSearch(search),
     audioUnlock: 'gesture',
   });
+
+  // The saved choice (Options screen, M2-16) replaces the default once storage answers; a
+  // `?profile=` override wins over it.
+  let stopped = false;
+  if (overrides.profile === null) {
+    void loadInputProfileChoice(shell.platform.storage).then((saved) => {
+      const chosen = chooseInputProfile(profiles.profiles, [saved], KEY_PROFILE_DEVICES);
+      if (!stopped && chosen !== null && chosen.id !== input.keyProfile?.id) {
+        applyKeyProfile(chosen);
+      }
+    });
+  }
 
   return {
     game: shell.game,
     renderer: shell.renderer,
     audio,
     input,
+    profiles,
     shell,
     stop() {
+      stopped = true;
       shell.stop();
     },
   };

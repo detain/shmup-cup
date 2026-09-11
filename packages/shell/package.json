@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@shmup/core": "workspace:*",
+    "@shmup/input-web": "workspace:*",
     "@shmup/render-pixi": "workspace:*"
   },
   "devDependencies": {

@@ -76,6 +76,7 @@ export {
 export {
   Action,
   ACTION_NAMES,
+  INPUT_CONTEXTS,
   MAX_PLAYERS,
   commitPlayerInput,
   copyInputSnapshot,
@@ -84,6 +85,7 @@ export {
   resetInputSnapshot,
   type ActionMask,
   type ActionName,
+  type InputContext,
   type InputDeviceKind,
   type InputSnapshot,
   type PlayerInput,

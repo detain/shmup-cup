@@ -90,11 +90,12 @@ and `internet`, application id `ShmpCupGam.ShmupCup` (package id = 10 alphanumer
 | Module | Status | Responsibility |
 |---|---|---|
 | `main.ts` | — | Entry (no `import.meta`, no top-level await) |
-| `boot` | implemented | Composition root: remote-first input, Web Audio and the Tizen platform handed to `@shmup/shell`'s `bootShell` (content + atlas from `file://`, boot error screen, renderer, game, rAF loop, audio unlocked at boot); Back exits from the root screen (also the boot error screen) until the title/exit-confirm scene exists |
-| `platform` | partial | `registerKeyBatch` (Play/Pause, Ch±, colours — never Exit/volume; falls back to per-key `registerKey` when the batch fails, so one key a model lacks does not block the rest), Back 10009 watcher, `visibilitychange` lifecycle, `exit()`, localStorage |
+| `boot` | implemented | Composition root: remote-first input (`tizen-remote-safe` profile, or the saved choice; `gamepad-standard`), Web Audio and the Tizen platform handed to `@shmup/shell`'s `bootShell` (content + atlas from `file://`, boot error screen, renderer, game, rAF loop, audio unlocked at boot); Back exits from the root screen (also the boot error screen) until the title/exit-confirm scene exists |
+| `platform` | partial | `registerKeyBatch` of the active input profile's `register` list (Play/Pause, Ch±; without a profile the fallback list adds the colour keys — never Exit/volume; falls back to per-key `registerKey` when the batch fails, so one key a model lacks does not block the rest), Back 10009 watcher, `visibilitychange` lifecycle, `exit()`, localStorage |
 | `device-info` | placeholder | UA / resolution / WebGL / product-info diagnostics |
 | `live-reload` | placeholder | Dev-only reload-on-change on the TV |
 
 Input device facts (diagonals, repeat behaviour, extra keys, latency) come from
-`tools/input-probe` (a separate npm project) — results feed `@shmup/input-web`'s `remote`
-module.
+`tools/input-probe` (a separate npm project) — results change the input profiles in
+`content/input/remote.input-profiles.json` (release debounce, diagonal policy, keys to
+register), read by `@shmup/input-web`'s `rebind` and `remote` modules — data, not code.

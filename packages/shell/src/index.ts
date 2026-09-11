@@ -25,6 +25,7 @@ export {
 } from './boot/index.js';
 export {
   AssetLoadError,
+  DEFAULT_CONTENT_OWNERS,
   loadGameContent,
   loadImages,
   type ContentOwner,

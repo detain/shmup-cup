@@ -7,11 +7,14 @@
  * documentation, so they may reuse the ids of the real content without clashing with it.
  * Every sprite name the shipped content uses must exist in the atlas the asset pipeline
  * builds (M1-03) — a typo is reported as an issue here, not as a magenta box in the game.
+ * Kinds the core does not own go to their owning package, like the shell does at boot
+ * (plan §3.5): `input-profiles` → `@shmup/input-web` (M1-05).
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { loadContent, type ContentFile } from '@shmup/core';
+import { loadContent, type ContentFile, type ValidationIssue } from '@shmup/core';
+import { loadInputProfiles, parseInputProfiles } from '@shmup/input-web';
 import { describe, expect, it } from 'vitest';
 import { findMissingSprites } from '../../scripts/assets/manifest.mjs';
 import { buildAtlas } from '../../scripts/assets/pipeline.mjs';
@@ -72,6 +75,35 @@ function stripLineComments(source: string): string {
   return out;
 }
 
+/** Validators of the foreign kinds, as the shell registers them (plan §3.5). */
+const OWNERS: Record<string, (files: readonly ContentFile[]) => readonly ValidationIssue[]> = {
+  'input-profiles': (files) => loadInputProfiles(files).issues,
+};
+
+/**
+ * Validates the foreign files of a load with their owners.
+ *
+ * @param foreign - `loadContent(...).foreign`.
+ * @returns Every owner issue, plus one per file of a kind nobody owns.
+ */
+function ownerIssues(foreign: readonly ContentFile[]): ValidationIssue[] {
+  const byKind = new Map<string, ContentFile[]>();
+  for (const file of foreign) {
+    const kind = (file.data as { kind: string }).kind;
+    byKind.set(kind, [...(byKind.get(kind) ?? []), file]);
+  }
+  const issues: ValidationIssue[] = [];
+  for (const [kind, files] of byKind) {
+    const owner = OWNERS[kind];
+    if (owner === undefined) {
+      for (const file of files) issues.push({ path: file.path, message: `no owner for "${kind}"` });
+    } else {
+      issues.push(...owner(files));
+    }
+  }
+  return issues;
+}
+
 const allPaths = listJson(contentRoot);
 const examplePaths = allPaths.filter((path) => path.split('/').pop()?.startsWith('example.'));
 const shippedFiles = readContentFiles(contentRoot);
@@ -87,8 +119,9 @@ describe('integration: content/ validates', () => {
   it('loads the shipped content without a single issue', () => {
     const { db, issues, foreign } = loadContent(shippedFiles);
     expect(issues).toEqual([]);
-    // Kinds no other package owns yet must not silently fall through as foreign.
-    expect(foreign.map((file) => file.path)).toEqual([]);
+    // Foreign kinds go to their owner; a kind nobody owns must not silently fall through.
+    expect(foreign.map((file) => file.path)).toEqual(['input/remote.input-profiles.json']);
+    expect(ownerIssues(foreign)).toEqual([]);
     expect(db.ships.map((ship) => ship.id)).toContain('kestrel');
     expect(db.weaponPresets.map((preset) => preset.id)).toContain('type-a');
   });
@@ -104,8 +137,10 @@ describe('integration: content/ validates', () => {
   });
 
   it('loads the example format samples without a single issue', () => {
-    const { db, issues } = loadContent(read(examplePaths));
+    const { db, issues, foreign } = loadContent(read(examplePaths));
     expect(issues).toEqual([]);
+    expect(foreign.map((file) => file.path)).toEqual(['input/example.input-profiles.json']);
+    expect(ownerIssues(foreign)).toEqual([]);
     expect(db.stages.length).toBeGreaterThan(0);
     for (const stage of db.stages) {
       for (const event of stage.events) {
@@ -120,6 +155,7 @@ describe('integration: content/ validates', () => {
       weapons: 'weapons',
       enemies: 'enemies',
       stages: 'stage',
+      input: 'input-profiles',
     };
     for (const file of [...shippedFiles, ...read(examplePaths)]) {
       const [folder = '', name = ''] = file.path.split('/');
@@ -174,6 +210,10 @@ describe('integration: content/ validates', () => {
       expect(blocks.length, `${folder}/README.md format block`).toBeGreaterThan(0);
       for (const block of blocks) {
         const data = JSON.parse(stripLineComments(block)) as unknown;
+        if ((data as { kind?: unknown }).kind === 'input-profiles') {
+          expect(parseInputProfiles(data, `${folder}/README.md`).issues).toEqual([]);
+          continue;
+        }
         const { issues } = loadContent([{ path: `${folder}/README.md`, data }]);
         // A sample may name ids that only exist in a full content set; its shape must be right.
         expect(

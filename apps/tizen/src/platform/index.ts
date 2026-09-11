@@ -4,8 +4,10 @@
  * **Responsibility.** Implements the core's `Platform` on Tizen 5.5+ TVs / Smart
  * Monitors:
  * - **Key registration** — `tizen.tvinputdevice.registerKeyBatch()` for the extra remote
- *   keys we use (Play/Pause, Ch+/−, colour keys). Arrows, OK (13) and Back (10009) arrive
- *   without registration. Never registers `Exit` (long-press Back) or volume keys.
+ *   keys the active input profile lists in `register` (decision D13; `tizen-remote-safe`
+ *   registers Play/Pause and Ch±), or {@link REMOTE_KEYS_TO_REGISTER} when no profile is
+ *   known. Arrows, OK (13) and Back (10009) arrive without registration. Never registers
+ *   `Exit` (long-press Back) or volume keys — {@link registerRemoteKeys} drops them.
  * - **Back (10009)** — {@link watchBackKey} reports presses to the host; the scene stack
  *   decides (pause in game, back in menus, exit confirmation on the title — shmup_feat.md
  *   §23). The key → `Action.Back` mapping itself lives in `@shmup/input-web`.
@@ -27,6 +29,7 @@
  *
  * @module
  */
+import { SYSTEM_REMOTE_KEYS } from '@shmup/input-web';
 import {
   createMemoryStorage,
   defineModule,
@@ -48,8 +51,9 @@ export const moduleInfo = defineModule({
 export const TIZEN_BACK_KEY_CODE = 10009;
 
 /**
- * Remote keys registered at startup (names from `tvinputdevice.getSupportedKeys()`).
- * Deliberately excludes `Exit` and the volume keys (system keys).
+ * Remote keys registered at startup when no input profile provides a `register` list (names
+ * from `tvinputdevice.getSupportedKeys()`). Deliberately excludes `Exit` and the volume keys
+ * (system keys).
  */
 export const REMOTE_KEYS_TO_REGISTER: readonly string[] = Object.freeze([
   'MediaPlayPause',
@@ -120,7 +124,9 @@ export function getTizenApi(win: Window): TizenApi | null {
 /**
  * Registers the extra remote keys so their key events reach the app.
  * Uses `registerKeyBatch` when available, else one `registerKey` per key; a key the
- * device does not support is skipped instead of aborting startup.
+ * device does not support is skipped instead of aborting startup. System keys (`Exit`,
+ * `VolumeUp`, `VolumeDown`, `VolumeMute` — input-web's `SYSTEM_REMOTE_KEYS`) are never
+ * registered, whatever the list says; an empty list registers nothing.
  *
  * `registerKeyBatch` reports an unsupported key (`InvalidValuesError`) through its
  * *asynchronous* error callback rather than by throwing, so that callback also falls
@@ -128,12 +134,14 @@ export function getTizenApi(win: Window): TizenApi | null {
  * (e.g. colour keys on a Smart Monitor remote) would leave every other key unregistered.
  *
  * @param tizen - The Tizen API.
- * @param keys - Key names to register.
+ * @param requested - Key names to register.
  * @returns Names that were registered (best effort for the batch call).
  */
-export function registerRemoteKeys(tizen: TizenApi, keys: readonly string[]): string[] {
+export function registerRemoteKeys(tizen: TizenApi, requested: readonly string[]): string[] {
   const input = tizen.tvinputdevice;
   if (input === undefined) return [];
+  const keys = requested.filter((key) => SYSTEM_REMOTE_KEYS.indexOf(key) < 0);
+  if (keys.length === 0) return [];
   if (typeof input.registerKeyBatch === 'function') {
     try {
       input.registerKeyBatch(
@@ -340,10 +348,16 @@ export interface TizenPlatformOptions {
   readonly gamepad: boolean;
   /** WebGL2 context obtained by the renderer. */
   readonly webgl2: boolean;
+  /**
+   * Remote keys to register — the active input profile's `register` list. Defaults to
+   * {@link REMOTE_KEYS_TO_REGISTER} (no profile known).
+   */
+  readonly registerKeys?: readonly string[];
 }
 
 /**
- * Creates the Tizen platform and registers the extra remote keys.
+ * Creates the Tizen platform and registers the extra remote keys (`options.registerKeys`, else
+ * {@link REMOTE_KEYS_TO_REGISTER}).
  *
  * @remarks
  * `id` is `'tizen'` and `caps.remoteOnly` is `true` even in a desktop browser (the
@@ -367,7 +381,7 @@ export interface TizenPlatformOptions {
  */
 export function createTizenPlatform(options: TizenPlatformOptions): Platform {
   const tizen = options.tizen;
-  if (tizen !== null) registerRemoteKeys(tizen, REMOTE_KEYS_TO_REGISTER);
+  if (tizen !== null) registerRemoteKeys(tizen, options.registerKeys ?? REMOTE_KEYS_TO_REGISTER);
   const application = tizen?.application;
   const displaySize = options.displaySize;
   return {

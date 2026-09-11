@@ -654,6 +654,62 @@ the browser dev app and as a Tizen 5.5 bundle.
 - **Manual (optional):** after the probe run, set `releaseDebounceTicks`/`diagonals` from its verdicts (§8.2).
 - **Refs:** `shmup_feat.md` §4 (remote-first rules 1–8, SOCD, buffering), §27; `input_probe_spec.md`;
   `shmup_tech.md` §2.3.
+- **As built:**
+  - **File name.** The profiles live in `content/input/remote.input-profiles.json` (not
+    `remote-profiles.json`): `pnpm content:check` enforces `<folder>/<name>.<kind>.json`. The folder
+    has its `README.md` (format samples, validated by the content test) and
+    `example.input-profiles.json`. Labels are upper-case for the bitmap font.
+  - **Bindings chosen.** Remote game: OK = PowerUp, Back = Pause (D12), Play/Pause = Pause,
+    Ch+ = Special, Ch− = Speed; remote menu: OK = Confirm, Back = Back, Play/Pause = Pause. Keyboard
+    game: Z/Space Shot, X Sub, C/Enter PowerUp, V Special, Shift Speed, P/Esc/Backspace Pause; menu:
+    Enter/Space/Z Confirm, X/Backspace/Esc Back, P Pause. Gamepad game: A Shot, B Sub, X PowerUp,
+    Y Special, LB/RB Speed, Start/Select Pause; menu: A Confirm, B/Select Back, Start Pause.
+    `keyboard-remote-emulation` has `device: 'remote'` (the core sees a remote), debounce 2,
+    `lastWins` for diagonals *and* SOCD, PgUp/PgDn = Ch±. Remote profiles bind by `keyCode` only,
+    so a desktop keyboard's arrows/Enter reach them through the keyCode fallback. Profiles register
+    only D14's three keys (the colour keys stay in the no-profile fallback `REMOTE_KEYS_TO_REGISTER`).
+  - **Validation beyond the schema** (`rebind`): every `game` table binds the four directions and
+    Pause, every `menu` table the directions, Confirm and Back (rule 8); gamepad profiles bind
+    `buttons` only (indices 0–31) with `releaseDebounceTicks: 0`; key profiles never bind buttons;
+    only `remote` profiles `register`, never `Exit`/`VolumeUp`/`VolumeDown`/`VolumeMute`
+    (`SYSTEM_REMOTE_KEYS`, also filtered by the Tizen `registerRemoteKeys`); ids are lower-case
+    kebab, unique across files. A bad profile is dropped, the others kept.
+  - **API.** `parseInputProfiles(data, path?)` (one file) plus `loadInputProfiles(files)` (all
+    files, duplicate ids across files), `createInputProfileRegistry()` (its `load` is the content
+    owner an app passes to the shell so it keeps the parsed profiles), `chooseInputProfile(profiles,
+    candidateIds, devices)`, `overrideInputTuning(profile, tuning)` (`?debounce=`), the persistence
+    hook `loadInputProfileChoice` / `saveInputProfileChoice` (`Platform.storage` key
+    `input.profile`), default ids `keyboard-default` / `tizen-remote-safe` / `gamepad-standard`.
+    Each profile is compiled once to per-context `tables` (`KeyBindings` + button masks); keys bound
+    only in the other context are listed with mask `0` so they stay tracked and
+    `preventDefault()`-ed in every context (`keymap.findKeyActions` returns `-1` for unbound keys).
+    The placeholder types `RemoteTuning` and `DeviceBindings` were replaced by `InputTuning` and the
+    profile types.
+  - **Debounce semantics** (`remote.createReleaseDebouncer(ticks, capacity = 32)`): a key released
+    between polls N and N+1 stays held for polls N+1 … N+ticks and is released on poll N+ticks+1;
+    a keydown inside the window returns `'resumed'` (no edge, no latch). The keyboard source now
+    tracks up to 32 physical keys in fixed slots, ages the debounce in `advance()` (called first in
+    `WebInput.poll()`), and resolves `resolveDirections(mask, order, diagonals, socd)` on `held`
+    with the event press order (SOCD first, then the diagonal policy; same-poll ties are
+    deterministic). Gamepads use `createDirectionOrder()` per pad and are never debounced.
+  - **Context switches without phantom presses.** A key or pad button held across a profile or
+    `game`/`menu` switch keeps only the actions it has in both tables until released (holding X
+    while a menu opens does not press Back). Keyboard: `setBindings()` intersects each held key's
+    mask. Gamepad: `GamepadReadState` gained optional `pressedButtons` / `staleButtons` and
+    `readGamepadActions()` a `previousButtons` table.
+  - **Core.** `InputContext` / `INPUT_CONTEXTS` live in core `input`; `Game.inputContext` is a
+    getter returning `'game'` until M1-16.
+  - **Shell.** `ShellInput` requires `setContext()`; `bootShell` calls it once at boot and, before
+    the ticks of a frame, whenever `game.inputContext` changed. The loader has
+    `DEFAULT_CONTENT_OWNERS` (`input-profiles` → `loadInputProfiles`), merged under the
+    `contentOwners` option — so `@shmup/shell` now depends on `@shmup/input-web` (allowed by §3.1).
+  - **Apps.** Both apps pass their registry's `load` as the `input-profiles` owner and apply the
+    profiles in the platform factory (after validation). Tizen: `tizen-remote-safe` +
+    `gamepad-standard`, `createTizenPlatform({ registerKeys })` registers the profile's list (fallback
+    `REMOTE_KEYS_TO_REGISTER`); a saved choice is applied once storage answers, re-registering its
+    keys. Web: `?profile=` (unknown ids → `console.warn`, default used) › saved choice ›
+    `keyboard-default`; `?debounce=` via the exported `inputOverridesFromSearch()`. Both apps expose
+    the registry as `app.profiles`; `WebInput` exposes `context`, `keyProfile`, `gamepadProfile`.
 
 ### M1-06 — Sim world, tick pipeline, player ship & collision
 

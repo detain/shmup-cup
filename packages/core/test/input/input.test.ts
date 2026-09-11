@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   ACTION_NAMES,
   Action,
+  INPUT_CONTEXTS,
   MAX_PLAYERS,
   commitPlayerInput,
   copyInputSnapshot,
@@ -12,6 +13,11 @@ import {
 } from '../../src/input/index.js';
 
 describe('core/input', () => {
+  it("names the two binding contexts, 'game' first (decision D15)", () => {
+    expect(INPUT_CONTEXTS).toEqual(['game', 'menu']);
+    expect(Object.isFrozen(INPUT_CONTEXTS)).toBe(true);
+  });
+
   it('describes itself', () => {
     expect(moduleInfo.name).toBe('input');
   });

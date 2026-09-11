@@ -3,7 +3,8 @@
  * images, a fake renderer (no WebGL in Node) and a fake AudioContext, booted through the real
  * `@shmup/shell`. Checks the wiring: keyboard-first input, audio unlocked by the first user
  * gesture only, visibility → suspend/resume, rAF → fixed ticks → render, resize forwarding,
- * storage fallbacks, the `?scene=` switch and a clean stop().
+ * storage fallbacks, the `?scene=` switch, the input profiles (`keyboard-default`, the
+ * `?profile=` / `?debounce=` dev overrides, the saved choice) and a clean stop().
  */
 import type * as AudioWeb from '@shmup/audio-web';
 import { Action } from '@shmup/core';
@@ -11,7 +12,11 @@ import type * as RenderPixi from '@shmup/render-pixi';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildAtlas } from '../../../../scripts/assets/pipeline.mjs';
 import { readContentFiles } from '../../../../vite.shared.js';
-import { bootWebApp, type WebAppResources } from '../../src/boot/index.js';
+import {
+  bootWebApp,
+  inputOverridesFromSearch,
+  type WebAppResources,
+} from '../../src/boot/index.js';
 
 const fakes = vi.hoisted(() => {
   const renderer = {
@@ -282,8 +287,58 @@ describe('web/boot bootWebApp wiring', () => {
     win.key('keydown', 'KeyZ', 90);
     win.frame(STEP);
     const p1 = app.game.state.input?.players[0];
-    expect(p1?.held).toBe(Action.Shot | Action.Confirm);
+    expect(p1?.held).toBe(Action.Shot); // keyboard-default, game context (D15)
     expect(p1?.device).toBe('keyboard');
+  });
+
+  it('applies keyboard-default and gamepad-standard from the content by default', async () => {
+    const { app } = await boot();
+    expect(app.profiles.issues).toEqual([]);
+    expect(app.profiles.profiles.map((profile) => profile.id)).toContain('tizen-remote-safe');
+    expect(app.input.keyProfile?.id).toBe('keyboard-default');
+    expect(app.input.gamepadProfile?.id).toBe('gamepad-standard');
+    expect(app.input.context).toBe('game');
+  });
+
+  it('?profile= picks a key profile and ?debounce= overrides its release debounce', async () => {
+    win.location.search = '?profile=keyboard-remote-emulation&debounce=0';
+    const { app } = await boot();
+    expect(app.input.keyProfile?.id).toBe('keyboard-remote-emulation');
+    expect(app.input.keyboard.tuning).toMatchObject({
+      releaseDebounceTicks: 0,
+      diagonals: 'lastWins',
+      socd: 'lastWins',
+    });
+    win.frame(0);
+    win.key('keydown', 'ArrowRight', 39);
+    win.key('keydown', 'ArrowUp', 38);
+    win.frame(STEP);
+    const p1 = app.game.state.input?.players[0];
+    expect(p1?.held).toBe(Action.Up); // the second arrow replaces the first, like the remote
+    expect(p1?.device).toBe('remote');
+  });
+
+  it('warns about an unknown ?profile= and falls back to keyboard-default', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    win.location.search = '?profile=nope';
+    const { app } = await boot();
+    expect(app.input.keyProfile?.id).toBe('keyboard-default');
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('"nope"'));
+  });
+
+  it('applies the saved profile choice unless ?profile= overrides it', async () => {
+    win.stored.set('shmup-cup:input.profile', 'keyboard-remote-emulation');
+    const saved = await boot();
+    await flush();
+    expect(saved.app.input.keyProfile?.id).toBe('keyboard-remote-emulation');
+    saved.app.stop();
+
+    win = new FakeWindow();
+    win.stored.set('shmup-cup:input.profile', 'keyboard-remote-emulation');
+    win.location.search = '?profile=tizen-remote-safe';
+    const overridden = await boot();
+    await flush();
+    expect(overridden.app.input.keyProfile?.id).toBe('tizen-remote-safe');
   });
 
   it('suspends on hidden (clearing held keys and audio) and resumes on visible', async () => {
@@ -343,5 +398,34 @@ describe('web/boot bootWebApp wiring', () => {
     expect(fakes.renderer.sizes).toEqual([]);
     expect(fakes.audioContext.resumes).toBe(0);
     expect(app.input.keyboard.held).toBe(0);
+  });
+});
+
+describe('web/boot inputOverridesFromSearch', () => {
+  it('reads ?profile= and ?debounce=', () => {
+    expect(inputOverridesFromSearch('?profile=keyboard-remote-emulation&debounce=2')).toEqual({
+      profile: 'keyboard-remote-emulation',
+      debounce: 2,
+    });
+    expect(inputOverridesFromSearch('scene=calibration&debounce=10')).toEqual({
+      profile: null,
+      debounce: 10,
+    });
+    expect(inputOverridesFromSearch('')).toEqual({ profile: null, debounce: null });
+  });
+
+  it('ignores empty profiles, bad debounce values and undecodable pairs', () => {
+    expect(inputOverridesFromSearch('?profile=&debounce=11')).toEqual({
+      profile: null,
+      debounce: null,
+    });
+    expect(inputOverridesFromSearch('?debounce=-1&debounce=1.5&profile=%E0%A4%A')).toEqual({
+      profile: null,
+      debounce: null,
+    });
+    expect(inputOverridesFromSearch('?profile=tizen%2Dremote%2Dsafe&debounce')).toEqual({
+      profile: 'tizen-remote-safe',
+      debounce: null,
+    });
   });
 });

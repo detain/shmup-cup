@@ -8,6 +8,7 @@ import type { ContentFile } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
 import {
   AssetLoadError,
+  DEFAULT_CONTENT_OWNERS,
   loadGameContent,
   loadImages,
   moduleInfo,
@@ -88,6 +89,21 @@ describe('shell/loader loadGameContent', () => {
     const result = loadGameContent(readContentFiles());
     expect(result.issues).toEqual([]);
     expect(result.db.ships.length).toBeGreaterThan(0);
+  });
+
+  it('validates input profiles with the default owner (plan §3.5)', () => {
+    expect(Object.keys(DEFAULT_CONTENT_OWNERS)).toEqual(['input-profiles']);
+    const result = loadGameContent([
+      {
+        path: 'input/bad.input-profiles.json',
+        data: { formatVersion: 1, kind: 'input-profiles', profiles: [] },
+      },
+    ]);
+    expect(result.issues).toEqual([
+      { path: 'input/bad.input-profiles.json:profiles', message: 'must have at least 1 items' },
+    ]);
+    const shipped = loadGameContent(readContentFiles());
+    expect(shipped.foreign.map((file) => file.path)).toEqual(['input/remote.input-profiles.json']);
   });
 
   it('routes foreign kinds to their owner, and reports kinds nobody owns', () => {

@@ -8,9 +8,10 @@
  *   an `HTMLImageElement` works everywhere), in parallel, reporting progress.
  * - {@link loadGameContent} validates the inlined `virtual:shmup-content` files: the core
  *   kinds through `loadContent()`, every other kind through the **owner** registered for it
- *   (plan §3.5 — e.g. `input-profiles` → `input-web`, M1-05). A file whose kind has no owner
- *   is an issue, so a new content kind cannot ship unvalidated. All problems come back as
- *   `ValidationIssue { path, message }` for the boot error screen.
+ *   (plan §3.5 — {@link DEFAULT_CONTENT_OWNERS}: `input-profiles` → `@shmup/input-web`,
+ *   M1-05; hosts may replace an owner, e.g. to keep the parsed profiles). A file whose kind
+ *   has no owner is an issue, so a new content kind cannot ship unvalidated. All problems
+ *   come back as `ValidationIssue { path, message }` for the boot error screen.
  *
  * **Implements.**
  * - shmup_feat.md §22 — data-driven content validated at load, assets preloaded (no
@@ -19,7 +20,7 @@
  *
  * **Public API.** {@link loadImages}, {@link ImageFactory}, {@link LoadableImage},
  * {@link AssetLoadError}, {@link loadGameContent}, {@link ContentOwner},
- * {@link ContentOwners}, {@link LoadGameContentOptions}.
+ * {@link ContentOwners}, {@link DEFAULT_CONTENT_OWNERS}, {@link LoadGameContentOptions}.
  *
  * @module
  */
@@ -31,6 +32,7 @@ import {
   type LoadContentResult,
   type ValidationIssue,
 } from '@shmup/core';
+import { INPUT_PROFILES_KIND, loadInputProfiles } from '@shmup/input-web';
 
 /** Module descriptor. */
 export const moduleInfo = defineModule({
@@ -134,9 +136,21 @@ export type ContentOwner = (files: readonly ContentFile[]) => readonly Validatio
 /** Content owners by `kind` (plan §3.5). */
 export type ContentOwners = { readonly [kind: string]: ContentOwner };
 
+/**
+ * The owners of the foreign content kinds that exist today (plan §3.5): `input-profiles` →
+ * `@shmup/input-web` `loadInputProfiles` (M1-05). Later steps add `sfx`/`music` (audio-web) and
+ * `fx` (render-pixi).
+ */
+export const DEFAULT_CONTENT_OWNERS: ContentOwners = Object.freeze({
+  [INPUT_PROFILES_KIND]: (files: readonly ContentFile[]) => loadInputProfiles(files).issues,
+});
+
 /** Options of {@link loadGameContent}. */
 export interface LoadGameContentOptions extends LoadContentOptions {
-  /** Validators for the non-core kinds (default: none). */
+  /**
+   * Validators for the non-core kinds, merged over {@link DEFAULT_CONTENT_OWNERS} (an entry
+   * here replaces the default owner of its kind).
+   */
   readonly owners?: ContentOwners;
 }
 
@@ -147,7 +161,8 @@ export interface LoadGameContentOptions extends LoadContentOptions {
  * @remarks
  * Issues are the core's (file and reference order), then per foreign kind in first-seen order
  * the owner's issues — or one issue per file when no owner claims the kind
- * (`"<path>: no loader for content kind \"<kind>\""`). Never throws for bad data.
+ * (`"<path>: no loader for content kind \"<kind>\""`). Owners come from `options.owners`,
+ * then {@link DEFAULT_CONTENT_OWNERS}. Never throws for bad data.
  *
  * @param files - The content files (`virtual:shmup-content`).
  * @param options - Owners and `loadContent` options (`knownScripts`, …).
@@ -167,6 +182,8 @@ export function loadGameContent(
   const result = loadContent(files, options);
   const issues: ValidationIssue[] = result.issues.slice();
   const owners = options.owners ?? {};
+  const hasOwn = (table: ContentOwners, kind: string): boolean =>
+    Object.prototype.hasOwnProperty.call(table, kind);
   const byKind = new Map<string, ContentFile[]>();
   for (const file of result.foreign) {
     // loadContent only returns files with a valid header as foreign, so `kind` is a string.
@@ -176,7 +193,11 @@ export function loadGameContent(
     else list.push(file);
   }
   byKind.forEach((kindFiles, kind) => {
-    const owner = Object.prototype.hasOwnProperty.call(owners, kind) ? owners[kind] : undefined;
+    const owner = hasOwn(owners, kind)
+      ? owners[kind]
+      : hasOwn(DEFAULT_CONTENT_OWNERS, kind)
+        ? DEFAULT_CONTENT_OWNERS[kind]
+        : undefined;
     if (owner === undefined) {
       for (const file of kindFiles) {
         issues.push({ path: file.path, message: `no loader for content kind "${kind}"` });

@@ -149,6 +149,7 @@ beforeEach(() => {
     destroyed: 0,
     poll: () => platform.snapshot,
     clear: () => {},
+    setContext: () => {},
     destroy() {
       input.destroyed++;
     },

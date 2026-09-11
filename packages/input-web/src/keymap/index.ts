@@ -15,8 +15,13 @@
  * **Implements.** shmup_feat.md §4 (actions, remote key table, keyboard via `e.code`),
  * shmup_tech.md §2.3 (remote key codes).
  *
+ * These built-in tables are the fallback used before an input profile is applied; the shipped
+ * bindings — with separate `game` and `menu` tables (decision D15) — are data in
+ * `content/input/` (see `rebind`).
+ *
  * **Public API.** {@link DEFAULT_CODE_BINDINGS}, {@link DEFAULT_KEYCODE_BINDINGS},
- * {@link TIZEN_KEY_CODES}, {@link KeyBindings}, {@link resolveKeyActions}.
+ * {@link DEFAULT_KEY_BINDINGS}, {@link TIZEN_KEY_CODES}, {@link KeyBindings},
+ * {@link resolveKeyActions}, {@link findKeyActions}.
  *
  * @module
  */
@@ -104,6 +109,35 @@ export const DEFAULT_KEY_BINDINGS: KeyBindings = Object.freeze({
 });
 
 /**
+ * Looks a key up in a binding table: `code` first, `keyCode` as fallback.
+ *
+ * @remarks
+ * Unlike {@link resolveKeyActions} this tells an *unbound* key (`-1`) from a key that is
+ * bound to no action in this table (`0`). Profile tables use `0` entries for keys that only
+ * act in the other binding context, so such a key is still tracked and `preventDefault()`-ed
+ * in every context (see `rebind`).
+ *
+ * @param code - `KeyboardEvent.code` (may be empty on TV remotes).
+ * @param keyCode - `KeyboardEvent.keyCode`.
+ * @param bindings - Binding table.
+ * @returns The action mask (possibly 0), or `-1` when the table does not know the key.
+ *
+ * @example
+ * ```ts
+ * findKeyActions('', 10009, DEFAULT_KEY_BINDINGS); // → Action.Back
+ * findKeyActions('KeyQ', 81, DEFAULT_KEY_BINDINGS); // → -1 (unbound)
+ * ```
+ */
+export function findKeyActions(code: string, keyCode: number, bindings: KeyBindings): number {
+  if (code !== '') {
+    const byCode = bindings.byCode[code];
+    if (byCode !== undefined) return byCode;
+  }
+  const byKeyCode = bindings.byKeyCode[keyCode];
+  return byKeyCode === undefined ? -1 : byKeyCode;
+}
+
+/**
  * Resolves a key event to actions: `code` first, `keyCode` as fallback.
  *
  * @remarks
@@ -127,9 +161,6 @@ export function resolveKeyActions(
   keyCode: number,
   bindings: KeyBindings,
 ): ActionMask {
-  if (code !== '') {
-    const byCode = bindings.byCode[code];
-    if (byCode !== undefined) return byCode;
-  }
-  return bindings.byKeyCode[keyCode] ?? 0;
+  const mask = findKeyActions(code, keyCode, bindings);
+  return mask < 0 ? 0 : mask;
 }

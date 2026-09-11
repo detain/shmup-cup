@@ -1,0 +1,74 @@
+{
+  "formatVersion": 1,
+  "kind": "input-profiles",
+  "profiles": [
+    {
+      "id": "example-remote",
+      "label": "EXAMPLE REMOTE",
+      "device": "remote",
+      "context": {
+        "game": {
+          "byCode": {},
+          "byKeyCode": {
+            "13": ["PowerUp"],
+            "37": ["Left"],
+            "38": ["Up"],
+            "39": ["Right"],
+            "40": ["Down"],
+            "10009": ["Pause"]
+          }
+        },
+        "menu": {
+          "byCode": {},
+          "byKeyCode": {
+            "13": ["Confirm"],
+            "37": ["Left"],
+            "38": ["Up"],
+            "39": ["Right"],
+            "40": ["Down"],
+            "10009": ["Back"]
+          }
+        }
+      },
+      "releaseDebounceTicks": 2,
+      "diagonals": "lastWins",
+      "socd": "neutral",
+      "register": ["MediaPlayPause"]
+    },
+    {
+      "id": "example-pad",
+      "label": "EXAMPLE PAD",
+      "device": "gamepad",
+      "context": {
+        "game": {
+          "byCode": {},
+          "byKeyCode": {},
+          "buttons": {
+            "0": ["Shot"],
+            "9": ["Pause"],
+            "12": ["Up"],
+            "13": ["Down"],
+            "14": ["Left"],
+            "15": ["Right"]
+          }
+        },
+        "menu": {
+          "byCode": {},
+          "byKeyCode": {},
+          "buttons": {
+            "0": ["Confirm"],
+            "1": ["Back"],
+            "12": ["Up"],
+            "13": ["Down"],
+            "14": ["Left"],
+            "15": ["Right"]
+          }
+        }
+      },
+      "releaseDebounceTicks": 0,
+      "diagonals": "combine",
+      "socd": "neutral",
+      "register": []
+    }
+  ]
+}

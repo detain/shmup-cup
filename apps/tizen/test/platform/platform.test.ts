@@ -113,6 +113,36 @@ describe('tizen/platform', () => {
     expect(tizen.exits()).toBe(1);
   });
 
+  it("registers the active input profile's keys instead of the fallback list", () => {
+    const tizen = fakeTizen({ batch: true });
+    createTizenPlatform({
+      ...services(),
+      tizen: tizen.api,
+      visibility: fakeDocument(),
+      registerKeys: ['MediaPlayPause', 'ChannelUp', 'ChannelDown'],
+    });
+    expect(tizen.registered).toEqual(['MediaPlayPause', 'ChannelUp', 'ChannelDown']);
+    const none = fakeTizen({ batch: true });
+    createTizenPlatform({
+      ...services(),
+      tizen: none.api,
+      visibility: fakeDocument(),
+      registerKeys: [],
+    });
+    expect(none.registered).toEqual([]);
+  });
+
+  it('never registers system keys, whatever the list says', () => {
+    for (const batch of [true, false]) {
+      const tizen = fakeTizen({ batch });
+      expect(
+        registerRemoteKeys(tizen.api, ['Exit', 'MediaPlayPause', 'VolumeUp', 'VolumeMute']),
+      ).toEqual(['MediaPlayPause']);
+      expect(tizen.registered).toEqual(['MediaPlayPause']);
+    }
+    expect(registerRemoteKeys(fakeTizen().api, ['VolumeDown'])).toEqual([]);
+  });
+
   it('has no exit and registers nothing in a desktop browser', () => {
     const platform = createTizenPlatform({
       ...services(),

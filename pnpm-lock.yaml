@@ -345,6 +345,9 @@ importers:
       '@shmup/core':
         specifier: workspace:*
         version: link:../core
+      '@shmup/input-web':
+        specifier: workspace:*
+        version: link:../input-web
       '@shmup/render-pixi':
         specifier: workspace:*
         version: link:../render-pixi

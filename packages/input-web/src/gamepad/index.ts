@@ -52,10 +52,23 @@ export interface GamepadLike {
   readonly axes: readonly number[];
 }
 
-/** Per-pad state carried between polls (for stick hysteresis). */
+/** Per-pad state carried between polls (stick hysteresis, buttons held across a table swap). */
 export interface GamepadReadState {
   /** Direction bits produced by the stick on the previous poll. */
   stickDirections: ActionMask;
+  /**
+   * Bitmask of the button indices (0–31) pressed on the previous poll; written by
+   * {@link readGamepadActions}.
+   */
+  pressedButtons?: number;
+  /**
+   * Button indices (bitmask) that were held when the binding table changed (a new profile or
+   * a `game`/`menu` context switch). Until released they contribute only the actions they have
+   * in both tables, so no action appears without a press. Set it to
+   * {@link GamepadReadState.pressedButtons} at the switch; {@link readGamepadActions} clears
+   * the bits of released buttons.
+   */
+  staleButtons?: number;
 }
 
 /** Standard-mapping button index → actions. */
@@ -113,12 +126,18 @@ function stickDirections(x: number, y: number, previous: ActionMask): ActionMask
  *
  * @remarks
  * The mapping is not checked: a non-standard pad is read as if it were standard (best
- * effort until rebinding lands). A disconnected pad returns 0 and resets its stick
- * state. Button bits and stick directions are OR-ed, so D-pad and stick combine.
+ * effort until rebinding lands). A disconnected pad returns 0 and resets its state.
+ * Button bits and stick directions are OR-ed, so D-pad and stick combine. A button listed in
+ * `state.staleButtons` contributes `buttons[i] & previousButtons[i]` (see
+ * {@link GamepadReadState.staleButtons}); buttons beyond the table contribute nothing. Buttons
+ * above index 31 are read but never tracked as pressed or stale.
+ * No allocation.
  *
  * @param pad - The gamepad (should use `mapping === 'standard'`).
  * @param state - Per-pad state, updated in place.
  * @param buttons - Button index → actions table.
+ * @param previousButtons - The table in use before the last switch (for stale buttons;
+ *   defaults to `buttons`).
  * @returns Held actions for this pad.
  *
  * @example
@@ -132,17 +151,28 @@ export function readGamepadActions(
   pad: GamepadLike,
   state: GamepadReadState,
   buttons: readonly ActionMask[] = DEFAULT_GAMEPAD_BUTTONS,
+  previousButtons: readonly ActionMask[] = buttons,
 ): ActionMask {
   if (!pad.connected) {
     state.stickDirections = 0;
+    state.pressedButtons = 0;
+    state.staleButtons = 0;
     return 0;
   }
   let mask = 0;
-  const count = Math.min(pad.buttons.length, buttons.length);
+  let pressed = 0;
+  const stale = state.staleButtons ?? 0;
+  const count = pad.buttons.length;
   for (let i = 0; i < count; i++) {
     const button = pad.buttons[i];
-    if (button !== undefined && button.pressed) mask |= buttons[i] ?? 0;
+    if (button === undefined || !button.pressed) continue;
+    const bit = i < 32 ? 1 << i : 0;
+    pressed |= bit;
+    const actions = buttons[i] ?? 0;
+    mask |= (stale & bit) !== 0 ? actions & (previousButtons[i] ?? 0) : actions;
   }
+  state.pressedButtons = pressed;
+  if (stale !== 0) state.staleButtons = stale & pressed;
   const stick = stickDirections(pad.axes[0] ?? 0, pad.axes[1] ?? 0, state.stickDirections);
   state.stickDirections = stick;
   return mask | stick;

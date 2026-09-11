@@ -8,6 +8,7 @@ import {
   SimEventKind,
   createHeadlessPlatform,
   type IAudio,
+  type InputContext,
   type Platform,
   type RenderFrame,
 } from '@shmup/core';
@@ -150,7 +151,7 @@ function fakeCanvas() {
 }
 
 let win: FakeWindow;
-let input: ShellInput & { cleared: number; destroyed: number };
+let input: ShellInput & { cleared: number; destroyed: number; contexts: InputContext[] };
 let audio: IAudio & { calls: string[] };
 let platform: ReturnType<typeof createHeadlessPlatform>;
 let unlocks = 0;
@@ -169,9 +170,13 @@ beforeEach(() => {
   input = {
     cleared: 0,
     destroyed: 0,
+    contexts: [],
     poll: () => platform.snapshot,
     clear() {
       input.cleared++;
+    },
+    setContext(context) {
+      input.contexts.push(context);
     },
     destroy() {
       input.destroyed++;
@@ -301,6 +306,22 @@ describe('shell/boot bootShell', () => {
     expect(fakes.frames[0].hudCount).toBeGreaterThan(0);
   });
 
+  it('hands game.inputContext to the input adapter at boot and before the ticks of a frame that changed it', async () => {
+    const shell = await boot().promise;
+    expect(input.contexts).toEqual(['game']);
+    let context: InputContext = 'game';
+    Object.defineProperty(shell.game, 'inputContext', { get: () => context });
+    win.frame(0);
+    expect(input.contexts).toEqual(['game']);
+    context = 'menu';
+    win.frame(STEP);
+    win.frame(2 * STEP);
+    expect(input.contexts).toEqual(['game', 'menu']);
+    context = 'game';
+    win.frame(3 * STEP);
+    expect(input.contexts).toEqual(['game', 'menu', 'game']);
+  });
+
   it('unlocks audio on the first key or pointer gesture only (web default)', async () => {
     await boot().promise;
     expect(unlocks).toBe(0);
@@ -378,7 +399,11 @@ describe('shell/boot failures (boot error screen)', () => {
       /no loader for content kind "fx"/,
     );
     const owned = await boot({ contentFiles: foreign, contentOwners: { fx: () => [] } }).promise;
-    expect(owned.content.foreign).toHaveLength(1);
+    // The input profiles are validated by the default owner; `fx` by the one passed in.
+    expect(owned.content.foreign.map((file) => file.path)).toEqual([
+      'fx/particles.fx.json',
+      'input/remote.input-profiles.json',
+    ]);
   });
 
   it('reports an atlas page that fails to load', async () => {

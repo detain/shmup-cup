@@ -7,6 +7,13 @@ It boots behind a loading bar (or a boot error screen listing every problem) int
 **sprite showcase**; `?scene=calibration` shows the pixel-art calibration test pattern
 instead. There is no gameplay yet.
 
+Input uses the data-driven profiles of `content/input/` (decision D13): `keyboard-default`
+(or the saved choice) and `gamepad-standard`. Dev overrides: `?profile=<id>` picks another
+keyboard/remote profile — `?profile=keyboard-remote-emulation` makes the keyboard behave like
+the Samsung remote (arrows only, the second arrow replaces the first, Enter = OK,
+Backspace = Back, P = Play/Pause) — and `?debounce=<ticks>` (0–10) overrides its release
+debounce.
+
 ```sh
 pnpm dev                          # from the repo root (= turbo run dev --filter=@shmup/web)
 # → http://localhost:5173 (showcase) · http://localhost:5173/?scene=calibration (test pattern)
@@ -37,7 +44,7 @@ the shell loads the pages with `new Image()`; see
 | Module | Status | Responsibility |
 |---|---|---|
 | `main.ts` | — | Entry: boots into `#game`, disposes on HMR |
-| `boot` | implemented | Composition root: keyboard/gamepad input, Web Audio and the browser platform handed to `@shmup/shell`'s `bootShell` (content + atlas loading, boot error screen, renderer, game, rAF loop, audio unlock on first gesture); `?scene=calibration` for the test pattern |
+| `boot` | implemented | Composition root: keyboard/gamepad input with the input profiles (`?profile=`, `?debounce=`, saved choice), Web Audio and the browser platform handed to `@shmup/shell`'s `bootShell` (content + atlas loading, boot error screen, renderer, game, rAF loop, audio unlock on first gesture); `?scene=calibration` for the test pattern |
 | `platform` | partial | Browser `Platform`: localStorage (memory fallback), visibility lifecycle, no `exit` |
 
 The rAF frame loop moved to [`@shmup/shell`](../../packages/shell/README.md) (M1-04).

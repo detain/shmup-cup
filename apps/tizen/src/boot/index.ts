@@ -9,6 +9,12 @@
  * event dispatch and the rAF frame loop). The game runs with `remoteMode: true` and forced
  * autofire; audio needs no gesture on TV, so it is unlocked immediately.
  *
+ * **Input profiles** (decisions D13/D14). The `input-profiles` content is parsed into a
+ * registry during boot; the remote uses the saved profile choice (`Platform.storage`, applied
+ * as soon as it is read) or `tizen-remote-safe`, gamepads use `gamepad-standard`, and the
+ * platform registers the active profile's `register` keys (falling back to
+ * `REMOTE_KEYS_TO_REGISTER` when the content has no remote profile).
+ *
  * **Back key.** Until the title scene with its exit-confirmation dialog exists
  * (shmup_feat.md §17/§23, M1-16), the showcase *is* the app's root screen, so Back exits
  * directly — the correct Tizen behaviour for a root screen. The Back watcher is installed
@@ -24,12 +30,26 @@
  */
 import { createWebAudio, type WebAudio } from '@shmup/audio-web';
 import { defineModule, type ContentFile, type Game, type Platform } from '@shmup/core';
-import { createWebInput, type GamepadLike, type WebInput } from '@shmup/input-web';
+import {
+  DEFAULT_GAMEPAD_PROFILE_ID,
+  DEFAULT_REMOTE_PROFILE_ID,
+  INPUT_PROFILES_KIND,
+  KEY_PROFILE_DEVICES,
+  chooseInputProfile,
+  createInputProfileRegistry,
+  createWebInput,
+  loadInputProfileChoice,
+  type GamepadLike,
+  type InputProfile,
+  type InputProfileRegistry,
+  type WebInput,
+} from '@shmup/input-web';
 import type { PixiRenderer } from '@shmup/render-pixi';
 import { bootShell, sceneFromSearch, type Shell, type ShellAssets } from '@shmup/shell';
 import {
   createTizenPlatform,
   getTizenApi,
+  registerRemoteKeys,
   watchBackKey,
   type StorageLike,
   type TizenApi,
@@ -62,6 +82,8 @@ export interface TizenApp {
   readonly audio: WebAudio;
   /** Remote / keyboard + gamepad input adapter (`keyDevice: 'remote'`). */
   readonly input: WebInput;
+  /** The input profiles from `content/input/` (the active ones: `input.keyProfile`, …). */
+  readonly profiles: InputProfileRegistry;
   /** The shared shell (atlas, event dispatcher, scene). */
   readonly shell: Shell;
   /** Stops the loop and releases resources. */
@@ -109,13 +131,35 @@ function apiExit(tizen: TizenApi | null): (() => void) | null {
 }
 
 /**
+ * Applies the first matching remote profile and the gamepad profile to the input adapter.
+ *
+ * @param input - The input adapter.
+ * @param profiles - The parsed profiles.
+ * @param candidates - Remote / keyboard profile ids in priority order.
+ * @returns The key profile applied, or `null` when none matched (built-in bindings stay).
+ */
+function applyProfiles(
+  input: WebInput,
+  profiles: readonly InputProfile[],
+  candidates: ReadonlyArray<string | null>,
+): InputProfile | null {
+  const keys = chooseInputProfile(profiles, candidates, KEY_PROFILE_DEVICES);
+  if (keys !== null) input.setProfile(keys);
+  const pads = chooseInputProfile(profiles, [DEFAULT_GAMEPAD_PROFILE_ID], ['gamepad']);
+  if (pads !== null) input.setProfile(pads);
+  return keys;
+}
+
+/**
  * Boots the game on the TV (or in a desktop browser for development).
  *
  * @remarks
  * Installs the Back watcher first (Back exits from the root screen — including the boot error
- * screen), creates input and audio, then runs `bootShell`, which creates the renderer, this
- * app's platform (registering the extra remote keys) and the game, and unlocks audio
- * immediately. Suspend (Home / multitasking) clears held input and suspends audio; resume
+ * screen), creates input and audio, then runs `bootShell`, which validates the content (the
+ * input profiles into this app's registry), creates the renderer, this app's platform (with the
+ * `tizen-remote-safe` profile applied and its keys registered) and the game, and unlocks audio
+ * immediately. A saved profile choice is applied — and its keys registered — once storage has
+ * answered. Suspend (Home / multitasking) clears held input and suspends audio; resume
  * resumes audio and the game resets its loop accumulator.
  *
  * @param canvas - Full-screen canvas.
@@ -155,6 +199,7 @@ export async function bootTizenApp(
     getGamepads: hasGamepadApi ? (): ArrayLike<GamepadLike | null> => nav.getGamepads() : undefined,
   });
   const audio = createWebAudio();
+  const profiles = createInputProfileRegistry();
   const shell = await bootShell({
     canvas,
     win,
@@ -162,7 +207,9 @@ export async function bootTizenApp(
     assets: resources.assets,
     input,
     audio,
+    contentOwners: { [INPUT_PROFILES_KIND]: profiles.load },
     platform: (renderer) => {
+      const keyProfile = applyProfiles(input, profiles.profiles, [DEFAULT_REMOTE_PROFILE_ID]);
       platform = createTizenPlatform({
         tizen,
         input,
@@ -172,6 +219,7 @@ export async function bootTizenApp(
         displaySize: () => ({ width: win.innerWidth, height: win.innerHeight }),
         gamepad: hasGamepadApi,
         webgl2: renderer.webGLVersion === 2,
+        registerKeys: keyProfile?.register,
       });
       return platform;
     },
@@ -181,14 +229,25 @@ export async function bootTizenApp(
     preferWebGLVersion: 1,
   });
 
+  // The saved choice (Options screen, M2-16) replaces the default once storage answers.
+  let stopped = false;
+  void loadInputProfileChoice(shell.platform.storage).then((saved) => {
+    const chosen = chooseInputProfile(profiles.profiles, [saved], KEY_PROFILE_DEVICES);
+    if (stopped || chosen === null || chosen === input.keyProfile) return;
+    input.setProfile(chosen);
+    if (tizen !== null) registerRemoteKeys(tizen, chosen.register);
+  });
+
   return {
     game: shell.game,
     platform: shell.platform,
     renderer: shell.renderer,
     audio,
     input,
+    profiles,
     shell,
     stop() {
+      stopped = true;
       shell.stop();
       stopBack();
     },

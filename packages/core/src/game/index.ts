@@ -22,13 +22,15 @@
  * into (`game.events`, drained by the host once per frame) and builds the reused
  * {@link RenderFrame} of the render contract (`game.renderFrame()`: `world` is `null` until the
  * World arrives in M1-06; the HUD and UI draw lists are empty until the scenes of M1-16).
+ * `game.inputContext` names the binding context (`'game'` / `'menu'`, decision D15) the host's
+ * input adapter should use — `'game'` until the scene stack of M1-16 decides.
  *
  * @module
  */
 import { resolveGameConfig, type GameConfig } from '../config/index.js';
 import { EMPTY_CONTENT_DB, type ContentDb } from '../data/index.js';
 import { createEventQueue, type EventQueue } from '../events/index.js';
-import type { InputSnapshot } from '../input/index.js';
+import type { InputContext, InputSnapshot } from '../input/index.js';
 import { createFixedStepLoop } from '../loop/index.js';
 import { defineModule } from '../module-info.js';
 import type { Platform } from '../platform/index.js';
@@ -75,6 +77,16 @@ export interface Game {
   readonly events: EventQueue;
   /** Current state. Do not mutate from outside the core. */
   readonly state: Readonly<GameState>;
+  /**
+   * The binding table the host's input adapter should use right now (decision D15): the top
+   * scene decides — `'menu'` for menus and the pause screen, `'game'` while playing.
+   *
+   * @remarks
+   * Always `'game'` until the scene stack arrives (M1-16). The host reads it once per frame and
+   * forwards a change to its adapter (`@shmup/shell` calls `input.setContext`); reading it never
+   * allocates.
+   */
+  readonly inputContext: InputContext;
   /**
    * Runs exactly one simulation tick: polls `platform.input` once, then advances the
    * simulation. No-op (and no poll) while paused or suspended.
@@ -168,6 +180,10 @@ export function createGame(
     platform,
     events,
     state,
+    get inputContext(): InputContext {
+      // The scene stack (M1-16) picks the context of its top scene; until then only gameplay.
+      return 'game';
+    },
     step,
     frame(nowMs) {
       if (isFrozen()) return 0;

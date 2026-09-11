@@ -2,7 +2,8 @@
  * Composition-root test for the TV app: bootTizenApp() with a fake window, a fake
  * `window.tizen`, fake atlas images, a fake renderer (no WebGL in Node) and a fake
  * AudioContext, booted through the real `@shmup/shell`. Checks the wiring the TV depends on:
- * remote-first input, key registration, Back → exit (also from the boot error screen), audio
+ * remote-first input with the data-driven input profiles (D13/D14: `tizen-remote-safe`, its
+ * `register` list, the saved choice), key registration, Back → exit (also from the boot error screen), audio
  * unlocked without a gesture, visibility → suspend/resume, rAF → fixed ticks → render, and a
  * clean stop().
  */
@@ -243,6 +244,53 @@ describe('tizen/boot bootTizenApp wiring', () => {
     expect(app.game.config.autofire).toBe(true);
     expect(win.registeredKeys).toContain('MediaPlayPause');
     expect(win.registeredKeys).not.toContain('Exit');
+  });
+
+  it('applies tizen-remote-safe and gamepad-standard, registering the profile keys only', async () => {
+    const { app } = await boot();
+    expect(app.profiles.issues).toEqual([]);
+    expect(app.input.keyProfile?.id).toBe('tizen-remote-safe');
+    expect(app.input.keyProfile?.releaseDebounceTicks).toBe(2);
+    expect(app.input.gamepadProfile?.id).toBe('gamepad-standard');
+    expect(app.input.keyboard.tuning.releaseDebounceTicks).toBe(2);
+    expect(win.registeredKeys).toEqual(['MediaPlayPause', 'ChannelUp', 'ChannelDown']);
+  });
+
+  it('resolves remote OK to PowerUp in the game context (D15) and debounces its release', async () => {
+    const { app } = await boot();
+    win.frame(0);
+    win.key('keydown', 13);
+    win.frame(STEP);
+    expect(app.game.state.input?.players[0]?.pressed).toBe(Action.PowerUp);
+    win.key('keyup', 13);
+    win.frame(2 * STEP);
+    win.frame(3 * STEP);
+    expect(app.game.state.input?.players[0]?.held).toBe(Action.PowerUp); // debounce: 2 polls
+    win.frame(4 * STEP);
+    expect(app.game.state.input?.players[0]?.held).toBe(0);
+  });
+
+  it('applies a saved profile choice once storage answers and registers its keys', async () => {
+    win.stored.set('shmup-cup:input.profile', 'tizen-remote-diagonal');
+    const { app } = await boot();
+    await flush();
+    expect(app.input.keyProfile?.id).toBe('tizen-remote-diagonal');
+    expect(app.input.keyboard.tuning.releaseDebounceTicks).toBe(0);
+    expect(win.registeredKeys).toEqual([
+      'MediaPlayPause',
+      'ChannelUp',
+      'ChannelDown',
+      'MediaPlayPause',
+      'ChannelUp',
+      'ChannelDown',
+    ]);
+  });
+
+  it('ignores a saved choice that names no remote or keyboard profile', async () => {
+    win.stored.set('shmup-cup:input.profile', 'gamepad-standard');
+    const { app } = await boot();
+    await flush();
+    expect(app.input.keyProfile?.id).toBe('tizen-remote-safe');
   });
 
   it('unlocks audio immediately (no user gesture on TV)', async () => {
