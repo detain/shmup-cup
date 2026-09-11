@@ -29,6 +29,7 @@ Design and research documents live at the repository root:
 | [`../shmup_feat.md`](../shmup_feat.md) | Feature & functionality catalog (P0/P1/P2) |
 | [`../shmup_tech.md`](../shmup_tech.md) | Platform constraints, library research, recommended stack |
 | [`../input_probe_spec.md`](../input_probe_spec.md) | Spec of the Tizen input-probe spike (`tools/input-probe/`) |
+| [`../shmup_plan.md`](../shmup_plan.md) | Implementation plan: decisions, milestones M1–M3, ordered build steps, manual on-device checklist |
 
 Per-project READMEs sit next to the code (e.g. [`../tools/input-probe/README.md`](../tools/input-probe/README.md),
 [`../apps/tizen/README.md`](../apps/tizen/README.md)).
