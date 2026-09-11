@@ -789,7 +789,7 @@ describe('core/enemies determinism and allocation', () => {
     const before = hashWorld(a);
     a.enemies.enemies[5].x += 0.5;
     expect(hashWorld(a)).not.toBe(before);
-  });
+  }, 30_000);
 
   it('allocates nothing over a 64-enemy tick loop (sleeping scripts, every mover kind)', () => {
     const w = crowded();
@@ -807,5 +807,5 @@ describe('core/enemies determinism and allocation', () => {
     );
     expect(w.enemies.count).toBe(MAX_ENEMIES);
     expect(growth.bytes).toBeLessThan(64 * 1024);
-  });
+  }, 60_000); // 30,000 ticks of 64 enemies: several seconds on a CI runner
 });
