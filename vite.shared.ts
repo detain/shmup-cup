@@ -8,7 +8,7 @@
  * @module
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { isAbsolute, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defaultClientConditions, defaultServerConditions, type Plugin } from 'vite';
 
@@ -58,6 +58,19 @@ export interface ShmupContentOptions {
  * @returns `true` for `example.*.json`.
  */
 const isExample = (name: string): boolean => name.indexOf('example.') === 0;
+
+/**
+ * Whether `file` lies below the directory `root` (a sibling such as `content-old/` does not,
+ * although its path starts with the same characters).
+ *
+ * @param root - Absolute directory path.
+ * @param file - Absolute file path.
+ * @returns `true` when `file` is inside `root`.
+ */
+const isInside = (root: string, file: string): boolean => {
+  const rel = relative(root, file);
+  return rel !== '' && rel !== '..' && !rel.startsWith('..' + sep) && !isAbsolute(rel);
+};
 
 /**
  * Reads every shipped content JSON file under `root`.
@@ -142,7 +155,7 @@ export function shmupContent(options: ShmupContentOptions = {}): Plugin {
        * @param file - Absolute path of the changed file.
        */
       const onChange = (file: string): void => {
-        if (!file.startsWith(root) || !file.endsWith('.json')) return;
+        if (!isInside(root, file) || !file.endsWith('.json')) return;
         const module = server.moduleGraph.getModuleById(RESOLVED_CONTENT_MODULE_ID);
         if (module !== undefined) server.moduleGraph.invalidateModule(module);
         server.ws.send({ type: 'full-reload' });

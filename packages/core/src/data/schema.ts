@@ -54,7 +54,7 @@ export interface RefSite {
   path: string;
   /** What the id points at. */
   readonly kind: ContentRefKind;
-  /** The id as written, or `null` for a `nullable` reference that was `null`. */
+  /** The id as written, or `null` for a `nullable` reference that was `null` or an absent optional one. */
   readonly id: string | null;
   /** Object that holds the reference; the resolved index is written to `<field>Id`. */
   readonly container: Record<string, unknown>;
@@ -192,6 +192,19 @@ function rangeSuffix(options: RangeOptions): string {
   return '';
 }
 
+/**
+ * Tests a whole-value pattern. `lastIndex` is reset first, so a pattern written with the
+ * `g` or `y` flag gives the same answer on every call instead of depending on the last one.
+ *
+ * @param pattern - The pattern.
+ * @param value - The string to test.
+ * @returns Whether `value` matches.
+ */
+function matches(pattern: RegExp, value: string): boolean {
+  pattern.lastIndex = 0;
+  return pattern.test(value);
+}
+
 /** Plain (non-array, non-null) object test. */
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -250,7 +263,7 @@ function str(options: StringOptions = {}): Schema<string> {
   return define('string', (value, path, issues) => {
     if (typeof value !== 'string' || value.length < minLength) return fail(issues, path, message);
     if (maxLength !== undefined && value.length > maxLength) return fail(issues, path, message);
-    if (pattern !== undefined && !pattern.test(value)) return fail(issues, path, message);
+    if (pattern !== undefined && !matches(pattern, value)) return fail(issues, path, message);
     return value;
   });
 }
@@ -336,7 +349,8 @@ function array<T>(item: Schema<T>, options: ArrayOptions = {}): Schema<T[]> {
  * @remarks
  * Fields declared with {@link s.ref} (also through {@link s.nullable}) record a
  * {@link RefSite} pointing at the parsed object, so the loader can write the resolved
- * numeric index into `<field>Id`.
+ * numeric index into `<field>Id`. An *optional* reference that is absent records a site
+ * with `id: null` too, so `<field>Id` is always present (`-1`).
  *
  * @example
  * ```ts
@@ -363,6 +377,10 @@ function object<S extends ObjectShape, O extends keyof S = never>(
         if (!optional.has(key)) {
           fail(issues, childPath, 'is required');
           ok = false;
+        } else if (refs !== undefined && child.refKind !== null) {
+          // An absent optional reference still gets its `<field>Id` (-1), so readers of
+          // the resolved data always see a number.
+          refs.push({ path: childPath, kind: child.refKind, id: null, container: out, field: key });
         }
         continue;
       }
@@ -397,17 +415,32 @@ function object<S extends ObjectShape, O extends keyof S = never>(
  *
  * @param value - Schema of every entry.
  * @param keyPattern - Pattern every key must match; defaults to any non-empty key.
+ *   `__proto__` is always rejected (assigning it would replace the result's prototype
+ *   instead of adding an entry).
  * @returns The schema.
+ * @throws TypeError when `value` is a {@link s.ref} — like {@link s.array}, a map of bare
+ *   references has nowhere to put the resolved ids; wrap the reference in an object.
  */
 function record<T>(value: Schema<T>, keyPattern?: RegExp): Schema<Record<string, T>> {
+  if (value.refKind !== null) {
+    throw new TypeError('s.record(s.ref()) is unsupported: wrap the reference in an object');
+  }
+  const keyMessage =
+    keyPattern === undefined
+      ? 'is not a valid key'
+      : 'is not a valid key (must match ' + String(keyPattern) + ')';
   return define('record', (input, path, issues, refs) => {
     if (!isPlainObject(input)) return fail(issues, path, 'must be an object');
     const out: Record<string, T> = {};
     let ok = true;
     for (const key of Object.keys(input)) {
       const entryPath = propPath(path, key);
-      if (key === '' || (keyPattern !== undefined && !keyPattern.test(key))) {
-        fail(issues, entryPath, 'is not a valid key (must match ' + String(keyPattern) + ')');
+      if (
+        key === '' ||
+        key === '__proto__' ||
+        (keyPattern !== undefined && !matches(keyPattern, key))
+      ) {
+        fail(issues, entryPath, keyMessage);
         ok = false;
         continue;
       }

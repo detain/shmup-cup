@@ -40,6 +40,34 @@ const read = (paths: readonly string[]): ContentFile[] =>
     data: JSON.parse(readFileSync(join(contentRoot, path), 'utf8')) as unknown,
   }));
 
+/**
+ * Removes `//` line comments from a JSONC sample, leaving `//` inside strings alone.
+ *
+ * @param source - The JSONC text.
+ * @returns Plain JSON text.
+ */
+function stripLineComments(source: string): string {
+  let out = '';
+  let inString = false;
+  for (let i = 0; i < source.length; i++) {
+    const ch = source[i];
+    if (inString) {
+      out += ch;
+      if (ch === '\\') out += source[++i] ?? '';
+      else if (ch === '"') inString = false;
+    } else if (ch === '"') {
+      inString = true;
+      out += ch;
+    } else if (ch === '/' && source[i + 1] === '/') {
+      while (i < source.length && source[i] !== '\n') i++;
+      out += '\n';
+    } else {
+      out += ch;
+    }
+  }
+  return out;
+}
+
 const allPaths = listJson(contentRoot);
 const examplePaths = allPaths.filter((path) => path.split('/').pop()?.startsWith('example.'));
 const shippedFiles = readContentFiles(contentRoot);
@@ -78,6 +106,76 @@ describe('integration: content/ validates', () => {
     for (const stage of db.stages) {
       for (const event of stage.events) {
         if ('enemyId' in event) expect(event.enemyId).toBeGreaterThanOrEqual(0);
+      }
+    }
+  });
+
+  it('names every file after its kind (`<folder>/<name>.<kind>.json`)', () => {
+    const suffixOf: Record<string, string> = {
+      player: 'player',
+      weapons: 'weapons',
+      enemies: 'enemies',
+      stages: 'stage',
+    };
+    for (const file of [...shippedFiles, ...read(examplePaths)]) {
+      const [folder = '', name = ''] = file.path.split('/');
+      const kind = (file.data as { kind?: unknown }).kind;
+      expect(suffixOf[folder], file.path).toBeDefined();
+      expect(kind, file.path).toBe(suffixOf[folder]);
+      expect(name.endsWith(`.${suffixOf[folder] ?? '?'}.json`), file.path).toBe(true);
+    }
+  });
+
+  it('builds weapon presets only from weapons of the matching slot', () => {
+    for (const set of [shippedFiles, read(examplePaths)]) {
+      const { db } = loadContent(set);
+      expect(db.weaponPresets.length).toBeGreaterThan(0);
+      for (const preset of db.weaponPresets) {
+        const slots = {
+          mainId: 'main',
+          missileId: 'missile',
+          doubleId: 'double',
+          laserId: 'laser',
+        };
+        for (const [field, slot] of Object.entries(slots)) {
+          const id = preset[field as keyof typeof slots] ?? -1;
+          if (id >= 0) expect(db.weapons[id]?.slot, `${preset.id}.${slot}`).toBe(slot);
+        }
+      }
+    }
+  });
+
+  it('gives every shipped weapon a cue and a sorted, deterministic sprite table', () => {
+    const { db } = loadContent(shippedFiles);
+    for (const weapon of db.weapons) {
+      expect(weapon.sfxId ?? -1, weapon.id).toBeGreaterThanOrEqual(0);
+    }
+    expect(db.sprites.names).toEqual([...db.sprites.names].sort());
+    expect(loadContent([...shippedFiles].reverse()).db.sprites.names).toEqual(db.sprites.names);
+  });
+
+  it('keeps the format samples in the content READMEs valid', () => {
+    const readmes = allPaths
+      .map((path) => path.split('/')[0] ?? '')
+      .filter(
+        (folder, i, list) =>
+          folder !== '' && list.indexOf(folder) === i && !folder.endsWith('.json'),
+      );
+    expect(readmes.length).toBeGreaterThan(0);
+    for (const folder of readmes) {
+      const readme = readFileSync(join(contentRoot, folder, 'README.md'), 'utf8');
+      const blocks = [...readme.matchAll(/```jsonc?\n([\s\S]*?)```/g)].map(
+        (match) => match[1] ?? '',
+      );
+      expect(blocks.length, `${folder}/README.md format block`).toBeGreaterThan(0);
+      for (const block of blocks) {
+        const data = JSON.parse(stripLineComments(block)) as unknown;
+        const { issues } = loadContent([{ path: `${folder}/README.md`, data }]);
+        // A sample may name ids that only exist in a full content set; its shape must be right.
+        expect(
+          issues.filter((issue) => !/^unknown \w+ id /.test(issue.message)),
+          `${folder}/README.md`,
+        ).toEqual([]);
       }
     }
   });

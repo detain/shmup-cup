@@ -421,7 +421,11 @@ export interface LoadContentOptions {
 export interface LoadContentResult {
   /** The resolved database (partial when `issues` is non-empty — bad files are skipped). */
   readonly db: ContentDb;
-  /** Every problem found, in file then document order. Empty means the content is sound. */
+  /**
+   * Every problem found: header, migration, schema and duplicate-id problems in file then
+   * document order, followed by the reference problems of the second pass (same order).
+   * Empty means the content is sound.
+   */
   readonly issues: readonly ValidationIssue[];
   /** Files whose `kind` this module does not own, untouched, in path order. */
   readonly foreign: readonly ContentFile[];
