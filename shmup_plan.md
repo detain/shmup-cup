@@ -1094,6 +1094,10 @@ the browser dev app and as a Tizen 5.5 bundle.
     tick); camera deltas are read once per update. The guards live in
     `test/bullets/bullets-alloc.test.ts` (own worker, 20k-tick warm-up): type feedback from the
     many small worlds of the functional suites skewed the measurement by an order of magnitude.
+  - **Test pass fixes.** A bullet whose position turned NaN (a NaN speed or acceleration) was
+    never culled — NaN fails every comparison — and "hit" every ship it was tested against; the
+    cull test is now "not inside the view ± 16 px" and both contact tests "not within reach", so
+    such a bullet goes on its next move and a laser with a NaN origin never hits.
 
 ### M1-10 — Player weapons (Type A) & Options
 

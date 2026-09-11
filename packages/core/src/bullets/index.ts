@@ -463,7 +463,8 @@ export interface BulletSystem {
    * The bullet gets its kind's radius, sprite, frame and flags, `minSpeed` 0 and `maxSpeed`
    * {@link MAX_BULLET_SPEED}, and its velocity from `angle` and `speed`. A full pool, an unknown
    * or fractional kind and a non-finite angle other than {@link AIM_AT_TARGET} drop the spawn
-   * quietly. The bullet moves (and rides the camera) from this tick's phase 5 on.
+   * quietly. The bullet moves (and rides the camera) from this tick's phase 5 on; one whose
+   * position turns non-finite (a NaN speed, say) is culled there and never hits.
    *
    * @param x - World x.
    * @param y - World y.
@@ -1169,7 +1170,9 @@ class BulletSystemImpl implements BulletSystem {
       }
       const x = xs[i];
       const y = ys[i];
-      if (x < left || x > right || y < top || y > bottom) {
+      // Written as "not inside" so a non-finite (NaN) position is culled too: NaN fails every
+      // comparison, and such a bullet would otherwise live forever and "hit" every ship.
+      if (!(x >= left && x <= right && y >= top && y <= bottom)) {
         this.killBullet(i);
       } else if (
         map !== null &&
@@ -1293,7 +1296,8 @@ class BulletSystemImpl implements BulletSystem {
       const dx = f.x[i] - sx;
       const dy = f.y[i] - sy;
       const reach = f.radius[i] + r;
-      if (dx * dx + dy * dy > reach * reach) continue;
+      // "Not within reach", so a NaN distance is a miss.
+      if (!(dx * dx + dy * dy <= reach * reach)) continue;
       if (playerHit(ship, PlayerHitCause.Bullet, host.tick, host.debugFlags)) {
         this.killBullet(i);
         return;
@@ -1332,7 +1336,8 @@ class BulletSystemImpl implements BulletSystem {
       const dx = px - (x1 + sx * t);
       const dy = py - (y1 + sy * t);
       const reach = f.width[i] / 2 + r;
-      if (dx * dx + dy * dy > reach * reach) continue;
+      // "Not within reach", so a laser with a NaN origin never hits.
+      if (!(dx * dx + dy * dy <= reach * reach)) continue;
       playerHit(ship, PlayerHitCause.Laser, host.tick, host.debugFlags);
       return;
     }
