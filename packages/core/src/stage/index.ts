@@ -16,7 +16,7 @@
  * - **invisible checkpoints** (shmup_feat.md §10) — the last passed checkpoint is tracked;
  *   {@link StageRunner.restartAt} puts the camera back, re-derives the scroll speed, pan and flags
  *   the stage had there, finds the event cursor by binary search (events at exactly the
- *   checkpoint's x fire again) and calls `hooks.clear()`;
+ *   checkpoint's x fire again, for the hooks) and calls `hooks.clear()`;
  * - the **terrain** and **parallax** descriptions: {@link createStageTerrain} turns the stage's
  *   expanded tile grid into the `TerrainMap` the collision queries read (a private copy, so later
  *   destructible terrain cannot touch the content), {@link createTerrainView} /
@@ -25,8 +25,19 @@
  *
  * **Tick order inside {@link StageRunner.tick}.** 1 apply the camera keys the camera has reached
  * (`key.x ≤ camera.x`), 2 advance the speed ramp and the vertical pan, 3 move the camera (not
- * while locked; stopping exactly at a pending lock key and at `length`), recording `dx`/`dy`, 4
- * fire the due events, 5 update the last passed checkpoint.
+ * while locked; stopping exactly at the first pending lock key — even with other pending keys
+ * before it — and at `length`), recording `dx`/`dy`, 4 fire the due events, 5 update the last
+ * passed checkpoint. So an event fires on the tick the camera reaches its x and a key applies
+ * one tick later: on a tie (and whenever one tick's movement crosses both) the event's speed
+ * is overridden by the key's.
+ *
+ * **Restart order.** {@link StageRunner.restartAt} replays that order by x: keys and events
+ * before the checkpoint at once, an event before a key at the same x; then the events at
+ * exactly the checkpoint's x (as live play fired them on arrival: speed ramps start, flags and
+ * `end` apply), which re-fire on the next tick for the hooks only; keys at the checkpoint's x
+ * apply on that tick, as live play applied them the tick after arriving. Exact for ties; a key
+ * and a speed event less than one tick's movement apart (key first) are replayed key → event,
+ * while live play may have crossed both in one tick (event → key).
  *
  * **Zero allocation.** All numeric runner state lives in one `Float64Array`
  * ({@link StageRunner.state}, also what `hashWorld` hashes); at creation the camera keys, events
@@ -205,10 +216,15 @@ export const StageSlot = {
   Ticks: 16,
   /** Restarts so far (a hook restarting mid-tick stops that tick's event loop). */
   Restarts: 17,
+  /**
+   * Events below this index fire for the hooks only: the last restart already applied their
+   * runner part (the events at exactly the checkpoint's x).
+   */
+  Replay: 18,
 } as const;
 
 /** Number of slots in {@link StageRunner.state}. */
-export const STAGE_STATE_SLOTS = 18;
+export const STAGE_STATE_SLOTS = 19;
 
 /** Drives one stage (see the module docs). */
 export interface StageRunner {
@@ -240,9 +256,10 @@ export interface StageRunner {
   tick(): void;
   /**
    * Restarts from a checkpoint (death penalty `arcade`, continues): camera x at the checkpoint,
-   * speed / pan / flags as the stage had them there (keys and events before it applied at once),
-   * the event cursor at the first event with `x ≥` the checkpoint (binary search), then
-   * `hooks.clear()`.
+   * speed / pan / flags as the stage had them there (keys and events before it applied at once,
+   * in live order — an event before a key at the same x — then the runner part of the events at
+   * exactly its x), the event cursor at the first event with `x ≥` the checkpoint (binary
+   * search; those events re-fire on the next tick for the hooks), then `hooks.clear()`.
    *
    * @param checkpoint - Index into `stage.checkpoints`, or -1 for the stage start.
    * @throws {RangeError} When the index is not an integer in `[-1, checkpoints.length)`.
@@ -293,6 +310,11 @@ interface CompiledStage {
   readonly keyYTicks: Float64Array;
   /** 1 for a lock key. */
   readonly keyLock: Uint8Array;
+  /**
+   * Per key index `i` (and `keys.length`): the index of the first lock key at or after `i`
+   * (`keys.length` = none) — what step 3 clamps the movement against.
+   */
+  readonly keyNextLock: Int32Array;
   /** Event x. */
   readonly eventX: Float64Array;
   /** {@link StageEventCode} per event. */
@@ -327,6 +349,7 @@ function compileStage(stage: StageSpec): CompiledStage {
     keyYTo: new Float64Array(keys.length),
     keyYTicks: new Float64Array(keys.length),
     keyLock: new Uint8Array(keys.length),
+    keyNextLock: new Int32Array(keys.length + 1),
     eventX: new Float64Array(events.length),
     eventCode: new Uint8Array(events.length),
     eventSpeed: new Float64Array(events.length),
@@ -344,6 +367,10 @@ function compileStage(stage: StageSpec): CompiledStage {
     // A pan "at once" is a one-tick pan: the same tick's step moves the camera all the way.
     compiled.keyYTicks[i] = key.yTicks === undefined || key.yTicks <= 0 ? 1 : key.yTicks;
     compiled.keyLock[i] = key.lock === true ? 1 : 0;
+  }
+  compiled.keyNextLock[keys.length] = keys.length;
+  for (let i = keys.length - 1; i >= 0; i--) {
+    compiled.keyNextLock[i] = compiled.keyLock[i] !== 0 ? i : compiled.keyNextLock[i + 1];
   }
   for (let i = 0; i < events.length; i++) {
     const event = events[i];
@@ -476,10 +503,12 @@ class StageRunnerImpl implements StageRunner {
       y = elapsed >= panTicks ? to : from + (to - from) * EASINGS.inOutQuad(elapsed / panTicks);
     }
 
-    // 3. Move: not while locked, never past a pending lock key or the stage end.
+    // 3. Move: not while locked, never past the first pending lock key (other pending keys may
+    // lie before it within this tick's movement) or the stage end.
     let dx = state[StageSlot.Locked] !== 0 ? 0 : state[StageSlot.Speed];
-    if (nextKey < keyCount && compiled.keyLock[nextKey] !== 0) {
-      const stop = keyX[nextKey] - camera.x;
+    const lock = compiled.keyNextLock[nextKey];
+    if (lock < keyCount) {
+      const stop = keyX[lock] - camera.x;
       if (dx > stop) dx = stop > 0 ? stop : 0;
     }
     const room = this.stage.length - camera.x;
@@ -581,16 +610,37 @@ class StageRunnerImpl implements StageRunner {
    * @param index - Event index.
    */
   private fire(index: number): void {
+    const code = this.compiled.eventCode[index] as StageEventCode;
+    // Events at a restart checkpoint's x already had their runner part applied by the restart.
+    if (index >= this.state[StageSlot.Replay]) this.applyEvent(index, code, true);
+    this.hooks.event(code, this.stage.events[index], index);
+  }
+
+  /**
+   * The runner's own part of an event: `speed` sets the target speed, `flag` sets / clears its
+   * flag, `end` ends the stage.
+   *
+   * @param index - Event index.
+   * @param code - Its {@link StageEventCode}.
+   * @param live - Apply it as live play does (a speed ramp starts; `end` ends the stage); `false`
+   *   applies an event long passed at a restart (the speed at once, `end` ignored).
+   */
+  private applyEvent(index: number, code: StageEventCode, live: boolean): void {
+    const state = this.state;
     const compiled = this.compiled;
-    const code = compiled.eventCode[index] as StageEventCode;
     if (code === StageEventCode.Speed) {
-      this.setTarget(compiled.eventSpeed[index], compiled.eventRamp[index]);
+      const speed = compiled.eventSpeed[index];
+      if (live) {
+        this.setTarget(speed, compiled.eventRamp[index]);
+      } else {
+        state[StageSlot.Speed] = speed;
+        state[StageSlot.Target] = speed;
+      }
     } else if (code === StageEventCode.Flag) {
       this.applyFlag(index);
-    } else if (code === StageEventCode.End) {
-      this.state[StageSlot.Ended] = 1;
+    } else if (code === StageEventCode.End && live) {
+      state[StageSlot.Ended] = 1;
     }
-    this.hooks.event(code, this.stage.events[index], index);
   }
 
   /**
@@ -620,18 +670,24 @@ class StageRunnerImpl implements StageRunner {
     camera.dy = 0;
     camera.vx = 0;
     camera.vy = 0;
-    // Re-derive the state at x: keys and events before it, merged in x order (keys first on a
-    // tie — they apply at the start of a tick, events after the move). Everything at once.
+    // Re-derive the state at x in live order (see "Restart order" in the module docs): an event
+    // fires on the tick the camera reaches its x, a key applies one tick later, so on a tie the
+    // event goes first. Keys and events before x apply at once; the events at exactly x as live
+    // play fired them on arrival (they re-fire next tick for the hooks only — `Replay`); keys at
+    // x stay pending for the next tick. At x 0 nothing was reached yet: the first tick applies
+    // the keys at 0 and fires the events at 0, like a fresh stage.
     const keyX = compiled.keyX;
     const eventX = compiled.eventX;
     const cursor = findEventCursor(this.stage.events, x);
+    let replay = cursor;
+    if (x > 0) while (replay < eventX.length && eventX[replay] <= x) replay++;
     let k = 0;
     let e = 0;
     while (true) {
       const keyDue = k < keyX.length && keyX[k] < x;
-      const eventDue = e < cursor;
+      const eventDue = e < replay;
       if (!keyDue && !eventDue) break;
-      if (keyDue && (!eventDue || keyX[k] <= eventX[e])) {
+      if (keyDue && (!eventDue || keyX[k] < eventX[e])) {
         const speed = compiled.keySpeed[k];
         state[StageSlot.Speed] = speed;
         state[StageSlot.Target] = speed;
@@ -639,19 +695,13 @@ class StageRunnerImpl implements StageRunner {
         if (yTo === yTo) camera.y = yTo;
         k++;
       } else {
-        const code = compiled.eventCode[e];
-        if (code === StageEventCode.Speed) {
-          const speed = compiled.eventSpeed[e];
-          state[StageSlot.Speed] = speed;
-          state[StageSlot.Target] = speed;
-        } else if (code === StageEventCode.Flag) {
-          this.applyFlag(e);
-        }
+        this.applyEvent(e, compiled.eventCode[e] as StageEventCode, e >= cursor);
         e++;
       }
     }
     state[StageSlot.NextKey] = k;
     state[StageSlot.Cursor] = cursor;
+    state[StageSlot.Replay] = replay;
     state[StageSlot.Checkpoint] = index;
     state[StageSlot.NextCheckpoint] = index + 1;
     if (notify) this.hooks.clear();

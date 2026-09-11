@@ -57,7 +57,9 @@ Each key takes effect when the camera reaches its `x`: the scroll speed heads fo
 linearly over `ramp` ticks (at once without `ramp`); `yTo` pans the camera vertically (eased,
 over `yTicks` ticks, at once without them — `yTicks` needs `yTo`); `lock: true` stops the camera
 exactly at `x` until the boss releases it, then it scrolls on at `speed`. The camera never
-scrolls past `length`; the terrain map is `length + 384` pixels wide.
+scrolls past `length`; the terrain map is `length + 384` pixels wide. A key applies one tick
+after the camera reaches it, events on that tick itself: a key and a `speed` event at the same
+`x` leave the key's speed.
 
 ## Events
 
@@ -78,7 +80,8 @@ tick, in file order.
 
 The runner remembers the last checkpoint the camera passed. Restarting there (death penalty
 *arcade*, continues) puts the camera back at its `x` with the speed, pan and flags the stage had
-there, re-fires the events at exactly that `x` and clears every enemy and bullet.
+there (a key and a `speed` event at the same `x` in the order live play applied them),
+re-fires the events at exactly that `x` and clears every enemy and bullet.
 
 ## Tilemap
 

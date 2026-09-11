@@ -832,9 +832,11 @@ the browser dev app and as a Tizen 5.5 bundle.
     (format-0 stubs now report schema issues; nothing shipped used them).
   - **Camera semantics.** A key applies at the start of the tick the camera reaches its x; its
     speed ramp is linear (exact at the end), its pan eased (`inOutQuad`, `yTicks` 0 / absent = one
-    tick). A lock key stops the camera **exactly** at its x (movement is clamped to it) and stays
-    locked until `runner.unlock()`; scrolling then resumes at the key's speed. `speed` events take
-    effect from the next tick. The camera never passes `length`.
+    tick). A lock key stops the camera **exactly** at its x (movement is clamped to the first
+    pending lock key, even with other keys before it in the same tick) and stays locked until
+    `runner.unlock()`; scrolling then resumes at the key's speed. `speed` events take effect from
+    the next tick; events fire on the tick the camera reaches their x, keys apply one tick later,
+    so a key's speed overrides a speed event at the same x. The camera never passes `length`.
   - **Tilesets** are a new content kind `tileset` (`content/tilesets/<id>.tileset.json`, one per
     file: `id, sprite, tileSize, tiles[]`); tile id = index + 1. Each tile has a `name` and a
     `frame` (not in the plan — the art frame is data, not "tile n = frame n − 1"), `type`
@@ -860,8 +862,10 @@ the browser dev app and as a Tizen 5.5 bundle.
   - **Runner.** `createStageRunner(stage, hooks, camera?)`; hooks are `event(code, event, index)`
     (numeric `StageEventCode`, every event, after the runner applied `speed` / `flag` / `end`) and
     `clear()`. `restartAt(checkpointIndex)` (-1 = stage start) re-derives speed, pan and flags from
-    the keys and events before the checkpoint, sets the cursor by binary search (events at exactly
-    its x fire again), then calls `clear()`; `unlock()` releases a lock. It is a class whose
+    the keys and events before the checkpoint in live order (event before key on a tie), applies
+    the runner part of the events at exactly its x as live play did on arriving (they re-fire on
+    the next tick for the hooks only — `StageSlot.Replay`; keys at its x apply on that tick), sets
+    the cursor by binary search, then calls `clear()`; `unlock()` releases a lock. It is a class whose
     timeline is compiled into typed arrays at creation and whose state is one `Float64Array`
     (`runner.state`, hashed by `hashWorld`): per-instance closures ("wrong call target") and
     megamorphic loads of the content objects (their shapes vary with optional fields) kept `tick()`

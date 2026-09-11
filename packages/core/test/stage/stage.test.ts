@@ -205,6 +205,45 @@ describe('core/stage camera path', () => {
     expect([runner.locked, runner.camera.x]).toEqual([false, 12]);
   });
 
+  it('stops exactly at a lock key when a non-lock key lies within the same tick before it', () => {
+    const runner = createStageRunner(
+      stage({
+        camera: [
+          { x: 0, speed: 3 },
+          { x: 100, speed: 3 },
+          { x: 101, speed: 1, lock: true },
+        ],
+      }),
+      recorder(),
+    );
+    for (let i = 0; i < 60; i++) runner.tick();
+    expect([runner.camera.x, runner.locked, runner.camera.dx]).toEqual([101, true, 0]);
+    runner.unlock();
+    runner.tick();
+    expect([runner.locked, runner.camera.x]).toEqual([false, 102]);
+  });
+
+  it('stops at a lock key several keys ahead, and not at an earlier unlocked one', () => {
+    const runner = createStageRunner(
+      stage({
+        camera: [
+          { x: 0, speed: 10, lock: true },
+          { x: 4, speed: 10 },
+          { x: 6, speed: 10 },
+          { x: 9, speed: 2, lock: true },
+        ],
+      }),
+      recorder(),
+    );
+    runner.tick();
+    expect([runner.camera.x, runner.locked]).toEqual([0, true]);
+    runner.unlock();
+    runner.tick(); // 0 → 9: the keys at 4 and 6 do not stop it, the lock at 9 does
+    expect(runner.camera.x).toBe(9);
+    runner.tick();
+    expect([runner.camera.x, runner.locked, runner.speed]).toEqual([9, true, 2]);
+  });
+
   it('never scrolls past the stage length', () => {
     const runner = createStageRunner(
       stage({ length: 10, camera: [{ x: 0, speed: 3 }] }),
@@ -324,7 +363,8 @@ describe('core/stage checkpoints', () => {
     expect([runner.camera.x, runner.camera.y, runner.camera.dx]).toEqual([150, 16, 0]);
     expect(runner.eventCursor).toBe(2); // the events at exactly x 150 fire again
     expect(runner.speed).toBe(3); // key 100 (speed 4) then the speed event at 120 (3)
-    expect(runner.flags).toBe(2); // `mid` (bit 1 — names sort late, mid) was set before 150
+    // `mid` (bit 1 — names sort late, mid) was set before 150, `late` (bit 0) on arriving there.
+    expect(runner.flags).toBe(3);
     expect([runner.checkpoint, runner.locked, runner.ended, runner.ticks]).toEqual([
       1,
       false,
@@ -338,7 +378,7 @@ describe('core/stage checkpoints', () => {
       [StageEventCode.Flag, 3],
     ]);
     expect(runner.camera.x).toBe(153);
-    expect(runner.flags).toBe(3); // + `late` (bit 0)
+    expect(runner.flags).toBe(3); // re-fired for the hooks only: the restart already set `late`
   });
 
   it('restarts at the stage start exactly like a fresh runner', () => {
@@ -356,6 +396,71 @@ describe('core/stage checkpoints', () => {
       return [...s, r.camera.x, r.camera.y];
     };
     expect(state(restarted)).toEqual(state(fresh));
+  });
+
+  it('restarts with the speed live play had when a key and a speed event share an x', () => {
+    const tie = {
+      camera: [
+        { x: 0, speed: 2 },
+        { x: 100, speed: 3 },
+      ],
+      events: [{ x: 100, type: 'speed', speed: 1 }],
+      checkpoints: [{ x: 0 }, { x: 500 }],
+    };
+    const runner = createStageRunner(stage(tie), recorder());
+    while (runner.checkpoint < 1) runner.tick();
+    // Live: the event fires on the tick the camera reaches 100, the key applies one tick later.
+    const live = runner.speed;
+    expect(live).toBe(3);
+    runner.restartAt(1);
+    expect([runner.speed, runner.targetSpeed]).toEqual([live, live]);
+  });
+
+  it('continues from a checkpoint exactly as live play did past it (key + events at its x)', () => {
+    const atCheckpoint = {
+      length: 1000,
+      camera: [
+        { x: 0, speed: 2 },
+        { x: 40, speed: 1 },
+        { x: 100, speed: 5, ramp: 4, yTo: 12, yTicks: 3 },
+        { x: 163, speed: 1 },
+      ],
+      // Both checkpoints are where live play lands exactly (100 = 50 · 2, 163 after the ramp).
+      checkpoints: [{ x: 0 }, { x: 100 }, { x: 163 }],
+      events: [
+        { x: 40, type: 'speed', speed: 2 },
+        { x: 100, type: 'speed', speed: 7 },
+        { x: 100, type: 'flag', flag: 'here' },
+        { x: 130, type: 'music', cue: 'Boss' },
+        { x: 163, type: 'speed', speed: 3, ramp: 5 },
+      ],
+    };
+    for (const cp of [1, 2]) {
+      const hooks = recorder();
+      const runner = createStageRunner(stage(atCheckpoint), hooks);
+      while (runner.checkpoint < cp) runner.tick();
+      const trace = (): number[][] => {
+        hooks.fired.length = 0;
+        const rows: number[][] = [];
+        for (let i = 0; i < 40; i++) {
+          runner.tick();
+          rows.push([runner.camera.x, runner.camera.y, runner.speed, runner.flags]);
+        }
+        return rows;
+      };
+      const firedIndices = (): number[] => hooks.fired.map(([, , index]) => index);
+      const live = trace();
+      const liveFired = firedIndices();
+      runner.restartAt(cp);
+      hooks.fired.length = 0;
+      runner.tick();
+      // The events at exactly the checkpoint's x fire again, for the hooks.
+      const again = firedIndices();
+      expect(again.length).toBeGreaterThan(0);
+      runner.restartAt(cp);
+      expect(trace(), `checkpoint ${String(cp)}`).toEqual(live);
+      expect(firedIndices().slice(again.length)).toEqual(liveFired);
+    }
   });
 
   it('rejects checkpoint indices outside [-1, count)', () => {
