@@ -443,3 +443,126 @@ describe('shell/boot failures (boot error screen)', () => {
     expect(shell.scene).toBe('showcase');
   });
 });
+
+describe('shell/boot input profiles and binding contexts (M1-05)', () => {
+  it('switches the context before the ticks of the frame poll input', async () => {
+    const log: string[] = [];
+    input.setContext = (context) => {
+      log.push(`context:${context}`);
+    };
+    const shell = await boot({
+      platform: (): Platform => ({
+        ...platform,
+        input: {
+          poll: () => {
+            log.push('poll');
+            return platform.snapshot;
+          },
+        },
+      }),
+    }).promise;
+    expect(log).toEqual(['context:game']);
+    let context: InputContext = 'game';
+    Object.defineProperty(shell.game, 'inputContext', { get: () => context });
+    win.frame(0);
+    win.frame(STEP);
+    context = 'menu';
+    win.frame(3 * STEP); // two ticks in this frame, both after the switch
+    expect(log).toEqual(['context:game', 'poll', 'context:menu', 'poll', 'poll']);
+  });
+
+  it('forwards a context change even while the game is paused (no ticks run)', async () => {
+    const shell = await boot().promise;
+    let context: InputContext = 'game';
+    Object.defineProperty(shell.game, 'inputContext', { get: () => context });
+    shell.game.pause();
+    context = 'menu';
+    win.frame(0);
+    // Paused: no ticks, but the shell still reads the context once per displayed frame, so a
+    // pause menu gets its menu table before the first key press.
+    expect(input.contexts).toEqual(['game', 'menu']);
+    win.frame(STEP);
+    expect(input.contexts).toEqual(['game', 'menu']);
+  });
+
+  it('a broken input-profiles file stops the boot on the error screen (default owner)', async () => {
+    const broken = [
+      ...contentFiles,
+      {
+        path: 'input/zz.input-profiles.json',
+        data: {
+          formatVersion: 1,
+          kind: 'input-profiles',
+          profiles: [
+            {
+              id: 'tizen-remote-safe', // already defined by remote.input-profiles.json
+              label: 'DUP',
+              device: 'remote',
+              context: {
+                game: {
+                  byCode: {},
+                  byKeyCode: {
+                    '37': ['Left'],
+                    '38': ['Up'],
+                    '39': ['Right'],
+                    '40': ['Down'],
+                    '10009': ['Pause'],
+                  },
+                },
+                menu: {
+                  byCode: {},
+                  byKeyCode: {
+                    '13': ['Confirm'],
+                    '37': ['Left'],
+                    '38': ['Up'],
+                    '39': ['Right'],
+                    '40': ['Down'],
+                    '10009': ['Back'],
+                  },
+                },
+              },
+              releaseDebounceTicks: 2,
+              diagonals: 'combine',
+              socd: 'neutral',
+              register: ['Exit'],
+            },
+          ],
+        },
+      },
+    ];
+    const { promise, attributes, shown } = boot({ contentFiles: broken });
+    const error = await promise.catch((caught: unknown) => caught);
+    expect(error).toBeInstanceOf(ShellBootError);
+    expect((error as ShellBootError).issues).toEqual([
+      {
+        path: 'input/zz.input-profiles.json:profiles[0].register[0]',
+        message: '"Exit" is a system key and must never be registered',
+      },
+    ]);
+    expect(shown[shown.length - 1]).toMatch(/^error:CONTENT ERRORS: 1 PROBLEM\|input\/zz/);
+    expect(attributes.get(BOOT_STATE_ATTRIBUTE)).toBe('error');
+    expect(input.contexts).toEqual([]); // never reached the frame loop
+  });
+
+  it('an app-supplied input-profiles owner replaces the default one', async () => {
+    const seen: string[] = [];
+    const shell = await boot({
+      contentOwners: {
+        'input-profiles': (files) => {
+          for (const file of files) seen.push(file.path);
+          return [];
+        },
+      },
+      contentFiles: [
+        ...contentFiles,
+        {
+          path: 'input/zz.input-profiles.json',
+          data: { formatVersion: 1, kind: 'input-profiles' },
+        },
+      ],
+    }).promise;
+    // The default owner would have reported the missing `profiles`; the app's owner accepted it.
+    expect(seen).toEqual(['input/remote.input-profiles.json', 'input/zz.input-profiles.json']);
+    expect(shell.content.issues).toEqual([]);
+  });
+});

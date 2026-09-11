@@ -91,6 +91,21 @@ describe('shell/loader loadGameContent', () => {
     expect(result.db.ships.length).toBeGreaterThan(0);
   });
 
+  it('hands the default input-profiles owner every file at once (ids unique across files)', () => {
+    expect(Object.isFrozen(DEFAULT_CONTENT_OWNERS)).toBe(true);
+    const shipped = readContentFiles().filter((file) => file.path.startsWith('input/'));
+    const copy: ContentFile = { path: 'input/zz-copy.input-profiles.json', data: shipped[0]?.data };
+    const result = loadGameContent([...readContentFiles(), copy]);
+    const ids = ['tizen-remote-safe', 'tizen-remote-diagonal', 'keyboard-default'];
+    expect(result.issues.slice(0, 3)).toEqual(
+      ids.map((id, i) => ({
+        path: `input/zz-copy.input-profiles.json:profiles[${String(i)}].id`,
+        message: `duplicate input profile id "${id}" (first defined in input/remote.input-profiles.json)`,
+      })),
+    );
+    expect(result.issues).toHaveLength(5);
+  });
+
   it('validates input profiles with the default owner (plan §3.5)', () => {
     expect(Object.keys(DEFAULT_CONTENT_OWNERS)).toEqual(['input-profiles']);
     const result = loadGameContent([

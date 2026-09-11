@@ -202,7 +202,7 @@ function clampTicks(ticks: number): number {
  * window of 0 behaves like plain keydown/keyup tracking.
  *
  * @param ticks - Debounce window in polls (clamped to `0 … MAX_RELEASE_DEBOUNCE_TICKS`).
- * @param capacity - Number of slots (default 32).
+ * @param capacity - Number of slots (default 32; floored, at least 1 — also for `NaN`).
  * @returns The debouncer.
  *
  * @example
@@ -215,7 +215,9 @@ function clampTicks(ticks: number): number {
  * ```
  */
 export function createReleaseDebouncer(ticks: number, capacity = 32): ReleaseDebouncer {
-  const size = Math.max(1, Math.floor(capacity));
+  // `Math.max(1, NaN)` is NaN: compare instead, so a NaN capacity still gives one slot.
+  const whole = Math.floor(capacity);
+  const size = whole >= 1 ? whole : 1;
   const state = new Uint8Array(size);
   const left = new Int32Array(size);
   let window = clampTicks(ticks);

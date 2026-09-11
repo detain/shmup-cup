@@ -7,7 +7,8 @@
  * `?profile=` / `?debounce=` dev overrides, the saved choice) and a clean stop().
  */
 import type * as AudioWeb from '@shmup/audio-web';
-import { Action } from '@shmup/core';
+import { Action, type PlatformStorage } from '@shmup/core';
+import type * as InputWeb from '@shmup/input-web';
 import type * as RenderPixi from '@shmup/render-pixi';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildAtlas } from '../../../../scripts/assets/pipeline.mjs';
@@ -74,6 +75,23 @@ vi.mock('@shmup/render-pixi', async (importOriginal) => {
       fakes.renderer.options = options;
       return Promise.resolve(fakes.renderer);
     },
+  };
+});
+
+/**
+ * Lets a test hold back the saved profile choice (`loadInputProfileChoice`) until it releases
+ * the gate — the real storage answers within the same task. `null` = no gate.
+ */
+const choiceGate = vi.hoisted(() => ({ wait: null as Promise<void> | null }));
+
+vi.mock('@shmup/input-web', async (importOriginal) => {
+  const real = await importOriginal<typeof InputWeb>();
+  return {
+    ...real,
+    loadInputProfileChoice: (storage: PlatformStorage) =>
+      choiceGate.wait === null
+        ? real.loadInputProfileChoice(storage)
+        : choiceGate.wait.then(() => real.loadInputProfileChoice(storage)),
   };
 });
 
@@ -189,6 +207,7 @@ let win: FakeWindow;
 beforeEach(() => {
   vi.stubGlobal('Image', FakeImage);
   win = new FakeWindow();
+  choiceGate.wait = null;
   fakes.renderer.options = null;
   fakes.renderer.spriteNames.length = 0;
   fakes.renderer.ticks.length = 0;
@@ -425,6 +444,168 @@ describe('web/boot inputOverridesFromSearch', () => {
     });
     expect(inputOverridesFromSearch('?profile=tizen%2Dremote%2Dsafe&debounce')).toEqual({
       profile: 'tizen-remote-safe',
+      debounce: null,
+    });
+  });
+});
+
+describe('web/boot input profiles (edge cases)', () => {
+  /**
+   * Boots with some content files left out.
+   *
+   * @param keep - Which content files to keep.
+   */
+  async function bootWith(keep: (path: string) => boolean) {
+    const canvas = {} as HTMLCanvasElement;
+    return bootWebApp(
+      canvas,
+      { ...resources, contentFiles: resources.contentFiles.filter((file) => keep(file.path)) },
+      win as unknown as Window,
+    );
+  }
+
+  it('?profile= naming a gamepad profile is not a key profile: warn, use keyboard-default', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    win.location.search = '?profile=gamepad-standard';
+    const { app } = await boot();
+    expect(app.input.keyProfile?.id).toBe('keyboard-default');
+    expect(app.input.gamepadProfile?.id).toBe('gamepad-standard');
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn.mock.calls[0]?.[0]).toMatch(/"gamepad-standard".*using keyboard-default/);
+  });
+
+  it('a valid ?profile= logs nothing', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    win.location.search = '?profile=keyboard-default';
+    await boot();
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it('?profile=tizen-remote-safe lets a desktop keyboard act as the remote (keyCode fallback)', async () => {
+    win.location.search = '?profile=tizen-remote-safe';
+    const { app } = await boot();
+    expect(app.input.keyboard.tuning.releaseDebounceTicks).toBe(2);
+    win.frame(0);
+    win.key('keydown', 'Enter', 13); // desktop Enter → keyCode 13 = OK = PowerUp in the game
+    win.frame(STEP);
+    const p1 = app.game.state.input?.players[0];
+    expect(p1?.pressed).toBe(Action.PowerUp);
+    expect(p1?.device).toBe('remote');
+    win.key('keydown', 'KeyZ', 90); // not a remote key: ignored
+    win.frame(2 * STEP);
+    expect(app.game.state.input?.players[0]?.held).toBe(Action.PowerUp);
+  });
+
+  it('?debounce= also applies to the saved choice', async () => {
+    win.stored.set('shmup-cup:input.profile', 'keyboard-remote-emulation');
+    win.location.search = '?debounce=5';
+    const { app } = await boot();
+    expect(app.input.keyboard.tuning.releaseDebounceTicks).toBe(5); // keyboard-default + override
+    await flush();
+    expect(app.input.keyProfile?.id).toBe('keyboard-remote-emulation');
+    expect(app.input.keyProfile?.releaseDebounceTicks).toBe(5);
+    expect(app.input.keyboard.tuning.releaseDebounceTicks).toBe(5);
+  });
+
+  it('ignores a saved choice that is unknown or names a gamepad profile', async () => {
+    for (const saved of ['no-such-profile', 'gamepad-standard']) {
+      win = new FakeWindow();
+      win.stored.set('shmup-cup:input.profile', saved);
+      const { app } = await boot();
+      await flush();
+      expect(app.input.keyProfile?.id, saved).toBe('keyboard-default');
+      app.stop();
+    }
+  });
+
+  it('a saved choice that arrives after stop() is not applied', async () => {
+    let open = (): void => {};
+    choiceGate.wait = new Promise<void>((resolve) => {
+      open = resolve;
+    });
+    win.stored.set('shmup-cup:input.profile', 'keyboard-remote-emulation');
+    const { app } = await boot();
+    app.stop();
+    open();
+    await flush();
+    expect(app.input.keyProfile?.id).toBe('keyboard-default');
+  });
+
+  it('a saved choice that arrives late still replaces the default while running', async () => {
+    let open = (): void => {};
+    choiceGate.wait = new Promise<void>((resolve) => {
+      open = resolve;
+    });
+    win.stored.set('shmup-cup:input.profile', 'tizen-remote-safe');
+    const { app } = await boot();
+    expect(app.input.keyProfile?.id).toBe('keyboard-default');
+    open();
+    await flush();
+    expect(app.input.keyProfile?.id).toBe('tizen-remote-safe');
+  });
+
+  it('boots on the built-in bindings when the content has no input profiles', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    win.location.search = '?profile=keyboard-default';
+    const app = await bootWith((path) => !path.startsWith('input/'));
+    expect(app.profiles.profiles).toEqual([]);
+    expect(app.input.keyProfile).toBeNull();
+    expect(app.input.gamepadProfile).toBeNull();
+    expect(warn.mock.calls[0]?.[0]).toMatch(/using the built-in bindings/);
+    win.frame(0);
+    win.key('keydown', 'KeyZ', 90);
+    win.frame(STEP);
+    expect(app.game.state.input?.players[0]?.held).toBe(Action.Shot | Action.Confirm);
+  });
+
+  it('switches keyboard X from Sub to Back when the game asks for the menu context', async () => {
+    const { app } = await boot();
+    let context: 'game' | 'menu' = 'game';
+    Object.defineProperty(app.game, 'inputContext', { get: () => context });
+    win.frame(0);
+    win.key('keydown', 'KeyX', 88);
+    win.frame(STEP);
+    expect(app.game.state.input?.players[0]?.pressed).toBe(Action.Sub);
+    win.key('keyup', 'KeyX', 88);
+    context = 'menu';
+    win.frame(2 * STEP);
+    expect(app.input.context).toBe('menu');
+    win.key('keydown', 'KeyX', 88);
+    win.frame(3 * STEP);
+    expect(app.game.state.input?.players[0]?.pressed).toBe(Action.Back);
+  });
+});
+
+describe('web/boot inputOverridesFromSearch (edge cases)', () => {
+  it('keeps the last valid value of a repeated parameter', () => {
+    expect(inputOverridesFromSearch('?profile=a&profile=b&debounce=1&debounce=3')).toEqual({
+      profile: 'b',
+      debounce: 3,
+    });
+    // Invalid later values do not erase an earlier valid one.
+    expect(inputOverridesFromSearch('?profile=a&profile=&debounce=2&debounce=x')).toEqual({
+      profile: 'a',
+      debounce: 2,
+    });
+  });
+
+  it('accepts leading zeros and the 0 and 10 bounds, nothing signed or spaced', () => {
+    expect(inputOverridesFromSearch('debounce=007').debounce).toBe(7);
+    expect(inputOverridesFromSearch('debounce=0').debounce).toBe(0);
+    expect(inputOverridesFromSearch('debounce=10').debounce).toBe(10);
+    for (const bad of ['+2', '2e0', ' 2', '%202', '0x2', '1e1', '']) {
+      expect(inputOverridesFromSearch(`debounce=${bad}`).debounce, bad).toBeNull();
+    }
+  });
+
+  it('decodes values but not names, and tolerates empty pairs and a bare "?"', () => {
+    expect(inputOverridesFromSearch('?').profile).toBeNull();
+    expect(inputOverridesFromSearch('&&profile=x&&').profile).toBe('x');
+    expect(inputOverridesFromSearch('%70rofile=x').profile).toBeNull();
+    expect(inputOverridesFromSearch('profile=a%20b').profile).toBe('a b');
+    expect(inputOverridesFromSearch('profile=a=b').profile).toBe('a=b');
+    expect(inputOverridesFromSearch('Profile=x&DEBOUNCE=2')).toEqual({
+      profile: null,
       debounce: null,
     });
   });

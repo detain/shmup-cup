@@ -8,6 +8,7 @@ import {
   DEFAULT_KEYCODE_BINDINGS,
   DEFAULT_KEY_BINDINGS,
   TIZEN_KEY_CODES,
+  findKeyActions,
   resolveKeyActions,
   type KeyBindings,
 } from '../../src/keymap/index.js';
@@ -106,5 +107,37 @@ describe('input-web/keymap resolveKeyActions edge cases', () => {
     expect(resolveKeyActions('KeyJ', 74, custom)).toBe(Action.Shot);
     expect(resolveKeyActions('', 74, custom)).toBe(Action.Sub);
     expect(resolveKeyActions('ArrowUp', 38, custom)).toBe(0);
+  });
+});
+
+describe('input-web/keymap findKeyActions (profile tables)', () => {
+  const table: KeyBindings = {
+    byCode: { Enter: 0, KeyX: Action.Back, KeyQ: 0 },
+    byKeyCode: { 13: Action.Confirm, 88: Action.Sub, 0: Action.Pause },
+  };
+
+  it('tells unbound keys (-1) from keys bound to no action (0)', () => {
+    expect(findKeyActions('KeyQ', 81, table)).toBe(0);
+    expect(findKeyActions('KeyR', 82, table)).toBe(-1);
+    expect(findKeyActions('', 82, table)).toBe(-1);
+    expect(resolveKeyActions('KeyR', 82, table)).toBe(0);
+  });
+
+  it('an action-bearing code wins over the keyCode (one physical key never counts twice)', () => {
+    expect(findKeyActions('KeyX', 88, table)).toBe(Action.Back);
+  });
+
+  // Regression (M1-05 tests): a 0 code entry is a profile placeholder for the other context;
+  // it must not hide this table's keyCode binding of the same key.
+  it('a code bound to no action falls through to the keyCode table', () => {
+    expect(findKeyActions('Enter', 13, table)).toBe(Action.Confirm);
+    expect(resolveKeyActions('Enter', 13, table)).toBe(Action.Confirm);
+    expect(findKeyActions('Enter', 0, table)).toBe(Action.Pause);
+  });
+
+  it('never looks up an empty code, even in a table that lists one', () => {
+    const odd: KeyBindings = { byCode: { '': Action.Shot }, byKeyCode: { 5: Action.Sub } };
+    expect(findKeyActions('', 5, odd)).toBe(Action.Sub);
+    expect(findKeyActions('', 6, odd)).toBe(-1);
   });
 });

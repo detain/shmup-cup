@@ -115,7 +115,9 @@ export const DEFAULT_KEY_BINDINGS: KeyBindings = Object.freeze({
  * Unlike {@link resolveKeyActions} this tells an *unbound* key (`-1`) from a key that is
  * bound to no action in this table (`0`). Profile tables use `0` entries for keys that only
  * act in the other binding context, so such a key is still tracked and `preventDefault()`-ed
- * in every context (see `rebind`).
+ * in every context (see `rebind`). A `code` entry of `0` does not hide the `keyCode` table:
+ * when the key code is bound there, that mask is returned (a profile may bind `Enter` by code
+ * in the game and key code 13 — OK — in menus; the game's placeholder must not disable OK).
  *
  * @param code - `KeyboardEvent.code` (may be empty on TV remotes).
  * @param keyCode - `KeyboardEvent.keyCode`.
@@ -129,20 +131,20 @@ export const DEFAULT_KEY_BINDINGS: KeyBindings = Object.freeze({
  * ```
  */
 export function findKeyActions(code: string, keyCode: number, bindings: KeyBindings): number {
-  if (code !== '') {
-    const byCode = bindings.byCode[code];
-    if (byCode !== undefined) return byCode;
-  }
+  const byCode = code === '' ? undefined : bindings.byCode[code];
+  if (byCode !== undefined && byCode !== 0) return byCode;
   const byKeyCode = bindings.byKeyCode[keyCode];
-  return byKeyCode === undefined ? -1 : byKeyCode;
+  if (byKeyCode !== undefined) return byKeyCode;
+  return byCode === undefined ? -1 : 0;
 }
 
 /**
  * Resolves a key event to actions: `code` first, `keyCode` as fallback.
  *
  * @remarks
- * The `keyCode` table is consulted only when `code` is empty or not bound, so a
- * keyboard arrow (bound by `code`) is never counted a second time via its key code.
+ * The `keyCode` table is consulted only when `code` is empty, not bound or bound to no
+ * action, so a keyboard arrow (bound by `code`) is never counted a second time via its key
+ * code.
  *
  * @param code - `KeyboardEvent.code` (may be empty on TV remotes).
  * @param keyCode - `KeyboardEvent.keyCode`.
