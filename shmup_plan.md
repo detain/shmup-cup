@@ -346,6 +346,13 @@ the browser dev app and as a Tizen 5.5 bundle.
   - `events`: `SimEventKind` became a numeric const object (`SimEventKind.Sfx === 0`) plus
     `SIM_EVENT_KIND_NAMES`; the placeholder's string union is gone. `EventQueue` gained `capacity`
     and `dropped`; `clear()` resets the drop counter too.
+  - `events` (**fixed by the TEST agent**): `drain()` now releases each ring slot immediately
+    before visiting it instead of releasing the whole pending block up front. The old version
+    let a visitor that pushed enough events to overflow the ring overwrite the records the
+    drain had not reached yet, so those pushes were visited as if they had been pending (and
+    again on the next drain); a visitor calling `clear()` mid-drain read released slots the
+    same way. Overflowing during a drain now drops the unvisited originals (counted in
+    `dropped`) and ends the drain, and `clear()` ends it too.
   - `pools`: `SoaPool<S>` is generic over its schema so `pool.fields.x` is typed; it also exposes
     `pendingFreeCount` and `clear()`. Field arrays are created in sorted field-name order so a
     future state hash does not depend on how the schema literal was written.

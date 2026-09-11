@@ -221,7 +221,10 @@ export interface EventQueue {
    *
    * @remarks
    * Events pushed by `visit` itself stay queued for the next drain, so a visitor that
-   * emits events cannot loop forever.
+   * emits events cannot loop forever. If such a visitor pushes more than the ring can
+   * hold, the overflow drops the oldest events — the ones this drain has not reached —
+   * and the drain stops there (they are counted in {@link EventQueue.dropped}). A
+   * visitor that calls {@link EventQueue.clear} also ends the drain.
    */
   drain(visit: (event: Readonly<SimEvent>) => void): void;
   /** Drops all pending events and resets {@link EventQueue.dropped}. */
@@ -283,19 +286,25 @@ export function createEventQueue(capacity: number = DEFAULT_EVENT_QUEUE_CAPACITY
       params[slot] = param;
     },
     drain(visit: (event: Readonly<SimEvent>) => void): void {
-      const pending = length;
-      let slot = head;
-      // Release the slots up front so a visitor may push without corrupting the ring.
-      head = (head + pending) % capacity;
-      length -= pending;
-      for (let i = 0; i < pending; i += 1) {
+      // Each slot is released just before its visit, so anything the visitor pushes
+      // lands behind the events this drain has not reached yet.
+      let remaining = length;
+      while (remaining > 0 && length > 0) {
+        const slot = head;
         record.kind = kinds[slot] as SimEventKind;
         record.id = ids[slot];
         record.x = xs[slot];
         record.y = ys[slot];
         record.param = params[slot];
-        slot = slot + 1 === capacity ? 0 : slot + 1;
+        head = head + 1 === capacity ? 0 : head + 1;
+        length -= 1;
+        remaining -= 1;
+        const droppedBefore = dropped;
         visit(record);
+        // A visitor that pushes more than the ring can hold overwrites the oldest
+        // pending events — which are exactly the ones this drain still owed a visit.
+        const lost = dropped - droppedBefore;
+        if (lost > 0) remaining = lost >= remaining ? 0 : remaining - lost;
       }
     },
     clear(): void {
