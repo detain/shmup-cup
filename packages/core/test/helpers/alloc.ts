@@ -22,10 +22,18 @@
  * that allocates nothing reports (close to) zero; one object per iteration shows up as tens of
  * bytes per iteration.
  *
- * With `attempts > 1` steps 2–4 repeat and the window with the fewest bytes is returned: V8 can
- * still drop a hot function back to a lower tier during one window (the stage runner guards
- * failed that way now and then on a loaded machine — hundreds of KB in one window, nothing in the
- * next), whereas code that really allocates per iteration does so in every window.
+ * Steps 2–4 run up to `attempts` times (default 3) and the window with the fewest bytes is
+ * returned: V8 can still drop a hot function back to a lower tier, or install freshly optimised
+ * code, during one window — a single-window guard then fails now and then under the load of the
+ * full suite (the stage runner guards and the terrain-scan guard did: 70–170 KB in one window, a
+ * few KB in the next), whereas code that really allocates per iteration does so in every window.
+ * A window measuring at most `settled` bytes (default 32 KiB, half the smallest absolute budget a
+ * guard uses) ends the search: further windows could only confirm it, and the heavy World guards
+ * would pay seconds for them. A guard with a budget under 64 KiB passes a smaller `settled`; pass
+ * `attempts = 1` only to observe one raw window.
+ *
+ * Give short, cheap loops a long warm-up (`warmup` ≫ 1000, e.g. 20,000): the default warm-up of
+ * 1000 calls can end before V8 has optimised `fn`, and the measured loop then pays for the tier-up.
  *
  * @module
  */
@@ -68,8 +76,9 @@ function requireGc(): () => void {
  *   what it allocates *for the test's sake* — the measurement counts allocations, retained or not.
  * @param iterations - Measured calls.
  * @param warmup - Unmeasured calls first (default: `min(iterations, 1000)`).
- * @param attempts - Measured windows of `iterations` calls each (default 1); the steadiest one —
- *   the fewest bytes — is returned.
+ * @param attempts - Most measured windows of `iterations` calls each (default 3); the steadiest
+ *   one — the fewest bytes — is returned.
+ * @param settled - A window measuring at most this many bytes ends the search (default 32 KiB).
  * @returns The measurement.
  * @throws {Error} Without `--expose-gc`.
  *
@@ -83,7 +92,8 @@ export function measureHeapGrowth(
   fn: (iteration: number) => void,
   iterations: number,
   warmup: number = Math.min(iterations, 1000),
-  attempts = 1,
+  attempts = 3,
+  settled = 32 * 1024,
 ): HeapGrowth {
   const gc = requireGc();
   // Clear what earlier code left behind first, so the warm-up re-optimises (see the module docs).
@@ -115,7 +125,7 @@ export function measureHeapGrowth(
     if (best === null || bytes < best.bytes) {
       best = { bytes, growth, collections: stats.length, bytesPerIteration: bytes / iterations };
     }
-    if (bytes === 0) break;
+    if (bytes <= settled) break;
   }
   return best;
 }

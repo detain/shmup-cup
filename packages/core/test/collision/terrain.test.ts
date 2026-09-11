@@ -228,13 +228,19 @@ describe('core/collision terrain — scans', () => {
   });
 
   it('never allocates on whole-pixel arguments', () => {
-    const growth = measureHeapGrowth((i) => {
-      const x = i % 16;
-      terrainRectHit(map, x - 5, (i % 80) - 3, x + 4, (i % 80) + 2);
-      findFloor(map, x, 20, 60);
-      findCeiling(map, x, 60, 60);
-      terrainAt(map, x, i % 80);
-    }, 20_000);
+    const growth = measureHeapGrowth(
+      (i) => {
+        const x = i % 16;
+        terrainRectHit(map, x - 5, (i % 80) - 3, x + 4, (i % 80) + 2);
+        findFloor(map, x, 20, 60);
+        findCeiling(map, x, 60, 60);
+        terrainAt(map, x, i % 80);
+      },
+      20_000,
+      // A long warm-up: after the default 1000 calls the measured window still paid for V8's
+      // tier-up (~47 KB of a 64 KB budget, over it now and then under full-suite load).
+      20_000,
+    );
     expect(growth.bytes).toBeLessThan(64 * 1024);
   });
 });

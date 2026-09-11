@@ -1171,11 +1171,13 @@ the browser dev app and as a Tizen 5.5 bundle.
   - **World / hash / apps.** Batches: ground, air, player shots, Options, ships, enemy bullets.
     `hashWorld` covers loadouts, option groups, autofire timers and the cooldown tables of live
     piercing shots. `apps/web` reads `?loadout=full` (`loadoutFromSearch`).
-  - **Tests infrastructure.** `measureHeapGrowth` gained `attempts` (the steadiest of N measured
-    windows): the stage-runner allocation guards already failed now and then on `master` (one
-    window in a lower V8 tier); they use 3. The measured loop must stay in the same function as
-    the warm-up loop (V8 optimises it on stack with `fn` inlined — moved into a helper, every
-    guard allocated). `enemies-runtime` integration tests that assume "nobody shoots" now turn
+  - **Tests infrastructure.** `measureHeapGrowth` gained `attempts` (the steadiest of up to N
+    measured windows, default 3, the first ≤ `settled` = 32 KiB ends the search — every guard):
+    the stage-runner and terrain-scan allocation guards already failed now and then on `master`
+    (one window in a lower V8 tier); the terrain guard also got a 20,000-call warm-up (after the
+    default 1000 it measured ~47 KB of its 64 KB). The measured loop must stay in the same
+    function as the warm-up loop (V8 optimises it on stack with `fn` inlined — moved into a
+    helper, every guard allocated). `enemies-runtime` integration tests that assume "nobody shoots" now turn
     autofire off; a new one checks the autofiring KESTREL kills test-range enemies. New
     `test/e2e/weapons.spec.ts`.
 

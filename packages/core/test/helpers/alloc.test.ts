@@ -43,6 +43,32 @@ describe('test helper measureHeapGrowth', () => {
     expect(calls).toBeGreaterThanOrEqual(1010);
   });
 
+  it('measures up to three windows by default and stops at the first settled one', () => {
+    const keep: object[] = [];
+    let calls = 0;
+    const steady = (): void => {
+      calls++;
+      keep.length = 0;
+      keep.push({ a: 1 });
+    };
+    // One object per call over 10,000 calls is well over the default 32 KiB: every window runs.
+    const growth = measureHeapGrowth(steady, 10_000, 10);
+    expect(growth.bytes).toBeGreaterThan(32 * 1024);
+    expect(calls).toBe(10 + 3 * 10_000);
+    calls = 0;
+    measureHeapGrowth(steady, 10_000, 10, 1);
+    expect(calls).toBe(10 + 10_000);
+    // A loop that does not allocate settles in its first window …
+    let quiet = 0;
+    const count = (): void => void quiet++;
+    expect(measureHeapGrowth(count, 10_000, 20_000).bytes).toBeLessThanOrEqual(32 * 1024);
+    expect(quiet).toBe(20_000 + 10_000);
+    // … unless nothing counts as settled.
+    quiet = 0;
+    measureHeapGrowth(count, 10_000, 20_000, 3, -1);
+    expect(quiet).toBe(20_000 + 3 * 10_000);
+  });
+
   it('counts garbage that a collection already reclaimed', () => {
     const growth = measureHeapGrowth(() => {
       // ~1 MB per call: several scavenges must run during the loop.

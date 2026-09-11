@@ -363,7 +363,13 @@ expect(growth.bytes).toBeLessThan(256 * 1024); // plan: < 256 KB over 10,000 tic
 It needs `node --expose-gc`: `defineShmupProject(name, { execArgv: ['--expose-gc'] })` passes
 it to the Vitest workers of `@shmup/core` and `@shmup/shell` (the shell's flight tests import
 the helper by relative path). It collects garbage before the warm-up too, so a collection that
-clears earlier tests' hidden classes cannot drop the measured loop into V8's lower tiers.
+clears earlier tests' hidden classes cannot drop the measured loop into V8's lower tiers. It
+measures up to `attempts` windows (default 3) and returns the steadiest, stopping at the first
+that measures at most `settled` bytes (default 32 KiB, half the smallest budget): under the load
+of the full suite V8 can still spend one window in a lower tier or installing optimised code
+(tens to hundreds of KB), which real per-iteration allocation does in every window. Give short,
+cheap loops a long warm-up (`warmup` of e.g. 20,000 instead of the default 1000), or the
+measured window pays for the tier-up.
 
 The guard found three real per-tick / per-frame allocations in M1-06, all of the same kind —
 **V8 boxes a non-integer number into a 16-byte heap object** in some positions:

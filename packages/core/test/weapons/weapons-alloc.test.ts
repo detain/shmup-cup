@@ -138,7 +138,6 @@ describe('core/weapons allocation', () => {
       },
       10_000,
       20_000,
-      3,
     );
     const f = w.weapons.pool.fields;
     let lasers = 0;
