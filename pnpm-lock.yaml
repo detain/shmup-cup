@@ -148,6 +148,9 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 24.13.4
+      '@types/semver':
+        specifier: ^7.8.0
+        version: 7.8.0
       eslint:
         specifier: 'catalog:'
         version: 10.10.0
@@ -163,6 +166,9 @@ importers:
       prettier:
         specifier: ^3.9.6
         version: 3.9.6
+      semver:
+        specifier: ^7.8.5
+        version: 7.8.5
       turbo:
         specifier: ^2.10.12
         version: 2.10.12
@@ -592,6 +598,9 @@ packages:
 
   '@types/node@26.5.1':
     resolution: {integrity: sha512-CzNm2FezW4VR/LjG6yUdiEgLE/rAQ9Slj5gCu/C2VrdcW7I0ahNZ8DRbHT7zOZ6r3ONgd/bsQIeSaoDGrd1C6g==}
+
+  '@types/semver@7.8.0':
+    resolution: {integrity: sha512-1mAINjtQCXXeLkJ9ehXkwOcBpqtLxiVtKhpUf83DdRNdQKV0iXZpaHYqRr7nj+wvxuJzoAmAwXI+sCNMv1CzLQ==}
 
   '@typescript-eslint/eslint-plugin@8.70.0':
     resolution: {integrity: sha512-/v8HZt6RlyIZxB3ntehELOcUcfxKPVGWXnQdJuHRmzrqgF8nQypcC/oxGW+Ot4VGKDq81XugPKxx0n5PBtf9PA==}
@@ -1548,6 +1557,8 @@ snapshots:
   '@types/node@26.5.1':
     dependencies:
       undici-types: 8.9.0
+
+  '@types/semver@7.8.0': {}
 
   '@typescript-eslint/eslint-plugin@8.70.0(@typescript-eslint/parser@8.70.0(eslint@10.10.0)(typescript@6.0.3))(eslint@10.10.0)(typescript@6.0.3)':
     dependencies:

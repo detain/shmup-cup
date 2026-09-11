@@ -2,5 +2,9 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "display": "@shmup/tizen — tests and tool configs (Node side)",
   "extends": "../../../tsconfig.tooling.json",
+  "compilerOptions": {
+    // Tests import the Node build/CLI scripts in ../scripts/*.mjs; their JSDoc provides the types.
+    "allowJs": true
+  },
   "include": ["./**/*.ts", "../vite.config.ts", "../vitest.config.ts"]
 }

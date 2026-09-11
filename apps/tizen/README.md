@@ -21,7 +21,21 @@ pnpm --filter @shmup/tizen dev     # desktop-browser preview (no window.tizen; B
 
 `scripts/check-bundle.mjs` fails the build unless: exactly one script exists, it is loaded
 as a classic deferred script, **it parses with acorn as an ES2018 script**, it starts with
-the polyfill, and `config.xml` / `icon.png` are present.
+the polyfill, and `config.xml` / `icon.png` are present. The checks are also exported as
+`checkTizenBundle(distDir)` for the tests.
+
+## Tests
+
+`pnpm --filter @shmup/tizen test` (headless Node, no TV needed):
+
+- `test/build/tizen-build.test.ts` runs the real Vite build into a temp folder, applies the
+  bundle checks, parses `app.js` with acorn (ES2018, script) and executes it in a V8 realm
+  with `globalThis` removed (like Chrome 69) up to the app entry;
+- `test/build/vite-config.test.ts` covers the classic-script rewrite, the build target and
+  the polyfill; `test/scripts/` covers the bundle checker and the Tizen CLI wrappers (with
+  `spawnSync` mocked — nothing is ever executed);
+- `test/boot/boot-wiring.test.ts` boots the app against a fake window, `window.tizen`,
+  renderer and AudioContext.
 
 ## Package, install, run (desktop with Tizen CLI + certificate — never in CI)
 
@@ -56,7 +70,7 @@ and `internet`, application id `ShmpCupGam.ShmupCup` (package id = 10 alphanumer
 |---|---|---|
 | `main.ts` | — | Entry (no `import.meta`, no top-level await) |
 | `boot` | partial | Composition root: remote-first input, audio, renderer, Tizen platform, loop; Back exits from the root screen until the title/exit-confirm scene exists |
-| `platform` | partial | `registerKeyBatch` (Play/Pause, Ch±, colours — never Exit/volume), Back 10009 watcher, `visibilitychange` lifecycle, `exit()`, localStorage |
+| `platform` | partial | `registerKeyBatch` (Play/Pause, Ch±, colours — never Exit/volume; falls back to per-key `registerKey` when the batch fails, so one key a model lacks does not block the rest), Back 10009 watcher, `visibilitychange` lifecycle, `exit()`, localStorage |
 | `frame-loop` | implemented | rAF driver (one tick per frame on the 60 Hz M7) |
 | `device-info` | placeholder | UA / resolution / WebGL / product-info diagnostics |
 | `live-reload` | placeholder | Dev-only reload-on-change on the TV |

@@ -92,6 +92,11 @@ export function getTizenApi(win: Window): TizenApi | null {
  * Uses `registerKeyBatch` when available, else one `registerKey` per key; a key the
  * device does not support is skipped instead of aborting startup.
  *
+ * `registerKeyBatch` reports an unsupported key (`InvalidValuesError`) through its
+ * *asynchronous* error callback rather than by throwing, so that callback also falls
+ * back to registering the keys one by one — otherwise a single key missing on a model
+ * (e.g. colour keys on a Smart Monitor remote) would leave every other key unregistered.
+ *
  * @param tizen - The Tizen API.
  * @param keys - Key names to register.
  * @returns Names that were registered (best effort for the batch call).
@@ -101,12 +106,32 @@ export function registerRemoteKeys(tizen: TizenApi, keys: readonly string[]): st
   if (input === undefined) return [];
   if (typeof input.registerKeyBatch === 'function') {
     try {
-      input.registerKeyBatch(keys.slice());
+      input.registerKeyBatch(
+        keys.slice(),
+        () => {},
+        () => {
+          registerEachKey(input, keys);
+        },
+      );
       return keys.slice();
     } catch (_error) {
       // Fall through: register individually so one unsupported key does not block the rest.
     }
   }
+  return registerEachKey(input, keys);
+}
+
+/**
+ * Registers keys one `registerKey` call at a time, skipping keys the device rejects.
+ *
+ * @param input - `tizen.tvinputdevice`.
+ * @param keys - Key names to register.
+ * @returns Names that were registered.
+ */
+function registerEachKey(
+  input: NonNullable<TizenApi['tvinputdevice']>,
+  keys: readonly string[],
+): string[] {
   const registered: string[] = [];
   for (const key of keys) {
     try {
