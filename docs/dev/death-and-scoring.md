@@ -213,6 +213,15 @@ outcomes was credited, so every kill and bonus is credited **exactly once** — 
 makes during a hit-stop, which is credited when the World thaws. Pickups are credited in phase 7
 only (they are rebuilt every phase 6).
 
+**Score popups** (M1-14). When the system credits a kill worth at least 1 point it also pushes a
+`SimEventKind.Score` event (`id` = the player, `x` / `y` = the kill's position floored — whole
+numbers, since a fractional argument to the queue's non-inlined `push` would be boxed — `param` =
+the points) into `ScoringHost.events` (the World's queue; absent in bare tests). `core/bosses`
+pushes one for every destroyed part with a score. Bonuses keep their `FormationBonus` /
+`BossDefeated` events and capsules push none. The shell turns them into rising numbers
+([fx-and-game-feel.md](fx-and-game-feel.md#score-popups-createscorepopups)); the event is
+presentation-only and never hashed.
+
 For the formation bonus the enemy system gained per-formation lists: `EnemyOutcomes.bonusCount`,
 `bonusScore[]` (`Float64Array`) and `bonusBy[]` (`Int8Array`); `EnemySystemImpl.kill` sets a
 private `creditBy` around the formation accounting, so the formation completed by that kill pays
@@ -234,7 +243,9 @@ that role over.
 
 `world.fx` is an `FxState` (a class: unboxed number fields) with the shake and flash timers; the
 hit-stop counter itself stays `world.hitStop`. Three requests set the timers and push the events
-the presentation of M1-14 will draw — the sim state makes them replayable and inspectable:
+the presentation draws since M1-14 (render-pixi `effects`,
+[fx-and-game-feel.md](fx-and-game-feel.md#screen-effects-createscreeneffects)) — the sim state
+makes them replayable and inspectable:
 
 | Request | Effect | Event |
 |---|---|---|
@@ -248,7 +259,8 @@ the presentation of M1-14 will draw — the sim state makes them replayable and 
 `MEGA_CRASH_FLASH_TICKS` reads `FLASH_KIND_TICKS`. M1-13 appended `Warning` (1, 8 ticks — each
 siren pulse of the boss WARNING) and `BossBlast` (2, 24 ticks — a boss's final blast, which also
 requests a large shake and a 5-tick hit-stop — [bosses-and-warning.md](bosses-and-warning.md#the-death-sequence)). The global shake switch and the flash limiter
-(≤ 3 a second) are presentation settings (M1-14), never sim state.
+(≤ 3 a second) are presentation settings (render-pixi `EffectSettings`, M1-14), never sim state;
+the drawn shake mirrors `shakeAmount` tick for tick.
 
 **Exact hit-stop.** `stepWorld` decides once, before phase 1, whether the tick is frozen
 (`hitStop > 0`) and records it in `fx.frozen`; `tickFx` (phase 9) counts the hit-stop down **only
@@ -266,11 +278,14 @@ frozen ones included (plan §3.2), but not on the tick of their request — a re
 |---|---|
 | Death | `Sfx PlayerDeath` (8), `Particles ExplosionLarge` (2) + `Particles Debris` (5), param 1, at the ship; `Rumble` (`id` = player, param 1); `MusicDuck` (`id` = player, param 120); `HitStop` (param 8); `Shake` (`id` 20, param 2); then `Particles BulletCancel` sparkles from the cancel |
 | Mega Crash | `Flash` (`id` 0, param 12) through `requestFlash` — unchanged on the wire |
+| A credited kill (M1-14) | `Score` (12: `id` = the player, `x` / `y` = the kill, floored; `param` = the points) — pushed by the scoring system when it credits the kill, for the score popups; none for anonymous kills, formation bonuses (their `FormationBonus` event pops up) or capsules. `core/bosses` pushes one per destroyed part with a score |
 
 `SimEventKind.MusicDuck` (9) and `FX_CUES.Debris` (5) are new (append-only codes;
-`SIM_EVENT_KIND_NAMES` gained `'musicDuck'`). Nothing consumes them yet: particles, shake and
-flash arrive with M1-14, sounds and the duck with M1-15, rumble with the gamepad work of M1-15 /
-M2-16.
+`SIM_EVENT_KIND_NAMES` gained `'musicDuck'`). Since M1-14 the renderer draws the death's
+`explosion.large` + `debris` particles, the medium shake, the cancel sparkles and the score
+popups ([fx-and-game-feel.md](fx-and-game-feel.md)); `SimEventKind.Score` (12, `'score'`) is new
+there and not hashed. Sounds and the duck arrive with M1-15, rumble with the gamepad work of
+M1-15 / M2-16.
 
 ## Determinism and hashing
 
@@ -348,7 +363,7 @@ The next `game.step()` runs that tick, and its phase 7 turns the recorded hit in
 | `packages/core/test/player/player-life*.test.ts` | `killPlayer`, `respawnPlayer`, `playerOut` and the `dying` / `respawning` branches of `updatePlayer`: timings, lives floor, the invulnerability on control return (any fly-in length), no invulnerability on `entering`, fly-ins on scrolling / panning cameras, `playerOut` boundaries |
 | `packages/core/test/powerups/powerups-death.test.ts` | `loseOneLevel` order and return values, `applyDeathPenalty` per preset |
 | `packages/core/test/fx/fx*.test.ts` | Hit-stop (raise-only, caps, `NaN`, exact frozen ticks mid-tick and between ticks, extension while frozen), shake (decay, weaker ignored, equal after decay, floor / cap, one tick), flash (restart, unknown kind), counting while frozen, per-tick hash determinism |
-| `packages/core/test/scoring/scoring*.test.ts` | `addScore` (per player, dirty flags, clamp, `NaN` / `Infinity` / bad slots), `setHiScore` (dirty only on a real raise — the bug the M1-12 test pass fixed), the system's crediting (killer, anonymous, bonuses, multi-pickup ticks, phase 3 vs 7, no re-credit), the World's board and hashing |
+| `packages/core/test/scoring/scoring*.test.ts` | `addScore` (per player, dirty flags, clamp, `NaN` / `Infinity` / bad slots), `setHiScore` (dirty only on a real raise — the bug the M1-12 test pass fixed), the system's crediting (killer, anonymous, bonuses, multi-pickup ticks, phase 3 vs 7, no re-credit), the World's board and hashing; `scoring-events.test.ts` (M1-14): the `Score` events — once per credited kill, between-tick kills too, whole points and pixels, none for bonuses / pickups / anonymous kills or without a queue, not hashed |
 | `packages/core/test/debug/`, `events/`, `enemies/`, existing World suites | The new hash block (every field matters, the hi-score and dirty flags do not); the `MusicDuck` / `Debris` codes; the bonus lists; suites that parked ships in rock or ran stages unattended now use god mode, top up lives or run the bullet phases alone |
 | `packages/shell/test/flight/flight.test.ts` | Score, `HI`, stock and `GAME OVER` in the HUD; rebuilt only on a change |
 | `test/integration/death-runtime.test.ts` | The shipped `test-range` through `Game.step()`: unattended sessions per preset with per-tick invariants (lives, hit-stop, frozen ticks, respawn position, 150-tick invulnerability, score = credited outcomes, hi-score), the exact game-over tick, lockstep hashes; full-loadout terrain crashes showing each preset's outcome (arcade restart at checkpoint x 1500) |
@@ -377,8 +392,9 @@ The next `game.step()` runs that tick, and its phase 7 turns the recorded hit in
 - **M1-13** (done) — bosses: part and tally scores through `addScore`, the final blast's
   hit-stop, large shake and flash kinds, the boss death's bullet cancel, the `bossWarning` status
   that game over may end ([bosses-and-warning.md](bosses-and-warning.md)).
-- **M1-14** — particles (explosion, debris, cancel sparkles), the screen shake and flash drawn from
-  the events, the global shake switch and the flash limiter.
+- **M1-14** (done) — particles (explosion, debris, cancel sparkles), the screen shake and flash
+  drawn from the events, the global shake switch and the flash limiter, score popups from the new
+  `Score` event ([fx-and-game-feel.md](fx-and-game-feel.md)).
 - **M1-15** — the death sound and the music duck.
 - **M1-16** — the real HUD and the scene flow after game over.
 - **M1-17** — the saved hi-score (`setHiScore`) and the Options menu for `deathPenalty` /

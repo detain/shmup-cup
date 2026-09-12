@@ -287,8 +287,15 @@ const resetPass = (
  *   world.
  * - Without `setSpriteNames()` every sprite id draws `ui/missing`; call it once the content
  *   (or a dev scene's name table) is known.
+ * - Game feel (M1-14): with an atlas, a particle pool of `particleCapacity` sprites per blend
+ *   mode (seeded with `fxSeed`) and, with a font too, the 16 score popups are created on the
+ *   `FX` layer; the screen effects always exist. Without `setFxContent()` no particle is
+ *   drawn. `render(frame)` steps them by the ticks since the previous frame (`frame.tick` minus
+ *   the last one: nothing on the first frame or while paused, at most 60 per frame; a tick that
+ *   goes back clears them all), then syncs particles and popups with the world's camera (0, 0
+ *   without a world).
  *
- * @param options - Canvas, display size, internal resolution, atlas and scene options.
+ * @param options - Canvas, display size, internal resolution, atlas, scene and effect options.
  * @returns A promise of a ready {@link PixiRenderer}.
  * @throws Rejects when Pixi cannot create a WebGL context at all (no WebGL on the
  *   device, context creation blocked).
@@ -302,6 +309,8 @@ const resetPass = (
  *   atlas,
  * });
  * renderer.setSpriteNames(game.content.sprites.names);
+ * renderer.setFxContent(loadFxContent(fxFiles).content); // particle presets (M1-14)
+ * renderer.effects.shake(ShakeMagnitude.Medium, 20); // normally from a drained Shake event
  * renderer.render(game.renderFrame());
  * window.addEventListener('resize', () => renderer.resize(innerWidth, innerHeight));
  * ```

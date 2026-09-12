@@ -357,9 +357,15 @@ function createCalibrationFrame(first: RenderFrame): CalibrationFrame {
  * names plus its own starfield / HUD sprites (`flight` module), the showcase its own
  * `SHOWCASE_SPRITES` table (`showcase` module); both pre-bind their world view (so the first
  * frame creates no Pixi objects). The calibration scene uses `content.db.sprites.names` and a
- * frame without a world (only the test pattern, HUD and UI lists). Audio unlock listeners
- * are registered in the capture phase and removed after the first gesture; `stop()` is
- * idempotent.
+ * frame without a world (only the test pattern, HUD and UI lists); the fx gallery its own
+ * starfield table (`FX_GALLERY_SPRITES`) and pre-bound view. Audio unlock listeners are
+ * registered in the capture phase and removed after the first gesture; `stop()` is idempotent.
+ *
+ * Game feel (M1-14): the `fx` files are validated by the shell's own owner (unless
+ * `contentOwners` replaces it — the particles then get no presets) and handed to the renderer
+ * with `setFxContent` before the scene is created; the renderer's particles are seeded with the
+ * game's seed xor a fixed salt; only free flight connects the World's events to the renderer
+ * (`connectFxEvents`) — the showcase, calibration and gallery scenes do not draw the World.
  *
  * @param options - Canvas, window, content, assets, adapters and the platform factory.
  * @returns A promise of the running {@link Shell}.

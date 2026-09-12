@@ -427,7 +427,9 @@ autofire) and hold no `Shot` / `Sub`.
 - **M1-13** (done) — boss parts share the grid, the hit list and the piercing cooldowns
   (`partCooldowns`); their hits go through `BossSystem.damagePart`, gated parts clink
   ([bosses-and-warning.md](bosses-and-warning.md)).
-- **M1-14 / M1-15** — particle presets and sounds for the explosion, `PlayerShot`,
-  `PlayerMissile` and `Clink` events.
+- **M1-14** (done) — `sfx` triggers draw a muzzle flash 9 px ahead of every `PlayerShot`,
+  sparks at an `EnemyHit` and sparks bouncing back off armour at a `Clink`; the kills pop their
+  score ([fx-and-game-feel.md](fx-and-game-feel.md)).
+- **M1-15** — the sounds of the explosion, `PlayerShot`, `PlayerMissile` and `Clink` events.
 - **M2-03** — loadouts B–D, Weapon Edit, weapon select; **M2-04** — Snake / Formation / Rotate
   Options and the Option Hunter; **M2-05** — Direct-mode weapon families.

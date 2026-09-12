@@ -20,8 +20,13 @@ one it is **GAME OVER** (see [The scrolling test stage](#the-scrolling-test-stag
 [Lives, losing your ship and the score](#lives-losing-your-ship-and-the-score)). Since this build
 a second, short stage — the *Boss Range* — ends with the first **boss**, announced by a
 **WARNING** sign ([The boss range and the WARNING](#the-boss-range-and-the-warning-browser-only)).
+And since this build hits *feel* like hits: enemies burst into **explosions**, shots throw
+**sparks**, the picture **shakes** when your ship is lost, the screen **flashes** for a Mega
+Crash or a boss's final blast, and every kill shows its **points** rising from the spot
+([Explosions, sparks, shake and flashes](#explosions-sparks-shake-and-flashes)).
 The earlier start-up pictures are still there: the animated **sprite showcase** and the
-**calibration screen** (see [below](#other-screens-browser-only)).
+**calibration screen**, plus a new **effects gallery** that shows every explosion and screen
+effect in turn (see [below](#other-screens-browser-only)).
 
 This page explains how to open the preview on each device, what you should see, how the ship
 should behave, and what to report if something is wrong. The full button layouts are in
@@ -46,7 +51,7 @@ transitions) framed by two thin bars, one along the top edge and one along the b
 |---|---|---|
 | **Star field** in three layers | Whole picture behind the ship | Stars drift to the left at three different speeds (the far ones slowest), steadily, with no jumps; the pattern repeats seamlessly |
 | **KESTREL**, the player ship | Enters from the left edge | Glides in from off-screen during the first ⅔ of a second, slowing down as it arrives, and stops at mid-height about a sixth of the way across. Then it is yours to fly |
-| **Shots** from the ship's nose | In front of the ship, flying right | As soon as the ship has arrived, small cyan-and-white darts leave its nose and race to the right edge, two at a time — see [Your weapons](#your-weapons) |
+| **Shots** from the ship's nose | In front of the ship, flying right | As soon as the ship has arrived, small cyan-and-white darts leave its nose and race to the right edge, two at a time, each with a tiny white-and-yellow **muzzle spark** flickering just in front of the nose as it leaves — see [Your weapons](#your-weapons) |
 | **Top bar** | Top edge | `1P` (cyan) and your score `00000000` on the left; **FREE FLIGHT** (yellow) in the middle; `HI` (yellow) and the best score of this session on the right |
 | **Bottom bar** | Bottom edge | Two small ship icons on the left (your spare ships — you start with three, the one you fly plus two); the hint `ARROWS MOVE` (grey) in the middle |
 
@@ -91,7 +96,22 @@ ship may move in four directions only; the game is designed to be fully playable
 
 ### What changed lately
 
-**New in this build: the first boss and its WARNING.** In a browser, the new *Boss Range* stage
+**New in this build: explosions, sparks, screen shake, flashes and score numbers.** Until now a
+destroyed enemy simply vanished. Now it bursts into a fireball bigger than itself (bigger enemies
+throw out grey chunks of debris too), a hit on an enemy that survives throws small sparks, shots
+that bounce off armour spark back towards you, and the points of every kill rise from the spot
+as a small white number (a completed formation's bonus in gold). Losing your ship ends in a big
+explosion and a short **screen shake**; a **Mega Crash** flashes the screen white; each capsule
+you collect makes a cyan ring flash around your ship; cancelled enemy bullets turn into small
+twinkles. The boss's WARNING now darkens the playfield and pulses red, and the boss dies in a
+two-second chain of explosions ending in a big white blast with a strong shake and a gold
+20,000. On the TV and the desktop (free flight) the only new thing is the tiny spark at the
+ship's nose with every shot. In a browser, the new **effects gallery**
+(http://localhost:5173/?scene=fx-gallery) shows every explosion and screen effect one after the
+other. See [Explosions, sparks, shake and flashes](#explosions-sparks-shake-and-flashes). There
+is still no sound.
+
+Before that, **the first boss and its WARNING.** In a browser, the new *Boss Range* stage
 (http://localhost:5173/?stage=test-boss) scrolls for about five seconds, then the scrolling
 slows to a stop and a **WARNING** band fills the middle of the picture for three seconds —
 `WARNING!!`, the boss's name and its code, flashing red and yellow. Then the **TRIAL WARDEN**, a
@@ -101,13 +121,12 @@ glowing core can be hit, its two guns can be shot off, and it changes its attack
 takes damage — the last one with **lasers**, the first long beams in the game. When the core is
 destroyed every bullet vanishes, the boss blinks and disappears, 20,000 points are added and the
 stage scrolls on. See [The boss range and the WARNING](#the-boss-range-and-the-warning-browser-only).
-The explosions, the siren and the boss music are still to come (in later builds), and on the TV
-and the desktop (free flight) nothing has changed.
+The siren and the boss music are still to come (in a later build).
 
 Before that, **lives, losing your ship and the score.** In the *Test Range* stage (browser
 only) the KESTREL can now be destroyed: flying into the rock or an enemy, or being hit by an enemy
-bullet, costs a ship. The game freezes for a split second, the ship vanishes (the explosion,
-sound and screen shake are drawn in a later build), every enemy bullet on screen disappears, and
+bullet, costs a ship. The game freezes for a split second, the ship vanishes (its explosion and
+the screen shake came with the build after), every enemy bullet on screen disappears, and
 after about a second and a half it flies in again from the left, **blinking** — while it blinks
 (about two and a half seconds after it is back under your control) nothing can hurt it, and it
 keeps firing. Each loss takes one of the spare-ship icons in the bottom bar and one step of your
@@ -132,8 +151,8 @@ Before that, **your ship learned to shoot.** Everywhere — on the TV, in the br
 desktop — the KESTREL's gun fires **on its own** once the ship has flown in: small darts,
 at most two on screen at a time, like the classic games this one follows. No button is needed
 (the TV remote has none to spare). In the *Test Range* stage the shots destroy the enemies: an
-enemy that takes more than one hit flashes white each time, and one that is destroyed simply
-disappears — the explosions, sounds and the score counter come in later builds. In a browser
+enemy that takes more than one hit flashes white each time, and one that is destroyed
+disappears (the explosions and the score counter came with later builds). In a browser
 you can also start **fully powered** with `?loadout=full`: a faster ship, a long piercing
 **laser** instead of the darts, **missiles** that drop to the ground and slide along it, and
 four glowing **Options** that follow your ship and fire everything it fires
@@ -152,17 +171,22 @@ fighters, and fighters that stop, aim and dash at you ([what to look for](#enemi
 slowing down, over rocky floors and caves drawn from small tiles, with star layers moving
 behind at their own speeds; and before that the ship came **under your control**, and free
 flight replaced the sprite showcase as the start-up picture. The simulation behind it is the real game engine: every
-build adds to this world — next come the explosions, sparks, screen shake and flashes that make
-hits feel good.
+build adds to this world — next come the sounds and the music.
 
 **Please re-test on the monitors:** install the new build and run through the checks in the
-next section — how the ship responds to the remote is still the most valuable report. Nothing
-new is visible on the TV in this build (the boss needs a stage, which only a browser can open
-yet), and **whether pressing OK while you hold an arrow stops the ship** (check 9) still needs
-answers. On a PC, please fly the new **boss range** (`?stage=test-boss`, then again with
-`&loadout=full`) and report anything from [its checklist](#the-boss-range-and-the-warning-browser-only)
-— in particular whether the WARNING text is easy to read, whether the boss's bullets and lasers
-can be dodged with single arrow presses, and whether it is clear which parts you can hurt. The
+next section — how the ship responds to the remote is still the most valuable report. The only
+new thing on the TV is the small spark at the ship's nose with every shot (check 8): please say
+whether it looks crisp and never flickers oddly. **Whether pressing OK while you hold an arrow
+stops the ship** (check 9) still needs answers. On a PC, please fly the **test stage** and the
+**boss range** with the new effects and report anything from
+[their checklist](#explosions-sparks-shake-and-flashes) — in particular whether an explosion ever
+hides an enemy bullet, whether the screen shake and the flashes are comfortable to watch (too
+strong, too long, too often?), and whether the score numbers get in the way. Please also look at
+the **effects gallery** (`?scene=fx-gallery`) on the monitor's browser or a PC and say which
+effects look wrong or too weak. The boss range is still worth a run for
+[its own checklist](#the-boss-range-and-the-warning-browser-only) — whether the WARNING text is
+easy to read, whether the boss's bullets and lasers can be dodged with single arrow presses, and
+whether it is clear which parts you can hurt. The
 test stage (`?stage=test-range`, normally and fully powered) is still worth a run for its
 checklists (the rock, the enemies, their bullets, your weapons, the power-ups, losing a ship):
 does every bullet pattern dodge with single arrow presses, does the blinking after a loss give
@@ -212,8 +236,10 @@ Things to check on the monitor and report:
 8. **The gun fires on its own** as soon as the ship has flown in, without touching any button:
    small cyan-and-white darts leave the ship's nose, two at a time, and fly straight to the
    right edge at an even speed. They never appear over the HUD bars, and they keep coming
-   wherever you fly — also while you hold a direction. Report if they stutter, flicker, show
-   up as magenta-and-black squares, or stop.
+   wherever you fly — also while you hold a direction. Each shot starts with a tiny
+   white-and-yellow spark just in front of the nose that is gone almost at once (new in this
+   build). Report if the darts or the spark stutter, flicker, show up as magenta-and-black
+   squares, or stop.
 9. **Hold an arrow and press OK while you hold it** (for example hold ▶ and press OK a few
    times): the ship must keep moving the whole time, without stopping or stuttering when OK is
    pressed or released. Report whether it does — it tells us if the remote drops a held arrow
@@ -222,9 +248,9 @@ Things to check on the monitor and report:
    left it.
 
 The TV always starts with free flight, where nothing can hit the ship — the score stays at zero
-and the two spare ships stay. The test stage (and with it the power capsules, losing ships and
-the score), the boss range with its WARNING and boss, the fully powered ship, the showcase and
-the calibration screen can only be opened in a browser.
+and the two spare ships stay. The test stage (and with it the power capsules, losing ships, the
+score and the explosions), the boss range with its WARNING and boss, the fully powered ship, the
+showcase, the calibration screen and the effects gallery can only be opened in a browser.
 
 ## In a desktop browser
 
@@ -383,8 +409,9 @@ playable with the TV remote. The pictures are placeholders (original designs).
 - A dart disappears when it hits an enemy, the rock or the edge of the screen.
 - One hit destroys the small enemies (pods, spinners, arrowhead fighters); the others need more
   — saucers and walkers two, turrets and lone spinners three, the armoured hatch eight — and
-  **flash white** every time they are hit. A destroyed enemy simply disappears (the explosion
-  and the sound come in later builds) and its points are added to your score
+  **flash white** every time they are hit (and throw a few sparks). A destroyed enemy bursts
+  into an explosion ([what it looks like](#explosions-sparks-shake-and-flashes); the sound comes
+  later) and its points are added to your score and rise from the spot
   ([the score](#the-score)); saucers and completed formations leave a power capsule
   ([Power-ups](#power-ups)).
 
@@ -408,7 +435,8 @@ What "good" looks like, with either loadout:
   down.
 - Darts and beams never fly through rock; missiles rest exactly on the ground while sliding
   (not floating above it, not sunk into it).
-- Enemies that are hit flash white; destroyed ones disappear at once and never come back.
+- Enemies that are hit flash white; destroyed ones turn into an explosion at once and never come
+  back.
 - The frame rate stays smooth even with everything firing.
 
 ## Power-ups
@@ -468,7 +496,7 @@ taken again; once it has broken, it can.
 **Mega Crash** (`!`). Every enemy — also the ones just about to come in — is destroyed at once,
 and every enemy bullet vanishes. Enemies destroyed this way count as shot down: a saucer or the
 last member of a formation still leaves its capsule. A **boss** is not hurt by it — only its
-bullets vanish. (The screen flash and the sound come later.)
+bullets vanish. The playfield flashes white for a moment (the sound comes later).
 
 **Fully powered** (`&loadout=full`, see [Your weapons](#your-weapons)) now also starts with a
 fresh Force Field.
@@ -499,7 +527,7 @@ the middle of the hull — so bullets that only graze the wings pass.
 
 | When (after the hit) | What happens |
 |---|---|
-| At once | The ship vanishes, and **every enemy bullet on the screen disappears**. The action freezes for a split second (an eighth of a second) — this pause is on purpose, it makes the moment readable. One spare-ship icon goes from the bottom bar. (The explosion, the flying debris, the sound, the screen shake and the music going quiet for a moment are coming in later builds — for now the ship simply disappears.) |
+| At once | The ship **explodes** — three fireballs and a spray of grey debris — and **every enemy bullet on the screen turns into a small twinkle and disappears**. The action freezes for a split second (an eighth of a second) — this pause is on purpose, it makes the moment readable — and the picture **shakes** for about a third of a second (the HUD bars stay still). One spare-ship icon goes from the bottom bar. (The sound and the music going quiet for a moment come in a later build.) |
 | About 1½ s | The ship **flies in again from the left edge**, where the stage is now — it does not scroll back — at mid-height, ignoring the controls like at the start |
 | About 2¼ s | It is yours again. It keeps **blinking** for another two and a half seconds: while it blinks (and while it flies in) **nothing can hurt it** — bullets, enemies and rock pass through — and it keeps firing |
 
@@ -541,6 +569,11 @@ The number next to `1P` is your score. It goes up when you:
 Enemies destroyed by a **Mega Crash** count too. Enemies that leave the screen, and destroyed
 ships, score nothing; the score is never taken away. It stops at 99,999,990.
 
+Every destroyed enemy also shows its points as a small **white number** that rises from where it
+was destroyed and blinks out after about two thirds of a second; a completed formation's bonus
+appears in **gold** where its last member was. Capsules add their 300 without a number (it would
+cover your ship — a cyan ring flashes around the ship instead).
+
 `HI` on the right of the top bar is the **best score of this session**: it follows your score
 while you are beating it. It starts at 0 every time the game is opened — saved high scores come
 with the options and save data in a later build.
@@ -570,7 +603,7 @@ wording.
 |---|---|
 | 0–1 s | The ship flies in; the stars start to scroll |
 | 1 s and 2 s | Two **red saucers** drift through (upper, then lower half) — each leaves a power capsule when you shoot it down |
-| 5 s | **The WARNING.** The scrolling slows down and stops within a second. A dark, see-through band with thin red edges crosses the middle of the picture, and three lines of text flash between red and yellow: `WARNING!!` · `GIANT HOSTILE "TRIAL WARDEN"` · `CLOSING IN - CODE TW-00`. It stays for **three seconds**; you can fly and shoot as usual meanwhile |
+| 5 s | **The WARNING.** The scrolling slows down and stops within a second. The whole playfield **darkens** to about half its brightness and pulses **red** three times, once a second. A dark, see-through band with thin red edges crosses the middle of the picture, and three lines of text flash between red and yellow: `WARNING!!` · `GIANT HOSTILE "TRIAL WARDEN"` · `CLOSING IN - CODE TW-00`. It stays for **three seconds**; you can fly and shoot as usual meanwhile |
 | 8 s | The band disappears and the **boss glides in** from the right edge, slowing down as it arrives; after two seconds it stops in the right quarter of the screen. While it glides in **it cannot be hurt** — your shots simply vanish on it — but flying into it already destroys your ship |
 | 10 s | The fight starts (below). The stage waits: the scrolling stays stopped until the boss is destroyed |
 
@@ -579,7 +612,7 @@ wording.
 | Part | Looks like | What your shots do |
 |---|---|---|
 | **Armour blocks** | A column of three dark blue-grey riveted blocks — the boss's body | Nothing, ever: shots vanish on them |
-| **Shield plates** | Two light grey plates on the boss's left side (facing you), one above the other | They take 10 hits each, flash white when hit and disappear when destroyed (500 points each) |
+| **Shield plates** | Two light grey plates on the boss's left side (facing you), one above the other | They take 10 hits each, flash white when hit and explode when destroyed (500 points each — the number rises from the plate) |
 | **Core** | A glowing, pulsing cyan eye behind the plates | Nothing while **both** plates are there; once they are gone it takes 24 hits. Destroying it destroys the boss (5,000 points for the core) |
 | **Guns** | Red-and-yellow emitters sticking out above and below the body | They fire at you; 12 hits each (1,000 points) and a destroyed gun stops firing |
 | **Vent** | A small emitter on the far (right) side | It can only be hurt now and then during the first attack, while it is open (there is no visible sign of that yet), and it is hard to reach — you do not need it (800 points) |
@@ -596,10 +629,13 @@ Flying into any part of the boss destroys your ship (a Force Field takes it like
 
 **When the core is destroyed:**
 
-- every enemy bullet and laser on the screen disappears at once;
-- the boss **blinks** white for two seconds (the chain of explosions, the big blast and the
-  sounds are drawn in a later build), then vanishes with a very short freeze;
-- **20,000 points** go to your score (on top of the parts you destroyed);
+- every enemy bullet and laser on the screen turns into twinkles and disappears at once;
+- the boss **blinks** white for two seconds while **explosions** keep bursting all over it,
+  then it vanishes in a **big blast** — a bright white flash, a strong screen shake of about two
+  thirds of a second, flying debris — with a very short freeze (the sounds come in a later
+  build);
+- **20,000 points** go to your score (on top of the parts you destroyed) — a gold `20000` rises
+  where the boss was;
 - about a second later the scrolling starts again, and after another quarter of a minute the
   stage ends and the scrolling stops for good. There is no "stage clear" screen yet — reload
   the page to fight again.
@@ -629,8 +665,51 @@ What "good" looks like:
 - Every bullet pattern and every laser can be dodged with the four arrow directions (the laser
   always blinks as a warning line first) — please report any spot where you could not get out
   of the way.
-- After the core is destroyed no enemy bullet or laser is left, the boss blinks and vanishes,
-  the score jumps by 20,000 and the stage scrolls on.
+- After the core is destroyed no enemy bullet or laser is left, explosions cover the boss while
+  it blinks, the final blast flashes and shakes the picture, the score jumps by 20,000 and the
+  stage scrolls on.
+- During the WARNING the playfield is darker and pulses red three times; the band's text stays
+  readable on top of it.
+
+## Explosions, sparks, shake and flashes
+
+Since this build hits look like hits. You see most of it in the *Test Range*
+(http://localhost:5173/?stage=test-range) and the *Boss Range* (`?stage=test-boss`); on the TV
+and the desktop (free flight — nothing to shoot at) only the muzzle spark shows. All of it is
+drawn from small placeholder pictures made for this project. There is no sound yet.
+
+| When | What you should see |
+|---|---|
+| Your ship fires | A tiny white-and-yellow spark just in front of the nose, gone almost at once (fully powered, it sometimes shows in front of an Option instead) |
+| A shot hits an enemy that survives | The enemy flashes white (as before) and a few sparks fly off it |
+| A shot hits something it cannot hurt (the boss's armour, its covered core, the boss while it glides in) | A few sparks bounce back towards you |
+| An enemy is destroyed | A **fireball bigger than the enemy** where it was — small enemies with a few sparks; the red saucers, turrets and the armoured hatch with grey chunks of **debris** that fly out and fall. The fireball stays on the spot even while the ground scrolls under it |
+| Its points | A small **white number** rises from the spot for about two thirds of a second and blinks out; a completed formation's bonus is a **gold** number |
+| You collect a capsule | A thin **cyan ring** flashes around your ship (no number) |
+| Enemy bullets are cancelled (you lost a ship, a Mega Crash, a boss destroyed) | Each bullet turns into a small pale-gold **twinkle** |
+| You lose your ship | Three fireballs and a spray of debris; the picture **shakes** for about a third of a second |
+| The Force Field breaks | A burst of sparks around the ship |
+| **Mega Crash** | The playfield (not the HUD bars) **flashes white** for a fifth of a second |
+| The boss **WARNING** | The playfield darkens to about half and pulses **red** three times, once a second |
+| A boss part is destroyed | It explodes; its points rise from it |
+| The boss is destroyed | Two seconds of explosions all over it, then a big blast: a bright **white flash**, a **strong shake** (about two thirds of a second), debris, and a gold `20000` |
+
+What "good" looks like:
+
+- **Enemy bullets are always on top.** An explosion, a spark or a number never hides a bullet —
+  please report it at once if one ever does (with the time into the stage).
+- Explosions, sparks and numbers stay inside the playfield, never over the top or bottom bar,
+  and are never magenta-and-black checkered squares.
+- Only the playfield shakes — the HUD bars stay perfectly still — and it settles back exactly
+  where it was.
+- Explosions stay where the enemy was destroyed and scroll away with the ground.
+- The screen never flashes more than three times in one second (a built-in limit that protects
+  players sensitive to flashing light). There is no setting yet to turn the shake off or to tone
+  the flashes down — both come with the options screen of a later build. If the shake or the
+  flashes are uncomfortable, please say so.
+- Everything freezes when the game is paused (switching tabs, the TV's Home button) and carries on
+  from where it stopped.
+- The game stays smooth even with many explosions at once.
 
 ## Other screens (browser only)
 
@@ -641,6 +720,7 @@ What "good" looks like:
 | http://localhost:5173/?stage=test-boss | The **Boss Range**: the WARNING and the test boss ([above](#the-boss-range-and-the-warning-browser-only)); add `&loadout=full` to fight it fully powered |
 | http://localhost:5173/?scene=showcase | The **sprite showcase** the previous builds started with: the KESTREL flying a figure-eight with two Options, five enemies with hit flashes, a ring of bullets, both HUD bars with a counting score and a blinking power meter. Nothing reacts to the controls |
 | http://localhost:5173/?scene=calibration | The **calibration screen**, for judging scaling and colours on a new display (below) |
+| http://localhost:5173/?scene=fx-gallery | The **effects gallery**: over still stars, one effect a second — each explosion and spark (three bursts in the middle of the picture), then the small, medium and large screen shake, the three flashes (Mega Crash, WARNING, boss blast), the darkening and a row of score numbers — then it starts over. The name of the effect shows near the top (`1/19  EXPLOSION.SMALL` …). Nothing reacts to the controls. Useful for judging the effects on a monitor without having to play to them |
 
 The calibration screen:
 
@@ -694,7 +774,7 @@ mean the build itself is broken; they are not caused by anything you did.
 | The ship stutters or stops for a moment while I hold a direction (TV) | Please report it with the remote model: the game's hiccup protection is supposed to hide exactly this |
 | `?stage=test-range` shows free flight (title FREE FLIGHT, no rock) | The stage name in the address is misspelled — check the spelling (`test-range`); the browser console names the unknown stage |
 | The ship flies through the rock or an enemy in the test stage | Expected only while it flies in or blinks after a loss (it cannot be hurt then), and in free flight there is nothing to hit. Otherwise rock and enemies destroy it — please report where it passed through |
-| The ship vanished and a spare-ship icon went | It was destroyed (rock, an enemy or a bullet) — see [Lives](#lives-losing-your-ship-and-the-score). The explosion and the sound are not drawn yet |
+| The ship vanished and a spare-ship icon went | It was destroyed (rock, an enemy or a bullet) — see [Lives](#lives-losing-your-ship-and-the-score). It should explode and the picture should shake briefly; the sound comes later |
 | The game froze for a moment when the ship was hit | Expected: a short freeze (an eighth of a second) marks every loss |
 | All enemy bullets vanished at once | Expected after a loss (and after a Mega Crash) |
 | After a loss the ship lost an Option, the laser or a Speed Up | Expected: each loss costs one step of power, and always the Force Field ([Lives](#lives-losing-your-ship-and-the-score)) |
@@ -703,7 +783,13 @@ mean the build itself is broken; they are not caused by anything you did.
 | The ship was destroyed while it was blinking | Not expected — please report what hit it and the time into the stage |
 | The ship does not shoot | It starts firing only once it has flown in (⅔ of a second). If it never fires — on the TV or in a browser — please report it; no button is needed |
 | Only two shots are on screen at a time | Expected: the basic gun allows two at a time, like the classic games; it fires again as soon as one hits something or leaves the screen |
-| Destroyed enemies just vanish — no explosion, no sound | Expected in this build: explosions and sounds come later. The score goes up, though; an enemy that needs several hits flashes white on each |
+| Destroyed enemies just vanish — no explosion | Not expected any more: every destroyed enemy should burst into a fireball ([Explosions](#explosions-sparks-shake-and-flashes)). Please report it with the address you opened. No **sound** is expected yet |
+| An explosion or a score number covers an enemy bullet | Not expected — bullets are always drawn on top. Please report it with the time into the stage |
+| The picture shakes | Expected when your ship is lost (a third of a second) and at a boss's final blast (two thirds of a second). The HUD bars must stay still — report it if they move. There is no setting to turn the shake off yet |
+| The screen flashes | Expected at a Mega Crash (white), during the boss WARNING (red, three times) and at a boss's final blast (white). It never flashes more than three times a second; if the flashes are uncomfortable, please say so — a "reduce flashing" option comes with the options screen |
+| Numbers pop up where enemies are destroyed | Expected: the points of each kill (white) and of a completed formation (gold). Capsules show a cyan ring instead of a number |
+| Explosions or sparks are magenta-and-black checkered squares | Their pictures are missing from the sprite sheet; please report it (the build is broken) |
+| `?scene=fx-gallery` shows only stars and the labels | The first effect appears within a second; if the explosions never show, please report it with the browser or TV model |
 | The score stays at zero | In free flight (the TV and the desktop) there is nothing to score. In the test stage it should rise with every destroyed enemy — please report it if it does not |
 | `HI` went back to 0 after reloading | Expected: the high score is kept only while the game is open; saving it comes later |
 | The red saucer leaves nothing behind | It leaves a capsule only when it is destroyed (by your shots or a Mega Crash); a saucer that flies off the screen leaves nothing |
@@ -732,12 +818,12 @@ mean the build itself is broken; they are not caused by anything you did.
 | The test stage stopped scrolling | At the end of the stage (after about 75 seconds) that is expected; reload the page to start again. If it stops earlier, please report where |
 | `?stage=test-boss` shows free flight (title FREE FLIGHT) | The stage name is misspelled — it is `test-boss`; the browser console names the unknown stage |
 | The Boss Range stopped scrolling after five seconds | Expected: the WARNING stops the scrolling, and it stays stopped until the boss is destroyed |
-| The WARNING shows but there is no siren, the screen does not darken or flash | Expected in this build: sounds, music and screen effects come later — only the band with the text is drawn |
+| The WARNING shows but there is no siren | Expected in this build: sounds and music come later. The playfield should darken and pulse red three times — if it does not, please report it |
 | The WARNING text is cut off, overlaps the HUD bars or shows odd symbols | Not expected — please report it with a screenshot |
 | My shots vanish on the boss without hurting it | Expected while it glides in, on the dark armour blocks, and on the core while a shield plate still covers it. If the plates, the guns or the uncovered core do not flash when hit, please report it |
 | The laser stops at the boss | Expected: it stops at the first part it cannot hurt (armour, or the covered core) |
 | The boss never appears | It comes about eight seconds in (five seconds of flight, then three seconds of WARNING); check the address says `?stage=test-boss`. If the WARNING never shows, please report it |
-| The boss just blinks and vanishes — no explosion | Expected in this build: the explosions and the sound come later. The 20,000 points should still be added |
+| The boss just blinks and vanishes — no explosion | Not expected any more: explosions should burst over it for two seconds, then a big white blast. Please report it. The sound comes later |
 | Nothing happens after the boss is gone | Expected: there is no "stage clear" screen yet. The stage scrolls on for a quarter of a minute and stops; reload to fight again |
 | A boss laser hit me although I was not on the beam | Only the beam hurts, never the blinking warning line; note that the laser runs along the row of the gun that fired it. If it still happens, please report it with the time into the fight |
 | Gaps, seams or flickering in the rock, or rock over a HUD bar | Please report it with a screenshot and roughly how far into the stage it was |

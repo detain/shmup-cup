@@ -21,15 +21,21 @@ const shell = await bootShell({
   scene: sceneFromSearch(location.search), // 'flight' (default) | 'showcase' | 'calibration' | 'fx-gallery'
   audioUnlock: 'gesture', // 'immediate' on TV
   contentOwners: { 'input-profiles': profiles.load }, // optional: keep the parsed input profiles
+  effects: { screenShake: true, reduceFlashing: false }, // optional (M1-14; the defaults)
 });
-shell.events.on(SimEventKind.Shake, (event) => { /* presentation handler */ });
+shell.events.on(SimEventKind.Music, (event) => { /* presentation handler */ });
+// free flight already feeds the World's events to the renderer's particles, shake, flash, dim
+// and score popups (connectFxEvents, M1-14)
 ```
 
 Boot sequence: progress bar (plain 2D overlay canvas) → content validation (core kinds + the
 owners of foreign kinds — `contentOwners`, then `DEFAULT_CONTENT_OWNERS` (`input-profiles` →
-`@shmup/input-web`); any issue → **boot error screen** listing `path: message`) → atlas pages
+`@shmup/input-web`, `fx` → `@shmup/render-pixi`, whose parsed presets the shell keeps as
+`shell.fx`); any issue → **boot error screen** listing `path: message`) → atlas pages
 via `new Image()` from relative URLs (no `fetch`, decision D25) → atlas → renderer (WebGL1
-first) → platform (the apps apply their input profiles in this factory) → game → lifecycle /
+first; particles seeded from the game's seed, presets via `setFxContent`) → platform (the apps
+apply their input profiles in this factory) → game → scene (free flight connects the World's
+events to the renderer's effects — `connectFxEvents`) → lifecycle /
 audio unlock / resize wiring → rAF frame loop (`input.setContext` when `game.inputContext`
 changed → `game.frame` → `game.events.drain(dispatch)` → `renderer.render`, plan §3.3). The
 canvas carries `data-shmup-state="loading" | "running" | "error"`.
@@ -62,16 +68,20 @@ before a frame's ticks whenever `game.inputContext` changed) and `destroy()`. `@
 
 Dependency direction (plan §3.1): `apps/* → @shmup/shell → {render-pixi, audio-web, input-web}
 → core`. Today the shell imports `@shmup/core`, `@shmup/render-pixi` and `@shmup/input-web`
-(only `loadInputProfiles` for the default `input-profiles` owner, M1-05); the apps create the
+(only `loadInputProfiles` for the default `input-profiles` owner, M1-05); render-pixi also
+provides the `fx` owner (`loadFxContent`) and the effect types (M1-14); the apps create the
 input and audio adapters and pass them in as interfaces (`ShellInput`, `IAudio`).
 
 Guide: [`docs/dev/rendering-and-shell.md`](../../docs/dev/rendering-and-shell.md#the-browser-shell-shmupshell);
+the game-feel wiring and the fx gallery: [`docs/dev/fx-and-game-feel.md`](../../docs/dev/fx-and-game-feel.md);
 exports: [`docs/dev/api-reference.md`](../../docs/dev/api-reference.md#shmupshell).
 
 Tests run in Node with fakes for the window, images and the WebGL renderer; the workers get
-`--expose-gc`, so the free-flight scene's per-frame `update()` is checked with the core's
-allocation guard. The real browser path is covered by `pnpm test:e2e` (headless Chromium,
+`--expose-gc`, so the free-flight scene's and the fx gallery's per-frame `update()` and the
+whole game-feel event path (`connectFxEvents` → particles / effects / popups) are checked with
+the core's allocation guard. The real browser path is covered by `pnpm test:e2e` (headless Chromium,
 `test/e2e/` — `flight.spec.ts` flies the KESTREL with arrow keys in both builds, `boss.spec.ts`
-checks the WARNING band and the boss on `?stage=test-boss`). How the World the scene draws works:
+checks the WARNING band and the boss on `?stage=test-boss`, `fx-gallery.spec.ts` the gallery's
+label and explosions in both builds). How the World the scene draws works:
 [`docs/dev/sim-world.md`](../../docs/dev/sim-world.md); the boss and its WARNING:
 [`docs/dev/bosses-and-warning.md`](../../docs/dev/bosses-and-warning.md).

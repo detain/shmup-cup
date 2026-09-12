@@ -12,7 +12,8 @@
  * suspends audio. The default scene is free flight (the KESTREL under keyboard / gamepad
  * control, plan M1-06); `?stage=<id>` runs that stage instead of open space (scrolling camera,
  * terrain, parallax — plan M1-07; `?stage=test-range` is the dev stage); `?scene=showcase`
- * shows the M1-04 sprite showcase and `?scene=calibration` the test pattern; `?loadout=full`
+ * shows the M1-04 sprite showcase, `?scene=calibration` the test pattern and
+ * `?scene=fx-gallery` every particle preset and screen effect in turn (plan M1-14); `?loadout=full`
  * starts fully powered — speed 2, Missile, Laser, four Options (dev override, plan M1-10;
  * {@link loadoutFromSearch}).
  *

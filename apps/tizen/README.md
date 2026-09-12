@@ -67,7 +67,10 @@ the M1-11 manual check asks). Nothing can hit the ship in free flight, so the M1
 (deaths, respawns, `GAME OVER`) is not reachable on the TV yet; the HUD's new `HI` score at the
 right end of the top bar is the only visible change there. Likewise the M1-13 bosses and their
 WARNING need a stage (`?stage=test-boss` in the web build) and are not reachable on the TV until
-the scene flow picks stages (M1-16).
+the scene flow picks stages (M1-16). Of the M1-14 game feel (explosions, sparks, shake, flashes,
+score popups) only the muzzle spark in front of the ship's nose shows in free flight on the TV;
+`pnpm test:e2e` checks the effects gallery (`?scene=fx-gallery`) in the Tizen build opened from
+disk too.
 
 ## Package, install, run (desktop with Tizen CLI + certificate — never in CI)
 

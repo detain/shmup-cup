@@ -190,7 +190,12 @@ export interface ScreenEffects {
   /**
    * Advances every effect by simulated ticks. Never allocates.
    *
-   * @param ticks - Ticks elapsed (floored; ≤ 0 does nothing).
+   * @remarks
+   * Each tick advances the limiter's clock; a shake or flash requested since the last step only
+   * loses its "fresh" mark on its first tick (the sim does not count a request down on its own
+   * tick either); the dim fades towards its level while its hold lasts, then back to 0.
+   *
+   * @param ticks - Ticks elapsed (floored; ≤ 0 does nothing; more than 600 are cut).
    */
   step(ticks: number): void;
   /** Stops every effect and resets the limiter and `flashesSuppressed`. */
@@ -239,7 +244,10 @@ class ScreenEffectsImpl implements ScreenEffects {
   dimAlpha = 0;
 
   /**
-   * @param settings - Initial settings (copied).
+   * Creates idle effects (no shake, flash or dim; the limiter's window empty).
+   *
+   * @param settings - Initial settings (copied; missing fields take
+   *   {@link DEFAULT_EFFECT_SETTINGS}'s).
    */
   constructor(settings: Partial<EffectSettings>) {
     this.settings = {
@@ -415,7 +423,10 @@ export const SCORE_POPUP_SLOTS = 16;
 /** Ticks a score popup stays up. */
 export const SCORE_POPUP_TICKS = 40;
 
-/** Colour of an ordinary score popup (a kill, a capsule, a boss part). */
+/**
+ * Colour of an ordinary score popup (an enemy kill, a destroyed boss part — the core's
+ * `SimEventKind.Score`; capsule pickups show none, the popup would cover the ship).
+ */
 export const SCORE_POPUP_COLOR = 0xf8f8f8;
 
 /** Colour of a bonus popup (a completed formation, a boss's tally). */

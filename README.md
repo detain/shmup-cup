@@ -12,13 +12,13 @@ committed trigonometry tables with binary angles, the sim → presentation event
 zero-GC pools ([developer guide](docs/dev/engine-foundations.md)). **Game data** is
 schema-validated JSON under [`content/`](content/README.md) — the KESTREL ship, the Type A
 weapons, the test-range stage with its terrain tileset, enemy roster and movement paths, and
-the boss range with its test boss so far — checked by `pnpm content:check`, served to the app builds as the virtual
+the boss range with its test boss, and the particle presets so far — checked by `pnpm content:check`, served to the app builds as the virtual
 module `virtual:shmup-content` and loaded by `loadContent()` with every string id resolved
 to a number ([developer guide](docs/dev/content-data.md)). **Placeholder art** is code:
 sprite pixel maps under [`assets/source/`](assets/README.md), seeded procedural generators
 and an original 6×8 pixel font are packed by `pnpm assets` into a texture atlas plus
 manifest (the KESTREL, shots, seven enemies, boss parts, bullets, laser beams, explosions, items,
-HUD pieces, terrain tiles, star layers), served to the builds as `virtual:shmup-assets`;
+particles, HUD pieces, terrain tiles, star layers), served to the builds as `virtual:shmup-assets`;
 real art can later replace any frame by name ([developer guide](docs/dev/asset-pipeline.md)).
 Both apps now boot through the shared browser shell [`@shmup/shell`](packages/shell/README.md)
 (M1-04): it validates the content, loads the atlas pages behind a loading bar (or shows a boot
@@ -104,7 +104,7 @@ no active ship has a life left the World's status is `gameOver`. Per-player **sc
 every kill to its killer, a formation's bonus to the killer of its last member and 300 per
 capsule — exactly once, clamped at 99,999,990 — with a session hi-score, and the sim-side
 game-feel timers (hit-stop, decaying integer shake, flash kinds) push the events the effects of
-M1-14 will draw. The flight HUD shows the score, `HI`, the spare ships and `GAME OVER`
+M1-14 draws. The flight HUD shows the score, `HI`, the spare ships and `GAME OVER`
 ([developer guide](docs/dev/death-and-scoring.md), [what testers should check](docs/client/preview-build.md#lives-losing-your-ship-and-the-score)).
 **Bosses arrive with a WARNING** (M1-13): a boss is an `enemies` entry with a `boss` section —
 up to 16 parts attached to each other (translation only), each with its own hit points,
@@ -123,6 +123,17 @@ the boss's points to whoever destroyed it, plays the stage-clear jingle and clea
 The first boss behaviours (`boss.hover`, `boss.lanes` — aimed spreads and telegraphed lane
 lasers from the gun parts) and TRIAL WARDEN on the BOSS RANGE (`?stage=test-boss`) exercise it
 all ([developer guide](docs/dev/bosses-and-warning.md), [what testers should check](docs/client/preview-build.md#the-boss-range-and-the-warning-browser-only)).
+**Hits feel like hits** (M1-14): particle presets in [`content/fx/`](content/fx/README.md) —
+explosions larger than the enemy, sparks, debris, clinks, bullet-cancel sparkles, the pickup
+ring and a muzzle flash — are bound to the sim's particle cues and to the sounds that imply a
+visual, and drawn from a 256-particle pool in world space on its own seeded RNG (never touching
+the simulation), below the enemy bullets so an explosion never hides one. The renderer's screen
+effects shake the playfield by whole pixels exactly as the sim's shake decays (with a global
+off switch), flash it in a colour per kind behind a limit of three flashes a second (and a
+reduced-flashing setting), and darken it during the boss WARNING; 16 score popups rise from
+every kill (a new `Score` event) and every bonus. Everything runs on simulated ticks, so it
+freezes with a paused game, and allocates nothing per frame. `?scene=fx-gallery` cycles through
+every preset and effect ([developer guide](docs/dev/fx-and-game-feel.md), [what testers should check](docs/client/preview-build.md#explosions-sparks-shake-and-flashes)).
 **Input is remote-first and data-driven** (M1-05): control profiles in
 [`content/input/`](content/input/README.md) map keys, remote buttons and gamepad buttons to
 actions with separate **game** and **menu** tables, and carry the Samsung remote's quirks as
@@ -147,7 +158,7 @@ it is waiting to be packaged and run on the M7 monitors.
 | [`shmup_prompt.md`](shmup_prompt.md) | Paste-into-a-new-session prompt that drives execution of the plan (workflow: build → review/fix loop → tests → docs → CI gate per step, progress in `shmup_progress.md`) |
 | [`docs/`](docs/README.md) | Player and developer documentation (start with [`docs/dev/repo-layout.md`](docs/dev/repo-layout.md)) |
 
-Game docs — testers: [preview build (free flight, test stage, its enemies and their bullets, your weapons, power-ups, lives and score, the boss and its WARNING)](docs/client/preview-build.md) ·
+Game docs — testers: [preview build (free flight, test stage, its enemies and their bullets, your weapons, power-ups, lives and score, the boss and its WARNING, explosions, shake and flashes)](docs/client/preview-build.md) ·
 [controls](docs/client/controls.md) · [monitor setup & install](docs/client/install-on-tv.md).
 Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/architecture.md) ·
 [engine foundations](docs/dev/engine-foundations.md) · [content data](docs/dev/content-data.md) ·
@@ -161,6 +172,7 @@ Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/ar
 [power-ups & shields](docs/dev/powerups-and-shields.md) ·
 [death, respawn & score](docs/dev/death-and-scoring.md) ·
 [bosses & the WARNING](docs/dev/bosses-and-warning.md) ·
+[FX & game feel](docs/dev/fx-and-game-feel.md) ·
 [input profiles](docs/dev/input-profiles.md) ·
 [API reference](docs/dev/api-reference.md) ·
 [build, test & deploy](docs/dev/build-test-deploy.md) · [conventions](docs/dev/conventions.md).
@@ -187,7 +199,7 @@ versions (`devEngines.runtime`).
 ```sh
 pnpm -v               # must print 12.x — an older global pnpm fails with ERR_PNPM_BROKEN_LOCKFILE
 pnpm install          # set ELECTRON_SKIP_BINARY_DOWNLOAD=1 to skip the Electron binary
-pnpm dev              # browser dev app → http://localhost:5173: fly the KESTREL (arrows/WASD, gamepad; Enter/C takes a power-up; ?stage=test-range scrolls the test stage, its enemies, their bullets and the power capsules; ?stage=test-boss plays the WARNING and the test boss; ?profile=keyboard-remote-emulation feels like the TV remote; ?scene=showcase / ?scene=calibration)
+pnpm dev              # browser dev app → http://localhost:5173: fly the KESTREL (arrows/WASD, gamepad; Enter/C takes a power-up; ?stage=test-range scrolls the test stage, its enemies, their bullets and the power capsules; ?stage=test-boss plays the WARNING and the test boss; ?profile=keyboard-remote-emulation feels like the TV remote; ?scene=showcase / ?scene=calibration / ?scene=fx-gallery)
 pnpm lint             # ESLint (typescript-eslint + compat: chrome >= 69)
 pnpm typecheck        # tsc --noEmit everywhere
 pnpm test             # Vitest per package + repo integration tests
@@ -241,14 +253,14 @@ pnpm workspace (`packages/*`, `apps/*`) + Turborepo. Full annotated tree:
 | Path | What |
 |---|---|
 | [`packages/core`](packages/core/README.md) | `@shmup/core` — pure-TS deterministic simulation: the World and its tick pipeline, all game systems, the `Platform` interface |
-| [`packages/render-pixi`](packages/render-pixi/README.md) | `@shmup/render-pixi` — PixiJS v8 renderer (WebGL1, 384×216 → integer upscale) |
+| [`packages/render-pixi`](packages/render-pixi/README.md) | `@shmup/render-pixi` — PixiJS v8 renderer (WebGL1, 384×216 → integer upscale); particles, screen shake / flash / dim, score popups |
 | [`packages/audio-web`](packages/audio-web/README.md) | `@shmup/audio-web` — Web Audio mixer |
 | [`packages/input-web`](packages/input-web/README.md) | `@shmup/input-web` — keyboard / Samsung remote / gamepad → action snapshots, driven by the input profiles (debounce, diagonal / SOCD policies, game / menu tables) |
-| [`packages/shell`](packages/shell/README.md) | `@shmup/shell` — shared browser host of web + Tizen: boot / loading, boot error screen, event dispatch, frame loop, the free-flight scene |
+| [`packages/shell`](packages/shell/README.md) | `@shmup/shell` — shared browser host of web + Tizen: boot / loading, boot error screen, event dispatch (game-feel events → renderer), frame loop, the free-flight scene, the fx gallery |
 | [`apps/web`](apps/web/README.md) | Vite browser dev target (also Electron's renderer) |
 | [`apps/tizen`](apps/tizen/README.md) | Samsung Tizen `.wgt` (Chromium 69 classic IIFE build, config.xml, CLI scripts) |
 | [`apps/electron`](apps/electron/README.md) | Electron desktop shell |
-| [`content/`](content/README.md) | Game data: player ships, stages, terrain tilesets, enemies, movement paths, weapons, input profiles (JSON, `formatVersion` 1) |
+| [`content/`](content/README.md) | Game data: player ships, stages, terrain tilesets, enemies, movement paths, weapons, input profiles, particle presets (JSON, `formatVersion` 1) |
 | `types/` | Ambient declarations for the Vite virtual modules (`virtual:shmup-content`, `virtual:shmup-assets`) |
 | [`assets/`](assets/README.md) | Art/audio sources (`source/`: sprite pixel maps, fonts) and pipeline output (`generated/`: atlas pages + manifest, ignored) |
 | [`scripts/`](scripts/README.md) | Repo-level Node scripts |
@@ -266,11 +278,12 @@ the game — the shipped Tizen bundle still targets Chromium 69.
 
 ## Next step
 
-Code: plan step **M1-14** (FX & game feel: particle presets from `content/fx/` — explosions,
-the boss chain, debris, sparks, clinks, bullet-cancel sparkles — spawned from the sim's events,
-the hit flash and invulnerability blink, integer screen shake with a global off switch, the
-full-screen flash / dim overlay with a flash limiter, score popups, and an `?scene=fx-gallery`
-dev scene) — the per-step status board is [`shmup_progress.md`](shmup_progress.md).
+Code: plan step **M1-15** (audio engine & procedural placeholder SFX/music: a deterministic
+pure-TS synth rendering ZzFX-style sound effects and chip songs, `content/audio/` for every SFX
+cue and the first original songs, an SFX voice manager with priorities, per-cue caps and
+stealing (the WARNING siren never stolen), looping music with fades and ducking, all fed by the
+sim's events through the shell's dispatcher) — the per-step status board is
+[`shmup_progress.md`](shmup_progress.md).
 
 On hardware (unchanged, and still the gate for the remote control scheme): package and
 deploy the input probe from the **Windows desktop** that sits on the same LAN as the monitors and holds

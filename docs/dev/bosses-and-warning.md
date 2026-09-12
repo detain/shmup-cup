@@ -272,8 +272,11 @@ a host puts it into a draw-list string slot on a change and never builds strings
 **The flight scene** (`@shmup/shell` `flight`) draws it in its UI list: a translucent black band
 (alpha 144) across the playfield at screen rows 76–123 with 1-px red (`0xf85858`) edges, the text
 centred at row 85, red and yellow (`0xf8d030`) alternating every 16 ticks. It rebuilds the list
-only when the WARNING starts, ends or changes colour. Nothing draws the `Dim` event, the flash,
-the siren or the music yet — M1-14 (dim / flash overlay) and M1-15 (audio) consume them.
+only when the WARNING starts, ends or changes colour. Since M1-14 the renderer draws the `Dim`
+event as a playfield dim (50 %, fading in over 8 ticks and out over 16 after the 180-tick hold —
+over the world layers, under the flash, the band and the HUD) and each pulse's `Flash` as a red
+flash (`0xf85858`, 0.35) ([fx-and-game-feel.md](fx-and-game-feel.md)); the siren and the music
+wait for M1-15.
 
 ### The brake
 
@@ -444,9 +447,12 @@ New codes (append-only): `SimEventKind.Dim` (10) and `BossDefeated` (11) with th
 `SIM_EVENT_KIND_NAMES`; `SfxPriority` (`Default 0, Low 1, Normal 2, High 3, Critical 4`) — a hint
 in an `Sfx` event's `param` that the mixer of M1-15 maps to its tiers (`Default` = the cue's own
 priority); `FX_CUES.BossChain` (6), `BossBlast` (7); `FlashKind.Warning` (1, 8 ticks) and
-`BossBlast` (2, 24 ticks) in `FLASH_KIND_TICKS`. Nothing consumes them yet beyond the WARNING band:
-particles, shake, flash and dim arrive with M1-14, sounds and music with M1-15, rumble with the
-gamepad work.
+`BossBlast` (2, 24 ticks) in `FLASH_KIND_TICKS`. Since M1-14 the particles (`boss.chain` for
+each chain explosion; `explosion.large` + `boss.chain` + `debris` for the blast), the large shake,
+the white blast flash, the dim and the popups (a white one per destroyed part with a score —
+`core/bosses` pushes a `SimEventKind.Score` for it — and the gold tally from `BossDefeated`) are
+drawn ([fx-and-game-feel.md](fx-and-game-feel.md)); sounds and music arrive with M1-15, rumble
+with the gamepad work.
 
 ## Determinism and hashing
 
@@ -553,13 +559,15 @@ free flight).
 | The boss score is 0 at the tally | `defeat()` without a player credits nobody (`killer` -1) |
 | `rng.gameplay.callCount` does not move during the death chain | Intended: the chain's positions come from the cosmetic stream, so a boss death never shifts the gameplay sequence |
 | `WarningView.text` is empty | Nothing started a WARNING yet — it is set at the first `startWarning` |
-| The screen does not dim, no siren | The `Dim` / `Flash` / `Sfx` events have no consumer until M1-14 / M1-15; only the flight scene's band is drawn |
+| No siren, no boss music | The `Sfx` / `Music` events have no audio consumer until M1-15 (the dim, the flashes and the particles are drawn since M1-14) |
+| The screen does not dim or flash in a custom scene | Only free flight connects the World's events to the renderer (`connectFxEvents`) — see [fx-and-game-feel.md](fx-and-game-feel.md#gotchas) |
 | An allocation guard creeps up after touching the boss code | A fractional argument to a non-inlined call, a non-integer generator local, or content read per tick — see the rules above; whole-sequence guards run partly unoptimised and have 128 KB |
 
 ## Next steps that build on this page
 
-- **M1-14** — the particles (`boss.chain`, explosions, cancel sparkles), shake, flash and the
-  WARNING dim drawn from the events.
+- **M1-14** (done) — the particles (`boss.chain`, explosions, cancel sparkles), shake, flash,
+  the WARNING dim and the part / tally popups drawn from the events
+  ([fx-and-game-feel.md](fx-and-game-feel.md)).
 - **M1-15** — the siren (critical priority), the boss theme, the music stop and fade, the
   stage-clear jingle.
 - **M1-16** — the HUD and scene flow after `stageClear` (the stage-clear screen).

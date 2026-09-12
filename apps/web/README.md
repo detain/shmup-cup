@@ -30,7 +30,13 @@ parameter for the penalty or the lives yet. Since M1-13 `?stage=test-boss` (BOSS
 the **boss WARNING** — the camera brakes to a stop under a flashing `WARNING!!` band for three
 seconds — and the test boss TRIAL WARDEN, whose shield plates, core and guns the ship shoots
 down; its death clears the stage (guide:
-[`docs/dev/bosses-and-warning.md`](../../docs/dev/bosses-and-warning.md)).
+[`docs/dev/bosses-and-warning.md`](../../docs/dev/bosses-and-warning.md)). Since M1-14 hits
+have **game feel**: explosions, sparks, debris, cancel sparkles and a muzzle flash from the
+presets of `content/fx/`, the screen shake of a lost ship or a boss's final blast, flashes
+(behind a ≤ 3-a-second limiter), the WARNING's dim and rising score numbers;
+`?scene=fx-gallery` cycles through every preset and screen effect (guide:
+[`docs/dev/fx-and-game-feel.md`](../../docs/dev/fx-and-game-feel.md)). The app passes no effect
+settings yet (shake on, normal flashing — the Options screen comes later).
 
 Input uses the data-driven profiles of `content/input/` (decision D13): `keyboard-default`
 (or the saved choice) and `gamepad-standard`. Dev overrides: `?profile=<id>` picks another
@@ -42,7 +48,7 @@ Guide: [`docs/dev/input-profiles.md`](../../docs/dev/input-profiles.md).
 
 ```sh
 pnpm dev                          # from the repo root (= turbo run dev --filter=@shmup/web)
-# → http://localhost:5173 (free flight) · ?stage=test-range (scrolling test stage) · ?stage=test-boss (the WARNING and the test boss) · &loadout=full (fully powered) · ?scene=showcase (sprite showcase) · ?scene=calibration (test pattern)
+# → http://localhost:5173 (free flight) · ?stage=test-range (scrolling test stage) · ?stage=test-boss (the WARNING and the test boss) · &loadout=full (fully powered) · ?scene=showcase (sprite showcase) · ?scene=calibration (test pattern) · ?scene=fx-gallery (every particle preset and screen effect)
 pnpm --filter @shmup/web build    # → apps/web/dist (relocatable, base './')
 pnpm --filter @shmup/web exec vite preview   # serve the production build (what pnpm test:e2e opens)
 ```
@@ -70,7 +76,7 @@ the shell loads the pages with `new Image()`; see
 | Module | Status | Responsibility |
 |---|---|---|
 | `main.ts` | — | Entry: boots into `#game`, disposes on HMR |
-| `boot` | implemented | Composition root: keyboard/gamepad input with the input profiles (`?profile=`, `?debounce=`, saved choice), Web Audio and the browser platform handed to `@shmup/shell`'s `bootShell` (content + atlas loading, boot error screen, renderer, game, rAF loop, audio unlock on first gesture); free flight by default, `?stage=<id>` (`stageFromSearch`, checked with `contentStageIds`), `?loadout=full` (`loadoutFromSearch`, M1-10), `?scene=showcase` / `?scene=calibration` |
+| `boot` | implemented | Composition root: keyboard/gamepad input with the input profiles (`?profile=`, `?debounce=`, saved choice), Web Audio and the browser platform handed to `@shmup/shell`'s `bootShell` (content + atlas loading, boot error screen, renderer, game, rAF loop, audio unlock on first gesture); free flight by default, `?stage=<id>` (`stageFromSearch`, checked with `contentStageIds`), `?loadout=full` (`loadoutFromSearch`, M1-10), `?scene=showcase` / `?scene=calibration` / `?scene=fx-gallery` (M1-14) |
 | `platform` | partial | Browser `Platform`: localStorage (memory fallback), visibility lifecycle, no `exit` |
 
 The rAF frame loop moved to [`@shmup/shell`](../../packages/shell/README.md) (M1-04).

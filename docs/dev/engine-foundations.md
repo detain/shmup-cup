@@ -219,5 +219,8 @@ registered with the World and draws `fireSpray`'s randomness from the gameplay s
 ([bullets-and-patterns.md](bullets-and-patterns.md)). M1-10 (done) turns player-shot headings
 into velocities with `SIN_TABLE_Q16` and keeps the shots in a third registered SoA pool
 (`playerShots`), and appends the `Clink` SFX cue
-([weapons-and-options.md](weapons-and-options.md)); M1-14/M1-15 consume the event kinds and cue
-registries, and M1-19 compares those hashes in golden replays.
+([weapons-and-options.md](weapons-and-options.md)); M1-14 (done) consumes the event kinds and
+the `FX_CUES` / `SFX_CUES` registries for particles, shake, flash, dim and score popups, appends
+`SimEventKind.Score` and seeds its particles with the core's sfc32 on a stream of its own
+([fx-and-game-feel.md](fx-and-game-feel.md)); M1-15 consumes the sound cues, and M1-19 compares
+those hashes in golden replays.

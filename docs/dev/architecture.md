@@ -65,8 +65,9 @@ weapons, loadouts, autofire, hits on enemies, trailing Options).
 - **Presentation packages depend only on core.** They implement core's contracts
   (`IRenderer`, `IAudio`, `PlatformInput`) and never call each other.
 - **`@shmup/shell` is the one boot path of the browser hosts** (M1-04, decision D34). It
-  depends on core and render-pixi, and on input-web only for the default owner of the
-  `input-profiles` content (M1-05, allowed by plan §3.1); the input and audio *adapters* reach
+  depends on core and render-pixi (which also owns the `fx` content kind since M1-14), and on
+  input-web only for the default owner of the `input-profiles` content (M1-05, allowed by plan
+  §3.1); the input and audio *adapters* reach
   it through interfaces (`ShellInput` = `PlatformInput` + `clear` / `setContext` / `destroy`,
   `IAudio`), so the shell never creates them itself.
 - **Apps are thin composition roots.** `src/boot/` in each app creates the input adapter,
@@ -86,8 +87,10 @@ calls the renderer or the mixer. Each displayed frame the host:
    queue belongs to the World (`game.events === game.world.events`); the stage pushes `Music`
    (M1-07), the enemies push explosion `Sfx` / `Particles` and `FormationBonus` (M1-08), bullet
    cancels push `Particles` (`FX_CUES.BulletCancel`, M1-09), the player weapons push their
-   `Sfx` cues (`PlayerShot`, `PlayerMissile`, `Clink` — M1-10), and the handlers arrive with the
-   FX/audio steps (M1-14, M1-15);
+   `Sfx` cues (`PlayerShot`, `PlayerMissile`, `Clink` — M1-10), the scoring pushes `Score`
+   (M1-14); since M1-14 the shell's `connectFxEvents` feeds particles, shake, flash, dim and
+   score popups to the renderer ([fx-and-game-feel.md](fx-and-game-feel.md)), and the audio
+   handlers arrive with M1-15;
 3. reads the read-only `RenderFrame` with `game.renderFrame()` — world sprite batches, HUD and
    UI draw lists, screen effects (plan §3.4) — and hands it to `renderer.render()`.
 
@@ -112,13 +115,17 @@ requestAnimationFrame(now)                       shell/frame-loop
              ├─ stepWorld(world, input)          core/world: the 9 phases below, world.tick++
              └─ state.tick++
  └─ game.events.drain(dispatcher.visit)          shell/dispatch → registered handlers
+     └─ connectFxEvents (free flight): emitFxCue / emitSfxCue, shake, flash, dim, popups.show
  └─ renderer.render(frame)                       render-pixi/renderer
-     │   frame = scene.update(game.renderFrame()) — free flight (default), showcase, calibration
+     │   frame = scene.update(game.renderFrame()) — free flight (default), showcase, calibration,
+     │   fx gallery
+     ├─ effects / particles / popups .step(tick delta)  render-pixi/effects + particles (M1-14)
      ├─ bindWorld(frame.world) if it is a new object   (load time only)
+     ├─ particles.sync(camera), popups.sync(camera)    FX layer, world pixels → screen
      ├─ parallax.sync(view), terrain.sync(view, camera) render-pixi/layers (a stage only)
      ├─ binding.sync(batch, camX, camY) per batch      render-pixi/sprites
      ├─ lasers.sync(view.lasers, camera)               render-pixi/layers (warning lines, beams)
-     ├─ shake offset, flash / dim quads
+     ├─ shake offset (frame + effects), flash (the brighter), playfield dim, menu dim
      ├─ hudView.draw(hud), uiView.draw(ui)             render-pixi/ui + text (skipped if unchanged)
      ├─ pass 1: scene → 384×216 RenderTexture          nearest sampling, no antialias
      └─ pass 2: one sprite, integer scale ×N, centred on the canvas (letterbox around it)
@@ -262,8 +269,9 @@ system, status,
   killer, a formation's bonus to the killer of its last member, 300 per capsule, boss parts and
   the boss tally to their destroyer), clamped at
   99,999,990, and the session hi-score (unhashed); the sim-side game-feel timers — hit-stop,
-  decaying integer shake and flash kinds — that push the events the presentation draws from
-  M1-14 ([death-and-scoring.md](death-and-scoring.md)).
+  decaying integer shake and flash kinds — that push the events the presentation draws since
+  M1-14 ([death-and-scoring.md](death-and-scoring.md)); every credited kill and boss part also
+  pushes a `Score` event for the popups ([fx-and-game-feel.md](fx-and-game-feel.md)).
 - **`collision`** — closed scalar shape tests (circle, AABB, circle–AABB, capsule–circle,
   segment–AABB), layer masks, a counting-sort uniform grid whose queries equal brute force,
   and pixel-exact terrain queries over per-tile column-height masks (phase 6 tests the ship's
@@ -366,7 +374,11 @@ Details: [rendering-and-shell.md](rendering-and-shell.md).
   384×216 → ×1 cropped (never blurred).
 - The 384×216 scene is a lifted-navy background, one container per core `LayerId` in the
   §18 draw order (the world layers in a group offset by screen shake; HUD, UI and DEBUG
-  fixed), a flash quad over the world and a dim quad under the UI.
+  fixed), a playfield-dim and a flash quad over the world and a menu-dim quad under the UI.
+- **Game feel** (M1-14): the renderer owns a 256-particle pool and 16 score popups on the `FX`
+  layer (below the enemy bullets) and the screen effects (integer shake, flash per kind behind
+  a ≤ 3-a-second limiter, playfield dim), all advanced by simulated ticks and fed from the sim's
+  events by the shell ([fx-and-game-feel.md](fx-and-game-feel.md)).
 - **World sprites:** one preallocated `SpriteLayerBinding` per `SpriteBatchView` of the
   frame's `WorldView`, created when a new world object is bound; each frame it copies
   `spriteTable[spriteId] + frame`, `round(x − camX)`, `round(y − camY) + PLAYFIELD_Y`, flips,
@@ -479,8 +491,9 @@ input-web `keymap`, `keyboard`, `gamepad`, `web-input`, `remote`, `rebind`
 (partial: profiles, contexts, persistence hook — the rebinding UI comes in M2-16); audio-web
 `web-audio`;
 render-pixi `renderer`, `viewport`, `test-pattern`, `palette`, `atlas`, `layers`, `sprites`,
-`text`, `ui`; shell `boot`, `loader`, `dispatch`, `error-screen`, `frame-loop`, `flight`,
-`showcase`;
+`text`, `ui`, `particles`, `effects` (partial: shake, flash, dim, popups — raster and palette
+effects later); shell `boot`, `loader`, `dispatch`, `error-screen`, `frame-loop`, `flight`,
+`showcase`, `fx-gallery`;
 the apps' `boot` and `platform`. Everything else declares its intended API only. The
 build-time tooling outside the packages (the asset pipeline in `scripts/assets/`, the Vite
 plugins in `vite.shared.ts`) has no `moduleInfo`; it is covered by the tests under
@@ -511,4 +524,5 @@ plugins in `vite.shared.ts`) has no `moduleInfo`; it is covered by the tests und
 | A sprite or animation | A `*.sprite.json` pixel map under `assets/source/sprites/` (its path is its name) or a generator in `scripts/assets/procedural/`; `hitFlash: true` for anything the player can shoot. Real art: a PNG (+ Aseprite export) of the same name — [asset-pipeline.md](asset-pipeline.md#extending-it) |
 | A sound, music or particle cue | Append a name to `SFX_CUES` / `MUSIC_CUES` / `FX_CUES` in `core/events` (never renumber — ids are recorded in replays and bound by `content/audio/` / `content/fx/`) |
 | A presentation event kind | Append a code to `SimEventKind` and a name to `SIM_EVENT_KIND_NAMES`, then register a handler on the shell's dispatcher (`shell.events.on`) |
+| An explosion, spark or other particle effect | A preset and a trigger in `content/fx/*.fx.json` — bound to an `FX_CUES` cue or to a sound that implies a visual — checked in `?scene=fx-gallery`; no code ([fx-and-game-feel.md](fx-and-game-feel.md#extending-it)) |
 | A new entity kind | Give it an SoA pool (`createSoaPool`) registered with `world.pools.register(name, pool)` (flushed in the removal phase and hashed automatically) or an object pool (`createPool`) with a mirror batch, sized from the budgets in `shmup_feat.md` §22 |

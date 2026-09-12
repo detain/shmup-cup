@@ -467,7 +467,9 @@ world.players[0].hits; // hits recorded by playerHit — each one a death since 
 - **M1-13** (done) — bosses fire through the same primitives from their parts (and lane
   lasers, attached lasers follow a part through `BulletHost.laserSources`); a boss's death
   cancels bullets and lasers with sparkles ([bosses-and-warning.md](bosses-and-warning.md)).
-- **M1-14** — particle presets for `FX_CUES.BulletCancel`.
+- **M1-14** (done) — `FX_CUES.BulletCancel` draws the `bullet.cancel` preset (a pale-gold
+  `fx/sparkle` twinkle) where each bullet was cancelled
+  ([fx-and-game-feel.md](fx-and-game-feel.md)).
 - **M2-01** — rank growth (`computeRank` reads stage, loop, power and special); Easy's 16 aim
   directions; revenge bullets.
 - **M2-02** — the pattern DSL, bending lasers, cancel into points, graze (`BulletFlag.Grazed`).

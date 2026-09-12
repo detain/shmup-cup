@@ -493,7 +493,7 @@ code):
 | An enemy spec field | `EnemySpec` + `ENEMY_SCHEMA` (+ `optional` and a default in `completeEnemy`), a typed array in the `SpecTable` if per-tick code needs it, the README sample and `example.enemies.json` |
 | An `Enemy` field | The class field, its reset in the spawn function, and `mixEnemy` in `core/debug` (in a fixed place — or replays diverge unnoticed) |
 | A drop kind | Append to `ENEMY_DROPS` and `DropKind` (code = position + 1), the schema picks it up; map it to an item in `core/powerups` `takeDrops` (capsules today — [powerups-and-shields.md](powerups-and-shields.md#extending-it)) |
-| A particle cue | Append to `FX_CUES` (never renumber); `content/fx/` binds it to a preset in M1-14 |
+| A particle cue | Append to `FX_CUES` (never renumber) and bind it to presets in `content/fx/` ([fx-and-game-feel.md](fx-and-game-feel.md#extending-it)); a visual for an existing sound needs only an `sfx` trigger there |
 | A new use of the tick outcomes | Read `world.enemies.outcomes` after phase 7 of the same tick (it is reset in the next phase 3) |
 
 ## Tests
@@ -549,5 +549,8 @@ code):
 - **M1-13** (done) — bosses are `enemies` entries with a `boss` section that this system never
   spawns; their parts take the grid ids after the enemy slots and share the shots' hit path; the
   boss roster lives in `core/behaviors` ([bosses-and-warning.md](bosses-and-warning.md)).
-- **M1-14** — particle presets for `FX_CUES`; **M2-01** — rank modifiers and revenge bullets;
+- **M1-14** (done) — the explosion cues draw their presets (a fireball plus sparks or debris),
+  `EnemyHit` sparks at a damaged enemy, and every credited kill pops its score (`Score` events
+  from `core/scoring`) ([fx-and-game-feel.md](fx-and-game-feel.md)); **M2-01** — rank modifiers
+  and revenge bullets;
   **M2-02** — the pattern DSL; **M2-04** — the Option Hunter.

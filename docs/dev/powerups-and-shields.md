@@ -273,8 +273,10 @@ is never touched (it detonates on that tick). The whole death sequence is
 | Break | `Sfx ShieldBreak` (13) + `Particles` `FX_CUES.ShieldBreak` (4, new), param 1 |
 | Mega Crash | `Flash` (`id` = `FlashKind.MegaCrash` 0, param 12, at 0, 0 — through `core/fx` `requestFlash` since M1-12) + `Sfx MegaCrash` (15) — plus the cancel sparkles and the enemies' explosions |
 
-Nothing consumes them yet: sounds arrive with M1-15, particles and the screen flash with M1-14,
-the HUD with M1-16. `SFX_CUES.CapsulePickup` (9) is **not** used by meter mode (Direct-mode items,
+Since M1-14 the renderer draws the shield break's `shield.break` sparks, the Mega Crash flash
+(white, 0.85) and — through an `sfx` trigger on `MeterAdvance` — a cyan `pickup` ring at the ship
+on every capsule pickup ([fx-and-game-feel.md](fx-and-game-feel.md)); capsules show no score
+popup (it would cover the ship). Sounds arrive with M1-15, the HUD with M1-16. `SFX_CUES.CapsulePickup` (9) is **not** used by meter mode (Direct-mode items,
 M2-05).
 
 ## Determinism, restarts and hashing
@@ -389,8 +391,9 @@ powerups.detonateMegaCrash(0); // debug: clear the screen now
   `requestFlash` ([death-and-scoring.md](death-and-scoring.md)).
 - **M1-13** (done) — bosses stay out of Mega Crash (a test checks it); the WARNING and the boss
   death's bullet cancel ([bosses-and-warning.md](bosses-and-warning.md)).
-- **M1-14 / M1-15** — the shield-break particles, the Mega Crash flash, cancel sparkles, and the
-  sounds of every event above.
+- **M1-14** (done) — the shield-break particles, the Mega Crash flash, cancel sparkles, the
+  pickup ring ([fx-and-game-feel.md](fx-and-game-feel.md)).
+- **M1-15** — the sounds of every event above.
 - **M1-16** — the HUD power meter (`cursor`, `equippable`, `METER_LABELS`, the `PowerUp` flash).
 - **M2-03** — loadouts B–D and `!` variants; **M2-04** — the other meter shields and the Option
   Hunter; **M2-05** — Direct mode's items and the Arm tiers.

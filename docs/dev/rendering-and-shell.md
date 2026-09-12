@@ -5,8 +5,9 @@ step **M1-04**. Later steps *fill* the contract (the World in M1-06, see
 [sim-world.md](sim-world.md); terrain and parallax in M1-07, see
 [stage-runtime.md](stage-runtime.md); the enemy bullets and the new `LaserView` in M1-09, see
 [bullets-and-patterns.md](bullets-and-patterns.md); the player shots and Options in M1-10, see
-[weapons-and-options.md](weapons-and-options.md); the HUD and menus in M1-16;
-particles and screen effects in M1-14) without changing its shape.
+[weapons-and-options.md](weapons-and-options.md); particles, score popups and the screen shake /
+flash / dim fed by the sim's events in M1-14, see [fx-and-game-feel.md](fx-and-game-feel.md);
+the HUD and menus in M1-16) without changing its shape.
 
 This page is the *how and why*. Exact signatures are in
 [api-reference.md](api-reference.md); the TSDoc in the sources is the authoritative
@@ -35,6 +36,10 @@ TV), **D30** (hit flash = white sibling sprite) and **D34** (one shared browser 
 │   hud, ui: DrawList (typed-array commands)   │        │   hudView.draw(hud), uiView.draw(ui)   │
 │   screen: { shakeX, shakeY, flash, dim }     │        │   pass 1: scene → 384×216 texture      │
 └──────────────────────────────────────────────┘        │   pass 2: texture ×N → canvas          │
+ game.events ──► shell dispatcher (connectFxEvents) ──► │ fx (M1-14): effects / particles /      │
+                                                        │   popups stepped by the tick delta,    │
+                                                        │   synced with the camera; shake, flash │
+                                                        │   and dim added to frame.screen's      │
                                                         └────────────────────────────────────────┘
 ```
 
@@ -59,7 +64,7 @@ Strings enter only through a draw list's string slots, and only when the text ch
 | 6 | `Player` | world | Options (their own batch, listed before the ships so they draw below them — M1-10), ships, shields (the Force Field's batch, listed after the ships so it draws over them — M1-11) |
 | 7 | `Hitbox` | world | hitbox marker |
 | 8 | `Items` | world | capsules (M1-11) |
-| 9 | `Fx` | world | explosions, particles |
+| 9 | `Fx` | world | the particle pool (normal-blend sprites, then additive) and the score popups — the renderer's own, fed by events (M1-14, [fx-and-game-feel.md](fx-and-game-feel.md)) |
 | 10 | `EnemyBullets` | world | enemy bullets (the bullet pool itself, M1-09), then the enemy lasers — above explosions and items so they stay readable (§12) |
 | 11 | `Hud` | screen | `RenderFrame.hud` |
 | 12 | `Ui` | screen | `RenderFrame.ui` |
@@ -165,8 +170,10 @@ returns the same object from every `renderFrame()` call: `world` is the World's 
 (`game.world.view`, the same object for the whole session — its batches are the enemies'
 ground / air mirrors (M1-08), the player-shot and Option mirrors (M1-10), the players' mirror
 on `LayerId.Player` (M1-06) and the enemy bullet pool (M1-09), plus the laser view), `hud` / `ui` are the session's (empty) draw lists,
-`screen` is all zeros until the fx system (M1-14). `screen.shakeX/Y` are rounded by the renderer; `flash` (white over the
-playfield, under the HUD) and `dim` (black under the UI layer) are 0…1 and clamped.
+the game's `screen` is all zeros — the event-driven shake, flash and playfield dim of M1-14 live
+in the renderer's `effects` and are added on top of it. `screen.shakeX/Y` are rounded by the
+renderer; `flash` (white over the playfield, under the HUD) and `dim` (black under the UI layer)
+are 0…1 and clamped.
 
 The layout constants are in core `config`: `HUD_BAR_HEIGHT` 8, `PLAYFIELD_Y` 8,
 `PLAYFIELD_W` 384, `PLAYFIELD_H` 200 (D20). `Game` also exposes `events` — the `core/events`
@@ -255,19 +262,27 @@ stops at 20 digits). `createTextMetrics([font])` implements core's `TextMetrics`
 ### One frame
 
 `createPixiRenderer({ canvas, displayWidth, displayHeight, atlas, testPattern?, font?,
-glyphCapacity?, preferWebGLVersion? })` builds the scene once: a lifted-navy background quad
-(never black — VA panels), the optional calibration pattern, the layer stack, a flash quad
-(last child of the world group, 32 px bigger than the frame on each side so shake never
-uncovers an edge), a dim quad (first child of the UI layer) and the HUD / UI draw-list views.
+glyphCapacity?, preferWebGLVersion?, effects?, fxSeed?, particleCapacity? })` builds the scene
+once: a lifted-navy background quad (never black — VA panels), the optional calibration pattern,
+the layer stack, a playfield-dim quad and a flash quad (the last children of the world group, 32
+px bigger than the frame on each side so shake never uncovers an edge), a menu-dim quad (first
+child of the UI layer), the HUD / UI draw-list views and — M1-14 — the screen effects, the
+particle pool and the score popups (the last two on the `FX` layer, with an atlas / font).
 `render(frame)` then:
 
 1. updates the calibration pattern (when enabled);
-2. rebinds if `frame.world` is a different object, then syncs the parallax bands, the terrain
-   grid, every sprite binding and the laser binding;
-3. offsets the world group by the rounded shake, sets flash / dim alpha and visibility;
-4. draws the HUD and UI lists (skipped when unchanged);
-5. renders the scene into the 384×216 render texture, then that texture as one sprite,
+2. steps the effects, particles and popups by the ticks since the last frame (`frame.tick`
+   delta: 0 while paused, ≤ 60; a tick going back clears them);
+3. rebinds if `frame.world` is a different object, then syncs the particles and popups (with the
+   world's camera), the parallax bands, the terrain grid, every sprite binding and the laser
+   binding;
+4. offsets the world group by the rounded `frame.screen` shake plus the effects' shake, shows the
+   brighter of the frame's white flash and the effects' tinted flash, sets both dims;
+5. draws the HUD and UI lists (skipped when unchanged);
+6. renders the scene into the 384×216 render texture, then that texture as one sprite,
    integer-scaled and centred, onto the canvas (`computeIntegerViewport`).
+
+How the effects work: [fx-and-game-feel.md](fx-and-game-feel.md).
 
 Both passes reuse option objects created with the renderer. Pixi's `render(options)` writes
 into the object it gets (`target`, `clear`, `clearColor`, a cached `transform`), so a small
@@ -300,7 +315,7 @@ const shell = await bootShell({
   audio, // createWebAudio()   — also behind the platform's audio; destroyed by stop()
   platform: (renderer) => createWebPlatform({ input, audio, webgl2: renderer.webGLVersion === 2 /* … */ }),
   gameConfig: { remoteMode: false, stage: stageFromSearch(location.search) }, // apps/web: ?stage=
-  scene: sceneFromSearch(location.search), // 'flight' (default) | 'showcase' | 'calibration'
+  scene: sceneFromSearch(location.search), // 'flight' (default) | 'showcase' | 'calibration' | 'fx-gallery'
   audioUnlock: 'gesture', // 'immediate' on the TV
   contentOwners: { [INPUT_PROFILES_KIND]: profiles.load }, // optional: merged over DEFAULT_CONTENT_OWNERS
 });
@@ -314,9 +329,9 @@ const shell = await bootShell({
 | 1 | `loadGameContent(files, { owners })`: core kinds through `loadContent()`, every foreign kind through its owner | `CONTENT COULD NOT BE READ` (a thrown error), `CONTENT ERRORS: N PROBLEMS` (issues, one `path: message` line each) |
 | 2 | `loadImages(pageUrls, () => new Image())` — all pages in parallel, the bar advances per page | `ATLAS PAGE FAILED TO LOAD` (`<url>: AssetLoadError: …`) |
 | 3 | `createAtlas(manifest, images)` | `ATLAS DOES NOT MATCH ITS MANIFEST` |
-| 4 | `createPixiRenderer(...)` — WebGL1 first | `WEBGL IS NOT AVAILABLE` |
+| 4 | `createPixiRenderer(...)` — WebGL1 first; `fxSeed` = the game's seed xor a salt, `effects` = `ShellOptions.effects` | `WEBGL IS NOT AVAILABLE` |
 | 5 | `options.platform(renderer)`, then `createGame(platform, gameConfig, content.db)` | `SHMUP CUP FAILED TO START` |
-| 6 | Scene set up (free flight / showcase: the scene's name table + `bindWorld(scene.world)`; calibration: content's names and a frame without a world), dispatcher created | — |
+| 6 | `renderer.setFxContent(shell.fx)`; scene set up (free flight / showcase / fx gallery: the scene's name table + `bindWorld(scene.world)`; calibration: content's names and a frame without a world), dispatcher created — in free flight with `connectFxEvents` (M1-14) | — |
 | 7 | Suspend → `input.clear()` + `audio.suspend()`; resume → `audio.resume()`; audio unlock (first `keydown` / `pointerdown` in the capture phase, or immediately); `resize` → `renderer.resize()` | — |
 | 8 | rAF loop started, overlay removed, canvas marked `running` | — |
 
@@ -328,9 +343,12 @@ A file whose kind is neither a core kind nor claimed by an owner is an issue
 (`<path>: no loader for content kind "<kind>"`), so a new content kind cannot ship
 unvalidated. Owners come from `contentOwners`, then the shell's `DEFAULT_CONTENT_OWNERS`
 (today `input-profiles` → `@shmup/input-web` `loadInputProfiles`, M1-05 — the one reason the
-shell imports input-web). Both apps pass an input-profile registry's `load` for that kind
-instead, so they keep the parsed profiles and apply them in the platform factory, which runs
-after validation ([input-profiles.md](input-profiles.md#choosing-the-active-profile)).
+shell imports input-web — and `fx` → `@shmup/render-pixi` `loadFxContent`, M1-14). Both apps
+pass an input-profile registry's `load` for that kind instead, so they keep the parsed profiles
+and apply them in the platform factory, which runs after validation
+([input-profiles.md](input-profiles.md#choosing-the-active-profile)). For `fx`, `bootShell`
+registers its own owner (under `contentOwners`) that keeps the parsed presets for the renderer
+(`Shell.fx`); an app `fx` owner would replace it and leave the particles without presets.
 
 ### The overlay canvas
 
@@ -365,11 +383,13 @@ startFrameLoop(win, onFrame); // requests the next frame before calling onFrame
 load time with `shell.events.on(kind, handler)` (returns an unsubscribe function; an unknown
 kind throws `RangeError`). Dispatching is a table lookup and a loop — no allocation.
 Handlers receive the queue's **reused** record: copy fields out, never keep it. Events with
-no handler are counted in `unhandled` and dropped; the queue is the World's (M1-06). The stage
-pushes `Music` (M1-07) and the enemies push explosion `Sfx` / `Particles` (`FX_CUES`) and
-`FormationBonus` (M1-08) and the player weapons push `Sfx` (`PlayerShot`, `PlayerMissile`,
-`Clink` — M1-10), but the audio and FX handlers only arrive in M1-14 / M1-15 — until then these
-events are counted as unhandled.
+no handler are counted in `unhandled` and dropped; the queue is the World's (M1-06). Since
+M1-14, free flight registers `connectFxEvents(events, renderer)`: `Particles` and `Sfx` →
+particle bursts (the sounds a `content/fx/` trigger binds: hits, clinks, pickups, shots),
+`Shake` / `Flash` / `Dim` → the screen effects, `Score` / `FormationBonus` / `BossDefeated` →
+score popups ([fx-and-game-feel.md](fx-and-game-feel.md#which-event-draws-what)). The audio
+handlers arrive in M1-15 — until then `Music`, `HitStop`, `Rumble`, `PowerUp` and `MusicDuck`
+are counted as unhandled (the `Sfx` events reach the particle handler).
 
 ### Scenes until the scene stack exists
 
@@ -378,6 +398,7 @@ events are counted as unhandled.
 | (none) / `flight` | **Free flight** (`createFlightScene(game)`, M1-06): the game's World — the KESTREL flying in, then moving under the player's control — over three drifting star layers, both HUD bars (`1P` and player 1's score, `FREE FLIGHT`, `HI` and the session hi-score, `lives − 1` stock ships, `ARROWS MOVE` — M1-12). With a stage (`gameConfig.stage`, the web app's `?stage=<id>`, M1-07): the stage's parallax bands and scrolling terrain instead of the starfield, the stage name as the title, the enemies its timeline spawns (M1-08) and their bullets (M1-09). The ship autofires in every build, with Options and lasers under the web app's `?loadout=full` (M1-10); power capsules and the Force Field are World batches too (M1-11 — the power meter itself is not drawn before the M1-16 HUD); ships that are `dying` / `dead` are not drawn, a respawn blinks, and `GAME OVER` (red) replaces the title once the World's status says so (M1-12); a boss's parts are a World batch, and a running WARNING is drawn as a translucent band with its text in the UI list (M1-13, `?stage=test-boss`) | `content.db.sprites.names` + `FLIGHT_SPRITES` |
 | `showcase` | The **sprite showcase** (`createShowcase()`): three scrolling star layers, the KESTREL flying a figure-eight with its thruster and two Options replaying its path, five drifters with periodic hit flashes, a rotating ring of twelve bullets, both HUD bars (scores via the `number` op, lives, power meter with a moving highlight) and the title "SHMUP CUP" / "SPRITE SHOWCASE" in the bitmap font | `SHOWCASE_SPRITES` |
 | `calibration` | The skeleton's test pattern (checker border, grid, colour bars, placeholder ship, moving marker) under empty layers | `content.db.sprites.names` |
+| `fx-gallery` | The **fx gallery** (`createFxGallery(renderer)`, M1-14): a still starfield and, one station a second, every particle preset of `content/fx/` bursting at the centre, then the three shakes, the three flash kinds, the playfield dim and a row of score popups, named in the UI list (`3/19  EXPLOSION.LARGE`); it drives the renderer's effects directly — the World's events are not connected ([fx-and-game-feel.md](fx-and-game-feel.md#the-fx-gallery-scenefx-gallery)) | `FX_GALLERY_SPRITES` |
 
 **Free flight** owns a `WorldView` whose batches are two starfield batches **followed by the
 game World's own batches**, on the World's camera object and with the World's `parallax` /
@@ -478,6 +499,10 @@ pnpm test:e2e                                        # builds web + tizen, then 
   whole width) for three seconds; once it is gone the TRIAL WARDEN flies in from the right and
   stays in the right part of the playfield (its `bosses/hull-block` colour there); no console
   errors or atlas warnings (M1-13).
+- `fx-gallery.spec.ts` — `?scene=fx-gallery` in the web build and the Tizen build opened from
+  disk shows the station label (its cyan) and, within the first stations, warm additively
+  blended fireball pixels in the middle of the playfield, so the screenshot (attached to the
+  report) is not blank; no console errors or atlas warnings (M1-14).
 - `shell.spec.ts` — an aborted atlas request ends on the boot error screen (overlay canvas,
   state `error`); a 1000×600 window gets a centred ×2 frame on the letterbox colour and a
   resize to 1920×1080 re-fits it to ×5; free flight animates.
@@ -536,8 +561,9 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | `packages/render-pixi/test/sprites/`, `ui/`, `text/`, `layers/` | Binding sync (camera, `PLAYFIELD_Y`, anchors, flips, blink, flash, shrinking batches), quad-pool ordering and overflow, draw-list views (revision skipping, hidden sprites), text layout and metrics, number formatting, layer order |
 | `packages/render-pixi/test/layers/layers-stage*.test.ts` | Terrain grid size (49 × 26, capped at the map's rows), textures and positions, the ring (nothing re-textured inside a tile, one column / row per tile edge, all after a jump or new tables; after a long random camera walk it equals a freshly built grid), pixel agreement with the sprite bindings at half-pixel cameras, parallax coverage for any offset / spacing, validation, allocation-free syncs |
 | `packages/render-pixi/test/layers/layers-lasers*.test.ts` | The laser binding (M1-09): two hidden sprites per slot, the tinted telegraph line vs the beam frame of the rounded width (band / frame boundaries, wider-than-frames scaling), blink and zero / NaN lengths hidden, rotation written only on change, camera rounding without `-0`, shrinking views, capacity validation, destroy, zero allocation through a whole laser life |
-| `packages/render-pixi/test/renderer/` | The renderer wired with a fake `WebGLRenderer`: passes, rebinding (incl. parallax / terrain bindings below the batches), shake / flash / dim, reused pass options (fails if `resetPass` is removed), allocation probes |
-| `packages/shell/test/` | Boot happy path and every failure (error screen, state attribute, cleanup), content owners (the default `input-profiles` owner, an app owner replacing it), the input context forwarded before a frame's polls, image loading and progress, dispatch (copy-on-write unsubscribe), overlay drawing, the free-flight scene (sprite ids, starfield drift / wrap / pause, HUD, the WARNING band — M1-13, empty content, zero allocation per frame), showcase determinism and allocation |
+| `packages/render-pixi/test/renderer/` | The renderer wired with a fake `WebGLRenderer`: passes, rebinding (incl. parallax / terrain bindings below the batches), shake / flash / dim, reused pass options (fails if `resetPass` is removed), allocation probes; `renderer-fx*` (M1-14): the particles / popups / effects it owns, stepping by the tick delta, flash tint composition, the two dims, the FX layer under the enemy bullets |
+| `packages/render-pixi/test/particles/`, `effects/` | The `fx` content validation, the particle pool, the screen effects and the score popups (M1-14 — [fx-and-game-feel.md](fx-and-game-feel.md#tests)) |
+| `packages/shell/test/` | Boot happy path and every failure (error screen, state attribute, cleanup), content owners (the default `input-profiles` owner, an app owner replacing it), the input context forwarded before a frame's polls, image loading and progress, dispatch (copy-on-write unsubscribe; `connectFxEvents` — its table, an allocation guard of the whole event path and an end-to-end game-feel run, M1-14), overlay drawing, the fx gallery, the free-flight scene (sprite ids, starfield drift / wrap / pause, HUD, the WARNING band — M1-13, empty content, zero allocation per frame), showcase determinism and allocation |
 | `test/e2e/` | The real browser path, both builds (above) |
 
 ## Gotchas
@@ -561,6 +587,8 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | `bindWorld` throws `parallax band i has layer …` | A `ParallaxView` band is not on `BG_FAR` / `BG_MID` — stage content only produces those; check a hand-made view |
 | Terrain and sprites disagree by one pixel | Something moved the terrain container by other than `round(−camera.x)`: sprite bindings draw `round(x − camera.x)`, and only that formula agrees for integer world positions (a test checks half-pixel cameras) |
 | `?scene=calibration` does nothing on the TV | The widget has no query string; the calibration scene is for browsers (`pnpm dev`, `vite preview`, the Tizen dev server) |
+| No explosions or sparks, but the game runs | The renderer has no presets (`setFxContent` not called — an app `fx` owner replaced the shell's) or the scene is not free flight (only it connects the World's events) — [fx-and-game-feel.md](fx-and-game-feel.md#gotchas) |
+| An explosion covers a bullet | Something was added to a layer above `ENEMY_BULLETS`; particles and popups belong on `FX` |
 
 ## Next steps that build on this page
 
@@ -590,6 +618,8 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
   `WarningView` in the render contract and the flight scene's WARNING band; the World pushes
   `Dim`, `BossDefeated`, the siren with its `SfxPriority.Critical` hint and the boss flashes —
   still unhandled ([bosses-and-warning.md](bosses-and-warning.md)).
-- **M1-14 / M1-15** — particles, shake, flash, the dim overlay and audio handlers registered on
-  the dispatcher.
+- **M1-14** (done) — the renderer's particle pool, screen effects (shake, tinted flash behind a
+  limiter, playfield dim) and score popups, fed through `connectFxEvents`; the shell owns the
+  `fx` content; `?scene=fx-gallery` ([fx-and-game-feel.md](fx-and-game-feel.md)).
+- **M1-15** — the audio handlers registered on the dispatcher.
 - **M1-16** — core `ui` fills the HUD and UI draw lists (menus, HUD model).

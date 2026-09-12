@@ -7,7 +7,8 @@
  * {@link FX_GALLERY_STATION_TICKS} ticks each — every particle preset in content order (burst at
  * the playfield's centre three times per station), then the three shake magnitudes, the three
  * flash kinds (Mega Crash, a WARNING pulse, a boss's final blast), the playfield dim and a row of
- * score popups — and names the current station in the UI (`4/20  EXPLOSION.LARGE`). It drives
+ * score popups — and names the current station in the UI (`3/19  EXPLOSION.LARGE` with the
+ * shipped content's 11 presets). It drives
  * the renderer's `particles`, `effects` and `popups` directly (not through sim events); the
  * game's World keeps running unseen behind it, but its events are not connected to the effects
  * in this scene.
@@ -121,6 +122,12 @@ export interface FxGallery {
 /**
  * Creates the gallery for a renderer's effects.
  *
+ * @remarks
+ * The preset stations are read from `fx.particles.content` **now**: give the renderer its
+ * presets (`setFxContent`) before creating the gallery — `bootShell` does. Without particles
+ * (`null`: no atlas) only the {@link FX_GALLERY_EXTRAS} stations exist; without popups the
+ * `popups` station shows nothing.
+ *
  * @param fx - The renderer's `particles`, `effects` and `popups` (a `PixiRenderer`).
  * @param options - Starfield tile size.
  * @returns The scene; views, draw lists and labels allocated now.
@@ -139,7 +146,14 @@ export function createFxGallery(fx: FxTargets, options: FxGalleryOptions = {}): 
   const presets = particles === null ? [] : particles.content.presets.map((preset) => preset.id);
   const stations = Object.freeze([...presets, ...FX_GALLERY_EXTRAS]);
   const labels = stations.map((name, i) => `${i + 1}/${stations.length}  ${name.toUpperCase()}`);
+  /**
+   * Station index of one of the {@link FX_GALLERY_EXTRAS} (they follow the presets).
+   *
+   * @param name - An entry of {@link FX_GALLERY_EXTRAS}.
+   * @returns Its station index.
+   */
   const extra = (name: string): number => presets.length + FX_GALLERY_EXTRAS.indexOf(name);
+  /** Station indices of the extras, resolved once so `run` compares numbers only. */
   const station = {
     shakeSmall: extra('shake.small'),
     shakeMedium: extra('shake.medium'),

@@ -67,13 +67,13 @@ shmup-cup/
 │   │   ├── tsconfig.build.json  emits dist/ (customConditions off)
 │   │   └── test/tsconfig.json   Node-side program for tests
 │   ├── render-pixi/        @shmup/render-pixi — PixiJS v8 IRenderer: WebGL1-first, 384×216 RT, integer upscale
-│   │   └── src/ renderer ✔ viewport ✔ test-pattern ✔ palette ✔ atlas ✔ layers ✔ (+ terrain grid, parallax bands, laser sprites) sprites ✔ text ✔ ui ✔ · particles effects debug (placeholders)
+│   │   └── src/ renderer ✔ viewport ✔ test-pattern ✔ palette ✔ atlas ✔ layers ✔ (+ terrain grid, parallax bands, laser sprites) sprites ✔ text ✔ ui ✔ particles ✔ (fx content owner, 256-particle pool) effects ✔ (partial: shake, flash + limiter, dim, score popups) · debug (placeholder)
 │   ├── audio-web/          @shmup/audio-web — Web Audio IAudio: interactive latency, buses, suspend/resume
 │   │   └── src/ web-audio ✔ · sfx music loader (placeholders)
 │   ├── input-web/          @shmup/input-web — keyboard/remote + Gamepad API → InputSnapshot
 │   │   └── src/ keymap ✔ keyboard ✔ gamepad ✔ web-input ✔ remote ✔ (debounce, diagonal/SOCD policies) rebind ✔ (partial: input profiles, game/menu tables, profile choice)
 │   └── shell/              @shmup/shell — shared browser host of apps/web + apps/tizen (decision D34)
-│       └── src/ boot ✔ loader ✔ dispatch ✔ error-screen ✔ frame-loop ✔ flight ✔ (default scene: free flight) showcase ✔
+│       └── src/ boot ✔ loader ✔ dispatch ✔ (+ connectFxEvents) error-screen ✔ frame-loop ✔ flight ✔ (default scene: free flight) showcase ✔ fx-gallery ✔ (?scene=fx-gallery)
 │
 ├── apps/                   deployable hosts (thin adapters around the packages)
 │   ├── web/                @shmup/web — Vite dev app (HMR), browser Platform; also Electron's renderer
@@ -95,7 +95,8 @@ shmup-cup/
 │   ├── enemies/            ✔ enemy definitions: hp, score, hurtbox, behaviour script + tunables, mover, ground anchor, drop, child; boss sections (parts, weak points, phases); test-range roster, test boss (+ README, example)
 │   ├── paths/              ✔ movement paths: spline control points, baked to arc-length tables at load (+ README, example)
 │   ├── weapons/            ✔ weapon tunables + preset loadouts: the Type A arsenal the game fires (+ README, example)
-│   └── input/              ✔ input profiles (kind input-profiles, validated by input-web rebind): per-context key/button tables, remote debounce/diagonal/SOCD, Tizen keys to register
+│   ├── input/              ✔ input profiles (kind input-profiles, validated by input-web rebind): per-context key/button tables, remote debounce/diagonal/SOCD, Tizen keys to register
+│   └── fx/                 ✔ particle presets + the event cues that spawn them (kind fx, validated by render-pixi particles): explosions, debris, sparks, clinks, cancel sparkles, pickup ring, muzzle flash (+ README, example)
 ├── assets/
 │   ├── source/             editable sources — in git: sprites/**/*.sprite.json pixel maps (+ real-art PNG overrides), fonts/*.font.json, tilesets, audio
 │   └── generated/          pipeline output (atlas/main.png + main.json, cache) — ignored
@@ -104,7 +105,7 @@ shmup-cup/
 ├── test/                   cross-package integration tests (Vitest project "integration", part of `pnpm test`); e2e/ = Playwright browser smoke tests (`pnpm test:e2e`)
 ├── docs/
 │   ├── client/             player/tester docs
-│   └── dev/                contributor docs (this file, architecture, engine-foundations, content-data, asset-pipeline, rendering-and-shell, sim-world, stage-runtime, enemies-and-behaviors, api-reference, …)
+│   └── dev/                contributor docs (this file, architecture, engine-foundations, content-data, asset-pipeline, rendering-and-shell, sim-world, stage-runtime, enemies-and-behaviors, fx-and-game-feel, api-reference, …)
 ├── tools/                  standalone tools, NOT workspace members (own package.json/lockfile, npm not pnpm)
 │   └── input-probe/        Tizen diagnostic .wgt: remote/gamepad/display measurements (see input-probe.md)
 └── shmup_feat.md  shmup_tech.md  input_probe_spec.md  README.md  LICENSE (MPL-2.0)

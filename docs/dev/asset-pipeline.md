@@ -105,7 +105,7 @@ Each module exports `generate(): SpriteDef[]` and is registered in
 | `bullets` | `bullets/{round,oval,needle}-{pink,red,purple}` — bright core, saturated body, dark rim (`shmup_feat.md` §12). Round 7×7 × 1 frame; oval 9×9 and needle 11×11 × 8 directional frames |
 | `lasers` | `lasers/beam-{pink,red,purple}` (M1-09) — enemy laser beams in the bullet colours: 8 frames of 4×8 px, frame `k` a horizontal band `k + 1` px tall (dark rim rows from 3 px, body rows from 5 px, a bright core). Every column is identical, so the renderer stretches a frame to any length and picks the frame of the beam's drawn width |
 | `explosions` | `fx/explosion-small` (16×16 × 6), `-medium` (32×32 × 7), `-large` (48×48 × 8); animation `burst` |
-| `particles` | `fx/spark` (5×5 × 3, `fade`), `fx/debris` (6×6 × 4, `tumble`) |
+| `particles` | `fx/spark` (5×5 × 3, `fade`), `fx/debris` (6×6 × 4, `tumble`), `fx/sparkle` (5×5 × 4, `twinkle` — fixed pixel lists, M1-14), `fx/ring` (9×9 × 4, `grow` — a 1-px ring of radius 1…4 by a `Math.sqrt` distance test, M1-14) |
 | `items` | `items/capsule` (12×8 × 2, `blink`) |
 | `shields` | `shields/force-field` (30×24 × 4 wear states: `fresh`, `worn`, `damaged`, `critical`) |
 | `starfield` | `bg/stars-far`, `bg/stars-mid`, `bg/stars-near` — seamless 128×128 transparent tiles |
@@ -415,5 +415,8 @@ M1-11 (done) draws `items/capsule` and `shields/force-field` (its four wear fram
 sprites — the death's explosion and debris are particle cues for M1-14, the HUD's stock icon is
 `hud/life`; M1-13 (done) draws the four boss-part sprites (`bosses/hull-block`, `core`,
 `shield-plate`, `emitter`, all with `@flash`) for the test boss — no new sprites were needed;
-M1-14 uses the explosions and particles; M1-16 builds the HUD from `hud/*` and `ui/pixel`;
+M1-14 (done) draws `fx/explosion-*`, `fx/spark` and `fx/debris` as particle presets and added
+two procedural sprites to `particles.mjs` — `fx/sparkle` (5×5, 4 frames, the pale-gold
+bullet-cancel twinkle) and `fx/ring` (9×9, 4 frames, the growing cyan pickup ring)
+([fx-and-game-feel.md](fx-and-game-feel.md)); M1-16 builds the HUD from `hud/*` and `ui/pixel`;
 M1-18 adds the Zone A art (HALCYON BULWARK's parts among it).

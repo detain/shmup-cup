@@ -2,9 +2,11 @@
  * # fx — deterministic game-feel state (hit-stop, shake, flash)
  *
  * **Status: partial.** Hit-stop, screen-shake and screen-flash *requests* are implemented (plan
- * M1-12): each sets a simulation timer and pushes the matching presentation event. Particles, the
- * hit flash of sprites and the shake / flash rendering live in the presentation layer (M1-14);
- * the optional "authentic slowdown" is M3.
+ * M1-12): each sets a simulation timer and pushes the matching presentation event. Particles and
+ * the shake / flash / dim rendering live in the presentation layer (`@shmup/render-pixi`
+ * `particles` / `effects`, fed by the shell's `connectFxEvents` since M1-14); the sprites' hit
+ * flash is the `flashTicks` of each system plus the atlas's `@flash` frames (D30). The optional
+ * "authentic slowdown" is M3.
  *
  * **Responsibility.** Game-feel state that must live in the simulation because it affects timing
  * or is replayed: hit-stop counters (4–5 ticks on big events), screen-shake requests (integer
@@ -21,14 +23,16 @@
  * **Shake.** {@link requestShake} starts a decaying integer shake of one of the
  * {@link ShakeMagnitude}s; a request weaker than the shake still running is ignored (no event). The
  * current amplitude is {@link shakeAmount}: `ceil(magnitude · ticksLeft / duration)` — it decays to
- * 0 over the duration. The presentation (M1-14) shakes the world layers from the
- * `SimEventKind.Shake` events (`param` = magnitude, `id` = duration in ticks) and owns the global
- * off switch; the sim state only makes the request replayable and inspectable.
+ * 0 over the duration. The presentation (render-pixi `effects`, M1-14) shakes the world layers
+ * from the `SimEventKind.Shake` events (`param` = magnitude, `id` = duration in ticks), mirroring
+ * {@link shakeAmount} tick for tick, and owns the global off switch; the sim state only makes the
+ * request replayable and inspectable.
  *
  * **Flash.** {@link requestFlash} starts a full-screen flash of a {@link FlashKind}
  * ({@link FLASH_KIND_TICKS} gives its length) and pushes `SimEventKind.Flash` (`id` = the kind,
- * `param` = the duration in ticks). The photosensitivity limiter (≤ 3 flashes a second) is the
- * presentation's (M1-14).
+ * `param` = the duration in ticks). The photosensitivity limiter (≤ 3 flashes a second, 1 with
+ * reduced flashing) and the look of each kind are the presentation's (render-pixi `effects`,
+ * M1-14).
  *
  * **Timers.** Shake and flash count down in phase 9 on every tick, frozen ones included (plan §3.2:
  * "ticks and fx timers still advance"), but not on the tick of their request — a request during

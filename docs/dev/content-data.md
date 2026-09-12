@@ -64,8 +64,9 @@ when there is any issue, and passes `db` to `createGame` (M1-04,
 - Core kinds (`CONTENT_KINDS`): `player`, `weapons`, `enemies`, `stage`, `tileset`. Any other kind is
   returned untouched in `foreign`, in path order, for its owning package to validate
   (`input-profiles` → input-web `rebind` since M1-05 — see
-  [input-profiles.md](input-profiles.md); `sfx`/`music` → audio-web in M1-15, `fx` →
-  render-pixi in M1-14).
+  [input-profiles.md](input-profiles.md); `fx` → render-pixi `particles` since M1-14 — see
+  [fx-and-game-feel.md](fx-and-game-feel.md#particle-presets-contentfx-kind-fx); `sfx`/`music`
+  → audio-web in M1-15).
 - `example.*.json` files are format samples. The plugin never ships them;
   `pnpm content:check` validates them as their own set.
 - `CONTENT_FORMAT_VERSION` is **1**. An older file is upgraded by `CONTENT_MIGRATIONS`

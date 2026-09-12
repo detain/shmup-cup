@@ -137,6 +137,12 @@ ES5 and linted with `ecmaVersion: 5`.
   allocated per sound; pass hot objects (the ship, the camera) to a method that reads their
   fields instead of passing their fractional coordinates
   ([weapons-and-options.md](weapons-and-options.md#zero-allocation-and-the-hot-path-rules)).
+  And from M1-14: state that leaves the small-integer range (an RNG's 32-bit words) lives in a
+  typed array, not in closure `let`s, and a draw returned from a call stays within 16 bits; a
+  fractional value the renderer reads every frame is a field updated when it changes, not a
+  getter; a quad pool shared by items of different tints re-tints quads whenever the items
+  shift — give each item its own quads so a tint is written only when it really changes
+  ([fx-and-game-feel.md](fx-and-game-feel.md#zero-allocation-and-the-hot-path-rules)).
 - Behaviour coroutines (generators, D29) allocate a small result object on every resume:
   scripts **sleep** (`yield ticks`) and are resumed only when they wake; per-tick motion
   belongs in a mover (numbers on the body), never in a `yield 1` loop.
