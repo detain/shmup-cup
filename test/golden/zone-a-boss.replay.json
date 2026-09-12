@@ -15,6 +15,12 @@
       "maxTicksPerFrame": 4,
       "seed": 3,
       "difficulty": "normal",
+      "rankBase": 2,
+      "rankGrowth": 1,
+      "extendFirst": 20000,
+      "extendEvery": 70000,
+      "continues": 3,
+      "bulletSpeedMul": 1,
       "powerUpMode": "meter",
       "deathPenalty": "arcade",
       "startingLives": 3,
@@ -47,15 +53,15 @@
     "AIwH"
   ],
   "hashes": [
-    2650079705
+    1960787130
   ],
-  "finalHash": 2704729944,
+  "finalHash": 4171453268,
   "description": "the stage skip to HALCYON BULWARK with the full loadout and the Arcade penalty",
   "expected": {
     "status": "stageClear",
     "ticks": 908,
     "score": 37000,
-    "lives": 3,
+    "lives": 4,
     "deathTicks": [],
     "bossDefeated": true
   }

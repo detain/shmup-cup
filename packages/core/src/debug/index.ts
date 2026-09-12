@@ -27,13 +27,14 @@
  * Crash and shield — kind, hits, max hits, i-frames, terrain flag, hit and break ticks, absorbed
  * count — and the count of enemy drops already turned into items; the items themselves are a
  * registered pool), then the effect timers and scores (M1-12: shake magnitude, ticks, duration and
- * request tick, flash ticks, kind and request tick, every player's score and the counts of kills
- * and formation bonuses already credited — not the session hi-score, which a host may raise from
- * its save), then the boss (M1-13: its state, position, timers, phase, script wake tick, motion,
- * destroyed-part mask, killer, blast flag and every part's offset, position, hit points,
- * destroyed / open flags and hit flash — plus the WARNING's active flag and ticks; the piercing
- * shots' boss-part cooldown tables join their enemy tables above). Scripts are covered by their
- * `wakeTick`; a coroutine's internal position
+ * request tick, flash ticks, kind and request tick, every player's score — with its next extend
+ * threshold and continue count (M2-01) — and the counts of kills and formation bonuses already
+ * credited — not the session hi-score, which a host may raise from its save —, then the continues
+ * used and the rank inputs' loop, stage, power and special terms, M2-01), then the boss (M1-13:
+ * its state, position, timers, phase, script wake tick, motion, destroyed-part mask, killer, blast
+ * flag and every part's offset, position, hit points, destroyed / open flags and hit flash — plus
+ * the WARNING's active flag and ticks; the piercing shots' boss-part cooldown tables join their
+ * enemy tables above). Scripts are covered by their `wakeTick`; a coroutine's internal position
  * cannot be hashed. Numbers are hashed as their little-endian IEEE-754 double bytes, so the hash
  * is identical on every engine and platform, and two worlds that simulated the same inputs from
  * the same seed hash equal. Golden replays (M1-19) compare these hashes. The hash reads state only
@@ -444,9 +445,20 @@ function mixFxAndScores(world: World): void {
   mixNumber(fx.flashTick);
   const scoring = world.scoring;
   const scores = scoring.board.scores;
-  for (let p = 0; p < scores.length; p++) mixNumber(scores[p].score);
+  for (let p = 0; p < scores.length; p++) {
+    const entry = scores[p];
+    mixNumber(entry.score);
+    mixNumber(entry.nextExtend);
+    mixNumber(entry.continues);
+  }
   mixNumber(scoring.killsScored);
   mixNumber(scoring.bonusesScored);
+  mixNumber(world.continuesUsed);
+  const rank = world.rankInputs;
+  mixNumber(rank.loop);
+  mixNumber(rank.stage);
+  mixNumber(rank.power);
+  mixNumber(rank.special);
 }
 
 /**

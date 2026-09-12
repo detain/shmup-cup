@@ -31,6 +31,8 @@ import {
   BossState,
   DEFAULT_BEHAVIORS,
   DEFAULT_BOSS_BEHAVIORS,
+  DEFAULT_DIFFICULTY_TABLE,
+  DIFFICULTY_PRESETS,
   ENGINE_SPRITES,
   KNOWN_SCRIPT_IDS,
   MUSIC_CUES,
@@ -42,8 +44,11 @@ import {
   checkWeaponBehaviors,
   createGame,
   createHeadlessPlatform,
+  computeRank,
   createStageRunner,
   loadContent,
+  powerRank,
+  resolveGameConfig,
   terrainAt,
   type ContentDb,
   type ContentFile,
@@ -263,6 +268,7 @@ describe('integration: content/ validates', () => {
       paths: ['paths'],
       stages: ['stage'],
       tilesets: ['tileset'],
+      rules: ['rules'],
       input: ['input-profiles'],
       fx: ['fx'],
       // The SFX bank next to the music folder (audio/main.sfx.json, audio/music/*.music.json).
@@ -347,6 +353,36 @@ describe('integration: content/ validates', () => {
         ).toEqual([]);
       }
     }
+  });
+
+  it('ships the difficulty presets of plan M2-01, equal to the built-in table', () => {
+    const { db } = loadContent(shippedFiles);
+    expect(db.difficulty).toEqual(DEFAULT_DIFFICULTY_TABLE);
+    const table = db.difficulty!;
+    expect(DIFFICULTY_PRESETS.map((p) => table[p].rankBase)).toEqual([0, 2, 4, 6]);
+    expect(DIFFICULTY_PRESETS.map((p) => table[p].aimDirections)).toEqual([16, 32, 32, 32]);
+    for (const preset of DIFFICULTY_PRESETS) {
+      expect(table[preset].extends, preset).toEqual({ first: 20000, every: 70000 });
+    }
+    // The Normal row is the default config: a session without overrides plays it.
+    const normal = resolveGameConfig({}, table);
+    expect(normal).toEqual(resolveGameConfig());
+    expect(normal.deathPenalty).toBe('classic');
+    // The example sample is a valid, different table.
+    expect(loadContent(read(['rules/example.rules.json'])).db.difficulty?.easy.continues).toBe(9);
+  });
+
+  it('gives zone A fans revenge bullets only at a high rank', () => {
+    const { db } = loadContent(shippedFiles);
+    const vane = db.enemies[db.enemyIndex.get('vane') ?? -1];
+    expect(vane?.revenge).toEqual({ minRank: 12, pattern: 'aimed', speed: 1.25 });
+    const minRank = vane?.revenge?.minRank ?? 0;
+    const rank = (base: number, power: number): number =>
+      computeRank({ difficultyBase: base, growth: 1, loop: 1, stage: 1, power, special: 0 });
+    // A fully powered ship on Normal (Missile, Laser, four Options, a shield) meets them…
+    expect(rank(2, powerRank(1, 0, 1, 4, 1, 0))).toBeGreaterThanOrEqual(minRank);
+    // …the 4-way bot's Speed / Missile / four Options do not, even on Arcade.
+    expect(rank(6, powerRank(1, 0, 0, 4, 0, 0))).toBeLessThan(minRank);
   });
 
   it('gives the KESTREL the six speed levels of decision D3', () => {

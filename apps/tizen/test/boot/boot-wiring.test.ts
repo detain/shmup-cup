@@ -437,6 +437,8 @@ describe('tizen/boot bootTizenApp wiring', () => {
     // In the game, Back pauses (the remote's game table binds it to Pause); it never exits.
     tap(13); // PRESS OK
     tap(13); // START
+    expect(app.game.scenes?.stack.top?.id).toBe('difficulty');
+    tap(13); // NORMAL
     expect(app.game.scenes?.stack.top?.id).toBe('game');
     tap(10009);
     expect(app.game.scenes?.stack.top?.id).toBe('pause');

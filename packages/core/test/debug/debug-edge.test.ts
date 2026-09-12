@@ -199,9 +199,18 @@ function referenceHash(w: World): number {
   ]) {
     num(value);
   }
-  for (const score of w.scoring.board.scores) num(score.score);
+  // Each score with its next extend and continue count (M2-01).
+  for (const score of w.scoring.board.scores) {
+    num(score.score);
+    num(score.nextExtend);
+    num(score.continues);
+  }
   num(w.scoring.killsScored);
   num(w.scoring.bonusesScored);
+  // The continues used and the rank inputs (M2-01).
+  num(w.continuesUsed);
+  for (const value of [w.rankInputs.loop, w.rankInputs.stage, w.rankInputs.power]) num(value);
+  num(w.rankInputs.special);
   // The boss (M1-13): its slot, the parts in use, the WARNING.
   const b = w.bosses.boss;
   word(b.state);

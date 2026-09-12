@@ -47,11 +47,14 @@ describe('core/game with and without the scene flow', () => {
       game.step();
     };
     press(Action.Confirm);
-    press(Action.Confirm);
+    press(Action.Confirm); // START → the difficulty menu
+    expect(game.scenes?.stack.top?.id).toBe('difficulty');
+    press(Action.Confirm); // NORMAL (buffered by the menu's open lock)
+    game.step();
     expect(game.scenes?.stack.top?.id).toBe('game');
     expect(game.world).not.toBe(placeholder);
     expect(game.world.events).toBe(game.events);
-    expect(game.state.tick).toBe(4);
+    expect(game.state.tick).toBe(7);
   });
 
   it('host pause and platform suspend freeze the flow; resume opens the pause menu', () => {

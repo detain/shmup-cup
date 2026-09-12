@@ -1,7 +1,8 @@
 /**
  * Browser tests of the scene flow (plan M1-16) in headless Chromium: both builds boot to the
  * title (`data-shmup-scene="title"`, the canvas-drawn logo, no ship); **Enter starts the game from
- * the title** — once past `PRESS OK`, once on START — and the KESTREL flies in with the HUD bars
+ * the title** — once past `PRESS OK`, once on START, once on NORMAL in the difficulty menu (M2-01)
+ * — and the KESTREL flies in with the HUD bars
  * and the power meter drawn; the pause key opens the pause menu over the dimmed, frozen game and
  * closes it again. In the Tizen build opened from disk the remote's OK (key code 13) starts the game
  * and Back (10009) pauses and resumes it through the scene stack — it never exits the app there.
@@ -172,6 +173,8 @@ test.describe('scene flow (web build)', () => {
     await tap(page, 'Enter'); // PRESS OK → the menu
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
     await tap(page, 'Enter'); // START
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'difficulty');
+    await tap(page, 'Enter'); // NORMAL
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
     await waitFrames(page, 60); // the fly-in
     const game = await shoot(page);
@@ -205,6 +208,8 @@ test.describe('scene flow (web build)', () => {
     await waitFrames(page, 6);
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
     await tap(page, 'Enter'); // START
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'difficulty');
+    await tap(page, 'Enter'); // NORMAL
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
     expect(errors).toEqual([]);
   });
@@ -216,7 +221,9 @@ test.describe('scene flow (Tizen build via file://)', () => {
     const errors = await openTitle(page, TIZEN_INDEX);
     const canvas = page.locator('#game');
     await tap(page, 'Enter'); // keyCode 13 = OK
-    await tap(page, 'Enter');
+    await tap(page, 'Enter'); // START
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'difficulty');
+    await tap(page, 'Enter'); // NORMAL
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
     await waitFrames(page, 60);
     expect(count(await shoot(page), KESTREL_HULL)).toBeGreaterThan(0);

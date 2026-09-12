@@ -134,8 +134,10 @@ describe('core/data module', () => {
       'paths',
       'stage',
       'tileset',
+      'rules',
     ]);
     expect(isContentKind('weapons')).toBe(true);
+    expect(isContentKind('rules')).toBe(true);
     expect(isContentKind('input-profiles')).toBe(false);
   });
 

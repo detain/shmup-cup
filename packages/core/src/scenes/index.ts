@@ -20,6 +20,10 @@
  *   - {@link TitleScene}: the logo, a blinking `PRESS OK`, then the menu START / OPTIONS / EXIT —
  *     EXIT only when the platform can quit (`platform.exit`). Shows the saved hi-score, plays the
  *     title music.
+ *   - {@link DifficultyScene} (overlay, M2-01 — START): EASY / NORMAL / HARD / ARCADE with the
+ *     focused preset's lives, continues and hi-score; OK starts the game on that preset (its World
+ *     gets `core/config` `withDifficulty` of the host config — {@link SceneFlow.gameConfig}), Back
+ *     returns to the title menu.
  *   - {@link GameScene}: **owns the World** — every start (and RETRY STAGE) creates a fresh one;
  *     ticks it with the snapshot; Pause (remote Play/Pause, Back — bound to Pause in the game
  *     context) opens the pause menu; `stageClear` / `gameOver` open their screens after a short
@@ -33,14 +37,17 @@
  *     and writes it when something changed (shmup_feat.md §21).
  *   - {@link StageClearScene} (overlay): the tally (score, hi-score), then `TO BE CONTINUED` (M1
  *     has one zone), then the title; OK skips ahead.
+ *   - {@link ContinueScene} (overlay, M2-01): a game over with continues left counts down 10 s;
+ *     OK continues at the last checkpoint (`core/world` `continueWorld`), Back or the timeout →
+ *     the game-over screen.
  *   - {@link GameOverScene} (overlay): OK (after a short lock) or 10 s → title.
  *
  *   **Saves (M1-17).** The flow plays with a `core/save` {@link SaveStore} (the host's, loaded
- *   before the title — or a memory-only one): the session hi-score starts from the saved best of
- *   the game's mode ({@link SceneFlow.modeKey}); when a game ends on the game-over or stage-clear
- *   screen its score is inserted into that mode's table (name `---` until the name entry of
- *   M2-15), the statistics count, and the save is written (only when it changed); closing the
- *   Options screen writes the options the same way.
+ *   before the title — or a memory-only one): the session hi-score of each difficulty starts from
+ *   the saved best of its table ({@link SceneFlow.modeKey}: power-up mode and difficulty); when a
+ *   game ends on the game-over or stage-clear screen its score is inserted into its difficulty's
+ *   table (name `---` until the name entry of M2-15), the statistics count, and the save is
+ *   written (only when it changed); closing the Options screen writes the options the same way.
  *   - {@link ConfirmDialog} (overlay): YES / NO, focused on NO — the Tizen **exit confirmation**
  *     (Back on the title, or EXIT: `platform.exit()` runs only after YES — shmup_feat.md §23) and
  *     "quit to title?".
@@ -67,6 +74,8 @@
  * Input by scene (every player's input merged; the game table maps OK to PowerUp instead):
  * - **Title** — OK: `PRESS OK` → menu, then activate; Back: exit confirmation (when the platform
  *   can exit) or back to `PRESS OK`; Up / Down: move (auto-repeat).
+ * - **Difficulty** — Up / Down: move; OK: start the game on the focused preset; Back: title menu.
+ * - **Continue** — OK: continue; Back: give up (both after a 30-tick lock).
  * - **Game** — Pause or Back: pause menu.
  * - **Pause** — Pause or Back: resume; OK: activate; Up / Down: move.
  * - **Options** — Up / Down: move; Left / Right: change the slider / profile (OK steps the profile
@@ -80,16 +89,19 @@
  * - shmup_feat.md §23 — Tizen Back key and exit confirmation, pause on resume
  * - shmup_feat.md §4 — rule 8: menus fully D-pad + OK + Back navigable
  * - shmup_feat.md §21 — the Options menu (audio sliders, controls profile) and saved hi-scores
+ * - shmup_feat.md §16 — difficulty select; §10 — continues (the countdown)
  *
  * **Public API.** {@link SceneStack}, {@link createSceneStack}, {@link SCENE_STACK_DEPTH},
  * {@link Scene}, {@link SceneId}, {@link SceneFlow}, {@link SceneFlowHost}, {@link SceneStart},
  * {@link createSceneFlow}, {@link mergeMenuInput}, the scenes ({@link BootScene},
- * {@link TitleScene}, {@link GameScene}, {@link PauseScene}, {@link OptionsScene},
- * {@link StageClearScene}, {@link GameOverScene}, {@link ConfirmDialog}), {@link ConfirmPurpose},
+ * {@link TitleScene}, {@link DifficultyScene}, {@link GameScene}, {@link PauseScene},
+ * {@link OptionsScene}, {@link StageClearScene}, {@link ContinueScene}, {@link GameOverScene},
+ * {@link ConfirmDialog}), {@link ConfirmPurpose},
  * {@link InputProfileSetup}, the menu item indices ({@link TitleItem}, {@link PauseItem},
  * {@link OptionsItem}) and the timing constants ({@link STAGE_CLEAR_DELAY_TICKS},
  * {@link GAME_OVER_DELAY_TICKS}, {@link GAME_OVER_TIMEOUT_TICKS}, {@link GAME_OVER_LOCK_TICKS},
- * {@link STAGE_CLEAR_TALLY_TICKS}, {@link STAGE_CLEAR_CONTINUED_TICKS}, {@link PAUSE_DIM}).
+ * {@link STAGE_CLEAR_TALLY_TICKS}, {@link STAGE_CLEAR_CONTINUED_TICKS}, {@link PAUSE_DIM},
+ * {@link CONTINUE_COUNTDOWN_TICKS}, {@link CONTINUE_LOCK_TICKS}).
  *
  * **Planned.** Attract mode, mode / ship / weapon select, the zone map, name entry, hi-score
  * table, ending and credits (M2); more option groups (controls rebinding, display, game — M2-16).
@@ -97,7 +109,11 @@
  * @module
  */
 import {
+  DEFAULT_DIFFICULTY_TABLE,
+  DIFFICULTY_PRESETS,
   VOLUME_LEVELS,
+  withDifficulty,
+  type DifficultyPreset,
   type GameConfig,
   type InputProfileChoice,
   type UserOptions,
@@ -146,7 +162,7 @@ import {
   type Slider,
   type UiSprites,
 } from '../ui/index.js';
-import { stepWorld, type World } from '../world/index.js';
+import { canContinue, continueWorld, stepWorld, type World } from '../world/index.js';
 
 /** Module descriptor (see {@link defineModule}). */
 export const moduleInfo = defineModule({
@@ -158,10 +174,15 @@ export const moduleInfo = defineModule({
     'shmup_feat.md §23',
     'shmup_feat.md §4',
     'shmup_feat.md §21',
+    'shmup_feat.md §16',
+    'shmup_feat.md §10',
   ],
 });
 
-/** Scene identifiers (the M1 set, plus the M2 screens already named by the spec). */
+/**
+ * Scene identifiers (the M1 set, the difficulty menu and continue countdown of M2-01, plus the M2
+ * screens already named by the spec).
+ */
 export type SceneId =
   | 'boot'
   | 'title'
@@ -170,6 +191,8 @@ export type SceneId =
   | 'stageClear'
   | 'gameOver'
   | 'confirm'
+  | 'difficulty'
+  | 'continue'
   | 'attract'
   | 'select'
   | 'map'
@@ -533,9 +556,12 @@ export interface SceneFlowHost {
    * Called once when the flow is created (the game scene's placeholder World) and on every game
    * start and RETRY STAGE — scene transitions, never inside the per-tick hot path of a World.
    *
+   * @param config - The config of the game (the difficulty chosen under START —
+   *   `core/config` `withDifficulty` of {@link SceneFlowHost.config}); omitted = the host's
+   *   config.
    * @returns The World at tick 0.
    */
-  createWorld(): World;
+  createWorld(config?: GameConfig): World;
   /**
    * The save the flow plays with (loaded by the host before the title — `core/save` `loadSave` +
    * `createSaveStore`): the options the Options screen shows and stores, the hi-score tables. When
@@ -606,6 +632,12 @@ export const STAGE_CLEAR_CONTINUED_TICKS = 240;
 
 /** Dim of the world under the pause menu and the dialogs. */
 export const PAUSE_DIM = 0.5;
+
+/** Ticks of the continue countdown (10 s — shmup_feat.md §17 "continue countdown"). */
+export const CONTINUE_COUNTDOWN_TICKS = 600;
+
+/** Ticks the continue countdown ignores OK and Back (so a mashed button decides nothing). */
+export const CONTINUE_LOCK_TICKS = 30;
 
 /** The `mode` of the hi-score rows a game records (one player — shmup_feat.md §16). */
 const HI_SCORE_MODE_1P = '1p';
@@ -688,10 +720,28 @@ interface FlowControl {
   readonly confirm: ConfirmDialog;
   /** The Options screen. */
   readonly options: OptionsScene;
+  /** The difficulty menu under START. */
+  readonly difficultyMenu: DifficultyScene;
+  /** The continue countdown. */
+  readonly continueScreen: ContinueScene;
   /** The save the flow plays with. */
   readonly save: SaveStore;
-  /** The hi-score table of the session's games ({@link hiScoreModeKey} of the config). */
+  /**
+   * The hi-score table of the chosen difficulty's games ({@link hiScoreModeKey} of
+   * {@link FlowControl.worldConfig}).
+   */
   readonly modeKey: string;
+  /** The difficulty the next game plays (the host config's until one is chosen under START). */
+  difficulty: DifficultyPreset;
+  /**
+   * The config of each difficulty preset, in {@link DIFFICULTY_PRESETS} order: the host's config
+   * for its own preset, `withDifficulty` of it for the others (built with the flow).
+   */
+  readonly configs: readonly GameConfig[];
+  /** The session hi-score of each preset (same order), starting from the save's best. */
+  readonly bests: Float64Array;
+  /** The config the next game's World gets ({@link FlowControl.difficulty}'s). */
+  readonly worldConfig: GameConfig;
   /** The input profiles CONTROLS offers (empty: CONTROLS disabled). */
   readonly profiles: readonly InputProfileChoice[];
   /** Index of the profile in use in {@link FlowControl.profiles} (-1 = none of them). */
@@ -738,8 +788,20 @@ interface FlowControl {
   ask(purpose: ConfirmPurpose): void;
   /** Resets the stack to the title. */
   toTitle(): void;
-  /** The best score of the session (hi-score across games). */
-  hiScore: number;
+  /** The best score of the session for the chosen difficulty (hi-score across games). */
+  readonly hiScore: number;
+  /**
+   * Raises the chosen difficulty's session hi-score (a lower value changes nothing).
+   *
+   * @param value - A score (floored, capped at `MAX_SCORE` + 9 — a continue digit).
+   */
+  raiseHiScore(value: number): void;
+  /**
+   * Chooses the difficulty of the next game (the difficulty menu).
+   *
+   * @param difficulty - The preset.
+   */
+  chooseDifficulty(difficulty: DifficultyPreset): void;
 }
 
 /**
@@ -855,8 +917,9 @@ const TitlePhase = { Prompt: 0, Menu: 1 } as const;
  *
  * @remarks
  * Draws the `ui/logo` sprite (or `SHMUP CUP` as text when the content lacks it), a `PRESS OK` that
- * blinks with a 32-tick half-period, and the session hi-score (from the save's best at start). OK
- * opens the menu (locked for 2 ticks, focus on START). START replaces the title with the game;
+ * blinks with a 32-tick half-period, and the session hi-score of the chosen difficulty (from the
+ * save's best at start). OK opens the menu (locked for 2 ticks, focus on START). START opens the
+ * difficulty menu ({@link DifficultyScene}) over the title, which starts the game;
  * OPTIONS opens the {@link OptionsScene} over the title; EXIT and Back open the exit
  * confirmation when the platform can exit — otherwise Back returns from the menu to `PRESS OK`
  * (and does nothing on `PRESS OK`). Entering the title always shows `PRESS OK` and queues the title
@@ -908,8 +971,9 @@ export class TitleScene extends SceneBase {
   }
 
   /**
-   * `PRESS OK` → menu; START → game; OPTIONS → the Options screen; EXIT / Back → exit
-   * confirmation (when the platform can quit). Reads the merged menu input. Never allocates.
+   * `PRESS OK` → menu; START → the difficulty menu (then the game); OPTIONS → the Options screen;
+   * EXIT / Back → exit confirmation (when the platform can quit). Reads the merged menu input.
+   * Never allocates.
    */
   tick(): void {
     const flow = this.flow;
@@ -948,7 +1012,7 @@ export class TitleScene extends SceneBase {
     if (result === MenuResult.Confirmed) {
       if (menu.focus === TitleItem.Start) {
         flow.sfx(SFX_CUES.MenuSelect);
-        flow.stack.replace(flow.game);
+        flow.stack.push(flow.difficultyMenu);
       } else if (menu.focus === TitleItem.Options) {
         flow.sfx(SFX_CUES.MenuSelect);
         flow.stack.push(flow.options);
@@ -990,13 +1054,16 @@ export class TitleScene extends SceneBase {
  *
  * @remarks
  * The only scene with the `'game'` binding context. Every `enter` (a game start) and every
- * {@link GameScene.restart} (RETRY STAGE) creates a **new World object** through the host — seeded
- * from the same config, so the same inputs replay the same game — with the session hi-score, and
- * fades the music out (the new World queues its stage theme). Under an overlay the World is not
- * stepped, so it freezes. After the World's status turns `stageClear` / `gameOver` it keeps
- * running for {@link STAGE_CLEAR_DELAY_TICKS} / {@link GAME_OVER_DELAY_TICKS} ticks (counted only
- * while this scene ticks) before the end screen opens. The HUD list ({@link GameScene.hudList}) is
- * rebuilt by the flow's `updateFrame` through {@link GameScene.hud}; `drawUi` only draws the boss
+ * {@link GameScene.restart} (RETRY STAGE) creates a **new World object** through the host — with
+ * the config of the difficulty chosen under START, seeded the same way, so the same inputs replay
+ * the same game — with that difficulty's session hi-score, and fades the music out (the new World
+ * queues its stage theme). Under an overlay the World is not stepped, so it freezes. After the
+ * World's status turns `stageClear` / `gameOver` it keeps running for
+ * {@link STAGE_CLEAR_DELAY_TICKS} / {@link GAME_OVER_DELAY_TICKS} ticks (counted only while this
+ * scene ticks) before the end screen opens — for a game over with continues left
+ * (`core/world` `canContinue`) the {@link ContinueScene} instead of the game-over screen. The HUD
+ * list ({@link GameScene.hudList}) is rebuilt by the flow's `updateFrame` through
+ * {@link GameScene.hud}; `drawUi` only draws the boss
  * WARNING band (the one the flight scene drew before M1-16: black at alpha 144, red edges, the
  * World's text alternating red / yellow every 16 ticks).
  */
@@ -1059,7 +1126,7 @@ export class GameScene extends SceneBase {
     this.recordHiScore();
     const flow = this.flow;
     flow.music(MUSIC_CUES.Silence, MUSIC_FADE_TICKS);
-    const world = flow.host.createWorld();
+    const world = flow.host.createWorld(flow.worldConfig);
     world.scoring.board.setHiScore(flow.hiScore);
     this.world = world;
     this.starts++;
@@ -1070,10 +1137,13 @@ export class GameScene extends SceneBase {
     this.uiRevision++;
   }
 
-  /** Raises the session hi-score from the World's. */
+  /** Raises the session hi-score of the World's difficulty from the World's. */
   private recordHiScore(): void {
-    const best = this.world.scoring.board.hiScore;
-    if (best > this.flow.hiScore) this.flow.hiScore = best;
+    const world = this.world;
+    const index = DIFFICULTY_PRESETS.indexOf(world.config.difficulty);
+    const bests = this.flow.bests;
+    const best = world.scoring.board.hiScore;
+    if (index >= 0 && best > bests[index]) bests[index] = best;
   }
 
   /**
@@ -1101,7 +1171,13 @@ export class GameScene extends SceneBase {
       this.endTicks++;
       const delay = status === 'stageClear' ? STAGE_CLEAR_DELAY_TICKS : GAME_OVER_DELAY_TICKS;
       if (this.endTicks === delay) {
-        flow.stack.push(status === 'stageClear' ? flow.stageClear : flow.gameOver);
+        flow.stack.push(
+          status === 'stageClear'
+            ? flow.stageClear
+            : canContinue(world)
+              ? flow.continueScreen
+              : flow.gameOver,
+        );
       }
     } else {
       this.endTicks = 0;
@@ -1634,6 +1710,196 @@ export class ConfirmDialog extends SceneBase {
   }
 }
 
+/** Where the difficulty menu is drawn (inside its panel). */
+const DIFFICULTY_MENU_LAYOUT: MenuLayout = Object.freeze({
+  x: CX,
+  y: 78,
+  align: TextAlign.Center,
+  cursorX: CX - 44,
+});
+
+/** The difficulty menu's panel: left, top, width, height. */
+const DIFFICULTY_PANEL = Object.freeze({ x: CX - 88, y: 56, w: 176, h: 112 });
+
+/** The labels of the difficulty menu, in {@link DIFFICULTY_PRESETS} order. */
+const DIFFICULTY_LABELS: readonly string[] = Object.freeze(['EASY', 'NORMAL', 'HARD', 'ARCADE']);
+
+/**
+ * The difficulty menu under START (shmup_feat.md §16 "difficulty select", plan M2-01): EASY /
+ * NORMAL / HARD / ARCADE.
+ *
+ * @remarks
+ * An overlay over the title (dim {@link PAUSE_DIM}) with an opaque panel: `DIFFICULTY`, the four
+ * presets, and for the focused one its starting lives, continues and saved / session hi-score
+ * (from the flow's per-preset configs — `core/config` `withDifficulty`). Opening it focuses the
+ * difficulty chosen last (at first the host config's) and locks activation for 2 ticks. OK
+ * chooses the focused preset and starts the game (the stack is reset to the game scene, whose
+ * World gets that preset's config); Back closes it (the title menu takes input again). Up / Down
+ * move the focus (wrapping, auto-repeat) with the move sound.
+ */
+export class DifficultyScene extends SceneBase {
+  /** See {@link Scene.id}. */
+  readonly id = 'difficulty' as const;
+  /** An overlay: the title stays visible under it. */
+  override readonly overlay = true;
+  /** {@link PAUSE_DIM}. */
+  override readonly dim = PAUSE_DIM;
+  /** The presets, in {@link DIFFICULTY_PRESETS} order. */
+  readonly menu: ListMenu = createListMenu(DIFFICULTY_LABELS.slice());
+
+  /** See {@link SceneBase.stringSlots}. */
+  get stringSlots(): number {
+    return 4 + menuStringSlots(this.menu);
+  }
+
+  /** The preset the focus is on. */
+  get focused(): DifficultyPreset {
+    return DIFFICULTY_PRESETS[this.menu.focus] ?? 'normal';
+  }
+
+  /** Focus on the difficulty chosen last, locked for 2 ticks. */
+  override enter(): void {
+    super.enter();
+    const index = DIFFICULTY_PRESETS.indexOf(this.flow.difficulty);
+    this.menu.focus = index >= 0 ? index : 0;
+    this.menu.open(MENU_OPEN_LOCK_TICKS);
+  }
+
+  /** OK chooses and starts the game; Back closes the menu. Never allocates. */
+  tick(): void {
+    const flow = this.flow;
+    const menu = this.menu;
+    const before = menu.revision;
+    const result = menuTick(menu, flow.menuInput);
+    if (menu.revision !== before) this.uiRevision++;
+    if (result === MenuResult.Back) {
+      flow.sfx(SFX_CUES.MenuBack);
+      flow.stack.pop();
+      return;
+    }
+    if (result === MenuResult.Confirmed) {
+      flow.sfx(SFX_CUES.MenuSelect);
+      flow.chooseDifficulty(this.focused);
+      flow.stack.reset(flow.game);
+      return;
+    }
+    flow.menuSound(result);
+  }
+
+  /**
+   * Draws the panel, `DIFFICULTY`, the presets and the focused preset's lives, continues and
+   * hi-score.
+   *
+   * @param list - The UI list.
+   */
+  drawUi(list: DrawList): void {
+    const base = this.stringBase;
+    const p = DIFFICULTY_PANEL;
+    const index = this.menu.focus;
+    const config = this.flow.configs[index] ?? this.flow.worldConfig;
+    drawPanel(list, p.x, p.y, p.w, p.h, UI_COLORS.panel, UI_COLORS.border, 255);
+    list.setString(base, 'DIFFICULTY');
+    list.setString(base + 1, 'LIVES');
+    list.setString(base + 2, 'CONTINUES');
+    list.setString(base + 3, 'HI');
+    list.text(base, CX, p.y + 8, UI_COLORS.title, TextAlign.Center);
+    drawMenu(list, this.menu, base + 4, DIFFICULTY_MENU_LAYOUT);
+    const y = p.y + p.h - 26;
+    list.text(base + 1, p.x + 12, y, UI_COLORS.title);
+    list.number(config.startingLives, p.x + 60, y, 0, UI_COLORS.text);
+    list.text(base + 2, p.x + 80, y, UI_COLORS.title);
+    list.number(config.continues, p.x + 164, y, 0, UI_COLORS.text, TextAlign.Right);
+    list.text(base + 3, p.x + 12, y + 12, UI_COLORS.focus);
+    list.number(this.flow.bests[index] ?? 0, p.x + 164, y + 12, 8, UI_COLORS.text, TextAlign.Right);
+  }
+}
+
+/**
+ * The continue countdown (shmup_feat.md §10 continues, §17 "continue countdown"; plan M2-01).
+ *
+ * @remarks
+ * An overlay (dim 0.35) over the frozen game, pushed instead of the game-over screen when the game
+ * is over and continues are left (`core/world` `canContinue`). It fades the music out and counts
+ * down {@link CONTINUE_COUNTDOWN_TICKS} ticks, showing the seconds left (9 … 0, a tick sound on
+ * every change) and the continues left. After {@link CONTINUE_LOCK_TICKS} ticks OK continues —
+ * `continueWorld`: the stage restarts at its last checkpoint with fresh lives, the score's last
+ * digit counts the continue — and closes the countdown (the game runs on); Back gives up. Giving up
+ * or running out of time replaces it with the {@link GameOverScene} (which records the run).
+ */
+export class ContinueScene extends SceneBase {
+  /** See {@link Scene.id}. */
+  readonly id = 'continue' as const;
+  /** An overlay: the game stays visible (frozen) under it. */
+  override readonly overlay = true;
+  /** Dim 0.35. */
+  override readonly dim = 0.35;
+  /** Ticks since it opened. */
+  ticks = 0;
+
+  /** See {@link SceneBase.stringSlots}. */
+  get stringSlots(): number {
+    return 2;
+  }
+
+  /** Seconds left on the countdown: 9 … 0. */
+  get seconds(): number {
+    const left = CONTINUE_COUNTDOWN_TICKS - this.ticks;
+    return left > 0 ? Math.floor((left - 1) / 60) : 0;
+  }
+
+  /** The countdown starts; the music fades out. */
+  override enter(): void {
+    super.enter();
+    this.ticks = 0;
+    this.flow.music(MUSIC_CUES.Silence, MUSIC_FADE_TICKS);
+  }
+
+  /** OK continues, Back or the timeout gives up (after the lock). Never allocates. */
+  tick(): void {
+    const flow = this.flow;
+    const before = this.seconds;
+    this.ticks++;
+    if (this.seconds !== before) {
+      this.uiRevision++;
+      flow.sfx(SFX_CUES.MenuMove);
+    }
+    const pressed = this.ticks > CONTINUE_LOCK_TICKS ? flow.menuInput.pressed : 0;
+    if ((pressed & Action.Confirm) !== 0 && continueWorld(flow.game.world)) {
+      flow.sfx(SFX_CUES.MenuSelect);
+      flow.stack.pop();
+      return;
+    }
+    if ((pressed & Action.Back) !== 0 || this.ticks >= CONTINUE_COUNTDOWN_TICKS) {
+      if ((pressed & Action.Back) !== 0) flow.sfx(SFX_CUES.MenuBack);
+      flow.stack.replace(flow.gameOver);
+    }
+  }
+
+  /**
+   * Draws `CONTINUE?`, the seconds left and the continues left.
+   *
+   * @param list - The UI list.
+   */
+  drawUi(list: DrawList): void {
+    const base = this.stringBase;
+    const world = this.flow.game.world;
+    drawPanel(list, CX - 72, 72, 144, 64, UI_COLORS.panel, UI_COLORS.alert);
+    list.setString(base, 'CONTINUE?');
+    list.setString(base + 1, 'CREDITS');
+    list.text(base, CX, 80, UI_COLORS.focus, TextAlign.Center);
+    list.number(this.seconds, CX, 96, 0, UI_COLORS.alert, TextAlign.Center);
+    list.text(base + 1, CX - 56, 118, UI_COLORS.title);
+    list.number(
+      world.config.continues - world.continuesUsed,
+      CX + 56,
+      118,
+      0,
+      UI_COLORS.text,
+      TextAlign.Right,
+    );
+  }
+}
+
 /** The M1 scene flow (see the module docs). */
 export interface SceneFlow {
   /** The scene stack. */
@@ -1654,13 +1920,27 @@ export interface SceneFlow {
   readonly confirm: ConfirmDialog;
   /** The Options screen. */
   readonly options: OptionsScene;
+  /** The difficulty menu under START (M2-01). */
+  readonly difficultyMenu: DifficultyScene;
+  /** The continue countdown (M2-01). */
+  readonly continueScreen: ContinueScene;
   /**
    * The save the flow plays with (the host's store, or a memory-only one): options, hi-score
    * tables, stats.
    */
   readonly save: SaveStore;
-  /** The hi-score table the session's games go into (`core/save` `hiScoreModeKey(config)`). */
+  /**
+   * The hi-score table the next game goes into (`core/save` `hiScoreModeKey` of
+   * {@link SceneFlow.gameConfig} — one table per power-up mode and difficulty).
+   */
   readonly modeKey: string;
+  /** The difficulty the next game plays (the host config's until one is chosen under START). */
+  readonly difficulty: DifficultyPreset;
+  /**
+   * The config the next game's World gets: the host's for its own difficulty, `withDifficulty` of
+   * it for another (the content's `rules` table — or the built-in one — gives the preset fields).
+   */
+  readonly gameConfig: GameConfig;
   /** The input profiles the Options screen offers (empty: CONTROLS disabled). */
   readonly inputProfiles: readonly InputProfileChoice[];
   /**
@@ -1674,7 +1954,10 @@ export interface SceneFlow {
   readonly world: World;
   /** Every player's input of the current tick merged (what the menus read; reused). */
   readonly menuInput: PlayerInput;
-  /** The best score of the session (the title shows it; each new World starts from it). */
+  /**
+   * The best score of the session for the chosen difficulty (the title shows it; each new World
+   * starts from it) — from the save's best of that difficulty's table at start.
+   */
   readonly hiScore: number;
   /** What the renderer draws now (refreshed by {@link SceneFlow.updateFrame}). */
   readonly view: SceneFlowView;
@@ -1718,8 +2001,8 @@ export interface SceneFlow {
    */
   onResume(): void;
   /**
-   * Raises the session hi-score (the flow starts from the save's best of its mode); a lower value
-   * changes nothing.
+   * Raises the chosen difficulty's session hi-score (the flow starts from the save's best of each
+   * difficulty's table); a lower value changes nothing.
    *
    * @param value - A hi-score (floored; capped at the scoring's `MAX_SCORE` like the board's).
    */
@@ -1777,7 +2060,27 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
   const events = host.events;
   const menuInput: PlayerInput = { held: 0, pressed: 0, released: 0, device: 'none' };
   const save = host.save ?? createSaveStore(null);
-  const modeKey = hiScoreModeKey(host.config);
+  // One config per difficulty preset (the difficulty menu): the host's for its own preset.
+  const table = host.content.difficulty ?? DEFAULT_DIFFICULTY_TABLE;
+  const configs: GameConfig[] = [];
+  const bests = new Float64Array(DIFFICULTY_PRESETS.length);
+  for (let i = 0; i < DIFFICULTY_PRESETS.length; i++) {
+    const preset = DIFFICULTY_PRESETS[i];
+    const config =
+      preset === host.config.difficulty ? host.config : withDifficulty(host.config, preset, table);
+    configs.push(config);
+    bests[i] = Math.min(MAX_SCORE, save.bestScore(hiScoreModeKey(config)));
+  }
+  /**
+   * Index of a preset in {@link DIFFICULTY_PRESETS} (0 for an unknown one).
+   *
+   * @param preset - The preset.
+   * @returns Its index.
+   */
+  const presetIndex = (preset: DifficultyPreset): number => {
+    const i = DIFFICULTY_PRESETS.indexOf(preset);
+    return i >= 0 ? i : 0;
+  };
   const setup = host.inputProfiles ?? null;
   const profiles: readonly InputProfileChoice[] = setup === null ? [] : setup.choices;
   let activeProfile = -1;
@@ -1790,9 +2093,28 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     host,
     sprites: resolveUiSprites(host.content),
     menuInput,
-    hiScore: 0,
     save,
-    modeKey,
+    difficulty: host.config.difficulty,
+    configs,
+    bests,
+    get worldConfig(): GameConfig {
+      return configs[presetIndex(control.difficulty)];
+    },
+    get modeKey(): string {
+      return hiScoreModeKey(control.worldConfig);
+    },
+    get hiScore(): number {
+      return bests[presetIndex(control.difficulty)];
+    },
+    raiseHiScore(value: number): void {
+      const i = presetIndex(control.difficulty);
+      if (value > bests[i]) bests[i] = value > MAX_SCORE + 9 ? MAX_SCORE + 9 : Math.floor(value);
+    },
+    chooseDifficulty(difficulty: DifficultyPreset): void {
+      if (DIFFICULTY_PRESETS.indexOf(difficulty) < 0) return;
+      control.difficulty = difficulty;
+      control.title.uiRevision++;
+    },
     profiles,
     activeProfile,
     userOption(kind: number, value: number): void {
@@ -1802,15 +2124,17 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
       const world = control.game.world;
       const scores = world.scoring.board.scores;
       const reached = world.stage === null ? '' : world.stage.stage.id;
+      // The World's own table: its difficulty (chosen under START) names it.
+      const key = hiScoreModeKey(world.config);
       let rank = -1;
       for (let p = 0; p < scores.length && p < world.players.length; p++) {
         if (p > 0 && !world.players[p].active) continue;
         const r = save.recordScore(
-          modeKey,
+          key,
           createHiScoreEntry(scores[p].score, {
             reached,
             mode: HI_SCORE_MODE_1P,
-            difficulty: host.config.difficulty,
+            difficulty: world.config.difficulty,
           }),
         );
         if (p === 0) rank = r;
@@ -1837,7 +2161,8 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     toTitle(): void {
       stack.reset(control.title);
     },
-  } as { -readonly [K in keyof FlowControl]: FlowControl[K] };
+    // The scene fields are filled right below (the scenes take the control in their constructors).
+  } as unknown as { -readonly [K in keyof FlowControl]: FlowControl[K] };
   control.boot = new BootScene(control);
   control.title = new TitleScene(control);
   control.game = new GameScene(control);
@@ -1846,7 +2171,8 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
   control.gameOver = new GameOverScene(control);
   control.confirm = new ConfirmDialog(control);
   control.options = new OptionsScene(control);
-  control.hiScore = Math.min(MAX_SCORE, save.bestScore(modeKey));
+  control.difficultyMenu = new DifficultyScene(control);
+  control.continueScreen = new ContinueScene(control);
   control.game.world.scoring.board.setHiScore(control.hiScore);
   // The placeholder World queued its stage theme; the flow does not start in the stage.
   events.clear();
@@ -1860,6 +2186,8 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     control.gameOver,
     control.confirm,
     control.options,
+    control.difficultyMenu,
+    control.continueScreen,
   ];
   let base = 0;
   for (const scene of scenes) {
@@ -1900,8 +2228,18 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     gameOver: control.gameOver,
     confirm: control.confirm,
     options: control.options,
+    difficultyMenu: control.difficultyMenu,
+    continueScreen: control.continueScreen,
     save,
-    modeKey,
+    get modeKey(): string {
+      return control.modeKey;
+    },
+    get difficulty(): DifficultyPreset {
+      return control.difficulty;
+    },
+    get gameConfig(): GameConfig {
+      return control.worldConfig;
+    },
     inputProfiles: profiles,
     get activeInputProfile(): number {
       return control.activeProfile;
@@ -1983,9 +2321,7 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     },
     setHiScore(value) {
       // Capped like the scoring board's, so the title and a new World show the same value.
-      if (value > control.hiScore) {
-        control.hiScore = value > MAX_SCORE ? MAX_SCORE : Math.floor(value);
-      }
+      control.raiseHiScore(value > MAX_SCORE ? MAX_SCORE : value);
       control.game.world.scoring.board.setHiScore(control.hiScore);
       control.title.uiRevision++;
     },

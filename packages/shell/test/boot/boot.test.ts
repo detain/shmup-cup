@@ -1003,7 +1003,9 @@ describe('shell/boot the scene flow (M1-16, the default scene)', () => {
     const shell = await promise;
     let at = press(0, 1000);
     at = press(Action.Confirm, at);
-    at = press(Action.Confirm, at);
+    at = press(Action.Confirm, at); // START → the difficulty menu
+    at = press(Action.Confirm, at); // NORMAL (buffered by the menu's open lock)
+    at = press(0, at);
     expect(attributes.get(SCENE_ATTRIBUTE)).toBe('game');
     win.frame(at);
     expect(input.contexts).toEqual(['menu', 'game']);
@@ -1432,10 +1434,15 @@ describe('shell/boot saves and options (M1-17 edge)', () => {
     press(0);
     press(Action.Confirm); // PRESS OK
     press(Action.Confirm); // START
+    press(Action.Confirm); // NORMAL
+    press(0);
     expect(flow.stack.top?.id).toBe('game');
     addScore(shell.game.world, 0, 4321);
     shell.game.world.status = 'gameOver';
     for (let i = 0; i < 120; i++) press(0);
+    // Normal has continues: the countdown first; Back gives up.
+    expect(flow.stack.top?.id).toBe('continue');
+    press(Action.Back);
     expect(flow.stack.top?.id).toBe('gameOver');
     await new Promise((resolve) => setTimeout(resolve, 0));
     const stored = JSON.parse((await platform.storage.get(SAVE_STORAGE_KEY)) ?? '{}') as {

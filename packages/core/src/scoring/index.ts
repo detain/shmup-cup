@@ -2,10 +2,10 @@
  * # scoring — score, hi-scores, lives and extends
  *
  * **Status: partial.** Per-player scores, the clamp, the session hi-score and the crediting of
- * every scoring event of a tick are implemented (plan M1-12). Extends, 1UP items and continues
- * arrive with M2-01. The saved hi-score tables live in `core/save` since M1-17 (`insertHiScore`,
- * `SaveStore.recordScore`, rows of this module's {@link HiScoreEntry}); names from the name entry
- * arrive with M2-15.
+ * every scoring event of a tick are implemented (plan M1-12); extends and the continue digit
+ * (plan M2-01). 1UP items arrive with Direct mode (M2-05). The saved hi-score tables live in
+ * `core/save` since M1-17 (`insertHiScore`, `SaveStore.recordScore`, rows of this module's
+ * {@link HiScoreEntry}); names from the name entry arrive with M2-15.
  *
  * **Responsibility.** Score keeping: per-enemy values, capsule (300) and bonus capsule (1,000) values,
  * formation and boss-time bonuses, per-player totals in co-op, extends at score
@@ -31,6 +31,22 @@
  * only, never hashed. Pickups push none: they happen on the ship, which a popup would cover (the
  * meter's ding and the pickup ring are their feedback).
  *
+ * **Extends (M2-01).** Every {@link PlayerScore} carries its next extend threshold
+ * ({@link PlayerScore.nextExtend}: `GameConfig.extendFirst`, then `+ extendEvery` after each one;
+ * 0 = no more). Whenever the scoring system credits points ({@link ScoringSystem.resolve}, and
+ * {@link ScoringSystem.beginTick} for kills made between ticks) a score that reached its threshold
+ * gives the player's ship +1 life, capped at {@link MAX_LIVES} (9 — at the cap the threshold is
+ * used up without a life), and pushes the `ExtraLife` SFX with `SfxPriority.Critical` (never
+ * stolen, shmup_feat.md §19) at the ship. A score that crosses several thresholds at once gives
+ * each life. No extends while the session is over (`status` `gameOver`): the threshold waits —
+ * a continue resets the lives anyway.
+ *
+ * **Continues (M2-01).** A continue (`core/world` `continueWorld`) keeps the score and writes the
+ * number of continues used into its **last digit** ({@link markContinue}, shmup_feat.md §10 — the
+ * arcade convention; points are multiples of 10, so the digit is free): from then on
+ * {@link addScore} keeps that digit (a point value that is not a multiple of 10 cannot change
+ * it) and the clamp becomes `MAX_SCORE + digit`.
+ *
  * **Hi-score.** Session-wide, starting at 0 or at the value set from outside
  * ({@link ScoreBoard.setHiScore}) — the scene flow sets the save's best score of the game's mode
  * (`core/save`, M1-17). It is presentation data derived from the scores, so it is
@@ -44,18 +60,21 @@
  * - shmup_feat.md §10 — continues
  *
  * **Public API.** {@link PlayerScore}, {@link ScoreBoard}, {@link createScoreBoard},
- * {@link addScore}, {@link ScoreHost}, {@link ScoringSystem}, {@link ScoringHost},
- * {@link createScoringSystem}, {@link MAX_SCORE}, {@link HiScoreEntry}.
+ * {@link addScore}, {@link markContinue}, {@link ScoreHost}, {@link ScoringSystem},
+ * {@link ScoringHost}, {@link createScoringSystem}, {@link MAX_SCORE}, {@link MAX_LIVES},
+ * {@link HiScoreEntry}.
  *
- * **Planned API.** `checkExtend(player)` and the lives cap (M2-01), continues (M2-01). (The
- * planned `insertHiScore` became `core/save`'s in M1-17.)
+ * **Planned API.** Rare 1UP items (Direct mode, M2-05). (The planned `insertHiScore` became
+ * `core/save`'s in M1-17.)
  *
  * @module
  */
+import type { GameConfig } from '../config/index.js';
 import type { EnemyOutcomes } from '../enemies/index.js';
-import { SimEventKind, type EventQueue } from '../events/index.js';
+import { SFX_CUES, SfxPriority, SimEventKind, type EventQueue } from '../events/index.js';
 import { MAX_PLAYERS } from '../input/index.js';
 import { defineModule } from '../module-info.js';
+import type { PlayerShip } from '../player/index.js';
 import type { PowerUpOutcomes } from '../powerups/index.js';
 
 /** Module descriptor (see {@link defineModule}). */
@@ -68,12 +87,29 @@ export const moduleInfo = defineModule({
 /** Highest score a player can reach (plan M1-12): eight digits, the last one kept for continues. */
 export const MAX_SCORE = 99_999_990;
 
+/** Most lives a ship can hold (shmup_feat.md §15 "lives cap"; extends stop adding at 9). */
+export const MAX_LIVES = 9;
+
 /** Score state of one player (a class: its fields stay unboxed numbers). */
 export class PlayerScore {
-  /** Current score, 0 … {@link MAX_SCORE}. */
+  /**
+   * Current score, 0 … {@link MAX_SCORE} (+ the continue digit, see
+   * {@link PlayerScore.continues}).
+   */
   score = 0;
   /** `true` when the score changed since the HUD last drew it (the HUD clears it). */
   displayDirty = false;
+  /**
+   * Score of the next extra life (M2-01; 0 = no more extends). The scoring system sets it from
+   * `GameConfig.extendFirst` and moves it on by `extendEvery` after each extend.
+   */
+  nextExtend = 0;
+  /** Extra lives this score earned so far (statistics, tests). */
+  extendsEarned = 0;
+  /**
+   * Continues used (M2-01, capped at 9 — shown in the score's last digit: {@link markContinue}).
+   */
+  continues = 0;
 }
 
 /**
@@ -173,9 +209,12 @@ export interface ScoreHost {
  * Adds points to a player's score (the one way scores change). Never allocates.
  *
  * @remarks
- * The result is clamped at {@link MAX_SCORE}. Points that are not positive (0, negative, NaN) and
- * a player slot the board does not have change nothing. A change marks the score `displayDirty`
- * and raises the session hi-score when beaten (marking it dirty too). Fractions are floored.
+ * The result is clamped at {@link MAX_SCORE} (plus the continue digit after a continue — its last
+ * digit stays the number of continues used, {@link markContinue}). Points that are not positive
+ * (0, negative, NaN) and a player slot the board does not have change nothing. A change marks the
+ * score `displayDirty` and raises the session hi-score when beaten (marking it dirty too).
+ * Fractions are floored. Extends are not checked here — the scoring system does that after
+ * crediting a tick.
  *
  * @param host - The World (anything with `scoring.board`).
  * @param player - Player slot.
@@ -196,7 +235,10 @@ export function addScore(host: ScoreHost, player: number, points: number): numbe
   if (!(points > 0)) return entry.score;
   const before = entry.score;
   let next = before + Math.floor(points);
-  if (next > MAX_SCORE) next = MAX_SCORE;
+  const digit = entry.continues;
+  // The clamp first (it also catches infinite points), then the continue digit.
+  if (next > MAX_SCORE + digit) next = MAX_SCORE + digit;
+  else if (digit > 0) next = next - (next % 10) + digit;
   if (next === before) return before;
   entry.score = next;
   entry.displayDirty = true;
@@ -205,6 +247,37 @@ export function addScore(host: ScoreHost, player: number, points: number): numbe
     board.hiScoreDirty = true;
   }
   return next;
+}
+
+/**
+ * Records a continue in a player's score (shmup_feat.md §10: the continue count shown in the
+ * score's last digit): `continues` goes up by one (at most 9) and the score's last digit becomes
+ * it. Cold path (a continue); never allocates.
+ *
+ * @param board - The session's scores.
+ * @param player - Player slot (a bad slot does nothing).
+ * @returns The player's score afterwards (0 for a bad slot).
+ *
+ * @example
+ * ```ts
+ * board.scores[0].score = 12_340;
+ * markContinue(board, 0); // → 12_341
+ * markContinue(board, 0); // → 12_342
+ * ```
+ */
+export function markContinue(board: ScoreBoard, player: number): number {
+  const scores = board.scores;
+  if (!(player >= 0 && player < scores.length && player % 1 === 0)) return 0;
+  const entry = scores[player];
+  const used = entry.continues < 9 ? entry.continues + 1 : 9;
+  entry.continues = used;
+  entry.score = entry.score - (entry.score % 10) + used;
+  entry.displayDirty = true;
+  if (entry.score > board.hiScore) {
+    board.hiScore = entry.score;
+    board.hiScoreDirty = true;
+  }
+  return entry.score;
 }
 
 /** What the scoring system reads from its World (the World implements it). */
@@ -221,9 +294,20 @@ export interface ScoringHost extends ScoreHost {
   };
   /**
    * Presentation events: every credited kill worth points pushes a `SimEventKind.Score` there
-   * (the score popups, plan M1-14). Absent = no events (tests).
+   * (the score popups, plan M1-14), every extend its `ExtraLife` SFX. Absent = no events (tests).
    */
   readonly events?: EventQueue;
+  /**
+   * The ships whose `lives` extends raise (index = player slot). Absent = no extends (tests).
+   */
+  readonly players?: readonly PlayerShip[];
+  /**
+   * The extend thresholds (`extendFirst`, `extendEvery`), read when the system is created and on
+   * {@link ScoringSystem.resetExtends}. Absent = no extends.
+   */
+  readonly config?: Pick<GameConfig, 'extendFirst' | 'extendEvery'>;
+  /** The session status: no extends while it is `gameOver`. */
+  readonly status?: string;
 }
 
 /** Credits the tick's scoring events (see the module docs). */
@@ -236,20 +320,34 @@ export interface ScoringSystem {
   readonly bonusesScored: number;
   /**
    * Phase 3, before the enemy system resets its outcomes: credits kills and bonuses recorded since
-   * the last {@link ScoringSystem.resolve} (made between ticks by tools), then resets the counts.
-   * Never allocates.
+   * the last {@link ScoringSystem.resolve} (made between ticks by tools), then resets the counts
+   * and gives the extends reached. Never allocates.
    */
   beginTick(): void;
   /**
    * Phase 7, after the shots' hits and the power-ups: credits the tick's kills, formation bonuses
-   * and pickups. Never allocates.
+   * and pickups, then gives the extends reached. Never allocates.
    */
   resolve(): void;
   /**
    * Session clear (a checkpoint restart, or the `arcade` respawn in free flight): forgets the
-   * credited counts — the enemy outcomes are reset with them. Scores and the hi-score stay.
+   * credited counts — the enemy outcomes are reset with them. Scores, extend thresholds and the
+   * hi-score stay.
    */
   clear(): void;
+  /**
+   * Gives every player's extends that its score has reached (see the module docs) — what
+   * {@link ScoringSystem.resolve} and {@link ScoringSystem.beginTick} call after crediting. Never
+   * allocates.
+   *
+   * @returns Extra lives given.
+   */
+  checkExtends(): number;
+  /**
+   * Sets every player's next extend back to the config's first threshold and forgets the extends
+   * earned (a new game on the same board — tests and tools; the World's board starts that way).
+   */
+  resetExtends(): void;
 }
 
 /** The scoring system (a class: monomorphic methods). */
@@ -271,6 +369,55 @@ class ScoringSystemImpl implements ScoringSystem {
   constructor(host: ScoringHost) {
     this.host = host;
     this.board = createScoreBoard(MAX_PLAYERS);
+    this.resetExtends();
+  }
+
+  /** See {@link ScoringSystem.resetExtends}. */
+  resetExtends(): void {
+    const config = this.host.config;
+    const first = config === undefined ? 0 : config.extendFirst;
+    const scores = this.board.scores;
+    for (let p = 0; p < scores.length; p++) {
+      scores[p].nextExtend = first > 0 ? first : 0;
+      scores[p].extendsEarned = 0;
+    }
+  }
+
+  /** See {@link ScoringSystem.checkExtends}. */
+  checkExtends(): number {
+    const host = this.host;
+    const players = host.players;
+    const config = host.config;
+    if (players === undefined || config === undefined || host.status === 'gameOver') return 0;
+    const every = config.extendEvery;
+    const scores = this.board.scores;
+    let given = 0;
+    for (let p = 0; p < scores.length && p < players.length; p++) {
+      const entry = scores[p];
+      let next = entry.nextExtend;
+      if (next <= 0 || entry.score < next) continue;
+      const ship = players[p];
+      while (next > 0 && entry.score >= next) {
+        next = every > 0 ? next + every : 0;
+        entry.extendsEarned++;
+        if (ship.lives < MAX_LIVES) {
+          ship.lives++;
+          given++;
+          const events = host.events;
+          if (events !== undefined) {
+            events.push(
+              SimEventKind.Sfx,
+              SFX_CUES.ExtraLife,
+              Math.floor(ship.x) | 0,
+              Math.floor(ship.y) | 0,
+              SfxPriority.Critical,
+            );
+          }
+        }
+      }
+      entry.nextExtend = next;
+    }
+    return given;
   }
 
   /** Credits the enemy kills and formation bonuses not credited yet. */
@@ -310,6 +457,7 @@ class ScoringSystemImpl implements ScoringSystem {
     this.creditEnemies();
     this.killsScored = 0;
     this.bonusesScored = 0;
+    this.checkExtends();
   }
 
   /** See {@link ScoringSystem.resolve}. */
@@ -318,6 +466,7 @@ class ScoringSystemImpl implements ScoringSystem {
     const host = this.host;
     const p = host.powerups.outcomes;
     for (let k = 0; k < p.pickupCount; k++) addScore(host, p.pickupPlayer[k], p.pickupScore[k]);
+    this.checkExtends();
   }
 
   /** See {@link ScoringSystem.clear}. */

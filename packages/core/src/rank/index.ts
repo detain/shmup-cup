@@ -1,54 +1,75 @@
 /**
  * # rank — rank / dynamic difficulty
  *
- * **Status: partial.** The rank value and the rank → multiplier curves are implemented with a
- * **constant** rank (plan M1-09): {@link computeRank} returns the difficulty preset's base
- * (Normal = 2) and the systems scale by {@link rankScale}, so M2-01 only has to turn rank growth
- * on (the stage, power-up and special terms of shmup_feat.md §15).
- *
  * **Responsibility.** Rank: a Gradius III-style 0–31 value (`difficulty + loop/stage + power-ups +
- * special`, capped at 16 on loop 1) that scales enemy speed, fire rate, bullet speed and
- * boss behaviour; higher steps matter more. Difficulty presets map to rank base and
- * growth. Rank is shown in the debug overlay.
+ * special`, capped at 16 on loop 1) that scales enemy bullet speed and fire rate — higher steps
+ * matter more. Difficulty presets (`core/config`, `content/rules/`) give the rank base and growth;
+ * the World recomputes the rank every tick (`core/world`) and the debug overlay shows it.
+ *
+ * **Formula** ({@link computeRank}, shmup_feat.md §15):
+ *
+ * ```
+ * rank = base + floor(growth × (8·(loop − 1) + (stage − 1) + power + special))
+ * ```
+ *
+ * clamped to `0…`{@link RANK_MAX} and to {@link RANK_LOOP1_CAP} on loop 1. `base` is the preset's
+ * `rankBase` (Easy 0 / Normal 2 / Hard 4 / Arcade 6), `growth` its `rankGrowth` (Easy 0.5, the
+ * others 1; 0 = a constant rank). The **power** term ({@link powerRank}) adds, per ship: Speed
+ * +0 per level, Missile +1, Double +2, Laser +3, each Option +1, a shield +4 (Reduce +2 — M2-04);
+ * with several ships in play the World uses the most powerful one. `special` is for no-miss
+ * streaks, loop bonuses and debug overrides (0 today).
  *
  * **Curves.** A {@link RankCurve} turns a rank into a multiplier that is **exactly 1 at
  * {@link RANK_NORMAL}** (Normal's base rank), so content speeds and fire intervals are the Normal
  * values and every other rank scales them: `1 + perRank · (r − 2) + perRankSq · (r² − 4)` — the
  * quadratic term makes the higher steps matter more. {@link BULLET_SPEED_RANK_CURVE} scales enemy
  * bullet speeds, {@link FIRE_RATE_RANK_CURVE} divides fire intervals (`core/patterns`,
- * `core/enemies`).
+ * `core/enemies`). An enemy's `rank` modifiers (`content/enemies/`: `bulletSpeed`, `fireRate`)
+ * set how strongly it follows a curve: {@link rankSensitivity} gives `1 + k · (scale − 1)` — `k`
+ * 1 is the curve, 0 ignores rank, 2 doubles its effect (`core/bullets` `setShooterRank`).
+ *
+ * **Zero allocation.** {@link computeRank} and {@link powerRank} only do integer arithmetic on
+ * their arguments; the World keeps one mutable {@link RankInputs} object
+ * ({@link createRankInputs}) and recomputes the rank from it each tick. {@link rankScale} returns
+ * a fraction: call it when the rank changes, not per tick.
  *
  * **Implements.**
- * - shmup_feat.md §15 — rank formula (difficulty base), rank scaling of bullet speed and fire rate
+ * - shmup_feat.md §15 — rank formula (difficulty, loop / stage, power-ups, special; 0–31, 16 on
+ *   loop 1), rank scaling of bullet speed and fire rate, difficulty presets' rank base / growth
+ * - shmup_feat.md §11 — per-enemy rank modifiers (fire rate, bullet speed)
  *
- * **Public API.** {@link RankInputs}, {@link computeRank}, {@link rankScale}, {@link RankCurve},
- * {@link RANK_MAX}, {@link RANK_LOOP1_CAP}, {@link RANK_NORMAL}, {@link DIFFICULTY_RANK_BASE},
- * {@link difficultyRankInputs}, {@link BULLET_SPEED_RANK_CURVE}, {@link FIRE_RATE_RANK_CURVE}.
- *
- * **Planned API.** Rank growth (stage, loop, power-ups, special) and the difficulty preset tables
- * (M2-01).
+ * **Public API.** {@link RankInputs}, {@link createRankInputs}, {@link difficultyRankInputs},
+ * {@link computeRank}, {@link powerRank}, {@link RANK_POWER}, {@link rankScale},
+ * {@link rankSensitivity}, {@link RankCurve}, {@link RANK_MAX}, {@link RANK_LOOP1_CAP},
+ * {@link RANK_NORMAL}, {@link DIFFICULTY_RANK_BASE}, {@link BULLET_SPEED_RANK_CURVE},
+ * {@link FIRE_RATE_RANK_CURVE}.
  *
  * @module
  */
-import type { DifficultyPreset } from '../config/index.js';
+import type { DifficultyPreset, GameConfig } from '../config/index.js';
 import { defineModule } from '../module-info.js';
 
 /** Module descriptor (see {@link defineModule}). */
 export const moduleInfo = defineModule({
   name: 'rank',
-  status: 'partial',
-  specRefs: ['shmup_feat.md §15'],
+  status: 'implemented',
+  specRefs: ['shmup_feat.md §15', 'shmup_feat.md §11'],
 });
 
-/** Everything the rank formula reads. */
+/** Everything the rank formula reads ({@link computeRank}). */
 export interface RankInputs {
-  /** Easy 0 / Normal 2 / Hard 4 / Very Hard 6. */
+  /** The preset's base rank (Easy 0 / Normal 2 / Hard 4 / Arcade 6 — `GameConfig.rankBase`). */
   readonly difficultyBase: number;
+  /**
+   * Multiplier of the growth terms (`GameConfig.rankGrowth`: 0 = constant rank, 1 = the Gradius
+   * III formula).
+   */
+  readonly growth: number;
   /** 1-based loop number. */
   readonly loop: number;
   /** 1-based stage number within the loop. */
   readonly stage: number;
-  /** Power contribution (Missile +1, Double +2, Laser +3, each Option +1, Shield +4 …). */
+  /** Power contribution ({@link powerRank}: Missile +1, Double +2, Laser +3, each Option +1 …). */
   readonly power: number;
   /** Extra rank from special conditions (no-miss streaks, loop bonuses, debug overrides). */
   readonly special: number;
@@ -57,15 +78,16 @@ export interface RankInputs {
 /** Highest rank (shmup_feat.md §15: rank runs 0–31). */
 export const RANK_MAX = 31;
 
-/** Highest rank on loop 1 (shmup_feat.md §15; applies once rank growth is on, M2-01). */
+/** Highest rank on loop 1 (shmup_feat.md §15). */
 export const RANK_LOOP1_CAP = 16;
 
 /** Normal difficulty's base rank: the rank at which every {@link RankCurve} gives exactly 1. */
 export const RANK_NORMAL = 2;
 
 /**
- * Base rank of each difficulty preset (shmup_feat.md §15: Easy 0 / Normal 2 / Hard 4 / Very
- * Hard 6 — the Arcade preset takes the Very Hard base).
+ * Base rank of each difficulty preset in the built-in table (shmup_feat.md §15: Easy 0 / Normal 2
+ * / Hard 4 / Very Hard 6 — the Arcade preset takes the Very Hard base). The content's
+ * `rules` table may differ; sessions read `GameConfig.rankBase`.
  */
 export const DIFFICULTY_RANK_BASE: Readonly<Record<DifficultyPreset, number>> = Object.freeze({
   easy: 0,
@@ -75,10 +97,62 @@ export const DIFFICULTY_RANK_BASE: Readonly<Record<DifficultyPreset, number>> = 
 });
 
 /**
- * The rank inputs of a session start: the preset's base, loop 1, stage 1, no power, nothing
- * special.
+ * Rank added by each power-up a ship holds (shmup_feat.md §15 "Power: Speed +0, Missile +1, Double
+ * +2, Laser +3, each Option +1, Shield +4 (Reduce +2)").
+ */
+export const RANK_POWER = Object.freeze({
+  /** Per Speed level. */
+  speed: 0,
+  /** The Missile. */
+  missile: 1,
+  /** The Double. */
+  double: 2,
+  /** The Laser. */
+  laser: 3,
+  /** Per Option. */
+  option: 1,
+  /** A shield (the Force Field; the front shields of M2-04). */
+  shield: 4,
+  /** Reduce (M2-04: the smaller hurtbox counts instead of a shield). */
+  reduce: 2,
+});
+
+/**
+ * A mutable {@link RankInputs} (what the World keeps and updates every tick).
+ */
+type MutableRankInputs = { -readonly [K in keyof RankInputs]: RankInputs[K] };
+
+/**
+ * The rank inputs of a session start: the config's base and growth, loop 1, stage 1, no power,
+ * nothing special.
  *
- * @param difficulty - The difficulty preset (`GameConfig.difficulty`).
+ * @param config - The session config (`rankBase`, `rankGrowth`).
+ * @returns A fresh, **mutable** object (load time — allocates); the World writes its `power`
+ *   (and, with the campaign of M2-10, `loop` / `stage`) every tick.
+ *
+ * @example
+ * ```ts
+ * computeRank(createRankInputs(resolveGameConfig({ difficulty: 'hard' }))); // → 4
+ * ```
+ */
+export function createRankInputs(
+  config: Pick<GameConfig, 'rankBase' | 'rankGrowth'>,
+): MutableRankInputs {
+  return {
+    difficultyBase: config.rankBase,
+    growth: config.rankGrowth,
+    loop: 1,
+    stage: 1,
+    power: 0,
+    special: 0,
+  };
+}
+
+/**
+ * The rank inputs of a session start on a preset of the built-in table: its base
+ * ({@link DIFFICULTY_RANK_BASE}), growth 1, loop 1, stage 1, no power, nothing special.
+ *
+ * @param difficulty - The difficulty preset.
  * @returns Fresh inputs (load time — allocates).
  *
  * @example
@@ -89,6 +163,7 @@ export const DIFFICULTY_RANK_BASE: Readonly<Record<DifficultyPreset, number>> = 
 export function difficultyRankInputs(difficulty: DifficultyPreset): RankInputs {
   return {
     difficultyBase: DIFFICULTY_RANK_BASE[difficulty],
+    growth: 1,
     loop: 1,
     stage: 1,
     power: 0,
@@ -97,25 +172,83 @@ export function difficultyRankInputs(difficulty: DifficultyPreset): RankInputs {
 }
 
 /**
- * The current rank.
+ * The current rank (shmup_feat.md §15; see the module docs for the formula).
  *
  * @remarks
- * M1 plays at a **constant** rank: the result is the difficulty base, rounded and clamped to
- * `0…`{@link RANK_MAX}; `loop`, `stage`, `power` and `special` are ignored until rank growth
- * arrives with M2-01 (the plumbing — inputs, curves, scaled systems — already exists).
+ * `base + floor(growth × (8·(loop − 1) + (stage − 1) + power + special))`, then clamped to
+ * `0…`{@link RANK_MAX} — and to {@link RANK_LOOP1_CAP} while `loop` is 1 (or below). The base is
+ * rounded; a loop or stage below 1 counts as 1; a non-finite input counts as 0 (the growth as 0 —
+ * a constant rank). Never allocates.
  *
  * @param inputs - Everything the formula reads.
- * @returns A whole rank in `[0, 31]` (a non-finite base counts as 0).
+ * @returns A whole rank in `[0, 31]` (`[0, 16]` on loop 1).
  *
  * @example
  * ```ts
- * computeRank(difficultyRankInputs('normal')); // → 2
+ * computeRank({ difficultyBase: 2, growth: 1, loop: 1, stage: 3, power: 5, special: 0 }); // → 9
+ * computeRank({ difficultyBase: 6, growth: 1, loop: 1, stage: 1, power: 16, special: 0 }); // → 16
+ * computeRank({ difficultyBase: 6, growth: 1, loop: 2, stage: 1, power: 16, special: 0 }); // → 30
  * ```
  */
 export function computeRank(inputs: RankInputs): number {
-  const base = Math.round(inputs.difficultyBase);
-  if (!(base > 0)) return 0;
-  return base > RANK_MAX ? RANK_MAX : base;
+  const base = finite(Math.round(inputs.difficultyBase));
+  const loop = inputs.loop >= 1 ? Math.floor(inputs.loop) : 1;
+  const stage = inputs.stage >= 1 ? Math.floor(inputs.stage) : 1;
+  const growth = finite(inputs.growth);
+  const terms = 8 * (loop - 1) + (stage - 1) + finite(inputs.power) + finite(inputs.special);
+  const rank = base + Math.floor(growth * terms);
+  const cap = loop <= 1 ? RANK_LOOP1_CAP : RANK_MAX;
+  if (!(rank > 0)) return 0;
+  return rank > cap ? cap : rank;
+}
+
+/**
+ * A number, or 0 when it is not finite.
+ *
+ * @param value - Any number.
+ * @returns `value` when finite, else 0.
+ */
+function finite(value: number): number {
+  return value - value === 0 ? value : 0;
+}
+
+/**
+ * The power term of one ship's rank (shmup_feat.md §15, {@link RANK_POWER}). Never allocates.
+ *
+ * @remarks
+ * Flags are `0` / `1` (anything positive counts as held); `options` is a count. Speed levels add
+ * nothing (`RANK_POWER.speed` is 0), so they are not an argument. A `reduce` ship counts
+ * `RANK_POWER.reduce`, a shielded one `RANK_POWER.shield` — both only when both flags are set.
+ *
+ * @param missile - 1 when the Missile is equipped.
+ * @param double - 1 when the Double is the main weapon.
+ * @param laser - 1 when the Laser is the main weapon.
+ * @param options - Options owned.
+ * @param shield - 1 while a shield is up.
+ * @param reduce - 1 while Reduce is active (M2-04).
+ * @returns The ship's power rank (a whole number ≥ 0).
+ *
+ * @example
+ * ```ts
+ * powerRank(1, 0, 1, 4, 1, 0); // → 1 + 3 + 4 + 4 = 12 (Missile, Laser, four Options, a shield)
+ * ```
+ */
+export function powerRank(
+  missile: number,
+  double: number,
+  laser: number,
+  options: number,
+  shield: number,
+  reduce: number,
+): number {
+  let power = 0;
+  if (missile > 0) power += RANK_POWER.missile;
+  if (double > 0) power += RANK_POWER.double;
+  if (laser > 0) power += RANK_POWER.laser;
+  if (options > 0) power += RANK_POWER.option * Math.floor(options);
+  if (shield > 0) power += RANK_POWER.shield;
+  if (reduce > 0) power += RANK_POWER.reduce;
+  return power;
 }
 
 /**
@@ -152,7 +285,7 @@ export const FIRE_RATE_RANK_CURVE: RankCurve = Object.freeze({
  * `r` the rank clamped to `0…31` — exactly 1 at {@link RANK_NORMAL}.
  *
  * @remarks
- * Call it when the rank changes (world creation in M1), not per tick: it returns a fractional
+ * Call it when the rank changes (`core/bullets` `setRank`), not per tick: it returns a fractional
  * number, which V8 boxes when the call is not inlined. The result is never below 0.05 (a curve
  * with negative coefficients cannot stop time or reverse a bullet).
  *
@@ -170,4 +303,28 @@ export function rankScale(rank: number, curve: RankCurve): number {
   const scale =
     1 + curve.perRank * (r - RANK_NORMAL) + curve.perRankSq * (r * r - RANK_NORMAL * RANK_NORMAL);
   return scale > 0.05 ? scale : 0.05;
+}
+
+/**
+ * A rank multiplier seen by an enemy with a rank modifier `k` (shmup_feat.md §11 "rank modifiers
+ * per enemy"): `1 + k · (scale − 1)` — `k` 1 keeps the curve's multiplier, 0 ignores rank, 2
+ * doubles its effect (at Normal's base rank every `k` gives 1).
+ *
+ * @remarks
+ * Never below 0.05, like {@link rankScale}. `core/bullets` inlines the same arithmetic in
+ * `setShooterRank` (reading `k` from a typed array, so no fraction crosses a call per tick).
+ *
+ * @param scale - The rank's multiplier ({@link rankScale}).
+ * @param k - The enemy's modifier (non-finite counts as 1).
+ * @returns The enemy's multiplier.
+ *
+ * @example
+ * ```ts
+ * rankSensitivity(rankScale(16, BULLET_SPEED_RANK_CURVE), 0.5); // → 1.133 (half the +26.6 %)
+ * ```
+ */
+export function rankSensitivity(scale: number, k: number): number {
+  const m = k - k === 0 ? k : 1;
+  const out = 1 + m * (scale - 1);
+  return out > 0.05 ? out : 0.05;
 }

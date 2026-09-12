@@ -47,8 +47,12 @@
  * without them (`loadContent`'s `extraSprites`) simulates bullets but does not draw them.
  *
  * **Rank.** {@link BulletSystem.speedScale} / {@link BulletSystem.fireScale} come from the rank
- * (`core/rank`: constant in M1) and are applied by the pattern primitives, not by
- * {@link BulletSystem.spawn}, which takes raw values.
+ * (`core/rank`, recomputed by the World whenever the rank changes — {@link BulletSystem.setRank})
+ * and are applied by the pattern primitives, not by {@link BulletSystem.spawn}, which takes raw
+ * values. The speed scale includes the preset's `GameConfig.bulletSpeedMul`. While an enemy's
+ * script runs, the enemy system narrows both to that enemy's rank modifiers
+ * ({@link BulletSystem.setShooterRank}: `1 + k · (scale − 1)`, `content/enemies/` `rank`) and
+ * restores the session's afterwards ({@link BulletSystem.clearShooterRank}).
  *
  * **Zero allocation.** Both pools, the views and the kind tables are built by
  * {@link createBulletSystem}; per-tick code reads and writes typed arrays only, passes whole
@@ -448,19 +452,49 @@ export interface BulletSystem {
   readonly count: number;
   /** The rank the scales below were computed for. */
   readonly rank: number;
-  /** Bullet speed multiplier of the rank (`core/rank` `BULLET_SPEED_RANK_CURVE`). */
+  /**
+   * The session's bullet speed multiplier: the rank's (`core/rank` `BULLET_SPEED_RANK_CURVE`) ×
+   * `config.bulletSpeedMul`.
+   */
+  readonly rankSpeedScale: number;
+  /** The session's fire-rate multiplier (the rank's `FIRE_RATE_RANK_CURVE`). */
+  readonly rankFireScale: number;
+  /**
+   * The bullet speed multiplier the fire primitives apply now: {@link BulletSystem.rankSpeedScale},
+   * or the shooter's own while an enemy script runs ({@link BulletSystem.setShooterRank}).
+   */
   readonly speedScale: number;
-  /** Fire-rate multiplier of the rank (`FIRE_RATE_RANK_CURVE`; intervals are divided by it). */
+  /**
+   * The fire-rate multiplier the fire primitives apply now (intervals are divided by it):
+   * {@link BulletSystem.rankFireScale}, or the shooter's own.
+   */
   readonly fireScale: number;
   /** Directions aimed shots snap to (`config.aimDirections`). */
   readonly aimDirections: number;
   /**
-   * Sets the rank and recomputes {@link BulletSystem.speedScale} / {@link BulletSystem.fireScale}
-   * (world creation in M1; rank growth in M2-01).
+   * Sets the rank and recomputes the session's scales ({@link BulletSystem.rankSpeedScale} — with
+   * `config.bulletSpeedMul` — and {@link BulletSystem.rankFireScale}); the current scales
+   * ({@link BulletSystem.speedScale} / {@link BulletSystem.fireScale}) become them. The World calls
+   * it at creation and whenever the rank changes — never with an unchanged rank per tick (the
+   * curves return fractions).
    *
    * @param rank - The rank (0–31).
    */
   setRank(rank: number): void;
+  /**
+   * Narrows the current scales to one shooter's rank modifiers (shmup_feat.md §11): speed scale
+   * `(1 + ks · (curve − 1)) · bulletSpeedMul`, fire scale `1 + kf · (curve − 1)`, each at least
+   * 0.05, with `ks = speedK[index]`, `kf = fireK[index]` (1 = the session's scales, 0 = unaffected
+   * by rank). The enemy system calls it before an enemy's script resumes. Never allocates (the
+   * modifiers are read from typed arrays, so no fraction crosses the call).
+   *
+   * @param speedK - Bullet speed modifier per spec.
+   * @param fireK - Fire-rate modifier per spec.
+   * @param index - The shooter's spec index.
+   */
+  setShooterRank(speedK: Float64Array, fireK: Float64Array, index: number): void;
+  /** Restores the session's scales after {@link BulletSystem.setShooterRank}. Never allocates. */
+  clearShooterRank(): void;
   /**
    * Spawns one bullet with raw values (no rank scaling).
    *
@@ -736,10 +770,18 @@ class BulletSystemImpl implements BulletSystem {
   readonly laserView: LaserView;
   /** See {@link BulletSystem.rank}. */
   rank = 0;
+  /** See {@link BulletSystem.rankSpeedScale}. */
+  rankSpeedScale = 1;
+  /** See {@link BulletSystem.rankFireScale}. */
+  rankFireScale = 1;
   /** See {@link BulletSystem.speedScale}. */
   speedScale = 1;
   /** See {@link BulletSystem.fireScale}. */
   fireScale = 1;
+  /** The rank's bullet speed curve value (before `bulletSpeedMul`). */
+  private speedCurve = 1;
+  /** `config.bulletSpeedMul`. */
+  private readonly speedMul: number;
   /**
    * The ships' hurt radius (`host.ship.hurtRadius`, fixed for a World), cached in a field: the
    * content's ship spec and the built-in default have different shapes, so reading it through
@@ -773,6 +815,11 @@ class BulletSystemImpl implements BulletSystem {
   constructor(host: BulletHost) {
     this.host = host;
     this.aimDirections = host.config.aimDirections;
+    // A host config without the field (hand-made test hosts) counts as × 1.
+    const mul = host.config.bulletSpeedMul;
+    this.speedMul = mul > 0 ? mul : 1;
+    this.rankSpeedScale = this.speedMul;
+    this.speedScale = this.speedMul;
     this.hurtRadius = host.ship.hurtRadius;
     this.pool = host.pools.register(
       'enemyBullets',
@@ -805,8 +852,27 @@ class BulletSystemImpl implements BulletSystem {
   /** See {@link BulletSystem.setRank}. */
   setRank(rank: number): void {
     this.rank = rank;
-    this.speedScale = rankScale(rank, BULLET_SPEED_RANK_CURVE);
-    this.fireScale = rankScale(rank, FIRE_RATE_RANK_CURVE);
+    this.speedCurve = rankScale(rank, BULLET_SPEED_RANK_CURVE);
+    this.rankSpeedScale = this.speedCurve * this.speedMul;
+    this.rankFireScale = rankScale(rank, FIRE_RATE_RANK_CURVE);
+    this.speedScale = this.rankSpeedScale;
+    this.fireScale = this.rankFireScale;
+  }
+
+  /** See {@link BulletSystem.setShooterRank}. */
+  setShooterRank(speedK: Float64Array, fireK: Float64Array, index: number): void {
+    const ks = speedK[index];
+    const kf = fireK[index];
+    const speed = 1 + ks * (this.speedCurve - 1);
+    const fire = 1 + kf * (this.rankFireScale - 1);
+    this.speedScale = (speed > 0.05 ? speed : 0.05) * this.speedMul;
+    this.fireScale = fire > 0.05 ? fire : 0.05;
+  }
+
+  /** See {@link BulletSystem.clearShooterRank}. */
+  clearShooterRank(): void {
+    this.speedScale = this.rankSpeedScale;
+    this.fireScale = this.rankFireScale;
   }
 
   /** See {@link BulletSystem.spawn}. */
@@ -1417,7 +1483,8 @@ class BulletSystemImpl implements BulletSystem {
 /**
  * Creates the bullet system of a World (load time): both pools (registered with the World as
  * `enemyBullets` and `enemyLasers`), their views and the kind tables (sprite ids resolved through
- * `content.sprites`). The rank starts at 0 — the World calls {@link BulletSystem.setRank}.
+ * `content.sprites`). The rank starts at 0 (scales 1, the speed scale × `config.bulletSpeedMul`) —
+ * the World calls {@link BulletSystem.setRank}.
  *
  * @param host - The World (read at every call — pass the World itself).
  * @returns The system.
@@ -1426,7 +1493,7 @@ class BulletSystemImpl implements BulletSystem {
  * @example
  * ```ts
  * const bullets = createBulletSystem(world);
- * bullets.setRank(computeRank(difficultyRankInputs(config.difficulty)));
+ * bullets.setRank(computeRank(createRankInputs(config)));
  * ```
  */
 export function createBulletSystem(host: BulletHost): BulletSystem {

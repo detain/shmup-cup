@@ -69,14 +69,20 @@ class Session {
     readonly save: SaveStore,
     options: SessionOptions = {},
   ) {
-    this.game = createGame(this.platform, { seed: 5, ...options.config }, options.content, {
-      scenes: options.start ?? 'title',
-      save,
-      inputProfiles:
-        options.profiles === undefined
-          ? { choices: PROFILES, active: 'keyboard-default' }
-          : options.profiles,
-    });
+    // No continues unless a test asks: a game over records the run at once (M1 flow).
+    this.game = createGame(
+      this.platform,
+      { seed: 5, continues: 0, ...options.config },
+      options.content,
+      {
+        scenes: options.start ?? 'title',
+        save,
+        inputProfiles:
+          options.profiles === undefined
+            ? { choices: PROFILES, active: 'keyboard-default' }
+            : options.profiles,
+      },
+    );
     this.flow = this.game.scenes!;
   }
 
@@ -422,6 +428,8 @@ describe('core/scenes saves (edge): what counts as a finished game', () => {
     const s = new Session(save);
     s.press(Action.Confirm);
     s.press(Action.Confirm); // START
+    s.press(Action.Confirm); // NORMAL
+    s.hold(0); // the difficulty menu's lock: the buffered OK acts now
     expect(s.ids).toEqual(['game']);
     addScore(s.game.world, 0, 9000);
     s.press(Action.Pause);
@@ -500,6 +508,8 @@ describe('core/scenes saves (edge): what counts as a finished game', () => {
     expect(s.flow.hiScore).toBe(2000);
     s.press(Action.Confirm);
     s.press(Action.Confirm); // START
+    s.press(Action.Confirm); // NORMAL
+    s.hold(0);
     addScore(s.game.world, 0, 100);
     s.gameOver();
     expect(s.flow.gameOver.rank).toBe(1);
@@ -525,6 +535,8 @@ describe('core/scenes saves (edge): what counts as a finished game', () => {
     s.press(Action.Confirm);
     s.press(Action.Confirm);
     s.press(Action.Confirm); // START
+    s.press(Action.Confirm); // NORMAL
+    s.hold(0);
     s.game.world.status = 'stageClear';
     s.hold(0, STAGE_CLEAR_DELAY_TICKS + 1);
     await settle();

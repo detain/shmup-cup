@@ -2059,6 +2059,44 @@ Goal of the milestone: every **[P1]** feature. Steps are ordered so systems land
 - **Acceptance:** rank formula table tests, cap on loop 1, modifiers change bullet speed deterministically, extends at
   thresholds, continue flow headless, golden replays re-blessed.
 - **Refs:** `shmup_feat.md` §15, §10 (continues), §11 (rank modifiers, revenge).
+- **As built:**
+  - The table is `content/rules/difficulty.rules.json` (the content naming rule `<folder>/<name>.<kind>.json`), kind
+    `rules` owned by `core/data` (`ContentDb.difficulty`; all four presets required, `aimDirections` a power of two, one
+    file only). `core/config` keeps the same values as `DEFAULT_DIFFICULTY_TABLE` for sessions without content
+    (`pnpm content:check` keeps them equal). Values: rank base 0/2/4/6, growth 0.5/1/1/1, lives 5/3/3/2, continues
+    5/3/2/0, death penalty casual/classic/classic/arcade, aim directions 16/32/32/32, bullet speed ×0.85/1/1/1, extends
+    20,000 then every 70,000 for all.
+  - `GameConfig` gained `rankBase`, `rankGrowth`, `extendFirst`, `extendEvery`, `continues`, `bulletSpeedMul`.
+    `resolveGameConfig(overrides, table)` fills the preset's fields of `overrides.difficulty` (lives, death penalty,
+    aim directions too) *under* explicit overrides, so `{ difficulty: 'arcade' }` now also means 2 lives and the arcade
+    penalty; `createGame` passes the content's table; `withDifficulty` switches a resolved config to another preset.
+    A replay header records every resolved value (format version unchanged: a missing key resolves to the preset's).
+  - `rankGrowth` is a multiplier of the growth terms: `rank = base + floor(growth × (8·(loop−1) + (stage−1) + power +
+    special))`. The World recomputes it at the end of phase 3 (`updateWorldRank`; the power term is the most powerful
+    active ship's; `world.rankInputs.loop / stage` stay 1 until the campaign of M2-10) and hands a changed rank to the
+    bullet system. The Reduce term (+2) is defined for M2-04.
+  - Enemy rank modifiers reuse the existing `rank: { fireRate, bulletSpeed }` fields (in the enemy schema, unused so far):
+    they are now sensitivity multipliers, `1 + k · (scale − 1)`, applied through `BulletSystem.setShooterRank` while
+    that enemy's script runs. `bulletSpeedMul` multiplies the rank's bullet speed scale.
+  - Revenge bullets: `revenge: { minRank, pattern, speed? }` with built-in patterns `aimed` / `spread3` / `ring8`
+    (M2-02's DSL may add pattern references); fired on a kill credited to a player, on screen, never on a Mega Crash.
+    Zone A's `vane` fans use it from rank 12 (a fully powered ship on Normal); the 4-way bot never reaches that.
+  - Extends live in `core/scoring` (`checkExtends` after every crediting, phases 3 and 7; `MAX_LIVES` 9; the threshold
+    waits while the game is over). The `ExtraLife` SFX is pushed with `SfxPriority.Critical`.
+  - Continues keep the score and write the continues used into its last digit (`markContinue`; `addScore` keeps the
+    digit). `continueWorld` restarts at the last checkpoint with `startingLives`, the arcade penalty's empty loadout
+    then the starting loadout, and re-queues the stage theme (the countdown fades the music out). The continue is
+    decided by the scene flow between World ticks, so it is not part of a bare-gameplay replay (those end at the game
+    over) — a flow-level replay is M2-15 / M3-01 material.
+  - The difficulty menu is an overlay scene (`DifficultyScene`) pushed by START; OK resets the stack to the game, whose
+    World gets the flow's config for that preset (the host config for its own preset). The choice lives for the
+    session only (saved with the options of M2-16); each preset shows and records its own hi-score table
+    (`meter-<difficulty>`). Starting a game now takes one more OK: every flow test and e2e spec was updated.
+  - The boss-fight allocation guard runs at a constant rank (`rankGrowth: 0`): at rank 14 the boss fires ~40 % more
+    often, i.e. more coroutine wakes (D29), not per-tick allocation. The zone A 4-way rule checks pass unchanged with
+    rank growth on (the bot's power keeps Normal at rank ≤ 7).
+  - Golden replays re-blessed: rank growth, extends (+1 life at 20,000) and the Arcade preset's 2 lives / arcade
+    penalty change the recorded runs (all four keep their outcome: stage clear ×3, game over).
 
 ### M2-02 — Pattern DSL, bending lasers, bullet cancel & readability
 

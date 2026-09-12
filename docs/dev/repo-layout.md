@@ -37,7 +37,7 @@ shmup-cup/
 │   │   │   ├── module-info.ts  ModuleInfo / defineModule
 │   │   │   ├── platform/       ✔ Platform interface (tech §3.2), headless platform, memory storage
 │   │   │   ├── input/          ✔ Action bits, InputSnapshot, edge latching (feat §4)
-│   │   │   ├── config/         ✔ GameConfig + defaults + validation; UserOptions (volumes, input profile — M1-17)
+│   │   │   ├── config/         ✔ GameConfig + defaults + validation; difficulty presets (DEFAULT_DIFFICULTY_TABLE, withDifficulty — M2-01); UserOptions (volumes, input profile — M1-17)
 │   │   │   ├── loop/           ✔ fixed-step accumulator (snap, cap, reset)
 │   │   │   ├── game/           ✔ createGame(): composition root, suspend/resume; bare gameplay (one World) or the scene flow (options.scenes, M1-16)
 │   │   │   ├── world/          ✔ createWorld / stepWorld: session state + the fixed 9-phase tick pipeline (plan §3.2), pool registry, view
@@ -56,10 +56,10 @@ shmup-cup/
 │   │   │   ├── bosses/         ✔ (partial) multi-part bosses: weak points, phases, the WARNING, the death sequence (mid-bosses, raids: M2-09)
 │   │   │   ├── collision/      ✔ (partial) scalar shape tests, layer masks, counting-sort uniform grid, pixel-exact terrain queries
 │   │   │   ├── stage/          ✔ stage runtime: camera keys / ramps / pans / locks, event cursor, checkpoints, terrain map + parallax / terrain views
-│   │   │   ├── rank/           ✔ (partial) constant rank from the difficulty, rankScale curves (growth: M2-01)
-│   │   │   ├── scoring/        ✔ (partial) per-player scores (clamp 99,999,990), session hi-score, crediting kills / bonuses / capsules (extends, continues: M2-01)
+│   │   │   ├── rank/           ✔ rank 0–31 (difficulty base + growth × stage / loop / power terms, 16 on loop 1), rankScale curves, per-enemy sensitivity (M2-01)
+│   │   │   ├── scoring/        ✔ (partial) per-player scores (clamp 99,999,990), session hi-score, crediting kills / bonuses / capsules, extends (cap 9) and the continue digit (M2-01; 1UP items: M2-05)
 │   │   │   ├── fx/             ✔ (partial) hit-stop / shake / flash requests + timers (FxState), exact hit-stop (slowdown: M3-02)
-│   │   │   ├── scenes/         ✔ (partial) scene stack (depth 8, deferred transitions) + the M1 flow: boot → title → game ⇄ pause → stage clear / game over, YES / NO dialog (Tizen exit confirm), Options overlay (M1-17)
+│   │   │   ├── scenes/         ✔ (partial) scene stack (depth 8, deferred transitions) + the M1 flow: boot → title → difficulty menu (M2-01) → game ⇄ pause → stage clear / continue countdown (M2-01) / game over, YES / NO dialog (Tizen exit confirm), Options overlay (M1-17)
 │   │   │   ├── ui/             ✔ (partial) canvas UI kit (list menu, slider, toggle, choice, confirm; 18/6-tick auto-repeat, 4-tick Confirm buffer; draw builders) + the HUD (buildHud, rebuilt only on change)
 │   │   │   ├── debug/          ✔ hashWorld state hash, debug switches + controls (god mode, outlines, frame advance, slow-mo, checkpoint jump, stage skip), overlay counters (M1-19)
 │   │   │   ├── save/           ✔ versioned save (save.v1): options, hi-score tables, stats; migrations, defensive parsing, SaveStore (writes only on change) — M1-17
@@ -99,6 +99,7 @@ shmup-cup/
 │   ├── weapons/            ✔ weapon tunables + preset loadouts: the Type A arsenal the game fires (+ README, example)
 │   ├── input/              ✔ input profiles (kind input-profiles, validated by input-web rebind): per-context key/button tables, remote debounce/diagonal/SOCD, Tizen keys to register
 │   ├── audio/              ✔ SFX bank (kind sfx: synth parameters or a file per SFX_CUES cue) + music/ (kind music: original chip songs or OGG, bound to MUSIC_CUES), validated by audio-web loader (+ README, examples)
+│   ├── rules/              ✔ game-wide rule tables (kind rules, validated by core/data): the difficulty presets Easy / Normal / Hard / Arcade — rank base / growth, lives, extends, continues, death penalty, aim directions, bullet speed (M2-01; + README, example)
 │   └── fx/                 ✔ particle presets + the event cues that spawn them (kind fx, validated by render-pixi particles): explosions, debris, sparks, clinks, cancel sparkles, pickup ring, muzzle flash (+ README, example)
 ├── assets/
 │   ├── source/             editable sources — in git: sprites/**/*.sprite.json pixel maps (+ real-art PNG overrides), fonts/*.font.json, tilesets, audio

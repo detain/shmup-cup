@@ -72,8 +72,10 @@ function db(): ContentDb {
 
 describe('core/bosses allocation (M1-13)', () => {
   it('allocates nothing over a long fight: parts hit, clinks, lasers, tracking, phases', () => {
+    // A constant rank (M2-01): the full loadout would raise it to 14, where the boss fires ~40 %
+    // more often — more coroutine wakes (D29), not per-tick allocation; the guard keeps M1's rate.
     const w = createWorld(
-      resolveGameConfig({ stage: 'test-boss', loadout: 'full', seed: 13 }),
+      resolveGameConfig({ stage: 'test-boss', loadout: 'full', seed: 13, rankGrowth: 0 }),
       db(),
     );
     w.debugFlags.godMode = true;

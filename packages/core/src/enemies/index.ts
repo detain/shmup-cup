@@ -6,7 +6,7 @@
  * hit points, hit flash, deaths (explosion events, drops, formation bonus), enemy–player contact
  * and the sprite mirror are implemented (plan M1-08); behaviours fire bullets and lasers through
  * the `ScriptApi` fire primitives (plan M1-09); the player shots of `core/weapons` damage them
- * (plan M1-10). Rank modifiers and revenge bullets arrive with M2-01, the Option Hunter with
+ * (plan M1-10); rank modifiers and revenge bullets (plan M2-01). The Option Hunter arrives with
  * M2-04.
  *
  * **Responsibility.** Enemies are pooled class instances ({@link Enemy}, {@link MAX_ENEMIES}
@@ -53,6 +53,14 @@
  * World's bullet system (`EnemyHost.bullets`), so speeds are rank-scaled and `AIM_AT_TARGET`
  * angles aim at the nearest living player. Bullets outlive the enemy that fired them.
  *
+ * **Rank (M2-01).** An enemy whose spec has `rank` modifiers (`content/enemies/`: `bulletSpeed`,
+ * `fireRate` — how strongly it follows the rank's curves) runs its script with the bullet
+ * system's scales narrowed to them (`BulletSystem.setShooterRank`, restored right after), so its
+ * bullet speeds and `fireWait` intervals follow `1 + k · (scale − 1)`. An enemy with `revenge`
+ * fires its revenge pattern (`aimed`, `spread3`, `ring8` — shmup_feat.md §11 "suicide bullets")
+ * from where it died when a player shoots it down on screen while the World's rank is at least
+ * its `minRank` — not on a Mega Crash, nor for kills credited to nobody.
+ *
  * **Tick outcomes.** Kills (with their score and killer), drops and completed formations' bonuses
  * (credited to the killer of the last member) of the current tick are listed in
  * {@link EnemySystem.outcomes} (reset at the start of phase 3) for the systems that turn them
@@ -71,6 +79,7 @@
  *   and settle rules, coroutine scripts
  * - shmup_feat.md §22 — enemies as pooled objects composed of mover, hurtbox, health and script;
  *   enemies × players contact through the uniform grid
+ * - shmup_feat.md §11 — rank modifiers per enemy (fire rate, bullet speed), revenge bullets
  *
  * **Public API.** {@link createEnemySystem}, {@link EnemySystem}, {@link EnemyHost},
  * {@link Enemy}, {@link EnemyState}, {@link EnemyFlag}, {@link ScriptApi}, {@link EnemyBehavior},
@@ -79,7 +88,7 @@
  * {@link DESPAWN_MARGIN}, {@link UNSEEN_MARGIN}, {@link UNSEEN_TICKS}, {@link GHOST_MARGIN},
  * {@link HIT_FLASH_TICKS}.
  *
- * **Planned API.** Rank modifiers and revenge bullets (M2-01), the Option Hunter (M2-04).
+ * **Planned API.** The Option Hunter (M2-04).
  *
  * **Bosses (M1-13).** Boss entries (`EnemySpec.boss`) are never spawned here (`spawn` returns
  * `null` for them); `core/bosses` runs them, and their parts take the grid ids after the
@@ -89,6 +98,7 @@
  */
 import {
   AIM_AT_TARGET,
+  BulletKind,
   BulletOrigin,
   LASER_ACTIVE_TICKS,
   LASER_FADE_TICKS,
@@ -106,8 +116,10 @@ import {
 } from '../collision/index.js';
 import { PLAYFIELD_H, PLAYFIELD_W } from '../config/index.js';
 import {
+  DEFAULT_REVENGE_SPEED,
   ENEMY_EXPLOSIONS,
   ENEMY_GROUNDS,
+  REVENGE_PATTERNS,
   type ContentDb,
   type EnemySpec,
   type PlayerShipSpec,
@@ -566,6 +578,11 @@ export interface EnemyHost {
   readonly debugFlags: DebugFlags;
   /** The enemy bullets and lasers (fire primitives; lasers detach when their enemy goes). */
   readonly bullets: BulletSystem;
+  /**
+   * The session's rank (`core/rank`, updated by the World every tick): revenge bullets need at
+   * least an enemy's `revenge.minRank`. Absent counts as 0.
+   */
+  readonly rank?: number;
 }
 
 /**
@@ -772,9 +789,11 @@ export interface EnemySystem {
    *
    * @remarks
    * Records the kill in {@link EnemySystem.outcomes} (spec, position, score, killer), pushes the
-   * explosion `Sfx` + `Particles` events of its spec's size, adds its own drop, then resolves
-   * its formation membership (killed count, last-kill position, completion check — which may add
-   * the formation's drop and `FormationBonus` in the same tick). The slot is freed in phase 8.
+   * explosion `Sfx` + `Particles` events of its spec's size, adds its own drop, fires its revenge
+   * bullets (M2-01: a kill credited to a player, on screen, at a rank of at least its
+   * `revenge.minRank`, not during {@link EnemySystem.megaCrash}), then resolves its formation
+   * membership (killed count, last-kill position, completion check — which may add the
+   * formation's drop and `FormationBonus` in the same tick). The slot is freed in phase 8.
    *
    * @param enemy - The enemy.
    * @param by - Player slot credited with the kill (default -1 = nobody).
@@ -841,6 +860,15 @@ const EXPLOSION_SFX = [
 
 /** Particle cue of each explosion size. */
 const EXPLOSION_FX = [FX_CUES.ExplosionSmall, FX_CUES.ExplosionMedium, FX_CUES.ExplosionLarge];
+
+/** Revenge pattern codes of the spec table (`REVENGE_PATTERNS` index + 1; 0 = none). */
+const RevengeCode = { None: 0, Aimed: 1, Spread3: 2, Ring8: 3 } as const;
+
+/** The bullet revenge patterns fire (a red round: a dying enemy's parting shot). */
+const REVENGE_BULLET = BulletKind.RoundRed;
+
+/** Binary-angle units between the bullets of the `spread3` revenge pattern (≈ 17°). */
+const REVENGE_SPREAD_STEP = 48;
 
 /** Capacity of the per-tick kill and drop lists. */
 const OUTCOME_CAPACITY = MAX_ENEMIES + MAX_FORMATIONS;
@@ -958,6 +986,18 @@ interface SpecTable {
   readonly behavior: ReadonlyArray<EnemyBehavior | null>;
   /** Resolved behaviour params per spec. */
   readonly params: ReadonlyArray<Readonly<Record<string, number>>>;
+  /** 1 = the spec has rank modifiers (its script runs with narrowed bullet scales). */
+  readonly rankMod: Uint8Array;
+  /** Bullet-speed rank modifier (1 = the session's curve). */
+  readonly rankSpeed: Float64Array;
+  /** Fire-rate rank modifier (1 = the session's curve). */
+  readonly rankFire: Float64Array;
+  /** Revenge pattern: 0 = none, else the `REVENGE_PATTERNS` index + 1. */
+  readonly revenge: Uint8Array;
+  /** Lowest rank of the revenge bullets. */
+  readonly revengeRank: Int32Array;
+  /** Revenge bullet speed on Normal. */
+  readonly revengeSpeed: Float64Array;
 }
 
 /**
@@ -989,9 +1029,27 @@ function compileSpecs(specs: readonly EnemySpec[], behaviors: EnemyBehaviorLooku
     moverParams: new Float64Array(n * 6),
     behavior,
     params,
+    rankMod: new Uint8Array(n),
+    rankSpeed: new Float64Array(n).fill(1),
+    rankFire: new Float64Array(n).fill(1),
+    revenge: new Uint8Array(n),
+    revengeRank: new Int32Array(n),
+    revengeSpeed: new Float64Array(n),
   };
   for (let i = 0; i < n; i++) {
     const spec = specs[i];
+    const rank = spec.rank;
+    if (rank !== undefined) {
+      table.rankSpeed[i] = rank.bulletSpeed ?? 1;
+      table.rankFire[i] = rank.fireRate ?? 1;
+      table.rankMod[i] = table.rankSpeed[i] !== 1 || table.rankFire[i] !== 1 ? 1 : 0;
+    }
+    const revenge = spec.revenge;
+    if (revenge !== undefined) {
+      table.revenge[i] = REVENGE_PATTERNS.indexOf(revenge.pattern) + 1;
+      table.revengeRank[i] = revenge.minRank;
+      table.revengeSpeed[i] = revenge.speed ?? DEFAULT_REVENGE_SPEED;
+    }
     table.hp[i] = spec.hp;
     table.score[i] = spec.score;
     table.hw[i] = spec.hurtbox.hw;
@@ -1368,6 +1426,8 @@ class EnemySystemImpl implements EnemySystem {
   readonly host: EnemyHost;
   /** The fire origin every script API shares (set before each primitive). */
   readonly origin = new BulletOrigin();
+  /** `true` while {@link EnemySystemImpl.megaCrash} kills (no revenge bullets). */
+  private crashing = false;
   /** Script API per slot. */
   private readonly apis: readonly EnemyScriptApi[];
   /** The compiled specs. */
@@ -1708,11 +1768,22 @@ class EnemySystemImpl implements EnemySystem {
   runScripts(): void {
     const enemies = this.enemies;
     const tick = this.host.tick;
+    const specs = this.specs;
+    const rankMod = specs.rankMod;
     for (let i = 0; i < enemies.length; i++) {
       const enemy = enemies[i];
       if (enemy.state !== EnemyState.Live || enemy.script === null) continue;
       if (enemy.wakeTick > tick) continue;
+      const spec = enemy.specIndex;
+      if (rankMod[spec] === 0) {
+        resumeScript(enemy, tick);
+        continue;
+      }
+      // The enemy's own rank modifiers for its fire primitives, then the session's again.
+      const bullets = this.host.bullets;
+      bullets.setShooterRank(specs.rankSpeed, specs.rankFire, spec);
       resumeScript(enemy, tick);
+      bullets.clearShooterRank();
     }
   }
 
@@ -1918,6 +1989,7 @@ class EnemySystemImpl implements EnemySystem {
     events.push(SimEventKind.Sfx, EXPLOSION_SFX[size], x, y, 0);
     events.push(SimEventKind.Particles, EXPLOSION_FX[size], x, y, 1);
     if (specs.drop[spec] !== DropKind.None) o.addDrop(specs.drop[spec], x, y);
+    if (by >= 0 && !this.crashing && specs.revenge[spec] !== 0) this.revenge(enemy, spec);
     const slot = enemy.formation;
     if (slot < 0) {
       this.remove(enemy);
@@ -1932,6 +2004,35 @@ class EnemySystemImpl implements EnemySystem {
     this.leaveFormation(enemy, slot);
     this.creditBy = -1;
     return true;
+  }
+
+  /**
+   * Fires an enemy's revenge bullets from where it died (see the module docs): only on screen and
+   * at a rank of at least its `minRank`, with its own rank modifiers. Rank-scaled like every enemy
+   * bullet; a full pool drops them quietly.
+   *
+   * @param enemy - The enemy being killed (still at its position).
+   * @param spec - Its spec index.
+   */
+  private revenge(enemy: Enemy, spec: number): void {
+    const specs = this.specs;
+    const host = this.host;
+    if ((host.rank ?? 0) < specs.revengeRank[spec]) return;
+    if ((enemy.flags & EnemyFlag.OnScreen) === 0) return;
+    const bullets = host.bullets;
+    const origin = this.origin;
+    origin.x = enemy.x;
+    origin.y = enemy.y;
+    bullets.setShooterRank(specs.rankSpeed, specs.rankFire, spec);
+    const pattern = specs.revenge[spec];
+    if (pattern === RevengeCode.Aimed) {
+      fireAimed(bullets, origin, specs.revengeSpeed[spec], REVENGE_BULLET);
+    } else if (pattern === RevengeCode.Spread3) {
+      fireNWay(bullets, origin, 3, REVENGE_SPREAD_STEP, specs.revengeSpeed[spec], REVENGE_BULLET);
+    } else {
+      fireRing(bullets, origin, 8, specs.revengeSpeed[spec], REVENGE_BULLET, AIM_AT_TARGET);
+    }
+    bullets.clearShooterRank();
   }
 
   /**
@@ -2046,12 +2147,15 @@ class EnemySystemImpl implements EnemySystem {
     const enemies = this.enemies;
     const immune = this.specs.immune;
     let killed = 0;
+    // A bomb's kills fire no revenge bullets.
+    this.crashing = true;
     for (let i = 0; i < enemies.length; i++) {
       const e = enemies[i];
       if (e.state !== EnemyState.Live || (e.flags & EnemyFlag.Ghost) !== 0) continue;
       if (immune[e.specIndex] === 1) continue;
       if (this.kill(e, by)) killed++;
     }
+    this.crashing = false;
     return killed;
   }
 

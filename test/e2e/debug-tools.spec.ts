@@ -151,7 +151,9 @@ async function startGame(page: Page, url: string): Promise<string[]> {
   await expect.poll(async () => (await view(page)).sceneId).toBe('title');
   await waitFrames(page, 10);
   await tap(page, 'Enter');
-  await tap(page, 'Enter');
+  await tap(page, 'Enter'); // START
+  await expect.poll(async () => (await view(page)).sceneId).toBe('difficulty');
+  await tap(page, 'Enter'); // NORMAL
   await expect.poll(async () => (await view(page)).sceneId).toBe('game');
   return errors;
 }

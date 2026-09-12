@@ -1,7 +1,8 @@
 /**
  * Browser smoke test of zone A (plan M1-18) in headless Chromium: the web build's scene flow
  * plays AZURE VERGE by default, and the debug stage skip `?skip=boss` starts the game a little
- * before its boss — Enter past `PRESS OK`, Enter on START, then within seconds the WARNING band
+ * before its boss — Enter past `PRESS OK`, Enter on START, Enter on NORMAL (the difficulty menu),
+ * then within seconds the WARNING band
  * (its red edge rows across the whole width) and, once it is gone, HALCYON BULWARK holding the
  * right half of the playfield (its hull colour there) — all without console errors or atlas
  * warnings. Screenshots are ×3 (viewport 1152×648): frame pixel (x, y) is screenshot pixel
@@ -104,6 +105,8 @@ test.describe('zone A (web build)', () => {
     await waitFrames(page, 10);
     await tap(page, 'Enter'); // PRESS OK → the menu
     await tap(page, 'Enter'); // START
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'difficulty');
+    await tap(page, 'Enter'); // NORMAL
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
     const start = await capture(page);
     expect(start.band).toBe(0);

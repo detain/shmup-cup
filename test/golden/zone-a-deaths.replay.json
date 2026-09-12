@@ -15,6 +15,12 @@
       "maxTicksPerFrame": 4,
       "seed": 4,
       "difficulty": "normal",
+      "rankBase": 2,
+      "rankGrowth": 1,
+      "extendFirst": 20000,
+      "extendEvery": 70000,
+      "continues": 3,
+      "bulletSpeedMul": 1,
       "powerUpMode": "meter",
       "deathPenalty": "classic",
       "startingLives": 3,
@@ -47,16 +53,16 @@
     "AMwp"
   ],
   "hashes": [
-    1262883568,
-    2367253230,
-    1814486511,
-    1785127101,
-    1461009336,
-    4066492286,
-    1772937485,
-    1795812241
+    1379374704,
+    1800104430,
+    1592638031,
+    1947574621,
+    208536216,
+    2631741406,
+    2192894317,
+    454400321
   ],
-  "finalHash": 1389997507,
+  "finalHash": 2169351619,
   "description": "a weaving pilot that never dodges, Classic penalty: deaths, respawns in place, game over",
   "expected": {
     "status": "gameOver",

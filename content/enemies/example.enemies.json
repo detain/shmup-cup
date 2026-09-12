@@ -34,7 +34,8 @@
       "ground": "floor",
       "settleTicks": 45,
       "explosion": "medium",
-      "rank": { "fireRate": 0.5, "bulletSpeed": 0.25 }
+      "rank": { "fireRate": 0.5, "bulletSpeed": 0.25 },
+      "revenge": { "minRank": 10, "pattern": "spread3", "speed": 1.5 }
     },
     {
       "id": "hatch",

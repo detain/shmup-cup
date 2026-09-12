@@ -9,7 +9,8 @@ off-screen and settle rules) and §15 (score values).
 `zone-a.enemies.json` is zone A's roster (M1-18): eight enemy types — `skeet` popcorn (and the
 `skeet-chain` sine chains), `vane` fans, `tender` capsule carriers, `lancer` rammers, `picket`
 floor / ceiling turrets, `strider` walkers, the `burrow` hatch (with its `burrow-mite`) and
-`gyre` orbiters — and the boss HALCYON BULWARK (`halcyon-bulwark`, code HB-01): an armoured hull
+`gyre` orbiters (the `vane` fans fire an aimed revenge bullet from rank 12 — a fully powered ship
+on Normal) — and the boss HALCYON BULWARK (`halcyon-bulwark`, code HB-01): an armoured hull
 and wings, four shield plates (12 hp) stacked in front of a 40-hp core that takes damage only once
 every plate is gone, and two laser emitters above and below it (`boss.bulwark`: slow tracking,
 alternating attached lane lasers, aimed 3-ways once two plates are down). Zone A is held to the
@@ -39,7 +40,8 @@ alternating attached lane lasers, aimed 3-ways once two plates are down). Zone A
       "explosion": "small",            // optional: "small" (default) | "medium" | "large"
       "megaCrashImmune": false,        // optional: survives the Mega Crash (default false)
       "child": null,                   // optional: enemy id a spawner releases (hatch.spawner)
-      "rank": { "fireRate": 0.5 }      // optional rank modifiers (§15)
+      "rank": { "fireRate": 0.5 },     // optional rank modifiers (§11, §15; default 1 each)
+      "revenge": { "minRank": 12, "pattern": "aimed", "speed": 1.25 } // optional revenge bullets
     }
   ]
 }
@@ -68,6 +70,17 @@ period, phase? }`, `path { path?, speed }`, `waypoint { x, y, speed, hold, leave
 (pixels per tick, ticks, binary angles — 1024 per turn). Flying enemies ride the camera
 scroll, so their velocities are relative to the screen; ground enemies stand on (or hang from)
 the terrain where they spawn.
+
+**Rank (M2-01).** Bullet speeds and fire intervals are the Normal values; the session's rank
+(`packages/core/src/rank`: 0–31, growing with the stage and the player's power) scales them.
+`"rank": { "bulletSpeed": k, "fireRate": k }` sets how strongly this enemy follows those curves:
+its multiplier is `1 + k · (rank multiplier − 1)` — 1 (default) = the usual curve, 0 = never
+faster, 2 = twice the effect (0–8). `"revenge": { "minRank", "pattern", "speed"? }` gives the
+enemy revenge ("suicide") bullets: shot down on screen by a player at a rank of at least
+`minRank` (0–31), it fires `pattern` — `aimed` (one bullet at the player), `spread3` (an aimed
+3-way) or `ring8` (eight bullets round the circle, the first aimed) — from where it died, at
+`speed` px/tick on Normal (0.25–4, default 1.25; rank-scaled). A Mega Crash kill never fires
+revenge bullets. Bosses take neither field.
 
 **Drops and Mega Crash.** `"drop": "capsule"` makes the enemy leave a power capsule where it
 dies (the player's power meter — `docs/dev/powerups-and-shields.md`); `"megaCrashImmune": true`

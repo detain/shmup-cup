@@ -293,7 +293,10 @@ describe('web/boot bootWebApp wiring', () => {
     frame();
     expect(app.game.scenes?.stack.top?.id).toBe('title');
     tap('Enter', 13);
-    tap('Enter', 13);
+    tap('Enter', 13); // START → the difficulty menu
+    expect(app.game.scenes?.stack.top?.id).toBe('difficulty');
+    tap('Enter', 13); // NORMAL (buffered by the menu's open lock)
+    frame();
     expect(app.game.scenes?.stack.top?.id).toBe('game');
     frame();
     expect(app.input.context).toBe('game');
@@ -462,7 +465,9 @@ describe('web/boot bootWebApp wiring', () => {
     frame();
     expect(app.game.scenes?.stack.top?.id).toBe('title');
     enter();
-    enter();
+    enter(); // START → the difficulty menu
+    enter(); // NORMAL (buffered by the menu's open lock)
+    frame();
     expect(app.game.scenes?.stack.top?.id).toBe('game');
     const world = app.game.world;
     expect(world.stage?.stage.id).toBe('zone-a');

@@ -56,9 +56,9 @@
  * phase 5 (after the enemies, so attached lasers follow their enemy's new position) and hit the
  * players in phase 6 (`playerHit(Bullet / Laser)`); the view carries the bullet pool as the
  * `LayerId.EnemyBullets` batch and the lasers as `view.lasers`. {@link World.rank} is the
- * session's rank (`core/rank`: the difficulty's base, constant in M1); the bullet system scales
- * bullet speeds and fire intervals by it. The engine's own sprites (bullets, laser beam) are
- * {@link ENGINE_SPRITES} — hosts load content with `extraSprites: ENGINE_SPRITES` so they draw.
+ * session's rank (`core/rank`); the bullet system scales bullet speeds and fire intervals by it.
+ * The engine's own sprites (bullets, laser beam) are {@link ENGINE_SPRITES} — hosts load content
+ * with `extraSprites: ENGINE_SPRITES` so they draw.
  *
  * **Player weapons (M1-10).** {@link World.weapons} (`core/weapons`, Options from `core/options`)
  * owns the `playerShots` pool, one loadout (`config.loadout` at creation) and one option group per
@@ -110,6 +110,19 @@
  * are drawn from the boss batch (`LayerId.AirEnemies`, after the other batches);
  * {@link World.laserSources} lists enemies then parts, so lasers can stay attached to either.
  *
+ * **Rank, extends and continues (M2-01).** At the end of phase 3 the World recomputes its rank
+ * ({@link updateWorldRank}): `core/rank` `computeRank` over {@link World.rankInputs} — the
+ * config's `rankBase` / `rankGrowth`, the loop and stage number (1 / 1 until the campaign of
+ * M2-10 sets them) and the power term of the most powerful active ship (`powerRank`: Missile,
+ * Double / Laser, Options, shield) — and hands a changed rank to the bullet system, so the fire
+ * primitives of phase 4 use it. The scores give extra lives (`core/scoring` extends). When the
+ * game is over and continues are left ({@link canContinue}: `config.continues` minus
+ * {@link World.continuesUsed}), the scene flow's continue countdown may call
+ * {@link continueWorld}: every active ship gets `config.startingLives` again, loses its power
+ * (the `arcade` penalty, then the config's starting loadout), the score's last digit counts the
+ * continue (`core/scoring` `markContinue`), the stage restarts at its last checkpoint and the
+ * ships fly in — status `playing`.
+ *
  * **Zero allocation.** Everything is allocated by {@link createWorld}; {@link stepWorld} and the
  * systems only write numbers into existing objects and typed arrays.
  *
@@ -125,7 +138,8 @@
  * {@link WORLD_PHASES}, {@link WorldPhaseEntry}, {@link WorldSystem}, {@link PoolRegistry},
  * {@link RegisteredPool}, {@link syncWorldView}, {@link GRID_MARGIN}, {@link resolveWorldStage},
  * {@link ENGINE_SPRITES}, {@link DEATH_HIT_STOP_TICKS}, {@link DEATH_SHAKE_TICKS},
- * {@link DEATH_MUSIC_DUCK_TICKS}.
+ * {@link DEATH_MUSIC_DUCK_TICKS}, {@link updateWorldRank}, {@link canContinue},
+ * {@link continueWorld}.
  *
  * @module
  */
@@ -171,9 +185,14 @@ import {
   createPowerUpSystem,
   type PowerUpSystem,
 } from '../powerups/index.js';
-import { createScoringSystem, type ScoringSystem } from '../scoring/index.js';
-import { FORCE_FIELD_SPRITE } from '../shields/index.js';
-import { applyLoadoutPreset, createWeaponSystem, type WeaponSystem } from '../weapons/index.js';
+import { createScoringSystem, markContinue, type ScoringSystem } from '../scoring/index.js';
+import { FORCE_FIELD_SPRITE, shieldActive } from '../shields/index.js';
+import {
+  MainWeapon,
+  applyLoadoutPreset,
+  createWeaponSystem,
+  type WeaponSystem,
+} from '../weapons/index.js';
 import { UI_SPRITES } from '../ui/index.js';
 import {
   FX_CUES,
@@ -213,7 +232,7 @@ import {
   type WarningView,
   type WorldView,
 } from '../presentation/index.js';
-import { computeRank, difficultyRankInputs } from '../rank/index.js';
+import { computeRank, createRankInputs, powerRank, type RankInputs } from '../rank/index.js';
 import { createRngStreams, type RngStreams } from '../rng/index.js';
 import {
   StageEventCode,
@@ -360,8 +379,19 @@ export interface World {
    * `core/bosses` `BOSS_PART_ID_BASE`), so enemy and boss lasers can stay attached to their gun.
    */
   readonly laserSources: readonly LaserSource[];
-  /** The session's rank (`core/rank`; constant in M1: the difficulty's base). */
+  /**
+   * The session's rank, 0–31 (`core/rank`; recomputed at the end of phase 3 —
+   * {@link updateWorldRank}).
+   */
   rank: number;
+  /**
+   * What the rank is computed from (mutable): the config's base and growth, `loop` / `stage` (1 / 1
+   * until the campaign of M2-10 sets them), the `power` term of the most powerful active ship
+   * (written by {@link updateWorldRank}) and `special` (0).
+   */
+  readonly rankInputs: { -readonly [K in keyof RankInputs]: RankInputs[K] };
+  /** Continues used so far this game (M2-01; {@link continueWorld}). */
+  continuesUsed: number;
   /** What the renderer draws: live references, refreshed at the end of every tick. */
   readonly view: WorldView;
 }
@@ -575,7 +605,8 @@ function clearSession(world: World): void {
  * capsules, kills → score — the tools' kills), then the enemy outcomes reset; the stage runner
  * moves the camera and fires the due timeline events; without a stage the camera moves by its
  * scroll velocity (`vx` / `vy`, static by default). Either way `dx` / `dy` record the step players
- * ride along with next tick.
+ * ride along with next tick. Last, the rank is recomputed ({@link updateWorldRank}) for the
+ * scripts of phase 4.
  *
  * @param world - The world.
  */
@@ -596,6 +627,7 @@ const stageSystem: WorldSystem = (world) => {
     camera.y += camera.dy;
   }
   enemies.spawnPending();
+  updateWorldRank(world);
 };
 
 /**
@@ -703,6 +735,131 @@ const damageSystem: WorldSystem = (world) => {
     if (ship.hitTick === tick && ship.hitCause !== PlayerHitCause.None) killShip(world, i);
   }
 };
+
+/**
+ * Recomputes the World's rank (shmup_feat.md §15): the power term of the most powerful active
+ * ship that is not dying or dead (`core/rank` `powerRank`: Missile +1, Double +2, Laser +3, each
+ * Option +1, a shield +4) goes into {@link World.rankInputs}, `computeRank` gives the rank, and a
+ * changed rank is handed to the bullet system (`BulletSystem.setRank` — the curves are only
+ * evaluated then). The World calls it at the end of phase 3; call it after changing
+ * `rankInputs` (the campaign's loop / stage) outside a tick. Never allocates.
+ *
+ * @remarks
+ * A ship that died keeps counting until the death penalty took its power (the same tick, phase
+ * 7): from the next phase 3 its reduced loadout counts. Without an active ship the power term is
+ * 0.
+ *
+ * @param world - The world.
+ * @returns The rank.
+ *
+ * @example
+ * ```ts
+ * world.weapons.loadouts[0].options = 4;
+ * updateWorldRank(world); // → 6 on Normal (base 2 + four Options)
+ * ```
+ */
+export function updateWorldRank(world: World): number {
+  const players = world.players;
+  const loadouts = world.weapons.loadouts;
+  let power = 0;
+  for (let i = 0; i < players.length; i++) {
+    const ship = players[i];
+    if (!ship.active) continue;
+    const loadout = loadouts[i];
+    const main = loadout.main;
+    const p = powerRank(
+      loadout.missile ? 1 : 0,
+      main === MainWeapon.Double ? 1 : 0,
+      main === MainWeapon.Laser ? 1 : 0,
+      loadout.options,
+      shieldActive(ship.shield) ? 1 : 0,
+      0,
+    );
+    if (p > power) power = p;
+  }
+  const inputs = world.rankInputs;
+  inputs.power = power;
+  const rank = computeRank(inputs);
+  if (rank !== world.rank) {
+    world.rank = rank;
+    world.bullets.setRank(rank);
+  }
+  return rank;
+}
+
+/**
+ * Whether the game can go on with a continue (shmup_feat.md §10): the status is `gameOver` and
+ * `config.continues` is more than {@link World.continuesUsed}.
+ *
+ * @param world - The world.
+ * @returns `true` when {@link continueWorld} would continue.
+ *
+ * @example
+ * ```ts
+ * if (world.status === 'gameOver' && canContinue(world)) flow.stack.push(flow.continueScreen);
+ * ```
+ */
+export function canContinue(world: World): boolean {
+  return world.status === 'gameOver' && world.continuesUsed < world.config.continues;
+}
+
+/**
+ * Continues a game that is over (shmup_feat.md §10 "continue at checkpoint; continue count shown
+ * in the score's last digit"): see the module docs. Deterministic — the same continue at the same
+ * tick reproduces the same state — and a cold path (it restarts the stage).
+ *
+ * @remarks
+ * Every active ship: lives back to `config.startingLives`, power gone (`applyDeathPenalty`
+ * `arcade`: no shield, basic shot, no Missile / Options, speed 0, meter cursor reset), then the
+ * config's starting loadout (`applyLoadoutPreset`), and its score marks the continue
+ * (`markContinue`). The stage restarts at its last checkpoint (`StageRunner.restartAt`, which
+ * empties every pool and system — the boss and its WARNING too) and its stage theme is queued
+ * again (`SimEventKind.Music`; the continue countdown faded the music out), or the session is
+ * cleared in free flight; the ships fly in at the view, the hit-stop ends and the status becomes
+ * `playing`. {@link World.continuesUsed} counts it.
+ *
+ * @param world - The world.
+ * @returns `true` when it continued; `false` when {@link canContinue} is `false` (nothing changes).
+ *
+ * @example
+ * ```ts
+ * if (canContinue(world)) continueWorld(world); // world.status → 'playing'
+ * ```
+ */
+export function continueWorld(world: World): boolean {
+  if (!canContinue(world)) return false;
+  world.continuesUsed++;
+  const config = world.config;
+  const players = world.players;
+  const board = world.scoring.board;
+  for (let i = 0; i < players.length; i++) {
+    const ship = players[i];
+    if (!ship.active) continue;
+    ship.lives = config.startingLives;
+    const loadout = world.weapons.loadouts[i];
+    applyDeathPenalty('arcade', ship, loadout, world.powerups.meters[i]);
+    applyLoadoutPreset(loadout, ship, config.loadout);
+    markContinue(board, i);
+  }
+  const stage = world.stage;
+  if (stage !== null) {
+    stage.restartAt(stage.checkpoint);
+    // The stage theme again (the continue countdown faded the music out).
+    const theme = stage.stage.music.stageId;
+    if (theme >= 0) world.events.push(SimEventKind.Music, theme, 0, 0, 0);
+  } else {
+    clearSession(world);
+  }
+  const camera = world.camera;
+  for (let i = 0; i < players.length; i++) {
+    if (players[i].active) respawnPlayer(players[i], world.ship, camera);
+  }
+  world.hitStop = 0;
+  world.status = 'playing';
+  updateWorldRank(world);
+  syncWorldView(world);
+  return true;
+}
 
 /** Hit-stop of a player's death, in ticks (plan M1-12). */
 export const DEATH_HIT_STOP_TICKS = 8;
@@ -959,9 +1116,12 @@ export function createWorld(
     scoring: null as unknown as ScoringSystem,
     bosses: null as unknown as BossSystem,
     laserSources: [],
-    rank: computeRank(difficultyRankInputs(config.difficulty)),
+    rank: 0,
+    rankInputs: createRankInputs(config),
+    continuesUsed: 0,
     view,
   };
+  world.rank = computeRank(world.rankInputs);
   world.bullets = createBulletSystem(world);
   world.bullets.setRank(world.rank);
   world.enemies = createEnemySystem(world, options.behaviors ?? DEFAULT_BEHAVIORS, stageSpec);
@@ -973,6 +1133,8 @@ export function createWorld(
   for (let slot = 0; slot < MAX_PLAYERS; slot++) {
     applyLoadoutPreset(world.weapons.loadouts[slot], players[slot], config.loadout);
   }
+  // The starting loadout counts towards the rank from the first tick.
+  updateWorldRank(world);
   // Same-layer batches draw in list order: the Options below the ships, the shields over them.
   batches.push(
     world.enemies.groundBatch,

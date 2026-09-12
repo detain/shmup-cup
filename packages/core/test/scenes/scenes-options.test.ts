@@ -59,7 +59,8 @@ class Session {
   ) {
     this.platform = createHeadlessPlatform();
     this.save = save;
-    this.game = createGame(this.platform, { seed: 3 }, undefined, {
+    // No continues: a game over records the run at once (the M1 flow these tests cover).
+    this.game = createGame(this.platform, { seed: 3, continues: 0 }, undefined, {
       scenes: start,
       save,
       inputProfiles: profiles,
@@ -344,6 +345,8 @@ describe('core/scenes saves: hi-scores', () => {
     expect(s.flow.hiScore).toBe(48000);
     s.press(Action.Confirm);
     s.press(Action.Confirm); // START
+    s.press(Action.Confirm); // NORMAL
+    s.hold(0); // the difficulty menu's lock: the buffered OK acts now
     expect(s.game.world.scoring.board.hiScore).toBe(48000);
     expect(save.data.stats.gamesStarted).toBe(1);
   });
@@ -410,6 +413,8 @@ describe('core/scenes saves: hi-scores', () => {
     expect(second.flow.hiScore).toBe(31400);
     second.press(Action.Confirm);
     second.press(Action.Confirm); // START
+    second.press(Action.Confirm); // NORMAL
+    second.hold(0);
     expect(second.game.world.scoring.board.hiScore).toBe(31400);
     expect(second.save.hiScores('meter-normal').map((r) => r.score)).toEqual([31400]);
   });

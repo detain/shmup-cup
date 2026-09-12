@@ -100,7 +100,9 @@ class Session {
         : null,
     });
     this.platform = platform;
-    this.game = createGame(platform, { seed: 11 }, content, { scenes: start });
+    // No continues: a game over opens the game-over screen at once (the M1 flow; the continue
+    // countdown of M2-01 is covered by scenes-continue.test.ts).
+    this.game = createGame(platform, { seed: 11, continues: 0 }, content, { scenes: start });
     this.flow = this.game.scenes as SceneFlow;
     this.drain();
   }
@@ -144,10 +146,23 @@ class Session {
     this.hold(0, 1, player);
   }
 
-  /** PRESS OK, then START. */
+  /** PRESS OK, then START, then NORMAL in the difficulty menu (its buffered OK acts a tick late). */
   startGame(): void {
     this.press(Action.Confirm);
     this.press(Action.Confirm);
+    expect(this.top).toBe('difficulty');
+    this.chooseNormal();
+  }
+
+  /**
+   * OK on the difficulty menu's focus (NORMAL unless moved), then one idle tick: the menu's
+   * 2-tick open lock buffers the press, which acts once the lock is over.
+   *
+   * @param player - Player slot.
+   */
+  chooseNormal(player = 0): void {
+    this.press(Action.Confirm, player);
+    this.hold(0, 1, player);
     expect(this.top).toBe('game');
   }
 
@@ -387,7 +402,8 @@ describe('core/scenes flow edge: title', () => {
     s.hold(0);
     expect(s.top).toBe('title'); // still locked (2 ticks)
     s.hold(0);
-    expect(s.top).toBe('game'); // the buffered press
+    expect(s.ids).toEqual(['title', 'difficulty']); // the buffered press: START
+    s.chooseNormal();
   });
 
   it('wraps the menu at both ends and plays the move sound', () => {
@@ -442,7 +458,7 @@ describe('core/scenes flow edge: title', () => {
     s.hold(0);
     expect(s.top).toBe('title');
     s.hold(0);
-    expect(s.top).toBe('game');
+    expect(s.top).toBe('difficulty');
   });
 
   it('opens the menu on START again after a game, whatever was focused before', () => {
@@ -451,7 +467,7 @@ describe('core/scenes flow edge: title', () => {
     s.press(Action.Up); // EXIT
     s.press(Action.Down); // START
     s.press(Action.Confirm);
-    expect(s.top).toBe('game');
+    s.chooseNormal();
     s.press(Action.Pause);
     s.press(Action.Up); // QUIT (wraps)
     s.press(Action.Confirm);
@@ -483,7 +499,7 @@ describe('core/scenes flow edge: title', () => {
     const s = new Session();
     s.press(Action.Confirm, 1);
     s.press(Action.Confirm, 1);
-    expect(s.top).toBe('game');
+    s.chooseNormal(1);
     s.press(Action.Pause, 1);
     expect(s.top).toBe('pause');
     s.press(Action.Back, 1);

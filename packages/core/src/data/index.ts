@@ -2,8 +2,8 @@
  * # data — content schemas and loaders (player, weapons, enemies, paths, stages, tilesets JSON)
  *
  * **Status: partial.** The loader, the schema combinators and the `player`, `weapons`,
- * `enemies` (with its boss section, M1-13), `paths`, `stage` and `tileset` formats are
- * implemented; later steps add their kinds.
+ * `enemies` (with its boss section, M1-13), `paths`, `stage`, `tileset` and `rules` (M2-01)
+ * formats are implemented; later steps add their kinds.
  *
  * **Responsibility.** Data-driven content (design pillar 4). Declares the shape of every
  * file under `content/`, validates it at load time with the in-house combinators in
@@ -38,7 +38,16 @@
  * resolved, stage `spawn` / `formation` events and enemy `child`ren must name regular enemies and
  * `warning` / `boss` events bosses.
  *
+ * **Rules (M2-01).** A `rules` file (`content/rules/*.rules.json`) holds game-wide tables; its
+ * optional `difficulty` section gives the four difficulty presets (`core/config`
+ * {@link DifficultyRules}: rank base and growth, lives, extends, continues, death penalty, aim
+ * directions, bullet speed multiplier) as {@link ContentDb.difficulty} — frozen, `aimDirections`
+ * checked to be powers of two, defined by one file only. Enemies may carry rank modifiers
+ * ({@link EnemyRankSpec}: how strongly they follow the rank's curves) and revenge bullets
+ * ({@link EnemyRevengeSpec}).
+ *
  * **Implements.**
+ * - shmup_feat.md §15 — difficulty presets as data (rank base / growth, lives, extends)
  * - shmup_feat.md §14 — stage data format (JSON validated with a schema), tilemap terrain with
  *   collision types and slope masks, parallax layers, sorted event timeline
  * - shmup_feat.md §10 — invisible checkpoints in the stage data
@@ -55,7 +64,9 @@
  *   {@link ContentMigrationTable}).
  * - Per-kind spec types: {@link PlayerShipSpec} ({@link BoxSpec}, {@link MarginSpec}),
  *   {@link WeaponSpec} ({@link WeaponSlot}, {@link WEAPON_SLOTS}), {@link WeaponPresetSpec},
- *   {@link EnemySpec} ({@link EnemyRankSpec}, {@link EnemyAnimSpec}, {@link EnemyMoverSpec},
+ *   {@link EnemySpec} ({@link EnemyRankSpec}, {@link EnemyRevengeSpec}, {@link RevengePattern},
+ *   {@link REVENGE_PATTERNS}, {@link DEFAULT_REVENGE_SPEED}, {@link EnemyAnimSpec},
+ *   {@link EnemyMoverSpec},
  *   {@link MoverType}, {@link MOVER_TYPES}, {@link EnemyGround}, {@link ENEMY_GROUNDS},
  *   {@link EnemyExplosion}, {@link ENEMY_EXPLOSIONS}, {@link EnemyDrop}, {@link ENEMY_DROPS},
  *   {@link DEFAULT_SETTLE_TICKS}), {@link BossSpec} ({@link BossPartSpec}, {@link BossPhaseSpec},
@@ -81,8 +92,8 @@
  * `path` → `pathId`, `child` → `childId`); `-1` means null, absent or unresolved. Systems read
  * only the numbers.
  *
- * **Planned API (later steps).** Kinds `rules`,
- * `patterns`, `campaign`, `strings` (M2); `input-profiles`, `sfx`/`music` and `fx` files stay
+ * **Planned API (later steps).** Kinds `patterns`, `campaign`, `strings` (M2) and more `rules`
+ * sections (scoring — M2-02); `input-profiles`, `sfx`/`music` and `fx` files stay
  * *foreign* here and are validated by their owning packages (see plan §3.5). Hosts pass
  * `knownScripts` (`core/behaviors` `KNOWN_SCRIPT_IDS`) so script ids are checked; M1-03 checks
  * `db.sprites` against the atlas.
@@ -94,7 +105,19 @@
  *
  * @module
  */
-import { PLAYFIELD_H, PLAYFIELD_W } from '../config/index.js';
+import {
+  DEATH_PENALTY_PRESETS,
+  DIFFICULTY_PRESETS,
+  MAX_BULLET_SPEED_MUL,
+  MAX_CONTINUES,
+  MAX_EXTEND_SCORE,
+  MAX_RANK_GROWTH,
+  MIN_BULLET_SPEED_MUL,
+  PLAYFIELD_H,
+  PLAYFIELD_W,
+  type DifficultyRules,
+  type DifficultyTable,
+} from '../config/index.js';
 import { MUSIC_CUES, SFX_CUES } from '../events/index.js';
 import { defineModule } from '../module-info.js';
 import { bakePath, type PathTable } from './paths.js';
@@ -119,7 +142,13 @@ export {
 export const moduleInfo = defineModule({
   name: 'data',
   status: 'partial',
-  specRefs: ['shmup_feat.md §14', 'shmup_feat.md §22', 'shmup_feat.md §7', 'shmup_feat.md §11'],
+  specRefs: [
+    'shmup_feat.md §14',
+    'shmup_feat.md §22',
+    'shmup_feat.md §7',
+    'shmup_feat.md §11',
+    'shmup_feat.md §15',
+  ],
 });
 
 /**
@@ -147,6 +176,7 @@ export const CONTENT_KINDS = Object.freeze([
   'paths',
   'stage',
   'tileset',
+  'rules',
 ] as const);
 
 /** Kinds of content file this module owns (`content/player/`, `weapons/`, …). */
@@ -325,13 +355,45 @@ export interface WeaponPresetSpec {
   readonly laserId: number;
 }
 
-/** Optional per-enemy rank modifiers (shmup_feat.md §15). */
+/**
+ * Optional per-enemy rank modifiers (shmup_feat.md §11 "rank modifiers per enemy", §15): how
+ * strongly the enemy follows the rank's curves (`core/rank` `rankSensitivity`) — 1 (the default)
+ * = the session's multiplier, 0 = unaffected by rank, 2 = twice the effect. At Normal's base rank
+ * every value gives × 1, so the content's speeds and intervals stay the Normal values.
+ */
 export interface EnemyRankSpec {
-  /** Extra shots per second at maximum rank. */
+  /** Modifier of the fire-rate curve (its fire intervals), 0–8 (default 1). */
   readonly fireRate?: number;
-  /** Extra bullet speed (px/tick) at maximum rank. */
+  /** Modifier of the bullet-speed curve, 0–8 (default 1). */
   readonly bulletSpeed?: number;
 }
+
+/**
+ * The revenge ("suicide") bullet patterns an enemy may fire when it is shot down at a high rank
+ * (shmup_feat.md §11): `aimed` — one bullet at the nearest player; `spread3` — an aimed 3-way
+ * spread; `ring8` — eight bullets evenly round the circle, the first aimed.
+ */
+export const REVENGE_PATTERNS = Object.freeze(['aimed', 'spread3', 'ring8'] as const);
+
+/** A {@link REVENGE_PATTERNS} name. */
+export type RevengePattern = (typeof REVENGE_PATTERNS)[number];
+
+/**
+ * Revenge bullets (shmup_feat.md §11 "revenge (suicide) bullets on higher rank / loop 2+"): when a
+ * player shoots the enemy down on screen while the rank is at least `minRank`, it fires `pattern`
+ * from where it died (`core/enemies`; rank-scaled like every enemy bullet — not on a Mega Crash).
+ */
+export interface EnemyRevengeSpec {
+  /** Lowest rank (0–31) at which the enemy fires revenge bullets. */
+  readonly minRank: number;
+  /** What it fires. */
+  readonly pattern: RevengePattern;
+  /** Bullet speed on Normal in px/tick (default {@link DEFAULT_REVENGE_SPEED}). */
+  readonly speed?: number;
+}
+
+/** Default {@link EnemyRevengeSpec.speed} (px/tick on Normal). */
+export const DEFAULT_REVENGE_SPEED = 1.25;
 
 /** Sprite animation of an enemy: `frames` frames of its sprite, `ticks` ticks each, looping. */
 export interface EnemyAnimSpec {
@@ -500,8 +562,10 @@ export interface EnemySpec {
   readonly child: string | null;
   /** Resolved {@link ContentDb.enemies} index of {@link EnemySpec.child} (-1 = none). */
   readonly childId: number;
-  /** Rank modifiers. */
+  /** Rank modifiers (default: none — both 1). */
   readonly rank?: EnemyRankSpec;
+  /** Revenge bullets (default: none). */
+  readonly revenge?: EnemyRevengeSpec;
   /**
    * The boss section (M1-13), or `null` for a regular enemy (default). A boss entry has only an
    * `id` and this section in the file; the loader fills the regular fields for it (`hp` = the
@@ -1060,6 +1124,12 @@ export interface ContentDb {
   readonly tilesets: readonly TilesetSpec[];
   /** Tileset id → {@link ContentDb.tilesets} index. */
   readonly tilesetIndex: ReadonlyMap<string, number>;
+  /**
+   * The difficulty presets of a `rules` file's `difficulty` section (M2-01,
+   * `content/rules/difficulty.rules.json`), or `null` when no file has one — sessions then use
+   * `core/config` `DEFAULT_DIFFICULTY_TABLE` (`createGame` passes this to `resolveGameConfig`).
+   */
+  readonly difficulty: DifficultyTable | null;
 }
 
 /** Options of {@link loadContent}. */
@@ -1342,6 +1412,7 @@ const BOSS_OMITTED = Object.freeze([
   'megaCrashImmune',
   'child',
   'rank',
+  'revenge',
 ] as const);
 
 /** One entry of `enemies` in an `enemies` file (optional fields are filled in by the loader). */
@@ -1366,6 +1437,14 @@ const ENEMY_SCHEMA = s.object(
       { fireRate: s.num({ min: 0, max: 8 }), bulletSpeed: s.num({ min: 0, max: 8 }) },
       { optional: ['fireRate', 'bulletSpeed'] },
     ),
+    revenge: s.object(
+      {
+        minRank: s.int({ min: 0, max: 31 }),
+        pattern: s.enumOf(REVENGE_PATTERNS),
+        speed: s.num({ min: 0.25, max: 4 }),
+      },
+      { optional: ['speed'] },
+    ),
     boss: BOSS_SCHEMA,
   },
   {
@@ -1387,6 +1466,7 @@ const ENEMY_SCHEMA = s.object(
       'megaCrashImmune',
       'child',
       'rank',
+      'revenge',
     ],
   },
 );
@@ -1583,6 +1663,42 @@ const TILESET_FILE_SCHEMA = s.object({
   tiles: s.array(TILE_SCHEMA, { min: 1, max: 255 }),
 });
 
+/** A score threshold of the difficulty presets (whole points, 0 = none). */
+const EXTEND_SCORE = s.int({ min: 0, max: MAX_EXTEND_SCORE });
+
+/** One difficulty preset of a `rules` file ({@link DifficultyRules}). */
+const DIFFICULTY_RULES_SCHEMA = s.object({
+  rankBase: s.int({ min: 0, max: 31 }),
+  rankGrowth: s.num({ min: 0, max: MAX_RANK_GROWTH }),
+  lives: s.int({ min: 1, max: 5 }),
+  extends: s.object({ first: EXTEND_SCORE, every: EXTEND_SCORE }),
+  continues: s.int({ min: 0, max: MAX_CONTINUES }),
+  deathPenalty: s.enumOf(DEATH_PENALTY_PRESETS),
+  aimDirections: s.int({ min: 4, max: 1024 }),
+  bulletSpeedMul: s.num({ min: MIN_BULLET_SPEED_MUL, max: MAX_BULLET_SPEED_MUL }),
+});
+
+/** The `difficulty` section of a `rules` file: one row per preset, all four required. */
+const DIFFICULTY_TABLE_SCHEMA = s.object({
+  easy: DIFFICULTY_RULES_SCHEMA,
+  normal: DIFFICULTY_RULES_SCHEMA,
+  hard: DIFFICULTY_RULES_SCHEMA,
+  arcade: DIFFICULTY_RULES_SCHEMA,
+});
+
+/**
+ * A `content/rules/*.rules.json` file (M2-01, plan §3.5): game-wide rule tables. Every section is
+ * optional and may appear in one file only; today the only section is `difficulty`.
+ */
+const RULES_FILE_SCHEMA = s.object(
+  {
+    ...HEADER_SHAPE,
+    kind: s.enumOf(['rules'] as const),
+    difficulty: DIFFICULTY_TABLE_SCHEMA,
+  },
+  { optional: ['difficulty'] },
+);
+
 /** Mutable working copy of a {@link ContentDb} while a load runs. */
 interface DbBuilder {
   /** Collected player ships (see {@link ContentDb.ships}). */
@@ -1617,6 +1733,8 @@ interface DbBuilder {
   tilesets: TilesetSpec[];
   /** Tileset id → position in {@link DbBuilder.tilesets}. */
   tilesetIndex: Map<string, number>;
+  /** The difficulty presets (the first `rules` file with a `difficulty` section), or `null`. */
+  difficulty: DifficultyTable | null;
 }
 
 /** Empty {@link StringTable}. */
@@ -1651,6 +1769,7 @@ export const EMPTY_CONTENT_DB: ContentDb = Object.freeze({
   stageIndex: new Map<string, number>(),
   tilesets: Object.freeze([]),
   tilesetIndex: new Map<string, number>(),
+  difficulty: null,
 });
 
 /** `Object.prototype.hasOwnProperty` (Chromium 69 has no `Object.hasOwn`). */
@@ -1954,6 +2073,7 @@ export function loadContent(
     enemyPaths: [],
     tilesets: [],
     tilesetIndex: new Map(),
+    difficulty: null,
   };
 
   const sorted = files.slice().sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
@@ -2012,6 +2132,7 @@ export function loadContent(
       stageIndex: db.stageIndex,
       tilesets: db.tilesets,
       tilesetIndex: db.tilesetIndex,
+      difficulty: db.difficulty,
     },
     issues,
     foreign,
@@ -2046,6 +2167,8 @@ function parseFile(
       return STAGE_FILE_SCHEMA.parse(data, '', issues, refs);
     case 'tileset':
       return TILESET_FILE_SCHEMA.parse(data, '', issues, refs);
+    case 'rules':
+      return RULES_FILE_SCHEMA.parse(data, '', issues, refs);
   }
 }
 
@@ -2172,7 +2295,65 @@ function collect(
       );
       return;
     }
+    case 'rules': {
+      const table = parsed['difficulty'] as DifficultyTable | undefined;
+      if (table === undefined) return;
+      if (!checkDifficultyTable(table, path, issues)) return;
+      if (db.difficulty !== null) {
+        issue(
+          issues,
+          at(path, 'difficulty'),
+          'difficulty rules are already defined by another file',
+        );
+        return;
+      }
+      db.difficulty = freezeDifficultyTable(table);
+      return;
+    }
   }
+}
+
+/**
+ * Checks what the difficulty schema cannot: every preset's `aimDirections` is a power of two.
+ *
+ * @param table - The parsed section.
+ * @param path - Repo-relative file path.
+ * @param issues - Collector.
+ * @returns `true` when the table is usable.
+ */
+function checkDifficultyTable(
+  table: DifficultyTable,
+  path: string,
+  issues: ValidationIssue[],
+): boolean {
+  let ok = true;
+  for (const preset of DIFFICULTY_PRESETS) {
+    const dirs = table[preset].aimDirections;
+    if ((dirs & (dirs - 1)) !== 0) {
+      ok = issue(
+        issues,
+        at(path, 'difficulty.' + preset + '.aimDirections'),
+        'must be a power of two (4, 8, 16 … 1024)',
+      );
+    }
+  }
+  return ok;
+}
+
+/**
+ * Freezes a parsed difficulty table (rows and their `extends`), so a session's config tables stay
+ * immutable like the built-in one.
+ *
+ * @param table - The parsed, checked section.
+ * @returns The same object, frozen.
+ */
+function freezeDifficultyTable(table: DifficultyTable): DifficultyTable {
+  for (const preset of DIFFICULTY_PRESETS) {
+    const rules: DifficultyRules = table[preset];
+    Object.freeze(rules.extends);
+    Object.freeze(rules);
+  }
+  return Object.freeze(table);
 }
 
 /** An enemy as the schema parsed it: the optional fields may still be missing. */

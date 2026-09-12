@@ -17,7 +17,12 @@
  *   (the presentation-only {@link UserOptions})
  *
  * **Public API (implemented now).** {@link GameConfig}, {@link DEFAULT_GAME_CONFIG},
- * {@link resolveGameConfig}, the preset types ({@link StartingLoadout}, {@link StageSkip} …), the
+ * {@link resolveGameConfig}, the difficulty presets ({@link DIFFICULTY_PRESETS},
+ * {@link DifficultyRules}, {@link DifficultyExtends}, {@link DifficultyTable},
+ * {@link DEFAULT_DIFFICULTY_TABLE}, {@link difficultyOverrides}, {@link withDifficulty},
+ * {@link MAX_RANK_GROWTH}, {@link MAX_CONTINUES}, {@link MAX_EXTEND_SCORE},
+ * {@link MIN_BULLET_SPEED_MUL}, {@link MAX_BULLET_SPEED_MUL}, {@link DEATH_PENALTY_PRESETS}), the
+ * preset types ({@link StartingLoadout}, {@link StageSkip} …), the
  * power-meter slot names ({@link MeterSlotName}, {@link METER_SLOT_NAMES},
  * {@link DEFAULT_AUTO_POWER_UP_ORDER}, {@link MAX_AUTO_POWER_UP_ORDER}) and the screen layout
  * constants {@link HUD_BAR_HEIGHT}, {@link PLAYFIELD_Y}, {@link PLAYFIELD_W}, {@link PLAYFIELD_H}
@@ -35,9 +40,18 @@
  * {@link resolveUserOptions} (defensive: anything malformed falls back field by field),
  * {@link InputProfileChoice} (one entry of the Options screen's profile selector).
  *
- * **Planned API.** Difficulty-preset tables mapping to rank base/growth, lives and extend
- * thresholds (shmup_feat.md §15 [P1]); display options (scale mode, shake, flash reduction —
- * M2-08 / M2-16).
+ * **Difficulty presets (M2-01).** Easy / Normal / Hard / Arcade ({@link DIFFICULTY_PRESETS},
+ * shmup_feat.md §15) each map to a row of a {@link DifficultyTable} ({@link DifficultyRules}: rank
+ * base and growth, lives, extend thresholds, continues, death penalty, aimed-shot directions and a
+ * bullet speed multiplier). The shipped table is content (`content/rules/difficulty.rules.json`,
+ * kind `rules`, validated by `core/data`); {@link DEFAULT_DIFFICULTY_TABLE} is the built-in copy
+ * used without content. {@link resolveGameConfig} fills the preset fields of
+ * `overrides.difficulty` from the table under the explicit overrides, so a config always carries
+ * the resolved values and a replay header records every one of them;
+ * {@link difficultyOverrides} gives one row as config fields and {@link withDifficulty} switches a
+ * resolved config to another preset (the difficulty menu under START, `core/scenes`).
+ *
+ * **Planned API.** Display options (scale mode, shake, flash reduction — M2-08 / M2-16).
  *
  * @module
  */
@@ -62,8 +76,133 @@ export type PowerUpMode = 'meter' | 'direct';
 /** What a death costs (shmup_feat.md §10). */
 export type DeathPenaltyPreset = 'arcade' | 'classic' | 'casual';
 
+/** Every {@link DeathPenaltyPreset}, in menu order. */
+export const DEATH_PENALTY_PRESETS: readonly DeathPenaltyPreset[] = Object.freeze([
+  'arcade',
+  'classic',
+  'casual',
+] as DeathPenaltyPreset[]);
+
 /** Difficulty presets (shmup_feat.md §15). */
 export type DifficultyPreset = 'easy' | 'normal' | 'hard' | 'arcade';
+
+/** Every {@link DifficultyPreset}, easiest first (the difficulty menu's order; hi-score tables). */
+export const DIFFICULTY_PRESETS: readonly DifficultyPreset[] = Object.freeze([
+  'easy',
+  'normal',
+  'hard',
+  'arcade',
+] as DifficultyPreset[]);
+
+/** Score thresholds of the extra lives of a preset (shmup_feat.md §15 extends). */
+export interface DifficultyExtends {
+  /** Score of the first extend (0 = no extends at all). */
+  readonly first: number;
+  /** Points between later extends (0 = only the first one). */
+  readonly every: number;
+}
+
+/**
+ * One difficulty preset (shmup_feat.md §15 "difficulty presets": each maps to rank base, rank
+ * growth, lives, extend thresholds and a death-penalty preset). A row of a {@link DifficultyTable};
+ * {@link difficultyOverrides} turns it into {@link GameConfig} fields.
+ */
+export interface DifficultyRules {
+  /** Base rank, 0–31 (`GameConfig.rankBase`; Easy 0 / Normal 2 / Hard 4 / Arcade 6). */
+  readonly rankBase: number;
+  /**
+   * How fast rank grows with the stage, loop and power-ups, 0–{@link MAX_RANK_GROWTH}
+   * (`GameConfig.rankGrowth`; 0 = constant rank, 1 = the Gradius III formula).
+   */
+  readonly rankGrowth: number;
+  /** Ships at game start, 1–5 (`GameConfig.startingLives`). */
+  readonly lives: number;
+  /** Extra-life thresholds (`GameConfig.extendFirst` / `extendEvery`). */
+  readonly extends: DifficultyExtends;
+  /** Continues (credits) per game, 0–{@link MAX_CONTINUES} (`GameConfig.continues`). */
+  readonly continues: number;
+  /** What a death costs (`GameConfig.deathPenalty`). */
+  readonly deathPenalty: DeathPenaltyPreset;
+  /** Directions aimed shots snap to: a power of two, 4–1024 (`GameConfig.aimDirections`). */
+  readonly aimDirections: number;
+  /**
+   * Enemy bullet speed multiplier on top of the rank's, {@link MIN_BULLET_SPEED_MUL}–
+   * {@link MAX_BULLET_SPEED_MUL} (`GameConfig.bulletSpeedMul`).
+   */
+  readonly bulletSpeedMul: number;
+}
+
+/** A {@link DifficultyRules} row per {@link DifficultyPreset}. */
+export type DifficultyTable = Readonly<Record<DifficultyPreset, DifficultyRules>>;
+
+/** Highest {@link GameConfig.rankGrowth}. */
+export const MAX_RANK_GROWTH = 4;
+
+/** Most continues a preset may give (the score's last digit counts them — 0–9). */
+export const MAX_CONTINUES = 9;
+
+/** Highest extend threshold (the scores' clamp: 99,999,990). */
+export const MAX_EXTEND_SCORE = 99_999_990;
+
+/** Lowest {@link GameConfig.bulletSpeedMul}. */
+export const MIN_BULLET_SPEED_MUL = 0.25;
+
+/** Highest {@link GameConfig.bulletSpeedMul}. */
+export const MAX_BULLET_SPEED_MUL = 4;
+
+/**
+ * Builds one frozen {@link DifficultyRules} row.
+ *
+ * @param rankBase - Base rank.
+ * @param rankGrowth - Rank growth.
+ * @param lives - Starting lives.
+ * @param continues - Continues.
+ * @param deathPenalty - Death penalty.
+ * @param aimDirections - Aimed-shot directions.
+ * @param bulletSpeedMul - Bullet speed multiplier.
+ * @returns The row (extends at 20,000, then every 70,000 — shmup_feat.md §15, decision D7).
+ */
+function preset(
+  rankBase: number,
+  rankGrowth: number,
+  lives: number,
+  continues: number,
+  deathPenalty: DeathPenaltyPreset,
+  aimDirections: number,
+  bulletSpeedMul: number,
+): DifficultyRules {
+  return Object.freeze({
+    rankBase,
+    rankGrowth,
+    lives,
+    extends: Object.freeze({ first: 20_000, every: 70_000 }),
+    continues,
+    deathPenalty,
+    aimDirections,
+    bulletSpeedMul,
+  });
+}
+
+/**
+ * The built-in difficulty table — the same values as the shipped
+ * `content/rules/difficulty.rules.json` (a test keeps them equal), used when the content has no
+ * `rules` file with a `difficulty` section:
+ *
+ * | Preset | rank base | growth | lives | continues | death penalty | aim dirs | bullet × |
+ * |---|---|---|---|---|---|---|---|
+ * | easy | 0 | 0.5 | 5 | 5 | casual | 16 | 0.85 |
+ * | normal | 2 | 1 | 3 | 3 | classic | 32 | 1 |
+ * | hard | 4 | 1 | 3 | 2 | classic | 32 | 1 |
+ * | arcade | 6 | 1 | 2 | 0 | arcade | 32 | 1 |
+ *
+ * Every preset extends at 20,000 and then every 70,000 points (decision D7).
+ */
+export const DEFAULT_DIFFICULTY_TABLE: DifficultyTable = Object.freeze({
+  easy: preset(0, 0.5, 5, 5, 'casual', 16, 0.85),
+  normal: preset(2, 1, 3, 3, 'classic', 32, 1),
+  hard: preset(4, 1, 3, 2, 'classic', 32, 1),
+  arcade: preset(6, 1, 2, 0, 'arcade', 32, 1),
+});
 
 /** Starting loadouts of {@link GameConfig.loadout}. */
 export type StartingLoadout = 'default' | 'full';
@@ -122,16 +261,48 @@ export interface GameConfig {
   readonly maxTicksPerFrame: number;
   /** Seed of the gameplay RNG stream. Unsigned 32-bit. */
   readonly seed: number;
-  /** Difficulty preset (drives rank base/growth, lives and extends in later steps). */
+  /**
+   * Difficulty preset (shmup_feat.md §15). {@link resolveGameConfig} fills the preset's fields —
+   * {@link GameConfig.rankBase}, {@link GameConfig.rankGrowth}, {@link GameConfig.startingLives},
+   * {@link GameConfig.extendFirst}, {@link GameConfig.extendEvery}, {@link GameConfig.continues},
+   * {@link GameConfig.deathPenalty}, {@link GameConfig.aimDirections},
+   * {@link GameConfig.bulletSpeedMul} — from its {@link DifficultyRules} unless overridden; it
+   * also names the saved hi-score table (`core/save` `hiScoreModeKey`).
+   */
   readonly difficulty: DifficultyPreset;
+  /** Base rank, 0–31 (`core/rank`; the preset's `rankBase` — Normal 2). */
+  readonly rankBase: number;
+  /**
+   * Rank growth, 0–{@link MAX_RANK_GROWTH}: the stage, loop, power-up and special terms of the rank
+   * formula are multiplied by it (`core/rank` `computeRank`; 0 = constant rank, 1 = Normal).
+   */
+  readonly rankGrowth: number;
+  /**
+   * Score of the first extra life (shmup_feat.md §15 extends; 0 = no extends), a whole number up
+   * to {@link MAX_EXTEND_SCORE}. `core/scoring` gives +1 life (capped at 9) when a score reaches
+   * it.
+   */
+  readonly extendFirst: number;
+  /** Points between the later extra lives (0 = only the first), up to {@link MAX_EXTEND_SCORE}. */
+  readonly extendEvery: number;
+  /**
+   * Continues per game, 0–{@link MAX_CONTINUES} (shmup_feat.md §10): after a game over the scene
+   * flow offers this many restarts at the last checkpoint (`core/world` `continueWorld`).
+   */
+  readonly continues: number;
+  /**
+   * Enemy bullet speed multiplier on top of the rank's curve, {@link MIN_BULLET_SPEED_MUL}–
+   * {@link MAX_BULLET_SPEED_MUL} (`core/bullets` `speedScale`; 1 on Normal).
+   */
+  readonly bulletSpeedMul: number;
   /**
    * Power-up model: `'meter'` (Gradius-style bar, the default — decision D1) or `'direct'`
    * (Darius-style items — rejected by {@link resolveGameConfig} until M2-05 implements it).
    */
   readonly powerUpMode: PowerUpMode;
-  /** How much power a death costs (shmup_feat.md §10). */
+  /** How much power a death costs (shmup_feat.md §10; the preset's value — Normal `classic`). */
   readonly deathPenalty: DeathPenaltyPreset;
-  /** Lives at game start (1–5). */
+  /** Lives at game start (1–5; the preset's value — Normal 3). */
   readonly startingLives: number;
   /** Always-on autofire (remote play requires it). */
   readonly autofire: boolean;
@@ -151,8 +322,8 @@ export interface GameConfig {
    */
   readonly stageSkip: StageSkip;
   /**
-   * Directions aimed enemy shots snap to (decision D17: 32 on Normal for the retro feel, 16
-   * planned for Easy). A power of two from 4 to 1024 (the binary-angle circle).
+   * Directions aimed enemy shots snap to (decision D17: 32 on Normal for the retro feel, 16 on
+   * Easy — the preset's value). A power of two from 4 to 1024 (the binary-angle circle).
    */
   readonly aimDirections: number;
   /**
@@ -205,7 +376,11 @@ export const PLAYFIELD_W = 384;
 /** Playfield height in pixels: 216 − two 8-px HUD bars (decision D20). */
 export const PLAYFIELD_H = 200;
 
-/** Defaults: remote-first, Normal difficulty, the power meter, Classic death penalty. */
+/**
+ * Defaults: remote-first, Normal difficulty (its {@link DEFAULT_DIFFICULTY_TABLE} row: rank base 2,
+ * growth 1, 3 lives, extends at 20,000 / every 70,000, 3 continues, Classic death penalty, 32 aim
+ * directions, bullet speed × 1), the power meter.
+ */
 export const DEFAULT_GAME_CONFIG: GameConfig = Object.freeze({
   internalWidth: 384,
   internalHeight: 216,
@@ -213,6 +388,12 @@ export const DEFAULT_GAME_CONFIG: GameConfig = Object.freeze({
   maxTicksPerFrame: 4,
   seed: 0x5eedc0de,
   difficulty: 'normal',
+  rankBase: 2,
+  rankGrowth: 1,
+  extendFirst: 20_000,
+  extendEvery: 70_000,
+  continues: 3,
+  bulletSpeedMul: 1,
   powerUpMode: 'meter',
   deathPenalty: 'classic',
   startingLives: 3,
@@ -230,13 +411,87 @@ export const DEFAULT_GAME_CONFIG: GameConfig = Object.freeze({
 });
 
 /**
+ * The {@link GameConfig} fields a difficulty preset sets (shmup_feat.md §15).
+ *
+ * @param difficulty - The preset.
+ * @param table - The difficulty table (default {@link DEFAULT_DIFFICULTY_TABLE}; the content's
+ *   `ContentDb.difficulty` when it has one).
+ * @returns A fresh object: `difficulty`, `rankBase`, `rankGrowth`, `startingLives`,
+ *   `extendFirst`, `extendEvery`, `continues`, `deathPenalty`, `aimDirections`,
+ *   `bulletSpeedMul`.
+ * @throws RangeError when `difficulty` is not a {@link DifficultyPreset}.
+ *
+ * @example
+ * ```ts
+ * difficultyOverrides('easy').aimDirections; // → 16
+ * ```
+ */
+export function difficultyOverrides(
+  difficulty: DifficultyPreset,
+  table: DifficultyTable = DEFAULT_DIFFICULTY_TABLE,
+): Partial<GameConfig> {
+  if (DIFFICULTY_PRESETS.indexOf(difficulty) < 0) {
+    throw new RangeError(
+      `GameConfig.difficulty must be one of ${DIFFICULTY_PRESETS.join(', ')}, got ${String(difficulty)}`,
+    );
+  }
+  const rules = table[difficulty];
+  return {
+    difficulty,
+    rankBase: rules.rankBase,
+    rankGrowth: rules.rankGrowth,
+    startingLives: rules.lives,
+    extendFirst: rules.extends.first,
+    extendEvery: rules.extends.every,
+    continues: rules.continues,
+    deathPenalty: rules.deathPenalty,
+    aimDirections: rules.aimDirections,
+    bulletSpeedMul: rules.bulletSpeedMul,
+  };
+}
+
+/**
+ * Switches a resolved config to another difficulty preset: every preset field (see
+ * {@link difficultyOverrides}) comes from the table's row, everything else stays.
+ *
+ * @remarks
+ * What the difficulty menu under START does (`core/scenes`). Overrides of preset fields the
+ * config had (e.g. `startingLives: 5`) are replaced by the new preset's values.
+ *
+ * @param config - A resolved config.
+ * @param difficulty - The new preset.
+ * @param table - The difficulty table (default {@link DEFAULT_DIFFICULTY_TABLE}).
+ * @returns A frozen, validated config.
+ * @throws RangeError when `difficulty` is not a preset or the result fails
+ *   {@link resolveGameConfig}.
+ *
+ * @example
+ * ```ts
+ * withDifficulty(resolveGameConfig({ seed: 3 }), 'hard').rankBase; // → 4 (seed stays 3)
+ * ```
+ */
+export function withDifficulty(
+  config: GameConfig,
+  difficulty: DifficultyPreset,
+  table: DifficultyTable = DEFAULT_DIFFICULTY_TABLE,
+): GameConfig {
+  return resolveGameConfig({ ...config, ...difficultyOverrides(difficulty, table) }, table);
+}
+
+/**
  * Merges overrides onto {@link DEFAULT_GAME_CONFIG} and validates the result.
  *
  * @remarks
- * Validated ranges (all integers, inclusive): `internalWidth` / `internalHeight`
+ * The difficulty preset (`overrides.difficulty`, default `'normal'`) fills its fields from `table`
+ * first ({@link difficultyOverrides}); explicit overrides of those fields win. Validated ranges
+ * (integers unless noted, inclusive): `internalWidth` / `internalHeight`
  * 16–4096, `tickRate` 1–1000, `maxTicksPerFrame` 1–60, `seed` 0–0xFFFFFFFF,
  * `startingLives` 1–5, `aimDirections` a power of two in 4–1024, `autofireInterval` /
- * `missileInterval` 1–60. `stage` must be `null` or a non-empty string (whether the id exists is
+ * `missileInterval` 1–60, `rankBase` 0–31, `rankGrowth` a finite number 0–{@link MAX_RANK_GROWTH},
+ * `extendFirst` / `extendEvery` 0–{@link MAX_EXTEND_SCORE}, `continues` 0–{@link MAX_CONTINUES},
+ * `bulletSpeedMul` a finite number {@link MIN_BULLET_SPEED_MUL}–{@link MAX_BULLET_SPEED_MUL}.
+ * `difficulty` must be a {@link DifficultyPreset} and `deathPenalty` a {@link DeathPenaltyPreset};
+ * `stage` must be `null` or a non-empty string (whether the id exists is
  * checked by `createWorld` against the content); `stageSkip` must be `'none'` or `'boss'`;
  * `loadout` must be `'default'` or `'full'`;
  * `powerUpMode` must be `'meter'` (`'direct'` is not implemented until M2-05);
@@ -245,9 +500,12 @@ export const DEFAULT_GAME_CONFIG: GameConfig = Object.freeze({
  * booleans are not validated at runtime — the types cover them.
  *
  * @param overrides - Fields to change.
+ * @param table - The difficulty table the preset fields come from (default
+ *   {@link DEFAULT_DIFFICULTY_TABLE}; `createGame` passes the content's).
  * @returns A frozen, validated config.
- * @throws RangeError when a numeric field is not an integer or is out of range,
- *   `aimDirections` is not a power of two, `stage` is neither `null` nor a non-empty string,
+ * @throws RangeError when a numeric field is not an integer (or not finite) or is out of range,
+ *   `aimDirections` is not a power of two, `difficulty` or `deathPenalty` is not a preset,
+ *   `stage` is neither `null` nor a non-empty string,
  *   `stageSkip` is not a {@link StageSkip}, `loadout` is not a {@link StartingLoadout},
  *   `powerUpMode` is not `'meter'`, or
  *   `autoPowerUpOrder` is not an array of meter slot names (or is too long).
@@ -255,11 +513,20 @@ export const DEFAULT_GAME_CONFIG: GameConfig = Object.freeze({
  * @example
  * ```ts
  * const config = resolveGameConfig({ seed: 42, startingLives: 5 });
+ * resolveGameConfig({ difficulty: 'easy' }).aimDirections; // → 16 (the Easy preset)
  * resolveGameConfig({ tickRate: 0 }); // throws RangeError
  * ```
  */
-export function resolveGameConfig(overrides: Partial<GameConfig> = {}): GameConfig {
-  const config: GameConfig = { ...DEFAULT_GAME_CONFIG, ...overrides };
+export function resolveGameConfig(
+  overrides: Partial<GameConfig> = {},
+  table: DifficultyTable = DEFAULT_DIFFICULTY_TABLE,
+): GameConfig {
+  const difficulty = overrides.difficulty ?? DEFAULT_GAME_CONFIG.difficulty;
+  const config: GameConfig = {
+    ...DEFAULT_GAME_CONFIG,
+    ...difficultyOverrides(difficulty, table),
+    ...overrides,
+  };
   requireInteger('internalWidth', config.internalWidth, 16, 4096);
   requireInteger('internalHeight', config.internalHeight, 16, 4096);
   requireInteger('tickRate', config.tickRate, 1, 1000);
@@ -269,9 +536,26 @@ export function resolveGameConfig(overrides: Partial<GameConfig> = {}): GameConf
   requireInteger('aimDirections', config.aimDirections, 4, 1024);
   requireInteger('autofireInterval', config.autofireInterval, 1, 60);
   requireInteger('missileInterval', config.missileInterval, 1, 60);
+  requireInteger('rankBase', config.rankBase, 0, 31);
+  requireNumber('rankGrowth', config.rankGrowth, 0, MAX_RANK_GROWTH);
+  requireInteger('extendFirst', config.extendFirst, 0, MAX_EXTEND_SCORE);
+  requireInteger('extendEvery', config.extendEvery, 0, MAX_EXTEND_SCORE);
+  requireInteger('continues', config.continues, 0, MAX_CONTINUES);
+  requireNumber(
+    'bulletSpeedMul',
+    config.bulletSpeedMul,
+    MIN_BULLET_SPEED_MUL,
+    MAX_BULLET_SPEED_MUL,
+  );
   if ((config.aimDirections & (config.aimDirections - 1)) !== 0) {
     throw new RangeError(
       `GameConfig.aimDirections must be a power of two, got ${config.aimDirections}`,
+    );
+  }
+  const penalty: unknown = config.deathPenalty;
+  if (DEATH_PENALTY_PRESETS.indexOf(penalty as DeathPenaltyPreset) < 0) {
+    throw new RangeError(
+      `GameConfig.deathPenalty must be one of ${DEATH_PENALTY_PRESETS.join(', ')}, got ${String(penalty)}`,
     );
   }
   const stage: unknown = config.stage;
@@ -331,6 +615,21 @@ export function resolveGameConfig(overrides: Partial<GameConfig> = {}): GameConf
 function requireInteger(name: string, value: number, min: number, max: number): void {
   if (!Number.isInteger(value) || value < min || value > max) {
     throw new RangeError(`GameConfig.${name} must be an integer in [${min}, ${max}], got ${value}`);
+  }
+}
+
+/**
+ * Throws unless `value` is a finite number within `[min, max]`.
+ *
+ * @param name - Field name for the error message.
+ * @param value - Value to check.
+ * @param min - Inclusive lower bound.
+ * @param max - Inclusive upper bound.
+ * @throws RangeError naming the field, the range and the offending value.
+ */
+function requireNumber(name: string, value: number, min: number, max: number): void {
+  if (typeof value !== 'number' || !(value >= min && value <= max)) {
+    throw new RangeError(`GameConfig.${name} must be a number in [${min}, ${max}], got ${value}`);
   }
 }
 

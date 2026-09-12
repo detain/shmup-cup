@@ -32,7 +32,9 @@ describe('core/game edge: the scene flow', () => {
     const contexts: string[] = [game.inputContext];
     expect(game.world).toBe(flow.world);
     press(game, platform, Action.Confirm);
-    press(game, platform, Action.Confirm);
+    press(game, platform, Action.Confirm); // START → the difficulty menu
+    press(game, platform, Action.Confirm); // NORMAL (buffered by the menu's open lock)
+    game.step();
     contexts.push(game.inputContext);
     const first = game.world;
     expect(first).toBe(flow.world);

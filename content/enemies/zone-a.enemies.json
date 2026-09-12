@@ -62,7 +62,12 @@
       "params": {
         "speed": 1.6
       },
-      "drop": null
+      "drop": null,
+      "revenge": {
+        "minRank": 12,
+        "pattern": "aimed",
+        "speed": 1.25
+      }
     },
     {
       "id": "tender",

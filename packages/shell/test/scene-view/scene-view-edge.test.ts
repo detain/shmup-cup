@@ -53,14 +53,16 @@ function press(game: Game, platform: HeadlessPlatform, action: number): void {
 }
 
 /**
- * Starts a game from the title.
+ * Starts a game from the title (OK, START, NORMAL).
  *
  * @param game - The game.
  * @param platform - Its platform.
  */
 function start(game: Game, platform: HeadlessPlatform): void {
   press(game, platform, Action.Confirm);
-  press(game, platform, Action.Confirm);
+  press(game, platform, Action.Confirm); // START → the difficulty menu
+  press(game, platform, Action.Confirm); // NORMAL (buffered by the menu's open lock)
+  game.step();
   expect(game.scenes?.stack.top?.id).toBe('game');
 }
 

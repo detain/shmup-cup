@@ -52,7 +52,7 @@
  *
  * @module
  */
-import { resolveGameConfig, type GameConfig } from '../config/index.js';
+import { DEFAULT_DIFFICULTY_TABLE, resolveGameConfig, type GameConfig } from '../config/index.js';
 import { EMPTY_CONTENT_DB, type ContentDb } from '../data/index.js';
 import { createDebugFlags, type DebugFlags } from '../debug/index.js';
 import type { InputContext, InputSnapshot } from '../input/index.js';
@@ -106,7 +106,10 @@ export interface GameState {
 
 /** A running game session. */
 export interface Game {
-  /** The resolved, frozen configuration of this session. */
+  /**
+   * The resolved, frozen configuration of this session. With the scene flow a game's World may
+   * run another difficulty preset (the difficulty menu under START — `world.config`).
+   */
   readonly config: GameConfig;
   /** Validated game content with string ids already resolved to indices. */
   readonly content: ContentDb;
@@ -244,7 +247,8 @@ export interface GameOptions {
  * {@link Game.frame} (or {@link Game.step} directly in tests).
  *
  * @param platform - Host platform adapter.
- * @param overrides - Config fields to change from the defaults.
+ * @param overrides - Config fields to change from the defaults (the difficulty preset's fields
+ *   come from `content.difficulty` — the `rules` table — or the built-in table, under these).
  * @param content - Validated content database (`loadContent(...).db`). Defaults to
  *   {@link EMPTY_CONTENT_DB}, which lets tests and the calibration scenes run with no
  *   `content/` at all; systems then fall back to their built-in defaults.
@@ -273,7 +277,8 @@ export function createGame(
   content: ContentDb = EMPTY_CONTENT_DB,
   options: GameOptions = {},
 ): Game {
-  const config = resolveGameConfig(overrides);
+  // The difficulty preset's fields come from the content's `rules` table when it has one.
+  const config = resolveGameConfig(overrides, content.difficulty ?? DEFAULT_DIFFICULTY_TABLE);
   const state: GameState = { tick: 0, paused: false, suspended: false, input: null };
   const isFrozen = (): boolean => state.paused || state.suspended;
   const events = createEventQueue();
@@ -291,7 +296,8 @@ export function createGame(
             content,
             events,
             exit: platform.exit,
-            createWorld: () => createWorld(config, content, { events, debugFlags: debug }),
+            createWorld: (worldConfig) =>
+              createWorld(worldConfig ?? config, content, { events, debugFlags: debug }),
             save: options.save ?? null,
             inputProfiles: options.inputProfiles ?? null,
           },

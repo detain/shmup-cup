@@ -74,7 +74,9 @@ class Session {
         : null,
     });
     this.platform = platform;
-    this.game = createGame(platform, { seed: 7 }, DB, { scenes: start });
+    // No continues: a game over opens the game-over screen at once (the M1 flow these tests
+    // cover; the continue countdown of M2-01 has its own tests — scenes-continue.test.ts).
+    this.game = createGame(platform, { seed: 7, continues: 0 }, DB, { scenes: start });
     this.flow = this.game.scenes as SceneFlow;
   }
 
@@ -237,12 +239,15 @@ describe('core/scenes flow: title → game → pause → quit → title', () => 
     const placeholder = s.game.world;
     s.press(Action.Confirm); // PRESS OK
     s.press(Action.Confirm); // START
+    expect(s.ids).toEqual(['title', 'difficulty']);
+    s.press(Action.Confirm); // NORMAL (buffered: it acts once the menu's 2-tick lock is over)
+    s.hold(0);
     expect(s.top).toBe('game');
     expect(s.game.inputContext).toBe('game');
     const world = s.game.world;
     expect(world).not.toBe(placeholder);
     s.hold(Action.Right, 60);
-    // START acted on its release tick (the menu had just opened: the press was buffered).
+    // NORMAL acted on its release tick (the menu had just opened: the press was buffered).
     expect(world.tick).toBe(60);
     expect(world.players[0].state).toBe('alive');
     // Pause.
@@ -376,6 +381,8 @@ describe('core/scenes flow: game over and stage clear', () => {
     expect(s.flow.hiScore).toBe(4200);
     s.press(Action.Confirm);
     s.press(Action.Confirm);
+    s.press(Action.Confirm); // NORMAL (buffered: it acts once the menu's 2-tick lock is over)
+    s.hold(0);
     expect(s.game.world.scoring.board.hiScore).toBe(4200);
     expect(s.game.world.scoring.board.scores[0].score).toBe(0);
     s.flow.setHiScore(90_000);
@@ -391,6 +398,8 @@ describe('core/scenes flow: the render frame', () => {
     expect([frame.world, frame.hud.count, frame.screen.dim]).toEqual([null, 0, 0]);
     s.press(Action.Confirm);
     s.press(Action.Confirm);
+    s.press(Action.Confirm); // NORMAL (buffered: it acts once the menu's 2-tick lock is over)
+    s.hold(0);
     frame = s.game.renderFrame();
     expect(frame.world).toBe(s.game.world.view);
     expect(frame.hud.count).toBeGreaterThan(20);
@@ -428,6 +437,8 @@ describe('core/scenes flow: the render frame', () => {
     expect(s.game.renderFrame().tick).toBe(5);
     s.press(Action.Confirm);
     s.press(Action.Confirm);
+    s.press(Action.Confirm); // NORMAL (buffered: it acts once the menu's 2-tick lock is over)
+    s.hold(0);
     expect(s.game.renderFrame().tick).toBe(s.game.world.tick);
     s.hold(0, 30);
     const tick = s.game.renderFrame().tick;
@@ -457,6 +468,8 @@ describe('core/scenes flow: the render frame', () => {
       const s = new Session();
       s.press(Action.Confirm);
       s.press(Action.Confirm);
+      s.press(Action.Confirm); // NORMAL (buffered: it acts once the menu's 2-tick lock is over)
+      s.hold(0);
       for (let t = 0; t < 400; t++) s.hold(t % 90 < 45 ? Action.Up : Action.Down | Action.Shot);
       s.press(Action.Pause);
       s.press(Action.Pause);

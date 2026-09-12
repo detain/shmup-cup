@@ -1,0 +1,46 @@
+{
+  "formatVersion": 1,
+  "kind": "rules",
+  "difficulty": {
+    "easy": {
+      "rankBase": 0,
+      "rankGrowth": 0.5,
+      "lives": 5,
+      "extends": { "first": 20000, "every": 70000 },
+      "continues": 5,
+      "deathPenalty": "casual",
+      "aimDirections": 16,
+      "bulletSpeedMul": 0.85
+    },
+    "normal": {
+      "rankBase": 2,
+      "rankGrowth": 1,
+      "lives": 3,
+      "extends": { "first": 20000, "every": 70000 },
+      "continues": 3,
+      "deathPenalty": "classic",
+      "aimDirections": 32,
+      "bulletSpeedMul": 1
+    },
+    "hard": {
+      "rankBase": 4,
+      "rankGrowth": 1,
+      "lives": 3,
+      "extends": { "first": 20000, "every": 70000 },
+      "continues": 2,
+      "deathPenalty": "classic",
+      "aimDirections": 32,
+      "bulletSpeedMul": 1
+    },
+    "arcade": {
+      "rankBase": 6,
+      "rankGrowth": 1,
+      "lives": 2,
+      "extends": { "first": 20000, "every": 70000 },
+      "continues": 0,
+      "deathPenalty": "arcade",
+      "aimDirections": 32,
+      "bulletSpeedMul": 1
+    }
+  }
+}
