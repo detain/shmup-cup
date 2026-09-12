@@ -9,7 +9,8 @@
  * This entry point exports the implemented (and partial) public API. Placeholder modules
  * under `src/<module>/` (weapons, bosses, scoring, …) are exported here as they get
  * implemented — `bullets` and `rank` joined with plan step M1-09, `weapons` and `options` with
- * M1-10, `powerups` and `shields` with M1-11, `scoring` and `fx` with M1-12, `bosses` with M1-13.
+ * M1-10, `powerups` and `shields` with M1-11, `scoring` and `fx` with M1-12, `bosses` with M1-13,
+ * `ui` (UI kit, HUD) and `scenes` (scene stack and flow) with M1-16.
  *
  * @packageDocumentation
  */
@@ -656,4 +657,77 @@ export {
   type StageRunner,
 } from './stage/index.js';
 
-export { createGame, type Game, type GameState } from './game/index.js';
+export {
+  CONFIRM_STRING_SLOTS,
+  Confirm,
+  ConfirmChoice,
+  DirectionRepeat,
+  HUD_COLORS,
+  HUD_LAYOUT,
+  HUD_METER_FLASH_TICKS,
+  HUD_STRING_SLOTS,
+  Hud,
+  ListMenu,
+  MENU_CONFIRM_BUFFER_TICKS,
+  MENU_REPEAT_DELAY,
+  MENU_REPEAT_INTERVAL,
+  MenuItemKind,
+  MenuResult,
+  Slider,
+  Toggle,
+  UI_COLORS,
+  UI_SPRITES,
+  buildHud,
+  confirmTick,
+  createConfirm,
+  createHud,
+  createListMenu,
+  createSlider,
+  createToggle,
+  drawConfirm,
+  drawMenu,
+  drawPanel,
+  menuResultSfx,
+  menuStringSlots,
+  menuTick,
+  repeatDirections,
+  resolveUiSprites,
+  type ListMenuOptions,
+  type MenuItem,
+  type MenuItemSpec,
+  type MenuLayout,
+  type UiSprites,
+} from './ui/index.js';
+
+export {
+  BootScene,
+  ConfirmDialog,
+  ConfirmPurpose,
+  GAME_OVER_DELAY_TICKS,
+  GAME_OVER_LOCK_TICKS,
+  GAME_OVER_TIMEOUT_TICKS,
+  GameOverScene,
+  GameScene,
+  PAUSE_DIM,
+  PauseItem,
+  PauseScene,
+  SCENE_STACK_DEPTH,
+  STAGE_CLEAR_CONTINUED_TICKS,
+  STAGE_CLEAR_DELAY_TICKS,
+  STAGE_CLEAR_TALLY_TICKS,
+  SceneStack,
+  StageClearScene,
+  TitleItem,
+  TitleScene,
+  createSceneFlow,
+  createSceneStack,
+  mergeMenuInput,
+  type Scene,
+  type SceneFlow,
+  type SceneFlowHost,
+  type SceneFlowView,
+  type SceneId,
+  type SceneStart,
+} from './scenes/index.js';
+
+export { createGame, type Game, type GameOptions, type GameState } from './game/index.js';

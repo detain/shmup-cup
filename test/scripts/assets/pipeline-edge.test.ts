@@ -254,7 +254,10 @@ describe('scripts/assets/pipeline — page limits', () => {
     const paths = error.issues.map((i) => i.path);
     expect(paths).toContain('procedural:explosions:frames[0]'); // 32×32 medium + border
     expect(paths).toContain('procedural:starfield:frames[0]');
-    expect(paths.every((p) => !p.includes('ui'))).toBe(true); // small frames are fine
+    // Small frames are fine: of the ui generator's sprites only the title logo is too wide.
+    const ui = error.issues.filter((i) => i.path.includes('ui'));
+    expect(ui.map((i) => i.path)).toEqual(['procedural:ui:frames[0]']);
+    expect(ui[0].message).toContain('"ui/logo"');
   });
 
   it('rejects a page limit that is not a power of two', () => {

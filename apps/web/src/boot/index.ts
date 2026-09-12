@@ -10,14 +10,17 @@
  * unlocked by the first key or pointer gesture (autoplay policy — gamepad buttons do not count
  * as a user activation) — sound effects requested before it are dropped, and a stage's theme
  * (`?stage=`, prepared during boot, plan M1-15) starts with that gesture; the tab being hidden
- * suspends the game, clears held input and suspends audio. The default scene is free flight
- * (the KESTREL under keyboard / gamepad
- * control, plan M1-06); `?stage=<id>` runs that stage instead of open space (scrolling camera,
- * terrain, parallax — plan M1-07; `?stage=test-range` is the dev stage); `?scene=showcase`
- * shows the M1-04 sprite showcase, `?scene=calibration` the test pattern and
- * `?scene=fx-gallery` every particle preset and screen effect in turn (plan M1-14); `?loadout=full`
- * starts fully powered — speed 2, Missile, Laser, four Options (dev override, plan M1-10;
- * {@link loadoutFromSearch}).
+ * suspends the game, clears held input and suspends audio. The default scene is the game's
+ * **scene flow** (plan M1-16): the title (`PRESS OK`, then START / OPTIONS — no EXIT in a browser),
+ * the game with its HUD, the pause menu (Esc / P / Backspace), stage clear and game over, all
+ * drawn on the canvas and driven by the menu / game binding contexts. `?scene=flight` plays
+ * **free flight** straight away instead (the KESTREL under keyboard / gamepad control from the
+ * first frame, no menus — plan M1-06; the e2e tests of the gameplay steps use it);
+ * `?stage=<id>` makes a game run that stage instead of open space (scrolling camera, terrain,
+ * parallax — plan M1-07; `?stage=test-range` is the dev stage); `?scene=showcase` shows the M1-04
+ * sprite showcase, `?scene=calibration` the test pattern and `?scene=fx-gallery` every particle
+ * preset and screen effect in turn (plan M1-14); `?loadout=full` starts fully powered — speed 2,
+ * Missile, Laser, four Options (dev override, plan M1-10; {@link loadoutFromSearch}).
  *
  * **Input profiles** (decisions D13–D15). The `input-profiles` content is parsed into a
  * registry during boot. Keys use `?profile=<id>` when given (dev override — e.g.

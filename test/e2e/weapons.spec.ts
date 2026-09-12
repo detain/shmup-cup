@@ -124,7 +124,7 @@ test.describe('player weapons (web build)', () => {
   test('the KESTREL autofires its main shot to the right, and the shots move', async ({ page }) => {
     test.setTimeout(90_000);
     const errors = collectErrors(page);
-    await page.goto('./');
+    await page.goto('./?scene=flight');
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
     // The 40-tick fly-in, then autofire.
     let first: ColourPixels[] | null = null;
@@ -154,7 +154,7 @@ test.describe('player weapons (web build)', () => {
   test('?loadout=full draws the Options and laser beams', async ({ page }) => {
     test.setTimeout(90_000);
     const errors = collectErrors(page);
-    await page.goto('./?loadout=full');
+    await page.goto('./?scene=flight&loadout=full');
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
     let found: ColourPixels[] | null = null;
     for (let poll = 0; poll < 60 && found === null; poll++) {
@@ -176,7 +176,7 @@ test.describe('player weapons (Tizen build via file://)', () => {
   test('autofires with no key held and ignores the web-only ?loadout=full', async ({ page }) => {
     test.setTimeout(90_000);
     const errors = collectErrors(page);
-    await page.goto(TIZEN_INDEX + '?loadout=full');
+    await page.goto(TIZEN_INDEX + '?scene=flight&loadout=full');
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
     let found: ColourPixels[] | null = null;
     for (let poll = 0; poll < 60 && found === null; poll++) {

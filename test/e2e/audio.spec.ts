@@ -97,7 +97,7 @@ test.describe('audio (web build, ?stage=test-range)', () => {
     });
     page.on('pageerror', (error) => errors.push(error.message));
     await recordSounds(page);
-    await page.goto('./?stage=test-range');
+    await page.goto('./?scene=flight&stage=test-range');
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
     await waitFrames(page, 10);
     expect(await sounds(page)).toEqual([]); // locked until a gesture (autoplay policy)
@@ -121,7 +121,7 @@ test.describe('audio (Tizen build via file://)', () => {
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
     await recordSounds(page);
-    await page.goto(TIZEN_INDEX);
+    await page.goto(TIZEN_INDEX + '?scene=flight');
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
     await waitFrames(page, 90);
     const started = await sounds(page);

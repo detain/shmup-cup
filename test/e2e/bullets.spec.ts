@@ -92,7 +92,7 @@ test.describe('enemy bullets (web build, ?stage=test-range)', () => {
       }
     });
     page.on('pageerror', (error) => errors.push(error.message));
-    await page.goto('./?stage=test-range');
+    await page.goto('./?scene=flight&stage=test-range');
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
 
     // The first turret spawns at camera x 500 (≈ 9 s in) and fires once it has scrolled in and

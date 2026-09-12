@@ -109,7 +109,7 @@ test.describe('stage runtime (web build, ?stage=test-range)', () => {
       }
     });
     page.on('pageerror', (error) => errors.push(error.message));
-    await page.goto('./?stage=test-range');
+    await page.goto('./?scene=flight&stage=test-range');
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
     await waitFrames(page, 90); // the camera ramps up to 1 px/tick over the first second
 
@@ -139,7 +139,7 @@ test.describe('stage runtime (web build, ?stage=test-range)', () => {
       if (message.type() === 'error') errors.push(message.text());
     });
     page.on('pageerror', (error) => errors.push(error.message));
-    await page.goto('./?stage=no-such-stage');
+    await page.goto('./?scene=flight&stage=no-such-stage');
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
     await waitFrames(page, 30);
     const pixels = await terrainPixels(page);

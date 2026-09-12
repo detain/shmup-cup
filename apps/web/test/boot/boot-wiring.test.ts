@@ -257,15 +257,61 @@ describe('web/boot bootWebApp wiring', () => {
     expect(app.shell.atlas.manifest).toBe(manifest);
   });
 
-  it('shows free flight by default and the test pattern with ?scene=calibration', async () => {
+  it('runs the scene flow by default, free flight with ?scene=flight, the test pattern with ?scene=calibration', async () => {
     const { app } = await boot();
-    expect(app.shell.scene).toBe('flight');
+    expect(app.shell.scene).toBe('game');
+    expect(app.game.scenes?.stack.top?.id).toBe('boot'); // finished: the title on the first tick
+    expect(app.game.scenes?.boot.done).toBe(true);
+    expect(app.input.context).toBe('menu');
     app.stop();
+    win = new FakeWindow();
+    win.location.search = '?scene=flight';
+    const flight = await boot();
+    expect(flight.app.shell.scene).toBe('flight');
+    expect(flight.app.game.scenes).toBeNull();
+    flight.app.stop();
     win = new FakeWindow();
     win.location.search = '?scene=calibration';
     const calibration = await boot();
     expect(calibration.app.shell.scene).toBe('calibration');
     expect(fakes.renderer.options?.testPattern).toBe(true);
+  });
+
+  it('Enter on the title and on START starts the game; Esc pauses it (keyboard-default)', async () => {
+    const { app } = await boot();
+    let now = 0;
+    /** Runs one displayed frame. */
+    const frame = (): void => {
+      win.frame(now);
+      now += STEP;
+    };
+    /**
+     * Taps a key over two frames.
+     *
+     * @param code - `KeyboardEvent.code`.
+     * @param keyCode - Legacy key code.
+     */
+    const tap = (code: string, keyCode: number): void => {
+      win.key('keydown', code, keyCode);
+      frame();
+      win.key('keyup', code, keyCode);
+      frame();
+    };
+    frame();
+    frame();
+    expect(app.game.scenes?.stack.top?.id).toBe('title');
+    tap('Enter', 13);
+    tap('Enter', 13);
+    expect(app.game.scenes?.stack.top?.id).toBe('game');
+    frame();
+    expect(app.input.context).toBe('game');
+    tap('Escape', 27);
+    expect(app.game.scenes?.stack.top?.id).toBe('pause');
+    expect(app.game.platform.exit).toBeNull(); // no EXIT item in a browser
+    expect(app.game.scenes?.title.menu.items.map((item) => item.label)).toEqual([
+      'START',
+      'OPTIONS',
+    ]);
   });
 
   it('runs the game on the validated content', async () => {
@@ -315,6 +361,7 @@ describe('web/boot bootWebApp wiring', () => {
   });
 
   it('delivers keyboard input to player 1 as a keyboard device', async () => {
+    win.location.search = '?scene=flight';
     const { app } = await boot();
     win.frame(0);
     win.key('keydown', 'KeyZ', 90);
@@ -330,7 +377,7 @@ describe('web/boot bootWebApp wiring', () => {
     expect(app.profiles.profiles.map((profile) => profile.id)).toContain('tizen-remote-safe');
     expect(app.input.keyProfile?.id).toBe('keyboard-default');
     expect(app.input.gamepadProfile?.id).toBe('gamepad-standard');
-    expect(app.input.context).toBe('game');
+    expect(app.input.context).toBe('menu'); // the scene flow starts on its boot / title screens
   });
 
   it('?profile= picks a key profile and ?debounce= overrides its release debounce', async () => {
@@ -360,7 +407,7 @@ describe('web/boot bootWebApp wiring', () => {
   });
 
   it('runs the ?stage= stage: scrolling camera, the stage name in the HUD', async () => {
-    win.location.search = '?stage=test-range';
+    win.location.search = '?scene=flight&stage=test-range';
     const { app } = await boot();
     expect(app.game.config.stage).toBe('test-range');
     expect(app.game.world.stage?.stage.id).toBe('test-range');
@@ -574,7 +621,7 @@ describe('web/boot input profiles (edge cases)', () => {
   });
 
   it('?profile=tizen-remote-safe lets a desktop keyboard act as the remote (keyCode fallback)', async () => {
-    win.location.search = '?profile=tizen-remote-safe';
+    win.location.search = '?scene=flight&profile=tizen-remote-safe';
     const { app } = await boot();
     expect(app.input.keyboard.tuning.releaseDebounceTicks).toBe(2);
     win.frame(0);

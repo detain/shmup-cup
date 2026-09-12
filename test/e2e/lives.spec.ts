@@ -91,7 +91,7 @@ test.describe('lives and game over (web build, ?stage=test-range)', () => {
       }
     });
     page.on('pageerror', (error) => errors.push(error.message));
-    await page.goto('./?stage=test-range');
+    await page.goto('./?scene=flight&stage=test-range');
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
     await waitFrames(page, 60); // past the fly-in
 

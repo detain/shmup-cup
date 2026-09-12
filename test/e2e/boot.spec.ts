@@ -3,8 +3,10 @@
  * the Tizen `dist/` (opened from disk via `file://`, like the TV) boot in headless Chromium
  * with SwiftShader WebGL — the shell reaches `data-shmup-state="running"`, the atlas page
  * loads, the canvas shows a real picture (not a uniform colour) and nothing is logged as an
- * error. The pixel checks read the canvas at ×3 (viewport 1152×648): frame pixel (x, y) is
- * screenshot pixel (3x + 1, 3y + 1).
+ * error. By default both builds show the scene flow's title (plan M1-16: the `ui/logo` sprite,
+ * no ship, no HUD bars — `data-shmup-scene="title"`); `?scene=flight` still boots free flight. The
+ * pixel checks read the canvas at ×3 (viewport 1152×648): frame pixel (x, y) is screenshot pixel
+ * (3x + 1, 3y + 1).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
@@ -26,6 +28,9 @@ const HUD_BAR = [0x1d, 0x2a, 0x5c] as const;
 
 /** KESTREL hull colour (`ships/kestrel` palette `h`, #c8d0e0) — only the ship uses it. */
 const KESTREL_HULL = [0xc8, 0xd0, 0xe0] as const;
+
+/** Bottom colour of the title logo's gradient (`ui/logo`, #e04828). */
+const LOGO_RED = [0xe0, 0x48, 0x28] as const;
 
 /** Light tone of the calibration pattern's checker border (0xf4f4f4). */
 const BORDER_LIGHT = [0xf4, 0xf4, 0xf4] as const;
@@ -182,7 +187,7 @@ async function expectHealthyBoot(page: Page, errors: string[]): Promise<Capture>
 }
 
 test.describe('web build (vite preview)', () => {
-  test('boots free flight: atlas loaded, KESTREL, HUD and its title drawn, no errors', async ({
+  test('boots the title: atlas loaded, logo and hi-score drawn, no ship, no errors', async ({
     page,
   }) => {
     const errors = watchErrors(page);
@@ -190,6 +195,18 @@ test.describe('web build (vite preview)', () => {
     await page.goto('./');
     expect((await atlas).status()).toBe(200);
     const shot = await expectHealthyBoot(page, errors);
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-scene', 'title');
+    expect(shot.contains(LOGO_RED)).toBe(true);
+    expect(shot.contains(TITLE_YELLOW)).toBe(true); // HI
+    expect(shot.contains(KESTREL_HULL)).toBe(false);
+    expect(shot.frameRgb(0, 0)).not.toEqual([...HUD_BAR]);
+  });
+
+  test('?scene=flight boots free flight: KESTREL, HUD and its title drawn', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('./?scene=flight');
+    const shot = await expectHealthyBoot(page, errors);
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-scene', 'flight');
     expect(shot.contains(TITLE_YELLOW)).toBe(true);
     expect(shot.contains(KESTREL_HULL)).toBe(true);
     expect(shot.frameRgb(0, 0)).toEqual([...HUD_BAR]);
@@ -212,7 +229,7 @@ test.describe('web build (vite preview)', () => {
 });
 
 test.describe('Tizen build (dist/ via file://)', () => {
-  test('boots from disk as one classic script: atlas loaded, free flight drawn, no errors', async ({
+  test('boots from disk as one classic script: atlas loaded, the title drawn, no errors', async ({
     page,
   }) => {
     const errors = watchErrors(page);
@@ -223,6 +240,15 @@ test.describe('Tizen build (dist/ via file://)', () => {
         nodes.map((node) => [node.getAttribute('src'), node.getAttribute('type')]),
       );
     expect(scripts).toEqual([['./app.js', null]]);
+    const shot = await expectHealthyBoot(page, errors);
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-scene', 'title');
+    expect(shot.contains(LOGO_RED)).toBe(true);
+    expect(shot.contains(KESTREL_HULL)).toBe(false);
+  });
+
+  test('?scene=flight boots free flight from disk', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto(TIZEN_INDEX + '?scene=flight');
     const shot = await expectHealthyBoot(page, errors);
     expect(shot.contains(TITLE_YELLOW)).toBe(true);
     expect(shot.contains(KESTREL_HULL)).toBe(true);

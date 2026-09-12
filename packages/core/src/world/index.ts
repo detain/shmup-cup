@@ -173,6 +173,7 @@ import {
 import { createScoringSystem, type ScoringSystem } from '../scoring/index.js';
 import { FORCE_FIELD_SPRITE } from '../shields/index.js';
 import { applyLoadoutPreset, createWeaponSystem, type WeaponSystem } from '../weapons/index.js';
+import { UI_SPRITES } from '../ui/index.js';
 import {
   FX_CUES,
   SFX_CUES,
@@ -386,6 +387,12 @@ export interface WorldOptions {
    * phase whose `script` the lookup does not know runs no script.
    */
   readonly bossBehaviors?: BossBehaviorLookup;
+  /**
+   * The presentation event queue to push into (default: a new one). A game that creates several
+   * Worlds over its life (the scene flow of M1-16 — one per game start) hands every World its own
+   * queue, so the host keeps draining one queue.
+   */
+  readonly events?: EventQueue;
 }
 
 /**
@@ -845,8 +852,9 @@ type WorldUnderConstruction = Omit<
  * The sprites the engine draws on its own, whatever the content: the enemy bullet kinds and the
  * laser beam (`core/bullets` `BULLET_SPRITES`), the Option (`core/options` `OPTION_SPRITE`), the
  * items (`core/powerups` `ITEM_SPRITES`: the power capsule) and the Force Field
- * (`core/shields` `FORCE_FIELD_SPRITE`). Hosts pass it as `loadContent`'s `extraSprites` (the
- * shell's loader does by default) so the World can resolve their sprite ids and
+ * (`core/shields` `FORCE_FIELD_SPRITE`), plus the HUD pieces and the title logo the scene flow
+ * draws (`core/ui` `UI_SPRITES`, M1-16). Hosts pass it as `loadContent`'s `extraSprites` (the
+ * shell's loader does by default) so the World and the scenes can resolve their sprite ids and
  * `pnpm content:check` verifies them against the atlas.
  */
 export const ENGINE_SPRITES: readonly string[] = Object.freeze([
@@ -854,6 +862,7 @@ export const ENGINE_SPRITES: readonly string[] = Object.freeze([
   OPTION_SPRITE,
   ...ITEM_SPRITES,
   FORCE_FIELD_SPRITE,
+  ...UI_SPRITES,
 ]);
 
 /**
@@ -917,7 +926,7 @@ export function createWorld(
     ship,
     tick: 0,
     rng: createRngStreams(config.seed),
-    events: createEventQueue(),
+    events: options.events ?? createEventQueue(),
     players,
     intents,
     camera,

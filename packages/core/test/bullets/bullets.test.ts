@@ -46,6 +46,7 @@ import { fireAimed, fireNWay, fireSpray } from '../../src/patterns/index.js';
 import { PlayerHitCause } from '../../src/player/index.js';
 import { LayerId, SpriteFlag } from '../../src/presentation/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld, type World } from '../../src/world/index.js';
+import { UI_SPRITES } from '../../src/ui/index.js';
 
 /**
  * A shipped content file.
@@ -205,6 +206,8 @@ describe('core/bullets', () => {
       'options/orb',
       'items/capsule',
       'shields/force-field',
+      // The HUD pieces and the title logo of the scene flow (M1-16).
+      ...UI_SPRITES,
     ]);
     for (const kind of BULLET_KINDS) {
       expect(kind.flags).toBe(BulletFlag.DieOnTerrain | BulletFlag.Cancelable);

@@ -5,9 +5,11 @@
  * lifecycle and resize wiring, stop(), and every failure path of the boot error screen.
  */
 import {
+  Action,
   MUSIC_CUES,
   SFX_CUES,
   SimEventKind,
+  commitPlayerInput,
   createHeadlessPlatform,
   type IAudio,
   type InputContext,
@@ -20,6 +22,7 @@ import { buildAtlas } from '../../../../scripts/assets/pipeline.mjs';
 import { readContentFiles } from '../../../../vite.shared.js';
 import {
   BOOT_STATE_ATTRIBUTE,
+  SCENE_ATTRIBUTE,
   SHELL_SCENES,
   ShellBootError,
   bootShell,
@@ -31,6 +34,7 @@ import {
 import type { BootOverlay } from '../../src/error-screen/index.js';
 import type { LoadableImage } from '../../src/loader/index.js';
 import { FLIGHT_SPRITES } from '../../src/flight/index.js';
+import { SCENE_VIEW_SPRITES } from '../../src/scene-view/index.js';
 import { SHOWCASE_SPRITES } from '../../src/showcase/index.js';
 import { FakeContext } from '../../../audio-web/test/helpers/fake-context.js';
 
@@ -39,7 +43,7 @@ const fakes = vi.hoisted(() => ({
   rendererFails: false,
   spriteNames: [] as Array<readonly string[]>,
   bound: [] as unknown[],
-  frames: [] as Array<{ tick: number; world: unknown; hudCount: number }>,
+  frames: [] as Array<{ tick: number; world: unknown; hudCount: number; uiCount: number }>,
   sizes: [] as Array<[number, number]>,
   destroyed: 0,
   /** The fx content handed to the renderer. */
@@ -67,15 +71,24 @@ vi.mock('@shmup/render-pixi', async (importOriginal) => {
           emit: (...args: unknown[]) => fakes.fxCalls.push(['emit', ...args]),
           emitFxCue: (...args: unknown[]) => fakes.fxCalls.push(['emitFxCue', ...args]),
           emitSfxCue: (...args: unknown[]) => fakes.fxCalls.push(['emitSfxCue', ...args]),
+          clear: () => fakes.fxCalls.push(['clearParticles']),
         },
-        popups: { show: (...args: unknown[]) => fakes.fxCalls.push(['show', ...args]) },
+        popups: {
+          show: (...args: unknown[]) => fakes.fxCalls.push(['show', ...args]),
+          clear: () => fakes.fxCalls.push(['clearPopups']),
+        },
         setFxContent: (content: RenderPixi.FxContent) => {
           fakes.fxContent = content;
         },
         setSpriteNames: (names: readonly string[]) => fakes.spriteNames.push(names),
         bindWorld: (world: unknown) => fakes.bound.push(world),
         render: (frame: RenderFrame) =>
-          fakes.frames.push({ tick: frame.tick, world: frame.world, hudCount: frame.hud.count }),
+          fakes.frames.push({
+            tick: frame.tick,
+            world: frame.world,
+            hudCount: frame.hud.count,
+            uiCount: frame.ui.count,
+          }),
         resize: (w: number, h: number) => fakes.sizes.push([w, h]),
         destroy: () => {
           fakes.destroyed++;
@@ -231,7 +244,8 @@ afterEach(() => {
 });
 
 /**
- * Boots with test defaults.
+ * Boots with test defaults (free flight — the dev scene most of these tests exercise; the scene
+ * flow has its own tests below).
  *
  * @param overrides - Option overrides.
  */
@@ -256,6 +270,7 @@ function boot(overrides: Partial<ShellOptions> = {}) {
     }),
     createImage: () => new FakeImage() as unknown as LoadableImage & HTMLImageElement,
     overlay,
+    scene: 'flight',
     ...overrides,
   });
   return { promise, attributes, shown };
@@ -264,18 +279,19 @@ function boot(overrides: Partial<ShellOptions> = {}) {
 describe('shell/boot sceneFromSearch', () => {
   it('describes itself and knows its scenes', () => {
     expect(moduleInfo.name).toBe('boot');
-    expect(SHELL_SCENES).toEqual(['flight', 'showcase', 'calibration', 'fx-gallery']);
+    expect(SHELL_SCENES).toEqual(['game', 'flight', 'showcase', 'calibration', 'fx-gallery']);
   });
 
-  it('reads ?scene= and defaults to free flight', () => {
+  it('reads ?scene= and defaults to the scene flow', () => {
     expect(sceneFromSearch('?scene=calibration')).toBe('calibration');
     expect(sceneFromSearch('debug=1&scene=calibration')).toBe('calibration');
     expect(sceneFromSearch('?scene=showcase')).toBe('showcase');
     expect(sceneFromSearch('?scene=fx-gallery')).toBe('fx-gallery');
     expect(sceneFromSearch('?scene=flight')).toBe('flight');
-    expect(sceneFromSearch('?scene=nope')).toBe('flight');
-    expect(sceneFromSearch('?scene')).toBe('flight');
-    expect(sceneFromSearch('')).toBe('flight');
+    expect(sceneFromSearch('?scene=game')).toBe('game');
+    expect(sceneFromSearch('?scene=nope')).toBe('game');
+    expect(sceneFromSearch('?scene')).toBe('game');
+    expect(sceneFromSearch('')).toBe('game');
   });
 });
 
@@ -299,7 +315,7 @@ describe('shell/boot bootShell', () => {
     expect(shown[shown.length - 1]).toBe('removed');
   });
 
-  it('shows free flight by default: the content names plus its own, its world bound', async () => {
+  it('?scene=flight: the content names plus its own, its world bound', async () => {
     const shell = await boot().promise;
     expect(shell.scene).toBe('flight');
     expect(shell.showcase).toBeNull();
@@ -802,5 +818,120 @@ describe('shell/boot audio (M1-15)', () => {
       'error:AUDIO FAILED TO LOAD|Error: could not load audio/sfx/boom.ogg: status 404',
     );
     expect(audio.calls).toEqual(['destroy']);
+  });
+});
+
+describe('shell/boot the scene flow (M1-16, the default scene)', () => {
+  /**
+   * Presses and releases an action over two displayed frames of one tick each.
+   *
+   * @param action - The action.
+   * @param at - The first frame's timestamp.
+   * @returns The next free timestamp.
+   */
+  function press(action: number, at: number): number {
+    commitPlayerInput(platform.snapshot.players[0], action);
+    win.frame(at);
+    commitPlayerInput(platform.snapshot.players[0], 0);
+    win.frame(at + STEP);
+    return at + 2 * STEP;
+  }
+
+  it('boots the flow: its sprite names, the backdrop bound, the boot scene finished', async () => {
+    const { promise, attributes } = boot({ scene: 'game' });
+    const shell = await promise;
+    expect(shell.scene).toBe('game');
+    expect([shell.flight, shell.showcase, shell.fxGallery]).toEqual([null, null, null]);
+    expect(shell.sceneView).not.toBeNull();
+    expect(fakes.spriteNames).toEqual([
+      [...shell.game.content.sprites.names, ...SCENE_VIEW_SPRITES],
+    ]);
+    expect(fakes.bound).toEqual([shell.sceneView?.backdrop]);
+    expect(shell.game.scenes?.boot.done).toBe(true);
+    expect(attributes.get(SCENE_ATTRIBUTE)).toBe('boot');
+    expect(input.contexts).toEqual(['menu']);
+    win.frame(1000);
+    win.frame(1000 + STEP);
+    expect(attributes.get(SCENE_ATTRIBUTE)).toBe('title');
+    expect(fakes.frames[1]).toMatchObject({ world: shell.sceneView?.backdrop, hudCount: 0 });
+    expect(fakes.frames[1].uiCount).toBeGreaterThan(0);
+    expect(shell.sceneView?.backdrop.batches[0].count).toBeGreaterThan(0); // the starfield
+  });
+
+  it('OK on the title and on START runs a game: its World under the starfield, the game context', async () => {
+    const { promise, attributes } = boot({ scene: 'game' });
+    const shell = await promise;
+    let at = press(0, 1000);
+    at = press(Action.Confirm, at);
+    at = press(Action.Confirm, at);
+    expect(attributes.get(SCENE_ATTRIBUTE)).toBe('game');
+    win.frame(at);
+    expect(input.contexts).toEqual(['menu', 'game']);
+    const frame = fakes.frames[fakes.frames.length - 1];
+    const world = frame.world as { batches: readonly unknown[] };
+    expect(world).not.toBe(shell.sceneView?.backdrop);
+    expect(world.batches.slice(2)).toEqual(shell.game.world.view.batches);
+    expect(frame.hudCount).toBeGreaterThan(20);
+    // The previous (title) picture's particles and popups were dropped for the new World.
+    expect(fakes.fxCalls).toContainEqual(['clearParticles']);
+    expect(fakes.fxCalls).toContainEqual(['clearPopups']);
+    // Pause: the game context goes, the World stays on screen.
+    at = press(Action.Pause, at + STEP);
+    expect(attributes.get(SCENE_ATTRIBUTE)).toBe('pause');
+    win.frame(at);
+    expect(input.contexts).toEqual(['menu', 'game', 'menu']);
+    expect(fakes.frames[fakes.frames.length - 1].world).toBe(world);
+  });
+
+  it('prepares the title theme with the music set and plays it', async () => {
+    const graph = (() => {
+      const context = new FakeContext();
+      let unlocked = false;
+      const buses = {
+        master: context.createGain(),
+        music: context.createGain(),
+        sfx: context.createGain(),
+        ui: context.createGain(),
+      };
+      const backend: ShellOptions['audio'] = {
+        state: 'uninitialized',
+        get context() {
+          return unlocked ? context : null;
+        },
+        bus: (name) => (unlocked ? buses[name] : null),
+        unlock: () => {
+          unlocked = true;
+          return Promise.resolve();
+        },
+        suspend: () => Promise.resolve(),
+        resume: () => Promise.resolve(),
+        setBusVolume: () => {},
+        destroy: () => Promise.resolve(),
+      };
+      return backend;
+    })();
+    const open = await boot({
+      scene: 'game',
+      audio: graph,
+      platform: (): Platform => ({ ...platform, audio: graph }),
+      audioUnlock: 'immediate',
+    }).promise;
+    expect([...open.audioEngine.residentTracks].sort()).toEqual([
+      'game-over',
+      'stage-clear',
+      'title',
+    ]);
+    win.frame(1000);
+    win.frame(1000 + STEP);
+    expect(open.audioEngine.music?.current?.id).toBe('title');
+    open.stop();
+    const staged = await boot({ scene: 'game', gameConfig: { stage: 'test-range' } }).promise;
+    expect([...staged.audioEngine.residentTracks].sort()).toEqual([
+      'boss',
+      'game-over',
+      'stage-clear',
+      'title',
+      'zone-a',
+    ]);
   });
 });

@@ -2,12 +2,24 @@
  * # game — top-level game object (composition root of the core)
  *
  * **Responsibility.** {@link createGame} wires a {@link Platform} to the fixed-step
- * loop and owns the per-session state. Each tick it polls input once and advances the
- * gameplay {@link World} with `stepWorld` — the fixed tick pipeline `input → players → stage →
- * scripts → movement → collision → damage → removal → fx` (plan §3.2, shmup_feat.md §22). The
- * scene stack of M1-16 will decide when a World exists; until then every session hosts one World
- * from the start: free flight with the KESTREL, or the stage `config.stage` names (M1-07 — the
- * web app's `?stage=<id>`).
+ * loop and owns the per-session state. Each tick it polls input once and advances the session.
+ * A session runs in one of two ways:
+ *
+ * - **Bare gameplay** (the default — tests, tools, the shell's dev scenes): one gameplay
+ *   {@link World} from creation, advanced with `stepWorld` every tick — the fixed tick pipeline
+ *   `input → players → stage → scripts → movement → collision → damage → removal → fx` (plan §3.2,
+ *   shmup_feat.md §22) — free flight with the KESTREL, or the stage `config.stage` names (M1-07).
+ *   Nothing reacts to its status: the World keeps simulating after a game over or a stage clear.
+ * - **The scene flow** (`options.scenes`, M1-16 — what the apps run): the `core/scenes` stack
+ *   Boot → Title → Game ⇄ Pause → Stage clear / Game over. Only the top scene ticks; the game
+ *   scene owns the World and creates a fresh one per game start, so {@link Game.world} changes
+ *   identity then. {@link Game.inputContext} is the top scene's binding context, the render frame
+ *   carries the World's view and HUD only while the game is visible, the UI list holds every
+ *   visible scene's widgets, and `screen.dim` darkens the game under the pause menu. A platform
+ *   resume while playing opens the pause menu.
+ *
+ * Every World of a session pushes into the same {@link EventQueue} ({@link Game.events}), so the
+ * host drains one queue.
  *
  * Lifecycle: `platform.lifecycle.onSuspend` freezes the game (`state.suspended`);
  * `onResume` unfreezes it and resets the loop accumulator so no burst of catch-up
@@ -15,27 +27,27 @@
  * (`state.paused`, via {@link Game.pause}) survives suspend/resume.
  *
  * **Implements.** shmup_tech.md §3.2 (core consumes `Platform`), shmup_feat.md §22
- * (tick order), §3 (pause on visibility change).
+ * (tick order), §3 (pause on visibility change), §17 (scene flow), §23 (pause on resume).
  *
- * **Public API.** {@link createGame}, {@link Game}, {@link GameState}. A session carries the
- * validated {@link ContentDb} it was created with (`game.content`), so systems read tunables
- * from data instead of constants, its gameplay {@link World} (`game.world`), the
- * {@link EventQueue} its systems push presentation events into (`game.events` — the World's
- * queue, drained by the host once per frame) and builds the reused {@link RenderFrame} of the
- * render contract (`game.renderFrame()`: `world` is the World's view; the HUD and UI draw lists
- * are empty until the scenes of M1-16).
+ * **Public API.** {@link createGame}, {@link Game}, {@link GameState}, {@link GameOptions}. A
+ * session carries the validated {@link ContentDb} it was created with (`game.content`), so systems
+ * read tunables from data instead of constants, its gameplay {@link World} (`game.world`), the
+ * {@link EventQueue} its systems push presentation events into (`game.events`, drained by the host
+ * once per frame), its scene flow (`game.scenes`, `null` for bare gameplay) and builds the reused
+ * {@link RenderFrame} of the render contract (`game.renderFrame()`).
  * `game.inputContext` names the binding context (`'game'` / `'menu'`, decision D15) the host's
- * input adapter should use — `'game'` until the scene stack of M1-16 decides.
+ * input adapter should use.
  *
  * @module
  */
 import { resolveGameConfig, type GameConfig } from '../config/index.js';
 import { EMPTY_CONTENT_DB, type ContentDb } from '../data/index.js';
-import type { EventQueue } from '../events/index.js';
 import type { InputContext, InputSnapshot } from '../input/index.js';
+import { createEventQueue, type EventQueue } from '../events/index.js';
 import { createFixedStepLoop } from '../loop/index.js';
 import { defineModule } from '../module-info.js';
 import type { Platform } from '../platform/index.js';
+import { createSceneFlow, type SceneFlow, type SceneStart } from '../scenes/index.js';
 import { createWorld, stepWorld, type World } from '../world/index.js';
 import {
   createDrawList,
@@ -49,7 +61,13 @@ import {
 export const moduleInfo = defineModule({
   name: 'game',
   status: 'partial',
-  specRefs: ['shmup_tech.md §3.2', 'shmup_feat.md §3', 'shmup_feat.md §22'],
+  specRefs: [
+    'shmup_tech.md §3.2',
+    'shmup_feat.md §3',
+    'shmup_feat.md §22',
+    'shmup_feat.md §17',
+    'shmup_feat.md §23',
+  ],
 });
 
 /** Mutable per-session state (read-only to presentation code). */
@@ -82,8 +100,17 @@ export interface Game {
   /**
    * The gameplay session: players, camera, RNG streams, pools and the view the renderer draws.
    * Read-only to hosts (debug overlays, tests); only {@link Game.step} advances it.
+   *
+   * @remarks
+   * With the scene flow this is the game scene's World: a fresh one per game start (a new object —
+   * do not keep it across a start), a placeholder before the first.
    */
   readonly world: World;
+  /**
+   * The scene flow (title, pause, game over … — `core/scenes`), or `null` for bare gameplay
+   * (`createGame` without `options.scenes`).
+   */
+  readonly scenes: SceneFlow | null;
   /** Current state. Do not mutate from outside the core. */
   readonly state: Readonly<GameState>;
   /**
@@ -91,14 +118,15 @@ export interface Game {
    * scene decides — `'menu'` for menus and the pause screen, `'game'` while playing.
    *
    * @remarks
-   * Always `'game'` until the scene stack arrives (M1-16). The host reads it once per frame and
-   * forwards a change to its adapter (`@shmup/shell` calls `input.setContext`); reading it never
-   * allocates.
+   * Always `'game'` for bare gameplay; with the scene flow the top scene's context. The host reads
+   * it once per frame and forwards a change to its adapter (`@shmup/shell` calls
+   * `input.setContext`); reading it never allocates.
    */
   readonly inputContext: InputContext;
   /**
    * Runs exactly one simulation tick: polls `platform.input` once, then advances the
-   * {@link Game.world} by one tick (`stepWorld`). No-op (and no poll) while paused or suspended.
+   * {@link Game.world} by one tick (`stepWorld`) — with the scene flow, the top scene instead (the
+   * game scene steps the World). No-op (and no poll) while paused or suspended.
    */
   step(): void;
   /**
@@ -113,18 +141,34 @@ export interface Game {
    * Builds the frame description to hand to an `IRenderer`.
    *
    * @returns A reused object (do not keep it across frames); `alpha` is 0 while
-   *   frozen so a paused picture does not wobble. `world` is the World's view
-   *   (`game.world.view`, the same object every frame); `hud` / `ui` are the session's draw
-   *   lists; `screen` carries no effects yet.
+   *   frozen so a paused picture does not wobble. For bare gameplay `world` is the World's view
+   *   (`game.world.view`, the same object every frame) and `hud` / `ui` are empty draw lists;
+   *   with the scene flow `world` is the World's view while the game scene is visible (else
+   *   `null`), `tick` then the World's tick (frozen under the pause menu, 0 for a new World — else
+   *   the flow's tick count), `hud` its HUD (rebuilt here only when it changed), `ui` every
+   *   visible scene's widgets and `screen.dim` the top overlay's dim. Never allocates.
    */
   renderFrame(): RenderFrame;
-  /** Pauses the simulation (user pause; survives platform suspend/resume). */
+  /**
+   * Freezes the whole session (a host-level pause, e.g. a debugger; survives platform
+   * suspend/resume). The scene flow's pause menu is a scene, not this.
+   */
   pause(): void;
   /**
    * Clears the user pause and resets the loop accumulator (so no catch-up burst runs).
    * Does not override a platform suspend.
    */
   resume(): void;
+}
+
+/** Options of {@link createGame} beyond the config (not recorded in replays). */
+export interface GameOptions {
+  /**
+   * Run the scene flow, starting on this scene: `'boot'` (the apps — waits for
+   * `game.scenes.finishBoot()`), `'title'` or `'game'` (straight into a game — dev and tests).
+   * Omitted or `null`: bare gameplay (one World ticked from the start, no scenes).
+   */
+  readonly scenes?: SceneStart | null;
 }
 
 /**
@@ -140,6 +184,7 @@ export interface Game {
  * @param content - Validated content database (`loadContent(...).db`). Defaults to
  *   {@link EMPTY_CONTENT_DB}, which lets tests and the calibration scenes run with no
  *   `content/` at all; systems then fall back to their built-in defaults.
+ * @param options - The scene flow's first scene (default: bare gameplay).
  * @returns The {@link Game}.
  * @throws RangeError when `overrides` fail validation (see `resolveGameConfig`) or
  *   `overrides.stage` names a stage `content` does not have (see `createWorld`).
@@ -151,19 +196,40 @@ export interface Game {
  * for (let i = 0; i < 60; i++) game.step(); // one simulated second
  * game.state.tick; // → 60
  * game.world.players[0].state; // → 'alive' (the fly-in took 40 ticks)
+ *
+ * // The scene flow (what the apps run):
+ * const flowGame = createGame(createHeadlessPlatform(), {}, db, { scenes: 'title' });
+ * flowGame.scenes?.stack.top?.id; // → 'title'
  * ```
  */
 export function createGame(
   platform: Platform,
   overrides: Partial<GameConfig> = {},
   content: ContentDb = EMPTY_CONTENT_DB,
+  options: GameOptions = {},
 ): Game {
   const config = resolveGameConfig(overrides);
   const state: GameState = { tick: 0, paused: false, suspended: false, input: null };
   const isFrozen = (): boolean => state.paused || state.suspended;
-  const world = createWorld(config, content);
-  const events = world.events;
-  const screen: ScreenView = { shakeX: 0, shakeY: 0, flash: 0, dim: 0 };
+  const events = createEventQueue();
+  const start = options.scenes ?? null;
+  // Bare gameplay: one World for the whole session. The scene flow creates its own (per game).
+  const bareWorld = start === null ? createWorld(config, content, { events }) : null;
+  const flow =
+    start === null
+      ? null
+      : createSceneFlow(
+          {
+            config,
+            content,
+            events,
+            exit: platform.exit,
+            createWorld: () => createWorld(config, content, { events }),
+          },
+          start,
+        );
+  const screen = { shakeX: 0, shakeY: 0, flash: 0, dim: 0 };
+  const emptyList = createDrawList(1, 1);
   const frameView: {
     tick: number;
     alpha: number;
@@ -174,18 +240,19 @@ export function createGame(
   } = {
     tick: 0,
     alpha: 0,
-    world: world.view,
-    hud: createDrawList(),
-    ui: createDrawList(),
+    world: bareWorld === null ? null : bareWorld.view,
+    hud: bareWorld === null ? emptyList : createDrawList(),
+    ui: bareWorld === null ? emptyList : createDrawList(),
     screen,
   };
 
-  /** One simulation tick; the systems run here in the fixed tick order. */
+  /** One simulation tick; the systems (or the top scene) run here in the fixed tick order. */
   const step = (): void => {
     if (isFrozen()) return;
     const input = platform.input.poll();
     state.input = input;
-    stepWorld(world, input);
+    if (bareWorld !== null) stepWorld(bareWorld, input);
+    else if (flow !== null) flow.tick(input);
     state.tick++;
   };
 
@@ -200,11 +267,13 @@ export function createGame(
     content,
     platform,
     events,
-    world,
+    get world(): World {
+      return bareWorld !== null ? bareWorld : (flow as SceneFlow).world;
+    },
+    scenes: flow,
     state,
     get inputContext(): InputContext {
-      // The scene stack (M1-16) picks the context of its top scene; until then only gameplay.
-      return 'game';
+      return flow === null ? 'game' : flow.inputContext;
     },
     step,
     frame(nowMs) {
@@ -214,6 +283,15 @@ export function createGame(
     renderFrame() {
       frameView.tick = state.tick;
       frameView.alpha = isFrozen() ? 0 : loop.alpha;
+      if (flow !== null) {
+        flow.updateFrame();
+        const view = flow.view;
+        frameView.tick = view.tick;
+        frameView.world = view.world;
+        frameView.hud = view.hud;
+        frameView.ui = view.ui;
+        screen.dim = view.dim;
+      }
       return frameView;
     },
     pause() {
@@ -231,6 +309,8 @@ export function createGame(
   platform.lifecycle.onResume(() => {
     state.suspended = false;
     loop.reset();
+    // Back from the TV's home screen into a running game: its pause menu (shmup_feat.md §23).
+    if (flow !== null) flow.onResume();
   });
   return game;
 }

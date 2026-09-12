@@ -4,8 +4,9 @@
  * One boot path for the browser and the TV: {@link bootShell} validates the inlined content,
  * loads the atlas pages with `new Image()` (no `fetch` on `file://` — D25) behind a progress
  * bar, shows the boot error screen when anything is wrong, creates the renderer, platform and
- * game, and runs the rAF frame loop that ticks the game, drains its events to registered
- * handlers and renders. The apps stay thin adapters (input, audio, platform, Back key).
+ * game — running the core's scene flow (title, game, pause …) drawn through `scene-view` — and
+ * runs the rAF frame loop that ticks the game, drains its events to registered handlers and
+ * renders. The apps stay thin adapters (input, audio, platform, Back key).
  *
  * Dependency direction: `apps/* → @shmup/shell → {render-pixi, audio-web, input-web} → core`.
  *
@@ -13,6 +14,7 @@
  */
 export {
   BOOT_STATE_ATTRIBUTE,
+  SCENE_ATTRIBUTE,
   SHELL_SCENES,
   ShellBootError,
   bootShell,
@@ -65,6 +67,7 @@ export {
   type FxGallery,
   type FxGalleryOptions,
 } from './fx-gallery/index.js';
+export { SCENE_VIEW_SPRITES, createSceneView, type SceneView } from './scene-view/index.js';
 export {
   SHOWCASE_SPRITES,
   createShowcase,

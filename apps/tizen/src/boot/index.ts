@@ -8,9 +8,9 @@
  * validation and boot error screen, atlas pages from relative `file://` URLs, renderer, game,
  * event dispatch and the rAF frame loop). The game runs with `remoteMode: true` and forced
  * autofire; audio needs no gesture on TV, so it is unlocked immediately and the shell's audio
- * engine (M1-15) plays the sound effects from boot. The TV has no `?stage=` parameter and free
- * flight prepares no music, so the app plays no music until the scene flow (M1-16) and zone A
- * (M1-18) arrive.
+ * engine (M1-15) plays from boot. The app runs the shell's default scene, the core **scene flow**
+ * (M1-16): title (with its theme), game ⇄ pause, stage clear / game over. The TV has no `?stage=`
+ * parameter, so START flies in open space until zone A arrives (M1-18).
  *
  * **Input profiles** (decisions D13/D14). The `input-profiles` content is parsed into a
  * registry during boot; the remote uses the saved profile choice (`Platform.storage`, applied
@@ -18,11 +18,12 @@
  * platform registers the active profile's `register` keys (falling back to
  * `REMOTE_KEYS_TO_REGISTER` when the content has no remote profile).
  *
- * **Back key.** Until the title scene with its exit-confirmation dialog exists
- * (shmup_feat.md §17/§23, M1-16), the free-flight scene *is* the app's root screen, so Back exits
- * directly — the correct Tizen behaviour for a root screen. The Back watcher is installed
- * before boot, so Back also leaves the boot error screen. Later the scene stack consumes
- * `Action.Back` and this shortcut goes away.
+ * **Back key** (shmup_feat.md §17/§23). Once the game runs, Back is an ordinary remote key
+ * (`Action.Back` in menus, `Action.Pause` in the game — the input profile) and the scene stack
+ * decides: game → pause, pause → resume, menus → back, **title → exit confirmation →
+ * `platform.exit()` after YES**. The app no longer exits on Back by itself — except while the game
+ * is not running: a Back watcher is installed before boot and removed once the shell runs, so
+ * Back still leaves the loading screen and the boot error screen (the root screen then).
  *
  * **Implements.** shmup_feat.md §23 (Tizen: Back, registerKeyBatch, visibilitychange,
  * exit), §3 (fixed step, pause on hidden), §4 (remote-first).
@@ -157,8 +158,9 @@ function applyProfiles(
  * Boots the game on the TV (or in a desktop browser for development).
  *
  * @remarks
- * Installs the Back watcher first (Back exits from the root screen — including the boot error
- * screen), creates input and audio, then runs `bootShell`, which validates the content (the
+ * Installs the Back watcher first (Back exits while the game is not running — the loading and
+ * boot error screens; it is removed once the shell runs and the scene flow owns Back), creates
+ * input and audio, then runs `bootShell`, which validates the content (the
  * input profiles into this app's registry), creates the renderer, this app's platform (with the
  * `tizen-remote-safe` profile applied and its keys registered) and the game, and unlocks audio
  * immediately. A saved profile choice is applied — and its keys registered — once storage has
@@ -170,7 +172,7 @@ function applyProfiles(
  * @param win - The window.
  * @returns A promise of the running app.
  * @throws Rejects with the shell's `ShellBootError` when content is invalid, the atlas cannot
- *   load or WebGL is unavailable (Back still exits the app afterwards).
+ *   load or WebGL is unavailable (Back then still exits the app from the error screen).
  *
  * @example
  * ```ts
@@ -188,9 +190,10 @@ export async function bootTizenApp(
   win: Window = window,
 ): Promise<TizenApp> {
   const tizen = getTizenApi(win);
-  let platform: Platform | null = null;
+  // Until the game runs, the loading / boot error screen is the root screen: Back exits. The scene
+  // flow owns Back afterwards (title → exit confirmation), so the watcher goes once boot succeeded.
   const stopBack = watchBackKey(win, () => {
-    const exit = platform !== null ? platform.exit : apiExit(tizen);
+    const exit = apiExit(tizen);
     if (exit !== null) exit();
   });
 
@@ -213,7 +216,7 @@ export async function bootTizenApp(
     contentOwners: { [INPUT_PROFILES_KIND]: profiles.load },
     platform: (renderer) => {
       const keyProfile = applyProfiles(input, profiles.profiles, [DEFAULT_REMOTE_PROFILE_ID]);
-      platform = createTizenPlatform({
+      return createTizenPlatform({
         tizen,
         input,
         audio,
@@ -224,13 +227,13 @@ export async function bootTizenApp(
         webgl2: renderer.webGLVersion === 2,
         registerKeys: keyProfile?.register,
       });
-      return platform;
     },
     gameConfig: { remoteMode: true, autofire: true },
     scene: sceneFromSearch(searchOf(win)),
     audioUnlock: 'immediate',
     preferWebGLVersion: 1,
   });
+  stopBack();
 
   // The saved choice (Options screen, M2-16) replaces the default once storage answers.
   let stopped = false;
@@ -252,7 +255,6 @@ export async function bootTizenApp(
     stop() {
       stopped = true;
       shell.stop();
-      stopBack();
     },
   };
 }

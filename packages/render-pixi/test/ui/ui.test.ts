@@ -30,7 +30,7 @@ function view(capacity = 16) {
 describe('render-pixi/ui createDrawListView', () => {
   it('describes itself', () => {
     expect(moduleInfo.name).toBe('ui');
-    expect(moduleInfo.status).toBe('partial');
+    expect(moduleInfo.status).toBe('implemented');
   });
 
   it('draws rect, sprite, text and number commands in command order', () => {

@@ -128,7 +128,7 @@ test.describe('Force Field (web build)', () => {
   test('?loadout=full draws the fresh Force Field ring around the ship', async ({ page }) => {
     test.setTimeout(90_000);
     const errors = collectErrors(page);
-    await page.goto('./?loadout=full');
+    await page.goto('./?scene=flight&loadout=full');
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
     let found: ColourPixels[] | null = null;
     for (let poll = 0; poll < 60 && found === null; poll++) {
@@ -154,7 +154,7 @@ test.describe('Force Field (web build)', () => {
   test('the default loadout has no Force Field', async ({ page }) => {
     test.setTimeout(90_000);
     const errors = collectErrors(page);
-    await page.goto('./');
+    await page.goto('./?scene=flight');
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
     // Past the 40-tick fly-in, a few samples: never a ring pixel.
     let hullSeen = false;
@@ -173,7 +173,7 @@ test.describe('Force Field (Tizen build via file://)', () => {
   test('ignores the web-only ?loadout=full: no Force Field', async ({ page }) => {
     test.setTimeout(90_000);
     const errors = collectErrors(page);
-    await page.goto(TIZEN_INDEX + '?loadout=full');
+    await page.goto(TIZEN_INDEX + '?scene=flight&loadout=full');
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
     let hullSeen = false;
     for (let poll = 0; poll < 8; poll++) {

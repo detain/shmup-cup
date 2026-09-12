@@ -96,7 +96,7 @@ test.describe('free flight (web build)', () => {
       if (message.type() === 'error') errors.push(message.text());
     });
     page.on('pageerror', (error) => errors.push(error.message));
-    await page.goto('./');
+    await page.goto('./?scene=flight');
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
     await waitFrames(page, 60); // the 40-tick fly-in is over
 
@@ -129,7 +129,7 @@ test.describe('free flight (web build)', () => {
     test.setTimeout(120_000);
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
-    await page.goto('./');
+    await page.goto('./?scene=flight');
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
     await waitFrames(page, 60);
 
@@ -165,7 +165,7 @@ test.describe('free flight (Tizen build via file://)', () => {
   test('remote arrow keys move the KESTREL', async ({ page }) => {
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
-    await page.goto(TIZEN_INDEX);
+    await page.goto(TIZEN_INDEX + '?scene=flight');
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
     await waitFrames(page, 60);
     const start = await shipCentre(page);

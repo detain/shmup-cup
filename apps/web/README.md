@@ -3,7 +3,9 @@
 The **browser dev target** (Vite dev server with HMR) and the renderer that
 `apps/electron` loads. Wires `@shmup/core` + `@shmup/render-pixi` + `@shmup/audio-web` +
 `@shmup/input-web` together through the shared shell [`@shmup/shell`](../../packages/shell/README.md).
-It boots behind a loading bar (or a boot error screen listing every problem) into **free
+It boots behind a loading bar (or a boot error screen listing every problem) into the game's
+**scene flow** (M1-16): the title (`PRESS OK`, then START / OPTIONS), the game with its HUD,
+the pause menu (Esc), stage clear and game over. `?scene=flight` goes straight into **free
 flight** (M1-06): the game's World with the KESTREL under keyboard / gamepad control over an
 empty starfield. `?scene=showcase` shows the M1-04 sprite showcase and `?scene=calibration`
 the pixel-art calibration test pattern instead. `?stage=<id>` runs that stage instead of
@@ -48,7 +50,7 @@ Guide: [`docs/dev/input-profiles.md`](../../docs/dev/input-profiles.md).
 
 ```sh
 pnpm dev                          # from the repo root (= turbo run dev --filter=@shmup/web)
-# → http://localhost:5173 (free flight) · ?stage=test-range (scrolling test stage) · ?stage=test-boss (the WARNING and the test boss) · &loadout=full (fully powered) · ?scene=showcase (sprite showcase) · ?scene=calibration (test pattern) · ?scene=fx-gallery (every particle preset and screen effect)
+# → http://localhost:5173 (title → game) · ?scene=flight (free flight at once) · ?stage=test-range (scrolling test stage) · ?stage=test-boss (the WARNING and the test boss) · &loadout=full (fully powered) · ?scene=showcase (sprite showcase) · ?scene=calibration (test pattern) · ?scene=fx-gallery (every particle preset and screen effect)
 pnpm --filter @shmup/web build    # → apps/web/dist (relocatable, base './')
 pnpm --filter @shmup/web exec vite preview   # serve the production build (what pnpm test:e2e opens)
 ```
@@ -76,7 +78,7 @@ the shell loads the pages with `new Image()`; see
 | Module | Status | Responsibility |
 |---|---|---|
 | `main.ts` | — | Entry: boots into `#game`, disposes on HMR |
-| `boot` | implemented | Composition root: keyboard/gamepad input with the input profiles (`?profile=`, `?debounce=`, saved choice), Web Audio and the browser platform handed to `@shmup/shell`'s `bootShell` (content + atlas loading, boot error screen, renderer, game, rAF loop, audio unlock on the first key or pointer gesture — gamepad buttons do not count — after which the shell's audio engine plays the sounds and, with `?stage=`, the stage's music, M1-15); free flight by default, `?stage=<id>` (`stageFromSearch`, checked with `contentStageIds`), `?loadout=full` (`loadoutFromSearch`, M1-10), `?scene=showcase` / `?scene=calibration` / `?scene=fx-gallery` (M1-14) |
+| `boot` | implemented | Composition root: keyboard/gamepad input with the input profiles (`?profile=`, `?debounce=`, saved choice), Web Audio and the browser platform handed to `@shmup/shell`'s `bootShell` (content + atlas loading, boot error screen, renderer, game, rAF loop, audio unlock on the first key or pointer gesture — gamepad buttons do not count — after which the shell's audio engine plays the sounds and, with `?stage=`, the stage's music, M1-15); the scene flow by default (title → game ⇄ pause …, M1-16), `?scene=flight` for free flight, `?stage=<id>` (`stageFromSearch`, checked with `contentStageIds`), `?loadout=full` (`loadoutFromSearch`, M1-10), `?scene=showcase` / `?scene=calibration` / `?scene=fx-gallery` (M1-14) |
 | `platform` | partial | Browser `Platform`: localStorage (memory fallback), visibility lifecycle, no `exit` |
 
 The rAF frame loop moved to [`@shmup/shell`](../../packages/shell/README.md) (M1-04).

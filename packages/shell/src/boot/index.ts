@@ -17,30 +17,37 @@
  * 5. wires the lifecycle (suspend clears held input and suspends audio), the audio unlock
  *    (first gesture on the web, immediately on TV), window resizes, and
  * 6. runs the rAF frame loop: `game.frame(now)` → `game.events.drain(dispatch)` →
- *    `renderer.render(frame)` (plan §3.3). The scene decides what the frame shows until the
- *    scene stack exists (M1-16): **free flight** (default — the game's World with the KESTREL
- *    under the player's control over a starfield, `flight` module), the sprite **showcase**
- *    (`?scene=showcase`), the **calibration** pattern (`?scene=calibration`, the World is not
- *    drawn) or the **fx gallery** (`?scene=fx-gallery`, M1-14). Before the ticks of each frame it
- *    forwards a change of `game.inputContext` to the
- *    input adapter (`input.setContext` — the `game` / `menu` binding tables of decision D15).
+ *    `renderer.render(frame)` (plan §3.3). Before the ticks of each frame it forwards a change of
+ *    `game.inputContext` to the input adapter (`input.setContext` — the `game` / `menu` binding
+ *    tables of decision D15).
+ *
+ * **Scenes.** By default the game runs the core's **scene flow** (M1-16, `?scene=game`): boot →
+ * title → game ⇄ pause → stage clear / game over, the HUD and the canvas menus, drawn through the
+ * `scene-view` module (a starfield behind the title and in open space). The shell finishes the
+ * boot scene once loading is done, and marks the canvas with the top scene's id
+ * (`data-shmup-scene`). Dev scenes run bare gameplay instead: **free flight** (`?scene=flight` —
+ * the World from the first frame, `flight` module), the sprite **showcase** (`?scene=showcase`),
+ * the **calibration** pattern (`?scene=calibration`, the World is not drawn) or the **fx gallery**
+ * (`?scene=fx-gallery`, M1-14).
  *
  * **Audio (M1-15).** The shell owns the `sfx` and `music` content kinds too: it validates
  * `content/audio/` with `@shmup/audio-web`'s loaders and creates the game's audio engine
  * (`createAudioEngine`). During boot — the loading phase — the engine renders the SFX bank and
  * prepares the running stage's music set (`stageMusicCues`: the theme and boss cues the stage
  * names, the cue of each of its `music` events, stage clear and game over; nothing in open
- * space), behind the progress bar; nothing is rendered or decoded later. Once the app's
+ * space; the scene flow adds the title theme), behind the progress bar; nothing is rendered or
+ * decoded later. Once the app's
  * `audio.unlock()` has created the context (first gesture on the web, at boot on TV) the engine
- * attaches to the web-audio buses; in free flight the World's `Sfx`, `Music` and `MusicDuck`
- * events play through it (`connectAudioEvents`, sounds panned from their x relative to the
+ * attaches to the web-audio buses; in the scene flow and free flight the `Sfx`, `Music` and
+ * `MusicDuck` events (the World's, the menus' and the scenes' music) play through it (`connectAudioEvents`, sounds panned from their x relative to the
  * camera), and the frame loop closes the per-tick SFX dedupe window after each drain.
  *
  * **Game feel (M1-14).** The shell owns the `fx` content kind: it validates `content/fx/` with
  * `@shmup/render-pixi`'s `loadFxContent`, hands the presets to the renderer
  * (`renderer.setFxContent`) and, in free flight, connects the World's `Particles`, `Sfx`,
  * `Shake`, `Flash`, `Dim` and score events to the renderer's particles, screen effects and score
- * popups (`connectFxEvents`). The particles' presentation RNG is seeded from the game's seed.
+ * popups (`connectFxEvents`) — in the scene flow and free flight. The particles' presentation RNG
+ * is seeded from the game's seed.
  *
  * The canvas carries `data-shmup-state="loading" | "running" | "error"` so tests and the TV's
  * remote inspector can tell where boot stands.
@@ -54,7 +61,7 @@
  *
  * **Public API.** {@link bootShell}, {@link Shell}, {@link ShellOptions}, {@link ShellAssets},
  * {@link ShellInput}, {@link ShellScene}, {@link SHELL_SCENES}, {@link sceneFromSearch},
- * {@link ShellBootError}, {@link BOOT_STATE_ATTRIBUTE}.
+ * {@link ShellBootError}, {@link BOOT_STATE_ATTRIBUTE}, {@link SCENE_ATTRIBUTE}.
  *
  * @module
  */
@@ -75,6 +82,7 @@ import {
 } from '@shmup/audio-web';
 import {
   DEFAULT_GAME_CONFIG,
+  MUSIC_CUES,
   createGame,
   defineModule,
   type ContentFile,
@@ -120,6 +128,7 @@ import {
 } from '../loader/index.js';
 import { createFlightScene, type FlightScene } from '../flight/index.js';
 import { createFxGallery, type FxGallery } from '../fx-gallery/index.js';
+import { createSceneView, type SceneView } from '../scene-view/index.js';
 import { createShowcase, type Showcase } from '../showcase/index.js';
 
 /** Module descriptor. */
@@ -136,15 +145,24 @@ const FX_SEED_SALT = 0x2545f491;
 export const BOOT_STATE_ATTRIBUTE = 'data-shmup-state';
 
 /**
- * Dev scenes the shell can show until real scenes exist (M1-16): `flight` (the game's World —
+ * Attribute on the game canvas naming what is shown: the scene flow's top scene id (`boot`,
+ * `title`, `game`, `pause`, …) or the dev scene (`flight`, `showcase`, …). For tests and the TV's
+ * remote inspector.
+ */
+export const SCENE_ATTRIBUTE = 'data-shmup-scene';
+
+/**
+ * What the shell shows: `game` — the real game, the core's scene flow (title, game, pause …,
+ * M1-16) — or a dev scene running bare gameplay: `flight` (the game's World from the first frame —
  * free flight), `showcase` (the M1-04 sprite showcase), `calibration` (the test pattern) and
  * `fx-gallery` (every particle preset, shake, flash, the dim and the score popups in turn —
  * M1-14).
  */
-export type ShellScene = 'flight' | 'showcase' | 'calibration' | 'fx-gallery';
+export type ShellScene = 'game' | 'flight' | 'showcase' | 'calibration' | 'fx-gallery';
 
 /** Every {@link ShellScene}, default first. */
 export const SHELL_SCENES: readonly ShellScene[] = Object.freeze([
+  'game',
   'flight',
   'showcase',
   'calibration',
@@ -155,12 +173,12 @@ export const SHELL_SCENES: readonly ShellScene[] = Object.freeze([
  * Reads the `scene` query parameter (`?scene=calibration`).
  *
  * @param search - `location.search` (with or without the leading `?`).
- * @returns The scene; unknown or missing values give `'flight'`.
+ * @returns The scene; unknown or missing values give `'game'` (the scene flow).
  *
  * @example
  * ```ts
  * sceneFromSearch('?scene=calibration'); // → 'calibration'
- * sceneFromSearch(''); // → 'flight'
+ * sceneFromSearch(''); // → 'game'
  * ```
  */
 export function sceneFromSearch(search: string): ShellScene {
@@ -172,7 +190,7 @@ export function sceneFromSearch(search: string): ShellScene {
     const value = eq < 0 ? '' : pair.slice(eq + 1);
     for (const scene of SHELL_SCENES) if (scene === value) return scene;
   }
-  return 'flight';
+  return 'game';
 }
 
 /** The inlined `virtual:shmup-assets` module (manifest + relative page URLs). */
@@ -232,7 +250,7 @@ export interface ShellOptions {
   readonly platform: (renderer: PixiRenderer) => Platform;
   /** Game config overrides (`remoteMode`, `autofire`, …). */
   readonly gameConfig?: Partial<GameConfig>;
-  /** Scene to show (default `'flight'`). */
+  /** Scene to show (default `'game'` — the scene flow). */
   readonly scene?: ShellScene;
   /**
    * When to unlock audio: `'gesture'` (default — first key or pointer press, the browser
@@ -282,6 +300,8 @@ export interface Shell {
   readonly content: LoadContentResult;
   /** The scene being shown. */
   readonly scene: ShellScene;
+  /** The scene flow's view when `scene === 'game'` (backdrop, starfield, followed camera), else `null`. */
+  readonly sceneView: SceneView | null;
   /** The free-flight scene when `scene === 'flight'`, else `null`. */
   readonly flight: FlightScene | null;
   /** The showcase scene when `scene === 'showcase'`, else `null`. */
@@ -334,16 +354,27 @@ export class ShellBootError extends Error {
 }
 
 /**
- * Writes the boot state onto the canvas (skipped for canvases without `setAttribute`, e.g.
- * test fakes).
+ * Writes an attribute onto the canvas (skipped for canvases without `setAttribute`, e.g. test
+ * fakes).
+ *
+ * @param canvas - The game canvas.
+ * @param name - Attribute name.
+ * @param value - Its value.
+ */
+function markCanvas(canvas: HTMLCanvasElement, name: string, value: string): void {
+  if (typeof (canvas as Partial<HTMLCanvasElement>).setAttribute === 'function') {
+    canvas.setAttribute(name, value);
+  }
+}
+
+/**
+ * Writes the boot state onto the canvas.
  *
  * @param canvas - The game canvas.
  * @param state - `loading`, `running` or `error`.
  */
 function markState(canvas: HTMLCanvasElement, state: 'loading' | 'running' | 'error'): void {
-  if (typeof (canvas as Partial<HTMLCanvasElement>).setAttribute === 'function') {
-    canvas.setAttribute(BOOT_STATE_ATTRIBUTE, state);
-  }
+  markCanvas(canvas, BOOT_STATE_ATTRIBUTE, state);
 }
 
 /**
@@ -405,7 +436,10 @@ function createCalibrationFrame(first: RenderFrame): CalibrationFrame {
  * `game.inputContext` to `input.setContext`, calls `game.frame`, drains the event queue through
  * the dispatcher's bound visitor and renders the reused frame.
  *
- * The renderer's sprite name table depends on the scene: free flight hands over the content's
+ * The renderer's sprite name table depends on the scene: the scene flow (`game`, the default) hands
+ * over the content's names plus the starfield's (`scene-view` module) and pre-binds the title's
+ * backdrop — a game start's World is bound on its first frame, and the particles and popups are
+ * cleared then; free flight hands over the content's
  * names plus its own starfield / HUD sprites (`flight` module), the showcase its own
  * `SHOWCASE_SPRITES` table (`showcase` module); both pre-bind their world view (so the first
  * frame creates no Pixi objects). The calibration scene uses `content.db.sprites.names` and a
@@ -416,16 +450,20 @@ function createCalibrationFrame(first: RenderFrame): CalibrationFrame {
  * Game feel (M1-14): the `fx` files are validated by the shell's own owner (unless
  * `contentOwners` replaces it — the particles then get no presets) and handed to the renderer
  * with `setFxContent` before the scene is created; the renderer's particles are seeded with the
- * game's seed xor a fixed salt; only free flight connects the World's events to the renderer
- * (`connectFxEvents`) — the showcase, calibration and gallery scenes do not draw the World.
+ * game's seed xor a fixed salt; only the scene flow and free flight connect the game's events to
+ * the renderer (`connectFxEvents`) — the showcase, calibration and gallery scenes do not draw the
+ * World.
  *
  * Audio (M1-15): the `sfx` / `music` files are validated by the shell's own owners (an app owner
  * of the same kind replaces one and leaves the engine without that content); after the game is
  * created, the engine renders the SFX bank (`LOADING SOUND`) and prepares the booted stage's music
- * set (`LOADING MUSIC`; open space prepares none). Only an `audio` that also exposes `context`
+ * set (`LOADING MUSIC`; open space prepares none; the scene flow adds the title theme, and the
+ * stage-clear and game-over jingles in open space) — then the scene flow leaves its boot scene.
+ * Only an `audio` that also exposes `context`
  * and `bus()` is attached — right after `platform.audio.unlock()` returns and again when it
  * resolves; a plain `IAudio` (or a context without buffer playback) leaves the game silent. Only
- * free flight connects the World's events to the engine (`connectAudioEvents`); every scene's
+ * the scene flow and free flight connect the game's events to the engine (`connectAudioEvents`,
+ * panned against the camera on screen); every scene's
  * frame loop calls `engine.endFrame()` after the drain, and `stop()` destroys the engine before the
  * audio back-end.
  *
@@ -451,7 +489,8 @@ function createCalibrationFrame(first: RenderFrame): CalibrationFrame {
  */
 export async function bootShell(options: ShellOptions): Promise<Shell> {
   const { canvas, win, input, audio } = options;
-  const scene = options.scene ?? 'flight';
+  const scene = options.scene ?? 'game';
+  const flowMode = scene === 'game';
   const overlay = options.overlay !== undefined ? options.overlay : createBootOverlay(canvas);
   const createImage = options.createImage ?? ((): HTMLImageElement => new Image());
   markState(canvas, 'loading');
@@ -560,7 +599,13 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   let game: Game;
   try {
     platform = options.platform(renderer);
-    game = createGame(platform, options.gameConfig ?? {}, content.db);
+    game = createGame(
+      platform,
+      options.gameConfig ?? {},
+      content.db,
+      // The real game runs the scene flow from its boot scene; dev scenes run bare gameplay.
+      flowMode ? { scenes: 'boot' } : {},
+    );
   } catch (error) {
     throw fail('SHMUP CUP FAILED TO START', [describe(error)], [], error);
   }
@@ -577,23 +622,33 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   // Every cue the stage's own data can make the sim ask for (its theme, boss and `music`
   // events), since a cue whose track is not prepared now stays silent.
   const stage = game.world.stage === null ? null : game.world.stage.stage;
+  const musicCues: number[] = stage === null ? [] : stageMusicCues(stage);
+  if (flowMode) {
+    // The title theme, and the jingles the flow plays after a game in open space.
+    musicCues.unshift(MUSIC_CUES.Title);
+    if (stage === null) musicCues.push(MUSIC_CUES.StageClear, MUSIC_CUES.GameOver);
+  }
   try {
     await engine.loadSfx((fraction) => overlay?.showProgress(fraction, 'LOADING SOUND'));
-    await engine.prepareMusic(
-      stage === null ? null : stage.id,
-      stage === null ? [] : stageMusicCues(stage),
-      (fraction) => overlay?.showProgress(fraction, 'LOADING MUSIC'),
+    await engine.prepareMusic(stage === null ? null : stage.id, musicCues, (fraction) =>
+      overlay?.showProgress(fraction, 'LOADING MUSIC'),
     );
   } catch (error) {
     throw fail('AUDIO FAILED TO LOAD', [describe(error)], [], error);
   }
+  // Loading is over: the scene flow shows its title on the first tick.
+  game.scenes?.finishBoot();
 
   readyRenderer.setFxContent(fx);
+  const flowView = flowMode ? createSceneView(game) : null;
   const flight = scene === 'flight' ? createFlightScene(game) : null;
   const showcase = scene === 'showcase' ? createShowcase() : null;
   const fxGallery = scene === 'fx-gallery' ? createFxGallery(readyRenderer) : null;
   const sceneView = flight ?? showcase ?? fxGallery;
-  if (sceneView !== null) {
+  if (flowView !== null) {
+    readyRenderer.setSpriteNames(flowView.spriteNames);
+    readyRenderer.bindWorld(flowView.backdrop);
+  } else if (sceneView !== null) {
     readyRenderer.setSpriteNames(sceneView.spriteNames);
     readyRenderer.bindWorld(sceneView.world);
   } else {
@@ -601,9 +656,13 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   }
   const calibration = createCalibrationFrame(game.renderFrame());
   const events = createEventDispatcher();
-  // The World's events feed the particles, shake, flash, dim and popups (plan M1-14) and the
-  // audio engine (M1-15) — in free flight only: the other scenes do not show the World.
-  if (flight !== null) {
+  // The game's events feed the particles, shake, flash, dim and popups (plan M1-14) and the
+  // audio engine (M1-15) — in the scene flow and free flight: the other scenes do not show the
+  // World.
+  if (flowView !== null) {
+    connectFxEvents(events, readyRenderer);
+    connectAudioEvents(events, engine, flowView.camera);
+  } else if (flight !== null) {
     connectFxEvents(events, readyRenderer);
     connectAudioEvents(events, engine, game.world.view.camera);
   }
@@ -657,6 +716,17 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   const visit = events.visit;
   let inputContext: InputContext = game.inputContext;
   input.setContext(inputContext);
+  const flow = game.scenes;
+  let shownScene = '';
+  let shownWorlds = 0;
+  /** Marks the canvas with what is shown (the scene flow's top scene or the dev scene). */
+  const markScene = (): void => {
+    const top = flow === null ? scene : (flow.stack.top?.id ?? '');
+    if (top !== shownScene) {
+      shownScene = top;
+      markCanvas(canvas, SCENE_ATTRIBUTE, top);
+    }
+  };
   /**
    * One displayed frame: input context, fixed ticks, event dispatch, render.
    *
@@ -669,15 +739,29 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
       input.setContext(context);
     }
     game.frame(now);
+    if (flowView !== null) flowView.follow();
     game.events.drain(visit);
     engine.endFrame();
     const frame = game.renderFrame();
+    if (flowView !== null) {
+      const shown = flowView.update(frame);
+      if (flowView.worldChanges !== shownWorlds) {
+        // A new game: the last one's explosions and popups do not belong to it.
+        shownWorlds = flowView.worldChanges;
+        readyRenderer.particles?.clear();
+        readyRenderer.popups?.clear();
+      }
+      markScene();
+      readyRenderer.render(shown);
+      return;
+    }
     readyRenderer.render(sceneView !== null ? sceneView.update(frame) : calibration.update(frame));
   };
   const loop = startFrameLoop(win, onFrame);
 
   overlay?.remove();
   markState(canvas, 'running');
+  markScene();
 
   let stopped = false;
   return {
@@ -688,6 +772,7 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     events,
     content,
     scene,
+    sceneView: flowView,
     flight,
     showcase,
     fxGallery,

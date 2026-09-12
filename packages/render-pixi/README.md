@@ -44,7 +44,7 @@ renderer.render(game.renderFrame()); // steps particles / popups / effects by th
 | `layers` | implemented | One container per core `LayerId` in §18 draw order; world group (shake) under HUD / UI / DEBUG; the stage's terrain as a ring-buffered 49 × 26 tile-sprite grid (re-textured one column / row as the camera crosses tile edges) and its parallax bands as repeated sprites (M1-07); the enemy lasers (`createLaserBinding`, M1-09: two sprites per slot — a tinted 1-px warning line and a beam frame picked by width — on `ENEMY_BULLETS`) |
 | `sprites` | implemented | `createSpriteLayerBinding` (preallocated sprites per `SpriteBatchView`: camera, `PLAYFIELD_Y`, anchors, flips, blink, hit flash), ordered `QuadPool` |
 | `text` | implemented | Bitmap font from the atlas, `TextMetrics`, allocation-free text and number layout |
-| `ui` | partial | Draws a core `DrawList` (rect, sprite, text, number) into the HUD or UI layer |
+| `ui` | implemented | Draws a core `DrawList` (rect, sprite, text, number) into the HUD or UI layer — the core HUD and the scene flow's menus since M1-16 |
 | `particles` | implemented | `content/fx/` presets (kind `fx`: `loadFxContent`) and the 256-particle pool on the FX layer (additive / normal, presentation RNG, oldest recycled, world space, ticks not frames), spawned by FX and SFX cues (M1-14) |
 | `effects` | partial | Screen shake (3 magnitudes, decaying, off switch), per-kind flash behind a ≤ 3-a-second limiter, playfield dim, score popups (M1-14); raster & palette effects, CRT later |
 | `debug` | placeholder | Debug overlay |

@@ -3,7 +3,8 @@
  * `window.tizen`, fake atlas images, a fake renderer (no WebGL in Node) and a fake
  * AudioContext, booted through the real `@shmup/shell`. Checks the wiring the TV depends on:
  * remote-first input with the data-driven input profiles (D13/D14: `tizen-remote-safe`, its
- * `register` list, the saved choice), key registration, Back → exit (also from the boot error screen), audio
+ * `register` list, the saved choice), key registration, Back through the scene flow (title → exit
+ * confirmation; a direct exit only from the boot error screen), audio
  * unlocked without a gesture, visibility → suspend/resume, rAF → fixed ticks → render, and a
  * clean stop().
  */
@@ -263,7 +264,8 @@ describe('tizen/boot bootTizenApp wiring', () => {
       testPattern: false,
       atlas: app.shell.atlas,
     });
-    expect(app.shell.scene).toBe('flight');
+    expect(app.shell.scene).toBe('game'); // the scene flow (title first)
+    expect(app.game.scenes).not.toBeNull();
   });
 
   it('builds a remote-first Tizen platform and game (keys registered, autofire forced)', async () => {
@@ -286,7 +288,16 @@ describe('tizen/boot bootTizenApp wiring', () => {
     expect(win.registeredKeys).toEqual(['MediaPlayPause', 'ChannelUp', 'ChannelDown']);
   });
 
-  it('resolves remote OK to PowerUp in the game context (D15) and debounces its release', async () => {
+  it('resolves remote OK to Confirm on the title, to PowerUp in the game context (D15)', async () => {
+    const title = await boot();
+    win.frame(0);
+    win.frame(STEP);
+    win.key('keydown', 13);
+    win.frame(2 * STEP);
+    expect(title.app.game.state.input?.players[0]?.pressed).toBe(Action.Confirm);
+    title.app.stop();
+    // Free flight (a dev scene) plays from the first frame: the game context.
+    Object.assign(win, { location: { search: '?scene=flight' } });
     const { app } = await boot();
     win.frame(0);
     win.key('keydown', 13);
@@ -339,7 +350,7 @@ describe('tizen/boot bootTizenApp wiring', () => {
 
   it('autofires with no key held and ignores the web-only ?loadout=full (M1-10)', async () => {
     // A development build opened with the web app's dev override must not power up the TV game.
-    Object.assign(win, { location: { search: '?loadout=full' } });
+    Object.assign(win, { location: { search: '?scene=flight&loadout=full' } });
     const { app } = await boot();
     expect(app.game.config.loadout).toBe('default');
     const world = app.game.world;
@@ -364,15 +375,52 @@ describe('tizen/boot bootTizenApp wiring', () => {
     expect(p1?.device).toBe('remote');
   });
 
-  it('exits the app on Back (free flight is the root screen) and ignores repeats', async () => {
+  it('Back on the title asks first: the app exits only after YES (the scene flow owns Back)', async () => {
     const { app } = await boot();
+    let now = 0;
+    /** Runs one displayed frame (one tick after the first). */
+    const frame = (): void => {
+      win.frame(now);
+      now += STEP;
+    };
+    /**
+     * Taps a remote key and lets the release debounce run out.
+     *
+     * @param keyCode - Legacy key code.
+     */
+    const tap = (keyCode: number): void => {
+      win.key('keydown', keyCode);
+      frame();
+      win.key('keyup', keyCode);
+      for (let i = 0; i < 4; i++) frame();
+    };
+    frame();
+    frame();
+    expect(app.game.scenes?.stack.top?.id).toBe('title');
     const back = win.key('keydown', 10009);
-    expect(back.defaultPrevented).toBe(true);
-    win.key('keydown', 10009, true);
+    expect(back.defaultPrevented).toBe(true); // the input profile binds it
+    frame();
+    win.key('keyup', 10009);
+    for (let i = 0; i < 4; i++) frame();
+    expect(app.game.scenes?.stack.top?.id).toBe('confirm');
+    expect(win.exits).toBe(0);
+    tap(13); // OK on the default NO
+    expect([app.game.scenes?.stack.top?.id, win.exits]).toEqual(['title', 0]);
+    tap(10009);
+    tap(37); // Left → YES
+    expect(win.exits).toBe(0);
+    tap(13);
+    expect(win.exits).toBe(1);
+    // In the game, Back pauses (the remote's game table binds it to Pause); it never exits.
+    tap(13); // PRESS OK
+    tap(13); // START
+    expect(app.game.scenes?.stack.top?.id).toBe('game');
+    tap(10009);
+    expect(app.game.scenes?.stack.top?.id).toBe('pause');
+    tap(10009);
+    expect(app.game.scenes?.stack.top?.id).toBe('game');
     expect(win.exits).toBe(1);
     app.stop();
-    win.key('keydown', 10009);
-    expect(win.exits).toBe(1);
   });
 
   it('suspends the game and audio when hidden, clears held input, and resumes cleanly', async () => {

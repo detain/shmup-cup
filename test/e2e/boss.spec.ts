@@ -82,7 +82,7 @@ test.describe('boss (web build, ?stage=test-boss)', () => {
       }
     });
     page.on('pageerror', (error) => errors.push(error.message));
-    await page.goto('./?stage=test-boss');
+    await page.goto('./?scene=flight&stage=test-boss');
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
     await waitFrames(page, 30);
     const before = await capture(page);

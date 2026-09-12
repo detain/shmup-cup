@@ -1672,6 +1672,97 @@ the browser dev app and as a Tizen 5.5 bundle.
   `exit` runs only after YES (fake platform); resume pushes pause; HUD rebuild only on change without allocation;
   meter command output; e2e: Enter starts the game from the title.
 - **Refs:** `shmup_feat.md` §17 (scene flow, screens, HUD, UI kit), §23 (Tizen Back/exit), §4 rule 8.
+- **As built:**
+  - **Two ways to run a game.** `createGame(platform, overrides, content, options)` gained
+    `GameOptions.scenes: 'boot' | 'title' | 'game' | null`. Without it the session is **bare
+    gameplay** exactly as before (one World from creation, stepped every tick, nothing reacting
+    to its status) — every earlier test, the tools and the shell's dev scenes use it. With it the
+    core `scenes` flow runs: only the top scene ticks, `game.inputContext` is the top scene's,
+    `game.scenes` is the `SceneFlow`, `game.world` is the game scene's World — **a fresh World per
+    game start and per RETRY STAGE** (a scene transition, never a tick; the flow's constructor
+    also creates a placeholder World so `game.world` is never null, and drops its queued stage
+    theme). Every World of a session pushes into the game's one `EventQueue` (new
+    `WorldOptions.events`), so the host drains one queue. `renderFrame()` then carries the World's
+    view and HUD only while the game scene is visible (under overlays), the composed UI list, the
+    top scene's dim (`screen.dim`) and as `tick` the **World's** tick while the game shows (frozen
+    under the pause menu and the end screens, so the renderer's particles, the starfield and the
+    HUD flash freeze; back to 0 for a new World, which clears the renderer's effects) — the flow's
+    own tick count otherwise. `game.pause()` stays a host-level freeze; the pause menu is a scene.
+  - **Stack.** `SceneStack` (depth 8, `push` / `pop` / `replace` / `reset`, hooks `enter` /
+    `exit` / `cover` / `uncover`): requests made while a scene ticks are queued (≤ 8) and applied
+    in order at the end of the tick (also those an `enter` hook makes, in the same flush; a runaway
+    chain throws); requests outside a tick (a platform resume) apply at once. The method is
+    `sceneAt(i)` — ESLint's Chrome-69 rule rejects any `.at(` call.
+  - **Scenes** (classes, all created with the flow): `BootScene` holds until the host calls
+    `finishBoot()` (the shell does after its loading phase, so the boot scene is only up for the
+    first tick — the pre-renderer loading stays on the shell's 2D overlay bar); `TitleScene` —
+    the new `ui/logo` sprite, blinking `PRESS OK`, then START / OPTIONS / EXIT (EXIT only when
+    `platform.exit` exists; **OPTIONS is disabled until M1-17** — the disabled-item rule in use),
+    the session hi-score, the title theme; `GameScene` — Pause **or Back** pressed by any player
+    opens the pause menu (the remote's game table binds Back to Pause anyway), `stageClear` /
+    `gameOver` push their screens after 90 / 30 more World ticks; `PauseScene` (dim 0.5) —
+    Pause or Back resumes, RETRY STAGE restarts without a confirm, QUIT TO TITLE asks;
+    `StageClearScene` — tally (score, hi-score) 240 ticks → `TO BE CONTINUED` 240 ticks → title,
+    OK skips; `GameOverScene` — OK / Back after a 30-tick lock or 600 ticks → title;
+    `ConfirmDialog` — YES / NO focused on NO, purpose `Exit` (pops, then `platform.exit()`) or
+    `QuitToTitle` (reset to the title). Back on the title opens the exit confirmation when the
+    platform can exit, else (browser) it backs out of the menu to `PRESS OK`. A platform resume
+    with the game on top pushes the pause menu. The session hi-score carries into every new World
+    and the title (`SceneFlow.setHiScore` for M1-17's save). Menus answer to **any player's**
+    input (`mergeMenuInput`). Menu sounds (`MenuMove` / `MenuSelect` / `MenuBack` /
+    `PauseToggle`, all on the unpanned UI bus — a denied Confirm also plays `MenuBack`) and the
+    title / stage-clear / game-over music (and a `Silence` fade when a game starts) go through the
+    event queue.
+  - **UI composition.** The frame has one UI draw list: every visible scene (the top one and the
+    overlays' base) draws into it bottom to top through its own **string-slot range**, rebuilt only
+    when a visible scene's `uiRevision` or the visible set changed. The confirm dialog therefore
+    sits over the pause menu, which stays visible; its panel is opaque. The boss WARNING band
+    moved from the shell's flight scene into `GameScene.drawUi` (same look).
+  - **UI kit.** `ListMenu` items are actions, `Slider`s or `Toggle`s (Left / Right change them,
+    Confirm flips a toggle); `menuTick` / `confirmTick` return a numeric `MenuResult`. The
+    held-duration repeat fires on the press, after 18 ticks, then every 6 (the last pressed
+    direction; a latched tap acts once). **Confirm buffer:** a press refills a 4-tick buffer; a
+    widget's `lockTicks` (menus lock 2 ticks when they open) hold back *activation only* — the
+    focus still moves and Back still answers — and the buffered press activates when the lock
+    ends if it is at most 3 ticks old. Layouts passed to `drawMenu` are frozen constants (a literal
+    per redraw would allocate).
+  - **HUD.** `buildHud(world, list, sprites)` + `Hud.update(world, list)` (change detection over
+    the scores' / hi-score's dirty flags, lives, player 2, the meter cursor, the equippable mask,
+    the flash phase while a slot is highlighted, the shield). Layout: `1P` at x 8, `HI` at 156,
+    `2P` at 292 (numbers 16 px after, 8 digits, the `number` op; `------` while player 2 is out);
+    bottom bar: up to 5 stock icons (more: one icon and the count), the meter's seven 40-px
+    `hud/meter-slot` boxes from x 58 (frame 1 highlighted on the "on" half of an 8-tick flash,
+    frame 2 when the slot cannot be equipped) with the `hud/meter-labels` frames (the atlas labels
+    read `SPEED MISSILE DOUBLE LASER OPTION ? !`), the Force Field as five pips from x 344. A
+    content table without the UI sprites falls back to rectangles. The UI sprites (`UI_SPRITES`:
+    `hud/life`, `hud/meter-slot`, `hud/meter-labels`, `ui/logo`) joined the core's
+    `ENGINE_SPRITES`, so every host interns them and `content:check` verifies them.
+  - **Logo.** New procedural sprite `ui/logo` (`scripts/assets/procedural/ui.mjs`: original 5×7
+    block letters ×3, gradient, outline, shadow — 165×27). The atlas page grew to 512×512.
+  - **Shell.** `ShellScene` gained `'game'` — the scene flow — **as the default** (`?scene=`
+    missing or unknown); `?scene=flight` keeps the old bare-gameplay free flight (with its own dev
+    HUD), which the gameplay e2e specs now open. New module `scene-view` (`createSceneView`): the
+    flow's frame plus a drifting starfield behind the title (a pre-bound backdrop view) and under
+    a game in open space (a wrapper view built once per World; a stage's own view as is), the
+    camera the audio pans against (`follow()`), and a count of new Worlds (the shell clears the
+    particles and popups then). The flow prepares the title theme with the stage's music set (and
+    the stage-clear / game-over jingles in open space) and calls `finishBoot()` after loading. The
+    canvas carries `data-shmup-scene` (the top scene's id, or the dev scene). `Shell.sceneView`,
+    `SCENE_ATTRIBUTE`.
+  - **Tizen.** The Back watcher no longer exits the running app: it is installed before boot and
+    removed once the shell runs, so Back still exits from the loading and boot error screens (the
+    root screen then) and the scene stack owns it afterwards (title → confirmation → YES →
+    `platform.exit()`). The render-pixi `ui` module is marked implemented (unchanged code).
+  - **Tests.** Core: `test/ui/ui.test.ts` (navigation, wrap, disabled, repeat timing, buffer,
+    sliders / toggles, prompt, builders), `ui-hud.test.ts` (exact meter commands, flash, pips,
+    fallbacks, change detection), `ui-alloc.test.ts`, `test/scenes/scenes.test.ts` (stack),
+    `scenes-flow.test.ts` (the headless title → game → pause → quit → title run, exit only after
+    YES on a fake platform, resume → pause, retry, end screens, frame composition, lockstep),
+    `scenes-alloc.test.ts`, `test/game/game-scenes.test.ts`. Shell: boot tests of the flow,
+    `scene-view` tests. Apps: title start and Back through the stack. New e2e `scenes.spec.ts`
+    (web: Enter starts the game from the title, Esc pauses — dimmed and frozen — and resumes;
+    Tizen from disk: OK starts, Back 10009 pauses and resumes); `boot.spec.ts` checks the title
+    by default and free flight with `?scene=flight`.
 
 ### M1-17 — Saves, audio options & platform integration
 

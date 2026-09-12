@@ -86,7 +86,7 @@ test.describe('enemies (web build, ?stage=test-range)', () => {
       }
     });
     page.on('pageerror', (error) => errors.push(error.message));
-    await page.goto('./?stage=test-range');
+    await page.goto('./?scene=flight&stage=test-range');
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
 
     // The formation event fires at camera x 60 (≈ 1.5 s in, the camera ramps up first); poll

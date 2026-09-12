@@ -59,7 +59,8 @@ shmup-cup/
 │   │   │   ├── rank/           ✔ (partial) constant rank from the difficulty, rankScale curves (growth: M2-01)
 │   │   │   ├── scoring/        ✔ (partial) per-player scores (clamp 99,999,990), session hi-score, crediting kills / bonuses / capsules (extends, continues: M2-01)
 │   │   │   ├── fx/             ✔ (partial) hit-stop / shake / flash requests + timers (FxState), exact hit-stop (slowdown: M3-02)
-│   │   │   ├── scenes/ ui/                                 flow & canvas UI model (placeholders)
+│   │   │   ├── scenes/         ✔ (partial) scene stack (depth 8, deferred transitions) + the M1 flow: boot → title → game ⇄ pause → stage clear / game over, YES / NO dialog (Tizen exit confirm)
+│   │   │   ├── ui/             ✔ (partial) canvas UI kit (list menu, slider, toggle, confirm; 18/6-tick auto-repeat, 4-tick Confirm buffer; draw builders) + the HUD (buildHud, rebuilt only on change)
 │   │   │   ├── debug/          ✔ (partial) hashWorld state hash, debug flags (controls: M1-19)
 │   │   │   └── replay/ save/                               meta & tooling (placeholders)
 │   │   ├── test/<module>/  one folder per module + index.test.ts (module tree invariants); test/helpers/alloc.ts = allocation guard (measureHeapGrowth)
@@ -73,7 +74,7 @@ shmup-cup/
 │   ├── input-web/          @shmup/input-web — keyboard/remote + Gamepad API → InputSnapshot
 │   │   └── src/ keymap ✔ keyboard ✔ gamepad ✔ web-input ✔ remote ✔ (debounce, diagonal/SOCD policies) rebind ✔ (partial: input profiles, game/menu tables, profile choice)
 │   └── shell/              @shmup/shell — shared browser host of apps/web + apps/tizen (decision D34)
-│       └── src/ boot ✔ loader ✔ dispatch ✔ (+ connectFxEvents, connectAudioEvents) error-screen ✔ frame-loop ✔ flight ✔ (default scene: free flight) showcase ✔ fx-gallery ✔ (?scene=fx-gallery)
+│       └── src/ boot ✔ loader ✔ dispatch ✔ (+ connectFxEvents, connectAudioEvents) error-screen ✔ frame-loop ✔ scene-view ✔ (default scene: the scene flow, M1-16) flight ✔ (?scene=flight: free flight) showcase ✔ fx-gallery ✔ (?scene=fx-gallery)
 │
 ├── apps/                   deployable hosts (thin adapters around the packages)
 │   ├── web/                @shmup/web — Vite dev app (HMR), browser Platform; also Electron's renderer

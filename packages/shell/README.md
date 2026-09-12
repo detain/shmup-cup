@@ -18,14 +18,15 @@ const shell = await bootShell({
   audio, // createWebAudio() — its context / bus() graph is what the audio engine plays through
   platform: (renderer) => createWebPlatform({ input, audio, webgl2: renderer.webGLVersion === 2, ... }),
   gameConfig: { remoteMode: false },
-  scene: sceneFromSearch(location.search), // 'flight' (default) | 'showcase' | 'calibration' | 'fx-gallery'
+  scene: sceneFromSearch(location.search), // 'game' (default: the scene flow) | 'flight' | 'showcase' | 'calibration' | 'fx-gallery'
   audioUnlock: 'gesture', // 'immediate' on TV
   contentOwners: { 'input-profiles': profiles.load }, // optional: keep the parsed input profiles
   effects: { screenShake: true, reduceFlashing: false }, // optional (M1-14; the defaults)
 });
 shell.events.on(SimEventKind.Music, (event) => { /* presentation handler */ });
-// free flight already feeds the World's events to the renderer's particles, shake, flash, dim
-// and score popups (connectFxEvents, M1-14) and to the audio engine (connectAudioEvents, M1-15)
+// the scene flow and free flight already feed the game's events to the renderer's particles,
+// shake, flash, dim and score popups (connectFxEvents, M1-14) and to the audio engine
+// (connectAudioEvents, M1-15)
 ```
 
 Boot sequence: progress bar (plain 2D overlay canvas) → content validation (core kinds + the
@@ -54,7 +55,8 @@ resize wiring → rAF frame loop (`input.setContext` when `game.inputContext` ch
 | `dispatch` | implemented | Sim event → presentation handler routing, allocation-free; `connectFxEvents` feeds the renderer's particles, shake / flash / dim and score popups from the World's events (M1-14); `connectAudioEvents` feeds `Sfx` / `Music` / `MusicDuck` to the audio engine (M1-15) |
 | `error-screen` | implemented | Boot overlay: progress bar and error screen (Canvas 2D) |
 | `frame-loop` | implemented | `requestAnimationFrame` driver (moved here from the apps) |
-| `flight` | implemented | Default dev scene since M1-06 ("free flight"): the game's World (the KESTREL under player control) over a drifting starfield — or, with a stage (`?stage=` in the web app, M1-07), the stage's parallax and terrain, the enemies its timeline spawns (M1-08) and their bullets and lasers (M1-09) — HUD bars; the ship's autofired shots and its Options are World batches too (M1-10), and so are the power capsules and the Force Field (M1-11 — the power meter is drawn by the M1-16 HUD); the HUD shows player 1's score, `HI` and the session hi-score, `lives − 1` stock ships and `GAME OVER` (red) in place of the title once the World's status says so, rebuilt only on a change (M1-12); a boss's parts are a World batch, and a running boss WARNING (`view.warning`) is drawn as its text on a translucent band in the UI list, red / yellow every 16 ticks, rebuilt only on a change (M1-13, `?stage=test-boss`); its sprites are appended to the content's sprite table |
+| `scene-view` | implemented | The scene flow's picture (M1-16, the default scene `game`): the core flow's frame plus a drifting starfield behind the title and under a game in open space (a stage's own view as is), the camera the audio pans against, a count of new Worlds (the shell then clears particles and popups); the canvas carries `data-shmup-scene` (the top scene's id) |
+| `flight` | implemented | Dev scene since M1-06 ("free flight", `?scene=flight` — the default until M1-16): the game's World (the KESTREL under player control) over a drifting starfield — or, with a stage (`?stage=` in the web app, M1-07), the stage's parallax and terrain, the enemies its timeline spawns (M1-08) and their bullets and lasers (M1-09) — HUD bars; the ship's autofired shots and its Options are World batches too (M1-10), and so are the power capsules and the Force Field (M1-11 — the power meter is drawn by the M1-16 HUD); the HUD shows player 1's score, `HI` and the session hi-score, `lives − 1` stock ships and `GAME OVER` (red) in place of the title once the World's status says so, rebuilt only on a change (M1-12); a boss's parts are a World batch, and a running boss WARNING (`view.warning`) is drawn as its text on a translucent band in the UI list, red / yellow every 16 ticks, rebuilt only on a change (M1-13, `?stage=test-boss`); its sprites are appended to the content's sprite table |
 | `showcase` | implemented | The M1-04 sprite showcase (`?scene=showcase`): parallax stars, KESTREL, HUD, bitmap text |
 | `fx-gallery` | implemented | `?scene=fx-gallery` (M1-14): every particle preset of `content/fx/`, then the shakes, flashes, the dim and the score popups, one station a second |
 

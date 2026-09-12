@@ -15,8 +15,9 @@
  *
  * **Public API.** {@link createDrawListView}, {@link DrawListView}, {@link DrawListViewOptions}.
  *
- * **Planned.** The HUD layout and the menu widgets that *fill* the lists are core `ui` (M1-16);
- * nothing here changes for them.
+ * The lists it draws are filled by core `ui` (M1-16): the HUD (`buildHud` — the power meter's slot
+ * and label sprites, stock icons, numbers) goes to the HUD layer, the scene flow's menus, dialogs
+ * and screens (`drawMenu`, `drawPanel`, `drawConfirm`, the title logo) to the UI layer.
  *
  * @module
  */
@@ -34,7 +35,7 @@ import { DEFAULT_GLYPH_CAPACITY, drawNumber, drawText, type BitmapFont } from '.
 /** Module descriptor. */
 export const moduleInfo = defineModule({
   name: 'ui',
-  status: 'partial',
+  status: 'implemented',
   specRefs: ['shmup_feat.md §17', 'shmup_tech.md §4.10'],
 });
 

@@ -106,7 +106,7 @@ function waitFrames(page: Page, frames: number): Promise<void> {
  * @param page - The page.
  */
 async function openRunning(page: Page): Promise<void> {
-  await page.goto('./');
+  await page.goto('./?scene=flight');
   await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
   await waitFrames(page, 10);
 }
