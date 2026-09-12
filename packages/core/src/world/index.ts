@@ -105,7 +105,8 @@
  * after the enemy slots) and touch the ships in phase 6, the player shots damage them in phase 7
  * (`core/weapons`), followed by the phase changes. Its death sequence (bullet cancel, chained
  * explosions, final blast with hit-stop, tally, stage-clear jingle) ends in status `stageClear`
- * and releases the scroll lock. The parts are drawn from the boss batch (`LayerId.AirEnemies`,
+ * and releases the scroll lock. With `config.stageSkip: 'boss'` the World starts its stage a
+ * little before the boss (`core/debug` `skipToBoss`, the debug stage skip of M1-18). The parts are drawn from the boss batch (`LayerId.AirEnemies`,
  * after the other batches); {@link World.laserSources} lists enemies then parts, so lasers can stay
  * attached to either.
  *
@@ -153,7 +154,7 @@ import type {
   StageMusicEvent,
   StageSpec,
 } from '../data/index.js';
-import { createDebugFlags, type DebugFlags } from '../debug/index.js';
+import { createDebugFlags, skipToBoss, type DebugFlags } from '../debug/index.js';
 import { createEnemySystem, type EnemyBehaviorLookup, type EnemySystem } from '../enemies/index.js';
 import {
   ShakeMagnitude,
@@ -867,7 +868,8 @@ export const ENGINE_SPRITES: readonly string[] = Object.freeze([
 
 /**
  * Creates a gameplay session: RNG streams from `config.seed`, the ship from `content`, the stage
- * `config.stage` (camera at its start, stage theme queued as a music event) or a static camera,
+ * `config.stage` (camera at its start — or just before its boss with `config.stageSkip: 'boss'` —,
+ * stage theme queued as a music event) or a static camera,
  * the enemy system (specs and the stage's spawn events compiled, 64 free slots), player 1
  * starting its fly-in at the left edge of the view, player 2 inactive.
  *
@@ -981,6 +983,8 @@ export function createWorld(
     if (stageSpec.music.stageId >= 0) {
       world.events.push(SimEventKind.Music, stageSpec.music.stageId, 0, 0, 0);
     }
+    // The debug stage skip (M1-18): start a little before the boss.
+    if (config.stageSkip === 'boss') skipToBoss(world);
   }
   syncWorldView(world);
   return world;

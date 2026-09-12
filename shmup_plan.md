@@ -1883,6 +1883,64 @@ the browser dev app and as a Tizen 5.5 bundle.
   skip flag.
 - **Manual (optional):** play zone A with the remote on the M7 (§8.4).
 - **Refs:** `shmup_feat.md` §14 (themes, length), §11, §13 (core battleship archetype), §10 (recovery), §4 rule 2.
+- **As built:**
+  - **Stage.** `content/stages/zone-a.stage.json` (AZURE VERGE, `length` 9,000): camera keys 0.75
+    (0) / 0.8 (1,500) / 0.6 (3,500, the corridor) / **1.5** (6,000) / 0.75 (8,000) px/tick,
+    checkpoints 0 / 3,500 / 6,000, `warning` at 8,600, `end` at 9,000. Terrain from the heightfield
+    generator: a low floor in section 1, floor + ceiling 3,440–6,400 (the corridor: ≥ 92 px open,
+    wide enough for the ground enemies spawned up to x 5,840 + 400), a low rolling floor under the
+    high-speed section. 28 capsule sources (carriers and formations) before the boss — 5 / 3 / 4
+    within 900 px after the checkpoints, 2 in the calm before the WARNING. Parallax: the star bands
+    plus a new far planet-rim band `bg/azure-verge` (drawn last on `mid`, so no star shows in front
+    of the planet) from the new procedural generator `scripts/assets/procedural/backdrops.mjs`.
+    Stage length with the bot: ≈ 3.5 min to the stage clear.
+  - **Enemies.** `content/enemies/zone-a.enemies.json`: eight types on the M1 roster behaviours
+    (no new enemy behaviour was needed) — `skeet` / `skeet-chain` (popcorn, `drifter.sine`),
+    `vane` (fans on the new `content/paths/zone-a.paths.json` curves), `tender` (capsule carrier),
+    `lancer` (rammer), `picket` / `picket-ceiling` (turrets, 1.25 px/tick), `strider` (walker),
+    `burrow` + `burrow-mite` (hatch), `gyre` (orbiter). New pixel-map sprites `enemies/vane`,
+    `enemies/gyre`; the others reuse the M1-03 art.
+  - **Boss.** `halcyon-bulwark` (HB-01, score 30,000): armour parts `hull`, `wing-top`,
+    `wing-bottom` and the two emitters (`vulnerable: never`, the emitters are the `gun`s), the core
+    (`bosses/core`, hp 40, `afterParts` of the four plates), plates `plate-1 … 4` (hp 12, stacked
+    along the core's lane in front of it — shots meet the outer one first). New sprites
+    `bosses/bulwark-hull`, `-wing-top`, `-wing-bottom`, `-emitter`, `-plate`. New boss behaviour
+    **`boss.bulwark`** (`core/behaviors`): slow `track`ing, lane lasers from the guns in turn
+    (**attached** to the emitter, so a lane sweeps with the boss), optional aimed spreads (`ways`
+    0 = none). Phases: lasers only → (two plates down) + 3-ways of needles at 1.5 px/tick → (all
+    plates down) lanes every 55 ticks, so both emitters' lanes overlap in time, 42 px apart.
+  - **Songs.** The M1-15 songs `zone-a` (AZURE VERGE) and `boss` (BULWARK ASSAULT) are zone A's —
+    no new song was written; the stage names the `Stage` / `Boss` cues.
+  - **4-way content test** (in `test/integration/content.test.ts`, so `pnpm content:check` runs
+    it): every aimed `bulletSpeed` tunable of zone A's enemies and boss phases (behaviour
+    defaults merged) ≤ 2.0; a whole HB-01 fight played by the 4-way bot (god mode, stage skip)
+    with no live enemy bullet over 2.0 px/tick and no two separate simultaneous laser lanes closer
+    than 16 px — a lane is a laser in its warning, grow or active phase, its beam rows widened by
+    the ship's hurt radius; overlapping lanes merge (`test/playtest/rules.ts`); plus the stage
+    structure and the capsule budget above. The corridor check of `stage-runtime.test.ts` now runs
+    for every shipped stage with terrain.
+  - **Debug skip flag** (for the e2e smoke; M1-19 builds its debug controls on it): new sim option
+    `GameConfig.stageSkip: 'none' | 'boss'` (validated; replay-recorded like every config field),
+    new `StageRunner.jumpTo(x)` (a `restartAt` at any scroll x — the checkpoint becomes the last
+    one at or before x) and `core/debug` `skipToBoss(world)` (jump to `BOSS_SKIP_LEAD` = 96 px before
+    the first `warning` / `boss` event, fly the ships in again), called by `createWorld` for
+    `'boss'`. The web app reads `?skip=boss` (`stageSkipFromSearch`); the TV has no such flag.
+  - **The game plays zone A.** New `@shmup/shell` `DEFAULT_STAGE_ID` (`'zone-a'`) /
+    `defaultStageId(files)`: the web app's scene flow plays it unless `?stage=` names another stage
+    (`?scene=flight` and the other dev scenes keep open space for the gameplay e2e specs), and the
+    Tizen app's START plays it (its dev scenes too keep open space). `enemies-runtime.test.ts` now
+    expects the test-range timeline to spawn the enemies *it* names (the content has zone A's too).
+  - **Playtest** (`test/playtest/`, part of the `integration` project and so of `pnpm test`):
+    `runStage(stageId, bot, flags)` (`flags`: `godMode`, `seed`, `stageSkip`, `config`,
+    `maxTicks`, `observe`) returns a report with the recorded per-tick input; `replayStage`
+    replays it. `fourWayBot()` scans 12 lanes of 16 px in 2-tick time slots (bullets and bodies
+    along their velocity, boss parts, laser lanes from 12 ticks before the beam grows, terrain
+    56 px ahead), picks the cheapest lane (the trip through the lanes on the way and the stay,
+    preferring capsules, the core's lane and enemies ahead), moves vertically first, then back to
+    x ≈ 64, and presses PowerUp for Speed (≤ level 2) / Missile / Option. The no-god-mode run is
+    printed (at the time of writing it clears the stage with no death); its replay must match.
+  - **e2e.** `test/e2e/zone-a.spec.ts`: web build, `?skip=boss`, title → Enter → START → WARNING
+    band → HB-01's hull colour in the right half of the playfield.
 
 ### M1-19 — Debug tools, replays, golden tests & M1 release check
 

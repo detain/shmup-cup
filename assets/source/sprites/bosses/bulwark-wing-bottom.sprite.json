@@ -1,0 +1,26 @@
+{
+  "name": "bosses/bulwark-wing-bottom",
+  "description": "HALCYON BULWARK (HB-01): lower wing carrying the bottom laser emitter; armour.",
+  "palette": { ".": null, "o": "#0a1428", "d": "#1e3458", "m": "#2e5082", "l": "#4a78b0", "h": "#8ab8e8", "c": "#38d8f8", "y": "#e8c048" },
+  "hitFlash": true,
+  "frames": [
+    {
+      "rows": [
+        ".ooooooooooooooooooooooooooooooooooooooooooooooooooo....",
+        "ohhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhho...",
+        "ollllllllllllllllldllllllllllllllllldlllllllllllllllho..",
+        "ommmmmmmmmmmmmmmmmdmmmmmmmmmmmmmmmmmdmmmmmmmmmmmmmmmlho.",
+        "ommmmmmmmmmmmmmmmmdmmmmmmmmmmmmmmmmmdmmmmmmmmmmmmmmmmlho",
+        "ommmmmmmmmmmmmmmmmdmmmmmmmmmmmmmmmmmdmmmmmmmmymmmymmmmlo",
+        "ommmmmmmmmmmmmmmmmdmmmmmmmmmmmmmmmmmdmmmmmymmmymmmmmmmmo",
+        "oddddddddmmmmmmmmmdmmmmmmmmmcmmmmmmmdmmmmmmymmmymmmmmmmo",
+        "oddddddddddddddddmdmmmmmmmmmmmmmmmmmdmmmmmmmymmmymmmmmdo",
+        ".ooooooooddddddddddddddddmmmmmmmmmmmdmmmmmmmmmmmmmmmmddo",
+        ".........ooooooooddddddddddddddddmmmdmmmmmmmmmmmmmmmddo.",
+        ".................ooooooooddddddddddddddddddddddddddddo..",
+        ".........................oooooooodddddddddddddddddddo...",
+        ".................................ooooooooooooooooooo...."
+      ]
+    }
+  ]
+}

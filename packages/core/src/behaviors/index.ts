@@ -50,6 +50,17 @@
  *   (not attached, [`laserLength` 384], [`laserWidth` 6], [`telegraph` 50] warning ticks,
  *   [`active` 45] beam ticks), and every [`fireTicks` 90] ticks each gun an aimed [`ways` 3]-way
  *   of purple needles [`spread` 40] at [`bulletSpeed` 1.25].
+ * - `boss.bulwark` — HALCYON BULWARK (HB-01, zone A, M1-18), a core battleship: tracks the nearest
+ *   player's height slowly [`trackSpeed` 0.35, `margin` 40]; every [`laserTicks` 110] ticks
+ *   (rank-scaled) the next gun in turn — the top and the bottom emitter, so the lanes alternate —
+ *   fires a telegraphed horizontal laser to the left that stays **attached** to its emitter (the
+ *   lane moves with the boss: [`laserLength` 384], [`laserWidth` 8], [`telegraph` 45] warning
+ *   ticks, [`active` 50] beam ticks); with [`ways` 0 = never] ≥ 1 every [`fireTicks` 120] ticks
+ *   (rank-scaled) each gun also fires an aimed `ways`-way of purple needles [`spread` 40] at
+ *   [`bulletSpeed` 1.5]. The first lane comes [`firstLaser` 60] ticks into the phase. Lanes never
+ *   come from the core: it sits between them, so the player who holds the core's lane is only
+ *   threatened when the boss's slow tracking sweeps a lane across, and every lane is dodged by
+ *   moving up or down (4-way).
  *
  * **Implements.**
  * - shmup_feat.md §11 — archetypes (popcorn, formation fliers, capsule carriers, turrets,
@@ -65,7 +76,7 @@
  * {@link DEFAULT_BOSS_BEHAVIOR_DEFS}, {@link BOSS_BEHAVIOR_IDS}, {@link WEAPON_SCRIPT_IDS},
  * {@link KNOWN_SCRIPT_IDS}, {@link checkEnemyBehaviors}.
  *
- * **Planned API.** More behaviours with the zone content (M1-18).
+ * **Planned API.** More behaviours with the zones of M2 (M2-11 … M2-14).
  *
  * @module
  */
@@ -582,10 +593,71 @@ const bossLanes = defineBossBehavior(
   },
 );
 
+/** `boss.bulwark` — HB-01: slow tracking, alternating attached lane lasers, optional spreads. */
+const bossBulwark = defineBossBehavior(
+  'boss.bulwark',
+  {
+    trackSpeed: 0.35,
+    margin: 40,
+    laserTicks: 110,
+    firstLaser: 60,
+    laserLength: 384,
+    laserWidth: 8,
+    telegraph: 45,
+    active: 50,
+    fireTicks: 120,
+    bulletSpeed: 1.5,
+    ways: 0,
+    spread: 40,
+  },
+  function* bulwark(api, p): Script {
+    api.track(p.trackSpeed, p.margin, PLAYFIELD_H - p.margin);
+    const ways = p.ways >= 1 ? Math.floor(p.ways) : 0;
+    const count = api.partCount;
+    const parts = api.self.parts;
+    let next = 0;
+    let laserIn = p.firstLaser >= 1 ? Math.floor(p.firstLaser) : 1;
+    // A whole-number "never" (see `boss.hover`): no spreads until two plates are down.
+    let fireIn = ways > 0 ? api.fireWait(p.fireTicks) : NEVER_TICKS;
+    for (;;) {
+      const wait = fireIn < laserIn ? fireIn : laserIn;
+      yield wait;
+      fireIn -= wait;
+      laserIn -= wait;
+      if (laserIn <= 0) {
+        // The next standing gun in turn: the lanes alternate between the emitters.
+        for (let k = 0; k < count; k++) {
+          const i = (next + k) % count;
+          if (!parts[i].gun || parts[i].destroyed) continue;
+          api.laser(
+            i,
+            ANGLE_UNITS / 2,
+            p.laserLength,
+            p.laserWidth,
+            p.telegraph,
+            LASER_GROW_TICKS,
+            p.active,
+            LASER_FADE_TICKS,
+            true,
+          );
+          next = i + 1;
+          break;
+        }
+        laserIn = api.fireWait(p.laserTicks);
+      }
+      if (fireIn <= 0) {
+        fireGuns(api, ways, p.spread, p.bulletSpeed, BulletKind.NeedlePurple);
+        fireIn = api.fireWait(p.fireTicks);
+      }
+    }
+  },
+);
+
 /** The M1 boss roster's definitions (see the module docs). */
 export const DEFAULT_BOSS_BEHAVIOR_DEFS: readonly BossBehaviorDef[] = Object.freeze([
   bossHover,
   bossLanes,
+  bossBulwark,
 ]);
 
 /** The boss roster as a registry (what the World uses). */

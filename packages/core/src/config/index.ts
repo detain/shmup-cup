@@ -17,9 +17,9 @@
  *   (the presentation-only {@link UserOptions})
  *
  * **Public API (implemented now).** {@link GameConfig}, {@link DEFAULT_GAME_CONFIG},
- * {@link resolveGameConfig}, the preset types ({@link StartingLoadout} …), the power-meter slot
- * names ({@link MeterSlotName}, {@link METER_SLOT_NAMES}, {@link DEFAULT_AUTO_POWER_UP_ORDER},
- * {@link MAX_AUTO_POWER_UP_ORDER}) and the screen layout
+ * {@link resolveGameConfig}, the preset types ({@link StartingLoadout}, {@link StageSkip} …), the
+ * power-meter slot names ({@link MeterSlotName}, {@link METER_SLOT_NAMES},
+ * {@link DEFAULT_AUTO_POWER_UP_ORDER}, {@link MAX_AUTO_POWER_UP_ORDER}) and the screen layout
  * constants {@link HUD_BAR_HEIGHT}, {@link PLAYFIELD_Y}, {@link PLAYFIELD_W}, {@link PLAYFIELD_H}
  * (decision D20: two 8-px HUD bars outside a 384×200 playfield). User options:
  * {@link UserOptions}, {@link AudioOptions}, {@link InputOptions}, {@link DisplayOptions},
@@ -67,6 +67,12 @@ export type DifficultyPreset = 'easy' | 'normal' | 'hard' | 'arcade';
 
 /** Starting loadouts of {@link GameConfig.loadout}. */
 export type StartingLoadout = 'default' | 'full';
+
+/**
+ * The debug stage skip of {@link GameConfig.stageSkip}: `'none'` plays the stage from its start,
+ * `'boss'` starts a little before its boss (the WARNING — `core/debug` `skipToBoss`).
+ */
+export type StageSkip = 'none' | 'boss';
 
 /**
  * Names of the seven power-meter slots (shmup_feat.md §6A), in meter order:
@@ -137,6 +143,14 @@ export interface GameConfig {
    */
   readonly stage: string | null;
   /**
+   * Debug stage skip (plan M1-18; the e2e smoke and the playtest reach the boss with it):
+   * `'boss'` makes every World of the session jump its stage to just before the first `warning`
+   * / `boss` event at creation (`core/debug` `skipToBoss`); `'none'` (the default) plays the
+   * stage from its start. Sim-affecting, so it lives here (a replay records it). Ignored in free
+   * flight and on a stage without a boss.
+   */
+  readonly stageSkip: StageSkip;
+  /**
    * Directions aimed enemy shots snap to (decision D17: 32 on Normal for the retro feel, 16
    * planned for Easy). A power of two from 4 to 1024 (the binary-angle circle).
    */
@@ -205,6 +219,7 @@ export const DEFAULT_GAME_CONFIG: GameConfig = Object.freeze({
   autofire: true,
   remoteMode: true,
   stage: null,
+  stageSkip: 'none',
   aimDirections: 32,
   autofireInterval: 4,
   missileInterval: 10,
@@ -222,7 +237,8 @@ export const DEFAULT_GAME_CONFIG: GameConfig = Object.freeze({
  * 16–4096, `tickRate` 1–1000, `maxTicksPerFrame` 1–60, `seed` 0–0xFFFFFFFF,
  * `startingLives` 1–5, `aimDirections` a power of two in 4–1024, `autofireInterval` /
  * `missileInterval` 1–60. `stage` must be `null` or a non-empty string (whether the id exists is
- * checked by `createWorld` against the content); `loadout` must be `'default'` or `'full'`;
+ * checked by `createWorld` against the content); `stageSkip` must be `'none'` or `'boss'`;
+ * `loadout` must be `'default'` or `'full'`;
  * `powerUpMode` must be `'meter'` (`'direct'` is not implemented until M2-05);
  * `autoPowerUpOrder` must be an array of at most {@link MAX_AUTO_POWER_UP_ORDER}
  * {@link MeterSlotName}s — the result holds a frozen copy of it. Other string presets and
@@ -232,7 +248,8 @@ export const DEFAULT_GAME_CONFIG: GameConfig = Object.freeze({
  * @returns A frozen, validated config.
  * @throws RangeError when a numeric field is not an integer or is out of range,
  *   `aimDirections` is not a power of two, `stage` is neither `null` nor a non-empty string,
- *   `loadout` is not a {@link StartingLoadout}, `powerUpMode` is not `'meter'`, or
+ *   `stageSkip` is not a {@link StageSkip}, `loadout` is not a {@link StartingLoadout},
+ *   `powerUpMode` is not `'meter'`, or
  *   `autoPowerUpOrder` is not an array of meter slot names (or is too long).
  *
  * @example
@@ -262,6 +279,10 @@ export function resolveGameConfig(overrides: Partial<GameConfig> = {}): GameConf
     throw new RangeError(
       `GameConfig.stage must be null or a non-empty stage id, got ${typeof stage === 'string' ? '""' : typeof stage}`,
     );
+  }
+  const skip: unknown = config.stageSkip;
+  if (skip !== 'none' && skip !== 'boss') {
+    throw new RangeError(`GameConfig.stageSkip must be 'none' or 'boss', got ${String(skip)}`);
   }
   const loadout: unknown = config.loadout;
   if (loadout !== 'default' && loadout !== 'full') {

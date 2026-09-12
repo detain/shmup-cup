@@ -9,8 +9,9 @@
  * event dispatch and the rAF frame loop). The game runs with `remoteMode: true` and forced
  * autofire; audio needs no gesture on TV, so it is unlocked immediately and the shell's audio
  * engine (M1-15) plays from boot. The app runs the shell's default scene, the core **scene flow**
- * (M1-16): title (with its theme), game ⇄ pause, stage clear / game over. The TV has no `?stage=`
- * parameter, so START flies in open space until zone A arrives (M1-18).
+ * (M1-16): title (with its theme), game ⇄ pause, stage clear / game over. START plays zone A,
+ * AZURE VERGE with its boss HALCYON BULWARK (plan M1-18 — `@shmup/shell` `defaultStageId`); the TV
+ * has no `?stage=` / `?skip=` dev parameters.
  *
  * **Input profiles** (decisions D13/D14). The `input-profiles` content is parsed into a
  * registry during boot; the remote uses `tizen-remote-safe` until the shell has read the save and
@@ -56,7 +57,13 @@ import {
   type WebInput,
 } from '@shmup/input-web';
 import type { PixiRenderer } from '@shmup/render-pixi';
-import { bootShell, sceneFromSearch, type Shell, type ShellAssets } from '@shmup/shell';
+import {
+  bootShell,
+  defaultStageId,
+  sceneFromSearch,
+  type Shell,
+  type ShellAssets,
+} from '@shmup/shell';
 import {
   createTizenPlatform,
   getTizenApi,
@@ -214,6 +221,7 @@ export async function bootTizenApp(
   });
   const audio = createWebAudio();
   const profiles = createInputProfileRegistry();
+  const scene = sceneFromSearch(searchOf(win));
   const shell = await bootShell({
     canvas,
     win,
@@ -236,8 +244,14 @@ export async function bootTizenApp(
         registerKeys: keyProfile?.register,
       });
     },
-    gameConfig: { remoteMode: true, autofire: true },
-    scene: sceneFromSearch(searchOf(win)),
+    // START plays zone A (plan M1-18; the dev scenes fly in open space); the TV has no `?stage=` /
+    // `?skip=` dev parameters.
+    gameConfig: {
+      remoteMode: true,
+      autofire: true,
+      stage: scene === 'game' ? defaultStageId(resources.contentFiles) : null,
+    },
+    scene,
     audioUnlock: 'immediate',
     preferWebGLVersion: 1,
     /**

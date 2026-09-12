@@ -182,8 +182,8 @@ describe('scripts/assets/pipeline — buildAtlas', () => {
     const enemies = Object.keys(manifest.sprites).filter(
       (n) => n.startsWith('enemies/') && !n.endsWith('@flash'),
     );
-    // The six initial enemies plus the ground hatch of M1-08.
-    expect(enemies).toHaveLength(7);
+    // The six initial enemies, the ground hatch of M1-08 and zone A's vane and gyre (M1-18).
+    expect(enemies).toHaveLength(9);
     expect(count('enemies/hatch')).toBe(2);
     expect(manifest.sprites['enemies/hatch'].flash).toBe('enemies/hatch@flash');
     for (const part of ['core', 'shield-plate', 'hull-block', 'emitter']) {
@@ -208,6 +208,12 @@ describe('scripts/assets/pipeline — buildAtlas', () => {
       'bg/stars-far',
       'bg/stars-mid',
       'bg/stars-near',
+      'bg/azure-verge',
+      'bosses/bulwark-hull',
+      'bosses/bulwark-wing-top',
+      'bosses/bulwark-wing-bottom',
+      'bosses/bulwark-emitter',
+      'bosses/bulwark-plate',
       'ui/pixel',
       'ui/missing',
     ]) {

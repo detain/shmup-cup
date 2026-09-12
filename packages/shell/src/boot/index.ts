@@ -80,7 +80,8 @@
  * **Public API.** {@link bootShell}, {@link Shell}, {@link ShellOptions}, {@link ShellAssets},
  * {@link ShellInput}, {@link ShellInputProfiles}, {@link ShellScene}, {@link SHELL_SCENES},
  * {@link sceneFromSearch}, {@link ShellBootError}, {@link BootTiming}, {@link BOOT_STATE_ATTRIBUTE},
- * {@link SCENE_ATTRIBUTE}, {@link BOOT_MS_ATTRIBUTE}.
+ * {@link SCENE_ATTRIBUTE}, {@link BOOT_MS_ATTRIBUTE}, {@link DEFAULT_STAGE_ID},
+ * {@link defaultStageId}.
  *
  * @module
  */
@@ -275,6 +276,34 @@ export function sceneFromSearch(search: string): ShellScene {
     for (const scene of SHELL_SCENES) if (scene === value) return scene;
   }
   return 'game';
+}
+
+/**
+ * The stage a game plays when the host names none: zone A, AZURE VERGE (plan M1-18 — the M1
+ * vertical slice is one zone; the zone map of M2-10 picks stages later).
+ */
+export const DEFAULT_STAGE_ID = 'zone-a';
+
+/**
+ * The stage an app's game should play by default: {@link DEFAULT_STAGE_ID} when the content has a
+ * stage file with that id (before validation — the shell validates the content itself).
+ *
+ * @param files - The content files (`virtual:shmup-content`).
+ * @returns `'zone-a'`, or `null` (open space) when the content has no such stage.
+ *
+ * @example
+ * ```ts
+ * bootShell({ …, gameConfig: { stage: defaultStageId(contentFiles) } });
+ * ```
+ */
+export function defaultStageId(files: readonly ContentFile[]): string | null {
+  for (const file of files) {
+    const data = file.data as { kind?: unknown; id?: unknown } | null;
+    if (data !== null && typeof data === 'object' && data.kind === 'stage') {
+      if (data.id === DEFAULT_STAGE_ID) return DEFAULT_STAGE_ID;
+    }
+  }
+  return null;
 }
 
 /** The inlined `virtual:shmup-assets` module (manifest + relative page URLs). */

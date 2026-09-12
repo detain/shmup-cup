@@ -17,7 +17,8 @@
  * - **invisible checkpoints** (shmup_feat.md §10) — the last passed checkpoint is tracked;
  *   {@link StageRunner.restartAt} puts the camera back, re-derives the scroll speed, pan and flags
  *   the stage had there, finds the event cursor by binary search (events at exactly the
- *   checkpoint's x fire again, for the hooks) and calls `hooks.clear()`;
+ *   checkpoint's x fire again, for the hooks) and calls `hooks.clear()`; {@link StageRunner.jumpTo}
+ *   does the same at any scroll x (the debug stage skip of M1-18);
  * - the **terrain** and **parallax** descriptions: {@link createStageTerrain} turns the stage's
  *   expanded tile grid into the `TerrainMap` the collision queries read (a private copy, so later
  *   destructible terrain cannot touch the content), {@link createTerrainView} /
@@ -301,6 +302,27 @@ export interface StageRunner {
    * ```
    */
   restartAt(checkpoint: number): void;
+  /**
+   * Jumps to any scroll x (the debug stage skip — `core/debug` `skipToBoss`, M1-18): exactly like
+   * {@link StageRunner.restartAt} at a checkpoint lying at `x` — speed / pan / flags re-derived
+   * from the keys and events before it, the events at exactly `x` re-fired for the hooks on the
+   * next tick, the cursor at the first event with `x ≥` it, then `hooks.clear()` — and the last
+   * passed checkpoint becomes the last one at or before `x` (-1 when none).
+   *
+   * @remarks
+   * `jumpTo(checkpoints[i].x)` leaves the runner in the same state as `restartAt(i)`; without a
+   * checkpoint at 0, `jumpTo(0)` equals `restartAt(-1)`. Allowed from inside
+   * {@link StageHooks.event}, like a restart.
+   *
+   * @param x - Scroll x, `0 … stage.length`.
+   * @throws {RangeError} When `x` is not a finite number in `[0, stage.length]`.
+   *
+   * @example
+   * ```ts
+   * runner.jumpTo(8500); // a little before the zone's WARNING
+   * ```
+   */
+  jumpTo(x: number): void;
   /**
    * Releases a scroll lock (the boss died): scrolling resumes at the current speed — the lock
    * key's speed once its ramp is done. Calling it before the camera reaches the lock key does
@@ -616,6 +638,18 @@ class StageRunnerImpl implements StageRunner {
     this.reset(checkpoint, true);
   }
 
+  /** See {@link StageRunner.jumpTo}. */
+  jumpTo(x: number): void {
+    const length = this.stage.length;
+    if (typeof x !== 'number' || !(x >= 0 && x <= length)) {
+      throw new RangeError(`jump x must be a number in [0, ${length}], got ${String(x)}`);
+    }
+    const checkpointX = this.compiled.checkpointX;
+    let index = -1;
+    while (index + 1 < checkpointX.length && checkpointX[index + 1] <= x) index++;
+    this.resetTo(x, index, true);
+  }
+
   /** See {@link StageRunner.unlock}. */
   unlock(): void {
     const state = this.state;
@@ -739,16 +773,27 @@ class StageRunnerImpl implements StageRunner {
    * @throws {RangeError} When the index is out of range.
    */
   private reset(index: number, notify: boolean): void {
-    const state = this.state;
-    const camera = this.camera;
-    const compiled = this.compiled;
-    const checkpointX = compiled.checkpointX;
+    const checkpointX = this.compiled.checkpointX;
     if (!Number.isInteger(index) || index < -1 || index >= checkpointX.length) {
       throw new RangeError(
         `checkpoint must be an integer in [-1, ${checkpointX.length}), got ${index}`,
       );
     }
-    const x = index < 0 ? 0 : checkpointX[index];
+    this.resetTo(index < 0 ? 0 : checkpointX[index], index, notify);
+  }
+
+  /**
+   * Resets the runner to a scroll x (see {@link StageRunner.restartAt} /
+   * {@link StageRunner.jumpTo}).
+   *
+   * @param x - Scroll x (validated by the caller).
+   * @param index - The last checkpoint at or before `x`, or -1.
+   * @param notify - Call `hooks.clear()` afterwards.
+   */
+  private resetTo(x: number, index: number, notify: boolean): void {
+    const state = this.state;
+    const camera = this.camera;
+    const compiled = this.compiled;
     const restarts = state[StageSlot.Restarts];
     state.fill(0);
     state[StageSlot.Restarts] = restarts + 1;

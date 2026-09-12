@@ -75,30 +75,34 @@ describe('integration: test-range terrain', () => {
   });
 
   it('leaves a flyable corridor in every pixel column and a clear spawn at every checkpoint', () => {
+    // Every shipped stage with terrain (test-range; zone A's floors and corridor since M1-18).
     const db = shipped();
-    const stage = db.stages[db.stageIndex.get('test-range') ?? -1];
-    const game = createGame(createHeadlessPlatform(), { seed: 1, stage: stage.id }, db);
-    const map = game.world.terrain;
-    expect(map).not.toBeNull();
-    if (map === null) return;
-    let narrowest = Number.POSITIVE_INFINITY;
-    for (let x = 0; x < stage.length + 384; x++) {
-      let run = 0;
-      let best = 0;
-      for (let y = 0; y < PLAYFIELD_H; y++) {
-        run = terrainAt(map, x, y) === TerrainType.Empty ? run + 1 : 0;
-        if (run > best) best = run;
+    const stages = db.stages.filter((s) => s.terrain !== null);
+    expect(stages.map((s) => s.id)).toEqual(expect.arrayContaining(['test-range', 'zone-a']));
+    for (const stage of stages) {
+      const game = createGame(createHeadlessPlatform(), { seed: 1, stage: stage.id }, db);
+      const map = game.world.terrain;
+      expect(map, stage.id).not.toBeNull();
+      if (map === null) return;
+      let narrowest = Number.POSITIVE_INFINITY;
+      for (let x = 0; x < stage.length + 384; x++) {
+        let run = 0;
+        let best = 0;
+        for (let y = 0; y < PLAYFIELD_H; y++) {
+          run = terrainAt(map, x, y) === TerrainType.Empty ? run + 1 : 0;
+          if (run > best) best = run;
+        }
+        if (best < narrowest) narrowest = best;
       }
-      if (best < narrowest) narrowest = best;
-    }
-    expect(narrowest).toBeGreaterThanOrEqual(48);
-    const box = game.world.ship.terrainBox;
-    for (const checkpoint of stage.checkpoints) {
-      for (let dx = -24; dx <= ENTER_END_X; dx += 4) {
-        expect(
-          boxHitsTerrain(map, checkpoint.x + dx, SPAWN_Y, box.hw, box.hh),
-          `checkpoint ${String(checkpoint.x)} + ${String(dx)}`,
-        ).toBe(TerrainType.Empty);
+      expect(narrowest, stage.id).toBeGreaterThanOrEqual(48);
+      const box = game.world.ship.terrainBox;
+      for (const checkpoint of stage.checkpoints) {
+        for (let dx = -24; dx <= ENTER_END_X; dx += 4) {
+          expect(
+            boxHitsTerrain(map, checkpoint.x + dx, SPAWN_Y, box.hw, box.hh),
+            `${stage.id} checkpoint ${String(checkpoint.x)} + ${String(dx)}`,
+          ).toBe(TerrainType.Empty);
+        }
       }
     }
   });

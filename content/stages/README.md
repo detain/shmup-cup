@@ -5,6 +5,16 @@ One file per stage (zone), e.g. `test-range.stage.json`. Validated and expanded 
 Implements `shmup_feat.md` §14 (scroll-driven timeline, scripted camera, tilemap terrain,
 parallax) and §10 (invisible checkpoints).
 
+`zone-a.stage.json` is zone A, **AZURE VERGE** (M1-18) — the stage the game plays: about 9,000 px
+(3½–4½ minutes) in five sections — (1) tutorial popcorn and the first capsule carriers over a
+low floor, (2) fan formations and rammers in open space, (3) a floor / ceiling corridor with
+turrets, walkers and hatches (checkpoint at 3,500), (4) orbiters and a high-speed section at
+1.5 px/tick (checkpoint at 6,000), (5) a calm with two capsules, then the WARNING and HALCYON
+BULWARK. `pnpm content:check` checks its capsule budget (≥ 12 capsule sources before the boss,
+≥ 3 within 900 px after every checkpoint — the recovery rule of `shmup_feat.md` §10) and the 4-way
+design rules; `test/playtest/` plays it with the 4-way bot. `?skip=boss` (web) starts a game a
+little before its boss.
+
 `test-range.stage.json` is the dev/test stage (generated floors and ceilings, speed ramps, a
 high-speed section, parallax stars): run it with `pnpm dev` and `?stage=test-range`.
 `test-boss.stage.json` is a short open-space range that ends with the WARNING and the test

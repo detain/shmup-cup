@@ -30,10 +30,12 @@ import {
   BOOT_MS_ATTRIBUTE,
   BOOT_STATE_ATTRIBUTE,
   SCENE_ATTRIBUTE,
+  DEFAULT_STAGE_ID,
   SHELL_SCENES,
   ShellBootError,
   bootShell,
   moduleInfo,
+  defaultStageId,
   sceneFromSearch,
   type ShellInput,
   type ShellInputProfiles,
@@ -300,6 +302,21 @@ describe('shell/boot sceneFromSearch', () => {
     expect(sceneFromSearch('?scene=nope')).toBe('game');
     expect(sceneFromSearch('?scene')).toBe('game');
     expect(sceneFromSearch('')).toBe('game');
+  });
+});
+
+describe('shell/boot defaultStageId (M1-18)', () => {
+  it('names zone A when the content has it, else open space', () => {
+    expect(DEFAULT_STAGE_ID).toBe('zone-a');
+    expect(defaultStageId(readContentFiles())).toBe('zone-a');
+    expect(
+      defaultStageId([
+        { path: 'stages/a.stage.json', data: { kind: 'stage', id: 'test-range' } },
+        { path: 'enemies/zone-a.enemies.json', data: { kind: 'enemies', id: 'zone-a' } },
+        { path: 'x.json', data: null },
+      ]),
+    ).toBeNull();
+    expect(defaultStageId([])).toBeNull();
   });
 });
 

@@ -265,6 +265,9 @@ describe('tizen/boot bootTizenApp wiring', () => {
     expect(app.platform.caps).toEqual({ gamepad: true, remoteOnly: true, webgl2: false });
     expect(app.game.config.remoteMode).toBe(true);
     expect(app.game.config.autofire).toBe(true);
+    // START plays zone A (M1-18); the TV has no debug stage skip.
+    expect(app.game.config.stage).toBe('zone-a');
+    expect(app.game.config.stageSkip).toBe('none');
     expect(win.registeredKeys).toContain('MediaPlayPause');
     expect(win.registeredKeys).not.toContain('Exit');
   });
@@ -290,6 +293,7 @@ describe('tizen/boot bootTizenApp wiring', () => {
     // Free flight (a dev scene) plays from the first frame: the game context.
     Object.assign(win, { location: { search: '?scene=flight' } });
     const { app } = await boot();
+    expect(app.game.config.stage).toBeNull(); // dev scenes fly in open space (M1-18)
     win.frame(0);
     win.key('keydown', 13);
     win.frame(STEP);

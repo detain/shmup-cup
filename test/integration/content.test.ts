@@ -16,11 +16,21 @@
  * engine's script registry (`KNOWN_SCRIPT_IDS`, M1-08), so an unknown behaviour id is an issue,
  * and its enemies and weapons are checked against their behaviours' tunables
  * (`checkEnemyBehaviors`, `checkWeaponBehaviors`).
+ *
+ * Zone A (M1-18) is held to its plan: the 4-way design rules (shmup_feat.md §4 rule 2, D17) —
+ * no aimed bullet tunable over 2 px/tick and, over a whole HALCYON BULWARK fight played by the
+ * 4-way bot, no enemy bullet over 2 px/tick and no two simultaneous laser lanes closer than
+ * 16 px — and its structure: the five sections' camera keys and checkpoints, 6–8 enemy types,
+ * ≥ 12 capsule sources before the boss and ≥ 3 within 900 px after every checkpoint (the recovery
+ * rule of shmup_feat.md §10), two in the calm before the WARNING.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+  BossState,
+  DEFAULT_BEHAVIORS,
+  DEFAULT_BOSS_BEHAVIORS,
   ENGINE_SPRITES,
   KNOWN_SCRIPT_IDS,
   MUSIC_CUES,
@@ -29,7 +39,9 @@ import {
   checkEnemyBehaviors,
   checkWeaponBehaviors,
   loadContent,
+  type ContentDb,
   type ContentFile,
+  type StageSpec,
   type ValidationIssue,
 } from '@shmup/core';
 import {
@@ -49,6 +61,9 @@ import { loadInputProfiles, parseInputProfiles } from '@shmup/input-web';
 import { fxSpriteNames, loadFxContent, parseFxContent } from '@shmup/render-pixi';
 import { describe, expect, it } from 'vitest';
 import { findMissingSprites } from '../../scripts/assets/manifest.mjs';
+import { fourWayBot } from '../playtest/four-way-bot.js';
+import { runStage } from '../playtest/harness.js';
+import { createRuleWatch, MAX_AIMED_BULLET_SPEED, MIN_LANE_GAP } from '../playtest/rules.js';
 import { buildAtlas } from '../../scripts/assets/pipeline.mjs';
 import { readContentFiles } from '../../vite.shared.js';
 
@@ -515,5 +530,143 @@ describe('integration: content/ sprites exist in the atlas', () => {
     const missing = findMissingSprites(manifest, db.sprites.names, 'db.sprites.names');
     expect(missing).toHaveLength(1);
     expect(missing[0]?.message).toContain('"ships/kestrell"');
+  });
+});
+
+/**
+ * The shipped content with the engine's scripts and sprites (the shell's loader).
+ *
+ * @returns The DB (asserted issue-free).
+ */
+function shippedDb(): ContentDb {
+  const { db, issues } = loadContent(readContentFiles(), {
+    knownScripts: KNOWN_SCRIPT_IDS,
+    extraSprites: ENGINE_SPRITES,
+  });
+  expect(issues).toEqual([]);
+  return db;
+}
+
+/**
+ * The indices of every enemy a stage can bring into play: its spawn / formation / WARNING / boss
+ * events' enemies and their children.
+ *
+ * @param db - Content.
+ * @param stage - The stage.
+ * @returns Enemy indices.
+ */
+function stageEnemies(db: ContentDb, stage: StageSpec): Set<number> {
+  const used = new Set<number>();
+  for (const event of stage.events) {
+    if ('enemyId' in event && event.enemyId >= 0) used.add(event.enemyId);
+  }
+  for (const index of [...used]) {
+    const child = db.enemies[index].childId;
+    if (child >= 0) used.add(child);
+  }
+  return used;
+}
+
+describe('integration: zone A holds to the 4-way design rules (M1-18)', () => {
+  const db = shippedDb();
+  const stage = db.stages[db.stageIndex.get('zone-a') ?? -1];
+
+  it('ships AZURE VERGE with HALCYON BULWARK (HB-01) and its five sections', () => {
+    expect(stage.name).toBe('AZURE VERGE');
+    expect(stage.length).toBeGreaterThanOrEqual(8500);
+    expect(stage.length).toBeLessThanOrEqual(9500);
+    expect(stage.checkpoints.map((c) => c.x)).toEqual([0, 3500, 6000]);
+    // The high-speed section of 6,000–8,000 at 1.5 px/tick, then the calm before the boss.
+    const key = (x: number): number => stage.camera.find((k) => k.x === x)?.speed ?? -1;
+    expect(key(6000)).toBe(1.5);
+    expect(key(8000)).toBeLessThan(1.5);
+    const warning = stage.events.find((e) => e.type === 'warning');
+    expect(warning?.x).toBeGreaterThanOrEqual(8500);
+    expect(warning?.x).toBeLessThanOrEqual(8700);
+    const boss = warning?.type === 'warning' ? db.enemies[warning.enemyId].boss : null;
+    expect(boss?.code).toBe('HB-01');
+    expect(boss?.displayName).toBe('HALCYON BULWARK');
+    // Four shield plates of 12 in front of a 40-hp core that needs them all gone; armoured hull.
+    const parts = boss?.parts ?? [];
+    const plates = parts.filter((p) => p.name.startsWith('plate-'));
+    expect(plates.map((p) => p.hp)).toEqual([12, 12, 12, 12]);
+    const core = parts.find((p) => p.core);
+    expect(core?.hp).toBe(40);
+    expect(core?.vulnerable).toBe('afterParts');
+    expect([...(core?.requires ?? [])].sort()).toEqual(plates.map((p) => p.name).sort());
+    expect(parts.find((p) => p.name === 'hull')?.vulnerable).toBe('never');
+    expect(parts.filter((p) => p.gun).map((p) => p.name)).toEqual([
+      'emitter-top',
+      'emitter-bottom',
+    ]);
+    // 6–8 enemy types (behaviours) besides the boss.
+    const types = new Set(
+      [...stageEnemies(db, stage)].map((i) => db.enemies[i]).filter((e) => e.boss === null),
+    );
+    const behaviours = new Set([...types].map((e) => e.script));
+    expect(behaviours.size).toBeGreaterThanOrEqual(6);
+    expect(behaviours.size).toBeLessThanOrEqual(8);
+  });
+
+  it('keeps every aimed bullet tunable at 2 px/tick or less (Normal)', () => {
+    const speeds: string[] = [];
+    for (const index of stageEnemies(db, stage)) {
+      const enemy = db.enemies[index];
+      if (enemy.boss !== null) {
+        enemy.boss.phases.forEach((phase, p) => {
+          const def = DEFAULT_BOSS_BEHAVIORS.get(phase.script);
+          const params = { ...def?.params, ...phase.params };
+          if ('bulletSpeed' in params)
+            speeds.push(`${enemy.id}[${String(p)}] ${params.bulletSpeed}`);
+          expect(params.bulletSpeed ?? 0, `${enemy.id} phase ${String(p)}`).toBeLessThanOrEqual(
+            MAX_AIMED_BULLET_SPEED,
+          );
+        });
+        continue;
+      }
+      const def = DEFAULT_BEHAVIORS.get(enemy.script);
+      const params = { ...def?.params, ...enemy.params };
+      if ('bulletSpeed' in params) speeds.push(`${enemy.id} ${params.bulletSpeed}`);
+      expect(params.bulletSpeed ?? 0, enemy.id).toBeLessThanOrEqual(MAX_AIMED_BULLET_SPEED);
+    }
+    expect(speeds.length).toBeGreaterThanOrEqual(4); // turrets, walkers, orbiters, the boss
+  });
+
+  it('never fires a bullet over 2 px/tick nor squeezes two laser lanes under 16 px (HB-01 fight)', () => {
+    const rules = createRuleWatch();
+    const phases = new Set<number>();
+    const run = runStage('zone-a', fourWayBot(), {
+      godMode: true,
+      stageSkip: 'boss',
+      observe(world) {
+        rules.observe(world);
+        if (world.bosses.boss.state === BossState.Fight) phases.add(world.bosses.boss.phase);
+      },
+    });
+    expect(run.bossDefeated).toBe(true);
+    expect([...phases]).toEqual([0, 1, 2]);
+    expect(rules.violations).toEqual([]);
+    expect(rules.maxBulletSpeed).toBeGreaterThan(0);
+    expect(rules.maxBulletSpeed).toBeLessThanOrEqual(MAX_AIMED_BULLET_SPEED);
+    // Its last phase really overlaps two lanes — with room between them.
+    expect(rules.maxSeparate).toBe(2);
+    expect(rules.narrowestGap).toBeGreaterThanOrEqual(MIN_LANE_GAP);
+    expect(rules.narrowestOpen).toBeGreaterThanOrEqual(MIN_LANE_GAP);
+  });
+
+  it('places the capsules for recovery: ≥ 12 before the boss, ≥ 3 after every checkpoint', () => {
+    /** Whether an event is a capsule source: a dropping enemy, a formation that drops. */
+    const capsule = (event: StageSpec['events'][number]): boolean =>
+      event.type === 'spawn'
+        ? db.enemies[event.enemyId].drop === 'capsule'
+        : event.type === 'formation' && event.drop !== null;
+    const warningX = stage.events.find((e) => e.type === 'warning')?.x ?? 0;
+    const sources = stage.events.filter(capsule).map((e) => e.x);
+    expect(sources.filter((x) => x < warningX).length).toBeGreaterThanOrEqual(12);
+    for (const checkpoint of stage.checkpoints) {
+      const after = sources.filter((x) => x >= checkpoint.x && x < checkpoint.x + 900);
+      expect(after.length, `checkpoint ${String(checkpoint.x)}`).toBeGreaterThanOrEqual(3);
+    }
+    expect(sources.filter((x) => x >= 8000 && x < warningX)).toHaveLength(2);
   });
 });

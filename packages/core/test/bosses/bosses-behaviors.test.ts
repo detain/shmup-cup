@@ -97,8 +97,9 @@ function run(w: World, ticks: number): void {
 const T = { vent: 3, core: 4, gunTop: 7, gunBottom: 8 } as const;
 
 describe('core/behaviors — the boss roster (M1-13)', () => {
-  it('registers boss.hover and boss.lanes, frozen, next to the enemy roster', () => {
-    expect(BOSS_BEHAVIOR_IDS).toEqual(['boss.hover', 'boss.lanes']);
+  it('registers boss.bulwark, boss.hover and boss.lanes, frozen, next to the enemy roster', () => {
+    // boss.bulwark (HB-01) joined with the zone A content of M1-18.
+    expect(BOSS_BEHAVIOR_IDS).toEqual(['boss.bulwark', 'boss.hover', 'boss.lanes']);
     expect(DEFAULT_BOSS_BEHAVIORS.get('boss.hover')?.params).toMatchObject({ trackSpeed: 0.5 });
     expect(Object.isFrozen(DEFAULT_BOSS_BEHAVIOR_DEFS[0].params)).toBe(true);
     expect(() =>

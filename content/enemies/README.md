@@ -6,6 +6,16 @@ of `packages/core/src/behaviors`. Implements `shmup_feat.md` §11 ("HP, score va
 flash-on-hit, death explosion, drops — defined in `enemies.json`", movement primitives,
 off-screen and settle rules) and §15 (score values).
 
+`zone-a.enemies.json` is zone A's roster (M1-18): eight enemy types — `skeet` popcorn (and the
+`skeet-chain` sine chains), `vane` fans, `tender` capsule carriers, `lancer` rammers, `picket`
+floor / ceiling turrets, `strider` walkers, the `burrow` hatch (with its `burrow-mite`) and
+`gyre` orbiters — and the boss HALCYON BULWARK (`halcyon-bulwark`, code HB-01): an armoured hull
+and wings, four shield plates (12 hp) stacked in front of a 40-hp core that takes damage only once
+every plate is gone, and two laser emitters above and below it (`boss.bulwark`: slow tracking,
+alternating attached lane lasers, aimed 3-ways once two plates are down). Zone A is held to the
+4-way design rules (no aimed bullet over 2 px/tick, no two laser lanes closer than 16 px) by
+`pnpm content:check`. `test-range.enemies.json` / `test-boss.enemies.json` serve the dev stages.
+
 ## Format (formatVersion 1)
 
 ```jsonc

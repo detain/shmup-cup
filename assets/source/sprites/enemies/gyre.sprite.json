@@ -1,0 +1,45 @@
+{
+  "name": "enemies/gyre",
+  "description": "Small enemy (zone A): teal orbiter ring around a bright core; the ring turns.",
+  "palette": { ".": null, "o": "#082018", "g": "#30c8a0", "d": "#18705a", "w": "#c0fff0" },
+  "hitFlash": true,
+  "frames": [
+    {
+      "rows": [
+        "....oooooo....",
+        "...oggggggo...",
+        "...oggggggo...",
+        ".oo.oooooo.oo.",
+        "oggo.oooo.oggo",
+        "oggooggggooggo",
+        "oggoogwwgooggo",
+        "oddoogwwgooddo",
+        "oddooggggooddo",
+        "oddo.oooo.oddo",
+        ".oo.oooooo.oo.",
+        "...oddddddo...",
+        "...oddddddo...",
+        "....oooooo...."
+      ]
+    },
+    {
+      "rows": [
+        "....oo..oo....",
+        "..ooggooggoo..",
+        ".oggggooggggo.",
+        ".ogggo..ogggo.",
+        "ogggoooooogggo",
+        "oggooggggooggo",
+        ".oo.ogwwgo.oo.",
+        ".oo.ogwwgo.oo.",
+        "oddooggggooddo",
+        "odddoooooodddo",
+        ".odddo..odddo.",
+        ".oddddooddddo.",
+        "..ooddooddoo..",
+        "....oo..oo...."
+      ]
+    }
+  ],
+  "animations": { "spin": [0, 1] }
+}

@@ -1,0 +1,30 @@
+{
+  "name": "bosses/bulwark-plate",
+  "description": "HALCYON BULWARK (HB-01): one of the four shield plates stacked in front of the core.",
+  "palette": { ".": null, "o": "#0a1428", "a": "#7a9cc8", "s": "#3e5a86", "h": "#d0e4ff" },
+  "hitFlash": true,
+  "frames": [
+    {
+      "rows": [
+        ".oooo.",
+        "ohhaso",
+        "ohaaso",
+        "ohaaso",
+        "ohaaso",
+        "ohaaso",
+        "ohaaso",
+        "ohaaso",
+        "ohaaso",
+        "ohaaso",
+        "ohaaso",
+        "ohaaso",
+        "ohaaso",
+        "ohaaso",
+        "ohaaso",
+        "ohaaso",
+        "osssso",
+        ".oooo."
+      ]
+    }
+  ]
+}

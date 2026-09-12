@@ -169,13 +169,19 @@ describe('integration: the test-range timeline', () => {
     expect(started).toBe(formations);
     expect(Array.from(w.enemies.formations.active).every((a) => a === 0)).toBe(true);
     expect(bonuses).toBe(0); // nothing shoots yet: every member escaped
-    // Every regular enemy of the content (the test boss is `core/bosses`' — M1-13).
+    // Every regular enemy the stage names, and their children (the test boss is `core/bosses`' —
+    // M1-13; zone A's roster — M1-18 — plays on its own stage).
+    const named = new Set<number>();
+    for (const e of STAGE.events) if ('enemyId' in e && e.enemyId >= 0) named.add(e.enemyId);
+    for (const i of [...named]) if (DB.enemies[i].childId >= 0) named.add(DB.enemies[i].childId);
     expect([...seen].sort()).toEqual(
-      DB.enemies
+      [...named]
+        .map((i) => DB.enemies[i])
         .filter((e) => e.boss === null)
         .map((e) => e.id)
         .sort(),
     );
+    expect(seen.size).toBe(10);
     expect([...scripts].sort()).toEqual(
       [
         'carrier.straight',

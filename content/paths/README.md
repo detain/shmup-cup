@@ -4,6 +4,10 @@ Curves that enemies fly along, loaded by the core's `data` module (kind `paths`)
 the `path` mover of `packages/core/src/patterns`. Implements `shmup_feat.md` §11 ("Catmull-Rom
 spline paths, arc-length parameterized").
 
+`zone-a.paths.json` holds zone A's curves (M1-18): the `vane-*` fan flights (arcs, loops, a
+swoop — `-up` / `-down` mirror each other) and the `gyre-orbit-*` orbiter loops;
+`test-range.paths.json` those of the dev stage.
+
 A path is a list of **control points relative to where the mover starts** (normally the spawn
 point; the first point is usually `(0, 0)` — the curve is translated so its first point sits
 on the enemy). At load the loader runs a centripetal Catmull-Rom spline through the points and

@@ -1,0 +1,44 @@
+{
+  "name": "bosses/bulwark-hull",
+  "description": "HALCYON BULWARK (HB-01): main hull behind the core; armour (never damaged).",
+  "palette": { ".": null, "o": "#0a1428", "d": "#1e3458", "m": "#2e5082", "l": "#4a78b0", "h": "#8ab8e8", "c": "#38d8f8", "y": "#e8c048" },
+  "hitFlash": true,
+  "frames": [
+    {
+      "rows": [
+        "....ooooooooooooooooooooooooooooooooooooooo.....",
+        "...ohhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhooo..",
+        "..ohlllllllllllllllllllllllllllllllllllllllhhho.",
+        ".ohlmmmmmmmmmmmdmmmmmmmmmmmmmmmdmmmmmmmmmmmlllho",
+        "ohlmmmmmmmmmmmmdmmmmmmmmmmmmmmmdmmmmmmmmmmmmmmlo",
+        "olmmmmmmmmmmmmmdmmmmmmmcmmmmmmmdmmmmmmmcmmmmmmmo",
+        "ommmmmmmmmmmmmmdmmmmmmmmmmmmmmmdmmmmmmmmmmmmmmmo",
+        "ommmmmmmmmmmmmmdmmmmmmmmmmmmmmmdmmmmmmmmmmmmmmmo",
+        "ommmmmmmmmmmmmmdmmmmmmmmmmmmmmmdmmmmmmmmmmmmmmmo",
+        "ommmmmmmmmmmmmmdmmmmmmmmmmmmmmmdmmmmmmmmmmmmmmmo",
+        "ommddddddddddddddddddddddddddddddddddddddddddmmo",
+        "ommmmmmmmmmmmmmdmmmmmmmmmmmmmmmdmmmmmmmmmmmmmmmo",
+        ".ooddmmmmmmmmmmdmmmmmmmmmmmmmmmdmmmmmmmmmmmmmmmo",
+        ".ooddmmmmmmmmmmdmmmmmmmmmmmmmmmdmmmmmmmmmymmmmmo",
+        ".ooddmmmmmmmmmmdmmmmmmmmmmmmmmmdmmmmmmmmymmymmmo",
+        ".ooddmmmmmmmmmmdmmmmmmmmmmmmmmmdmmmmmmmmmmymmmmo",
+        ".ooddmmmmmmmmmmdmmmmmmmmmmmmmmmdmmmmmmmmmymmmmmo",
+        ".ooddmmmmmmmmmmdmmmmmmmmmmmmmmmdmmmmmmmmymmymmmo",
+        ".ooddmmmmmmmmmmdmmmmmmmmmmmmmmmdmmmmmmmmmmymmmmo",
+        ".ooddmmmmmmmmmmdmmmmmmmmmmmmmmmdmmmmmmmmmmmmmmmo",
+        "ommmmmmmmmmmmmmdmmmmmmmmmmmmmmmdmmmmmmmmmmmmmmmo",
+        "ommddddddddddddddddddddddddddddddddddddddddddmmo",
+        "ommmmmmmmmmmmmmdmmmmmmmmmmmmmmmdmmmmmmmmmmmmmmmo",
+        "ommmmmmmmmmmmmmdmmmmmmmmmmmmmmmdmmmmmmmmmmmmmmmo",
+        "ommmmmmmmmmmmmmdmmmmmmmmmmmmmmmdmmmmmmmmmmmmmmmo",
+        "ommmmmmmmmmmmmmdmmmmmmmmmmmmmmmdmmmmmmmmmmmmmmmo",
+        "odmmmmmmmmmmmmmdmmmmmmmcmmmmmmmdmmmmmmmcmmmmmmmo",
+        "oddmmmmmmmmmmmmdmmmmmmmmmmmmmmmdmmmmmmmmmmmmmmdo",
+        ".oddmmmmmmmmmmmdmmmmmmmmmmmmmmmdmmmmmmmmmmmddddo",
+        "..odddddddddddddddddddddddddddddddddddddddddddo.",
+        "...odddddddddddddddddddddddddddddddddddddddooo..",
+        "....ooooooooooooooooooooooooooooooooooooooo....."
+      ]
+    }
+  ]
+}

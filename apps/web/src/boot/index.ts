@@ -15,12 +15,16 @@
  * the game with its HUD, the pause menu (Esc / P / Backspace), stage clear and game over, all
  * drawn on the canvas and driven by the menu / game binding contexts. `?scene=flight` plays
  * **free flight** straight away instead (the KESTREL under keyboard / gamepad control from the
- * first frame, no menus — plan M1-06; the e2e tests of the gameplay steps use it);
- * `?stage=<id>` makes a game run that stage instead of open space (scrolling camera, terrain,
- * parallax — plan M1-07; `?stage=test-range` is the dev stage); `?scene=showcase` shows the M1-04
- * sprite showcase, `?scene=calibration` the test pattern and `?scene=fx-gallery` every particle
- * preset and screen effect in turn (plan M1-14); `?loadout=full` starts fully powered — speed 2,
- * Missile, Laser, four Options (dev override, plan M1-10; {@link loadoutFromSearch}).
+ * first frame, no menus — plan M1-06; the e2e tests of the gameplay steps use it). The game
+ * plays **zone A** (AZURE VERGE, plan M1-18 — the shell's `DEFAULT_STAGE_ID`); `?stage=<id>`
+ * makes it run another stage (`?stage=test-range` is the dev stage — plan M1-07; `?scene=flight`
+ * flies in open space unless a `?stage=` names one); `?skip=boss` is the debug stage skip: every
+ * game starts a little before the stage's boss (`GameConfig.stageSkip`,
+ * {@link stageSkipFromSearch} — the e2e smoke reaches HALCYON BULWARK with it);
+ * `?scene=showcase` shows the M1-04 sprite showcase, `?scene=calibration` the test pattern and
+ * `?scene=fx-gallery` every particle preset and screen effect in turn (plan M1-14);
+ * `?loadout=full` starts fully powered — speed 2, Missile, Laser, four Options (dev override,
+ * plan M1-10; {@link loadoutFromSearch}).
  *
  * **Input profiles** (decisions D13–D15). The `input-profiles` content is parsed into a
  * registry during boot. Keys use `?profile=<id>` when given (dev override — e.g.
@@ -41,12 +45,18 @@
  *
  * **Public API.** {@link bootWebApp}, {@link WebApp}, {@link WebAppResources},
  * {@link inputOverridesFromSearch}, {@link InputOverrides}, {@link stageFromSearch},
- * {@link contentStageIds}, {@link loadoutFromSearch}.
+ * {@link contentStageIds}, {@link loadoutFromSearch}, {@link stageSkipFromSearch}.
  *
  * @module
  */
 import { createWebAudio, type WebAudio } from '@shmup/audio-web';
-import { defineModule, type ContentFile, type Game, type StartingLoadout } from '@shmup/core';
+import {
+  defineModule,
+  type ContentFile,
+  type Game,
+  type StageSkip,
+  type StartingLoadout,
+} from '@shmup/core';
 import {
   DEFAULT_GAMEPAD_PROFILE_ID,
   DEFAULT_KEYBOARD_PROFILE_ID,
@@ -65,7 +75,13 @@ import {
   type WebInput,
 } from '@shmup/input-web';
 import type { PixiRenderer } from '@shmup/render-pixi';
-import { bootShell, sceneFromSearch, type Shell, type ShellAssets } from '@shmup/shell';
+import {
+  bootShell,
+  defaultStageId,
+  sceneFromSearch,
+  type Shell,
+  type ShellAssets,
+} from '@shmup/shell';
 import { createWebPlatform, type StorageLike } from '../platform/index.js';
 
 /** Module descriptor. */
@@ -232,6 +248,30 @@ export function loadoutFromSearch(search: string): StartingLoadout | null {
 }
 
 /**
+ * Reads the `?skip=boss` debug parameter (the stage skip of plan M1-18; the last valid value
+ * wins; exact, case-sensitive, not percent-decoded, like `?loadout=`).
+ *
+ * @param search - `location.search` (with or without the leading `?`).
+ * @returns `'boss'` or `'none'` when asked for, `null` when absent, empty or unknown (no skip).
+ *
+ * @example
+ * ```ts
+ * stageSkipFromSearch('?skip=boss'); // → 'boss'
+ * ```
+ */
+export function stageSkipFromSearch(search: string): StageSkip | null {
+  const query = search.charAt(0) === '?' ? search.slice(1) : search;
+  let skip: StageSkip | null = null;
+  for (const pair of query.split('&')) {
+    const eq = pair.indexOf('=');
+    if (eq < 0 || pair.slice(0, eq) !== 'skip') continue;
+    const value = pair.slice(eq + 1);
+    if (value === 'boss' || value === 'none') skip = value;
+  }
+  return skip;
+}
+
+/**
  * The ids of every `stage` file among the content files (before validation — for choosing a
  * stage; the shell validates the content itself).
  *
@@ -261,7 +301,9 @@ export function contentStageIds(files: readonly ContentFile[]): string[] {
  * `?profile=` id is reported with
  * `console.warn` and the default is used; so is an unknown `?stage=` id (the game then flies in
  * open space). The game config sets `remoteMode: false` (keyboard / gamepad play; `autofire`
- * keeps its default, on), the `?stage=` id and the `?loadout=` preset
+ * keeps its default, on), the stage (`?stage=`, else zone A in the scene flow — `defaultStageId`
+ * of `@shmup/shell`, open space in the dev scenes), the `?skip=` stage skip
+ * ({@link stageSkipFromSearch}, default `'none'`) and the `?loadout=` preset
  * ({@link loadoutFromSearch}, default `'default'`). Everything is released by
  * {@link WebApp.stop}; on a failed boot the shell has already released it and shows the boot
  * error screen.
@@ -299,10 +341,14 @@ export async function bootWebApp(
   const profiles = createInputProfileRegistry();
   const search = searchOf(win);
   const overrides = inputOverridesFromSearch(search);
+  const scene = sceneFromSearch(search);
   let stage = stageFromSearch(search);
   if (stage !== null && contentStageIds(resources.contentFiles).indexOf(stage) < 0) {
     console.warn(`Shmup Cup: no stage "${stage}"; flying in open space`);
     stage = null;
+  } else if (stage === null && scene === 'game') {
+    // The game plays zone A unless a `?stage=` says otherwise (dev scenes keep open space).
+    stage = defaultStageId(resources.contentFiles);
   }
   /** The profile a `?profile=` override selected (offered in the Options screen too), if any. */
   let overrideProfile: InputProfile | null = null;
@@ -352,8 +398,13 @@ export async function bootWebApp(
         webgl2: renderer.webGLVersion === 2,
       });
     },
-    gameConfig: { remoteMode: false, stage, loadout: loadoutFromSearch(search) ?? 'default' },
-    scene: sceneFromSearch(search),
+    gameConfig: {
+      remoteMode: false,
+      stage,
+      stageSkip: stageSkipFromSearch(search) ?? 'none',
+      loadout: loadoutFromSearch(search) ?? 'default',
+    },
+    scene,
     audioUnlock: 'gesture',
     /**
      * The Options screen's CONTROLS (plan M1-17): the keyboard profiles a desktop keyboard can

@@ -1,0 +1,428 @@
+{
+  "formatVersion": 1,
+  "kind": "enemies",
+  "enemies": [
+    {
+      "id": "skeet",
+      "hp": 1,
+      "score": 100,
+      "hurtbox": {
+        "hw": 5,
+        "hh": 5
+      },
+      "script": "drifter.sine",
+      "sprite": "enemies/drifter",
+      "anim": {
+        "frames": 2,
+        "ticks": 8
+      },
+      "params": {
+        "speed": 1.1,
+        "amp": 18,
+        "period": 100
+      },
+      "drop": null
+    },
+    {
+      "id": "skeet-chain",
+      "hp": 1,
+      "score": 100,
+      "hurtbox": {
+        "hw": 5,
+        "hh": 5
+      },
+      "script": "drifter.sine",
+      "sprite": "enemies/drifter",
+      "anim": {
+        "frames": 2,
+        "ticks": 8
+      },
+      "params": {
+        "speed": 1.25,
+        "amp": 28,
+        "period": 120,
+        "memberPhase": 48
+      },
+      "drop": null
+    },
+    {
+      "id": "vane",
+      "hp": 1,
+      "score": 100,
+      "hurtbox": {
+        "hw": 5,
+        "hh": 4
+      },
+      "script": "fan.loop",
+      "sprite": "enemies/vane",
+      "anim": {
+        "frames": 2,
+        "ticks": 6
+      },
+      "params": {
+        "speed": 1.6
+      },
+      "drop": null
+    },
+    {
+      "id": "tender",
+      "hp": 3,
+      "score": 200,
+      "hurtbox": {
+        "hw": 6,
+        "hh": 4
+      },
+      "script": "carrier.straight",
+      "sprite": "enemies/carrier-red",
+      "anim": {
+        "frames": 2,
+        "ticks": 10
+      },
+      "params": {
+        "speed": 0.7
+      },
+      "drop": "capsule",
+      "explosion": "medium"
+    },
+    {
+      "id": "lancer",
+      "hp": 1,
+      "score": 150,
+      "hurtbox": {
+        "hw": 5,
+        "hh": 3
+      },
+      "script": "rammer.aimed",
+      "sprite": "enemies/darter",
+      "anim": {
+        "frames": 2,
+        "ticks": 4
+      },
+      "mover": {
+        "type": "straight",
+        "vx": -1.25,
+        "vy": 0
+      },
+      "params": {
+        "enterTicks": 70,
+        "windup": 24,
+        "speed": 2
+      },
+      "drop": null
+    },
+    {
+      "id": "picket",
+      "hp": 3,
+      "score": 300,
+      "hurtbox": {
+        "hw": 5,
+        "hh": 4
+      },
+      "script": "turret.floor",
+      "sprite": "enemies/turret",
+      "params": {
+        "fireTicks": 110,
+        "bulletSpeed": 1.25
+      },
+      "drop": null,
+      "ground": "floor",
+      "explosion": "medium"
+    },
+    {
+      "id": "picket-ceiling",
+      "hp": 3,
+      "score": 300,
+      "hurtbox": {
+        "hw": 5,
+        "hh": 4
+      },
+      "script": "turret.floor",
+      "sprite": "enemies/turret",
+      "params": {
+        "fireTicks": 110,
+        "bulletSpeed": 1.25
+      },
+      "drop": null,
+      "ground": "ceiling",
+      "explosion": "medium"
+    },
+    {
+      "id": "strider",
+      "hp": 2,
+      "score": 200,
+      "hurtbox": {
+        "hw": 5,
+        "hh": 6
+      },
+      "script": "walker.floor",
+      "sprite": "enemies/hopper",
+      "anim": {
+        "frames": 2,
+        "ticks": 12
+      },
+      "params": {
+        "speed": 0.6,
+        "bulletSpeed": 1.25
+      },
+      "drop": null,
+      "ground": "floor"
+    },
+    {
+      "id": "burrow",
+      "hp": 8,
+      "score": 500,
+      "hurtbox": {
+        "hw": 9,
+        "hh": 5
+      },
+      "script": "hatch.spawner",
+      "sprite": "enemies/hatch",
+      "anim": {
+        "frames": 2,
+        "ticks": 40
+      },
+      "params": {
+        "interval": 90,
+        "max": 4
+      },
+      "drop": null,
+      "ground": "floor",
+      "child": "burrow-mite",
+      "explosion": "large"
+    },
+    {
+      "id": "burrow-mite",
+      "hp": 1,
+      "score": 50,
+      "hurtbox": {
+        "hw": 5,
+        "hh": 3
+      },
+      "script": "rammer.aimed",
+      "sprite": "enemies/darter",
+      "anim": {
+        "frames": 2,
+        "ticks": 4
+      },
+      "mover": {
+        "type": "straight",
+        "vx": -0.5,
+        "vy": -1
+      },
+      "params": {
+        "enterTicks": 36,
+        "windup": 14,
+        "speed": 1.75
+      },
+      "drop": null
+    },
+    {
+      "id": "gyre",
+      "hp": 4,
+      "score": 400,
+      "hurtbox": {
+        "hw": 5,
+        "hh": 5
+      },
+      "script": "orbiter.loop",
+      "sprite": "enemies/gyre",
+      "anim": {
+        "frames": 2,
+        "ticks": 6
+      },
+      "params": {
+        "speed": 1.4,
+        "ringTicks": 150,
+        "bulletSpeed": 1
+      },
+      "drop": null,
+      "explosion": "medium"
+    },
+    {
+      "id": "halcyon-bulwark",
+      "boss": {
+        "code": "HB-01",
+        "displayName": "HALCYON BULWARK",
+        "introTicks": 150,
+        "score": 30000,
+        "x": 300,
+        "y": 100,
+        "parts": [
+          {
+            "name": "hull",
+            "x": 28,
+            "hurtbox": {
+              "hw": 22,
+              "hh": 14
+            },
+            "vulnerable": "never",
+            "sprite": "bosses/bulwark-hull"
+          },
+          {
+            "name": "wing-top",
+            "parent": "hull",
+            "x": -6,
+            "y": -23,
+            "hurtbox": {
+              "hw": 26,
+              "hh": 6
+            },
+            "vulnerable": "never",
+            "sprite": "bosses/bulwark-wing-top"
+          },
+          {
+            "name": "wing-bottom",
+            "parent": "hull",
+            "x": -6,
+            "y": 23,
+            "hurtbox": {
+              "hw": 26,
+              "hh": 6
+            },
+            "vulnerable": "never",
+            "sprite": "bosses/bulwark-wing-bottom"
+          },
+          {
+            "name": "emitter-top",
+            "parent": "wing-top",
+            "x": -34,
+            "y": -2,
+            "hurtbox": {
+              "hw": 8,
+              "hh": 4
+            },
+            "vulnerable": "never",
+            "gun": true,
+            "sprite": "bosses/bulwark-emitter",
+            "anim": {
+              "frames": 2,
+              "ticks": 16
+            }
+          },
+          {
+            "name": "emitter-bottom",
+            "parent": "wing-bottom",
+            "x": -34,
+            "y": 2,
+            "hurtbox": {
+              "hw": 8,
+              "hh": 4
+            },
+            "vulnerable": "never",
+            "gun": true,
+            "sprite": "bosses/bulwark-emitter",
+            "anim": {
+              "frames": 2,
+              "ticks": 16
+            }
+          },
+          {
+            "name": "core",
+            "hp": 40,
+            "hurtbox": {
+              "hw": 7,
+              "hh": 7
+            },
+            "vulnerable": "afterParts",
+            "requires": ["plate-1", "plate-2", "plate-3", "plate-4"],
+            "core": true,
+            "sprite": "bosses/core",
+            "anim": {
+              "frames": 2,
+              "ticks": 12
+            },
+            "score": 5000,
+            "explosion": "large"
+          },
+          {
+            "name": "plate-1",
+            "x": -11,
+            "hp": 12,
+            "hurtbox": {
+              "hw": 3,
+              "hh": 9
+            },
+            "sprite": "bosses/bulwark-plate",
+            "score": 500,
+            "explosion": "medium"
+          },
+          {
+            "name": "plate-2",
+            "x": -17,
+            "hp": 12,
+            "hurtbox": {
+              "hw": 3,
+              "hh": 9
+            },
+            "sprite": "bosses/bulwark-plate",
+            "score": 500,
+            "explosion": "medium"
+          },
+          {
+            "name": "plate-3",
+            "x": -23,
+            "hp": 12,
+            "hurtbox": {
+              "hw": 3,
+              "hh": 9
+            },
+            "sprite": "bosses/bulwark-plate",
+            "score": 500,
+            "explosion": "medium"
+          },
+          {
+            "name": "plate-4",
+            "x": -29,
+            "hp": 12,
+            "hurtbox": {
+              "hw": 3,
+              "hh": 9
+            },
+            "sprite": "bosses/bulwark-plate",
+            "score": 500,
+            "explosion": "medium"
+          }
+        ],
+        "phases": [
+          {
+            "script": "boss.bulwark",
+            "params": {
+              "trackSpeed": 0.35,
+              "laserTicks": 110
+            },
+            "until": {
+              "partsDestroyed": ["plate-1", "plate-2", "plate-3", "plate-4"],
+              "count": 2
+            }
+          },
+          {
+            "script": "boss.bulwark",
+            "params": {
+              "trackSpeed": 0.45,
+              "laserTicks": 100,
+              "ways": 3,
+              "fireTicks": 120,
+              "firstLaser": 40
+            },
+            "until": {
+              "partsDestroyed": ["plate-1", "plate-2", "plate-3", "plate-4"],
+              "count": 4
+            }
+          },
+          {
+            "script": "boss.bulwark",
+            "params": {
+              "trackSpeed": 0.55,
+              "laserTicks": 55,
+              "telegraph": 40,
+              "active": 60,
+              "ways": 3,
+              "fireTicks": 90,
+              "firstLaser": 30
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

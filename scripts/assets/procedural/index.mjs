@@ -12,6 +12,7 @@
  *
  * @module
  */
+import * as backdrops from './backdrops.mjs';
 import * as bullets from './bullets.mjs';
 import * as explosions from './explosions.mjs';
 import * as hud from './hud.mjs';
@@ -31,6 +32,7 @@ import * as ui from './ui.mjs';
  * @type {readonly { id: string, generate: () => SpriteDef[] }[]}
  */
 export const PROCEDURAL_GENERATORS = [
+  { id: 'backdrops', generate: backdrops.generate },
   { id: 'bullets', generate: bullets.generate },
   { id: 'explosions', generate: explosions.generate },
   { id: 'hud', generate: hud.generate },

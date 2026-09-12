@@ -1,0 +1,37 @@
+{
+  "name": "enemies/vane",
+  "description": "Small enemy (zone A): amber swept-wing fan flier; wings beat.",
+  "palette": { ".": null, "o": "#281008", "a": "#f09028", "d": "#a04810", "w": "#ffe0a0" },
+  "hitFlash": true,
+  "frames": [
+    {
+      "rows": [
+        "......oo....",
+        ".....oado...",
+        "....oaddo...",
+        "..ooaaaaoo..",
+        "ooaawwwaaddo",
+        "odddwwwaaaao",
+        "..ooddddoo..",
+        "....odaao...",
+        ".....odao...",
+        "......oo...."
+      ]
+    },
+    {
+      "rows": [
+        "............",
+        "......oo....",
+        "...ooaado...",
+        "..oaaaaaoo..",
+        "ooaawwwaaddo",
+        "odddwwwaaaao",
+        "..odddddoo..",
+        "...oodaao...",
+        "......oo....",
+        "............"
+      ]
+    }
+  ],
+  "animations": { "fly": [0, 1] }
+}

@@ -19,6 +19,7 @@ import {
   inputOverridesFromSearch,
   loadoutFromSearch,
   stageFromSearch,
+  stageSkipFromSearch,
   type WebAppResources,
 } from '../../src/boot/index.js';
 
@@ -419,6 +420,27 @@ describe('web/boot bootWebApp wiring', () => {
     expect(plain.app.game.world.weapons.loadouts[0].options).toBe(0);
   });
 
+  it('plays zone A in the scene flow by default; ?scene=flight keeps open space (M1-18)', async () => {
+    const { app } = await boot();
+    expect(app.game.config.stage).toBe('zone-a');
+    expect(app.game.config.stageSkip).toBe('none');
+    app.stop();
+    win = new FakeWindow();
+    win.location.search = '?scene=flight';
+    const flight = await boot();
+    expect(flight.app.game.config.stage).toBeNull();
+    expect(flight.app.game.world.stage).toBeNull();
+  });
+
+  it('starts every game a little before the boss with ?skip=boss (M1-18)', async () => {
+    win.location.search = '?scene=flight&stage=zone-a&skip=boss';
+    const { app } = await boot();
+    expect(app.game.config.stageSkip).toBe('boss');
+    const warning = app.game.world.stage?.stage.events.find((e) => e.type === 'warning');
+    expect(warning).toBeDefined();
+    expect(app.game.world.camera.x).toBeGreaterThan((warning?.x ?? 0) - 200);
+  });
+
   it('warns about an unknown ?stage= and flies in open space', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     win.location.search = '?stage=nope';
@@ -522,6 +544,20 @@ describe('web/boot loadoutFromSearch', () => {
     expect(loadoutFromSearch('?loadout=full&loadout=')).toBe('full');
     expect(loadoutFromSearch('?stage=test-range&profile=x&loadout=default')).toBe('default');
     expect(loadoutFromSearch('?')).toBeNull();
+  });
+});
+
+describe('web/boot stageSkipFromSearch', () => {
+  it('reads the last known ?skip= value exactly (M1-18 debug stage skip)', () => {
+    expect(stageSkipFromSearch('?skip=boss')).toBe('boss');
+    expect(stageSkipFromSearch('stage=zone-a&skip=boss')).toBe('boss');
+    expect(stageSkipFromSearch('?skip=boss&skip=none')).toBe('none');
+    expect(stageSkipFromSearch('?skip=boss&skip=bogus')).toBe('boss');
+    expect(stageSkipFromSearch('?skip=Boss')).toBeNull();
+    expect(stageSkipFromSearch('?SKIP=boss')).toBeNull();
+    expect(stageSkipFromSearch('?skip=')).toBeNull();
+    expect(stageSkipFromSearch('?skip')).toBeNull();
+    expect(stageSkipFromSearch('')).toBeNull();
   });
 });
 

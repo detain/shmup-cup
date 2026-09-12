@@ -2,9 +2,10 @@
  * # debug — debug and dev-tool hooks
  *
  * **Status: partial.** The debug switches ({@link DebugFlags}, carried by every `World`) and the
- * deterministic state hash {@link hashWorld} are implemented (plan M1-06); the controls that act
- * on the switches (god mode, stage skip, frame advance, slow motion) and the overlay counters
- * arrive with the debug tools of M1-19.
+ * deterministic state hash {@link hashWorld} are implemented (plan M1-06), and the stage skip to
+ * the boss ({@link skipToBoss} — `GameConfig.stageSkip`, plan M1-18); the controls that act on
+ * the switches (god mode, frame advance, slow motion, jump to a checkpoint) and the overlay
+ * counters arrive with the debug tools of M1-19.
  *
  * **Responsibility.** Development hooks inside the simulation: god mode, stage skip, jump to
  * scroll X or checkpoint, frame advance (pause + step one tick), slow motion, state hashing and
@@ -42,8 +43,15 @@
  * - shmup_feat.md §24 Dev tooling & debug features
  * - shmup_feat.md §22 — determinism (state hashes compared across runs)
  *
+ * **Stage skip.** {@link skipToBoss} jumps a World's stage to {@link BOSS_SKIP_LEAD} px before its
+ * first `warning` / `boss` event (`StageRunner.jumpTo`: speed, pan and flags re-derived, every
+ * pool and system cleared) and flies the ships in again at the new view. `createWorld` calls it
+ * when `GameConfig.stageSkip` is `'boss'` — a sim option, so a replay of a skipped session skips
+ * too — which is how the e2e smoke and the playtest reach the boss quickly.
+ *
  * **Public API.** {@link DebugFlags}, {@link createDebugFlags}, {@link DebugCounters},
- * {@link hashWorld}, {@link FNV_OFFSET_BASIS}, {@link FNV_PRIME}.
+ * {@link hashWorld}, {@link FNV_OFFSET_BASIS}, {@link FNV_PRIME}, {@link skipToBoss},
+ * {@link BOSS_SKIP_LEAD}.
  *
  * **Planned API.** `createDebugControls(game)` (M1-19): god mode, frame advance, slow motion,
  * stage skip / jump, overlay counters.
@@ -59,8 +67,9 @@ import {
   type FormationTable,
 } from '../enemies/index.js';
 import { defineModule } from '../module-info.js';
-import { PLAYER_STATES } from '../player/index.js';
+import { PLAYER_STATES, spawnPlayer } from '../player/index.js';
 import { RNG_STATE_WORDS } from '../rng/index.js';
+import { StageEventCode } from '../stage/index.js';
 import type { World } from '../world/index.js';
 
 /** Module descriptor (see {@link defineModule}). */
@@ -474,4 +483,47 @@ function statusCode(world: World): number {
     case 'gameOver':
       return 3;
   }
+}
+
+/** How far before its boss event {@link skipToBoss} puts the camera, in pixels. */
+export const BOSS_SKIP_LEAD = 96;
+
+/**
+ * The debug stage skip: jumps the World's stage to {@link BOSS_SKIP_LEAD} px before its first
+ * `warning` / `boss` event and flies every ship in play (not dying / dead) in again at the new view.
+ *
+ * @remarks
+ * Load-time / debug code (cold): `StageRunner.jumpTo` re-derives the scroll speed, pan and flags
+ * the stage has there and its `clear` hook empties every pool and system (enemies, bullets, shots,
+ * items, the boss and its WARNING); the events between the old and the new position never fire.
+ * Loadouts, lives and scores stay. `createWorld` calls it for `GameConfig.stageSkip: 'boss'`; the
+ * debug controls of M1-19 may call it on a running World.
+ *
+ * @param world - The world.
+ * @returns `true` when it jumped; `false` in free flight or on a stage without a boss event.
+ *
+ * @example
+ * ```ts
+ * const world = createWorld(resolveGameConfig({ stage: 'zone-a' }), db);
+ * skipToBoss(world); // → true: the WARNING is about two seconds away
+ * ```
+ */
+export function skipToBoss(world: World): boolean {
+  const runner = world.stage;
+  if (runner === null) return false;
+  const codes = runner.eventCodes;
+  for (let i = 0; i < codes.length; i++) {
+    if (codes[i] !== StageEventCode.Warning && codes[i] !== StageEventCode.Boss) continue;
+    const x = runner.stage.events[i].x - BOSS_SKIP_LEAD;
+    runner.jumpTo(x > 0 ? x : 0);
+    const players = world.players;
+    for (let p = 0; p < players.length; p++) {
+      const ship = players[p];
+      if (ship.active && ship.state !== 'dying' && ship.state !== 'dead') {
+        spawnPlayer(ship, world.camera);
+      }
+    }
+    return true;
+  }
+  return false;
 }

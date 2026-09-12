@@ -137,6 +137,7 @@ export {
   type InputProfileChoice,
   type MeterSlotName,
   type PowerUpMode,
+  type StageSkip,
   type StartingLoadout,
   type UserOptions,
 } from './config/index.js';
@@ -327,10 +328,12 @@ export {
 } from './player/index.js';
 
 export {
+  BOSS_SKIP_LEAD,
   FNV_OFFSET_BASIS,
   FNV_PRIME,
   createDebugFlags,
   hashWorld,
+  skipToBoss,
   type DebugCounters,
   type DebugFlags,
 } from './debug/index.js';

@@ -1,0 +1,533 @@
+{
+  "formatVersion": 1,
+  "kind": "stage",
+  "id": "zone-a",
+  "name": "AZURE VERGE",
+  "music": {
+    "stage": "Stage",
+    "boss": "Boss"
+  },
+  "length": 9000,
+  "camera": [
+    {
+      "x": 0,
+      "speed": 0.75,
+      "ramp": 60
+    },
+    {
+      "x": 1500,
+      "speed": 0.8,
+      "ramp": 60
+    },
+    {
+      "x": 3500,
+      "speed": 0.6,
+      "ramp": 90
+    },
+    {
+      "x": 6000,
+      "speed": 1.5,
+      "ramp": 120
+    },
+    {
+      "x": 8000,
+      "speed": 0.75,
+      "ramp": 120
+    }
+  ],
+  "checkpoints": [
+    {
+      "x": 0
+    },
+    {
+      "x": 3500
+    },
+    {
+      "x": 6000
+    }
+  ],
+  "parallax": [
+    {
+      "layer": "far",
+      "sprite": "bg/stars-far",
+      "factor": 0.25,
+      "y": 0,
+      "spacing": 128
+    },
+    {
+      "layer": "far",
+      "sprite": "bg/stars-far",
+      "factor": 0.25,
+      "y": 128,
+      "spacing": 128
+    },
+    {
+      "layer": "mid",
+      "sprite": "bg/stars-mid",
+      "factor": 0.5,
+      "y": 0,
+      "spacing": 128
+    },
+    {
+      "layer": "mid",
+      "sprite": "bg/stars-mid",
+      "factor": 0.5,
+      "y": 128,
+      "spacing": 128
+    },
+    {
+      "layer": "mid",
+      "sprite": "bg/azure-verge",
+      "factor": 0.125,
+      "y": 152,
+      "spacing": 128
+    }
+  ],
+  "tilemap": {
+    "tileSize": 8,
+    "tileset": "terrain-a",
+    "rowsTall": 25,
+    "generator": {
+      "type": "heightfield",
+      "segments": [
+        {
+          "from": 200,
+          "to": 1400,
+          "floor": {
+            "base": 20,
+            "amp": 12,
+            "period": 360,
+            "seed": 11
+          }
+        },
+        {
+          "from": 3440,
+          "to": 6400,
+          "floor": {
+            "base": 40,
+            "amp": 16,
+            "period": 420,
+            "seed": 21
+          },
+          "ceiling": {
+            "base": 36,
+            "amp": 16,
+            "period": 300,
+            "seed": 22
+          }
+        },
+        {
+          "from": 6500,
+          "to": 7900,
+          "floor": {
+            "base": 14,
+            "amp": 8,
+            "period": 240,
+            "seed": 31
+          }
+        }
+      ]
+    }
+  },
+  "events": [
+    {
+      "x": 120,
+      "type": "formation",
+      "enemy": "skeet",
+      "count": 5,
+      "interval": 18,
+      "y": 70,
+      "bonus": 300
+    },
+    {
+      "x": 320,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 120
+    },
+    {
+      "x": 480,
+      "type": "formation",
+      "enemy": "skeet",
+      "count": 5,
+      "interval": 18,
+      "y": 130,
+      "bonus": 300
+    },
+    {
+      "x": 680,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 60
+    },
+    {
+      "x": 840,
+      "type": "formation",
+      "enemy": "skeet",
+      "count": 6,
+      "interval": 16,
+      "y": 100,
+      "bonus": 400
+    },
+    {
+      "x": 1040,
+      "type": "formation",
+      "enemy": "skeet-chain",
+      "count": 8,
+      "interval": 12,
+      "y": 60,
+      "drop": null
+    },
+    {
+      "x": 1180,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 140
+    },
+    {
+      "x": 1320,
+      "type": "formation",
+      "enemy": "skeet-chain",
+      "count": 8,
+      "interval": 12,
+      "y": 140,
+      "drop": null
+    },
+    {
+      "x": 1540,
+      "type": "formation",
+      "enemy": "vane",
+      "count": 5,
+      "interval": 10,
+      "y": 150,
+      "path": "vane-arc-up",
+      "bonus": 1000
+    },
+    {
+      "x": 1720,
+      "type": "spawn",
+      "enemy": "lancer",
+      "y": 50
+    },
+    {
+      "x": 1760,
+      "type": "spawn",
+      "enemy": "lancer",
+      "y": 150
+    },
+    {
+      "x": 1900,
+      "type": "formation",
+      "enemy": "vane",
+      "count": 5,
+      "interval": 10,
+      "y": 50,
+      "path": "vane-arc-down",
+      "bonus": 1000
+    },
+    {
+      "x": 2080,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 100
+    },
+    {
+      "x": 2240,
+      "type": "formation",
+      "enemy": "lancer",
+      "count": 3,
+      "interval": 30,
+      "y": 70,
+      "drop": null
+    },
+    {
+      "x": 2400,
+      "type": "formation",
+      "enemy": "vane",
+      "count": 6,
+      "interval": 10,
+      "y": 130,
+      "path": "vane-loop-up",
+      "bonus": 1000
+    },
+    {
+      "x": 2560,
+      "type": "spawn",
+      "enemy": "lancer",
+      "y": 40
+    },
+    {
+      "x": 2600,
+      "type": "spawn",
+      "enemy": "lancer",
+      "y": 160
+    },
+    {
+      "x": 2740,
+      "type": "formation",
+      "enemy": "skeet-chain",
+      "count": 10,
+      "interval": 12,
+      "y": 100,
+      "drop": null
+    },
+    {
+      "x": 2900,
+      "type": "formation",
+      "enemy": "vane",
+      "count": 6,
+      "interval": 10,
+      "y": 70,
+      "path": "vane-loop-down",
+      "bonus": 1000
+    },
+    {
+      "x": 3080,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 120
+    },
+    {
+      "x": 3220,
+      "type": "formation",
+      "enemy": "vane",
+      "count": 5,
+      "interval": 10,
+      "y": 100,
+      "path": "vane-swoop",
+      "bonus": 1000
+    },
+    {
+      "x": 3380,
+      "type": "spawn",
+      "enemy": "lancer",
+      "y": 60
+    },
+    {
+      "x": 3420,
+      "type": "spawn",
+      "enemy": "lancer",
+      "y": 140
+    },
+    {
+      "x": 3520,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 100
+    },
+    {
+      "x": 3640,
+      "type": "formation",
+      "enemy": "skeet",
+      "count": 5,
+      "interval": 18,
+      "y": 100,
+      "bonus": 400
+    },
+    {
+      "x": 3720,
+      "type": "spawn",
+      "enemy": "picket"
+    },
+    {
+      "x": 3860,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 90
+    },
+    {
+      "x": 3940,
+      "type": "spawn",
+      "enemy": "picket-ceiling"
+    },
+    {
+      "x": 4100,
+      "type": "spawn",
+      "enemy": "strider"
+    },
+    {
+      "x": 4260,
+      "type": "spawn",
+      "enemy": "burrow"
+    },
+    {
+      "x": 4380,
+      "type": "spawn",
+      "enemy": "picket-ceiling"
+    },
+    {
+      "x": 4520,
+      "type": "formation",
+      "enemy": "vane",
+      "count": 4,
+      "interval": 12,
+      "y": 100,
+      "path": "vane-swoop",
+      "bonus": 800
+    },
+    {
+      "x": 4660,
+      "type": "spawn",
+      "enemy": "strider"
+    },
+    {
+      "x": 4780,
+      "type": "spawn",
+      "enemy": "picket"
+    },
+    {
+      "x": 4900,
+      "type": "spawn",
+      "enemy": "picket-ceiling"
+    },
+    {
+      "x": 5020,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 100
+    },
+    {
+      "x": 5160,
+      "type": "spawn",
+      "enemy": "burrow"
+    },
+    {
+      "x": 5300,
+      "type": "spawn",
+      "enemy": "strider"
+    },
+    {
+      "x": 5440,
+      "type": "formation",
+      "enemy": "skeet",
+      "count": 5,
+      "interval": 18,
+      "y": 100,
+      "bonus": 400
+    },
+    {
+      "x": 5580,
+      "type": "spawn",
+      "enemy": "picket"
+    },
+    {
+      "x": 5700,
+      "type": "spawn",
+      "enemy": "picket-ceiling"
+    },
+    {
+      "x": 5840,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 100
+    },
+    {
+      "x": 6040,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 60
+    },
+    {
+      "x": 6140,
+      "type": "formation",
+      "enemy": "skeet",
+      "count": 5,
+      "interval": 14,
+      "y": 140,
+      "bonus": 400
+    },
+    {
+      "x": 6300,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 120
+    },
+    {
+      "x": 6420,
+      "type": "spawn",
+      "enemy": "gyre",
+      "y": 60,
+      "path": "gyre-orbit-down"
+    },
+    {
+      "x": 6600,
+      "type": "formation",
+      "enemy": "vane",
+      "count": 5,
+      "interval": 10,
+      "y": 100,
+      "path": "vane-loop-up",
+      "bonus": 1000
+    },
+    {
+      "x": 6800,
+      "type": "spawn",
+      "enemy": "gyre",
+      "y": 150,
+      "path": "gyre-orbit-up"
+    },
+    {
+      "x": 6980,
+      "type": "spawn",
+      "enemy": "lancer",
+      "y": 50
+    },
+    {
+      "x": 7020,
+      "type": "spawn",
+      "enemy": "lancer",
+      "y": 150
+    },
+    {
+      "x": 7200,
+      "type": "spawn",
+      "enemy": "gyre",
+      "y": 60,
+      "path": "gyre-orbit-down"
+    },
+    {
+      "x": 7380,
+      "type": "formation",
+      "enemy": "vane",
+      "count": 5,
+      "interval": 10,
+      "y": 140,
+      "path": "vane-arc-up",
+      "bonus": 1000
+    },
+    {
+      "x": 7560,
+      "type": "spawn",
+      "enemy": "gyre",
+      "y": 150,
+      "path": "gyre-orbit-up"
+    },
+    {
+      "x": 7760,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 90
+    },
+    {
+      "x": 8120,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 80
+    },
+    {
+      "x": 8320,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 130
+    },
+    {
+      "x": 8600,
+      "type": "warning",
+      "enemy": "halcyon-bulwark"
+    },
+    {
+      "x": 9000,
+      "type": "end"
+    }
+  ]
+}
