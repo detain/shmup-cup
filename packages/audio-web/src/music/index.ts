@@ -201,7 +201,11 @@ export function createMusicPlayer(options: MusicPlayerOptions): MusicPlayer {
       gain.cancelScheduledValues(now);
       gain.setValueAtTime(gain.value, now);
       gain.linearRampToValueAtTime(0, end);
-      source.stop(end);
+      try {
+        source.stop(end);
+      } catch (_error) {
+        // A fade-out over a fade-out: older engines throw on a second stop() (the first stands).
+      }
     },
     duck(level, ticks) {
       if (destroyed || !(ticks > 0)) return;

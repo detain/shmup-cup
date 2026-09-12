@@ -10,7 +10,8 @@
  * Kinds the core does not own go to their owning package, like the shell does at boot
  * (plan §3.5): `input-profiles` → `@shmup/input-web` (M1-05), `fx` → `@shmup/render-pixi`
  * (M1-14 — its preset sprites must exist in the atlas too), `sfx` / `music` → `@shmup/audio-web`
- * (M1-15 — the shipped bank binds every `SFX_CUES` cue and every looping song loops
+ * (M1-15 — the shipped bank binds every `SFX_CUES` cue, every sound renders audible and
+ * unclipped, the WARNING siren ends before its next wail, and every looping song loops
  * sample-exactly). The shipped set is loaded with the
  * engine's script registry (`KNOWN_SCRIPT_IDS`, M1-08), so an unknown behaviour id is an issue,
  * and its enemies and weapons are checked against their behaviours' tunables
@@ -24,6 +25,7 @@ import {
   KNOWN_SCRIPT_IDS,
   MUSIC_CUES,
   SFX_CUE_NAMES,
+  WARNING_PULSE_TICKS,
   checkEnemyBehaviors,
   checkWeaponBehaviors,
   loadContent,
@@ -37,9 +39,11 @@ import {
   loadSfxContent,
   parseMusicContent,
   parseSfxContent,
+  renderSfx,
   renderSong,
   resolveMusicCues,
   stageMusicCues,
+  type RenderedSong,
 } from '@shmup/audio-web';
 import { loadInputProfiles, parseInputProfiles } from '@shmup/input-web';
 import { fxSpriteNames, loadFxContent, parseFxContent } from '@shmup/render-pixi';
@@ -380,6 +384,56 @@ describe('integration: content/audio (M1-15)', () => {
     const stageIds = db.stages.map((stage) => stage.id);
     for (const track of content.tracks) {
       for (const stage of track.stages ?? []) expect(stageIds, track.id).toContain(stage);
+    }
+  });
+
+  it('renders every synthesized sound audible, unclipped and short; whole-screen sounds centred', () => {
+    const { content } = loadSfxContent(audioFiles('sfx'));
+    for (const def of content.cues) {
+      if (def === null || def.params === null) continue;
+      const pcm = renderSfx(def.params, SYNTH_SAMPLE_RATE);
+      let peak = 0;
+      for (const value of pcm) peak = Math.max(peak, Math.abs(value * def.volume));
+      expect(peak, def.cue).toBeGreaterThan(0.1);
+      expect(peak, def.cue).toBeLessThanOrEqual(1);
+      // A voice is a short sound; the longest placeholder (Mega Crash) is ≈ 1.2 s.
+      expect(pcm.length / SYNTH_SAMPLE_RATE, def.cue).toBeLessThanOrEqual(1.5);
+    }
+    // The siren (instance cap 1) ends before its next wail, so a wail is never cut short.
+    const siren = content.cues[SFX_CUE_NAMES.indexOf('WarningSiren')];
+    expect(siren?.maxInstances).toBe(1);
+    const wail = renderSfx(siren?.params ?? {}, SYNTH_SAMPLE_RATE).length / SYNTH_SAMPLE_RATE;
+    expect(wail).toBeLessThan(WARNING_PULSE_TICKS / 60);
+    // Whole-screen sounds are not panned; menu sounds play on the ui bus.
+    for (const cue of ['WarningSiren', 'MegaCrash', 'ExtraLife']) {
+      expect(content.cues[SFX_CUE_NAMES.indexOf(cue)]?.positional, cue).toBe(false);
+    }
+    for (const cue of ['MenuMove', 'MenuSelect', 'MenuBack', 'PauseToggle']) {
+      expect(content.cues[SFX_CUE_NAMES.indexOf(cue)]?.bus, cue).toBe('ui');
+    }
+  });
+
+  it('shapes the songs as planned: zone A ≈ 45 s loop after its intro, jingles end, no clipping', () => {
+    const { content } = loadMusicContent(audioFiles('music'));
+    const rendered = new Map<string, RenderedSong>();
+    for (const track of content.tracks) {
+      if (track.song !== null) rendered.set(track.id, renderSong(track.song, SYNTH_SAMPLE_RATE));
+    }
+    expect(rendered.size).toBe(content.tracks.length); // every placeholder is a chip song
+    const seconds = (samples: number): number => samples / SYNTH_SAMPLE_RATE;
+    const zone = rendered.get('zone-a');
+    if (zone === undefined) throw new Error('no zone-a');
+    expect(seconds(zone.loopStart)).toBeGreaterThan(0); // an intro
+    expect(seconds(zone.loopEnd - zone.loopStart)).toBeGreaterThanOrEqual(40);
+    expect(seconds(zone.loopEnd - zone.loopStart)).toBeLessThanOrEqual(50);
+    for (const id of ['stage-clear', 'game-over']) {
+      expect(rendered.get(id)?.loopStart, id).toBe(-1);
+    }
+    for (const [id, song] of rendered) {
+      let peak = 0;
+      for (const value of song.pcm) peak = Math.max(peak, Math.abs(value));
+      expect(peak, id).toBeGreaterThan(0.2);
+      expect(peak, `${id} clips`).toBeLessThan(1);
     }
   });
 

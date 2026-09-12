@@ -14,8 +14,10 @@
  *   never stolen by another cue, and a voice of higher priority than the new sound is not stolen
  *   either (the new sound is dropped instead).
  * - **Pan** — each voice slot owns a `StereoPannerNode` (created once, connected to the `sfx`
- *   bus) whose pan is set from the caller's `pan` (−1…1; the engine derives it from the event's
- *   x). `ui`-bus cues (menus) play centred straight into the `ui` bus.
+ *   bus) whose pan is set from the caller's `pan` (−1…1, {@link SfxPlayer.play}) or from a
+ *   whole-pixel screen x ({@link SfxPlayer.playAt} — the engine's path: the pan is computed only
+ *   once a voice starts, so a dropped or deduped request allocates nothing). `ui`-bus cues (menus)
+ *   play centred straight into the `ui` bus.
  *
  * Voices are tracked in preallocated typed arrays; a voice is free once its buffer has played out
  * (`context.currentTime` past its end), so no `onended` closures are needed. Starting a sound
@@ -34,7 +36,7 @@
  *
  * @module
  */
-import { SfxPriority, defineModule } from '@shmup/core';
+import { PLAYFIELD_W, SfxPriority, defineModule } from '@shmup/core';
 import type {
   AudioBufferLike,
   AudioBufferSourceNodeLike,
@@ -102,6 +104,10 @@ export interface SfxPlayerOptions {
   readonly cues: readonly (SfxVoiceSpec | null)[];
   /** Global voice cap (default {@link DEFAULT_MAX_VOICES}). */
   readonly maxVoices?: number;
+  /** Width in pixels {@link SfxPlayer.playAt} maps an x over (default `PLAYFIELD_W`). */
+  readonly panField?: number;
+  /** Pan of {@link SfxPlayer.playAt} at x = 0 / x = `panField` (±, default 1). */
+  readonly panWidth?: number;
 }
 
 /** The SFX voice manager. */
@@ -116,6 +122,21 @@ export interface SfxPlayer {
    *   this frame, or every voice holds a more important sound).
    */
   play(cue: number, pan?: number, priority?: number): number;
+  /**
+   * Starts a cue panned from a screen position: pan = `((x / panField) · 2 − 1) · panWidth`,
+   * clamped to the edges (ignored on the `ui` bus).
+   *
+   * @remarks
+   * The pan is computed only once a voice starts, so a request that is dropped or deduped
+   * allocates nothing — a fractional pan passed to {@link SfxPlayer.play} is boxed by the call
+   * itself (the audio engine plays positional cues through this method).
+   *
+   * @param cue - `SFX_CUES` id.
+   * @param x - Whole pixels from the left edge of the playfield.
+   * @param priority - A `SfxPriority` hint (1–4) overriding the cue's tier; 0 = the cue's own.
+   * @returns The voice slot used, or −1 (see {@link SfxPlayer.play}).
+   */
+  playAt(cue: number, x: number, priority: number): number;
   /** Ends the dedupe window: sounds started from now on belong to the next tick batch. */
   endFrame(): void;
   /** Stops every voice at once. */
@@ -191,6 +212,8 @@ export function createSfxPlayer(options: SfxPlayerOptions): SfxPlayer {
   const voiceTier = new Uint8Array(maxVoices);
   const voiceOrder = new Float64Array(maxVoices);
   const voiceEnd = new Float64Array(maxVoices);
+  /** 1 = the voice plays through its slot panner. */
+  const voicePanned = new Uint8Array(maxVoices);
   const sources: Array<AudioBufferSourceNodeLike | null> = [];
   const panners: Array<StereoPannerNodeLike | null> = [];
   for (let i = 0; i < maxVoices; i++) {
@@ -202,6 +225,8 @@ export function createSfxPlayer(options: SfxPlayerOptions): SfxPlayer {
     }
     panners.push(panner);
   }
+  const panField = options.panField ?? PLAYFIELD_W;
+  const panWidth = options.panWidth ?? 1;
   const startedFrame = new Float64Array(cues.length).fill(-1);
   let frame = 0;
   let sequence = 0;
@@ -223,6 +248,106 @@ export function createSfxPlayer(options: SfxPlayerOptions): SfxPlayer {
     voiceCue[slot] = -1;
   };
 
+  /**
+   * Starts a cue on a voice (the caller sets its pan): dedupe, instance cap, global cap.
+   *
+   * @param cue - `SFX_CUES` id.
+   * @param priority - Priority hint (0 = the cue's tier).
+   * @returns The voice slot, or −1 when nothing started.
+   */
+  const start = (cue: number, priority: number): number => {
+    // `?? null`: a fractional id or a hole in the bank reads `undefined` — an unknown cue too.
+    const spec = !destroyed && cue >= 0 && cue < cues.length ? (cues[cue] ?? null) : null;
+    const buffer = spec === null ? null : spec.buffer;
+    if (spec === null || buffer === null) {
+      dropped++;
+      return -1;
+    }
+    if (startedFrame[cue] === frame) {
+      deduped++;
+      return -1;
+    }
+    const tier =
+      priority >= SfxPriority.Low && priority <= SfxPriority.Critical ? priority : spec.tier;
+    const now = context.currentTime;
+    let instances = 0;
+    let oldestSame = -1;
+    let free = -1;
+    let victim = -1;
+    for (let i = 0; i < maxVoices; i++) {
+      const playing = voiceCue[i];
+      if (playing >= 0 && voiceEnd[i] <= now) release(i);
+      if (voiceCue[i] < 0) {
+        if (free < 0) free = i;
+        continue;
+      }
+      if (playing === cue) {
+        instances++;
+        if (oldestSame < 0 || voiceOrder[i] < voiceOrder[oldestSame]) oldestSame = i;
+      }
+      if (voiceTier[i] < SfxPriority.Critical) {
+        if (
+          victim < 0 ||
+          voiceTier[i] < voiceTier[victim] ||
+          (voiceTier[i] === voiceTier[victim] && voiceOrder[i] < voiceOrder[victim])
+        ) {
+          victim = i;
+        }
+      }
+    }
+    let slot: number;
+    if (instances >= spec.maxInstances && oldestSame >= 0) {
+      slot = oldestSame;
+      release(slot);
+      stolen++;
+    } else if (free >= 0) {
+      slot = free;
+    } else if (victim >= 0 && voiceTier[victim] <= tier) {
+      slot = victim;
+      release(slot);
+      stolen++;
+    } else {
+      dropped++;
+      return -1;
+    }
+    const source = context.createBufferSource();
+    source.buffer = buffer;
+    const panner = panners[slot];
+    let panned = 0;
+    if (spec.bus === 'ui') {
+      source.connect(uiBus);
+    } else if (panner !== null) {
+      source.connect(panner);
+      panned = 1;
+    } else {
+      source.connect(sfxBus);
+    }
+    voicePanned[slot] = panned;
+    source.start(0);
+    sources[slot] = source;
+    voiceCue[slot] = cue;
+    voiceTier[slot] = tier;
+    voiceOrder[slot] = ++sequence;
+    voiceEnd[slot] = now + buffer.duration;
+    startedFrame[cue] = frame;
+    started++;
+    return slot;
+  };
+
+  /**
+   * Sets the pan of a voice that just started through its slot panner (`ui` voices and engines
+   * without panners stay centred).
+   *
+   * @param slot - Voice slot.
+   * @param pan - Stereo position (clamped to −1…1).
+   */
+  const setPan = (slot: number, pan: number): void => {
+    const panner = panners[slot];
+    if (voicePanned[slot] === 1 && panner !== null) {
+      panner.pan.value = pan < -1 ? -1 : pan > 1 ? 1 : pan;
+    }
+  };
+
   return {
     maxVoices,
     get started() {
@@ -238,78 +363,16 @@ export function createSfxPlayer(options: SfxPlayerOptions): SfxPlayer {
       return deduped;
     },
     play(cue, pan = 0, priority = 0) {
-      const spec = !destroyed && cue >= 0 && cue < cues.length ? cues[cue] : null;
-      const buffer = spec === null ? null : spec.buffer;
-      if (spec === null || buffer === null) {
-        dropped++;
-        return -1;
+      const slot = start(cue, priority);
+      if (slot >= 0) setPan(slot, pan);
+      return slot;
+    },
+    playAt(cue, x, priority) {
+      const slot = start(cue, priority);
+      if (slot >= 0 && voicePanned[slot] === 1) {
+        const position = (x / panField) * 2 - 1;
+        setPan(slot, (position < -1 ? -1 : position > 1 ? 1 : position) * panWidth);
       }
-      if (startedFrame[cue] === frame) {
-        deduped++;
-        return -1;
-      }
-      const tier =
-        priority >= SfxPriority.Low && priority <= SfxPriority.Critical ? priority : spec.tier;
-      const now = context.currentTime;
-      let instances = 0;
-      let oldestSame = -1;
-      let free = -1;
-      let victim = -1;
-      for (let i = 0; i < maxVoices; i++) {
-        const playing = voiceCue[i];
-        if (playing >= 0 && voiceEnd[i] <= now) release(i);
-        if (voiceCue[i] < 0) {
-          if (free < 0) free = i;
-          continue;
-        }
-        if (playing === cue) {
-          instances++;
-          if (oldestSame < 0 || voiceOrder[i] < voiceOrder[oldestSame]) oldestSame = i;
-        }
-        if (voiceTier[i] < SfxPriority.Critical) {
-          if (
-            victim < 0 ||
-            voiceTier[i] < voiceTier[victim] ||
-            (voiceTier[i] === voiceTier[victim] && voiceOrder[i] < voiceOrder[victim])
-          ) {
-            victim = i;
-          }
-        }
-      }
-      let slot: number;
-      if (instances >= spec.maxInstances && oldestSame >= 0) {
-        slot = oldestSame;
-        release(slot);
-        stolen++;
-      } else if (free >= 0) {
-        slot = free;
-      } else if (victim >= 0 && voiceTier[victim] <= tier) {
-        slot = victim;
-        release(slot);
-        stolen++;
-      } else {
-        dropped++;
-        return -1;
-      }
-      const source = context.createBufferSource();
-      source.buffer = buffer;
-      const panner = panners[slot];
-      if (spec.bus === 'ui') {
-        source.connect(uiBus);
-      } else if (panner !== null) {
-        panner.pan.value = pan < -1 ? -1 : pan > 1 ? 1 : pan;
-        source.connect(panner);
-      } else {
-        source.connect(sfxBus);
-      }
-      source.start(0);
-      sources[slot] = source;
-      voiceCue[slot] = cue;
-      voiceTier[slot] = tier;
-      voiceOrder[slot] = ++sequence;
-      voiceEnd[slot] = now + buffer.duration;
-      startedFrame[cue] = frame;
-      started++;
       return slot;
     },
     endFrame() {

@@ -332,6 +332,8 @@ export function createAudioEngine(options: AudioEngineOptions): AudioEngine {
         uiBus: graph.bus('ui'),
         cues: specs,
         maxVoices: options.maxVoices,
+        panField: PLAYFIELD_W,
+        panWidth,
       });
       music = createMusicPlayer({ context: candidate, destination: musicBus });
       if (musicCue >= 0) startCue(musicCue, 0);
@@ -339,12 +341,13 @@ export function createAudioEngine(options: AudioEngineOptions): AudioEngine {
     },
     playSfx(cue, screenX, priority) {
       if (sfx === null) return -1;
-      let pan = 0;
+      // A positional cue is panned by the player from the whole-pixel x, once a voice starts: a
+      // fractional pan passed across the call would be boxed — an allocation for every request,
+      // dropped and deduped ones included.
       if (cue >= 0 && cue < positional.length && positional[cue] === 1) {
-        const x = (screenX / PLAYFIELD_W) * 2 - 1;
-        pan = (x < -1 ? -1 : x > 1 ? 1 : x) * panWidth;
+        return sfx.playAt(cue, screenX, priority);
       }
-      return sfx.play(cue, pan, priority);
+      return sfx.play(cue, 0, priority);
     },
     playMusic(cue, fadeTicks) {
       if (destroyed) return;
