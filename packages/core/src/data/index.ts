@@ -2279,8 +2279,8 @@ function completeEnemy(
  * that is not `afterParts`, missing on one that is, naming an unknown part or the part itself;
  * no `core` part, a core that is `never` vulnerable or has no hurtbox; a phase other than the last
  * without `until`, the last one with it, an `until` without a condition, a `count` without
- * `partsDestroyed` or above its length, unknown `partsDestroyed` names, an `hpBelow` above the
- * cores' total.
+ * `partsDestroyed` or above its length, unknown or repeated `partsDestroyed` names, an `hpBelow`
+ * above the cores' total.
  *
  * @param boss - The parsed boss section.
  * @param path - Issue path of the section (`<file>:enemies[i].boss`).
@@ -2409,6 +2409,14 @@ function completeBoss(boss: MutableBoss, path: string, issues: ValidationIssue[]
           issues,
           where + '.until.partsDestroyed[' + String(k) + ']',
           'unknown part "' + destroyed[k] + '"',
+        );
+      } else if (destroyed.indexOf(destroyed[k]) < k) {
+        // A repeated name adds no bit to the mask but counts toward the list's length (the
+        // default `count`), so the part condition could never be met.
+        ok = issue(
+          issues,
+          where + '.until.partsDestroyed[' + String(k) + ']',
+          'duplicate part "' + destroyed[k] + '"',
         );
       } else {
         mask |= 1 << index;
