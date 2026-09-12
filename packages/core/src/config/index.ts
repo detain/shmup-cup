@@ -399,7 +399,8 @@ export function volumeGain(level: number): number {
 function volumeLevel(value: unknown, fallback: number): number {
   if (typeof value !== 'number' || !Number.isFinite(value)) return fallback;
   const level = Math.round(value);
-  return level < 0 ? 0 : level > VOLUME_LEVELS ? VOLUME_LEVELS : level;
+  // `<= 0` also turns -0 (from -0.4, say) into 0 (V8 boxes -0 like a fraction).
+  return level <= 0 ? 0 : level > VOLUME_LEVELS ? VOLUME_LEVELS : level;
 }
 
 /**

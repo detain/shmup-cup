@@ -13,6 +13,7 @@ import {
   SFX_CUES,
   SimEventKind,
   UserOptionKind,
+  addScore,
   commitPlayerInput,
   createHeadlessPlatform,
   volumeGain,
@@ -1121,5 +1122,195 @@ describe('shell/boot saves and options (M1-17)', () => {
     (win as unknown as { performance: { now(): number } }).performance = { now: () => 42 };
     const timed = await boot().promise;
     expect(timed.bootTiming).toEqual({ startMs: 42, readyMs: 42, bootMs: 0 });
+  });
+});
+
+describe('shell/boot saves and options (M1-17 edge)', () => {
+  /**
+   * The audio fake with its bus volumes recorded.
+   *
+   * @returns The back-end and its `[bus, gain]` log.
+   */
+  function recordingAudio() {
+    const volumes: Array<[string, number]> = [];
+    const backend: IAudio = {
+      ...audio,
+      setBusVolume: (bus, gain) => {
+        volumes.push([bus, gain]);
+      },
+    };
+    return { backend, volumes };
+  }
+
+  /**
+   * App profiles recording every call.
+   *
+   * @param active - Id in use at boot.
+   * @returns The profiles and the call log.
+   */
+  function countingProfiles(active: string | null = 'safe') {
+    const log: string[] = [];
+    const profiles: ShellInputProfiles = {
+      choices: () => {
+        log.push('choices');
+        return [
+          { id: 'safe', label: 'SAFE 4-WAY (DEFAULT)' },
+          { id: 'fast', label: 'FAST 8-WAY' },
+        ];
+      },
+      active: () => {
+        log.push('active');
+        return active;
+      },
+      apply: (id, source) => {
+        log.push(`apply:${id}:${source}`);
+      },
+    };
+    return { profiles, log };
+  }
+
+  it('an unreadable (newer) save boots with defaults and is kept aside', async () => {
+    const newer = JSON.stringify({ version: 42, options: { audio: { master: 0 } } });
+    await platform.storage.set(SAVE_STORAGE_KEY, newer);
+    const { backend, volumes } = recordingAudio();
+    const shell = await boot({ scene: 'game', audio: backend }).promise;
+    expect(shell.loadedSave.status).toBe('unreadable');
+    expect(await platform.storage.get(SAVE_CORRUPT_KEY)).toBe(newer);
+    expect(volumes.map(([, gain]) => gain)).toEqual([1, 1, 1, 1]);
+    expect(shell.save.dirty).toBe(true); // replaced at the next write
+  });
+
+  it('a version-0 save is migrated at boot and its volumes applied', async () => {
+    await platform.storage.set(
+      SAVE_STORAGE_KEY,
+      JSON.stringify({
+        options: { masterVolume: 0.5, musicVolume: 0, sfxVolume: 1 },
+        hiScores: [{ name: 'OLD', score: 777 }],
+      }),
+    );
+    const { backend, volumes } = recordingAudio();
+    const shell = await boot({ scene: 'game', audio: backend }).promise;
+    expect([shell.loadedSave.status, shell.loadedSave.fromVersion]).toEqual(['migrated', 0]);
+    expect(volumes).toEqual([
+      ['master', 0.25],
+      ['music', 0],
+      ['sfx', 1],
+      ['ui', 1],
+    ]);
+    expect(shell.game.scenes!.hiScore).toBe(777);
+  });
+
+  it('a storage that fails to read boots like a first launch', async () => {
+    const shell = await boot({
+      scene: 'game',
+      platform: (): Platform => ({
+        ...platform,
+        storage: {
+          get: () => Promise.reject(new Error('denied')),
+          set: () => Promise.reject(new Error('denied')),
+        },
+      }),
+    }).promise;
+    expect(shell.loadedSave).toMatchObject({ status: 'empty', text: null });
+    expect(shell.game.scenes!.hiScore).toBe(0);
+    // Writes fail quietly: the store stays dirty, nothing throws.
+    expect(await shell.save.flush()).toBe(false);
+  });
+
+  it('asks the app for its choices once and applies no saved profile when none is saved', async () => {
+    const { profiles, log } = countingProfiles('fast');
+    const shell = await boot({ scene: 'game', inputProfiles: profiles }).promise;
+    expect(log).toEqual(['choices', 'active']);
+    expect(shell.game.scenes!.activeInputProfile).toBe(1);
+  });
+
+  it('dev scenes never hand the profiles to a flow (there is none)', async () => {
+    const { profiles, log } = countingProfiles();
+    const shell = await boot({ scene: 'calibration', inputProfiles: profiles }).promise;
+    expect(shell.game.scenes).toBeNull();
+    expect(log).toEqual(['choices', 'active']);
+  });
+
+  it('without app profiles a saved profile and profile events are ignored', async () => {
+    await platform.storage.set(
+      SAVE_STORAGE_KEY,
+      JSON.stringify({ version: 1, options: { input: { profileId: 'fast' } } }),
+    );
+    const shell = await boot({ scene: 'game' }).promise;
+    expect(shell.game.scenes!.inputProfiles).toEqual([]);
+    shell.game.events.push(SimEventKind.UserOption, UserOptionKind.InputProfile, 0, 0, 0);
+    expect(() => win.frame(1000)).not.toThrow();
+    expect(shell.save.options.input.profileId).toBe('fast'); // kept for a host that has it
+  });
+
+  it('ignores a profile event with a negative index', async () => {
+    const { profiles, log } = countingProfiles();
+    const shell = await boot({ scene: 'game', inputProfiles: profiles }).promise;
+    log.length = 0;
+    shell.game.events.push(SimEventKind.UserOption, UserOptionKind.InputProfile, 0, 0, -1);
+    shell.game.events.push(SimEventKind.UserOption, UserOptionKind.InputProfile, 0, 0, 0);
+    win.frame(1000);
+    expect(log).toEqual(['apply:safe:options']);
+  });
+
+  it('an app whose apply throws at boot fails with the start error and frees the renderer', async () => {
+    await platform.storage.set(
+      SAVE_STORAGE_KEY,
+      JSON.stringify({ version: 1, options: { input: { profileId: 'fast' } } }),
+    );
+    const { profiles } = countingProfiles();
+    const { promise, attributes } = boot({
+      scene: 'game',
+      inputProfiles: {
+        ...profiles,
+        apply: () => {
+          throw new Error('bad profile table');
+        },
+      },
+    });
+    await expect(promise).rejects.toThrow(/SHMUP CUP FAILED TO START/);
+    expect(attributes.get(BOOT_STATE_ATTRIBUTE)).toBe('error');
+    expect(fakes.destroyed).toBe(1);
+  });
+
+  it('marks the canvas with the ready time rounded to whole ms', async () => {
+    const readings = [1000.2, 1234.6];
+    const { promise, attributes } = boot({ now: () => readings.shift() ?? 0 });
+    const shell = await promise;
+    expect(shell.bootTiming.bootMs).toBeCloseTo(234.4, 9);
+    expect(attributes.get(BOOT_MS_ATTRIBUTE)).toBe('1235');
+  });
+
+  it('a game over in the shell writes the hi-score to the platform storage', async () => {
+    const shell = await boot({ scene: 'game' }).promise;
+    const flow = shell.game.scenes!;
+    let at = 1000;
+    /**
+     * Presses and releases an action over two frames.
+     *
+     * @param action - The action.
+     */
+    const press = (action: number): void => {
+      commitPlayerInput(platform.snapshot.players[0], action);
+      win.frame(at);
+      commitPlayerInput(platform.snapshot.players[0], 0);
+      win.frame(at + STEP);
+      at += 2 * STEP;
+    };
+    press(0);
+    press(Action.Confirm); // PRESS OK
+    press(Action.Confirm); // START
+    expect(flow.stack.top?.id).toBe('game');
+    addScore(shell.game.world, 0, 4321);
+    shell.game.world.status = 'gameOver';
+    for (let i = 0; i < 120; i++) press(0);
+    expect(flow.stack.top?.id).toBe('gameOver');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const stored = JSON.parse((await platform.storage.get(SAVE_STORAGE_KEY)) ?? '{}') as {
+      hiScores: Record<string, Array<{ score: number }>>;
+      stats: { gameOvers: number };
+    };
+    expect(stored.hiScores['meter-normal'][0].score).toBe(4321);
+    expect(stored.stats.gameOvers).toBe(1);
   });
 });

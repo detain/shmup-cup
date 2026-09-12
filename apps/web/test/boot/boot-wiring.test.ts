@@ -735,3 +735,62 @@ describe('web/boot inputOverridesFromSearch (edge cases)', () => {
     });
   });
 });
+
+describe('web/boot saves and the Options screen (M1-17 edge)', () => {
+  it('a player pick in the Options screen wins over a ?profile= override', async () => {
+    win.location.search = '?profile=tizen-remote-safe';
+    const { app } = await boot();
+    expect(app.input.keyProfile?.id).toBe('tizen-remote-safe');
+    // CONTROLS: keyboard-default (DEFAULT), keyboard-remote-emulation, tizen-remote-safe.
+    app.game.events.push(SimEventKind.UserOption, UserOptionKind.InputProfile, 0, 0, 0);
+    win.frame(0);
+    expect(app.input.keyProfile?.id).toBe('keyboard-default');
+    // ... and the override stays offered: it can be picked again.
+    app.game.events.push(SimEventKind.UserOption, UserOptionKind.InputProfile, 0, 0, 2);
+    win.frame(1000 / 60);
+    expect(app.input.keyProfile?.id).toBe('tizen-remote-safe');
+  });
+
+  it('a pick out of the choice range changes nothing', async () => {
+    const { app } = await boot();
+    app.game.events.push(SimEventKind.UserOption, UserOptionKind.InputProfile, 0, 0, 5);
+    win.frame(0);
+    expect(app.input.keyProfile?.id).toBe('keyboard-default');
+  });
+
+  it('a pick keeps the ?debounce= override', async () => {
+    win.location.search = '?debounce=4';
+    const { app } = await boot();
+    app.game.events.push(SimEventKind.UserOption, UserOptionKind.InputProfile, 0, 0, 1);
+    win.frame(0);
+    expect(app.input.keyProfile?.id).toBe('keyboard-remote-emulation');
+    expect(app.input.keyboard.tuning.releaseDebounceTicks).toBe(4);
+  });
+
+  it('reads a corrupt save as defaults and keeps a copy under shmup-cup:save.corrupt', async () => {
+    win.stored.set('shmup-cup:save.v1', 'not json at all');
+    const { app } = await boot();
+    expect(app.shell.loadedSave.status).toBe('corrupt');
+    expect(win.stored.get('shmup-cup:save.corrupt')).toBe('not json at all');
+    expect(app.input.keyProfile?.id).toBe('keyboard-default');
+    await flush();
+    expect(win.stored.get('shmup-cup:save.v1')).toBe('not json at all'); // until the next write
+  });
+
+  it('the save the flow plays with is the shell’s, on the prefixed localStorage', async () => {
+    win.stored.set(
+      'shmup-cup:save.v1',
+      JSON.stringify({ version: 1, hiScores: { 'meter-normal': [{ score: 12345 }] } }),
+    );
+    const { app } = await boot();
+    const flow = app.game.scenes!;
+    expect(flow.save).toBe(app.shell.save);
+    expect(flow.hiScore).toBe(12345);
+    flow.save.count('gamesStarted');
+    expect(await flow.save.flush()).toBe(true);
+    const stored = JSON.parse(win.stored.get('shmup-cup:save.v1') ?? '{}') as {
+      stats: { gamesStarted: number };
+    };
+    expect(stored.stats.gamesStarted).toBe(1);
+  });
+});

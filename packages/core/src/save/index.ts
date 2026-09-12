@@ -302,7 +302,8 @@ function sanitizeTable(value: unknown): readonly HiScoreEntry[] | null {
  * @returns A whole number `0…2³¹−1` (0 when unusable).
  */
 function counter(value: unknown): number {
-  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return 0;
+  // `<= 0` also turns a stored `-0` into 0 (V8 boxes -0 like a fraction).
+  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) return 0;
   return value > MAX_COUNTER ? MAX_COUNTER : Math.floor(value);
 }
 
@@ -431,11 +432,32 @@ export function parseSave(
 /**
  * The stored text of a save document (compact JSON, fields in a fixed order).
  *
+ * @remarks
+ * Canonical: the hi-score tables are written in key order and their rows field by field, so the
+ * same document always gives the same text — however its tables were built (a store appends a new
+ * mode's table, the sanitiser sorts them when the save is read) — and a reloaded save that did not
+ * change is not rewritten ({@link SaveStore.flush} compares texts).
+ *
  * @param data - The document.
  * @returns JSON text.
  */
 export function serializeSave(data: SaveData): string {
   const a = data.options.audio;
+  // No prototype: a key can never reach Object.prototype, whatever the document holds.
+  const hiScores = Object.create(null) as Record<string, HiScoreEntry[]>;
+  for (const key of Object.keys(data.hiScores).sort()) {
+    const rows: HiScoreEntry[] = [];
+    for (const row of data.hiScores[key]) {
+      rows.push({
+        name: row.name,
+        score: row.score,
+        reached: row.reached,
+        mode: row.mode,
+        difficulty: row.difficulty,
+      });
+    }
+    hiScores[key] = rows;
+  }
   return JSON.stringify({
     version: data.version,
     options: {
@@ -443,7 +465,7 @@ export function serializeSave(data: SaveData): string {
       input: { profileId: data.options.input.profileId },
       display: {},
     },
-    hiScores: data.hiScores,
+    hiScores,
     stats: {
       gamesStarted: data.stats.gamesStarted,
       gameOvers: data.stats.gameOvers,
@@ -713,8 +735,10 @@ export class SaveStore {
    *
    * @remarks
    * The text is remembered as written before the storage answers, so a second flush right after
-   * does not write again; when the write fails, the text is forgotten again (the next flush
-   * retries). Never rejects.
+   * does not write again; when the write fails — and no later flush has started meanwhile — the
+   * store forgets what the storage holds, so the next flush writes whatever the document is then
+   * (even when it equals an earlier text: overlapping writes that all failed must not leave one of
+   * them counted as stored). Never rejects.
    *
    * @returns Resolves with `true` when a write happened and succeeded, `false` when nothing had
    *   changed, there is no storage, or the storage failed.
@@ -739,7 +763,8 @@ export class SaveStore {
         return true;
       },
       () => {
-        if (this.written === text) this.written = previous;
+        // Not `previous`: that text may itself have been an optimistic write that failed too.
+        if (this.written === text) this.written = null;
         return false;
       },
     );

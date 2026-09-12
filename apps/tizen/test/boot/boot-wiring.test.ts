@@ -577,3 +577,105 @@ describe('tizen/boot input profiles (edge cases)', () => {
     expect(win.exits).toBe(1);
   });
 });
+
+describe('tizen/boot saves and the Options screen (M1-17 edge)', () => {
+  /** The next frame's rAF time. */
+  let at = 0;
+
+  /**
+   * Runs frames (one tick each).
+   *
+   * @param frames - Frames to run.
+   */
+  function frames(frames: number): void {
+    for (let i = 0; i < frames; i++) {
+      win.frame(at);
+      at += STEP;
+    }
+  }
+
+  /**
+   * Presses and releases a remote key (the safe profile debounces the release by 2 ticks).
+   *
+   * @param keyCode - Legacy key code.
+   */
+  function tap(keyCode: number): void {
+    win.key('keydown', keyCode);
+    frames(3);
+    win.key('keyup', keyCode);
+    frames(6);
+  }
+
+  beforeEach(() => {
+    at = 0;
+  });
+
+  it('an Options pick of the profile in use neither switches nor registers keys', async () => {
+    const { app } = await boot();
+    const before = app.input.keyProfile;
+    app.game.events.push(SimEventKind.UserOption, UserOptionKind.InputProfile, 0, 0, 0);
+    frames(1);
+    expect(app.input.keyProfile).toBe(before);
+    expect(win.registeredKeys).toEqual(['MediaPlayPause', 'ChannelUp', 'ChannelDown']);
+  });
+
+  it('a saved FAST 8-WAY shows as the active choice and can be switched back', async () => {
+    win.stored.set('shmup-cup:save.v1', savedProfile('tizen-remote-diagonal'));
+    const { app } = await boot();
+    expect(app.game.scenes!.activeInputProfile).toBe(1);
+    app.game.events.push(SimEventKind.UserOption, UserOptionKind.InputProfile, 0, 0, 0);
+    frames(1);
+    expect(app.input.keyProfile?.id).toBe('tizen-remote-safe');
+    expect(app.input.keyProfile?.releaseDebounceTicks).toBe(2);
+  });
+
+  it('a corrupt save boots the title with defaults and is kept aside', async () => {
+    win.stored.set('shmup-cup:save.v1', '{"version":1,"options":');
+    const { app } = await boot();
+    expect(app.shell.loadedSave.status).toBe('corrupt');
+    expect(win.stored.get('shmup-cup:save.corrupt')).toBe('{"version":1,"options":');
+    expect(app.input.keyProfile?.id).toBe('tizen-remote-safe');
+    expect(app.game.scenes!.save.options.audio).toEqual({ master: 10, music: 10, sfx: 10 });
+  });
+
+  it('remote only: change SFX and CONTROLS, Back saves; a relaunch keeps both', async () => {
+    const first = await boot();
+    frames(2);
+    tap(13); // PRESS OK → menu
+    tap(40); // OPTIONS
+    tap(13);
+    frames(2);
+    const flow = first.app.game.scenes!;
+    expect(flow.stack.top?.id).toBe('options');
+    tap(40);
+    tap(40); // SFX
+    tap(37); // 10 → 9
+    tap(37); // → 8
+    tap(40); // CONTROLS
+    tap(39); // → FAST 8-WAY (applied live)
+    expect(first.app.input.keyProfile?.id).toBe('tizen-remote-diagonal');
+    expect(win.stored.has('shmup-cup:save.v1')).toBe(false); // written when the screen closes
+    win.key('keydown', 10009); // Back: save and close (never an exit here)
+    frames(2);
+    win.key('keyup', 10009);
+    frames(2);
+    expect(flow.stack.top?.id).toBe('title');
+    expect(win.exits).toBe(0);
+    await flush();
+    const stored = JSON.parse(win.stored.get('shmup-cup:save.v1') ?? '{}') as {
+      options: { audio: { sfx: number }; input: { profileId: string } };
+    };
+    expect(stored.options.audio.sfx).toBe(8);
+    expect(stored.options.input.profileId).toBe('tizen-remote-diagonal');
+    first.app.stop();
+
+    // Relaunch on the same storage (Tizen keeps localStorage until uninstall).
+    const kept = win.stored;
+    win = new FakeWindow();
+    for (const [key, value] of kept) win.stored.set(key, value);
+    const second = await boot();
+    expect(second.app.input.keyProfile?.id).toBe('tizen-remote-diagonal');
+    expect(second.app.game.scenes!.save.options.audio.sfx).toBe(8);
+    expect(second.app.game.scenes!.activeInputProfile).toBe(1);
+  });
+});
