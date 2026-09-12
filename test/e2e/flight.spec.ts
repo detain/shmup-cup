@@ -90,6 +90,7 @@ async function hold(page: Page, key: string, frames: number): Promise<void> {
 
 test.describe('free flight (web build)', () => {
   test('arrow keys move the KESTREL; without input it stays put', async ({ page }) => {
+    test.setTimeout(90_000);
     const errors: string[] = [];
     page.on('console', (message) => {
       if (message.type() === 'error') errors.push(message.text());
@@ -123,6 +124,9 @@ test.describe('free flight (web build)', () => {
   test('holding a direction stops the ship at the playfield margin, clear of the HUD', async ({
     page,
   }) => {
+    // ~400 rAF frames and five canvas captures: ~55 s on a CI runner's SwiftShader, over the
+    // 60 s default under load (the M1-10/M1-11 CI flakes).
+    test.setTimeout(120_000);
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
     await page.goto('./');
