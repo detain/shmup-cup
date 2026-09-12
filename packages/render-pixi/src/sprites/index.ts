@@ -142,6 +142,26 @@ function setTint(sprite: Sprite, tint: number): void {
   if (sprite.tint !== tint) sprite.tint = tint;
 }
 
+/**
+ * Sets the alpha of a quad-pool sprite only when it changes, comparing against the pool's own
+ * record of the 0…255 value it last set. `alpha / 255` is fractional for a translucent quad (the
+ * debug overlay's backdrop and grid lines, dimmed HUD panels), and passing a fractional number to
+ * Pixi's `alpha` setter boxes it into a heap number whenever V8 does not inline the setter — which
+ * depends on how the call site's feedback settled (the debug overlay's allocation guard caught 16
+ * bytes per translucent quad per frame in some runs). Comparing against a typed array never
+ * allocates, and an unchanged quad skips the setter altogether.
+ *
+ * @param sprite - The Pixi sprite.
+ * @param alphas - The pool's last-set alphas, 0…255 (255 = Pixi's default opacity of 1).
+ * @param slot - The sprite's slot in the pool.
+ * @param alpha - Opacity 0…255.
+ */
+function setAlpha(sprite: Sprite, alphas: Float64Array, slot: number, alpha: number): void {
+  if (alphas[slot] === alpha) return;
+  alphas[slot] = alpha;
+  sprite.alpha = alpha / 255;
+}
+
 /** Options of {@link createSpriteLayerBinding}. */
 export interface SpriteLayerBindingOptions {
   /** The atlas the frames come from. */
@@ -278,8 +298,9 @@ export interface QuadPool {
    * Draws an atlas frame with its anchor at `(x, y)`.
    *
    * @remarks
-   * A `frameId` outside `[0, atlas.size)` draws {@link Atlas.missingFrame}. The tint is only
-   * written to the Pixi sprite when it changed (Pixi's tint setter allocates).
+   * A `frameId` outside `[0, atlas.size)` draws {@link Atlas.missingFrame}. The tint and the
+   * alpha are only written to the Pixi sprite when they changed (Pixi's tint setter allocates, and
+   * a fractional alpha passed to a setter V8 does not inline is boxed).
    *
    * @param frameId - Frame to draw.
    * @param x - Screen x of the anchor (rounded).
@@ -344,6 +365,8 @@ export function createQuadPool(options: QuadPoolOptions): QuadPool {
     sprites.push(sprite);
     container.addChild(sprite);
   }
+  // The alpha each sprite was last given (see setAlpha); new sprites are opaque.
+  const alphas = new Float64Array(capacity).fill(255);
   const pixel = atlas.textures[atlas.pixelFrame];
   let used = 0;
   let previous = 0;
@@ -368,11 +391,12 @@ export function createQuadPool(options: QuadPoolOptions): QuadPool {
         dropped++;
         return false;
       }
-      const sprite = sprites[used++];
+      const slot = used++;
+      const sprite = sprites[slot];
       const id = frameId >= 0 && frameId < atlas.size ? frameId : atlas.missingFrame;
       place(sprite, atlas, id, Math.round(x), Math.round(y), flags);
       setTint(sprite, tint);
-      sprite.alpha = alpha / 255;
+      setAlpha(sprite, alphas, slot, alpha);
       sprite.visible = true;
       return true;
     },
@@ -381,14 +405,15 @@ export function createQuadPool(options: QuadPoolOptions): QuadPool {
         dropped++;
         return false;
       }
-      const sprite = sprites[used++];
+      const slot = used++;
+      const sprite = sprites[slot];
       sprite.texture = pixel;
       sprite.x = Math.round(x);
       sprite.y = Math.round(y);
       sprite.scale.x = w;
       sprite.scale.y = h;
       setTint(sprite, color);
-      sprite.alpha = alpha / 255;
+      setAlpha(sprite, alphas, slot, alpha);
       sprite.visible = w > 0 && h > 0;
       return true;
     },

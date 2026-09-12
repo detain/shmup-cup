@@ -417,7 +417,9 @@ export function createMoverContext(
  * and the inlining budget of the big per-tick loops runs out — so the frame origin is computed
  * inline (`camera.x · air`, 1 for flying bodies, 0 for ground ones: both arms a product), sines
  * come straight from the committed table (`SIN_TABLE_Q16[a] / TRIG_SCALE`, bit-identical to
- * `sinB` / `cosB`) and `atan2B` gets whole numbers (see `aimFrom`).
+ * `sinB` / `cosB`) and `atan2B` gets whole numbers (see `aimFrom`). Aiming at the target goes
+ * through `aimAtTarget`, which reads the target's (fractional) coordinates itself rather than
+ * taking them as arguments.
  */
 
 /**
@@ -482,6 +484,21 @@ const AIM_SCALE = 64;
  */
 function aimFrom(body: MoverBody, tx: number, ty: number): number {
   return atan2B(((ty - body.y) * AIM_SCALE) | 0, ((tx - body.x) * AIM_SCALE) | 0);
+}
+
+/**
+ * Direction from a body to the context's target — `aimFrom(body, ctx.targetX, ctx.targetY)`,
+ * bit for bit — for per-tick movers. It takes objects only: the target's coordinates are
+ * fractional (the ship moves in sub-pixels), and passing them to `aimFrom` boxed two heap numbers
+ * per homing body per tick whenever V8 did not inline the call (the 64-enemy allocation guard
+ * caught ~128 bytes per tick in some runs).
+ *
+ * @param body - The body (the origin).
+ * @param ctx - The context (its `targetX` / `targetY`).
+ * @returns The angle in `[0, 1024)`.
+ */
+function aimAtTarget(body: MoverBody, ctx: MoverContext): number {
+  return atan2B(((ctx.targetY - body.y) * AIM_SCALE) | 0, ((ctx.targetX - body.x) * AIM_SCALE) | 0);
 }
 
 /**
@@ -797,7 +814,7 @@ function moveCrawl(body: MoverBody, ctx: MoverContext): void {
  */
 function moveHoming(body: MoverBody, ctx: MoverContext): void {
   if (ctx.hasTarget) {
-    body.s0 = turnToward(body.s0, aimFrom(body, ctx.targetX, ctx.targetY), body.m1);
+    body.s0 = turnToward(body.s0, aimAtTarget(body, ctx), body.m1);
   }
   const speed = body.m0;
   const angle = body.s0 & ANGLE_MASK;
@@ -822,7 +839,7 @@ function moveAimedDash(body: MoverBody, ctx: MoverContext): void {
   if (body.s0 === 0) {
     body.s0 = 1;
     body.s1 = ctx.hasTarget
-      ? quantizeAngle(aimFrom(body, ctx.targetX, ctx.targetY), AIM_DIRECTIONS)
+      ? quantizeAngle(aimAtTarget(body, ctx), AIM_DIRECTIONS)
       : ANGLE_UNITS / 2;
   }
   const speed = body.m0;

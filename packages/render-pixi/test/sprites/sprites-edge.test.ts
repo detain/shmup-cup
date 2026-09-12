@@ -5,11 +5,12 @@
  * offsets, combined flips, and the quad pool's texture / scale / tint resets between reused
  * sprites. Also checks that neither sync nor a quad pass ever creates or re-parents a Pixi
  * object and that both stay (nearly) allocation-free per frame (plan §1.3) — re-tinting a quad
- * with an unchanged colour used to allocate inside Pixi's `Color` on every pass.
+ * with an unchanged colour used to allocate inside Pixi's `Color` on every pass, and a translucent
+ * quad's fractional alpha could be boxed on every pass (it is now written only on change).
  */
 import { LayerId, PLAYFIELD_Y, SpriteFlag, createSpriteBatch, pushSprite } from '@shmup/core';
 import type { Container, Sprite } from 'pixi.js';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createAtlas, type Atlas } from '../../src/atlas/index.js';
 import {
   createQuadPool,
@@ -305,6 +306,34 @@ describe('render-pixi/sprites createQuadPool (edge)', () => {
     }
     expect(pool.container.children.every((child, i) => child === before[i])).toBe(true);
     expect(pool.container.children).toHaveLength(8);
+  });
+
+  it('writes the alpha of a quad only when it changes, through rect and frame alike', () => {
+    const a = atlas();
+    const pool = createQuadPool({ atlas: a, capacity: 2 });
+    const [sprite, other] = pool.container.children as Sprite[];
+    // Count the writes that reach Pixi's alpha setter on the first sprite (the spy still sets it).
+    const setter = vi.spyOn(sprite, 'alpha', 'set');
+    const writes = (): number[] => setter.mock.calls.map((call) => call[0]);
+    const pass = (alpha: number, asFrame = false): void => {
+      pool.begin();
+      if (asFrame) pool.frame(a.spriteBase('bg/tile'), 0, 0, 0, 0xffffff, alpha);
+      else pool.rect(0, 0, 4, 4, 0x405070, alpha);
+      pool.rect(0, 0, 4, 4, 0x405070, 90);
+      pool.end();
+    };
+    pass(255); // a new quad is already opaque: nothing to write
+    expect(writes()).toEqual([]);
+    pass(90);
+    pass(90);
+    pass(90, true);
+    expect(writes()).toHaveLength(1);
+    expect(sprite.alpha).toBeCloseTo(90 / 255);
+    pass(255, true);
+    pass(51);
+    expect(writes()).toEqual([90 / 255, 1, 51 / 255]);
+    expect(sprite.alpha).toBeCloseTo(0.2);
+    expect(other.alpha).toBeCloseTo(90 / 255);
   });
 
   it('redrawing the same HUD every frame allocates next to nothing (tints set only on change)', () => {

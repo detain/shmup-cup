@@ -4,12 +4,12 @@
  * outlines scrolling through the view (so outlines come and go and numbers change) allocates
  * nothing — every list draws in one colour, so no quad is ever re-tinted.
  *
- * The guard measures a **second** overlay, after a throwaway one has run a few thousand frames.
- * The very first instances of the overlay's objects (its Pixi sprites, lists and views) sometimes
- * stay in a V8 state that boxes a few hundred bytes per frame for as long as they live — about one
- * run in four when other test processes run in parallel, never with the same code on objects
- * created afterwards. That is V8 settling its hidden classes, not a per-frame allocation of the
- * overlay; measuring a fresh overlay keeps the guard on what the code allocates in steady state.
+ * The guard measures a **second** overlay, after a throwaway one has run a few thousand frames, so
+ * the shared code has tiered up before the measured windows. It used to fail now and then (352
+ * bytes per frame, mostly when other test processes ran in parallel): the quad pool assigned every
+ * quad's `alpha / 255` each frame, and the 22 translucent quads here (the panel backdrop, the
+ * graph guides, the grid lines) each boxed that fractional number whenever V8 had not inlined
+ * Pixi's `alpha` setter. The pool now writes an alpha only when it changes.
  */
 import {
   EMPTY_CONTENT_DB,
