@@ -16,8 +16,8 @@
  *   and the dim as overlays over the world layers (under the HUD).
  * - {@link createScorePopups} — {@link SCORE_POPUP_SLOTS} (16) bitmap-font numbers that rise from
  *   where points were scored and vanish after {@link SCORE_POPUP_TICKS} (40) ticks, blinking at
- *   the end; the oldest is replaced when all are in use. Drawn into an ordered quad pool on the
- *   `FX` layer (below the enemy bullets), camera-converted like the particles.
+ *   the end; the oldest is replaced when all are in use. Drawn into one small quad pool per slot
+ *   on the `FX` layer (below the enemy bullets), camera-converted like the particles.
  *
  * The sim-side hit flash (`<sprite>@flash` frames while `flashTicks > 0`, decision D30) and the
  * invulnerability blink (`SpriteFlag.Hidden` every other 4 ticks) are already in the sprite
@@ -27,8 +27,11 @@
  * first `step` after a request only clears its "fresh" mark, so at one tick per frame the drawn
  * amplitude equals `shakeAmount(world.fx)` on every frame.
  *
- * **Allocation.** Requests, `step` and `sync` only write numbers (the popups' quad pool and text
- * layout are preallocated).
+ * **Allocation.** Requests, `step` and `sync` only write numbers (the popups' quads and text
+ * layout are preallocated). Each popup slot has a quad pool of its own, so a glyph quad keeps its
+ * tint for the whole life of its popup — Pixi's tint setter allocates, and with one shared pool
+ * a gold bonus popup among white ones re-tinted quads on every frame where a popup blinked,
+ * appeared or expired.
  *
  * **Implements.**
  * - shmup_feat.md §18 — screen shake (integer, decaying, 3 magnitudes, off switch), flash on Mega
@@ -58,7 +61,7 @@ import {
   defineModule,
   type CameraView,
 } from '@shmup/core';
-import type { Container } from 'pixi.js';
+import { Container } from 'pixi.js';
 import type { Atlas } from '../atlas/index.js';
 import { createQuadPool, type QuadPool } from '../sprites/index.js';
 import { drawNumber, type BitmapFont } from '../text/index.js';
@@ -418,7 +421,10 @@ export const SCORE_POPUP_COLOR = 0xf8f8f8;
 /** Colour of a bonus popup (a completed formation, a boss's tally). */
 export const BONUS_POPUP_COLOR = 0xf8d030;
 
-/** Glyph quads per popup (7 digits and a spare). */
+/**
+ * Glyph quads per popup slot: 8 digits, as many as `MAX_SCORE` has (a longer number loses its
+ * last digits).
+ */
 const GLYPHS_PER_POPUP = 8;
 
 /** Ticks at the end of a popup's life during which it blinks. */
@@ -440,7 +446,10 @@ export interface ScorePopupsOptions {
 
 /** Rising score numbers. */
 export interface ScorePopups {
-  /** Holds the glyph quads (add it to the `FX` layer, above the particles). */
+  /**
+   * Holds the glyph quads — one quad pool per slot, in slot order (add it to the `FX` layer,
+   * above the particles).
+   */
   readonly container: Container;
   /** Popup slots. */
   readonly capacity: number;
@@ -508,11 +517,14 @@ export function createScorePopups(options: ScorePopupsOptions): ScorePopups {
     throw new RangeError('score popup ticks must be a positive integer');
   }
   const offsetY = options.offsetY ?? PLAYFIELD_Y;
-  const pool: QuadPool = createQuadPool({
-    atlas,
-    capacity: capacity * GLYPHS_PER_POPUP,
-    label: 'score-popups',
-  });
+  // One pool per slot: a slot's quads only change tint when a new popup takes the slot.
+  const container = new Container({ label: 'score-popups' });
+  const pools: QuadPool[] = [];
+  for (let i = 0; i < capacity; i++) {
+    const pool = createQuadPool({ atlas, capacity: GLYPHS_PER_POPUP, label: 'score-popup' });
+    pools.push(pool);
+    container.addChild(pool.container);
+  }
   const px = new Float64Array(capacity);
   const py = new Float64Array(capacity);
   const points = new Float64Array(capacity);
@@ -526,7 +538,7 @@ export function createScorePopups(options: ScorePopupsOptions): ScorePopups {
   const bottom = offsetY + PLAYFIELD_H - glyphHeight;
 
   return {
-    container: pool.container,
+    container,
     capacity,
     ticks,
     /** See {@link ScorePopups.liveCount}. */
@@ -569,11 +581,14 @@ export function createScorePopups(options: ScorePopupsOptions): ScorePopups {
     sync(camera) {
       const camX = camera.x;
       const camY = camera.y;
-      pool.begin();
       for (let i = 0; i < capacity; i++) {
+        const pool = pools[i];
+        pool.begin();
         const age = ages[i];
-        if (age < 0) continue;
-        if (age >= ticks - POPUP_BLINK_TICKS && ((age >> 1) & 1) === 1) continue;
+        if (age < 0 || (age >= ticks - POPUP_BLINK_TICKS && ((age >> 1) & 1) === 1)) {
+          pool.end();
+          continue;
+        }
         let sx = Math.round(px[i] - camX) | 0;
         if (sx < 12) sx = 12;
         else if (sx > PLAYFIELD_W - 12) sx = PLAYFIELD_W - 12;
@@ -581,15 +596,16 @@ export function createScorePopups(options: ScorePopupsOptions): ScorePopups {
         if (sy < offsetY) sy = offsetY;
         else if (sy > bottom) sy = bottom;
         drawNumber(pool, font, points[i], sx, sy, 0, colors[i], TextAlign.Center, 255);
+        pool.end();
       }
-      pool.end();
     },
     clear() {
       ages.fill(-1);
       live = 0;
     },
     destroy() {
-      pool.destroy();
+      for (const pool of pools) pool.destroy();
+      container.destroy({ children: true });
     },
   };
 }

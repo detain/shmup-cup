@@ -16,7 +16,7 @@ import {
   shakeAmount,
   tickFx,
 } from '@shmup/core';
-import type { Sprite } from 'pixi.js';
+import type { Container, Sprite } from 'pixi.js';
 import { describe, expect, it } from 'vitest';
 import { createAtlas } from '../../src/atlas/index.js';
 import {
@@ -225,8 +225,11 @@ describe('render-pixi/effects score popups', () => {
    * @param container - The popups' container.
    * @returns `[x, y, tint]` per visible quad.
    */
-  const quads = (container: { children: readonly unknown[] }) =>
-    (container.children as Sprite[]).filter((s) => s.visible).map((s) => [s.x, s.y, s.tint]);
+  const quads = (container: Container) =>
+    (container.children as Container[])
+      .flatMap((pool) => pool.children as Sprite[])
+      .filter((s) => s.visible)
+      .map((s) => [s.x, s.y, s.tint]);
 
   it('rises from the scoring point, blinks at the end and disappears after 40 ticks', () => {
     const popups = createScorePopups({ atlas, font });

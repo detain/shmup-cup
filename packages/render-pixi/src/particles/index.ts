@@ -499,7 +499,7 @@ export interface ParticleSystem {
    * @remarks
    * `count × intensity` particles (intensity clamped to 1…4 and floored, NaN = 1; at most 64 a
    * burst). Each takes a free slot, or recycles the oldest live particle when the pool is full.
-   * An unknown preset index spawns nothing.
+   * An unknown (or fractional) preset index spawns nothing.
    *
    * @param preset - Preset index.
    * @param x - World x of the burst's centre.
@@ -823,7 +823,8 @@ export function createParticleSystem(options: ParticleSystemOptions): ParticleSy
    * @returns Particles spawned.
    */
   const emit = (p: number, x: number, y: number, intensity: number): number => {
-    if (!(p >= 0 && p < pCount.length)) return 0;
+    // A fractional index would read `pCount[0.5]` (undefined) and return NaN.
+    if (!(p >= 0 && p < pCount.length) || p % 1 !== 0) return 0;
     const times = intensity >= 4 ? 4 : intensity >= 1 ? Math.floor(intensity) : 1;
     let n = pCount[p] * times;
     if (n > MAX_BURST) n = MAX_BURST;
