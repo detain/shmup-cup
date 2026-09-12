@@ -83,7 +83,7 @@ errors you may meet:
 | `Object.fromEntries` | Chrome 73 | a loop filling an object |
 | `Promise.allSettled` / `Promise.any` | Chrome 76 / 85 | `Promise.all` with per-promise `.catch` |
 | `String.prototype.replaceAll` | Chrome 85 | `replace(/…/g, …)` |
-| `.at(i)` | Chrome 92 | `a[i]`, `a[a.length - 1]` |
+| `.at(i)` | Chrome 92 | `a[i]`, `a[a.length - 1]` — the rule matches any `.at(` call, so do not name your own method `at` either (the scene stack's is `sceneAt`) |
 | `structuredClone` | Chrome 98 | explicit copy |
 | `import.meta` | ES modules only | pass values in through config (allowed only in `apps/web`, which is served as a module) |
 | other newer APIs | — | `compat/compat` (eslint-plugin-compat, `lintAllEsApis`) reports them |
@@ -149,6 +149,12 @@ ES5 and linted with `ecmaVersion: 5`.
   code that only *has* to allocate (a Web Audio source node per started sound) keeps every
   other path — dropped, deduped, unchanged — allocation-free
   ([audio.md](audio.md#zero-allocation-and-the-hot-path-rules)).
+  And from M1-16: an options / layout object a builder reads every frame (`drawMenu`'s
+  `MenuLayout`) is a frozen module constant — a literal at the call site allocates on every
+  redraw; widgets and HUDs that count ticks are classes; a composed draw list (the scene flow's
+  one UI list) is cleared and rebuilt only when a producer's revision changed, and each producer
+  writes only its own string-slot range
+  ([scenes-and-ui.md](scenes-and-ui.md#zero-allocation-and-the-hot-path-rules)).
 - Behaviour coroutines (generators, D29) allocate a small result object on every resume:
   scripts **sleep** (`yield ticks`) and are resumed only when they wake; per-tick motion
   belongs in a mover (numbers on the body), never in a `yield 1` loop.

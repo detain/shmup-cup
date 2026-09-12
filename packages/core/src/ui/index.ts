@@ -10,7 +10,8 @@
  *   plain actions, {@link Slider}s or {@link Toggle}s, and the YES / NO {@link Confirm} prompt
  *   (default NO). {@link menuTick} / {@link confirmTick} advance one widget by one tick of input:
  *   Up / Down move the focus (disabled items are skipped, the list wraps when asked), Left / Right
- *   change the focused slider or toggle (or the prompt's choice), Confirm activates, Back backs out.
+ *   change the focused slider or toggle (or the prompt's choice), Confirm activates, Back backs
+ *   out.
  *   Directions auto-repeat by **held duration** — once on the press, again after
  *   {@link MENU_REPEAT_DELAY} ticks, then every {@link MENU_REPEAT_INTERVAL} ticks — independent of
  *   any device key repeat (the input adapters drop those). A Confirm press is **buffered** for
@@ -19,17 +20,24 @@
  *   buffering for menus").
  *   Both return a {@link MenuResult} code the scene acts on (no callbacks, no allocation);
  *   {@link menuResultSfx} maps it to the menu sound.
- * - **Builders.** {@link drawPanel} (a framed translucent box), {@link drawMenu} (the items with the
- *   focus cursor, disabled items dimmed, a slider's bar and value, a toggle's `ON` / `OFF`) and
+ * - **Builders.** {@link drawPanel} (a framed translucent box), {@link drawMenu} (the items with
+ *   the focus cursor, disabled items dimmed, a slider's bar and value, a toggle's `ON` / `OFF`) and
  *   {@link drawConfirm} (question + YES / NO). Text goes through the list's string slots: a builder
  *   writes a slot only when its text changed, so redrawing a menu never builds strings.
  * - **HUD** (decision D20: two 8-px bars outside the playfield). {@link buildHud} draws the top bar
  *   `1P 00012300  HI 00050000  2P ------` and the bottom bar — `lives − 1` stock icons, the 7-slot
  *   power meter (`SPEED MISSILE DOUBLE LASER OPTION ? !`, the highlighted slot flashing every
- *   {@link HUD_METER_FLASH_TICKS} ticks, slots that cannot be equipped dimmed) and the Force Field's
- *   pips; numbers use the `number` op. {@link Hud.update} rebuilds the list **only when something
- *   it shows changed** (the scores' dirty flags, lives, the meter cursor and equippable mask, the
- *   flash phase, the shield) and never allocates.
+ *   {@link HUD_METER_FLASH_TICKS} ticks, slots that cannot be equipped dimmed) and the Force
+ *   Field's pips; numbers use the `number` op. {@link Hud.update} rebuilds the list **only when
+ *   something it shows changed** (the scores' dirty flags, lives, the meter cursor and equippable
+ *   mask, the flash phase, the shield) and never allocates.
+ *
+ * The widgets are plain state objects the scenes own (`core/scenes` builds its title and pause
+ * menus and the YES / NO dialog from them); nothing here knows about scenes, sounds or the stack.
+ * Because the widgets answer with numbers and draw through string slots, a menu can be ticked and
+ * redrawn every frame without allocating — but a {@link MenuLayout} passed to {@link drawMenu}
+ * must be a constant (a frozen object built once): an object literal written at the call site
+ * allocates on every redraw.
  *
  * Sprites are referenced by id: {@link UI_SPRITES} names the atlas sprites the kit draws (the HUD
  * pieces, the title logo); hosts intern them with the engine's sprites (`core/world`
@@ -962,8 +970,22 @@ export const HUD_METER_FLASH_TICKS = 8;
  * the session hi-score, player 2's score or `------`, player 1's stock, power meter and Force
  * Field. Never allocates (the four labels are written into their string slots only when changed).
  *
+ * @remarks
+ * Side effect: clears the scores' `displayDirty` and the board's `hiScoreDirty` flags (it has
+ * drawn them). Layout ({@link HUD_LAYOUT}): top bar `1P` at x 8, `HI` at 156, `2P` at 292, each
+ * followed 16 px later by an 8-digit number (`------` while player 2 is out); bottom bar: up to 5
+ * stock icons 10 px apart from x 4 (more: one icon and the count), the seven 40-px meter slots
+ * from x 58 — `hud/meter-slot` frame 1 on the "on" half of the {@link HUD_METER_FLASH_TICKS}
+ * flash for the highlighted slot, frame 2 for a slot that cannot be equipped, frame 0 otherwise,
+ * with the `hud/meter-labels` frame of the slot tinted {@link HUD_COLORS}.label or
+ * `labelDisabled` — and, while the Force Field is up, one pip per hit it can take (at most 5, 7 px
+ * apart from x 344), cyan for the hits left and dark for the spent ones.
+ * Without the UI sprites the icons and slots become rectangles and the labels are left out. The
+ * worst case is 32 commands (the game scene's HUD list has 64).
+ *
  * @param world - The World shown.
- * @param list - Target draw list (≥ 40 commands, ≥ 4 string slots).
+ * @param list - Target draw list (≥ 32 commands, ≥ 4 string slots — slots 0–3 are the HUD's,
+ *   {@link HUD_STRING_SLOTS}).
  * @param sprites - UI sprite ids ({@link resolveUiSprites}); missing ones fall back to rectangles.
  *
  * @example
@@ -1083,7 +1105,9 @@ export class Hud {
    * @remarks
    * Compared: player 1's and 2's score (their `displayDirty` flags), the hi-score
    * (`hiScoreDirty`), player 1's lives, whether player 2 plays, the meter cursor and equippable
-   * mask, the highlight's flash phase (only while a slot is highlighted) and the Force Field's hits.
+   * mask, the highlight's flash phase (only while a slot is highlighted) and the Force Field's
+   * hits. A rebuild clears the dirty flags ({@link buildHud}), so only one HUD should read a given
+   * World's flags. The game scene calls this once per displayed frame, not per tick.
    *
    * @param world - The World shown.
    * @param list - The HUD draw list.

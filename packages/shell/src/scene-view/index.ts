@@ -71,9 +71,14 @@ const STAR_LAYERS = [
   { sprite: 2, speed: 0.5, far: false },
 ] as const;
 
-/** A position the audio engine pans against (updated from the World's camera). */
+/**
+ * A position the audio engine pans against (updated from the World's camera). A class, so its
+ * possibly fractional fields keep one hidden class and are written without allocating.
+ */
 class FollowCamera implements CameraView {
+  /** Playfield left edge in world pixels. */
   x = 0;
+  /** Playfield top edge in world pixels. */
   y = 0;
 }
 
@@ -95,11 +100,19 @@ export interface SceneView {
   readonly frame: RenderFrame;
   /** The camera of what is on screen: the World's while a game shows, else the backdrop's. */
   readonly camera: CameraView;
-  /** How many different Worlds have been shown (a game start or RETRY adds one). */
+  /**
+   * How many different Worlds have been shown (a game start or RETRY adds one) — the shell clears
+   * the renderer's particles and score popups when it changes.
+   */
   readonly worldChanges: number;
   /**
    * Copies the game's camera into {@link SceneView.camera} (call after the ticks, before the
    * events are drained). Never allocates.
+   *
+   * @remarks
+   * Follows `game.world.camera` when the last {@link SceneView.update} showed a World, else the
+   * backdrop's static camera — so a sound pushed while the title shows pans from the backdrop, and
+   * after a quit to the title the view stops following the old World.
    */
   follow(): void;
   /**
@@ -115,6 +128,14 @@ export interface SceneView {
 
 /**
  * Creates the scene flow's view for a game.
+ *
+ * @remarks
+ * The starfield drifts with the frame's tick, so it freezes with the World under the pause menu
+ * and restarts from the left with a new World (whose tick starts at 0); behind the title it runs
+ * on the flow's own tick. A World whose view has parallax bands (a stage) is drawn as is; one
+ * without (open space) gets a wrapper view listing two starfield batches, then the World's
+ * batches, on the World's camera with its terrain, laser and WARNING views passed through. The
+ * wrapper is a new `WorldView` object, so the renderer binds it on the first frame it appears.
  *
  * @param game - A game running the scene flow (its content's sprite names are used).
  * @returns The view; the backdrop is allocated now, a World's wrapper when that World appears.

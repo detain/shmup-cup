@@ -389,8 +389,8 @@ export interface WorldOptions {
   readonly bossBehaviors?: BossBehaviorLookup;
   /**
    * The presentation event queue to push into (default: a new one). A game that creates several
-   * Worlds over its life (the scene flow of M1-16 — one per game start) hands every World its own
-   * queue, so the host keeps draining one queue.
+   * Worlds over its life (the scene flow of M1-16 — one per game start) hands every World the
+   * game's one queue, so the host keeps draining one queue (`Game.events`) whichever World runs.
    */
   readonly events?: EventQueue;
 }

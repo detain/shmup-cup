@@ -17,7 +17,8 @@ camera path, timeline, checkpoints, tile terrain, parallax),
 [enemies-and-behaviors.md](enemies-and-behaviors.md) (enemies, formations, behaviour coroutines,
 movers, spline paths), [bullets-and-patterns.md](bullets-and-patterns.md) (enemy bullets,
 lasers, fire primitives, rank), [weapons-and-options.md](weapons-and-options.md) (player
-weapons, loadouts, autofire, hits on enemies, trailing Options).
+weapons, loadouts, autofire, hits on enemies, trailing Options),
+[scenes-and-ui.md](scenes-and-ui.md) (the scene stack and flow, menus, the HUD).
 
 ## Layers
 
@@ -33,7 +34,7 @@ weapons, loadouts, autofire, hits on enemies, trailing Options).
        │              │ @shmup/shell — shared browser host (D34)    │    │
        │              │ loading bar + boot error screen, content    │    │
        │              │ validation, atlas pages, renderer + game,   │    │
-       │              │ event dispatch, rAF frame loop, dev scenes  │    │
+       │              │ event dispatch, rAF loop, scene view + dev  │    │
        │              └──────────────────────┬──────────────────────┘    │
        ▼                                     ▼ creates                   ▼
 ┌──────────────────────┐  ┌────────────────────────────┐  ┌──────────────────────────────┐
@@ -54,7 +55,8 @@ weapons, loadouts, autofire, hits on enemies, trailing Options).
                     │ stage, player, collision, enemies, behaviour   │
                     │ scripts + movers, bullets + lasers, rank,      │
                     │ player weapons + Options, power-ups, shields,  │
-                    │ death / respawn, score, fx timers;             │
+                    │ death / respawn, score, fx timers, the scene   │
+                    │ stack + flow, canvas UI kit, HUD;              │
                     │ other systems: placeholders                    │
                     └────────────────────────────────────────────────┘
 ```
@@ -86,7 +88,9 @@ calls the renderer or the mixer. Each displayed frame the host:
 2. drains `game.events` through the shell's dispatcher into the handlers registered per
    event kind (particles, shake → renderer; SFX, music → mixer). The queue, its cue
    registries and the dispatcher exist (`core/events`, shell `dispatch`), and since M1-06 the
-   queue belongs to the World (`game.events === game.world.events`); the stage pushes `Music`
+   queue belongs to the World (`game.events === game.world.events` — since M1-16 one queue per
+   session that every World of the scene flow pushes into, with the menus' sounds and the scenes'
+   music, via `WorldOptions.events`); the stage pushes `Music`
    (M1-07), the enemies push explosion `Sfx` / `Particles` and `FormationBonus` (M1-08), bullet
    cancels push `Particles` (`FX_CUES.BulletCancel`, M1-09), the player weapons push their
    `Sfx` cues (`PlayerShot`, `PlayerMissile`, `Clink` — M1-10), the scoring pushes `Score`
@@ -115,15 +119,19 @@ requestAnimationFrame(now)                       shell/frame-loop
              │   ├─ keyboard.held + consumeLatched()   input-web/keyboard: SOCD + diagonal policy
              │   ├─ readGamepadActions(pad 0..3)       input-web/gamepad (+ the same policies)
              │   └─ commitPlayerInput(p1/p2, …)        core/input: pressed/released edges
-             ├─ stepWorld(world, input)          core/world: the 9 phases below, world.tick++
+             ├─ scenes.tick(input)               core/scenes: merge menu input, top scene only,
+             │   └─ GameScene: stepWorld(world, input)   deferred transitions at the end
+             │       (bare gameplay: stepWorld directly)  core/world: the 9 phases below
              └─ state.tick++
+ └─ sceneView.follow()                           shell/scene-view: the camera sounds pan against
  └─ game.events.drain(dispatcher.visit)          shell/dispatch → registered handlers
-     ├─ connectFxEvents (free flight): emitFxCue / emitSfxCue, shake, flash, dim, popups.show
-     └─ connectAudioEvents (free flight): playSfx (panned), playMusic, duckMusic  audio-web/engine
+     ├─ connectFxEvents (flow, free flight): emitFxCue / emitSfxCue, shake, flash, dim, popups
+     └─ connectAudioEvents (flow, free flight): playSfx (panned), playMusic, duckMusic
  └─ audioEngine.endFrame()                        audio-web/sfx: closes the SFX dedupe window
  └─ renderer.render(frame)                       render-pixi/renderer
-     │   frame = scene.update(game.renderFrame()) — free flight (default), showcase, calibration,
-     │   fx gallery
+     │   frame = view.update(game.renderFrame()) — the scene flow (default: renderFrame runs
+     │   flow.updateFrame → World view + HUD while the game shows, one UI list, the dim),
+     │   free flight, showcase, calibration, fx gallery
      ├─ effects / particles / popups .step(tick delta)  render-pixi/effects + particles (M1-14)
      ├─ bindWorld(frame.world) if it is a new object   (load time only)
      ├─ particles.sync(camera), popups.sync(camera)    FX layer, world pixels → screen
@@ -206,8 +214,9 @@ Details: [sim-world.md](sim-world.md), [stage-runtime.md](stage-runtime.md),
 system, status,
   hit-stop and the fx timers, debug flags, the SoA pool
   registry (flushed in phase 8, hashed), a broad-phase grid over the camera view and the
-  `WorldView` the renderer draws. `stepWorld(world, input)` runs one tick and never allocates; `createGame`
-  hosts one World per session (`game.world`).
+  `WorldView` the renderer draws. `stepWorld(world, input)` runs one tick and never allocates;
+  bare gameplay hosts one World per session (`game.world`), the scene flow's game scene a fresh
+  one per game start and RETRY STAGE ([scenes-and-ui.md](scenes-and-ui.md)).
 - **`stage`** — the stage runner (phase 3): the camera path (linear speed ramps, eased
   vertical pans, scroll locks that stop the camera exactly, and the WARNING's brake to a lock
   wherever the camera is — M1-13), the sorted event timeline fired through a cursor into the
@@ -430,9 +439,10 @@ changes nothing in the game.
 |---|---|---|---|
 | Boot | loading bar → content / atlas / WebGL checks → running | same, pages from `file://` | canvas `data-shmup-state` = `loading` → `running`, or `error` with the boot error screen listing every problem |
 | App hidden | tab hidden (`visibilitychange`) | Home, source switch, multitasking (`visibilitychange`) | `platform.lifecycle` suspend → `game.state.suspended = true` (no ticks), held input cleared, audio suspended |
-| App visible | tab visible | back to the app | resume → `suspended = false`, loop accumulator reset, audio resumed |
-| User pause | `game.pause()` (no UI yet) | same | `state.paused`; survives suspend/resume — resuming the platform does not un-pause |
-| Back | — (`keyboard-default`: Esc / Backspace = `Pause` in the game, `Back` in menus) | remote Back (10009) → `watchBackKey` → `platform.exit()` (before the platform exists: `tizen.application` directly); `tizen-remote-safe` also maps it to `Pause` (game) / `Back` (menus) | Today free flight is the root screen, so Back exits the TV app — also from the boot error screen, because the watcher is installed before boot; the scene stack will take over Back handling (M1-16) |
+| App visible | tab visible | back to the app | resume → `suspended = false`, loop accumulator reset, audio resumed; with the game scene on top the scene flow opens the pause menu (M1-16) |
+| Pause menu | Esc / P / Backspace in the game | remote Back or Play/Pause in the game | the flow pushes `PauseScene` over the frozen, dimmed game; Pause / Back / RESUME close it (M1-16) |
+| Host pause | `game.pause()` (no UI; a debugger) | same | `state.paused`; survives suspend/resume — resuming the platform does not un-pause |
+| Back | Esc / Backspace (`keyboard-default`: `Pause` in the game, `Back` in menus); no exit | remote Back (10009): `tizen-remote-safe` maps it to `Pause` (game) / `Back` (menus); before the shell runs, `watchBackKey` exits (`tizen.application` directly) — the loading and boot error screens | The scene stack owns Back (M1-16): game → pause, pause → resume, menus → back, title → exit confirmation → `platform.exit()` after YES (the TV); in a browser the title's Back only backs out of its menu |
 | Resize | `resize` → `renderer.resize()` | same (rare on TV) | new integer viewport |
 
 JavaScript is frozen while a Tizen app is hidden, so nothing in the core may assume wall
@@ -511,15 +521,18 @@ into points come with M2-02), `rank` (partial: constant rank, no growth yet), `w
 (partial: Type A — loadouts B–D and Direct mode later), `options` (partial: the standard trail),
 `powerups` (partial: meter mode), `shields` (partial: the Force Field), `scoring` (partial:
 scores and the session hi-score — extends, continues and the table later), `fx` (partial: the
-hit-stop / shake / flash requests — slowdown later);
+hit-stop / shake / flash requests — slowdown later), `ui` (partial: the list menu, slider,
+toggle and confirm widgets, builders and the HUD — rebind prompt, name entry and the boss HP bar
+later), `scenes` (partial: the scene stack and the M1 flow — Options with M1-17, the M2 screens
+later);
 input-web `keymap`, `keyboard`, `gamepad`, `web-input`, `remote`, `rebind`
 (partial: profiles, contexts, persistence hook — the rebinding UI comes in M2-16); audio-web
 `web-audio` (partial: the volume sliders come with M1-17), `synth`, `sfx`, `music`, `loader`,
 `engine`;
 render-pixi `renderer`, `viewport`, `test-pattern`, `palette`, `atlas`, `layers`, `sprites`,
 `text`, `ui`, `particles`, `effects` (partial: shake, flash, dim, popups — raster and palette
-effects later); shell `boot`, `loader`, `dispatch`, `error-screen`, `frame-loop`, `flight`,
-`showcase`, `fx-gallery`;
+effects later); shell `boot`, `loader`, `dispatch`, `error-screen`, `frame-loop`, `scene-view`,
+`flight`, `showcase`, `fx-gallery`;
 the apps' `boot` and `platform`. Everything else declares its intended API only. The
 build-time tooling outside the packages (the asset pipeline in `scripts/assets/`, the Vite
 plugins in `vite.shared.ts`) has no `moduleInfo`; it is covered by the tests under
@@ -531,7 +544,8 @@ plugins in `vite.shared.ts`) has no `moduleInfo`; it is covered by the tests und
 |---|---|
 | A new host platform (webOS, Android TV) | New `apps/<name>/` implementing `Platform` (copy `apps/tizen/src/platform/` as a start) and a thin `boot` that calls `bootShell()` if it is a browser engine (reuse `@shmup/input-web` / `audio-web`) |
 | Something drawn in the world | A `SpriteBatchView` (an SoA pool or a `createSpriteBatch` mirror) in the `WorldView.batches` list — no renderer change ([rendering-and-shell.md](rendering-and-shell.md#extending-it)) |
-| HUD or menu drawing | Commands into `RenderFrame.hud` / `ui` (`DrawList`: rect, sprite, text slot, number) |
+| HUD or menu drawing | The HUD is `core/ui` `buildHud` (add what it depends on to `Hud.update`); menus are `core/ui` widgets drawn by a scene's `drawUi` into the flow's one UI list (`DrawList`: rect, sprite, text slot, number) — [scenes-and-ui.md](scenes-and-ui.md#extending-it) |
+| A screen or overlay (Options, select screens …) | A `SceneBase` subclass in `core/scenes` created by `createSceneFlow`, with its own string-slot range, pushed / replaced from another scene's `tick` — [scenes-and-ui.md](scenes-and-ui.md#extending-it) |
 | A handler for a sim event | `shell.events.on(SimEventKind.X, handler)` at load time; copy fields out of the reused record |
 | A content kind validated outside core | A `ContentOwner` in the shell's `DEFAULT_CONTENT_OWNERS`, or passed to `bootShell({ contentOwners })` from both apps (an app entry replaces the default — the apps do this for `input-profiles` to keep the parsed profiles) — unowned kinds stop the boot |
 | A renderer or audio back-end | Implement `IRenderer` / `IAudio` from `@shmup/core` in a new package; the apps choose which one to create |
@@ -543,7 +557,7 @@ plugins in `vite.shared.ts`) has no `moduleInfo`; it is covered by the tests und
 | An item kind, a meter slot rule or a shield kind | `ITEM_KINDS` / `ItemKind` (appended), the meter's `canEquipSlot` / `equipSlot` and Auto Power-Up rules, a `ShieldSpec` in `SHIELD_SPECS` — [powerups-and-shields.md](powerups-and-shields.md#extending-it) |
 | A bullet pattern, bullet kind or laser | A behaviour calling the `ScriptApi` fire primitives (`aimed`, `nWay`, `ring`, …, `laser`, `fireWait`); a new primitive in `core/patterns` with its `ScriptApi` wrapper; a kind in `BULLET_KINDS` — [bullets-and-patterns.md](bullets-and-patterns.md#extending-it) |
 | A weapon, a weapon behaviour or an Option formation | A weapon is JSON in `content/weapons/` (tunables in `params`); a behaviour is a `ShotKind` plus its tables and a branch of the weapon system's `update()`; formations branch in `OptionGroup.follow` — [weapons-and-options.md](weapons-and-options.md#extending-it) |
-| Something the engine draws whatever the content | Add its sprite name to `ENGINE_SPRITES` (`core/bullets` `BULLET_SPRITES`, `core/options` `OPTION_SPRITE`, `core/powerups` `ITEM_SPRITES` and `core/shields` `FORCE_FIELD_SPRITE` today): hosts pass it as `loadContent`'s `extraSprites` and `pnpm content:check` verifies it against the atlas |
+| Something the engine draws whatever the content | Add its sprite name to `ENGINE_SPRITES` (`core/bullets` `BULLET_SPRITES`, `core/options` `OPTION_SPRITE`, `core/powerups` `ITEM_SPRITES`, `core/shields` `FORCE_FIELD_SPRITE` and `core/ui` `UI_SPRITES` today): hosts pass it as `loadContent`'s `extraSprites` and `pnpm content:check` verifies it against the atlas |
 | A game system | Fill in its placeholder module in `packages/core/src/<module>/`, set `moduleInfo.status`, export it from `packages/core/src/index.ts`, call it from its phase function in `core/world` (never reorder `WORLD_PHASES`), allocate its state in `createWorld` and add simulated state to `hashWorld` — [sim-world.md](sim-world.md#extending-it) |
 | Content (enemies, weapons, stages, tilesets) | JSON under `content/` following its README, then `pnpm content:check` (try a stage with `pnpm dev` and `?stage=<id>`). New fields or a new kind: extend the schemas in `core/data` — checklist in [content-data.md](content-data.md#extending-it) |
 | A stage event type or camera feature | [stage-runtime.md](stage-runtime.md#extending-it): schema in `core/data`, a `StageEventCode`, the runner's own part (if any) and the World's hook |

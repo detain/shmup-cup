@@ -100,9 +100,13 @@ unboxed small integer). `cursor` is `-1` (nothing highlighted) or a `MeterSlot`:
 - The plan's `canEquip(slot)` needs the state, so the pure form is
   `canEquipSlot(slot, ship, loadout, maxSpeedLevel)` (and `equipSlot` with the same arguments);
   the system adds `canEquip(player, slot)` and `equippable(player)` — a bit mask of the
-  equippable slots (`equippableSlots`) for the M1-16 HUD, which greys the others. **The meter is
-  not drawn before M1-16**; `METER_LABELS` holds the HUD labels (`SPEED` … `?`, `!`) that match
-  the `hud/meter-labels` frames.
+  equippable slots (`equippableSlots`) for the HUD, which greys the others. Since M1-16 the core
+  HUD (`core/ui` `buildHud`, drawn by the scene flow) shows the meter in the bottom bar: seven
+  `hud/meter-slot` boxes with the `hud/meter-labels` frames (`METER_LABELS`, here and in the
+  asset pipeline's `hud.mjs`: `SPEED MISSILE DOUBLE LASER OPTION ? !`), the highlighted slot
+  (`meters[0].cursor`) flashing every 8 ticks, the slots `equippable(0)` excludes greyed
+  ([scenes-and-ui.md](scenes-and-ui.md#the-hud)). The `?scene=flight` dev scene still draws no
+  meter.
 
 ## Auto Power-Up
 
@@ -278,8 +282,9 @@ Since M1-14 the renderer draws the shield break's `shield.break` sparks, the Meg
 on every capsule pickup ([fx-and-game-feel.md](fx-and-game-feel.md)); capsules show no score
 popup (it would cover the ship). Since M1-15 the events are heard (`MeterAdvance`,
 `PowerUpEquip`, `PowerUpDenied`, `ShieldHit`, `ShieldBreak`, a centred `MegaCrash` —
-[audio.md](audio.md)); the HUD comes with M1-16. `SFX_CUES.CapsulePickup` (9) is **not** used by meter mode (Direct-mode items,
-M2-05).
+[audio.md](audio.md)), and since M1-16 the HUD redraws the meter from the state (`cursor`,
+`equippable`), not from these events. `SFX_CUES.CapsulePickup` (9) is **not** used by meter mode
+(Direct-mode items, M2-05).
 
 ## Determinism, restarts and hashing
 
@@ -351,7 +356,7 @@ powerups.detonateMegaCrash(0); // debug: clear the screen now
 | A meter slot rule or a `!` variant (M2-03) | `canEquipSlot` / `equipSlot`, the matching `nextAutoSlot` rule, `METER_LABELS` and the `hud/meter-labels` art; a new slot also needs `METER_SLOT_NAMES` / `MeterSlotName` in `core/config` |
 | A shield kind (pods, Free / Rotate Shield, Reduce — M2-04; Arm tiers — M2-05) | Append a `ShieldKind` code and name, a `ShieldSpec` in `SHIELD_SPECS` (`absorbsTerrain: true` for the Arm tiers), its sprite in `ENGINE_SPRITES`, grant it from its slot; keep `absorbShieldHit` allocation-free and hash any new state in `mixPowerUps` |
 | Something that reacts to pickups (like `core/scoring`, M1-12) | Read `world.powerups.outcomes` (`pickupCount`, `pickupPlayer`, `pickupScore`, …) after `powerups.resolve()` in phase 7 — reset in phase 6 |
-| The HUD meter (M1-16) | Draw `meters[p].cursor`, grey the slots missing from `equippable(p)`, flash on `SimEventKind.PowerUp` |
+| Something the HUD meter shows | `core/ui` `buildHud` draws `meters[0].cursor` (flashing every `HUD_METER_FLASH_TICKS`) and greys the slots missing from `equippable(0)`; add any new state it depends on to `Hud.update`'s comparison ([scenes-and-ui.md](scenes-and-ui.md#the-hud)) |
 | An enemy Mega Crash spares | `"megaCrashImmune": true` in its `content/enemies/` entry |
 
 ## Tests
@@ -371,7 +376,7 @@ powerups.detonateMegaCrash(0); // debug: clear the screen now
 
 | Symptom | Cause / fix |
 |---|---|
-| OK "does nothing" | The meter is not drawn before M1-16; a denied press plays `PowerUpDenied` (M1-15 — in a browser only after the first key press). Check `world.powerups.meters[p].cursor`: `-1` (no capsule since the last equip) is a denied press |
+| OK "does nothing" | No slot is highlighted on the HUD meter (no capsule since the last equip — `meters[p].cursor` is `-1`) or the highlighted slot is greyed (cannot be equipped); a denied press plays `PowerUpDenied` (M1-15 — in a browser only after the first key press). `?scene=flight` draws no meter |
 | A test presses `PowerUp` every tick and equips only once | By design — only the `pressed` edge equips. Commit `0` (release) between presses |
 | A capsule spawned by a test vanishes | It was more than 32 px outside the camera view (culled in the next phase 5), or it landed on the ship during the fly-in and is waiting — ships collect only while `alive` |
 | A kill made between ticks produced no capsule yet | It appears at the next tick's phase 3 (`beginTick`) |
@@ -396,6 +401,7 @@ powerups.detonateMegaCrash(0); // debug: clear the screen now
 - **M1-14** (done) — the shield-break particles, the Mega Crash flash, cancel sparkles, the
   pickup ring ([fx-and-game-feel.md](fx-and-game-feel.md)).
 - **M1-15** (done) — the sounds of every event above ([audio.md](audio.md)).
-- **M1-16** — the HUD power meter (`cursor`, `equippable`, `METER_LABELS`, the `PowerUp` flash).
+- **M1-16** (done) — the HUD power meter (`cursor`, `equippable`, the `hud/meter-labels`
+  frames, the highlighted slot flashing every 8 ticks) ([scenes-and-ui.md](scenes-and-ui.md#the-hud)).
 - **M2-03** — loadouts B–D and `!` variants; **M2-04** — the other meter shields and the Option
   Hunter; **M2-05** — Direct mode's items and the Arm tiers.

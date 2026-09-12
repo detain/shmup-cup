@@ -1,5 +1,5 @@
 /**
- * # flight — "free flight", the default dev scene since the World exists (M1-06)
+ * # flight — "free flight", the `?scene=flight` dev scene (M1-06; the default until M1-16)
  *
  * **Responsibility.** Shows the real simulation: the game's {@link WorldView} (the KESTREL,
  * moved by the player's remote, keyboard or gamepad through `stepWorld`) with the HUD bars of
@@ -25,7 +25,8 @@
  * stock ships in the bottom bar (`core/player`: `lives` counts the ship in play), and `GAME OVER`
  * in place of the title once the World's status says so. The draw list is rebuilt only when one of
  * them changes (the scores' `displayDirty` / `hiScoreDirty` flags, cleared here). The real HUD with
- * the power meter is M1-16's.
+ * the power meter is core `ui`'s, drawn by the scene flow (M1-16, the shell's default scene
+ * `game`); free flight keeps this dev HUD and runs bare gameplay — no title, no pause menu.
  *
  * **WARNING (M1-13).** While the World's boss WARNING is active (`view.warning`), the UI draw list
  * shows its text — built once per boss by the core — centred on a translucent band across the

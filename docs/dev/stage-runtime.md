@@ -320,8 +320,9 @@ repeated sprites per parallax band — see
 
 `GameConfig.stage` (default `null`) selects the stage by id; `createWorld` (and so
 `createGame`) throws a `RangeError` for an id the content does not have, and
-`resolveWorldStage(config, db)` does the lookup. Until the scene flow of M1-16 picks stages,
-the dev entry point is the web app:
+`resolveWorldStage(config, db)` does the lookup. The scene flow (M1-16) does not pick stages
+yet — START creates a World from the same config, so a game runs `config.stage` (open space when
+it is `null`); the zone map picks them from M2-10. The dev entry point is the web app:
 
 ```sh
 pnpm dev
@@ -414,7 +415,7 @@ world.stage!.restartAt(1); // back to x 1500: speed, pan and flags as live play 
 | Per-tick terrain queries allocate | Fractional arguments to a non-inlined call are boxed; pass floored / ceiled whole pixels (`terrainRectHit`) |
 | `stage "x": unknown event type` `RangeError` | A `StageSpec` that did not come through `loadContent` (hand-made in a test) with a type the runtime does not know |
 | A stage loads without terrain | Its tileset id did not resolve, the tile sizes differ, or its RLE rows failed — all reported as issues; the heightfield issues (missing tile names or masks) keep the terrain |
-| `?stage=` does nothing on the TV | The widget has no query string; stages are picked by the scene flow from M1-16 |
+| `?stage=` does nothing on the TV | The widget has no query string, so START flies in open space; zone A becomes the TV's stage with M1-18 and the zone map picks stages from M2-10 |
 | The `test-range` fingerprint test fails | The stage file or the generator changed. If intended, re-pin the value in `stage-runtime.test.ts` and say why in the commit |
 | A browser test that measures the scroll between two screenshots misses the shift | With enemies drawn and e2e files running in parallel, the frame loop may run up to 4 ticks per frame; keep captures close together (the stage test compares frames 30 apart) so the shift stays inside the search window |
 
@@ -436,6 +437,9 @@ world.stage!.restartAt(1); // back to x 1500: speed, pan and flags as live play 
 - **M1-13** (done) — `warning` / `boss` events start the boss system; the WARNING brakes the
   camera to a lock (`brake()`), the boss's death releases it with `unlock()`; `test-boss` stage
   ([bosses-and-warning.md](bosses-and-warning.md)).
-- **M1-16** — the scene flow picks the stage (replacing `?stage=`).
+- **M1-16** (done) — the scene flow runs the stage `config.stage` names on START and on RETRY
+  STAGE (a fresh World each time); the stage's `end` event and a boss's death set `stageClear`,
+  which opens the stage-clear screen ([scenes-and-ui.md](scenes-and-ui.md)). Picking stages from
+  the flow comes with the zone map (M2-10).
 - **M2-07** — time-keyed events during scroll stops, diagonal scrolling, in-stage branches on
   the flags, destructible tiles, the Tiled / LDtk exporter to RLE rows.

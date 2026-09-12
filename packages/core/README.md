@@ -87,7 +87,9 @@ Force Field and Mega Crash (`powerups`, `shields`) in
 and game-feel timers (`scoring`, `fx`) in
 [`docs/dev/death-and-scoring.md`](../../docs/dev/death-and-scoring.md); the bosses, the WARNING and
 the death sequence (`bosses`, the boss roster of `behaviors`, the boss section of `data`, the
-stage brake) in [`docs/dev/bosses-and-warning.md`](../../docs/dev/bosses-and-warning.md).
+stage brake) in [`docs/dev/bosses-and-warning.md`](../../docs/dev/bosses-and-warning.md); the
+scene stack and flow, the canvas UI kit and the HUD (`scenes`, `ui`, `GameOptions.scenes` of
+`game`) in [`docs/dev/scenes-and-ui.md`](../../docs/dev/scenes-and-ui.md).
 `src/math/trig-table.ts`
 is **generated** — edit `scripts/gen-trig-tables.mjs`, not the table.
 
@@ -100,6 +102,6 @@ iterations)` measures the bytes a hot path allocates (V8 `GCProfiler`, needs `--
 which `vitest.config.ts` passes to the workers). Every per-tick entry point (`stepWorld`,
 `updatePlayer`, the grid, the stage runner, a 64-enemy World running every mover kind, a World
 with 512 live bullets and 16 lasers, a fully powered World firing lasers and missiles from
-four Options, a World collecting capsules, equipping the meter and wearing the Force Field down — one and two players, deaths and restarts, a whole boss fight — `hashWorld`, `game.frame`) has a test that keeps it under budget. The helper
+four Options, a World collecting capsules, equipping the meter and wearing the Force Field down — one and two players, deaths and restarts, a whole boss fight — `hashWorld`, `game.frame`, the scene flow through a whole game and 20,000 menu ticks, the UI widgets and the HUD) has a test that keeps it under budget. The helper
 keeps the steadiest of up to three measured windows (`attempts`, stopping at the first within
 `settled` bytes), so one window spent in a lower V8 tier cannot fail a guard.

@@ -37,8 +37,8 @@ virtual:shmup-assets       export const manifest = {…} (inlined) · pageUrls =
 dist/assets/atlas/*.png    emitted next to the bundle (web and Tizen builds)
 ```
 
-**Status today.** The whole pipeline, the initial sprite set (55 sprites, 272 frames on one
-512×256 page), the pixel font, the Vite plugin and the sprite-name check in
+**Status today.** The whole pipeline, the initial sprite set (M1-03: 55 sprites, 272 frames on
+one 512×256 page — grown with every step since; one 512×512 page since the M1-16 logo), the pixel font, the Vite plugin and the sprite-name check in
 `pnpm content:check` are done. Both apps register `shmupAssets()` and ship the pages; since
 M1-04 their `main.ts` imports `virtual:shmup-assets`, `@shmup/shell` loads the pages with
 `new Image()` and render-pixi's `createAtlas` turns them into textures, and the default scene
@@ -111,7 +111,7 @@ Each module exports `generate(): SpriteDef[]` and is registered in
 | `starfield` | `bg/stars-far`, `bg/stars-mid`, `bg/stars-near` — seamless 128×128 transparent tiles |
 | `terrain` | `tiles/terrain-a` — 17 8×8 tiles (solid, floor, ceiling, walls, 45° and 22.5° slopes); every tile is also a one-frame animation named after it (`floor → [1]`, list in `TERRAIN_TILES`); collision masks and frames live in `content/tilesets/terrain-a.tileset.json` — change both together |
 | `hud` | `hud/meter-slot` (40×8: `normal`, `highlighted`, `disabled`), `hud/meter-labels` (36×5 × 7 slot labels in meter order) |
-| `ui` | `ui/pixel` (1×1 white, for rectangles), `ui/missing` (8×8 magenta checker the renderer shows for an unknown name) |
+| `ui` | `ui/pixel` (1×1 white, for rectangles), `ui/missing` (8×8 magenta checker the renderer shows for an unknown name), `ui/logo` (M1-16: the 165×27 title logo `SHMUP CUP` — original 5×7 block letters ×3 (`LOGO_TEXT`, `LOGO_SCALE`), a yellow → orange → red gradient with a highlight row, a dark outline and a 2-px drop shadow; anchored at its centre) |
 
 Rules that keep generated pixels identical on every machine:
 
@@ -189,7 +189,7 @@ is simpler for the renderer.) Today the seven enemies and the four boss parts fl
 | HUD | `hud/meter-slot`, `hud/meter-labels` (generated), `hud/life` | both |
 | World | `bg/stars-{far,mid,near}`, `tiles/terrain-a` | generated |
 | FX / bullets / shield | explosions, spark, debris, 9 enemy bullets, 3 laser beams (M1-09), `shields/force-field` | generated |
-| Utility | `ui/pixel`, `ui/missing`, `font/pixel` | generated / font |
+| Utility | `ui/pixel`, `ui/missing`, `ui/logo` (M1-16), `font/pixel` | generated / font |
 
 The enemy names cover every name the shipped and example content use (the `test-range`
 roster of M1-08 included), so `pnpm content:check` passes.
@@ -418,5 +418,7 @@ sprites — the death's explosion and debris are particle cues for M1-14, the HU
 M1-14 (done) draws `fx/explosion-*`, `fx/spark` and `fx/debris` as particle presets and added
 two procedural sprites to `particles.mjs` — `fx/sparkle` (5×5, 4 frames, the pale-gold
 bullet-cancel twinkle) and `fx/ring` (9×9, 4 frames, the growing cyan pickup ring)
-([fx-and-game-feel.md](fx-and-game-feel.md)); M1-16 builds the HUD from `hud/*` and `ui/pixel`;
+([fx-and-game-feel.md](fx-and-game-feel.md)); M1-16 (done) builds the HUD from `hud/*` and `ui/pixel` and added the procedural title logo
+`ui/logo` to `ui.mjs` (165×27: original 5×7 block letters ×3, a warm gradient, outline and drop
+shadow — the atlas page grew to 512×512; [scenes-and-ui.md](scenes-and-ui.md#sprites-and-the-logo));
 M1-18 adds the Zone A art (HALCYON BULWARK's parts among it).

@@ -4,12 +4,14 @@ The **browser dev target** (Vite dev server with HMR) and the renderer that
 `apps/electron` loads. Wires `@shmup/core` + `@shmup/render-pixi` + `@shmup/audio-web` +
 `@shmup/input-web` together through the shared shell [`@shmup/shell`](../../packages/shell/README.md).
 It boots behind a loading bar (or a boot error screen listing every problem) into the game's
-**scene flow** (M1-16): the title (`PRESS OK`, then START / OPTIONS), the game with its HUD,
-the pause menu (Esc), stage clear and game over. `?scene=flight` goes straight into **free
+**scene flow** (M1-16): the title (`PRESS OK`, then START / OPTIONS — no EXIT: a browser has no
+`platform.exit`, so Back on the title only backs out of the menu), the game with its HUD, the
+pause menu (Esc / P / Backspace), stage clear and game over — guide:
+[`docs/dev/scenes-and-ui.md`](../../docs/dev/scenes-and-ui.md). `?scene=flight` goes straight into **free
 flight** (M1-06): the game's World with the KESTREL under keyboard / gamepad control over an
 empty starfield. `?scene=showcase` shows the M1-04 sprite showcase and `?scene=calibration`
 the pixel-art calibration test pattern instead. `?stage=<id>` runs that stage instead of
-open space (M1-07 — `?stage=test-range` is the dev stage: scrolling camera, generated
+open space when a game starts (M1-07 — `?stage=test-range` is the dev stage: scrolling camera, generated
 terrain, star parallax and, since M1-08, its enemy roster flying the timeline — since M1-09
 the turrets, walkers and orbiters fire bullets at the ship; an unknown id
 logs a `console.warn` and flies in open space; guides:
@@ -22,11 +24,12 @@ speed 2, Missile, Laser, four Options and (since M1-11) a Force Field (dev overr
 `loadoutFromSearch`; guide: [`docs/dev/weapons-and-options.md`](../../docs/dev/weapons-and-options.md)).
 Since M1-11 the test stage's carriers and completed formations drop **power capsules**; C or
 Enter (the game's `PowerUp`, remote OK) equips the highlighted meter slot — the meter itself is
-drawn by the M1-16 HUD (guide: [`docs/dev/powerups-and-shields.md`](../../docs/dev/powerups-and-shields.md)).
+drawn by the HUD since M1-16 (guide: [`docs/dev/powerups-and-shields.md`](../../docs/dev/powerups-and-shields.md)).
 Since M1-12 rock, enemies, bullets and lasers **destroy the ship** (a Force Field takes all but
 the rock): it flies back in blinking with one power level less (the default `classic` penalty),
-the HUD shows the score, `HI` and the spare ships, and after the third ship the top bar says
-`GAME OVER` — reload to play again (guide:
+the HUD shows the score, `HI` and the spare ships, and after the third ship the game-over
+screen leads back to the title (in free flight the top bar says `GAME OVER` — reload to play
+again) (guide:
 [`docs/dev/death-and-scoring.md`](../../docs/dev/death-and-scoring.md)). There is no URL
 parameter for the penalty or the lives yet. Since M1-13 `?stage=test-boss` (BOSS RANGE) ends in
 the **boss WARNING** — the camera brakes to a stop under a flashing `WARNING!!` band for three

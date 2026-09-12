@@ -4,22 +4,21 @@ Shmup Cup is designed for the **Samsung Smart Remote** first; a gamepad or a key
 work too, and every device drives both the game and the menus.
 
 > **Status:** these controls are built into the game as **control profiles** and are read
-> every frame. In the current build ("free flight", [preview-build.md](preview-build.md))
-> the **directions fly the ship** on every device and the gun **fires on its own** — the same
-> in the scrolling test stage (`?stage=test-range` in a browser), where the view scrolls by
-> itself, the ship keeps its place on screen unless you move it, and enemies fly past, shoot at
-> you (every bullet pattern is dodgeable with the four arrow directions alone) and are shot
-> down. **PowerUp** (OK on the remote, Enter or C on a keyboard, X on a gamepad) takes the
-> highlighted power-up once you have collected capsules
-> ([preview-build.md](preview-build.md#power-ups)). The other buttons do nothing yet, except
-> **Back** on the TV, which closes the app (also from the start-up error screen); the pause
-> screen arrives later. Losing a ship needs no button either: the next one flies in by itself,
-> and after **GAME OVER** there is no continue yet — reload the page
-> ([preview-build.md](preview-build.md#lives-losing-your-ship-and-the-score)). The boss of the
-> boss range (`?stage=test-boss`) needs no new controls: you dodge and let the gun fire
-> ([preview-build.md](preview-build.md#the-boss-range-and-the-warning-browser-only)). The remote's settings may still change once the input probe results
-> from the M7 monitors are in, and a menu for choosing a profile and rebinding buttons is
-> planned.
+> every frame. The current build ([preview-build.md](preview-build.md)) starts on the **title
+> screen**: OK (Enter / A) opens the menu, ▲ ▼ move the highlight, OK chooses — START begins a
+> game. In the game the **directions fly the ship** on every device and the gun **fires on its
+> own** — the same in the scrolling test stage (`?stage=test-range` in a browser), where enemies
+> fly past, shoot at you (every bullet pattern is dodgeable with the four arrow directions alone)
+> and are shot down. **PowerUp** (OK on the remote, Enter or C on a keyboard, X on a gamepad)
+> takes the highlighted power-up of the power meter once you have collected capsules
+> ([preview-build.md](preview-build.md#power-ups)). **Pause** — Back or Play/Pause on the remote,
+> Esc / P / Backspace on a keyboard, Start / Back on a gamepad — opens the pause menu; in menus
+> **Back** goes back, and on the TV's title screen it asks before quitting
+> ([preview-build.md](preview-build.md#pausing-quitting-and-the-end-screens)). Losing a ship needs
+> no button: the next one flies in by itself, and after **GAME OVER** OK returns to the title.
+> The other buttons (Special, Speed) do nothing yet. The remote's settings may still change once
+> the input probe results from the M7 monitors are in, and a menu for choosing a profile and
+> rebinding buttons is planned.
 
 ## In the game and in menus
 
@@ -29,19 +28,20 @@ and selects a menu entry in menus; Back pauses the game and goes back in menus.
 
 | Action | What it does |
 |---|---|
-| Move | Game: fly the ship (8 directions where the device allows it; diagonals are no faster than straight moves, and the ship stops as soon as you let go). Menus: move the highlight |
+| Move | Game: fly the ship (8 directions where the device allows it; diagonals are no faster than straight moves, and the ship stops as soon as you let go). Menus: move the highlight (▲ ▼; ◀ ▶ between YES and NO) — holding a direction repeats the move after about a third of a second, then about ten times a second |
 | Shot | Main gun. Today it fires **on its own** on every device (automatic fire is on by default, and always on with the TV remote), so you never need to press it; once automatic fire can be switched off in the Options menu, hold it to fire |
 | Sub | Missiles / sub-weapon, once you have them — automatic in the same way |
 | PowerUp | Take the highlighted power-up of the power meter — one per press (holding the button never takes a second); a press on an empty or maxed-out slot does nothing |
 | Special | Screen-clearing special, when you have one |
 | Speed | Cycle ship speed (item mode) |
-| Pause | Pause / resume |
-| Confirm | Menus: select the highlighted entry |
-| Back | Menus: previous screen; on the title screen it asks whether to quit |
+| Pause | Pause / resume (the pause menu: RESUME, RETRY STAGE, QUIT TO TITLE) |
+| Confirm | Menus: select the highlighted entry; on the title first leaves `PRESS OK`. A press made while a menu is just appearing is remembered for a moment, not lost |
+| Back | Menus: previous screen (in the pause menu: resume; in a YES / NO question: NO); on the TV's title screen it asks **EXIT SHMUP CUP?** — only YES quits |
 
 If you are holding a button at the moment a menu opens (or closes), it keeps doing only what
 it does in both sets until you let go — holding the Sub key while the pause menu appears will
-not suddenly press Back. Release it and press again.
+not suddenly press Back. Release it and press again. The menus answer to **every** controller —
+the TV remote, the keyboard and both gamepads.
 
 ## Samsung Smart Remote
 
@@ -70,8 +70,10 @@ not suddenly press Back. Release it and press again.
   game — they set the monitor's volume as usual (the game has no volume setting of its own
   yet). The colour buttons (red/green/yellow/blue on the on-screen number pad) are reserved
   for later use.
-- Today Back still closes the app from free flight, because it is the first screen; once
-  the title screen exists, Back there asks before quitting.
+- **Back** never closes the game by surprise: in the game it pauses, in menus it goes back,
+  and on the title screen it asks **EXIT SHMUP CUP?** (NO is highlighted) — only **YES** returns
+  to the monitor's home screen. Only while the app is still loading, or on its error screen,
+  does Back close it at once.
 
 ## Gamepad
 
@@ -162,10 +164,12 @@ its default.
 | `?profile=…` seems to be ignored | The name is misspelled or is not a keyboard/remote profile (a gamepad profile cannot drive the keyboard). The game then uses the normal keyboard profile and writes a warning in the browser's developer console |
 | A button does something in the game but nothing in a menu (or the other way round) | Expected — see the two tables above; for example C (PowerUp) has no menu function |
 | The game shows a start-up error screen mentioning `input-profiles.json` | The control profiles in this build are broken. Report the lines on the screen — see [preview-build.md](preview-build.md) |
-| Back closes the game on the TV instead of pausing | Expected in the current preview — free flight is the first screen. Pausing with Back arrives with the playable game |
-| The ship does not react for a moment after the app starts | It is flying in (about ⅔ of a second) and ignores the controls until it arrives — see [preview-build.md](preview-build.md#flying-the-ship) |
+| Back closes the game on the TV instead of pausing | Not expected any more — Back pauses in the game and asks before quitting on the title. It closes the app at once only on the loading and error screens; otherwise please report it (and check the installed build is the latest) |
+| Nothing reacts for a moment after the app starts | The title screen needs OK first (`PRESS OK`), then START; after START the ship flies in (about ⅔ of a second) and ignores the controls until it arrives — see [preview-build.md](preview-build.md#flying-the-ship) |
 | Holding Shot (Z / Space, A / Cross) or Sub (X, B / Circle) changes nothing | Expected: the gun already fires on its own (automatic fire is on by default), and the missiles fire on their own too once a power-up gave them to you (in a browser, `?loadout=full` gives them to you right away) |
-| PowerUp (OK, Enter, C, X) does nothing | Expected until you have collected a power capsule — and on the TV and the desktop, whose free flight has no enemies, there are none yet. Also expected when you already have the most of the highlighted power-up. Such a press plays a short, low "no" buzz. See [preview-build.md](preview-build.md#power-ups) |
+| PowerUp (OK, Enter, C, X) does nothing | Expected until you have collected a power capsule (no box of the power meter is highlighted) — and on the TV and the desktop, whose games fly in open space without enemies, there are none yet. Also expected when you already have the most of the highlighted power-up. Such a press plays a short, low "no" buzz. See [preview-build.md](preview-build.md#power-ups) |
 | No sound in the browser | Press a key or click into the picture once — the sound starts then (a gamepad button does not count). See [preview-build.md](preview-build.md#sound-and-music) |
 | Pressing OK while holding an arrow stops the ship on the TV | Not expected — the game keeps the arrow held. Please report it with the remote model: it means the remote itself drops the arrow when OK is pressed |
-| Pause and the other buttons do nothing | Expected in the current preview — the pause screen comes later |
+| Pause does nothing | On the title and the end screens Pause has no job — it pauses only a running game. In the game it should open the PAUSE menu; if not, please report the device and the button |
+| Special, Speed and the other buttons do nothing | Expected in the current preview — nothing uses them yet |
+| A menu moves two steps for one press, or skips a press | Not expected — please report the device (and the remote model) |

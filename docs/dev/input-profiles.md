@@ -187,8 +187,9 @@ try it by hand in a browser console: `localStorage.setItem('shmup-cup:input.prof
 ## Binding contexts (`game` / `menu`, decision D15)
 
 - `InputContext = 'game' | 'menu'` lives in core `input`. `Game.inputContext` is the
-  context the top scene wants; until the scene stack lands (M1-16) it always returns
-  `'game'`. It is presentation routing only — the simulation still gets plain masks, and
+  context the top scene wants: with the scene flow (M1-16) `'game'` only while the game scene is
+  on top, `'menu'` on the title, the pause menu, the dialogs and the end screens; for bare
+  gameplay (the dev scenes) always `'game'`. It is presentation routing only — the simulation still gets plain masks, and
   replays do not record it.
 - `bootShell` calls `input.setContext(game.inputContext)` once at boot and then, at the start
   of every frame and **before that frame's ticks**, whenever the value changed (also while the
@@ -263,9 +264,12 @@ platform registers the active key profile's `register` list with
 an unsupported key). `registerRemoteKeys()` filters `SYSTEM_REMOTE_KEYS` itself, so even a hand
 edit that slipped past validation can never take `Exit` or the volume keys from the system.
 The shipped profiles register only D14's three keys; the colour keys (403–406) stay in the
-no-profile fallback `REMOTE_KEYS_TO_REGISTER` until something uses them. Back is still also
-watched by `watchBackKey`: until the scene stack exists (M1-16) free flight is the root
-screen, so Back exits the TV app regardless of the profile's `Pause` binding.
+no-profile fallback `REMOTE_KEYS_TO_REGISTER` until something uses them. Back is also watched
+by `watchBackKey`, but only until the shell runs (the loading and boot error screens are the
+root screen then, so Back exits); since M1-16 the watcher is removed once the game runs and Back
+is an ordinary key of the profile — `Pause` in the game, `Back` in menus — which the scene stack
+turns into pause / resume / back and, on the title, the exit confirmation
+([scenes-and-ui.md](scenes-and-ui.md#back-pause-and-the-platform)).
 
 ## Using it in code
 
@@ -348,7 +352,7 @@ measures ~30 KB of test noise).
 | Diagonals impossible on the keyboard | `keyboard-remote-emulation` is active (the URL, or a saved choice in `shmup-cup:input.profile`) — `lastWins` keeps one arrow |
 | Holding a key through a menu switch "loses" it | By design: a held key keeps only the actions common to both tables until released. Release and press again |
 | A remote key never arrives on the TV | It must be in the active profile's `register` list (and supported by that remote model); Play/Pause and Ch± are registered by default, the colour keys only without a profile |
-| Back closes the TV app instead of pausing | Expected until the scene stack (M1-16): free flight is the root screen and `watchBackKey` exits from it |
+| Back closes the TV app instead of pausing | Only expected on the loading and boot error screens; since M1-16 Back pauses in the game and asks before quitting on the title. An older build exits — reinstall |
 | A profile edit does not show in `pnpm dev` | Content edits reload the page; a saved choice in `localStorage` (`shmup-cup:input.profile`) may be overriding the default — remove it or use `?profile=` |
 
 ## Next steps that build on this page
@@ -359,8 +363,9 @@ measures ~30 KB of test noise).
 - **M1-10** (done) — `Shot` fires the main weapon and `Sub` the missiles while held; with
   `GameConfig.autofire` (the default) or `remoteMode` (the TV) they fire without a button
   (feat §4 rule 1, [weapons-and-options.md](weapons-and-options.md#shooters-autofire-and-caps-phase-2-updateplayers)).
-- **M1-16** — the scene stack returns `'menu'` from `Game.inputContext` for menus and the
-  pause screen; Back handling moves from `watchBackKey` to the scenes.
+- **M1-16** (done) — the scene stack returns `'menu'` from `Game.inputContext` for menus and
+  the pause screen; Back handling moved from `watchBackKey` to the scenes; menus read every
+  player's input merged ([scenes-and-ui.md](scenes-and-ui.md)).
 - **M2-16** — Options: profile choice (writes `input.profile`), per-device rebinding, conflict
   detection, reset to defaults.
 - **On hardware** — run the input probe (plan §8.2) and set `releaseDebounceTicks` /

@@ -76,10 +76,13 @@ exactly the same game.
 | `MusicDuck` + 120 ticks (the player's death) | `duckMusic(120)` | The music dips to 0.35 in 4 ticks, holds for 1 s, is back at full volume at 2 s |
 
 Bound but not pushed by the sim yet: `LaserHum`, `CapsulePickup` (Direct mode, M2-05),
-`ExtraLife` (extends, M2-01), `MenuMove` / `MenuSelect` / `MenuBack` / `PauseToggle` (the
-scene flow, M1-16). No `Music GameOver` is pushed yet either (the game-over scene, M1-16) —
-at `GAME OVER` the stage theme keeps playing. `HitStop`, `Rumble` and `PowerUp` events still
-have no audio meaning.
+`ExtraLife` (extends, M2-01). Since M1-16 the **scene flow** pushes its own events into the same
+queue: `MenuMove` / `MenuSelect` / `MenuBack` (widget results — a denied OK plays `MenuBack`) and
+`PauseToggle` (the pause menu opening or closing), all at x 0 on the unpanned `ui` bus; `Music
+Title` (30-tick fade) when the title shows, `Music Silence` (30 ticks) when a game starts (the new
+World then queues its stage theme), `Music StageClear` / `Music GameOver` (no fade) with the end
+screens. The music keeps playing under the pause menu. `HitStop`, `Rumble` and `PowerUp` events
+still have no audio meaning.
 
 ## The content (`content/audio/`, kinds `sfx` and `music`)
 
@@ -131,7 +134,7 @@ for the same stage (or both as its default). A track with an issue is left out.
 
 The shipped songs are original: `zone-a` (AZURE VERGE, cue `Stage` — 6.4 s intro + 44.8 s
 loop), `boss` (BULWARK ASSAULT, `Boss` — 2.7 s + 21.3 s), `title` (SHMUP CUP, `Title` — 3.7 s +
-14.9 s; nothing plays it before M1-16), `stage-clear` (VERGE SECURED, jingle) and `game-over`
+14.9 s; the title scene's since M1-16), `stage-clear` (VERGE SECURED, jingle) and `game-over`
 (SILENT VERGE, jingle). None is limited to a stage yet, so every stage uses them.
 
 ## The synth (`synth`)
@@ -288,8 +291,10 @@ last (cleared by `stop()` at once), `playing` whether it is audible now.
 What that means per build: in a browser nothing is audible until the first key press or click
 (gamepad buttons are not a user activation); sounds requested before are dropped, but the stage
 theme queued at world creation starts at that moment. On the TV audio is unlocked at boot, so
-shots play from the first frame — but the TV app has no `?stage=`, and free flight prepares no
-music, so it plays **no music** until the scene flow (M1-16) and zone A (M1-18).
+the title theme plays from the start (since M1-16 the shell prepares `Title` for the scene
+flow, plus `StageClear` / `GameOver` in open space). The TV app has no `?stage=`, so a game there
+flies in open space with **no stage music** until zone A (M1-18); in a browser the title theme,
+like a stage theme, starts with the first key press or click.
 
 ## Zero allocation and the hot-path rules
 
@@ -330,7 +335,7 @@ song's loop points and render time. Options: `--out DIR`, `--only NAME` (one cue
 | A mid-stage music change | A stage `music` event with the cue — `stageMusicCues` prepares it with the stage, nothing else to do |
 | A recorded track | `"file"`, `"loopStart"`, `"loopEnd"` (samples at `"sampleRate"`, default 32000) instead of `"song"` |
 | A new music cue | Append to `MUSIC_CUES`; bind a track; if a stage can reach it only through code (not its data), pass it to `prepareMusic` too |
-| A loading phase with music (the title, a zone) | `engine.prepareMusic(stageId, cues)` behind the loading screen, then `playMusic` — the scene flow of M1-16 does this for the title |
+| A loading phase with music (the title, a zone) | `engine.prepareMusic(stageId, cues)` behind the loading screen, then `playMusic` — the shell does this for the title (M1-16: `MUSIC_CUES.Title` is added to the booted stage's set) |
 | A new audio event kind | Append to `SimEventKind`, register a handler in `connectAudioEvents` (whole-pixel arguments) and extend `AudioEventTarget` / `AudioEngine` |
 
 ## Tests
@@ -366,13 +371,13 @@ song's loop points and render time. Options: `--out DIR`, `--only NAME` (one cue
 | `renderSong` throws `RangeError` | The song skipped validation (`loadMusicContent` reports the same problems as issues) |
 | An allocation guard fails in audio code | A fractional value passed across a call (a pan, a gain); pass whole pixels / ticks and compute inside — see the M1-15 finding above |
 | `AUDIO FAILED TO LOAD` | A `file` sound or track could not be fetched (a wrong relative URL, a file missing from the build) or decoded (`OfflineAudioContext` missing, a corrupt OGG). The line names the URL |
-| The music keeps playing at `GAME OVER` or while paused | Nothing pushes `Music GameOver` yet and there is no pause scene; both come with M1-16 |
+| The music keeps playing while paused | By design (M1-16): the pause menu freezes the World, not the music. At `GAME OVER` the game-over tune replaces it once the game-over screen opens (the scene flow; `?scene=flight` has no screens, so there the stage theme keeps playing) |
 
 ## Next steps that build on this page
 
-- **M1-16** — the scene flow: the title theme (`Title`) prepared in the title's loading phase,
-  `MenuMove` / `MenuSelect` / `MenuBack` / `PauseToggle` on the `ui` bus, pause handling of the
-  music, the game-over and stage-clear scenes.
+- **M1-16** (done) — the scene flow: the title theme (`Title`) prepared in the boot's loading
+  phase, `MenuMove` / `MenuSelect` / `MenuBack` / `PauseToggle` on the `ui` bus, the game-over and
+  stage-clear scenes' music ([scenes-and-ui.md](scenes-and-ui.md)).
 - **M1-17** — the Options screen's MASTER / MUSIC / SFX sliders → `audio.setBusVolume`, saved.
 - **M1-18** — zone A: the `zone-a` stage plays AZURE VERGE and BULWARK ASSAULT through the same
   set (a track can be limited to it with `stages`).

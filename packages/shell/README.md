@@ -37,14 +37,18 @@ for its audio engine); any issue → **boot error screen** listing `path: messag
 via `new Image()` from relative URLs (no `fetch`, decision D25) → atlas → renderer (WebGL1
 first; particles seeded from the game's seed, presets via `setFxContent`) → platform (the apps
 apply their input profiles in this factory) → game → audio (M1-15: the engine renders the SFX
-bank — `LOADING SOUND` — and prepares the booted stage's music set, `stageMusicCues` —
-`LOADING MUSIC`; nothing is rendered or decoded later) → scene (free flight connects the
-World's events to the renderer's effects — `connectFxEvents` — and to the audio engine —
-`connectAudioEvents`) → lifecycle / audio unlock (the engine attaches right after `unlock()`) /
-resize wiring → rAF frame loop (`input.setContext` when `game.inputContext` changed →
-`game.frame` → `game.events.drain(dispatch)` → `shell.audioEngine.endFrame()` →
-`renderer.render`, plan §3.3). The canvas carries
-`data-shmup-state="loading" | "running" | "error"`.
+bank — `LOADING SOUND` — and prepares the booted stage's music set, `stageMusicCues`, plus the
+title theme for the scene flow — `LOADING MUSIC`; nothing is rendered or decoded later; then
+`game.scenes.finishBoot()`) → scene (the default `game` runs the core **scene flow** — the game is
+created with `{ scenes: 'boot' }` and drawn through `createSceneView`; the scene flow and free
+flight connect the game's events to the renderer's effects — `connectFxEvents` — and to the
+audio engine — `connectAudioEvents`) → lifecycle / audio unlock (the engine attaches right after
+`unlock()`) / resize wiring → rAF frame loop (`input.setContext` when `game.inputContext` changed
+→ `game.frame` → `sceneView.follow()` → `game.events.drain(dispatch)` →
+`shell.audioEngine.endFrame()` → `renderer.render`, plan §3.3). The canvas carries
+`data-shmup-state="loading" | "running" | "error"` and `data-shmup-scene` (the scene flow's top
+scene — `title`, `game`, `pause`, `confirm`, … — or the dev scene's name). Scenes, menus and the
+HUD: [`docs/dev/scenes-and-ui.md`](../../docs/dev/scenes-and-ui.md).
 
 ## Modules
 
@@ -91,12 +95,15 @@ the audio wiring: [`docs/dev/audio.md`](../../docs/dev/audio.md#the-shells-wirin
 exports: [`docs/dev/api-reference.md`](../../docs/dev/api-reference.md#shmupshell).
 
 Tests run in Node with fakes for the window, images and the WebGL renderer; the workers get
-`--expose-gc`, so the free-flight scene's and the fx gallery's per-frame `update()` and the
+`--expose-gc`, so the scene view's, the free-flight scene's and the fx gallery's per-frame
+`update()` and the
 whole game-feel event path (`connectFxEvents` → particles / effects / popups) and the audio
 event path (`connectAudioEvents` → a real `AudioEngine` on a fake Web Audio context: dropped,
 deduped and unchanged sounds and music) are checked with the core's allocation guard;
 `dispatch-audio-runtime` plays the shipped boss range from the real sim through the engine. The real browser path is covered by `pnpm test:e2e` (headless Chromium,
-`test/e2e/` — `flight.spec.ts` flies the KESTREL with arrow keys in both builds, `boss.spec.ts`
+`test/e2e/` — `scenes.spec.ts` starts a game from the title with Enter / OK and pauses it with
+Esc / Back in both builds (and the Tizen exit confirmation), `flight.spec.ts` flies the KESTREL
+with arrow keys in both builds (on `?scene=flight`), `boss.spec.ts`
 checks the WARNING band and the boss on `?stage=test-boss`, `fx-gallery.spec.ts` the gallery's
 label and explosions in both builds, `audio.spec.ts` the first-key-press unlock and the zone
 theme's exact loop points in the web build and the shots' sounds from boot in the Tizen build). How the World the scene draws works:

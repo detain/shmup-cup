@@ -77,7 +77,9 @@ pnpm --filter @shmup/tizen tizen:run
 - After every new `build`, run `tizen:package` again before installing.
 - PowerShell: `$env:TIZEN_PROFILE = "shmupcup"; $env:TV_IP = "192.168.1.50"` instead of `set`.
 
-The app appears in the Apps panel as **Shmup Cup**. What it should look like: [preview-build.md](preview-build.md).
+The app appears in the Apps panel as **Shmup Cup** and opens on the title screen. To leave it, press **Back** on
+the title and answer **YES** to **EXIT SHMUP CUP?** (in a game, Back pauses first — choose QUIT TO TITLE), or press
+**Home**. What it should look like: [preview-build.md](preview-build.md).
 If it opens on a navy screen with a pink error title instead, the build is broken — photograph the screen, press
 **Back** to close the app, and see [preview-build.md](preview-build.md#when-the-app-shows-an-error-screen).
 More options (custom `tizen`/`sdb` paths): [`apps/tizen/README.md`](../../apps/tizen/README.md).

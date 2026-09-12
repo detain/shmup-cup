@@ -1,0 +1,399 @@
+# Scenes, the canvas UI kit and the HUD
+
+How the game goes from the title to a game and back — the scene stack, the M1 scene flow (boot,
+title, game, pause, stage clear, game over, the YES / NO dialog), the canvas-drawn menus and the
+in-game HUD. Filled in by plan step **M1-16**; the Options screen joins the flow in M1-17.
+
+This page is the *how and why*. Exact signatures are in
+[api-reference.md](api-reference.md#scenes--scene-stack-and-the-m1-flow-partial) (`scenes`) and
+[api-reference.md](api-reference.md#ui--canvas-ui-kit-and-the-hud-partial) (`ui`); the TSDoc in
+the sources (`packages/core/src/scenes`, `ui`, `game`; `packages/shell/src/scene-view`, `boot`;
+`apps/tizen/src/boot`) is the authoritative reference. How draw lists reach the screen is
+[rendering-and-shell.md](rendering-and-shell.md#draw-lists-drawlist); the menu / game binding
+tables are [input-profiles.md](input-profiles.md).
+
+Background: `shmup_feat.md` §17 (scene flow, screens, the HUD, the UI kit), §23 (Tizen Back key,
+exit confirmation, pause on resume), §4 rule 8 (menus fully D-pad + OK + Back navigable, input
+buffering); `shmup_tech.md` §4.10 (no UI framework: canvas menus and a bitmap font); plan §3.4
+(render contract) and decisions **D15** (`game` / `menu` binding contexts) and **D20** (HUD bars
+outside the playfield).
+
+## The picture at a glance
+
+```text
+ @shmup/core                                                            @shmup/shell
+┌──────────────────────────────────────────────────────────────┐    ┌────────────────────────────┐
+│ createGame(platform, config, content, { scenes: 'boot' })    │    │ bootShell (scene 'game'):  │
+│  ├─ one EventQueue for the session                           │    │  finishBoot() after the    │
+│  └─ createSceneFlow(host, 'boot')                            │    │  loading phase             │
+│      SceneStack (depth 8, deferred transitions)              │    │ frame loop:                │
+│      ┌─────────┐   ┌──────────┐   ┌─────────┐                │    │  game.frame(now)           │
+│      │ confirm │ ◄─│ pause    │ ◄─│  game   │ owns World     │    │  sceneView.follow()        │
+│      │ (YES/NO)│   │ (overlay)│   │ (HUD,   │ (fresh per     │───►│  events.drain(dispatch)    │
+│      └─────────┘   └──────────┘   │ WARNING)│  start/retry)  │    │  sceneView.update(         │
+│      stageClear / gameOver (overlays over the frozen game)   │    │    game.renderFrame())     │
+│      boot → title (logo, PRESS OK, START/OPTIONS/EXIT)       │    │  → renderer.render(frame)  │
+│  step(): poll → flow.tick(input) → top scene only            │    │ canvas data-shmup-scene    │
+│  renderFrame(): flow.updateFrame() → world view + HUD while  │    └────────────────────────────┘
+│    the game is visible, one UI list, the top scene's dim     │
+└──────────────────────────────────────────────────────────────┘
+ core/ui: ListMenu / Slider / Toggle / Confirm, menuTick / confirmTick, drawPanel / drawMenu /
+          drawConfirm, buildHud + Hud (change detection) — plain state, numbers, draw lists
+```
+
+## Two ways to run a game
+
+`createGame(platform, overrides, content, options)` gained `GameOptions.scenes`:
+
+| `options.scenes` | The session | Used by |
+|---|---|---|
+| omitted / `null` | **Bare gameplay**, exactly as before M1-16: one World from creation, `stepWorld` every tick, nothing reacts to its status (it keeps simulating after a game over) | Every earlier test, the tools, the shell's dev scenes (`?scene=flight`, `showcase`, `calibration`, `fx-gallery`) |
+| `'boot'` | The scene flow, starting on the boot scene until `game.scenes.finishBoot()` | The shell's default scene `game` (web and TV) |
+| `'title'` | The flow, starting on the title | Tests |
+| `'game'` | The flow, starting in a game | Tests, dev |
+
+With the flow:
+
+- `game.step()` polls once and calls `game.scenes.tick(input)` — only the **top** scene ticks.
+- `game.world` is a getter for the game scene's World — **a new object per game start and per
+  RETRY STAGE** (never keep it across a start); before the first start it is a placeholder World
+  (so it is never `null`) whose queued stage theme the flow drops.
+- `game.inputContext` is the top scene's (`'game'` only while the game scene is on top).
+- `game.events` is one `EventQueue` for the whole session: every World is created with
+  `WorldOptions.events` = that queue, and the menus' sounds and the scenes' music are pushed into
+  it too. The host drains one queue, whichever World runs.
+- A platform resume calls `game.scenes.onResume()`: with the game on top it pushes the pause
+  menu, so the player comes back to a paused game (shmup_feat.md §23).
+- `game.pause()` stays a **host-level** freeze (a debugger's pause); the pause *menu* is a scene
+  and the flow keeps ticking under it.
+
+## The scene stack (`SceneStack`)
+
+A fixed array of at most `SCENE_STACK_DEPTH` = 8 scenes. Only the top one ticks.
+
+| Call | Effect (hooks in order) |
+|---|---|
+| `push(scene)` | the old top gets `cover()`, the new one `enter()` |
+| `pop()` | the top gets `exit()`, the one below `uncover()`; an empty stack does nothing |
+| `replace(scene)` | the top gets `exit()`, the new one `enter()` (nobody is covered); on an empty stack it pushes; replacing the top with itself does nothing |
+| `reset(scene)` | every scene gets `exit()`, top first, then `scene` is pushed and gets `enter()` — "quit to title" |
+
+**Deferred transitions.** A request made while a scene ticks (`stack.tick` sets a flag) is queued
+(at most 8 per tick) and applied **in request order at the end of the tick**, so a scene never
+runs half a tick after it left. Requests made by the hooks the flush runs are applied in the same
+flush; a chain of more than 64 throws (`scene transitions keep requesting transitions`). A request
+made **outside** a tick — a platform resume, a host call — applies at once. A throwing scene does
+not wedge the stack: the ticking flag is cleared in a `finally`.
+
+Errors are programming errors and throw `RangeError`: a push on a full stack, a scene that is
+already on the stack (scenes are singletons — the flow owns one instance of each), more than 8
+requests in one tick.
+
+The lookup method is `sceneAt(i)` (0 = bottom) — not `at(i)`: the Chrome-69 ESLint rule rejects
+any `.at(` call, whatever the receiver ([conventions.md](conventions.md#chromium-69-rules)).
+
+A `Scene` declares `id`, `overlay` (the scene below keeps being drawn — frozen, since only the
+top ticks), `inputContext` (D15), `dim` (0…1 darkening of the world and HUD under the UI while it
+is on top) and `uiRevision` (bumped whenever `drawUi` would draw something else).
+
+## The M1 flow (`createSceneFlow`)
+
+`createSceneFlow(host, start)` creates the seven scenes, their menus, the UI draw list (256
+commands, 96 string slots) and the game scene's placeholder World once, then `reset`s the stack to
+the start scene. `SceneFlowHost` is what the flow needs from the session: `config`, `content`,
+`events`, `exit` (`platform.exit` or `null`) and `createWorld()`.
+
+| Scene | Overlay / dim / context | Shows | Input (any player) | Leads to |
+|---|---|---|---|---|
+| `BootScene` | no / 0 / menu | `LOADING` (or a label) and a progress bar (`setBootProgress`) | — | title on the tick after `finishBoot()` (`replace`) |
+| `TitleScene` | no / 0 / menu | `ui/logo` (or `SHMUP CUP` as text), `PRESS OK` blinking (32-tick half period), then the menu START / OPTIONS / EXIT at y 118; `HI` and the session hi-score at the bottom | OK: prompt → menu (locked 2 ticks, focus START); START → game; EXIT → confirm; Back: confirm if the platform can exit, else menu → `PRESS OK` | game (`replace`), confirm (`push`) |
+| `GameScene` | no / 0 / **game** | The World (view + HUD), the boss WARNING band in the UI list | Pause or Back → pause menu (that tick the World does not step) | pause, stage clear (90 World ticks after `stageClear`), game over (30 after `gameOver`) — all `push` |
+| `PauseScene` | yes / 0.5 / menu | Panel, `PAUSE`, RESUME / OPTIONS / RETRY STAGE / QUIT TO TITLE | Pause, Back, RESUME → resume; RETRY STAGE → `game.restart()` + pop (no confirmation); QUIT TO TITLE → confirm | game (`pop`), confirm (`push`) |
+| `StageClearScene` | yes / 0.25 / menu | `STAGE CLEAR`, `SCORE`, `HI` for 240 ticks, then `TO BE CONTINUED` for 240 | OK skips a phase | title (`reset`) |
+| `GameOverScene` | yes / 0.35 / menu | Red-edged panel, `GAME OVER`, the final score | OK / Back after 30 ticks | title (`reset`) after OK / Back or 600 ticks |
+| `ConfirmDialog` | yes / 0.5 / menu | Opaque panel, `EXIT SHMUP CUP?` or `QUIT TO TITLE?`, YES / NO focused on **NO** | Left / Up → YES, Right / Down → NO; OK answers; Back = NO | `Exit`: pop, then `host.exit()`; `QuitToTitle`: title (`reset`); NO: pop |
+
+OPTIONS is **disabled** in both menus until the Options screen (M1-17) — the disabled-item rule in
+use: the focus skips it and OK on it (reachable only if something focuses it) is `Denied`. EXIT
+exists only when `platform.exit` does (the TV, Electron later); in a browser the title's Back only
+backs out of the menu to `PRESS OK`.
+
+### Back, Pause and the platform
+
+| Where | Back (remote ↩, Esc / Backspace, pad Back) | Pause (Play/Pause, P, pad Start) |
+|---|---|---|
+| Title, `PRESS OK` | exit confirmation (can exit) / nothing (browser) | — |
+| Title menu | exit confirmation (can exit) / back to `PRESS OK` (browser) | — |
+| Game | pause menu (the game table binds remote Back to `Pause`; `Action.Back` is checked too) | pause menu |
+| Pause menu | resume | resume |
+| Confirm dialog | NO (close) | — |
+| Game over | title (after the 30-tick lock) | — |
+| Stage clear | — | — |
+
+**Tizen.** `apps/tizen` no longer exits on Back by itself. Its `watchBackKey` watcher is installed
+before boot — the loading and boot error screens are the root screen, so Back exits there — and
+removed once `bootShell` resolved; from then on Back is an ordinary remote key and the stack
+decides: game → pause, pause → resume, menus → back, **title → exit confirmation → YES →
+`platform.exit()`** (NO or Back keep the app running). The e2e suite checks the last part with a
+fake `window.tizen` whose `exit()` is recorded.
+
+**Resume.** `createGame` forwards `platform.lifecycle.onResume` to `flow.onResume()`, which pushes
+the pause menu (with the pause sound) only when the game scene is on top — returning from the TV's
+home screen never drops the player back into a running game. The flow's own music keeps playing
+under the pause menu; the World is frozen.
+
+### Menus answer to any player
+
+`flow.tick(input)` first merges every player's masks into `flow.menuInput` (`mergeMenuInput`:
+the OR of `held` / `pressed` / `released`, player 1's device), and every menu scene reads that —
+player 2's pad can drive the title and the pause menu. The game scene steps the World with the
+unmerged snapshot. Because a menu opens with a 2-tick activation lock and the adapters switch the
+binding tables without phantom presses ([input-profiles.md](input-profiles.md)), an OK that started
+the game is never read as a PowerUp, and a held button crossing a context change keeps only what
+both tables give it.
+
+## Worlds, events and the frame
+
+The game scene **owns the World**: its `enter()` (a game start) and `restart()` (RETRY STAGE) call
+`host.createWorld()` — a new World from the same config (so the same inputs replay the same game;
+the flow's lockstep test runs two flows through menus and retries and compares `hashWorld`), with
+the session hi-score set on its scoring board. Creating a World is a scene transition, never part
+of a tick's hot path. `exit()` and `restart()` first raise the session hi-score from the old
+World's (`flow.hiScore`, also shown on the title; `setHiScore(value)` raises it from outside — the
+saved best of M1-17 — floored and capped at `MAX_SCORE` like the board's).
+
+Music follows the scenes through the same event queue: the title queues `Music Title` (30-tick
+fade), a game start `Music Silence` (the new World then queues its stage theme, if it has a stage),
+the stage-clear and game-over screens `StageClear` / `GameOver` (no fade; a boss's death already
+started the stage-clear jingle and the music player does not restart a playing track).
+
+`Game.renderFrame()` calls `flow.updateFrame()` and copies its `view`:
+
+| Frame field | While the game scene is visible (on top or under overlays) | Otherwise (boot, title) |
+|---|---|---|
+| `world` | the World's view | `null` |
+| `tick` | the **World's** tick — frozen under the pause menu and the end screens, back to 0 for a new World | the flow's own tick count |
+| `hud` | the game scene's HUD list (`Hud.update` — rebuilt only on a change) | an empty list |
+| `ui` | every visible scene's widgets (one list) | same |
+| `screen.dim` | the top scene's `dim` | same |
+
+The renderer steps its particles, popups and screen effects by the frame's tick delta, so they
+freeze under the pause menu with the World, and a tick going back (a new World) clears them. The
+shell also clears the particles and popups when `sceneView.worldChanges` moves.
+
+### One UI list for the whole stack
+
+The visible scenes are the topmost non-overlay scene and every overlay above it (the game under
+the pause menu under the dialog). `updateFrame()` rebuilds the UI list — `clear()`, then each
+visible scene's `drawUi(list)` bottom to top — **only when** the visible set changed or one of
+their `uiRevision`s moved since the last build; otherwise the list keeps its `revision` and the
+renderer skips it. Each scene owns a disjoint range of the 96 string slots (`stringBase`,
+`stringSlots`, assigned in the flow's constructor — it throws if they do not fit), so scenes drawn
+together never overwrite each other's text. That is why the confirm dialog sits over the still
+visible pause menu; its panel is opaque (alpha 255) so the menu's text does not show through.
+
+The boss **WARNING band** moved from the shell's flight scene into `GameScene.drawUi` (same look:
+a black band at alpha 144 across screen rows 76–123, 1-px red edges, the World's WARNING text
+centred at row 85, red and yellow alternating every 16 World ticks). The scene bumps its
+`uiRevision` only when the look (off / red / yellow) changes.
+
+## The UI kit (`core/ui`)
+
+Widgets are plain state objects the scenes own; they know nothing about scenes, sounds or the
+stack. They answer with a number (`MenuResult`) instead of callbacks and draw through string
+slots, so a menu can be ticked and redrawn every frame without allocating.
+
+### Widgets
+
+- **`ListMenu`** (`createListMenu(items, { focus, disabledMask, wrap })`, 1–31 items): `items`
+  are actions (a label), `Slider`s (`{ label, slider }`) or `Toggle`s (`{ label, toggle }`);
+  `focus`; `disabledMask` (bit `i` = item `i` disabled); `wrap` (default on); `lockTicks`,
+  `confirmBuffer`, `repeat` (a `DirectionRepeat`) and `revision`. `setDisabled(i, on)` passes the
+  focus on when it disables the focused item; `open(lockTicks)` clears the transient input state
+  (call it when a menu appears).
+- **`Slider`** (`createSlider(min, max, step, value)` — the volumes 0–10 of M1-17): Left / Right
+  change it by `step`, clamped. **`Toggle`**: Left = off, Right = on, OK flips it.
+- **`Confirm`** (`createConfirm(question)`): YES / NO, focused on **NO** whenever it opens, so a
+  stray OK never confirms something destructive.
+
+### `menuTick(menu, input)` in order
+
+1. A Confirm press (re)fills the confirm buffer (`MENU_CONFIRM_BUFFER_TICKS` = 4).
+2. Back wins → `Back` (the buffer is cleared).
+3. While `lockTicks > 0` activation waits: the lock and the buffer count down (a press older than
+   the buffer is dropped) — **the focus still moves and Back still answers**. Otherwise a buffered
+   Confirm activates: a disabled item → `Denied`, a toggle → flips, `Changed`, anything else →
+   `Confirmed` (read `menu.focus`).
+4. The auto-repeated direction (also while locked): Up / Down move over the enabled items (wrapping
+   when `wrap`) → `Moved`; Left / Right change the focused slider or toggle → `Changed`.
+
+So a menu that just opened (the flow locks its menus for 2 ticks) holds back activation, and an OK
+pressed during the lock fires when the lock ends if it is at most 3 ticks old. `confirmTick` does
+the same for the prompt: Left / Up → YES, Right / Down → NO (no wrap), a buffered Confirm →
+`Confirmed` (read `focus`), Back → `Back`.
+
+**Held-duration auto-repeat** (`repeatDirections`): a newly pressed direction acts at once; the
+held one again after `MENU_REPEAT_DELAY` = 18 ticks, then every `MENU_REPEAT_INTERVAL` = 6 ticks
+(ticks 0, 18, 24, 30, …). Only the direction pressed last repeats (several pressed on one tick: the
+lowest bit — Up, Down, Left, Right); releasing it stops the repeat. A tap latched between two
+polls (pressed but no longer held) acts once. This is independent of any device key repeat — the
+adapters drop those.
+
+**Sounds.** `menuResultSfx(result)` maps `Moved` / `Changed` → `MenuMove`, `Confirmed` →
+`MenuSelect`, `Back` **and** `Denied` → `MenuBack` (a refusal sounds like backing out — all menu
+cues play on the unpanned UI bus, unlike the positional `PowerUpDenied`). The flow pushes them as
+`Sfx` events at x 0, plus `PauseToggle` when the pause menu opens or closes.
+
+### Builders
+
+| Builder | Draws | String slots |
+|---|---|---|
+| `drawPanel(list, x, y, w, h, fill?, border?, alpha = 232)` | a filled box and a 1-px border (5 rects) | — |
+| `drawMenu(list, menu, stringBase, layout)` | per item: the label (focused: `UI_COLORS.focus` and the `→` cursor at `cursorX`; disabled: dimmed), a slider's 50-px bar and value, a toggle's `ON` / `OFF` at `valueX`; returns the y below the last row | `menuStringSlots(menu)` = items + 3 (`ON`, `OFF`, cursor) |
+| `drawConfirm(list, confirm, stringBase, cx, cy)` | a 176×52 opaque panel centred at `(cx, cy)`, the question (up to two lines), YES / NO with the cursor | `CONFIRM_STRING_SLOTS` = 4 |
+
+Builders write a string slot only when its text changed (`setString` compares), so redrawing is
+cheap. **A `MenuLayout` must be a constant** — the flow's are `Object.freeze`d module constants:
+an object literal written at the call site allocates on every redraw.
+
+## The HUD
+
+```text
+ x: 8    24             156  172            292  308
+    1P   00012300           HI   00050000       2P   ------            ← top bar, y 0 (8 px)
+ ...................................  playfield 384×200  ..................................
+    ▲ ▲ ▲   [SPEED][MISSILE][DOUBLE][LASER][OPTION][ ? ][ ! ]  ■■■■□   ← bottom bar, y 208
+ x: 4 (10 px apart)  58 + 40·slot (7 slots)                    344 (7 px apart)
+```
+
+`buildHud(world, list, sprites)` clears the list and draws: both bars (`HUD_COLORS.bar`, the
+lifted navy of the VA panels); `1P`, `HI`, `2P` with 8-digit numbers 16 px after each label (the
+`number` op — no strings), `------` in grey while player 2 is not playing; player 1's `lives − 1`
+stock icons (`hud/life`; more than 5 show one icon and the count); the seven meter slots
+(`hud/meter-slot`: frame 1 for the highlighted slot on the "on" half of its 8-tick flash
+(`HUD_METER_FLASH_TICKS`), frame 2 for a slot `world.powerups.equippable(0)` excludes, frame 0
+otherwise) with the slot's `hud/meter-labels` frame tinted white or grey; and, while the Force
+Field is up, one pip per hit it can take (at most 5), cyan for the hits left. The labels are the
+atlas's (`SPEED MISSILE DOUBLE LASER OPTION ? !`), not the plan's abbreviations. Without the UI
+sprites (a content table that lacks them, `EMPTY_CONTENT_DB`) icons and slots become rectangles and
+the labels are left out. The worst case is 32 commands; the game scene's HUD list has 64.
+
+`buildHud` **clears the scores' `displayDirty` and the board's `hiScoreDirty`**. `Hud.update(world,
+list)` is the change detection around it: it rebuilds only when a dirty flag is set, player 1's
+lives, whether player 2 plays, the meter cursor, the equippable mask, the flash phase (only while a
+slot is highlighted) or the shield's hits changed — or the World or list is another object
+(`invalidate()` forces it; the game scene calls it on every new World). `builds` counts rebuilds
+for tests and debug overlays. It runs once per **displayed frame** (from `updateFrame`), never per
+tick.
+
+## Sprites and the logo
+
+`UI_SPRITES` (`hud/life`, `hud/meter-slot`, `hud/meter-labels`, `ui/logo`) joined the core's
+`ENGINE_SPRITES`, so every host interns them with the content (`loadGameContent` passes
+`ENGINE_SPRITES` as `extraSprites` by default) and `pnpm content:check` verifies them against the
+atlas. `resolveUiSprites(content)` looks their ids up once (`-1` when missing).
+
+`ui/logo` is a new procedural sprite (`scripts/assets/procedural/ui.mjs`): `SHMUP CUP` in
+original 5×7 block letters drawn ×3 (`LOGO_SCALE`), a vertical yellow → orange → red gradient with
+a one-pixel highlight on each letter row, a dark outline and a 2-px drop shadow — 165×27, anchored
+at its centre. With it the atlas page grew to 512×512.
+
+## The shell side
+
+The shell's `ShellScene` gained `'game'` — the scene flow — **as the default** (`?scene=` missing
+or unknown). `bootShell` creates the game with `{ scenes: 'boot' }`, prepares the title theme with
+the stage's music set (and the stage-clear / game-over jingles in open space, where the stage names
+none), and calls `game.scenes.finishBoot()` once its loading phase is over — so the boot scene is
+only up for the first tick; the loading before the renderer exists stays on the 2D overlay bar.
+
+`createSceneView(game)` (module `scene-view`) turns the flow's frame into what the renderer draws:
+
+- **Outside the game** (boot, title — `frame.world === null`) a starfield **backdrop** (its own
+  static camera, pre-bound at load) drifts behind the title with the flow's tick.
+- **In a game in open space** a wrapper `WorldView` — two starfield batches, then the World's
+  batches, on the World's camera with its terrain / laser / WARNING views — built **once per
+  World** (a new object, bound by the renderer on its first frame). A stage's own view (it has
+  parallax bands) is used as is.
+- `camera` follows the World on screen (`follow()` after the ticks, before the drain — the audio
+  pans against it); `worldChanges` counts new Worlds (the shell then clears particles and popups).
+- `spriteNames` = the content's names, then `SCENE_VIEW_SPRITES` (the three star tiles).
+
+The canvas carries `data-shmup-scene` (`SCENE_ATTRIBUTE`): the top scene's id (`boot`, `title`,
+`game`, `pause`, `confirm`, `stageClear`, `gameOver`) or the dev scene's name — the e2e tests wait
+on it. `?scene=flight` keeps the old bare-gameplay free flight with its own dev HUD (`FREE
+FLIGHT`, `ARROWS MOVE`, `GAME OVER` in the top bar); the gameplay e2e specs of M1-06…M1-15 open it.
+
+## Determinism
+
+The flow never changes simulated state except by creating Worlds: menus, timers and the stack are
+presentation-side session state, not hashed, not in replays. A World created by the flow is the
+same as one created by bare gameplay from the same config — `game.world` hashes identically for the
+same inputs, and two flows fed the same snapshots through menus, pauses and retries stay in
+lockstep (`scenes-flow.test.ts`, `scenes-flow-edge.test.ts`). The session hi-score is not hashed (as before).
+
+## Zero allocation and the hot-path rules
+
+- Every scene, menu, draw list and the HUD is created with the flow; `tick`, `updateFrame`,
+  `menuTick`, `confirmTick`, the builders and `Hud.update` never allocate. The allocation guards
+  drive the flow through a whole game (`scenes-alloc.test.ts`), the title and the exit confirmation
+  for 20,000 ticks with a frame composed every tick (`scenes-menu-alloc.test.ts`), and the widgets
+  and HUD (`ui-alloc.test.ts`).
+- Widgets and the HUD are **classes** (`ListMenu`, `Confirm`, `DirectionRepeat`, `Hud`) so their
+  counters stay small integers on one hidden class.
+- Layouts for `drawMenu` are frozen module constants (a literal per redraw allocates).
+- Text is `setString` into the scene's own slots only when it changes; numbers are `number`
+  commands.
+- The only allocation in the flow is `host.createWorld()` on a game start or RETRY — a scene
+  transition — plus, in the shell, one wrapper view per open-space World.
+
+## Extending it
+
+| To add… | Do this |
+|---|---|
+| A new scene (Options in M1-17, the M2 screens) | A `SceneBase` subclass in `core/scenes` with its `id` (already in `SceneId` for the planned screens), `overlay` / `dim` / `inputContext`, `stringSlots`, `tick` (read `flow.menuInput`; request transitions on `flow.stack`) and `drawUi` (only its own string slots); create it in `createSceneFlow`, add it to the `scenes` array (the string-slot assignment) and to `SceneFlow`; bump `uiRevision` whenever its look changes |
+| Enabling OPTIONS | Remove the `disabledMask` bit in `TitleScene` / `PauseScene` and push the Options scene on `Confirmed` with `TitleItem.Options` / `PauseItem.Options` |
+| A menu with sliders or toggles | `createListMenu([{ label: 'MUSIC', slider: createSlider(0, 10, 1, 7) }, …])`; `menuTick` returns `Changed` — read the item's `slider.value` / `toggle.value`; give `drawMenu` a frozen layout with a `valueX` |
+| A HUD element | Draw it in `buildHud` (keep within the HUD list's 64 commands) and add what it depends on to `Hud.update`'s comparison, or it will not redraw |
+| A UI sprite | Add its name to `UI_SPRITES` and a field to `UiSprites` / `resolveUiSprites`; the atlas must have it (`pnpm content:check`) — draw a fallback for id `-1` |
+| A new widget kind | A class with its own state and a `…Tick(widget, input) → MenuResult` function using `repeatDirections` and the same buffer / lock rules, plus a builder writing through string slots |
+
+## Tests
+
+| Where | Covers |
+|---|---|
+| `packages/core/test/ui/ui.test.ts`, `ui-edge.test.ts` | Navigation, wrap (also across disabled ends), disabled items and `Denied`, repeat timing over long holds / chords / latched taps, the Confirm buffer vs Back, a disabled item and a same-tick direction, lock lengths 1–4, sliders (overshoot, fractional steps, one-value ranges, NaN) and toggles, the YES / NO prompt, builder defaults, geometry, slot reuse and overflow |
+| `packages/core/test/ui/ui-hud.test.ts`, `ui-hud-edge.test.ts` | The exact meter commands, the flash, greyed slots, pips, stock boundaries (0, 5, > 5) with and without sprites, partial sprites, player 2, change detection, the worst case within 64 commands, labels written once, big scores |
+| `packages/core/test/ui/ui-alloc.test.ts` | Widgets, builders and the HUD without allocation |
+| `packages/core/test/scenes/scenes.test.ts`, `scenes-edge.test.ts` | Stack semantics, hook order, deferred vs immediate transitions, mid-tick self pop / pop + push / reset, exactly 8 queued, the runaway guard, transitions from hooks, a full stack, a throwing tick or hook, `mergeMenuInput` |
+| `packages/core/test/scenes/scenes-flow.test.ts`, `scenes-flow-edge.test.ts` | The headless run title → game → pause → quit → title from snapshot inputs; exit only after YES on a fake platform; resume → pause on every scene; retry; end screens and their delays (frozen while paused, reset by RETRY); the WARNING band; the dialog's sounds; the game-over lock boundary; the stage-clear tally; the session hi-score; the frame on every screen; player 2 driving menus; lockstep across menus and retries |
+| `packages/core/test/scenes/scenes-alloc.test.ts`, `scenes-menu-alloc.test.ts` | A whole game and 20,000 menu ticks without allocation |
+| `packages/core/test/game/game-scenes.test.ts`, `game-scenes-edge.test.ts` | `GameOptions.scenes`, `game.world` / `inputContext` across transitions, EXIT only with `platform.exit`, the dim cleared on resume, bare gameplay ignoring a game over |
+| `packages/shell/test/boot/`, `scene-view/` | The flow's boot (title theme prepared, `finishBoot`, `data-shmup-scene`), the scene view (backdrop drift per layer, open-space starfield frozen under pause, the followed camera before a frame and after quitting, `worldChanges`) |
+| `apps/*/test/boot/boot-wiring.test.ts` | Title start and Back through the stack (Tizen: the exit confirmation, `exit` only after YES; a direct exit only from the boot error screen) |
+| `test/e2e/scenes.spec.ts`, `boot.spec.ts` | Web: Enter starts the game from the title (past `PRESS OK`, then START), Esc pauses (dimmed, frozen) and resumes, Back on the title only backs out; Tizen from disk: OK starts, Back (10009) pauses and resumes, with a fake `window.tizen` Back on the title opens the confirmation and `exit()` runs only after YES; both builds boot to the title (logo, no ship), `?scene=flight` to free flight |
+
+## Gotchas
+
+| Symptom | Cause / fix |
+|---|---|
+| A test or tool that keeps `game.world` sees a frozen game after START or RETRY | With the flow, every start creates a new World — read `game.world` again (or use bare gameplay: no `options.scenes`) |
+| Events already in `host.events` when `createSceneFlow` ran are gone | The flow clears the queue after creating its placeholder World (to drop the stage theme it queued) — create the flow before pushing anything |
+| `.at(` fails the lint on the stack | Use `sceneAt(i)` — the Chrome-69 rule rejects every `.at(` call |
+| A scene's text shows another scene's words | It wrote outside its own string-slot range — use `this.stringBase + k` for `k < stringSlots`, and declare enough `stringSlots` |
+| A menu change does not show | The scene did not bump its `uiRevision` (compare the widget's `revision` before and after `menuTick`, as the flow's scenes do) |
+| The menu allocates every frame | A `MenuLayout` literal at the `drawMenu` call — make it a frozen constant |
+| OK on the title does nothing the first time | Expected: the first OK only leaves `PRESS OK`; the menu then locks activation for 2 ticks (an OK in that window is buffered, not lost) |
+| Back on the title does nothing in a browser | Expected on `PRESS OK`; in the menu it goes back to `PRESS OK`. The exit confirmation needs `platform.exit` (the TV) |
+| The HUD never updates | Something else clears the scores' dirty flags (another HUD over the same World), or the new state is not in `Hud.update`'s comparison |
+| The HUD shows rectangles instead of the meter boxes | The content was loaded without `ENGINE_SPRITES` (the UI sprites are in it since M1-16) or the atlas lacks them |
+| Explosions of the last game show after RETRY | The host did not clear its particles on a new World — watch `sceneView.worldChanges` (the shell does) |
+| The TV app exits on Back during play | An old build: since M1-16 the Back watcher is removed once the shell runs |
+
+## Next steps that build on this page
+
+- **M1-17** — the Options scene (MASTER / MUSIC / SFX sliders, the controls profile, BACK saves),
+  OPTIONS enabled in the title and pause menus; the saved hi-score through `setHiScore`.
+- **M1-19** — debug controls and replays on top of the flow (`sceneId` for the smoke test).
+- **M2-10 / M2-15** — the zone map, attract mode, mode / ship / weapon select, name entry, the
+  hi-score table; **M2-16** — rebinding and accessibility options; the boss HP bar and the co-op P2
+  meter in the HUD (M2).

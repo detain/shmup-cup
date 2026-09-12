@@ -7,7 +7,7 @@ our Smart Monitor M7 / M70A test displays, Chromium 69). Remote-first.
 
 ```sh
 pnpm --filter @shmup/tizen build   # vite build + scripts/check-bundle.mjs
-pnpm --filter @shmup/tizen dev     # desktop-browser preview (no window.tizen; Back does nothing)
+pnpm --filter @shmup/tizen dev     # desktop-browser preview (no window.tizen: no EXIT, Back never exits)
 ```
 
 `dist/` then contains `index.html`, **one classic IIFE script `app.js`**, `config.xml`,
@@ -52,23 +52,31 @@ page exists under `dist/assets/atlas/` (the shell cannot boot without it). The c
   renderer and AudioContext.
 
 `pnpm test:e2e` (repo root) also opens the built `dist/index.html` via `file://` in headless
-Chromium, like the TV runs the widget, and checks it boots, loads the atlas, draws free
-flight and that the remote's arrow key codes move the KESTREL, and that the ship autofires
+Chromium, like the TV runs the widget, and checks it boots to the title, that the remote's OK
+(13) starts a game and Back (10009) pauses and resumes it without exiting, that with a fake
+`window.tizen` Back on the title opens the exit confirmation and `exit()` runs only after YES
+(M1-16), and — on `?scene=flight` — that the remote's arrow key codes move the KESTREL, and that
+the ship autofires
 with no key held (remote mode, M1-10) while the web-only `?loadout=full` is ignored (no Options,
 no laser, no Force Field — M1-11). To open `dist/index.html` from disk in desktop Chrome yourself, start Chrome with
 `--allow-file-access-from-files` — otherwise Chrome treats the atlas page as cross-origin and
 WebGL refuses it (the TV serves the widget's files as same-origin). On the TV the app always
-starts into free flight — the KESTREL flown with the remote's directional pad, its main gun
-firing on its own (`remoteMode` forces autofire, `shmup_feat.md` §4 rule 1) — because a
-widget has no `?scene=` query string (and so no `?stage=` or `?loadout=` either). The remote's
-OK is the game's `PowerUp` (M1-11): free flight has no capsules, so a press there is simply
-denied — but holding an arrow and pressing OK must not stop the ship (the input-probe question
-the M1-11 manual check asks). Nothing can hit the ship in free flight, so the M1-12 life cycle
-(deaths, respawns, `GAME OVER`) is not reachable on the TV yet; the HUD's new `HI` score at the
-right end of the top bar is the only visible change there. Likewise the M1-13 bosses and their
-WARNING need a stage (`?stage=test-boss` in the web build) and are not reachable on the TV until
-the scene flow picks stages (M1-16). Of the M1-14 game feel (explosions, sparks, shake, flashes,
-score popups) only the muzzle spark in front of the ship's nose shows in free flight on the TV;
+runs the shell's default scene, the **scene flow** (M1-16), because a widget has no `?scene=`
+query string (and so no `?stage=` or `?loadout=` either): the title (logo, `PRESS OK`, START /
+OPTIONS / EXIT, the title theme), then START flies the KESTREL in open space with the remote's
+directional pad, its main gun firing on its own (`remoteMode` forces autofire,
+`shmup_feat.md` §4 rule 1), under the core HUD with the power meter. **Back** goes through the
+scene stack — game → pause menu, pause → resume, menus → back, title → **EXIT SHMUP CUP?** →
+`platform.exit()` only after YES; the app's own Back watcher (`watchBackKey`) is installed before
+boot and removed once the shell runs, so it exits directly only from the loading and boot error
+screens. A resume from the home screen during a game opens the pause menu. The remote's OK is
+the menus' Confirm and the game's `PowerUp` (M1-11): open space has no capsules, so a press there
+is simply denied — but holding an arrow and pressing OK must not stop the ship (the input-probe
+question the M1-11 manual check asks). Nothing can hit the ship in open space, so the M1-12 life
+cycle (deaths, respawns, the game-over screen) is not reachable on the TV yet. Likewise the M1-13
+bosses and their WARNING need a stage (`?stage=test-boss` in the web build) and are not reachable
+on the TV until zone A (M1-18). Of the M1-14 game feel (explosions, sparks, shake, flashes, score
+popups) only the muzzle spark in front of the ship's nose shows in open space on the TV;
 `pnpm test:e2e` checks the effects gallery (`?scene=fx-gallery`) in the Tizen build opened from
 disk too.
 

@@ -44,6 +44,22 @@
  * Nothing allocates per tick or per frame: every scene, menu and draw list is created with the
  * flow; only a World is created per game start (a scene transition, not a tick).
  *
+ * **Where it runs.** Hosts rarely call {@link createSceneFlow} themselves: `core/game`
+ * `createGame(platform, overrides, content, { scenes: 'boot' | 'title' | 'game' })` builds the flow
+ * on the session (its config, content, one event queue, `platform.exit`, a World factory), ticks it
+ * from `Game.step`, forwards a platform resume to {@link SceneFlow.onResume} and composes
+ * `Game.renderFrame()` from {@link SceneFlow.view}. Without `options.scenes` the session stays bare
+ * gameplay (no scenes at all). The browser shell's default scene `'game'` runs the flow from
+ * `'boot'` and calls {@link SceneFlow.finishBoot} after its loading phase.
+ *
+ * Input by scene (every player's input merged; the game table maps OK to PowerUp instead):
+ * - **Title** — OK: `PRESS OK` → menu, then activate; Back: exit confirmation (when the platform
+ *   can exit) or back to `PRESS OK`; Up / Down: move (auto-repeat).
+ * - **Game** — Pause or Back: pause menu.
+ * - **Pause** — Pause or Back: resume; OK: activate; Up / Down: move.
+ * - **Confirm** — Left / Up: YES, Right / Down: NO; OK: answer; Back: NO.
+ * - **Stage clear** — OK: skip ahead. **Game over** — OK or Back (after a 30-tick lock): title.
+ *
  * **Implements.**
  * - shmup_feat.md §17 Screens, UI flow & HUD — scene flow, title / pause / game over / stage clear
  * - shmup_feat.md §22 — scene stack / state machine
@@ -251,6 +267,8 @@ export class SceneStack {
   /**
    * Removes the top scene (deferred during a tick): it gets `exit()`, the one below `uncover()`.
    * Popping an empty stack does nothing.
+   *
+   * @throws {RangeError} When too many transitions were queued in one tick.
    */
   pop(): void {
     this.request(Op.Pop, null);
@@ -260,18 +278,27 @@ export class SceneStack {
    * Swaps the top scene for another (deferred during a tick): `exit()` then `enter()`; on an empty
    * stack it pushes.
    *
+   * @remarks
+   * Replacing the top with itself does nothing (no hooks run). The scene below gets no hook.
+   *
    * @param scene - Scene to activate.
-   * @throws {RangeError} When the scene is already on the stack (below the top).
+   * @throws {RangeError} When the scene is already on the stack (below the top), or too many
+   *   transitions were queued in one tick.
    */
   replace(scene: Scene): void {
     this.request(Op.Replace, scene);
   }
 
   /**
-   * Empties the stack (every scene gets `exit()`, top first), then pushes `scene` (deferred during a
-   * tick) — "quit to title".
+   * Empties the stack (every scene gets `exit()`, top first), then pushes `scene` (deferred during
+   * a tick) — "quit to title".
+   *
+   * @remarks
+   * `scene` gets `enter()` even when it was on the stack before (it left with `exit()` first); no
+   * `cover` / `uncover` hooks run.
    *
    * @param scene - The new root scene.
+   * @throws {RangeError} When too many transitions were queued in one tick.
    */
   reset(scene: Scene): void {
     this.request(Op.Reset, scene);
@@ -281,7 +308,13 @@ export class SceneStack {
    * Ticks the top scene, then applies the transitions it (or anything it called) requested, in
    * order. Does nothing on an empty stack. Never allocates.
    *
+   * @remarks
+   * When the scene's `tick` throws, the error propagates but the stack leaves its "ticking" state,
+   * so later requests apply at once again; the requests queued before the throw stay queued until
+   * the next flush.
+   *
    * @param input - This tick's input.
+   * @throws Whatever the top scene's `tick` throws, and {@link SceneStack.flush}'s `RangeError`.
    */
   tick(input: InputSnapshot): void {
     const top = this.top;
@@ -407,6 +440,11 @@ export function createSceneStack(): SceneStack {
 /**
  * Merges every player's input into one (menus answer to any controller). Never allocates.
  *
+ * @remarks
+ * The flow merges once per tick into {@link SceneFlow.menuInput}; every menu scene reads that, so
+ * player 2's pad can drive the title and the pause menu. The game scene steps the World with the
+ * unmerged snapshot.
+ *
  * @param snapshot - This tick's input.
  * @param out - The merged input (overwritten): the OR of every player's masks, player 1's device.
  * @returns `out`.
@@ -439,10 +477,18 @@ export interface SceneFlowHost {
   readonly content: ContentDb;
   /** The session's presentation event queue (menu sounds and music are pushed into it). */
   readonly events: EventQueue;
-  /** Quits the app, or `null` when the platform cannot (no EXIT item, Back on the title only backs out). */
+  /**
+   * Quits the app (`platform.exit`), or `null` when the platform cannot — then the title has no
+   * EXIT item and Back on the title only backs out of the menu. Read when the flow is created
+   * (the title's items) and when a confirmed exit runs.
+   */
   readonly exit: (() => void) | null;
   /**
    * Creates a fresh gameplay World for a new game (pushing into {@link SceneFlowHost.events}).
+   *
+   * @remarks
+   * Called once when the flow is created (the game scene's placeholder World) and on every game
+   * start and RETRY STAGE — scene transitions, never inside the per-tick hot path of a World.
    *
    * @returns The World at tick 0.
    */
@@ -463,10 +509,16 @@ export const ConfirmPurpose = {
 /** A {@link ConfirmPurpose} code. */
 export type ConfirmPurpose = (typeof ConfirmPurpose)[keyof typeof ConfirmPurpose];
 
-/** Title menu items (indices into the title menu; EXIT only exists when the platform can quit). */
+/**
+ * Title menu items (indices into the title menu; EXIT only exists when the platform can quit).
+ * OPTIONS is disabled until the Options screen (M1-17).
+ */
 export const TitleItem = { Start: 0, Options: 1, Exit: 2 } as const;
 
-/** Pause menu items. */
+/**
+ * Pause menu items: RESUME, OPTIONS (disabled until M1-17), RETRY STAGE (no confirmation),
+ * QUIT TO TITLE (through the {@link ConfirmDialog}).
+ */
 export const PauseItem = { Resume: 0, Options: 1, Retry: 2, Quit: 3 } as const;
 
 /** Ticks the game runs on after `stageClear` before the stage-clear screen opens. */
@@ -527,26 +579,57 @@ const PAUSE_MENU_LAYOUT: MenuLayout = Object.freeze({
   cursorX: CX - 60,
 });
 
-/** The flow's side of the scenes (what they call back). */
+/**
+ * The flow's side of the scenes (what they call back). Built by {@link createSceneFlow} before
+ * the scenes, which receive it in their constructors (the scene fields are filled right after).
+ */
 interface FlowControl {
+  /** The flow's stack. */
   readonly stack: SceneStack;
+  /** The session the flow runs on. */
   readonly host: SceneFlowHost;
+  /** The UI kit's sprite ids in the session's content (logo, HUD pieces). */
   readonly sprites: UiSprites;
+  /** Every player's input of the current tick merged ({@link mergeMenuInput}; reused). */
   readonly menuInput: PlayerInput;
+  /** The boot screen. */
   readonly boot: BootScene;
+  /** The title. */
   readonly title: TitleScene;
+  /** The game. */
   readonly game: GameScene;
+  /** The pause menu. */
   readonly pause: PauseScene;
+  /** The stage-clear screen. */
   readonly stageClear: StageClearScene;
+  /** The game-over screen. */
   readonly gameOver: GameOverScene;
+  /** The YES / NO dialog. */
   readonly confirm: ConfirmDialog;
-  /** Pushes an SFX event (menu sounds). */
+  /**
+   * Pushes an SFX event at x 0 (menu sounds — their cues play unpanned on the UI bus).
+   *
+   * @param cue - An `SFX_CUES` id.
+   */
   sfx(cue: number): void;
-  /** Pushes a music event. */
+  /**
+   * Pushes a music event.
+   *
+   * @param cue - A `MUSIC_CUES` id.
+   * @param fade - Fade length in ticks (the event's `param`).
+   */
   music(cue: number, fade: number): void;
-  /** Pushes the sound of a widget result (none for `None`). */
+  /**
+   * Pushes the sound of a widget result (none for `None`).
+   *
+   * @param result - A {@link MenuResult} code.
+   */
   menuSound(result: number): void;
-  /** Opens the confirm dialog for a purpose. */
+  /**
+   * Opens the confirm dialog for a purpose (with the select sound).
+   *
+   * @param purpose - Why it opens.
+   */
   ask(purpose: ConfirmPurpose): void;
   /** Resets the stack to the title. */
   toTitle(): void;
@@ -554,11 +637,18 @@ interface FlowControl {
   hiScore: number;
 }
 
-/** Shared state and defaults of the scenes. */
+/**
+ * Shared state and defaults of the scenes: not an overlay, the `'menu'` binding context, no dim;
+ * `enter` and `uncover` bump {@link Scene.uiRevision} so the flow redraws the scene.
+ */
 abstract class SceneBase implements Scene {
+  /** See {@link Scene.id}. */
   abstract readonly id: SceneId;
+  /** See {@link Scene.overlay} (default `false`). */
   readonly overlay: boolean = false;
+  /** See {@link Scene.inputContext} (default `'menu'`). */
   readonly inputContext: InputContext = 'menu';
+  /** See {@link Scene.dim} (default 0). */
   readonly dim: number = 0;
   /** See {@link Scene.uiRevision}. */
   uiRevision = 0;
@@ -572,7 +662,10 @@ abstract class SceneBase implements Scene {
    */
   constructor(protected readonly flow: FlowControl) {}
 
-  /** String slots the scene uses in the UI list. */
+  /**
+   * String slots the scene uses in the UI list (from {@link SceneBase.stringBase}); the flow gives
+   * every scene a disjoint range, so the scenes drawn together never overwrite each other's text.
+   */
   abstract get stringSlots(): number;
 
   /** See {@link Scene.enter}. */
@@ -591,12 +684,32 @@ abstract class SceneBase implements Scene {
     this.uiRevision++;
   }
 
+  /**
+   * See {@link Scene.tick}.
+   *
+   * @param input - This tick's input snapshot (menus read the merged `flow.menuInput` instead).
+   */
   abstract tick(input: InputSnapshot): void;
+
+  /**
+   * See {@link Scene.drawUi}.
+   *
+   * @param list - The UI draw list.
+   */
   abstract drawUi(list: DrawList): void;
 }
 
-/** The boot screen: a progress bar until the host finishes loading. */
+/**
+ * The boot screen: a progress bar until the host finishes loading.
+ *
+ * @remarks
+ * It holds until {@link SceneFlow.finishBoot}; the next tick replaces it with the title. The
+ * browser shell finishes it right after its own loading phase (which it shows on its 2D overlay
+ * bar, before the renderer exists), so in the apps the boot scene is only up for the first tick;
+ * {@link SceneFlow.setBootProgress} is for hosts that load after the flow started.
+ */
 export class BootScene extends SceneBase {
+  /** See {@link Scene.id}. */
   readonly id = 'boot' as const;
   /** Loading progress 0…1 shown by the bar. */
   progress = 0;
@@ -632,13 +745,25 @@ export class BootScene extends SceneBase {
 /** Title phases. */
 const TitlePhase = { Prompt: 0, Menu: 1 } as const;
 
-/** The title: logo, `PRESS OK`, then START / OPTIONS / EXIT. */
+/**
+ * The title: logo, `PRESS OK`, then START / OPTIONS / EXIT.
+ *
+ * @remarks
+ * Draws the `ui/logo` sprite (or `SHMUP CUP` as text when the content lacks it), a `PRESS OK` that
+ * blinks with a 32-tick half-period, and the session hi-score. OK opens the menu (locked for 2
+ * ticks, focus on START). START replaces the title with the game; EXIT and Back open the exit
+ * confirmation when the platform can exit — otherwise Back returns from the menu to `PRESS OK`
+ * (and does nothing on `PRESS OK`). Entering the title always shows `PRESS OK` and queues the title
+ * music.
+ */
 export class TitleScene extends SceneBase {
+  /** See {@link Scene.id}. */
   readonly id = 'title' as const;
   /** The title menu (START / OPTIONS / EXIT — EXIT only when the platform can quit). */
   readonly menu: ListMenu;
   /** 0 = `PRESS OK`, 1 = the menu. */
   phase: number = TitlePhase.Prompt;
+  /** Ticks since the title (or its prompt) was shown — the blink's clock. */
   private ticks = 0;
 
   /**
@@ -677,7 +802,10 @@ export class TitleScene extends SceneBase {
     this.menu.open(MENU_OPEN_LOCK_TICKS);
   }
 
-  /** `PRESS OK` → menu; START → game; EXIT / Back → exit confirmation (when the platform can quit). */
+  /**
+   * `PRESS OK` → menu; START → game; EXIT / Back → exit confirmation (when the platform can
+   * quit). Reads the merged menu input. Never allocates.
+   */
   tick(): void {
     const flow = this.flow;
     const input = flow.menuInput;
@@ -749,9 +877,25 @@ export class TitleScene extends SceneBase {
   }
 }
 
-/** The game: owns the World, draws the HUD and the WARNING band. */
+/**
+ * The game: owns the World, draws the HUD and the WARNING band.
+ *
+ * @remarks
+ * The only scene with the `'game'` binding context. Every `enter` (a game start) and every
+ * {@link GameScene.restart} (RETRY STAGE) creates a **new World object** through the host — seeded
+ * from the same config, so the same inputs replay the same game — with the session hi-score, and
+ * fades the music out (the new World queues its stage theme). Under an overlay the World is not
+ * stepped, so it freezes. After the World's status turns `stageClear` / `gameOver` it keeps
+ * running for {@link STAGE_CLEAR_DELAY_TICKS} / {@link GAME_OVER_DELAY_TICKS} ticks (counted only
+ * while this scene ticks) before the end screen opens. The HUD list ({@link GameScene.hudList}) is
+ * rebuilt by the flow's `updateFrame` through {@link GameScene.hud}; `drawUi` only draws the boss
+ * WARNING band (the one the flight scene drew before M1-16: black at alpha 144, red edges, the
+ * World's text alternating red / yellow every 16 ticks).
+ */
 export class GameScene extends SceneBase {
+  /** See {@link Scene.id}. */
   readonly id = 'game' as const;
+  /** `'game'`: the gameplay binding table while the game is on top. */
   override readonly inputContext: InputContext = 'game';
   /** The HUD draw list (the frame's `hud` while the game is visible). */
   readonly hudList: DrawList = createDrawList(64, 4);
@@ -761,7 +905,9 @@ export class GameScene extends SceneBase {
   world: World;
   /** Games started so far (retries included). */
   starts = 0;
+  /** Ticks this scene has stepped the World since its status turned `stageClear` / `gameOver`. */
   private endTicks = 0;
+  /** What the WARNING band shows: 0 nothing, 1 red text, 2 yellow text. */
   private warningLook = 0;
 
   /**
@@ -794,6 +940,10 @@ export class GameScene extends SceneBase {
   /**
    * Starts over with a fresh World (a new game, RETRY STAGE): the music fades out (the new
    * World queues its stage theme), the session hi-score carries over.
+   *
+   * @remarks
+   * Allocates the new World (a scene transition, never a tick). The old World's best score is
+   * recorded first; the end-screen delay and the WARNING look reset, the HUD is invalidated.
    */
   restart(): void {
     this.recordHiScore();
@@ -817,9 +967,14 @@ export class GameScene extends SceneBase {
 
   /**
    * Pause (or Back) opens the pause menu; otherwise the World advances one tick and its status
-   * decides whether the stage-clear or game-over screen opens.
+   * decides whether the stage-clear or game-over screen opens. Never allocates.
    *
-   * @param input - This tick's input.
+   * @remarks
+   * Pause / Back are read from the merged menu input (any player); on that tick the World does
+   * not step. The remote's game table binds Back to Pause anyway; Back is checked too so a table
+   * that keeps `Action.Back` in the game context still pauses.
+   *
+   * @param input - This tick's input (the World gets it unmerged — per player).
    */
   tick(input: InputSnapshot): void {
     const flow = this.flow;
@@ -870,10 +1025,22 @@ export class GameScene extends SceneBase {
   }
 }
 
-/** The pause menu: RESUME / OPTIONS / RETRY STAGE / QUIT TO TITLE. */
+/**
+ * The pause menu: RESUME / OPTIONS / RETRY STAGE / QUIT TO TITLE.
+ *
+ * @remarks
+ * An overlay over the frozen game, dimmed by {@link PAUSE_DIM}. Opening it focuses RESUME and locks
+ * activation for 2 ticks (a buffered OK still counts). Pause, Back and RESUME close it with the
+ * pause sound; RETRY STAGE restarts the game scene with a fresh World and closes it (no
+ * confirmation); QUIT TO TITLE opens the {@link ConfirmDialog}, which is drawn over the still
+ * visible menu. OPTIONS is disabled until M1-17 (OK on it plays `MenuBack`).
+ */
 export class PauseScene extends SceneBase {
+  /** See {@link Scene.id}. */
   readonly id = 'pause' as const;
+  /** An overlay: the game stays visible (frozen) under it. */
   override readonly overlay = true;
+  /** {@link PAUSE_DIM}. */
   override readonly dim = PAUSE_DIM;
   /** The pause menu. */
   readonly menu: ListMenu = createListMenu(['RESUME', 'OPTIONS', 'RETRY STAGE', 'QUIT TO TITLE'], {
@@ -904,7 +1071,10 @@ export class PauseScene extends SceneBase {
     this.flow.stack.pop();
   }
 
-  /** Pause / Back / RESUME resume; RETRY STAGE restarts; QUIT TO TITLE asks first. */
+  /**
+   * Pause / Back / RESUME resume; RETRY STAGE restarts; QUIT TO TITLE asks first. Never
+   * allocates.
+   */
   tick(): void {
     const flow = this.flow;
     const input = flow.menuInput;
@@ -952,10 +1122,22 @@ export class PauseScene extends SceneBase {
 /** Stage-clear phases. */
 const ClearPhase = { Tally: 0, Continued: 1 } as const;
 
-/** Stage clear: the tally, then `TO BE CONTINUED` (M1), then the title. */
+/**
+ * Stage clear: the tally, then `TO BE CONTINUED` (M1), then the title.
+ *
+ * @remarks
+ * An overlay (dim 0.25) over the frozen game: a panel with `STAGE CLEAR`, player 1's score and
+ * the hi-score for {@link STAGE_CLEAR_TALLY_TICKS}, then `TO BE CONTINUED` for
+ * {@link STAGE_CLEAR_CONTINUED_TICKS}, then the title; OK skips each phase at once (Back does
+ * nothing). Queues the stage-clear jingle with no fade (a boss's death already started it; the
+ * music player does not restart a playing track).
+ */
 export class StageClearScene extends SceneBase {
+  /** See {@link Scene.id}. */
   readonly id = 'stageClear' as const;
+  /** An overlay: the game stays visible (frozen) under it. */
   override readonly overlay = true;
+  /** A light dim (0.25), so the final picture stays readable. */
   override readonly dim = 0.25;
   /** 0 = tally, 1 = `TO BE CONTINUED`. */
   phase: number = ClearPhase.Tally;
@@ -1020,10 +1202,22 @@ export class StageClearScene extends SceneBase {
   }
 }
 
-/** Game over: OK (after a short lock) or 10 s → title. */
+/**
+ * Game over: OK (after a short lock) or 10 s → title.
+ *
+ * @remarks
+ * An overlay (dim 0.35) over the frozen game: a red-edged panel with `GAME OVER` and player 1's
+ * final score, the game-over music. OK or Back are ignored for {@link GAME_OVER_LOCK_TICKS}
+ * ticks (a mashed button does not skip it), then return to the title; after
+ * {@link GAME_OVER_TIMEOUT_TICKS} it returns by itself. The score joins the session hi-score when
+ * the game scene leaves the stack.
+ */
 export class GameOverScene extends SceneBase {
+  /** See {@link Scene.id}. */
   readonly id = 'gameOver' as const;
+  /** An overlay: the game stays visible (frozen) under it. */
   override readonly overlay = true;
+  /** Dim 0.35. */
   override readonly dim = 0.35;
   /** Ticks since it opened. */
   ticks = 0;
@@ -1077,10 +1271,23 @@ export class GameOverScene extends SceneBase {
   }
 }
 
-/** The YES / NO dialog (exit confirmation, quit to title). */
+/**
+ * The YES / NO dialog (exit confirmation, quit to title).
+ *
+ * @remarks
+ * An overlay over whatever asked (the title, the pause menu — both stay drawn under its opaque
+ * panel), focused on **NO** and locked for 2 ticks when it opens. Left / Up focus YES, Right /
+ * Down focus NO. YES with purpose `Exit` pops the dialog and then calls the host's `exit` (so the
+ * title is on top if the platform does not quit at once); YES with `QuitToTitle` resets the stack
+ * to the title (the game's score joins the session hi-score). NO and Back close it with
+ * `MenuBack`.
+ */
 export class ConfirmDialog extends SceneBase {
+  /** See {@link Scene.id}. */
   readonly id = 'confirm' as const;
+  /** An overlay: the scene that asked stays visible under it. */
   override readonly overlay = true;
+  /** {@link PAUSE_DIM}. */
   override readonly dim = PAUSE_DIM;
   /** The prompt (focused on NO when opened). */
   readonly prompt: Confirm = createConfirm('');
@@ -1106,7 +1313,10 @@ export class ConfirmDialog extends SceneBase {
     this.uiRevision++;
   }
 
-  /** YES runs the purpose (exit / back to the title); NO and Back close the dialog. */
+  /**
+   * YES runs the purpose (exit / back to the title); NO and Back close the dialog. Never
+   * allocates.
+   */
   tick(): void {
     const flow = this.flow;
     const prompt = this.prompt;
@@ -1175,12 +1385,19 @@ export interface SceneFlow {
    * (a game start creates its World).
    *
    * @param input - This tick's input.
+   * @throws Whatever the top scene or a transition throws (see {@link SceneStack.tick}).
    */
   tick(input: InputSnapshot): void;
   /**
    * Refreshes {@link SceneFlow.view}: the World's view and HUD when the game is visible, the dim of
    * the top scene and the UI list (rebuilt only when a visible scene's look changed). Call once
    * per displayed frame. Never allocates.
+   *
+   * @remarks
+   * The visible scenes are the topmost non-overlay scene and every overlay above it. The UI list
+   * is cleared and redrawn (bottom to top) only when that set or one of their
+   * {@link Scene.uiRevision}s changed since the last build; the HUD goes through
+   * `Hud.update`, which rebuilds only on a change. `Game.renderFrame()` calls this.
    */
   updateFrame(): void;
   /**
@@ -1195,6 +1412,11 @@ export interface SceneFlow {
   /**
    * The platform resumed (the app was hidden): a running game is paused, so the player comes back
    * to the pause menu (shmup_feat.md §23).
+   *
+   * @remarks
+   * Only when the game scene is on top (pushes the pause menu at once, with the pause sound); on
+   * any other scene — the pause menu, a dialog, the title — nothing changes. `createGame` calls it
+   * from `platform.lifecycle.onResume`.
    */
   onResume(): void;
   /**
@@ -1230,12 +1452,16 @@ export interface SceneFlowView {
  * @remarks
  * Every scene, menu and draw list is created here, plus the game scene's placeholder World (its
  * queued presentation events are dropped — the flow starts on the boot screen or the title, not in
- * the stage). `start` `'boot'` waits for {@link SceneFlow.finishBoot}; `'title'` starts on the title
- * (title music queued); `'game'` starts a game at once (dev / tests).
+ * the stage; note that this clears the whole `host.events` queue). `start` `'boot'` waits for
+ * {@link SceneFlow.finishBoot}; `'title'` starts on the title (title music queued); `'game'`
+ * starts a game at once (dev / tests). Each scene gets its own range of the UI list's 96 string
+ * slots. `core/game` `createGame(…, { scenes })` calls this for you.
  *
  * @param host - The session: config, content, event queue, exit, World factory.
  * @param start - First scene (default `'boot'`).
  * @returns The running flow.
+ * @throws {RangeError} When the scenes need more string slots than the UI list has (a
+ *   programming error), or whatever `host.createWorld()` throws (an unknown `config.stage`).
  *
  * @example
  * ```ts

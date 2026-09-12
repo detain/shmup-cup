@@ -26,8 +26,8 @@ assets/source/fonts/*.font.json ────────┘                     
   [`scripts/assets/sprite-source.mjs`](../scripts/assets/sprite-source.mjs).
 - **Procedural generators** — seeded, engine-independent code for explosions, sparks,
   debris, enemy bullets, the capsule, the Force Field wear states, star layers, the 8×8
-  terrain tileset, HUD meter pieces, `ui/pixel` (1×1 white, for rectangles) and
-  `ui/missing` (magenta checker).
+  terrain tileset, HUD meter pieces, the title logo `ui/logo` (original block letters),
+  `ui/pixel` (1×1 white, for rectangles) and `ui/missing` (magenta checker).
 - **Real art replaces placeholders by name** — drop `sprites/ships/kestrel.png` (optionally
   with an Aseprite JSON export `ships/kestrel.json` for several frames, tags and a slice
   pivot) and it overrides the frames of `ships/kestrel`; frames it does not provide keep

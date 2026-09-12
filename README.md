@@ -18,7 +18,7 @@ to a number ([developer guide](docs/dev/content-data.md)). **Placeholder art** i
 sprite pixel maps under [`assets/source/`](assets/README.md), seeded procedural generators
 and an original 6×8 pixel font are packed by `pnpm assets` into a texture atlas plus
 manifest (the KESTREL, shots, seven enemies, boss parts, bullets, laser beams, explosions, items,
-particles, HUD pieces, terrain tiles, star layers), served to the builds as `virtual:shmup-assets`;
+particles, HUD pieces, the title logo, terrain tiles, star layers), served to the builds as `virtual:shmup-assets`;
 real art can later replace any frame by name ([developer guide](docs/dev/asset-pipeline.md)).
 Both apps now boot through the shared browser shell [`@shmup/shell`](packages/shell/README.md)
 (M1-04): it validates the content, loads the atlas pages behind a loading bar (or shows a boot
@@ -33,10 +33,10 @@ flies** under remote, keyboard or gamepad control (six speed levels from content
 0.7071, no inertia, clamped to the playfield, banking, a 40-tick fly-in), the collision toolkit
 (closed shape tests, layer masks, a counting-sort grid whose queries equal brute force) is in
 place, and `hashWorld` fingerprints the simulated state for lockstep and replay tests. An
-allocation-guard test keeps the tick free of garbage. Every build now starts into **free
-flight** — the ship over an empty starfield between the HUD bars — with the M1-04 sprite
-showcase at `?scene=showcase` and the test pattern at `?scene=calibration`; free flight has no
-enemies ([developer guide](docs/dev/sim-world.md),
+allocation-guard test keeps the tick free of garbage. **Free flight** — the ship over an empty
+starfield between the HUD bars — was the start-up picture until M1-16 and is now
+`?scene=flight`, with the M1-04 sprite showcase at `?scene=showcase` and the test pattern at
+`?scene=calibration` ([developer guide](docs/dev/sim-world.md),
 [what testers should check](docs/client/preview-build.md)).
 **Stages scroll** (M1-07): a stage file carries a scripted camera path (speed keys with
 linear ramps, eased vertical pans, scroll locks that stop the camera exactly), invisible
@@ -91,7 +91,7 @@ Laser are exclusive, and an optional Auto Power-Up equips a configurable order b
 `?` slot puts up a **Force Field** that absorbs five bullets, lasers or rammed enemies (never
 the rock) with short shield-hit i-frames and visible wear; `!` is **Mega Crash**, which cancels
 every enemy bullet and destroys every enemy that is not immune. The meter itself is drawn by
-the HUD of M1-16 ([developer guide](docs/dev/powerups-and-shields.md), [what testers should check](docs/client/preview-build.md#power-ups)).
+the HUD since M1-16 ([developer guide](docs/dev/powerups-and-shields.md), [what testers should check](docs/client/preview-build.md#power-ups)).
 **The ship can be lost, and the score counts** (M1-12): a hit the Force Field does not absorb —
 rock, an enemy, a bullet or a laser — starts the **death sequence** in the same tick's damage
 phase: a life gone, explosion and debris events, an exact 8-tick **hit-stop**, a medium screen
@@ -148,9 +148,25 @@ and the running stage's music set (every cue its data names), and an OGG path (X
 dedupe, per-cue instance caps, priority stealing, the WARNING siren and the ship's death never
 cut), sounds panned from where they happen, and a looping music player with fades and ducking
 scheduled as sample-accurate ramps — with no allocation unless a sound starts. In a browser the
-sound starts with the first key press; the TV plays the sound effects from boot (its free flight
-has no music yet). `pnpm audio:preview` writes every sound and song as WAV files
+sound starts with the first key press; the TV plays from boot (the title theme since M1-16; a
+game there flies in open space, which has no stage music yet). `pnpm audio:preview` writes every
+sound and song as WAV files
 ([developer guide](docs/dev/audio.md), [what testers should check](docs/client/preview-build.md#sound-and-music)).
+**The game has screens, menus and a HUD** (M1-16): a fixed-depth **scene stack** with deferred
+transitions runs the M1 flow — boot → **title** (the procedural SHMUP CUP logo, `PRESS OK`,
+START / OPTIONS / EXIT) → **game** (a fresh World per start and per RETRY STAGE, all pushing into
+one event queue) ⇄ **pause** (RESUME / RETRY STAGE / QUIT TO TITLE) → **stage clear** (tally,
+`TO BE CONTINUED`) / **game over** → title — with a YES / NO dialog focused on NO. Everything is
+canvas-drawn by the core into draw lists (no UI framework) and fully navigable with the remote's
+D-pad, OK and Back: menus auto-repeat held directions (18 / 6 ticks), buffer a Confirm pressed
+while they open, answer to any player, and play their sounds through the same event queue.
+**Back** goes through the scenes — game → pause, pause → resume, menus → back, and on the TV the
+title's **exit confirmation** → `platform.exit()` only after YES; a platform resume during a
+game opens the pause menu. The in-game **HUD** (`1P` / `HI` / `2P`, stock icons, the 7-slot power
+meter with its flashing highlight and greyed slots, Force Field pips) is rebuilt only when
+something it shows changed, without allocating. The shell's default scene is now this flow;
+`createGame` without `options.scenes` keeps bare gameplay for tests and tools
+([developer guide](docs/dev/scenes-and-ui.md), [what testers should check](docs/client/preview-build.md#the-title-screen-and-the-menus)).
 **Input is remote-first and data-driven** (M1-05): control profiles in
 [`content/input/`](content/input/README.md) map keys, remote buttons and gamepad buttons to
 actions with separate **game** and **menu** tables, and carry the Samsung remote's quirks as
@@ -175,7 +191,7 @@ it is waiting to be packaged and run on the M7 monitors.
 | [`shmup_prompt.md`](shmup_prompt.md) | Paste-into-a-new-session prompt that drives execution of the plan (workflow: build → review/fix loop → tests → docs → CI gate per step, progress in `shmup_progress.md`) |
 | [`docs/`](docs/README.md) | Player and developer documentation (start with [`docs/dev/repo-layout.md`](docs/dev/repo-layout.md)) |
 
-Game docs — testers: [preview build (free flight, test stage, its enemies and their bullets, your weapons, power-ups, lives and score, the boss and its WARNING, explosions, shake and flashes, sound and music)](docs/client/preview-build.md) ·
+Game docs — testers: [preview build (the title screen, menus, HUD and pause menu, the game-over and stage-clear screens, test stage, its enemies and their bullets, your weapons, power-ups, lives and score, the boss and its WARNING, explosions, shake and flashes, sound and music)](docs/client/preview-build.md) ·
 [controls](docs/client/controls.md) · [monitor setup & install](docs/client/install-on-tv.md).
 Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/architecture.md) ·
 [engine foundations](docs/dev/engine-foundations.md) · [content data](docs/dev/content-data.md) ·
@@ -191,6 +207,7 @@ Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/ar
 [bosses & the WARNING](docs/dev/bosses-and-warning.md) ·
 [FX & game feel](docs/dev/fx-and-game-feel.md) ·
 [audio](docs/dev/audio.md) ·
+[scenes, menus & HUD](docs/dev/scenes-and-ui.md) ·
 [input profiles](docs/dev/input-profiles.md) ·
 [API reference](docs/dev/api-reference.md) ·
 [build, test & deploy](docs/dev/build-test-deploy.md) · [conventions](docs/dev/conventions.md).
@@ -217,7 +234,7 @@ versions (`devEngines.runtime`).
 ```sh
 pnpm -v               # must print 12.x — an older global pnpm fails with ERR_PNPM_BROKEN_LOCKFILE
 pnpm install          # set ELECTRON_SKIP_BINARY_DOWNLOAD=1 to skip the Electron binary
-pnpm dev              # browser dev app → http://localhost:5173: fly the KESTREL (arrows/WASD, gamepad; the first key press turns the sound on; Enter/C takes a power-up; ?stage=test-range scrolls the test stage, its enemies, their bullets and the power capsules; ?stage=test-boss plays the WARNING and the test boss; ?profile=keyboard-remote-emulation feels like the TV remote; ?scene=showcase / ?scene=calibration / ?scene=fx-gallery)
+pnpm dev              # browser dev app → http://localhost:5173: the title (Enter twice starts a game; Esc pauses), then fly the KESTREL (arrows/WASD, gamepad; the first key press turns the sound on; Enter/C takes a power-up; ?scene=flight skips the title; ?stage=test-range scrolls the test stage, its enemies, their bullets and the power capsules; ?stage=test-boss plays the WARNING and the test boss; ?profile=keyboard-remote-emulation feels like the TV remote; ?scene=showcase / ?scene=calibration / ?scene=fx-gallery)
 pnpm lint             # ESLint (typescript-eslint + compat: chrome >= 69)
 pnpm typecheck        # tsc --noEmit everywhere
 pnpm test             # Vitest per package + repo integration tests
@@ -271,11 +288,11 @@ pnpm workspace (`packages/*`, `apps/*`) + Turborepo. Full annotated tree:
 
 | Path | What |
 |---|---|
-| [`packages/core`](packages/core/README.md) | `@shmup/core` — pure-TS deterministic simulation: the World and its tick pipeline, all game systems, the `Platform` interface |
+| [`packages/core`](packages/core/README.md) | `@shmup/core` — pure-TS deterministic simulation: the World and its tick pipeline, all game systems, the scene stack and flow, the canvas UI kit and HUD, the `Platform` interface |
 | [`packages/render-pixi`](packages/render-pixi/README.md) | `@shmup/render-pixi` — PixiJS v8 renderer (WebGL1, 384×216 → integer upscale); particles, screen shake / flash / dim, score popups |
 | [`packages/audio-web`](packages/audio-web/README.md) | `@shmup/audio-web` — Web Audio back-end (interactive latency, buses) and the game's audio: deterministic synth, SFX voice manager, looping music with fades and ducking, the engine fed by sim events |
 | [`packages/input-web`](packages/input-web/README.md) | `@shmup/input-web` — keyboard / Samsung remote / gamepad → action snapshots, driven by the input profiles (debounce, diagonal / SOCD policies, game / menu tables) |
-| [`packages/shell`](packages/shell/README.md) | `@shmup/shell` — shared browser host of web + Tizen: boot / loading (content, atlas, sounds and the stage's music), boot error screen, event dispatch (game-feel events → renderer, sound events → audio engine), frame loop, the free-flight scene, the fx gallery |
+| [`packages/shell`](packages/shell/README.md) | `@shmup/shell` — shared browser host of web + Tizen: boot / loading (content, atlas, sounds and the stage's music), boot error screen, event dispatch (game-feel events → renderer, sound events → audio engine), frame loop, the scene flow's view (the default), the free-flight scene, the fx gallery |
 | [`apps/web`](apps/web/README.md) | Vite browser dev target (also Electron's renderer) |
 | [`apps/tizen`](apps/tizen/README.md) | Samsung Tizen `.wgt` (Chromium 69 classic IIFE build, config.xml, CLI scripts) |
 | [`apps/electron`](apps/electron/README.md) | Electron desktop shell |
@@ -297,11 +314,10 @@ the game — the shipped Tizen bundle still targets Chromium 69.
 
 ## Next step
 
-Code: plan step **M1-16** (scene flow, canvas UI kit & HUD: a scene stack with Title → Game ⇄
-Pause → Stage clear / Game over, all canvas-drawn and navigable with the remote — menus with
-held-direction auto-repeat, confirm dialogs, Back handled through the scenes and the TV's exit
-confirmation — and the in-game HUD with the 7-slot power meter) — the per-step status board is
-[`shmup_progress.md`](shmup_progress.md).
+Code: plan step **M1-17** (saves, audio options & platform integration: `SaveData` v1 with
+migrations and a corrupt-save fallback, persisted hi-scores and options, an Options screen with
+MASTER / MUSIC / SFX sliders and the remote-profile choice, the saved hi-score and volumes applied
+at boot) — the per-step status board is [`shmup_progress.md`](shmup_progress.md).
 
 On hardware (unchanged, and still the gate for the remote control scheme): package and
 deploy the input probe from the **Windows desktop** that sits on the same LAN as the monitors and holds
@@ -310,7 +326,8 @@ the Samsung certificate profile, run the test protocol on both monitors, and rec
 become edits to `content/input/remote.input-profiles.json` (`releaseDebounceTicks`,
 `diagonals`, `register`) — recipes in [`content/input/README.md`](content/input/README.md).
 Since M1-06 the preview build is worth installing too: flying the KESTREL with the real remote
-is the first hands-on check of the control scheme (checklist in
+is the first hands-on check of the control scheme — and since M1-16 moving through the title and
+pause menus and quitting with Back (checklist in
 [`docs/client/preview-build.md`](docs/client/preview-build.md#on-the-samsung-smart-monitor--tv)).
 
 Desktop prerequisites: Git, Node 24 (22.12+), Tizen Studio **or** VS Code + Samsung Tizen extension (with a Samsung

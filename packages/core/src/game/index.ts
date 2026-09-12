@@ -74,7 +74,10 @@ export const moduleInfo = defineModule({
 export interface GameState {
   /** Simulation ticks executed so far. */
   tick: number;
-  /** `true` while the player paused the game; `step()` does nothing. */
+  /**
+   * `true` while the session is paused with {@link Game.pause}; `step()` does nothing. The scene
+   * flow's pause menu does not set it (it is a scene: the flow still ticks).
+   */
   paused: boolean;
   /** `true` while the platform has the app backgrounded/hidden; `step()` does nothing. */
   suspended: boolean;
@@ -92,7 +95,8 @@ export interface Game {
   readonly platform: Platform;
   /**
    * Presentation events pushed by the simulation (SFX, music, particles, shake …) — the same
-   * queue as `world.events`. The host drains it once per displayed frame
+   * queue as `world.events` (with the scene flow every World of the session pushes into it, and
+   * so do the menus' sounds and the scenes' music). The host drains it once per displayed frame
    * (`game.events.drain(dispatch)`); a headless run may ignore it (the ring drops the oldest
    * events when full).
    */

@@ -183,8 +183,11 @@ the game ends **after** the last explosion and dead time (`DEATH_HIT_STOP_TICKS 
 while one active ship has a life; an inactive slot never counts. `gameOver` is only set from
 `playing` or `bossWarning` — a death after the stage's `end` event (`stageClear`) never overrides
 it. The out ship stays `dead`, and the World **keeps simulating** (the camera scrolls, enemies fly
-and fire): what follows a game over — continue, name entry, the title — is the scene flow's
-(M1-16, M2-01, M2-15).
+and fire): what follows a game over — continue, name entry, the title — is the scene flow's.
+Since M1-16 the flow's game scene keeps stepping the World for 30 ticks after `gameOver`, then
+opens the game-over screen over the frozen game (OK after half a second, or 10 s, returns to the
+title — [scenes-and-ui.md](scenes-and-ui.md)); continues (M2-01) and name entry (M2-15) come
+later. Bare gameplay (`?scene=flight`) still just keeps simulating.
 
 ## Score (`core/scoring`)
 
@@ -232,12 +235,16 @@ the host from its save with `board.setHiScore(value)` (M1-17 — only raises, fl
 sets `hiScoreDirty` only on a real raise). It is presentation data, so it is **not hashed**: a
 saved hi-score must not change a replay's hashes. The scores and the two credit counters are.
 
-**The HUD.** The shell's flight scene (`@shmup/shell` `flight`) draws player 1's score after `1P`,
-`HI` and the hi-score at the right end of the top bar (x 300 / 316, eight digits), `lives − 1`
-stock icons (at most 8) and `GAME OVER` (red, `0xf85858`) in place of the title once
-`world.status === 'gameOver'`. It rebuilds its draw list only when the lives, the status or a
-dirty flag changed, and clears `displayDirty` / `hiScoreDirty` itself — the M1-16 HUD will take
-that role over.
+**The HUD.** Since M1-16 the core HUD (`core/ui` `buildHud` / `Hud.update`, drawn by the scene
+flow's game scene) reads the board: `1P` and player 1's score at x 8 / 24, `HI` and the hi-score at
+156 / 172, `2P` and player 2's score (or `------`) at 292 / 308 — eight digits each through the
+`number` op — and `lives − 1` stock icons (at most 5; more show one icon and the count). It
+rebuilds only when a dirty flag, the lives or another HUD input changed, and clears
+`displayDirty` / `hiScoreDirty` itself ([scenes-and-ui.md](scenes-and-ui.md#the-hud)). The
+`?scene=flight` dev scene keeps its M1-12 HUD: the hi-score at x 300 / 316, at most 8 stock icons
+and `GAME OVER` (red, `0xf85858`) in place of the title once `world.status === 'gameOver'`.
+The session hi-score now outlives a World: the flow carries it into every new World and shows it
+on the title (`SceneFlow.hiScore`, `setHiScore`).
 
 ## Game feel (`core/fx`)
 
@@ -353,7 +360,7 @@ The next `game.step()` runs that tick, and its phase 7 turns the recorded hit in
 | Extends / the lives cap (M2-01) | React to `addScore` crossing a threshold (a flag on the board, applied in phase 7), capped by the difficulty; `lives` on the ship |
 | A flash kind | Append to `FlashKind` and `FLASH_KIND_TICKS` (never renumber — the code travels in the event); M1-13 added `Warning` and `BossBlast` this way |
 | A hit-stop or shake elsewhere (boss kills, big explosions) | `requestHitStop` / `requestShake(ShakeMagnitude.…)` from phase 7 code; never write `world.hitStop` directly |
-| The M1-16 HUD | Read `world.scoring.board` (`scores[p].score`, `hiScore`), draw on the dirty flags and clear them; `lives − 1` stock; `world.status === 'gameOver'` |
+| Something new on the HUD | `core/ui` `buildHud` reads `world.scoring.board` (`scores[p].score`, `hiScore`) on the dirty flags and clears them; add any other input to `Hud.update`'s comparison ([scenes-and-ui.md](scenes-and-ui.md#extending-it)) |
 
 ## Tests
 
@@ -398,7 +405,8 @@ The next `game.step()` runs that tick, and its phase 7 turns the recorded hit in
   drawn from the events, the global shake switch and the flash limiter, score popups from the new
   `Score` event ([fx-and-game-feel.md](fx-and-game-feel.md)).
 - **M1-15** (done) — the death sound and the music duck ([audio.md](audio.md)).
-- **M1-16** — the real HUD and the scene flow after game over.
+- **M1-16** (done) — the real HUD and the scene flow after game over (the game-over screen, the
+  session hi-score across games) ([scenes-and-ui.md](scenes-and-ui.md)).
 - **M1-17** — the saved hi-score (`setHiScore`) and the Options menu for `deathPenalty` /
   `startingLives`.
 - **M2-01** — extends, the lives cap, continues (the score's last digit), rank reacting to deaths.

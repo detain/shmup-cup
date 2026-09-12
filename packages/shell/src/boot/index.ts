@@ -35,12 +35,13 @@
  * (`createAudioEngine`). During boot — the loading phase — the engine renders the SFX bank and
  * prepares the running stage's music set (`stageMusicCues`: the theme and boss cues the stage
  * names, the cue of each of its `music` events, stage clear and game over; nothing in open
- * space; the scene flow adds the title theme), behind the progress bar; nothing is rendered or
- * decoded later. Once the app's
+ * space; the scene flow adds the title theme, and in open space the stage-clear and game-over
+ * jingles), behind the progress bar; nothing is rendered or decoded later. Once the app's
  * `audio.unlock()` has created the context (first gesture on the web, at boot on TV) the engine
  * attaches to the web-audio buses; in the scene flow and free flight the `Sfx`, `Music` and
- * `MusicDuck` events (the World's, the menus' and the scenes' music) play through it (`connectAudioEvents`, sounds panned from their x relative to the
- * camera), and the frame loop closes the per-tick SFX dedupe window after each drain.
+ * `MusicDuck` events (the World's, and in the flow the menus' sounds and the scenes' music) play
+ * through it (`connectAudioEvents`, sounds panned from their x relative to the camera on screen),
+ * and the frame loop closes the per-tick SFX dedupe window after each drain.
  *
  * **Game feel (M1-14).** The shell owns the `fx` content kind: it validates `content/fx/` with
  * `@shmup/render-pixi`'s `loadFxContent`, hands the presets to the renderer
@@ -300,7 +301,10 @@ export interface Shell {
   readonly content: LoadContentResult;
   /** The scene being shown. */
   readonly scene: ShellScene;
-  /** The scene flow's view when `scene === 'game'` (backdrop, starfield, followed camera), else `null`. */
+  /**
+   * The scene flow's view when `scene === 'game'` (backdrop, open-space starfield, followed
+   * camera — `scene-view` module), else `null`. The flow itself is `game.scenes`.
+   */
   readonly sceneView: SceneView | null;
   /** The free-flight scene when `scene === 'flight'`, else `null`. */
   readonly flight: FlightScene | null;
@@ -436,13 +440,16 @@ function createCalibrationFrame(first: RenderFrame): CalibrationFrame {
  * `game.inputContext` to `input.setContext`, calls `game.frame`, drains the event queue through
  * the dispatcher's bound visitor and renders the reused frame.
  *
- * The renderer's sprite name table depends on the scene: the scene flow (`game`, the default) hands
- * over the content's names plus the starfield's (`scene-view` module) and pre-binds the title's
- * backdrop — a game start's World is bound on its first frame, and the particles and popups are
- * cleared then; free flight hands over the content's
- * names plus its own starfield / HUD sprites (`flight` module), the showcase its own
- * `SHOWCASE_SPRITES` table (`showcase` module); both pre-bind their world view (so the first
- * frame creates no Pixi objects). The calibration scene uses `content.db.sprites.names` and a
+ * The renderer's sprite name table depends on the scene: the scene flow (`game`, the default)
+ * hands over the content's names plus the starfield's (`scene-view` module) and pre-binds the
+ * title's backdrop — a game start's World is bound on its first frame, and the particles and
+ * popups are cleared then; free flight hands over the content's names plus its own starfield /
+ * HUD sprites (`flight` module), the showcase its own `SHOWCASE_SPRITES` table (`showcase`
+ * module); both pre-bind their world view (so the first frame creates no Pixi objects). In the
+ * scene flow the frame loop also copies the camera on screen into the view after the ticks
+ * (`sceneView.follow()`, before the drain, so sounds pan against it) and writes the top scene's
+ * id into the canvas's `data-shmup-scene` when it changes (dev scenes write their name once).
+ * The calibration scene uses `content.db.sprites.names` and a
  * frame without a world (only the test pattern, HUD and UI lists); the fx gallery its own
  * starfield table (`FX_GALLERY_SPRITES`) and pre-bound view. Audio unlock listeners are
  * registered in the capture phase and removed after the first gesture; `stop()` is idempotent.
@@ -458,14 +465,13 @@ function createCalibrationFrame(first: RenderFrame): CalibrationFrame {
  * of the same kind replaces one and leaves the engine without that content); after the game is
  * created, the engine renders the SFX bank (`LOADING SOUND`) and prepares the booted stage's music
  * set (`LOADING MUSIC`; open space prepares none; the scene flow adds the title theme, and the
- * stage-clear and game-over jingles in open space) — then the scene flow leaves its boot scene.
- * Only an `audio` that also exposes `context`
- * and `bus()` is attached — right after `platform.audio.unlock()` returns and again when it
- * resolves; a plain `IAudio` (or a context without buffer playback) leaves the game silent. Only
- * the scene flow and free flight connect the game's events to the engine (`connectAudioEvents`,
- * panned against the camera on screen); every scene's
- * frame loop calls `engine.endFrame()` after the drain, and `stop()` destroys the engine before the
- * audio back-end.
+ * stage-clear and game-over jingles in open space) — then the scene flow leaves its boot scene
+ * (`game.scenes.finishBoot()`). Only an `audio` that also exposes `context` and `bus()` is
+ * attached — right after `platform.audio.unlock()` returns and again when it resolves; a plain
+ * `IAudio` (or a context without buffer playback) leaves the game silent. Only the scene flow and
+ * free flight connect the game's events to the engine (`connectAudioEvents`, panned against the
+ * camera on screen); every scene's frame loop calls `engine.endFrame()` after the drain, and
+ * `stop()` destroys the engine before the audio back-end.
  *
  * @param options - Canvas, window, content, assets, adapters and the platform factory.
  * @returns A promise of the running {@link Shell}.
@@ -482,8 +488,9 @@ function createCalibrationFrame(first: RenderFrame): CalibrationFrame {
  * const audio = createWebAudio();
  * const shell = await bootShell({
  *   canvas, win: window, contentFiles, assets, input, audio,
- *   platform: (renderer) => createWebPlatform({ input, audio, webgl2: renderer.webGLVersion === 2, ... }),
- *   scene: sceneFromSearch(location.search),
+ *   platform: (renderer) =>
+ *     createWebPlatform({ input, audio, webgl2: renderer.webGLVersion === 2, ... }),
+ *   scene: sceneFromSearch(location.search), // 'game' (the scene flow) unless ?scene= says so
  * });
  * ```
  */

@@ -123,7 +123,8 @@ Chrome 69 must not be used in shipped code. `eslint-plugin-compat` (browserslist
 [conventions.md](conventions.md#chromium-69-rules)).
 
 `pnpm --filter @shmup/tizen dev` serves the Tizen entry in a desktop browser on port 5174
-(no `window.tizen`: key registration is skipped and Back does nothing). Opening
+(no `window.tizen`: key registration is skipped and there is no `platform.exit`, so the title
+has no EXIT item and Back never exits — it still pauses and backs out of menus). Opening
 `apps/tizen/dist/index.html` straight from disk in desktop Chrome needs
 `--allow-file-access-from-files`: Chrome gives every `file://` URL its own origin, so WebGL
 refuses to upload the atlas page; the TV serves the widget's files as same-origin.
@@ -198,8 +199,12 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   including every asset-pipeline module) and the Vite plugins, some of which start a real
   dev server or build (see [../../test/README.md](../../test/README.md)).
 - **Browser tests** (`test/e2e/`, `pnpm test:e2e`, not part of `pnpm test`): both builds boot
-  in headless Chromium to `data-shmup-state="running"`, load the atlas, render free flight
-  with known pixels (HUD, title, the KESTREL's hull) and log no errors; arrow keys move the
+  in headless Chromium to `data-shmup-state="running"`, load the atlas, render the title
+  (`data-shmup-scene="title"`: the logo and the hi-score, no ship) — and free flight with
+  `?scene=flight` (HUD, title, the KESTREL's hull) — and log no errors; Enter / OK starts the
+  game from the title, Esc / Back pause (dimmed, frozen) and resume, Back on the web title only
+  backs out of the menu and on the Tizen title (a fake `window.tizen`) asks first and exits only
+  after YES (M1-16); arrow keys move the
   ship and holding one stops it at the playfield margin (web and Tizen builds); a failing
   atlas request shows the boot error screen; resizing re-fits the integer scale; the input
   profiles reach the page
@@ -216,13 +221,16 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   and additively blended fireball pixels in both builds, with the screenshot attached to the
   report (M1-14), and — with `createBufferSource` wrapped to log started sounds — the web build's
   first key press on `?stage=test-range` starts the zone theme looping at the song's exact sample
-  indices while the Tizen build plays its shots from boot (M1-15).
+  indices while the Tizen build plays its shots from boot (M1-15). The gameplay specs open
+  `?scene=flight` (bare gameplay) since M1-16.
   Output goes to `test/e2e/test-results/` (git- and Prettier-ignored).
-- **Dev query parameters** of the web build (`pnpm dev`, `vite preview`): `?stage=<id>` (run
+- **Dev query parameters** of the web build (`pnpm dev`, `vite preview`; without `?scene=` the
+  game starts on the title — the scene flow, M1-16): `?scene=flight` (free flight straight away,
+  no title or pause menu — bare gameplay), `?stage=<id>` (START — or free flight — runs
   that stage instead of open space, e.g. `test-range`, or `test-boss` for the WARNING and the
   test boss — see [stage-runtime.md](stage-runtime.md#running-a-stage) and
   [bosses-and-warning.md](bosses-and-warning.md#the-test-boss-and-stagetest-boss)), `?scene=showcase`
-  (the M1-04 sprite showcase instead of free flight), `?scene=calibration` (test pattern),
+  (the M1-04 sprite showcase), `?scene=calibration` (test pattern),
   `?scene=fx-gallery` (every particle preset, shake, flash, the dim and the score popups in turn —
   M1-14, [fx-and-game-feel.md](fx-and-game-feel.md#the-fx-gallery-scenefx-gallery)),
   `?loadout=full` (start fully powered: speed 2, Missile, Laser, four Options — M1-10 — and a

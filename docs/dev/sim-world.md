@@ -70,9 +70,12 @@ hashWorld(world)                                    FNV-1a over the simulated st
 ## The World (`core/world`)
 
 `createWorld(config, content)` allocates everything a session needs; `stepWorld(world,
-input)` advances it by exactly one tick and never allocates. `createGame` creates one World
-per session (`game.world`) and calls `stepWorld` from `game.step()`; until the scene stack of
-M1-16 decides when a World exists, every session hosts one from the start.
+input)` advances it by exactly one tick and never allocates. For **bare gameplay** (no
+`GameOptions.scenes` — tests, tools, the shell's dev scenes) `createGame` creates one World per
+session (`game.world`) and calls `stepWorld` from `game.step()`. With the **scene flow** (M1-16,
+what the apps run) the game scene decides when a World exists: a fresh one per game start and
+RETRY STAGE, stepped only while the game scene is on top, all of them pushing into the game's one
+event queue (`WorldOptions.events`) — [scenes-and-ui.md](scenes-and-ui.md#worlds-events-and-the-frame).
 
 | Field | What it is |
 |---|---|

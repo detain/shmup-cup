@@ -16,7 +16,7 @@ Listen to everything with `pnpm audio:preview` (WAV files in `assets/generated/a
 | `main.sfx.json` | `sfx` | The SFX bank: every `SFX_CUES` cue (shots, explosions, pickups, menus, the WARNING siren wail …) |
 | `music/zone-a.music.json` | `music` | AZURE VERGE — the stage theme (`Stage`): a 6.4 s intro, then a 44.8 s loop |
 | `music/boss.music.json` | `music` | BULWARK ASSAULT — the boss theme (`Boss`) |
-| `music/title.music.json` | `music` | SHMUP CUP — the title theme (`Title`, used by the title scene from M1-16) |
+| `music/title.music.json` | `music` | SHMUP CUP — the title theme (`Title`, played by the title scene since M1-16; the shell prepares it at boot) |
 | `music/stage-clear.music.json` | `music` | VERGE SECURED — the stage-clear jingle (`StageClear`, no loop) |
 | `music/game-over.music.json` | `music` | SILENT VERGE — game over (`GameOver`, no loop) |
 

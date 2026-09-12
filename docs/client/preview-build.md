@@ -1,65 +1,107 @@
-# The preview build (free flight)
+# The preview build
 
-The game is not a game yet, but for the first time you can **fly the ship**. Every build —
-browser, Samsung TV and desktop — starts with a short loading bar and then **free flight**:
-the KESTREL, the player ship, flies in from the left edge of an empty starfield and from then
-on follows the directional buttons of the TV remote, the arrow keys or a gamepad — and **its
-gun fires on its own**, with a sound for every shot. Free flight has no enemies and no music.
-Free flight exists to prove on each device that the
-whole chain works — the controls reach the ship quickly and reliably, the 60 ticks per second
-simulation runs smoothly, the picture is pixel-perfect at the monitor's resolution — and to
-catch control, smoothness or scaling problems early.
+The game now starts like a real game. Every build — browser, Samsung TV and desktop — shows a
+short loading bar and then the **title screen**: the SHMUP CUP logo, a blinking `PRESS OK`, and
+after OK a small menu. **START** begins a game: the KESTREL, the player ship, flies in from the
+left and from then on follows the directional buttons of the TV remote, the arrow keys or a
+gamepad — **its gun fires on its own**, with a sound for every shot — under the new **HUD**: your
+score, the best score and the second player's slot along the top, your spare ships, the **power
+meter** and the Force Field's strength along the bottom. **Back** (or Pause) opens the **pause
+menu** over the frozen game: resume, retry, or quit to the title. When the last ship is lost a
+**GAME OVER** screen appears, after a boss a **STAGE CLEAR** screen, and on the TV Back on the
+title asks **EXIT SHMUP CUP?** before it closes the app. Everything is drawn by the game itself
+and works with the remote's arrows, OK and Back alone ([The title screen and the
+menus](#the-title-screen-and-the-menus), [Pausing, quitting and the end
+screens](#pausing-quitting-and-the-end-screens)).
 
-In a browser you can also fly the first **scrolling stage** — the *Test Range*, with rocky
+On the TV a game flies in empty **open space** (no enemies yet): it exists to prove on each
+device that the whole chain works — the menus and the controls respond quickly and reliably, the
+60 ticks per second simulation runs smoothly, the picture is pixel-perfect at the monitor's
+resolution — and to catch control, smoothness or scaling problems early.
+
+In a browser you can also play the first **scrolling stage** — the *Test Range*, with rocky
 ground, caves, speed changes, enemies that fly and walk past and shoot at you, your ship
 shooting them down, **power-ups** (the capsules some enemies leave behind, taken with the
 remote's OK button) and **lives, losing your ship and the score**: rock,
-enemies and bullets now destroy the KESTREL, it comes back with a life less, and after the last
+enemies and bullets destroy the KESTREL, it comes back with a life less, and after the last
 one it is **GAME OVER** (see [The scrolling test stage](#the-scrolling-test-stage-browser-only),
 [Your weapons](#your-weapons), [Power-ups](#power-ups) and
-[Lives, losing your ship and the score](#lives-losing-your-ship-and-the-score)). Since this build
-a second, short stage — the *Boss Range* — ends with the first **boss**, announced by a
+[Lives, losing your ship and the score](#lives-losing-your-ship-and-the-score)). A second, short
+stage — the *Boss Range* — ends with the first **boss**, announced by a
 **WARNING** sign ([The boss range and the WARNING](#the-boss-range-and-the-warning-browser-only)).
-And since this build hits *feel* like hits: enemies burst into **explosions**, shots throw
+Hits *feel* like hits: enemies burst into **explosions**, shots throw
 **sparks**, the picture **shakes** when your ship is lost, the screen **flashes** for a Mega
 Crash or a boss's final blast, and every kill shows its **points** rising from the spot
 ([Explosions, sparks, shake and flashes](#explosions-sparks-shake-and-flashes)).
-The earlier start-up pictures are still there: the animated **sprite showcase** and the
-**calibration screen**, plus the **effects gallery** that shows every explosion and screen
-effect in turn (see [below](#other-screens-browser-only)). And since this build the game has
-**sound**: every shot, hit, explosion and pickup makes a sound, the WARNING wails its siren, and
-in the browser stages the first **music** plays — a stage theme that loops seamlessly, the boss
-theme and a short stage-clear tune ([Sound and music](#sound-and-music)). In a browser the
-sound starts with your first key press or click.
+The earlier start-up pictures are still there: **free flight** straight away without the title,
+the animated **sprite showcase** and the **calibration screen**, plus the **effects gallery**
+that shows every explosion and screen effect in turn (see [below](#other-screens-browser-only)).
+And the game has **sound**: every shot, hit, explosion and pickup makes a sound, the menus click
+and chime, the WARNING wails its siren, and there is original **music** — the title theme, in
+the browser stages a stage theme that loops seamlessly, the boss theme, a short stage-clear tune
+and a game-over tune ([Sound and music](#sound-and-music)). In a browser the sound starts with
+your first key press or click.
 
 This page explains how to open the preview on each device, what you should see, how the ship
-should behave, and what to report if something is wrong. The full button layouts are in
-[controls.md](controls.md).
+and the menus should behave, and what to report if something is wrong. The full button layouts
+are in [controls.md](controls.md).
 
 ## Starting up: the loading screen
 
 For a moment after the app opens you see a deep navy screen with **SHMUP CUP**, the word
 **LOADING** and a progress bar that fills from left to right — at the end it reads
-**LOADING SOUND** while the game makes its sound effects, and in a browser stage also
-**LOADING MUSIC** while it makes the stage's music. On the TV and on a PC this takes well
-under a second, so you may only see a flash of it. Then free flight starts.
+**LOADING SOUND** while the game makes its sound effects, then **LOADING MUSIC** while it makes
+the title music (and, in a browser stage, the stage's music). On the TV and on a PC this takes
+well under a second, so you may only see a flash of it. Then the title screen appears.
 
 If something is wrong with the build, the app stops on the **error screen** instead (see
 [When the app shows an error screen](#when-the-app-shows-an-error-screen)) — it never just
 stays black.
 
+## The title screen and the menus
+
+| What | Where | What "good" looks like |
+|---|---|---|
+| **Stars** | Behind everything | Three layers of stars drift slowly to the left, as in the game |
+| **SHMUP CUP** logo | Upper middle | Big blocky letters, yellow at the top turning orange and red towards the bottom, with a dark outline and a shadow; crisp square pixels |
+| **PRESS OK** | Under the logo | Blinks on and off about once a second |
+| **HI** and a number | Bottom | The best score of this session (0 after the app starts) |
+
+The title music (SHMUP CUP) plays — in a browser from your first key press or click.
+
+**OK** (Enter on a keyboard, A / Cross on a gamepad) replaces `PRESS OK` with the **menu**:
+
+| Entry | What it does |
+|---|---|
+| **START** | Starts a game (highlighted first) |
+| **OPTIONS** | Greyed out — the options screen comes with the next build; the highlight skips it |
+| **EXIT** | Only on the TV: asks **EXIT SHMUP CUP?** — see below |
+
+- The highlighted entry is yellow with a small arrow `→` in front of it. **▲ / ▼** move the
+  highlight (from the last entry it wraps round to the first); holding an arrow moves it again
+  after about a third of a second, then about ten times a second. Each move clicks softly.
+- **OK** chooses the highlighted entry (a short chime). The menu ignores OK for a split second
+  after it appears, so the OK that opened it never also starts the game — but an OK pressed in
+  that moment is remembered, not lost.
+- **Back** on the TV asks **EXIT SHMUP CUP?** with **YES** and **NO** — NO is highlighted, so a
+  stray OK never quits. ◀ / ▶ move between YES and NO; OK on **YES** closes the app and returns
+  to the monitor's home screen, OK on **NO** (or Back again) goes back to the title. In a browser
+  (which cannot close itself) Back only goes from the menu back to `PRESS OK`.
+- Any controller works in the menus — also a second gamepad.
+
 ## What you should see
 
-A deep navy picture (never pure black — the M7 monitors' VA panels smear dark-to-bright
-transitions) framed by two thin bars, one along the top edge and one along the bottom:
+After **START** the music fades, the stars keep drifting and the game begins — a deep navy
+picture (never pure black — the M7 monitors' VA panels smear dark-to-bright transitions) framed by
+two thin bars, one along the top edge and one along the bottom (the **HUD**):
 
 | Element | Where | What "good" looks like |
 |---|---|---|
 | **Star field** in three layers | Whole picture behind the ship | Stars drift to the left at three different speeds (the far ones slowest), steadily, with no jumps; the pattern repeats seamlessly |
 | **KESTREL**, the player ship | Enters from the left edge | Glides in from off-screen during the first ⅔ of a second, slowing down as it arrives, and stops at mid-height about a sixth of the way across. Then it is yours to fly |
 | **Shots** from the ship's nose | In front of the ship, flying right | As soon as the ship has arrived, small cyan-and-white darts leave its nose and race to the right edge, two at a time, each with a tiny white-and-yellow **muzzle spark** flickering just in front of the nose as it leaves — see [Your weapons](#your-weapons) |
-| **Top bar** | Top edge | `1P` (cyan) and your score `00000000` on the left; **FREE FLIGHT** (yellow) in the middle; `HI` (yellow) and the best score of this session on the right |
-| **Bottom bar** | Bottom edge | Two small ship icons on the left (your spare ships — you start with three, the one you fly plus two); the hint `ARROWS MOVE` (grey) in the middle |
+| **Top bar** | Top edge | `1P` (cyan) and your score `00000000` on the left; `HI` (yellow) and the best score of this session in the middle; `2P` and `------` (grey — nobody is playing player 2) on the right |
+| **Bottom bar** | Bottom edge | On the left two small ship icons (your spare ships — you start with three, the one you fly plus two; with more than five you see one icon and the number); then the **power meter**: seven boxes labelled `SPEED` `MISSILE` `DOUBLE` `LASER` `OPTION` `?` `!` ([Power-ups](#power-ups)); on the right, while you have a Force Field, five small blocks — cyan for each hit it can still take, dark for the spent ones |
 
 Every pixel should be a crisp little square. The game draws at 384×216 and scales that up
 by a whole number: on the 1080p M7 monitors (and any 1920×1080 browser window) the scale is
@@ -69,6 +111,33 @@ intentional, it keeps the pixels sharp.
 
 The graphics are placeholders made for this project (original designs, not taken from any
 other game) and will be replaced by finished art later.
+
+## Pausing, quitting and the end screens
+
+**Pause.** **Back** or **Play/Pause** on the remote (Esc, P or Backspace on a keyboard, Start or
+Back on a gamepad) freezes the game — ship, bullets, explosions, the scrolling — darkens it to
+about half and shows the **PAUSE** menu in a framed box, with a short sound:
+
+| Entry | What it does |
+|---|---|
+| **RESUME** | Back to the game exactly where it stopped (highlighted first). **Back** or **Pause** do the same |
+| **OPTIONS** | Greyed out until the options screen arrives |
+| **RETRY STAGE** | Starts the stage (or open space) again from the beginning with a fresh ship, three ships and a zero score — no question asked |
+| **QUIT TO TITLE** | Asks **QUIT TO TITLE?** (YES / NO, NO highlighted); YES ends the game and shows the title |
+
+The music keeps playing while the game is paused. Leaving the app with **Home** on the TV (or
+switching tabs in a browser) and coming back also brings you back to the pause menu, so a game
+never continues while you are not looking.
+
+**Game over.** When your last ship is lost the game plays on for a moment, then darkens and a
+red-edged box shows **GAME OVER** and your final **SCORE**; a short, sad tune (SILENT VERGE)
+plays. After half a second **OK** (or Back) returns to the title; after ten seconds it goes back
+by itself. If the score beat the session's best, the title's `HI` now shows it.
+
+**Stage clear.** When a stage ends — the Test Range after its 75 seconds, the Boss Range after
+its boss — the game plays on for a second and a half, then a box shows **STAGE CLEAR** with your
+**SCORE** and the **HI** score for four seconds, then **TO BE CONTINUED** for four seconds (this
+preview has only one zone), and then the title. **OK** skips ahead.
 
 ## Flying the ship
 
@@ -93,7 +162,8 @@ How it should feel:
 - **The gun fires by itself** — you never press a button to shoot ([Your weapons](#your-weapons)).
 - **OK** (Enter or C on a keyboard, X on a gamepad) takes a power-up once you have collected
   capsules ([Power-ups](#power-ups)) — pressing it never stops or slows the ship.
-- There is no pause screen yet; it arrives in a later step.
+- **Back** or **Play/Pause** pauses the game
+  ([Pausing, quitting and the end screens](#pausing-quitting-and-the-end-screens)).
 
 On the TV remote the ship stops about 1/30 of a second after you let go of a button — the
 game waits that long to hide the remote's occasional "released and pressed again" hiccup, so a
@@ -102,7 +172,20 @@ ship may move in four directions only; the game is designed to be fully playable
 
 ### What changed lately
 
-**New in this build: sound and music.** Everything that happens now makes a sound: your shots
+**New in this build: the title screen, the menus, the HUD and the pause menu.** Until now every
+build started straight in the game ("free flight"). Now it starts on a **title screen** with the
+SHMUP CUP logo and its own music; OK opens a small menu, and **START** begins the game. The top
+bar shows your score, the session's best (`HI`) and the second player's slot; the bottom bar your
+spare ships, the **power meter** — the seven boxes that show which power-up OK takes, the
+highlighted one blinking, the ones you cannot take right now greyed out — and the Force Field's
+strength. **Back** (or Play/Pause) now **pauses** the game on the TV instead of closing the app:
+RESUME, RETRY STAGE or QUIT TO TITLE. Losing the last ship shows a **GAME OVER** screen and
+returns to the title; finishing a stage shows **STAGE CLEAR** and `TO BE CONTINUED`. And on the
+TV, Back on the title asks **EXIT SHMUP CUP?** — only YES closes the app. See
+[The title screen and the menus](#the-title-screen-and-the-menus) and
+[Pausing, quitting and the end screens](#pausing-quitting-and-the-end-screens).
+
+Before that, **sound and music.** Everything that happens now makes a sound: your shots
 (a short blip, the missiles a lower one), hits on enemies, clinks on armour, explosions of three
 sizes, the capsule ding, the power-up trill and a "no" buzz when OK has nothing to give, the
 Force Field's hits and break, the Mega Crash, the loss of your ship, and the boss's explosions.
@@ -113,8 +196,8 @@ without a gap; the WARNING fades it out, the boss brings its own theme (BULWARK 
 after the boss a short stage-clear tune (VERGE SECURED) plays. When your ship is lost the music
 goes quiet for a moment. All of it is original placeholder sound made by the game itself. **In a
 browser the sound starts only after your first key press or click** (browsers do not allow sound
-before that; a gamepad button does not count). **On the TV** you hear the shots from the start;
-the TV has no music yet — free flight has none. See [Sound and music](#sound-and-music).
+before that; a gamepad button does not count). **On the TV** you hear the shots from the start
+(the title music came with the title screen). See [Sound and music](#sound-and-music).
 
 Before that, **explosions, sparks, screen shake, flashes and score numbers.** Until now a
 destroyed enemy simply vanished. Now it bursts into a fireball bigger than itself (bigger enemies
@@ -161,7 +244,7 @@ every formation you destroy completely now leave a blinking **power capsule**. F
 drifts into the ship once you are close) and press **OK** — Enter or C on a keyboard — to take
 the power-up the capsules have earned you: Speed Up, Missile, Double, Laser, an extra Option, a
 **Force Field** that takes five hits, or the **Mega Crash** that wipes the screen. The power meter
-that shows which one is highlighted is not drawn yet, so for now you count capsules — the
+that shows which one is highlighted was not drawn yet then (it came with the HUD) — the
 [Power-ups](#power-ups) section has the table. `?loadout=full` now also starts with a Force
 Field. On the TV and the desktop (free flight, no enemies) there are no capsules yet, but OK is
 now a game button there too.
@@ -189,15 +272,21 @@ fighters, and fighters that stop, aim and dash at you ([what to look for](#enemi
 **scrolling stages** — the view scrolls along a scripted path, speeding up and
 slowing down, over rocky floors and caves drawn from small tiles, with star layers moving
 behind at their own speeds; and before that the ship came **under your control**, and free
-flight replaced the sprite showcase as the start-up picture. The simulation behind it is the real game engine: every
-build adds to this world — next come the title screen, the pause menu and the game's menus.
+flight replaced the sprite showcase as the start-up picture. The simulation behind it is the real
+game engine: every build adds to this world — next come the options screen (volumes, the control
+profile) and saved high scores.
 
 **Please re-test on the monitors:** install the new build and run through the checks in the
-next section — how the ship responds to the remote is still the most valuable report. The new
-thing on the TV is **sound** (check 11): every shot should be heard the moment it leaves the
-ship — please say whether the sound feels immediate or lags behind the picture, and whether it
-ever crackles, stutters or drops out. **Whether pressing OK while you hold an arrow stops the
-ship** (check 9) still needs answers. On a PC — or in the monitor's own web browser, pointed at
+next section — how the ship and the menus respond to the remote is still the most valuable
+report. New on the TV are the **title screen, the menus and the pause menu** (checks 12–15):
+please say whether moving through the menus with the arrows and choosing with OK feels quick and
+reliable (never a skipped or doubled move), whether **Back** pauses the game and gets you back
+out of every screen as you expect, whether the **EXIT SHMUP CUP?** question appears before the
+app closes, and whether the new **HUD** — the top bar's three scores and the bottom bar's power
+meter — is complete and readable from the sofa (check 2). **Sound** (check 11): every shot should
+be heard the moment it leaves the ship — please say whether the sound feels immediate or lags
+behind the picture, and whether it ever crackles, stutters or drops out. **Whether pressing OK
+while you hold an arrow stops the ship** (check 9) still needs answers. On a PC — or in the monitor's own web browser, pointed at
 the PC (see [In a desktop browser](#in-a-desktop-browser)) — please fly the **test stage** and
 the **boss range** with the sound on and report anything from
 [its checklist](#sound-and-music): in particular whether you can hear the **loop point** of the
@@ -227,22 +316,26 @@ the first install it appears in the monitor's **Apps** list as **Shmup Cup**.
 
 | Remote button | What it does in the preview |
 |---|---|
-| Directional pad (◀ ▲ ▶ ▼) | Flies the ship |
-| **OK** (centre) | Takes a power-up — but free flight has no enemies and so no capsules, so on the TV a press only plays a short low "no" buzz (see checks 9 and 11) |
-| **Back** (↩) | Closes the app and returns to the monitor's home screen — also from the error screen |
-| **Home** | Leaves the app; everything freezes (and falls silent) while it is in the background. Reopening it continues exactly where it stopped — nothing jumps ahead |
+| Directional pad (◀ ▲ ▶ ▼) | Menus: moves the highlight. Game: flies the ship |
+| **OK** (centre) | Menus: chooses the highlighted entry (on the title first `PRESS OK`). Game: takes a power-up — but open space has no enemies and so no capsules, so on the TV a press only plays a short low "no" buzz (see checks 9 and 11) |
+| **Back** (↩) | Game: opens the pause menu. Pause menu: resumes. A question: answers NO. Title: asks **EXIT SHMUP CUP?** — YES closes the app and returns to the monitor's home screen. On the loading and error screens it closes the app at once |
+| **Play/Pause** ⏯ (if your remote has it) | Pauses and resumes the game |
+| **Home** | Leaves the app; everything freezes (and falls silent) while it is in the background. Reopening it brings you back where you were — during a game, to the pause menu — and nothing jumps ahead |
 | **Volume +/−, Mute** | The monitor's own volume, as in any app — the game has no volume setting of its own yet (it comes with the options screen) |
 | Everything else | Read by the game every tick, but nothing reacts to it yet (the gun fires without any button) |
 
+On the TV, START flies in **open space** — stars, your ship and its gun, no enemies — until the
+first real zone arrives.
+
 Things to check on the monitor and report:
 
-1. A loading bar (or nothing at all, if it is very quick) and then the stars and the ship
-   flying in — never a black screen that stays black.
-2. **Both HUD bars are complete**: the top bar's `1P` and score on the left, **FREE FLIGHT**
-   in the middle and `HI 00000000` on the right (new — its last digit ends just before the
-   right edge); the bottom bar's two ship icons and `ARROWS MOVE`. If one edge is cut off,
-   note which — that would mean the monitor overscans or the app runs at a different
-   resolution.
+1. A loading bar (or nothing at all, if it is very quick) and then the **title screen** — the
+   logo, a blinking `PRESS OK`, `HI` at the bottom, drifting stars — never a black screen that
+   stays black. OK, then OK on START: the stars keep drifting and the ship flies in.
+2. **Both HUD bars are complete** (new layout): the top bar's `1P` and score on the left, `HI`
+   and its score in the middle, `2P ------` on the right; the bottom bar's two ship icons on the
+   left and the power meter's seven boxes `SPEED` … `!` after them — every label readable. If one edge is cut off, note which — that would mean the monitor overscans or the
+   app runs at a different resolution.
 3. Everything is sharp: the pixel-font text, the ship and the stars have crisp square
    pixels, nothing is blurry.
 4. **The ship answers the directional pad right away** and moves smoothly while you hold a
@@ -264,21 +357,39 @@ Things to check on the monitor and report:
    times): the ship must keep moving the whole time, without stopping or stuttering when OK is
    pressed or released. Report whether it does — it tells us if the remote drops a held arrow
    when OK is pressed, which decides how comfortable power-ups are on the TV.
-10. After Home → reopen, the app comes back without a black screen and the ship is where you
-   left it — and the shot sounds come back with it.
+10. After Home → reopen during a game, the app comes back without a black screen, on the **pause
+   menu** over the ship where you left it; RESUME continues — and the shot sounds come back with
+   it.
 11. **Sound** (new in this build — turn the monitor's volume up): every shot plays a short, high
    blip, a little to the left of the middle (the ship flies on the left side of the picture;
    sounds come from where they happen — fly to the right edge and they move towards the right
-   speaker). Press **OK** once: a short, low "no" buzz (there is nothing to take in free flight).
+   speaker). Press **OK** once: a short, low "no" buzz (there is nothing to take in open space).
    Report whether the shot sounds feel **immediate** — in time with the darts leaving the nose —
-   or noticeably late, and whether they ever crackle, stutter, drop out or stop. There is **no
-   music** on the TV yet: free flight has none (music plays in the browser stages, below).
+   or noticeably late, and whether they ever crackle, stutter, drop out or stop. The **title
+   music** (SHMUP CUP) plays on the title screen and fades out when a game starts; open space has
+   no music of its own (the stage music plays in the browser stages, below).
+12. **The title menu** (new): OK on `PRESS OK` shows START / OPTIONS / EXIT with START
+   highlighted; ▲ / ▼ move the highlight (OPTIONS is grey and skipped), each move with a soft
+   click; holding ▼ keeps moving it after a moment. Report any skipped or doubled step, or a
+   press that did nothing.
+13. **Pause** (new): in a game, **Back** freezes and darkens the picture and shows PAUSE with
+   RESUME / OPTIONS / RETRY STAGE / QUIT TO TITLE. Back again (or RESUME) continues exactly where
+   it stopped. RETRY STAGE starts over with a zero score. QUIT TO TITLE asks first (NO is
+   highlighted); YES shows the title. Play/Pause, if your remote has it, pauses and resumes too.
+14. **Leaving the app** (new): on the title, **Back** (or EXIT in the menu) asks **EXIT SHMUP
+   CUP?** with NO highlighted. NO or Back keeps the app running; only **YES** closes it and returns
+   to the monitor's home screen. Report if Back ever closes the app without asking (except on the
+   loading or error screen).
+15. The menus answer the remote **quickly** — as quickly as the ship does — and the text in the
+   boxes is readable from the sofa.
 
-The TV always starts with free flight, where nothing can hit the ship — the score stays at zero
-and the two spare ships stay. The test stage (and with it the power capsules, losing ships, the
-score and the explosions), the boss range with its WARNING and boss, the music, the fully
-powered ship, the showcase, the calibration screen and the effects gallery can only be opened in
-a browser — the monitor's own web browser works too, pointed at a PC running `pnpm dev` (below).
+The TV starts on the title, and START flies in open space, where nothing can hit the ship — the
+score stays at zero, the two spare ships stay and the game-over and stage-clear screens never
+come. The test stage (and with it the power capsules, losing ships, the score, the explosions and
+the end screens), the boss range with its WARNING and boss, the stage music, the fully powered
+ship, free flight, the showcase, the calibration screen and the effects gallery can only be
+opened in a browser — the monitor's own web browser works too, pointed at a PC running `pnpm dev`
+(below).
 
 ## In a desktop browser
 
@@ -290,15 +401,21 @@ pnpm dev
 ```
 
 Open http://localhost:5173 (other devices on the same network can use the PC's IP
-address, e.g. `http://192.168.1.20:5173`) and fly with the arrow keys, W A S D or a gamepad.
-Resize the window to see the whole-number scaling at work: the picture snaps between sizes
-instead of stretching. Switching to another tab freezes the game (and its sound); coming back
-continues it.
+address, e.g. `http://192.168.1.20:5173`): the title screen appears. Press **Enter** twice (past
+`PRESS OK`, then START) and fly with the arrow keys, W A S D or a gamepad; **Esc** (or P,
+Backspace) pauses. The browser version has no EXIT entry — a browser tab cannot close itself — so
+Back (Esc) on the title only goes back from the menu to `PRESS OK`. To skip the title and fly
+straight away, open http://localhost:5173/?scene=flight (**free flight**: the older start-up
+picture with its own simpler HUD — the stage name or FREE FLIGHT in the top bar, `ARROWS MOVE` in
+the bottom bar, no power meter, no pause menu, and `GAME OVER` written into the top bar). Resize
+the window to see the whole-number scaling at work: the picture snaps between sizes instead of
+stretching. Switching to another tab freezes the game (and its sound); coming back during a
+game shows the pause menu.
 
 **Sound in a browser starts with your first key press or click** into the page — browsers do
-not let a page make sound before that, and a gamepad button does not count. So press an arrow
-key (or click the picture) once; from then on you hear everything, and in a stage the music
-starts at that moment. To listen to every sound effect and song on its own, run
+not let a page make sound before that, and a gamepad button does not count. So press a key (or
+click the picture) once — the Enter that leaves `PRESS OK` will do; from then on you hear
+everything, and the title music starts at that moment. To listen to every sound effect and song on its own, run
 `pnpm audio:preview` on the PC: it writes them as WAV files into
 `assets/generated/audio-preview/` (the songs with their loop played twice, so you can listen for
 the seam).
@@ -308,17 +425,18 @@ delay as on the TV — open http://localhost:5173/?profile=keyboard-remote-emula
 [controls.md](controls.md#feeling-the-remote-on-a-desktop-keyboard)).
 
 `pnpm --filter @shmup/tizen dev` (http://localhost:5174) opens the *TV* build in the
-browser instead. It behaves the same, except that Back does nothing (there is no TV
-system to return to).
+browser instead. It behaves the same, except that its title has no EXIT entry and Back never
+closes it (there is no TV system to return to) — Back still pauses and goes back in menus.
 
 ### The scrolling test stage (browser only)
 
 Open http://localhost:5173/?stage=test-range (add `&profile=keyboard-remote-emulation` to fly
-it with the TV remote's limits). The top bar's title reads **TEST RANGE** instead of FREE
-FLIGHT, and the view scrolls to the right on its own while you fly — the ship keeps its place
-on screen unless you move it, and the world slides past from right to left. The stage theme,
-AZURE VERGE, starts with your first key press ([Sound and music](#sound-and-music)). The whole
-run takes about a minute and a quarter:
+it with the TV remote's limits) and choose START on the title: the game now runs the *Test Range*
+instead of open space (also after RETRY STAGE), and the view scrolls to the right on its own
+while you fly — the ship keeps its place on screen unless you move it, and the world slides past
+from right to left. The stage theme, AZURE VERGE, starts with the game
+([Sound and music](#sound-and-music)). The whole run takes about a minute and a quarter (times
+below count from START):
 
 | Time (about) | What happens |
 |---|---|
@@ -329,10 +447,10 @@ run takes about a minute and a quarter:
 | 33–36 s | The cave ends; the scrolling eases off, then slows to a crawl in open space |
 | 36–45 s | A second, **deeper cave** creeps into view — the ceiling hangs lower, the floor is flatter; at about 45 s the scrolling is back to normal speed |
 | 62–68 s | The rock ends; open space |
-| 75 s | The stage ends and the scrolling stops for good. Nothing else happens yet (no "stage clear" screen) — reload the page to fly it again |
+| 75 s | The stage ends and the scrolling stops for good; a second and a half later the **STAGE CLEAR** screen appears (your score and the best score), then `TO BE CONTINUED`, then the title ([the end screens](#pausing-quitting-and-the-end-screens)) |
 
 Two star layers move behind everything: the far stars at a quarter of the scrolling speed,
-the nearer ones at half. They only move while the view scrolls (unlike free flight's stars,
+the nearer ones at half. They only move while the view scrolls (unlike the open-space stars,
 which drift by themselves), and they stop when the stage ends.
 
 What "good" looks like:
@@ -347,8 +465,8 @@ What "good" looks like:
   protects against rock). While it flies in and while it blinks afterwards it passes through
   rock unharmed.
 
-If the address names a stage that does not exist (for example a typo in `?stage=`), the game
-starts in ordinary free flight instead; the browser's developer console then says `no stage
+If the address names a stage that does not exist (for example a typo in `?stage=`), a game
+flies in ordinary open space instead; the browser's developer console then says `no stage
 "…"; flying in open space`.
 
 #### Enemies in the test stage
@@ -433,7 +551,7 @@ What "good" looks like:
 ## Your weapons
 
 The KESTREL's gun fires **by itself** as soon as the ship has flown in — on the TV, in the
-browser and on the desktop, in free flight and in the test stage. There is no fire button to
+browser and on the desktop, in open space and in the test stage. There is no fire button to
 press (holding Shot or Sub changes nothing); this "always-on" fire is what makes the game
 playable with the TV remote. The pictures are placeholders (original designs).
 
@@ -454,14 +572,15 @@ playable with the TV remote. The pictures are placeholders (original designs).
   ([Power-ups](#power-ups)).
 
 **Fully powered** (browser only, for testing): add `&loadout=full` to the address, e.g.
-http://localhost:5173/?stage=test-range&loadout=full (or `?loadout=full` for free flight). You
-start with most of what the power-ups give you:
+http://localhost:5173/?stage=test-range&loadout=full (or `?loadout=full` for open space), then
+START. Every game you start (and every RETRY STAGE) begins with most of what the power-ups give
+you:
 
 | What | What "good" looks like |
 |---|---|
 | **Faster ship** | The ship moves noticeably faster than normal (speed level 3 of 6) |
 | **Laser** instead of the darts | A thin pale-blue beam shoots out of the nose, grows to about a sixth of the screen's width and races right. It passes **through** enemies, damaging each one it touches up to ten times a second, and it moves up and down with the ship that fired it. It stops at rock: the beam's front stays at the wall while its tail catches up and it vanishes. One beam per ship or Option at a time |
-| **Missiles** | Small grey missiles with a flickering orange flame drop diagonally forward and down — one at a time from the ship and from each Option; the next follows as soon as the last one is gone. On the ground they **slide along the rock**, following slopes up and down; a steep wall stops them, and over a drop they fall again. In free flight (no ground) they simply fall off the bottom of the screen |
+| **Missiles** | Small grey missiles with a flickering orange flame drop diagonally forward and down — one at a time from the ship and from each Option; the next follows as soon as the last one is gone. On the ground they **slide along the rock**, following slopes up and down; a steep wall stops them, and over a drop they fall again. In open space (no ground) they simply fall off the bottom of the screen |
 | **Four Options** | Four glowing red-and-orange orbs that pulse gently. They follow the path your ship has flown: **when you move, they string out behind you** along your path; **when you stop, they stay where they are on screen** (even while the stage scrolls); pushing against the edge of the screen gathers them onto the ship. Each one fires the laser and the missiles too. They float through rock, cannot be hurt, and start on top of the ship when it flies in |
 | **Force Field** | A glowing cyan ring around the ship that takes five hits — see [Power-ups](#power-ups) |
 
@@ -479,12 +598,12 @@ What "good" looks like, with either loadout:
 
 ## Power-ups
 
-Since this build the KESTREL powers up the classic way, with a **power meter**. Everything here
-happens in the *Test Range* stage (http://localhost:5173/?stage=test-range) — free flight on the
-TV and the desktop has no enemies and so no capsules yet. The meter itself (a row of seven boxes
-in the bottom bar) is **not drawn yet** — it arrives with the heads-up display in a later build —
-so for now you count your capsules — but you can hear it: a bright ding for every capsule, a
-short rising trill when OK takes a power-up and a low "no" buzz when it has nothing to give.
+The KESTREL powers up the classic way, with a **power meter**. Capsules come only in the *Test
+Range* stage (http://localhost:5173/?stage=test-range, then START) — open space on the TV and the
+desktop has no enemies and so no capsules yet. The meter is the row of seven boxes in the bottom
+bar — `SPEED` `MISSILE` `DOUBLE` `LASER` `OPTION` `?` `!` — and you hear it too: a bright ding
+for every capsule, a short rising trill when OK takes a power-up and a low "no" buzz when it has
+nothing to give.
 
 **Power capsules.** Small orange-red pills that blink. In the test stage they come from:
 
@@ -499,9 +618,12 @@ have to hit them exactly: once the ship is close (about a ship's width away), th
 into it by itself. A capsule you touch disappears at once, and **every** capsule counts — also
 several collected in quick succession.
 
-**The meter and the OK button.** Each capsule moves the (invisible) highlight one step along the
-meter; **OK** — the centre of the remote's directional pad, Enter or C on a keyboard, X / Square
-on a gamepad — takes the highlighted power-up, and the highlight goes back to the start:
+**The meter and the OK button.** Each capsule moves the highlight one box to the right along
+the meter — the highlighted box **blinks** (a yellow frame on a brown box, about four times a second); **OK** — the
+centre of the remote's directional pad, Enter or C on a keyboard, X / Square on a gamepad — takes
+the highlighted power-up, and no box is highlighted until the next capsule. Boxes whose power-up
+you cannot take right now (the fifth Speed Up, the missiles you already have, four Options, a
+Force Field that is still up …) are **greyed out**:
 
 | Capsules since your last power-up | Highlighted | What OK gives you |
 |---|---|---|
@@ -518,8 +640,8 @@ on a gamepad — takes the highlighted power-up, and the highlight goes back to 
 - A press **does nothing** (and the highlight stays where it is) when no capsule was collected
   since the last power-up, or when you already have the most of the highlighted one: the fifth
   Speed Up, the missiles, the Double or laser you already fire, four Options, a Force Field that
-  is still up. Collect another capsule to move the highlight on. Such a press plays a short,
-  low "no" buzz; later the meter will also show such slots greyed out.
+  is still up — its box is greyed out. Collect another capsule to move the highlight on. Such a
+  press plays a short, low "no" buzz.
 - You may leave the highlight "parked" on a power-up as long as you like and press OK when it
   suits you — it is never taken by itself.
 - Pressing OK never stops or slows the ship, also while you hold a direction.
@@ -553,9 +675,9 @@ What "good" looks like:
 
 ## Lives, losing your ship and the score
 
-Since this build the KESTREL can be **destroyed**, and the game keeps score. Everything here
-happens in the *Test Range* stage (http://localhost:5173/?stage=test-range) — in free flight (the
-TV and the desktop) there is nothing that can hit the ship.
+The KESTREL can be **destroyed**, and the game keeps score. Everything here happens in the
+*Test Range* stage (http://localhost:5173/?stage=test-range, then START) — in open space (the TV
+and the desktop) there is nothing that can hit the ship.
 
 **What costs a ship.** Flying into the **rock**, flying into an **enemy**, or being hit by an
 **enemy bullet**. A Force Field takes enemies and bullets for you (five hits, see
@@ -578,17 +700,19 @@ the middle of the hull — so bullets that only graze the wings pass.
 4. otherwise one **Speed Up**.
 
 The **Force Field** is always lost. The capsules you have collected towards the next power-up
-(the invisible highlight on the meter) are kept. So a fully powered ship (`&loadout=full`) comes
+(the highlight on the meter) are kept. So a fully powered ship (`&loadout=full`) comes
 back with three Options, then two, one, none, then without the laser … This is the *Classic*
 rule, the game's default. The options menu of a later build will also offer *Arcade* (a loss
 costs all your power and sends you back to the last invisible checkpoint of the stage) and
 *Casual* (a loss costs only the Force Field).
 
 **Game over.** You start with **three ships** — the one you fly and the two icons in the bottom
-bar. When the last one is destroyed there is no icon left, the ship does not come back, and
-after about a second and a half **GAME OVER** (red) replaces TEST RANGE in the middle of the top
-bar. The stage keeps scrolling and the enemies keep coming, but nothing more happens: there is
-no continue and no title screen yet — **reload the page** to play again.
+bar. When the last one is destroyed there is no icon left and the ship does not come back; a
+couple of seconds later the game freezes and darkens under the **GAME OVER** screen (red frame,
+your final score, a short sad tune). Half a second later **OK** takes you back to the title (it
+also goes by itself after ten seconds), where START plays again — there are no continues yet. In
+free flight (`?scene=flight`) there is no such screen: **GAME OVER** (red) appears in the middle
+of the top bar and the stage keeps scrolling.
 
 ### The score
 
@@ -613,9 +737,10 @@ was destroyed and blinks out after about two thirds of a second; a completed for
 appears in **gold** where its last member was. Capsules add their 300 without a number (it would
 cover your ship — a cyan ring flashes around the ship instead).
 
-`HI` on the right of the top bar is the **best score of this session**: it follows your score
-while you are beating it. It starts at 0 every time the game is opened — saved high scores come
-with the options and save data in a later build.
+`HI` in the middle of the top bar is the **best score of this session**: it follows your score
+while you are beating it, it carries over into every new game (START, RETRY STAGE), and the
+title screen shows it too. It starts at 0 every time the app is opened — saved high scores come
+with the options and save data in the next build.
 
 What "good" looks like:
 
@@ -626,14 +751,15 @@ What "good" looks like:
 - After a loss **no enemy bullet** is left on the screen.
 - The ship always comes back from the left edge at mid-height and blinks until it is safe;
   bullets that touch it while it blinks do not destroy it.
-- The spare-ship icons go 2 → 1 → none, and GAME OVER appears only after the last ship.
+- The spare-ship icons go 2 → 1 → none, and GAME OVER appears only after the last ship; OK on
+  it leads back to the title, whose `HI` shows your best score.
 - The score only ever goes up, by the amounts above, and `HI` is never lower than the score.
 
 ## The boss range and the WARNING (browser only)
 
 Open http://localhost:5173/?stage=test-boss (add `&loadout=full` to fight fully powered, or
-`&profile=keyboard-remote-emulation` to fly with the TV remote's limits). The top bar's title
-reads **BOSS RANGE**. It is a short stage in open space — no rock — made to try out the first
+`&profile=keyboard-remote-emulation` to fly with the TV remote's limits) and choose START on the
+title (times below count from START). It is a short stage in open space — no rock — made to try out the first
 boss, the **TRIAL WARDEN** (a test boss; the real bosses of the zones come later). Everything
 here is a placeholder made for this project, including the boss's name and the WARNING's
 wording.
@@ -675,9 +801,10 @@ Flying into any part of the boss destroys your ship (a Force Field takes it like
   explosions start;
 - **20,000 points** go to your score (on top of the parts you destroyed) — a gold `20000` rises
   where the boss was, and a short, cheerful stage-clear tune plays;
-- about a second later the scrolling starts again, and after another quarter of a minute the
-  stage ends and the scrolling stops for good. There is no "stage clear" screen yet — reload
-  the page to fight again.
+- about a second later the scrolling starts again, and a second and a half after that the
+  game freezes under the **STAGE CLEAR** screen: your score and the best score, then
+  `TO BE CONTINUED`, then the title — START (or RETRY STAGE from the pause menu during the
+  fight) to fight again ([the end screens](#pausing-quitting-and-the-end-screens)).
 
 **Losing a ship during the fight** works as everywhere else: the bullets vanish, you fly in
 again from the left, blinking, and the boss keeps fighting. After the last ship it is GAME
@@ -712,9 +839,9 @@ What "good" looks like:
 
 ## Explosions, sparks, shake and flashes
 
-Since this build hits look like hits. You see most of it in the *Test Range*
+Hits look like hits. You see most of it in the *Test Range*
 (http://localhost:5173/?stage=test-range) and the *Boss Range* (`?stage=test-boss`); on the TV
-and the desktop (free flight — nothing to shoot at) only the muzzle spark shows. All of it is
+and the desktop (open space — nothing to shoot at) only the muzzle spark shows. All of it is
 drawn from small placeholder pictures made for this project; what you hear at the same moments
 is in [Sound and music](#sound-and-music).
 
@@ -747,8 +874,9 @@ What "good" looks like:
   players sensitive to flashing light). There is no setting yet to turn the shake off or to tone
   the flashes down — both come with the options screen of a later build. If the shake or the
   flashes are uncomfortable, please say so.
-- Everything freezes when the game is paused (switching tabs, the TV's Home button) and carries on
-  from where it stopped.
+- Everything freezes when the game is paused (the pause menu, switching tabs, the TV's Home
+  button) and carries on from where it stopped. A new game (START, RETRY STAGE) starts without
+  the last game's explosions and numbers.
 - The game stays smooth even with many explosions at once.
 
 ## Sound and music
@@ -760,10 +888,11 @@ will be replaced by finished sound and music later.
 
 | Where | Sound effects | Music |
 |---|---|---|
-| **TV** (free flight) | From the start | None yet — free flight has no music |
-| **Browser**, free flight | After your first key press or click | None |
-| **Browser**, `?stage=test-range` or `?stage=test-boss` | After your first key press or click | The stage theme starts with that first key press |
-| **Desktop** (Electron, free flight) | After your first key press or click | None |
+| **TV** | From the start | The title theme on the title; none in a game (open space has no music of its own); the game-over tune never comes (nothing can hit the ship) |
+| **Browser** | After your first key press or click | The title theme from that first key press; in a game in open space none |
+| **Browser**, `?stage=test-range` or `?stage=test-boss` | After your first key press or click | The title theme, then the stage theme when the game starts; the boss theme, the stage-clear and game-over tunes |
+| **Browser**, `?scene=flight` (free flight) | After your first key press or click | None in open space; with `&stage=…` the stage theme starts with the first key press |
+| **Desktop** (Electron) | After your first key press or click | As in the browser: the title theme |
 
 In a browser (and the desktop app) nothing can be heard before the first key press or click —
 browsers do not allow a page to make sound before that, and a gamepad button does not count.
@@ -786,13 +915,17 @@ What you should hear:
 | The boss **WARNING** | The stage music fades out within half a second and a **siren** wails three times, once a second, with the red pulses |
 | The boss glides in | The boss theme, **BULWARK ASSAULT**, starts |
 | The boss is destroyed | The boss music fades out over a second while the explosions crackle over it; with the final blast's `20000` a short, cheerful **stage-clear tune** (VERGE SECURED) plays, then it is quiet |
+| The menus | A soft click for each move of the highlight, a short chime when you choose an entry, a lower "back" sound for Back, NO and a greyed-out entry; a short sound when the pause menu opens and closes. Menu sounds come from the middle |
+| The title screen | The title theme, **SHMUP CUP**; it fades out when a game starts |
+| **GAME OVER** screen | A short, sad tune (**SILENT VERGE**) |
+| **STAGE CLEAR** screen | The stage-clear tune (if it is not playing already) |
 
 **The stage theme** (AZURE VERGE, in both browser stages) starts with a short intro of about six
 seconds and then repeats a 45-second part over and over. The jump back — about **51 seconds**
 after the music started, and every 45 seconds after that — should be impossible to hear: no
 gap, no click, no jump in the tune. The Test Range lasts long enough to hear it once; please say
-if you can tell where it is. At `GAME OVER` the music keeps playing (a game-over tune and the
-title music come with the screens of a later build).
+if you can tell where it is. The music keeps playing while the game is paused; when the
+GAME OVER screen opens the game-over tune replaces it.
 
 **Where sounds come from.** Sounds come from where they happen on the screen: a shot on the left
 of the picture is heard more from the left speaker, an explosion on the right from the right.
@@ -802,8 +935,8 @@ The siren and the Mega Crash come from the middle.
 same instant is played once (it would only be louder), and when too much happens at once the
 least important sounds give way — the siren and the loss of your ship are never cut off.
 
-**Volume.** There is no volume setting in the game yet (it comes with the options screen); use
-the TV's or the PC's volume.
+**Volume.** There is no volume setting in the game yet (it comes with the options screen in the
+next build — OPTIONS is greyed out until then); use the TV's or the PC's volume.
 
 What "good" sounds like:
 
@@ -821,6 +954,8 @@ What "good" sounds like:
 
 | Address | Screen |
 |---|---|
+| http://localhost:5173 | The **title screen** (the normal start); `?stage=…` and `?loadout=…` below change what START plays |
+| http://localhost:5173/?scene=flight | **Free flight**: straight into the game without the title — the older start-up picture, with its simpler HUD (FREE FLIGHT or the stage name in the top bar, `ARROWS MOVE`, no power meter), no pause menu and no end screens; combine it with `&stage=…` and `&loadout=full` |
 | http://localhost:5173/?stage=test-range | The **Test Range**, the first scrolling stage (above) |
 | http://localhost:5173/?stage=test-range&loadout=full | The Test Range with the **fully powered** ship: laser, missiles, four Options, Force Field ([Your weapons](#your-weapons)) |
 | http://localhost:5173/?stage=test-boss | The **Boss Range**: the WARNING and the test boss ([above](#the-boss-range-and-the-warning-browser-only)); add `&loadout=full` to fight it fully powered |
@@ -847,7 +982,8 @@ pnpm build
 pnpm --filter @shmup/electron start
 ```
 
-A 1152×648 window (×3) opens with the same free flight; fly with the keyboard or a gamepad.
+A 1152×648 window (×3) opens with the same title screen as the browser (no EXIT entry yet —
+close the window to quit); play with the keyboard or a gamepad.
 Set `SHMUP_FULLSCREEN=1` before the last command to start in fullscreen. Close the window (or
 Alt+F4 / Cmd+Q) to quit.
 
@@ -875,17 +1011,25 @@ mean the build itself is broken; they are not caused by anything you did.
 
 | Symptom | What to do |
 |---|---|
+| The title screen stays, the game does not start | Press OK (Enter) once to leave `PRESS OK`, then OK again on START. In a browser click once into the page first so it has the keyboard focus |
+| OK on the title menu did nothing | The menu ignores OK for a split second after it appears (an OK pressed then still counts a moment later). OPTIONS is greyed out and does nothing yet. If START never reacts, please report it with the remote model |
+| The highlight in a menu jumps two steps, or a press is lost | Not expected — please report it with the remote model (and whether you held the button) |
+| Back closed the app on the TV | Expected only on the loading and error screens, and after answering **YES** to **EXIT SHMUP CUP?** on the title. Anywhere else, please report it (an older build closed the app on Back) |
+| Back on the title does nothing in a browser | Expected on `PRESS OK`; in the menu it goes back to `PRESS OK`. A browser tab cannot close itself, so there is no EXIT |
+| The game froze and darkened with a PAUSE box | You pressed Back or Play/Pause (Esc, P or Backspace on a keyboard), or the app came back from the background — choose RESUME or press Back again |
+| The pause menu has no effect on the music | Expected: the music keeps playing while the game is paused |
+| OPTIONS is grey | Expected: the options screen comes with the next build |
 | The ship does not move | Wait until it has finished flying in (⅔ of a second). In a browser, click once into the page so it has the keyboard focus; with a gamepad, press any button first. On the TV, report it together with the remote model |
 | The ship moves only up, down, left and right | Normal on remotes that report one direction at a time, and with `?profile=keyboard-remote-emulation` in a browser. With a keyboard or gamepad and no `?profile=` in the address, please report it |
 | The ship keeps moving after I let go (TV) | A tiny delay (1/30 of a second) is intentional. If it clearly keeps going, report it — and film it if you can |
 | The ship stutters or stops for a moment while I hold a direction (TV) | Please report it with the remote model: the game's hiccup protection is supposed to hide exactly this |
-| `?stage=test-range` shows free flight (title FREE FLIGHT, no rock) | The stage name in the address is misspelled — check the spelling (`test-range`); the browser console names the unknown stage |
-| The ship flies through the rock or an enemy in the test stage | Expected only while it flies in or blinks after a loss (it cannot be hurt then), and in free flight there is nothing to hit. Otherwise rock and enemies destroy it — please report where it passed through |
+| `?stage=test-range` flies in open space (no rock) | The stage name in the address is misspelled — check the spelling (`test-range`); the browser console names the unknown stage |
+| The ship flies through the rock or an enemy in the test stage | Expected only while it flies in or blinks after a loss (it cannot be hurt then), and in open space there is nothing to hit. Otherwise rock and enemies destroy it — please report where it passed through |
 | The ship vanished and a spare-ship icon went | It was destroyed (rock, an enemy or a bullet) — see [Lives](#lives-losing-your-ship-and-the-score). It should explode with a heavy sound and the picture should shake briefly |
 | The game froze for a moment when the ship was hit | Expected: a short freeze (an eighth of a second) marks every loss |
 | All enemy bullets vanished at once | Expected after a loss (and after a Mega Crash) |
 | After a loss the ship lost an Option, the laser or a Speed Up | Expected: each loss costs one step of power, and always the Force Field ([Lives](#lives-losing-your-ship-and-the-score)) |
-| GAME OVER — how do I start again? | Reload the page. There is no continue or title screen yet |
+| GAME OVER — how do I start again? | Press OK on the GAME OVER screen (after half a second) or wait ten seconds: the title appears, and START plays again. There are no continues yet. In free flight (`?scene=flight`) reload the page |
 | GAME OVER appeared while I still had a ship icon | Not expected — the icons show your *spare* ships, so GAME OVER comes only after the last icon has gone and that ship was lost too. Please report it |
 | The ship was destroyed while it was blinking | Not expected — please report what hit it and the time into the stage |
 | The ship does not shoot | It starts firing only once it has flown in (⅔ of a second). If it never fires — on the TV or in a browser — please report it; no button is needed |
@@ -897,10 +1041,11 @@ mean the build itself is broken; they are not caused by anything you did.
 | Numbers pop up where enemies are destroyed | Expected: the points of each kill (white) and of a completed formation (gold). Capsules show a cyan ring instead of a number |
 | Explosions or sparks are magenta-and-black checkered squares | Their pictures are missing from the sprite sheet; please report it (the build is broken) |
 | `?scene=fx-gallery` shows only stars and the labels | The first effect appears within a second; if the explosions never show, please report it with the browser or TV model |
-| The score stays at zero | In free flight (the TV and the desktop) there is nothing to score. In the test stage it should rise with every destroyed enemy — please report it if it does not |
-| `HI` went back to 0 after reloading | Expected: the high score is kept only while the game is open; saving it comes later |
+| The score stays at zero | In open space (the TV and the desktop) there is nothing to score. In the test stage it should rise with every destroyed enemy — please report it if it does not |
+| `HI` went back to 0 after reloading | Expected: the high score is kept only while the game is open (across games, and on the title); saving it comes with the next build |
+| The score went back to 0 after RETRY STAGE | Expected: a retry starts the stage over with a fresh ship and score; `HI` keeps the best |
 | The red saucer leaves nothing behind | It leaves a capsule only when it is destroyed (by your shots or a Mega Crash); a saucer that flies off the screen leaves nothing |
-| I pressed OK and nothing happened | Expected when no capsule was collected since your last power-up, or when you already have the maximum of the highlighted one (fifth Speed Up, the missiles, the Double or laser you already fire, four Options, a Force Field that is still up) — collect another capsule to move the highlight on. The power meter is not drawn yet: count your capsules ([Power-ups](#power-ups)). On the TV and the desktop (free flight) there are no capsules at all yet |
+| I pressed OK and nothing happened | Expected when no capsule was collected since your last power-up, or when you already have the maximum of the highlighted one (fifth Speed Up, the missiles, the Double or laser you already fire, four Options, a Force Field that is still up) — collect another capsule to move the highlight on. Look at the power meter: no highlighted box, or a greyed-out one, means OK has nothing to give ([Power-ups](#power-ups)). On the TV and the desktop (open space) there are no capsules at all yet |
 | Holding OK gave me only one power-up | Expected: one press, one power-up — let go and press again |
 | No capsule after destroying a formation | Every member has to be destroyed; if one leaves the screen, there is no capsule. The six low pods at 17 s never leave one |
 | A capsule vanished before I reached it | Capsules stay where they appeared and scroll off with the rock; once off the left edge they are gone |
@@ -914,16 +1059,16 @@ mean the build itself is broken; they are not caused by anything you did.
 | The Options trail behind the ship while it stands still | Expected only while you are moving; once you stop they should hold their places on screen. If they drift away while you stand still, please report it |
 | An enemy bullet hits my ship and just disappears | Expected when a Force Field is up (it takes the bullet); without one the ship is destroyed. If a bullet disappears on the bare ship and nothing happens, please report it |
 | Bullets fly through my ship | Expected while it flies in and while it blinks after a loss (it cannot be hurt then), and when they only graze the wings — the hit spot is a couple of pixels in the middle |
-| No bullets at all in the test stage | Check the address says `?stage=test-range`. The first turret starts shooting about ten seconds in; the pods, saucers and spinner formations never shoot. Free flight (the TV and desktop builds) has no enemies and no bullets |
+| No bullets at all in the test stage | Check the address says `?stage=test-range`. The first turret starts shooting about ten seconds in; the pods, saucers and spinner formations never shoot. Open space (the TV and desktop builds) has no enemies and no bullets |
 | Bullets appear out of nowhere, from an enemy still off screen, or keep flying through rock | Please report it with the time into the stage and which enemy fired |
 | A bullet pattern cannot be dodged with the arrow directions alone | Please report it with the time into the stage — every pattern is meant to be dodgeable on the TV remote |
 | Bullets are magenta-and-black checkered squares | The bullet pictures are missing from the sprite sheet; please report it (the build is broken) |
 | An enemy floats above the ground, sinks into it, or walks through a wall | Please report it with a screenshot and roughly how far into the stage it was |
 | An enemy jumps, stutters or suddenly vanishes in the middle of the screen | Please report it with the time into the stage — enemies should only disappear after leaving the screen |
-| No enemies at all in the test stage | Check the address says `?stage=test-range` (the title bar reads TEST RANGE). Free flight — the TV and desktop builds — has no enemies |
+| No enemies at all in the test stage | Check the address says `?stage=test-range` (with rock along the bottom from the start). Open space — the TV and desktop builds — has no enemies |
 | The screen slows down or stutters when many bullets are around | Not expected — the game is built for hundreds of bullets. Please report it with the time into the stage and the browser or TV model |
-| The test stage stopped scrolling | At the end of the stage (after about 75 seconds) that is expected; reload the page to start again. If it stops earlier, please report where |
-| `?stage=test-boss` shows free flight (title FREE FLIGHT) | The stage name is misspelled — it is `test-boss`; the browser console names the unknown stage |
+| The test stage stopped scrolling | At the end of the stage (after about 75 seconds) that is expected — the STAGE CLEAR screen follows. If it stops earlier, please report where |
+| `?stage=test-boss` flies in open space with no WARNING | The stage name is misspelled — it is `test-boss`; the browser console names the unknown stage |
 | The Boss Range stopped scrolling after five seconds | Expected: the WARNING stops the scrolling, and it stays stopped until the boss is destroyed |
 | The WARNING shows but there is no siren | In a browser, press a key once first — nothing plays before that. Otherwise not expected: the siren should wail three times with the red pulses. Please report it |
 | The WARNING text is cut off, overlaps the HUD bars or shows odd symbols | Not expected — please report it with a screenshot |
@@ -931,16 +1076,17 @@ mean the build itself is broken; they are not caused by anything you did.
 | The laser stops at the boss | Expected: it stops at the first part it cannot hurt (armour, or the covered core) |
 | The boss never appears | It comes about eight seconds in (five seconds of flight, then three seconds of WARNING); check the address says `?stage=test-boss`. If the WARNING never shows, please report it |
 | The boss just blinks and vanishes — no explosion | Not expected any more: explosions should burst (and crackle) over it for two seconds, then a big white blast. Please report it |
-| Nothing happens after the boss is gone | Expected: there is no "stage clear" screen yet. The stage scrolls on for a quarter of a minute and stops; reload to fight again |
+| Nothing happens after the boss is gone | Not expected any more: a few seconds after the final blast the STAGE CLEAR screen should appear, then `TO BE CONTINUED` and the title. Please report it |
 | A boss laser hit me although I was not on the beam | Only the beam hurts, never the blinking warning line; note that the laser runs along the row of the gun that fired it. If it still happens, please report it with the time into the fight |
 | Gaps, seams or flickering in the rock, or rock over a HUD bar | Please report it with a screenshot and roughly how far into the stage it was |
 | The ship flies in from the left again | Expected after it was destroyed. If it happens without a loss (no spare-ship icon went), please report what you were doing |
 | No sound at all in a browser | Press a key or click into the picture once — browsers allow sound only after that (a gamepad button does not count). Check that the tab is not muted (right-click the tab) and the PC's volume. If it stays silent, report it with the browser's name |
 | No sound at all on the TV | Check the monitor's volume and mute. The shots should be heard from the start; if they are not, please report it with the monitor's firmware version |
-| No music on the TV or on the desktop | Expected: they start in free flight, which has no music yet. The music plays in the browser stages (`?stage=test-range`, `?stage=test-boss`) |
+| No music in a game on the TV or on the desktop | Expected: a game there flies in open space, which has no music of its own (the title theme fades out when the game starts). The stage music plays in the browser stages (`?stage=test-range`, `?stage=test-boss`) |
 | No music in the test stage, but sound effects play | Not expected — the stage theme should start with your first key press. Please report it with the browser's name |
 | The music stops at the WARNING | Expected: it fades out for the siren, and the boss theme starts when the boss glides in |
-| Silence after the boss | Expected: after the stage-clear tune it stays quiet until you reload |
+| Silence after the boss | Expected until the title's music starts again after the STAGE CLEAR screen |
+| No title music | In a browser press a key once first. On the TV it should play on the title from the start — please report it if it does not |
 | A click, gap or jump in the music about 51 seconds in | That is the stage theme's loop point — it should not be audible; please report it (with the browser or TV model) |
 | Sounds lag behind the picture, crackle or stutter | Please report it with the browser or TV model and what was happening (many explosions? a boss?) |
 | A sound is cut off or missing in a busy moment | Somewhat expected: when many sounds play at once, the least important give way. Please report it if the siren or the loss of your ship is ever cut off, or if a sound is missing in a quiet moment |

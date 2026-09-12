@@ -39,7 +39,7 @@ shmup-cup/
 │   │   │   ├── input/          ✔ Action bits, InputSnapshot, edge latching (feat §4)
 │   │   │   ├── config/         ✔ GameConfig + defaults + validation
 │   │   │   ├── loop/           ✔ fixed-step accumulator (snap, cap, reset)
-│   │   │   ├── game/           ✔ createGame(): composition root, suspend/resume, hosts the World
+│   │   │   ├── game/           ✔ createGame(): composition root, suspend/resume; bare gameplay (one World) or the scene flow (options.scenes, M1-16)
 │   │   │   ├── world/          ✔ createWorld / stepWorld: session state + the fixed 9-phase tick pipeline (plan §3.2), pool registry, view
 │   │   │   ├── presentation/   ✔ IRenderer / IAudio contracts + the render contract (RenderFrame, WorldView, SpriteBatchView, DrawList, LayerId)
 │   │   │   ├── rng/ math/ events/ pools/                 ✔ engine foundations (sfc32, trig tables, event ring, SoA pools)
@@ -84,7 +84,7 @@ shmup-cup/
 │   │   ├── polyfills/      global-this.js (ES5, prepended to app.js)
 │   │   ├── scripts/        check-bundle.mjs (one classic ES2018 script) · tizen-package/install/run.mjs (env-driven, Windows-friendly)
 │   │   ├── vite.config.ts  target chrome69+es2018, IIFE, no code splitting, classic <script defer>
-│   │   └── src/ main.ts · boot ✔ platform ✔ (keys, Back 10009, visibility, exit) · device-info live-reload (placeholders)
+│   │   └── src/ main.ts · boot ✔ (Back exits only before the game runs — then the scene flow's exit confirmation) platform ✔ (keys, Back 10009, visibility, exit) · device-info live-reload (placeholders)
 │   └── electron/           @shmup/electron — desktop shell; compiles in CI, binary never downloaded there
 │       ├── scripts/        copy-renderer.mjs (apps/web/dist → dist/renderer)
 │       └── src/ main/ (main.ts, app-protocol.ts, window-options.ts ✔ · saves.ts steam.ts placeholders) · preload/preload.cts · shared/ipc.ts
@@ -107,7 +107,7 @@ shmup-cup/
 ├── test/                   cross-package integration tests (Vitest project "integration", part of `pnpm test`); e2e/ = Playwright browser smoke tests (`pnpm test:e2e`)
 ├── docs/
 │   ├── client/             player/tester docs
-│   └── dev/                contributor docs (this file, architecture, engine-foundations, content-data, asset-pipeline, rendering-and-shell, sim-world, stage-runtime, enemies-and-behaviors, fx-and-game-feel, api-reference, …)
+│   └── dev/                contributor docs (this file, architecture, engine-foundations, content-data, asset-pipeline, rendering-and-shell, sim-world, stage-runtime, enemies-and-behaviors, fx-and-game-feel, scenes-and-ui, api-reference, …)
 ├── tools/                  standalone tools, NOT workspace members (own package.json/lockfile, npm not pnpm)
 │   └── input-probe/        Tizen diagnostic .wgt: remote/gamepad/display measurements (see input-probe.md)
 └── shmup_feat.md  shmup_tech.md  input_probe_spec.md  README.md  LICENSE (MPL-2.0)

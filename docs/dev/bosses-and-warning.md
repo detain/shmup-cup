@@ -269,10 +269,13 @@ that fit the 384-px playfield. D10's em dash became `-` because the pixel font i
 last WARNING's; `''` before the first). `text` only changes when another boss's WARNING starts, so
 a host puts it into a draw-list string slot on a change and never builds strings per frame.
 
-**The flight scene** (`@shmup/shell` `flight`) draws it in its UI list: a translucent black band
+**The game scene** (`core/scenes` `GameScene.drawUi`, the scene flow — M1-16) and the
+`?scene=flight` dev scene (`@shmup/shell` `flight`, which drew it first in M1-13) draw it the same
+way in their UI list: a translucent black band
 (alpha 144) across the playfield at screen rows 76–123 with 1-px red (`0xf85858`) edges, the text
-centred at row 85, red and yellow (`0xf8d030`) alternating every 16 ticks. It rebuilds the list
-only when the WARNING starts, ends or changes colour. Since M1-14 the renderer draws the `Dim`
+centred at row 85, red and yellow (`0xf8d030`) alternating every 16 ticks. The list is rebuilt
+only when the WARNING starts, ends or changes colour (the game scene bumps its `uiRevision` then;
+the pause menu drawn over it freezes the colour with the World). Since M1-14 the renderer draws the `Dim`
 event as a playfield dim (50 %, fading in over 8 ticks and out over 16 after the 180-tick hold —
 over the world layers, under the flash, the band and the HUD) and each pulse's `Flash` as a red
 flash (`0xf85858`, 0.35) ([fx-and-game-feel.md](fx-and-game-feel.md)). Since M1-15 the siren is
@@ -574,7 +577,9 @@ free flight).
   ([fx-and-game-feel.md](fx-and-game-feel.md)).
 - **M1-15** (done) — the siren (critical priority), the boss theme, the music stop and fade,
   the stage-clear jingle ([audio.md](audio.md)).
-- **M1-16** — the HUD and scene flow after `stageClear` (the stage-clear screen).
+- **M1-16** (done) — the scene flow: 90 World ticks after `stageClear` the stage-clear screen
+  (tally, `TO BE CONTINUED`, the title), the WARNING band drawn by the game scene, the HUD
+  ([scenes-and-ui.md](scenes-and-ui.md)).
 - **M1-18** — zone A's boss, HALCYON BULWARK (HB-01), with its own behaviours.
 - **M2-09** — boss timers and escapes, the optional HP bar, mid-bosses, battleship raids,
   boss-inside-boss, double bosses, boss rush.

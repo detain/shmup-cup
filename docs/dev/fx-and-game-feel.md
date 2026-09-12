@@ -354,8 +354,9 @@ objects.
 - **M1-15** (done) — the sounds of the same events (the `Sfx` / `Music` / `MusicDuck` handlers
   on the dispatcher, `connectAudioEvents`), the WARNING siren ([audio.md](audio.md)); rumble
   waits for the gamepad work.
-- **M1-16** — the HUD's power meter with the `PowerUp` flash; scenes other than free flight that
-  draw the World connect the effects too.
+- **M1-16** (done) — the scene flow (the shell's default scene) connects the effects like free
+  flight; the renderer's particles, popups and effects freeze under the pause menu (the frame's
+  tick is the World's) and are cleared for a new World ([scenes-and-ui.md](scenes-and-ui.md)).
 - **M1-17 / M2-16** — the Options screen sets `screenShake` and `reduceFlashing`.
 - **M2-02** — bullet cancel into points (popups for the points).
 - **M2-08** — raster / scanline effects, palette swaps and cycling (`effects` → implemented).

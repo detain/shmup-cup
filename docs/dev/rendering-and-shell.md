@@ -7,7 +7,8 @@ step **M1-04**. Later steps *fill* the contract (the World in M1-06, see
 [bullets-and-patterns.md](bullets-and-patterns.md); the player shots and Options in M1-10, see
 [weapons-and-options.md](weapons-and-options.md); particles, score popups and the screen shake /
 flash / dim fed by the sim's events in M1-14, see [fx-and-game-feel.md](fx-and-game-feel.md);
-the HUD and menus in M1-16) without changing its shape. The shell's audio wiring (M1-15 — the
+the HUD, the menus and the scene flow's frame in M1-16, see [scenes-and-ui.md](scenes-and-ui.md))
+without changing its shape. The shell's audio wiring (M1-15 — the
 SFX bank and the stage's music rendered during boot, the engine fed by the same event dispatch)
 is on [audio.md](audio.md).
 
@@ -168,7 +169,13 @@ hud.sprite(lifeSpriteId, 0, 4, 209);
 ### The frame
 
 `RenderFrame = { tick, alpha, world, hud, ui, screen }`. `createGame()` builds one and
-returns the same object from every `renderFrame()` call: `world` is the World's view
+returns the same object from every `renderFrame()` call. **With the scene flow** (M1-16, the
+shell's default) the flow composes it: `world` is the game scene's World view while the game is
+visible (else `null` — the title), `tick` the World's tick then (frozen under the pause menu, 0 for
+a new World) or the flow's own tick count, `hud` the core HUD (`buildHud`, rebuilt only on a
+change), `ui` one list with every visible scene's menus and panels, and `screen.dim` the top
+overlay's dim (the menu dim under the UI layer) — [scenes-and-ui.md](scenes-and-ui.md#worlds-events-and-the-frame).
+For **bare gameplay** (the dev scenes, tests): `world` is the World's view
 (`game.world.view`, the same object for the whole session — its batches are the enemies'
 ground / air mirrors (M1-08), the player-shot and Option mirrors (M1-10), the players' mirror
 on `LayerId.Player` (M1-06) and the enemy bullet pool (M1-09), plus the laser view), `hud` / `ui` are the session's (empty) draw lists,
@@ -317,7 +324,7 @@ const shell = await bootShell({
   audio, // createWebAudio()   — also behind the platform's audio; destroyed by stop()
   platform: (renderer) => createWebPlatform({ input, audio, webgl2: renderer.webGLVersion === 2 /* … */ }),
   gameConfig: { remoteMode: false, stage: stageFromSearch(location.search) }, // apps/web: ?stage=
-  scene: sceneFromSearch(location.search), // 'flight' (default) | 'showcase' | 'calibration' | 'fx-gallery'
+  scene: sceneFromSearch(location.search), // 'game' (default: the scene flow) | 'flight' | 'showcase' | 'calibration' | 'fx-gallery'
   audioUnlock: 'gesture', // 'immediate' on the TV
   contentOwners: { [INPUT_PROFILES_KIND]: profiles.load }, // optional: merged over DEFAULT_CONTENT_OWNERS
 });
@@ -332,11 +339,11 @@ const shell = await bootShell({
 | 2 | `loadImages(pageUrls, () => new Image())` — all pages in parallel, the bar advances per page | `ATLAS PAGE FAILED TO LOAD` (`<url>: AssetLoadError: …`) |
 | 3 | `createAtlas(manifest, images)` | `ATLAS DOES NOT MATCH ITS MANIFEST` |
 | 4 | `createPixiRenderer(...)` — WebGL1 first; `fxSeed` = the game's seed xor a salt, `effects` = `ShellOptions.effects` | `WEBGL IS NOT AVAILABLE` |
-| 5 | `options.platform(renderer)`, then `createGame(platform, gameConfig, content.db)` | `SHMUP CUP FAILED TO START` |
-| 5a | Audio (M1-15): `createAudioEngine({ sfx, music, loader })`, `engine.loadSfx()` (bar labelled `LOADING SOUND`), then for a booted stage `engine.prepareMusic(stage.id, stageMusicCues(stage))` (`LOADING MUSIC`; open space prepares none) — [audio.md](audio.md#the-shells-wiring) | `AUDIO FAILED TO LOAD` (`AudioLoadError: could not load <url>: …`) |
-| 6 | `renderer.setFxContent(shell.fx)`; scene set up (free flight / showcase / fx gallery: the scene's name table + `bindWorld(scene.world)`; calibration: content's names and a frame without a world), dispatcher created — in free flight with `connectFxEvents` (M1-14) and `connectAudioEvents(events, engine, world.view.camera)` (M1-15) | — |
+| 5 | `options.platform(renderer)`, then `createGame(platform, gameConfig, content.db, options)` — `{ scenes: 'boot' }` for the default scene `game` (the scene flow, M1-16), none for the dev scenes (bare gameplay) | `SHMUP CUP FAILED TO START` |
+| 5a | Audio (M1-15): `createAudioEngine({ sfx, music, loader })`, `engine.loadSfx()` (bar labelled `LOADING SOUND`), then for a booted stage `engine.prepareMusic(stage.id, stageMusicCues(stage))` (`LOADING MUSIC`; open space prepares none); the scene flow adds the title theme (and the stage-clear / game-over jingles in open space), then `game.scenes.finishBoot()` — [audio.md](audio.md#the-shells-wiring) | `AUDIO FAILED TO LOAD` (`AudioLoadError: could not load <url>: …`) |
+| 6 | `renderer.setFxContent(shell.fx)`; scene set up (the scene flow: `createSceneView(game)`, its name table + `bindWorld(view.backdrop)`; free flight / showcase / fx gallery: the scene's name table + `bindWorld(scene.world)`; calibration: content's names and a frame without a world), dispatcher created — in the scene flow and free flight with `connectFxEvents` (M1-14) and `connectAudioEvents(events, engine, camera)` (M1-15; the flow's `sceneView.camera`, free flight's `world.view.camera`) | — |
 | 7 | Suspend → `input.clear()` + `audio.suspend()`; resume → `audio.resume()`; audio unlock (first `keydown` / `pointerdown` in the capture phase, or immediately) followed by `engine.attach(audio)` right after `unlock()` returns and again when it resolves; `resize` → `renderer.resize()` | — |
-| 8 | rAF loop started, overlay removed, canvas marked `running` | — |
+| 8 | rAF loop started, overlay removed, canvas marked `running` and `data-shmup-scene` = the top scene (`title`) or the dev scene | — |
 
 On any failure the error screen stays up, the canvas is marked `error`, everything created so
 far (input and audio included) is released, and the promise rejects with a `ShellBootError`
@@ -378,9 +385,19 @@ const onFrame = (now: number): void => {
     input.setContext(inputContext); // game / menu binding tables (D15), before this frame's ticks
   }
   game.frame(now); // 0…4 fixed ticks
+  sceneView?.follow(); // the scene flow: copy the camera on screen (sounds pan against it)
   game.events.drain(events.visit); // sim events → registered handlers
   engine.endFrame(); // closes the audio engine's SFX dedupe window (M1-15)
-  const frame = game.renderFrame();
+  const frame = game.renderFrame(); // the flow composes it (updateFrame)
+  if (sceneView !== null) {
+    const shown = sceneView.update(frame);
+    if (sceneView.worldChanges !== shownWorlds) {
+      // a new game: clear the last one's particles and popups
+    }
+    markScene(); // data-shmup-scene = the top scene's id, when it changed
+    renderer.render(shown);
+    return;
+  }
   renderer.render(scene !== null ? scene.update(frame) : calibration.update(frame));
 };
 startFrameLoop(win, onFrame); // requests the next frame before calling onFrame
@@ -390,8 +407,9 @@ startFrameLoop(win, onFrame); // requests the next frame before calling onFrame
 load time with `shell.events.on(kind, handler)` (returns an unsubscribe function; an unknown
 kind throws `RangeError`). Dispatching is a table lookup and a loop — no allocation.
 Handlers receive the queue's **reused** record: copy fields out, never keep it. Events with
-no handler are counted in `unhandled` and dropped; the queue is the World's (M1-06). Since
-M1-14, free flight registers `connectFxEvents(events, renderer)`: `Particles` and `Sfx` →
+no handler are counted in `unhandled` and dropped; the queue is the game's (the World's since
+M1-06; one queue for every World of the scene flow since M1-16). Since M1-14, free flight (and
+since M1-16 the scene flow) registers `connectFxEvents(events, renderer)`: `Particles` and `Sfx` →
 particle bursts (the sounds a `content/fx/` trigger binds: hits, clinks, pickups, shots),
 `Shake` / `Flash` / `Dim` → the screen effects, `Score` / `FormationBonus` / `BossDefeated` →
 score popups ([fx-and-game-feel.md](fx-and-game-feel.md#which-event-draws-what)). Since M1-15
@@ -402,16 +420,28 @@ playfield's left edge — it pans the sound), `Music` → `playMusic(cue, fadeTi
 the particle and the audio handler. Only `HitStop`, `Rumble` and `PowerUp` are still counted as
 unhandled.
 
-### Scenes until the scene stack exists
+### Scenes
 
 | `?scene=` | What is drawn | Sprite name table |
 |---|---|---|
-| (none) / `flight` | **Free flight** (`createFlightScene(game)`, M1-06): the game's World — the KESTREL flying in, then moving under the player's control — over three drifting star layers, both HUD bars (`1P` and player 1's score, `FREE FLIGHT`, `HI` and the session hi-score, `lives − 1` stock ships, `ARROWS MOVE` — M1-12). With a stage (`gameConfig.stage`, the web app's `?stage=<id>`, M1-07): the stage's parallax bands and scrolling terrain instead of the starfield, the stage name as the title, the enemies its timeline spawns (M1-08) and their bullets (M1-09). The ship autofires in every build, with Options and lasers under the web app's `?loadout=full` (M1-10); power capsules and the Force Field are World batches too (M1-11 — the power meter itself is not drawn before the M1-16 HUD); ships that are `dying` / `dead` are not drawn, a respawn blinks, and `GAME OVER` (red) replaces the title once the World's status says so (M1-12); a boss's parts are a World batch, and a running WARNING is drawn as a translucent band with its text in the UI list (M1-13, `?stage=test-boss`) | `content.db.sprites.names` + `FLIGHT_SPRITES` |
+| (none) / `game` | **The scene flow** (M1-16, `createSceneView(game)`; the game created with `{ scenes: 'boot' }`): the title (logo, `PRESS OK`, START / OPTIONS / EXIT, the session hi-score) over a drifting starfield backdrop; a game with the core HUD (score, `HI`, `2P`, stock, the power meter, Force Field pips), the World over the starfield in open space or the stage's own parallax and terrain with `?stage=`; the pause menu, the YES / NO dialog, the stage-clear and game-over screens over the frozen, dimmed game — all drawn by the core into the HUD / UI lists ([scenes-and-ui.md](scenes-and-ui.md)) | `content.db.sprites.names` + `SCENE_VIEW_SPRITES` |
+| `flight` | **Free flight** (`createFlightScene(game)`, M1-06): the game's World — the KESTREL flying in, then moving under the player's control — over three drifting star layers, both HUD bars (`1P` and player 1's score, `FREE FLIGHT`, `HI` and the session hi-score, `lives − 1` stock ships, `ARROWS MOVE` — M1-12). With a stage (`gameConfig.stage`, the web app's `?stage=<id>`, M1-07): the stage's parallax bands and scrolling terrain instead of the starfield, the stage name as the title, the enemies its timeline spawns (M1-08) and their bullets (M1-09). The ship autofires in every build, with Options and lasers under the web app's `?loadout=full` (M1-10); power capsules and the Force Field are World batches too (M1-11 — the power meter itself is not drawn before the M1-16 HUD); ships that are `dying` / `dead` are not drawn, a respawn blinks, and `GAME OVER` (red) replaces the title once the World's status says so (M1-12); a boss's parts are a World batch, and a running WARNING is drawn as a translucent band with its text in the UI list (M1-13, `?stage=test-boss`) | `content.db.sprites.names` + `FLIGHT_SPRITES` |
 | `showcase` | The **sprite showcase** (`createShowcase()`): three scrolling star layers, the KESTREL flying a figure-eight with its thruster and two Options replaying its path, five drifters with periodic hit flashes, a rotating ring of twelve bullets, both HUD bars (scores via the `number` op, lives, power meter with a moving highlight) and the title "SHMUP CUP" / "SPRITE SHOWCASE" in the bitmap font | `SHOWCASE_SPRITES` |
 | `calibration` | The skeleton's test pattern (checker border, grid, colour bars, placeholder ship, moving marker) under empty layers | `content.db.sprites.names` |
 | `fx-gallery` | The **fx gallery** (`createFxGallery(renderer)`, M1-14): a still starfield and, one station a second, every particle preset of `content/fx/` bursting at the centre, then the three shakes, the three flash kinds, the playfield dim and a row of score popups, named in the UI list (`3/19  EXPLOSION.LARGE`); it drives the renderer's effects directly — the World's events are not connected ([fx-and-game-feel.md](fx-and-game-feel.md#the-fx-gallery-scenefx-gallery)) | `FX_GALLERY_SPRITES` |
 
-**Free flight** owns a `WorldView` whose batches are two starfield batches **followed by the
+**The scene flow's view** (`scene-view`, M1-16) passes the core's HUD, UI list and screen
+effects through and only decides the `world`: outside the game (boot, title — the frame's `world`
+is `null`) its **backdrop** — a static camera and two starfield batches, pre-bound at load, drifting
+with the flow's tick; in a game in open space a **wrapper** `WorldView` with two starfield batches
+before the World's batches (on the World's camera, with its terrain, laser and WARNING views),
+built once per World — a new object, so the renderer binds it on the first frame it appears; a
+stage's own view (it has parallax bands) as is. `camera` follows the World on screen for the audio
+pan, and `worldChanges` counts new Worlds — the shell clears the particles and popups when it
+moves. No allocation per frame beyond that one wrapper per open-space World.
+
+**Free flight** (`?scene=flight`, the default until M1-16 — bare gameplay, no title or pause)
+owns a `WorldView` whose batches are two starfield batches **followed by the
 game World's own batches**, on the World's camera object and with the World's `parallax` /
 `terrain` / `lasers` views passed through (the starfield batches are left out when the World has
 parallax bands — a stage brings its own background) — a batch the World adds later is
@@ -436,8 +466,8 @@ The showcase owns its own `RenderFrame` and derives every position from the game
 UI list is built once (the renderer never redraws it); its HUD list is rebuilt every frame.
 The calibration scene renders the game's frame through a small wrapper whose `world` is always
 `null`, so only the test pattern and the (empty) HUD / UI lists show. `sceneFromSearch()`
-ignores unknown values. On the TV the widget starts without a query string, so the TV always
-shows free flight.
+turns unknown or missing values into `game`. On the TV the widget starts without a query string,
+so the TV always runs the scene flow (the title; START flies in open space).
 
 ## The apps
 
@@ -450,10 +480,10 @@ resolve virtual modules, so the boot functions receive them as arguments.
 
 | | `apps/web` | `apps/tizen` |
 |---|---|---|
-| `gameConfig` | `{ remoteMode: false, stage }` — `stage` from `?stage=<id>` (`stageFromSearch`; an id missing from `contentStageIds(contentFiles)` → `console.warn`, `null`) | `{ remoteMode: true, autofire: true }` — no stage parameter (free flight) |
-| `audioUnlock` | `'gesture'` (autoplay policy): silent until the first key press or click — gamepad buttons do not count — then the audio engine attaches and a stage's theme starts | `'immediate'`: sound effects from boot; free flight prepares no music, so the TV app plays none yet |
+| `gameConfig` | `{ remoteMode: false, stage }` — `stage` from `?stage=<id>` (`stageFromSearch`; an id missing from `contentStageIds(contentFiles)` → `console.warn`, `null`): START runs that stage | `{ remoteMode: true, autofire: true }` — no stage parameter (START flies in open space until zone A, M1-18) |
+| `audioUnlock` | `'gesture'` (autoplay policy): silent until the first key press or click — gamepad buttons do not count — then the audio engine attaches and the music asked for so far (the title theme) starts | `'immediate'`: sound from boot — the title theme, menu sounds, the game-over tune; open space has no stage music |
 | Input profiles | `?profile=` › saved choice › `keyboard-default`; `?debounce=`; `gamepad-standard` | saved choice › `tizen-remote-safe` (its `register` keys registered); `gamepad-standard` |
-| Back | Esc / Backspace → `Pause` (game) / `Back` (menus) | remote Back (10009) exits — the watcher is installed **before** boot, so Back also leaves the boot error screen |
+| Back | Esc / Backspace → `Pause` (game) / `Back` (menus); the title's Back only backs out of its menu (no `platform.exit`) | remote Back (10009) → `Pause` (game) / `Back` (menus) through the scene stack; on the title the exit confirmation → `platform.exit()` after YES. The exit watcher is installed **before** boot and removed once the shell runs, so Back exits only from the loading and boot error screens |
 | Atlas URLs | `assets/atlas/main.png` under the page (`vite preview`, dev middleware) | the same relative path inside the widget (`file://`) |
 
 `apps/tizen/scripts/check-bundle.mjs` rule 7 fails the Tizen build unless `dist/assets/atlas/`
@@ -472,10 +502,20 @@ pnpm test:e2e                                        # builds web + tizen, then 
 `vite preview` on port 4173 and the Tizen `dist/index.html` opened via `file://`.
 
 - `boot.spec.ts` — both builds reach `running`, the atlas page loads through its relative
-  URL, the screenshot is not uniform and has known pixels (free flight's title yellow, the HUD
-  bar and the KESTREL's hull colour; the showcase with `?scene=showcase`; the calibration
-  border with `?scene=calibration`), and nothing is logged as a console error, page error or
-  failed request.
+  URL, the screenshot is not uniform and has known pixels (by default the title: the logo's
+  colours and the hi-score, no ship; free flight's title yellow, the HUD bar and the KESTREL's
+  hull colour with `?scene=flight`; the showcase with `?scene=showcase`; the calibration border
+  with `?scene=calibration`), and nothing is logged as a console error, page error or failed
+  request.
+- `scenes.spec.ts` (M1-16) — both builds boot to the title (`data-shmup-scene="title"`); web:
+  **Enter starts the game from the title** (past `PRESS OK`, then START) and the KESTREL flies in
+  with the HUD and the power meter, Esc pauses (dimmed and frozen) and resumes, Back on the title
+  only backs out of the menu; Tizen from disk: OK (13) starts, Back (10009) pauses and resumes
+  without exiting, and with a fake `window.tizen` Back on the title opens the exit confirmation —
+  NO and Back keep the app running, `exit()` runs only after YES.
+- The gameplay specs below (`flight`, `stage`, `enemies`, `bullets`, `weapons`, `powerups`,
+  `lives`, `boss`, `audio`, `shell`) open `?scene=flight` since M1-16, so they start in the game
+  straight away.
 - `flight.spec.ts` — after the fly-in, holding an arrow key moves the KESTREL (found by its
   hull colour, a pixel diff between captures) while it stays put without input; holding a
   direction stops it at the playfield margin, never over the HUD bars; the Tizen build from
@@ -547,7 +587,8 @@ display objects need no GPU, so atlas, bindings, quad pools, text and the render
 
 ### Drawing HUD or menu content
 
-Write commands into `frame.hud` / `frame.ui` (core `ui`, M1-16). Put changing strings into
+The HUD is core `ui`'s `buildHud`; menus and screens are scenes drawing core `ui` widgets into
+the flow's UI list ([scenes-and-ui.md](scenes-and-ui.md#extending-it)). Put changing strings into
 slots with `setString` only when they change; draw numbers with `number`. Keep each list
 within its capacity (256 commands by default) and the quads per layer within 1024 (a glyph
 is one quad).
@@ -582,7 +623,7 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | `packages/render-pixi/test/layers/layers-lasers*.test.ts` | The laser binding (M1-09): two hidden sprites per slot, the tinted telegraph line vs the beam frame of the rounded width (band / frame boundaries, wider-than-frames scaling), blink and zero / NaN lengths hidden, rotation written only on change, camera rounding without `-0`, shrinking views, capacity validation, destroy, zero allocation through a whole laser life |
 | `packages/render-pixi/test/renderer/` | The renderer wired with a fake `WebGLRenderer`: passes, rebinding (incl. parallax / terrain bindings below the batches), shake / flash / dim, reused pass options (fails if `resetPass` is removed), allocation probes; `renderer-fx*` (M1-14): the particles / popups / effects it owns, stepping by the tick delta, flash tint composition, the two dims, the FX layer under the enemy bullets |
 | `packages/render-pixi/test/particles/`, `effects/` | The `fx` content validation, the particle pool, the screen effects and the score popups (M1-14 — [fx-and-game-feel.md](fx-and-game-feel.md#tests)) |
-| `packages/shell/test/` | Boot happy path and every failure (error screen, state attribute, cleanup), content owners (the default `input-profiles` owner, an app owner replacing it), the input context forwarded before a frame's polls, image loading and progress, dispatch (copy-on-write unsubscribe; `connectFxEvents` — its table, an allocation guard of the whole event path and an end-to-end game-feel run, M1-14; `connectAudioEvents` — its mapping, two allocation guards and the shipped boss range through a real audio engine, M1-15), the audio wiring of boot (bank and stage set prepared, attach after the unlock, `AUDIO FAILED TO LOAD` — M1-15), overlay drawing, the fx gallery, the free-flight scene (sprite ids, starfield drift / wrap / pause, HUD, the WARNING band — M1-13, empty content, zero allocation per frame), showcase determinism and allocation |
+| `packages/shell/test/` | The scene flow's boot (title theme prepared, `finishBoot`, `data-shmup-scene` through boot → title → game → pause) and `scene-view` (backdrop, open-space wrapper per World, starfield frozen under pause, followed camera, `worldChanges` — M1-16); boot happy path and every failure (error screen, state attribute, cleanup), content owners (the default `input-profiles` owner, an app owner replacing it), the input context forwarded before a frame's polls, image loading and progress, dispatch (copy-on-write unsubscribe; `connectFxEvents` — its table, an allocation guard of the whole event path and an end-to-end game-feel run, M1-14; `connectAudioEvents` — its mapping, two allocation guards and the shipped boss range through a real audio engine, M1-15), the audio wiring of boot (bank and stage set prepared, attach after the unlock, `AUDIO FAILED TO LOAD` — M1-15), overlay drawing, the fx gallery, the free-flight scene (sprite ids, starfield drift / wrap / pause, HUD, the WARNING band — M1-13, empty content, zero allocation per frame), showcase determinism and allocation |
 | `test/e2e/` | The real browser path, both builds (above) |
 
 ## Gotchas
@@ -605,10 +646,11 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | A stage runs but shows no terrain | The stage has no `tilemap`, its tileset failed to load (see the boot issues), or no atlas was given; tiles whose `frame` the atlas lacks draw `ui/missing` |
 | `bindWorld` throws `parallax band i has layer …` | A `ParallaxView` band is not on `BG_FAR` / `BG_MID` — stage content only produces those; check a hand-made view |
 | Terrain and sprites disagree by one pixel | Something moved the terrain container by other than `round(−camera.x)`: sprite bindings draw `round(x − camera.x)`, and only that formula agrees for integer world positions (a test checks half-pixel cameras) |
+| The title shows instead of the game in a test or tool | Since M1-16 the shell's default scene is the scene flow — open `?scene=flight` for bare gameplay, or press OK twice (past `PRESS OK`, then START); wait on `data-shmup-scene` |
 | `?scene=calibration` does nothing on the TV | The widget has no query string; the calibration scene is for browsers (`pnpm dev`, `vite preview`, the Tizen dev server) |
-| No explosions or sparks, but the game runs | The renderer has no presets (`setFxContent` not called — an app `fx` owner replaced the shell's) or the scene is not free flight (only it connects the World's events) — [fx-and-game-feel.md](fx-and-game-feel.md#gotchas) |
+| No explosions or sparks, but the game runs | The renderer has no presets (`setFxContent` not called — an app `fx` owner replaced the shell's) or the scene is not the scene flow or free flight (only they connect the game's events) — [fx-and-game-feel.md](fx-and-game-feel.md#gotchas) |
 | An explosion covers a bullet | Something was added to a layer above `ENEMY_BULLETS`; particles and popups belong on `FX` |
-| No sound, but the game runs | In a browser nothing plays before the first key press or click (autoplay policy); the scene is not free flight (only it connects the World's events); the `audio` passed to `bootShell` does not expose `context` / `bus()`; or the TV's free flight, which has no music — [audio.md](audio.md#gotchas) |
+| No sound, but the game runs | In a browser nothing plays before the first key press or click (autoplay policy); the scene is not the scene flow or free flight (only they connect the game's events); the `audio` passed to `bootShell` does not expose `context` / `bus()`; or a game in open space, which has no stage music — [audio.md](audio.md#gotchas) |
 | `stage.spec.ts` fails with the terrain "not scrolling" on a busy machine | A screenshot took so long that the terrain moved more than the 250-px search window (reproduced before M1-15 under a load average of ~40); re-run on a quieter machine |
 
 ## Next steps that build on this page
@@ -645,4 +687,8 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 - **M1-15** (done) — the shell owns the `sfx` / `music` content, renders the SFX bank and the
   booted stage's music set during boot, attaches the audio engine after the unlock and feeds it
   through `connectAudioEvents` ([audio.md](audio.md)).
-- **M1-16** — core `ui` fills the HUD and UI draw lists (menus, HUD model).
+- **M1-16** (done) — the scene flow composes the frame (World view and HUD while the game is
+  visible, one UI list for every visible scene, the menu dim); core `ui` fills the HUD and UI
+  lists; the shell's default scene is `game` with its `scene-view`; `?scene=flight` keeps free
+  flight ([scenes-and-ui.md](scenes-and-ui.md)).
+- **M1-17** — the Options scene; saved volumes and hi-scores.
