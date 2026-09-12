@@ -70,6 +70,7 @@ import { MUSIC_CUES, SFX_CUES, SimEventKind, type EventQueue } from '../events/i
 import { Action, type InputContext, type InputSnapshot, type PlayerInput } from '../input/index.js';
 import { defineModule } from '../module-info.js';
 import { TextAlign, createDrawList, type DrawList, type WorldView } from '../presentation/index.js';
+import { MAX_SCORE } from '../scoring/index.js';
 import {
   CONFIRM_STRING_SLOTS,
   ConfirmChoice,
@@ -1197,9 +1198,9 @@ export interface SceneFlow {
    */
   onResume(): void;
   /**
-   * Raises the session hi-score (the saved best of M1-17).
+   * Raises the session hi-score (the saved best of M1-17); a lower value changes nothing.
    *
-   * @param value - A hi-score.
+   * @param value - A hi-score (floored; capped at the scoring's `MAX_SCORE` like the board's).
    */
   setHiScore(value: number): void;
 }
@@ -1406,7 +1407,10 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
       }
     },
     setHiScore(value) {
-      if (value > control.hiScore) control.hiScore = Math.floor(value);
+      // Capped like the scoring board's, so the title and a new World show the same value.
+      if (value > control.hiScore) {
+        control.hiScore = value > MAX_SCORE ? MAX_SCORE : Math.floor(value);
+      }
       control.game.world.scoring.board.setHiScore(control.hiScore);
       control.title.uiRevision++;
     },

@@ -5,6 +5,9 @@
  * and the power meter drawn; the pause key opens the pause menu over the dimmed, frozen game and
  * closes it again. In the Tizen build opened from disk the remote's OK (key code 13) starts the game
  * and Back (10009) pauses and resumes it through the scene stack — it never exits the app there.
+ * Back on the title: in the browser (no `platform.exit`) it only backs out of the menu to
+ * `PRESS OK`; in the Tizen build with a fake `window.tizen` it opens the exit confirmation, NO keeps
+ * the app running and only YES calls `tizen.application.getCurrentApplication().exit()`.
  * Screenshots are ×3 (viewport 1152×648): frame pixel (x, y) is screenshot pixel (3x + 1, 3y + 1).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -189,6 +192,22 @@ test.describe('scene flow (web build)', () => {
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
     expect(errors).toEqual([]);
   });
+
+  test('Back on the title only backs out of the menu (a browser cannot exit)', async ({ page }) => {
+    test.setTimeout(90_000);
+    const errors = await openTitle(page, './');
+    const canvas = page.locator('#game');
+    await tap(page, 'Escape'); // on PRESS OK: nothing to confirm
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
+    await tap(page, 'Enter'); // the menu
+    await tap(page, 'Escape'); // back to PRESS OK
+    await tap(page, 'Enter'); // the menu again — not START yet
+    await waitFrames(page, 6);
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
+    await tap(page, 'Enter'); // START
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
+    expect(errors).toEqual([]);
+  });
 });
 
 test.describe('scene flow (Tizen build via file://)', () => {
@@ -205,6 +224,53 @@ test.describe('scene flow (Tizen build via file://)', () => {
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'pause');
     await remoteTap(page, 10009);
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
+    expect(errors).toEqual([]);
+  });
+});
+
+test.describe('scene flow (Tizen build with a fake tizen API)', () => {
+  test('Back on the title opens the exit confirmation; the app exits only after YES', async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    // A stand-in for the TV's `window.tizen`: key registration succeeds, exit() is counted.
+    await page.addInitScript(() => {
+      const w = window as unknown as { shmupExits: number; tizen: unknown };
+      w.shmupExits = 0;
+      w.tizen = {
+        tvinputdevice: {
+          registerKey: () => {},
+          registerKeyBatch: (_keys: string[], onSuccess?: () => void) => onSuccess?.(),
+        },
+        application: {
+          getCurrentApplication: () => ({
+            exit: () => {
+              w.shmupExits++;
+            },
+          }),
+        },
+      };
+    });
+    const errors = await openTitle(page, TIZEN_INDEX);
+    const canvas = page.locator('#game');
+    const exits = (): Promise<number> =>
+      page.evaluate(() => (window as unknown as { shmupExits: number }).shmupExits);
+    await remoteTap(page, 10009);
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'confirm');
+    await tap(page, 'Enter'); // OK on the default NO
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
+    expect(await exits()).toBe(0);
+    await remoteTap(page, 10009);
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'confirm');
+    await remoteTap(page, 10009); // Back answers NO as well
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
+    expect(await exits()).toBe(0);
+    await remoteTap(page, 10009);
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'confirm');
+    await tap(page, 'ArrowLeft'); // YES
+    expect(await exits()).toBe(0);
+    await tap(page, 'Enter');
+    await expect.poll(exits).toBe(1);
     expect(errors).toEqual([]);
   });
 });

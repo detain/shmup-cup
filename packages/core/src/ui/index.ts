@@ -997,6 +997,7 @@ export function buildHud(world: World, list: DrawList, sprites: UiSprites = NO_S
   const iconY = L.bottomY + 2;
   if (stock > L.stockIcons) {
     if (sprites.life >= 0) list.sprite(sprites.life, 0, L.stockX, iconY);
+    else list.rect(L.stockX, iconY, 8, 4, HUD_COLORS.p1);
     list.number(stock, L.stockX + 12, L.bottomY, 0, HUD_COLORS.number);
   } else {
     for (let i = 0; i < stock; i++) {
