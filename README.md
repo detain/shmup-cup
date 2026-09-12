@@ -4,180 +4,256 @@ A modern TypeScript 2D horizontal-scrolling shoot-'em-up in the spirit of **Grad
 retro SNES-era look, fast and fluid 60 fps gameplay — targeting **Samsung Tizen** (TVs / Smart Monitors, Tizen 5.5+),
 with the browser and Electron as additional targets.
 
-**Status:** the [implementation plan](shmup_plan.md) is approved and under way; progress per
-step is tracked in [`shmup_progress.md`](shmup_progress.md).
-The monorepo skeleton is in place (every planned system has a module with its API declared
-and TSDoc-documented) and the **engine foundations** are implemented: seeded RNG streams,
-committed trigonometry tables with binary angles, the sim → presentation event queue and the
-zero-GC pools ([developer guide](docs/dev/engine-foundations.md)). **Game data** is
-schema-validated JSON under [`content/`](content/README.md) — the KESTREL ship, the Type A
-weapons, the test-range stage with its terrain tileset, enemy roster and movement paths, and
-the boss range with its test boss, the particle presets, and the sound effects and music so far — checked by `pnpm content:check`, served to the app builds as the virtual
-module `virtual:shmup-content` and loaded by `loadContent()` with every string id resolved
-to a number ([developer guide](docs/dev/content-data.md)). **Placeholder art** is code:
-sprite pixel maps under [`assets/source/`](assets/README.md), seeded procedural generators
-and an original 6×8 pixel font are packed by `pnpm assets` into a texture atlas plus
-manifest (the KESTREL, shots, seven enemies, boss parts, bullets, laser beams, explosions, items,
-particles, HUD pieces, the title logo, terrain tiles, star layers), served to the builds as `virtual:shmup-assets`;
-real art can later replace any frame by name ([developer guide](docs/dev/asset-pipeline.md)).
-Both apps now boot through the shared browser shell [`@shmup/shell`](packages/shell/README.md)
-(M1-04): it validates the content, loads the atlas pages behind a loading bar (or shows a boot
-error screen listing every problem), and renders the core's render contract — sprite batches,
-bitmap text, HUD / UI command lists — with zero per-frame allocation
-([developer guide](docs/dev/rendering-and-shell.md)). `pnpm test:e2e` boots the web build and
-the Tizen `dist/` (via `file://`) in headless Chromium.
-**The simulation World runs** (M1-06): `createWorld` / `stepWorld` advance one gameplay
-session through the fixed 9-phase tick pipeline (input → players → stage → scripts →
-movement → collision → damage → removal → fx, with deterministic hit-stop), the **KESTREL
-flies** under remote, keyboard or gamepad control (six speed levels from content, diagonals ×
-0.7071, no inertia, clamped to the playfield, banking, a 40-tick fly-in), the collision toolkit
-(closed shape tests, layer masks, a counting-sort grid whose queries equal brute force) is in
-place, and `hashWorld` fingerprints the simulated state for lockstep and replay tests. An
-allocation-guard test keeps the tick free of garbage. **Free flight** — the ship over an empty
-starfield between the HUD bars — was the start-up picture until M1-16 and is now
-`?scene=flight`, with the M1-04 sprite showcase at `?scene=showcase` and the test pattern at
-`?scene=calibration` ([developer guide](docs/dev/sim-world.md),
-[what testers should check](docs/client/preview-build.md)).
-**Stages scroll** (M1-07): a stage file carries a scripted camera path (speed keys with
-linear ramps, eased vertical pans, scroll locks that stop the camera exactly), invisible
-checkpoints with a deterministic restart, parallax star bands and tile terrain — generated at
-load by a deterministic heightfield generator (or given as RLE rows) over a
-[tileset](content/tilesets/README.md) whose per-tile column-height masks give pixel-exact
-slopes. The stage runner fires the sorted event timeline through a cursor, the World tests
-the ship's terrain box against the tiles (a crash is a death since M1-12), and the renderer draws the terrain as a ring-buffered sprite grid. Fly the dev stage
-with `pnpm dev` and `?stage=test-range` ([developer guide](docs/dev/stage-runtime.md)).
-**Enemies fly** (M1-08): data-defined enemies from [`content/enemies/`](content/enemies/README.md)
-are spawned by the stage timeline — alone or as formations whose members fly one behind the
-other and drop a capsule (and pay a bonus) only when every one of them is destroyed. What an
-enemy does is a TypeScript **behaviour coroutine** that sleeps between decisions (resumed only
-on the tick it wakes) — the M1 roster covers popcorn, formation fliers, capsule carriers,
-floor and ceiling turrets, walkers, hatches that release fighters, rammers and orbiters —
-while per-tick **movers** do the moving: straight, sine waves, centripetal Catmull-Rom
-[paths](content/paths/README.md) baked at load into 1-px arc-length tables, enter-hold-leave
-waypoints, follow-the-leader, ground crawling over the terrain slopes, capped-turn homing and
-aimed dashes. Off-screen / settle rules, contact with the ship, hit flash, explosion events and
-the tick's kill / drop outcomes are in place; 64 scripted enemies stay within the allocation
-guard, and enemies are part of `hashWorld`. The test stage now sends all eight behaviours at
-you ([developer guide](docs/dev/enemies-and-behaviors.md)).
-**Enemies shoot back** (M1-09): a 512-slot enemy bullet pool — which is also the renderer's
-enemy-bullet sprite batch — with acceleration, turning, delayed launches, mid-flight changes
-and capped homing; bullets ride the camera, die on the rock or just off screen, and are aimed
-on 32 directions (decision D17). Behaviour scripts fire through rank-scaled pattern primitives
-(aimed, N-way, ring, spiral, stack, seeded spray, homing, delayed) that only fire from an enemy
-on screen and settled; the turrets, walkers and orbiters of the test stage now shoot aimed
-shots, three-way fans and rings. Telegraphed lasers (a blinking warning line, then a beam
-whose hitbox exists only at full width) and bullet cancel with sparkle events are in place (the
-bosses fire both since M1-13), and rank runs at the difficulty's constant base (Normal = 2) with curves
-that growth will scale in M2. A bullet or laser hit costs a ship since M1-12
-([developer guide](docs/dev/bullets-and-patterns.md), [what testers should check](docs/client/preview-build.md#enemy-bullets)).
-**The ship shoots back** (M1-10): the KESTREL fires on its own — always-on autofire, the
-remote-first rule — with the Gradius-style Type A arsenal defined in
-[`content/weapons/`](content/weapons/README.md): a main shot limited to two on screen, the
-Double's forward-and-climbing pair, a piercing Laser that grows to 64 px, follows the ship up
-and down and hurts each enemy at most every sixth tick, and a Missile that drops to the ground
-and slides along the slopes until a wall stops it. Shots live in a 96-slot pool, ride the
-scroll, die on the rock and hit enemies through the collision grid (armoured parts clink, every
-kill is credited to a player — the score since M1-12). Up to four **Options** follow the ship's
-flown path — bunched while it idles during scrolling, spread out when it moves — and copy every
-weapon with their own caps; `?loadout=full` in a browser starts fully powered
-([developer guide](docs/dev/weapons-and-options.md), [what testers should check](docs/client/preview-build.md#your-weapons)).
-**The ship powers up** (M1-11): the Gradius-style **power meter** — `SPEED UP | MISSILE |
-DOUBLE | LASER | OPTION | ? | !` — per player. Capsule carriers and formations wiped out to the
-last member drop blinking **power capsules** (world-space, a 16-px pickup magnet pulls them in,
-every quick pickup counts, 300 points each — scored since M1-12); each capsule moves the
-highlight one slot, and **OK on the remote** (the `PowerUp` action, on its pressed edge only —
-holding it never re-equips) takes the highlighted power-up: maxed slots are greyed, Double and
-Laser are exclusive, and an optional Auto Power-Up equips a configurable order by itself. The
-`?` slot puts up a **Force Field** that absorbs five bullets, lasers or rammed enemies (never
-the rock) with short shield-hit i-frames and visible wear; `!` is **Mega Crash**, which cancels
-every enemy bullet and destroys every enemy that is not immune. The meter itself is drawn by
-the HUD since M1-16 ([developer guide](docs/dev/powerups-and-shields.md), [what testers should check](docs/client/preview-build.md#power-ups)).
-**The ship can be lost, and the score counts** (M1-12): a hit the Force Field does not absorb —
-rock, an enemy, a bullet or a laser — starts the **death sequence** in the same tick's damage
-phase: a life gone, explosion and debris events, an exact 8-tick **hit-stop**, a medium screen
-shake, every cancelable enemy bullet and laser cancelled, and the **death penalty** of the
-session (decision D6): *Classic* (the default) loses one power level (Option → Double / Laser →
-Missile → Speed) and the shield, *Arcade* loses everything and restarts the stage at its last
-checkpoint, *Casual* only loses the shield. After its explosion and dead time the ship flies
-back in, blinking, and stays invulnerable for 150 ticks once it is under control again; when
-no active ship has a life left the World's status is `gameOver`. Per-player **scores** credit
-every kill to its killer, a formation's bonus to the killer of its last member and 300 per
-capsule — exactly once, clamped at 99,999,990 — with a session hi-score, and the sim-side
-game-feel timers (hit-stop, decaying integer shake, flash kinds) push the events the effects of
-M1-14 draws. The flight HUD shows the score, `HI`, the spare ships and `GAME OVER`
-([developer guide](docs/dev/death-and-scoring.md), [what testers should check](docs/client/preview-build.md#lives-losing-your-ship-and-the-score)).
-**Bosses arrive with a WARNING** (M1-13): a boss is an `enemies` entry with a `boss` section —
-up to 16 parts attached to each other (translation only), each with its own hit points,
-hurtbox, sprite and weak-point rule (always, only after other parts are destroyed, only while
-the boss holds it open, or armour), cores whose destruction kills it, and up to 8 phases that
-swap the running boss behaviour when the cores' HP falls below a threshold, given parts are
-destroyed or time runs out. Its parts share the enemies' hit path (grid ids after the enemy
-slots, piercing cooldowns per part); a hit on a part that cannot take damage — or on anything
-during the invulnerable fly-in — **clinks**. A stage `warning` event brakes the camera into a
-scroll lock, sets the status to `bossWarning` for three seconds of siren pulses (a critical
-priority hint), flashes, dim and music stop, and shows the game's own text (`WARNING!!` /
-`GIANT HOSTILE "TRIAL WARDEN"` / `CLOSING IN - CODE TW-00`, decision D10) on a band in the
-flight scene; then the boss flies in with its theme. Destroying the last core cancels every
-bullet, chains explosions for two seconds, ends in a final blast with a 5-tick hit-stop, pays
-the boss's points to whoever destroyed it, plays the stage-clear jingle and clears the stage.
-The first boss behaviours (`boss.hover`, `boss.lanes` — aimed spreads and telegraphed lane
-lasers from the gun parts) and TRIAL WARDEN on the BOSS RANGE (`?stage=test-boss`) exercise it
-all ([developer guide](docs/dev/bosses-and-warning.md), [what testers should check](docs/client/preview-build.md#the-boss-range-and-the-warning-browser-only)).
-**Hits feel like hits** (M1-14): particle presets in [`content/fx/`](content/fx/README.md) —
-explosions larger than the enemy, sparks, debris, clinks, bullet-cancel sparkles, the pickup
-ring and a muzzle flash — are bound to the sim's particle cues and to the sounds that imply a
-visual, and drawn from a 256-particle pool in world space on its own seeded RNG (never touching
-the simulation), below the enemy bullets so an explosion never hides one. The renderer's screen
-effects shake the playfield by whole pixels exactly as the sim's shake decays (with a global
-off switch), flash it in a colour per kind behind a limit of three flashes a second (and a
-reduced-flashing setting), and darken it during the boss WARNING; 16 score popups rise from
-every kill (a new `Score` event) and every bonus. Everything runs on simulated ticks, so it
-freezes with a paused game, and allocates nothing per frame. `?scene=fx-gallery` cycles through
-every preset and effect ([developer guide](docs/dev/fx-and-game-feel.md), [what testers should check](docs/client/preview-build.md#explosions-sparks-shake-and-flashes)).
-**The game sounds** (M1-15): every placeholder sound and tune is data in
-[`content/audio/`](content/audio/README.md) — a ZzFX-style parameter set per `SFX_CUES` cue (with
-a priority tier, an instance cap, a volume and a bus) and original chip songs (AZURE VERGE, the
-stage theme with a 6.4-s intro and a 44.8-s loop; BULWARK ASSAULT for the boss; a title theme;
-stage-clear and game-over jingles) bound to `MUSIC_CUES`, optionally per stage — rendered while
-the game loads by a deterministic pure-TS synth (table sines and seeded noise, bit-identical on
-every engine; song rows are whole samples, so loop points are exact and the loop seam equals an
-unrolled render). Nothing is rendered or decoded mid-stage: the shell's boot renders the SFX bank
-and the running stage's music set (every cue its data names), and an OGG path (XHR +
-`OfflineAudioContext(2, 1, 32000)`) is ready for recorded tracks. The sim's `Sfx` / `Music` /
-`MusicDuck` events reach an audio engine on the Web Audio buses: a 14-voice SFX manager (per-frame
-dedupe, per-cue instance caps, priority stealing, the WARNING siren and the ship's death never
-cut), sounds panned from where they happen, and a looping music player with fades and ducking
-scheduled as sample-accurate ramps — with no allocation unless a sound starts. In a browser the
-sound starts with the first key press; the TV plays from boot (the title theme since M1-16; a
-game there flies in open space, which has no stage music yet). `pnpm audio:preview` writes every
-sound and song as WAV files
-([developer guide](docs/dev/audio.md), [what testers should check](docs/client/preview-build.md#sound-and-music)).
-**The game has screens, menus and a HUD** (M1-16): a fixed-depth **scene stack** with deferred
-transitions runs the M1 flow — boot → **title** (the procedural SHMUP CUP logo, `PRESS OK`,
-START / OPTIONS / EXIT) → **game** (a fresh World per start and per RETRY STAGE, all pushing into
-one event queue) ⇄ **pause** (RESUME / RETRY STAGE / QUIT TO TITLE) → **stage clear** (tally,
-`TO BE CONTINUED`) / **game over** → title — with a YES / NO dialog focused on NO. Everything is
-canvas-drawn by the core into draw lists (no UI framework) and fully navigable with the remote's
-D-pad, OK and Back: menus auto-repeat held directions (18 / 6 ticks), buffer a Confirm pressed
-while they open, answer to any player, and play their sounds through the same event queue.
-**Back** goes through the scenes — game → pause, pause → resume, menus → back, and on the TV the
-title's **exit confirmation** → `platform.exit()` only after YES; a platform resume during a
-game opens the pause menu. The in-game **HUD** (`1P` / `HI` / `2P`, stock icons, the 7-slot power
-meter with its flashing highlight and greyed slots, Force Field pips) is rebuilt only when
-something it shows changed, without allocating. The shell's default scene is now this flow;
-`createGame` without `options.scenes` keeps bare gameplay for tests and tools
-([developer guide](docs/dev/scenes-and-ui.md), [what testers should check](docs/client/preview-build.md#the-title-screen-and-the-menus)).
-**Input is remote-first and data-driven** (M1-05): control profiles in
-[`content/input/`](content/input/README.md) map keys, remote buttons and gamepad buttons to
-actions with separate **game** and **menu** tables, and carry the Samsung remote's quirks as
-settings — a release debounce against fake key-up/key-down pairs, diagonal and SOCD policies,
-the Tizen keys to register. The TV uses `tizen-remote-safe`, the browser `keyboard-default`
-(`?profile=keyboard-remote-emulation` lets a desktop keyboard feel like the remote), so the
-input probe's results will change a JSON file, not code
-([developer guide](docs/dev/input-profiles.md), [controls](docs/client/controls.md)).
-The **input probe** — a diagnostic Tizen app that measures the Samsung remote, gamepads and
-display on the real monitors — is built and tested ([`tools/input-probe/`](tools/input-probe/README.md));
-it is waiting to be packaged and run on the M7 monitors.
+## Status
+
+The [implementation plan](shmup_plan.md) is approved and under way. Progress per step is tracked in
+[`shmup_progress.md`](shmup_progress.md); milestone **M1 — playable vertical slice** is in progress.
+
+<!--
+  Keep this section scannable: one entry per plan step, in plan order — a bold headline with the
+  step id, a few short sub-bullets, and a final "Docs:" bullet. Details belong in docs/dev/ and
+  docs/client/, not here.
+-->
+
+### What works so far
+
+- **Monorepo skeleton** — every planned system has a module with its API declared and
+  TSDoc-documented.
+
+- **Engine foundations** (M1-01)
+  - Seeded RNG streams, committed trigonometry tables with binary angles, the sim → presentation
+    event queue and zero-GC pools.
+  - Docs: [developer guide](docs/dev/engine-foundations.md)
+
+- **Game data** (M1-02)
+  - Schema-validated JSON under [`content/`](content/README.md): the KESTREL ship, the Type A
+    weapons, the test-range stage with its terrain tileset, enemy roster and movement paths, the
+    boss range with its test boss, particle presets, sound effects and music.
+  - Checked by `pnpm content:check`, served to the builds as the virtual module
+    `virtual:shmup-content`, and loaded by `loadContent()` with every string id resolved to a
+    number.
+  - Docs: [developer guide](docs/dev/content-data.md)
+
+- **Placeholder art is code** (M1-03)
+  - Sprite pixel maps under [`assets/source/`](assets/README.md), seeded procedural generators and
+    an original 6×8 pixel font are packed by `pnpm assets` into a texture atlas plus manifest,
+    served to the builds as `virtual:shmup-assets`.
+  - Covers the KESTREL, shots, seven enemies, boss parts, bullets, laser beams, explosions, items,
+    particles, HUD pieces, the title logo, terrain tiles and star layers.
+  - Real art can later replace any frame by name.
+  - Docs: [developer guide](docs/dev/asset-pipeline.md)
+
+- **Shared browser shell** (M1-04)
+  - Both apps boot through [`@shmup/shell`](packages/shell/README.md): it validates the content and
+    loads the atlas pages behind a loading bar — or shows a boot error screen listing every
+    problem.
+  - Renders the core's render contract (sprite batches, bitmap text, HUD / UI command lists) with
+    zero per-frame allocation.
+  - `pnpm test:e2e` boots the web build and the Tizen `dist/` (via `file://`) in headless Chromium.
+  - Docs: [developer guide](docs/dev/rendering-and-shell.md)
+
+- **Remote-first, data-driven input** (M1-05)
+  - Control profiles in [`content/input/`](content/input/README.md) map keys, remote buttons and
+    gamepad buttons to actions, with separate **game** and **menu** tables.
+  - The Samsung remote's quirks are settings: a release debounce against fake key-up/key-down
+    pairs, diagonal and SOCD policies, and the Tizen keys to register.
+  - The TV uses `tizen-remote-safe`, the browser `keyboard-default`;
+    `?profile=keyboard-remote-emulation` makes a desktop keyboard feel like the remote.
+  - The input probe's results will change a JSON file, not code.
+  - Docs: [developer guide](docs/dev/input-profiles.md) · [controls](docs/client/controls.md)
+
+- **The simulation World runs** (M1-06)
+  - `createWorld` / `stepWorld` advance a session through the fixed 9-phase tick pipeline (input →
+    players → stage → scripts → movement → collision → damage → removal → fx), with deterministic
+    hit-stop.
+  - The **KESTREL flies** under remote, keyboard or gamepad control: six speed levels from content,
+    diagonals × 0.7071, no inertia, clamped to the playfield, banking, a 40-tick fly-in.
+  - Collision toolkit: closed shape tests, layer masks, and a counting-sort grid whose queries equal
+    brute force.
+  - `hashWorld` fingerprints the simulated state for lockstep and replay tests; an allocation-guard
+    test keeps the tick free of garbage.
+  - Dev scenes: `?scene=flight` (free flight — the start-up picture until M1-16),
+    `?scene=showcase` (the M1-04 sprite showcase) and `?scene=calibration` (the test pattern).
+  - Docs: [developer guide](docs/dev/sim-world.md) ·
+    [what testers should check](docs/client/preview-build.md)
+
+- **Stages scroll** (M1-07)
+  - A stage file carries a scripted camera path (speed keys with linear ramps, eased vertical pans,
+    scroll locks that stop the camera exactly), invisible checkpoints with a deterministic restart,
+    parallax star bands and tile terrain.
+  - Terrain is generated at load by a deterministic heightfield generator (or given as RLE rows)
+    over a [tileset](content/tilesets/README.md) whose per-tile column-height masks give pixel-exact
+    slopes.
+  - The stage runner fires the sorted event timeline through a cursor; the ship's terrain box is
+    tested against the tiles (a crash is a death since M1-12); the renderer draws the terrain as a
+    ring-buffered sprite grid.
+  - Try it: `pnpm dev` with `?stage=test-range`.
+  - Docs: [developer guide](docs/dev/stage-runtime.md)
+
+- **Enemies fly** (M1-08)
+  - Data-defined enemies from [`content/enemies/`](content/enemies/README.md) are spawned by the
+    stage timeline — alone, or as formations whose members fly one behind the other and drop a
+    capsule (and pay a bonus) only when every one of them is destroyed.
+  - An enemy's behaviour is a TypeScript **coroutine** that sleeps between decisions, resumed only
+    on the tick it wakes. The M1 roster: popcorn, formation fliers, capsule carriers, floor and
+    ceiling turrets, walkers, hatches that release fighters, rammers and orbiters.
+  - Per-tick **movers** do the moving: straight, sine waves, centripetal Catmull-Rom
+    [paths](content/paths/README.md) baked at load into 1-px arc-length tables, enter-hold-leave
+    waypoints, follow-the-leader, ground crawling over the terrain slopes, capped-turn homing and
+    aimed dashes.
+  - Off-screen / settle rules, contact with the ship, hit flash, explosion events and kill / drop
+    outcomes are in place; 64 scripted enemies stay within the allocation guard, and enemies are
+    part of `hashWorld`. The test stage sends all eight behaviours at you.
+  - Docs: [developer guide](docs/dev/enemies-and-behaviors.md)
+
+- **Enemies shoot back** (M1-09)
+  - A 512-slot enemy bullet pool — also the renderer's enemy-bullet sprite batch — with
+    acceleration, turning, delayed launches, mid-flight changes and capped homing. Bullets ride the
+    camera, die on the rock or just off screen, and are aimed on 32 directions (decision D17).
+  - Behaviour scripts fire through rank-scaled pattern primitives (aimed, N-way, ring, spiral,
+    stack, seeded spray, homing, delayed), only from an enemy that is on screen and settled; the
+    test stage's turrets, walkers and orbiters shoot aimed shots, three-way fans and rings.
+  - Telegraphed lasers (a blinking warning line, then a beam whose hitbox exists only at full
+    width) and bullet cancel with sparkle events — the bosses fire both since M1-13.
+  - Rank runs at the difficulty's constant base (Normal = 2); M2 adds growth. A bullet or laser hit
+    costs a ship since M1-12.
+  - Docs: [developer guide](docs/dev/bullets-and-patterns.md) ·
+    [what testers should check](docs/client/preview-build.md#enemy-bullets)
+
+- **The ship shoots back** (M1-10)
+  - Always-on autofire (the remote-first rule) with the Gradius-style Type A arsenal defined in
+    [`content/weapons/`](content/weapons/README.md):
+    - **Shot** — the main shot, two on screen at most;
+    - **Double** — a forward-and-climbing pair;
+    - **Laser** — pierces, grows to 64 px, follows the ship up and down, and hurts each enemy at
+      most every sixth tick;
+    - **Missile** — drops to the ground and slides along the slopes until a wall stops it.
+  - Shots live in a 96-slot pool, ride the scroll, die on the rock and hit enemies through the
+    collision grid; armoured parts clink, and every kill is credited to a player.
+  - Up to four **Options** follow the ship's flown path — bunched while it idles, spread out when
+    it moves — and copy every weapon with their own caps.
+  - `?loadout=full` in a browser starts fully powered.
+  - Docs: [developer guide](docs/dev/weapons-and-options.md) ·
+    [what testers should check](docs/client/preview-build.md#your-weapons)
+
+- **The ship powers up** (M1-11)
+  - A Gradius-style **power meter** per player: `SPEED UP | MISSILE | DOUBLE | LASER | OPTION | ? | !`
+    (drawn by the HUD since M1-16).
+  - Capsule carriers and formations wiped out to the last member drop blinking **power capsules**
+    (world-space, pulled in by a 16-px pickup magnet, 300 points each); each capsule moves the
+    highlight one slot.
+  - **OK on the remote** (the `PowerUp` action, on its pressed edge only — holding it never
+    re-equips) takes the highlighted power-up. Maxed slots are greyed, Double and Laser are
+    exclusive, and an optional Auto Power-Up equips a configurable order by itself.
+  - `?` is a **Force Field** that absorbs five bullets, lasers or rammed enemies (never the rock),
+    with short shield-hit i-frames and visible wear.
+  - `!` is **Mega Crash**: it cancels every enemy bullet and destroys every enemy that is not
+    immune.
+  - Docs: [developer guide](docs/dev/powerups-and-shields.md) ·
+    [what testers should check](docs/client/preview-build.md#power-ups)
+
+- **The ship can be lost, and the score counts** (M1-12)
+  - A hit the Force Field does not absorb — rock, an enemy, a bullet or a laser — starts the
+    **death sequence** in the same tick's damage phase: a life gone, explosion and debris events,
+    an exact 8-tick hit-stop, a medium screen shake, and every cancelable enemy bullet and laser
+    cancelled.
+  - The session's **death penalty** (decision D6): _Classic_ (the default) loses one power level
+    (Option → Double / Laser → Missile → Speed) and the shield, _Arcade_ loses everything and
+    restarts the stage at its last checkpoint, _Casual_ only loses the shield.
+  - The ship flies back in blinking and stays invulnerable for 150 ticks once under control; when
+    no active ship has a life left, the World's status is `gameOver`.
+  - Per-player **scores** credit every kill to its killer, a formation's bonus to the killer of its
+    last member and 300 per capsule — exactly once, clamped at 99,999,990 — with a session
+    hi-score.
+  - Sim-side game-feel timers (hit-stop, decaying integer shake, flash kinds) push the events that
+    M1-14 draws; the flight HUD shows the score, `HI`, the spare ships and `GAME OVER`.
+  - Docs: [developer guide](docs/dev/death-and-scoring.md) ·
+    [what testers should check](docs/client/preview-build.md#lives-losing-your-ship-and-the-score)
+
+- **Bosses arrive with a WARNING** (M1-13)
+  - A boss is an `enemies` entry with a `boss` section: up to 16 parts attached to each other
+    (translation only), each with its own hit points, hurtbox, sprite and weak-point rule (always,
+    only after other parts are destroyed, only while the boss holds it open, or armour); cores
+    whose destruction kills it; and up to 8 phases that swap the running behaviour when the cores'
+    HP falls below a threshold, given parts are destroyed, or time runs out.
+  - Parts share the enemies' hit path (grid ids after the enemy slots, piercing cooldowns per
+    part); a hit on a part that cannot take damage — or on anything during the invulnerable fly-in
+    — **clinks**.
+  - A stage `warning` event brakes the camera into a scroll lock and sets the status to
+    `bossWarning` for three seconds: siren pulses, flashes, dim, music stop, and the game's own
+    banner (`WARNING!!` / `GIANT HOSTILE "TRIAL WARDEN"` / `CLOSING IN - CODE TW-00`, decision
+    D10). Then the boss flies in with its theme.
+  - Destroying the last core cancels every bullet, chains explosions for two seconds, ends in a
+    final blast with a 5-tick hit-stop, pays the boss's points to whoever destroyed it, plays the
+    stage-clear jingle and clears the stage.
+  - The first boss behaviours (`boss.hover`, `boss.lanes` — aimed spreads and telegraphed lane
+    lasers from the gun parts) and TRIAL WARDEN on the BOSS RANGE (`?stage=test-boss`) exercise it
+    all.
+  - Docs: [developer guide](docs/dev/bosses-and-warning.md) ·
+    [what testers should check](docs/client/preview-build.md#the-boss-range-and-the-warning-browser-only)
+
+- **Hits feel like hits** (M1-14)
+  - Particle presets in [`content/fx/`](content/fx/README.md) — explosions larger than the enemy,
+    sparks, debris, clinks, bullet-cancel sparkles, the pickup ring and a muzzle flash — are bound
+    to the sim's particle cues and to the sounds that imply a visual.
+  - They are drawn from a 256-particle pool in world space on their own seeded RNG (never touching
+    the simulation), below the enemy bullets so an explosion never hides one.
+  - Screen effects: whole-pixel shake that follows the sim's decay (with a global off switch),
+    per-kind colour flashes limited to three a second (plus a reduced-flashing setting), and a
+    darkened playfield during the boss WARNING; 16 score popups rise from every kill (a new `Score`
+    event) and every bonus.
+  - Everything runs on simulated ticks, so it freezes with a paused game, and allocates nothing
+    per frame. `?scene=fx-gallery` cycles through every preset and effect.
+  - Docs: [developer guide](docs/dev/fx-and-game-feel.md) ·
+    [what testers should check](docs/client/preview-build.md#explosions-sparks-shake-and-flashes)
+
+- **The game sounds** (M1-15)
+  - Every placeholder sound and tune is data in [`content/audio/`](content/audio/README.md): a
+    ZzFX-style parameter set per `SFX_CUES` cue (priority tier, instance cap, volume, bus), and
+    original chip songs bound to `MUSIC_CUES`, optionally per stage — AZURE VERGE (the stage theme:
+    6.4-s intro, 44.8-s loop), BULWARK ASSAULT (the boss), a title theme, and stage-clear and
+    game-over jingles.
+  - Rendered while the game loads by a deterministic pure-TS synth (table sines and seeded noise,
+    bit-identical on every engine; song rows are whole samples, so loop points are exact). Nothing
+    is rendered or decoded mid-stage; an OGG path (XHR + `OfflineAudioContext(2, 1, 32000)`) is
+    ready for recorded tracks.
+  - The sim's `Sfx` / `Music` / `MusicDuck` events drive an audio engine on the Web Audio buses: a
+    14-voice SFX manager (per-frame dedupe, per-cue instance caps, priority stealing; the WARNING
+    siren and the ship's death are never cut), sounds panned from where they happen, and a looping
+    music player with fades and ducking as sample-accurate ramps — no allocation unless a sound
+    starts.
+  - In a browser the sound starts with the first key press; the TV plays from boot (the title
+    theme since M1-16; a game there flies in open space, which has no stage music yet).
+  - `pnpm audio:preview` writes every sound and song as WAV files.
+  - Docs: [developer guide](docs/dev/audio.md) ·
+    [what testers should check](docs/client/preview-build.md#sound-and-music)
+
+- **Screens, menus and a HUD** (M1-16)
+  - A fixed-depth **scene stack** with deferred transitions runs the M1 flow: boot → **title** (the
+    procedural SHMUP CUP logo, `PRESS OK`, START / OPTIONS / EXIT) → **game** ⇄ **pause** (RESUME /
+    RETRY STAGE / QUIT TO TITLE) → **stage clear** (tally, `TO BE CONTINUED`) or **game over** →
+    title, with a YES / NO dialog focused on NO.
+  - Everything is canvas-drawn by the core into draw lists (no UI framework) and fully navigable
+    with the remote's D-pad, OK and Back: held directions auto-repeat (18 / 6 ticks), a Confirm
+    pressed while a menu opens is buffered, any player can answer, and sounds go through the same
+    event queue.
+  - **Back** walks the scenes — game → pause, pause → resume, menus → back — and on the TV the
+    title's **exit confirmation** calls `platform.exit()` only after YES; a platform resume during
+    a game opens the pause menu.
+  - The in-game **HUD** (`1P` / `HI` / `2P`, stock icons, the 7-slot power meter with its flashing
+    highlight and greyed slots, Force Field pips) is rebuilt only when something it shows changed,
+    without allocating.
+  - The shell's default scene is now this flow; `createGame` without `options.scenes` keeps bare
+    gameplay for tests and tools.
+  - Docs: [developer guide](docs/dev/scenes-and-ui.md) ·
+    [what testers should check](docs/client/preview-build.md#the-title-screen-and-the-menus)
+
+### Hardware spike
+
+- The **input probe** — a diagnostic Tizen app that measures the Samsung remote, gamepads and
+  display on the real monitors — is built and tested
+  ([`tools/input-probe/`](tools/input-probe/README.md)). It is waiting to be packaged and run on
+  the M7 monitors.
 
 ## Documents
 
