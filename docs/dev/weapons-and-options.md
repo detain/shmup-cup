@@ -403,8 +403,10 @@ autofire) and hold no `Shot` / `Sub`.
   and the ship's speed level and Force Field (`PlayerShip.shield`); capsules come from
   `outcomes.drop*`; Mega Crash `kill`s enemies credited to the player who fired it
   ([powerups-and-shields.md](powerups-and-shields.md)).
-- **M1-12** — score from `outcomes.killScore` credited by `killBy`; the death penalty presets
-  reset or reduce the loadout; respawns fly in with a fresh Option trail.
+- **M1-12** (done) — score from `outcomes.killScore` credited by `killBy`; the death penalty
+  presets reset (`arcade`) or reduce (`classic`: `loseOneLevel` — Option → Double / Laser →
+  Missile → Speed) the loadout; respawns fly in with a fresh Option trail, and the ship fires
+  while it blinks ([death-and-scoring.md](death-and-scoring.md)).
 - **M1-13** — boss parts share the damage path; gated parts clink.
 - **M1-14 / M1-15** — particle presets and sounds for the explosion, `PlayerShot`,
   `PlayerMissile` and `Clink` events.

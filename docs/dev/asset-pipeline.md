@@ -411,6 +411,7 @@ sprites through the World's enemy-bullet batch and added the `lasers` generator
 sprites (a laser as a row of `shots/laser` segments) and `options/orb`, which joined
 `ENGINE_SPRITES` ([weapons-and-options.md](weapons-and-options.md#drawing-shots-and-options));
 M1-11 (done) draws `items/capsule` and `shields/force-field` (its four wear frames), which joined
-`ENGINE_SPRITES` ([powerups-and-shields.md](powerups-and-shields.md)); M1-12 / M1-13 add the
-remaining item and boss sprites (with `hitFlash`); M1-14 uses the explosions and particles; M1-16 builds the HUD from
+`ENGINE_SPRITES` ([powerups-and-shields.md](powerups-and-shields.md)); M1-12 (done) drew no new
+sprites — the death's explosion and debris are particle cues for M1-14, the HUD's stock icon is
+`hud/life`; M1-13 adds the remaining item and boss sprites (with `hitFlash`); M1-14 uses the explosions and particles; M1-16 builds the HUD from
 `hud/*` and `ui/pixel`; M1-18 adds the Zone A art.

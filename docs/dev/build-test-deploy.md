@@ -209,7 +209,8 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   bullets appear in the playfield and move (M1-09), and the KESTREL autofires its main shot in
   both builds while `?loadout=full` draws Options and laser beams in the web build only (M1-10),
   and `?loadout=full` draws the fresh Force Field ring around the ship in the web build only
-  (M1-11).
+  (M1-11), and on `?stage=test-range` an unattended ship loses its stock icons 2 → 1 → 0 and the
+  top bar shows `GAME OVER` (M1-12).
   Output goes to `test/e2e/test-results/` (git- and Prettier-ignored).
 - **Dev query parameters** of the web build (`pnpm dev`, `vite preview`): `?stage=<id>` (run
   that stage instead of open space, e.g. `test-range` — see

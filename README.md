@@ -44,8 +44,7 @@ checkpoints with a deterministic restart, parallax star bands and tile terrain �
 load by a deterministic heightfield generator (or given as RLE rows) over a
 [tileset](content/tilesets/README.md) whose per-tile column-height masks give pixel-exact
 slopes. The stage runner fires the sorted event timeline through a cursor, the World tests
-the ship's terrain box against the tiles (hits are recorded until the death sequence of
-M1-12), and the renderer draws the terrain as a ring-buffered sprite grid. Fly the dev stage
+the ship's terrain box against the tiles (a crash is a death since M1-12), and the renderer draws the terrain as a ring-buffered sprite grid. Fly the dev stage
 with `pnpm dev` and `?stage=test-range` ([developer guide](docs/dev/stage-runtime.md)).
 **Enemies fly** (M1-08): data-defined enemies from [`content/enemies/`](content/enemies/README.md)
 are spawned by the stage timeline — alone or as formations whose members fly one behind the
@@ -69,8 +68,8 @@ on screen and settled; the turrets, walkers and orbiters of the test stage now s
 shots, three-way fans and rings. Telegraphed lasers (a blinking warning line, then a beam
 whose hitbox exists only at full width) and bullet cancel with sparkle events are in place for
 the bosses to come, and rank runs at the difficulty's constant base (Normal = 2) with curves
-that growth will scale in M2. Bullet and laser hits are recorded on the ship (death comes with
-M1-12) ([developer guide](docs/dev/bullets-and-patterns.md), [what testers should check](docs/client/preview-build.md#enemy-bullets)).
+that growth will scale in M2. A bullet or laser hit costs a ship since M1-12
+([developer guide](docs/dev/bullets-and-patterns.md), [what testers should check](docs/client/preview-build.md#enemy-bullets)).
 **The ship shoots back** (M1-10): the KESTREL fires on its own — always-on autofire, the
 remote-first rule — with the Gradius-style Type A arsenal defined in
 [`content/weapons/`](content/weapons/README.md): a main shot limited to two on screen, the
@@ -78,14 +77,14 @@ Double's forward-and-climbing pair, a piercing Laser that grows to 64 px, follow
 and down and hurts each enemy at most every sixth tick, and a Missile that drops to the ground
 and slides along the slopes until a wall stops it. Shots live in a 96-slot pool, ride the
 scroll, die on the rock and hit enemies through the collision grid (armoured parts clink, every
-kill is credited to a player for the scoring to come). Up to four **Options** follow the ship's
+kill is credited to a player — the score since M1-12). Up to four **Options** follow the ship's
 flown path — bunched while it idles during scrolling, spread out when it moves — and copy every
 weapon with their own caps; `?loadout=full` in a browser starts fully powered
 ([developer guide](docs/dev/weapons-and-options.md), [what testers should check](docs/client/preview-build.md#your-weapons)).
 **The ship powers up** (M1-11): the Gradius-style **power meter** — `SPEED UP | MISSILE |
 DOUBLE | LASER | OPTION | ? | !` — per player. Capsule carriers and formations wiped out to the
 last member drop blinking **power capsules** (world-space, a 16-px pickup magnet pulls them in,
-every quick pickup counts, 300 points each for the scoring to come); each capsule moves the
+every quick pickup counts, 300 points each — scored since M1-12); each capsule moves the
 highlight one slot, and **OK on the remote** (the `PowerUp` action, on its pressed edge only —
 holding it never re-equips) takes the highlighted power-up: maxed slots are greyed, Double and
 Laser are exclusive, and an optional Auto Power-Up equips a configurable order by itself. The
@@ -93,6 +92,20 @@ Laser are exclusive, and an optional Auto Power-Up equips a configurable order b
 the rock) with short shield-hit i-frames and visible wear; `!` is **Mega Crash**, which cancels
 every enemy bullet and destroys every enemy that is not immune. The meter itself is drawn by
 the HUD of M1-16 ([developer guide](docs/dev/powerups-and-shields.md), [what testers should check](docs/client/preview-build.md#power-ups)).
+**The ship can be lost, and the score counts** (M1-12): a hit the Force Field does not absorb —
+rock, an enemy, a bullet or a laser — starts the **death sequence** in the same tick's damage
+phase: a life gone, explosion and debris events, an exact 8-tick **hit-stop**, a medium screen
+shake, every cancelable enemy bullet and laser cancelled, and the **death penalty** of the
+session (decision D6): *Classic* (the default) loses one power level (Option → Double / Laser →
+Missile → Speed) and the shield, *Arcade* loses everything and restarts the stage at its last
+checkpoint, *Casual* only loses the shield. After its explosion and dead time the ship flies
+back in, blinking, and stays invulnerable for 150 ticks once it is under control again; when
+no active ship has a life left the World's status is `gameOver`. Per-player **scores** credit
+every kill to its killer, a formation's bonus to the killer of its last member and 300 per
+capsule — exactly once, clamped at 99,999,990 — with a session hi-score, and the sim-side
+game-feel timers (hit-stop, decaying integer shake, flash kinds) push the events the effects of
+M1-14 will draw. The flight HUD shows the score, `HI`, the spare ships and `GAME OVER`
+([developer guide](docs/dev/death-and-scoring.md), [what testers should check](docs/client/preview-build.md#lives-losing-your-ship-and-the-score)).
 **Input is remote-first and data-driven** (M1-05): control profiles in
 [`content/input/`](content/input/README.md) map keys, remote buttons and gamepad buttons to
 actions with separate **game** and **menu** tables, and carry the Samsung remote's quirks as
@@ -117,7 +130,7 @@ it is waiting to be packaged and run on the M7 monitors.
 | [`shmup_prompt.md`](shmup_prompt.md) | Paste-into-a-new-session prompt that drives execution of the plan (workflow: build → review/fix loop → tests → docs → CI gate per step, progress in `shmup_progress.md`) |
 | [`docs/`](docs/README.md) | Player and developer documentation (start with [`docs/dev/repo-layout.md`](docs/dev/repo-layout.md)) |
 
-Game docs — testers: [preview build (free flight, test stage, its enemies and their bullets, your weapons, power-ups)](docs/client/preview-build.md) ·
+Game docs — testers: [preview build (free flight, test stage, its enemies and their bullets, your weapons, power-ups, lives and score)](docs/client/preview-build.md) ·
 [controls](docs/client/controls.md) · [monitor setup & install](docs/client/install-on-tv.md).
 Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/architecture.md) ·
 [engine foundations](docs/dev/engine-foundations.md) · [content data](docs/dev/content-data.md) ·
@@ -129,6 +142,7 @@ Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/ar
 [bullets, lasers & patterns](docs/dev/bullets-and-patterns.md) ·
 [weapons & Options](docs/dev/weapons-and-options.md) ·
 [power-ups & shields](docs/dev/powerups-and-shields.md) ·
+[death, respawn & score](docs/dev/death-and-scoring.md) ·
 [input profiles](docs/dev/input-profiles.md) ·
 [API reference](docs/dev/api-reference.md) ·
 [build, test & deploy](docs/dev/build-test-deploy.md) · [conventions](docs/dev/conventions.md).
@@ -234,12 +248,11 @@ the game — the shipped Tizen bundle still targets Chromium 69.
 
 ## Next step
 
-Code: plan step **M1-12** (death, respawn, checkpoints, lives and score: a hit the Force Field
-does not absorb starts the death sequence with hit-stop and a bullet cancel, the three
-death-penalty presets decide what the loadout keeps — Arcade restarts at the last checkpoint,
-Classic loses one power level, Casual keeps the loadout — the ship flies back in with
-invulnerability, and kills, formation bonuses and capsules finally score) — the per-step status board is
-[`shmup_progress.md`](shmup_progress.md).
+Code: plan step **M1-13** (bosses and the WARNING sequence: multi-part bosses with weak points
+gated by other parts and phases that swap scripts by HP or destroyed parts, the stage's
+`warning` event slowing the camera into its lock under a WARNING screen with the siren, an
+invulnerable intro, and a boss death with chained explosions, a hit-stop, the score tally and
+`stageClear`) — the per-step status board is [`shmup_progress.md`](shmup_progress.md).
 
 On hardware (unchanged, and still the gate for the remote control scheme): package and
 deploy the input probe from the **Windows desktop** that sits on the same LAN as the monitors and holds

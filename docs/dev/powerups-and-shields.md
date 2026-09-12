@@ -122,7 +122,7 @@ slot, and for Double / Laser entries the set of main weapons that satisfy them),
 | `mega` | never (the order stops there) |
 
 The order is re-evaluated at every pickup, so a loss — a broken Force Field, a death penalty
-from M1-12 — is wanted again. `-1` means the order is satisfied (or empty): the meter then only
+(M1-12) — is wanted again. `-1` means the order is satisfied (or empty): the meter then only
 moves. Because the cursor restarts at `-1` after every equip, a wanted slot costs its position +
 1 capsules (Speed 1, Missile 2, Laser 4, each Option 5, `?` 6): the default order takes 33
 capsules. Manual presses keep working with Auto Power-Up on.
@@ -167,7 +167,8 @@ capsule draws `items/capsule` (`CAPSULE_SPRITE`, an **engine sprite** — `ITEM_
 - **Applying them (phase 7).** `resolve()` calls `collect(player)` for every pickup in item
   order: **every pickup advances the meter** (no merging of quick pickups, §6A), pushes the
   meter "ding" (`SFX MeterAdvance`) and may Auto-equip. `outcomes` stays readable until the next
-  phase 6 — M1-12's scoring adds `pickupScore`.
+  phase 6 — `core/scoring` credits each `pickupScore` to its `pickupPlayer` right after
+  `resolve()` (M1-12).
 
 ## The Force Field (`core/shields`)
 
@@ -201,7 +202,9 @@ contact, bullet and laser hits:
    - anything but `None` makes `playerHit` return `true` **without touching the ship** — the
      hit is "accepted" (the bullet is used up, lasers too) but not recorded (`hitCause`,
      `hitTick`, `hits` stay);
-3. otherwise the hit is recorded on the ship as before (the death sequence arrives in M1-12).
+3. otherwise the hit is recorded on the ship, and phase 7 of the same tick runs the death
+   sequence (M1-12, [death-and-scoring.md](death-and-scoring.md)) — which clears the shield of
+   every preset anyway, so a terrain death takes the Force Field with it.
 
 **I-frames count down in phase 7** (`tickShield`, called by `resolve()` for every ship), but not
 on the tick of the hit that started them: a hit on tick `t` (phase 6) blocks the hits of ticks
@@ -210,8 +213,8 @@ a break `SFX ShieldBreak` + `Particles FX_CUES.ShieldBreak` (param 1). Blocked h
 
 **Granting and clearing.** The `?` slot (and `applyLoadoutPreset(…, 'full')`) calls
 `grantShield(state, spec = FORCE_FIELD)`: full hits, **i-frames reset to 0**, replacing whatever
-was there. `clearShield` removes it without a break (the `'default'` loadout; death penalties in
-M1-12). `shieldActive(state)` = a kind other than `None` with hits left — while it is true the
+was there. `clearShield` removes it without a break (the `'default'` loadout; every death
+penalty since M1-12). `shieldActive(state)` = a kind other than `None` with hits left — while it is true the
 `?` slot is greyed.
 
 **Drawing.** `sync()` puts one sprite per active, not-`dying` / `dead` ship with a shield into
@@ -236,9 +239,27 @@ detonates on the pickup's own tick) — so its kills are scored and drop capsule
    its capsule and pays its bonus). **Armour does not protect**, and enemies spawned just
    outside the view die too. The compiled `megaCrashImmune` table is read, never the content
    objects. Boss parts (M1-13) are not enemies and take no damage;
-3. `SimEventKind.Flash` with param `MEGA_CRASH_FLASH_TICKS` (12) and `SFX MegaCrash` at the ship.
+3. `requestFlash(world, FlashKind.MegaCrash)` (`core/fx`, M1-12: the flash timer and
+   `SimEventKind.Flash` with `id` 0 and param `MEGA_CRASH_FLASH_TICKS` 12) and `SFX MegaCrash` at
+   the ship.
 
 The drops of its kills become capsules at the end of the same `resolve()`.
+
+## Death penalties (M1-12)
+
+`applyDeathPenalty(preset, ship, loadout, meter)` lives here — `core/player` cannot import the
+weapon values without an import cycle — and the World calls it at the death, after the tick's
+pickups (so a capsule collected on the fatal tick still advanced the meter first):
+
+| `config.deathPenalty` | Shield | Loadout / speed | Cursor |
+|---|---|---|---|
+| `'classic'` (D6 default) | `clearShield` | `loseOneLevel`: the first of Option −1 → Double / Laser → basic → Missile off → speed level −1 | kept |
+| `'arcade'` | `clearShield` | basic shot, no Missile, no Options, speed level 0 (the stage restarts at the respawn) | `-1` |
+| `'casual'` | `clearShield` | kept | kept |
+
+`loseOneLevel` returns the `MeterSlot` it took (`-1` when the ship is bare); a pending Mega Crash
+is never touched (it detonates on that tick). The whole death sequence is
+[death-and-scoring.md](death-and-scoring.md#the-death-penalty-d6).
 
 ## Presentation events
 
@@ -249,7 +270,7 @@ The drops of its kills become capsules at the end of the same `resolve()`.
 | Denied press | `Sfx PowerUpDenied` (22, new) |
 | Shield hit that cost a point | `Sfx ShieldHit` (12) |
 | Break | `Sfx ShieldBreak` (13) + `Particles` `FX_CUES.ShieldBreak` (4, new), param 1 |
-| Mega Crash | `Flash` (param 12, at 0, 0) + `Sfx MegaCrash` (15) — plus the cancel sparkles and the enemies' explosions |
+| Mega Crash | `Flash` (`id` = `FlashKind.MegaCrash` 0, param 12, at 0, 0 — through `core/fx` `requestFlash` since M1-12) + `Sfx MegaCrash` (15) — plus the cancel sparkles and the enemies' explosions |
 
 Nothing consumes them yet: sounds arrive with M1-15, particles and the screen flash with M1-14,
 the HUD with M1-16. `SFX_CUES.CapsulePickup` (9) is **not** used by meter mode (Direct-mode items,
@@ -263,7 +284,7 @@ hashed: the pickup outcomes (rebuilt every phase 6), the compiled Auto Power-Up 
 sprite / score tables (derived from config and content) and the batches. A checkpoint restart
 (`stage.restartAt` → the World's `clear` hook) empties the item pool (`pools.clearAll()`) and
 `powerups.clear()` forgets the pickups, pending Mega Crashes and taken drops — the meters and
-shields are player state and stay (M1-12 decides what a death costs).
+shields are player state and stay. What a death costs is `applyDeathPenalty` (below).
 
 ## Zero allocation and the hot-path rules
 
@@ -271,7 +292,10 @@ Everything is built by `createPowerUpSystem`; the tick writes numbers into typed
 fields. The guards (`powerups-alloc.test.ts`: the `'full'` loadout with Auto Power-Up, capsules
 next to the ship, carriers shot down, bullets wearing the Force Field down and breaking it, OK
 presses and a Mega Crash every few seconds; `powerups-alloc-coop.test.ts`: both players, a
-scrolling camera, pickup ties, breaks and re-grants on both ships, two Mega Crashes on one tick)
+scrolling camera, pickup ties, breaks and re-grants on both ships, two Mega Crashes on one tick;
+since M1-12 it re-grants broken shields and plays the `casual` penalty — `classic` deaths
+changing the loadouts late left a `core/weapons` grid visitor deoptimised by V8, see
+[death-and-scoring.md](death-and-scoring.md#zero-allocation-and-the-hot-path-rules))
 measure about **20 KB over 10,000 busy ticks** (budget 64 KB):
 
 | Rule | Why |
@@ -321,7 +345,7 @@ powerups.detonateMegaCrash(0); // debug: clear the screen now
 | A drop kind | `DropKind` in `core/enemies` (M1-08), then map it in `takeDrops` |
 | A meter slot rule or a `!` variant (M2-03) | `canEquipSlot` / `equipSlot`, the matching `nextAutoSlot` rule, `METER_LABELS` and the `hud/meter-labels` art; a new slot also needs `METER_SLOT_NAMES` / `MeterSlotName` in `core/config` |
 | A shield kind (pods, Free / Rotate Shield, Reduce — M2-04; Arm tiers — M2-05) | Append a `ShieldKind` code and name, a `ShieldSpec` in `SHIELD_SPECS` (`absorbsTerrain: true` for the Arm tiers), its sprite in `ENGINE_SPRITES`, grant it from its slot; keep `absorbShieldHit` allocation-free and hash any new state in `mixPowerUps` |
-| Something that reacts to pickups (scoring, M1-12) | Read `world.powerups.outcomes` (`pickupCount`, `pickupPlayer`, `pickupScore`, …) after phase 7 — reset in phase 6 |
+| Something that reacts to pickups (like `core/scoring`, M1-12) | Read `world.powerups.outcomes` (`pickupCount`, `pickupPlayer`, `pickupScore`, …) after `powerups.resolve()` in phase 7 — reset in phase 6 |
 | The HUD meter (M1-16) | Draw `meters[p].cursor`, grey the slots missing from `equippable(p)`, flash on `SimEventKind.PowerUp` |
 | An enemy Mega Crash spares | `"megaCrashImmune": true` in its `content/enemies/` entry |
 
@@ -359,8 +383,9 @@ powerups.detonateMegaCrash(0); // debug: clear the screen now
 
 ## Next steps that build on this page
 
-- **M1-12** — score from `outcomes.pickupScore` and Mega Crash kills (`killBy`); death penalty
-  presets reset or reduce the meter state (`clearShield`, loadout, speed level); respawns.
+- **M1-12** (done) — score from `outcomes.pickupScore` and Mega Crash kills (`killBy`);
+  `applyDeathPenalty` / `loseOneLevel` (below); Mega Crash's flash goes through `core/fx`
+  `requestFlash` ([death-and-scoring.md](death-and-scoring.md)).
 - **M1-13** — bosses stay out of Mega Crash; the WARNING sequence.
 - **M1-14 / M1-15** — the shield-break particles, the Mega Crash flash, cancel sparkles, and the
   sounds of every event above.

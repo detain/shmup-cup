@@ -686,7 +686,10 @@ export interface StageFormationEvent {
   readonly pathId: number;
   /** What the completed formation drops (default `capsule`; `null` = nothing). */
   readonly drop?: EnemyDrop | null;
-  /** Bonus points for destroying the whole formation (default 0; scoring: M1-12). */
+  /**
+   * Bonus points for destroying the whole formation (default 0) — credited to the player who kills
+   * its last member (`core/scoring`, M1-12).
+   */
   readonly bonus?: number;
 }
 

@@ -63,7 +63,9 @@ firing on its own (`remoteMode` forces autofire, `shmup_feat.md` §4 rule 1) —
 widget has no `?scene=` query string (and so no `?stage=` or `?loadout=` either). The remote's
 OK is the game's `PowerUp` (M1-11): free flight has no capsules, so a press there is simply
 denied — but holding an arrow and pressing OK must not stop the ship (the input-probe question
-the M1-11 manual check asks).
+the M1-11 manual check asks). Nothing can hit the ship in free flight, so the M1-12 life cycle
+(deaths, respawns, `GAME OVER`) is not reachable on the TV yet; the HUD's new `HI` score at the
+right end of the top bar is the only visible change there.
 
 ## Package, install, run (desktop with Tizen CLI + certificate — never in CI)
 

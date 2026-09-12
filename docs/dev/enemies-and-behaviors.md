@@ -294,7 +294,8 @@ only the broad phase, and whole numbers are never boxed as call arguments. After
 `grid.build()`, `collidePlayers(grid)` queries it with each active, `alive` ship's hurt circle
 and runs the exact closed circle-vs-box test (inlined `circleAabb`) on the candidates;
 contact calls `playerHit(ship, PlayerHitCause.Contact, tick, debugFlags)`, at most **one
-accepted hit per ship and tick**. Until M1-12 a hit is only recorded on the ship.
+accepted hit per ship and tick**. Since M1-12 a hit that gets through (no Force Field) is a
+death, run in phase 7 ([death-and-scoring.md](death-and-scoring.md)).
 
 Phase 7 is where the player shots (M1-10, `weapons.applyHits()`) call `damage(enemy, amount,
 by)` — `by` is the player credited with a kill (default `-1` = nobody). It is ignored for
@@ -314,11 +315,14 @@ non-ghost enemy that is not `megaCrashImmune` — armour does not protect — M1
    completion check (which may add the formation's drop and `FormationBonus` right away).
 
 `EnemySystem.outcomes` (`EnemyOutcomes`) lists the current tick's kills (`killSpec`, `killX`,
-`killY`, `killScore`), drops (`dropKind`, `dropX`, `dropY` — enemy drops and completed
-formations in kill order) and `bonusPoints`; it is reset at the start of phase 3. Since M1-11
-`core/powerups` turns every drop into a capsule at the end of phase 7 (drops of kills made
+`killY`, `killScore`, `killBy`), drops (`dropKind`, `dropX`, `dropY` — enemy drops and completed
+formations in kill order), `bonusPoints` and, since M1-12, one entry per completed formation
+(`bonusCount`, `bonusScore[]`, `bonusBy[]` — the player who killed its last member: `kill` sets a
+private `creditBy` around the formation accounting); it is reset at the start of phase 3. Since
+M1-11 `core/powerups` turns every drop into a capsule at the end of phase 7 (drops of kills made
 between ticks at the next phase 3 — [powerups-and-shields.md](powerups-and-shields.md#items-and-capsules));
-M1-12 turns kills and bonuses into score.
+since M1-12 `core/scoring` credits every kill's `killScore` to `killBy` and every bonus to
+`bonusBy`, exactly once ([death-and-scoring.md](death-and-scoring.md#score-corescoring)).
 
 ### Removal, drawing, restart and hashing
 
@@ -495,7 +499,8 @@ code):
 | A child spawned by a script does nothing on its first tick | By design: a script spawn's script starts on the next tick (it spawned during phase 4) |
 | `yield 0` did not run the next step in the same tick | `0` (and anything below 1) means the next tick |
 | The allocation guard fails after a behaviour change | A closure, array, object literal or string in the generator body, or a `yield 1` loop resuming every tick. Sleep longer, keep state in `let`s of whole numbers or on the `Enemy` |
-| The ship flies through enemies | Expected until M1-12: contact is recorded (`ship.hitCause = Contact`, `hits`), not fatal; ignored during the fly-in, while invulnerable and in god mode. The same holds for bullets (`Bullet`, the bullet is removed) and lasers (`Laser`) |
+| The ship flies through enemies | Only during the fly-in, while invulnerable (the respawn blink) and in god mode; a Force Field absorbs contact instead. Otherwise contact is a death since M1-12 — as are bullets and lasers |
+| A formation bonus went to nobody | It is credited to the killer of the last member; a debug `kill(enemy)` without `by` (`-1`) credits nobody |
 | A behaviour's shot never appears | `canFire()` was false (off screen, unsettled, ghost) — the wrappers return `-1` / `0` then; or the content was loaded without `ENGINE_SPRITES`, so bullets are hidden ([bullets-and-patterns.md](bullets-and-patterns.md#gotchas)) |
 | Enemies never die | The ship is not shooting at them: it is still flying in, the content has no weapons, or autofire is off; tests can also call `world.enemies.damage` / `kill` |
 | Enemies die in a test that expects them to fly past | The KESTREL autofires by default since M1-10 — pass `{ autofire: false, remoteMode: false }` |
@@ -513,7 +518,9 @@ code):
   ([weapons-and-options.md](weapons-and-options.md)).
 - **M1-11** (done) — capsules from `outcomes.drop*`; `megaCrash(by)` `kill`s every enemy
   without `megaCrashImmune` ([powerups-and-shields.md](powerups-and-shields.md)).
-- **M1-12** — score from `outcomes.killScore` / `bonusPoints`; contact kills the ship.
+- **M1-12** (done) — score from `outcomes.killScore` / `killBy` and the per-formation bonus lists;
+  contact kills the ship; an arcade restart clears every enemy and formation
+  ([death-and-scoring.md](death-and-scoring.md)).
 - **M1-13** — bosses and their parts share the damage path.
 - **M1-14** — particle presets for `FX_CUES`; **M2-01** — rank modifiers and revenge bullets;
   **M2-02** — the pattern DSL; **M2-04** — the Option Hunter.

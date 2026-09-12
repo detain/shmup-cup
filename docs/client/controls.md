@@ -13,7 +13,9 @@ work too, and every device drives both the game and the menus.
 > highlighted power-up once you have collected capsules
 > ([preview-build.md](preview-build.md#power-ups)). The other buttons do nothing yet, except
 > **Back** on the TV, which closes the app (also from the start-up error screen); the pause
-> screen arrives later. The remote's settings may still change once the input probe results
+> screen arrives later. Losing a ship needs no button either: the next one flies in by itself,
+> and after **GAME OVER** there is no continue yet — reload the page
+> ([preview-build.md](preview-build.md#lives-losing-your-ship-and-the-score)). The remote's settings may still change once the input probe results
 > from the M7 monitors are in, and a menu for choosing a profile and rebinding buttons is
 > planned.
 

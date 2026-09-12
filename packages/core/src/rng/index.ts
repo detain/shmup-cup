@@ -23,7 +23,8 @@
  * {@link RNG_STATE_WORDS}, {@link createRng}, {@link createRngStreams}.
  *
  * **Planned API (later steps).** `hashRngState()` for the golden-replay state hash
- * (M1-19) and a weighted-pick helper if drop tables need one (M1-12).
+ * (M1-19) and a weighted-pick helper if drop tables ever need one (M1's drops are fixed per
+ * enemy, so none has so far).
  *
  * @module
  */

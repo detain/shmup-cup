@@ -41,7 +41,11 @@ through `bankFrames` frames each way (the sprite needs `1 + 2 × bankFrames` fra
 then the up frames, then the down frames). The session flies the ship with id `kestrel`, else
 the first ship listed. `hurtRadius`, `terrainBox`, `pickupBox` and `respawnInvulnTicks` are
 validated now; the terrain box is used since M1-07, the pickup box since M1-11 (power capsules
-and the pickup magnet), the hurt radius for bullets since M1-09, respawn from M1-12. Edit a value and reload `pnpm dev` to feel
-the change; details in [`docs/dev/sim-world.md`](../../docs/dev/sim-world.md#the-player-ship-coreplayer).
+and the pickup magnet), the hurt radius for bullets since M1-09 (and enemy contact), and since
+M1-12 `enterTicks` is also the respawn fly-in and `respawnInvulnTicks` the invulnerable ticks
+counted from the moment that fly-in ends (the ship blinks from the start of the fly-in). Edit a
+value and reload `pnpm dev` to feel the change; details in
+[`docs/dev/sim-world.md`](../../docs/dev/sim-world.md#the-player-ship-coreplayer) and
+[`docs/dev/death-and-scoring.md`](../../docs/dev/death-and-scoring.md#respawn-and-invulnerability).
 
 See [`example.player.json`](example.player.json).

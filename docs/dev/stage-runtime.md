@@ -205,7 +205,9 @@ created. A hook may call `restartAt()`: the current tick's event loop stops ther
 
 `checkpoints: [{ x }]` are invisible restart points (shmup_feat.md §10). `runner.checkpoint`
 is the index of the last one the camera passed (`-1` before the first). `restartAt(index)`
-(`-1` = the stage start) is what the `arcade` death penalty and continues use (M1-12):
+(`-1` = the stage start) is what the `arcade` death penalty uses (M1-12: the World calls
+`restartAt(runner.checkpoint)` when the ship respawns, after its explosion and dead time — see
+[death-and-scoring.md](death-and-scoring.md#the-arcade-restart)) and continues will use (M2-01):
 
 1. camera x = the checkpoint's x, y = the last pan target before it (pans settled), all
    movement zeroed;
@@ -218,7 +220,8 @@ is the index of the last one the camera passed (`-1` before the first). `restart
    hooks only** (`StageSlot.Replay` marks them) — so spawns at the checkpoint come back;
    keys at that x apply on the next tick, as live play applied them the tick after arriving;
 4. the event cursor is found by binary search (`findEventCursor`), then `hooks.clear()` runs
-   (the World empties every pool and the enemy system: every enemy and formation).
+   (the World's `clearSession`: every pool, every enemy and formation, the weapons', power-ups'
+   and scoring system's per-session state — scores, lives, loadouts and meters stay).
 
 The result depends only on the stage and the index, so a restart matches what live play had
 at the checkpoint — `stage-edge.test.ts` checks it on 60 random stages. One approximation
@@ -269,8 +272,8 @@ is world (0, 0); everything outside the map is open space. The World builds it w
   pixel bounds and call `terrainRectHit` — V8 boxes fractional arguments of calls it does not
   inline (one heap number per call). The World's phase 6 does exactly that for each alive
   ship's `terrainBox` (the KESTREL's is 5 × 3 half sizes) and reports contact with
-  `playerHit(ship, PlayerHitCause.Terrain, tick, debugFlags)`. Until M1-12 a hit is only
-  recorded on the ship (`hitCause`, `hitTick`, `hits`); the ship flies on through the rock.
+  `playerHit(ship, PlayerHitCause.Terrain, tick, debugFlags)`. Since M1-12 that is a death
+  (phase 7 of the same tick); the Force Field never absorbs terrain (D8).
 
 ## Parallax and the terrain view
 
@@ -375,7 +378,8 @@ world.stage!.restartAt(1); // back to x 1500: speed, pan and flags as live play 
 | Spawns at a checkpoint's x appear again after a restart | Intended: those events re-fire on the next tick for the hooks (their runner part was already applied) |
 | `unlock()` did nothing | It was called before the camera reached the lock key; the key locks when it applies |
 | The camera stops short of the stage end | A lock key waiting for `unlock()` — nothing unlocks until the bosses of M1-13 |
-| The ship flies through rock | Expected until M1-12: terrain contact is only recorded (`ship.hits`, `hitCause`); also ignored during the fly-in, while invulnerable and in god mode |
+| The ship flies through rock | Only during the fly-in, while invulnerable (the respawn blink) and in god mode; otherwise terrain contact is a death since M1-12 |
+| A test that parks a ship in the floor ends in `gameOver` | Terrain kills since M1-12 — set `world.debugFlags.godMode = true` |
 | A box sitting exactly on a floor does not hit | Terrain tests are half-open on pixels; move it one pixel into the rock |
 | `findFloor(...) < 0` never true | "None" is `NaN`, not -1 |
 | Every fractional camera write allocates after adding a content schema | V8 shares hidden classes between object *literals* with the same key order; a 6-key literal starting with `x` (the new camera-key schema) generalised a literal camera's `x` field to "tagged". The camera is therefore a class instance (`createStageCamera()`); keep hot objects out of literal shapes that content schemas also build |
@@ -399,8 +403,9 @@ world.stage!.restartAt(1); // back to x 1500: speed, pan and flags as live play 
   at the first solid column; ground missiles land on and slide along `findFloor` surfaces
   (climbing slopes, dying at walls, falling over cliffs); the restart hook also clears the
   weapon system ([weapons-and-options.md](weapons-and-options.md)).
-- **M1-12** — `playerHit` starts the death sequence; the `arcade` penalty restarts at
-  `runner.checkpoint` with `restartAt`.
+- **M1-12** (done) — terrain contact is a death; the `arcade` penalty restarts at
+  `runner.checkpoint` with `restartAt` when the ship respawns
+  ([death-and-scoring.md](death-and-scoring.md)).
 - **M1-13** — `warning` / `boss` events, the boss lock released by `unlock()`, the boss music.
 - **M1-16** — the scene flow picks the stage (replacing `?stage=`).
 - **M2-07** — time-keyed events during scroll stops, diagonal scrolling, in-stage branches on

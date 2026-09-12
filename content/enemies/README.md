@@ -16,7 +16,7 @@ off-screen and settle rules) and §15 (score values).
     {
       "id": "drifter",                 // referenced by stage events (and by other enemies' "child")
       "hp": 1,
-      "score": 100,
+      "score": 100,                    // points for the player whose shot (or Mega Crash) kills it
       "hurtbox": { "hw": 6, "hh": 5 }, // half-extents in pixels; also the contact box
       "script": "drifter.sine",        // behaviour coroutine id (core/behaviors)
       "sprite": "enemies/drifter",     // atlas sprite name (assets/source/sprites/)

@@ -70,7 +70,7 @@ tick, in file order.
 | `type` | Fields | Effect |
 |---|---|---|
 | `spawn` | `enemy`, optional `y`, `screenX`, `path` | one enemy |
-| `formation` | `enemy`, `count` (1–64), `interval` ticks, optional `y`, `screenX`, `path`, `drop` (`"capsule"` default, or `null`), `bonus` (points, default 0) | a timed group, every member at the same spawn point; all killed (none escaped) → the drop at the last kill + the bonus |
+| `formation` | `enemy`, `count` (1–64), `interval` ticks, optional `y`, `screenX`, `path`, `drop` (`"capsule"` default, or `null`), `bonus` (points, default 0) | a timed group, every member at the same spawn point; all killed (none escaped) → the drop at the last kill + the bonus (scored since M1-12 for the player who killed the last member) |
 | `warning` / `boss` | `enemy` | the WARNING intro / the boss (M1-13) |
 | `music` | `cue` (a `MUSIC_CUES` name) | change the track |
 | `speed` | `speed`, optional `ramp` | new target scroll speed |
@@ -90,7 +90,9 @@ formation can no longer be completed).
 The runner remembers the last checkpoint the camera passed. Restarting there (death penalty
 *arcade*, continues) puts the camera back at its `x` with the speed, pan and flags the stage had
 there (a key and a `speed` event at the same `x` in the order live play applied them),
-re-fires the events at exactly that `x` and clears every enemy and bullet.
+re-fires the events at exactly that `x` and clears every enemy and bullet. Since M1-12 the
+*arcade* penalty does this when the ship respawns after a death (the other presets fly the ship
+back in where the camera is), so place checkpoints where a stripped-down ship can restart.
 
 ## Tilemap
 

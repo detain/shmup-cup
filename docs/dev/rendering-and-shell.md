@@ -368,7 +368,7 @@ events are counted as unhandled.
 
 | `?scene=` | What is drawn | Sprite name table |
 |---|---|---|
-| (none) / `flight` | **Free flight** (`createFlightScene(game)`, M1-06): the game's World — the KESTREL flying in, then moving under the player's control — over three drifting star layers, both HUD bars (`1P`, a zero score, `FREE FLIGHT`, stock ships, `ARROWS MOVE`). With a stage (`gameConfig.stage`, the web app's `?stage=<id>`, M1-07): the stage's parallax bands and scrolling terrain instead of the starfield, the stage name as the title, the enemies its timeline spawns (M1-08) and their bullets (M1-09). The ship autofires in every build, with Options and lasers under the web app's `?loadout=full` (M1-10); power capsules and the Force Field are World batches too (M1-11 — the power meter itself is not drawn before the M1-16 HUD) | `content.db.sprites.names` + `FLIGHT_SPRITES` |
+| (none) / `flight` | **Free flight** (`createFlightScene(game)`, M1-06): the game's World — the KESTREL flying in, then moving under the player's control — over three drifting star layers, both HUD bars (`1P` and player 1's score, `FREE FLIGHT`, `HI` and the session hi-score, `lives − 1` stock ships, `ARROWS MOVE` — M1-12). With a stage (`gameConfig.stage`, the web app's `?stage=<id>`, M1-07): the stage's parallax bands and scrolling terrain instead of the starfield, the stage name as the title, the enemies its timeline spawns (M1-08) and their bullets (M1-09). The ship autofires in every build, with Options and lasers under the web app's `?loadout=full` (M1-10); power capsules and the Force Field are World batches too (M1-11 — the power meter itself is not drawn before the M1-16 HUD); ships that are `dying` / `dead` are not drawn, a respawn blinks, and `GAME OVER` (red) replaces the title once the World's status says so (M1-12) | `content.db.sprites.names` + `FLIGHT_SPRITES` |
 | `showcase` | The **sprite showcase** (`createShowcase()`): three scrolling star layers, the KESTREL flying a figure-eight with its thruster and two Options replaying its path, five drifters with periodic hit flashes, a rotating ring of twelve bullets, both HUD bars (scores via the `number` op, lives, power meter with a moving highlight) and the title "SHMUP CUP" / "SPRITE SHOWCASE" in the bitmap font | `SHOWCASE_SPRITES` |
 | `calibration` | The skeleton's test pattern (checker border, grid, colour bars, placeholder ship, moving marker) under empty layers | `content.db.sprites.names` |
 
@@ -380,8 +380,11 @@ drawn without changing the scene (the view is bound once, so the World's batch l
 complete at creation). Its sprite ids index one table: the content's names, then
 `FLIGHT_SPRITES`. `update(frame)` copies tick, alpha and screen effects, refills the stars
 from the tick (world space relative to the camera, so they pause with the game) and rebuilds
-the HUD only when player 1's lives change. How the World itself works is in
-[sim-world.md](sim-world.md).
+the HUD only when player 1's lives, the World's status (`gameOver`) or a score's dirty flag
+(`displayDirty`, `hiScoreDirty` — the rebuild clears them) changed: `HI` sits at x 300 and its
+eight digits at x 316 of the top bar, `GAME OVER` is `0xf85858`, and at most 8 stock icons are
+drawn. How the World itself works is in [sim-world.md](sim-world.md); the life cycle and score
+in [death-and-scoring.md](death-and-scoring.md).
 
 The showcase owns its own `RenderFrame` and derives every position from the game's tick with
 `sinB` / `cosB`, so it pauses and resumes with the game and allocates nothing per frame. Its
@@ -453,6 +456,10 @@ pnpm test:e2e                                        # builds web + tizen, then 
   (`shields/force-field`, an engine sprite on the `Player` layer after the ships) around the
   KESTREL; the default web boot and the Tizen build opened from disk never show it; no console
   errors or atlas `unknown sprite` warnings (M1-11).
+- `lives.spec.ts` — on `?stage=test-range` an unattended KESTREL is shot down three times: the
+  bottom bar's `hud/life` stock icons go 2 → 1 → 0, the ship vanishes while it explodes and
+  flies back in, and `GAME OVER` (its red is used nowhere else in the top bar) replaces the stage
+  title; no console errors or atlas warnings (M1-12).
 - `shell.spec.ts` — an aborted atlas request ends on the boot error screen (overlay canvas,
   state `error`); a 1000×600 window gets a centred ×2 frame on the letterbox colour and a
   resize to 1920×1080 re-fits it to ×5; free flight animates.
@@ -557,5 +564,9 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
   segments) and the Options (a mirror batch on `PLAYER`, before the ships) join the World's
   batches; `options/orb` joins the engine sprites
   ([weapons-and-options.md](weapons-and-options.md#drawing-shots-and-options)).
+- **M1-11** (done) — the items and shields batches ([powerups-and-shields.md](powerups-and-shields.md)).
+- **M1-12** (done) — the flight HUD's score, `HI`, stock and `GAME OVER`; the World pushes the
+  death's `Shake` / `HitStop` / `MusicDuck` / `Particles Debris` events, still unhandled
+  ([death-and-scoring.md](death-and-scoring.md)).
 - **M1-14 / M1-15** — particles, shake, flash and audio handlers registered on the dispatcher.
 - **M1-16** — core `ui` fills the HUD and UI draw lists (menus, HUD model).

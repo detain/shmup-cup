@@ -53,7 +53,8 @@ weapons, loadouts, autofire, hits on enemies, trailing Options).
                     │ createGame(), the World + tick pipeline,       │
                     │ stage, player, collision, enemies, behaviour   │
                     │ scripts + movers, bullets + lasers, rank,      │
-                    │ player weapons + Options;                      │
+                    │ player weapons + Options, power-ups, shields,  │
+                    │ death / respawn, score, fx timers;             │
                     │ other systems: placeholders                    │
                     └────────────────────────────────────────────────┘
 ```
@@ -126,7 +127,8 @@ requestAnimationFrame(now)                       shell/frame-loop
 Inside `stepWorld` the systems run in a fixed order (plan §3.2, `shmup_feat.md` §22), kept as
 the explicit array `WORLD_PHASES`: `input → players → stage → scripts → movement → collision →
 damage → removal → fx`. While hit-stop is active only `input` and `fx` run (the tick still
-counts). Details: [sim-world.md](sim-world.md).
+counts, and `fx` counts the hit-stop down — exactly `n` frozen ticks for a request of `n`).
+Details: [sim-world.md](sim-world.md).
 
 ### Fixed-step loop (`core/loop`)
 
@@ -174,19 +176,21 @@ The deterministic primitives every later system builds on. Details and usage rul
 
 One gameplay session, built in M1-06; the stage runtime joined in M1-07, the enemies in
 M1-08, the enemy bullets, lasers and rank in M1-09, the player weapons and Options in M1-10 and
-the power meter, capsules, Force Field and Mega Crash in M1-11.
+the power meter, capsules, Force Field and Mega Crash in M1-11, and death, respawn, lives,
+score and the game-feel timers in M1-12.
 Details: [sim-world.md](sim-world.md), [stage-runtime.md](stage-runtime.md),
 [enemies-and-behaviors.md](enemies-and-behaviors.md),
 [bullets-and-patterns.md](bullets-and-patterns.md),
 [weapons-and-options.md](weapons-and-options.md),
-[powerups-and-shields.md](powerups-and-shields.md).
+[powerups-and-shields.md](powerups-and-shields.md),
+[death-and-scoring.md](death-and-scoring.md).
 
 - **`world`** — `createWorld(config, content)` allocates the session: tick counter, RNG
   streams, event queue, two `PlayerShip`s (P2 inactive until co-op), the camera, the stage
   `config.stage` names (runner, collision map, parallax and terrain views — or none: free
   flight with a static camera), the enemy system, the rank, the bullet system, the weapon
-  system (with `config.loadout` applied) and the power-up system, status,
-  hit-stop, debug flags, the SoA pool
+  system (with `config.loadout` applied), the power-up system and the scoring system, status,
+  hit-stop and the fx timers, debug flags, the SoA pool
   registry (flushed in phase 8, hashed), a broad-phase grid over the camera view and the
   `WorldView` the renderer draws. `stepWorld(world, input)` runs one tick and never allocates; `createGame`
   hosts one World per session (`game.world`).
@@ -234,7 +238,18 @@ Details: [sim-world.md](sim-world.md), [stage-runtime.md](stage-runtime.md),
   (D4), no inertia, riding the camera scroll, clamped to the camera view minus margins,
   banking, a 40-tick fly-in; `playerHit` records hits (terrain contact since M1-07, enemy
   contact since M1-08, enemy bullets and lasers since M1-09) — after the ship's Force Field had
-  its say (M1-11) — until the death and respawn of M1-12.
+  its say (M1-11). The life cycle (M1-12): the World turns a hit recorded in phase 6 into the
+  **death sequence** in phase 7 (a life gone, explosion / debris / rumble / music-duck events,
+  an 8-tick hit-stop, a shake, every cancelable bullet and laser cancelled, the
+  `config.deathPenalty` preset: `classic` one level, `arcade` everything plus a checkpoint
+  restart at the respawn, `casual` only the shield), `dying` 24 ticks → `dead` 60 → a blinking
+  respawn fly-in with 150 invulnerable ticks once control returns, and `gameOver` when no
+  active ship has a life left.
+- **`scoring`**, **`fx`** — per-player scores credited in phases 3 and 7 (kills to their
+  killer, a formation's bonus to the killer of its last member, 300 per capsule), clamped at
+  99,999,990, and the session hi-score (unhashed); the sim-side game-feel timers — hit-stop,
+  decaying integer shake and flash kinds — that push the events the presentation draws from
+  M1-14 ([death-and-scoring.md](death-and-scoring.md)).
 - **`collision`** — closed scalar shape tests (circle, AABB, circle–AABB, capsule–circle,
   segment–AABB), layer masks, a counting-sort uniform grid whose queries equal brute force,
   and pixel-exact terrain queries over per-tile column-height masks (phase 6 tests the ship's
@@ -434,13 +449,16 @@ sections of `shmup_feat.md` / `shmup_tech.md`.
 
 Implemented or partial today: core `platform`, `input`, `config`, `loop`, `game`,
 `presentation`, `rng`, `math`, `events`, `pools`, `data` (partial: the boss section of
-`enemies` and the M2 kinds are missing), `world`, `stage`, `player` (partial: hits recorded,
-no death / respawn yet), `collision` (partial: no bending-laser chains yet), `debug` (partial:
+`enemies` and the M2 kinds are missing), `world`, `stage`, `player` (implemented for P0 since
+M1-12 — co-op joining comes with M2-06), `collision` (partial: no bending-laser chains yet), `debug` (partial:
 state hash and flags, no controls yet), `enemies` (partial: no rank modifiers / Option Hunter
 yet), `patterns` (partial: runner, movers and fire primitives — no pattern DSL yet),
 `behaviors` (partial: the M1 roster), `bullets` (implemented for P0 — bending lasers and cancel
 into points come with M2-02), `rank` (partial: constant rank, no growth yet), `weapons`
-(partial: Type A — loadouts B–D and Direct mode later), `options` (partial: the standard trail);
+(partial: Type A — loadouts B–D and Direct mode later), `options` (partial: the standard trail),
+`powerups` (partial: meter mode), `shields` (partial: the Force Field), `scoring` (partial:
+scores and the session hi-score — extends, continues and the table later), `fx` (partial: the
+hit-stop / shake / flash requests — slowdown later);
 input-web `keymap`, `keyboard`, `gamepad`, `web-input`, `remote`, `rebind`
 (partial: profiles, contexts, persistence hook — the rebinding UI comes in M2-16); audio-web
 `web-audio`;

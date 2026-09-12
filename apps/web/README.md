@@ -21,7 +21,12 @@ speed 2, Missile, Laser, four Options and (since M1-11) a Force Field (dev overr
 Since M1-11 the test stage's carriers and completed formations drop **power capsules**; C or
 Enter (the game's `PowerUp`, remote OK) equips the highlighted meter slot — the meter itself is
 drawn by the M1-16 HUD (guide: [`docs/dev/powerups-and-shields.md`](../../docs/dev/powerups-and-shields.md)).
-Hits on the ship are only recorded (no death until M1-12).
+Since M1-12 rock, enemies, bullets and lasers **destroy the ship** (a Force Field takes all but
+the rock): it flies back in blinking with one power level less (the default `classic` penalty),
+the HUD shows the score, `HI` and the spare ships, and after the third ship the top bar says
+`GAME OVER` — reload to play again (guide:
+[`docs/dev/death-and-scoring.md`](../../docs/dev/death-and-scoring.md)). There is no URL
+parameter for the penalty or the lives yet.
 
 Input uses the data-driven profiles of `content/input/` (decision D13): `keyboard-default`
 (or the saved choice) and `gamepad-standard`. Dev overrides: `?profile=<id>` picks another

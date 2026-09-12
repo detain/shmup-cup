@@ -378,8 +378,17 @@ export function respawnPlayer(
 /**
  * Whether a ship is out of the game: active, `dead`, its dead time over and no life left.
  *
+ * @remarks
+ * The World ends the game (`status = 'gameOver'`) once every active ship is out — after the last
+ * explosion and dead time, not at the fatal hit. An inactive slot is never out.
+ *
  * @param ship - The ship.
  * @returns `true` for a ship that will not respawn.
+ *
+ * @example
+ * ```ts
+ * playerOut(world.players[0]); // → true once P1's last dead time is over (lives 0)
+ * ```
  */
 export function playerOut(ship: Readonly<PlayerShip>): boolean {
   return (

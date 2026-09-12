@@ -10,12 +10,14 @@
  *
  * ```
  * 1 input      per-player intents from the InputSnapshot (context 'game')
- * 2 players    movement, state timers, PowerUp press (meter equip), weapon fire, option trails
- * 3 stage      late drops → capsules, camera path, event cursor, formation spawns, checkpoints
+ * 2 players    movement, state timers, respawn / game over, PowerUp press (meter equip), weapon
+ *              fire, option trails
+ * 3 stage      late drops → capsules, late kills → score, camera path, event cursor, formation
+ *              spawns, checkpoints
  * 4 scripts    wake sleeping enemy/boss coroutines; patterns fire bullets
  * 5 movement   movers (enemies), bullets, player shots, items, lasers
  * 6 collision  grid build; shots×enemies, bullets/lasers×players, enemies×players, items×players, terrain
- * 7 damage     apply hits, deaths, drops, pickups, Mega Crash, score, player death/respawn
+ * 7 damage     apply hits, deaths, drops, pickups, Mega Crash, score, player deaths + penalty
  * 8 removal    deferred pool flushes
  * 9 fx         hit-stop/shake/flash timers, emit presentation events, view mirrors, debug counters
  * ```
@@ -84,7 +86,7 @@
  * {@link DEATH_HIT_STOP_TICKS}-tick hit-stop and a medium shake are requested (`core/fx`), every
  * cancelable enemy bullet and laser is cancelled with sparkles, and the death penalty of
  * `config.deathPenalty` applies (`core/powerups` `applyDeathPenalty`, decision D6). The ship
- * explodes (`dying`), then waits (`dead`); in phase 2 of the tick its dead time ends, the World
+ * explodes (`dying`), then waits (`dead`); in phase 2 of the tick its dead time ends in, the World
  * respawns it when it has a life left (`respawnPlayer`: a blinking fly-in, invulnerable
  * afterwards) — with the `arcade` penalty after restarting the stage at its last checkpoint
  * (`StageRunner.restartAt`, which clears enemies, bullets, lasers, shots and items; in free flight
@@ -429,9 +431,10 @@ const inputSystem: WorldSystem = (world, input) => {
 };
 
 /**
- * Phase 2: moves the ships, then the PowerUp presses equip the meter (before the weapons, so a new
- * weapon or Option fires on this tick), then the weapons follow the ships: option trails,
- * autofire.
+ * Phase 2: moves the ships and advances their state timers, then the life cycle (respawns and
+ * game over — `lifecycleSystem`), then the PowerUp presses equip the meter (before the
+ * weapons, so a new weapon or Option fires on this tick), then the weapons follow the ships:
+ * option trails, autofire.
  *
  * @param world - The world.
  */
@@ -516,9 +519,11 @@ function clearSession(world: World): void {
 }
 
 /**
- * Phase 3: the stage runner moves the camera and fires the due timeline events; without a stage
- * the camera moves by its scroll velocity (`vx` / `vy`, static by default). Either way `dx` /
- * `dy` record the step players ride along with next tick.
+ * Phase 3: first the power-ups and the scores take what was recorded between ticks (drops →
+ * capsules, kills → score — the tools' kills), then the enemy outcomes reset; the stage runner
+ * moves the camera and fires the due timeline events; without a stage the camera moves by its
+ * scroll velocity (`vx` / `vy`, static by default). Either way `dx` / `dy` record the step players
+ * ride along with next tick.
  *
  * @param world - The world.
  */
@@ -952,6 +957,12 @@ function createWorldStageHooks(world: WorldUnderConstruction): StageHooks {
 /**
  * Advances the world by exactly one tick: runs {@link WORLD_PHASES} in order (skipping phases
  * 2–8 while hit-stop is active), then increments {@link World.tick}. Never allocates.
+ *
+ * @remarks
+ * Whether the tick is frozen is decided once, before phase 1 (`hitStop > 0`), and recorded in
+ * `world.fx.frozen`: phase 9 (`core/fx` `tickFx`) counts the hit-stop down only on such ticks, so
+ * a hit-stop of `n` requested during tick `t` (the player's death in phase 7) freezes exactly
+ * ticks `t + 1 … t + n`.
  *
  * @param world - The world.
  * @param input - This tick's input (read-only; typically `platform.input.poll()`).

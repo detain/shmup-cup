@@ -253,6 +253,12 @@ export function requestFlash(host: FxHost, kind: number): boolean {
  *
  * @param fx - The effect state.
  * @returns The amplitude.
+ *
+ * @example
+ * ```ts
+ * requestShake(world, ShakeMagnitude.Medium, 20);
+ * shakeAmount(world.fx); // → 2, falling to 1 after 10 ticks and 0 after 20
+ * ```
  */
 export function shakeAmount(fx: Readonly<FxState>): number {
   if (fx.shakeTicks <= 0 || fx.shakeDuration <= 0) return 0;
@@ -263,6 +269,11 @@ export function shakeAmount(fx: Readonly<FxState>): number {
  * Tick phase 9 (every tick, frozen ones included): counts the hit-stop down when this tick was
  * frozen, and the shake and flash timers unless they were requested on this tick. Never
  * allocates.
+ *
+ * @remarks
+ * `fx.frozen` is written by `stepWorld` before phase 1; code that drives the timers by hand (a
+ * tool, a test) sets it the same way. A longer request while frozen (between ticks) simply
+ * raises the counter, which then runs down over that many more frozen ticks.
  *
  * @param host - The World.
  */

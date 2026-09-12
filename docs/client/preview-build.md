@@ -12,9 +12,12 @@ catch control, smoothness or scaling problems early.
 
 In a browser you can also fly the first **scrolling stage** — the *Test Range*, with rocky
 ground, caves, speed changes, enemies that fly and walk past and shoot at you, your ship
-shooting them down and, since this build, **power-ups**: the capsules some enemies leave
-behind, taken with the remote's OK button (see [The scrolling test stage](#the-scrolling-test-stage-browser-only),
-[Your weapons](#your-weapons) and [Power-ups](#power-ups)) — and the earlier
+shooting them down, **power-ups** (the capsules some enemies leave behind, taken with the
+remote's OK button) and, since this build, **lives, losing your ship and the score**: rock,
+enemies and bullets now destroy the KESTREL, it comes back with a life less, and after the last
+one it is **GAME OVER** (see [The scrolling test stage](#the-scrolling-test-stage-browser-only),
+[Your weapons](#your-weapons), [Power-ups](#power-ups) and
+[Lives, losing your ship and the score](#lives-losing-your-ship-and-the-score)) — and the earlier
 start-up pictures are still there: the animated **sprite showcase** and the **calibration
 screen** (see [below](#other-screens-browser-only)).
 
@@ -42,8 +45,8 @@ transitions) framed by two thin bars, one along the top edge and one along the b
 | **Star field** in three layers | Whole picture behind the ship | Stars drift to the left at three different speeds (the far ones slowest), steadily, with no jumps; the pattern repeats seamlessly |
 | **KESTREL**, the player ship | Enters from the left edge | Glides in from off-screen during the first ⅔ of a second, slowing down as it arrives, and stops at mid-height about a sixth of the way across. Then it is yours to fly |
 | **Shots** from the ship's nose | In front of the ship, flying right | As soon as the ship has arrived, small cyan-and-white darts leave its nose and race to the right edge, two at a time — see [Your weapons](#your-weapons) |
-| **Top bar** | Top edge | `1P` (cyan) and the score `00000000` on the left; **FREE FLIGHT** (yellow) in the middle |
-| **Bottom bar** | Bottom edge | Two small ship icons on the left (your spare lives); the hint `ARROWS MOVE` (grey) in the middle |
+| **Top bar** | Top edge | `1P` (cyan) and your score `00000000` on the left; **FREE FLIGHT** (yellow) in the middle; `HI` (yellow) and the best score of this session on the right |
+| **Bottom bar** | Bottom edge | Two small ship icons on the left (your spare ships — you start with three, the one you fly plus two); the hint `ARROWS MOVE` (grey) in the middle |
 
 Every pixel should be a crisp little square. The game draws at 384×216 and scales that up
 by a whole number: on the 1080p M7 monitors (and any 1920×1080 browser window) the scale is
@@ -64,8 +67,8 @@ other game) and will be replaced by finished art later.
 
 How it should feel:
 
-- **While the ship flies in** (the first ⅔ of a second, and again whenever it re-enters) it
-  ignores the controls. That is intentional.
+- **While the ship flies in** (the first ⅔ of a second, and again every time it comes back
+  after being destroyed) it ignores the controls. That is intentional.
 - **It moves the moment you press and stops the moment you let go** — no drifting, no
   acceleration. At its normal speed it crosses the whole picture in a little over four
   seconds.
@@ -86,7 +89,21 @@ ship may move in four directions only; the game is designed to be fully playable
 
 ### What changed lately
 
-**New in this build: power-ups.** In the *Test Range* stage (browser only), the red saucers and
+**New in this build: lives, losing your ship and the score.** In the *Test Range* stage (browser
+only) the KESTREL can now be destroyed: flying into the rock or an enemy, or being hit by an enemy
+bullet, costs a ship. The game freezes for a split second, the ship vanishes (the explosion,
+sound and screen shake are drawn in a later build), every enemy bullet on screen disappears, and
+after about a second and a half it flies in again from the left, **blinking** — while it blinks
+(about two and a half seconds after it is back under your control) nothing can hurt it, and it
+keeps firing. Each loss takes one of the spare-ship icons in the bottom bar and one step of your
+power (below); after the last ship the top bar says **GAME OVER** in red. And the **score**
+counts now: every enemy you destroy, every completed formation and every capsule adds points to
+the number next to `1P`, and `HI` on the right shows the best score of the session. See
+[Lives, losing your ship and the score](#lives-losing-your-ship-and-the-score). On the TV and the
+desktop (free flight: no enemies, no rock) nothing can hit the ship, so only the new `HI` in the
+top bar is visible there.
+
+Before that, **power-ups.** In the *Test Range* stage (browser only), the red saucers and
 every formation you destroy completely now leave a blinking **power capsule**. Fly into it (it
 drifts into the ship once you are close) and press **OK** — Enter or C on a keyboard — to take
 the power-up the capsules have earned you: Speed Up, Missile, Double, Laser, an extra Option, a
@@ -120,17 +137,19 @@ fighters, and fighters that stop, aim and dash at you ([what to look for](#enemi
 slowing down, over rocky floors and caves drawn from small tiles, with star layers moving
 behind at their own speeds; and before that the ship came **under your control**, and free
 flight replaced the sprite showcase as the start-up picture. The simulation behind it is the real game engine: every
-build adds to this world — next come lives, losing the ship, checkpoints and the score.
+build adds to this world — next come the bosses with their WARNING sign.
 
 **Please re-test on the monitors:** install the new build and run through the checks in the
-next section — how the ship responds to the remote is still the most valuable report, and new
-in this build: **whether pressing OK while you hold an arrow stops the ship** (check 9). On a
-PC, please also fly the test stage once, normally and fully powered
+next section — how the ship responds to the remote is still the most valuable report; new in
+this build is only the `HI` score at the right end of the top bar (check 2), and **whether
+pressing OK while you hold an arrow stops the ship** (check 9) still needs answers. On a PC,
+please also fly the test stage once, normally and fully powered
 (`?stage=test-range&loadout=full`), and report anything from its checklists (the rock, the
-enemies, their bullets, your weapons, the power-ups) — in particular whether every bullet
-pattern can be dodged with single arrow presses and whether collecting capsules and pressing
-OK feels natural with the remote's buttons (try `?profile=keyboard-remote-emulation`, which
-moves like the remote and uses Enter as OK).
+enemies, their bullets, your weapons, the power-ups, losing a ship) — in particular whether
+every bullet pattern can be dodged with single arrow presses, whether the blinking after a
+loss gives you enough time to get clear, and whether collecting capsules and pressing OK feels
+natural with the remote's buttons (try `?profile=keyboard-remote-emulation`, which moves like
+the remote and uses Enter as OK).
 
 The game data and the sprite sheet travel **inside** the app (the sprite sheet is a small
 picture file packed into the same `.wgt`, in its `assets/` folder). There are no extra files
@@ -156,7 +175,8 @@ Things to check on the monitor and report:
 1. A loading bar (or nothing at all, if it is very quick) and then the stars and the ship
    flying in — never a black screen that stays black.
 2. **Both HUD bars are complete**: the top bar's `1P` and score on the left, **FREE FLIGHT**
-   in the middle; the bottom bar's two ship icons and `ARROWS MOVE`. If one edge is cut off,
+   in the middle and `HI 00000000` on the right (new — its last digit ends just before the
+   right edge); the bottom bar's two ship icons and `ARROWS MOVE`. If one edge is cut off,
    note which — that would mean the monitor overscans or the app runs at a different
    resolution.
 3. Everything is sharp: the pixel-font text, the ship and the stars have crisp square
@@ -182,8 +202,10 @@ Things to check on the monitor and report:
 10. After Home → reopen, the app comes back without a black screen and the ship is where you
    left it.
 
-The TV always starts with free flight; the test stage (and with it the power capsules), the
-fully powered ship, the showcase and the calibration screen can only be opened in a browser.
+The TV always starts with free flight, where nothing can hit the ship — the score stays at zero
+and the two spare ships stay. The test stage (and with it the power capsules, losing ships and
+the score), the fully powered ship, the showcase and the calibration screen can only be opened
+in a browser.
 
 ## In a desktop browser
 
@@ -238,8 +260,9 @@ What "good" looks like:
   and the ground never jumps or shimmers relative to the ship.
 - Rock is only ever inside the playfield: it never covers the top or bottom HUD bar.
 - There is always a gap tall enough to fly through; the ship can reach every part of it.
-- Touching the rock does nothing yet — the ship passes through it. That is expected in this
-  build.
+- **Touching the rock destroys the ship** — even with a Force Field up (the field never
+  protects against rock). While it flies in and while it blinks afterwards it passes through
+  rock unharmed.
 
 If the address names a stage that does not exist (for example a typo in `?stage=`), the game
 starts in ordinary free flight instead; the browser's developer console then says `no stage
@@ -288,8 +311,8 @@ What "good" looks like:
 - Turrets and walkers turn round to face your ship when you pass them.
 - Enemies only ever appear inside the playfield, never over the top or bottom bar.
 - An enemy that has left the screen does not come back.
-- Flying into an enemy does nothing yet — the ship passes through it. That is expected in
-  this build.
+- **Flying into an enemy destroys the ship** (a Force Field takes the hit instead and wears a
+  step). While the ship flies in or blinks, it passes through enemies unharmed.
 
 #### Enemy bullets
 
@@ -317,9 +340,10 @@ What "good" looks like:
 - Bullets never cover the top or bottom HUD bar.
 - Every pattern can be dodged by moving in the four arrow directions only (no diagonals
   needed) — please report any spot where you could not get out of the way.
-- **A bullet that touches your ship disappears**, and nothing else happens yet (no explosion,
-  no lost life — that comes later); with a Force Field up, the field takes it and wears a step
-  ([Power-ups](#power-ups)). While the ship is flying in at the start, bullets pass through it.
+- **A bullet that touches your ship destroys it** and costs a ship
+  ([Lives](#lives-losing-your-ship-and-the-score)); with a Force Field up, the field takes the
+  bullet instead and wears a step ([Power-ups](#power-ups)). While the ship is flying in or
+  blinking after a loss, bullets pass through it.
 - The enemies never fire long beams (lasers) yet; those come with later enemies and bosses.
 
 ## Your weapons
@@ -339,9 +363,10 @@ playable with the TV remote. The pictures are placeholders (original designs).
 - A dart disappears when it hits an enemy, the rock or the edge of the screen.
 - One hit destroys the small enemies (pods, spinners, arrowhead fighters); the others need more
   — saucers and walkers two, turrets and lone spinners three, the armoured hatch eight — and
-  **flash white** every time they are hit. A destroyed enemy simply disappears: no explosion,
-  sound or points yet (they come in later builds); saucers and completed formations leave a
-  power capsule ([Power-ups](#power-ups)).
+  **flash white** every time they are hit. A destroyed enemy simply disappears (the explosion
+  and the sound come in later builds) and its points are added to your score
+  ([the score](#the-score)); saucers and completed formations leave a power capsule
+  ([Power-ups](#power-ups)).
 
 **Fully powered** (browser only, for testing): add `&loadout=full` to the address, e.g.
 http://localhost:5173/?stage=test-range&loadout=full (or `?loadout=full` for free flight). You
@@ -439,6 +464,79 @@ What "good" looks like:
   after each hit and disappears after the fifth.
 - After a Mega Crash no enemy and no enemy bullet is left on the screen.
 
+## Lives, losing your ship and the score
+
+Since this build the KESTREL can be **destroyed**, and the game keeps score. Everything here
+happens in the *Test Range* stage (http://localhost:5173/?stage=test-range) — in free flight (the
+TV and the desktop) there is nothing that can hit the ship.
+
+**What costs a ship.** Flying into the **rock**, flying into an **enemy**, or being hit by an
+**enemy bullet**. A Force Field takes enemies and bullets for you (five hits, see
+[Power-ups](#power-ups)) but never the rock. The ship's hit spot is tiny — a couple of pixels in
+the middle of the hull — so bullets that only graze the wings pass.
+
+**What you see when you lose one:**
+
+| When (after the hit) | What happens |
+|---|---|
+| At once | The ship vanishes, and **every enemy bullet on the screen disappears**. The action freezes for a split second (an eighth of a second) — this pause is on purpose, it makes the moment readable. One spare-ship icon goes from the bottom bar. (The explosion, the flying debris, the sound, the screen shake and the music going quiet for a moment are coming in later builds — for now the ship simply disappears.) |
+| About 1½ s | The ship **flies in again from the left edge**, where the stage is now — it does not scroll back — at mid-height, ignoring the controls like at the start |
+| About 2¼ s | It is yours again. It keeps **blinking** for another two and a half seconds: while it blinks (and while it flies in) **nothing can hurt it** — bullets, enemies and rock pass through — and it keeps firing |
+
+**What a lost ship costs besides the life.** One step of your power — the first of these you have:
+
+1. an **Option** (4 → 3 …);
+2. otherwise the **Double or the Laser** (back to the small darts);
+3. otherwise the **Missiles**;
+4. otherwise one **Speed Up**.
+
+The **Force Field** is always lost. The capsules you have collected towards the next power-up
+(the invisible highlight on the meter) are kept. So a fully powered ship (`&loadout=full`) comes
+back with three Options, then two, one, none, then without the laser … This is the *Classic*
+rule, the game's default. The options menu of a later build will also offer *Arcade* (a loss
+costs all your power and sends you back to the last invisible checkpoint of the stage) and
+*Casual* (a loss costs only the Force Field).
+
+**Game over.** You start with **three ships** — the one you fly and the two icons in the bottom
+bar. When the last one is destroyed there is no icon left, the ship does not come back, and
+after about a second and a half **GAME OVER** (red) replaces TEST RANGE in the middle of the top
+bar. The stage keeps scrolling and the enemies keep coming, but nothing more happens: there is
+no continue and no title screen yet — **reload the page** to play again.
+
+### The score
+
+The number next to `1P` is your score. It goes up when you:
+
+| Destroy | Points |
+|---|---|
+| a small fighter from a hatch | 50 |
+| a green pod, a spinner of a formation | 100 |
+| the arrowhead fighter that dashes at you (15 s) | 150 |
+| a red saucer, a walker | 200 |
+| a gun turret (floor or ceiling), a lone spinner | 300 |
+| the armoured hatch | 500 |
+| a **whole formation** (every member destroyed — a bonus on top, for the one who destroys the last member) | 300 to 1,000, depending on the formation |
+| collect a **power capsule** | 300 |
+
+Enemies destroyed by a **Mega Crash** count too. Enemies that leave the screen, and destroyed
+ships, score nothing; the score is never taken away. It stops at 99,999,990.
+
+`HI` on the right of the top bar is the **best score of this session**: it follows your score
+while you are beating it. It starts at 0 every time the game is opened — saved high scores come
+with the options and save data in a later build.
+
+What "good" looks like:
+
+- Every hit by rock, an enemy or a bullet (without a Force Field) costs exactly **one** ship —
+  also when several bullets hit at the same moment.
+- The freeze after a loss is short and always the same length; nothing jumps when the game
+  continues.
+- After a loss **no enemy bullet** is left on the screen.
+- The ship always comes back from the left edge at mid-height and blinks until it is safe;
+  bullets that touch it while it blinks do not destroy it.
+- The spare-ship icons go 2 → 1 → none, and GAME OVER appears only after the last ship.
+- The score only ever goes up, by the amounts above, and `HI` is never lower than the score.
+
 ## Other screens (browser only)
 
 | Address | Screen |
@@ -499,11 +597,19 @@ mean the build itself is broken; they are not caused by anything you did.
 | The ship keeps moving after I let go (TV) | A tiny delay (1/30 of a second) is intentional. If it clearly keeps going, report it — and film it if you can |
 | The ship stutters or stops for a moment while I hold a direction (TV) | Please report it with the remote model: the game's hiccup protection is supposed to hide exactly this |
 | `?stage=test-range` shows free flight (title FREE FLIGHT, no rock) | The stage name in the address is misspelled — check the spelling (`test-range`); the browser console names the unknown stage |
-| The ship flies through the rock in the test stage | Expected in this build: hits are only noted, crashing comes later |
-| The ship flies through enemies, and nothing happens | Expected in this build: touching an enemy is only noted; crashing comes with lives and respawning (your shots do destroy them) |
+| The ship flies through the rock or an enemy in the test stage | Expected only while it flies in or blinks after a loss (it cannot be hurt then), and in free flight there is nothing to hit. Otherwise rock and enemies destroy it — please report where it passed through |
+| The ship vanished and a spare-ship icon went | It was destroyed (rock, an enemy or a bullet) — see [Lives](#lives-losing-your-ship-and-the-score). The explosion and the sound are not drawn yet |
+| The game froze for a moment when the ship was hit | Expected: a short freeze (an eighth of a second) marks every loss |
+| All enemy bullets vanished at once | Expected after a loss (and after a Mega Crash) |
+| After a loss the ship lost an Option, the laser or a Speed Up | Expected: each loss costs one step of power, and always the Force Field ([Lives](#lives-losing-your-ship-and-the-score)) |
+| GAME OVER — how do I start again? | Reload the page. There is no continue or title screen yet |
+| GAME OVER appeared while I still had a ship icon | Not expected — the icons show your *spare* ships, so GAME OVER comes only after the last icon has gone and that ship was lost too. Please report it |
+| The ship was destroyed while it was blinking | Not expected — please report what hit it and the time into the stage |
 | The ship does not shoot | It starts firing only once it has flown in (⅔ of a second). If it never fires — on the TV or in a browser — please report it; no button is needed |
 | Only two shots are on screen at a time | Expected: the basic gun allows two at a time, like the classic games; it fires again as soon as one hits something or leaves the screen |
-| Destroyed enemies just vanish — no explosion, no sound, the score stays at zero | Expected in this build: explosions, sounds and scoring come later. An enemy that needs several hits flashes white on each |
+| Destroyed enemies just vanish — no explosion, no sound | Expected in this build: explosions and sounds come later. The score goes up, though; an enemy that needs several hits flashes white on each |
+| The score stays at zero | In free flight (the TV and the desktop) there is nothing to score. In the test stage it should rise with every destroyed enemy — please report it if it does not |
+| `HI` went back to 0 after reloading | Expected: the high score is kept only while the game is open; saving it comes later |
 | The red saucer leaves nothing behind | It leaves a capsule only when it is destroyed (by your shots or a Mega Crash); a saucer that flies off the screen leaves nothing |
 | I pressed OK and nothing happened | Expected when no capsule was collected since your last power-up, or when you already have the maximum of the highlighted one (fifth Speed Up, the missiles, the Double or laser you already fire, four Options, a Force Field that is still up) — collect another capsule to move the highlight on. The power meter is not drawn yet: count your capsules ([Power-ups](#power-ups)). On the TV and the desktop (free flight) there are no capsules at all yet |
 | Holding OK gave me only one power-up | Expected: one press, one power-up — let go and press again |
@@ -517,8 +623,8 @@ mean the build itself is broken; they are not caused by anything you did.
 | The orbs, laser or missiles are magenta-and-black checkered squares | Their pictures are missing from the sprite sheet; please report it (the build is broken) |
 | A dart or beam flies through rock, or a missile floats above the ground or sinks into it | Please report it with a screenshot and the time into the stage |
 | The Options trail behind the ship while it stands still | Expected only while you are moving; once you stop they should hold their places on screen. If they drift away while you stand still, please report it |
-| An enemy bullet hits my ship and just disappears | Expected in this build: hits are only noted; losing a life and the explosion come later |
-| Bullets fly through my ship while it flies in at the start | Expected: the ship cannot be hit while it is flying in |
+| An enemy bullet hits my ship and just disappears | Expected when a Force Field is up (it takes the bullet); without one the ship is destroyed. If a bullet disappears on the bare ship and nothing happens, please report it |
+| Bullets fly through my ship | Expected while it flies in and while it blinks after a loss (it cannot be hurt then), and when they only graze the wings — the hit spot is a couple of pixels in the middle |
 | No bullets at all in the test stage | Check the address says `?stage=test-range`. The first turret starts shooting about ten seconds in; the pods, saucers and spinner formations never shoot. Free flight (the TV and desktop builds) has no enemies and no bullets |
 | Bullets appear out of nowhere, from an enemy still off screen, or keep flying through rock | Please report it with the time into the stage and which enemy fired |
 | A bullet pattern cannot be dodged with the arrow directions alone | Please report it with the time into the stage — every pattern is meant to be dodgeable on the TV remote |
@@ -529,7 +635,7 @@ mean the build itself is broken; they are not caused by anything you did.
 | The screen slows down or stutters when many bullets are around | Not expected — the game is built for hundreds of bullets. Please report it with the time into the stage and the browser or TV model |
 | The test stage stopped scrolling | At the end of the stage (after about 75 seconds) that is expected; reload the page to start again. If it stops earlier, please report where |
 | Gaps, seams or flickering in the rock, or rock over a HUD bar | Please report it with a screenshot and roughly how far into the stage it was |
-| The ship flies in from the left again | Not expected in this build — the ship only flies in at start-up. Please report what you were doing |
+| The ship flies in from the left again | Expected after it was destroyed. If it happens without a loss (no spare-ship icon went), please report what you were doing |
 | Error screen with a pink title | See [When the app shows an error screen](#when-the-app-shows-an-error-screen) — photograph it and report it |
 | Error screen `WEBGL IS NOT AVAILABLE` in a browser | Hardware acceleration is off or blocked: enable it in the browser settings (Chrome: Settings → System → "Use graphics acceleration when available") and reload. On the TV, report it together with the monitor's firmware version |
 | Black or empty screen that stays black | Should not happen any more — the app shows an error screen instead. In a browser open the developer console: the message "Shmup Cup failed to start" gives the reason. On the TV, report it with the firmware version |

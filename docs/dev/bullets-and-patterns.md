@@ -207,17 +207,20 @@ Brute force per active, `alive` ship (§22 — at most 512 × 2 cheap tests):
   radius `width / 2`) against the hurt radius → `playerHit(ship, PlayerHitCause.Laser, …)`
   (the plan wrote `playerHit('bullet')`; a separate cause tells them apart).
 
-So at most one bullet hit and one laser hit are offered per ship and tick. Until M1-12,
-`playerHit` only records the hit (`hitCause`, `hitTick`, `hits`); the ship keeps flying. The
+So at most one bullet hit and one laser hit are offered per ship and tick. `playerHit` records
+the hit (`hitCause`, `hitTick`, `hits`); since M1-12 phase 7 of the same tick turns it into the
+death sequence, which cancels every cancelable bullet and laser
+([death-and-scoring.md](death-and-scoring.md)). The
 contact tests are written as "not within reach", so a `NaN` position or origin never hits.
 
 ### Cancel
 
 `cancelAllBullets(world, CancelMode.Sparkle)` removes every cancelable bullet **and** laser at
-once (Mega Crash since M1-11 — through `BulletSystem.cancelAll`; boss death and player death
-from M1-12 / M1-13) and returns the number
+once (Mega Crash since M1-11 and the player's death since M1-12 — both through
+`BulletSystem.cancelAll`; boss death from M1-13) and returns the number
 of bullets cancelled. Each cancelled bullet pushes a `SimEventKind.Particles` event with
-`FX_CUES.BulletCancel` (3) at its position — up to `CANCEL_SPARKLE_LIMIT` (64) per call; beyond
+`FX_CUES.BulletCancel` (3) at its position, floored to whole pixels (M1-12: the push is a call V8
+does not inline, so fractional positions were boxed — and every death now cancels) — up to `CANCEL_SPARKLE_LIMIT` (64) per call; beyond
 that an evenly spread subset (every `ceil(n / 64)`-th bullet), because the event ring is shared
 with everything else. Bullets without `Cancelable` survive. Points mode arrives with M2-02.
 
@@ -389,7 +392,7 @@ const i = spawnBullet(world, world.camera.x + 300, 100, AIM_AT_TARGET, 1.5, Bull
 if (i >= 0) world.bullets.setMotion(i, 0.02, 0, 0, 3); // speeds up to 3 px/tick
 fireLaser(world, { slot: -1, x: world.camera.x + 380, y: 60 }, 512, 380); // fixed, pointing left
 cancelAllBullets(world, CancelMode.Sparkle); // → bullets cancelled; lasers go too
-world.players[0].hits; // hits recorded by playerHit (no death until M1-12)
+world.players[0].hits; // hits recorded by playerHit — each one a death since M1-12
 ```
 
 ## Extending it
@@ -447,7 +450,9 @@ world.players[0].hits; // hits recorded by playerHit (no death until M1-12)
 - **M1-11** (done) — Mega Crash cancels every cancelable bullet and laser with sparkles; the
   Force Field absorbs bullet and laser hits inside `playerHit` (an absorbed bullet is used up
   like an accepted hit) ([powerups-and-shields.md](powerups-and-shields.md)).
-- **M1-12** — `playerHit(Bullet / Laser)` starts the death sequence; death cancels bullets.
+- **M1-12** (done) — `playerHit(Bullet / Laser)` leads to the death sequence, which cancels
+  bullets and lasers with sparkles; the arcade restart clears both pools
+  ([death-and-scoring.md](death-and-scoring.md)).
 - **M1-13** — bosses fire through the same primitives (and lasers); boss death cancels.
 - **M1-14** — particle presets for `FX_CUES.BulletCancel`.
 - **M2-01** — rank growth (`computeRank` reads stage, loop, power and special); Easy's 16 aim

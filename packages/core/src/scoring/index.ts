@@ -107,8 +107,18 @@ export class ScoreBoard {
    * Sets the hi-score to show (the host's saved best, M1-17). Only raises it; the session's own
    * scores keep raising it too.
    *
-   * @param value - Saved hi-score (NaN / negative ignored; capped at {@link MAX_SCORE}).
+   * @remarks
+   * `hiScoreDirty` is set only when the value really raises the hi-score: a fraction that floors
+   * back to the current value (10.5 over 10) or a second value above the cap changes nothing.
+   *
+   * @param value - Saved hi-score (NaN / negative ignored; fractions floored; capped at
+   *   {@link MAX_SCORE}).
    * @returns The hi-score afterwards.
+   *
+   * @example
+   * ```ts
+   * world.scoring.board.setHiScore(save.hiScore); // before the first tick (M1-17)
+   * ```
    */
   setHiScore(value: number): number {
     if (value > this.hiScore) {
@@ -124,10 +134,17 @@ export class ScoreBoard {
 }
 
 /**
- * Creates the scores of a session: every player at 0, hi-score 0.
+ * Creates the scores of a session: every player at 0, hi-score 0. The World's board is made by
+ * {@link createScoringSystem}; a standalone board is for tools and tests.
  *
  * @param players - Player slots (default {@link MAX_PLAYERS}).
  * @returns The board.
+ *
+ * @example
+ * ```ts
+ * const board = createScoreBoard(1);
+ * addScore({ scoring: { board } }, 0, 500); // board.scores[0].score → 500
+ * ```
  */
 export function createScoreBoard(players: number = MAX_PLAYERS): ScoreBoard {
   return new ScoreBoard(players);
@@ -213,7 +230,10 @@ export interface ScoringSystem {
    * and pickups. Never allocates.
    */
   resolve(): void;
-  /** Checkpoint restart: forgets the credited counts (the enemy outcomes are reset too). */
+  /**
+   * Session clear (a checkpoint restart, or the `arcade` respawn in free flight): forgets the
+   * credited counts — the enemy outcomes are reset with them. Scores and the hi-score stay.
+   */
   clear(): void;
 }
 

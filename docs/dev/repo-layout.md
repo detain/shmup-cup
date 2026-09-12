@@ -44,7 +44,7 @@ shmup-cup/
 │   │   │   ├── presentation/   ✔ IRenderer / IAudio contracts + the render contract (RenderFrame, WorldView, SpriteBatchView, DrawList, LayerId)
 │   │   │   ├── rng/ math/ events/ pools/                 ✔ engine foundations (sfc32, trig tables, event ring, SoA pools)
 │   │   │   ├── data/           ✔ (partial) content loader: schema.ts combinators, loadContent(), ContentDb, migrations, tilemap.ts (tileset tables, heightfield / RLE expansion), paths.ts (spline → arc-length tables)
-│   │   │   ├── player/         ✔ (partial) KESTREL movement, speed levels, clamp, banking, fly-in (death/respawn: M1-12)
+│   │   │   ├── player/         ✔ KESTREL movement, speed levels, clamp, banking, fly-in, life cycle (killPlayer / respawnPlayer / playerOut)
 │   │   │   ├── weapons/        ✔ (partial) player shots (96-slot SoA pool), Type A roles from content, loadouts, autofire + caps per shooter, grid hits (Type B–D / Direct: M2)
 │   │   │   ├── options/        ✔ (partial) trailing Options: screen-space trail ring buffer (Snake / Formation / Rotate: M2-04)
 │   │   │   ├── powerups/       ✔ (partial) 7-slot power meter, equip on the PowerUp edge, Auto Power-Up, capsule pool + magnet, Mega Crash (Direct mode: M2-05)
@@ -57,7 +57,8 @@ shmup-cup/
 │   │   │   ├── collision/      ✔ (partial) scalar shape tests, layer masks, counting-sort uniform grid, pixel-exact terrain queries
 │   │   │   ├── stage/          ✔ stage runtime: camera keys / ramps / pans / locks, event cursor, checkpoints, terrain map + parallax / terrain views
 │   │   │   ├── rank/           ✔ (partial) constant rank from the difficulty, rankScale curves (growth: M2-01)
-│   │   │   ├── scoring/ fx/                                rules & feel (placeholders)
+│   │   │   ├── scoring/        ✔ (partial) per-player scores (clamp 99,999,990), session hi-score, crediting kills / bonuses / capsules (extends, continues: M2-01)
+│   │   │   ├── fx/             ✔ (partial) hit-stop / shake / flash requests + timers (FxState), exact hit-stop (slowdown: M3-02)
 │   │   │   ├── scenes/ ui/                                 flow & canvas UI model (placeholders)
 │   │   │   ├── debug/          ✔ (partial) hashWorld state hash, debug flags (controls: M1-19)
 │   │   │   └── replay/ save/                               meta & tooling (placeholders)
