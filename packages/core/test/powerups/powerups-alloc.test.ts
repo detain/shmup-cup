@@ -129,6 +129,9 @@ describe('core/powerups allocation', () => {
         if (t % 12 === 0) w.powerups.spawnItem(ItemKind.Capsule, sx + 20, sy + 3);
         if (t % 9 === 0) spawnBullet(w, sx, sy, 0, 0, BulletKind.RoundPink);
         if (t % 45 === 0) w.enemies.spawn(carrier, sx + 28, sy);
+        // Bullets that get through kill the ship (M1-12): deaths and respawns are part of the
+        // loop, but the game never ends.
+        if (ship.lives < 3) ship.lives = 3;
         t++;
         stepWorld(w, input);
         pickups += w.powerups.outcomes.pickupCount;

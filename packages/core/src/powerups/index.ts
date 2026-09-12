@@ -67,6 +67,11 @@
  * the tick's absorbed hits in phase 7; the view shows it as a sprite around the ship in its wear
  * frame (blinking during its i-frames).
  *
+ * **Death penalty** (M1-12, decision D6): {@link applyDeathPenalty} — called by the World when a
+ * ship dies — takes the shield in every preset, and `arcade` everything else too (cursor back to
+ * -1), `classic` one level ({@link loseOneLevel}: Option → Double / Laser → Missile → Speed),
+ * `casual` nothing more.
+ *
  * **Tick.** Phase 2 — {@link PowerUpSystem.updatePlayers} (after the ships moved, before the
  * weapons fire, so a new weapon or Option fires on the tick it is equipped). Phase 3 —
  * {@link PowerUpSystem.beginTick} (before the enemy outcomes reset). Phase 5 —
@@ -94,7 +99,8 @@
  * {@link ItemSchema}, {@link ITEM_SPRITES}, {@link CAPSULE_SPRITE}, {@link MAX_ITEMS},
  * {@link CAPSULE_SCORE}, {@link ITEM_RADIUS}, {@link PICKUP_MAGNET_RANGE},
  * {@link PICKUP_MAGNET_SPEED}, {@link ITEM_CULL_MARGIN}, {@link ITEM_BLINK_TICKS},
- * {@link MEGA_CRASH_FLASH_TICKS}, {@link DirectItem}.
+ * {@link MEGA_CRASH_FLASH_TICKS}, {@link DirectItem}, {@link applyDeathPenalty},
+ * {@link loseOneLevel}.
  *
  * **Planned API.** Direct-mode items `applyDirectItem(player, item)` (M2-05); `!`-slot variants
  * and Weapon Edit (M2-03).
@@ -106,12 +112,14 @@ import {
   METER_SLOT_NAMES,
   PLAYFIELD_H,
   PLAYFIELD_W,
+  type DeathPenaltyPreset,
   type GameConfig,
   type MeterSlotName,
 } from '../config/index.js';
 import type { ContentDb, PlayerShipSpec } from '../data/index.js';
 import { DropKind, type EnemyOutcomes } from '../enemies/index.js';
 import { FX_CUES, SFX_CUES, SimEventKind, type EventQueue } from '../events/index.js';
+import { FLASH_KIND_TICKS, FlashKind, requestFlash, type FxState } from '../fx/index.js';
 import { Action, MAX_PLAYERS } from '../input/index.js';
 import { defineModule } from '../module-info.js';
 import { MAX_OPTIONS } from '../options/index.js';
@@ -120,6 +128,7 @@ import { createSoaPool, type SoaPool, type SoaSchema } from '../pools/index.js';
 import { LayerId, SpriteFlag, createSpriteBatch, type SpriteBatch } from '../presentation/index.js';
 import {
   FORCE_FIELD,
+  clearShield,
   grantShield,
   shieldActive,
   shieldWearFrame,
@@ -203,8 +212,11 @@ export const ITEM_CULL_MARGIN = 32;
 /** Ticks per frame of an item's two-frame blink. */
 export const ITEM_BLINK_TICKS = 8;
 
-/** Length of Mega Crash's screen flash in ticks (`SimEventKind.Flash` param). */
-export const MEGA_CRASH_FLASH_TICKS = 12;
+/**
+ * Length of Mega Crash's screen flash in ticks (`SimEventKind.Flash` param; `core/fx`
+ * `FLASH_KIND_TICKS[FlashKind.MegaCrash]`).
+ */
+export const MEGA_CRASH_FLASH_TICKS = FLASH_KIND_TICKS[FlashKind.MegaCrash];
 
 /** The power capsule's sprite (an engine sprite — see core `world` `ENGINE_SPRITES`). */
 export const CAPSULE_SPRITE = 'items/capsule';
@@ -405,6 +417,81 @@ export function equipSlot(
   return true;
 }
 
+/**
+ * Classic death penalty (decision D6): takes **one** power level, the first the ship has in the
+ * order Option → Double / Laser (back to the basic shot) → Missile → Speed. Never allocates.
+ *
+ * @param ship - The player's ship (speed level).
+ * @param loadout - The player's loadout.
+ * @returns The {@link MeterSlot} of the level lost (`Double` / `Laser` for the main weapon), or -1
+ *   when there was nothing to lose.
+ *
+ * @example
+ * ```ts
+ * loseOneLevel(ship, loadout); // 4 Options → 3
+ * ```
+ */
+export function loseOneLevel(ship: Pick<PlayerShip, 'speedLevel'>, loadout: Loadout): number {
+  if (loadout.options > 0) {
+    loadout.options--;
+    return MeterSlot.Option;
+  }
+  if (loadout.main === MainWeapon.Laser || loadout.main === MainWeapon.Double) {
+    const slot = loadout.main === MainWeapon.Laser ? MeterSlot.Laser : MeterSlot.Double;
+    loadout.main = MainWeapon.Basic;
+    return slot;
+  }
+  if (loadout.missile) {
+    loadout.missile = false;
+    return MeterSlot.Missile;
+  }
+  if (ship.speedLevel > 0) {
+    ship.speedLevel--;
+    return MeterSlot.Speed;
+  }
+  return -1;
+}
+
+/**
+ * Applies what a death costs (shmup_feat.md §10, decision D6) to a player's power-up state. Never
+ * allocates.
+ *
+ * @remarks
+ * Every preset loses the shield (without a break event). `arcade`: everything — basic shot, no
+ * Missile, no Options, speed level 0 — and the meter cursor back to -1 (the World also restarts the
+ * stage at the last checkpoint when the ship respawns). `classic`: {@link loseOneLevel}, the cursor
+ * is kept. `casual`: nothing else. A pending Mega Crash is not touched (it detonates this tick).
+ *
+ * @param preset - `GameConfig.deathPenalty`.
+ * @param ship - The player's ship (speed level, shield).
+ * @param loadout - The player's loadout.
+ * @param meter - The player's power meter.
+ * @returns The {@link MeterSlot} `classic` took (-1 otherwise, or when nothing was left).
+ *
+ * @example
+ * ```ts
+ * applyDeathPenalty('classic', ship, loadout, meter); // one level and the shield gone
+ * ```
+ */
+export function applyDeathPenalty(
+  preset: DeathPenaltyPreset,
+  ship: Pick<PlayerShip, 'speedLevel' | 'shield'>,
+  loadout: Loadout,
+  meter: PowerMeter,
+): number {
+  clearShield(ship.shield);
+  if (preset === 'arcade') {
+    loadout.main = MainWeapon.Basic;
+    loadout.missile = false;
+    loadout.options = 0;
+    ship.speedLevel = 0;
+    meter.cursor = -1;
+    return -1;
+  }
+  if (preset === 'classic') return loseOneLevel(ship, loadout);
+  return -1;
+}
+
 /** Pickups of the last collision phase (reset at the start of phase 6). */
 export interface PowerUpOutcomes {
   /** Items collected. */
@@ -439,6 +526,8 @@ export interface PowerUpHost {
   readonly content: ContentDb;
   /** Presentation events. */
   readonly events: EventQueue;
+  /** The World's effect timers (Mega Crash's flash — `core/fx` `requestFlash`). */
+  readonly fx: FxState;
   /** The World's pool registry (the item pool is registered at creation). */
   readonly pools: {
     /**
@@ -870,7 +959,7 @@ class PowerUpSystemImpl implements PowerUpSystem {
     const host = this.host;
     host.bullets.cancelAll(CancelMode.Sparkle);
     const killed = host.enemies.megaCrash(this.valid(player) ? player : -1);
-    host.events.push(SimEventKind.Flash, 0, 0, 0, MEGA_CRASH_FLASH_TICKS);
+    requestFlash(host, FlashKind.MegaCrash);
     if (this.valid(player)) {
       this.pushAtShip(SimEventKind.Sfx, SFX_CUES.MegaCrash, host.players[player], 0);
     } else {

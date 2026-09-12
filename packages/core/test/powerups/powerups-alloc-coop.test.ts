@@ -5,7 +5,9 @@
  * (fractional positions), capsules dropped between the ships (the magnet picks the nearer one,
  * pickup ties, capsules left behind and culled), bullets on both ships (shield hits, breaks and
  * re-grants on both), both players pressing PowerUp (equips, denials) and Mega Crashes armed by
- * both on the same tick.
+ * both on the same tick. A broken Force Field is put back up at once, so no bullet reaches a ship;
+ * a rare death on the floor (M1-12) costs only the shield (the `casual` penalty). Deaths with the
+ * `classic` penalty have their own guard (`test/world/world-death-alloc.test.ts`).
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
@@ -13,8 +15,9 @@ import { BulletKind, spawnBullet } from '../../src/bullets/index.js';
 import { resolveGameConfig } from '../../src/config/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
 import { Action, commitPlayerInput, createInputSnapshot } from '../../src/input/index.js';
-import { spawnPlayer } from '../../src/player/index.js';
+import { PlayerHitCause, spawnPlayer } from '../../src/player/index.js';
 import { ItemKind, MeterSlot } from '../../src/powerups/index.js';
+import { grantShield, shieldActive } from '../../src/shields/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld, type World } from '../../src/world/index.js';
 import { measureHeapGrowth } from '../helpers/alloc.js';
 
@@ -102,7 +105,14 @@ function db(): ContentDb {
  */
 function world(): World {
   const w = createWorld(
-    resolveGameConfig({ stage: 't', loadout: 'full', autoPowerUp: true, seed: 13 }),
+    // Casual: a rare terrain death (the floor) costs the shield only, the loadouts stay.
+    resolveGameConfig({
+      stage: 't',
+      loadout: 'full',
+      autoPowerUp: true,
+      seed: 13,
+      deathPenalty: 'casual',
+    }),
     db(),
   );
   const p2 = w.players[1];
@@ -125,9 +135,11 @@ describe('core/powerups allocation (co-op, scrolling)', () => {
     let t = 0;
     let pickups = 0;
     let shieldHits = 0;
+    let breaks = 0;
     const growth = measureHeapGrowth(
       () => {
-        const up = (t / 40) % 2 < 1;
+        // Short weaves (±50 px): P2 never reaches the floor (terrain would kill it — M1-12).
+        const up = (t / 20) % 2 < 1;
         let held1 = up ? Action.Up : Action.Down;
         let held2 = up ? Action.Down : Action.Up;
         if (t % 35 === 0) held1 |= Action.PowerUp;
@@ -150,11 +162,19 @@ describe('core/powerups allocation (co-op, scrolling)', () => {
         if (t % 11 === 0) spawnBullet(w, x1, y1, 0, 0, BulletKind.RoundPink);
         if (t % 13 === 0) spawnBullet(w, x2, y2, 0, 0, BulletKind.OvalRed);
         if (t % 60 === 0) w.enemies.spawn(carrier, x2 + 30, y2);
+        // A broken shield comes back at once: bullets never reach the ships (M1-12 deaths); a
+        // rare touch of the floor may still kill one, and the game never ends.
+        if (!shieldActive(p1.shield)) grantShield(p1.shield);
+        if (!shieldActive(p2.shield)) grantShield(p2.shield);
+        if (p1.lives < 3) p1.lives = 3;
+        if (p2.lives < 3) p2.lives = 3;
         t++;
         stepWorld(w, input);
         pickups += w.powerups.outcomes.pickupCount;
         if (p1.shield.hitTick === w.tick - 1) shieldHits++;
         if (p2.shield.hitTick === w.tick - 1) shieldHits++;
+        if (p1.shield.brokeTick === w.tick - 1) breaks++;
+        if (p2.shield.brokeTick === w.tick - 1) breaks++;
         w.events.clear();
       },
       10_000,
@@ -162,7 +182,10 @@ describe('core/powerups allocation (co-op, scrolling)', () => {
     );
     expect(pickups).toBeGreaterThan(100);
     expect(shieldHits).toBeGreaterThan(20);
-    expect(p1.hits + p2.hits).toBeGreaterThan(0); // shields broke and bullets got through too
+    expect(breaks).toBeGreaterThan(0); // shields broke (and were put back up)
+    // No bullet, laser or enemy got through the shields (only the floor may have killed).
+    expect([PlayerHitCause.None, PlayerHitCause.Terrain]).toContain(p1.hitCause);
+    expect([PlayerHitCause.None, PlayerHitCause.Terrain]).toContain(p2.hitCause);
     expect(growth.bytes).toBeLessThan(64 * 1024);
   }, 120_000);
 });

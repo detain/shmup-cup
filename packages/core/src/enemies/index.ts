@@ -53,11 +53,12 @@
  * World's bullet system (`EnemyHost.bullets`), so speeds are rank-scaled and `AIM_AT_TARGET`
  * angles aim at the nearest living player. Bullets outlive the enemy that fired them.
  *
- * **Tick outcomes.** Kills and drops of the current tick are listed in
+ * **Tick outcomes.** Kills (with their score and killer), drops and completed formations' bonuses
+ * (credited to the killer of the last member) of the current tick are listed in
  * {@link EnemySystem.outcomes} (reset at the start of phase 3) for the systems that turn them
- * into score (M1-12) and capsules (`core/powerups` spawns an item per drop at the end of phase 7,
- * M1-11). {@link EnemySystem.megaCrash} kills every enemy that is not `megaCrashImmune` (the
- * meter's `!` slot).
+ * into score (`core/scoring`, M1-12) and capsules (`core/powerups` spawns an item per drop at the
+ * end of phase 7, M1-11). {@link EnemySystem.megaCrash} kills every enemy that is not
+ * `megaCrashImmune` (the meter's `!` slot).
  *
  * **Zero allocation.** Every enemy, script API, track and table is built by
  * {@link createEnemySystem}; the per-tick methods only write numbers. The allocations left are
@@ -626,8 +627,17 @@ export interface EnemyOutcomes {
   readonly dropX: Float64Array;
   /** World y per drop. */
   readonly dropY: Float64Array;
-  /** Formation bonus points awarded this tick (scoring: M1-12). */
+  /** Formation bonus points awarded this tick (the sum of {@link EnemyOutcomes.bonusScore}). */
   readonly bonusPoints: number;
+  /** Completed formations that paid a bonus this tick (scoring, M1-12). */
+  readonly bonusCount: number;
+  /** Bonus points per completed formation. */
+  readonly bonusScore: Float64Array;
+  /**
+   * Player slot credited with each bonus — the killer of the formation's last member (-1 =
+   * nobody).
+   */
+  readonly bonusBy: Int8Array;
 }
 
 /** The enemy system of one World (see the module docs for its part of each tick phase). */
@@ -855,6 +865,12 @@ class OutcomeLists implements EnemyOutcomes {
   readonly dropY = new Float64Array(OUTCOME_CAPACITY);
   /** See {@link EnemyOutcomes.bonusPoints}. */
   bonusPoints = 0;
+  /** See {@link EnemyOutcomes.bonusCount}. */
+  bonusCount = 0;
+  /** See {@link EnemyOutcomes.bonusScore}. */
+  readonly bonusScore = new Float64Array(MAX_FORMATIONS);
+  /** See {@link EnemyOutcomes.bonusBy}. */
+  readonly bonusBy = new Int8Array(MAX_FORMATIONS);
 
   /**
    * Adds a drop.
@@ -1329,6 +1345,11 @@ class EnemySystemImpl implements EnemySystem {
   readonly formations: FormationTable;
   /** See {@link EnemySystem.outcomes}. */
   readonly outcomes: OutcomeLists;
+  /**
+   * Player credited with the kill being resolved (set by `kill` around the formation accounting,
+   * -1 otherwise): a formation completed by that kill pays its bonus to this player.
+   */
+  private creditBy = -1;
   /** See {@link EnemySystem.groundBatch}. */
   readonly groundBatch: SpriteBatch;
   /** See {@link EnemySystem.airBatch}. */
@@ -1644,6 +1665,7 @@ class EnemySystemImpl implements EnemySystem {
     o.killCount = 0;
     o.dropCount = 0;
     o.bonusPoints = 0;
+    o.bonusCount = 0;
   }
 
   /** See {@link EnemySystem.spawnPending}. */
@@ -1895,7 +1917,10 @@ class EnemySystemImpl implements EnemySystem {
     f.killed[slot]++;
     f.lastX[slot] = x;
     f.lastY[slot] = y;
+    // A formation completes on the kill of its last member: its bonus goes to this killer.
+    this.creditBy = by;
     this.leaveFormation(enemy, slot);
+    this.creditBy = -1;
     return true;
   }
 
@@ -1949,8 +1974,15 @@ class EnemySystemImpl implements EnemySystem {
     if (f.escaped[slot] === 0 && f.killed[slot] === total) {
       const x = f.lastX[slot];
       const y = f.lastY[slot];
-      if (f.drop[slot] !== DropKind.None) this.outcomes.addDrop(f.drop[slot], x, y);
-      this.outcomes.bonusPoints += f.bonus[slot];
+      const o = this.outcomes;
+      if (f.drop[slot] !== DropKind.None) o.addDrop(f.drop[slot], x, y);
+      o.bonusPoints += f.bonus[slot];
+      const b = o.bonusCount;
+      if (b < MAX_FORMATIONS) {
+        o.bonusScore[b] = f.bonus[slot];
+        o.bonusBy[b] = this.creditBy;
+        o.bonusCount = b + 1;
+      }
       this.host.events.push(SimEventKind.FormationBonus, slot, x, y, f.bonus[slot]);
     }
     const leader = f.leader[slot];

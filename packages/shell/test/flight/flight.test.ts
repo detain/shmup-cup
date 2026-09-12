@@ -3,7 +3,8 @@
  * appended after the content's names, its world view is the starfield followed by the game
  * World's batches on the game's live camera, update() copies the game frame and fills a
  * starfield that covers the playfield wherever the camera is, the HUD is rebuilt only when the
- * stock changes, and the KESTREL moved by input shows up in the drawn batches.
+ * stock, the scores or the game-over state change (M1-12), and the KESTREL moved by input shows
+ * up in the drawn batches.
  */
 import {
   Action,
@@ -11,6 +12,7 @@ import {
   LayerId,
   PLAYFIELD_H,
   PLAYFIELD_W,
+  addScore,
   commitPlayerInput,
   createGame,
   createHeadlessPlatform,
@@ -151,6 +153,41 @@ describe('shell/flight', () => {
     expect(Array.from(hud.op.subarray(0, hud.count)).filter((op) => op === DrawOp.Sprite)).toEqual(
       [],
     );
+  });
+
+  it("draws player 1's score and the hi-score, and GAME OVER when the World says so (M1-12)", () => {
+    const { game } = realGame();
+    const flight = createFlightScene(game);
+    const hud = flight.frame.hud;
+    const numbers = (): number[] => {
+      const out: number[] = [];
+      for (let i = 0; i < hud.count; i++) if (hud.op[i] === DrawOp.Number) out.push(hud.value[i]);
+      return out;
+    };
+    const title = (): string => {
+      for (let i = 0; i < hud.count; i++) {
+        if (hud.op[i] === DrawOp.Text && hud.x[i] === PLAYFIELD_W / 2 && hud.y[i] === 0) {
+          return hud.strings[hud.ref[i]];
+        }
+      }
+      return '';
+    };
+    const board = game.world.scoring.board;
+    board.setHiScore(20_000);
+    flight.update(game.renderFrame());
+    expect(numbers()).toEqual([0, 20_000]);
+    expect(title()).toBe('FREE FLIGHT');
+    expect(board.hiScoreDirty).toBe(false); // the HUD drew it
+    const revision = hud.revision;
+    flight.update(game.renderFrame());
+    expect(hud.revision).toBe(revision); // nothing changed: no rebuild
+    addScore(game.world, 0, 25_000);
+    flight.update(game.renderFrame());
+    expect(numbers()).toEqual([25_000, 25_000]);
+    expect(board.scores[0].displayDirty).toBe(false);
+    game.world.status = 'gameOver';
+    flight.update(game.renderFrame());
+    expect(title()).toBe('GAME OVER');
   });
 
   it('shows the KESTREL where the input moved it', () => {

@@ -23,7 +23,10 @@
  * every live piercing shot), then the power-ups (M1-11: each player's meter cursor, pending Mega
  * Crash and shield — kind, hits, max hits, i-frames, terrain flag, hit and break ticks, absorbed
  * count — and the count of enemy drops already turned into items; the items themselves are a
- * registered pool). Scripts are covered by their `wakeTick`; a coroutine's internal position
+ * registered pool), then the effect timers and scores (M1-12: shake magnitude, ticks, duration and
+ * request tick, flash ticks, kind and request tick, every player's score and the counts of kills
+ * and formation bonuses already credited — not the session hi-score, which a host may raise from
+ * its save). Scripts are covered by their `wakeTick`; a coroutine's internal position
  * cannot be hashed. Numbers are hashed as their little-endian IEEE-754 double bytes, so the hash
  * is identical on every engine and platform, and two worlds that simulated the same inputs from
  * the same seed hash equal. Golden replays (M1-19) compare these hashes. The hash reads state only
@@ -272,6 +275,28 @@ function mixPowerUps(world: World): void {
 }
 
 /**
+ * Mixes the effect timers and the scores into {@link accumulator} (M1-12; fixed order). The
+ * session hi-score is left out on purpose: a host may raise it from a save.
+ *
+ * @param world - The world.
+ */
+function mixFxAndScores(world: World): void {
+  const fx = world.fx;
+  mixNumber(fx.shakeMagnitude);
+  mixNumber(fx.shakeTicks);
+  mixNumber(fx.shakeDuration);
+  mixNumber(fx.shakeTick);
+  mixNumber(fx.flashTicks);
+  mixNumber(fx.flashKind);
+  mixNumber(fx.flashTick);
+  const scoring = world.scoring;
+  const scores = scoring.board.scores;
+  for (let p = 0; p < scores.length; p++) mixNumber(scores[p].score);
+  mixNumber(scoring.killsScored);
+  mixNumber(scoring.bonusesScored);
+}
+
+/**
  * Mixes the active slots of the formation table into {@link accumulator}.
  *
  * @param f - The table.
@@ -369,6 +394,7 @@ export function hashWorld(world: World): number {
   mixFormations(world.enemies.formations);
   mixWeapons(world.weapons);
   mixPowerUps(world);
+  mixFxAndScores(world);
   return accumulator[0];
 }
 

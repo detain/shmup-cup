@@ -25,7 +25,7 @@ the Direct-mode ship (**MANTA**) arrives in M2.
       "pickupBox": { "hw": 8, "hh": 6 },   // half-extents used to collect items
       "margins": { "left": 8, "right": 8, "top": 6, "bottom": 6 }, // clamp to the camera view
       "enterTicks": 40,                // uncontrollable fly-in after a spawn
-      "respawnInvulnTicks": 120,       // blinking invincibility after a respawn
+      "respawnInvulnTicks": 150,       // blinking invincibility after a respawn
       "bankFrames": 1                  // tilt frames on each side of the idle frame
     }
   ]

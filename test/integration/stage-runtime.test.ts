@@ -125,6 +125,8 @@ describe('integration: checkpoint restarts on the shipped stages', () => {
     checkpoint: number,
   ): { game: Game; x: number } {
     const game = createGame(createHeadlessPlatform(), { seed: 11, stage: stageId }, db);
+    // Nobody steers: god mode keeps the ship alive to the end (deaths since M1-12).
+    game.world.debugFlags.godMode = true;
     const runner = game.world.stage;
     if (runner === null) throw new Error('no stage');
     // 200 px past the checkpoint (300 ticks for the stage start), then back to it.

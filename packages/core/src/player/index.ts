@@ -1,10 +1,9 @@
 /**
  * # player — player ship
  *
- * **Status: partial.** Movement, speed levels, clamping to the camera view, banking and the
- * fly-in are implemented (plan M1-06); hits are *recorded* by {@link playerHit} (the World's
- * collision phase reports terrain contact since M1-07); the death sequence, respawn by
- * death-penalty preset and lives arrive in M1-12.
+ * **Status: implemented** for P0: movement, speed levels, clamping to the camera view, banking and
+ * the fly-in (plan M1-06), hits (M1-07 … M1-11) and the life cycle — death, dead time, respawn
+ * with invulnerability and lives (M1-12). Co-op specifics arrive with M2-06.
  *
  * **Responsibility.** The player ship: 8-way movement with no inertia, speed levels (meter Speed Ups or
  * a fixed Direct-mode speed), a tiny centred hurtbox plus a separate terrain box,
@@ -26,9 +25,21 @@
  *   ({@link ENTER_START_X} → {@link ENTER_END_X}, camera-relative, cubic ease-out), then `alive`.
  *
  * **Hits (M1-07).** {@link playerHit} is the single entry point for anything that would kill the
- * ship (terrain now; contact, bullets and lasers from M1-08/M1-09). Until the death sequence of
- * M1-12 it only records the hit on the ship (`hitCause`, `hitTick`, `hits`) — the ship flies on.
- * Ships that are not `alive`, still invulnerable, or protected by the debug god mode ignore hits.
+ * ship (terrain, enemy contact, bullets, lasers). It records the hit on the ship (`hitCause`,
+ * `hitTick`, `hits`); the World turns a hit recorded during a tick into the death sequence in
+ * that tick's damage phase (M1-12, below). Ships that are not `alive`, still invulnerable, or
+ * protected by the debug god mode ignore hits.
+ *
+ * **Life cycle (M1-12, shmup_feat.md §10).**
+ * `entering` (stage start fly-in) → `alive` → hit → `dying` ({@link PLAYER_DYING_TICKS}: the
+ * explosion; {@link killPlayer} takes a life) → `dead` ({@link PLAYER_DEAD_TICKS}) → with a ship
+ * left the World respawns it ({@link respawnPlayer}: `respawning`, a fly-in like `entering`) →
+ * `alive`, invulnerable for `spec.respawnInvulnTicks` (150 for the KESTREL) ticks counted from the
+ * tick control returns — it blinks from the start of the fly-in and may fire. A ship whose dead
+ * time ends without lives stays `dead` for good ({@link playerOut}). `lives` counts the ships
+ * including the one in play: the HUD shows `lives − 1` in stock. The death sequence's effects
+ * (explosion events, hit-stop, bullet cancel, the death penalty) and the respawn decision are
+ * the World's (`core/world`).
  *
  * **Shields (M1-11).** Every ship carries its {@link PlayerShip.shield} (`core/shields`); a hit
  * goes to the shield first (`absorbShieldHit`): an absorbed hit is accepted — the bullet is used
@@ -43,17 +54,16 @@
  * {@link readPlayerIntent}, {@link spawnPlayer}, {@link setPlayerState}, {@link updatePlayer},
  * {@link playerBankFrame}, {@link resolvePlayerShip}, {@link DEFAULT_PLAYER_SHIP},
  * {@link DIAGONAL_SCALE}, {@link ENTER_START_X}, {@link ENTER_END_X}, {@link SPAWN_Y},
- * {@link playerHit}, {@link PlayerHitCause}, {@link PLAYER_HIT_CAUSE_NAMES}.
+ * {@link playerHit}, {@link PlayerHitCause}, {@link PLAYER_HIT_CAUSE_NAMES}, {@link killPlayer},
+ * {@link respawnPlayer}, {@link playerOut}, {@link PLAYER_DYING_TICKS}, {@link PLAYER_DEAD_TICKS}.
  *
- * **Planned API.** `killPlayer`, `respawnPlayer` by death-penalty preset (M1-12); `playerHit`
- * then starts the death sequence.
+ * **Planned API.** Joining / leaving co-op mid-game (M2-06); continues (M2-01).
  *
  * @module
  */
 import { PLAYFIELD_H, PLAYFIELD_W } from '../config/index.js';
 import type { ContentDb, PlayerShipSpec } from '../data/index.js';
 import { Action, type InputDeviceKind, type PlayerInput } from '../input/index.js';
-import { EASINGS } from '../math/index.js';
 import { defineModule } from '../module-info.js';
 import type { CameraView } from '../presentation/index.js';
 import type { DebugFlags } from '../debug/index.js';
@@ -67,11 +77,11 @@ import {
 /** Module descriptor (see {@link defineModule}). */
 export const moduleInfo = defineModule({
   name: 'player',
-  status: 'partial',
+  status: 'implemented',
   specRefs: ['shmup_feat.md §5', 'shmup_feat.md §10'],
 });
 
-/** Life-cycle state of a ship (the M1-12 death sequence fills `dying` / `dead`). */
+/** Life-cycle state of a ship (see the module docs' life cycle). */
 export type PlayerState = 'entering' | 'alive' | 'dying' | 'dead' | 'respawning';
 
 /** Every {@link PlayerState}, in a fixed order (the index is the state's code in state hashes). */
@@ -98,6 +108,15 @@ export const ENTER_END_X = 64;
 /** Camera-relative y of a fresh spawn: the middle of the playfield. */
 export const SPAWN_Y = PLAYFIELD_H / 2;
 
+/**
+ * Ticks a ship spends `dying` (its explosion) before it is `dead` — counted by
+ * {@link updatePlayer}, so the death's hit-stop comes on top.
+ */
+export const PLAYER_DYING_TICKS = 24;
+
+/** Ticks a ship stays `dead` before the World respawns it (plan M1-12). */
+export const PLAYER_DEAD_TICKS = 60;
+
 /** Runtime state of one player ship. */
 export interface PlayerShip {
   /** 0 = player 1, 1 = player 2. */
@@ -114,13 +133,13 @@ export interface PlayerShip {
   stateTicks: number;
   /** Index into the ship's `speeds` (0 = base speed; meter Speed Ups add levels). */
   speedLevel: number;
-  /** Remaining invulnerability ticks (respawn blink, M1-12); 0 = vulnerable. */
+  /** Remaining invulnerability ticks (the respawn blink); 0 = vulnerable. */
   invulnTicks: number;
   /** Bank (tilt) step: negative = banking up, positive = down, 0 = level. */
   bank: number;
   /** Device that last produced input for this player (prompts and glyphs). */
   device: InputDeviceKind;
-  /** Ships left including the current one (M1-12 applies the loss). */
+  /** Ships left including the one in play ({@link killPlayer} takes one; HUD: `lives − 1`). */
   lives: number;
   /** `true` when the ship had movement input this tick (the Option trail records only then, D26). */
   moving: boolean;
@@ -128,7 +147,7 @@ export interface PlayerShip {
   hitCause: PlayerHitCause;
   /** Tick of the last accepted hit (-1 = never). */
   hitTick: number;
-  /** Accepted hits so far (until M1-12 a hit does not kill, so contact counts every tick). */
+  /** Hits that got through to the ship so far (each one starts a death). */
   hits: number;
   /**
    * The ship's shield (`core/shields`; M1-11): the meter's `?` slot grants a Force Field here, and
@@ -209,7 +228,7 @@ export const DEFAULT_PLAYER_SHIP: PlayerShipSpec = Object.freeze({
   pickupBox: Object.freeze({ hw: 8, hh: 6 }),
   margins: Object.freeze({ left: 8, right: 8, top: 6, bottom: 6 }),
   enterTicks: 40,
-  respawnInvulnTicks: 120,
+  respawnInvulnTicks: 150,
   bankFrames: 1,
 });
 
@@ -268,8 +287,9 @@ export function createPlayer(slot: number, lives: number): PlayerShip {
  * {@link PlayerShip.shield} gets it first (`core/shields` `absorbShieldHit`: the Force Field takes
  * bullets, lasers and contact — not terrain — and swallows hits during its shield-hit i-frames);
  * an absorbed hit is accepted (`true`) without touching the ship. A hit that gets through is
- * recorded on the ship (`hitCause`, `hitTick`, `hits`); until the death sequence of M1-12 nothing
- * else happens — the ship keeps flying.
+ * recorded on the ship (`hitCause`, `hitTick`, `hits`); the World starts the death sequence for
+ * a ship hit during a tick in that tick's damage phase (the ship stays `alive` until then, so
+ * every system of the collision phase sees the same ships).
  *
  * @param ship - The ship.
  * @param cause - What hit it.
@@ -301,6 +321,70 @@ export function playerHit(
   ship.hitTick = tick;
   ship.hits++;
   return true;
+}
+
+/**
+ * Starts a ship's death: `dying` (timer restarted), one life gone (never below 0), no
+ * invulnerability, level. Never allocates.
+ *
+ * @remarks
+ * Ship-level only: the World adds the death sequence around it (explosion and debris events,
+ * hit-stop, bullet cancel, music duck, the death penalty — `core/world`). Does nothing for an
+ * inactive ship or one that is already `dying` / `dead`.
+ *
+ * @param ship - The ship.
+ * @returns Lives left afterwards (-1 when nothing happened).
+ *
+ * @example
+ * ```ts
+ * killPlayer(ship); // lives 3 → 2, state 'dying'
+ * ```
+ */
+export function killPlayer(ship: PlayerShip): number {
+  if (!ship.active || ship.state === 'dying' || ship.state === 'dead') return -1;
+  setPlayerState(ship, 'dying');
+  ship.lives = ship.lives > 1 ? ship.lives - 1 : 0;
+  ship.invulnTicks = 0;
+  ship.bank = 0;
+  ship.moving = false;
+  return ship.lives;
+}
+
+/**
+ * Brings a ship back after its dead time: a `respawning` fly-in from the left edge of the camera
+ * view ({@link spawnPlayer}), blinking — `invulnTicks` covers the fly-in plus
+ * `spec.respawnInvulnTicks`, and {@link updatePlayer} sets it to exactly `respawnInvulnTicks` on
+ * the tick control returns. Lives are not touched (the death took one).
+ *
+ * @param ship - The ship.
+ * @param spec - Its tunables (`enterTicks`, `respawnInvulnTicks`).
+ * @param camera - The current camera (after a checkpoint restart: the restarted one).
+ *
+ * @example
+ * ```ts
+ * respawnPlayer(ship, world.ship, world.camera);
+ * ```
+ */
+export function respawnPlayer(
+  ship: PlayerShip,
+  spec: Pick<PlayerShipSpec, 'enterTicks' | 'respawnInvulnTicks'>,
+  camera: CameraView,
+): void {
+  spawnPlayer(ship, camera, 'respawning');
+  const enter = spec.enterTicks > 0 ? spec.enterTicks : 0;
+  ship.invulnTicks = enter + spec.respawnInvulnTicks;
+}
+
+/**
+ * Whether a ship is out of the game: active, `dead`, its dead time over and no life left.
+ *
+ * @param ship - The ship.
+ * @returns `true` for a ship that will not respawn.
+ */
+export function playerOut(ship: Readonly<PlayerShip>): boolean {
+  return (
+    ship.active && ship.state === 'dead' && ship.lives <= 0 && ship.stateTicks >= PLAYER_DEAD_TICKS
+  );
 }
 
 /**
@@ -384,8 +468,11 @@ export function playerBankFrame(bank: number, bankFrames: number): number {
  * Never allocates.
  *
  * @remarks
- * Inactive ships are skipped. `dying` and `dead` only advance their timers here — the death
- * sequence and respawn are M1-12's. Invulnerability counts down in every state.
+ * Inactive ships are skipped. Invulnerability counts down in every state. A `dying` ship stays
+ * where it was hit and becomes `dead` after {@link PLAYER_DYING_TICKS} ticks; `dead` only counts
+ * its timer (the World respawns it after {@link PLAYER_DEAD_TICKS}). The tick a `respawning`
+ * fly-in ends, `invulnTicks` is set to `spec.respawnInvulnTicks` — the invulnerability after a
+ * respawn starts when control returns.
  *
  * @param ship - The ship to move.
  * @param spec - Its tunables (speeds, margins, fly-in length, bank frames).
@@ -412,11 +499,21 @@ export function updatePlayer(
   const state = ship.state;
   if (state === 'entering' || state === 'respawning') {
     const duration = spec.enterTicks;
-    const t = duration <= 0 || ship.stateTicks >= duration ? 1 : ship.stateTicks / duration;
-    ship.x = camera.x + ENTER_START_X + (ENTER_END_X - ENTER_START_X) * EASINGS.outCubic(t);
+    const done = duration <= 0 || ship.stateTicks >= duration;
+    // `EASINGS.outCubic` written out: a fractional argument and result of a call V8 does not
+    // inline are boxed (two heap numbers per fly-in tick — every respawn flies in, M1-12).
+    const u = done ? 0 : 1 - ship.stateTicks / duration;
+    ship.x = camera.x + ENTER_START_X + (ENTER_END_X - ENTER_START_X) * (1 - u * u * u);
     ship.y += camera.dy;
     ship.bank = 0;
-    if (t >= 1) setPlayerState(ship, 'alive');
+    if (done) {
+      if (state === 'respawning') ship.invulnTicks = spec.respawnInvulnTicks;
+      setPlayerState(ship, 'alive');
+    }
+    return;
+  }
+  if (state === 'dying') {
+    if (ship.stateTicks >= PLAYER_DYING_TICKS) setPlayerState(ship, 'dead');
     return;
   }
   if (state !== 'alive') return;

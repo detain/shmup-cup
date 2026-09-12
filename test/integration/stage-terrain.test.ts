@@ -104,6 +104,8 @@ describe('integration: the test-range stage', () => {
     const db = shipped();
     const play = () => {
       const game = createGame(createHeadlessPlatform(), { seed: 5, stage: 'test-range' }, db);
+      // Nobody steers: god mode keeps the ship alive to the end (deaths since M1-12).
+      game.world.debugFlags.godMode = true;
       let floors = 0;
       for (let tick = 0; tick < 6000 && game.world.status === 'playing'; tick++) {
         game.step();

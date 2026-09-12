@@ -599,9 +599,12 @@ describe('core/powerups — the Force Field in the World', () => {
     grantShield(ship.shield);
     ship.y = w.camera.y + 200 - 28; // the terrain box reaches into the 32-px floor
     for (let i = 0; i < 3; i++) tick(w, input);
-    expect(ship.hits).toBeGreaterThan(0);
+    expect(ship.hits).toBe(1);
     expect(ship.hitCause).toBe(PlayerHitCause.Terrain);
-    expect(ship.shield.hits).toBe(5);
+    expect(ship.shield.absorbed).toBe(0);
+    // The hit got through: the ship died (M1-12) and lost the unbroken shield with its life.
+    expect(ship.state).toBe('dying');
+    expect(ship.shield.kind).toBe(ShieldKind.None);
   });
 
   it('absorbs enemy contact', () => {

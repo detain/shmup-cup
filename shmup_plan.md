@@ -1288,6 +1288,59 @@ the browser dev app and as a Tizen 5.5 bundle.
 - **Acceptance:** each preset's outcome (loadout, cursor, camera, cleared pools), invulnerability timing, hit-stop
   determinism (hash equality across runs), game over, score clamping and per-player totals.
 - **Refs:** `shmup_feat.md` §10, §15 (score, lives), §18 (hit-stop), §2 (death penalty).
+- **As built:**
+  - **Where the death happens.** `playerHit` still only *records* a hit (so every system of
+    phase 6 sees the same ships); phase 7 turns a ship hit on this tick (`hitTick === tick`) into
+    the death sequence after the shots' hits, the power-ups and the tick's score (`killShip` in
+    `core/world`): `core/player` `killPlayer` (`dying`, `lives − 1`, never below 0), `SFX
+    PlayerDeath`, `FX ExplosionLarge` + the new `FX_CUES.Debris` (5), `SimEventKind.Rumble`, the
+    new `SimEventKind.MusicDuck` (9, `param` = `DEATH_MUSIC_DUCK_TICKS` 120), `requestHitStop(8)`,
+    `requestShake(Medium, 20)`, `cancelAll(Sparkle)` (lasers too), then the penalty. A shield
+    absorbs first as before; terrain passes the Force Field (D8), so a terrain death takes the
+    shield with it.
+  - **Timing.** `dying` lasts `PLAYER_DYING_TICKS` (24, counted after the hit-stop — the plan gave
+    no length), `dead` `PLAYER_DEAD_TICKS` (60); the respawn decision runs in phase 2 right after
+    the ships' timers (`lifecycleSystem`), so the fly-in's first tick is the next one. A
+    `respawning` ship blinks from the start of the fly-in (`invulnTicks` = `enterTicks` +
+    `respawnInvulnTicks`) and gets exactly `respawnInvulnTicks` on the tick control returns;
+    `kestrel.player.json` and `DEFAULT_PLAYER_SHIP` now say **150** (was 120). The invulnerable
+    ship fires (weapons only need `alive`).
+  - **Penalties** live in `core/powerups` (`applyDeathPenalty`, `loseOneLevel` — `player` cannot
+    import the weapons' values without a cycle), applied at the death: every preset loses the
+    shield; `classic` one level (Option → Double / Laser → Missile → Speed); `arcade` everything
+    and cursor −1 — and at the respawn `stage.restartAt(stage.checkpoint)` (whose `clear` hook is
+    now `clearSession`: pools, enemies, weapons, power-ups, score counters); without a stage the
+    same clear runs with no camera move; other ships in play (co-op) fly in again without a
+    penalty. Every respawn flies in from the left edge of the current view.
+  - **Game over** when every active ship is out (`playerOut`: `dead`, dead time over, no lives)
+    — set after the last explosion and dead time, only from `playing` / `bossWarning` (never over
+    `stageClear`). The out ship stays `dead`; the World keeps simulating.
+  - **Scoring.** `ScoreBoard` (`scores[]` of `PlayerScore { score, displayDirty }`, session
+    `hiScore` + `hiScoreDirty`, `setHiScore` for the save of M1-17) inside a `ScoringSystem`
+    (`world.scoring`). `addScore(world, player, points)` as planned (floored, clamped, ≤ 0 / NaN /
+    bad slots ignored). Crediting mirrors M1-11's drops: phase 7 (after pickups and Mega Crash)
+    and phase 3 (kills made between ticks), each outcome once. `EnemyOutcomes` gained
+    `bonusCount` / `bonusScore` / `bonusBy` so a formation bonus goes to the killer of its last
+    member. `hashWorld` covers the scores and credit counters, not the hi-score.
+  - **fx.** `FxState` (`world.fx`: shake magnitude / ticks / duration, flash ticks / kind, request
+    ticks) + `requestHitStop` / `requestShake` / `requestFlash` (`FlashKind.MegaCrash` — Mega Crash
+    now goes through it, same event) / `tickFx` / `shakeAmount`. Hit-stop now counts down only on
+    ticks that started frozen (`fx.frozen`, set by `stepWorld`), so a request during tick `t`
+    freezes exactly `t + 1 … t + n`; shake / flash count down every tick except their request's.
+    `SimEventKind.Shake` carries the duration in `id`, `Flash` the kind in `id`. The screen view
+    stays empty until M1-14.
+  - **Shell.** The flight HUD shows player 1's score, `HI` and the hi-score, `lives − 1` stock and
+    `GAME OVER` as its title; it rebuilds only on a change (clearing the dirty flags).
+  - **Zero-allocation fixes found on the way.** The fly-in inlines `EASINGS.outCubic` (the call
+    boxed its fractional argument and result — ~1.7 KB per respawn); cancel sparkles are pushed at
+    whole pixels. New guard `test/world/world-death-alloc.test.ts` (a death every ~5 s, classic
+    penalty, scrolling): ≈ 10 KB / 10,000 ticks. The co-op power-up guard now re-grants broken
+    shields and uses the `casual` penalty: with `classic` deaths changing loadouts late, V8 left
+    `core/weapons`' shot×enemy grid visitor deoptimised (Maglev, "insufficient feedback", never
+    re-tiered in the run) and it boxed doubles (≈ 80 KB) — a tiering quirk to watch in M1-19's
+    bench, not a per-death cost.
+  - **Tests** that parked ships inside terrain, ran full ticks after a hit or played stages
+    unattended now use god mode, top up lives, or run the bullet system's phases alone.
 
 ### M1-13 — Bosses & the WARNING sequence
 

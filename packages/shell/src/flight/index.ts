@@ -21,6 +21,12 @@
  * effects and refills the starfield from the tick (it pauses with the game). No allocation per
  * frame.
  *
+ * **HUD (M1-12).** Player 1's score and the session hi-score (`HI`) in the top bar, `lives − 1`
+ * stock ships in the bottom bar (`core/player`: `lives` counts the ship in play), and `GAME OVER`
+ * in place of the title once the World's status says so. The draw list is rebuilt only when one of
+ * them changes (the scores' `displayDirty` / `hiScoreDirty` flags, cleared here). The real HUD with
+ * the power meter is M1-16's.
+ *
  * **Implements.**
  * - shmup_feat.md §5 — the ship under the player's control
  * - shmup_feat.md §18 — parallax starfields behind the world layers
@@ -108,7 +114,7 @@ const STAR_LAYERS = [
 const HUD_BAR_COLOR = 0x1d2a5c;
 
 /** String slots of the HUD draw list. */
-const STRING = { p1: 0, title: 1, hint: 2 } as const;
+const STRING = { p1: 0, title: 1, hint: 2, hi: 3, gameOver: 4 } as const;
 
 /**
  * Creates the free-flight scene for a game.
@@ -146,10 +152,14 @@ export function createFlightScene(game: Game, options: FlightSceneOptions = {}):
   };
   const stage = game.world.stage;
 
-  const hud = createDrawList(32, 4);
+  const hud = createDrawList(32, 5);
   hud.setString(STRING.p1, '1P');
   hud.setString(STRING.title, stage === null ? 'FREE FLIGHT' : stage.stage.name.toUpperCase());
   hud.setString(STRING.hint, 'ARROWS MOVE');
+  hud.setString(STRING.hi, 'HI');
+  hud.setString(STRING.gameOver, 'GAME OVER');
+  const scoring = game.world.scoring.board;
+  const p1Score = scoring.scores[0];
   const ui = createDrawList(1, 1);
 
   const frame: {
@@ -181,23 +191,35 @@ export function createFlightScene(game: Game, options: FlightSceneOptions = {}):
   };
 
   /**
-   * Rebuilds the HUD: both bars, the 1P label and score, the scene title (`FREE FLIGHT` or the
-   * stage name), stock ships and a control hint.
+   * Rebuilds the HUD: both bars, the 1P label and score, the scene title (`FREE FLIGHT`, the
+   * stage name or `GAME OVER`), the hi-score, stock ships and a control hint.
    *
    * @param lives - Player 1's ships (the HUD shows `lives - 1` in stock).
+   * @param over - Whether the game is over.
    */
-  const buildHud = (lives: number): void => {
+  const buildHud = (lives: number, over: boolean): void => {
     hud.clear();
     hud.rect(0, 0, PLAYFIELD_W, 8, HUD_BAR_COLOR);
     hud.rect(0, 208, PLAYFIELD_W, 8, HUD_BAR_COLOR);
     hud.text(STRING.p1, 4, 0, 0x38c8e8);
-    hud.number(0, 20, 0, 8);
-    hud.text(STRING.title, PLAYFIELD_W / 2, 0, 0xf8d030, TextAlign.Center);
+    hud.number(p1Score.score, 20, 0, 8);
+    hud.text(
+      over ? STRING.gameOver : STRING.title,
+      PLAYFIELD_W / 2,
+      0,
+      over ? 0xf85858 : 0xf8d030,
+      TextAlign.Center,
+    );
+    hud.text(STRING.hi, 300, 0, 0xf8d030);
+    hud.number(scoring.hiScore, 316, 0, 8);
     for (let i = 0; i < lives - 1 && i < 8; i++) hud.sprite(base + OWN.life, 0, 4 + i * 10, 209);
     hud.text(STRING.hint, PLAYFIELD_W / 2, 208, 0x8890b0, TextAlign.Center);
+    p1Score.displayDirty = false;
+    scoring.hiScoreDirty = false;
   };
 
   let hudLives = -1;
+  let hudOver = false;
   return {
     spriteNames,
     world,
@@ -219,9 +241,11 @@ export function createFlightScene(game: Game, options: FlightSceneOptions = {}):
         );
       }
       const lives = game.world.players[0].lives;
-      if (lives !== hudLives) {
+      const over = game.world.status === 'gameOver';
+      if (lives !== hudLives || over !== hudOver || p1Score.displayDirty || scoring.hiScoreDirty) {
         hudLives = lives;
-        buildHud(lives);
+        hudOver = over;
+        buildHud(lives, over);
       }
       return frame;
     },

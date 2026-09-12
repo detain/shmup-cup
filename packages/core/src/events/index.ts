@@ -53,14 +53,20 @@ export const SimEventKind = {
    * (enemy explosions push 1).
    */
   Particles: 2,
-  /** Shake the screen: `param` is the magnitude in pixels. */
+  /**
+   * Shake the screen: `param` is the magnitude in pixels, `id` the duration in ticks over which it
+   * decays (`core/fx` `requestShake`, M1-12).
+   */
   Shake: 3,
   /**
-   * Flash the screen: `param` is the duration in ticks (Mega Crash pushes 12 — `core/powerups`
-   * `MEGA_CRASH_FLASH_TICKS`, M1-11).
+   * Flash the screen: `id` is the `core/fx` `FlashKind`, `param` the duration in ticks (Mega Crash
+   * pushes kind 0 for 12 ticks — `core/fx` `requestFlash`).
    */
   Flash: 4,
-  /** Freeze the simulation for `param` ticks (big hits, boss kills). */
+  /**
+   * The simulation freezes for `param` ticks (big hits, boss kills — `core/fx` `requestHitStop`,
+   * M1-12). Informational: the World already froze itself.
+   */
   HitStop: 5,
   /** Rumble a gamepad: `id` is the player index, `param` the magnitude. */
   Rumble: 6,
@@ -74,6 +80,11 @@ export const SimEventKind = {
    * `MeterSlot` code, `x`/`y` = the ship (whole pixels), `param` = the player slot.
    */
   PowerUp: 8,
+  /**
+   * Duck the music (shmup_feat.md §19 ducking — the player's death, M1-12): `param` = ticks until
+   * it is back at full volume, `id` = the player slot.
+   */
+  MusicDuck: 9,
 } as const;
 
 /** One of the {@link SimEventKind} codes. */
@@ -90,6 +101,7 @@ export const SIM_EVENT_KIND_NAMES: readonly string[] = Object.freeze([
   'rumble',
   'formationBonus',
   'powerUp',
+  'musicDuck',
 ]);
 
 /**
@@ -229,6 +241,8 @@ export const FX_CUES = {
   BulletCancel: 3,
   /** A shield broke (its last hit — `core/shields`, M1-11): `x`/`y` = the ship. */
   ShieldBreak: 4,
+  /** Wreckage of the player's ship flying apart (the death sequence, M1-12): `x`/`y` = the ship. */
+  Debris: 5,
 } as const;
 
 /** One of the {@link FX_CUES} ids. */

@@ -9,7 +9,7 @@
  * This entry point exports the implemented (and partial) public API. Placeholder modules
  * under `src/<module>/` (weapons, bosses, scoring, …) are exported here as they get
  * implemented — `bullets` and `rank` joined with plan step M1-09, `weapons` and `options` with
- * M1-10, `powerups` and `shields` with M1-11.
+ * M1-10, `powerups` and `shields` with M1-11, `scoring` and `fx` with M1-12.
  *
  * @packageDocumentation
  */
@@ -276,16 +276,21 @@ export {
   DIAGONAL_SCALE,
   ENTER_END_X,
   ENTER_START_X,
+  PLAYER_DEAD_TICKS,
+  PLAYER_DYING_TICKS,
   PLAYER_HIT_CAUSE_NAMES,
   PLAYER_STATES,
   PlayerHitCause,
   SPAWN_Y,
   createPlayer,
   createPlayerIntent,
+  killPlayer,
   playerBankFrame,
   playerHit,
+  playerOut,
   readPlayerIntent,
   resolvePlayerShip,
+  respawnPlayer,
   setPlayerState,
   spawnPlayer,
   updatePlayer,
@@ -508,11 +513,13 @@ export {
   PICKUP_MAGNET_SPEED,
   PowerMeter,
   advanceMeter,
+  applyDeathPenalty,
   canEquipSlot,
   createPowerMeter,
   createPowerUpSystem,
   equipSlot,
   equippableSlots,
+  loseOneLevel,
   meterSlotOf,
   type DirectItem,
   type ItemKindSpec,
@@ -523,6 +530,39 @@ export {
 } from './powerups/index.js';
 
 export {
+  FLASH_KIND_TICKS,
+  FlashKind,
+  FxState,
+  MAX_FX_TICKS,
+  MAX_HIT_STOP_TICKS,
+  ShakeMagnitude,
+  createFxState,
+  requestFlash,
+  requestHitStop,
+  requestShake,
+  shakeAmount,
+  tickFx,
+  type FxHost,
+  type HitStopHost,
+} from './fx/index.js';
+
+export {
+  MAX_SCORE,
+  PlayerScore,
+  ScoreBoard,
+  addScore,
+  createScoreBoard,
+  createScoringSystem,
+  type HiScoreEntry,
+  type ScoreHost,
+  type ScoringHost,
+  type ScoringSystem,
+} from './scoring/index.js';
+
+export {
+  DEATH_HIT_STOP_TICKS,
+  DEATH_MUSIC_DUCK_TICKS,
+  DEATH_SHAKE_TICKS,
   ENGINE_SPRITES,
   GRID_MARGIN,
   WORLD_PHASES,

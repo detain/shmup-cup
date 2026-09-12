@@ -69,7 +69,7 @@ function hold(intent: PlayerIntent, held: number): void {
 describe('core/player', () => {
   it('describes itself', () => {
     expect(moduleInfo.name).toBe('player');
-    expect(moduleInfo.status).toBe('partial');
+    expect(moduleInfo.status).toBe('implemented');
     expect(PLAYER_STATES).toEqual(['entering', 'alive', 'dying', 'dead', 'respawning']);
   });
 

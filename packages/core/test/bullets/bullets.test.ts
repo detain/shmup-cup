@@ -159,6 +159,23 @@ function run(w: World, ticks: number): void {
 }
 
 /**
+ * Runs only the bullet system's part of a tick — movement (phase 5), the hits on the ships (phase
+ * 6) and the flush (phase 8) — without the damage phase, so a hit ship stays `alive` (the death
+ * sequence of M1-12 would cancel the bullets under test).
+ *
+ * @param w - The world.
+ * @param ticks - Ticks.
+ */
+function runBullets(w: World, ticks: number): void {
+  for (let i = 0; i < ticks; i++) {
+    w.bullets.update();
+    w.bullets.collidePlayers();
+    w.pools.flushAll();
+    w.tick++;
+  }
+}
+
+/**
  * Drains the world's events into plain records.
  *
  * @param w - The world.
@@ -279,7 +296,7 @@ function origin(x: number, y: number): BulletOrigin {
 describe('core/bullets kinematics', () => {
   it('accelerates up to maxSpeed, integrating position each tick', () => {
     const w = world();
-    park(w, 20, 180);
+    park(w, 20, 150); // out of the way, above the floor
     const i = w.bullets.spawn(100, 50, 0, 1, BulletKind.RoundPink);
     w.bullets.setMotion(i, 0.5, 0, 0, 2);
     const f = fields(w);
@@ -296,7 +313,7 @@ describe('core/bullets kinematics', () => {
 
   it('decelerates down to minSpeed (and may clamp to a negative minimum = reverse)', () => {
     const w = world();
-    park(w, 20, 180);
+    park(w, 20, 150); // out of the way, above the floor
     const a = w.bullets.spawn(100, 50, 0, 2, BulletKind.RoundPink);
     w.bullets.setMotion(a, -0.5, 0, 0.5, 4);
     const b = w.bullets.spawn(200, 50, 0, 0.5, BulletKind.RoundPink);
@@ -318,7 +335,7 @@ describe('core/bullets kinematics', () => {
 
   it('turns by angVel per tick (wrapping), recomputing velocity and frame from the tables', () => {
     const w = world();
-    park(w, 20, 180);
+    park(w, 20, 150); // out of the way, above the floor
     const i = w.bullets.spawn(150, 100, 1000, 1, BulletKind.OvalPink);
     w.bullets.setMotion(i, 0, 16, 0, 16);
     run(w, 4);
@@ -331,7 +348,7 @@ describe('core/bullets kinematics', () => {
 
   it('orbits: constant speed + angVel traces a closed circle', () => {
     const w = world();
-    park(w, 20, 180);
+    park(w, 20, 150); // out of the way, above the floor
     w.bullets.setMotion(w.bullets.spawn(200, 100, 0, 1, 0), 0, 8, 0, 16);
     run(w, 128);
     expect(fields(w).x[0]).toBeCloseTo(200, 6);
@@ -369,6 +386,7 @@ describe('core/bullets kinematics', () => {
   it('changes speed and / or heading when its age reaches changeAt (NaN keeps, AIM re-aims)', () => {
     const w = world();
     park(w, 150, 190);
+    w.debugFlags.godMode = true; // parked in the floor: no terrain death
     const a = w.bullets.spawn(100, 40, 0, 1, 0);
     w.bullets.setChange(a, 3, 0.25, UNCHANGED);
     const b = w.bullets.spawn(150, 40, 0, 1, 0);
@@ -384,6 +402,7 @@ describe('core/bullets kinematics', () => {
   it('homes by at most turnRate per tick for its lifetime, then flies straight', () => {
     const w = world();
     park(w, 100, 190);
+    w.debugFlags.godMode = true; // parked in the floor: no terrain death
     const i = w.bullets.spawn(100, 40, 0, 1, 0);
     w.bullets.setHoming(i, 8, 5);
     const f = fields(w);
@@ -480,12 +499,21 @@ describe('core/bullets vs players', () => {
     const reach = w.ship.hurtRadius + BULLET_KINDS[0].radius;
     w.bullets.spawn(192 + reach, 100, 0, 0, 0); // touching (closed test)
     w.bullets.spawn(192 - 1, 100, 0, 0, 0);
-    run(w, 1);
+    runBullets(w, 1);
     expect([ship.hits, ship.hitCause]).toEqual([1, PlayerHitCause.Bullet]);
     expect(w.bullets.count).toBe(1);
-    run(w, 1);
+    runBullets(w, 1);
     expect(ship.hits).toBe(2);
     expect(w.bullets.count).toBe(0);
+  });
+
+  it('a full tick turns the hit into a death that cancels the other bullets (M1-12)', () => {
+    const w = world();
+    const ship = w.players[0];
+    w.bullets.spawn(192, 100, 0, 0, 0);
+    w.bullets.spawn(300, 100, 0, 0, 0);
+    run(w, 1);
+    expect([ship.hits, ship.state, w.bullets.count]).toEqual([1, 'dying', 0]);
   });
 
   it('ignores bullets just out of reach, and passes through god mode / invulnerable ships', () => {
@@ -525,7 +553,7 @@ describe('core/bullets lasers', () => {
     const hits: number[] = [];
     const phases: number[] = [];
     for (let t = 0; t < 16; t++) {
-      run(w, 1);
+      runBullets(w, 1); // no damage phase: the ship survives every hit
       hits.push(ship.hits);
       phases.push(w.bullets.lasers.count === 0 ? -1 : w.bullets.lasers.fields.phase[0]);
     }

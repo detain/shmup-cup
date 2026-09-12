@@ -40,7 +40,7 @@ describe('core/events', () => {
     expect(SimEventKind.Sfx).toBe(0);
     expect(SIM_EVENT_KIND_NAMES.length).toBe(Object.keys(SimEventKind).length);
     const codes = Object.values(SimEventKind);
-    expect(codes).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8]);
+    expect(codes).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
     expect(SIM_EVENT_KIND_NAMES[SimEventKind.HitStop]).toBe('hitstop');
   });
 

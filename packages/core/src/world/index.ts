@@ -37,7 +37,7 @@
  * `stageClear`, `spawn` / `formation` go to the enemy system, a checkpoint restart clears every
  * pool and every enemy; `warning` / `boss` wait for M1-13. Phase 6 tests each alive ship's
  * terrain box against the stage's {@link World.terrain | collision map} and reports contact
- * through `playerHit` (recorded only until the death sequence of M1-12). The view carries the
+ * through `playerHit` (a death, M1-12). The view carries the
  * stage's parallax bands (scrolled in phase 9) and terrain. Without a stage (`stage: null`) the
  * camera is static unless something sets its scroll velocity (`camera.vx` / `camera.vy`) — free
  * flight.
@@ -76,6 +76,24 @@
  * items (`LayerId.Items`) and the shields (`LayerId.Player`, over the ships); their sprites are
  * {@link ENGINE_SPRITES} too.
  *
+ * **Death, respawn, lives and score (M1-12).** A hit that gets through to a ship during phase 6
+ * (`playerHit` records it) becomes the **death sequence** in phase 7, after the shots' hits, the
+ * power-ups and the tick's score: the ship is `dying` and loses a life (`core/player`
+ * `killPlayer`), `SFX PlayerDeath`, `FX ExplosionLarge` + `FX Debris`, a gamepad rumble and a
+ * `SimEventKind.MusicDuck` ({@link DEATH_MUSIC_DUCK_TICKS}) are pushed, a
+ * {@link DEATH_HIT_STOP_TICKS}-tick hit-stop and a medium shake are requested (`core/fx`), every
+ * cancelable enemy bullet and laser is cancelled with sparkles, and the death penalty of
+ * `config.deathPenalty` applies (`core/powerups` `applyDeathPenalty`, decision D6). The ship
+ * explodes (`dying`), then waits (`dead`); in phase 2 of the tick its dead time ends, the World
+ * respawns it when it has a life left (`respawnPlayer`: a blinking fly-in, invulnerable
+ * afterwards) — with the `arcade` penalty after restarting the stage at its last checkpoint
+ * (`StageRunner.restartAt`, which clears enemies, bullets, lasers, shots and items; in free flight
+ * the same clear without a camera move; other ships in play fly in again). When no active ship
+ * has a life left, the status becomes `gameOver` (from `playing` / `bossWarning`). Scores
+ * (`core/scoring`, {@link World.scoring}) are credited in phase 7 (kills, formation bonuses,
+ * pickups) and phase 3 (kills made between ticks); the effect timers ({@link World.fx}) count
+ * down in phase 9.
+ *
  * **Zero allocation.** Everything is allocated by {@link createWorld}; {@link stepWorld} and the
  * systems only write numbers into existing objects and typed arrays.
  *
@@ -90,7 +108,8 @@
  * {@link WorldStatus}, {@link WORLD_STATUSES}, {@link WorldPhase}, {@link WORLD_PHASE_NAMES},
  * {@link WORLD_PHASES}, {@link WorldPhaseEntry}, {@link WorldSystem}, {@link PoolRegistry},
  * {@link RegisteredPool}, {@link syncWorldView}, {@link GRID_MARGIN}, {@link resolveWorldStage},
- * {@link ENGINE_SPRITES}.
+ * {@link ENGINE_SPRITES}, {@link DEATH_HIT_STOP_TICKS}, {@link DEATH_SHAKE_TICKS},
+ * {@link DEATH_MUSIC_DUCK_TICKS}.
  *
  * @module
  */
@@ -104,24 +123,53 @@ import {
   type TerrainMap,
 } from '../collision/index.js';
 import { DEFAULT_BEHAVIORS } from '../behaviors/index.js';
-import { BULLET_SPRITES, createBulletSystem, type BulletSystem } from '../bullets/index.js';
+import {
+  BULLET_SPRITES,
+  CancelMode,
+  createBulletSystem,
+  type BulletSystem,
+} from '../bullets/index.js';
 import type { ContentDb, PlayerShipSpec, StageMusicEvent, StageSpec } from '../data/index.js';
 import { createDebugFlags, type DebugFlags } from '../debug/index.js';
 import { createEnemySystem, type EnemyBehaviorLookup, type EnemySystem } from '../enemies/index.js';
+import {
+  ShakeMagnitude,
+  createFxState,
+  requestHitStop,
+  requestShake,
+  tickFx,
+  type FxState,
+} from '../fx/index.js';
 import { OPTION_SPRITE } from '../options/index.js';
-import { ITEM_SPRITES, createPowerUpSystem, type PowerUpSystem } from '../powerups/index.js';
+import {
+  ITEM_SPRITES,
+  applyDeathPenalty,
+  createPowerUpSystem,
+  type PowerUpSystem,
+} from '../powerups/index.js';
+import { createScoringSystem, type ScoringSystem } from '../scoring/index.js';
 import { FORCE_FIELD_SPRITE } from '../shields/index.js';
 import { applyLoadoutPreset, createWeaponSystem, type WeaponSystem } from '../weapons/index.js';
-import { SimEventKind, createEventQueue, type EventQueue } from '../events/index.js';
+import {
+  FX_CUES,
+  SFX_CUES,
+  SimEventKind,
+  createEventQueue,
+  type EventQueue,
+} from '../events/index.js';
 import { defineModule } from '../module-info.js';
 import {
+  PLAYER_DEAD_TICKS,
   PlayerHitCause,
   createPlayer,
   createPlayerIntent,
+  killPlayer,
   playerBankFrame,
   playerHit,
+  playerOut,
   readPlayerIntent,
   resolvePlayerShip,
+  respawnPlayer,
   spawnPlayer,
   updatePlayer,
   type PlayerCamera,
@@ -245,8 +293,13 @@ export interface World {
   readonly camera: WorldCamera;
   /** Session status. */
   status: WorldStatus;
-  /** Remaining hit-stop ticks: while > 0, phases 2–8 are skipped (M1-12 requests it). */
+  /**
+   * Remaining hit-stop ticks: a tick that starts with it > 0 skips phases 2–8 and counts it down
+   * (`core/fx` `requestHitStop` raises it — the player's death).
+   */
   hitStop: number;
+  /** Shake and flash timers (`core/fx`); counted down in phase 9. */
+  readonly fx: FxState;
   /** Debug switches (god mode, hitboxes, frame advance, slow motion). */
   readonly debugFlags: DebugFlags;
   /** Struct-of-arrays pools of the session's systems. */
@@ -269,6 +322,8 @@ export interface World {
   readonly weapons: WeaponSystem;
   /** Power meters, capsules, Mega Crash and the shields' feedback (`core/powerups`). */
   readonly powerups: PowerUpSystem;
+  /** Per-player scores and the session hi-score, credited every tick (`core/scoring`). */
+  readonly scoring: ScoringSystem;
   /** The session's rank (`core/rank`; constant in M1: the difficulty's base). */
   rank: number;
   /** What the renderer draws: live references, refreshed at the end of every tick. */
@@ -385,9 +440,80 @@ const playersSystem: WorldSystem = (world) => {
   for (let i = 0; i < players.length; i++) {
     updatePlayer(players[i], world.ship, world.intents[i], world.camera);
   }
+  lifecycleSystem(world);
   world.powerups.updatePlayers();
   world.weapons.updatePlayers();
 };
+
+/**
+ * Part of phase 2, after the ships' timers advanced: respawns every ship whose dead time is over
+ * and that has a life left (the `arcade` penalty restarts the stage at its last checkpoint first),
+ * then ends the game when no active ship has a life left.
+ *
+ * @param world - The world.
+ */
+function lifecycleSystem(world: World): void {
+  const players = world.players;
+  let active = 0;
+  let out = 0;
+  for (let i = 0; i < players.length; i++) {
+    const ship = players[i];
+    if (!ship.active) continue;
+    active++;
+    if (ship.state === 'dead' && ship.stateTicks >= PLAYER_DEAD_TICKS && ship.lives > 0) {
+      respawnShip(world, i);
+    }
+    if (playerOut(ship)) out++;
+  }
+  if (
+    active > 0 &&
+    out === active &&
+    (world.status === 'playing' || world.status === 'bossWarning')
+  ) {
+    world.status = 'gameOver';
+  }
+}
+
+/**
+ * Brings a ship back after its dead time (rare, cold path). With the `arcade` penalty the stage
+ * restarts at its last checkpoint first (`StageRunner.restartAt` — its `clear` hook empties every
+ * pool and system; in free flight the same clear runs without a camera move) and every other ship
+ * in play flies in again with it.
+ *
+ * @param world - The world.
+ * @param slot - The ship's player slot.
+ */
+function respawnShip(world: World, slot: number): void {
+  const players = world.players;
+  const camera = world.camera;
+  if (world.config.deathPenalty === 'arcade') {
+    const stage = world.stage;
+    if (stage !== null) stage.restartAt(stage.checkpoint);
+    else clearSession(world);
+    for (let i = 0; i < players.length; i++) {
+      const other = players[i];
+      if (i === slot || !other.active || other.state === 'dying' || other.state === 'dead') {
+        continue;
+      }
+      respawnPlayer(other, world.ship, camera);
+    }
+  }
+  respawnPlayer(players[slot], world.ship, camera);
+}
+
+/**
+ * Empties every pool and system of the session (a checkpoint restart — the stage hooks' `clear` —
+ * or the `arcade` respawn in free flight).
+ *
+ * @param world - The world.
+ */
+function clearSession(world: World): void {
+  world.pools.clearAll();
+  world.enemies.clear();
+  world.weapons.clear();
+  world.powerups.clear();
+  world.scoring.clear();
+}
 
 /**
  * Phase 3: the stage runner moves the camera and fires the due timeline events; without a stage
@@ -399,6 +525,7 @@ const playersSystem: WorldSystem = (world) => {
 const stageSystem: WorldSystem = (world) => {
   const enemies = world.enemies;
   world.powerups.beginTick();
+  world.scoring.beginTick();
   enemies.beginTick();
   const stage = world.stage;
   if (stage !== null) {
@@ -466,7 +593,7 @@ const collisionSystem: WorldSystem = (world) => {
 
 /**
  * Part of phase 6: each alive ship's terrain box against the stage terrain; contact is reported
- * through `playerHit` (cause `Terrain` — recorded only until the death sequence of M1-12).
+ * through `playerHit` (cause `Terrain` — the Force Field does not absorb it: a death).
  *
  * @param world - The world.
  * @param terrain - The stage's collision map.
@@ -493,14 +620,61 @@ function terrainSystem(world: World, terrain: TerrainMap): void {
 /**
  * Phase 7: applies the player shots' hits (damage, deaths, drops, kill records — `core/weapons`),
  * then the power-ups (`core/powerups`: pickups and Auto Power-Up, Mega Crash, shield feedback,
- * capsules from the tick's drops); score and respawn join in M1-12.
+ * capsules from the tick's drops), then credits the tick's score (`core/scoring`), then starts
+ * the death sequence of every ship hit this tick.
  *
  * @param world - The world.
  */
 const damageSystem: WorldSystem = (world) => {
   world.weapons.applyHits();
   world.powerups.resolve();
+  world.scoring.resolve();
+  const players = world.players;
+  const tick = world.tick;
+  for (let i = 0; i < players.length; i++) {
+    const ship = players[i];
+    if (!ship.active || ship.state !== 'alive') continue;
+    if (ship.hitTick === tick && ship.hitCause !== PlayerHitCause.None) killShip(world, i);
+  }
 };
+
+/** Hit-stop of a player's death, in ticks (plan M1-12). */
+export const DEATH_HIT_STOP_TICKS = 8;
+
+/** Length of the medium screen shake of a player's death, in ticks. */
+export const DEATH_SHAKE_TICKS = 20;
+
+/** How long the music stays ducked after a player's death (`SimEventKind.MusicDuck` param). */
+export const DEATH_MUSIC_DUCK_TICKS = 120;
+
+/**
+ * The death sequence of one ship (rare, cold path — see the module docs): `killPlayer`, the
+ * explosion / debris / rumble / music-duck events, hit-stop, shake, bullet cancel, death penalty.
+ *
+ * @param world - The world.
+ * @param slot - The ship's player slot.
+ */
+function killShip(world: World, slot: number): void {
+  const ship = world.players[slot];
+  killPlayer(ship);
+  const events = world.events;
+  const x = Math.floor(ship.x) | 0;
+  const y = Math.floor(ship.y) | 0;
+  events.push(SimEventKind.Sfx, SFX_CUES.PlayerDeath, x, y, 0);
+  events.push(SimEventKind.Particles, FX_CUES.ExplosionLarge, x, y, 1);
+  events.push(SimEventKind.Particles, FX_CUES.Debris, x, y, 1);
+  events.push(SimEventKind.Rumble, slot, x, y, 1);
+  events.push(SimEventKind.MusicDuck, slot, 0, 0, DEATH_MUSIC_DUCK_TICKS);
+  requestHitStop(world, DEATH_HIT_STOP_TICKS);
+  requestShake(world, ShakeMagnitude.Medium, DEATH_SHAKE_TICKS);
+  world.bullets.cancelAll(CancelMode.Sparkle);
+  applyDeathPenalty(
+    world.config.deathPenalty,
+    ship,
+    world.weapons.loadouts[slot],
+    world.powerups.meters[slot],
+  );
+}
 
 /**
  * Phase 8: applies every pool's deferred frees.
@@ -513,12 +687,13 @@ const removalSystem: WorldSystem = (world) => {
 };
 
 /**
- * Phase 9: counts hit-stop down and refreshes the view mirrors.
+ * Phase 9: counts the hit-stop down (on frozen ticks) and the shake / flash timers (`core/fx`
+ * `tickFx`), then refreshes the view mirrors.
  *
  * @param world - The world.
  */
 const fxSystem: WorldSystem = (world) => {
-  if (world.hitStop > 0) world.hitStop--;
+  tickFx(world);
   syncWorldView(world);
 };
 
@@ -597,7 +772,7 @@ export function resolveWorldStage(config: GameConfig, content: ContentDb): Stage
 /** A {@link World} while {@link createWorld} assembles it (the stage fields are set last). */
 type WorldUnderConstruction = Omit<
   World,
-  'stage' | 'enemies' | 'bullets' | 'weapons' | 'powerups'
+  'stage' | 'enemies' | 'bullets' | 'weapons' | 'powerups' | 'scoring'
 > & {
   /** See {@link World.stage}. */
   stage: StageRunner | null;
@@ -609,6 +784,8 @@ type WorldUnderConstruction = Omit<
   weapons: WeaponSystem;
   /** See {@link World.powerups}. */
   powerups: PowerUpSystem;
+  /** See {@link World.scoring}. */
+  scoring: ScoringSystem;
 };
 
 /**
@@ -692,6 +869,7 @@ export function createWorld(
     camera,
     status: 'playing',
     hitStop: 0,
+    fx: createFxState(),
     debugFlags: createDebugFlags(),
     pools: createPoolRegistry(),
     grid: createSpatialGrid(PLAYFIELD_W + 2 * GRID_MARGIN, PLAYFIELD_H + 2 * GRID_MARGIN),
@@ -704,6 +882,7 @@ export function createWorld(
     bullets: null as unknown as BulletSystem,
     weapons: null as unknown as WeaponSystem,
     powerups: null as unknown as PowerUpSystem,
+    scoring: null as unknown as ScoringSystem,
     rank: computeRank(difficultyRankInputs(config.difficulty)),
     view,
   };
@@ -712,6 +891,7 @@ export function createWorld(
   world.enemies = createEnemySystem(world, options.behaviors ?? DEFAULT_BEHAVIORS, stageSpec);
   world.weapons = createWeaponSystem(world);
   world.powerups = createPowerUpSystem(world);
+  world.scoring = createScoringSystem(world);
   for (let slot = 0; slot < MAX_PLAYERS; slot++) {
     applyLoadoutPreset(world.weapons.loadouts[slot], players[slot], config.loadout);
   }
@@ -762,12 +942,9 @@ function createWorldStageHooks(world: WorldUnderConstruction): StageHooks {
       }
       // warning / boss → bosses (M1-13).
     },
-    /** A checkpoint restart: empties every pool and the enemy, weapon and power-up systems. */
+    /** A checkpoint restart: empties every pool and the enemy, weapon, power-up, score systems. */
     clear() {
-      world.pools.clearAll();
-      world.enemies.clear();
-      world.weapons.clear();
-      world.powerups.clear();
+      clearSession(world);
     },
   };
 }
@@ -788,6 +965,7 @@ function createWorldStageHooks(world: WorldUnderConstruction): StageHooks {
  */
 export function stepWorld(world: World, input: Readonly<InputSnapshot>): void {
   const frozen = world.hitStop > 0;
+  world.fx.frozen = frozen;
   for (let i = 0; i < WORLD_PHASES.length; i++) {
     const entry = WORLD_PHASES[i];
     if (frozen && !entry.runsDuringHitStop) continue;

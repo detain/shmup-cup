@@ -173,7 +173,7 @@ centre, sub-pixel), `state`, `stateTicks`, `speedLevel`, `invulnTicks`, `bank`, 
 | `enterTicks` | 40 | fly-in length |
 | `bankFrames` | 1 | bank steps each way (frames 0 level, 1 up, 2 down) |
 | `hurtRadius`, `terrainBox`, `pickupBox` | 1.5; 5×3; 8×6 (half sizes) | collision: the terrain box since M1-07, the pickup box since M1-11 (capsules and the magnet), the hurt radius (bullets) since M1-09 — death from M1-12 |
-| `respawnInvulnTicks` | 120 | respawn blink, M1-12 |
+| `respawnInvulnTicks` | 150 | respawn blink and invulnerability after the fly-in (M1-12) |
 
 `resolvePlayerShip(content, id = 'kestrel')` picks the ship: that id, else the first ship,
 else `DEFAULT_PLAYER_SHIP` — a built-in copy of the KESTREL tunables with `spriteId: -1`, so a

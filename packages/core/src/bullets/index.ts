@@ -1388,7 +1388,11 @@ class BulletSystemImpl implements BulletSystem {
       const bits = f.flags[i];
       if ((bits & BulletFlag.Dead) !== 0 || (bits & BulletFlag.Cancelable) === 0) continue;
       if (cancelled % stride === 0) {
-        events.push(SimEventKind.Particles, FX_CUES.BulletCancel, f.x[i], f.y[i], 1);
+        // Whole pixels: fractional arguments of the (not inlined) push would be boxed — every
+        // death cancels the bullets (M1-12), so this is no longer a rare path.
+        const x = Math.floor(f.x[i]) | 0;
+        const y = Math.floor(f.y[i]) | 0;
+        events.push(SimEventKind.Particles, FX_CUES.BulletCancel, x, y, 1);
       }
       cancelled++;
       this.killBullet(i);
@@ -1520,9 +1524,9 @@ export function fireLaser(
  *
  * @remarks
  * `CancelMode.Sparkle` pushes a `SimEventKind.Particles` event with `FX_CUES.BulletCancel` at the
- * bullets' positions — every bullet up to {@link CANCEL_SPARKLE_LIMIT}, beyond that an evenly
- * spread subset (the event ring is shared with everything else). Bullets without
- * `BulletFlag.Cancelable` survive. Points mode arrives with M2-02.
+ * bullets' positions (whole pixels, floored) — every bullet up to {@link CANCEL_SPARKLE_LIMIT},
+ * beyond that an evenly spread subset (the event ring is shared with everything else). Bullets
+ * without `BulletFlag.Cancelable` survive. Points mode arrives with M2-02.
  *
  * @param owner - The World.
  * @param mode - {@link CancelMode}.

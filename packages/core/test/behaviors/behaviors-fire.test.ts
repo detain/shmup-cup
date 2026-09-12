@@ -18,6 +18,7 @@ import { loadContent, type ContentDb, type ContentFile } from '../../src/data/in
 import type { Enemy, ScriptApi } from '../../src/enemies/index.js';
 import { createInputSnapshot } from '../../src/input/index.js';
 import { MoverKind, SLEEP_FOREVER, type Script } from '../../src/patterns/index.js';
+import { grantShield } from '../../src/shields/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld, type World } from '../../src/world/index.js';
 
 /**
@@ -358,13 +359,18 @@ describe('core/enemies ScriptApi fire primitives', () => {
     w.debugFlags.godMode = false;
     w.players[0].x = 150; // on the beam (x 100 … 300)
     w.players[0].y = 100;
+    // A Force Field counts every contact (absorbed or swallowed by its i-frames) and keeps the
+    // ship alive — a hit on the bare ship would start the death sequence, which cancels lasers.
+    const shield = w.players[0].shield;
+    grantShield(shield);
     run(w, 1);
-    const hits = w.players[0].hits;
-    expect(hits).toBe(1);
+    const absorbed = shield.absorbed;
+    expect(absorbed).toBe(1);
     w.enemies.kill(e);
     expect([f.phase[0], f.src[0]]).toEqual([LaserPhase.Fade, -1]);
     run(w, 2);
-    expect(w.players[0].hits).toBe(hits);
+    expect(shield.absorbed).toBe(absorbed);
+    expect(w.players[0].hits).toBe(0);
     run(w, 4);
     expect(w.bullets.lasers.count).toBe(0);
   });

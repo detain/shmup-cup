@@ -8,7 +8,8 @@
  *   spawns all its members and resolves; with nobody shooting nothing is killed, so no
  *   formation bonus is awarded and every member counts as escaped.
  * - With the default always-on autofire the KESTREL's Type A main shot (M1-10) kills enemies:
- *   kills credited to player 1, and formations shot down completely award their bonus.
+ *   kills credited to player 1, and formations shot down completely award their bonus — all of
+ *   it (and the capsules it collects) scored for player 1 (M1-12).
  * - Ground enemies stand on (or hang from) the generated terrain when they appear, and the
  *   walkers stay on the surface over the rolling slopes for their whole lives.
  * - Killing every enemy on its first on-screen tick (perfect play through the public damage
@@ -60,20 +61,24 @@ const STAGE = DB.stages[DB.stageIndex.get('test-range') ?? -1];
 
 /**
  * A headless game on the test range whose ship does not shoot (autofire off, no button held —
- * the player weapons of M1-10 would kill the enemies these tests watch).
+ * the player weapons of M1-10 would kill the enemies these tests watch) and does not die (god
+ * mode).
  *
  * @param seed - Seed.
  * @param shoot - Let the ship autofire (the default config) instead.
  * @returns The game.
  */
 function game(seed = 21, shoot = false): Game {
-  return createGame(
+  const g = createGame(
     createHeadlessPlatform(),
     shoot
       ? { seed, stage: 'test-range' }
       : { seed, stage: 'test-range', autofire: false, remoteMode: false },
     DB,
   );
+  // Nobody steers: god mode keeps the ship alive to the end (deaths since M1-12).
+  g.world.debugFlags.godMode = true;
+  return g;
 }
 
 /**
@@ -99,19 +104,29 @@ describe('integration: the test-range timeline', () => {
     const w = g.world;
     let kills = 0;
     let bonuses = 0;
+    let points = 0;
     playThrough(g, () => {
       const o = w.enemies.outcomes;
       for (let k = 0; k < o.killCount; k++) {
         expect(o.killBy[k]).toBe(0);
         kills++;
+        points += o.killScore[k];
       }
+      const p = w.powerups.outcomes;
+      for (let k = 0; k < p.pickupCount; k++) points += p.pickupScore[k];
       w.events.drain((event) => {
-        if (event.kind === SimEventKind.FormationBonus) bonuses++;
+        if (event.kind === SimEventKind.FormationBonus) {
+          bonuses++;
+          points += event.param;
+        }
       });
     });
     expect(w.weapons.roleWeapons[0]?.id).toBe('shot.basic');
     expect(kills).toBeGreaterThan(10);
     expect(bonuses).toBeGreaterThan(0);
+    // Every kill, bonus and capsule went to player 1's score (M1-12).
+    expect(w.scoring.board.scores[0].score).toBe(points);
+    expect(w.scoring.board.scores[1].score).toBe(0);
   });
 
   it('spawns every roster enemy, stays within the pool and resolves every formation', () => {
@@ -243,6 +258,9 @@ describe('integration: the test-range timeline', () => {
       const held = masks[(t >> 5) % masks.length];
       commitPlayerInput(pa.snapshot.players[0], held);
       commitPlayerInput(pb.snapshot.players[0], held);
+      // Deaths (M1-12) and respawns stay in the run; the game never ends.
+      if (a.world.players[0].lives < 3) a.world.players[0].lives = 3;
+      if (b.world.players[0].lives < 3) b.world.players[0].lives = 3;
       a.step();
       b.step();
       a.world.events.clear();

@@ -762,6 +762,9 @@ describe('core/enemies determinism and allocation', () => {
       },
     });
     const w = world(content);
+    // God mode keeps the ship alive: contact would start the death sequence of M1-12, and the
+    // homers circling it would lose their target.
+    w.debugFlags.godMode = true;
     const e = w.enemies;
     const n = (g: string): number => (groups.includes(g) ? 16 : 0);
     for (let i = 0; i < n('s'); i++) e.spawn(spec(w, 'sine'), 60 + i * 18, 60);

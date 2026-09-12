@@ -19,6 +19,7 @@ import { Action, commitPlayerInput, createInputSnapshot } from '../../src/input/
 import { PLAYER_STATES, spawnPlayer } from '../../src/player/index.js';
 import { createSoaPool } from '../../src/pools/index.js';
 import { createRng } from '../../src/rng/index.js';
+import { addScore } from '../../src/scoring/index.js';
 import { WORLD_STATUSES, createWorld, stepWorld, type World } from '../../src/world/index.js';
 
 /**
@@ -184,6 +185,22 @@ function referenceHash(w: World): number {
     num(shield.absorbed);
   }
   num(powerups.dropsTaken);
+  // Effect timers and scores (M1-12) — not the session hi-score.
+  const fx = w.fx;
+  for (const value of [
+    fx.shakeMagnitude,
+    fx.shakeTicks,
+    fx.shakeDuration,
+    fx.shakeTick,
+    fx.flashTicks,
+    fx.flashKind,
+    fx.flashTick,
+  ]) {
+    num(value);
+  }
+  for (const score of w.scoring.board.scores) num(score.score);
+  num(w.scoring.killsScored);
+  num(w.scoring.bonusesScored);
   let h = FNV_OFFSET_BASIS;
   for (const b of bytes) h = Math.imul(h ^ b, FNV_PRIME) >>> 0;
   return h;
@@ -243,6 +260,15 @@ describe('core/debug hashWorld — reference and coverage', () => {
     ['rank', (w: World) => void (w.rank = 3)],
     ['an enemy bullet', (w: World) => void w.bullets.spawn(100, 100, 0, 1, 0)],
     ['an enemy laser', (w: World) => void fireLaser(w, { slot: -1, x: 50, y: 50 }, 0, 100)],
+    ['shake magnitude', (w: World) => void (w.fx.shakeMagnitude = 2)],
+    ['shake ticks', (w: World) => void (w.fx.shakeTicks = 2)],
+    ['shake duration', (w: World) => void (w.fx.shakeDuration = 2)],
+    ['shake request tick', (w: World) => void (w.fx.shakeTick = 2)],
+    ['flash ticks', (w: World) => void (w.fx.flashTicks = 2)],
+    ['flash kind', (w: World) => void (w.fx.flashKind = 1)],
+    ['flash request tick', (w: World) => void (w.fx.flashTick = 2)],
+    ['player 1 score', (w: World) => void addScore(w, 0, 100)],
+    ['player 2 score', (w: World) => void addScore(w, 1, 100)],
   ])('changes when the %s changes', (_label, mutate) => {
     const a = world();
     const b = world();
@@ -302,6 +328,10 @@ describe('core/debug hashWorld — what it ignores, odd values, purity', () => {
     b.grid.begin(100, 100);
     b.grid.insert(1, 0, 0, 10, 10);
     b.grid.build();
+    // The session hi-score and the HUD's dirty flags (M1-12): presentation, raised from a save.
+    b.scoring.board.setHiScore(123_456);
+    b.scoring.board.scores[0].displayDirty = true;
+    b.fx.frozen = true;
     expect(hashWorld(b)).toBe(base);
   });
 

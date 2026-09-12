@@ -189,6 +189,8 @@ describe('integration: enemy bullets on the test range', () => {
     let other = 0;
     let lastHits = 0;
     playThrough(g, () => {
+      // Each hit is a death since M1-12: the ship respawns where it started, and never runs out.
+      if (ship.lives < 3) ship.lives = 3;
       if (ship.hits !== lastHits) {
         if (ship.hitCause === PlayerHitCause.Bullet) bullet += ship.hits - lastHits;
         else if (ship.hitCause === PlayerHitCause.Laser) other++;
@@ -223,6 +225,9 @@ describe('integration: enemy bullets on the test range', () => {
       const held = masks[(t >> 4) % masks.length];
       commitPlayerInput(pa.snapshot.players[0], held);
       commitPlayerInput(pb.snapshot.players[0], held);
+      // Deaths (M1-12) and respawns stay in the run; the game never ends.
+      if (a.world.players[0].lives < 3) a.world.players[0].lives = 3;
+      if (b.world.players[0].lives < 3) b.world.players[0].lives = 3;
       a.step();
       b.step();
       a.world.events.clear();

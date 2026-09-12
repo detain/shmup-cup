@@ -202,15 +202,15 @@ describe('core/world with a stage — terrain hits', () => {
     run(w, input, Action.Down, 20); // still flying in: ignored
     expect(ship.hits).toBe(0);
     run(w, input, Action.Down, 60);
-    expect(ship.state).toBe('alive');
-    expect(ship.hits).toBeGreaterThan(0);
+    // One hit: the ship died there (M1-12) and a `dying` ship is not tested any more.
+    expect(ship.state).toBe('dying');
+    expect(ship.hits).toBe(1);
     expect(ship.hitCause).toBe(PlayerHitCause.Terrain);
-    expect(ship.hitTick).toBe(w.tick - 1);
-    // Clear of the floor again: no new hits.
-    run(w, input, Action.Up, 40);
-    const hits = ship.hits;
+    expect(ship.hitTick).toBeGreaterThan(20);
+    expect(ship.hitTick).toBeLessThan(w.tick);
+    expect(ship.lives).toBe(2);
     run(w, input, 0, 10);
-    expect(ship.hits).toBe(hits);
+    expect(ship.hits).toBe(1);
   });
 
   it('ignores terrain in god mode and while invulnerable', () => {
