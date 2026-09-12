@@ -39,6 +39,7 @@ import {
   parseSfxContent,
   renderSong,
   resolveMusicCues,
+  stageMusicCues,
 } from '@shmup/audio-web';
 import { loadInputProfiles, parseInputProfiles } from '@shmup/input-web';
 import { fxSpriteNames, loadFxContent, parseFxContent } from '@shmup/render-pixi';
@@ -361,8 +362,18 @@ describe('integration: content/audio (M1-15)', () => {
       const table = resolveMusicCues(content, stage.id);
       for (const cue of STAGE_MUSIC_CUES)
         expect(table[cue], `${stage.id} cue ${cue}`).toBeGreaterThanOrEqual(0);
-      expect(table[stage.music.stageId]).toBeGreaterThanOrEqual(0);
-      expect(table[stage.music.bossId]).toBeGreaterThanOrEqual(0);
+      // Every cue the stage can make the sim ask for — its theme, its boss, its `music` events —
+      // is in the set the shell prepares during its loading phase and has a track: a cue outside
+      // the prepared set would play silence (nothing is rendered mid-stage).
+      const prepared = stageMusicCues(stage);
+      const referenced = [stage.music.stageId, stage.music.bossId];
+      for (const event of stage.events) if (event.type === 'music') referenced.push(event.cueId);
+      for (const cue of referenced) {
+        if (cue === MUSIC_CUES.Silence) continue;
+        expect(prepared, `${stage.id} prepares cue ${cue}`).toContain(cue);
+      }
+      for (const cue of prepared)
+        expect(table[cue], `${stage.id} track of cue ${cue}`).toBeGreaterThanOrEqual(0);
     }
     expect(resolveMusicCues(content, null)[MUSIC_CUES.Title]).toBe(content.trackIndex.get('title'));
     // A track limited to stages names stages that exist.

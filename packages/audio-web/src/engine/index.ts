@@ -5,8 +5,8 @@
  * shell's event dispatch talks to (plan §3.3 — `sfx` / `music` events → audio-web):
  *
  * 1. **Loading phases.** {@link AudioEngine.loadSfx} renders / decodes the whole SFX bank during
- *    boot; {@link AudioEngine.prepareMusic} prepares a stage's music set (its theme, the boss,
- *    the stage-clear jingle, game over — {@link STAGE_MUSIC_CUES}) during the stage-intro /
+ *    boot; {@link AudioEngine.prepareMusic} prepares a stage's music set (every cue its data
+ *    can ask for — `stageMusicCues`; default {@link STAGE_MUSIC_CUES}) during the stage-intro /
  *    loading phase and releases every track outside the set. A music cue whose track is not
  *    prepared is **ignored** (counted in {@link AudioEngine.missedMusic}) — nothing is ever
  *    rendered or decoded mid-stage.
@@ -115,7 +115,8 @@ export interface AudioEngine {
    *
    * @param stageId - The stage about to run (`null` = menus / open space): picks per cue the
    *   track bound to that stage, else the cue's default.
-   * @param cues - The cues to prepare (default {@link STAGE_MUSIC_CUES}).
+   * @param cues - The cues to prepare (default {@link STAGE_MUSIC_CUES}; a running stage passes
+   *   `stageMusicCues(stage)` — the cues its own data names).
    * @param onProgress - Called with 0…1.
    * @returns Resolves when the set is ready.
    * @throws Rejects with the loader's `AudioLoadError` when a recorded track cannot be loaded.

@@ -28,7 +28,8 @@
  * **Audio (M1-15).** The shell owns the `sfx` and `music` content kinds too: it validates
  * `content/audio/` with `@shmup/audio-web`'s loaders and creates the game's audio engine
  * (`createAudioEngine`). During boot — the loading phase — the engine renders the SFX bank and
- * prepares the running stage's music set (theme, boss, stage clear, game over; nothing in open
+ * prepares the running stage's music set (`stageMusicCues`: the theme and boss cues the stage
+ * names, the cue of each of its `music` events, stage clear and game over; nothing in open
  * space), behind the progress bar; nothing is rendered or decoded later. Once the app's
  * `audio.unlock()` has created the context (first gesture on the web, at boot on TV) the engine
  * attaches to the web-audio buses; in free flight the World's `Sfx`, `Music` and `MusicDuck`
@@ -60,12 +61,12 @@
 import {
   MUSIC_CONTENT_KIND,
   SFX_CONTENT_KIND,
-  STAGE_MUSIC_CUES,
   EMPTY_MUSIC_CONTENT,
   EMPTY_SFX_CONTENT,
   createAudioEngine,
   loadMusicContent,
   loadSfxContent,
+  stageMusicCues,
   type AudioEngine,
   type AudioGraphLike,
   type AudioLoader,
@@ -558,11 +559,15 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     loader: options.audioLoader,
   });
   audioEngine = engine;
-  const stageId = game.world.stage === null ? null : game.world.stage.stage.id;
+  // Every cue the stage's own data can make the sim ask for (its theme, boss and `music`
+  // events), since a cue whose track is not prepared now stays silent.
+  const stage = game.world.stage === null ? null : game.world.stage.stage;
   try {
     await engine.loadSfx((fraction) => overlay?.showProgress(fraction, 'LOADING SOUND'));
-    await engine.prepareMusic(stageId, stageId === null ? [] : STAGE_MUSIC_CUES, (fraction) =>
-      overlay?.showProgress(fraction, 'LOADING MUSIC'),
+    await engine.prepareMusic(
+      stage === null ? null : stage.id,
+      stage === null ? [] : stageMusicCues(stage),
+      (fraction) => overlay?.showProgress(fraction, 'LOADING MUSIC'),
     );
   } catch (error) {
     throw fail('AUDIO FAILED TO LOAD', [describe(error)], [], error);

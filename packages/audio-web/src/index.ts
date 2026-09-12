@@ -90,6 +90,7 @@ export {
   parseMusicContent,
   parseSfxContent,
   resolveMusicCues,
+  stageMusicCues,
   toAudioBuffer,
   type AudioLoader,
   type AudioLoaderOptions,

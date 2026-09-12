@@ -1592,14 +1592,17 @@ the browser dev app and as a Tizen 5.5 bundle.
     The web-audio module gained the structural Web Audio types (`PlaybackContextLike`,
     `isPlaybackContext` …) every module is tested against; `IAudio` in the core was **not** grown
     (its "planned API" note is replaced — playback is event-driven through the shell).
-  - **"One track resident"** is the music player's rule (a new track hard-stops the previous one,
-    a fading one included). The boss theme must start mid-stage without rendering, so the engine
-    keeps the stage's **music set** prepared — theme, boss, stage clear, game over
-    (`STAGE_MUSIC_CUES`); placeholders are mono 22,050 Hz float (zone A ≈ 4.5 MB). A music cue
-    outside the prepared set is ignored (`missedMusic`), never rendered late; the track already
-    playing is not restarted; `Silence` fades out over the event's ticks; a new track fades in over
-    them. `MusicDuck` ducks to 0.35: a 4-tick fall, held for half the event's ticks, back to 1 at
-    the end — all scheduled as `AudioParam` ramps (`source → fade gain → duck gain → music bus`).
+  - **"One track resident"** is the music player's rule (a new track hard-stops the previous one, a
+    fading one included). The boss theme must start mid-stage without rendering, so the engine keeps
+    the stage's **music set** prepared — `stageMusicCues(stage)`: the theme and boss cues the stage
+    names (`music.stage` / `music.boss`), the cue of each of its `music` events, stage clear and
+    game over (`STAGE_MUSIC_CUES` is only `prepareMusic`'s default; `content:check` asserts every
+    cue a shipped stage references is in its set and has a track); placeholders are mono 22,050 Hz
+    float (zone A ≈ 4.5 MB). A music cue outside the prepared set is ignored (`missedMusic`), never
+    rendered late; the track already playing is not restarted; `Silence` fades out over the event's
+    ticks; a new track fades in over them. `MusicDuck` ducks to 0.35: a 4-tick fall, held for half
+    the event's ticks, back to 1 at the end — all scheduled as `AudioParam` ramps
+    (`source → fade gain → duck gain → music bus`).
   - **Voice manager.** Voices are freed by the context clock (a voice is free once its buffer has
     played out — no `onended` closures). Two rules beyond the plan: a cue at its instance cap
     restarts its oldest instance even when it is `critical` (the siren's next wail), and at the

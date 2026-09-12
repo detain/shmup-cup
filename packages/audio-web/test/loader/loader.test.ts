@@ -4,7 +4,14 @@
  * the OGG path — XHR `arraybuffer` → decode through an offline context at 32 kHz, loop points
  * converted — against fakes.
  */
-import { MUSIC_CUES, SFX_CUES, SFX_CUE_NAMES, type ContentFile } from '@shmup/core';
+import {
+  MUSIC_CUES,
+  SFX_CUES,
+  SFX_CUE_NAMES,
+  type ContentFile,
+  type StageEvent,
+  type StageSpec,
+} from '@shmup/core';
 import { describe, expect, it } from 'vitest';
 import * as audioWeb from '../../src/index.js';
 import {
@@ -20,6 +27,7 @@ import {
   parseMusicContent,
   parseSfxContent,
   resolveMusicCues,
+  stageMusicCues,
   toAudioBuffer,
   type DecodeContextLike,
   type XhrLike,
@@ -72,6 +80,7 @@ describe('audio-web/loader sfx content', () => {
     expect(moduleInfo.status).toBe('implemented');
     expect(audioWeb.loadSfxContent).toBe(loadSfxContent);
     expect(audioWeb.createAudioLoader).toBe(createAudioLoader);
+    expect(audioWeb.stageMusicCues).toBe(stageMusicCues);
   });
 
   it('parses cues with their defaults, indexed by SFX_CUES id', () => {
@@ -213,6 +222,58 @@ describe('audio-web/loader music content', () => {
     expect(ids('zone-b')[MUSIC_CUES.Title]).toBeNull();
     expect(STAGE_MUSIC_CUES).toEqual([
       MUSIC_CUES.Stage,
+      MUSIC_CUES.Boss,
+      MUSIC_CUES.StageClear,
+      MUSIC_CUES.GameOver,
+    ]);
+  });
+
+  it("builds a stage's music set from the cues its own data names (theme, boss, events)", () => {
+    /** A stage's music-relevant parts. */
+    const stage = (
+      theme: number,
+      boss: number,
+      events: StageEvent[] = [],
+    ): Pick<StageSpec, 'music' | 'events'> => ({
+      music: { stage: '', stageId: theme, boss: '', bossId: boss },
+      events,
+    });
+    const musicEvent = (x: number, cueId: number): StageEvent => ({
+      x,
+      type: 'music',
+      cue: '',
+      cueId,
+    });
+    // The generic stage reproduces the default set.
+    expect(stageMusicCues(stage(MUSIC_CUES.Stage, MUSIC_CUES.Boss))).toEqual([...STAGE_MUSIC_CUES]);
+    // A final-boss stage prepares FinalBoss, not the generic boss theme.
+    expect(stageMusicCues(stage(MUSIC_CUES.Stage, MUSIC_CUES.FinalBoss))).toEqual([
+      MUSIC_CUES.Stage,
+      MUSIC_CUES.FinalBoss,
+      MUSIC_CUES.StageClear,
+      MUSIC_CUES.GameOver,
+    ]);
+    // Mid-stage music events add their cues (deduplicated; Silence has no track).
+    expect(
+      stageMusicCues(
+        stage(MUSIC_CUES.ZoneMap, MUSIC_CUES.Boss, [
+          { x: 10, type: 'spawn', enemy: 'e', enemyId: 0, pathId: -1 },
+          musicEvent(20, MUSIC_CUES.NameEntry),
+          musicEvent(30, MUSIC_CUES.Silence),
+          musicEvent(40, MUSIC_CUES.ZoneMap),
+          musicEvent(50, MUSIC_CUES.NameEntry),
+          musicEvent(60, MUSIC_CUES.GameOver),
+        ]),
+      ),
+    ).toEqual([
+      MUSIC_CUES.ZoneMap,
+      MUSIC_CUES.Boss,
+      MUSIC_CUES.NameEntry,
+      MUSIC_CUES.GameOver,
+      MUSIC_CUES.StageClear,
+    ]);
+    // No boss cue resolved: the sim falls back to the generic boss theme.
+    expect(stageMusicCues(stage(-1, -1))).toEqual([
       MUSIC_CUES.Boss,
       MUSIC_CUES.StageClear,
       MUSIC_CUES.GameOver,

@@ -37,8 +37,8 @@
  * {@link SfxContentResult}, {@link EMPTY_SFX_CONTENT}, {@link loadMusicContent},
  * {@link parseMusicContent}, {@link MusicContent}, {@link MusicTrackDef}, {@link MusicFileDef},
  * {@link MusicContentResult}, {@link EMPTY_MUSIC_CONTENT}, {@link resolveMusicCues},
- * {@link STAGE_MUSIC_CUES}. Loading: {@link createAudioLoader}, {@link AudioLoader},
- * {@link AudioLoaderOptions}, {@link PreparedSound}, {@link PreparedTrack},
+ * {@link STAGE_MUSIC_CUES}, {@link stageMusicCues}. Loading: {@link createAudioLoader},
+ * {@link AudioLoader}, {@link AudioLoaderOptions}, {@link PreparedSound}, {@link PreparedTrack},
  * {@link toAudioBuffer}, {@link loadArrayBuffer}, {@link XhrLike}, {@link decodeAudioFile},
  * {@link DecodeContextLike}, {@link DECODE_SAMPLE_RATE}, {@link AudioLoadError},
  * {@link LoadProgress}.
@@ -53,6 +53,7 @@ import {
   defineModule,
   s,
   type ContentFile,
+  type StageSpec,
   type ValidationIssue,
 } from '@shmup/core';
 import {
@@ -93,8 +94,9 @@ export const MUSIC_CONTENT_KIND = 'music';
 export const DECODE_SAMPLE_RATE = 32000;
 
 /**
- * The music a stage can ask for while it runs — its theme, the boss, the stage-clear jingle and
- * game over — prepared together during the stage's loading phase.
+ * The default music set of a stage — the generic theme, the boss, the stage-clear jingle and game
+ * over (`AudioEngine.prepareMusic`'s default). A real stage's set comes from its own data:
+ * {@link stageMusicCues}.
  */
 export const STAGE_MUSIC_CUES: readonly number[] = Object.freeze([
   MUSIC_CUES.Stage,
@@ -102,6 +104,37 @@ export const STAGE_MUSIC_CUES: readonly number[] = Object.freeze([
   MUSIC_CUES.StageClear,
   MUSIC_CUES.GameOver,
 ]);
+
+/**
+ * Every music cue a stage can make the sim ask for while it runs, prepared together during its
+ * loading phase (nothing is rendered or decoded mid-stage): the stage's own `music.stage` theme and
+ * `music.boss` theme, the cue of each of its `music` timeline events, then the stage-clear jingle
+ * and game over (which the sim emits for every stage). `Silence` (no track) and unresolved cues are
+ * left out; the list has no duplicates.
+ *
+ * @param stage - The stage's validated spec (its `music` and `events`).
+ * @returns `MUSIC_CUES` ids, in first-use order.
+ *
+ * @example
+ * ```ts
+ * await engine.prepareMusic(stage.id, stageMusicCues(stage));
+ * ```
+ */
+export function stageMusicCues(stage: Pick<StageSpec, 'music' | 'events'>): number[] {
+  const cues: number[] = [];
+  const add = (cue: number): void => {
+    if (cue > MUSIC_CUES.Silence && cues.indexOf(cue) < 0) cues.push(cue);
+  };
+  add(stage.music.stageId);
+  // The sim falls back to the generic boss theme when the stage names none.
+  add(stage.music.bossId >= 0 ? stage.music.bossId : MUSIC_CUES.Boss);
+  for (const event of stage.events) {
+    if (event.type === 'music') add(event.cueId);
+  }
+  add(MUSIC_CUES.StageClear);
+  add(MUSIC_CUES.GameOver);
+  return cues;
+}
 
 // ---------------------------------------------------------------------------------------------
 // Content: sfx

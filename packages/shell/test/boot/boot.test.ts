@@ -714,6 +714,39 @@ describe('shell/boot audio (M1-15)', () => {
     ]);
   });
 
+  it('prepares every cue the stage itself names: its boss theme and its music events', async () => {
+    const jingle = contentFiles.find((file) => file.path === 'audio/music/stage-clear.music.json');
+    const range = contentFiles.find((file) => file.path === 'stages/test-range.stage.json');
+    if (jingle === undefined || range === undefined) throw new Error('content moved');
+    const track = (id: string, cue: string) => ({
+      path: `audio/music/${id}.music.json`,
+      data: { ...(jingle.data as object), id, cue, stages: ['test-range'] },
+    });
+    const stage = range.data as { music: object; events: object[] };
+    const files = [
+      ...contentFiles.filter((file) => file !== range),
+      {
+        path: range.path,
+        data: {
+          ...stage,
+          music: { stage: 'Stage', boss: 'FinalBoss' },
+          events: [{ x: 0, type: 'music', cue: 'ZoneMap' }, ...stage.events],
+        },
+      },
+      track('final-boss', 'FinalBoss'),
+      track('zone-map', 'ZoneMap'),
+    ];
+    const shell = await boot({ contentFiles: files, gameConfig: { stage: 'test-range' } }).promise;
+    expect(shell.content.issues).toEqual([]);
+    expect([...shell.audioEngine.residentTracks].sort()).toEqual([
+      'final-boss',
+      'game-over',
+      'stage-clear',
+      'zone-a',
+      'zone-map',
+    ]);
+  });
+
   it("attaches after the unlock and plays the World's music and sounds (panned, deduped)", async () => {
     const { backend, context } = graphAudio();
     const shell = await boot({
