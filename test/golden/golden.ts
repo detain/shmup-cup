@@ -261,6 +261,28 @@ export function readGolden(name: string): { file: GoldenFile; replay: Replay } {
 }
 
 /**
+ * The text of a scenario's golden file: the encoded replay, the description and the expected
+ * outcome, as `JSON.stringify` lays it out (two-space indent, final newline).
+ *
+ * @param scenario - The scenario.
+ * @param replay - Its recording.
+ * @param outcome - The recording's outcome.
+ * @returns The file's text.
+ */
+export function formatGolden(
+  scenario: GoldenScenario,
+  replay: Replay,
+  outcome: GoldenOutcome,
+): string {
+  const file: GoldenFile = {
+    ...encodeReplay(replay),
+    description: scenario.description,
+    expected: outcome,
+  };
+  return JSON.stringify(file, null, 2) + '\n';
+}
+
+/**
  * Writes a scenario's golden file (re-bless).
  *
  * @param scenario - The scenario.
@@ -272,10 +294,5 @@ export function writeGolden(
   replay: Replay,
   outcome: GoldenOutcome,
 ): void {
-  const file: GoldenFile = {
-    ...encodeReplay(replay),
-    description: scenario.description,
-    expected: outcome,
-  };
-  writeFileSync(goldenPath(scenario.name), JSON.stringify(file, null, 2) + '\n');
+  writeFileSync(goldenPath(scenario.name), formatGolden(scenario, replay, outcome));
 }

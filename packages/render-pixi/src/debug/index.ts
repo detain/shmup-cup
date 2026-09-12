@@ -719,7 +719,8 @@ export function buildDebugOutlines(
   const parts = boss.parts;
   for (let i = 0; i < boss.partCount; i++) {
     const part = parts[i];
-    if (!part.active || part.destroyed) continue;
+    // A part without a hurtbox is never hit or touched: nothing to outline.
+    if (!part.active || !part.hurtbox || part.destroyed) continue;
     scratch.centred(part.x, part.y, part.hw, part.hh);
     outline(lists.boss, OUTLINE_COLORS.boss);
   }

@@ -403,6 +403,8 @@ export interface ReplayPlayback extends PlatformInput {
   /**
    * Call after every tick: compares `hashWorld(world)` with the recorded hash on every
    * hash-interval tick and after the last recorded tick; the first mismatch is kept in the report.
+   * A call before the first tick only matters for a zero-tick replay, whose final hash is the
+   * starting state's (compared then — {@link playReplay} makes that call).
    *
    * @param world - The session's World after the tick.
    */
@@ -439,7 +441,9 @@ export function createPlayback(replay: Replay, options: PlaybackOptions = {}): R
   const inputs = replay.inputs;
   const interval = replay.hashInterval;
   const total = replay.ticks;
-  const counts = { ticks: 0, checked: 0 };
+  // `checked` starts at -1 so a check() before the first tick compares a zero-tick replay's final
+  // hash (the starting state); for longer replays that check finds nothing to compare.
+  const counts = { ticks: 0, checked: -1 };
   const report = {
     ok: true,
     checked: 0,
@@ -494,7 +498,7 @@ export function createPlayback(replay: Replay, options: PlaybackOptions = {}): R
       const tick = counts.ticks;
       if (tick === counts.checked || tick > total) return;
       counts.checked = tick;
-      if (tick % interval === 0) {
+      if (tick > 0 && tick % interval === 0) {
         const index = tick / interval - 1;
         if (index < replay.hashes.length) compare(tick, replay.hashes[index], world);
       }
@@ -570,6 +574,8 @@ export function playReplay(
   const playback = createPlayback(replay, options);
   const platform = createHeadlessPlatform();
   const game = createReplayGame({ ...platform, input: playback }, replay.header, content);
+  // The starting state: compares the final hash of a zero-tick replay (nothing otherwise).
+  playback.check(game.world);
   while (!playback.done) {
     game.step();
     playback.check(game.world);
