@@ -16,9 +16,12 @@ logs a `console.warn` and flies in open space; guides:
 [`docs/dev/bullets-and-patterns.md`](../../docs/dev/bullets-and-patterns.md)). Since M1-10
 the KESTREL **autofires** (`GameConfig.autofire` stays on although this app sets
 `remoteMode: false`) and shoots the enemies down; `?loadout=full` starts it fully powered —
-speed 2, Missile, Laser and four Options (dev override, `loadoutFromSearch`; guide:
-[`docs/dev/weapons-and-options.md`](../../docs/dev/weapons-and-options.md)). Hits on the ship
-are only recorded (no death until M1-12).
+speed 2, Missile, Laser, four Options and (since M1-11) a Force Field (dev override,
+`loadoutFromSearch`; guide: [`docs/dev/weapons-and-options.md`](../../docs/dev/weapons-and-options.md)).
+Since M1-11 the test stage's carriers and completed formations drop **power capsules**; C or
+Enter (the game's `PowerUp`, remote OK) equips the highlighted meter slot — the meter itself is
+drawn by the M1-16 HUD (guide: [`docs/dev/powerups-and-shields.md`](../../docs/dev/powerups-and-shields.md)).
+Hits on the ship are only recorded (no death until M1-12).
 
 Input uses the data-driven profiles of `content/input/` (decision D13): `keyboard-default`
 (or the saved choice) and `gamepad-standard`. Dev overrides: `?profile=<id>` picks another

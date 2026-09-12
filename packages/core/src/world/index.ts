@@ -10,12 +10,12 @@
  *
  * ```
  * 1 input      per-player intents from the InputSnapshot (context 'game')
- * 2 players    movement, state timers, weapon fire requests, option trail record
- * 3 stage      camera path, event cursor, pending formation spawns, checkpoints
+ * 2 players    movement, state timers, PowerUp press (meter equip), weapon fire, option trails
+ * 3 stage      late drops → capsules, camera path, event cursor, formation spawns, checkpoints
  * 4 scripts    wake sleeping enemy/boss coroutines; patterns fire bullets
  * 5 movement   movers (enemies), bullets, player shots, items, lasers
  * 6 collision  grid build; shots×enemies, bullets/lasers×players, enemies×players, items×players, terrain
- * 7 damage     apply hits, deaths, drops, score, player death/respawn, formation bonuses
+ * 7 damage     apply hits, deaths, drops, pickups, Mega Crash, score, player death/respawn
  * 8 removal    deferred pool flushes
  * 9 fx         hit-stop/shake/flash timers, emit presentation events, view mirrors, debug counters
  * ```

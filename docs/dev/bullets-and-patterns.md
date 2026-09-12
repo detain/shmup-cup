@@ -214,7 +214,8 @@ contact tests are written as "not within reach", so a `NaN` position or origin n
 ### Cancel
 
 `cancelAllBullets(world, CancelMode.Sparkle)` removes every cancelable bullet **and** laser at
-once (boss death, player death, the Mega Crash — M1-11 onwards call it) and returns the number
+once (Mega Crash since M1-11 — through `BulletSystem.cancelAll`; boss death and player death
+from M1-12 / M1-13) and returns the number
 of bullets cancelled. Each cancelled bullet pushes a `SimEventKind.Particles` event with
 `FX_CUES.BulletCancel` (3) at its position — up to `CANCEL_SPARKLE_LIMIT` (64) per call; beyond
 that an evenly spread subset (every `ceil(n / 64)`-th bullet), because the event ring is shared
@@ -443,7 +444,9 @@ world.players[0].hits; // hits recorded by playerHit (no death until M1-12)
 - **M1-10** (done) — player shots in their own pool (`playerShots`, 96), riding the camera and
   culled at view ± 16 px like bullets; they hit enemies through the grid (boxes, not capsules —
   the laser weapon's box spans its whole length) ([weapons-and-options.md](weapons-and-options.md)).
-- **M1-11** — the Mega Crash calls `cancelAllBullets`; the Force Field absorbs bullet hits.
+- **M1-11** (done) — Mega Crash cancels every cancelable bullet and laser with sparkles; the
+  Force Field absorbs bullet and laser hits inside `playerHit` (an absorbed bullet is used up
+  like an accepted hit) ([powerups-and-shields.md](powerups-and-shields.md)).
 - **M1-12** — `playerHit(Bullet / Laser)` starts the death sequence; death cancels bullets.
 - **M1-13** — bosses fire through the same primitives (and lasers); boss death cancels.
 - **M1-14** — particle presets for `FX_CUES.BulletCancel`.

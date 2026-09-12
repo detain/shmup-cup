@@ -55,7 +55,10 @@ export const SimEventKind = {
   Particles: 2,
   /** Shake the screen: `param` is the magnitude in pixels. */
   Shake: 3,
-  /** Flash the screen: `param` is the duration in ticks. */
+  /**
+   * Flash the screen: `param` is the duration in ticks (Mega Crash pushes 12 — `core/powerups`
+   * `MEGA_CRASH_FLASH_TICKS`, M1-11).
+   */
   Flash: 4,
   /** Freeze the simulation for `param` ticks (big hits, boss kills). */
   HitStop: 5,
@@ -115,19 +118,31 @@ export const SFX_CUES = {
   BossExplode: 7,
   /** The player ship is destroyed. */
   PlayerDeath: 8,
-  /** Power capsule collected. */
+  /**
+   * Power capsule collected (a Direct-mode item pickup, M2-05; meter-mode capsules push
+   * {@link SFX_CUES.MeterAdvance} instead — M1-11).
+   */
   CapsulePickup: 9,
-  /** Power meter cursor advances one slot. */
+  /**
+   * Power meter cursor advances one slot — the meter "ding" of every capsule pickup
+   * (`core/powerups`, M1-11; `x`/`y` = the ship).
+   */
   MeterAdvance: 10,
-  /** A meter slot is equipped. */
+  /**
+   * A meter slot is equipped (`core/powerups`, M1-11; pushed with a `SimEventKind.PowerUp`
+   * event).
+   */
   PowerUpEquip: 11,
-  /** Shield absorbs a hit. */
+  /** Shield absorbs a hit that costs it one point (`core/shields` Force Field, M1-11). */
   ShieldHit: 12,
-  /** Shield is depleted. */
+  /** Shield is depleted — its last hit (M1-11; pushed with `FX_CUES.ShieldBreak`). */
   ShieldBreak: 13,
   /** Extra life awarded. */
   ExtraLife: 14,
-  /** Mega Crash / smart bomb detonation. */
+  /**
+   * Mega Crash / smart bomb detonation (the meter's `!` slot, M1-11 — pushed with a
+   * `SimEventKind.Flash`).
+   */
   MegaCrash: 15,
   /** Menu cursor moved. */
   MenuMove: 16,

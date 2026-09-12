@@ -107,22 +107,23 @@ content without weapons fires nothing (there is no built-in arsenal, unlike the 
 ## Loadouts and the starting loadout
 
 `Loadout` (a class, one per player slot in `weapons.loadouts`) is the meter-mode state the power
-meter of M1-11 will equip:
+meter of M1-11 equips ([powerups-and-shields.md](powerups-and-shields.md)):
 
 | Field | Meaning |
 |---|---|
 | `main` | `MainWeapon`: `Basic` 0, `Double` 1, `Laser` 2 — mutually exclusive (§6A); an empty Double / Laser role falls back to the main shot |
 | `missile` | whether the Missile is equipped |
 | `options` | Options owned, 0–`MAX_OPTIONS` (4) |
-| `shield` | Force Field hits left (0 = none; used from M1-11) |
 
-The ship's **speed level** stays on the ship (`PlayerShip.speedLevel`, `core/player`).
+The ship's **speed level** and **shield** stay on the ship (`PlayerShip.speedLevel`,
+`core/player`; `PlayerShip.shield`, `core/shields` — M1-11 moved the shield there and removed
+`Loadout.shield`).
 
 `GameConfig.loadout` (`StartingLoadout`: `'default'` | `'full'`, validated by
 `resolveGameConfig`) is applied to every player by `createWorld` through
 `applyLoadoutPreset(loadout, ship, preset)`: `'default'` = the basic shot, nothing else, speed
-level 0; `'full'` = speed level `FULL_LOADOUT_SPEED_LEVEL` (2), the Missile, the Laser and four
-Options. The web app maps `?loadout=full` onto it (`loadoutFromSearch`, a dev override; the TV
+level 0 and no shield (`clearShield`); `'full'` = speed level `FULL_LOADOUT_SPEED_LEVEL` (2),
+the Missile, the Laser, four Options and — since M1-11 — a fresh Force Field (`grantShield`). The web app maps `?loadout=full` onto it (`loadoutFromSearch`, a dev override; the TV
 has no query string). Being a `GameConfig` field, it is recorded in replay headers.
 
 ## Shooters, autofire and caps (phase 2, `updatePlayers()`)
@@ -257,7 +258,7 @@ The hit list (`hitShot` / `hitEnemy`, at most `MAX_SHOT_HITS` 1024 a tick, the r
 3. otherwise `enemies.damage(enemy, damage, player)`: hit flash and `Sfx EnemyHit`, or at 0 hp
    the kill — explosion events, drop, formation accounting and the kill record in
    `EnemySystem.outcomes`, now with **`killBy`** (the player credited; `-1` = nobody, e.g. a
-   Mega Crash). Then a non-piercing shot dies; a piercing one sets its cooldown for that enemy
+   debug kill — a Mega Crash credits the player who fired it, M1-11). Then a non-piercing shot dies; a piercing one sets its cooldown for that enemy
    to `hitCooldownTicks` (6) — damage over time for beams.
 
 **Cooldown tables.** Instead of a 64-entry table per shot slot, a pool of `PIERCE_TABLES` (32)
@@ -291,8 +292,8 @@ The renderer needs no change: it binds one sprite binding per batch
 ## Determinism and hashing
 
 `hashWorld` covers the shot pool (as a registered pool) and, after the formation table, the
-weapons' own state (`mixWeapons`): per player the loadout (`main`, `missile`, `options`,
-`shield`) and the option group (`count`, `stolen`, `head`, the whole trail, the positions), then
+weapons' own state (`mixWeapons`): per player the loadout (`main`, `missile`, `options`; the
+shield is hashed with the power-ups since M1-11) and the option group (`count`, `stolen`, `head`, the whole trail, the positions), then
 every autofire timer, then the cooldown table of every live piercing shot. Not hashed: the role
 tables (derived from content and config), `liveCounts` (recounted every phase 2), the hit list
 (rebuilt every phase 6) and the batches. Two sessions fed the same input keep equal hashes,
@@ -342,7 +343,7 @@ for (let i = 0; i < 900; i++) game.step(); // remote mode (the default) autofire
 const { weapons, enemies } = game.world;
 weapons.count; // live player shots (at most 96)
 weapons.options[0].count; // → 4 Options flying
-weapons.loadouts[0].main = MainWeapon.Double; // what the power meter (M1-11) will do
+weapons.loadouts[0].main = MainWeapon.Double; // what the power meter's Double slot does (M1-11)
 weapons.spawnShot(WeaponRole.Missile, 0, game.world.camera.x + 100, 60); // debug: ignores caps
 enemies.outcomes.killBy; // who killed each enemy this tick (Int8Array, -1 = nobody)
 ```
@@ -356,7 +357,7 @@ autofire) and hold no `Shot` / `Sub`.
 |---|---|
 | A weapon of an existing behaviour | JSON in `content/weapons/` (a new file or a new entry) with its `params`; reference it from a preset; `pnpm content:check` |
 | A weapon behaviour | A `ShotKind` code (append — it is hashed), an entry in `WEAPON_BEHAVIOR_KINDS`, `WEAPON_BEHAVIOR_PARAMS` (its tunables with defaults) and `WEAPON_BEHAVIOR_SLOTS`; its per-tick motion as a branch of `update()` (numbers only, no calls with fractional arguments); spawning in `emit` if it needs a special heading; `WEAPON_SCRIPT_IDS` follows automatically; tests in `test/weapons/` |
-| A loadout field | A field on `Loadout` (a class), set in `applyLoadoutPreset`, added to `mixWeapons` in `core/debug` |
+| A loadout field | A field on `Loadout` (a class), set in `applyLoadoutPreset`, added to `mixWeapons` in `core/debug`; a meter slot that equips it in `core/powerups` (`canEquipSlot` / `equipSlot`) |
 | A starting loadout | Extend `StartingLoadout` and its check in `resolveGameConfig`, then `applyLoadoutPreset` (and `loadoutFromSearch` in `apps/web` for a dev override) |
 | Another loadout type (B–D, M2-03) | A preset in the weapons file; the session picks it instead of `DEFAULT_WEAPON_PRESET` |
 | An Option formation (M2-04) | A branch in `OptionGroup.follow` keyed by `formation`; keep it allocation-free and hash any new state |
@@ -398,9 +399,10 @@ autofire) and hold no `Shot` / `Sub`.
 
 ## Next steps that build on this page
 
-- **M1-11** — the power meter equips `Loadout` fields (Speed, Missile, Double / Laser, Options,
-  Force Field in `shield`), capsules come from `outcomes.drop*`, the Mega Crash `kill`s enemies
-  (`killBy` -1).
+- **M1-11** (done) — the power meter equips `Loadout` fields (Missile, Double / Laser, Options)
+  and the ship's speed level and Force Field (`PlayerShip.shield`); capsules come from
+  `outcomes.drop*`; Mega Crash `kill`s enemies credited to the player who fired it
+  ([powerups-and-shields.md](powerups-and-shields.md)).
 - **M1-12** — score from `outcomes.killScore` credited by `killBy`; the death penalty presets
   reset or reduce the loadout; respawns fly in with a fresh Option trail.
 - **M1-13** — boss parts share the damage path; gated parts clink.

@@ -207,13 +207,16 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   the playfield and scrolls it (an unknown `?stage=` warns and boots free flight), and its
   first drifter formation appears in the playfield and flies left (M1-08), the turrets'
   bullets appear in the playfield and move (M1-09), and the KESTREL autofires its main shot in
-  both builds while `?loadout=full` draws Options and laser beams in the web build only (M1-10).
+  both builds while `?loadout=full` draws Options and laser beams in the web build only (M1-10),
+  and `?loadout=full` draws the fresh Force Field ring around the ship in the web build only
+  (M1-11).
   Output goes to `test/e2e/test-results/` (git- and Prettier-ignored).
 - **Dev query parameters** of the web build (`pnpm dev`, `vite preview`): `?stage=<id>` (run
   that stage instead of open space, e.g. `test-range` — see
   [stage-runtime.md](stage-runtime.md#running-a-stage)), `?scene=showcase`
   (the M1-04 sprite showcase instead of free flight), `?scene=calibration` (test pattern),
-  `?loadout=full` (start fully powered: speed 2, Missile, Laser, four Options — M1-10; see
+  `?loadout=full` (start fully powered: speed 2, Missile, Laser, four Options — M1-10 — and a
+  Force Field since M1-11; see
   [weapons-and-options.md](weapons-and-options.md#loadouts-and-the-starting-loadout)),
   `?profile=<id>` (another keyboard / remote input profile, e.g.
   `keyboard-remote-emulation` or `tizen-remote-safe`) and `?debounce=<0…10>` (release debounce

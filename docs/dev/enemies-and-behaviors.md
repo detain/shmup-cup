@@ -61,7 +61,7 @@ stepWorld, every tick
 contact box), `script` → `scriptId`, `sprite` → `spriteId`, and the fields M1-08 added —
 `anim { frames, ticks }`, `params` (behaviour tunables by name), `mover` (a starting mover or
 `null`), `drop` (`'capsule'` or `null`), `ground` (`'floor'`, `'ceiling'` or `null` = flying),
-`settleTicks`, `explosion` (`'small' | 'medium' | 'large'`), `megaCrashImmune` (read by M1-11),
+`settleTicks`, `explosion` (`'small' | 'medium' | 'large'`), `megaCrashImmune` (compiled into a table `EnemySystem.megaCrash` reads — M1-11),
 `child` → `childId` (the enemy a spawner releases) — plus the older optional `rank`.
 
 The loader fills the defaults of every optional field (`completeEnemy`): `anim` 1 frame,
@@ -302,7 +302,8 @@ non-live, ghost and `Invulnerable` enemies (armour: the weapons answer with a `C
 shot dies — [weapons-and-options.md](weapons-and-options.md#hits-phases-67-collide--applyhits));
 otherwise `hp −= amount`, `flashTicks = 4` (drawn with
 `SpriteFlag.Flash`, the `@flash` sibling of D30), `Sfx EnemyHit` while it survives; at 0 hp
-→ `kill(enemy)` (also the Mega Crash / debug entry point):
+→ `kill(enemy)` (also the debug entry point, and what `megaCrash(by)` calls for every live,
+non-ghost enemy that is not `megaCrashImmune` — armour does not protect — M1-11):
 
 1. the kill is recorded in `outcomes` (spec, x, y, score, and `killBy` — the player credited,
    M1-10);
@@ -314,8 +315,10 @@ otherwise `hp −= amount`, `flashTicks = 4` (drawn with
 
 `EnemySystem.outcomes` (`EnemyOutcomes`) lists the current tick's kills (`killSpec`, `killX`,
 `killY`, `killScore`), drops (`dropKind`, `dropX`, `dropY` — enemy drops and completed
-formations in kill order) and `bonusPoints`; it is reset at the start of phase 3. Nothing
-consumes it yet: M1-11 turns drops into capsules, M1-12 turns kills and bonuses into score.
+formations in kill order) and `bonusPoints`; it is reset at the start of phase 3. Since M1-11
+`core/powerups` turns every drop into a capsule at the end of phase 7 (drops of kills made
+between ticks at the next phase 3 — [powerups-and-shields.md](powerups-and-shields.md#items-and-capsules));
+M1-12 turns kills and bonuses into score.
 
 ### Removal, drawing, restart and hashing
 
@@ -460,7 +463,7 @@ code):
 | A mover | Append the name to `MOVER_TYPES` (`core/data`) and a code to `MoverKind` (never renumber), a variant in `MOVER_SCHEMA`, its parameters in `compileSpecs` (`core/enemies`), its start state in `setMover` and a `move…` function in `updateMover` (numbers only, whole-number calls), the docs (module docblock, `content/enemies/README.md`, this page), tests incl. the allocation guard |
 | An enemy spec field | `EnemySpec` + `ENEMY_SCHEMA` (+ `optional` and a default in `completeEnemy`), a typed array in the `SpecTable` if per-tick code needs it, the README sample and `example.enemies.json` |
 | An `Enemy` field | The class field, its reset in the spawn function, and `mixEnemy` in `core/debug` (in a fixed place — or replays diverge unnoticed) |
-| A drop kind | Append to `ENEMY_DROPS` and `DropKind` (code = position + 1), the schema picks it up; M1-11 decides what it becomes |
+| A drop kind | Append to `ENEMY_DROPS` and `DropKind` (code = position + 1), the schema picks it up; map it to an item in `core/powerups` `takeDrops` (capsules today — [powerups-and-shields.md](powerups-and-shields.md#extending-it)) |
 | A particle cue | Append to `FX_CUES` (never renumber); `content/fx/` binds it to a preset in M1-14 |
 | A new use of the tick outcomes | Read `world.enemies.outcomes` after phase 7 of the same tick (it is reset in the next phase 3) |
 
@@ -508,8 +511,8 @@ code):
 - **M1-10** (done) — player shots query the enemy grid entries and call `damage` with the
   player credited (`outcomes.killBy`), armour → `Clink`; `WEAPON_SCRIPT_IDS` moved to `weapons`
   ([weapons-and-options.md](weapons-and-options.md)).
-- **M1-11** — capsules from `outcomes.drop*`; the Mega Crash `kill`s every enemy without
-  `megaCrashImmune`.
+- **M1-11** (done) — capsules from `outcomes.drop*`; `megaCrash(by)` `kill`s every enemy
+  without `megaCrashImmune` ([powerups-and-shields.md](powerups-and-shields.md)).
 - **M1-12** — score from `outcomes.killScore` / `bonusPoints`; contact kills the ship.
 - **M1-13** — bosses and their parts share the damage path.
 - **M1-14** — particle presets for `FX_CUES`; **M2-01** — rank modifiers and revenge bullets;

@@ -3,17 +3,18 @@
 The game is not a game yet, but for the first time you can **fly the ship**. Every build —
 browser, Samsung TV and desktop — starts with a short loading bar and then **free flight**:
 the KESTREL, the player ship, flies in from the left edge of an empty starfield and from then
-on follows the directional buttons of the TV remote, the arrow keys or a gamepad — and, since
-this build, **its gun fires on its own**. Free flight has no enemies and there is no sound yet.
+on follows the directional buttons of the TV remote, the arrow keys or a gamepad — and **its
+gun fires on its own**. Free flight has no enemies and there is no sound yet.
 Free flight exists to prove on each device that the
 whole chain works — the controls reach the ship quickly and reliably, the 60 ticks per second
 simulation runs smoothly, the picture is pixel-perfect at the monitor's resolution — and to
 catch control, smoothness or scaling problems early.
 
 In a browser you can also fly the first **scrolling stage** — the *Test Range*, with rocky
-ground, caves, speed changes, enemies that fly and walk past and shoot at you and, since this
-build, **your ship shooting them down** (see [The scrolling test stage](#the-scrolling-test-stage-browser-only)
-and [Your weapons](#your-weapons)) — and the earlier
+ground, caves, speed changes, enemies that fly and walk past and shoot at you, your ship
+shooting them down and, since this build, **power-ups**: the capsules some enemies leave
+behind, taken with the remote's OK button (see [The scrolling test stage](#the-scrolling-test-stage-browser-only),
+[Your weapons](#your-weapons) and [Power-ups](#power-ups)) — and the earlier
 start-up pictures are still there: the animated **sprite showcase** and the **calibration
 screen** (see [below](#other-screens-browser-only)).
 
@@ -74,7 +75,9 @@ How it should feel:
 - **It cannot leave the playfield.** Holding a direction stops it a few pixels before the
   edge; it never covers the top or bottom bar and never disappears off the side.
 - **The gun fires by itself** — you never press a button to shoot ([Your weapons](#your-weapons)).
-- Nothing else reacts yet: no power-ups, no pause screen. Those arrive in the next steps.
+- **OK** (Enter or C on a keyboard, X on a gamepad) takes a power-up once you have collected
+  capsules ([Power-ups](#power-ups)) — pressing it never stops or slows the ship.
+- There is no pause screen yet; it arrives in a later step.
 
 On the TV remote the ship stops about 1/30 of a second after you let go of a button — the
 game waits that long to hide the remote's occasional "released and pressed again" hiccup, so a
@@ -83,8 +86,18 @@ ship may move in four directions only; the game is designed to be fully playable
 
 ### What changed lately
 
-**New in this build: your ship shoots.** Everywhere — on the TV, in the browser and on the
-desktop — the KESTREL's gun now fires **on its own** once the ship has flown in: small darts,
+**New in this build: power-ups.** In the *Test Range* stage (browser only), the red saucers and
+every formation you destroy completely now leave a blinking **power capsule**. Fly into it (it
+drifts into the ship once you are close) and press **OK** — Enter or C on a keyboard — to take
+the power-up the capsules have earned you: Speed Up, Missile, Double, Laser, an extra Option, a
+**Force Field** that takes five hits, or the **Mega Crash** that wipes the screen. The power meter
+that shows which one is highlighted is not drawn yet, so for now you count capsules — the
+[Power-ups](#power-ups) section has the table. `?loadout=full` now also starts with a Force
+Field. On the TV and the desktop (free flight, no enemies) there are no capsules yet, but OK is
+now a game button there too.
+
+Before that, **your ship learned to shoot.** Everywhere — on the TV, in the browser and on the
+desktop — the KESTREL's gun fires **on its own** once the ship has flown in: small darts,
 at most two on screen at a time, like the classic games this one follows. No button is needed
 (the TV remote has none to spare). In the *Test Range* stage the shots destroy the enemies: an
 enemy that takes more than one hit flashes white each time, and one that is destroyed simply
@@ -96,7 +109,7 @@ four glowing **Options** that follow your ship and fire everything it fires
 be opened in a browser; the TV and desktop builds start in free flight, where the ship now
 shoots into empty space.
 
-Before that: **enemies that shoot back** — gun turrets firing single pink bullets straight at
+And before that: **enemies that shoot back** — gun turrets firing single pink bullets straight at
 your ship, walkers firing fans of three red bullets, looping spinners sending out rings of
 eight purple bullets ([what to look for](#enemy-bullets)); being hit by a bullet still does
 nothing (it just disappears); **the first enemies** — rows of small pods weaving on a wave, spinners that fly
@@ -107,15 +120,17 @@ fighters, and fighters that stop, aim and dash at you ([what to look for](#enemi
 slowing down, over rocky floors and caves drawn from small tiles, with star layers moving
 behind at their own speeds; and before that the ship came **under your control**, and free
 flight replaced the sprite showcase as the start-up picture. The simulation behind it is the real game engine: every
-build adds to this world — next come your weapons, then power-ups.
+build adds to this world — next come lives, losing the ship, checkpoints and the score.
 
 **Please re-test on the monitors:** install the new build and run through the checks in the
-next section — how the ship responds to the remote is still the most valuable report, and now
-also whether the shots look right and stream smoothly. On a PC, please also fly the test stage
-once, normally and fully powered (`?stage=test-range&loadout=full`), and report anything from
-its checklists (the rock, the enemies, their bullets, your weapons) — in particular whether
-every bullet pattern can be dodged with single arrow presses (try
-`?profile=keyboard-remote-emulation`, which moves like the remote).
+next section — how the ship responds to the remote is still the most valuable report, and new
+in this build: **whether pressing OK while you hold an arrow stops the ship** (check 9). On a
+PC, please also fly the test stage once, normally and fully powered
+(`?stage=test-range&loadout=full`), and report anything from its checklists (the rock, the
+enemies, their bullets, your weapons, the power-ups) — in particular whether every bullet
+pattern can be dodged with single arrow presses and whether collecting capsules and pressing
+OK feels natural with the remote's buttons (try `?profile=keyboard-remote-emulation`, which
+moves like the remote and uses Enter as OK).
 
 The game data and the sprite sheet travel **inside** the app (the sprite sheet is a small
 picture file packed into the same `.wgt`, in its `assets/` folder). There are no extra files
@@ -131,6 +146,7 @@ the first install it appears in the monitor's **Apps** list as **Shmup Cup**.
 | Remote button | What it does in the preview |
 |---|---|
 | Directional pad (◀ ▲ ▶ ▼) | Flies the ship |
+| **OK** (centre) | Takes a power-up — but free flight has no enemies and so no capsules, so on the TV a press does nothing visible yet (see check 9) |
 | **Back** (↩) | Closes the app and returns to the monitor's home screen — also from the error screen |
 | **Home** | Leaves the app; everything freezes while it is in the background. Reopening it continues exactly where it stopped — nothing jumps ahead |
 | Everything else | Read by the game every tick, but nothing reacts to it yet (the gun fires without any button) |
@@ -159,11 +175,15 @@ Things to check on the monitor and report:
    right edge at an even speed. They never appear over the HUD bars, and they keep coming
    wherever you fly — also while you hold a direction. Report if they stutter, flicker, show
    up as magenta-and-black squares, or stop.
-9. After Home → reopen, the app comes back without a black screen and the ship is where you
+9. **Hold an arrow and press OK while you hold it** (for example hold ▶ and press OK a few
+   times): the ship must keep moving the whole time, without stopping or stuttering when OK is
+   pressed or released. Report whether it does — it tells us if the remote drops a held arrow
+   when OK is pressed, which decides how comfortable power-ups are on the TV.
+10. After Home → reopen, the app comes back without a black screen and the ship is where you
    left it.
 
-The TV always starts with free flight; the test stage, the fully powered ship, the showcase and
-the calibration screen can only be opened in a browser.
+The TV always starts with free flight; the test stage (and with it the power capsules), the
+fully powered ship, the showcase and the calibration screen can only be opened in a browser.
 
 ## In a desktop browser
 
@@ -236,24 +256,24 @@ once.
 
 | Time (about) | What comes |
 |---|---|
-| 2 s | Five **green pods** in a row, weaving up and down on a wave through the upper part of the screen |
-| 5 s | A **red saucer** with blinking lights, drifting slowly through the middle (later it will carry a power-up) |
-| 7 s | Five **four-bladed spinners** in single file along the lower part of the screen: each flies a loop-the-loop, exactly on the path of the one in front |
+| 2 s | Five **green pods** in a row, weaving up and down on a wave through the upper part of the screen (destroy all five: a capsule) |
+| 5 s | A **red saucer** with blinking lights, drifting slowly through the middle — shoot it down and it leaves a **power capsule** |
+| 7 s | Five **four-bladed spinners** in single file along the lower part of the screen: each flies a loop-the-loop, exactly on the path of the one in front (all five: a capsule) |
 | 9 s | A **gun turret** on the ground; it turns to face your ship as you pass it and **shoots** at it |
 | 10 s | A **walker** on legs, strolling along the rolling ground towards your ship, stopping (and **shooting**), then walking on — up and down the slopes |
 | 12 s | An **armoured hatch** on the ground: once it is on screen it releases a small **arrowhead fighter** every second and a quarter or so (six at most); each one rises, stops, turns towards your ship and dashes at it |
 | 15 s | An **arrowhead fighter** high up: it flies in, stops for a moment and dashes straight at where your ship is |
-| 17 s | Six green pods, lower down |
+| 17 s | Six green pods, lower down (these never leave a capsule) |
 | 21 s | Another ground turret (shoots) |
 | 27 s | Inside the first cave: a turret hanging **upside down from the ceiling**, shooting down at you |
 | 29 s | A spinner flying a wide loop, sending out **rings of bullets** |
-| 30 s | Four spinners diving down along a curve, one behind the other |
-| 33 s | Another red saucer |
+| 30 s | Four spinners diving down along a curve, one behind the other (all four: a capsule) |
+| 33 s | Another red saucer (capsule) |
 | 46–50 s | In the deeper cave: a walker, a hatch with its fighters and a ceiling turret (the walker and the turret shoot) |
-| 53 s | Five green pods |
+| 53 s | Five green pods (all five: a capsule) |
 | 58 s | A spinner that flies to a spot a little right of the screen's centre, hovers there for about a second and a half and then leaves to the left — firing rings of bullets |
-| 62 s | Five spinners flying the loop-the-loop again |
-| 65 s | A last red saucer |
+| 62 s | Five spinners flying the loop-the-loop again (all five: a capsule) |
+| 65 s | A last red saucer (capsule) |
 
 What "good" looks like:
 
@@ -298,8 +318,8 @@ What "good" looks like:
 - Every pattern can be dodged by moving in the four arrow directions only (no diagonals
   needed) — please report any spot where you could not get out of the way.
 - **A bullet that touches your ship disappears**, and nothing else happens yet (no explosion,
-  no lost life — that comes later). While the ship is flying in at the start, bullets pass
-  through it.
+  no lost life — that comes later); with a Force Field up, the field takes it and wears a step
+  ([Power-ups](#power-ups)). While the ship is flying in at the start, bullets pass through it.
 - The enemies never fire long beams (lasers) yet; those come with later enemies and bosses.
 
 ## Your weapons
@@ -320,11 +340,12 @@ playable with the TV remote. The pictures are placeholders (original designs).
 - One hit destroys the small enemies (pods, spinners, arrowhead fighters); the others need more
   — saucers and walkers two, turrets and lone spinners three, the armoured hatch eight — and
   **flash white** every time they are hit. A destroyed enemy simply disappears: no explosion,
-  sound or points yet (they come in later builds), and the saucer does not leave a power-up yet.
+  sound or points yet (they come in later builds); saucers and completed formations leave a
+  power capsule ([Power-ups](#power-ups)).
 
 **Fully powered** (browser only, for testing): add `&loadout=full` to the address, e.g.
 http://localhost:5173/?stage=test-range&loadout=full (or `?loadout=full` for free flight). You
-start with what the power-ups will give you later:
+start with most of what the power-ups give you:
 
 | What | What "good" looks like |
 |---|---|
@@ -332,10 +353,11 @@ start with what the power-ups will give you later:
 | **Laser** instead of the darts | A thin pale-blue beam shoots out of the nose, grows to about a sixth of the screen's width and races right. It passes **through** enemies, damaging each one it touches up to ten times a second, and it moves up and down with the ship that fired it. It stops at rock: the beam's front stays at the wall while its tail catches up and it vanishes. One beam per ship or Option at a time |
 | **Missiles** | Small grey missiles with a flickering orange flame drop diagonally forward and down — one at a time from the ship and from each Option; the next follows as soon as the last one is gone. On the ground they **slide along the rock**, following slopes up and down; a steep wall stops them, and over a drop they fall again. In free flight (no ground) they simply fall off the bottom of the screen |
 | **Four Options** | Four glowing red-and-orange orbs that pulse gently. They follow the path your ship has flown: **when you move, they string out behind you** along your path; **when you stop, they stay where they are on screen** (even while the stage scrolls); pushing against the edge of the screen gathers them onto the ship. Each one fires the laser and the missiles too. They float through rock, cannot be hurt, and start on top of the ship when it flies in |
+| **Force Field** | A glowing cyan ring around the ship that takes five hits — see [Power-ups](#power-ups) |
 
 What "good" looks like, with either loadout:
 
-- Shots, beams, missiles and orbs only ever appear inside the playfield — never over the top or
+- Shots, beams, missiles, orbs and the Force Field only ever appear inside the playfield — never over the top or
   bottom bar — and never as magenta-and-black checkered squares.
 - Everything moves smoothly and keeps its speed on screen while the stage speeds up or slows
   down.
@@ -344,12 +366,85 @@ What "good" looks like, with either loadout:
 - Enemies that are hit flash white; destroyed ones disappear at once and never come back.
 - The frame rate stays smooth even with everything firing.
 
-### Other screens (browser only)
+## Power-ups
+
+Since this build the KESTREL powers up the classic way, with a **power meter**. Everything here
+happens in the *Test Range* stage (http://localhost:5173/?stage=test-range) — free flight on the
+TV and the desktop has no enemies and so no capsules yet. The meter itself (a row of seven boxes
+in the bottom bar) is **not drawn yet** — it arrives with the heads-up display in a later build —
+so for now you count your capsules. There are no sounds for any of this yet either.
+
+**Power capsules.** Small orange-red pills that blink. In the test stage they come from:
+
+- every **red saucer** (at about 5 s, 33 s and 65 s) that you shoot down — the capsule appears
+  where it was destroyed;
+- every **formation** — a row of green pods or a file of spinners — that you destroy
+  **completely**: the last one leaves the capsule. If a single member escapes off the screen,
+  there is none. The six low pods at 17 s never leave one.
+
+Capsules stay where they appeared and scroll away with the rock, so fly over to them. You do not
+have to hit them exactly: once the ship is close (about a ship's width away), the capsule drifts
+into it by itself. A capsule you touch disappears at once, and **every** capsule counts — also
+several collected in quick succession.
+
+**The meter and the OK button.** Each capsule moves the (invisible) highlight one step along the
+meter; **OK** — the centre of the remote's directional pad, Enter or C on a keyboard, X / Square
+on a gamepad — takes the highlighted power-up, and the highlight goes back to the start:
+
+| Capsules since your last power-up | Highlighted | What OK gives you |
+|---|---|---|
+| 1 | SPEED UP | The ship moves faster (five Speed Ups at most) |
+| 2 | MISSILE | Missiles that drop to the ground and slide along it |
+| 3 | DOUBLE | A second shot that climbs diagonally — replaces the laser |
+| 4 | LASER | The long piercing laser — replaces the Double |
+| 5 | OPTION | One more glowing orb that follows the ship and copies its fire (four at most) |
+| 6 | ? | A **Force Field** around the ship (below) |
+| 7 | ! | **Mega Crash**: every enemy and every enemy bullet is destroyed at once |
+| 8 | SPEED UP again | After `!` the highlight starts over |
+
+- **One press, one power-up.** Holding OK never takes a second one; let go and press again.
+- A press **does nothing** (and the highlight stays where it is) when no capsule was collected
+  since the last power-up, or when you already have the most of the highlighted one: the fifth
+  Speed Up, the missiles, the Double or laser you already fire, four Options, a Force Field that
+  is still up. Collect another capsule to move the highlight on. Later the meter will show such
+  slots greyed out and play a "no" sound.
+- You may leave the highlight "parked" on a power-up as long as you like and press OK when it
+  suits you — it is never taken by itself.
+- Pressing OK never stops or slows the ship, also while you hold a direction.
+
+**The Force Field** (`?`). A glowing ring around the ship. It stops **five** hits — enemy
+bullets, enemy lasers and enemies you fly into — and wears as it goes: bright cyan when fresh
+(five and four hits left), then light blue with a few gaps (three), violet with more gaps (two)
+and purple and full of holes (one); the next hit breaks it. After every hit it flickers for a
+moment (about an eighth of a second) during which further hits are free, so a burst of bullets
+costs only one step. It does **not** protect against the rock. While it is up, `?` cannot be
+taken again; once it has broken, it can.
+
+**Mega Crash** (`!`). Every enemy — also the ones just about to come in — is destroyed at once,
+and every enemy bullet vanishes. Enemies destroyed this way count as shot down: a saucer or the
+last member of a formation still leaves its capsule. (The bosses of later builds will not be
+hurt by it. The screen flash and the sound come later.)
+
+**Fully powered** (`&loadout=full`, see [Your weapons](#your-weapons)) now also starts with a
+fresh Force Field.
+
+What "good" looks like:
+
+- Capsules appear exactly where the saucer or the formation's last member was destroyed, blink
+  steadily, stay put against the rock and never appear over the HUD bars.
+- A capsule near the ship glides smoothly into it; one you touch vanishes at once.
+- One OK press = exactly one power-up, visible straight away: a faster ship, missiles, the
+  Double, the laser, one more orb, the ring, or an empty screen after a Mega Crash.
+- The Force Field sits centred on the ship and moves with it, wears one step per hit, flickers
+  after each hit and disappears after the fifth.
+- After a Mega Crash no enemy and no enemy bullet is left on the screen.
+
+## Other screens (browser only)
 
 | Address | Screen |
 |---|---|
 | http://localhost:5173/?stage=test-range | The **Test Range**, the first scrolling stage (above) |
-| http://localhost:5173/?stage=test-range&loadout=full | The Test Range with the **fully powered** ship: laser, missiles, four Options ([Your weapons](#your-weapons)) |
+| http://localhost:5173/?stage=test-range&loadout=full | The Test Range with the **fully powered** ship: laser, missiles, four Options, Force Field ([Your weapons](#your-weapons)) |
 | http://localhost:5173/?scene=showcase | The **sprite showcase** the previous builds started with: the KESTREL flying a figure-eight with two Options, five enemies with hit flashes, a ring of bullets, both HUD bars with a counting score and a blinking power meter. Nothing reacts to the controls |
 | http://localhost:5173/?scene=calibration | The **calibration screen**, for judging scaling and colours on a new display (below) |
 
@@ -409,8 +504,16 @@ mean the build itself is broken; they are not caused by anything you did.
 | The ship does not shoot | It starts firing only once it has flown in (⅔ of a second). If it never fires — on the TV or in a browser — please report it; no button is needed |
 | Only two shots are on screen at a time | Expected: the basic gun allows two at a time, like the classic games; it fires again as soon as one hits something or leaves the screen |
 | Destroyed enemies just vanish — no explosion, no sound, the score stays at zero | Expected in this build: explosions, sounds and scoring come later. An enemy that needs several hits flashes white on each |
-| The red saucer leaves nothing behind | Expected: power-up capsules come in the next build |
-| `?loadout=full` shows the normal ship (no orbs, no laser) | Check the spelling (`loadout=full`, lower case) and that it is joined with `&` after `?stage=…`. It only works in a browser — the TV and desktop builds always start with the normal ship |
+| The red saucer leaves nothing behind | It leaves a capsule only when it is destroyed (by your shots or a Mega Crash); a saucer that flies off the screen leaves nothing |
+| I pressed OK and nothing happened | Expected when no capsule was collected since your last power-up, or when you already have the maximum of the highlighted one (fifth Speed Up, the missiles, the Double or laser you already fire, four Options, a Force Field that is still up) — collect another capsule to move the highlight on. The power meter is not drawn yet: count your capsules ([Power-ups](#power-ups)). On the TV and the desktop (free flight) there are no capsules at all yet |
+| Holding OK gave me only one power-up | Expected: one press, one power-up — let go and press again |
+| No capsule after destroying a formation | Every member has to be destroyed; if one leaves the screen, there is no capsule. The six low pods at 17 s never leave one |
+| A capsule vanished before I reached it | Capsules stay where they appeared and scroll off with the rock; once off the left edge they are gone |
+| The ship flies over a capsule without picking it up | While it flies in (the first ⅔ of a second) the ship collects nothing. Otherwise please report it with the time into the stage |
+| The Force Field does not protect against the rock | Expected — it only stops enemy bullets, lasers and enemies you fly into |
+| Several bullets hit the Force Field but it wore only one step | Expected: right after a hit it flickers and is immune for a moment, so one burst cannot empty it |
+| Capsules or the Force Field are magenta-and-black checkered squares | Their pictures are missing from the sprite sheet; please report it (the build is broken) |
+| `?loadout=full` shows the normal ship (no orbs, no laser, no Force Field) | Check the spelling (`loadout=full`, lower case) and that it is joined with `&` after `?stage=…`. It only works in a browser — the TV and desktop builds always start with the normal ship |
 | The orbs, laser or missiles are magenta-and-black checkered squares | Their pictures are missing from the sprite sheet; please report it (the build is broken) |
 | A dart or beam flies through rock, or a missile floats above the ground or sinks into it | Please report it with a screenshot and the time into the stage |
 | The Options trail behind the ship while it stands still | Expected only while you are moving; once you stop they should hold their places on screen. If they drift away while you stand still, please report it |

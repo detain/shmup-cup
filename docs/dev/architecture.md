@@ -173,17 +173,19 @@ The deterministic primitives every later system builds on. Details and usage rul
 ### The World (`core/world`, `stage`, `player`, `collision`, `debug`)
 
 One gameplay session, built in M1-06; the stage runtime joined in M1-07, the enemies in
-M1-08, the enemy bullets, lasers and rank in M1-09 and the player weapons and Options in M1-10.
+M1-08, the enemy bullets, lasers and rank in M1-09, the player weapons and Options in M1-10 and
+the power meter, capsules, Force Field and Mega Crash in M1-11.
 Details: [sim-world.md](sim-world.md), [stage-runtime.md](stage-runtime.md),
 [enemies-and-behaviors.md](enemies-and-behaviors.md),
 [bullets-and-patterns.md](bullets-and-patterns.md),
-[weapons-and-options.md](weapons-and-options.md).
+[weapons-and-options.md](weapons-and-options.md),
+[powerups-and-shields.md](powerups-and-shields.md).
 
 - **`world`** — `createWorld(config, content)` allocates the session: tick counter, RNG
   streams, event queue, two `PlayerShip`s (P2 inactive until co-op), the camera, the stage
   `config.stage` names (runner, collision map, parallax and terrain views — or none: free
-  flight with a static camera), the enemy system, the rank, the bullet system and the weapon
-  system (with `config.loadout` applied), status,
+  flight with a static camera), the enemy system, the rank, the bullet system, the weapon
+  system (with `config.loadout` applied) and the power-up system, status,
   hit-stop, debug flags, the SoA pool
   registry (flushed in phase 8, hashed), a broad-phase grid over the camera view and the
   `WorldView` the renderer draws. `stepWorld(world, input)` runs one tick and never allocates; `createGame`
@@ -220,16 +222,25 @@ Details: [sim-world.md](sim-world.md), [stage-runtime.md](stage-runtime.md),
   piercing shots keep per-enemy cooldowns, kills are credited to a player). Up to four Options
   per ship follow a screen-space trail that advances only with movement input (D26) and fire
   every weapon with their own caps.
+- **`powerups`**, **`shields`** — meter mode's economy: a 7-slot power meter per player
+  (`SPEED | MISSILE | DOUBLE | LASER | OPTION | ? | !`) advanced by every capsule and equipped on
+  the **pressed edge** of `PowerUp` (remote OK) in phase 2, maxed slots greyed, Double / Laser
+  exclusive, an optional Auto Power-Up order; capsules in a 32-slot world-space SoA pool, spawned
+  from the enemies' drops (carriers, completed formations), pulled by a 16-px pickup magnet and
+  collected by the ships' pickup boxes; Mega Crash (the `!` slot: cancels bullets, destroys every
+  non-immune enemy, screen flash). The Force Field lives on the ship (`PlayerShip.shield`):
+  `playerHit` hands every hit to it first — 5 hits, 8-tick shield-hit i-frames, never terrain.
 - **`player`** — KESTREL movement from `content/player/`: speed levels (D3), diagonals × 0.7071
   (D4), no inertia, riding the camera scroll, clamped to the camera view minus margins,
   banking, a 40-tick fly-in; `playerHit` records hits (terrain contact since M1-07, enemy
-  contact since M1-08, enemy bullets and lasers since M1-09) until the death and respawn of
-  M1-12.
+  contact since M1-08, enemy bullets and lasers since M1-09) — after the ship's Force Field had
+  its say (M1-11) — until the death and respawn of M1-12.
 - **`collision`** — closed scalar shape tests (circle, AABB, circle–AABB, capsule–circle,
   segment–AABB), layer masks, a counting-sort uniform grid whose queries equal brute force,
   and pixel-exact terrain queries over per-tile column-height masks (phase 6 tests the ship's
   terrain box, the ships and the player shots against the enemies' hurtboxes; the bullet system
-  tests bullets and laser capsules against the ships by brute force).
+  tests bullets and laser capsules against the ships by brute force, the power-up system the
+  items against the ships' pickup boxes).
 - **`debug`** — `hashWorld(world)`: FNV-1a over every piece of simulated state in a fixed
   order; two worlds with the same seed and input hash equal (golden replays, M1-19).
 
@@ -455,9 +466,10 @@ plugins in `vite.shared.ts`) has no `moduleInfo`; it is covered by the tests und
 | An input profile or a remote tuning change | Edit `content/input/*.input-profiles.json` (format in [`content/input/README.md`](../../content/input/README.md)) — no code change |
 | A game action | Append a bit to `Action` (never renumber — masks are recorded in replays), add it to `ACTION_NAMES`, the shipped input profiles and the built-in bindings in `input-web/keymap` / `gamepad` |
 | An enemy, a path, a behaviour or a mover | Enemies and paths are JSON (`content/enemies/`, `content/paths/`); a behaviour is a `defineBehavior` coroutine added to `DEFAULT_BEHAVIOR_DEFS`; a mover a new `MoverKind` — [enemies-and-behaviors.md](enemies-and-behaviors.md#extending-it) |
+| An item kind, a meter slot rule or a shield kind | `ITEM_KINDS` / `ItemKind` (appended), the meter's `canEquipSlot` / `equipSlot` and Auto Power-Up rules, a `ShieldSpec` in `SHIELD_SPECS` — [powerups-and-shields.md](powerups-and-shields.md#extending-it) |
 | A bullet pattern, bullet kind or laser | A behaviour calling the `ScriptApi` fire primitives (`aimed`, `nWay`, `ring`, …, `laser`, `fireWait`); a new primitive in `core/patterns` with its `ScriptApi` wrapper; a kind in `BULLET_KINDS` — [bullets-and-patterns.md](bullets-and-patterns.md#extending-it) |
 | A weapon, a weapon behaviour or an Option formation | A weapon is JSON in `content/weapons/` (tunables in `params`); a behaviour is a `ShotKind` plus its tables and a branch of the weapon system's `update()`; formations branch in `OptionGroup.follow` — [weapons-and-options.md](weapons-and-options.md#extending-it) |
-| Something the engine draws whatever the content | Add its sprite name to `ENGINE_SPRITES` (`core/bullets` `BULLET_SPRITES` and `core/options` `OPTION_SPRITE` today): hosts pass it as `loadContent`'s `extraSprites` and `pnpm content:check` verifies it against the atlas |
+| Something the engine draws whatever the content | Add its sprite name to `ENGINE_SPRITES` (`core/bullets` `BULLET_SPRITES`, `core/options` `OPTION_SPRITE`, `core/powerups` `ITEM_SPRITES` and `core/shields` `FORCE_FIELD_SPRITE` today): hosts pass it as `loadContent`'s `extraSprites` and `pnpm content:check` verifies it against the atlas |
 | A game system | Fill in its placeholder module in `packages/core/src/<module>/`, set `moduleInfo.status`, export it from `packages/core/src/index.ts`, call it from its phase function in `core/world` (never reorder `WORLD_PHASES`), allocate its state in `createWorld` and add simulated state to `hashWorld` — [sim-world.md](sim-world.md#extending-it) |
 | Content (enemies, weapons, stages, tilesets) | JSON under `content/` following its README, then `pnpm content:check` (try a stage with `pnpm dev` and `?stage=<id>`). New fields or a new kind: extend the schemas in `core/data` — checklist in [content-data.md](content-data.md#extending-it) |
 | A stage event type or camera feature | [stage-runtime.md](stage-runtime.md#extending-it): schema in `core/data`, a `StageEventCode`, the runner's own part (if any) and the World's hook |

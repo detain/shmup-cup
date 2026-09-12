@@ -5,15 +5,17 @@ work too, and every device drives both the game and the menus.
 
 > **Status:** these controls are built into the game as **control profiles** and are read
 > every frame. In the current build ("free flight", [preview-build.md](preview-build.md))
-> the **directions fly the ship** on every device — the same in the scrolling test stage
-> (`?stage=test-range` in a browser), where the view scrolls by itself, the ship keeps its
-> place on screen unless you move it and the first enemies fly past and shoot at you (they
-> cannot be shot yet; every bullet pattern is dodgeable with the four arrow directions alone);
-> the other buttons do nothing yet, except
-> **Back** on the TV, which closes the app (also from the start-up error screen). Shooting,
-> power-ups and the pause screen arrive in the next steps. The remote's settings may still
-> change once the input probe results from the M7 monitors are in, and a menu for choosing a
-> profile and rebinding buttons is planned.
+> the **directions fly the ship** on every device and the gun **fires on its own** — the same
+> in the scrolling test stage (`?stage=test-range` in a browser), where the view scrolls by
+> itself, the ship keeps its place on screen unless you move it, and enemies fly past, shoot at
+> you (every bullet pattern is dodgeable with the four arrow directions alone) and are shot
+> down. **PowerUp** (OK on the remote, Enter or C on a keyboard, X on a gamepad) takes the
+> highlighted power-up once you have collected capsules
+> ([preview-build.md](preview-build.md#power-ups)). The other buttons do nothing yet, except
+> **Back** on the TV, which closes the app (also from the start-up error screen); the pause
+> screen arrives later. The remote's settings may still change once the input probe results
+> from the M7 monitors are in, and a menu for choosing a profile and rebinding buttons is
+> planned.
 
 ## In the game and in menus
 
@@ -26,7 +28,7 @@ and selects a menu entry in menus; Back pauses the game and goes back in menus.
 | Move | Game: fly the ship (8 directions where the device allows it; diagonals are no faster than straight moves, and the ship stops as soon as you let go). Menus: move the highlight |
 | Shot | Main gun. Today it fires **on its own** on every device (automatic fire is on by default, and always on with the TV remote), so you never need to press it; once automatic fire can be switched off in the Options menu, hold it to fire |
 | Sub | Missiles / sub-weapon, once you have them — automatic in the same way |
-| PowerUp | Power-meter mode: take the highlighted power-up |
+| PowerUp | Take the highlighted power-up of the power meter — one per press (holding the button never takes a second); a press on an empty or maxed-out slot does nothing |
 | Special | Screen-clearing special, when you have one |
 | Speed | Cycle ship speed (item mode) |
 | Pause | Pause / resume |
@@ -50,7 +52,9 @@ not suddenly press Back. Release it and press again.
 
 - On the TV the ship fires its main gun **and** its missiles automatically, so no button is
   ever needed for shooting (in the current build the gun starts firing as soon as the ship has
-  flown in). Channel up / down are optional extras — nothing ever requires them.
+  flown in). **OK** is the only other button the game needs: a rare press to take a power-up,
+  which never stops a direction you are holding. Channel up / down are optional extras —
+  nothing ever requires them.
 - Some TV remotes briefly report a held button as released and pressed again. The game hides
   such hiccups (up to about 1/30 of a second), so a held direction never stutters; in return,
   letting go of a button registers two frames later — too short to notice.
@@ -153,5 +157,7 @@ its default.
 | The game shows a start-up error screen mentioning `input-profiles.json` | The control profiles in this build are broken. Report the lines on the screen — see [preview-build.md](preview-build.md) |
 | Back closes the game on the TV instead of pausing | Expected in the current preview — free flight is the first screen. Pausing with Back arrives with the playable game |
 | The ship does not react for a moment after the app starts | It is flying in (about ⅔ of a second) and ignores the controls until it arrives — see [preview-build.md](preview-build.md#flying-the-ship) |
-| Holding Shot (Z / Space, A / Cross) or Sub (X, B / Circle) changes nothing | Expected: the gun already fires on its own (automatic fire is on by default), and missiles come later with power-ups (in a browser, `?loadout=full` gives them to you right away) |
-| PowerUp, Pause and the other buttons do nothing | Expected in the current preview — only the directions are used so far, and the gun fires by itself |
+| Holding Shot (Z / Space, A / Cross) or Sub (X, B / Circle) changes nothing | Expected: the gun already fires on its own (automatic fire is on by default), and the missiles fire on their own too once a power-up gave them to you (in a browser, `?loadout=full` gives them to you right away) |
+| PowerUp (OK, Enter, C, X) does nothing | Expected until you have collected a power capsule — and on the TV and the desktop, whose free flight has no enemies, there are none yet. Also expected when you already have the most of the highlighted power-up. See [preview-build.md](preview-build.md#power-ups) |
+| Pressing OK while holding an arrow stops the ship on the TV | Not expected — the game keeps the arrow held. Please report it with the remote model: it means the remote itself drops the arrow when OK is pressed |
+| Pause and the other buttons do nothing | Expected in the current preview — the pause screen comes later |

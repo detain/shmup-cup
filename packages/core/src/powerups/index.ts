@@ -507,6 +507,11 @@ export interface PowerUpSystem {
    * @param y - World y.
    * @returns The item slot (stable within the tick), or -1 (bad kind, full pool — dropped
    *   quietly).
+   *
+   * @example
+   * ```ts
+   * world.powerups.spawnItem(ItemKind.Capsule, world.camera.x + 200, world.camera.y + 100);
+   * ```
    */
   spawnItem(kind: number, x: number, y: number): number;
   /**
@@ -555,8 +560,18 @@ export interface PowerUpSystem {
   /**
    * Detonates a Mega Crash for a player now (see the module docs).
    *
+   * @remarks
+   * Needs no equip and no cursor (tests and debug tools call it directly; the `!` slot arms it
+   * for phase 7 instead). For a bad player slot the kills are credited to nobody (-1) and
+   * `SFX MegaCrash` is pushed at (0, 0). Never allocates.
+   *
    * @param player - Player slot credited with the kills.
    * @returns Enemies destroyed.
+   *
+   * @example
+   * ```ts
+   * world.powerups.detonateMegaCrash(0); // → enemies destroyed, bullets cancelled with sparkles
+   * ```
    */
   detonateMegaCrash(player: number): number;
   /**

@@ -319,10 +319,13 @@ turrets, walkers and hatches on the rolling ground, a rammer and orbiters
 ([enemies-and-behaviors.md](enemies-and-behaviors.md#the-test-range-roster)); since M1-09 the
 turrets, walkers and orbiters fire on it ([bullets-and-patterns.md](bullets-and-patterns.md)),
 and since M1-10 the KESTREL shoots them down (with `?loadout=full`: lasers, missiles sliding
-over its slopes and four Options — [weapons-and-options.md](weapons-and-options.md)).
-A checkpoint restart empties the enemy bullet and laser pools and the player shots with every
-other registered pool (`pools.clearAll()`) and resets the weapon system's hit list and batches
-(`weapons.clear()`).
+over its slopes and four Options — [weapons-and-options.md](weapons-and-options.md)); since
+M1-11 the carriers and completed formations drop power capsules the ship collects and equips
+with OK ([powerups-and-shields.md](powerups-and-shields.md)).
+A checkpoint restart empties the enemy bullet and laser pools, the player shots and the items
+with every other registered pool (`pools.clearAll()`), resets the weapon system's hit list and
+batches (`weapons.clear()`) and forgets the power-ups' pickups, pending Mega Crashes and taken
+drops (`powerups.clear()` — the meters and shields stay).
 `example.stage.json` shows the rest of the format (RLE rows over `example.tileset.json`,
 formations, a pan, a boss lock).
 

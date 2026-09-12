@@ -80,9 +80,19 @@ and slides along the slopes until a wall stops it. Shots live in a 96-slot pool,
 scroll, die on the rock and hit enemies through the collision grid (armoured parts clink, every
 kill is credited to a player for the scoring to come). Up to four **Options** follow the ship's
 flown path — bunched while it idles during scrolling, spread out when it moves — and copy every
-weapon with their own caps. The power meter that equips all this comes next; until then
-`?loadout=full` in a browser starts fully powered
+weapon with their own caps; `?loadout=full` in a browser starts fully powered
 ([developer guide](docs/dev/weapons-and-options.md), [what testers should check](docs/client/preview-build.md#your-weapons)).
+**The ship powers up** (M1-11): the Gradius-style **power meter** — `SPEED UP | MISSILE |
+DOUBLE | LASER | OPTION | ? | !` — per player. Capsule carriers and formations wiped out to the
+last member drop blinking **power capsules** (world-space, a 16-px pickup magnet pulls them in,
+every quick pickup counts, 300 points each for the scoring to come); each capsule moves the
+highlight one slot, and **OK on the remote** (the `PowerUp` action, on its pressed edge only —
+holding it never re-equips) takes the highlighted power-up: maxed slots are greyed, Double and
+Laser are exclusive, and an optional Auto Power-Up equips a configurable order by itself. The
+`?` slot puts up a **Force Field** that absorbs five bullets, lasers or rammed enemies (never
+the rock) with short shield-hit i-frames and visible wear; `!` is **Mega Crash**, which cancels
+every enemy bullet and destroys every enemy that is not immune. The meter itself is drawn by
+the HUD of M1-16 ([developer guide](docs/dev/powerups-and-shields.md), [what testers should check](docs/client/preview-build.md#power-ups)).
 **Input is remote-first and data-driven** (M1-05): control profiles in
 [`content/input/`](content/input/README.md) map keys, remote buttons and gamepad buttons to
 actions with separate **game** and **menu** tables, and carry the Samsung remote's quirks as
@@ -107,7 +117,7 @@ it is waiting to be packaged and run on the M7 monitors.
 | [`shmup_prompt.md`](shmup_prompt.md) | Paste-into-a-new-session prompt that drives execution of the plan (workflow: build → review/fix loop → tests → docs → CI gate per step, progress in `shmup_progress.md`) |
 | [`docs/`](docs/README.md) | Player and developer documentation (start with [`docs/dev/repo-layout.md`](docs/dev/repo-layout.md)) |
 
-Game docs — testers: [preview build (free flight, test stage, its enemies and their bullets, your weapons)](docs/client/preview-build.md) ·
+Game docs — testers: [preview build (free flight, test stage, its enemies and their bullets, your weapons, power-ups)](docs/client/preview-build.md) ·
 [controls](docs/client/controls.md) · [monitor setup & install](docs/client/install-on-tv.md).
 Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/architecture.md) ·
 [engine foundations](docs/dev/engine-foundations.md) · [content data](docs/dev/content-data.md) ·
@@ -118,6 +128,7 @@ Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/ar
 [enemies & behaviours](docs/dev/enemies-and-behaviors.md) ·
 [bullets, lasers & patterns](docs/dev/bullets-and-patterns.md) ·
 [weapons & Options](docs/dev/weapons-and-options.md) ·
+[power-ups & shields](docs/dev/powerups-and-shields.md) ·
 [input profiles](docs/dev/input-profiles.md) ·
 [API reference](docs/dev/api-reference.md) ·
 [build, test & deploy](docs/dev/build-test-deploy.md) · [conventions](docs/dev/conventions.md).
@@ -144,7 +155,7 @@ versions (`devEngines.runtime`).
 ```sh
 pnpm -v               # must print 12.x — an older global pnpm fails with ERR_PNPM_BROKEN_LOCKFILE
 pnpm install          # set ELECTRON_SKIP_BINARY_DOWNLOAD=1 to skip the Electron binary
-pnpm dev              # browser dev app → http://localhost:5173: fly the KESTREL (arrows/WASD, gamepad; ?stage=test-range scrolls the test stage, its enemies and their bullets; ?profile=keyboard-remote-emulation feels like the TV remote; ?scene=showcase / ?scene=calibration)
+pnpm dev              # browser dev app → http://localhost:5173: fly the KESTREL (arrows/WASD, gamepad; Enter/C takes a power-up; ?stage=test-range scrolls the test stage, its enemies, their bullets and the power capsules; ?profile=keyboard-remote-emulation feels like the TV remote; ?scene=showcase / ?scene=calibration)
 pnpm lint             # ESLint (typescript-eslint + compat: chrome >= 69)
 pnpm typecheck        # tsc --noEmit everywhere
 pnpm test             # Vitest per package + repo integration tests
@@ -223,10 +234,11 @@ the game — the shipped Tizen bundle still targets Chromium 69.
 
 ## Next step
 
-Code: plan step **M1-11** (the Gradius power meter, capsules, Force Field and Mega Crash:
-capsules dropped by carriers and completed formations advance the meter, OK on the remote
-equips the highlighted slot — Speed, Missile, Double / Laser, Option, the Force Field, the
-screen-clearing Mega Crash — with an optional Auto Power-Up) — the per-step status board is
+Code: plan step **M1-12** (death, respawn, checkpoints, lives and score: a hit the Force Field
+does not absorb starts the death sequence with hit-stop and a bullet cancel, the three
+death-penalty presets decide what the loadout keeps — Arcade restarts at the last checkpoint,
+Classic loses one power level, Casual keeps the loadout — the ship flies back in with
+invulnerability, and kills, formation bonuses and capsules finally score) — the per-step status board is
 [`shmup_progress.md`](shmup_progress.md).
 
 On hardware (unchanged, and still the gate for the remote control scheme): package and

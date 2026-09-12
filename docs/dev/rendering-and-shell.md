@@ -56,9 +56,9 @@ Strings enter only through a draw list's string slots, and only when the text ch
 | 3 | `GroundEnemies` | world | turrets, walkers, hatches (the enemy system's ground batch, M1-08) |
 | 4 | `AirEnemies` | world | flying enemies (the enemy system's air batch, M1-08), bosses |
 | 5 | `PlayerShots` | world | shots, lasers (rows of 8-px segments), missiles — the weapon system's mirror batch (M1-10) |
-| 6 | `Player` | world | Options (their own batch, listed before the ships so they draw below them — M1-10), ships, shields |
+| 6 | `Player` | world | Options (their own batch, listed before the ships so they draw below them — M1-10), ships, shields (the Force Field's batch, listed after the ships so it draws over them — M1-11) |
 | 7 | `Hitbox` | world | hitbox marker |
-| 8 | `Items` | world | capsules |
+| 8 | `Items` | world | capsules (M1-11) |
 | 9 | `Fx` | world | explosions, particles |
 | 10 | `EnemyBullets` | world | enemy bullets (the bullet pool itself, M1-09), then the enemy lasers — above explosions and items so they stay readable (§12) |
 | 11 | `Hud` | screen | `RenderFrame.hud` |
@@ -368,7 +368,7 @@ events are counted as unhandled.
 
 | `?scene=` | What is drawn | Sprite name table |
 |---|---|---|
-| (none) / `flight` | **Free flight** (`createFlightScene(game)`, M1-06): the game's World — the KESTREL flying in, then moving under the player's control — over three drifting star layers, both HUD bars (`1P`, a zero score, `FREE FLIGHT`, stock ships, `ARROWS MOVE`). With a stage (`gameConfig.stage`, the web app's `?stage=<id>`, M1-07): the stage's parallax bands and scrolling terrain instead of the starfield, the stage name as the title, the enemies its timeline spawns (M1-08) and their bullets (M1-09). The ship autofires in every build, with Options and lasers under the web app's `?loadout=full` (M1-10) | `content.db.sprites.names` + `FLIGHT_SPRITES` |
+| (none) / `flight` | **Free flight** (`createFlightScene(game)`, M1-06): the game's World — the KESTREL flying in, then moving under the player's control — over three drifting star layers, both HUD bars (`1P`, a zero score, `FREE FLIGHT`, stock ships, `ARROWS MOVE`). With a stage (`gameConfig.stage`, the web app's `?stage=<id>`, M1-07): the stage's parallax bands and scrolling terrain instead of the starfield, the stage name as the title, the enemies its timeline spawns (M1-08) and their bullets (M1-09). The ship autofires in every build, with Options and lasers under the web app's `?loadout=full` (M1-10); power capsules and the Force Field are World batches too (M1-11 — the power meter itself is not drawn before the M1-16 HUD) | `content.db.sprites.names` + `FLIGHT_SPRITES` |
 | `showcase` | The **sprite showcase** (`createShowcase()`): three scrolling star layers, the KESTREL flying a figure-eight with its thruster and two Options replaying its path, five drifters with periodic hit flashes, a rotating ring of twelve bullets, both HUD bars (scores via the `number` op, lives, power meter with a moving highlight) and the title "SHMUP CUP" / "SPRITE SHOWCASE" in the bitmap font | `SHOWCASE_SPRITES` |
 | `calibration` | The skeleton's test pattern (checker border, grid, colour bars, placeholder ship, moving marker) under empty layers | `content.db.sprites.names` |
 
@@ -449,6 +449,10 @@ pnpm test:e2e                                        # builds web + tizen, then 
   two screenshots; `?loadout=full` draws the Options' orbs and laser beams; the Tizen build
   opened from disk autofires with no key held and ignores `?loadout=full`; no console errors or
   atlas `unknown sprite` warnings (M1-10).
+- `powerups.spec.ts` — `?loadout=full` draws the fresh Force Field's cyan ring
+  (`shields/force-field`, an engine sprite on the `Player` layer after the ships) around the
+  KESTREL; the default web boot and the Tizen build opened from disk never show it; no console
+  errors or atlas `unknown sprite` warnings (M1-11).
 - `shell.spec.ts` — an aborted atlas request ends on the boot error screen (overlay canvas,
   state `error`); a 1000×600 window gets a centred ×2 frame on the letterbox colour and a
   resize to 1920×1080 re-fits it to ×5; free flight animates.

@@ -59,6 +59,11 @@ period, phase? }`, `path { path?, speed }`, `waypoint { x, y, speed, hold, leave
 scroll, so their velocities are relative to the screen; ground enemies stand on (or hang from)
 the terrain where they spawn.
 
+**Drops and Mega Crash.** `"drop": "capsule"` makes the enemy leave a power capsule where it
+dies (the player's power meter — `docs/dev/powerups-and-shields.md`); `"megaCrashImmune": true`
+lets it survive the meter's `!` slot (Mega Crash), which destroys every other enemy — armour
+included.
+
 Several files may exist (e.g. one per theme); ids must be unique across all of them.
 Formation-kill drops and bonuses are configured on the stage event (`formation`), not here.
 
