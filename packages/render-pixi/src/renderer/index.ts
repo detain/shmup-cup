@@ -27,6 +27,12 @@
  * counter that goes back clears them), converts particle and popup positions with the world's
  * camera, and adds its shake / flash / dim on top of `frame.screen`.
  *
+ * **Debug (plan M1-19).** With {@link PixiRendererOptions.countDrawCalls} (the shell sets it only
+ * in dev / test builds, together with its debug tools) the WebGL context's draw entry points are
+ * wrapped with a counter and {@link PixiRenderer.drawCalls} reports the last frame's calls (both
+ * passes; -1 when not counting). The debug overlay (`debug` module) adds its own containers to
+ * the `DEBUG` layer; the renderer draws that layer like the others.
+ *
  * **Allocation.** Pixi objects are created in {@link createPixiRenderer} and when a new
  * `WorldView` object is bound ({@link PixiRenderer.bindWorld} — once per world, called
  * automatically by `render()` when `frame.world` changes identity). A frame showing an already
@@ -38,8 +44,8 @@
  * scaling, pixel-perfect), §18 (draw order, one atlas, flash/dim, shake, particles), §20 (juice),
  * §22 Rendering pipeline.
  *
- * **Public API.** {@link createPixiRenderer}, {@link PixiRenderer},
- * {@link PixiRendererOptions}.
+ * **Public API.** {@link createPixiRenderer}, {@link PixiRenderer} (incl. `drawCalls`, M1-19),
+ * {@link PixiRendererOptions} (incl. `countDrawCalls`, M1-19).
  *
  * @module
  */
@@ -265,8 +271,9 @@ const DRAW_METHODS = [
  * Wraps a WebGL context's draw calls with a counter (dev builds: the debug overlay's draw calls).
  *
  * @remarks
- * Each wrapper forwards its four arguments explicitly (no `arguments` object, no rest array), so a
- * counted draw call allocates nothing. A missing context or method is skipped.
+ * Each wrapper forwards up to five arguments explicitly (no `arguments` object, no rest array —
+ * `drawElementsInstanced` takes five), so a counted draw call allocates nothing. A missing context
+ * or method is skipped.
  *
  * @param gl - The context (`WebGLRenderer.gl`), or `undefined` (test fakes).
  * @param counter - The counter to increment.

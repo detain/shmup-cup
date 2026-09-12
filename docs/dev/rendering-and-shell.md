@@ -10,7 +10,9 @@ flash / dim fed by the sim's events in M1-14, see [fx-and-game-feel.md](fx-and-g
 the HUD, the menus and the scene flow's frame in M1-16, see [scenes-and-ui.md](scenes-and-ui.md))
 without changing its shape. The shell's audio wiring (M1-15 — the
 SFX bank and the stage's music rendered during boot, the engine fed by the same event dispatch)
-is on [audio.md](audio.md).
+is on [audio.md](audio.md); the dev / test builds' debug tools and overlay (M1-19 — the `DEBUG`
+layer, the draw-call counter, the shell's `debug` module) on
+[debug-and-replays.md](debug-and-replays.md).
 
 This page is the *how and why*. Exact signatures are in
 [api-reference.md](api-reference.md); the TSDoc in the sources is the authoritative
@@ -71,7 +73,7 @@ Strings enter only through a draw list's string slots, and only when the text ch
 | 10 | `EnemyBullets` | world | enemy bullets (the bullet pool itself, M1-09), then the enemy lasers — above explosions and items so they stay readable (§12) |
 | 11 | `Hud` | screen | `RenderFrame.hud` |
 | 12 | `Ui` | screen | `RenderFrame.ui` |
-| 13 | `Debug` | screen | debug overlay (M1-19) |
+| 13 | `Debug` | screen | the debug overlay — panel, frame graph, hitbox / grid outlines (`render-pixi` `debug`, dev / test builds only — M1-19, [debug-and-replays.md](debug-and-replays.md#the-overlay-shmuprender-pixi-debug)) |
 
 `LAYER_COUNT` is 14 and `LAYER_NAMES` holds the plan's spellings (`'ENEMY_BULLETS'`), used as
 Pixi container labels. The world group is offset by screen shake; `Hud`, `Ui` and `Debug`
@@ -328,6 +330,7 @@ const shell = await bootShell({
   audioUnlock: 'gesture', // 'immediate' on the TV
   contentOwners: { [INPUT_PROFILES_KIND]: profiles.load }, // optional: merged over DEFAULT_CONTENT_OWNERS
   inputProfiles: { choices, active, apply }, // optional (M1-17): the Options screen's CONTROLS
+  debugTools: __SHMUP_DEV__ ? debugToolsFactory({ buildId: __SHMUP_BUILD__ }) : null, // M1-19
 });
 ```
 
@@ -339,12 +342,12 @@ const shell = await bootShell({
 | 1 | `loadGameContent(files, { owners })`: core kinds through `loadContent()`, every foreign kind through its owner | `CONTENT COULD NOT BE READ` (a thrown error), `CONTENT ERRORS: N PROBLEMS` (issues, one `path: message` line each) |
 | 2 | `loadImages(pageUrls, () => new Image())` — all pages in parallel, the bar advances per page | `ATLAS PAGE FAILED TO LOAD` (`<url>: AssetLoadError: …`) |
 | 3 | `createAtlas(manifest, images)` | `ATLAS DOES NOT MATCH ITS MANIFEST` |
-| 4 | `createPixiRenderer(...)` — WebGL1 first; `fxSeed` = the game's seed xor a salt, `effects` = `ShellOptions.effects` | `WEBGL IS NOT AVAILABLE` |
+| 4 | `createPixiRenderer(...)` — WebGL1 first; `fxSeed` = the game's seed xor a salt, `effects` = `ShellOptions.effects`, `countDrawCalls` only with `ShellOptions.debugTools` (M1-19) | `WEBGL IS NOT AVAILABLE` |
 | 5 | `options.platform(renderer)`; then (M1-17) `loadSave(platform.storage)` — never fails: a corrupt or unreadable save means defaults, its text copied to `save.corrupt` — `createSaveStore`, `applyAudioOptions(audio, save.options.audio)`, and with `options.inputProfiles` its `choices()`, `apply(savedId, 'save')` and `active()`; then `createGame(platform, gameConfig, content.db, options)` — `{ scenes: 'boot', save, inputProfiles: { choices, active } }` for the default scene `game` (the scene flow, M1-16), none for the dev scenes (bare gameplay) — [saves-and-options.md](saves-and-options.md#the-shells-side) | `SHMUP CUP FAILED TO START` (the platform factory, the profile callbacks or `createGame` threw) |
 | 5a | Audio (M1-15): `createAudioEngine({ sfx, music, loader })`, `engine.loadSfx()` (bar labelled `LOADING SOUND`), then for a booted stage `engine.prepareMusic(stage.id, stageMusicCues(stage))` (`LOADING MUSIC`; open space prepares none); the scene flow adds the title theme (and the stage-clear / game-over jingles in open space), then `game.scenes.finishBoot()` — [audio.md](audio.md#the-shells-wiring) | `AUDIO FAILED TO LOAD` (`AudioLoadError: could not load <url>: …`) |
 | 6 | `renderer.setFxContent(shell.fx)`; scene set up (the scene flow: `createSceneView(game)`, its name table + `bindWorld(view.backdrop)`; free flight / showcase / fx gallery: the scene's name table + `bindWorld(scene.world)`; calibration: content's names and a frame without a world), dispatcher created — in the scene flow and free flight with `connectFxEvents` (M1-14) and `connectAudioEvents(events, engine, camera)` (M1-15; the flow's `sceneView.camera`, free flight's `world.view.camera`); in the scene flow also `connectOptionEvents(events, audio, …)` (M1-17: the Options screen's volumes and profile, live) | — |
 | 7 | Suspend → `input.clear()` + `audio.suspend()`; resume → `audio.resume()`; window `blur` → `input.clear()` (M1-17 — a window without focus never sends its key-ups); audio unlock (first `keydown` / `pointerdown` in the capture phase, or immediately) followed by `engine.attach(audio)` right after `unlock()` returns and again when it resolves; `resize` → `renderer.resize()` | — |
-| 8 | rAF loop started, overlay removed, canvas marked `running`, `data-shmup-scene` = the top scene (`title`) or the dev scene, and `data-shmup-boot-ms` = the launch-to-ready time (M1-17, `Shell.bootTiming`) | — |
+| 8 | rAF loop started, overlay removed, canvas marked `running`, `data-shmup-scene` = the top scene (`title`) or the dev scene, and `data-shmup-boot-ms` = the launch-to-ready time (M1-17, `Shell.bootTiming`); then, in dev / test builds, the debug tools from `ShellOptions.debugTools` (M1-19: keys, `window.__shmupDebug`, the overlay — before the first frame, which rAF runs later) | — |
 
 On any failure the error screen stays up, the canvas is marked `error`, everything created so
 far (input and audio included) is released, and the promise rejects with a `ShellBootError`
@@ -403,6 +406,13 @@ const onFrame = (now: number): void => {
 };
 startFrameLoop(win, onFrame); // requests the next frame before calling onFrame
 ```
+
+In dev / test builds (`Shell.debug !== null`, M1-19) the same frame also calls the debug tools:
+`beginFrame(now)` first (frame time, FPS, the frame graph; starts timing the ticks),
+`endTicks()` after `game.frame`, `beforeRender()` just before `renderer.render` (collects the
+sim counters from the World on screen, reads `renderer.drawCalls` and the particle pool, rebuilds
+the overlay) and `afterRender()` after it (render time). Release builds pass no factory, so the
+frame is exactly the one above — [debug-and-replays.md](debug-and-replays.md#the-frame-with-the-tools).
 
 `createEventDispatcher()` routes drained records by `SimEventKind` to handlers registered at
 load time with `shell.events.on(kind, handler)` (returns an unsubscribe function; an unknown
@@ -491,6 +501,7 @@ resolve virtual modules, so the boot functions receive them as arguments.
 | Saves | `localStorage` `shmup-cup:save.v1` (memory for the session after the first storage error) | the same key in the widget's `localStorage` (deleted on uninstall) |
 | Back | Esc / Backspace → `Pause` (game) / `Back` (menus); the title's Back only backs out of its menu (no `platform.exit`) | remote Back (10009) → `Pause` (game) / `Back` (menus) through the scene stack; on the title the exit confirmation → `platform.exit()` after YES. The exit watcher is installed **before** boot and removed once the shell runs, so Back exits only from the loading and boot error screens |
 | Atlas URLs | `assets/atlas/main.png` under the page (`vite preview`, dev middleware) | the same relative path inside the widget (`file://`) |
+| Debug tools (M1-19) | `pnpm dev`, `build:test`, `build:dev`: `debugToolsFactory({ buildId })` — F1–F8 at once | `build:test`, `build:dev`: `tizenDebugTools(window, buildId)` — nothing until Pause, Ch+, Ch+, Ch+; then 1–8 (registered with `tvinputdevice` on the unlock) and F1–F8 |
 
 `apps/tizen/scripts/check-bundle.mjs` rule 7 fails the Tizen build unless `dist/assets/atlas/`
 holds at least one page — without it the widget can only show the boot error screen.
@@ -502,7 +513,8 @@ pnpm exec playwright install --with-deps chromium   # once per machine
 pnpm test:e2e                                        # builds web + tizen, then runs Playwright
 ```
 
-`test:e2e` runs `turbo run build` for `@shmup/web` and `@shmup/tizen`, then
+`test:e2e` runs `turbo run build:test` for `@shmup/web` and `@shmup/tizen` (since M1-19 the
+**test builds** — release code plus the debug tools, so `window.__shmupDebug` exists), then
 `playwright test --config test/e2e/playwright.config.ts`: headless Chromium, 1152×648 viewport
 (×3, so frame pixel `(x, y)` is screenshot pixel `(3x + 1, 3y + 1)`), the web build served by
 `vite preview` on port 4173 and the Tizen `dist/index.html` opened via `file://`.
@@ -528,12 +540,15 @@ pnpm test:e2e                                        # builds web + tizen, then 
   `file://` moves it with the remote's arrow key codes.
 - `stage.spec.ts` — `?stage=test-range` shows the generated terrain (the placeholder tileset's
   colours) inside the playfield and never in the HUD bars, and scrolls it left between two
-  screenshots (30 frames apart) while the ship stays put on screen; an unknown `?stage=` warns
-  and boots free flight without terrain (M1-07).
+  screenshots while the ship stays put on screen — since M1-19 the sim is frozen with frame
+  advance and the captures are taken at World tick 90 and exactly 30 ticks later (a 29–31 px
+  shift), instead of 30 rAF frames apart; an unknown `?stage=` warns and boots free flight
+  without terrain (M1-07).
 - `enemies.spec.ts` — on `?stage=test-range` the first formation of drifters (found by their
   placeholder colours, which no other sprite uses) appears inside the playfield, never in the
-  HUD bars, and flies left; no console errors and no atlas `unknown sprite` warnings while the
-  timeline spawns (M1-08).
+  HUD bars, and flies left (since M1-19 stepped in exact ticks: 15-tick steps until they show,
+  then 20 ticks); no console errors and no atlas `unknown sprite` warnings while the timeline
+  spawns (M1-08).
 - `bullets.spec.ts` — on `?stage=test-range`, once the first turrets have scrolled in and
   settled, enemy bullets in the readability palette's body colours appear inside the playfield
   (never in the HUD bars) and move between two screenshots; no console errors or atlas
@@ -581,6 +596,16 @@ pnpm test:e2e                                        # builds web + tizen, then 
 - `shell.spec.ts` — an aborted atlas request ends on the boot error screen (overlay canvas,
   state `error`); a 1000×600 window gets a centred ×2 frame on the letterbox colour and a
   resize to 1920×1080 re-fits it to ×5; free flight animates.
+- `smoke.spec.ts` (M1-19) — the M1 gameplay smoke on both builds: title → OK, OK → hold → then ↑
+  for 2.5 s each → `window.__shmupDebug.sceneId === 'game'`, the World ticked, no console errors;
+  F1 / F2 on the web, and on the TV build the locked tools until Pause, Ch+, Ch+, Ch+.
+- `debug-tools.spec.ts` (M1-19) — F4 freezes, F5 steps exactly one tick, `requestStep(n)` exactly
+  n, F7 / F8 move the camera to the next checkpoint / before the WARNING, F3 / F6 cycle; the TV
+  build's 4 / 5 after the unlock; the `frame-advance.ts` helpers themselves.
+- `frame-advance.ts` (M1-19) — `freezeSim(page)` and `stepTo(page, tick)`: specs that compare two
+  captures a set number of ticks apart freeze the sim and run exact ticks, because under load the
+  frame loop runs 1–4 ticks per rAF frame. Playwright uses half the cores, at most 8 workers
+  (SwiftShader is itself multi-threaded).
 
 Chromium flags (why each exists is in the config's docblock): `--use-angle=swiftshader
 --enable-unsafe-swiftshader` (software WebGL), `--allow-file-access-from-files` (see
@@ -640,6 +665,8 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | `packages/render-pixi/test/renderer/` | The renderer wired with a fake `WebGLRenderer`: passes, rebinding (incl. parallax / terrain bindings below the batches), shake / flash / dim, reused pass options (fails if `resetPass` is removed), allocation probes; `renderer-fx*` (M1-14): the particles / popups / effects it owns, stepping by the tick delta, flash tint composition, the two dims, the FX layer under the enemy bullets |
 | `packages/render-pixi/test/particles/`, `effects/` | The `fx` content validation, the particle pool, the screen effects and the score popups (M1-14 — [fx-and-game-feel.md](fx-and-game-feel.md#tests)) |
 | `packages/shell/test/` | The save at boot (M1-17: volumes on a fake audio, the app's profile callbacks, corrupt / unreadable / v0 saves, a failing storage, the Options screen end to end, `blur`, boot timing and `data-shmup-boot-ms`), `connectOptionEvents` / `applyAudioOptions` (`dispatch-options*.test.ts`); the scene flow's boot (title theme prepared, `finishBoot`, `data-shmup-scene` through boot → title → game → pause) and `scene-view` (backdrop, open-space wrapper per World, starfield frozen under pause, followed camera, `worldChanges` — M1-16); boot happy path and every failure (error screen, state attribute, cleanup), content owners (the default `input-profiles` owner, an app owner replacing it), the input context forwarded before a frame's polls, image loading and progress, dispatch (copy-on-write unsubscribe; `connectFxEvents` — its table, an allocation guard of the whole event path and an end-to-end game-feel run, M1-14; `connectAudioEvents` — its mapping, two allocation guards and the shipped boss range through a real audio engine, M1-15), the audio wiring of boot (bank and stage set prepared, attach after the unlock, `AUDIO FAILED TO LOAD` — M1-15), overlay drawing, the fx gallery, the free-flight scene (sprite ids, starfield drift / wrap / pause, HUD, the WARNING band — M1-13, empty content, zero allocation per frame), showcase determinism and allocation |
+| `packages/render-pixi/test/debug/`, `renderer/renderer-draw-calls.test.ts` | The debug overlay (M1-19): panel lines and values, frame graph, every outline kind, one colour per list, no dropped commands with every pool full, allocation-free `update`; the draw-call counter ([debug-and-replays.md](debug-and-replays.md#tests)) |
+| `packages/shell/test/debug/` | The debug tools (M1-19): F-keys, the TV unlock sequence, `window.__shmupDebug`, the frame hooks |
 | `test/e2e/` | The real browser path, both builds (above) |
 
 ## Gotchas
@@ -668,7 +695,8 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | An explosion covers a bullet | Something was added to a layer above `ENEMY_BULLETS`; particles and popups belong on `FX` |
 | No sound, but the game runs | In a browser nothing plays before the first key press or click (autoplay policy); the scene is not the scene flow or free flight (only they connect the game's events); the `audio` passed to `bootShell` does not expose `context` / `bus()`; or a game in open space, which has no stage music — [audio.md](audio.md#gotchas) |
 | Settings or the hi-score are back to the defaults after a reload | Nothing was written yet (the save is written when the Options screen closes and when a game ends), `localStorage` failed and the adapter fell back to memory, or the save was corrupt (look for `shmup-cup:save.corrupt`; `shell.loadedSave.status`) — [saves-and-options.md](saves-and-options.md#gotchas) |
-| `stage.spec.ts` fails with the terrain "not scrolling" on a busy machine | A screenshot took so long that the terrain moved more than the 250-px search window (reproduced before M1-15 under a load average of ~40); re-run on a quieter machine |
+| `stage.spec.ts` / `enemies.spec.ts` fail with "not scrolling" / "not moving" on a busy machine | Fixed in M1-19: they no longer count rAF frames (the loop runs 1–4 ticks a frame under load) but freeze the sim and step exact ticks (`test/e2e/frame-advance.ts`). A new spec comparing two captures should do the same |
+| e2e specs time out waiting for `window.__shmupDebug` | The `dist/` folders are release builds (`pnpm build` ran after the test builds). `pnpm test:e2e` builds `build:test` first; do not run `playwright test` alone on release builds |
 
 ## Next steps that build on this page
 
@@ -715,4 +743,7 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 - **M1-18** (done) — `DEFAULT_STAGE_ID` / `defaultStageId(files)`: both apps' scene flow plays
   zone A (the dev scenes keep open space); the web app's `?skip=boss`
   ([zone-a-and-playtest.md](zone-a-and-playtest.md#the-game-plays-zone-a)).
-- **M1-19** — the debug overlay (FPS, tick / render ms, boot ms from `Shell.bootTiming`).
+- **M1-19** (done) — the debug tools: `ShellOptions.debugTools` / `Shell.debug`, the renderer's
+  draw-call counter, the overlay on the `DEBUG` layer (FPS, tick / render ms, draw calls, pools,
+  boot ms from `Shell.bootTiming`, the frame graph, outlines), `window.__shmupDebug`; `pnpm
+  test:e2e` on the test builds ([debug-and-replays.md](debug-and-replays.md)).

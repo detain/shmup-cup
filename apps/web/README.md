@@ -47,6 +47,15 @@ presets of `content/fx/`, the screen shake of a lost ship or a boss's final blas
 [`docs/dev/fx-and-game-feel.md`](../../docs/dev/fx-and-game-feel.md)). The app passes no effect
 settings yet (shake on, normal flashing — display options come with M2-08 / M2-16).
 
+Since M1-19 dev and test builds (`pnpm dev`, `build:test` — what `pnpm test:e2e` opens —,
+`build:dev`) carry the **debug tools**: `main.ts` passes `debugToolsFactory({ buildId:
+__SHMUP_BUILD__ })` when `__SHMUP_DEV__` is true (`shmupBuildInfo()` in `vite.config.ts`), so F1
+overlay (FPS, tick / render ms, draw calls, pools, rank, RNG calls, state hash, boot ms, build
+id, frame graph), F2 god mode, F3 hitbox / grid outlines, F4 frame advance, F5 step, F6 slow
+motion, F7 next checkpoint, F8 skip to the boss, and `window.__shmupDebug` for the console and the
+e2e suite. A release build (`pnpm build`) contains none of it — guide:
+[`docs/dev/debug-and-replays.md`](../../docs/dev/debug-and-replays.md).
+
 Since M1-17 **OPTIONS** opens the Options screen (MASTER / MUSIC / SFX volume sliders, CONTROLS),
 and the shell keeps the options and the hi-scores in a versioned save in `localStorage`
 (`shmup-cup:save.v1`, read before the title; a corrupt one is copied to `shmup-cup:save.corrupt`
@@ -67,8 +76,10 @@ Guide: [`docs/dev/input-profiles.md`](../../docs/dev/input-profiles.md).
 ```sh
 pnpm dev                          # from the repo root (= turbo run dev --filter=@shmup/web)
 # → http://localhost:5173 (title → game) · ?scene=flight (free flight at once) · ?stage=test-range (scrolling test stage) · ?stage=test-boss (the WARNING and the test boss) · &loadout=full (fully powered) · ?scene=showcase (sprite showcase) · ?scene=calibration (test pattern) · ?scene=fx-gallery (every particle preset and screen effect)
-pnpm --filter @shmup/web build    # → apps/web/dist (relocatable, base './')
-pnpm --filter @shmup/web exec vite preview   # serve the production build (what pnpm test:e2e opens)
+pnpm --filter @shmup/web build    # → apps/web/dist (relocatable, base './'), release: no debug tools
+pnpm --filter @shmup/web build:test   # the same plus the debug tools (vite build --mode test — what pnpm test:e2e builds)
+pnpm --filter @shmup/web build:dev    # likewise, --mode development
+pnpm --filter @shmup/web exec vite preview   # serve the last build in apps/web/dist
 ```
 
 Workspace packages are resolved to their TypeScript sources (`@shmup/source` export
@@ -93,7 +104,7 @@ the shell loads the pages with `new Image()`; see
 
 | Module | Status | Responsibility |
 |---|---|---|
-| `main.ts` | — | Entry: boots into `#game`, disposes on HMR |
+| `main.ts` | — | Entry: boots into `#game` (with `debugToolsFactory` when `__SHMUP_DEV__`, M1-19), disposes on HMR |
 | `boot` | implemented | Composition root: keyboard/gamepad input with the input profiles (`?profile=`, `?debounce=`, saved choice), Web Audio and the browser platform handed to `@shmup/shell`'s `bootShell` (content + atlas loading, boot error screen, renderer, game, rAF loop, audio unlock on the first key or pointer gesture — gamepad buttons do not count — after which the shell's audio engine plays the sounds and, with `?stage=`, the stage's music, M1-15); the scene flow by default (title → game ⇄ pause …, M1-16), `?scene=flight` for free flight, `?stage=<id>` (`stageFromSearch`, checked with `contentStageIds`), `?loadout=full` (`loadoutFromSearch`, M1-10), `?scene=showcase` / `?scene=calibration` / `?scene=fx-gallery` (M1-14) |
 | `platform` | partial | Browser `Platform`: localStorage (memory fallback), visibility lifecycle, no `exit` |
 

@@ -96,7 +96,7 @@ event queue (`WorldOptions.events`) — [scenes-and-ui.md](scenes-and-ui.md#worl
 | `status` | `WorldStatus`: `'playing'` \| `'bossWarning'` \| `'stageClear'` \| `'gameOver'` (`'stageClear'` once a stage's `end` event fired; `'gameOver'` once every active ship is out — M1-12, from `playing` / `bossWarning` only; `'bossWarning'` for the 180 ticks of a boss WARNING — M1-13, from `playing` only, back to `playing` when the boss enters; the boss's death sequence also ends in `'stageClear'`) |
 | `hitStop` | Remaining hit-stop ticks — raised by `core/fx` `requestHitStop` (the player's death since M1-12) |
 | `fx` | `FxState` (M1-12): the shake and flash timers and `frozen` (this tick started frozen) — [death-and-scoring.md](death-and-scoring.md#game-feel-corefx) |
-| `debugFlags` | `createDebugFlags()`: `godMode`, `showHitboxes`, `frameAdvance`, `slowMo` (acted on from M1-19) |
+| `debugFlags` | The session's debug switches (`WorldOptions.debugFlags` — `createGame` passes `game.debug`, a World alone gets `createDebugFlags()`): `godMode` (read by `playerHit` — the only one that changes a tick), `showHitboxes`, `showGrid`, `frameAdvance`, `slowMo`, `overlay` (M1-19 — [debug-and-replays.md](debug-and-replays.md)) |
 | `pools` | The `PoolRegistry` of every SoA pool the systems create |
 | `grid` | The broad-phase `SpatialGrid` over the camera view + `GRID_MARGIN` (64 px) on each side |
 | `playerBatch`, `view` | The players' mirror `SpriteBatch` (`LayerId.Player`) and the `WorldView` the renderer draws |
@@ -382,8 +382,8 @@ independently and fails when the two disagree.
 
 `hashWorld` reads state only (it never draws from an RNG) and mixes into module-level typed
 arrays, so the only allocation is the engine boxing the returned unsigned 32-bit value when it
-does not fit a small integer (≤ 16 bytes). Call it every few ticks — golden replays (M1-19)
-will compare it at checkpoints — not per entity.
+does not fit a small integer (≤ 16 bytes). Call it every few ticks — replays store it every 600
+ticks and the debug overlay every 60 (M1-19) — not per entity.
 
 ## The free-flight scene (`@shmup/shell` `flight`)
 
@@ -553,4 +553,5 @@ Inside the game, use `createGame(platform, overrides, db)` and `game.step()` /
   ([death-and-scoring.md](death-and-scoring.md)).
 - **M1-13** (done) — the boss system in phases 3–7 and 9, the `bossWarning` status, the stage
   brake, the boss kill's hit-stop, shake and flash ([bosses-and-warning.md](bosses-and-warning.md)).
-- **M1-19** — golden replays compare `hashWorld`; the debug controls act on `debugFlags`.
+- **M1-19** (done) — replays and the golden zone A replays compare `hashWorld`; the debug
+  controls act on the shared `debugFlags` ([debug-and-replays.md](debug-and-replays.md)).

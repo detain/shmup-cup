@@ -43,7 +43,9 @@ desktop app, run `pnpm rebuild electron` without the variable set.
 | `pnpm test` | Every project's `vitest run` plus `test:integration` (repo-level `test/`) |
 | `pnpm test:all` | One Vitest process over all projects (root `vitest.config.ts`) — quickest full run |
 | `pnpm test:integration` | Only the repo-level `test/` project |
-| `pnpm test:e2e` | Browser smoke tests: `turbo run build` for `@shmup/web` and `@shmup/tizen`, then Playwright (`test/e2e/playwright.config.ts`) in headless Chromium with SwiftShader WebGL — the web build via `vite preview` (port 4173) and the Tizen `dist/index.html` via `file://`. Needs Chromium once per machine: `pnpm exec playwright install --with-deps chromium`. See [rendering-and-shell.md](rendering-and-shell.md#browser-tests-pnpm-teste2e) |
+| `pnpm test:e2e` | Browser smoke tests: `turbo run build:test` for `@shmup/web` and `@shmup/tizen` (test builds — the release code plus the debug tools and `window.__shmupDebug`, M1-19), then Playwright (`test/e2e/playwright.config.ts`) in headless Chromium with SwiftShader WebGL — the web build via `vite preview` (port 4173) and the Tizen `dist/index.html` via `file://`. Needs Chromium once per machine: `pnpm exec playwright install --with-deps chromium`. See [rendering-and-shell.md](rendering-and-shell.md#browser-tests-pnpm-teste2e) |
+| `pnpm golden:update` | Re-blesses the golden replays (`scripts/golden-update.mjs`: Vitest on `test/golden` with `SHMUP_GOLDEN_UPDATE=1` — re-records every scenario of `test/golden/golden.ts` from its bot, rewrites `test/golden/*.replay.json`, then checks them). Only for an **intended** simulation change, in the same commit, with the reason in the commit message — see [debug-and-replays.md](debug-and-replays.md#golden-replays-testgolden) |
+| `pnpm bench` | The stress benchmark (`test/bench/`, own Vitest config, `--expose-gc`): 20,000 ticks with 512 bullets, 64 enemies, the full loadout and four lasers; prints ms/tick and heap growth, fails at a median ≥ 1.0 ms/tick or ≥ 512 KB heap growth. Not part of `pnpm test`; CI runs it after the build — see [debug-and-replays.md](debug-and-replays.md#the-stress-benchmark-pnpm-bench) |
 | `pnpm format` / `pnpm format:check` | Prettier write / check (research docs at the root are ignored) |
 | `pnpm clean` | Removes `dist/`, `coverage/`, `.turbo/` everywhere (never `node_modules`) |
 | `pnpm assets` | Placeholder asset pipeline (`scripts/generate-assets.mjs`): sprite pixel maps, procedural generators, PNG overrides and fonts → `assets/generated/atlas/main.png` + `main.json`; skipped when inputs are unchanged; `--force` rebuilds, `--out DIR` / `--source DIR` redirect, `--quiet` silences; exit 1 lists invalid sources. Also runs before every `build` / `dev` (Turborepo `//#assets`) and inside Vite builds (`shmupAssets()`). See [asset-pipeline.md](asset-pipeline.md#running-it) |
@@ -52,7 +54,11 @@ desktop app, run `pnpm rebuild electron` without the variable set.
 | `pnpm trig:tables` | Regenerates the committed `packages/core/src/math/trig-table.ts` (`scripts/gen-trig-tables.mjs`; `--check` verifies, `--out FILE` writes elsewhere). Re-run it in the same commit whenever the script changes — a test diffs the committed file |
 
 Per project: `pnpm --filter <name> <script>`, e.g. `pnpm --filter @shmup/core test`,
-`pnpm --filter @shmup/tizen build`. Extra arguments go to the tool:
+`pnpm --filter @shmup/tizen build`. The two browser apps also have `build:test` (`vite build
+--mode test` — what `pnpm test:e2e` builds) and `build:dev` (`--mode development` — the on-device
+debug build): both are the release code plus the debug tools (`__SHMUP_DEV__` true — M1-19,
+[debug-and-replays.md](debug-and-replays.md#release-builds-and-dev--test-builds)); plain `build`
+never contains them. Extra arguments go to the tool:
 `pnpm --filter @shmup/core test loop` runs only test files whose path contains `loop`.
 
 ## Turborepo
@@ -60,11 +66,12 @@ Per project: `pnpm --filter <name> <script>`, e.g. `pnpm --filter @shmup/core te
 `turbo.json` defines the task graph:
 
 - `build` depends on `^build` (dependencies first) and on the root task `//#assets`, and
-  caches `dist/**`.
+  caches `dist/**`; so do `build:test` and `build:dev` (M1-19 — the apps' test and debug
+  builds; the packages have no such script, so `^build` builds them normally).
 - `//#assets` runs `pnpm assets` (inputs `assets/source/**`, `scripts/assets/**`,
   `scripts/generate-assets.mjs`; outputs `assets/generated/**`). `dev` and the `test:e2e`
   entry depend on it too (that turbo task stays unused: the root `pnpm test:e2e` script
-  chains `turbo run build` and Playwright itself). The pipeline also runs from the
+  chains `turbo run build:test` and Playwright itself). The pipeline also runs from the
   `shmupAssets()` Vite plugin and has its own input-hash cache, so a Turborepo cache miss
   costs one hash when nothing changed ([asset-pipeline.md](asset-pipeline.md#running-it)).
 - `typecheck`, `lint` and `test` depend on the no-op `transit` task, so their caches are
@@ -89,7 +96,7 @@ A cache hit prints `cache hit, replaying logs`. To force a rerun: `pnpm turbo ru
 |---|---|---|
 | `packages/*` | `dist/*.js` + `.d.ts` (ES2018) | `tsconfig.build.json` switches the `@shmup/source` condition off so dependents' types come from `dist/` |
 | `apps/web` | `apps/web/dist/` (+ `assets/atlas/main.png`) | Vite default (modern) target, `base: './'` (relocatable — required by Electron's `app://`) |
-| `apps/tizen` | `apps/tizen/dist/`: `index.html`, `app.js`, `config.xml`, `icon.png`, `assets/atlas/main.png` | Chromium 69 contract below; packaging adds a `.wgt` next to them |
+| `apps/tizen` | `apps/tizen/dist/`: `index.html`, `app.js`, `config.xml`, `icon.png`, `assets/atlas/main.png` | Chromium 69 contract below; packaging adds a `.wgt` next to them. `build:test` / `build:dev` write the **same folder** — the last build wins, so rebuild with `build` before packaging a release |
 | repo root | `assets/generated/atlas/main.png` (+ `main-1.png` …), `main.json`, `assets/generated/.asset-cache.json` | `pnpm assets` / `//#assets`; git-ignored. The app builds copy the pages and inline the manifest |
 | `apps/electron` | `dist/main/*.js`, `dist/preload/preload.cjs`, `dist/renderer/` (copy of `apps/web/dist`) | Needs `@shmup/web` built first (Turborepo does it) |
 
@@ -113,7 +120,11 @@ exactly one script `app.js`, `index.html` loads it as a deferred classic script,
 `config.xml` / `icon.png` are present, every other file lives under `dist/assets/`
 (the atlas pages — anything else would be packaged into the `.wgt` by accident), and at
 least one atlas page exists under `dist/assets/atlas/` (without it the widget can only show
-the boot error screen).
+the boot error screen), and — since M1-19 — the **budgets** hold: `app.js` ≤ 350 KB gzipped
+(`APP_JS_GZIP_BUDGET`), every atlas page a readable PNG of at most 2048² (`ATLAS_PAGE_MAX_SIZE`),
+the whole `dist/` ≤ 8 MB (`DIST_BUDGET`). The OK line prints the sizes against them
+(M1-19: `app.js` 773.6 KB, 228.6 KB gzipped; `dist/` 812.4 KB). A release build must also carry
+no debug code (`tizen-build.test.ts` looks for `__shmupDebug` / `debug-overlay`).
 `apps/tizen/test/build/tizen-build.test.ts` also executes the bundle in a V8 realm with
 `globalThis` deleted.
 
@@ -165,6 +176,12 @@ For the second monitor set `TV_IP` to its address and repeat `tizen:install` and
 `tizen:run` (unlike the input probe's `deploy`, these scripts take one IP at a time).
 `pnpm build` empties `dist/`, so package again after every build.
 
+**Debug build** (the §8.4 on-device checks, M1-19): `pnpm --filter @shmup/tizen build:dev`
+instead of `build`, then the same three commands. It is the same app id, so it installs over the
+release build and keeps its save; the remote sequence Pause, Ch+, Ch+, Ch+ unlocks the debug
+tools ([../client/debug-tools.md](../client/debug-tools.md)). Package from a plain `build` for
+anything that is not a test build — `pnpm test:e2e` leaves a test build in `dist/` too.
+
 ## Electron
 
 ```sh
@@ -201,6 +218,12 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   BULWARK and reach the stage clear in 3–6 minutes, the run without it only reports its deaths.
   `pnpm exec vitest run --project integration test/playtest --reporter=verbose` prints the runs —
   see [zone-a-and-playtest.md](zone-a-and-playtest.md#the-playtest-testplaytest).
+- **Golden replays** (M1-19, plan §1.3): `test/golden/golden.test.ts` plays the four committed
+  zone A replays (`test/golden/*.replay.json`) back and requires every state hash and the
+  recorded outcome to match — part of `pnpm test` (the `integration` project). A failure means
+  the simulation changed; re-bless an intended change with `pnpm golden:update` and say why in
+  the commit message ([debug-and-replays.md](debug-and-replays.md#golden-replays-testgolden)).
+- **Benchmark** (M1-19): `pnpm bench` (above) — not part of `pnpm test`; CI runs it.
 - Repo-level integration tests (`test/`) cover cross-package behaviour, lint-rule
   enforcement and skeleton invariants, plus the root Node scripts (`test/scripts/`,
   including every asset-pipeline module) and the Vite plugins, some of which start a real
@@ -234,8 +257,14 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   build keeps SFX and CONTROLS changed with the remote alone across a reload, and the boot time on
   the canvas (`data-shmup-boot-ms`) stays under 10 s (M1-17), and the scene flow plays zone A:
   with `?skip=boss`, Enter twice reaches the WARNING band within seconds and then HALCYON
-  BULWARK's hull in the right half of the playfield (M1-18). The gameplay specs open
-  `?scene=flight` (bare gameplay, open space unless `?stage=` names a stage) since M1-16.
+  BULWARK's hull in the right half of the playfield (M1-18), and the M1 gameplay smoke plays both
+  builds from the title (hold the arrows 5 s → `window.__shmupDebug.sceneId` is `game`, no console
+  errors) while the debug tools answer F1–F8 on the web and unlock on the TV build only after
+  Pause, Ch+, Ch+, Ch+; F4 / F5 / `requestStep` run exact tick counts (M1-19). The gameplay specs
+  open `?scene=flight` (bare gameplay, open space unless `?stage=` names a stage) since M1-16;
+  specs comparing captures a set number of ticks apart freeze the sim and step exact ticks
+  (`test/e2e/frame-advance.ts`, M1-19) instead of counting rAF frames. Since M1-19 the suite runs
+  on the **test builds** (`build:test`), and Playwright uses half the cores, at most 8 workers.
   Output goes to `test/e2e/test-results/` (git- and Prettier-ignored).
 - **Dev query parameters** of the web build (`pnpm dev`, `vite preview`; without `?scene=` the
   game starts on the title — the scene flow, M1-16 — and START plays zone A, AZURE VERGE, M1-18):
@@ -262,10 +291,11 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
 `.github/workflows/ci.yml` on every push to `master` and every pull request:
 `pnpm/action-setup` (version from `packageManager`) → `actions/setup-node` (`.nvmrc`,
 pnpm cache) → `pnpm install --frozen-lockfile` → `pnpm lint` → `pnpm typecheck` →
-`pnpm test` → `pnpm build`, with `ELECTRON_SKIP_BINARY_DOWNLOAD=1` (Electron is only
+`pnpm test` (golden replays included) → `pnpm build` (Tizen budgets included) → `pnpm bench`
+(M1-19), with `ELECTRON_SKIP_BINARY_DOWNLOAD=1` (Electron is only
 type-checked, tested and compiled) and Turborepo telemetry off. A parallel **`e2e`** job
 installs the same way, runs `pnpm exec playwright install --with-deps chromium` and then
-`pnpm test:e2e`; the `input-probe` job builds and tests `tools/input-probe` with npm. Commit `pnpm-lock.yaml`
+`pnpm test:e2e` (test builds); the `input-probe` job builds and tests `tools/input-probe` with npm. Commit `pnpm-lock.yaml`
 whenever dependencies change, or the frozen install fails.
 
 ## Troubleshooting
@@ -292,4 +322,8 @@ whenever dependencies change, or the frozen install fails.
 | `pnpm test:e2e`: port 4173 already in use | Another `vite preview` is running; locally it is reused (`reuseExistingServer`), so make sure it serves a current `apps/web/dist`, or stop it |
 | A test fails with `measureHeapGrowth needs node --expose-gc` | The package's `vitest.config.ts` lacks `defineShmupProject(name, { execArgv: ['--expose-gc'] })` |
 | An allocation test (`… toBeLessThan(…)` on `growth.bytes`) fails | A hot path allocates: a new object / array / closure per tick, or a fractional number V8 boxes (a fractional `let` in a closure, a mixed ternary, a fractional argument) — see [sim-world.md](sim-world.md#zero-allocation-and-the-allocation-guard). If it fails only now and then in a full `pnpm test` (Turborepo runs every package at once) and always passes alone (`pnpm --filter <package> test`), it is JIT / GC noise under load — seen occasionally in core's `game-world.test.ts` and render-pixi's `sprites-edge.test.ts`; rerun, and report it if it keeps happening |
+| `golden.test.ts` fails: a hash or the outcome differs | The simulation changed. Unintended: find the change (the report names the first diverging hash tick). Intended: `pnpm golden:update`, review the diff of `test/golden/*.replay.json`, commit it with the reason — [debug-and-replays.md](debug-and-replays.md#gotchas) |
+| `pnpm bench` fails on the median | Timing: run it alone on a quiet machine. On the heap: something in the tick allocates — see the allocation guard rows above |
+| Tizen build fails with `app.js is … gzipped, over the … budget` (or an atlas page / `dist/` budget) | The bundle grew past a plan budget (`check-bundle.mjs` rule 8). Find what grew (a new dependency, inlined data); raising a budget is a plan decision, not a fix |
+| `pnpm test:e2e` specs time out waiting for `window.__shmupDebug` | They ran against release builds (e.g. `playwright test` by hand after `pnpm build`). Run `pnpm test:e2e`, which builds `build:test` first |
 | Type errors about `@shmup/*` imports only in `pnpm build` | The library build uses `dist/` typings: a dependency's `build` failed or was skipped — run `pnpm build` from the root so `^build` runs first |

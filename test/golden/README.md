@@ -21,3 +21,5 @@ score, lives, death ticks, boss kill).
   steps that change simulation behaviour re-bless in the same commit). Re-recording an unchanged
   simulation writes byte-identical files.
 - The files are generated: never edit them by hand (Prettier skips them).
+
+Guide (replay format, re-blessing, gotchas): [`docs/dev/debug-and-replays.md`](../../docs/dev/debug-and-replays.md#golden-replays-testgolden).

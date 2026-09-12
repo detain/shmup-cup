@@ -167,7 +167,17 @@ const OUTLINE_CAPACITY: Readonly<Record<keyof DebugOutlineLists, number>> = Obje
 /**
  * Creates empty outline lists sized for full pools.
  *
+ * @remarks
+ * Load time: each list holds 4 rects per box of its pool's full size (512 bullets, 64 enemies,
+ * 96 shots …), so {@link buildDebugOutlines} never runs out of commands.
+ *
  * @returns The lists.
+ *
+ * @example
+ * ```ts
+ * const outlines = createDebugOutlineLists();
+ * buildDebugOutlines(outlines, game.world, game.debug);
+ * ```
  */
 export function createDebugOutlineLists(): DebugOutlineLists {
   const lists = {} as Record<keyof DebugOutlineLists, DrawList>;
@@ -330,8 +340,20 @@ export interface FrameGraph {
 /**
  * Creates an empty frame graph.
  *
+ * @remarks
+ * `push()` writes one number into a preallocated `Float64Array` ring — allocation-free, so the
+ * host may call it every frame.
+ *
  * @param length - Frames kept (default {@link FRAME_GRAPH_LENGTH}).
  * @returns The graph.
+ *
+ * @example
+ * ```ts
+ * const graph = createFrameGraph();
+ * graph.push(16.7);
+ * graph.push(33.4); // a dropped frame: drawn as a yellow bar
+ * graph.count; // → 2
+ * ```
  */
 export function createFrameGraph(length: number = FRAME_GRAPH_LENGTH): FrameGraph {
   const times = new Float64Array(length);

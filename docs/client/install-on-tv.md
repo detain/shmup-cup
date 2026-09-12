@@ -90,6 +90,21 @@ the old one should keep them (the app stays the same app) — please report it i
 them. **Removing the app deletes them** (the TV does that for every app), so the next install starts
 with the default settings and no high scores. Each monitor keeps its own.
 
+**The debug build (developer tools).** For the on-device checks of a milestone, build with
+`build:dev` instead of `build` and package and install as above:
+
+```bat
+pnpm --filter @shmup/tizen build:dev
+pnpm --filter @shmup/tizen tizen:package
+pnpm --filter @shmup/tizen tizen:install
+pnpm --filter @shmup/tizen tizen:run
+```
+
+It is the same app (it replaces the normal build and keeps its saved data) and plays the same,
+but Play/Pause followed by Channel up three times opens a measuring panel and the developer
+tools — see [debug-tools.md](debug-tools.md). Build with plain `build` again before handing the
+game to anyone else.
+
 ## Removing an app
 
 Remove it from the monitor's Apps panel like any other app (highlight it and use its options menu), or with the
@@ -111,3 +126,5 @@ saved settings and high scores.
 | Game preview: `Missing environment variable TIZEN_PROFILE` | `set TIZEN_PROFILE=<profile name>` in the same Command Prompt before `tizen:package` |
 | Game preview: `apps/tizen/dist is missing` | Run `pnpm --filter @shmup/tizen build` first |
 | Game preview: `No .wgt found` | Run `tizen:package` after the build (a new build removes the old `.wgt`) |
+| Game preview: Play/Pause + Ch ▲ ×3 opens nothing | The installed widget is a normal build — build with `pnpm --filter @shmup/tizen build:dev`, package and install again ([debug-tools.md](debug-tools.md)) |
+| Game preview: Play/Pause + Ch ▲ ×3 opens the developer panel on what should be a normal build | `apps\tizen\dist` came from `build:dev` or from a developer's `pnpm test:e2e` (which leaves a test build there) — run `pnpm --filter @shmup/tizen build`, then package and install again |

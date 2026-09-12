@@ -37,6 +37,7 @@ screen).
        │              │ loading bar + boot error screen, content    │    │
        │              │ validation, atlas pages, renderer + game,   │    │
        │              │ event dispatch, rAF loop, scene view + dev  │    │
+       │              │ scenes, debug tools (dev / test builds)     │    │
        │              └──────────────────────┬──────────────────────┘    │
        ▼                                     ▼ creates                   ▼
 ┌──────────────────────┐  ┌────────────────────────────┐  ┌──────────────────────────────┐
@@ -59,8 +60,8 @@ screen).
                     │ player weapons + Options, power-ups, shields,  │
                     │ death / respawn, score, fx timers, the scene   │
                     │ stack + flow, canvas UI kit, HUD, Options      │
-                    │ screen, versioned saves + user options;        │
-                    │ other systems: placeholders                    │
+                    │ screen, versioned saves + user options, debug  │
+                    │ switches + controls, replays + state hashes    │
                     └────────────────────────────────────────────────┘
 ```
 
@@ -105,16 +106,18 @@ calls the renderer or the mixer. Each displayed frame the host:
    UI draw lists, screen effects (plan §3.4) — and hands it to `renderer.render()`.
 
 Because nothing flows from presentation back into the sim except input, the same core
-runs headless in Vitest (`createHeadlessPlatform`), can fast-forward, and will replay
-recorded input bit-for-bit (`test/integration/input-replay.test.ts` already checks the
-input side of that contract).
+runs headless in Vitest (`createHeadlessPlatform`), can fast-forward, and replays recorded
+input bit-for-bit: `core/replay` (M1-19) records a session's input per tick and plays it back
+with state-hash desync detection, and the golden zone A replays in `test/golden/` are checked by
+every `pnpm test` ([debug-and-replays.md](debug-and-replays.md)).
 
 ## One frame, end to end
 
 ```text
 requestAnimationFrame(now)                       shell/frame-loop
  └─ game.inputContext changed? → input.setContext(ctx)   shell/boot → input-web: game/menu tables
- └─ game.frame(now)                              core/game
+ └─ debug.beginFrame(now)                        shell/debug (dev / test builds only): frame time
+ └─ game.frame(now)                              core/game (debug frame advance / slow-mo here)
      └─ loop.advance(now)                        core/loop: delta snapping, accumulator, cap
          └─ repeat 0..4×: step()
              ├─ platform.input.poll()            input-web/web-input (once per tick)
@@ -131,6 +134,7 @@ requestAnimationFrame(now)                       shell/frame-loop
      ├─ connectFxEvents (flow, free flight): emitFxCue / emitSfxCue, shake, flash, dim, popups
      └─ connectAudioEvents (flow, free flight): playSfx (panned), playMusic, duckMusic
  └─ audioEngine.endFrame()                        audio-web/sfx: closes the SFX dedupe window
+ └─ debug.beforeRender()                         shell/debug → render-pixi/debug overlay (dev only)
  └─ renderer.render(frame)                       render-pixi/renderer
      │   frame = view.update(game.renderFrame()) — the scene flow (default: renderFrame runs
      │   flow.updateFrame → World view + HUD while the game shows, one UI list, the dim),
@@ -297,10 +301,19 @@ system, status,
   tests bullets and laser capsules against the ships by brute force, the power-up system the
   items against the ships' pickup boxes).
 - **`debug`** — `hashWorld(world)`: FNV-1a over every piece of simulated state in a fixed
-  order; two worlds with the same seed and input hash equal (golden replays, M1-19). Since M1-18
-  also the debug stage skip `skipToBoss(world)` (`StageRunner.jumpTo` to just before the first
-  boss event), run by `createWorld` for `GameConfig.stageSkip: 'boss'`
-  ([zone-a-and-playtest.md](zone-a-and-playtest.md#the-debug-stage-skip)).
+  order; two worlds with the same seed and input hash equal (golden replays compare them). Since
+  M1-18 also the debug stage skip `skipToBoss(world)` (`StageRunner.jumpTo` to just before the
+  first boss event), run by `createWorld` for `GameConfig.stageSkip: 'boss'`
+  ([zone-a-and-playtest.md](zone-a-and-playtest.md#the-debug-stage-skip)); since M1-19 the
+  session's debug switches (`game.debug`, shared by every World — only god mode changes a tick),
+  the debug controls (`createDebugControls`: god mode, outlines, frame advance, slow motion,
+  checkpoint jump, stage skip) and the overlay counters. Frame advance and slow motion live in
+  `Game.frame` — they change how many ticks a frame runs, never what a tick does
+  ([debug-and-replays.md](debug-and-replays.md)).
+- **`replay`** (M1-19) — a header recreating the start (the whole `GameConfig`, stage,
+  checkpoint, `assisted`), `held | pressed << 16` per tick and player, a state hash every 600
+  ticks; the recorder and the playback are `PlatformInput`s, so a replay is fed through the same
+  `platform.input.poll()` as live play.
 
 ### Content pipeline (`content/` → `core/data`)
 
@@ -532,10 +545,16 @@ These are enforced now so that replays, golden tests and attract mode work later
   is bound. The allocation guard `measureHeapGrowth` (core `test/helpers/alloc.ts`) checks
   it: `stepWorld` must stay under 256 KB over 10,000 ticks (plan §1.4).
 - **State hashes**: `hashWorld(world)` covers every piece of simulated state; tests run two
-  worlds in lockstep and compare hashes, and golden replays (M1-19) will compare them at
-  checkpoints. New simulated state must be added to the hash. The headless playtest
+  worlds in lockstep and compare hashes, and the golden replays (`test/golden/`, M1-19) compare
+  them every 600 ticks and at the end of four committed zone A runs — any change to what the sim
+  does fails `pnpm test` until it is re-blessed (`pnpm golden:update`, the reason in the commit
+  message). New simulated state must be added to the hash. The headless playtest
   (`test/playtest/`, M1-18) records a bot's input per tick and replays it to the same deaths and
   final hash.
+- **Debug tools never desync**: the only sim-affecting switch is god mode (a replay header's
+  `assisted`); the stage jumps are cold restarts a replay reproduces when it contains them; frame
+  advance and slow motion only change how many ticks a displayed frame runs. The tools exist
+  only in dev / test builds (`__SHMUP_DEV__`).
 
 ## Module status tracking
 
@@ -550,8 +569,8 @@ Implemented or partial today: core `platform`, `input`, `config` (partial: `Game
 M1-17, the `UserOptions` — difficulty tables and display options later), `loop`, `game`,
 `presentation`, `rng`, `math`, `events`, `pools`, `save` (M1-17), `data` (partial: the M2 kinds are
 missing), `world`, `stage`, `player` (implemented for P0 since
-M1-12 — co-op joining comes with M2-06), `collision` (partial: no bending-laser chains yet), `debug` (partial:
-state hash, flags and the stage skip to the boss — M1-18; no controls yet), `enemies` (partial: no rank modifiers / Option Hunter
+M1-12 — co-op joining comes with M2-06), `collision` (partial: no bending-laser chains yet), `debug` (M1-19: state hash, switches, controls,
+counters, the stage skip and checkpoint jumps), `replay` (M1-19), `enemies` (partial: no rank modifiers / Option Hunter
 yet), `patterns` (partial: runner, movers and fire primitives — no pattern DSL yet),
 `behaviors` (partial: the M1 enemy and boss rosters), `bosses` (partial: the P0 mechanics —
 timers, escapes, the HP bar, mid-bosses and raids with M2-09), `bullets` (implemented for P0 — bending lasers and cancel
@@ -570,8 +589,8 @@ M2-16); audio-web `web-audio` (partial; driven by the Options sliders since M1-1
 `engine`;
 render-pixi `renderer`, `viewport`, `test-pattern`, `palette`, `atlas`, `layers`, `sprites`,
 `text`, `ui`, `particles`, `effects` (partial: shake, flash, dim, popups — raster and palette
-effects later); shell `boot`, `loader`, `dispatch`, `error-screen`, `frame-loop`, `scene-view`,
-`flight`, `showcase`, `fx-gallery`;
+effects later), `debug` (the overlay, M1-19); shell `boot`, `loader`, `dispatch`, `error-screen`,
+`frame-loop`, `scene-view`, `flight`, `showcase`, `fx-gallery`, `debug` (M1-19);
 the apps' `boot` and `platform`. Everything else declares its intended API only. The
 build-time tooling outside the packages (the asset pipeline in `scripts/assets/`, the Vite
 plugins in `vite.shared.ts`) has no `moduleInfo`; it is covered by the tests under
@@ -605,6 +624,8 @@ plugins in `vite.shared.ts`) has no `moduleInfo`; it is covered by the tests und
 | A sprite or animation | A `*.sprite.json` pixel map under `assets/source/sprites/` (its path is its name) or a generator in `scripts/assets/procedural/`; `hitFlash: true` for anything the player can shoot. Real art: a PNG (+ Aseprite export) of the same name — [asset-pipeline.md](asset-pipeline.md#extending-it) |
 | A sound, music or particle cue | Append a name to `SFX_CUES` / `MUSIC_CUES` / `FX_CUES` in `core/events` (never renumber — ids are recorded in replays and bound by `content/audio/` / `content/fx/`) |
 | A sound effect or a song | A cue entry in `content/audio/main.sfx.json` (synth parameters or a recorded file) or a `content/audio/music/<id>.music.json` track (a chip song or an OGG file) bound to its cue, optionally per stage; listen with `pnpm audio:preview`, check with `pnpm content:check` — no code ([audio.md](audio.md#extending-it)) |
+| A debug command, overlay figure or outline kind | `DebugCommand` (appended) in `core/debug` + a key in the shell's `DEBUG_KEYS`; a `DebugCounters` / `DebugOverlayStats` field and a panel line in `render-pixi/debug`; an outline list of its own colour — [debug-and-replays.md](debug-and-replays.md#extending-it) |
+| A golden replay | A scenario in `test/golden/golden.ts` `GOLDEN_SCENARIOS`, then `pnpm golden:update` — [debug-and-replays.md](debug-and-replays.md#golden-replays-testgolden) |
 | A presentation event kind | Append a code to `SimEventKind` and a name to `SIM_EVENT_KIND_NAMES`, then register a handler on the shell's dispatcher (`shell.events.on`) |
 | An explosion, spark or other particle effect | A preset and a trigger in `content/fx/*.fx.json` — bound to an `FX_CUES` cue or to a sound that implies a visual — checked in `?scene=fx-gallery`; no code ([fx-and-game-feel.md](fx-and-game-feel.md#extending-it)) |
 | A new entity kind | Give it an SoA pool (`createSoaPool`) registered with `world.pools.register(name, pool)` (flushed in the removal phase and hashed automatically) or an object pool (`createPool`) with a mirror batch, sized from the budgets in `shmup_feat.md` §22 |

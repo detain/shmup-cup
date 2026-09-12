@@ -50,6 +50,13 @@ The earlier start-up pictures are still there: **free flight** straight away wit
 the animated **sprite showcase** and the **calibration screen**, plus the **effects gallery**
 that shows every explosion and screen effect in turn (see [below](#other-screens-browser-only)).
 
+This build is version **0.1.0**, the end of the first milestone. For checking it on the monitors
+there is a **debug build** with developer tools — a panel with the frame rate, frame times and
+start-up time, hit-area outlines, invincibility, a freeze with single steps, slow motion and
+jumps to the next checkpoint or the boss — opened on the remote with Play/Pause and then Ch ▲
+three times. It comes with the **M1 release check**, the list to run on both monitors
+([debug-tools.md](debug-tools.md)).
+
 This page explains how to open the preview on each device, what you should see, how the ship
 and the menus should behave, and what to report if something is wrong. The full button layouts
 are in [controls.md](controls.md).
@@ -244,7 +251,19 @@ ship may move in four directions only; the game is designed to be fully playable
 
 ### What changed lately
 
-**New in this build: the first real zone, AZURE VERGE, with its boss — on the TV too.** Until
+**New in this build: version 0.1.0 — the end of the first milestone — and developer tools.**
+The game itself plays exactly as before. What is new is behind the scenes: a **debug build** of
+the TV app (`pnpm --filter @shmup/tizen build:dev`) that opens a measuring panel when you press
+**Play/Pause and then Channel up three times** on the remote — frames per second, how long each
+frame takes, a graph of the last second's frames, the start-up time, outlines of every hit area,
+an invincible mode, a freeze with single steps, slow motion, and jumps to the next checkpoint or
+the boss — and the **M1 release check**, the list of things to confirm on both monitors before
+the milestone counts as done. The normal build has none of these tools. In a browser `pnpm dev`
+has them on the F1–F8 keys. Behind the scenes the game can now also record a whole game as a
+list of button presses and play it back exactly, which is how every change to the code is now
+checked against four recorded runs of AZURE VERGE. See [debug-tools.md](debug-tools.md).
+
+Before that, **the first real zone, AZURE VERGE, with its boss — on the TV too.** Until
 now START flew in empty space on the TV and the desktop; the test stages could only be opened in a
 browser. Now **START plays AZURE VERGE on every device**: about three minutes in five parts —
 rows of pods and red saucers to get started, groups of new amber fan fliers and dashing
@@ -370,12 +389,17 @@ fighters, and fighters that stop, aim and dash at you ([what to look for](#enemi
 slowing down, over rocky floors and caves drawn from small tiles, with star layers moving
 behind at their own speeds; and before that the ship came **under your control**, and free
 flight replaced the sprite showcase as the start-up picture. The simulation behind it is the real
-game engine: every build adds to this world — next come developer tools (a debug overlay,
-recorded replays) and a final check of this first playable slice of the game.
+game engine: every build added to this world, and version 0.1.0 completes its first playable
+slice. Next comes the complete game — difficulty levels, more weapons and ships, two players,
+more zones.
 
-**Please re-test on the monitors:** install the new build and run through the checks in the
-next section — how the ship and the menus respond to the remote is still the most valuable
-report. New on the TV is **AZURE VERGE** itself (checks 19–24): please play it through with the
+**Please re-test on the monitors:** this time with the **debug build**, and run the **M1 release
+check** in [debug-tools.md](debug-tools.md#the-m1-release-check) on both monitors — start-up
+time, picture, remote-only play through AZURE VERGE, leaving and returning, sound, what is kept
+after closing and after an update, 15 minutes of play with no hitches in the frame graph, other
+controllers. Quote the build id shown in the panel. The checks in the next section give the
+detail — how the ship and the menus respond to the remote is still the most valuable report.
+Since the last build, **AZURE VERGE** itself (checks 19–24) is on the TV: please play it through with the
 remote — several times if you can — and tell us whether every bullet and every laser could be
 dodged with single arrow presses (note the time into the stage where one could not), whether the
 scrolling stays smooth (also in the fast part), whether taking power-ups with OK feels natural
@@ -489,7 +513,8 @@ CLEAR** screen and the title ([the end screens](#pausing-quitting-and-the-end-sc
 
 **In a browser you can go straight to the boss:** http://localhost:5173/?skip=boss starts every
 game (START, and RETRY STAGE) about two seconds before the WARNING — add `&loadout=full` to fight
-it fully powered. There is no such shortcut on the TV: play through the zone (three minutes).
+it fully powered. The normal TV build has no such shortcut: play through the zone (three
+minutes) — or use the debug build's key 8 ([debug-tools.md](debug-tools.md)).
 
 What "good" looks like:
 
@@ -523,8 +548,9 @@ the first install it appears in the monitor's **Apps** list as **Shmup Cup**.
 | Everything else | Read by the game every tick, but nothing reacts to it yet (the gun fires without any button) |
 
 On the TV, START plays **AZURE VERGE** ([The first zone](#the-first-zone-azure-verge)), with
-enemies, capsules, the boss and the zone's music. There is no shortcut to the boss on the TV —
-it comes after about three minutes.
+enemies, capsules, the boss and the zone's music. The normal TV build has no shortcut to the
+boss — it comes after about three minutes; the debug build has one (key 8 once the developer
+tools are open — [debug-tools.md](debug-tools.md)).
 
 Things to check on the monitor and report:
 
@@ -629,6 +655,14 @@ The fully powered ship (`?loadout=full`), the shortcut to the boss (`?skip=boss`
 stages (the Test Range and the Boss Range with its test boss), free flight, the showcase, the
 calibration screen and the effects gallery can only be opened in a browser — the monitor's own
 web browser works too, pointed at a PC running `pnpm dev` (below).
+
+**Developer tools on the TV (debug build only).** Installed from `pnpm --filter @shmup/tizen
+build:dev`, the app plays exactly like the normal build until you press **Play/Pause, then Ch ▲
+three times** within three seconds: a panel with the frame rate, the frame times and the
+start-up time appears, and the number keys 1–8 turn on invincibility, hit-area outlines, a freeze
+with single steps, slow motion, and jumps to the next checkpoint (7) or the boss (8) — the TV's
+own shortcut to the boss. Everything about it, and the release checklist to run with it, is in
+[debug-tools.md](debug-tools.md).
 
 ## In a desktop browser
 
@@ -1265,6 +1299,8 @@ mean the build itself is broken; they are not caused by anything you did.
 
 | Symptom | What to do |
 |---|---|
+| A panel of numbers (FPS, TICK, …) and a small bar graph appear in the top-left corner | That is the developer panel of a **debug build** (`build:dev`), opened by Play/Pause followed by Ch ▲ three times. Press **1** to hide it — see [debug-tools.md](debug-tools.md). The normal build never shows it |
+| The game froze without a PAUSE box, or everything runs in slow motion (debug build) | A developer tool is on (`STEP` or `SLOW` in the panel): press **4** or **6** until it is off — [debug-tools.md](debug-tools.md#troubleshooting) |
 | The title screen stays, the game does not start | Press OK (Enter) once to leave `PRESS OK`, then OK again on START. In a browser click once into the page first so it has the keyboard focus |
 | OK on the title menu did nothing | The menu ignores OK for a split second after it appears (an OK pressed then still counts a moment later). If START or OPTIONS never reacts, please report it with the remote model |
 | The highlight in a menu jumps two steps, or a press is lost | Not expected — please report it with the remote model (and whether you held the button) |

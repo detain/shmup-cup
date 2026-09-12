@@ -52,4 +52,15 @@ widget bundle (`pnpm --filter @shmup/tizen build` → a checked `dist/` ready to
   ≤ 2048², `dist/` ≤ 8 MB); an e2e gameplay smoke on both builds.
 - Versions: `0.1.0` in every package manifest and in the widget's `config.xml`.
 
+### Documentation
+
+- Testers: [`docs/client/preview-build.md`](docs/client/preview-build.md) (the build, checks per
+  feature), [`docs/client/debug-tools.md`](docs/client/debug-tools.md) (the debug build, the
+  developer tools and the **M1 release check** for the monitors),
+  [`docs/client/controls.md`](docs/client/controls.md),
+  [`docs/client/install-on-tv.md`](docs/client/install-on-tv.md).
+- Contributors: [`docs/dev/`](docs/dev/README.md) — one guide per system, including
+  [`debug-and-replays.md`](docs/dev/debug-and-replays.md) for the M1-19 tooling, and the
+  [API reference](docs/dev/api-reference.md).
+
 [0.1.0]: https://github.com/detain/shmup-cup/tree/master

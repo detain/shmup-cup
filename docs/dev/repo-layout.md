@@ -18,17 +18,17 @@ shmup-cup/
 ├── package.json            root scripts (dev/build/typecheck/lint/test/format/clean), packageManager pnpm@12, engines/devEngines (Node floor)
 ├── pnpm-workspace.yaml     members packages/* + apps/* (NOT tools/*), version catalog, allowed build scripts
 ├── pnpm-lock.yaml          committed; CI installs with --frozen-lockfile
-├── turbo.json              task graph: build (^build + //#assets → dist/**), typecheck/lint/test (via "transit"), dev, clean, root tasks; globalDependencies incl. content/** types/** assets/source/**
+├── turbo.json              task graph: build, build:test, build:dev (^build + //#assets → dist/**), typecheck/lint/test (via "transit"), dev, clean, root tasks; globalDependencies incl. content/** types/** assets/source/**
 ├── tsconfig.base.json      strict compiler options shared by everything (ES2018 target/lib, NodeNext, @shmup/source)
 ├── tsconfig.tooling.json   Node-side base (tests, Vite/Vitest configs): ES2023 + DOM + node types, noEmit, allowJs (JSDoc-typed scripts/*.mjs)
 ├── tsconfig.json           type-checks repo-root tooling files
 ├── eslint.config.js        flat config: typescript-eslint (type-aware), compat (chrome >= 69), jsdoc, core purity rules
-├── vite.shared.ts          @shmup/source resolve conditions shared by Vite + Vitest; shmupContent() → virtual:shmup-content; shmupAssets() → virtual:shmup-assets + dist/assets/atlas/
+├── vite.shared.ts          @shmup/source resolve conditions shared by Vite + Vitest; shmupContent() → virtual:shmup-content; shmupAssets() → virtual:shmup-assets + dist/assets/atlas/; shmupBuildInfo() → __SHMUP_DEV__ / __SHMUP_BUILD__ (M1-19)
 ├── vitest.shared.ts        defineShmupProject(): per-project Vitest defaults (tests in test/, Node env, optional worker execArgv such as --expose-gc)
 ├── vitest.config.ts        Vitest *projects*: packages/*, apps/*, test (→ `pnpm test:all`)
 ├── .browserslistrc         chrome >= 69 (Tizen 5.5) for eslint-plugin-compat
 ├── .editorconfig  .prettierrc.json  .prettierignore  .nvmrc (Node 24)  .gitignore
-├── .github/workflows/ci.yml   install (frozen) → lint → typecheck → test → build; job e2e (Playwright Chromium → pnpm test:e2e); ELECTRON_SKIP_BINARY_DOWNLOAD=1
+├── .github/workflows/ci.yml   install (frozen) → lint → typecheck → test (golden replays) → build (Tizen budgets) → bench; job e2e (Playwright Chromium → pnpm test:e2e on the test builds); ELECTRON_SKIP_BINARY_DOWNLOAD=1
 │
 ├── packages/               reusable libraries (the "engine + game")
 │   ├── core/               @shmup/core — PURE TS: no DOM/WebGL/audio/Node/platform APIs, no clocks, no Math.random
@@ -61,21 +61,21 @@ shmup-cup/
 │   │   │   ├── fx/             ✔ (partial) hit-stop / shake / flash requests + timers (FxState), exact hit-stop (slowdown: M3-02)
 │   │   │   ├── scenes/         ✔ (partial) scene stack (depth 8, deferred transitions) + the M1 flow: boot → title → game ⇄ pause → stage clear / game over, YES / NO dialog (Tizen exit confirm), Options overlay (M1-17)
 │   │   │   ├── ui/             ✔ (partial) canvas UI kit (list menu, slider, toggle, choice, confirm; 18/6-tick auto-repeat, 4-tick Confirm buffer; draw builders) + the HUD (buildHud, rebuilt only on change)
-│   │   │   ├── debug/          ✔ (partial) hashWorld state hash, debug flags (controls: M1-19)
+│   │   │   ├── debug/          ✔ hashWorld state hash, debug switches + controls (god mode, outlines, frame advance, slow-mo, checkpoint jump, stage skip), overlay counters (M1-19)
 │   │   │   ├── save/           ✔ versioned save (save.v1): options, hi-score tables, stats; migrations, defensive parsing, SaveStore (writes only on change) — M1-17
-│   │   │   └── replay/                                     meta & tooling (placeholder)
+│   │   │   └── replay/         ✔ replays: header, per-tick input recorder, playback + desync report, RLE/varint/base64 JSON format (M1-19)
 │   │   ├── test/<module>/  one folder per module + index.test.ts (module tree invariants); test/helpers/alloc.ts = allocation guard (measureHeapGrowth)
 │   │   ├── tsconfig.json   src only, lib ES2018, no types (purity)
 │   │   ├── tsconfig.build.json  emits dist/ (customConditions off)
 │   │   └── test/tsconfig.json   Node-side program for tests
 │   ├── render-pixi/        @shmup/render-pixi — PixiJS v8 IRenderer: WebGL1-first, 384×216 RT, integer upscale
-│   │   └── src/ renderer ✔ viewport ✔ test-pattern ✔ palette ✔ atlas ✔ layers ✔ (+ terrain grid, parallax bands, laser sprites) sprites ✔ text ✔ ui ✔ particles ✔ (fx content owner, 256-particle pool) effects ✔ (partial: shake, flash + limiter, dim, score popups) · debug (placeholder)
+│   │   └── src/ renderer ✔ viewport ✔ test-pattern ✔ palette ✔ atlas ✔ layers ✔ (+ terrain grid, parallax bands, laser sprites) sprites ✔ text ✔ ui ✔ particles ✔ (fx content owner, 256-particle pool) effects ✔ (partial: shake, flash + limiter, dim, score popups) debug ✔ (overlay: panel, frame graph, hitbox / grid outlines — M1-19)
 │   ├── audio-web/          @shmup/audio-web — Web Audio IAudio (interactive latency, buses, suspend/resume) + the game's audio
 │   │   └── src/ web-audio ✔ synth ✔ (deterministic PCM: ZzFX-style SFX, chip songs with sample-exact loops) sfx ✔ (voice manager) music ✔ (loop, fades, ducking) loader ✔ (sfx / music kinds, OGG path) engine ✔
 │   ├── input-web/          @shmup/input-web — keyboard/remote + Gamepad API → InputSnapshot
 │   │   └── src/ keymap ✔ keyboard ✔ gamepad ✔ web-input ✔ remote ✔ (debounce, diagonal/SOCD policies) rebind ✔ (partial: input profiles, game/menu tables, profile choice)
 │   └── shell/              @shmup/shell — shared browser host of apps/web + apps/tizen (decision D34)
-│       └── src/ boot ✔ loader ✔ dispatch ✔ (+ connectFxEvents, connectAudioEvents, connectOptionEvents / applyAudioOptions — M1-17) error-screen ✔ frame-loop ✔ scene-view ✔ (default scene: the scene flow, M1-16) flight ✔ (?scene=flight: free flight) showcase ✔ fx-gallery ✔ (?scene=fx-gallery)
+│       └── src/ boot ✔ loader ✔ dispatch ✔ (+ connectFxEvents, connectAudioEvents, connectOptionEvents / applyAudioOptions — M1-17) error-screen ✔ frame-loop ✔ scene-view ✔ (default scene: the scene flow, M1-16) flight ✔ (?scene=flight: free flight) showcase ✔ fx-gallery ✔ (?scene=fx-gallery) debug ✔ (dev / test builds: F1–F8, the TV's Pause + Ch+ ×3 unlock, per-frame timing, window.__shmupDebug — M1-19)
 │
 ├── apps/                   deployable hosts (thin adapters around the packages)
 │   ├── web/                @shmup/web — Vite dev app (HMR), browser Platform; also Electron's renderer
@@ -83,9 +83,9 @@ shmup-cup/
 │   ├── tizen/              @shmup/tizen — Samsung TV .wgt (Tizen 5.5+, Chromium 69)
 │   │   ├── public/         config.xml (tv-samsung, tv.inputdevice + internet), icon.png → copied to dist/
 │   │   ├── polyfills/      global-this.js (ES5, prepended to app.js)
-│   │   ├── scripts/        check-bundle.mjs (one classic ES2018 script) · tizen-package/install/run.mjs (env-driven, Windows-friendly)
+│   │   ├── scripts/        check-bundle.mjs (one classic ES2018 script + size budgets) · tizen-package/install/run.mjs (env-driven, Windows-friendly)
 │   │   ├── vite.config.ts  target chrome69+es2018, IIFE, no code splitting, classic <script defer>
-│   │   └── src/ main.ts · boot ✔ (Back exits only before the game runs — then the scene flow's exit confirmation) platform ✔ (keys, Back 10009, visibility, exit) · device-info live-reload (placeholders)
+│   │   └── src/ main.ts · boot ✔ (Back exits only before the game runs — then the scene flow's exit confirmation; tizenDebugTools in dev / test builds) platform ✔ (keys, Back 10009, visibility, exit) · device-info live-reload (placeholders)
 │   └── electron/           @shmup/electron — desktop shell; compiles in CI, binary never downloaded there
 │       ├── scripts/        copy-renderer.mjs (apps/web/dist → dist/renderer)
 │       └── src/ main/ (main.ts, app-protocol.ts, window-options.ts ✔ · saves.ts steam.ts placeholders) · preload/preload.cts · shared/ipc.ts
@@ -103,15 +103,15 @@ shmup-cup/
 ├── assets/
 │   ├── source/             editable sources — in git: sprites/**/*.sprite.json pixel maps (+ real-art PNG overrides), fonts/*.font.json, tilesets, audio
 │   └── generated/          pipeline output (atlas/main.png + main.json, cache) — ignored
-├── scripts/                repo-level Node scripts: clean.mjs, generate-assets.mjs (pnpm assets) + assets/ (PNG encoder, sprite sources, procedural generators, packer, font), gen-trig-tables.mjs, audio-preview.mjs (pnpm audio:preview → WAV files)
-├── types/                  ambient declarations for the Vite virtual modules (virtual:shmup-content, virtual:shmup-assets)
-├── test/                   cross-package integration tests (Vitest project "integration", part of `pnpm test`); playtest/ = headless playtest harness + 4-way bot + design rules (M1-18, same project); e2e/ = Playwright browser smoke tests (`pnpm test:e2e`)
+├── scripts/                repo-level Node scripts: clean.mjs, generate-assets.mjs (pnpm assets) + assets/ (PNG encoder, sprite sources, procedural generators, packer, font), gen-trig-tables.mjs, audio-preview.mjs (pnpm audio:preview → WAV files), golden-update.mjs (pnpm golden:update)
+├── types/                  ambient declarations for the Vite virtual modules (virtual:shmup-content, virtual:shmup-assets) and the build-info defines (build-info.d.ts: __SHMUP_DEV__, __SHMUP_BUILD__)
+├── test/                   cross-package integration tests (Vitest project "integration", part of `pnpm test`); playtest/ = headless playtest harness + 4-way bot + design rules (M1-18, same project); golden/ = golden zone A replays + their test (M1-19, same project); bench/ = `pnpm bench` stress benchmark (own Vitest config, not in `pnpm test`); e2e/ = Playwright browser smoke tests (`pnpm test:e2e`)
 ├── docs/
 │   ├── client/             player/tester docs
-│   └── dev/                contributor docs (this file, architecture, engine-foundations, content-data, asset-pipeline, rendering-and-shell, sim-world, stage-runtime, enemies-and-behaviors, fx-and-game-feel, scenes-and-ui, saves-and-options, zone-a-and-playtest, api-reference, …)
+│   └── dev/                contributor docs (this file, architecture, engine-foundations, content-data, asset-pipeline, rendering-and-shell, sim-world, stage-runtime, enemies-and-behaviors, fx-and-game-feel, scenes-and-ui, saves-and-options, zone-a-and-playtest, debug-and-replays, api-reference, …)
 ├── tools/                  standalone tools, NOT workspace members (own package.json/lockfile, npm not pnpm)
 │   └── input-probe/        Tizen diagnostic .wgt: remote/gamepad/display measurements (see input-probe.md)
-└── shmup_feat.md  shmup_tech.md  input_probe_spec.md  README.md  LICENSE (MPL-2.0)
+└── shmup_feat.md  shmup_tech.md  input_probe_spec.md  shmup_plan.md  shmup_progress.md  CHANGELOG.md  README.md  LICENSE (MPL-2.0)
 ```
 
 ✔ = implemented or partially implemented today; everything else is a placeholder with its
@@ -170,8 +170,11 @@ pnpm install            # also links workspace packages
 pnpm dev                # browser dev app on http://localhost:5173
 pnpm lint | typecheck | test | build
 pnpm test:all           # every Vitest project in one process
-pnpm test:e2e           # build web + tizen, then browser smoke tests (headless Chromium, Playwright)
-pnpm --filter @shmup/tizen build    # TV bundle + bundle check
+pnpm test:e2e           # build web + tizen test builds, then browser smoke tests (headless Chromium, Playwright)
+pnpm --filter @shmup/tizen build    # TV bundle (release) + bundle check with size budgets
+pnpm --filter @shmup/tizen build:dev  # TV debug build (debug tools behind Pause, Ch+ ×3) for on-device checks
+pnpm golden:update      # re-bless the golden replays (intended sim changes only — say why in the commit)
+pnpm bench              # stress benchmark: ms/tick and heap growth under maximum load
 pnpm content:check      # validate content/ against the core schemas (+ sprite names exist in the atlas, zone A's 4-way rules)
 pnpm exec vitest run --project integration test/playtest --reporter=verbose   # the headless playtest, runs printed
 pnpm assets             # regenerate the placeholder atlas (skipped when nothing changed)
@@ -188,4 +191,6 @@ runtime), [content-data.md](content-data.md) (game data and its loader),
 [saves-and-options.md](saves-and-options.md) (saves, user options, the Options screen),
 [stage-runtime.md](stage-runtime.md) (scrolling stages, terrain, parallax),
 [zone-a-and-playtest.md](zone-a-and-playtest.md) (zone A, its boss, the 4-way rules, the
-playtest bot), [api-reference.md](api-reference.md) and [conventions.md](conventions.md).
+playtest bot), [debug-and-replays.md](debug-and-replays.md) (debug tools, replays, golden
+replays, the benchmark and budgets), [api-reference.md](api-reference.md) and
+[conventions.md](conventions.md).

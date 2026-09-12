@@ -121,6 +121,28 @@ The game keeps the keys it uses from scrolling or navigating the page; browser s
 with Ctrl / Cmd (reload, developer tools) keep working. Switching to another window
 releases every key, so nothing stays stuck.
 
+## Developer keys (debug builds only)
+
+Debug builds — `pnpm dev` in a browser, the TV's `build:dev` — add eight developer tools for
+testing: a measuring panel, invincibility, hit-area outlines, a freeze with single steps, slow
+motion, and jumps to the next checkpoint and the boss. The normal build has none of them.
+
+| Tool | Browser (`pnpm dev`) | TV (debug build) |
+|---|---|---|
+| Open the tools | — (always on) | **Play/Pause, then Channel up three times**, within 3 s |
+| Panel on / off | F1 | 1 |
+| Invincible on / off | F2 | 2 |
+| Outlines (off → hit areas → + grid) | F3 | 3 |
+| Freeze / run | F4 | 4 |
+| One step while frozen (hold to crawl) | F5 | 5 |
+| Slow motion (½, ¼, normal) | F6 | 6 |
+| Next checkpoint | F7 | 7 |
+| Skip to the boss | F8 | 8 |
+
+On the TV the number keys do nothing until the tools are open (a keyboard's F1–F8 work then
+too). In a browser F5 does not reload the page while the game has focus. Details and how to read
+the panel: [debug-tools.md](debug-tools.md).
+
 ## Control profiles
 
 The button layouts above are **profiles**, stored as game data rather than built into the
@@ -187,4 +209,6 @@ profile chosen under CONTROLS — SAFE 4-WAY until you pick another.
 | Pressing OK while holding an arrow stops the ship on the TV | Not expected — the game keeps the arrow held. Please report it with the remote model: it means the remote itself drops the arrow when OK is pressed |
 | Pause does nothing | On the title and the end screens Pause has no job — it pauses only a running game. In the game it should open the PAUSE menu; if not, please report the device and the button |
 | Special, Speed and the other buttons do nothing | Expected in the current preview — nothing uses them yet |
+| F1–F8 (or 1–8 on the TV) do nothing | They are developer keys of debug builds only; on the TV the tools must be opened first with Play/Pause, Ch ▲, Ch ▲, Ch ▲ — see [Developer keys](#developer-keys-debug-builds-only) |
+| The game froze without a PAUSE box, or runs in slow motion (debug build) | A developer tool is on — F4 / 4 unfreezes, F6 / 6 cycles slow motion back to normal ([debug-tools.md](debug-tools.md#troubleshooting)) |
 | A menu moves two steps for one press, or skips a press | Not expected — please report the device (and the remote model) |

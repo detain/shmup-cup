@@ -8,6 +8,8 @@
  * build; it is not part of `pnpm test` (timing needs a quiet machine).
  *
  * The top-up (spawning enemies, bullets and lasers) runs between ticks and is timed with them.
+ *
+ * @module
  */
 import { describe, expect, it } from 'vitest';
 import {
@@ -72,6 +74,11 @@ function stressScenario(): { world: World; topUp: () => void } {
   };
   const origin = new BulletOrigin();
   let spawned = 0;
+  /**
+   * Refills the pools before a tick: enemies back to 64 (the flying zone A types in turn, in the
+   * right half of the view), bullets back to 512 (random positions, headings and speeds) and one
+   * more enemy laser while fewer than four are alive.
+   */
   const topUp = (): void => {
     const camera = world.camera;
     const enemies = world.enemies.enemies;

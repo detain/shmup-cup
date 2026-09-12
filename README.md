@@ -7,7 +7,9 @@ with the browser and Electron as additional targets.
 ## Status
 
 The [implementation plan](shmup_plan.md) is approved and under way. Progress per step is tracked in
-[`shmup_progress.md`](shmup_progress.md); milestone **M1 — playable vertical slice** is in progress.
+[`shmup_progress.md`](shmup_progress.md); milestone **M1 — playable vertical slice** is code-complete
+as version **0.1.0** ([`CHANGELOG.md`](CHANGELOG.md)) — its on-device release check on the monitors
+is next — and **M2 — complete v1.0** follows.
 
 <!--
   Keep this section scannable: one entry per plan step, in plan order — a bold headline with the
@@ -263,7 +265,7 @@ The [implementation plan](shmup_plan.md) is approved and under way. Progress per
     killed TV app loses nothing.
   - Finished games enter the top-10 table (`NEW HI-SCORE` on the game-over screen) and the
     title's `HI` starts from the saved best; the boot time is measured
-    (`data-shmup-boot-ms`, for the M1-19 debug overlay).
+    (`data-shmup-boot-ms`, shown as `BOOT` in the M1-19 debug overlay).
   - Docs: [developer guide](docs/dev/saves-and-options.md) ·
     [what testers should check](docs/client/preview-build.md#the-options-screen)
 
@@ -288,6 +290,29 @@ The [implementation plan](shmup_plan.md) is approved and under way. Progress per
   - Docs: [developer guide](docs/dev/zone-a-and-playtest.md) ·
     [what testers should check](docs/client/preview-build.md#the-first-zone-azure-verge)
 
+- **Debug tools, replays, golden tests and the M1 release** (M1-19)
+  - **Debug tools** in dev and test builds only (`__SHMUP_DEV__`; `pnpm build` carries none): god
+    mode, hitbox / grid outlines, frame advance with single steps, slow motion ×½ / ×¼, jump to the
+    next checkpoint, skip to the boss, and an **overlay** — FPS, tick / render ms, draw calls, pool
+    usage, rank, RNG calls, state hash, WebGL version, boot ms, build id and a 60-frame graph.
+    F1–F8 in the browser; on the TV's debug build (`pnpm --filter @shmup/tizen build:dev`) the
+    remote's **Play/Pause, Ch+, Ch+, Ch+** unlocks them and 1–8 run them. `window.__shmupDebug`
+    for the console and the e2e suite.
+  - **Replays** (`core/replay`): a header with everything that recreates the start (the whole
+    `GameConfig`, stage, checkpoint, god mode as `assisted`, build id), `held | pressed << 16` per
+    tick and player — run-length encoded, base64 — and a state hash every 600 ticks; playback
+    reports the first diverging tick.
+  - **Golden replays** of zone A (`test/golden/`: god mode, Arcade, deaths, the boss) are checked
+    by every `pnpm test`; an intended simulation change re-blesses them with `pnpm golden:update`.
+  - **Budgets**: `pnpm bench` (20,000 ticks with 512 bullets, 64 enemies, the full loadout and
+    lasers — median ≈ 0.12 ms/tick against a 1.0 ms budget, no heap growth; run in CI) and the
+    Tizen bundle check (`app.js` 228.6 KB of 350 KB gzipped, atlas pages ≤ 2048², `dist/` ≤ 8 MB).
+  - An e2e gameplay smoke on both builds (title → OK → hold the arrows → the game scene, no
+    errors), frame-advance helpers that make the scroll checks exact, version **0.1.0**
+    everywhere and a [`CHANGELOG.md`](CHANGELOG.md).
+  - Docs: [developer guide](docs/dev/debug-and-replays.md) ·
+    [the tools and the M1 release check for testers](docs/client/debug-tools.md)
+
 ### Hardware spike
 
 - The **input probe** — a diagnostic Tizen app that measures the Samsung remote, gamepads and
@@ -304,6 +329,7 @@ The [implementation plan](shmup_plan.md) is approved and under way. Progress per
 | [`input_probe_spec.md`](input_probe_spec.md) | Spec for the first spike: a diagnostic Tizen app that measures the Samsung remote / gamepad / display behavior |
 | [`shmup_plan.md`](shmup_plan.md) | Implementation plan: resolved design decisions, milestones M1 (vertical slice) → M2 (v1.0) → M3, ordered agent-sized build steps, manual on-device checklist, "as built" notes per step |
 | [`shmup_progress.md`](shmup_progress.md) | Execution progress: one row per plan step (status, review rounds, tests, commits, deviations) |
+| [`CHANGELOG.md`](CHANGELOG.md) | Release notes per version (0.1.0 = milestone M1) |
 | [`shmup_prompt.md`](shmup_prompt.md) | Paste-into-a-new-session prompt that drives execution of the plan (workflow: build → review/fix loop → tests → docs → CI gate per step, progress in `shmup_progress.md`) |
 | [`docs/`](docs/README.md) | Player and developer documentation (start with [`docs/dev/repo-layout.md`](docs/dev/repo-layout.md)) |
 
@@ -352,12 +378,14 @@ versions (`devEngines.runtime`).
 ```sh
 pnpm -v               # must print 12.x — an older global pnpm fails with ERR_PNPM_BROKEN_LOCKFILE
 pnpm install          # set ELECTRON_SKIP_BINARY_DOWNLOAD=1 to skip the Electron binary
-pnpm dev              # browser dev app → http://localhost:5173: the title (Enter twice starts zone A, AZURE VERGE; ?skip=boss starts right before its boss HALCYON BULWARK; Enter, Down, Enter opens OPTIONS — volumes and controls, saved in localStorage; Esc pauses), then fly the KESTREL (arrows/WASD, gamepad; the first key press turns the sound on; Enter/C takes a power-up; ?scene=flight skips the title; ?stage=test-range scrolls the test stage, its enemies, their bullets and the power capsules; ?stage=test-boss plays the WARNING and the test boss; ?profile=keyboard-remote-emulation feels like the TV remote; ?scene=showcase / ?scene=calibration / ?scene=fx-gallery)
+pnpm dev              # browser dev app → http://localhost:5173 (F1–F8: debug tools): the title (Enter twice starts zone A, AZURE VERGE; ?skip=boss starts right before its boss HALCYON BULWARK; Enter, Down, Enter opens OPTIONS — volumes and controls, saved in localStorage; Esc pauses), then fly the KESTREL (arrows/WASD, gamepad; the first key press turns the sound on; Enter/C takes a power-up; ?scene=flight skips the title; ?stage=test-range scrolls the test stage, its enemies, their bullets and the power capsules; ?stage=test-boss plays the WARNING and the test boss; ?profile=keyboard-remote-emulation feels like the TV remote; ?scene=showcase / ?scene=calibration / ?scene=fx-gallery)
 pnpm lint             # ESLint (typescript-eslint + compat: chrome >= 69)
 pnpm typecheck        # tsc --noEmit everywhere
 pnpm test             # Vitest per package + repo integration tests
-pnpm test:e2e         # build web + Tizen, boot both in headless Chromium (once: pnpm exec playwright install --with-deps chromium)
-pnpm build            # packages → dist/, apps/web, apps/tizen (one ES2018 IIFE), apps/electron
+pnpm test:e2e         # build web + Tizen test builds, boot both in headless Chromium (once: pnpm exec playwright install --with-deps chromium)
+pnpm build            # packages → dist/, apps/web, apps/tizen (one ES2018 IIFE within its size budgets), apps/electron
+pnpm bench            # stress benchmark: ms per tick and heap growth under maximum load
+pnpm golden:update    # re-bless the golden replays (only for an intended simulation change)
 pnpm format           # Prettier
 pnpm trig:tables      # regenerate the committed core trig tables (a test checks they are current)
 pnpm content:check    # validate every JSON under content/ + its sprite names exist in the atlas + zone A's 4-way design rules (part of pnpm test)
@@ -366,8 +394,10 @@ pnpm audio:preview    # render every placeholder sound and song to WAV files in 
 pnpm clean            # remove build output
 ```
 
-Samsung TV: `pnpm --filter @shmup/tizen build`, then the `tizen:package` / `tizen:install` /
-`tizen:run` scripts on a machine with the Tizen CLI and certificate — step by step in
+Samsung TV: `pnpm --filter @shmup/tizen build` (or `build:dev` for the debug build with the
+developer tools — [`docs/client/debug-tools.md`](docs/client/debug-tools.md)), then the
+`tizen:package` / `tizen:install` / `tizen:run` scripts on a machine with the Tizen CLI and
+certificate — step by step in
 [`docs/client/install-on-tv.md`](docs/client/install-on-tv.md#installing-the-game-preview); all
 variables and the Chromium 69 build contract in
 [`docs/dev/build-test-deploy.md`](docs/dev/build-test-deploy.md) and
@@ -406,19 +436,19 @@ pnpm workspace (`packages/*`, `apps/*`) + Turborepo. Full annotated tree:
 
 | Path | What |
 |---|---|
-| [`packages/core`](packages/core/README.md) | `@shmup/core` — pure-TS deterministic simulation: the World and its tick pipeline, all game systems, the scene stack and flow, the canvas UI kit and HUD, the `Platform` interface |
-| [`packages/render-pixi`](packages/render-pixi/README.md) | `@shmup/render-pixi` — PixiJS v8 renderer (WebGL1, 384×216 → integer upscale); particles, screen shake / flash / dim, score popups |
+| [`packages/core`](packages/core/README.md) | `@shmup/core` — pure-TS deterministic simulation: the World and its tick pipeline, all game systems, the scene stack and flow, the canvas UI kit and HUD, saves, debug controls, replays, the `Platform` interface |
+| [`packages/render-pixi`](packages/render-pixi/README.md) | `@shmup/render-pixi` — PixiJS v8 renderer (WebGL1, 384×216 → integer upscale); particles, screen shake / flash / dim, score popups; the debug overlay |
 | [`packages/audio-web`](packages/audio-web/README.md) | `@shmup/audio-web` — Web Audio back-end (interactive latency, buses) and the game's audio: deterministic synth, SFX voice manager, looping music with fades and ducking, the engine fed by sim events |
 | [`packages/input-web`](packages/input-web/README.md) | `@shmup/input-web` — keyboard / Samsung remote / gamepad → action snapshots, driven by the input profiles (debounce, diagonal / SOCD policies, game / menu tables) |
-| [`packages/shell`](packages/shell/README.md) | `@shmup/shell` — shared browser host of web + Tizen: boot / loading (content, atlas, sounds and the stage's music), boot error screen, event dispatch (game-feel events → renderer, sound events → audio engine), frame loop, the scene flow's view (the default), the free-flight scene, the fx gallery |
+| [`packages/shell`](packages/shell/README.md) | `@shmup/shell` — shared browser host of web + Tizen: boot / loading (content, atlas, sounds and the stage's music), boot error screen, event dispatch (game-feel events → renderer, sound events → audio engine), frame loop, the scene flow's view (the default), the free-flight scene, the fx gallery, the dev builds' debug tools |
 | [`apps/web`](apps/web/README.md) | Vite browser dev target (also Electron's renderer) |
 | [`apps/tizen`](apps/tizen/README.md) | Samsung Tizen `.wgt` (Chromium 69 classic IIFE build, config.xml, CLI scripts) |
 | [`apps/electron`](apps/electron/README.md) | Electron desktop shell |
 | [`content/`](content/README.md) | Game data: player ships, stages, terrain tilesets, enemies, movement paths, weapons, input profiles, particle presets, sound effects and music (JSON, `formatVersion` 1) |
-| `types/` | Ambient declarations for the Vite virtual modules (`virtual:shmup-content`, `virtual:shmup-assets`) |
+| `types/` | Ambient declarations for the Vite virtual modules (`virtual:shmup-content`, `virtual:shmup-assets`) and the build-info defines (`__SHMUP_DEV__`, `__SHMUP_BUILD__`) |
 | [`assets/`](assets/README.md) | Art/audio sources (`source/`: sprite pixel maps, fonts) and pipeline output (`generated/`: atlas pages + manifest, ignored) |
 | [`scripts/`](scripts/README.md) | Repo-level Node scripts |
-| [`test/`](test/README.md) | Cross-package integration tests; `test/e2e/` browser smoke tests (Playwright) |
+| [`test/`](test/README.md) | Cross-package integration tests; `test/playtest/` the 4-way playtest bot; `test/golden/` golden replays; `test/bench/` the stress benchmark; `test/e2e/` browser smoke tests (Playwright) |
 | [`docs/`](docs/README.md) | Player (`client/`) and developer (`dev/`) documentation |
 | `tools/` | Standalone dev tools with their own npm projects (not workspace members) |
 | [`tools/input-probe`](tools/input-probe/README.md) | Input probe `.wgt`: remote / gamepad / display diagnostics for the M7 monitors (npm, Vite, Vitest; log server) |
@@ -432,12 +462,18 @@ the game — the shipped Tizen bundle still targets Chromium 69.
 
 ## Next step
 
-Code: plan step **M1-19** (debug tools, replays, golden tests & M1 release check: god mode, frame
-advance, slow motion, stage skip and checkpoint jump behind dev keys, the debug overlay,
-deterministic replays with golden zone A replays recorded from the playtest bot, perf and size
-budgets, a tagged M1 build) — the per-step status board is [`shmup_progress.md`](shmup_progress.md).
+On hardware: the **M1 release check** (plan §8.4) on both monitors with the debug build —
+launch ≤ 10 s, a crisp picture, AZURE VERGE played through with the remote alone, Back / Home /
+exit behaviour, sound, saves kept after a relaunch and an update install, 15 minutes without a
+hitch in the overlay's frame graph, gamepad and keyboard — checklist in
+[`docs/client/debug-tools.md`](docs/client/debug-tools.md#the-m1-release-check). The M1 release
+is tagged `v0.1.0` on the final commit of step M1-19.
 
-On hardware (unchanged, and still the gate for the remote control scheme): package and
+Code: plan step **M2-01** (rank, difficulty presets, extends & continues) opens milestone **M2 —
+complete v1.0**; from now on every simulation change re-blesses the golden replays in the same
+commit. The per-step status board is [`shmup_progress.md`](shmup_progress.md).
+
+Also on hardware (unchanged, and still the gate for the remote control scheme): package and
 deploy the input probe from the **Windows desktop** that sits on the same LAN as the monitors and holds
 the Samsung certificate profile, run the test protocol on both monitors, and record the results in `shmup_tech.md`
 §2.7 (they decide the remote control scheme in `shmup_feat.md` §4). Since M1-05 the verdicts

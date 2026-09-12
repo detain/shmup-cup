@@ -216,8 +216,10 @@ loadouts, lives and scores are untouched.
 Hosts: the web app reads `?skip=boss` (`stageSkipFromSearch` — exact, case-sensitive, last valid
 value wins; `none` / absent / unknown → `'none'`). In the scene flow every START and RETRY STAGE
 creates a new World from the same config, so each game starts before the boss. The Tizen app has
-no dev parameters; the M1-19 debug controls (`createDebugControls`, dev builds only on the TV) will
-build their "skip to boss" and "jump to checkpoint" on `skipToBoss` / `jumpTo`.
+no dev parameters; since M1-19 its **debug build** has the debug controls
+(`createDebugControls` behind the remote's Pause, Ch+, Ch+, Ch+ — then 8 skips to the boss and 7
+jumps to the next checkpoint, on `skipToBoss` / `jumpToNextCheckpoint`; the web's F8 / F7 do the
+same — [debug-and-replays.md](debug-and-replays.md#the-debug-controls)).
 
 ## The game plays zone A
 
@@ -263,7 +265,8 @@ mask }` at player 1's controls.
   range, the recorded `inputs` (`Uint16Array`) and the final `hashWorld`.
 - `replayStage(stageId, inputs, flags)` replays the recording in a fresh session with the same
   flags → `{ status, ticks, deathTicks, hash }`; equal to the run's because the sim is
-  deterministic (M1-19's golden replays are recorded from these runs).
+  deterministic. M1-19's golden replays (`test/golden/`) are recorded from the same bots, through
+  `core/replay` instead of the harness's `Uint16Array` recording.
 - `describeRun(run)` → the one-line summary the tests print.
 
 ### `fourWayBot()` — the remote player
@@ -345,7 +348,7 @@ in the right half of the playfield, with no console errors or atlas warnings.
 | A boss built on `boss.bulwark` | An `enemies` entry whose phases name it, with two or more `gun` parts (the lanes alternate between them in part order); keep the guns ≥ 16 px + beam width + 2 × hurt radius apart and the core between them if the lanes may overlap — the content test's geometry check shows how |
 | A new rule for the 4-way checks | A pure function of the World in `rules.ts`, collected in `createRuleWatch`, with a hand-made test in `rules.test.ts` |
 | A different playtester (8-way, a sloppy player) | Another `PlaytestBot` (`decide(world)` → mask); reuse `scanLanes`; the harness records and replays any bot |
-| A skip target (next checkpoint, a given x) | Build on `StageRunner.jumpTo` like `skipToBoss` does — cold code, call it at creation or from the M1-19 debug controls, and fly the ships in again |
+| A skip target (a given x, a named section) | Build on `StageRunner.jumpTo` / `restartAt` like `skipToBoss` and `jumpToCheckpoint` do (M1-19) — cold code, call it at creation or from a `DebugCommand`, and fly the ships in again |
 
 ## Gotchas
 
@@ -363,8 +366,10 @@ in the right half of the playfield, with no console errors or atlas warnings.
 
 ## Next steps that build on this page
 
-- **M1-19** — `createDebugControls(game)`: stage skip (to boss) and jump to the next checkpoint on
-  `skipToBoss` / `jumpTo`, god mode, frame advance, slow motion; golden replays
-  `test/golden/zone-a-*.replay.json` recorded from the playtest bot; the M1 release check.
+- **M1-19** (done) — `createDebugControls(game)`: stage skip (to boss) and jump to the next
+  checkpoint on `skipToBoss` / `jumpToNextCheckpoint`, god mode, frame advance, slow motion;
+  golden replays `test/golden/zone-a-*.replay.json` recorded from the playtest bots (plus a
+  careless `weaverBot` for the deaths); the M1 release check
+  ([debug-and-replays.md](debug-and-replays.md)).
 - **M2-10 / M2-11 … M2-14** — the zone map picks stages (replacing `DEFAULT_STAGE_ID`); the other
   zones, each with a playtest run and its own design-rule checks.

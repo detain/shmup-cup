@@ -228,6 +228,8 @@ export interface ReplayRecorder extends PlatformInput {
    *
    * @param world - The session's World after the last tick (its hash becomes `finalHash`).
    * @returns The replay (its arrays are trimmed copies; the recorder may be dropped).
+   * @throws {Error} When a periodic hash is missing — `check(world)` was not called after every
+   *   tick (a replay without its hashes could not detect a desync).
    */
   finish(world: World): Replay;
 }
@@ -275,7 +277,8 @@ function checkInterval(interval: number): void {
  * @param header - The session's header ({@link createReplayHeader}).
  * @param options - Capacity and hash interval.
  * @returns The recorder.
- * @throws {RangeError} When the capacity or the hash interval is not a positive integer.
+ * @throws {RangeError} When the capacity or the hash interval is not a positive integer. (Its
+ *   `finish()` throws an `Error` when `check()` was skipped on a hash tick.)
  *
  * @example
  * ```ts

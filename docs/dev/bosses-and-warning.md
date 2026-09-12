@@ -599,6 +599,8 @@ free flight).
 - **M1-18** (done) — zone A's boss, HALCYON BULWARK (HB-01), with its behaviour `boss.bulwark`
   (attached lane lasers) and the debug stage skip to reach it
   ([zone-a-and-playtest.md](zone-a-and-playtest.md)).
-- **M1-19** — the debug controls' "skip to boss" (on `core/debug` `skipToBoss`).
+- **M1-19** (done) — the debug controls' "skip to boss" (F8, the TV debug build's 8 — on
+  `core/debug` `skipToBoss`); the boss outlines of the debug overlay (parts with a hurtbox); the
+  `zone-a-boss` golden replay ([debug-and-replays.md](debug-and-replays.md)).
 - **M2-09** — boss timers and escapes, the optional HP bar, mid-bosses, battleship raids,
   boss-inside-boss, double bosses, boss rush.

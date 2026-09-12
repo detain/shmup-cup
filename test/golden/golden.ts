@@ -157,6 +157,8 @@ class OutcomeWatch {
   private wasAlive = false;
 
   /**
+   * Starts watching a session (before its first tick).
+   *
    * @param game - The session.
    */
   constructor(private readonly game: Game) {}

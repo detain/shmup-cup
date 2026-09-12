@@ -257,8 +257,10 @@ the last one at or before `x` (−1 when none). `jumpTo(checkpoints[i].x)` leave
 as `restartAt(i)`; without a checkpoint at 0, `jumpTo(0)` equals `restartAt(-1)`. It is the debug
 stage skip's primitive — `core/debug` `skipToBoss` jumps to 96 px before the first `warning` /
 `boss` event when `GameConfig.stageSkip` is `'boss'`
-([zone-a-and-playtest.md](zone-a-and-playtest.md#the-debug-stage-skip)) — and the M1-19 debug
-controls' "jump to the next checkpoint". Like a restart, it may be called from a hook.
+([zone-a-and-playtest.md](zone-a-and-playtest.md#the-debug-stage-skip)) and the M1-19 debug
+controls' "skip to boss"; their "jump to the next checkpoint" (`jumpToCheckpoint` /
+`jumpToNextCheckpoint`) and a replay's checkpoint start use `restartAt`. Like a restart, it may be
+called from a hook.
 
 ### Runner state and zero allocation
 
@@ -466,6 +468,8 @@ world.stage!.restartAt(1); // back to x 1500: speed, pan and flags as live play 
 - **M1-18** (done) — zone A, AZURE VERGE, the stage both apps play by default; `jumpTo(x)` and the
   debug stage skip (`GameConfig.stageSkip`, `?skip=boss`); the corridor check covers every stage
   with terrain ([zone-a-and-playtest.md](zone-a-and-playtest.md)).
-- **M1-19** — the debug controls: skip to the boss and jump to the next checkpoint on `jumpTo`.
+- **M1-19** (done) — the debug controls: skip to the boss on `jumpTo`, jump to the next
+  checkpoint on `restartAt`; replays starting at a checkpoint
+  ([debug-and-replays.md](debug-and-replays.md#the-debug-controls)).
 - **M2-07** — time-keyed events during scroll stops, diagonal scrolling, in-stage branches on
   the flags, destructible tiles, the Tiled / LDtk exporter to RLE rows.

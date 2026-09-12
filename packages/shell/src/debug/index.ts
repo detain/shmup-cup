@@ -151,7 +151,22 @@ export interface DebugToolsHost {
   readonly visibleWorld: () => World | null;
 }
 
-/** What `window.__shmupDebug` holds (dev / test builds). */
+/**
+ * What `window.__shmupDebug` holds (dev / test builds).
+ *
+ * @remarks
+ * A live object: the getters read the game at the moment they are called, `flags` is the game's
+ * own switches (writing `flags.frameAdvance = true` freezes the sim — the e2e helper `freezeSim`
+ * does), and `counters` / `stats` are refreshed every frame. Absent from release builds.
+ *
+ * @example
+ * ```js
+ * // Chrome DevTools console (browser, or the TV's remote inspector):
+ * __shmupDebug.sceneId;            // → 'game'
+ * __shmupDebug.run(9);             // DebugCommand.SkipToBoss → true while a stage is played
+ * __shmupDebug.game.requestStep(60); // under frame advance: one second of ticks
+ * ```
+ */
 export interface ShmupDebugApi {
   /** What is shown: the scene flow's top scene id (`'title'`, `'game'` …) or the dev scene. */
   readonly sceneId: string;

@@ -428,7 +428,10 @@ outside the World.
   `defaultStageId`), so START and RETRY STAGE play AZURE VERGE on every build; with the web app's
   `?skip=boss` (`GameConfig.stageSkip`) every new World starts just before HALCYON BULWARK
   ([zone-a-and-playtest.md](zone-a-and-playtest.md)).
-- **M1-19** — debug controls and replays on top of the flow (`sceneId` for the smoke test).
+- **M1-19** (done) — debug controls on top of the flow (the stage jumps act only while the game
+  scene is on top; frame advance freezes the menus too), `window.__shmupDebug.sceneId` for the
+  smoke test; replays cover bare gameplay — recording the flow comes with attract mode (M2-15)
+  ([debug-and-replays.md](debug-and-replays.md)).
 - **M2-10 / M2-15** — the zone map, attract mode, mode / ship / weapon select, name entry, the
   hi-score table; **M2-16** — rebinding and accessibility options; the boss HP bar and the co-op P2
   meter in the HUD (M2).

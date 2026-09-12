@@ -23,7 +23,9 @@ const shell = await bootShell({
   contentOwners: { 'input-profiles': profiles.load }, // optional: keep the parsed input profiles
   effects: { screenShake: true, reduceFlashing: false }, // optional (M1-14; the defaults)
   inputProfiles: { choices, active, apply }, // optional (M1-17): the Options screen's CONTROLS
+  debugTools: __SHMUP_DEV__ ? debugToolsFactory({ buildId: __SHMUP_BUILD__ }) : null, // M1-19
 });
+shell.debug?.api.sceneId; // dev / test builds: the tools, also window.__shmupDebug (M1-19)
 shell.loadedSave.status; // 'empty' | 'ok' | 'migrated' | 'corrupt' | 'unreadable' (M1-17)
 shell.bootTiming.readyMs; // launch-to-ready time, also on the canvas as data-shmup-boot-ms
 shell.events.on(SimEventKind.Music, (event) => { /* presentation handler */ });
@@ -56,7 +58,12 @@ audio unlock (the engine attaches right after `unlock()`) / resize wiring → rA
 `shell.audioEngine.endFrame()` → `renderer.render`, plan §3.3). The canvas carries
 `data-shmup-state="loading" | "running" | "error"`, `data-shmup-scene` (the scene flow's top
 scene — `title`, `game`, `pause`, `options`, `confirm`, … — or the dev scene's name) and, once
-running, `data-shmup-boot-ms` (the launch-to-ready time, `Shell.bootTiming` — M1-17). Scenes, menus
+running, `data-shmup-boot-ms` (the launch-to-ready time, `Shell.bootTiming` — M1-17). With a
+`debugTools` factory (dev / test builds only, M1-19) the renderer also counts its draw calls, and
+once boot is done the **debug tools** bind their keys — F1–F8 on the web; on the TV nothing until
+the remote's Pause, Ch+, Ch+, Ch+ (then 1–8) — publish `window.__shmupDebug`, time each frame's
+ticks and render and rebuild the overlay before `renderer.render`
+([`docs/dev/debug-and-replays.md`](../../docs/dev/debug-and-replays.md)). Scenes, menus
 and the HUD: [`docs/dev/scenes-and-ui.md`](../../docs/dev/scenes-and-ui.md); the save, the user
 options and the Options screen: [`docs/dev/saves-and-options.md`](../../docs/dev/saves-and-options.md).
 
@@ -73,6 +80,7 @@ options and the Options screen: [`docs/dev/saves-and-options.md`](../../docs/dev
 | `flight` | implemented | Dev scene since M1-06 ("free flight", `?scene=flight` — the default until M1-16): the game's World (the KESTREL under player control) over a drifting starfield — or, with a stage (`?stage=` in the web app, M1-07), the stage's parallax and terrain, the enemies its timeline spawns (M1-08) and their bullets and lasers (M1-09) — HUD bars; the ship's autofired shots and its Options are World batches too (M1-10), and so are the power capsules and the Force Field (M1-11 — the power meter is drawn by the M1-16 HUD); the HUD shows player 1's score, `HI` and the session hi-score, `lives − 1` stock ships and `GAME OVER` (red) in place of the title once the World's status says so, rebuilt only on a change (M1-12); a boss's parts are a World batch, and a running boss WARNING (`view.warning`) is drawn as its text on a translucent band in the UI list, red / yellow every 16 ticks, rebuilt only on a change (M1-13, `?stage=test-boss`); its sprites are appended to the content's sprite table |
 | `showcase` | implemented | The M1-04 sprite showcase (`?scene=showcase`): parallax stars, KESTREL, HUD, bitmap text |
 | `fx-gallery` | implemented | `?scene=fx-gallery` (M1-14): every particle preset of `content/fx/`, then the shakes, flashes, the dim and the score popups, one station a second |
+| `debug` | implemented | The dev / test builds' debug tools (M1-19; not named in the plan — keys and timing are host work): `debugToolsFactory` / `createDebugTools` (core `createDebugControls` + render-pixi `createDebugOverlay`), `DEBUG_KEYS` (F1–F8, and 1–8 on the TV), the TV unlock `DEBUG_UNLOCK_SEQUENCE` (Pause, Ch+ ×3 within 3 s), per-frame timing hooks, `window.__shmupDebug` (`ShmupDebugApi`) |
 
 Boot error screen titles: `CONTENT COULD NOT BE READ`, `CONTENT ERRORS: N PROBLEMS` (one
 `<file>:<json path>: message` line per issue), `ATLAS PAGE FAILED TO LOAD`,
@@ -116,6 +124,8 @@ Esc / Back in both builds (and the Tizen exit confirmation), `flight.spec.ts` fl
 with arrow keys in both builds (on `?scene=flight`), `boss.spec.ts`
 checks the WARNING band and the boss on `?stage=test-boss`, `fx-gallery.spec.ts` the gallery's
 label and explosions in both builds, `audio.spec.ts` the first-key-press unlock and the zone
-theme's exact loop points in the web build and the shots' sounds from boot in the Tizen build). How the World the scene draws works:
+theme's exact loop points in the web build and the shots' sounds from boot in the Tizen build,
+`smoke.spec.ts` the M1 gameplay smoke and the debug keys / TV unlock on the test builds —
+M1-19). How the World the scene draws works:
 [`docs/dev/sim-world.md`](../../docs/dev/sim-world.md); the boss and its WARNING:
 [`docs/dev/bosses-and-warning.md`](../../docs/dev/bosses-and-warning.md).

@@ -173,7 +173,19 @@ export interface Game {
    * the next {@link Game.frame} runs the queued ticks — and only those. Ignored while frame advance
    * is off; switching it off drops what is still queued.
    *
+   * @remarks
+   * The queued ticks all run in the next `frame()` call, however many there are (the
+   * `maxTicksPerFrame` cap does not apply) — the e2e helper `stepTo` queues the ticks it needs to
+   * reach an exact World tick this way. {@link Game.step} runs regardless of the switches.
+   *
    * @param count - Ticks to queue (default 1; non-positive or non-integer counts are ignored).
+   *
+   * @example
+   * ```ts
+   * game.debug.frameAdvance = true; // the game freezes: frame() runs no tick on its own
+   * game.requestStep(30);
+   * game.frame(now); // → 30
+   * ```
    */
   requestStep(count?: number): void;
   /**

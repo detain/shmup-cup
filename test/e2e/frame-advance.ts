@@ -15,6 +15,7 @@ import type { Page } from '@playwright/test';
  *
  * @param page - The page.
  * @param frames - Frames to wait.
+ * @returns Resolves once the page has shown `frames` more animation frames.
  */
 function waitFrames(page: Page, frames: number): Promise<void> {
   return page.evaluate(
@@ -38,6 +39,9 @@ function waitFrames(page: Page, frames: number): Promise<void> {
  * when {@link stepTo} asks for them.
  *
  * @param page - The page (a test build, booted).
+ * @returns Resolves once frame advance is on (the World then stays at its current tick).
+ * @throws {Error} Playwright's timeout error when `window.__shmupDebug` never appears — the page
+ *   is a release build (`pnpm build` instead of `build:test`) or did not boot.
  */
 export async function freezeSim(page: Page): Promise<void> {
   await page.waitForFunction(() => {
@@ -55,7 +59,16 @@ export async function freezeSim(page: Page): Promise<void> {
  *
  * @param page - The page (frozen with {@link freezeSim}).
  * @param tick - The World tick to reach.
- * @returns The World tick reached.
+ * @returns The World tick reached (resolves once the canvas shows it) — exactly `tick` unless the
+ *   World was already past it.
+ *
+ * @example
+ * ```ts
+ * await freezeSim(page);
+ * await stepTo(page, 90);
+ * const before = await capture(page);
+ * await stepTo(page, 120); // exactly 30 ticks later, whatever the machine's load
+ * ```
  */
 export async function stepTo(page: Page, tick: number): Promise<number> {
   // Queue the missing ticks; the next frame runs them all (`Game.frame` under frame advance).

@@ -194,7 +194,8 @@ order every tick keeps a fixed array of slots instead — the enemy system's 64 
   script produces.
 - `test/integration/engine-determinism.test.ts` drives all four modules together as a
   miniature fixed-step sim and compares committed golden state hashes for three seeds —
-  the first line of defence for the real golden replays in M1-19. If it fails after an
+  the first line of defence before the real golden replays of `test/golden/` (M1-19 —
+  [debug-and-replays.md](debug-and-replays.md#golden-replays-testgolden)). If it fails after an
   intentional change, re-bless it deliberately and say why in the commit message.
 - `test/integration/eslint-rules.test.ts` checks that `Math.sin(x)` and `x ** 2` are still
   lint errors inside `packages/core`.
@@ -226,4 +227,4 @@ the `FX_CUES` / `SFX_CUES` registries for particles, shake, flash, dim and score
 ([fx-and-game-feel.md](fx-and-game-feel.md)); M1-15 (done) consumes the sound and music cues —
 its synth also takes its sines from `SIN_TABLE_Q16` and its noise from the core's sfc32, so
 every placeholder sound is bit-identical on every engine ([audio.md](audio.md#the-synth-synth));
-M1-19 compares those hashes in golden replays.
+M1-19 (done) compares those hashes in golden replays ([debug-and-replays.md](debug-and-replays.md)).

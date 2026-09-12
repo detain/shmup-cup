@@ -160,6 +160,14 @@ ES5 and linted with `ecmaVersion: 5`.
   back from JSON — clamp read values with `v <= 0 ? 0 : …` (as `resolveUserOptions` and the save's
   counters do) so a `-0` never enters state that is later passed around
   ([saves-and-options.md](saves-and-options.md#user-options-coreconfig)).
+  And from M1-19: draw lists whose items come in several colours re-tint a shared quad pool —
+  give each colour its own list (the debug overlay has sixteen); a slowed clock fed to
+  `loop.advance` is floored to whole milliseconds (a fractional argument is boxed every frame);
+  wrappers of a hot native call (the draw-call counter) forward their arguments explicitly, never
+  through `arguments` or a rest array; and an allocation guard of an object made by a factory may
+  need to measure a second instance after a throwaway one — the first carried V8 hidden-class
+  transitions and made the render-pixi overlay guard flaky
+  ([debug-and-replays.md](debug-and-replays.md#the-overlay-shmuprender-pixi-debug)).
 - Behaviour coroutines (generators, D29) allocate a small result object on every resume:
   scripts **sleep** (`yield ticks`) and are resumed only when they wake; per-tick motion
   belongs in a mover (numbers on the body), never in a `yield 1` loop.
@@ -171,6 +179,17 @@ ES5 and linted with `ecmaVersion: 5`.
   first within `settled` = 32 KiB); give short, cheap loops a long `warmup` (e.g. 20,000), and
   never move its measured loop into a separate helper — V8 optimises the warm-up loop on stack
   with `fn` inlined, and only that code runs allocation-free.
+
+## Debug-only code
+
+Developer tooling that must not ship (the debug tools, the overlay, `window.__shmupDebug`) is
+reached only through a `__SHMUP_DEV__ ? … : null` expression in an app's `main.ts` — the define
+is `false` in `pnpm build`, so the minifier drops the branch and everything only it imports.
+Library code takes such tooling as an optional **factory** (`ShellOptions.debugTools`), never as
+a static import from the boot path; `apps/tizen/test/build/tizen-build.test.ts` checks that the
+release `app.js` holds no debug code. Sim-affecting debug options belong in `GameConfig` (so a
+replay records them); the only sim-affecting debug switch is god mode, which a replay header
+records as `assisted` ([debug-and-replays.md](debug-and-replays.md#release-builds-and-dev--test-builds)).
 
 ## Tests
 
@@ -188,6 +207,14 @@ ES5 and linted with `ecmaVersion: 5`.
   worlds fed the same input.
 - Generated sources that are committed (today `packages/core/src/math/trig-table.ts`) get
   a test that regenerates them and diffs the committed copy.
+- **Golden replays** (M1-19, plan §1.3 / §1.5): `test/golden/*.replay.json` must replay with
+  every state hash equal. A change that alters what the simulation does re-blesses them **in the
+  same commit** with `pnpm golden:update`, and the commit message says why; never edit the files
+  by hand (Prettier skips them). An unintended golden failure is a bug, not a re-bless
+  ([debug-and-replays.md](debug-and-replays.md#golden-replays-testgolden)).
+- Browser specs that compare two captures a known number of ticks apart freeze the sim and step
+  exact ticks (`test/e2e/frame-advance.ts` — `freezeSim`, `stepTo`); never count rAF frames, the
+  loop runs 1–4 ticks per frame under load.
 - Pixi display objects need no GPU, so render code is unit-tested in Node with the
   `WebGLRenderer` faked; the real WebGL path is covered by the Playwright browser tests in
   `test/e2e/` (`pnpm test:e2e`, part of the definition of done from M1-04 on).

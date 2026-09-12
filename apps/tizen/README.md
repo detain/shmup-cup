@@ -6,9 +6,14 @@ our Smart Monitor M7 / M70A test displays, Chromium 69). Remote-first.
 ## Build
 
 ```sh
-pnpm --filter @shmup/tizen build   # vite build + scripts/check-bundle.mjs
-pnpm --filter @shmup/tizen dev     # desktop-browser preview (no window.tizen: no EXIT, Back never exits)
+pnpm --filter @shmup/tizen build      # release: vite build + scripts/check-bundle.mjs (no debug code)
+pnpm --filter @shmup/tizen build:dev  # on-device debug build (--mode development): the debug tools behind Pause, Ch+ ×3
+pnpm --filter @shmup/tizen build:test # the same as a test build (--mode test) — what pnpm test:e2e opens
+pnpm --filter @shmup/tizen dev        # desktop-browser preview (no window.tizen: no EXIT, Back never exits)
 ```
+
+The widget version is **0.1.0** (M1) in `public/config.xml` and `package.json`, kept equal by a
+test.
 
 `dist/` then contains `index.html`, **one classic IIFE script `app.js`**, `config.xml`,
 `icon.png` and the sprite-atlas pages under `assets/atlas/` (`main.png`). The build (`vite.config.ts`) follows `shmup_tech.md` §2.1:
@@ -33,8 +38,25 @@ pnpm --filter @shmup/tizen dev     # desktop-browser preview (no window.tizen: n
 as a classic deferred script, **it parses with acorn as an ES2018 script**, it starts with
 the polyfill, `config.xml` / `icon.png` are present, every other file lives under
 `dist/assets/` (so nothing unexpected is packaged into the `.wgt`), and at least one atlas
-page exists under `dist/assets/atlas/` (the shell cannot boot without it). The checks are also exported as
-`checkTizenBundle(distDir)` for the tests.
+page exists under `dist/assets/atlas/` (the shell cannot boot without it), and — since M1-19 — the
+**budgets** hold: `app.js` ≤ 350 KB gzipped, every atlas page a PNG of at most 2048², the whole
+`dist/` ≤ 8 MB (`APP_JS_GZIP_BUDGET`, `ATLAS_PAGE_MAX_SIZE`, `DIST_BUDGET`; at M1-19 `app.js` is
+228.6 KB gzipped and `dist/` 812.4 KB). The checks are also exported as `checkTizenBundle(distDir)`
+(and `pngSize`) for the tests.
+
+## Debug build (M1-19)
+
+`build:dev` / `build:test` set `__SHMUP_DEV__`, so `main.ts` passes `tizenDebugTools(window,
+__SHMUP_BUILD__)` to the boot: the shell's debug tools in **sequence** mode. Nothing reacts until
+the remote enters **Pause (Play/Pause 10252, or a keyboard's Pause 19), Ch+, Ch+, Ch+** within
+3 s; that unlocks the tools, shows the overlay (FPS, tick / render ms, draw calls, pools, rank, RNG
+calls, state hash, WebGL version, boot ms, build id, frame graph), registers the number keys
+(`DEBUG_REMOTE_KEYS`, `'1'` … `'8'`) with `tvinputdevice`, and **1–8** then work like the web's
+F1–F8 (overlay, god mode, outlines, frame advance, step, slow motion, next checkpoint, skip to the
+boss). `window.__shmupDebug` is there for the remote inspector. Package and install a debug build
+like any other; package from a plain `build` for anything else (`pnpm test:e2e` leaves a test build
+in `dist/`). Tester guide: [`docs/client/debug-tools.md`](../../docs/client/debug-tools.md);
+developer guide: [`docs/dev/debug-and-replays.md`](../../docs/dev/debug-and-replays.md).
 
 ## Tests
 
@@ -49,10 +71,13 @@ page exists under `dist/assets/atlas/` (the shell cannot boot without it). The c
   the polyfill; `test/scripts/` covers the bundle checker and the Tizen CLI wrappers (with
   `spawnSync` mocked — nothing is ever executed);
 - `test/boot/boot-wiring.test.ts` boots the app against a fake window, `window.tizen`,
-  renderer and AudioContext.
+  renderer and AudioContext; `test/boot/debug-tools.test.ts` checks the TV debug tools (number
+  keys registered once, only on the unlock);
+- `test/build/tizen-build.test.ts` also asserts that the release bundle holds no debug code, and
+  `test/config-xml/` that `config.xml`'s version equals the package's (M1-19).
 
-`pnpm test:e2e` (repo root) also opens the built `dist/index.html` via `file://` in headless
-Chromium, like the TV runs the widget, and checks it boots to the title, that the remote's OK
+`pnpm test:e2e` (repo root) builds `build:test` and opens `dist/index.html` via `file://` in
+headless Chromium (since M1-19 the smoke also checks the locked debug tools and their unlock), like the TV runs the widget, and checks it boots to the title, that the remote's OK
 (13) starts a game and Back (10009) pauses and resumes it without exiting, that with a fake
 `window.tizen` Back on the title opens the exit confirmation and `exit()` runs only after YES
 (M1-16), and — on `?scene=flight` — that the remote's arrow key codes move the KESTREL, and that
@@ -76,7 +101,8 @@ formations drop capsules, and holding an arrow while pressing OK must not stop t
 input-probe question the M1-11 manual check asks). Since zone A the TV reaches everything the
 browser stages had: the M1-12 life cycle (deaths, respawns, the game-over screen), the M1-13
 WARNING and boss (HALCYON BULWARK), the M1-14 game feel and the zone's music. There is no
-`?skip=boss` on the TV — the M1-19 debug controls bring a dev-build-only skip. `pnpm test:e2e`
+`?skip=boss` on the TV — the debug build's key 8 (after Pause, Ch+ ×3) is its skip to the boss
+(M1-19). `pnpm test:e2e`
 checks the effects gallery (`?scene=fx-gallery`) in the Tizen build opened from disk too; the
 manual zone A checks are 19–24 of
 [`docs/client/preview-build.md`](../../docs/client/preview-build.md#on-the-samsung-smart-monitor--tv).
@@ -125,7 +151,7 @@ and `internet`, application id `ShmpCupGam.ShmupCup` (package id = 10 alphanumer
 
 | Module | Status | Responsibility |
 |---|---|---|
-| `main.ts` | — | Entry (no `import.meta`, no top-level await) |
+| `main.ts` | — | Entry (no `import.meta`, no top-level await); `tizenDebugTools` when `__SHMUP_DEV__` (M1-19) |
 | `boot` | implemented | Composition root: remote-first input (`tizen-remote-safe` profile, or the choice saved from OPTIONS → CONTROLS, applied when the shell has read the save — M1-17; `gamepad-standard`), Web Audio and the Tizen platform handed to `@shmup/shell`'s `bootShell` (content + atlas from `file://`, boot error screen, renderer, game, rAF loop, audio unlocked at boot — the shell's audio engine plays the sound effects from the start; the title theme plays in the scene flow, M1-16); Back goes through the scene stack (game → pause, menus → back, title → exit confirmation → `platform.exit()` after YES); only while the game is not running (loading, boot error screen) does Back exit directly |
 | `platform` | partial | `registerKeyBatch` of the active input profile's `register` list (Play/Pause, Ch±; without a profile the fallback list adds the colour keys — never Exit/volume; falls back to per-key `registerKey` when the batch fails, so one key a model lacks does not block the rest), Back 10009 watcher, `visibilitychange` lifecycle, `exit()`, localStorage |
 | `device-info` | placeholder | UA / resolution / WebGL / product-info diagnostics |

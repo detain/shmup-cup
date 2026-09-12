@@ -348,8 +348,8 @@ called, when the game was ready to run, and the difference (the time spent in th
 atlas, renderer, save, audio). Because `performance.now()` counts from the page's start,
 **`readyMs` is the launch-to-ready time** — what `shmup_feat.md` §23's "launch ≤ 10 s" is about.
 The canvas carries it as **`data-shmup-boot-ms`** (`BOOT_MS_ATTRIBUTE`, whole ms of `readyMs`, not
-`bootMs`) for the e2e suite (asserted < 10 s) and the TV's remote inspector; the debug overlay of
-M1-19 will show it.
+`bootMs`) for the e2e suite (asserted < 10 s) and the TV's remote inspector; the debug overlay
+(M1-19) shows it as `BOOT` ([debug-and-replays.md](debug-and-replays.md#the-overlay-shmuprender-pixi-debug)).
 
 ## Determinism
 
@@ -444,7 +444,8 @@ title — the M1-17 acceptance test in `scenes-options.test.ts`.
 
 - **M1-18** (done) — zone A: START plays AZURE VERGE on every build, so the TV records its first
   real scores (open space scored nothing) ([zone-a-and-playtest.md](zone-a-and-playtest.md)).
-- **M1-19** — the debug overlay shows `bootTiming` (boot ms) next to FPS and the state hash.
+- **M1-19** (done) — the debug overlay shows `bootTiming` (`BOOT`, launch-to-ready ms) next to
+  FPS and the state hash; the M1 release check asks for ≤ 10 s on the TV.
 - **M2-08 / M2-16** — display options (scale mode, shake, flash reduction, hitbox), game options
   (difficulty, lives, death penalty, auto power-up), per-device rebinding and the controls
   sub-screens; **save v2** with a migration from v1.

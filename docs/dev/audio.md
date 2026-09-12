@@ -398,6 +398,8 @@ song's loop points and render time. Options: `--out DIR`, `--only NAME` (one cue
 - **M1-18** (done) — zone A: the `zone-a` stage names the `Stage` / `Boss` cues, so it plays AZURE
   VERGE and BULWARK ASSAULT through the same set — no new song was written; the apps boot it by
   default, so the TV now plays stage music ([zone-a-and-playtest.md](zone-a-and-playtest.md)).
-- **M1-19** — perf budgets (the TV's render time of the music set during loading).
+- **M1-19** (done) — the budgets (`pnpm bench`, the bundle size) and the overlay's `BOOT` figure,
+  which includes rendering the SFX bank and the music set during loading — the M1 release check
+  asks for launch ≤ 10 s on the TV ([debug-and-replays.md](debug-and-replays.md)).
 - **M2-01** — extends (`ExtraLife`); **M2-05** — Direct mode (`CapsulePickup`); **M3-03** —
   tracker music.

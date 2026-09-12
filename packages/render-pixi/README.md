@@ -16,7 +16,11 @@ no Pixi ticker; the host's fixed-step loop calls `render()` (`shmup_tech.md` §4
   (`loadFxContent` is the owner of the `fx` content kind), 16 rising score popups, and screen
   effects — an integer shake mirroring the sim's, a flash tinted per kind behind a ≤ 3-a-second
   limiter (reduced flashing), a playfield dim — all advanced by simulated ticks, under the enemy
-  bullets. With `testPattern: true` it also shows the
+  bullets. In dev / test builds it also draws the **debug overlay** (M1-19, `createDebugOverlay`):
+  a panel with FPS, tick / render ms, draw calls (`countDrawCalls` → `renderer.drawCalls`), pool
+  usage, rank, RNG calls, the state hash, WebGL version, boot ms and a 60-frame graph, plus
+  hitbox / grid outlines — core draw lists, one colour per list, no allocation per frame.
+  With `testPattern: true` it also shows the
   **calibration test pattern** (1-px checker border, 16-px grid, colour bars, a placeholder
   ship, a marker moving one pixel per tick).
 
@@ -36,7 +40,7 @@ renderer.render(game.renderFrame()); // steps particles / popups / effects by th
 
 | Module | Status | Responsibility |
 |---|---|---|
-| `renderer` | partial | Pixi WebGL renderer, low-res target, upscale pass; draws a core `RenderFrame` (world batches, HUD / UI draw lists, shake, flash, dim); owns the particles, popups and screen effects and steps them by the `frame.tick` delta (M1-14); optional calibration pattern |
+| `renderer` | partial | Pixi WebGL renderer, low-res target, upscale pass; draws a core `RenderFrame` (world batches, HUD / UI draw lists, shake, flash, dim); owns the particles, popups and screen effects and steps them by the `frame.tick` delta (M1-14); optional calibration pattern; optional draw-call counter (`countDrawCalls` → `drawCalls`, M1-19) |
 | `viewport` | partial | Integer-scale letterbox math (pure) |
 | `test-pattern` | implemented | Calibration scene (`?scene=calibration`) |
 | `palette` | partial | Placeholder colours (VA-panel-friendly, no pure black) |
@@ -47,13 +51,14 @@ renderer.render(game.renderFrame()); // steps particles / popups / effects by th
 | `ui` | implemented | Draws a core `DrawList` (rect, sprite, text, number) into the HUD or UI layer — the core HUD and the scene flow's menus since M1-16 |
 | `particles` | implemented | `content/fx/` presets (kind `fx`: `loadFxContent`) and the 256-particle pool on the FX layer (additive / normal, presentation RNG, oldest recycled, world space, ticks not frames), spawned by FX and SFX cues (M1-14) |
 | `effects` | partial | Screen shake (3 magnitudes, decaying, off switch), per-kind flash behind a ≤ 3-a-second limiter, playfield dim, score popups (M1-14); raster & palette effects, CRT later |
-| `debug` | placeholder | Debug overlay |
+| `debug` | implemented | The debug overlay on the `DEBUG` layer (M1-19): `createDebugOverlay`, the pure builders `buildDebugPanel` (five lines + the frame graph) and `buildDebugOutlines` (hurt circles, terrain boxes, enemy / boss-part hurtboxes, shot boxes, bullet circles, items, laser capsules, grid cells) — sixteen one-colour draw lists, allocation-free; created only by dev / test builds |
 
 Guide (sprite ids → frames, bindings, quad pools, the terrain ring and parallax bands, text,
 the two passes, gotchas): [`docs/dev/rendering-and-shell.md`](../../docs/dev/rendering-and-shell.md);
 what the terrain and parallax views contain: [`docs/dev/stage-runtime.md`](../../docs/dev/stage-runtime.md);
 the laser view and the beam art: [`docs/dev/bullets-and-patterns.md`](../../docs/dev/bullets-and-patterns.md#drawing-bullets-and-lasers);
 particles, screen effects, score popups and the `fx` content: [`docs/dev/fx-and-game-feel.md`](../../docs/dev/fx-and-game-feel.md);
+the debug overlay and the draw-call counter: [`docs/dev/debug-and-replays.md`](../../docs/dev/debug-and-replays.md#the-overlay-shmuprender-pixi-debug);
 exports: [`docs/dev/api-reference.md`](../../docs/dev/api-reference.md#shmuprender-pixi).
 
 Tests run in Node: pure modules are tested fully; Pixi display objects need no GPU, so the
