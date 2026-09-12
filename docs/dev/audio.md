@@ -81,8 +81,10 @@ queue: `MenuMove` / `MenuSelect` / `MenuBack` (widget results — a denied OK pl
 `PauseToggle` (the pause menu opening or closing), all at x 0 on the unpanned `ui` bus; `Music
 Title` (30-tick fade) when the title shows, `Music Silence` (30 ticks) when a game starts (the new
 World then queues its stage theme), `Music StageClear` / `Music GameOver` (no fade) with the end
-screens. The music keeps playing under the pause menu. `HitStop`, `Rumble` and `PowerUp` events
-still have no audio meaning.
+screens. The music keeps playing under the pause menu. Since M1-17 the Options screen's
+`UserOption` events set the bus volumes (the shell's `connectOptionEvents`, not the engine — the
+engine never touches volumes). `HitStop`, `Rumble` and `PowerUp` events still have no audio
+meaning.
 
 ## The content (`content/audio/`, kinds `sfx` and `music`)
 
@@ -222,8 +224,12 @@ The object the shell talks to; it composes the loader and the two players:
 
 Counters and state for tests: `attached`, `musicCue`, `residentTracks` (a new array per read),
 `missedMusic`, `sfx`, `music`. Bus volumes stay with the web-audio back-end
-(`setBusVolume`, clamped 0…1, remembered before the context exists) — the Options screen of
-M1-17 will drive them.
+(`setBusVolume`, clamped 0…1, remembered before the context exists). Since M1-17 the Options
+screen drives them: its MASTER / MUSIC / SFX sliders (levels 0–10) reach the shell as `UserOption`
+events and become `setBusVolume('master' / 'music' / 'sfx', volumeGain(level))` — the SFX level
+also sets the **`ui`** bus, so the menu sounds follow it — and the saved levels are applied at boot
+before anything plays ([saves-and-options.md](saves-and-options.md#live-changes-the-useroption-event)).
+`volumeGain(level) = (level / 10)²` is a perceptual curve: level 5 is a gain of 0.25 (≈ −12 dB).
 
 ## The SFX voice manager (`sfx`, `createSfxPlayer`)
 
@@ -276,9 +282,12 @@ last (cleared by `stop()` at once), `playing` whether it is audible now.
    `prepareMusic(stage.id, stageMusicCues(stage))` behind `LOADING MUSIC` — nothing in open space
    (free flight has no music). A rejection ends on the boot error screen **`AUDIO FAILED TO
    LOAD`** with the `AudioLoadError` line.
-3. **Events** — in free flight only (the other scenes do not show the World):
-   `connectAudioEvents(events, engine, game.world.view.camera)`. The `Sfx` handler passes
-   `Math.floor(event.x - camera.x) | 0`, read from the live camera when the event is handled.
+3. **Events** — in the scene flow (against `sceneView.camera`, M1-16) and free flight (against
+   `game.world.view.camera`); the other dev scenes do not show the World:
+   `connectAudioEvents(events, engine, camera)`. The `Sfx` handler passes
+   `Math.floor(event.x - camera.x) | 0`, read from the live camera when the event is handled. In
+   the scene flow `connectOptionEvents(events, audio, …)` applies the Options screen's volume
+   changes to the back-end (M1-17).
 4. **Unlock** — `ShellOptions.audio` is `IAudio & Partial<AudioGraphLike>`: a `WebAudio` exposes
    `context` and `bus()`. The gesture handler (web: first `keydown` / `pointerdown`; TV: at
    boot) calls `platform.audio.unlock()` — which creates the context synchronously — then
@@ -287,6 +296,10 @@ last (cleared by `stop()` at once), `playing` whether it is audible now.
 6. **Lifecycle** — suspend / resume suspend and resume the context (the music's clock stops
    with it); `stop()` destroys the engine, then the audio back-end. `Shell.audioEngine`
    exposes the engine.
+7. **Volumes** (M1-17) — right after the platform exists and before the game, the shell reads the
+   save and calls `applyAudioOptions(audio, save.options.audio)`: `master`, `music`, and `sfx` +
+   `ui` from the SFX level. On the web the context does not exist yet; `WebAudio` remembers the
+   gains and applies them when the unlock creates it.
 
 What that means per build: in a browser nothing is audible until the first key press or click
 (gamepad buttons are not a user activation); sounds requested before are dropped, but the stage
@@ -371,6 +384,7 @@ song's loop points and render time. Options: `--out DIR`, `--only NAME` (one cue
 | `renderSong` throws `RangeError` | The song skipped validation (`loadMusicContent` reports the same problems as issues) |
 | An allocation guard fails in audio code | A fractional value passed across a call (a pan, a gain); pass whole pixels / ticks and compute inside — see the M1-15 finding above |
 | `AUDIO FAILED TO LOAD` | A `file` sound or track could not be fetched (a wrong relative URL, a file missing from the build) or decoded (`OfflineAudioContext` missing, a corrupt OGG). The line names the URL |
+| A sound is too quiet or silent although the content's volume is right | The player's Options volumes: MASTER scales everything, MUSIC the music, SFX the effects **and** the menu sounds; level 0 is silent. Check `shell.save.options.audio` (or clear `shmup-cup:save.v1`) |
 | The music keeps playing while paused | By design (M1-16): the pause menu freezes the World, not the music. At `GAME OVER` the game-over tune replaces it once the game-over screen opens (the scene flow; `?scene=flight` has no screens, so there the stage theme keeps playing) |
 
 ## Next steps that build on this page
@@ -378,7 +392,8 @@ song's loop points and render time. Options: `--out DIR`, `--only NAME` (one cue
 - **M1-16** (done) — the scene flow: the title theme (`Title`) prepared in the boot's loading
   phase, `MenuMove` / `MenuSelect` / `MenuBack` / `PauseToggle` on the `ui` bus, the game-over and
   stage-clear scenes' music ([scenes-and-ui.md](scenes-and-ui.md)).
-- **M1-17** — the Options screen's MASTER / MUSIC / SFX sliders → `audio.setBusVolume`, saved.
+- **M1-17** (done) — the Options screen's MASTER / MUSIC / SFX sliders → `audio.setBusVolume`
+  through `volumeGain`, saved and applied at boot ([saves-and-options.md](saves-and-options.md)).
 - **M1-18** — zone A: the `zone-a` stage plays AZURE VERGE and BULWARK ASSAULT through the same
   set (a track can be limited to it with `stages`).
 - **M1-19** — perf budgets (the TV's render time of the music set during loading).

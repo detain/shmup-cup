@@ -371,7 +371,7 @@ Not hashed: config and content (fixed per session — the terrain map included, 
 modifies yet), intents, `device`, `slot`, debug flags, the event queue, the grid, the enemies'
 tick outcomes, the weapons' role tables, live counts and hit list, the power-ups' pickup outcomes and compiled Auto Power-Up order (derived from content,
 config and the pool, or rebuilt every tick), the session hi-score and the HUD's dirty flags (a
-host may raise the hi-score from its save — M1-12), `fx.frozen` (derived from `hitStop`) and the view (parallax offsets are derived from the
+host may raise the hi-score — the scene flow starts it from the save's best since M1-17), `fx.frozen` (derived from `hitStop`) and the view (parallax offsets are derived from the
 camera, enemy batches from the enemies) — presentation or derived state. A behaviour coroutine's position inside its
 generator cannot be read; it is covered by `wakeTick` and by everything the script changed. Two worlds created
 from the same seed and content and fed the same inputs hash equal after any number of ticks

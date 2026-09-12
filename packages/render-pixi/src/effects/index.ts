@@ -73,7 +73,10 @@ export const moduleInfo = defineModule({
   specRefs: ['shmup_feat.md §18', 'shmup_feat.md §20', 'shmup_feat.md §21', 'shmup_feat.md §22'],
 });
 
-/** Presentation options for effects (Display settings; `UserOptions` in M1-17 / M2-16). */
+/**
+ * Presentation options for effects (the Display settings — set from `core/config`
+ * `UserOptions.display` once the display options arrive, M2-08 / M2-16).
+ */
 export interface EffectSettings {
   /** Apply sim-requested screen shake to the world layers (the global off switch). */
   screenShake: boolean;

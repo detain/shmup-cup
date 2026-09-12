@@ -66,7 +66,8 @@ validated by `resolveGameConfig`:
 The slot **names** (`MeterSlotName`, `METER_SLOT_NAMES`: `speed missile double laser option
 shield mega` — `?` = `shield`, `!` = `mega`) live in `core/config`, so the config never imports
 `core/powerups`; `core/powerups` numbers them (`MeterSlot` 0–6, `meterSlotOf(name)`). No app
-exposes these fields yet: the Options menu of M1-17 / M2-16 will.
+exposes these fields yet: the Options screen's Game group of M2-16 will (the M1-17 Options screen
+has the audio sliders and the controls profile only).
 
 ## The meter
 

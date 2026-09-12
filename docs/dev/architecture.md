@@ -18,7 +18,9 @@ camera path, timeline, checkpoints, tile terrain, parallax),
 movers, spline paths), [bullets-and-patterns.md](bullets-and-patterns.md) (enemy bullets,
 lasers, fire primitives, rank), [weapons-and-options.md](weapons-and-options.md) (player
 weapons, loadouts, autofire, hits on enemies, trailing Options),
-[scenes-and-ui.md](scenes-and-ui.md) (the scene stack and flow, menus, the HUD).
+[scenes-and-ui.md](scenes-and-ui.md) (the scene stack and flow, menus, the HUD),
+[saves-and-options.md](saves-and-options.md) (the versioned save, user options, the Options
+screen).
 
 ## Layers
 
@@ -56,7 +58,8 @@ weapons, loadouts, autofire, hits on enemies, trailing Options),
                     │ scripts + movers, bullets + lasers, rank,      │
                     │ player weapons + Options, power-ups, shields,  │
                     │ death / respawn, score, fx timers, the scene   │
-                    │ stack + flow, canvas UI kit, HUD;              │
+                    │ stack + flow, canvas UI kit, HUD, Options      │
+                    │ screen, versioned saves + user options;        │
                     │ other systems: placeholders                    │
                     └────────────────────────────────────────────────┘
 ```
@@ -350,8 +353,9 @@ D24, "art as code"); nothing is drawn at run time and nothing is fetched on the 
   `released` (went up), plus the device kind that produced the input.
 - **Bindings are data** (decisions D13–D15): input profiles in `content/input/` are validated
   at boot (`rebind`, the `input-profiles` content owner) and applied by the apps — one
-  keyboard / remote profile (`keyboard-default` on the web, `tizen-remote-safe` on the TV, a
-  saved choice, `?profile=` on the web) and `gamepad-standard`. Each profile has a **`game`**
+  keyboard / remote profile (`keyboard-default` on the web, `tizen-remote-safe` on the TV, the
+  choice kept in the save and picked in OPTIONS → CONTROLS since M1-17, `?profile=` on the web) and
+  `gamepad-standard`. Each profile has a **`game`**
   and a **`menu`** table; the shell forwards `Game.inputContext` to `input.setContext()`
   before a frame's ticks, and a key held across a switch keeps only the actions both tables
   give it. Before a profile is applied the built-in `keymap` / `gamepad` tables are used.
@@ -361,7 +365,8 @@ D24, "art as code"); nothing is drawn at run time and nothing is fetched on the 
   `keyCode` only.
 - **Held state comes from keydown/keyup only** — auto-repeat keydowns are ignored and each
   physical key is counted separately, so two keys bound to one action keep it held until
-  both are released. `blur` clears all held keys.
+  both are released. `blur` clears all held keys (since M1-17 the shell's own window `blur`
+  listener calls `input.clear()` too).
 - **Taps are latched:** a key pressed and released between two polls still appears in
   `pressed` for the next tick (important for the remote's short OK/Back presses).
 - **Device quirks are profile knobs** (`input-web/remote`): a release debounce (a released
@@ -430,16 +435,40 @@ Since M1-15 the game's audio sits on those buses ([audio.md](audio.md)):
   player keeps one track resident with an intro + sample-accurate loop, fades and ducking as
   `AudioParam` ramps on the context clock.
 
+- **Volumes** (M1-17) — the player's MASTER / MUSIC / SFX levels (0–10, saved) become bus gains
+  through `volumeGain(level) = (level / 10)²`, applied at boot and live from the Options screen's
+  `UserOption` events; the SFX level drives the `sfx` and `ui` buses.
+
 Audio is pure presentation: the sim only pushes cue ids, so a muted or absent audio back-end
 changes nothing in the game.
+
+### Saves and user options (`core/save`, `core/config`)
+
+Details: [saves-and-options.md](saves-and-options.md).
+
+- **One versioned JSON document** under `Platform.storage` key `save.v1` (`shmup-cup:save.v1` in
+  `localStorage`): the player's `UserOptions` (volumes, the input profile), hi-score tables per mode
+  key (top 10, `meter-normal` in M1) and play statistics. Loading never fails the boot: JSON →
+  forward migrations (`SAVE_MIGRATIONS`, the document's `version`) → a field-by-field sanitiser;
+  a corrupt or unreadable text falls back to defaults and is copied to `save.corrupt`.
+- **The shell reads it before the title** (after the platform exists, before the game), applies
+  the volumes and the saved profile, and hands a `SaveStore` to the scene flow. The flow writes it
+  when the Options screen closes and when a game ends — `SaveStore.flush()` writes only when the
+  canonical text changed, so nothing is lost when the TV app is killed and nothing is written for
+  nothing.
+- **User options are presentation** (plan §1.5): not in `GameConfig`, replays or hashes. The
+  Options screen pushes each change as a `SimEventKind.UserOption` event through the one event
+  queue; the shell turns it into `setBusVolume` or asks the app to switch the input profile.
 
 ## Lifecycle
 
 | Event | Browser (`apps/web`) | TV (`apps/tizen`) | Effect |
 |---|---|---|---|
-| Boot | loading bar → content / atlas / WebGL checks → running | same, pages from `file://` | canvas `data-shmup-state` = `loading` → `running`, or `error` with the boot error screen listing every problem |
+| Boot | loading bar → content / atlas / WebGL checks → save read → running | same, pages from `file://` | canvas `data-shmup-state` = `loading` → `running`, or `error` with the boot error screen listing every problem; `data-shmup-boot-ms` = the launch-to-ready time (M1-17) |
 | App hidden | tab hidden (`visibilitychange`) | Home, source switch, multitasking (`visibilitychange`) | `platform.lifecycle` suspend → `game.state.suspended = true` (no ticks), held input cleared, audio suspended |
 | App visible | tab visible | back to the app | resume → `suspended = false`, loop accumulator reset, audio resumed; with the game scene on top the scene flow opens the pause menu (M1-16) |
+| Window loses focus | `blur` (another window, devtools) | `blur` | held input cleared (M1-17) — the key-ups of a window without focus never arrive |
+| Options closed, game ended | BACK / Back on the Options screen; the game-over or stage-clear screen | same (remote only) | the save is written when it changed (M1-17); nothing is written on exit, and nothing needs to be |
 | Pause menu | Esc / P / Backspace in the game | remote Back or Play/Pause in the game | the flow pushes `PauseScene` over the frozen, dimmed game; Pause / Back / RESUME close it (M1-16) |
 | Host pause | `game.pause()` (no UI; a debugger) | same | `state.paused`; survives suspend/resume — resuming the platform does not un-pause |
 | Back | Esc / Backspace (`keyboard-default`: `Pause` in the game, `Back` in menus); no exit | remote Back (10009): `tizen-remote-safe` maps it to `Pause` (game) / `Back` (menus); before the shell runs, `watchBackKey` exits (`tizen.application` directly) — the loading and boot error screens | The scene stack owns Back (M1-16): game → pause, pause → resume, menus → back, title → exit confirmation → `platform.exit()` after YES (the TV); in a browser the title's Back only backs out of its menu |
@@ -457,7 +486,7 @@ may ask of a host:
 |---|---|---|---|
 | `id` | `'web'` | `'tizen'` | `'headless'` |
 | `input.poll()` | `createWebInput` (`keyDevice: 'keyboard'`) + `keyboard-default` / `gamepad-standard` profiles | `createWebInput` (`keyDevice: 'remote'`) + `tizen-remote-safe` / `gamepad-standard` profiles | returns `platform.snapshot` (tests set bits) |
-| `storage` | `localStorage`, prefix `shmup-cup:`, memory fallback | same | in-memory `Map` |
+| `storage` | `localStorage`, prefix `shmup-cup:`, memory fallback — holds the save (`save.v1`, M1-17) | same (deleted with the app on uninstall) | in-memory `Map` |
 | `audio.unlock()` | the `WebAudio` instance | the `WebAudio` instance | resolves immediately |
 | `lifecycle` | Page Visibility | Page Visibility | `platform.suspend()` / `resume()` |
 | `exit` | `null` (browsers cannot quit) | `tizen.application.getCurrentApplication().exit()`, `null` outside a TV | `null` |
@@ -468,8 +497,9 @@ Tizen extras live in `apps/tizen/src/platform/`: `registerRemoteKeys()` register
 active input profile's `register` list at startup (Play/Pause and Ch± for
 `tizen-remote-safe`; the fallback `REMOTE_KEYS_TO_REGISTER` adds the colour keys when no
 profile is known), never `Exit` or volume (filtered whatever the list says), falling back to
-per-key registration when the batch call reports an unsupported key. A saved profile choice
-re-registers its keys once storage answers.
+per-key registration when the batch call reports an unsupported key. Since M1-17 the saved
+profile choice (read with the save before the title) and every pick in OPTIONS → CONTROLS register
+the new profile's keys.
 
 ## Determinism rules
 
@@ -479,7 +509,8 @@ These are enforced now so that replays, golden tests and attract mode work later
 - The sim counts **ticks**, never milliseconds — `Date.now`, `performance.now` and
   `Math.random` are lint errors in `packages/core`.
 - All sim-affecting options live in `GameConfig` (frozen, validated, recorded in replay
-  headers). Presentation-only options will live elsewhere.
+  headers). Presentation-only options live in `core/config` `UserOptions` (M1-17 — volumes, the
+  input profile), persisted by `core/save` and never seen by the simulation.
 - Input reaches the sim only through `InputSnapshot` masks; `copyInputSnapshot()` records
   and replays them without allocating.
 - Randomness comes from the seeded `rng` streams only (gameplay stream seeded from
@@ -509,8 +540,9 @@ module has a docblock with **Responsibility**, **Implements** and **Public API**
 a matching `test/<module>/` folder, and spec references that point at real numbered
 sections of `shmup_feat.md` / `shmup_tech.md`.
 
-Implemented or partial today: core `platform`, `input`, `config`, `loop`, `game`,
-`presentation`, `rng`, `math`, `events`, `pools`, `data` (partial: the M2 kinds are
+Implemented or partial today: core `platform`, `input`, `config` (partial: `GameConfig` and, since
+M1-17, the `UserOptions` — difficulty tables and display options later), `loop`, `game`,
+`presentation`, `rng`, `math`, `events`, `pools`, `save` (M1-17), `data` (partial: the M2 kinds are
 missing), `world`, `stage`, `player` (implemented for P0 since
 M1-12 — co-op joining comes with M2-06), `collision` (partial: no bending-laser chains yet), `debug` (partial:
 state hash and flags, no controls yet), `enemies` (partial: no rank modifiers / Option Hunter
@@ -522,12 +554,13 @@ into points come with M2-02), `rank` (partial: constant rank, no growth yet), `w
 `powerups` (partial: meter mode), `shields` (partial: the Force Field), `scoring` (partial:
 scores and the session hi-score — extends, continues and the table later), `fx` (partial: the
 hit-stop / shake / flash requests — slowdown later), `ui` (partial: the list menu, slider,
-toggle and confirm widgets, builders and the HUD — rebind prompt, name entry and the boss HP bar
-later), `scenes` (partial: the scene stack and the M1 flow — Options with M1-17, the M2 screens
-later);
+toggle, choice and confirm widgets, builders and the HUD — rebind prompt, name entry and the boss
+HP bar later), `scenes` (partial: the scene stack, the M1 flow and the Options screen — the M2
+screens later);
 input-web `keymap`, `keyboard`, `gamepad`, `web-input`, `remote`, `rebind`
-(partial: profiles, contexts, persistence hook — the rebinding UI comes in M2-16); audio-web
-`web-audio` (partial: the volume sliders come with M1-17), `synth`, `sfx`, `music`, `loader`,
+(partial: profiles, contexts, the selectable profiles of CONTROLS — the rebinding UI comes in
+M2-16); audio-web `web-audio` (partial; driven by the Options sliders since M1-17), `synth`, `sfx`,
+`music`, `loader`,
 `engine`;
 render-pixi `renderer`, `viewport`, `test-pattern`, `palette`, `atlas`, `layers`, `sprites`,
 `text`, `ui`, `particles`, `effects` (partial: shake, flash, dim, popups — raster and palette
@@ -545,7 +578,8 @@ plugins in `vite.shared.ts`) has no `moduleInfo`; it is covered by the tests und
 | A new host platform (webOS, Android TV) | New `apps/<name>/` implementing `Platform` (copy `apps/tizen/src/platform/` as a start) and a thin `boot` that calls `bootShell()` if it is a browser engine (reuse `@shmup/input-web` / `audio-web`) |
 | Something drawn in the world | A `SpriteBatchView` (an SoA pool or a `createSpriteBatch` mirror) in the `WorldView.batches` list — no renderer change ([rendering-and-shell.md](rendering-and-shell.md#extending-it)) |
 | HUD or menu drawing | The HUD is `core/ui` `buildHud` (add what it depends on to `Hud.update`); menus are `core/ui` widgets drawn by a scene's `drawUi` into the flow's one UI list (`DrawList`: rect, sprite, text slot, number) — [scenes-and-ui.md](scenes-and-ui.md#extending-it) |
-| A screen or overlay (Options, select screens …) | A `SceneBase` subclass in `core/scenes` created by `createSceneFlow`, with its own string-slot range, pushed / replaced from another scene's `tick` — [scenes-and-ui.md](scenes-and-ui.md#extending-it) |
+| A saved option, a save field or a statistic | `UserOptions` / `resolveUserOptions` in `core/config`, a `SAVE_MIGRATIONS` step + `sanitizeSave` / `serializeSave` in `core/save` — [saves-and-options.md](saves-and-options.md#extending-it) |
+| A screen or overlay (select screens, more option groups …) | A `SceneBase` subclass in `core/scenes` created by `createSceneFlow`, with its own string-slot range, pushed / replaced from another scene's `tick` — [scenes-and-ui.md](scenes-and-ui.md#extending-it) |
 | A handler for a sim event | `shell.events.on(SimEventKind.X, handler)` at load time; copy fields out of the reused record |
 | A content kind validated outside core | A `ContentOwner` in the shell's `DEFAULT_CONTENT_OWNERS`, or passed to `bootShell({ contentOwners })` from both apps (an app entry replaces the default — the apps do this for `input-profiles` to keep the parsed profiles) — unowned kinds stop the boot |
 | A renderer or audio back-end | Implement `IRenderer` / `IAudio` from `@shmup/core` in a new package; the apps choose which one to create |

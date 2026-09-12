@@ -85,6 +85,7 @@ errors you may meet:
 | `String.prototype.replaceAll` | Chrome 85 | `replace(/…/g, …)` |
 | `.at(i)` | Chrome 92 | `a[i]`, `a[a.length - 1]` — the rule matches any `.at(` call, so do not name your own method `at` either (the scene stack's is `sceneAt`) |
 | `structuredClone` | Chrome 98 | explicit copy |
+| a **stable** `Array.prototype.sort` | Chrome 70 (V8 7.0) — not a lint error | an insertion sort by hand wherever equal keys must keep their order (`core/save`'s hi-score tables: a tie stays below the older row) |
 | `import.meta` | ES modules only | pass values in through config (allowed only in `apps/web`, which is served as a module) |
 | other newer APIs | — | `compat/compat` (eslint-plugin-compat, `lintAllEsApis`) reports them |
 
@@ -155,6 +156,10 @@ ES5 and linted with `ecmaVersion: 5`.
   one UI list) is cleared and rebuilt only when a producer's revision changed, and each producer
   writes only its own string-slot range
   ([scenes-and-ui.md](scenes-and-ui.md#zero-allocation-and-the-hot-path-rules)).
+  And from M1-17: `Math.round(x)` for `x` in (−0.5, 0) returns `-0` too, and so does a `-0` read
+  back from JSON — clamp read values with `v <= 0 ? 0 : …` (as `resolveUserOptions` and the save's
+  counters do) so a `-0` never enters state that is later passed around
+  ([saves-and-options.md](saves-and-options.md#user-options-coreconfig)).
 - Behaviour coroutines (generators, D29) allocate a small result object on every resume:
   scripts **sleep** (`yield ticks`) and are resumed only when they wake; per-tick motion
   belongs in a mover (numbers on the body), never in a `yield 1` loop.

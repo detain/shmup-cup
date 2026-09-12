@@ -9,10 +9,12 @@ score, the best score and the second player's slot along the top, your spare shi
 meter** and the Force Field's strength along the bottom. **Back** (or Pause) opens the **pause
 menu** over the frozen game: resume, retry, or quit to the title. When the last ship is lost a
 **GAME OVER** screen appears, after a boss a **STAGE CLEAR** screen, and on the TV Back on the
-title asks **EXIT SHMUP CUP?** before it closes the app. Everything is drawn by the game itself
-and works with the remote's arrows, OK and Back alone ([The title screen and the
+title asks **EXIT SHMUP CUP?** before it closes the app. **OPTIONS** — on the title and in the
+pause menu — sets the game's own volumes (MASTER, MUSIC, SFX) and the control profile, and the
+game **remembers** them and your **high scores** between launches. Everything is drawn by the game
+itself and works with the remote's arrows, OK and Back alone ([The title screen and the
 menus](#the-title-screen-and-the-menus), [Pausing, quitting and the end
-screens](#pausing-quitting-and-the-end-screens)).
+screens](#pausing-quitting-and-the-end-screens), [The Options screen](#the-options-screen)).
 
 On the TV a game flies in empty **open space** (no enemies yet): it exists to prove on each
 device that the whole chain works — the menus and the controls respond quickly and reliably, the
@@ -65,7 +67,7 @@ stays black.
 | **Stars** | Behind everything | Three layers of stars drift slowly to the left, as in the game |
 | **SHMUP CUP** logo | Upper middle | Big blocky letters, yellow at the top turning orange and red towards the bottom, with a dark outline and a shadow; crisp square pixels |
 | **PRESS OK** | Under the logo | Blinks on and off about once a second |
-| **HI** and a number | Bottom | The best score of this session (0 after the app starts) |
+| **HI** and a number | Bottom | The best score kept on this device — from earlier launches too (0 on a fresh install) |
 
 The title music (SHMUP CUP) plays — in a browser from your first key press or click.
 
@@ -74,7 +76,7 @@ The title music (SHMUP CUP) plays — in a browser from your first key press or 
 | Entry | What it does |
 |---|---|
 | **START** | Starts a game (highlighted first) |
-| **OPTIONS** | Greyed out — the options screen comes with the next build; the highlight skips it |
+| **OPTIONS** | Opens the **Options screen**: the volumes and the control profile — see [The Options screen](#the-options-screen) |
 | **EXIT** | Only on the TV: asks **EXIT SHMUP CUP?** — see below |
 
 - The highlighted entry is yellow with a small arrow `→` in front of it. **▲ / ▼** move the
@@ -100,7 +102,7 @@ two thin bars, one along the top edge and one along the bottom (the **HUD**):
 | **Star field** in three layers | Whole picture behind the ship | Stars drift to the left at three different speeds (the far ones slowest), steadily, with no jumps; the pattern repeats seamlessly |
 | **KESTREL**, the player ship | Enters from the left edge | Glides in from off-screen during the first ⅔ of a second, slowing down as it arrives, and stops at mid-height about a sixth of the way across. Then it is yours to fly |
 | **Shots** from the ship's nose | In front of the ship, flying right | As soon as the ship has arrived, small cyan-and-white darts leave its nose and race to the right edge, two at a time, each with a tiny white-and-yellow **muzzle spark** flickering just in front of the nose as it leaves — see [Your weapons](#your-weapons) |
-| **Top bar** | Top edge | `1P` (cyan) and your score `00000000` on the left; `HI` (yellow) and the best score of this session in the middle; `2P` and `------` (grey — nobody is playing player 2) on the right |
+| **Top bar** | Top edge | `1P` (cyan) and your score `00000000` on the left; `HI` (yellow) and the best score so far (kept between launches) in the middle; `2P` and `------` (grey — nobody is playing player 2) on the right |
 | **Bottom bar** | Bottom edge | On the left two small ship icons (your spare ships — you start with three, the one you fly plus two; with more than five you see one icon and the number); then the **power meter**: seven boxes labelled `SPEED` `MISSILE` `DOUBLE` `LASER` `OPTION` `?` `!` ([Power-ups](#power-ups)); on the right, while you have a Force Field, five small blocks — cyan for each hit it can still take, dark for the spent ones |
 
 Every pixel should be a crisp little square. The game draws at 384×216 and scales that up
@@ -121,7 +123,7 @@ about half and shows the **PAUSE** menu in a framed box, with a short sound:
 | Entry | What it does |
 |---|---|
 | **RESUME** | Back to the game exactly where it stopped (highlighted first). **Back** or **Pause** do the same |
-| **OPTIONS** | Greyed out until the options screen arrives |
+| **OPTIONS** | Opens the **Options screen** over the frozen game ([below](#the-options-screen)); BACK returns to the pause menu |
 | **RETRY STAGE** | Starts the stage (or open space) again from the beginning with a fresh ship, three ships and a zero score — no question asked |
 | **QUIT TO TITLE** | Asks **QUIT TO TITLE?** (YES / NO, NO highlighted); YES ends the game and shows the title |
 
@@ -131,13 +133,76 @@ never continues while you are not looking.
 
 **Game over.** When your last ship is lost the game plays on for a moment, then darkens and a
 red-edged box shows **GAME OVER** and your final **SCORE**; a short, sad tune (SILENT VERGE)
-plays. After half a second **OK** (or Back) returns to the title; after ten seconds it goes back
-by itself. If the score beat the session's best, the title's `HI` now shows it.
+plays. If the score is a new best for this device, **NEW HI-SCORE** shows in yellow under the box
+(your first game with any points always is). After half a second **OK** (or Back) returns to the
+title; after ten seconds it goes back by itself. The score is saved as soon as the screen appears
+([What the game remembers](#what-the-game-remembers)), and the title's `HI` shows the best one.
 
 **Stage clear.** When a stage ends — the Test Range after its 75 seconds, the Boss Range after
 its boss — the game plays on for a second and a half, then a box shows **STAGE CLEAR** with your
 **SCORE** and the **HI** score for four seconds, then **TO BE CONTINUED** for four seconds (this
-preview has only one zone), and then the title. **OK** skips ahead.
+preview has only one zone), and then the title. **OK** skips ahead. The score is saved like a
+game over's (this screen ends the run in this preview).
+
+## The Options screen
+
+**OPTIONS** on the title menu — or in the pause menu during a game — opens a framed box over the
+darkened picture:
+
+```text
+            OPTIONS
+   → MASTER   ▬▬▬▬▬▬▬▬▬▬  10
+     MUSIC    ▬▬▬▬▬▬▬▬▬▬  10
+     SFX      ▬▬▬▬▬▬▬▬▬▬  10
+     CONTROLS SAFE 4-WAY (DEFAULT)
+     BACK
+```
+
+| Entry | What it does |
+|---|---|
+| **MASTER** | The volume of everything the game plays, from 0 (silent) to 10 (full, the start setting) |
+| **MUSIC** | The music's volume, 0–10 |
+| **SFX** | The sound effects' volume, 0–10 — the menu clicks and chimes follow it too |
+| **CONTROLS** | The control profile: on the TV **SAFE 4-WAY (DEFAULT)** or **FAST 8-WAY**, in a browser **KEYBOARD (DEFAULT)** or **KEYBOARD AS REMOTE** ([controls.md](controls.md#control-profiles)) |
+| **BACK** | Keeps the settings and closes the box |
+
+- **▲ / ▼** move the highlight (MASTER is highlighted first). On a volume, **◀ / ▶** turn it down
+  or up one step — the bar shrinks or grows and the number changes; holding the arrow keeps
+  going, like in the other menus. On CONTROLS, **◀ / ▶** (or OK) step to the next profile.
+- **Every change works at once**: the music gets quieter while you turn MUSIC down (on the title
+  you hear the title music change), the clicks get quieter while you turn SFX or MASTER down, and a
+  new control profile is used from the next button press. OK on a volume does nothing.
+- The steps follow your hearing rather than a ruler: 5 sounds about half as loud as 10, and 0 is
+  silent.
+- **BACK** — or the **Back** button anywhere in the box — keeps the settings, plays the "back"
+  sound and returns to where you came from: the title menu, or the pause menu with the game still
+  frozen. The game **remembers** them from then on, also after the app is closed.
+- The game's volumes come on top of the TV's (or the PC's) own volume: the remote's volume keys
+  still set the monitor's volume as always.
+
+### What the game remembers
+
+| What | When it is saved | Where |
+|---|---|---|
+| The three volumes and the control profile | When you leave the Options screen with BACK or Back | On the TV inside the app itself; in a browser (and the desktop app) in that browser's storage for the page |
+| High scores | When the **GAME OVER** or **STAGE CLEAR** screen appears | The same place |
+
+- **High scores**: the best ten of each kind of game are kept; the title's `HI` (and the HUD's)
+  shows the best one. Names are `---` for now — typing your initials and a high-score table to
+  look at come with a later build.
+- **Only finished games count**, like in the arcade: a game you leave with QUIT TO TITLE or start
+  over with RETRY STAGE is not saved. (Its score can still show as `HI` until you close the app.)
+- Nothing needs saving when you close the app — Back → YES, Home, or even pulling the plug loses
+  nothing that was already saved.
+- **On the TV** games fly in open space where nothing scores, so `HI` stays 0 there until the first
+  real zone arrives; the volumes and the control profile are what to check.
+- **In a browser** each browser (and each address — the TV build on port 5174 is separate from
+  the browser build on 5173) keeps its own; a private window forgets everything when it closes.
+- If the saved data is ever damaged (or comes from a newer version of the game), the game simply
+  starts with the default settings and no high scores — no error screen. Please report it if that
+  happens without a reason.
+- To start from scratch: on the TV remove the app and install it again (removing it deletes the
+  saved data — [install-on-tv.md](install-on-tv.md)); in a browser clear the page's site data.
 
 ## Flying the ship
 
@@ -172,13 +237,24 @@ ship may move in four directions only; the game is designed to be fully playable
 
 ### What changed lately
 
-**New in this build: the title screen, the menus, the HUD and the pause menu.** Until now every
-build started straight in the game ("free flight"). Now it starts on a **title screen** with the
-SHMUP CUP logo and its own music; OK opens a small menu, and **START** begins the game. The top
-bar shows your score, the session's best (`HI`) and the second player's slot; the bottom bar your
-spare ships, the **power meter** — the seven boxes that show which power-up OK takes, the
+**New in this build: the Options screen, and the game remembers.** **OPTIONS** — greyed out until
+now — works on the title and in the pause menu: three volume sliders (MASTER, MUSIC, SFX, from 0 to
+10) that change the sound the moment you press ◀ / ▶, and **CONTROLS**, the control profile —
+on the TV **SAFE 4-WAY** (the default, with the hiccup protection) or **FAST 8-WAY** (without it),
+in a browser KEYBOARD or KEYBOARD AS REMOTE — which also takes effect at once. **BACK** keeps the
+settings, and the game now **remembers** them after it is closed, together with your **high
+scores**: every game that ends on the GAME OVER or STAGE CLEAR screen is saved, the title's `HI`
+shows the best score kept on this device, and a new best gets **NEW HI-SCORE** on the GAME OVER
+screen. See [The Options screen](#the-options-screen) and
+[What the game remembers](#what-the-game-remembers).
+
+Before that, **the title screen, the menus, the HUD and the pause menu.** Until then every
+build started straight in the game ("free flight"). Since then it starts on a **title screen**
+with the SHMUP CUP logo and its own music; OK opens a small menu, and **START** begins the game.
+The top bar shows your score, the best score (`HI`) and the second player's slot; the bottom bar
+your spare ships, the **power meter** — the seven boxes that show which power-up OK takes, the
 highlighted one blinking, the ones you cannot take right now greyed out — and the Force Field's
-strength. **Back** (or Play/Pause) now **pauses** the game on the TV instead of closing the app:
+strength. **Back** (or Play/Pause) **pauses** the game on the TV instead of closing the app:
 RESUME, RETRY STAGE or QUIT TO TITLE. Losing the last ship shows a **GAME OVER** screen and
 returns to the title; finishing a stage shows **STAGE CLEAR** and `TO BE CONTINUED`. And on the
 TV, Back on the title asks **EXIT SHMUP CUP?** — only YES closes the app. See
@@ -234,7 +310,8 @@ after about a second and a half it flies in again from the left, **blinking** �
 keeps firing. Each loss takes one of the spare-ship icons in the bottom bar and one step of your
 power (below); after the last ship the top bar says **GAME OVER** in red. And the **score**
 counts now: every enemy you destroy, every completed formation and every capsule adds points to
-the number next to `1P`, and `HI` on the right shows the best score of the session. See
+the number next to `1P`, and `HI` on the right shows the best score of the session (saved
+between launches since the Options build). See
 [Lives, losing your ship and the score](#lives-losing-your-ship-and-the-score). On the TV and the
 desktop (free flight: no enemies, no rock) nothing can hit the ship, so only the new `HI` in the
 top bar is visible there.
@@ -273,12 +350,17 @@ fighters, and fighters that stop, aim and dash at you ([what to look for](#enemi
 slowing down, over rocky floors and caves drawn from small tiles, with star layers moving
 behind at their own speeds; and before that the ship came **under your control**, and free
 flight replaced the sprite showcase as the start-up picture. The simulation behind it is the real
-game engine: every build adds to this world — next come the options screen (volumes, the control
-profile) and saved high scores.
+game engine: every build adds to this world — next comes the first real zone, AZURE VERGE, with
+its boss, on the TV too.
 
 **Please re-test on the monitors:** install the new build and run through the checks in the
 next section — how the ship and the menus respond to the remote is still the most valuable
-report. New on the TV are the **title screen, the menus and the pause menu** (checks 12–15):
+report. New on the TV are the **Options screen** and **settings that are kept after the app is
+closed** (checks 16–18): please say whether the volume steps feel even and the MUSIC and SFX
+sliders change what they should at once, whether the settings are still there after Back → YES
+and opening the app again, and — the most useful answer — whether the ship still moves smoothly
+with **FAST 8-WAY** (no hiccup protection) on your remote. Still worth answering: the **title
+screen, the menus and the pause menu** (checks 12–15):
 please say whether moving through the menus with the arrows and choosing with OK feels quick and
 reliable (never a skipped or doubled move), whether **Back** pauses the game and gets you back
 out of every screen as you expect, whether the **EXIT SHMUP CUP?** question appears before the
@@ -321,7 +403,7 @@ the first install it appears in the monitor's **Apps** list as **Shmup Cup**.
 | **Back** (↩) | Game: opens the pause menu. Pause menu: resumes. A question: answers NO. Title: asks **EXIT SHMUP CUP?** — YES closes the app and returns to the monitor's home screen. On the loading and error screens it closes the app at once |
 | **Play/Pause** ⏯ (if your remote has it) | Pauses and resumes the game |
 | **Home** | Leaves the app; everything freezes (and falls silent) while it is in the background. Reopening it brings you back where you were — during a game, to the pause menu — and nothing jumps ahead |
-| **Volume +/−, Mute** | The monitor's own volume, as in any app — the game has no volume setting of its own yet (it comes with the options screen) |
+| **Volume +/−, Mute** | The monitor's own volume, as in any app. The game's own volumes (MASTER, MUSIC, SFX) are under **OPTIONS** |
 | Everything else | Read by the game every tick, but nothing reacts to it yet (the gun fires without any button) |
 
 On the TV, START flies in **open space** — stars, your ship and its gun, no enemies — until the
@@ -368,24 +450,41 @@ Things to check on the monitor and report:
    or noticeably late, and whether they ever crackle, stutter, drop out or stop. The **title
    music** (SHMUP CUP) plays on the title screen and fades out when a game starts; open space has
    no music of its own (the stage music plays in the browser stages, below).
-12. **The title menu** (new): OK on `PRESS OK` shows START / OPTIONS / EXIT with START
-   highlighted; ▲ / ▼ move the highlight (OPTIONS is grey and skipped), each move with a soft
-   click; holding ▼ keeps moving it after a moment. Report any skipped or doubled step, or a
-   press that did nothing.
-13. **Pause** (new): in a game, **Back** freezes and darkens the picture and shows PAUSE with
+12. **The title menu**: OK on `PRESS OK` shows START / OPTIONS / EXIT with START
+   highlighted; ▲ / ▼ move the highlight, each move with a soft click; holding ▼ keeps moving it
+   after a moment. Report any skipped or doubled step, or a press that did nothing.
+13. **Pause**: in a game, **Back** freezes and darkens the picture and shows PAUSE with
    RESUME / OPTIONS / RETRY STAGE / QUIT TO TITLE. Back again (or RESUME) continues exactly where
    it stopped. RETRY STAGE starts over with a zero score. QUIT TO TITLE asks first (NO is
    highlighted); YES shows the title. Play/Pause, if your remote has it, pauses and resumes too.
-14. **Leaving the app** (new): on the title, **Back** (or EXIT in the menu) asks **EXIT SHMUP
+14. **Leaving the app**: on the title, **Back** (or EXIT in the menu) asks **EXIT SHMUP
    CUP?** with NO highlighted. NO or Back keeps the app running; only **YES** closes it and returns
    to the monitor's home screen. Report if Back ever closes the app without asking (except on the
    loading or error screen).
 15. The menus answer the remote **quickly** — as quickly as the ship does — and the text in the
    boxes is readable from the sofa.
+16. **The Options screen** (new): on the title, OK → **OPTIONS** shows a box with MASTER, MUSIC
+   and SFX (full bars, `10`), `CONTROLS  SAFE 4-WAY (DEFAULT)` and BACK. On **MUSIC** press ◀ a few
+   times: the title music gets quieter with every step, and at `0` it is silent; ▶ brings it back.
+   On **SFX** the clicks of each step get quieter; on **MASTER** everything does. Report whether
+   the steps feel even (no big jump between two steps), whether a change comes at once, and
+   whether the bars and numbers are readable. In a game, Back → OPTIONS opens the same box over
+   the frozen game; BACK returns to the pause menu.
+17. **Kept after closing the app** (new — the check the plan asks for): set MUSIC to `5` and SFX
+   to `3`, choose BACK, then close the app (Back on the title → **YES**). Open it again: the title
+   music plays at the lower volume, and OPTIONS shows `5` and `3`. Also press **Home** while the
+   Options screen is open and come back: the box is still there with your changes, and they are
+   kept once you choose BACK.
+18. **CONTROLS** (new): in OPTIONS move to CONTROLS and press ◀ / ▶: it switches between
+   `SAFE 4-WAY (DEFAULT)` and `FAST 8-WAY`, and the menu keeps working with the arrows, OK and Back
+   whichever is shown. Choose **FAST 8-WAY**, BACK, START and fly: hold each direction for a few
+   seconds — report whether the ship moves smoothly or stutters / stops for a moment (FAST 8-WAY
+   has no hiccup protection; if it stutters, your remote needs SAFE 4-WAY — switch back). Close
+   and reopen the app: CONTROLS still shows the profile you chose.
 
 The TV starts on the title, and START flies in open space, where nothing can hit the ship — the
-score stays at zero, the two spare ships stay and the game-over and stage-clear screens never
-come. The test stage (and with it the power capsules, losing ships, the score, the explosions and
+score stays at zero, the two spare ships stay, the game-over and stage-clear screens never come,
+and so `HI` stays 0 and nothing is added to the saved high scores (the browser stages test that). The test stage (and with it the power capsules, losing ships, the score, the explosions and
 the end screens), the boss range with its WARNING and boss, the stage music, the fully powered
 ship, free flight, the showcase, the calibration screen and the effects gallery can only be
 opened in a browser — the monitor's own web browser works too, pointed at a PC running `pnpm dev`
@@ -410,7 +509,10 @@ picture with its own simpler HUD — the stage name or FREE FLIGHT in the top ba
 the bottom bar, no power meter, no pause menu, and `GAME OVER` written into the top bar). Resize
 the window to see the whole-number scaling at work: the picture snaps between sizes instead of
 stretching. Switching to another tab freezes the game (and its sound); coming back during a
-game shows the pause menu.
+game shows the pause menu. The Options screen works the same as on the TV (Enter
+for OK, Esc or Backspace for Back); the settings and high scores are kept in this browser
+([What the game remembers](#what-the-game-remembers)) — in the test stages below the high scores
+can be tried out: finish a game on GAME OVER, reload the page, and the title's `HI` shows it.
 
 **Sound in a browser starts with your first key press or click** into the page — browsers do
 not let a page make sound before that, and a gamepad button does not count. So press a key (or
@@ -737,10 +839,12 @@ was destroyed and blinks out after about two thirds of a second; a completed for
 appears in **gold** where its last member was. Capsules add their 300 without a number (it would
 cover your ship — a cyan ring flashes around the ship instead).
 
-`HI` in the middle of the top bar is the **best score of this session**: it follows your score
-while you are beating it, it carries over into every new game (START, RETRY STAGE), and the
-title screen shows it too. It starts at 0 every time the app is opened — saved high scores come
-with the options and save data in the next build.
+`HI` in the middle of the top bar is the **best score**: it follows your score while you are
+beating it, it carries over into every new game (START, RETRY STAGE), and the title screen shows
+it too. Since this build it is **kept between launches**: every game that ends on the GAME OVER or
+STAGE CLEAR screen is saved, so after closing and reopening the app `HI` starts from the best
+saved score, and a new best shows **NEW HI-SCORE** on the GAME OVER screen
+([What the game remembers](#what-the-game-remembers)). A game you quit or retry is not saved.
 
 What "good" looks like:
 
@@ -915,7 +1019,7 @@ What you should hear:
 | The boss **WARNING** | The stage music fades out within half a second and a **siren** wails three times, once a second, with the red pulses |
 | The boss glides in | The boss theme, **BULWARK ASSAULT**, starts |
 | The boss is destroyed | The boss music fades out over a second while the explosions crackle over it; with the final blast's `20000` a short, cheerful **stage-clear tune** (VERGE SECURED) plays, then it is quiet |
-| The menus | A soft click for each move of the highlight, a short chime when you choose an entry, a lower "back" sound for Back, NO and a greyed-out entry; a short sound when the pause menu opens and closes. Menu sounds come from the middle |
+| The menus | A soft click for each move of the highlight (and each step of a volume or the control profile in the Options screen), a short chime when you choose an entry, a lower "back" sound for Back, NO and a greyed-out entry; a short sound when the pause menu opens and closes. Menu sounds come from the middle and follow the SFX volume |
 | The title screen | The title theme, **SHMUP CUP**; it fades out when a game starts |
 | **GAME OVER** screen | A short, sad tune (**SILENT VERGE**) |
 | **STAGE CLEAR** screen | The stage-clear tune (if it is not playing already) |
@@ -935,8 +1039,10 @@ The siren and the Mega Crash come from the middle.
 same instant is played once (it would only be louder), and when too much happens at once the
 least important sounds give way — the siren and the loss of your ship are never cut off.
 
-**Volume.** There is no volume setting in the game yet (it comes with the options screen in the
-next build — OPTIONS is greyed out until then); use the TV's or the PC's volume.
+**Volume.** The game's own volumes are under **OPTIONS**: MASTER (everything), MUSIC and SFX (the
+sound effects and the menu sounds), each from 0 (silent) to 10 (full — the start setting). They
+change at once and are kept after the app is closed ([The Options screen](#the-options-screen)).
+The TV's or the PC's volume works on top, as always.
 
 What "good" sounds like:
 
@@ -983,7 +1089,8 @@ pnpm --filter @shmup/electron start
 ```
 
 A 1152×648 window (×3) opens with the same title screen as the browser (no EXIT entry yet —
-close the window to quit); play with the keyboard or a gamepad.
+close the window to quit); play with the keyboard or a gamepad. The Options screen and the saved
+settings and high scores work as in the browser.
 Set `SHMUP_FULLSCREEN=1` before the last command to start in fullscreen. Close the window (or
 Alt+F4 / Cmd+Q) to quit.
 
@@ -1012,13 +1119,20 @@ mean the build itself is broken; they are not caused by anything you did.
 | Symptom | What to do |
 |---|---|
 | The title screen stays, the game does not start | Press OK (Enter) once to leave `PRESS OK`, then OK again on START. In a browser click once into the page first so it has the keyboard focus |
-| OK on the title menu did nothing | The menu ignores OK for a split second after it appears (an OK pressed then still counts a moment later). OPTIONS is greyed out and does nothing yet. If START never reacts, please report it with the remote model |
+| OK on the title menu did nothing | The menu ignores OK for a split second after it appears (an OK pressed then still counts a moment later). If START or OPTIONS never reacts, please report it with the remote model |
 | The highlight in a menu jumps two steps, or a press is lost | Not expected — please report it with the remote model (and whether you held the button) |
 | Back closed the app on the TV | Expected only on the loading and error screens, and after answering **YES** to **EXIT SHMUP CUP?** on the title. Anywhere else, please report it (an older build closed the app on Back) |
 | Back on the title does nothing in a browser | Expected on `PRESS OK`; in the menu it goes back to `PRESS OK`. A browser tab cannot close itself, so there is no EXIT |
 | The game froze and darkened with a PAUSE box | You pressed Back or Play/Pause (Esc, P or Backspace on a keyboard), or the app came back from the background — choose RESUME or press Back again |
 | The pause menu has no effect on the music | Expected: the music keeps playing while the game is paused |
-| OPTIONS is grey | Expected: the options screen comes with the next build |
+| OPTIONS is grey | Not expected any more — OPTIONS opens the Options screen on the title and in the pause menu. Check that the installed build is the latest |
+| A volume or the control profile went back to what it was after closing the app | The Options screen keeps its settings when you leave it with **BACK** or the Back button — changes made just before the app was closed some other way are lost. If they are lost after BACK, please report it (on the TV: and whether the app was reinstalled in between — removing the app deletes its saved data) |
+| No sound at all, or no music, but everything else works | Check OPTIONS: MASTER, MUSIC or SFX may be at `0` (0 is silent). Then the monitor's or PC's volume |
+| The menu clicks are very quiet | They follow the **SFX** volume — turn it up in OPTIONS |
+| OK on MASTER, MUSIC or SFX does nothing | Expected: the volumes change with ◀ / ▶; OK only works on CONTROLS and BACK |
+| The ship stutters while I hold a direction after choosing FAST 8-WAY (TV) | This remote needs the hiccup protection: choose SAFE 4-WAY again under OPTIONS → CONTROLS, and please report the remote model |
+| My high score is gone | Only games that end on the GAME OVER or STAGE CLEAR screen are saved — QUIT TO TITLE and RETRY STAGE are not. In a browser, a private window or cleared site data forgets them, and another browser has its own. On the TV, removing the app deletes them; if they vanish otherwise, please report it |
+| The settings and high scores were back to the start after an update | Installing a new build over the old one should keep them; please report it with how the build was installed. After removing and reinstalling the app this is expected |
 | The ship does not move | Wait until it has finished flying in (⅔ of a second). In a browser, click once into the page so it has the keyboard focus; with a gamepad, press any button first. On the TV, report it together with the remote model |
 | The ship moves only up, down, left and right | Normal on remotes that report one direction at a time, and with `?profile=keyboard-remote-emulation` in a browser. With a keyboard or gamepad and no `?profile=` in the address, please report it |
 | The ship keeps moving after I let go (TV) | A tiny delay (1/30 of a second) is intentional. If it clearly keeps going, report it — and film it if you can |
@@ -1037,12 +1151,12 @@ mean the build itself is broken; they are not caused by anything you did.
 | Destroyed enemies just vanish — no explosion | Not expected any more: every destroyed enemy should burst into a fireball with a noisy burst of sound ([Explosions](#explosions-sparks-shake-and-flashes)). Please report it with the address you opened |
 | An explosion or a score number covers an enemy bullet | Not expected — bullets are always drawn on top. Please report it with the time into the stage |
 | The picture shakes | Expected when your ship is lost (a third of a second) and at a boss's final blast (two thirds of a second). The HUD bars must stay still — report it if they move. There is no setting to turn the shake off yet |
-| The screen flashes | Expected at a Mega Crash (white), during the boss WARNING (red, three times) and at a boss's final blast (white). It never flashes more than three times a second; if the flashes are uncomfortable, please say so — a "reduce flashing" option comes with the options screen |
+| The screen flashes | Expected at a Mega Crash (white), during the boss WARNING (red, three times) and at a boss's final blast (white). It never flashes more than three times a second; if the flashes are uncomfortable, please say so — a "reduce flashing" option joins the Options screen in a later build |
 | Numbers pop up where enemies are destroyed | Expected: the points of each kill (white) and of a completed formation (gold). Capsules show a cyan ring instead of a number |
 | Explosions or sparks are magenta-and-black checkered squares | Their pictures are missing from the sprite sheet; please report it (the build is broken) |
 | `?scene=fx-gallery` shows only stars and the labels | The first effect appears within a second; if the explosions never show, please report it with the browser or TV model |
 | The score stays at zero | In open space (the TV and the desktop) there is nothing to score. In the test stage it should rise with every destroyed enemy — please report it if it does not |
-| `HI` went back to 0 after reloading | Expected: the high score is kept only while the game is open (across games, and on the title); saving it comes with the next build |
+| `HI` went back to 0 (or to a lower score) after reloading | Expected when the best game was quit or retried rather than ended on GAME OVER / STAGE CLEAR (only finished games are saved), in a new private window, or in another browser. Otherwise please report it |
 | The score went back to 0 after RETRY STAGE | Expected: a retry starts the stage over with a fresh ship and score; `HI` keeps the best |
 | The red saucer leaves nothing behind | It leaves a capsule only when it is destroyed (by your shots or a Mega Crash); a saucer that flies off the screen leaves nothing |
 | I pressed OK and nothing happened | Expected when no capsule was collected since your last power-up, or when you already have the maximum of the highlighted one (fifth Speed Up, the missiles, the Double or laser you already fire, four Options, a Force Field that is still up) — collect another capsule to move the highlight on. Look at the power meter: no highlighted box, or a greyed-out one, means OK has nothing to give ([Power-ups](#power-ups)). On the TV and the desktop (open space) there are no capsules at all yet |

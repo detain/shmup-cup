@@ -593,7 +593,7 @@ export type KeySpace = 'code' | 'keyCode';
  *
  * @param profiles - Every profile (the registry's).
  * @param keySpace - How the host's keys arrive.
- * @returns The selectable profiles.
+ * @returns The selectable profiles (a new array; the profiles themselves are shared).
  *
  * @example
  * ```ts
@@ -633,7 +633,8 @@ export const DEFAULT_PROFILE_SUFFIX = ' (DEFAULT)';
  * @param defaultId - The platform's default profile id.
  * @param extra - A profile to offer even when it is not selectable (e.g. a `?profile=` dev
  *   override in use), appended when missing; `null` for none.
- * @returns The choices.
+ * @returns The choices (a new array of new objects, in {@link selectableKeyProfiles} order, then
+ *   `extra`).
  *
  * @example
  * ```ts

@@ -41,14 +41,23 @@ presets of `content/fx/`, the screen shake of a lost ship or a boss's final blas
 (behind a ≤ 3-a-second limiter), the WARNING's dim and rising score numbers;
 `?scene=fx-gallery` cycles through every preset and screen effect (guide:
 [`docs/dev/fx-and-game-feel.md`](../../docs/dev/fx-and-game-feel.md)). The app passes no effect
-settings yet (shake on, normal flashing — the Options screen comes later).
+settings yet (shake on, normal flashing — display options come with M2-08 / M2-16).
+
+Since M1-17 **OPTIONS** opens the Options screen (MASTER / MUSIC / SFX volume sliders, CONTROLS),
+and the shell keeps the options and the hi-scores in a versioned save in `localStorage`
+(`shmup-cup:save.v1`, read before the title; a corrupt one is copied to `shmup-cup:save.corrupt`
+and replaced by defaults). This app gives the shell its `inputProfiles`: CONTROLS offers
+`KEYBOARD (DEFAULT)` and `KEYBOARD AS REMOTE` (plus a `?profile=` override in use) and switches
+at once (with `?debounce=` applied); guide:
+[`docs/dev/saves-and-options.md`](../../docs/dev/saves-and-options.md).
 
 Input uses the data-driven profiles of `content/input/` (decision D13): `keyboard-default`
-(or the saved choice) and `gamepad-standard`. Dev overrides: `?profile=<id>` picks another
+(or the choice saved from OPTIONS → CONTROLS) and `gamepad-standard`. Dev overrides: `?profile=<id>` picks another
 keyboard/remote profile — `?profile=keyboard-remote-emulation` makes the keyboard behave like
 the Samsung remote (arrows only, the second arrow replaces the first, Enter = OK,
 Backspace = Back, P = Play/Pause) — and `?debounce=<ticks>` (0–10) overrides its release
-debounce. An unknown `?profile=` logs a `console.warn` and falls back to `keyboard-default`.
+debounce. An unknown `?profile=` logs a `console.warn` and falls back to `keyboard-default`. A
+`?profile=` wins over the saved choice when the page loads (a pick in CONTROLS still switches).
 Guide: [`docs/dev/input-profiles.md`](../../docs/dev/input-profiles.md).
 
 ```sh

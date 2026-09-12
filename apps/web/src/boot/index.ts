@@ -29,8 +29,9 @@
  * to this app — plan M1-17), else `keyboard-default`; gamepads use `gamepad-standard`.
  * `?debounce=<ticks>` overrides the key profile's release debounce
  * ({@link inputOverridesFromSearch}). The Options screen's CONTROLS offers the keyboard profiles
- * whose menus a desktop keyboard can drive (`keyboard-default (DEFAULT)`,
- * `keyboard-remote-emulation`; plus a `?profile=` override in use) and switches live.
+ * whose menus a desktop keyboard can drive (`KEYBOARD (DEFAULT)` = `keyboard-default`,
+ * `KEYBOARD AS REMOTE` = `keyboard-remote-emulation`; plus a `?profile=` override in use) and
+ * switches live.
  *
  * **Saves (M1-17).** Options and hi-scores live in `localStorage` (`shmup-cup:save.v1`); the
  * shell loads them before the title and applies the volumes.
@@ -354,6 +355,12 @@ export async function bootWebApp(
     gameConfig: { remoteMode: false, stage, loadout: loadoutFromSearch(search) ?? 'default' },
     scene: sceneFromSearch(search),
     audioUnlock: 'gesture',
+    /**
+     * The Options screen's CONTROLS (plan M1-17): the keyboard profiles a desktop keyboard can
+     * drive the menus with, plus a `?profile=` override in use; `apply` switches the key profile
+     * (with the `?debounce=` override) unless it is already active — a saved choice (`'save'`)
+     * never replaces a `?profile=` override, the player's pick (`'options'`) does.
+     */
     inputProfiles: {
       choices: () =>
         inputProfileChoices(

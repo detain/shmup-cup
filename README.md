@@ -248,6 +248,23 @@ The [implementation plan](shmup_plan.md) is approved and under way. Progress per
   - Docs: [developer guide](docs/dev/scenes-and-ui.md) ·
     [what testers should check](docs/client/preview-build.md#the-title-screen-and-the-menus)
 
+- **Options and saves** (M1-17)
+  - **OPTIONS** on the title and in the pause menu opens the Options screen: MASTER / MUSIC / SFX
+    sliders (0–10, applied live as bus volumes on a perceptual curve — the SFX slider also drives
+    the menu sounds) and **CONTROLS**, the remote / keyboard profile (`SAFE 4-WAY (DEFAULT)` /
+    `FAST 8-WAY` on the TV), switched at once; BACK keeps them.
+  - A versioned save (`save.v1` in `Platform.storage`) keeps the options, the hi-score tables and
+    play stats: forward migrations, field-by-field sanitising, and a corrupt save falls back to
+    defaults (the text kept under `save.corrupt`) instead of breaking the boot.
+  - The shell reads it before the title and applies the volumes and profile; the game writes it
+    only when something changed — when the Options screen closes and when a game ends — so a
+    killed TV app loses nothing.
+  - Finished games enter the top-10 table (`NEW HI-SCORE` on the game-over screen) and the
+    title's `HI` starts from the saved best; the boot time is measured
+    (`data-shmup-boot-ms`, for the M1-19 debug overlay).
+  - Docs: [developer guide](docs/dev/saves-and-options.md) ·
+    [what testers should check](docs/client/preview-build.md#the-options-screen)
+
 ### Hardware spike
 
 - The **input probe** — a diagnostic Tizen app that measures the Samsung remote, gamepads and
@@ -267,7 +284,7 @@ The [implementation plan](shmup_plan.md) is approved and under way. Progress per
 | [`shmup_prompt.md`](shmup_prompt.md) | Paste-into-a-new-session prompt that drives execution of the plan (workflow: build → review/fix loop → tests → docs → CI gate per step, progress in `shmup_progress.md`) |
 | [`docs/`](docs/README.md) | Player and developer documentation (start with [`docs/dev/repo-layout.md`](docs/dev/repo-layout.md)) |
 
-Game docs — testers: [preview build (the title screen, menus, HUD and pause menu, the game-over and stage-clear screens, test stage, its enemies and their bullets, your weapons, power-ups, lives and score, the boss and its WARNING, explosions, shake and flashes, sound and music)](docs/client/preview-build.md) ·
+Game docs — testers: [preview build (the title screen, menus, HUD and pause menu, the Options screen and saved settings and high scores, the game-over and stage-clear screens, test stage, its enemies and their bullets, your weapons, power-ups, lives and score, the boss and its WARNING, explosions, shake and flashes, sound and music)](docs/client/preview-build.md) ·
 [controls](docs/client/controls.md) · [monitor setup & install](docs/client/install-on-tv.md).
 Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/architecture.md) ·
 [engine foundations](docs/dev/engine-foundations.md) · [content data](docs/dev/content-data.md) ·
@@ -284,6 +301,7 @@ Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/ar
 [FX & game feel](docs/dev/fx-and-game-feel.md) ·
 [audio](docs/dev/audio.md) ·
 [scenes, menus & HUD](docs/dev/scenes-and-ui.md) ·
+[saves & options](docs/dev/saves-and-options.md) ·
 [input profiles](docs/dev/input-profiles.md) ·
 [API reference](docs/dev/api-reference.md) ·
 [build, test & deploy](docs/dev/build-test-deploy.md) · [conventions](docs/dev/conventions.md).
@@ -310,7 +328,7 @@ versions (`devEngines.runtime`).
 ```sh
 pnpm -v               # must print 12.x — an older global pnpm fails with ERR_PNPM_BROKEN_LOCKFILE
 pnpm install          # set ELECTRON_SKIP_BINARY_DOWNLOAD=1 to skip the Electron binary
-pnpm dev              # browser dev app → http://localhost:5173: the title (Enter twice starts a game; Esc pauses), then fly the KESTREL (arrows/WASD, gamepad; the first key press turns the sound on; Enter/C takes a power-up; ?scene=flight skips the title; ?stage=test-range scrolls the test stage, its enemies, their bullets and the power capsules; ?stage=test-boss plays the WARNING and the test boss; ?profile=keyboard-remote-emulation feels like the TV remote; ?scene=showcase / ?scene=calibration / ?scene=fx-gallery)
+pnpm dev              # browser dev app → http://localhost:5173: the title (Enter twice starts a game; Enter, Down, Enter opens OPTIONS — volumes and controls, saved in localStorage; Esc pauses), then fly the KESTREL (arrows/WASD, gamepad; the first key press turns the sound on; Enter/C takes a power-up; ?scene=flight skips the title; ?stage=test-range scrolls the test stage, its enemies, their bullets and the power capsules; ?stage=test-boss plays the WARNING and the test boss; ?profile=keyboard-remote-emulation feels like the TV remote; ?scene=showcase / ?scene=calibration / ?scene=fx-gallery)
 pnpm lint             # ESLint (typescript-eslint + compat: chrome >= 69)
 pnpm typecheck        # tsc --noEmit everywhere
 pnpm test             # Vitest per package + repo integration tests
@@ -390,10 +408,9 @@ the game — the shipped Tizen bundle still targets Chromium 69.
 
 ## Next step
 
-Code: plan step **M1-17** (saves, audio options & platform integration: `SaveData` v1 with
-migrations and a corrupt-save fallback, persisted hi-scores and options, an Options screen with
-MASTER / MUSIC / SFX sliders and the remote-profile choice, the saved hi-score and volumes applied
-at boot) — the per-step status board is [`shmup_progress.md`](shmup_progress.md).
+Code: plan step **M1-18** (zone A content, boss & 4-way playtest bot: the real vertical-slice
+level AZURE VERGE with the HALCYON BULWARK boss, balanced for the remote and checked by a
+four-direction playtest bot) — the per-step status board is [`shmup_progress.md`](shmup_progress.md).
 
 On hardware (unchanged, and still the gate for the remote control scheme): package and
 deploy the input probe from the **Windows desktop** that sits on the same LAN as the monitors and holds
@@ -402,8 +419,9 @@ the Samsung certificate profile, run the test protocol on both monitors, and rec
 become edits to `content/input/remote.input-profiles.json` (`releaseDebounceTicks`,
 `diagonals`, `register`) — recipes in [`content/input/README.md`](content/input/README.md).
 Since M1-06 the preview build is worth installing too: flying the KESTREL with the real remote
-is the first hands-on check of the control scheme — and since M1-16 moving through the title and
-pause menus and quitting with Back (checklist in
+is the first hands-on check of the control scheme — since M1-16 moving through the title and
+pause menus and quitting with Back, and since M1-17 the Options screen, settings kept after a
+relaunch and the FAST 8-WAY profile (checklist in
 [`docs/client/preview-build.md`](docs/client/preview-build.md#on-the-samsung-smart-monitor--tv)).
 
 Desktop prerequisites: Git, Node 24 (22.12+), Tizen Studio **or** VS Code + Samsung Tizen extension (with a Samsung

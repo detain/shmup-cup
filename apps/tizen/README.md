@@ -80,6 +80,19 @@ popups) only the muzzle spark in front of the ship's nose shows in open space on
 `pnpm test:e2e` checks the effects gallery (`?scene=fx-gallery`) in the Tizen build opened from
 disk too.
 
+Since M1-17 **OPTIONS** (on the title and in the pause menu) opens the Options screen: MASTER /
+MUSIC / SFX volume sliders and **CONTROLS**, which offers `SAFE 4-WAY (DEFAULT)`
+(`tizen-remote-safe`) and `FAST 8-WAY` (`tizen-remote-diagonal`) — the remote profiles whose menus
+the remote can drive — and switches at once, registering the new profile's keys. The shell reads
+the save from the widget's `localStorage` (`shmup-cup:save.v1`) before the title and applies the
+saved volumes and profile; the save is written when the Options screen closes and when a game
+ends, so quitting with Back → YES (or the TV killing the app) loses nothing, and Tizen deletes it
+when the app is uninstalled. In open space nothing scores, so the saved hi-score stays 0 on the TV
+until zone A. `pnpm test:e2e` checks the Options screen with remote key codes only in the build
+opened from disk (SFX and CONTROLS kept after a reload); the manual check is in
+[`docs/client/preview-build.md`](../../docs/client/preview-build.md#on-the-samsung-smart-monitor--tv)
+(checks 16–18). Guide: [`docs/dev/saves-and-options.md`](../../docs/dev/saves-and-options.md).
+
 ## Package, install, run (desktop with Tizen CLI + certificate — never in CI)
 
 Cross-platform Node wrappers around the Tizen CLI; configure with environment variables:
@@ -112,7 +125,7 @@ and `internet`, application id `ShmpCupGam.ShmupCup` (package id = 10 alphanumer
 | Module | Status | Responsibility |
 |---|---|---|
 | `main.ts` | — | Entry (no `import.meta`, no top-level await) |
-| `boot` | implemented | Composition root: remote-first input (`tizen-remote-safe` profile, or the saved choice; `gamepad-standard`), Web Audio and the Tizen platform handed to `@shmup/shell`'s `bootShell` (content + atlas from `file://`, boot error screen, renderer, game, rAF loop, audio unlocked at boot — the shell's audio engine plays the sound effects from the start; the title theme plays in the scene flow, M1-16); Back goes through the scene stack (game → pause, menus → back, title → exit confirmation → `platform.exit()` after YES); only while the game is not running (loading, boot error screen) does Back exit directly |
+| `boot` | implemented | Composition root: remote-first input (`tizen-remote-safe` profile, or the choice saved from OPTIONS → CONTROLS, applied when the shell has read the save — M1-17; `gamepad-standard`), Web Audio and the Tizen platform handed to `@shmup/shell`'s `bootShell` (content + atlas from `file://`, boot error screen, renderer, game, rAF loop, audio unlocked at boot — the shell's audio engine plays the sound effects from the start; the title theme plays in the scene flow, M1-16); Back goes through the scene stack (game → pause, menus → back, title → exit confirmation → `platform.exit()` after YES); only while the game is not running (loading, boot error screen) does Back exit directly |
 | `platform` | partial | `registerKeyBatch` of the active input profile's `register` list (Play/Pause, Ch±; without a profile the fallback list adds the colour keys — never Exit/volume; falls back to per-key `registerKey` when the batch fails, so one key a model lacks does not block the rest), Back 10009 watcher, `visibilitychange` lifecycle, `exit()`, localStorage |
 | `device-info` | placeholder | UA / resolution / WebGL / product-info diagnostics |
 | `live-reload` | placeholder | Dev-only reload-on-change on the TV |

@@ -22,11 +22,15 @@ const shell = await bootShell({
   audioUnlock: 'gesture', // 'immediate' on TV
   contentOwners: { 'input-profiles': profiles.load }, // optional: keep the parsed input profiles
   effects: { screenShake: true, reduceFlashing: false }, // optional (M1-14; the defaults)
+  inputProfiles: { choices, active, apply }, // optional (M1-17): the Options screen's CONTROLS
 });
+shell.loadedSave.status; // 'empty' | 'ok' | 'migrated' | 'corrupt' | 'unreadable' (M1-17)
+shell.bootTiming.readyMs; // launch-to-ready time, also on the canvas as data-shmup-boot-ms
 shell.events.on(SimEventKind.Music, (event) => { /* presentation handler */ });
 // the scene flow and free flight already feed the game's events to the renderer's particles,
 // shake, flash, dim and score popups (connectFxEvents, M1-14) and to the audio engine
-// (connectAudioEvents, M1-15)
+// (connectAudioEvents, M1-15); the scene flow's Options screen reaches the audio buses and the
+// app's input profile through connectOptionEvents (M1-17)
 ```
 
 Boot sequence: progress bar (plain 2D overlay canvas) → content validation (core kinds + the
@@ -36,27 +40,33 @@ owners of foreign kinds — `contentOwners`, then `DEFAULT_CONTENT_OWNERS` (`inp
 for its audio engine); any issue → **boot error screen** listing `path: message`) → atlas pages
 via `new Image()` from relative URLs (no `fetch`, decision D25) → atlas → renderer (WebGL1
 first; particles seeded from the game's seed, presets via `setFxContent`) → platform (the apps
-apply their input profiles in this factory) → game → audio (M1-15: the engine renders the SFX
+apply their input profiles in this factory) → **save** (M1-17: `loadSave(platform.storage)` —
+a corrupt or unreadable save means defaults, never a boot error — then the saved volumes through
+`applyAudioOptions` and the saved input profile through `inputProfiles.apply(id, 'save')`) → game
+(the scene flow gets the `SaveStore` and the profile choices) → audio (M1-15: the engine renders the SFX
 bank — `LOADING SOUND` — and prepares the booted stage's music set, `stageMusicCues`, plus the
 title theme for the scene flow — `LOADING MUSIC`; nothing is rendered or decoded later; then
 `game.scenes.finishBoot()`) → scene (the default `game` runs the core **scene flow** — the game is
 created with `{ scenes: 'boot' }` and drawn through `createSceneView`; the scene flow and free
 flight connect the game's events to the renderer's effects — `connectFxEvents` — and to the
-audio engine — `connectAudioEvents`) → lifecycle / audio unlock (the engine attaches right after
-`unlock()`) / resize wiring → rAF frame loop (`input.setContext` when `game.inputContext` changed
+audio engine — `connectAudioEvents`; the scene flow also applies the Options screen's `UserOption`
+events — `connectOptionEvents`) → lifecycle (suspend; window `blur` clears held input — M1-17) /
+audio unlock (the engine attaches right after `unlock()`) / resize wiring → rAF frame loop (`input.setContext` when `game.inputContext` changed
 → `game.frame` → `sceneView.follow()` → `game.events.drain(dispatch)` →
 `shell.audioEngine.endFrame()` → `renderer.render`, plan §3.3). The canvas carries
-`data-shmup-state="loading" | "running" | "error"` and `data-shmup-scene` (the scene flow's top
-scene — `title`, `game`, `pause`, `confirm`, … — or the dev scene's name). Scenes, menus and the
-HUD: [`docs/dev/scenes-and-ui.md`](../../docs/dev/scenes-and-ui.md).
+`data-shmup-state="loading" | "running" | "error"`, `data-shmup-scene` (the scene flow's top
+scene — `title`, `game`, `pause`, `options`, `confirm`, … — or the dev scene's name) and, once
+running, `data-shmup-boot-ms` (the launch-to-ready time, `Shell.bootTiming` — M1-17). Scenes, menus
+and the HUD: [`docs/dev/scenes-and-ui.md`](../../docs/dev/scenes-and-ui.md); the save, the user
+options and the Options screen: [`docs/dev/saves-and-options.md`](../../docs/dev/saves-and-options.md).
 
 ## Modules
 
 | Module | Status | Responsibility |
 |---|---|---|
-| `boot` | implemented | `bootShell()`, `sceneFromSearch()`, `ShellBootError`; owns the audio engine (`Shell.audioEngine`, M1-15) |
+| `boot` | implemented | `bootShell()`, `sceneFromSearch()`, `ShellBootError`; owns the audio engine (`Shell.audioEngine`, M1-15); reads the save before the title and exposes it (`Shell.loadedSave`, `Shell.save`), applies the saved volumes and input profile (`ShellOptions.inputProfiles`), times the boot (`ShellOptions.now`, `Shell.bootTiming`, `BOOT_MS_ATTRIBUTE`) and clears held input on `blur` (M1-17) |
 | `loader` | implemented | Atlas page images (`loadImages`), content validation routed by kind (`loadGameContent`, `DEFAULT_CONTENT_OWNERS` — `input-profiles`, `fx`, `sfx`, `music`; script ids checked against the core's `KNOWN_SCRIPT_IDS` and enemies against their behaviours since M1-08, weapons against theirs (`checkWeaponBehaviors`) since M1-10; the core's `ENGINE_SPRITES` — bullets, laser beam, since M1-10 the Option orb, since M1-11 the power capsule and the Force Field — interned by default since M1-09) |
-| `dispatch` | implemented | Sim event → presentation handler routing, allocation-free; `connectFxEvents` feeds the renderer's particles, shake / flash / dim and score popups from the World's events (M1-14); `connectAudioEvents` feeds `Sfx` / `Music` / `MusicDuck` to the audio engine (M1-15) |
+| `dispatch` | implemented | Sim event → presentation handler routing, allocation-free; `connectFxEvents` feeds the renderer's particles, shake / flash / dim and score popups from the World's events (M1-14); `connectAudioEvents` feeds `Sfx` / `Music` / `MusicDuck` to the audio engine (M1-15); `connectOptionEvents` turns the Options screen's `UserOption` events into bus volumes (`volumeGain`; SFX drives `sfx` and `ui`) and profile switches, `applyAudioOptions` sets the saved volumes at boot (M1-17) |
 | `error-screen` | implemented | Boot overlay: progress bar and error screen (Canvas 2D) |
 | `frame-loop` | implemented | `requestAnimationFrame` driver (moved here from the apps) |
 | `scene-view` | implemented | The scene flow's picture (M1-16, the default scene `game`): the core flow's frame plus a drifting starfield behind the title and under a game in open space (a stage's own view as is), the camera the audio pans against, a count of new Worlds (the shell then clears particles and popups); the canvas carries `data-shmup-scene` (the top scene's id) |

@@ -221,7 +221,11 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   and additively blended fireball pixels in both builds, with the screenshot attached to the
   report (M1-14), and — with `createBufferSource` wrapped to log started sounds — the web build's
   first key press on `?stage=test-range` starts the zone theme looping at the song's exact sample
-  indices while the Tizen build plays its shots from boot (M1-15). The gameplay specs open
+  indices while the Tizen build plays its shots from boot (M1-15), and OPTIONS opens the Options
+  screen, where a MUSIC change is saved to `shmup-cup:save.v1` on Back and read again after a
+  reload, a corrupt save boots with defaults and is copied to `shmup-cup:save.corrupt`, the Tizen
+  build keeps SFX and CONTROLS changed with the remote alone across a reload, and the boot time on
+  the canvas (`data-shmup-boot-ms`) stays under 10 s (M1-17). The gameplay specs open
   `?scene=flight` (bare gameplay) since M1-16.
   Output goes to `test/e2e/test-results/` (git- and Prettier-ignored).
 - **Dev query parameters** of the web build (`pnpm dev`, `vite preview`; without `?scene=` the

@@ -2,8 +2,9 @@
 
 How a key, a remote button or a gamepad button becomes an action the simulation sees, and
 why the Samsung remote's mapping and quirks are **data**. Filled in by plan step **M1-05**.
-The Options screen (M2-16) adds a rebinding UI on top of the same profiles; nothing on this
-page changes shape for it.
+Since **M1-17** the Options screen's CONTROLS lets the player pick a key / remote profile, and the
+choice is kept in the save ([the saved choice](#the-saved-choice)); M2-16 adds a rebinding UI on
+top of the same profiles — nothing on this page changes shape for it.
 
 This page is the *how and why*. Exact signatures are in
 [api-reference.md](api-reference.md#shmupinput-web); the TSDoc in
@@ -76,13 +77,16 @@ Around it: core `input` owns `InputContext` / `INPUT_CONTEXTS`, core `game` the
 
 ## The shipped profiles
 
-| Profile | `device` | Used | Debounce | Diagonals / SOCD | `register` |
-|---|---|---|---|---|---|
-| `tizen-remote-safe` | `remote` | TV default (D14) | 2 | `combine` / `neutral` | `MediaPlayPause`, `ChannelUp`, `ChannelDown` |
-| `tizen-remote-diagonal` | `remote` | after a positive probe result | 0 | `combine` / `neutral` | same |
-| `keyboard-default` | `keyboard` | web default | 0 | `combine` / `neutral` | — |
-| `keyboard-remote-emulation` | `remote` | `?profile=keyboard-remote-emulation` | 2 | `lastWins` / `lastWins` | — |
-| `gamepad-standard` | `gamepad` | every pad, both apps | 0 (must be) | `combine` / `neutral` | — |
+| Profile | Label (CONTROLS) | `device` | Used | Debounce | Diagonals / SOCD | `register` |
+|---|---|---|---|---|---|---|
+| `tizen-remote-safe` | `SAFE 4-WAY` | `remote` | TV default (D14) | 2 | `combine` / `neutral` | `MediaPlayPause`, `ChannelUp`, `ChannelDown` |
+| `tizen-remote-diagonal` | `FAST 8-WAY` | `remote` | TV, picked in CONTROLS (or after a positive probe result) | 0 | `combine` / `neutral` | same |
+| `keyboard-default` | `KEYBOARD` | `keyboard` | web default | 0 | `combine` / `neutral` | — |
+| `keyboard-remote-emulation` | `KEYBOARD AS REMOTE` | `remote` | web, picked in CONTROLS or `?profile=keyboard-remote-emulation` | 2 | `lastWins` / `lastWins` | — |
+| `gamepad-standard` | `GAMEPAD` | `gamepad` | every pad, both apps (never offered in CONTROLS) | 0 (must be) | `combine` / `neutral` | — |
+
+M1-17 renamed the labels for the Options screen (they were `TV REMOTE`, `TV REMOTE 8-WAY`,
+`KEYBOARD AS TV REMOTE`); CONTROLS appends ` (DEFAULT)` to the platform's default.
 
 | Action | `keyboard-default` game / menu | `tizen-remote-*` game / menu | `gamepad-standard` game / menu |
 |---|---|---|---|
@@ -155,7 +159,8 @@ content is validated and before the game exists:
 
 | | `apps/web` | `apps/tizen` |
 |---|---|---|
-| Key profile | `?profile=<id>` › saved choice › `keyboard-default` | saved choice › `tizen-remote-safe` |
+| Key profile | `?profile=<id>` › saved choice (`options.input.profileId` of the save) › `keyboard-default` | saved choice › `tizen-remote-safe` |
+| Offered in CONTROLS (M1-17) | `KEYBOARD (DEFAULT)`, `KEYBOARD AS REMOTE`, plus a `?profile=` override in use | `SAFE 4-WAY (DEFAULT)`, `FAST 8-WAY` |
 | Gamepad profile | `gamepad-standard` | `gamepad-standard` |
 | Dev overrides | `?debounce=<ticks>` (0–10) on the key profile, via `overrideInputTuning` | none (the widget has no query string) |
 | Key registration | — | the key profile's `register` list (`createTizenPlatform({ registerKeys })`) |
@@ -170,19 +175,28 @@ registers the fallback `REMOTE_KEYS_TO_REGISTER` (which also lists the colour ke
 
 ### The saved choice
 
-`loadInputProfileChoice(storage)` / `saveInputProfileChoice(storage, id)` use
-`Platform.storage` key **`input.profile`** (`INPUT_PROFILE_STORAGE_KEY`; in `localStorage`
-it is `shmup-cup:input.profile`). Storage is asynchronous, so the apps boot with the default and
-apply the saved profile **when storage answers**:
+Since M1-17 the choice lives in the **save document** (`core/save`, `options.input.profileId`,
+`localStorage` key `shmup-cup:save.v1`) and is set by the Options screen's **CONTROLS**
+([saves-and-options.md](saves-and-options.md#input-profile-choices-input-web-the-apps)):
 
-- web: only without a `?profile=` override (the URL wins), and only if it differs from the
-  active id; the `?debounce=` override is applied to it too;
-- Tizen: registers the new profile's `register` keys (`registerRemoteKeys`) after applying it;
-- both: a choice that arrives after `app.stop()` is ignored.
+- **Which profiles can be picked.** `selectableKeyProfiles(profiles, keySpace)` keeps only the
+  keyboard / remote profiles whose **menu** table binds Up, Down, Left, Right, Confirm and Back in
+  the host's key space — `'code'` on the web (desktop keys), `'keyCode'` on the TV (remote key
+  codes) — so no pick can leave the player unable to leave the menu again.
+  `inputProfileChoices(profiles, keySpace, defaultId, extra)` turns them into the screen's
+  `{ id, label }` entries, the default marked ` (DEFAULT)`.
+- **At boot** the shell reads the save before the title and calls the app's
+  `inputProfiles.apply(savedId, 'save')`: web — ignored when the URL has `?profile=` (the override
+  wins), else applied (with the `?debounce=` override) if it is selectable and not already active;
+  Tizen — applied if selectable, then its `register` keys are registered (`registerRemoteKeys`).
+  A saved id that is unknown or not selectable on this host is ignored.
+- **In the Options screen** every CONTROLS step applies the profile at once
+  (`apply(id, 'options')` — on the web this wins over `?profile=`); BACK stores it in the save.
 
-Nothing writes the choice yet — the Options screen (M2-16) calls `saveInputProfileChoice`. To
-try it by hand in a browser console: `localStorage.setItem('shmup-cup:input.profile',
-'keyboard-remote-emulation')`, then reload.
+`loadInputProfileChoice(storage)` / `saveInputProfileChoice(storage, id)` (key `input.profile`,
+`INPUT_PROFILE_STORAGE_KEY`) stay exported but are no longer called; an old
+`shmup-cup:input.profile` entry is ignored. To try a choice by hand, pick it in OPTIONS → CONTROLS
+(or edit `options.input.profileId` in `shmup-cup:save.v1` and reload).
 
 ## Binding contexts (`game` / `menu`, decision D15)
 
@@ -281,7 +295,8 @@ import {
   chooseInputProfile,
   createInputProfileRegistry,
   createWebInput,
-  loadInputProfileChoice,
+  inputProfileChoices,
+  selectableKeyProfiles,
 } from '@shmup/input-web';
 
 const input = createWebInput({ keyTarget: window, keyDevice: 'remote', getGamepads });
@@ -295,8 +310,17 @@ const shell = await bootShell({
     if (keys !== null) input.setProfile(keys);
     return createTizenPlatform({ ...platformOptions, registerKeys: keys?.register });
   },
+  inputProfiles: {
+    // the Options screen's CONTROLS; the saved choice arrives through apply(id, 'save')
+    choices: () => inputProfileChoices(profiles.profiles, 'keyCode', DEFAULT_REMOTE_PROFILE_ID),
+    active: () => input.keyProfile?.id ?? null,
+    apply: (id) => {
+      const offered = selectableKeyProfiles(profiles.profiles, 'keyCode');
+      const chosen = chooseInputProfile(offered, [id], KEY_PROFILE_DEVICES);
+      if (chosen !== null && chosen !== input.keyProfile) input.setProfile(chosen);
+    },
+  },
 });
-const saved = await loadInputProfileChoice(shell.platform.storage); // later: apply it too
 ```
 
 The running state is on the app object `bootWebApp` / `bootTizenApp` resolve with (tests read
@@ -324,7 +348,8 @@ measures ~30 KB of test noise).
 | Add a game action | Append the bit to core `Action` / `ACTION_NAMES` (never renumber), bind it in every shipped profile where it belongs and in the built-in `keymap` / `gamepad` defaults; add it to `REQUIRED_CONTEXT_ACTIONS` only if every profile must bind it |
 | Add a binding context | Extend `InputContext` / `INPUT_CONTEXTS` in core, the `context` schema and `compileProfile` in `rebind`, `REQUIRED_CONTEXT_ACTIONS`, and every shipped profile (the schema makes each context required) |
 | Add a device kind | Extend `InputProfileDevice` / `INPUT_PROFILE_DEVICES`, decide its rules in `checkProfile`, and route it in `WebInput.setProfile` |
-| Build the rebinding UI (M2-16) | Planned in `rebind`: capture the next input, conflict detection, reset to defaults, a per-device choice. Persist through `saveInputProfileChoice`; apply with `WebInput.setProfile` (held keys are handled) |
+| Offer a new profile in CONTROLS | Nothing to do if its menu table binds the six menu actions in the host's key space (`byCode` for the web, `byKeyCode` for the TV) — `selectableKeyProfiles` picks it up; otherwise it stays reachable only through `?profile=` on the web |
+| Build the rebinding UI (M2-16) | Planned in `rebind`: capture the next input, conflict detection, reset to defaults, a per-device choice. Persist in the save document (save v2 — [saves-and-options.md](saves-and-options.md#extending-it)); apply with `WebInput.setProfile` (held keys are handled) |
 | Another host | Implement `ShellInput.setContext` in its adapter; pass a registry's `load` as the `input-profiles` owner if the host needs the profiles, otherwise the shell's default owner still validates them |
 
 ## Tests
@@ -332,11 +357,11 @@ measures ~30 KB of test noise).
 | Where | Covers |
 |---|---|
 | `packages/input-web/test/remote/` | The exact debounce window for every tick count 0–10, per-slot ageing, resumes and re-releases inside the window, `setTicks`, capacities (incl. `NaN`); `resolveDirections` exhaustively against a reference model and its invariants; press-order numbering |
-| `packages/input-web/test/rebind/` | Every schema limit, the semantic checks alone and combined, dropped profiles never claiming ids, compiled tables (frozen, prototype-free, `0` placeholders, button gaps), path-order independence, the registry, `chooseInputProfile`, `overrideInputTuning` clamping, the persistence hook |
+| `packages/input-web/test/rebind/` | Every schema limit, the semantic checks alone and combined, dropped profiles never claiming ids, compiled tables (frozen, prototype-free, `0` placeholders, button gaps), path-order independence, the registry, `chooseInputProfile`, `overrideInputTuning` clamping, the persistence hook; `selectableKeyProfiles` / `inputProfileChoices` per key space (gamepads never offered, order, the default suffix, the `extra` profile — `rebind-choices*.test.ts`, M1-17) |
 | `packages/input-web/test/keyboard/`, `keymap/` | Fake pairs never renewing press order, pending releases across table / tuning switches, `0`-mask keys tracked and prevented, `findKeyActions` `-1` / `0` / fall-through |
 | `packages/input-web/test/web-input/` | The probe scenarios replayed as timed fake event sequences (clean hold, fake pairs 30 ms apart with debounce 2 vs 0, OK while an arrow is held, diagonal and SOCD policies, `game` vs `menu`), no phantom edges across switches, gamepad profiles, the debounce boundary at any poll phase, the allocation probe |
 | `packages/shell/test/` | Context forwarded before the frame's polls (also while paused), a bad `input-profiles` file stops boot on the error screen, an app owner replaces the default owner |
-| `apps/*/test/boot/` | Profile choice per app, `?profile=` / `?debounce=` (incl. `inputOverridesFromSearch` edge cases), a saved choice applied late or after `stop()`, content without profiles (fallback), Tizen registration lists |
+| `apps/*/test/boot/` | Profile choice per app, `?profile=` / `?debounce=` (incl. `inputOverridesFromSearch` edge cases), the saved choice through the save (M1-17), CONTROLS entries and live switches (the TV registering the new keys), a pick winning over `?profile=`, content without profiles (fallback), Tizen registration lists |
 | `test/integration/input-profiles.test.ts` | Every key and button of every shipped profile, in both contexts, reaches the core snapshot as exactly its actions; a fake-pair remote session records and replays tick for tick |
 | `test/e2e/input.spec.ts` | The built web page: bound keys prevented, unbound keys not; `?profile=keyboard-remote-emulation` knows only the remote's keys; an unknown `?profile=` warns and boots |
 
@@ -349,11 +374,12 @@ measures ~30 KB of test noise).
 | `?profile=foo` does nothing | Unknown id, or a gamepad profile (the key source only takes `keyboard` / `remote`). The console shows the `Shmup Cup: no keyboard or remote input profile` warning; the default is used |
 | A key does nothing in menus but works in the game | It is bound only in the `game` table. Keys of the other context are known (`0`) and prevented, but act only where bound |
 | Releases feel late with a remote profile | Expected: the release debounce delays every release by `releaseDebounceTicks` ticks (2 = 33 ms). Use `?debounce=0` to compare; the probe decides the final value |
-| Diagonals impossible on the keyboard | `keyboard-remote-emulation` is active (the URL, or a saved choice in `shmup-cup:input.profile`) — `lastWins` keeps one arrow |
+| Diagonals impossible on the keyboard | `keyboard-remote-emulation` is active (the URL, or KEYBOARD AS REMOTE picked in OPTIONS → CONTROLS and saved) — `lastWins` keeps one arrow |
 | Holding a key through a menu switch "loses" it | By design: a held key keeps only the actions common to both tables until released. Release and press again |
 | A remote key never arrives on the TV | It must be in the active profile's `register` list (and supported by that remote model); Play/Pause and Ch± are registered by default, the colour keys only without a profile |
 | Back closes the TV app instead of pausing | Only expected on the loading and boot error screens; since M1-16 Back pauses in the game and asks before quitting on the title. An older build exits — reinstall |
-| A profile edit does not show in `pnpm dev` | Content edits reload the page; a saved choice in `localStorage` (`shmup-cup:input.profile`) may be overriding the default — remove it or use `?profile=` |
+| A profile edit does not show in `pnpm dev` | Content edits reload the page; a saved choice (`options.input.profileId` in `shmup-cup:save.v1`) may be overriding the default — pick the default in CONTROLS or use `?profile=` |
+| A profile is missing from CONTROLS | Its menu table cannot be driven by this host's keys (a remote profile binds by `keyCode`, which the web key space does not consult) or it is a gamepad profile — by design ([the saved choice](#the-saved-choice)) |
 
 ## Next steps that build on this page
 
@@ -366,7 +392,10 @@ measures ~30 KB of test noise).
 - **M1-16** (done) — the scene stack returns `'menu'` from `Game.inputContext` for menus and
   the pause screen; Back handling moved from `watchBackKey` to the scenes; menus read every
   player's input merged ([scenes-and-ui.md](scenes-and-ui.md)).
-- **M2-16** — Options: profile choice (writes `input.profile`), per-device rebinding, conflict
-  detection, reset to defaults.
+- **M1-17** (done) — the Options screen's CONTROLS: the selectable profiles, the choice stored in
+  the save and applied live (the TV registering the new profile's keys)
+  ([saves-and-options.md](saves-and-options.md)).
+- **M2-16** — Options: per-device rebinding, conflict detection, reset to defaults, the advanced
+  debounce slider.
 - **On hardware** — run the input probe (plan §8.2) and set `releaseDebounceTicks` /
   `diagonals` / `register` from its verdicts.

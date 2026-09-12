@@ -222,6 +222,12 @@ export interface ShellInputProfiles {
   /**
    * Switches the key profile (and whatever goes with it — the TV registers the profile's keys).
    *
+   * @remarks
+   * Called with `'save'` at most once during boot, before the game exists (a throw there fails the
+   * boot like any other start error), then with `'options'` from the frame loop's event drain each
+   * time CONTROLS changes. An app should ignore an id it does not offer, so a hand-edited save
+   * cannot select a profile that cannot drive the menus.
+   *
    * @param id - A profile id (unknown ids are ignored by the app).
    * @param source - `'save'`: the saved choice, applied at boot (an app may keep a dev override
    *   instead); `'options'`: the player picked it in the Options screen.
@@ -594,7 +600,9 @@ function createCalibrationFrame(first: RenderFrame): CalibrationFrame {
  * @returns A promise of the running {@link Shell}.
  * @throws Rejects with {@link ShellBootError} when content is invalid, an atlas page cannot
  *   be loaded or does not match the manifest, WebGL is unavailable, creating the platform
- *   or game fails, or a recorded sound or track cannot be loaded (`AUDIO FAILED TO LOAD`).
+ *   or game fails (including an `options.inputProfiles` callback throwing at boot — `SHMUP CUP
+ *   FAILED TO START`), or a recorded sound or track cannot be loaded (`AUDIO FAILED TO LOAD`). A
+ *   corrupt, unreadable or unreachable save never rejects: the game starts with the defaults.
  *
  * @example
  * ```ts
@@ -811,7 +819,8 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   if (flowView !== null) {
     connectFxEvents(events, readyRenderer);
     connectAudioEvents(events, engine, flowView.camera);
-    // The Options screen's changes, live (plan M1-17).
+    // The Options screen's changes, live (plan M1-17). The profile event carries an index into
+    // the same `profileChoices` the flow was given; out-of-range indices are ignored.
     connectOptionEvents(
       events,
       audio,

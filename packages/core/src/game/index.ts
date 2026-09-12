@@ -16,7 +16,10 @@
  *   identity then. {@link Game.inputContext} is the top scene's binding context, the render frame
  *   carries the World's view and HUD only while the game is visible, the UI list holds every
  *   visible scene's widgets, and `screen.dim` darkens the game under the pause menu. A platform
- *   resume while playing opens the pause menu.
+ *   resume while playing opens the pause menu. Since M1-17 the flow plays with a `core/save`
+ *   store (`options.save` — the Options screen's options, the title's HI, finished games recorded;
+ *   a memory-only store when omitted) and offers the host's input profiles in CONTROLS
+ *   (`options.inputProfiles`).
  *
  * Every World of a session pushes into the same {@link EventQueue} ({@link Game.events}), so the
  * host drains one queue.

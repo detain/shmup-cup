@@ -315,7 +315,7 @@ objects.
 | A particle sprite | A `*.sprite.json` pixel map or a procedural generator ([asset-pipeline.md](asset-pipeline.md)); name it in `sprite` |
 | A flash kind | Append to `FlashKind` / `FLASH_KIND_TICKS` in `core/fx` and its look to `FLASH_LOOKS` (same index); unknown kinds fall back to `DEFAULT_FLASH_LOOK` |
 | A popup for another event | A handler in `connectFxEvents` calling `popups.show(points, x, y, color)`, or a `Score` event pushed by the system |
-| A user setting | `EffectSettings` (render-pixi `effects`) — the Options screen (M1-17 / M2-16) will set `screenShake` / `reduceFlashing` through `ShellOptions.effects` or `renderer.effects.settings` |
+| A user setting | `EffectSettings` (render-pixi `effects`) — the Options screen's display options (M2-08 / M2-16) will set `screenShake` / `reduceFlashing` through `ShellOptions.effects` or `renderer.effects.settings`, saved in the save's `options.display` ([saves-and-options.md](saves-and-options.md#extending-it)) |
 
 ## Tests
 
@@ -357,7 +357,8 @@ objects.
 - **M1-16** (done) — the scene flow (the shell's default scene) connects the effects like free
   flight; the renderer's particles, popups and effects freeze under the pause menu (the frame's
   tick is the World's) and are cleared for a new World ([scenes-and-ui.md](scenes-and-ui.md)).
-- **M1-17 / M2-16** — the Options screen sets `screenShake` and `reduceFlashing`.
+- **M2-08 / M2-16** — the Options screen's display options set `screenShake` and
+  `reduceFlashing` (the M1-17 Options screen has the audio sliders and the controls profile only).
 - **M2-02** — bullet cancel into points (popups for the points).
 - **M2-08** — raster / scanline effects, palette swaps and cycling (`effects` → implemented).
 - **M3-02** — the CRT filter (`EffectSettings.crt`).

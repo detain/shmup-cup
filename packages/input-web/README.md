@@ -58,12 +58,18 @@ table, e.g. Z = Shot + Confirm).
 | `gamepad` | implemented | Gamepad → actions (deadzone, hysteresis, buttons held across a table swap) |
 | `web-input` | partial | Merges sources into the `InputSnapshot`; profiles + contexts; player assignment |
 | `remote` | implemented | Release debounce, diagonal policy, SOCD — tuned from the input-probe results |
-| `rebind` | partial | Input profiles: validation, compiled `game`/`menu` tables, choice + persistence |
+| `rebind` | partial | Input profiles: validation, compiled `game`/`menu` tables, choice; the profiles an Options screen may offer (`selectableKeyProfiles`, `inputProfileChoices` — M1-17) |
 
-Profile choice (done by the apps in their platform factory): the web uses `?profile=<id>` ›
-the saved choice (`Platform.storage` key `input.profile`, `loadInputProfileChoice`) ›
-`keyboard-default`, with `?debounce=<ticks>` as a dev override (`overrideInputTuning`); the TV
-uses the saved choice › `tizen-remote-safe` and registers its `register` keys. Validation
+Profile choice (done by the apps in their platform factory and through the shell's
+`inputProfiles`): the web uses `?profile=<id>` › the saved choice › `keyboard-default`, with
+`?debounce=<ticks>` as a dev override (`overrideInputTuning`); the TV uses the saved choice ›
+`tizen-remote-safe` and registers its `register` keys. Since M1-17 the saved choice is the
+Options screen's CONTROLS, stored in the `core/save` document (`options.input.profileId`); the
+screen offers only `selectableKeyProfiles(profiles, 'code' | 'keyCode')` — keyboard / remote
+profiles whose **menu** table the host's keys can drive (web: `KEYBOARD`, `KEYBOARD AS REMOTE`; TV:
+`SAFE 4-WAY`, `FAST 8-WAY`), the default labelled ` (DEFAULT)` by `inputProfileChoices`. The older
+`loadInputProfileChoice` / `saveInputProfileChoice` (key `input.profile`) stay exported but are
+unused. Validation
 beyond the schema: every `game` table binds the directions + Pause, every `menu` table the
 directions + Confirm + Back; gamepad profiles bind buttons only with debounce 0; only remote
 profiles register keys, never `Exit` / volume; ids unique. A bad profile is dropped, the others
@@ -74,5 +80,6 @@ compiled once at load.
 
 Guide: [`docs/dev/input-profiles.md`](../../docs/dev/input-profiles.md) · exports:
 [`docs/dev/api-reference.md`](../../docs/dev/api-reference.md#shmupinput-web) · file format:
-[`content/input/README.md`](../../content/input/README.md) · player controls:
+[`content/input/README.md`](../../content/input/README.md) · the Options screen's profile choice:
+[`docs/dev/saves-and-options.md`](../../docs/dev/saves-and-options.md#input-profile-choices-input-web-the-apps) · player controls:
 [`docs/client/controls.md`](../../docs/client/controls.md).

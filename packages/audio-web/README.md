@@ -46,7 +46,7 @@ audio.setBusVolume('music', 0.6);
 
 | Module | Status | Responsibility |
 |---|---|---|
-| `web-audio` | partial | Context, buses, unlock/suspend/resume, volumes (driven by the Options screen from M1-17); the structural Web Audio types (`PlaybackContextLike` …) and `isPlaybackContext` the other modules are tested against |
+| `web-audio` | partial | Context, buses, unlock/suspend/resume, volumes (driven by the Options screen's MASTER / MUSIC / SFX sliders since M1-17 — the shell's `connectOptionEvents` / `applyAudioOptions` set `master`, `music`, and `sfx` + `ui` to `volumeGain(level)`); the structural Web Audio types (`PlaybackContextLike` …) and `isPlaybackContext` the other modules are tested against |
 | `synth` | implemented | Deterministic pure-TS PCM (table sines, seeded noise — bit-identical on every engine): ZzFX-style SFX parameter sets (`renderSfx`) and 4–6-channel chip songs from text tracks with sample-exact loops holding the loop's steady state (`renderSong`), mono 22,050 Hz; `pcmHash` |
 | `sfx` | implemented | Pre-rendered SFX buffers, per-frame dedupe, per-cue instance caps (oldest restarted), 14-voice global cap stealing the lowest tier then the oldest (`critical` never stolen, a higher tier never stolen), stereo pan from a whole-pixel x (`shmup_feat.md` §19) |
 | `music` | implemented | One resident track, intro + sample-accurate loop (`loopStart` / `loopEnd` from samples), fade in / out and ducking as `AudioParam` ramps |

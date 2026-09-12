@@ -240,6 +240,12 @@ export async function bootTizenApp(
     scene: sceneFromSearch(searchOf(win)),
     audioUnlock: 'immediate',
     preferWebGLVersion: 1,
+    /**
+     * The Options screen's CONTROLS (plan M1-17): the remote profiles whose menus the remote can
+     * drive (`SAFE 4-WAY (DEFAULT)`, `FAST 8-WAY`); `apply` — for the saved choice at boot and the
+     * player's pick alike — switches the key profile and registers its `register` keys, ignoring
+     * an id it does not offer and the profile already in use.
+     */
     inputProfiles: {
       choices: () => inputProfileChoices(profiles.profiles, 'keyCode', DEFAULT_REMOTE_PROFILE_ID),
       active: () => input.keyProfile?.id ?? null,

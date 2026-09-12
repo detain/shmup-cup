@@ -3,7 +3,9 @@
  *
  * **Status: partial.** Per-player scores, the clamp, the session hi-score and the crediting of
  * every scoring event of a tick are implemented (plan M1-12). Extends, 1UP items and continues
- * arrive with M2-01; the hi-score table with the saves / name entry (M1-17, M2-15).
+ * arrive with M2-01. The saved hi-score tables live in `core/save` since M1-17 (`insertHiScore`,
+ * `SaveStore.recordScore`, rows of this module's {@link HiScoreEntry}); names from the name entry
+ * arrive with M2-15.
  *
  * **Responsibility.** Score keeping: per-enemy values, capsule (300) and bonus capsule (1,000) values,
  * formation and boss-time bonuses, per-player totals in co-op, extends at score
@@ -29,8 +31,9 @@
  * only, never hashed. Pickups push none: they happen on the ship, which a popup would cover (the
  * meter's ding and the pickup ring are their feedback).
  *
- * **Hi-score.** Session-wide, starting at 0 or at the value the host sets from its save
- * ({@link ScoreBoard.setHiScore}, M1-17). It is presentation data derived from the scores, so it is
+ * **Hi-score.** Session-wide, starting at 0 or at the value set from outside
+ * ({@link ScoreBoard.setHiScore}) — the scene flow sets the save's best score of the game's mode
+ * (`core/save`, M1-17). It is presentation data derived from the scores, so it is
  * **not** part of the state hash (a saved hi-score must not change a replay's hashes); the scores
  * are.
  *
@@ -44,8 +47,8 @@
  * {@link addScore}, {@link ScoreHost}, {@link ScoringSystem}, {@link ScoringHost},
  * {@link createScoringSystem}, {@link MAX_SCORE}, {@link HiScoreEntry}.
  *
- * **Planned API.** `checkExtend(player)` and the lives cap (M2-01), `insertHiScore(table, entry)`
- * (M1-17 / M2-15), continues (M2-01).
+ * **Planned API.** `checkExtend(player)` and the lives cap (M2-01), continues (M2-01). (The
+ * planned `insertHiScore` became `core/save`'s in M1-17.)
  *
  * @module
  */
@@ -124,7 +127,7 @@ export class ScoreBoard {
    *
    * @example
    * ```ts
-   * world.scoring.board.setHiScore(save.hiScore); // before the first tick (M1-17)
+   * world.scoring.board.setHiScore(store.bestScore(hiScoreModeKey(world.config))); // core/save
    * ```
    */
   setHiScore(value: number): number {

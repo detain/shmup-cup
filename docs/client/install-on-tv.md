@@ -84,11 +84,18 @@ If it opens on a navy screen with a pink error title instead, the build is broke
 **Back** to close the app, and see [preview-build.md](preview-build.md#when-the-app-shows-an-error-screen).
 More options (custom `tizen`/`sdb` paths): [`apps/tizen/README.md`](../../apps/tizen/README.md).
 
+**Saved settings and high scores.** The game keeps its Options (volumes, the control profile) and
+its high scores on the monitor itself, inside the app's own storage. Installing a newer build over
+the old one should keep them (the app stays the same app) — please report it if an update loses
+them. **Removing the app deletes them** (the TV does that for every app), so the next install starts
+with the default settings and no high scores. Each monitor keeps its own.
+
 ## Removing an app
 
 Remove it from the monitor's Apps panel like any other app (highlight it and use its options menu), or with the
 Device Manager in Tizen Studio. Installing a newer build over an existing one does not require removing it first —
-unless it was signed with a *different* author certificate (see below).
+unless it was signed with a *different* author certificate (see below). Removing the game preview also deletes its
+saved settings and high scores.
 
 ## Troubleshooting
 

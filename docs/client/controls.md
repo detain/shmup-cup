@@ -16,9 +16,11 @@ work too, and every device drives both the game and the menus.
 > **Back** goes back, and on the TV's title screen it asks before quitting
 > ([preview-build.md](preview-build.md#pausing-quitting-and-the-end-screens)). Losing a ship needs
 > no button: the next one flies in by itself, and after **GAME OVER** OK returns to the title.
+> **OPTIONS** (on the title and in the pause menu) sets the game's volumes and lets you choose the
+> control profile (**CONTROLS**, [below](#control-profiles)); the game remembers both.
 > The other buttons (Special, Speed) do nothing yet. The remote's settings may still change once
-> the input probe results from the M7 monitors are in, and a menu for choosing a profile and
-> rebinding buttons is planned.
+> the input probe results from the M7 monitors are in, and a screen for rebinding single buttons
+> is planned.
 
 ## In the game and in menus
 
@@ -28,15 +30,15 @@ and selects a menu entry in menus; Back pauses the game and goes back in menus.
 
 | Action | What it does |
 |---|---|
-| Move | Game: fly the ship (8 directions where the device allows it; diagonals are no faster than straight moves, and the ship stops as soon as you let go). Menus: move the highlight (▲ ▼; ◀ ▶ between YES and NO) — holding a direction repeats the move after about a third of a second, then about ten times a second |
+| Move | Game: fly the ship (8 directions where the device allows it; diagonals are no faster than straight moves, and the ship stops as soon as you let go). Menus: move the highlight (▲ ▼; ◀ ▶ between YES and NO, and in the Options screen ◀ ▶ turn a volume down / up or change the control profile) — holding a direction repeats the move after about a third of a second, then about ten times a second |
 | Shot | Main gun. Today it fires **on its own** on every device (automatic fire is on by default, and always on with the TV remote), so you never need to press it; once automatic fire can be switched off in the Options menu, hold it to fire |
 | Sub | Missiles / sub-weapon, once you have them — automatic in the same way |
 | PowerUp | Take the highlighted power-up of the power meter — one per press (holding the button never takes a second); a press on an empty or maxed-out slot does nothing |
 | Special | Screen-clearing special, when you have one |
 | Speed | Cycle ship speed (item mode) |
-| Pause | Pause / resume (the pause menu: RESUME, RETRY STAGE, QUIT TO TITLE) |
+| Pause | Pause / resume (the pause menu: RESUME, OPTIONS, RETRY STAGE, QUIT TO TITLE) |
 | Confirm | Menus: select the highlighted entry; on the title first leaves `PRESS OK`. A press made while a menu is just appearing is remembered for a moment, not lost |
-| Back | Menus: previous screen (in the pause menu: resume; in a YES / NO question: NO); on the TV's title screen it asks **EXIT SHMUP CUP?** — only YES quits |
+| Back | Menus: previous screen (in the pause menu: resume; in a YES / NO question: NO; in the Options screen: keep the settings and close it, like BACK); on the TV's title screen it asks **EXIT SHMUP CUP?** — only YES quits |
 
 If you are holding a button at the moment a menu opens (or closes), it keeps doing only what
 it does in both sets until you let go — holding the Sub key while the pause menu appears will
@@ -67,8 +69,8 @@ the TV remote, the keyboard and both gamepads.
   four directions.
 - **Home** always leaves the app; the game pauses in the background and continues when you
   return. Long-pressing Back and the volume keys belong to the TV and are never used by the
-  game — they set the monitor's volume as usual (the game has no volume setting of its own
-  yet). The colour buttons (red/green/yellow/blue on the on-screen number pad) are reserved
+  game — they set the monitor's volume as usual; the game's own volumes (MASTER, MUSIC, SFX)
+  are in **OPTIONS**. The colour buttons (red/green/yellow/blue on the on-screen number pad) are reserved
   for later use.
 - **Back** never closes the game by surprise: in the game it pauses, in menus it goes back,
   and on the title screen it asks **EXIT SHMUP CUP?** (NO is highlighted) — only **YES** returns
@@ -128,13 +130,20 @@ of the code.
 | Profile | Name in the game | Used |
 |---|---|---|
 | `tizen-remote-safe` | SAFE 4-WAY | On the TV (default) |
-| `tizen-remote-diagonal` | FAST 8-WAY | Same buttons, without the hiccup protection — for remotes that turn out not to need it |
+| `tizen-remote-diagonal` | FAST 8-WAY | On the TV, when chosen: the same buttons, without the hiccup protection — for remotes that turn out not to need it (the ship then also stops the instant you let go) |
 | `keyboard-default` | KEYBOARD | In a browser and on the desktop (default) |
-| `keyboard-remote-emulation` | KEYBOARD AS REMOTE | Desktop testers who want to feel the remote's limits (below) |
-| `gamepad-standard` | GAMEPAD | Every gamepad, on every device |
+| `keyboard-remote-emulation` | KEYBOARD AS REMOTE | In a browser, when chosen: for desktop testers who want to feel the remote's limits (below) |
+| `gamepad-standard` | GAMEPAD | Every gamepad, on every device (always; not a choice) |
 
-Pick one under **OPTIONS → CONTROLS** (on the TV: the two remote profiles; in a browser: the two
-keyboard ones); the game remembers the choice.
+**Choosing a profile.** Open **OPTIONS** (on the title, or in the pause menu during a game), move
+the highlight to **CONTROLS** and press ◀ / ▶ (or OK) to step through the profiles this device
+can use: on the TV **SAFE 4-WAY (DEFAULT)** and **FAST 8-WAY**, in a browser **KEYBOARD
+(DEFAULT)** and **KEYBOARD AS REMOTE**. `(DEFAULT)` marks the one the game starts with until you
+choose another. The new profile works **at once** — you can try it right away in the menu — and
+the game remembers it when you leave the Options screen with **BACK** (or the Back button), also
+after the app is closed and opened again. Only profiles that can still move through the menus
+with this device's buttons are offered, so a choice can never leave you stuck. A gamepad always
+uses GAMEPAD, whatever CONTROLS says.
 
 ### Feeling the remote on a desktop keyboard
 
@@ -151,17 +160,22 @@ last wins), the same hiccup protection as on the TV, and only the remote's butto
 | P | Play/Pause |
 | Page Up / Page Down | Channel up / down |
 
-Every other key (Z, X, W A S D, …) does nothing in this profile. Testers can also add
-`&debounce=0` … `&debounce=10` to change how long the hiccup protection waits (in frames of
-1/60 s; the TV uses 2). These options exist only in the browser; the TV always starts with
-its default.
+Every other key (Z, X, W A S D, …) does nothing in this profile. The same profile can be chosen
+in the browser under **OPTIONS → CONTROLS** (KEYBOARD AS REMOTE) without changing the address.
+Testers can also add `&debounce=0` … `&debounce=10` to change how long the hiccup protection
+waits (in frames of 1/60 s; the TV uses 2). These address options exist only in the browser; a
+`?profile=` in the address wins over the profile chosen in the Options screen when the page
+loads (it is also listed under CONTROLS, and a pick there still switches). The TV starts with the
+profile chosen under CONTROLS — SAFE 4-WAY until you pick another.
 
 ## Troubleshooting
 
 | Problem | What to do |
 |---|---|
 | Play/Pause or Channel up / down do nothing on the TV | Not every remote has these buttons or sends them to apps. They are optional — use Back to pause. Please report the remote model (the input probe records which keys arrive) |
-| Diagonals never work with the keyboard | The address probably contains `?profile=keyboard-remote-emulation`, which allows one direction at a time. Remove it and reload |
+| Diagonals never work with the keyboard | The address probably contains `?profile=keyboard-remote-emulation`, or KEYBOARD AS REMOTE is chosen under OPTIONS → CONTROLS — both allow one direction at a time. Remove it from the address and reload, or choose KEYBOARD (DEFAULT) |
+| The control profile I chose was forgotten | The Options screen keeps a choice when you leave it with **BACK** or the Back button. In a browser, a `?profile=` in the address wins over it when the page loads. If it is still forgotten after a relaunch, please report it (and whether the build was reinstalled in between) |
+| After choosing FAST 8-WAY the ship stutters or stops for a moment while I hold a direction (TV) | This remote needs the hiccup protection — choose SAFE 4-WAY again (OPTIONS → CONTROLS) and please report the remote model: it is exactly what we want to know |
 | `?profile=…` seems to be ignored | The name is misspelled or is not a keyboard/remote profile (a gamepad profile cannot drive the keyboard). The game then uses the normal keyboard profile and writes a warning in the browser's developer console |
 | A button does something in the game but nothing in a menu (or the other way round) | Expected — see the two tables above; for example C (PowerUp) has no menu function |
 | The game shows a start-up error screen mentioning `input-profiles.json` | The control profiles in this build are broken. Report the lines on the screen — see [preview-build.md](preview-build.md) |

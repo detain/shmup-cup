@@ -22,7 +22,9 @@
  *    restarted), {@link AudioEngine.duckMusic} ducks to {@link DEFAULT_DUCK_LEVEL}, and
  *    {@link AudioEngine.endFrame} closes the SFX dedupe window (once per drained frame).
  *
- * Bus volumes stay with the web-audio back-end (`setBusVolume` — the Options screen, M1-17).
+ * Bus volumes stay with the web-audio back-end (`setBusVolume`): since M1-17 the shell sets them
+ * from the saved options at boot and from the Options screen's `UserOption` events
+ * (`@shmup/shell` `applyAudioOptions` / `connectOptionEvents`); the engine never touches them.
  *
  * **Implements.**
  * - shmup_feat.md §19 — music (intro + loop, ducking) and SFX voice management fed by sim events

@@ -61,7 +61,8 @@ ship out of control for 132 ticks (2.2 s), and it is safe for another 150 (2.5 s
 Tunables of the ship (`content/player/kestrel.player.json`, `PlayerShipSpec`): `enterTicks` (40,
 the fly-in) and `respawnInvulnTicks` (**150** since M1-12 — 120 before; `DEFAULT_PLAYER_SHIP`
 matches). No app exposes the two config fields yet: the web and TV builds play `classic` with 3
-ships; the Options menu of M1-17 / M2-16 will offer them.
+ships; the Options screen's Game group of M2-16 will offer them (the M1-17 Options screen has the
+audio sliders and the controls profile only).
 
 ## The death sequence
 
@@ -230,10 +231,13 @@ For the formation bonus the enemy system gained per-formation lists: `EnemyOutco
 private `creditBy` around the formation accounting, so the formation completed by that kill pays
 its bonus to that player. `bonusPoints` stays as the sum.
 
-**The hi-score** is session-wide: it starts at 0, follows the best score and can be raised by
-the host from its save with `board.setHiScore(value)` (M1-17 — only raises, floors, caps, and
-sets `hiScoreDirty` only on a real raise). It is presentation data, so it is **not hashed**: a
-saved hi-score must not change a replay's hashes. The scores and the two credit counters are.
+**The hi-score** is session-wide: it follows the best score and can be raised from outside
+with `board.setHiScore(value)` (only raises, floors, caps, and sets `hiScoreDirty` only on a real
+raise). Since M1-17 the scene flow starts it from the **saved** best score of the game's mode and
+records every finished game in the save's hi-score table (`core/save` —
+[saves-and-options.md](saves-and-options.md#hi-score-tables)). It is presentation data, so it is
+**not hashed**: a saved hi-score must not change a replay's hashes. The scores and the two credit
+counters are.
 
 **The HUD.** Since M1-16 the core HUD (`core/ui` `buildHud` / `Hud.update`, drawn by the scene
 flow's game scene) reads the board: `1P` and player 1's score at x 8 / 24, `HI` and the hi-score at
@@ -244,7 +248,9 @@ rebuilds only when a dirty flag, the lives or another HUD input changed, and cle
 `?scene=flight` dev scene keeps its M1-12 HUD: the hi-score at x 300 / 316, at most 8 stock icons
 and `GAME OVER` (red, `0xf85858`) in place of the title once `world.status === 'gameOver'`.
 The session hi-score now outlives a World: the flow carries it into every new World and shows it
-on the title (`SceneFlow.hiScore`, `setHiScore`).
+on the title (`SceneFlow.hiScore`, `setHiScore`). Since M1-17 it also outlives the app: the
+game-over and stage-clear screens insert the final score into the saved table (`NEW HI-SCORE` on
+the game-over screen for a new best), and the next launch's title starts from it.
 
 ## Game feel (`core/fx`)
 
@@ -407,7 +413,9 @@ The next `game.step()` runs that tick, and its phase 7 turns the recorded hit in
 - **M1-15** (done) — the death sound and the music duck ([audio.md](audio.md)).
 - **M1-16** (done) — the real HUD and the scene flow after game over (the game-over screen, the
   session hi-score across games) ([scenes-and-ui.md](scenes-and-ui.md)).
-- **M1-17** — the saved hi-score (`setHiScore`) and the Options menu for `deathPenalty` /
-  `startingLives`.
+- **M1-17** (done) — the saved hi-score tables: finished games recorded, the session hi-score
+  starting from the saved best ([saves-and-options.md](saves-and-options.md)).
+- **M2-15 / M2-16** — the name entry and the hi-score table screen; the Options screen's
+  `deathPenalty` / `startingLives`.
 - **M2-01** — extends, the lives cap, continues (the score's last digit), rank reacting to deaths.
 - **M3** — option recovery after a death, authentic slowdown.

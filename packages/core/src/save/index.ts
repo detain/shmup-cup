@@ -629,7 +629,12 @@ export class SaveStore {
   readonly storage: PlatformStorage | null;
   /** Successful writes so far (tests, debug). */
   writes = 0;
+  /** The document the game plays with (frozen; replaced on every change). */
   private current: SaveData;
+  /**
+   * The text the storage is believed to hold: the loaded text (status `'ok'` only) or the last text
+   * a flush started writing; `null` = unknown, so the next flush writes whatever the document is.
+   */
   private written: string | null;
 
   /**
