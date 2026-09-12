@@ -193,7 +193,10 @@ describe('audio-web/synth renderSong', () => {
     expect(song.loopEnd).toBe((8 + 16 + 16) * spr);
     expect(song.pcm.length).toBe(song.loopEnd);
     expect(Number.isInteger(song.loopStart) && Number.isInteger(song.loopEnd)).toBe(true);
-    for (const value of song.pcm) expect(Math.abs(value)).toBeLessThanOrEqual(1);
+    // One assertion on the peak: an `expect` per sample (~88k) took ~5 s on a CI runner.
+    let peak = 0;
+    for (const value of song.pcm) peak = Math.max(peak, Math.abs(value));
+    expect(peak).toBeLessThanOrEqual(1);
   });
 
   it('is deterministic (hash pinned)', () => {
@@ -244,7 +247,9 @@ describe('audio-web/synth renderSong', () => {
     expect(peakQuiet).toBeGreaterThan(0);
     expect(peakQuiet).toBeLessThan(peakNormal);
     const loud = renderSong({ ...SONG, volume: 1 }, RATE).pcm;
-    for (const value of loud) expect(Math.abs(value)).toBeLessThanOrEqual(1);
+    let peakLoud = 0;
+    for (const value of loud) peakLoud = Math.max(peakLoud, Math.abs(value));
+    expect(peakLoud).toBeLessThanOrEqual(1);
   });
 
   it('rejects malformed songs', () => {

@@ -468,7 +468,8 @@ describe('integration: content/audio (M1-15)', () => {
         track.id,
       ).toBe(true);
     }
-  });
+    // Renders every looping song twice (once unrolled ×3): ~1.5 s locally, >5 s on a busy CI runner.
+  }, 60_000);
 });
 
 describe('integration: content/ sprites exist in the atlas', () => {

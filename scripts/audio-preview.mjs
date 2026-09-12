@@ -29,6 +29,12 @@ import { fileURLToPath } from 'node:url';
 /** Repository root (this file lives in `scripts/`). */
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
+/**
+ * The workspace packages' source `exports` condition (`SOURCE_CONDITION` of `vite.shared.ts`,
+ * which cannot be imported here before Vite has loaded it).
+ */
+const SOURCE_CONDITION = '@shmup/source';
+
 /** Default output directory. */
 export const DEFAULT_PREVIEW_DIR = join(REPO_ROOT, 'assets', 'generated', 'audio-preview');
 
@@ -84,12 +90,16 @@ export async function renderAudioPreview(options = {}) {
   const out = options.out ?? DEFAULT_PREVIEW_DIR;
   const only = options.only ?? null;
   const log = options.log ?? (() => {});
-  const { createServer } = await import('vite');
+  const { createServer, defaultClientConditions, defaultServerConditions } = await import('vite');
+  // `configFile: false` skips vite.shared.ts, so the `@shmup/source` condition is set here:
+  // without it `@shmup/core` resolves to its `dist/`, which does not exist before `pnpm build`.
   const server = await createServer({
     configFile: false,
     root: REPO_ROOT,
     logLevel: 'error',
     appType: 'custom',
+    resolve: { conditions: [SOURCE_CONDITION, ...defaultClientConditions] },
+    ssr: { resolve: { conditions: [SOURCE_CONDITION, ...defaultServerConditions] } },
     server: { middlewareMode: true, hmr: false, ws: false },
     optimizeDeps: { noDiscovery: true, include: [] },
   });
