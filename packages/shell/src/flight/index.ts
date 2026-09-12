@@ -27,6 +27,11 @@
  * them changes (the scores' `displayDirty` / `hiScoreDirty` flags, cleared here). The real HUD with
  * the power meter is M1-16's.
  *
+ * **WARNING (M1-13).** While the World's boss WARNING is active (`view.warning`), the UI draw list
+ * shows its text — built once per boss by the core — centred on a translucent band across the
+ * playfield, its colour alternating every 16 ticks. The list is rebuilt only when the WARNING
+ * starts, ends or changes colour, and the text enters its string slot only when it changed.
+ *
  * **Implements.**
  * - shmup_feat.md §5 — the ship under the player's control
  * - shmup_feat.md §18 — parallax starfields behind the world layers
@@ -116,6 +121,12 @@ const HUD_BAR_COLOR = 0x1d2a5c;
 /** String slots of the HUD draw list. */
 const STRING = { p1: 0, title: 1, hint: 2, hi: 3, gameOver: 4 } as const;
 
+/** Screen row of the WARNING band's top edge (the playfield's middle, below the 8-px HUD bar). */
+const WARNING_BAND_Y = 76;
+
+/** Height of the WARNING band (three lines of the 10-px font plus margins). */
+const WARNING_BAND_H = 48;
+
 /**
  * Creates the free-flight scene for a game.
  *
@@ -149,7 +160,9 @@ export function createFlightScene(game: Game, options: FlightSceneOptions = {}):
     terrain: gameView.terrain,
     batches: starfield ? [far, mid, ...gameView.batches] : gameView.batches.slice(),
     lasers: gameView.lasers ?? null,
+    warning: gameView.warning ?? null,
   };
+  const warning = gameView.warning ?? null;
   const stage = game.world.stage;
 
   const hud = createDrawList(32, 5);
@@ -160,7 +173,7 @@ export function createFlightScene(game: Game, options: FlightSceneOptions = {}):
   hud.setString(STRING.gameOver, 'GAME OVER');
   const scoring = game.world.scoring.board;
   const p1Score = scoring.scores[0];
-  const ui = createDrawList(1, 1);
+  const ui = createDrawList(4, 1);
 
   const frame: {
     tick: number;
@@ -218,8 +231,30 @@ export function createFlightScene(game: Game, options: FlightSceneOptions = {}):
     scoring.hiScoreDirty = false;
   };
 
+  /**
+   * Rebuilds the UI list for a WARNING look: 0 = off, 1 / 2 = on in its two colours.
+   *
+   * @param look - The look.
+   */
+  const buildWarning = (look: number): void => {
+    ui.clear();
+    if (look === 0 || warning === null) return;
+    ui.setString(0, warning.text);
+    ui.rect(0, WARNING_BAND_Y, PLAYFIELD_W, WARNING_BAND_H, 0x000000, 144);
+    ui.rect(0, WARNING_BAND_Y, PLAYFIELD_W, 1, 0xf85858);
+    ui.rect(0, WARNING_BAND_Y + WARNING_BAND_H - 1, PLAYFIELD_W, 1, 0xf85858);
+    ui.text(
+      0,
+      PLAYFIELD_W / 2,
+      WARNING_BAND_Y + 9,
+      look === 1 ? 0xf85858 : 0xf8d030,
+      TextAlign.Center,
+    );
+  };
+
   let hudLives = -1;
   let hudOver = false;
+  let warningLook = 0;
   return {
     spriteNames,
     world,
@@ -246,6 +281,12 @@ export function createFlightScene(game: Game, options: FlightSceneOptions = {}):
         hudLives = lives;
         hudOver = over;
         buildHud(lives, over);
+      }
+      const look =
+        warning === null || !warning.active ? 0 : ((warning.ticks >> 4) & 1) === 0 ? 1 : 2;
+      if (look !== warningLook) {
+        warningLook = look;
+        buildWarning(look);
       }
       return frame;
     },

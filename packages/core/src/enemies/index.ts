@@ -79,8 +79,11 @@
  * {@link DESPAWN_MARGIN}, {@link UNSEEN_MARGIN}, {@link UNSEEN_TICKS}, {@link GHOST_MARGIN},
  * {@link HIT_FLASH_TICKS}.
  *
- * **Planned API.** Rank modifiers and revenge bullets (M2-01), the Option Hunter (M2-04), boss
- * parts sharing the damage path (M1-13).
+ * **Planned API.** Rank modifiers and revenge bullets (M2-01), the Option Hunter (M2-04).
+ *
+ * **Bosses (M1-13).** Boss entries (`EnemySpec.boss`) are never spawned here (`spawn` returns
+ * `null` for them); `core/bosses` runs them, and their parts take the grid ids after the
+ * {@link MAX_ENEMIES} enemy slots, so the contact test here skips them.
  *
  * @module
  */
@@ -669,8 +672,8 @@ export interface EnemySystem {
    * @param x - World x.
    * @param y - World y (`NaN` = mid-view; a ground enemy snaps to the surface below / above it).
    * @param pathId - Path for `path` movers and path behaviours (-1 = none).
-   * @returns The enemy, or `null` (a bad or fractional index or no free slot — the spawn is
-   *   dropped).
+   * @returns The enemy, or `null` (a bad or fractional index, a boss entry — `core/bosses` runs
+   *   those — or no free slot: the spawn is dropped).
    *
    * @example
    * ```ts
@@ -826,6 +829,7 @@ const NO_SPEC: EnemySpec = Object.freeze({
   megaCrashImmune: false,
   child: null,
   childId: -1,
+  boss: null,
 });
 
 /** Sound of each explosion size (index = `ENEMY_EXPLOSIONS` position). */
@@ -944,6 +948,8 @@ interface SpecTable {
   readonly drop: Uint8Array;
   /** 1 = `megaCrashImmune` (Mega Crash does not kill it). */
   readonly immune: Uint8Array;
+  /** 1 = a boss entry (`core/bosses` runs it; the enemy system never spawns it). */
+  readonly boss: Uint8Array;
   /** Starting `MoverKind`. */
   readonly mover: Uint8Array;
   /** Starting mover parameters, 6 per spec (a `path` mover's path: -1 = the spawn's). */
@@ -978,6 +984,7 @@ function compileSpecs(specs: readonly EnemySpec[], behaviors: EnemyBehaviorLooku
     explosion: new Uint8Array(n),
     drop: new Uint8Array(n),
     immune: new Uint8Array(n),
+    boss: new Uint8Array(n),
     mover: new Uint8Array(n),
     moverParams: new Float64Array(n * 6),
     behavior,
@@ -998,6 +1005,7 @@ function compileSpecs(specs: readonly EnemySpec[], behaviors: EnemyBehaviorLooku
     table.explosion[i] = ENEMY_EXPLOSIONS.indexOf(spec.explosion);
     table.drop[i] = spec.drop === 'capsule' ? DropKind.Capsule : DropKind.None;
     table.immune[i] = spec.megaCrashImmune ? 1 : 0;
+    table.boss[i] = spec.boss === null ? 0 : 1;
     const mover = spec.mover;
     const p = i * 6;
     if (mover !== null) {
@@ -1470,8 +1478,10 @@ class EnemySystemImpl implements EnemySystem {
     fromScript: boolean,
   ): Enemy | null {
     const specs = this.specs;
-    // A whole index in range (a fractional one would read `undefined` from the spec tables).
+    // A whole index in range (a fractional one would read `undefined` from the spec tables); a
+    // boss entry is `core/bosses`' to run.
     if (!(enemyIndex >= 0 && enemyIndex < specs.hp.length && enemyIndex % 1 === 0)) return null;
+    if (specs.boss[enemyIndex] !== 0) return null;
     const enemies = this.enemies;
     let enemy: Enemy | null = null;
     for (let i = 0; i < enemies.length; i++) {

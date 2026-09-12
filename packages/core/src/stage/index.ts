@@ -6,8 +6,9 @@
  *
  * - the **scripted camera path** — speed keys with linear ramps, scroll stops, vertical pans
  *   (`yTo` over `yTicks`, eased), boss **scroll locks** (the camera stops exactly at the lock key
- *   and waits for {@link StageRunner.unlock}), `speed` events for scripted / high-speed sections;
- *   the camera never scrolls past the stage `length`;
+ *   and waits for {@link StageRunner.unlock}), the boss WARNING's **brake** (decelerate, then
+ *   locked — {@link StageRunner.brake}, M1-13), `speed` events for scripted / high-speed
+ *   sections; the camera never scrolls past the stage `length`;
  * - the **event timeline** — events are pre-sorted by camera x and consumed through a cursor:
  *   every tick fires, in order, each event with `x ≤ camera.x`, exactly once (several may fire on
  *   one tick). The runner applies `speed`, `flag` and `end` itself and hands **every** event to
@@ -234,10 +235,19 @@ export const StageSlot = {
    * runner part (the events at exactly the checkpoint's x).
    */
   Replay: 18,
+  /**
+   * 1 while a brake (the boss WARNING, {@link StageRunner.brake}) holds the camera: decelerating,
+   * then locked, until {@link StageRunner.unlock}.
+   */
+  Braking: 19,
+  /** Speed scrolling resumes at after a brake (the keys and `speed` events met while braking). */
+  ResumeSpeed: 20,
+  /** Ramp of the brake in ticks (also the ramp back up after the unlock). */
+  BrakeRamp: 21,
 } as const;
 
 /** Number of slots in {@link StageRunner.state}. */
-export const STAGE_STATE_SLOTS = 19;
+export const STAGE_STATE_SLOTS = 22;
 
 /** Drives one stage (see the module docs). */
 export interface StageRunner {
@@ -294,9 +304,31 @@ export interface StageRunner {
   /**
    * Releases a scroll lock (the boss died): scrolling resumes at the current speed — the lock
    * key's speed once its ramp is done. Calling it before the camera reaches the lock key does
-   * nothing (the key locks when it applies).
+   * nothing (the key locks when it applies). A brake ({@link StageRunner.brake}) is released too:
+   * the speed ramps back up over the brake's ramp to the speed the stage asks for by now.
    */
   unlock(): void;
+  /**
+   * Brakes the camera to a scroll lock (the boss WARNING — `core/bosses`, M1-13): the speed ramps
+   * linearly to 0 over `ticks` ticks (at once for `ticks ≤ 0`), then the camera is locked until
+   * {@link StageRunner.unlock}.
+   *
+   * @remarks
+   * While braking or locked by a brake, camera keys and `speed` events the camera still reaches
+   * keep their pans and locks but only record their speed ({@link StageSlot.ResumeSpeed}) for
+   * the unlock. A second brake while one holds changes nothing. A restart
+   * ({@link StageRunner.restartAt}) forgets the brake.
+   *
+   * @param ticks - Deceleration ticks.
+   *
+   * @example
+   * ```ts
+   * runner.brake(60); // a second to stop, then locked
+   * // … the boss dies:
+   * runner.unlock(); // back up to speed over 60 ticks
+   * ```
+   */
+  brake(ticks: number): void;
 }
 
 /**
@@ -525,6 +557,10 @@ class StageRunnerImpl implements StageRunner {
       state[StageSlot.Speed] =
         elapsed >= rampTicks ? target : from + (target - from) * (elapsed / rampTicks);
     }
+    // A brake locks once its ramp has stopped the camera (this tick moves by the last speed, 0).
+    if (state[StageSlot.Braking] !== 0 && state[StageSlot.Speed] === 0) {
+      state[StageSlot.Locked] = 1;
+    }
     let y = camera.y;
     const panTicks = state[StageSlot.PanTicks];
     if (state[StageSlot.PanElapsed] < panTicks) {
@@ -582,7 +618,24 @@ class StageRunnerImpl implements StageRunner {
 
   /** See {@link StageRunner.unlock}. */
   unlock(): void {
-    this.state[StageSlot.Locked] = 0;
+    const state = this.state;
+    state[StageSlot.Locked] = 0;
+    if (state[StageSlot.Braking] !== 0) {
+      state[StageSlot.Braking] = 0;
+      this.setTarget(state[StageSlot.ResumeSpeed], state[StageSlot.BrakeRamp]);
+    }
+  }
+
+  /** See {@link StageRunner.brake}. */
+  brake(ticks: number): void {
+    const state = this.state;
+    if (state[StageSlot.Braking] !== 0) return;
+    const ramp = ticks > 0 ? Math.floor(ticks) : 0;
+    state[StageSlot.Braking] = 1;
+    state[StageSlot.ResumeSpeed] = state[StageSlot.Target];
+    state[StageSlot.BrakeRamp] = ramp;
+    this.setTarget(0, ramp);
+    if (ramp === 0) state[StageSlot.Locked] = 1;
   }
 
   /**
@@ -612,7 +665,8 @@ class StageRunnerImpl implements StageRunner {
   private applyKey(index: number): void {
     const state = this.state;
     const compiled = this.compiled;
-    this.setTarget(compiled.keySpeed[index], compiled.keyRamp[index]);
+    if (state[StageSlot.Braking] !== 0) state[StageSlot.ResumeSpeed] = compiled.keySpeed[index];
+    else this.setTarget(compiled.keySpeed[index], compiled.keyRamp[index]);
     const yTo = compiled.keyYTo[index];
     if (yTo === yTo) {
       state[StageSlot.PanFrom] = this.camera.y;
@@ -662,7 +716,9 @@ class StageRunnerImpl implements StageRunner {
     const compiled = this.compiled;
     if (code === StageEventCode.Speed) {
       const speed = compiled.eventSpeed[index];
-      if (live) {
+      if (live && state[StageSlot.Braking] !== 0) {
+        state[StageSlot.ResumeSpeed] = speed;
+      } else if (live) {
         this.setTarget(speed, compiled.eventRamp[index]);
       } else {
         state[StageSlot.Speed] = speed;

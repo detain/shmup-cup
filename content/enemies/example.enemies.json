@@ -61,14 +61,58 @@
     },
     {
       "id": "example-warden",
-      "hp": 60,
-      "score": 5000,
-      "hurtbox": { "hw": 24, "hh": 20 },
-      "script": "boss.warden",
-      "sprite": "enemies/example-warden",
-      "drop": null,
-      "explosion": "large",
-      "megaCrashImmune": true
+      "boss": {
+        "code": "EW-00",
+        "displayName": "EXAMPLE WARDEN",
+        "introTicks": 120,
+        "score": 5000,
+        "x": 300,
+        "y": 100,
+        "parts": [
+          {
+            "name": "hull",
+            "hurtbox": { "hw": 8, "hh": 8 },
+            "vulnerable": "never",
+            "sprite": "bosses/hull-block"
+          },
+          {
+            "name": "core",
+            "parent": "hull",
+            "x": -12,
+            "hp": 40,
+            "hurtbox": { "hw": 7, "hh": 7 },
+            "vulnerable": "afterParts",
+            "requires": ["shield"],
+            "core": true,
+            "sprite": "bosses/core",
+            "anim": { "frames": 2, "ticks": 12 },
+            "explosion": "large"
+          },
+          {
+            "name": "shield",
+            "parent": "hull",
+            "x": -22,
+            "hp": 12,
+            "hurtbox": { "hw": 4, "hh": 8 },
+            "sprite": "bosses/shield-plate",
+            "score": 500
+          },
+          {
+            "name": "gun",
+            "parent": "hull",
+            "y": -18,
+            "hp": 8,
+            "hurtbox": { "hw": 6, "hh": 6 },
+            "gun": true,
+            "sprite": "bosses/emitter",
+            "score": 1000
+          }
+        ],
+        "phases": [
+          { "script": "boss.hover", "until": { "partsDestroyed": ["shield"] } },
+          { "script": "boss.lanes", "params": { "trackSpeed": 0.5 } }
+        ]
+      }
     }
   ]
 }

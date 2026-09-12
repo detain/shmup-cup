@@ -169,7 +169,13 @@ describe('integration: the test-range timeline', () => {
     expect(started).toBe(formations);
     expect(Array.from(w.enemies.formations.active).every((a) => a === 0)).toBe(true);
     expect(bonuses).toBe(0); // nothing shoots yet: every member escaped
-    expect([...seen].sort()).toEqual(DB.enemies.map((e) => e.id).sort());
+    // Every regular enemy of the content (the test boss is `core/bosses`' — M1-13).
+    expect([...seen].sort()).toEqual(
+      DB.enemies
+        .filter((e) => e.boss === null)
+        .map((e) => e.id)
+        .sort(),
+    );
     expect([...scripts].sort()).toEqual(
       [
         'carrier.straight',

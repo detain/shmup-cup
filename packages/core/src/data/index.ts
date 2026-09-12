@@ -2,8 +2,8 @@
  * # data — content schemas and loaders (player, weapons, enemies, paths, stages, tilesets JSON)
  *
  * **Status: partial.** The loader, the schema combinators and the `player`, `weapons`,
- * `enemies`, `paths`, `stage` and `tileset` formats are implemented; the boss section of the
- * `enemies` kind arrives with M1-13 and later steps add their kinds.
+ * `enemies` (with its boss section, M1-13), `paths`, `stage` and `tileset` formats are
+ * implemented; later steps add their kinds.
  *
  * **Responsibility.** Data-driven content (design pillar 4). Declares the shape of every
  * file under `content/`, validates it at load time with the in-house combinators in
@@ -29,12 +29,22 @@
  * ({@link ./paths.js | data/paths}); stage `spawn` / `formation` events and `path` movers refer to
  * them by id.
  *
+ * **Bosses (M1-13).** An enemy entry with a `boss` section ({@link BossSpec}) is a boss: its
+ * WARNING `code` and `displayName`, intro length, home position, tally score, up to
+ * {@link MAX_BOSS_PARTS} parts ({@link BossPartSpec}: parent, offset, hit points, hurtbox, sprite,
+ * weak-point rule — {@link BossVulnerability}) and up to {@link MAX_BOSS_PHASES} phases
+ * ({@link BossPhaseSpec}: a boss behaviour and the condition that ends it). Such an entry names
+ * nothing else; the loader resolves part names to indices and bit masks. After the references are
+ * resolved, stage `spawn` / `formation` events and enemy `child`ren must name regular enemies and
+ * `warning` / `boss` events bosses.
+ *
  * **Implements.**
  * - shmup_feat.md §14 — stage data format (JSON validated with a schema), tilemap terrain with
  *   collision types and slope masks, parallax layers, sorted event timeline
  * - shmup_feat.md §10 — invisible checkpoints in the stage data
  * - shmup_feat.md §22 — data-driven content (`enemies.json`, `weapons.json`, `stages/*.json`)
  * - shmup_feat.md §7 / §11 — weapons and enemies defined in data
+ * - shmup_feat.md §13 — multi-part bosses with weak points and phases defined in data
  *
  * **Public API.**
  * - Loading: {@link loadContent} (+ {@link LoadContentOptions}, {@link LoadContentResult},
@@ -48,7 +58,10 @@
  *   {@link EnemySpec} ({@link EnemyRankSpec}, {@link EnemyAnimSpec}, {@link EnemyMoverSpec},
  *   {@link MoverType}, {@link MOVER_TYPES}, {@link EnemyGround}, {@link ENEMY_GROUNDS},
  *   {@link EnemyExplosion}, {@link ENEMY_EXPLOSIONS}, {@link EnemyDrop}, {@link ENEMY_DROPS},
- *   {@link DEFAULT_SETTLE_TICKS}), {@link PathSpec} ({@link PathPointSpec}, {@link PathTable},
+ *   {@link DEFAULT_SETTLE_TICKS}), {@link BossSpec} ({@link BossPartSpec}, {@link BossPhaseSpec},
+ *   {@link BossUntilSpec}, {@link BossVulnerability}, {@link BOSS_VULNERABILITIES},
+ *   {@link MAX_BOSS_PARTS}, {@link MAX_BOSS_PHASES}, {@link DEFAULT_BOSS_X},
+ *   {@link DEFAULT_BOSS_Y}, {@link DEFAULT_BOSS_INTRO_TICKS}), {@link PathSpec} ({@link PathPointSpec}, {@link PathTable},
  *   {@link bakePath}, {@link PATH_SAMPLE_STEP}, {@link MAX_PATH_LENGTH}), {@link StageSpec} and its
  *   parts
  *   ({@link StageMusic}, {@link StageCameraKey}, {@link StageCheckpoint},
@@ -68,7 +81,7 @@
  * `path` → `pathId`, `child` → `childId`); `-1` means null, absent or unresolved. Systems read
  * only the numbers.
  *
- * **Planned API (later steps).** The boss section of `enemies` (M1-13); kinds `rules`,
+ * **Planned API (later steps).** Kinds `rules`,
  * `patterns`, `campaign`, `strings` (M2); `input-profiles`, `sfx`/`music` and `fx` files stay
  * *foreign* here and are validated by their owning packages (see plan §3.5). Hosts pass
  * `knownScripts` (`core/behaviors` `KNOWN_SCRIPT_IDS`) so script ids are checked; M1-03 checks
@@ -81,7 +94,7 @@
  *
  * @module
  */
-import { PLAYFIELD_W } from '../config/index.js';
+import { PLAYFIELD_H, PLAYFIELD_W } from '../config/index.js';
 import { MUSIC_CUES, SFX_CUES } from '../events/index.js';
 import { defineModule } from '../module-info.js';
 import { bakePath, type PathTable } from './paths.js';
@@ -489,6 +502,139 @@ export interface EnemySpec {
   readonly childId: number;
   /** Rank modifiers. */
   readonly rank?: EnemyRankSpec;
+  /**
+   * The boss section (M1-13), or `null` for a regular enemy (default). A boss entry has only an
+   * `id` and this section in the file; the loader fills the regular fields for it (`hp` = the
+   * cores' total hit points, `score` = `boss.score`, `script` / `sprite` empty with ids -1, a
+   * 1-px `hurtbox`, `megaCrashImmune`) — the enemy system never spawns it, `core/bosses` runs it.
+   */
+  readonly boss: BossSpec | null;
+}
+
+/** Most parts one boss may have (shmup_feat.md §13 multi-part bosses; plan M1-13). */
+export const MAX_BOSS_PARTS = 16;
+
+/** Most phases one boss may have. */
+export const MAX_BOSS_PHASES = 8;
+
+/**
+ * When a boss part takes damage (shmup_feat.md §13 weak points): `always`; `afterParts` — only
+ * once every part of its `requires` list is destroyed (a core behind shield plates); `whenOpen`
+ * — only while its behaviour holds it open (a mouth, a hatch); `never` — armour (every hit
+ * `clink`s).
+ */
+export type BossVulnerability = 'always' | 'afterParts' | 'whenOpen' | 'never';
+
+/** Every {@link BossVulnerability}, in code order (the index is the `core/bosses` code). */
+export const BOSS_VULNERABILITIES = Object.freeze([
+  'always',
+  'afterParts',
+  'whenOpen',
+  'never',
+] as const);
+
+/** Default home position of a boss (playfield pixels, where its intro ends). */
+export const DEFAULT_BOSS_X = 296;
+
+/** Default home row of a boss (the playfield's middle). */
+export const DEFAULT_BOSS_Y = 100;
+
+/** Default length of a boss's invulnerable intro (the fly-in), in ticks. */
+export const DEFAULT_BOSS_INTRO_TICKS = 120;
+
+/**
+ * One part of a boss (`boss.parts[]`): a translation from its parent (or from the boss's origin),
+ * hit points, a hurtbox, a sprite and its weak-point rule. Parts are listed parents first; later
+ * parts are drawn over earlier ones.
+ */
+export interface BossPartSpec {
+  /** Unique name inside the boss (lower-case kebab), e.g. `core`, `plate-top`. */
+  readonly name: string;
+  /** Name of the part it is attached to (an earlier part), or `null` for the boss's origin. */
+  readonly parent: string | null;
+  /** Resolved index of {@link BossPartSpec.parent} in `parts` (-1 = the origin). */
+  readonly parentIndex: number;
+  /** X offset from the parent, in pixels (default 0). */
+  readonly x: number;
+  /** Y offset from the parent, in pixels (default 0). */
+  readonly y: number;
+  /** Hit points (default 1; unused by `never` parts). */
+  readonly hp: number;
+  /** Half-extents of the hurtbox (also the contact box), or `null`: never hit, never touched. */
+  readonly hurtbox: BoxSpec | null;
+  /** When it takes damage (default `always`). */
+  readonly vulnerable: BossVulnerability;
+  /** Parts that must be destroyed first (`afterParts` only). */
+  readonly requires: readonly string[];
+  /** {@link BossPartSpec.requires} as a bit mask of part indices. */
+  readonly requiresMask: number;
+  /** A core: the boss dies when every core is destroyed (default `false`; at least one). */
+  readonly core: boolean;
+  /** A gun: the generic boss behaviours fire from it (default `false`). */
+  readonly gun: boolean;
+  /** Starts open (`whenOpen` parts; default `false`). */
+  readonly open: boolean;
+  /** Atlas sprite name (omitted: not drawn). */
+  readonly sprite?: string;
+  /** Resolved {@link ContentDb.sprites} index of {@link BossPartSpec.sprite} (-1 = none). */
+  readonly spriteId: number;
+  /** Sprite animation (default: frame 0). */
+  readonly anim: EnemyAnimSpec;
+  /** Points for destroying it (default 0). */
+  readonly score: number;
+  /** Size of its explosion when destroyed (default `medium`). */
+  readonly explosion: EnemyExplosion;
+}
+
+/**
+ * When a boss phase ends (any condition met ends it; the next phase starts on the same tick).
+ */
+export interface BossUntilSpec {
+  /** The cores' total hit points fell below this. */
+  readonly hpBelow?: number;
+  /** At least `count` of these parts are destroyed (all of them without `count`). */
+  readonly partsDestroyed?: readonly string[];
+  /** How many of {@link BossUntilSpec.partsDestroyed} (default: all). */
+  readonly count?: number;
+  /** The phase has run this many ticks. */
+  readonly ticks?: number;
+  /** {@link BossUntilSpec.partsDestroyed} as a bit mask (0 when absent). */
+  readonly partsMask: number;
+}
+
+/** One phase of a boss: the behaviour it runs and when it gives way to the next one. */
+export interface BossPhaseSpec {
+  /** Boss behaviour id (`core/behaviors` boss roster). */
+  readonly script: string;
+  /** Resolved {@link ContentDb.scripts} index of {@link BossPhaseSpec.script}. */
+  readonly scriptId: number;
+  /** The behaviour's tunables by name (default none). */
+  readonly params: Readonly<Record<string, number>>;
+  /** When the phase ends; `null` for the last phase (it runs until the boss dies). */
+  readonly until: BossUntilSpec | null;
+}
+
+/**
+ * The boss section of an enemy entry (shmup_feat.md §13, plan M1-13): the WARNING text, the
+ * intro, the parts and the phase list.
+ */
+export interface BossSpec {
+  /** Code shown by the WARNING, e.g. `HB-01` (upper case, digits, `-`; ≤ 8). */
+  readonly code: string;
+  /** Name shown by the WARNING, e.g. `HALCYON BULWARK` (upper case; ≤ 24). */
+  readonly displayName: string;
+  /** Length of the invulnerable fly-in, in ticks (default {@link DEFAULT_BOSS_INTRO_TICKS}). */
+  readonly introTicks: number;
+  /** Points awarded at the score tally of its death sequence (default 0). */
+  readonly score: number;
+  /** Home x of the boss's origin in playfield pixels (default {@link DEFAULT_BOSS_X}). */
+  readonly x: number;
+  /** Home y (default {@link DEFAULT_BOSS_Y}). */
+  readonly y: number;
+  /** The parts (1–{@link MAX_BOSS_PARTS}), parents first. */
+  readonly parts: readonly BossPartSpec[];
+  /** The phases (1–{@link MAX_BOSS_PHASES}), in order. */
+  readonly phases: readonly BossPhaseSpec[];
 }
 
 /** One control point of a path, in pixels relative to where the mover starts. */
@@ -693,13 +839,16 @@ export interface StageFormationEvent {
   readonly bonus?: number;
 }
 
-/** Start a boss or its WARNING intro (shmup_feat.md §13, M1-13). */
+/**
+ * Start a boss (shmup_feat.md §13, M1-13): `warning` plays the WARNING sequence (the camera brakes
+ * to a lock, 180 ticks of siren and text) and then the boss flies in; `boss` brings it in at once.
+ */
 export interface StageBossEvent {
   /** Camera X that fires the event. */
   readonly x: number;
   /** Discriminator. */
   readonly type: 'boss' | 'warning';
-  /** Boss enemy id. */
+  /** Boss enemy id (an entry with a `boss` section). */
   readonly enemy: string;
   /** Resolved {@link ContentDb.enemies} index. */
   readonly enemyId: number;
@@ -1079,6 +1228,122 @@ const MOVER_SCHEMA: Schema<Omit<EnemyMoverSpec, 'pathId'>> = s.oneOf('type', {
   }),
 });
 
+/** A boss part name (lower-case kebab). */
+const PART_NAME = s.str({ maxLength: 32, pattern: /^[a-z][a-z0-9-]*$/ });
+
+/** A sprite animation (`frames` frames, `ticks` ticks each). */
+const ANIM_SCHEMA = s.object({
+  frames: s.int({ min: 1, max: 64 }),
+  ticks: s.int({ min: 1, max: 600 }),
+});
+
+/** Behaviour tunables by name. */
+const PARAMS_SCHEMA = s.record(s.num(), /^[a-zA-Z][a-zA-Z0-9]*$/);
+
+/** One entry of `boss.parts` (optional fields get their defaults at load). */
+const BOSS_PART_SCHEMA = s.object(
+  {
+    name: PART_NAME,
+    parent: PART_NAME,
+    x: s.num({ min: -512, max: 512 }),
+    y: s.num({ min: -512, max: 512 }),
+    hp: s.int({ min: 1, max: 100000 }),
+    hurtbox: BOX_SCHEMA,
+    vulnerable: s.enumOf(BOSS_VULNERABILITIES),
+    requires: s.array(PART_NAME, { min: 1, max: MAX_BOSS_PARTS }),
+    core: s.bool(),
+    gun: s.bool(),
+    open: s.bool(),
+    sprite: s.ref('sprite'),
+    anim: ANIM_SCHEMA,
+    score: s.int({ min: 0, max: 1000000 }),
+    explosion: s.enumOf(ENEMY_EXPLOSIONS),
+  },
+  {
+    optional: [
+      'parent',
+      'x',
+      'y',
+      'hp',
+      'hurtbox',
+      'vulnerable',
+      'requires',
+      'core',
+      'gun',
+      'open',
+      'sprite',
+      'anim',
+      'score',
+      'explosion',
+    ],
+  },
+);
+
+/** One entry of `boss.phases`. */
+const BOSS_PHASE_SCHEMA = s.object(
+  {
+    script: s.ref('script'),
+    params: PARAMS_SCHEMA,
+    until: s.object(
+      {
+        hpBelow: s.int({ min: 1, max: 1600000 }),
+        partsDestroyed: s.array(PART_NAME, { min: 1, max: MAX_BOSS_PARTS }),
+        count: s.int({ min: 1, max: MAX_BOSS_PARTS }),
+        ticks: s.int({ min: 1, max: 36000 }),
+      },
+      { optional: ['hpBelow', 'partsDestroyed', 'count', 'ticks'] },
+    ),
+  },
+  { optional: ['params', 'until'] },
+);
+
+/** The `boss` section of an enemy entry. */
+const BOSS_SCHEMA = s.object(
+  {
+    code: s.str({ maxLength: 8, pattern: /^[A-Z0-9][A-Z0-9-]*$/ }),
+    displayName: s.str({ maxLength: 24, pattern: /^[A-Z0-9][A-Z0-9 .'-]*$/ }),
+    introTicks: s.int({ min: 0, max: 600 }),
+    score: s.int({ min: 0, max: 10000000 }),
+    x: s.num({ min: 0, max: PLAYFIELD_W }),
+    y: s.num({ min: 0, max: PLAYFIELD_H }),
+    parts: s.array(BOSS_PART_SCHEMA, { min: 1, max: MAX_BOSS_PARTS }),
+    phases: s.array(BOSS_PHASE_SCHEMA, { min: 1, max: MAX_BOSS_PHASES }),
+  },
+  { optional: ['introTicks', 'score', 'x', 'y'] },
+);
+
+/**
+ * The fields a regular enemy must have (they are optional in the schema because a boss entry
+ * omits them — {@link completeEnemy} reports them).
+ */
+const ENEMY_REQUIRED = Object.freeze([
+  'hp',
+  'score',
+  'hurtbox',
+  'script',
+  'sprite',
+  'drop',
+] as const);
+
+/** The fields a boss entry must leave out (the loader fills them from the `boss` section). */
+const BOSS_OMITTED = Object.freeze([
+  'hp',
+  'score',
+  'hurtbox',
+  'script',
+  'sprite',
+  'anim',
+  'params',
+  'mover',
+  'drop',
+  'ground',
+  'settleTicks',
+  'explosion',
+  'megaCrashImmune',
+  'child',
+  'rank',
+] as const);
+
 /** One entry of `enemies` in an `enemies` file (optional fields are filled in by the loader). */
 const ENEMY_SCHEMA = s.object(
   {
@@ -1088,8 +1353,8 @@ const ENEMY_SCHEMA = s.object(
     hurtbox: BOX_SCHEMA,
     script: s.ref('script'),
     sprite: s.ref('sprite'),
-    anim: s.object({ frames: s.int({ min: 1, max: 64 }), ticks: s.int({ min: 1, max: 600 }) }),
-    params: s.record(s.num(), /^[a-zA-Z][a-zA-Z0-9]*$/),
+    anim: ANIM_SCHEMA,
+    params: PARAMS_SCHEMA,
     mover: s.nullable(MOVER_SCHEMA),
     drop: s.nullable(s.enumOf(ENEMY_DROPS)),
     ground: s.nullable(s.enumOf(ENEMY_GROUNDS)),
@@ -1101,9 +1366,18 @@ const ENEMY_SCHEMA = s.object(
       { fireRate: s.num({ min: 0, max: 8 }), bulletSpeed: s.num({ min: 0, max: 8 }) },
       { optional: ['fireRate', 'bulletSpeed'] },
     ),
+    boss: BOSS_SCHEMA,
   },
   {
     optional: [
+      // Required for regular enemies, left out by bosses: `completeEnemy` checks them.
+      'hp',
+      'score',
+      'hurtbox',
+      'script',
+      'sprite',
+      'drop',
+      'boss',
       'anim',
       'params',
       'mover',
@@ -1337,6 +1611,8 @@ interface DbBuilder {
   stageIndex: Map<string, number>;
   /** Repo-relative file path of every collected stage (issue paths of the terrain pass). */
   stagePaths: string[];
+  /** Issue path (`<file>:enemies[i]`) of every collected enemy (the boss reference pass). */
+  enemyPaths: string[];
   /** Collected tilesets. */
   tilesets: TilesetSpec[];
   /** Tileset id → position in {@link DbBuilder.tilesets}. */
@@ -1612,11 +1888,14 @@ function assertFileList(files: unknown): void {
  * paths, stages, tilesets or audio cues must resolve, or an issue is reported and the id becomes
  * `-1`. With `options.knownScripts` an interned script id outside that list is an issue too;
  * `options.extraSprites` (the engine's own sprites) are interned with the content's sprite
- * names, so they get ids in the same sorted table. A third pass expands every stage tilemap
- * against its resolved tileset ({@link StageSpec.terrain}); its issues come last. While
- * collecting, enemies get the defaults
- * of their optional fields and paths are baked into arc-length tables ({@link bakePath}; a path
- * with coincident neighbours or an overlong curve is an issue and is left out).
+ * names, so they get ids in the same sorted table. Then bosses and regular enemies are checked
+ * against the places that name them (stage events, `child`ren), and a last pass expands every
+ * stage tilemap against its resolved tileset ({@link StageSpec.terrain}); its issues come last.
+ * While collecting, enemies get the defaults of their optional fields (a regular enemy missing
+ * `hp`, `score`, `hurtbox`, `script`, `sprite` or `drop`, or a bad boss section, fails its whole
+ * file),
+ * boss sections are completed, and paths are baked into arc-length tables ({@link bakePath}; a
+ * path with coincident neighbours or an overlong curve is an issue and is left out).
  *
  * Bad files are skipped, not fatal: the caller (the boot error screen, `pnpm content:check`)
  * shows `issues` and may still run with the partial database. A file with a bad header or
@@ -1672,6 +1951,7 @@ export function loadContent(
     stages: [],
     stageIndex: new Map(),
     stagePaths: [],
+    enemyPaths: [],
     tilesets: [],
     tilesetIndex: new Map(),
   };
@@ -1711,6 +1991,7 @@ export function loadContent(
   const sprites = buildStringTable(spriteNames);
   const scripts = buildStringTable(scriptNames);
   for (const site of refs) resolveRef(site, db, sprites, scripts, knownScripts, issues);
+  checkBossReferences(db, issues);
   expandStageTerrains(db, issues);
 
   return {
@@ -1826,15 +2107,26 @@ function collect(
     }
     case 'enemies': {
       const enemies = parsed['enemies'] as MutableEnemy[];
+      const complete: EnemySpec[] = [];
+      let ok = true;
       for (let i = 0; i < enemies.length; i++) {
+        const spec = completeEnemy(enemies[i], at(path, 'enemies[' + String(i) + ']'), issues);
+        if (spec === null) ok = false;
+        else complete.push(spec);
+      }
+      // Like a schema failure: a file with one bad entry contributes nothing.
+      if (!ok) return;
+      for (let i = 0; i < complete.length; i++) {
+        const before = db.enemies.length;
         addEntry(
           db.enemies,
           db.enemyIndex,
-          completeEnemy(enemies[i]),
+          complete[i],
           at(path, 'enemies[' + String(i) + '].id'),
           'enemy',
           issues,
         );
+        if (db.enemies.length > before) db.enemyPaths.push(at(path, 'enemies[' + String(i) + ']'));
       }
       return;
     }
@@ -1886,23 +2178,291 @@ function collect(
 /** An enemy as the schema parsed it: the optional fields may still be missing. */
 type MutableEnemy = { -readonly [K in keyof EnemySpec]?: EnemySpec[K] };
 
+/** A boss part as the schema parsed it (the loader completes it in place). */
+type MutableBossPart = { -readonly [K in keyof BossPartSpec]?: BossPartSpec[K] };
+
+/** A boss phase condition as parsed. */
+type MutableBossUntil = { -readonly [K in keyof BossUntilSpec]?: BossUntilSpec[K] };
+
+/** A boss phase as parsed. */
+type MutableBossPhase = Omit<
+  { -readonly [K in keyof BossPhaseSpec]?: BossPhaseSpec[K] },
+  'until'
+> & {
+  /** See {@link BossPhaseSpec.until}. */
+  until?: MutableBossUntil | null;
+};
+
+/** A boss section as parsed. */
+type MutableBoss = Omit<{ -readonly [K in keyof BossSpec]?: BossSpec[K] }, 'parts' | 'phases'> & {
+  /** See {@link BossSpec.parts}. */
+  parts: MutableBossPart[];
+  /** See {@link BossSpec.phases}. */
+  phases: MutableBossPhase[];
+};
+
 /**
- * Fills the defaults of an enemy's optional fields in place (the parsed object is the loader's
- * own), so every {@link EnemySpec} has the same fields.
+ * Checks an enemy entry and fills the defaults of its optional fields in place (the parsed object
+ * is the loader's own), so every {@link EnemySpec} has the same fields.
+ *
+ * @remarks
+ * A regular enemy must have `hp`, `score`, `hurtbox`, `script`, `sprite` and `drop`. A boss entry
+ * (with a `boss` section, M1-13) must leave those — and every other enemy field but `id` — out:
+ * its boss section is checked and completed ({@link completeBoss}) and the regular fields are
+ * filled from it (`hp` = the cores' total, `score` = `boss.score`, an empty `script` / `sprite`,
+ * a 1-px `hurtbox`, `explosion` large, `megaCrashImmune`).
  *
  * @param enemy - The parsed enemy.
- * @returns The same object, complete.
+ * @param entry - Issue path of the entry (`<file>:enemies[i]`).
+ * @param issues - Collector.
+ * @returns The same object, complete, or `null` when it is unusable (issues reported).
  */
-function completeEnemy(enemy: MutableEnemy): EnemySpec {
-  if (enemy.anim === undefined) enemy.anim = { frames: 1, ticks: 1 };
-  if (enemy.params === undefined) enemy.params = {};
-  if (enemy.mover === undefined) enemy.mover = null;
-  if (enemy.ground === undefined) enemy.ground = null;
-  if (enemy.settleTicks === undefined) enemy.settleTicks = DEFAULT_SETTLE_TICKS;
-  if (enemy.explosion === undefined) enemy.explosion = 'small';
-  if (enemy.megaCrashImmune === undefined) enemy.megaCrashImmune = false;
-  if (enemy.child === undefined) enemy.child = null;
+function completeEnemy(
+  enemy: MutableEnemy,
+  entry: string,
+  issues: ValidationIssue[],
+): EnemySpec | null {
+  const record = enemy as Record<string, unknown>;
+  const boss = record['boss'] as MutableBoss | undefined;
+  if (boss === undefined) {
+    let ok = true;
+    for (const field of ENEMY_REQUIRED) {
+      if (record[field] === undefined) ok = issue(issues, entry + '.' + field, 'is required');
+    }
+    if (!ok) return null;
+    if (enemy.anim === undefined) enemy.anim = { frames: 1, ticks: 1 };
+    if (enemy.params === undefined) enemy.params = {};
+    if (enemy.mover === undefined) enemy.mover = null;
+    if (enemy.ground === undefined) enemy.ground = null;
+    if (enemy.settleTicks === undefined) enemy.settleTicks = DEFAULT_SETTLE_TICKS;
+    if (enemy.explosion === undefined) enemy.explosion = 'small';
+    if (enemy.megaCrashImmune === undefined) enemy.megaCrashImmune = false;
+    if (enemy.child === undefined) enemy.child = null;
+    enemy.boss = null;
+    return enemy as EnemySpec;
+  }
+  let ok = true;
+  for (const field of BOSS_OMITTED) {
+    if (record[field] !== undefined) {
+      ok = issue(
+        issues,
+        entry + '.' + field,
+        'must be omitted for a boss (its boss section describes it)',
+      );
+    }
+  }
+  const coreHp = completeBoss(boss, entry + '.boss', issues);
+  if (!ok || coreHp < 0) return null;
+  enemy.hp = coreHp;
+  enemy.score = boss.score;
+  enemy.hurtbox = { hw: 1, hh: 1 };
+  enemy.script = '';
+  enemy.sprite = '';
+  enemy.anim = { frames: 1, ticks: 1 };
+  enemy.params = {};
+  enemy.mover = null;
+  enemy.drop = null;
+  enemy.ground = null;
+  enemy.settleTicks = 0;
+  enemy.explosion = 'large';
+  enemy.megaCrashImmune = true;
+  enemy.child = null;
   return enemy as EnemySpec;
+}
+
+/**
+ * Checks a boss section and completes it in place: part defaults, parent indices, `requires`
+ * masks, phase defaults and condition masks.
+ *
+ * @remarks
+ * Reported: duplicate part names; a `parent` that is not an earlier part; `requires` on a part
+ * that is not `afterParts`, missing on one that is, naming an unknown part or the part itself;
+ * no `core` part, a core that is `never` vulnerable or has no hurtbox; a phase other than the last
+ * without `until`, the last one with it, an `until` without a condition, a `count` without
+ * `partsDestroyed` or above its length, unknown `partsDestroyed` names, an `hpBelow` above the
+ * cores' total.
+ *
+ * @param boss - The parsed boss section.
+ * @param path - Issue path of the section (`<file>:enemies[i].boss`).
+ * @param issues - Collector.
+ * @returns The cores' total hit points, or -1 when the section is unusable.
+ */
+function completeBoss(boss: MutableBoss, path: string, issues: ValidationIssue[]): number {
+  let ok = true;
+  const parts = boss.parts;
+  const names: string[] = [];
+  for (let i = 0; i < parts.length; i++) {
+    const name = parts[i].name ?? '';
+    if (names.indexOf(name) >= 0) {
+      ok = issue(issues, path + '.parts[' + String(i) + '].name', 'duplicate part "' + name + '"');
+    }
+    names.push(name);
+  }
+  let coreHp = 0;
+  let cores = 0;
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i];
+    const where = path + '.parts[' + String(i) + ']';
+    const parent = part.parent;
+    let parentIndex = -1;
+    if (parent !== undefined && parent !== null) {
+      parentIndex = names.indexOf(parent);
+      if (parentIndex < 0 || parentIndex >= i) {
+        ok = issue(issues, where + '.parent', 'must name an earlier part (parents come first)');
+        parentIndex = -1;
+      }
+    }
+    part.parent = parent ?? null;
+    part.parentIndex = parentIndex;
+    if (part.x === undefined) part.x = 0;
+    if (part.y === undefined) part.y = 0;
+    if (part.hp === undefined) part.hp = 1;
+    if (part.hurtbox === undefined) part.hurtbox = null;
+    if (part.vulnerable === undefined) part.vulnerable = 'always';
+    const requires = part.requires ?? [];
+    let mask = 0;
+    if (part.vulnerable === 'afterParts' && requires.length === 0) {
+      ok = issue(issues, where + '.requires', 'is required for vulnerable "afterParts"');
+    } else if (part.vulnerable !== 'afterParts' && requires.length > 0) {
+      ok = issue(issues, where + '.requires', 'is only used by vulnerable "afterParts"');
+    }
+    for (let k = 0; k < requires.length; k++) {
+      const index = names.indexOf(requires[k]);
+      if (index < 0) {
+        ok = issue(
+          issues,
+          where + '.requires[' + String(k) + ']',
+          'unknown part "' + requires[k] + '"',
+        );
+      } else if (index === i) {
+        ok = issue(issues, where + '.requires[' + String(k) + ']', 'must name another part');
+      } else {
+        mask |= 1 << index;
+      }
+    }
+    part.requires = requires;
+    part.requiresMask = mask >>> 0;
+    if (part.core === undefined) part.core = false;
+    if (part.gun === undefined) part.gun = false;
+    if (part.open === undefined) part.open = false;
+    if (part.anim === undefined) part.anim = { frames: 1, ticks: 1 };
+    if (part.score === undefined) part.score = 0;
+    if (part.explosion === undefined) part.explosion = 'medium';
+    if (part.core) {
+      cores++;
+      coreHp += part.hp;
+      if (part.vulnerable === 'never') {
+        ok = issue(
+          issues,
+          where + '.vulnerable',
+          'a core cannot be "never" (the boss could not die)',
+        );
+      }
+      if (part.hurtbox === null) ok = issue(issues, where + '.hurtbox', 'is required for a core');
+    }
+  }
+  if (cores === 0) ok = issue(issues, path + '.parts', 'needs at least one core ("core": true)');
+  const phases = boss.phases;
+  for (let i = 0; i < phases.length; i++) {
+    const phase = phases[i];
+    const where = path + '.phases[' + String(i) + ']';
+    if (phase.params === undefined) phase.params = {};
+    const until = phase.until;
+    const last = i === phases.length - 1;
+    if (until === undefined || until === null) {
+      phase.until = null;
+      if (!last) {
+        ok = issue(issues, where + '.until', 'is required (every phase but the last ends on it)');
+      }
+      continue;
+    }
+    if (last) {
+      ok = issue(
+        issues,
+        where + '.until',
+        'must be omitted on the last phase (it runs to the end)',
+      );
+    }
+    const destroyed = until.partsDestroyed;
+    if (until.hpBelow === undefined && destroyed === undefined && until.ticks === undefined) {
+      ok = issue(issues, where + '.until', 'needs hpBelow, partsDestroyed or ticks');
+    }
+    if (until.count !== undefined && destroyed === undefined) {
+      ok = issue(issues, where + '.until.count', 'needs partsDestroyed');
+    } else if (until.count !== undefined && destroyed !== undefined) {
+      if (until.count > destroyed.length) {
+        ok = issue(issues, where + '.until.count', 'must be <= the number of partsDestroyed');
+      }
+    }
+    if (until.hpBelow !== undefined && cores > 0 && until.hpBelow > coreHp) {
+      ok = issue(
+        issues,
+        where + '.until.hpBelow',
+        "must be <= the cores' total hp (" + String(coreHp) + ')',
+      );
+    }
+    let mask = 0;
+    for (let k = 0; destroyed !== undefined && k < destroyed.length; k++) {
+      const index = names.indexOf(destroyed[k]);
+      if (index < 0) {
+        ok = issue(
+          issues,
+          where + '.until.partsDestroyed[' + String(k) + ']',
+          'unknown part "' + destroyed[k] + '"',
+        );
+      } else {
+        mask |= 1 << index;
+      }
+    }
+    until.partsMask = mask >>> 0;
+  }
+  if (boss.introTicks === undefined) boss.introTicks = DEFAULT_BOSS_INTRO_TICKS;
+  if (boss.score === undefined) boss.score = 0;
+  if (boss.x === undefined) boss.x = DEFAULT_BOSS_X;
+  if (boss.y === undefined) boss.y = DEFAULT_BOSS_Y;
+  return ok ? coreHp : -1;
+}
+
+/**
+ * Fourth pass of {@link loadContent} (references resolved): bosses and regular enemies must be
+ * used where they belong — a stage `spawn` / `formation` event or an enemy `child` naming a boss,
+ * or a `warning` / `boss` event naming a regular enemy, is an issue.
+ *
+ * @param db - The builder (references already resolved).
+ * @param issues - Collector.
+ */
+function checkBossReferences(db: DbBuilder, issues: ValidationIssue[]): void {
+  const enemies = db.enemies;
+  /**
+   * Whether a resolved enemy index names a boss (-1 = unresolved: already an issue).
+   *
+   * @param index - The index.
+   * @returns `true` for a boss, `false` otherwise, `null` when unresolved.
+   */
+  const isBoss = (index: number): boolean | null =>
+    index >= 0 && index < enemies.length ? enemies[index].boss !== null : null;
+  for (let s = 0; s < db.stages.length; s++) {
+    const events = db.stages[s].events;
+    const file = db.stagePaths[s];
+    for (let i = 0; i < events.length; i++) {
+      const event = events[i];
+      const path = at(file, 'events[' + String(i) + '].enemy');
+      if (event.type === 'spawn' || event.type === 'formation') {
+        if (isBoss(event.enemyId) === true) {
+          issue(issues, path, 'is a boss: start it with a "warning" or "boss" event');
+        }
+      } else if (event.type === 'warning' || event.type === 'boss') {
+        if (isBoss(event.enemyId) === false) {
+          issue(issues, path, 'must name an enemy with a boss section');
+        }
+      }
+    }
+  }
+  for (let e = 0; e < enemies.length; e++) {
+    if (isBoss(enemies[e].childId) === true) {
+      issue(issues, db.enemyPaths[e] + '.child', 'is a boss: a spawner cannot release it');
+    }
+  }
 }
 
 /**

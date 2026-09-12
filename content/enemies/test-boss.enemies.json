@@ -1,0 +1,120 @@
+{
+  "formatVersion": 1,
+  "kind": "enemies",
+  "enemies": [
+    {
+      "id": "test-boss",
+      "boss": {
+        "code": "TW-00",
+        "displayName": "TRIAL WARDEN",
+        "introTicks": 120,
+        "score": 20000,
+        "x": 300,
+        "y": 100,
+        "parts": [
+          {
+            "name": "hull",
+            "hurtbox": { "hw": 8, "hh": 8 },
+            "vulnerable": "never",
+            "sprite": "bosses/hull-block"
+          },
+          {
+            "name": "hull-top",
+            "parent": "hull",
+            "y": -16,
+            "hurtbox": { "hw": 8, "hh": 8 },
+            "vulnerable": "never",
+            "sprite": "bosses/hull-block"
+          },
+          {
+            "name": "hull-bottom",
+            "parent": "hull",
+            "y": 16,
+            "hurtbox": { "hw": 8, "hh": 8 },
+            "vulnerable": "never",
+            "sprite": "bosses/hull-block"
+          },
+          {
+            "name": "vent",
+            "parent": "hull",
+            "x": 14,
+            "hp": 6,
+            "hurtbox": { "hw": 5, "hh": 5 },
+            "vulnerable": "whenOpen",
+            "sprite": "bosses/emitter",
+            "score": 800
+          },
+          {
+            "name": "core",
+            "parent": "hull",
+            "x": -14,
+            "hp": 24,
+            "hurtbox": { "hw": 7, "hh": 7 },
+            "vulnerable": "afterParts",
+            "requires": ["plate-top", "plate-bottom"],
+            "core": true,
+            "sprite": "bosses/core",
+            "anim": { "frames": 2, "ticks": 12 },
+            "score": 5000,
+            "explosion": "large"
+          },
+          {
+            "name": "plate-top",
+            "parent": "hull",
+            "x": -26,
+            "y": -8,
+            "hp": 10,
+            "hurtbox": { "hw": 4, "hh": 8 },
+            "sprite": "bosses/shield-plate",
+            "score": 500
+          },
+          {
+            "name": "plate-bottom",
+            "parent": "hull",
+            "x": -26,
+            "y": 8,
+            "hp": 10,
+            "hurtbox": { "hw": 4, "hh": 8 },
+            "sprite": "bosses/shield-plate",
+            "score": 500
+          },
+          {
+            "name": "gun-top",
+            "parent": "hull-top",
+            "x": -10,
+            "y": -12,
+            "hp": 12,
+            "hurtbox": { "hw": 6, "hh": 6 },
+            "gun": true,
+            "sprite": "bosses/emitter",
+            "score": 1000
+          },
+          {
+            "name": "gun-bottom",
+            "parent": "hull-bottom",
+            "x": -10,
+            "y": 12,
+            "hp": 12,
+            "hurtbox": { "hw": 6, "hh": 6 },
+            "gun": true,
+            "sprite": "bosses/emitter",
+            "score": 1000
+          }
+        ],
+        "phases": [
+          {
+            "script": "boss.hover",
+            "params": { "trackSpeed": 0.5, "fireTicks": 70, "openTicks": 60, "closedTicks": 120 },
+            "until": { "partsDestroyed": ["plate-top", "plate-bottom"], "count": 1 }
+          },
+          {
+            "script": "boss.hover",
+            "params": { "trackSpeed": 0.75, "fireTicks": 50, "ways": 3 },
+            "until": { "hpBelow": 12 }
+          },
+          { "script": "boss.lanes", "params": { "trackSpeed": 0.25 } }
+        ]
+      }
+    }
+  ]
+}

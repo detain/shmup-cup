@@ -116,7 +116,20 @@ const fullSet = (): ContentFile[] => [
     ],
   }),
   file('enemies/zone-a.enemies.json', 'enemies', {
-    enemies: [enemy('drifter'), { ...enemy('warden'), script: 'boss.warden' }],
+    enemies: [
+      enemy('drifter'),
+      {
+        id: 'warden',
+        boss: {
+          code: 'WD-01',
+          displayName: 'WARDEN',
+          parts: [
+            { name: 'core', core: true, hp: 20, hurtbox: { hw: 8, hh: 8 }, sprite: 'bosses/core' },
+          ],
+          phases: [{ script: 'boss.warden' }],
+        },
+      },
+    ],
   }),
   file('paths/zone-a.paths.json', 'paths', {
     paths: [
@@ -135,7 +148,7 @@ const fullSet = (): ContentFile[] => [
     'stage',
     stageBody('zone-a', [
       { x: 10, type: 'formation', enemy: 'drifter', path: 'sine', y: 40, count: 5, interval: 8 },
-      { x: 20, type: 'spawn', enemy: 'warden', y: -8 },
+      { x: 20, type: 'spawn', enemy: 'drifter', y: -8 },
       { x: 30, type: 'warning', enemy: 'warden' },
       { x: 40, type: 'boss', enemy: 'warden' },
       { x: 50, type: 'music', cue: 'Boss' },
@@ -486,8 +499,8 @@ describe('core/data loadContent — per-kind schemas', () => {
       y: 40,
       pathId: db.pathIndex.get('sine'),
     });
-    expect(events[1]).toMatchObject({ pathId: -1 });
-    for (const e of events.slice(1, 4)) expect(e).toMatchObject({ enemyId: warden });
+    expect(events[1]).toMatchObject({ pathId: -1, enemyId: db.enemyIndex.get('drifter') });
+    for (const e of events.slice(2, 4)) expect(e).toMatchObject({ enemyId: warden });
     expect(events[4]).toMatchObject({ cueId: MUSIC_CUES.Boss });
     expect(events[6]).toMatchObject({ flag: 'lower-path', flagId: 0, value: false });
     expect(db.stages[0]?.flagNames).toEqual(['lower-path']);

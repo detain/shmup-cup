@@ -168,6 +168,7 @@ function referenceHash(w: World): number {
     const table = shots.fields.table[i];
     if (table <= 0) continue;
     for (let e = 0; e < 64; e++) word(weapons.cooldowns[(table - 1) * 64 + e]);
+    for (let e = 0; e < 16; e++) word(weapons.partCooldowns[(table - 1) * 16 + e]);
   }
   // Power-ups (M1-11): per player the meter cursor, pending Mega Crash and shield; taken drops.
   const powerups = w.powerups;
@@ -201,6 +202,29 @@ function referenceHash(w: World): number {
   for (const score of w.scoring.board.scores) num(score.score);
   num(w.scoring.killsScored);
   num(w.scoring.bonusesScored);
+  // The boss (M1-13): its slot, the parts in use, the WARNING.
+  const b = w.bosses.boss;
+  word(b.state);
+  for (const value of [b.specIndex, b.x, b.y, b.screenX, b.screenY]) num(value);
+  for (const value of [b.stateTicks, b.phase, b.phaseTicks]) num(value);
+  word(b.script === null ? 0 : 1);
+  num(b.wakeTick);
+  word(b.motion);
+  for (const value of [b.trackSpeed, b.trackMin, b.trackMax]) num(value);
+  for (const value of [b.moveFromX, b.moveFromY, b.moveToX, b.moveToY, b.moveTicks]) num(value);
+  num(b.moveElapsed);
+  word(b.destroyedMask);
+  num(b.killer);
+  word(b.blasted ? 1 : 0);
+  num(b.partCount);
+  for (const part of b.parts.slice(0, b.partCount)) {
+    for (const value of [part.localX, part.localY, part.x, part.y, part.hp]) num(value);
+    word(part.destroyed ? 1 : 0);
+    word(part.open ? 1 : 0);
+    num(part.flashTicks);
+  }
+  word(w.bosses.warning.active ? 1 : 0);
+  num(w.bosses.warning.ticks);
   let h = FNV_OFFSET_BASIS;
   for (const b of bytes) h = Math.imul(h ^ b, FNV_PRIME) >>> 0;
   return h;

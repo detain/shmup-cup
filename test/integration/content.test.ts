@@ -166,7 +166,21 @@ describe('integration: content/ validates', () => {
       expect(db.sprites.names[weapon.spriteId]).toBe(weapon.sprite);
       expect(db.scripts.names[weapon.behaviorId]).toBe(weapon.behavior);
     }
-    for (const enemy of db.enemies) expect(db.scripts.names[enemy.scriptId]).toBe(enemy.script);
+    for (const enemy of db.enemies) {
+      if (enemy.boss === null) {
+        expect(db.scripts.names[enemy.scriptId]).toBe(enemy.script);
+        expect(db.sprites.names[enemy.spriteId]).toBe(enemy.sprite);
+        continue;
+      }
+      // A boss (M1-13): its phases name the scripts, its parts the sprites.
+      expect([enemy.scriptId, enemy.spriteId]).toEqual([-1, -1]);
+      for (const phase of enemy.boss.phases) {
+        expect(db.scripts.names[phase.scriptId]).toBe(phase.script);
+      }
+      for (const part of enemy.boss.parts) {
+        if (part.sprite !== undefined) expect(db.sprites.names[part.spriteId]).toBe(part.sprite);
+      }
+    }
   });
 
   it('loads the example format samples without a single issue', () => {

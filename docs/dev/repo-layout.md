@@ -53,7 +53,7 @@ shmup-cup/
 │   │   │   ├── patterns/       ✔ (partial) sleeping behaviour coroutines (runner) + per-tick movers + fire primitives (DSL: M2-02)
 │   │   │   ├── behaviors/      ✔ (partial) behaviour registry referenced by content script ids; the M1 roster
 │   │   │   ├── bullets/        ✔ enemy bullets (512-slot SoA pool = the ENEMY_BULLETS batch) + telegraphed lasers, player collision, cancel
-│   │   │   ├── bosses/                                     enemy-side system (placeholder)
+│   │   │   ├── bosses/         ✔ (partial) multi-part bosses: weak points, phases, the WARNING, the death sequence (mid-bosses, raids: M2-09)
 │   │   │   ├── collision/      ✔ (partial) scalar shape tests, layer masks, counting-sort uniform grid, pixel-exact terrain queries
 │   │   │   ├── stage/          ✔ stage runtime: camera keys / ramps / pans / locks, event cursor, checkpoints, terrain map + parallax / terrain views
 │   │   │   ├── rank/           ✔ (partial) constant rank from the difficulty, rankScale curves (growth: M2-01)
@@ -92,7 +92,7 @@ shmup-cup/
 │   ├── player/             ✔ one file per ship: speed levels, hitboxes, margins, timers (+ README, example)
 │   ├── stages/             ✔ one file per stage: music, camera path, checkpoints, parallax, tilemap (heightfield / RLE), event timeline; test-range (+ README, example)
 │   ├── tilesets/           ✔ terrain tilesets: per tile collision type, column-height mask, atlas frame (+ README, example)
-│   ├── enemies/            ✔ enemy definitions: hp, score, hurtbox, behaviour script + tunables, mover, ground anchor, drop, child; test-range roster (+ README, example)
+│   ├── enemies/            ✔ enemy definitions: hp, score, hurtbox, behaviour script + tunables, mover, ground anchor, drop, child; boss sections (parts, weak points, phases); test-range roster, test boss (+ README, example)
 │   ├── paths/              ✔ movement paths: spline control points, baked to arc-length tables at load (+ README, example)
 │   ├── weapons/            ✔ weapon tunables + preset loadouts: the Type A arsenal the game fires (+ README, example)
 │   └── input/              ✔ input profiles (kind input-profiles, validated by input-web rebind): per-context key/button tables, remote debounce/diagonal/SOCD, Tizen keys to register

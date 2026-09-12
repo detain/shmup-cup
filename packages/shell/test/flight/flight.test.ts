@@ -73,6 +73,7 @@ describe('shell/flight', () => {
       LayerId.EnemyBullets,
       LayerId.Player,
       LayerId.Items,
+      LayerId.AirEnemies,
     ]);
     expect(flight.world.batches.slice(2)).toEqual(game.world.view.batches);
     expect(flight.world.batches[2]).toBe(game.world.enemies.groundBatch);
@@ -83,6 +84,8 @@ describe('shell/flight', () => {
     expect(flight.world.batches[7]).toBe(game.world.bullets.batch);
     expect(flight.world.batches[8]).toBe(game.world.powerups.shieldBatch); // M1-11
     expect(flight.world.batches[9]).toBe(game.world.powerups.itemBatch);
+    expect(flight.world.batches[10]).toBe(game.world.bosses.batch); // M1-13
+    expect(flight.world.warning).toBe(game.world.bosses.warning);
     expect(flight.world.lasers).toBe(game.world.bullets.laserView); // M1-09
   });
 
@@ -221,5 +224,40 @@ describe('shell/flight', () => {
     expect(flight.frame.hud.strings[1]).toBe('TEST RANGE');
     for (let i = 0; i < 120; i++) game.step();
     expect(game.world.camera.x).toBeGreaterThan(60);
+  });
+
+  it("shows the boss WARNING's text on a band while it plays, rebuilt only on changes (M1-13)", () => {
+    const { db } = loadContent(readContentFiles());
+    const game = createGame(createHeadlessPlatform(), { seed: 1, stage: 'test-boss' }, db);
+    const flight = createFlightScene(game);
+    const ui = flight.frame.ui;
+    const warning = game.world.bosses.warning;
+    expect(flight.world.warning).toBe(warning);
+    flight.update(game.renderFrame());
+    expect(ui.count).toBe(0);
+    while (!warning.active) game.step();
+    flight.update(game.renderFrame());
+    expect(ui.strings[0]).toBe(warning.text);
+    expect(ui.strings[0]).toContain('"TRIAL WARDEN"');
+    expect(Array.from(ui.op.subarray(0, ui.count))).toEqual([
+      DrawOp.Rect,
+      DrawOp.Rect,
+      DrawOp.Rect,
+      DrawOp.Text,
+    ]);
+    const text = ui.count - 1;
+    expect([ui.x[text], ui.color[text]]).toEqual([PLAYFIELD_W / 2, 0xf85858]);
+    // Unchanged within a colour phase; the colour alternates every 16 ticks.
+    const revision = ui.revision;
+    game.step();
+    flight.update(game.renderFrame());
+    expect(ui.revision).toBe(revision);
+    while ((warning.ticks & 16) === 0) game.step();
+    flight.update(game.renderFrame());
+    expect(ui.color[ui.count - 1]).toBe(0xf8d030);
+    // Gone when the boss flies in.
+    while (warning.active) game.step();
+    flight.update(game.renderFrame());
+    expect(ui.count).toBe(0);
   });
 });

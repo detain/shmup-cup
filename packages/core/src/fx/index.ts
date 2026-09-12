@@ -48,7 +48,7 @@
  * {@link ShakeMagnitude}, {@link FlashKind}, {@link FLASH_KIND_TICKS}, {@link MAX_HIT_STOP_TICKS},
  * {@link MAX_FX_TICKS}.
  *
- * **Planned API.** Authentic slowdown (M3-02); more {@link FlashKind}s with the bosses (M1-13).
+ * **Planned API.** Authentic slowdown (M3-02).
  *
  * @module
  */
@@ -88,13 +88,20 @@ export type ShakeMagnitude = (typeof ShakeMagnitude)[keyof typeof ShakeMagnitude
 export const FlashKind = {
   /** Mega Crash, the meter's `!` slot (`core/powerups`). */
   MegaCrash: 0,
+  /** A pulse of the boss WARNING (`core/bosses`, M1-13: one per siren wail, 1 a second). */
+  Warning: 1,
+  /** The final blast of a boss's death sequence (`core/bosses`, M1-13). */
+  BossBlast: 2,
 } as const;
 
 /** A {@link FlashKind} code. */
 export type FlashKind = (typeof FlashKind)[keyof typeof FlashKind];
 
-/** Duration in ticks of each {@link FlashKind}, by code (Mega Crash: 12 — M1-11's value). */
-export const FLASH_KIND_TICKS: readonly number[] = Object.freeze([12]);
+/**
+ * Duration in ticks of each {@link FlashKind}, by code (Mega Crash: 12 — M1-11's value; a
+ * WARNING pulse 8; a boss's final blast 24).
+ */
+export const FLASH_KIND_TICKS: readonly number[] = Object.freeze([12, 8, 24]);
 
 /**
  * Sim-side effect state of one World (a class, so its fields stay unboxed numbers). Hit-stop

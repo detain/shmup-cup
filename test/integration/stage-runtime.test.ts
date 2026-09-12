@@ -9,11 +9,12 @@
  *   the playfield is at least 48 px tall, and the fly-in spawn point is clear at every
  *   checkpoint;
  * - a headless game restarted at every checkpoint of every shipped stage plays on to
- *   `stageClear`, with equal `hashWorld` for two identical sessions, and the restarted camera
- *   continues at the checkpoint x;
+ *   `stageClear` (a boss — M1-13 — is defeated as soon as it fights), with equal `hashWorld` for
+ *   two identical sessions, and the restarted camera continues at the checkpoint x;
  * - the terrain the World collides with is the terrain the renderer is told to draw.
  */
 import {
+  BossState,
   ENTER_END_X,
   PLAYFIELD_H,
   SPAWN_Y,
@@ -125,23 +126,31 @@ describe('integration: checkpoint restarts on the shipped stages', () => {
     checkpoint: number,
   ): { game: Game; x: number } {
     const game = createGame(createHeadlessPlatform(), { seed: 11, stage: stageId }, db);
+    const world = game.world;
     // Nobody steers: god mode keeps the ship alive to the end (deaths since M1-12).
-    game.world.debugFlags.godMode = true;
-    const runner = game.world.stage;
+    world.debugFlags.godMode = true;
+    const runner = world.stage;
     if (runner === null) throw new Error('no stage');
+    /** One tick: a scroll lock without a boss is released, a boss is defeated once it fights. */
+    const step = (): void => {
+      if (runner.locked && !world.bosses.active) runner.unlock();
+      if (world.bosses.boss.state === BossState.Fight) world.bosses.defeat(0);
+      game.step();
+    };
     // 200 px past the checkpoint (300 ticks for the stage start), then back to it.
     const past = (checkpoint < 0 ? 0 : runner.stage.checkpoints[checkpoint].x) + 200;
-    for (let t = 0; t < 20000 && game.world.status === 'playing'; t++) {
+    for (let t = 0; t < 20000 && world.status === 'playing'; t++) {
       if (runner.camera.x >= past && t >= 300) break;
-      if (runner.locked) runner.unlock();
-      game.step();
+      step();
     }
-    expect(game.world.status).toBe('playing');
+    expect(world.status).toBe('playing');
     runner.restartAt(checkpoint);
-    const x = game.world.camera.x;
-    for (let t = 0; t < 20000 && game.world.status === 'playing'; t++) {
-      if (runner.locked) runner.unlock();
-      game.step();
+    const x = world.camera.x;
+    // On to the end of the stage (a boss's death clears it before the camera gets there).
+    const length = runner.stage.length;
+    for (let t = 0; t < 20000 && world.status !== 'gameOver'; t++) {
+      if (world.status === 'stageClear' && world.camera.x >= length) break;
+      step();
     }
     return { game, x };
   }

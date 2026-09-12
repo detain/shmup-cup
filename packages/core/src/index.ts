@@ -9,7 +9,7 @@
  * This entry point exports the implemented (and partial) public API. Placeholder modules
  * under `src/<module>/` (weapons, bosses, scoring, …) are exported here as they get
  * implemented — `bullets` and `rank` joined with plan step M1-09, `weapons` and `options` with
- * M1-10, `powerups` and `shields` with M1-11, `scoring` and `fx` with M1-12.
+ * M1-10, `powerups` and `shields` with M1-11, `scoring` and `fx` with M1-12, `bosses` with M1-13.
  *
  * @packageDocumentation
  */
@@ -56,6 +56,7 @@ export {
   SFX_CUES,
   SFX_CUE_NAMES,
   SIM_EVENT_KIND_NAMES,
+  SfxPriority,
   SimEventKind,
   createEventQueue,
   type EventQueue,
@@ -160,18 +161,25 @@ export {
   type SpriteBatchView,
   type TerrainView,
   type TextMetrics,
+  type WarningView,
   type WorldView,
 } from './presentation/index.js';
 
 export {
+  BOSS_VULNERABILITIES,
   CONTENT_FORMAT_VERSION,
   CONTENT_KINDS,
   CONTENT_MIGRATIONS,
+  DEFAULT_BOSS_INTRO_TICKS,
+  DEFAULT_BOSS_X,
+  DEFAULT_BOSS_Y,
   DEFAULT_SETTLE_TICKS,
   EMPTY_CONTENT_DB,
   ENEMY_DROPS,
   ENEMY_EXPLOSIONS,
   ENEMY_GROUNDS,
+  MAX_BOSS_PARTS,
+  MAX_BOSS_PHASES,
   MAX_PATH_LENGTH,
   MAX_STAGE_FLAGS,
   MOVER_TYPES,
@@ -185,6 +193,11 @@ export {
   isContentKind,
   loadContent,
   s,
+  type BossPartSpec,
+  type BossPhaseSpec,
+  type BossSpec,
+  type BossUntilSpec,
+  type BossVulnerability,
   type BoxSpec,
   type ContentDb,
   type ContentFile,
@@ -417,15 +430,57 @@ export {
 
 export {
   BEHAVIOR_IDS,
+  BOSS_BEHAVIOR_IDS,
   DEFAULT_BEHAVIORS,
   DEFAULT_BEHAVIOR_DEFS,
+  DEFAULT_BOSS_BEHAVIORS,
+  DEFAULT_BOSS_BEHAVIOR_DEFS,
   KNOWN_SCRIPT_IDS,
   checkEnemyBehaviors,
   createBehaviorRegistry,
+  createBossBehaviorRegistry,
   defineBehavior,
+  defineBossBehavior,
   type BehaviorDef,
   type BehaviorRegistry,
+  type BossBehaviorDef,
+  type BossBehaviorRegistry,
 } from './behaviors/index.js';
+
+export {
+  BOSS_BLAST_HIT_STOP_TICKS,
+  BOSS_BLAST_SHAKE_TICKS,
+  BOSS_CHAIN_INTERVAL,
+  BOSS_CHAIN_TICKS,
+  BOSS_CLEAR_TICKS,
+  BOSS_ENTRY_MARGIN,
+  BOSS_MUSIC_FADE_TICKS,
+  BOSS_PART_ID_BASE,
+  BOSS_STATE_NAMES,
+  BOSS_TALLY_TICKS,
+  Boss,
+  BossHit,
+  BossMotion,
+  BossPart,
+  BossState,
+  BossVulnerable,
+  EMPTY_BOSS_BEHAVIORS,
+  MAX_HIT_TARGETS,
+  WARNING_BRAKE_TICKS,
+  WARNING_DIM_PERCENT,
+  WARNING_MUSIC_FADE_TICKS,
+  WARNING_PULSE_TICKS,
+  WARNING_TEMPLATE,
+  WARNING_TICKS,
+  WarningState,
+  createBossSystem,
+  formatWarningText,
+  type BossBehavior,
+  type BossBehaviorLookup,
+  type BossHost,
+  type BossScriptApi,
+  type BossSystem,
+} from './bosses/index.js';
 
 export {
   MAX_OPTIONS,

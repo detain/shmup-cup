@@ -192,7 +192,7 @@ its index:
 | `type` | Runner's own part | The World's hook today |
 |---|---|---|
 | `spawn`, `formation` | — | `world.enemies.onStageEvent(index)`: one enemy at the view point (`screenX`, `y`), or a formation whose members spawn every `interval` ticks (M1-08 — [enemies-and-behaviors.md](enemies-and-behaviors.md#spawning)) |
-| `warning`, `boss` | — | nothing yet — bosses arrive in M1-13 |
+| `warning`, `boss` | — | `core/bosses` (M1-13): the WARNING then the boss / the boss at once; `warning` also brakes the camera to a lock (`StageRunner.brake`) |
 | `music` | — | pushes `SimEventKind.Music` with the cue id |
 | `speed` | new target speed / ramp | — |
 | `flag` | sets / clears bit `flagId` of `runner.flags` (`value` defaults to `true`) | — |
@@ -377,7 +377,7 @@ world.stage!.restartAt(1); // back to x 1500: speed, pan and flags as live play 
 | After `restartAt`, the speed differs slightly from live play | A key and a `speed` event less than one tick's movement apart; place them at the same x or further apart (see [Checkpoints](#checkpoints)) |
 | Spawns at a checkpoint's x appear again after a restart | Intended: those events re-fire on the next tick for the hooks (their runner part was already applied) |
 | `unlock()` did nothing | It was called before the camera reached the lock key; the key locks when it applies |
-| The camera stops short of the stage end | A lock key waiting for `unlock()` — nothing unlocks until the bosses of M1-13 |
+| The camera stops short of the stage end | A lock key (or a WARNING's brake) waiting for `unlock()` — a boss's death unlocks it (M1-13) |
 | The ship flies through rock | Only during the fly-in, while invulnerable (the respawn blink) and in god mode; otherwise terrain contact is a death since M1-12 |
 | A test that parks a ship in the floor ends in `gameOver` | Terrain kills since M1-12 — set `world.debugFlags.godMode = true` |
 | A box sitting exactly on a floor does not hit | Terrain tests are half-open on pixels; move it one pixel into the rock |

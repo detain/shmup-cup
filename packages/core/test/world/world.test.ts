@@ -121,11 +121,11 @@ describe('core/world', () => {
     expect(w.rng.gameplay.nextU32()).toBe(createRng(9).nextU32());
   });
 
-  it('exposes a WorldView: live camera, no parallax/terrain yet, enemy, shot, option, player, bullet, shield and item batches', () => {
+  it('exposes a WorldView: live camera, no parallax/terrain yet, enemy, shot, option, player, bullet, shield, item and boss batches', () => {
     const w = world();
     expect(w.view.camera).toBe(w.camera);
     expect([w.view.parallax, w.view.terrain]).toEqual([null, null]);
-    expect(w.view.batches).toHaveLength(8);
+    expect(w.view.batches).toHaveLength(9);
     expect(w.view.batches[0]).toBe(w.enemies.groundBatch);
     expect(w.view.batches[1]).toBe(w.enemies.airBatch);
     expect(w.view.batches[2]).toBe(w.weapons.batch);
@@ -134,7 +134,9 @@ describe('core/world', () => {
     expect(w.view.batches[5]).toBe(w.bullets.batch);
     expect(w.view.batches[6]).toBe(w.powerups.shieldBatch);
     expect(w.view.batches[7]).toBe(w.powerups.itemBatch);
+    expect(w.view.batches[8]).toBe(w.bosses.batch);
     expect(w.view.lasers).toBe(w.bullets.laserView);
+    expect(w.view.warning).toBe(w.bosses.warning);
     expect(w.view.batches.map((b) => b.layer)).toEqual([
       LayerId.GroundEnemies,
       LayerId.AirEnemies,
@@ -144,6 +146,7 @@ describe('core/world', () => {
       LayerId.EnemyBullets,
       LayerId.Player,
       LayerId.Items,
+      LayerId.AirEnemies,
     ]);
     expect(w.playerBatch.layer).toBe(LayerId.Player);
     // Filled at creation, so the first frame already shows the ship.

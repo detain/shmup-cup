@@ -40,8 +40,9 @@ describe('core/events', () => {
     expect(SimEventKind.Sfx).toBe(0);
     expect(SIM_EVENT_KIND_NAMES.length).toBe(Object.keys(SimEventKind).length);
     const codes = Object.values(SimEventKind);
-    expect(codes).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    expect(codes).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
     expect(SIM_EVENT_KIND_NAMES[SimEventKind.HitStop]).toBe('hitstop');
+    expect(SIM_EVENT_KIND_NAMES[SimEventKind.BossDefeated]).toBe('bossDefeated');
   });
 
   it('keeps the cue registries dense, unique and in name order', () => {

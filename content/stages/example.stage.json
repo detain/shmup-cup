@@ -62,9 +62,7 @@
     { "x": 1536, "type": "formation", "enemy": "drifter", "count": 5, "interval": 8 },
     { "x": 2048, "type": "speed", "speed": 2, "ramp": 120 },
     { "x": 2048, "type": "flag", "flag": "fast-lane" },
-    { "x": 3700, "type": "warning", "enemy": "example-warden" },
-    { "x": 3840, "type": "music", "cue": "Boss" },
-    { "x": 3840, "type": "boss", "enemy": "example-warden" },
+    { "x": 3840, "type": "warning", "enemy": "example-warden" },
     { "x": 4096, "type": "end" }
   ]
 }

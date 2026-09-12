@@ -36,22 +36,43 @@
  * `drifter.sine`, `fan.loop`, `carrier.straight`, `hatch.spawner` and `rammer.aimed` do not fire.
  * Every shot goes through the primitives, so nothing fires off screen or before `settleTicks`.
  *
+ * **Boss behaviours** (M1-13, {@link DEFAULT_BOSS_BEHAVIORS}; a boss phase's `script`, its
+ * `params` override the defaults) drive `core/bosses` through the {@link BossScriptApi}; they
+ * fire from the boss's **gun** parts (`"gun": true`) that are still standing:
+ *
+ * - `boss.hover` — follows the nearest player's height at [`trackSpeed` 0.5] px/tick, [`margin`
+ *   32] px from the playfield's top and bottom; every [`fireTicks` 60] ticks (rank-scaled) each gun
+ *   fires an aimed spread of [`ways` 1] round red bullets [`spread` 40 binary units apart] at
+ *   [`bulletSpeed` 1.5]; with [`openTicks` 0 = never] > 0 its `whenOpen` parts open for
+ *   `openTicks` after every [`closedTicks` 120] closed.
+ * - `boss.lanes` — tracks like `boss.hover` [`trackSpeed` 0 = holds still]; every [`laserTicks`
+ *   150] ticks the next gun in turn fires a telegraphed horizontal laser to the left in its lane
+ *   (not attached, [`laserLength` 384], [`laserWidth` 6], [`telegraph` 50] warning ticks,
+ *   [`active` 45] beam ticks), and every [`fireTicks` 90] ticks each gun an aimed [`ways` 3]-way
+ *   of purple needles [`spread` 40] at [`bulletSpeed` 1.25].
+ *
  * **Implements.**
  * - shmup_feat.md §11 — archetypes (popcorn, formation fliers, capsule carriers, turrets,
  *   walkers, hatches, rammers, orbiters) as coroutine scripts
  * - shmup_tech.md §4.6 — TS generator coroutines
+ * - shmup_feat.md §13 — boss phases driven by behaviour scripts (the pattern set changes with the
+ *   phase)
  *
  * **Public API.** {@link BehaviorDef}, {@link BehaviorRegistry}, {@link defineBehavior},
  * {@link createBehaviorRegistry}, {@link DEFAULT_BEHAVIORS}, {@link DEFAULT_BEHAVIOR_DEFS},
- * {@link BEHAVIOR_IDS}, {@link WEAPON_SCRIPT_IDS}, {@link KNOWN_SCRIPT_IDS},
- * {@link checkEnemyBehaviors}.
+ * {@link BEHAVIOR_IDS}, {@link BossBehaviorDef}, {@link BossBehaviorRegistry},
+ * {@link defineBossBehavior}, {@link createBossBehaviorRegistry}, {@link DEFAULT_BOSS_BEHAVIORS},
+ * {@link DEFAULT_BOSS_BEHAVIOR_DEFS}, {@link BOSS_BEHAVIOR_IDS}, {@link WEAPON_SCRIPT_IDS},
+ * {@link KNOWN_SCRIPT_IDS}, {@link checkEnemyBehaviors}.
  *
- * **Planned API.** More behaviours with the zone content (M1-18) and the bosses (M1-13).
+ * **Planned API.** More behaviours with the zone content (M1-18).
  *
  * @module
  */
-import { BulletKind } from '../bullets/index.js';
+import { BulletKind, LASER_FADE_TICKS, LASER_GROW_TICKS } from '../bullets/index.js';
 import { WEAPON_SCRIPT_IDS } from '../weapons/index.js';
+import type { BossBehavior, BossBehaviorLookup, BossScriptApi } from '../bosses/index.js';
+import { PLAYFIELD_H } from '../config/index.js';
 import type { ContentDb, ValidationIssue } from '../data/index.js';
 import type { EnemyBehavior, EnemyBehaviorLookup, ScriptApi } from '../enemies/index.js';
 import { EnemyFlag } from '../enemies/index.js';
@@ -63,7 +84,7 @@ import { BodyAnchor, MoverKind, SLEEP_FOREVER, type Script } from '../patterns/i
 export const moduleInfo = defineModule({
   name: 'behaviors',
   status: 'partial',
-  specRefs: ['shmup_feat.md §11', 'shmup_tech.md §4.6'],
+  specRefs: ['shmup_feat.md §11', 'shmup_tech.md §4.6', 'shmup_feat.md §13'],
 });
 
 /**
@@ -344,6 +365,238 @@ export const DEFAULT_BEHAVIORS: BehaviorRegistry = createBehaviorRegistry(DEFAUL
 export const BEHAVIOR_IDS: readonly string[] = DEFAULT_BEHAVIORS.ids;
 
 /**
+ * One boss behaviour: its id, its tunables (defaults) and its coroutine factory (M1-13).
+ *
+ * @typeParam P - The tunables' shape.
+ */
+export interface BossBehaviorDef<
+  P extends Readonly<Record<string, number>> = Readonly<Record<string, number>>,
+> extends BossBehavior {
+  /** Script id a boss phase refers to. */
+  readonly id: string;
+  /** Tunables with their defaults (a phase's `params` override them by name). */
+  readonly params: P;
+  /**
+   * Creates the coroutine of one phase.
+   *
+   * @param api - The boss's script API.
+   * @param params - The resolved tunables.
+   * @returns The coroutine.
+   */
+  create(api: BossScriptApi, params: P): Script;
+}
+
+/** A set of boss behaviours by id. */
+export interface BossBehaviorRegistry extends BossBehaviorLookup {
+  /** Every id, sorted. */
+  readonly ids: readonly string[];
+  /**
+   * Finds a boss behaviour.
+   *
+   * @param id - Script id.
+   * @returns The behaviour, or `undefined`.
+   */
+  get(id: string): BossBehaviorDef | undefined;
+}
+
+/**
+ * Declares a boss behaviour with typed tunables (see {@link defineBehavior} — the same rules: read
+ * the API once at the start, `yield` tick counts, no allocation between yields, integer locals).
+ *
+ * @typeParam P - The tunables' shape.
+ * @param id - Script id.
+ * @param params - Tunables with defaults.
+ * @param create - The coroutine factory.
+ * @returns The frozen definition.
+ *
+ * @example
+ * ```ts
+ * const sitter = defineBossBehavior('boss.sit', { fireTicks: 60 }, function* (api, p) {
+ *   for (;;) {
+ *     yield api.fireWait(p.fireTicks);
+ *     api.aimed(api.partIndex('core'), 1.5, BulletKind.RoundRed);
+ *   }
+ * });
+ * ```
+ */
+export function defineBossBehavior<P extends Readonly<Record<string, number>>>(
+  id: string,
+  params: P,
+  create: (api: BossScriptApi, params: P) => Script,
+): BossBehaviorDef {
+  return Object.freeze({
+    id,
+    params: Object.freeze({ ...params }),
+    create: create as (api: BossScriptApi, params: Readonly<Record<string, number>>) => Script,
+  });
+}
+
+/**
+ * Builds a boss behaviour registry (load time).
+ *
+ * @param defs - The behaviours.
+ * @returns The registry.
+ * @throws {Error} When two behaviours share an id.
+ */
+export function createBossBehaviorRegistry(defs: readonly BossBehaviorDef[]): BossBehaviorRegistry {
+  const byId = new Map<string, BossBehaviorDef>();
+  for (const def of defs) {
+    if (byId.has(def.id)) throw new Error(`boss behaviour "${def.id}" is defined twice`);
+    byId.set(def.id, def);
+  }
+  const ids = Object.freeze([...byId.keys()].sort());
+  return Object.freeze({
+    ids,
+    get(id: string): BossBehaviorDef | undefined {
+      return byId.get(id);
+    },
+  });
+}
+
+/** A timer that never runs out, as a small integer (see `boss.hover`). */
+const NEVER_TICKS = 0x3fffffff;
+
+/**
+ * Fires an aimed spread from every standing gun part of the boss.
+ *
+ * @param api - The boss's API.
+ * @param ways - Bullets per gun.
+ * @param spread - Binary units between neighbours.
+ * @param speed - Speed on Normal.
+ * @param kind - `BulletKind`.
+ * @returns Bullets fired.
+ */
+function fireGuns(
+  api: BossScriptApi,
+  ways: number,
+  spread: number,
+  speed: number,
+  kind: number,
+): number {
+  const parts = api.self.parts;
+  let fired = 0;
+  for (let i = 0; i < api.partCount; i++) {
+    if (parts[i].gun && !parts[i].destroyed) fired += api.nWay(i, ways, spread, speed, kind);
+  }
+  return fired;
+}
+
+/** `boss.hover` — track the player's height, aimed spreads from the guns, open / close. */
+const bossHover = defineBossBehavior(
+  'boss.hover',
+  {
+    trackSpeed: 0.5,
+    margin: 32,
+    fireTicks: 60,
+    bulletSpeed: 1.5,
+    ways: 1,
+    spread: 40,
+    openTicks: 0,
+    closedTicks: 120,
+  },
+  function* hover(api, p): Script {
+    api.track(p.trackSpeed, p.margin, PLAYFIELD_H - p.margin);
+    const ways = p.ways >= 1 ? Math.floor(p.ways) : 1;
+    const openTicks = p.openTicks >= 1 ? Math.floor(p.openTicks) : 0;
+    const closedTicks = p.closedTicks >= 1 ? Math.floor(p.closedTicks) : 1;
+    let open = false;
+    api.setOpenAll(false);
+    let fireIn = api.fireWait(p.fireTicks);
+    // A whole-number "never" (not `SLEEP_FOREVER`): an Infinity in a generator local is a heap
+    // number, and `toggleIn -= wait` would allocate a new one on every wake.
+    let toggleIn = openTicks > 0 ? closedTicks : NEVER_TICKS;
+    for (;;) {
+      const wait = fireIn < toggleIn ? fireIn : toggleIn;
+      yield wait;
+      fireIn -= wait;
+      toggleIn -= wait;
+      if (fireIn <= 0) {
+        fireGuns(api, ways, p.spread, p.bulletSpeed, BulletKind.RoundRed);
+        fireIn = api.fireWait(p.fireTicks);
+      }
+      if (toggleIn <= 0) {
+        open = !open;
+        api.setOpenAll(open);
+        toggleIn = open ? openTicks : closedTicks;
+      }
+    }
+  },
+);
+
+/** `boss.lanes` — lane lasers from the guns in turn, aimed spreads between them. */
+const bossLanes = defineBossBehavior(
+  'boss.lanes',
+  {
+    trackSpeed: 0,
+    margin: 32,
+    laserTicks: 150,
+    laserLength: 384,
+    laserWidth: 6,
+    telegraph: 50,
+    active: 45,
+    fireTicks: 90,
+    bulletSpeed: 1.25,
+    ways: 3,
+    spread: 40,
+  },
+  function* lanes(api, p): Script {
+    api.track(p.trackSpeed, p.margin, PLAYFIELD_H - p.margin);
+    const ways = p.ways >= 1 ? Math.floor(p.ways) : 1;
+    const laserTicks = p.laserTicks >= 1 ? Math.floor(p.laserTicks) : 1;
+    let next = 0;
+    let laserIn = laserTicks;
+    let fireIn = api.fireWait(p.fireTicks);
+    for (;;) {
+      const wait = fireIn < laserIn ? fireIn : laserIn;
+      yield wait;
+      fireIn -= wait;
+      laserIn -= wait;
+      if (laserIn <= 0) {
+        // The next standing gun in turn (lanes alternate between the guns).
+        const parts = api.self.parts;
+        const count = api.partCount;
+        for (let k = 0; k < count; k++) {
+          const i = (next + k) % count;
+          if (!parts[i].gun || parts[i].destroyed) continue;
+          api.laser(
+            i,
+            ANGLE_UNITS / 2,
+            p.laserLength,
+            p.laserWidth,
+            p.telegraph,
+            LASER_GROW_TICKS,
+            p.active,
+            LASER_FADE_TICKS,
+            false,
+          );
+          next = i + 1;
+          break;
+        }
+        laserIn = laserTicks;
+      }
+      if (fireIn <= 0) {
+        fireGuns(api, ways, p.spread, p.bulletSpeed, BulletKind.NeedlePurple);
+        fireIn = api.fireWait(p.fireTicks);
+      }
+    }
+  },
+);
+
+/** The M1 boss roster's definitions (see the module docs). */
+export const DEFAULT_BOSS_BEHAVIOR_DEFS: readonly BossBehaviorDef[] = Object.freeze([
+  bossHover,
+  bossLanes,
+]);
+
+/** The boss roster as a registry (what the World uses). */
+export const DEFAULT_BOSS_BEHAVIORS: BossBehaviorRegistry = createBossBehaviorRegistry(
+  DEFAULT_BOSS_BEHAVIOR_DEFS,
+);
+
+/** Ids of {@link DEFAULT_BOSS_BEHAVIORS}, sorted. */
+export const BOSS_BEHAVIOR_IDS: readonly string[] = DEFAULT_BOSS_BEHAVIORS.ids;
+
+/**
  * The weapon behaviour ids (`core/weapons` `WEAPON_SCRIPT_IDS`: `laser.beam`,
  * `missile.groundSlide`, `shot.double`, `shot.straight`), re-exported here next to
  * {@link KNOWN_SCRIPT_IDS}: weapon and enemy behaviours share the content's one script table.
@@ -351,20 +604,53 @@ export const BEHAVIOR_IDS: readonly string[] = DEFAULT_BEHAVIORS.ids;
 export { WEAPON_SCRIPT_IDS };
 
 /**
- * Every script id the engine knows: the enemy behaviours plus {@link WEAPON_SCRIPT_IDS} — both
- * live in the content's one script table. Hosts pass it to `loadContent` as `knownScripts`.
+ * Every script id the engine knows: the enemy behaviours, the boss behaviours and
+ * {@link WEAPON_SCRIPT_IDS} — all live in the content's one script table. Hosts pass it to
+ * `loadContent` as `knownScripts`.
  */
 export const KNOWN_SCRIPT_IDS: readonly string[] = Object.freeze(
-  [...BEHAVIOR_IDS, ...WEAPON_SCRIPT_IDS].sort(),
+  [...BEHAVIOR_IDS, ...BOSS_BEHAVIOR_IDS, ...WEAPON_SCRIPT_IDS].sort(),
 );
 
 /**
+ * Lists the `params` names a behaviour does not have.
+ *
+ * @param params - The content's tunables.
+ * @param known - The behaviour's defaults.
+ * @param path - Issue path of the `params` object.
+ * @param id - Behaviour id (for the message).
+ * @param issues - Collector.
+ */
+function checkParams(
+  params: Readonly<Record<string, number>>,
+  known: Readonly<Record<string, number>>,
+  path: string,
+  id: string,
+  issues: ValidationIssue[],
+): void {
+  for (const name of Object.keys(params)) {
+    if (!Object.prototype.hasOwnProperty.call(known, name)) {
+      issues.push({
+        path: path + '.' + name,
+        message:
+          'unknown param for behaviour "' + id + '" (known: ' + Object.keys(known).join(', ') + ')',
+      });
+    }
+  }
+}
+
+/**
  * Checks enemies against their behaviours: every `params` name must be a tunable of the
- * behaviour, and spawners need a `child`. (Unknown script ids are `loadContent`'s job.)
+ * behaviour, and spawners need a `child`. A regular enemy must name an enemy behaviour, every boss
+ * phase a boss behaviour, and a phase's `params` must be that boss behaviour's tunables. (Unknown
+ * script ids are `loadContent`'s job.)
  *
  * @param db - Validated content.
- * @param registry - The behaviours (default {@link DEFAULT_BEHAVIORS}).
- * @returns Issues with paths `enemies:<id>.params.<name>` / `enemies:<id>.child`.
+ * @param registry - The enemy behaviours (default {@link DEFAULT_BEHAVIORS}).
+ * @param bossRegistry - The boss behaviours (default {@link DEFAULT_BOSS_BEHAVIORS}).
+ * @returns Issues with paths `enemies:<id>.params.<name>`, `enemies:<id>.child`,
+ *   `enemies:<id>.script`, `enemies:<id>.boss.phases[<p>].script` and
+ *   `enemies:<id>.boss.phases[<p>].params.<name>`.
  *
  * @example
  * ```ts
@@ -375,24 +661,40 @@ export const KNOWN_SCRIPT_IDS: readonly string[] = Object.freeze(
 export function checkEnemyBehaviors(
   db: ContentDb,
   registry: BehaviorRegistry = DEFAULT_BEHAVIORS,
+  bossRegistry: BossBehaviorRegistry = DEFAULT_BOSS_BEHAVIORS,
 ): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
   for (const enemy of db.enemies) {
+    const boss = enemy.boss;
+    if (boss !== null) {
+      for (let p = 0; p < boss.phases.length; p++) {
+        const phase = boss.phases[p];
+        const at = 'enemies:' + enemy.id + '.boss.phases[' + String(p) + ']';
+        const def = bossRegistry.get(phase.script);
+        if (def === undefined) {
+          if (registry.get(phase.script) !== undefined) {
+            issues.push({
+              path: at + '.script',
+              message: '"' + phase.script + '" is an enemy behaviour, not a boss behaviour',
+            });
+          }
+          continue;
+        }
+        checkParams(phase.params, def.params, at + '.params', def.id, issues);
+      }
+      continue;
+    }
     const def = registry.get(enemy.script);
-    if (def === undefined) continue;
-    for (const name of Object.keys(enemy.params)) {
-      if (!Object.prototype.hasOwnProperty.call(def.params, name)) {
+    if (def === undefined) {
+      if (bossRegistry.get(enemy.script) !== undefined) {
         issues.push({
-          path: 'enemies:' + enemy.id + '.params.' + name,
-          message:
-            'unknown param for behaviour "' +
-            def.id +
-            '" (known: ' +
-            Object.keys(def.params).join(', ') +
-            ')',
+          path: 'enemies:' + enemy.id + '.script',
+          message: '"' + enemy.script + '" is a boss behaviour (use it in a boss phase)',
         });
       }
+      continue;
     }
+    checkParams(enemy.params, def.params, 'enemies:' + enemy.id + '.params', def.id, issues);
     if (def.needsChild && enemy.childId < 0) {
       issues.push({
         path: 'enemies:' + enemy.id + '.child',

@@ -1364,6 +1364,96 @@ the browser dev app and as a Tizen 5.5 bundle.
 - **Acceptance:** part transforms, weak-point gating, phase transitions (HP and part-mask), warning timeline incl.
   scroll lock and music events, death sequence timing, score award, bullets canceled.
 - **Refs:** `shmup_feat.md` §13 (presentation, mechanics), §19 (WARNING siren), §26 (no verbatim text).
+- **As built:**
+  - **Content.** A boss is an `enemies` entry with only an `id` and a `boss` section; every other
+    enemy field must be omitted (an issue), while a regular enemy still needs `hp`, `score`,
+    `hurtbox`, `script`, `sprite` and `drop` (now checked by the loader rather than the schema — a
+    bad entry still fails its whole file). The loader fills the regular fields of a boss (`hp` = the
+    cores' total, `score` = `boss.score`, `script` / `sprite` empty with ids -1, a 1-px hurtbox,
+    `megaCrashImmune`, `boss: null` on regular enemies). The section: `code` (A–Z, 0–9, `-`, ≤ 8),
+    `displayName` (upper case, ≤ 24), `introTicks` (default 120), `score` (tally points), home `x` /
+    `y` (default 296 / 100), `parts` (1–16, **parents first**: `name`, `parent`, `x` / `y` — the
+    plan's `localX` / `localY` —, `hp`, `hurtbox` (none = never hit or touched), `vulnerable` plus
+    **`never`** (armour), `requires` (names → `requiresMask`), **`core`** (the plan did not say how a
+    boss dies: when every core is destroyed; at least one, never `never`, with a hurtbox), **`gun`**
+    (where the generic behaviours fire from), `open`, `sprite`, `anim`, `score` (points for the
+    part), `explosion`) and `phases` (1–8: `script`, per-phase `params`, `until: { hpBelow (the
+    cores' total), partsDestroyed + optional **`count`**, **`ticks`** }` — any one ends the phase;
+    every phase but the last needs `until`, the last must not have one). After the references are
+    resolved a fourth loader pass reports a `spawn` / `formation` event or a `child` naming a boss
+    and a `warning` / `boss` event naming a regular enemy. New `content/enemies/test-boss.enemies.json`
+    (TRIAL WARDEN, TW-00: armoured hull blocks, a `whenOpen` vent, a core behind two plates, two
+    guns; phases: one plate down → `hpBelow` 12 → lanes) and `content/stages/test-boss.stage.json`
+    (BOSS RANGE, `?stage=test-boss`). The example warden became a boss; the samples lost their
+    redundant `boss` / `music` events (the WARNING brings the boss and its music).
+  - **Runtime shapes.** `Boss` / `BossPart` are classes with numeric codes (`BossState` None /
+    Warning / Intro / Fight / Dying / Dead instead of strings, `BossVulnerable`), one boss per World
+    with 16 part slots. The boss moves by its own motion (`hold`, `track(speed, minY, maxY)` — the
+    nearest player's height —, eased `moveTo`) instead of the enemy movers, which keeps
+    `updateMover` monomorphic; it rides the camera (playfield position + camera). Parts are placed
+    every tick parent + local offset (translation only; behaviours may move a part —
+    `setPartOffset`). Destroying a part destroys the parts attached below it (each explodes and pays
+    its score).
+  - **Hit path.** Parts take the ids after the enemy slots (`BOSS_PART_ID_BASE` 64 + index,
+    `MAX_HIT_TARGETS` 80) in the grid, the weapons' hit list and the laser sources. `core/weapons`
+    tests parts in its grid visitor and applies their hits through `BossSystem.damagePart`, which
+    answers a `BossHit`: `None` (the part went this tick — the shot flies on), `Clink` (the shot dies
+    with the clink SFX — the whole boss during its intro, armour, `afterParts` with parts of its
+    list left, `whenOpen` while closed), `Damaged`, `Destroyed`. Piercing shots keep a second
+    cooldown table for the parts (`WeaponSystem.partCooldowns`, 32 × 16 — the enemy tables keep
+    their layout); a clinking part ignores it like armour. Parts touch the ships during the intro
+    and the fight (brute force over ≤ 16 parts). `BulletHost` gained optional `laserSources` (the
+    World: enemies, then parts), so a part's laser can stay attached; a destroyed part detaches its
+    lasers.
+  - **Behaviours.** Boss behaviours are a second roster in `core/behaviors` (`BossBehaviorDef`,
+    `defineBossBehavior`, `createBossBehaviorRegistry`, `DEFAULT_BOSS_BEHAVIORS`,
+    `BOSS_BEHAVIOR_IDS` ⊂ `KNOWN_SCRIPT_IDS`) driving a `BossScriptApi` (fire primitives per part,
+    open / close, `track`, `moveTo`): the generic `boss.hover` and `boss.lanes` (HB-01's own come
+    with M1-18). `checkEnemyBehaviors` checks each phase's script is a boss behaviour and its
+    `params`, and flags a boss behaviour named by a regular enemy. `WorldOptions.bossBehaviors`.
+  - **WARNING.** The stage `warning` event: status `bossWarning` (only from `playing`), the new
+    `StageRunner.brake(60)` (speed ramps linearly to 0, then locked; keys and `speed` events met
+    meanwhile only record the resume speed; `unlock()` ramps back up over the same ramp; three new
+    state slots, `STAGE_STATE_SLOTS` 22), `MUSIC Silence` (fade 30), the new `SimEventKind.Dim`
+    (10: 50 % for 180 ticks), and on ticks 0 / 60 / 120 the siren (with the new `SfxPriority`
+    hint `Critical` in `param`) and the new `FlashKind.Warning` (8 ticks). The render contract got
+    `WarningView` (`WorldView.warning`), its text built per boss at world creation from
+    `WARNING_TEMPLATE` — `WARNING!!` / `GIANT HOSTILE "<NAME>"` / `CLOSING IN - CODE <CODE>` (three
+    lines that fit 384 px; D10's em dash is `-`, the font is ASCII). On tick 180 the boss flies in
+    from where its leftmost part edge is 8 px past the right edge (cubic ease-out over
+    `introTicks`), the status returns to `playing` and the stage's `music.boss` starts (`MUSIC
+    Boss` in free flight). A `boss` event skips the WARNING and the brake; a boss event while a
+    boss runs is ignored. The shell's flight scene draws the text centred on a translucent band
+    (red / yellow every 16 ticks), rebuilding its UI list only on changes.
+  - **Death sequence.** Counted in simulated ticks (a hit-stop pauses it, like the player's
+    `dying`): the last core destroyed (in phase 7, or by `defeat()`) cancels every cancelable bullet
+    and laser (sparkles), fades the music (60) and starts a small shake; the new `FX_CUES.BossChain`
+    (6) + `SFX BossExplode` every 8 ticks; on tick 120 the final blast (the new `FX_CUES.BossBlast`
+    (7), `FlashKind.BossBlast` 24 ticks, large shake 40, rumble per active player, hit-stop 5; parts
+    no longer drawn); the tally on tick 121, the first after the hit-stop (the boss's `score` to the
+    player who destroyed the last core, the new `SimEventKind.BossDefeated` (11), `MUSIC
+    StageClear`); on tick 180 state `Dead`, status `stageClear` (from `playing` / `bossWarning`)
+    and the scroll lock released — 185 World ticks after the kill with the hit-stop.
+  - **Phases** are checked in phase 7 after the shots' hits (several in one tick when the next
+    ones are met too); the new script first runs the next tick; the first phase's script runs on the
+    fight's first tick. The timers advance at the start of phase 3.
+  - **World.** `World.bosses`, `World.laserSources`; the boss batch (`AirEnemies`) is appended after
+    the other batches. A checkpoint clear removes the boss and the WARNING, turns `bossWarning`
+    back into `playing` and re-queues the stage theme when the boss had changed the music.
+    `hashWorld` covers the boss, its parts, the WARNING and the piercing shots' part tables. The
+    enemy system never spawns a boss entry; the Mega Crash leaves the boss alone.
+  - **Allocation.** `test/bosses/bosses-alloc.test.ts`: a long fight ≈ 39 KB / 10,000 ticks, each
+    timed state held (WARNING, intro, death chain) ≈ 18–30 KB, whole sequences every ~500 ticks
+    ≈ 70 KB (own budget 128 KB: their once-per-boss code — a new phase generator, part explosions,
+    the chain's RNG draws, the lukewarm part branch of the shot visitor — partly runs in V8's lower
+    tiers, which box doubles; found with the in-process sampling heap profiler). `boss.hover` keeps
+    its "never" timer a small integer: an `Infinity` generator local allocated a heap number per
+    wake.
+  - **Tests adapted.** The data fixtures' warden is a boss (a `boss` event naming a regular enemy
+    became a spawn); the integration stage-restart run defeats a boss once it fights and plays on
+    to the stage end; `enemies-runtime` compares the regular enemies only; the content test checks
+    a boss's phase scripts and part sprites. New e2e `boss.spec.ts` (the WARNING band on
+    `?stage=test-boss`, then the boss).
 
 ### M1-14 — FX & game feel
 

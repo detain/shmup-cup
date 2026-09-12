@@ -7,8 +7,8 @@
  * - the back-end interfaces presentation packages implement (`@shmup/render-pixi` →
  *   {@link IRenderer}, `@shmup/audio-web` → {@link IAudio});
  * - the **render contract** (plan §3.4): the per-frame {@link RenderFrame} with a read-only
- *   {@link WorldView} (camera, parallax, terrain, a list of {@link SpriteBatchView}s and the
- *   enemy lasers, {@link LaserView}),
+ *   {@link WorldView} (camera, parallax, terrain, a list of {@link SpriteBatchView}s, the
+ *   enemy lasers, {@link LaserView}, and the boss WARNING, {@link WarningView}),
  *   two {@link DrawList} command buffers (HUD and UI) and the {@link ScreenView} effects;
  * - the draw layers ({@link LayerId}), sprite flags ({@link SpriteFlag}) and the bitmap-text
  *   measuring contract ({@link TextMetrics}) the renderer implements for layout code.
@@ -33,7 +33,7 @@
  * **Public API.** Back-ends: {@link IRenderer}, {@link IAudio}, {@link AudioBus},
  * {@link AudioState}. Frame: {@link RenderFrame}, {@link ScreenView}. World:
  * {@link WorldView}, {@link CameraView}, {@link ParallaxView}, {@link TerrainView},
- * {@link LaserView},
+ * {@link LaserView}, {@link WarningView},
  * {@link SpriteBatchView}, {@link SpriteBatch}, {@link createSpriteBatch}, {@link pushSprite},
  * {@link SpriteFlag}. Layers: {@link LayerId}, {@link LAYER_COUNT}, {@link LAYER_NAMES}.
  * Command lists: {@link DrawList}, {@link createDrawList}, {@link DrawOp}, {@link TextAlign},
@@ -341,6 +341,28 @@ export interface LaserView {
 }
 
 /**
+ * The boss WARNING of the world (`core/bosses`, plan M1-13, shmup_feat.md §13): while `active`,
+ * the host shows `text` (lines split at `\n`) over the dimmed playfield. A live object — the sim
+ * updates it every tick.
+ *
+ * @remarks
+ * `text` is built once per boss at world creation from the game's own paraphrased template
+ * (decision D10 — never the arcade original's words) and only changes when another boss's
+ * WARNING starts, so a host can put it into a draw-list string slot when it changes and draw the
+ * slot every frame without building strings.
+ */
+export interface WarningView {
+  /** Whether the WARNING is on screen. */
+  readonly active: boolean;
+  /** Ticks since it started (0 on its first tick). */
+  readonly ticks: number;
+  /** Its length in ticks. */
+  readonly duration: number;
+  /** The text of the current (or last) WARNING; `''` before the first one. */
+  readonly text: string;
+}
+
+/**
  * Read-only view of the gameplay world for one frame (plan §3.4). All members are
  * references to live sim state — the renderer reads, never writes.
  */
@@ -362,6 +384,11 @@ export interface WorldView {
    * the view is bound, like the batches.
    */
   readonly lasers?: LaserView | null;
+  /**
+   * The boss WARNING (plan M1-13), or `null` / absent for a world without bosses. Drawn by the
+   * host's HUD / UI layer, not by the renderer's world binding.
+   */
+  readonly warning?: WarningView | null;
 }
 
 /** Whole-screen effects for one frame (filled by the fx system, M1-14). */

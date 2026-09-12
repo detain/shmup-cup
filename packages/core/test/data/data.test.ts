@@ -113,7 +113,8 @@ const stageFile = (id = 'zone-a', enemy = 'drifter'): ContentFile => ({
     events: [
       { x: 384, type: 'spawn', enemy, path: 'sine-low' },
       { x: 512, type: 'music', cue: 'Stage' },
-      { x: 3840, type: 'boss', enemy },
+      // (A `boss` event would need a boss entry — M1-13; a second spawn keeps the reference.)
+      { x: 3840, type: 'spawn', enemy },
     ],
   },
 });

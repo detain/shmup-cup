@@ -8,6 +8,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   BEHAVIOR_IDS,
+  BOSS_BEHAVIOR_IDS,
   DEFAULT_BEHAVIORS,
   DEFAULT_BEHAVIOR_DEFS,
   KNOWN_SCRIPT_IDS,
@@ -116,7 +117,9 @@ describe('core/behaviors registry', () => {
       'shot.double',
       'shot.straight',
     ]);
-    expect(KNOWN_SCRIPT_IDS).toEqual([...BEHAVIOR_IDS, ...WEAPON_SCRIPT_IDS].sort());
+    expect(KNOWN_SCRIPT_IDS).toEqual(
+      [...BEHAVIOR_IDS, ...BOSS_BEHAVIOR_IDS, ...WEAPON_SCRIPT_IDS].sort(),
+    );
     expect(Object.isFrozen(KNOWN_SCRIPT_IDS)).toBe(true);
   });
 

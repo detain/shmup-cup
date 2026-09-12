@@ -427,6 +427,11 @@ export interface BulletHost {
     /** Every enemy slot. */
     readonly enemies: readonly LaserSource[];
   };
+  /**
+   * Every laser source by id, when the host has more than enemies (the World: the enemy slots,
+   * then the boss parts — `core/bosses` `BOSS_PART_ID_BASE`, M1-13). Absent = `enemies.enemies`.
+   */
+  readonly laserSources?: readonly LaserSource[];
 }
 
 /** The bullets and lasers of one World (see the module docs). */
@@ -1009,7 +1014,7 @@ class BulletSystemImpl implements BulletSystem {
     const heading = angle === AIM_AT_TARGET ? this.aimFrom(origin) : Math.round(angle) & ANGLE_MASK;
     f.x[i] = origin.x;
     f.y[i] = origin.y;
-    const sources = this.host.enemies.enemies;
+    const sources = this.host.laserSources ?? this.host.enemies.enemies;
     if (src >= 0 && src < sources.length && src % 1 === 0) {
       f.src[i] = src;
       f.ox[i] = origin.x - sources[src].x;
@@ -1214,7 +1219,7 @@ class BulletSystemImpl implements BulletSystem {
     const lasers = this.lasers;
     const lf = lasers.fields;
     const ln = lasers.count;
-    const sources = this.host.enemies.enemies;
+    const sources = this.host.laserSources ?? this.host.enemies.enemies;
     for (let i = 0; i < ln; i++) {
       if ((lf.flags[i] & BulletFlag.Dead) !== 0) continue;
       const src = lf.src[i];

@@ -7,6 +7,8 @@ parallax) and §10 (invisible checkpoints).
 
 `test-range.stage.json` is the dev/test stage (generated floors and ceilings, speed ramps, a
 high-speed section, parallax stars): run it with `pnpm dev` and `?stage=test-range`.
+`test-boss.stage.json` is a short open-space range that ends with the WARNING and the test
+boss (M1-13): `?stage=test-boss`.
 
 ## Format (formatVersion 1)
 
@@ -21,7 +23,7 @@ high-speed section, parallax stars): run it with `pnpm dev` and `?stage=test-ran
   "camera": [                      // camera keys, strictly sorted by x, the first at 0
     { "x": 0, "speed": 1, "ramp": 60 },            // speed in px/tick, reached over `ramp` ticks
     { "x": 2048, "speed": 1, "yTo": 40, "yTicks": 90 }, // vertical pan of the camera's top edge
-    { "x": 3840, "speed": 1, "lock": true }        // boss lock: stop exactly here until unlocked
+    { "x": 3840, "speed": 1, "lock": true }        // scroll lock: stop exactly here until unlocked
   ],
   "checkpoints": [{ "x": 0 }, { "x": 2048 }],     // restart points, strictly sorted
   "parallax": [                    // background bands, far → near
@@ -43,9 +45,7 @@ high-speed section, parallax stars): run it with `pnpm dev` and `?stage=test-ran
     { "x": 768, "type": "spawn", "enemy": "carrier-red", "path": "straight-mid" },
     { "x": 2000, "type": "speed", "speed": 2, "ramp": 120 },
     { "x": 2000, "type": "flag", "flag": "fast-lane" },
-    { "x": 3700, "type": "warning", "enemy": "example-warden" },
-    { "x": 3840, "type": "boss", "enemy": "example-warden" },
-    { "x": 3840, "type": "music", "cue": "Boss" },
+    { "x": 3840, "type": "warning", "enemy": "example-warden" }, // WARNING, then the boss
     { "x": 4096, "type": "end" }
   ]
 }
@@ -56,7 +56,8 @@ high-speed section, parallax stars): run it with `pnpm dev` and `?stage=test-ran
 Each key takes effect when the camera reaches its `x`: the scroll speed heads for `speed`
 linearly over `ramp` ticks (at once without `ramp`); `yTo` pans the camera vertically (eased,
 over `yTicks` ticks, at once without them — `yTicks` needs `yTo`); `lock: true` stops the camera
-exactly at `x` until the boss releases it, then it scrolls on at `speed`. The camera never
+exactly at `x` until the boss releases it, then it scrolls on at `speed`. A `warning` event
+brakes the camera to such a lock by itself (over one second), wherever it is. The camera never
 scrolls past `length`; the terrain map is `length + 384` pixels wide. A key applies one tick
 after the camera reaches it, events on that tick itself: a key and a `speed` event at the same
 `x` leave the key's speed — except at `x` 0, where the camera starts: the first tick applies the
@@ -71,7 +72,8 @@ tick, in file order.
 |---|---|---|
 | `spawn` | `enemy`, optional `y`, `screenX`, `path` | one enemy |
 | `formation` | `enemy`, `count` (1–64), `interval` ticks, optional `y`, `screenX`, `path`, `drop` (`"capsule"` default, or `null`), `bonus` (points, default 0) | a timed group, every member at the same spawn point; all killed (none escaped) → the drop at the last kill + the bonus (scored since M1-12 for the player who killed the last member) |
-| `warning` / `boss` | `enemy` | the WARNING intro / the boss (M1-13) |
+| `warning` | `enemy` (a boss) | the WARNING (M1-13): the camera brakes to a scroll lock, 3 s of siren and text, then the boss flies in with the boss theme; its death clears the stage and releases the lock |
+| `boss` | `enemy` (a boss) | the boss flies in at once (no WARNING, no brake) |
 | `music` | `cue` (a `MUSIC_CUES` name) | change the track |
 | `speed` | `speed`, optional `ramp` | new target scroll speed |
 | `flag` | `flag` (lower-case kebab), optional `value` (default `true`) | set / clear a stage flag (branches, M2; ≤ 32 per stage) |

@@ -26,7 +26,11 @@
  * registered pool), then the effect timers and scores (M1-12: shake magnitude, ticks, duration and
  * request tick, flash ticks, kind and request tick, every player's score and the counts of kills
  * and formation bonuses already credited — not the session hi-score, which a host may raise from
- * its save). Scripts are covered by their `wakeTick`; a coroutine's internal position
+ * its save), then the boss (M1-13: its state, position, timers, phase, script wake tick, motion,
+ * destroyed-part mask, killer, blast flag and every part's offset, position, hit points,
+ * destroyed / open flags and hit flash — plus the WARNING's active flag and ticks; the piercing
+ * shots' boss-part cooldown tables join their enemy tables above). Scripts are covered by their
+ * `wakeTick`; a coroutine's internal position
  * cannot be hashed. Numbers are hashed as their little-endian IEEE-754 double bytes, so the hash
  * is identical on every engine and platform, and two worlds that simulated the same inputs from
  * the same seed hash equal. Golden replays (M1-19) compare these hashes. The hash reads state only
@@ -46,6 +50,7 @@
  *
  * @module
  */
+import { MAX_BOSS_PARTS } from '../data/index.js';
 import {
   EnemyState,
   MAX_ENEMIES,
@@ -240,11 +245,14 @@ function mixWeapons(weapons: World['weapons']): void {
   const f = weapons.pool.fields;
   const n = weapons.pool.count;
   const cooldowns = weapons.cooldowns;
+  const partCooldowns = weapons.partCooldowns;
   for (let i = 0; i < n; i++) {
     const table = f.table[i];
     if (table <= 0) continue;
     const base = (table - 1) * MAX_ENEMIES;
     for (let e = base; e < base + MAX_ENEMIES; e++) mixWord(cooldowns[e]);
+    const partBase = (table - 1) * MAX_BOSS_PARTS;
+    for (let e = partBase; e < partBase + MAX_BOSS_PARTS; e++) mixWord(partCooldowns[e]);
   }
 }
 
@@ -294,6 +302,56 @@ function mixFxAndScores(world: World): void {
   for (let p = 0; p < scores.length; p++) mixNumber(scores[p].score);
   mixNumber(scoring.killsScored);
   mixNumber(scoring.bonusesScored);
+}
+
+/**
+ * Mixes the boss slot, its parts and the WARNING into {@link accumulator} (M1-13; fixed order).
+ *
+ * @param world - The world.
+ */
+function mixBosses(world: World): void {
+  const bosses = world.bosses;
+  const b = bosses.boss;
+  mixWord(b.state);
+  mixNumber(b.specIndex);
+  mixNumber(b.x);
+  mixNumber(b.y);
+  mixNumber(b.screenX);
+  mixNumber(b.screenY);
+  mixNumber(b.stateTicks);
+  mixNumber(b.phase);
+  mixNumber(b.phaseTicks);
+  mixWord(b.script === null ? 0 : 1);
+  mixNumber(b.wakeTick);
+  mixWord(b.motion);
+  mixNumber(b.trackSpeed);
+  mixNumber(b.trackMin);
+  mixNumber(b.trackMax);
+  mixNumber(b.moveFromX);
+  mixNumber(b.moveFromY);
+  mixNumber(b.moveToX);
+  mixNumber(b.moveToY);
+  mixNumber(b.moveTicks);
+  mixNumber(b.moveElapsed);
+  mixWord(b.destroyedMask);
+  mixNumber(b.killer);
+  mixWord(b.blasted ? 1 : 0);
+  mixNumber(b.partCount);
+  const parts = b.parts;
+  for (let i = 0; i < b.partCount; i++) {
+    const part = parts[i];
+    mixNumber(part.localX);
+    mixNumber(part.localY);
+    mixNumber(part.x);
+    mixNumber(part.y);
+    mixNumber(part.hp);
+    mixWord(part.destroyed ? 1 : 0);
+    mixWord(part.open ? 1 : 0);
+    mixNumber(part.flashTicks);
+  }
+  const warning = bosses.warning;
+  mixWord(warning.active ? 1 : 0);
+  mixNumber(warning.ticks);
 }
 
 /**
@@ -395,6 +453,7 @@ export function hashWorld(world: World): number {
   mixWeapons(world.weapons);
   mixPowerUps(world);
   mixFxAndScores(world);
+  mixBosses(world);
   return accumulator[0];
 }
 

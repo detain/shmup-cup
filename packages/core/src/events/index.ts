@@ -17,7 +17,7 @@
  * - shmup_feat.md §18 / §19 / §20 — effects, audio cues and "juice" triggered by sim events
  *
  * **Public API (implemented now).** {@link SimEventKind}, {@link SIM_EVENT_KIND_NAMES},
- * {@link SFX_CUES}, {@link SFX_CUE_NAMES}, {@link SfxCue}, {@link MUSIC_CUES},
+ * {@link SFX_CUES}, {@link SFX_CUE_NAMES}, {@link SfxCue}, {@link SfxPriority}, {@link MUSIC_CUES},
  * {@link MUSIC_CUE_NAMES}, {@link MusicCue}, {@link FX_CUES}, {@link FX_CUE_NAMES}, {@link FxCue},
  * {@link SimEvent}, {@link EventQueue},
  * {@link DEFAULT_EVENT_QUEUE_CAPACITY}, {@link createEventQueue}.
@@ -85,6 +85,17 @@ export const SimEventKind = {
    * it is back at full volume, `id` = the player slot.
    */
   MusicDuck: 9,
+  /**
+   * Darken the playfield (the boss WARNING, M1-13): `id` = the level in percent (0 = clear, 100 =
+   * black), `param` = how long in ticks (the presentation fades back afterwards).
+   */
+  Dim: 10,
+  /**
+   * A boss was defeated — the score tally of its death sequence (M1-13): `id` = the boss's
+   * `ContentDb.enemies` index, `x`/`y` = where it exploded (whole pixels), `param` = the points
+   * awarded.
+   */
+  BossDefeated: 11,
 } as const;
 
 /** One of the {@link SimEventKind} codes. */
@@ -102,7 +113,30 @@ export const SIM_EVENT_KIND_NAMES: readonly string[] = Object.freeze([
   'formationBonus',
   'powerUp',
   'musicDuck',
+  'dim',
+  'bossDefeated',
 ]);
+
+/**
+ * Priority hints carried by `SimEventKind.Sfx` events in `param` (the mixer of M1-15 maps them to
+ * its tiers; `Default` = the cue's own priority from `content/audio/`). Only rare, must-hear cues
+ * pass one — the boss WARNING siren is `Critical` (never stolen, shmup_feat.md §19).
+ */
+export const SfxPriority = {
+  /** Use the cue's own priority. */
+  Default: 0,
+  /** Background detail. */
+  Low: 1,
+  /** Ordinary effects. */
+  Normal: 2,
+  /** Important feedback (deaths, 1UPs). */
+  High: 3,
+  /** Never stolen by another voice (the WARNING siren). */
+  Critical: 4,
+} as const;
+
+/** A {@link SfxPriority} value. */
+export type SfxPriority = (typeof SfxPriority)[keyof typeof SfxPriority];
 
 /**
  * Canonical sound-effect cues (shmup_feat.md §19 "Core SFX").
@@ -243,6 +277,13 @@ export const FX_CUES = {
   ShieldBreak: 4,
   /** Wreckage of the player's ship flying apart (the death sequence, M1-12): `x`/`y` = the ship. */
   Debris: 5,
+  /**
+   * One explosion of a boss's death chain (`core/bosses`, M1-13): `x`/`y` = a random point of the
+   * boss (cosmetic RNG).
+   */
+  BossChain: 6,
+  /** The final blast of a boss's death sequence (M1-13): `x`/`y` = the boss's origin. */
+  BossBlast: 7,
 } as const;
 
 /** One of the {@link FX_CUES} ids. */

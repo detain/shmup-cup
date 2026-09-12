@@ -12,12 +12,14 @@
  * 1 input      per-player intents from the InputSnapshot (context 'game')
  * 2 players    movement, state timers, respawn / game over, PowerUp press (meter equip), weapon
  *              fire, option trails
- * 3 stage      late drops → capsules, late kills → score, camera path, event cursor, formation
- *              spawns, checkpoints
+ * 3 stage      late drops → capsules, late kills → score, boss timers (WARNING, intro, death
+ *              sequence), camera path, event cursor, formation spawns, checkpoints
  * 4 scripts    wake sleeping enemy/boss coroutines; patterns fire bullets
- * 5 movement   movers (enemies), bullets, player shots, items, lasers
- * 6 collision  grid build; shots×enemies, bullets/lasers×players, enemies×players, items×players, terrain
- * 7 damage     apply hits, deaths, drops, pickups, Mega Crash, score, player deaths + penalty
+ * 5 movement   movers (enemies), the boss and its parts, bullets, player shots, items, lasers
+ * 6 collision  grid build; shots×enemies/boss parts, bullets/lasers×players, enemies/boss
+ *              parts×players, items×players, terrain
+ * 7 damage     apply hits, boss phases, deaths, drops, pickups, Mega Crash, score, player deaths
+ *              + penalty
  * 8 removal    deferred pool flushes
  * 9 fx         hit-stop/shake/flash timers, emit presentation events, view mirrors, debug counters
  * ```
@@ -36,8 +38,8 @@
  * {@link World.stage | runner} drives the camera in phase 3 (keys, ramps, pans, locks) and fires
  * the timeline through the World's stage hooks — `music` events become `SimEventKind.Music`
  * presentation events (the stage theme is queued at creation), `end` sets the status to
- * `stageClear`, `spawn` / `formation` go to the enemy system, a checkpoint restart clears every
- * pool and every enemy; `warning` / `boss` wait for M1-13. Phase 6 tests each alive ship's
+ * `stageClear`, `spawn` / `formation` go to the enemy system, `warning` / `boss` to the boss system
+ * (M1-13), a checkpoint restart clears every pool, every enemy and the boss. Phase 6 tests each alive ship's
  * terrain box against the stage's {@link World.terrain | collision map} and reports contact
  * through `playerHit` (a death, M1-12). The view carries the
  * stage's parallax bands (scrolled in phase 9) and terrain. Without a stage (`stage: null`) the
@@ -96,6 +98,18 @@
  * pickups) and phase 3 (kills made between ticks); the effect timers ({@link World.fx}) count
  * down in phase 9.
  *
+ * **Bosses (M1-13).** {@link World.bosses} (`core/bosses`, boss behaviours from `core/behaviors`)
+ * runs the World's boss: a stage `warning` event starts the WARNING (status `bossWarning` for 180
+ * ticks, the camera braking to a scroll lock, siren / dim / flash / music events — the text is
+ * `view.warning`), then the boss flies in; its timers advance at the start of phase 3, its phase
+ * script wakes in phase 4, it moves and places its parts in phase 5, its parts join the grid (ids
+ * after the enemy slots) and touch the ships in phase 6, the player shots damage them in phase 7
+ * (`core/weapons`), followed by the phase changes. Its death sequence (bullet cancel, chained
+ * explosions, final blast with hit-stop, tally, stage-clear jingle) ends in status `stageClear`
+ * and releases the scroll lock. The parts are drawn from the boss batch (`LayerId.AirEnemies`,
+ * after the other batches); {@link World.laserSources} lists enemies then parts, so lasers can stay
+ * attached to either.
+ *
  * **Zero allocation.** Everything is allocated by {@link createWorld}; {@link stepWorld} and the
  * systems only write numbers into existing objects and typed arrays.
  *
@@ -124,14 +138,22 @@ import {
   type SpatialGrid,
   type TerrainMap,
 } from '../collision/index.js';
-import { DEFAULT_BEHAVIORS } from '../behaviors/index.js';
+import { DEFAULT_BEHAVIORS, DEFAULT_BOSS_BEHAVIORS } from '../behaviors/index.js';
+import { createBossSystem, type BossBehaviorLookup, type BossSystem } from '../bosses/index.js';
 import {
   BULLET_SPRITES,
   CancelMode,
   createBulletSystem,
   type BulletSystem,
+  type LaserSource,
 } from '../bullets/index.js';
-import type { ContentDb, PlayerShipSpec, StageMusicEvent, StageSpec } from '../data/index.js';
+import type {
+  ContentDb,
+  PlayerShipSpec,
+  StageBossEvent,
+  StageMusicEvent,
+  StageSpec,
+} from '../data/index.js';
 import { createDebugFlags, type DebugFlags } from '../debug/index.js';
 import { createEnemySystem, type EnemyBehaviorLookup, type EnemySystem } from '../enemies/index.js';
 import {
@@ -187,6 +209,7 @@ import {
   type SpriteBatch,
   type LaserView,
   type SpriteBatchView,
+  type WarningView,
   type WorldView,
 } from '../presentation/index.js';
 import { computeRank, difficultyRankInputs } from '../rank/index.js';
@@ -326,6 +349,13 @@ export interface World {
   readonly powerups: PowerUpSystem;
   /** Per-player scores and the session hi-score, credited every tick (`core/scoring`). */
   readonly scoring: ScoringSystem;
+  /** The boss, its WARNING and its death sequence (`core/bosses`, M1-13). */
+  readonly bosses: BossSystem;
+  /**
+   * Every laser source by id (`core/bullets`): the enemy slots, then the boss parts (from
+   * `core/bosses` `BOSS_PART_ID_BASE`), so enemy and boss lasers can stay attached to their gun.
+   */
+  readonly laserSources: readonly LaserSource[];
   /** The session's rank (`core/rank`; constant in M1: the difficulty's base). */
   rank: number;
   /** What the renderer draws: live references, refreshed at the end of every tick. */
@@ -352,6 +382,11 @@ export interface WorldOptions {
    * `script` the lookup does not know spawns without a script (it only runs its spec mover).
    */
   readonly behaviors?: EnemyBehaviorLookup;
+  /**
+   * Boss behaviours by script id (default: `core/behaviors` `DEFAULT_BOSS_BEHAVIORS`). A boss
+   * phase whose `script` the lookup does not know runs no script.
+   */
+  readonly bossBehaviors?: BossBehaviorLookup;
 }
 
 /**
@@ -513,6 +548,7 @@ function respawnShip(world: World, slot: number): void {
 function clearSession(world: World): void {
   world.pools.clearAll();
   world.enemies.clear();
+  world.bosses.clear();
   world.weapons.clear();
   world.powerups.clear();
   world.scoring.clear();
@@ -532,6 +568,7 @@ const stageSystem: WorldSystem = (world) => {
   world.powerups.beginTick();
   world.scoring.beginTick();
   enemies.beginTick();
+  world.bosses.update();
   const stage = world.stage;
   if (stage !== null) {
     stage.tick();
@@ -546,32 +583,36 @@ const stageSystem: WorldSystem = (world) => {
 };
 
 /**
- * Phase 4: resumes the enemy coroutines that wake this tick (they fire bullets and lasers).
+ * Phase 4: resumes the enemy coroutines that wake this tick, then the boss's (they fire bullets
+ * and lasers).
  *
  * @param world - The world.
  */
 const scriptsSystem: WorldSystem = (world) => {
   world.enemies.runScripts();
+  world.bosses.runScript();
 };
 
 /**
- * Phase 5: enemy movers and the off-screen rules, then enemy bullets and lasers, then the player
- * shots, then the items (drift, pickup magnet, culling).
+ * Phase 5: enemy movers and the off-screen rules, then the boss (fly-in, motion, part
+ * transforms), then enemy bullets and lasers (attached ones follow their enemy or part), then the
+ * player shots, then the items (drift, pickup magnet, culling).
  *
  * @param world - The world.
  */
 const movementSystem: WorldSystem = (world) => {
   world.enemies.move();
+  world.bosses.move();
   world.bullets.update();
   world.weapons.update();
   world.powerups.update();
 };
 
 /**
- * Phase 6: rebuilds the broad-phase grid around the camera view with the enemy hurtboxes, then
- * the overlap tests: enemies × players (contact), player shots × enemies (hits found here, applied
- * in phase 7), bullets / lasers × players, terrain × players, items × players (pickups, applied
- * in phase 7).
+ * Phase 6: rebuilds the broad-phase grid around the camera view with the enemy and boss-part
+ * hurtboxes, then the overlap tests: enemies and boss parts × players (contact), player shots ×
+ * enemies and boss parts (hits found here, applied in phase 7), bullets / lasers × players,
+ * terrain × players, items × players (pickups, applied in phase 7).
  *
  * @remarks
  * The grid origin is the camera position floored to whole pixels: it only decides which cell a
@@ -587,8 +628,10 @@ const collisionSystem: WorldSystem = (world) => {
   const enemies = world.enemies;
   grid.begin(Math.floor(camera.x) - GRID_MARGIN, Math.floor(camera.y) - GRID_MARGIN);
   enemies.insertColliders(grid);
+  world.bosses.insertColliders(grid);
   grid.build();
   enemies.collidePlayers(grid);
+  world.bosses.collidePlayers();
   world.weapons.collide(grid);
   world.bullets.collidePlayers();
   const terrain = world.terrain;
@@ -623,15 +666,17 @@ function terrainSystem(world: World, terrain: TerrainMap): void {
 }
 
 /**
- * Phase 7: applies the player shots' hits (damage, deaths, drops, kill records — `core/weapons`),
- * then the power-ups (`core/powerups`: pickups and Auto Power-Up, Mega Crash, shield feedback,
- * capsules from the tick's drops), then credits the tick's score (`core/scoring`), then starts
- * the death sequence of every ship hit this tick.
+ * Phase 7: applies the player shots' hits (damage, deaths, drops, kill records — `core/weapons`;
+ * boss parts through `core/bosses`), then the boss's phase changes, then the power-ups
+ * (`core/powerups`: pickups and Auto Power-Up, Mega Crash, shield feedback, capsules from the
+ * tick's drops), then credits the tick's score (`core/scoring`), then starts the death sequence
+ * of every ship hit this tick.
  *
  * @param world - The world.
  */
 const damageSystem: WorldSystem = (world) => {
   world.weapons.applyHits();
+  world.bosses.resolve();
   world.powerups.resolve();
   world.scoring.resolve();
   const players = world.players;
@@ -777,7 +822,7 @@ export function resolveWorldStage(config: GameConfig, content: ContentDb): Stage
 /** A {@link World} while {@link createWorld} assembles it (the stage fields are set last). */
 type WorldUnderConstruction = Omit<
   World,
-  'stage' | 'enemies' | 'bullets' | 'weapons' | 'powerups' | 'scoring'
+  'stage' | 'enemies' | 'bullets' | 'weapons' | 'powerups' | 'scoring' | 'bosses' | 'laserSources'
 > & {
   /** See {@link World.stage}. */
   stage: StageRunner | null;
@@ -791,6 +836,10 @@ type WorldUnderConstruction = Omit<
   powerups: PowerUpSystem;
   /** See {@link World.scoring}. */
   scoring: ScoringSystem;
+  /** See {@link World.bosses}. */
+  bosses: BossSystem;
+  /** See {@link World.laserSources}. */
+  laserSources: readonly LaserSource[];
 };
 
 /**
@@ -861,6 +910,7 @@ export function createWorld(
         : createTerrainView(terrain, stageSpec, content),
     batches,
     lasers: null as LaserView | null,
+    warning: null as WarningView | null,
   };
   const world: WorldUnderConstruction = {
     config,
@@ -888,12 +938,16 @@ export function createWorld(
     weapons: null as unknown as WeaponSystem,
     powerups: null as unknown as PowerUpSystem,
     scoring: null as unknown as ScoringSystem,
+    bosses: null as unknown as BossSystem,
+    laserSources: [],
     rank: computeRank(difficultyRankInputs(config.difficulty)),
     view,
   };
   world.bullets = createBulletSystem(world);
   world.bullets.setRank(world.rank);
   world.enemies = createEnemySystem(world, options.behaviors ?? DEFAULT_BEHAVIORS, stageSpec);
+  world.bosses = createBossSystem(world, options.bossBehaviors ?? DEFAULT_BOSS_BEHAVIORS);
+  world.laserSources = Object.freeze([...world.enemies.enemies, ...world.bosses.boss.parts]);
   world.weapons = createWeaponSystem(world);
   world.powerups = createPowerUpSystem(world);
   world.scoring = createScoringSystem(world);
@@ -910,8 +964,10 @@ export function createWorld(
     world.bullets.batch,
     world.powerups.shieldBatch,
     world.powerups.itemBatch,
+    world.bosses.batch,
   );
   view.lasers = world.bullets.laserView;
+  view.warning = world.bosses.warning;
   if (stageSpec !== null) {
     world.stage = createStageRunner(stageSpec, createWorldStageHooks(world), camera);
     if (stageSpec.music.stageId >= 0) {
@@ -944,8 +1000,11 @@ function createWorldStageHooks(world: WorldUnderConstruction): StageHooks {
         world.events.push(SimEventKind.Music, (event as StageMusicEvent).cueId, 0, 0, 0);
       } else if (code === StageEventCode.End) {
         world.status = 'stageClear';
+      } else if (code === StageEventCode.Warning) {
+        world.bosses.startWarning((event as StageBossEvent).enemyId);
+      } else if (code === StageEventCode.Boss) {
+        world.bosses.startBoss((event as StageBossEvent).enemyId);
       }
-      // warning / boss → bosses (M1-13).
     },
     /** A checkpoint restart: empties every pool and the enemy, weapon, power-up, score systems. */
     clear() {
@@ -1000,6 +1059,7 @@ export function syncWorldView(world: World): void {
   const parallax = world.parallax;
   if (parallax !== null) updateParallaxView(parallax, world.camera.x, world.camera.y);
   world.enemies.sync();
+  world.bosses.sync();
   world.weapons.sync();
   world.powerups.sync();
   const batch = world.playerBatch;
