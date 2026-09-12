@@ -3,7 +3,15 @@
  * and rejects anything outside it, non-integers, NaN and infinities.
  */
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_GAME_CONFIG, resolveGameConfig, type GameConfig } from '../../src/config/index.js';
+import {
+  DEFAULT_AUTO_POWER_UP_ORDER,
+  DEFAULT_GAME_CONFIG,
+  MAX_AUTO_POWER_UP_ORDER,
+  METER_SLOT_NAMES,
+  resolveGameConfig,
+  type GameConfig,
+  type MeterSlotName,
+} from '../../src/config/index.js';
 
 type NumericField =
   'internalWidth' | 'internalHeight' | 'tickRate' | 'maxTicksPerFrame' | 'seed' | 'startingLives';
@@ -85,5 +93,81 @@ describe('core/config resolveGameConfig boundaries', () => {
     expect([1920 / w, 1080 / h]).toEqual([5, 5]);
     expect([Math.floor(1280 / w), Math.floor(720 / h)]).toEqual([3, 3]);
     expect(w / h).toBeCloseTo(16 / 9, 10);
+  });
+});
+
+describe('core/config power-up options edge cases (M1-11)', () => {
+  it('keeps the default order itself, even when passed explicitly', () => {
+    expect(resolveGameConfig().autoPowerUpOrder).toBe(DEFAULT_AUTO_POWER_UP_ORDER);
+    expect(
+      resolveGameConfig({ autoPowerUpOrder: DEFAULT_AUTO_POWER_UP_ORDER }).autoPowerUpOrder,
+    ).toBe(DEFAULT_AUTO_POWER_UP_ORDER);
+  });
+
+  it("isolates the config from later changes to the caller's array", () => {
+    const order: MeterSlotName[] = ['speed', 'option'];
+    const config = resolveGameConfig({ autoPowerUpOrder: order });
+    order[0] = 'mega';
+    order.push('shield');
+    expect(config.autoPowerUpOrder).toEqual(['speed', 'option']);
+    expect(() => {
+      (config.autoPowerUpOrder as MeterSlotName[]).push('laser');
+    }).toThrow(TypeError);
+  });
+
+  it('accepts every slot name, repeated, up to the limit', () => {
+    const order: MeterSlotName[] = [];
+    while (order.length < MAX_AUTO_POWER_UP_ORDER) {
+      order.push(METER_SLOT_NAMES[order.length % METER_SLOT_NAMES.length]);
+    }
+    expect(resolveGameConfig({ autoPowerUpOrder: order }).autoPowerUpOrder).toEqual(order);
+  });
+
+  it('names the bad entry and its index, and rejects holes and non-arrays', () => {
+    expect(() =>
+      resolveGameConfig({ autoPowerUpOrder: ['speed', 'Speed'] as unknown as MeterSlotName[] }),
+    ).toThrow(
+      'GameConfig.autoPowerUpOrder[1] must be one of speed, missile, double, laser, option, ' +
+        'shield, mega, got Speed',
+    );
+    // eslint-disable-next-line no-sparse-arrays
+    const holey = ['speed', , 'laser'] as unknown as MeterSlotName[];
+    expect(() => resolveGameConfig({ autoPowerUpOrder: holey })).toThrow('[1]');
+    const notArrays: [string, unknown][] = [
+      ['undefined', undefined],
+      ['object', {}],
+      ['array-like', { length: 1, 0: 'speed' }],
+      ['number', 7],
+    ];
+    for (const [label, bad] of notArrays) {
+      expect(
+        () =>
+          resolveGameConfig({
+            autoPowerUpOrder: bad as GameConfig['autoPowerUpOrder'],
+          }),
+        label,
+      ).toThrow(`at most ${MAX_AUTO_POWER_UP_ORDER} meter slots`);
+    }
+  });
+
+  it("names the bad power-up mode (and the 'direct' message stays specific)", () => {
+    expect(() =>
+      resolveGameConfig({ powerUpMode: 'Meter' as unknown as GameConfig['powerUpMode'] }),
+    ).toThrow("GameConfig.powerUpMode must be 'meter' or 'direct', got Meter");
+    expect(() => resolveGameConfig({ powerUpMode: 'direct' })).toThrow(/M2-05/);
+  });
+
+  it('survives a replay-header round trip with a custom order', () => {
+    const config = resolveGameConfig({
+      autoPowerUp: true,
+      pickupMagnet: false,
+      autoPowerUpOrder: ['laser', 'option', 'option', 'mega'],
+    });
+    const again = resolveGameConfig(JSON.parse(JSON.stringify(config)) as Partial<GameConfig>);
+    expect(again).toEqual(config);
+    expect(again.autoPowerUpOrder).not.toBe(config.autoPowerUpOrder);
+    // The booleans pass through untouched.
+    expect([again.autoPowerUp, again.pickupMagnet]).toEqual([true, false]);
+    expect(DEFAULT_GAME_CONFIG.autoPowerUpOrder).toBe(DEFAULT_AUTO_POWER_UP_ORDER);
   });
 });

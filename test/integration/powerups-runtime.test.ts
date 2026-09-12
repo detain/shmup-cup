@@ -10,21 +10,33 @@
  * - Auto Power-Up: a session with `autoPowerUp` that only collects capsules grows its loadout in
  *   the default order without any button.
  * - Mega Crash in the middle of the stage clears the view of enemies and bullets.
+ * - A capsule-hunting bot with Auto Power-Up plays the stage: after every tick the item pool,
+ *   its batch, the meter, the loadout and the shield stay within their bounds, every live item is
+ *   inside the view ± 32 px, every pickup is worth 300 points; the loadout grows; two sessions of
+ *   the same bot keep equal `hashWorld`s.
  */
 import {
   Action,
   ENGINE_SPRITES,
+  CAPSULE_SCORE,
   EnemyFlag,
   EnemyState,
+  FORCE_FIELD_HITS,
+  ITEM_CULL_MARGIN,
   ItemFlag,
   KNOWN_SCRIPT_IDS,
   LayerId,
+  MAX_ITEMS,
+  MAX_OPTIONS,
   MainWeapon,
   MeterSlot,
+  PLAYFIELD_H,
+  PLAYFIELD_W,
   SimEventKind,
   commitPlayerInput,
   createGame,
   createHeadlessPlatform,
+  hashWorld,
   loadContent,
   type ContentDb,
   type Game,
@@ -218,4 +230,80 @@ describe('integration: the power meter on the test range', () => {
     expect(w.bullets.count).toBe(0);
     expect(w.enemies.outcomes.killCount).toBeGreaterThanOrEqual(before);
   });
+});
+
+/**
+ * Plays the test range with a bot that hunts capsules (steers to the first live item, otherwise
+ * lines up with the nearest drifter or carrier), checking the power-up invariants after every
+ * tick.
+ *
+ * @param ticks - Ticks to play.
+ * @returns The game, the pickups seen and a hash every 100 ticks.
+ */
+function capsuleHunt(ticks: number): { g: Game; pickups: number; hashes: number[] } {
+  const { g, platform } = game({ autoPowerUp: true });
+  const w = g.world;
+  const ship = w.players[0];
+  const input = platform.snapshot.players[0];
+  const loadout = w.weapons.loadouts[0];
+  const top = w.ship.speeds.length - 1;
+  let pickups = 0;
+  const hashes: number[] = [];
+  for (let t = 0; t < ticks; t++) {
+    ship.invulnTicks = 1e9; // the bot does not dodge
+    let held = 0;
+    const item = firstItem(w);
+    if (item !== null) held = steer(w, item.x, item.y);
+    else {
+      const target = nearest(w, 'drifter') ?? nearest(w, 'carrier');
+      if (target !== null) held = steer(w, NaN, target.y);
+    }
+    commitPlayerInput(input, held);
+    g.step();
+    w.events.clear();
+    // Invariants.
+    const pool = w.powerups.pool;
+    const f = pool.fields;
+    expect(pool.count).toBeLessThanOrEqual(MAX_ITEMS);
+    let live = 0;
+    for (let i = 0; i < pool.count; i++) {
+      if ((f.flags[i] & ItemFlag.Dead) !== 0) continue;
+      live++;
+      const inside =
+        f.x[i] >= w.camera.x - ITEM_CULL_MARGIN &&
+        f.x[i] <= w.camera.x + PLAYFIELD_W + ITEM_CULL_MARGIN &&
+        f.y[i] >= w.camera.y - ITEM_CULL_MARGIN &&
+        f.y[i] <= w.camera.y + PLAYFIELD_H + ITEM_CULL_MARGIN;
+      expect(inside, `item ${i} at tick ${w.tick}`).toBe(true);
+    }
+    expect(w.powerups.itemBatch.count).toBe(live);
+    const o = w.powerups.outcomes;
+    for (let k = 0; k < o.pickupCount; k++) {
+      expect(o.pickupScore[k]).toBe(CAPSULE_SCORE);
+      expect(o.pickupPlayer[k]).toBe(0);
+    }
+    pickups += o.pickupCount;
+    const cursor = w.powerups.meters[0].cursor;
+    expect(cursor >= -1 && cursor <= MeterSlot.Mega && cursor % 1 === 0).toBe(true);
+    expect(ship.speedLevel).toBeLessThanOrEqual(top);
+    expect(loadout.options).toBeLessThanOrEqual(MAX_OPTIONS);
+    expect(ship.shield.hits).toBeLessThanOrEqual(FORCE_FIELD_HITS);
+    expect(w.powerups.shieldBatch.count).toBeLessThanOrEqual(1);
+    if (t % 100 === 99) hashes.push(hashWorld(w));
+  }
+  return { g, pickups, hashes };
+}
+
+describe('integration: capsule hunting with Auto Power-Up on the test range', () => {
+  it('keeps the power-up invariants every tick, grows the loadout and stays deterministic', () => {
+    const run = capsuleHunt(3000);
+    const w = run.g.world;
+    expect(run.pickups).toBeGreaterThanOrEqual(3);
+    // The default order: the 1st capsule equipped Speed, the 3rd the Missile.
+    expect(w.players[0].speedLevel).toBeGreaterThanOrEqual(1);
+    expect(w.weapons.loadouts[0].missile).toBe(true);
+    const again = capsuleHunt(3000);
+    expect(again.pickups).toBe(run.pickups);
+    expect(again.hashes).toEqual(run.hashes);
+  }, 60_000);
 });

@@ -283,6 +283,10 @@ export function createPowerMeter(): PowerMeter {
 /**
  * Advances the cursor by one slot (a capsule): −1 → Speed, … `!` → Speed (wraps).
  *
+ * @remarks
+ * A cursor that is not a slot or -1 (a debug tool wrote it — NaN included) comes back to Speed
+ * instead of staying out of range.
+ *
  * @param meter - The meter.
  * @returns The new cursor.
  *
@@ -294,7 +298,8 @@ export function createPowerMeter(): PowerMeter {
  */
 export function advanceMeter(meter: PowerMeter): number {
   const next = meter.cursor + 1;
-  meter.cursor = next >= METER_SLOT_COUNT || next < 0 ? 0 : next;
+  // "Not a slot", so a NaN cursor recovers too.
+  meter.cursor = next >= 0 && next < METER_SLOT_COUNT ? next : 0;
   return meter.cursor;
 }
 
