@@ -112,8 +112,12 @@ export class ScoreBoard {
    */
   setHiScore(value: number): number {
     if (value > this.hiScore) {
-      this.hiScore = value > MAX_SCORE ? MAX_SCORE : Math.floor(value);
-      this.hiScoreDirty = true;
+      const next = value > MAX_SCORE ? MAX_SCORE : Math.floor(value);
+      // Only a real change marks the HUD dirty (10.5 over 10 floors back to 10; the cap stays).
+      if (next > this.hiScore) {
+        this.hiScore = next;
+        this.hiScoreDirty = true;
+      }
     }
     return this.hiScore;
   }
