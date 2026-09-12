@@ -59,8 +59,9 @@ decides what that looks like, from data. Particles have their own RNG, are not p
 | `FormationBonus` (`param` = bonus, at the last kill) · `BossDefeated` (`param` = the tally, where the boss exploded) | `popups.show(…, BONUS_POPUP_COLOR)` | A gold number |
 
 Positions go on as whole world pixels (`Math.floor(x) | 0`); the renderer applies the camera when
-it draws. The other kinds (`Music`, `HitStop`, `Rumble`, `PowerUp`, `MusicDuck`) and the sounds
-themselves stay unhandled until M1-15 — the dispatcher counts them in `unhandled`.
+it draws. Since M1-15 `connectAudioEvents` plays the sounds themselves and handles `Music` /
+`MusicDuck` ([audio.md](audio.md)) — an `Sfx` event reaches both handlers; `HitStop`, `Rumble` and
+`PowerUp` stay unhandled (the dispatcher counts them in `unhandled`).
 
 **Already sim-side** (nothing changed in M1-14): the **hit flash** — a system sets
 `SpriteFlag.Flash` while an enemy's or part's `flashTicks > 0`, and the sprite binding swaps to
@@ -201,7 +202,7 @@ blinking (hidden every other 2 ticks) during its last 10. At most 8 digits are d
 
 Colours: `SCORE_POPUP_COLOR` `0xf8f8f8` for `Score` events, `BONUS_POPUP_COLOR` `0xf8d030` (gold)
 for a formation's bonus and a boss's tally. Capsule pickups push no `Score` event — the popup
-would cover the ship; their feedback is the ring and (M1-15) the meter's ding.
+would cover the ship; their feedback is the ring and (since M1-15) the meter's ding.
 
 **Where the points come from.** `SimEventKind.Score` (12) is new in M1-14: `core/scoring` pushes
 one for every credited kill worth at least 1 point (`id` = the player, `x` / `y` = the kill,
@@ -350,8 +351,9 @@ objects.
 
 ## Next steps that build on this page
 
-- **M1-15** — the sounds of the same events (the `Sfx` / `Music` / `MusicDuck` handlers on the
-  dispatcher), the WARNING siren, rumble.
+- **M1-15** (done) — the sounds of the same events (the `Sfx` / `Music` / `MusicDuck` handlers
+  on the dispatcher, `connectAudioEvents`), the WARNING siren ([audio.md](audio.md)); rumble
+  waits for the gamepad work.
 - **M1-16** — the HUD's power meter with the `PowerUp` flash; scenes other than free flight that
   draw the World connect the effects too.
 - **M1-17 / M2-16** — the Options screen sets `screenShake` and `reduceFlashing`.

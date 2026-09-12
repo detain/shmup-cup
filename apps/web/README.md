@@ -76,7 +76,7 @@ the shell loads the pages with `new Image()`; see
 | Module | Status | Responsibility |
 |---|---|---|
 | `main.ts` | — | Entry: boots into `#game`, disposes on HMR |
-| `boot` | implemented | Composition root: keyboard/gamepad input with the input profiles (`?profile=`, `?debounce=`, saved choice), Web Audio and the browser platform handed to `@shmup/shell`'s `bootShell` (content + atlas loading, boot error screen, renderer, game, rAF loop, audio unlock on first gesture); free flight by default, `?stage=<id>` (`stageFromSearch`, checked with `contentStageIds`), `?loadout=full` (`loadoutFromSearch`, M1-10), `?scene=showcase` / `?scene=calibration` / `?scene=fx-gallery` (M1-14) |
+| `boot` | implemented | Composition root: keyboard/gamepad input with the input profiles (`?profile=`, `?debounce=`, saved choice), Web Audio and the browser platform handed to `@shmup/shell`'s `bootShell` (content + atlas loading, boot error screen, renderer, game, rAF loop, audio unlock on the first key or pointer gesture — gamepad buttons do not count — after which the shell's audio engine plays the sounds and, with `?stage=`, the stage's music, M1-15); free flight by default, `?stage=<id>` (`stageFromSearch`, checked with `contentStageIds`), `?loadout=full` (`loadoutFromSearch`, M1-10), `?scene=showcase` / `?scene=calibration` / `?scene=fx-gallery` (M1-14) |
 | `platform` | partial | Browser `Platform`: localStorage (memory fallback), visibility lifecycle, no `exit` |
 
 The rAF frame loop moved to [`@shmup/shell`](../../packages/shell/README.md) (M1-04).

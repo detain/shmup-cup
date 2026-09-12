@@ -4,7 +4,8 @@
  * **Responsibility.** Plays pre-rendered / pre-decoded SFX `AudioBuffer`s (never decoded
  * mid-game — Tizen decoding is slow) with SNES-driver-style voice management:
  *
- * - **Per-tick dedupe** — a cue started once in a frame's batch is not started again until
+ * - **Per-frame dedupe** (the plan's "per-tick" dedupe; sim events carry no tick number) — a cue
+ *   started once in a frame's batch is not started again until
  *   {@link SfxPlayer.endFrame} (the shell calls it after draining each frame's events; the ticks of
  *   one frame are heard together, so stacking identical sounds would only get louder).
  * - **Per-cue instance cap** (`maxInstances`, 1–8) — a cue at its cap restarts its **oldest**
@@ -115,6 +116,16 @@ export interface SfxPlayer {
   /**
    * Starts a cue.
    *
+   * @remarks
+   * The checks run in this order: an unknown id, a fractional id or a cue without a buffer is
+   * dropped; a cue already started since the last {@link SfxPlayer.endFrame} is deduped; voices
+   * whose sound has played out (by `context.currentTime`) are freed; a cue at its `maxInstances`
+   * restarts its oldest instance — even a `critical` one (the siren's next wail); else a free
+   * voice is taken; else the non-critical voice of the lowest tier, then the oldest, is stolen —
+   * but only when its tier is not above the new sound's (otherwise the new sound is dropped).
+   * Starting a sound creates one `AudioBufferSourceNode` (a heap allocation the Web Audio API
+   * cannot avoid); a request that starts nothing allocates nothing.
+   *
    * @param cue - `SFX_CUES` id.
    * @param pan - Stereo position −1…1 (default 0; ignored on the `ui` bus).
    * @param priority - A `SfxPriority` hint (1–4) overriding the cue's tier; 0 = the cue's own.
@@ -137,7 +148,10 @@ export interface SfxPlayer {
    * @returns The voice slot used, or −1 (see {@link SfxPlayer.play}).
    */
   playAt(cue: number, x: number, priority: number): number;
-  /** Ends the dedupe window: sounds started from now on belong to the next tick batch. */
+  /**
+   * Ends the dedupe window: sounds started from now on belong to the next frame's batch (the
+   * shell calls it once after draining each frame's events — sim events carry no tick number).
+   */
   endFrame(): void;
   /** Stops every voice at once. */
   stopAll(): void;

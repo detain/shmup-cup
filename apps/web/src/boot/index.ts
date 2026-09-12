@@ -8,8 +8,10 @@
  * (`bootShell`: loading bar, content validation and boot error screen, atlas, renderer, game,
  * event dispatch and the rAF frame loop). Keyboard-first (`remoteMode: false`); audio is
  * unlocked by the first key or pointer gesture (autoplay policy — gamepad buttons do not count
- * as a user activation); the tab being hidden suspends the game, clears held input and
- * suspends audio. The default scene is free flight (the KESTREL under keyboard / gamepad
+ * as a user activation) — sound effects requested before it are dropped, and a stage's theme
+ * (`?stage=`, prepared during boot, plan M1-15) starts with that gesture; the tab being hidden
+ * suspends the game, clears held input and suspends audio. The default scene is free flight
+ * (the KESTREL under keyboard / gamepad
  * control, plan M1-06); `?stage=<id>` runs that stage instead of open space (scrolling camera,
  * terrain, parallax — plan M1-07; `?stage=test-range` is the dev stage); `?scene=showcase`
  * shows the M1-04 sprite showcase, `?scene=calibration` the test pattern and

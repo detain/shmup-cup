@@ -12,7 +12,7 @@ committed trigonometry tables with binary angles, the sim → presentation event
 zero-GC pools ([developer guide](docs/dev/engine-foundations.md)). **Game data** is
 schema-validated JSON under [`content/`](content/README.md) — the KESTREL ship, the Type A
 weapons, the test-range stage with its terrain tileset, enemy roster and movement paths, and
-the boss range with its test boss, and the particle presets so far — checked by `pnpm content:check`, served to the app builds as the virtual
+the boss range with its test boss, the particle presets, and the sound effects and music so far — checked by `pnpm content:check`, served to the app builds as the virtual
 module `virtual:shmup-content` and loaded by `loadContent()` with every string id resolved
 to a number ([developer guide](docs/dev/content-data.md)). **Placeholder art** is code:
 sprite pixel maps under [`assets/source/`](assets/README.md), seeded procedural generators
@@ -134,6 +134,23 @@ reduced-flashing setting), and darken it during the boss WARNING; 16 score popup
 every kill (a new `Score` event) and every bonus. Everything runs on simulated ticks, so it
 freezes with a paused game, and allocates nothing per frame. `?scene=fx-gallery` cycles through
 every preset and effect ([developer guide](docs/dev/fx-and-game-feel.md), [what testers should check](docs/client/preview-build.md#explosions-sparks-shake-and-flashes)).
+**The game sounds** (M1-15): every placeholder sound and tune is data in
+[`content/audio/`](content/audio/README.md) — a ZzFX-style parameter set per `SFX_CUES` cue (with
+a priority tier, an instance cap, a volume and a bus) and original chip songs (AZURE VERGE, the
+stage theme with a 6.4-s intro and a 44.8-s loop; BULWARK ASSAULT for the boss; a title theme;
+stage-clear and game-over jingles) bound to `MUSIC_CUES`, optionally per stage — rendered while
+the game loads by a deterministic pure-TS synth (table sines and seeded noise, bit-identical on
+every engine; song rows are whole samples, so loop points are exact and the loop seam equals an
+unrolled render). Nothing is rendered or decoded mid-stage: the shell's boot renders the SFX bank
+and the running stage's music set (every cue its data names), and an OGG path (XHR +
+`OfflineAudioContext(2, 1, 32000)`) is ready for recorded tracks. The sim's `Sfx` / `Music` /
+`MusicDuck` events reach an audio engine on the Web Audio buses: a 14-voice SFX manager (per-frame
+dedupe, per-cue instance caps, priority stealing, the WARNING siren and the ship's death never
+cut), sounds panned from where they happen, and a looping music player with fades and ducking
+scheduled as sample-accurate ramps — with no allocation unless a sound starts. In a browser the
+sound starts with the first key press; the TV plays the sound effects from boot (its free flight
+has no music yet). `pnpm audio:preview` writes every sound and song as WAV files
+([developer guide](docs/dev/audio.md), [what testers should check](docs/client/preview-build.md#sound-and-music)).
 **Input is remote-first and data-driven** (M1-05): control profiles in
 [`content/input/`](content/input/README.md) map keys, remote buttons and gamepad buttons to
 actions with separate **game** and **menu** tables, and carry the Samsung remote's quirks as
@@ -158,7 +175,7 @@ it is waiting to be packaged and run on the M7 monitors.
 | [`shmup_prompt.md`](shmup_prompt.md) | Paste-into-a-new-session prompt that drives execution of the plan (workflow: build → review/fix loop → tests → docs → CI gate per step, progress in `shmup_progress.md`) |
 | [`docs/`](docs/README.md) | Player and developer documentation (start with [`docs/dev/repo-layout.md`](docs/dev/repo-layout.md)) |
 
-Game docs — testers: [preview build (free flight, test stage, its enemies and their bullets, your weapons, power-ups, lives and score, the boss and its WARNING, explosions, shake and flashes)](docs/client/preview-build.md) ·
+Game docs — testers: [preview build (free flight, test stage, its enemies and their bullets, your weapons, power-ups, lives and score, the boss and its WARNING, explosions, shake and flashes, sound and music)](docs/client/preview-build.md) ·
 [controls](docs/client/controls.md) · [monitor setup & install](docs/client/install-on-tv.md).
 Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/architecture.md) ·
 [engine foundations](docs/dev/engine-foundations.md) · [content data](docs/dev/content-data.md) ·
@@ -173,6 +190,7 @@ Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/ar
 [death, respawn & score](docs/dev/death-and-scoring.md) ·
 [bosses & the WARNING](docs/dev/bosses-and-warning.md) ·
 [FX & game feel](docs/dev/fx-and-game-feel.md) ·
+[audio](docs/dev/audio.md) ·
 [input profiles](docs/dev/input-profiles.md) ·
 [API reference](docs/dev/api-reference.md) ·
 [build, test & deploy](docs/dev/build-test-deploy.md) · [conventions](docs/dev/conventions.md).
@@ -199,7 +217,7 @@ versions (`devEngines.runtime`).
 ```sh
 pnpm -v               # must print 12.x — an older global pnpm fails with ERR_PNPM_BROKEN_LOCKFILE
 pnpm install          # set ELECTRON_SKIP_BINARY_DOWNLOAD=1 to skip the Electron binary
-pnpm dev              # browser dev app → http://localhost:5173: fly the KESTREL (arrows/WASD, gamepad; Enter/C takes a power-up; ?stage=test-range scrolls the test stage, its enemies, their bullets and the power capsules; ?stage=test-boss plays the WARNING and the test boss; ?profile=keyboard-remote-emulation feels like the TV remote; ?scene=showcase / ?scene=calibration / ?scene=fx-gallery)
+pnpm dev              # browser dev app → http://localhost:5173: fly the KESTREL (arrows/WASD, gamepad; the first key press turns the sound on; Enter/C takes a power-up; ?stage=test-range scrolls the test stage, its enemies, their bullets and the power capsules; ?stage=test-boss plays the WARNING and the test boss; ?profile=keyboard-remote-emulation feels like the TV remote; ?scene=showcase / ?scene=calibration / ?scene=fx-gallery)
 pnpm lint             # ESLint (typescript-eslint + compat: chrome >= 69)
 pnpm typecheck        # tsc --noEmit everywhere
 pnpm test             # Vitest per package + repo integration tests
@@ -209,6 +227,7 @@ pnpm format           # Prettier
 pnpm trig:tables      # regenerate the committed core trig tables (a test checks they are current)
 pnpm content:check    # validate every JSON under content/ + its sprite names exist in the atlas (part of pnpm test)
 pnpm assets           # rebuild the placeholder sprite atlas (automatic before build/dev; skipped when unchanged)
+pnpm audio:preview    # render every placeholder sound and song to WAV files in assets/generated/audio-preview/
 pnpm clean            # remove build output
 ```
 
@@ -254,13 +273,13 @@ pnpm workspace (`packages/*`, `apps/*`) + Turborepo. Full annotated tree:
 |---|---|
 | [`packages/core`](packages/core/README.md) | `@shmup/core` — pure-TS deterministic simulation: the World and its tick pipeline, all game systems, the `Platform` interface |
 | [`packages/render-pixi`](packages/render-pixi/README.md) | `@shmup/render-pixi` — PixiJS v8 renderer (WebGL1, 384×216 → integer upscale); particles, screen shake / flash / dim, score popups |
-| [`packages/audio-web`](packages/audio-web/README.md) | `@shmup/audio-web` — Web Audio mixer |
+| [`packages/audio-web`](packages/audio-web/README.md) | `@shmup/audio-web` — Web Audio back-end (interactive latency, buses) and the game's audio: deterministic synth, SFX voice manager, looping music with fades and ducking, the engine fed by sim events |
 | [`packages/input-web`](packages/input-web/README.md) | `@shmup/input-web` — keyboard / Samsung remote / gamepad → action snapshots, driven by the input profiles (debounce, diagonal / SOCD policies, game / menu tables) |
-| [`packages/shell`](packages/shell/README.md) | `@shmup/shell` — shared browser host of web + Tizen: boot / loading, boot error screen, event dispatch (game-feel events → renderer), frame loop, the free-flight scene, the fx gallery |
+| [`packages/shell`](packages/shell/README.md) | `@shmup/shell` — shared browser host of web + Tizen: boot / loading (content, atlas, sounds and the stage's music), boot error screen, event dispatch (game-feel events → renderer, sound events → audio engine), frame loop, the free-flight scene, the fx gallery |
 | [`apps/web`](apps/web/README.md) | Vite browser dev target (also Electron's renderer) |
 | [`apps/tizen`](apps/tizen/README.md) | Samsung Tizen `.wgt` (Chromium 69 classic IIFE build, config.xml, CLI scripts) |
 | [`apps/electron`](apps/electron/README.md) | Electron desktop shell |
-| [`content/`](content/README.md) | Game data: player ships, stages, terrain tilesets, enemies, movement paths, weapons, input profiles, particle presets (JSON, `formatVersion` 1) |
+| [`content/`](content/README.md) | Game data: player ships, stages, terrain tilesets, enemies, movement paths, weapons, input profiles, particle presets, sound effects and music (JSON, `formatVersion` 1) |
 | `types/` | Ambient declarations for the Vite virtual modules (`virtual:shmup-content`, `virtual:shmup-assets`) |
 | [`assets/`](assets/README.md) | Art/audio sources (`source/`: sprite pixel maps, fonts) and pipeline output (`generated/`: atlas pages + manifest, ignored) |
 | [`scripts/`](scripts/README.md) | Repo-level Node scripts |
@@ -278,11 +297,10 @@ the game — the shipped Tizen bundle still targets Chromium 69.
 
 ## Next step
 
-Code: plan step **M1-15** (audio engine & procedural placeholder SFX/music: a deterministic
-pure-TS synth rendering ZzFX-style sound effects and chip songs, `content/audio/` for every SFX
-cue and the first original songs, an SFX voice manager with priorities, per-cue caps and
-stealing (the WARNING siren never stolen), looping music with fades and ducking, all fed by the
-sim's events through the shell's dispatcher) — the per-step status board is
+Code: plan step **M1-16** (scene flow, canvas UI kit & HUD: a scene stack with Title → Game ⇄
+Pause → Stage clear / Game over, all canvas-drawn and navigable with the remote — menus with
+held-direction auto-repeat, confirm dialogs, Back handled through the scenes and the TV's exit
+confirmation — and the in-game HUD with the 7-slot power meter) — the per-step status board is
 [`shmup_progress.md`](shmup_progress.md).
 
 On hardware (unchanged, and still the gate for the remote control scheme): package and

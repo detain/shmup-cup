@@ -39,8 +39,8 @@ weapons, loadouts, autofire, hits on enemies, trailing Options).
 ┌──────────────────────┐  ┌────────────────────────────┐  ┌──────────────────────────────┐
 │ @shmup/input-web     │  │ @shmup/render-pixi         │  │ @shmup/audio-web             │
 │ keys/remote/pads →   │  │ IRenderer over PixiJS v8   │  │ IAudio over Web Audio        │
-│ InputSnapshot        │  │ atlas, layers, sprites,    │  │ (interactive, buses)         │
-│                      │  │ bitmap text, draw lists    │  │                              │
+│ InputSnapshot        │  │ atlas, layers, sprites,    │  │ (interactive, buses); synth, │
+│                      │  │ bitmap text, draw lists    │  │ SFX voices, music, engine    │
 └──────────┬───────────┘  └─────────────┬──────────────┘  └──────────────┬───────────────┘
            └─────────────────────────────┼────────────────────────────────┘
                                          ▼  (types + helpers only)
@@ -65,11 +65,13 @@ weapons, loadouts, autofire, hits on enemies, trailing Options).
 - **Presentation packages depend only on core.** They implement core's contracts
   (`IRenderer`, `IAudio`, `PlatformInput`) and never call each other.
 - **`@shmup/shell` is the one boot path of the browser hosts** (M1-04, decision D34). It
-  depends on core and render-pixi (which also owns the `fx` content kind since M1-14), and on
+  depends on core and render-pixi (which also owns the `fx` content kind since M1-14), on
+  audio-web for the `sfx` / `music` content kinds and the audio engine it creates (M1-15), and on
   input-web only for the default owner of the `input-profiles` content (M1-05, allowed by plan
   §3.1); the input and audio *adapters* reach
   it through interfaces (`ShellInput` = `PlatformInput` + `clear` / `setContext` / `destroy`,
-  `IAudio`), so the shell never creates them itself.
+  `IAudio` — plus, optionally, the `context` / `bus()` graph a `WebAudio` exposes for the
+  engine), so the shell never creates them itself.
 - **Apps are thin composition roots.** `src/boot/` in each app creates the input adapter,
   audio back-end and a `Platform` factory and calls `bootShell()`, which creates the atlas,
   renderer and game and drives them from `requestAnimationFrame`. Electron has no game code
@@ -89,8 +91,9 @@ calls the renderer or the mixer. Each displayed frame the host:
    cancels push `Particles` (`FX_CUES.BulletCancel`, M1-09), the player weapons push their
    `Sfx` cues (`PlayerShot`, `PlayerMissile`, `Clink` — M1-10), the scoring pushes `Score`
    (M1-14); since M1-14 the shell's `connectFxEvents` feeds particles, shake, flash, dim and
-   score popups to the renderer ([fx-and-game-feel.md](fx-and-game-feel.md)), and the audio
-   handlers arrive with M1-15;
+   score popups to the renderer ([fx-and-game-feel.md](fx-and-game-feel.md)), and since M1-15
+   `connectAudioEvents` feeds `Sfx`, `Music` and `MusicDuck` to the audio engine, whose SFX
+   dedupe window `engine.endFrame()` closes after the drain ([audio.md](audio.md));
 3. reads the read-only `RenderFrame` with `game.renderFrame()` — world sprite batches, HUD and
    UI draw lists, screen effects (plan §3.4) — and hands it to `renderer.render()`.
 
@@ -115,7 +118,9 @@ requestAnimationFrame(now)                       shell/frame-loop
              ├─ stepWorld(world, input)          core/world: the 9 phases below, world.tick++
              └─ state.tick++
  └─ game.events.drain(dispatcher.visit)          shell/dispatch → registered handlers
-     └─ connectFxEvents (free flight): emitFxCue / emitSfxCue, shake, flash, dim, popups.show
+     ├─ connectFxEvents (free flight): emitFxCue / emitSfxCue, shake, flash, dim, popups.show
+     └─ connectAudioEvents (free flight): playSfx (panned), playMusic, duckMusic  audio-web/engine
+ └─ audioEngine.endFrame()                        audio-web/sfx: closes the SFX dedupe window
  └─ renderer.render(frame)                       render-pixi/renderer
      │   frame = scene.update(game.renderFrame()) — free flight (default), showcase, calibration,
      │   fx gallery
@@ -392,12 +397,32 @@ Details: [rendering-and-shell.md](rendering-and-shell.md).
 
 ### Audio (`@shmup/audio-web`)
 
-`AudioContext({ latencyHint: 'interactive' })` created lazily by the first `unlock()`,
-with the bus graph `music / sfx / ui → master → destination`. Browsers need a user
-gesture: `apps/web` unlocks on the first `keydown`/`pointerdown`; `apps/tizen` unlocks at
-boot (no autoplay policy on TV). Volumes set before the context exists are applied when
-it is created. `sfx`, `music` and `loader` are placeholders that will connect to the buses
-via `WebAudio.bus(name)`.
+`AudioContext({ latencyHint: 'interactive' })` created lazily (and synchronously) by the first
+`unlock()`, with the bus graph `music / sfx / ui → master → destination`. Browsers need a user
+gesture: `apps/web` unlocks on the first `keydown`/`pointerdown` (gamepad buttons do not
+count); `apps/tizen` unlocks at boot (no autoplay policy on TV). Volumes set before the context
+exists are applied when it is created.
+
+Since M1-15 the game's audio sits on those buses ([audio.md](audio.md)):
+
+- **Content** — `content/audio/` binds every `SFX_CUES` cue to a synth parameter set (or a
+  recorded file) with a priority tier, an instance cap, a volume and a bus, and every
+  `MUSIC_CUES` cue to an original chip song (or an OGG file), optionally per stage; validated by
+  the `loader` module as the shell's `sfx` / `music` content owners.
+- **Loading phases only** — the shell's boot renders the SFX bank and prepares the running
+  stage's music set (`stageMusicCues`) behind the progress bar with the deterministic pure-TS
+  `synth` (22,050 Hz mono; sample-exact loop points); OGG files would be fetched with XHR and
+  decoded through `OfflineAudioContext(2, 1, 32000)` (D22). Nothing is rendered or decoded
+  mid-stage.
+- **Playback** — the `engine` attaches to the buses after the unlock; `connectAudioEvents`
+  feeds it the World's `Sfx` (panned from the event's x relative to the camera), `Music` and
+  `MusicDuck` events. The `sfx` voice manager keeps 14 voices (per-frame dedupe, per-cue
+  instance caps, stealing the lowest tier then the oldest, `critical` never stolen); the `music`
+  player keeps one track resident with an intro + sample-accurate loop, fades and ducking as
+  `AudioParam` ramps on the context clock.
+
+Audio is pure presentation: the sim only pushes cue ids, so a muted or absent audio back-end
+changes nothing in the game.
 
 ## Lifecycle
 
@@ -489,7 +514,8 @@ scores and the session hi-score — extends, continues and the table later), `fx
 hit-stop / shake / flash requests — slowdown later);
 input-web `keymap`, `keyboard`, `gamepad`, `web-input`, `remote`, `rebind`
 (partial: profiles, contexts, persistence hook — the rebinding UI comes in M2-16); audio-web
-`web-audio`;
+`web-audio` (partial: the volume sliders come with M1-17), `synth`, `sfx`, `music`, `loader`,
+`engine`;
 render-pixi `renderer`, `viewport`, `test-pattern`, `palette`, `atlas`, `layers`, `sprites`,
 `text`, `ui`, `particles`, `effects` (partial: shake, flash, dim, popups — raster and palette
 effects later); shell `boot`, `loader`, `dispatch`, `error-screen`, `frame-loop`, `flight`,
@@ -523,6 +549,7 @@ plugins in `vite.shared.ts`) has no `moduleInfo`; it is covered by the tests und
 | A stage event type or camera feature | [stage-runtime.md](stage-runtime.md#extending-it): schema in `core/data`, a `StageEventCode`, the runner's own part (if any) and the World's hook |
 | A sprite or animation | A `*.sprite.json` pixel map under `assets/source/sprites/` (its path is its name) or a generator in `scripts/assets/procedural/`; `hitFlash: true` for anything the player can shoot. Real art: a PNG (+ Aseprite export) of the same name — [asset-pipeline.md](asset-pipeline.md#extending-it) |
 | A sound, music or particle cue | Append a name to `SFX_CUES` / `MUSIC_CUES` / `FX_CUES` in `core/events` (never renumber — ids are recorded in replays and bound by `content/audio/` / `content/fx/`) |
+| A sound effect or a song | A cue entry in `content/audio/main.sfx.json` (synth parameters or a recorded file) or a `content/audio/music/<id>.music.json` track (a chip song or an OGG file) bound to its cue, optionally per stage; listen with `pnpm audio:preview`, check with `pnpm content:check` — no code ([audio.md](audio.md#extending-it)) |
 | A presentation event kind | Append a code to `SimEventKind` and a name to `SIM_EVENT_KIND_NAMES`, then register a handler on the shell's dispatcher (`shell.events.on`) |
 | An explosion, spark or other particle effect | A preset and a trigger in `content/fx/*.fx.json` — bound to an `FX_CUES` cue or to a sound that implies a visual — checked in `?scene=fx-gallery`; no code ([fx-and-game-feel.md](fx-and-game-feel.md#extending-it)) |
 | A new entity kind | Give it an SoA pool (`createSoaPool`) registered with `world.pools.register(name, pool)` (flushed in the removal phase and hashed automatically) or an object pool (`createPool`) with a mirror batch, sized from the budgets in `shmup_feat.md` §22 |

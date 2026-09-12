@@ -122,6 +122,11 @@ export const STAGE_MUSIC_CUES: readonly number[] = Object.freeze([
  */
 export function stageMusicCues(stage: Pick<StageSpec, 'music' | 'events'>): number[] {
   const cues: number[] = [];
+  /**
+   * Appends a cue unless it is `Silence`, unresolved (−1) or already listed.
+   *
+   * @param cue - A `MUSIC_CUES` id.
+   */
   const add = (cue: number): void => {
     if (cue > MUSIC_CUES.Silence && cues.indexOf(cue) < 0) cues.push(cue);
   };
@@ -504,6 +509,12 @@ const MUSIC_FILE_SCHEMA = s.object(
  */
 function checkSong(song: Song, path: string, issues: ValidationIssue[]): boolean {
   let ok = true;
+  /**
+   * Whether the song defines an instrument (own keys only — `"constructor"` is not one).
+   *
+   * @param name - Instrument name.
+   * @returns `true` when `song.instruments` has it.
+   */
   const hasInstrument = (name: string): boolean =>
     Object.prototype.hasOwnProperty.call(song.instruments, name);
   song.channels.forEach((channel, c) => {
@@ -597,6 +608,12 @@ export function loadMusicContent(files: readonly ContentFile[]): MusicContentRes
       issues.push({ path: at(file.path, issue.path), message: issue.message });
     if (parsed === undefined) continue;
     let ok = true;
+    /**
+     * Records an issue of this file and leaves the track out.
+     *
+     * @param field - JSON path inside the file (`''` = the file itself).
+     * @param message - What is wrong.
+     */
     const report = (field: string, message: string): void => {
       issues.push({ path: at(file.path, field), message });
       ok = false;
@@ -754,7 +771,10 @@ export class AudioLoadError extends Error {
   readonly url: string;
 
   /**
-   * @param url - The URL that failed.
+   * Creates the error; its message reads `could not load <url>: <reason>` (the boot error screen
+   * shows it under `AUDIO FAILED TO LOAD`).
+   *
+   * @param url - The URL that failed (a track id when a track has neither song nor file).
    * @param reason - What went wrong.
    */
   constructor(url: string, reason: string) {
@@ -924,9 +944,16 @@ export interface AudioLoader {
   /**
    * Prepares one music track: renders its song or fetches + decodes its file.
    *
+   * @remarks
+   * A file track's `loopStart` / `loopEnd` (counted at its `sampleRate`) are scaled to the decoded
+   * buffer's rate and rounded; `loopEnd` is clamped to the buffer's length. A song track keeps the
+   * exact sample indices `renderSong` returns.
+   *
    * @param track - The track.
    * @returns A promise of the prepared track (loop points in its own frames).
-   * @throws Rejects with {@link AudioLoadError} when a file cannot be loaded or decoded.
+   * @throws Rejects with {@link AudioLoadError} when a file cannot be loaded or decoded, or the
+   *   track has neither song nor file; with the `RangeError` of `renderSong` for a song that did
+   *   not pass {@link loadMusicContent}.
    */
   loadTrack(track: MusicTrackDef): Promise<PreparedTrack>;
 }
@@ -947,6 +974,13 @@ function scaleBuffer(buffer: AudioBufferLike, gain: number): void {
 
 /**
  * Creates the audio loader.
+ *
+ * @remarks
+ * Load-time code (it allocates freely). `loadSfx` renders every synthesized cue synchronously
+ * inside the call — the shipped bank of 23 cues takes a few milliseconds — and fetches + decodes
+ * the recorded ones in parallel; progress advances once per cue. `loadTrack` renders a song
+ * synchronously too (zone A's 51 s: tens of milliseconds on a desktop, several times that on a
+ * TV) — callers run it behind a loading screen, never mid-stage.
  *
  * @param options - Synth rate, file fetcher and decoder (tests inject fakes).
  * @returns The loader.
@@ -981,6 +1015,7 @@ export function createAudioLoader(options: AudioLoaderOptions = {}): AudioLoader
       const total = content.cues.filter((cue) => cue !== null).length;
       let done = 0;
       onProgress?.(total === 0 ? 1 : 0);
+      /** Counts one prepared cue and reports the progress. */
       const finish = (): void => {
         done++;
         onProgress?.(done / total);

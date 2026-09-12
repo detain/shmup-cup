@@ -133,6 +133,7 @@ region holds the loop's steady state: a note still ringing at the loop end conti
 the seam exactly as if the loop were played twice. Give every channel a note (or a cut, `=`)
 somewhere in the loop — a channel that only holds a note from the intro cannot loop exactly. A jingle ends with its notes' release tails (2 s at most).
 
-**Memory.** Only the music of the current phase is resident: the stage's theme, the boss
-theme, the stage-clear jingle and game over are prepared while the stage loads, never
-mid-stage. Mono 22,050 Hz float samples cost 88 KB a second (zone A ≈ 4.5 MB).
+**Memory.** Only the music of the current phase is resident: the stage's theme, its boss
+theme, the cue of each of its `music` events, the stage-clear jingle and game over are prepared
+while the stage loads, never mid-stage (a cue whose track was not prepared stays silent;
+`pnpm content:check` checks that every cue a shipped stage names has a track). Mono 22,050 Hz float samples cost 88 KB a second (zone A ≈ 4.5 MB).

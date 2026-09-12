@@ -303,6 +303,9 @@ function clampVolume(volume: number): number {
  * - `setBusVolume()` clamps to 0…1 (NaN → 0) and works before the context exists;
  *   the value is applied when the buses are created.
  * - After `destroy()` the state is `'closed'` for good; `unlock()` never recreates it.
+ * - The first `unlock()` creates the context and the buses **synchronously**, before its promise
+ *   settles, so `context` and `bus()` are usable right after the call — the shell attaches the
+ *   audio engine at once (still inside the user gesture) and again when the promise resolves.
  *
  * @param options - Optional context factory.
  * @returns The {@link WebAudio} instance.

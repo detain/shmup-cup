@@ -143,6 +143,12 @@ ES5 and linted with `ecmaVersion: 5`.
   getter; a quad pool shared by items of different tints re-tints quads whenever the items
   shift — give each item its own quads so a tint is written only when it really changes
   ([fx-and-game-feel.md](fx-and-game-feel.md#zero-allocation-and-the-hot-path-rules)).
+  And from M1-15: a value computed per request and passed on (a stereo pan) is boxed by the call
+  even when the callee then drops the request — pass the whole-pixel input instead and compute
+  the fraction inside, only on the path that uses it (`SfxPlayer.playAt(cue, x, priority)`);
+  code that only *has* to allocate (a Web Audio source node per started sound) keeps every
+  other path — dropped, deduped, unchanged — allocation-free
+  ([audio.md](audio.md#zero-allocation-and-the-hot-path-rules)).
 - Behaviour coroutines (generators, D29) allocate a small result object on every resume:
   scripts **sleep** (`yield ticks`) and are resumed only when they wake; per-tick motion
   belongs in a mover (numbers on the body), never in a `yield 1` loop.
@@ -160,7 +166,10 @@ ES5 and linted with `ecmaVersion: 5`.
 - Vitest, Node environment, one folder per module: `test/<module>/<module>.test.ts`, plus
   `<module>-edge.test.ts` for edge cases where useful.
 - Browser/TV APIs are injected (`win`, `createContext`, `getGamepads`, `tizen`) so tests
-  pass fakes instead of touching globals.
+  pass fakes instead of touching globals. Web Audio code is written against the structural
+  types of `audio-web/web-audio` (`PlaybackContextLike` …) and tested with the recording fake
+  `packages/audio-web/test/helpers/fake-context.ts` (a settable clock, real sample buffers, every
+  scheduled parameter change logged).
 - Each package has `test/tsconfig.json` (Node types, DOM lib) separate from the pure
   `src` program.
 - Determinism-sensitive code gets a headless test against `createHeadlessPlatform()`; code
@@ -197,6 +206,7 @@ Only original names, art and music — never Konami or Taito names or assets
 | Every sprite name the shipped content uses exists in the atlas | `pnpm content:check` (`findMissingSprites`) |
 | Every `script` id names a registered behaviour (`KNOWN_SCRIPT_IDS`), every enemy `params` name a tunable of its behaviour, every spawner a `child` | `pnpm content:check` and the shell's boot (`knownScripts`, `checkEnemyBehaviors`) |
 | Procedural generators seed from the sprite name (`seedOf`) and use only exactly rounded maths (no `Math.sin`/`cos`), so the atlas is byte-identical on every machine | review; `test/scripts/assets/pipeline*.test.ts` (byte-identical runs) |
+| Placeholder sounds and music are data, never audio binaries: synth parameter sets and chip songs in `content/audio/`, rendered at load by the deterministic `audio-web` synth (table sines, seeded noise). Every `SFX_CUES` cue is bound, every song loops sample-exactly, every cue a shipped stage names has a track | `pnpm content:check`; `packages/audio-web/test/synth/` (pinned hashes) — [audio.md](audio.md) |
 
 ## Checklists
 

@@ -68,7 +68,7 @@ shmup-cup/
 │   │   └── test/tsconfig.json   Node-side program for tests
 │   ├── render-pixi/        @shmup/render-pixi — PixiJS v8 IRenderer: WebGL1-first, 384×216 RT, integer upscale
 │   │   └── src/ renderer ✔ viewport ✔ test-pattern ✔ palette ✔ atlas ✔ layers ✔ (+ terrain grid, parallax bands, laser sprites) sprites ✔ text ✔ ui ✔ particles ✔ (fx content owner, 256-particle pool) effects ✔ (partial: shake, flash + limiter, dim, score popups) · debug (placeholder)
-│   ├── audio-web/          @shmup/audio-web — Web Audio IAudio: interactive latency, buses, suspend/resume
+│   ├── audio-web/          @shmup/audio-web — Web Audio IAudio (interactive latency, buses, suspend/resume) + the game's audio
 │   │   └── src/ web-audio ✔ synth ✔ (deterministic PCM: ZzFX-style SFX, chip songs with sample-exact loops) sfx ✔ (voice manager) music ✔ (loop, fades, ducking) loader ✔ (sfx / music kinds, OGG path) engine ✔
 │   ├── input-web/          @shmup/input-web — keyboard/remote + Gamepad API → InputSnapshot
 │   │   └── src/ keymap ✔ keyboard ✔ gamepad ✔ web-input ✔ remote ✔ (debounce, diagonal/SOCD policies) rebind ✔ (partial: input profiles, game/menu tables, profile choice)
@@ -128,10 +128,11 @@ apps/electron ─► (loads apps/web build; no package imports)
 
 `@shmup/shell` (M1-04) is the shared boot path of the two browser hosts; the apps still create
 their own input / audio adapters and platform and hand them to it (plan §3.1). The plan
-allows the shell to import render-pixi, audio-web and input-web; today it imports render-pixi,
-input-web (only to validate the `input-profiles` content by default, M1-05) and core — the
-input and audio adapters themselves arrive as interfaces. Guide:
-[rendering-and-shell.md](rendering-and-shell.md).
+allows the shell to import render-pixi, audio-web and input-web; today it imports all three —
+render-pixi (the renderer, the `fx` owner), audio-web (the `sfx` / `music` owners and the audio
+engine, M1-15 — [audio.md](audio.md)), input-web (only to validate the `input-profiles` content
+by default, M1-05) — and core; the input and audio adapters themselves arrive as interfaces.
+Guide: [rendering-and-shell.md](rendering-and-shell.md).
 
 `@shmup/core` imports nothing from the workspace (lint-enforced). Presentation packages
 depend only on core. Apps compose everything.

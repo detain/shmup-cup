@@ -15,7 +15,7 @@ const shell = await bootShell({
   contentFiles,
   assets,
   input, // createWebInput(...)
-  audio, // createWebAudio()
+  audio, // createWebAudio() — its context / bus() graph is what the audio engine plays through
   platform: (renderer) => createWebPlatform({ input, audio, webgl2: renderer.webGLVersion === 2, ... }),
   gameConfig: { remoteMode: false },
   scene: sceneFromSearch(location.search), // 'flight' (default) | 'showcase' | 'calibration' | 'fx-gallery'
@@ -31,21 +31,26 @@ shell.events.on(SimEventKind.Music, (event) => { /* presentation handler */ });
 Boot sequence: progress bar (plain 2D overlay canvas) → content validation (core kinds + the
 owners of foreign kinds — `contentOwners`, then `DEFAULT_CONTENT_OWNERS` (`input-profiles` →
 `@shmup/input-web`, `fx` → `@shmup/render-pixi`, whose parsed presets the shell keeps as
-`shell.fx`); any issue → **boot error screen** listing `path: message`) → atlas pages
+`shell.fx`, `sfx` / `music` → `@shmup/audio-web`, whose bank and music library the shell keeps
+for its audio engine); any issue → **boot error screen** listing `path: message`) → atlas pages
 via `new Image()` from relative URLs (no `fetch`, decision D25) → atlas → renderer (WebGL1
 first; particles seeded from the game's seed, presets via `setFxContent`) → platform (the apps
-apply their input profiles in this factory) → game → scene (free flight connects the World's
-events to the renderer's effects — `connectFxEvents`) → lifecycle /
-audio unlock / resize wiring → rAF frame loop (`input.setContext` when `game.inputContext`
-changed → `game.frame` → `game.events.drain(dispatch)` → `renderer.render`, plan §3.3). The
-canvas carries `data-shmup-state="loading" | "running" | "error"`.
+apply their input profiles in this factory) → game → audio (M1-15: the engine renders the SFX
+bank — `LOADING SOUND` — and prepares the booted stage's music set, `stageMusicCues` —
+`LOADING MUSIC`; nothing is rendered or decoded later) → scene (free flight connects the
+World's events to the renderer's effects — `connectFxEvents` — and to the audio engine —
+`connectAudioEvents`) → lifecycle / audio unlock (the engine attaches right after `unlock()`) /
+resize wiring → rAF frame loop (`input.setContext` when `game.inputContext` changed →
+`game.frame` → `game.events.drain(dispatch)` → `shell.audioEngine.endFrame()` →
+`renderer.render`, plan §3.3). The canvas carries
+`data-shmup-state="loading" | "running" | "error"`.
 
 ## Modules
 
 | Module | Status | Responsibility |
 |---|---|---|
-| `boot` | implemented | `bootShell()`, `sceneFromSearch()`, `ShellBootError` |
-| `loader` | implemented | Atlas page images (`loadImages`), content validation routed by kind (`loadGameContent`, `DEFAULT_CONTENT_OWNERS`; script ids checked against the core's `KNOWN_SCRIPT_IDS` and enemies against their behaviours since M1-08, weapons against theirs (`checkWeaponBehaviors`) since M1-10; the core's `ENGINE_SPRITES` — bullets, laser beam, since M1-10 the Option orb, since M1-11 the power capsule and the Force Field — interned by default since M1-09) |
+| `boot` | implemented | `bootShell()`, `sceneFromSearch()`, `ShellBootError`; owns the audio engine (`Shell.audioEngine`, M1-15) |
+| `loader` | implemented | Atlas page images (`loadImages`), content validation routed by kind (`loadGameContent`, `DEFAULT_CONTENT_OWNERS` — `input-profiles`, `fx`, `sfx`, `music`; script ids checked against the core's `KNOWN_SCRIPT_IDS` and enemies against their behaviours since M1-08, weapons against theirs (`checkWeaponBehaviors`) since M1-10; the core's `ENGINE_SPRITES` — bullets, laser beam, since M1-10 the Option orb, since M1-11 the power capsule and the Force Field — interned by default since M1-09) |
 | `dispatch` | implemented | Sim event → presentation handler routing, allocation-free; `connectFxEvents` feeds the renderer's particles, shake / flash / dim and score popups from the World's events (M1-14); `connectAudioEvents` feeds `Sfx` / `Music` / `MusicDuck` to the audio engine (M1-15) |
 | `error-screen` | implemented | Boot overlay: progress bar and error screen (Canvas 2D) |
 | `frame-loop` | implemented | `requestAnimationFrame` driver (moved here from the apps) |
@@ -80,14 +85,18 @@ graph, `context` and `bus()`, which the engine plays through).
 
 Guide: [`docs/dev/rendering-and-shell.md`](../../docs/dev/rendering-and-shell.md#the-browser-shell-shmupshell);
 the game-feel wiring and the fx gallery: [`docs/dev/fx-and-game-feel.md`](../../docs/dev/fx-and-game-feel.md);
+the audio wiring: [`docs/dev/audio.md`](../../docs/dev/audio.md#the-shells-wiring);
 exports: [`docs/dev/api-reference.md`](../../docs/dev/api-reference.md#shmupshell).
 
 Tests run in Node with fakes for the window, images and the WebGL renderer; the workers get
 `--expose-gc`, so the free-flight scene's and the fx gallery's per-frame `update()` and the
-whole game-feel event path (`connectFxEvents` → particles / effects / popups) are checked with
-the core's allocation guard. The real browser path is covered by `pnpm test:e2e` (headless Chromium,
+whole game-feel event path (`connectFxEvents` → particles / effects / popups) and the audio
+event path (`connectAudioEvents` → a real `AudioEngine` on a fake Web Audio context: dropped,
+deduped and unchanged sounds and music) are checked with the core's allocation guard;
+`dispatch-audio-runtime` plays the shipped boss range from the real sim through the engine. The real browser path is covered by `pnpm test:e2e` (headless Chromium,
 `test/e2e/` — `flight.spec.ts` flies the KESTREL with arrow keys in both builds, `boss.spec.ts`
 checks the WARNING band and the boss on `?stage=test-boss`, `fx-gallery.spec.ts` the gallery's
-label and explosions in both builds). How the World the scene draws works:
+label and explosions in both builds, `audio.spec.ts` the first-key-press unlock and the zone
+theme's exact loop points in the web build and the shots' sounds from boot in the Tizen build). How the World the scene draws works:
 [`docs/dev/sim-world.md`](../../docs/dev/sim-world.md); the boss and its WARNING:
 [`docs/dev/bosses-and-warning.md`](../../docs/dev/bosses-and-warning.md).

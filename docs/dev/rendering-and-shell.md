@@ -7,7 +7,9 @@ step **M1-04**. Later steps *fill* the contract (the World in M1-06, see
 [bullets-and-patterns.md](bullets-and-patterns.md); the player shots and Options in M1-10, see
 [weapons-and-options.md](weapons-and-options.md); particles, score popups and the screen shake /
 flash / dim fed by the sim's events in M1-14, see [fx-and-game-feel.md](fx-and-game-feel.md);
-the HUD and menus in M1-16) without changing its shape.
+the HUD and menus in M1-16) without changing its shape. The shell's audio wiring (M1-15 — the
+SFX bank and the stage's music rendered during boot, the engine fed by the same event dispatch)
+is on [audio.md](audio.md).
 
 This page is the *how and why*. Exact signatures are in
 [api-reference.md](api-reference.md); the TSDoc in the sources is the authoritative
@@ -331,8 +333,9 @@ const shell = await bootShell({
 | 3 | `createAtlas(manifest, images)` | `ATLAS DOES NOT MATCH ITS MANIFEST` |
 | 4 | `createPixiRenderer(...)` — WebGL1 first; `fxSeed` = the game's seed xor a salt, `effects` = `ShellOptions.effects` | `WEBGL IS NOT AVAILABLE` |
 | 5 | `options.platform(renderer)`, then `createGame(platform, gameConfig, content.db)` | `SHMUP CUP FAILED TO START` |
-| 6 | `renderer.setFxContent(shell.fx)`; scene set up (free flight / showcase / fx gallery: the scene's name table + `bindWorld(scene.world)`; calibration: content's names and a frame without a world), dispatcher created — in free flight with `connectFxEvents` (M1-14) | — |
-| 7 | Suspend → `input.clear()` + `audio.suspend()`; resume → `audio.resume()`; audio unlock (first `keydown` / `pointerdown` in the capture phase, or immediately); `resize` → `renderer.resize()` | — |
+| 5a | Audio (M1-15): `createAudioEngine({ sfx, music, loader })`, `engine.loadSfx()` (bar labelled `LOADING SOUND`), then for a booted stage `engine.prepareMusic(stage.id, stageMusicCues(stage))` (`LOADING MUSIC`; open space prepares none) — [audio.md](audio.md#the-shells-wiring) | `AUDIO FAILED TO LOAD` (`AudioLoadError: could not load <url>: …`) |
+| 6 | `renderer.setFxContent(shell.fx)`; scene set up (free flight / showcase / fx gallery: the scene's name table + `bindWorld(scene.world)`; calibration: content's names and a frame without a world), dispatcher created — in free flight with `connectFxEvents` (M1-14) and `connectAudioEvents(events, engine, world.view.camera)` (M1-15) | — |
+| 7 | Suspend → `input.clear()` + `audio.suspend()`; resume → `audio.resume()`; audio unlock (first `keydown` / `pointerdown` in the capture phase, or immediately) followed by `engine.attach(audio)` right after `unlock()` returns and again when it resolves; `resize` → `renderer.resize()` | — |
 | 8 | rAF loop started, overlay removed, canvas marked `running` | — |
 
 On any failure the error screen stays up, the canvas is marked `error`, everything created so
@@ -343,12 +346,15 @@ A file whose kind is neither a core kind nor claimed by an owner is an issue
 (`<path>: no loader for content kind "<kind>"`), so a new content kind cannot ship
 unvalidated. Owners come from `contentOwners`, then the shell's `DEFAULT_CONTENT_OWNERS`
 (today `input-profiles` → `@shmup/input-web` `loadInputProfiles`, M1-05 — the one reason the
-shell imports input-web — and `fx` → `@shmup/render-pixi` `loadFxContent`, M1-14). Both apps
+shell imports input-web — `fx` → `@shmup/render-pixi` `loadFxContent`, M1-14, and `sfx` /
+`music` → `@shmup/audio-web` `loadSfxContent` / `loadMusicContent`, M1-15). Both apps
 pass an input-profile registry's `load` for that kind instead, so they keep the parsed profiles
 and apply them in the platform factory, which runs after validation
 ([input-profiles.md](input-profiles.md#choosing-the-active-profile)). For `fx`, `bootShell`
 registers its own owner (under `contentOwners`) that keeps the parsed presets for the renderer
-(`Shell.fx`); an app `fx` owner would replace it and leave the particles without presets.
+(`Shell.fx`); an app `fx` owner would replace it and leave the particles without presets. The
+same goes for `sfx` / `music`: the shell's own owners keep the bank and the music library for
+the audio engine (`Shell.audioEngine`).
 
 ### The overlay canvas
 
@@ -373,6 +379,7 @@ const onFrame = (now: number): void => {
   }
   game.frame(now); // 0…4 fixed ticks
   game.events.drain(events.visit); // sim events → registered handlers
+  engine.endFrame(); // closes the audio engine's SFX dedupe window (M1-15)
   const frame = game.renderFrame();
   renderer.render(scene !== null ? scene.update(frame) : calibration.update(frame));
 };
@@ -387,9 +394,13 @@ no handler are counted in `unhandled` and dropped; the queue is the World's (M1-
 M1-14, free flight registers `connectFxEvents(events, renderer)`: `Particles` and `Sfx` →
 particle bursts (the sounds a `content/fx/` trigger binds: hits, clinks, pickups, shots),
 `Shake` / `Flash` / `Dim` → the screen effects, `Score` / `FormationBonus` / `BossDefeated` →
-score popups ([fx-and-game-feel.md](fx-and-game-feel.md#which-event-draws-what)). The audio
-handlers arrive in M1-15 — until then `Music`, `HitStop`, `Rumble`, `PowerUp` and `MusicDuck`
-are counted as unhandled (the `Sfx` events reach the particle handler).
+score popups ([fx-and-game-feel.md](fx-and-game-feel.md#which-event-draws-what)). Since M1-15
+it also registers `connectAudioEvents(events, engine, camera)`: `Sfx` → `engine.playSfx(cue,
+screenX, priority)` with `screenX = Math.floor(event.x - camera.x) | 0` (whole pixels from the
+playfield's left edge — it pans the sound), `Music` → `playMusic(cue, fadeTicks)`, `MusicDuck`
+→ `duckMusic(ticks)` ([audio.md](audio.md#which-event-plays-what)); an `Sfx` event reaches both
+the particle and the audio handler. Only `HitStop`, `Rumble` and `PowerUp` are still counted as
+unhandled.
 
 ### Scenes until the scene stack exists
 
@@ -440,7 +451,7 @@ resolve virtual modules, so the boot functions receive them as arguments.
 | | `apps/web` | `apps/tizen` |
 |---|---|---|
 | `gameConfig` | `{ remoteMode: false, stage }` — `stage` from `?stage=<id>` (`stageFromSearch`; an id missing from `contentStageIds(contentFiles)` → `console.warn`, `null`) | `{ remoteMode: true, autofire: true }` — no stage parameter (free flight) |
-| `audioUnlock` | `'gesture'` (autoplay policy) | `'immediate'` |
+| `audioUnlock` | `'gesture'` (autoplay policy): silent until the first key press or click — gamepad buttons do not count — then the audio engine attaches and a stage's theme starts | `'immediate'`: sound effects from boot; free flight prepares no music, so the TV app plays none yet |
 | Input profiles | `?profile=` › saved choice › `keyboard-default`; `?debounce=`; `gamepad-standard` | saved choice › `tizen-remote-safe` (its `register` keys registered); `gamepad-standard` |
 | Back | Esc / Backspace → `Pause` (game) / `Back` (menus) | remote Back (10009) exits — the watcher is installed **before** boot, so Back also leaves the boot error screen |
 | Atlas URLs | `assets/atlas/main.png` under the page (`vite preview`, dev middleware) | the same relative path inside the widget (`file://`) |
@@ -498,11 +509,19 @@ pnpm test:e2e                                        # builds web + tizen, then 
   after about five seconds: the flight scene draws the WARNING band (its red edge rows across the
   whole width) for three seconds; once it is gone the TRIAL WARDEN flies in from the right and
   stays in the right part of the playfield (its `bosses/hull-block` colour there); no console
-  errors or atlas warnings (M1-13).
+  errors or atlas warnings (M1-13). Since M1-15 it polls for the boss after the WARNING and
+  needs two band-free captures in a row, instead of capturing once after a fixed 150 frames: on
+  a loaded machine the loop runs up to 4 ticks a frame and the autofire destroyed the boss before
+  the late capture (seen on the pre-M1-15 build too).
 - `fx-gallery.spec.ts` — `?scene=fx-gallery` in the web build and the Tizen build opened from
   disk shows the station label (its cyan) and, within the first stations, warm additively
   blended fireball pixels in the middle of the playfield, so the screenshot (attached to the
   report) is not blank; no console errors or atlas warnings (M1-14).
+- `audio.spec.ts` — `createBufferSource` is wrapped before the page loads so every started
+  sound is logged: in the web build on `?stage=test-range` the first key press unlocks audio and
+  the zone theme starts as a looping 22,050 Hz buffer whose `loopStart` / `loopEnd` are the
+  song's exact sample indices (intro 64 rows × 2,205 samples); in the Tizen build (unlocked at
+  boot, forced autofire) the shots play as short one-shot buffers; no console errors (M1-15).
 - `shell.spec.ts` — an aborted atlas request ends on the boot error screen (overlay canvas,
   state `error`); a 1000×600 window gets a centred ×2 frame on the letterbox colour and a
   resize to 1920×1080 re-fits it to ×5; free flight animates.
@@ -563,7 +582,7 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | `packages/render-pixi/test/layers/layers-lasers*.test.ts` | The laser binding (M1-09): two hidden sprites per slot, the tinted telegraph line vs the beam frame of the rounded width (band / frame boundaries, wider-than-frames scaling), blink and zero / NaN lengths hidden, rotation written only on change, camera rounding without `-0`, shrinking views, capacity validation, destroy, zero allocation through a whole laser life |
 | `packages/render-pixi/test/renderer/` | The renderer wired with a fake `WebGLRenderer`: passes, rebinding (incl. parallax / terrain bindings below the batches), shake / flash / dim, reused pass options (fails if `resetPass` is removed), allocation probes; `renderer-fx*` (M1-14): the particles / popups / effects it owns, stepping by the tick delta, flash tint composition, the two dims, the FX layer under the enemy bullets |
 | `packages/render-pixi/test/particles/`, `effects/` | The `fx` content validation, the particle pool, the screen effects and the score popups (M1-14 — [fx-and-game-feel.md](fx-and-game-feel.md#tests)) |
-| `packages/shell/test/` | Boot happy path and every failure (error screen, state attribute, cleanup), content owners (the default `input-profiles` owner, an app owner replacing it), the input context forwarded before a frame's polls, image loading and progress, dispatch (copy-on-write unsubscribe; `connectFxEvents` — its table, an allocation guard of the whole event path and an end-to-end game-feel run, M1-14), overlay drawing, the fx gallery, the free-flight scene (sprite ids, starfield drift / wrap / pause, HUD, the WARNING band — M1-13, empty content, zero allocation per frame), showcase determinism and allocation |
+| `packages/shell/test/` | Boot happy path and every failure (error screen, state attribute, cleanup), content owners (the default `input-profiles` owner, an app owner replacing it), the input context forwarded before a frame's polls, image loading and progress, dispatch (copy-on-write unsubscribe; `connectFxEvents` — its table, an allocation guard of the whole event path and an end-to-end game-feel run, M1-14; `connectAudioEvents` — its mapping, two allocation guards and the shipped boss range through a real audio engine, M1-15), the audio wiring of boot (bank and stage set prepared, attach after the unlock, `AUDIO FAILED TO LOAD` — M1-15), overlay drawing, the fx gallery, the free-flight scene (sprite ids, starfield drift / wrap / pause, HUD, the WARNING band — M1-13, empty content, zero allocation per frame), showcase determinism and allocation |
 | `test/e2e/` | The real browser path, both builds (above) |
 
 ## Gotchas
@@ -589,6 +608,8 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | `?scene=calibration` does nothing on the TV | The widget has no query string; the calibration scene is for browsers (`pnpm dev`, `vite preview`, the Tizen dev server) |
 | No explosions or sparks, but the game runs | The renderer has no presets (`setFxContent` not called — an app `fx` owner replaced the shell's) or the scene is not free flight (only it connects the World's events) — [fx-and-game-feel.md](fx-and-game-feel.md#gotchas) |
 | An explosion covers a bullet | Something was added to a layer above `ENEMY_BULLETS`; particles and popups belong on `FX` |
+| No sound, but the game runs | In a browser nothing plays before the first key press or click (autoplay policy); the scene is not free flight (only it connects the World's events); the `audio` passed to `bootShell` does not expose `context` / `bus()`; or the TV's free flight, which has no music — [audio.md](audio.md#gotchas) |
+| `stage.spec.ts` fails with the terrain "not scrolling" on a busy machine | A screenshot took so long that the terrain moved more than the 250-px search window (reproduced before M1-15 under a load average of ~40); re-run on a quieter machine |
 
 ## Next steps that build on this page
 
@@ -621,5 +642,7 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 - **M1-14** (done) — the renderer's particle pool, screen effects (shake, tinted flash behind a
   limiter, playfield dim) and score popups, fed through `connectFxEvents`; the shell owns the
   `fx` content; `?scene=fx-gallery` ([fx-and-game-feel.md](fx-and-game-feel.md)).
-- **M1-15** — the audio handlers registered on the dispatcher.
+- **M1-15** (done) — the shell owns the `sfx` / `music` content, renders the SFX bank and the
+  booted stage's music set during boot, attaches the audio engine after the unlock and feeds it
+  through `connectAudioEvents` ([audio.md](audio.md)).
 - **M1-16** — core `ui` fills the HUD and UI draw lists (menus, HUD model).

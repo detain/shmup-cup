@@ -2,14 +2,15 @@
 
 | Page | Contents |
 |---|---|
-| [`preview-build.md`](preview-build.md) | The current game build: the loading bar and **free flight** (flying the KESTREL around an empty starfield with the remote, keyboard or gamepad, its gun firing on its own), plus the scrolling **Test Range** stage with its enemies and their bullets, the **power-ups** (capsules, taking them with OK, the Force Field and Mega Crash), **lives, losing the ship and the score** (what destroys the ship, the freeze, the blinking comeback, what a loss costs, GAME OVER, the points table and `HI`), the **Boss Range** with the **WARNING** sign and the first **boss** (its parts, which ones can be hurt, its attacks, what happens when it is destroyed), the **explosions, sparks, screen shake, flashes and score numbers** (what each one should look like, the flash limit), the **fully powered** ship (laser, missiles, four Options, Force Field), the sprite showcase, the calibration screen and the **effects gallery** in a browser — how to open it on the TV, in a browser and on the desktop, how the ship and its weapons should behave, what a correct picture looks like, which enemies shoot what and how many hits they take, the start-up error screen, what to report, troubleshooting |
+| [`preview-build.md`](preview-build.md) | The current game build: the loading bar and **free flight** (flying the KESTREL around an empty starfield with the remote, keyboard or gamepad, its gun firing on its own), plus the scrolling **Test Range** stage with its enemies and their bullets, the **power-ups** (capsules, taking them with OK, the Force Field and Mega Crash), **lives, losing the ship and the score** (what destroys the ship, the freeze, the blinking comeback, what a loss costs, GAME OVER, the points table and `HI`), the **Boss Range** with the **WARNING** sign and the first **boss** (its parts, which ones can be hurt, its attacks, what happens when it is destroyed), the **explosions, sparks, screen shake, flashes and score numbers** (what each one should look like, the flash limit), the **sound effects and the music** (what you should hear and when, the first key press in a browser, the loop point to listen for), the **fully powered** ship (laser, missiles, four Options, Force Field), the sprite showcase, the calibration screen and the **effects gallery** in a browser — how to open it on the TV, in a browser and on the desktop, how the ship and its weapons should behave, what a correct picture looks like, which enemies shoot what and how many hits they take, the start-up error screen, what to report, troubleshooting |
 | [`controls.md`](controls.md) | Default controls for the Samsung Smart Remote (primary), gamepads and keyboard, in the game and in menus; the control profiles, feeling the remote's limits on a desktop keyboard, controls troubleshooting |
 | [`install-on-tv.md`](install-on-tv.md) | One-time Developer Mode + certificate setup, installing / starting / removing development builds (input probe and game preview) on the Samsung Smart Monitor M7 (Windows desktop), install troubleshooting |
 | [`input-probe.md`](input-probe.md) | Tester guide for the **Input Probe** diagnostic app: screen tour, remote controls, the 9-step on-device test protocol, how to read the verdicts, measuring latency with a 240 fps camera, recording results, troubleshooting |
 
 Planned pages, as the game takes shape:
 
-- **Options** — audio, display (scale modes, screen shake, flashing), controls, difficulty.
+- **Options** — audio volumes, display (scale modes, screen shake, flashing), controls,
+  difficulty.
 - **Troubleshooting** — black screen, input lag (the M7 has no Game Mode for apps),
   audio issues.
 
@@ -36,8 +37,8 @@ enemies and bullets destroy it (a Force Field takes enemies and bullets for it),
 again blinking — safe for a moment — with one step of power less, and after the third ship the
 top bar says **GAME OVER**; every destroyed enemy, completed formation and collected capsule adds
 to the **score**, and `HI` shows the session's best
-([preview-build.md](preview-build.md#lives-losing-your-ship-and-the-score)). There is no
-sound yet. And the first **boss** has arrived: in a browser, `?stage=test-boss`
+([preview-build.md](preview-build.md#lives-losing-your-ship-and-the-score)). And the first
+**boss** has arrived: in a browser, `?stage=test-boss`
 scrolls for a few seconds until a **WARNING** sign stops the stage, then the TRIAL WARDEN — a
 test boss built from armour blocks, shield plates, a core and two guns — glides in; shoot the
 plates off, then the core, dodge its bullet fans and its lasers, and the stage scrolls on
@@ -48,5 +49,11 @@ shakes the picture, a Mega Crash or a boss's final blast flashes the screen (nev
 three times a second), the WARNING darkens the playfield, and every kill shows its points rising
 from the spot; `?scene=fx-gallery` shows every effect in turn
 ([preview-build.md](preview-build.md#explosions-sparks-shake-and-flashes)). The button layouts
-for the TV remote, keyboard and gamepad are in [controls.md](controls.md). Next come the sounds
-and the music.
+for the TV remote, keyboard and gamepad are in [controls.md](controls.md). And now the game
+**sounds** too: every shot, hit, explosion, pickup and power-up makes a sound, coming from where
+it happens on the screen; the WARNING wails a siren; and in the browser stages the first
+original **music** plays — a stage theme that loops without a gap, a boss theme and a short
+stage-clear tune. In a browser the sound starts with the first key press or click; the TV plays
+the sound effects from the start but has no music yet
+([preview-build.md](preview-build.md#sound-and-music)). Next come the title screen, the pause
+menu and the in-game HUD.

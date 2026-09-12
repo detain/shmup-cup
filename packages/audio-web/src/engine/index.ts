@@ -20,7 +20,7 @@
  *    ({@link DEFAULT_PAN_WIDTH} at the playfield edges), {@link AudioEngine.playMusic} maps a
  *    `MUSIC_CUES` id to the stage's track (`Silence` fades out; the track already playing is not
  *    restarted), {@link AudioEngine.duckMusic} ducks to {@link DEFAULT_DUCK_LEVEL}, and
- *    {@link AudioEngine.endFrame} closes the per-tick dedupe window.
+ *    {@link AudioEngine.endFrame} closes the SFX dedupe window (once per drained frame).
  *
  * Bus volumes stay with the web-audio back-end (`setBusVolume` — the Options screen, M1-17).
  *
@@ -150,6 +150,13 @@ export interface AudioEngine {
   /**
    * Changes the music (a sim `Music` event).
    *
+   * @remarks
+   * A cue whose track is not in the prepared set is ignored and counted in
+   * {@link AudioEngine.missedMusic} (the music already playing goes on). Before
+   * {@link AudioEngine.attach} a prepared cue is remembered and started, without a fade, when the
+   * engine attaches — how the stage theme queued at world creation reaches the web build after its
+   * first key press. The cue already playing is not restarted.
+   *
    * @param cue - `MUSIC_CUES` id (`Silence` stops).
    * @param fadeTicks - `Silence`: fade-out; a track: fade-in (and the previous track stops).
    */
@@ -160,11 +167,16 @@ export interface AudioEngine {
    * @param ticks - Ticks until the music is back at full volume.
    */
   duckMusic(ticks: number): void;
-  /** Ends the per-tick SFX dedupe window (call after each frame's events). */
+  /** Ends the SFX dedupe window (call once after each frame's events are drained). */
   endFrame(): void;
   /** The music cue requested last (−1 = none / silence). */
   readonly musicCue: number;
-  /** Ids of the prepared (resident) music tracks. */
+  /**
+   * Ids of the prepared (resident) music tracks.
+   *
+   * @remarks
+   * A new array on every read — for tests and diagnostics, never for per-frame code.
+   */
   readonly residentTracks: readonly string[];
   /** Music requests ignored because their track was not prepared. */
   readonly missedMusic: number;
@@ -178,6 +190,16 @@ export interface AudioEngine {
 
 /**
  * Creates the game's audio engine (see the module docs for the life cycle).
+ *
+ * @remarks
+ * Load time: the per-cue voice specs and the positional table are built here, the samples by
+ * {@link AudioEngine.loadSfx} / {@link AudioEngine.prepareMusic}, the `AudioBuffer`s and players
+ * by {@link AudioEngine.attach}. The per-frame calls — `playSfx`, `playMusic`, `duckMusic`,
+ * `endFrame` — allocate nothing unless a sound actually starts (one Web Audio source node, plus
+ * the `AudioBuffer` of a resident track the first time it plays); the shell's
+ * `dispatch-audio-engine-alloc` test guards it. A positional cue is panned from the whole-pixel
+ * screen x by the SFX player once a voice starts ({@link SfxPlayer.playAt}), never from a
+ * fractional pan passed across a call.
  *
  * @param options - Content, loader, voice cap, pan width, duck level.
  * @returns The engine (not attached, nothing prepared).

@@ -275,8 +275,10 @@ centred at row 85, red and yellow (`0xf8d030`) alternating every 16 ticks. It re
 only when the WARNING starts, ends or changes colour. Since M1-14 the renderer draws the `Dim`
 event as a playfield dim (50 %, fading in over 8 ticks and out over 16 after the 180-tick hold —
 over the world layers, under the flash, the band and the HUD) and each pulse's `Flash` as a red
-flash (`0xf85858`, 0.35) ([fx-and-game-feel.md](fx-and-game-feel.md)); the siren and the music
-wait for M1-15.
+flash (`0xf85858`, 0.35) ([fx-and-game-feel.md](fx-and-game-feel.md)). Since M1-15 the siren is
+heard — one 0.92-s wail per pulse, `critical`, centred, never stolen (a new pulse restarts the
+last) — and the stage theme fades out over the WARNING's 30-tick `Silence`
+([audio.md](audio.md#which-event-plays-what)).
 
 ### The brake
 
@@ -445,14 +447,16 @@ M1-18.
 
 New codes (append-only): `SimEventKind.Dim` (10) and `BossDefeated` (11) with their
 `SIM_EVENT_KIND_NAMES`; `SfxPriority` (`Default 0, Low 1, Normal 2, High 3, Critical 4`) — a hint
-in an `Sfx` event's `param` that the mixer of M1-15 maps to its tiers (`Default` = the cue's own
-priority); `FX_CUES.BossChain` (6), `BossBlast` (7); `FlashKind.Warning` (1, 8 ticks) and
+in an `Sfx` event's `param` that the SFX player of M1-15 uses as the sound's tier (`Default` =
+the cue's own priority); `FX_CUES.BossChain` (6), `BossBlast` (7); `FlashKind.Warning` (1, 8 ticks) and
 `BossBlast` (2, 24 ticks) in `FLASH_KIND_TICKS`. Since M1-14 the particles (`boss.chain` for
 each chain explosion; `explosion.large` + `boss.chain` + `debris` for the blast), the large shake,
 the white blast flash, the dim and the popups (a white one per destroyed part with a score —
 `core/bosses` pushes a `SimEventKind.Score` for it — and the gold tally from `BossDefeated`) are
-drawn ([fx-and-game-feel.md](fx-and-game-feel.md)); sounds and music arrive with M1-15, rumble
-with the gamepad work.
+drawn ([fx-and-game-feel.md](fx-and-game-feel.md)); since M1-15 the chain and the blast are
+heard (`BossExplode`, the blast with a `High` hint), the boss theme starts with the intro, fades
+out over 60 ticks at the kill and the stage-clear jingle plays at the tally
+([audio.md](audio.md)); rumble comes with the gamepad work.
 
 ## Determinism and hashing
 
@@ -559,7 +563,7 @@ free flight).
 | The boss score is 0 at the tally | `defeat()` without a player credits nobody (`killer` -1) |
 | `rng.gameplay.callCount` does not move during the death chain | Intended: the chain's positions come from the cosmetic stream, so a boss death never shifts the gameplay sequence |
 | `WarningView.text` is empty | Nothing started a WARNING yet — it is set at the first `startWarning` |
-| No siren, no boss music | The `Sfx` / `Music` events have no audio consumer until M1-15 (the dim, the flashes and the particles are drawn since M1-14) |
+| No siren, no boss music | In a browser nothing plays before the first key press or click (autoplay policy); a custom scene must connect the World's events (`connectAudioEvents`); a boss theme the stage names must be prepared with the stage (`stageMusicCues`, not the fixed `STAGE_MUSIC_CUES`) — see [audio.md](audio.md#gotchas) |
 | The screen does not dim or flash in a custom scene | Only free flight connects the World's events to the renderer (`connectFxEvents`) — see [fx-and-game-feel.md](fx-and-game-feel.md#gotchas) |
 | An allocation guard creeps up after touching the boss code | A fractional argument to a non-inlined call, a non-integer generator local, or content read per tick — see the rules above; whole-sequence guards run partly unoptimised and have 128 KB |
 
@@ -568,8 +572,8 @@ free flight).
 - **M1-14** (done) — the particles (`boss.chain`, explosions, cancel sparkles), shake, flash,
   the WARNING dim and the part / tally popups drawn from the events
   ([fx-and-game-feel.md](fx-and-game-feel.md)).
-- **M1-15** — the siren (critical priority), the boss theme, the music stop and fade, the
-  stage-clear jingle.
+- **M1-15** (done) — the siren (critical priority), the boss theme, the music stop and fade,
+  the stage-clear jingle ([audio.md](audio.md)).
 - **M1-16** — the HUD and scene flow after `stageClear` (the stage-clear screen).
 - **M1-18** — zone A's boss, HALCYON BULWARK (HB-01), with its own behaviours.
 - **M2-09** — boss timers and escapes, the optional HP bar, mid-bosses, battleship raids,

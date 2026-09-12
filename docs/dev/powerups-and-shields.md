@@ -276,7 +276,9 @@ is never touched (it detonates on that tick). The whole death sequence is
 Since M1-14 the renderer draws the shield break's `shield.break` sparks, the Mega Crash flash
 (white, 0.85) and — through an `sfx` trigger on `MeterAdvance` — a cyan `pickup` ring at the ship
 on every capsule pickup ([fx-and-game-feel.md](fx-and-game-feel.md)); capsules show no score
-popup (it would cover the ship). Sounds arrive with M1-15, the HUD with M1-16. `SFX_CUES.CapsulePickup` (9) is **not** used by meter mode (Direct-mode items,
+popup (it would cover the ship). Since M1-15 the events are heard (`MeterAdvance`,
+`PowerUpEquip`, `PowerUpDenied`, `ShieldHit`, `ShieldBreak`, a centred `MegaCrash` —
+[audio.md](audio.md)); the HUD comes with M1-16. `SFX_CUES.CapsulePickup` (9) is **not** used by meter mode (Direct-mode items,
 M2-05).
 
 ## Determinism, restarts and hashing
@@ -369,7 +371,7 @@ powerups.detonateMegaCrash(0); // debug: clear the screen now
 
 | Symptom | Cause / fix |
 |---|---|
-| OK "does nothing" | The meter is not drawn before M1-16 and no sound plays before M1-15. Check `world.powerups.meters[p].cursor`: `-1` (no capsule since the last equip) is a denied press |
+| OK "does nothing" | The meter is not drawn before M1-16; a denied press plays `PowerUpDenied` (M1-15 — in a browser only after the first key press). Check `world.powerups.meters[p].cursor`: `-1` (no capsule since the last equip) is a denied press |
 | A test presses `PowerUp` every tick and equips only once | By design — only the `pressed` edge equips. Commit `0` (release) between presses |
 | A capsule spawned by a test vanishes | It was more than 32 px outside the camera view (culled in the next phase 5), or it landed on the ship during the fly-in and is waiting — ships collect only while `alive` |
 | A kill made between ticks produced no capsule yet | It appears at the next tick's phase 3 (`beginTick`) |
@@ -393,7 +395,7 @@ powerups.detonateMegaCrash(0); // debug: clear the screen now
   death's bullet cancel ([bosses-and-warning.md](bosses-and-warning.md)).
 - **M1-14** (done) — the shield-break particles, the Mega Crash flash, cancel sparkles, the
   pickup ring ([fx-and-game-feel.md](fx-and-game-feel.md)).
-- **M1-15** — the sounds of every event above.
+- **M1-15** (done) — the sounds of every event above ([audio.md](audio.md)).
 - **M1-16** — the HUD power meter (`cursor`, `equippable`, `METER_LABELS`, the `PowerUp` flash).
 - **M2-03** — loadouts B–D and `!` variants; **M2-04** — the other meter shields and the Option
   Hunter; **M2-05** — Direct mode's items and the Arm tiers.

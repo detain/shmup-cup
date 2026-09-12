@@ -142,9 +142,10 @@ with `shell.events.on(kind, handler)` ([rendering-and-shell.md](rendering-and-sh
   there; a visitor that calls `clear()` also ends it. (The first implementation released
   the whole pending block up front and re-visited overwritten slots — caught by the test
   agent, regression tests in `packages/core/test/events/events-edge.test.ts`.)
-- The module owns the canonical cue registries `SFX_CUES` (21 cues) and `MUSIC_CUES`
-  (15 cues) plus their `*_NAMES` arrays. The sim emits numbers; `content/audio/` binds the
-  names to samples (M1-15).
+- The module owns the canonical cue registries `SFX_CUES` (23 cues since M1-11) and
+  `MUSIC_CUES` (15 cues) plus their `*_NAMES` arrays. The sim emits numbers;
+  `content/audio/` binds the names to synthesized sounds and songs (M1-15 —
+  [audio.md](audio.md)).
 
 **Ids and kind codes are part of the replay/debug format: append, never renumber.** Adding
 a kind means adding a code to `SimEventKind`, a name to `SIM_EVENT_KIND_NAMES` and a case
@@ -222,5 +223,7 @@ into velocities with `SIN_TABLE_Q16` and keeps the shots in a third registered S
 ([weapons-and-options.md](weapons-and-options.md)); M1-14 (done) consumes the event kinds and
 the `FX_CUES` / `SFX_CUES` registries for particles, shake, flash, dim and score popups, appends
 `SimEventKind.Score` and seeds its particles with the core's sfc32 on a stream of its own
-([fx-and-game-feel.md](fx-and-game-feel.md)); M1-15 consumes the sound cues, and M1-19 compares
-those hashes in golden replays.
+([fx-and-game-feel.md](fx-and-game-feel.md)); M1-15 (done) consumes the sound and music cues —
+its synth also takes its sines from `SIN_TABLE_Q16` and its noise from the core's sfc32, so
+every placeholder sound is bit-identical on every engine ([audio.md](audio.md#the-synth-synth));
+M1-19 compares those hashes in golden replays.

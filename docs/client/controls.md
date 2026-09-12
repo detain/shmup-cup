@@ -67,7 +67,8 @@ not suddenly press Back. Release it and press again.
   four directions.
 - **Home** always leaves the app; the game pauses in the background and continues when you
   return. Long-pressing Back and the volume keys belong to the TV and are never used by the
-  game. The colour buttons (red/green/yellow/blue on the on-screen number pad) are reserved
+  game — they set the monitor's volume as usual (the game has no volume setting of its own
+  yet). The colour buttons (red/green/yellow/blue on the on-screen number pad) are reserved
   for later use.
 - Today Back still closes the app from free flight, because it is the first screen; once
   the title screen exists, Back there asks before quitting.
@@ -76,7 +77,9 @@ not suddenly press Back. Release it and press again.
 
 Any controller the TV or browser recognises as a standard gamepad (Xbox / PlayStation
 layout). A controller becomes visible to the game only after you **press one of its
-buttons** once — press any button to activate it.
+buttons** once — press any button to activate it. In a browser a gamepad button does **not**
+turn the sound on: browsers allow sound only after a key press or a click, so press a key or
+click the picture once.
 
 | Button (Xbox / PlayStation) | In the game | In menus |
 |---|---|---|
@@ -162,6 +165,7 @@ its default.
 | Back closes the game on the TV instead of pausing | Expected in the current preview — free flight is the first screen. Pausing with Back arrives with the playable game |
 | The ship does not react for a moment after the app starts | It is flying in (about ⅔ of a second) and ignores the controls until it arrives — see [preview-build.md](preview-build.md#flying-the-ship) |
 | Holding Shot (Z / Space, A / Cross) or Sub (X, B / Circle) changes nothing | Expected: the gun already fires on its own (automatic fire is on by default), and the missiles fire on their own too once a power-up gave them to you (in a browser, `?loadout=full` gives them to you right away) |
-| PowerUp (OK, Enter, C, X) does nothing | Expected until you have collected a power capsule — and on the TV and the desktop, whose free flight has no enemies, there are none yet. Also expected when you already have the most of the highlighted power-up. See [preview-build.md](preview-build.md#power-ups) |
+| PowerUp (OK, Enter, C, X) does nothing | Expected until you have collected a power capsule — and on the TV and the desktop, whose free flight has no enemies, there are none yet. Also expected when you already have the most of the highlighted power-up. Such a press plays a short, low "no" buzz. See [preview-build.md](preview-build.md#power-ups) |
+| No sound in the browser | Press a key or click into the picture once — the sound starts then (a gamepad button does not count). See [preview-build.md](preview-build.md#sound-and-music) |
 | Pressing OK while holding an arrow stops the ship on the TV | Not expected — the game keeps the arrow held. Please report it with the remote model: it means the remote itself drops the arrow when OK is pressed |
 | Pause and the other buttons do nothing | Expected in the current preview — the pause screen comes later |

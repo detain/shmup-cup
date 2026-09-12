@@ -8,9 +8,10 @@
  *
  * Output (default `assets/generated/audio-preview/`, ignored by git):
  *
- * - `sfx/<Cue>.wav` — one file per bound `SFX_CUES` cue, volume baked in;
+ * - `sfx/<Cue>.wav` — one file per synthesized `SFX_CUES` cue, volume baked in (a cue bound to a
+ *   recorded `file` is skipped — it is already listenable);
  * - `music/<id>.wav` — a one-shot song as is; a looping song as intro + the loop **twice**, so the
- *   seam can be heard (the loop points are printed, in samples).
+ *   seam can be heard (the loop points are printed, in samples). File tracks are skipped too.
  *
  * Every file's `pcmHash` is printed next to it (the tests pin hashes the same way).
  *
@@ -180,6 +181,7 @@ function isKind(data, kind) {
  *
  * @param {string[]} args - `process.argv.slice(2)`.
  * @returns {{ out: string, only: string | null, quiet: boolean }} The options.
+ * @throws {Error} For an unknown option (the CLI prints it and exits with code 1).
  */
 function parseArgs(args) {
   let out = DEFAULT_PREVIEW_DIR;

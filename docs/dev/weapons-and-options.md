@@ -430,6 +430,7 @@ autofire) and hold no `Shot` / `Sub`.
 - **M1-14** (done) — `sfx` triggers draw a muzzle flash 9 px ahead of every `PlayerShot`,
   sparks at an `EnemyHit` and sparks bouncing back off armour at a `Clink`; the kills pop their
   score ([fx-and-game-feel.md](fx-and-game-feel.md)).
-- **M1-15** — the sounds of the explosion, `PlayerShot`, `PlayerMissile` and `Clink` events.
+- **M1-15** (done) — the sounds of the explosion, `PlayerShot`, `PlayerMissile` and `Clink`
+  events, panned from where they happen ([audio.md](audio.md)).
 - **M2-03** — loadouts B–D, Weapon Edit, weapon select; **M2-04** — Snake / Formation / Rotate
   Options and the Option Hunter; **M2-05** — Direct-mode weapon families.

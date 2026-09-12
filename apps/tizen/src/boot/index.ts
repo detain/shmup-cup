@@ -7,7 +7,10 @@
  * atlas to the shared boot sequence of `@shmup/shell` (`bootShell`: loading bar, content
  * validation and boot error screen, atlas pages from relative `file://` URLs, renderer, game,
  * event dispatch and the rAF frame loop). The game runs with `remoteMode: true` and forced
- * autofire; audio needs no gesture on TV, so it is unlocked immediately.
+ * autofire; audio needs no gesture on TV, so it is unlocked immediately and the shell's audio
+ * engine (M1-15) plays the sound effects from boot. The TV has no `?stage=` parameter and free
+ * flight prepares no music, so the app plays no music until the scene flow (M1-16) and zone A
+ * (M1-18) arrive.
  *
  * **Input profiles** (decisions D13/D14). The `input-profiles` content is parsed into a
  * registry during boot; the remote uses the saved profile choice (`Platform.storage`, applied

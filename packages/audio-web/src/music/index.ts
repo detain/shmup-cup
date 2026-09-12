@@ -115,7 +115,12 @@ export interface MusicPlayer {
  * @remarks
  * Load time: creates the fade and duck gains (`fade → duck → destination`). Every `play()`
  * creates one `AudioBufferSourceNode`; loop points become seconds (`samples / buffer.sampleRate`),
- * which the engine turns back into the same sample frames.
+ * which the engine turns back into the same sample frames. A track counts as looping only when
+ * `loopStart ≥ 0` and `loopEnd > loopStart`; anything else plays once. `stop()` clears
+ * {@link MusicPlayer.current} at once, even while the fade-out is still audible; a second
+ * `stop(fade)` during a fade re-ramps from the current gain (engines that throw on a second
+ * `source.stop()` keep the first stop time — the throw is caught).
+ * Fades and ducks use separate gains, so a duck during a fade-in (or the reverse) combines both.
  *
  * @param options - Context, destination and tick length.
  * @returns The player.
@@ -123,7 +128,8 @@ export interface MusicPlayer {
  * @example
  * ```ts
  * const music = createMusicPlayer({ context, destination: audio.bus('music')! });
- * music.play({ id: 'zone-a', buffer, loopStart: 176_400, loopEnd: 1_168_650 }, { fadeInTicks: 30 });
+ * // zone A at 22,050 Hz: 6.4 s intro, then the loop up to 51.2 s
+ * music.play({ id: 'zone-a', buffer, loopStart: 141_120, loopEnd: 1_128_960 }, { fadeInTicks: 30 });
  * music.duck(0.35, 120); // the player died
  * music.stop(60);
  * ```

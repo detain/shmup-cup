@@ -47,7 +47,8 @@ desktop app, run `pnpm rebuild electron` without the variable set.
 | `pnpm format` / `pnpm format:check` | Prettier write / check (research docs at the root are ignored) |
 | `pnpm clean` | Removes `dist/`, `coverage/`, `.turbo/` everywhere (never `node_modules`) |
 | `pnpm assets` | Placeholder asset pipeline (`scripts/generate-assets.mjs`): sprite pixel maps, procedural generators, PNG overrides and fonts → `assets/generated/atlas/main.png` + `main.json`; skipped when inputs are unchanged; `--force` rebuilds, `--out DIR` / `--source DIR` redirect, `--quiet` silences; exit 1 lists invalid sources. Also runs before every `build` / `dev` (Turborepo `//#assets`) and inside Vite builds (`shmupAssets()`). See [asset-pipeline.md](asset-pipeline.md#running-it) |
-| `pnpm content:check` | Validates every JSON file under `content/` with `loadContent()` from `@shmup/core` — the shipped files and the `example.*.json` samples as two independent sets, plus the README format samples — and checks that every sprite name of the shipped content exists in the atlas (`test/integration/content.test.ts`; also part of `pnpm test`). See [content-data.md](content-data.md#commands) |
+| `pnpm content:check` | Validates every JSON file under `content/` with `loadContent()` from `@shmup/core` — the shipped files and the `example.*.json` samples as two independent sets, plus the README format samples — and checks that every sprite name of the shipped content exists in the atlas; the foreign kinds go through their owners, and `content/audio/` is also checked for sound (every `SFX_CUES` cue bound, audible, unclipped, short; every song looping sample-exactly; every cue a shipped stage names prepared and bound — M1-15) (`test/integration/content.test.ts`; also part of `pnpm test`). See [content-data.md](content-data.md#commands) |
+| `pnpm audio:preview` | Renders every synthesized SFX cue and chip song of `content/audio/` to 16-bit mono WAV files in `assets/generated/audio-preview/` (git-ignored) for listening — a looping song as intro + loop + loop so the seam can be heard — and prints each file's `pcmHash` and a song's loop points (`scripts/audio-preview.mjs`, loads `@shmup/audio-web` through Vite's `ssrLoadModule`; `--out DIR`, `--only NAME`, `--quiet`). See [audio.md](audio.md#pnpm-audiopreview) |
 | `pnpm trig:tables` | Regenerates the committed `packages/core/src/math/trig-table.ts` (`scripts/gen-trig-tables.mjs`; `--check` verifies, `--out FILE` writes elsewhere). Re-run it in the same commit whenever the script changes — a test diffs the committed file |
 
 Per project: `pnpm --filter <name> <script>`, e.g. `pnpm --filter @shmup/core test`,
@@ -213,7 +214,9 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   top bar shows `GAME OVER` (M1-12), and on `?stage=test-boss` the WARNING band shows for three
   seconds and then the test boss flies in (M1-13), and `?scene=fx-gallery` shows its station label
   and additively blended fireball pixels in both builds, with the screenshot attached to the
-  report (M1-14).
+  report (M1-14), and — with `createBufferSource` wrapped to log started sounds — the web build's
+  first key press on `?stage=test-range` starts the zone theme looping at the song's exact sample
+  indices while the Tizen build plays its shots from boot (M1-15).
   Output goes to `test/e2e/test-results/` (git- and Prettier-ignored).
 - **Dev query parameters** of the web build (`pnpm dev`, `vite preview`): `?stage=<id>` (run
   that stage instead of open space, e.g. `test-range`, or `test-boss` for the WARNING and the
@@ -256,6 +259,7 @@ whenever dependencies change, or the frozen install fails.
 | Build fails with `SyntaxError: <file>.json: …` from `shmup:content` | A file under `content/` is not valid JSON (comments and trailing commas are not allowed; only the README samples are JSONC) |
 | `asset sources are invalid (N issues)` from `pnpm assets`, `pnpm build` or `pnpm dev` | A sprite pixel map, PNG override or font breaks its format; every line names `<file>:<json path>`. See [asset-pipeline.md](asset-pipeline.md#gotchas) |
 | `pnpm content:check` reports `sprite "…" is not in the atlas` | Content names a sprite no pixel map, generator or PNG defines — fix the name or add the sprite |
+| `pnpm content:check` fails an audio check (a cue without a sound, a song that clips or does not loop sample-exactly, a stage cue without a track) | Fix `content/audio/` — listen with `pnpm audio:preview --only <name>`; the rules are in [audio.md](audio.md#extending-it) and [`content/audio/README.md`](../../content/audio/README.md) |
 | `pnpm dev` keeps the old atlas after editing `scripts/assets/` | Vite should restart the server on its own; if it logged `restart the dev server to regenerate the atlas …`, restart `pnpm dev` |
 | Tizen build fails with `unexpected files outside dist/assets/` | Something (a new `public/` file, a plugin) put a file into `dist/` outside `assets/`; move it under `assets/` or keep it out of the widget |
 | The game shows a navy screen with a pink title such as `CONTENT ERRORS: 2 PROBLEMS` or `ATLAS PAGE FAILED TO LOAD` | The shell's boot error screen: every line is one problem (`<file>:<json path>: message` for content). Fix the listed content, rebuild a stale atlas (`ATLAS DOES NOT MATCH ITS MANIFEST`), or check WebGL (`WEBGL IS NOT AVAILABLE`). The console logs "Shmup Cup failed to start" with the `ShellBootError` — see [rendering-and-shell.md](rendering-and-shell.md#the-boot-sequence) |

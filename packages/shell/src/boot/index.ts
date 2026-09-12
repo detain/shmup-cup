@@ -295,7 +295,10 @@ export interface Shell {
    * back-end once it is unlocked (M1-15).
    */
   readonly audioEngine: AudioEngine;
-  /** Stops the frame loop and releases listeners, input, renderer, atlas and audio. */
+  /**
+   * Stops the frame loop and releases listeners, input, renderer, atlas, the audio engine and the
+   * audio back-end (idempotent).
+   */
   stop(): void;
 }
 
@@ -309,6 +312,8 @@ export class ShellBootError extends Error {
   readonly reason: unknown;
 
   /**
+   * Creates the error; its message is the title followed by the detail lines.
+   *
    * @param title - Error screen title (also the message).
    * @param lines - Detail lines.
    * @param issues - Content issues, if any.
@@ -414,11 +419,21 @@ function createCalibrationFrame(first: RenderFrame): CalibrationFrame {
  * game's seed xor a fixed salt; only free flight connects the World's events to the renderer
  * (`connectFxEvents`) — the showcase, calibration and gallery scenes do not draw the World.
  *
+ * Audio (M1-15): the `sfx` / `music` files are validated by the shell's own owners (an app owner
+ * of the same kind replaces one and leaves the engine without that content); after the game is
+ * created, the engine renders the SFX bank (`LOADING SOUND`) and prepares the booted stage's music
+ * set (`LOADING MUSIC`; open space prepares none). Only an `audio` that also exposes `context`
+ * and `bus()` is attached — right after `platform.audio.unlock()` returns and again when it
+ * resolves; a plain `IAudio` (or a context without buffer playback) leaves the game silent. Only
+ * free flight connects the World's events to the engine (`connectAudioEvents`); every scene's
+ * frame loop calls `engine.endFrame()` after the drain, and `stop()` destroys the engine before the
+ * audio back-end.
+ *
  * @param options - Canvas, window, content, assets, adapters and the platform factory.
  * @returns A promise of the running {@link Shell}.
  * @throws Rejects with {@link ShellBootError} when content is invalid, an atlas page cannot
- *   be loaded or does not match the manifest, WebGL is unavailable, or creating the platform
- *   or game fails.
+ *   be loaded or does not match the manifest, WebGL is unavailable, creating the platform
+ *   or game fails, or a recorded sound or track cannot be loaded (`AUDIO FAILED TO LOAD`).
  *
  * @example
  * ```ts

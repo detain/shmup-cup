@@ -284,8 +284,10 @@ frozen ones included (plan §3.2), but not on the tick of their request — a re
 `SIM_EVENT_KIND_NAMES` gained `'musicDuck'`). Since M1-14 the renderer draws the death's
 `explosion.large` + `debris` particles, the medium shake, the cancel sparkles and the score
 popups ([fx-and-game-feel.md](fx-and-game-feel.md)); `SimEventKind.Score` (12, `'score'`) is new
-there and not hashed. Sounds and the duck arrive with M1-15, rumble with the gamepad work of
-M1-15 / M2-16.
+there and not hashed. Since M1-15 the death is heard — `PlayerDeath` (`critical`, never cut by
+another cue) — and the `MusicDuck` dips the music to 0.35 in 4 ticks, holds it for 60 ticks and
+brings it back at 120 ([audio.md](audio.md#which-event-plays-what)); rumble comes with the gamepad
+work of M2-16.
 
 ## Determinism and hashing
 
@@ -395,7 +397,7 @@ The next `game.step()` runs that tick, and its phase 7 turns the recorded hit in
 - **M1-14** (done) — particles (explosion, debris, cancel sparkles), the screen shake and flash
   drawn from the events, the global shake switch and the flash limiter, score popups from the new
   `Score` event ([fx-and-game-feel.md](fx-and-game-feel.md)).
-- **M1-15** — the death sound and the music duck.
+- **M1-15** (done) — the death sound and the music duck ([audio.md](audio.md)).
 - **M1-16** — the real HUD and the scene flow after game over.
 - **M1-17** — the saved hi-score (`setHiScore`) and the Options menu for `deathPenalty` /
   `startingLives`.

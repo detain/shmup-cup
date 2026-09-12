@@ -65,8 +65,9 @@ when there is any issue, and passes `db` to `createGame` (M1-04,
   returned untouched in `foreign`, in path order, for its owning package to validate
   (`input-profiles` → input-web `rebind` since M1-05 — see
   [input-profiles.md](input-profiles.md); `fx` → render-pixi `particles` since M1-14 — see
-  [fx-and-game-feel.md](fx-and-game-feel.md#particle-presets-contentfx-kind-fx); `sfx`/`music`
-  → audio-web in M1-15).
+  [fx-and-game-feel.md](fx-and-game-feel.md#particle-presets-contentfx-kind-fx); `sfx` /
+  `music` → audio-web `loader` since M1-15 — see
+  [audio.md](audio.md#the-content-contentaudio-kinds-sfx-and-music)).
 - `example.*.json` files are format samples. The plugin never ships them;
   `pnpm content:check` validates them as their own set.
 - `CONTENT_FORMAT_VERSION` is **1**. An older file is upgraded by `CONTENT_MIGRATIONS`
@@ -315,8 +316,8 @@ pnpm test:integration                       # includes content:check and the plu
 
 - the shipped files load with **zero issues** — with `knownScripts: KNOWN_SCRIPT_IDS` and
   `checkEnemyBehaviors`, so an unknown behaviour id or tunable fails — and every sprite and
-  script id maps back to its name; the only `foreign` file is the input profiles, which
-  input-web's owner validates;
+  script id maps back to its name; the `foreign` files (the input profiles, the particle
+  presets, the SFX bank and the music) are validated by their owners;
 - the `example.*.json` samples load with zero issues as an **independent set** (so they may
   reuse real ids such as `kestrel` without a duplicate-id clash);
 - every file is named `<folder>/<name>.<kind>.json`;
@@ -328,7 +329,11 @@ pnpm test:integration                       # includes content:check and the plu
   asset pipeline builds (`findMissingSprites`, M1-03 — see
   [asset-pipeline.md](asset-pipeline.md#sprite-names-used-by-content)), and so does every
   engine sprite (`ENGINE_SPRITES`, M1-09), which `loadContent(files, { extraSprites })`
-  interns.
+  interns;
+- the audio of `content/audio/` works (M1-15): every `SFX_CUES` cue has a sound, every cue a
+  shipped stage references (theme, boss, `music` events — `stageMusicCues`) has a track, every
+  synthesized sound is audible, unclipped and short, and every looping song loops sample-exactly
+  ([audio.md](audio.md#tests)).
 
 A failure prints the issue list (`path` + `message`) in the Vitest diff.
 

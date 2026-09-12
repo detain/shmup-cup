@@ -349,6 +349,8 @@ class ChannelVoice {
   gain = 0;
 
   /**
+   * Creates a silent voice (no instrument until the first note-on).
+   *
    * @param rate - Sample rate.
    * @param channelVolume - Channel gain.
    */
