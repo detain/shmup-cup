@@ -368,12 +368,14 @@ export function fourWayBot(): PlaytestBot {
           const far = dir > 0 ? laneCentre(j) + LANE_HEIGHT / 2 : laneCentre(j) - LANE_HEIGHT / 2;
           const enter = j === current ? 0 : Math.abs(near - sy) / speed;
           const leave = Math.abs(far - sy) / speed;
-          const hit = firstSlot(
-            scan.span[j],
-            Math.floor(enter / SLOT_TICKS) - 1,
-            Math.ceil(leave / SLOT_TICKS) + 1,
-          );
-          if (hit >= 0) c += 3000 - hit * 50;
+          const from = Math.floor(enter / SLOT_TICKS) - 1;
+          const to = Math.ceil(leave / SLOT_TICKS) + 1;
+          const hit = firstSlot(scan.span[j], from, to);
+          // A threat at the ship's own spot before it could leave hits it if it stays too:
+          // leaving is then never worse than staying (else the bot froze inside a beam).
+          if (hit >= 0 && !(j === current && firstSlot(scan.centre[j], from, to) >= 0)) {
+            c += 3000 - hit * 50;
+          }
         }
         // The stay: from the slot the ship gets there (sooner threats weigh more).
         const arrive = Math.abs(goal - sy) / speed;

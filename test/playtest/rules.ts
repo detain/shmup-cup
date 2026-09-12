@@ -54,7 +54,8 @@ export interface LaneGaps {
 /**
  * Measures the laser lanes of a tick (see the module docs). A lane's rows are the beam's
  * vertical extent over the playfield width (a horizontal beam: its row ± half its width) widened
- * by the ship's hurt radius; lanes that overlap merge and leave no gap between them.
+ * by the ship's hurt radius and clipped to the playfield rows (a beam entirely above or below the
+ * playfield is no lane); lanes that overlap merge and leave no gap between them.
  *
  * @param world - The World.
  * @returns The lanes and gaps.
@@ -70,6 +71,8 @@ export function laserLaneGaps(world: World): LaneGaps {
     const half = f.width[i] / 2 + hurt;
     const top = Math.min(f.y[i], f.ey[i]) - camera.y - half;
     const bottom = Math.max(f.y[i], f.ey[i]) - camera.y + half;
+    // A beam entirely above or below the playfield closes no row the ship can use.
+    if (bottom <= 0 || top >= PLAYFIELD_H) continue;
     bands.push([Math.max(0, top), Math.min(PLAYFIELD_H, bottom)]);
   }
   bands.sort((a, b) => a[0] - b[0]);

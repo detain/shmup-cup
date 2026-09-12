@@ -318,6 +318,27 @@ describe('shell/boot defaultStageId (M1-18)', () => {
     ).toBeNull();
     expect(defaultStageId([])).toBeNull();
   });
+
+  it('skips files whose data is not an object and finds zone A anywhere in the list', () => {
+    expect(
+      defaultStageId([
+        { path: 'a.json', data: 'zone-a' },
+        { path: 'b.json', data: 42 },
+        { path: 'c.json', data: ['stage', 'zone-a'] },
+        { path: 'd.json', data: { kind: 'stage' } },
+        { path: 'e.json', data: { id: 'zone-a' } },
+        { path: 'f.json', data: { kind: 'Stage', id: 'zone-a' } },
+        { path: 'g.json', data: { kind: 'stage', id: 'ZONE-A' } },
+      ]),
+    ).toBeNull();
+    // The data decides, not the file name.
+    expect(
+      defaultStageId([
+        { path: 'x.json', data: undefined },
+        { path: 'stages/elsewhere.json', data: { kind: 'stage', id: DEFAULT_STAGE_ID } },
+      ]),
+    ).toBe('zone-a');
+  });
 });
 
 describe('shell/boot bootShell', () => {

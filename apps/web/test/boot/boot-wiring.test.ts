@@ -441,6 +441,62 @@ describe('web/boot bootWebApp wiring', () => {
     expect(app.game.world.camera.x).toBeGreaterThan((warning?.x ?? 0) - 200);
   });
 
+  it('plays zone A from START and skips to its boss with ?skip=boss in the scene flow (M1-18)', async () => {
+    win.location.search = '?skip=boss';
+    const { app } = await boot();
+    expect(app.game.config).toMatchObject({ stage: 'zone-a', stageSkip: 'boss' });
+    let now = 0;
+    /** Runs one displayed frame. */
+    const frame = (): void => {
+      win.frame(now);
+      now += STEP;
+    };
+    /** Taps Enter over two frames. */
+    const enter = (): void => {
+      win.key('keydown', 'Enter', 13);
+      frame();
+      win.key('keyup', 'Enter', 13);
+      frame();
+    };
+    frame();
+    frame();
+    expect(app.game.scenes?.stack.top?.id).toBe('title');
+    enter();
+    enter();
+    expect(app.game.scenes?.stack.top?.id).toBe('game');
+    const world = app.game.world;
+    expect(world.stage?.stage.id).toBe('zone-a');
+    const warning = world.stage?.stage.events.find((e) => e.type === 'warning');
+    expect(world.camera.x).toBeGreaterThanOrEqual((warning?.x ?? 0) - 96);
+    expect(world.camera.x).toBeLessThan(warning?.x ?? 0);
+  });
+
+  it('keeps open space in the dev scenes and ignores ?skip= on a stage without a boss (M1-18)', async () => {
+    for (const scene of ['showcase', 'calibration', 'fx-gallery']) {
+      win = new FakeWindow();
+      win.location.search = `?scene=${scene}&skip=boss`;
+      const { app } = await boot();
+      expect(app.game.config.stage, scene).toBeNull();
+      app.stop();
+    }
+    win = new FakeWindow();
+    win.location.search = '?scene=flight&stage=test-range&skip=boss';
+    const { app } = await boot();
+    expect(app.game.config).toMatchObject({ stage: 'test-range', stageSkip: 'boss' });
+    expect(app.game.world.stage?.stage.id).toBe('test-range');
+    expect(app.game.world.camera.x).toBe(0);
+  });
+
+  it('flies in open space when the content has no zone A (M1-18)', async () => {
+    const withoutZoneA: WebAppResources = {
+      ...resources,
+      contentFiles: resources.contentFiles.filter((f) => f.path !== 'stages/zone-a.stage.json'),
+    };
+    const app = await bootWebApp({} as HTMLCanvasElement, withoutZoneA, win as unknown as Window);
+    expect(app.game.config.stage).toBeNull();
+    app.stop();
+  });
+
   it('warns about an unknown ?stage= and flies in open space', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     win.location.search = '?stage=nope';
@@ -558,6 +614,16 @@ describe('web/boot stageSkipFromSearch', () => {
     expect(stageSkipFromSearch('?skip=')).toBeNull();
     expect(stageSkipFromSearch('?skip')).toBeNull();
     expect(stageSkipFromSearch('')).toBeNull();
+  });
+
+  it('is not percent-decoded and ignores empty pairs and look-alike keys', () => {
+    expect(stageSkipFromSearch('?skip=%62oss')).toBeNull();
+    expect(stageSkipFromSearch('?skip=boss=1')).toBeNull();
+    expect(stageSkipFromSearch('?skip= boss')).toBeNull();
+    expect(stageSkipFromSearch('?skipper=boss&xskip=boss')).toBeNull();
+    expect(stageSkipFromSearch('?&&skip=boss&')).toBe('boss');
+    expect(stageSkipFromSearch('skip=none')).toBe('none');
+    expect(stageSkipFromSearch('??skip=boss')).toBeNull(); // the key is "?skip"
   });
 });
 

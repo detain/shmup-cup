@@ -34,11 +34,17 @@ import {
   ENGINE_SPRITES,
   KNOWN_SCRIPT_IDS,
   MUSIC_CUES,
+  PLAYFIELD_H,
   SFX_CUE_NAMES,
+  TerrainType,
   WARNING_PULSE_TICKS,
   checkEnemyBehaviors,
   checkWeaponBehaviors,
+  createGame,
+  createHeadlessPlatform,
+  createStageRunner,
   loadContent,
+  terrainAt,
   type ContentDb,
   type ContentFile,
   type StageSpec,
@@ -668,5 +674,178 @@ describe('integration: zone A holds to the 4-way design rules (M1-18)', () => {
       expect(after.length, `checkpoint ${String(checkpoint.x)}`).toBeGreaterThanOrEqual(3);
     }
     expect(sources.filter((x) => x >= 8000 && x < warningX)).toHaveLength(2);
+  });
+  /**
+   * The behaviours of every enemy a stage's spawn / formation events in `[from, to)` bring in
+   * (children included), with the ground anchors of the ground enemies.
+   *
+   * @param from - First x.
+   * @param to - End x (exclusive).
+   * @returns Script ids, and `script:ground` for anchored enemies.
+   */
+  const sectionScripts = (from: number, to: number): Set<string> => {
+    const out = new Set<string>();
+    for (const event of stage.events) {
+      if (event.x < from || event.x >= to) continue;
+      if (event.type !== 'spawn' && event.type !== 'formation') continue;
+      for (const enemy of [
+        db.enemies[event.enemyId],
+        db.enemies[db.enemies[event.enemyId].childId],
+      ]) {
+        if (enemy === undefined) continue;
+        out.add(enemy.script);
+        if (enemy.ground !== null) out.add(`${enemy.script}:${enemy.ground}`);
+      }
+    }
+    return out;
+  };
+
+  it('lays out the five sections with the archetypes the plan names (M1-18 test round)', () => {
+    const warningX = stage.events.find((e) => e.type === 'warning')?.x ?? 0;
+    // (1) tutorial popcorn and the first carriers.
+    const one = sectionScripts(0, 1500);
+    expect([...one].sort()).toEqual(['carrier.straight', 'drifter.sine']);
+    // (2) fan formations on paths, rammers.
+    const two = sectionScripts(1500, 3500);
+    expect(two).toContain('fan.loop');
+    expect(two).toContain('rammer.aimed');
+    const fans = stage.events.filter(
+      (e) => e.type === 'formation' && e.x >= 1500 && e.x < 3500 && e.pathId >= 0,
+    );
+    expect(fans.length).toBeGreaterThanOrEqual(3);
+    // (3) the corridor: floor and ceiling turrets, walkers, hatches.
+    const three = sectionScripts(3500, 6000);
+    for (const script of [
+      'turret.floor:floor',
+      'turret.floor:ceiling',
+      'walker.floor:floor',
+      'hatch.spawner:floor',
+    ]) {
+      expect(three, script).toContain(script);
+    }
+    // (4) orbiters in the high-speed section.
+    expect(sectionScripts(6000, 8000)).toContain('orbiter.loop');
+    // (5) the calm before the WARNING: two capsule carriers and nothing else.
+    const calm = stage.events.filter(
+      (e) => e.x >= 8000 && e.x < warningX && (e.type === 'spawn' || e.type === 'formation'),
+    );
+    expect(calm.map((e) => ('enemyId' in e ? db.enemies[e.enemyId].script : ''))).toEqual([
+      'carrier.straight',
+      'carrier.straight',
+    ]);
+    // Ground enemies only where the corridor gives them a floor or a ceiling.
+    for (const event of stage.events) {
+      if (event.type !== 'spawn' || db.enemies[event.enemyId].ground === null) continue;
+      expect(event.x, db.enemies[event.enemyId].id).toBeGreaterThanOrEqual(3500);
+      expect(event.x, db.enemies[event.enemyId].id).toBeLessThan(6000);
+    }
+    // The stage theme and the boss theme; the planet band drawn last on the mid layer.
+    expect(stage.music).toMatchObject({ stage: 'Stage', boss: 'Boss' });
+    const mid = stage.parallax.filter((p) => p.layer === 'mid');
+    expect(mid[mid.length - 1]?.sprite).toBe('bg/azure-verge');
+  });
+
+  it('shapes its terrain: floors, the floor-and-ceiling corridor, an open arena for the boss', () => {
+    const game = createGame(createHeadlessPlatform(), { seed: 1, stage: 'zone-a' }, db);
+    const map = game.world.terrain;
+    expect(map).not.toBeNull();
+    if (map === null) return;
+    const ceiling = (x: number): boolean => terrainAt(map, x, 0) !== TerrainType.Empty;
+    const floor = (x: number): boolean => terrainAt(map, x, PLAYFIELD_H - 1) !== TerrainType.Empty;
+    const warningX = stage.events.find((e) => e.type === 'warning')?.x ?? 0;
+    let ceilingColumns = 0;
+    for (let x = 0; x < stage.length + 384; x += 4) {
+      if (ceiling(x)) {
+        ceilingColumns++;
+        // A ceiling only in the corridor (section 3, a little beyond its checkpoint and end).
+        expect(x, `ceiling at ${String(x)}`).toBeGreaterThanOrEqual(3400);
+        expect(x, `ceiling at ${String(x)}`).toBeLessThan(6500);
+      }
+    }
+    expect(ceilingColumns).toBeGreaterThan((6000 - 3500) / 4);
+    for (const x of [600, 1000, 4000, 5500, 7000])
+      expect(floor(x), `floor at ${String(x)}`).toBe(true);
+    // The calm and the boss arena (the whole view at the WARNING and beyond): open space.
+    for (let x = 8000; x < stage.length + 384; x += 4) {
+      expect(ceiling(x) || floor(x), `rock at ${String(x)}`).toBe(false);
+    }
+    expect(warningX).toBeGreaterThan(8000);
+  });
+
+  it("keeps HB-01's two lanes 16 px apart with the core's lane between them", () => {
+    const warning = stage.events.find((e) => e.type === 'warning');
+    const boss = warning?.type === 'warning' ? db.enemies[warning.enemyId].boss : null;
+    expect(boss).not.toBeNull();
+    if (boss === null) return;
+    /** A part's y relative to the boss origin (its parents' offsets added up). */
+    const offsetY = (index: number): number => {
+      let y = 0;
+      for (let i = index; i >= 0; i = boss.parts[i].parentIndex) y += boss.parts[i].y;
+      return y;
+    };
+    const guns = boss.parts.map((p, i) => (p.gun ? offsetY(i) : null)).filter((y) => y !== null);
+    expect(guns).toHaveLength(2);
+    const [top, bottom] = [Math.min(...guns), Math.max(...guns)];
+    const coreY = offsetY(boss.parts.findIndex((p) => p.core));
+    expect(top).toBeLessThan(coreY);
+    expect(bottom).toBeGreaterThan(coreY);
+    const hurt = createGame(createHeadlessPlatform(), { seed: 1 }, db).world.ship.hurtRadius;
+    const bulwark = DEFAULT_BOSS_BEHAVIORS.get('boss.bulwark');
+    for (const [p, phase] of boss.phases.entries()) {
+      expect(phase.script, `phase ${String(p)}`).toBe('boss.bulwark');
+      const params = { ...bulwark?.params, ...phase.params };
+      const half = params.laserWidth / 2 + hurt;
+      // Two simultaneous lanes (phase 2 overlaps them) leave a gap a 4-way ship fits in…
+      expect(bottom - top - 2 * half, `phase ${String(p)}`).toBeGreaterThanOrEqual(MIN_LANE_GAP);
+      // … the core's lane is inside it …
+      expect(coreY - top - half).toBeGreaterThan(0);
+      expect(bottom - coreY - half).toBeGreaterThan(0);
+      // … and the tracking keeps both lanes on the playfield.
+      expect(params.margin + top).toBeGreaterThanOrEqual(0);
+      expect(PLAYFIELD_H - params.margin + bottom).toBeLessThanOrEqual(PLAYFIELD_H);
+      expect(params.trackSpeed).toBeLessThan(1); // slow vertical tracking
+    }
+  });
+
+  it('takes the scroll about three minutes to reach the WARNING (the run lasts 3–6 min)', () => {
+    const runner = createStageRunner(stage, { event() {}, clear() {} });
+    const warningX = stage.events.find((e) => e.type === 'warning')?.x ?? 0;
+    let ticks = 0;
+    while (runner.camera.x < warningX && ticks < 60 * 60 * 10) {
+      runner.tick();
+      ticks++;
+    }
+    expect(ticks / 60).toBeGreaterThanOrEqual(2.5 * 60);
+    expect(ticks / 60).toBeLessThanOrEqual(4.5 * 60);
+  });
+  it('animates every shipped enemy and boss part with frames the atlas has; zone A flashes on hits', () => {
+    const { manifest } = buildAtlas();
+    const frames = (sprite: string): number => manifest.sprites[sprite]?.frames.length ?? 0;
+    for (const enemy of db.enemies) {
+      // A boss is drawn by its parts (its own sprite is unused).
+      if (enemy.boss === null) {
+        expect(frames(enemy.sprite), enemy.id).toBeGreaterThanOrEqual(enemy.anim.frames);
+      }
+      for (const part of enemy.boss?.parts ?? []) {
+        if (part.sprite === undefined) continue;
+        expect(frames(part.sprite), `${enemy.id}.${part.name}`).toBeGreaterThanOrEqual(
+          part.anim.frames,
+        );
+      }
+    }
+    // Zone A's roster and HB-01's parts have their white hit-flash frames.
+    const zone = [...stageEnemies(db, stage)].map((i) => db.enemies[i]);
+    const sprites = new Set<string>();
+    for (const enemy of zone) {
+      if (enemy.boss === null) sprites.add(enemy.sprite);
+      for (const part of enemy.boss?.parts ?? [])
+        if (part.sprite !== undefined) sprites.add(part.sprite);
+    }
+    expect(sprites.size).toBeGreaterThanOrEqual(10);
+    for (const sprite of sprites) {
+      const flash = manifest.sprites[sprite]?.flash ?? null;
+      expect(flash, sprite).not.toBeNull();
+      expect(manifest.sprites[flash ?? '']?.frames.length, sprite).toBe(frames(sprite));
+    }
   });
 });

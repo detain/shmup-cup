@@ -272,6 +272,31 @@ describe('tizen/boot bootTizenApp wiring', () => {
     expect(win.registeredKeys).not.toContain('Exit');
   });
 
+  it('plays zone A whatever the URL says: no ?stage= / ?skip= on the TV (M1-18)', async () => {
+    Object.assign(win, { location: { search: '?stage=test-range&skip=boss' } });
+    const { app } = await boot();
+    expect(app.game.config.stage).toBe('zone-a');
+    expect(app.game.config.stageSkip).toBe('none');
+    app.stop();
+    // The dev scenes fly in open space.
+    Object.assign(win, { location: { search: '?scene=showcase' } });
+    const showcase = await boot();
+    expect(showcase.app.game.config.stage).toBeNull();
+    showcase.app.stop();
+    // Content without zone A: START flies in open space.
+    Object.assign(win, { location: { search: '' } });
+    const app2 = await bootTizenApp(
+      {} as HTMLCanvasElement,
+      {
+        ...resources,
+        contentFiles: resources.contentFiles.filter((f) => f.path !== 'stages/zone-a.stage.json'),
+      },
+      win as unknown as Window,
+    );
+    expect(app2.game.config.stage).toBeNull();
+    app2.stop();
+  });
+
   it('applies tizen-remote-safe and gamepad-standard, registering the profile keys only', async () => {
     const { app } = await boot();
     expect(app.profiles.issues).toEqual([]);

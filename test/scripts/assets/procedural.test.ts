@@ -655,6 +655,15 @@ describe('scripts/assets/procedural/backdrops', () => {
     expect(streakPixels).toBeGreaterThan(200);
     expect(wrapped).toBeGreaterThan(0);
   });
+
+  it('is deterministic (seeded by its name) and registered with the procedural generators', () => {
+    const [a] = backdrops.generate();
+    const [b] = backdrops.generate();
+    expect(Buffer.from(b.frames[0].data).equals(Buffer.from(a.frames[0].data))).toBe(true);
+    expect(PROCEDURAL_GENERATORS.map((g) => g.id)).toContain('backdrops');
+    const all = PROCEDURAL_GENERATORS.flatMap((g) => g.generate().map((sprite) => sprite.name));
+    expect(all.filter((name) => name === 'bg/azure-verge')).toHaveLength(1);
+  });
 });
 
 describe('scripts/assets/procedural/starfield', () => {
