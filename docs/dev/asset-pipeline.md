@@ -413,5 +413,7 @@ sprites (a laser as a row of `shots/laser` segments) and `options/orb`, which jo
 M1-11 (done) draws `items/capsule` and `shields/force-field` (its four wear frames), which joined
 `ENGINE_SPRITES` ([powerups-and-shields.md](powerups-and-shields.md)); M1-12 (done) drew no new
 sprites — the death's explosion and debris are particle cues for M1-14, the HUD's stock icon is
-`hud/life`; M1-13 adds the remaining item and boss sprites (with `hitFlash`); M1-14 uses the explosions and particles; M1-16 builds the HUD from
-`hud/*` and `ui/pixel`; M1-18 adds the Zone A art.
+`hud/life`; M1-13 (done) draws the four boss-part sprites (`bosses/hull-block`, `core`,
+`shield-plate`, `emitter`, all with `@flash`) for the test boss — no new sprites were needed;
+M1-14 uses the explosions and particles; M1-16 builds the HUD from `hud/*` and `ui/pixel`;
+M1-18 adds the Zone A art (HALCYON BULWARK's parts among it).

@@ -195,6 +195,13 @@ warning or growing vanishes, an active one fades, and none of them ever follows 
 spawned into that slot. Lasers are cancelable. A full laser pool, every timing 0, a
 non-positive length or width, or a bad angle return `-1`.
 
+**Boss parts as sources (M1-13).** `BulletHost` gained an optional `laserSources` — every laser
+source by id; without it the enemies are the sources. The World's lists the 64 enemy slots, then
+the 16 boss parts (ids `BOSS_PART_ID_BASE` 64 + part), so a boss laser fired with `attach` stays
+on its part; the boss system calls `detachLasers(part.slot)` when the part is destroyed, when
+the boss dies (every part) and on a clear
+([bosses-and-warning.md](bosses-and-warning.md#boss-behaviours-corebehaviors)).
+
 ### Collision with the ships (phase 6, `collidePlayers()`)
 
 Brute force per active, `alive` ship (§22 — at most 512 × 2 cheap tests):
@@ -216,8 +223,8 @@ contact tests are written as "not within reach", so a `NaN` position or origin n
 ### Cancel
 
 `cancelAllBullets(world, CancelMode.Sparkle)` removes every cancelable bullet **and** laser at
-once (Mega Crash since M1-11 and the player's death since M1-12 — both through
-`BulletSystem.cancelAll`; boss death from M1-13) and returns the number
+once (Mega Crash since M1-11, the player's death since M1-12 and a boss's death since M1-13 —
+all through `BulletSystem.cancelAll`) and returns the number
 of bullets cancelled. Each cancelled bullet pushes a `SimEventKind.Particles` event with
 `FX_CUES.BulletCancel` (3) at its position, floored to whole pixels (M1-12: the push is a call V8
 does not inline, so fractional positions were boxed — and every death now cancels) — up to `CANCEL_SPARKLE_LIMIT` (64) per call; beyond
@@ -267,8 +274,12 @@ enemy that fired them.
 | `orbiter.loop` | every [`ringTicks` 120] ticks (`fireWait`) a ring of [`ringCount` 8] `RoundPurple` at [`bulletSpeed` 1], each ring turned half a gap from the last |
 
 `drifter.sine`, `fan.loop`, `carrier.straight`, `hatch.spawner` and `rammer.aimed` do not fire,
-and nothing in the shipped content fires a laser yet (bosses and zone content will). All speeds
-stay within D17's "aimed ≤ 2.0 px/tick on Normal in zone A".
+and no regular enemy fires a laser. Since M1-13 the boss roster fires through the same primitives
+from the boss's gun parts: `boss.hover` aimed `RoundRed` spreads, `boss.lanes` aimed 3-ways of
+`NeedlePurple` and the first lasers of the shipped content — telegraphed horizontal lane lasers
+(not attached) from each gun in turn, fired by the test boss's last phase
+([bosses-and-warning.md](bosses-and-warning.md#boss-behaviours-corebehaviors)). All speeds stay
+within D17's "aimed ≤ 2.0 px/tick on Normal in zone A".
 
 A firing behaviour:
 
@@ -453,7 +464,9 @@ world.players[0].hits; // hits recorded by playerHit — each one a death since 
 - **M1-12** (done) — `playerHit(Bullet / Laser)` leads to the death sequence, which cancels
   bullets and lasers with sparkles; the arcade restart clears both pools
   ([death-and-scoring.md](death-and-scoring.md)).
-- **M1-13** — bosses fire through the same primitives (and lasers); boss death cancels.
+- **M1-13** (done) — bosses fire through the same primitives from their parts (and lane
+  lasers, attached lasers follow a part through `BulletHost.laserSources`); a boss's death
+  cancels bullets and lasers with sparkles ([bosses-and-warning.md](bosses-and-warning.md)).
 - **M1-14** — particle presets for `FX_CUES.BulletCancel`.
 - **M2-01** — rank growth (`computeRank` reads stage, loop, power and special); Easy's 16 aim
   directions; revenge bullets.

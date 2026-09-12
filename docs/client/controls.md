@@ -15,7 +15,9 @@ work too, and every device drives both the game and the menus.
 > **Back** on the TV, which closes the app (also from the start-up error screen); the pause
 > screen arrives later. Losing a ship needs no button either: the next one flies in by itself,
 > and after **GAME OVER** there is no continue yet — reload the page
-> ([preview-build.md](preview-build.md#lives-losing-your-ship-and-the-score)). The remote's settings may still change once the input probe results
+> ([preview-build.md](preview-build.md#lives-losing-your-ship-and-the-score)). The boss of the
+> boss range (`?stage=test-boss`) needs no new controls: you dodge and let the gun fire
+> ([preview-build.md](preview-build.md#the-boss-range-and-the-warning-browser-only)). The remote's settings may still change once the input probe results
 > from the M7 monitors are in, and a menu for choosing a profile and rebinding buttons is
 > planned.
 

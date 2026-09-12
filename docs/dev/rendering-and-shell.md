@@ -54,7 +54,7 @@ Strings enter only through a draw list's string slots, and only when the text ch
 | 1 | `BgMid` | world | a stage's `mid` parallax bands (M1-07); the free-flight mid / near stars |
 | 2 | `Terrain` | world | the stage's tile terrain (M1-07) |
 | 3 | `GroundEnemies` | world | turrets, walkers, hatches (the enemy system's ground batch, M1-08) |
-| 4 | `AirEnemies` | world | flying enemies (the enemy system's air batch, M1-08), bosses |
+| 4 | `AirEnemies` | world | flying enemies (the enemy system's air batch, M1-08), the boss's parts (their own batch after every other World batch, so they draw over the air enemies — M1-13) |
 | 5 | `PlayerShots` | world | shots, lasers (rows of 8-px segments), missiles — the weapon system's mirror batch (M1-10) |
 | 6 | `Player` | world | Options (their own batch, listed before the ships so they draw below them — M1-10), ships, shields (the Force Field's batch, listed after the ships so it draws over them — M1-11) |
 | 7 | `Hitbox` | world | hitbox marker |
@@ -90,7 +90,7 @@ and per slot `x`, `y`, `spriteId`, `frame`, `flags`. Slots `[0, count)` are draw
 
 ### The world view
 
-`WorldView = { camera: { x, y }, parallax, terrain, batches, lasers? }`. Everything is a live
+`WorldView = { camera: { x, y }, parallax, terrain, batches, lasers?, warning? }`. Everything is a live
 reference into sim state; the renderer reads and never writes. **`batches` is read once, when
 the view is bound**: the renderer creates one preallocated binding per entry, and syncs
 binding `i` from `batches[i]` every frame. To change the list, hand the renderer a different
@@ -113,6 +113,13 @@ spacings) and `terrain` (map size, tile size); their per-frame values are read e
   only telegraphs — the renderer draws a 1-px warning line then), `spriteId` (the beam strip)
   and `flags` (`Hidden` = the warning line's blink). The bullet system's laser pool implements
   it directly ([bullets-and-patterns.md](bullets-and-patterns.md#drawing-bullets-and-lasers)).
+- `WarningView` (optional `warning`, M1-13) — the boss WARNING: `active`, `ticks` (since it
+  started), `duration` (180) and `text` (three lines split at `\n`, built once per boss at world
+  creation from the game's own template — decision D10). The renderer's world binding ignores
+  it: a **host** draws it into its UI draw list, putting `text` into a string slot only when it
+  changed (the flight scene does —
+  [bosses-and-warning.md](bosses-and-warning.md#the-warning)). The World's is the boss system's
+  live `WarningState`.
 
 How the stage builds these views: [stage-runtime.md](stage-runtime.md#parallax-and-the-terrain-view).
 
@@ -368,7 +375,7 @@ events are counted as unhandled.
 
 | `?scene=` | What is drawn | Sprite name table |
 |---|---|---|
-| (none) / `flight` | **Free flight** (`createFlightScene(game)`, M1-06): the game's World — the KESTREL flying in, then moving under the player's control — over three drifting star layers, both HUD bars (`1P` and player 1's score, `FREE FLIGHT`, `HI` and the session hi-score, `lives − 1` stock ships, `ARROWS MOVE` — M1-12). With a stage (`gameConfig.stage`, the web app's `?stage=<id>`, M1-07): the stage's parallax bands and scrolling terrain instead of the starfield, the stage name as the title, the enemies its timeline spawns (M1-08) and their bullets (M1-09). The ship autofires in every build, with Options and lasers under the web app's `?loadout=full` (M1-10); power capsules and the Force Field are World batches too (M1-11 — the power meter itself is not drawn before the M1-16 HUD); ships that are `dying` / `dead` are not drawn, a respawn blinks, and `GAME OVER` (red) replaces the title once the World's status says so (M1-12) | `content.db.sprites.names` + `FLIGHT_SPRITES` |
+| (none) / `flight` | **Free flight** (`createFlightScene(game)`, M1-06): the game's World — the KESTREL flying in, then moving under the player's control — over three drifting star layers, both HUD bars (`1P` and player 1's score, `FREE FLIGHT`, `HI` and the session hi-score, `lives − 1` stock ships, `ARROWS MOVE` — M1-12). With a stage (`gameConfig.stage`, the web app's `?stage=<id>`, M1-07): the stage's parallax bands and scrolling terrain instead of the starfield, the stage name as the title, the enemies its timeline spawns (M1-08) and their bullets (M1-09). The ship autofires in every build, with Options and lasers under the web app's `?loadout=full` (M1-10); power capsules and the Force Field are World batches too (M1-11 — the power meter itself is not drawn before the M1-16 HUD); ships that are `dying` / `dead` are not drawn, a respawn blinks, and `GAME OVER` (red) replaces the title once the World's status says so (M1-12); a boss's parts are a World batch, and a running WARNING is drawn as a translucent band with its text in the UI list (M1-13, `?stage=test-boss`) | `content.db.sprites.names` + `FLIGHT_SPRITES` |
 | `showcase` | The **sprite showcase** (`createShowcase()`): three scrolling star layers, the KESTREL flying a figure-eight with its thruster and two Options replaying its path, five drifters with periodic hit flashes, a rotating ring of twelve bullets, both HUD bars (scores via the `number` op, lives, power meter with a moving highlight) and the title "SHMUP CUP" / "SPRITE SHOWCASE" in the bitmap font | `SHOWCASE_SPRITES` |
 | `calibration` | The skeleton's test pattern (checker border, grid, colour bars, placeholder ship, moving marker) under empty layers | `content.db.sprites.names` |
 
@@ -383,8 +390,14 @@ from the tick (world space relative to the camera, so they pause with the game) 
 the HUD only when player 1's lives, the World's status (`gameOver`) or a score's dirty flag
 (`displayDirty`, `hiScoreDirty` — the rebuild clears them) changed: `HI` sits at x 300 and its
 eight digits at x 316 of the top bar, `GAME OVER` is `0xf85858`, and at most 8 stock icons are
-drawn. How the World itself works is in [sim-world.md](sim-world.md); the life cycle and score
-in [death-and-scoring.md](death-and-scoring.md).
+drawn. Since M1-13 the scene also passes the World's `warning` view through and, while it is
+`active`, fills its UI list (4 commands, 1 string slot) with a translucent black band (alpha 144)
+across the playfield at screen rows 76–123 (`WARNING_BAND_Y` / `_H`), 1-px red edges and the
+WARNING text centred at row 85, red (`0xf85858`) and yellow (`0xf8d030`) alternating every 16
+ticks; the list is rebuilt only when the look changes (off / red / yellow), and the text enters
+its string slot only then. How the World itself works is in [sim-world.md](sim-world.md); the
+life cycle and score in [death-and-scoring.md](death-and-scoring.md); the boss and its WARNING in
+[bosses-and-warning.md](bosses-and-warning.md).
 
 The showcase owns its own `RenderFrame` and derives every position from the game's tick with
 `sinB` / `cosB`, so it pauses and resumes with the game and allocates nothing per frame. Its
@@ -460,6 +473,11 @@ pnpm test:e2e                                        # builds web + tizen, then 
   bottom bar's `hud/life` stock icons go 2 → 1 → 0, the ship vanishes while it explodes and
   flies back in, and `GAME OVER` (its red is used nowhere else in the top bar) replaces the stage
   title; no console errors or atlas warnings (M1-12).
+- `boss.spec.ts` — on `?stage=test-boss` the camera reaches the test boss's `warning` event
+  after about five seconds: the flight scene draws the WARNING band (its red edge rows across the
+  whole width) for three seconds; once it is gone the TRIAL WARDEN flies in from the right and
+  stays in the right part of the playfield (its `bosses/hull-block` colour there); no console
+  errors or atlas warnings (M1-13).
 - `shell.spec.ts` — an aborted atlas request ends on the boot error screen (overlay canvas,
   state `error`); a 1000×600 window gets a centred ×2 frame on the letterbox colour and a
   resize to 1920×1080 re-fits it to ×5; free flight animates.
@@ -519,7 +537,7 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | `packages/render-pixi/test/layers/layers-stage*.test.ts` | Terrain grid size (49 × 26, capped at the map's rows), textures and positions, the ring (nothing re-textured inside a tile, one column / row per tile edge, all after a jump or new tables; after a long random camera walk it equals a freshly built grid), pixel agreement with the sprite bindings at half-pixel cameras, parallax coverage for any offset / spacing, validation, allocation-free syncs |
 | `packages/render-pixi/test/layers/layers-lasers*.test.ts` | The laser binding (M1-09): two hidden sprites per slot, the tinted telegraph line vs the beam frame of the rounded width (band / frame boundaries, wider-than-frames scaling), blink and zero / NaN lengths hidden, rotation written only on change, camera rounding without `-0`, shrinking views, capacity validation, destroy, zero allocation through a whole laser life |
 | `packages/render-pixi/test/renderer/` | The renderer wired with a fake `WebGLRenderer`: passes, rebinding (incl. parallax / terrain bindings below the batches), shake / flash / dim, reused pass options (fails if `resetPass` is removed), allocation probes |
-| `packages/shell/test/` | Boot happy path and every failure (error screen, state attribute, cleanup), content owners (the default `input-profiles` owner, an app owner replacing it), the input context forwarded before a frame's polls, image loading and progress, dispatch (copy-on-write unsubscribe), overlay drawing, the free-flight scene (sprite ids, starfield drift / wrap / pause, HUD, empty content, zero allocation per frame), showcase determinism and allocation |
+| `packages/shell/test/` | Boot happy path and every failure (error screen, state attribute, cleanup), content owners (the default `input-profiles` owner, an app owner replacing it), the input context forwarded before a frame's polls, image loading and progress, dispatch (copy-on-write unsubscribe), overlay drawing, the free-flight scene (sprite ids, starfield drift / wrap / pause, HUD, the WARNING band — M1-13, empty content, zero allocation per frame), showcase determinism and allocation |
 | `test/e2e/` | The real browser path, both builds (above) |
 
 ## Gotchas
@@ -568,5 +586,10 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 - **M1-12** (done) — the flight HUD's score, `HI`, stock and `GAME OVER`; the World pushes the
   death's `Shake` / `HitStop` / `MusicDuck` / `Particles Debris` events, still unhandled
   ([death-and-scoring.md](death-and-scoring.md)).
-- **M1-14 / M1-15** — particles, shake, flash and audio handlers registered on the dispatcher.
+- **M1-13** (done) — the boss parts' batch (last in the World's list, on `AIR_ENEMIES`), the
+  `WarningView` in the render contract and the flight scene's WARNING band; the World pushes
+  `Dim`, `BossDefeated`, the siren with its `SfxPriority.Critical` hint and the boss flashes —
+  still unhandled ([bosses-and-warning.md](bosses-and-warning.md)).
+- **M1-14 / M1-15** — particles, shake, flash, the dim overlay and audio handlers registered on
+  the dispatcher.
 - **M1-16** — core `ui` fills the HUD and UI draw lists (menus, HUD model).

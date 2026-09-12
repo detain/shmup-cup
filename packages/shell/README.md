@@ -43,7 +43,7 @@ canvas carries `data-shmup-state="loading" | "running" | "error"`.
 | `dispatch` | implemented | Sim event → presentation handler routing, allocation-free |
 | `error-screen` | implemented | Boot overlay: progress bar and error screen (Canvas 2D) |
 | `frame-loop` | implemented | `requestAnimationFrame` driver (moved here from the apps) |
-| `flight` | implemented | Default dev scene since M1-06 ("free flight"): the game's World (the KESTREL under player control) over a drifting starfield — or, with a stage (`?stage=` in the web app, M1-07), the stage's parallax and terrain, the enemies its timeline spawns (M1-08) and their bullets and lasers (M1-09) — HUD bars; the ship's autofired shots and its Options are World batches too (M1-10), and so are the power capsules and the Force Field (M1-11 — the power meter is drawn by the M1-16 HUD); the HUD shows player 1's score, `HI` and the session hi-score, `lives − 1` stock ships and `GAME OVER` (red) in place of the title once the World's status says so, rebuilt only on a change (M1-12); its sprites are appended to the content's sprite table |
+| `flight` | implemented | Default dev scene since M1-06 ("free flight"): the game's World (the KESTREL under player control) over a drifting starfield — or, with a stage (`?stage=` in the web app, M1-07), the stage's parallax and terrain, the enemies its timeline spawns (M1-08) and their bullets and lasers (M1-09) — HUD bars; the ship's autofired shots and its Options are World batches too (M1-10), and so are the power capsules and the Force Field (M1-11 — the power meter is drawn by the M1-16 HUD); the HUD shows player 1's score, `HI` and the session hi-score, `lives − 1` stock ships and `GAME OVER` (red) in place of the title once the World's status says so, rebuilt only on a change (M1-12); a boss's parts are a World batch, and a running boss WARNING (`view.warning`) is drawn as its text on a translucent band in the UI list, red / yellow every 16 ticks, rebuilt only on a change (M1-13, `?stage=test-boss`); its sprites are appended to the content's sprite table |
 | `showcase` | implemented | The M1-04 sprite showcase (`?scene=showcase`): parallax stars, KESTREL, HUD, bitmap text |
 
 Boot error screen titles: `CONTENT COULD NOT BE READ`, `CONTENT ERRORS: N PROBLEMS` (one
@@ -70,5 +70,7 @@ exports: [`docs/dev/api-reference.md`](../../docs/dev/api-reference.md#shmupshel
 Tests run in Node with fakes for the window, images and the WebGL renderer; the workers get
 `--expose-gc`, so the free-flight scene's per-frame `update()` is checked with the core's
 allocation guard. The real browser path is covered by `pnpm test:e2e` (headless Chromium,
-`test/e2e/` — `flight.spec.ts` flies the KESTREL with arrow keys in both builds). How the World
-the scene draws works: [`docs/dev/sim-world.md`](../../docs/dev/sim-world.md).
+`test/e2e/` — `flight.spec.ts` flies the KESTREL with arrow keys in both builds, `boss.spec.ts`
+checks the WARNING band and the boss on `?stage=test-boss`). How the World the scene draws works:
+[`docs/dev/sim-world.md`](../../docs/dev/sim-world.md); the boss and its WARNING:
+[`docs/dev/bosses-and-warning.md`](../../docs/dev/bosses-and-warning.md).

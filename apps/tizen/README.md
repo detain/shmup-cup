@@ -65,7 +65,9 @@ OK is the game's `PowerUp` (M1-11): free flight has no capsules, so a press ther
 denied — but holding an arrow and pressing OK must not stop the ship (the input-probe question
 the M1-11 manual check asks). Nothing can hit the ship in free flight, so the M1-12 life cycle
 (deaths, respawns, `GAME OVER`) is not reachable on the TV yet; the HUD's new `HI` score at the
-right end of the top bar is the only visible change there.
+right end of the top bar is the only visible change there. Likewise the M1-13 bosses and their
+WARNING need a stage (`?stage=test-boss` in the web build) and are not reachable on the TV until
+the scene flow picks stages (M1-16).
 
 ## Package, install, run (desktop with Tizen CLI + certificate — never in CI)
 

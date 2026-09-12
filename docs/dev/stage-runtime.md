@@ -36,7 +36,7 @@ createWorld({ stage: 'test-range' }, db)                                      co
 stepWorld, every tick
  ├─ 3 stage      runner.tick(): keys → ramp / pan → move camera → fire events → checkpoint
  │                 hooks.event: spawn / formation → world.enemies, music → SimEventKind.Music,
- │                 end → status 'stageClear'
+ │                 warning / boss → world.bosses (M1-13), end → status 'stageClear'
  ├─ 6 collision  terrainRectHit(terrain, ship's terrain box) → playerHit(Terrain)
  └─ 9 fx         updateParallaxView(parallax, camera.x, camera.y)
 
@@ -175,11 +175,32 @@ Consequences worth knowing:
 | `speed` | New target scroll speed in px/tick (0 = scroll stop, up to 16) |
 | `ramp` | Reach `speed` linearly over this many ticks from the current speed (0 / absent = at once) |
 | `yTo`, `yTicks` | Vertical pan: the camera's top edge moves to world y `yTo` over `yTicks` ticks, eased (0 / absent = in one tick) |
-| `lock: true` | Boss lock: the camera has already stopped exactly at the key's x; it stays until `runner.unlock()`, then scrolls on at the current speed (the key's ramp and pan keep running while it waits) |
+| `lock: true` | Scroll lock: the camera has already stopped exactly at the key's x; it stays until `runner.unlock()`, then scrolls on at the current speed (the key's ramp and pan keep running while it waits) |
 
 `speed` events (`{ type: 'speed', speed, ramp? }`) change the target between keys — scripted
 and high-speed sections. `unlock()` before the camera reaches a lock key does nothing (the key
 locks when it applies). The camera never scrolls past `length`; the stage keeps ticking there.
+
+### The brake (M1-13)
+
+A lock key stops the camera at a fixed x. The boss WARNING needs to stop it **wherever it is**:
+`runner.brake(ticks)` (`core/bosses` calls it with `WARNING_BRAKE_TICKS` = 60 when a `warning`
+event fires — [bosses-and-warning.md](bosses-and-warning.md#the-brake)):
+
+- the speed ramps **linearly to 0** over `ticks` ticks (a fractional ramp is floored; `ticks ≤
+  0` stops and locks at once); once the speed is 0 the camera is **locked** (`runner.locked`) —
+  from a standstill it locks on the next tick;
+- while braking or locked by the brake, camera keys and `speed` events the camera still reaches
+  keep their pans and lock keys but only **record their speed** (`StageSlot.ResumeSpeed`, which
+  starts as the target speed at the brake) instead of changing the target;
+- `unlock()` releases the lock **and** the brake: the speed ramps back up over the brake's ramp
+  to the recorded speed — also when it is called before the camera stopped (from the current
+  speed); a lock key met while braking is released by the same call;
+- a second `brake()` while one holds changes nothing; `restartAt()` forgets the brake (the state
+  is re-derived from the stage data).
+
+The brake's state is three appended slots (`Braking`, `ResumeSpeed`, `BrakeRamp`), so it is
+hashed and replayed like the rest of the runner.
 
 ### The event timeline
 
@@ -192,7 +213,7 @@ its index:
 | `type` | Runner's own part | The World's hook today |
 |---|---|---|
 | `spawn`, `formation` | — | `world.enemies.onStageEvent(index)`: one enemy at the view point (`screenX`, `y`), or a formation whose members spawn every `interval` ticks (M1-08 — [enemies-and-behaviors.md](enemies-and-behaviors.md#spawning)) |
-| `warning`, `boss` | — | `core/bosses` (M1-13): the WARNING then the boss / the boss at once; `warning` also brakes the camera to a lock (`StageRunner.brake`) |
+| `warning`, `boss` | — | `world.bosses.startWarning(enemyId)` / `startBoss(enemyId)` (M1-13): the WARNING — which brakes the camera to a lock with `runner.brake(60)` — then the boss / the boss at once; the boss's death calls `unlock()` ([bosses-and-warning.md](bosses-and-warning.md)) |
 | `music` | — | pushes `SimEventKind.Music` with the cue id |
 | `speed` | new target speed / ramp | — |
 | `flag` | sets / clears bit `flagId` of `runner.flags` (`value` defaults to `true`) | — |
@@ -220,8 +241,9 @@ is the index of the last one the camera passed (`-1` before the first). `restart
    hooks only** (`StageSlot.Replay` marks them) — so spawns at the checkpoint come back;
    keys at that x apply on the next tick, as live play applied them the tick after arriving;
 4. the event cursor is found by binary search (`findEventCursor`), then `hooks.clear()` runs
-   (the World's `clearSession`: every pool, every enemy and formation, the weapons', power-ups'
-   and scoring system's per-session state — scores, lives, loadouts and meters stay).
+   (the World's `clearSession`: every pool, every enemy and formation, the boss and its WARNING
+   (M1-13), the weapons', power-ups' and scoring system's per-session state — scores, lives,
+   loadouts and meters stay). A brake is forgotten with the rest of the state.
 
 The result depends only on the stage and the index, so a restart matches what live play had
 at the checkpoint — `stage-edge.test.ts` checks it on 60 random stages. One approximation
@@ -233,8 +255,8 @@ such pairs further apart than the scroll speed, or at the same x.
 
 All numeric state lives in one `Float64Array`, `runner.state`, indexed by `StageSlot`
 (`Speed, Target, RampFrom, RampTicks, RampElapsed, PanFrom, PanTo, PanTicks, PanElapsed,
-Locked, Cursor, NextKey, NextCheckpoint, Checkpoint, Flags, Ended, Ticks, Restarts, Replay` —
-`STAGE_STATE_SLOTS` = 19). `hashWorld` hashes the whole array, so every piece of runner state
+Locked, Cursor, NextKey, NextCheckpoint, Checkpoint, Flags, Ended, Ticks, Restarts, Replay`, and
+since M1-13 `Braking, ResumeSpeed, BrakeRamp` — `STAGE_STATE_SLOTS` = 22). `hashWorld` hashes the whole array, so every piece of runner state
 is covered by lockstep and replay tests. At creation the keys, events (types resolved to codes)
 and checkpoints are compiled into typed arrays (`keyX`, `keySpeed`, …, `keyNextLock` — the
 first lock key at or after each key), so `tick()` reads only typed arrays; the content objects
@@ -303,7 +325,7 @@ the dev entry point is the web app:
 
 ```sh
 pnpm dev
-# → http://localhost:5173/?stage=test-range
+# → http://localhost:5173/?stage=test-range   (or ?stage=test-boss — the boss range, M1-13)
 ```
 
 `apps/web` reads `?stage=<id>` with `stageFromSearch` and checks it against the raw content's
@@ -330,7 +352,10 @@ with every other registered pool (`pools.clearAll()`), resets the weapon system'
 batches (`weapons.clear()`) and forgets the power-ups' pickups, pending Mega Crashes and taken
 drops (`powerups.clear()` — the meters and shields stay).
 `example.stage.json` shows the rest of the format (RLE rows over `example.tileset.json`,
-formations, a pan, a boss lock).
+formations, a pan, a scroll lock, the `warning` event of the example warden).
+`content/stages/test-boss.stage.json` (BOSS RANGE, M1-13) is a 1200-px open-space range: two
+capsule carriers, then a `warning` for the test boss at x 300 — `?stage=test-boss`
+([bosses-and-warning.md](bosses-and-warning.md#the-test-boss-and-stagetest-boss)).
 
 Headless:
 
@@ -358,6 +383,7 @@ world.stage!.restartAt(1); // back to x 1500: speed, pan and flags as live play 
 | Where | Covers |
 |---|---|
 | `packages/core/test/stage/stage.test.ts` | Ramp values, pans, locks, the stage end; every event fires exactly once at its x, in order, several on one tick; checkpoints (last passed, binary-search cursor, re-derived speed / pan / flags, `clear()`); the live-vs-restart tie cases of the review; parallax / terrain views; allocation-free `tick()` |
+| `packages/core/test/stage/stage-brake.test.ts`, `stage-brake-edge.test.ts` | The brake (M1-13): its hashed slots, linear deceleration then the lock where it stopped, speeds of keys and `speed` events met while braking recorded and resumed, `brake(0)`, a restart forgets it; a fractional ramp, resuming at a running ramp's target, `unlock()` mid-brake, pans under the lock, a lock key met while braking, a brake from a standstill, a restart replaying a passed `speed` event |
 | `packages/core/test/stage/stage-edge.test.ts` | Ramps and pans interrupted mid-way, scroll stops, locks (first key, stage end, behind a speed event, several in a row, fractional keys at fractional speeds, behind non-lock keys crossed in one tick), `unlock()` before a lock, flags up to bit 31, randomised invariants on 60 generated stages, a randomised live-vs-restart equivalence on 60 stages, `findEventCursor` vs a linear scan, allocation with locks, pans and unlocking hooks |
 | `packages/core/test/collision/terrain*.test.ts` | Every `terrain-a` tile shape pixel by pixel (`terrainAt`, `findFloor` from above, `findCeiling` from below), `boxHitsTerrain` edges, hazard priority, decoration, out-of-map and NaN input; every query against an independent pixel reference on random maps; the allocation guard |
 | `packages/core/test/data/tilemap*.test.ts`, `stage-edge.test.ts` | Tileset validation and tables; stage checks (sorting, first key, range, pans, flags, segments, unknown tileset) — all issues of one file in one load; RLE decoding and every error; the heightfield generator (deterministic, masks match tiles, slope rules, ramps, floor over ceiling, 120 random profiles where `findFloor` sees exactly the generated heights) |
@@ -377,6 +403,7 @@ world.stage!.restartAt(1); // back to x 1500: speed, pan and flags as live play 
 | After `restartAt`, the speed differs slightly from live play | A key and a `speed` event less than one tick's movement apart; place them at the same x or further apart (see [Checkpoints](#checkpoints)) |
 | Spawns at a checkpoint's x appear again after a restart | Intended: those events re-fire on the next tick for the hooks (their runner part was already applied) |
 | `unlock()` did nothing | It was called before the camera reached the lock key; the key locks when it applies |
+| A key's or `speed` event's new speed was ignored during a boss | A brake holds the camera: the speed is only recorded and applies at the `unlock()` |
 | The camera stops short of the stage end | A lock key (or a WARNING's brake) waiting for `unlock()` — a boss's death unlocks it (M1-13) |
 | The ship flies through rock | Only during the fly-in, while invulnerable (the respawn blink) and in god mode; otherwise terrain contact is a death since M1-12 |
 | A test that parks a ship in the floor ends in `gameOver` | Terrain kills since M1-12 — set `world.debugFlags.godMode = true` |
@@ -406,7 +433,9 @@ world.stage!.restartAt(1); // back to x 1500: speed, pan and flags as live play 
 - **M1-12** (done) — terrain contact is a death; the `arcade` penalty restarts at
   `runner.checkpoint` with `restartAt` when the ship respawns
   ([death-and-scoring.md](death-and-scoring.md)).
-- **M1-13** — `warning` / `boss` events, the boss lock released by `unlock()`, the boss music.
+- **M1-13** (done) — `warning` / `boss` events start the boss system; the WARNING brakes the
+  camera to a lock (`brake()`), the boss's death releases it with `unlock()`; `test-boss` stage
+  ([bosses-and-warning.md](bosses-and-warning.md)).
 - **M1-16** — the scene flow picks the stage (replacing `?stage=`).
 - **M2-07** — time-keyed events during scroll stops, diagonal scrolling, in-stage branches on
   the flags, destructible tiles, the Tiled / LDtk exporter to RLE rows.

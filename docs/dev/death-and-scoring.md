@@ -202,6 +202,8 @@ hi-score (setting `hiScoreDirty`) when beaten.
 | Enemy kill | the enemy's `score` (`content/enemies/`, e.g. 100 for a `drifter`) | the killer (`EnemyOutcomes.killBy` — the shot's player, Mega Crash's player); `-1` (debug tools) scores nothing |
 | Completed formation | the stage event's `bonus` (`content/stages/`) | the player who killed its **last member** (`EnemyOutcomes.bonusBy`, new) |
 | Capsule pickup | `CAPSULE_SCORE` (300) | the collector (`PowerUpOutcomes.pickupPlayer`) |
+| Boss part destroyed (M1-13) | the part's `score` (`content/enemies/`, e.g. 500 for a shield plate) | the player whose shot destroyed it — also every part destroyed with it; paid at once by `core/bosses` through `addScore` |
+| Boss defeated (M1-13) | the boss's `score` (TRIAL WARDEN: 20,000), at the tally of its death sequence | the player who destroyed the last core (`Boss.killer`); nobody for a tool's `defeat()` |
 
 **Crediting** mirrors M1-11's drops. `scoring.resolve()` runs in phase 7 after the shots' hits,
 the pickups and Mega Crash; `scoring.beginTick()` runs at the start of phase 3, before
@@ -241,9 +243,11 @@ the presentation of M1-14 will draw — the sim state makes them replayable and 
 | `requestFlash(world, kind)` | a full-screen flash of `FLASH_KIND_TICKS[kind]` ticks, restarting a running one; unknown kinds → `false` | `Flash`, `id` = `FlashKind`, `param` = duration |
 
 `shakeAmount(fx)` = `ceil(magnitude · ticksLeft / duration)` — whole pixels, decaying to 0.
-`FlashKind.MegaCrash` (0, 12 ticks) is the only kind so far: Mega Crash now flashes through
+`FlashKind.MegaCrash` (0, 12 ticks) was the first kind: Mega Crash now flashes through
 `requestFlash` (the same event as M1-11's hand-pushed one, with `id` 0), and
-`MEGA_CRASH_FLASH_TICKS` reads `FLASH_KIND_TICKS`. The global shake switch and the flash limiter
+`MEGA_CRASH_FLASH_TICKS` reads `FLASH_KIND_TICKS`. M1-13 appended `Warning` (1, 8 ticks — each
+siren pulse of the boss WARNING) and `BossBlast` (2, 24 ticks — a boss's final blast, which also
+requests a large shake and a 5-tick hit-stop — [bosses-and-warning.md](bosses-and-warning.md#the-death-sequence)). The global shake switch and the flash limiter
 (≤ 3 a second) are presentation settings (M1-14), never sim state.
 
 **Exact hit-stop.** `stepWorld` decides once, before phase 1, whether the tick is frozen
@@ -330,7 +334,7 @@ The next `game.step()` runs that tick, and its phase 7 turns the recorded hit in
 | Another effect on death (a bomb refund, option recovery — M3) | In `killShip`, after `killPlayer` and before the penalty; keep it cold and allocation-free |
 | A scoring event | Record it in a system's tick outcomes (with the player credited), credit it in `ScoringSystemImpl.resolve` (and `beginTick` if tools can cause it between ticks), exactly once; hash any new counter in `mixFxAndScores` |
 | Extends / the lives cap (M2-01) | React to `addScore` crossing a threshold (a flag on the board, applied in phase 7), capped by the difficulty; `lives` on the ship |
-| A flash kind (boss kills, M1-13) | Append to `FlashKind` and `FLASH_KIND_TICKS` (never renumber — the code travels in the event) |
+| A flash kind | Append to `FlashKind` and `FLASH_KIND_TICKS` (never renumber — the code travels in the event); M1-13 added `Warning` and `BossBlast` this way |
 | A hit-stop or shake elsewhere (boss kills, big explosions) | `requestHitStop` / `requestShake(ShakeMagnitude.…)` from phase 7 code; never write `world.hitStop` directly |
 | The M1-16 HUD | Read `world.scoring.board` (`scores[p].score`, `hiScore`), draw on the dirty flags and clear them; `lives − 1` stock; `world.status === 'gameOver'` |
 
@@ -370,8 +374,9 @@ The next `game.step()` runs that tick, and its phase 7 turns the recorded hit in
 
 ## Next steps that build on this page
 
-- **M1-13** — bosses: the kill's hit-stop, a large shake and a flash kind; a boss death clears the
-  field; the WARNING status that game over may end.
+- **M1-13** (done) — bosses: part and tally scores through `addScore`, the final blast's
+  hit-stop, large shake and flash kinds, the boss death's bullet cancel, the `bossWarning` status
+  that game over may end ([bosses-and-warning.md](bosses-and-warning.md)).
 - **M1-14** — particles (explosion, debris, cancel sparkles), the screen shake and flash drawn from
   the events, the global shake switch and the flash limiter.
 - **M1-15** — the death sound and the music duck.

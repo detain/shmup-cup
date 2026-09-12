@@ -11,8 +11,8 @@ and TSDoc-documented) and the **engine foundations** are implemented: seeded RNG
 committed trigonometry tables with binary angles, the sim → presentation event queue and the
 zero-GC pools ([developer guide](docs/dev/engine-foundations.md)). **Game data** is
 schema-validated JSON under [`content/`](content/README.md) — the KESTREL ship, the Type A
-weapons, the test-range stage with its terrain tileset, enemy roster and movement paths so
-far — checked by `pnpm content:check`, served to the app builds as the virtual
+weapons, the test-range stage with its terrain tileset, enemy roster and movement paths, and
+the boss range with its test boss so far — checked by `pnpm content:check`, served to the app builds as the virtual
 module `virtual:shmup-content` and loaded by `loadContent()` with every string id resolved
 to a number ([developer guide](docs/dev/content-data.md)). **Placeholder art** is code:
 sprite pixel maps under [`assets/source/`](assets/README.md), seeded procedural generators
@@ -39,7 +39,7 @@ showcase at `?scene=showcase` and the test pattern at `?scene=calibration`; free
 enemies ([developer guide](docs/dev/sim-world.md),
 [what testers should check](docs/client/preview-build.md)).
 **Stages scroll** (M1-07): a stage file carries a scripted camera path (speed keys with
-linear ramps, eased vertical pans, boss locks that stop the camera exactly), invisible
+linear ramps, eased vertical pans, scroll locks that stop the camera exactly), invisible
 checkpoints with a deterministic restart, parallax star bands and tile terrain — generated at
 load by a deterministic heightfield generator (or given as RLE rows) over a
 [tileset](content/tilesets/README.md) whose per-tile column-height masks give pixel-exact
@@ -66,8 +66,8 @@ on 32 directions (decision D17). Behaviour scripts fire through rank-scaled patt
 (aimed, N-way, ring, spiral, stack, seeded spray, homing, delayed) that only fire from an enemy
 on screen and settled; the turrets, walkers and orbiters of the test stage now shoot aimed
 shots, three-way fans and rings. Telegraphed lasers (a blinking warning line, then a beam
-whose hitbox exists only at full width) and bullet cancel with sparkle events are in place for
-the bosses to come, and rank runs at the difficulty's constant base (Normal = 2) with curves
+whose hitbox exists only at full width) and bullet cancel with sparkle events are in place (the
+bosses fire both since M1-13), and rank runs at the difficulty's constant base (Normal = 2) with curves
 that growth will scale in M2. A bullet or laser hit costs a ship since M1-12
 ([developer guide](docs/dev/bullets-and-patterns.md), [what testers should check](docs/client/preview-build.md#enemy-bullets)).
 **The ship shoots back** (M1-10): the KESTREL fires on its own — always-on autofire, the
@@ -106,6 +106,23 @@ capsule — exactly once, clamped at 99,999,990 — with a session hi-score, and
 game-feel timers (hit-stop, decaying integer shake, flash kinds) push the events the effects of
 M1-14 will draw. The flight HUD shows the score, `HI`, the spare ships and `GAME OVER`
 ([developer guide](docs/dev/death-and-scoring.md), [what testers should check](docs/client/preview-build.md#lives-losing-your-ship-and-the-score)).
+**Bosses arrive with a WARNING** (M1-13): a boss is an `enemies` entry with a `boss` section —
+up to 16 parts attached to each other (translation only), each with its own hit points,
+hurtbox, sprite and weak-point rule (always, only after other parts are destroyed, only while
+the boss holds it open, or armour), cores whose destruction kills it, and up to 8 phases that
+swap the running boss behaviour when the cores' HP falls below a threshold, given parts are
+destroyed or time runs out. Its parts share the enemies' hit path (grid ids after the enemy
+slots, piercing cooldowns per part); a hit on a part that cannot take damage — or on anything
+during the invulnerable fly-in — **clinks**. A stage `warning` event brakes the camera into a
+scroll lock, sets the status to `bossWarning` for three seconds of siren pulses (a critical
+priority hint), flashes, dim and music stop, and shows the game's own text (`WARNING!!` /
+`GIANT HOSTILE "TRIAL WARDEN"` / `CLOSING IN - CODE TW-00`, decision D10) on a band in the
+flight scene; then the boss flies in with its theme. Destroying the last core cancels every
+bullet, chains explosions for two seconds, ends in a final blast with a 5-tick hit-stop, pays
+the boss's points to whoever destroyed it, plays the stage-clear jingle and clears the stage.
+The first boss behaviours (`boss.hover`, `boss.lanes` — aimed spreads and telegraphed lane
+lasers from the gun parts) and TRIAL WARDEN on the BOSS RANGE (`?stage=test-boss`) exercise it
+all ([developer guide](docs/dev/bosses-and-warning.md), [what testers should check](docs/client/preview-build.md#the-boss-range-and-the-warning-browser-only)).
 **Input is remote-first and data-driven** (M1-05): control profiles in
 [`content/input/`](content/input/README.md) map keys, remote buttons and gamepad buttons to
 actions with separate **game** and **menu** tables, and carry the Samsung remote's quirks as
@@ -130,7 +147,7 @@ it is waiting to be packaged and run on the M7 monitors.
 | [`shmup_prompt.md`](shmup_prompt.md) | Paste-into-a-new-session prompt that drives execution of the plan (workflow: build → review/fix loop → tests → docs → CI gate per step, progress in `shmup_progress.md`) |
 | [`docs/`](docs/README.md) | Player and developer documentation (start with [`docs/dev/repo-layout.md`](docs/dev/repo-layout.md)) |
 
-Game docs — testers: [preview build (free flight, test stage, its enemies and their bullets, your weapons, power-ups, lives and score)](docs/client/preview-build.md) ·
+Game docs — testers: [preview build (free flight, test stage, its enemies and their bullets, your weapons, power-ups, lives and score, the boss and its WARNING)](docs/client/preview-build.md) ·
 [controls](docs/client/controls.md) · [monitor setup & install](docs/client/install-on-tv.md).
 Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/architecture.md) ·
 [engine foundations](docs/dev/engine-foundations.md) · [content data](docs/dev/content-data.md) ·
@@ -143,6 +160,7 @@ Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/ar
 [weapons & Options](docs/dev/weapons-and-options.md) ·
 [power-ups & shields](docs/dev/powerups-and-shields.md) ·
 [death, respawn & score](docs/dev/death-and-scoring.md) ·
+[bosses & the WARNING](docs/dev/bosses-and-warning.md) ·
 [input profiles](docs/dev/input-profiles.md) ·
 [API reference](docs/dev/api-reference.md) ·
 [build, test & deploy](docs/dev/build-test-deploy.md) · [conventions](docs/dev/conventions.md).
@@ -169,7 +187,7 @@ versions (`devEngines.runtime`).
 ```sh
 pnpm -v               # must print 12.x — an older global pnpm fails with ERR_PNPM_BROKEN_LOCKFILE
 pnpm install          # set ELECTRON_SKIP_BINARY_DOWNLOAD=1 to skip the Electron binary
-pnpm dev              # browser dev app → http://localhost:5173: fly the KESTREL (arrows/WASD, gamepad; Enter/C takes a power-up; ?stage=test-range scrolls the test stage, its enemies, their bullets and the power capsules; ?profile=keyboard-remote-emulation feels like the TV remote; ?scene=showcase / ?scene=calibration)
+pnpm dev              # browser dev app → http://localhost:5173: fly the KESTREL (arrows/WASD, gamepad; Enter/C takes a power-up; ?stage=test-range scrolls the test stage, its enemies, their bullets and the power capsules; ?stage=test-boss plays the WARNING and the test boss; ?profile=keyboard-remote-emulation feels like the TV remote; ?scene=showcase / ?scene=calibration)
 pnpm lint             # ESLint (typescript-eslint + compat: chrome >= 69)
 pnpm typecheck        # tsc --noEmit everywhere
 pnpm test             # Vitest per package + repo integration tests
@@ -248,11 +266,11 @@ the game — the shipped Tizen bundle still targets Chromium 69.
 
 ## Next step
 
-Code: plan step **M1-13** (bosses and the WARNING sequence: multi-part bosses with weak points
-gated by other parts and phases that swap scripts by HP or destroyed parts, the stage's
-`warning` event slowing the camera into its lock under a WARNING screen with the siren, an
-invulnerable intro, and a boss death with chained explosions, a hit-stop, the score tally and
-`stageClear`) — the per-step status board is [`shmup_progress.md`](shmup_progress.md).
+Code: plan step **M1-14** (FX & game feel: particle presets from `content/fx/` — explosions,
+the boss chain, debris, sparks, clinks, bullet-cancel sparkles — spawned from the sim's events,
+the hit flash and invulnerability blink, integer screen shake with a global off switch, the
+full-screen flash / dim overlay with a flash limiter, score popups, and an `?scene=fx-gallery`
+dev scene) — the per-step status board is [`shmup_progress.md`](shmup_progress.md).
 
 On hardware (unchanged, and still the gate for the remote control scheme): package and
 deploy the input probe from the **Windows desktop** that sits on the same LAN as the monitors and holds

@@ -47,7 +47,9 @@ content on every machine.
 `tileset` formats (the last two since M1-07 — see [stage-runtime.md](stage-runtime.md)), the
 `enemies` and `paths` formats (M1-08 — see
 [enemies-and-behaviors.md](enemies-and-behaviors.md#data-as-loaded)), the plugin and
-`pnpm content:check` are done; the boss section of `enemies` arrives with M1-13. Both apps register the plugin and their
+`pnpm content:check` are done, and since M1-13 the `enemies` kind has its boss section (see
+[bosses-and-warning.md](bosses-and-warning.md#boss-data-contentenemies-the-boss-section)). Both
+apps register the plugin and their
 `main.ts` imports `virtual:shmup-content`; `@shmup/shell`'s `bootShell()` validates it with
 `loadGameContent()` (core kinds through `loadContent()`, foreign kinds through the
 `contentOwners` the apps pass — an unowned kind is an issue), stops on the boot error screen
@@ -94,14 +96,20 @@ const game = createGame(platform, { seed }, db);
 5. **Validate** against the kind's schema. Parsing builds *new* objects — the caller's JSON
    is never mutated — and records a `RefSite` for every `s.ref` field.
 6. **Collect** the entries into the per-kind lists and `…Index` maps. A duplicate id
-   (across all files of the kind) is an issue; the first file in path order wins.
+   (across all files of the kind) is an issue; the first file in path order wins. Enemies are
+   completed here (`completeEnemy`: defaults; since M1-13 the fields a regular enemy must have,
+   and a boss section checked and completed — part indices and masks, the regular fields filled
+   from it); one bad entry skips its whole file, like a schema failure.
 7. **Intern** sprite and script names: every distinct name gets an index in *sorted* order
    (`db.sprites`, `db.scripts`), independent of which file mentioned it first. The names in
    `options.extraSprites` join the sprite names first (M1-09: hosts pass `core/world`
    `ENGINE_SPRITES` — the enemy bullet kinds and the laser beam, which the engine draws although
    no content file names them).
 8. **Resolve** every recorded reference and write the index into `<field>Id`.
-9. **Expand stage terrain** (third pass, M1-07): every stage with a `tilemap` whose tileset
+9. **Check boss references** (M1-13, `checkBossReferences`): a stage `spawn` / `formation`
+   event or an enemy `child` naming a boss, and a `warning` / `boss` event naming a regular
+   enemy, are issues.
+10. **Expand stage terrain** (third pass, M1-07): every stage with a `tilemap` whose tileset
    resolved gets its tile grid built from the `heightfield` generator and / or RLE rows into
    `StageSpec.terrain` (`core/data/tilemap.ts`). Its issues (a tile the generator needs is
    missing, bad RLE rows) come last. Stages are also checked beyond the schema at collect
@@ -127,6 +135,8 @@ stages/zone-a.stage.json:events[13].x               must be >= events[12].x (eve
 stages/zone-a.stage.json:tilemap.rle[3]             tile id 40 does not exist (the tileset has 17)
 player/kestrel.player.json:ships[0].speedz          unknown field
 stages/b.stage.json:id                              duplicate stage id "zone-a"
+enemies/x.enemies.json:enemies[4].boss.phases[0].until  is required (every phase but the last ends on it)
+stages/zone-a.stage.json:events[20].enemy           is a boss: start it with a "warning" or "boss" event
 ```
 
 Order: header, migration, schema, stage / tileset checks and duplicate-id issues in

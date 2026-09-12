@@ -26,7 +26,11 @@ the rock): it flies back in blinking with one power level less (the default `cla
 the HUD shows the score, `HI` and the spare ships, and after the third ship the top bar says
 `GAME OVER` — reload to play again (guide:
 [`docs/dev/death-and-scoring.md`](../../docs/dev/death-and-scoring.md)). There is no URL
-parameter for the penalty or the lives yet.
+parameter for the penalty or the lives yet. Since M1-13 `?stage=test-boss` (BOSS RANGE) ends in
+the **boss WARNING** — the camera brakes to a stop under a flashing `WARNING!!` band for three
+seconds — and the test boss TRIAL WARDEN, whose shield plates, core and guns the ship shoots
+down; its death clears the stage (guide:
+[`docs/dev/bosses-and-warning.md`](../../docs/dev/bosses-and-warning.md)).
 
 Input uses the data-driven profiles of `content/input/` (decision D13): `keyboard-default`
 (or the saved choice) and `gamepad-standard`. Dev overrides: `?profile=<id>` picks another
@@ -38,7 +42,7 @@ Guide: [`docs/dev/input-profiles.md`](../../docs/dev/input-profiles.md).
 
 ```sh
 pnpm dev                          # from the repo root (= turbo run dev --filter=@shmup/web)
-# → http://localhost:5173 (free flight) · ?stage=test-range (scrolling test stage) · &loadout=full (fully powered) · ?scene=showcase (sprite showcase) · ?scene=calibration (test pattern)
+# → http://localhost:5173 (free flight) · ?stage=test-range (scrolling test stage) · ?stage=test-boss (the WARNING and the test boss) · &loadout=full (fully powered) · ?scene=showcase (sprite showcase) · ?scene=calibration (test pattern)
 pnpm --filter @shmup/web build    # → apps/web/dist (relocatable, base './')
 pnpm --filter @shmup/web exec vite preview   # serve the production build (what pnpm test:e2e opens)
 ```

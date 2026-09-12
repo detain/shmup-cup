@@ -39,12 +39,11 @@
  * the timeline through the World's stage hooks — `music` events become `SimEventKind.Music`
  * presentation events (the stage theme is queued at creation), `end` sets the status to
  * `stageClear`, `spawn` / `formation` go to the enemy system, `warning` / `boss` to the boss system
- * (M1-13), a checkpoint restart clears every pool, every enemy and the boss. Phase 6 tests each alive ship's
- * terrain box against the stage's {@link World.terrain | collision map} and reports contact
- * through `playerHit` (a death, M1-12). The view carries the
- * stage's parallax bands (scrolled in phase 9) and terrain. Without a stage (`stage: null`) the
- * camera is static unless something sets its scroll velocity (`camera.vx` / `camera.vy`) — free
- * flight.
+ * (M1-13), a checkpoint restart clears every pool, every enemy and the boss. Phase 6 tests each
+ * alive ship's terrain box against the stage's {@link World.terrain | collision map} and reports
+ * contact through `playerHit` (a death, M1-12). The view carries the stage's parallax bands
+ * (scrolled in phase 9) and terrain. Without a stage (`stage: null`) the camera is static unless
+ * something sets its scroll velocity (`camera.vx` / `camera.vy`) — free flight.
  *
  * **Enemies (M1-08).** {@link World.enemies} (`core/enemies`, behaviours from `core/behaviors`)
  * takes part in phases 3 (spawns: stage events and due formation members), 4 (behaviour
@@ -987,11 +986,14 @@ export function createWorld(
 function createWorldStageHooks(world: WorldUnderConstruction): StageHooks {
   return {
     /**
-     * `music` → a `SimEventKind.Music` presentation event, `end` → status `stageClear`; the
-     * other types wait for their systems. Never allocates (the event queue stores numbers).
+     * `spawn` / `formation` → the enemy system, `music` → a `SimEventKind.Music` presentation
+     * event, `end` → status `stageClear`, `warning` → `BossSystem.startWarning`, `boss` →
+     * `BossSystem.startBoss` (M1-13); `speed` and `flag` are the runner's own. Never allocates
+     * (the event queue stores numbers).
      *
      * @param code - The event's code.
      * @param event - The event (content data).
+     * @param index - The event's index in the stage's timeline (the enemy system's key).
      */
     event(code, event, index) {
       if (code === StageEventCode.Spawn || code === StageEventCode.Formation) {
@@ -1006,7 +1008,10 @@ function createWorldStageHooks(world: WorldUnderConstruction): StageHooks {
         world.bosses.startBoss((event as StageBossEvent).enemyId);
       }
     },
-    /** A checkpoint restart: empties every pool and the enemy, weapon, power-up, score systems. */
+    /**
+     * A checkpoint restart: empties every pool and the enemy, boss, weapon, power-up and score
+     * systems.
+     */
     clear() {
       clearSession(world);
     },

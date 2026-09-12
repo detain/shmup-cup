@@ -7,7 +7,10 @@ sleep between decisions, the per-tick **movers** that do the actual moving (incl
 arc-length **spline paths**), the off-screen rules, and the hot-path rules that keep 64
 scripted enemies free of garbage. Built in plan step **M1-08**; since **M1-09** the behaviours
 fire bullets and lasers through the `ScriptApi` — the bullet side is
-[bullets-and-patterns.md](bullets-and-patterns.md).
+[bullets-and-patterns.md](bullets-and-patterns.md). Since **M1-13** an `enemies` entry may be a
+**boss** (a `boss` section instead of the regular fields); bosses are run by `core/bosses`, never
+by this system, and their parts share its hit path —
+[bosses-and-warning.md](bosses-and-warning.md).
 
 This page is the *how and why*. Exact signatures are in
 [api-reference.md](api-reference.md#enemies--the-enemy-system-partial); the TSDoc in
@@ -66,9 +69,17 @@ contact box), `script` → `scriptId`, `sprite` → `spriteId`, and the fields M
 
 The loader fills the defaults of every optional field (`completeEnemy`): `anim` 1 frame,
 `params` `{}`, `mover` `null`, `ground` `null`, `settleTicks` `DEFAULT_SETTLE_TICKS` (30),
-`explosion` `'small'`, `megaCrashImmune` `false`, `child` `null`. So every spec has the same
-fields in the same order — the enemy system compiles them into typed arrays once, and no code
-branches on "is this field present".
+`explosion` `'small'`, `megaCrashImmune` `false`, `child` `null`, `boss` `null`. So every spec has
+the same fields in the same order — the enemy system compiles them into typed arrays once, and no
+code branches on "is this field present".
+
+Since M1-13 the schema lets `hp`, `score`, `hurtbox`, `script`, `sprite` and `drop` be absent
+(a boss entry omits them), so `completeEnemy` reports a regular enemy missing one (`is
+required`) — and a bad entry fails its whole file, like a schema failure. A **boss entry** (only
+`id` and `boss`) gets every regular field filled from its section (`hp` = the cores' total,
+`score` = `boss.score`, empty script / sprite with ids -1, a 1-px hurtbox, `megaCrashImmune`);
+the enemy system compiles a `boss` column and `spawn` refuses such an entry. The boss section is
+[bosses-and-warning.md](bosses-and-warning.md#boss-data-contentenemies-the-boss-section).
 
 `mover` is a discriminated union on `type` with the names of `MOVER_TYPES` (`straight`,
 `sine`, `path`, `waypoint`, `follow`, `groundCrawl`, `homing`, `aimedDash`); a `path` mover
@@ -80,14 +91,18 @@ without `path` uses the spawn event's path. Bounds are checked by the schema (ve
 
 Weapon and enemy behaviours share one interned table, `ContentDb.scripts`. `loadContent`
 reports an unknown script id only when it is given `knownScripts`; the hosts pass
-`KNOWN_SCRIPT_IDS` (`core/behaviors`) = the eight enemy behaviours ∪ `WEAPON_SCRIPT_IDS` (the
-four Type A ids, defined in `core/weapons` since M1-10 and re-exported by `behaviors`).
-`checkEnemyBehaviors(db, registry?)` then reports what the schema cannot know:
+`KNOWN_SCRIPT_IDS` (`core/behaviors`) = the eight enemy behaviours ∪ the boss behaviours
+(`BOSS_BEHAVIOR_IDS`, M1-13) ∪ `WEAPON_SCRIPT_IDS` (the four Type A ids, defined in
+`core/weapons` since M1-10 and re-exported by `behaviors`). `checkEnemyBehaviors(db, registry?,
+bossRegistry?)` then reports what the schema cannot know:
 
 | Issue path | Message |
 |---|---|
 | `enemies:<id>.params.<name>` | `unknown param for behaviour "<id>" (known: …)` |
 | `enemies:<id>.child` | `behaviour "<id>" needs a child enemy` (a `needsChild` behaviour — `hatch.spawner`) |
+| `enemies:<id>.script` | `"<script>" is a boss behaviour (use it in a boss phase)` (M1-13) |
+| `enemies:<id>.boss.phases[<p>].script` | `"<script>" is an enemy behaviour, not a boss behaviour` (M1-13) |
+| `enemies:<id>.boss.phases[<p>].params.<name>` | `unknown param for behaviour "<id>" (known: …)` (M1-13) |
 
 The shell's `loadGameContent` does both by default (its `knownScripts` option can override
 the list), and `pnpm content:check` does the same over the shipped files, so a typo in a
@@ -122,7 +137,9 @@ by id (`path` → `pathId`, `-1` = none).
 pixels, default 400 = `DEFAULT_SPAWN_SCREEN_X`, 16 px past the right edge; negative = behind
 the player) next to `y` (default: mid-playfield) and a real `path` reference; `formation` also
 gained `drop` (default `'capsule'`, `null` = nothing) and `bonus` (points, default 0). All
-members of a formation spawn at the same view point.
+members of a formation spawn at the same view point. Since M1-13 `spawn` / `formation` events
+(and a spawner's `child`) must name a regular enemy and `warning` / `boss` events a boss — the
+loader checks it once the references are resolved.
 
 ## The enemy system (`core/enemies`)
 
@@ -177,7 +194,8 @@ work on it directly:
 
 Every spawn goes through one internal function: whole spec index in range (a fractional or
 out-of-range index returns `null` — a TEST-agent fix; it used to read `undefined` from the
-spec tables and throw), lowest free slot (none → `null`, the spawn is dropped), fields reset,
+spec tables and throw), not a boss entry (`null` — `core/bosses` runs those, M1-13), lowest
+free slot (none → `null`, the spawn is dropped), fields reset,
 starting mover set from the spec (`setMover`; a `path` mover with no path of its own gets the
 spawn's `pathId`), the leader of a formation flagged and its track started, the behaviour's
 generator created with the slot's `ScriptApi` and the resolved params, `wakeTick` = this tick
@@ -295,7 +313,9 @@ only the broad phase, and whole numbers are never boxed as call arguments. After
 and runs the exact closed circle-vs-box test (inlined `circleAabb`) on the candidates;
 contact calls `playerHit(ship, PlayerHitCause.Contact, tick, debugFlags)`, at most **one
 accepted hit per ship and tick**. Since M1-12 a hit that gets through (no Force Field) is a
-death, run in phase 7 ([death-and-scoring.md](death-and-scoring.md)).
+death, run in phase 7 ([death-and-scoring.md](death-and-scoring.md)). Since M1-13 the boss's
+parts join the same grid with the ids after the 64 enemy slots (`BOSS_PART_ID_BASE` + part), so
+this contact query skips ids ≥ 64 — the boss system tests its parts against the ships itself.
 
 Phase 7 is where the player shots (M1-10, `weapons.applyHits()`) call `damage(enemy, amount,
 by)` — `by` is the player credited with a kill (default `-1` = nobody). It is ignored for
@@ -412,6 +432,11 @@ Add it to `DEFAULT_BEHAVIOR_DEFS` (so `KNOWN_SCRIPT_IDS` and the shell's validat
 document it in the module docblock and in `content/enemies/README.md`, and test it
 (`packages/core/test/behaviors/`). `yield SLEEP_FOREVER` once the mover can do the rest.
 
+**Boss behaviours** (M1-13) are a second roster in the same module — `defineBossBehavior`,
+`createBossBehaviorRegistry`, `DEFAULT_BOSS_BEHAVIORS` (`boss.hover`, `boss.lanes`) — driving a
+`BossScriptApi` instead of a `ScriptApi`; a boss phase's `script` names one. They follow the same
+coroutine rules ([bosses-and-warning.md](bosses-and-warning.md#boss-behaviours-corebehaviors)).
+
 ## The `test-range` roster
 
 `content/enemies/test-range.enemies.json` defines ten enemies using all eight behaviours
@@ -521,6 +546,8 @@ code):
 - **M1-12** (done) — score from `outcomes.killScore` / `killBy` and the per-formation bonus lists;
   contact kills the ship; an arcade restart clears every enemy and formation
   ([death-and-scoring.md](death-and-scoring.md)).
-- **M1-13** — bosses and their parts share the damage path.
+- **M1-13** (done) — bosses are `enemies` entries with a `boss` section that this system never
+  spawns; their parts take the grid ids after the enemy slots and share the shots' hit path; the
+  boss roster lives in `core/behaviors` ([bosses-and-warning.md](bosses-and-warning.md)).
 - **M1-14** — particle presets for `FX_CUES`; **M2-01** — rank modifiers and revenge bullets;
   **M2-02** — the pattern DSL; **M2-04** — the Option Hunter.

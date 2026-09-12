@@ -61,13 +61,13 @@
  *   {@link DEFAULT_SETTLE_TICKS}), {@link BossSpec} ({@link BossPartSpec}, {@link BossPhaseSpec},
  *   {@link BossUntilSpec}, {@link BossVulnerability}, {@link BOSS_VULNERABILITIES},
  *   {@link MAX_BOSS_PARTS}, {@link MAX_BOSS_PHASES}, {@link DEFAULT_BOSS_X},
- *   {@link DEFAULT_BOSS_Y}, {@link DEFAULT_BOSS_INTRO_TICKS}), {@link PathSpec} ({@link PathPointSpec}, {@link PathTable},
- *   {@link bakePath}, {@link PATH_SAMPLE_STEP}, {@link MAX_PATH_LENGTH}), {@link StageSpec} and its
- *   parts
- *   ({@link StageMusic}, {@link StageCameraKey}, {@link StageCheckpoint},
- *   {@link StageParallaxLayer}, {@link StageParallaxLayerName}, {@link StageTilemapSpec},
- *   {@link HeightfieldSpec}, {@link HeightfieldSegment}, {@link HeightfieldProfile},
- *   {@link StageTerrain}, {@link StageEvent} and its variants, {@link STAGE_EVENT_TYPES},
+ *   {@link DEFAULT_BOSS_Y}, {@link DEFAULT_BOSS_INTRO_TICKS}), {@link PathSpec}
+ *   ({@link PathPointSpec}, {@link PathTable}, {@link bakePath}, {@link PATH_SAMPLE_STEP},
+ *   {@link MAX_PATH_LENGTH}), {@link StageSpec} and its parts ({@link StageMusic},
+ *   {@link StageCameraKey}, {@link StageCheckpoint}, {@link StageParallaxLayer},
+ *   {@link StageParallaxLayerName}, {@link StageTilemapSpec}, {@link HeightfieldSpec},
+ *   {@link HeightfieldSegment}, {@link HeightfieldProfile}, {@link StageTerrain},
+ *   {@link StageEvent} and its variants, {@link STAGE_EVENT_TYPES},
  *   {@link MAX_STAGE_FLAGS}), {@link TilesetSpec} ({@link TileSpec}, {@link TileType},
  *   {@link TILE_TYPES}, {@link TileAnchor}, {@link TILE_ANCHORS}, {@link TILE_SIZE},
  *   {@link TilesetTables}).
@@ -1893,9 +1893,9 @@ function assertFileList(files: unknown): void {
  * stage tilemap against its resolved tileset ({@link StageSpec.terrain}); its issues come last.
  * While collecting, enemies get the defaults of their optional fields (a regular enemy missing
  * `hp`, `score`, `hurtbox`, `script`, `sprite` or `drop`, or a bad boss section, fails its whole
- * file),
- * boss sections are completed, and paths are baked into arc-length tables ({@link bakePath}; a
- * path with coincident neighbours or an overlong curve is an issue and is left out).
+ * file), boss sections are completed, and paths are baked into arc-length tables
+ * ({@link bakePath}; a path with coincident neighbours or an overlong curve is an issue and is
+ * left out).
  *
  * Bad files are skipped, not fatal: the caller (the boot error screen, `pnpm content:check`)
  * shows `issues` and may still run with the partial database. A file with a bad header or

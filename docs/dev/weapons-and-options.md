@@ -267,6 +267,21 @@ piercing shot takes the first free table when it is fired (zeroed then) and stor
 in `table`; a piercing shot with no free table is **not fired**. Only the tables of live
 piercing shots are hashed.
 
+**Boss parts** (M1-13) are hit targets too. The boss system inserts each part that is a target
+this tick into the same grid with the id `BOSS_PART_ID_BASE` (64) + part index (`MAX_HIT_TARGETS`
+80), after refreshing its `target` / `armoured` flags; the grid visitor sends ids ≥ 64 to a
+part branch (the same closed exact box test), and the hit list stores the id in `hitEnemy`, so
+a non-piercing shot still takes the **lowest** id — an enemy in the same box before a part.
+Piercing shots keep a second table set for the parts, `weapons.partCooldowns` (`PIERCE_TABLES`
+× `MAX_BOSS_PARTS` 16, the same table index — the enemy tables kept their layout), skipped for
+an `armoured` part like armour. `applyHits()` sends a part hit to
+**`world.bosses.damagePart(part, damage, player)`** and reads its `BossHit` answer: `None` (the
+part went earlier this tick, or no boss is in its intro / fight) → the shot flies on; `Clink`
+(the intro, armour, an `afterParts` part with shields left, a closed `whenOpen` part) → the
+shot dies with `SFX Clink`, a piercing one too; `Damaged` / `Destroyed` → a non-piercing shot
+dies, a piercing one sets its part cooldown. The part's points and the boss's tally go to the
+shot's player ([bosses-and-warning.md](bosses-and-warning.md#weak-points-hits-and-the-clink)).
+
 ## Drawing shots and Options
 
 `world.view.batches` is now: ground enemies, air enemies, **player shots**, **Options**, player
@@ -294,7 +309,8 @@ The renderer needs no change: it binds one sprite binding per batch
 `hashWorld` covers the shot pool (as a registered pool) and, after the formation table, the
 weapons' own state (`mixWeapons`): per player the loadout (`main`, `missile`, `options`; the
 shield is hashed with the power-ups since M1-11) and the option group (`count`, `stolen`, `head`, the whole trail, the positions), then
-every autofire timer, then the cooldown table of every live piercing shot. Not hashed: the role
+every autofire timer, then the cooldown table of every live piercing shot (and, since M1-13,
+its boss-part table). Not hashed: the role
 tables (derived from content and config), `liveCounts` (recounted every phase 2), the hit list
 (rebuilt every phase 6) and the batches. Two sessions fed the same input keep equal hashes,
 shot pools and trails (`weapons.test.ts`, `weapons-runtime.test.ts`); a different
@@ -375,6 +391,7 @@ autofire) and hold no `Shot` / `Sub`.
 | `test/integration/weapons-runtime.test.ts` | The shipped arsenal loaded like the shell does; the `'full'` loadout and the Double playing the whole `test-range` within every cap, bound and surface; remote mode firing with no button; lockstep sessions |
 | `test/integration/enemies-runtime.test.ts`, `content.test.ts` | Enemies killed by the autofiring KESTREL (the "nobody shoots" tests turn autofire off); `checkWeaponBehaviors` on the shipped content |
 | `apps/web/test/boot/`, `apps/tizen/test/boot/` | `loadoutFromSearch`; the web build passes `?loadout=` to the config, the TV build does not |
+| `packages/core/test/bosses/bosses*.test.ts`, `test/integration/boss-runtime.test.ts` | Shots against boss parts (M1-13): clinks in the intro, on armour and on gated parts, a laser's per-part cooldown, an enemy in the same box first, Option credit, a part gone mid-tick letting the next shot through; the full loadout shooting the test boss down ([bosses-and-warning.md](bosses-and-warning.md#tests)) |
 | `test/e2e/weapons.spec.ts` | In Chromium: the web build autofires `shots/basic` to the right of the ship (never in the HUD bars) and they move; `?loadout=full` draws orbs and laser beams; the Tizen build autofires with no key and ignores `?loadout=full`; no console errors or unknown-sprite warnings |
 
 ## Gotchas
@@ -407,7 +424,9 @@ autofire) and hold no `Shot` / `Sub`.
   presets reset (`arcade`) or reduce (`classic`: `loseOneLevel` — Option → Double / Laser →
   Missile → Speed) the loadout; respawns fly in with a fresh Option trail, and the ship fires
   while it blinks ([death-and-scoring.md](death-and-scoring.md)).
-- **M1-13** — boss parts share the damage path; gated parts clink.
+- **M1-13** (done) — boss parts share the grid, the hit list and the piercing cooldowns
+  (`partCooldowns`); their hits go through `BossSystem.damagePart`, gated parts clink
+  ([bosses-and-warning.md](bosses-and-warning.md)).
 - **M1-14 / M1-15** — particle presets and sounds for the explosion, `PlayerShot`,
   `PlayerMissile` and `Clink` events.
 - **M2-03** — loadouts B–D, Weapon Edit, weapon select; **M2-04** — Snake / Formation / Rotate

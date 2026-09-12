@@ -238,7 +238,8 @@ detonates on the pickup's own tick) — so its kills are scored and drop capsule
    = the player, explosion events, drops, formation completion (a formation it wipes out drops
    its capsule and pays its bonus). **Armour does not protect**, and enemies spawned just
    outside the view die too. The compiled `megaCrashImmune` table is read, never the content
-   objects. Boss parts (M1-13) are not enemies and take no damage;
+   objects. A boss (M1-13) is untouched: its parts are not enemy slots, and its entry is
+   `megaCrashImmune` too — but the bullets it fired are cancelled with the rest;
 3. `requestFlash(world, FlashKind.MegaCrash)` (`core/fx`, M1-12: the flash timer and
    `SimEventKind.Flash` with `id` 0 and param `MEGA_CRASH_FLASH_TICKS` 12) and `SFX MegaCrash` at
    the ship.
@@ -386,7 +387,8 @@ powerups.detonateMegaCrash(0); // debug: clear the screen now
 - **M1-12** (done) — score from `outcomes.pickupScore` and Mega Crash kills (`killBy`);
   `applyDeathPenalty` / `loseOneLevel` (below); Mega Crash's flash goes through `core/fx`
   `requestFlash` ([death-and-scoring.md](death-and-scoring.md)).
-- **M1-13** — bosses stay out of Mega Crash; the WARNING sequence.
+- **M1-13** (done) — bosses stay out of Mega Crash (a test checks it); the WARNING and the boss
+  death's bullet cancel ([bosses-and-warning.md](bosses-and-warning.md)).
 - **M1-14 / M1-15** — the shield-break particles, the Mega Crash flash, cancel sparkles, and the
   sounds of every event above.
 - **M1-16** — the HUD power meter (`cursor`, `equippable`, `METER_LABELS`, the `PowerUp` flash).

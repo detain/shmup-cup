@@ -6,9 +6,9 @@
  * on the switches (god mode, stage skip, frame advance, slow motion) and the overlay counters
  * arrive with the debug tools of M1-19.
  *
- * **Responsibility.** Development hooks inside the simulation: god mode, stage skip, jump to scroll X or
- * checkpoint, frame advance (pause + step one tick), slow motion, state hashing and the
- * counters shown by the debug overlay (pool usage, entity counts, RNG calls, rank). Off in
+ * **Responsibility.** Development hooks inside the simulation: god mode, stage skip, jump to
+ * scroll X or checkpoint, frame advance (pause + step one tick), slow motion, state hashing and
+ * the counters shown by the debug overlay (pool usage, entity counts, RNG calls, rank). Off in
  * release builds; never affects a replay unless flagged in its header.
  *
  * **State hash.** {@link hashWorld} is FNV-1a (32-bit) over a fixed sequence of values: the tick,

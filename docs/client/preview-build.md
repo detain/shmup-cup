@@ -13,13 +13,15 @@ catch control, smoothness or scaling problems early.
 In a browser you can also fly the first **scrolling stage** — the *Test Range*, with rocky
 ground, caves, speed changes, enemies that fly and walk past and shoot at you, your ship
 shooting them down, **power-ups** (the capsules some enemies leave behind, taken with the
-remote's OK button) and, since this build, **lives, losing your ship and the score**: rock,
+remote's OK button) and **lives, losing your ship and the score**: rock,
 enemies and bullets now destroy the KESTREL, it comes back with a life less, and after the last
 one it is **GAME OVER** (see [The scrolling test stage](#the-scrolling-test-stage-browser-only),
 [Your weapons](#your-weapons), [Power-ups](#power-ups) and
-[Lives, losing your ship and the score](#lives-losing-your-ship-and-the-score)) — and the earlier
-start-up pictures are still there: the animated **sprite showcase** and the **calibration
-screen** (see [below](#other-screens-browser-only)).
+[Lives, losing your ship and the score](#lives-losing-your-ship-and-the-score)). Since this build
+a second, short stage — the *Boss Range* — ends with the first **boss**, announced by a
+**WARNING** sign ([The boss range and the WARNING](#the-boss-range-and-the-warning-browser-only)).
+The earlier start-up pictures are still there: the animated **sprite showcase** and the
+**calibration screen** (see [below](#other-screens-browser-only)).
 
 This page explains how to open the preview on each device, what you should see, how the ship
 should behave, and what to report if something is wrong. The full button layouts are in
@@ -89,7 +91,20 @@ ship may move in four directions only; the game is designed to be fully playable
 
 ### What changed lately
 
-**New in this build: lives, losing your ship and the score.** In the *Test Range* stage (browser
+**New in this build: the first boss and its WARNING.** In a browser, the new *Boss Range* stage
+(http://localhost:5173/?stage=test-boss) scrolls for about five seconds, then the scrolling
+slows to a stop and a **WARNING** band fills the middle of the picture for three seconds —
+`WARNING!!`, the boss's name and its code, flashing red and yellow. Then the **TRIAL WARDEN**, a
+test boss made of several parts, glides in from the right. You cannot hurt it until it has
+arrived; then its armour blocks stay unbreakable, its two shield plates must go before its
+glowing core can be hit, its two guns can be shot off, and it changes its attack twice as it
+takes damage — the last one with **lasers**, the first long beams in the game. When the core is
+destroyed every bullet vanishes, the boss blinks and disappears, 20,000 points are added and the
+stage scrolls on. See [The boss range and the WARNING](#the-boss-range-and-the-warning-browser-only).
+The explosions, the siren and the boss music are still to come (in later builds), and on the TV
+and the desktop (free flight) nothing has changed.
+
+Before that, **lives, losing your ship and the score.** In the *Test Range* stage (browser
 only) the KESTREL can now be destroyed: flying into the rock or an enemy, or being hit by an enemy
 bullet, costs a ship. The game freezes for a split second, the ship vanishes (the explosion,
 sound and screen shake are drawn in a later build), every enemy bullet on screen disappears, and
@@ -137,19 +152,23 @@ fighters, and fighters that stop, aim and dash at you ([what to look for](#enemi
 slowing down, over rocky floors and caves drawn from small tiles, with star layers moving
 behind at their own speeds; and before that the ship came **under your control**, and free
 flight replaced the sprite showcase as the start-up picture. The simulation behind it is the real game engine: every
-build adds to this world — next come the bosses with their WARNING sign.
+build adds to this world — next come the explosions, sparks, screen shake and flashes that make
+hits feel good.
 
 **Please re-test on the monitors:** install the new build and run through the checks in the
-next section — how the ship responds to the remote is still the most valuable report; new in
-this build is only the `HI` score at the right end of the top bar (check 2), and **whether
-pressing OK while you hold an arrow stops the ship** (check 9) still needs answers. On a PC,
-please also fly the test stage once, normally and fully powered
-(`?stage=test-range&loadout=full`), and report anything from its checklists (the rock, the
-enemies, their bullets, your weapons, the power-ups, losing a ship) — in particular whether
-every bullet pattern can be dodged with single arrow presses, whether the blinking after a
-loss gives you enough time to get clear, and whether collecting capsules and pressing OK feels
-natural with the remote's buttons (try `?profile=keyboard-remote-emulation`, which moves like
-the remote and uses Enter as OK).
+next section — how the ship responds to the remote is still the most valuable report. Nothing
+new is visible on the TV in this build (the boss needs a stage, which only a browser can open
+yet), and **whether pressing OK while you hold an arrow stops the ship** (check 9) still needs
+answers. On a PC, please fly the new **boss range** (`?stage=test-boss`, then again with
+`&loadout=full`) and report anything from [its checklist](#the-boss-range-and-the-warning-browser-only)
+— in particular whether the WARNING text is easy to read, whether the boss's bullets and lasers
+can be dodged with single arrow presses, and whether it is clear which parts you can hurt. The
+test stage (`?stage=test-range`, normally and fully powered) is still worth a run for its
+checklists (the rock, the enemies, their bullets, your weapons, the power-ups, losing a ship):
+does every bullet pattern dodge with single arrow presses, does the blinking after a loss give
+you enough time to get clear, and does collecting capsules and pressing OK feel natural with
+the remote's buttons (try `?profile=keyboard-remote-emulation`, which moves like the remote and
+uses Enter as OK)?
 
 The game data and the sprite sheet travel **inside** the app (the sprite sheet is a small
 picture file packed into the same `.wgt`, in its `assets/` folder). There are no extra files
@@ -204,8 +223,8 @@ Things to check on the monitor and report:
 
 The TV always starts with free flight, where nothing can hit the ship — the score stays at zero
 and the two spare ships stay. The test stage (and with it the power capsules, losing ships and
-the score), the fully powered ship, the showcase and the calibration screen can only be opened
-in a browser.
+the score), the boss range with its WARNING and boss, the fully powered ship, the showcase and
+the calibration screen can only be opened in a browser.
 
 ## In a desktop browser
 
@@ -344,7 +363,8 @@ What "good" looks like:
   ([Lives](#lives-losing-your-ship-and-the-score)); with a Force Field up, the field takes the
   bullet instead and wears a step ([Power-ups](#power-ups)). While the ship is flying in or
   blinking after a loss, bullets pass through it.
-- The enemies never fire long beams (lasers) yet; those come with later enemies and bosses.
+- The enemies of the test stage never fire long beams (lasers); the test boss does
+  ([The boss range and the WARNING](#the-boss-range-and-the-warning-browser-only)).
 
 ## Your weapons
 
@@ -447,8 +467,8 @@ taken again; once it has broken, it can.
 
 **Mega Crash** (`!`). Every enemy — also the ones just about to come in — is destroyed at once,
 and every enemy bullet vanishes. Enemies destroyed this way count as shot down: a saucer or the
-last member of a formation still leaves its capsule. (The bosses of later builds will not be
-hurt by it. The screen flash and the sound come later.)
+last member of a formation still leaves its capsule. A **boss** is not hurt by it — only its
+bullets vanish. (The screen flash and the sound come later.)
 
 **Fully powered** (`&loadout=full`, see [Your weapons](#your-weapons)) now also starts with a
 fresh Force Field.
@@ -537,12 +557,88 @@ What "good" looks like:
 - The spare-ship icons go 2 → 1 → none, and GAME OVER appears only after the last ship.
 - The score only ever goes up, by the amounts above, and `HI` is never lower than the score.
 
+## The boss range and the WARNING (browser only)
+
+Open http://localhost:5173/?stage=test-boss (add `&loadout=full` to fight fully powered, or
+`&profile=keyboard-remote-emulation` to fly with the TV remote's limits). The top bar's title
+reads **BOSS RANGE**. It is a short stage in open space — no rock — made to try out the first
+boss, the **TRIAL WARDEN** (a test boss; the real bosses of the zones come later). Everything
+here is a placeholder made for this project, including the boss's name and the WARNING's
+wording.
+
+| Time (about) | What happens |
+|---|---|
+| 0–1 s | The ship flies in; the stars start to scroll |
+| 1 s and 2 s | Two **red saucers** drift through (upper, then lower half) — each leaves a power capsule when you shoot it down |
+| 5 s | **The WARNING.** The scrolling slows down and stops within a second. A dark, see-through band with thin red edges crosses the middle of the picture, and three lines of text flash between red and yellow: `WARNING!!` · `GIANT HOSTILE "TRIAL WARDEN"` · `CLOSING IN - CODE TW-00`. It stays for **three seconds**; you can fly and shoot as usual meanwhile |
+| 8 s | The band disappears and the **boss glides in** from the right edge, slowing down as it arrives; after two seconds it stops in the right quarter of the screen. While it glides in **it cannot be hurt** — your shots simply vanish on it — but flying into it already destroys your ship |
+| 10 s | The fight starts (below). The stage waits: the scrolling stays stopped until the boss is destroyed |
+
+**The TRIAL WARDEN** is built from parts, and each part behaves differently:
+
+| Part | Looks like | What your shots do |
+|---|---|---|
+| **Armour blocks** | A column of three dark blue-grey riveted blocks — the boss's body | Nothing, ever: shots vanish on them |
+| **Shield plates** | Two light grey plates on the boss's left side (facing you), one above the other | They take 10 hits each, flash white when hit and disappear when destroyed (500 points each) |
+| **Core** | A glowing, pulsing cyan eye behind the plates | Nothing while **both** plates are there; once they are gone it takes 24 hits. Destroying it destroys the boss (5,000 points for the core) |
+| **Guns** | Red-and-yellow emitters sticking out above and below the body | They fire at you; 12 hits each (1,000 points) and a destroyed gun stops firing |
+| **Vent** | A small emitter on the far (right) side | It can only be hurt now and then during the first attack, while it is open (there is no visible sign of that yet), and it is hard to reach — you do not need it (800 points) |
+
+Flying into any part of the boss destroys your ship (a Force Field takes it like an enemy).
+
+**How it fights.** It changes its attack twice as it takes damage:
+
+| When | What it does |
+|---|---|
+| From the start | Slowly follows your ship's height up and down (staying clear of the top and bottom edges); each gun fires a single **red** bullet at you a little more than once a second |
+| After the first shield plate is destroyed | Follows you faster; each gun fires a **fan of three red** bullets about every 0.8 seconds |
+| Once the core has lost **half** its strength | Drifts slowly. Every two and a half seconds one gun — taking turns — fires a **laser** straight to the left across the whole screen along its row: first a thin **blinking warning line** for almost a second, then the beam for about ¾ of a second; only the beam hurts, so leave its row while the line blinks. Between lasers each gun fires a fan of three **purple needles** every second and a half |
+
+**When the core is destroyed:**
+
+- every enemy bullet and laser on the screen disappears at once;
+- the boss **blinks** white for two seconds (the chain of explosions, the big blast and the
+  sounds are drawn in a later build), then vanishes with a very short freeze;
+- **20,000 points** go to your score (on top of the parts you destroyed);
+- about a second later the scrolling starts again, and after another quarter of a minute the
+  stage ends and the scrolling stops for good. There is no "stage clear" screen yet — reload
+  the page to fight again.
+
+**Losing a ship during the fight** works as everywhere else: the bullets vanish, you fly in
+again from the left, blinking, and the boss keeps fighting. After the last ship it is GAME
+OVER, as in the Test Range.
+
+**Fully powered** (`&loadout=full`): the laser passes through the shield plates and damages
+them, but stops at the first part it cannot hurt (the armour, or the core while a plate still
+covers it); the missiles drop forward and down (there is no ground to slide on here), and the
+Options fire with you. The Force Field takes the boss's bullets, lasers and body like any enemy's.
+
+What "good" looks like:
+
+- The WARNING band and its text sit inside the playfield (never over the HUD bars), the three
+  lines are centred, complete and easy to read, and the colour change is steady, not
+  flickering.
+- The scrolling slows down smoothly and stops (the stars stop too); it only starts again after
+  the boss is destroyed.
+- The boss glides in smoothly from beyond the right edge — it never pops up in the middle of
+  the screen — and its parts always stay together as one body, also while it moves up and down.
+- No part of the boss is ever a magenta-and-black checkered square.
+- While it glides in, and on the armour blocks, your shots vanish without effect; the core
+  cannot be hurt before both plates are gone; parts that are hit flash white; destroyed parts
+  disappear and never come back; a destroyed gun stops firing.
+- Every bullet pattern and every laser can be dodged with the four arrow directions (the laser
+  always blinks as a warning line first) — please report any spot where you could not get out
+  of the way.
+- After the core is destroyed no enemy bullet or laser is left, the boss blinks and vanishes,
+  the score jumps by 20,000 and the stage scrolls on.
+
 ## Other screens (browser only)
 
 | Address | Screen |
 |---|---|
 | http://localhost:5173/?stage=test-range | The **Test Range**, the first scrolling stage (above) |
 | http://localhost:5173/?stage=test-range&loadout=full | The Test Range with the **fully powered** ship: laser, missiles, four Options, Force Field ([Your weapons](#your-weapons)) |
+| http://localhost:5173/?stage=test-boss | The **Boss Range**: the WARNING and the test boss ([above](#the-boss-range-and-the-warning-browser-only)); add `&loadout=full` to fight it fully powered |
 | http://localhost:5173/?scene=showcase | The **sprite showcase** the previous builds started with: the KESTREL flying a figure-eight with two Options, five enemies with hit flashes, a ring of bullets, both HUD bars with a counting score and a blinking power meter. Nothing reacts to the controls |
 | http://localhost:5173/?scene=calibration | The **calibration screen**, for judging scaling and colours on a new display (below) |
 
@@ -634,6 +730,16 @@ mean the build itself is broken; they are not caused by anything you did.
 | No enemies at all in the test stage | Check the address says `?stage=test-range` (the title bar reads TEST RANGE). Free flight — the TV and desktop builds — has no enemies |
 | The screen slows down or stutters when many bullets are around | Not expected — the game is built for hundreds of bullets. Please report it with the time into the stage and the browser or TV model |
 | The test stage stopped scrolling | At the end of the stage (after about 75 seconds) that is expected; reload the page to start again. If it stops earlier, please report where |
+| `?stage=test-boss` shows free flight (title FREE FLIGHT) | The stage name is misspelled — it is `test-boss`; the browser console names the unknown stage |
+| The Boss Range stopped scrolling after five seconds | Expected: the WARNING stops the scrolling, and it stays stopped until the boss is destroyed |
+| The WARNING shows but there is no siren, the screen does not darken or flash | Expected in this build: sounds, music and screen effects come later — only the band with the text is drawn |
+| The WARNING text is cut off, overlaps the HUD bars or shows odd symbols | Not expected — please report it with a screenshot |
+| My shots vanish on the boss without hurting it | Expected while it glides in, on the dark armour blocks, and on the core while a shield plate still covers it. If the plates, the guns or the uncovered core do not flash when hit, please report it |
+| The laser stops at the boss | Expected: it stops at the first part it cannot hurt (armour, or the covered core) |
+| The boss never appears | It comes about eight seconds in (five seconds of flight, then three seconds of WARNING); check the address says `?stage=test-boss`. If the WARNING never shows, please report it |
+| The boss just blinks and vanishes — no explosion | Expected in this build: the explosions and the sound come later. The 20,000 points should still be added |
+| Nothing happens after the boss is gone | Expected: there is no "stage clear" screen yet. The stage scrolls on for a quarter of a minute and stops; reload to fight again |
+| A boss laser hit me although I was not on the beam | Only the beam hurts, never the blinking warning line; note that the laser runs along the row of the gun that fired it. If it still happens, please report it with the time into the fight |
 | Gaps, seams or flickering in the rock, or rock over a HUD bar | Please report it with a screenshot and roughly how far into the stage it was |
 | The ship flies in from the left again | Expected after it was destroyed. If it happens without a loss (no spare-ship icon went), please report what you were doing |
 | Error screen with a pink title | See [When the app shows an error screen](#when-the-app-shows-an-error-screen) — photograph it and report it |

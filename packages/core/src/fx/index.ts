@@ -6,8 +6,8 @@
  * hit flash of sprites and the shake / flash rendering live in the presentation layer (M1-14);
  * the optional "authentic slowdown" is M3.
  *
- * **Responsibility.** Game-feel state that must live in the simulation because it affects timing or is
- * replayed: hit-stop counters (4–5 ticks on big events), screen-shake requests (integer
+ * **Responsibility.** Game-feel state that must live in the simulation because it affects timing
+ * or is replayed: hit-stop counters (4–5 ticks on big events), screen-shake requests (integer
  * pixels, decaying, 3 magnitudes, global off switch), hit-flash timers, and the optional
  * deterministic "authentic slowdown". Particles themselves are cosmetic and live in the
  * presentation layer (driven by events and the cosmetic RNG).

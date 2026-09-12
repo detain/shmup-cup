@@ -210,11 +210,13 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   both builds while `?loadout=full` draws Options and laser beams in the web build only (M1-10),
   and `?loadout=full` draws the fresh Force Field ring around the ship in the web build only
   (M1-11), and on `?stage=test-range` an unattended ship loses its stock icons 2 → 1 → 0 and the
-  top bar shows `GAME OVER` (M1-12).
+  top bar shows `GAME OVER` (M1-12), and on `?stage=test-boss` the WARNING band shows for three
+  seconds and then the test boss flies in (M1-13).
   Output goes to `test/e2e/test-results/` (git- and Prettier-ignored).
 - **Dev query parameters** of the web build (`pnpm dev`, `vite preview`): `?stage=<id>` (run
-  that stage instead of open space, e.g. `test-range` — see
-  [stage-runtime.md](stage-runtime.md#running-a-stage)), `?scene=showcase`
+  that stage instead of open space, e.g. `test-range`, or `test-boss` for the WARNING and the
+  test boss — see [stage-runtime.md](stage-runtime.md#running-a-stage) and
+  [bosses-and-warning.md](bosses-and-warning.md#the-test-boss-and-stagetest-boss)), `?scene=showcase`
   (the M1-04 sprite showcase instead of free flight), `?scene=calibration` (test pattern),
   `?loadout=full` (start fully powered: speed 2, Missile, Laser, four Options — M1-10 — and a
   Force Field since M1-11; see

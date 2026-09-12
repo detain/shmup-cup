@@ -176,29 +176,32 @@ The deterministic primitives every later system builds on. Details and usage rul
 
 One gameplay session, built in M1-06; the stage runtime joined in M1-07, the enemies in
 M1-08, the enemy bullets, lasers and rank in M1-09, the player weapons and Options in M1-10 and
-the power meter, capsules, Force Field and Mega Crash in M1-11, and death, respawn, lives,
-score and the game-feel timers in M1-12.
+the power meter, capsules, Force Field and Mega Crash in M1-11, death, respawn, lives, score
+and the game-feel timers in M1-12, and the bosses with their WARNING and death sequence in M1-13.
 Details: [sim-world.md](sim-world.md), [stage-runtime.md](stage-runtime.md),
 [enemies-and-behaviors.md](enemies-and-behaviors.md),
 [bullets-and-patterns.md](bullets-and-patterns.md),
 [weapons-and-options.md](weapons-and-options.md),
 [powerups-and-shields.md](powerups-and-shields.md),
-[death-and-scoring.md](death-and-scoring.md).
+[death-and-scoring.md](death-and-scoring.md),
+[bosses-and-warning.md](bosses-and-warning.md).
 
 - **`world`** — `createWorld(config, content)` allocates the session: tick counter, RNG
   streams, event queue, two `PlayerShip`s (P2 inactive until co-op), the camera, the stage
   `config.stage` names (runner, collision map, parallax and terrain views — or none: free
   flight with a static camera), the enemy system, the rank, the bullet system, the weapon
-  system (with `config.loadout` applied), the power-up system and the scoring system, status,
+  system (with `config.loadout` applied), the power-up system, the scoring system and the boss
+system, status,
   hit-stop and the fx timers, debug flags, the SoA pool
   registry (flushed in phase 8, hashed), a broad-phase grid over the camera view and the
   `WorldView` the renderer draws. `stepWorld(world, input)` runs one tick and never allocates; `createGame`
   hosts one World per session (`game.world`).
 - **`stage`** — the stage runner (phase 3): the camera path (linear speed ramps, eased
-  vertical pans, boss locks that stop the camera exactly), the sorted event timeline fired
-  through a cursor into the World's hooks (`spawn` / `formation` → the enemy system, music
-  events → presentation events, `end` → `stageClear`), invisible checkpoints with `restartAt`,
-  and the terrain / parallax views. All runner state is one hashed `Float64Array`.
+  vertical pans, scroll locks that stop the camera exactly, and the WARNING's brake to a lock
+  wherever the camera is — M1-13), the sorted event timeline fired through a cursor into the
+  World's hooks (`spawn` / `formation` → the enemy system, `warning` / `boss` → the boss system,
+  music events → presentation events, `end` → `stageClear`), invisible checkpoints with
+  `restartAt`, and the terrain / parallax views. All runner state is one hashed `Float64Array`.
 - **`enemies`**, **`patterns`**, **`behaviors`** — 64 enemies in fixed slots, spawned by the
   timeline (single enemies or formations that drop a capsule and pay a bonus when every member
   is killed), driven by **behaviour coroutines** — generators that sleep by yielding a tick
@@ -234,6 +237,16 @@ Details: [sim-world.md](sim-world.md), [stage-runtime.md](stage-runtime.md),
   collected by the ships' pickup boxes; Mega Crash (the `!` slot: cancels bullets, destroys every
   non-immune enemy, screen flash). The Force Field lives on the ship (`PlayerShip.shield`):
   `playerHit` hands every hit to it first — 5 hits, 8-tick shield-hit i-frames, never terrain.
+- **`bosses`** — one multi-part boss per World (M1-13), an `enemies` entry with a `boss`
+  section: up to 16 parts placed parent + offset every tick (riding the camera), sharing the
+  enemies' hit path (grid ids after the 64 enemy slots, hits through `damagePart`), weak points
+  that clink (armour, parts behind other parts, parts open only at times, everything during the
+  intro), cores whose destruction kills it, phases that swap the running boss behaviour
+  (`core/behaviors`' boss roster) on HP, destroyed parts or time. A stage `warning` event plays
+  the **WARNING** (status `bossWarning`, the camera braking into a lock, siren / dim / flash /
+  music events, the game's own text in `view.warning`), then the invulnerable fly-in; the
+  **death sequence** cancels bullets, chains explosions (cosmetic RNG), ends in a final blast
+  with hit-stop, the score tally and `stageClear`, and releases the lock.
 - **`player`** — KESTREL movement from `content/player/`: speed levels (D3), diagonals × 0.7071
   (D4), no inertia, riding the camera scroll, clamped to the camera view minus margins,
   banking, a 40-tick fly-in; `playerHit` records hits (terrain contact since M1-07, enemy
@@ -246,14 +259,16 @@ Details: [sim-world.md](sim-world.md), [stage-runtime.md](stage-runtime.md),
   respawn fly-in with 150 invulnerable ticks once control returns, and `gameOver` when no
   active ship has a life left.
 - **`scoring`**, **`fx`** — per-player scores credited in phases 3 and 7 (kills to their
-  killer, a formation's bonus to the killer of its last member, 300 per capsule), clamped at
+  killer, a formation's bonus to the killer of its last member, 300 per capsule, boss parts and
+  the boss tally to their destroyer), clamped at
   99,999,990, and the session hi-score (unhashed); the sim-side game-feel timers — hit-stop,
   decaying integer shake and flash kinds — that push the events the presentation draws from
   M1-14 ([death-and-scoring.md](death-and-scoring.md)).
 - **`collision`** — closed scalar shape tests (circle, AABB, circle–AABB, capsule–circle,
   segment–AABB), layer masks, a counting-sort uniform grid whose queries equal brute force,
   and pixel-exact terrain queries over per-tile column-height masks (phase 6 tests the ship's
-  terrain box, the ships and the player shots against the enemies' hurtboxes; the bullet system
+  terrain box, the ships and the player shots against the enemies' and boss parts' hurtboxes;
+  the bullet system
   tests bullets and laser capsules against the ships by brute force, the power-up system the
   items against the ships' pickup boxes).
 - **`debug`** — `hashWorld(world)`: FNV-1a over every piece of simulated state in a fixed
@@ -448,12 +463,13 @@ a matching `test/<module>/` folder, and spec references that point at real numbe
 sections of `shmup_feat.md` / `shmup_tech.md`.
 
 Implemented or partial today: core `platform`, `input`, `config`, `loop`, `game`,
-`presentation`, `rng`, `math`, `events`, `pools`, `data` (partial: the boss section of
-`enemies` and the M2 kinds are missing), `world`, `stage`, `player` (implemented for P0 since
+`presentation`, `rng`, `math`, `events`, `pools`, `data` (partial: the M2 kinds are
+missing), `world`, `stage`, `player` (implemented for P0 since
 M1-12 — co-op joining comes with M2-06), `collision` (partial: no bending-laser chains yet), `debug` (partial:
 state hash and flags, no controls yet), `enemies` (partial: no rank modifiers / Option Hunter
 yet), `patterns` (partial: runner, movers and fire primitives — no pattern DSL yet),
-`behaviors` (partial: the M1 roster), `bullets` (implemented for P0 — bending lasers and cancel
+`behaviors` (partial: the M1 enemy and boss rosters), `bosses` (partial: the P0 mechanics —
+timers, escapes, the HP bar, mid-bosses and raids with M2-09), `bullets` (implemented for P0 — bending lasers and cancel
 into points come with M2-02), `rank` (partial: constant rank, no growth yet), `weapons`
 (partial: Type A — loadouts B–D and Direct mode later), `options` (partial: the standard trail),
 `powerups` (partial: meter mode), `shields` (partial: the Force Field), `scoring` (partial:
@@ -484,6 +500,7 @@ plugins in `vite.shared.ts`) has no `moduleInfo`; it is covered by the tests und
 | An input profile or a remote tuning change | Edit `content/input/*.input-profiles.json` (format in [`content/input/README.md`](../../content/input/README.md)) — no code change |
 | A game action | Append a bit to `Action` (never renumber — masks are recorded in replays), add it to `ACTION_NAMES`, the shipped input profiles and the built-in bindings in `input-web/keymap` / `gamepad` |
 | An enemy, a path, a behaviour or a mover | Enemies and paths are JSON (`content/enemies/`, `content/paths/`); a behaviour is a `defineBehavior` coroutine added to `DEFAULT_BEHAVIOR_DEFS`; a mover a new `MoverKind` — [enemies-and-behaviors.md](enemies-and-behaviors.md#extending-it) |
+| A boss or a boss behaviour | A boss is an `enemies` entry with a `boss` section (parts, weak points, phases) started by a stage `warning` event; a boss behaviour is a `defineBossBehavior` coroutine added to `DEFAULT_BOSS_BEHAVIOR_DEFS` — [bosses-and-warning.md](bosses-and-warning.md#extending-it) |
 | An item kind, a meter slot rule or a shield kind | `ITEM_KINDS` / `ItemKind` (appended), the meter's `canEquipSlot` / `equipSlot` and Auto Power-Up rules, a `ShieldSpec` in `SHIELD_SPECS` — [powerups-and-shields.md](powerups-and-shields.md#extending-it) |
 | A bullet pattern, bullet kind or laser | A behaviour calling the `ScriptApi` fire primitives (`aimed`, `nWay`, `ring`, …, `laser`, `fireWait`); a new primitive in `core/patterns` with its `ScriptApi` wrapper; a kind in `BULLET_KINDS` — [bullets-and-patterns.md](bullets-and-patterns.md#extending-it) |
 | A weapon, a weapon behaviour or an Option formation | A weapon is JSON in `content/weapons/` (tunables in `params`); a behaviour is a `ShotKind` plus its tables and a branch of the weapon system's `update()`; formations branch in `OptionGroup.follow` — [weapons-and-options.md](weapons-and-options.md#extending-it) |
