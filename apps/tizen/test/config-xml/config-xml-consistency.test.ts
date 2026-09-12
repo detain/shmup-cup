@@ -29,6 +29,18 @@ describe('tizen/public/config.xml consistency', () => {
     expect(APP_ID.startsWith(`${attr('tizen:application', 'package') ?? '?'}.`)).toBe(true);
   });
 
+  it('carries the release version of the package manifests (0.1.0 = M1, plan M1-19)', () => {
+    const pkg = JSON.parse(
+      readFileSync(new URL('../../package.json', import.meta.url), 'utf8'),
+    ) as { version: string };
+    const root = JSON.parse(
+      readFileSync(new URL('../../../../package.json', import.meta.url), 'utf8'),
+    ) as { version: string };
+    expect(attr('widget', 'version')).toBe(pkg.version);
+    expect(pkg.version).toBe(root.version);
+    expect(pkg.version).toMatch(/^\d+\.\d+\.\d+$/);
+  });
+
   it('targets Tizen 5.5 or newer', () => {
     expect(attr('tizen:application', 'required_version')).toBe('5.5');
   });

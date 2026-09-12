@@ -41,6 +41,7 @@ import {
   type ShellInputProfiles,
   type ShellOptions,
 } from '../../src/boot/index.js';
+import type { DebugToolsFactory, DebugToolsHost } from '../../src/debug/index.js';
 import type { BootOverlay } from '../../src/error-screen/index.js';
 import type { LoadableImage } from '../../src/loader/index.js';
 import { FLIGHT_SPRITES } from '../../src/flight/index.js';
@@ -466,6 +467,99 @@ describe('shell/boot bootShell', () => {
     win.dispatchEvent(new Event('keydown'));
     expect(fakes.sizes).toEqual([]);
     expect(unlocks).toBe(0);
+  });
+});
+
+describe('shell/boot debug tools (M1-19)', () => {
+  /**
+   * A factory whose tools record the frame hooks (with how many frames were rendered by then).
+   *
+   * @returns The factory, the hosts it saw and the log.
+   */
+  const recordingTools = () => {
+    const hosts: DebugToolsHost[] = [];
+    const log: string[] = [];
+    let destroyed = 0;
+    const factory: DebugToolsFactory = (host) => {
+      hosts.push(host);
+      return {
+        controls: null as never,
+        overlay: null as never,
+        counters: null as never,
+        api: null as never,
+        unlocked: true,
+        handleKey: () => false,
+        beginFrame: (now) => log.push(`begin:${now}:${host.game.state.tick}`),
+        endTicks: () => log.push(`ticks:${host.game.state.tick}`),
+        beforeRender: () =>
+          log.push(
+            `before:${fakes.frames.length}:${host.visibleWorld() === null ? 'none' : 'world'}`,
+          ),
+        afterRender: () => log.push(`after:${fakes.frames.length}`),
+        destroy: () => {
+          destroyed++;
+        },
+      };
+    };
+    return { factory, hosts, log, destroyed: () => destroyed };
+  };
+
+  it('counts draw calls and creates the tools only when the app passes a factory', async () => {
+    const plain = await boot().promise;
+    expect(fakes.rendererOptions?.countDrawCalls).toBe(false);
+    expect(plain.debug).toBeNull();
+    plain.stop();
+    const tools = recordingTools();
+    const shell = await boot({ debugTools: tools.factory }).promise;
+    expect(fakes.rendererOptions?.countDrawCalls).toBe(true);
+    expect(tools.hosts).toHaveLength(1);
+    const host = tools.hosts[0];
+    expect(shell.debug).not.toBeNull();
+    expect(host.game).toBe(shell.game);
+    expect(host.win).toBe(win);
+    expect(host.bootMs).toBe(shell.bootTiming.readyMs);
+    expect(host.sceneId()).toBe('flight');
+    shell.stop();
+    shell.stop();
+    expect(tools.destroyed()).toBe(1);
+  });
+
+  it('hooks into every frame: begin → ticks → overlay → render → after', async () => {
+    const tools = recordingTools();
+    await boot({ debugTools: tools.factory }).promise;
+    win.frame(1000);
+    win.frame(1000 + STEP);
+    expect(tools.log).toEqual([
+      'begin:1000:0',
+      'ticks:0',
+      'before:0:world',
+      'after:1',
+      `begin:${1000 + STEP}:0`,
+      'ticks:1',
+      'before:1:world',
+      'after:2',
+    ]);
+  });
+
+  it('in the scene flow: the top scene id, and no World on screen at the title', async () => {
+    const tools = recordingTools();
+    const shell = await boot({ debugTools: tools.factory, scene: 'game' }).promise;
+    win.frame(1000);
+    win.frame(1000 + STEP);
+    expect(tools.hosts[0].sceneId()).toBe(shell.game.scenes?.stack.top?.id);
+    expect(tools.hosts[0].sceneId()).toBe('title');
+    expect(tools.log.filter((line) => line.startsWith('before'))).toEqual([
+      'before:0:none',
+      'before:1:none',
+    ]);
+  });
+
+  it('shows no World for the dev scenes that do not draw it', async () => {
+    const tools = recordingTools();
+    await boot({ debugTools: tools.factory, scene: 'showcase' }).promise;
+    win.frame(1000);
+    expect(tools.log).toContain('before:0:none');
+    expect(tools.hosts[0].sceneId()).toBe('showcase');
   });
 });
 

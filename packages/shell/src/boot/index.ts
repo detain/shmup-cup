@@ -68,6 +68,13 @@
  * The canvas carries `data-shmup-state="loading" | "running" | "error"` so tests and the TV's
  * remote inspector can tell where boot stands.
  *
+ * **Debug tools (M1-19).** In dev / test builds the apps pass a {@link ShellOptions.debugTools}
+ * factory (`debug` module): the renderer then counts its draw calls, and once boot is done the
+ * tools bind their keys (F1–F8 on the web, the Pause, Ch+, Ch+, Ch+ sequence first on the TV),
+ * publish `window.__shmupDebug` and hook into the frame loop — timing the frame, its ticks and the
+ * render, and rebuilding the debug overlay (panel, frame graph, hitbox / grid outlines) before each
+ * render. Release builds pass `null`, so none of it is in their bundle.
+ *
  * **Implements.**
  * - shmup_feat.md §23 — one platform layer for web, Tizen and Electron hosts
  * - shmup_feat.md §22 — rendering pipeline, event dispatch, content validated at load
@@ -81,7 +88,7 @@
  * {@link ShellInput}, {@link ShellInputProfiles}, {@link ShellScene}, {@link SHELL_SCENES},
  * {@link sceneFromSearch}, {@link ShellBootError}, {@link BootTiming},
  * {@link BOOT_STATE_ATTRIBUTE}, {@link SCENE_ATTRIBUTE}, {@link BOOT_MS_ATTRIBUTE},
- * {@link DEFAULT_STAGE_ID}, {@link defaultStageId}.
+ * {@link DEFAULT_STAGE_ID}, {@link defaultStageId}. Debug tools: the `debug` module.
  *
  * @module
  */
@@ -144,6 +151,7 @@ import {
   createEventDispatcher,
   type EventDispatcher,
 } from '../dispatch/index.js';
+import type { DebugTools, DebugToolsFactory } from '../debug/index.js';
 import { createBootOverlay, formatIssues, type BootOverlay } from '../error-screen/index.js';
 import { startFrameLoop } from '../frame-loop/index.js';
 import {
@@ -406,6 +414,13 @@ export interface ShellOptions {
    * after the game canvas; `null` disables it.
    */
   readonly overlay?: BootOverlay | null;
+  /**
+   * The debug tools (plan M1-19) — dev / test builds only: the apps pass
+   * `debugToolsFactory(…)` when `__SHMUP_DEV__` is true and `null` otherwise, so a release bundle
+   * leaves the tools out. With a factory the renderer counts its draw calls and the tools are
+   * created once boot is done (see the `debug` module). Default `null`.
+   */
+  readonly debugTools?: DebugToolsFactory | null;
 }
 
 /** A running shell. */
@@ -451,6 +466,8 @@ export interface Shell {
   readonly save: SaveStore;
   /** How long boot took (for the debug overlay, M1-19). */
   readonly bootTiming: BootTiming;
+  /** The debug tools (dev / test builds — {@link ShellOptions.debugTools}), else `null`. */
+  readonly debug: DebugTools | null;
   /**
    * Stops the frame loop and releases listeners, input, renderer, atlas, the audio engine and the
    * audio back-end (idempotent).
@@ -754,6 +771,8 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
       effects: options.effects,
       // The particles' own RNG, seeded per session from the game's seed (never the sim's streams).
       fxSeed: ((options.gameConfig?.seed ?? DEFAULT_GAME_CONFIG.seed) ^ FX_SEED_SALT) >>> 0,
+      // The debug overlay's draw-call figure (dev / test builds only).
+      countDrawCalls: options.debugTools !== undefined && options.debugTools !== null,
     });
   } catch (error) {
     throw fail('WEBGL IS NOT AVAILABLE', [describe(error)], [], error);
@@ -930,24 +949,33 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
       markCanvas(canvas, SCENE_ATTRIBUTE, top);
     }
   };
+  /** The debug tools (dev / test builds), created once boot is done. */
+  let debug: DebugTools | null = null;
+  /** Whether the last frame showed the World (the scene flow's game, free flight). */
+  let worldShown = false;
   /**
-   * One displayed frame: input context, fixed ticks, event dispatch, render.
+   * One displayed frame: input context, fixed ticks, event dispatch, render (with the debug
+   * tools' timing and overlay in dev / test builds).
    *
    * @param now - rAF timestamp.
    */
   const onFrame = (now: number): void => {
+    const tools = debug;
+    if (tools !== null) tools.beginFrame(now);
     const context = game.inputContext;
     if (context !== inputContext) {
       inputContext = context;
       input.setContext(context);
     }
     game.frame(now);
+    if (tools !== null) tools.endTicks();
     if (flowView !== null) flowView.follow();
     game.events.drain(visit);
     engine.endFrame();
     const frame = game.renderFrame();
+    let shown: RenderFrame;
     if (flowView !== null) {
-      const shown = flowView.update(frame);
+      shown = flowView.update(frame);
       if (flowView.worldChanges !== shownWorlds) {
         // A new game: the last one's explosions and popups do not belong to it.
         shownWorlds = flowView.worldChanges;
@@ -955,10 +983,14 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
         readyRenderer.popups?.clear();
       }
       markScene();
-      readyRenderer.render(shown);
-      return;
+      worldShown = frame.world !== null;
+    } else {
+      shown = sceneView !== null ? sceneView.update(frame) : calibration.update(frame);
+      worldShown = flight !== null;
     }
-    readyRenderer.render(sceneView !== null ? sceneView.update(frame) : calibration.update(frame));
+    if (tools !== null) tools.beforeRender();
+    readyRenderer.render(shown);
+    if (tools !== null) tools.afterRender();
   };
   const loop = startFrameLoop(win, onFrame);
 
@@ -968,6 +1000,18 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   markCanvas(canvas, BOOT_MS_ATTRIBUTE, String(Math.round(readyMs)));
   markState(canvas, 'running');
   markScene();
+  // Dev / test builds: the debug tools (the first frame runs after this — rAF is asynchronous).
+  if (options.debugTools !== undefined && options.debugTools !== null) {
+    debug = options.debugTools({
+      game,
+      renderer: readyRenderer,
+      win,
+      now,
+      bootMs: readyMs,
+      sceneId: () => (flow === null ? scene : (flow.stack.top?.id ?? '')),
+      visibleWorld: () => (worldShown ? game.world : null),
+    });
+  }
 
   let stopped = false;
   return {
@@ -987,10 +1031,14 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     loadedSave,
     save,
     bootTiming,
+    get debug() {
+      return debug;
+    },
     stop() {
       if (stopped) return;
       stopped = true;
       loop.stop();
+      debug?.destroy();
       win.removeEventListener('resize', onResize);
       win.removeEventListener('blur', onBlur);
       if (unlockOnGesture) removeGestureListeners();

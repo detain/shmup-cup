@@ -1,6 +1,6 @@
 {
   "name": "@shmup/tizen",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "description": "Samsung Tizen TV web app (.wgt), Tizen 5.5+ / Chromium 69: one classic IIFE script, remote-first input, Tizen lifecycle.",
   "license": "MPL-2.0",
@@ -8,6 +8,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build && node scripts/check-bundle.mjs",
+    "build:test": "vite build --mode test && node scripts/check-bundle.mjs",
+    "build:dev": "vite build --mode development && node scripts/check-bundle.mjs",
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p test/tsconfig.json",
     "lint": "eslint --max-warnings=0 .",

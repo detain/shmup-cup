@@ -9,5 +9,5 @@
     "types": ["vite/client"],
     "noEmit": true
   },
-  "include": ["src", "../../types/virtual-modules.d.ts"]
+  "include": ["src", "../../types/virtual-modules.d.ts", "../../types/build-info.d.ts"]
 }

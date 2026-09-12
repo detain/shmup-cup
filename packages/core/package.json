@@ -1,6 +1,6 @@
 {
   "name": "@shmup/core",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "description": "Platform-agnostic game core: deterministic fixed-step simulation, game systems and the Platform contract. No DOM/WebGL/audio/platform globals.",
   "license": "MPL-2.0",

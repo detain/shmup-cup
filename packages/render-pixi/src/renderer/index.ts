@@ -156,12 +156,23 @@ export interface PixiRendererOptions {
   readonly fxSeed?: number;
   /** Particle pool size (default 256). */
   readonly particleCapacity?: number;
+  /**
+   * Count the WebGL draw calls of every frame ({@link PixiRenderer.drawCalls} — the debug overlay,
+   * M1-19). Wraps the context's `drawElements` / `drawArrays` (and their instanced variants) with a
+   * counter; dev / test builds only (default `false`).
+   */
+  readonly countDrawCalls?: boolean;
 }
 
 /** The Pixi-backed renderer. */
 export interface PixiRenderer extends IRenderer {
   /** WebGL version actually obtained (1 or 2). */
   readonly webGLVersion: number;
+  /**
+   * WebGL draw calls of the last `render()` (both passes), or -1 when the renderer was created
+   * without {@link PixiRendererOptions.countDrawCalls} (or the context could not be wrapped).
+   */
+  readonly drawCalls: number;
   /** Current placement of the scaled frame on the canvas. */
   readonly viewport: Viewport;
   /** Low-res scene root (384×216 coordinates). */
@@ -234,6 +245,56 @@ export interface PixiRenderer extends IRenderer {
   bindWorld(world: WorldView | null): void;
 }
 
+/** Draw-call counts of the renderer (see {@link installDrawCallCounter}). */
+interface DrawCallCounter {
+  /** Calls since the frame began. */
+  calls: number;
+  /** Calls of the last whole frame (-1 = not counting). */
+  last: number;
+}
+
+/** The draw entry points of a WebGL context the counter wraps (WebGL2 adds the instanced ones). */
+const DRAW_METHODS = [
+  'drawElements',
+  'drawArrays',
+  'drawElementsInstanced',
+  'drawArraysInstanced',
+] as const;
+
+/**
+ * Wraps a WebGL context's draw calls with a counter (dev builds: the debug overlay's draw calls).
+ *
+ * @remarks
+ * Each wrapper forwards its four arguments explicitly (no `arguments` object, no rest array), so a
+ * counted draw call allocates nothing. A missing context or method is skipped.
+ *
+ * @param gl - The context (`WebGLRenderer.gl`), or `undefined` (test fakes).
+ * @param counter - The counter to increment.
+ * @returns `true` when at least `drawElements` or `drawArrays` was wrapped.
+ */
+function installDrawCallCounter(gl: unknown, counter: DrawCallCounter): boolean {
+  if (typeof gl !== 'object' || gl === null) return false;
+  const context = gl as Record<string, unknown>;
+  let wrapped = false;
+  for (const name of DRAW_METHODS) {
+    const original = context[name];
+    if (typeof original !== 'function') continue;
+    const call = original as (a: unknown, b: unknown, c: unknown, d: unknown, e?: unknown) => void;
+    context[name] = function countedDraw(
+      a: unknown,
+      b: unknown,
+      c: unknown,
+      d: unknown,
+      e: unknown,
+    ) {
+      counter.calls++;
+      call.call(gl, a, b, c, d, e);
+    };
+    if (name === 'drawElements' || name === 'drawArrays') wrapped = true;
+  }
+  return wrapped;
+}
+
 /**
  * Clamps to 0…1 (NaN → 0).
  *
@@ -287,6 +348,9 @@ const resetPass = (
  *   world.
  * - Without `setSpriteNames()` every sprite id draws `ui/missing`; call it once the content
  *   (or a dev scene's name table) is known.
+ * - Debug (M1-19): with `countDrawCalls` the context's draw entry points are wrapped with a
+ *   counter and {@link PixiRenderer.drawCalls} reports the last frame's calls (else -1); the debug
+ *   overlay (`debug` module) adds its own containers to the `DEBUG` layer.
  * - Game feel (M1-14): with an atlas, a particle pool of `particleCapacity` sprites per blend
  *   mode (seeded with `fxSeed`) and, with a font too, the 16 score popups are created on the
  *   `FX` layer; the screen effects always exist. Without `setFxContent()` no particle is
@@ -321,6 +385,7 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
   const atlas = options.atlas ?? null;
 
   const renderer = new WebGLRenderer();
+  const drawCounter: DrawCallCounter = { calls: 0, last: -1 };
   await renderer.init({
     canvas: options.canvas,
     width: options.displayWidth,
@@ -334,6 +399,10 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
     background: PALETTE.letterbox,
     hello: false,
   });
+  const countDraws =
+    options.countDrawCalls === true &&
+    installDrawCallCounter((renderer as unknown as { gl?: unknown }).gl, drawCounter);
+  if (countDraws) drawCounter.last = 0;
 
   // Pass 1 target: the internal frame, sampled nearest-neighbour when upscaled.
   const frameTexture = RenderTexture.create({
@@ -543,6 +612,9 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
     get webGLVersion() {
       return renderer.context.webGLVersion;
     },
+    get drawCalls() {
+      return drawCounter.last;
+    },
     setSpriteNames(names) {
       if (atlas === null) return;
       const resolved = createSpriteTables(atlas, names);
@@ -621,8 +693,10 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
       dim.visible = dimAlpha > 0;
       if (hudView !== null) hudView.draw(frame.hud);
       if (uiView !== null) uiView.draw(frame.ui);
+      drawCounter.calls = 0;
       renderer.render(resetPass(scenePass, frameTexture, true));
       renderer.render(resetPass(screenPass, undefined, undefined));
+      if (countDraws) drawCounter.last = drawCounter.calls;
     },
     destroy() {
       bindWorld(null);

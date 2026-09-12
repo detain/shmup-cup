@@ -138,6 +138,10 @@ describe('tooling: package manager and workspace', () => {
       expect(root.scripts?.[script], script).toBeTruthy();
     }
     expect(root.scripts?.test).toContain('test:integration');
+    // Plan M1-19: the benchmark, the golden re-bless, and e2e on the dev / test builds.
+    expect(root.scripts?.bench).toBe('vitest run --config test/bench/vitest.config.ts');
+    expect(root.scripts?.['golden:update']).toBe('node scripts/golden-update.mjs');
+    expect(root.scripts?.['test:e2e']).toContain('turbo run build:test');
   });
 
   it('orchestrates every root task with Turborepo, including the root-only tasks', () => {
@@ -239,13 +243,14 @@ describe('tooling: TypeScript and browser targets', () => {
 describe('tooling: CI and repository hygiene', () => {
   const ci = read('.github/workflows/ci.yml');
 
-  it('runs install (frozen lockfile), lint, typecheck, test and build in that order', () => {
+  it('runs install (frozen lockfile), lint, typecheck, test, build and the benchmark in that order', () => {
     const steps = [
       'pnpm install --frozen-lockfile',
       'pnpm lint',
       'pnpm typecheck',
       'pnpm test',
       'pnpm build',
+      'pnpm bench',
     ];
     const positions = steps.map((step) => ci.indexOf(`run: ${step}`));
     for (const [index, position] of positions.entries()) {

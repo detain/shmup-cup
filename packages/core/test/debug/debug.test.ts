@@ -32,12 +32,14 @@ function world(seed = 1): World {
 describe('core/debug', () => {
   it('describes itself and creates switches that are all off', () => {
     expect(moduleInfo.name).toBe('debug');
-    expect(moduleInfo.status).toBe('partial');
+    expect(moduleInfo.status).toBe('implemented');
     expect(createDebugFlags()).toEqual({
       godMode: false,
       showHitboxes: false,
+      showGrid: false,
       frameAdvance: false,
       slowMo: 1,
+      overlay: false,
     });
     expect(createDebugFlags()).not.toBe(createDebugFlags());
     expect([FNV_OFFSET_BASIS, FNV_PRIME]).toEqual([2166136261, 16777619]);

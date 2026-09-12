@@ -1,0 +1,62 @@
+{
+  "kind": "replay",
+  "header": {
+    "formatVersion": 1,
+    "buildId": "golden",
+    "seed": 3,
+    "stageId": "zone-a",
+    "checkpoint": -1,
+    "loadout": "full",
+    "assisted": false,
+    "config": {
+      "internalWidth": 384,
+      "internalHeight": 216,
+      "tickRate": 60,
+      "maxTicksPerFrame": 4,
+      "seed": 3,
+      "difficulty": "normal",
+      "powerUpMode": "meter",
+      "deathPenalty": "arcade",
+      "startingLives": 3,
+      "autofire": true,
+      "remoteMode": true,
+      "stage": "zone-a",
+      "stageSkip": "boss",
+      "aimDirections": 32,
+      "autofireInterval": 4,
+      "missileInterval": 10,
+      "loadout": "full",
+      "autoPowerUp": false,
+      "autoPowerUpOrder": [
+        "speed",
+        "missile",
+        "laser",
+        "option",
+        "option",
+        "option",
+        "option",
+        "shield"
+      ],
+      "pickupMagnet": true
+    }
+  },
+  "ticks": 908,
+  "hashInterval": 600,
+  "inputs": [
+    "ACiCgAgBAgEA4gY=",
+    "AIwH"
+  ],
+  "hashes": [
+    2650079705
+  ],
+  "finalHash": 2704729944,
+  "description": "the stage skip to HALCYON BULWARK with the full loadout and the Arcade penalty",
+  "expected": {
+    "status": "stageClear",
+    "ticks": 908,
+    "score": 37000,
+    "lives": 3,
+    "deathTicks": [],
+    "bossDefeated": true
+  }
+}

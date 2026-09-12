@@ -11,11 +11,15 @@
  *    no code splitting, no module-preload polyfill;
  *  - a tiny hand-written globalThis polyfill is prepended after minification
  *    (`postBanner`), so it runs before any bundled code, including PixiJS.
+ * `shmupBuildInfo()` defines `__SHMUP_DEV__` — `false` for `vite build` (the release bundle, no
+ * debug tools), `true` for `--mode development` (`build:dev`: the tools behind the remote's Pause,
+ * Ch+, Ch+, Ch+) and `--mode test` (`build:test`, what `pnpm test:e2e` opens) — and
+ * `__SHMUP_BUILD__` (the git SHA).
  */
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, type Plugin } from 'vite';
-import { clientConditions, shmupAssets, shmupContent } from '../../vite.shared.js';
+import { clientConditions, shmupAssets, shmupBuildInfo, shmupContent } from '../../vite.shared.js';
 
 /** Source of `polyfills/global-this.js`, prepended to `app.js` as the post-minify banner. */
 const globalThisPolyfill = readFileSync(
@@ -57,7 +61,7 @@ export default defineConfig({
   resolve: {
     conditions: clientConditions,
   },
-  plugins: [shmupContent(), shmupAssets(), classicScriptTag()],
+  plugins: [shmupContent(), shmupAssets(), shmupBuildInfo(), classicScriptTag()],
   server: {
     host: true,
     port: 5174,

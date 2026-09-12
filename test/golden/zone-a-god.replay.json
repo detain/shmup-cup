@@ -1,0 +1,82 @@
+{
+  "kind": "replay",
+  "header": {
+    "formatVersion": 1,
+    "buildId": "golden",
+    "seed": 1,
+    "stageId": "zone-a",
+    "checkpoint": -1,
+    "loadout": "default",
+    "assisted": true,
+    "config": {
+      "internalWidth": 384,
+      "internalHeight": 216,
+      "tickRate": 60,
+      "maxTicksPerFrame": 4,
+      "seed": 1,
+      "difficulty": "normal",
+      "powerUpMode": "meter",
+      "deathPenalty": "classic",
+      "startingLives": 3,
+      "autofire": true,
+      "remoteMode": true,
+      "stage": "zone-a",
+      "stageSkip": "none",
+      "aimDirections": 32,
+      "autofireInterval": 4,
+      "missileInterval": 10,
+      "loadout": "default",
+      "autoPowerUp": false,
+      "autoPowerUpOrder": [
+        "speed",
+        "missile",
+        "laser",
+        "option",
+        "option",
+        "option",
+        "option",
+        "shield"
+      ],
+      "pickupMagnet": true
+    }
+  },
+  "ticks": 12611,
+  "hashInterval": 600,
+  "inputs": [
+    "ACiCgAgBAgIAlAeBgAQBAR8A9ALAgIACAQAqgoAIAQIXAA+CgAgBAg8AsQTAgIACAQCuBYGABAEBBgALgYAEAQEFAKUDwICAAgEArQOBgAQBAQUAKIKACAGBgAQBgoAIAQIFAPUBgYAEAQEFAAKBgAQBAQSCgAgBAgoAiwWBgAQBAQUALIKACAECBQCwBIGABAEBDAAmgoAIAQIMABPAgIACAQCbAoKACAECBQDMAYGABAEBBQBdgoAIAQIFAAiCgAgBAgYAoAOBgAQBAQwAuAGBgAQBAQUAKYKACAGBgAQBgoAIAQIFADqCgAgBAgUALIGABAEBBQCvBIGABAEBBQAmgoAIAYGABAGCgAgBAgUAEIGABAEBBQAlgoAIAYGABAGCgAgBAgUAGIKACAECBQAKgoAIAQIGACKBgAQBAQwALIKACAECBQAjgYAEAYKACAGBgAQBAQUAvAeBgAQBAQUAOIKACAECBQA9gYAEAQEFACmCgAgBgYAEAYKACAECBQARgoAIAQIFAC+BgAQBAQUARIGABAEBBQDFAYKACAECCwBNwICAAgEAvgGBgAQBAQsA/AGBgAQBAQYAxQGCgAgBAgYAL4KACAECBQCxBIGABAEBBQDBAcCAgAIBAIwCgoAIAQISANYN",
+    "AMNi"
+  ],
+  "hashes": [
+    2348990044,
+    2692732015,
+    711976892,
+    82612712,
+    3404918155,
+    3078510997,
+    1174707333,
+    2399846918,
+    2033299715,
+    102179139,
+    2073996526,
+    981011295,
+    4952732,
+    707019777,
+    4086833992,
+    3595387137,
+    3803592213,
+    3585408557,
+    1768176122,
+    2444953961,
+    161085243
+  ],
+  "finalHash": 18440584,
+  "description": "AZURE VERGE start to stage clear with god mode: the 4-way bot shoots HALCYON BULWARK down",
+  "expected": {
+    "status": "stageClear",
+    "ticks": 12611,
+    "score": 63900,
+    "lives": 3,
+    "deathTicks": [],
+    "bossDefeated": true
+  }
+}

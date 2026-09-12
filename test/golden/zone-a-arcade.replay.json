@@ -1,0 +1,81 @@
+{
+  "kind": "replay",
+  "header": {
+    "formatVersion": 1,
+    "buildId": "golden",
+    "seed": 2,
+    "stageId": "zone-a",
+    "checkpoint": -1,
+    "loadout": "default",
+    "assisted": false,
+    "config": {
+      "internalWidth": 384,
+      "internalHeight": 216,
+      "tickRate": 60,
+      "maxTicksPerFrame": 4,
+      "seed": 2,
+      "difficulty": "arcade",
+      "powerUpMode": "meter",
+      "deathPenalty": "classic",
+      "startingLives": 3,
+      "autofire": true,
+      "remoteMode": true,
+      "stage": "zone-a",
+      "stageSkip": "none",
+      "aimDirections": 32,
+      "autofireInterval": 4,
+      "missileInterval": 10,
+      "loadout": "default",
+      "autoPowerUp": false,
+      "autoPowerUpOrder": [
+        "speed",
+        "missile",
+        "laser",
+        "option",
+        "option",
+        "option",
+        "option",
+        "shield"
+      ],
+      "pickupMagnet": true
+    }
+  },
+  "ticks": 12016,
+  "hashInterval": 600,
+  "inputs": [
+    "ACiCgAgBAgIAlAeBgAQBAR8A9ALAgIACAQAqgoAIAQIXAA+CgAgBAg8AsQTAgIACAQCuBYGABAEBBgALgYAEAQEFAKUDwICAAgEArQOBgAQBAQUAKIKACAGBgAQBgoAIAQIFAPUBgYAEAQEFAAKBgAQBAQSCgAgBAgoAiwWBgAQBAQUALIKACAECBQClBIGABAGCgAgBgYAEAYKACAGBgAQBgoAIAQIBgYAEAYKACAGBgAQBgoAIAYGABAGCgAgBgYAEAYKACAGBgAQBgoAIAYGABAGCgAgBgYAEAYKACAGBgAQBgoAIAYGABAGCgAgBgYAEAYKACAGBgAQBgoAIAYGABAGCgAgBgYAEAYKACAGBgAQBgoAIAYGABAGCgAgBgYAEAYKACAGBgAQBADbAgIACAQCQAoGABAEBBQADgYAEAQEGAHGCgAgBAgYAQIKACAECBQBygoAIAQIFAAWCgAgBAgYAlwOBgAQBAQwAY4KACAECEgBDgYAEAQEFABuBgAQBAQYAW4KACAECBgAFgYAEAQESAO8DgoAIAQIFAIsBgYAEAQEFACSCgAgBgYAEAYKACAECBQAbgoAIAQIFAAmCgAgBAgYAIYGABAEBDAAugoAIAQIFACKBgAQBgoAIAYGABAEBBQC1B4GABAEBBQA7goAIAQIFAD+BgAQBAQUAKYKACAGBgAQBgoAIAQIFABSCgAgBAgUALoGABAEBBQBFgYAEAQEFAPABgoAIAQILAEDAgIACAQCkAYGABAEBCwD7AYGABAEBBgDCAYKACAECBgAsgoAIAQIfABGBgAQBAQYAAYGABAEBDAD4AYKACAECBgDiDg==",
+    "APBd"
+  ],
+  "hashes": [
+    447646019,
+    3207634196,
+    3484991127,
+    4285888667,
+    3040688260,
+    2447720750,
+    2813418534,
+    3130673345,
+    1091801116,
+    1873628122,
+    3860030111,
+    584644978,
+    90115287,
+    2589204957,
+    1639090727,
+    1381300591,
+    2442397120,
+    645318696,
+    3037218140,
+    588973750
+  ],
+  "finalHash": 3546709072,
+  "description": "AZURE VERGE at Arcade difficulty without god mode: the 4-way bot clears it",
+  "expected": {
+    "status": "stageClear",
+    "ticks": 12016,
+    "score": 62600,
+    "lives": 3,
+    "deathTicks": [],
+    "bossDefeated": true
+  }
+}

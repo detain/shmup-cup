@@ -1,16 +1,18 @@
 /**
  * # debug — debug and dev-tool hooks
  *
- * **Status: partial.** The debug switches ({@link DebugFlags}, carried by every `World`) and the
- * deterministic state hash {@link hashWorld} are implemented (plan M1-06), and the stage skip to
- * the boss ({@link skipToBoss} — `GameConfig.stageSkip`, plan M1-18); the controls that act on
- * the switches (god mode, frame advance, slow motion, jump to a checkpoint) and the overlay
- * counters arrive with the debug tools of M1-19.
- *
- * **Responsibility.** Development hooks inside the simulation: god mode, stage skip, jump to
- * scroll X or checkpoint, frame advance (pause + step one tick), slow motion, state hashing and
- * the counters shown by the debug overlay (pool usage, entity counts, RNG calls, rank). Off in
- * release builds; never affects a replay unless flagged in its header.
+ * **Responsibility.** Development hooks inside the simulation: the debug switches
+ * ({@link DebugFlags} — god mode, hitbox and grid outlines, frame advance, slow motion, the
+ * overlay), the controls that act on them ({@link createDebugControls}: god mode, stage skip to the
+ * boss, jump to the next checkpoint, frame advance and single steps, slow motion), the counters
+ * shown by the debug overlay ({@link collectDebugCounters}: pool usage, rank, RNG calls, a state
+ * hash every {@link DEBUG_HASH_INTERVAL} ticks) and the deterministic state hash
+ * {@link hashWorld} that golden replays and desync checks compare. The switches live on the
+ * `Game` (`game.debug`) and every World of the session shares them (`world.debugFlags`). Off in
+ * release builds (the hosts only create the controls in dev / test builds — `__SHMUP_DEV__`);
+ * god mode is recorded in a replay header as `assisted`, the stage jumps restart the stage like a
+ * checkpoint restart, and frame advance / slow motion only change how many ticks a displayed frame
+ * runs — never what a tick does — so none of them desyncs a replay of the ticks that ran.
  *
  * **State hash.** {@link hashWorld} is FNV-1a (32-bit) over a fixed sequence of values: the tick,
  * both RNG states, the camera, the stage runner's state (whether there is one, then every slot of
@@ -39,22 +41,31 @@
  * allocation left is the engine boxing the returned unsigned 32-bit value (a 16-byte heap number
  * when it does not fit a small integer); call it every few ticks, not per entity.
  *
+ * **Stage jumps.** {@link skipToBoss} jumps a World's stage to {@link BOSS_SKIP_LEAD} px before its
+ * first `warning` / `boss` event and {@link jumpToCheckpoint} / {@link jumpToNextCheckpoint}
+ * restart it at a checkpoint (`StageRunner.jumpTo` / `restartAt`: speed, pan and flags
+ * re-derived, every pool and system cleared) and fly the ships in again at the new view.
+ * `createWorld` calls `skipToBoss` when `GameConfig.stageSkip` is `'boss'` — a sim option, so a
+ * replay of a skipped session skips too — which is how the e2e smoke and the playtest reach the
+ * boss quickly; a replay that starts at a checkpoint (`ReplayHeader.checkpoint`) is set up with
+ * `jumpToCheckpoint` before its first tick (`core/replay` `createReplayGame`).
+ *
+ * **Frame advance and slow motion (M1-19).** `Game.frame` reads {@link DebugFlags.frameAdvance}
+ * (only the ticks queued with `Game.requestStep` run) and {@link DebugFlags.slowMo} (the frame
+ * clock runs 2× / 4× slower, so a tick runs every 2nd / 4th frame at 60 Hz). Each tick still
+ * polls input once and runs the whole pipeline, so the simulation stays deterministic.
+ *
  * **Implements.**
- * - shmup_feat.md §24 Dev tooling & debug features
+ * - shmup_feat.md §24 Dev tooling & debug features (god mode, stage skip, jump to checkpoint,
+ *   frame advance, slow-mo, overlay counters)
  * - shmup_feat.md §22 — determinism (state hashes compared across runs)
  *
- * **Stage skip.** {@link skipToBoss} jumps a World's stage to {@link BOSS_SKIP_LEAD} px before its
- * first `warning` / `boss` event (`StageRunner.jumpTo`: speed, pan and flags re-derived, every
- * pool and system cleared) and flies the ships in again at the new view. `createWorld` calls it
- * when `GameConfig.stageSkip` is `'boss'` — a sim option, so a replay of a skipped session skips
- * too — which is how the e2e smoke and the playtest reach the boss quickly.
- *
- * **Public API.** {@link DebugFlags}, {@link createDebugFlags}, {@link DebugCounters},
+ * **Public API.** {@link DebugFlags}, {@link SlowMo}, {@link SLOW_MO_STEPS},
+ * {@link createDebugFlags}, {@link DebugCounters}, {@link createDebugCounters},
+ * {@link collectDebugCounters}, {@link DEBUG_HASH_INTERVAL}, {@link DebugCommand},
+ * {@link DEBUG_COMMAND_NAMES}, {@link DebugControls}, {@link createDebugControls},
  * {@link hashWorld}, {@link FNV_OFFSET_BASIS}, {@link FNV_PRIME}, {@link skipToBoss},
- * {@link BOSS_SKIP_LEAD}.
- *
- * **Planned API.** `createDebugControls(game)` (M1-19): god mode, frame advance, slow motion,
- * stage skip / jump, overlay counters.
+ * {@link BOSS_SKIP_LEAD}, {@link jumpToCheckpoint}, {@link jumpToNextCheckpoint}.
  *
  * @module
  */
@@ -66,6 +77,7 @@ import {
   type Enemy,
   type FormationTable,
 } from '../enemies/index.js';
+import type { Game } from '../game/index.js';
 import { defineModule } from '../module-info.js';
 import { PLAYER_STATES, spawnPlayer } from '../player/index.js';
 import { RNG_STATE_WORDS } from '../rng/index.js';
@@ -75,43 +87,167 @@ import type { World } from '../world/index.js';
 /** Module descriptor (see {@link defineModule}). */
 export const moduleInfo = defineModule({
   name: 'debug',
-  status: 'partial',
+  status: 'implemented',
   specRefs: ['shmup_feat.md §24', 'shmup_feat.md §22'],
 });
 
-/** Toggleable debug switches. */
+/** Slow-motion factors: 1 = normal speed, 2 = half speed, 4 = quarter speed. */
+export type SlowMo = 1 | 2 | 4;
+
+/** Every {@link SlowMo} factor, in the order the slow-motion command cycles through them. */
+export const SLOW_MO_STEPS: readonly SlowMo[] = Object.freeze([1, 2, 4] as SlowMo[]);
+
+/**
+ * Toggleable debug switches. One object per `Game` (`game.debug`), shared by every World the
+ * session creates (`world.debugFlags`), so a switch survives a new game start.
+ */
 export interface DebugFlags {
-  /** Player hits are ignored. */
+  /** Player hits are ignored (sim-affecting: a replay records it as `assisted`). */
   godMode: boolean;
-  /** Renderer draws hurtboxes, terrain boxes and bullet circles. */
+  /** The overlay draws hurtboxes, terrain boxes, shot boxes and bullet circles. */
   showHitboxes: boolean;
-  /** When `true`, ticks run only on explicit frame-advance requests. */
+  /** The overlay draws the broad-phase collision grid's cells. */
+  showGrid: boolean;
+  /** When `true`, ticks run only when requested (`Game.requestStep` — the step command). */
   frameAdvance: boolean;
-  /** 1 = normal speed, 2 = half speed, … */
-  slowMo: number;
+  /** Slow motion: a tick runs every `slowMo`-th tick period (1 = normal speed). */
+  slowMo: SlowMo;
+  /** The debug overlay's panel (FPS, timings, pools, rank, RNG, hash) is shown. */
+  overlay: boolean;
 }
 
 /**
  * Creates the default switches: everything off, normal speed.
  *
  * @returns Fresh flags.
+ *
+ * @example
+ * ```ts
+ * const flags = createDebugFlags(); // { godMode: false, …, slowMo: 1, overlay: false }
+ * ```
  */
 export function createDebugFlags(): DebugFlags {
-  return { godMode: false, showHitboxes: false, frameAdvance: false, slowMo: 1 };
+  return {
+    godMode: false,
+    showHitboxes: false,
+    showGrid: false,
+    frameAdvance: false,
+    slowMo: 1,
+    overlay: false,
+  };
 }
 
-/** Counters for the debug overlay. */
+/** Ticks between two state hashes of {@link collectDebugCounters} (the overlay's hash line). */
+export const DEBUG_HASH_INTERVAL = 60;
+
+/** Counters for the debug overlay (filled by {@link collectDebugCounters}). */
 export interface DebugCounters {
-  /** Live enemy instances. */
+  /** The World's tick. */
+  tick: number;
+  /** Enemy slots in use. */
   enemies: number;
-  /** Live enemy bullets (budget ~512). */
+  /** Enemy slots (64). */
+  enemyCapacity: number;
+  /** Live enemy bullets. */
   enemyBullets: number;
-  /** Live player shots (budget 96). */
+  /** Bullet pool size (512). */
+  bulletCapacity: number;
+  /** Live enemy lasers. */
+  lasers: number;
+  /** Laser pool size. */
+  laserCapacity: number;
+  /** Live player shots. */
   playerShots: number;
-  /** Gameplay RNG draws this tick (determinism debugging). */
+  /** Shot pool size (96). */
+  shotCapacity: number;
+  /** Live items (capsules). */
+  items: number;
+  /** Item pool size. */
+  itemCapacity: number;
+  /** The session's rank. */
+  rank: number;
+  /** Draws from the gameplay RNG stream since the World was created (determinism debugging). */
   rngCalls: number;
-  /** Hash of the sim state, compared against replay checkpoints. */
+  /** The last state hash ({@link hashWorld}), computed every {@link DEBUG_HASH_INTERVAL} ticks. */
   stateHash: number;
+  /** Tick the hash was computed at (-1 = none yet). */
+  hashTick: number;
+}
+
+/**
+ * Creates zeroed counters (no hash yet).
+ *
+ * @returns Fresh counters.
+ */
+export function createDebugCounters(): DebugCounters {
+  return {
+    tick: 0,
+    enemies: 0,
+    enemyCapacity: MAX_ENEMIES,
+    enemyBullets: 0,
+    bulletCapacity: 0,
+    lasers: 0,
+    laserCapacity: 0,
+    playerShots: 0,
+    shotCapacity: 0,
+    items: 0,
+    itemCapacity: 0,
+    rank: 0,
+    rngCalls: 0,
+    stateHash: 0,
+    hashTick: -1,
+  };
+}
+
+/**
+ * Fills the overlay counters from a World (read-only: nothing in the World changes). The state
+ * hash is recomputed when none was taken yet, when {@link DEBUG_HASH_INTERVAL} ticks have passed
+ * since the last one, or when the tick went back (a new World).
+ *
+ * @remarks
+ * Per-frame code: writes numbers into `out` only; the hash (every 60 ticks) is the one allocation
+ * left — the engine boxing {@link hashWorld}'s unsigned result when it does not fit a small
+ * integer.
+ *
+ * @param world - The World.
+ * @param out - Counters to overwrite.
+ * @returns `out`.
+ *
+ * @example
+ * ```ts
+ * const counters = createDebugCounters();
+ * // every frame:
+ * collectDebugCounters(game.world, counters);
+ * counters.enemyBullets; // → live bullets
+ * ```
+ */
+export function collectDebugCounters(world: World, out: DebugCounters): DebugCounters {
+  const tick = world.tick;
+  out.tick = tick;
+  const enemies = world.enemies.enemies;
+  let used = 0;
+  for (let i = 0; i < enemies.length; i++) if (enemies[i].state !== EnemyState.Free) used++;
+  out.enemies = used;
+  out.enemyCapacity = enemies.length;
+  const bullets = world.bullets.pool;
+  out.enemyBullets = bullets.count;
+  out.bulletCapacity = bullets.capacity;
+  const lasers = world.bullets.lasers;
+  out.lasers = lasers.count;
+  out.laserCapacity = lasers.capacity;
+  const shots = world.weapons.pool;
+  out.playerShots = shots.count;
+  out.shotCapacity = shots.capacity;
+  const items = world.powerups.pool;
+  out.items = items.count;
+  out.itemCapacity = items.capacity;
+  out.rank = world.rank;
+  out.rngCalls = world.rng.gameplay.callCount;
+  if (out.hashTick < 0 || tick < out.hashTick || tick - out.hashTick >= DEBUG_HASH_INTERVAL) {
+    out.stateHash = hashWorld(world);
+    out.hashTick = tick;
+  }
+  return out;
 }
 
 /** FNV-1a 32-bit offset basis. */
@@ -498,7 +634,8 @@ export const BOSS_SKIP_LEAD = 96;
  * the stage has there and its `clear` hook empties every pool and system (enemies, bullets, shots,
  * items, the boss and its WARNING); the events between the old and the new position never fire.
  * Loadouts, lives and scores stay. `createWorld` calls it for `GameConfig.stageSkip: 'boss'`; the
- * debug controls of M1-19 may call it on a running World.
+ * debug controls ({@link createDebugControls}, `DebugCommand.SkipToBoss`) call it on a running
+ * World.
  *
  * Only the **first** `warning` / `boss` event counts (a stage with two bosses skips to the first);
  * the target is clamped to 0, so a WARNING closer than {@link BOSS_SKIP_LEAD} px to the start
@@ -528,14 +665,226 @@ export function skipToBoss(world: World): boolean {
     if (codes[i] !== StageEventCode.Warning && codes[i] !== StageEventCode.Boss) continue;
     const x = runner.stage.events[i].x - BOSS_SKIP_LEAD;
     runner.jumpTo(x > 0 ? x : 0);
-    const players = world.players;
-    for (let p = 0; p < players.length; p++) {
-      const ship = players[p];
-      if (ship.active && ship.state !== 'dying' && ship.state !== 'dead') {
-        spawnPlayer(ship, world.camera);
-      }
-    }
+    flyShipsIn(world);
     return true;
   }
   return false;
+}
+
+/**
+ * Restarts the fly-in of every ship in play (not dying / dead) at the current view — after a
+ * stage jump.
+ *
+ * @param world - The world.
+ */
+function flyShipsIn(world: World): void {
+  const players = world.players;
+  for (let p = 0; p < players.length; p++) {
+    const ship = players[p];
+    if (ship.active && ship.state !== 'dying' && ship.state !== 'dead') {
+      spawnPlayer(ship, world.camera);
+    }
+  }
+}
+
+/**
+ * Restarts the World's stage at a checkpoint (`StageRunner.restartAt`: the camera at the
+ * checkpoint, speed / pan / flags as the stage has them there, every pool and system cleared) and
+ * flies every ship in play in again at the new view — the debug "jump to checkpoint", and how a
+ * replay that starts at a checkpoint is set up (`ReplayHeader.checkpoint`, before its first tick).
+ *
+ * @remarks
+ * Debug / load-time code (cold). Loadouts, lives and scores stay; the World's tick counter and RNG
+ * streams move on, so a replay reproduces a jump made at the same tick.
+ *
+ * @param world - The world.
+ * @param checkpoint - Index into the stage's `checkpoints`, or -1 for the stage start.
+ * @returns `true` when it jumped; `false` in free flight or for an index outside
+ *   `[-1, checkpoints.length)`.
+ *
+ * @example
+ * ```ts
+ * jumpToCheckpoint(world, 1); // → true: the camera is at the second checkpoint
+ * ```
+ */
+export function jumpToCheckpoint(world: World, checkpoint: number): boolean {
+  const runner = world.stage;
+  if (runner === null) return false;
+  if (!Number.isInteger(checkpoint) || checkpoint < -1) return false;
+  if (checkpoint >= runner.stage.checkpoints.length) return false;
+  runner.restartAt(checkpoint);
+  flyShipsIn(world);
+  return true;
+}
+
+/**
+ * The debug "jump to next checkpoint": {@link jumpToCheckpoint} with the checkpoint after the last
+ * one the camera passed.
+ *
+ * @param world - The world.
+ * @returns `true` when it jumped; `false` in free flight or when the camera already passed the
+ *   stage's last checkpoint.
+ *
+ * @example
+ * ```ts
+ * jumpToNextCheckpoint(world); // → true at the stage start of a stage with checkpoints
+ * ```
+ */
+export function jumpToNextCheckpoint(world: World): boolean {
+  const runner = world.stage;
+  if (runner === null) return false;
+  return jumpToCheckpoint(world, runner.checkpoint + 1);
+}
+
+// ------------------------------------------------------------------------------ controls
+
+/**
+ * Commands of the debug controls ({@link DebugControls.run}); the hosts bind keys to them (web dev
+ * builds: F1–F8, `@shmup/shell` `debug`).
+ */
+export const DebugCommand = {
+  /** Shows / hides the overlay panel. */
+  Overlay: 1,
+  /** Toggles god mode. */
+  GodMode: 2,
+  /** Cycles the outlines: off → hitboxes → hitboxes + grid → off. */
+  Outlines: 3,
+  /** Toggles the collision-grid outline alone. */
+  Grid: 4,
+  /** Toggles frame advance (the game freezes; steps run one tick each). */
+  FrameAdvance: 5,
+  /** Runs one tick under frame advance (switching frame advance on first). */
+  Step: 6,
+  /** Cycles slow motion 1 → 2 → 4 → 1 ({@link SLOW_MO_STEPS}). */
+  SlowMo: 7,
+  /** Jumps to the next checkpoint of the running stage. */
+  NextCheckpoint: 8,
+  /** Skips the running stage to just before its boss. */
+  SkipToBoss: 9,
+} as const;
+
+/** A {@link DebugCommand} code. */
+export type DebugCommand = (typeof DebugCommand)[keyof typeof DebugCommand];
+
+/** Names of the commands by code (index 0 unused) — for key help and logs. */
+export const DEBUG_COMMAND_NAMES: readonly string[] = Object.freeze([
+  '',
+  'overlay',
+  'god mode',
+  'outlines',
+  'grid',
+  'frame advance',
+  'step',
+  'slow motion',
+  'next checkpoint',
+  'skip to boss',
+]);
+
+/** The debug controls of one game session (see {@link createDebugControls}). */
+export interface DebugControls {
+  /** The session. */
+  readonly game: Game;
+  /** The switches the commands flip (`game.debug`). */
+  readonly flags: DebugFlags;
+  /**
+   * Runs one command.
+   *
+   * @param command - The command.
+   * @returns `true` when it changed something; `false` for an unknown code, and for the stage
+   *   jumps when no stage is being played (free flight, the title, a finished game).
+   */
+  run(command: DebugCommand): boolean;
+}
+
+/**
+ * Whether the session is playing a stage the debug jumps may act on: the World has a stage, is
+ * still `playing` (or in its boss WARNING) and — with the scene flow — the game scene is on top.
+ *
+ * @param game - The session.
+ * @returns `true` when a jump makes sense.
+ */
+function playingStage(game: Game): boolean {
+  const flow = game.scenes;
+  if (flow !== null) {
+    const top = flow.stack.top;
+    if (top === null || top.id !== 'game') return false;
+  }
+  const world = game.world;
+  if (world.stage === null) return false;
+  return world.status === 'playing' || world.status === 'bossWarning';
+}
+
+/**
+ * Creates the debug controls of a session: god mode, the outlines, the overlay, frame advance and
+ * single steps, slow motion, the stage skip to the boss and the jump to the next checkpoint — all
+ * through {@link DebugControls.run} and the session's switches (`game.debug`).
+ *
+ * @remarks
+ * Hosts create them only in dev / test builds and bind keys to the commands (`@shmup/shell`
+ * `debug`: F1–F8 on the web, the Pause, Ch+, Ch+, Ch+ sequence first on the TV). Frame advance and
+ * slow motion take effect in `Game.frame` (the step command queues one tick with
+ * `Game.requestStep`); the stage jumps act on `game.world` at once ({@link skipToBoss},
+ * {@link jumpToNextCheckpoint}) and only while a stage is being played. God mode is sim-affecting:
+ * a replay recorded while it changes mid-run does not reproduce (record with it fixed — the
+ * header's `assisted`). Cold code: commands run on key presses, not per tick.
+ *
+ * @param game - The session.
+ * @returns The controls.
+ *
+ * @example
+ * ```ts
+ * const controls = createDebugControls(game);
+ * controls.run(DebugCommand.GodMode);   // game.debug.godMode → true
+ * controls.run(DebugCommand.Step);      // freezes the game, then one tick per press
+ * controls.run(DebugCommand.SkipToBoss); // → true while zone A is being played
+ * ```
+ */
+export function createDebugControls(game: Game): DebugControls {
+  const flags = game.debug;
+  return {
+    game,
+    flags,
+    run(command) {
+      switch (command) {
+        case DebugCommand.Overlay:
+          flags.overlay = !flags.overlay;
+          return true;
+        case DebugCommand.GodMode:
+          flags.godMode = !flags.godMode;
+          return true;
+        case DebugCommand.Outlines:
+          if (!flags.showHitboxes) {
+            flags.showHitboxes = true;
+            flags.showGrid = false;
+          } else if (!flags.showGrid) {
+            flags.showGrid = true;
+          } else {
+            flags.showHitboxes = false;
+            flags.showGrid = false;
+          }
+          return true;
+        case DebugCommand.Grid:
+          flags.showGrid = !flags.showGrid;
+          return true;
+        case DebugCommand.FrameAdvance:
+          flags.frameAdvance = !flags.frameAdvance;
+          return true;
+        case DebugCommand.Step:
+          flags.frameAdvance = true;
+          game.requestStep(1);
+          return true;
+        case DebugCommand.SlowMo: {
+          const next = SLOW_MO_STEPS.indexOf(flags.slowMo) + 1;
+          flags.slowMo = SLOW_MO_STEPS[next < SLOW_MO_STEPS.length ? next : 0];
+          return true;
+        }
+        case DebugCommand.NextCheckpoint:
+          return playingStage(game) && jumpToNextCheckpoint(game.world);
+        case DebugCommand.SkipToBoss:
+          return playingStage(game) && skipToBoss(game.world);
+        default:
+          return false;
+      }
+    },
+  };
 }

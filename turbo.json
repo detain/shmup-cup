@@ -22,6 +22,14 @@
       "dependsOn": ["^build", "//#assets"],
       "outputs": ["dist/**"]
     },
+    "build:test": {
+      "dependsOn": ["^build", "//#assets"],
+      "outputs": ["dist/**"]
+    },
+    "build:dev": {
+      "dependsOn": ["^build", "//#assets"],
+      "outputs": ["dist/**"]
+    },
     "typecheck": {
       "dependsOn": ["transit"]
     },

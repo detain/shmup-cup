@@ -115,8 +115,10 @@ describe('core/world', () => {
     expect(w.debugFlags).toEqual({
       godMode: false,
       showHitboxes: false,
+      showGrid: false,
       frameAdvance: false,
       slowMo: 1,
+      overlay: false,
     });
     expect(w.rng.gameplay.nextU32()).toBe(createRng(9).nextU32());
   });

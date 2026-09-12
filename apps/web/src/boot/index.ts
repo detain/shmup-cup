@@ -40,6 +40,11 @@
  * **Saves (M1-17).** Options and hi-scores live in `localStorage` (`shmup-cup:save.v1`); the
  * shell loads them before the title and applies the volumes.
  *
+ * **Debug tools (M1-19).** In dev / test builds (`pnpm dev`, `build:test`) `main.ts` hands over the
+ * shell's debug tools ({@link WebAppResources.debugTools}): F1 overlay, F2 god mode, F3 hitboxes /
+ * grid, F4 frame advance, F5 step, F6 slow motion, F7 next checkpoint, F8 skip to the boss, and
+ * `window.__shmupDebug`. A release build (`pnpm build`) has none.
+ *
  * **Implements.** shmup_feat.md §23 (web dev target), §3 (rAF-driven fixed step, pause on
  * visibility change, integer scaling), §19 (resume audio on first input), §4 (input profiles).
  *
@@ -79,6 +84,7 @@ import {
   bootShell,
   defaultStageId,
   sceneFromSearch,
+  type DebugToolsFactory,
   type Shell,
   type ShellAssets,
 } from '@shmup/shell';
@@ -91,12 +97,17 @@ export const moduleInfo = defineModule({
   specRefs: ['shmup_feat.md §23', 'shmup_feat.md §3', 'shmup_feat.md §19'],
 });
 
-/** What the app boots with: the inlined virtual modules (see `main.ts`). */
+/** What the app boots with: the inlined virtual modules and the dev tools (see `main.ts`). */
 export interface WebAppResources {
   /** `virtual:shmup-content`. */
   readonly contentFiles: readonly ContentFile[];
   /** `virtual:shmup-assets`. */
   readonly assets: ShellAssets;
+  /**
+   * The debug tools (plan M1-19): `main.ts` passes `debugToolsFactory(…)` in dev / test builds
+   * (`__SHMUP_DEV__`) — F1–F8, the overlay, `window.__shmupDebug` — and `null` in a release build.
+   */
+  readonly debugTools?: DebugToolsFactory | null;
 }
 
 /** Handles to the running app (for HMR disposal and debugging in the console). */
@@ -406,6 +417,7 @@ export async function bootWebApp(
     },
     scene,
     audioUnlock: 'gesture',
+    debugTools: resources.debugTools ?? null,
     /**
      * The Options screen's CONTROLS (plan M1-17): the keyboard profiles a desktop keyboard can
      * drive the menus with, plus a `?profile=` override in use; `apply` switches the key profile

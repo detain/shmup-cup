@@ -11,7 +11,8 @@
  * {@link serverConditions}. Content: {@link shmupContent}, {@link readContentFiles},
  * {@link CONTENT_MODULE_ID}, {@link ContentFileRecord}, {@link ShmupContentOptions}.
  * Assets: {@link shmupAssets}, {@link ASSETS_MODULE_ID}, {@link ATLAS_URL_DIR},
- * {@link ShmupAssetsOptions}.
+ * {@link ShmupAssetsOptions}. Build info (M1-19): {@link shmupBuildInfo}, {@link isDevBuild},
+ * {@link DEV_BUILD_MODES}, {@link buildId}.
  *
  * @remarks
  * Node-only tooling (it reads the file system); it is never part of a shipped bundle, so
@@ -20,6 +21,7 @@
  *
  * @module
  */
+import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { isAbsolute, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -422,6 +424,99 @@ export function shmupAssets(options: ShmupAssetsOptions = {}): Plugin {
       server.watcher.on('add', onChange);
       server.watcher.on('change', onChange);
       server.watcher.on('unlink', onChange);
+    },
+  };
+}
+
+// ------------------------------------------------------------------------------ build info
+
+/**
+ * Vite modes that make a **dev / test build** (`__SHMUP_DEV__` true): `development`
+ * (`vite build --mode development` — the apps' `build:dev`) and `test` (`build:test`, what
+ * `pnpm test:e2e` builds). The dev server is always a dev build; `vite build` (mode `production`,
+ * `pnpm build`) is a release build.
+ */
+export const DEV_BUILD_MODES: readonly string[] = Object.freeze(['development', 'test']);
+
+/**
+ * Whether a Vite run makes a dev / test build (debug tools in the bundle — plan M1-19).
+ *
+ * @param env - Vite's config environment.
+ * @param env.command - `'serve'` (dev server) or `'build'`.
+ * @param env.mode - The Vite mode.
+ * @returns `true` for the dev server and the {@link DEV_BUILD_MODES}.
+ *
+ * @example
+ * ```ts
+ * isDevBuild({ command: 'build', mode: 'production' }); // → false
+ * isDevBuild({ command: 'build', mode: 'test' }); // → true
+ * ```
+ */
+export function isDevBuild(env: { command: string; mode: string }): boolean {
+  return env.command === 'serve' || DEV_BUILD_MODES.indexOf(env.mode) >= 0;
+}
+
+/**
+ * The build id baked into the apps as `__SHMUP_BUILD__` (replay headers, the debug overlay): the
+ * `SHMUP_BUILD_ID` environment variable when set, else the short git SHA of `HEAD` (with a `+`
+ * when the work tree has changes), else `'unknown'` (no git).
+ *
+ * @param cwd - Where to ask git (default: the repo root).
+ * @returns The id, e.g. `'9524c84'` or `'9524c84+'`.
+ *
+ * @example
+ * ```ts
+ * buildId(); // → '9524c84'
+ * ```
+ */
+export function buildId(cwd: string = REPO_ROOT): string {
+  const fromEnv = process.env.SHMUP_BUILD_ID;
+  if (fromEnv !== undefined && fromEnv !== '') return fromEnv;
+  try {
+    const sha = execFileSync('git', ['rev-parse', '--short=7', 'HEAD'], {
+      cwd,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
+    const dirty = execFileSync('git', ['status', '--porcelain', '--untracked-files=no'], {
+      cwd,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
+    return sha === '' ? 'unknown' : dirty === '' ? sha : `${sha}+`;
+  } catch (_error) {
+    return 'unknown';
+  }
+}
+
+/**
+ * Vite plugin that defines the build-info globals of the apps (plan M1-19; declared in
+ * `types/build-info.d.ts`):
+ *
+ * - `__SHMUP_DEV__` — `true` for a dev / test build ({@link isDevBuild}): the apps then create the
+ *   debug tools (F1–F8, the TV's unlock sequence, the overlay, `window.__shmupDebug`); `false` in a
+ *   release build, where the minifier folds `__SHMUP_DEV__ ? … : null` away and the tools are
+ *   not bundled.
+ * - `__SHMUP_BUILD__` — the {@link buildId} (git SHA).
+ *
+ * @returns The plugin.
+ *
+ * @example
+ * ```ts
+ * // apps/tizen/vite.config.ts
+ * export default defineConfig({ plugins: [shmupContent(), shmupAssets(), shmupBuildInfo()] });
+ * ```
+ */
+export function shmupBuildInfo(): Plugin {
+  return {
+    name: 'shmup:build-info',
+    config(_config, env) {
+      return {
+        define: {
+          __SHMUP_DEV__: JSON.stringify(isDevBuild(env)),
+          __SHMUP_BUILD__: JSON.stringify(buildId()),
+        },
+      };
     },
   };
 }

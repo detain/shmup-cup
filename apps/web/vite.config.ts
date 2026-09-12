@@ -5,14 +5,16 @@
  * export condition, so `pnpm dev` needs no prior package build and HMR reaches into
  * packages/*. `base: './'` keeps the build relocatable (served from a sub-path, or
  * loaded by apps/electron through its `app://` protocol). `shmupContent()` inlines `content/`,
- * `shmupAssets()` inlines the atlas manifest and emits the atlas pages into `dist/assets/atlas/`.
+ * `shmupAssets()` inlines the atlas manifest and emits the atlas pages into `dist/assets/atlas/`,
+ * `shmupBuildInfo()` defines `__SHMUP_DEV__` (dev server, `--mode development` / `test`: the debug
+ * tools) and `__SHMUP_BUILD__` (the git SHA).
  */
 import { defineConfig } from 'vite';
-import { clientConditions, shmupAssets, shmupContent } from '../../vite.shared.js';
+import { clientConditions, shmupAssets, shmupBuildInfo, shmupContent } from '../../vite.shared.js';
 
 export default defineConfig({
   base: './',
-  plugins: [shmupContent(), shmupAssets()],
+  plugins: [shmupContent(), shmupAssets(), shmupBuildInfo()],
   resolve: {
     conditions: clientConditions,
   },

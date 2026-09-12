@@ -11,7 +11,8 @@
  * implemented — `bullets` and `rank` joined with plan step M1-09, `weapons` and `options` with
  * M1-10, `powerups` and `shields` with M1-11, `scoring` and `fx` with M1-12, `bosses` with M1-13,
  * `ui` (UI kit, HUD) and `scenes` (scene stack and flow) with M1-16, `save` (versioned saves,
- * hi-score tables) and the `config` user options with M1-17.
+ * hi-score tables) and the `config` user options with M1-17, the `debug` controls and counters and
+ * `replay` (recording, playback, desync detection) with M1-19.
  *
  * @packageDocumentation
  */
@@ -329,13 +330,24 @@ export {
 
 export {
   BOSS_SKIP_LEAD,
+  DEBUG_COMMAND_NAMES,
+  DEBUG_HASH_INTERVAL,
+  DebugCommand,
   FNV_OFFSET_BASIS,
   FNV_PRIME,
+  SLOW_MO_STEPS,
+  collectDebugCounters,
+  createDebugControls,
+  createDebugCounters,
   createDebugFlags,
   hashWorld,
+  jumpToCheckpoint,
+  jumpToNextCheckpoint,
   skipToBoss,
+  type DebugControls,
   type DebugCounters,
   type DebugFlags,
+  type SlowMo,
 } from './debug/index.js';
 
 export {
@@ -751,6 +763,34 @@ export {
 } from './scenes/index.js';
 
 export { createGame, type Game, type GameOptions, type GameState } from './game/index.js';
+
+export {
+  REPLAY_FORMAT_VERSION,
+  REPLAY_HASH_INTERVAL,
+  REPLAY_KIND,
+  createPlayback,
+  createReplayGame,
+  createReplayHeader,
+  createReplayRecorder,
+  decodeBase64,
+  decodeInputRuns,
+  decodeReplay,
+  encodeBase64,
+  encodeInputRuns,
+  encodeReplay,
+  packReplayInput,
+  playReplay,
+  type DesyncReport,
+  type PlaybackOptions,
+  type RecorderOptions,
+  type Replay,
+  type ReplayHeader,
+  type ReplayHeaderOptions,
+  type ReplayJson,
+  type ReplayPlayback,
+  type ReplayRecorder,
+  type ReplayRun,
+} from './replay/index.js';
 
 export {
   DEFAULT_HI_SCORE_NAME,

@@ -23,8 +23,9 @@
  * {@link FixedStepLoopOptions}, {@link DEFAULT_SNAP_TOLERANCE_MS}.
  *
  * **Planned API.** refresh-rate probe (median rAF delta at boot), optional deterministic
- * "authentic slowdown" tick skipping (shmup_feat.md §3 [P2]), frame-advance for the
- * debug tools (shmup_feat.md §24).
+ * "authentic slowdown" tick skipping (shmup_feat.md §3 [P2]). The debug tools' frame advance and
+ * slow motion (shmup_feat.md §24, M1-19) live in `Game.frame` (`core/game`), which resets this
+ * loop when they switch and feeds it a slowed clock.
  *
  * @module
  */

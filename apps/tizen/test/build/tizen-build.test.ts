@@ -88,6 +88,15 @@ describe('tizen build output (vite build → dist/)', () => {
     expect(code.trimStart().startsWith(POLYFILL_BANNER)).toBe(true);
   });
 
+  it('leaves the dev-build debug tools out of the release bundle (plan M1-19)', () => {
+    // `__SHMUP_DEV__` is false for `vite build`: main.ts's `__SHMUP_DEV__ ? … : null` folds away and
+    // the shell's debug tools, the overlay and the key bindings are never bundled.
+    expect(code).not.toContain('__shmupDebug');
+    expect(code).not.toContain('debug-overlay');
+    expect(code).not.toContain('__SHMUP_DEV__');
+    expect(code).not.toContain('__SHMUP_BUILD__');
+  });
+
   it('never references import.meta or dynamic import()', () => {
     expect(code).not.toMatch(/\bimport\.meta\b/);
     expect(code).not.toMatch(/\bimport\s*\(/);

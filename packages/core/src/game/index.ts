@@ -22,7 +22,15 @@
  *   (`options.inputProfiles`).
  *
  * Every World of a session pushes into the same {@link EventQueue} ({@link Game.events}), so the
- * host drains one queue.
+ * host drains one queue, and shares the session's debug switches ({@link Game.debug}, `core/debug`
+ * — god mode, the outlines, the overlay survive a new game start).
+ *
+ * **Debug timing (M1-19).** {@link Game.frame} honours two of those switches: with
+ * `debug.frameAdvance` only the ticks queued with {@link Game.requestStep} run (one per request —
+ * the debug step command), and with `debug.slowMo` 2 or 4 the frame clock runs that many times
+ * slower, so a tick runs every 2nd / 4th frame at 60 Hz. Switching either resets the loop
+ * accumulator (no catch-up burst). Every tick still polls input once and runs the whole pipeline,
+ * so determinism and replays are unaffected; {@link Game.step} ignores both switches.
  *
  * Lifecycle: `platform.lifecycle.onSuspend` freezes the game (`state.suspended`);
  * `onResume` unfreezes it and resets the loop accumulator so no burst of catch-up
@@ -36,7 +44,8 @@
  * session carries the validated {@link ContentDb} it was created with (`game.content`), so systems
  * read tunables from data instead of constants, its gameplay {@link World} (`game.world`), the
  * {@link EventQueue} its systems push presentation events into (`game.events`, drained by the host
- * once per frame), its scene flow (`game.scenes`, `null` for bare gameplay) and builds the reused
+ * once per frame), its scene flow (`game.scenes`, `null` for bare gameplay), its debug switches
+ * (`game.debug`, `requestStep()` for frame advance) and builds the reused
  * {@link RenderFrame} of the render contract (`game.renderFrame()`).
  * `game.inputContext` names the binding context (`'game'` / `'menu'`, decision D15) the host's
  * input adapter should use.
@@ -45,6 +54,7 @@
  */
 import { resolveGameConfig, type GameConfig } from '../config/index.js';
 import { EMPTY_CONTENT_DB, type ContentDb } from '../data/index.js';
+import { createDebugFlags, type DebugFlags } from '../debug/index.js';
 import type { InputContext, InputSnapshot } from '../input/index.js';
 import { createEventQueue, type EventQueue } from '../events/index.js';
 import { createFixedStepLoop } from '../loop/index.js';
@@ -127,6 +137,13 @@ export interface Game {
   /** Current state. Do not mutate from outside the core. */
   readonly state: Readonly<GameState>;
   /**
+   * The session's debug switches (`core/debug`), shared by every World it creates
+   * (`world.debugFlags` is this object). God mode changes what a tick does; `frameAdvance` and
+   * `slowMo` change how many ticks {@link Game.frame} runs; the rest is for the overlay. The debug
+   * controls (`createDebugControls`) flip them; hosts only create those in dev / test builds.
+   */
+  readonly debug: DebugFlags;
+  /**
    * The binding table the host's input adapter should use right now (decision D15): the top
    * scene decides — `'menu'` for menus and the pause screen, `'game'` while playing.
    *
@@ -147,9 +164,18 @@ export interface Game {
    *
    * @param nowMs - Monotonic timestamp in ms (rAF argument).
    * @returns Number of ticks run (0 while paused or suspended, at most
-   *   `config.maxTicksPerFrame`).
+   *   `config.maxTicksPerFrame`; under frame advance the queued steps, under slow motion the ticks
+   *   of the slowed clock — see the module docs).
    */
   frame(nowMs: number): number;
+  /**
+   * Queues ticks for frame advance (the debug step command): while `debug.frameAdvance` is on,
+   * the next {@link Game.frame} runs the queued ticks — and only those. Ignored while frame advance
+   * is off; switching it off drops what is still queued.
+   *
+   * @param count - Ticks to queue (default 1; non-positive or non-integer counts are ignored).
+   */
+  requestStep(count?: number): void;
   /**
    * Builds the frame description to hand to an `IRenderer`.
    *
@@ -239,9 +265,11 @@ export function createGame(
   const state: GameState = { tick: 0, paused: false, suspended: false, input: null };
   const isFrozen = (): boolean => state.paused || state.suspended;
   const events = createEventQueue();
+  const debug = createDebugFlags();
   const start = options.scenes ?? null;
   // Bare gameplay: one World for the whole session. The scene flow creates its own (per game).
-  const bareWorld = start === null ? createWorld(config, content, { events }) : null;
+  const bareWorld =
+    start === null ? createWorld(config, content, { events, debugFlags: debug }) : null;
   const flow =
     start === null
       ? null
@@ -251,7 +279,7 @@ export function createGame(
             content,
             events,
             exit: platform.exit,
-            createWorld: () => createWorld(config, content, { events }),
+            createWorld: () => createWorld(config, content, { events, debugFlags: debug }),
             save: options.save ?? null,
             inputProfiles: options.inputProfiles ?? null,
           },
@@ -291,6 +319,53 @@ export function createGame(
     onTick: step,
   });
 
+  // Debug timing (frame advance, slow motion). The slowed clock's fractional times live in a
+  // typed array (closure `let`s holding fractions would be boxed on every assignment).
+  const slowClock = new Float64Array(2);
+  const RAW = 0;
+  const SLOW = 1;
+  const timing = { mode: 1, slowStarted: false, pendingSteps: 0 };
+  /** {@link timing}`.mode` while frame advance is on (otherwise the slow-motion factor). */
+  const FRAME_ADVANCE_MODE = 0;
+
+  /**
+   * Runs the due ticks of one frame under the debug timing switches.
+   *
+   * @param nowMs - Frame timestamp.
+   * @returns Ticks run.
+   */
+  const debugFrame = (nowMs: number): number => {
+    const mode = debug.frameAdvance ? FRAME_ADVANCE_MODE : debug.slowMo > 1 ? debug.slowMo : 1;
+    if (mode !== timing.mode) {
+      // A switch: forget the accumulated time, so the new mode starts without a burst.
+      timing.mode = mode;
+      timing.slowStarted = false;
+      loop.reset();
+    }
+    if (mode === FRAME_ADVANCE_MODE) {
+      let ran = 0;
+      while (timing.pendingSteps > 0) {
+        timing.pendingSteps--;
+        step();
+        ran++;
+      }
+      return ran;
+    }
+    timing.pendingSteps = 0;
+    if (mode === 1) return loop.advance(nowMs);
+    if (!timing.slowStarted) {
+      timing.slowStarted = true;
+      slowClock[RAW] = nowMs;
+      slowClock[SLOW] = nowMs;
+    } else {
+      const delta = nowMs - slowClock[RAW];
+      slowClock[RAW] = nowMs;
+      if (delta > 0) slowClock[SLOW] += delta / mode;
+    }
+    // Whole milliseconds (the loop snaps ±1 ms): a fractional argument would be boxed per frame.
+    return loop.advance(Math.floor(slowClock[SLOW]));
+  };
+
   const game: Game = {
     config,
     content,
@@ -301,13 +376,20 @@ export function createGame(
     },
     scenes: flow,
     state,
+    debug,
     get inputContext(): InputContext {
       return flow === null ? 'game' : flow.inputContext;
     },
     step,
     frame(nowMs) {
       if (isFrozen()) return 0;
-      return loop.advance(nowMs);
+      if (timing.mode === 1 && !debug.frameAdvance && debug.slowMo === 1) {
+        return loop.advance(nowMs);
+      }
+      return debugFrame(nowMs);
+    },
+    requestStep(count = 1) {
+      if (debug.frameAdvance && Number.isInteger(count) && count > 0) timing.pendingSteps += count;
     },
     renderFrame() {
       frameView.tick = state.tick;

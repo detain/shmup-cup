@@ -8,7 +8,7 @@
   - Long-press Back (Exit) is never registered; Back (10009) is handled by the app.
 -->
 <widget xmlns="http://www.w3.org/ns/widgets" xmlns:tizen="http://tizen.org/ns/widgets"
-        id="http://shmupcup.dev/ShmupCup" version="0.0.1" viewmodes="maximized">
+        id="http://shmupcup.dev/ShmupCup" version="0.1.0" viewmodes="maximized">
   <tizen:application id="ShmpCupGam.ShmupCup" package="ShmpCupGam" required_version="5.5"/>
   <content src="index.html"/>
   <icon src="icon.png"/>

@@ -22,3 +22,6 @@ tools/
 
 # Hand-formatted XML (Tizen widget config)
 *.xml
+
+# Golden replays: written by `pnpm golden:update` (JSON.stringify layout — re-bless, never hand-edit)
+test/golden/*.replay.json

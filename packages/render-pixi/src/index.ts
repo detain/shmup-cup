@@ -11,6 +11,8 @@
  * allocation. It also draws the game feel fed by the sim's events (plan M1-14): particle presets
  * from `content/fx/` ({@link createParticleSystem}, {@link loadFxContent} — the owner of the `fx`
  * content kind), score popups and the screen shake / flash / dim ({@link createScreenEffects}).
+ * Dev and test builds add the debug overlay (plan M1-19, {@link createDebugOverlay}): a stats panel
+ * with a frame graph and the hitbox / grid outlines on the `DEBUG` layer.
  *
  * @packageDocumentation
  */
@@ -125,3 +127,21 @@ export {
   type ScorePopupsOptions,
   type ScreenEffects,
 } from './effects/index.js';
+export {
+  FRAME_GRAPH_LENGTH,
+  OUTLINE_COLORS,
+  PANEL_COLORS,
+  buildDebugOutlines,
+  buildDebugPanel,
+  createDebugOutlineLists,
+  createDebugOverlay,
+  createDebugOverlayStats,
+  createDebugPanelLists,
+  createFrameGraph,
+  type DebugOutlineLists,
+  type DebugOverlay,
+  type DebugOverlayOptions,
+  type DebugOverlayStats,
+  type DebugPanelLists,
+  type FrameGraph,
+} from './debug/index.js';

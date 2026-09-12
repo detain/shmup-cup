@@ -47,9 +47,15 @@ jobs:
       - name: Build
         run: pnpm build
 
+      # Plan M1-19: 20,000 stress ticks (512 bullets, 64 enemies, full loadout, lasers) — fails
+      # when the median reaches 1.0 ms/tick or the heap grows by 512 KB after the warm-up.
+      - name: Benchmark
+        run: pnpm bench
+
   e2e:
-    # Browser smoke tests (plan §1.4): builds the web and Tizen apps and opens them in
-    # headless Chromium with SwiftShader WebGL (web via `vite preview`, Tizen via file://).
+    # Browser smoke tests (plan §1.4): builds the web and Tizen apps (`build:test` — dev / test
+    # builds with the debug tools and window.__shmupDebug, plan M1-19) and opens them in headless
+    # Chromium with SwiftShader WebGL (web via `vite preview`, Tizen via file://).
     name: e2e · headless Chromium (web + Tizen builds)
     runs-on: ubuntu-latest
     timeout-minutes: 20

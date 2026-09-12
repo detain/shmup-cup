@@ -1,6 +1,6 @@
 {
   "name": "@shmup/electron",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "description": "Electron desktop shell (Windows/macOS/Linux/Steam Deck): minimal main + sandboxed preload loading the apps/web build.",
   "license": "MPL-2.0",

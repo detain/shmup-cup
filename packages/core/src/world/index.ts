@@ -326,7 +326,10 @@ export interface World {
   hitStop: number;
   /** Shake and flash timers (`core/fx`); counted down in phase 9. */
   readonly fx: FxState;
-  /** Debug switches (god mode, hitboxes, frame advance, slow motion). */
+  /**
+   * Debug switches (god mode, outlines, frame advance, slow motion, overlay) — the game's shared
+   * set (`WorldOptions.debugFlags`); only god mode changes what a tick does.
+   */
   readonly debugFlags: DebugFlags;
   /** Struct-of-arrays pools of the session's systems. */
   readonly pools: PoolRegistry;
@@ -394,6 +397,12 @@ export interface WorldOptions {
    * game's one queue, so the host keeps draining one queue (`Game.events`) whichever World runs.
    */
   readonly events?: EventQueue;
+  /**
+   * The debug switches to share (default: new ones, everything off). A game hands every World of
+   * the session its one set (`Game.debug`), so god mode or the outlines survive a new game start.
+   * God mode is sim-affecting: a replay header records it as `assisted` (`core/replay`).
+   */
+  readonly debugFlags?: DebugFlags;
 }
 
 /**
@@ -935,7 +944,7 @@ export function createWorld(
     status: 'playing',
     hitStop: 0,
     fx: createFxState(),
-    debugFlags: createDebugFlags(),
+    debugFlags: options.debugFlags ?? createDebugFlags(),
     pools: createPoolRegistry(),
     grid: createSpatialGrid(PLAYFIELD_W + 2 * GRID_MARGIN, PLAYFIELD_H + 2 * GRID_MARGIN),
     playerBatch,

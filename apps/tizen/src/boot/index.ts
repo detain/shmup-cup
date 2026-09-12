@@ -35,7 +35,16 @@
  * **Implements.** shmup_feat.md §23 (Tizen: Back, registerKeyBatch, visibilitychange,
  * exit), §3 (fixed step, pause on hidden), §4 (remote-first).
  *
- * **Public API.** {@link bootTizenApp}, {@link TizenApp}, {@link TizenAppResources}.
+ * **Debug tools (M1-19).** Dev / test builds (`build:dev`, `build:test`) get the shell's debug
+ * tools ({@link tizenDebugTools}): the remote sequence **Pause, Ch+, Ch+, Ch+** unlocks them and
+ * shows the overlay (boot ms, WebGL version, FPS and the frame graph for the on-device checks),
+ * registers the number keys, and 1–8 then run the eight commands (1 overlay, 2 god mode, 3
+ * hitboxes / grid, 4 frame advance, 5 step, 6 slow motion, 7 next checkpoint, 8 skip to the boss);
+ * `window.__shmupDebug` is published for the remote inspector. The release bundle (`pnpm build`)
+ * has none of it.
+ *
+ * **Public API.** {@link bootTizenApp}, {@link TizenApp}, {@link TizenAppResources},
+ * {@link tizenDebugTools}, {@link DEBUG_REMOTE_KEYS}.
  *
  * @module
  */
@@ -59,8 +68,10 @@ import {
 import type { PixiRenderer } from '@shmup/render-pixi';
 import {
   bootShell,
+  debugToolsFactory,
   defaultStageId,
   sceneFromSearch,
+  type DebugToolsFactory,
   type Shell,
   type ShellAssets,
 } from '@shmup/shell';
@@ -80,12 +91,57 @@ export const moduleInfo = defineModule({
   specRefs: ['shmup_feat.md §23', 'shmup_feat.md §3', 'shmup_feat.md §4'],
 });
 
-/** What the app boots with: the inlined virtual modules (see `main.ts`). */
+/** What the app boots with: the inlined virtual modules and the dev tools (see `main.ts`). */
 export interface TizenAppResources {
   /** `virtual:shmup-content`. */
   readonly contentFiles: readonly ContentFile[];
   /** `virtual:shmup-assets`. */
   readonly assets: ShellAssets;
+  /**
+   * The debug tools (plan M1-19): `main.ts` passes {@link tizenDebugTools}`(…)` in dev / test builds
+   * (`__SHMUP_DEV__` — `build:dev`, `build:test`) and `null` in a release build.
+   */
+  readonly debugTools?: DebugToolsFactory | null;
+}
+
+/**
+ * The number keys the TV debug tools use once unlocked (1–8 work like F1–F8); registered with
+ * `tvinputdevice` only then, in dev builds.
+ */
+export const DEBUG_REMOTE_KEYS: readonly string[] = Object.freeze([
+  '1',
+  '2',
+  '3',
+  '4',
+  '5',
+  '6',
+  '7',
+  '8',
+]);
+
+/**
+ * The TV's debug tools (dev / test builds): the shell's tools behind the remote sequence Pause,
+ * Ch+, Ch+, Ch+ — which also registers the number keys 1–8 ({@link DEBUG_REMOTE_KEYS}) so the
+ * remote's number pad can run the commands.
+ *
+ * @param win - The window (its `tizen` API registers the keys; none outside a TV).
+ * @param buildId - The build id (`__SHMUP_BUILD__`).
+ * @returns The factory for {@link TizenAppResources.debugTools}.
+ *
+ * @example
+ * ```ts
+ * debugTools: __SHMUP_DEV__ ? tizenDebugTools(window, __SHMUP_BUILD__) : null
+ * ```
+ */
+export function tizenDebugTools(win: Window, buildId: string): DebugToolsFactory {
+  return debugToolsFactory({
+    unlock: 'sequence',
+    buildId,
+    onUnlock: () => {
+      const tizen = getTizenApi(win);
+      if (tizen !== null) registerRemoteKeys(tizen, DEBUG_REMOTE_KEYS);
+    },
+  });
 }
 
 /** Handles to the running TV app. */
@@ -254,6 +310,7 @@ export async function bootTizenApp(
     scene,
     audioUnlock: 'immediate',
     preferWebGLVersion: 1,
+    debugTools: resources.debugTools ?? null,
     /**
      * The Options screen's CONTROLS (plan M1-17): the remote profiles whose menus the remote can
      * drive (`SAFE 4-WAY (DEFAULT)`, `FAST 8-WAY`); `apply` — for the saved choice at boot and the

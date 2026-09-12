@@ -1969,6 +1969,74 @@ the browser dev app and as a Tizen 5.5 bundle.
   e2e checks green; CI green.
 - **Manual:** the full M1 on-device checklist (§8.4).
 - **Refs:** `shmup_feat.md` §24 (debug tools), §21 (replays), §22 (determinism, budgets), §23 (launch time).
+- **As built:**
+  - **Where the switches live.** `DebugFlags` gained `showGrid` and `overlay`; `slowMo` is typed `SlowMo`
+    (`1 | 2 | 4`, `SLOW_MO_STEPS`). The flags are one object per **`Game`** (`game.debug`) handed to every World
+    of the session (`WorldOptions.debugFlags`, so god mode / outlines survive a new game start). Frame advance and
+    slow motion are implemented in **`Game.frame`** (frame advance runs only the ticks queued with the new
+    `Game.requestStep(n)`; slow motion feeds the fixed-step loop a clock slowed 2× / 4×, passed as whole ms so it
+    stays allocation-free; switching modes resets the loop — no catch-up burst). `createDebugControls(game)`
+    exposes the commands through `run(DebugCommand)` (overlay, god mode, outline cycle off → hitboxes → + grid,
+    grid, frame advance, step, slow-mo cycle, next checkpoint, skip to boss); the stage jumps act only while the
+    game scene is on top and the World is `playing` / `bossWarning`. New core helpers: `jumpToCheckpoint`,
+    `jumpToNextCheckpoint`, `collectDebugCounters` (pools, rank, gameplay RNG `callCount`, `hashWorld` every
+    `DEBUG_HASH_INTERVAL` = 60 ticks).
+  - **Keys.** F1 overlay, F2 god mode, F3 outlines, F4 frame advance, F5 step, F6 slow-mo, F7 next checkpoint,
+    F8 skip to boss (`@shmup/shell` `DEBUG_KEYS`; defaults prevented, only the step auto-repeats). On the TV the
+    sequence **Pause (10252, or 19), Ch+ ×3 within 3 s** unlocks the tools and shows the overlay; the Tizen app's
+    `onUnlock` then registers the number keys and **1–8** act as F1–F8 (the M7 remote has no F-keys); the sequence
+    again toggles the overlay. The keys never swallow the sequence (Pause still opens the pause menu, where Ch+ is
+    unbound).
+  - **New shell module `debug`** (not named in the plan — the timing and the keys are host work):
+    `debugToolsFactory` / `createDebugTools`, `ShellOptions.debugTools` (a factory, so a release bundle can drop the
+    whole module), `Shell.debug`, and `window.__shmupDebug` (`ShmupDebugApi`: `sceneId`, ticks, flags, counters,
+    stats, `unlocked`, `buildId`, `run`, `game`). The frame loop times its ticks and the render (smoothed), feeds
+    the frame graph and rebuilds the overlay just before `renderer.render` — only when tools exist.
+  - **Overlay (render-pixi `debug`).** Built as core `DrawList`s drawn through the `ui` quad pools — no Pixi
+    `Graphics`. Pixi's `tint` setter allocates and a shared quad pool re-tints when items shift, so every list has
+    one colour: nine outline lists (grid, items, enemies, boss parts, shots, lasers, bullets, terrain boxes, hurt
+    circles) and seven panel lists (backdrop, labels, values, switches, three frame-graph colours) —
+    allocation-free per frame (guarded). The panel also shows lasers / items and the build id, plus a 60-frame
+    **frame graph** (for the §8.4 "no hitches" check). Draw calls come from the renderer's new
+    `countDrawCalls` option (wraps the context's `drawElements` / `drawArrays` / instanced variants →
+    `PixiRenderer.drawCalls`, -1 when off), enabled by the shell only with debug tools.
+  - **Builds.** `shmupBuildInfo()` (in `vite.shared.ts`, types in `types/build-info.d.ts`) defines
+    `__SHMUP_DEV__` — true for the dev server and `vite build --mode development | test` — and `__SHMUP_BUILD__`
+    (short git SHA, `+` when the work tree is dirty; `SHMUP_BUILD_ID` overrides). New app scripts **`build:test`**
+    (what `pnpm test:e2e` now builds, Turborepo task `build:test`) and **`build:dev`** (the on-device debug build
+    for §8.4: `pnpm --filter @shmup/tizen build:dev`, then package). `pnpm build` stays the release build: the
+    `__SHMUP_DEV__ ? … : null` in `main.ts` folds away and no debug code is bundled (asserted by
+    `apps/tizen/test/build`). Measured: release `app.js` 228.6 KB gzip, test build 234.3 KB.
+  - **Replays (core `replay`).** Header as specified; `assisted` = god mode on for the **whole** run (playback
+    turns it on — toggling it mid-recording is not reproducible and documented as such). The input device is not
+    recorded (the sim never reads it). Hashes every `REPLAY_HASH_INTERVAL` (600) ticks **plus a final hash**.
+    API: `createReplayHeader`, `createReplayRecorder(source, header)` (a `PlatformInput` wrapper + `check(world)`
+    after each tick + `finish(world)`; preallocates 10 minutes, doubles beyond), `createPlayback(replay, {buildId})`
+    (a `PlatformInput` + `check(world)` + `DesyncReport { ok, checked, desyncTick, expectedHash, actualHash,
+    finished, buildMatches }`), `createReplayGame` (the same setup for recording and playback: config, god mode,
+    `jumpToCheckpoint` for `checkpoint ≥ 0`), `playReplay`, `encodeReplay` / `decodeReplay` (JSON
+    `{ kind: 'replay', header, ticks, hashInterval, inputs, hashes, finalHash }`, runs of `(value, count)` as LEB128
+    varints then base64 — own base64, no `btoa`; strict validation). The build lock is reported, not enforced
+    (`buildMatches`); golden replays use the fixed build id `golden`. Replays cover bare-gameplay sessions (one
+    World); recording the scene flow (dev auto-record, attract mode) is later work (M2-15 / M3-01).
+  - **Golden replays.** Four scenarios in `test/golden/golden.ts`: `zone-a-god` (4-way bot, god mode, stage
+    clear), `zone-a-arcade` (4-way bot at Arcade difficulty, no god mode), `zone-a-deaths` and `zone-a-boss`
+    (stage skip, full loadout, Arcade penalty). The 4-way bot clears zone A without dying even at Arcade, so the
+    death scenario uses a careless **weaving pilot** (three deaths → `gameOver`). Each file also stores its
+    `description` and `expected` outcome (status, ticks, score, lives, death ticks, boss kill), checked on
+    playback. `pnpm golden:update` = `scripts/golden-update.mjs` (spawns Vitest with `SHMUP_GOLDEN_UPDATE=1`,
+    cross-platform); re-recording an unchanged sim is byte-identical. The files are excluded from Prettier.
+  - **Bench.** `pnpm bench` = Vitest with `test/bench/vitest.config.ts` (`*.perf.ts`, `--expose-gc`, not part of
+    `pnpm test`); CI runs it after `pnpm build`. Free flight on the shipped content with zone A's flying enemies
+    topped up to 64, bullets to 512 and four enemy lasers every tick (the top-up is timed with the ticks); heap
+    growth = retained heap after forced GCs (before / after the 20,000 ticks). Measured: median ≈ 0.12 ms/tick.
+  - **Bundle check.** Budgets exported (`APP_JS_GZIP_BUDGET`, `ATLAS_PAGE_MAX_SIZE`, `DIST_BUDGET`); an atlas
+    page must also be a readable PNG (`pngSize`); the OK line prints the sizes against the budgets.
+  - **e2e smoke** (`test/e2e/smoke.spec.ts`): holds → then ↑ for 2.5 s each (a remote holds one arrow at a time);
+    also checks F1 / F2 on the web and the locked → Pause, Ch+ ×3 → unlocked TV tools.
+  - **Version.** `0.1.0` in the root, every package and app manifest (Electron included) and `config.xml` (a test
+    keeps `config.xml` equal to the Tizen package version). The **`v0.1.0` tag is not created by the BUILD agent**:
+    the review / test / docs agents still commit to this step — tag the step's final commit.
 
 ---
 

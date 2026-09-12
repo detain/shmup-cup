@@ -6,7 +6,15 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { POLYFILL_BANNER, WIDGET_FILES, checkTizenBundle } from '../../scripts/check-bundle.mjs';
+import {
+  APP_JS_GZIP_BUDGET,
+  ATLAS_PAGE_MAX_SIZE,
+  DIST_BUDGET,
+  POLYFILL_BANNER,
+  WIDGET_FILES,
+  checkTizenBundle,
+  pngSize,
+} from '../../scripts/check-bundle.mjs';
 
 const polyfill = readFileSync(new URL('../../polyfills/global-this.js', import.meta.url), 'utf8');
 const GOOD_HTML =
@@ -16,12 +24,31 @@ const GOOD_APP = `${polyfill}\n(function () {\n  'use strict';\n  var x = { a: 1
 let dir = '';
 
 /**
+ * The start of a PNG: signature and IHDR chunk with the given size (enough for the page check).
+ *
+ * @param width - Width in pixels.
+ * @param height - Height in pixels.
+ * @returns The bytes.
+ */
+function png(width: number, height: number): Uint8Array {
+  const bytes = new Uint8Array(33);
+  bytes.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 73, 72, 68, 82]);
+  const view = new DataView(bytes.buffer);
+  view.setUint32(16, width);
+  view.setUint32(20, height);
+  return bytes;
+}
+
+/** An atlas page within budget. */
+const PAGE = png(512, 512);
+
+/**
  * Writes a file into the fixture folder.
  *
  * @param name - Relative path.
  * @param contents - File contents.
  */
-function put(name: string, contents: string): void {
+function put(name: string, contents: string | Uint8Array): void {
   const file = join(dir, name);
   mkdirSync(dirname(file), { recursive: true });
   writeFileSync(file, contents);
@@ -33,7 +60,7 @@ beforeEach(() => {
   put('app.js', GOOD_APP);
   put('config.xml', '<widget/>');
   put('icon.png', 'png');
-  put('assets/atlas/main.png', 'png');
+  put('assets/atlas/main.png', PAGE);
 });
 
 afterEach(() => {
@@ -56,7 +83,7 @@ describe('tizen/scripts/check-bundle checkTizenBundle', () => {
   });
 
   it('accepts non-script assets under dist/assets/ (atlas pages) next to the one script', () => {
-    put('assets/atlas/main-1.png', 'png');
+    put('assets/atlas/main-1.png', PAGE);
     const result = checkTizenBundle(dir);
     expect(result.problems).toEqual([]);
     expect(result.files.sort()).toEqual([
@@ -87,7 +114,7 @@ describe('tizen/scripts/check-bundle checkTizenBundle', () => {
   });
 
   it('allows the atlas manifest and any number of pages under dist/assets/atlas/', () => {
-    for (let i = 0; i < 4; i++) put(`assets/atlas/main${i === 0 ? '' : `-${i}`}.png`, 'png');
+    for (let i = 0; i < 4; i++) put(`assets/atlas/main${i === 0 ? '' : `-${i}`}.png`, PAGE);
     put('assets/atlas/main.json', '{}');
     expect(checkTizenBundle(dir).problems).toEqual([]);
   });
@@ -206,6 +233,52 @@ describe('tizen/scripts/check-bundle checkTizenBundle', () => {
     expect(checkTizenBundle(dir).problems).toEqual([
       'no atlas page in dist/assets/atlas/ (the game cannot boot without it)',
     ]);
+  });
+
+  it('reads the pixel size of a PNG and rejects anything else', () => {
+    expect(pngSize(png(2048, 1024))).toEqual({ width: 2048, height: 1024 });
+    expect(pngSize(new TextEncoder().encode('png'))).toBeNull();
+    const notIhdr = png(1, 1);
+    notIhdr[12] = 0x49 + 1;
+    expect(pngSize(notIhdr)).toBeNull();
+  });
+
+  it('keeps the plan M1-19 budgets: 350 KB gzip, 2048² pages, 8 MB', () => {
+    expect([APP_JS_GZIP_BUDGET, ATLAS_PAGE_MAX_SIZE, DIST_BUDGET]).toEqual([
+      350 * 1024,
+      2048,
+      8 * 1024 * 1024,
+    ]);
+    const result = checkTizenBundle(dir);
+    expect(result.problems).toEqual([]);
+    expect(result.gzipBytes).toBeGreaterThan(0);
+    expect(result.distBytes).toBeGreaterThan(result.code.length);
+  });
+
+  it('rejects an atlas page over 2048² and one that is not a PNG', () => {
+    put('assets/atlas/main-1.png', png(4096, 2048));
+    put('assets/atlas/main-2.png', 'png');
+    put('assets/atlas/main-3.png', png(2048, 2048));
+    expect(checkTizenBundle(dir).problems).toEqual([
+      'atlas page assets/atlas/main-1.png is 4096×2048, over the 2048² budget',
+      'atlas page assets/atlas/main-2.png is not a PNG',
+    ]);
+  });
+
+  it('rejects an app.js over 350 KB gzipped and a dist/ over 8 MB', () => {
+    // Random-looking text barely compresses: ~800 KB of it stays far over the gzip budget.
+    let state = 1;
+    let noise = '';
+    for (let i = 0; i < 120_000; i++) {
+      state = (Math.imul(state, 1103515245) + 12345) >>> 0;
+      noise += state.toString(36);
+    }
+    put('app.js', `${GOOD_APP}\n/* ${noise} */\n`);
+    put('assets/big.bin', new Uint8Array(DIST_BUDGET));
+    const problems = checkTizenBundle(dir).problems;
+    expect(problems).toHaveLength(2);
+    expect(problems[0]).toMatch(/^app\.js is [\d.]+ KB gzipped, over the 350\.0 KB budget$/);
+    expect(problems[1]).toMatch(/^dist\/ holds [\d.]+ KB, over the 8192\.0 KB budget$/);
   });
 
   it('reports a missing build folder instead of throwing', () => {
