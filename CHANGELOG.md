@@ -4,6 +4,29 @@ All notable changes to Shmup Cup. The project follows [Semantic Versioning](http
 versions before 1.0 may change anything between minor releases. Development follows the step plan in
 [`shmup_plan.md`](shmup_plan.md); progress is tracked in [`shmup_progress.md`](shmup_progress.md).
 
+## [Unreleased] — M2: complete v1.0
+
+### Game
+
+- **Difficulty presets** Easy / Normal / Hard / Arcade, chosen in a **DIFFICULTY** menu under START
+  (M2-01): ships 5 / 3 / 3 / 2, continues 5 / 3 / 2 / 0, death penalty Casual / Classic / Classic /
+  Arcade, 16 or 32 aim directions, Easy's bullets × 0.85 — a table in
+  `content/rules/difficulty.rules.json`. Each difficulty keeps its own hi-score table.
+- **Rank grows** with the stage, the loop and the ship's power (Missile, Double / Laser, Options,
+  shield), 0–31 and at most 16 on loop 1; enemies fire more often and faster as it rises.
+  Per-enemy rank modifiers and **revenge bullets** (zone A's fan fliers from rank 12).
+- **Extra ships** at 20,000 points, then every 70,000 (at most nine), with a 1UP jingle that is
+  never cut off.
+- **Continues**: a 10-second CONTINUE? countdown after the last ship; OK restarts at the last
+  checkpoint with fresh ships and no power, and the score's last digit counts the continues.
+- Behaviour change for tools and tests: `{ difficulty: 'arcade' }` now means the whole preset
+  (2 lives, 0 continues, the arcade penalty); the golden replays were re-blessed.
+
+### Documentation
+
+- New developer guide [`docs/dev/difficulty-and-rank.md`](docs/dev/difficulty-and-rank.md); the
+  tester guide's [difficulty, extra ships and continues](docs/client/preview-build.md#difficulty-extra-ships-and-continues).
+
 ## [0.1.0] — M1: playable vertical slice
 
 The first milestone (plan steps M1-01 … M1-19): one complete zone with its boss, playable from
@@ -63,4 +86,5 @@ widget bundle (`pnpm --filter @shmup/tizen build` → a checked `dist/` ready to
   [`debug-and-replays.md`](docs/dev/debug-and-replays.md) for the M1-19 tooling, and the
   [API reference](docs/dev/api-reference.md).
 
+[Unreleased]: https://github.com/detain/shmup-cup/commits/master
 [0.1.0]: https://github.com/detain/shmup-cup/tree/master

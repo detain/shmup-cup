@@ -228,7 +228,9 @@ created. A hook may call `restartAt()`: the current tick's event loop stops ther
 is the index of the last one the camera passed (`-1` before the first). `restartAt(index)`
 (`-1` = the stage start) is what the `arcade` death penalty uses (M1-12: the World calls
 `restartAt(runner.checkpoint)` when the ship respawns, after its explosion and dead time — see
-[death-and-scoring.md](death-and-scoring.md#the-arcade-restart)) and continues will use (M2-01):
+[death-and-scoring.md](death-and-scoring.md#the-arcade-restart)) and continues use since M2-01
+(`core/world` `continueWorld` restarts at `runner.checkpoint` and queues the stage theme again —
+[difficulty-and-rank.md](difficulty-and-rank.md#continues)):
 
 1. camera x = the checkpoint's x, y = the last pan target before it (pans settled), all
    movement zeroed;

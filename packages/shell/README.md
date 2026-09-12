@@ -57,7 +57,7 @@ audio unlock (the engine attaches right after `unlock()`) / resize wiring → rA
 → `game.frame` → `sceneView.follow()` → `game.events.drain(dispatch)` →
 `shell.audioEngine.endFrame()` → `renderer.render`, plan §3.3). The canvas carries
 `data-shmup-state="loading" | "running" | "error"`, `data-shmup-scene` (the scene flow's top
-scene — `title`, `game`, `pause`, `options`, `confirm`, … — or the dev scene's name) and, once
+scene — `title`, `difficulty`, `game`, `pause`, `options`, `continue`, `confirm`, … — or the dev scene's name) and, once
 running, `data-shmup-boot-ms` (the launch-to-ready time, `Shell.bootTiming` — M1-17). With a
 `debugTools` factory (dev / test builds only, M1-19) the renderer also counts its draw calls, and
 once boot is done the **debug tools** bind their keys — F1–F8 on the web; on the TV nothing until

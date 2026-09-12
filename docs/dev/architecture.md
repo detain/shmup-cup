@@ -20,7 +20,8 @@ lasers, fire primitives, rank), [weapons-and-options.md](weapons-and-options.md)
 weapons, loadouts, autofire, hits on enemies, trailing Options),
 [scenes-and-ui.md](scenes-and-ui.md) (the scene stack and flow, menus, the HUD),
 [saves-and-options.md](saves-and-options.md) (the versioned save, user options, the Options
-screen).
+screen), [difficulty-and-rank.md](difficulty-and-rank.md) (difficulty presets, rank growth,
+extends, continues, the difficulty menu and the continue countdown).
 
 ## Layers
 
@@ -204,14 +205,16 @@ The deterministic primitives every later system builds on. Details and usage rul
 One gameplay session, built in M1-06; the stage runtime joined in M1-07, the enemies in
 M1-08, the enemy bullets, lasers and rank in M1-09, the player weapons and Options in M1-10 and
 the power meter, capsules, Force Field and Mega Crash in M1-11, death, respawn, lives, score
-and the game-feel timers in M1-12, and the bosses with their WARNING and death sequence in M1-13.
+and the game-feel timers in M1-12, the bosses with their WARNING and death sequence in M1-13,
+and rank growth, extends and continues in M2-01.
 Details: [sim-world.md](sim-world.md), [stage-runtime.md](stage-runtime.md),
 [enemies-and-behaviors.md](enemies-and-behaviors.md),
 [bullets-and-patterns.md](bullets-and-patterns.md),
 [weapons-and-options.md](weapons-and-options.md),
 [powerups-and-shields.md](powerups-and-shields.md),
 [death-and-scoring.md](death-and-scoring.md),
-[bosses-and-warning.md](bosses-and-warning.md).
+[bosses-and-warning.md](bosses-and-warning.md),
+[difficulty-and-rank.md](difficulty-and-rank.md).
 
 - **`world`** — `createWorld(config, content)` allocates the session: tick counter, RNG
   streams, event queue, two `PlayerShip`s (P2 inactive until co-op), the camera, the stage
@@ -223,7 +226,10 @@ system, status,
   registry (flushed in phase 8, hashed), a broad-phase grid over the camera view and the
   `WorldView` the renderer draws. `stepWorld(world, input)` runs one tick and never allocates;
   bare gameplay hosts one World per session (`game.world`), the scene flow's game scene a fresh
-  one per game start and RETRY STAGE ([scenes-and-ui.md](scenes-and-ui.md)).
+  one per game start and RETRY STAGE, on the difficulty chosen under START
+  ([scenes-and-ui.md](scenes-and-ui.md)). Since M2-01 the World recomputes its rank at the end of
+  phase 3 (`updateWorldRank`) and can be continued after a game over (`canContinue` /
+  `continueWorld`: fresh lives, the last checkpoint — the scene flow's countdown decides).
 - **`stage`** — the stage runner (phase 3): the camera path (linear speed ramps, eased
   vertical pans, scroll locks that stop the camera exactly, and the WARNING's brake to a lock
   wherever the camera is — M1-13), the sorted event timeline fired through a cursor into the
@@ -245,8 +251,11 @@ system, status,
   line → grow → full-width beam, the only phase with a hitbox → fade), attached to their enemy
   or fixed; brute-force collision with the ships (`playerHit(Bullet / Laser)`); bullet cancel.
   The fire primitives of `patterns` (aimed, N-way, ring, spiral, stack, spray, homing,
-  delayed) scale bullet speeds and fire intervals by the session's rank — constant in M1 (the
-  difficulty's base, Normal = 2, where every curve is exactly 1).
+  delayed) scale bullet speeds and fire intervals by the session's rank — constant in M1, since
+  M2-01 `base + floor(growth × (stage / loop / power terms))` (0–31, 16 on loop 1; Normal starts
+  at 2, where every curve is exactly 1), times the preset's bullet speed multiplier; enemies may
+  follow the curves more or less strongly (rank modifiers) and fire revenge bullets when shot
+  down at a high rank ([difficulty-and-rank.md](difficulty-and-rank.md)).
 - **`weapons`**, **`options`** — the player shots (a 96-slot SoA pool drawn through a mirror
   batch, lasers as rows of segments) of meter mode's Type A arsenal compiled from
   `content/weapons/` (main shot, Double pair, piercing Laser that grows and follows its shooter,
@@ -285,11 +294,12 @@ system, status,
   `config.deathPenalty` preset: `classic` one level, `arcade` everything plus a checkpoint
   restart at the respawn, `casual` only the shield), `dying` 24 ticks → `dead` 60 → a blinking
   respawn fly-in with 150 invulnerable ticks once control returns, and `gameOver` when no
-  active ship has a life left.
+  active ship has a life left. The difficulty preset (M2-01) chooses the lives and the penalty.
 - **`scoring`**, **`fx`** — per-player scores credited in phases 3 and 7 (kills to their
   killer, a formation's bonus to the killer of its last member, 300 per capsule, boss parts and
   the boss tally to their destroyer), clamped at
-  99,999,990, and the session hi-score (unhashed); the sim-side game-feel timers — hit-stop,
+  99,999,990, and the session hi-score (unhashed); since M2-01 extra lives at score thresholds
+  (20,000, then every 70,000, capped at 9) and the continue count in the score's last digit; the sim-side game-feel timers — hit-stop,
   decaying integer shake and flash kinds — that push the events the presentation draws since
   M1-14 ([death-and-scoring.md](death-and-scoring.md)); every credited kill and boss part also
   pushes a `Score` event for the popups ([fx-and-game-feel.md](fx-and-game-feel.md)).
@@ -565,23 +575,23 @@ module has a docblock with **Responsibility**, **Implements** and **Public API**
 a matching `test/<module>/` folder, and spec references that point at real numbered
 sections of `shmup_feat.md` / `shmup_tech.md`.
 
-Implemented or partial today: core `platform`, `input`, `config` (partial: `GameConfig` and, since
-M1-17, the `UserOptions` — difficulty tables and display options later), `loop`, `game`,
-`presentation`, `rng`, `math`, `events`, `pools`, `save` (M1-17), `data` (partial: the M2 kinds are
+Implemented or partial today: core `platform`, `input`, `config` (partial: `GameConfig` with the difficulty
+presets since M2-01 and, since M1-17, the `UserOptions` — display options later), `loop`, `game`,
+`presentation`, `rng`, `math`, `events`, `pools`, `save` (M1-17), `data` (partial: `rules` since M2-01 — the other M2 kinds are
 missing), `world`, `stage`, `player` (implemented for P0 since
 M1-12 — co-op joining comes with M2-06), `collision` (partial: no bending-laser chains yet), `debug` (M1-19: state hash, switches, controls,
-counters, the stage skip and checkpoint jumps), `replay` (M1-19), `enemies` (partial: no rank modifiers / Option Hunter
+counters, the stage skip and checkpoint jumps), `replay` (M1-19), `enemies` (partial: rank modifiers and revenge bullets since M2-01 — no Option Hunter
 yet), `patterns` (partial: runner, movers and fire primitives — no pattern DSL yet),
 `behaviors` (partial: the M1 enemy and boss rosters), `bosses` (partial: the P0 mechanics —
 timers, escapes, the HP bar, mid-bosses and raids with M2-09), `bullets` (implemented for P0 — bending lasers and cancel
-into points come with M2-02), `rank` (partial: constant rank, no growth yet), `weapons`
+into points come with M2-02), `rank` (implemented with M2-01: growth, power terms, per-enemy sensitivity), `weapons`
 (partial: Type A — loadouts B–D and Direct mode later), `options` (partial: the standard trail),
 `powerups` (partial: meter mode), `shields` (partial: the Force Field), `scoring` (partial:
-scores and the session hi-score — extends, continues and the table later), `fx` (partial: the
+scores, the session hi-score, extends and the continue digit — 1UP items later), `fx` (partial: the
 hit-stop / shake / flash requests — slowdown later), `ui` (partial: the list menu, slider,
 toggle, choice and confirm widgets, builders and the HUD — rebind prompt, name entry and the boss
-HP bar later), `scenes` (partial: the scene stack, the M1 flow and the Options screen — the M2
-screens later);
+HP bar later), `scenes` (partial: the scene stack, the M1 flow, the Options screen, the difficulty
+menu and the continue countdown — the other M2 screens later);
 input-web `keymap`, `keyboard`, `gamepad`, `web-input`, `remote`, `rebind`
 (partial: profiles, contexts, the selectable profiles of CONTROLS — the rebinding UI comes in
 M2-16); audio-web `web-audio` (partial; driven by the Options sliders since M1-17), `synth`, `sfx`,

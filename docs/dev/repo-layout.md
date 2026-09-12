@@ -109,7 +109,7 @@ shmup-cup/
 ├── test/                   cross-package integration tests (Vitest project "integration", part of `pnpm test`); playtest/ = headless playtest harness + 4-way bot + design rules (M1-18, same project); golden/ = golden zone A replays + their test (M1-19, same project); bench/ = `pnpm bench` stress benchmark (own Vitest config, not in `pnpm test`); e2e/ = Playwright browser smoke tests (`pnpm test:e2e`)
 ├── docs/
 │   ├── client/             player/tester docs
-│   └── dev/                contributor docs (this file, architecture, engine-foundations, content-data, asset-pipeline, rendering-and-shell, sim-world, stage-runtime, enemies-and-behaviors, fx-and-game-feel, scenes-and-ui, saves-and-options, zone-a-and-playtest, debug-and-replays, api-reference, …)
+│   └── dev/                contributor docs (this file, architecture, engine-foundations, content-data, asset-pipeline, rendering-and-shell, sim-world, stage-runtime, enemies-and-behaviors, fx-and-game-feel, scenes-and-ui, saves-and-options, zone-a-and-playtest, debug-and-replays, difficulty-and-rank, api-reference, …)
 ├── tools/                  standalone tools, NOT workspace members (own package.json/lockfile, npm not pnpm)
 │   └── input-probe/        Tizen diagnostic .wgt: remote/gamepad/display measurements (see input-probe.md)
 └── shmup_feat.md  shmup_tech.md  input_probe_spec.md  shmup_plan.md  shmup_progress.md  CHANGELOG.md  README.md  LICENSE (MPL-2.0)
@@ -193,5 +193,6 @@ runtime), [content-data.md](content-data.md) (game data and its loader),
 [stage-runtime.md](stage-runtime.md) (scrolling stages, terrain, parallax),
 [zone-a-and-playtest.md](zone-a-and-playtest.md) (zone A, its boss, the 4-way rules, the
 playtest bot), [debug-and-replays.md](debug-and-replays.md) (debug tools, replays, golden
-replays, the benchmark and budgets), [api-reference.md](api-reference.md) and
+replays, the benchmark and budgets), [difficulty-and-rank.md](difficulty-and-rank.md) (difficulty
+presets, rank growth, extends, continues), [api-reference.md](api-reference.md) and
 [conventions.md](conventions.md).

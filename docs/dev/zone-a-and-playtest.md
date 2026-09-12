@@ -60,7 +60,7 @@ with the bot.
 | Section | Scroll x | Camera key (px/tick) | Content |
 |---|---|---|---|
 | 1 — tutorial | 0–1,500 | 0.75 at 0 (ramp 60) | `skeet` popcorn formations (5–6, bonus 300 / 400), three `tender` capsule carriers, two `skeet-chain` sine chains (8, no drop); a low rolling floor 200–1,400 |
-| 2 — fans and rammers | 1,500–3,500 | 0.8 at 1,500 | five `vane` fan formations on the `vane-*` paths (bonus 1,000), `lancer` rammers in pairs (and a file of three, no drop), a 10-long chain, two carriers; open space |
+| 2 — fans and rammers | 1,500–3,500 | 0.8 at 1,500 | five `vane` fan formations on the `vane-*` paths (bonus 1,000; since M2-01 a `vane` shot down at rank ≥ 12 fires an aimed revenge bullet), `lancer` rammers in pairs (and a file of three, no drop), a 10-long chain, two carriers; open space |
 | 3 — the corridor | 3,500–6,000 (checkpoint 3,500) | 0.6 at 3,500 (ramp 90) | floor **and** ceiling 3,440–6,400 (≥ 92 px open); `picket` floor turrets, `picket-ceiling` ceiling turrets, `strider` walkers, two `burrow` hatches with their mites, a vane swoop, popcorn, four carriers |
 | 4 — high speed | 6,000–8,000 (checkpoint 6,000) | **1.5** at 6,000 (ramp 120) | four `gyre` orbiters on the `gyre-orbit-*` paths, two vane formations, a popcorn formation, a lancer pair, three carriers; a low floor 6,500–7,900 |
 | 5 — the calm | 8,000–8,600 | 0.75 at 8,000 (ramp 120) | two carriers (`tender` at 8,120 / 8,320) and nothing else; open space |
@@ -167,6 +167,13 @@ geometry for every phase (below).
 |---|---|---|
 | Aimed bullet speed ≤ 2.0 px/tick (Normal) | `MAX_AIMED_BULLET_SPEED` | Statically: every `bulletSpeed` tunable of zone A's enemies and boss phases, behaviour defaults merged. Dynamically: `maxBulletSpeed(world)` — the fastest live enemy bullet (zone A fires nothing faster than its aimed shots, so every bullet is held to it) |
 | No simultaneous laser lanes leaving < 16 px of safe gap | `MIN_LANE_GAP` | `laserLaneGaps(world)`: a **lane** is a laser in its telegraph, grow or active phase (a warned lane is as good as closed), its rows = the beam's vertical extent ± half its width, **widened by the ship's hurt radius** and clipped to the playfield (a beam wholly above or below it is no lane); overlapping or touching lanes merge. Reports the narrowest gap between separate lanes and the widest open band |
+
+**Rank (M2-01).** The rules are written for Normal's speeds. With rank growth on, a fully
+powered ship raises the rank and so the bullet speeds; the static check reads the content's
+Normal values and the dynamic checks of the playtest run the real rank — the 4-way bot's power
+keeps Normal at rank ≤ 7, and every check passes unchanged. Zone A's only rank-dependent content
+is the `vane` revenge bullet from rank 12, which the bot never reaches
+([difficulty-and-rank.md](difficulty-and-rank.md#revenge-bullets)).
 
 `createRuleWatch()` collects both over a run (`observe` is a bound function to pass as the
 playtest's observer): maxima, the narrowest gap, the narrowest widest-open band while lanes were
@@ -330,7 +337,7 @@ replayStage('zone-a', run.inputs, { godMode: true }).hash === run.hash; // → t
 
 ```sh
 pnpm dev
-# → http://localhost:5173              title → START plays zone A
+# → http://localhost:5173              title → START → a difficulty → plays zone A
 # → http://localhost:5173/?skip=boss   every game starts ~2 s before the WARNING
 # → http://localhost:5173/?skip=boss&loadout=full   fight HB-01 fully powered
 ```
@@ -362,6 +369,7 @@ in the right half of the playfield, with no console errors or atlas warnings.
 | The no-god-mode playtest reports deaths | They are reported, not asserted; a balance change that makes the bot die is worth a look, not a red build |
 | A rule violation `lane gap …` after moving HB-01's parts | The lanes are attached to the emitters: their distance, the beam width and the ship's hurt radius decide the gap — see the geometry check in `content.test.ts` |
 | The bot freezes or oscillates between two lanes | The hysteresis (20) and the trip / stay costs; the danger scan is tested lane by lane in `four-way-bot.test.ts` — add a case there first |
+| A run on `{ difficulty: 'arcade' }` (the `zone-a-arcade` golden scenario) now starts with 2 lives | Since M2-01 `{ difficulty: 'arcade' }` is the whole preset (2 lives, 0 continues, the arcade penalty, rank from 6) |
 | `runStage` throws `shipped content has issues` | The same validation as the shell's boot; run `pnpm content:check` to read the issues |
 
 ## Next steps that build on this page
@@ -371,5 +379,8 @@ in the right half of the playfield, with no console errors or atlas warnings.
   golden replays `test/golden/zone-a-*.replay.json` recorded from the playtest bots (plus a
   careless `weaverBot` for the deaths); the M1 release check
   ([debug-and-replays.md](debug-and-replays.md)).
+- **M2-01** (done) — rank growth, the `vane` revenge bullets from rank 12, the presets' lives and
+  penalties in the Arcade scenarios; the golden replays re-blessed with the same outcomes
+  ([difficulty-and-rank.md](difficulty-and-rank.md)).
 - **M2-10 / M2-11 … M2-14** — the zone map picks stages (replacing `DEFAULT_STAGE_ID`); the other
   zones, each with a playtest run and its own design-rule checks.

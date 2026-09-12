@@ -75,8 +75,10 @@ exactly the same game.
 | `Music <stage theme>` (a checkpoint restart that removed a boss after it had changed the music) | `playMusic(theme, 0)` | The stage theme again |
 | `MusicDuck` + 120 ticks (the player's death) | `duckMusic(120)` | The music dips to 0.35 in 4 ticks, holds for 1 s, is back at full volume at 2 s |
 
-Bound but not pushed by the sim yet: `LaserHum`, `CapsulePickup` (Direct mode, M2-05),
-`ExtraLife` (extends, M2-01). Since M1-16 the **scene flow** pushes its own events into the same
+Since M2-01 the scoring system pushes `Sfx ExtraLife` at the ship for every extend, with
+`SfxPriority.Critical` (never stolen — shmup_feat.md §19), and a continue queues the stage theme
+again (`Music <stage theme>` — the continue countdown faded it out with `Music Silence`).
+Bound but not pushed by the sim yet: `LaserHum`, `CapsulePickup` (Direct mode, M2-05). Since M1-16 the **scene flow** pushes its own events into the same
 queue: `MenuMove` / `MenuSelect` / `MenuBack` (widget results — a denied OK plays `MenuBack`) and
 `PauseToggle` (the pause menu opening or closing), all at x 0 on the unpanned `ui` bus; `Music
 Title` (30-tick fade) when the title shows, `Music Silence` (30 ticks) when a game starts (the new
@@ -401,5 +403,6 @@ song's loop points and render time. Options: `--out DIR`, `--only NAME` (one cue
 - **M1-19** (done) — the budgets (`pnpm bench`, the bundle size) and the overlay's `BOOT` figure,
   which includes rendering the SFX bank and the music set during loading — the M1 release check
   asks for launch ≤ 10 s on the TV ([debug-and-replays.md](debug-and-replays.md)).
-- **M2-01** — extends (`ExtraLife`); **M2-05** — Direct mode (`CapsulePickup`); **M3-03** —
-  tracker music.
+- **M2-01** (done) — extends push `ExtraLife` (critical priority); the continue countdown fades
+  the music and a continue restarts the stage theme ([difficulty-and-rank.md](difficulty-and-rank.md)).
+- **M2-05** — Direct mode (`CapsulePickup`); **M3-03** — tracker music.

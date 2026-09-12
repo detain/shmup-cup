@@ -50,6 +50,13 @@
  * `game.inputContext` names the binding context (`'game'` / `'menu'`, decision D15) the host's
  * input adapter should use.
  *
+ * **Difficulty (M2-01).** The session config is resolved with the content's difficulty table
+ * (`content.difficulty` — the `rules` kind — or `core/config` `DEFAULT_DIFFICULTY_TABLE`), so the
+ * preset's rank, lives, extends, continues and penalty come from data under the explicit
+ * overrides. With the scene flow, the difficulty menu under START hands each game's World the
+ * chosen preset's config (`SceneFlowHost.createWorld(config)`), so `game.world.config` may differ
+ * from `game.config`.
+ *
  * @module
  */
 import { DEFAULT_DIFFICULTY_TABLE, resolveGameConfig, type GameConfig } from '../config/index.js';

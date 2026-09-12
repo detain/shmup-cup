@@ -2,16 +2,17 @@
 
 | Page | Contents |
 |---|---|
-| [`preview-build.md`](preview-build.md) | The current game build (version 0.1.0 — its debug build's developer tools are in [`debug-tools.md`](debug-tools.md)): the loading bar, the **title screen** and its menu, the **Options screen** (MASTER / MUSIC / SFX volume, the control profile) and what the game remembers between launches (settings, high scores), the in-game **HUD** with the power meter, the **pause menu**, the **GAME OVER** and **STAGE CLEAR** screens and quitting with the TV remote's Back (the **EXIT SHMUP CUP?** question); **AZURE VERGE**, the first real zone that START plays on every device — its five parts, its enemies (hits, points, what they fire), its capsules, its boss **HALCYON BULWARK** (its plates, core and laser rows, how it fights, tips) and the browser's shortcut `?skip=boss`; flying the KESTREL with the remote, keyboard or gamepad, its gun firing on its own, plus the scrolling **Test Range** stage with its enemies and their bullets, the **power-ups** (capsules, taking them with OK, the Force Field and Mega Crash), **lives, losing the ship and the score** (what destroys the ship, the freeze, the blinking comeback, what a loss costs, GAME OVER, the points table and `HI`), the **Boss Range** with the **WARNING** sign and the first **boss** (its parts, which ones can be hurt, its attacks, what happens when it is destroyed), the **explosions, sparks, screen shake, flashes and score numbers** (what each one should look like, the flash limit), the **sound effects and the music** (what you should hear and when, the first key press in a browser, the loop point to listen for), the **fully powered** ship (laser, missiles, four Options, Force Field), the sprite showcase, the calibration screen and the **effects gallery** in a browser — how to open it on the TV, in a browser and on the desktop, how the ship and its weapons should behave, what a correct picture looks like, which enemies shoot what and how many hits they take, the start-up error screen, what to report, troubleshooting |
+| [`preview-build.md`](preview-build.md) | The current game build (version 0.1.0 — its debug build's developer tools are in [`debug-tools.md`](debug-tools.md)): the loading bar, the **title screen** and its menu, the **Options screen** (MASTER / MUSIC / SFX volume, the control profile) and what the game remembers between launches (settings, high scores), the **DIFFICULTY** box under START (EASY / NORMAL / HARD / ARCADE: ships, continues, what a loss costs), the rank that makes the game harder as the ship gets stronger (and the fan fliers' revenge bullets), **extra ships** at 20,000 / 90,000 / … points, the **CONTINUE?** countdown and the score's continue digit, the in-game **HUD** with the power meter, the **pause menu**, the **GAME OVER** and **STAGE CLEAR** screens and quitting with the TV remote's Back (the **EXIT SHMUP CUP?** question); **AZURE VERGE**, the first real zone that START plays on every device — its five parts, its enemies (hits, points, what they fire), its capsules, its boss **HALCYON BULWARK** (its plates, core and laser rows, how it fights, tips) and the browser's shortcut `?skip=boss`; flying the KESTREL with the remote, keyboard or gamepad, its gun firing on its own, plus the scrolling **Test Range** stage with its enemies and their bullets, the **power-ups** (capsules, taking them with OK, the Force Field and Mega Crash), **lives, losing the ship and the score** (what destroys the ship, the freeze, the blinking comeback, what a loss costs, GAME OVER, the points table and `HI`), the **Boss Range** with the **WARNING** sign and the first **boss** (its parts, which ones can be hurt, its attacks, what happens when it is destroyed), the **explosions, sparks, screen shake, flashes and score numbers** (what each one should look like, the flash limit), the **sound effects and the music** (what you should hear and when, the first key press in a browser, the loop point to listen for), the **fully powered** ship (laser, missiles, four Options, Force Field), the sprite showcase, the calibration screen and the **effects gallery** in a browser — how to open it on the TV, in a browser and on the desktop, how the ship and its weapons should behave, what a correct picture looks like, which enemies shoot what and how many hits they take, the start-up error screen, what to report, troubleshooting |
 | [`debug-tools.md`](debug-tools.md) | Version **0.1.0** and the **M1 release check**: which builds have the developer tools, installing the TV's debug build (`build:dev`), opening the tools with Play/Pause then Ch ▲ three times (F1–F8 in a browser), the eight tools (panel, invincibility, hit-area outlines, freeze and single steps, slow motion, next checkpoint, skip to the boss), reading the panel (FPS, frame times, pools, boot time, build id) and the frame graph, the outline colours, the release checklist for both monitors, troubleshooting |
-| [`controls.md`](controls.md) | Default controls for the Samsung Smart Remote (primary), gamepads and keyboard, in the game and in menus (moving through menus, pausing, Back and quitting on the TV); the developer keys of debug builds; the control profiles and choosing one under OPTIONS → CONTROLS, feeling the remote's limits on a desktop keyboard, controls troubleshooting |
+| [`controls.md`](controls.md) | Default controls for the Samsung Smart Remote (primary), gamepads and keyboard, in the game and in menus (moving through menus, the DIFFICULTY box and the CONTINUE? countdown, pausing, Back and quitting on the TV); the developer keys of debug builds; the control profiles and choosing one under OPTIONS → CONTROLS, feeling the remote's limits on a desktop keyboard, controls troubleshooting |
 | [`install-on-tv.md`](install-on-tv.md) | One-time Developer Mode + certificate setup, installing / starting / removing development builds (input probe and game preview, and the game's debug build with the developer tools) on the Samsung Smart Monitor M7 (Windows desktop), what happens to saved settings and high scores on update and removal, install troubleshooting |
 | [`input-probe.md`](input-probe.md) | Tester guide for the **Input Probe** diagnostic app: screen tour, remote controls, the 9-step on-device test protocol, how to read the verdicts, measuring latency with a 240 fps camera, recording results, troubleshooting |
 
 Planned pages, as the game takes shape:
 
 - **Options** — a page of its own once there are more options: display (scale modes, screen
-  shake, flashing), rebinding buttons, difficulty. Today's Options screen (volumes and the
+  shake, flashing), rebinding buttons, the game options (a remembered difficulty, lives, death
+  penalty). Today's Options screen (volumes and the
   control profile) is described in [preview-build.md](preview-build.md#the-options-screen).
 - **Troubleshooting** — black screen, input lag (the M7 has no Game Mode for apps),
   audio issues.
@@ -22,12 +23,18 @@ SHMUP CUP logo, a blinking `PRESS OK` and its own music — and OK opens a small
 and chooses the control profile (on the TV **SAFE 4-WAY** or **FAST 8-WAY**); the game remembers
 them, and it remembers your **high scores** too — the title's `HI` is the best score kept on this
 device, and a new best gets a **NEW HI-SCORE** on the GAME OVER screen
-([preview-build.md](preview-build.md#the-options-screen)). START begins a game under the new **HUD**:
+([preview-build.md](preview-build.md#the-options-screen)). START opens a **DIFFICULTY** box —
+EASY (five ships, five continues, slower bullets), NORMAL, HARD, ARCADE (two ships, no continues,
+a loss sends you back to the last checkpoint) — and OK there begins a game under the new **HUD**:
 your score, the best score (`HI`) and the second player's slot along the top; your spare
 ships, the **power meter** (the seven boxes that show which power-up OK takes — the highlighted
 one blinking, the ones you cannot take greyed out) and the Force Field's strength along the
-bottom. **Back** (or Play/Pause) now **pauses**: RESUME, OPTIONS, RETRY STAGE or QUIT TO TITLE. Losing the
-last ship shows **GAME OVER** and returns to the title; finishing a stage shows **STAGE CLEAR**
+bottom. **Back** (or Play/Pause) now **pauses**: RESUME, OPTIONS, RETRY STAGE or QUIT TO TITLE. Scores of
+20,000, 90,000, 160,000 … points earn an **extra ship**, and the game gets harder as your ship gets
+stronger. Losing the last ship with continues left shows a ten-second **CONTINUE?** countdown — OK
+carries on from the last checkpoint with fresh ships, and the score's last digit counts the
+continues — otherwise **GAME OVER**, which returns to the title
+([preview-build.md](preview-build.md#difficulty-extra-ships-and-continues)); finishing a stage shows **STAGE CLEAR**
 and `TO BE CONTINUED`. On the TV, Back on the title asks **EXIT SHMUP CUP?** — only YES closes the
 app ([preview-build.md](preview-build.md#the-title-screen-and-the-menus)).
 
@@ -56,7 +63,8 @@ screen-clearing Mega Crash ([preview-build.md](preview-build.md#power-ups)). In 
 four Options that follow the ship and copy its fire, and a Force Field
 ([preview-build.md](preview-build.md#your-weapons)). The ship can be **lost**: rock, enemies and
 bullets destroy it (a Force Field takes enemies and bullets for it), it flies in again blinking —
-safe for a moment — with one step of power less, and after the third ship comes **GAME OVER**;
+safe for a moment — with one step of power less (on NORMAL), and after the last ship comes
+**CONTINUE?** or **GAME OVER**;
 every destroyed enemy, completed formation and collected capsule adds to the **score**, and `HI`
 shows the best score so far (kept between launches) ([preview-build.md](preview-build.md#lives-losing-your-ship-and-the-score)).
 The first **boss** is there too: in a browser, `?stage=test-boss` scrolls for a few seconds until
@@ -77,7 +85,8 @@ press or click ([preview-build.md](preview-build.md#sound-and-music)). If a buil
 shows a readable error screen instead of a black one. The button layouts for the TV remote,
 keyboard and gamepad are in [controls.md](controls.md).
 
-This is version **0.1.0**, the end of the first milestone. For the on-device checks there is a
+This is version **0.1.0**, the end of the first milestone, plus the first step of the second
+(difficulties, extra ships and continues). For the on-device checks there is a
 **debug build** of the TV app with developer tools — a measuring panel (frame rate, frame times,
 a frame graph, start-up time), hit-area outlines, invincibility, a freeze with single steps, slow
 motion and jumps to the next checkpoint or the boss — opened on the remote with **Play/Pause,

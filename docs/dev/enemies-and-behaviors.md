@@ -65,7 +65,11 @@ contact box), `script` → `scriptId`, `sprite` → `spriteId`, and the fields M
 `anim { frames, ticks }`, `params` (behaviour tunables by name), `mover` (a starting mover or
 `null`), `drop` (`'capsule'` or `null`), `ground` (`'floor'`, `'ceiling'` or `null` = flying),
 `settleTicks`, `explosion` (`'small' | 'medium' | 'large'`), `megaCrashImmune` (compiled into a table `EnemySystem.megaCrash` reads — M1-11),
-`child` → `childId` (the enemy a spawner releases) — plus the older optional `rank`.
+`child` → `childId` (the enemy a spawner releases) — plus the older optional `rank` (read since
+M2-01: `{ bulletSpeed?, fireRate? }`, 0–8, default 1 — how strongly the enemy follows the rank's
+curves) and, since M2-01, the optional `revenge` (`{ minRank, pattern: 'aimed' | 'spread3' |
+'ring8', speed? }` — revenge bullets); bosses take neither. Both are compiled into typed arrays
+with the other specs ([difficulty-and-rank.md](difficulty-and-rank.md#per-enemy-rank-modifiers)).
 
 The loader fills the defaults of every optional field (`completeEnemy`): `anim` 1 frame,
 `params` `{}`, `mover` `null`, `ground` `null`, `settleTicks` `DEFAULT_SETTLE_TICKS` (30),
@@ -258,7 +262,9 @@ nothing while `wakeTick > tick`; otherwise it resumes the generator once, then s
 → never). A generator that returns is dropped (`script = null`) and the enemy keeps its last
 mover; exceptions propagate (a behaviour bug must not be swallowed). Phase 4 resumes, in slot
 order, every `Live` enemy whose script is due — ghosts included, so a ghost leader's script
-can still switch movers.
+can still switch movers. Since M2-01 an enemy whose spec has rank modifiers is resumed between
+`bullets.setShooterRank(…)` and `bullets.clearShooterRank()`, so its fire primitives use its own
+scales ([difficulty-and-rank.md](difficulty-and-rank.md#per-enemy-rank-modifiers)).
 
 Why sleeping matters: V8 allocates the generator's `{ value, done }` result object (≈ 40 B)
 on every resume. A script that waits 30 ticks costs one comparison per tick and one small
@@ -331,7 +337,10 @@ non-ghost enemy that is not `megaCrashImmune` — armour does not protect — M1
 2. `Sfx EnemyExplodeSmall | Medium | Large` and `Particles` with `FX_CUES.ExplosionSmall |
    Medium | Large` (intensity 1) are pushed at its position;
 3. its own drop is added to the outcomes;
-4. formation accounting: `killed++`, last-kill position, a leader may turn ghost, the
+4. its revenge bullets (M2-01), when the spec has `revenge`, the kill is credited to a player
+   (`by ≥ 0`), it is not part of a Mega Crash, the enemy is on screen and the World's rank is at
+   least `minRank` ([difficulty-and-rank.md](difficulty-and-rank.md#revenge-bullets));
+5. formation accounting: `killed++`, last-kill position, a leader may turn ghost, the
    completion check (which may add the formation's drop and `FormationBonus` right away).
 
 `EnemySystem.outcomes` (`EnemyOutcomes`) lists the current tick's kills (`killSpec`, `killX`,
@@ -473,7 +482,7 @@ no new enemy behaviour was needed — and its own tunables: `skeet` / `skeet-cha
 (fans on the new `content/paths/zone-a.paths.json` curves), `tender` (capsule carrier, 3 hp),
 `lancer` (rammer), `picket` / `picket-ceiling` (turrets, 1.25 px/tick), `strider` (walker),
 `burrow` + `burrow-mite` (hatch, at most 4 mites), `gyre` (orbiter, a ring every 150 ticks at
-1 px/tick). Two new pixel-map sprites, `enemies/vane` and `enemies/gyre`; the rest reuse the M1-03
+1 px/tick; since M2-01 the `vane` fans fire an aimed revenge bullet from rank 12). Two new pixel-map sprites, `enemies/vane` and `enemies/gyre`; the rest reuse the M1-03
 art. Every aimed `bulletSpeed` stays ≤ 2.0 px/tick (D17 — checked by `pnpm content:check`), and
 ground enemies are only spawned in the stage's floor-and-ceiling corridor. The full table, the
 stage's sections and the boss are in
@@ -568,8 +577,8 @@ code):
   boss roster lives in `core/behaviors` ([bosses-and-warning.md](bosses-and-warning.md)).
 - **M1-14** (done) — the explosion cues draw their presets (a fireball plus sparks or debris),
   `EnemyHit` sparks at a damaged enemy, and every credited kill pops its score (`Score` events
-  from `core/scoring`) ([fx-and-game-feel.md](fx-and-game-feel.md)); **M2-01** — rank modifiers
-  and revenge bullets;
+  from `core/scoring`) ([fx-and-game-feel.md](fx-and-game-feel.md)); **M2-01** (done) — rank
+  modifiers and revenge bullets ([difficulty-and-rank.md](difficulty-and-rank.md));
   **M2-02** — the pattern DSL; **M2-04** — the Option Hunter.
 - **M1-18** (done) — zone A's roster on these behaviours, its paths, and HALCYON BULWARK's
   `boss.bulwark` ([zone-a-and-playtest.md](zone-a-and-playtest.md)).

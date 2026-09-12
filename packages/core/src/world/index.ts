@@ -131,6 +131,10 @@
  *   determinism (seeded RNG streams), hybrid data layout (SoA pools + objects)
  * - shmup_feat.md §5 — the player ship inside the session
  * - shmup_feat.md §18 — hit-stop freezes the simulation, not the presentation
+ * - shmup_feat.md §15 — the rank recomputed every tick from the preset's base / growth and the
+ *   strongest ship's power ({@link updateWorldRank})
+ * - shmup_feat.md §10 — continues: restart at the last checkpoint with fresh lives, the continue
+ *   count in the score's last digit ({@link canContinue}, {@link continueWorld})
  *
  * **Public API.** {@link createWorld}, {@link WorldOptions}, {@link stepWorld}, {@link World},
  * {@link WorldCamera},
@@ -251,7 +255,13 @@ import {
 export const moduleInfo = defineModule({
   name: 'world',
   status: 'implemented',
-  specRefs: ['shmup_feat.md §22', 'shmup_feat.md §5', 'shmup_feat.md §18'],
+  specRefs: [
+    'shmup_feat.md §22',
+    'shmup_feat.md §5',
+    'shmup_feat.md §18',
+    'shmup_feat.md §15',
+    'shmup_feat.md §10',
+  ],
 });
 
 /** What the session is doing (the scene stack of M1-16 reacts to it). */

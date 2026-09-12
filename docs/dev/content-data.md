@@ -47,8 +47,10 @@ content on every machine.
 `tileset` formats (the last two since M1-07 — see [stage-runtime.md](stage-runtime.md)), the
 `enemies` and `paths` formats (M1-08 — see
 [enemies-and-behaviors.md](enemies-and-behaviors.md#data-as-loaded)), the plugin and
-`pnpm content:check` are done, and since M1-13 the `enemies` kind has its boss section (see
-[bosses-and-warning.md](bosses-and-warning.md#boss-data-contentenemies-the-boss-section)). Both
+`pnpm content:check` are done, since M1-13 the `enemies` kind has its boss section (see
+[bosses-and-warning.md](bosses-and-warning.md#boss-data-contentenemies-the-boss-section)), and
+since M2-01 the `rules` kind holds the difficulty presets and enemies may carry `revenge` bullets
+(see [difficulty-and-rank.md](difficulty-and-rank.md#the-rules-kind-coredata)). Both
 apps register the plugin and their
 `main.ts` imports `virtual:shmup-content`; `@shmup/shell`'s `bootShell()` validates it with
 `loadGameContent()` (core kinds through `loadContent()`, foreign kinds through the
@@ -61,7 +63,8 @@ when there is any issue, and passes `db` to `createGame` (M1-04,
 - Every file is a JSON object with a header: `"formatVersion": 1` and `"kind"`. The `kind`
   selects the schema; the loader does not care about folder or file name (the content test
   does: files must be named `<folder>/<name>.<kind>.json`).
-- Core kinds (`CONTENT_KINDS`): `player`, `weapons`, `enemies`, `stage`, `tileset`. Any other kind is
+- Core kinds (`CONTENT_KINDS`): `player`, `weapons`, `enemies`, `paths`, `stage`, `tileset`,
+  `rules` (M2-01). Any other kind is
   returned untouched in `foreign`, in path order, for its owning package to validate
   (`input-profiles` → input-web `rebind` since M1-05 — see
   [input-profiles.md](input-profiles.md); `fx` → render-pixi `particles` since M1-14 — see
@@ -101,7 +104,9 @@ const game = createGame(platform, { seed }, db);
    (across all files of the kind) is an issue; the first file in path order wins. Enemies are
    completed here (`completeEnemy`: defaults; since M1-13 the fields a regular enemy must have,
    and a boss section checked and completed — part indices and masks, the regular fields filled
-   from it); one bad entry skips its whole file, like a schema failure.
+   from it); one bad entry skips its whole file, like a schema failure. A `rules` file's
+   `difficulty` section (M2-01) is checked (`aimDirections` powers of two), frozen and stored as
+   `db.difficulty`; a second file defining it is an issue and is ignored.
 7. **Intern** sprite and script names: every distinct name gets an index in *sorted* order
    (`db.sprites`, `db.scripts`), independent of which file mentioned it first. The names in
    `options.extraSprites` join the sprite names first (M1-09: hosts pass `core/world`
@@ -180,7 +185,9 @@ is left out.
 `ContentDb` holds `sprites` / `scripts` (`StringTable { names, index }`) and, per kind, a
 list plus an id → position map: `ships`/`shipIndex`, `weapons`/`weaponIndex`,
 `weaponPresets`/`weaponPresetIndex`, `enemies`/`enemyIndex`, `paths`/`pathIndex`,
-`stages`/`stageIndex`, `tilesets`/`tilesetIndex`. Lists are
+`stages`/`stageIndex`, `tilesets`/`tilesetIndex` — and, from the `rules` kind (M2-01), one table:
+`difficulty` (a frozen `DifficultyTable`, or `null` without a `difficulty` section, when
+`createGame` uses `core/config` `DEFAULT_DIFFICULTY_TABLE`). Lists are
 in path-then-document order. Systems resolve what they need **once** (at session or stage
 start) and keep the numbers; per-tick code indexes arrays only — no `Map.get`, no string
 compares (zero-allocation rule, [conventions.md](conventions.md#performance-zero-allocation-in-hot-paths)).
@@ -321,6 +328,8 @@ pnpm test:integration                       # includes content:check and the plu
 - the `example.*.json` samples load with zero issues as an **independent set** (so they may
   reuse real ids such as `kestrel` without a duplicate-id clash);
 - every file is named `<folder>/<name>.<kind>.json`;
+- the shipped `rules` table (`content/rules/difficulty.rules.json`) equals `core/config`
+  `DEFAULT_DIFFICULTY_TABLE`, so sessions with and without content play the same presets (M2-01);
 - weapon presets only use weapons of the matching slot, every shipped weapon has a sound
   cue, and the KESTREL has the six D3 speed levels;
 - the JSONC format samples in the content READMEs still validate (unknown-id issues
@@ -384,4 +393,7 @@ engine's own sprites ([bullets-and-patterns.md](bullets-and-patterns.md)); M1-10
 Type A weapons drive the weapon system (`refireTicks` optional, behaviour tunables in `params`
 checked by `checkWeaponBehaviors`, `WEAPON_SCRIPT_IDS` moved to `weapons`, `options/orb` joined
 `ENGINE_SPRITES` — [weapons-and-options.md](weapons-and-options.md#content-the-type-a-arsenal));
-the pattern content kind arrives with the DSL of M2-02.
+M2-01 (done) — the `rules` kind with the difficulty presets (`ContentDb.difficulty`), the enemy
+`revenge` section and the `rank` modifiers given meaning
+([difficulty-and-rank.md](difficulty-and-rank.md)); the pattern content kind arrives with the DSL
+of M2-02.

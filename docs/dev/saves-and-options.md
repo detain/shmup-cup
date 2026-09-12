@@ -74,7 +74,7 @@ tests use `createMemoryStorage()`. Electron's renderer runs the web build and us
 |---|---|
 | `version` | `SAVE_VERSION` = 1. Drives the migrations; a document without it counts as version 0 |
 | `options` | The player's `UserOptions` (below): volume levels 0–10, the chosen key / remote profile id (or `null` = the platform default), display options (none yet) |
-| `hiScores` | Tables by **mode key** (`hiScoreModeKey(config)` = `<powerUpMode>-<difficulty>`, `meter-normal` in M1), each sorted best first, at most `HI_SCORE_TABLE_SIZE` = 10 rows, at most `MAX_HI_SCORE_TABLES` = 32 tables. A mode nobody scored in has no table |
+| `hiScores` | Tables by **mode key** (`hiScoreModeKey(config)` = `<powerUpMode>-<difficulty>`, `meter-normal` in M1; since M2-01 one per difficulty — `meter-easy`, `meter-normal`, `meter-hard`, `meter-arcade`), each sorted best first, at most `HI_SCORE_TABLE_SIZE` = 10 rows, at most `MAX_HI_SCORE_TABLES` = 32 tables. A mode nobody scored in has no table |
 | `stats` | Counters: `gamesStarted` (START and RETRY STAGE), `gameOvers`, `stagesCleared` — whole numbers, capped at 2³¹−1 |
 
 The key stays `save.v1` for the whole format family: a new format bumps the document's
@@ -185,7 +185,8 @@ What the scene flow records (`FlowControl.recordRun`, when the game-over or stag
 opens — M1's run ends at the stage clear, since there is one zone):
 
 - a row per playing player: player 1 always, player 2 when active — `reached` = the World's
-  stage id (`''` in open space), `mode` `1p`, `difficulty` = the config's;
+  stage id (`''` in open space), `mode` `1p`, `difficulty` = the World's (since M2-01 the preset
+  chosen under START), into that preset's table (`hiScoreModeKey(world.config)`);
 - the statistic (`gameOvers` or `stagesCleared`), then `flush()`;
 - player 1's rank is kept on the screen (`GameOverScene.rank`, `StageClearScene.rank`): the
   game-over screen shows **`NEW HI-SCORE`** under its panel when it is 0.
@@ -193,8 +194,11 @@ opens — M1's run ends at the stage clear, since there is one zone):
 **QUIT TO TITLE and RETRY STAGE record nothing** (the arcade rule: only finished games count),
 although the session hi-score in memory still takes the abandoned game's best score, as before.
 The session hi-score (the title's `HI`, the HUD's `HI`) starts from `save.bestScore(modeKey)`
-when the flow is created. The table is chosen by the config, not the stage: the Test Range, the
-Boss Range and open space all share `meter-normal`.
+when the flow is created — since M2-01 one per difficulty preset, each from its own table; the
+title shows the chosen preset's and the difficulty menu the focused one's. The table is chosen by
+the config's power-up mode and difficulty, not the stage: the Test Range, the Boss Range and open
+space on Normal all share `meter-normal`. A score recorded after a continue ends in the number
+of continues used ([difficulty-and-rank.md](difficulty-and-rank.md#the-continue-digit-markcontinue)).
 
 ## User options (`core/config`)
 
@@ -446,6 +450,9 @@ title — the M1-17 acceptance test in `scenes-options.test.ts`.
   real scores (open space scored nothing) ([zone-a-and-playtest.md](zone-a-and-playtest.md)).
 - **M1-19** (done) — the debug overlay shows `bootTiming` (`BOOT`, launch-to-ready ms) next to
   FPS and the state hash; the M1 release check asks for ≤ 10 s on the TV.
+- **M2-01** (done) — a hi-score table per difficulty preset (`meter-easy` … `meter-arcade`) and a
+  session hi-score per preset in the flow; the chosen difficulty is not saved yet
+  ([difficulty-and-rank.md](difficulty-and-rank.md)).
 - **M2-08 / M2-16** — display options (scale mode, shake, flash reduction, hitbox), game options
   (difficulty, lives, death penalty, auto power-up), per-device rebinding and the controls
   sub-screens; **save v2** with a migration from v1.

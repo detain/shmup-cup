@@ -5,6 +5,8 @@ title, game, pause, stage clear, game over, the YES / NO dialog), the canvas-dra
 in-game HUD. Filled in by plan step **M1-16**; **M1-17** added the Options screen (an overlay from
 the title and the pause menu), the `Choice` widget and the saved hi-scores — the save itself, the
 user options and their live application are [saves-and-options.md](saves-and-options.md).
+**M2-01** added the difficulty menu under START and the continue countdown after a game over
+(the presets, rank, extends and continues themselves are [difficulty-and-rank.md](difficulty-and-rank.md)).
 
 This page is the *how and why*. Exact signatures are in
 [api-reference.md](api-reference.md#scenes--scene-stack-and-the-m1-flow-partial) (`scenes`) and
@@ -33,8 +35,8 @@ outside the playfield).
 │      │ confirm │ ◄─│ pause    │ ◄─│  game   │ owns World     │    │  sceneView.follow()        │
 │      │ (YES/NO)│   │ (overlay)│   │ (HUD,   │ (fresh per     │───►│  events.drain(dispatch)    │
 │      └─────────┘   └──────────┘   │ WARNING)│  start/retry)  │    │  sceneView.update(         │
-│      stageClear / gameOver (overlays over the frozen game)   │    │    game.renderFrame())     │
-│      boot → title (logo, PRESS OK, START/OPTIONS/EXIT)       │    │  → renderer.render(frame)  │
+│      stageClear / continue / gameOver (overlays, frozen game)│    │    game.renderFrame())     │
+│      boot → title (PRESS OK, START/OPTIONS/EXIT) → difficulty│    │  → renderer.render(frame)  │
 │  step(): poll → flow.tick(input) → top scene only            │    │ canvas data-shmup-scene    │
 │  renderFrame(): flow.updateFrame() → world view + HUD while  │    └────────────────────────────┘
 │    the game is visible, one UI list, the top scene's dim     │
@@ -101,10 +103,12 @@ is on top) and `uiRevision` (bumped whenever `drawUi` would draw something else)
 
 ## The M1 flow (`createSceneFlow`)
 
-`createSceneFlow(host, start)` creates the eight scenes, their menus, the UI draw list (256
+`createSceneFlow(host, start)` creates the ten scenes (eight in M1, the difficulty menu and the
+continue countdown since M2-01), their menus, the UI draw list (256
 commands, 96 string slots) and the game scene's placeholder World once, then `reset`s the stack to
 the start scene. `SceneFlowHost` is what the flow needs from the session: `config`, `content`,
-`events`, `exit` (`platform.exit` or `null`), `createWorld()` and, since M1-17, `save` (a `core/save`
+`events`, `exit` (`platform.exit` or `null`), `createWorld(config?)` (since M2-01 with the chosen
+difficulty's config) and, since M1-17, `save` (a `core/save`
 `SaveStore` — a memory-only one when omitted) and `inputProfiles` (`{ choices, active }` for the
 Options screen's CONTROLS — disabled when omitted). `createGame` passes `GameOptions.save` /
 `inputProfiles` through.
@@ -112,11 +116,13 @@ Options screen's CONTROLS — disabled when omitted). `createGame` passes `GameO
 | Scene | Overlay / dim / context | Shows | Input (any player) | Leads to |
 |---|---|---|---|---|
 | `BootScene` | no / 0 / menu | `LOADING` (or a label) and a progress bar (`setBootProgress`) | — | title on the tick after `finishBoot()` (`replace`) |
-| `TitleScene` | no / 0 / menu | `ui/logo` (or `SHMUP CUP` as text), `PRESS OK` blinking (32-tick half period), then the menu START / OPTIONS / EXIT at y 118; `HI` and the session hi-score (the save's best at start) at the bottom | OK: prompt → menu (locked 2 ticks, focus START); START → game; OPTIONS → Options; EXIT → confirm; Back: confirm if the platform can exit, else menu → `PRESS OK` | game (`replace`), options, confirm (`push`) |
-| `GameScene` | no / 0 / **game** | The World (view + HUD), the boss WARNING band in the UI list | Pause or Back → pause menu (that tick the World does not step) | pause, stage clear (90 World ticks after `stageClear`), game over (30 after `gameOver`) — all `push` |
+| `TitleScene` | no / 0 / menu | `ui/logo` (or `SHMUP CUP` as text), `PRESS OK` blinking (32-tick half period), then the menu START / OPTIONS / EXIT at y 118; `HI` and the session hi-score (the save's best at start) at the bottom | OK: prompt → menu (locked 2 ticks, focus START); START → the difficulty menu (M2-01; before, the game); OPTIONS → Options; EXIT → confirm; Back: confirm if the platform can exit, else menu → `PRESS OK` | difficulty, options, confirm (`push`) |
+| `DifficultyScene` (M2-01) | yes / 0.5 / menu | Opaque panel, `DIFFICULTY`, EASY / NORMAL / HARD / ARCADE (focus on the preset chosen last, at first the host config's), the focused preset's `LIVES`, `CONTINUES` and `HI` | Up / Down move (wrap); OK chooses the preset; Back closes | game (`reset` — its World on that preset's config), title menu (`pop`) |
+| `GameScene` | no / 0 / **game** | The World (view + HUD), the boss WARNING band in the UI list | Pause or Back → pause menu (that tick the World does not step) | pause, stage clear (90 World ticks after `stageClear`), game over (30 after `gameOver`) — or, with continues left (`canContinue`), the continue countdown (M2-01) — all `push` |
 | `PauseScene` | yes / 0.5 / menu | Panel, `PAUSE`, RESUME / OPTIONS / RETRY STAGE / QUIT TO TITLE | Pause, Back, RESUME → resume; OPTIONS → Options (the game stays frozen); RETRY STAGE → `game.restart()` + pop (no confirmation); QUIT TO TITLE → confirm | game (`pop`), options, confirm (`push`) |
 | `OptionsScene` (M1-17) | yes / 0.5 / menu | Opaque panel, `OPTIONS`, MASTER / MUSIC / SFX sliders (0–10), CONTROLS (the input profile's label, a `Choice`), BACK | Up / Down move; Left / Right change a slider or step CONTROLS (OK steps it too), each change pushed live as a `UserOption` event; BACK or Back store the options in the save, flush it and close | title / pause menu (`pop`) |
 | `StageClearScene` | yes / 0.25 / menu | `STAGE CLEAR`, `SCORE`, `HI` for 240 ticks, then `TO BE CONTINUED` for 240 | OK skips a phase; entering it records the run in the save (M1's run ends here) | title (`reset`) |
+| `ContinueScene` (M2-01) | yes / 0.35 / menu | Red-edged panel, `CONTINUE?`, the seconds left (9 … 0, a tick sound each), `CREDITS` = continues left; the music fades out | OK / Back after 30 ticks: OK continues (`continueWorld` — checkpoint restart, fresh lives), Back gives up | game (`pop`), game over (`replace`, also after 600 ticks) |
 | `GameOverScene` | yes / 0.35 / menu | Red-edged panel, `GAME OVER`, the final score; `NEW HI-SCORE` below it for a new best | OK / Back after 30 ticks; entering it records the run in the save | title (`reset`) after OK / Back or 600 ticks |
 | `ConfirmDialog` | yes / 0.5 / menu | Opaque panel, `EXIT SHMUP CUP?` or `QUIT TO TITLE?`, YES / NO focused on **NO** | Left / Up → YES, Right / Down → NO; OK answers; Back = NO | `Exit`: pop, then `host.exit()`; `QuitToTitle`: title (`reset`); NO: pop |
 
@@ -127,8 +133,9 @@ profiles. EXIT exists only when `platform.exit` does (the TV, Electron later); i
 title's Back only backs out of the menu to `PRESS OK`.
 
 **Saves in the flow (M1-17).** The flow's session hi-score starts from the save's best score of the
-game's mode (`SceneFlow.modeKey`); the game-over and stage-clear screens insert every playing
-player's score into that table, count the statistic and flush the save; every game start and
+game's mode (`SceneFlow.modeKey`) — since M2-01 one per difficulty preset (`meter-easy` …
+`meter-arcade`), the chosen preset's shown on the title; the game-over and stage-clear screens
+insert every playing player's score into its World's table, count the statistic and flush the save; every game start and
 RETRY STAGE counts `gamesStarted`; QUIT TO TITLE and RETRY record no score. Details, the Options
 screen and the live `UserOption` events are in [saves-and-options.md](saves-and-options.md).
 
@@ -142,6 +149,8 @@ screen and the live `UserOption` events are in [saves-and-options.md](saves-and-
 | Pause menu | resume | resume |
 | Options screen | store the options, write the save if they changed, close (back to the title or the pause menu) | — |
 | Confirm dialog | NO (close) | — |
+| Difficulty menu (M2-01) | back to the title menu | — |
+| Continue countdown (M2-01) | give up → game over (after the 30-tick lock) | — |
 | Game over | title (after the 30-tick lock) | — |
 | Stage clear | — | — |
 
@@ -170,18 +179,22 @@ both tables give it.
 ## Worlds, events and the frame
 
 The game scene **owns the World**: its `enter()` (a game start) and `restart()` (RETRY STAGE) call
-`host.createWorld()` — a new World from the same config (so the same inputs replay the same game;
+`host.createWorld(flow.gameConfig)` — a new World from the chosen difficulty's config (M2-01; the
+same config for every start on that preset, so the same inputs replay the same game;
 the flow's lockstep test runs two flows through menus and retries and compares `hashWorld`), with
 the session hi-score set on its scoring board. Creating a World is a scene transition, never part
 of a tick's hot path. `exit()` and `restart()` first raise the session hi-score from the old
 World's (`flow.hiScore`, also shown on the title; `setHiScore(value)` raises it from outside,
 floored and capped at `MAX_SCORE` like the board's). Since M1-17 it starts from the save's best score
-of the session's mode.
+of the session's mode; since M2-01 each difficulty keeps its own (`FlowControl.bests`) and the old
+World's best goes to its own preset's.
 
 Music follows the scenes through the same event queue: the title queues `Music Title` (30-tick
 fade), a game start `Music Silence` (the new World then queues its stage theme, if it has a stage),
 the stage-clear and game-over screens `StageClear` / `GameOver` (no fade; a boss's death already
-started the stage-clear jingle and the music player does not restart a playing track).
+started the stage-clear jingle and the music player does not restart a playing track). The continue
+countdown (M2-01) fades the music out (`Silence`, 30 ticks); a continue (`continueWorld`) queues the
+stage theme again.
 
 `Game.renderFrame()` calls `flow.updateFrame()` and copies its `view`:
 
@@ -395,15 +408,18 @@ outside the World.
 | `packages/core/test/scenes/scenes-alloc.test.ts`, `scenes-menu-alloc.test.ts` | A whole game and 20,000 menu ticks without allocation |
 | `packages/core/test/ui/ui-choice.test.ts`, `ui-choice-edge.test.ts` | The `Choice` widget (M1-17): label limits, clamping, wrap and repeat, Confirm stepping, disabled, the label's string slot |
 | `packages/core/test/scenes/scenes-options.test.ts`, `scenes-options-edge.test.ts`, `scenes-options-alloc.test.ts` | The Options screen from the title and the pause menu, live `UserOption` events, saving on BACK / Back, hi-scores recorded on the end screens and `NEW HI-SCORE`, the hi-score persisting across game instances, allocation-free ticking (M1-17 — [saves-and-options.md](saves-and-options.md#tests)) |
+| `packages/core/test/scenes/scenes-continue.test.ts`, `scenes-continue-edge.test.ts`, `scenes-continue-alloc.test.ts` | M2-01: the difficulty menu (order, wrap, sounds, Back, the World's preset, per-preset hi-scores) and the continue countdown (timing, lock, held OK, timeout, resume, the recorded score) — [difficulty-and-rank.md](difficulty-and-rank.md#tests) |
 | `packages/core/test/game/game-scenes.test.ts`, `game-scenes-edge.test.ts` | `GameOptions.scenes`, `game.world` / `inputContext` across transitions, EXIT only with `platform.exit`, the dim cleared on resume, bare gameplay ignoring a game over |
 | `packages/shell/test/boot/`, `scene-view/` | The flow's boot (title theme prepared, `finishBoot`, `data-shmup-scene`), the scene view (backdrop drift per layer, open-space starfield frozen under pause, the followed camera before a frame and after quitting, `worldChanges`) |
 | `apps/*/test/boot/boot-wiring.test.ts` | Title start and Back through the stack (Tizen: the exit confirmation, `exit` only after YES; a direct exit only from the boot error screen) |
-| `test/e2e/scenes.spec.ts`, `boot.spec.ts`, `options.spec.ts` (M1-17: the Options screen and the save, both builds) | Web: Enter starts the game from the title (past `PRESS OK`, then START), Esc pauses (dimmed, frozen) and resumes, Back on the title only backs out; Tizen from disk: OK starts, Back (10009) pauses and resumes, with a fake `window.tizen` Back on the title opens the confirmation and `exit()` runs only after YES; both builds boot to the title (logo, no ship), `?scene=flight` to free flight |
+| `test/e2e/scenes.spec.ts`, `boot.spec.ts`, `options.spec.ts` (M1-17: the Options screen and the save, both builds) | Web: Enter starts the game from the title (past `PRESS OK`, START, then OK on the difficulty menu since M2-01), Esc pauses (dimmed, frozen) and resumes, Back on the title only backs out; Tizen from disk: OK starts, Back (10009) pauses and resumes, with a fake `window.tizen` Back on the title opens the confirmation and `exit()` runs only after YES; both builds boot to the title (logo, no ship), `?scene=flight` to free flight |
 
 ## Gotchas
 
 | Symptom | Cause / fix |
 |---|---|
+| START does not start a game | Since M2-01 it opens the difficulty menu — one more OK starts. Scripts and specs that pressed OK twice from the title need a third |
+| A game's World has another `difficulty` than `game.config` | The difficulty menu: the World runs `withDifficulty(host config, chosen)` — read `game.world.config` |
 | A test or tool that keeps `game.world` sees a frozen game after START or RETRY | With the flow, every start creates a new World — read `game.world` again (or use bare gameplay: no `options.scenes`) |
 | Events already in `host.events` when `createSceneFlow` ran are gone | The flow clears the queue after creating its placeholder World (to drop the stage theme it queued) — create the flow before pushing anything |
 | `.at(` fails the lint on the stack | Use `sceneAt(i)` — the Chrome-69 rule rejects every `.at(` call |
@@ -432,6 +448,9 @@ outside the World.
   scene is on top; frame advance freezes the menus too), `window.__shmupDebug.sceneId` for the
   smoke test; replays cover bare gameplay — recording the flow comes with attract mode (M2-15)
   ([debug-and-replays.md](debug-and-replays.md)).
+- **M2-01** (done) — the difficulty menu under START (a config and a session hi-score per
+  preset), the continue countdown between the game and the game-over screen
+  ([difficulty-and-rank.md](difficulty-and-rank.md)).
 - **M2-10 / M2-15** — the zone map, attract mode, mode / ship / weapon select, name entry, the
   hi-score table; **M2-16** — rebinding and accessibility options; the boss HP bar and the co-op P2
   meter in the HUD (M2).

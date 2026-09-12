@@ -4,9 +4,10 @@ How enemies shoot inside `@shmup/core`: the **bullet system** (`core/bullets`) w
 512-slot struct-of-arrays bullet pool and 16-slot laser pool, the bullet **kinematics**
 (acceleration, turning, delays, changes, homing), telegraphed **lasers**, bullet and laser
 **collision** with the ships, **bullet cancel**, the **fire primitives** of `core/patterns`
-that behaviour scripts call through the enemy `ScriptApi`, the constant **rank** of
-`core/rank` that scales bullet speeds and fire intervals, and how render-pixi draws bullets and
-lasers without allocating. Built in plan step **M1-09**.
+that behaviour scripts call through the enemy `ScriptApi`, the **rank** of `core/rank` that
+scales bullet speeds and fire intervals, and how render-pixi draws bullets and lasers without
+allocating. Built in plan step **M1-09** (at a constant rank); **M2-01** made the rank grow and
+added per-enemy rank modifiers and revenge bullets ([difficulty-and-rank.md](difficulty-and-rank.md)).
 
 This page is the *how and why*. Exact signatures are in
 [api-reference.md](api-reference.md#bullets--enemy-bullets-and-lasers); the TSDoc in
@@ -22,18 +23,19 @@ cancel, the ~512 bullet budget, the readability palette), §15 (rank), §20 (tel
 visible bullet origins), §22 (SoA pools, brute-force bullets × players, capsules for lasers);
 plan §3.2 (tick phases), §3.4 (render contract) and decisions **D17** (moderate density,
 aimed shots on 32 directions, speeds tuned for 4-way dodging), **D16** (rank 0–31, M1 at a
-fixed Normal rank) and **D29** (coroutines decide, per-tick code moves).
+fixed Normal rank, growing since M2-01) and **D29** (coroutines decide, per-tick code moves).
 
 ## The picture at a glance
 
 ```text
 createWorld(config, db)                                                       core/world
- ├─ world.rank = computeRank(difficultyRankInputs(config.difficulty))  → 2 on Normal  core/rank
+ ├─ world.rank = computeRank(createRankInputs(config))  → 2 on Normal (M2-01)       core/rank
  ├─ world.bullets = createBulletSystem(world)                                 core/bullets
  │    pools.register('enemyBullets', 512 slots)  ← also the ENEMY_BULLETS sprite batch
  │    pools.register('enemyLasers', 16 slots)    ← also view.lasers (LaserView)
  │    kind tables: BULLET_KINDS sprite names → db.sprites ids (ENGINE_SPRITES, -1 = hidden)
- └─ world.bullets.setRank(world.rank)  → speedScale, fireScale
+ └─ world.bullets.setRank(world.rank)  → speedScale (× bulletSpeedMul), fireScale
+    (then updateWorldRank: the starting loadout's power term — and again every tick, phase 3)
 
 stepWorld, every tick
  ├─ 4 scripts    enemy coroutine wakes → api.aimed / nWay / ring / … / laser      core/enemies
@@ -304,16 +306,19 @@ export const sentry = defineBehavior(
 );
 ```
 
-## Rank (`core/rank`, partial)
+## Rank (`core/rank`)
 
-Rank is Gradius III's 0–31 difficulty value (§15). In M1 it is **constant**: `computeRank`
-returns the difficulty preset's base, rounded and clamped (`loop`, `stage`, `power` and
-`special` are ignored until M2-01 turns growth on), and the systems already scale by it, so
-M2-01 only adds the growth terms.
+Rank is Gradius III's 0–31 difficulty value (§15). M1-09 built it **constant** (the preset's
+base) with the curves and the scaled systems already in place; since **M2-01** it grows —
+`rank = base + floor(growth × (8·(loop − 1) + (stage − 1) + power + special))`, at most 16 on
+loop 1 — and the World recomputes it at the end of phase 3 (`updateWorldRank`). The formula, the
+power terms, the difficulty presets and the per-enemy modifiers are
+[difficulty-and-rank.md](difficulty-and-rank.md#rank-corerank); this section is what the rank
+does to bullets. The presets' **starting** ranks:
 
-| Preset (`GameConfig.difficulty`) | `DIFFICULTY_RANK_BASE` | Bullet speed × | Fire rate × | `rankedWait(90)` |
+| Preset (`GameConfig.difficulty`) | `rankBase` | Bullet speed × | Fire rate × | `rankedWait(90)` |
 |---|---|---|---|---|
-| `easy` | 0 | 0.978 | 0.956 | 94 |
+| `easy` | 0 | 0.978 (× `bulletSpeedMul` 0.85 = 0.831) | 0.956 | 94 |
 | `normal` | 2 (`RANK_NORMAL`) | 1 | 1 | 90 |
 | `hard` | 4 | 1.026 | 1.052 | 86 |
 | `arcade` | 6 (the "very hard" base) | 1.056 | 1.112 | 81 |
@@ -323,10 +328,15 @@ perRankSq · (r² − 4)` for `r` clamped to 0…31 (never below 0.05) — **exa
 content speeds and intervals are the Normal values and every other rank scales them.
 `BULLET_SPEED_RANK_CURVE` is `{ 0.01, 0.0005 }` (× 1.266 at rank 16, × 1.768 at 31),
 `FIRE_RATE_RANK_CURVE` `{ 0.02, 0.001 }` (× 1.532, × 2.537); intervals are divided by the fire
-rate. `world.rank` (hashed) is computed in `createWorld` and handed to `bullets.setRank`, which
-caches `speedScale` and `fireScale` — `rankScale` returns a fraction, so it is called when the
-rank changes, never per tick. Raw `spawnBullet` / `fireLaser` calls are **not** scaled; the
-primitives are.
+rate. `world.rank` (hashed) is handed to `bullets.setRank` at creation and whenever it changes,
+which caches the session's scales — `rankSpeedScale` (the speed curve × the preset's
+`GameConfig.bulletSpeedMul`: × 0.85 on Easy) and `rankFireScale` — and makes them the current
+`speedScale` / `fireScale`; `rankScale` returns a fraction, so it is called when the rank
+changes, never per tick. While an enemy with `rank` modifiers runs its script (and while it fires
+its revenge bullets), `setShooterRank(speedK, fireK, spec)` narrows the current scales to
+`1 + k · (curve − 1)` and `clearShooterRank()` restores the session's (M2-01 —
+[difficulty-and-rank.md](difficulty-and-rank.md#per-enemy-rank-modifiers)). Raw `spawnBullet` /
+`fireLaser` calls are **not** scaled; the primitives are.
 
 ## Drawing bullets and lasers
 
@@ -431,7 +441,7 @@ world.players[0].hits; // hits recorded by playerHit — each one a death since 
 | `packages/core/test/bullets/bullets-alloc*.test.ts` | The allocation guards above (own workers) |
 | `packages/core/test/patterns/patterns-fire*.test.ts` | Every primitive: spreads (even / wrapping, centred in all 32 directions), rings, spirals, stacks, sprays (two RNG draws per bullet, cosmetic stream untouched), homing, delayed, partial pools, `rankedWait` exact on Normal |
 | `packages/core/test/behaviors/behaviors-fire*.test.ts` | The roster firing in a World: turret interval in `aimTicks` steps and rank-scaled, orbiter rings, walker 3-way, the `ScriptApi` fire rule (off screen, unsettled, ghosts), `laser()` defaults, bullets outliving their enemy, a detached laser never following the next enemy in the slot |
-| `packages/core/test/rank/rank.test.ts`, `config/config.test.ts` | `computeRank`, the curves (1 at Normal), clamps; `aimDirections` validation |
+| `packages/core/test/rank/rank.test.ts`, `config/config.test.ts` | `computeRank`, the curves (1 at Normal), clamps; `aimDirections` validation (the M2-01 rank growth, modifier and revenge suites are listed in [difficulty-and-rank.md](difficulty-and-rank.md#tests)) |
 | `packages/render-pixi/test/layers/layers-lasers*.test.ts`, `renderer/renderer-wiring.test.ts` | The laser binding (line vs beam, band frames, rotation only on change, blink, camera rounding, capacity, destroy, allocation); the renderer binding it on `ENEMY_BULLETS` |
 | `packages/shell/test/loader/`, `flight/` | `ENGINE_SPRITES` interned by default; the flight scene passing the laser view through |
 | `test/integration/bullets-runtime.test.ts`, `content.test.ts` | The shipped timeline fires exactly the roster patterns, bullets stay in bounds / off terrain / drawn, a passive ship takes hits, Arcade speeds, lockstep pools and hashes; engine sprites exist in the atlas |
@@ -474,6 +484,8 @@ world.players[0].hits; // hits recorded by playerHit — each one a death since 
 - **M1-14** (done) — `FX_CUES.BulletCancel` draws the `bullet.cancel` preset (a pale-gold
   `fx/sparkle` twinkle) where each bullet was cancelled
   ([fx-and-game-feel.md](fx-and-game-feel.md)).
-- **M2-01** — rank growth (`computeRank` reads stage, loop, power and special); Easy's 16 aim
-  directions; revenge bullets.
+- **M2-01** (done) — rank growth (`computeRank` reads stage, loop, power and special;
+  `updateWorldRank` in phase 3), the preset's `bulletSpeedMul` in the session scales, Easy's 16
+  aim directions, per-enemy modifiers through `setShooterRank`, revenge bullets
+  ([difficulty-and-rank.md](difficulty-and-rank.md)).
 - **M2-02** — the pattern DSL, bending lasers, cancel into points, graze (`BulletFlag.Grazed`).

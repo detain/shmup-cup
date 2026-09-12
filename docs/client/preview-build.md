@@ -2,19 +2,22 @@
 
 The game now starts like a real game. Every build — browser, Samsung TV and desktop — shows a
 short loading bar and then the **title screen**: the SHMUP CUP logo, a blinking `PRESS OK`, and
-after OK a small menu. **START** begins a game: the KESTREL, the player ship, flies in from the
+after OK a small menu. **START** asks for a **difficulty** — EASY, NORMAL, HARD or ARCADE — and
+then begins a game: the KESTREL, the player ship, flies in from the
 left and from then on follows the directional buttons of the TV remote, the arrow keys or a
 gamepad — **its gun fires on its own**, with a sound for every shot — under the new **HUD**: your
 score, the best score and the second player's slot along the top, your spare ships, the **power
 meter** and the Force Field's strength along the bottom. **Back** (or Pause) opens the **pause
 menu** over the frozen game: resume, retry, or quit to the title. When the last ship is lost a
-**GAME OVER** screen appears, after a boss a **STAGE CLEAR** screen, and on the TV Back on the
+**CONTINUE?** countdown lets you carry on from the last checkpoint (if the difficulty gives
+continues), then a **GAME OVER** screen appears, after a boss a **STAGE CLEAR** screen, and on the TV Back on the
 title asks **EXIT SHMUP CUP?** before it closes the app. **OPTIONS** — on the title and in the
 pause menu — sets the game's own volumes (MASTER, MUSIC, SFX) and the control profile, and the
 game **remembers** them and your **high scores** between launches. Everything is drawn by the game
 itself and works with the remote's arrows, OK and Back alone ([The title screen and the
 menus](#the-title-screen-and-the-menus), [Pausing, quitting and the end
-screens](#pausing-quitting-and-the-end-screens), [The Options screen](#the-options-screen)).
+screens](#pausing-quitting-and-the-end-screens), [Difficulty, extra ships and
+continues](#difficulty-extra-ships-and-continues), [The Options screen](#the-options-screen)).
 
 **START plays the first real zone, AZURE VERGE** — on the TV too: about three minutes of
 scrolling over rolling ground, through a long cave and a high-speed stretch, with enemies that fly
@@ -29,8 +32,10 @@ first real test of how the game plays with the remote.
 Along the way your ship shoots the enemies down ([Your weapons](#your-weapons)), powers up with
 the capsules some enemies leave behind, taken with the remote's OK button
 ([Power-ups](#power-ups)), and can be lost: rock, enemies and bullets destroy the KESTREL, it
-comes back with a life less, and after the last one it is **GAME OVER**
-([Lives, losing your ship and the score](#lives-losing-your-ship-and-the-score)). Hits *feel*
+comes back with a life less, and after the last one it is **GAME OVER** — unless you continue
+([Lives, losing your ship and the score](#lives-losing-your-ship-and-the-score)). Scores of
+20,000, 90,000, 160,000 … points earn **extra ships**, and the game gets **harder as your ship
+gets stronger** ([Difficulty, extra ships and continues](#difficulty-extra-ships-and-continues)). Hits *feel*
 like hits: enemies burst into **explosions**, shots throw **sparks**, the picture **shakes** when
 your ship is lost, the screen **flashes** for a Mega Crash or a boss's final blast, and every kill
 shows its **points** rising from the spot
@@ -50,7 +55,8 @@ The earlier start-up pictures are still there: **free flight** straight away wit
 the animated **sprite showcase** and the **calibration screen**, plus the **effects gallery**
 that shows every explosion and screen effect in turn (see [below](#other-screens-browser-only)).
 
-This build is version **0.1.0**, the end of the first milestone. For checking it on the monitors
+This build is version **0.1.0** — the end of the first milestone — plus the first step of the
+second: the difficulties, extra ships and continues. For checking it on the monitors
 there is a **debug build** with developer tools — a panel with the frame rate, frame times and
 start-up time, hit-area outlines, invincibility, a freeze with single steps, slow motion and
 jumps to the next checkpoint or the boss — opened on the remote with Play/Pause and then Ch ▲
@@ -80,7 +86,7 @@ stays black.
 | **Stars** | Behind everything | Three layers of stars drift slowly to the left, as in the game |
 | **SHMUP CUP** logo | Upper middle | Big blocky letters, yellow at the top turning orange and red towards the bottom, with a dark outline and a shadow; crisp square pixels |
 | **PRESS OK** | Under the logo | Blinks on and off about once a second |
-| **HI** and a number | Bottom | The best score kept on this device — from earlier launches too (0 on a fresh install) |
+| **HI** and a number | Bottom | The best score kept on this device for the difficulty you chose last (NORMAL at first) — from earlier launches too (0 on a fresh install) |
 
 The title music (SHMUP CUP) plays — in a browser from your first key press or click.
 
@@ -88,7 +94,7 @@ The title music (SHMUP CUP) plays — in a browser from your first key press or 
 
 | Entry | What it does |
 |---|---|
-| **START** | Starts a game (highlighted first) |
+| **START** | Opens the **DIFFICULTY** box (highlighted first); OK there starts the game — see [Difficulty, extra ships and continues](#difficulty-extra-ships-and-continues) |
 | **OPTIONS** | Opens the **Options screen**: the volumes and the control profile — see [The Options screen](#the-options-screen) |
 | **EXIT** | Only on the TV: asks **EXIT SHMUP CUP?** — see below |
 
@@ -106,7 +112,8 @@ The title music (SHMUP CUP) plays — in a browser from your first key press or 
 
 ## What you should see
 
-After **START** the title music fades and the game begins — AZURE VERGE's own music starts, and
+After **START** and **OK** on a difficulty the title music fades and the game begins — AZURE
+VERGE's own music starts, and
 the picture is a deep navy
 picture (never pure black — the M7 monitors' VA panels smear dark-to-bright transitions) framed by
 two thin bars, one along the top edge and one along the bottom (the **HUD**):
@@ -117,7 +124,7 @@ two thin bars, one along the top edge and one along the bottom (the **HUD**):
 | **KESTREL**, the player ship | Enters from the left edge | Glides in from off-screen during the first ⅔ of a second, slowing down as it arrives, and stops at mid-height about a sixth of the way across. Then it is yours to fly |
 | **Shots** from the ship's nose | In front of the ship, flying right | As soon as the ship has arrived, small cyan-and-white darts leave its nose and race to the right edge, two at a time, each with a tiny white-and-yellow **muzzle spark** flickering just in front of the nose as it leaves — see [Your weapons](#your-weapons) |
 | **Top bar** | Top edge | `1P` (cyan) and your score `00000000` on the left; `HI` (yellow) and the best score so far (kept between launches) in the middle; `2P` and `------` (grey — nobody is playing player 2) on the right |
-| **Bottom bar** | Bottom edge | On the left two small ship icons (your spare ships — you start with three, the one you fly plus two; with more than five you see one icon and the number); then the **power meter**: seven boxes labelled `SPEED` `MISSILE` `DOUBLE` `LASER` `OPTION` `?` `!` ([Power-ups](#power-ups)); on the right, while you have a Force Field, five small blocks — cyan for each hit it can still take, dark for the spent ones |
+| **Bottom bar** | Bottom edge | On the left small ship icons (your spare ships — on NORMAL you start with three, the one you fly plus two icons; EASY gives five, ARCADE two; with more than five spare ships you see one icon and the number); then the **power meter**: seven boxes labelled `SPEED` `MISSILE` `DOUBLE` `LASER` `OPTION` `?` `!` ([Power-ups](#power-ups)); on the right, while you have a Force Field, five small blocks — cyan for each hit it can still take, dark for the spent ones |
 
 Every pixel should be a crisp little square. The game draws at 384×216 and scales that up
 by a whole number: on the 1080p M7 monitors (and any 1920×1080 browser window) the scale is
@@ -138,15 +145,16 @@ about half and shows the **PAUSE** menu in a framed box, with a short sound:
 |---|---|
 | **RESUME** | Back to the game exactly where it stopped (highlighted first). **Back** or **Pause** do the same |
 | **OPTIONS** | Opens the **Options screen** over the frozen game ([below](#the-options-screen)); BACK returns to the pause menu |
-| **RETRY STAGE** | Starts the stage (or open space) again from the beginning with a fresh ship, three ships and a zero score — no question asked |
+| **RETRY STAGE** | Starts the stage (or open space) again from the beginning with a fresh ship, the difficulty's full number of ships and a zero score — no question asked |
 | **QUIT TO TITLE** | Asks **QUIT TO TITLE?** (YES / NO, NO highlighted); YES ends the game and shows the title |
 
 The music keeps playing while the game is paused. Leaving the app with **Home** on the TV (or
 switching tabs in a browser) and coming back also brings you back to the pause menu, so a game
 never continues while you are not looking.
 
-**Game over.** When your last ship is lost the game plays on for a moment, then darkens and a
-red-edged box shows **GAME OVER** and your final **SCORE**; a short, sad tune (SILENT VERGE)
+**Game over.** When your last ship is lost the game plays on for a moment, then darkens — if
+you still have continues, the **CONTINUE?** countdown comes first
+([Continues](#continues)) — and a red-edged box shows **GAME OVER** and your final **SCORE**; a short, sad tune (SILENT VERGE)
 plays. If the score is a new best for this device, **NEW HI-SCORE** shows in yellow under the box
 (your first game with any points always is). After half a second **OK** (or Back) returns to the
 title; after ten seconds it goes back by itself. The score is saved as soon as the screen appears
@@ -157,6 +165,80 @@ Range after its 75 seconds — the game plays on for a second and a half, then a
 **SCORE** and the **HI** score for four seconds, then **TO BE CONTINUED** for four seconds (this
 preview has only one zone), and then the title. **OK** skips ahead. The score is saved like a
 game over's (this screen ends the run in this preview).
+
+## Difficulty, extra ships and continues
+
+### Choosing a difficulty
+
+**START** on the title opens a framed box over the darkened title:
+
+```text
+          DIFFICULTY
+           EASY
+       →  NORMAL
+           HARD
+           ARCADE
+   LIVES     3   CONTINUES   3
+   HI                 00012340
+```
+
+| Difficulty | Ships | Continues | What losing a ship costs | The enemies |
+|---|---|---|---|---|
+| **EASY** | 5 | 5 | Only the Force Field (*Casual*) | Bullets about a sixth slower, aimed shots a little less exact, and they speed up only half as much as you power up |
+| **NORMAL** | 3 | 3 | One step of power (*Classic*) | The standard |
+| **HARD** | 3 | 2 | One step of power (*Classic*) | A little faster and more often from the start |
+| **ARCADE** | 2 | 0 | All your power, and the stage goes back to its last checkpoint (*Arcade*) | Faster still from the start; no continues |
+
+- **▲ / ▼** move the highlight (it wraps round); the lines at the bottom show the highlighted
+  difficulty's **LIVES** (ships), **CONTINUES** and **HI** — each difficulty keeps its own best
+  scores.
+- **OK** starts the game on the highlighted difficulty (a chime); **Back** returns to the title
+  menu.
+- The box opens on the difficulty you chose last — NORMAL the first time. The choice lasts until
+  the app is closed; remembering it between launches comes with a later build's game options.
+- Starting a game therefore takes one more OK than before: OK (`PRESS OK`), OK (START), OK (the
+  difficulty).
+
+### The game gets harder as your ship gets stronger
+
+Like the classic games, Shmup Cup keeps a hidden difficulty level, the **rank**. It starts at the
+difficulty's level and goes up with the power your ship carries: the Missile, the Double or the
+Laser, each Option and the Force Field all raise it (Speed Ups do not). The higher the rank, the
+more often enemies fire and the faster their bullets fly — a fully powered ship on NORMAL faces
+bullets about a fifth faster and shots about 40 % more often than a bare one. Losing power (a lost
+ship) lowers it again. The debug build's panel shows it as `RANK`
+([debug-tools.md](debug-tools.md)).
+
+At a high rank some enemies fire a last bullet when they are destroyed (a **revenge bullet**). In
+AZURE VERGE the amber **fan fliers** do: shot down on screen, they send one red round bullet
+towards you from where they exploded. On NORMAL that starts once the ship has the Missile, the
+Laser, all four Options **and** a Force Field; on HARD and ARCADE sooner; on EASY never. A Mega
+Crash never causes revenge bullets.
+
+### Extra ships
+
+Your score earns a ship at **20,000** points, then at **90,000**, **160,000** and every 70,000
+after that, on every difficulty. A short "1UP" jingle plays that no other sound can cut off, and a
+spare-ship icon appears in the bottom bar. You can hold at most **nine** ships.
+
+### Continues
+
+When your last ship is lost and the difficulty still has continues, the game darkens a little
+and a red-edged box shows **CONTINUE?**, a big red number counting down from **9** to **0** (a
+tick each second, ten seconds in all) and **CREDITS** with the continues you have left. The music
+fades out.
+
+- **OK** continues (it only counts after the first half second, so a button you were still
+  pressing does not decide for you): the stage goes back to its last invisible checkpoint — in
+  AZURE VERGE the start, the entrance of the cave (about 1:15) or the start of the fast stretch
+  (about 2:25) — the zone's music starts again and your ship flies in with the difficulty's full
+  number of ships but **without its power** (small darts, no Missile or Options, normal speed).
+- **Your score is kept**, and its **last digit** now counts your continues: 12,340 becomes 12,341
+  after the first continue, 12,342 after the second. Points always end in 0, so that digit shows
+  at a glance — also in the saved high scores — how many continues a score needed.
+- **Back** gives up, and so does waiting until the countdown ends: the **GAME OVER** screen
+  appears and the game is saved as usual.
+- On **ARCADE** there are no continues: GAME OVER comes straight away.
 
 ## The Options screen
 
@@ -201,9 +283,12 @@ darkened picture:
 | The three volumes and the control profile | When you leave the Options screen with BACK or Back | On the TV inside the app itself; in a browser (and the desktop app) in that browser's storage for the page |
 | High scores | When the **GAME OVER** or **STAGE CLEAR** screen appears | The same place |
 
-- **High scores**: the best ten of each kind of game are kept; the title's `HI` (and the HUD's)
-  shows the best one. Names are `---` for now — typing your initials and a high-score table to
+- **High scores**: the best ten of each kind of game are kept — each **difficulty** has its own
+  list; the title's `HI` (and the HUD's) shows the best one of the difficulty you chose last. A
+  score that needed continues ends in the number of continues used. Names are `---` for now — typing your initials and a high-score table to
   look at come with a later build.
+- **The difficulty you chose** is not remembered yet: after the app is closed the DIFFICULTY box
+  opens on NORMAL again.
 - **Only finished games count**, like in the arcade: a game you leave with QUIT TO TITLE or start
   over with RETRY STAGE is not saved. (Its score can still show as `HI` until you close the app.)
 - Nothing needs saving when you close the app — Back → YES, Home, or even pulling the plug loses
@@ -251,8 +336,20 @@ ship may move in four directions only; the game is designed to be fully playable
 
 ### What changed lately
 
-**New in this build: version 0.1.0 — the end of the first milestone — and developer tools.**
-The game itself plays exactly as before. What is new is behind the scenes: a **debug build** of
+**New in this build: difficulties, extra ships and continues.** START now opens a **DIFFICULTY**
+box — EASY (five ships, five continues, slower bullets, a loss only takes the Force Field), NORMAL
+(as before, plus three continues), HARD, and ARCADE (two ships, no continues, a loss sends you back
+to the last checkpoint without your power) — so a game starts with one more OK. The game now gets
+**harder as your ship gets stronger** (and easier again when it loses power), and at a high rank
+the amber fan fliers of AZURE VERGE fire a last bullet when they are destroyed. Scores of 20,000,
+90,000, 160,000 … points give an **extra ship** with a "1UP" jingle (at most nine). When the last
+ship is lost with continues left, a ten-second **CONTINUE?** countdown lets you carry on from the
+last checkpoint with fresh ships; the score's last digit then counts your continues. Each
+difficulty keeps its own high scores. See
+[Difficulty, extra ships and continues](#difficulty-extra-ships-and-continues).
+
+Before that, **version 0.1.0 — the end of the first milestone — and developer tools.**
+The game itself played exactly as before. What was new was behind the scenes: a **debug build** of
 the TV app (`pnpm --filter @shmup/tizen build:dev`) that opens a measuring panel when you press
 **Play/Pause and then Channel up three times** on the remote — frames per second, how long each
 frame takes, a graph of the last second's frames, the start-up time, outlines of every hit area,
@@ -556,7 +653,8 @@ Things to check on the monitor and report:
 
 1. A loading bar (or nothing at all, if it is very quick) and then the **title screen** — the
    logo, a blinking `PRESS OK`, `HI` at the bottom, drifting stars — never a black screen that
-   stays black. OK, then OK on START: the view starts to scroll and the ship flies in.
+   stays black. OK, then OK on START, then OK on NORMAL in the DIFFICULTY box: the view starts to
+   scroll and the ship flies in.
 2. **Both HUD bars are complete** (new layout): the top bar's `1P` and score on the left, `HI`
    and its score in the middle, `2P ------` on the right; the bottom bar's two ship icons on the
    left and the power meter's seven boxes `SPEED` … `!` after them — every label readable. If one edge is cut off, note which — that would mean the monitor overscans or the
@@ -650,6 +748,22 @@ Things to check on the monitor and report:
    ship — it flies in again blinking, a spare-ship icon goes, and after the last one comes
    **GAME OVER** (with **NEW HI-SCORE** for a new best). Close the app (Back on the title → YES),
    open it again: the title's `HI` shows your best score.
+25. **The DIFFICULTY box** (new): on the title, OK → START opens it with NORMAL highlighted and
+   `LIVES 3`, `CONTINUES 3` and `HI` underneath. ▲ / ▼ move the highlight (wrapping round) and the
+   numbers change with it — EASY `5` / `5`, HARD `3` / `2`, ARCADE `2` / `0`. Back returns to the
+   title menu; OK on **EASY** starts a game with four spare-ship icons. Report whether the box is
+   readable from the sofa.
+26. **Extra ship** (new): play NORMAL until the score passes 20,000: a short "1UP" jingle plays even in the middle of explosions, and a spare-ship icon
+   appears. Report if it is missing or drowned out.
+27. **Continue** (new): on NORMAL lose every ship (fly into the rock of the cave, for example):
+   instead of GAME OVER, **CONTINUE?** with a countdown from 9 and `CREDITS 3`, a tick each second,
+   the music fading. Press **OK**: the stage goes back to its last checkpoint, the zone music starts
+   again, the ship flies in without its power and three ships, and the score now ends in `1`. Lose
+   everything again and press **Back** on the countdown: GAME OVER. Once more and wait: at `0`
+   GAME OVER appears by itself. Report whether the countdown is readable and whether OK or Back
+   ever did nothing.
+28. **ARCADE** (new): start on ARCADE and lose both ships: GAME OVER comes without a countdown, and
+   each loss sends the stage back to its last checkpoint with the ship's power gone.
 
 The fully powered ship (`?loadout=full`), the shortcut to the boss (`?skip=boss`), the two test
 stages (the Test Range and the Boss Range with its test boss), free flight, the showcase, the
@@ -674,8 +788,8 @@ pnpm dev
 ```
 
 Open http://localhost:5173 (other devices on the same network can use the PC's IP
-address, e.g. `http://192.168.1.20:5173`): the title screen appears. Press **Enter** twice (past
-`PRESS OK`, then START) to play AZURE VERGE and fly with the arrow keys, W A S D or a gamepad;
+address, e.g. `http://192.168.1.20:5173`): the title screen appears. Press **Enter** three times
+(past `PRESS OK`, START, then NORMAL in the DIFFICULTY box — or ▼ to choose another) to play AZURE VERGE and fly with the arrow keys, W A S D or a gamepad;
 **Esc** (or P, Backspace) pauses. http://localhost:5173/?skip=boss starts every game a moment
 before the zone's WARNING, to try the boss without playing the three minutes before it. The browser version has no EXIT entry — a browser tab cannot close itself — so
 Back (Esc) on the title only goes back from the menu to `PRESS OK`. To skip the title and fly
@@ -983,15 +1097,17 @@ the middle of the hull — so bullets that only graze the wings pass.
 The **Force Field** is always lost. The capsules you have collected towards the next power-up
 (the highlight on the meter) are kept. So a fully powered ship (`&loadout=full`) comes
 back with three Options, then two, one, none, then without the laser … This is the *Classic*
-rule, the game's default. The options menu of a later build will also offer *Arcade* (a loss
-costs all your power and sends you back to the last invisible checkpoint of the stage) and
-*Casual* (a loss costs only the Force Field).
+rule of NORMAL and HARD. **EASY** uses *Casual* (a loss costs only the Force Field) and
+**ARCADE** uses *Arcade* (a loss costs all your power and sends you back to the last invisible
+checkpoint of the stage) — see [Choosing a difficulty](#choosing-a-difficulty).
 
-**Game over.** You start with **three ships** — the one you fly and the two icons in the bottom
-bar. When the last one is destroyed there is no icon left and the ship does not come back; a
-couple of seconds later the game freezes and darkens under the **GAME OVER** screen (red frame,
-your final score, a short sad tune). Half a second later **OK** takes you back to the title (it
-also goes by itself after ten seconds), where START plays again — there are no continues yet. In
+**Game over.** On NORMAL you start with **three ships** — the one you fly and the two icons in
+the bottom bar (EASY five, ARCADE two); extra ships come at 20,000, 90,000, 160,000 … points.
+When the last one is destroyed there is no icon left and the ship does not come back; a couple of
+seconds later the game freezes and darkens — first under the **CONTINUE?** countdown while you
+have continues ([Continues](#continues)), then under the **GAME OVER** screen (red frame, your
+final score, a short sad tune). Half a second later **OK** takes you back to the title (it also
+goes by itself after ten seconds), where START plays again. In
 free flight (`?scene=flight`) there is no such screen: **GAME OVER** (red) appears in the middle
 of the top bar and the stage keeps scrolling.
 
@@ -1012,16 +1128,17 @@ and its boss's are in [its section](#the-first-zone-azure-verge)) — in the tes
 | collect a **power capsule** | 300 |
 
 Enemies destroyed by a **Mega Crash** count too. Enemies that leave the screen, and destroyed
-ships, score nothing; the score is never taken away. It stops at 99,999,990.
+ships, score nothing; the score is never taken away. It stops at 99,999,990. Points always end
+in 0; after a continue the last digit counts your continues ([Continues](#continues)).
 
 Every destroyed enemy also shows its points as a small **white number** that rises from where it
 was destroyed and blinks out after about two thirds of a second; a completed formation's bonus
 appears in **gold** where its last member was. Capsules add their 300 without a number (it would
 cover your ship — a cyan ring flashes around the ship instead).
 
-`HI` in the middle of the top bar is the **best score**: it follows your score while you are
-beating it, it carries over into every new game (START, RETRY STAGE), and the title screen shows
-it too. Since this build it is **kept between launches**: every game that ends on the GAME OVER or
+`HI` in the middle of the top bar is the **best score** of the difficulty you are playing: it
+follows your score while you are beating it, it carries over into every new game on that
+difficulty (START, RETRY STAGE), and the title screen shows it too. Since this build it is **kept between launches**: every game that ends on the GAME OVER or
 STAGE CLEAR screen is saved, so after closing and reopening the app `HI` starts from the best
 saved score, and a new best shows **NEW HI-SCORE** on the GAME OVER screen
 ([What the game remembers](#what-the-game-remembers)). A game you quit or retry is not saved.
@@ -1035,8 +1152,9 @@ What "good" looks like:
 - After a loss **no enemy bullet** is left on the screen.
 - The ship always comes back from the left edge at mid-height and blinks until it is safe;
   bullets that touch it while it blinks do not destroy it.
-- The spare-ship icons go 2 → 1 → none, and GAME OVER appears only after the last ship; OK on
-  it leads back to the title, whose `HI` shows your best score.
+- The spare-ship icons go 2 → 1 → none (on NORMAL), and CONTINUE? or GAME OVER appears only
+  after the last ship; OK on GAME OVER leads back to the title, whose `HI` shows your best score.
+- At 20,000 points a spare-ship icon is **added**, with a "1UP" jingle.
 - The score only ever goes up, by the amounts above, and `HI` is never lower than the score.
 
 ## The boss range and the WARNING (browser only)
@@ -1301,7 +1419,10 @@ mean the build itself is broken; they are not caused by anything you did.
 |---|---|
 | A panel of numbers (FPS, TICK, …) and a small bar graph appear in the top-left corner | That is the developer panel of a **debug build** (`build:dev`), opened by Play/Pause followed by Ch ▲ three times. Press **1** to hide it — see [debug-tools.md](debug-tools.md). The normal build never shows it |
 | The game froze without a PAUSE box, or everything runs in slow motion (debug build) | A developer tool is on (`STEP` or `SLOW` in the panel): press **4** or **6** until it is off — [debug-tools.md](debug-tools.md#troubleshooting) |
-| The title screen stays, the game does not start | Press OK (Enter) once to leave `PRESS OK`, then OK again on START. In a browser click once into the page first so it has the keyboard focus |
+| The title screen stays, the game does not start | Press OK (Enter) once to leave `PRESS OK`, OK again on START, then OK on a difficulty in the DIFFICULTY box. In a browser click once into the page first so it has the keyboard focus |
+| START opened a DIFFICULTY box instead of the game | Expected since this build: choose a difficulty with ▲ / ▼ and press OK (Back returns to the title menu) |
+| The DIFFICULTY box is back on NORMAL after reopening the app | Expected: the choice is kept only until the app is closed (a later build remembers it) |
+| The title's `HI` changed after I chose another difficulty | Expected: each difficulty keeps its own high scores, and the title shows the one you chose last |
 | OK on the title menu did nothing | The menu ignores OK for a split second after it appears (an OK pressed then still counts a moment later). If START or OPTIONS never reacts, please report it with the remote model |
 | The highlight in a menu jumps two steps, or a press is lost | Not expected — please report it with the remote model (and whether you held the button) |
 | Back closed the app on the TV | Expected only on the loading and error screens, and after answering **YES** to **EXIT SHMUP CUP?** on the title. Anywhere else, please report it (an older build closed the app on Back) |
@@ -1326,7 +1447,15 @@ mean the build itself is broken; they are not caused by anything you did.
 | The game froze for a moment when the ship was hit | Expected: a short freeze (an eighth of a second) marks every loss |
 | All enemy bullets vanished at once | Expected after a loss (and after a Mega Crash) |
 | After a loss the ship lost an Option, the laser or a Speed Up | Expected: each loss costs one step of power, and always the Force Field ([Lives](#lives-losing-your-ship-and-the-score)) |
-| GAME OVER — how do I start again? | Press OK on the GAME OVER screen (after half a second) or wait ten seconds: the title appears, and START plays again. There are no continues yet. In free flight (`?scene=flight`) reload the page |
+| GAME OVER — how do I start again? | Press OK on the GAME OVER screen (after half a second) or wait ten seconds: the title appears, and START plays again. In free flight (`?scene=flight`) reload the page |
+| A CONTINUE? box with a countdown appeared | Your last ship was lost and the difficulty has continues left: OK (after half a second) continues from the last checkpoint, Back or waiting ten seconds gives up |
+| OK on CONTINUE? did nothing | It is ignored for the first half second; press it again. If it never reacts, please report it with the remote model |
+| After a continue the ship has no power | Expected: a continue restarts without power, like in the arcade — collect capsules again |
+| My score ends in 1, 2, 3 … instead of 0 | Expected after a continue: the last digit counts the continues you used |
+| No CONTINUE? on ARCADE | Expected: ARCADE has no continues |
+| I got an extra ship | Expected at 20,000 points, then 90,000, 160,000 and every 70,000 more (at most nine ships) |
+| Enemies shoot more and faster later in the game | Expected: the game gets harder as your ship gets stronger (Missile, Double or Laser, Options, Force Field), and easier again when it loses power |
+| A destroyed fan flier fired a bullet at me | Expected at a high rank (a fully powered ship on NORMAL, sooner on HARD and ARCADE): its revenge bullet |
 | GAME OVER appeared while I still had a ship icon | Not expected — the icons show your *spare* ships, so GAME OVER comes only after the last icon has gone and that ship was lost too. Please report it |
 | The ship was destroyed while it was blinking | Not expected — please report what hit it and the time into the stage |
 | The ship does not shoot | It starts firing only once it has flown in (⅔ of a second). If it never fires — on the TV or in a browser — please report it; no button is needed |

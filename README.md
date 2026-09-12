@@ -9,7 +9,7 @@ with the browser and Electron as additional targets.
 The [implementation plan](shmup_plan.md) is approved and under way. Progress per step is tracked in
 [`shmup_progress.md`](shmup_progress.md); milestone **M1 — playable vertical slice** is code-complete
 as version **0.1.0** ([`CHANGELOG.md`](CHANGELOG.md)) — its on-device release check on the monitors
-is next — and **M2 — complete v1.0** follows.
+is next — and **M2 — complete v1.0** is under way (M2-01 done).
 
 <!--
   Keep this section scannable: one entry per plan step, in plan order — a bold headline with the
@@ -234,7 +234,8 @@ is next — and **M2 — complete v1.0** follows.
 
 - **Screens, menus and a HUD** (M1-16)
   - A fixed-depth **scene stack** with deferred transitions runs the M1 flow: boot → **title** (the
-    procedural SHMUP CUP logo, `PRESS OK`, START / OPTIONS / EXIT) → **game** ⇄ **pause** (RESUME /
+    procedural SHMUP CUP logo, `PRESS OK`, START / OPTIONS / EXIT; START opens the difficulty menu
+    since M2-01) → **game** ⇄ **pause** (RESUME /
     RETRY STAGE / QUIT TO TITLE) → **stage clear** (tally, `TO BE CONTINUED`) or **game over** →
     title, with a YES / NO dialog focused on NO.
   - Everything is canvas-drawn by the core into draw lists (no UI framework) and fully navigable
@@ -313,6 +314,24 @@ is next — and **M2 — complete v1.0** follows.
   - Docs: [developer guide](docs/dev/debug-and-replays.md) ·
     [the tools and the M1 release check for testers](docs/client/debug-tools.md)
 
+- **Rank, difficulty presets, extends and continues** (M2-01)
+  - **Difficulty presets** Easy / Normal / Hard / Arcade as data (`content/rules/difficulty.rules.json`,
+    kind `rules`): rank base 0 / 2 / 4 / 6, rank growth, lives 5 / 3 / 3 / 2, continues
+    5 / 3 / 2 / 0, death penalty, 16 or 32 aim directions, a bullet speed multiplier;
+    `resolveGameConfig` fills the chosen preset under explicit overrides and a replay header
+    records every value.
+  - **Rank grows**: `base + floor(growth × (8·(loop − 1) + (stage − 1) + power))`, 0–31, at most 16
+    on loop 1 — the power term counts Missile, Double / Laser, Options and the shield of the
+    strongest ship; recomputed at the end of phase 3, it scales enemy fire rates and bullet speeds.
+    Per-enemy **rank modifiers** and **revenge bullets** (zone A's fan fliers from rank 12).
+  - **Extends** at 20,000 then every 70,000 points (cap 9, a critical-priority 1UP sound);
+    **continues**: a 10-s countdown after the game over, a restart at the last checkpoint with fresh
+    lives, the continue count in the score's last digit.
+  - A **DIFFICULTY** menu under START (one more OK to start a game) and a hi-score table per
+    difficulty; golden replays re-blessed with the same outcomes.
+  - Docs: [developer guide](docs/dev/difficulty-and-rank.md) ·
+    [what testers should check](docs/client/preview-build.md#difficulty-extra-ships-and-continues)
+
 ### Hardware spike
 
 - The **input probe** — a diagnostic Tizen app that measures the Samsung remote, gamepads and
@@ -333,7 +352,7 @@ is next — and **M2 — complete v1.0** follows.
 | [`shmup_prompt.md`](shmup_prompt.md) | Paste-into-a-new-session prompt that drives execution of the plan (workflow: build → review/fix loop → tests → docs → CI gate per step, progress in `shmup_progress.md`) |
 | [`docs/`](docs/README.md) | Player and developer documentation (start with [`docs/dev/repo-layout.md`](docs/dev/repo-layout.md)) |
 
-Game docs — testers: [preview build (the title screen, menus, HUD and pause menu, the Options screen and saved settings and high scores, the game-over and stage-clear screens, zone A — AZURE VERGE and its boss HALCYON BULWARK —, test stage, its enemies and their bullets, your weapons, power-ups, lives and score, the boss and its WARNING, explosions, shake and flashes, sound and music)](docs/client/preview-build.md) ·
+Game docs — testers: [preview build (the title screen, menus, HUD and pause menu, the Options screen and saved settings and high scores, the game-over and stage-clear screens, the difficulties, extra ships and continues, zone A — AZURE VERGE and its boss HALCYON BULWARK —, test stage, its enemies and their bullets, your weapons, power-ups, lives and score, the boss and its WARNING, explosions, shake and flashes, sound and music)](docs/client/preview-build.md) ·
 [controls](docs/client/controls.md) · [monitor setup & install](docs/client/install-on-tv.md).
 Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/architecture.md) ·
 [engine foundations](docs/dev/engine-foundations.md) · [content data](docs/dev/content-data.md) ·
@@ -352,6 +371,7 @@ Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/ar
 [scenes, menus & HUD](docs/dev/scenes-and-ui.md) ·
 [saves & options](docs/dev/saves-and-options.md) ·
 [zone A & playtest](docs/dev/zone-a-and-playtest.md) ·
+[difficulty, rank, extends & continues](docs/dev/difficulty-and-rank.md) ·
 [input profiles](docs/dev/input-profiles.md) ·
 [API reference](docs/dev/api-reference.md) ·
 [build, test & deploy](docs/dev/build-test-deploy.md) · [conventions](docs/dev/conventions.md).
@@ -444,7 +464,7 @@ pnpm workspace (`packages/*`, `apps/*`) + Turborepo. Full annotated tree:
 | [`apps/web`](apps/web/README.md) | Vite browser dev target (also Electron's renderer) |
 | [`apps/tizen`](apps/tizen/README.md) | Samsung Tizen `.wgt` (Chromium 69 classic IIFE build, config.xml, CLI scripts) |
 | [`apps/electron`](apps/electron/README.md) | Electron desktop shell |
-| [`content/`](content/README.md) | Game data: player ships, stages, terrain tilesets, enemies, movement paths, weapons, input profiles, particle presets, sound effects and music (JSON, `formatVersion` 1) |
+| [`content/`](content/README.md) | Game data: player ships, stages, terrain tilesets, enemies, movement paths, weapons, the difficulty presets (`rules/`), input profiles, particle presets, sound effects and music (JSON, `formatVersion` 1) |
 | `types/` | Ambient declarations for the Vite virtual modules (`virtual:shmup-content`, `virtual:shmup-assets`) and the build-info defines (`__SHMUP_DEV__`, `__SHMUP_BUILD__`) |
 | [`assets/`](assets/README.md) | Art/audio sources (`source/`: sprite pixel maps, fonts) and pipeline output (`generated/`: atlas pages + manifest, ignored) |
 | [`scripts/`](scripts/README.md) | Repo-level Node scripts |
@@ -469,9 +489,9 @@ hitch in the overlay's frame graph, gamepad and keyboard — checklist in
 [`docs/client/debug-tools.md`](docs/client/debug-tools.md#the-m1-release-check). The M1 release
 is tagged `v0.1.0` on the final commit of step M1-19.
 
-Code: plan step **M2-01** (rank, difficulty presets, extends & continues) opens milestone **M2 —
-complete v1.0**; from now on every simulation change re-blesses the golden replays in the same
-commit. The per-step status board is [`shmup_progress.md`](shmup_progress.md).
+Code: plan step **M2-02** (pattern DSL, bending lasers, bullet cancel & readability) — M2-01
+(rank, difficulty presets, extends & continues) opened milestone **M2 — complete v1.0**; every
+simulation change re-blesses the golden replays in the same commit. The per-step status board is [`shmup_progress.md`](shmup_progress.md).
 
 Also on hardware (unchanged, and still the gate for the remote control scheme): package and
 deploy the input probe from the **Windows desktop** that sits on the same LAN as the monitors and holds
@@ -482,8 +502,9 @@ become edits to `content/input/remote.input-profiles.json` (`releaseDebounceTick
 Since M1-06 the preview build is worth installing too: flying the KESTREL with the real remote
 is the first hands-on check of the control scheme — since M1-16 moving through the title and
 pause menus and quitting with Back, since M1-17 the Options screen, settings kept after a
-relaunch and the FAST 8-WAY profile, and since M1-18 **playing zone A through with the remote**
-— the plan's manual M1-18 check: every bullet and laser dodgeable with single arrow presses
+relaunch and the FAST 8-WAY profile, since M1-18 **playing zone A through with the remote**
+— the plan's manual M1-18 check: every bullet and laser dodgeable with single arrow presses —
+and since M2-01 the DIFFICULTY box, the extra-ship jingle and the CONTINUE? countdown
 (checklist in
 [`docs/client/preview-build.md`](docs/client/preview-build.md#on-the-samsung-smart-monitor--tv)).
 

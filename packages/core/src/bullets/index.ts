@@ -62,7 +62,9 @@
  * **Implements.**
  * - shmup_feat.md §12 Enemy bullets & attack patterns — kinematics, lasers (telegraph → grow →
  *   capsule hitbox only at full width), bullets die on terrain, cancel, ~512 bullet budget
- * - shmup_feat.md §15 — rank hook (bullet speed and fire-rate multipliers)
+ * - shmup_feat.md §15 — rank hook (bullet speed and fire-rate multipliers, the preset's bullet
+ *   speed multiplier)
+ * - shmup_feat.md §11 — per-enemy rank modifiers ({@link BulletSystem.setShooterRank})
  * - shmup_feat.md §20 — telegraphing (laser warning lines), visible bullet origins
  * - shmup_feat.md §22 — SoA pools, brute-force bullets × players, capsules for lasers
  *
@@ -105,7 +107,13 @@ import { BULLET_SPEED_RANK_CURVE, FIRE_RATE_RANK_CURVE, rankScale } from '../ran
 export const moduleInfo = defineModule({
   name: 'bullets',
   status: 'implemented',
-  specRefs: ['shmup_feat.md §12', 'shmup_feat.md §15', 'shmup_feat.md §20', 'shmup_feat.md §22'],
+  specRefs: [
+    'shmup_feat.md §12',
+    'shmup_feat.md §15',
+    'shmup_feat.md §20',
+    'shmup_feat.md §22',
+    'shmup_feat.md §11',
+  ],
 });
 
 /** Enemy bullet slots (shmup_feat.md §12 / §22 budget, decision D17). */

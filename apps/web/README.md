@@ -5,9 +5,11 @@ The **browser dev target** (Vite dev server with HMR) and the renderer that
 `@shmup/input-web` together through the shared shell [`@shmup/shell`](../../packages/shell/README.md).
 It boots behind a loading bar (or a boot error screen listing every problem) into the game's
 **scene flow** (M1-16): the title (`PRESS OK`, then START / OPTIONS — no EXIT: a browser has no
-`platform.exit`, so Back on the title only backs out of the menu), the game with its HUD, the
-pause menu (Esc / P / Backspace), stage clear and game over — guide:
-[`docs/dev/scenes-and-ui.md`](../../docs/dev/scenes-and-ui.md). `?scene=flight` goes straight into **free
+`platform.exit`, so Back on the title only backs out of the menu), the difficulty menu under
+START (EASY / NORMAL / HARD / ARCADE — M2-01), the game with its HUD, the pause menu (Esc / P /
+Backspace), stage clear, the continue countdown (M2-01) and game over — guides:
+[`docs/dev/scenes-and-ui.md`](../../docs/dev/scenes-and-ui.md),
+[`docs/dev/difficulty-and-rank.md`](../../docs/dev/difficulty-and-rank.md). `?scene=flight` goes straight into **free
 flight** (M1-06): the game's World with the KESTREL under keyboard / gamepad control over an
 empty starfield. `?scene=showcase` shows the M1-04 sprite showcase and `?scene=calibration`
 the pixel-art calibration test pattern instead. Since M1-18 a game in the scene flow plays

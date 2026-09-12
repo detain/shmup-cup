@@ -5,8 +5,9 @@ work too, and every device drives both the game and the menus.
 
 > **Status:** these controls are built into the game as **control profiles** and are read
 > every frame. The current build ([preview-build.md](preview-build.md)) starts on the **title
-> screen**: OK (Enter / A) opens the menu, ▲ ▼ move the highlight, OK chooses — START begins a
-> game — the first zone, **AZURE VERGE**, on every device. In the game the **directions fly the
+> screen**: OK (Enter / A) opens the menu, ▲ ▼ move the highlight, OK chooses — START opens the
+> **DIFFICULTY** box, where ▲ ▼ pick EASY / NORMAL / HARD / ARCADE and OK begins a game — the
+> first zone, **AZURE VERGE**, on every device. In the game the **directions fly the
 > ship** and the gun **fires on its own**; enemies fly past and shoot at you — every bullet pattern
 > and every boss laser is dodgeable with the four arrow directions alone, no diagonals needed (a
 > test program that plays with single arrow presses clears the whole zone) — and are shot down. **PowerUp** (OK on the remote, Enter or C on a keyboard, X on a gamepad)
@@ -15,7 +16,9 @@ work too, and every device drives both the game and the menus.
 > Esc / P / Backspace on a keyboard, Start / Back on a gamepad — opens the pause menu; in menus
 > **Back** goes back, and on the TV's title screen it asks before quitting
 > ([preview-build.md](preview-build.md#pausing-quitting-and-the-end-screens)). Losing a ship needs
-> no button: the next one flies in by itself, and after **GAME OVER** OK returns to the title.
+> no button: the next one flies in by itself; with continues left, OK on the **CONTINUE?**
+> countdown carries on from the last checkpoint (Back gives up), and after **GAME OVER** OK
+> returns to the title.
 > **OPTIONS** (on the title and in the pause menu) sets the game's volumes and lets you choose the
 > control profile (**CONTROLS**, [below](#control-profiles)); the game remembers both.
 > The other buttons (Special, Speed) do nothing yet. The remote's settings may still change once
@@ -38,7 +41,7 @@ and selects a menu entry in menus; Back pauses the game and goes back in menus.
 | Speed | Cycle ship speed (item mode) |
 | Pause | Pause / resume (the pause menu: RESUME, OPTIONS, RETRY STAGE, QUIT TO TITLE) |
 | Confirm | Menus: select the highlighted entry; on the title first leaves `PRESS OK`. A press made while a menu is just appearing is remembered for a moment, not lost |
-| Back | Menus: previous screen (in the pause menu: resume; in a YES / NO question: NO; in the Options screen: keep the settings and close it, like BACK); on the TV's title screen it asks **EXIT SHMUP CUP?** — only YES quits |
+| Back | Menus: previous screen (in the pause menu: resume; in a YES / NO question: NO; in the Options screen: keep the settings and close it, like BACK; in the DIFFICULTY box: back to the title menu; on the CONTINUE? countdown: give up — GAME OVER); on the TV's title screen it asks **EXIT SHMUP CUP?** — only YES quits |
 
 If you are holding a button at the moment a menu opens (or closes), it keeps doing only what
 it does in both sets until you let go — holding the Sub key while the pause menu appears will
@@ -202,12 +205,13 @@ profile chosen under CONTROLS — SAFE 4-WAY until you pick another.
 | A button does something in the game but nothing in a menu (or the other way round) | Expected — see the two tables above; for example C (PowerUp) has no menu function |
 | The game shows a start-up error screen mentioning `input-profiles.json` | The control profiles in this build are broken. Report the lines on the screen — see [preview-build.md](preview-build.md) |
 | Back closes the game on the TV instead of pausing | Not expected any more — Back pauses in the game and asks before quitting on the title. It closes the app at once only on the loading and error screens; otherwise please report it (and check the installed build is the latest) |
-| Nothing reacts for a moment after the app starts | The title screen needs OK first (`PRESS OK`), then START; after START the ship flies in (about ⅔ of a second) and ignores the controls until it arrives — see [preview-build.md](preview-build.md#flying-the-ship) |
+| Nothing reacts for a moment after the app starts | The title screen needs OK first (`PRESS OK`), then START, then OK on a difficulty; after that the ship flies in (about ⅔ of a second) and ignores the controls until it arrives — see [preview-build.md](preview-build.md#flying-the-ship) |
 | Holding Shot (Z / Space, A / Cross) or Sub (X, B / Circle) changes nothing | Expected: the gun already fires on its own (automatic fire is on by default), and the missiles fire on their own too once a power-up gave them to you (in a browser, `?loadout=full` gives them to you right away) |
 | PowerUp (OK, Enter, C, X) does nothing | Expected until you have collected a power capsule (no box of the power meter is highlighted) — the red saucers and completed formations of AZURE VERGE leave them. Also expected when you already have the most of the highlighted power-up. Such a press plays a short, low "no" buzz. See [preview-build.md](preview-build.md#power-ups) |
 | No sound in the browser | Press a key or click into the picture once — the sound starts then (a gamepad button does not count). See [preview-build.md](preview-build.md#sound-and-music) |
 | Pressing OK while holding an arrow stops the ship on the TV | Not expected — the game keeps the arrow held. Please report it with the remote model: it means the remote itself drops the arrow when OK is pressed |
-| Pause does nothing | On the title and the end screens Pause has no job — it pauses only a running game. In the game it should open the PAUSE menu; if not, please report the device and the button |
+| OK or Back does nothing on the CONTINUE? countdown | Both are ignored for the first half second, so a button still pressed from the game never decides; press again. If they never react, please report it |
+| Pause does nothing | On the title, the DIFFICULTY box, the CONTINUE? countdown and the end screens Pause has no job — it pauses only a running game. In the game it should open the PAUSE menu; if not, please report the device and the button |
 | Special, Speed and the other buttons do nothing | Expected in the current preview — nothing uses them yet |
 | F1–F8 (or 1–8 on the TV) do nothing | They are developer keys of debug builds only; on the TV the tools must be opened first with Play/Pause, Ch ▲, Ch ▲, Ch ▲ — see [Developer keys](#developer-keys-debug-builds-only) |
 | The game froze without a PAUSE box, or runs in slow motion (debug build) | A developer tool is on — F4 / 4 unfreezes, F6 / 6 cycles slow motion back to normal ([debug-tools.md](debug-tools.md#troubleshooting)) |

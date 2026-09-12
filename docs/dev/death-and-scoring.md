@@ -6,12 +6,16 @@ music duck, a life gone), the **death penalty** of `config.deathPenalty` (decisi
 time, the **respawn** fly-in with its invulnerability blink, the **arcade** restart at the last
 checkpoint, **game over**, the per-player **score** with the session hi-score (`core/scoring`) and
 the sim-side **game-feel timers** — hit-stop, shake, flash (`core/fx`). Built in plan step
-**M1-12**; `core/player` is implemented for P0 with it.
+**M1-12**; `core/player` is implemented for P0 with it. Plan step **M2-01** added the extends
+(extra lives at score thresholds, capped at 9), the continues (restart at the last checkpoint,
+counted in the score's last digit) and the difficulty presets that choose the lives, the penalty
+and both — those are [difficulty-and-rank.md](difficulty-and-rank.md); this page links to it
+where they meet the life cycle.
 
 This page is the *how and why*. Exact signatures are in
 [api-reference.md](api-reference.md#player--the-player-ship-implemented-for-p0) (`player`),
 [`fx`](api-reference.md#fx--hit-stop-shake-and-flash-requests-partial),
-[`scoring`](api-reference.md#scoring--scores-and-the-session-hi-score-partial) and
+[`scoring`](api-reference.md#scoring--scores-extends-continues-and-the-session-hi-score-partial) and
 [`world`](api-reference.md#world--the-gameplay-session-and-the-tick-pipeline); the TSDoc in
 `packages/core/src/{world,player,powerups,fx,scoring}/index.ts` is the authoritative reference.
 The tick pipeline and `playerHit` are [sim-world.md](sim-world.md); the Force Field that takes a
@@ -132,6 +136,9 @@ need `alive`). Lives are not touched by the respawn: the death took one.
 `applyDeathPenalty(preset, ship, loadout, meter)` (`core/powerups` — `core/player` cannot import the
 weapon values without an import cycle) runs **at the death**, step 6 above:
 
+Since M2-01 the difficulty preset sets the penalty unless the config overrides it: Easy `casual`,
+Normal and Hard `classic`, Arcade `arcade` ([difficulty-and-rank.md](difficulty-and-rank.md#the-difficulty-presets)).
+
 | Preset | Shield | Loadout | Speed | Meter cursor | Where the ship comes back |
 |---|---|---|---|---|---|
 | `classic` (default) | lost | `loseOneLevel`: one level | (the last step of `loseOneLevel`) | kept | fly-in at the current scroll |
@@ -176,7 +183,10 @@ from the same restarted view.
 
 `PlayerShip.lives` counts the ships **including the one in play** (`createWorld` gives player 1
 `config.startingLives`); `killPlayer` takes one at the death, so the HUD drops a stock icon the
-moment the ship explodes. There are no extends yet (M2-01).
+moment the ship explodes. Since M2-01 scores give extra lives (`core/scoring` `checkExtends`:
+20,000, then every 70,000 points on every preset, at most `MAX_LIVES` = 9 — see
+[difficulty-and-rank.md](difficulty-and-rank.md#extends-corescoring)), and the preset sets
+`startingLives` (Easy 5, Normal and Hard 3, Arcade 2).
 
 `playerOut(ship)` is `active && state === 'dead' && lives <= 0 && stateTicks >= PLAYER_DEAD_TICKS`:
 the game ends **after** the last explosion and dead time (`DEATH_HIT_STOP_TICKS + PLAYER_DYING_TICKS
@@ -187,15 +197,20 @@ it. The out ship stays `dead`, and the World **keeps simulating** (the camera sc
 and fire): what follows a game over — continue, name entry, the title — is the scene flow's.
 Since M1-16 the flow's game scene keeps stepping the World for 30 ticks after `gameOver`, then
 opens the game-over screen over the frozen game (OK after half a second, or 10 s, returns to the
-title — [scenes-and-ui.md](scenes-and-ui.md)); continues (M2-01) and name entry (M2-15) come
+title — [scenes-and-ui.md](scenes-and-ui.md)). Since M2-01, when continues are left
+(`core/world` `canContinue`) the flow opens the **continue countdown** instead, and a continue
+(`continueWorld`) gives every active ship `startingLives` again, restarts at the last checkpoint
+with the arcade penalty's empty loadout (then the starting loadout) and marks the score's last
+digit ([difficulty-and-rank.md](difficulty-and-rank.md#continues)); name entry (M2-15) comes
 later. Bare gameplay (`?scene=flight`) still just keeps simulating.
 
 ## Score (`core/scoring`)
 
 `world.scoring` is a `ScoringSystem` holding a `ScoreBoard`: one `PlayerScore { score,
-displayDirty }` per player slot, the session `hiScore` and `hiScoreDirty`. Scores only change
+displayDirty }` per player slot (M2-01 added `nextExtend`, `extendsEarned` and `continues`), the session `hiScore` and `hiScoreDirty`. Scores only change
 through **`addScore(world, player, points)`**: `floor(points)` added, clamped at `MAX_SCORE`
-(**99,999,990** — eight digits, the last one free for the continue counter of M2-01); points ≤ 0
+(**99,999,990** — eight digits, the last one free for the continue counter: after a continue
+`markContinue` writes the continues used into it and `addScore` keeps it, M2-01); points ≤ 0
 or `NaN` and bad player slots change nothing; a change sets `displayDirty` and raises the
 hi-score (setting `hiScoreDirty`) when beaten.
 
@@ -359,11 +374,11 @@ The next `game.step()` runs that tick, and its phase 7 turns the recorded hit in
 
 | To add… | Do this |
 |---|---|
-| A death penalty preset | Extend `DeathPenaltyPreset` (`core/config`), its branch in `applyDeathPenalty`, and — if it moves the camera — `respawnShip`; validate it in `resolveGameConfig` once strings are validated |
+| A death penalty preset | Extend `DeathPenaltyPreset` and `DEATH_PENALTY_PRESETS` (`core/config` — `resolveGameConfig` and the `rules` schema validate against the list since M2-01), its branch in `applyDeathPenalty`, and — if it moves the camera — `respawnShip` |
 | Something else that kills a ship | Call `playerHit(ship, cause, tick, debugFlags)` in phase 6 (append a `PlayerHitCause` — hashed); the World does the rest in phase 7 |
 | Another effect on death (a bomb refund, option recovery — M3) | In `killShip`, after `killPlayer` and before the penalty; keep it cold and allocation-free |
 | A scoring event | Record it in a system's tick outcomes (with the player credited), credit it in `ScoringSystemImpl.resolve` (and `beginTick` if tools can cause it between ticks), exactly once; hash any new counter in `mixFxAndScores` |
-| Extends / the lives cap (M2-01) | React to `addScore` crossing a threshold (a flag on the board, applied in phase 7), capped by the difficulty; `lives` on the ship |
+| Another way to earn a life (1UP items — M2-05) | Raise `ship.lives` up to `MAX_LIVES` and push `Sfx ExtraLife` with `SfxPriority.Critical`, like `ScoringSystem.checkExtends` ([difficulty-and-rank.md](difficulty-and-rank.md#extends-corescoring)) |
 | A flash kind | Append to `FlashKind` and `FLASH_KIND_TICKS` (never renumber — the code travels in the event); M1-13 added `Warning` and `BossBlast` this way |
 | A hit-stop or shake elsewhere (boss kills, big explosions) | `requestHitStop` / `requestShake(ShakeMagnitude.…)` from phase 7 code; never write `world.hitStop` directly |
 | Something new on the HUD | `core/ui` `buildHud` reads `world.scoring.board` (`scores[p].score`, `hiScore`) on the dirty flags and clears them; add any other input to `Hud.update`'s comparison ([scenes-and-ui.md](scenes-and-ui.md#extending-it)) |
@@ -396,7 +411,9 @@ The next `game.step()` runs that tick, and its phase 7 turns the recorded hit in
 | An arcade death did not move the camera | The restart happens at the **respawn**, 92 ticks later; in free flight there is no camera move at all |
 | After an arcade restart, spawns at the checkpoint appear again | Intended: `restartAt` re-fires the checkpoint's events on the next tick |
 | A co-op partner flew in again without dying | An arcade restart flies every other live ship in with the respawning one |
-| Unknown `deathPenalty` strings act like `casual` | Strings are not validated at runtime; use the `DeathPenaltyPreset` type |
+| `RangeError: GameConfig.deathPenalty must be one of …` | Since M2-01 the penalty is validated (before, an unknown string acted like `casual`); use a `DeathPenaltyPreset` |
+| A test on `{ difficulty: 'arcade' }` lost ships faster than expected | Since M2-01 the preset also sets 2 lives and the `arcade` penalty — override `startingLives` / `deathPenalty` explicitly |
+| A score ends in a digit other than 0 | A continue: the last digit counts the continues used (M2-01) |
 | The score did not include a kill a tool made | It is credited at the next tick's phase 3 (or the next phase 7) |
 | The hi-score differs between two otherwise equal runs | It is not hashed and a host may raise it with `setHiScore` — compare scores, not hi-scores |
 | The HUD score never updates in a custom scene | Rebuild on `displayDirty` / `hiScoreDirty` and clear them yourself, as the flight scene does |
@@ -417,5 +434,8 @@ The next `game.step()` runs that tick, and its phase 7 turns the recorded hit in
   starting from the saved best ([saves-and-options.md](saves-and-options.md)).
 - **M2-15 / M2-16** — the name entry and the hi-score table screen; the Options screen's
   `deathPenalty` / `startingLives`.
-- **M2-01** — extends, the lives cap, continues (the score's last digit), rank reacting to deaths.
+- **M2-01** (done) — extends (cap 9, the critical `ExtraLife` sound), continues (the countdown,
+  the checkpoint restart, the score's last digit), the difficulty presets choosing lives and
+  penalty, rank falling with the power a death takes
+  ([difficulty-and-rank.md](difficulty-and-rank.md)).
 - **M3** — option recovery after a death, authentic slowdown.

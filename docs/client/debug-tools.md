@@ -100,7 +100,7 @@ GOD HITBOX GRID STEP SLOW 2
 | `DRAW` | Draw calls sent to the graphics chip this frame | for developers — note it if it jumps much higher at some point of the zone |
 | `BUL` · `ENM` · `SHT` · `PRT` | Enemy bullets · enemies · your shots · particles: in use / room for | the first number never reaching the second for long |
 | `LAS` · `ITM` | Enemy lasers · capsules on screen | — |
-| `RANK` | The difficulty level the game is running at | 2 on Normal (it does not change during a run yet) |
+| `RANK` | The hidden difficulty level the game is running at (0–31) | Starts at the difficulty's level — EASY 0, NORMAL 2, HARD 4, ARCADE 6 — and goes up as the ship powers up (Missile +1, Double +2, Laser +3, each Option +1, Force Field +4; on EASY half as fast), down again when it loses power; at most 16 in this zone ([preview-build.md](preview-build.md#the-game-gets-harder-as-your-ship-gets-stronger)) |
 | `RNG` · `HASH @tick` | Technical fingerprints of the game's state (the hash is taken every second) | for developers: two runs with the same inputs show the same numbers |
 | `WEBGL` | Graphics version the game got | 1 |
 | `BOOT` | Milliseconds from starting the app to the title | **under 10,000** (target 5,000) |

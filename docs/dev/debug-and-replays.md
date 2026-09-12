@@ -275,7 +275,7 @@ playback path for golden tests, the future cross-engine check (M2-18) and attrac
 | `formatVersion` | `REPLAY_FORMAT_VERSION` (1); another version is rejected |
 | `buildId` | the build that recorded it (`__SHMUP_BUILD__`; golden replays: `'golden'`) |
 | `seed` | `config.seed`, repeated for readability |
-| `config` | the session's **whole resolved `GameConfig`** — every sim-affecting option, so a new `GameConfig` field is recorded without touching the replay code |
+| `config` | the session's **whole resolved `GameConfig`** — every sim-affecting option, so a new `GameConfig` field is recorded without touching the replay code (since M2-01 the difficulty preset's rank base / growth, lives, extends, continues, penalty, aim directions and bullet speed — a replay does not depend on the content's `rules` table; an M1 header without them decodes to its preset's values) |
 | `stageId` | `config.stage` (`null` = free flight) |
 | `checkpoint` | `-1` = the stage start, else the checkpoint the run started from |
 | `loadout` | `config.loadout` |
@@ -350,13 +350,15 @@ Four committed zone A runs pin down what the simulation does (`test/golden/golde
 
 | File | Who plays | Covers | Ends |
 |---|---|---|---|
-| `zone-a-god.replay.json` | 4-way bot, god mode (seed 1) | the whole stage and HALCYON BULWARK | `stageClear` after 12,611 ticks, 63,900 points |
-| `zone-a-arcade.replay.json` | 4-way bot, Arcade difficulty (seed 2) | rank 6 without god mode | `stageClear` after 12,016 ticks |
+| `zone-a-god.replay.json` | 4-way bot, god mode (seed 1) | the whole stage and HALCYON BULWARK | `stageClear` after 12,637 ticks, 62,750 points, 4 lives (one extend) |
+| `zone-a-arcade.replay.json` | 4-way bot, Arcade difficulty (seed 2) | the Arcade preset (rank from 6, 2 lives, the arcade penalty) without god mode | `stageClear` after 12,611 ticks, 64,450 points, 3 lives (one extend) |
 | `zone-a-deaths.replay.json` | `weaverBot()` — weaves up / down, never dodges (seed 4) | deaths, Classic respawns, game over | `gameOver` after 5,324 ticks (deaths at 2,125 / 4,457 / 5,231) |
-| `zone-a-boss.replay.json` | 4-way bot, `stageSkip: 'boss'`, full loadout, Arcade penalty (seed 3) | the stage skip, the boss with everything | `stageClear` after 908 ticks |
+| `zone-a-boss.replay.json` | 4-way bot, `stageSkip: 'boss'`, full loadout, Arcade penalty (seed 3) | the stage skip, the boss with everything | `stageClear` after 908 ticks, 37,000 points |
 
 The 4-way bot survives zone A even at Arcade, which is why the death scenario uses a careless
-weaving pilot. Each file is an encoded replay plus the scenario's `description` and its
+weaving pilot. The files were re-blessed on purpose by M2-01 (`b31fac5`): rank growth changes
+fire rates and bullet speeds as the bot powers up, extends add a life at 20,000 points, and the
+Arcade preset now also means 2 lives and the arcade penalty — every scenario kept its outcome. Each file is an encoded replay plus the scenario's `description` and its
 `expected` outcome (status, ticks, player 1's score and lives, death ticks, boss killed).
 
 - `golden.test.ts` (part of `pnpm test`, the `integration` project) plays every file into a fresh
@@ -414,7 +416,7 @@ in dist/ (812.4 KB of 8192.0 KB)`. `checkTizenBundle(dir)` also returns `gzipByt
 `window.__shmupDebug`:
 
 - `smoke.spec.ts` — the M1 gameplay smoke on the web build (`vite preview`) and the Tizen `dist/`
-  via `file://`: title → OK (past `PRESS OK`, then START) → hold → then ↑ for 2.5 s each (a
+  via `file://`: title → OK (past `PRESS OK`, START, then NORMAL in the difficulty menu — M2-01) → hold → then ↑ for 2.5 s each (a
   remote holds one arrow at a time) → `sceneId === 'game'`, the World ticked, the ship alive or
   flying in again → no console errors. Then the tools: F1 shows the overlay and F2 turns god mode
   on (web); on the TV build nothing works until Pause, Ch+, Ch+, Ch+ (dispatched as key codes
@@ -492,8 +494,10 @@ testers in [../client/debug-tools.md](../client/debug-tools.md#the-m1-release-ch
 
 ## Next steps that build on this page
 
-- **M2-01** — the rank formula; the overlay's `RANK` then moves during a run; golden replays
-  re-blessed.
+- **M2-01** (done) — the rank formula: the overlay's `RANK` moves during a run; the header's
+  config records every difficulty-preset value; golden replays re-blessed; a continue is a
+  scene-flow action, so it is not part of a bare-gameplay replay
+  ([difficulty-and-rank.md](difficulty-and-rank.md)).
 - **M2-02 … M2-14** — every simulation change re-blesses the golden replays in the same commit;
   zones B–I add a golden replay each.
 - **M2-06** — replays record both players (the body already has a word per player).

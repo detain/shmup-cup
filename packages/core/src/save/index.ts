@@ -14,7 +14,7 @@
  *   input: { profileId }, display: {} }, hiScores: { [modeKey]: HiScoreEntry[≤ 10] }, stats: {
  *   gamesStarted, gameOvers, stagesCleared } }`.
  *   A mode key ({@link hiScoreModeKey}) names the table a game's score belongs to
- *   (`meter-normal` in M1).
+ *   (`meter-normal` in M1; one per difficulty preset since M2-01 — `meter-easy` … `meter-arcade`).
  * - **Loading** ({@link loadSave}, {@link parseSave}): JSON → migrations ({@link SAVE_MIGRATIONS}:
  *   entry `n` turns version `n` into `n + 1`; a document without a version counts as version 0) →
  *   sanitising ({@link sanitizeSave}: every field checked, clamped or replaced by its default,
@@ -604,8 +604,15 @@ export function insertHiScore(table: readonly HiScoreEntry[], entry: HiScoreEntr
 }
 
 /**
- * The hi-score table a game belongs to: `<powerUpMode>-<difficulty>` (`meter-normal` in M1). Co-op
- * and the other modes of M2 add their own keys.
+ * The hi-score table a game belongs to: `<powerUpMode>-<difficulty>` (`meter-normal` in M1). Since
+ * M2-01 each difficulty preset has its own table (`meter-easy`, `meter-normal`, `meter-hard`,
+ * `meter-arcade`) — the scene flow passes the World's config, whose preset was chosen under
+ * START. Co-op and the other modes of M2 add their own keys.
+ *
+ * @example
+ * ```ts
+ * hiScoreModeKey(resolveGameConfig({ difficulty: 'hard' })); // → 'meter-hard'
+ * ```
  *
  * @param config - The session config.
  * @returns The mode key.

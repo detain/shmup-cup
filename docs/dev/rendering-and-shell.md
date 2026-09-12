@@ -439,7 +439,7 @@ the app's `inputProfiles.apply(id, 'options')`
 
 | `?scene=` | What is drawn | Sprite name table |
 |---|---|---|
-| (none) / `game` | **The scene flow** (M1-16, `createSceneView(game)`; the game created with `{ scenes: 'boot' }`): the title (logo, `PRESS OK`, START / OPTIONS / EXIT, the session hi-score — the saved best since M1-17) over a drifting starfield backdrop; a game with the core HUD (score, `HI`, `2P`, stock, the power meter, Force Field pips), the stage's own parallax and terrain — zone A by default since M1-18 (`defaultStageId`), another with `?stage=` — or the World over the starfield in open space; the pause menu, the Options screen (M1-17), the YES / NO dialog, the stage-clear and game-over screens over the frozen, dimmed game — all drawn by the core into the HUD / UI lists ([scenes-and-ui.md](scenes-and-ui.md)) | `content.db.sprites.names` + `SCENE_VIEW_SPRITES` |
+| (none) / `game` | **The scene flow** (M1-16, `createSceneView(game)`; the game created with `{ scenes: 'boot' }`): the title (logo, `PRESS OK`, START / OPTIONS / EXIT, the session hi-score — the saved best since M1-17) over a drifting starfield backdrop; a game with the core HUD (score, `HI`, `2P`, stock, the power meter, Force Field pips), the stage's own parallax and terrain — zone A by default since M1-18 (`defaultStageId`), another with `?stage=` — or the World over the starfield in open space; the difficulty menu under START and the continue countdown (M2-01), the pause menu, the Options screen (M1-17), the YES / NO dialog, the stage-clear and game-over screens over the frozen, dimmed game — all drawn by the core into the HUD / UI lists ([scenes-and-ui.md](scenes-and-ui.md)) | `content.db.sprites.names` + `SCENE_VIEW_SPRITES` |
 | `flight` | **Free flight** (`createFlightScene(game)`, M1-06): the game's World — the KESTREL flying in, then moving under the player's control — over three drifting star layers, both HUD bars (`1P` and player 1's score, `FREE FLIGHT`, `HI` and the session hi-score, `lives − 1` stock ships, `ARROWS MOVE` — M1-12). With a stage (`gameConfig.stage`, the web app's `?stage=<id>`, M1-07): the stage's parallax bands and scrolling terrain instead of the starfield, the stage name as the title, the enemies its timeline spawns (M1-08) and their bullets (M1-09). The ship autofires in every build, with Options and lasers under the web app's `?loadout=full` (M1-10); power capsules and the Force Field are World batches too (M1-11 — the power meter itself is not drawn before the M1-16 HUD); ships that are `dying` / `dead` are not drawn, a respawn blinks, and `GAME OVER` (red) replaces the title once the World's status says so (M1-12); a boss's parts are a World batch, and a running WARNING is drawn as a translucent band with its text in the UI list (M1-13, `?stage=test-boss`) | `content.db.sprites.names` + `FLIGHT_SPRITES` |
 | `showcase` | The **sprite showcase** (`createShowcase()`): three scrolling star layers, the KESTREL flying a figure-eight with its thruster and two Options replaying its path, five drifters with periodic hit flashes, a rotating ring of twelve bullets, both HUD bars (scores via the `number` op, lives, power meter with a moving highlight) and the title "SHMUP CUP" / "SPRITE SHOWCASE" in the bitmap font | `SHOWCASE_SPRITES` |
 | `calibration` | The skeleton's test pattern (checker border, grid, colour bars, placeholder ship, moving marker) under empty layers | `content.db.sprites.names` |
@@ -482,7 +482,7 @@ UI list is built once (the renderer never redraws it); its HUD list is rebuilt e
 The calibration scene renders the game's frame through a small wrapper whose `world` is always
 `null`, so only the test pattern and the (empty) HUD / UI lists show. `sceneFromSearch()`
 turns unknown or missing values into `game`. On the TV the widget starts without a query string,
-so the TV always runs the scene flow (the title; START plays zone A since M1-18).
+so the TV always runs the scene flow (the title; START opens the difficulty menu since M2-01 and plays zone A since M1-18).
 
 ## The apps
 
@@ -526,7 +526,8 @@ pnpm test:e2e                                        # builds web + tizen, then 
   with `?scene=calibration`), and nothing is logged as a console error, page error or failed
   request.
 - `scenes.spec.ts` (M1-16) — both builds boot to the title (`data-shmup-scene="title"`); web:
-  **Enter starts the game from the title** (past `PRESS OK`, then START) and the KESTREL flies in
+  **Enter starts the game from the title** (past `PRESS OK`, START, then OK on the difficulty menu
+  — M2-01) and the KESTREL flies in
   with the HUD and the power meter, Esc pauses (dimmed and frozen) and resumes, Back on the title
   only backs out of the menu; Tizen from disk: OK (13) starts, Back (10009) pauses and resumes
   without exiting, and with a fake `window.tizen` Back on the title opens the exit confirmation —
@@ -589,19 +590,27 @@ pnpm test:e2e                                        # builds web + tizen, then 
   `shmup-cup:save.corrupt` and replaced on Back. Tizen from disk: SFX and CONTROLS changed with the
   remote's key codes only, saved on Back, kept after a reload.
 - `zone-a.spec.ts` (M1-18) — the web build's scene flow plays zone A; with the debug stage skip
-  `?skip=boss`, Enter past `PRESS OK` and Enter on START reach the WARNING band (its red edge rows
+  `?skip=boss`, Enter past `PRESS OK`, Enter on START and Enter on the difficulty menu reach the WARNING band (its red edge rows
   across the whole width) within seconds, then HALCYON BULWARK's hull colour (`#2e5082`, used by no
   other sprite) holds the right half of the playfield; no console errors or atlas warnings
   ([zone-a-and-playtest.md](zone-a-and-playtest.md)).
 - `shell.spec.ts` — an aborted atlas request ends on the boot error screen (overlay canvas,
   state `error`); a 1000×600 window gets a centred ×2 frame on the letterbox colour and a
   resize to 1920×1080 re-fits it to ×5; free flight animates.
-- `smoke.spec.ts` (M1-19) — the M1 gameplay smoke on both builds: title → OK, OK → hold → then ↑
+- `smoke.spec.ts` (M1-19) — the M1 gameplay smoke on both builds: title → OK, OK (START), OK on
+  NORMAL in the difficulty menu (M2-01) → hold → then ↑
   for 2.5 s each → `window.__shmupDebug.sceneId === 'game'`, the World ticked, no console errors;
   F1 / F2 on the web, and on the TV build the locked tools until Pause, Ch+, Ch+, Ch+.
 - `debug-tools.spec.ts` (M1-19) — F4 freezes, F5 steps exactly one tick, `requestStep(n)` exactly
   n, F7 / F8 move the camera to the next checkpoint / before the WARNING, F3 / F6 cycle; the TV
   build's 4 / 5 after the unlock; the `frame-advance.ts` helpers themselves.
+- `continue.spec.ts` (M2-01) — web build: START → ArrowDown → Enter starts the game on HARD (the
+  World's rank 4); a game over (ended through `window.__shmupDebug`) opens the continue countdown
+  (its red panel drawn); Enter after the lock continues — fresh lives, one continue used, the
+  score's last digit counting it. Tizen build from `file://`: the remote's Back (10009) on the
+  countdown gives up to the game-over screen without leaving the app; no console errors
+  ([difficulty-and-rank.md](difficulty-and-rank.md)). Every older spec that starts a game from
+  the title presses one more Enter / OK for the difficulty menu.
 - `frame-advance.ts` (M1-19) — `freezeSim(page)` and `stepTo(page, tick)`: specs that compare two
   captures a set number of ticks apart freeze the sim and run exact ticks, because under load the
   frame loop runs 1–4 ticks per rAF frame. Playwright uses half the cores, at most 8 workers
@@ -689,7 +698,7 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | A stage runs but shows no terrain | The stage has no `tilemap`, its tileset failed to load (see the boot issues), or no atlas was given; tiles whose `frame` the atlas lacks draw `ui/missing` |
 | `bindWorld` throws `parallax band i has layer …` | A `ParallaxView` band is not on `BG_FAR` / `BG_MID` — stage content only produces those; check a hand-made view |
 | Terrain and sprites disagree by one pixel | Something moved the terrain container by other than `round(−camera.x)`: sprite bindings draw `round(x − camera.x)`, and only that formula agrees for integer world positions (a test checks half-pixel cameras) |
-| The title shows instead of the game in a test or tool | Since M1-16 the shell's default scene is the scene flow — open `?scene=flight` for bare gameplay, or press OK twice (past `PRESS OK`, then START); wait on `data-shmup-scene` |
+| The title shows instead of the game in a test or tool | Since M1-16 the shell's default scene is the scene flow — open `?scene=flight` for bare gameplay, or press OK three times (past `PRESS OK`, START, then a difficulty — M2-01); wait on `data-shmup-scene` |
 | `?scene=calibration` does nothing on the TV | The widget has no query string; the calibration scene is for browsers (`pnpm dev`, `vite preview`, the Tizen dev server) |
 | No explosions or sparks, but the game runs | The renderer has no presets (`setFxContent` not called — an app `fx` owner replaced the shell's) or the scene is not the scene flow or free flight (only they connect the game's events) — [fx-and-game-feel.md](fx-and-game-feel.md#gotchas) |
 | An explosion covers a bullet | Something was added to a layer above `ENEMY_BULLETS`; particles and popups belong on `FX` |

@@ -10,7 +10,9 @@
  * **Implements.**
  * - shmup_feat.md §2 (design forks: Meter vs Direct, death-penalty presets, difficulty)
  * - shmup_feat.md §3 (384×216 internal resolution, 60 Hz fixed step, max ticks/frame)
- * - shmup_feat.md §15 (lives 1–5), §21 Options menu (sim-affecting subset)
+ * - shmup_feat.md §15 (lives 1–5; the difficulty presets Easy / Normal / Hard / Arcade — rank base
+ *   and growth, lives, extend thresholds, continues, death-penalty preset — M2-01), §21 Options
+ *   menu (sim-affecting subset)
  * - shmup_feat.md §6 (Meter mode by default — decision D1; Auto Power-Up — D2; the pickup
  *   magnet — D33)
  * - shmup_feat.md §21 Options menu — audio master / music / SFX sliders, the controls profile
