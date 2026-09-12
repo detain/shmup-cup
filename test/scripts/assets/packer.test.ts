@@ -88,10 +88,14 @@ describe('scripts/assets/packer — packRects', () => {
     [50, 1],
     [300, 2],
     [600, 3],
-  ])('never overlaps and stays on the page (%i random items)', (count, seed) => {
-    const items = randomItems(count, seed);
-    expectValid(items, packRects(items));
-  });
+  ])(
+    'never overlaps and stays on the page (%i random items)',
+    (count, seed) => {
+      const items = randomItems(count, seed);
+      expectValid(items, packRects(items));
+    },
+    60_000, // 600 items are checked pairwise: ~2 s on a CI runner, more when it is busy
+  );
 
   it('respects other padding / extrusion settings', () => {
     const items = randomItems(120, 7, 20);

@@ -455,5 +455,5 @@ describe('render-pixi/particles system', () => {
     );
     // A branch on the burst radius merging a small-integer x with a fractional one was ~1.3 MB.
     expect(frameBytes).toBeLessThan(128 * 1024);
-  });
+  }, 60_000); // 2 × 30,000 measured ticks: 3–5 s on a busy CI runner
 });

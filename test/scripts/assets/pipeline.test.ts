@@ -390,7 +390,7 @@ describe('scripts/assets/pipeline — generateAssets (disk, cache)', () => {
     writeFileSync(join(out, CACHE_FILE), '{ corrupt');
     expect(generateAssets({ outDir: out }).cached).toBe(false);
     expect(generateAssets({ outDir: out }).cached).toBe(true);
-  });
+  }, 60_000); // four full atlas builds: ~3 s on a busy CI runner
 
   it('rebuilds when a source changes and removes stale pages', () => {
     const src = copySources('changing');

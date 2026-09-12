@@ -243,7 +243,7 @@ describe('render-pixi/renderer per-frame work (edge)', () => {
     // ~0.6 MB (Pixi's own event plumbing when sprites blink); re-tinting every HUD quad on
     // every frame through Pixi's Color path was ~4.5 MB.
     expect(bytes).toBeLessThan(1.5 * 1024 * 1024);
-  });
+  }, 60_000); // 20,000 rendered frames: ~3 s on a busy CI runner
 });
 
 describe('render-pixi/renderer scene structure (edge)', () => {

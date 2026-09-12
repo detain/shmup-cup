@@ -203,7 +203,7 @@ describe('audio-web/synth renderSong', () => {
     const a = renderSong(SONG, RATE);
     expect(renderSong(SONG, RATE).pcm).toEqual(a.pcm);
     expect(pcmHash(a.pcm).toString(16)).toMatchInlineSnapshot(`"3c64eb9e"`);
-  });
+  }, 30_000); // two song renders: ~3.5 s on a busy CI runner
 
   it('holds the steady state in the loop region: the seam is sample-exact', () => {
     const looped = renderSong(SONG, RATE);
@@ -223,7 +223,7 @@ describe('audio-web/synth renderSong', () => {
     expect(pass(2)).toEqual(pass(1));
     // The first pass differs: the lead still rings from the intro into it, not from the loop end.
     expect(pass(0)).not.toEqual(pass(1));
-  });
+  }, 30_000); // a song plus its unrolled copy: ~4 s on a busy CI runner
 
   it('ends a one-shot song with its release tails and no loop', () => {
     const jingle = renderSong({ ...SONG, order: ['a'], loopFromOrder: undefined }, RATE);
