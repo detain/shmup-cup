@@ -10,7 +10,8 @@
  * under `src/<module>/` (weapons, bosses, scoring, …) are exported here as they get
  * implemented — `bullets` and `rank` joined with plan step M1-09, `weapons` and `options` with
  * M1-10, `powerups` and `shields` with M1-11, `scoring` and `fx` with M1-12, `bosses` with M1-13,
- * `ui` (UI kit, HUD) and `scenes` (scene stack and flow) with M1-16.
+ * `ui` (UI kit, HUD) and `scenes` (scene stack and flow) with M1-16, `save` (versioned saves,
+ * hi-score tables) and the `config` user options with M1-17.
  *
  * @packageDocumentation
  */
@@ -59,6 +60,7 @@ export {
   SIM_EVENT_KIND_NAMES,
   SfxPriority,
   SimEventKind,
+  UserOptionKind,
   createEventQueue,
   type EventQueue,
   type FxCue,
@@ -114,19 +116,29 @@ export {
 export {
   DEFAULT_AUTO_POWER_UP_ORDER,
   DEFAULT_GAME_CONFIG,
+  DEFAULT_USER_OPTIONS,
   HUD_BAR_HEIGHT,
+  INPUT_PROFILE_ID_PATTERN,
   MAX_AUTO_POWER_UP_ORDER,
   METER_SLOT_NAMES,
   PLAYFIELD_H,
   PLAYFIELD_W,
   PLAYFIELD_Y,
+  VOLUME_LEVELS,
   resolveGameConfig,
+  resolveUserOptions,
+  volumeGain,
+  type AudioOptions,
   type DeathPenaltyPreset,
   type DifficultyPreset,
+  type DisplayOptions,
   type GameConfig,
+  type InputOptions,
+  type InputProfileChoice,
   type MeterSlotName,
   type PowerUpMode,
   type StartingLoadout,
+  type UserOptions,
 } from './config/index.js';
 
 export {
@@ -659,6 +671,7 @@ export {
 
 export {
   CONFIRM_STRING_SLOTS,
+  Choice,
   Confirm,
   ConfirmChoice,
   DirectionRepeat,
@@ -679,6 +692,7 @@ export {
   UI_SPRITES,
   buildHud,
   confirmTick,
+  createChoice,
   createConfirm,
   createHud,
   createListMenu,
@@ -708,6 +722,8 @@ export {
   GAME_OVER_TIMEOUT_TICKS,
   GameOverScene,
   GameScene,
+  OptionsItem,
+  OptionsScene,
   PAUSE_DIM,
   PauseItem,
   PauseScene,
@@ -722,6 +738,7 @@ export {
   createSceneFlow,
   createSceneStack,
   mergeMenuInput,
+  type InputProfileSetup,
   type Scene,
   type SceneFlow,
   type SceneFlowHost,
@@ -731,3 +748,33 @@ export {
 } from './scenes/index.js';
 
 export { createGame, type Game, type GameOptions, type GameState } from './game/index.js';
+
+export {
+  DEFAULT_HI_SCORE_NAME,
+  HI_SCORE_NAME_MAX,
+  HI_SCORE_TABLE_SIZE,
+  MAX_HI_SCORE_TABLES,
+  SAVE_CORRUPT_KEY,
+  SAVE_MIGRATIONS,
+  SAVE_STORAGE_KEY,
+  SAVE_VERSION,
+  SaveStore,
+  createDefaultSave,
+  createHiScoreEntry,
+  createSaveStore,
+  hiScoreModeKey,
+  insertHiScore,
+  loadSave,
+  migrateSave,
+  parseSave,
+  sanitizeSave,
+  serializeSave,
+  writeSave,
+  type HiScoreInsert,
+  type LoadedSave,
+  type ParsedSave,
+  type SaveData,
+  type SaveMigration,
+  type SaveStats,
+  type SaveStatus,
+} from './save/index.js';

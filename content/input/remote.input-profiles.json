@@ -4,7 +4,7 @@
   "profiles": [
     {
       "id": "tizen-remote-safe",
-      "label": "TV REMOTE",
+      "label": "SAFE 4-WAY",
       "device": "remote",
       "context": {
         "game": {
@@ -41,7 +41,7 @@
     },
     {
       "id": "tizen-remote-diagonal",
-      "label": "TV REMOTE 8-WAY",
+      "label": "FAST 8-WAY",
       "device": "remote",
       "context": {
         "game": {
@@ -134,7 +134,7 @@
     },
     {
       "id": "keyboard-remote-emulation",
-      "label": "KEYBOARD AS TV REMOTE",
+      "label": "KEYBOARD AS REMOTE",
       "device": "remote",
       "context": {
         "game": {

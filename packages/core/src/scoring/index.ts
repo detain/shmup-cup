@@ -73,15 +73,18 @@ export class PlayerScore {
   displayDirty = false;
 }
 
-/** One hi-score table row. */
+/**
+ * One hi-score table row — what `core/save` stores in its tables (M1-17; built with its
+ * `createHiScoreEntry`).
+ */
 export interface HiScoreEntry {
-  /** Three letters. */
+  /** Up to 8 characters: three letters from the name entry (M2-15), `---` until then. */
   readonly name: string;
   /** Final score. */
   readonly score: number;
-  /** Stage / zone reached. */
+  /** Stage / zone reached (a stage id; `''` in open space). */
   readonly reached: string;
-  /** Game mode the score was set in (arcade, boss rush, …). */
+  /** Game mode the score was set in (`1p` in M1; co-op, practice, boss rush … later). */
   readonly mode: string;
   /** Difficulty preset of the run. */
   readonly difficulty: string;

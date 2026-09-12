@@ -170,7 +170,7 @@ describe('core/scenes flow: boot and title', () => {
     expect(s.events.filter((e) => e[0] === SimEventKind.Music)).toHaveLength(1);
   });
 
-  it('shows PRESS OK (blinking), then the menu START / OPTIONS / EXIT with OPTIONS disabled', () => {
+  it('shows PRESS OK (blinking), then the menu START / OPTIONS / EXIT', () => {
     const s = new Session();
     expect(s.uiTexts()).toEqual(['PRESS OK', 'HI']);
     s.hold(0, 32);
@@ -178,10 +178,12 @@ describe('core/scenes flow: boot and title', () => {
     s.press(Action.Confirm);
     expect(s.flow.title.menuOpen).toBe(true);
     expect(s.uiTexts()).toEqual(['→', 'START', 'OPTIONS', 'EXIT', 'HI']);
-    expect(s.flow.title.menu.enabled(TitleItem.Options)).toBe(false);
+    expect(s.flow.title.menu.enabled(TitleItem.Options)).toBe(true);
     s.press(Action.Down);
-    expect(s.flow.title.menu.focus).toBe(TitleItem.Exit); // OPTIONS is skipped
-    expect(s.sounds()).toEqual([SFX_CUES.MenuSelect, SFX_CUES.MenuMove]);
+    expect(s.flow.title.menu.focus).toBe(TitleItem.Options);
+    s.press(Action.Down);
+    expect(s.flow.title.menu.focus).toBe(TitleItem.Exit);
+    expect(s.sounds()).toEqual([SFX_CUES.MenuSelect, SFX_CUES.MenuMove, SFX_CUES.MenuMove]);
   });
 
   it('has no EXIT on a platform that cannot quit; Back there returns to PRESS OK', () => {
@@ -251,8 +253,7 @@ describe('core/scenes flow: title → game → pause → quit → title', () => 
     s.hold(0, 30);
     expect(world.tick).toBe(frozen);
     // QUIT TO TITLE → confirm → YES.
-    s.press(Action.Down);
-    s.press(Action.Down); // OPTIONS skipped: RESUME → RETRY → QUIT
+    s.press(Action.Up); // RESUME → QUIT (wraps)
     expect(s.flow.pause.menu.focus).toBe(PauseItem.Quit);
     s.press(Action.Confirm);
     expect(s.ids).toEqual(['game', 'pause', 'confirm']);
@@ -281,7 +282,8 @@ describe('core/scenes flow: title → game → pause → quit → title', () => 
     s.press(Action.Confirm); // NO
     expect(s.ids).toEqual(['game', 'pause']);
     s.press(Action.Up); // QUIT → RETRY
-    s.press(Action.Up); // → RESUME (OPTIONS skipped)
+    s.press(Action.Up); // → OPTIONS
+    s.press(Action.Up); // → RESUME
     s.press(Action.Confirm);
     expect(s.ids).toEqual(['game']);
   });
@@ -291,7 +293,8 @@ describe('core/scenes flow: title → game → pause → quit → title', () => 
     s.hold(Action.Up, 90);
     const before = s.game.world;
     s.press(Action.Pause);
-    s.press(Action.Down); // RETRY (OPTIONS skipped)
+    s.press(Action.Down); // OPTIONS
+    s.press(Action.Down); // RETRY
     expect(s.flow.pause.menu.focus).toBe(PauseItem.Retry);
     s.press(Action.Confirm);
     expect(s.ids).toEqual(['game']);
@@ -404,8 +407,7 @@ describe('core/scenes flow: the render frame', () => {
       'RETRY STAGE',
       'QUIT TO TITLE',
     ]);
-    s.press(Action.Down);
-    s.press(Action.Down);
+    s.press(Action.Up); // RESUME → QUIT (wraps)
     s.press(Action.Confirm);
     // The dialog is drawn over the pause menu (focused on QUIT), which stays visible.
     const texts = s.uiTexts();

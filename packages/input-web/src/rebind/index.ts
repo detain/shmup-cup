@@ -17,8 +17,12 @@
  * - collects them for a host ({@link createInputProfileRegistry}, whose `load` is the content
  *   owner the shell calls) and picks the active one ({@link chooseInputProfile},
  *   {@link overrideInputTuning} for dev overrides);
- * - persists the player's choice through `Platform.storage` ({@link loadInputProfileChoice},
- *   {@link saveInputProfileChoice}) — the hook the Options screen will call.
+ * - lists the profiles a host can safely offer in the Options screen ({@link selectableKeyProfiles},
+ *   {@link inputProfileChoices} — M1-17: only profiles whose menu table the host's keys can reach,
+ *   so the player can always navigate back out);
+ * - persists a choice through `Platform.storage` under its own key
+ *   ({@link loadInputProfileChoice}, {@link saveInputProfileChoice}) — the apps keep the choice in
+ *   the `core/save` document instead since M1-17 (`options.input.profileId`).
  *
  * `WebInput.setProfile()` / `WebInput.setContext()` (`web-input`) apply a profile and switch
  * its tables; nothing here runs per tick.
@@ -33,7 +37,8 @@
  * {@link INPUT_PROFILES_KIND}, {@link REQUIRED_CONTEXT_ACTIONS}, {@link SYSTEM_REMOTE_KEYS},
  * {@link InputProfilesResult}, {@link parseInputProfiles}, {@link loadInputProfiles},
  * {@link InputProfileRegistry}, {@link createInputProfileRegistry}, {@link chooseInputProfile},
- * {@link overrideInputTuning}, {@link DEFAULT_KEYBOARD_PROFILE_ID},
+ * {@link overrideInputTuning}, {@link selectableKeyProfiles}, {@link KeySpace},
+ * {@link inputProfileChoices}, {@link DEFAULT_PROFILE_SUFFIX}, {@link DEFAULT_KEYBOARD_PROFILE_ID},
  * {@link DEFAULT_REMOTE_PROFILE_ID}, {@link DEFAULT_GAMEPAD_PROFILE_ID},
  * {@link INPUT_PROFILE_STORAGE_KEY}, {@link loadInputProfileChoice},
  * {@link saveInputProfileChoice}.
@@ -50,6 +55,7 @@ import {
   type ActionName,
   type ContentFile,
   type InputContext,
+  type InputProfileChoice,
   type PlatformStorage,
   type ValidationIssue,
 } from '@shmup/core';
@@ -565,6 +571,88 @@ export function overrideInputTuning(
     diagonals: overrides.diagonals ?? profile.diagonals,
     socd: overrides.socd ?? profile.socd,
   });
+}
+
+/**
+ * How a host's keys reach the binding tables: `'code'` — a desktop keyboard (every key has a
+ * `KeyboardEvent.code`, looked up in `byCode` first); `'keyCode'` — the TV remote (its keys
+ * arrive as legacy key codes, looked up in `byKeyCode`).
+ */
+export type KeySpace = 'code' | 'keyCode';
+
+/**
+ * The keyboard / remote profiles a host can offer in its Options screen: those whose **menu**
+ * table binds Up, Down, Left, Right, Confirm and Back through the host's key space — so whichever
+ * the player picks, the menus stay navigable and the Options screen can be left again (shmup_feat.md
+ * §4 rule 8).
+ *
+ * @remarks
+ * On the web (`'code'`) that is `keyboard-default` and `keyboard-remote-emulation`; on the TV
+ * (`'keyCode'`) the `tizen-remote-*` profiles. Gamepad profiles are never offered (the per-device
+ * choice arrives with M2-16). Order: as in `profiles`.
+ *
+ * @param profiles - Every profile (the registry's).
+ * @param keySpace - How the host's keys arrive.
+ * @returns The selectable profiles.
+ *
+ * @example
+ * ```ts
+ * selectableKeyProfiles(registry.profiles, 'keyCode').map((p) => p.id);
+ * // → ['tizen-remote-safe', 'tizen-remote-diagonal']
+ * ```
+ */
+export function selectableKeyProfiles(
+  profiles: readonly InputProfile[],
+  keySpace: KeySpace,
+): InputProfile[] {
+  const out: InputProfile[] = [];
+  for (const profile of profiles) {
+    if (KEY_PROFILE_DEVICES.indexOf(profile.device) < 0) continue;
+    const menu = profile.context.menu;
+    const table = keySpace === 'code' ? menu.byCode : menu.byKeyCode;
+    let bound = 0;
+    for (const key of Object.keys(table)) bound |= maskOf(table[key] ?? []);
+    let complete = true;
+    for (const name of REQUIRED_CONTEXT_ACTIONS.menu) {
+      if ((bound & Action[name]) === 0) complete = false;
+    }
+    if (complete) out.push(profile);
+  }
+  return out;
+}
+
+/** Appended to the label of the platform's default profile in the Options screen. */
+export const DEFAULT_PROFILE_SUFFIX = ' (DEFAULT)';
+
+/**
+ * The Options screen's CONTROLS entries: the {@link selectableKeyProfiles} as `{ id, label }`, the
+ * platform's default marked with {@link DEFAULT_PROFILE_SUFFIX} (`SAFE 4-WAY (DEFAULT)`).
+ *
+ * @param profiles - Every profile.
+ * @param keySpace - How the host's keys arrive.
+ * @param defaultId - The platform's default profile id.
+ * @param extra - A profile to offer even when it is not selectable (e.g. a `?profile=` dev
+ *   override in use), appended when missing; `null` for none.
+ * @returns The choices.
+ *
+ * @example
+ * ```ts
+ * inputProfileChoices(registry.profiles, 'keyCode', DEFAULT_REMOTE_PROFILE_ID);
+ * // → [{ id: 'tizen-remote-safe', label: 'SAFE 4-WAY (DEFAULT)' }, { id: …, label: 'FAST 8-WAY' }]
+ * ```
+ */
+export function inputProfileChoices(
+  profiles: readonly InputProfile[],
+  keySpace: KeySpace,
+  defaultId: string,
+  extra: InputProfile | null = null,
+): InputProfileChoice[] {
+  const list = selectableKeyProfiles(profiles, keySpace);
+  if (extra !== null && list.indexOf(extra) < 0) list.push(extra);
+  return list.map((profile) => ({
+    id: profile.id,
+    label: profile.id === defaultId ? profile.label + DEFAULT_PROFILE_SUFFIX : profile.label,
+  }));
 }
 
 /** `Platform.storage` key of the chosen keyboard / remote profile id. */

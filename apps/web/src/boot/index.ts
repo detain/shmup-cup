@@ -25,9 +25,15 @@
  * **Input profiles** (decisions D13–D15). The `input-profiles` content is parsed into a
  * registry during boot. Keys use `?profile=<id>` when given (dev override — e.g.
  * `keyboard-remote-emulation` to feel the remote's limits on a desktop, or a `tizen-remote-*`
- * profile), else the saved choice (`Platform.storage`, applied once read), else
- * `keyboard-default`; gamepads use `gamepad-standard`. `?debounce=<ticks>` overrides the key
- * profile's release debounce ({@link inputOverridesFromSearch}).
+ * profile), else the choice stored in the save (the shell reads it before the title and hands it
+ * to this app — plan M1-17), else `keyboard-default`; gamepads use `gamepad-standard`.
+ * `?debounce=<ticks>` overrides the key profile's release debounce
+ * ({@link inputOverridesFromSearch}). The Options screen's CONTROLS offers the keyboard profiles
+ * whose menus a desktop keyboard can drive (`keyboard-default (DEFAULT)`,
+ * `keyboard-remote-emulation`; plus a `?profile=` override in use) and switches live.
+ *
+ * **Saves (M1-17).** Options and hi-scores live in `localStorage` (`shmup-cup:save.v1`); the
+ * shell loads them before the title and applies the volumes.
  *
  * **Implements.** shmup_feat.md §23 (web dev target), §3 (rAF-driven fixed step, pause on
  * visibility change, integer scaling), §19 (resume audio on first input), §4 (input profiles).
@@ -49,8 +55,9 @@ import {
   chooseInputProfile,
   createInputProfileRegistry,
   createWebInput,
-  loadInputProfileChoice,
+  inputProfileChoices,
   overrideInputTuning,
+  selectableKeyProfiles,
   type GamepadLike,
   type InputProfile,
   type InputProfileRegistry,
@@ -248,8 +255,9 @@ export function contentStageIds(files: readonly ContentFile[]): string[] {
  * Creates input and audio (no context yet), then runs `bootShell`, which validates the content
  * (the input profiles into this app's registry), creates the renderer, then this app's
  * platform (through the factory, once WebGL2 support is known — the input profiles are
- * applied there) and the game. Without a `?profile=` override the saved profile choice is
- * applied once storage has answered. An unknown `?profile=` id is reported with
+ * applied there), reads the save and the game. Without a `?profile=` override the saved profile
+ * choice is applied during boot (only a profile the Options screen offers). An unknown
+ * `?profile=` id is reported with
  * `console.warn` and the default is used; so is an unknown `?stage=` id (the game then flies in
  * open space). The game config sets `remoteMode: false` (keyboard / gamepad play; `autofire`
  * keeps its default, on), the `?stage=` id and the `?loadout=` preset
@@ -295,6 +303,8 @@ export async function bootWebApp(
     console.warn(`Shmup Cup: no stage "${stage}"; flying in open space`);
     stage = null;
   }
+  /** The profile a `?profile=` override selected (offered in the Options screen too), if any. */
+  let overrideProfile: InputProfile | null = null;
   /**
    * Applies a keyboard / remote profile with the `?debounce=` override.
    *
@@ -328,6 +338,7 @@ export async function bootWebApp(
         );
       }
       if (keys !== null) applyKeyProfile(keys);
+      if (keys !== null && keys.id === overrides.profile) overrideProfile = keys;
       const pads = chooseInputProfile(profiles.profiles, [DEFAULT_GAMEPAD_PROFILE_ID], ['gamepad']);
       if (pads !== null) input.setProfile(pads);
       return createWebPlatform({
@@ -343,19 +354,26 @@ export async function bootWebApp(
     gameConfig: { remoteMode: false, stage, loadout: loadoutFromSearch(search) ?? 'default' },
     scene: sceneFromSearch(search),
     audioUnlock: 'gesture',
+    inputProfiles: {
+      choices: () =>
+        inputProfileChoices(
+          profiles.profiles,
+          'code',
+          DEFAULT_KEYBOARD_PROFILE_ID,
+          overrideProfile,
+        ),
+      active: () => input.keyProfile?.id ?? null,
+      apply: (id, source) => {
+        // A `?profile=` override wins over the saved choice (not over the player's pick).
+        if (source === 'save' && overrides.profile !== null) return;
+        // Only a profile the Options screen offers: a desktop keyboard can always drive its menus.
+        const offered = selectableKeyProfiles(profiles.profiles, 'code');
+        if (overrideProfile !== null) offered.push(overrideProfile);
+        const chosen = chooseInputProfile(offered, [id], KEY_PROFILE_DEVICES);
+        if (chosen !== null && chosen.id !== input.keyProfile?.id) applyKeyProfile(chosen);
+      },
+    },
   });
-
-  // The saved choice (Options screen, M2-16) replaces the default once storage answers; a
-  // `?profile=` override wins over it.
-  let stopped = false;
-  if (overrides.profile === null) {
-    void loadInputProfileChoice(shell.platform.storage).then((saved) => {
-      const chosen = chooseInputProfile(profiles.profiles, [saved], KEY_PROFILE_DEVICES);
-      if (!stopped && chosen !== null && chosen.id !== input.keyProfile?.id) {
-        applyKeyProfile(chosen);
-      }
-    });
-  }
 
   return {
     game: shell.game,
@@ -365,7 +383,6 @@ export async function bootWebApp(
     profiles,
     shell,
     stop() {
-      stopped = true;
       shell.stop();
     },
   };

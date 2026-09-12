@@ -19,7 +19,7 @@
  * **Public API (implemented now).** {@link SimEventKind}, {@link SIM_EVENT_KIND_NAMES},
  * {@link SFX_CUES}, {@link SFX_CUE_NAMES}, {@link SfxCue}, {@link SfxPriority}, {@link MUSIC_CUES},
  * {@link MUSIC_CUE_NAMES}, {@link MusicCue}, {@link FX_CUES}, {@link FX_CUE_NAMES}, {@link FxCue},
- * {@link SimEvent}, {@link EventQueue},
+ * {@link UserOptionKind}, {@link SimEvent}, {@link EventQueue},
  * {@link DEFAULT_EVENT_QUEUE_CAPACITY}, {@link createEventQueue}.
  *
  * **Planned API (later steps).** More cue names as weapons, bosses and menus land; a
@@ -105,6 +105,14 @@ export const SimEventKind = {
    * (on the ship) push none.
    */
   Score: 12,
+  /**
+   * The player changed a user option in the Options screen (M1-17, shmup_feat.md §21): `id` = a
+   * {@link UserOptionKind} code, `param` = the new value — a volume level `0…10` (the host sets the
+   * bus gain, `core/config` `volumeGain`) or, for `InputProfile`, the index of the chosen profile in
+   * the scene flow's profile choices (the host applies that profile to its input adapter). Pushed
+   * live, on every change; the save is written when the screen closes.
+   */
+  UserOption: 13,
 } as const;
 
 /** One of the {@link SimEventKind} codes. */
@@ -125,7 +133,26 @@ export const SIM_EVENT_KIND_NAMES: readonly string[] = Object.freeze([
   'dim',
   'bossDefeated',
   'score',
+  'userOption',
 ]);
+
+/**
+ * What a {@link SimEventKind.UserOption} event changed (its `id`). Codes are stable: append, never
+ * renumber.
+ */
+export const UserOptionKind = {
+  /** MASTER volume: `param` = level 0–10 (the `master` bus). */
+  MasterVolume: 0,
+  /** MUSIC volume: `param` = level 0–10 (the `music` bus). */
+  MusicVolume: 1,
+  /** SFX volume: `param` = level 0–10 (the `sfx` and `ui` buses). */
+  SfxVolume: 2,
+  /** CONTROLS: `param` = index of the chosen input profile in the flow's profile choices. */
+  InputProfile: 3,
+} as const;
+
+/** A {@link UserOptionKind} code. */
+export type UserOptionKind = (typeof UserOptionKind)[keyof typeof UserOptionKind];
 
 /**
  * Priority hints carried by `SimEventKind.Sfx` events in `param` (the mixer of M1-15 maps them to

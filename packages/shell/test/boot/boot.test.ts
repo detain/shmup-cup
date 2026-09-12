@@ -2,15 +2,20 @@
  * Tests for bootShell() with a fake window, fake images and a fake renderer (no WebGL in
  * Node; the atlas is built for real over fake page images): the boot order, the free-flight,
  * showcase and calibration scenes, the frame loop (ticks → event dispatch → render), audio unlock policies,
- * lifecycle and resize wiring, stop(), and every failure path of the boot error screen.
+ * lifecycle and resize wiring, stop(), and every failure path of the boot error screen; the save
+ * read before the title, the Options screen applied live, blur and the boot timing (M1-17).
  */
 import {
   Action,
   MUSIC_CUES,
+  SAVE_CORRUPT_KEY,
+  SAVE_STORAGE_KEY,
   SFX_CUES,
   SimEventKind,
+  UserOptionKind,
   commitPlayerInput,
   createHeadlessPlatform,
+  volumeGain,
   type IAudio,
   type InputContext,
   type Platform,
@@ -21,6 +26,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildAtlas } from '../../../../scripts/assets/pipeline.mjs';
 import { readContentFiles } from '../../../../vite.shared.js';
 import {
+  BOOT_MS_ATTRIBUTE,
   BOOT_STATE_ATTRIBUTE,
   SCENE_ATTRIBUTE,
   SHELL_SCENES,
@@ -29,6 +35,7 @@ import {
   moduleInfo,
   sceneFromSearch,
   type ShellInput,
+  type ShellInputProfiles,
   type ShellOptions,
 } from '../../src/boot/index.js';
 import type { BootOverlay } from '../../src/error-screen/index.js';
@@ -933,5 +940,186 @@ describe('shell/boot the scene flow (M1-16, the default scene)', () => {
       'title',
       'zone-a',
     ]);
+  });
+});
+
+describe('shell/boot saves and options (M1-17)', () => {
+  /** A save document's text. */
+  const saveText = (doc: Record<string, unknown>): string => JSON.stringify({ version: 1, ...doc });
+
+  /**
+   * The audio fake with its bus volumes recorded.
+   *
+   * @returns The back-end and its `[bus, gain]` log.
+   */
+  function recordingAudio() {
+    const volumes: Array<[string, number]> = [];
+    const backend: IAudio = {
+      ...audio,
+      setBusVolume: (bus, gain) => {
+        volumes.push([bus, gain]);
+      },
+    };
+    return { backend, volumes };
+  }
+
+  /**
+   * An app's input profiles, with the calls recorded.
+   *
+   * @param active - The id in use at boot.
+   * @returns The profiles and the apply log.
+   */
+  function fakeProfiles(active: string | null = 'safe') {
+    const applied: Array<[string, string]> = [];
+    let current = active;
+    const profiles: ShellInputProfiles = {
+      choices: () => [
+        { id: 'safe', label: 'SAFE 4-WAY (DEFAULT)' },
+        { id: 'fast', label: 'FAST 8-WAY' },
+      ],
+      active: () => current,
+      apply: (id, source) => {
+        applied.push([id, source]);
+        if (id === 'safe' || id === 'fast') current = id;
+      },
+    };
+    return { profiles, applied };
+  }
+
+  it('reads the save before the title: volumes, hi-score and the saved profile', async () => {
+    await platform.storage.set(
+      SAVE_STORAGE_KEY,
+      saveText({
+        options: { audio: { master: 5, music: 0, sfx: 8 }, input: { profileId: 'fast' } },
+        hiScores: { 'meter-normal': [{ name: '---', score: 64000 }] },
+      }),
+    );
+    const { backend, volumes } = recordingAudio();
+    const { profiles, applied } = fakeProfiles();
+    const shell = await boot({ scene: 'game', audio: backend, inputProfiles: profiles }).promise;
+    expect(shell.loadedSave.status).toBe('ok');
+    expect(volumes).toEqual([
+      ['master', 0.25],
+      ['music', 0],
+      ['sfx', volumeGain(8)],
+      ['ui', volumeGain(8)],
+    ]);
+    expect(applied).toEqual([['fast', 'save']]);
+    const flow = shell.game.scenes!;
+    expect(flow.save).toBe(shell.save);
+    expect(flow.hiScore).toBe(64000);
+    expect(flow.inputProfiles.map((p) => p.id)).toEqual(['safe', 'fast']);
+    expect(flow.activeInputProfile).toBe(1);
+  });
+
+  it('boots with defaults on a corrupt save and keeps a copy of it', async () => {
+    await platform.storage.set(SAVE_STORAGE_KEY, '{not json');
+    const { backend, volumes } = recordingAudio();
+    const { promise, attributes } = boot({ scene: 'game', audio: backend });
+    const shell = await promise;
+    expect(attributes.get(BOOT_STATE_ATTRIBUTE)).toBe('running');
+    expect(shell.loadedSave.status).toBe('corrupt');
+    expect(await platform.storage.get(SAVE_CORRUPT_KEY)).toBe('{not json');
+    expect(volumes.map(([, gain]) => gain)).toEqual([1, 1, 1, 1]);
+    expect(shell.game.scenes!.inputProfiles).toEqual([]); // no app profiles: CONTROLS disabled
+  });
+
+  it('applies the Options screen changes live: bus volumes and the input profile', async () => {
+    const { backend, volumes } = recordingAudio();
+    const { profiles, applied } = fakeProfiles();
+    const shell = await boot({ scene: 'game', audio: backend, inputProfiles: profiles }).promise;
+    volumes.length = 0;
+    const events = shell.game.events;
+    events.push(SimEventKind.UserOption, UserOptionKind.MasterVolume, 0, 0, 5);
+    events.push(SimEventKind.UserOption, UserOptionKind.MusicVolume, 0, 0, 10);
+    events.push(SimEventKind.UserOption, UserOptionKind.SfxVolume, 0, 0, 0);
+    events.push(SimEventKind.UserOption, UserOptionKind.InputProfile, 0, 0, 1);
+    events.push(SimEventKind.UserOption, UserOptionKind.InputProfile, 0, 0, 7); // no such choice
+    win.frame(1000);
+    expect(volumes).toEqual([
+      ['master', 0.25],
+      ['music', 1],
+      ['sfx', 0],
+      ['ui', 0],
+    ]);
+    expect(applied).toEqual([['fast', 'options']]);
+  });
+
+  it('drives the Options screen end to end and writes the save on BACK', async () => {
+    const { backend, volumes } = recordingAudio();
+    const shell = await boot({ scene: 'game', audio: backend }).promise;
+    volumes.length = 0;
+    let at = 1000;
+    /**
+     * Presses and releases an action over two frames.
+     *
+     * @param action - The action.
+     */
+    const press = (action: number): void => {
+      commitPlayerInput(platform.snapshot.players[0], action);
+      win.frame(at);
+      commitPlayerInput(platform.snapshot.players[0], 0);
+      win.frame(at + STEP);
+      at += 2 * STEP;
+    };
+    press(0);
+    press(Action.Confirm); // PRESS OK
+    press(Action.Down); // OPTIONS
+    press(Action.Confirm);
+    press(0);
+    expect(shell.game.scenes!.stack.top?.id).toBe('options');
+    press(Action.Down); // MUSIC
+    press(Action.Left); // 9
+    expect(volumes).toEqual([['music', volumeGain(9)]]);
+    press(Action.Back);
+    expect(shell.game.scenes!.stack.top?.id).toBe('title');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const stored = JSON.parse((await platform.storage.get(SAVE_STORAGE_KEY)) ?? '{}') as {
+      options: { audio: { music: number } };
+    };
+    expect(stored.options.audio.music).toBe(9);
+  });
+
+  it('dev scenes read the save too (volumes, profile) but run without the flow', async () => {
+    await platform.storage.set(
+      SAVE_STORAGE_KEY,
+      saveText({ options: { audio: { master: 0 }, input: { profileId: 'fast' } } }),
+    );
+    const { backend, volumes } = recordingAudio();
+    const { profiles, applied } = fakeProfiles();
+    const shell = await boot({ audio: backend, inputProfiles: profiles }).promise;
+    expect(shell.game.scenes).toBeNull();
+    expect(volumes[0]).toEqual(['master', 0]);
+    expect(applied).toEqual([['fast', 'save']]);
+  });
+
+  it('clears held input when the window loses focus, until stop()', async () => {
+    const shell = await boot().promise;
+    const before = input.cleared;
+    win.dispatchEvent(new Event('blur'));
+    expect(input.cleared).toBe(before + 1);
+    shell.stop();
+    win.dispatchEvent(new Event('blur'));
+    expect(input.cleared).toBe(before + 1);
+  });
+
+  it('times the boot with the given clock and marks the canvas', async () => {
+    let clock = 1200;
+    const { promise, attributes } = boot({ now: () => (clock += 50) });
+    const shell = await promise;
+    expect(shell.bootTiming.startMs).toBe(1250);
+    expect(shell.bootTiming.readyMs).toBe(1300);
+    expect(shell.bootTiming.bootMs).toBe(50);
+    expect(attributes.get(BOOT_MS_ATTRIBUTE)).toBe('1300');
+    expect(Object.isFrozen(shell.bootTiming)).toBe(true);
+  });
+
+  it('falls back to the window clock (or Date.now) by default', async () => {
+    const shell = await boot().promise;
+    expect(shell.bootTiming.readyMs).toBeGreaterThanOrEqual(shell.bootTiming.startMs);
+    shell.stop();
+    (win as unknown as { performance: { now(): number } }).performance = { now: () => 42 };
+    const timed = await boot().promise;
+    expect(timed.bootTiming).toEqual({ startMs: 42, readyMs: 42, bootMs: 0 });
   });
 });

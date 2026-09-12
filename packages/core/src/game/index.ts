@@ -47,7 +47,13 @@ import { createEventQueue, type EventQueue } from '../events/index.js';
 import { createFixedStepLoop } from '../loop/index.js';
 import { defineModule } from '../module-info.js';
 import type { Platform } from '../platform/index.js';
-import { createSceneFlow, type SceneFlow, type SceneStart } from '../scenes/index.js';
+import {
+  createSceneFlow,
+  type InputProfileSetup,
+  type SceneFlow,
+  type SceneStart,
+} from '../scenes/index.js';
+import type { SaveStore } from '../save/index.js';
 import { createWorld, stepWorld, type World } from '../world/index.js';
 import {
   createDrawList,
@@ -173,6 +179,19 @@ export interface GameOptions {
    * Omitted or `null`: bare gameplay (one World ticked from the start, no scenes).
    */
   readonly scenes?: SceneStart | null;
+  /**
+   * The save the scene flow plays with (`core/save`: loaded by the host before the title) — its
+   * options fill the Options screen, its hi-score tables the title's HI, and finished games are
+   * recorded into it. Omitted or `null`: a memory-only store with the defaults. Ignored for bare
+   * gameplay.
+   */
+  readonly save?: SaveStore | null;
+  /**
+   * The keyboard / remote input profiles the Options screen offers and the one in use (the host
+   * applies a change it reads from the `UserOption` events). Omitted or `null`: CONTROLS is
+   * disabled. Ignored for bare gameplay.
+   */
+  readonly inputProfiles?: InputProfileSetup | null;
 }
 
 /**
@@ -188,7 +207,8 @@ export interface GameOptions {
  * @param content - Validated content database (`loadContent(...).db`). Defaults to
  *   {@link EMPTY_CONTENT_DB}, which lets tests and the calibration scenes run with no
  *   `content/` at all; systems then fall back to their built-in defaults.
- * @param options - The scene flow's first scene (default: bare gameplay).
+ * @param options - The scene flow's first scene (default: bare gameplay), its save and the input
+ *   profiles its Options screen offers.
  * @returns The {@link Game}.
  * @throws RangeError when `overrides` fail validation (see `resolveGameConfig`) or
  *   `overrides.stage` names a stage `content` does not have (see `createWorld`).
@@ -229,6 +249,8 @@ export function createGame(
             events,
             exit: platform.exit,
             createWorld: () => createWorld(config, content, { events }),
+            save: options.save ?? null,
+            inputProfiles: options.inputProfiles ?? null,
           },
           start,
         );

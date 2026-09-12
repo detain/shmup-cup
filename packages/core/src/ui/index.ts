@@ -7,11 +7,12 @@
  * with atlas sprites and the bitmap font.
  *
  * - **Widgets.** {@link ListMenu} (`items`, `focus`, `disabledMask`, optional wrap) whose items are
- *   plain actions, {@link Slider}s or {@link Toggle}s, and the YES / NO {@link Confirm} prompt
+ *   plain actions, {@link Slider}s, {@link Toggle}s or {@link Choice}s (one of several labels — the
+ *   Options screen's input-profile selector, M1-17), and the YES / NO {@link Confirm} prompt
  *   (default NO). {@link menuTick} / {@link confirmTick} advance one widget by one tick of input:
  *   Up / Down move the focus (disabled items are skipped, the list wraps when asked), Left / Right
- *   change the focused slider or toggle (or the prompt's choice), Confirm activates, Back backs
- *   out.
+ *   change the focused slider, toggle or choice (or the prompt's answer), Confirm activates (and
+ *   flips a toggle / steps a choice), Back backs out.
  *   Directions auto-repeat by **held duration** — once on the press, again after
  *   {@link MENU_REPEAT_DELAY} ticks, then every {@link MENU_REPEAT_INTERVAL} ticks — independent of
  *   any device key repeat (the input adapters drop those). A Confirm press is **buffered** for
@@ -21,7 +22,8 @@
  *   Both return a {@link MenuResult} code the scene acts on (no callbacks, no allocation);
  *   {@link menuResultSfx} maps it to the menu sound.
  * - **Builders.** {@link drawPanel} (a framed translucent box), {@link drawMenu} (the items with
- *   the focus cursor, disabled items dimmed, a slider's bar and value, a toggle's `ON` / `OFF`) and
+ *   the focus cursor, disabled items dimmed, a slider's bar and value, a toggle's `ON` / `OFF`, a
+ *   choice's label) and
  *   {@link drawConfirm} (question + YES / NO). Text goes through the list's string slots: a builder
  *   writes a slot only when its text changed, so redrawing a menu never builds strings.
  * - **HUD** (decision D20: two 8-px bars outside the playfield). {@link buildHud} draws the top bar
@@ -51,8 +53,9 @@
  * - shmup_tech.md §4.10 — no UI framework; canvas menus + bitmap font
  *
  * **Public API.** Widgets: {@link ListMenu}, {@link MenuItem}, {@link MenuItemKind},
- * {@link Slider}, {@link Toggle}, {@link Confirm}, {@link ConfirmChoice}, {@link DirectionRepeat},
- * {@link createListMenu}, {@link createSlider}, {@link createToggle}, {@link createConfirm},
+ * {@link Slider}, {@link Toggle}, {@link Choice}, {@link Confirm}, {@link ConfirmChoice},
+ * {@link DirectionRepeat}, {@link createListMenu}, {@link createSlider}, {@link createToggle},
+ * {@link createChoice}, {@link createConfirm},
  * {@link menuTick}, {@link confirmTick}, {@link repeatDirections}, {@link MenuResult},
  * {@link menuResultSfx}, {@link MENU_REPEAT_DELAY}, {@link MENU_REPEAT_INTERVAL},
  * {@link MENU_CONFIRM_BUFFER_TICKS}. Builders: {@link drawPanel}, {@link drawMenu},
@@ -267,6 +270,8 @@ export const MenuItemKind = {
   Slider: 1,
   /** An on / off switch: Left / Right / Confirm flip it. */
   Toggle: 2,
+  /** One of several labels: Left / Right step through them (wrapping), Confirm steps forward. */
+  Choice: 3,
 } as const;
 
 /** A {@link MenuItemKind} code. */
@@ -305,6 +310,34 @@ export class Toggle {
   constructor(public value: boolean) {}
 }
 
+/**
+ * One of several labelled values (the Options screen's CONTROLS: the input profiles). A class so
+ * its index stays an unboxed small integer.
+ */
+export class Choice {
+  /** The labels (upper case), at least one. */
+  readonly labels: readonly string[];
+  /** Index of the chosen label. */
+  index: number;
+
+  /**
+   * Creates the choice (use {@link createChoice}).
+   *
+   * @param labels - The labels.
+   * @param index - Starting index (clamped into range).
+   */
+  constructor(labels: readonly string[], index: number) {
+    this.labels = labels;
+    const last = labels.length - 1;
+    this.index = !(index > 0) ? 0 : index > last ? last : Math.floor(index);
+  }
+
+  /** The chosen label. */
+  get label(): string {
+    return this.labels[this.index];
+  }
+}
+
 /** One entry of a {@link ListMenu}. */
 export interface MenuItem {
   /** Text drawn with the bitmap font (upper case). */
@@ -315,6 +348,8 @@ export interface MenuItem {
   readonly slider: Slider | null;
   /** The toggle of a `Toggle` item, else `null`. */
   readonly toggle: Toggle | null;
+  /** The choice of a `Choice` item, else `null`. */
+  readonly choice: Choice | null;
 }
 
 /**
@@ -425,8 +460,8 @@ export interface ListMenuOptions {
 }
 
 /**
- * An item description for {@link createListMenu}: a label (an action), or a label with a slider or
- * toggle.
+ * An item description for {@link createListMenu}: a label (an action), or a label with a slider,
+ * toggle or choice (the first one given wins).
  */
 export type MenuItemSpec =
   | string
@@ -437,12 +472,14 @@ export type MenuItemSpec =
       readonly slider?: Slider;
       /** A toggle for this item. */
       readonly toggle?: Toggle;
+      /** A choice for this item. */
+      readonly choice?: Choice;
     };
 
 /**
  * Creates a list menu (load time — scenes build their menus once).
  *
- * @param items - Up to 31 items: labels (actions) or `{ label, slider | toggle }`.
+ * @param items - Up to 31 items: labels (actions) or `{ label, slider | toggle | choice }`.
  * @param options - Focus, disabled mask, wrap.
  * @returns The menu, focused on the first enabled item at or after `options.focus`.
  * @throws {RangeError} For no items or more than 31.
@@ -462,12 +499,26 @@ export function createListMenu(
   }
   const built: MenuItem[] = items.map((spec): MenuItem => {
     if (typeof spec === 'string') {
-      return Object.freeze({ label: spec, kind: MenuItemKind.Action, slider: null, toggle: null });
+      return Object.freeze({
+        label: spec,
+        kind: MenuItemKind.Action,
+        slider: null,
+        toggle: null,
+        choice: null,
+      });
     }
     const slider = spec.slider ?? null;
     const toggle = slider === null ? (spec.toggle ?? null) : null;
-    const kind = slider !== null ? MenuItemKind.Slider : toggle !== null ? MenuItemKind.Toggle : 0;
-    return Object.freeze({ label: spec.label, kind, slider, toggle });
+    const choice = slider === null && toggle === null ? (spec.choice ?? null) : null;
+    const kind: MenuItemKind =
+      slider !== null
+        ? MenuItemKind.Slider
+        : toggle !== null
+          ? MenuItemKind.Toggle
+          : choice !== null
+            ? MenuItemKind.Choice
+            : MenuItemKind.Action;
+    return Object.freeze({ label: spec.label, kind, slider, toggle, choice });
   });
   const menu = new ListMenu(
     Object.freeze(built),
@@ -504,6 +555,27 @@ export function createSlider(min: number, max: number, step: number, value: numb
  */
 export function createToggle(value: boolean): Toggle {
   return new Toggle(value);
+}
+
+/**
+ * Creates a choice between labels.
+ *
+ * @param labels - The labels (upper case), 1–255 of them (copied and frozen).
+ * @param index - Starting index (clamped into range; default 0).
+ * @returns The choice.
+ * @throws {RangeError} For no labels or more than 255.
+ *
+ * @example
+ * ```ts
+ * const profile = createChoice(['SAFE 4-WAY (DEFAULT)', 'FAST 8-WAY'], 0);
+ * createListMenu([{ label: 'CONTROLS', choice: profile }]);
+ * ```
+ */
+export function createChoice(labels: readonly string[], index = 0): Choice {
+  if (labels.length === 0 || labels.length > 255) {
+    throw new RangeError(`a choice has 1–255 labels, got ${labels.length}`);
+  }
+  return new Choice(Object.freeze(labels.slice()), index);
 }
 
 /**
@@ -555,7 +627,24 @@ function adjustItem(item: MenuItem, delta: number): boolean {
     toggle.value = value;
     return true;
   }
+  const choice = item.choice;
+  if (choice !== null) return stepChoice(choice, delta);
   return false;
+}
+
+/**
+ * Steps a choice by one label, wrapping at both ends.
+ *
+ * @param choice - The choice.
+ * @param delta - -1 or +1.
+ * @returns Whether the index changed (never for a single label).
+ */
+function stepChoice(choice: Choice, delta: number): boolean {
+  const n = choice.labels.length;
+  if (n < 2) return false;
+  const next = choice.index + delta;
+  choice.index = next < 0 ? n - 1 : next >= n ? 0 : next;
+  return true;
 }
 
 /**
@@ -565,10 +654,11 @@ function adjustItem(item: MenuItem, delta: number): boolean {
  * Order: a Confirm press (re)fills the confirm buffer; Back wins (`Back`); while
  * {@link ListMenu.lockTicks} > 0 activation waits — the lock and the buffer count down, a press
  * older than {@link MENU_CONFIRM_BUFFER_TICKS} ticks is dropped — otherwise a buffered Confirm
- * activates (a disabled item → `Denied`; a toggle flips → `Changed`; anything else → `Confirmed`
- * with `menu.focus` the item). Then the auto-repeated direction (also while locked): Up / Down
- * move the focus over enabled items (wrapping when `wrap`), Left / Right change the focused
- * slider (clamped) or set the toggle (Left off, Right on). Never allocates.
+ * activates (a disabled item → `Denied`; a toggle flips / a choice with two or more labels steps
+ * forward → `Changed`; anything else → `Confirmed` with `menu.focus` the item). Then the
+ * auto-repeated direction (also while locked): Up / Down move the focus over enabled items
+ * (wrapping when `wrap`), Left / Right change the focused slider (clamped), set the toggle (Left
+ * off, Right on) or step the choice (wrapping). Never allocates.
  *
  * @param menu - The menu (updated; `revision` increases on visible changes).
  * @param input - This tick's menu input (one player's, or both merged).
@@ -598,6 +688,11 @@ export function menuTick(menu: ListMenu, input: Readonly<PlayerInput>): MenuResu
     const toggle = item.toggle;
     if (toggle !== null) {
       toggle.value = !toggle.value;
+      menu.revision++;
+      return MenuResult.Changed;
+    }
+    const choice = item.choice;
+    if (choice !== null && stepChoice(choice, 1)) {
       menu.revision++;
       return MenuResult.Changed;
     }
@@ -788,23 +883,26 @@ export interface MenuLayout {
   readonly align?: number;
   /** X of the cursor glyph (default `x - 10`). */
   readonly cursorX?: number;
-  /** X of a slider's bar / a toggle's `ON` / `OFF` (default `x + 80`). */
+  /** X of a slider's bar / a toggle's `ON` / `OFF` / a choice's label (default `x + 80`). */
   readonly valueX?: number;
 }
 
 /**
- * String slots {@link drawMenu} uses for a menu: one per item, then `ON`, `OFF` and the cursor.
+ * String slots {@link drawMenu} uses for a menu: one per item, then `ON`, `OFF` and the cursor,
+ * then one per choice item (its current label).
  *
  * @param menu - The menu.
  * @returns The slot count.
  */
 export function menuStringSlots(menu: ListMenu): number {
-  return menu.items.length + 3;
+  let choices = 0;
+  for (const item of menu.items) if (item.choice !== null) choices++;
+  return menu.items.length + 3 + choices;
 }
 
 /**
  * Draws a menu's items: labels (focused in {@link UI_COLORS}.focus with the `→` cursor, disabled
- * ones dimmed), a slider's bar and value, a toggle's `ON` / `OFF`.
+ * ones dimmed), a slider's bar and value, a toggle's `ON` / `OFF`, a choice's label.
  *
  * @remarks
  * Uses the string slots `stringBase … stringBase + menuStringSlots(menu) − 1` of `list` and writes
@@ -840,6 +938,7 @@ export function drawMenu(
   list.setString(onSlot, 'ON');
   list.setString(offSlot, 'OFF');
   list.setString(cursorSlot, CURSOR);
+  let choiceSlot = cursorSlot + 1;
   let y = layout.y;
   for (let i = 0; i < n; i++) {
     const item = items[i];
@@ -859,6 +958,12 @@ export function drawMenu(
     }
     const toggle = item.toggle;
     if (toggle !== null) list.text(toggle.value ? onSlot : offSlot, valueX, y, color);
+    const choice = item.choice;
+    if (choice !== null) {
+      list.setString(choiceSlot, choice.label);
+      list.text(choiceSlot, valueX, y, color);
+      choiceSlot++;
+    }
     y += lineHeight;
   }
   return y;

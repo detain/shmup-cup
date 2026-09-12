@@ -13,10 +13,16 @@
  * parameter, so START flies in open space until zone A arrives (M1-18).
  *
  * **Input profiles** (decisions D13/D14). The `input-profiles` content is parsed into a
- * registry during boot; the remote uses the saved profile choice (`Platform.storage`, applied
- * as soon as it is read) or `tizen-remote-safe`, gamepads use `gamepad-standard`, and the
- * platform registers the active profile's `register` keys (falling back to
- * `REMOTE_KEYS_TO_REGISTER` when the content has no remote profile).
+ * registry during boot; the remote uses `tizen-remote-safe` until the shell has read the save and
+ * applies the saved choice (plan M1-17 — the choice lives in the save document), gamepads use
+ * `gamepad-standard`, and the platform registers the active profile's `register` keys (falling
+ * back to `REMOTE_KEYS_TO_REGISTER` when the content has no remote profile). The Options screen's
+ * CONTROLS offers the profiles whose menus the remote can drive (`SAFE 4-WAY (DEFAULT)`,
+ * `FAST 8-WAY`) and switches live, registering the new profile's keys.
+ *
+ * **Saves (M1-17).** Options and hi-scores live in `localStorage` (deleted with the app on
+ * uninstall); the save is written when the Options screen closes and when a game ends, so
+ * quitting with Back → YES loses nothing.
  *
  * **Back key** (shmup_feat.md §17/§23). Once the game runs, Back is an ordinary remote key
  * (`Action.Back` in menus, `Action.Pause` in the game — the input profile) and the scene stack
@@ -42,7 +48,8 @@ import {
   chooseInputProfile,
   createInputProfileRegistry,
   createWebInput,
-  loadInputProfileChoice,
+  inputProfileChoices,
+  selectableKeyProfiles,
   type GamepadLike,
   type InputProfile,
   type InputProfileRegistry,
@@ -163,8 +170,9 @@ function applyProfiles(
  * input and audio, then runs `bootShell`, which validates the content (the
  * input profiles into this app's registry), creates the renderer, this app's platform (with the
  * `tizen-remote-safe` profile applied and its keys registered) and the game, and unlocks audio
- * immediately. A saved profile choice is applied — and its keys registered — once storage has
- * answered. Suspend (Home / multitasking) clears held input and suspends audio; resume
+ * immediately. The shell reads the save during boot; a saved profile choice (only one the Options
+ * screen offers) is applied then and its keys registered. Suspend (Home / multitasking) clears
+ * held input and suspends audio; resume
  * resumes audio and the game resets its loop accumulator.
  *
  * @param canvas - Full-screen canvas.
@@ -232,17 +240,20 @@ export async function bootTizenApp(
     scene: sceneFromSearch(searchOf(win)),
     audioUnlock: 'immediate',
     preferWebGLVersion: 1,
+    inputProfiles: {
+      choices: () => inputProfileChoices(profiles.profiles, 'keyCode', DEFAULT_REMOTE_PROFILE_ID),
+      active: () => input.keyProfile?.id ?? null,
+      apply: (id) => {
+        // Only a profile the remote can drive the menus with (never lock the player out).
+        const offered = selectableKeyProfiles(profiles.profiles, 'keyCode');
+        const chosen = chooseInputProfile(offered, [id], KEY_PROFILE_DEVICES);
+        if (chosen === null || chosen === input.keyProfile) return;
+        input.setProfile(chosen);
+        if (tizen !== null) registerRemoteKeys(tizen, chosen.register);
+      },
+    },
   });
   stopBack();
-
-  // The saved choice (Options screen, M2-16) replaces the default once storage answers.
-  let stopped = false;
-  void loadInputProfileChoice(shell.platform.storage).then((saved) => {
-    const chosen = chooseInputProfile(profiles.profiles, [saved], KEY_PROFILE_DEVICES);
-    if (stopped || chosen === null || chosen === input.keyProfile) return;
-    input.setProfile(chosen);
-    if (tizen !== null) registerRemoteKeys(tizen, chosen.register);
-  });
 
   return {
     game: shell.game,
@@ -253,7 +264,6 @@ export async function bootTizenApp(
     profiles,
     shell,
     stop() {
-      stopped = true;
       shell.stop();
     },
   };

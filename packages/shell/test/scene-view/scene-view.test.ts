@@ -105,7 +105,8 @@ describe('shell/scene-view', () => {
     expect(view.update(game.renderFrame()).world).toBe(world);
     // RETRY STAGE: another World, another wrapper.
     press(game, platform, Action.Pause);
-    press(game, platform, Action.Down);
+    press(game, platform, Action.Down); // OPTIONS
+    press(game, platform, Action.Down); // RETRY STAGE
     press(game, platform, Action.Confirm);
     const retried = view.update(game.renderFrame()).world!;
     expect(retried).not.toBe(world);

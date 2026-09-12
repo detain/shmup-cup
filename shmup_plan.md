@@ -1782,6 +1782,79 @@ the browser dev app and as a Tizen 5.5 bundle.
   active profile (fake input); hi-score persists across a new game instance on the same memory storage.
 - **Manual (optional):** on the M7: change volume, quit with Back → YES, relaunch — settings and hi-score persist.
 - **Refs:** `shmup_feat.md` §21 (options, saves), §23 (Tizen lifecycle), §3 (pause on hidden).
+- **As built:**
+  - **Save format** (`core/save`, `implemented`). `SaveData v1 { version, options, hiScores,
+    stats: { gamesStarted, gameOvers, stagesCleared } }` under the key `save.v1` (the web / TV
+    adapters prefix `shmup-cup:`). The key stays `save.v1` for the format family; the document's
+    `version` field drives the migrations (`SAVE_MIGRATIONS[n]`: n → n + 1; no `version` = 0). The
+    "v0" of the acceptance is the pre-release layout of the skeleton's placeholder `SaveData`
+    (flat `hiScores` list, float volumes `masterVolume` … 0–1, `profile`, `unlocks`) — it becomes
+    the `meter-normal` table, levels 0–10 and `input.profileId`; unlocks are dropped (none in v1).
+    Loading never rejects: JSON → migrations → a field-by-field sanitiser (volumes clamped, bad
+    rows dropped, tables sorted best first and cut to 10, ≤ 32 tables, bad mode keys dropped);
+    unparsable JSON or a non-object is `corrupt`, a newer / malformed version `unreadable` — both
+    fall back to defaults and copy the text to `save.corrupt`. Hi-score rows reuse the
+    `core/scoring` `HiScoreEntry` that already existed (name `---`, score, `reached` = stage id or
+    `''`, `mode` `1p`, difficulty); the table key is `hiScoreModeKey(config)` =
+    `<powerUpMode>-<difficulty>` (`meter-normal`). A score enters when it beats the 10th row, ties
+    go below the older rows, a score of 0 never enters. **`SaveStore`** (`createSaveStore`) holds
+    the frozen document and the text last written; `flush()` writes only when the serialised
+    document differs (best effort — never rejects, retries after a failed write), so "write only
+    on change" is the store's job; `writeSave` writes unconditionally.
+  - **User options** (`core/config`): `UserOptions { audio: { master, music, sfx } (levels
+    0–10), input: { profileId | null }, display: {} }`, `DEFAULT_USER_OPTIONS` (all volumes 10 —
+    the current mix), `resolveUserOptions` (defensive), `volumeGain(level) = (level / 10)²` (a
+    perceptual curve), `InputProfileChoice { id, label }`.
+  - **Live options through events.** New `SimEventKind.UserOption` (13, appended) with
+    `UserOptionKind` MasterVolume / MusicVolume / SfxVolume (param = level) / InputProfile (param =
+    index into the flow's profile choices). The shell's new `connectOptionEvents` sets
+    `audio.setBusVolume(bus, volumeGain(level))` — **the SFX level drives the `sfx` and the `ui`
+    bus** (menu sounds follow SFX) — and asks the app to apply the profile; `applyAudioOptions` does
+    the same from the save at boot.
+  - **Options screen** (`core/scenes` `OptionsScene`, an overlay with dim 0.5): opened by
+    OPTIONS on the title and on the pause menu (both **enabled** now; the tests that navigated past
+    the disabled item were updated). MASTER / MUSIC / SFX sliders (0–10, step 1, the UI kit's
+    held-direction repeat), CONTROLS — a new UI-kit widget **`Choice`** (`MenuItemKind.Choice`,
+    `createChoice`: Left / Right step and wrap, OK steps forward; `menuStringSlots` adds one slot
+    per choice for its label) — and BACK. Every change is pushed live; BACK or the Back button
+    stores the options (the profile id only when CONTROLS changed) and flushes the save. CONTROLS is
+    disabled (showing `DEFAULT`) when the host offers no profiles. OK on a slider is silent.
+  - **Hi-scores in the flow.** The flow plays with `GameOptions.save` (or a memory-only store):
+    the session hi-score starts from the saved best of its mode; the **game-over and stage-clear
+    screens** (M1's run ends at the stage clear) insert every playing player's score, count the
+    stat and flush; the game-over screen shows `NEW HI-SCORE` under its panel for a new best.
+    Quitting or RETRY does not record (arcade rule). Each game start counts `gamesStarted`.
+    `SceneFlow` gained `options`, `save`, `modeKey`, `inputProfiles`, `activeInputProfile`;
+    `GameOptions` gained `save` and `inputProfiles` (`InputProfileSetup { choices, active }`).
+  - **Profile choice lives in the save now** (`options.input.profileId`): the apps no longer read
+    input-web's separate `input.profile` key (`loadInputProfileChoice` / `saveInputProfileChoice`
+    stay exported, unused). New input-web `selectableKeyProfiles(profiles, 'code' | 'keyCode')` /
+    `inputProfileChoices(…, defaultId, extra)`: a host offers only profiles whose **menu** table its
+    keys can drive (web: `keyboard-default`, `keyboard-remote-emulation`; TV: `tizen-remote-safe`,
+    `tizen-remote-diagonal`), so a choice can never lock the player out; a saved id outside that
+    set is ignored. The platform default is labelled with ` (DEFAULT)`. The shipped labels became
+    `SAFE 4-WAY`, `FAST 8-WAY`, `KEYBOARD`, `KEYBOARD AS REMOTE` (→ `SAFE 4-WAY (DEFAULT)` on the
+    TV). The web app's `?profile=` override wins over the saved choice (not over a pick in the
+    Options screen) and is offered in CONTROLS too; the TV registers the new profile's keys.
+  - **Shell.** New `ShellOptions.inputProfiles` (`choices()` / `active()` / `apply(id, 'save' |
+    'options')`) and `ShellOptions.now`. After the platform exists (it provides the storage) the
+    shell awaits `loadSave(platform.storage)`, applies the volumes and the saved profile, then
+    creates the game with the store and the profile choices — in the dev scenes too (volumes,
+    profile; bare gameplay ignores the store). `Shell.loadedSave`, `Shell.save`,
+    `Shell.bootTiming { startMs, readyMs, bootMs }` (clock default `performance.now()`, so
+    `readyMs` ≈ the launch time) and the canvas attribute `data-shmup-boot-ms`
+    (`BOOT_MS_ATTRIBUTE`) for the debug overlay of M1-19. A window `blur` listener clears held
+    input (removed on `stop()`).
+  - **Tests.** Core: `test/save/save.test.ts` (round trip, the v0 fixture
+    `test/save/fixtures/save-v0.json`, corrupt / unreadable fallback, sanitising, insertion,
+    the store's write-on-change and failures), `config-user-options.test.ts`, `ui-choice.test.ts`,
+    `scenes-options.test.ts` (live events, saving, hi-scores, the hi-score persisting across a new
+    game instance on the same memory storage), `scenes-options-alloc.test.ts`. input-web:
+    `rebind-choices.test.ts`. Shell: `dispatch-options.test.ts`; boot tests for the save (fake
+    audio volumes, fake app profiles, corrupt save, Options end to end, blur, timing). Apps: the
+    saved choice through the save, CONTROLS entries, a live switch (the TV registering keys). New
+    e2e `options.spec.ts` (web: a MUSIC change saved on Back, read again after a reload; boot
+    time < 10 s).
 
 ### M1-18 — Zone A content, boss & 4-way playtest bot
 

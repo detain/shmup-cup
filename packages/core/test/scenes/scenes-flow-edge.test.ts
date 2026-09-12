@@ -401,13 +401,15 @@ describe('core/scenes flow edge: title', () => {
     expect(s.sounds(from)).toEqual([SFX_CUES.MenuMove, SFX_CUES.MenuMove]);
   });
 
-  it('without EXIT the menu has nowhere to move (OPTIONS disabled) and makes no sound', () => {
+  it('without EXIT the menu moves between START and OPTIONS only', () => {
     const s = new Session('title', false);
     s.press(Action.Confirm);
     const from = s.events.length;
     s.press(Action.Down);
-    s.press(Action.Up);
-    expect([s.flow.title.menu.focus, s.sounds(from)]).toEqual([TitleItem.Start, []]);
+    expect(s.flow.title.menu.focus).toBe(TitleItem.Options);
+    s.press(Action.Down); // wraps
+    expect(s.flow.title.menu.focus).toBe(TitleItem.Start);
+    expect(s.sounds(from)).toEqual([SFX_CUES.MenuMove, SFX_CUES.MenuMove]);
   });
 
   it('Back from the menu without EXIT shows PRESS OK at once with the back sound', () => {
@@ -533,6 +535,7 @@ describe('core/scenes flow edge: game', () => {
     t.game.world.status = 'gameOver';
     t.hold(0, 10);
     t.press(Action.Pause);
+    t.press(Action.Down); // OPTIONS
     t.press(Action.Down); // RETRY
     t.press(Action.Confirm);
     t.hold(0, GAME_OVER_DELAY_TICKS * 2);
@@ -578,8 +581,7 @@ describe('core/scenes flow edge: pause menu and dialogs', () => {
   it('opens on RESUME every time and buffers an OK pressed while it opens', () => {
     const s = new Session('game');
     s.press(Action.Pause);
-    s.press(Action.Down);
-    s.press(Action.Down);
+    s.press(Action.Up); // wraps to QUIT
     expect(s.flow.pause.menu.focus).toBe(PauseItem.Quit);
     s.press(Action.Pause); // resume
     s.hold(Action.Pause); // pause again
@@ -592,19 +594,19 @@ describe('core/scenes flow edge: pause menu and dialogs', () => {
     expect(s.ids).toEqual(['game']); // RESUME
   });
 
-  it('denies the disabled OPTIONS with the back sound', () => {
+  it('opens the Options screen from OPTIONS with the select sound', () => {
     const s = new Session('game');
     s.press(Action.Pause);
-    s.hold(0, 2);
-    s.flow.pause.menu.focus = PauseItem.Options; // forced: navigation skips it
+    s.press(Action.Down);
     const from = s.events.length;
     s.press(Action.Confirm);
-    expect([s.ids, s.sounds(from)]).toEqual([['game', 'pause'], [SFX_CUES.MenuBack]]);
+    expect([s.ids, s.sounds(from)]).toEqual([['game', 'pause', 'options'], [SFX_CUES.MenuSelect]]);
   });
 
   it('RETRY plays the select sound, fades the music out and counts a start', () => {
     const s = new Session('game');
     s.press(Action.Pause);
+    s.press(Action.Down);
     s.press(Action.Down);
     const from = s.events.length;
     s.hold(Action.Confirm);
@@ -789,6 +791,7 @@ describe('core/scenes flow edge: session hi-score', () => {
     const s = new Session('game');
     s.game.world.scoring.board.setHiScore(5000);
     s.press(Action.Pause);
+    s.press(Action.Down); // OPTIONS
     s.press(Action.Down); // RETRY
     s.press(Action.Confirm);
     expect(s.flow.hiScore).toBe(5000);
@@ -841,6 +844,7 @@ describe('core/scenes flow edge: the frame', () => {
     const builds = s.flow.game.hud.builds;
     s.press(Action.Pause);
     s.press(Action.Down);
+    s.press(Action.Down);
     s.press(Action.Confirm); // RETRY
     expect(s.game.renderFrame().hud).toBe(s.flow.game.hudList);
     expect(s.flow.game.hud.builds).toBeGreaterThan(builds);
@@ -852,6 +856,7 @@ describe('core/scenes flow edge: the frame', () => {
       s.startGame();
       for (let t = 0; t < 150; t++) s.hold(t % 40 < 20 ? Action.Up | Action.Shot : Action.Right);
       s.press(Action.Pause);
+      s.press(Action.Down);
       s.press(Action.Down);
       s.press(Action.Confirm); // RETRY
       for (let t = 0; t < 120; t++) s.hold(t % 30 < 15 ? Action.Down : Action.Left);

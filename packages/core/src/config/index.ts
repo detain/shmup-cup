@@ -13,17 +13,31 @@
  * - shmup_feat.md §15 (lives 1–5), §21 Options menu (sim-affecting subset)
  * - shmup_feat.md §6 (Meter mode by default — decision D1; Auto Power-Up — D2; the pickup
  *   magnet — D33)
+ * - shmup_feat.md §21 Options menu — audio master / music / SFX sliders, the controls profile
+ *   (the presentation-only {@link UserOptions})
  *
  * **Public API (implemented now).** {@link GameConfig}, {@link DEFAULT_GAME_CONFIG},
  * {@link resolveGameConfig}, the preset types ({@link StartingLoadout} …), the power-meter slot
  * names ({@link MeterSlotName}, {@link METER_SLOT_NAMES}, {@link DEFAULT_AUTO_POWER_UP_ORDER},
  * {@link MAX_AUTO_POWER_UP_ORDER}) and the screen layout
  * constants {@link HUD_BAR_HEIGHT}, {@link PLAYFIELD_Y}, {@link PLAYFIELD_W}, {@link PLAYFIELD_H}
- * (decision D20: two 8-px HUD bars outside a 384×200 playfield).
+ * (decision D20: two 8-px HUD bars outside a 384×200 playfield). User options:
+ * {@link UserOptions}, {@link AudioOptions}, {@link InputOptions}, {@link DisplayOptions},
+ * {@link DEFAULT_USER_OPTIONS}, {@link VOLUME_LEVELS}, {@link volumeGain},
+ * {@link resolveUserOptions}, {@link InputProfileChoice}, {@link INPUT_PROFILE_ID_PATTERN}.
  *
- * **Planned API.** `UserOptions` (audio/display/controls options that do *not* affect
- * the sim, persisted by `save`), difficulty-preset tables mapping to rank base/growth,
- * lives and extend thresholds (shmup_feat.md §15 [P1]).
+ * **User options (M1-17).** {@link UserOptions} — the *presentation-only* options the player sets
+ * in the Options screen and `core/save` persists (plan §1.5: sim-affecting options live in
+ * {@link GameConfig}, the rest here): the audio volumes MASTER / MUSIC / SFX as levels
+ * `0…`{@link VOLUME_LEVELS} ({@link volumeGain} turns a level into the linear bus gain), the chosen
+ * keyboard / remote input profile ({@link InputOptions.profileId}, `null` = the platform's default)
+ * and the display options (none yet — M2-08). {@link DEFAULT_USER_OPTIONS},
+ * {@link resolveUserOptions} (defensive: anything malformed falls back field by field),
+ * {@link InputProfileChoice} (one entry of the Options screen's profile selector).
+ *
+ * **Planned API.** Difficulty-preset tables mapping to rank base/growth, lives and extend
+ * thresholds (shmup_feat.md §15 [P1]); display options (scale mode, shake, flash reduction —
+ * M2-08 / M2-16).
  *
  * @module
  */
@@ -297,4 +311,144 @@ function requireInteger(name: string, value: number, min: number, max: number): 
   if (!Number.isInteger(value) || value < min || value > max) {
     throw new RangeError(`GameConfig.${name} must be an integer in [${min}, ${max}], got ${value}`);
   }
+}
+
+// ------------------------------------------------------------------------------ user options
+
+/** Highest volume level of the Options screen's sliders (levels run `0…VOLUME_LEVELS`). */
+export const VOLUME_LEVELS = 10;
+
+/** Audio volumes as slider levels `0…`{@link VOLUME_LEVELS} (shmup_feat.md §21). */
+export interface AudioOptions {
+  /** MASTER — every sound. */
+  readonly master: number;
+  /** MUSIC — the music bus. */
+  readonly music: number;
+  /** SFX — the sound effects and the menu sounds (the `sfx` and `ui` buses). */
+  readonly sfx: number;
+}
+
+/** Input options. */
+export interface InputOptions {
+  /**
+   * Id of the keyboard / remote input profile the player chose in the Options screen
+   * (`content/input/`, e.g. `tizen-remote-safe`), or `null` for the platform's default.
+   */
+  readonly profileId: string | null;
+}
+
+/** Display options — none in M1 (scale mode, shake, flash reduction arrive with M2-08 / M2-16). */
+export type DisplayOptions = Readonly<Record<string, never>>;
+
+/**
+ * The player's presentation-only options (plan §1.5: they never affect the simulation, so they are
+ * not in {@link GameConfig} or replays). Persisted by `core/save` (`SaveData.options`).
+ */
+export interface UserOptions {
+  /** Volumes. */
+  readonly audio: AudioOptions;
+  /** Controls. */
+  readonly input: InputOptions;
+  /** Display (empty in M1). */
+  readonly display: DisplayOptions;
+}
+
+/** Defaults: every volume at full level (the mix the audio content was made for), no profile. */
+export const DEFAULT_USER_OPTIONS: UserOptions = Object.freeze({
+  audio: Object.freeze({ master: VOLUME_LEVELS, music: VOLUME_LEVELS, sfx: VOLUME_LEVELS }),
+  input: Object.freeze({ profileId: null }),
+  display: Object.freeze({}),
+});
+
+/** Shape of an input profile id (lower-case kebab, as `content/input/` requires), ≤ 64 characters. */
+export const INPUT_PROFILE_ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+/** One entry of the Options screen's CONTROLS selector: a keyboard / remote input profile. */
+export interface InputProfileChoice {
+  /** Profile id (`content/input/`). */
+  readonly id: string;
+  /** Text shown in the selector (upper case, e.g. `SAFE 4-WAY (DEFAULT)`). */
+  readonly label: string;
+}
+
+/**
+ * The linear bus gain of a volume level: `(level / VOLUME_LEVELS)²` — a perceptual curve, so the
+ * slider's middle sounds about half as loud (level 5 → 0.25, about −12 dB) and level 0 is silent.
+ *
+ * @param level - A volume level (clamped to `0…`{@link VOLUME_LEVELS}; NaN → 0).
+ * @returns The gain for `IAudio.setBusVolume`, 0…1.
+ *
+ * @example
+ * ```ts
+ * audio.setBusVolume('music', volumeGain(options.audio.music)); // level 10 → 1, 5 → 0.25
+ * ```
+ */
+export function volumeGain(level: number): number {
+  if (!(level > 0)) return 0;
+  const x = level >= VOLUME_LEVELS ? 1 : level / VOLUME_LEVELS;
+  return x * x;
+}
+
+/**
+ * Reads a volume level defensively.
+ *
+ * @param value - Anything.
+ * @param fallback - Level used when `value` is not a finite number.
+ * @returns An integer level in `0…VOLUME_LEVELS` (rounded, clamped).
+ */
+function volumeLevel(value: unknown, fallback: number): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return fallback;
+  const level = Math.round(value);
+  return level < 0 ? 0 : level > VOLUME_LEVELS ? VOLUME_LEVELS : level;
+}
+
+/**
+ * Builds valid {@link UserOptions} from anything (a parsed save, a partial update), falling back to
+ * {@link DEFAULT_USER_OPTIONS} field by field — never throws (shmup_feat.md §21: never crash on a
+ * bad save).
+ *
+ * @remarks
+ * Volumes: finite numbers are rounded and clamped to `0…`{@link VOLUME_LEVELS}; anything else takes
+ * the default. `input.profileId`: a string matching {@link INPUT_PROFILE_ID_PATTERN} of at most 64
+ * characters, else `null`. `display` is always `{}` in M1 (unknown fields are dropped). Whether the
+ * profile id names an existing profile is the host's business (an unknown one is skipped when
+ * applied).
+ *
+ * @param value - Candidate options (e.g. `JSON.parse(text).options`).
+ * @returns Frozen, valid options.
+ *
+ * @example
+ * ```ts
+ * resolveUserOptions({ audio: { music: 7.4 } }); // → master 10, music 7, sfx 10, profileId null
+ * resolveUserOptions('garbage');                  // → DEFAULT_USER_OPTIONS' values
+ * ```
+ */
+export function resolveUserOptions(value: unknown): UserOptions {
+  const root = isRecord(value) ? value : {};
+  const audio = isRecord(root.audio) ? root.audio : {};
+  const input = isRecord(root.input) ? root.input : {};
+  const d = DEFAULT_USER_OPTIONS.audio;
+  const id = input.profileId;
+  return Object.freeze({
+    audio: Object.freeze({
+      master: volumeLevel(audio.master, d.master),
+      music: volumeLevel(audio.music, d.music),
+      sfx: volumeLevel(audio.sfx, d.sfx),
+    }),
+    input: Object.freeze({
+      profileId:
+        typeof id === 'string' && id.length <= 64 && INPUT_PROFILE_ID_PATTERN.test(id) ? id : null,
+    }),
+    display: Object.freeze({}),
+  });
+}
+
+/**
+ * Whether a value is a plain (non-array, non-null) object.
+ *
+ * @param value - Anything.
+ * @returns `true` for an object whose fields can be read.
+ */
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

@@ -31,7 +31,7 @@ has in both tables until it is released.
   "profiles": [
     {
       "id": "tizen-remote-safe",   // lower-case kebab, unique across all files (?profile=<id>)
-      "label": "TV REMOTE",        // shown in the Options screen
+      "label": "SAFE 4-WAY",       // shown in the Options screen
       "device": "remote",          // "keyboard" | "remote" (key events) | "gamepad" (polled)
       "context": {
         "game": {

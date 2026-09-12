@@ -37,7 +37,7 @@ shmup-cup/
 │   │   │   ├── module-info.ts  ModuleInfo / defineModule
 │   │   │   ├── platform/       ✔ Platform interface (tech §3.2), headless platform, memory storage
 │   │   │   ├── input/          ✔ Action bits, InputSnapshot, edge latching (feat §4)
-│   │   │   ├── config/         ✔ GameConfig + defaults + validation
+│   │   │   ├── config/         ✔ GameConfig + defaults + validation; UserOptions (volumes, input profile — M1-17)
 │   │   │   ├── loop/           ✔ fixed-step accumulator (snap, cap, reset)
 │   │   │   ├── game/           ✔ createGame(): composition root, suspend/resume; bare gameplay (one World) or the scene flow (options.scenes, M1-16)
 │   │   │   ├── world/          ✔ createWorld / stepWorld: session state + the fixed 9-phase tick pipeline (plan §3.2), pool registry, view
@@ -59,10 +59,11 @@ shmup-cup/
 │   │   │   ├── rank/           ✔ (partial) constant rank from the difficulty, rankScale curves (growth: M2-01)
 │   │   │   ├── scoring/        ✔ (partial) per-player scores (clamp 99,999,990), session hi-score, crediting kills / bonuses / capsules (extends, continues: M2-01)
 │   │   │   ├── fx/             ✔ (partial) hit-stop / shake / flash requests + timers (FxState), exact hit-stop (slowdown: M3-02)
-│   │   │   ├── scenes/         ✔ (partial) scene stack (depth 8, deferred transitions) + the M1 flow: boot → title → game ⇄ pause → stage clear / game over, YES / NO dialog (Tizen exit confirm)
+│   │   │   ├── scenes/         ✔ (partial) scene stack (depth 8, deferred transitions) + the M1 flow: boot → title → game ⇄ pause → stage clear / game over, YES / NO dialog (Tizen exit confirm), Options overlay (M1-17)
 │   │   │   ├── ui/             ✔ (partial) canvas UI kit (list menu, slider, toggle, confirm; 18/6-tick auto-repeat, 4-tick Confirm buffer; draw builders) + the HUD (buildHud, rebuilt only on change)
 │   │   │   ├── debug/          ✔ (partial) hashWorld state hash, debug flags (controls: M1-19)
-│   │   │   └── replay/ save/                               meta & tooling (placeholders)
+│   │   │   ├── save/           ✔ versioned save (save.v1): options, hi-score tables, stats; migrations, defensive parsing, SaveStore (writes only on change) — M1-17
+│   │   │   └── replay/                                     meta & tooling (placeholder)
 │   │   ├── test/<module>/  one folder per module + index.test.ts (module tree invariants); test/helpers/alloc.ts = allocation guard (measureHeapGrowth)
 │   │   ├── tsconfig.json   src only, lib ES2018, no types (purity)
 │   │   ├── tsconfig.build.json  emits dist/ (customConditions off)

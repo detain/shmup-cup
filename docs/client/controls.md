@@ -127,13 +127,14 @@ of the code.
 
 | Profile | Name in the game | Used |
 |---|---|---|
-| `tizen-remote-safe` | TV REMOTE | On the TV (default) |
-| `tizen-remote-diagonal` | TV REMOTE 8-WAY | Same buttons, without the hiccup protection — for remotes that turn out not to need it |
+| `tizen-remote-safe` | SAFE 4-WAY | On the TV (default) |
+| `tizen-remote-diagonal` | FAST 8-WAY | Same buttons, without the hiccup protection — for remotes that turn out not to need it |
 | `keyboard-default` | KEYBOARD | In a browser and on the desktop (default) |
-| `keyboard-remote-emulation` | KEYBOARD AS TV REMOTE | Desktop testers who want to feel the remote's limits (below) |
+| `keyboard-remote-emulation` | KEYBOARD AS REMOTE | Desktop testers who want to feel the remote's limits (below) |
 | `gamepad-standard` | GAMEPAD | Every gamepad, on every device |
 
-A choice will be offered in the Options menu later, and the game remembers it.
+Pick one under **OPTIONS → CONTROLS** (on the TV: the two remote profiles; in a browser: the two
+keyboard ones); the game remembers the choice.
 
 ### Feeling the remote on a desktop keyboard
 

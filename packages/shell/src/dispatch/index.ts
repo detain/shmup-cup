@@ -31,20 +31,35 @@
  * | `Music` (`id` = `MUSIC_CUES`, `param` = fade ticks) | `playMusic(cue, fadeTicks)` |
  * | `MusicDuck` (`param` = ticks) | `duckMusic(ticks)` |
  *
+ * **Options (M1-17).** {@link connectOptionEvents} applies what the Options screen changes, live:
+ *
+ * | Event | Handler |
+ * |---|---|
+ * | `UserOption` `MasterVolume` / `MusicVolume` (`param` = level 0–10) | `audio.setBusVolume('master' / 'music', volumeGain(level))` |
+ * | `UserOption` `SfxVolume` | the same for the `sfx` **and** `ui` buses (menu sounds follow SFX) |
+ * | `UserOption` `InputProfile` (`param` = choice index) | the host's profile callback |
+ *
+ * {@link applyAudioOptions} sets all three from saved options at boot.
+ *
  * **Implements.**
  * - shmup_feat.md §22 Architecture — presentation fed by read-only views + the event queue
  * - shmup_feat.md §19 / §20 — audio cues and "juice" triggered by sim events (handlers M1-14/15)
  *
  * **Public API.** {@link createEventDispatcher}, {@link EventDispatcher},
  * {@link SimEventHandler}, {@link connectFxEvents}, {@link FxTargets},
- * {@link connectAudioEvents}, {@link AudioEventTarget}, {@link CameraPosition}.
+ * {@link connectAudioEvents}, {@link AudioEventTarget}, {@link CameraPosition},
+ * {@link connectOptionEvents}, {@link applyAudioOptions}, {@link VolumeTarget}.
  *
  * @module
  */
 import {
   SIM_EVENT_KIND_NAMES,
   SimEventKind,
+  UserOptionKind,
   defineModule,
+  volumeGain,
+  type AudioBus,
+  type AudioOptions,
   type EventQueue,
   type SimEvent,
 } from '@shmup/core';
@@ -60,7 +75,7 @@ import {
 export const moduleInfo = defineModule({
   name: 'dispatch',
   status: 'implemented',
-  specRefs: ['shmup_feat.md §22', 'shmup_feat.md §19', 'shmup_feat.md §20'],
+  specRefs: ['shmup_feat.md §22', 'shmup_feat.md §19', 'shmup_feat.md §20', 'shmup_feat.md §21'],
 });
 
 /**
@@ -330,4 +345,78 @@ export function connectAudioEvents(
     connected = false;
     for (const unregister of off) unregister();
   };
+}
+
+/** Where volumes go — the audio back-end (`IAudio` has it). */
+export interface VolumeTarget {
+  /**
+   * Sets a bus volume.
+   *
+   * @param bus - Bus name.
+   * @param volume - Linear gain 0…1.
+   */
+  setBusVolume(bus: AudioBus, volume: number): void;
+}
+
+/**
+ * Sets the bus volumes from the player's audio options (boot, after the save is read): `master`,
+ * `music`, and `sfx` + `ui` from the SFX level, each through `volumeGain` (the perceptual curve —
+ * level 10 → 1, 5 → 0.25, 0 → silent).
+ *
+ * @param audio - The audio back-end.
+ * @param options - Levels 0–10.
+ *
+ * @example
+ * ```ts
+ * applyAudioOptions(audio, save.options.audio);
+ * ```
+ */
+export function applyAudioOptions(audio: VolumeTarget, options: AudioOptions): void {
+  audio.setBusVolume('master', volumeGain(options.master));
+  audio.setBusVolume('music', volumeGain(options.music));
+  audio.setBusVolume('sfx', volumeGain(options.sfx));
+  audio.setBusVolume('ui', volumeGain(options.sfx));
+}
+
+/**
+ * Registers the Options screen's handler (plan M1-17, see the module docs): a `UserOption` event
+ * sets a bus volume or calls `onInputProfile` with the chosen profile's index. Load time —
+ * registering allocates the handler; volume events allocate nothing here.
+ *
+ * @param dispatcher - The shell's event dispatcher.
+ * @param audio - The audio back-end.
+ * @param onInputProfile - Applies the profile at an index of the flow's profile choices, or `null`
+ *   (profile events are ignored).
+ * @returns A function that unregisters the handler (idempotent).
+ *
+ * @example
+ * ```ts
+ * connectOptionEvents(shell.events, audio, (index) => profiles.apply(choices[index].id, 'options'));
+ * ```
+ */
+export function connectOptionEvents(
+  dispatcher: EventDispatcher,
+  audio: VolumeTarget,
+  onInputProfile: ((index: number) => void) | null,
+): () => void {
+  return dispatcher.on(SimEventKind.UserOption, (event) => {
+    const value = event.param;
+    switch (event.id) {
+      case UserOptionKind.MasterVolume:
+        audio.setBusVolume('master', volumeGain(value));
+        break;
+      case UserOptionKind.MusicVolume:
+        audio.setBusVolume('music', volumeGain(value));
+        break;
+      case UserOptionKind.SfxVolume:
+        audio.setBusVolume('sfx', volumeGain(value));
+        audio.setBusVolume('ui', volumeGain(value));
+        break;
+      case UserOptionKind.InputProfile:
+        if (onInputProfile !== null) onInputProfile(value);
+        break;
+      default:
+        break;
+    }
+  });
 }

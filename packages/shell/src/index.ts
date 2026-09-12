@@ -6,7 +6,8 @@
  * bar, shows the boot error screen when anything is wrong, creates the renderer, platform and
  * game — running the core's scene flow (title, game, pause …) drawn through `scene-view` — and
  * runs the rAF frame loop that ticks the game, drains its events to registered handlers and
- * renders. The apps stay thin adapters (input, audio, platform, Back key).
+ * renders. It also reads the save before the title (volumes, input profile, hi-scores — M1-17).
+ * The apps stay thin adapters (input, audio, platform, Back key).
  *
  * Dependency direction: `apps/* → @shmup/shell → {render-pixi, audio-web, input-web} → core`.
  *
@@ -15,13 +16,16 @@
 export {
   BOOT_STATE_ATTRIBUTE,
   SCENE_ATTRIBUTE,
+  BOOT_MS_ATTRIBUTE,
   SHELL_SCENES,
   ShellBootError,
   bootShell,
   sceneFromSearch,
+  type BootTiming,
   type Shell,
   type ShellAssets,
   type ShellInput,
+  type ShellInputProfiles,
   type ShellOptions,
   type ShellScene,
 } from './boot/index.js';
@@ -37,11 +41,14 @@ export {
   type LoadableImage,
 } from './loader/index.js';
 export {
+  applyAudioOptions,
   connectFxEvents,
+  connectOptionEvents,
   createEventDispatcher,
   type EventDispatcher,
   type FxTargets,
   type SimEventHandler,
+  type VolumeTarget,
 } from './dispatch/index.js';
 export {
   BOOT_SCREEN_COLORS,

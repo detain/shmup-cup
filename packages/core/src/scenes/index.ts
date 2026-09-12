@@ -18,17 +18,29 @@
  *   - {@link BootScene}: a progress bar until the host calls {@link SceneFlow.finishBoot}; then the
  *     title.
  *   - {@link TitleScene}: the logo, a blinking `PRESS OK`, then the menu START / OPTIONS / EXIT —
- *     EXIT only when the platform can quit (`platform.exit`); OPTIONS is disabled until the
- *     Options screen (M1-17). Plays the title music.
+ *     EXIT only when the platform can quit (`platform.exit`). Shows the saved hi-score, plays the
+ *     title music.
  *   - {@link GameScene}: **owns the World** — every start (and RETRY STAGE) creates a fresh one;
  *     ticks it with the snapshot; Pause (remote Play/Pause, Back — bound to Pause in the game
  *     context) opens the pause menu; `stageClear` / `gameOver` open their screens after a short
  *     delay; draws the HUD (`core/ui` {@link Hud}) and the boss WARNING band.
  *   - {@link PauseScene} (overlay): RESUME / OPTIONS / RETRY STAGE / QUIT TO TITLE — the last one
  *     through the {@link ConfirmDialog}; Pause or Back resumes.
+ *   - {@link OptionsScene} (overlay, M1-17 — from the title and the pause menu): MASTER / MUSIC /
+ *     SFX sliders (levels 0–10, applied **live** through `UserOption` events the host turns into
+ *     bus volumes), CONTROLS — the keyboard / remote input profile, shown by its label (applied
+ *     live the same way) — and BACK, which (like the Back button) stores the options in the save
+ *     and writes it when something changed (shmup_feat.md §21).
  *   - {@link StageClearScene} (overlay): the tally (score, hi-score), then `TO BE CONTINUED` (M1
  *     has one zone), then the title; OK skips ahead.
  *   - {@link GameOverScene} (overlay): OK (after a short lock) or 10 s → title.
+ *
+ *   **Saves (M1-17).** The flow plays with a `core/save` {@link SaveStore} (the host's, loaded
+ *   before the title — or a memory-only one): the session hi-score starts from the saved best of
+ *   the game's mode ({@link SceneFlow.modeKey}); when a game ends on the game-over or stage-clear
+ *   screen its score is inserted into that mode's table (name `---` until the name entry of
+ *   M2-15), the statistics count, and the save is written (only when it changed); closing the
+ *   Options screen writes the options the same way.
  *   - {@link ConfirmDialog} (overlay): YES / NO, focused on NO — the Tizen **exit confirmation**
  *     (Back on the title, or EXIT: `platform.exit()` runs only after YES — shmup_feat.md §23) and
  *     "quit to title?".
@@ -57,6 +69,8 @@
  *   can exit) or back to `PRESS OK`; Up / Down: move (auto-repeat).
  * - **Game** — Pause or Back: pause menu.
  * - **Pause** — Pause or Back: resume; OK: activate; Up / Down: move.
+ * - **Options** — Up / Down: move; Left / Right: change the slider / profile (OK steps the profile
+ *   too); Back or BACK: save and close.
  * - **Confirm** — Left / Up: YES, Right / Down: NO; OK: answer; Back: NO.
  * - **Stage clear** — OK: skip ahead. **Game over** — OK or Back (after a 30-tick lock): title.
  *
@@ -65,27 +79,46 @@
  * - shmup_feat.md §22 — scene stack / state machine
  * - shmup_feat.md §23 — Tizen Back key and exit confirmation, pause on resume
  * - shmup_feat.md §4 — rule 8: menus fully D-pad + OK + Back navigable
+ * - shmup_feat.md §21 — the Options menu (audio sliders, controls profile) and saved hi-scores
  *
  * **Public API.** {@link SceneStack}, {@link createSceneStack}, {@link SCENE_STACK_DEPTH},
  * {@link Scene}, {@link SceneId}, {@link SceneFlow}, {@link SceneFlowHost}, {@link SceneStart},
  * {@link createSceneFlow}, {@link mergeMenuInput}, the scenes ({@link BootScene},
- * {@link TitleScene}, {@link GameScene}, {@link PauseScene}, {@link StageClearScene},
- * {@link GameOverScene}, {@link ConfirmDialog}), {@link ConfirmPurpose}, the menu item indices
- * ({@link TitleItem}, {@link PauseItem}) and the timing constants ({@link STAGE_CLEAR_DELAY_TICKS},
+ * {@link TitleScene}, {@link GameScene}, {@link PauseScene}, {@link OptionsScene},
+ * {@link StageClearScene}, {@link GameOverScene}, {@link ConfirmDialog}), {@link ConfirmPurpose},
+ * {@link InputProfileSetup}, the menu item indices ({@link TitleItem}, {@link PauseItem},
+ * {@link OptionsItem}) and the timing constants ({@link STAGE_CLEAR_DELAY_TICKS},
  * {@link GAME_OVER_DELAY_TICKS}, {@link GAME_OVER_TIMEOUT_TICKS}, {@link GAME_OVER_LOCK_TICKS},
  * {@link STAGE_CLEAR_TALLY_TICKS}, {@link STAGE_CLEAR_CONTINUED_TICKS}, {@link PAUSE_DIM}).
  *
  * **Planned.** Attract mode, mode / ship / weapon select, the zone map, name entry, hi-score
- * table, ending and credits (M2); the Options overlay (M1-17).
+ * table, ending and credits (M2); more option groups (controls rebinding, display, game — M2-16).
  *
  * @module
  */
-import type { GameConfig } from '../config/index.js';
+import {
+  VOLUME_LEVELS,
+  type GameConfig,
+  type InputProfileChoice,
+  type UserOptions,
+} from '../config/index.js';
 import type { ContentDb } from '../data/index.js';
-import { MUSIC_CUES, SFX_CUES, SimEventKind, type EventQueue } from '../events/index.js';
+import {
+  MUSIC_CUES,
+  SFX_CUES,
+  SimEventKind,
+  UserOptionKind,
+  type EventQueue,
+} from '../events/index.js';
 import { Action, type InputContext, type InputSnapshot, type PlayerInput } from '../input/index.js';
 import { defineModule } from '../module-info.js';
 import { TextAlign, createDrawList, type DrawList, type WorldView } from '../presentation/index.js';
+import {
+  createHiScoreEntry,
+  createSaveStore,
+  hiScoreModeKey,
+  type SaveStore,
+} from '../save/index.js';
 import { MAX_SCORE } from '../scoring/index.js';
 import {
   CONFIRM_STRING_SLOTS,
@@ -93,9 +126,11 @@ import {
   MenuResult,
   UI_COLORS,
   confirmTick,
+  createChoice,
   createConfirm,
   createHud,
   createListMenu,
+  createSlider,
   drawConfirm,
   drawMenu,
   drawPanel,
@@ -103,10 +138,12 @@ import {
   menuStringSlots,
   menuTick,
   resolveUiSprites,
+  type Choice,
   type Confirm,
   type Hud,
   type ListMenu,
   type MenuLayout,
+  type Slider,
   type UiSprites,
 } from '../ui/index.js';
 import { stepWorld, type World } from '../world/index.js';
@@ -115,7 +152,13 @@ import { stepWorld, type World } from '../world/index.js';
 export const moduleInfo = defineModule({
   name: 'scenes',
   status: 'partial',
-  specRefs: ['shmup_feat.md §17', 'shmup_feat.md §22', 'shmup_feat.md §23', 'shmup_feat.md §4'],
+  specRefs: [
+    'shmup_feat.md §17',
+    'shmup_feat.md §22',
+    'shmup_feat.md §23',
+    'shmup_feat.md §4',
+    'shmup_feat.md §21',
+  ],
 });
 
 /** Scene identifiers (the M1 set, plus the M2 screens already named by the spec). */
@@ -493,6 +536,25 @@ export interface SceneFlowHost {
    * @returns The World at tick 0.
    */
   createWorld(): World;
+  /**
+   * The save the flow plays with (loaded by the host before the title — `core/save` `loadSave` +
+   * `createSaveStore`): the options the Options screen shows and stores, the hi-score tables. When
+   * omitted or `null` the flow uses a memory-only store with the defaults (nothing persists).
+   */
+  readonly save?: SaveStore | null;
+  /**
+   * The keyboard / remote input profiles the Options screen's CONTROLS item offers, and the one in
+   * use. Omitted or `null` (or no choices): CONTROLS is disabled.
+   */
+  readonly inputProfiles?: InputProfileSetup | null;
+}
+
+/** The input profiles a host lets the player choose from (the Options screen's CONTROLS). */
+export interface InputProfileSetup {
+  /** The profiles, in the order the selector steps through them. */
+  readonly choices: readonly InputProfileChoice[];
+  /** Id of the profile in use when the flow starts (`null` or unknown: the first choice is shown). */
+  readonly active: string | null;
 }
 
 /** Where a flow starts: the boot screen, the title, or straight in a game (dev / tests). */
@@ -511,15 +573,18 @@ export type ConfirmPurpose = (typeof ConfirmPurpose)[keyof typeof ConfirmPurpose
 
 /**
  * Title menu items (indices into the title menu; EXIT only exists when the platform can quit).
- * OPTIONS is disabled until the Options screen (M1-17).
+ * OPTIONS opens the {@link OptionsScene}.
  */
 export const TitleItem = { Start: 0, Options: 1, Exit: 2 } as const;
 
 /**
- * Pause menu items: RESUME, OPTIONS (disabled until M1-17), RETRY STAGE (no confirmation),
- * QUIT TO TITLE (through the {@link ConfirmDialog}).
+ * Pause menu items: RESUME, OPTIONS (the {@link OptionsScene} over the paused game), RETRY STAGE
+ * (no confirmation), QUIT TO TITLE (through the {@link ConfirmDialog}).
  */
 export const PauseItem = { Resume: 0, Options: 1, Retry: 2, Quit: 3 } as const;
+
+/** Options screen items: the three volume sliders, the input profile, BACK. */
+export const OptionsItem = { Master: 0, Music: 1, Sfx: 2, Controls: 3, Back: 4 } as const;
 
 /** Ticks the game runs on after `stageClear` before the stage-clear screen opens. */
 export const STAGE_CLEAR_DELAY_TICKS = 90;
@@ -541,6 +606,9 @@ export const STAGE_CLEAR_CONTINUED_TICKS = 240;
 
 /** Dim of the world under the pause menu and the dialogs. */
 export const PAUSE_DIM = 0.5;
+
+/** The `mode` of the hi-score rows a game records (one player — shmup_feat.md §16). */
+const HI_SCORE_MODE_1P = '1p';
 
 /** Ticks a menu ignores input after it opened (a buffered OK still counts). */
 const MENU_OPEN_LOCK_TICKS = 2;
@@ -579,6 +647,18 @@ const PAUSE_MENU_LAYOUT: MenuLayout = Object.freeze({
   cursorX: CX - 60,
 });
 
+/** The Options screen's panel: left, top, width, height. */
+const OPTIONS_PANEL = Object.freeze({ x: 48, y: 48, w: 288, h: 112 });
+
+/** Where the Options menu is drawn (labels left, values from x 150). */
+const OPTIONS_MENU_LAYOUT: MenuLayout = Object.freeze({
+  x: 72,
+  y: 78,
+  lineHeight: 14,
+  cursorX: 62,
+  valueX: 150,
+});
+
 /**
  * The flow's side of the scenes (what they call back). Built by {@link createSceneFlow} before
  * the scenes, which receive it in their constructors (the scene fields are filled right after).
@@ -606,6 +686,31 @@ interface FlowControl {
   readonly gameOver: GameOverScene;
   /** The YES / NO dialog. */
   readonly confirm: ConfirmDialog;
+  /** The Options screen. */
+  readonly options: OptionsScene;
+  /** The save the flow plays with. */
+  readonly save: SaveStore;
+  /** The hi-score table of the session's games ({@link hiScoreModeKey} of the config). */
+  readonly modeKey: string;
+  /** The input profiles CONTROLS offers (empty: CONTROLS disabled). */
+  readonly profiles: readonly InputProfileChoice[];
+  /** Index of the profile in use in {@link FlowControl.profiles} (-1 = none of them). */
+  activeProfile: number;
+  /**
+   * Pushes a `UserOption` event (the host applies it).
+   *
+   * @param kind - A `UserOptionKind` code.
+   * @param value - The new value.
+   */
+  userOption(kind: number, value: number): void;
+  /**
+   * A game ended on its end screen: records every playing player's score in the mode's table,
+   * counts the statistic and writes the save when it changed.
+   *
+   * @param cleared - `true` for a stage clear, `false` for a game over.
+   * @returns Player 1's rank in the table (0 = best), or -1 when the score did not enter.
+   */
+  recordRun(cleared: boolean): number;
   /**
    * Pushes an SFX event at x 0 (menu sounds — their cues play unpanned on the UI bus).
    *
@@ -750,8 +855,9 @@ const TitlePhase = { Prompt: 0, Menu: 1 } as const;
  *
  * @remarks
  * Draws the `ui/logo` sprite (or `SHMUP CUP` as text when the content lacks it), a `PRESS OK` that
- * blinks with a 32-tick half-period, and the session hi-score. OK opens the menu (locked for 2
- * ticks, focus on START). START replaces the title with the game; EXIT and Back open the exit
+ * blinks with a 32-tick half-period, and the session hi-score (from the save's best at start). OK
+ * opens the menu (locked for 2 ticks, focus on START). START replaces the title with the game;
+ * OPTIONS opens the {@link OptionsScene} over the title; EXIT and Back open the exit
  * confirmation when the platform can exit — otherwise Back returns from the menu to `PRESS OK`
  * (and does nothing on `PRESS OK`). Entering the title always shows `PRESS OK` and queues the title
  * music.
@@ -774,8 +880,7 @@ export class TitleScene extends SceneBase {
   constructor(flow: FlowControl) {
     super(flow);
     const items = flow.host.exit !== null ? ['START', 'OPTIONS', 'EXIT'] : ['START', 'OPTIONS'];
-    // OPTIONS opens the Options screen of M1-17; disabled until then.
-    this.menu = createListMenu(items, { disabledMask: 1 << TitleItem.Options });
+    this.menu = createListMenu(items);
   }
 
   /** Whether the menu is showing (else `PRESS OK`). */
@@ -803,8 +908,8 @@ export class TitleScene extends SceneBase {
   }
 
   /**
-   * `PRESS OK` → menu; START → game; EXIT / Back → exit confirmation (when the platform can
-   * quit). Reads the merged menu input. Never allocates.
+   * `PRESS OK` → menu; START → game; OPTIONS → the Options screen; EXIT / Back → exit
+   * confirmation (when the platform can quit). Reads the merged menu input. Never allocates.
    */
   tick(): void {
     const flow = this.flow;
@@ -844,6 +949,9 @@ export class TitleScene extends SceneBase {
       if (menu.focus === TitleItem.Start) {
         flow.sfx(SFX_CUES.MenuSelect);
         flow.stack.replace(flow.game);
+      } else if (menu.focus === TitleItem.Options) {
+        flow.sfx(SFX_CUES.MenuSelect);
+        flow.stack.push(flow.options);
       } else if (menu.focus === TitleItem.Exit) {
         flow.ask(ConfirmPurpose.Exit);
       }
@@ -943,7 +1051,9 @@ export class GameScene extends SceneBase {
    *
    * @remarks
    * Allocates the new World (a scene transition, never a tick). The old World's best score is
-   * recorded first; the end-screen delay and the WARNING look reset, the HUD is invalidated.
+   * recorded first (into the session hi-score — the saved tables only take finished games); the
+   * end-screen delay and the WARNING look reset, the HUD is invalidated; the save counts a game
+   * start (written with the next save write).
    */
   restart(): void {
     this.recordHiScore();
@@ -953,6 +1063,7 @@ export class GameScene extends SceneBase {
     world.scoring.board.setHiScore(flow.hiScore);
     this.world = world;
     this.starts++;
+    flow.save.count('gamesStarted');
     this.endTicks = 0;
     this.warningLook = 0;
     this.hud.invalidate();
@@ -1033,7 +1144,7 @@ export class GameScene extends SceneBase {
  * activation for 2 ticks (a buffered OK still counts). Pause, Back and RESUME close it with the
  * pause sound; RETRY STAGE restarts the game scene with a fresh World and closes it (no
  * confirmation); QUIT TO TITLE opens the {@link ConfirmDialog}, which is drawn over the still
- * visible menu. OPTIONS is disabled until M1-17 (OK on it plays `MenuBack`).
+ * visible menu. OPTIONS opens the {@link OptionsScene} over the menu (the game stays frozen).
  */
 export class PauseScene extends SceneBase {
   /** See {@link Scene.id}. */
@@ -1043,9 +1154,7 @@ export class PauseScene extends SceneBase {
   /** {@link PAUSE_DIM}. */
   override readonly dim = PAUSE_DIM;
   /** The pause menu. */
-  readonly menu: ListMenu = createListMenu(['RESUME', 'OPTIONS', 'RETRY STAGE', 'QUIT TO TITLE'], {
-    disabledMask: 1 << PauseItem.Options,
-  });
+  readonly menu: ListMenu = createListMenu(['RESUME', 'OPTIONS', 'RETRY STAGE', 'QUIT TO TITLE']);
 
   /** See {@link SceneBase.stringSlots}. */
   get stringSlots(): number {
@@ -1072,8 +1181,8 @@ export class PauseScene extends SceneBase {
   }
 
   /**
-   * Pause / Back / RESUME resume; RETRY STAGE restarts; QUIT TO TITLE asks first. Never
-   * allocates.
+   * Pause / Back / RESUME resume; OPTIONS opens the Options screen; RETRY STAGE restarts; QUIT TO
+   * TITLE asks first. Never allocates.
    */
   tick(): void {
     const flow = this.flow;
@@ -1093,6 +1202,9 @@ export class PauseScene extends SceneBase {
     if (result === MenuResult.Confirmed) {
       if (menu.focus === PauseItem.Resume) {
         this.resume();
+      } else if (menu.focus === PauseItem.Options) {
+        flow.sfx(SFX_CUES.MenuSelect);
+        flow.stack.push(flow.options);
       } else if (menu.focus === PauseItem.Retry) {
         flow.sfx(SFX_CUES.MenuSelect);
         flow.game.restart();
@@ -1119,6 +1231,163 @@ export class PauseScene extends SceneBase {
   }
 }
 
+/**
+ * The Options screen: MASTER / MUSIC / SFX sliders, CONTROLS (the input profile), BACK
+ * (shmup_feat.md §21, plan M1-17).
+ *
+ * @remarks
+ * An overlay (dim {@link PAUSE_DIM}) with an opaque panel, opened from the title and from the pause
+ * menu (both stay drawn under it; a game under the pause menu stays frozen). Opening it reads the
+ * save's options into the sliders (levels `0…`{@link VOLUME_LEVELS}) and the profile in use into
+ * CONTROLS, focuses MASTER and locks activation for 2 ticks. Every change applies **live**: a
+ * slider pushes a `UserOption` event with its level (`MasterVolume` / `MusicVolume` /
+ * `SfxVolume`), CONTROLS — Left / Right, or OK stepping forward, wrapping — one with the profile's
+ * index (`InputProfile`); both play the move sound (at the new volume). BACK or the Back button
+ * stores the sliders and — when it changed — the profile id in the save, writes the save when
+ * anything differs from what is stored (`SaveStore.flush`), plays `MenuBack` and closes. CONTROLS
+ * is disabled when the host offers no profiles (it then shows `DEFAULT`).
+ */
+export class OptionsScene extends SceneBase {
+  /** See {@link Scene.id}. */
+  readonly id = 'options' as const;
+  /** An overlay: the title or the paused game stays visible under it. */
+  override readonly overlay = true;
+  /** {@link PAUSE_DIM}. */
+  override readonly dim = PAUSE_DIM;
+  /** MASTER level. */
+  readonly master: Slider = createSlider(0, VOLUME_LEVELS, 1, VOLUME_LEVELS);
+  /** MUSIC level. */
+  readonly music: Slider = createSlider(0, VOLUME_LEVELS, 1, VOLUME_LEVELS);
+  /** SFX level. */
+  readonly sfx: Slider = createSlider(0, VOLUME_LEVELS, 1, VOLUME_LEVELS);
+  /** CONTROLS: the profile labels (`DEFAULT` alone when the host offers none). */
+  readonly controls: Choice;
+  /** The menu. */
+  readonly menu: ListMenu;
+  /** The CONTROLS index when the screen opened (a different one on close is saved). */
+  private openedProfile = 0;
+
+  /**
+   * Creates the screen.
+   *
+   * @param flow - The flow (its profile choices must be set).
+   */
+  constructor(flow: FlowControl) {
+    super(flow);
+    const profiles = flow.profiles;
+    const labels: string[] = [];
+    for (const profile of profiles) labels.push(profile.label);
+    if (labels.length === 0) labels.push('DEFAULT');
+    this.controls = createChoice(labels, 0);
+    this.menu = createListMenu(
+      [
+        { label: 'MASTER', slider: this.master },
+        { label: 'MUSIC', slider: this.music },
+        { label: 'SFX', slider: this.sfx },
+        { label: 'CONTROLS', choice: this.controls },
+        'BACK',
+      ],
+      { disabledMask: profiles.length === 0 ? 1 << OptionsItem.Controls : 0 },
+    );
+  }
+
+  /** See {@link SceneBase.stringSlots}. */
+  get stringSlots(): number {
+    return 1 + menuStringSlots(this.menu);
+  }
+
+  /** Reads the save's volumes and the profile in use; focus on MASTER, locked for 2 ticks. */
+  override enter(): void {
+    super.enter();
+    const flow = this.flow;
+    const audio = flow.save.options.audio;
+    this.master.value = audio.master;
+    this.music.value = audio.music;
+    this.sfx.value = audio.sfx;
+    this.controls.index = flow.activeProfile >= 0 ? flow.activeProfile : 0;
+    this.openedProfile = this.controls.index;
+    this.menu.focus = OptionsItem.Master;
+    this.menu.open(MENU_OPEN_LOCK_TICKS);
+  }
+
+  /**
+   * Stores the options in the save, writes it when anything changed, and closes the screen.
+   */
+  private close(): void {
+    const flow = this.flow;
+    const save = flow.save;
+    const chosen = this.controls.index;
+    const profileId =
+      chosen !== this.openedProfile && chosen < flow.profiles.length
+        ? flow.profiles[chosen].id
+        : save.options.input.profileId;
+    const options: UserOptions = {
+      audio: { master: this.master.value, music: this.music.value, sfx: this.sfx.value },
+      input: { profileId },
+      display: save.options.display,
+    };
+    save.setOptions(options);
+    void save.flush();
+    flow.sfx(SFX_CUES.MenuBack);
+    flow.stack.pop();
+  }
+
+  /**
+   * Moves the focus, applies a changed slider or profile at once, BACK / Back saves and closes.
+   * Never allocates (closing builds the options object — a menu action, not a tick path).
+   */
+  tick(): void {
+    const flow = this.flow;
+    const menu = this.menu;
+    const before = menu.revision;
+    const result = menuTick(menu, flow.menuInput);
+    if (menu.revision !== before) this.uiRevision++;
+    if (
+      result === MenuResult.Back ||
+      (result === MenuResult.Confirmed && menu.focus === OptionsItem.Back)
+    ) {
+      this.close();
+      return;
+    }
+    if (result === MenuResult.Changed) {
+      switch (menu.focus) {
+        case OptionsItem.Master:
+          flow.userOption(UserOptionKind.MasterVolume, this.master.value);
+          break;
+        case OptionsItem.Music:
+          flow.userOption(UserOptionKind.MusicVolume, this.music.value);
+          break;
+        case OptionsItem.Sfx:
+          flow.userOption(UserOptionKind.SfxVolume, this.sfx.value);
+          break;
+        case OptionsItem.Controls:
+          flow.activeProfile = this.controls.index;
+          flow.userOption(UserOptionKind.InputProfile, this.controls.index);
+          break;
+        default:
+          break;
+      }
+    }
+    // OK on a slider changes nothing and makes no sound.
+    if (result === MenuResult.Confirmed) return;
+    flow.menuSound(result);
+  }
+
+  /**
+   * Draws the panel, `OPTIONS` and the menu.
+   *
+   * @param list - The UI list.
+   */
+  drawUi(list: DrawList): void {
+    const base = this.stringBase;
+    const p = OPTIONS_PANEL;
+    drawPanel(list, p.x, p.y, p.w, p.h, UI_COLORS.panel, UI_COLORS.border, 255);
+    list.setString(base, 'OPTIONS');
+    list.text(base, CX, p.y + 8, UI_COLORS.title, TextAlign.Center);
+    drawMenu(list, this.menu, base + 1, OPTIONS_MENU_LAYOUT);
+  }
+}
+
 /** Stage-clear phases. */
 const ClearPhase = { Tally: 0, Continued: 1 } as const;
 
@@ -1130,7 +1399,8 @@ const ClearPhase = { Tally: 0, Continued: 1 } as const;
  * the hi-score for {@link STAGE_CLEAR_TALLY_TICKS}, then `TO BE CONTINUED` for
  * {@link STAGE_CLEAR_CONTINUED_TICKS}, then the title; OK skips each phase at once (Back does
  * nothing). Queues the stage-clear jingle with no fade (a boss's death already started it; the
- * music player does not restart a playing track).
+ * music player does not restart a playing track). Entering it ends the run (M1 has one zone): the
+ * score goes into the saved hi-score table and the save is written.
  */
 export class StageClearScene extends SceneBase {
   /** See {@link Scene.id}. */
@@ -1143,17 +1413,23 @@ export class StageClearScene extends SceneBase {
   phase: number = ClearPhase.Tally;
   /** Ticks in the current phase. */
   ticks = 0;
+  /** Player 1's rank in the saved table (0 = best), or -1 when the score did not enter. */
+  rank = -1;
 
   /** See {@link SceneBase.stringSlots}. */
   get stringSlots(): number {
     return 4;
   }
 
-  /** The tally starts; the stage-clear jingle plays (not restarted when already playing). */
+  /**
+   * The tally starts; the run's scores are recorded (and saved); the stage-clear jingle plays (not
+   * restarted when already playing).
+   */
   override enter(): void {
     super.enter();
     this.phase = ClearPhase.Tally;
     this.ticks = 0;
+    this.rank = this.flow.recordRun(true);
     this.flow.music(MUSIC_CUES.StageClear, 0);
   }
 
@@ -1209,8 +1485,9 @@ export class StageClearScene extends SceneBase {
  * An overlay (dim 0.35) over the frozen game: a red-edged panel with `GAME OVER` and player 1's
  * final score, the game-over music. OK or Back are ignored for {@link GAME_OVER_LOCK_TICKS}
  * ticks (a mashed button does not skip it), then return to the title; after
- * {@link GAME_OVER_TIMEOUT_TICKS} it returns by itself. The score joins the session hi-score when
- * the game scene leaves the stack.
+ * {@link GAME_OVER_TIMEOUT_TICKS} it returns by itself. Entering it records the run: the score goes
+ * into the saved hi-score table (`NEW HI-SCORE` under the panel when it is the new best) and the
+ * save is written; the score joins the session hi-score when the game scene leaves the stack.
  */
 export class GameOverScene extends SceneBase {
   /** See {@link Scene.id}. */
@@ -1221,16 +1498,19 @@ export class GameOverScene extends SceneBase {
   override readonly dim = 0.35;
   /** Ticks since it opened. */
   ticks = 0;
+  /** Player 1's rank in the saved table (0 = best), or -1 when the score did not enter. */
+  rank = -1;
 
   /** See {@link SceneBase.stringSlots}. */
   get stringSlots(): number {
-    return 2;
+    return 3;
   }
 
-  /** Game-over music. */
+  /** Records the run (and saves), game-over music. */
   override enter(): void {
     super.enter();
     this.ticks = 0;
+    this.rank = this.flow.recordRun(false);
     this.flow.music(MUSIC_CUES.GameOver, 0);
   }
 
@@ -1249,7 +1529,7 @@ export class GameOverScene extends SceneBase {
   }
 
   /**
-   * Draws `GAME OVER` and the final score.
+   * Draws `GAME OVER`, the final score and — when it is the new best — `NEW HI-SCORE`.
    *
    * @param list - The UI list.
    */
@@ -1258,6 +1538,8 @@ export class GameOverScene extends SceneBase {
     drawPanel(list, CX - 72, 80, 144, 44, UI_COLORS.panel, UI_COLORS.alert);
     list.setString(base, 'GAME OVER');
     list.setString(base + 1, 'SCORE');
+    list.setString(base + 2, 'NEW HI-SCORE');
+    if (this.rank === 0) list.text(base + 2, CX, 130, UI_COLORS.focus, TextAlign.Center);
     list.text(base, CX, 88, UI_COLORS.alert, TextAlign.Center);
     list.text(base + 1, CX - 56, 106, UI_COLORS.title);
     list.number(
@@ -1370,6 +1652,22 @@ export interface SceneFlow {
   readonly gameOver: GameOverScene;
   /** The YES / NO dialog. */
   readonly confirm: ConfirmDialog;
+  /** The Options screen. */
+  readonly options: OptionsScene;
+  /**
+   * The save the flow plays with (the host's store, or a memory-only one): options, hi-score
+   * tables, stats.
+   */
+  readonly save: SaveStore;
+  /** The hi-score table the session's games go into (`core/save` `hiScoreModeKey(config)`). */
+  readonly modeKey: string;
+  /** The input profiles the Options screen offers (empty: CONTROLS disabled). */
+  readonly inputProfiles: readonly InputProfileChoice[];
+  /**
+   * Index of the input profile in use in {@link SceneFlow.inputProfiles} (-1 = none of them —
+   * the host's own default). Changed by the Options screen.
+   */
+  readonly activeInputProfile: number;
   /** The top scene's binding context (`'menu'` on an empty stack). */
   readonly inputContext: InputContext;
   /** The World of the game scene (a fresh one per game; a placeholder before the first). */
@@ -1420,7 +1718,8 @@ export interface SceneFlow {
    */
   onResume(): void;
   /**
-   * Raises the session hi-score (the saved best of M1-17); a lower value changes nothing.
+   * Raises the session hi-score (the flow starts from the save's best of its mode); a lower value
+   * changes nothing.
    *
    * @param value - A hi-score (floored; capped at the scoring's `MAX_SCORE` like the board's).
    */
@@ -1455,9 +1754,11 @@ export interface SceneFlowView {
  * the stage; note that this clears the whole `host.events` queue). `start` `'boot'` waits for
  * {@link SceneFlow.finishBoot}; `'title'` starts on the title (title music queued); `'game'`
  * starts a game at once (dev / tests). Each scene gets its own range of the UI list's 96 string
- * slots. `core/game` `createGame(…, { scenes })` calls this for you.
+ * slots. The session hi-score starts from `host.save`'s best score of the config's mode (a
+ * memory-only store with the defaults when the host has none). `core/game`
+ * `createGame(…, { scenes, save, inputProfiles })` calls this for you.
  *
- * @param host - The session: config, content, event queue, exit, World factory.
+ * @param host - The session: config, content, event queue, exit, World factory, save, profiles.
  * @param start - First scene (default `'boot'`).
  * @returns The running flow.
  * @throws {RangeError} When the scenes need more string slots than the UI list has (a
@@ -1475,12 +1776,49 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
   const stack = createSceneStack();
   const events = host.events;
   const menuInput: PlayerInput = { held: 0, pressed: 0, released: 0, device: 'none' };
+  const save = host.save ?? createSaveStore(null);
+  const modeKey = hiScoreModeKey(host.config);
+  const setup = host.inputProfiles ?? null;
+  const profiles: readonly InputProfileChoice[] = setup === null ? [] : setup.choices;
+  let activeProfile = -1;
+  if (setup !== null) {
+    for (let i = 0; i < profiles.length; i++)
+      if (profiles[i].id === setup.active) activeProfile = i;
+  }
   const control = {
     stack,
     host,
     sprites: resolveUiSprites(host.content),
     menuInput,
     hiScore: 0,
+    save,
+    modeKey,
+    profiles,
+    activeProfile,
+    userOption(kind: number, value: number): void {
+      events.push(SimEventKind.UserOption, kind, 0, 0, value);
+    },
+    recordRun(cleared: boolean): number {
+      const world = control.game.world;
+      const scores = world.scoring.board.scores;
+      const reached = world.stage === null ? '' : world.stage.stage.id;
+      let rank = -1;
+      for (let p = 0; p < scores.length && p < world.players.length; p++) {
+        if (p > 0 && !world.players[p].active) continue;
+        const r = save.recordScore(
+          modeKey,
+          createHiScoreEntry(scores[p].score, {
+            reached,
+            mode: HI_SCORE_MODE_1P,
+            difficulty: host.config.difficulty,
+          }),
+        );
+        if (p === 0) rank = r;
+      }
+      save.count(cleared ? 'stagesCleared' : 'gameOvers');
+      void save.flush();
+      return rank;
+    },
     sfx(cue: number): void {
       events.push(SimEventKind.Sfx, cue, 0, 0, 0);
     },
@@ -1507,6 +1845,9 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
   control.stageClear = new StageClearScene(control);
   control.gameOver = new GameOverScene(control);
   control.confirm = new ConfirmDialog(control);
+  control.options = new OptionsScene(control);
+  control.hiScore = Math.min(MAX_SCORE, save.bestScore(modeKey));
+  control.game.world.scoring.board.setHiScore(control.hiScore);
   // The placeholder World queued its stage theme; the flow does not start in the stage.
   events.clear();
 
@@ -1518,6 +1859,7 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     control.stageClear,
     control.gameOver,
     control.confirm,
+    control.options,
   ];
   let base = 0;
   for (const scene of scenes) {
@@ -1557,6 +1899,13 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     stageClear: control.stageClear,
     gameOver: control.gameOver,
     confirm: control.confirm,
+    options: control.options,
+    save,
+    modeKey,
+    inputProfiles: profiles,
+    get activeInputProfile(): number {
+      return control.activeProfile;
+    },
     get inputContext(): InputContext {
       const top = stack.top;
       return top === null ? 'menu' : top.inputContext;

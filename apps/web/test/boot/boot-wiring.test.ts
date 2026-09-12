@@ -8,8 +8,7 @@
  * clean stop().
  */
 import type * as AudioWeb from '@shmup/audio-web';
-import { Action, type PlatformStorage } from '@shmup/core';
-import type * as InputWeb from '@shmup/input-web';
+import { Action, SimEventKind, UserOptionKind } from '@shmup/core';
 import type * as RenderPixi from '@shmup/render-pixi';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildAtlas } from '../../../../scripts/assets/pipeline.mjs';
@@ -90,21 +89,14 @@ vi.mock('@shmup/render-pixi', async (importOriginal) => {
 });
 
 /**
- * Lets a test hold back the saved profile choice (`loadInputProfileChoice`) until it releases
- * the gate — the real storage answers within the same task. `null` = no gate.
+ * A save document (`core/save` v1) that names an input profile.
+ *
+ * @param profileId - The saved profile id.
+ * @returns The stored JSON text.
  */
-const choiceGate = vi.hoisted(() => ({ wait: null as Promise<void> | null }));
-
-vi.mock('@shmup/input-web', async (importOriginal) => {
-  const real = await importOriginal<typeof InputWeb>();
-  return {
-    ...real,
-    loadInputProfileChoice: (storage: PlatformStorage) =>
-      choiceGate.wait === null
-        ? real.loadInputProfileChoice(storage)
-        : choiceGate.wait.then(() => real.loadInputProfileChoice(storage)),
-  };
-});
+function savedProfile(profileId: string): string {
+  return JSON.stringify({ version: 1, options: { input: { profileId } } });
+}
 
 vi.mock('@shmup/audio-web', async (importOriginal) => {
   const real = await importOriginal<typeof AudioWeb>();
@@ -221,7 +213,6 @@ let win: FakeWindow;
 beforeEach(() => {
   vi.stubGlobal('Image', FakeImage);
   win = new FakeWindow();
-  choiceGate.wait = null;
   fakes.renderer.options = null;
   fakes.renderer.spriteNames.length = 0;
   fakes.renderer.ticks.length = 0;
@@ -438,14 +429,13 @@ describe('web/boot bootWebApp wiring', () => {
   });
 
   it('applies the saved profile choice unless ?profile= overrides it', async () => {
-    win.stored.set('shmup-cup:input.profile', 'keyboard-remote-emulation');
+    win.stored.set('shmup-cup:save.v1', savedProfile('keyboard-remote-emulation'));
     const saved = await boot();
-    await flush();
     expect(saved.app.input.keyProfile?.id).toBe('keyboard-remote-emulation');
     saved.app.stop();
 
     win = new FakeWindow();
-    win.stored.set('shmup-cup:input.profile', 'keyboard-remote-emulation');
+    win.stored.set('shmup-cup:save.v1', savedProfile('keyboard-remote-emulation'));
     win.location.search = '?profile=tizen-remote-safe';
     const overridden = await boot();
     await flush();
@@ -636,51 +626,47 @@ describe('web/boot input profiles (edge cases)', () => {
   });
 
   it('?debounce= also applies to the saved choice', async () => {
-    win.stored.set('shmup-cup:input.profile', 'keyboard-remote-emulation');
+    win.stored.set('shmup-cup:save.v1', savedProfile('keyboard-remote-emulation'));
     win.location.search = '?debounce=5';
     const { app } = await boot();
-    expect(app.input.keyboard.tuning.releaseDebounceTicks).toBe(5); // keyboard-default + override
-    await flush();
     expect(app.input.keyProfile?.id).toBe('keyboard-remote-emulation');
     expect(app.input.keyProfile?.releaseDebounceTicks).toBe(5);
     expect(app.input.keyboard.tuning.releaseDebounceTicks).toBe(5);
   });
 
-  it('ignores a saved choice that is unknown or names a gamepad profile', async () => {
-    for (const saved of ['no-such-profile', 'gamepad-standard']) {
+  it('ignores a saved choice that is unknown, a gamepad profile or not offered in a browser', async () => {
+    for (const saved of ['no-such-profile', 'gamepad-standard', 'tizen-remote-safe']) {
       win = new FakeWindow();
-      win.stored.set('shmup-cup:input.profile', saved);
+      win.stored.set('shmup-cup:save.v1', savedProfile(saved));
       const { app } = await boot();
-      await flush();
       expect(app.input.keyProfile?.id, saved).toBe('keyboard-default');
       app.stop();
     }
   });
 
-  it('a saved choice that arrives after stop() is not applied', async () => {
-    let open = (): void => {};
-    choiceGate.wait = new Promise<void>((resolve) => {
-      open = resolve;
-    });
-    win.stored.set('shmup-cup:input.profile', 'keyboard-remote-emulation');
+  it('offers the keyboard profiles in the Options screen and switches live', async () => {
     const { app } = await boot();
-    app.stop();
-    open();
-    await flush();
-    expect(app.input.keyProfile?.id).toBe('keyboard-default');
+    const flow = app.game.scenes!;
+    expect(flow.inputProfiles).toEqual([
+      { id: 'keyboard-default', label: 'KEYBOARD (DEFAULT)' },
+      { id: 'keyboard-remote-emulation', label: 'KEYBOARD AS REMOTE' },
+    ]);
+    expect(flow.activeInputProfile).toBe(0);
+    // The Options screen's change reaches the input adapter through the event dispatch.
+    app.game.events.push(SimEventKind.UserOption, UserOptionKind.InputProfile, 0, 0, 1);
+    win.frame(0);
+    expect(app.input.keyProfile?.id).toBe('keyboard-remote-emulation');
   });
 
-  it('a saved choice that arrives late still replaces the default while running', async () => {
-    let open = (): void => {};
-    choiceGate.wait = new Promise<void>((resolve) => {
-      open = resolve;
-    });
-    win.stored.set('shmup-cup:input.profile', 'tizen-remote-safe');
+  it('offers a ?profile= override in use in the Options screen too', async () => {
+    win.location.search = '?profile=tizen-remote-safe';
     const { app } = await boot();
-    expect(app.input.keyProfile?.id).toBe('keyboard-default');
-    open();
-    await flush();
-    expect(app.input.keyProfile?.id).toBe('tizen-remote-safe');
+    expect(app.game.scenes!.inputProfiles.map((p) => p.id)).toEqual([
+      'keyboard-default',
+      'keyboard-remote-emulation',
+      'tizen-remote-safe',
+    ]);
+    expect(app.game.scenes!.activeInputProfile).toBe(2);
   });
 
   it('boots on the built-in bindings when the content has no input profiles', async () => {

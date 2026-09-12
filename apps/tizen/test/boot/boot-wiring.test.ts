@@ -9,8 +9,7 @@
  * clean stop().
  */
 import type * as AudioWeb from '@shmup/audio-web';
-import { Action, type PlatformStorage } from '@shmup/core';
-import type * as InputWeb from '@shmup/input-web';
+import { Action, SimEventKind, UserOptionKind } from '@shmup/core';
 import type * as RenderPixi from '@shmup/render-pixi';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildAtlas } from '../../../../scripts/assets/pipeline.mjs';
@@ -80,21 +79,14 @@ vi.mock('@shmup/render-pixi', async (importOriginal) => {
 });
 
 /**
- * Lets a test hold back the saved profile choice (`loadInputProfileChoice`) until it releases
- * the gate — the real storage answers within the same task. `null` = no gate.
+ * A save document (`core/save` v1) that names an input profile.
+ *
+ * @param profileId - The saved profile id.
+ * @returns The stored JSON text.
  */
-const choiceGate = vi.hoisted(() => ({ wait: null as Promise<void> | null }));
-
-vi.mock('@shmup/input-web', async (importOriginal) => {
-  const real = await importOriginal<typeof InputWeb>();
-  return {
-    ...real,
-    loadInputProfileChoice: (storage: PlatformStorage) =>
-      choiceGate.wait === null
-        ? real.loadInputProfileChoice(storage)
-        : choiceGate.wait.then(() => real.loadInputProfileChoice(storage)),
-  };
-});
+function savedProfile(profileId: string): string {
+  return JSON.stringify({ version: 1, options: { input: { profileId } } });
+}
 
 vi.mock('@shmup/audio-web', async (importOriginal) => {
   const real = await importOriginal<typeof AudioWeb>();
@@ -233,7 +225,6 @@ let win: FakeWindow;
 beforeEach(() => {
   vi.stubGlobal('Image', FakeImage);
   win = new FakeWindow();
-  choiceGate.wait = null;
   fakes.renderer.options = null;
   fakes.renderer.frames.length = 0;
   fakes.renderer.sizes.length = 0;
@@ -311,10 +302,9 @@ describe('tizen/boot bootTizenApp wiring', () => {
     expect(app.game.state.input?.players[0]?.held).toBe(0);
   });
 
-  it('applies a saved profile choice once storage answers and registers its keys', async () => {
-    win.stored.set('shmup-cup:input.profile', 'tizen-remote-diagonal');
+  it('applies a saved profile choice during boot and registers its keys', async () => {
+    win.stored.set('shmup-cup:save.v1', savedProfile('tizen-remote-diagonal'));
     const { app } = await boot();
-    await flush();
     expect(app.input.keyProfile?.id).toBe('tizen-remote-diagonal');
     expect(app.input.keyboard.tuning.releaseDebounceTicks).toBe(0);
     expect(win.registeredKeys).toEqual([
@@ -327,11 +317,15 @@ describe('tizen/boot bootTizenApp wiring', () => {
     ]);
   });
 
-  it('ignores a saved choice that names no remote or keyboard profile', async () => {
-    win.stored.set('shmup-cup:input.profile', 'gamepad-standard');
-    const { app } = await boot();
-    await flush();
-    expect(app.input.keyProfile?.id).toBe('tizen-remote-safe');
+  it('ignores a saved choice that names no remote profile the TV offers', async () => {
+    for (const saved of ['gamepad-standard', 'keyboard-default', 'keyboard-remote-emulation']) {
+      win = new FakeWindow();
+      win.stored.set('shmup-cup:save.v1', savedProfile(saved));
+      const { app } = await boot();
+      expect(app.input.keyProfile?.id, saved).toBe('tizen-remote-safe');
+      expect(win.registeredKeys, saved).toEqual(['MediaPlayPause', 'ChannelUp', 'ChannelDown']);
+      app.stop();
+    }
   });
 
   it('unlocks audio immediately (no user gesture on TV)', async () => {
@@ -499,56 +493,31 @@ describe('tizen/boot bootTizenApp wiring', () => {
 });
 
 describe('tizen/boot input profiles (edge cases)', () => {
-  /**
-   * A gate for the saved choice.
-   *
-   * @returns The function that opens it.
-   */
-  function gate(): () => void {
-    let open = (): void => {};
-    choiceGate.wait = new Promise<void>((resolve) => {
-      open = resolve;
-    });
-    return open;
-  }
-
   it('a saved choice equal to the default re-registers nothing', async () => {
-    win.stored.set('shmup-cup:input.profile', 'tizen-remote-safe');
+    win.stored.set('shmup-cup:save.v1', savedProfile('tizen-remote-safe'));
     const { app } = await boot();
-    await flush();
     expect(app.input.keyProfile?.id).toBe('tizen-remote-safe');
     expect(win.registeredKeys).toEqual(['MediaPlayPause', 'ChannelUp', 'ChannelDown']);
   });
 
-  it('a saved keyboard profile is applied on the TV but registers no keys', async () => {
-    win.stored.set('shmup-cup:input.profile', 'keyboard-remote-emulation');
+  it('offers the remote profiles in the Options screen', async () => {
     const { app } = await boot();
-    await flush();
-    expect(app.input.keyProfile?.id).toBe('keyboard-remote-emulation');
-    expect(win.registeredKeys).toEqual(['MediaPlayPause', 'ChannelUp', 'ChannelDown']);
+    expect(app.game.scenes!.inputProfiles).toEqual([
+      { id: 'tizen-remote-safe', label: 'SAFE 4-WAY (DEFAULT)' },
+      { id: 'tizen-remote-diagonal', label: 'FAST 8-WAY' },
+    ]);
+    expect(app.game.scenes!.activeInputProfile).toBe(0);
   });
 
-  it('a saved choice that arrives after stop() is neither applied nor registered', async () => {
-    const open = gate();
-    win.stored.set('shmup-cup:input.profile', 'tizen-remote-diagonal');
-    const { app } = await boot();
-    app.stop();
-    open();
-    await flush();
-    expect(app.input.keyProfile?.id).toBe('tizen-remote-safe');
-    expect(win.registeredKeys).toEqual(['MediaPlayPause', 'ChannelUp', 'ChannelDown']);
-  });
-
-  it('a late saved choice replaces the default while running, even mid-hold', async () => {
-    const open = gate();
-    win.stored.set('shmup-cup:input.profile', 'tizen-remote-diagonal');
+  it('an Options change switches the profile while running, even mid-hold, and registers keys', async () => {
     const { app } = await boot();
     win.frame(0);
     win.key('keydown', 39);
     win.frame(STEP);
-    open();
-    await flush();
+    app.game.events.push(SimEventKind.UserOption, UserOptionKind.InputProfile, 0, 0, 1);
+    win.frame(1.5 * STEP); // drains the event (no tick yet)
     expect(app.input.keyProfile?.id).toBe('tizen-remote-diagonal');
+    expect(win.registeredKeys).toHaveLength(6);
     win.frame(2 * STEP);
     const p1 = app.game.state.input?.players[0];
     expect(p1?.held).toBe(Action.Right); // same bindings: the held arrow keeps moving

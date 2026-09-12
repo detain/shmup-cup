@@ -38,6 +38,7 @@ describe('core/game edge: the scene flow', () => {
     expect(first).toBe(flow.world);
     press(game, platform, Action.Pause);
     contexts.push(game.inputContext);
+    press(game, platform, Action.Down); // OPTIONS
     press(game, platform, Action.Down); // RETRY
     press(game, platform, Action.Confirm);
     contexts.push(game.inputContext);

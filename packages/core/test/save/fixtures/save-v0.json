@@ -1,0 +1,16 @@
+{
+  "hiScores": [
+    { "name": "ACE", "score": 48200 },
+    { "name": "BOB", "score": 91000 },
+    { "name": "", "score": 1200.7 },
+    { "score": "not a number" },
+    { "name": "CAT", "score": 48200 }
+  ],
+  "options": {
+    "masterVolume": 0.8,
+    "musicVolume": 0.45,
+    "sfxVolume": 1,
+    "profile": "tizen-remote-diagonal"
+  },
+  "unlocks": ["extra-edit"]
+}

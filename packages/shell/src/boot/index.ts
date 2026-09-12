@@ -12,10 +12,12 @@
  *    `path: message`;
  * 3. loads the atlas pages with `new Image()` from their relative URLs (no `fetch` — D25) and
  *    builds the atlas (`@shmup/render-pixi` `createAtlas`);
- * 4. creates the renderer (WebGL1 first) and, through the app's factory, the platform, then
- *    the core game with the validated content;
- * 5. wires the lifecycle (suspend clears held input and suspends audio), the audio unlock
- *    (first gesture on the web, immediately on TV), window resizes, and
+ * 4. creates the renderer (WebGL1 first) and, through the app's factory, the platform; **reads
+ *    the save** (`core/save` `loadSave`, M1-17) and applies its volumes and input profile; then
+ *    creates the core game with the validated content and the save;
+ * 5. wires the lifecycle (suspend clears held input and suspends audio; so does the window losing
+ *    focus — `blur` clears held input), the audio unlock (first gesture on the web, immediately on
+ *    TV), window resizes, and
  * 6. runs the rAF frame loop: `game.frame(now)` → `game.events.drain(dispatch)` →
  *    `renderer.render(frame)` (plan §3.3). Before the ticks of each frame it forwards a change of
  *    `game.inputContext` to the input adapter (`input.setContext` — the `game` / `menu` binding
@@ -50,6 +52,19 @@
  * popups (`connectFxEvents`) — in the scene flow and free flight. The particles' presentation RNG
  * is seeded from the game's seed.
  *
+ * **Saves and options (M1-17).** After the platform exists the shell reads the save from
+ * `platform.storage` (a corrupt one falls back to defaults — never a boot error), sets the bus
+ * volumes from its audio options (`applyAudioOptions`) and, when it names an input profile, asks
+ * the app to apply it (`ShellOptions.inputProfiles`). The scene flow gets the save store (the
+ * title's HI, the Options screen, hi-score tables — the flow writes it on changes) and the profile
+ * choices; the Options screen's `UserOption` events set bus volumes and switch profiles live
+ * (`connectOptionEvents`).
+ *
+ * **Boot time.** The shell measures its boot (`ShellOptions.now`, default `performance.now()` —
+ * whose origin is the page's start, i.e. the app launch on the TV) and exposes it as
+ * {@link Shell.bootTiming} for the debug overlay (M1-19) and on the canvas
+ * (`data-shmup-boot-ms`, the launch-to-ready time in whole ms).
+ *
  * The canvas carries `data-shmup-state="loading" | "running" | "error"` so tests and the TV's
  * remote inspector can tell where boot stands.
  *
@@ -59,10 +74,13 @@
  * - shmup_feat.md §3 — rAF-driven fixed step, pause on visibility change, integer scaling
  * - shmup_feat.md §19 — audio unlocked by the first user gesture on the web; SFX and music fed by
  *   sim events, prepared during loading
+ * - shmup_feat.md §21 — saved options and hi-scores loaded before the title; the Options screen
+ *   applied live
  *
  * **Public API.** {@link bootShell}, {@link Shell}, {@link ShellOptions}, {@link ShellAssets},
- * {@link ShellInput}, {@link ShellScene}, {@link SHELL_SCENES}, {@link sceneFromSearch},
- * {@link ShellBootError}, {@link BOOT_STATE_ATTRIBUTE}, {@link SCENE_ATTRIBUTE}.
+ * {@link ShellInput}, {@link ShellInputProfiles}, {@link ShellScene}, {@link SHELL_SCENES},
+ * {@link sceneFromSearch}, {@link ShellBootError}, {@link BootTiming}, {@link BOOT_STATE_ATTRIBUTE},
+ * {@link SCENE_ATTRIBUTE}, {@link BOOT_MS_ATTRIBUTE}.
  *
  * @module
  */
@@ -85,12 +103,17 @@ import {
   DEFAULT_GAME_CONFIG,
   MUSIC_CUES,
   createGame,
+  createSaveStore,
   defineModule,
+  loadSave,
   type ContentFile,
   type Game,
   type GameConfig,
   type IAudio,
   type InputContext,
+  type InputProfileChoice,
+  type LoadedSave,
+  type SaveStore,
   type LoadContentResult,
   type DrawList,
   type Platform,
@@ -113,8 +136,10 @@ import {
   type PixiRenderer,
 } from '@shmup/render-pixi';
 import {
+  applyAudioOptions,
   connectAudioEvents,
   connectFxEvents,
+  connectOptionEvents,
   createEventDispatcher,
   type EventDispatcher,
 } from '../dispatch/index.js';
@@ -136,7 +161,13 @@ import { createShowcase, type Showcase } from '../showcase/index.js';
 export const moduleInfo = defineModule({
   name: 'boot',
   status: 'implemented',
-  specRefs: ['shmup_feat.md §23', 'shmup_feat.md §22', 'shmup_feat.md §3', 'shmup_feat.md §19'],
+  specRefs: [
+    'shmup_feat.md §23',
+    'shmup_feat.md §22',
+    'shmup_feat.md §3',
+    'shmup_feat.md §19',
+    'shmup_feat.md §21',
+  ],
 });
 
 /** Mixed into the game's seed for the particles' presentation RNG (a stream of its own). */
@@ -151,6 +182,52 @@ export const BOOT_STATE_ATTRIBUTE = 'data-shmup-state';
  * remote inspector.
  */
 export const SCENE_ATTRIBUTE = 'data-shmup-scene';
+
+/**
+ * Attribute on the game canvas holding the launch-to-ready time in whole milliseconds
+ * ({@link BootTiming.readyMs}) once the game runs — for tests and the TV's remote inspector
+ * (shmup_feat.md §23: launch ≤ 10 s).
+ */
+export const BOOT_MS_ATTRIBUTE = 'data-shmup-boot-ms';
+
+/** How long boot took (see {@link Shell.bootTiming}). All values in milliseconds of `now()`. */
+export interface BootTiming {
+  /** Clock reading when `bootShell` was called (with `performance.now()`: ms since page start). */
+  readonly startMs: number;
+  /** Clock reading when the game was ready to run (≈ the launch time on the TV). */
+  readonly readyMs: number;
+  /** `readyMs − startMs`: the time spent in `bootShell` (content, atlas, renderer, save, audio). */
+  readonly bootMs: number;
+}
+
+/**
+ * The keyboard / remote input profiles an app lets the player choose in the Options screen
+ * (plan M1-17). The app owns the profiles (its `input-profiles` registry) and the input adapter;
+ * the shell only asks.
+ */
+export interface ShellInputProfiles {
+  /**
+   * The profiles the Options screen's CONTROLS offers, in order. Called once, after the content
+   * was validated (the registry is filled then).
+   *
+   * @returns The choices (empty: CONTROLS is disabled).
+   */
+  choices(): readonly InputProfileChoice[];
+  /**
+   * The id of the key profile in use now.
+   *
+   * @returns The id, or `null` for the adapter's built-in bindings.
+   */
+  active(): string | null;
+  /**
+   * Switches the key profile (and whatever goes with it — the TV registers the profile's keys).
+   *
+   * @param id - A profile id (unknown ids are ignored by the app).
+   * @param source - `'save'`: the saved choice, applied at boot (an app may keep a dev override
+   *   instead); `'options'`: the player picked it in the Options screen.
+   */
+  apply(id: string, source: 'save' | 'options'): void;
+}
 
 /**
  * What the shell shows: `game` — the real game, the core's scene flow (title, game, pause …,
@@ -251,6 +328,17 @@ export interface ShellOptions {
   readonly platform: (renderer: PixiRenderer) => Platform;
   /** Game config overrides (`remoteMode`, `autofire`, …). */
   readonly gameConfig?: Partial<GameConfig>;
+  /**
+   * The input profiles the Options screen offers, and how to apply one (the saved choice at boot,
+   * the player's pick later). Omitted: CONTROLS is disabled and a saved profile is not applied.
+   */
+  readonly inputProfiles?: ShellInputProfiles;
+  /**
+   * The clock boot is timed with (default `win.performance.now()`, else `Date.now()`).
+   *
+   * @returns Milliseconds.
+   */
+  readonly now?: () => number;
   /** Scene to show (default `'game'` — the scene flow). */
   readonly scene?: ShellScene;
   /**
@@ -319,6 +407,15 @@ export interface Shell {
    * back-end once it is unlocked (M1-15).
    */
   readonly audioEngine: AudioEngine;
+  /**
+   * The save as it was read at boot (document, status — `'empty'`, `'ok'`, `'migrated'`,
+   * `'corrupt'`, `'unreadable'` — and the stored text).
+   */
+  readonly loadedSave: LoadedSave;
+  /** The save the game plays with (the scene flow's `game.scenes.save` in the default scene). */
+  readonly save: SaveStore;
+  /** How long boot took (for the debug overlay, M1-19). */
+  readonly bootTiming: BootTiming;
   /**
    * Stops the frame loop and releases listeners, input, renderer, atlas, the audio engine and the
    * audio back-end (idempotent).
@@ -390,6 +487,19 @@ function markState(canvas: HTMLCanvasElement, state: 'loading' | 'running' | 'er
 function describe(error: unknown): string {
   if (error instanceof Error) return `${error.name}: ${error.message}`;
   return String(error);
+}
+
+/**
+ * The default boot clock: `performance.now()` of the window (ms since the page started), else
+ * `Date.now()` (test fakes without `performance`).
+ *
+ * @param win - The window.
+ * @returns The clock.
+ */
+function defaultClock(win: Window): () => number {
+  const perf = (win as Partial<Window>).performance;
+  if (perf !== undefined && typeof perf.now === 'function') return () => perf.now();
+  return () => Date.now();
 }
 
 /** The calibration scene's frame: the game frame without its world (test pattern only). */
@@ -473,6 +583,13 @@ function createCalibrationFrame(first: RenderFrame): CalibrationFrame {
  * camera on screen); every scene's frame loop calls `engine.endFrame()` after the drain, and
  * `stop()` destroys the engine before the audio back-end.
  *
+ * Saves (M1-17): once the platform exists, `loadSave(platform.storage)` runs (it never rejects);
+ * the audio options set the bus volumes, a saved input profile is handed to
+ * `options.inputProfiles.apply(id, 'save')`, and the game gets the save store and the profile
+ * choices (the scene flow only). In the scene flow the `UserOption` events go to
+ * `connectOptionEvents`. A `blur` listener clears held input; `stop()` removes it. Boot is timed
+ * with `options.now` ({@link Shell.bootTiming}, the canvas's `data-shmup-boot-ms`).
+ *
  * @param options - Canvas, window, content, assets, adapters and the platform factory.
  * @returns A promise of the running {@link Shell}.
  * @throws Rejects with {@link ShellBootError} when content is invalid, an atlas page cannot
@@ -496,6 +613,8 @@ function createCalibrationFrame(first: RenderFrame): CalibrationFrame {
  */
 export async function bootShell(options: ShellOptions): Promise<Shell> {
   const { canvas, win, input, audio } = options;
+  const now = options.now ?? defaultClock(win);
+  const startMs = now();
   const scene = options.scene ?? 'game';
   const flowMode = scene === 'game';
   const overlay = options.overlay !== undefined ? options.overlay : createBootOverlay(canvas);
@@ -603,15 +722,38 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     throw fail('WEBGL IS NOT AVAILABLE', [describe(error)], [], error);
   }
   let platform: Platform;
-  let game: Game;
   try {
     platform = options.platform(renderer);
+  } catch (error) {
+    throw fail('SHMUP CUP FAILED TO START', [describe(error)], [], error);
+  }
+  // The save (plan M1-17): read before the title; a bad one falls back to defaults (never fails).
+  const loadedSave = await loadSave(platform.storage);
+  const save = createSaveStore(platform.storage, loadedSave);
+  applyAudioOptions(audio, save.options.audio);
+  const profiles = options.inputProfiles ?? null;
+  let profileChoices: readonly InputProfileChoice[] = [];
+  let game: Game;
+  try {
+    let activeProfile: string | null = null;
+    if (profiles !== null) {
+      profileChoices = profiles.choices();
+      const savedProfile = save.options.input.profileId;
+      if (savedProfile !== null) profiles.apply(savedProfile, 'save');
+      activeProfile = profiles.active();
+    }
     game = createGame(
       platform,
       options.gameConfig ?? {},
       content.db,
       // The real game runs the scene flow from its boot scene; dev scenes run bare gameplay.
-      flowMode ? { scenes: 'boot' } : {},
+      flowMode
+        ? {
+            scenes: 'boot',
+            save,
+            inputProfiles: { choices: profileChoices, active: activeProfile },
+          }
+        : {},
     );
   } catch (error) {
     throw fail('SHMUP CUP FAILED TO START', [describe(error)], [], error);
@@ -669,6 +811,17 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   if (flowView !== null) {
     connectFxEvents(events, readyRenderer);
     connectAudioEvents(events, engine, flowView.camera);
+    // The Options screen's changes, live (plan M1-17).
+    connectOptionEvents(
+      events,
+      audio,
+      profiles === null
+        ? null
+        : (index) => {
+            const choice = index >= 0 ? profileChoices[index] : undefined;
+            if (choice !== undefined) profiles.apply(choice.id, 'options');
+          },
+    );
   } else if (flight !== null) {
     connectFxEvents(events, readyRenderer);
     connectAudioEvents(events, engine, game.world.view.camera);
@@ -718,6 +871,11 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     readyRenderer.resize(win.innerWidth, win.innerHeight);
   };
   win.addEventListener('resize', onResize);
+  /** The window lost focus: its key-ups will never arrive, so nothing stays held. */
+  const onBlur = (): void => {
+    input.clear();
+  };
+  win.addEventListener('blur', onBlur);
 
   // 6. Frame loop (plan §3.3) — allocation-free.
   const visit = events.visit;
@@ -767,6 +925,9 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   const loop = startFrameLoop(win, onFrame);
 
   overlay?.remove();
+  const readyMs = now();
+  const bootTiming: BootTiming = Object.freeze({ startMs, readyMs, bootMs: readyMs - startMs });
+  markCanvas(canvas, BOOT_MS_ATTRIBUTE, String(Math.round(readyMs)));
   markState(canvas, 'running');
   markScene();
 
@@ -785,11 +946,15 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     fxGallery,
     fx,
     audioEngine: engine,
+    loadedSave,
+    save,
+    bootTiming,
     stop() {
       if (stopped) return;
       stopped = true;
       loop.stop();
       win.removeEventListener('resize', onResize);
+      win.removeEventListener('blur', onBlur);
       if (unlockOnGesture) removeGestureListeners();
       input.destroy();
       readyRenderer.destroy();
