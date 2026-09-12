@@ -1,0 +1,118 @@
+{
+  "formatVersion": 1,
+  "kind": "fx",
+  "presets": [
+    {
+      "id": "explosion.small",
+      "sprite": "fx/explosion-small",
+      "count": 1,
+      "speed": { "min": 0, "max": 0 },
+      "lifetime": { "min": 18, "max": 18 }
+    },
+    {
+      "id": "explosion.medium",
+      "sprite": "fx/explosion-medium",
+      "count": 1,
+      "speed": { "min": 0, "max": 0 },
+      "lifetime": { "min": 24, "max": 24 }
+    },
+    {
+      "id": "explosion.large",
+      "sprite": "fx/explosion-large",
+      "count": 3,
+      "speed": { "min": 0, "max": 0.3 },
+      "lifetime": { "min": 28, "max": 32 },
+      "delay": { "min": 0, "max": 10 },
+      "radius": 8
+    },
+    {
+      "id": "boss.chain",
+      "sprite": "fx/explosion-medium",
+      "count": 2,
+      "speed": { "min": 0, "max": 0.4 },
+      "lifetime": { "min": 22, "max": 26 },
+      "delay": { "min": 0, "max": 6 },
+      "radius": 12
+    },
+    {
+      "id": "debris",
+      "sprite": "fx/debris",
+      "count": 6,
+      "speed": { "min": 0.8, "max": 2.2 },
+      "gravity": 0.06,
+      "drag": 0.02,
+      "lifetime": { "min": 24, "max": 40 },
+      "blend": "normal"
+    },
+    {
+      "id": "spark",
+      "sprite": "fx/spark",
+      "count": 3,
+      "speed": { "min": 0.8, "max": 1.8 },
+      "drag": 0.1,
+      "lifetime": { "min": 6, "max": 9 }
+    },
+    {
+      "id": "clink",
+      "sprite": "fx/spark",
+      "count": 4,
+      "speed": { "min": 1.2, "max": 2.2 },
+      "direction": 180,
+      "spread": 120,
+      "drag": 0.15,
+      "lifetime": { "min": 5, "max": 8 }
+    },
+    {
+      "id": "bullet.cancel",
+      "sprite": "fx/sparkle",
+      "count": 1,
+      "speed": { "min": 0, "max": 0.2 },
+      "lifetime": { "min": 12, "max": 16 }
+    },
+    {
+      "id": "pickup",
+      "sprite": "fx/ring",
+      "count": 1,
+      "speed": { "min": 0, "max": 0 },
+      "lifetime": { "min": 12, "max": 12 }
+    },
+    {
+      "id": "muzzle",
+      "sprite": "fx/spark",
+      "frames": [0, 1],
+      "count": 2,
+      "speed": { "min": 0.3, "max": 0.8 },
+      "direction": 0,
+      "spread": 60,
+      "lifetime": { "min": 3, "max": 5 }
+    },
+    {
+      "id": "shield.break",
+      "sprite": "fx/spark",
+      "count": 8,
+      "speed": { "min": 1.5, "max": 2.5 },
+      "drag": 0.08,
+      "lifetime": { "min": 8, "max": 12 }
+    }
+  ],
+  "triggers": [
+    { "event": "fx", "cue": "ExplosionSmall", "preset": "explosion.small" },
+    { "event": "fx", "cue": "ExplosionSmall", "preset": "spark" },
+    { "event": "fx", "cue": "ExplosionMedium", "preset": "explosion.medium" },
+    { "event": "fx", "cue": "ExplosionMedium", "preset": "debris" },
+    { "event": "fx", "cue": "ExplosionLarge", "preset": "explosion.large" },
+    { "event": "fx", "cue": "ExplosionLarge", "preset": "debris" },
+    { "event": "fx", "cue": "BulletCancel", "preset": "bullet.cancel" },
+    { "event": "fx", "cue": "ShieldBreak", "preset": "shield.break" },
+    { "event": "fx", "cue": "Debris", "preset": "debris" },
+    { "event": "fx", "cue": "BossChain", "preset": "boss.chain" },
+    { "event": "fx", "cue": "BossBlast", "preset": "explosion.large" },
+    { "event": "fx", "cue": "BossBlast", "preset": "boss.chain" },
+    { "event": "fx", "cue": "BossBlast", "preset": "debris" },
+    { "event": "sfx", "cue": "EnemyHit", "preset": "spark" },
+    { "event": "sfx", "cue": "Clink", "preset": "clink" },
+    { "event": "sfx", "cue": "MeterAdvance", "preset": "pickup" },
+    { "event": "sfx", "cue": "CapsulePickup", "preset": "pickup" },
+    { "event": "sfx", "cue": "PlayerShot", "preset": "muzzle", "dx": 9 }
+  ]
+}

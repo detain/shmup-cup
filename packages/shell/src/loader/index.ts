@@ -13,7 +13,8 @@
  *   the engine's own sprites, `ENGINE_SPRITES`, interned into the sprite table — M1-09),
  *   every other kind through the **owner** registered for it
  *   (plan §3.5 — {@link DEFAULT_CONTENT_OWNERS}: `input-profiles` → `@shmup/input-web`,
- *   M1-05; hosts may replace an owner, e.g. to keep the parsed profiles). A file whose kind
+ *   M1-05; `fx` → `@shmup/render-pixi`, M1-14; hosts may replace an owner, e.g. to keep the
+ *   parsed profiles). A file whose kind
  *   has no owner is an issue, so a new content kind cannot ship unvalidated. All problems
  *   come back as `ValidationIssue { path, message }` for the boot error screen.
  *
@@ -41,6 +42,7 @@ import {
   type ValidationIssue,
 } from '@shmup/core';
 import { INPUT_PROFILES_KIND, loadInputProfiles } from '@shmup/input-web';
+import { FX_CONTENT_KIND, loadFxContent } from '@shmup/render-pixi';
 
 /** Module descriptor. */
 export const moduleInfo = defineModule({
@@ -146,11 +148,12 @@ export type ContentOwners = { readonly [kind: string]: ContentOwner };
 
 /**
  * The owners of the foreign content kinds that exist today (plan §3.5): `input-profiles` →
- * `@shmup/input-web` `loadInputProfiles` (M1-05). Later steps add `sfx`/`music` (audio-web) and
- * `fx` (render-pixi).
+ * `@shmup/input-web` `loadInputProfiles` (M1-05), `fx` → `@shmup/render-pixi` `loadFxContent`
+ * (M1-14). A later step adds `sfx`/`music` (audio-web).
  */
 export const DEFAULT_CONTENT_OWNERS: ContentOwners = Object.freeze({
   [INPUT_PROFILES_KIND]: (files: readonly ContentFile[]) => loadInputProfiles(files).issues,
+  [FX_CONTENT_KIND]: (files: readonly ContentFile[]) => loadFxContent(files).issues,
 });
 
 /** Options of {@link loadGameContent}. */

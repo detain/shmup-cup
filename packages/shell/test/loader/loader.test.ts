@@ -114,7 +114,7 @@ describe('shell/loader loadGameContent', () => {
   });
 
   it('validates input profiles with the default owner (plan §3.5)', () => {
-    expect(Object.keys(DEFAULT_CONTENT_OWNERS)).toEqual(['input-profiles']);
+    expect(Object.keys(DEFAULT_CONTENT_OWNERS)).toEqual(['input-profiles', 'fx']);
     const result = loadGameContent([
       {
         path: 'input/bad.input-profiles.json',
@@ -125,7 +125,29 @@ describe('shell/loader loadGameContent', () => {
       { path: 'input/bad.input-profiles.json:profiles', message: 'must have at least 1 items' },
     ]);
     const shipped = loadGameContent(readContentFiles());
-    expect(shipped.foreign.map((file) => file.path)).toEqual(['input/remote.input-profiles.json']);
+    expect(shipped.issues).toEqual([]);
+    expect(shipped.foreign.map((file) => file.path)).toEqual([
+      'fx/particles.fx.json',
+      'input/remote.input-profiles.json',
+    ]);
+  });
+
+  it('validates particle presets with the default fx owner (plan §3.5, M1-14)', () => {
+    const result = loadGameContent([
+      {
+        path: 'fx/bad.fx.json',
+        data: {
+          formatVersion: 1,
+          kind: 'fx',
+          presets: [],
+          triggers: [{ event: 'fx', cue: 'Nope', preset: 'none' }],
+        },
+      },
+    ]);
+    expect(result.issues).toEqual([
+      { path: 'fx/bad.fx.json:triggers[0].cue', message: 'unknown FX cue "Nope"' },
+      { path: 'fx/bad.fx.json:triggers[0].preset', message: 'unknown preset "none"' },
+    ]);
   });
 
   it('routes foreign kinds to their owner, and reports kinds nobody owns', () => {
@@ -134,8 +156,8 @@ describe('shell/loader loadGameContent', () => {
         path: 'input/remote.input-profiles.json',
         data: { formatVersion: 1, kind: 'input-profiles' },
       },
-      { path: 'fx/particles.fx.json', data: { formatVersion: 1, kind: 'fx' } },
-      { path: 'fx/more.fx.json', data: { formatVersion: 1, kind: 'fx' } },
+      { path: 'audio/sfx.sfx.json', data: { formatVersion: 1, kind: 'sfx' } },
+      { path: 'audio/more.sfx.json', data: { formatVersion: 1, kind: 'sfx' } },
     ];
     const seen: string[][] = [];
     const result = loadGameContent(files, {
@@ -148,8 +170,8 @@ describe('shell/loader loadGameContent', () => {
     });
     expect(seen).toEqual([['input/remote.input-profiles.json']]);
     expect(result.issues).toEqual([
-      { path: 'fx/more.fx.json', message: 'no loader for content kind "fx"' },
-      { path: 'fx/particles.fx.json', message: 'no loader for content kind "fx"' },
+      { path: 'audio/more.sfx.json', message: 'no loader for content kind "sfx"' },
+      { path: 'audio/sfx.sfx.json', message: 'no loader for content kind "sfx"' },
       { path: 'input/remote.input-profiles.json:profiles[0]', message: 'bad profile' },
     ]);
     expect(result.foreign).toHaveLength(3);

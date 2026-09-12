@@ -18,6 +18,15 @@
  * (the world group is offset by the rounded `shakeX/Y`) and the flash / dim overlays. Optionally
  * the calibration test pattern sits below the layers (`?scene=calibration`).
  *
+ * **Game feel (plan M1-14).** The renderer also owns the presentation effects the host feeds from
+ * the sim's events: the particle pool and the score popups on the `FX` layer (`particles`,
+ * `effects` — under the enemy bullets), and the {@link PixiRenderer.effects | screen effects}
+ * (shake, a flash tinted per `FlashKind` behind the ≤ 3-a-second limiter, a playfield dim drawn
+ * over the world layers but under the flash and the HUD). `render()` advances them by the
+ * frame's **simulated ticks** (`frame.tick` minus the last frame's — 0 while paused; a tick
+ * counter that goes back clears them), converts particle and popup positions with the world's
+ * camera, and adds its shake / flash / dim on top of `frame.screen`.
+ *
  * **Allocation.** Pixi objects are created in {@link createPixiRenderer} and when a new
  * `WorldView` object is bound ({@link PixiRenderer.bindWorld} — once per world, called
  * automatically by `render()` when `frame.world` changes identity). A frame showing an already
@@ -26,7 +35,8 @@
  *
  * **Implements.** shmup_tech.md §2.2 (WebGL1-first, low-res render texture + one
  * nearest upscale quad), §4.1 (Pixi as renderer only), shmup_feat.md §3 (integer
- * scaling, pixel-perfect), §18 (draw order, one atlas, flash/dim), §22 Rendering pipeline.
+ * scaling, pixel-perfect), §18 (draw order, one atlas, flash/dim, shake, particles), §20 (juice),
+ * §22 Rendering pipeline.
  *
  * **Public API.** {@link createPixiRenderer}, {@link PixiRenderer},
  * {@link PixiRendererOptions}.
@@ -36,6 +46,7 @@
 import {
   LayerId,
   defineModule,
+  type CameraView,
   type IRenderer,
   type RenderFrame,
   type TextMetrics,
@@ -51,6 +62,13 @@ import {
 } from 'pixi.js';
 import type { Atlas } from '../atlas/index.js';
 import {
+  createScorePopups,
+  createScreenEffects,
+  type EffectSettings,
+  type ScorePopups,
+  type ScreenEffects,
+} from '../effects/index.js';
+import {
   createLayerStack,
   createLaserBinding,
   createParallaxBinding,
@@ -61,6 +79,12 @@ import {
   type TerrainBinding,
 } from '../layers/index.js';
 import { PALETTE } from '../palette/index.js';
+import {
+  PARTICLE_CAPACITY,
+  createParticleSystem,
+  type FxContent,
+  type ParticleSystem,
+} from '../particles/index.js';
 import {
   createSpriteLayerBinding,
   createSpriteTables,
@@ -87,12 +111,19 @@ export const moduleInfo = defineModule({
     'shmup_tech.md §4.1',
     'shmup_feat.md §3',
     'shmup_feat.md §18',
+    'shmup_feat.md §20',
     'shmup_feat.md §22',
   ],
 });
 
 /** Pixels the flash overlay extends past each frame edge (it moves with screen shake). */
 const OVERLAY_MARGIN = 32;
+
+/** Most ticks one frame advances the effects (a longer gap — a hitch — is cut). */
+const MAX_EFFECT_STEP = 60;
+
+/** Camera of frames without a world (particles and popups then use frame pixels). */
+const NO_CAMERA: CameraView = Object.freeze({ x: 0, y: 0 });
 
 /** Options for {@link createPixiRenderer}. */
 export interface PixiRendererOptions {
@@ -119,6 +150,12 @@ export interface PixiRendererOptions {
   readonly testPattern?: boolean;
   /** Quads preallocated for each of the HUD and UI layers (default 1024). */
   readonly glyphCapacity?: number;
+  /** Effect settings to change from the defaults (screen shake on, normal flashing). */
+  readonly effects?: Partial<EffectSettings>;
+  /** Seed of the particles' presentation RNG (default 1; the shell passes the game's seed). */
+  readonly fxSeed?: number;
+  /** Particle pool size (default 256). */
+  readonly particleCapacity?: number;
 }
 
 /** The Pixi-backed renderer. */
@@ -143,6 +180,28 @@ export interface PixiRenderer extends IRenderer {
   readonly parallax: ParallaxBinding | null;
   /** Laser sprites of the bound world (`null` without a laser view or atlas). */
   readonly lasers: LaserBinding | null;
+  /**
+   * The screen effects (shake, flash, playfield dim — plan M1-14): the host feeds them from the
+   * `Shake` / `Flash` / `Dim` events; `render()` advances them by the frame's ticks and draws
+   * them on top of `frame.screen`.
+   */
+  readonly effects: ScreenEffects;
+  /**
+   * The particle pool on the `FX` layer (`null` without an atlas): the host emits into it from
+   * the `Particles` / `Sfx` events; `render()` advances and draws it.
+   */
+  readonly particles: ParticleSystem | null;
+  /**
+   * The score popups on the `FX` layer, above the particles (`null` without an atlas font).
+   */
+  readonly popups: ScorePopups | null;
+  /**
+   * Gives the particle system its presets and triggers (load time — `content/fx/`, validated by
+   * `loadFxContent`). Without it no particle is ever drawn.
+   *
+   * @param content - The validated fx content.
+   */
+  setFxContent(content: FxContent): void;
   /**
    * Sets the sprite name table that `spriteId`s in world batches and draw lists index —
    * normally `ContentDb.sprites.names`. Resolved against the atlas now (load time); unknown
@@ -299,6 +358,15 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
   flash.visible = false;
   layers.world.addChild(flash);
 
+  // Playfield dim (the boss WARNING): over every world layer, under the flash and the HUD.
+  const playfieldDim = new Sprite(Texture.WHITE);
+  playfieldDim.position.set(-OVERLAY_MARGIN, -OVERLAY_MARGIN);
+  playfieldDim.scale.set(width + 2 * OVERLAY_MARGIN, height + 2 * OVERLAY_MARGIN);
+  playfieldDim.tint = 0x000000;
+  playfieldDim.visible = false;
+  layers.world.addChildAt(playfieldDim, layers.world.children.length - 1);
+  let flashTint = 0xffffff;
+
   // Dim: first child of the UI layer (darkens world + HUD under a menu).
   const uiLayer = layers.layers[LayerId.Ui];
   const dim = new Sprite(Texture.WHITE);
@@ -324,6 +392,25 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
     layers.layers[LayerId.Hud].addChild(hudView.container);
     uiLayer.addChild(uiView.container);
   }
+
+  // Game feel (plan M1-14): particles, then popups, on the FX layer — under the enemy bullets.
+  const effects = createScreenEffects(options.effects ?? {});
+  const fxLayer = layers.layers[LayerId.Fx];
+  let particles: ParticleSystem | null = null;
+  let popups: ScorePopups | null = null;
+  if (atlas !== null) {
+    particles = createParticleSystem({
+      atlas,
+      capacity: options.particleCapacity ?? PARTICLE_CAPACITY,
+      seed: options.fxSeed ?? 1,
+    });
+    fxLayer.addChild(particles.container);
+    if (font !== null) {
+      popups = createScorePopups({ atlas, font });
+      fxLayer.addChild(popups.container);
+    }
+  }
+  let lastTick = -1;
 
   // Pass 2: one sprite showing the frame texture, integer-scaled and centred.
   const screen = new Container({ label: 'screen' });
@@ -435,6 +522,12 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
     get lasers() {
       return lasers;
     },
+    effects,
+    particles,
+    popups,
+    setFxContent(content) {
+      particles?.setContent(content);
+    },
     get viewport() {
       return viewport;
     },
@@ -459,8 +552,28 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
     },
     render(frame: RenderFrame) {
       if (pattern !== null) pattern.update(frame.tick);
+      // Effects run on simulated ticks: they freeze with a paused game; a tick counter that went
+      // back (a new session) ends every running effect.
+      const tick = frame.tick;
+      let ticks = 0;
+      if (lastTick >= 0 && tick >= lastTick) ticks = tick - lastTick;
+      else if (lastTick >= 0) {
+        effects.clear();
+        particles?.clear();
+        popups?.clear();
+      }
+      lastTick = tick;
+      if (ticks > 0) {
+        if (ticks > MAX_EFFECT_STEP) ticks = MAX_EFFECT_STEP;
+        effects.step(ticks);
+        particles?.step(ticks);
+        popups?.step(ticks);
+      }
       const world = frame.world;
       if (world !== boundWorld) bindWorld(world);
+      const camera = world !== null ? world.camera : NO_CAMERA;
+      particles?.sync(camera);
+      popups?.sync(camera);
       if (world !== null) {
         const camX = world.camera.x;
         const camY = world.camera.y;
@@ -475,12 +588,26 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
           lasers.sync(laserView, world.camera);
         }
       }
-      const effects = frame.screen;
-      layers.world.position.set(Math.round(effects.shakeX), Math.round(effects.shakeY));
-      const flashAlpha = unit(effects.flash);
+      const screen = frame.screen;
+      layers.world.position.set(
+        (Math.round(screen.shakeX) + effects.shakeX) | 0,
+        (Math.round(screen.shakeY) + effects.shakeY) | 0,
+      );
+      // The brighter of the frame's own flash (white) and the event-driven one (its look's colour).
+      const frameFlash = unit(screen.flash);
+      const eventFlash = unit(effects.flashAlpha);
+      const flashAlpha = eventFlash > frameFlash ? eventFlash : frameFlash;
+      const tint = eventFlash > frameFlash ? effects.flashColor : 0xffffff;
+      if (flashAlpha > 0 && tint !== flashTint) {
+        flashTint = tint;
+        flash.tint = tint;
+      }
       flash.alpha = flashAlpha;
       flash.visible = flashAlpha > 0;
-      const dimAlpha = unit(effects.dim);
+      const playfieldAlpha = unit(effects.dimAlpha);
+      playfieldDim.alpha = playfieldAlpha;
+      playfieldDim.visible = playfieldAlpha > 0;
+      const dimAlpha = unit(screen.dim);
       dim.alpha = dimAlpha;
       dim.visible = dimAlpha > 0;
       if (hudView !== null) hudView.draw(frame.hud);

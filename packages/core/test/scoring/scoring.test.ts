@@ -2,7 +2,8 @@
  * `core/scoring` (plan M1-12): `addScore` (clamp at 99,999,990, per-player totals, the dirty
  * flags, the session hi-score, odd inputs), `ScoreBoard.setHiScore`, and the scoring system's
  * crediting of tick outcomes — kills by their killer only, formation bonuses, pickups — exactly
- * once, including kills made between ticks. The World-level score tests are in
+ * once, including kills made between ticks — and the `Score` events of the popups (M1-14). The
+ * World-level score tests are in
  * `test/world/world-death.test.ts`.
  */
 import { describe, expect, it } from 'vitest';
@@ -10,6 +11,7 @@ import { resolveGameConfig } from '../../src/config/index.js';
 import { EMPTY_CONTENT_DB } from '../../src/data/index.js';
 import { hashWorld } from '../../src/debug/index.js';
 import type { EnemyOutcomes } from '../../src/enemies/index.js';
+import { SimEventKind, createEventQueue } from '../../src/events/index.js';
 import { MAX_PLAYERS } from '../../src/input/index.js';
 import type { PowerUpOutcomes } from '../../src/powerups/index.js';
 import {
@@ -189,6 +191,31 @@ describe('core/scoring system', () => {
     kill(o, 0, 10);
     scoring.clear();
     expect(scoring.killsScored).toBe(0);
+  });
+
+  it('pushes a Score event (player, whole-pixel place, points) per credited kill, none for pickups', () => {
+    const { o } = system();
+    const events = createEventQueue();
+    const host = { ...o, events, scoring: null as unknown as ScoringSystem };
+    host.scoring = createScoringSystem(host);
+    const e = o.enemies.outcomes;
+    kill(o, 0, 100);
+    e.killX[0] = 120.75;
+    e.killY[0] = 64.5;
+    kill(o, -1, 999); // anonymous: no score, no popup
+    kill(o, 1, 0); // worth nothing: no popup
+    const p = o.powerups.outcomes as { pickupCount: number } & PowerUpOutcomes;
+    p.pickupPlayer[0] = 1;
+    p.pickupX[0] = 30;
+    p.pickupY[0] = 40;
+    p.pickupScore[0] = 300;
+    p.pickupCount = 1;
+    host.scoring.resolve();
+    const seen: number[][] = [];
+    events.drain((event) => seen.push([event.kind, event.id, event.x, event.y, event.param]));
+    // The pickup scores (300 for player 1) but shows no popup over the ship.
+    expect(seen).toEqual([[SimEventKind.Score, 0, 120, 64, 100]]);
+    expect(host.scoring.board.scores[1].score).toBe(300);
   });
 
   it('is part of the World: `world.scoring.board`, scores hashed, the hi-score not', () => {

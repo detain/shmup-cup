@@ -96,6 +96,15 @@ export const SimEventKind = {
    * awarded.
    */
   BossDefeated: 11,
+  /**
+   * Points were scored at a place (the score popups of plan M1-14): `id` = the player slot
+   * credited, `x`/`y` = where (whole world pixels — the kill, the boss part), `param` = the
+   * points (whole). Pushed by `core/scoring` for enemy kills and by `core/bosses` for boss parts;
+   * formation bonuses and the boss tally keep their own events
+   * ({@link SimEventKind.FormationBonus}, {@link SimEventKind.BossDefeated}); capsule pickups
+   * (on the ship) push none.
+   */
+  Score: 12,
 } as const;
 
 /** One of the {@link SimEventKind} codes. */
@@ -115,6 +124,7 @@ export const SIM_EVENT_KIND_NAMES: readonly string[] = Object.freeze([
   'musicDuck',
   'dim',
   'bossDefeated',
+  'score',
 ]);
 
 /**

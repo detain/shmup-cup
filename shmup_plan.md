@@ -1473,6 +1473,54 @@ the browser dev app and as a Tizen 5.5 bundle.
 - **Acceptance:** particle pool reuse without allocation, event → preset mapping, shake decay sequence, flash limiter,
   draw-order test (bullets above explosions and items), e2e screenshot of the gallery non-blank.
 - **Refs:** `shmup_feat.md` §18 (explosions, hit flash, draw order, shake, particles), §20.
+- **As built:**
+  - **Content.** The file is `content/fx/particles.fx.json` (the `<folder>/<name>.<kind>.json`
+    rule), with `README.md` and `example.fx.json`. A preset is `id`, `sprite`, optional `frames`
+    (indices played evenly over the lifetime; default all), `count` (× the event's intensity
+    1–4, ≤ 64 a burst), `speed` / `lifetime` / optional `delay` ranges, optional `direction` /
+    `spread` (degrees), `gravity`, `drag`, `radius` and `blend` (`add` default, `normal`). Events
+    reach presets through **triggers** (`{ event: 'fx' | 'sfx', cue, preset, dx?, dy? }`, ≤ 4 per
+    cue): `fx` = the `Particles` events' `FX_CUES` (every cue is bound), `sfx` = the sounds that
+    imply a visual — `EnemyHit` → `spark`, `Clink` → `clink`, `MeterAdvance` / `CapsulePickup` →
+    `pickup`, `PlayerShot` → `muzzle` (9 px ahead). This keeps the sim unchanged for hits,
+    clinks, pickups and shots. An extra preset `shield.break` serves `FX_CUES.ShieldBreak`.
+    Validated by render-pixi `loadFxContent` (min ≤ max, unique ids — first file in path order
+    wins, known cues and presets); the shell owns the kind (`DEFAULT_CONTENT_OWNERS.fx`, and
+    `bootShell` keeps the parsed content for the renderer); `pnpm content:check` checks the
+    preset sprites against the atlas. Two new procedural sprites, `fx/sparkle` (cancel twinkle)
+    and `fx/ring` (pickup ring), in `scripts/assets/procedural/particles.mjs`.
+  - **Pool.** Particles live in **world pixels**; the camera is applied when they are drawn (not
+    at spawn), so an explosion stays on the ground it happened on while the stage scrolls. The
+    pool advances by **simulated ticks** (the renderer steps it by `frame.tick` deltas: frozen
+    while paused, cleared when the tick goes back); a particle emitted between steps appears on
+    the next step at age 0. The presentation RNG is the core's sfc32 seeded from the game's seed
+    (`^ 0x2545f491`) but stepped on a typed-array state with 16-bit draws (closure words and
+    32-bit returns are boxed by V8). Normal and additive particles have their own preallocated
+    sprite sets (changing a sprite's blend mode rebuilds Pixi's render group).
+  - **Ownership.** The renderer owns `particles`, `popups` and `effects` (`PixiRenderer` gained
+    them plus `setFxContent`, and the options `effects`, `fxSeed`, `particleCapacity`);
+    `render()` steps them and adds the event shake / flash / dim on top of `frame.screen`. The
+    shell's `connectFxEvents(dispatcher, renderer)` (dispatch module) wires `Particles`, `Sfx`,
+    `Shake`, `Flash`, `Dim`, `Score`, `FormationBonus` and `BossDefeated` — in free flight only.
+  - **Effects.** The hit flash (`@flash` frames while `flashTicks > 0`) and the invulnerability
+    blink were already sim-side (M1-10 / M1-12); nothing changed there. The shake mirrors the
+    sim's `shakeAmount` tick for tick (a request is not counted down on its own tick) along a
+    fixed 8-step jitter pattern; `EffectSettings.screenShake` is the off switch. Flashes use a
+    look per `FlashKind` (Mega Crash white 0.85, WARNING red 0.35, boss blast white 1.0) and the
+    limiter allows ≤ 3 starts per 60 ticks (1 with `reduceFlashing`, which also caps the opacity
+    at 0.25). The WARNING's `Dim` event dims the **playfield** through a new overlay in the world
+    group (under the flash and the HUD); `frame.screen.dim` stays the menu dim under the UI list.
+  - **Score popups** need points and a place, so the core gained `SimEventKind.Score` (12,
+    `id` = player, `x`/`y` = the kill, `param` = points): pushed by `core/scoring` for credited
+    kills and by `core/bosses` for destroyed parts worth points (presentation only, not hashed).
+    Formation bonuses and the boss tally pop up from their own events (gold). Capsule pickups
+    push no popup — it would cover the ship.
+  - **Dev scene.** `?scene=fx-gallery` (new shell module `fx-gallery`) cycles one station a
+    second: every preset (three bursts), then shake small / medium / large, the three flashes,
+    the dim and the popups; the World's events are not connected there.
+  - **Tests / tooling.** The root `package.json` links `@shmup/render-pixi` (workspace) as a dev
+    dependency so `content:check` can validate the `fx` kind. New e2e `fx-gallery.spec.ts` (web
+    and Tizen builds: station label and warm explosion pixels, screenshot attached).
 
 ### M1-15 — Audio engine & procedural placeholder SFX/music
 

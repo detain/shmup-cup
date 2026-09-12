@@ -603,6 +603,29 @@ describe('core/bosses — edge cases (M1-13)', () => {
       expect(bosses.defeat(0)).toBe(false);
     });
 
+    it('pushes a Score event for every destroyed part worth points (the popups, M1-14)', () => {
+      const { w } = fighting();
+      w.events.clear();
+      expect(w.bosses.damagePart(E.arm, 5, 0)).toBe(BossHit.Destroyed);
+      const scores: number[][] = [];
+      w.events.drain((event) => {
+        if (event.kind === SimEventKind.Score) scores.push([event.id, event.param]);
+      });
+      // The arm and the parts attached below it (gun, tip), each at its own place.
+      expect(scores).toEqual([
+        [0, 100],
+        [0, 50],
+        [0, 10],
+      ]);
+      w.events.clear();
+      w.bosses.defeat();
+      const anonymous: number[] = [];
+      w.events.drain((event) => {
+        if (event.kind === SimEventKind.Score) anonymous.push(event.param);
+      });
+      expect(anonymous).toEqual([]);
+    });
+
     it('defeats a boss with a core left by destroying the rest (tool): nobody credited', () => {
       const { w } = fighting();
       w.bosses.damagePart(E.coreA, 6, 0);

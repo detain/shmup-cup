@@ -18,7 +18,7 @@ const shell = await bootShell({
   audio, // createWebAudio()
   platform: (renderer) => createWebPlatform({ input, audio, webgl2: renderer.webGLVersion === 2, ... }),
   gameConfig: { remoteMode: false },
-  scene: sceneFromSearch(location.search), // 'flight' (default) | 'showcase' | 'calibration'
+  scene: sceneFromSearch(location.search), // 'flight' (default) | 'showcase' | 'calibration' | 'fx-gallery'
   audioUnlock: 'gesture', // 'immediate' on TV
   contentOwners: { 'input-profiles': profiles.load }, // optional: keep the parsed input profiles
 });
@@ -40,11 +40,12 @@ canvas carries `data-shmup-state="loading" | "running" | "error"`.
 |---|---|---|
 | `boot` | implemented | `bootShell()`, `sceneFromSearch()`, `ShellBootError` |
 | `loader` | implemented | Atlas page images (`loadImages`), content validation routed by kind (`loadGameContent`, `DEFAULT_CONTENT_OWNERS`; script ids checked against the core's `KNOWN_SCRIPT_IDS` and enemies against their behaviours since M1-08, weapons against theirs (`checkWeaponBehaviors`) since M1-10; the core's `ENGINE_SPRITES` — bullets, laser beam, since M1-10 the Option orb, since M1-11 the power capsule and the Force Field — interned by default since M1-09) |
-| `dispatch` | implemented | Sim event → presentation handler routing, allocation-free |
+| `dispatch` | implemented | Sim event → presentation handler routing, allocation-free; `connectFxEvents` feeds the renderer's particles, shake / flash / dim and score popups from the World's events (M1-14) |
 | `error-screen` | implemented | Boot overlay: progress bar and error screen (Canvas 2D) |
 | `frame-loop` | implemented | `requestAnimationFrame` driver (moved here from the apps) |
 | `flight` | implemented | Default dev scene since M1-06 ("free flight"): the game's World (the KESTREL under player control) over a drifting starfield — or, with a stage (`?stage=` in the web app, M1-07), the stage's parallax and terrain, the enemies its timeline spawns (M1-08) and their bullets and lasers (M1-09) — HUD bars; the ship's autofired shots and its Options are World batches too (M1-10), and so are the power capsules and the Force Field (M1-11 — the power meter is drawn by the M1-16 HUD); the HUD shows player 1's score, `HI` and the session hi-score, `lives − 1` stock ships and `GAME OVER` (red) in place of the title once the World's status says so, rebuilt only on a change (M1-12); a boss's parts are a World batch, and a running boss WARNING (`view.warning`) is drawn as its text on a translucent band in the UI list, red / yellow every 16 ticks, rebuilt only on a change (M1-13, `?stage=test-boss`); its sprites are appended to the content's sprite table |
 | `showcase` | implemented | The M1-04 sprite showcase (`?scene=showcase`): parallax stars, KESTREL, HUD, bitmap text |
+| `fx-gallery` | implemented | `?scene=fx-gallery` (M1-14): every particle preset of `content/fx/`, then the shakes, flashes, the dim and the score popups, one station a second |
 
 Boot error screen titles: `CONTENT COULD NOT BE READ`, `CONTENT ERRORS: N PROBLEMS` (one
 `<file>:<json path>: message` line per issue), `ATLAS PAGE FAILED TO LOAD`,

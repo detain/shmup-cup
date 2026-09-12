@@ -1777,7 +1777,11 @@ class BossSystemImpl implements BossSystem {
     const size = part.explosion >= 0 && part.explosion < EXPLOSION_SFX.length ? part.explosion : 1;
     host.events.push(SimEventKind.Sfx, EXPLOSION_SFX[size], x, y, 0);
     host.events.push(SimEventKind.Particles, EXPLOSION_FX[size], x, y, 1);
-    if (by >= 0 && part.score > 0) addScore(host, by, part.score);
+    if (by >= 0 && part.score > 0) {
+      addScore(host, by, part.score);
+      // The score popup of the part (plan M1-14); whole numbers, like every event push.
+      if (part.score >= 1) host.events.push(SimEventKind.Score, by, x, y, part.score | 0);
+    }
     host.bullets.detachLasers(part.slot);
   }
 

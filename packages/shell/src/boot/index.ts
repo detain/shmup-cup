@@ -20,9 +20,16 @@
  *    `renderer.render(frame)` (plan §3.3). The scene decides what the frame shows until the
  *    scene stack exists (M1-16): **free flight** (default — the game's World with the KESTREL
  *    under the player's control over a starfield, `flight` module), the sprite **showcase**
- *    (`?scene=showcase`) or the **calibration** pattern (`?scene=calibration`, the World is not
- *    drawn). Before the ticks of each frame it forwards a change of `game.inputContext` to the
+ *    (`?scene=showcase`), the **calibration** pattern (`?scene=calibration`, the World is not
+ *    drawn) or the **fx gallery** (`?scene=fx-gallery`, M1-14). Before the ticks of each frame it
+ *    forwards a change of `game.inputContext` to the
  *    input adapter (`input.setContext` — the `game` / `menu` binding tables of decision D15).
+ *
+ * **Game feel (M1-14).** The shell owns the `fx` content kind: it validates `content/fx/` with
+ * `@shmup/render-pixi`'s `loadFxContent`, hands the presets to the renderer
+ * (`renderer.setFxContent`) and, in free flight, connects the World's `Particles`, `Sfx`,
+ * `Shake`, `Flash`, `Dim` and score events to the renderer's particles, screen effects and score
+ * popups (`connectFxEvents`). The particles' presentation RNG is seeded from the game's seed.
  *
  * The canvas carries `data-shmup-state="loading" | "running" | "error"` so tests and the TV's
  * remote inspector can tell where boot stands.
@@ -40,6 +47,7 @@
  * @module
  */
 import {
+  DEFAULT_GAME_CONFIG,
   createGame,
   defineModule,
   type ContentFile,
@@ -56,14 +64,19 @@ import {
   type ValidationIssue,
 } from '@shmup/core';
 import {
+  EMPTY_FX_CONTENT,
+  FX_CONTENT_KIND,
   createAtlas,
   createPixiRenderer,
+  loadFxContent,
   type Atlas,
   type AtlasManifest,
   type AtlasPageImage,
+  type EffectSettings,
+  type FxContent,
   type PixiRenderer,
 } from '@shmup/render-pixi';
-import { createEventDispatcher, type EventDispatcher } from '../dispatch/index.js';
+import { connectFxEvents, createEventDispatcher, type EventDispatcher } from '../dispatch/index.js';
 import { createBootOverlay, formatIssues, type BootOverlay } from '../error-screen/index.js';
 import { startFrameLoop } from '../frame-loop/index.js';
 import {
@@ -74,6 +87,7 @@ import {
   type LoadableImage,
 } from '../loader/index.js';
 import { createFlightScene, type FlightScene } from '../flight/index.js';
+import { createFxGallery, type FxGallery } from '../fx-gallery/index.js';
 import { createShowcase, type Showcase } from '../showcase/index.js';
 
 /** Module descriptor. */
@@ -83,20 +97,26 @@ export const moduleInfo = defineModule({
   specRefs: ['shmup_feat.md §23', 'shmup_feat.md §22', 'shmup_feat.md §3', 'shmup_feat.md §19'],
 });
 
+/** Mixed into the game's seed for the particles' presentation RNG (a stream of its own). */
+const FX_SEED_SALT = 0x2545f491;
+
 /** Attribute on the game canvas that reports the boot state. */
 export const BOOT_STATE_ATTRIBUTE = 'data-shmup-state';
 
 /**
  * Dev scenes the shell can show until real scenes exist (M1-16): `flight` (the game's World —
- * free flight), `showcase` (the M1-04 sprite showcase) and `calibration` (the test pattern).
+ * free flight), `showcase` (the M1-04 sprite showcase), `calibration` (the test pattern) and
+ * `fx-gallery` (every particle preset, shake, flash, the dim and the score popups in turn —
+ * M1-14).
  */
-export type ShellScene = 'flight' | 'showcase' | 'calibration';
+export type ShellScene = 'flight' | 'showcase' | 'calibration' | 'fx-gallery';
 
 /** Every {@link ShellScene}, default first. */
 export const SHELL_SCENES: readonly ShellScene[] = Object.freeze([
   'flight',
   'showcase',
   'calibration',
+  'fx-gallery',
 ]);
 
 /**
@@ -182,9 +202,15 @@ export interface ShellOptions {
   /**
    * Validators for foreign content kinds (plan §3.5), merged over the shell's
    * `DEFAULT_CONTENT_OWNERS` — e.g. an input-profile registry's `load`, so the app keeps the
-   * parsed profiles (M1-05).
+   * parsed profiles (M1-05). The shell owns `fx` itself (it keeps the particle presets for the
+   * renderer); an `fx` owner given here replaces it, and the particles then have no presets.
    */
   readonly contentOwners?: ContentOwners;
+  /**
+   * Effect settings to change from the renderer's defaults (screen shake on, normal flashing —
+   * plan M1-14; the Options screen sets them later).
+   */
+  readonly effects?: Partial<EffectSettings>;
   /**
    * Image factory for the atlas pages (default `() => new Image()`).
    *
@@ -218,6 +244,10 @@ export interface Shell {
   readonly flight: FlightScene | null;
   /** The showcase scene when `scene === 'showcase'`, else `null`. */
   readonly showcase: Showcase | null;
+  /** The fx gallery when `scene === 'fx-gallery'`, else `null`. */
+  readonly fxGallery: FxGallery | null;
+  /** The particle presets and triggers of `content/fx/` handed to the renderer. */
+  readonly fx: FxContent;
   /** Stops the frame loop and releases listeners, input, renderer, atlas and audio. */
   stop(): void;
 }
@@ -386,10 +416,19 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     return new ShellBootError(title, lines, issues, reason);
   };
 
-  // 1–2. Content.
+  // 1–2. Content. The shell keeps the particle presets it validates (the `fx` owner).
+  let fx: FxContent = EMPTY_FX_CONTENT;
+  const owners: ContentOwners = {
+    [FX_CONTENT_KIND]: (files) => {
+      const result = loadFxContent(files);
+      fx = result.content;
+      return result.issues;
+    },
+    ...options.contentOwners,
+  };
   let content: LoadContentResult;
   try {
-    content = loadGameContent(options.contentFiles, { owners: options.contentOwners });
+    content = loadGameContent(options.contentFiles, { owners });
   } catch (error) {
     throw fail('CONTENT COULD NOT BE READ', [describe(error)], [], error);
   }
@@ -427,6 +466,9 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
       preferWebGLVersion: options.preferWebGLVersion ?? 1,
       atlas,
       testPattern: scene === 'calibration',
+      effects: options.effects,
+      // The particles' own RNG, seeded per session from the game's seed (never the sim's streams).
+      fxSeed: ((options.gameConfig?.seed ?? DEFAULT_GAME_CONFIG.seed) ^ FX_SEED_SALT) >>> 0,
     });
   } catch (error) {
     throw fail('WEBGL IS NOT AVAILABLE', [describe(error)], [], error);
@@ -442,9 +484,11 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   const readyAtlas = atlas;
   const readyRenderer = renderer;
 
+  readyRenderer.setFxContent(fx);
   const flight = scene === 'flight' ? createFlightScene(game) : null;
   const showcase = scene === 'showcase' ? createShowcase() : null;
-  const sceneView = flight ?? showcase;
+  const fxGallery = scene === 'fx-gallery' ? createFxGallery(readyRenderer) : null;
+  const sceneView = flight ?? showcase ?? fxGallery;
   if (sceneView !== null) {
     readyRenderer.setSpriteNames(sceneView.spriteNames);
     readyRenderer.bindWorld(sceneView.world);
@@ -453,6 +497,9 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   }
   const calibration = createCalibrationFrame(game.renderFrame());
   const events = createEventDispatcher();
+  // The World's events feed the particles, shake, flash, dim and popups (plan M1-14) — in free
+  // flight only: the other scenes do not draw the World.
+  if (flight !== null) connectFxEvents(events, readyRenderer);
 
   // 5. Lifecycle, audio unlock, resize.
   platform.lifecycle.onSuspend(() => {
@@ -524,6 +571,8 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     scene,
     flight,
     showcase,
+    fxGallery,
+    fx,
     stop() {
       if (stopped) return;
       stopped = true;

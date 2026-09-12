@@ -39,6 +39,10 @@ const fakes = vi.hoisted(() => ({
   frames: [] as Array<{ tick: number; world: unknown; hudCount: number }>,
   sizes: [] as Array<[number, number]>,
   destroyed: 0,
+  /** The fx content handed to the renderer. */
+  fxContent: null as RenderPixi.FxContent | null,
+  /** Calls into the fake renderer's particles and popups: `[method, ...args]`. */
+  fxCalls: [] as unknown[][],
 }));
 
 vi.mock('@shmup/render-pixi', async (importOriginal) => {
@@ -52,6 +56,19 @@ vi.mock('@shmup/render-pixi', async (importOriginal) => {
         width: 384,
         height: 216,
         webGLVersion: 1,
+        effects: real.createScreenEffects(),
+        particles: {
+          get content() {
+            return fakes.fxContent ?? real.EMPTY_FX_CONTENT;
+          },
+          emit: (...args: unknown[]) => fakes.fxCalls.push(['emit', ...args]),
+          emitFxCue: (...args: unknown[]) => fakes.fxCalls.push(['emitFxCue', ...args]),
+          emitSfxCue: (...args: unknown[]) => fakes.fxCalls.push(['emitSfxCue', ...args]),
+        },
+        popups: { show: (...args: unknown[]) => fakes.fxCalls.push(['show', ...args]) },
+        setFxContent: (content: RenderPixi.FxContent) => {
+          fakes.fxContent = content;
+        },
         setSpriteNames: (names: readonly string[]) => fakes.spriteNames.push(names),
         bindWorld: (world: unknown) => fakes.bound.push(world),
         render: (frame: RenderFrame) =>
@@ -166,6 +183,8 @@ beforeEach(() => {
   fakes.frames.length = 0;
   fakes.sizes.length = 0;
   fakes.destroyed = 0;
+  fakes.fxContent = null;
+  fakes.fxCalls.length = 0;
   unlocks = 0;
   platform = createHeadlessPlatform();
   input = {
@@ -242,13 +261,14 @@ function boot(overrides: Partial<ShellOptions> = {}) {
 describe('shell/boot sceneFromSearch', () => {
   it('describes itself and knows its scenes', () => {
     expect(moduleInfo.name).toBe('boot');
-    expect(SHELL_SCENES).toEqual(['flight', 'showcase', 'calibration']);
+    expect(SHELL_SCENES).toEqual(['flight', 'showcase', 'calibration', 'fx-gallery']);
   });
 
   it('reads ?scene= and defaults to free flight', () => {
     expect(sceneFromSearch('?scene=calibration')).toBe('calibration');
     expect(sceneFromSearch('debug=1&scene=calibration')).toBe('calibration');
     expect(sceneFromSearch('?scene=showcase')).toBe('showcase');
+    expect(sceneFromSearch('?scene=fx-gallery')).toBe('fx-gallery');
     expect(sceneFromSearch('?scene=flight')).toBe('flight');
     expect(sceneFromSearch('?scene=nope')).toBe('flight');
     expect(sceneFromSearch('?scene')).toBe('flight');
@@ -406,17 +426,70 @@ describe('shell/boot failures (boot error screen)', () => {
   it('reports content from a foreign kind nobody owns, unless an owner accepts it', async () => {
     const foreign = [
       ...contentFiles,
-      { path: 'fx/particles.fx.json', data: { formatVersion: 1, kind: 'fx' } },
+      { path: 'audio/sfx.sfx.json', data: { formatVersion: 1, kind: 'sfx' } },
     ];
     await expect(boot({ contentFiles: foreign }).promise).rejects.toThrow(
-      /no loader for content kind "fx"/,
+      /no loader for content kind "sfx"/,
     );
-    const owned = await boot({ contentFiles: foreign, contentOwners: { fx: () => [] } }).promise;
-    // The input profiles are validated by the default owner; `fx` by the one passed in.
+    const owned = await boot({ contentFiles: foreign, contentOwners: { sfx: () => [] } }).promise;
+    // The input profiles and the fx presets are validated by the shell; `sfx` by the one passed.
     expect(owned.content.foreign.map((file) => file.path)).toEqual([
+      'audio/sfx.sfx.json',
       'fx/particles.fx.json',
       'input/remote.input-profiles.json',
     ]);
+  });
+
+  it('keeps the content/fx presets, hands them to the renderer and seeds its particles (M1-14)', async () => {
+    const shell = await boot({ gameConfig: { seed: 1234 } }).promise;
+    expect(shell.fx.presets.map((preset) => preset.id)).toContain('explosion.small');
+    expect(fakes.fxContent).toBe(shell.fx);
+    expect(fakes.rendererOptions?.fxSeed).toBe((1234 ^ 0x2545f491) >>> 0);
+    const other = await boot().promise;
+    expect(fakes.rendererOptions?.fxSeed).not.toBe((1234 ^ 0x2545f491) >>> 0);
+    expect(other.fxGallery).toBeNull();
+  });
+
+  it('reports bad fx content on the boot error screen', async () => {
+    const files = [
+      ...contentFiles.filter((file) => !file.path.startsWith('fx/')),
+      {
+        path: 'fx/bad.fx.json',
+        data: { formatVersion: 1, kind: 'fx', presets: [], triggers: [{ event: 'x' }] },
+      },
+    ];
+    await expect(boot({ contentFiles: files }).promise).rejects.toThrow(
+      /fx\/bad\.fx\.json:triggers\[0\]\.event/,
+    );
+  });
+
+  it("connects the World's events to the particles, effects and popups in free flight", async () => {
+    const shell = await boot().promise;
+    shell.game.events.push(SimEventKind.Particles, 0, 100.7, 50, 1);
+    shell.game.events.push(SimEventKind.Sfx, 3, 20, 30, 0);
+    shell.game.events.push(SimEventKind.Score, 0, 40, 60, 300);
+    shell.game.events.push(SimEventKind.Shake, 20, 0, 0, 2);
+    win.frame(0);
+    expect(fakes.fxCalls).toEqual([
+      ['emitFxCue', 0, 100, 50, 1],
+      ['emitSfxCue', 3, 20, 30],
+      ['show', 300, 40, 60, 0xf8f8f8],
+    ]);
+    expect(shell.renderer.effects.shakeAmount).toBe(2);
+  });
+
+  it('?scene=fx-gallery: binds the gallery and drives the particles directly, not by events', async () => {
+    const shell = await boot({ scene: 'fx-gallery' }).promise;
+    const gallery = shell.fxGallery;
+    if (gallery === null) throw new Error('no gallery');
+    expect(fakes.spriteNames).toEqual([gallery.spriteNames]);
+    expect(fakes.bound).toEqual([gallery.world]);
+    expect(gallery.stations[0]).toBe(shell.fx.presets[0].id);
+    shell.game.events.push(SimEventKind.Particles, 0, 1, 2, 1);
+    win.frame(0);
+    expect(fakes.frames[fakes.frames.length - 1]?.world).toBe(gallery.world);
+    // The first station's burst, not the World's event.
+    expect(fakes.fxCalls).toEqual([['emit', 0, 192, 100, 1]]);
   });
 
   it('reports an atlas page that fails to load', async () => {

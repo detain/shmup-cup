@@ -37,8 +37,8 @@ renderer.render(game.renderFrame());
 | `sprites` | implemented | `createSpriteLayerBinding` (preallocated sprites per `SpriteBatchView`: camera, `PLAYFIELD_Y`, anchors, flips, blink, hit flash), ordered `QuadPool` |
 | `text` | implemented | Bitmap font from the atlas, `TextMetrics`, allocation-free text and number layout |
 | `ui` | partial | Draws a core `DrawList` (rect, sprite, text, number) into the HUD or UI layer |
-| `particles` | placeholder | Pooled cosmetic particles |
-| `effects` | placeholder | Shake/flash application, raster & palette effects, CRT |
+| `particles` | implemented | `content/fx/` presets (kind `fx`: `loadFxContent`) and the 256-particle pool on the FX layer (additive / normal, presentation RNG, oldest recycled, world space, ticks not frames), spawned by FX and SFX cues (M1-14) |
+| `effects` | partial | Screen shake (3 magnitudes, decaying, off switch), per-kind flash behind a ≤ 3-a-second limiter, playfield dim, score popups (M1-14); raster & palette effects, CRT later |
 | `debug` | placeholder | Debug overlay |
 
 Guide (sprite ids → frames, bindings, quad pools, the terrain ring and parallax bands, text,

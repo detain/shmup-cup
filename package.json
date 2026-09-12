@@ -39,6 +39,7 @@
     "@playwright/test": "^1.63.0",
     "@shmup/core": "workspace:*",
     "@shmup/input-web": "workspace:*",
+    "@shmup/render-pixi": "workspace:*",
     "@types/node": "catalog:",
     "@types/semver": "^7.8.0",
     "eslint": "catalog:",

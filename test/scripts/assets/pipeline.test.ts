@@ -203,6 +203,8 @@ describe('scripts/assets/pipeline — buildAtlas', () => {
       'fx/explosion-large',
       'fx/spark',
       'fx/debris',
+      'fx/sparkle',
+      'fx/ring',
       'bg/stars-far',
       'bg/stars-mid',
       'bg/stars-near',

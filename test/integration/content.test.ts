@@ -8,7 +8,8 @@
  * Every sprite name the shipped content uses must exist in the atlas the asset pipeline
  * builds (M1-03) — a typo is reported as an issue here, not as a magenta box in the game.
  * Kinds the core does not own go to their owning package, like the shell does at boot
- * (plan §3.5): `input-profiles` → `@shmup/input-web` (M1-05). The shipped set is loaded with the
+ * (plan §3.5): `input-profiles` → `@shmup/input-web` (M1-05), `fx` → `@shmup/render-pixi`
+ * (M1-14 — its preset sprites must exist in the atlas too). The shipped set is loaded with the
  * engine's script registry (`KNOWN_SCRIPT_IDS`, M1-08), so an unknown behaviour id is an issue,
  * and its enemies and weapons are checked against their behaviours' tunables
  * (`checkEnemyBehaviors`, `checkWeaponBehaviors`).
@@ -26,6 +27,7 @@ import {
   type ValidationIssue,
 } from '@shmup/core';
 import { loadInputProfiles, parseInputProfiles } from '@shmup/input-web';
+import { fxSpriteNames, loadFxContent, parseFxContent } from '@shmup/render-pixi';
 import { describe, expect, it } from 'vitest';
 import { findMissingSprites } from '../../scripts/assets/manifest.mjs';
 import { buildAtlas } from '../../scripts/assets/pipeline.mjs';
@@ -89,6 +91,7 @@ function stripLineComments(source: string): string {
 /** Validators of the foreign kinds, as the shell registers them (plan §3.5). */
 const OWNERS: Record<string, (files: readonly ContentFile[]) => readonly ValidationIssue[]> = {
   'input-profiles': (files) => loadInputProfiles(files).issues,
+  fx: (files) => loadFxContent(files).issues,
 };
 
 /**
@@ -133,7 +136,10 @@ describe('integration: content/ validates', () => {
     expect(checkEnemyBehaviors(db)).toEqual([]);
     expect(checkWeaponBehaviors(db)).toEqual([]);
     // Foreign kinds go to their owner; a kind nobody owns must not silently fall through.
-    expect(foreign.map((file) => file.path)).toEqual(['input/remote.input-profiles.json']);
+    expect(foreign.map((file) => file.path)).toEqual([
+      'fx/particles.fx.json',
+      'input/remote.input-profiles.json',
+    ]);
     expect(ownerIssues(foreign)).toEqual([]);
     expect(db.ships.map((ship) => ship.id)).toContain('kestrel');
     expect(db.weaponPresets.map((preset) => preset.id)).toContain('type-a');
@@ -186,7 +192,10 @@ describe('integration: content/ validates', () => {
   it('loads the example format samples without a single issue', () => {
     const { db, issues, foreign } = loadContent(read(examplePaths));
     expect(issues).toEqual([]);
-    expect(foreign.map((file) => file.path)).toEqual(['input/example.input-profiles.json']);
+    expect(foreign.map((file) => file.path)).toEqual([
+      'fx/example.fx.json',
+      'input/example.input-profiles.json',
+    ]);
     expect(ownerIssues(foreign)).toEqual([]);
     expect(db.stages.length).toBeGreaterThan(0);
     for (const stage of db.stages) {
@@ -205,6 +214,7 @@ describe('integration: content/ validates', () => {
       stages: 'stage',
       tilesets: 'tileset',
       input: 'input-profiles',
+      fx: 'fx',
     };
     for (const file of [...shippedFiles, ...read(examplePaths)]) {
       const [folder = '', name = ''] = file.path.split('/');
@@ -263,6 +273,10 @@ describe('integration: content/ validates', () => {
           expect(parseInputProfiles(data, `${folder}/README.md`).issues).toEqual([]);
           continue;
         }
+        if ((data as { kind?: unknown }).kind === 'fx') {
+          expect(parseFxContent(data, `${folder}/README.md`).issues).toEqual([]);
+          continue;
+        }
         const { issues } = loadContent([{ path: `${folder}/README.md`, data }]);
         // A sample may name ids that only exist in a full content set; its shape must be right.
         expect(
@@ -295,6 +309,17 @@ describe('integration: content/ sprites exist in the atlas', () => {
     expect(findMissingSprites(manifest, ENGINE_SPRITES, 'ENGINE_SPRITES')).toEqual([]);
     const { db } = loadContent(shippedFiles, { extraSprites: ENGINE_SPRITES });
     expect(findMissingSprites(manifest, db.sprites.names, 'db.sprites.names')).toEqual([]);
+  });
+
+  it('finds every sprite of the particle presets (content/fx, M1-14) in the atlas', () => {
+    const fxFiles = shippedFiles.filter((file) => file.path.startsWith('fx/'));
+    const { content, issues } = loadFxContent(fxFiles);
+    expect(issues).toEqual([]);
+    const names = fxSpriteNames(content);
+    expect(names.length).toBeGreaterThan(0);
+    expect(findMissingSprites(manifest, names, 'fx presets')).toEqual([]);
+    const example = loadFxContent(read(examplePaths.filter((path) => path.startsWith('fx/'))));
+    expect(findMissingSprites(manifest, fxSpriteNames(example.content), 'fx example')).toEqual([]);
   });
 
   it('reports a sprite name that is not in the atlas as an issue', () => {

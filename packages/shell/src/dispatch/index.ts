@@ -3,27 +3,48 @@
  *
  * **Responsibility.** Routes the records drained from the core's event queue
  * (`game.events`) to the handlers the host registered per `SimEventKind` (SFX and music →
- * `audio-web`, particles / shake / flash → `render-pixi` — wired by later steps). Handlers are
+ * `audio-web` in M1-15; particles / shake / flash / dim / score popups → `render-pixi`,
+ * {@link connectFxEvents}, M1-14). Handlers are
  * registered at load time; dispatching is a table lookup and a loop over a preallocated array,
  * so draining the queue once per frame allocates nothing. Events nobody handles are counted
  * and dropped (a headless-safe default: the sim never depends on presentation).
+ *
+ * **Game feel (M1-14).** {@link connectFxEvents} registers the renderer's effect handlers:
+ *
+ * | Event | Handler |
+ * |---|---|
+ * | `Particles` (`id` = `FX_CUES`, `param` = intensity) | `particles.emitFxCue` — the presets `content/fx/` binds to the cue |
+ * | `Sfx` (`id` = `SFX_CUES`) | `particles.emitSfxCue` — the sounds that imply a visual (hit sparks, clinks, pickup rings, muzzle flashes) |
+ * | `Shake` (`param` = magnitude, `id` = ticks) | `effects.shake` |
+ * | `Flash` (`id` = `FlashKind`, `param` = ticks) | `effects.flash` (behind the ≤ 3-a-second limiter) |
+ * | `Dim` (`id` = percent, `param` = ticks) | `effects.dim` |
+ * | `Score` / `FormationBonus` / `BossDefeated` (`param` = points) | `popups.show` (white; the bonuses gold) |
+ *
+ * Positions stay world pixels — the renderer applies the camera when it draws.
  *
  * **Implements.**
  * - shmup_feat.md §22 Architecture — presentation fed by read-only views + the event queue
  * - shmup_feat.md §19 / §20 — audio cues and "juice" triggered by sim events (handlers M1-14/15)
  *
  * **Public API.** {@link createEventDispatcher}, {@link EventDispatcher},
- * {@link SimEventHandler}.
+ * {@link SimEventHandler}, {@link connectFxEvents}, {@link FxTargets}.
  *
  * @module
  */
 import {
   SIM_EVENT_KIND_NAMES,
+  SimEventKind,
   defineModule,
   type EventQueue,
   type SimEvent,
-  type SimEventKind,
 } from '@shmup/core';
+import {
+  BONUS_POPUP_COLOR,
+  SCORE_POPUP_COLOR,
+  type ParticleSystem,
+  type ScorePopups,
+  type ScreenEffects,
+} from '@shmup/render-pixi';
 
 /** Module descriptor. */
 export const moduleInfo = defineModule({
@@ -138,5 +159,88 @@ export function createEventDispatcher(): EventDispatcher {
     handlerCount(kind) {
       return handlers[kind]?.length ?? 0;
     },
+  };
+}
+
+/** The renderer's game-feel parts {@link connectFxEvents} feeds (a `PixiRenderer` has them). */
+export interface FxTargets {
+  /** The particle pool (`null` = particle events are ignored). */
+  readonly particles: ParticleSystem | null;
+  /** Shake, flash and playfield dim. */
+  readonly effects: ScreenEffects;
+  /** Score popups (`null` = score events are ignored). */
+  readonly popups: ScorePopups | null;
+}
+
+/**
+ * Registers the game-feel handlers of plan M1-14 (see the module docs for the table): particle
+ * bursts from `Particles` and `Sfx` events, shake, flash, dim and score popups. Load time —
+ * registering allocates the handlers; handling an event allocates nothing.
+ *
+ * @remarks
+ * Event positions are passed on as whole world pixels (`Math.floor(x) | 0` — some sounds carry an
+ * enemy's fractional position, and a fractional argument to a non-inlined call is boxed). A
+ * `Dim` level is `id / 100`. Popups show `param` points (nothing for less than 1).
+ *
+ * @param dispatcher - The shell's event dispatcher.
+ * @param fx - The renderer (or anything with its `particles`, `effects` and `popups`).
+ * @returns A function that unregisters every handler (idempotent).
+ *
+ * @example
+ * ```ts
+ * const disconnect = connectFxEvents(shell.events, shell.renderer);
+ * // every frame: game.events.drain(shell.events.visit) → renderer.render(frame)
+ * ```
+ */
+export function connectFxEvents(dispatcher: EventDispatcher, fx: FxTargets): () => void {
+  const { particles, effects, popups } = fx;
+  const off: Array<() => void> = [];
+  if (particles !== null) {
+    off.push(
+      dispatcher.on(SimEventKind.Particles, (event) => {
+        particles.emitFxCue(
+          event.id,
+          Math.floor(event.x) | 0,
+          Math.floor(event.y) | 0,
+          event.param,
+        );
+      }),
+      dispatcher.on(SimEventKind.Sfx, (event) => {
+        particles.emitSfxCue(event.id, Math.floor(event.x) | 0, Math.floor(event.y) | 0);
+      }),
+    );
+  }
+  off.push(
+    dispatcher.on(SimEventKind.Shake, (event) => {
+      effects.shake(event.param, event.id);
+    }),
+    dispatcher.on(SimEventKind.Flash, (event) => {
+      effects.flash(event.id, event.param);
+    }),
+    dispatcher.on(SimEventKind.Dim, (event) => {
+      effects.dim(event.id / 100, event.param);
+    }),
+  );
+  if (popups !== null) {
+    /**
+     * Shows a popup for an event's points.
+     *
+     * @param event - The drained record.
+     * @param color - Tint.
+     */
+    const popup = (event: Readonly<SimEvent>, color: number): void => {
+      popups.show(event.param, Math.floor(event.x) | 0, Math.floor(event.y) | 0, color);
+    };
+    off.push(
+      dispatcher.on(SimEventKind.Score, (event) => popup(event, SCORE_POPUP_COLOR)),
+      dispatcher.on(SimEventKind.FormationBonus, (event) => popup(event, BONUS_POPUP_COLOR)),
+      dispatcher.on(SimEventKind.BossDefeated, (event) => popup(event, BONUS_POPUP_COLOR)),
+    );
+  }
+  let connected = true;
+  return () => {
+    if (!connected) return;
+    connected = false;
+    for (const unregister of off) unregister();
   };
 }

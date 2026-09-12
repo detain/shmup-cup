@@ -247,7 +247,7 @@ describe('core/events — cue registries', () => {
     expect(MUSIC_CUES.Escape).toBe(14);
     expect(MUSIC_CUE_NAMES.length).toBe(15);
 
-    expect(Object.values(SimEventKind)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+    expect(Object.values(SimEventKind)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
     expect(SIM_EVENT_KIND_NAMES).toEqual([
       'sfx',
       'music',
@@ -261,6 +261,7 @@ describe('core/events — cue registries', () => {
       'musicDuck',
       'dim',
       'bossDefeated',
+      'score',
     ]);
     expect(FX_CUES).toEqual({
       ExplosionSmall: 0,

@@ -446,7 +446,11 @@ describe('render-pixi/renderer render contract (plan §3.4)', () => {
       }),
     ).toThrow(RangeError);
     expect(renderer.bindings).toEqual([]);
-    expect(renderer.layers.layers[LayerId.Fx].children).toHaveLength(0);
+    // Only the renderer's own particles and score popups (plan M1-14) — no batch binding.
+    expect(renderer.layers.layers[LayerId.Fx].children).toEqual([
+      renderer.particles?.container,
+      renderer.popups?.container,
+    ]);
   });
 
   it('binds parallax bands and the terrain grid below the batches and syncs them (M1-07)', async () => {

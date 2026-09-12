@@ -35,8 +35,10 @@ export {
   type LoadableImage,
 } from './loader/index.js';
 export {
+  connectFxEvents,
   createEventDispatcher,
   type EventDispatcher,
+  type FxTargets,
   type SimEventHandler,
 } from './dispatch/index.js';
 export {
@@ -55,6 +57,14 @@ export {
   type FlightScene,
   type FlightSceneOptions,
 } from './flight/index.js';
+export {
+  FX_GALLERY_EXTRAS,
+  FX_GALLERY_SPRITES,
+  FX_GALLERY_STATION_TICKS,
+  createFxGallery,
+  type FxGallery,
+  type FxGalleryOptions,
+} from './fx-gallery/index.js';
 export {
   SHOWCASE_SPRITES,
   createShowcase,

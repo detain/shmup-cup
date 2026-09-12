@@ -24,7 +24,10 @@
  * nobody (-1: debug tools) score nothing. The {@link ScoringSystem} reads the tick outcomes of the
  * enemy and power-up systems: in tick phase 7 (after the shots' hits, pickups and Mega Crash) and,
  * for kills made between ticks (tools), at the start of phase 3 — every outcome is credited
- * exactly once.
+ * exactly once. Each credited kill worth points also pushes a `SimEventKind.Score` (`id` =
+ * player, `x`/`y` = the kill, `param` = points) for the score popups of plan M1-14 — presentation
+ * only, never hashed. Pickups push none: they happen on the ship, which a popup would cover (the
+ * meter's ding and the pickup ring are their feedback).
  *
  * **Hi-score.** Session-wide, starting at 0 or at the value the host sets from its save
  * ({@link ScoreBoard.setHiScore}, M1-17). It is presentation data derived from the scores, so it is
@@ -47,6 +50,7 @@
  * @module
  */
 import type { EnemyOutcomes } from '../enemies/index.js';
+import { SimEventKind, type EventQueue } from '../events/index.js';
 import { MAX_PLAYERS } from '../input/index.js';
 import { defineModule } from '../module-info.js';
 import type { PowerUpOutcomes } from '../powerups/index.js';
@@ -209,6 +213,11 @@ export interface ScoringHost extends ScoreHost {
     /** Pickups of the last collision phase. */
     readonly outcomes: PowerUpOutcomes;
   };
+  /**
+   * Presentation events: every credited kill worth points pushes a `SimEventKind.Score` there
+   * (the score popups, plan M1-14). Absent = no events (tests).
+   */
+  readonly events?: EventQueue;
 }
 
 /** Credits the tick's scoring events (see the module docs). */
@@ -263,9 +272,23 @@ class ScoringSystemImpl implements ScoringSystem {
     const host = this.host;
     const o = host.enemies.outcomes;
     const kills = o.killCount;
+    const events = host.events;
     for (let k = this.killsScored; k < kills; k++) {
       const by = o.killBy[k];
-      if (by >= 0) addScore(host, by, o.killScore[k]);
+      if (by < 0) continue;
+      const points = o.killScore[k];
+      addScore(host, by, points);
+      // The score popup (plan M1-14): whole numbers only — a fractional argument to the queue's
+      // non-inlined `push` would be boxed.
+      if (events !== undefined && points >= 1) {
+        events.push(
+          SimEventKind.Score,
+          by,
+          Math.floor(o.killX[k]) | 0,
+          Math.floor(o.killY[k]) | 0,
+          points | 0,
+        );
+      }
     }
     if (kills > this.killsScored) this.killsScored = kills;
     const bonuses = o.bonusCount;

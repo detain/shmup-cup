@@ -77,7 +77,14 @@ vi.mock('@shmup/render-pixi', async (importOriginal) => {
     ...real,
     createPixiRenderer: (options: Record<string, unknown>) => {
       fakes.renderer.options = options;
-      return Promise.resolve(fakes.renderer);
+      // The game-feel parts of plan M1-14: real screen effects, no particles or popups.
+      return Promise.resolve({
+        ...fakes.renderer,
+        effects: real.createScreenEffects(),
+        particles: null,
+        popups: null,
+        setFxContent: () => {},
+      });
     },
   };
 });

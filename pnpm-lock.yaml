@@ -148,6 +148,9 @@ importers:
       '@shmup/input-web':
         specifier: workspace:*
         version: link:packages/input-web
+      '@shmup/render-pixi':
+        specifier: workspace:*
+        version: link:packages/render-pixi
       '@types/node':
         specifier: 'catalog:'
         version: 24.13.4

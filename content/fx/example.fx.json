@@ -1,0 +1,44 @@
+{
+  "formatVersion": 1,
+  "kind": "fx",
+  "presets": [
+    {
+      "id": "explosion.small",
+      "sprite": "fx/explosion-small",
+      "count": 1,
+      "speed": { "min": 0, "max": 0 },
+      "lifetime": { "min": 18, "max": 18 }
+    },
+    {
+      "id": "spark",
+      "sprite": "fx/spark",
+      "frames": [0, 1, 2],
+      "count": 3,
+      "speed": { "min": 0.8, "max": 1.8 },
+      "direction": 0,
+      "spread": 360,
+      "gravity": 0,
+      "drag": 0.1,
+      "lifetime": { "min": 6, "max": 9 },
+      "delay": { "min": 0, "max": 0 },
+      "radius": 0,
+      "blend": "add"
+    },
+    {
+      "id": "debris",
+      "sprite": "fx/debris",
+      "count": 6,
+      "speed": { "min": 0.8, "max": 2.2 },
+      "gravity": 0.06,
+      "drag": 0.02,
+      "lifetime": { "min": 24, "max": 40 },
+      "blend": "normal"
+    }
+  ],
+  "triggers": [
+    { "event": "fx", "cue": "ExplosionSmall", "preset": "explosion.small" },
+    { "event": "fx", "cue": "ExplosionSmall", "preset": "spark" },
+    { "event": "fx", "cue": "Debris", "preset": "debris" },
+    { "event": "sfx", "cue": "EnemyHit", "preset": "spark", "dx": 0, "dy": 0 }
+  ]
+}
