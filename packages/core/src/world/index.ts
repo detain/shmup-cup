@@ -106,9 +106,9 @@
  * (`core/weapons`), followed by the phase changes. Its death sequence (bullet cancel, chained
  * explosions, final blast with hit-stop, tally, stage-clear jingle) ends in status `stageClear`
  * and releases the scroll lock. With `config.stageSkip: 'boss'` the World starts its stage a
- * little before the boss (`core/debug` `skipToBoss`, the debug stage skip of M1-18). The parts are drawn from the boss batch (`LayerId.AirEnemies`,
- * after the other batches); {@link World.laserSources} lists enemies then parts, so lasers can stay
- * attached to either.
+ * little before the boss (`core/debug` `skipToBoss`, the debug stage skip of M1-18). The parts
+ * are drawn from the boss batch (`LayerId.AirEnemies`, after the other batches);
+ * {@link World.laserSources} lists enemies then parts, so lasers can stay attached to either.
  *
  * **Zero allocation.** Everything is allocated by {@link createWorld}; {@link stepWorld} and the
  * systems only write numbers into existing objects and typed arrays.

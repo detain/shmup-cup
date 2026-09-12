@@ -424,6 +424,10 @@ outside the World.
 - **M1-17** (done) — the Options scene (MASTER / MUSIC / SFX sliders, the controls profile, BACK
   saves), OPTIONS enabled in the title and pause menus, the `Choice` widget, the saved hi-scores
   ([saves-and-options.md](saves-and-options.md)).
+- **M1-18** (done) — the apps hand the flow zone A as `GameConfig.stage` (`@shmup/shell`
+  `defaultStageId`), so START and RETRY STAGE play AZURE VERGE on every build; with the web app's
+  `?skip=boss` (`GameConfig.stageSkip`) every new World starts just before HALCYON BULWARK
+  ([zone-a-and-playtest.md](zone-a-and-playtest.md)).
 - **M1-19** — debug controls and replays on top of the flow (`sceneId` for the smoke test).
 - **M2-10 / M2-15** — the zone map, attract mode, mode / ship / weapon select, name entry, the
   hi-score table; **M2-16** — rebinding and accessibility options; the boss HP bar and the co-op P2

@@ -490,7 +490,8 @@ export const BOSS_SKIP_LEAD = 96;
 
 /**
  * The debug stage skip: jumps the World's stage to {@link BOSS_SKIP_LEAD} px before its first
- * `warning` / `boss` event and flies every ship in play (not dying / dead) in again at the new view.
+ * `warning` / `boss` event and flies every ship in play (not dying / dead) in again at the new
+ * view.
  *
  * @remarks
  * Load-time / debug code (cold): `StageRunner.jumpTo` re-derives the scroll speed, pan and flags
@@ -498,6 +499,17 @@ export const BOSS_SKIP_LEAD = 96;
  * items, the boss and its WARNING); the events between the old and the new position never fire.
  * Loadouts, lives and scores stay. `createWorld` calls it for `GameConfig.stageSkip: 'boss'`; the
  * debug controls of M1-19 may call it on a running World.
+ *
+ * Only the **first** `warning` / `boss` event counts (a stage with two bosses skips to the first);
+ * the target is clamped to 0, so a WARNING closer than {@link BOSS_SKIP_LEAD} px to the start
+ * restarts the stage there. The ships' `spawnPlayer` restarts their fly-in (the controls are
+ * ignored for its ticks, as at a respawn); a dying or dead ship keeps its death sequence. The
+ * World's tick counter, RNG streams and hashed state move on from the jump like any other
+ * restart, so a replay of a skipped session reproduces it exactly.
+ *
+ * @throws {RangeError} Never for content that passed `loadContent` (its event x lies in
+ * `[0, stage.length]`); a hand-made `StageSpec` with an event beyond its `length` makes
+ * `StageRunner.jumpTo` throw.
  *
  * @param world - The world.
  * @returns `true` when it jumped; `false` in free flight or on a stage without a boss event.

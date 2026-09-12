@@ -200,6 +200,20 @@ function directionCount(mask: number): number {
  * @param bot - Who plays.
  * @param flags - Run options (god mode, seed, skip, config, limit, observer).
  * @returns The report, with the recorded input.
+ * @throws {Error} When the shipped content has issues ({@link shippedContent}).
+ * @throws {RangeError} When `stageId` is not a shipped stage or `flags.config` is invalid
+ *   (`createGame` / `resolveGameConfig`).
+ *
+ * @remarks
+ * Bare gameplay (no scene flow): the run ends on the tick the World's status becomes
+ * `stageClear` or `gameOver`, or after `maxTicks`. Each tick the bot decides first (its mask is
+ * cut to 16 bits and recorded), the harness commits it to player 1's snapshot, the game steps
+ * once, the tick's events are drained into the report (equips from `PowerUp` events with
+ * param 0, pickups from the `MeterAdvance` sound), then `observe` runs. `seed`, `stage` and
+ * `stageSkip` from the flags override the same fields of `flags.config`; god mode is set on
+ * `world.debugFlags` after creation (it is not part of the config, so a replay must pass it
+ * again). A death is a tick on which player 1 went from `alive` to `dying`; `boss` is true when
+ * the boss was in its fight then.
  *
  * @example
  * ```ts
@@ -305,6 +319,20 @@ export interface ReplayOutcome {
  * @param inputs - {@link PlaytestResult.inputs}.
  * @param flags - The run's options (god mode, seed, skip, config).
  * @returns The outcome; equal to the run's when the simulation is deterministic.
+ * @throws {Error} When the shipped content has issues ({@link shippedContent}).
+ * @throws {RangeError} When `stageId` or `flags.config` is invalid.
+ *
+ * @remarks
+ * Plays every recorded tick (it does not stop at `stageClear` — the recording already stopped
+ * there) and ignores `maxTicks` and `observe`. Pass the run's flags unchanged: god mode, the seed
+ * and the stage skip all change the simulation.
+ *
+ * @example
+ * ```ts
+ * const run = runStage('zone-a', fourWayBot(), { seed: 3 });
+ * const again = replayStage('zone-a', run.inputs, { seed: 3 });
+ * again.hash === run.hash; // → true
+ * ```
  */
 export function replayStage(
   stageId: string,

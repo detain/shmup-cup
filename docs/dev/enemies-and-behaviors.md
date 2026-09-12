@@ -433,7 +433,8 @@ document it in the module docblock and in `content/enemies/README.md`, and test 
 (`packages/core/test/behaviors/`). `yield SLEEP_FOREVER` once the mover can do the rest.
 
 **Boss behaviours** (M1-13) are a second roster in the same module — `defineBossBehavior`,
-`createBossBehaviorRegistry`, `DEFAULT_BOSS_BEHAVIORS` (`boss.hover`, `boss.lanes`) — driving a
+`createBossBehaviorRegistry`, `DEFAULT_BOSS_BEHAVIORS` (`boss.hover`, `boss.lanes`, and
+`boss.bulwark` since M1-18) — driving a
 `BossScriptApi` instead of a `ScriptApi`; a boss phase's `script` names one. They follow the same
 coroutine rules ([bosses-and-warning.md](bosses-and-warning.md#boss-behaviours-corebehaviors)).
 
@@ -463,6 +464,22 @@ game.world.enemies.count; // enemies alive now
 for (const e of game.world.enemies.enemies) if (e.state === EnemyState.Live) game.world.enemies.kill(e);
 game.world.enemies.outcomes.killCount; // kills this tick (reset at the next tick's phase 3)
 ```
+
+## The zone A roster
+
+`content/enemies/zone-a.enemies.json` (M1-18) plays AZURE VERGE with the same eight behaviours —
+no new enemy behaviour was needed — and its own tunables: `skeet` / `skeet-chain` (popcorn,
+`drifter.sine`; the chains run a travelling wave with `memberPhase` 48 and never drop), `vane`
+(fans on the new `content/paths/zone-a.paths.json` curves), `tender` (capsule carrier, 3 hp),
+`lancer` (rammer), `picket` / `picket-ceiling` (turrets, 1.25 px/tick), `strider` (walker),
+`burrow` + `burrow-mite` (hatch, at most 4 mites), `gyre` (orbiter, a ring every 150 ticks at
+1 px/tick). Two new pixel-map sprites, `enemies/vane` and `enemies/gyre`; the rest reuse the M1-03
+art. Every aimed `bulletSpeed` stays ≤ 2.0 px/tick (D17 — checked by `pnpm content:check`), and
+ground enemies are only spawned in the stage's floor-and-ceiling corridor. The full table, the
+stage's sections and the boss are in
+[zone-a-and-playtest.md](zone-a-and-playtest.md#the-roster). Because the shipped content now
+has both rosters, `test/integration/enemies-runtime.test.ts` expects the `test-range` timeline
+to spawn only the enemies it names.
 
 ## Zero allocation and the hot-path rules
 
@@ -554,3 +571,5 @@ code):
   from `core/scoring`) ([fx-and-game-feel.md](fx-and-game-feel.md)); **M2-01** — rank modifiers
   and revenge bullets;
   **M2-02** — the pattern DSL; **M2-04** — the Option Hunter.
+- **M1-18** (done) — zone A's roster on these behaviours, its paths, and HALCYON BULWARK's
+  `boss.bulwark` ([zone-a-and-playtest.md](zone-a-and-playtest.md)).

@@ -10,8 +10,12 @@ pause menu (Esc / P / Backspace), stage clear and game over — guide:
 [`docs/dev/scenes-and-ui.md`](../../docs/dev/scenes-and-ui.md). `?scene=flight` goes straight into **free
 flight** (M1-06): the game's World with the KESTREL under keyboard / gamepad control over an
 empty starfield. `?scene=showcase` shows the M1-04 sprite showcase and `?scene=calibration`
-the pixel-art calibration test pattern instead. `?stage=<id>` runs that stage instead of
-open space when a game starts (M1-07 — `?stage=test-range` is the dev stage: scrolling camera, generated
+the pixel-art calibration test pattern instead. Since M1-18 a game in the scene flow plays
+**zone A, AZURE VERGE**, with its boss HALCYON BULWARK (`@shmup/shell` `defaultStageId`; the dev
+scenes keep open space), and `?skip=boss` — the debug stage skip, `stageSkipFromSearch` → `GameConfig.stageSkip`
+— starts every game a little before the boss (guide:
+[`docs/dev/zone-a-and-playtest.md`](../../docs/dev/zone-a-and-playtest.md)). `?stage=<id>` runs
+another stage when a game starts (M1-07 — `?stage=test-range` is the dev stage: scrolling camera, generated
 terrain, star parallax and, since M1-08, its enemy roster flying the timeline — since M1-09
 the turrets, walkers and orbiters fire bullets at the ship; an unknown id
 logs a `console.warn` and flies in open space; guides:

@@ -305,9 +305,10 @@ What that means per build: in a browser nothing is audible until the first key p
 (gamepad buttons are not a user activation); sounds requested before are dropped, but the stage
 theme queued at world creation starts at that moment. On the TV audio is unlocked at boot, so
 the title theme plays from the start (since M1-16 the shell prepares `Title` for the scene
-flow, plus `StageClear` / `GameOver` in open space). The TV app has no `?stage=`, so a game there
-flies in open space with **no stage music** until zone A (M1-18); in a browser the title theme,
-like a stage theme, starts with the first key press or click.
+flow, plus `StageClear` / `GameOver` in open space). Since M1-18 both apps' games play zone A, so
+the boot prepares `zone-a`'s set — AZURE VERGE, BULWARK ASSAULT, the jingles — and the TV plays the
+stage music from START; in a browser the title theme, like a stage theme, starts with the first
+key press or click.
 
 ## Zero allocation and the hot-path rules
 
@@ -373,7 +374,7 @@ song's loop points and render time. Options: `--out DIR`, `--only NAME` (one cue
 | Symptom | Cause / fix |
 |---|---|
 | No sound at all in a browser | Autoplay policy: nothing plays before the first key press or click (gamepad buttons do not count). Sounds requested before are dropped; the stage theme starts with the gesture |
-| No music on the TV | Expected: the TV app runs free flight, which prepares no music (no `?stage=` on TV). Music on the TV arrives with the scene flow / zone A |
+| No stage music in a game | Since M1-18 a game plays zone A (theme `zone-a`, boss theme `boss`) on the TV, in a browser and on the desktop; only open space (`?scene=flight` without `?stage=`, an unknown `?stage=`) has none. In a browser press a key first |
 | A stage's music event (or boss theme) plays silence | The cue has no track (`content:check` says so for shipped stages) or it was not prepared: a host preparing a stage must pass `stageMusicCues(stage)`, not the default `STAGE_MUSIC_CUES`. `engine.missedMusic` counts ignored requests |
 | A new cue plays nothing | Not bound in `main.sfx.json`, or bound on a context that has no buffer yet — check `engine.attached` |
 | The boot tests' app is silent | Expected: their fake context has no `createBuffer` / `createBufferSource`, so `isPlaybackContext` fails and the engine stays silent instead of throwing |
@@ -394,8 +395,9 @@ song's loop points and render time. Options: `--out DIR`, `--only NAME` (one cue
   stage-clear scenes' music ([scenes-and-ui.md](scenes-and-ui.md)).
 - **M1-17** (done) — the Options screen's MASTER / MUSIC / SFX sliders → `audio.setBusVolume`
   through `volumeGain`, saved and applied at boot ([saves-and-options.md](saves-and-options.md)).
-- **M1-18** — zone A: the `zone-a` stage plays AZURE VERGE and BULWARK ASSAULT through the same
-  set (a track can be limited to it with `stages`).
+- **M1-18** (done) — zone A: the `zone-a` stage names the `Stage` / `Boss` cues, so it plays AZURE
+  VERGE and BULWARK ASSAULT through the same set — no new song was written; the apps boot it by
+  default, so the TV now plays stage music ([zone-a-and-playtest.md](zone-a-and-playtest.md)).
 - **M1-19** — perf budgets (the TV's render time of the music set during loading).
 - **M2-01** — extends (`ExtraLife`); **M2-05** — Direct mode (`CapsulePickup`); **M3-03** —
   tracker music.

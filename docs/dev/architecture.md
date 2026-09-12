@@ -297,7 +297,10 @@ system, status,
   tests bullets and laser capsules against the ships by brute force, the power-up system the
   items against the ships' pickup boxes).
 - **`debug`** — `hashWorld(world)`: FNV-1a over every piece of simulated state in a fixed
-  order; two worlds with the same seed and input hash equal (golden replays, M1-19).
+  order; two worlds with the same seed and input hash equal (golden replays, M1-19). Since M1-18
+  also the debug stage skip `skipToBoss(world)` (`StageRunner.jumpTo` to just before the first
+  boss event), run by `createWorld` for `GameConfig.stageSkip: 'boss'`
+  ([zone-a-and-playtest.md](zone-a-and-playtest.md#the-debug-stage-skip)).
 
 ### Content pipeline (`content/` → `core/data`)
 
@@ -509,7 +512,8 @@ These are enforced now so that replays, golden tests and attract mode work later
 - The sim counts **ticks**, never milliseconds — `Date.now`, `performance.now` and
   `Math.random` are lint errors in `packages/core`.
 - All sim-affecting options live in `GameConfig` (frozen, validated, recorded in replay
-  headers). Presentation-only options live in `core/config` `UserOptions` (M1-17 — volumes, the
+  headers) — debug ones too: the stage skip is `GameConfig.stageSkip` (M1-18), so a replay of a
+  skipped session skips the same way. Presentation-only options live in `core/config` `UserOptions` (M1-17 — volumes, the
   input profile), persisted by `core/save` and never seen by the simulation.
 - Input reaches the sim only through `InputSnapshot` masks; `copyInputSnapshot()` records
   and replays them without allocating.
@@ -529,7 +533,9 @@ These are enforced now so that replays, golden tests and attract mode work later
   it: `stepWorld` must stay under 256 KB over 10,000 ticks (plan §1.4).
 - **State hashes**: `hashWorld(world)` covers every piece of simulated state; tests run two
   worlds in lockstep and compare hashes, and golden replays (M1-19) will compare them at
-  checkpoints. New simulated state must be added to the hash.
+  checkpoints. New simulated state must be added to the hash. The headless playtest
+  (`test/playtest/`, M1-18) records a bot's input per tick and replays it to the same deaths and
+  final hash.
 
 ## Module status tracking
 
@@ -545,7 +551,7 @@ M1-17, the `UserOptions` — difficulty tables and display options later), `loop
 `presentation`, `rng`, `math`, `events`, `pools`, `save` (M1-17), `data` (partial: the M2 kinds are
 missing), `world`, `stage`, `player` (implemented for P0 since
 M1-12 — co-op joining comes with M2-06), `collision` (partial: no bending-laser chains yet), `debug` (partial:
-state hash and flags, no controls yet), `enemies` (partial: no rank modifiers / Option Hunter
+state hash, flags and the stage skip to the boss — M1-18; no controls yet), `enemies` (partial: no rank modifiers / Option Hunter
 yet), `patterns` (partial: runner, movers and fire primitives — no pattern DSL yet),
 `behaviors` (partial: the M1 enemy and boss rosters), `bosses` (partial: the P0 mechanics —
 timers, escapes, the HP bar, mid-bosses and raids with M2-09), `bullets` (implemented for P0 — bending lasers and cancel
@@ -587,6 +593,7 @@ plugins in `vite.shared.ts`) has no `moduleInfo`; it is covered by the tests und
 | An input profile or a remote tuning change | Edit `content/input/*.input-profiles.json` (format in [`content/input/README.md`](../../content/input/README.md)) — no code change |
 | A game action | Append a bit to `Action` (never renumber — masks are recorded in replays), add it to `ACTION_NAMES`, the shipped input profiles and the built-in bindings in `input-web/keymap` / `gamepad` |
 | An enemy, a path, a behaviour or a mover | Enemies and paths are JSON (`content/enemies/`, `content/paths/`); a behaviour is a `defineBehavior` coroutine added to `DEFAULT_BEHAVIOR_DEFS`; a mover a new `MoverKind` — [enemies-and-behaviors.md](enemies-and-behaviors.md#extending-it) |
+| A zone (a stage with its roster and boss) | JSON under `content/stages/`, `content/enemies/`, `content/paths/`; `pnpm content:check`; a playtest run with the 4-way bot (`test/playtest/`) and its design-rule checks — [zone-a-and-playtest.md](zone-a-and-playtest.md#extending-it) |
 | A boss or a boss behaviour | A boss is an `enemies` entry with a `boss` section (parts, weak points, phases) started by a stage `warning` event; a boss behaviour is a `defineBossBehavior` coroutine added to `DEFAULT_BOSS_BEHAVIOR_DEFS` — [bosses-and-warning.md](bosses-and-warning.md#extending-it) |
 | An item kind, a meter slot rule or a shield kind | `ITEM_KINDS` / `ItemKind` (appended), the meter's `canEquipSlot` / `equipSlot` and Auto Power-Up rules, a `ShieldSpec` in `SHIELD_SPECS` — [powerups-and-shields.md](powerups-and-shields.md#extending-it) |
 | A bullet pattern, bullet kind or laser | A behaviour calling the `ScriptApi` fire primitives (`aimed`, `nWay`, `ring`, …, `laser`, `fireWait`); a new primitive in `core/patterns` with its `ScriptApi` wrapper; a kind in `BULLET_KINDS` — [bullets-and-patterns.md](bullets-and-patterns.md#extending-it) |

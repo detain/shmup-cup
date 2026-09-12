@@ -79,9 +79,9 @@
  *
  * **Public API.** {@link bootShell}, {@link Shell}, {@link ShellOptions}, {@link ShellAssets},
  * {@link ShellInput}, {@link ShellInputProfiles}, {@link ShellScene}, {@link SHELL_SCENES},
- * {@link sceneFromSearch}, {@link ShellBootError}, {@link BootTiming}, {@link BOOT_STATE_ATTRIBUTE},
- * {@link SCENE_ATTRIBUTE}, {@link BOOT_MS_ATTRIBUTE}, {@link DEFAULT_STAGE_ID},
- * {@link defaultStageId}.
+ * {@link sceneFromSearch}, {@link ShellBootError}, {@link BootTiming},
+ * {@link BOOT_STATE_ATTRIBUTE}, {@link SCENE_ATTRIBUTE}, {@link BOOT_MS_ATTRIBUTE},
+ * {@link DEFAULT_STAGE_ID}, {@link defaultStageId}.
  *
  * @module
  */

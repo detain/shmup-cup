@@ -6,10 +6,10 @@ work too, and every device drives both the game and the menus.
 > **Status:** these controls are built into the game as **control profiles** and are read
 > every frame. The current build ([preview-build.md](preview-build.md)) starts on the **title
 > screen**: OK (Enter / A) opens the menu, ▲ ▼ move the highlight, OK chooses — START begins a
-> game. In the game the **directions fly the ship** on every device and the gun **fires on its
-> own** — the same in the scrolling test stage (`?stage=test-range` in a browser), where enemies
-> fly past, shoot at you (every bullet pattern is dodgeable with the four arrow directions alone)
-> and are shot down. **PowerUp** (OK on the remote, Enter or C on a keyboard, X on a gamepad)
+> game — the first zone, **AZURE VERGE**, on every device. In the game the **directions fly the
+> ship** and the gun **fires on its own**; enemies fly past and shoot at you — every bullet pattern
+> and every boss laser is dodgeable with the four arrow directions alone, no diagonals needed (a
+> test program that plays with single arrow presses clears the whole zone) — and are shot down. **PowerUp** (OK on the remote, Enter or C on a keyboard, X on a gamepad)
 > takes the highlighted power-up of the power meter once you have collected capsules
 > ([preview-build.md](preview-build.md#power-ups)). **Pause** — Back or Play/Pause on the remote,
 > Esc / P / Backspace on a keyboard, Start / Back on a gamepad — opens the pause menu; in menus
@@ -182,7 +182,7 @@ profile chosen under CONTROLS — SAFE 4-WAY until you pick another.
 | Back closes the game on the TV instead of pausing | Not expected any more — Back pauses in the game and asks before quitting on the title. It closes the app at once only on the loading and error screens; otherwise please report it (and check the installed build is the latest) |
 | Nothing reacts for a moment after the app starts | The title screen needs OK first (`PRESS OK`), then START; after START the ship flies in (about ⅔ of a second) and ignores the controls until it arrives — see [preview-build.md](preview-build.md#flying-the-ship) |
 | Holding Shot (Z / Space, A / Cross) or Sub (X, B / Circle) changes nothing | Expected: the gun already fires on its own (automatic fire is on by default), and the missiles fire on their own too once a power-up gave them to you (in a browser, `?loadout=full` gives them to you right away) |
-| PowerUp (OK, Enter, C, X) does nothing | Expected until you have collected a power capsule (no box of the power meter is highlighted) — and on the TV and the desktop, whose games fly in open space without enemies, there are none yet. Also expected when you already have the most of the highlighted power-up. Such a press plays a short, low "no" buzz. See [preview-build.md](preview-build.md#power-ups) |
+| PowerUp (OK, Enter, C, X) does nothing | Expected until you have collected a power capsule (no box of the power meter is highlighted) — the red saucers and completed formations of AZURE VERGE leave them. Also expected when you already have the most of the highlighted power-up. Such a press plays a short, low "no" buzz. See [preview-build.md](preview-build.md#power-ups) |
 | No sound in the browser | Press a key or click into the picture once — the sound starts then (a gamepad button does not count). See [preview-build.md](preview-build.md#sound-and-music) |
 | Pressing OK while holding an arrow stops the ship on the TV | Not expected — the game keeps the arrow held. Please report it with the remote model: it means the remote itself drops the arrow when OK is pressed |
 | Pause does nothing | On the title and the end screens Pause has no job — it pauses only a running game. In the game it should open the PAUSE menu; if not, please report the device and the button |

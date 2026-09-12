@@ -16,33 +16,39 @@ itself and works with the remote's arrows, OK and Back alone ([The title screen 
 menus](#the-title-screen-and-the-menus), [Pausing, quitting and the end
 screens](#pausing-quitting-and-the-end-screens), [The Options screen](#the-options-screen)).
 
-On the TV a game flies in empty **open space** (no enemies yet): it exists to prove on each
-device that the whole chain works — the menus and the controls respond quickly and reliably, the
-60 ticks per second simulation runs smoothly, the picture is pixel-perfect at the monitor's
-resolution — and to catch control, smoothness or scaling problems early.
+**START plays the first real zone, AZURE VERGE** — on the TV too: about three minutes of
+scrolling over rolling ground, through a long cave and a high-speed stretch, with enemies that fly
+and walk past and shoot at you, power capsules to collect, and at the end the **WARNING** and the
+zone's boss, the battleship **HALCYON BULWARK** ([The first zone: AZURE
+VERGE](#the-first-zone-azure-verge)). It is built to be played with the TV remote: every bullet
+and every laser can be dodged with the four arrow directions alone. On every device it proves the
+whole chain — the menus and the controls respond quickly and reliably, the 60 ticks per second
+simulation runs smoothly, the picture is pixel-perfect at the monitor's resolution — and it is the
+first real test of how the game plays with the remote.
 
-In a browser you can also play the first **scrolling stage** — the *Test Range*, with rocky
-ground, caves, speed changes, enemies that fly and walk past and shoot at you, your ship
-shooting them down, **power-ups** (the capsules some enemies leave behind, taken with the
-remote's OK button) and **lives, losing your ship and the score**: rock,
-enemies and bullets destroy the KESTREL, it comes back with a life less, and after the last
-one it is **GAME OVER** (see [The scrolling test stage](#the-scrolling-test-stage-browser-only),
-[Your weapons](#your-weapons), [Power-ups](#power-ups) and
-[Lives, losing your ship and the score](#lives-losing-your-ship-and-the-score)). A second, short
-stage — the *Boss Range* — ends with the first **boss**, announced by a
-**WARNING** sign ([The boss range and the WARNING](#the-boss-range-and-the-warning-browser-only)).
-Hits *feel* like hits: enemies burst into **explosions**, shots throw
-**sparks**, the picture **shakes** when your ship is lost, the screen **flashes** for a Mega
-Crash or a boss's final blast, and every kill shows its **points** rising from the spot
-([Explosions, sparks, shake and flashes](#explosions-sparks-shake-and-flashes)).
+Along the way your ship shoots the enemies down ([Your weapons](#your-weapons)), powers up with
+the capsules some enemies leave behind, taken with the remote's OK button
+([Power-ups](#power-ups)), and can be lost: rock, enemies and bullets destroy the KESTREL, it
+comes back with a life less, and after the last one it is **GAME OVER**
+([Lives, losing your ship and the score](#lives-losing-your-ship-and-the-score)). Hits *feel*
+like hits: enemies burst into **explosions**, shots throw **sparks**, the picture **shakes** when
+your ship is lost, the screen **flashes** for a Mega Crash or a boss's final blast, and every kill
+shows its **points** rising from the spot
+([Explosions, sparks, shake and flashes](#explosions-sparks-shake-and-flashes)). And the game has
+**sound**: every shot, hit, explosion and pickup makes a sound, the menus click and chime, the
+WARNING wails its siren, and there is original **music** — the title theme, the zone's theme that
+loops seamlessly, the boss theme, a short stage-clear tune and a game-over tune
+([Sound and music](#sound-and-music)). In a browser the sound starts with your first key press or
+click.
+
+In a browser there is more to try: a shortcut straight to the zone's boss (`?skip=boss`), the
+fully powered ship (`?loadout=full`), and two test stages — the scrolling *Test Range*, with rocky
+ground, caves, speed changes and the first enemy roster
+([The scrolling test stage](#the-scrolling-test-stage-browser-only)), and the short *Boss Range*
+with a test boss ([The boss range and the WARNING](#the-boss-range-and-the-warning-browser-only)).
 The earlier start-up pictures are still there: **free flight** straight away without the title,
 the animated **sprite showcase** and the **calibration screen**, plus the **effects gallery**
 that shows every explosion and screen effect in turn (see [below](#other-screens-browser-only)).
-And the game has **sound**: every shot, hit, explosion and pickup makes a sound, the menus click
-and chime, the WARNING wails its siren, and there is original **music** — the title theme, in
-the browser stages a stage theme that loops seamlessly, the boss theme, a short stage-clear tune
-and a game-over tune ([Sound and music](#sound-and-music)). In a browser the sound starts with
-your first key press or click.
 
 This page explains how to open the preview on each device, what you should see, how the ship
 and the menus should behave, and what to report if something is wrong. The full button layouts
@@ -93,13 +99,14 @@ The title music (SHMUP CUP) plays — in a browser from your first key press or 
 
 ## What you should see
 
-After **START** the music fades, the stars keep drifting and the game begins — a deep navy
+After **START** the title music fades and the game begins — AZURE VERGE's own music starts, and
+the picture is a deep navy
 picture (never pure black — the M7 monitors' VA panels smear dark-to-bright transitions) framed by
 two thin bars, one along the top edge and one along the bottom (the **HUD**):
 
 | Element | Where | What "good" looks like |
 |---|---|---|
-| **Star field** in three layers | Whole picture behind the ship | Stars drift to the left at three different speeds (the far ones slowest), steadily, with no jumps; the pattern repeats seamlessly |
+| **Background** | Whole picture behind the ship | Two layers of stars move to the left as the view scrolls, the far ones slower, and the rim of a blue planet fills the bottom of the picture, moving slowest of all; everything moves steadily, with no jumps, and repeats seamlessly. (In free flight and on the title, three star layers drift by themselves instead) |
 | **KESTREL**, the player ship | Enters from the left edge | Glides in from off-screen during the first ⅔ of a second, slowing down as it arrives, and stops at mid-height about a sixth of the way across. Then it is yours to fly |
 | **Shots** from the ship's nose | In front of the ship, flying right | As soon as the ship has arrived, small cyan-and-white darts leave its nose and race to the right edge, two at a time, each with a tiny white-and-yellow **muzzle spark** flickering just in front of the nose as it leaves — see [Your weapons](#your-weapons) |
 | **Top bar** | Top edge | `1P` (cyan) and your score `00000000` on the left; `HI` (yellow) and the best score so far (kept between launches) in the middle; `2P` and `------` (grey — nobody is playing player 2) on the right |
@@ -138,8 +145,8 @@ plays. If the score is a new best for this device, **NEW HI-SCORE** shows in yel
 title; after ten seconds it goes back by itself. The score is saved as soon as the screen appears
 ([What the game remembers](#what-the-game-remembers)), and the title's `HI` shows the best one.
 
-**Stage clear.** When a stage ends — the Test Range after its 75 seconds, the Boss Range after
-its boss — the game plays on for a second and a half, then a box shows **STAGE CLEAR** with your
+**Stage clear.** When a stage ends — AZURE VERGE and the Boss Range after their boss, the Test
+Range after its 75 seconds — the game plays on for a second and a half, then a box shows **STAGE CLEAR** with your
 **SCORE** and the **HI** score for four seconds, then **TO BE CONTINUED** for four seconds (this
 preview has only one zone), and then the title. **OK** skips ahead. The score is saved like a
 game over's (this screen ends the run in this preview).
@@ -194,8 +201,8 @@ darkened picture:
   over with RETRY STAGE is not saved. (Its score can still show as `HI` until you close the app.)
 - Nothing needs saving when you close the app — Back → YES, Home, or even pulling the plug loses
   nothing that was already saved.
-- **On the TV** games fly in open space where nothing scores, so `HI` stays 0 there until the first
-  real zone arrives; the volumes and the control profile are what to check.
+- **On the TV** games play AZURE VERGE since this build, so they score: a game that ends on GAME
+  OVER or STAGE CLEAR is saved, and `HI` shows it after the app is closed and opened again.
 - **In a browser** each browser (and each address — the TV build on port 5174 is separate from
   the browser build on 5173) keeps its own; a private window forgets everything when it closes.
 - If the saved data is ever damaged (or comes from a newer version of the game), the game simply
@@ -237,8 +244,21 @@ ship may move in four directions only; the game is designed to be fully playable
 
 ### What changed lately
 
-**New in this build: the Options screen, and the game remembers.** **OPTIONS** — greyed out until
-now — works on the title and in the pause menu: three volume sliders (MASTER, MUSIC, SFX, from 0 to
+**New in this build: the first real zone, AZURE VERGE, with its boss — on the TV too.** Until
+now START flew in empty space on the TV and the desktop; the test stages could only be opened in a
+browser. Now **START plays AZURE VERGE on every device**: about three minutes in five parts —
+rows of pods and red saucers to get started, groups of new amber fan fliers and dashing
+arrowheads, a long cave with turrets on its floor and ceiling, walkers and hatches, a fast stretch
+with new teal ring spinners, a calm with two last capsules — then the **WARNING** and **HALCYON
+BULWARK**, an armoured battleship whose four shield plates guard its core and whose two emitters
+fire laser rows that move with it. Everything is made to be dodged with single arrow presses; a
+test program that plays like a remote player (never two arrows at once) clears the whole zone.
+The zone's music (AZURE VERGE, then BULWARK ASSAULT for the boss) now plays on the TV too, and on
+the TV scores are now saved like in the browser. In a browser, `?skip=boss` starts a game right
+before the boss. See [The first zone: AZURE VERGE](#the-first-zone-azure-verge).
+
+Before that, **the Options screen, and the game remembers.** **OPTIONS** — greyed out until
+then — works on the title and in the pause menu: three volume sliders (MASTER, MUSIC, SFX, from 0 to
 10) that change the sound the moment you press ◀ / ▶, and **CONTROLS**, the control profile —
 on the TV **SAFE 4-WAY** (the default, with the hiccup protection) or **FAST 8-WAY** (without it),
 in a browser KEYBOARD or KEYBOARD AS REMOTE — which also takes effect at once. **BACK** keeps the
@@ -350,13 +370,18 @@ fighters, and fighters that stop, aim and dash at you ([what to look for](#enemi
 slowing down, over rocky floors and caves drawn from small tiles, with star layers moving
 behind at their own speeds; and before that the ship came **under your control**, and free
 flight replaced the sprite showcase as the start-up picture. The simulation behind it is the real
-game engine: every build adds to this world — next comes the first real zone, AZURE VERGE, with
-its boss, on the TV too.
+game engine: every build adds to this world — next come developer tools (a debug overlay,
+recorded replays) and a final check of this first playable slice of the game.
 
 **Please re-test on the monitors:** install the new build and run through the checks in the
 next section — how the ship and the menus respond to the remote is still the most valuable
-report. New on the TV are the **Options screen** and **settings that are kept after the app is
-closed** (checks 16–18): please say whether the volume steps feel even and the MUSIC and SFX
+report. New on the TV is **AZURE VERGE** itself (checks 19–24): please play it through with the
+remote — several times if you can — and tell us whether every bullet and every laser could be
+dodged with single arrow presses (note the time into the stage where one could not), whether the
+scrolling stays smooth (also in the fast part), whether taking power-ups with OK feels natural
+during the action, whether the boss is fair, and how many ships you lost and where. Still worth
+answering: the **Options screen** and **settings that are kept after the app is closed**
+(checks 16–18): please say whether the volume steps feel even and the MUSIC and SFX
 sliders change what they should at once, whether the settings are still there after Back → YES
 and opening the app again, and — the most useful answer — whether the ship still moves smoothly
 with **FAST 8-WAY** (no hiccup protection) on your remote. Still worth answering: the **title
@@ -368,12 +393,13 @@ app closes, and whether the new **HUD** — the top bar's three scores and the b
 meter — is complete and readable from the sofa (check 2). **Sound** (check 11): every shot should
 be heard the moment it leaves the ship — please say whether the sound feels immediate or lags
 behind the picture, and whether it ever crackles, stutters or drops out. **Whether pressing OK
-while you hold an arrow stops the ship** (check 9) still needs answers. On a PC — or in the monitor's own web browser, pointed at
-the PC (see [In a desktop browser](#in-a-desktop-browser)) — please fly the **test stage** and
-the **boss range** with the sound on and report anything from
-[its checklist](#sound-and-music): in particular whether you can hear the **loop point** of the
-stage theme (about 51 seconds after your first key press the music jumps back to just after its
-intro — it should sound like one continuous piece), whether some sound is missing, cut off or
+while you hold an arrow stops the ship** (check 9) still needs answers — it matters more now that
+there are capsules to take on the TV. On a PC — or in the monitor's own web browser, pointed at
+the PC (see [In a desktop browser](#in-a-desktop-browser)) — AZURE VERGE plays the same;
+`?skip=boss` takes you straight to the boss to try it again and again. Please also report anything
+from [the sound checklist](#sound-and-music): in particular whether you can hear the **loop point**
+of the stage theme (about 51 seconds after the game started the music jumps back to just after
+its intro — it should sound like one continuous piece), whether some sound is missing, cut off or
 much too loud or quiet, and whether the siren and the music changes around the boss come at the
 right moments. The [effects checklist](#explosions-sparks-shake-and-flashes) (explosions never
 hiding a bullet, a comfortable shake and flash) and the
@@ -390,6 +416,96 @@ picture file packed into the same `.wgt`, in its `assets/` folder). There are no
 to copy to the monitor or to a USB stick — installing the `.wgt` (or opening the browser
 build) is all it takes, and the TV never needs a network connection to load it.
 
+## The first zone: AZURE VERGE
+
+**START plays AZURE VERGE** — on the TV, in a browser and on the desktop. It is the first real
+level of the game: about three minutes of scrolling in five parts, then the **WARNING** and the
+zone's boss, **HALCYON BULWARK**. Everything in it is an original placeholder made for this
+project (names, pictures, music). Times below count from START (about):
+
+| Time | What happens |
+|---|---|
+| 0–35 s | **Getting started.** The view scrolls gently over low rolling ground along the bottom; far behind, the rim of a **blue planet** fills the bottom of the picture, drifting very slowly. Rows of small **green pods** weave through (the first about 3 s in), **red saucers** drift across at about 8 s, 16 s and 27 s (each leaves a power capsule when you shoot it down), and at 24 s and 30 s long **wavy chains** of pods ripple through (they never leave a capsule) |
+| 35–75 s | **Fans and dashers**, in open space: groups of five or six **amber swept-wing fliers** swing in along arcs, loops and swoops, one behind the other (destroy a whole group for a big bonus and a capsule); pairs of **arrowhead fighters**, one high and one low, stop, aim and dash at you; a few more saucers |
+| about 66 s | Rock comes into view on the right — the ground below **and** a ceiling above: a long **cave** |
+| 75–145 s | **The cave.** The scrolling slows down. **Gun turrets** stand on the floor and hang from the ceiling, **walkers** stroll along the floor, two **armoured hatches** release small fighters, and saucers keep bringing capsules. The cave is always wide enough to fly through — but touching the rock costs a ship |
+| about 145 s | **High speed.** The cave ends and the scrolling speeds up to twice its normal pace over low ground, for about 20 seconds: **teal ring spinners** fly wide loops sending out rings of bullets, more fans, a pair of arrowhead fighters, three saucers |
+| about 168 s | **The calm.** The scrolling eases off; two last red saucers — the capsules for the boss fight — and nothing else. No rock any more |
+| about 3:00 | **The WARNING.** The scrolling slows to a stop, the playfield darkens and pulses red three times with the siren, the music fades, and the band reads `WARNING!!` · `GIANT HOSTILE "HALCYON BULWARK"` · `CLOSING IN - CODE HB-01` for three seconds |
+| about 3:03 | The boss glides in from the right (it cannot be hurt until it stops, about 2½ seconds later) and its theme starts. The stage waits until it is destroyed |
+
+**The enemies of AZURE VERGE** (the pods, saucers, turrets, walkers, hatches and arrowheads look
+like the test stage's; the fan fliers and ring spinners are new):
+
+| Enemy | Hits to destroy | Points | Shoots? |
+|---|---|---|---|
+| Green pod (rows and wavy chains) | 1 | 100 | No |
+| Amber fan flier (groups on curved paths) | 1 | 100 | No |
+| Arrowhead fighter (stops, aims, dashes at you) | 1 | 150 | No — it rams |
+| Small fighter from a hatch (rises, then dashes) | 1 | 50 | No — it rams |
+| Red saucer (always leaves a capsule) | 3 | 200 | No |
+| Walker (cave floor) | 2 | 200 | A fan of three **red ovals** each time it stops |
+| Gun turret (cave floor or ceiling) | 3 | 300 | One **pink round** bullet aimed at you about every two seconds |
+| Teal ring spinner (high-speed part) | 4 | 400 | A **ring of eight purple** bullets every two and a half seconds |
+| Armoured hatch (cave floor) | 8 | 500 | No — it releases up to four small fighters, one every second and a half |
+| A whole group of pods or fan fliers | — | 300 to 1,000 bonus (+ a capsule) | — |
+
+No enemy bullet in this zone crosses the whole picture in less than about four seconds, so every
+one can be side-stepped with the arrow buttons alone.
+
+**Capsules.** Across the zone 28 red saucers and complete groups leave a capsule — at least three
+within about half a minute after the start, after the cave's entrance and after the high-speed
+part begins, so a ship lost there can soon be powered up again — and two come in the calm right
+before the boss.
+
+### HALCYON BULWARK (HB-01)
+
+A big armoured battleship that holds the right part of the screen:
+
+| Part | Looks like | What your shots do |
+|---|---|---|
+| **Hull and wings** | A big dark-blue armoured hull on the right, with a long wing reaching forward above and one below | Nothing, ever — shots vanish on them (a small spark bounces back) |
+| **Laser emitters** | A glowing blue emitter at the front tip of each wing | Nothing: they are armour too, so the lasers never stop |
+| **Shield plates** | Four light-blue plates in a row in front of the core, at its height | 12 hits each; the outermost (leftmost) one takes the shots first. 500 points each |
+| **Core** | The glowing, pulsing cyan eye at the front middle, behind the plates | Nothing while any plate stands; then 40 hits. Destroying it destroys the boss (5,000 points) |
+
+**How it fights.** It slowly follows your ship's height up and down, and its lasers come from the
+two emitters — never from the core, which sits between them:
+
+| When | What it does |
+|---|---|
+| From the start | Every two seconds or so one emitter — top and bottom taking turns — fires a **laser** straight to the left across the screen along its row: first a thin **blinking warning line** for about ¾ of a second, then the beam for a little under a second. Only the beam hurts. The laser **moves up and down with the boss** while it follows you |
+| After two plates are destroyed | It follows you a little faster, and each emitter also fires a fan of three **purple needles** at you every two seconds |
+| After all four plates are gone (the core can be hit) | A laser every second or so, each lasting a bit longer, so often **both** rows are closed at the same time — the space between them, level with the core, always stays open. Needles every second and a half |
+
+**Tip:** stay level with the core — that is where your shots must go anyway, and the lasers then
+pass above and below you. When a warning line blinks across your row, step up or down out of it
+before the beam comes.
+
+**When the core is destroyed** everything happens as with the test boss: every bullet and laser
+disappears, the boss blinks and explodes for two seconds, a big white blast with a strong shake,
+**30,000 points** (a gold `30000`), the stage-clear tune, and a few seconds later the **STAGE
+CLEAR** screen and the title ([the end screens](#pausing-quitting-and-the-end-screens)).
+
+**In a browser you can go straight to the boss:** http://localhost:5173/?skip=boss starts every
+game (START, and RETRY STAGE) about two seconds before the WARNING — add `&loadout=full` to fight
+it fully powered. There is no such shortcut on the TV: play through the zone (three minutes).
+
+What "good" looks like:
+
+- The scrolling is smooth everywhere — slow in the cave, fast in the high-speed part — with no
+  jumps or stutters, and the planet and the stars move steadily behind.
+- The cave never closes: there is always a gap to fly through, and every enemy on its floor or
+  ceiling stands exactly on the rock.
+- Every bullet, every group of needles and every laser can be dodged with **single arrow
+  presses** (no diagonals) — please report the time into the stage of any spot where you could not
+  get out of the way.
+- The capsules come often enough that a lost ship can be powered up again soon after.
+- The WARNING text is complete and readable; the boss's parts always stay together; the plates
+  flash white when hit and burst when destroyed; the core only reacts once all four plates are
+  gone; each laser always blinks as a warning line first.
+- The whole zone, boss included, takes about three and a half minutes when nothing goes wrong.
+
 ## On the Samsung Smart Monitor / TV
 
 The TV build is installed from the development PC like the input probe — see
@@ -399,21 +515,22 @@ the first install it appears in the monitor's **Apps** list as **Shmup Cup**.
 | Remote button | What it does in the preview |
 |---|---|
 | Directional pad (◀ ▲ ▶ ▼) | Menus: moves the highlight. Game: flies the ship |
-| **OK** (centre) | Menus: chooses the highlighted entry (on the title first `PRESS OK`). Game: takes a power-up — but open space has no enemies and so no capsules, so on the TV a press only plays a short low "no" buzz (see checks 9 and 11) |
+| **OK** (centre) | Menus: chooses the highlighted entry (on the title first `PRESS OK`). Game: takes the highlighted power-up once you have collected capsules (see checks 9 and 20); with nothing to take, a short low "no" buzz |
 | **Back** (↩) | Game: opens the pause menu. Pause menu: resumes. A question: answers NO. Title: asks **EXIT SHMUP CUP?** — YES closes the app and returns to the monitor's home screen. On the loading and error screens it closes the app at once |
 | **Play/Pause** ⏯ (if your remote has it) | Pauses and resumes the game |
 | **Home** | Leaves the app; everything freezes (and falls silent) while it is in the background. Reopening it brings you back where you were — during a game, to the pause menu — and nothing jumps ahead |
 | **Volume +/−, Mute** | The monitor's own volume, as in any app. The game's own volumes (MASTER, MUSIC, SFX) are under **OPTIONS** |
 | Everything else | Read by the game every tick, but nothing reacts to it yet (the gun fires without any button) |
 
-On the TV, START flies in **open space** — stars, your ship and its gun, no enemies — until the
-first real zone arrives.
+On the TV, START plays **AZURE VERGE** ([The first zone](#the-first-zone-azure-verge)), with
+enemies, capsules, the boss and the zone's music. There is no shortcut to the boss on the TV —
+it comes after about three minutes.
 
 Things to check on the monitor and report:
 
 1. A loading bar (or nothing at all, if it is very quick) and then the **title screen** — the
    logo, a blinking `PRESS OK`, `HI` at the bottom, drifting stars — never a black screen that
-   stays black. OK, then OK on START: the stars keep drifting and the ship flies in.
+   stays black. OK, then OK on START: the view starts to scroll and the ship flies in.
 2. **Both HUD bars are complete** (new layout): the top bar's `1P` and score on the left, `HI`
    and its score in the middle, `2P ------` on the right; the bottom bar's two ship icons on the
    left and the power meter's seven boxes `SPEED` … `!` after them — every label readable. If one edge is cut off, note which — that would mean the monitor overscans or the
@@ -428,7 +545,7 @@ Things to check on the monitor and report:
    diagonally or only in one direction — this tells us what your remote can report.
 6. Fly into every edge: the ship stops before each edge, stays fully visible and never
    covers a HUD bar.
-7. The stars drift **smoothly**.
+7. The stars, the planet and the ground scroll **smoothly**.
 8. **The gun fires on its own** as soon as the ship has flown in, without touching any button:
    small cyan-and-white darts leave the ship's nose, two at a time, and fly straight to the
    right edge at an even speed. They never appear over the HUD bars, and they keep coming
@@ -445,11 +562,11 @@ Things to check on the monitor and report:
 11. **Sound** (new in this build — turn the monitor's volume up): every shot plays a short, high
    blip, a little to the left of the middle (the ship flies on the left side of the picture;
    sounds come from where they happen — fly to the right edge and they move towards the right
-   speaker). Press **OK** once: a short, low "no" buzz (there is nothing to take in open space).
+   speaker). Press **OK** once before collecting anything: a short, low "no" buzz.
    Report whether the shot sounds feel **immediate** — in time with the darts leaving the nose —
    or noticeably late, and whether they ever crackle, stutter, drop out or stop. The **title
-   music** (SHMUP CUP) plays on the title screen and fades out when a game starts; open space has
-   no music of its own (the stage music plays in the browser stages, below).
+   music** (SHMUP CUP) plays on the title screen and fades out when a game starts; then AZURE
+   VERGE's own theme plays, and at the WARNING the siren and the boss theme (BULWARK ASSAULT).
 12. **The title menu**: OK on `PRESS OK` shows START / OPTIONS / EXIT with START
    highlighted; ▲ / ▼ move the highlight, each move with a soft click; holding ▼ keeps moving it
    after a moment. Report any skipped or doubled step, or a press that did nothing.
@@ -481,14 +598,37 @@ Things to check on the monitor and report:
    seconds — report whether the ship moves smoothly or stutters / stops for a moment (FAST 8-WAY
    has no hiccup protection; if it stutters, your remote needs SAFE 4-WAY — switch back). Close
    and reopen the app: CONTROLS still shows the profile you chose.
+19. **AZURE VERGE** (new): after START the view scrolls to the right on its own over rolling
+   ground, with a blue planet's rim low in the background, and the first row of green pods weaves
+   in about three seconds later. Watch the scrolling for a few minutes: it should stay smooth in
+   the slow cave (from about 1:15) and in the fast stretch (from about 2:25) — report any stutter,
+   jump or flicker, with the time into the stage.
+20. **Capsules and OK** (new on the TV): shoot the first red saucer (about 8 s in) — it leaves a
+   blinking capsule; fly close and it drifts into the ship with a ding, and the power meter's
+   `SPEED` box lights up. Press **OK**: a rising trill, and the ship moves faster. Report whether
+   taking power-ups with OK in the middle of the action feels natural with the remote.
+21. **Dodging with the remote** (new): every bullet of the zone — and every laser and needle of the
+   boss — is meant to be avoidable with **single arrow presses**. Report the time into the stage
+   of any spot where you could not get out of the way, and whether FAST 8-WAY (check 18) makes a
+   difference there.
+22. **The rock** (new): in the cave (about 1:15–2:25) the ship explodes when it touches the floor
+   or the ceiling; the cave is always wide enough to fly through. Report any spot that felt too
+   narrow or where the ship exploded without touching rock.
+23. **The boss** (new): at about 3:00 the WARNING band, the siren and the red pulses, then HALCYON
+   BULWARK glides in and its theme starts. Each laser first blinks as a thin line along its row —
+   step up or down out of it — and then fires; shoot the four plates in front of the glowing core,
+   then the core. Report whether the WARNING text is readable from the sofa, whether the lasers'
+   warning comes early enough, and roughly how long the fight took. After the final blast the
+   **STAGE CLEAR** screen shows your score.
+24. **Losing ships and high scores on the TV** (new): bullets, enemies and rock now destroy the
+   ship — it flies in again blinking, a spare-ship icon goes, and after the last one comes
+   **GAME OVER** (with **NEW HI-SCORE** for a new best). Close the app (Back on the title → YES),
+   open it again: the title's `HI` shows your best score.
 
-The TV starts on the title, and START flies in open space, where nothing can hit the ship — the
-score stays at zero, the two spare ships stay, the game-over and stage-clear screens never come,
-and so `HI` stays 0 and nothing is added to the saved high scores (the browser stages test that). The test stage (and with it the power capsules, losing ships, the score, the explosions and
-the end screens), the boss range with its WARNING and boss, the stage music, the fully powered
-ship, free flight, the showcase, the calibration screen and the effects gallery can only be
-opened in a browser — the monitor's own web browser works too, pointed at a PC running `pnpm dev`
-(below).
+The fully powered ship (`?loadout=full`), the shortcut to the boss (`?skip=boss`), the two test
+stages (the Test Range and the Boss Range with its test boss), free flight, the showcase, the
+calibration screen and the effects gallery can only be opened in a browser — the monitor's own
+web browser works too, pointed at a PC running `pnpm dev` (below).
 
 ## In a desktop browser
 
@@ -501,18 +641,20 @@ pnpm dev
 
 Open http://localhost:5173 (other devices on the same network can use the PC's IP
 address, e.g. `http://192.168.1.20:5173`): the title screen appears. Press **Enter** twice (past
-`PRESS OK`, then START) and fly with the arrow keys, W A S D or a gamepad; **Esc** (or P,
-Backspace) pauses. The browser version has no EXIT entry — a browser tab cannot close itself — so
+`PRESS OK`, then START) to play AZURE VERGE and fly with the arrow keys, W A S D or a gamepad;
+**Esc** (or P, Backspace) pauses. http://localhost:5173/?skip=boss starts every game a moment
+before the zone's WARNING, to try the boss without playing the three minutes before it. The browser version has no EXIT entry — a browser tab cannot close itself — so
 Back (Esc) on the title only goes back from the menu to `PRESS OK`. To skip the title and fly
 straight away, open http://localhost:5173/?scene=flight (**free flight**: the older start-up
 picture with its own simpler HUD — the stage name or FREE FLIGHT in the top bar, `ARROWS MOVE` in
-the bottom bar, no power meter, no pause menu, and `GAME OVER` written into the top bar). Resize
+the bottom bar, no power meter, no pause menu, and `GAME OVER` written into the top bar; it flies
+in empty space unless you add `&stage=…`). Resize
 the window to see the whole-number scaling at work: the picture snaps between sizes instead of
 stretching. Switching to another tab freezes the game (and its sound); coming back during a
 game shows the pause menu. The Options screen works the same as on the TV (Enter
 for OK, Esc or Backspace for Back); the settings and high scores are kept in this browser
-([What the game remembers](#what-the-game-remembers)) — in the test stages below the high scores
-can be tried out: finish a game on GAME OVER, reload the page, and the title's `HI` shows it.
+([What the game remembers](#what-the-game-remembers)): finish a game on GAME OVER or STAGE CLEAR,
+reload the page, and the title's `HI` shows it.
 
 **Sound in a browser starts with your first key press or click** into the page — browsers do
 not let a page make sound before that, and a gamepad button does not count. So press a key (or
@@ -534,7 +676,7 @@ closes it (there is no TV system to return to) — Back still pauses and goes ba
 
 Open http://localhost:5173/?stage=test-range (add `&profile=keyboard-remote-emulation` to fly
 it with the TV remote's limits) and choose START on the title: the game now runs the *Test Range*
-instead of open space (also after RETRY STAGE), and the view scrolls to the right on its own
+instead of AZURE VERGE (also after RETRY STAGE), and the view scrolls to the right on its own
 while you fly — the ship keeps its place on screen unless you move it, and the world slides past
 from right to left. The stage theme, AZURE VERGE, starts with the game
 ([Sound and music](#sound-and-music)). The whole run takes about a minute and a quarter (times
@@ -568,7 +710,7 @@ What "good" looks like:
   rock unharmed.
 
 If the address names a stage that does not exist (for example a typo in `?stage=`), a game
-flies in ordinary open space instead; the browser's developer console then says `no stage
+flies in empty open space instead (no rock, no enemies); the browser's developer console then says `no stage
 "…"; flying in open space`.
 
 #### Enemies in the test stage
@@ -653,7 +795,7 @@ What "good" looks like:
 ## Your weapons
 
 The KESTREL's gun fires **by itself** as soon as the ship has flown in — on the TV, in the
-browser and on the desktop, in open space and in the test stage. There is no fire button to
+browser and on the desktop, in every stage. There is no fire button to
 press (holding Shot or Sub changes nothing); this "always-on" fire is what makes the game
 playable with the TV remote. The pictures are placeholders (original designs).
 
@@ -666,7 +808,8 @@ playable with the TV remote. The pictures are placeholders (original designs).
   close in front of you — that is intentional.
 - A dart disappears when it hits an enemy, the rock or the edge of the screen.
 - One hit destroys the small enemies (pods, spinners, arrowhead fighters); the others need more
-  — saucers and walkers two, turrets and lone spinners three, the armoured hatch eight — and
+  — in the test stage saucers and walkers two, turrets and lone spinners three, the armoured hatch
+  eight (AZURE VERGE's are in [its table](#the-first-zone-azure-verge)) — and
   **flash white** every time they are hit (and throw a few sparks). A destroyed enemy bursts
   into an explosion ([what it looks like](#explosions-sparks-shake-and-flashes) and
   [sounds like](#sound-and-music)) and its points are added to your score and rise from the spot
@@ -674,15 +817,15 @@ playable with the TV remote. The pictures are placeholders (original designs).
   ([Power-ups](#power-ups)).
 
 **Fully powered** (browser only, for testing): add `&loadout=full` to the address, e.g.
-http://localhost:5173/?stage=test-range&loadout=full (or `?loadout=full` for open space), then
-START. Every game you start (and every RETRY STAGE) begins with most of what the power-ups give
+http://localhost:5173/?stage=test-range&loadout=full (or `?loadout=full` alone for AZURE VERGE,
+`?skip=boss&loadout=full` for its boss), then START. Every game you start (and every RETRY STAGE) begins with most of what the power-ups give
 you:
 
 | What | What "good" looks like |
 |---|---|
 | **Faster ship** | The ship moves noticeably faster than normal (speed level 3 of 6) |
 | **Laser** instead of the darts | A thin pale-blue beam shoots out of the nose, grows to about a sixth of the screen's width and races right. It passes **through** enemies, damaging each one it touches up to ten times a second, and it moves up and down with the ship that fired it. It stops at rock: the beam's front stays at the wall while its tail catches up and it vanishes. One beam per ship or Option at a time |
-| **Missiles** | Small grey missiles with a flickering orange flame drop diagonally forward and down — one at a time from the ship and from each Option; the next follows as soon as the last one is gone. On the ground they **slide along the rock**, following slopes up and down; a steep wall stops them, and over a drop they fall again. In open space (no ground) they simply fall off the bottom of the screen |
+| **Missiles** | Small grey missiles with a flickering orange flame drop diagonally forward and down — one at a time from the ship and from each Option; the next follows as soon as the last one is gone. On the ground they **slide along the rock**, following slopes up and down; a steep wall stops them, and over a drop they fall again. Where there is no ground they simply fall off the bottom of the screen |
 | **Four Options** | Four glowing red-and-orange orbs that pulse gently. They follow the path your ship has flown: **when you move, they string out behind you** along your path; **when you stop, they stay where they are on screen** (even while the stage scrolls); pushing against the edge of the screen gathers them onto the ship. Each one fires the laser and the missiles too. They float through rock, cannot be hurt, and start on top of the ship when it flies in |
 | **Force Field** | A glowing cyan ring around the ship that takes five hits — see [Power-ups](#power-ups) |
 
@@ -700,14 +843,16 @@ What "good" looks like, with either loadout:
 
 ## Power-ups
 
-The KESTREL powers up the classic way, with a **power meter**. Capsules come only in the *Test
-Range* stage (http://localhost:5173/?stage=test-range, then START) — open space on the TV and the
-desktop has no enemies and so no capsules yet. The meter is the row of seven boxes in the bottom
+The KESTREL powers up the classic way, with a **power meter**. Capsules come in AZURE VERGE on
+every device (28 of them — [The first zone](#the-first-zone-azure-verge)) and in the browser's
+*Test Range* (http://localhost:5173/?stage=test-range, then START). The meter is the row of seven boxes in the bottom
 bar — `SPEED` `MISSILE` `DOUBLE` `LASER` `OPTION` `?` `!` — and you hear it too: a bright ding
 for every capsule, a short rising trill when OK takes a power-up and a low "no" buzz when it has
 nothing to give.
 
-**Power capsules.** Small orange-red pills that blink. In the test stage they come from:
+**Power capsules.** Small orange-red pills that blink. They come from every red saucer you shoot
+down and every group you destroy completely (in AZURE VERGE the long wavy chains of pods never
+leave one). In the test stage:
 
 - every **red saucer** (at about 5 s, 33 s and 65 s) that you shoot down — the capsule appears
   where it was destroyed;
@@ -777,9 +922,9 @@ What "good" looks like:
 
 ## Lives, losing your ship and the score
 
-The KESTREL can be **destroyed**, and the game keeps score. Everything here happens in the
-*Test Range* stage (http://localhost:5173/?stage=test-range, then START) — in open space (the TV
-and the desktop) there is nothing that can hit the ship.
+The KESTREL can be **destroyed**, and the game keeps score — in AZURE VERGE on every device and in
+the browser's test stages. Only in empty open space (free flight without a stage) is there nothing
+that can hit the ship.
 
 **What costs a ship.** Flying into the **rock**, flying into an **enemy**, or being hit by an
 **enemy bullet**. A Force Field takes enemies and bullets for you (five hits, see
@@ -818,9 +963,10 @@ of the top bar and the stage keeps scrolling.
 
 ### The score
 
-The number next to `1P` is your score. It goes up when you:
+The number next to `1P` is your score. It goes up when you destroy enemies (AZURE VERGE's points
+and its boss's are in [its section](#the-first-zone-azure-verge)) — in the test stage:
 
-| Destroy | Points |
+| Destroy (test stage) | Points |
 |---|---|
 | a small fighter from a hatch | 50 |
 | a green pod, a spinner of a formation | 100 |
@@ -863,8 +1009,9 @@ What "good" looks like:
 
 Open http://localhost:5173/?stage=test-boss (add `&loadout=full` to fight fully powered, or
 `&profile=keyboard-remote-emulation` to fly with the TV remote's limits) and choose START on the
-title (times below count from START). It is a short stage in open space — no rock — made to try out the first
-boss, the **TRIAL WARDEN** (a test boss; the real bosses of the zones come later). Everything
+title (times below count from START). It is a short stage in open space — no rock — made to try out the
+first boss mechanics with the **TRIAL WARDEN**, a test boss (the zone's real boss, HALCYON BULWARK,
+ends AZURE VERGE — [above](#halcyon-bulwark-hb-01)). Everything
 here is a placeholder made for this project, including the boss's name and the WARNING's
 wording.
 
@@ -943,9 +1090,8 @@ What "good" looks like:
 
 ## Explosions, sparks, shake and flashes
 
-Hits look like hits. You see most of it in the *Test Range*
-(http://localhost:5173/?stage=test-range) and the *Boss Range* (`?stage=test-boss`); on the TV
-and the desktop (open space — nothing to shoot at) only the muzzle spark shows. All of it is
+Hits look like hits — in AZURE VERGE on every device, and in the browser's *Test Range*
+(http://localhost:5173/?stage=test-range) and *Boss Range* (`?stage=test-boss`). All of it is
 drawn from small placeholder pictures made for this project; what you hear at the same moments
 is in [Sound and music](#sound-and-music).
 
@@ -963,7 +1109,7 @@ is in [Sound and music](#sound-and-music).
 | **Mega Crash** | The playfield (not the HUD bars) **flashes white** for a fifth of a second |
 | The boss **WARNING** | The playfield darkens to about half and pulses **red** three times, once a second |
 | A boss part is destroyed | It explodes; its points rise from it |
-| The boss is destroyed | Two seconds of explosions all over it, then a big blast: a bright **white flash**, a **strong shake** (about two thirds of a second), debris, and a gold `20000` |
+| The boss is destroyed | Two seconds of explosions all over it, then a big blast: a bright **white flash**, a **strong shake** (about two thirds of a second), debris, and a gold `30000` (HALCYON BULWARK) or `20000` (the test boss) |
 
 What "good" looks like:
 
@@ -992,11 +1138,11 @@ will be replaced by finished sound and music later.
 
 | Where | Sound effects | Music |
 |---|---|---|
-| **TV** | From the start | The title theme on the title; none in a game (open space has no music of its own); the game-over tune never comes (nothing can hit the ship) |
-| **Browser** | After your first key press or click | The title theme from that first key press; in a game in open space none |
+| **TV** | From the start | The title theme on the title; in a game AZURE VERGE's theme, the boss theme, the stage-clear and game-over tunes |
+| **Browser** | After your first key press or click | The title theme from that first key press; in a game the same as on the TV |
 | **Browser**, `?stage=test-range` or `?stage=test-boss` | After your first key press or click | The title theme, then the stage theme when the game starts; the boss theme, the stage-clear and game-over tunes |
 | **Browser**, `?scene=flight` (free flight) | After your first key press or click | None in open space; with `&stage=…` the stage theme starts with the first key press |
-| **Desktop** (Electron) | After your first key press or click | As in the browser: the title theme |
+| **Desktop** (Electron) | After your first key press or click | As in the browser |
 
 In a browser (and the desktop app) nothing can be heard before the first key press or click —
 browsers do not allow a page to make sound before that, and a gamepad button does not count.
@@ -1024,11 +1170,11 @@ What you should hear:
 | **GAME OVER** screen | A short, sad tune (**SILENT VERGE**) |
 | **STAGE CLEAR** screen | The stage-clear tune (if it is not playing already) |
 
-**The stage theme** (AZURE VERGE, in both browser stages) starts with a short intro of about six
-seconds and then repeats a 45-second part over and over. The jump back — about **51 seconds**
-after the music started, and every 45 seconds after that — should be impossible to hear: no
-gap, no click, no jump in the tune. The Test Range lasts long enough to hear it once; please say
-if you can tell where it is. The music keeps playing while the game is paused; when the
+**The stage theme** (AZURE VERGE — in the zone of the same name and in both browser test stages)
+starts with a short intro of about six seconds and then repeats a 45-second part over and over.
+The jump back — about **51 seconds** after the music started, and every 45 seconds after that —
+should be impossible to hear: no gap, no click, no jump in the tune. The zone lasts long enough to
+hear it three times; please say if you can tell where it is. The music keeps playing while the game is paused; when the
 GAME OVER screen opens the game-over tune replaces it.
 
 **Where sounds come from.** Sounds come from where they happen on the screen: a shot on the left
@@ -1060,8 +1206,9 @@ What "good" sounds like:
 
 | Address | Screen |
 |---|---|
-| http://localhost:5173 | The **title screen** (the normal start); `?stage=…` and `?loadout=…` below change what START plays |
-| http://localhost:5173/?scene=flight | **Free flight**: straight into the game without the title — the older start-up picture, with its simpler HUD (FREE FLIGHT or the stage name in the top bar, `ARROWS MOVE`, no power meter), no pause menu and no end screens; combine it with `&stage=…` and `&loadout=full` |
+| http://localhost:5173 | The **title screen** (the normal start); START plays AZURE VERGE; `?stage=…`, `?skip=…` and `?loadout=…` below change what START plays |
+| http://localhost:5173/?skip=boss | AZURE VERGE, but every game starts about two seconds before the **WARNING** and **HALCYON BULWARK**; add `&loadout=full` to fight it fully powered ([above](#halcyon-bulwark-hb-01)) |
+| http://localhost:5173/?scene=flight | **Free flight**: straight into the game without the title — the older start-up picture, with its simpler HUD (FREE FLIGHT or the stage name in the top bar, `ARROWS MOVE`, no power meter), no pause menu and no end screens, in empty space; combine it with `&stage=…` (e.g. `&stage=zone-a`) and `&loadout=full` |
 | http://localhost:5173/?stage=test-range | The **Test Range**, the first scrolling stage (above) |
 | http://localhost:5173/?stage=test-range&loadout=full | The Test Range with the **fully powered** ship: laser, missiles, four Options, Force Field ([Your weapons](#your-weapons)) |
 | http://localhost:5173/?stage=test-boss | The **Boss Range**: the WARNING and the test boss ([above](#the-boss-range-and-the-warning-browser-only)); add `&loadout=full` to fight it fully powered |
@@ -1089,7 +1236,7 @@ pnpm --filter @shmup/electron start
 ```
 
 A 1152×648 window (×3) opens with the same title screen as the browser (no EXIT entry yet —
-close the window to quit); play with the keyboard or a gamepad. The Options screen and the saved
+close the window to quit); START plays AZURE VERGE; play with the keyboard or a gamepad. The Options screen and the saved
 settings and high scores work as in the browser.
 Set `SHMUP_FULLSCREEN=1` before the last command to start in fullscreen. Close the window (or
 Alt+F4 / Cmd+Q) to quit.
@@ -1155,11 +1302,11 @@ mean the build itself is broken; they are not caused by anything you did.
 | Numbers pop up where enemies are destroyed | Expected: the points of each kill (white) and of a completed formation (gold). Capsules show a cyan ring instead of a number |
 | Explosions or sparks are magenta-and-black checkered squares | Their pictures are missing from the sprite sheet; please report it (the build is broken) |
 | `?scene=fx-gallery` shows only stars and the labels | The first effect appears within a second; if the explosions never show, please report it with the browser or TV model |
-| The score stays at zero | In open space (the TV and the desktop) there is nothing to score. In the test stage it should rise with every destroyed enemy — please report it if it does not |
+| The score stays at zero | In free flight in empty space there is nothing to score. In AZURE VERGE and the test stages it should rise with every destroyed enemy — please report it if it does not |
 | `HI` went back to 0 (or to a lower score) after reloading | Expected when the best game was quit or retried rather than ended on GAME OVER / STAGE CLEAR (only finished games are saved), in a new private window, or in another browser. Otherwise please report it |
 | The score went back to 0 after RETRY STAGE | Expected: a retry starts the stage over with a fresh ship and score; `HI` keeps the best |
 | The red saucer leaves nothing behind | It leaves a capsule only when it is destroyed (by your shots or a Mega Crash); a saucer that flies off the screen leaves nothing |
-| I pressed OK and nothing happened | Expected when no capsule was collected since your last power-up, or when you already have the maximum of the highlighted one (fifth Speed Up, the missiles, the Double or laser you already fire, four Options, a Force Field that is still up) — collect another capsule to move the highlight on. Look at the power meter: no highlighted box, or a greyed-out one, means OK has nothing to give ([Power-ups](#power-ups)). On the TV and the desktop (open space) there are no capsules at all yet |
+| I pressed OK and nothing happened | Expected when no capsule was collected since your last power-up, or when you already have the maximum of the highlighted one (fifth Speed Up, the missiles, the Double or laser you already fire, four Options, a Force Field that is still up) — collect another capsule to move the highlight on. Look at the power meter: no highlighted box, or a greyed-out one, means OK has nothing to give ([Power-ups](#power-ups)) |
 | Holding OK gave me only one power-up | Expected: one press, one power-up — let go and press again |
 | No capsule after destroying a formation | Every member has to be destroyed; if one leaves the screen, there is no capsule. The six low pods at 17 s never leave one |
 | A capsule vanished before I reached it | Capsules stay where they appeared and scroll off with the rock; once off the left edge they are gone |
@@ -1173,17 +1320,24 @@ mean the build itself is broken; they are not caused by anything you did.
 | The Options trail behind the ship while it stands still | Expected only while you are moving; once you stop they should hold their places on screen. If they drift away while you stand still, please report it |
 | An enemy bullet hits my ship and just disappears | Expected when a Force Field is up (it takes the bullet); without one the ship is destroyed. If a bullet disappears on the bare ship and nothing happens, please report it |
 | Bullets fly through my ship | Expected while it flies in and while it blinks after a loss (it cannot be hurt then), and when they only graze the wings — the hit spot is a couple of pixels in the middle |
-| No bullets at all in the test stage | Check the address says `?stage=test-range`. The first turret starts shooting about ten seconds in; the pods, saucers and spinner formations never shoot. Open space (the TV and desktop builds) has no enemies and no bullets |
+| No bullets at all in the test stage | Check the address says `?stage=test-range`. The first turret starts shooting about ten seconds in; the pods, saucers and spinner formations never shoot. Free flight in empty space has no enemies and no bullets |
+| No bullets in the first minute of AZURE VERGE | Expected: the pods, saucers, fan fliers and arrowheads of the first two parts never shoot (the arrowheads ram). The first shooters are the gun turrets in the cave, from about 1:20 |
 | Bullets appear out of nowhere, from an enemy still off screen, or keep flying through rock | Please report it with the time into the stage and which enemy fired |
 | A bullet pattern cannot be dodged with the arrow directions alone | Please report it with the time into the stage — every pattern is meant to be dodgeable on the TV remote |
 | Bullets are magenta-and-black checkered squares | The bullet pictures are missing from the sprite sheet; please report it (the build is broken) |
 | An enemy floats above the ground, sinks into it, or walks through a wall | Please report it with a screenshot and roughly how far into the stage it was |
 | An enemy jumps, stutters or suddenly vanishes in the middle of the screen | Please report it with the time into the stage — enemies should only disappear after leaving the screen |
-| No enemies at all in the test stage | Check the address says `?stage=test-range` (with rock along the bottom from the start). Open space — the TV and desktop builds — has no enemies |
+| No enemies at all in the test stage | Check the address says `?stage=test-range` (with rock along the bottom from the start). Free flight in empty space has no enemies |
+| START flies in empty space (no rock, no enemies) | A misspelled `?stage=` in the address (the browser console names it), or `?scene=flight` without `&stage=…`. Without either, START plays AZURE VERGE — on the TV always. If the TV shows empty space, please report it |
 | The screen slows down or stutters when many bullets are around | Not expected — the game is built for hundreds of bullets. Please report it with the time into the stage and the browser or TV model |
 | The test stage stopped scrolling | At the end of the stage (after about 75 seconds) that is expected — the STAGE CLEAR screen follows. If it stops earlier, please report where |
 | `?stage=test-boss` flies in open space with no WARNING | The stage name is misspelled — it is `test-boss`; the browser console names the unknown stage |
 | The Boss Range stopped scrolling after five seconds | Expected: the WARNING stops the scrolling, and it stays stopped until the boss is destroyed |
+| AZURE VERGE slowed down, sped up or stopped | Expected: it slows down in the cave (from about 1:15), runs at twice the normal speed in the fast stretch (about 2:25–2:50), eases off in the calm and stops for good at the WARNING (about 3:00) until the boss is destroyed. A stop anywhere else, please report with the time |
+| `?skip=boss` starts at the beginning of the zone | Check the spelling — exactly `skip=boss`, lower case. It works only in a browser (not on the TV) and only for stages with a boss: with `&stage=test-range` there is nothing to skip to |
+| My shots vanish on HALCYON BULWARK | Expected on its hull, its wings and its two emitters (armour — they can never be destroyed), on the core while any of the four plates still stands, and during its first 2½ seconds while it glides in. Shoot the plates at the core's height first, the leftmost one first |
+| HALCYON BULWARK's lasers never stop | Expected: its emitters are armour, so the lasers last until the core is destroyed. Stay level with the core — the laser rows pass above and below it |
+| A laser hit me although I had left its row | Only the beam hurts, and the rows **move with the boss** as it follows you up and down — move well clear of the blinking line. If it still happens, please report the time into the fight |
 | The WARNING shows but there is no siren | In a browser, press a key once first — nothing plays before that. Otherwise not expected: the siren should wail three times with the red pulses. Please report it |
 | The WARNING text is cut off, overlaps the HUD bars or shows odd symbols | Not expected — please report it with a screenshot |
 | My shots vanish on the boss without hurting it | Expected while it glides in, on the dark armour blocks, and on the core while a shield plate still covers it. If the plates, the guns or the uncovered core do not flash when hit, please report it |
@@ -1196,7 +1350,7 @@ mean the build itself is broken; they are not caused by anything you did.
 | The ship flies in from the left again | Expected after it was destroyed. If it happens without a loss (no spare-ship icon went), please report what you were doing |
 | No sound at all in a browser | Press a key or click into the picture once — browsers allow sound only after that (a gamepad button does not count). Check that the tab is not muted (right-click the tab) and the PC's volume. If it stays silent, report it with the browser's name |
 | No sound at all on the TV | Check the monitor's volume and mute. The shots should be heard from the start; if they are not, please report it with the monitor's firmware version |
-| No music in a game on the TV or on the desktop | Expected: a game there flies in open space, which has no music of its own (the title theme fades out when the game starts). The stage music plays in the browser stages (`?stage=test-range`, `?stage=test-boss`) |
+| No music in a game on the TV or on the desktop | Not expected any more: AZURE VERGE's theme should start with the game (on the desktop after your first key press). Check OPTIONS → MUSIC is not `0`, then please report it |
 | No music in the test stage, but sound effects play | Not expected — the stage theme should start with your first key press. Please report it with the browser's name |
 | The music stops at the WARNING | Expected: it fades out for the siren, and the boss theme starts when the boss glides in |
 | Silence after the boss | Expected until the title's music starts again after the STAGE CLEAR screen |

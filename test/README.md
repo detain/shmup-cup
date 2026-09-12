@@ -54,7 +54,10 @@ live in each package's own `test/` folder (never next to sources).
 | `e2e/input.spec.ts` (Playwright, `pnpm test:e2e`) | The input profiles in the web build: `keyboard-default` prevents the default of the keys it binds and leaves others alone; `?profile=keyboard-remote-emulation&debounce=2` only knows the remote's keys (arrows, Enter, Backspace, PgUp/PgDn — `KeyZ` passes through); an unknown `?profile=` logs one `Shmup Cup` warning and boots with `keyboard-default`, no errors |
 
 Run: `pnpm test:integration` (part of `pnpm test`), or `pnpm test:all` to run every
-Vitest project (all packages + this one) in one process. Later: golden-replay tests and
+Vitest project (all packages + this one) in one process. The playtest's run summaries (`[playtest]
+zone-a four-way (god mode): stageClear after … s, …` and the deaths of the run without god mode)
+show with the verbose reporter: `pnpm exec vitest run --project integration test/playtest
+--reporter=verbose` — guide: [`docs/dev/zone-a-and-playtest.md`](../docs/dev/zone-a-and-playtest.md). Later: golden-replay tests and
 the cross-engine determinism check (`shmup_feat.md` §22, §24), comparing `hashWorld` fingerprints.
 
 Build-output tests live with the apps they build: `apps/tizen/test/build/` runs the real

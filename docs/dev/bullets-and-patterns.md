@@ -278,8 +278,12 @@ and no regular enemy fires a laser. Since M1-13 the boss roster fires through th
 from the boss's gun parts: `boss.hover` aimed `RoundRed` spreads, `boss.lanes` aimed 3-ways of
 `NeedlePurple` and the first lasers of the shipped content — telegraphed horizontal lane lasers
 (not attached) from each gun in turn, fired by the test boss's last phase
-([bosses-and-warning.md](bosses-and-warning.md#boss-behaviours-corebehaviors)). All speeds stay
-within D17's "aimed ≤ 2.0 px/tick on Normal in zone A".
+([bosses-and-warning.md](bosses-and-warning.md#boss-behaviours-corebehaviors)); since M1-18
+`boss.bulwark` fires the same lanes **attached** to HALCYON BULWARK's emitters (they sweep with its
+tracking) and 3-ways of `NeedlePurple` at 1.5 px/tick. All speeds stay within D17's "aimed ≤ 2.0
+px/tick on Normal in zone A" — `pnpm content:check` enforces it for zone A, together with "no two
+simultaneous laser lanes closer than 16 px"
+([zone-a-and-playtest.md](zone-a-and-playtest.md#the-4-way-design-rules)).
 
 A firing behaviour:
 

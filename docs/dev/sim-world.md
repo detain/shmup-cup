@@ -387,7 +387,9 @@ will compare it at checkpoints — not per entity.
 
 ## The free-flight scene (`@shmup/shell` `flight`)
 
-Since M1-06 the browser and TV builds start into **free flight**: the game's World — the
+From M1-06 until the scene flow of M1-16 the browser and TV builds started into **free flight**
+(now `?scene=flight` in the web app; the default is the title, and since M1-18 START plays zone A
+— [scenes-and-ui.md](scenes-and-ui.md), [zone-a-and-playtest.md](zone-a-and-playtest.md)): the game's World — the
 KESTREL flying in and then moving under the remote, keyboard or gamepad — over a drifting
 starfield, with the D20 HUD bars (`1P` and player 1's score, `FREE FLIGHT` — `GAME OVER` in red once the
 World's status says so — `HI` and the session hi-score, `lives − 1` stock ships, the hint
@@ -411,7 +413,8 @@ ticks, rebuilt only when the WARNING starts, ends or changes colour
 
 | `?scene=` | Shows |
 |---|---|
-| (none) / `flight` | free flight (the TV always starts here — a widget has no query string) |
+| (none) / `game` | the scene flow (M1-16): the title, then zone A (M1-18) — the TV always starts here, a widget has no query string |
+| `flight` | free flight (open space unless `?stage=` names a stage) |
 | `showcase` | the M1-04 sprite showcase |
 | `calibration` | the test pattern; the game's frame is rendered **without** its world |
 

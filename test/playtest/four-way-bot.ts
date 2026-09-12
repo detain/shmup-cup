@@ -297,6 +297,16 @@ export function fourWayBot(): PlaytestBot {
 
   return {
     name: 'four-way',
+    /**
+     * One tick's decision (see the module docs): a one-tick PowerUp press when `wantsEquip` says,
+     * then — only while the ship is `alive` — the lane scan, a cost per lane (the trip through the
+     * lanes on the way, the stay, terrain, preferences, a pull towards the middle), the cheapest
+     * lane with a 20-point hysteresis, and one direction towards it: vertical first, then back to
+     * {@link BOT_X}.
+     *
+     * @param world - The World about to be stepped (read only).
+     * @returns The `Action` mask to hold: at most one direction, plus `PowerUp` on a press tick.
+     */
     decide(world) {
       const ship = world.players[0];
       let mask = 0;

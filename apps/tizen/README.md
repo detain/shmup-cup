@@ -63,22 +63,23 @@ no laser, no Force Field — M1-11). To open `dist/index.html` from disk in desk
 WebGL refuses it (the TV serves the widget's files as same-origin). On the TV the app always
 runs the shell's default scene, the **scene flow** (M1-16), because a widget has no `?scene=`
 query string (and so no `?stage=` or `?loadout=` either): the title (logo, `PRESS OK`, START /
-OPTIONS / EXIT, the title theme), then START flies the KESTREL in open space with the remote's
+OPTIONS / EXIT, the title theme), then START plays **zone A, AZURE VERGE** (M1-18 — `@shmup/shell`
+`defaultStageId`; the dev scenes still fly in open space) with the remote's
 directional pad, its main gun firing on its own (`remoteMode` forces autofire,
 `shmup_feat.md` §4 rule 1), under the core HUD with the power meter. **Back** goes through the
 scene stack — game → pause menu, pause → resume, menus → back, title → **EXIT SHMUP CUP?** →
 `platform.exit()` only after YES; the app's own Back watcher (`watchBackKey`) is installed before
 boot and removed once the shell runs, so it exits directly only from the loading and boot error
 screens. A resume from the home screen during a game opens the pause menu. The remote's OK is
-the menus' Confirm and the game's `PowerUp` (M1-11): open space has no capsules, so a press there
-is simply denied — but holding an arrow and pressing OK must not stop the ship (the input-probe
-question the M1-11 manual check asks). Nothing can hit the ship in open space, so the M1-12 life
-cycle (deaths, respawns, the game-over screen) is not reachable on the TV yet. Likewise the M1-13
-bosses and their WARNING need a stage (`?stage=test-boss` in the web build) and are not reachable
-on the TV until zone A (M1-18). Of the M1-14 game feel (explosions, sparks, shake, flashes, score
-popups) only the muzzle spark in front of the ship's nose shows in open space on the TV;
-`pnpm test:e2e` checks the effects gallery (`?scene=fx-gallery`) in the Tizen build opened from
-disk too.
+the menus' Confirm and the game's `PowerUp` (M1-11): zone A's red saucers and completed
+formations drop capsules, and holding an arrow while pressing OK must not stop the ship (the
+input-probe question the M1-11 manual check asks). Since zone A the TV reaches everything the
+browser stages had: the M1-12 life cycle (deaths, respawns, the game-over screen), the M1-13
+WARNING and boss (HALCYON BULWARK), the M1-14 game feel and the zone's music. There is no
+`?skip=boss` on the TV — the M1-19 debug controls bring a dev-build-only skip. `pnpm test:e2e`
+checks the effects gallery (`?scene=fx-gallery`) in the Tizen build opened from disk too; the
+manual zone A checks are 19–24 of
+[`docs/client/preview-build.md`](../../docs/client/preview-build.md#on-the-samsung-smart-monitor--tv).
 
 Since M1-17 **OPTIONS** (on the title and in the pause menu) opens the Options screen: MASTER /
 MUSIC / SFX volume sliders and **CONTROLS**, which offers `SAFE 4-WAY (DEFAULT)`
@@ -87,8 +88,8 @@ the remote can drive — and switches at once, registering the new profile's key
 the save from the widget's `localStorage` (`shmup-cup:save.v1`) before the title and applies the
 saved volumes and profile; the save is written when the Options screen closes and when a game
 ends, so quitting with Back → YES (or the TV killing the app) loses nothing, and Tizen deletes it
-when the app is uninstalled. In open space nothing scores, so the saved hi-score stays 0 on the TV
-until zone A. `pnpm test:e2e` checks the Options screen with remote key codes only in the build
+when the app is uninstalled. Since zone A (M1-18) games on the TV score, so the hi-score table
+fills there too. `pnpm test:e2e` checks the Options screen with remote key codes only in the build
 opened from disk (SFX and CONTROLS kept after a reload); the manual check is in
 [`docs/client/preview-build.md`](../../docs/client/preview-build.md#on-the-samsung-smart-monitor--tv)
 (checks 16–18). Guide: [`docs/dev/saves-and-options.md`](../../docs/dev/saves-and-options.md).

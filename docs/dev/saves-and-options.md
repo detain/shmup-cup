@@ -442,7 +442,8 @@ title — the M1-17 acceptance test in `scenes-options.test.ts`.
 
 ## Next steps that build on this page
 
-- **M1-18** — zone A: the first scores worth keeping on the TV (open space scores nothing).
+- **M1-18** (done) — zone A: START plays AZURE VERGE on every build, so the TV records its first
+  real scores (open space scored nothing) ([zone-a-and-playtest.md](zone-a-and-playtest.md)).
 - **M1-19** — the debug overlay shows `bootTiming` (boot ms) next to FPS and the state hash.
 - **M2-08 / M2-16** — display options (scale mode, shake, flash reduction, hitbox), game options
   (difficulty, lives, death penalty, auto power-up), per-device rebinding and the controls

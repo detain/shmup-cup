@@ -194,6 +194,13 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   [sim-world.md](sim-world.md#zero-allocation-and-the-allocation-guard) and
   [enemies-and-behaviors.md](enemies-and-behaviors.md#zero-allocation-and-the-hot-path-rules).
   The long 64-enemy tests carry explicit timeouts (several seconds on a CI runner).
+- **Playtest** (plan §1.4, M1-18): `test/playtest/` plays shipped stages headless with a bot at
+  the controls — `runStage(stageId, bot, flags)` records and reports the run, `replayStage`
+  replays it, `fourWayBot()` plays like a Samsung-remote player (never a diagonal). Part of the
+  `integration` project, so of `pnpm test`; the zone A run with god mode must kill HALCYON
+  BULWARK and reach the stage clear in 3–6 minutes, the run without it only reports its deaths.
+  `pnpm exec vitest run --project integration test/playtest --reporter=verbose` prints the runs —
+  see [zone-a-and-playtest.md](zone-a-and-playtest.md#the-playtest-testplaytest).
 - Repo-level integration tests (`test/`) cover cross-package behaviour, lint-rule
   enforcement and skeleton invariants, plus the root Node scripts (`test/scripts/`,
   including every asset-pipeline module) and the Vite plugins, some of which start a real
@@ -225,15 +232,20 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   screen, where a MUSIC change is saved to `shmup-cup:save.v1` on Back and read again after a
   reload, a corrupt save boots with defaults and is copied to `shmup-cup:save.corrupt`, the Tizen
   build keeps SFX and CONTROLS changed with the remote alone across a reload, and the boot time on
-  the canvas (`data-shmup-boot-ms`) stays under 10 s (M1-17). The gameplay specs open
-  `?scene=flight` (bare gameplay) since M1-16.
+  the canvas (`data-shmup-boot-ms`) stays under 10 s (M1-17), and the scene flow plays zone A:
+  with `?skip=boss`, Enter twice reaches the WARNING band within seconds and then HALCYON
+  BULWARK's hull in the right half of the playfield (M1-18). The gameplay specs open
+  `?scene=flight` (bare gameplay, open space unless `?stage=` names a stage) since M1-16.
   Output goes to `test/e2e/test-results/` (git- and Prettier-ignored).
 - **Dev query parameters** of the web build (`pnpm dev`, `vite preview`; without `?scene=` the
-  game starts on the title — the scene flow, M1-16): `?scene=flight` (free flight straight away,
-  no title or pause menu — bare gameplay), `?stage=<id>` (START — or free flight — runs
-  that stage instead of open space, e.g. `test-range`, or `test-boss` for the WARNING and the
-  test boss — see [stage-runtime.md](stage-runtime.md#running-a-stage) and
-  [bosses-and-warning.md](bosses-and-warning.md#the-test-boss-and-stagetest-boss)), `?scene=showcase`
+  game starts on the title — the scene flow, M1-16 — and START plays zone A, AZURE VERGE, M1-18):
+  `?scene=flight` (free flight straight away, no title or pause menu — bare gameplay, open space),
+  `?stage=<id>` (START — or free flight — runs that stage instead, e.g. `test-range`, or
+  `test-boss` for the WARNING and the test boss — see
+  [stage-runtime.md](stage-runtime.md#running-a-stage) and
+  [bosses-and-warning.md](bosses-and-warning.md#the-test-boss-and-stagetest-boss)), `?skip=boss`
+  (the debug stage skip: every game starts about two seconds before the stage's WARNING — M1-18,
+  [zone-a-and-playtest.md](zone-a-and-playtest.md#the-debug-stage-skip)), `?scene=showcase`
   (the M1-04 sprite showcase), `?scene=calibration` (test pattern),
   `?scene=fx-gallery` (every particle preset, shake, flash, the dim and the score popups in turn —
   M1-14, [fx-and-game-feel.md](fx-and-game-feel.md#the-fx-gallery-scenefx-gallery)),

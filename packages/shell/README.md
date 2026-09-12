@@ -7,7 +7,7 @@ Tizen Back key).
 ```ts
 import contentFiles from 'virtual:shmup-content';
 import assets from 'virtual:shmup-assets';
-import { bootShell, sceneFromSearch } from '@shmup/shell';
+import { bootShell, defaultStageId, sceneFromSearch } from '@shmup/shell';
 
 const shell = await bootShell({
   canvas,
@@ -17,7 +17,7 @@ const shell = await bootShell({
   input, // createWebInput(...)
   audio, // createWebAudio() — its context / bus() graph is what the audio engine plays through
   platform: (renderer) => createWebPlatform({ input, audio, webgl2: renderer.webGLVersion === 2, ... }),
-  gameConfig: { remoteMode: false },
+  gameConfig: { remoteMode: false, stage: defaultStageId(contentFiles) }, // zone A (M1-18)
   scene: sceneFromSearch(location.search), // 'game' (default: the scene flow) | 'flight' | 'showcase' | 'calibration' | 'fx-gallery'
   audioUnlock: 'gesture', // 'immediate' on TV
   contentOwners: { 'input-profiles': profiles.load }, // optional: keep the parsed input profiles
@@ -64,7 +64,7 @@ options and the Options screen: [`docs/dev/saves-and-options.md`](../../docs/dev
 
 | Module | Status | Responsibility |
 |---|---|---|
-| `boot` | implemented | `bootShell()`, `sceneFromSearch()`, `ShellBootError`; owns the audio engine (`Shell.audioEngine`, M1-15); reads the save before the title and exposes it (`Shell.loadedSave`, `Shell.save`), applies the saved volumes and input profile (`ShellOptions.inputProfiles`), times the boot (`ShellOptions.now`, `Shell.bootTiming`, `BOOT_MS_ATTRIBUTE`) and clears held input on `blur` (M1-17) |
+| `boot` | implemented | `bootShell()`, `sceneFromSearch()`, `ShellBootError`; `DEFAULT_STAGE_ID` / `defaultStageId(files)` — the stage the apps' scene flow plays, zone A (M1-18 — [`docs/dev/zone-a-and-playtest.md`](../../docs/dev/zone-a-and-playtest.md#the-game-plays-zone-a)); owns the audio engine (`Shell.audioEngine`, M1-15); reads the save before the title and exposes it (`Shell.loadedSave`, `Shell.save`), applies the saved volumes and input profile (`ShellOptions.inputProfiles`), times the boot (`ShellOptions.now`, `Shell.bootTiming`, `BOOT_MS_ATTRIBUTE`) and clears held input on `blur` (M1-17) |
 | `loader` | implemented | Atlas page images (`loadImages`), content validation routed by kind (`loadGameContent`, `DEFAULT_CONTENT_OWNERS` — `input-profiles`, `fx`, `sfx`, `music`; script ids checked against the core's `KNOWN_SCRIPT_IDS` and enemies against their behaviours since M1-08, weapons against theirs (`checkWeaponBehaviors`) since M1-10; the core's `ENGINE_SPRITES` — bullets, laser beam, since M1-10 the Option orb, since M1-11 the power capsule and the Force Field — interned by default since M1-09) |
 | `dispatch` | implemented | Sim event → presentation handler routing, allocation-free; `connectFxEvents` feeds the renderer's particles, shake / flash / dim and score popups from the World's events (M1-14); `connectAudioEvents` feeds `Sfx` / `Music` / `MusicDuck` to the audio engine (M1-15); `connectOptionEvents` turns the Options screen's `UserOption` events into bus volumes (`volumeGain`; SFX drives `sfx` and `ui`) and profile switches, `applyAudioOptions` sets the saved volumes at boot (M1-17) |
 | `error-screen` | implemented | Boot overlay: progress bar and error screen (Canvas 2D) |

@@ -92,10 +92,10 @@ shmup-cup/
 │
 ├── content/                game DATA (JSON, formatVersion 1, validated at load by core/data ✔)
 │   ├── player/             ✔ one file per ship: speed levels, hitboxes, margins, timers (+ README, example)
-│   ├── stages/             ✔ one file per stage: music, camera path, checkpoints, parallax, tilemap (heightfield / RLE), event timeline; test-range, test-boss (+ README, example)
+│   ├── stages/             ✔ one file per stage: music, camera path, checkpoints, parallax, tilemap (heightfield / RLE), event timeline; zone-a (AZURE VERGE, the game's stage — M1-18), test-range, test-boss (+ README, example)
 │   ├── tilesets/           ✔ terrain tilesets: per tile collision type, column-height mask, atlas frame (+ README, example)
-│   ├── enemies/            ✔ enemy definitions: hp, score, hurtbox, behaviour script + tunables, mover, ground anchor, drop, child; boss sections (parts, weak points, phases); test-range roster, test boss (+ README, example)
-│   ├── paths/              ✔ movement paths: spline control points, baked to arc-length tables at load (+ README, example)
+│   ├── enemies/            ✔ enemy definitions: hp, score, hurtbox, behaviour script + tunables, mover, ground anchor, drop, child; boss sections (parts, weak points, phases); zone A roster + HALCYON BULWARK (M1-18), test-range roster, test boss (+ README, example)
+│   ├── paths/              ✔ movement paths: spline control points, baked to arc-length tables at load; zone A's fan / orbit curves, test-range's (+ README, example)
 │   ├── weapons/            ✔ weapon tunables + preset loadouts: the Type A arsenal the game fires (+ README, example)
 │   ├── input/              ✔ input profiles (kind input-profiles, validated by input-web rebind): per-context key/button tables, remote debounce/diagonal/SOCD, Tizen keys to register
 │   ├── audio/              ✔ SFX bank (kind sfx: synth parameters or a file per SFX_CUES cue) + music/ (kind music: original chip songs or OGG, bound to MUSIC_CUES), validated by audio-web loader (+ README, examples)
@@ -105,10 +105,10 @@ shmup-cup/
 │   └── generated/          pipeline output (atlas/main.png + main.json, cache) — ignored
 ├── scripts/                repo-level Node scripts: clean.mjs, generate-assets.mjs (pnpm assets) + assets/ (PNG encoder, sprite sources, procedural generators, packer, font), gen-trig-tables.mjs, audio-preview.mjs (pnpm audio:preview → WAV files)
 ├── types/                  ambient declarations for the Vite virtual modules (virtual:shmup-content, virtual:shmup-assets)
-├── test/                   cross-package integration tests (Vitest project "integration", part of `pnpm test`); e2e/ = Playwright browser smoke tests (`pnpm test:e2e`)
+├── test/                   cross-package integration tests (Vitest project "integration", part of `pnpm test`); playtest/ = headless playtest harness + 4-way bot + design rules (M1-18, same project); e2e/ = Playwright browser smoke tests (`pnpm test:e2e`)
 ├── docs/
 │   ├── client/             player/tester docs
-│   └── dev/                contributor docs (this file, architecture, engine-foundations, content-data, asset-pipeline, rendering-and-shell, sim-world, stage-runtime, enemies-and-behaviors, fx-and-game-feel, scenes-and-ui, saves-and-options, api-reference, …)
+│   └── dev/                contributor docs (this file, architecture, engine-foundations, content-data, asset-pipeline, rendering-and-shell, sim-world, stage-runtime, enemies-and-behaviors, fx-and-game-feel, scenes-and-ui, saves-and-options, zone-a-and-playtest, api-reference, …)
 ├── tools/                  standalone tools, NOT workspace members (own package.json/lockfile, npm not pnpm)
 │   └── input-probe/        Tizen diagnostic .wgt: remote/gamepad/display measurements (see input-probe.md)
 └── shmup_feat.md  shmup_tech.md  input_probe_spec.md  README.md  LICENSE (MPL-2.0)
@@ -172,7 +172,8 @@ pnpm lint | typecheck | test | build
 pnpm test:all           # every Vitest project in one process
 pnpm test:e2e           # build web + tizen, then browser smoke tests (headless Chromium, Playwright)
 pnpm --filter @shmup/tizen build    # TV bundle + bundle check
-pnpm content:check      # validate content/ against the core schemas (+ sprite names exist in the atlas)
+pnpm content:check      # validate content/ against the core schemas (+ sprite names exist in the atlas, zone A's 4-way rules)
+pnpm exec vitest run --project integration test/playtest --reporter=verbose   # the headless playtest, runs printed
 pnpm assets             # regenerate the placeholder atlas (skipped when nothing changed)
 pnpm clean              # remove dist/ coverage/ .turbo/ everywhere
 ```
@@ -186,4 +187,5 @@ runtime), [content-data.md](content-data.md) (game data and its loader),
 [scenes-and-ui.md](scenes-and-ui.md) (scenes, menus, HUD),
 [saves-and-options.md](saves-and-options.md) (saves, user options, the Options screen),
 [stage-runtime.md](stage-runtime.md) (scrolling stages, terrain, parallax),
-[api-reference.md](api-reference.md) and [conventions.md](conventions.md).
+[zone-a-and-playtest.md](zone-a-and-playtest.md) (zone A, its boss, the 4-way rules, the
+playtest bot), [api-reference.md](api-reference.md) and [conventions.md](conventions.md).

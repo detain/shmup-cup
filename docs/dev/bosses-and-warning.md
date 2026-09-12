@@ -351,10 +351,12 @@ The M1 roster fires from the boss's **`gun` parts that still stand**:
 |---|---|---|
 | `boss.hover` | `trackSpeed` 0.5, `margin` 32, `fireTicks` 60, `bulletSpeed` 1.5, `ways` 1, `spread` 40, `openTicks` 0, `closedTicks` 120 | Tracks the nearest player's height (`margin` px from the playfield's top and bottom); every `fireTicks` (rank-scaled) each gun fires an aimed `ways`-way spread of round red bullets; with `openTicks` > 0 its `whenOpen` parts open for `openTicks` after every `closedTicks` closed (0 = never — and it closes a part the data left open) |
 | `boss.lanes` | `trackSpeed` 0 (holds still), `margin` 32, `laserTicks` 150, `laserLength` 384, `laserWidth` 6, `telegraph` 50, `active` 45, `fireTicks` 90, `bulletSpeed` 1.25, `ways` 3, `spread` 40 | Every `laserTicks` the next standing gun in turn fires a telegraphed horizontal laser to the left in its lane (not attached); every `fireTicks` each gun an aimed `ways`-way of purple needles |
+| `boss.bulwark` (M1-18, HALCYON BULWARK) | `trackSpeed` 0.35, `margin` 40, `laserTicks` 110, `firstLaser` 60, `laserLength` 384, `laserWidth` 8, `telegraph` 45, `active` 50, `fireTicks` 120, `bulletSpeed` 1.5, `ways` 0 (none), `spread` 40 | Tracks the nearest player's height slowly; the first lane after `firstLaser` ticks (not rank-scaled), then every `laserTicks` the next standing gun in turn fires a telegraphed horizontal laser to the left **attached** to the gun, so the lane moves with the boss; with `ways` ≥ 1 every `fireTicks` each gun an aimed `ways`-way of purple needles — [zone-a-and-playtest.md](zone-a-and-playtest.md#bossbulwark) |
 
 `boss.hover` closes every `whenOpen` part when its phase starts (so a new hover phase closes what
 the last one opened — on its first tick, the tick after the change); `boss.lanes` leaves them as
-they are. HALCYON BULWARK's own behaviours come with zone A in M1-18.
+they are, and so does `boss.bulwark` (HALCYON BULWARK has no `whenOpen` part). A boss whose guns
+are armour (`vulnerable: never`, like HB-01's emitters) keeps every lane to the end.
 
 **Writing one** follows the enemy rules ([enemies-and-behaviors.md](enemies-and-behaviors.md#behaviours-corebehaviors)):
 read the API and look part names up once at the start, `yield` tick counts (sleep until the next
@@ -407,8 +409,19 @@ parallax, two capsule carriers at x 40 / 120, the **`warning`** at x 300 (about 
 1200. Fly it with `pnpm dev` and http://localhost:5173/?stage=test-boss (add `&loadout=full` to
 fight it fully powered). The example warden (`example.enemies.json`, EXAMPLE WARDEN, EW-00)
 became a boss too, and the sample stages lost their redundant `boss` / `music` events — the
-`warning` brings the boss and its music. Zone A's real boss (HALCYON BULWARK, HB-01) comes with
-M1-18.
+`warning` brings the boss and its music.
+
+## HALCYON BULWARK (HB-01)
+
+Zone A's boss (M1-18), `content/enemies/zone-a.enemies.json` — a core battleship: an armoured hull
+and wings (`never`), two armoured laser **emitters** as its `gun`s, a 40-hp `core` (5,000 points)
+that takes damage only after all **four shield plates** (12 hp, 500 points each) stacked in front
+of it along its lane are destroyed, a 30,000-point tally and a 150-tick intro. Three
+`boss.bulwark` phases — lane lasers only, then (two plates down) plus aimed 3-ways of needles at
+1.5 px/tick, then (all plates down) a lane every 55 ticks so both emitters' lanes overlap in time
+with ≥ 16 px between them. Parts, phases, the 4-way checks and the playtest that kills it:
+[zone-a-and-playtest.md](zone-a-and-playtest.md#the-boss-halcyon-bulwark-hb-01). Reach it quickly
+with the web app's `?skip=boss` (the debug stage skip, `GameConfig.stageSkip`).
 
 ## World integration
 
@@ -540,12 +553,15 @@ free flight).
 | `packages/core/test/bosses/bosses-edge.test.ts` | The script API (lookups, bad indices, open / close, offsets, track bounds, `moveTo` easing and at-once, `canFire` per state, the primitives, attached / lane lasers), tunables merged over defaults, unknown phase scripts, cascades and several cores, `defeat`, the WARNING in free flight and from other statuses, hit-stop pausing the WARNING and the chain, cosmetic-only RNG inside the boxes, the dying blink, a second boss, a restart while dying, `clear()` music, `hashWorld` coverage, shots vs parts (enemy first, Option credit, a part gone mid-tick) |
 | `packages/core/test/bosses/bosses-behaviors*.test.ts` | The roster: registration next to the enemy roster, `boss.hover` spreads / tracking / open-close, `boss.lanes` lanes and spreads, `checkEnemyBehaviors` for boss phases; `ways` flooring, default `openTicks`, a new phase closing parts, lanes between standing guns only, separate registries |
 | `packages/core/test/bosses/bosses-alloc.test.ts` | The allocation guards above (own worker) |
+| `packages/core/test/behaviors/behaviors-bulwark*.test.ts` | `boss.bulwark` (M1-18): defaults, lane geometry and timings, alternation over the standing guns, attached lanes following / vanishing with their gun, `firstLaser` / `ways` flooring, tracking bounds, the rank-scaled interval, timers restarted on HB-01's phase change; its allocation guard in its own file |
+| `test/integration/content.test.ts` (zone A block), `test/playtest/` | HB-01's data and lane geometry per phase; a whole HB-01 fight played by the 4-way bot with the design rules checked every tick ([zone-a-and-playtest.md](zone-a-and-playtest.md#the-4-way-design-rules)) |
 | `packages/core/test/data/bosses-data*.test.ts` | Completion (defaults, indices, masks, the regular fields), phase scripts as script refs, the section schema, the omitted / required fields, the reference pass; self-parents, limits and boundary values, several cores, later `requires`, duplicate `partsDestroyed` names (the regression), unknown section fields |
 | `packages/core/test/stage/stage-brake*.test.ts` | The brake: hashed slots, linear deceleration then lock, recorded resume speeds, `brake(0)`, restart forgets it; fractional ramps, a running ramp's target, unlock mid-brake, pans under the lock, a lock key met while braking, a brake from a standstill |
 | `packages/core/test/{data,debug,events,world,behaviors}/`, `test/integration/{content,enemies-runtime,stage-runtime}.test.ts` | Adapted suites: the warden fixtures are bosses, the new event / flash codes, the batch count, the reference hash, shipped-stage runs defeat the boss |
 | `packages/shell/test/flight/flight.test.ts` | The WARNING band in the UI list, its colours, rebuilt only on changes |
 | `test/integration/boss-runtime.test.ts` | The fully powered KESTREL shoots the shipped TRIAL WARDEN down through all three phases to `stageClear` via `createGame`, with the host's event order and timing; the `WarningView` in the render contract with original wording; two sessions in lockstep through the fight |
 | `test/e2e/boss.spec.ts` | In Chromium on `?stage=test-boss`: the WARNING band for three seconds, then the boss's hull colour in the right part of the playfield; no console errors or atlas warnings |
+| `test/e2e/zone-a.spec.ts` | In Chromium with `?skip=boss` (M1-18): the scene flow plays zone A, START lands before the WARNING, then HALCYON BULWARK's hull colour in the right half of the playfield |
 
 ## Gotchas
 
@@ -580,6 +596,9 @@ free flight).
 - **M1-16** (done) — the scene flow: 90 World ticks after `stageClear` the stage-clear screen
   (tally, `TO BE CONTINUED`, the title), the WARNING band drawn by the game scene, the HUD
   ([scenes-and-ui.md](scenes-and-ui.md)).
-- **M1-18** — zone A's boss, HALCYON BULWARK (HB-01), with its own behaviours.
+- **M1-18** (done) — zone A's boss, HALCYON BULWARK (HB-01), with its behaviour `boss.bulwark`
+  (attached lane lasers) and the debug stage skip to reach it
+  ([zone-a-and-playtest.md](zone-a-and-playtest.md)).
+- **M1-19** — the debug controls' "skip to boss" (on `core/debug` `skipToBoss`).
 - **M2-09** — boss timers and escapes, the optional HP bar, mid-bosses, battleship raids,
   boss-inside-boss, double bosses, boss rush.

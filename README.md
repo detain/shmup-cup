@@ -28,7 +28,8 @@ The [implementation plan](shmup_plan.md) is approved and under way. Progress per
 - **Game data** (M1-02)
   - Schema-validated JSON under [`content/`](content/README.md): the KESTREL ship, the Type A
     weapons, the test-range stage with its terrain tileset, enemy roster and movement paths, the
-    boss range with its test boss, particle presets, sound effects and music.
+    boss range with its test boss, zone A with its roster and boss (M1-18), particle presets, sound
+    effects and music.
   - Checked by `pnpm content:check`, served to the builds as the virtual module
     `virtual:shmup-content`, and loaded by `loadContent()` with every string id resolved to a
     number.
@@ -38,8 +39,9 @@ The [implementation plan](shmup_plan.md) is approved and under way. Progress per
   - Sprite pixel maps under [`assets/source/`](assets/README.md), seeded procedural generators and
     an original 6×8 pixel font are packed by `pnpm assets` into a texture atlas plus manifest,
     served to the builds as `virtual:shmup-assets`.
-  - Covers the KESTREL, shots, seven enemies, boss parts, bullets, laser beams, explosions, items,
-    particles, HUD pieces, the title logo, terrain tiles and star layers.
+  - Covers the KESTREL, shots, nine enemies, boss parts (the test boss's and, since M1-18,
+    HALCYON BULWARK's), bullets, laser beams, explosions, items, particles, HUD pieces, the title
+    logo, terrain tiles, star layers and zone A's planet band.
   - Real art can later replace any frame by name.
   - Docs: [developer guide](docs/dev/asset-pipeline.md)
 
@@ -223,7 +225,7 @@ The [implementation plan](shmup_plan.md) is approved and under way. Progress per
     music player with fades and ducking as sample-accurate ramps — no allocation unless a sound
     starts.
   - In a browser the sound starts with the first key press; the TV plays from boot (the title
-    theme since M1-16; a game there flies in open space, which has no stage music yet).
+    theme since M1-16, zone A's stage and boss themes since M1-18).
   - `pnpm audio:preview` writes every sound and song as WAV files.
   - Docs: [developer guide](docs/dev/audio.md) ·
     [what testers should check](docs/client/preview-build.md#sound-and-music)
@@ -265,6 +267,27 @@ The [implementation plan](shmup_plan.md) is approved and under way. Progress per
   - Docs: [developer guide](docs/dev/saves-and-options.md) ·
     [what testers should check](docs/client/preview-build.md#the-options-screen)
 
+- **Zone A, its boss and a 4-way playtest bot** (M1-18)
+  - **START plays AZURE VERGE** on every build, the TV included: a 9,000-px zone in five sections
+    (popcorn and capsule carriers, fan formations and rammers, a floor-and-ceiling corridor with
+    turrets, walkers and hatches, orbiters at 1.5 px/tick, a calm), checkpoints at 0 / 3,500 /
+    6,000, a planet-rim parallax band, 28 capsule sources — about 3½ minutes.
+  - The boss **HALCYON BULWARK (HB-01)**: an armoured battleship whose four shield plates stand in
+    front of its core, and whose two emitters fire telegraphed lane lasers that move with it (new
+    boss behaviour `boss.bulwark`), aimed 3-ways once two plates are down, overlapping lanes at
+    the end.
+  - **4-way design rules** in `pnpm content:check`: no aimed bullet over 2 px/tick, no two
+    simultaneous laser lanes closer than 16 px (checked statically and over a whole HB-01 fight),
+    ≥ 3 capsule sources within 900 px after every checkpoint.
+  - **Headless playtest** (`test/playtest/`): `runStage(stageId, bot, flags)` records and reports a
+    run, `replayStage` replays it, and `fourWayBot()` plays like a remote player — never a
+    diagonal, a 16-px lane danger scan, OK only for Speed / Missile / Option. With god mode it
+    kills the boss and clears the zone in 3–6 minutes (≈ 3.5 min today, also without god mode).
+  - Debug stage skip: `GameConfig.stageSkip`, `StageRunner.jumpTo`, `skipToBoss`; the web app's
+    `?skip=boss` starts a game right before the WARNING (the e2e smoke reaches the boss with it).
+  - Docs: [developer guide](docs/dev/zone-a-and-playtest.md) ·
+    [what testers should check](docs/client/preview-build.md#the-first-zone-azure-verge)
+
 ### Hardware spike
 
 - The **input probe** — a diagnostic Tizen app that measures the Samsung remote, gamepads and
@@ -284,7 +307,7 @@ The [implementation plan](shmup_plan.md) is approved and under way. Progress per
 | [`shmup_prompt.md`](shmup_prompt.md) | Paste-into-a-new-session prompt that drives execution of the plan (workflow: build → review/fix loop → tests → docs → CI gate per step, progress in `shmup_progress.md`) |
 | [`docs/`](docs/README.md) | Player and developer documentation (start with [`docs/dev/repo-layout.md`](docs/dev/repo-layout.md)) |
 
-Game docs — testers: [preview build (the title screen, menus, HUD and pause menu, the Options screen and saved settings and high scores, the game-over and stage-clear screens, test stage, its enemies and their bullets, your weapons, power-ups, lives and score, the boss and its WARNING, explosions, shake and flashes, sound and music)](docs/client/preview-build.md) ·
+Game docs — testers: [preview build (the title screen, menus, HUD and pause menu, the Options screen and saved settings and high scores, the game-over and stage-clear screens, zone A — AZURE VERGE and its boss HALCYON BULWARK —, test stage, its enemies and their bullets, your weapons, power-ups, lives and score, the boss and its WARNING, explosions, shake and flashes, sound and music)](docs/client/preview-build.md) ·
 [controls](docs/client/controls.md) · [monitor setup & install](docs/client/install-on-tv.md).
 Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/architecture.md) ·
 [engine foundations](docs/dev/engine-foundations.md) · [content data](docs/dev/content-data.md) ·
@@ -302,6 +325,7 @@ Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/ar
 [audio](docs/dev/audio.md) ·
 [scenes, menus & HUD](docs/dev/scenes-and-ui.md) ·
 [saves & options](docs/dev/saves-and-options.md) ·
+[zone A & playtest](docs/dev/zone-a-and-playtest.md) ·
 [input profiles](docs/dev/input-profiles.md) ·
 [API reference](docs/dev/api-reference.md) ·
 [build, test & deploy](docs/dev/build-test-deploy.md) · [conventions](docs/dev/conventions.md).
@@ -328,7 +352,7 @@ versions (`devEngines.runtime`).
 ```sh
 pnpm -v               # must print 12.x — an older global pnpm fails with ERR_PNPM_BROKEN_LOCKFILE
 pnpm install          # set ELECTRON_SKIP_BINARY_DOWNLOAD=1 to skip the Electron binary
-pnpm dev              # browser dev app → http://localhost:5173: the title (Enter twice starts a game; Enter, Down, Enter opens OPTIONS — volumes and controls, saved in localStorage; Esc pauses), then fly the KESTREL (arrows/WASD, gamepad; the first key press turns the sound on; Enter/C takes a power-up; ?scene=flight skips the title; ?stage=test-range scrolls the test stage, its enemies, their bullets and the power capsules; ?stage=test-boss plays the WARNING and the test boss; ?profile=keyboard-remote-emulation feels like the TV remote; ?scene=showcase / ?scene=calibration / ?scene=fx-gallery)
+pnpm dev              # browser dev app → http://localhost:5173: the title (Enter twice starts zone A, AZURE VERGE; ?skip=boss starts right before its boss HALCYON BULWARK; Enter, Down, Enter opens OPTIONS — volumes and controls, saved in localStorage; Esc pauses), then fly the KESTREL (arrows/WASD, gamepad; the first key press turns the sound on; Enter/C takes a power-up; ?scene=flight skips the title; ?stage=test-range scrolls the test stage, its enemies, their bullets and the power capsules; ?stage=test-boss plays the WARNING and the test boss; ?profile=keyboard-remote-emulation feels like the TV remote; ?scene=showcase / ?scene=calibration / ?scene=fx-gallery)
 pnpm lint             # ESLint (typescript-eslint + compat: chrome >= 69)
 pnpm typecheck        # tsc --noEmit everywhere
 pnpm test             # Vitest per package + repo integration tests
@@ -336,7 +360,7 @@ pnpm test:e2e         # build web + Tizen, boot both in headless Chromium (once:
 pnpm build            # packages → dist/, apps/web, apps/tizen (one ES2018 IIFE), apps/electron
 pnpm format           # Prettier
 pnpm trig:tables      # regenerate the committed core trig tables (a test checks they are current)
-pnpm content:check    # validate every JSON under content/ + its sprite names exist in the atlas (part of pnpm test)
+pnpm content:check    # validate every JSON under content/ + its sprite names exist in the atlas + zone A's 4-way design rules (part of pnpm test)
 pnpm assets           # rebuild the placeholder sprite atlas (automatic before build/dev; skipped when unchanged)
 pnpm audio:preview    # render every placeholder sound and song to WAV files in assets/generated/audio-preview/
 pnpm clean            # remove build output
@@ -408,9 +432,10 @@ the game — the shipped Tizen bundle still targets Chromium 69.
 
 ## Next step
 
-Code: plan step **M1-18** (zone A content, boss & 4-way playtest bot: the real vertical-slice
-level AZURE VERGE with the HALCYON BULWARK boss, balanced for the remote and checked by a
-four-direction playtest bot) — the per-step status board is [`shmup_progress.md`](shmup_progress.md).
+Code: plan step **M1-19** (debug tools, replays, golden tests & M1 release check: god mode, frame
+advance, slow motion, stage skip and checkpoint jump behind dev keys, the debug overlay,
+deterministic replays with golden zone A replays recorded from the playtest bot, perf and size
+budgets, a tagged M1 build) — the per-step status board is [`shmup_progress.md`](shmup_progress.md).
 
 On hardware (unchanged, and still the gate for the remote control scheme): package and
 deploy the input probe from the **Windows desktop** that sits on the same LAN as the monitors and holds
@@ -420,8 +445,10 @@ become edits to `content/input/remote.input-profiles.json` (`releaseDebounceTick
 `diagonals`, `register`) — recipes in [`content/input/README.md`](content/input/README.md).
 Since M1-06 the preview build is worth installing too: flying the KESTREL with the real remote
 is the first hands-on check of the control scheme — since M1-16 moving through the title and
-pause menus and quitting with Back, and since M1-17 the Options screen, settings kept after a
-relaunch and the FAST 8-WAY profile (checklist in
+pause menus and quitting with Back, since M1-17 the Options screen, settings kept after a
+relaunch and the FAST 8-WAY profile, and since M1-18 **playing zone A through with the remote**
+— the plan's manual M1-18 check: every bullet and laser dodgeable with single arrow presses
+(checklist in
 [`docs/client/preview-build.md`](docs/client/preview-build.md#on-the-samsung-smart-monitor--tv)).
 
 Desktop prerequisites: Git, Node 24 (22.12+), Tizen Studio **or** VS Code + Samsung Tizen extension (with a Samsung

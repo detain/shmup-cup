@@ -429,7 +429,7 @@ the app's `inputProfiles.apply(id, 'options')`
 
 | `?scene=` | What is drawn | Sprite name table |
 |---|---|---|
-| (none) / `game` | **The scene flow** (M1-16, `createSceneView(game)`; the game created with `{ scenes: 'boot' }`): the title (logo, `PRESS OK`, START / OPTIONS / EXIT, the session hi-score — the saved best since M1-17) over a drifting starfield backdrop; a game with the core HUD (score, `HI`, `2P`, stock, the power meter, Force Field pips), the World over the starfield in open space or the stage's own parallax and terrain with `?stage=`; the pause menu, the Options screen (M1-17), the YES / NO dialog, the stage-clear and game-over screens over the frozen, dimmed game — all drawn by the core into the HUD / UI lists ([scenes-and-ui.md](scenes-and-ui.md)) | `content.db.sprites.names` + `SCENE_VIEW_SPRITES` |
+| (none) / `game` | **The scene flow** (M1-16, `createSceneView(game)`; the game created with `{ scenes: 'boot' }`): the title (logo, `PRESS OK`, START / OPTIONS / EXIT, the session hi-score — the saved best since M1-17) over a drifting starfield backdrop; a game with the core HUD (score, `HI`, `2P`, stock, the power meter, Force Field pips), the stage's own parallax and terrain — zone A by default since M1-18 (`defaultStageId`), another with `?stage=` — or the World over the starfield in open space; the pause menu, the Options screen (M1-17), the YES / NO dialog, the stage-clear and game-over screens over the frozen, dimmed game — all drawn by the core into the HUD / UI lists ([scenes-and-ui.md](scenes-and-ui.md)) | `content.db.sprites.names` + `SCENE_VIEW_SPRITES` |
 | `flight` | **Free flight** (`createFlightScene(game)`, M1-06): the game's World — the KESTREL flying in, then moving under the player's control — over three drifting star layers, both HUD bars (`1P` and player 1's score, `FREE FLIGHT`, `HI` and the session hi-score, `lives − 1` stock ships, `ARROWS MOVE` — M1-12). With a stage (`gameConfig.stage`, the web app's `?stage=<id>`, M1-07): the stage's parallax bands and scrolling terrain instead of the starfield, the stage name as the title, the enemies its timeline spawns (M1-08) and their bullets (M1-09). The ship autofires in every build, with Options and lasers under the web app's `?loadout=full` (M1-10); power capsules and the Force Field are World batches too (M1-11 — the power meter itself is not drawn before the M1-16 HUD); ships that are `dying` / `dead` are not drawn, a respawn blinks, and `GAME OVER` (red) replaces the title once the World's status says so (M1-12); a boss's parts are a World batch, and a running WARNING is drawn as a translucent band with its text in the UI list (M1-13, `?stage=test-boss`) | `content.db.sprites.names` + `FLIGHT_SPRITES` |
 | `showcase` | The **sprite showcase** (`createShowcase()`): three scrolling star layers, the KESTREL flying a figure-eight with its thruster and two Options replaying its path, five drifters with periodic hit flashes, a rotating ring of twelve bullets, both HUD bars (scores via the `number` op, lives, power meter with a moving highlight) and the title "SHMUP CUP" / "SPRITE SHOWCASE" in the bitmap font | `SHOWCASE_SPRITES` |
 | `calibration` | The skeleton's test pattern (checker border, grid, colour bars, placeholder ship, moving marker) under empty layers | `content.db.sprites.names` |
@@ -472,7 +472,7 @@ UI list is built once (the renderer never redraws it); its HUD list is rebuilt e
 The calibration scene renders the game's frame through a small wrapper whose `world` is always
 `null`, so only the test pattern and the (empty) HUD / UI lists show. `sceneFromSearch()`
 turns unknown or missing values into `game`. On the TV the widget starts without a query string,
-so the TV always runs the scene flow (the title; START flies in open space).
+so the TV always runs the scene flow (the title; START plays zone A since M1-18).
 
 ## The apps
 
@@ -485,8 +485,8 @@ resolve virtual modules, so the boot functions receive them as arguments.
 
 | | `apps/web` | `apps/tizen` |
 |---|---|---|
-| `gameConfig` | `{ remoteMode: false, stage }` — `stage` from `?stage=<id>` (`stageFromSearch`; an id missing from `contentStageIds(contentFiles)` → `console.warn`, `null`): START runs that stage | `{ remoteMode: true, autofire: true }` — no stage parameter (START flies in open space until zone A, M1-18) |
-| `audioUnlock` | `'gesture'` (autoplay policy): silent until the first key press or click — gamepad buttons do not count — then the audio engine attaches and the music asked for so far (the title theme) starts | `'immediate'`: sound from boot — the title theme, menu sounds, the game-over tune; open space has no stage music |
+| `gameConfig` | `{ remoteMode: false, stage, stageSkip, loadout }` — `stage` from `?stage=<id>` (`stageFromSearch`; an id missing from `contentStageIds(contentFiles)` → `console.warn`, `null`), else in the scene flow `defaultStageId(contentFiles)` — zone A (M1-18; the dev scenes keep `null`); `stageSkip` from `?skip=boss` (`stageSkipFromSearch`, M1-18); `loadout` from `?loadout=` | `{ remoteMode: true, autofire: true, stage }` — `stage` is `defaultStageId(contentFiles)` in the scene flow (START plays zone A, M1-18), `null` in the dev scenes; no `?stage=` / `?skip=` |
+| `audioUnlock` | `'gesture'` (autoplay policy): silent until the first key press or click — gamepad buttons do not count — then the audio engine attaches and the music asked for so far (the title theme) starts | `'immediate'`: sound from boot — the title theme, menu sounds, zone A's stage and boss themes, the jingles |
 | Input profiles | `?profile=` › the saved choice (read by the shell with the save, M1-17) › `keyboard-default`; `?debounce=`; `gamepad-standard`. CONTROLS: `KEYBOARD (DEFAULT)`, `KEYBOARD AS REMOTE` (+ a `?profile=` override) | saved choice › `tizen-remote-safe` (its `register` keys registered); `gamepad-standard`. CONTROLS: `SAFE 4-WAY (DEFAULT)`, `FAST 8-WAY` — a pick registers the new profile's keys |
 | Saves | `localStorage` `shmup-cup:save.v1` (memory for the session after the first storage error) | the same key in the widget's `localStorage` (deleted on uninstall) |
 | Back | Esc / Backspace → `Pause` (game) / `Back` (menus); the title's Back only backs out of its menu (no `platform.exit`) | remote Back (10009) → `Pause` (game) / `Back` (menus) through the scene stack; on the title the exit confirmation → `platform.exit()` after YES. The exit watcher is installed **before** boot and removed once the shell runs, so Back exits only from the loading and boot error screens |
@@ -573,6 +573,11 @@ pnpm test:e2e                                        # builds web + tizen, then 
   `data-shmup-boot-ms` is under 10 s; a corrupt save boots the title with defaults, is copied to
   `shmup-cup:save.corrupt` and replaced on Back. Tizen from disk: SFX and CONTROLS changed with the
   remote's key codes only, saved on Back, kept after a reload.
+- `zone-a.spec.ts` (M1-18) — the web build's scene flow plays zone A; with the debug stage skip
+  `?skip=boss`, Enter past `PRESS OK` and Enter on START reach the WARNING band (its red edge rows
+  across the whole width) within seconds, then HALCYON BULWARK's hull colour (`#2e5082`, used by no
+  other sprite) holds the right half of the playfield; no console errors or atlas warnings
+  ([zone-a-and-playtest.md](zone-a-and-playtest.md)).
 - `shell.spec.ts` — an aborted atlas request ends on the boot error screen (overlay canvas,
   state `error`); a 1000×600 window gets a centred ×2 frame on the letterbox colour and a
   resize to 1920×1080 re-fits it to ×5; free flight animates.
@@ -707,4 +712,7 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
   profile, hands the store and the profile choices to the scene flow, applies the Options screen's
   `UserOption` events live, clears held input on `blur` and exposes the boot timing
   ([saves-and-options.md](saves-and-options.md)).
+- **M1-18** (done) — `DEFAULT_STAGE_ID` / `defaultStageId(files)`: both apps' scene flow plays
+  zone A (the dev scenes keep open space); the web app's `?skip=boss`
+  ([zone-a-and-playtest.md](zone-a-and-playtest.md#the-game-plays-zone-a)).
 - **M1-19** — the debug overlay (FPS, tick / render ms, boot ms from `Shell.bootTiming`).

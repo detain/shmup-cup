@@ -251,6 +251,15 @@ remains: a key and a `speed` event less than one tick's movement apart (key firs
 replayed key → event, while live play may have crossed both in one tick (event → key). Keep
 such pairs further apart than the scroll speed, or at the same x.
 
+**`jumpTo(x)`** (M1-18) is the same restart at any scroll x in `[0, stage.length]` (else a
+`RangeError`): steps 1–4 above with `x` in place of the checkpoint's x, and `checkpoint` becomes
+the last one at or before `x` (−1 when none). `jumpTo(checkpoints[i].x)` leaves the runner exactly
+as `restartAt(i)`; without a checkpoint at 0, `jumpTo(0)` equals `restartAt(-1)`. It is the debug
+stage skip's primitive — `core/debug` `skipToBoss` jumps to 96 px before the first `warning` /
+`boss` event when `GameConfig.stageSkip` is `'boss'`
+([zone-a-and-playtest.md](zone-a-and-playtest.md#the-debug-stage-skip)) — and the M1-19 debug
+controls' "jump to the next checkpoint". Like a restart, it may be called from a hook.
+
 ### Runner state and zero allocation
 
 All numeric state lives in one `Float64Array`, `runner.state`, indexed by `StageSlot`
@@ -321,19 +330,30 @@ repeated sprites per parallax band — see
 `GameConfig.stage` (default `null`) selects the stage by id; `createWorld` (and so
 `createGame`) throws a `RangeError` for an id the content does not have, and
 `resolveWorldStage(config, db)` does the lookup. The scene flow (M1-16) does not pick stages
-yet — START creates a World from the same config, so a game runs `config.stage` (open space when
-it is `null`); the zone map picks them from M2-10. The dev entry point is the web app:
+itself — START creates a World from the same config, so a game runs `config.stage` (open space when
+it is `null`). Since M1-18 both apps pass zone A there in the scene flow (`@shmup/shell`
+`defaultStageId(contentFiles)` → `'zone-a'`); the zone map picks stages from M2-10. The dev entry
+point is the web app:
 
 ```sh
 pnpm dev
+# → http://localhost:5173                      START plays zone A (M1-18); ?skip=boss starts near its boss
 # → http://localhost:5173/?stage=test-range   (or ?stage=test-boss — the boss range, M1-13)
 ```
 
 `apps/web` reads `?stage=<id>` with `stageFromSearch` and checks it against the raw content's
-stage ids (`contentStageIds`); an unknown id logs `console.warn` and boots free flight in open
-space. The free-flight scene then draws the stage's parallax and terrain instead of its own
-starfield and shows the stage name in the HUD. The Tizen app has no stage parameter (the
-widget has no query string) and stays in free flight.
+stage ids (`contentStageIds`); an unknown id logs `console.warn` and flies in open space. Without
+`?stage=`, the scene flow plays zone A and the dev scenes (`?scene=flight` …) open space. The
+free-flight scene draws a stage's parallax and terrain instead of its own starfield and shows the
+stage name in the HUD. The Tizen app has no stage parameter (the widget has no query string):
+START plays zone A.
+
+`content/stages/zone-a.stage.json` is **AZURE VERGE**, zone A (M1-18): 9,000 px, camera keys
+0.75 / 0.8 / 0.6 / 1.5 / 0.75 px/tick at 0 / 1,500 / 3,500 / 6,000 / 8,000, checkpoints at 0 /
+3,500 / 6,000, heightfield floors and a floor-and-ceiling corridor (3,440–6,400), the star bands
+plus the planet band `bg/azure-verge`, 58 events ending in the `warning` for HALCYON BULWARK at
+8,600 and `end` at 9,000 — section by section in
+[zone-a-and-playtest.md](zone-a-and-playtest.md#the-stage-azure-verge).
 
 `content/stages/test-range.stage.json` is the dev / test stage: 4800 px long (about 75 s),
 checkpoints at 0 / 1500 / 3000, speed 1 → 2 (a high-speed cave with floor and ceiling from
@@ -385,6 +405,7 @@ world.stage!.restartAt(1); // back to x 1500: speed, pan and flags as live play 
 |---|---|
 | `packages/core/test/stage/stage.test.ts` | Ramp values, pans, locks, the stage end; every event fires exactly once at its x, in order, several on one tick; checkpoints (last passed, binary-search cursor, re-derived speed / pan / flags, `clear()`); the live-vs-restart tie cases of the review; parallax / terrain views; allocation-free `tick()` |
 | `packages/core/test/stage/stage-brake.test.ts`, `stage-brake-edge.test.ts` | The brake (M1-13): its hashed slots, linear deceleration then the lock where it stopped, speeds of keys and `speed` events met while braking recorded and resumed, `brake(0)`, a restart forgets it; a fractional ramp, resuming at a running ramp's target, `unlock()` mid-brake, pans under the lock, a lock key met while braking, a brake from a standstill, a restart replaying a passed `speed` event |
+| `packages/core/test/stage/stage-jump.test.ts`, `stage-jump-edge.test.ts` | `jumpTo` (M1-18): state equal to `restartAt` at a checkpoint's x, re-derived speed / pan / flags between keys, the events at `x` re-fired, the checkpoint index at or before `x`, range errors; no / late checkpoints, a pending key at `x`, key vs speed-event order, lock keys, a re-opened `end`, a brake released, a jump from a hook, independence from the run's history |
 | `packages/core/test/stage/stage-edge.test.ts` | Ramps and pans interrupted mid-way, scroll stops, locks (first key, stage end, behind a speed event, several in a row, fractional keys at fractional speeds, behind non-lock keys crossed in one tick), `unlock()` before a lock, flags up to bit 31, randomised invariants on 60 generated stages, a randomised live-vs-restart equivalence on 60 stages, `findEventCursor` vs a linear scan, allocation with locks, pans and unlocking hooks |
 | `packages/core/test/collision/terrain*.test.ts` | Every `terrain-a` tile shape pixel by pixel (`terrainAt`, `findFloor` from above, `findCeiling` from below), `boxHitsTerrain` edges, hazard priority, decoration, out-of-map and NaN input; every query against an independent pixel reference on random maps; the allocation guard |
 | `packages/core/test/data/tilemap*.test.ts`, `stage-edge.test.ts` | Tileset validation and tables; stage checks (sorting, first key, range, pans, flags, segments, unknown tileset) — all issues of one file in one load; RLE decoding and every error; the heightfield generator (deterministic, masks match tiles, slope rules, ramps, floor over ceiling, 120 random profiles where `findFloor` sees exactly the generated heights) |
@@ -392,7 +413,7 @@ world.stage!.restartAt(1); // back to x 1500: speed, pan and flags as live play 
 | `packages/core/test/debug/` | `hashWorld` covers the stage state and the players' hit fields |
 | `packages/render-pixi/test/layers/layers-stage*.test.ts`, `renderer/` | The terrain ring and parallax bands ([rendering-and-shell.md](rendering-and-shell.md#tests)) |
 | `packages/shell/test/flight/`, `apps/web/test/boot/` | The flight scene with a stage (no starfield, stage name, the World's views); `stageFromSearch`, `contentStageIds`, the unknown-id warning |
-| `test/integration/stage-terrain.test.ts`, `stage-runtime.test.ts` | Tileset masks = atlas pixels; `test-range` expands with existing frames, a pinned grid fingerprint, a ≥ 48-px corridor in every pixel column and a clear spawn at every checkpoint; every shipped stage plays to `stageClear` deterministically, also after a restart at each checkpoint; the World collides with the tiles the renderer draws |
+| `test/integration/stage-terrain.test.ts`, `stage-runtime.test.ts` | Tileset masks = atlas pixels; `test-range` expands with existing frames and a pinned grid fingerprint; **every shipped stage with terrain** (`test-range`, and zone A since M1-18) leaves a ≥ 48-px corridor in every pixel column and a clear spawn at every checkpoint; every shipped stage plays to `stageClear` deterministically, also after a restart at each checkpoint; the World collides with the tiles the renderer draws |
 | `test/e2e/stage.spec.ts` | In Chromium: `?stage=test-range` shows terrain inside the playfield only and scrolls it while the ship stays put (captures 30 frames apart since M1-08 — see Gotchas); an unknown id boots free flight |
 
 ## Gotchas
@@ -415,7 +436,8 @@ world.stage!.restartAt(1); // back to x 1500: speed, pan and flags as live play 
 | Per-tick terrain queries allocate | Fractional arguments to a non-inlined call are boxed; pass floored / ceiled whole pixels (`terrainRectHit`) |
 | `stage "x": unknown event type` `RangeError` | A `StageSpec` that did not come through `loadContent` (hand-made in a test) with a type the runtime does not know |
 | A stage loads without terrain | Its tileset id did not resolve, the tile sizes differ, or its RLE rows failed — all reported as issues; the heightfield issues (missing tile names or masks) keep the terrain |
-| `?stage=` does nothing on the TV | The widget has no query string, so START flies in open space; zone A becomes the TV's stage with M1-18 and the zone map picks stages from M2-10 |
+| `?stage=` does nothing on the TV | The widget has no query string: START plays zone A (`defaultStageId`, M1-18) and the zone map picks stages from M2-10 |
+| The skipped part of a stage never spawned after `jumpTo` | By design: events between the old and the new x never fire (the debug stage skip jumps over them) |
 | The `test-range` fingerprint test fails | The stage file or the generator changed. If intended, re-pin the value in `stage-runtime.test.ts` and say why in the commit |
 | A browser test that measures the scroll between two screenshots misses the shift | With enemies drawn and e2e files running in parallel, the frame loop may run up to 4 ticks per frame; keep captures close together (the stage test compares frames 30 apart) so the shift stays inside the search window |
 
@@ -441,5 +463,9 @@ world.stage!.restartAt(1); // back to x 1500: speed, pan and flags as live play 
   STAGE (a fresh World each time); the stage's `end` event and a boss's death set `stageClear`,
   which opens the stage-clear screen ([scenes-and-ui.md](scenes-and-ui.md)). Picking stages from
   the flow comes with the zone map (M2-10).
+- **M1-18** (done) — zone A, AZURE VERGE, the stage both apps play by default; `jumpTo(x)` and the
+  debug stage skip (`GameConfig.stageSkip`, `?skip=boss`); the corridor check covers every stage
+  with terrain ([zone-a-and-playtest.md](zone-a-and-playtest.md)).
+- **M1-19** — the debug controls: skip to the boss and jump to the next checkpoint on `jumpTo`.
 - **M2-07** — time-keyed events during scroll stops, diagonal scrolling, in-stage branches on
   the flags, destructible tiles, the Tiled / LDtk exporter to RLE rows.

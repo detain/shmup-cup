@@ -109,6 +109,7 @@ Each module exports `generate(): SpriteDef[]` and is registered in
 | `items` | `items/capsule` (12×8 × 2, `blink`) |
 | `shields` | `shields/force-field` (30×24 × 4 wear states: `fresh`, `worn`, `damaged`, `critical`) |
 | `starfield` | `bg/stars-far`, `bg/stars-mid`, `bg/stars-near` — seamless 128×128 transparent tiles |
+| `backdrops` | M1-18: `bg/azure-verge` — zone A's far planet band, a 128×48 tile (`AZURE_TILE_W`, `AZURE_TILE_H`, anchored top-left) that repeats seamlessly along x: a translucent haze thickening towards a lit rim row (`AZURE_RIM_ROW` 10), then an opaque dark-azure-to-navy body with seeded cloud streaks that wrap round the tile edge. Dark and low in saturation so the pink / red / purple bullets and the gold capsules stay readable over it, never pure black |
 | `terrain` | `tiles/terrain-a` — 17 8×8 tiles (solid, floor, ceiling, walls, 45° and 22.5° slopes); every tile is also a one-frame animation named after it (`floor → [1]`, list in `TERRAIN_TILES`); collision masks and frames live in `content/tilesets/terrain-a.tileset.json` — change both together |
 | `hud` | `hud/meter-slot` (40×8: `normal`, `highlighted`, `disabled`), `hud/meter-labels` (36×5 × 7 slot labels in meter order) |
 | `ui` | `ui/pixel` (1×1 white, for rectangles), `ui/missing` (8×8 magenta checker the renderer shows for an unknown name), `ui/logo` (M1-16: the 165×27 title logo `SHMUP CUP` — original 5×7 block letters ×3 (`LOGO_TEXT`, `LOGO_SCALE`), a yellow → orange → red gradient with a highlight row, a dark outline and a 2-px drop shadow; anchored at its centre) |
@@ -183,11 +184,11 @@ is simpler for the renderer.) Today the seven enemies and the four boss parts fl
 |---|---|---|
 | Player | `ships/kestrel` (16×9: `level`, `up`, `down`, from `PLACEHOLDER_SHIP`), `ships/kestrel-thruster` (6×3 × 2, `burn`, drawn behind the ship), `options/orb` (`pulse`) | pixel maps |
 | Player shots | `shots/basic`, `shots/double`, `shots/laser` (a segment, anchor on its left edge), `shots/missile` (`fly`) | pixel maps |
-| Enemies | `enemies/drifter`, `turret`, `carrier-red`, `hopper`, `spinner`, `darter`, and since M1-08 the ground `hatch` (20 px wide, lid closed / open) — 2 frames each, all with `@flash` | pixel maps |
-| Boss parts | `bosses/core`, `shield-plate` (`intact`, `cracked`), `hull-block`, `emitter` (`idle`, `charge`), all with `@flash` | pixel maps |
+| Enemies | `enemies/drifter`, `turret`, `carrier-red`, `hopper`, `spinner`, `darter`, since M1-08 the ground `hatch` (20 px wide, lid closed / open), and since M1-18 zone A's `vane` (12×10, an amber swept-wing fan flier, wings beat) and `gyre` (14×14, a teal ring round a bright core, the ring turns) — 2 frames each, all with `@flash` | pixel maps |
+| Boss parts | `bosses/core`, `shield-plate` (`intact`, `cracked`), `hull-block`, `emitter` (`idle`, `charge`), and since M1-18 HALCYON BULWARK's `bulwark-hull` (48×32), `bulwark-wing-top` / `-bottom` (56×14), `bulwark-emitter` (18×10, 2 frames — it glows) and `bulwark-plate` (6×18) — all with `@flash` | pixel maps |
 | Items | `items/capsule` (generated), `items/bonus`, `items/one-up` | both |
 | HUD | `hud/meter-slot`, `hud/meter-labels` (generated), `hud/life` | both |
-| World | `bg/stars-{far,mid,near}`, `tiles/terrain-a` | generated |
+| World | `bg/stars-{far,mid,near}`, `bg/azure-verge` (M1-18), `tiles/terrain-a` | generated |
 | FX / bullets / shield | explosions, spark, debris, 9 enemy bullets, 3 laser beams (M1-09), `shields/force-field` | generated |
 | Utility | `ui/pixel`, `ui/missing`, `ui/logo` (M1-16), `font/pixel` | generated / font |
 
@@ -421,4 +422,7 @@ bullet-cancel twinkle) and `fx/ring` (9×9, 4 frames, the growing cyan pickup ri
 ([fx-and-game-feel.md](fx-and-game-feel.md)); M1-16 (done) builds the HUD from `hud/*` and `ui/pixel` and added the procedural title logo
 `ui/logo` to `ui.mjs` (165×27: original 5×7 block letters ×3, a warm gradient, outline and drop
 shadow — the atlas page grew to 512×512; [scenes-and-ui.md](scenes-and-ui.md#sprites-and-the-logo));
-M1-18 adds the Zone A art (HALCYON BULWARK's parts among it).
+M1-18 (done) added zone A's art: the pixel maps `enemies/vane`, `enemies/gyre` and HALCYON
+BULWARK's five `bosses/bulwark-*` parts (all with `@flash`; its core reuses `bosses/core`), and
+the new `backdrops` generator with the planet band `bg/azure-verge` — the page stays 512×512
+([zone-a-and-playtest.md](zone-a-and-playtest.md)).

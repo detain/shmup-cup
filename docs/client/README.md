@@ -2,7 +2,7 @@
 
 | Page | Contents |
 |---|---|
-| [`preview-build.md`](preview-build.md) | The current game build: the loading bar, the **title screen** and its menu, the **Options screen** (MASTER / MUSIC / SFX volume, the control profile) and what the game remembers between launches (settings, high scores), the in-game **HUD** with the power meter, the **pause menu**, the **GAME OVER** and **STAGE CLEAR** screens and quitting with the TV remote's Back (the **EXIT SHMUP CUP?** question); flying the KESTREL around an empty starfield with the remote, keyboard or gamepad, its gun firing on its own, plus the scrolling **Test Range** stage with its enemies and their bullets, the **power-ups** (capsules, taking them with OK, the Force Field and Mega Crash), **lives, losing the ship and the score** (what destroys the ship, the freeze, the blinking comeback, what a loss costs, GAME OVER, the points table and `HI`), the **Boss Range** with the **WARNING** sign and the first **boss** (its parts, which ones can be hurt, its attacks, what happens when it is destroyed), the **explosions, sparks, screen shake, flashes and score numbers** (what each one should look like, the flash limit), the **sound effects and the music** (what you should hear and when, the first key press in a browser, the loop point to listen for), the **fully powered** ship (laser, missiles, four Options, Force Field), the sprite showcase, the calibration screen and the **effects gallery** in a browser — how to open it on the TV, in a browser and on the desktop, how the ship and its weapons should behave, what a correct picture looks like, which enemies shoot what and how many hits they take, the start-up error screen, what to report, troubleshooting |
+| [`preview-build.md`](preview-build.md) | The current game build: the loading bar, the **title screen** and its menu, the **Options screen** (MASTER / MUSIC / SFX volume, the control profile) and what the game remembers between launches (settings, high scores), the in-game **HUD** with the power meter, the **pause menu**, the **GAME OVER** and **STAGE CLEAR** screens and quitting with the TV remote's Back (the **EXIT SHMUP CUP?** question); **AZURE VERGE**, the first real zone that START plays on every device — its five parts, its enemies (hits, points, what they fire), its capsules, its boss **HALCYON BULWARK** (its plates, core and laser rows, how it fights, tips) and the browser's shortcut `?skip=boss`; flying the KESTREL with the remote, keyboard or gamepad, its gun firing on its own, plus the scrolling **Test Range** stage with its enemies and their bullets, the **power-ups** (capsules, taking them with OK, the Force Field and Mega Crash), **lives, losing the ship and the score** (what destroys the ship, the freeze, the blinking comeback, what a loss costs, GAME OVER, the points table and `HI`), the **Boss Range** with the **WARNING** sign and the first **boss** (its parts, which ones can be hurt, its attacks, what happens when it is destroyed), the **explosions, sparks, screen shake, flashes and score numbers** (what each one should look like, the flash limit), the **sound effects and the music** (what you should hear and when, the first key press in a browser, the loop point to listen for), the **fully powered** ship (laser, missiles, four Options, Force Field), the sprite showcase, the calibration screen and the **effects gallery** in a browser — how to open it on the TV, in a browser and on the desktop, how the ship and its weapons should behave, what a correct picture looks like, which enemies shoot what and how many hits they take, the start-up error screen, what to report, troubleshooting |
 | [`controls.md`](controls.md) | Default controls for the Samsung Smart Remote (primary), gamepads and keyboard, in the game and in menus (moving through menus, pausing, Back and quitting on the TV); the control profiles and choosing one under OPTIONS → CONTROLS, feeling the remote's limits on a desktop keyboard, controls troubleshooting |
 | [`install-on-tv.md`](install-on-tv.md) | One-time Developer Mode + certificate setup, installing / starting / removing development builds (input probe and game preview) on the Samsung Smart Monitor M7 (Windows desktop), what happens to saved settings and high scores on update and removal, install troubleshooting |
 | [`input-probe.md`](input-probe.md) | Tester guide for the **Input Probe** diagnostic app: screen tour, remote controls, the 9-step on-device test protocol, how to read the verdicts, measuring latency with a 240 fps camera, recording results, troubleshooting |
@@ -30,9 +30,16 @@ last ship shows **GAME OVER** and returns to the title; finishing a stage shows 
 and `TO BE CONTINUED`. On the TV, Back on the title asks **EXIT SHMUP CUP?** — only YES closes the
 app ([preview-build.md](preview-build.md#the-title-screen-and-the-menus)).
 
-On the TV a game flies in empty space: the KESTREL glides in from the left and then follows the
-remote's directional pad, the arrow keys or a gamepad, its gun firing on its own. In a browser
-the first **scrolling stage** can be played too (`?stage=test-range`, then START): the view
+**START plays the first real zone, AZURE VERGE — on the TV too**: about three minutes of
+scrolling over rolling ground, through a long cave with turrets on its floor and ceiling and a
+fast stretch, with rows of pods, red saucers that leave power capsules, fan fliers, dashing
+arrowheads, walkers, hatches and ring spinners, and then the **WARNING** and the zone's boss,
+the battleship **HALCYON BULWARK** — shoot its four shield plates, then its core, and dodge the
+laser rows of its two emitters by stepping up or down. Every bullet and laser can be dodged with
+single arrow presses. In a browser `?skip=boss` starts a game right before the boss
+([preview-build.md](preview-build.md#the-first-zone-azure-verge)). The KESTREL glides in from the
+left and then follows the remote's directional pad, the arrow keys or a gamepad, its gun firing on
+its own. In a browser a **test stage** can be played too (`?stage=test-range`, then START): the view
 scrolls on its own over rocky ground and through caves, speeding up and slowing down, with star
 layers moving behind — and **enemies** come at you: weaving pods, looping spinners, saucers,
 ground turrets, walkers, hatches releasing small fighters. The turrets, walkers and lone spinners
@@ -63,9 +70,9 @@ from the spot; `?scene=fx-gallery` shows every effect in turn
 ([preview-build.md](preview-build.md#explosions-sparks-shake-and-flashes)). And the game
 **sounds**: every shot, hit, explosion, pickup and power-up makes a sound, coming from where it
 happens on the screen; the menus click and chime; the WARNING wails a siren; and there is original
-**music** — the title theme, and in the browser stages a stage theme that loops without a gap, a
+**music** — the title theme, the zone's stage theme that loops without a gap (on the TV too), a
 boss theme, a stage-clear and a game-over tune. In a browser the sound starts with the first key
 press or click ([preview-build.md](preview-build.md#sound-and-music)). If a build is broken it
 shows a readable error screen instead of a black one. The button layouts for the TV remote,
-keyboard and gamepad are in [controls.md](controls.md). Next comes the first real zone, AZURE
-VERGE, with its boss — on the TV too.
+keyboard and gamepad are in [controls.md](controls.md). Next come developer tools (a debug
+overlay, recorded replays) and a final check of this first playable slice.

@@ -593,7 +593,21 @@ const bossLanes = defineBossBehavior(
   },
 );
 
-/** `boss.bulwark` — HB-01: slow tracking, alternating attached lane lasers, optional spreads. */
+/**
+ * `boss.bulwark` — HB-01: slow tracking, alternating attached lane lasers, optional spreads (the
+ * tunables are listed in the module docs).
+ *
+ * @remarks
+ * One script per phase (the boss system restarts it with the phase's params on every phase
+ * change, so `firstLaser` counts from the change). The script **sleeps** until the sooner of its
+ * two timers — the next lane or the next spread — so it resumes only when it acts. Lanes go to
+ * the standing `gun` parts in part order, taking turns (`next` wraps round), and skip a destroyed
+ * gun; with no standing gun the phase fires no lanes. Each lane is `api.laser(…, attached: true)`
+ * pointing left (`ANGLE_UNITS / 2`): it follows its emitter as the boss tracks, and vanishes with
+ * it. `laserTicks` and `fireTicks` go through `api.fireWait` (constant rank scales them);
+ * `firstLaser` does not. `ways` is floored and `0` means no spreads at all (the "never" wait of
+ * `boss.hover`) — HB-01's content turns them on from its second phase.
+ */
 const bossBulwark = defineBossBehavior(
   'boss.bulwark',
   {
