@@ -5,9 +5,15 @@
  * left between two screenshots while the ship stays where it is on screen; an unknown stage id
  * warns and boots free flight without terrain. Screenshots are ×3
  * (viewport 1152×648): frame pixel (x, y) is screenshot pixel (3x + 1, 3y + 1).
+ *
+ * The scroll check does not depend on how fast the machine is: `pnpm test:e2e` runs the test
+ * builds, whose `window.__shmupDebug` (plan M1-19) lets the spec freeze the sim with frame advance
+ * and run exact tick counts (`./frame-advance.ts`). The two captures are then exactly 30 ticks of
+ * camera travel apart, however many ticks a loaded machine would have run per frame.
  */
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
+import { freezeSim, stepTo } from './frame-advance.js';
 
 /** Colours of the `tiles/terrain-a` placeholder art (surface rim, subsurface, rock tones). */
 const TERRAIN_COLOURS = [
@@ -111,20 +117,22 @@ test.describe('stage runtime (web build, ?stage=test-range)', () => {
     page.on('pageerror', (error) => errors.push(error.message));
     await page.goto('./?scene=flight&stage=test-range');
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
-    await waitFrames(page, 90); // the camera ramps up to 1 px/tick over the first second
+    await freezeSim(page);
+    // The camera ramps up to 1 px/tick over the first 60 ticks, then holds that speed.
+    const start = await stepTo(page, 90);
 
     const first = await terrainPixels(page);
     expect(first.playfield).toBeGreaterThan(400); // the floor of the first segment
     expect(first.hud).toBe(0);
-    // 30 frames: a busy machine runs up to 4 ticks per frame (the loop catches up), and the
-    // shift must stay inside the 250-px search window of `leftShift`.
-    await waitFrames(page, 30);
+    // Exactly 30 ticks later the camera has travelled 30 px.
+    expect(await stepTo(page, start + 30)).toBe(start + 30);
     const second = await terrainPixels(page);
     expect(second.playfield).toBeGreaterThan(400);
     expect(second.hud).toBe(0);
-    // The floor's height profile reappears shifted to the left (≈ 1 px per tick).
+    // The floor's height profile reappears shifted 30 px to the left (± 1 for pixel snapping).
     const moved = leftShift(first.profile, second.profile);
-    expect(moved.shift).toBeGreaterThan(10);
+    expect(moved.shift).toBeGreaterThanOrEqual(29);
+    expect(moved.shift).toBeLessThanOrEqual(31);
     expect(moved.error).toBeLessThan(1);
     expect(errors).toEqual([]);
   });

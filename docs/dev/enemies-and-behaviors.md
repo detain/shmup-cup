@@ -548,7 +548,7 @@ code):
 | Enemies die in a test that expects them to fly past | The KESTREL autofires by default since M1-10 — pass `{ autofire: false, remoteMode: false }` |
 | A new `Enemy` field diverges in replays unnoticed | Add it to `mixEnemy` in `core/debug` |
 | A path has an odd kink | Control points are relative to the *start*; the first point is normally `(0, 0)`. Centripetal splines never cusp between close points — a kink is a point where the curve really turns |
-| An e2e screenshot test that tracks scrolling became flaky | With enemies drawn and parallel workers the loop may run up to 4 ticks per frame; compare frames closer together (the stage test moved from 60 to 30 frames) |
+| An e2e screenshot test that tracks scrolling or movement became flaky | With enemies drawn and parallel workers the loop may run up to 4 ticks per frame. Do not count frames: freeze the sim with `freezeSim` and run exact tick counts with `stepTo` (`test/e2e/frame-advance.ts`, the test builds' frame advance) — the stage and enemies specs do |
 
 ## Next steps that build on this page
 

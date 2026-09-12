@@ -439,7 +439,7 @@ world.stage!.restartAt(1); // back to x 1500: speed, pan and flags as live play 
 | `?stage=` does nothing on the TV | The widget has no query string: START plays zone A (`defaultStageId`, M1-18) and the zone map picks stages from M2-10 |
 | The skipped part of a stage never spawned after `jumpTo` | By design: events between the old and the new x never fire (the debug stage skip jumps over them) |
 | The `test-range` fingerprint test fails | The stage file or the generator changed. If intended, re-pin the value in `stage-runtime.test.ts` and say why in the commit |
-| A browser test that measures the scroll between two screenshots misses the shift | With enemies drawn and e2e files running in parallel, the frame loop may run up to 4 ticks per frame; keep captures close together (the stage test compares frames 30 apart) so the shift stays inside the search window |
+| A browser test that measures the scroll between two screenshots misses the shift | With enemies drawn and e2e files running in parallel, the frame loop may run up to 4 ticks per frame, so a frame count says little about the ticks run. Freeze the sim and step exact ticks (`freezeSim` / `stepTo` in `test/e2e/frame-advance.ts`): the stage test captures at tick 90 and 30 ticks later and expects a 30 px shift |
 
 ## Next steps that build on this page
 

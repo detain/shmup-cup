@@ -1,10 +1,12 @@
 /**
  * Playwright config for the browser smoke tests (`pnpm test:e2e`, plan §1.4): headless
- * Chromium with SwiftShader WebGL opens the production web build (served by `vite preview`)
- * and the Tizen `dist/` straight from disk via `file://`, the way the TV runs the widget.
+ * Chromium with SwiftShader WebGL opens the web build (served by `vite preview`) and the Tizen
+ * `dist/` straight from disk via `file://`, the way the TV runs the widget.
  *
- * `pnpm test:e2e` builds both apps first (Turborepo `build`, which also generates the atlas);
- * this config only serves and tests the existing `dist/` folders.
+ * `pnpm test:e2e` builds both apps first as test builds (Turborepo `build:test`, which also
+ * generates the atlas: release code plus `__SHMUP_DEV__`, so `window.__shmupDebug` exists for
+ * the smoke and the frame-advance helpers); this config only serves and tests the existing
+ * `dist/` folders.
  *
  * Chromium flags:
  * - `--use-angle=swiftshader --enable-unsafe-swiftshader` — software WebGL on CI machines
@@ -22,6 +24,7 @@
  *
  * @module
  */
+import { availableParallelism } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, devices } from '@playwright/test';
 
@@ -37,6 +40,14 @@ for (const [name, value] of Object.entries(process.env)) {
   if (name !== 'DISPLAY' && value !== undefined) browserEnv[name] = value;
 }
 
+/**
+ * Parallel browsers: half the cores (Playwright's default), but at most 8. Each page renders
+ * with SwiftShader, which is itself multi-threaded, so on a many-core machine the default (24
+ * workers on 48 cores) starves the pages of CPU. Eight is as fast in wall time here: the
+ * longest spec files, not the worker count, bound the run.
+ */
+const WORKERS = Math.max(1, Math.min(8, Math.floor(availableParallelism() / 2)));
+
 /** Running on CI (stricter: no `test.only`, one retry, never reuse a server). */
 const ci = process.env.CI !== undefined && process.env.CI !== '';
 
@@ -45,6 +56,7 @@ export default defineConfig({
   testMatch: '*.spec.ts',
   outputDir: './test-results',
   fullyParallel: false,
+  workers: WORKERS,
   forbidOnly: ci,
   retries: ci ? 1 : 0,
   reporter: 'list',

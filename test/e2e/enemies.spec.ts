@@ -5,9 +5,13 @@
  * the HUD bars — and the formation must fly left across the screen, with no console errors
  * while the timeline spawns. Screenshots are ×3 (viewport 1152×648): frame pixel (x, y) is
  * screenshot pixel (3x + 1, 3y + 1).
+ *
+ * The sim runs under frame advance (`./frame-advance.ts`, the test builds' `window.__shmupDebug`),
+ * in exact tick counts, so the captures do not depend on how fast the machine is.
  */
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
+import { freezeSim, stepTo } from './frame-advance.js';
 
 /** Colours of the `enemies/drifter` placeholder sprite (rim, shell, core). */
 const DRIFTER_COLOURS = [
@@ -15,28 +19,6 @@ const DRIFTER_COLOURS = [
   [0x2a, 0x6a, 0x30],
   [0xc8, 0xf0, 0x80],
 ] as const;
-
-/**
- * Waits for `frames` animation frames in the page.
- *
- * @param page - The page.
- * @param frames - Frames to wait.
- */
-function waitFrames(page: Page, frames: number): Promise<void> {
-  return page.evaluate(
-    (count) =>
-      new Promise<void>((resolve) => {
-        let seen = 0;
-        const next = (): void => {
-          seen++;
-          if (seen >= count) resolve();
-          else requestAnimationFrame(next);
-        };
-        requestAnimationFrame(next);
-      }),
-    frames,
-  );
-}
 
 /**
  * Samples the canvas at frame-pixel resolution and finds the drifter-coloured pixels.
@@ -89,20 +71,23 @@ test.describe('enemies (web build, ?stage=test-range)', () => {
     await page.goto('./?scene=flight&stage=test-range');
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
 
-    // The formation event fires at camera x 60 (≈ 1.5 s in, the camera ramps up first); poll
-    // until the first drifters have flown in from the right edge.
+    await freezeSim(page);
+
+    // The formation event fires at camera x 60 (≈ 1.5 s in, the camera ramps up first); step
+    // 15 ticks at a time until the first drifters have flown in from the right edge.
     let first: { playfield: number; hud: number; left: number } | null = null;
+    let tick = 0;
     for (let poll = 0; poll < 40 && first === null; poll++) {
-      await waitFrames(page, 15);
+      tick = await stepTo(page, tick + 15);
       const pixels = await drifterPixels(page);
       if (pixels.playfield >= 20) first = pixels;
     }
-    expect(first, 'no drifter appeared within 600 frames').not.toBeNull();
+    expect(first, 'no drifter appeared within 600 ticks').not.toBeNull();
     if (first === null) return;
     expect(first.hud).toBe(0);
 
-    // 20 frames later (≥ 20 ticks at 1.25 px/tick) the leading drifter is further left.
-    await waitFrames(page, 20);
+    // 20 ticks later (at 1.25 px/tick) the leading drifter is further left.
+    await stepTo(page, tick + 20);
     const second = await drifterPixels(page);
     expect(second.playfield).toBeGreaterThan(0);
     expect(second.hud).toBe(0);
