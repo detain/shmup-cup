@@ -1,0 +1,171 @@
+{
+  "formatVersion": 1,
+  "kind": "music",
+  "id": "boss",
+  "title": "BULWARK ASSAULT",
+  "cue": "Boss",
+  "song": {
+    "speed": 5,
+    "volume": 0.38,
+    "instruments": {
+      "lead": {
+        "wave": "pulse50",
+        "volume": 0.85,
+        "attack": 0.004,
+        "decay": 0.08,
+        "sustain": 0.7,
+        "release": 0.07,
+        "vibrato": {
+          "depth": 0.3,
+          "rate": 7,
+          "delay": 0.15
+        }
+      },
+      "arp-min": {
+        "wave": "pulse12",
+        "volume": 0.5,
+        "attack": 0.002,
+        "decay": 0.16,
+        "sustain": 0.35,
+        "release": 0.04,
+        "arpeggio": [0, 3, 7, 12],
+        "arpeggioTicks": 2
+      },
+      "arp-maj": {
+        "wave": "pulse12",
+        "volume": 0.5,
+        "attack": 0.002,
+        "decay": 0.16,
+        "sustain": 0.35,
+        "release": 0.04,
+        "arpeggio": [0, 4, 7, 12],
+        "arpeggioTicks": 2
+      },
+      "bass": {
+        "wave": "triangle",
+        "volume": 1,
+        "attack": 0.002,
+        "decay": 0.04,
+        "sustain": 0.7,
+        "release": 0.03
+      },
+      "stab": {
+        "wave": "saw",
+        "volume": 0.4,
+        "attack": 0.002,
+        "decay": 0.2,
+        "sustain": 0.4,
+        "release": 0.08
+      },
+      "hat": {
+        "wave": "noise",
+        "volume": 0.3,
+        "attack": 0,
+        "decay": 0.035,
+        "sustain": 0,
+        "release": 0.01
+      },
+      "snare": {
+        "wave": "noise",
+        "volume": 0.62,
+        "attack": 0,
+        "decay": 0.13,
+        "sustain": 0,
+        "release": 0.02
+      },
+      "kick": {
+        "wave": "noise",
+        "volume": 0.85,
+        "attack": 0,
+        "decay": 0.07,
+        "sustain": 0,
+        "release": 0.01,
+        "sweep": -90
+      },
+      "crash": {
+        "wave": "noise",
+        "volume": 0.5,
+        "attack": 0,
+        "decay": 0.9,
+        "sustain": 0,
+        "release": 0.1
+      }
+    },
+    "channels": [
+      {
+        "instrument": "lead",
+        "volume": 0.75
+      },
+      {
+        "instrument": "arp-min",
+        "volume": 0.5
+      },
+      {
+        "instrument": "bass",
+        "volume": 0.95
+      },
+      {
+        "instrument": "hat",
+        "volume": 0.7
+      },
+      {
+        "instrument": "stab",
+        "volume": 0.45
+      }
+    ],
+    "patterns": {
+      "intro": {
+        "rows": 32,
+        "tracks": [
+          "=:32",
+          "=:32",
+          "E1:2 E1:2 E2:2 E1:2 E1:2 E2:2 E1:1 E1:1 E2:2 E1:2 E1:2 E2:2 E1:2 E1:2 E2:2 E1:1 E1:1 E2:2",
+          "C2:4@kick C2:4@kick C2:4@kick C2:4@kick C5:2@snare C5:2@snare C5@snare C5@snare C5:2@snare C5:2@snare C5:2@snare C5:2@snare C5:2@snare",
+          "E4:16 D#4:16"
+        ]
+      },
+      "a1": {
+        "rows": 32,
+        "tracks": [
+          "E5:6 G5:2 F#5:4 E5:4 F5:6 A5:2 G5:4 F5:4",
+          "E4:4@arp-min E4:4@arp-min E4:4@arp-min E4:4@arp-min F4:4@arp-maj F4:4@arp-maj F4:4@arp-maj F4:4@arp-maj",
+          "E1:2 E1:2 E2:2 E1:2 E1:2 E2:2 E1:1 E1:1 E2:2 F1:2 F1:2 F2:2 F1:2 F1:2 F2:2 F1:1 F1:1 F2:2",
+          "C2:2@kick C8@hat C8@hat C5:2@snare C8:2@hat C2@kick C2@kick C8:2@hat C5:2@snare C5@snare C8@hat C2:2@kick C8@hat C8@hat C5:2@snare C8:2@hat C2@kick C2@kick C8:2@hat C5:2@snare C5@snare C8@hat",
+          "G4:8 -:8 A4:8 -:8"
+        ]
+      },
+      "a2": {
+        "rows": 32,
+        "tracks": [
+          "E5:4 B4:4 E5:4 G5:4 F#5:8 D#5:8",
+          "E4:4@arp-min E4:4@arp-min E4:4@arp-min E4:4@arp-min B3:4@arp-maj B3:4@arp-maj B3:4@arp-maj B3:4@arp-maj",
+          "E1:2 E1:2 E2:2 E1:2 E1:2 E2:2 E1:1 E1:1 E2:2 B1:2 B1:2 B2:2 B1:2 B1:2 B2:2 B1:1 B1:1 B2:2",
+          "C2:2@kick C8@hat C8@hat C5:2@snare C8:2@hat C2@kick C2@kick C8:2@hat C5:2@snare C5@snare C8@hat C5:2@snare C5:2@snare C5@snare C5@snare C5:2@snare C5:2@snare C5:2@snare C5:2@snare C5:2@snare",
+          "G4:8 -:8 D#4:8 -:8"
+        ]
+      },
+      "b1": {
+        "rows": 32,
+        "tracks": [
+          "G5:4 E5:4 C5:4 E5:4 A5:4 F#5:4 D5:4 F#5:4",
+          "C4:4@arp-maj C4:4@arp-maj C4:4@arp-maj C4:4@arp-maj D4:4@arp-maj D4:4@arp-maj D4:4@arp-maj D4:4@arp-maj",
+          "C2:2 C2:2 C3:2 C2:2 C2:2 C3:2 C2:1 C2:1 C3:2 D2:2 D2:2 D3:2 D2:2 D2:2 D3:2 D2:1 D2:1 D3:2",
+          "C2:2@kick C8@hat C8@hat C5:2@snare C8:2@hat C2@kick C2@kick C8:2@hat C5:2@snare C5@snare C8@hat C2:2@kick C8@hat C8@hat C5:2@snare C8:2@hat C2@kick C2@kick C8:2@hat C5:2@snare C5@snare C8@hat",
+          "E4:8 -:8 F#4:8 -:8"
+        ]
+      },
+      "b2": {
+        "rows": 32,
+        "tracks": [
+          "B5:6 A5:2 G5:4 F#5:4 D#5:4 F#5:4 B5:8",
+          "E4:4@arp-min E4:4@arp-min E4:4@arp-min E4:4@arp-min B3:4@arp-maj B3:4@arp-maj B3:4@arp-maj B3:4@arp-maj",
+          "E1:2 E1:2 E2:2 E1:2 E1:2 E2:2 E1:1 E1:1 E2:2 B1:2 B1:2 B2:2 B1:2 B1:2 B2:2 B1:1 B1:1 B2:2",
+          "C2:2@kick C8@hat C8@hat C5:2@snare C8:2@hat C2@kick C2@kick C8:2@hat C5:2@snare C5@snare C8@hat C5:2@snare C5:2@snare C5@snare C5@snare C5:2@snare C5:2@snare C5:2@snare C5:2@snare C5:2@snare",
+          "G4:8 -:8 D#4:8 -:8"
+        ]
+      }
+    },
+    "order": ["intro", "a1", "a2", "a1", "a2", "b1", "b2", "b1", "b2"],
+    "loopFromOrder": 1
+  }
+}

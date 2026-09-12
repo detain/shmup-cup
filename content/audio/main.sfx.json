@@ -1,0 +1,360 @@
+{
+  "formatVersion": 1,
+  "kind": "sfx",
+  "cues": {
+    "PlayerShot": {
+      "priority": "low",
+      "maxInstances": 2,
+      "volume": 0.28,
+      "params": {
+        "shape": "square",
+        "duty": 0.25,
+        "frequency": 1320,
+        "slide": -14000,
+        "sustain": 0.012,
+        "release": 0.045,
+        "seed": 11
+      }
+    },
+    "PlayerMissile": {
+      "priority": "low",
+      "maxInstances": 2,
+      "volume": 0.3,
+      "params": {
+        "shape": "saw",
+        "frequency": 420,
+        "slide": -1800,
+        "sustain": 0.04,
+        "release": 0.09,
+        "bitCrush": 2,
+        "seed": 12
+      }
+    },
+    "LaserHum": {
+      "priority": "low",
+      "maxInstances": 1,
+      "volume": 0.25,
+      "params": {
+        "shape": "square",
+        "duty": 0.125,
+        "frequency": 196,
+        "modulation": 32,
+        "modulationDepth": 0.08,
+        "attack": 0.01,
+        "sustain": 0.12,
+        "release": 0.05,
+        "seed": 13
+      }
+    },
+    "EnemyHit": {
+      "priority": "low",
+      "maxInstances": 3,
+      "volume": 0.3,
+      "params": {
+        "shape": "square",
+        "frequency": 980,
+        "slide": -5200,
+        "sustain": 0.008,
+        "release": 0.03,
+        "seed": 14
+      }
+    },
+    "EnemyExplodeSmall": {
+      "priority": "normal",
+      "maxInstances": 3,
+      "volume": 0.45,
+      "params": {
+        "shape": "noise",
+        "frequency": 3600,
+        "randomness": 0.08,
+        "slide": -9000,
+        "sustain": 0.04,
+        "release": 0.16,
+        "bitCrush": 2,
+        "seed": 15
+      }
+    },
+    "EnemyExplodeMedium": {
+      "priority": "normal",
+      "maxInstances": 3,
+      "volume": 0.55,
+      "params": {
+        "shape": "noise",
+        "frequency": 2600,
+        "randomness": 0.06,
+        "slide": -3800,
+        "sustain": 0.08,
+        "release": 0.3,
+        "bitCrush": 3,
+        "seed": 16
+      }
+    },
+    "EnemyExplodeLarge": {
+      "priority": "high",
+      "maxInstances": 2,
+      "volume": 0.65,
+      "params": {
+        "shape": "noise",
+        "frequency": 1800,
+        "randomness": 0.05,
+        "slide": -1600,
+        "sustain": 0.16,
+        "release": 0.5,
+        "tremolo": 0.35,
+        "tremoloRate": 18,
+        "bitCrush": 3,
+        "seed": 17
+      }
+    },
+    "BossExplode": {
+      "priority": "high",
+      "maxInstances": 4,
+      "volume": 0.6,
+      "params": {
+        "shape": "noise",
+        "frequency": 1400,
+        "randomness": 0.1,
+        "slide": -900,
+        "sustain": 0.12,
+        "release": 0.42,
+        "bitCrush": 4,
+        "seed": 18
+      }
+    },
+    "PlayerDeath": {
+      "priority": "critical",
+      "maxInstances": 1,
+      "volume": 0.75,
+      "params": {
+        "shape": "noise",
+        "frequency": 2400,
+        "slide": -1900,
+        "sustain": 0.28,
+        "release": 0.72,
+        "tremolo": 0.45,
+        "tremoloRate": 11,
+        "bitCrush": 3,
+        "seed": 19
+      }
+    },
+    "CapsulePickup": {
+      "priority": "normal",
+      "maxInstances": 2,
+      "volume": 0.4,
+      "params": {
+        "shape": "square",
+        "duty": 0.25,
+        "frequency": 660,
+        "pitchJump": 330,
+        "pitchJumpTime": 0.05,
+        "sustain": 0.09,
+        "release": 0.06,
+        "seed": 20
+      }
+    },
+    "MeterAdvance": {
+      "priority": "high",
+      "maxInstances": 2,
+      "volume": 0.42,
+      "params": {
+        "shape": "square",
+        "duty": 0.5,
+        "frequency": 1568,
+        "decay": 0.05,
+        "sustainVolume": 0.45,
+        "sustain": 0.05,
+        "release": 0.14,
+        "seed": 21
+      }
+    },
+    "PowerUpEquip": {
+      "priority": "high",
+      "maxInstances": 1,
+      "volume": 0.45,
+      "params": {
+        "shape": "square",
+        "duty": 0.25,
+        "frequency": 523,
+        "slide": 1600,
+        "pitchJump": 262,
+        "pitchJumpTime": 0.06,
+        "repeat": 0.12,
+        "sustain": 0.3,
+        "release": 0.1,
+        "seed": 22
+      }
+    },
+    "ShieldHit": {
+      "priority": "normal",
+      "maxInstances": 2,
+      "volume": 0.45,
+      "params": {
+        "shape": "triangle",
+        "frequency": 360,
+        "slide": -900,
+        "sustain": 0.05,
+        "release": 0.12,
+        "bitCrush": 2,
+        "seed": 23
+      }
+    },
+    "ShieldBreak": {
+      "priority": "high",
+      "maxInstances": 1,
+      "volume": 0.55,
+      "params": {
+        "shape": "saw",
+        "frequency": 700,
+        "slide": -1700,
+        "sustain": 0.14,
+        "release": 0.26,
+        "bitCrush": 3,
+        "tremolo": 0.4,
+        "tremoloRate": 24,
+        "seed": 24
+      }
+    },
+    "ExtraLife": {
+      "priority": "critical",
+      "maxInstances": 1,
+      "volume": 0.5,
+      "pan": false,
+      "params": {
+        "shape": "square",
+        "duty": 0.5,
+        "frequency": 784,
+        "pitchJump": 392,
+        "pitchJumpTime": 0.07,
+        "repeat": 0.14,
+        "sustain": 0.5,
+        "release": 0.2,
+        "seed": 25
+      }
+    },
+    "MegaCrash": {
+      "priority": "high",
+      "maxInstances": 1,
+      "volume": 0.8,
+      "pan": false,
+      "params": {
+        "shape": "noise",
+        "frequency": 900,
+        "slide": -500,
+        "attack": 0.01,
+        "sustain": 0.35,
+        "release": 0.85,
+        "tremolo": 0.3,
+        "tremoloRate": 9,
+        "bitCrush": 4,
+        "seed": 26
+      }
+    },
+    "MenuMove": {
+      "priority": "normal",
+      "maxInstances": 1,
+      "volume": 0.35,
+      "bus": "ui",
+      "params": {
+        "shape": "square",
+        "duty": 0.25,
+        "frequency": 1046,
+        "sustain": 0.02,
+        "release": 0.025,
+        "seed": 27
+      }
+    },
+    "MenuSelect": {
+      "priority": "normal",
+      "maxInstances": 1,
+      "volume": 0.4,
+      "bus": "ui",
+      "params": {
+        "shape": "square",
+        "duty": 0.5,
+        "frequency": 784,
+        "pitchJump": 392,
+        "pitchJumpTime": 0.045,
+        "sustain": 0.09,
+        "release": 0.07,
+        "seed": 28
+      }
+    },
+    "MenuBack": {
+      "priority": "normal",
+      "maxInstances": 1,
+      "volume": 0.38,
+      "bus": "ui",
+      "params": {
+        "shape": "square",
+        "duty": 0.5,
+        "frequency": 587,
+        "slide": -1800,
+        "sustain": 0.05,
+        "release": 0.05,
+        "seed": 29
+      }
+    },
+    "PauseToggle": {
+      "priority": "normal",
+      "maxInstances": 1,
+      "volume": 0.4,
+      "bus": "ui",
+      "params": {
+        "shape": "triangle",
+        "frequency": 880,
+        "pitchJump": -220,
+        "pitchJumpTime": 0.05,
+        "sustain": 0.1,
+        "release": 0.1,
+        "seed": 30
+      }
+    },
+    "WarningSiren": {
+      "priority": "critical",
+      "maxInstances": 1,
+      "volume": 0.55,
+      "pan": false,
+      "params": {
+        "shape": "square",
+        "duty": 0.5,
+        "frequency": 640,
+        "modulation": 1.1,
+        "modulationDepth": 0.32,
+        "attack": 0.04,
+        "sustain": 0.78,
+        "release": 0.1,
+        "tremolo": 0.15,
+        "tremoloRate": 14,
+        "seed": 31
+      }
+    },
+    "Clink": {
+      "priority": "low",
+      "maxInstances": 2,
+      "volume": 0.3,
+      "params": {
+        "shape": "square",
+        "duty": 0.125,
+        "frequency": 2640,
+        "slide": -3000,
+        "sustain": 0.006,
+        "release": 0.05,
+        "seed": 32
+      }
+    },
+    "PowerUpDenied": {
+      "priority": "normal",
+      "maxInstances": 1,
+      "volume": 0.35,
+      "params": {
+        "shape": "square",
+        "duty": 0.5,
+        "frequency": 147,
+        "sustain": 0.08,
+        "release": 0.04,
+        "bitCrush": 4,
+        "seed": 33
+      }
+    }
+  }
+}

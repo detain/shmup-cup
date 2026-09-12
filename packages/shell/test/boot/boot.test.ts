@@ -5,6 +5,8 @@
  * lifecycle and resize wiring, stop(), and every failure path of the boot error screen.
  */
 import {
+  MUSIC_CUES,
+  SFX_CUES,
   SimEventKind,
   createHeadlessPlatform,
   type IAudio,
@@ -30,6 +32,7 @@ import type { BootOverlay } from '../../src/error-screen/index.js';
 import type { LoadableImage } from '../../src/loader/index.js';
 import { FLIGHT_SPRITES } from '../../src/flight/index.js';
 import { SHOWCASE_SPRITES } from '../../src/showcase/index.js';
+import { FakeContext } from '../../../audio-web/test/helpers/fake-context.js';
 
 const fakes = vi.hoisted(() => ({
   rendererOptions: null as Record<string, unknown> | null,
@@ -426,15 +429,23 @@ describe('shell/boot failures (boot error screen)', () => {
   it('reports content from a foreign kind nobody owns, unless an owner accepts it', async () => {
     const foreign = [
       ...contentFiles,
-      { path: 'audio/sfx.sfx.json', data: { formatVersion: 1, kind: 'sfx' } },
+      { path: 'campaign/main.campaign.json', data: { formatVersion: 1, kind: 'campaign' } },
     ];
     await expect(boot({ contentFiles: foreign }).promise).rejects.toThrow(
-      /no loader for content kind "sfx"/,
+      /no loader for content kind "campaign"/,
     );
-    const owned = await boot({ contentFiles: foreign, contentOwners: { sfx: () => [] } }).promise;
-    // The input profiles and the fx presets are validated by the shell; `sfx` by the one passed.
+    const owned = await boot({ contentFiles: foreign, contentOwners: { campaign: () => [] } })
+      .promise;
+    // The input profiles, fx presets and audio are validated by the shell; `campaign` by the one
+    // passed.
     expect(owned.content.foreign.map((file) => file.path)).toEqual([
-      'audio/sfx.sfx.json',
+      'audio/main.sfx.json',
+      'audio/music/boss.music.json',
+      'audio/music/game-over.music.json',
+      'audio/music/stage-clear.music.json',
+      'audio/music/title.music.json',
+      'audio/music/zone-a.music.json',
+      'campaign/main.campaign.json',
       'fx/particles.fx.json',
       'input/remote.input-profiles.json',
     ]);
@@ -650,5 +661,113 @@ describe('shell/boot input profiles and binding contexts (M1-05)', () => {
     // The default owner would have reported the missing `profiles`; the app's owner accepted it.
     expect(seen).toEqual(['input/remote.input-profiles.json', 'input/zz.input-profiles.json']);
     expect(shell.content.issues).toEqual([]);
+  });
+});
+
+describe('shell/boot audio (M1-15)', () => {
+  /**
+   * An audio back-end that exposes a Web Audio graph on a fake context once unlocked.
+   *
+   * @returns The back-end and its context.
+   */
+  function graphAudio() {
+    const context = new FakeContext();
+    let unlocked = false;
+    const buses = {
+      master: context.createGain(),
+      music: context.createGain(),
+      sfx: context.createGain(),
+      ui: context.createGain(),
+    };
+    const destroyed: number[] = [];
+    const backend: ShellOptions['audio'] = {
+      state: 'uninitialized',
+      get context() {
+        return unlocked ? context : null;
+      },
+      bus: (name) => (unlocked ? buses[name] : null),
+      unlock: () => {
+        unlocked = true;
+        return Promise.resolve();
+      },
+      suspend: () => Promise.resolve(),
+      resume: () => Promise.resolve(),
+      setBusVolume: () => {},
+      destroy: () => {
+        destroyed.push(1);
+        return Promise.resolve();
+      },
+    };
+    return { backend, context, destroyed };
+  }
+
+  it('renders the SFX bank at boot and prepares the music set of the running stage only', async () => {
+    const open = await boot().promise;
+    expect(open.audioEngine.residentTracks).toEqual([]);
+    expect(open.audioEngine.attached).toBe(false); // a plain IAudio: silent
+    const staged = await boot({ gameConfig: { stage: 'test-range' } }).promise;
+    expect([...staged.audioEngine.residentTracks].sort()).toEqual([
+      'boss',
+      'game-over',
+      'stage-clear',
+      'zone-a',
+    ]);
+  });
+
+  it("attaches after the unlock and plays the World's music and sounds (panned, deduped)", async () => {
+    const { backend, context } = graphAudio();
+    const shell = await boot({
+      audio: backend,
+      platform: (): Platform => ({ ...platform, audio: backend }),
+      audioUnlock: 'immediate',
+      gameConfig: { stage: 'test-range' },
+    }).promise;
+    const engine = shell.audioEngine;
+    expect(engine.attached).toBe(true);
+    win.frame(1000);
+    win.frame(1000 + STEP);
+    // The stage start pushed MUSIC Stage: the zone theme loops on the music bus.
+    expect(engine.music?.current?.id).toBe('zone-a');
+    const theme = context.sources.find((source) => source.loop);
+    expect(theme).toBeDefined();
+    const started = engine.sfx?.started ?? 0;
+    const camera = shell.game.world.view.camera;
+    shell.game.events.push(SimEventKind.Sfx, SFX_CUES.EnemyExplodeLarge, camera.x + 384, 90, 0);
+    shell.game.events.push(SimEventKind.Sfx, SFX_CUES.EnemyExplodeLarge, camera.x + 384, 90, 0);
+    win.frame(1000 + 2 * STEP);
+    expect((engine.sfx?.started ?? 0) - started).toBe(1);
+    expect(engine.sfx?.deduped).toBeGreaterThanOrEqual(1);
+    expect(context.panners.some((panner) => panner.pan.value > 0.5)).toBe(true);
+    shell.game.events.push(SimEventKind.Music, MUSIC_CUES.Silence, 0, 0, 30);
+    win.frame(1000 + 3 * STEP);
+    expect(engine.musicCue).toBe(-1);
+    shell.stop();
+    expect(engine.attached).toBe(false);
+  });
+
+  it('attaches on the first gesture on the web', async () => {
+    const { backend } = graphAudio();
+    const shell = await boot({
+      audio: backend,
+      platform: (): Platform => ({ ...platform, audio: backend }),
+    }).promise;
+    expect(shell.audioEngine.attached).toBe(false);
+    win.dispatchEvent(new Event('keydown'));
+    expect(shell.audioEngine.attached).toBe(true);
+  });
+
+  it('shows the boot error screen when the audio cannot be loaded', async () => {
+    const { promise, shown } = boot({
+      audioLoader: {
+        sampleRate: 22050,
+        loadSfx: () => Promise.reject(new Error('could not load audio/sfx/boom.ogg: status 404')),
+        loadTrack: () => Promise.reject(new Error('unused')),
+      },
+    });
+    await expect(promise).rejects.toThrow(/AUDIO FAILED TO LOAD/);
+    expect(shown[shown.length - 1]).toBe(
+      'error:AUDIO FAILED TO LOAD|Error: could not load audio/sfx/boom.ogg: status 404',
+    );
+    expect(audio.calls).toEqual(['destroy']);
   });
 });

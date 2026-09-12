@@ -32,11 +32,13 @@
     "format:check": "prettier --check .",
     "clean": "turbo run clean && node scripts/clean.mjs .turbo coverage",
     "assets": "node scripts/generate-assets.mjs",
-    "trig:tables": "node scripts/gen-trig-tables.mjs"
+    "trig:tables": "node scripts/gen-trig-tables.mjs",
+    "audio:preview": "node scripts/audio-preview.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.63.0",
+    "@shmup/audio-web": "workspace:*",
     "@shmup/core": "workspace:*",
     "@shmup/input-web": "workspace:*",
     "@shmup/render-pixi": "workspace:*",

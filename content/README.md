@@ -13,6 +13,7 @@ weapons and stages do not need engine changes (design pillar 4, `shmup_feat.md` 
 | [`weapons/`](weapons/README.md) | Player weapon tunables: damage, speed, on-screen cap, piercing, behaviour id | `@shmup/core` `weapons` + `data` modules |
 | [`input/`](input/README.md) | Input profiles: key / button → action tables per binding context (`game`, `menu`), remote quirks (release debounce, diagonal and SOCD policy), Tizen keys to register | `@shmup/input-web` `rebind` (kind `input-profiles`, validated by the shell's content owner) |
 | [`fx/`](fx/README.md) | Particle presets (explosions, debris, sparks, clinks, bullet-cancel sparkles, pickup and muzzle flashes) and the event cues that spawn them | `@shmup/render-pixi` `particles` (kind `fx`, validated by the shell's content owner) |
+| [`audio/`](audio/README.md) | The SFX bank (a synth parameter set or a recorded file per `SFX_CUES` cue, with priority, instance cap, volume, bus) and the music (`music/`: original chip songs with intro + sample-exact loop, or OGG files, bound to `MUSIC_CUES`) | `@shmup/audio-web` `loader` (kinds `sfx` and `music`, validated by the shell's content owners) |
 
 ## Rules
 

@@ -96,17 +96,26 @@ test.describe('boss (web build, ?stage=test-boss)', () => {
     }
     expect(shown, 'no WARNING band within 3,000 frames').toBe(true);
 
+    // Two captures in a row without the band: a single one can land on one of the WARNING's
+    // 8-tick red flashes, which tint the band's edge rows (a flake under parallel load).
     let gone = false;
+    let clear = 0;
     for (let poll = 0; poll < 100 && !gone; poll++) {
       await waitFrames(page, 10);
-      gone = (await capture(page)).band === 0;
+      clear = (await capture(page)).band === 0 ? clear + 1 : 0;
+      gone = clear >= 2;
     }
     expect(gone, 'the WARNING band never went away').toBe(true);
 
-    // The intro takes 120 ticks; then the boss holds the right side of the playfield.
-    await waitFrames(page, 150);
-    const boss = await capture(page);
-    expect(boss.hull).toBeGreaterThan(50);
+    // The intro takes 120 ticks; then the boss holds the right side of the playfield. Poll for
+    // it rather than wait a fixed number of frames: a busy machine runs up to 4 ticks a frame,
+    // and the ship's autofire can destroy the test boss before a late capture.
+    let hull = 0;
+    for (let poll = 0; poll < 60 && hull <= 50; poll++) {
+      await waitFrames(page, 5);
+      hull = (await capture(page)).hull;
+    }
+    expect(hull).toBeGreaterThan(50);
     expect(errors).toEqual([]);
   });
 });

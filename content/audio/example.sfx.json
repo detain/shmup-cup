@@ -1,0 +1,54 @@
+{
+  "formatVersion": 1,
+  "kind": "sfx",
+  "cues": {
+    "PlayerShot": {
+      "priority": "low",
+      "maxInstances": 2,
+      "volume": 0.3,
+      "params": {
+        "shape": "square",
+        "duty": 0.25,
+        "frequency": 1320,
+        "slide": -14000,
+        "sustain": 0.012,
+        "release": 0.045
+      }
+    },
+    "EnemyExplodeSmall": {
+      "priority": "normal",
+      "maxInstances": 3,
+      "params": {
+        "shape": "noise",
+        "frequency": 3600,
+        "randomness": 0.08,
+        "slide": -9000,
+        "sustain": 0.04,
+        "release": 0.16,
+        "bitCrush": 2,
+        "seed": 15
+      }
+    },
+    "WarningSiren": {
+      "priority": "critical",
+      "maxInstances": 1,
+      "volume": 0.55,
+      "pan": false,
+      "params": {
+        "shape": "square",
+        "frequency": 640,
+        "modulation": 1.1,
+        "modulationDepth": 0.32,
+        "attack": 0.04,
+        "sustain": 0.78,
+        "release": 0.1
+      }
+    },
+    "MenuSelect": {
+      "priority": "normal",
+      "maxInstances": 1,
+      "bus": "ui",
+      "file": "audio/sfx/menu-select.ogg"
+    }
+  }
+}

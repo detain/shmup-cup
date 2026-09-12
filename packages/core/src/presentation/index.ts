@@ -40,8 +40,9 @@
  * {@link DEFAULT_DRAW_LIST_CAPACITY}, {@link DEFAULT_DRAW_LIST_STRINGS}. Text:
  * {@link TextMetrics}.
  *
- * **Planned API.** `IAudio` grows `playSfx(id, priority)`, `playMusic(trackId)`,
- * `duck(amount, ticks)` with the audio engine (M1-15, shmup_feat.md §19).
+ * Audio playback itself is not part of `IAudio`: the sim's `Sfx` / `Music` / `MusicDuck` events
+ * reach `@shmup/audio-web`'s audio engine through the shell's event dispatch (M1-15,
+ * shmup_feat.md §19); `IAudio` stays the lifecycle and volume contract the platform exposes.
  *
  * @module
  */

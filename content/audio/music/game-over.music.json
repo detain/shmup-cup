@@ -1,0 +1,104 @@
+{
+  "formatVersion": 1,
+  "kind": "music",
+  "id": "game-over",
+  "title": "SILENT VERGE",
+  "cue": "GameOver",
+  "song": {
+    "speed": 8,
+    "volume": 0.4,
+    "instruments": {
+      "lead": {
+        "wave": "pulse25",
+        "volume": 0.85,
+        "attack": 0.004,
+        "decay": 0.3,
+        "sustain": 0.5,
+        "release": 0.5,
+        "vibrato": {
+          "depth": 0.25,
+          "rate": 4.5,
+          "delay": 0.3
+        }
+      },
+      "pad": {
+        "wave": "saw",
+        "volume": 0.5,
+        "attack": 0.14,
+        "decay": 0.3,
+        "sustain": 0.6,
+        "release": 0.6
+      },
+      "bass": {
+        "wave": "triangle",
+        "volume": 1,
+        "attack": 0.002,
+        "decay": 0.05,
+        "sustain": 0.85,
+        "release": 0.4
+      },
+      "hat": {
+        "wave": "noise",
+        "volume": 0.3,
+        "attack": 0,
+        "decay": 0.035,
+        "sustain": 0,
+        "release": 0.01
+      },
+      "snare": {
+        "wave": "noise",
+        "volume": 0.62,
+        "attack": 0,
+        "decay": 0.13,
+        "sustain": 0,
+        "release": 0.02
+      },
+      "kick": {
+        "wave": "noise",
+        "volume": 0.85,
+        "attack": 0,
+        "decay": 0.07,
+        "sustain": 0,
+        "release": 0.01,
+        "sweep": -90
+      },
+      "crash": {
+        "wave": "noise",
+        "volume": 0.5,
+        "attack": 0,
+        "decay": 0.9,
+        "sustain": 0,
+        "release": 0.1
+      }
+    },
+    "channels": [
+      {
+        "instrument": "lead",
+        "volume": 0.8
+      },
+      {
+        "instrument": "pad",
+        "volume": 0.6
+      },
+      {
+        "instrument": "bass",
+        "volume": 0.9
+      },
+      {
+        "instrument": "kick",
+        "volume": 0.6
+      }
+    ],
+    "patterns": {
+      "fall-1": {
+        "rows": 32,
+        "tracks": ["E5:8 D5:8 C5:8 B4:8", "C4:16 A3:16", "A2:16 F2:16", "C2:16 C2:16"]
+      },
+      "fall-2": {
+        "rows": 32,
+        "tracks": ["A4:8 G#4:8 A4:16", "B3:16 C4:16", "E2:16 A1:16", "C2:16 C2:16"]
+      }
+    },
+    "order": ["fall-1", "fall-2"]
+  }
+}

@@ -97,7 +97,10 @@ vi.mock('@shmup/input-web', async (importOriginal) => {
 
 vi.mock('@shmup/audio-web', async (importOriginal) => {
   const real = await importOriginal<typeof AudioWeb>();
-  return { createWebAudio: () => real.createWebAudio({ createContext: () => fakes.audioContext }) };
+  return {
+    ...real,
+    createWebAudio: () => real.createWebAudio({ createContext: () => fakes.audioContext }),
+  };
 });
 
 const STEP = 1000 / 60;

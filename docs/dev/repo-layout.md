@@ -69,11 +69,11 @@ shmup-cup/
 │   ├── render-pixi/        @shmup/render-pixi — PixiJS v8 IRenderer: WebGL1-first, 384×216 RT, integer upscale
 │   │   └── src/ renderer ✔ viewport ✔ test-pattern ✔ palette ✔ atlas ✔ layers ✔ (+ terrain grid, parallax bands, laser sprites) sprites ✔ text ✔ ui ✔ particles ✔ (fx content owner, 256-particle pool) effects ✔ (partial: shake, flash + limiter, dim, score popups) · debug (placeholder)
 │   ├── audio-web/          @shmup/audio-web — Web Audio IAudio: interactive latency, buses, suspend/resume
-│   │   └── src/ web-audio ✔ · sfx music loader (placeholders)
+│   │   └── src/ web-audio ✔ synth ✔ (deterministic PCM: ZzFX-style SFX, chip songs with sample-exact loops) sfx ✔ (voice manager) music ✔ (loop, fades, ducking) loader ✔ (sfx / music kinds, OGG path) engine ✔
 │   ├── input-web/          @shmup/input-web — keyboard/remote + Gamepad API → InputSnapshot
 │   │   └── src/ keymap ✔ keyboard ✔ gamepad ✔ web-input ✔ remote ✔ (debounce, diagonal/SOCD policies) rebind ✔ (partial: input profiles, game/menu tables, profile choice)
 │   └── shell/              @shmup/shell — shared browser host of apps/web + apps/tizen (decision D34)
-│       └── src/ boot ✔ loader ✔ dispatch ✔ (+ connectFxEvents) error-screen ✔ frame-loop ✔ flight ✔ (default scene: free flight) showcase ✔ fx-gallery ✔ (?scene=fx-gallery)
+│       └── src/ boot ✔ loader ✔ dispatch ✔ (+ connectFxEvents, connectAudioEvents) error-screen ✔ frame-loop ✔ flight ✔ (default scene: free flight) showcase ✔ fx-gallery ✔ (?scene=fx-gallery)
 │
 ├── apps/                   deployable hosts (thin adapters around the packages)
 │   ├── web/                @shmup/web — Vite dev app (HMR), browser Platform; also Electron's renderer
@@ -96,11 +96,12 @@ shmup-cup/
 │   ├── paths/              ✔ movement paths: spline control points, baked to arc-length tables at load (+ README, example)
 │   ├── weapons/            ✔ weapon tunables + preset loadouts: the Type A arsenal the game fires (+ README, example)
 │   ├── input/              ✔ input profiles (kind input-profiles, validated by input-web rebind): per-context key/button tables, remote debounce/diagonal/SOCD, Tizen keys to register
+│   ├── audio/              ✔ SFX bank (kind sfx: synth parameters or a file per SFX_CUES cue) + music/ (kind music: original chip songs or OGG, bound to MUSIC_CUES), validated by audio-web loader (+ README, examples)
 │   └── fx/                 ✔ particle presets + the event cues that spawn them (kind fx, validated by render-pixi particles): explosions, debris, sparks, clinks, cancel sparkles, pickup ring, muzzle flash (+ README, example)
 ├── assets/
 │   ├── source/             editable sources — in git: sprites/**/*.sprite.json pixel maps (+ real-art PNG overrides), fonts/*.font.json, tilesets, audio
 │   └── generated/          pipeline output (atlas/main.png + main.json, cache) — ignored
-├── scripts/                repo-level Node scripts: clean.mjs, generate-assets.mjs (pnpm assets) + assets/ (PNG encoder, sprite sources, procedural generators, packer, font), gen-trig-tables.mjs
+├── scripts/                repo-level Node scripts: clean.mjs, generate-assets.mjs (pnpm assets) + assets/ (PNG encoder, sprite sources, procedural generators, packer, font), gen-trig-tables.mjs, audio-preview.mjs (pnpm audio:preview → WAV files)
 ├── types/                  ambient declarations for the Vite virtual modules (virtual:shmup-content, virtual:shmup-assets)
 ├── test/                   cross-package integration tests (Vitest project "integration", part of `pnpm test`); e2e/ = Playwright browser smoke tests (`pnpm test:e2e`)
 ├── docs/

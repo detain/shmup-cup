@@ -339,7 +339,9 @@ describe('shell/boot running (edge)', () => {
       assets: { manifest: twoPages, pageUrls: ['assets/atlas/p0.png', 'assets/atlas/p1.png'] },
     });
     const shell = await promise;
-    expect(shown).toEqual(['progress:0', 'progress:0', 'progress:0.5', 'progress:1', 'removed']);
+    expect(shown.slice(0, 4)).toEqual(['progress:0', 'progress:0', 'progress:0.5', 'progress:1']);
+    // Then the audio loading phase (the SFX bank — open space prepares no music), ending full.
+    expect(shown.slice(-2)).toEqual(['progress:1', 'removed']);
     expect(shell.atlas.pages).toHaveLength(2);
     shell.stop();
   });

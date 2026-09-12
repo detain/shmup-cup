@@ -114,7 +114,7 @@ describe('shell/loader loadGameContent', () => {
   });
 
   it('validates input profiles with the default owner (plan §3.5)', () => {
-    expect(Object.keys(DEFAULT_CONTENT_OWNERS)).toEqual(['input-profiles', 'fx']);
+    expect(Object.keys(DEFAULT_CONTENT_OWNERS)).toEqual(['input-profiles', 'fx', 'sfx', 'music']);
     const result = loadGameContent([
       {
         path: 'input/bad.input-profiles.json',
@@ -127,6 +127,12 @@ describe('shell/loader loadGameContent', () => {
     const shipped = loadGameContent(readContentFiles());
     expect(shipped.issues).toEqual([]);
     expect(shipped.foreign.map((file) => file.path)).toEqual([
+      'audio/main.sfx.json',
+      'audio/music/boss.music.json',
+      'audio/music/game-over.music.json',
+      'audio/music/stage-clear.music.json',
+      'audio/music/title.music.json',
+      'audio/music/zone-a.music.json',
       'fx/particles.fx.json',
       'input/remote.input-profiles.json',
     ]);
@@ -156,8 +162,8 @@ describe('shell/loader loadGameContent', () => {
         path: 'input/remote.input-profiles.json',
         data: { formatVersion: 1, kind: 'input-profiles' },
       },
-      { path: 'audio/sfx.sfx.json', data: { formatVersion: 1, kind: 'sfx' } },
-      { path: 'audio/more.sfx.json', data: { formatVersion: 1, kind: 'sfx' } },
+      { path: 'campaign/main.campaign.json', data: { formatVersion: 1, kind: 'campaign' } },
+      { path: 'campaign/more.campaign.json', data: { formatVersion: 1, kind: 'campaign' } },
     ];
     const seen: string[][] = [];
     const result = loadGameContent(files, {
@@ -170,8 +176,8 @@ describe('shell/loader loadGameContent', () => {
     });
     expect(seen).toEqual([['input/remote.input-profiles.json']]);
     expect(result.issues).toEqual([
-      { path: 'audio/more.sfx.json', message: 'no loader for content kind "sfx"' },
-      { path: 'audio/sfx.sfx.json', message: 'no loader for content kind "sfx"' },
+      { path: 'campaign/main.campaign.json', message: 'no loader for content kind "campaign"' },
+      { path: 'campaign/more.campaign.json', message: 'no loader for content kind "campaign"' },
       { path: 'input/remote.input-profiles.json:profiles[0]', message: 'bad profile' },
     ]);
     expect(result.foreign).toHaveLength(3);

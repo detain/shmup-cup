@@ -9,14 +9,19 @@
  * Volumes set before the context exists are remembered and applied on creation.
  *
  * SFX playback, music and asset decoding are separate modules (`sfx`, `music`,
- * `loader`) that plug into the buses exposed here.
+ * `loader`, composed by `engine`) that plug into the buses exposed here; the structural
+ * Web Audio types they share ({@link PlaybackContextLike} and friends) live in this module so
+ * every one of them can be unit-tested against a fake context.
  *
  * **Implements.** shmup_feat.md §19 (buses with volume sliders; `latencyHint:
  * 'interactive'`; `resume()` on first input; `suspend()` on hidden), shmup_tech.md §2.4 /
  * §2.5 (lifecycle), §4.3 (custom Web Audio wrapper).
  *
  * **Public API.** {@link createWebAudio}, {@link WebAudio}, {@link WebAudioOptions},
- * {@link AudioContextLike}, {@link GainNodeLike}.
+ * {@link AudioContextLike}, {@link GainNodeLike}. Playback types: {@link PlaybackContextLike},
+ * {@link isPlaybackContext}, {@link AudioNodeLike}, {@link AudioParamLike},
+ * {@link AudioGainNodeLike}, {@link StereoPannerNodeLike}, {@link AudioBufferLike},
+ * {@link AudioBufferSourceNodeLike}.
  *
  * @module
  */
@@ -77,6 +82,161 @@ export interface AudioContextLike {
    * @returns Resolves when closed.
    */
   close(): Promise<void>;
+}
+
+/** Any audio graph node this package connects (lets tests pass fakes). */
+export interface AudioNodeLike {
+  /**
+   * Routes this node's output into another node.
+   *
+   * @param destination - Target node.
+   * @returns Whatever the implementation returns (ignored).
+   */
+  connect(destination: unknown): unknown;
+  /** Detaches every outgoing connection. */
+  disconnect(): void;
+}
+
+/** The subset of `AudioParam` the players automate (fades, ducking, pan). */
+export interface AudioParamLike {
+  /** Current value (setting it cancels nothing — use the scheduling methods for ramps). */
+  value: number;
+  /**
+   * Schedules a step to `value` at `time`.
+   *
+   * @param value - Target value.
+   * @param time - Context time in seconds.
+   * @returns Whatever the implementation returns (ignored).
+   */
+  setValueAtTime(value: number, time: number): unknown;
+  /**
+   * Schedules a linear ramp that reaches `value` at `time`.
+   *
+   * @param value - Target value.
+   * @param time - Context time in seconds.
+   * @returns Whatever the implementation returns (ignored).
+   */
+  linearRampToValueAtTime(value: number, time: number): unknown;
+  /**
+   * Removes every scheduled change at or after `time`.
+   *
+   * @param time - Context time in seconds.
+   * @returns Whatever the implementation returns (ignored).
+   */
+  cancelScheduledValues(time: number): unknown;
+}
+
+/** A gain node whose gain can be automated. */
+export interface AudioGainNodeLike extends AudioNodeLike {
+  /** The gain parameter. */
+  readonly gain: AudioParamLike;
+}
+
+/** The subset of `StereoPannerNode` the SFX player uses. */
+export interface StereoPannerNodeLike extends AudioNodeLike {
+  /** Pan position, −1 (left) … 1 (right). */
+  readonly pan: AudioParamLike;
+}
+
+/** The subset of `AudioBuffer` this package reads and fills. */
+export interface AudioBufferLike {
+  /** Sample rate in Hz. */
+  readonly sampleRate: number;
+  /** Length in sample frames. */
+  readonly length: number;
+  /** Length in seconds. */
+  readonly duration: number;
+  /** Number of channels. */
+  readonly numberOfChannels: number;
+  /**
+   * The samples of one channel (a live view — writing fills the buffer).
+   *
+   * @param channel - Channel index.
+   * @returns The channel's samples.
+   */
+  getChannelData(channel: number): Float32Array;
+}
+
+/** The subset of `AudioBufferSourceNode` the players use. */
+export interface AudioBufferSourceNodeLike extends AudioNodeLike {
+  /** The buffer to play. */
+  buffer: AudioBufferLike | null;
+  /** Whether playback loops between `loopStart` and `loopEnd`. */
+  loop: boolean;
+  /** Loop start in seconds. */
+  loopStart: number;
+  /** Loop end in seconds. */
+  loopEnd: number;
+  /**
+   * Starts playback.
+   *
+   * @param when - Context time (0 = now).
+   */
+  start(when?: number): void;
+  /**
+   * Stops playback.
+   *
+   * @param when - Context time (0 / omitted = now).
+   */
+  stop(when?: number): void;
+}
+
+/**
+ * A context that can play buffers — what the SFX and music players need on top of
+ * {@link AudioContextLike}. A real `AudioContext` satisfies it; {@link isPlaybackContext} checks a
+ * context at run time.
+ */
+export interface PlaybackContextLike extends AudioContextLike {
+  /** Context time in seconds (advances while running). */
+  readonly currentTime: number;
+  /** The context's output rate. */
+  readonly sampleRate: number;
+  /**
+   * Creates an automatable gain node.
+   *
+   * @returns A new, unconnected gain node.
+   */
+  createGain(): AudioGainNodeLike;
+  /**
+   * Creates an empty buffer.
+   *
+   * @param channels - Channel count.
+   * @param length - Sample frames.
+   * @param sampleRate - Rate in Hz (3,000 … 192,000 everywhere).
+   * @returns The buffer.
+   */
+  createBuffer(channels: number, length: number, sampleRate: number): AudioBufferLike;
+  /**
+   * Creates a one-shot buffer source.
+   *
+   * @returns A new source.
+   */
+  createBufferSource(): AudioBufferSourceNodeLike;
+  /**
+   * Creates a stereo panner (missing on some old engines — the SFX player then plays centred).
+   *
+   * @returns A new panner.
+   */
+  createStereoPanner?(): StereoPannerNodeLike;
+}
+
+/**
+ * Whether a context can play buffers (a real `AudioContext` can; the minimal fakes of the boot
+ * tests cannot, and audio then stays silent instead of failing).
+ *
+ * @param context - A context, or `null`.
+ * @returns `true` when it has `currentTime`, `createBuffer` and `createBufferSource`.
+ */
+export function isPlaybackContext(
+  context: AudioContextLike | null,
+): context is PlaybackContextLike {
+  if (context === null) return false;
+  const candidate = context as Partial<PlaybackContextLike>;
+  return (
+    typeof candidate.currentTime === 'number' &&
+    typeof candidate.createBuffer === 'function' &&
+    typeof candidate.createBufferSource === 'function'
+  );
 }
 
 /** Options for {@link createWebAudio}. */

@@ -1555,6 +1555,93 @@ the browser dev app and as a Tizen 5.5 bundle.
   size check still passes.
 - **Manual (optional):** on the M7, confirm SFX latency feels immediate and the loop seam is inaudible.
 - **Refs:** `shmup_feat.md` §19 (music, SFX, voice management, buses, WARNING siren); `shmup_tech.md` §2.4, §4.3.
+- **As built:**
+  - **Content files** follow the `<folder>/<name>.<kind>.json` rule: the bank is
+    `content/audio/main.sfx.json` (kind `sfx`) and the songs are `content/audio/music/<id>.music.json`
+    (kind `music`, not `*.song.json`), with `content/audio/README.md` and two samples
+    (`example.sfx.json`, `example.music.json`) next to the bank. The content test's naming check
+    now takes the file's basename and allows two kinds (`sfx`, `music`) in the `audio` folder.
+    `SFX_CUES` has **23** cues (the whole §19 list — one shot cue for every weapon), all bound; no
+    cue was added, so the sim is unchanged. The WARNING siren wail is a square wave swept by a
+    1.1 Hz modulation, 0.92 s long (it ends before the next of its three wails).
+  - **Music binding.** A track declares the `MUSIC_CUES` name it answers (`cue`) and optionally
+    the stages it is limited to (`stages`); `resolveMusicCues(content, stageId)` picks, per cue,
+    the track bound to the running stage over the cue's default. The songs are original: `zone-a`
+    (AZURE VERGE, 6.4 s intro + 44.8 s loop), `boss` (BULWARK ASSAULT, 2.7 s intro + 21.3 s loop),
+    `title` (3.7 s + 14.9 s), `stage-clear` and `game-over` (jingles). `title` is prepared by the
+    scene flow of M1-16; nothing plays it yet.
+  - **synth.** Deterministic across engines: sines come from the core's committed
+    `SIN_TABLE_Q16` (interpolated), pitch ratios from 13 literal constants — no `Math.sin` /
+    `Math.pow` — and randomness / noise from the core's seeded sfc32. The SFX parameter set has
+    the plan's fields plus `decay`, `sustainVolume`, `pitchJumpTime`, `modulationDepth`,
+    `tremoloRate`, `duty` and `seed` (Hz and seconds; `slide` is linear Hz/s; `bitCrush` = samples
+    held). Songs are a small tracker format: instruments (wave, ADSR, `vibrato`, `arpeggio`,
+    `sweep` — per-tick effects), 4–6 channels (a content rule; the renderer takes any count),
+    patterns of whitespace-separated **text tracks** (`C4:2`, `.`, `-`, `=`, `@instrument`) and
+    an order list. A row is `round(rate × speed / 60)` samples, so loop points are exact sample
+    indices; the loop region holds the loop's **steady state** (each channel is advanced through
+    one silent pass from its last note-on — a note-on resets a channel — then rendered), so a note
+    ringing over the loop end continues across the seam exactly as in an unrolled render (tested
+    against an unrolled one-shot, for the shipped songs too). `renderSong` also returns the
+    `sampleRate`; a one-shot song has loop points −1 and ends with its release tails (≤ 2 s).
+    `pcmHash` (FNV-1a over the float bits) pins sounds in tests.
+  - **New module `engine`** (`createAudioEngine`) composes `loader`, `sfx` and `music` into the
+    object the shell feeds: `loadSfx()` (boot), `prepareMusic(stageId, cues)` (loading phase; one
+    set resident — tracks outside the new set are released), `attach(graph)` (after the unlock),
+    `playSfx(cue, screenX, priority)`, `playMusic(cue, fade)`, `duckMusic(ticks)`, `endFrame()`.
+    The web-audio module gained the structural Web Audio types (`PlaybackContextLike`,
+    `isPlaybackContext` …) every module is tested against; `IAudio` in the core was **not** grown
+    (its "planned API" note is replaced — playback is event-driven through the shell).
+  - **"One track resident"** is the music player's rule (a new track hard-stops the previous one,
+    a fading one included). The boss theme must start mid-stage without rendering, so the engine
+    keeps the stage's **music set** prepared — theme, boss, stage clear, game over
+    (`STAGE_MUSIC_CUES`); placeholders are mono 22,050 Hz float (zone A ≈ 4.5 MB). A music cue
+    outside the prepared set is ignored (`missedMusic`), never rendered late; the track already
+    playing is not restarted; `Silence` fades out over the event's ticks; a new track fades in over
+    them. `MusicDuck` ducks to 0.35: a 4-tick fall, held for half the event's ticks, back to 1 at
+    the end — all scheduled as `AudioParam` ramps (`source → fade gain → duck gain → music bus`).
+  - **Voice manager.** Voices are freed by the context clock (a voice is free once its buffer has
+    played out — no `onended` closures). Two rules beyond the plan: a cue at its instance cap
+    restarts its oldest instance even when it is `critical` (the siren's next wail), and at the
+    global cap a voice of **higher priority** than the new sound is not stolen — the new sound is
+    dropped. The event's `SfxPriority` hint (the siren's `Critical`) overrides a cue's tier.
+    **Dedupe is per drained frame** (`endFrame()` after each drain): events carry no tick number,
+    and the ticks of one frame start their sounds at the same moment anyway. A cue's `volume` is
+    baked into its samples; `bus: 'ui'` cues go straight to the `ui` bus, unpanned; `pan: false`
+    keeps whole-screen sounds (siren, Mega Crash, 1UP) centred; the pan is ±0.6 at the playfield
+    edges from the event's x relative to the camera.
+  - **Loader / OGG path.** SFX are rendered at boot, before a context exists (the web creates it at
+    the first gesture): prepared sounds keep their `Float32Array` until `attach()` copies it into
+    an `AudioBuffer` (`createBuffer`) and drops it. A `file` (SFX or music) is fetched with XHR
+    (`arraybuffer`, status 0 accepted for `file://`) and decoded through
+    `OfflineAudioContext(2, 1, 32000)` (callback form); a file track's `loopStart` / `loopEnd` are
+    counted at its `sampleRate` (default 32000) and scaled to the decoded rate. Tested with fakes;
+    no audio file ships yet.
+  - **Shell.** `bootShell` owns the `sfx` / `music` kinds (also in `DEFAULT_CONTENT_OWNERS`),
+    renders the bank and prepares the booted stage's music set behind the progress bar
+    (`LOADING SOUND` / `LOADING MUSIC`; open-space free flight prepares no music — so the Tizen
+    app, which has no `?stage=`, plays SFX but no music until the scene flow and zone A arrive),
+    fails with the new boot error `AUDIO FAILED TO LOAD` when a file cannot be loaded, attaches the
+    engine right after `audio.unlock()` (which creates the context synchronously) and again when it
+    resolves, connects `Sfx` / `Music` / `MusicDuck` in free flight (`connectAudioEvents`, dispatch
+    module), calls `engine.endFrame()` after each drain and destroys the engine on `stop()`.
+    `ShellOptions.audio` is `IAudio & Partial<AudioGraphLike>` (a `WebAudio` exposes `context` /
+    `bus()`; a plain `IAudio` leaves the game silent); new `ShellOptions.audioLoader` and
+    `Shell.audioEngine`. **Volumes from options** have nothing to read until M1-17's Options
+    screen — the buses keep their defaults.
+  - **Tooling / tests.** The root links `@shmup/audio-web` (workspace) as a dev dependency for
+    `content:check`; the shell depends on it. `scripts/audio-preview.mjs` also prints each file's
+    hash and a song's loop points, writes a looping song as intro + loop + loop (the seam can be
+    heard) and takes `--out` / `--only` / `--quiet`. The apps' boot tests mock `@shmup/audio-web`
+    partially now (the shell imports its loaders); shell tests that used `sfx` as an unowned kind
+    use `campaign`. New e2e `audio.spec.ts` (web: the first key press unlocks audio and the zone
+    theme loops at the song's exact sample indices; Tizen: shots play from boot). `boss.spec.ts`
+    now polls for the boss after the WARNING (and needs two band-free captures in a row) instead of
+    capturing once after a fixed 150 frames: on a loaded machine the loop runs up to 4 ticks a
+    frame and the autofire destroyed the test boss before the late capture (seen on the
+    pre-M1-15 build too). `stage.spec.ts`'s terrain-scroll check can still miss when a screenshot
+    takes so long that the terrain moves more than its 250-px search window (also reproduced on
+    the pre-M1-15 build under a load average of ~40); left unchanged.
 
 ### M1-16 — Scene flow, canvas UI kit & HUD
 

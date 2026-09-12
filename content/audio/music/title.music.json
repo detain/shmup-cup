@@ -1,0 +1,171 @@
+{
+  "formatVersion": 1,
+  "kind": "music",
+  "id": "title",
+  "title": "SHMUP CUP",
+  "cue": "Title",
+  "song": {
+    "speed": 7,
+    "volume": 0.38,
+    "instruments": {
+      "lead": {
+        "wave": "pulse50",
+        "volume": 0.85,
+        "attack": 0.004,
+        "decay": 0.12,
+        "sustain": 0.62,
+        "release": 0.07,
+        "vibrato": {
+          "depth": 0.2,
+          "rate": 5.5,
+          "delay": 0.2
+        }
+      },
+      "arp-min": {
+        "wave": "pulse12",
+        "volume": 0.5,
+        "attack": 0.002,
+        "decay": 0.16,
+        "sustain": 0.35,
+        "release": 0.04,
+        "arpeggio": [0, 3, 7, 12],
+        "arpeggioTicks": 2
+      },
+      "arp-maj": {
+        "wave": "pulse12",
+        "volume": 0.5,
+        "attack": 0.002,
+        "decay": 0.16,
+        "sustain": 0.35,
+        "release": 0.04,
+        "arpeggio": [0, 4, 7, 12],
+        "arpeggioTicks": 2
+      },
+      "bass": {
+        "wave": "triangle",
+        "volume": 1,
+        "attack": 0.002,
+        "decay": 0.05,
+        "sustain": 0.85,
+        "release": 0.03
+      },
+      "pad": {
+        "wave": "saw",
+        "volume": 0.32,
+        "attack": 0.14,
+        "decay": 0.3,
+        "sustain": 0.6,
+        "release": 0.2
+      },
+      "hat": {
+        "wave": "noise",
+        "volume": 0.3,
+        "attack": 0,
+        "decay": 0.035,
+        "sustain": 0,
+        "release": 0.01
+      },
+      "snare": {
+        "wave": "noise",
+        "volume": 0.62,
+        "attack": 0,
+        "decay": 0.13,
+        "sustain": 0,
+        "release": 0.02
+      },
+      "kick": {
+        "wave": "noise",
+        "volume": 0.85,
+        "attack": 0,
+        "decay": 0.07,
+        "sustain": 0,
+        "release": 0.01,
+        "sweep": -90
+      },
+      "crash": {
+        "wave": "noise",
+        "volume": 0.5,
+        "attack": 0,
+        "decay": 0.9,
+        "sustain": 0,
+        "release": 0.1
+      }
+    },
+    "channels": [
+      {
+        "instrument": "lead",
+        "volume": 0.75
+      },
+      {
+        "instrument": "arp-maj",
+        "volume": 0.5
+      },
+      {
+        "instrument": "bass",
+        "volume": 0.9
+      },
+      {
+        "instrument": "hat",
+        "volume": 0.65
+      },
+      {
+        "instrument": "pad",
+        "volume": 0.5
+      }
+    ],
+    "patterns": {
+      "fanfare": {
+        "rows": 32,
+        "tracks": [
+          "G4:2 G4:2 G4:2 C5:10 B4:4 C5:4 D5:8",
+          "C4:4@arp-maj C4:4@arp-maj C4:4@arp-maj C4:4@arp-maj G3:4@arp-maj G3:4@arp-maj G3:4@arp-maj G3:4@arp-maj",
+          "C2:4 C3:4 C2:4 C3:4 G1:4 G2:4 G1:4 G2:4",
+          "C5:2@snare C5:2@snare C5:2@snare C8:10@crash C5:4@snare C5:4@snare C5:2@snare C5:2@snare C5:2@snare C5:2@snare",
+          "E4:16 D4:16"
+        ]
+      },
+      "t1": {
+        "rows": 32,
+        "tracks": [
+          "C5:4 E5:4 G5:6 A5:2 G5:8 D5:4 B4:4",
+          "C4:4@arp-maj C4:4@arp-maj C4:4@arp-maj C4:4@arp-maj G3:4@arp-maj G3:4@arp-maj G3:4@arp-maj G3:4@arp-maj",
+          "C2:4 C3:4 C2:4 C3:4 G1:4 G2:4 G1:4 G2:4",
+          "C2:4@kick C5:4@snare C2:4@kick C5:4@snare C2:4@kick C5:4@snare C2:4@kick C5:4@snare",
+          "E4:16 D4:16"
+        ]
+      },
+      "t2": {
+        "rows": 32,
+        "tracks": [
+          "A4:4 C5:4 E5:6 D5:2 C5:4 A4:4 F4:8",
+          "A3:4@arp-min A3:4@arp-min A3:4@arp-min A3:4@arp-min F3:4@arp-maj F3:4@arp-maj F3:4@arp-maj F3:4@arp-maj",
+          "A1:4 A2:4 A1:4 A2:4 F1:4 F2:4 F1:4 F2:4",
+          "C2:4@kick C5:4@snare C2:4@kick C5:4@snare C2:4@kick C5:4@snare C2:4@kick C5:4@snare",
+          "C4:16 A3:16"
+        ]
+      },
+      "t3": {
+        "rows": 32,
+        "tracks": [
+          "A4:4 C5:4 F5:6 E5:2 D5:4 G5:4 B5:8",
+          "F3:4@arp-maj F3:4@arp-maj F3:4@arp-maj F3:4@arp-maj G3:4@arp-maj G3:4@arp-maj G3:4@arp-maj G3:4@arp-maj",
+          "F1:4 F2:4 F1:4 F2:4 G1:4 G2:4 G1:4 G2:4",
+          "C2:4@kick C5:4@snare C2:4@kick C5:4@snare C2:4@kick C5:4@snare C2:4@kick C5:4@snare",
+          "A3:16 D4:16"
+        ]
+      },
+      "t4": {
+        "rows": 32,
+        "tracks": [
+          "C6:12 G5:4 E5:4 D5:4 C5:8",
+          "C4:4@arp-maj C4:4@arp-maj C4:4@arp-maj C4:4@arp-maj C4:4@arp-maj C4:4@arp-maj C4:4@arp-maj C4:4@arp-maj",
+          "C2:4 C3:4 C2:4 C3:4 C2:4 C3:4 C2:4 C3:4",
+          "C2:4@kick C5:4@snare C2:4@kick C5:4@snare C5:2@snare C5:2@snare C5@snare C5@snare C5:2@snare C5:2@snare C5:2@snare C5:2@snare C5:2@snare",
+          "E4:16 E4:16"
+        ]
+      }
+    },
+    "order": ["fanfare", "t1", "t2", "t3", "t4"],
+    "loopFromOrder": 1
+  }
+}

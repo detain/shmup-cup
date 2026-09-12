@@ -25,6 +25,16 @@
  *    forwards a change of `game.inputContext` to the
  *    input adapter (`input.setContext` — the `game` / `menu` binding tables of decision D15).
  *
+ * **Audio (M1-15).** The shell owns the `sfx` and `music` content kinds too: it validates
+ * `content/audio/` with `@shmup/audio-web`'s loaders and creates the game's audio engine
+ * (`createAudioEngine`). During boot — the loading phase — the engine renders the SFX bank and
+ * prepares the running stage's music set (theme, boss, stage clear, game over; nothing in open
+ * space), behind the progress bar; nothing is rendered or decoded later. Once the app's
+ * `audio.unlock()` has created the context (first gesture on the web, at boot on TV) the engine
+ * attaches to the web-audio buses; in free flight the World's `Sfx`, `Music` and `MusicDuck`
+ * events play through it (`connectAudioEvents`, sounds panned from their x relative to the
+ * camera), and the frame loop closes the per-tick SFX dedupe window after each drain.
+ *
  * **Game feel (M1-14).** The shell owns the `fx` content kind: it validates `content/fx/` with
  * `@shmup/render-pixi`'s `loadFxContent`, hands the presets to the renderer
  * (`renderer.setFxContent`) and, in free flight, connects the World's `Particles`, `Sfx`,
@@ -38,7 +48,8 @@
  * - shmup_feat.md §23 — one platform layer for web, Tizen and Electron hosts
  * - shmup_feat.md §22 — rendering pipeline, event dispatch, content validated at load
  * - shmup_feat.md §3 — rAF-driven fixed step, pause on visibility change, integer scaling
- * - shmup_feat.md §19 — audio unlocked by the first user gesture on the web
+ * - shmup_feat.md §19 — audio unlocked by the first user gesture on the web; SFX and music fed by
+ *   sim events, prepared during loading
  *
  * **Public API.** {@link bootShell}, {@link Shell}, {@link ShellOptions}, {@link ShellAssets},
  * {@link ShellInput}, {@link ShellScene}, {@link SHELL_SCENES}, {@link sceneFromSearch},
@@ -46,6 +57,21 @@
  *
  * @module
  */
+import {
+  MUSIC_CONTENT_KIND,
+  SFX_CONTENT_KIND,
+  STAGE_MUSIC_CUES,
+  EMPTY_MUSIC_CONTENT,
+  EMPTY_SFX_CONTENT,
+  createAudioEngine,
+  loadMusicContent,
+  loadSfxContent,
+  type AudioEngine,
+  type AudioGraphLike,
+  type AudioLoader,
+  type MusicContent,
+  type SfxContent,
+} from '@shmup/audio-web';
 import {
   DEFAULT_GAME_CONFIG,
   createGame,
@@ -76,7 +102,12 @@ import {
   type FxContent,
   type PixiRenderer,
 } from '@shmup/render-pixi';
-import { connectFxEvents, createEventDispatcher, type EventDispatcher } from '../dispatch/index.js';
+import {
+  connectAudioEvents,
+  connectFxEvents,
+  createEventDispatcher,
+  type EventDispatcher,
+} from '../dispatch/index.js';
 import { createBootOverlay, formatIssues, type BootOverlay } from '../error-screen/index.js';
 import { startFrameLoop } from '../frame-loop/index.js';
 import {
@@ -178,8 +209,18 @@ export interface ShellOptions {
   readonly assets: ShellAssets;
   /** Input adapter (also the platform's input). The shell destroys it on `stop()`. */
   readonly input: ShellInput;
-  /** Audio back-end (also behind the platform's audio). The shell destroys it on `stop()`. */
-  readonly audio: IAudio;
+  /**
+   * Audio back-end (also behind the platform's audio). The shell destroys it on `stop()`. When
+   * it also exposes the Web Audio graph (`context` and `bus()` — `@shmup/audio-web`'s `WebAudio`
+   * does), the shell's audio engine plays the game's SFX and music through it; a plain `IAudio`
+   * leaves the game silent.
+   */
+  readonly audio: IAudio & Partial<AudioGraphLike>;
+  /**
+   * Renders / decodes the audio content (default: `@shmup/audio-web`'s `createAudioLoader()` —
+   * 22,050 Hz synth, XHR + 32 kHz decode for files). Tests inject a fake.
+   */
+  readonly audioLoader?: AudioLoader;
   /**
    * Creates the host platform once the renderer exists (capabilities such as WebGL2 are
    * only known then).
@@ -248,6 +289,11 @@ export interface Shell {
   readonly fxGallery: FxGallery | null;
   /** The particle presets and triggers of `content/fx/` handed to the renderer. */
   readonly fx: FxContent;
+  /**
+   * The game's audio engine: SFX bank and the running stage's music set, attached to the audio
+   * back-end once it is unlocked (M1-15).
+   */
+  readonly audioEngine: AudioEngine;
   /** Stops the frame loop and releases listeners, input, renderer, atlas and audio. */
   stop(): void;
 }
@@ -397,6 +443,7 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
 
   let atlas: Atlas | null = null;
   let renderer: PixiRenderer | null = null;
+  let audioEngine: AudioEngine | null = null;
 
   /**
    * Shows the error screen, releases what boot created and builds the rejection.
@@ -418,16 +465,30 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     input.destroy();
     renderer?.destroy();
     atlas?.destroy();
+    audioEngine?.destroy();
     void audio.destroy();
     return new ShellBootError(title, lines, issues, reason);
   };
 
-  // 1–2. Content. The shell keeps the particle presets it validates (the `fx` owner).
+  // 1–2. Content. The shell keeps the particle presets (`fx`) and the audio content (`sfx`,
+  // `music`) it validates.
   let fx: FxContent = EMPTY_FX_CONTENT;
+  let sfxContent: SfxContent = EMPTY_SFX_CONTENT;
+  let musicContent: MusicContent = EMPTY_MUSIC_CONTENT;
   const owners: ContentOwners = {
     [FX_CONTENT_KIND]: (files) => {
       const result = loadFxContent(files);
       fx = result.content;
+      return result.issues;
+    },
+    [SFX_CONTENT_KIND]: (files) => {
+      const result = loadSfxContent(files);
+      sfxContent = result.content;
+      return result.issues;
+    },
+    [MUSIC_CONTENT_KIND]: (files) => {
+      const result = loadMusicContent(files);
+      musicContent = result.content;
       return result.issues;
     },
     ...options.contentOwners,
@@ -490,6 +551,23 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   const readyAtlas = atlas;
   const readyRenderer = renderer;
 
+  // Audio (plan M1-15): the loading phase renders the SFX bank and the stage's music set.
+  const engine = createAudioEngine({
+    sfx: sfxContent,
+    music: musicContent,
+    loader: options.audioLoader,
+  });
+  audioEngine = engine;
+  const stageId = game.world.stage === null ? null : game.world.stage.stage.id;
+  try {
+    await engine.loadSfx((fraction) => overlay?.showProgress(fraction, 'LOADING SOUND'));
+    await engine.prepareMusic(stageId, stageId === null ? [] : STAGE_MUSIC_CUES, (fraction) =>
+      overlay?.showProgress(fraction, 'LOADING MUSIC'),
+    );
+  } catch (error) {
+    throw fail('AUDIO FAILED TO LOAD', [describe(error)], [], error);
+  }
+
   readyRenderer.setFxContent(fx);
   const flight = scene === 'flight' ? createFlightScene(game) : null;
   const showcase = scene === 'showcase' ? createShowcase() : null;
@@ -503,9 +581,12 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   }
   const calibration = createCalibrationFrame(game.renderFrame());
   const events = createEventDispatcher();
-  // The World's events feed the particles, shake, flash, dim and popups (plan M1-14) — in free
-  // flight only: the other scenes do not draw the World.
-  if (flight !== null) connectFxEvents(events, readyRenderer);
+  // The World's events feed the particles, shake, flash, dim and popups (plan M1-14) and the
+  // audio engine (M1-15) — in free flight only: the other scenes do not show the World.
+  if (flight !== null) {
+    connectFxEvents(events, readyRenderer);
+    connectAudioEvents(events, engine, game.world.view.camera);
+  }
 
   // 5. Lifecycle, audio unlock, resize.
   platform.lifecycle.onSuspend(() => {
@@ -523,10 +604,21 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     win.removeEventListener('keydown', unlockAudio, gestureOptions);
     win.removeEventListener('pointerdown', unlockAudio, gestureOptions);
   };
+  const graph: AudioGraphLike | null =
+    typeof audio.bus === 'function' && audio.context !== undefined
+      ? (audio as IAudio & AudioGraphLike)
+      : null;
+  /** Attaches the audio engine to the Web Audio graph once the context exists (idempotent). */
+  const attachAudio = (): void => {
+    if (graph !== null) engine.attach(graph);
+  };
   /** Gesture handler that unlocks audio once (autoplay policy). */
   const unlockAudio = (): void => {
     if (unlockOnGesture) removeGestureListeners();
-    void platform.audio.unlock();
+    const unlocked = platform.audio.unlock();
+    // `unlock()` creates the context synchronously; attach now and again once it runs.
+    attachAudio();
+    void unlocked.then(attachAudio, attachAudio);
   };
   if (unlockOnGesture) {
     win.addEventListener('keydown', unlockAudio, gestureOptions);
@@ -558,6 +650,7 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     }
     game.frame(now);
     game.events.drain(visit);
+    engine.endFrame();
     const frame = game.renderFrame();
     readyRenderer.render(sceneView !== null ? sceneView.update(frame) : calibration.update(frame));
   };
@@ -579,6 +672,7 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     showcase,
     fxGallery,
     fx,
+    audioEngine: engine,
     stop() {
       if (stopped) return;
       stopped = true;
@@ -588,6 +682,7 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
       input.destroy();
       readyRenderer.destroy();
       readyAtlas.destroy();
+      engine.destroy();
       void audio.destroy();
     },
   };

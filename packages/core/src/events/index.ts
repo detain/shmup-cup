@@ -152,8 +152,9 @@ export type SfxPriority = (typeof SfxPriority)[keyof typeof SfxPriority];
  * Canonical sound-effect cues (shmup_feat.md §19 "Core SFX").
  *
  * @remarks
- * The simulation emits these ids; `content/audio/sfx.json` binds each name to a
- * synthesised or recorded sample (M1-15). Ids are stable: append, never renumber.
+ * The simulation emits these ids; `content/audio/main.sfx.json` binds each name to a
+ * synthesised or recorded sample (`@shmup/audio-web` `loader`, M1-15). Ids are stable: append,
+ * never renumber.
  */
 export const SFX_CUES = {
   /** Player main shot. */

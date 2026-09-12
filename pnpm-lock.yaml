@@ -142,6 +142,9 @@ importers:
       '@playwright/test':
         specifier: ^1.63.0
         version: 1.63.0
+      '@shmup/audio-web':
+        specifier: workspace:*
+        version: link:packages/audio-web
       '@shmup/core':
         specifier: workspace:*
         version: link:packages/core
@@ -345,6 +348,9 @@ importers:
 
   packages/shell:
     dependencies:
+      '@shmup/audio-web':
+        specifier: workspace:*
+        version: link:../audio-web
       '@shmup/core':
         specifier: workspace:*
         version: link:../core

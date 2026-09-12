@@ -25,6 +25,7 @@
     "clean": "node ../../scripts/clean.mjs dist coverage .turbo"
   },
   "dependencies": {
+    "@shmup/audio-web": "workspace:*",
     "@shmup/core": "workspace:*",
     "@shmup/input-web": "workspace:*",
     "@shmup/render-pixi": "workspace:*"

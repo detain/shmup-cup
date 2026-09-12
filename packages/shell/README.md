@@ -25,7 +25,7 @@ const shell = await bootShell({
 });
 shell.events.on(SimEventKind.Music, (event) => { /* presentation handler */ });
 // free flight already feeds the World's events to the renderer's particles, shake, flash, dim
-// and score popups (connectFxEvents, M1-14)
+// and score popups (connectFxEvents, M1-14) and to the audio engine (connectAudioEvents, M1-15)
 ```
 
 Boot sequence: progress bar (plain 2D overlay canvas) → content validation (core kinds + the
@@ -46,7 +46,7 @@ canvas carries `data-shmup-state="loading" | "running" | "error"`.
 |---|---|---|
 | `boot` | implemented | `bootShell()`, `sceneFromSearch()`, `ShellBootError` |
 | `loader` | implemented | Atlas page images (`loadImages`), content validation routed by kind (`loadGameContent`, `DEFAULT_CONTENT_OWNERS`; script ids checked against the core's `KNOWN_SCRIPT_IDS` and enemies against their behaviours since M1-08, weapons against theirs (`checkWeaponBehaviors`) since M1-10; the core's `ENGINE_SPRITES` — bullets, laser beam, since M1-10 the Option orb, since M1-11 the power capsule and the Force Field — interned by default since M1-09) |
-| `dispatch` | implemented | Sim event → presentation handler routing, allocation-free; `connectFxEvents` feeds the renderer's particles, shake / flash / dim and score popups from the World's events (M1-14) |
+| `dispatch` | implemented | Sim event → presentation handler routing, allocation-free; `connectFxEvents` feeds the renderer's particles, shake / flash / dim and score popups from the World's events (M1-14); `connectAudioEvents` feeds `Sfx` / `Music` / `MusicDuck` to the audio engine (M1-15) |
 | `error-screen` | implemented | Boot overlay: progress bar and error screen (Canvas 2D) |
 | `frame-loop` | implemented | `requestAnimationFrame` driver (moved here from the apps) |
 | `flight` | implemented | Default dev scene since M1-06 ("free flight"): the game's World (the KESTREL under player control) over a drifting starfield — or, with a stage (`?stage=` in the web app, M1-07), the stage's parallax and terrain, the enemies its timeline spawns (M1-08) and their bullets and lasers (M1-09) — HUD bars; the ship's autofired shots and its Options are World batches too (M1-10), and so are the power capsules and the Force Field (M1-11 — the power meter is drawn by the M1-16 HUD); the HUD shows player 1's score, `HI` and the session hi-score, `lives − 1` stock ships and `GAME OVER` (red) in place of the title once the World's status says so, rebuilt only on a change (M1-12); a boss's parts are a World batch, and a running boss WARNING (`view.warning`) is drawn as its text on a translucent band in the UI list, red / yellow every 16 ticks, rebuilt only on a change (M1-13, `?stage=test-boss`); its sprites are appended to the content's sprite table |
@@ -55,7 +55,9 @@ canvas carries `data-shmup-state="loading" | "running" | "error"`.
 
 Boot error screen titles: `CONTENT COULD NOT BE READ`, `CONTENT ERRORS: N PROBLEMS` (one
 `<file>:<json path>: message` line per issue), `ATLAS PAGE FAILED TO LOAD`,
-`ATLAS DOES NOT MATCH ITS MANIFEST`, `WEBGL IS NOT AVAILABLE`, `SHMUP CUP FAILED TO START`.
+`ATLAS DOES NOT MATCH ITS MANIFEST`, `WEBGL IS NOT AVAILABLE`, `SHMUP CUP FAILED TO START`,
+`AUDIO FAILED TO LOAD` (a recorded sound or track of `content/audio/` could not be fetched or
+decoded, M1-15).
 `bootShell` then rejects with a `ShellBootError` (`lines`, `issues`, `reason`) after releasing
 everything it created. Content kinds that are neither core kinds nor claimed by an owner
 (`contentOwners` or `DEFAULT_CONTENT_OWNERS`) are issues, so a new kind cannot ship
@@ -69,8 +71,12 @@ before a frame's ticks whenever `game.inputContext` changed) and `destroy()`. `@
 Dependency direction (plan §3.1): `apps/* → @shmup/shell → {render-pixi, audio-web, input-web}
 → core`. Today the shell imports `@shmup/core`, `@shmup/render-pixi` and `@shmup/input-web`
 (only `loadInputProfiles` for the default `input-profiles` owner, M1-05); render-pixi also
-provides the `fx` owner (`loadFxContent`) and the effect types (M1-14); the apps create the
-input and audio adapters and pass them in as interfaces (`ShellInput`, `IAudio`).
+provides the `fx` owner (`loadFxContent`) and the effect types (M1-14); `@shmup/audio-web`
+provides the `sfx` / `music` owners and the audio engine (`createAudioEngine`, M1-15: the boot
+renders the SFX bank and the running stage's music set, the engine attaches to the audio
+back-end's buses once `unlock()` has created the context). The apps create the input and audio
+adapters and pass them in as interfaces (`ShellInput`, `IAudio` — a `WebAudio` also exposes its
+graph, `context` and `bus()`, which the engine plays through).
 
 Guide: [`docs/dev/rendering-and-shell.md`](../../docs/dev/rendering-and-shell.md#the-browser-shell-shmupshell);
 the game-feel wiring and the fx gallery: [`docs/dev/fx-and-game-feel.md`](../../docs/dev/fx-and-game-feel.md);

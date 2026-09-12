@@ -1,0 +1,63 @@
+{
+  "formatVersion": 1,
+  "kind": "music",
+  "id": "example-theme",
+  "title": "EXAMPLE THEME",
+  "cue": "Stage",
+  "stages": ["example"],
+  "song": {
+    "speed": 6,
+    "instruments": {
+      "lead": {
+        "wave": "pulse25",
+        "decay": 0.12,
+        "sustain": 0.6,
+        "release": 0.07,
+        "vibrato": { "depth": 0.2, "rate": 5.5, "delay": 0.2 }
+      },
+      "arp": {
+        "wave": "pulse12",
+        "volume": 0.5,
+        "decay": 0.16,
+        "sustain": 0.35,
+        "arpeggio": [0, 3, 7],
+        "arpeggioTicks": 2
+      },
+      "bass": { "wave": "triangle" },
+      "hat": { "wave": "noise", "volume": 0.3, "attack": 0, "decay": 0.035, "sustain": 0 },
+      "kick": { "wave": "noise", "attack": 0, "decay": 0.07, "sustain": 0, "sweep": -90 }
+    },
+    "channels": [
+      { "instrument": "lead", "volume": 0.8 },
+      { "instrument": "arp", "volume": 0.55 },
+      { "instrument": "bass", "volume": 0.9 },
+      { "instrument": "hat", "volume": 0.7 }
+    ],
+    "patterns": {
+      "intro": {
+        "rows": 16,
+        "tracks": ["=:8 A4:4 C5:4", "D4:16", "D2:16", "C8:2 C8:2 C8:2 C8:2 C8:2 C8:2 C8:2 C8:2"]
+      },
+      "a": {
+        "rows": 16,
+        "tracks": [
+          "D5:4 F5:2 A5:6 G5:2 F5:2",
+          "D4:4 D4:4 Bb3:4 Bb3:4",
+          "D2:2 D3:2 D2:2 D3:2 Bb1:2 Bb2:2 Bb1:2 Bb2:2",
+          "C2:2@kick C8:2 C5:2 C8:2 C2:2@kick C2:2@kick C5:2 C8:2"
+        ]
+      },
+      "b": {
+        "rows": 16,
+        "tracks": [
+          "E5:4 C5:4 A4:8",
+          "C4:8 A3:8",
+          "C2:4 C3:4 A1:4 A2:4",
+          "C2:4@kick C5:4 C2:4@kick C5:4"
+        ]
+      }
+    },
+    "order": ["intro", "a", "b"],
+    "loopFromOrder": 1
+  }
+}

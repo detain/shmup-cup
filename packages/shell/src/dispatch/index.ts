@@ -2,9 +2,9 @@
  * # dispatch — simulation events → presentation handlers
  *
  * **Responsibility.** Routes the records drained from the core's event queue
- * (`game.events`) to the handlers the host registered per `SimEventKind` (SFX and music →
- * `audio-web` in M1-15; particles / shake / flash / dim / score popups → `render-pixi`,
- * {@link connectFxEvents}, M1-14). Handlers are
+ * (`game.events`) to the handlers the host registered per `SimEventKind` (SFX, music and ducking
+ * → `audio-web`, {@link connectAudioEvents}, M1-15; particles / shake / flash / dim / score popups
+ * → `render-pixi`, {@link connectFxEvents}, M1-14). Handlers are
  * registered at load time; dispatching is a table lookup and a loop over a preallocated array,
  * so draining the queue once per frame allocates nothing. Events nobody handles are counted
  * and dropped (a headless-safe default: the sim never depends on presentation).
@@ -22,12 +22,22 @@
  *
  * Positions stay world pixels — the renderer applies the camera when it draws.
  *
+ * **Audio (M1-15).** {@link connectAudioEvents} registers the audio engine's handlers
+ * (`@shmup/audio-web` `AudioEngine`):
+ *
+ * | Event | Handler |
+ * |---|---|
+ * | `Sfx` (`id` = `SFX_CUES`, `x` = world x, `param` = `SfxPriority` hint) | `playSfx(cue, screenX, priority)` — `screenX` = the x relative to the camera, in whole pixels (it pans the sound) |
+ * | `Music` (`id` = `MUSIC_CUES`, `param` = fade ticks) | `playMusic(cue, fadeTicks)` |
+ * | `MusicDuck` (`param` = ticks) | `duckMusic(ticks)` |
+ *
  * **Implements.**
  * - shmup_feat.md §22 Architecture — presentation fed by read-only views + the event queue
  * - shmup_feat.md §19 / §20 — audio cues and "juice" triggered by sim events (handlers M1-14/15)
  *
  * **Public API.** {@link createEventDispatcher}, {@link EventDispatcher},
- * {@link SimEventHandler}, {@link connectFxEvents}, {@link FxTargets}.
+ * {@link SimEventHandler}, {@link connectFxEvents}, {@link FxTargets},
+ * {@link connectAudioEvents}, {@link AudioEventTarget}, {@link CameraPosition}.
  *
  * @module
  */
@@ -237,6 +247,83 @@ export function connectFxEvents(dispatcher: EventDispatcher, fx: FxTargets): () 
       dispatcher.on(SimEventKind.BossDefeated, (event) => popup(event, BONUS_POPUP_COLOR)),
     );
   }
+  let connected = true;
+  return () => {
+    if (!connected) return;
+    connected = false;
+    for (const unregister of off) unregister();
+  };
+}
+
+/** What {@link connectAudioEvents} feeds — `@shmup/audio-web`'s `AudioEngine` has it. */
+export interface AudioEventTarget {
+  /**
+   * Plays a sound effect.
+   *
+   * @param cue - `SFX_CUES` id.
+   * @param screenX - The event's x relative to the camera, whole pixels.
+   * @param priority - The event's `SfxPriority` hint (0 = the cue's own).
+   * @returns Anything (ignored).
+   */
+  playSfx(cue: number, screenX: number, priority: number): unknown;
+  /**
+   * Changes the music.
+   *
+   * @param cue - `MUSIC_CUES` id.
+   * @param fadeTicks - Fade length in ticks.
+   */
+  playMusic(cue: number, fadeTicks: number): void;
+  /**
+   * Ducks the music.
+   *
+   * @param ticks - Ticks until it is back at full volume.
+   */
+  duckMusic(ticks: number): void;
+}
+
+/** A camera position read when a sound plays (the World's `CameraView`). */
+export interface CameraPosition {
+  /** World x of the playfield's left edge. */
+  readonly x: number;
+}
+
+/**
+ * Registers the audio handlers of plan M1-15 (see the module docs for the table): `Sfx` →
+ * `playSfx`, `Music` → `playMusic`, `MusicDuck` → `duckMusic`. Load time — registering
+ * allocates the handlers; handling an event allocates nothing here (the audio engine creates the
+ * Web Audio source node of a sound it starts).
+ *
+ * @remarks
+ * A sound's position is passed as whole pixels relative to the camera
+ * (`Math.floor(event.x - camera.x) | 0` — 0 at the playfield's left edge), read from the live
+ * camera when the event is handled; a fractional argument to a non-inlined call would be boxed.
+ *
+ * @param dispatcher - The shell's event dispatcher.
+ * @param audio - The audio engine (or anything with its three methods).
+ * @param camera - The World's camera (`game.world.view.camera`).
+ * @returns A function that unregisters every handler (idempotent).
+ *
+ * @example
+ * ```ts
+ * const disconnect = connectAudioEvents(shell.events, shell.audioEngine, game.world.view.camera);
+ * ```
+ */
+export function connectAudioEvents(
+  dispatcher: EventDispatcher,
+  audio: AudioEventTarget,
+  camera: CameraPosition,
+): () => void {
+  const off = [
+    dispatcher.on(SimEventKind.Sfx, (event) => {
+      audio.playSfx(event.id, Math.floor(event.x - camera.x) | 0, event.param);
+    }),
+    dispatcher.on(SimEventKind.Music, (event) => {
+      audio.playMusic(event.id, event.param);
+    }),
+    dispatcher.on(SimEventKind.MusicDuck, (event) => {
+      audio.duckMusic(event.param);
+    }),
+  ];
   let connected = true;
   return () => {
     if (!connected) return;
