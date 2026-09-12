@@ -738,16 +738,17 @@ const damageSystem: WorldSystem = (world) => {
 
 /**
  * Recomputes the World's rank (shmup_feat.md §15): the power term of the most powerful active
- * ship that is not dying or dead (`core/rank` `powerRank`: Missile +1, Double +2, Laser +3, each
- * Option +1, a shield +4) goes into {@link World.rankInputs}, `computeRank` gives the rank, and a
+ * ship — dying, dead and respawning ones included (see the remarks) — (`core/rank` `powerRank`:
+ * Missile +1, Double +2, Laser +3, each Option +1, a shield +4) goes into
+ * {@link World.rankInputs}, `computeRank` gives the rank, and a
  * changed rank is handed to the bullet system (`BulletSystem.setRank` — the curves are only
  * evaluated then). The World calls it at the end of phase 3; call it after changing
  * `rankInputs` (the campaign's loop / stage) outside a tick. Never allocates.
  *
  * @remarks
  * A ship that died keeps counting until the death penalty took its power (the same tick, phase
- * 7): from the next phase 3 its reduced loadout counts. Without an active ship the power term is
- * 0.
+ * 7): from the next phase 3 its reduced loadout counts, while it is dead and while it flies back
+ * in. Without an active ship the power term is 0.
  *
  * @param world - The world.
  * @returns The rank.

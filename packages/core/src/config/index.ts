@@ -526,6 +526,8 @@ export function resolveGameConfig(
     ...DEFAULT_GAME_CONFIG,
     ...difficultyOverrides(difficulty, table),
     ...overrides,
+    // The preset the fields came from (an explicit `difficulty: undefined` must not survive).
+    difficulty,
   };
   requireInteger('internalWidth', config.internalWidth, 16, 4096);
   requireInteger('internalHeight', config.internalHeight, 16, 4096);
