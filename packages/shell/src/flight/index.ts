@@ -161,6 +161,7 @@ export function createFlightScene(game: Game, options: FlightSceneOptions = {}):
     terrain: gameView.terrain,
     batches: starfield ? [far, mid, ...gameView.batches] : gameView.batches.slice(),
     lasers: gameView.lasers ?? null,
+    bendingLasers: gameView.bendingLasers ?? null,
     warning: gameView.warning ?? null,
   };
   const warning = gameView.warning ?? null;

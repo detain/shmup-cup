@@ -1,0 +1,27 @@
+{
+  "formatVersion": 1,
+  "kind": "enemies",
+  "enemies": [
+    {
+      "id": "sentry",
+      "hp": 4,
+      "score": 400,
+      "hurtbox": { "hw": 5, "hh": 5 },
+      "script": "pattern.loop",
+      "sprite": "enemies/spinner",
+      "anim": { "frames": 2, "ticks": 6 },
+      "mover": {
+        "type": "waypoint",
+        "x": 300,
+        "y": 100,
+        "speed": 1.5,
+        "hold": 600,
+        "leaveVx": -1.5,
+        "leaveVy": 0
+      },
+      "pattern": "common.spiral",
+      "params": { "restTicks": 45 },
+      "drop": null
+    }
+  ]
+}

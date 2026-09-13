@@ -35,7 +35,8 @@
  *   right edge (its **intro**: `introTicks`, invulnerable, eased) and the boss music starts. A
  *   stage `boss` event brings a boss in at once (no WARNING, no brake).
  * - **The death sequence.** When the last core is destroyed: every cancelable bullet and laser is
- *   cancelled (sparkles), the music fades out, then chained explosions (`FX BossChain` + `SFX
+ *   cancelled (sparkles; each bullet becomes a point item for the killer — `CancelMode.Points`,
+ *   M2-02), the music fades out, then chained explosions (`FX BossChain` + `SFX
  *   BossExplode` every {@link BOSS_CHAIN_INTERVAL} ticks at random points of the boss — cosmetic
  *   RNG) until {@link BOSS_CHAIN_TICKS}, the final blast (`FX BossBlast`, a large shake, a flash,
  *   rumble, a {@link BOSS_BLAST_HIT_STOP_TICKS}-tick hit-stop), the **score tally** after the
@@ -1803,7 +1804,8 @@ class BossSystemImpl implements BossSystem {
       parts[i].target = false;
       host.bullets.detachLasers(parts[i].slot);
     }
-    host.bullets.cancelAll(CancelMode.Sparkle);
+    // The boss's bullets turn into points for its killer (M2-02); nobody's kill only sparkles.
+    host.bullets.cancelAll(CancelMode.Points, by);
     host.events.push(SimEventKind.Music, MUSIC_CUES.Silence, 0, 0, BOSS_MUSIC_FADE_TICKS);
     requestShake(host, ShakeMagnitude.Small, BOSS_CHAIN_TICKS);
   }

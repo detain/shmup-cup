@@ -4,6 +4,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
+  BULLET_PALETTES,
   DEFAULT_USER_OPTIONS,
   VOLUME_LEVELS,
   resolveUserOptions,
@@ -16,9 +17,24 @@ describe('core/config user options', () => {
     expect(DEFAULT_USER_OPTIONS).toEqual({
       audio: { master: 10, music: 10, sfx: 10 },
       input: { profileId: null },
-      display: {},
+      display: { bulletPalette: 'standard' },
     });
     expect(Object.isFrozen(DEFAULT_USER_OPTIONS.audio)).toBe(true);
+  });
+
+  it('resolves the bullet palette (M2-02): a known name, else standard', () => {
+    expect(BULLET_PALETTES).toEqual(['standard', 'deuteranopia', 'protanopia', 'tritanopia']);
+    for (const palette of BULLET_PALETTES) {
+      expect(
+        resolveUserOptions({ display: { bulletPalette: palette } }).display.bulletPalette,
+      ).toBe(palette);
+    }
+    for (const bad of ['Tritanopia', '', 3, null, undefined]) {
+      expect(resolveUserOptions({ display: { bulletPalette: bad } }).display.bulletPalette).toBe(
+        'standard',
+      );
+    }
+    expect(resolveUserOptions({ display: 'x' }).display).toEqual({ bulletPalette: 'standard' });
   });
 
   it('maps volume levels to a squared gain', () => {
@@ -42,7 +58,7 @@ describe('core/config user options', () => {
     ).toEqual({
       audio: { master: 4, music: 0, sfx: 10 },
       input: { profileId: 'tizen-remote-safe' },
-      display: {},
+      display: { bulletPalette: 'standard' },
     });
     for (const id of ['', 'Upper', 'a b', '-x', 'x'.repeat(65), 7, null]) {
       expect(resolveUserOptions({ input: { profileId: id } }).input.profileId, String(id)).toBe(

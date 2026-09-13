@@ -11,7 +11,7 @@
  *
  * - **Format** ({@link SaveData}, version {@link SAVE_VERSION} = 1) under the storage key
  *   {@link SAVE_STORAGE_KEY} (`save.v1`): `{ version, options: { audio: { master, music, sfx },
- *   input: { profileId }, display: {} }, hiScores: { [modeKey]: HiScoreEntry[≤ 10] }, stats: {
+ *   input: { profileId }, display: { bulletPalette } }, hiScores: { [modeKey]: HiScoreEntry[≤ 10] }, stats: {
  *   gamesStarted, gameOvers, stagesCleared } }`.
  *   A mode key ({@link hiScoreModeKey}) names the table a game's score belongs to
  *   (`meter-normal` in M1; one per difficulty preset since M2-01 — `meter-easy` … `meter-arcade`).
@@ -463,7 +463,7 @@ export function serializeSave(data: SaveData): string {
     options: {
       audio: { master: a.master, music: a.music, sfx: a.sfx },
       input: { profileId: data.options.input.profileId },
-      display: {},
+      display: { bulletPalette: data.options.display.bulletPalette },
     },
     hiScores,
     stats: {

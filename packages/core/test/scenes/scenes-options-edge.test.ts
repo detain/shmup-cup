@@ -270,6 +270,7 @@ describe('core/scenes options (edge): opening and closing', () => {
     s.press(Action.Left); // SFX 9
     s.press(Action.Down);
     s.press(Action.Down);
+    s.press(Action.Down); // past BULLETS (M2-02)
     expect(s.flow.options.menu.focus).toBe(OptionsItem.Back);
     s.press(Action.Confirm);
     expect(s.ids).toEqual(['game', 'pause']);
@@ -299,7 +300,7 @@ describe('core/scenes options (edge): opening and closing', () => {
     expect(save.options).toEqual({
       audio: { master: 10, music: 10, sfx: 10 },
       input: { profileId: null },
-      display: {},
+      display: { bulletPalette: 'standard' },
     });
   });
 

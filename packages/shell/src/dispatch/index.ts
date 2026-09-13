@@ -38,8 +38,10 @@
  * | `UserOption` `MasterVolume` / `MusicVolume` (`param` = level 0–10) | `audio.setBusVolume('master' / 'music', volumeGain(level))` |
  * | `UserOption` `SfxVolume` | the same for the `sfx` **and** `ui` buses (menu sounds follow SFX) |
  * | `UserOption` `InputProfile` (`param` = choice index) | the host's profile callback |
+ * | `UserOption` `BulletPalette` (`param` = `BULLET_PALETTES` index, M2-02) | the palette callback (the renderer's `setBulletPalette`) |
  *
- * {@link applyAudioOptions} sets all three from saved options at boot.
+ * {@link applyAudioOptions} sets all three volumes from saved options at boot; the boot sequence
+ * also hands the saved bullet palette to the renderer.
  *
  * **Implements.**
  * - shmup_feat.md §22 Architecture — presentation fed by read-only views + the event queue
@@ -53,6 +55,7 @@
  * @module
  */
 import {
+  BULLET_PALETTES,
   SIM_EVENT_KIND_NAMES,
   SimEventKind,
   UserOptionKind,
@@ -60,6 +63,7 @@ import {
   volumeGain,
   type AudioBus,
   type AudioOptions,
+  type BulletPalette,
   type EventQueue,
   type SimEvent,
 } from '@shmup/core';
@@ -387,6 +391,9 @@ export function applyAudioOptions(audio: VolumeTarget, options: AudioOptions): v
  * @param audio - The audio back-end.
  * @param onInputProfile - Applies the profile at an index of the flow's profile choices, or `null`
  *   (profile events are ignored).
+ * @param onBulletPalette - Applies the bullet palette at an index of `BULLET_PALETTES` (M2-02 —
+ *   normally `renderer.setBulletPalette`), or `null` / omitted (palette events are ignored; bad
+ *   indices are ignored too).
  * @returns A function that unregisters the handler (idempotent).
  *
  * @example
@@ -398,6 +405,7 @@ export function connectOptionEvents(
   dispatcher: EventDispatcher,
   audio: VolumeTarget,
   onInputProfile: ((index: number) => void) | null,
+  onBulletPalette: ((palette: BulletPalette) => void) | null = null,
 ): () => void {
   return dispatcher.on(SimEventKind.UserOption, (event) => {
     const value = event.param;
@@ -415,6 +423,11 @@ export function connectOptionEvents(
       case UserOptionKind.InputProfile:
         if (onInputProfile !== null) onInputProfile(value);
         break;
+      case UserOptionKind.BulletPalette: {
+        const palette = BULLET_PALETTES[value];
+        if (onBulletPalette !== null && palette !== undefined) onBulletPalette(palette);
+        break;
+      }
       default:
         break;
     }

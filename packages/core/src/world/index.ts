@@ -60,6 +60,16 @@
  * The engine's own sprites (bullets, laser beam) are {@link ENGINE_SPRITES} — hosts load content
  * with `extraSprites: ENGINE_SPRITES` so they draw.
  *
+ * **Pattern DSL, bending lasers, cancel points (M2-02).** {@link World.patterns} (`core/patterns`
+ * `PatternVm`) interprets the content's DSL patterns: enemy behaviours step their emitters in
+ * phase 4, bullets fired with `actions` run their own programs in phase 5 (it is the bullet
+ * system's program runner); a checkpoint restart frees every bullet program
+ * (`BulletSystem.clear`). The bending lasers move in phase 5 and hit in phase 6 like the lasers
+ * (the view carries them as `view.bendingLasers`); the point items of a boss's death or a Mega
+ * Crash (`CancelMode.Points`; the player's death still only sparkles) fly in phase 5 and are
+ * drawn as the `cancelPoints` batch on `ITEMS`. `hashWorld` covers the bending lasers and the
+ * interpreter's runners.
+ *
  * **Player weapons (M1-10).** {@link World.weapons} (`core/weapons`, Options from `core/options`)
  * owns the `playerShots` pool, one loadout (`config.loadout` at creation) and one option group per
  * player: after the ships move in phase 2 the option trails advance and every shooter (ship and
@@ -183,6 +193,7 @@ import {
   type FxState,
 } from '../fx/index.js';
 import { OPTION_SPRITE } from '../options/index.js';
+import { createPatternVm, type PatternVm } from '../patterns/index.js';
 import {
   ITEM_SPRITES,
   applyDeathPenalty,
@@ -231,6 +242,7 @@ import {
   createSpriteBatch,
   pushSprite,
   type SpriteBatch,
+  type BendingLaserView,
   type LaserView,
   type SpriteBatchView,
   type WarningView,
@@ -376,6 +388,11 @@ export interface World {
   readonly enemies: EnemySystem;
   /** Enemy bullets and lasers (`core/bullets`). */
   readonly bullets: BulletSystem;
+  /**
+   * The DSL pattern interpreter (`core/patterns`, M2-02): enemies' emitters and the bullets' own
+   * programs (installed as the bullet system's program runner).
+   */
+  readonly patterns: PatternVm;
   /** The players' weapons, loadouts and Options (`core/weapons`, `core/options`). */
   readonly weapons: WeaponSystem;
   /** Power meters, capsules, Mega Crash and the shields' feedback (`core/powerups`). */
@@ -603,6 +620,7 @@ function respawnShip(world: World, slot: number): void {
  */
 function clearSession(world: World): void {
   world.pools.clearAll();
+  world.bullets.clear();
   world.enemies.clear();
   world.bosses.clear();
   world.weapons.clear();
@@ -1006,7 +1024,15 @@ export function resolveWorldStage(config: GameConfig, content: ContentDb): Stage
 /** A {@link World} while {@link createWorld} assembles it (the stage fields are set last). */
 type WorldUnderConstruction = Omit<
   World,
-  'stage' | 'enemies' | 'bullets' | 'weapons' | 'powerups' | 'scoring' | 'bosses' | 'laserSources'
+  | 'stage'
+  | 'enemies'
+  | 'bullets'
+  | 'patterns'
+  | 'weapons'
+  | 'powerups'
+  | 'scoring'
+  | 'bosses'
+  | 'laserSources'
 > & {
   /** See {@link World.stage}. */
   stage: StageRunner | null;
@@ -1014,6 +1040,8 @@ type WorldUnderConstruction = Omit<
   enemies: EnemySystem;
   /** See {@link World.bullets}. */
   bullets: BulletSystem;
+  /** See {@link World.patterns}. */
+  patterns: PatternVm;
   /** See {@link World.weapons}. */
   weapons: WeaponSystem;
   /** See {@link World.powerups}. */
@@ -1097,6 +1125,7 @@ export function createWorld(
         : createTerrainView(terrain, stageSpec, content),
     batches,
     lasers: null as LaserView | null,
+    bendingLasers: null as BendingLaserView | null,
     warning: null as WarningView | null,
   };
   const world: WorldUnderConstruction = {
@@ -1122,6 +1151,7 @@ export function createWorld(
     // Replaced right below: the enemy and bullet systems read the World they belong to.
     enemies: null as unknown as EnemySystem,
     bullets: null as unknown as BulletSystem,
+    patterns: null as unknown as PatternVm,
     weapons: null as unknown as WeaponSystem,
     powerups: null as unknown as PowerUpSystem,
     scoring: null as unknown as ScoringSystem,
@@ -1135,6 +1165,8 @@ export function createWorld(
   world.rank = computeRank(world.rankInputs);
   world.bullets = createBulletSystem(world);
   world.bullets.setRank(world.rank);
+  world.patterns = createPatternVm(world);
+  world.bullets.setProgramRunner(world.patterns);
   world.enemies = createEnemySystem(world, options.behaviors ?? DEFAULT_BEHAVIORS, stageSpec);
   world.bosses = createBossSystem(world, options.bossBehaviors ?? DEFAULT_BOSS_BEHAVIORS);
   world.laserSources = Object.freeze([...world.enemies.enemies, ...world.bosses.boss.parts]);
@@ -1156,9 +1188,11 @@ export function createWorld(
     world.bullets.batch,
     world.powerups.shieldBatch,
     world.powerups.itemBatch,
+    world.bullets.pointBatch,
     world.bosses.batch,
   );
   view.lasers = world.bullets.laserView;
+  view.bendingLasers = world.bullets.bending;
   view.warning = world.bosses.warning;
   if (stageSpec !== null) {
     world.stage = createStageRunner(stageSpec, createWorldStageHooks(world), camera);

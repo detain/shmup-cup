@@ -18,6 +18,7 @@ import * as explosions from './explosions.mjs';
 import * as hud from './hud.mjs';
 import * as items from './items.mjs';
 import * as lasers from './lasers.mjs';
+import * as palettes from './palettes.mjs';
 import * as particles from './particles.mjs';
 import * as shields from './shields.mjs';
 import * as starfield from './starfield.mjs';
@@ -38,6 +39,7 @@ export const PROCEDURAL_GENERATORS = [
   { id: 'hud', generate: hud.generate },
   { id: 'items', generate: items.generate },
   { id: 'lasers', generate: lasers.generate },
+  { id: 'palettes', generate: palettes.generate },
   { id: 'particles', generate: particles.generate },
   { id: 'shields', generate: shields.generate },
   { id: 'starfield', generate: starfield.generate },

@@ -548,6 +548,110 @@ describe('render-pixi/renderer render contract (plan §3.4)', () => {
     expect(binding.container.destroyed).toBe(true);
   });
 
+  it('binds the bending lasers on ENEMY_BULLETS after the lasers and syncs them (M2-02)', async () => {
+    const renderer = await createPixiRenderer({
+      canvas,
+      displayWidth: 1920,
+      displayHeight: 1080,
+      atlas: testAtlas(),
+    });
+    renderer.setSpriteNames(['ships/a', 'bg/tile']);
+    const bending = {
+      capacity: 2,
+      nodes: 4,
+      active: new Uint8Array([1, 0]),
+      filled: new Int32Array([2, 0]),
+      head: new Int32Array([1, 0]),
+      width: new Float64Array([6, 0]),
+      spriteId: new Uint16Array(2),
+      flags: new Uint8Array(2),
+      x: new Float64Array([100, 110, 0, 0, 0, 0, 0, 0]),
+      y: new Float64Array([50, 50, 0, 0, 0, 0, 0, 0]),
+    };
+    const lasers = {
+      capacity: 1,
+      count: 0,
+      x: new Float64Array(1),
+      y: new Float64Array(1),
+      angle: new Float64Array(1),
+      length: new Float64Array(1),
+      width: new Float64Array(1),
+      spriteId: new Uint16Array(1),
+      flags: new Uint8Array(1),
+    };
+    const world: WorldView = {
+      camera: { x: 0, y: 0 },
+      parallax: null,
+      terrain: null,
+      batches: [],
+      lasers,
+      bendingLasers: bending,
+    };
+    renderer.render(frameOf(0, world));
+    const binding = renderer.bendingLasers;
+    expect(binding).not.toBeNull();
+    if (binding === null || renderer.lasers === null) return;
+    expect(renderer.layers.layers[LayerId.EnemyBullets].children).toEqual([
+      renderer.lasers.container,
+      binding.container,
+    ]);
+    expect(binding.visibleCount).toBe(2);
+    renderer.bindWorld(null);
+    expect(renderer.bendingLasers).toBeNull();
+    expect(binding.container.destroyed).toBe(true);
+  });
+
+  it('swaps the sprite tables to a bullet palette’s variants and back (M2-02)', async () => {
+    const base = testManifest();
+    const variantFrames = { ...base.frames };
+    const names: string[] = [];
+    for (let i = 0; i < 3; i++) {
+      variantFrames[`ships/a@protanopia#${i}`] = {
+        p: 0,
+        x: 16 * i,
+        y: 10,
+        w: 16,
+        h: 9,
+        ax: 8,
+        ay: 4,
+      };
+      names.push(`ships/a@protanopia#${i}`);
+    }
+    const manifest = {
+      ...base,
+      frames: variantFrames,
+      sprites: { ...base.sprites, 'ships/a@protanopia': { frames: names, flash: null } },
+    };
+    const atlas = createAtlas(manifest, pageImages(manifest), { onWarning: () => {} });
+    const renderer = await createPixiRenderer({
+      canvas,
+      displayWidth: 1920,
+      displayHeight: 1080,
+      atlas,
+    });
+    expect(renderer.bulletPalette).toBe('standard');
+    renderer.setBulletPalette('protanopia'); // before the names: applied when they come
+    renderer.setSpriteNames(['ships/a']);
+    const batch = createSpriteBatch(LayerId.EnemyBullets, 2);
+    pushSprite(batch, 100, 50, 0, 1, 0);
+    const world: WorldView = {
+      camera: { x: 0, y: 0 },
+      parallax: null,
+      terrain: null,
+      batches: [batch],
+    };
+    renderer.render(frameOf(0, world));
+    const sprite = renderer.bindings[0].container.children[0] as Pixi.Sprite;
+    expect(sprite.texture).toBe(atlas.textures[atlas.spriteBase('ships/a@protanopia') + 1]);
+    renderer.setBulletPalette('standard');
+    expect(renderer.bulletPalette).toBe('standard');
+    renderer.render(frameOf(1, world));
+    expect(sprite.texture).toBe(atlas.textures[atlas.spriteBase('ships/a') + 1]);
+    renderer.setBulletPalette('deuteranopia'); // no variant: the plain frames
+    renderer.render(frameOf(2, world));
+    expect(sprite.texture).toBe(atlas.textures[atlas.spriteBase('ships/a') + 1]);
+  });
+
   it('rejects a parallax band off the background layers before binding anything', async () => {
     const renderer = await createPixiRenderer({
       canvas,

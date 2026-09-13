@@ -227,6 +227,7 @@ export function createSceneView(game: Game): SceneView {
       terrain: view.terrain,
       batches: [stars.far, stars.mid, ...view.batches],
       lasers: view.lasers ?? null,
+      bendingLasers: view.bendingLasers ?? null,
       warning: view.warning ?? null,
     };
   };

@@ -28,10 +28,13 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+  BULLET_PALETTES,
+  BULLET_SPRITES,
   BossState,
   DEFAULT_BEHAVIORS,
   DEFAULT_BOSS_BEHAVIORS,
   DEFAULT_DIFFICULTY_TABLE,
+  DEFAULT_SCORING_RULES,
   DIFFICULTY_PRESETS,
   ENGINE_SPRITES,
   KNOWN_SCRIPT_IDS,
@@ -69,7 +72,12 @@ import {
   type RenderedSong,
 } from '@shmup/audio-web';
 import { loadInputProfiles, parseInputProfiles } from '@shmup/input-web';
-import { fxSpriteNames, loadFxContent, parseFxContent } from '@shmup/render-pixi';
+import {
+  bulletPaletteSpriteName,
+  fxSpriteNames,
+  loadFxContent,
+  parseFxContent,
+} from '@shmup/render-pixi';
 import { describe, expect, it } from 'vitest';
 import { findMissingSprites } from '../../scripts/assets/manifest.mjs';
 import { fourWayBot } from '../playtest/four-way-bot.js';
@@ -269,6 +277,7 @@ describe('integration: content/ validates', () => {
       stages: ['stage'],
       tilesets: ['tileset'],
       rules: ['rules'],
+      patterns: ['patterns'],
       input: ['input-profiles'],
       fx: ['fx'],
       // The SFX bank next to the music folder (audio/main.sfx.json, audio/music/*.music.json).
@@ -353,6 +362,19 @@ describe('integration: content/ validates', () => {
         ).toEqual([]);
       }
     }
+  });
+
+  it('ships the scoring rules (M2-02) equal to the built-in ones, and a compiled pattern library', () => {
+    const { db } = loadContent(shippedFiles);
+    expect(db.scoring).toEqual(DEFAULT_SCORING_RULES);
+    const bank = db.patterns;
+    expect(bank.actions.length).toBeGreaterThanOrEqual(5);
+    for (let i = 0; i < bank.actions.length; i++) {
+      expect(bank.entries[i], bank.actions[i]).toBeGreaterThan(0);
+    }
+    const sentry = db.enemies[db.enemyIndex.get('sentry') ?? -1];
+    expect(sentry?.script).toBe('pattern.loop');
+    expect(bank.actions[sentry?.patternId ?? -1]).toBe('common.spiral');
   });
 
   it('ships the difficulty presets of plan M2-01, equal to the built-in table', () => {
@@ -543,6 +565,26 @@ describe('integration: content/ sprites exist in the atlas', () => {
     expect(findMissingSprites(manifest, ENGINE_SPRITES, 'ENGINE_SPRITES')).toEqual([]);
     const { db } = loadContent(shippedFiles, { extraSprites: ENGINE_SPRITES });
     expect(findMissingSprites(manifest, db.sprites.names, 'db.sprites.names')).toEqual([]);
+  });
+
+  it('has every colour-blind palette variant of every bullet / laser sprite, frame for frame (M2-02)', () => {
+    const coloured = BULLET_SPRITES.filter((name) => /^(bullets|lasers)\//.test(name));
+    expect(coloured.length).toBeGreaterThanOrEqual(11); // 9 kinds, the beam, the bend
+    for (const palette of BULLET_PALETTES) {
+      if (palette === 'standard') continue;
+      for (const name of coloured) {
+        const variant = bulletPaletteSpriteName(name, palette);
+        const sprite = manifest.sprites[variant];
+        expect(sprite, variant).toBeDefined();
+        expect(sprite?.frames.length, variant).toBe(manifest.sprites[name]?.frames.length);
+        // Same frame sizes and anchors: the renderer swaps sprite bases only.
+        sprite?.frames.forEach((frame, k) => {
+          const a = manifest.frames[frame];
+          const b = manifest.frames[manifest.sprites[name]?.frames[k] ?? ''];
+          expect([a?.w, a?.h, a?.ax, a?.ay], `${variant}#${k}`).toEqual([b?.w, b?.h, b?.ax, b?.ay]);
+        });
+      }
+    }
   });
 
   it('finds every sprite of the particle presets (content/fx, M1-14) in the atlas', () => {

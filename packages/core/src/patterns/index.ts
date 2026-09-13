@@ -1,8 +1,8 @@
 /**
  * # patterns — behaviour coroutines, movers and attack patterns
  *
- * **Status: partial.** The script runner and the movers (plan M1-08) and the fire primitives
- * (plan M1-09) are implemented; the BulletML-inspired pattern DSL arrives with M2-02.
+ * **Status: implemented.** The script runner and the movers (plan M1-08), the fire primitives
+ * (plan M1-09) and the BulletML-inspired pattern DSL with its interpreter (plan M2-02).
  *
  * **Responsibility.** Scripting for enemy/boss behaviour and bullet patterns, split the way
  * decision D29 describes:
@@ -62,6 +62,16 @@
  *
  * {@link rankedWait} scales a fire interval by the rank's fire rate.
  *
+ * **The pattern DSL (M2-02).** Bullet patterns authored as data (`content/patterns/`): the format,
+ * the expression compiler ({@link compileExpression}) and the pattern compiler
+ * ({@link compilePatternBank}, run by `core/data`'s loader) are in `./dsl.ts`; every action becomes
+ * a stack-machine program in one `Float64Array` ({@link PatternBank}). {@link createPatternVm}
+ * builds a World's interpreter ({@link PatternVm}): enemy behaviours start and step an emitter
+ * (`ScriptApi.startPattern` / `stepPattern` — the yielded `wait` is the coroutine's sleep, so the
+ * script runner steps the interpreter), and bullets fired with `actions` run their own programs
+ * inside the bullet update (`BulletSystem.setProgramRunner`). Zero allocation: typed-array state,
+ * a preallocated expression stack, no `eval`.
+ *
  * **Zero allocation.** Movers only read typed arrays (the baked path tables, the collision map,
  * the sine table) and write numbers; the terrain queries get whole pixels (V8 boxes fractional
  * arguments of calls it does not inline). Resuming a generator allocates its `{ value, done }`
@@ -78,14 +88,33 @@
  * {@link setMover}, {@link updateMover}, {@link FollowTrack}, {@link FOLLOW_HISTORY},
  * {@link samplePath}, {@link CRAWL_STEP}, {@link AIM_DIRECTIONS}. Fire primitives:
  * {@link fireAimed}, {@link fireNWay}, {@link fireRing}, {@link fireSpiral}, {@link fireStack},
- * {@link fireSpray}, {@link fireHoming}, {@link fireDelayed}, {@link rankedWait}. The planned DSL
- * node type {@link PatternNode}.
- *
- * **Planned API.** `compilePattern(nodes)` (M2-02).
+ * {@link fireSpray}, {@link fireHoming}, {@link fireDelayed}, {@link rankedWait}. The DSL:
+ * {@link createPatternVm}, {@link PatternVm}, {@link PatternHost}, {@link PatternSource},
+ * {@link PatternRunners},
+ * {@link MAX_PATTERN_EMITTERS}, {@link MAX_BULLET_PROGRAMS}, {@link PATTERN_RUNNERS},
+ * {@link PATTERN_STEP_BUDGET}, {@link MAX_PATTERN_WAIT}; from `./dsl.ts` {@link compileExpression},
+ * {@link compilePatternBank}, {@link applyExprOp}, {@link PatternBank}, {@link EMPTY_PATTERN_BANK},
+ * {@link PATTERNS_FILE_SCHEMA}, {@link CollectedPatterns}, the node types ({@link PatternNode},
+ * {@link PatternsFile}, {@link PatternActionEntry}, {@link PatternBulletEntry},
+ * {@link PatternBulletSpec}, {@link PatternDirection}, {@link PatternSpeed},
+ * {@link PatternSpeedSpec}, {@link PatternExpr}), the codes ({@link PatternOp}, {@link ExprOp},
+ * {@link DirType}, {@link SpeedType}, {@link DIRECTION_TYPES}, {@link SPEED_TYPES},
+ * {@link ACCEL_HAS_MIN}, {@link ACCEL_HAS_MAX}) and limits ({@link MAX_REPEAT_DEPTH},
+ * {@link MAX_EXPR_STACK}, {@link MAX_PATTERN_CODE}, {@link DEFAULT_PATTERN_SPEED},
+ * {@link DEFAULT_PATTERN_KIND}).
  *
  * @module
  */
-import { AIM_AT_TARGET, type BulletOrigin, type BulletSystem } from '../bullets/index.js';
+import {
+  AIM_AT_TARGET,
+  BulletFlag,
+  BulletOrigin,
+  BulletShot,
+  MAX_ENEMY_BULLETS,
+  NO_TARGET_ANGLE,
+  type BulletProgramRunner,
+  type BulletSystem,
+} from '../bullets/index.js';
 import { findCeiling, findFloor, type TerrainMap } from '../collision/index.js';
 import { MOVER_TYPES, PATH_SAMPLE_STEP, type MoverType, type PathSpec } from '../data/index.js';
 import {
@@ -101,11 +130,55 @@ import { SIN_TABLE_Q16, TRIG_SCALE } from '../math/trig-table.js';
 import { defineModule } from '../module-info.js';
 import type { CameraView } from '../presentation/index.js';
 import type { Rng } from '../rng/index.js';
+import {
+  ACCEL_HAS_MAX,
+  ACCEL_HAS_MIN,
+  DEFAULT_PATTERN_SPEED,
+  DirType,
+  ExprOp,
+  MAX_EXPR_STACK,
+  MAX_REPEAT_DEPTH,
+  PatternOp,
+  SpeedType,
+  type PatternBank,
+} from './dsl.js';
+
+export {
+  ACCEL_HAS_MAX,
+  ACCEL_HAS_MIN,
+  DEFAULT_PATTERN_KIND,
+  DEFAULT_PATTERN_SPEED,
+  DIRECTION_TYPES,
+  DirType,
+  EMPTY_PATTERN_BANK,
+  ExprOp,
+  MAX_EXPR_STACK,
+  MAX_PATTERN_CODE,
+  MAX_REPEAT_DEPTH,
+  PATTERNS_FILE_SCHEMA,
+  PatternOp,
+  SPEED_TYPES,
+  SpeedType,
+  applyExprOp,
+  compileExpression,
+  compilePatternBank,
+  type CollectedPatterns,
+  type PatternActionEntry,
+  type PatternBank,
+  type PatternBulletEntry,
+  type PatternBulletSpec,
+  type PatternDirection,
+  type PatternExpr,
+  type PatternNode,
+  type PatternSpeed,
+  type PatternSpeedSpec,
+  type PatternsFile,
+} from './dsl.js';
 
 /** Module descriptor (see {@link defineModule}). */
 export const moduleInfo = defineModule({
   name: 'patterns',
-  status: 'partial',
+  status: 'implemented',
   specRefs: ['shmup_feat.md §12', 'shmup_feat.md §11', 'shmup_tech.md §4.6'],
 });
 
@@ -1194,33 +1267,721 @@ export function fireDelayed(
 
 // ------------------------------------------------------------------------------ DSL (M2-02)
 
+/** Emitter runner slots: one per enemy slot (`core/enemies` `MAX_ENEMIES`). */
+export const MAX_PATTERN_EMITTERS = 64;
+
+/** Runner slots of bullets' own programs: one per enemy bullet. */
+export const MAX_BULLET_PROGRAMS = MAX_ENEMY_BULLETS;
+
+/** Every runner slot: the emitters `[0, 64)`, then the bullet programs. */
+export const PATTERN_RUNNERS = MAX_PATTERN_EMITTERS + MAX_BULLET_PROGRAMS;
+
 /**
- * A node of the planned pattern DSL (JSON-serialisable, M2-02).
+ * Most instructions one run may execute before it sleeps a tick on its own (a `repeat` without a
+ * `wait` cannot hang the tick; the pattern resumes on the next one, deterministically).
+ */
+export const PATTERN_STEP_BUDGET = 1024;
+
+/** Longest `wait` a program may yield (ticks). */
+export const MAX_PATTERN_WAIT = 1_000_000;
+
+/** Runner state bits (`PatternVm` `state`). */
+const RunnerBit = { InUse: 1, SeqDir: 2, SeqSpeed: 4 } as const;
+
+/** What the pattern interpreter reads from its World (the World implements it). */
+export interface PatternHost {
+  /** The enemy bullets (fire, aim, the rank's scales; bullets' motion fields). */
+  readonly bullets: BulletSystem;
+  /** The RNG streams (`$rand` draws from the gameplay stream). */
+  readonly rng: { readonly gameplay: Rng };
+  /** The session's rank (`$rank`). */
+  readonly rank: number;
+  /** What the rank is computed from (`$loop` reads `loop`). */
+  readonly rankInputs: { readonly loop: number };
+  /** The content (the compiled {@link PatternBank}). */
+  readonly content: { readonly patterns: PatternBank };
+}
+
+/**
+ * The runner table of a {@link PatternVm} ({@link PATTERN_RUNNERS} slots; `repeat` arrays are
+ * runner-major, {@link MAX_REPEAT_DEPTH} per runner). Live interpreter state — never write it.
+ */
+export interface PatternRunners {
+  /** Runner state bits (0 = free / idle; bit 1 = in use, 2 = has a `sequence` direction, 4 = speed). */
+  readonly state: Uint8Array;
+  /** Program counter (0 = nothing to run). */
+  readonly pc: Int32Array;
+  /** Entry the runner started from. */
+  readonly entry: Int32Array;
+  /** `repeat` depth. */
+  readonly depth: Int32Array;
+  /** `repeat` indices. */
+  readonly loopI: Int32Array;
+  /** `repeat` counts. */
+  readonly loopN: Int32Array;
+  /** Bullets: the age their program runs again. */
+  readonly wake: Int32Array;
+  /** Direction of the previous fire. */
+  readonly seqDir: Float64Array;
+  /** Speed of the previous fire (Normal units). */
+  readonly seqSpeed: Float64Array;
+  /** Emitters: heading of `relative` directions. */
+  readonly heading: Float64Array;
+  /** Bullets: the rank speed scale they fire with. */
+  readonly scale: Float64Array;
+  /** `[0]` = where the next bullet runner search starts, `[1]` = bullet runners in use. */
+  readonly meta: Int32Array;
+}
+
+/** Where an emitter fires from (an `Enemy` works: only `x` / `y` are read). */
+export interface PatternSource {
+  /** World x. */
+  readonly x: number;
+  /** World y. */
+  readonly y: number;
+}
+
+/**
+ * The interpreter of compiled DSL programs (plan M2-02): one per World, created by `createWorld`
+ * and installed as the bullet system's program runner.
  *
  * @remarks
- * Numeric parameters are strings so they can be expressions over `$rank` and
- * `$rand`, e.g. `"2 + $rank / 8"` (BulletML-style), compiled once at load time.
+ * **Runners.** {@link PATTERN_RUNNERS} runner slots in typed arrays ({@link PatternVm.runners},
+ * hashed by `hashWorld` — the runners in use): slot `e < 64` belongs to enemy slot `e` (its
+ * behaviour starts and steps it — `ScriptApi.startPattern` / `stepPattern`), the others are handed
+ * out to bullets fired with `actions` (the first free slot from a rotating hint, so the choice
+ * depends only on hashed state; a bullet stores `runner + 1` in its pool field) and freed when the
+ * program ends or the bullet goes. A runner holds its program counter, its `repeat`
+ * stack ({@link MAX_REPEAT_DEPTH} × index / count), the previous fire's direction and speed
+ * (`sequence`), its heading (emitters: `relative`), the rank speed scale it fires with (bullets:
+ * the shooter's at launch) and when it wakes (bullets: the age).
+ *
+ * **Running.** An emitter runs when its behaviour's coroutine wakes: {@link PatternVm.stepEmitter}
+ * executes until a `wait` (its ticks are the coroutine's next `yield` — decision D29) or the end.
+ * A bullet's program runs inside `BulletSystem.update` (phase 5), after the bullet aged and
+ * before its kinematics, when its wake age has come. Each run executes at most
+ * {@link PATTERN_STEP_BUDGET} instructions. Expressions are evaluated on a preallocated stack;
+ * fractional values stay in typed arrays and class fields, so a run never allocates (a `$rand`
+ * draw is the RNG's own call).
+ *
+ * **Firing.** A `fire` computes its direction and speed (see `dsl.ts`), records them for
+ * `sequence`, and — when the emitter may fire (the enemy's fire rule) — launches one bullet at
+ * `speed × the rank's speed scale` (`BulletSystem.speedScale` — the shooter's modifiers apply
+ * while its script runs; a bullet's program uses the scale it was fired with), giving it a runner
+ * of its own when its bullet has `actions` (no free runner: it flies without its program).
  */
-export type PatternNode =
-  | {
-      /** Discriminant: fire one bullet. */
-      readonly op: 'fire';
-      /** Direction expression (binary-angle units; default: aimed at the player). */
-      readonly direction?: string;
-      /** Speed expression in pixels per tick (default: the enemy's base speed). */
-      readonly speed?: string;
+export interface PatternVm extends BulletProgramRunner {
+  /** The bank the programs come from. */
+  readonly bank: PatternBank;
+  /** The runner table (read-only for others: `hashWorld` mixes the runners in use). */
+  readonly runners: PatternRunners;
+  /** Bullet runners in use. */
+  readonly bulletPrograms: number;
+  /**
+   * (Re)starts an emitter on a pattern (`ContentDb.patterns` action index).
+   *
+   * @param emitter - Emitter slot (the enemy slot, `0 … 63`).
+   * @param pattern - Action index (e.g. `EnemySpec.patternId`).
+   * @param heading - The emitter's heading for `relative` directions (default left).
+   * @returns `false` (nothing started, the emitter stopped) for a bad slot or pattern, or one that
+   *   did not compile.
+   */
+  startEmitter(emitter: number, pattern: number, heading?: number): boolean;
+  /**
+   * Runs an emitter until its next `wait` or its end (see the remarks of {@link PatternVm}).
+   *
+   * @param emitter - Emitter slot.
+   * @param source - Where it fires from (the enemy).
+   * @param canFire - The enemy's fire rule: `false` computes everything but launches nothing.
+   * @returns Ticks to sleep (≥ 1), or -1 when the pattern ended (or none runs).
+   */
+  stepEmitter(emitter: number, source: PatternSource, canFire: boolean): number;
+  /**
+   * Stops an emitter (its enemy is gone).
+   *
+   * @param emitter - Emitter slot.
+   */
+  stopEmitter(emitter: number): void;
+}
+
+/** The {@link PatternVm} (a class: typed-array state, monomorphic methods). */
+class PatternVmImpl implements PatternVm {
+  /** See {@link PatternVm.bank}. */
+  readonly bank: PatternBank;
+  /** See {@link PatternVm.runners}. */
+  readonly runners: PatternRunners;
+  /** The bank's code. */
+  private readonly code: Float64Array;
+  /** Program counter per runner (0 = the bank's `End`: nothing to run). */
+  private readonly pc = new Int32Array(PATTERN_RUNNERS);
+  /** Entry per runner (emitters restart from it). */
+  private readonly entry = new Int32Array(PATTERN_RUNNERS);
+  /** `repeat` depth per runner. */
+  private readonly depth = new Int32Array(PATTERN_RUNNERS);
+  /** `repeat` indices (`$i`), runner-major. */
+  private readonly loopI = new Int32Array(PATTERN_RUNNERS * MAX_REPEAT_DEPTH);
+  /** `repeat` counts, runner-major. */
+  private readonly loopN = new Int32Array(PATTERN_RUNNERS * MAX_REPEAT_DEPTH);
+  /** Bullets: the age their program runs again. */
+  private readonly wake = new Int32Array(PATTERN_RUNNERS);
+  /** Direction of the previous fire (`sequence`). */
+  private readonly seqDir = new Float64Array(PATTERN_RUNNERS);
+  /** Speed of the previous fire (Normal units, `sequence`). */
+  private readonly seqSpeed = new Float64Array(PATTERN_RUNNERS);
+  /** Emitters: the heading of `relative` directions. */
+  private readonly heading = new Float64Array(PATTERN_RUNNERS);
+  /** Bullets: the rank speed scale they were fired with. */
+  private readonly scale = new Float64Array(PATTERN_RUNNERS);
+  /** {@link RunnerBit}s. */
+  private readonly state = new Uint8Array(PATTERN_RUNNERS);
+  /** `[0]` = next bullet runner to try, `[1]` = bullet runners in use. */
+  private readonly meta = new Int32Array(2);
+  /** The expression stack; `[0]` holds the last result. */
+  private readonly stack = new Float64Array(MAX_EXPR_STACK + 1);
+  /** The World. */
+  private readonly host: PatternHost;
+  /** Where the current fire starts (and aims from). */
+  private readonly origin = new BulletOrigin();
+  /** The bullet being launched. */
+  private readonly shot = new BulletShot();
+
+  /**
+   * Creates the interpreter (see {@link createPatternVm}).
+   *
+   * @param host - The World.
+   */
+  constructor(host: PatternHost) {
+    this.host = host;
+    this.bank = host.content.patterns;
+    this.code = this.bank.code;
+    this.runners = Object.freeze({
+      state: this.state,
+      pc: this.pc,
+      entry: this.entry,
+      depth: this.depth,
+      loopI: this.loopI,
+      loopN: this.loopN,
+      wake: this.wake,
+      seqDir: this.seqDir,
+      seqSpeed: this.seqSpeed,
+      heading: this.heading,
+      scale: this.scale,
+      meta: this.meta,
+    });
+    this.clear();
+  }
+
+  /** See {@link PatternVm.bulletPrograms}. */
+  get bulletPrograms(): number {
+    return this.meta[1];
+  }
+
+  /**
+   * See {@link BulletProgramRunner.clear}: every bullet runner free and every emitter stopped (a
+   * session clear removes the enemies too).
+   */
+  clear(): void {
+    for (let r = 0; r < PATTERN_RUNNERS; r++) {
+      this.state[r] = 0;
+      this.pc[r] = 0;
     }
-  | {
-      /** Discriminant: pause the pattern. */
-      readonly op: 'wait';
-      /** Tick-count expression. */
-      readonly ticks: string;
+    this.meta[0] = MAX_PATTERN_EMITTERS;
+    this.meta[1] = 0;
+  }
+
+  /** See {@link BulletProgramRunner.release}. */
+  release(runner: number): void {
+    if (!(runner >= MAX_PATTERN_EMITTERS && runner < PATTERN_RUNNERS)) return;
+    if ((this.state[runner] & RunnerBit.InUse) === 0) return;
+    this.state[runner] = 0;
+    this.pc[runner] = 0;
+    this.meta[1]--;
+  }
+
+  /**
+   * Takes the first free bullet runner at or after the search hint (wrapping).
+   *
+   * @returns The runner slot, or -1 when all are in use.
+   */
+  private allocRunner(): number {
+    if (this.meta[1] >= MAX_BULLET_PROGRAMS) return -1;
+    let r = this.meta[0];
+    for (let k = 0; k < MAX_BULLET_PROGRAMS; k++) {
+      if (this.state[r] === 0) {
+        this.meta[0] = r + 1 < PATTERN_RUNNERS ? r + 1 : MAX_PATTERN_EMITTERS;
+        this.meta[1]++;
+        return r;
+      }
+      r = r + 1 < PATTERN_RUNNERS ? r + 1 : MAX_PATTERN_EMITTERS;
     }
-  | {
-      /** Discriminant: run `body` several times. */
-      readonly op: 'repeat';
-      /** Repetition-count expression. */
-      readonly times: string;
-      /** Nodes to repeat, in order. */
-      readonly body: readonly PatternNode[];
-    };
+    return -1;
+  }
+
+  /**
+   * Resets a runner to an entry.
+   *
+   * @param r - Runner slot.
+   * @param entry - Code offset.
+   */
+  private reset(r: number, entry: number): void {
+    this.pc[r] = entry;
+    this.entry[r] = entry;
+    this.depth[r] = 0;
+    this.wake[r] = 1;
+    this.seqDir[r] = 0;
+    this.seqSpeed[r] = 0;
+    this.state[r] = RunnerBit.InUse;
+  }
+
+  /** See {@link PatternVm.startEmitter}. */
+  startEmitter(emitter: number, pattern: number, heading: number = NO_TARGET_ANGLE): boolean {
+    if (!(emitter >= 0 && emitter < MAX_PATTERN_EMITTERS && emitter % 1 === 0)) return false;
+    const entries = this.bank.entries;
+    const entry =
+      pattern >= 0 && pattern < entries.length && pattern % 1 === 0 ? entries[pattern] : 0;
+    if (entry <= 0) {
+      this.stopEmitter(emitter);
+      return false;
+    }
+    this.reset(emitter, entry);
+    this.heading[emitter] = heading;
+    this.scale[emitter] = 1;
+    return true;
+  }
+
+  /** See {@link PatternVm.stopEmitter}. */
+  stopEmitter(emitter: number): void {
+    if (!(emitter >= 0 && emitter < MAX_PATTERN_EMITTERS && emitter % 1 === 0)) return;
+    this.pc[emitter] = 0;
+    this.state[emitter] = 0;
+  }
+
+  /** See {@link PatternVm.stepEmitter}. */
+  stepEmitter(emitter: number, source: PatternSource, canFire: boolean): number {
+    if (!(emitter >= 0 && emitter < MAX_PATTERN_EMITTERS && emitter % 1 === 0)) return -1;
+    if (this.pc[emitter] === 0) return -1;
+    this.origin.x = source.x;
+    this.origin.y = source.y;
+    const wait = this.exec(emitter, -1, canFire);
+    if (wait > 0) return wait;
+    this.stopEmitter(emitter);
+    return -1;
+  }
+
+  /** See {@link BulletProgramRunner.runBullet}. */
+  runBullet(index: number): number {
+    const f = this.host.bullets.pool.fields;
+    const r = f.runner[index] - 1;
+    if (r < MAX_PATTERN_EMITTERS || (this.state[r] & RunnerBit.InUse) === 0) {
+      f.runner[index] = 0;
+      return 0;
+    }
+    const age = f.age[index];
+    if (this.wake[r] > age) return 0;
+    this.origin.x = f.x[index];
+    this.origin.y = f.y[index];
+    const wait = this.exec(r, index, true);
+    if (wait > 0) {
+      this.wake[r] = age + wait;
+      return 1;
+    }
+    // The program ended (or the bullet vanished — its runner is already free then).
+    if (f.runner[index] !== 0 && (f.flags[index] & BulletFlag.Dead) === 0) {
+      f.runner[index] = 0;
+      this.release(r);
+    }
+    return 1;
+  }
+
+  /**
+   * Runs a runner until it sleeps or ends.
+   *
+   * @param r - Runner slot.
+   * @param bullet - The bullet running it, or -1 for an emitter.
+   * @param canFire - Whether fires launch bullets.
+   * @returns Ticks to sleep (≥ 1), or 0 when the program ended.
+   */
+  private exec(r: number, bullet: number, canFire: boolean): number {
+    const code = this.code;
+    let pc = this.pc[r];
+    let steps = 0;
+    for (;;) {
+      if (++steps > PATTERN_STEP_BUDGET) {
+        this.pc[r] = pc;
+        return 1;
+      }
+      switch (code[pc]) {
+        case PatternOp.Wait: {
+          const ranked = code[pc + 1];
+          pc = this.evalExpr(pc + 2, r);
+          const ticks = this.stack[0];
+          let wait = 0;
+          if (ranked !== 0) {
+            wait = Math.round(ticks / this.host.bullets.fireScale);
+            if (!(wait >= 1)) wait = 1;
+          } else if (ticks >= 1) {
+            wait = Math.floor(ticks);
+          }
+          if (wait >= 1) {
+            this.pc[r] = pc;
+            return wait < MAX_PATTERN_WAIT ? wait : MAX_PATTERN_WAIT;
+          }
+          break;
+        }
+        case PatternOp.Repeat: {
+          const exit = code[pc + 1];
+          pc = this.evalExpr(pc + 2, r);
+          const times = Math.floor(this.stack[0]);
+          const d = this.depth[r];
+          if (!(times >= 1) || d >= MAX_REPEAT_DEPTH) {
+            pc = exit;
+            break;
+          }
+          this.loopI[r * MAX_REPEAT_DEPTH + d] = 0;
+          this.loopN[r * MAX_REPEAT_DEPTH + d] = times < 0x3fffffff ? times : 0x3fffffff;
+          this.depth[r] = d + 1;
+          break;
+        }
+        case PatternOp.Loop: {
+          const d = this.depth[r] - 1;
+          const at = r * MAX_REPEAT_DEPTH + d;
+          const i = this.loopI[at] + 1;
+          if (d >= 0 && i < this.loopN[at]) {
+            this.loopI[at] = i;
+            pc = code[pc + 1];
+          } else {
+            this.depth[r] = d > 0 ? d : 0;
+            pc += 2;
+          }
+          break;
+        }
+        case PatternOp.Fire:
+          pc = this.fire(pc, r, bullet, canFire);
+          break;
+        case PatternOp.ChangeSpeed:
+          pc = this.changeSpeed(pc, r, bullet);
+          break;
+        case PatternOp.ChangeDirection:
+          pc = this.changeDirection(pc, r, bullet);
+          break;
+        case PatternOp.Accel:
+          pc = this.accel(pc, r, bullet);
+          break;
+        case PatternOp.Vanish:
+          this.pc[r] = 0;
+          if (bullet >= 0) this.host.bullets.remove(bullet);
+          return 0;
+        default:
+          // `End` (and anything unknown).
+          this.pc[r] = 0;
+          return 0;
+      }
+    }
+  }
+
+  /**
+   * Evaluates the expression at `pc` into `stack[0]`.
+   *
+   * @param pc - Offset of the expression's length.
+   * @param r - Runner slot (`$i`).
+   * @returns The offset after the expression.
+   */
+  private evalExpr(pc: number, r: number): number {
+    const code = this.code;
+    const stack = this.stack;
+    const end = pc + 1 + code[pc];
+    let p = pc + 1;
+    let sp = 0;
+    while (p < end) {
+      const op = code[p++];
+      if (op === ExprOp.Const) {
+        stack[sp++] = code[p++];
+        continue;
+      }
+      switch (op) {
+        case ExprOp.Rank:
+          stack[sp++] = this.host.rank;
+          break;
+        case ExprOp.Rand:
+          // Into the stack: a returned fraction would be boxed per draw.
+          this.host.rng.gameplay.nextFloatInto(stack, sp++);
+          break;
+        case ExprOp.Loop:
+          stack[sp++] = this.host.rankInputs.loop;
+          break;
+        case ExprOp.Index: {
+          const d = this.depth[r];
+          stack[sp++] = d > 0 ? this.loopI[r * MAX_REPEAT_DEPTH + d - 1] : 0;
+          break;
+        }
+        case ExprOp.Neg:
+          stack[sp - 1] = -stack[sp - 1];
+          break;
+        case ExprOp.Floor:
+          stack[sp - 1] = Math.floor(stack[sp - 1]);
+          break;
+        case ExprOp.Round:
+          stack[sp - 1] = Math.round(stack[sp - 1]);
+          break;
+        case ExprOp.Abs:
+          stack[sp - 1] = Math.abs(stack[sp - 1]);
+          break;
+        case ExprOp.Sin:
+          stack[sp - 1] = SIN_TABLE_Q16[Math.round(stack[sp - 1]) & ANGLE_MASK] / TRIG_SCALE;
+          break;
+        case ExprOp.Cos:
+          stack[sp - 1] =
+            SIN_TABLE_Q16[(Math.round(stack[sp - 1]) + ANGLE_QUARTER) & ANGLE_MASK] / TRIG_SCALE;
+          break;
+        default: {
+          const b = stack[--sp];
+          const a = stack[sp - 1];
+          let v: number;
+          switch (op) {
+            case ExprOp.Add:
+              v = a + b;
+              break;
+            case ExprOp.Sub:
+              v = a - b;
+              break;
+            case ExprOp.Mul:
+              v = a * b;
+              break;
+            case ExprOp.Div:
+              v = a / b;
+              break;
+            case ExprOp.Mod:
+              v = a % b;
+              break;
+            case ExprOp.Min:
+              v = a < b ? a : b;
+              break;
+            case ExprOp.Max:
+              v = a > b ? a : b;
+              break;
+            default:
+              v = NaN;
+          }
+          stack[sp - 1] = v;
+        }
+      }
+    }
+    if (sp === 0) stack[0] = 0;
+    return end;
+  }
+
+  /**
+   * The heading a direction resolves to (its value is in `stack[0]`); aims from `origin`.
+   *
+   * @param type - `DirType`.
+   * @param r - Runner slot.
+   * @param bullet - The bullet running it, or -1.
+   * @returns Nothing — the heading is written to `stack[1]`.
+   */
+  private resolveDirection(type: number, r: number, bullet: number): void {
+    const stack = this.stack;
+    const value = stack[0];
+    let dir: number;
+    if (type === DirType.Absolute) {
+      dir = value;
+    } else if (type === DirType.Relative) {
+      dir = (bullet >= 0 ? this.host.bullets.pool.fields.angle[bullet] : this.heading[r]) + value;
+    } else if (type === DirType.Sequence && (this.state[r] & RunnerBit.SeqDir) !== 0) {
+      dir = this.seqDir[r] + value;
+    } else {
+      dir = this.host.bullets.aimFrom(this.origin) + value;
+    }
+    stack[1] = dir;
+  }
+
+  /**
+   * `Fire` (see {@link PatternVm}).
+   *
+   * @param pc - Offset of the op.
+   * @param r - Runner slot.
+   * @param bullet - The bullet running it, or -1.
+   * @param canFire - Whether it launches.
+   * @returns The next offset.
+   */
+  private fire(pc: number, r: number, bullet: number, canFire: boolean): number {
+    const code = this.code;
+    const stack = this.stack;
+    const dirType = code[pc + 1];
+    const speedType = code[pc + 2];
+    const kind = code[pc + 3];
+    const entry = code[pc + 4];
+    let p = this.evalExpr(pc + 5, r);
+    this.resolveDirection(dirType, r, bullet);
+    const dir = stack[1];
+    p = this.evalExpr(p, r);
+    const value = stack[0];
+    const bullets = this.host.bullets;
+    const scale = bullet >= 0 ? this.scale[r] : bullets.speedScale;
+    let speed: number;
+    if (speedType === SpeedType.Relative) {
+      speed = (bullet >= 0 ? bullets.pool.fields.speed[bullet] / scale : 0) + value;
+    } else if (speedType === SpeedType.Sequence) {
+      speed =
+        ((this.state[r] & RunnerBit.SeqSpeed) !== 0 ? this.seqSpeed[r] : DEFAULT_PATTERN_SPEED) +
+        value;
+    } else {
+      speed = value;
+    }
+    this.seqDir[r] = dir;
+    this.seqSpeed[r] = speed;
+    this.state[r] |= RunnerBit.SeqDir | RunnerBit.SeqSpeed;
+    if (!canFire) return p;
+    const shot = this.shot;
+    shot.x = this.origin.x;
+    shot.y = this.origin.y;
+    shot.angle = dir;
+    shot.speed = speed * scale;
+    const j = bullets.launch(shot, kind);
+    const child = j >= 0 && entry > 0 ? this.allocRunner() : -1;
+    if (child >= 0) {
+      this.reset(child, entry);
+      this.scale[child] = scale;
+      this.heading[child] = 0;
+      bullets.pool.fields.runner[j] = child + 1;
+    }
+    return p;
+  }
+
+  /**
+   * `ChangeSpeed` of the running bullet (an emitter only evaluates it).
+   *
+   * @param pc - Offset of the op.
+   * @param r - Runner slot.
+   * @param bullet - The bullet, or -1.
+   * @returns The next offset.
+   */
+  private changeSpeed(pc: number, r: number, bullet: number): number {
+    const type = this.code[pc + 1];
+    let p = this.evalExpr(pc + 2, r);
+    const value = this.stack[0];
+    p = this.evalExpr(p, r);
+    const term = Math.floor(this.stack[0]);
+    if (bullet < 0) return p;
+    const f = this.host.bullets.pool.fields;
+    const scale = this.scale[r];
+    if (type === SpeedType.Sequence) {
+      if (term >= 1) {
+        f.accel[bullet] = value * scale;
+        f.accelTerm[bullet] = term;
+        f.termSpeed[bullet] = NaN;
+      }
+      return p;
+    }
+    const current = f.speed[bullet];
+    const target = type === SpeedType.Relative ? current + value * scale : value * scale;
+    if (target < f.minSpeed[bullet]) f.minSpeed[bullet] = target;
+    if (target > f.maxSpeed[bullet]) f.maxSpeed[bullet] = target;
+    if (!(term >= 1)) {
+      f.speed[bullet] = target;
+      f.accel[bullet] = 0;
+      f.accelTerm[bullet] = 0;
+      return p;
+    }
+    f.accel[bullet] = (target - current) / term;
+    f.accelTerm[bullet] = term;
+    f.termSpeed[bullet] = target;
+    return p;
+  }
+
+  /**
+   * `ChangeDirection` of the running bullet; an emitter's sets its `relative` heading at once.
+   *
+   * @param pc - Offset of the op.
+   * @param r - Runner slot.
+   * @param bullet - The bullet, or -1.
+   * @returns The next offset.
+   */
+  private changeDirection(pc: number, r: number, bullet: number): number {
+    const type = this.code[pc + 1];
+    let p = this.evalExpr(pc + 2, r);
+    const value = this.stack[0];
+    p = this.evalExpr(p, r);
+    const term = Math.floor(this.stack[0]);
+    this.stack[0] = value;
+    if (bullet < 0) {
+      if (type !== DirType.Sequence) {
+        this.resolveDirection(type, r, -1);
+        this.heading[r] = this.stack[1];
+      }
+      return p;
+    }
+    const f = this.host.bullets.pool.fields;
+    if (type === DirType.Sequence) {
+      if (term >= 1) {
+        f.angVel[bullet] = value;
+        f.turnTerm[bullet] = term;
+        f.termAngle[bullet] = NaN;
+      }
+      return p;
+    }
+    this.resolveDirection(type, r, bullet);
+    let target = this.stack[1] % ANGLE_UNITS;
+    if (target < 0) target += ANGLE_UNITS;
+    if (!(term >= 1)) {
+      f.angle[bullet] = target;
+      f.angVel[bullet] = 0;
+      f.turnTerm[bullet] = 0;
+      return p;
+    }
+    let delta = (target - f.angle[bullet]) % ANGLE_UNITS;
+    if (delta > ANGLE_UNITS / 2) delta -= ANGLE_UNITS;
+    else if (delta <= -ANGLE_UNITS / 2) delta += ANGLE_UNITS;
+    f.angVel[bullet] = delta / term;
+    f.turnTerm[bullet] = term;
+    f.termAngle[bullet] = target;
+    return p;
+  }
+
+  /**
+   * `Accel` of the running bullet (an emitter only evaluates it).
+   *
+   * @param pc - Offset of the op.
+   * @param r - Runner slot.
+   * @param bullet - The bullet, or -1.
+   * @returns The next offset.
+   */
+  private accel(pc: number, r: number, bullet: number): number {
+    const flags = this.code[pc + 1];
+    let p = this.evalExpr(pc + 2, r);
+    const accel = this.stack[0];
+    p = this.evalExpr(p, r);
+    const min = this.stack[0];
+    p = this.evalExpr(p, r);
+    const max = this.stack[0];
+    p = this.evalExpr(p, r);
+    const term = Math.floor(this.stack[0]);
+    if (bullet < 0) return p;
+    const f = this.host.bullets.pool.fields;
+    const scale = this.scale[r];
+    f.accel[bullet] = accel * scale;
+    if ((flags & ACCEL_HAS_MIN) !== 0) f.minSpeed[bullet] = min * scale;
+    if ((flags & ACCEL_HAS_MAX) !== 0) f.maxSpeed[bullet] = max * scale;
+    f.accelTerm[bullet] = term >= 1 ? term : 0;
+    f.termSpeed[bullet] = NaN;
+    return p;
+  }
+}
+
+/**
+ * Creates the pattern interpreter of a World (load time; the World installs it with
+ * `BulletSystem.setProgramRunner`).
+ *
+ * @param host - The World (its bullets, RNG, rank, loop and compiled patterns).
+ * @returns The interpreter, every runner idle.
+ *
+ * @example
+ * ```ts
+ * const vm = createPatternVm(world);
+ * world.bullets.setProgramRunner(vm);
+ * vm.startEmitter(enemy.slot, db.patterns.actionIndex.get('fan-3') ?? -1);
+ * const wait = vm.stepEmitter(enemy.slot, enemy, true); // → ticks until the next volley
+ * ```
+ */
+export function createPatternVm(host: PatternHost): PatternVm {
+  return new PatternVmImpl(host);
+}

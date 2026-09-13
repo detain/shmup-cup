@@ -1,7 +1,8 @@
 # content/rules/ — game-wide rule tables
 
 Rule tables that tune the whole game rather than one enemy or stage, loaded by the core's `data`
-module (kind `rules`, plan §3.5) and read by `core/config`. Implements `shmup_feat.md` §15
+module (kind `rules`, plan §3.5) and read by `core/config` (difficulty) and `core/bullets`
+(scoring). Implements `shmup_feat.md` §15
 ("Difficulty presets: Easy / Normal / Hard / Arcade — each maps to rank base, rank growth, lives,
 extend thresholds, death-penalty preset") and decision D16.
 
@@ -44,6 +45,24 @@ power of two; a second file with a `difficulty` section is reported and ignored.
 | ARCADE | 6 | 1 | 2 | 0 | arcade | 32 | × 1 |
 
 Every preset extends at 20,000 points and then every 70,000 (decision D7); lives are capped at 9.
+
+## Scoring section (M2-02)
+
+```jsonc
+{
+  "formatVersion": 1,
+  "kind": "rules",
+  "scoring": {                           // optional section; defined by one file only
+    "bulletCancel": 10                   // 0–10,000 points per bullet cancelled into a point item
+  }
+}
+```
+
+[`scoring.rules.json`](scoring.rules.json) is the shipped section (the built-in
+`DEFAULT_SCORING_RULES` of `packages/core/src/scoring` has the same value). When a boss dies or a
+Mega Crash goes off, every cancelable enemy bullet turns into a small gold point item that flies
+to the credited player's score in the top HUD bar and adds `bulletCancel` points when it gets
+there (core `bullets`, `CancelMode.Points`); the player's own death only makes them sparkle.
 
 ## How the table is used
 

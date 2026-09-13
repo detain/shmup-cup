@@ -1,0 +1,7 @@
+{
+  "formatVersion": 1,
+  "kind": "rules",
+  "scoring": {
+    "bulletCancel": 10
+  }
+}

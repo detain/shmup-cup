@@ -25,6 +25,7 @@ import {
   type SaveStore,
 } from '../../src/save/index.js';
 import {
+  BULLET_PALETTE_LABELS,
   GAME_OVER_DELAY_TICKS,
   OptionsItem,
   PAUSE_DIM,
@@ -174,7 +175,7 @@ describe('core/scenes options: opening and drawing', () => {
     save.setOptions({
       audio: { master: 6, music: 4, sfx: 9 },
       input: save.options.input,
-      display: {},
+      display: { bulletPalette: 'standard' },
     });
     const s = new Session(save);
     s.openOptionsFromTitle();
@@ -193,6 +194,8 @@ describe('core/scenes options: opening and drawing', () => {
       'SFX',
       'CONTROLS',
       'SAFE 4-WAY (DEFAULT)',
+      'BULLETS',
+      'STANDARD',
       'BACK',
     ]);
   });
@@ -230,6 +233,8 @@ describe('core/scenes options: opening and drawing', () => {
     none.press(Action.Down);
     none.press(Action.Down);
     none.press(Action.Down); // CONTROLS is skipped
+    expect(none.flow.options.menu.focus).toBe(OptionsItem.Bullets);
+    none.press(Action.Down);
     expect(none.flow.options.menu.focus).toBe(OptionsItem.Back);
   });
 });
@@ -286,6 +291,32 @@ describe('core/scenes options: live changes', () => {
 });
 
 describe('core/scenes options: saving', () => {
+  it('BULLETS picks the bullet palette live (M2-02), stores it and reopens on it', async () => {
+    const { storage } = countingStorage();
+    const save = createSaveStore(storage, await loadSave(storage));
+    const s = new Session(save);
+    s.openOptionsFromTitle();
+    for (let i = 0; i < 4; i++) s.press(Action.Down);
+    expect(s.flow.options.menu.focus).toBe(OptionsItem.Bullets);
+    const from = s.events.length;
+    s.press(Action.Right); // DEUTERANOPIA
+    s.press(Action.Right); // PROTANOPIA
+    s.press(Action.Left); // DEUTERANOPIA
+    expect(s.flow.options.bullets.label).toBe('DEUTERANOPIA');
+    expect(s.options(from)).toEqual([
+      [UserOptionKind.BulletPalette, 1],
+      [UserOptionKind.BulletPalette, 2],
+      [UserOptionKind.BulletPalette, 1],
+    ]);
+    s.press(Action.Back);
+    expect(save.options.display).toEqual({ bulletPalette: 'deuteranopia' });
+    s.hold(0, 3);
+    s.press(Action.Confirm);
+    s.hold(0, 2);
+    expect(s.flow.options.bullets.index).toBe(1);
+    expect(BULLET_PALETTE_LABELS).toEqual(['STANDARD', 'DEUTERANOPIA', 'PROTANOPIA', 'TRITANOPIA']);
+  });
+
   it('BACK stores the options and writes the save; unchanged options write nothing', async () => {
     const { storage, writes } = countingStorage();
     const save = createSaveStore(storage, await loadSave(storage));
@@ -295,6 +326,7 @@ describe('core/scenes options: saving', () => {
     s.press(Action.Left); // MUSIC 9
     for (let i = 0; i < 2; i++) s.press(Action.Down);
     s.press(Action.Right); // CONTROLS → FAST 8-WAY
+    s.press(Action.Down); // BULLETS
     s.press(Action.Down); // BACK
     const from = s.events.length;
     s.press(Action.Confirm);
@@ -303,7 +335,7 @@ describe('core/scenes options: saving', () => {
     expect(save.options).toEqual({
       audio: { master: 10, music: 9, sfx: 10 },
       input: { profileId: 'tizen-remote-diagonal' },
-      display: {},
+      display: { bulletPalette: 'standard' },
     });
     await settle();
     expect(writes).toEqual([SAVE_STORAGE_KEY]);

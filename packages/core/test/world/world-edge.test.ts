@@ -310,13 +310,14 @@ describe('core/world edge cases — pools, grid and view', () => {
     expect(w.pools.entries.map((e) => e.name)).toEqual([
       'enemyBullets',
       'enemyLasers',
+      'cancelPoints',
       'playerShots',
       'items',
       'a',
       'b',
     ]);
-    expect(w.pools.entries[4].arrays).toEqual([a.fields.a, a.fields.m, a.fields.z]);
-    expect(w.pools.entries[5].pool).toBe(b);
+    expect(w.pools.entries[5].arrays).toEqual([a.fields.a, a.fields.m, a.fields.z]);
+    expect(w.pools.entries[6].pool).toBe(b);
     a.alloc();
     a.alloc();
     b.alloc();

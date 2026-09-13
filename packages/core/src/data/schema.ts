@@ -44,7 +44,8 @@ export interface ValidationIssue {
  * @remarks
  * `sprite` and `script` ids are *interned* (any name is accepted and gets an index);
  * `ship`/`weapon`/`enemy`/`stage`/`tileset`/`path` must name an item defined by some content file;
- * `sfx`/`music` must name a cue of the registries in `core/events`.
+ * `sfx`/`music` must name a cue of the registries in `core/events`; `pattern` must name an action
+ * of a `content/patterns/` file (plan M2-02).
  */
 export type ContentRefKind =
   | 'ship'
@@ -56,7 +57,8 @@ export type ContentRefKind =
   | 'sprite'
   | 'script'
   | 'sfx'
-  | 'music';
+  | 'music'
+  | 'pattern';
 
 /**
  * One place where content referred to another item by string id, recorded while parsing

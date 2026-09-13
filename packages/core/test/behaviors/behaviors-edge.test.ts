@@ -290,7 +290,13 @@ describe('core/behaviors edge — checkEnemyBehaviors', () => {
     const enemies = DEFAULT_BEHAVIOR_DEFS.map((def) =>
       enemy('e-' + def.id, def.id, { params: { ...def.params }, child: 'e-' + def.id }),
     );
-    expect(checkEnemyBehaviors(load(enemies))).toEqual([]);
+    // `pattern.loop` also needs a pattern (M2-02): the one it names is reported missing.
+    expect(checkEnemyBehaviors(load(enemies))).toEqual([
+      {
+        path: 'enemies:e-pattern.loop.pattern',
+        message: 'behaviour "pattern.loop" needs a pattern',
+      },
+    ]);
   });
 
   it('checks against a custom registry, reporting every unknown name in order', () => {

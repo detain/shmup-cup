@@ -8,7 +8,8 @@
  *   {@link IRenderer}, `@shmup/audio-web` → {@link IAudio});
  * - the **render contract** (plan §3.4): the per-frame {@link RenderFrame} with a read-only
  *   {@link WorldView} (camera, parallax, terrain, a list of {@link SpriteBatchView}s, the
- *   enemy lasers, {@link LaserView}, and the boss WARNING, {@link WarningView}),
+ *   enemy lasers, {@link LaserView}, the bending lasers, {@link BendingLaserView}, and the boss
+ *   WARNING, {@link WarningView}),
  *   two {@link DrawList} command buffers (HUD and UI) and the {@link ScreenView} effects;
  * - the draw layers ({@link LayerId}), sprite flags ({@link SpriteFlag}) and the bitmap-text
  *   measuring contract ({@link TextMetrics}) the renderer implements for layout code.
@@ -33,7 +34,7 @@
  * **Public API.** Back-ends: {@link IRenderer}, {@link IAudio}, {@link AudioBus},
  * {@link AudioState}. Frame: {@link RenderFrame}, {@link ScreenView}. World:
  * {@link WorldView}, {@link CameraView}, {@link ParallaxView}, {@link TerrainView},
- * {@link LaserView}, {@link WarningView},
+ * {@link LaserView}, {@link BendingLaserView} (M2-02), {@link WarningView},
  * {@link SpriteBatchView}, {@link SpriteBatch}, {@link createSpriteBatch}, {@link pushSprite},
  * {@link SpriteFlag}. Layers: {@link LayerId}, {@link LAYER_COUNT}, {@link LAYER_NAMES}.
  * Command lists: {@link DrawList}, {@link createDrawList}, {@link DrawOp}, {@link TextAlign},
@@ -342,6 +343,38 @@ export interface LaserView {
 }
 
 /**
+ * The enemy **bending lasers** of a world (plan M2-02, shmup_feat.md §12): a fixed table of
+ * `capacity` slots (stable — not packed like the other views), each a ring of `nodes` recorded
+ * head positions. Slot `s` is drawn while `active[s]` is 1 and its `flags` have no
+ * `SpriteFlag.Hidden`: its newest `filled[s]` nodes, from the ring index `head[s]` backwards
+ * (`(head − k) & (nodes − 1)`), at world positions `x[s · nodes + i]`, `y[s · nodes + i]` — one
+ * segment sprite (`spriteId[s]`, frame 0) per node; `width[s]` is the beam's width (its hitbox is
+ * a chain of circles of that diameter). The arrays are live sim state.
+ */
+export interface BendingLaserView {
+  /** Laser slots. */
+  readonly capacity: number;
+  /** Ring nodes per slot (a power of two). */
+  readonly nodes: number;
+  /** 1 while the slot holds a laser. */
+  readonly active: ArrayLike<number>;
+  /** Nodes to draw (the newest ones). */
+  readonly filled: ArrayLike<number>;
+  /** Ring index of the newest node. */
+  readonly head: ArrayLike<number>;
+  /** Beam width in pixels. */
+  readonly width: ArrayLike<number>;
+  /** Sprite id of the segment sprite. */
+  readonly spriteId: ArrayLike<number>;
+  /** {@link SpriteFlag} bits (`Hidden` = not drawn). */
+  readonly flags: ArrayLike<number>;
+  /** World x of every node, slot-major (`capacity × nodes`). */
+  readonly x: ArrayLike<number>;
+  /** World y of every node, slot-major. */
+  readonly y: ArrayLike<number>;
+}
+
+/**
  * The boss WARNING of the world (`core/bosses`, plan M1-13, shmup_feat.md §13): while `active`,
  * the host shows `text` (lines split at `\n`) over the dimmed playfield. A live object — the sim
  * updates it every tick.
@@ -385,6 +418,11 @@ export interface WorldView {
    * the view is bound, like the batches.
    */
   readonly lasers?: LaserView | null;
+  /**
+   * The enemy bending lasers (plan M2-02), or `null` / absent for a world without them. Read once
+   * when the view is bound, like the batches; drawn on `ENEMY_BULLETS` after the lasers.
+   */
+  readonly bendingLasers?: BendingLaserView | null;
   /**
    * The boss WARNING (plan M1-13), or `null` / absent for a world without bosses. Drawn by the
    * host's HUD / UI layer, not by the renderer's world binding.

@@ -1,0 +1,126 @@
+{
+  "formatVersion": 1,
+  "kind": "patterns",
+  "actions": [
+    {
+      "id": "common.fan-5",
+      "body": [
+        {
+          "op": "repeat",
+          "times": 5,
+          "body": [
+            {
+              "op": "fire",
+              "direction": { "type": "aim", "value": "($i - 2) * 40" },
+              "speed": 1.25,
+              "bullet": { "kind": "oval-red" }
+            }
+          ]
+        },
+        { "op": "wait", "ticks": 90, "ranked": true }
+      ]
+    },
+    {
+      "id": "common.spiral",
+      "body": [
+        {
+          "op": "repeat",
+          "times": 24,
+          "body": [
+            {
+              "op": "fire",
+              "direction": { "type": "sequence", "value": 44 },
+              "speed": 1,
+              "bullet": { "kind": "needle-pink" }
+            },
+            {
+              "op": "fire",
+              "direction": { "type": "sequence", "value": 512 },
+              "speed": { "type": "sequence", "value": 0 },
+              "bullet": { "kind": "needle-pink" }
+            },
+            { "op": "wait", "ticks": 8 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "common.ring",
+      "body": [
+        {
+          "op": "repeat",
+          "times": "8 + floor($rank / 4) * 2",
+          "body": [
+            {
+              "op": "fire",
+              "direction": {
+                "type": "absolute",
+                "value": "$i * 1024 / (8 + floor($rank / 4) * 2)"
+              },
+              "speed": 1,
+              "bullet": { "kind": "round-purple" }
+            }
+          ]
+        },
+        { "op": "wait", "ticks": 120, "ranked": true }
+      ]
+    },
+    {
+      "id": "common.homing-ring",
+      "body": [
+        {
+          "op": "repeat",
+          "times": 6,
+          "body": [
+            {
+              "op": "fire",
+              "direction": { "type": "aim", "value": "$i * 1024 / 6" },
+              "speed": 1.5,
+              "bulletRef": "common.turner"
+            }
+          ]
+        },
+        { "op": "wait", "ticks": 150, "ranked": true }
+      ]
+    },
+    {
+      "id": "common.splitter",
+      "body": [
+        { "op": "fire", "speed": 1, "bulletRef": "common.splitter-shell" },
+        { "op": "wait", "ticks": 120, "ranked": true }
+      ]
+    }
+  ],
+  "bullets": [
+    {
+      "id": "common.turner",
+      "kind": "oval-purple",
+      "actions": [
+        { "op": "changeSpeed", "speed": 0.25, "term": 20 },
+        { "op": "wait", "ticks": 30 },
+        { "op": "changeDirection", "direction": { "type": "aim" }, "term": 10 },
+        { "op": "changeSpeed", "speed": 1.75, "term": 30 }
+      ]
+    },
+    {
+      "id": "common.splitter-shell",
+      "kind": "round-red",
+      "actions": [
+        { "op": "wait", "ticks": 45 },
+        {
+          "op": "repeat",
+          "times": 6,
+          "body": [
+            {
+              "op": "fire",
+              "direction": { "type": "relative", "value": "$i * 1024 / 6" },
+              "speed": 1,
+              "bullet": { "kind": "round-pink" }
+            }
+          ]
+        },
+        { "op": "vanish" }
+      ]
+    }
+  ]
+}

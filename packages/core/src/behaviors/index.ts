@@ -33,6 +33,10 @@
  *   Every [`ringTicks` 120] ticks (rank-scaled) it fires a ring of [`ringCount` 8] purple bullets
  *   at [`bulletSpeed` 1], each ring turned half a gap from the last.
  *
+ * - `pattern.loop` (M2-02) — runs the enemy's `pattern` (a `content/patterns/` DSL action) over
+ *   and over, [`restTicks` 60] apart, `relative` directions from [`heading` 512]; it moves with
+ *   its spec's `mover`.
+ *
  * `drifter.sine`, `fan.loop`, `carrier.straight`, `hatch.spawner` and `rammer.aimed` do not fire.
  * Every shot goes through the primitives, so nothing fires off screen or before `settleTicks`.
  *
@@ -120,6 +124,8 @@ export interface BehaviorDef<
   create(api: ScriptApi, params: P): Script;
   /** Whether the enemy must name a `child` (spawners). */
   readonly needsChild: boolean;
+  /** Whether the enemy must name a `pattern` (DSL pattern runners, M2-02). */
+  readonly needsPattern: boolean;
 }
 
 /** A set of behaviours by id. */
@@ -151,6 +157,7 @@ export interface BehaviorRegistry extends EnemyBehaviorLookup {
  * @param params - Tunables with defaults.
  * @param create - The coroutine factory.
  * @param needsChild - Whether the enemy must name a `child` (default `false`).
+ * @param needsPattern - Whether the enemy must name a `pattern` (default `false`).
  * @returns The frozen definition.
  *
  * @example
@@ -166,12 +173,14 @@ export function defineBehavior<P extends Readonly<Record<string, number>>>(
   params: P,
   create: (api: ScriptApi, params: P) => Script,
   needsChild = false,
+  needsPattern = false,
 ): BehaviorDef {
   return Object.freeze({
     id,
     params: Object.freeze({ ...params }),
     create: create as (api: ScriptApi, params: Readonly<Record<string, number>>) => Script,
     needsChild,
+    needsPattern,
   });
 }
 
@@ -357,7 +366,34 @@ const orbiterLoop = defineBehavior(
   },
 );
 
-/** The M1 roster's definitions (see the module docs), e.g. to extend a registry in tests. */
+/**
+ * `pattern.loop` — runs the enemy's `content/patterns/` DSL pattern (its spec's `pattern`, M2-02)
+ * over and over: the pattern's `wait`s are the coroutine's sleeps, and [`restTicks` 60] ticks
+ * pass between the end of one run and the next. `relative` directions measure from [`heading`
+ * 512 = left]. Its motion is the spec's `mover` (it sets none).
+ */
+const patternLoop = defineBehavior(
+  'pattern.loop',
+  { restTicks: 60, heading: ANGLE_UNITS / 2 },
+  function* pattern(api, p): Script {
+    const id = api.spec.patternId;
+    const rest = p.restTicks >= 1 ? Math.floor(p.restTicks) : 1;
+    if (!api.startPattern(id, p.heading)) yield SLEEP_FOREVER;
+    for (;;) {
+      const wait = api.stepPattern();
+      if (wait > 0) {
+        yield wait;
+        continue;
+      }
+      yield rest;
+      api.startPattern(id, p.heading);
+    }
+  },
+  false,
+  true,
+);
+
+/** The roster's definitions (see the module docs), e.g. to extend a registry in tests. */
 export const DEFAULT_BEHAVIOR_DEFS: readonly BehaviorDef[] = Object.freeze([
   drifterSine,
   fanLoop,
@@ -367,6 +403,7 @@ export const DEFAULT_BEHAVIOR_DEFS: readonly BehaviorDef[] = Object.freeze([
   hatchSpawner,
   rammerAimed,
   orbiterLoop,
+  patternLoop,
 ]);
 
 /** The M1 roster as a registry (what the World uses). */
@@ -727,7 +764,8 @@ function checkParams(
 
 /**
  * Checks enemies against their behaviours: every `params` name must be a tunable of the
- * behaviour, and spawners need a `child`. A regular enemy must name an enemy behaviour, every boss
+ * behaviour, spawners need a `child` and pattern runners a `pattern` (M2-02, path
+ * `enemies:<id>.pattern`). A regular enemy must name an enemy behaviour, every boss
  * phase a boss behaviour, and a phase's `params` must be that boss behaviour's tunables. (Unknown
  * script ids are `loadContent`'s job.)
  *
@@ -785,6 +823,12 @@ export function checkEnemyBehaviors(
       issues.push({
         path: 'enemies:' + enemy.id + '.child',
         message: 'behaviour "' + def.id + '" needs a child enemy',
+      });
+    }
+    if (def.needsPattern && enemy.patternId < 0) {
+      issues.push({
+        path: 'enemies:' + enemy.id + '.pattern',
+        message: 'behaviour "' + def.id + '" needs a pattern',
       });
     }
   }

@@ -11,6 +11,10 @@
  * symmetric, so 8 frames cover every heading: with a binary angle `a` (1024 units per
  * turn, `core/math`) the frame is `((a + 32) >> 6) & 7`.
  *
+ * {@link bulletSprites} draws the set in any colours, with optional **shape coding** of the
+ * core (plan M2-02): `palettes.mjs` uses it for the colour-blind variants
+ * (`bullets/<shape>-<colour>@<palette>`).
+ *
  * @module
  */
 import { createImage, setPixel } from '../image.mjs';
@@ -28,6 +32,14 @@ export const BULLET_COLORS = /** @type {const} */ ({
 });
 
 /**
+ * How a colour family's core is marked (shape coding, M2-02): `solid` — the bright core disc
+ * (the standard look); `ring` — the core with a dark centre pixel; `dot` — no core band, one
+ * bright centre pixel.
+ *
+ * @typedef {'solid' | 'ring' | 'dot'} CoreMark
+ */
+
+/**
  * Draws an ellipse bullet with rim / body / core bands.
  *
  * @remarks
@@ -43,9 +55,10 @@ export const BULLET_COLORS = /** @type {const} */ ({
  * @param {{ rim: Rgba, body: Rgba, core: Rgba }} palette - Band colours.
  * @param {number} rimFrom - Normalised radius where the rim starts (0…1).
  * @param {number} coreTo - Normalised radius where the core ends (0…1).
+ * @param {CoreMark} [mark] - Shape coding of the core (default `solid`).
  * @returns {Image} The frame.
  */
-function drawEllipse(size, along, across, direction, palette, rimFrom, coreTo) {
+function drawEllipse(size, along, across, direction, palette, rimFrom, coreTo, mark = 'solid') {
   const image = createImage(size, size);
   const centre = (size - 1) / 2;
   const [c, s] = direction;
@@ -73,15 +86,57 @@ function drawEllipse(size, along, across, direction, palette, rimFrom, coreTo) {
         radius(x + 1, y) > 1 ||
         radius(x, y - 1) > 1 ||
         radius(x, y + 1) > 1;
-      setPixel(
-        image,
-        x,
-        y,
-        edge || e > rimFrom ? palette.rim : e <= coreTo ? palette.core : palette.body,
-      );
+      const core = mark === 'dot' ? palette.body : palette.core;
+      setPixel(image, x, y, edge || e > rimFrom ? palette.rim : e <= coreTo ? core : palette.body);
     }
   }
+  if (mark === 'ring') setPixel(image, centre, centre, palette.rim);
+  else if (mark === 'dot') setPixel(image, centre, centre, palette.core);
   return image;
+}
+
+/**
+ * Draws the nine bullet sprites in the given colours.
+ *
+ * @param {Readonly<Record<keyof typeof BULLET_COLORS, string>>} colours - Body colour per family.
+ * @param {string} [suffix] - Appended to every sprite name (`@deuteranopia`; default none).
+ * @param {Readonly<Record<keyof typeof BULLET_COLORS, CoreMark>>} [marks] - Core shape coding per
+ *   family (default: all `solid`).
+ * @param {string} [generator] - Generator id of the sprites' `origin` (default `bullets`).
+ * @returns {SpriteDef[]} Round, oval and needle bullets in each colour.
+ */
+export function bulletSprites(colours, suffix = '', marks, generator = 'bullets') {
+  /** @type {SpriteDef[]} */
+  const sprites = [];
+  const black = color('#000000');
+  const white = color('#ffffff');
+  for (const name of /** @type {(keyof typeof BULLET_COLORS)[]} */ (Object.keys(BULLET_COLORS))) {
+    const base = color(colours[name]);
+    const palette = { rim: mix(base, black, 0.68), body: base, core: mix(base, white, 0.75) };
+    const mark = marks?.[name] ?? 'solid';
+    sprites.push(
+      makeSprite(
+        `bullets/round-${name}${suffix}`,
+        [drawEllipse(7, 3.4, 3.4, DIRECTIONS_8[0], palette, 0.7, 0.36, mark)],
+        generator,
+      ),
+    );
+    sprites.push(
+      makeSprite(
+        `bullets/oval-${name}${suffix}`,
+        DIRECTIONS_8.map((d) => drawEllipse(9, 4.3, 2.7, d, palette, 0.72, 0.4, mark)),
+        generator,
+      ),
+    );
+    sprites.push(
+      makeSprite(
+        `bullets/needle-${name}${suffix}`,
+        DIRECTIONS_8.map((d) => drawEllipse(11, 5.4, 1.7, d, palette, 0.62, 0.42, mark)),
+        generator,
+      ),
+    );
+  }
+  return sprites;
 }
 
 /**
@@ -90,34 +145,5 @@ function drawEllipse(size, along, across, direction, palette, rimFrom, coreTo) {
  * @returns {SpriteDef[]} Round, oval and needle bullets in each colour.
  */
 export function generate() {
-  /** @type {SpriteDef[]} */
-  const sprites = [];
-  const black = color('#000000');
-  const white = color('#ffffff');
-  for (const [name, body] of Object.entries(BULLET_COLORS)) {
-    const base = color(body);
-    const palette = { rim: mix(base, black, 0.68), body: base, core: mix(base, white, 0.75) };
-    sprites.push(
-      makeSprite(
-        `bullets/round-${name}`,
-        [drawEllipse(7, 3.4, 3.4, DIRECTIONS_8[0], palette, 0.7, 0.36)],
-        'bullets',
-      ),
-    );
-    sprites.push(
-      makeSprite(
-        `bullets/oval-${name}`,
-        DIRECTIONS_8.map((d) => drawEllipse(9, 4.3, 2.7, d, palette, 0.72, 0.4)),
-        'bullets',
-      ),
-    );
-    sprites.push(
-      makeSprite(
-        `bullets/needle-${name}`,
-        DIRECTIONS_8.map((d) => drawEllipse(11, 5.4, 1.7, d, palette, 0.62, 0.42)),
-        'bullets',
-      ),
-    );
-  }
-  return sprites;
+  return bulletSprites(BULLET_COLORS);
 }

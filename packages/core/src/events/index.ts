@@ -108,8 +108,9 @@ export const SimEventKind = {
   /**
    * The player changed a user option in the Options screen (M1-17, shmup_feat.md §21): `id` = a
    * {@link UserOptionKind} code, `param` = the new value — a volume level `0…10` (the host sets the
-   * bus gain, `core/config` `volumeGain`) or, for `InputProfile`, the index of the chosen profile in
-   * the scene flow's profile choices (the host applies that profile to its input adapter). Pushed
+   * bus gain, `core/config` `volumeGain`), for `InputProfile`, the index of the chosen profile in
+   * the scene flow's profile choices (the host applies that profile to its input adapter), or, for
+   * `BulletPalette` (M2-02), the index of the bullet palette in `BULLET_PALETTES`. Pushed
    * live, on every change; the save is written when the screen closes.
    */
   UserOption: 13,
@@ -149,6 +150,11 @@ export const UserOptionKind = {
   SfxVolume: 2,
   /** CONTROLS: `param` = index of the chosen input profile in the flow's profile choices. */
   InputProfile: 3,
+  /**
+   * BULLETS (M2-02): `param` = index of the chosen enemy bullet palette in `core/config`
+   * `BULLET_PALETTES` (the host re-resolves the renderer's bullet sprites).
+   */
+  BulletPalette: 4,
 } as const;
 
 /** A {@link UserOptionKind} code. */

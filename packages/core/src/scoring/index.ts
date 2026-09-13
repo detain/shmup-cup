@@ -62,7 +62,9 @@
  * **Public API.** {@link PlayerScore}, {@link ScoreBoard}, {@link createScoreBoard},
  * {@link addScore}, {@link markContinue}, {@link ScoreHost}, {@link ScoringSystem},
  * {@link ScoringHost}, {@link createScoringSystem}, {@link MAX_SCORE}, {@link MAX_LIVES},
- * {@link HiScoreEntry}.
+ * {@link HiScoreEntry}; the rules of `content/rules/` (M2-02) {@link ScoringRules},
+ * {@link DEFAULT_SCORING_RULES}, {@link MAX_BULLET_CANCEL_POINTS} — the points of a bullet
+ * cancelled into a point item (credited by `core/bullets` through {@link addScore}).
  *
  * **Planned API.** Rare 1UP items (Direct mode, M2-05). (The planned `insertHiScore` became
  * `core/save`'s in M1-17.)
@@ -89,6 +91,24 @@ export const MAX_SCORE = 99_999_990;
 
 /** Most lives a ship can hold (shmup_feat.md §15 "lives cap"; extends stop adding at 9). */
 export const MAX_LIVES = 9;
+
+/**
+ * Game-wide score values of the `scoring` section of a `content/rules/` file (plan M2-02; the
+ * content's `ContentDb.scoring`, else {@link DEFAULT_SCORING_RULES}).
+ */
+export interface ScoringRules {
+  /**
+   * Points of each enemy bullet cancelled into a point item (`core/bullets` `CancelMode.Points`:
+   * a boss's death, a Mega Crash), credited when the item reaches the player's score.
+   */
+  readonly bulletCancel: number;
+}
+
+/** Highest {@link ScoringRules.bulletCancel} a rules file may give. */
+export const MAX_BULLET_CANCEL_POINTS = 10_000;
+
+/** The built-in scoring rules (what `content/rules/scoring.rules.json` ships with). */
+export const DEFAULT_SCORING_RULES: ScoringRules = Object.freeze({ bulletCancel: 10 });
 
 /** Score state of one player (a class: its fields stay unboxed numbers). */
 export class PlayerScore {

@@ -270,6 +270,7 @@ describe('core/events — cue registries', () => {
       MusicVolume: 1,
       SfxVolume: 2,
       InputProfile: 3,
+      BulletPalette: 4,
     });
     expect(FX_CUES).toEqual({
       ExplosionSmall: 0,

@@ -14,7 +14,8 @@
  * (`ui` + `text`), the world's parallax bands and tile terrain (`layers`: repeated sprites on
  * `BG_FAR` / `BG_MID`, a ring-buffered tile-sprite grid on `TERRAIN` — plan M1-07), the enemy
  * lasers (`layers`: rotated warning lines / stretched beams on `ENEMY_BULLETS`, above the bullet
- * batch — plan M1-09), screen shake
+ * batch — plan M1-09), the bending lasers (`layers`: a segment sprite per node, above the lasers —
+ * plan M2-02), screen shake
  * (the world group is offset by the rounded `shakeX/Y`) and the flash / dim overlays. Optionally
  * the calibration test pattern sits below the layers (`?scene=calibration`).
  *
@@ -26,6 +27,10 @@
  * frame's **simulated ticks** (`frame.tick` minus the last frame's — 0 while paused; a tick
  * counter that goes back clears them), converts particle and popup positions with the world's
  * camera, and adds its shake / flash / dim on top of `frame.screen`.
+ *
+ * **Bullet palettes (plan M2-02).** {@link PixiRenderer.setBulletPalette} re-resolves the sprite
+ * tables with the chosen colour-blind variants (`palette` `resolveBulletPaletteTable`): every
+ * binding reads the shared tables, so the swap takes effect on the next frame without re-binding.
  *
  * **Debug (plan M1-19).** With {@link PixiRendererOptions.countDrawCalls} (the shell sets it only
  * in dev / test builds, together with its debug tools) the WebGL context's draw entry points are
@@ -52,6 +57,7 @@
 import {
   LayerId,
   defineModule,
+  type BulletPalette,
   type CameraView,
   type IRenderer,
   type RenderFrame,
@@ -75,16 +81,18 @@ import {
   type ScreenEffects,
 } from '../effects/index.js';
 import {
+  createBendingLaserBinding,
   createLayerStack,
   createLaserBinding,
   createParallaxBinding,
   createTerrainBinding,
+  type BendingLaserBinding,
   type LaserBinding,
   type LayerStack,
   type ParallaxBinding,
   type TerrainBinding,
 } from '../layers/index.js';
-import { PALETTE } from '../palette/index.js';
+import { PALETTE, resolveBulletPaletteTable } from '../palette/index.js';
 import {
   PARTICLE_CAPACITY,
   createParticleSystem,
@@ -197,6 +205,19 @@ export interface PixiRenderer extends IRenderer {
   readonly parallax: ParallaxBinding | null;
   /** Laser sprites of the bound world (`null` without a laser view or atlas). */
   readonly lasers: LaserBinding | null;
+  /** Bending laser segments of the bound world (`null` without a bending laser view or atlas). */
+  readonly bendingLasers: BendingLaserBinding | null;
+  /** The enemy bullet palette in use (`standard` until {@link PixiRenderer.setBulletPalette}). */
+  readonly bulletPalette: BulletPalette;
+  /**
+   * Switches the enemy bullets, lasers and bending lasers to a colour-blind palette's sprite
+   * variants (`<sprite>@<palette>`, plan M2-02) — or back to `standard`. Re-resolves the sprite
+   * tables (allocates: call it when the option changes, not per frame); sprites without a variant
+   * keep their frames.
+   *
+   * @param palette - The palette (core `BULLET_PALETTES`).
+   */
+  setBulletPalette(palette: BulletPalette): void;
   /**
    * The screen effects (shake, flash, playfield dim — plan M1-14): the host feeds them from the
    * `Shake` / `Flash` / `Dim` events; `render()` advances them by the frame's ticks and draws
@@ -230,7 +251,8 @@ export interface PixiRenderer extends IRenderer {
   /**
    * Binds a world view: creates the parallax band sprites (on `BG_FAR` / `BG_MID`), the terrain
    * tile grid (on `TERRAIN`), one sprite binding per batch (in its layer, batch order) and the
-   * laser sprites of `world.lasers` (on `ENEMY_BULLETS`, after the batches), and destroys the
+   * laser sprites of `world.lasers` and the segment sprites of `world.bendingLasers` (on
+   * `ENEMY_BULLETS`, after the batches, in that order), and destroys the
    * previous world's bindings. `render()` does this automatically when
    * `frame.world` is a different object; hosts call it at load time so the first frame does
    * not create Pixi objects.
@@ -521,6 +543,9 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
   let terrain: TerrainBinding | null = null;
   let parallax: ParallaxBinding | null = null;
   let lasers: LaserBinding | null = null;
+  let bendingLasers: BendingLaserBinding | null = null;
+  let bulletPalette: BulletPalette = 'standard';
+  let spriteNames: readonly string[] | null = null;
 
   /**
    * Replaces the world bindings (see {@link PixiRenderer.bindWorld}).
@@ -536,6 +561,8 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
     parallax = null;
     lasers?.destroy();
     lasers = null;
+    bendingLasers?.destroy();
+    bendingLasers = null;
     boundWorld = null;
     if (world !== null) {
       // Validate first, so a bad view leaves nothing half-bound.
@@ -581,6 +608,16 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
           lasers = createLaserBinding({ atlas, tables, capacity: laserView.capacity });
           layers.layers[LayerId.EnemyBullets].addChild(lasers.container);
         }
+        const bendView = world.bendingLasers ?? null;
+        if (bendView !== null) {
+          bendingLasers = createBendingLaserBinding({
+            atlas,
+            tables,
+            capacity: bendView.capacity,
+            nodes: bendView.nodes,
+          });
+          layers.layers[LayerId.EnemyBullets].addChild(bendingLasers.container);
+        }
       }
     }
     boundWorld = world;
@@ -607,6 +644,20 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
     get lasers() {
       return lasers;
     },
+    get bendingLasers() {
+      return bendingLasers;
+    },
+    get bulletPalette() {
+      return bulletPalette;
+    },
+    setBulletPalette(palette) {
+      if (palette === bulletPalette) return;
+      bulletPalette = palette;
+      if (atlas === null || spriteNames === null) return;
+      tables.base = resolveBulletPaletteTable(atlas, spriteNames, palette);
+      hudView?.invalidate();
+      uiView?.invalidate();
+    },
     effects,
     particles,
     popups,
@@ -624,8 +675,12 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
     },
     setSpriteNames(names) {
       if (atlas === null) return;
+      spriteNames = names;
       const resolved = createSpriteTables(atlas, names);
-      tables.base = resolved.base;
+      tables.base =
+        bulletPalette === 'standard'
+          ? resolved.base
+          : resolveBulletPaletteTable(atlas, names, bulletPalette);
       tables.flash = resolved.flash;
       hudView?.invalidate();
       uiView?.invalidate();
@@ -674,6 +729,10 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
         const laserView = world.lasers;
         if (lasers !== null && laserView !== undefined && laserView !== null) {
           lasers.sync(laserView, world.camera);
+        }
+        const bendView = world.bendingLasers;
+        if (bendingLasers !== null && bendView !== undefined && bendView !== null) {
+          bendingLasers.sync(bendView, world.camera);
         }
       }
       const screen = frame.screen;

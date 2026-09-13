@@ -25,6 +25,10 @@
  * {@link LASER_WARNING_TINT} (its blink is the view's `Hidden` flag), a beam the frame of the
  * beam sprite whose band matches the drawn width, stretched along the laser.
  *
+ * And the bending lasers of plan M2-02 — {@link createBendingLaserBinding}: one preallocated,
+ * never-rotated segment sprite per node of every `BendingLaserView` slot, placed on the recorded
+ * head positions (tail first, so the head draws on top).
+ *
  * Pixel snapping: the renderer is created with `roundPixels: true` and every binding writes
  * integer positions (`Math.round`), so nothing in the stack is drawn at sub-pixel offsets. The
  * terrain container sits at `round(−camera.x)`, which lands integer world positions on exactly
@@ -41,7 +45,8 @@
  * {@link createTerrainBinding}, {@link TerrainBinding}, {@link TerrainBindingOptions},
  * {@link createParallaxBinding}, {@link ParallaxBinding}, {@link ParallaxBindingOptions},
  * {@link createLaserBinding}, {@link LaserBinding}, {@link LaserBindingOptions},
- * {@link LASER_WARNING_TINT}.
+ * {@link LASER_WARNING_TINT}, {@link createBendingLaserBinding}, {@link BendingLaserBinding},
+ * {@link BendingLaserBindingOptions}.
  *
  * @module
  */
@@ -54,6 +59,7 @@ import {
   PLAYFIELD_Y,
   SpriteFlag,
   defineModule,
+  type BendingLaserView,
   type CameraView,
   type LaserView,
   type ParallaxView,
@@ -552,6 +558,143 @@ export function createLaserBinding(options: LaserBindingOptions): LaserBinding {
       used = count;
     },
     /** See {@link LaserBinding.destroy}. */
+    destroy() {
+      container.destroy({ children: true });
+    },
+  };
+}
+
+/** Options of {@link createBendingLaserBinding}. */
+export interface BendingLaserBindingOptions {
+  /** The atlas (the segment sprites). */
+  readonly atlas: Atlas;
+  /** The renderer's sprite tables. */
+  readonly tables: SpriteTables;
+  /** Laser slots — the view's capacity. */
+  readonly capacity: number;
+  /** Nodes per slot — the view's ring size (one sprite each). */
+  readonly nodes: number;
+  /** Screen row of world row 0 at camera y 0 (default `PLAYFIELD_Y`). */
+  readonly offsetY?: number;
+}
+
+/** The preallocated segment sprites of one bending laser view. */
+export interface BendingLaserBinding {
+  /** Holds the sprites (add it to the `ENEMY_BULLETS` layer). */
+  readonly container: Container;
+  /** Laser slots. */
+  readonly capacity: number;
+  /** Sprites per slot. */
+  readonly nodes: number;
+  /** Segments drawn by the last sync. */
+  readonly visibleCount: number;
+  /**
+   * Draws every active, not hidden laser's body and hides the rest. Never allocates.
+   *
+   * @remarks
+   * Slot `s` shows its newest `filled[s]` nodes (at most `nodes`), one segment sprite each —
+   * frame 0 of its `spriteId`, anchored on the node (`round(x − camera.x)`,
+   * `round(y − camera.y) + offsetY`), never rotated or scaled (Pixi's transform setters
+   * allocate) — tail first, so the head is on top. A texture is assigned only when it changed.
+   *
+   * @param view - The bending laser view the binding was created for.
+   * @param camera - The world camera.
+   */
+  sync(view: BendingLaserView, camera: CameraView): void;
+  /** Destroys the sprites and the container. */
+  destroy(): void;
+}
+
+/**
+ * Creates the segment sprites for a bending laser view (load time).
+ *
+ * @param options - Atlas, tables, capacity, nodes and y offset.
+ * @returns The binding (`capacity × nodes` sprites created now, hidden).
+ * @throws {RangeError} When `capacity` or `nodes` is not a positive integer.
+ *
+ * @example
+ * ```ts
+ * const bends = createBendingLaserBinding({ atlas, tables, capacity: 8, nodes: 64 });
+ * layers.layers[LayerId.EnemyBullets].addChild(bends.container);
+ * bends.sync(world.bendingLasers, world.camera); // every frame
+ * ```
+ */
+export function createBendingLaserBinding(
+  options: BendingLaserBindingOptions,
+): BendingLaserBinding {
+  const { atlas, tables, capacity, nodes } = options;
+  if (!Number.isInteger(capacity) || capacity <= 0) {
+    throw new RangeError('bending laser binding capacity must be a positive integer');
+  }
+  if (!Number.isInteger(nodes) || nodes <= 0) {
+    throw new RangeError('bending laser binding nodes must be a positive integer');
+  }
+  const offsetY = options.offsetY ?? PLAYFIELD_Y;
+  const container = new Container({ label: 'bending-lasers' });
+  const pixel = atlas.textures[atlas.pixelFrame];
+  const sprites: Sprite[] = [];
+  for (let i = 0; i < capacity * nodes; i++) {
+    const sprite = new Sprite(pixel);
+    sprite.visible = false;
+    sprites.push(sprite);
+    container.addChild(sprite);
+  }
+  /** Segments shown per slot by the last sync (the rest of the slot's sprites are hidden). */
+  const shown = new Int32Array(capacity);
+  let visible = 0;
+
+  return {
+    container,
+    capacity,
+    nodes,
+    /** See {@link BendingLaserBinding.visibleCount}. */
+    get visibleCount(): number {
+      return visible;
+    },
+    /**
+     * See {@link BendingLaserBinding.sync}.
+     *
+     * @param view - The view.
+     * @param camera - The camera.
+     */
+    sync(view, camera) {
+      const camX = camera.x;
+      const camY = camera.y;
+      const slots = view.capacity < capacity ? view.capacity : capacity;
+      const ring = view.nodes;
+      const mask = ring - 1;
+      visible = 0;
+      for (let s = 0; s < slots; s++) {
+        let n = 0;
+        if (view.active[s] !== 0 && (view.flags[s] & SpriteFlag.Hidden) === 0) {
+          n = view.filled[s];
+          if (n > nodes) n = nodes;
+          if (n > ring) n = ring;
+        }
+        const first = s * nodes;
+        if (n > 0) {
+          const frameId = resolveFrame(atlas, tables, view.spriteId[s], 0, 0);
+          const texture = atlas.textures[frameId];
+          const ax = atlas.anchorX[frameId];
+          const ay = atlas.anchorY[frameId];
+          const base = s * ring;
+          const head = view.head[s];
+          for (let j = 0; j < n; j++) {
+            // Sprite j shows node k = n − 1 − j: the tail first, the head last (on top).
+            const node = base + ((head - (n - 1 - j)) & mask);
+            const sprite = sprites[first + j];
+            if (sprite.texture !== texture) sprite.texture = texture;
+            sprite.x = (Math.round(view.x[node] - camX) - ax) | 0;
+            sprite.y = (Math.round(view.y[node] - camY) + offsetY - ay) | 0;
+            sprite.visible = true;
+          }
+        }
+        for (let j = n; j < shown[s]; j++) sprites[first + j].visible = false;
+        shown[s] = n;
+        visible += n;
+      }
+    },
+    /** See {@link BendingLaserBinding.destroy}. */
     destroy() {
       container.destroy({ children: true });
     },

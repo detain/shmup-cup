@@ -1,0 +1,55 @@
+{
+  "formatVersion": 1,
+  "kind": "patterns",
+  "actions": [
+    {
+      "id": "example.aimed-3way",
+      "body": [
+        {
+          "op": "repeat",
+          "times": 3,
+          "body": [
+            {
+              "op": "fire",
+              "direction": { "type": "aim", "value": "($i - 1) * 48" },
+              "speed": "1.25 + $rank / 32",
+              "bulletRef": "example.shot"
+            }
+          ]
+        },
+        { "op": "wait", "ticks": 60, "ranked": true }
+      ]
+    },
+    {
+      "id": "example.burst",
+      "body": [{ "op": "actionRef", "action": "example.stack", "params": [4, 0.25] }]
+    },
+    {
+      "id": "example.stack",
+      "body": [
+        {
+          "op": "repeat",
+          "times": "$1",
+          "body": [
+            {
+              "op": "fire",
+              "direction": { "type": "aim" },
+              "speed": "1 + $i * $2",
+              "bullet": { "kind": "needle-red" }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "bullets": [
+    {
+      "id": "example.shot",
+      "kind": "oval-pink",
+      "actions": [
+        { "op": "wait", "ticks": 40 },
+        { "op": "accel", "accel": 0.02, "max": 2, "term": 60 }
+      ]
+    }
+  ]
+}

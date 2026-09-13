@@ -57,7 +57,8 @@
  *
  * **Mega Crash** (the `!` slot): equipping it arms a detonation that runs in phase 7 of the same
  * tick (so its kills are scored and drop capsules like any other): every cancelable enemy bullet
- * and laser is cancelled with sparkles (`core/bullets` `cancelAllBullets`), every enemy that is not
+ * and laser is cancelled — sparkles, and point items for the bomber (`core/bullets`
+ * `cancelAllBullets` with `CancelMode.Points`, M2-02) —, every enemy that is not
  * `megaCrashImmune` is destroyed and credited to the player (`EnemySystem.megaCrash`), and a
  * {@link MEGA_CRASH_FLASH_TICKS}-tick screen flash (`SimEventKind.Flash`) and `SFX MegaCrash` are
  * pushed. Bosses (M1-13) take no damage.
@@ -557,9 +558,10 @@ export interface PowerUpHost {
      * Cancels every cancelable bullet and laser (`BulletSystem.cancelAll`).
      *
      * @param mode - `CancelMode`.
+     * @param player - Player credited with the point items of `CancelMode.Points`.
      * @returns Bullets cancelled.
      */
-    cancelAll(mode: CancelMode): number;
+    cancelAll(mode: CancelMode, player?: number): number;
   };
   /** The weapons (the loadouts the meter equips). */
   readonly weapons: {
@@ -957,7 +959,8 @@ class PowerUpSystemImpl implements PowerUpSystem {
   /** See {@link PowerUpSystem.detonateMegaCrash}. */
   detonateMegaCrash(player: number): number {
     const host = this.host;
-    host.bullets.cancelAll(CancelMode.Sparkle);
+    // The cancelled bullets turn into points for the bomber (M2-02).
+    host.bullets.cancelAll(CancelMode.Points, this.valid(player) ? player : -1);
     const killed = host.enemies.megaCrash(this.valid(player) ? player : -1);
     requestFlash(host, FlashKind.MegaCrash);
     if (this.valid(player)) {

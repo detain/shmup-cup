@@ -43,16 +43,16 @@ shmup-cup/
 │   │   │   ├── world/          ✔ createWorld / stepWorld: session state + the fixed 9-phase tick pipeline (plan §3.2), pool registry, view
 │   │   │   ├── presentation/   ✔ IRenderer / IAudio contracts + the render contract (RenderFrame, WorldView, SpriteBatchView, DrawList, LayerId)
 │   │   │   ├── rng/ math/ events/ pools/                 ✔ engine foundations (sfc32, trig tables, event ring, SoA pools)
-│   │   │   ├── data/           ✔ (partial) content loader: schema.ts combinators, loadContent(), ContentDb, migrations, tilemap.ts (tileset tables, heightfield / RLE expansion), paths.ts (spline → arc-length tables)
+│   │   │   ├── data/           ✔ (partial) content loader: schema.ts combinators, loadContent(), ContentDb, migrations, tilemap.ts (tileset tables, heightfield / RLE expansion), paths.ts (spline → arc-length tables); kinds incl. rules (difficulty, scoring) and patterns (M2-02)
 │   │   │   ├── player/         ✔ KESTREL movement, speed levels, clamp, banking, fly-in, life cycle (killPlayer / respawnPlayer / playerOut)
 │   │   │   ├── weapons/        ✔ (partial) player shots (96-slot SoA pool), Type A roles from content, loadouts, autofire + caps per shooter, grid hits (Type B–D / Direct: M2)
 │   │   │   ├── options/        ✔ (partial) trailing Options: screen-space trail ring buffer (Snake / Formation / Rotate: M2-04)
 │   │   │   ├── powerups/       ✔ (partial) 7-slot power meter, equip on the PowerUp edge, Auto Power-Up, capsule pool + magnet, Mega Crash (Direct mode: M2-05)
 │   │   │   ├── shields/        ✔ (partial) the Force Field on every ship: hits, shield-hit i-frames, wear, never terrain (pods, Arm tiers: M2-04 / M2-05)
 │   │   │   ├── enemies/        ✔ (partial) 64 enemy slots: spawns, formations, off-screen rules, contact, damage, sprite mirror
-│   │   │   ├── patterns/       ✔ (partial) sleeping behaviour coroutines (runner) + per-tick movers + fire primitives (DSL: M2-02)
+│   │   │   ├── patterns/       ✔ sleeping behaviour coroutines (runner) + per-tick movers + fire primitives + the BulletML-inspired pattern DSL (dsl.ts: expression + pattern compiler → one Float64Array bank; PatternVm interpreter: enemy emitters, bullets' own programs — M2-02)
 │   │   │   ├── behaviors/      ✔ (partial) behaviour registry referenced by content script ids; the M1 roster
-│   │   │   ├── bullets/        ✔ enemy bullets (512-slot SoA pool = the ENEMY_BULLETS batch) + telegraphed lasers, player collision, cancel
+│   │   │   ├── bullets/        ✔ enemy bullets (512-slot SoA pool = the ENEMY_BULLETS batch) + telegraphed lasers, bending lasers (8 × 64-node rings, circle-chain hitbox — M2-02), player collision, cancel (sparkles, or point items that fly to the score — M2-02); kinds.ts = the kind names (leaf)
 │   │   │   ├── bosses/         ✔ (partial) multi-part bosses: weak points, phases, the WARNING, the death sequence (mid-bosses, raids: M2-09)
 │   │   │   ├── collision/      ✔ (partial) scalar shape tests, layer masks, counting-sort uniform grid, pixel-exact terrain queries
 │   │   │   ├── stage/          ✔ stage runtime: camera keys / ramps / pans / locks, event cursor, checkpoints, terrain map + parallax / terrain views
@@ -69,7 +69,7 @@ shmup-cup/
 │   │   ├── tsconfig.build.json  emits dist/ (customConditions off)
 │   │   └── test/tsconfig.json   Node-side program for tests
 │   ├── render-pixi/        @shmup/render-pixi — PixiJS v8 IRenderer: WebGL1-first, 384×216 RT, integer upscale
-│   │   └── src/ renderer ✔ viewport ✔ test-pattern ✔ palette ✔ atlas ✔ layers ✔ (+ terrain grid, parallax bands, laser sprites) sprites ✔ text ✔ ui ✔ particles ✔ (fx content owner, 256-particle pool) effects ✔ (partial: shake, flash + limiter, dim, score popups) debug ✔ (overlay: panel, frame graph, hitbox / grid outlines — M1-19)
+│   │   └── src/ renderer ✔ viewport ✔ test-pattern ✔ palette ✔ (+ colour-blind bullet palette tables — M2-02) atlas ✔ layers ✔ (+ terrain grid, parallax bands, laser sprites, bending laser segments — M2-02) sprites ✔ text ✔ ui ✔ particles ✔ (fx content owner, 256-particle pool) effects ✔ (partial: shake, flash + limiter, dim, score popups) debug ✔ (overlay: panel, frame graph, hitbox / grid outlines — M1-19)
 │   ├── audio-web/          @shmup/audio-web — Web Audio IAudio (interactive latency, buses, suspend/resume) + the game's audio
 │   │   └── src/ web-audio ✔ synth ✔ (deterministic PCM: ZzFX-style SFX, chip songs with sample-exact loops) sfx ✔ (voice manager) music ✔ (loop, fades, ducking) loader ✔ (sfx / music kinds, OGG path) engine ✔
 │   ├── input-web/          @shmup/input-web — keyboard/remote + Gamepad API → InputSnapshot
@@ -99,7 +99,8 @@ shmup-cup/
 │   ├── weapons/            ✔ weapon tunables + preset loadouts: the Type A arsenal the game fires (+ README, example)
 │   ├── input/              ✔ input profiles (kind input-profiles, validated by input-web rebind): per-context key/button tables, remote debounce/diagonal/SOCD, Tizen keys to register
 │   ├── audio/              ✔ SFX bank (kind sfx: synth parameters or a file per SFX_CUES cue) + music/ (kind music: original chip songs or OGG, bound to MUSIC_CUES), validated by audio-web loader (+ README, examples)
-│   ├── rules/              ✔ game-wide rule tables (kind rules, validated by core/data): the difficulty presets Easy / Normal / Hard / Arcade — rank base / growth, lives, extends, continues, death penalty, aim directions, bullet speed (M2-01; + README, example)
+│   ├── rules/              ✔ game-wide rule tables (kind rules, validated by core/data): the difficulty presets Easy / Normal / Hard / Arcade — rank base / growth, lives, extends, continues, death penalty, aim directions, bullet speed (M2-01); the scoring values — points per cancelled bullet (M2-02; + README, example)
+│   ├── patterns/           ✔ bullet patterns as data (kind patterns, compiled by core/data + core/patterns): BulletML-inspired actions and bullets, expressions over $rank / $rand / $loop / $i; the common library (M2-02; + README, example)
 │   └── fx/                 ✔ particle presets + the event cues that spawn them (kind fx, validated by render-pixi particles): explosions, debris, sparks, clinks, cancel sparkles, pickup ring, muzzle flash (+ README, example)
 ├── assets/
 │   ├── source/             editable sources — in git: sprites/**/*.sprite.json pixel maps (+ real-art PNG overrides), fonts/*.font.json, tilesets, audio

@@ -15,7 +15,9 @@ and wings, four shield plates (12 hp) stacked in front of a 40-hp core that take
 every plate is gone, and two laser emitters above and below it (`boss.bulwark`: slow tracking,
 alternating attached lane lasers, aimed 3-ways once two plates are down). Zone A is held to the
 4-way design rules (no aimed bullet over 2 px/tick, no two laser lanes closer than 16 px) by
-`pnpm content:check`. `test-range.enemies.json` / `test-boss.enemies.json` serve the dev stages.
+`pnpm content:check`. `test-range.enemies.json` / `test-boss.enemies.json` serve the dev stages;
+`test-sentry.enemies.json` holds the `sentry`, which runs the `common.spiral` DSL pattern
+(`pattern.loop`, M2-02).
 
 ## Format (formatVersion 1)
 
@@ -40,6 +42,7 @@ alternating attached lane lasers, aimed 3-ways once two plates are down). Zone A
       "explosion": "small",            // optional: "small" (default) | "medium" | "large"
       "megaCrashImmune": false,        // optional: survives the Mega Crash (default false)
       "child": null,                   // optional: enemy id a spawner releases (hatch.spawner)
+      "pattern": null,                 // optional: content/patterns/ action the pattern.loop behaviour runs
       "rank": { "fireRate": 0.5 },     // optional rank modifiers (§11, §15; default 1 each)
       "revenge": { "minRank": 12, "pattern": "aimed", "speed": 1.25 } // optional revenge bullets
     }
@@ -60,7 +63,9 @@ flier: the leader flies the spawn event's path, the others follow its track), `c
 `fireTicks`, `bulletSpeed`), `walker.floor` (walks, stops and fires an aimed 3-way — `spread`,
 `bulletSpeed` — walks), `hatch.spawner` (releases its `child`), `rammer.aimed` (enters with its
 mover, then dashes at the player), `orbiter.loop` (loops along the spawn event's path, firing
-rings — `ringTicks`, `ringCount`, `bulletSpeed`). Their tunables and defaults are listed in
+rings — `ringTicks`, `ringCount`, `bulletSpeed`), and since M2-02 `pattern.loop` (runs the
+enemy's `pattern` — a [`content/patterns/`](../patterns/README.md) DSL action — over and over,
+`restTicks` apart; it moves with its `mover`). Their tunables and defaults are listed in
 `packages/core/src/behaviors`. Bullet speeds are px/tick on Normal (rank scales them) and fire
 intervals are ticks on Normal.
 

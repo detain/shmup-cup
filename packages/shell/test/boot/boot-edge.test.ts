@@ -50,6 +50,7 @@ vi.mock('@shmup/render-pixi', async (importOriginal) => {
         particles: null,
         popups: null,
         setFxContent: () => {},
+        setBulletPalette: () => {},
         setSpriteNames: () => {},
         bindWorld: () => {},
         render: (frame: RenderFrame) => fakes.renders.push({ tick: frame.tick }),

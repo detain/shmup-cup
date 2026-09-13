@@ -2,8 +2,9 @@
  * # data — content schemas and loaders (player, weapons, enemies, paths, stages, tilesets JSON)
  *
  * **Status: partial.** The loader, the schema combinators and the `player`, `weapons`,
- * `enemies` (with its boss section, M1-13), `paths`, `stage`, `tileset` and `rules` (M2-01)
- * formats are implemented; later steps add their kinds.
+ * `enemies` (with its boss section, M1-13), `paths`, `stage`, `tileset`, `rules` (M2-01, its
+ * `scoring` section M2-02) and `patterns` (M2-02) formats are implemented; later steps add their
+ * kinds.
  *
  * **Responsibility.** Data-driven content (design pillar 4). Declares the shape of every
  * file under `content/`, validates it at load time with the in-house combinators in
@@ -92,9 +93,16 @@
  * `path` → `pathId`, `child` → `childId`); `-1` means null, absent or unresolved. Systems read
  * only the numbers.
  *
- * **Planned API (later steps).** Kinds `patterns`, `campaign`, `strings` (M2) and more `rules`
- * sections (scoring — M2-02); `input-profiles`, `sfx`/`music` and `fx` files stay
- * *foreign* here and are validated by their owning packages (see plan §3.5). Hosts pass
+ * **Patterns and scoring rules (M2-02).** A `patterns` file (`content/patterns/*.patterns.json`)
+ * holds BulletML-inspired actions and bullets (`core/patterns` `dsl.ts`: the format, the
+ * expression compiler and the pattern compiler). Every valid file is collected, then — before the
+ * references are resolved — all of them are compiled into one {@link ContentDb.patterns} bank;
+ * enemies refer to an action with `pattern` (→ `patternId`). A `rules` file's optional `scoring`
+ * section gives {@link ContentDb.scoring} (the points of a bullet cancelled into a point item).
+ *
+ * **Planned API (later steps).** Kinds `campaign`, `strings` (M2); `input-profiles`,
+ * `sfx`/`music` and `fx` files stay *foreign* here and are validated by their owning packages
+ * (see plan §3.5). Hosts pass
  * `knownScripts` (`core/behaviors` `KNOWN_SCRIPT_IDS`) so script ids are checked; M1-03 checks
  * `db.sprites` against the atlas.
  *
@@ -120,6 +128,14 @@ import {
 } from '../config/index.js';
 import { MUSIC_CUES, SFX_CUES } from '../events/index.js';
 import { defineModule } from '../module-info.js';
+import {
+  EMPTY_PATTERN_BANK,
+  PATTERNS_FILE_SCHEMA,
+  compilePatternBank,
+  type CollectedPatterns,
+  type PatternBank,
+} from '../patterns/dsl.js';
+import { MAX_BULLET_CANCEL_POINTS, type ScoringRules } from '../scoring/index.js';
 import { bakePath, type PathTable } from './paths.js';
 import { s, type RefSite, type Schema, type ValidationIssue } from './schema.js';
 import { buildTilesetTables, expandTilemap, type TilesetTables } from './tilemap.js';
@@ -177,6 +193,7 @@ export const CONTENT_KINDS = Object.freeze([
   'stage',
   'tileset',
   'rules',
+  'patterns',
 ] as const);
 
 /** Kinds of content file this module owns (`content/player/`, `weapons/`, …). */
@@ -562,6 +579,13 @@ export interface EnemySpec {
   readonly child: string | null;
   /** Resolved {@link ContentDb.enemies} index of {@link EnemySpec.child} (-1 = none). */
   readonly childId: number;
+  /**
+   * The `content/patterns/` action the enemy's behaviour runs (plan M2-02 — the `pattern.loop`
+   * behaviour and `ScriptApi.startPattern`), or `null` (default).
+   */
+  readonly pattern: string | null;
+  /** Resolved {@link ContentDb.patterns} action index of {@link EnemySpec.pattern} (-1 = none). */
+  readonly patternId: number;
   /** Rank modifiers (default: none — both 1). */
   readonly rank?: EnemyRankSpec;
   /** Revenge bullets (default: none). */
@@ -1130,6 +1154,17 @@ export interface ContentDb {
    * `core/config` `DEFAULT_DIFFICULTY_TABLE` (`createGame` passes this to `resolveGameConfig`).
    */
   readonly difficulty: DifficultyTable | null;
+  /**
+   * The `scoring` section of a `rules` file (M2-02, `content/rules/scoring.rules.json`), or `null`
+   * when no file has one — the World then uses `core/scoring` `DEFAULT_SCORING_RULES`.
+   */
+  readonly scoring: ScoringRules | null;
+  /**
+   * The compiled bullet patterns of every `content/patterns/` file (M2-02, `core/patterns`
+   * `PatternBank`): enemies refer to an action by id (`pattern` → `patternId`). Empty without
+   * pattern files.
+   */
+  readonly patterns: PatternBank;
 }
 
 /** Options of {@link loadContent}. */
@@ -1411,6 +1446,7 @@ const BOSS_OMITTED = Object.freeze([
   'explosion',
   'megaCrashImmune',
   'child',
+  'pattern',
   'rank',
   'revenge',
 ] as const);
@@ -1433,6 +1469,7 @@ const ENEMY_SCHEMA = s.object(
     explosion: s.enumOf(ENEMY_EXPLOSIONS),
     megaCrashImmune: s.bool(),
     child: s.nullable(s.ref('enemy')),
+    pattern: s.nullable(s.ref('pattern')),
     rank: s.object(
       { fireRate: s.num({ min: 0, max: 8 }), bulletSpeed: s.num({ min: 0, max: 8 }) },
       { optional: ['fireRate', 'bulletSpeed'] },
@@ -1465,6 +1502,7 @@ const ENEMY_SCHEMA = s.object(
       'explosion',
       'megaCrashImmune',
       'child',
+      'pattern',
       'rank',
       'revenge',
     ],
@@ -1686,17 +1724,23 @@ const DIFFICULTY_TABLE_SCHEMA = s.object({
   arcade: DIFFICULTY_RULES_SCHEMA,
 });
 
+/** The `scoring` section of a `rules` file (plan M2-02, `core/scoring` {@link ScoringRules}). */
+const SCORING_RULES_SCHEMA = s.object({
+  bulletCancel: s.int({ min: 0, max: MAX_BULLET_CANCEL_POINTS }),
+});
+
 /**
  * A `content/rules/*.rules.json` file (M2-01, plan §3.5): game-wide rule tables. Every section is
- * optional and may appear in one file only; today the only section is `difficulty`.
+ * optional and may appear in one file only: `difficulty` (M2-01) and `scoring` (M2-02).
  */
 const RULES_FILE_SCHEMA = s.object(
   {
     ...HEADER_SHAPE,
     kind: s.enumOf(['rules'] as const),
     difficulty: DIFFICULTY_TABLE_SCHEMA,
+    scoring: SCORING_RULES_SCHEMA,
   },
-  { optional: ['difficulty'] },
+  { optional: ['difficulty', 'scoring'] },
 );
 
 /** Mutable working copy of a {@link ContentDb} while a load runs. */
@@ -1735,6 +1779,10 @@ interface DbBuilder {
   tilesetIndex: Map<string, number>;
   /** The difficulty presets (the first `rules` file with a `difficulty` section), or `null`. */
   difficulty: DifficultyTable | null;
+  /** The scoring rules (the first `rules` file with a `scoring` section), or `null`. */
+  scoring: ScoringRules | null;
+  /** Every valid `patterns` file, in path order (compiled once all files are collected). */
+  patternFiles: CollectedPatterns[];
 }
 
 /** Empty {@link StringTable}. */
@@ -1770,6 +1818,8 @@ export const EMPTY_CONTENT_DB: ContentDb = Object.freeze({
   tilesets: Object.freeze([]),
   tilesetIndex: new Map<string, number>(),
   difficulty: null,
+  scoring: null,
+  patterns: EMPTY_PATTERN_BANK,
 });
 
 /** `Object.prototype.hasOwnProperty` (Chromium 69 has no `Object.hasOwn`). */
@@ -1923,6 +1973,7 @@ function migrate(
  * @param sprites - Interned sprite table.
  * @param scripts - Interned script table.
  * @param knownScripts - Script ids the engine implements, or `null` to skip the check.
+ * @param patterns - The compiled pattern bank (pattern action ids).
  * @param issues - Collector.
  */
 function resolveRef(
@@ -1931,6 +1982,7 @@ function resolveRef(
   sprites: StringTable,
   scripts: StringTable,
   knownScripts: ReadonlySet<string> | null,
+  patterns: PatternBank,
   issues: ValidationIssue[],
 ): void {
   const target = site.container;
@@ -1974,6 +2026,9 @@ function resolveRef(
       break;
     case 'music':
       resolved = hasOwn(MUSIC_CUES, id) ? (MUSIC_CUES as Record<string, number>)[id] : undefined;
+      break;
+    case 'pattern':
+      resolved = patterns.actionIndex.get(id);
       break;
   }
   if (resolved === undefined) {
@@ -2074,6 +2129,8 @@ export function loadContent(
     tilesets: [],
     tilesetIndex: new Map(),
     difficulty: null,
+    scoring: null,
+    patternFiles: [],
   };
 
   const sorted = files.slice().sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
@@ -2110,7 +2167,8 @@ export function loadContent(
   }
   const sprites = buildStringTable(spriteNames);
   const scripts = buildStringTable(scriptNames);
-  for (const site of refs) resolveRef(site, db, sprites, scripts, knownScripts, issues);
+  const patterns = compilePatternBank(db.patternFiles, issues);
+  for (const site of refs) resolveRef(site, db, sprites, scripts, knownScripts, patterns, issues);
   checkBossReferences(db, issues);
   expandStageTerrains(db, issues);
 
@@ -2133,6 +2191,8 @@ export function loadContent(
       tilesets: db.tilesets,
       tilesetIndex: db.tilesetIndex,
       difficulty: db.difficulty,
+      scoring: db.scoring,
+      patterns,
     },
     issues,
     foreign,
@@ -2169,6 +2229,8 @@ function parseFile(
       return TILESET_FILE_SCHEMA.parse(data, '', issues, refs);
     case 'rules':
       return RULES_FILE_SCHEMA.parse(data, '', issues, refs);
+    case 'patterns':
+      return PATTERNS_FILE_SCHEMA.parse(data, '', issues, refs);
   }
 }
 
@@ -2296,6 +2358,14 @@ function collect(
       return;
     }
     case 'rules': {
+      const scoring = parsed['scoring'] as ScoringRules | undefined;
+      if (scoring !== undefined) {
+        if (db.scoring !== null) {
+          issue(issues, at(path, 'scoring'), 'scoring rules are already defined by another file');
+        } else {
+          db.scoring = Object.freeze(scoring);
+        }
+      }
       const table = parsed['difficulty'] as DifficultyTable | undefined;
       if (table === undefined) return;
       if (!checkDifficultyTable(table, path, issues)) return;
@@ -2310,6 +2380,9 @@ function collect(
       db.difficulty = freezeDifficultyTable(table);
       return;
     }
+    case 'patterns':
+      db.patternFiles.push({ path, file: parsed });
+      return;
   }
 }
 
@@ -2419,6 +2492,7 @@ function completeEnemy(
     if (enemy.explosion === undefined) enemy.explosion = 'small';
     if (enemy.megaCrashImmune === undefined) enemy.megaCrashImmune = false;
     if (enemy.child === undefined) enemy.child = null;
+    if (enemy.pattern === undefined) enemy.pattern = null;
     enemy.boss = null;
     return enemy as EnemySpec;
   }
@@ -2448,6 +2522,7 @@ function completeEnemy(
   enemy.explosion = 'large';
   enemy.megaCrashImmune = true;
   enemy.child = null;
+  enemy.pattern = null;
   return enemy as EnemySpec;
 }
 

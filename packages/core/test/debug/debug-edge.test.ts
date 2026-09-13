@@ -11,11 +11,12 @@
  * - a stepped world's hash is a pure function of its state, however it was reached.
  */
 import { describe, expect, it } from 'vitest';
-import { fireLaser } from '../../src/bullets/index.js';
+import { fireBendingLaser, fireLaser } from '../../src/bullets/index.js';
 import { resolveGameConfig } from '../../src/config/index.js';
 import { EMPTY_CONTENT_DB } from '../../src/data/index.js';
 import { FNV_OFFSET_BASIS, FNV_PRIME, hashWorld } from '../../src/debug/index.js';
 import { Action, commitPlayerInput, createInputSnapshot } from '../../src/input/index.js';
+import { MAX_REPEAT_DEPTH } from '../../src/patterns/index.js';
 import { PLAYER_STATES, spawnPlayer } from '../../src/player/index.js';
 import { createSoaPool } from '../../src/pools/index.js';
 import { createRng } from '../../src/rng/index.js';
@@ -83,6 +84,56 @@ function referenceHash(w: World): number {
     const count = entry.pool.count;
     word(count);
     for (const array of entry.arrays) for (let i = 0; i < count; i++) num(array[i]);
+  }
+  // M2-02: the bending lasers' active slots, then the pattern runners in use.
+  const bend = w.bullets.bending;
+  for (let s = 0; s < bend.capacity; s++) {
+    word(bend.active[s]);
+    if (bend.active[s] === 0) continue;
+    for (const value of [
+      bend.filled[s],
+      bend.head[s],
+      bend.length[s],
+      bend.emit[s],
+      bend.homing[s],
+      bend.stride[s],
+      bend.angle[s],
+      bend.speed[s],
+      bend.turnRate[s],
+      bend.width[s],
+    ]) {
+      num(value);
+    }
+    word(bend.bits[s]);
+    for (let n = 0; n < bend.filled[s]; n++) {
+      const node = s * bend.nodes + ((bend.head[s] - n) & (bend.nodes - 1));
+      num(bend.x[node]);
+      num(bend.y[node]);
+    }
+  }
+  const runners = w.patterns.runners;
+  num(runners.meta[0]);
+  num(runners.meta[1]);
+  for (let i = 0; i < runners.state.length; i++) {
+    if (runners.state[i] === 0) continue;
+    num(i);
+    word(runners.state[i]);
+    num(runners.entry[i]);
+    num(runners.pc[i]);
+    num(runners.depth[i]);
+    for (let d = 0; d < runners.depth[i]; d++) {
+      num(runners.loopI[i * MAX_REPEAT_DEPTH + d]);
+      num(runners.loopN[i * MAX_REPEAT_DEPTH + d]);
+    }
+    for (const value of [
+      runners.wake[i],
+      runners.seqDir[i],
+      runners.seqSpeed[i],
+      runners.heading[i],
+      runners.scale[i],
+    ]) {
+      num(value);
+    }
   }
   for (const e of w.enemies.enemies) {
     word(e.state);
@@ -256,6 +307,7 @@ describe('core/debug hashWorld — reference and coverage', () => {
         }
       }
       if (round % 3 === 0) w.pools.register('e', createSoaPool(4, { t: 'u8' })).alloc();
+      if (round % 5 === 0) fireBendingLaser(w, { slot: -1, x: w.camera.x + 300, y: 100 });
       w.players[1].active = round % 4 === 0;
       if (w.players[1].active) spawnPlayer(w.players[1], w.camera);
       w.camera.vx = rng.rangeInt(0, 3) / 4;

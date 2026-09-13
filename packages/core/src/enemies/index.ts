@@ -17,7 +17,10 @@
  * - phase 3 (stage): `spawn` / `formation` events spawn enemies; formation members due this tick
  *   spawn;
  * - phase 4 (scripts): scripts whose `wakeTick` has come are resumed (`next()` only on wake);
- *   they fire through the {@link ScriptApi} primitives (`core/patterns`, `core/bullets`);
+ *   they fire through the {@link ScriptApi} primitives (`core/patterns`, `core/bullets`) — since
+ *   M2-02 also bending lasers ({@link ScriptApi.bendingLaser}) and DSL patterns
+ *   ({@link ScriptApi.startPattern} / {@link ScriptApi.stepPattern}: the World's `PatternVm`,
+ *   one emitter per enemy slot, stopped when the enemy is removed);
  * - phase 5 (movement): age, hit flash, camera ride (flying enemies), mover, leader track,
  *   animation, on-screen / settle / despawn rules;
  * - phase 6 (collision): hurtboxes go into the World's grid (ids = slots); the players' hurt
@@ -98,6 +101,12 @@
  */
 import {
   AIM_AT_TARGET,
+  BENDING_LASER_HOMING,
+  BENDING_LASER_LENGTH,
+  BENDING_LASER_LIFE,
+  BENDING_LASER_SPEED,
+  BENDING_LASER_TURN,
+  BENDING_LASER_WIDTH,
   BulletKind,
   BulletOrigin,
   LASER_ACTIVE_TICKS,
@@ -105,6 +114,7 @@ import {
   LASER_GROW_TICKS,
   LASER_TELEGRAPH_TICKS,
   LASER_WIDTH,
+  NO_TARGET_ANGLE,
   type BulletSystem,
 } from '../bullets/index.js';
 import {
@@ -151,6 +161,7 @@ import {
   updateMover,
   type MoverBody,
   type MoverContext,
+  type PatternVm,
   type Script,
   type ScriptHolder,
 } from '../patterns/index.js';
@@ -526,6 +537,51 @@ export interface ScriptApi {
     active?: number,
     fade?: number,
   ): number;
+  /**
+   * A bending laser from this enemy (`core/bullets` `fireBendingLaser`, M2-02): a homing head
+   * leaving a body of its last positions. It does not follow the enemy.
+   *
+   * @param angle - Starting heading (default `AIM_AT_TARGET`).
+   * @param speed - Head speed (default `BENDING_LASER_SPEED`; × the rank's speed scale).
+   * @param turnRate - Turn cap while homing (default `BENDING_LASER_TURN`).
+   * @param homing - Homing ticks (default `BENDING_LASER_HOMING`).
+   * @param length - Body length in nodes (default `BENDING_LASER_LENGTH`).
+   * @param width - Width (default `BENDING_LASER_WIDTH`).
+   * @param life - Ticks the head flies (default `BENDING_LASER_LIFE`).
+   * @returns The bending laser slot, or -1.
+   */
+  bendingLaser(
+    angle?: number,
+    speed?: number,
+    turnRate?: number,
+    homing?: number,
+    length?: number,
+    width?: number,
+    life?: number,
+  ): number;
+  /**
+   * Starts (or restarts) a `content/patterns/` DSL pattern on this enemy (`core/patterns`
+   * `PatternVm.startEmitter`, M2-02); step it with {@link ScriptApi.stepPattern}.
+   *
+   * @param pattern - `ContentDb.patterns` action index (e.g. `spec.patternId`).
+   * @param heading - Heading of the pattern's `relative` directions (default left).
+   * @returns `false` when there is no such (compiled) pattern or no interpreter.
+   */
+  startPattern(pattern: number, heading?: number): boolean;
+  /**
+   * Runs this enemy's pattern until its next `wait` — yield the result — or its end. Fires follow
+   * the fire rule (`canFire()`): while it is false the pattern advances but launches nothing.
+   *
+   * @returns Ticks to sleep (≥ 1), or -1 when the pattern ended (or none was started).
+   *
+   * @example
+   * ```ts
+   * if (api.startPattern(api.spec.patternId)) {
+   *   for (let wait = api.stepPattern(); wait > 0; wait = api.stepPattern()) yield wait;
+   * }
+   * ```
+   */
+  stepPattern(): number;
 }
 
 /** An enemy behaviour as the enemy system uses it (`core/behaviors` provides them). */
@@ -583,6 +639,11 @@ export interface EnemyHost {
    * least an enemy's `revenge.minRank`. Absent counts as 0.
    */
   readonly rank?: number;
+  /**
+   * The pattern interpreter (`core/patterns` `PatternVm`, M2-02) behind `ScriptApi.startPattern` /
+   * `stepPattern`. Absent = no DSL patterns (those calls do nothing).
+   */
+  readonly patterns?: PatternVm;
 }
 
 /**
@@ -848,6 +909,8 @@ const NO_SPEC: EnemySpec = Object.freeze({
   megaCrashImmune: false,
   child: null,
   childId: -1,
+  pattern: null,
+  patternId: -1,
   boss: null,
 });
 
@@ -1400,6 +1463,44 @@ class EnemyScriptApi implements ScriptApi {
           fade,
           this.self.slot,
         );
+  }
+
+  /** See {@link ScriptApi.bendingLaser}. */
+  bendingLaser(
+    angle = AIM_AT_TARGET,
+    speed = BENDING_LASER_SPEED,
+    turnRate = BENDING_LASER_TURN,
+    homing = BENDING_LASER_HOMING,
+    length = BENDING_LASER_LENGTH,
+    width = BENDING_LASER_WIDTH,
+    life = BENDING_LASER_LIFE,
+  ): number {
+    const gun = this.gun();
+    const bullets = this.system.host.bullets;
+    return gun === null
+      ? -1
+      : bullets.fireBendingLaser(
+          gun,
+          angle,
+          speed * bullets.speedScale,
+          turnRate,
+          homing,
+          length,
+          width,
+          life,
+        );
+  }
+
+  /** See {@link ScriptApi.startPattern}. */
+  startPattern(pattern: number, heading = NO_TARGET_ANGLE): boolean {
+    const vm = this.system.host.patterns;
+    return vm === undefined ? false : vm.startEmitter(this.self.slot, pattern, heading);
+  }
+
+  /** See {@link ScriptApi.stepPattern}. */
+  stepPattern(): number {
+    const vm = this.system.host.patterns;
+    return vm === undefined ? -1 : vm.stepEmitter(this.self.slot, this.self, this.canFire());
   }
 }
 
@@ -2126,6 +2227,7 @@ class EnemySystemImpl implements EnemySystem {
     enemy.script = null;
     enemy.flags &= ~(EnemyFlag.OnScreen | EnemyFlag.Settled);
     this.host.bullets.detachLasers(enemy.slot);
+    this.host.patterns?.stopEmitter(enemy.slot);
   }
 
   /** See {@link EnemySystem.flush}. */

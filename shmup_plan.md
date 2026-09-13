@@ -2114,6 +2114,56 @@ Goal of the milestone: every **[P1]** feature. Steps are ordered so systems land
 - **Acceptance:** expression compiler tests, DSL patterns match hand-written TS equivalents (hash), bending laser
   collision, cancel scoring, palette variant frames exist.
 - **Refs:** `shmup_feat.md` §12 (DSL, bending lasers, cancel, readability), §21 (accessibility palettes).
+- **As built:**
+  - **Format.** `content/patterns/*.patterns.json` holds `actions` (`{ id, body }` — a pattern an enemy runs *is* an
+    action) and `bullets` (`{ id, kind?, direction?, speed?, actions? }`); ids are global. `bulletRef` is a field of
+    `fire` (with `params`), not a node of its own; `actionRef` carries `params` too (`$1` … `$9`). `accel` is the
+    engine's tangential acceleration (`accel`, `min`, `max`, `term` — px/tick², polar bullets), not BulletML's
+    horizontal / vertical pair; in `changeSpeed` / `changeDirection` a `sequence` value is a per-tick change for
+    `term` ticks (BulletML's meaning), the other types reach their target over `term` ticks and land on it exactly
+    (new bullet fields `accelTerm` / `termSpeed`, `turnTerm` / `termAngle`). `wait` has a `ranked` flag (÷ the rank's
+    fire rate, like `fireWait`). Directions are binary units (the placeholder type's choice); `relative` for an
+    enemy's pattern measures from a heading it starts with (left) and its `changeDirection` sets; relative speed of an
+    enemy is 0. Expressions add `floor`, `round`, `abs`, `min`, `max`, `sin`, `cos` (table).
+  - **Compiler** (`core/patterns/dsl.ts`, run by `loadContent` after collecting, before references resolve):
+    recursive-descent parser → constant folding → postfix code; `actionRef` / `bulletRef` are **inlined** with their
+    params substituted (no call stack at run time; recursion is an issue, except a bullet firing itself without
+    params, whose program is shared). `repeat` nests ≤ 4 after inlining; bank ≤ 262,144 numbers. A bad expression
+    fails its file's schema; reference problems give the action entry 0 (it runs nothing). Bullet kind names come from
+    a leaf `bullets/kinds.ts` so `core/data` needs no import of the bullet system. Enemies name an action with
+    `pattern` (→ `patternId`, ref kind `pattern`).
+  - **Interpreter** (`createPatternVm`, `World.patterns`): 576 runner slots in typed arrays — 64 emitters (one per
+    enemy slot) + 512 bullet programs (a bullet stores `runner + 1`; slots handed out from a rotating hint so the
+    choice depends only on hashed state). The script runner steps it: `ScriptApi.startPattern` / `stepPattern` (the
+    returned `wait` is the coroutine's `yield`) and the new behaviour **`pattern.loop`** (`restTicks`, `heading`;
+    `checkEnemyBehaviors` requires a `pattern`). Bullet programs run inside `BulletSystem.update` through an injected
+    `BulletProgramRunner` (no module cycle). A run executes ≤ 1,024 instructions, then sleeps a tick. `$rand` draws
+    through the new `Rng.nextFloatInto` (a returned fraction was boxed per draw). Fires obey the enemy fire rule (the
+    pattern advances, nothing launches). `hashWorld` mixes the runners in use. Boss behaviours and revenge bullets do
+    not run DSL patterns yet (M2-09 material). Shipped: `common.patterns.json` (5 patterns) and a `sentry` enemy
+    (`content/enemies/test-sentry.enemies.json`, own file so suites loading the test range alone stay valid) that runs
+    `common.spiral`; zone A is unchanged.
+  - **Bending lasers:** 8 stable slots (`BendingLaserTable`, not a packed pool — each keeps its 64-node ring; hashed
+    per active slot), fired with `fireBendingLaser` / `ScriptApi.bendingLaser` (not attached; speed × rank scale
+    there); head homes for `homing` ticks at ≤ `turnRate`; after `life` ticks, or when the head leaves the view ± 16 px
+    or enters terrain, the tail catches up one node per tick. Hitbox: circles of diameter `width` on every
+    `floor(width / 2 / speed)`-th node (overlapping). Drawn as un-rotated round segment sprites (`lasers/bend-*`) at
+    every node (Pixi rotation writes allocate), via the render contract's new `BendingLaserView`
+    (`WorldView.bendingLasers`) and render-pixi `createBendingLaserBinding`. No DSL node fires lasers.
+  - **Cancel → points:** `CancelMode.Points` (a boss's death → its killer, a Mega Crash → the bomber; the player's
+    death still sparkles): each cancelled bullet becomes a point item (pool `cancelPoints`, the `ITEMS` batch, sprite
+    `items/point`) that drifts 12 ticks, then accelerates to the credited player's score in the top HUD bar and adds
+    `bulletCancel` points (`content/rules/scoring.rules.json`, kind `rules` section `scoring`, default
+    `DEFAULT_SCORING_RULES` = 10) — at the latest after 180 ticks; a full item pool credits at once.
+  - **Palettes:** names in core `BULLET_PALETTES` (`standard`, `deuteranopia`, `protanopia`, `tritanopia`),
+    `UserOptions.display.bulletPalette` (saved; the Options screen gained **BULLETS** before BACK — `OptionsItem.Back`
+    is now 5 — pushing `UserOptionKind.BulletPalette` live). The pipeline's new generator `palettes.mjs` draws every
+    bullet, beam and bend again as `<sprite>@<palette>`, recoloured and shape-coded (pink solid core, red a dark
+    centre, purple a single bright dot); render-pixi `resolveBulletPaletteTable` / `renderer.setBulletPalette` swap
+    the sprite tables (the shell applies the saved choice at boot and the event live). Real-art PNG overrides of those
+    sprites need their own `@<palette>` variants (else they keep their frames).
+  - Golden replays re-blessed: new bullet pool fields and the `cancelPoints` pool change the hashes, and cancel points
+    raise the scores of runs with a boss kill or a Mega Crash (outcomes unchanged).
 
 ### M2-03 — Meter arsenal: loadouts B–D, Weapon Edit, parking & weapon select
 

@@ -128,7 +128,7 @@ const LOOP: readonly (readonly [number, number])[] = [
 describe('core/patterns module', () => {
   it('describes itself and names the movers after the content types', () => {
     expect(moduleInfo.name).toBe('patterns');
-    expect(moduleInfo.status).toBe('partial');
+    expect(moduleInfo.status).toBe('implemented');
     expect(MOVER_NAMES).toEqual([
       'none',
       'straight',

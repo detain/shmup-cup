@@ -19,7 +19,8 @@
  * - shmup_feat.md §22 Determinism — seeded PRNG (sfc32), two streams
  * - shmup_feat.md §12 — random spray from the seeded RNG; §11 — "seeded & readable" rushes
  *
- * **Public API (implemented now).** {@link Rng}, {@link RngState}, {@link RngStreams},
+ * **Public API (implemented now).** {@link Rng} (M2-02: `nextFloatInto`, the allocation-free
+ * draw of the pattern DSL's `$rand`), {@link RngState}, {@link RngStreams},
  * {@link RNG_STATE_WORDS}, {@link createRng}, {@link createRngStreams}.
  *
  * **Planned API (later steps).** `hashRngState()` for the golden-replay state hash
@@ -72,6 +73,15 @@ export interface Rng {
    * @returns The next float in [0, 1), in steps of 2^-32.
    */
   nextFloat(): number;
+  /**
+   * Advances the stream like {@link Rng.nextFloat} and writes the float into a typed array instead
+   * of returning it — for per-tick code: a fractional result of a call V8 does not inline is boxed
+   * into a heap number (the pattern DSL's `$rand`, plan M2-02).
+   *
+   * @param out - Destination.
+   * @param index - Element to write.
+   */
+  nextFloatInto(out: Float64Array, index: number): void;
   /**
    * Draws a uniformly distributed integer.
    *
@@ -191,6 +201,10 @@ export function createRng(seed: number): Rng {
     nextFloat(): number {
       calls += 1;
       return step() / TWO_POW_32;
+    },
+    nextFloatInto(out: Float64Array, index: number): void {
+      calls += 1;
+      out[index] = step() / TWO_POW_32;
     },
     rangeInt(min: number, max: number): number {
       calls += 1;

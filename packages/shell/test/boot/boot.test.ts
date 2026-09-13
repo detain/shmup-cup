@@ -61,6 +61,8 @@ const fakes = vi.hoisted(() => ({
   fxContent: null as RenderPixi.FxContent | null,
   /** Calls into the fake renderer's particles and popups: `[method, ...args]`. */
   fxCalls: [] as unknown[][],
+  /** Bullet palettes handed to the renderer (M2-02). */
+  palettes: [] as string[],
 }));
 
 vi.mock('@shmup/render-pixi', async (importOriginal) => {
@@ -91,6 +93,7 @@ vi.mock('@shmup/render-pixi', async (importOriginal) => {
         setFxContent: (content: RenderPixi.FxContent) => {
           fakes.fxContent = content;
         },
+        setBulletPalette: (palette: string) => fakes.palettes.push(palette),
         setSpriteNames: (names: readonly string[]) => fakes.spriteNames.push(names),
         bindWorld: (world: unknown) => fakes.bound.push(world),
         render: (frame: RenderFrame) =>
@@ -212,6 +215,7 @@ beforeEach(() => {
   fakes.destroyed = 0;
   fakes.fxContent = null;
   fakes.fxCalls.length = 0;
+  fakes.palettes.length = 0;
   unlocks = 0;
   platform = createHeadlessPlatform();
   input = {
@@ -1170,6 +1174,9 @@ describe('shell/boot saves and options (M1-17)', () => {
     events.push(SimEventKind.UserOption, UserOptionKind.SfxVolume, 0, 0, 0);
     events.push(SimEventKind.UserOption, UserOptionKind.InputProfile, 0, 0, 1);
     events.push(SimEventKind.UserOption, UserOptionKind.InputProfile, 0, 0, 7); // no such choice
+    // M2-02: the bullet palette goes to the renderer (the saved one first, at boot).
+    events.push(SimEventKind.UserOption, UserOptionKind.BulletPalette, 0, 0, 3);
+    events.push(SimEventKind.UserOption, UserOptionKind.BulletPalette, 0, 0, 9); // no such palette
     win.frame(1000);
     expect(volumes).toEqual([
       ['master', 0.25],
@@ -1178,6 +1185,7 @@ describe('shell/boot saves and options (M1-17)', () => {
       ['ui', 0],
     ]);
     expect(applied).toEqual([['fast', 'options']]);
+    expect(fakes.palettes).toEqual(['standard', 'tritanopia']);
   });
 
   it('drives the Options screen end to end and writes the save on BACK', async () => {

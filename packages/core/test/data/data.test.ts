@@ -135,6 +135,7 @@ describe('core/data module', () => {
       'stage',
       'tileset',
       'rules',
+      'patterns',
     ]);
     expect(isContentKind('weapons')).toBe(true);
     expect(isContentKind('rules')).toBe(true);

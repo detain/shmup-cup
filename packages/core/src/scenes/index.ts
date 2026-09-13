@@ -98,7 +98,8 @@
  * {@link OptionsScene}, {@link StageClearScene}, {@link ContinueScene}, {@link GameOverScene},
  * {@link ConfirmDialog}), {@link ConfirmPurpose},
  * {@link InputProfileSetup}, the menu item indices ({@link TitleItem}, {@link PauseItem},
- * {@link OptionsItem}) and the timing constants ({@link STAGE_CLEAR_DELAY_TICKS},
+ * {@link OptionsItem} — BULLETS since M2-02 —), the Options screen's bullet palette labels
+ * ({@link BULLET_PALETTE_LABELS}, M2-02) and the timing constants ({@link STAGE_CLEAR_DELAY_TICKS},
  * {@link GAME_OVER_DELAY_TICKS}, {@link GAME_OVER_TIMEOUT_TICKS}, {@link GAME_OVER_LOCK_TICKS},
  * {@link STAGE_CLEAR_TALLY_TICKS}, {@link STAGE_CLEAR_CONTINUED_TICKS}, {@link PAUSE_DIM},
  * {@link CONTINUE_COUNTDOWN_TICKS}, {@link CONTINUE_LOCK_TICKS}).
@@ -109,6 +110,7 @@
  * @module
  */
 import {
+  BULLET_PALETTES,
   DEFAULT_DIFFICULTY_TABLE,
   DIFFICULTY_PRESETS,
   VOLUME_LEVELS,
@@ -610,7 +612,22 @@ export const TitleItem = { Start: 0, Options: 1, Exit: 2 } as const;
 export const PauseItem = { Resume: 0, Options: 1, Retry: 2, Quit: 3 } as const;
 
 /** Options screen items: the three volume sliders, the input profile, BACK. */
-export const OptionsItem = { Master: 0, Music: 1, Sfx: 2, Controls: 3, Back: 4 } as const;
+export const OptionsItem = {
+  Master: 0,
+  Music: 1,
+  Sfx: 2,
+  Controls: 3,
+  Bullets: 4,
+  Back: 5,
+} as const;
+
+/** The Options screen's BULLETS labels, in `BULLET_PALETTES` order (M2-02). */
+export const BULLET_PALETTE_LABELS: readonly string[] = Object.freeze([
+  'STANDARD',
+  'DEUTERANOPIA',
+  'PROTANOPIA',
+  'TRITANOPIA',
+]);
 
 /** Ticks the game runs on after `stageClear` before the stage-clear screen opens. */
 export const STAGE_CLEAR_DELAY_TICKS = 90;
@@ -680,12 +697,12 @@ const PAUSE_MENU_LAYOUT: MenuLayout = Object.freeze({
 });
 
 /** The Options screen's panel: left, top, width, height. */
-const OPTIONS_PANEL = Object.freeze({ x: 48, y: 48, w: 288, h: 112 });
+const OPTIONS_PANEL = Object.freeze({ x: 48, y: 44, w: 288, h: 128 });
 
 /** Where the Options menu is drawn (labels left, values from x 150). */
 const OPTIONS_MENU_LAYOUT: MenuLayout = Object.freeze({
   x: 72,
-  y: 78,
+  y: 74,
   lineHeight: 14,
   cursorX: 62,
   valueX: 150,
@@ -1308,8 +1325,8 @@ export class PauseScene extends SceneBase {
 }
 
 /**
- * The Options screen: MASTER / MUSIC / SFX sliders, CONTROLS (the input profile), BACK
- * (shmup_feat.md §21, plan M1-17).
+ * The Options screen: MASTER / MUSIC / SFX sliders, CONTROLS (the input profile), BULLETS (the
+ * enemy bullet colour set — plan M2-02), BACK (shmup_feat.md §21, plan M1-17).
  *
  * @remarks
  * An overlay (dim {@link PAUSE_DIM}) with an opaque panel, opened from the title and from the pause
@@ -1318,8 +1335,10 @@ export class PauseScene extends SceneBase {
  * CONTROLS, focuses MASTER and locks activation for 2 ticks. Every change applies **live**: a
  * slider pushes a `UserOption` event with its level (`MasterVolume` / `MusicVolume` /
  * `SfxVolume`), CONTROLS — Left / Right, or OK stepping forward, wrapping — one with the profile's
- * index (`InputProfile`); both play the move sound (at the new volume). BACK or the Back button
- * stores the sliders and — when it changed — the profile id in the save, writes the save when
+ * index (`InputProfile`), BULLETS one with the palette's index in `BULLET_PALETTES`
+ * (`BulletPalette` — the host swaps the renderer's bullet sprites); all play the move sound (at the
+ * new volume). BACK or the Back button stores the sliders, the bullet palette and — when it
+ * changed — the profile id in the save, writes the save when
  * anything differs from what is stored (`SaveStore.flush`), plays `MenuBack` and closes. CONTROLS
  * is disabled when the host offers no profiles (it then shows `DEFAULT`).
  */
@@ -1338,6 +1357,8 @@ export class OptionsScene extends SceneBase {
   readonly sfx: Slider = createSlider(0, VOLUME_LEVELS, 1, VOLUME_LEVELS);
   /** CONTROLS: the profile labels (`DEFAULT` alone when the host offers none). */
   readonly controls: Choice;
+  /** BULLETS: the enemy bullet colour set (`BULLET_PALETTES`, M2-02). */
+  readonly bullets: Choice = createChoice(BULLET_PALETTE_LABELS, 0);
   /** The menu. */
   readonly menu: ListMenu;
   /** The CONTROLS index when the screen opened (a different one on close is saved). */
@@ -1361,6 +1382,7 @@ export class OptionsScene extends SceneBase {
         { label: 'MUSIC', slider: this.music },
         { label: 'SFX', slider: this.sfx },
         { label: 'CONTROLS', choice: this.controls },
+        { label: 'BULLETS', choice: this.bullets },
         'BACK',
       ],
       { disabledMask: profiles.length === 0 ? 1 << OptionsItem.Controls : 0 },
@@ -1382,6 +1404,8 @@ export class OptionsScene extends SceneBase {
     this.sfx.value = audio.sfx;
     this.controls.index = flow.activeProfile >= 0 ? flow.activeProfile : 0;
     this.openedProfile = this.controls.index;
+    const palette = BULLET_PALETTES.indexOf(flow.save.options.display.bulletPalette);
+    this.bullets.index = palette >= 0 ? palette : 0;
     this.menu.focus = OptionsItem.Master;
     this.menu.open(MENU_OPEN_LOCK_TICKS);
   }
@@ -1400,7 +1424,7 @@ export class OptionsScene extends SceneBase {
     const options: UserOptions = {
       audio: { master: this.master.value, music: this.music.value, sfx: this.sfx.value },
       input: { profileId },
-      display: save.options.display,
+      display: { bulletPalette: BULLET_PALETTES[this.bullets.index] ?? 'standard' },
     };
     save.setOptions(options);
     void save.flush();
@@ -1439,6 +1463,9 @@ export class OptionsScene extends SceneBase {
         case OptionsItem.Controls:
           flow.activeProfile = this.controls.index;
           flow.userOption(UserOptionKind.InputProfile, this.controls.index);
+          break;
+        case OptionsItem.Bullets:
+          flow.userOption(UserOptionKind.BulletPalette, this.bullets.index);
           break;
         default:
           break;

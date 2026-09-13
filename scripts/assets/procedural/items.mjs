@@ -2,6 +2,9 @@
  * The power capsule `items/capsule` (12×8, 2 frames): an orange-red pill with a dark rim
  * and a highlight band; frame 1 is the bright half of its blink (`blink: [0, 1]`).
  *
+ * The point item `items/point` (5×5, 2 frames, plan M2-02): a small gold diamond with a dark
+ * rim that cancelled bullets turn into; frame 1 is its twinkle (a white centre and tips).
+ *
  * @module
  */
 import { createImage, setPixel } from '../image.mjs';
@@ -58,14 +61,40 @@ function capsule(bright) {
 }
 
 /**
- * Generates the capsule sprite.
+ * Draws one point item frame: a gold diamond (|dx| + |dy| ≤ 2), rim on its outline.
  *
- * @returns {SpriteDef[]} `items/capsule`.
+ * @param {boolean} twinkle - The bright frame (white centre and tips).
+ * @returns {Image} 5×5 frame.
+ */
+function point(twinkle) {
+  const image = createImage(5, 5);
+  const rim = color('#6a4808');
+  const body = color('#ffc830');
+  const white = color('#ffffff');
+  for (let y = 0; y < 5; y++) {
+    for (let x = 0; x < 5; x++) {
+      const d = Math.abs(x - 2) + Math.abs(y - 2);
+      if (d > 2) continue;
+      const tip = d === 2 && (x === 2 || y === 2);
+      setPixel(image, x, y, d === 0 ? white : d === 2 ? (twinkle && tip ? white : rim) : body);
+    }
+  }
+  if (twinkle) setPixel(image, 2, 2, white);
+  return image;
+}
+
+/**
+ * Generates the item sprites.
+ *
+ * @returns {SpriteDef[]} `items/capsule` and `items/point`.
  */
 export function generate() {
   return [
     makeSprite('items/capsule', [capsule(false), capsule(true)], 'items', {
       animations: { blink: [0, 1] },
+    }),
+    makeSprite('items/point', [point(false), point(true)], 'items', {
+      animations: { twinkle: [0, 1] },
     }),
   ];
 }

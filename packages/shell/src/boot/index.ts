@@ -57,8 +57,9 @@
  * volumes from its audio options (`applyAudioOptions`) and, when it names an input profile, asks
  * the app to apply it (`ShellOptions.inputProfiles`). The scene flow gets the save store (the
  * title's HI, the Options screen, hi-score tables — the flow writes it on changes) and the profile
- * choices; the Options screen's `UserOption` events set bus volumes and switch profiles live
- * (`connectOptionEvents`).
+ * choices; the Options screen's `UserOption` events set bus volumes, switch profiles and — since
+ * M2-02 — the renderer's enemy bullet palette live (`connectOptionEvents`); the saved palette is
+ * applied before the sprite tables are resolved (`renderer.setBulletPalette`).
  *
  * **Boot time.** The shell measures its boot (`ShellOptions.now`, default `performance.now()` —
  * whose origin is the page's start, i.e. the app launch on the TV) and exposes it as
@@ -845,6 +846,8 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   game.scenes?.finishBoot();
 
   readyRenderer.setFxContent(fx);
+  // The saved enemy bullet palette (plan M2-02), before the sprite tables are resolved.
+  readyRenderer.setBulletPalette(save.options.display.bulletPalette);
   const flowView = flowMode ? createSceneView(game) : null;
   const flight = scene === 'flight' ? createFlightScene(game) : null;
   const showcase = scene === 'showcase' ? createShowcase() : null;
@@ -878,6 +881,7 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
             const choice = index >= 0 ? profileChoices[index] : undefined;
             if (choice !== undefined) profiles.apply(choice.id, 'options');
           },
+      (palette) => readyRenderer.setBulletPalette(palette),
     );
   } else if (flight !== null) {
     connectFxEvents(events, readyRenderer);

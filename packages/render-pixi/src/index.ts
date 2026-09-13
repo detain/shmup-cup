@@ -29,7 +29,13 @@ export {
   type PixelRect,
   type TestPattern,
 } from './test-pattern/index.js';
-export { PALETTE, type PaletteColor } from './palette/index.js';
+export {
+  BULLET_PALETTE_SUFFIX,
+  PALETTE,
+  bulletPaletteSpriteName,
+  resolveBulletPaletteTable,
+  type PaletteColor,
+} from './palette/index.js';
 export {
   MAX_ATLAS_SIZE,
   MISSING_SPRITE,
@@ -49,10 +55,13 @@ export {
 export {
   LASER_WARNING_TINT,
   WORLD_LAYER_COUNT,
+  createBendingLaserBinding,
   createLaserBinding,
   createLayerStack,
   createParallaxBinding,
   createTerrainBinding,
+  type BendingLaserBinding,
+  type BendingLaserBindingOptions,
   type LaserBinding,
   type LaserBindingOptions,
   type LayerStack,

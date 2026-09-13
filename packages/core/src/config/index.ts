@@ -31,14 +31,16 @@
  * (decision D20: two 8-px HUD bars outside a 384×200 playfield). User options:
  * {@link UserOptions}, {@link AudioOptions}, {@link InputOptions}, {@link DisplayOptions},
  * {@link DEFAULT_USER_OPTIONS}, {@link VOLUME_LEVELS}, {@link volumeGain},
- * {@link resolveUserOptions}, {@link InputProfileChoice}, {@link INPUT_PROFILE_ID_PATTERN}.
+ * {@link resolveUserOptions}, {@link InputProfileChoice}, {@link INPUT_PROFILE_ID_PATTERN},
+ * {@link BULLET_PALETTES}, {@link BulletPalette}.
  *
  * **User options (M1-17).** {@link UserOptions} — the *presentation-only* options the player sets
  * in the Options screen and `core/save` persists (plan §1.5: sim-affecting options live in
  * {@link GameConfig}, the rest here): the audio volumes MASTER / MUSIC / SFX as levels
  * `0…`{@link VOLUME_LEVELS} ({@link volumeGain} turns a level into the linear bus gain), the chosen
  * keyboard / remote input profile ({@link InputOptions.profileId}, `null` = the platform's default)
- * and the display options (none yet — M2-08). {@link DEFAULT_USER_OPTIONS},
+ * and the display options (M2-02: the enemy bullet colour set, {@link DisplayOptions.bulletPalette}
+ * — {@link BULLET_PALETTES}). {@link DEFAULT_USER_OPTIONS},
  * {@link resolveUserOptions} (defensive: anything malformed falls back field by field),
  * {@link InputProfileChoice} (one entry of the Options screen's profile selector).
  *
@@ -661,8 +663,30 @@ export interface InputOptions {
   readonly profileId: string | null;
 }
 
-/** Display options — none in M1 (scale mode, shake, flash reduction arrive with M2-08 / M2-16). */
-export type DisplayOptions = Readonly<Record<string, never>>;
+/**
+ * The enemy bullet colour sets the renderer can draw (plan M2-02, shmup_feat.md §21 "colorblind
+ * bullet palettes + shape coding"): `standard` (pink / red / purple), and one set per kind of
+ * colour blindness — the asset pipeline draws every bullet, beam and bending laser segment again as
+ * `<sprite>@<palette>` (recoloured, the cores shape-coded).
+ */
+export const BULLET_PALETTES = Object.freeze([
+  'standard',
+  'deuteranopia',
+  'protanopia',
+  'tritanopia',
+] as const);
+
+/** One of {@link BULLET_PALETTES}. */
+export type BulletPalette = (typeof BULLET_PALETTES)[number];
+
+/**
+ * Display options (presentation only). M2-02 brings the bullet palette; scale mode, shake and flash
+ * reduction arrive with M2-08 / M2-16.
+ */
+export interface DisplayOptions {
+  /** The enemy bullet colour set ({@link BULLET_PALETTES}; default `standard`). */
+  readonly bulletPalette: BulletPalette;
+}
 
 /**
  * The player's presentation-only options (plan §1.5: they never affect the simulation, so they are
@@ -681,7 +705,7 @@ export interface UserOptions {
 export const DEFAULT_USER_OPTIONS: UserOptions = Object.freeze({
   audio: Object.freeze({ master: VOLUME_LEVELS, music: VOLUME_LEVELS, sfx: VOLUME_LEVELS }),
   input: Object.freeze({ profileId: null }),
-  display: Object.freeze({}),
+  display: Object.freeze({ bulletPalette: 'standard' }),
 });
 
 /** Shape of an input profile id (lower-case kebab, as `content/input/` requires), ≤ 64 characters. */
@@ -735,7 +759,8 @@ function volumeLevel(value: unknown, fallback: number): number {
  * @remarks
  * Volumes: finite numbers are rounded and clamped to `0…`{@link VOLUME_LEVELS}; anything else takes
  * the default. `input.profileId`: a string matching {@link INPUT_PROFILE_ID_PATTERN} of at most 64
- * characters, else `null`. `display` is always `{}` in M1 (unknown fields are dropped). Whether the
+ * characters, else `null`. `display.bulletPalette`: one of {@link BULLET_PALETTES}, else `standard`
+ * (unknown display fields are dropped). Whether the
  * profile id names an existing profile is the host's business (an unknown one is skipped when
  * applied).
  *
@@ -752,6 +777,8 @@ export function resolveUserOptions(value: unknown): UserOptions {
   const root = isRecord(value) ? value : {};
   const audio = isRecord(root.audio) ? root.audio : {};
   const input = isRecord(root.input) ? root.input : {};
+  const display = isRecord(root.display) ? root.display : {};
+  const palette = display.bulletPalette;
   const d = DEFAULT_USER_OPTIONS.audio;
   const id = input.profileId;
   return Object.freeze({
@@ -764,7 +791,12 @@ export function resolveUserOptions(value: unknown): UserOptions {
       profileId:
         typeof id === 'string' && id.length <= 64 && INPUT_PROFILE_ID_PATTERN.test(id) ? id : null,
     }),
-    display: Object.freeze({}),
+    display: Object.freeze({
+      bulletPalette:
+        typeof palette === 'string' && (BULLET_PALETTES as readonly string[]).indexOf(palette) >= 0
+          ? (palette as BulletPalette)
+          : DEFAULT_USER_OPTIONS.display.bulletPalette,
+    }),
   });
 }
 

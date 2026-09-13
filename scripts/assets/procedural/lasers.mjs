@@ -7,6 +7,11 @@
  * width, so growing and fading beams never scale across (`render-pixi` `createLaserBinding`,
  * plan M1-09).
  *
+ * The bending lasers' segments `lasers/bend-<colour>` (plan M2-02): one 7×7 round blob (rim /
+ * body / core, like a round bullet) the renderer draws at every node of a bending laser's body.
+ * {@link laserSprites} draws both in any colours — `palettes.mjs` uses it for the colour-blind
+ * variants.
+ *
  * @module
  */
 import { createImage, setPixel } from '../image.mjs';
@@ -45,18 +50,46 @@ export function bandRows(height, palette) {
   return rows;
 }
 
+/** Side of a bending laser segment (odd: centred on its node). */
+export const BEND_SIZE = 7;
+
 /**
- * Generates the beam strips.
+ * Draws one bending laser segment: a round blob, dark rim outside radius 2.6, bright core inside
+ * radius 1.3.
  *
- * @returns {SpriteDef[]} One 8-frame beam per bullet colour.
+ * @param {{ rim: Rgba, body: Rgba, core: Rgba }} palette - Band colours.
+ * @returns {import('../image.mjs').Image} The 7×7 frame.
  */
-export function generate() {
+function bendBlob(palette) {
+  const image = createImage(BEND_SIZE, BEND_SIZE);
+  const c = (BEND_SIZE - 1) / 2;
+  for (let y = 0; y < BEND_SIZE; y++) {
+    for (let x = 0; x < BEND_SIZE; x++) {
+      const dx = x - c;
+      const dy = y - c;
+      const r = Math.sqrt(dx * dx + dy * dy);
+      if (r > 3.4) continue;
+      setPixel(image, x, y, r > 2.6 ? palette.rim : r > 1.3 ? palette.body : palette.core);
+    }
+  }
+  return image;
+}
+
+/**
+ * Draws the beams and the bending laser segments in the given colours.
+ *
+ * @param {Readonly<Record<keyof typeof BULLET_COLORS, string>>} colours - Body colour per family.
+ * @param {string} [suffix] - Appended to every sprite name (`@tritanopia`; default none).
+ * @param {string} [generator] - Generator id of the sprites' `origin` (default `lasers`).
+ * @returns {SpriteDef[]} One 8-frame beam and one segment per colour.
+ */
+export function laserSprites(colours, suffix = '', generator = 'lasers') {
   /** @type {SpriteDef[]} */
   const sprites = [];
   const black = color('#000000');
   const white = color('#ffffff');
-  for (const [name, body] of Object.entries(BULLET_COLORS)) {
-    const base = color(body);
+  for (const name of /** @type {(keyof typeof BULLET_COLORS)[]} */ (Object.keys(BULLET_COLORS))) {
+    const base = color(colours[name]);
     const palette = { rim: mix(base, black, 0.68), body: base, core: mix(base, white, 0.75) };
     const frames = [];
     for (let height = 1; height <= BEAM_HEIGHT; height++) {
@@ -68,7 +101,17 @@ export function generate() {
       }
       frames.push(image);
     }
-    sprites.push(makeSprite(`lasers/beam-${name}`, frames, 'lasers'));
+    sprites.push(makeSprite(`lasers/beam-${name}${suffix}`, frames, generator));
+    sprites.push(makeSprite(`lasers/bend-${name}${suffix}`, [bendBlob(palette)], generator));
   }
   return sprites;
+}
+
+/**
+ * Generates the beam strips and the bending laser segments.
+ *
+ * @returns {SpriteDef[]} One 8-frame beam and one segment per bullet colour.
+ */
+export function generate() {
+  return laserSprites(BULLET_COLORS);
 }

@@ -127,7 +127,7 @@ describe('core/world', () => {
     const w = world();
     expect(w.view.camera).toBe(w.camera);
     expect([w.view.parallax, w.view.terrain]).toEqual([null, null]);
-    expect(w.view.batches).toHaveLength(9);
+    expect(w.view.batches).toHaveLength(10);
     expect(w.view.batches[0]).toBe(w.enemies.groundBatch);
     expect(w.view.batches[1]).toBe(w.enemies.airBatch);
     expect(w.view.batches[2]).toBe(w.weapons.batch);
@@ -136,8 +136,10 @@ describe('core/world', () => {
     expect(w.view.batches[5]).toBe(w.bullets.batch);
     expect(w.view.batches[6]).toBe(w.powerups.shieldBatch);
     expect(w.view.batches[7]).toBe(w.powerups.itemBatch);
-    expect(w.view.batches[8]).toBe(w.bosses.batch);
+    expect(w.view.batches[8]).toBe(w.bullets.pointBatch);
+    expect(w.view.batches[9]).toBe(w.bosses.batch);
     expect(w.view.lasers).toBe(w.bullets.laserView);
+    expect(w.view.bendingLasers).toBe(w.bullets.bending);
     expect(w.view.warning).toBe(w.bosses.warning);
     expect(w.view.batches.map((b) => b.layer)).toEqual([
       LayerId.GroundEnemies,
@@ -147,6 +149,7 @@ describe('core/world', () => {
       LayerId.Player,
       LayerId.EnemyBullets,
       LayerId.Player,
+      LayerId.Items,
       LayerId.Items,
       LayerId.AirEnemies,
     ]);
@@ -262,11 +265,12 @@ describe('core/world', () => {
     expect(w.pools.entries.map((e) => e.name)).toEqual([
       'enemyBullets',
       'enemyLasers',
+      'cancelPoints',
       'playerShots',
       'items',
       'bullets',
     ]);
-    expect(w.pools.entries[4].arrays).toEqual([pool.fields.x, pool.fields.y]);
+    expect(w.pools.entries[5].arrays).toEqual([pool.fields.x, pool.fields.y]);
     pool.alloc();
     pool.alloc();
     pool.free(1);

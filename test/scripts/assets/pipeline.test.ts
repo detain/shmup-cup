@@ -315,7 +315,8 @@ describe('scripts/assets/procedural — generators', () => {
   it('only produce valid sprite names, each from one generator', () => {
     const names = PROCEDURAL_GENERATORS.flatMap((g) => g.generate().map((s) => s.name));
     expect(new Set(names).size).toBe(names.length);
-    for (const name of names) expect(name).toMatch(/^[a-z0-9-]+(\/[a-z0-9-]+)+$/);
+    // A colour-blind palette variant carries its palette after an `@` (M2-02).
+    for (const name of names) expect(name).toMatch(/^[a-z0-9-]+(\/[a-z0-9-]+)+(@[a-z]+)?$/);
   });
 
   it('never use engine-dependent maths (Math.sin/cos/…, **) — byte-identical on any engine', () => {

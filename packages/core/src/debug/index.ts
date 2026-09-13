@@ -18,7 +18,10 @@
  * both RNG states, the camera, the stage runner's state (whether there is one, then every slot of
  * its state array), the session status, hit-stop and rank, every player's fields, every
  * registered pool's live slots (fields in sorted name order, slots `0 … count-1` — the enemy
- * bullets and lasers of M1-09 and the player shots of M1-10 among them), then the enemies
+ * bullets and lasers of M1-09, the player shots of M1-10 and the point items of M2-02 among
+ * them), then the bending lasers (M2-02: each slot's active flag; an active one's fields and body
+ * nodes) and the pattern interpreter's runners (M2-02: the search hint and count, then every
+ * runner in use), then the enemies
  * (every slot's state, and the numeric fields of each slot in use — M1-08), the formation table
  * (the fields of every active slot, and each track's recorded count), the player weapons (M1-10:
  * each player's loadout — main, missile, options — and option group — count, stolen, trail head,
@@ -70,6 +73,7 @@
  *
  * @module
  */
+import type { BendingLaserTable } from '../bullets/index.js';
 import { MAX_BOSS_PARTS } from '../data/index.js';
 import {
   EnemyState,
@@ -80,6 +84,7 @@ import {
 } from '../enemies/index.js';
 import type { Game } from '../game/index.js';
 import { defineModule } from '../module-info.js';
+import { MAX_REPEAT_DEPTH, type PatternRunners } from '../patterns/index.js';
 import { PLAYER_STATES, spawnPlayer } from '../player/index.js';
 import { RNG_STATE_WORDS } from '../rng/index.js';
 import { StageEventCode } from '../stage/index.js';
@@ -302,6 +307,69 @@ function mixNumber(value: number): void {
  */
 function mixArray(array: ArrayLike<number>, count: number): void {
   for (let slot = 0; slot < count; slot++) mixNumber(array[slot]);
+}
+
+/**
+ * Mixes the bending lasers (M2-02): every slot's active flag; for an active slot its fields and
+ * the nodes of its body, newest first.
+ *
+ * @param b - The bending laser table.
+ */
+function mixBendingLasers(b: BendingLaserTable): void {
+  for (let s = 0; s < b.capacity; s++) {
+    mixWord(b.active[s]);
+    if (b.active[s] === 0) continue;
+    const filled = b.filled[s];
+    mixNumber(filled);
+    mixNumber(b.head[s]);
+    mixNumber(b.length[s]);
+    mixNumber(b.emit[s]);
+    mixNumber(b.homing[s]);
+    mixNumber(b.stride[s]);
+    mixNumber(b.angle[s]);
+    mixNumber(b.speed[s]);
+    mixNumber(b.turnRate[s]);
+    mixNumber(b.width[s]);
+    mixWord(b.bits[s]);
+    const base = s * b.nodes;
+    let k = b.head[s];
+    for (let n = 0; n < filled; n++) {
+      mixNumber(b.x[base + k]);
+      mixNumber(b.y[base + k]);
+      k = (k - 1) & (b.nodes - 1);
+    }
+  }
+}
+
+/**
+ * Mixes the pattern interpreter's runners (M2-02): the bullet runner search hint and count, then
+ * every runner in use (its slot, entry, counter, `repeat` stack, wake age, `sequence` values,
+ * heading, scale and state bits).
+ *
+ * @param r - The runner table.
+ */
+function mixPatternRunners(r: PatternRunners): void {
+  mixNumber(r.meta[0]);
+  mixNumber(r.meta[1]);
+  const state = r.state;
+  for (let i = 0; i < state.length; i++) {
+    if (state[i] === 0) continue;
+    mixNumber(i);
+    mixWord(state[i]);
+    mixNumber(r.entry[i]);
+    mixNumber(r.pc[i]);
+    const depth = r.depth[i];
+    mixNumber(depth);
+    for (let d = 0; d < depth; d++) {
+      mixNumber(r.loopI[i * MAX_REPEAT_DEPTH + d]);
+      mixNumber(r.loopN[i * MAX_REPEAT_DEPTH + d]);
+    }
+    mixNumber(r.wake[i]);
+    mixNumber(r.seqDir[i]);
+    mixNumber(r.seqSpeed[i]);
+    mixNumber(r.heading[i]);
+    mixNumber(r.scale[i]);
+  }
 }
 
 /**
@@ -599,6 +667,11 @@ export function hashWorld(world: World): number {
     const arrays = entry.arrays;
     for (let f = 0; f < arrays.length; f++) mixArray(arrays[f], count);
   }
+
+  // State kept outside the registered pools (M2-02): the bending lasers' stable slots and the
+  // pattern interpreter's runners in use.
+  mixBendingLasers(world.bullets.bending);
+  mixPatternRunners(world.patterns.runners);
 
   const enemies = world.enemies.enemies;
   for (let i = 0; i < enemies.length; i++) {

@@ -200,7 +200,12 @@ describe('core/bullets', () => {
   it('has 9 built-in kinds whose sprites (and the beam) are the engine sprites', () => {
     expect(BULLET_KINDS).toHaveLength(9);
     expect(BULLET_KINDS[BulletKind.NeedlePurple].sprite).toBe('bullets/needle-purple');
-    expect(BULLET_SPRITES).toEqual([...BULLET_KINDS.map((k) => k.sprite), LASER_SPRITE]);
+    expect(BULLET_SPRITES).toEqual([
+      ...BULLET_KINDS.map((k) => k.sprite),
+      LASER_SPRITE,
+      'lasers/bend-pink',
+      'items/point',
+    ]);
     expect(ENGINE_SPRITES).toEqual([
       ...BULLET_SPRITES,
       'options/orb',

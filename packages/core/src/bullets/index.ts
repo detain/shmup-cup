@@ -1,8 +1,8 @@
 /**
  * # bullets — enemy bullets and lasers
  *
- * **Status: implemented** for P0 (plan M1-09). Bending lasers, bullet cancel into points and the
- * pattern DSL arrive with M2-02; player shots are `core/weapons` (M1-10).
+ * **Status: implemented** (P0 in plan M1-09; bending lasers, bullet cancel into points and the
+ * pattern DSL's bullet programs in M2-02). Player shots are `core/weapons` (M1-10).
  *
  * **Responsibility.** The enemy projectiles of a World ({@link BulletSystem}):
  *
@@ -22,8 +22,27 @@
  * - **Collision** with the players (brute force, shmup_feat.md §22): bullet circles against each
  *   ship's hurt radius, laser capsules against it → `playerHit(Bullet)` / `playerHit(Laser)`, at
  *   most one accepted hit of each cause per ship and tick; an accepted bullet is removed.
- * - **Cancel** ({@link cancelAllBullets}): cancelable bullets and lasers vanish in sparkles
- *   (`FX_CUES.BulletCancel` events; points mode with M2-02).
+ * - **Bending lasers (M2-02)** — {@link MAX_BENDING_LASERS} stable slots
+ *   ({@link BendingLaserTable}, also the render contract's `BendingLaserView`): a head that flies
+ *   (homing for a while) and records one position per tick in a ring of
+ *   {@link BENDING_LASER_NODES} nodes; the body is the newest `length` nodes; when the head's time
+ *   is up, or it leaves the view or hits terrain, the tail catches up. Their hitbox is a chain of
+ *   circles on every `stride`-th node (`floor(width / 2 / speed)`, so the circles overlap).
+ * - **Collision** with the players (brute force, shmup_feat.md §22): bullet circles against each
+ *   ship's hurt radius, laser capsules and bending laser circle chains against it →
+ *   `playerHit(Bullet)` / `playerHit(Laser)`, at most one accepted hit of each cause per ship and
+ *   tick; an accepted bullet is removed.
+ * - **Cancel** ({@link cancelAllBullets}): cancelable bullets and lasers (straight and bending)
+ *   vanish in sparkles (`FX_CUES.BulletCancel` events); with {@link CancelMode.Points} (M2-02: a
+ *   boss's death, a Mega Crash) every bullet also becomes a **point item** (pool `cancelPoints`,
+ *   the `LayerId.Items` batch {@link BulletSystem.pointBatch}) that drifts, then flies to the
+ *   credited player's score in the top HUD bar and adds `ContentDb.scoring.bulletCancel` points
+ *   (`core/scoring` `addScore`).
+ * - **Bullet programs (M2-02)** — a bullet fired by a DSL pattern with `actions` carries a runner
+ *   of `core/patterns`' interpreter in its `runner` field; {@link BulletSystem.update} runs it
+ *   through the {@link BulletProgramRunner} the World installs (no import of the interpreter),
+ *   and the timed kinematics it sets (`accelTerm` / `termSpeed`, `turnTerm` / `termAngle`) stop
+ *   the acceleration / turn after their ticks, landing exactly on the target.
  *
  * **Frames.** Bullets and fixed lasers live in world pixels but **ride the camera** like flying
  * enemies (`x += camera.dx` every tick, delayed bullets included): patterns keep their shape on
@@ -61,7 +80,8 @@
  *
  * **Implements.**
  * - shmup_feat.md §12 Enemy bullets & attack patterns — kinematics, lasers (telegraph → grow →
- *   capsule hitbox only at full width), bullets die on terrain, cancel, ~512 bullet budget
+ *   capsule hitbox only at full width), bending lasers (ring buffer of head positions, subsampled
+ *   hitbox nodes), bullets die on terrain, cancel into points / sparkles, ~512 bullet budget
  * - shmup_feat.md §15 — rank hook (bullet speed and fire-rate multipliers, the preset's bullet
  *   speed multiplier)
  * - shmup_feat.md §11 — per-enemy rank modifiers ({@link BulletSystem.setShooterRank})
@@ -78,10 +98,17 @@
  * {@link MAX_BULLET_SPEED}, {@link BULLET_CULL_MARGIN}, {@link CANCEL_SPARKLE_LIMIT},
  * {@link NO_TARGET_ANGLE}, {@link LASER_TELEGRAPH_TICKS}, {@link LASER_GROW_TICKS},
  * {@link LASER_ACTIVE_TICKS}, {@link LASER_FADE_TICKS}, {@link LASER_WIDTH},
- * {@link LASER_BLINK_TICKS}.
+ * {@link LASER_BLINK_TICKS}. M2-02: {@link fireBendingLaser}, {@link BendingLaserTable},
+ * {@link MAX_BENDING_LASERS}, {@link BENDING_LASER_NODES}, {@link BENDING_LASER_SPEED},
+ * {@link BENDING_LASER_TURN}, {@link BENDING_LASER_HOMING}, {@link BENDING_LASER_LENGTH},
+ * {@link BENDING_LASER_WIDTH}, {@link BENDING_LASER_LIFE}, {@link BENDING_LASER_SPRITE},
+ * {@link POINT_ITEM_SPRITE}, {@link POINT_ITEM_SCHEMA}, {@link PointItemSchema},
+ * {@link MAX_POINT_ITEMS}, {@link POINT_ITEM_HOVER_TICKS}, {@link POINT_ITEM_ACCEL},
+ * {@link POINT_ITEM_MAX_SPEED}, {@link POINT_ITEM_LIFETIME}, {@link POINT_ITEM_TARGETS},
+ * {@link BulletShot}, {@link BulletProgramRunner}, and from `./kinds.ts` {@link BULLET_SHAPES},
+ * {@link BULLET_COLORS}, {@link BULLET_KIND_NAMES}.
  *
- * **Planned API.** Bending lasers, bullet cancel into points and `$rank`-driven DSL patterns
- * (M2-02); graze detection (P2 — the {@link BulletFlag.Grazed} bit is reserved).
+ * **Planned API.** Graze detection (P2 — the {@link BulletFlag.Grazed} bit is reserved).
  *
  * @module
  */
@@ -98,10 +125,15 @@ import { createSoaPool, type SoaPool, type SoaSchema } from '../pools/index.js';
 import {
   LayerId,
   SpriteFlag,
+  type BendingLaserView,
   type LaserView,
   type SpriteBatchView,
 } from '../presentation/index.js';
 import { BULLET_SPEED_RANK_CURVE, FIRE_RATE_RANK_CURVE, rankScale } from '../rank/index.js';
+import { DEFAULT_SCORING_RULES, addScore, type ScoreHost } from '../scoring/index.js';
+import { BULLET_COLORS, BULLET_SHAPES } from './kinds.js';
+
+export { BULLET_COLORS, BULLET_KIND_NAMES, BULLET_SHAPES } from './kinds.js';
 
 /** Module descriptor (see {@link defineModule}). */
 export const moduleInfo = defineModule({
@@ -186,8 +218,14 @@ const PUBLIC_FLAGS = BulletFlag.DieOnTerrain | BulletFlag.Cancelable | BulletFla
 
 /** How {@link cancelAllBullets} turns bullets into something else. */
 export const CancelMode = {
-  /** Sparkles only (`FX_CUES.BulletCancel` particle events). Points mode arrives in M2-02. */
+  /** Sparkles only (`FX_CUES.BulletCancel` particle events) — the player's death. */
   Sparkle: 0,
+  /**
+   * Sparkles, and every cancelled bullet becomes a **point item** that flies to the credited
+   * player's score and adds `ContentDb.scoring.bulletCancel` points when it arrives (plan M2-02:
+   * a boss's death, a Mega Crash). Without a player to credit it is `Sparkle`.
+   */
+  Points: 1,
 } as const;
 
 /** A {@link CancelMode} code. */
@@ -244,8 +282,8 @@ const KIND_FLAGS = BulletFlag.DieOnTerrain | BulletFlag.Cancelable;
 export const BULLET_KINDS: readonly BulletKindSpec[] = Object.freeze(
   (function buildKinds(): BulletKindSpec[] {
     const kinds: BulletKindSpec[] = [];
-    for (const shape of ['round', 'oval', 'needle']) {
-      for (const color of ['pink', 'red', 'purple']) {
+    for (const shape of BULLET_SHAPES) {
+      for (const color of BULLET_COLORS) {
         kinds.push(
           Object.freeze({
             name: shape + '-' + color,
@@ -261,10 +299,69 @@ export const BULLET_KINDS: readonly BulletKindSpec[] = Object.freeze(
   })(),
 );
 
-/** Every sprite the bullet system draws: the kinds' sprites, then {@link LASER_SPRITE}. */
+/** Sprite of the bending lasers' segments (a round blob drawn at every node). */
+export const BENDING_LASER_SPRITE = 'lasers/bend-pink';
+
+/** Sprite of the point items cancelled bullets turn into (2 twinkle frames). */
+export const POINT_ITEM_SPRITE = 'items/point';
+
+/**
+ * Every sprite the bullet system draws: the kinds' sprites, then {@link LASER_SPRITE},
+ * {@link BENDING_LASER_SPRITE} and {@link POINT_ITEM_SPRITE}.
+ */
 export const BULLET_SPRITES: readonly string[] = Object.freeze([
   ...BULLET_KINDS.map((kind) => kind.sprite),
   LASER_SPRITE,
+  BENDING_LASER_SPRITE,
+  POINT_ITEM_SPRITE,
+]);
+
+/** Bending laser slots (plan M2-02). */
+export const MAX_BENDING_LASERS = 8;
+
+/** Recorded head positions per bending laser (a power of two): its longest body in nodes. */
+export const BENDING_LASER_NODES = 64;
+
+/** Default speed of a bending laser's head, px/tick. */
+export const BENDING_LASER_SPEED = 3;
+
+/** Default turn cap of a bending laser's head while it homes, binary units per tick. */
+export const BENDING_LASER_TURN = 6;
+
+/** Default homing ticks of a bending laser's head. */
+export const BENDING_LASER_HOMING = 60;
+
+/** Default body length of a bending laser, in nodes (one node per tick). */
+export const BENDING_LASER_LENGTH = 48;
+
+/** Default width of a bending laser (its hit circles' diameter), px. */
+export const BENDING_LASER_WIDTH = 6;
+
+/** Default emission time of a bending laser: its head flies this many ticks, then the tail catches up. */
+export const BENDING_LASER_LIFE = 120;
+
+/** Point item slots (one per enemy bullet — a full screen cancelled at once fits). */
+export const MAX_POINT_ITEMS = MAX_ENEMY_BULLETS;
+
+/** Ticks a new point item drifts (slowing down) before it flies to the score. */
+export const POINT_ITEM_HOVER_TICKS = 12;
+
+/** How much faster a point item flies each tick after hovering, px/tick². */
+export const POINT_ITEM_ACCEL = 0.35;
+
+/** Top speed of a point item, px/tick. */
+export const POINT_ITEM_MAX_SPEED = 9;
+
+/** A point item still flying after this many ticks is credited anyway. */
+export const POINT_ITEM_LIFETIME = 180;
+
+/**
+ * Where point items fly, per player slot: the player's score in the top HUD bar, in playfield
+ * coordinates (the bar is above the playfield, so `y` is negative).
+ */
+export const POINT_ITEM_TARGETS: readonly (readonly [number, number])[] = Object.freeze([
+  Object.freeze([40, -4] as const),
+  Object.freeze([344, -4] as const),
 ]);
 
 /** Laser phases, in order. */
@@ -330,6 +427,19 @@ export const BULLET_SCHEMA = Object.freeze({
   turnRate: 'f64',
   /** Homing ticks left (0 = not homing). */
   homing: 'i32',
+  /**
+   * Pattern runner of the bullet's own DSL program + 1 (0 = none — plan M2-02; the runner table is
+   * `core/patterns` `PatternVm`'s).
+   */
+  runner: 'u16',
+  /** Ticks the acceleration lasts (0 = until changed), then it stops (DSL `changeSpeed` / `accel`). */
+  accelTerm: 'i32',
+  /** Speed the bullet lands on when {@link BULLET_SCHEMA.accelTerm} runs out (NaN = keep). */
+  termSpeed: 'f64',
+  /** Ticks the angular velocity lasts (0 = until changed), then it stops (DSL `changeDirection`). */
+  turnTerm: 'i32',
+  /** Heading the bullet lands on when {@link BULLET_SCHEMA.turnTerm} runs out (NaN = keep). */
+  termAngle: 'f64',
 } as const);
 
 /** The bullet pool's schema type. */
@@ -381,6 +491,133 @@ export const LASER_SCHEMA = Object.freeze({
 
 /** The laser pool's schema type. */
 export type LaserSchema = typeof LASER_SCHEMA;
+
+/** Field layout of the point item pool (`cancelPoints`, hashed in sorted field order). */
+export const POINT_ITEM_SCHEMA = Object.freeze({
+  /** World x. */
+  x: 'f64',
+  /** World y. */
+  y: 'f64',
+  /** Velocity x (px/tick, before the camera ride). */
+  vx: 'f64',
+  /** Velocity y. */
+  vy: 'f64',
+  /** Player slot credited. */
+  player: 'u8',
+  /** Points credited on arrival. */
+  value: 'i32',
+  /** Ticks since it appeared. */
+  age: 'i32',
+  /** Sprite id. */
+  sprite: 'u16',
+  /** Twinkle frame. */
+  frame: 'u16',
+  /** `SpriteFlag` bits for the renderer. */
+  draw: 'u8',
+  /** {@link BulletFlag} bits (`Dead`). */
+  flags: 'u8',
+} as const);
+
+/** The point item pool's schema type. */
+export type PointItemSchema = typeof POINT_ITEM_SCHEMA;
+
+/**
+ * The bending lasers of a World (plan M2-02, shmup_feat.md §12 "ring buffer of head positions,
+ * subsampled hitbox nodes"): {@link MAX_BENDING_LASERS} **stable** slots (not a packed pool — a slot
+ * keeps its ring of {@link BENDING_LASER_NODES} nodes), which is also the render contract's
+ * `BendingLaserView`. `hashWorld` mixes its active slots (their fields and body nodes).
+ */
+export class BendingLaserTable implements BendingLaserView {
+  /** See {@link BendingLaserView.capacity}. */
+  readonly capacity = MAX_BENDING_LASERS;
+  /** See {@link BendingLaserView.nodes}. */
+  readonly nodes = BENDING_LASER_NODES;
+  /** 1 while the slot holds a laser. */
+  readonly active = new Uint8Array(MAX_BENDING_LASERS);
+  /** Nodes in the body (the newest ones of the ring). */
+  readonly filled = new Int32Array(MAX_BENDING_LASERS);
+  /** Ring index of the newest node (the head). */
+  readonly head = new Int32Array(MAX_BENDING_LASERS);
+  /** Most nodes the body keeps. */
+  readonly length = new Int32Array(MAX_BENDING_LASERS);
+  /** Ticks the head still flies (0 = stopped: the tail catches up). */
+  readonly emit = new Int32Array(MAX_BENDING_LASERS);
+  /** Homing ticks left. */
+  readonly homing = new Int32Array(MAX_BENDING_LASERS);
+  /** Nodes between two hit circles (from the width and the speed). */
+  readonly stride = new Int32Array(MAX_BENDING_LASERS);
+  /** Heading of the head, binary units. */
+  readonly angle = new Float64Array(MAX_BENDING_LASERS);
+  /** Speed of the head, px/tick. */
+  readonly speed = new Float64Array(MAX_BENDING_LASERS);
+  /** Turn cap while homing, units per tick. */
+  readonly turnRate = new Float64Array(MAX_BENDING_LASERS);
+  /** Width (hit circle diameter). */
+  readonly width = new Float64Array(MAX_BENDING_LASERS);
+  /** Segment sprite id. */
+  readonly spriteId = new Uint16Array(MAX_BENDING_LASERS);
+  /** `SpriteFlag` bits for the renderer. */
+  readonly flags = new Uint8Array(MAX_BENDING_LASERS);
+  /** {@link BulletFlag} bits (`Cancelable`). */
+  readonly bits = new Uint8Array(MAX_BENDING_LASERS);
+  /** Node x, slot-major. */
+  readonly x = new Float64Array(MAX_BENDING_LASERS * BENDING_LASER_NODES);
+  /** Node y, slot-major. */
+  readonly y = new Float64Array(MAX_BENDING_LASERS * BENDING_LASER_NODES);
+
+  /** Live lasers. */
+  get count(): number {
+    let n = 0;
+    for (let s = 0; s < MAX_BENDING_LASERS; s++) n += this.active[s];
+    return n;
+  }
+
+  /** Removes every laser. */
+  clear(): void {
+    this.active.fill(0);
+    this.filled.fill(0);
+  }
+}
+
+/**
+ * Values of one bullet a pattern interpreter launches ({@link BulletSystem.launch}): a class so the
+ * fields stay unboxed doubles (V8 boxes fractional arguments of calls it does not inline).
+ */
+export class BulletShot {
+  /** World x. */
+  x = 0;
+  /** World y. */
+  y = 0;
+  /** Heading in binary units (any finite number, wrapped). */
+  angle = 0;
+  /** Speed in px/tick (already rank-scaled). */
+  speed = 0;
+}
+
+/**
+ * The runner of bullets' own DSL programs (plan M2-02: `core/patterns` `PatternVm`, handed to
+ * {@link BulletSystem.setProgramRunner} by the World). The bullet system calls it; it never
+ * imports the interpreter (no module cycle).
+ */
+export interface BulletProgramRunner {
+  /**
+   * Runs the program of bullet `index` (its `runner` field is non-zero) if it is due this tick —
+   * called by {@link BulletSystem.update} after the bullet aged, before its kinematics. May change
+   * the bullet's speed, heading and motion fields, fire bullets and remove it.
+   *
+   * @param index - Bullet slot.
+   * @returns 1 when the program ran (the velocity is recomputed), 0 when it sleeps.
+   */
+  runBullet(index: number): number;
+  /**
+   * A bullet with a program was removed: its runner slot is free again.
+   *
+   * @param runner - The runner slot (the bullet's `runner` field − 1).
+   */
+  release(runner: number): void;
+  /** Session clear: frees every bullet runner (and stops the enemies' emitters). */
+  clear(): void;
+}
 
 /**
  * Where a pattern fires from: one reused object per firing system (the enemy system sets it to
@@ -444,6 +681,11 @@ export interface BulletHost {
    * then the boss parts — `core/bosses` `BOSS_PART_ID_BASE`, M1-13). Absent = `enemies.enemies`.
    */
   readonly laserSources?: readonly LaserSource[];
+  /**
+   * The scores point items credit (`core/scoring` — the World). Absent = point items are removed
+   * without scoring (hand-made test hosts).
+   */
+  readonly scoring?: ScoreHost['scoring'];
 }
 
 /** The bullets and lasers of one World (see the module docs). */
@@ -456,6 +698,14 @@ export interface BulletSystem {
   readonly batch: SpriteBatchView;
   /** The laser pool as the render contract's `LaserView`. */
   readonly laserView: LaserView;
+  /** The bending lasers (stable slots; also the render contract's `BendingLaserView`, M2-02). */
+  readonly bending: BendingLaserTable;
+  /** The point items of cancelled bullets (registered as `cancelPoints`, M2-02). */
+  readonly points: SoaPool<PointItemSchema>;
+  /** The point item pool as a `LayerId.Items` sprite batch (live view). */
+  readonly pointBatch: SpriteBatchView;
+  /** Points of one cancelled bullet (`ContentDb.scoring.bulletCancel`, else the default). */
+  readonly cancelPoints: number;
   /** Live bullets (removed-this-tick ones included until phase 8). */
   readonly count: number;
   /** The rank the scales below were computed for. */
@@ -585,6 +835,59 @@ export interface BulletSystem {
    */
   setFlags(index: number, flags: number): void;
   /**
+   * Launches one bullet from a {@link BulletShot} (position, heading, speed — already rank-scaled):
+   * {@link BulletSystem.emit} for interpreters that keep their fractional values in an object.
+   *
+   * @param shot - The bullet's values.
+   * @param kind - `BulletKind`.
+   * @returns The slot, or -1 (full pool, bad kind or angle).
+   */
+  launch(shot: BulletShot, kind: number): number;
+  /**
+   * Removes a bullet this tick without a sparkle (the DSL's `vanish`). A no-op for a slot that is
+   * not live.
+   *
+   * @param index - Bullet slot.
+   */
+  remove(index: number): void;
+  /**
+   * Installs the runner of the bullets' own DSL programs (the World's `PatternVm`, M2-02), or
+   * `null`. Bullets whose `runner` field is set call it every moving tick.
+   *
+   * @param runner - The runner.
+   */
+  setProgramRunner(runner: BulletProgramRunner | null): void;
+  /**
+   * Fires a **bending laser** (plan M2-02, shmup_feat.md §12): a head that flies from `origin` at
+   * `speed`, homing on the nearest living player for `homing` ticks (turning at most `turnRate`
+   * units per tick), leaving a body of its last `length` positions — one node per tick in a ring of
+   * {@link BENDING_LASER_NODES}. After `life` ticks, or when the head leaves the view (± 16 px) or
+   * enters terrain, the head stops and the tail catches up, one node per tick; the laser ends
+   * when its body is empty. The hitbox is a chain of circles (diameter `width`) on every
+   * `stride`-th node, `stride` = `max(1, floor(width / 2 / speed))` so neighbouring circles
+   * overlap. Bending lasers ride the camera and are cancelable.
+   *
+   * @param origin - Where the head starts.
+   * @param angle - Starting heading or {@link AIM_AT_TARGET}.
+   * @param speed - Head speed (px/tick, raw — no rank scaling), `(0, 16]`.
+   * @param turnRate - Turn cap while homing (units per tick).
+   * @param homing - Homing ticks.
+   * @param length - Body length in nodes, `2 … BENDING_LASER_NODES`.
+   * @param width - Width in pixels (> 0).
+   * @param life - Ticks the head flies (≥ 1).
+   * @returns The slot, or -1 (every slot busy, bad values).
+   */
+  fireBendingLaser(
+    origin: BulletOrigin,
+    angle: number,
+    speed: number,
+    turnRate: number,
+    homing: number,
+    length: number,
+    width: number,
+    life: number,
+  ): number;
+  /**
    * Fires a straight laser.
    *
    * @remarks
@@ -650,12 +953,19 @@ export interface BulletSystem {
    */
   collidePlayers(): void;
   /**
-   * Removes every cancelable bullet and laser (see {@link cancelAllBullets}).
+   * Removes every cancelable bullet and laser, straight or bending (see
+   * {@link cancelAllBullets}).
    *
    * @param mode - {@link CancelMode}.
+   * @param player - Player credited with the point items of `CancelMode.Points` (-1 = nobody).
    * @returns Bullets cancelled.
    */
-  cancelAll(mode: CancelMode): number;
+  cancelAll(mode: CancelMode, player?: number): number;
+  /**
+   * Session clear (a checkpoint restart; the World calls it after emptying the pools): removes the
+   * bending lasers and frees every bullet program runner.
+   */
+  clear(): void;
 }
 
 /** Anything that owns a bullet system (the World). */
@@ -664,12 +974,27 @@ export interface BulletOwner {
   readonly bullets: BulletSystem;
 }
 
+/** The pool fields a {@link PoolBatchView} reads (bullets and point items have them all). */
+interface DrawableFields {
+  /** World x. */
+  readonly x: Float64Array;
+  /** World y. */
+  readonly y: Float64Array;
+  /** Sprite id. */
+  readonly sprite: Uint16Array;
+  /** Frame. */
+  readonly frame: Uint16Array;
+  /** `SpriteFlag` bits. */
+  readonly draw: Uint8Array;
+}
+
 /**
- * The bullet pool seen as a sprite batch (plan §3.4: SoA pools implement the view directly).
+ * A pool seen as a sprite batch (plan §3.4: SoA pools implement the view directly) — the bullet
+ * pool on `ENEMY_BULLETS`, the point items on `ITEMS`.
  */
-class BulletBatchView implements SpriteBatchView {
+class PoolBatchView implements SpriteBatchView {
   /** See {@link SpriteBatchView.layer}. */
-  readonly layer = LayerId.EnemyBullets;
+  readonly layer: LayerId;
   /** See {@link SpriteBatchView.capacity}. */
   readonly capacity: number;
   /** See {@link SpriteBatchView.x}. */
@@ -683,17 +1008,26 @@ class BulletBatchView implements SpriteBatchView {
   /** See {@link SpriteBatchView.flags}. */
   readonly flags: Uint8Array;
   /** The pool. */
-  private readonly pool: SoaPool<BulletSchema>;
+  private readonly pool: { readonly count: number };
 
   /**
    * Wraps the pool.
    *
-   * @param pool - The bullet pool.
+   * @param pool - The pool.
+   * @param fields - Its drawable fields.
+   * @param capacity - Its capacity.
+   * @param layer - The layer it is drawn on.
    */
-  constructor(pool: SoaPool<BulletSchema>) {
+  constructor(
+    pool: { readonly count: number },
+    fields: DrawableFields,
+    capacity: number,
+    layer: LayerId,
+  ) {
     this.pool = pool;
-    const f = pool.fields;
-    this.capacity = pool.capacity;
+    this.layer = layer;
+    const f = fields;
+    this.capacity = capacity;
     this.x = f.x;
     this.y = f.y;
     this.spriteId = f.sprite;
@@ -776,6 +1110,14 @@ class BulletSystemImpl implements BulletSystem {
   readonly batch: SpriteBatchView;
   /** See {@link BulletSystem.laserView}. */
   readonly laserView: LaserView;
+  /** See {@link BulletSystem.bending}. */
+  readonly bending: BendingLaserTable;
+  /** See {@link BulletSystem.points}. */
+  readonly points: SoaPool<PointItemSchema>;
+  /** See {@link BulletSystem.pointBatch}. */
+  readonly pointBatch: SpriteBatchView;
+  /** See {@link BulletSystem.cancelPoints}. */
+  readonly cancelPoints: number;
   /** See {@link BulletSystem.rank}. */
   rank = 0;
   /** See {@link BulletSystem.rankSpeedScale}. */
@@ -814,6 +1156,16 @@ class BulletSystemImpl implements BulletSystem {
   private readonly kindFlags: Uint8Array;
   /** Beam sprite id (-1 = not in the table). */
   private readonly laserSprite: number;
+  /** Bending laser segment sprite id (-1 = not in the table). */
+  private readonly bendSprite: number;
+  /** Point item sprite id (-1 = not in the table). */
+  private readonly pointSprite: number;
+  /** The runner of the bullets' DSL programs, or `null`. */
+  private programs: BulletProgramRunner | null = null;
+  /** X of the point {@link BulletSystemImpl.aimPoint} aims from (a field: never boxed). */
+  private aimX = 0;
+  /** Y of the point {@link BulletSystemImpl.aimPoint} aims from. */
+  private aimY = 0;
 
   /**
    * Builds the pools, views and kind tables (see {@link createBulletSystem}).
@@ -834,8 +1186,27 @@ class BulletSystemImpl implements BulletSystem {
       createSoaPool(MAX_ENEMY_BULLETS, BULLET_SCHEMA),
     );
     this.lasers = host.pools.register('enemyLasers', createSoaPool(MAX_ENEMY_LASERS, LASER_SCHEMA));
-    this.batch = new BulletBatchView(this.pool);
+    this.points = host.pools.register(
+      'cancelPoints',
+      createSoaPool(MAX_POINT_ITEMS, POINT_ITEM_SCHEMA),
+    );
+    this.batch = new PoolBatchView(
+      this.pool,
+      this.pool.fields,
+      this.pool.capacity,
+      LayerId.EnemyBullets,
+    );
+    this.pointBatch = new PoolBatchView(
+      this.points,
+      this.points.fields,
+      this.points.capacity,
+      LayerId.Items,
+    );
     this.laserView = new LaserPoolView(this.lasers);
+    this.bending = new BendingLaserTable();
+    // Hand-made test hosts may pass content without a `scoring` field.
+    const scoring = (host.content as Partial<ContentDb>).scoring;
+    this.cancelPoints = (scoring ?? DEFAULT_SCORING_RULES).bulletCancel;
     const n = BULLET_KINDS.length;
     this.kindSprite = new Int32Array(n);
     this.kindRadius = new Float64Array(n);
@@ -850,6 +1221,12 @@ class BulletSystemImpl implements BulletSystem {
       this.kindFlags[i] = kind.flags;
     }
     this.laserSprite = sprites.get(LASER_SPRITE) ?? -1;
+    this.bendSprite = sprites.get(BENDING_LASER_SPRITE) ?? -1;
+    this.pointSprite = sprites.get(POINT_ITEM_SPRITE) ?? -1;
+    for (let s = 0; s < MAX_BENDING_LASERS; s++) {
+      this.bending.spriteId[s] = this.bendSprite < 0 ? 0 : this.bendSprite;
+      this.bending.flags[s] = this.bendSprite < 0 ? SpriteFlag.Hidden : 0;
+    }
   }
 
   /** See {@link BulletSystem.count}. */
@@ -909,6 +1286,39 @@ class BulletSystemImpl implements BulletSystem {
     f.angle[i] = angle === AIM_AT_TARGET ? this.aimSlot(i, true) : wrapUnits(angle);
     this.initSlot(i, speed, kind);
     return i;
+  }
+
+  /** See {@link BulletSystem.launch}. */
+  launch(shot: BulletShot, kind: number): number {
+    if (!(kind >= 0 && kind < this.kindSprite.length && kind % 1 === 0)) return -1;
+    const angle = shot.angle;
+    if (!(angle - angle === 0)) return -1;
+    const i = this.pool.alloc();
+    if (i < 0) return -1;
+    const f = this.pool.fields;
+    f.x[i] = shot.x;
+    f.y[i] = shot.y;
+    f.angle[i] = wrapUnits(angle);
+    f.speed[i] = shot.speed;
+    f.maxSpeed[i] = MAX_BULLET_SPEED;
+    f.radius[i] = this.kindRadius[kind];
+    f.kind[i] = kind;
+    f.flags[i] = this.kindFlags[kind];
+    const sprite = this.kindSprite[kind];
+    f.sprite[i] = sprite < 0 ? 0 : sprite;
+    f.draw[i] = sprite < 0 ? SpriteFlag.Hidden : 0;
+    this.velocity(i);
+    return i;
+  }
+
+  /** See {@link BulletSystem.remove}. */
+  remove(index: number): void {
+    if (this.live(index)) this.killBullet(index);
+  }
+
+  /** See {@link BulletSystem.setProgramRunner}. */
+  setProgramRunner(runner: BulletProgramRunner | null): void {
+    this.programs = runner;
   }
 
   /**
@@ -1028,6 +1438,8 @@ class BulletSystemImpl implements BulletSystem {
     f.angVel[index] = angVel;
     f.minSpeed[index] = minSpeed;
     f.maxSpeed[index] = maxSpeed;
+    f.accelTerm[index] = 0;
+    f.turnTerm[index] = 0;
   }
 
   /** See {@link BulletSystem.setChange}. */
@@ -1116,6 +1528,77 @@ class BulletSystemImpl implements BulletSystem {
     f.sprite[i] = this.laserSprite < 0 ? 0 : this.laserSprite;
     this.laserShape(i);
     return i;
+  }
+
+  /** See {@link BulletSystem.fireBendingLaser}. */
+  fireBendingLaser(
+    origin: BulletOrigin,
+    angle: number,
+    speed: number,
+    turnRate: number,
+    homing: number,
+    length: number,
+    width: number,
+    life: number,
+  ): number {
+    if (!(speed > 0 && speed <= MAX_BULLET_SPEED) || !(width > 0) || !(life >= 1)) return -1;
+    if (!(length >= 2 && length <= BENDING_LASER_NODES)) return -1;
+    if (angle !== AIM_AT_TARGET && !(angle - angle === 0)) return -1;
+    if (!(origin.x - origin.x === 0 && origin.y - origin.y === 0)) return -1;
+    const b = this.bending;
+    let s = 0;
+    while (s < MAX_BENDING_LASERS && b.active[s] !== 0) s++;
+    if (s === MAX_BENDING_LASERS) return -1;
+    b.active[s] = 1;
+    b.angle[s] = angle === AIM_AT_TARGET ? this.aimFrom(origin) : wrapUnits(angle);
+    b.speed[s] = speed;
+    b.turnRate[s] = turnRate > 0 ? turnRate : 0;
+    b.homing[s] = homing >= 1 ? Math.floor(homing) : 0;
+    b.length[s] = Math.floor(length);
+    b.width[s] = width;
+    b.emit[s] = Math.floor(life);
+    const stride = Math.floor(width / 2 / speed);
+    b.stride[s] = stride >= 1 ? stride : 1;
+    b.bits[s] = BulletFlag.Cancelable;
+    b.head[s] = 0;
+    b.filled[s] = 1;
+    b.x[s * BENDING_LASER_NODES] = origin.x;
+    b.y[s * BENDING_LASER_NODES] = origin.y;
+    return s;
+  }
+
+  /**
+   * The unquantised angle from ({@link BulletSystemImpl.aimX}, `aimY`) to the nearest living
+   * player (bending laser homing; the point is passed in fields — never boxed).
+   *
+   * @returns A whole angle, or -1 without a target.
+   */
+  private aimPoint(): number {
+    const x = this.aimX;
+    const y = this.aimY;
+    const players = this.host.players;
+    let best = -1;
+    let bestDistance = 0;
+    for (let p = 0; p < players.length; p++) {
+      const ship = players[p];
+      if (!ship.active || ship.state !== 'alive') continue;
+      const dx = ship.x - x;
+      const dy = ship.y - y;
+      const d = dx * dx + dy * dy;
+      if (best < 0 || d < bestDistance) {
+        best = p;
+        bestDistance = d;
+      }
+    }
+    if (best < 0) return -1;
+    const target = players[best];
+    return atan2B(((target.y - y) * AIM_SCALE) | 0, ((target.x - x) * AIM_SCALE) | 0);
+  }
+
+  /** See {@link BulletSystem.clear}. */
+  clear(): void {
+    this.bending.clear();
+    if (this.programs !== null) this.programs.clear();
   }
 
   /** See {@link BulletSystem.detachLasers}. */
@@ -1210,6 +1693,7 @@ class BulletSystemImpl implements BulletSystem {
     const xs = f.x;
     const ys = f.y;
     const flags = f.flags;
+    const programs = this.programs;
     for (let i = 0; i < n; i++) {
       const bits = flags[i];
       if ((bits & BulletFlag.Dead) !== 0) continue;
@@ -1231,6 +1715,11 @@ class BulletSystemImpl implements BulletSystem {
         const age = f.age[i] + 1;
         f.age[i] = age;
         let dirty = false;
+        if (programs !== null && f.runner[i] !== 0 && programs.runBullet(i) !== 0) {
+          // Its DSL program ran (plan M2-02): it may have changed the motion — or vanished.
+          if ((flags[i] & BulletFlag.Dead) !== 0) continue;
+          dirty = true;
+        }
         if (age === f.changeAt[i]) {
           const speed = f.changeSpeed[i];
           if (speed === speed) f.speed[i] = speed;
@@ -1259,6 +1748,17 @@ class BulletSystemImpl implements BulletSystem {
         const accel = f.accel[i];
         if (accel !== 0) {
           let speed = f.speed[i] + accel;
+          const term = f.accelTerm[i];
+          if (term > 0) {
+            // A timed change (DSL `changeSpeed` / `accel`): it stops after `term` ticks, landing
+            // exactly on its target speed when it has one.
+            if (term === 1) {
+              f.accel[i] = 0;
+              const target = f.termSpeed[i];
+              if (target === target) speed = target;
+            }
+            f.accelTerm[i] = term - 1;
+          }
           if (speed < f.minSpeed[i]) speed = f.minSpeed[i];
           if (speed > f.maxSpeed[i]) speed = f.maxSpeed[i];
           f.speed[i] = speed;
@@ -1267,6 +1767,16 @@ class BulletSystemImpl implements BulletSystem {
         const angVel = f.angVel[i];
         if (angVel !== 0) {
           let angle = (f.angle[i] + angVel) % ANGLE_UNITS;
+          const term = f.turnTerm[i];
+          if (term > 0) {
+            // A timed turn (DSL `changeDirection`): lands exactly on its target heading.
+            if (term === 1) {
+              f.angVel[i] = 0;
+              const target = f.termAngle[i];
+              if (target === target) angle = target % ANGLE_UNITS;
+            }
+            f.turnTerm[i] = term - 1;
+          }
           if (angle < 0) angle += ANGLE_UNITS;
           f.angle[i] = angle;
           dirty = true;
@@ -1332,6 +1842,147 @@ class BulletSystemImpl implements BulletSystem {
       lf.ticks[i] = ticks;
       this.laserShape(i);
     }
+    // Bending lasers (M2-02): the ring rides the camera; the head flies (homing) and records a
+    // node, or — stopped — the tail catches up one node per tick.
+    const b = this.bending;
+    const bx = b.x;
+    const by = b.y;
+    for (let s = 0; s < MAX_BENDING_LASERS; s++) {
+      if (b.active[s] === 0) continue;
+      const base = s * BENDING_LASER_NODES;
+      const filled = b.filled[s];
+      let head = b.head[s];
+      let k = head;
+      for (let m = 0; m < filled; m++) {
+        bx[base + k] += dx;
+        by[base + k] += dy;
+        k = (k - 1) & (BENDING_LASER_NODES - 1);
+      }
+      const emit = b.emit[s];
+      if (emit <= 0) {
+        if (filled <= 1) {
+          b.active[s] = 0;
+          b.filled[s] = 0;
+        } else {
+          b.filled[s] = filled - 1;
+        }
+        continue;
+      }
+      b.emit[s] = emit - 1;
+      const hx = bx[base + head];
+      const hy = by[base + head];
+      const homing = b.homing[s];
+      if (homing > 0) {
+        b.homing[s] = homing - 1;
+        this.aimX = hx;
+        this.aimY = hy;
+        const target = this.aimPoint();
+        if (target >= 0) {
+          const from = Math.round(b.angle[s]) & ANGLE_MASK;
+          const delta = ((target - from + ANGLE_UNITS / 2) & ANGLE_MASK) - ANGLE_UNITS / 2;
+          const step = b.turnRate[s];
+          let turned = delta > step ? from + step : delta < -step ? from - step : from + delta;
+          if (turned >= ANGLE_UNITS) turned -= ANGLE_UNITS;
+          else if (turned < 0) turned += ANGLE_UNITS;
+          b.angle[s] = turned;
+        }
+      }
+      const a = Math.round(b.angle[s]) & ANGLE_MASK;
+      const speed = b.speed[s];
+      const nx = hx + (SIN_TABLE_Q16[a + ANGLE_QUARTER] / TRIG_SCALE) * speed;
+      const ny = hy + (SIN_TABLE_Q16[a] / TRIG_SCALE) * speed;
+      if (
+        !(nx >= left && nx <= right && ny >= top && ny <= bottom) ||
+        (map !== null &&
+          terrainAt(map, Math.floor(nx) | 0, Math.floor(ny) | 0) !== TerrainType.Empty)
+      ) {
+        // The head left the view or hit terrain: it stops, the tail catches up.
+        b.emit[s] = 0;
+        continue;
+      }
+      head = (head + 1) & (BENDING_LASER_NODES - 1);
+      bx[base + head] = nx;
+      by[base + head] = ny;
+      b.head[s] = head;
+      if (filled < b.length[s]) b.filled[s] = filled + 1;
+    }
+    // Point items (M2-02): drift, then fly to the credited player's score and add their points.
+    const points = this.points;
+    const pf = points.fields;
+    const pn = points.count;
+    const camX = camera.x;
+    const camY = camera.y;
+    for (let i = 0; i < pn; i++) {
+      if ((pf.flags[i] & BulletFlag.Dead) !== 0) continue;
+      let x = pf.x[i] + dx;
+      let y = pf.y[i] + dy;
+      const age = pf.age[i] + 1;
+      pf.age[i] = age;
+      pf.frame[i] = (age >> 3) & 1;
+      if (age <= POINT_ITEM_HOVER_TICKS) {
+        pf.vx[i] *= 0.85;
+        pf.vy[i] *= 0.85;
+      } else {
+        const player = pf.player[i];
+        const target = POINT_ITEM_TARGETS[player < POINT_ITEM_TARGETS.length ? player : 0];
+        const tx = camX + target[0] - x;
+        const ty = camY + target[1] - y;
+        const d = Math.sqrt(tx * tx + ty * ty);
+        const fly = (age - POINT_ITEM_HOVER_TICKS) * POINT_ITEM_ACCEL;
+        const sp = fly < POINT_ITEM_MAX_SPEED ? fly : POINT_ITEM_MAX_SPEED;
+        if (!(d > sp) || age >= POINT_ITEM_LIFETIME) {
+          this.creditPoint(i);
+          continue;
+        }
+        pf.vx[i] = (tx / d) * sp;
+        pf.vy[i] = (ty / d) * sp;
+      }
+      x += pf.vx[i];
+      y += pf.vy[i];
+      pf.x[i] = x;
+      pf.y[i] = y;
+    }
+  }
+
+  /**
+   * A point item reached the score: its points go to its player, it is removed.
+   *
+   * @param i - Point item slot.
+   */
+  private creditPoint(i: number): void {
+    const pf = this.points.fields;
+    const scoring = this.host.scoring;
+    if (scoring !== undefined) addScore(this.host as ScoreHost, pf.player[i], pf.value[i]);
+    pf.flags[i] |= BulletFlag.Dead;
+    pf.draw[i] |= SpriteFlag.Hidden;
+    this.points.free(i);
+  }
+
+  /**
+   * Turns cancelled bullet `i` into a point item for `player` (credited at once when the item pool
+   * is full).
+   *
+   * @param i - Bullet slot (still live).
+   * @param player - Player slot credited.
+   */
+  private spawnPoint(i: number, player: number): void {
+    const j = this.points.alloc();
+    if (j < 0) {
+      if (this.host.scoring !== undefined) {
+        addScore(this.host as ScoreHost, player, this.cancelPoints);
+      }
+      return;
+    }
+    const f = this.pool.fields;
+    const pf = this.points.fields;
+    pf.x[j] = f.x[i];
+    pf.y[j] = f.y[i];
+    pf.vx[j] = f.vx[i] * 0.5;
+    pf.vy[j] = f.vy[i] * 0.5;
+    pf.player[j] = player;
+    pf.value[j] = this.cancelPoints;
+    pf.sprite[j] = this.pointSprite < 0 ? 0 : this.pointSprite;
+    pf.draw[j] = this.pointSprite < 0 ? SpriteFlag.Hidden : 0;
   }
 
   /**
@@ -1355,8 +2006,14 @@ class BulletSystemImpl implements BulletSystem {
    * @param i - The slot.
    */
   private killBullet(i: number): void {
-    this.pool.fields.flags[i] |= BulletFlag.Dead;
-    this.pool.fields.draw[i] |= SpriteFlag.Hidden;
+    const f = this.pool.fields;
+    f.flags[i] |= BulletFlag.Dead;
+    f.draw[i] |= SpriteFlag.Hidden;
+    const runner = f.runner[i];
+    if (runner !== 0) {
+      f.runner[i] = 0;
+      if (this.programs !== null) this.programs.release(runner - 1);
+    }
     this.pool.free(i);
   }
 
@@ -1448,10 +2105,35 @@ class BulletSystemImpl implements BulletSystem {
       playerHit(ship, PlayerHitCause.Laser, host.tick, host.debugFlags);
       return;
     }
+    // Bending lasers (M2-02): a chain of circles on every `stride`-th node, head first.
+    const b = this.bending;
+    for (let s = 0; s < MAX_BENDING_LASERS; s++) {
+      if (b.active[s] === 0) continue;
+      const base = s * BENDING_LASER_NODES;
+      const filled = b.filled[s];
+      const stride = b.stride[s];
+      const reach = b.width[s] / 2 + r;
+      const reachSq = reach * reach;
+      const head = b.head[s];
+      for (let k = 0; k < filled; k += stride) {
+        const node = base + ((head - k) & (BENDING_LASER_NODES - 1));
+        const dx = px - b.x[node];
+        const dy = py - b.y[node];
+        if (!(dx * dx + dy * dy <= reachSq)) continue;
+        playerHit(ship, PlayerHitCause.Laser, host.tick, host.debugFlags);
+        return;
+      }
+    }
   }
 
   /** See {@link BulletSystem.cancelAll}. */
-  cancelAll(_mode: CancelMode): number {
+  cancelAll(mode: CancelMode, player = -1): number {
+    const points =
+      mode === CancelMode.Points &&
+      player >= 0 &&
+      player < this.host.players.length &&
+      player % 1 === 0 &&
+      this.cancelPoints > 0;
     const f = this.pool.fields;
     const n = this.pool.count;
     let cancelable = 0;
@@ -1474,6 +2156,7 @@ class BulletSystemImpl implements BulletSystem {
         events.push(SimEventKind.Particles, FX_CUES.BulletCancel, x, y, 1);
       }
       cancelled++;
+      if (points) this.spawnPoint(i, player);
       this.killBullet(i);
     }
     const lf = this.lasers.fields;
@@ -1482,6 +2165,13 @@ class BulletSystemImpl implements BulletSystem {
       const bits = lf.flags[i];
       if ((bits & BulletFlag.Dead) === 0 && (bits & BulletFlag.Cancelable) !== 0) {
         this.killLaser(i);
+      }
+    }
+    const b = this.bending;
+    for (let s = 0; s < MAX_BENDING_LASERS; s++) {
+      if (b.active[s] !== 0 && (b.bits[s] & BulletFlag.Cancelable) !== 0) {
+        b.active[s] = 0;
+        b.filled[s] = 0;
       }
     }
     return cancelled;
@@ -1599,24 +2289,87 @@ export function fireLaser(
 }
 
 /**
- * Cancels every cancelable enemy bullet and laser at once (boss death, player death, Mega Crash —
- * shmup_feat.md §12): they are removed this tick and sparkle.
+ * Cancels every cancelable enemy bullet and laser (straight and bending) at once (boss death,
+ * player death, Mega Crash — shmup_feat.md §12): they are removed this tick and sparkle; with
+ * `CancelMode.Points` every bullet also becomes a point item for `player`.
  *
  * @remarks
- * `CancelMode.Sparkle` pushes a `SimEventKind.Particles` event with `FX_CUES.BulletCancel` at the
- * bullets' positions (whole pixels, floored) — every bullet up to {@link CANCEL_SPARKLE_LIMIT},
- * beyond that an evenly spread subset (the event ring is shared with everything else). Bullets
- * without `BulletFlag.Cancelable` survive. Points mode arrives with M2-02.
+ * Both modes push a `SimEventKind.Particles` event with `FX_CUES.BulletCancel` at the bullets'
+ * positions (whole pixels, floored) — every bullet up to {@link CANCEL_SPARKLE_LIMIT}, beyond that
+ * an evenly spread subset (the event ring is shared with everything else). Bullets without
+ * `BulletFlag.Cancelable` survive. `CancelMode.Points` (plan M2-02) turns each cancelled bullet
+ * into a point item (pool `cancelPoints`, drawn on `ITEMS`): it keeps half the bullet's velocity
+ * for {@link POINT_ITEM_HOVER_TICKS} ticks (slowing down), then flies faster and faster
+ * (≤ {@link POINT_ITEM_MAX_SPEED}) to the player's score in the top HUD bar
+ * ({@link POINT_ITEM_TARGETS}) and adds `ContentDb.scoring.bulletCancel` points (default
+ * `core/scoring` `DEFAULT_SCORING_RULES`) when it arrives — after {@link POINT_ITEM_LIFETIME}
+ * ticks at the latest. A full item pool credits the points at once; without a valid player,
+ * or with 0 points per bullet, it behaves as `Sparkle`.
  *
  * @param owner - The World.
  * @param mode - {@link CancelMode}.
+ * @param player - Player slot credited with `CancelMode.Points` (default -1: nobody).
  * @returns How many bullets were cancelled.
  *
  * @example
  * ```ts
- * cancelAllBullets(world, CancelMode.Sparkle); // the boss exploded
+ * cancelAllBullets(world, CancelMode.Points, boss.killer); // the boss exploded: points!
+ * cancelAllBullets(world, CancelMode.Sparkle); // the player died: sparkles only
  * ```
  */
-export function cancelAllBullets(owner: BulletOwner, mode: CancelMode): number {
-  return owner.bullets.cancelAll(mode);
+export function cancelAllBullets(owner: BulletOwner, mode: CancelMode, player = -1): number {
+  return owner.bullets.cancelAll(mode, player);
+}
+
+/** Scratch origin of {@link fireBendingLaser}. */
+const bendOrigin = new BulletOrigin();
+
+/**
+ * Fires a bending laser from a source's position (see {@link BulletSystem.fireBendingLaser}):
+ * a homing head leaving a body of its last `length` positions, hit by a chain of circles.
+ *
+ * @remarks
+ * A raw call like {@link fireLaser}: no fire rule, no rank scaling (the enemy `ScriptApi`'s
+ * `bendingLaser` checks `canFire()`). The laser does not follow its source.
+ *
+ * @param owner - The World.
+ * @param src - The source (an `Enemy` works; only `x` / `y` are read).
+ * @param angle - Starting heading or {@link AIM_AT_TARGET} (default aimed).
+ * @param speed - Head speed (default {@link BENDING_LASER_SPEED}).
+ * @param turnRate - Turn cap while homing (default {@link BENDING_LASER_TURN}).
+ * @param homing - Homing ticks (default {@link BENDING_LASER_HOMING}).
+ * @param length - Body length in nodes (default {@link BENDING_LASER_LENGTH}).
+ * @param width - Width (default {@link BENDING_LASER_WIDTH}).
+ * @param life - Ticks the head flies (default {@link BENDING_LASER_LIFE}).
+ * @returns The slot (stable for the laser's life), or -1 (all {@link MAX_BENDING_LASERS} busy,
+ *   bad values).
+ *
+ * @example
+ * ```ts
+ * fireBendingLaser(world, enemy); // a homing snake from the enemy
+ * ```
+ */
+export function fireBendingLaser(
+  owner: BulletOwner,
+  src: LaserSource,
+  angle: number = AIM_AT_TARGET,
+  speed: number = BENDING_LASER_SPEED,
+  turnRate: number = BENDING_LASER_TURN,
+  homing: number = BENDING_LASER_HOMING,
+  length: number = BENDING_LASER_LENGTH,
+  width: number = BENDING_LASER_WIDTH,
+  life: number = BENDING_LASER_LIFE,
+): number {
+  bendOrigin.x = src.x;
+  bendOrigin.y = src.y;
+  return owner.bullets.fireBendingLaser(
+    bendOrigin,
+    angle,
+    speed,
+    turnRate,
+    homing,
+    length,
+    width,
+    life,
+  );
 }
