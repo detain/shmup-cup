@@ -150,11 +150,11 @@ describe('core/config power-up options edge cases (M1-11)', () => {
     }
   });
 
-  it("names the bad power-up mode (and the 'direct' message stays specific)", () => {
+  it('names the bad power-up mode (Direct mode is accepted since M2-05)', () => {
     expect(() =>
       resolveGameConfig({ powerUpMode: 'Meter' as unknown as GameConfig['powerUpMode'] }),
     ).toThrow("GameConfig.powerUpMode must be 'meter' or 'direct', got Meter");
-    expect(() => resolveGameConfig({ powerUpMode: 'direct' })).toThrow(/M2-05/);
+    expect(resolveGameConfig({ powerUpMode: 'direct' }).powerUpMode).toBe('direct');
   });
 
   it('survives a replay-header round trip with a custom order', () => {

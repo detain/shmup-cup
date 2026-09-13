@@ -23,7 +23,10 @@ weapon select's live preview — `range-drone` (a slow sine flier) and the floor
 the three Option Hunters — `option-hunter-rear` (lines up behind the player on its row and
 charges right), `option-hunter-front` (from ahead, charging left) and `option-hunter-dive` (over
 the player's column, diving down) — flown by the `hunter-range` dev stage, which also brings the
-rare blue carrier (`carrier-blue` in `test-range.enemies.json`).
+rare blue carrier (`carrier-blue` in `test-range.enemies.json`). `direct-carriers.enemies.json`
+(M2-05) holds the Direct mode's item carriers flown by the `direct-range` dev stage: the `cube`
+(`cube.pincer` — a formation of six makes a pincer wave, the last cube destroyed drops the wave's
+item) and the coloured `lead-carrier` (`drop: "powerup"`).
 
 ## Format (formatVersion 1)
 
@@ -42,7 +45,7 @@ rare blue carrier (`carrier-blue` in `test-range.enemies.json`).
       "anim": { "frames": 2, "ticks": 8 }, // optional: loop frames 0…1, 8 ticks each (default: frame 0)
       "params": { "amp": 20 },         // optional: behaviour tunables by name (defaults in core/behaviors)
       "mover": { "type": "sine", "vx": -1, "amp": 16, "period": 90 }, // optional starting mover
-      "drop": null,                    // "capsule" | "blueCapsule" | null
+      "drop": null,                    // "capsule" | "blueCapsule" | "powerup" | null
       "ground": null,                  // optional: "floor" | "ceiling" | null (flying, default)
       "settleTicks": 30,               // optional: ticks on screen before it may fire (default 30)
       "explosion": "small",            // optional: "small" (default) | "medium" | "large"
@@ -99,7 +102,9 @@ revenge bullets. Bosses take neither field.
 **Drops and Mega Crash.** `"drop": "capsule"` makes the enemy leave a power capsule where it
 dies (the player's power meter — `docs/dev/powerups-and-shields.md`); `"drop": "blueCapsule"`
 (M2-04) the rare blue capsule, which destroys every enemy on screen when collected (keep it
-rare). `"megaCrashImmune": true` lets it survive the meter's `!` slot (Mega Crash) and the blue
+rare). `"drop": "powerup"` (M2-05) is the **mode-agnostic** power-up: a capsule when the player
+flies the meter ship, the stage's next planned colour item (`directItems`) when it flies the
+Direct-mode MANTA — the direct ship has no meter, so a `capsule` drop becomes that item too. `"megaCrashImmune": true` lets it survive the meter's `!` slot (Mega Crash) and the blue
 capsule, which destroy every other enemy — armour included.
 
 **Option Hunters (M2-04).** `"optionHunter": true` makes the enemy an Option Hunter

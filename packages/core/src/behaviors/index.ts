@@ -46,8 +46,16 @@
  *   [`chargeSpeed` 4.5]. The stealing, its armour, its harmless body and its alarm come with its
  *   spec's `optionHunter` flag (`core/enemies`); it only spawns while some ship has an Option.
  *
- * `drifter.sine`, `fan.loop`, `carrier.straight`, `hatch.spawner`, `rammer.aimed` and
- * `hunter.option` do not fire.
+ * - `cube.pincer` (M2-05) — a Direct-mode item carrier cube of a six-cube pincer wave
+ *   (shmup_feat.md §6B: three from the top, three from the bottom, converging): even formation
+ *   members fly from the spawn point, odd ones from its mirror image across the playfield's middle
+ *   row; each flies (at [`speed` 1.5]) to view point [`meetX` 176], [`gap` 8] px above or below
+ *   the middle row (its own half), then leaves left at [`leaveSpeed` 1.75]. The stage's
+ *   `formation` event makes the wave — the last cube destroyed drops its `drop` (`powerup`: a
+ *   capsule in meter mode, the next planned item in Direct mode).
+ *
+ * `drifter.sine`, `fan.loop`, `carrier.straight`, `hatch.spawner`, `rammer.aimed`,
+ * `hunter.option` and `cube.pincer` do not fire.
  * Every shot goes through the primitives, so nothing fires off screen or before `settleTicks`.
  *
  * **Boss behaviours** (M1-13, {@link DEFAULT_BOSS_BEHAVIORS}; a boss phase's `script`, its
@@ -79,6 +87,7 @@
  * **Implements.**
  * - shmup_feat.md §11 — archetypes (popcorn, formation fliers, capsule carriers, turrets,
  *   walkers, hatches, rammers, orbiters, the Option Hunter — M2-04) as coroutine scripts
+ * - shmup_feat.md §6B — the Direct-mode item carriers: six-cube pincer waves (M2-05)
  * - shmup_tech.md §4.6 — TS generator coroutines
  * - shmup_feat.md §13 — boss phases driven by behaviour scripts (the pattern set changes with the
  *   phase)
@@ -471,6 +480,34 @@ const hunterOption = defineBehavior(
   },
 );
 
+/**
+ * `cube.pincer` — a cube of a six-cube pincer wave (plan M2-05, shmup_feat.md §6B): odd formation
+ * members start mirrored across the playfield's middle row, every cube flies to its meeting point
+ * beside the middle row, then leaves left (tunables in the module docs). It never fires.
+ *
+ * @remarks
+ * The mirror is done once, when the script starts (the spawn tick): the cube's world y becomes the
+ * camera's y plus `PLAYFIELD_H` minus its view y.
+ */
+const cubePincer = defineBehavior(
+  'cube.pincer',
+  { speed: 1.5, meetX: 176, gap: 8, leaveSpeed: 1.75 },
+  function* cube(api, p): Script {
+    const self = api.self;
+    const camera = api.camera;
+    const member = self.member < 0 ? 0 : self.member;
+    let viewY = self.y - camera.y;
+    if ((member & 1) === 1) {
+      viewY = PLAYFIELD_H - viewY;
+      self.y = camera.y + viewY;
+    }
+    const half = PLAYFIELD_H / 2;
+    const meetY = viewY < half ? half - p.gap : half + p.gap;
+    api.setMover(MoverKind.Waypoint, p.meetX, meetY, p.speed, 0, -p.leaveSpeed, 0);
+    yield SLEEP_FOREVER;
+  },
+);
+
 /** The roster's definitions (see the module docs), e.g. to extend a registry in tests. */
 export const DEFAULT_BEHAVIOR_DEFS: readonly BehaviorDef[] = Object.freeze([
   drifterSine,
@@ -483,6 +520,7 @@ export const DEFAULT_BEHAVIOR_DEFS: readonly BehaviorDef[] = Object.freeze([
   orbiterLoop,
   patternLoop,
   hunterOption,
+  cubePincer,
 ]);
 
 /** The roster as a registry (what the World uses). */

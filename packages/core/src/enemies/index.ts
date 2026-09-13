@@ -87,7 +87,9 @@
  * **Blue capsule and pods (M2-04).** {@link EnemySystem.clearOnScreen} is the blue capsule's
  * effect: every live enemy on screen that is not `megaCrashImmune` dies (credited, no revenge
  * bullets). Enemies and formations may drop it (`drop: 'blueCapsule'` →
- * {@link DropKind.BlueCapsule}).
+ * {@link DropKind.BlueCapsule}). Since M2-05 they may also drop the mode-agnostic `powerup`
+ * ({@link DropKind.PowerUp}): `core/powerups` makes a capsule of it for the meter, the stage's next
+ * planned colour item in Direct mode.
  * The contact test of phase 6 uses each ship's own hurt radius (`hurtRadius × shield.hurtScale`
  * — Reduce) and, for a ship with shield pods, tests every standing pod against the grid: a body
  * that touches a pod costs it a hit (`core/shields` `absorbPodHit`) and flies on.
@@ -275,8 +277,16 @@ export const DropKind = {
   Capsule: 1,
   /** The rare blue capsule that clears the screen's enemies (content `blueCapsule`, M2-04). */
   BlueCapsule: 2,
-  /** One Option a dead Option Hunter carried, drifting free to be re-collected (M2-04). */
-  FreeOption: 3,
+  /**
+   * The mode-agnostic power-up (content `powerup`, M2-05): `core/powerups` makes a capsule of it in
+   * meter mode, the stage's next planned item in Direct mode.
+   */
+  PowerUp: 3,
+  /**
+   * One Option a dead Option Hunter carried, drifting free to be re-collected (M2-04; code 4
+   * since M2-05 — the content drops come first).
+   */
+  FreeOption: 4,
 } as const;
 
 /** Options one Option Hunter can carry. */

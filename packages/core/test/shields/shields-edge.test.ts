@@ -53,6 +53,7 @@ describe('core/shields edge — tables', () => {
       'freeShield',
       'rotateShield',
       'reduce',
+      'arm',
     ]);
     expect(Object.isFrozen(SHIELD_SPECS)).toBe(true);
     expect(Object.isFrozen(SHIELD_KIND_NAMES)).toBe(true);
@@ -81,6 +82,8 @@ describe('core/shields edge — tables', () => {
       podHitTick: new Float64Array(4).fill(-1),
       podX: new Float64Array(4),
       podY: new Float64Array(4),
+      tier: 0,
+      charge: 0,
     });
     expect(createShieldState()).not.toBe(s);
   });

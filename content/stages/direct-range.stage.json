@@ -1,0 +1,172 @@
+{
+  "formatVersion": 1,
+  "kind": "stage",
+  "id": "direct-range",
+  "name": "DIRECT RANGE",
+  "music": {
+    "stage": "Stage",
+    "boss": "Boss"
+  },
+  "length": 3620,
+  "camera": [
+    {
+      "x": 0,
+      "speed": 1
+    }
+  ],
+  "checkpoints": [
+    {
+      "x": 0
+    },
+    {
+      "x": 1800
+    }
+  ],
+  "parallax": [
+    {
+      "layer": "far",
+      "sprite": "bg/stars-far",
+      "factor": 0.25,
+      "y": 0,
+      "spacing": 128
+    },
+    {
+      "layer": "far",
+      "sprite": "bg/stars-far",
+      "factor": 0.25,
+      "y": 128,
+      "spacing": 128
+    },
+    {
+      "layer": "mid",
+      "sprite": "bg/stars-mid",
+      "factor": 0.5,
+      "y": 0,
+      "spacing": 128
+    },
+    {
+      "layer": "mid",
+      "sprite": "bg/stars-mid",
+      "factor": 0.5,
+      "y": 128,
+      "spacing": 128
+    }
+  ],
+  "tilemap": null,
+  "events": [
+    {
+      "x": 60,
+      "type": "formation",
+      "enemy": "cube",
+      "count": 6,
+      "interval": 14,
+      "y": 28,
+      "drop": "powerup",
+      "bonus": 600
+    },
+    {
+      "x": 320,
+      "type": "spawn",
+      "enemy": "lead-carrier",
+      "y": 140
+    },
+    {
+      "x": 620,
+      "type": "formation",
+      "enemy": "cube",
+      "count": 6,
+      "interval": 14,
+      "y": 38,
+      "drop": "powerup",
+      "bonus": 600
+    },
+    {
+      "x": 880,
+      "type": "spawn",
+      "enemy": "lead-carrier",
+      "y": 60
+    },
+    {
+      "x": 1180,
+      "type": "formation",
+      "enemy": "cube",
+      "count": 6,
+      "interval": 14,
+      "y": 48,
+      "drop": "powerup",
+      "bonus": 600
+    },
+    {
+      "x": 1440,
+      "type": "spawn",
+      "enemy": "lead-carrier",
+      "y": 140
+    },
+    {
+      "x": 1740,
+      "type": "formation",
+      "enemy": "cube",
+      "count": 6,
+      "interval": 14,
+      "y": 28,
+      "drop": "powerup",
+      "bonus": 600
+    },
+    {
+      "x": 2000,
+      "type": "spawn",
+      "enemy": "lead-carrier",
+      "y": 60
+    },
+    {
+      "x": 2300,
+      "type": "formation",
+      "enemy": "cube",
+      "count": 6,
+      "interval": 14,
+      "y": 38,
+      "drop": "powerup",
+      "bonus": 600
+    },
+    {
+      "x": 2560,
+      "type": "spawn",
+      "enemy": "lead-carrier",
+      "y": 140
+    },
+    {
+      "x": 2860,
+      "type": "formation",
+      "enemy": "cube",
+      "count": 6,
+      "interval": 14,
+      "y": 48,
+      "drop": "powerup",
+      "bonus": 600
+    },
+    {
+      "x": 3120,
+      "type": "spawn",
+      "enemy": "lead-carrier",
+      "y": 60
+    },
+    {
+      "x": 3620,
+      "type": "end"
+    }
+  ],
+  "directItems": [
+    "red",
+    "green",
+    "blue",
+    "orange",
+    "yellow",
+    "octagon",
+    "blue",
+    "red",
+    "green",
+    "blue",
+    "red",
+    "blue"
+  ]
+}

@@ -1,9 +1,9 @@
 /**
  * # shields — shields
  *
- * **Status: implemented** for meter mode: the **Force Field** (plan M1-11) and, since M2-04, the
+ * **Status: implemented**: the meter mode's **Force Field** (plan M1-11) and, since M2-04, the
  * other `?` shields — the front **Shield** pods, the **Free Shield**, the **Rotate Shield** and
- * **Reduce**. The Direct-mode Arm tiers arrive with M2-05.
+ * **Reduce** —, and since M2-05 the Direct mode's **Arm** with its three tiers.
  *
  * **Responsibility.** Shields for both models. Meter mode (`?` slot): Force Field, front Shield
  * pods, Free Shield, Rotate Shield, Reduce (shrinks the hurtbox, not the terrain box). Direct mode
@@ -40,6 +40,16 @@
  *   - the **Rotate Shield** ({@link ROTATE_SHIELD}): two opposite pods orbiting the ship at
  *     {@link ROTATE_POD_ORBIT} px, {@link ROTATE_SHIELD_SPIN} units per tick.
  *
+ * **The Arm (Direct mode, M2-05 — shmup_feat.md §9 "Direct-mode (blue item \"Arm\")").** A field
+ * ({@link ARM}) granted and grown by the blue items ({@link collectArm}): every blue item counts
+ * ({@link ShieldState.charge}); the tier is the highest one whose count is reached —
+ * {@link ARM_TIER_BLUE} 1 / 4 / 9 blue items for the green **Arm** (3 hits), the silver **Super
+ * Arm** (4) and the gold **Hyper Arm** (5 hits, {@link ARM_TIER_HITS}) — and every blue item
+ * repairs it to its tier's hits. Unlike the meter shields it **absorbs terrain contact** too
+ * (`absorbsTerrain`, decision D8), with the usual shield-hit i-frames; when it breaks (or is lost
+ * with a death) the count starts over. Drawn from `shields/arm` in the tier's colour, shrinking
+ * with wear ({@link armWearFrame}).
+ *
  * **Where it acts.** Every ship carries one {@link ShieldState} (`PlayerShip.shield`, created with
  * the ship). `core/powerups` grants the shield (the `?` slot — and the `!` slot's FULL BARRIER,
  * M2-03, {@link refillShield} — with the spec of the session's `?` choice, {@link shieldSpecOf}
@@ -58,6 +68,8 @@
  *   Shield (two orbiting pods), Reduce (two hurtbox steps, absorbs 2 hits, the terrain box
  *   unchanged); hit counter per shield, visible wear state, break SFX/effect, shield-hit
  *   i-frames; the meter shields do not absorb terrain (decision D8)
+ * - shmup_feat.md §9 Direct mode — the Arm: green 3 / silver 4 / gold 5 hits after 1 / 4 / 9 blue
+ *   items, absorbs bullets, enemy contact and terrain contact, further blue items repair (M2-05)
  *
  * **Public API.** {@link ShieldKind}, {@link SHIELD_KIND_NAMES}, {@link ShieldState},
  * {@link createShieldState}, {@link ShieldSpec}, {@link FORCE_FIELD}, {@link FRONT_SHIELD},
@@ -71,9 +83,11 @@
  * {@link POD_RADIUS}, {@link POD_ORBIT}, {@link ROTATE_POD_ORBIT}, {@link FRONT_POD_ANGLE},
  * {@link FREE_POD_SPREAD}, {@link ROTATE_SHIELD_SPIN}, {@link FORCE_FIELD_SPRITE},
  * {@link FORCE_FIELD_WEAR_FRAMES}, {@link SHIELD_POD_SPRITE}, {@link SHIELD_POD_WEAR_FRAMES},
- * {@link REDUCE_SPRITE}, {@link REDUCE_FRAMES}, {@link SHIELD_SPRITES}.
+ * {@link REDUCE_SPRITE}, {@link REDUCE_FRAMES}, {@link SHIELD_SPRITES};
  *
- * **Planned API.** The Arm tiers with repair (M2-05).
+ * M2-05: {@link ARM}, {@link ARM_TIER_HITS}, {@link ARM_TIER_BLUE}, {@link ARM_TIERS},
+ * {@link MAX_ARM_CHARGE}, {@link ARM_SPRITE}, {@link ARM_WEAR_FRAMES}, {@link collectArm},
+ * {@link armTierOf}, {@link armWearFrame}.
  *
  * @module
  */
@@ -103,6 +117,8 @@ export const ShieldKind = {
   RotateShield: 4,
   /** Reduce: a smaller hurtbox that grows back one step per hit (M2-04). */
   Reduce: 5,
+  /** The Direct-mode Arm: three tiers grown by blue items, absorbs terrain too (M2-05). */
+  Arm: 6,
 } as const;
 
 /** A {@link ShieldKind} code. */
@@ -116,6 +132,7 @@ export const SHIELD_KIND_NAMES: readonly string[] = Object.freeze([
   'freeShield',
   'rotateShield',
   'reduce',
+  'arm',
 ]);
 
 /** Hits a fresh Force Field absorbs (plan M1-11; the arcade's ~6, the SNES's 3). */
@@ -172,11 +189,30 @@ export const REDUCE_SPRITE = 'shields/reduce';
 /** Frames of {@link REDUCE_SPRITE}: frame 0 at full strength (smallest), frame 1 one hit down. */
 export const REDUCE_FRAMES = 2;
 
+/** The Arm's sprite (M2-05): per tier ({@link ARM_TIERS}) its wear frames, green, silver, gold. */
+export const ARM_SPRITE = 'shields/arm';
+
+/** Wear frames of each Arm tier in {@link ARM_SPRITE} (frame `(tier − 1) × 3 + wear`). */
+export const ARM_WEAR_FRAMES = 3;
+
+/** Arm tiers: 1 Arm (green), 2 Super Arm (silver), 3 Hyper Arm (gold). */
+export const ARM_TIERS = 3;
+
+/** Hits of an Arm per tier (index = tier; 0 = no Arm): 3, 4, 5 (shmup_feat.md §9). */
+export const ARM_TIER_HITS: readonly number[] = Object.freeze([0, 3, 4, 5]);
+
+/** Blue items needed for each tier (index = tier): 1, 4, 9 (shmup_feat.md §9). */
+export const ARM_TIER_BLUE: readonly number[] = Object.freeze([0, 1, 4, 9]);
+
+/** The blue-item count stops growing here (the Hyper Arm needs 9). */
+export const MAX_ARM_CHARGE = 99;
+
 /** Every shield sprite (part of the World's `ENGINE_SPRITES`). */
 export const SHIELD_SPRITES: readonly string[] = Object.freeze([
   FORCE_FIELD_SPRITE,
   SHIELD_POD_SPRITE,
   REDUCE_SPRITE,
+  ARM_SPRITE,
 ]);
 
 /** Tunables of one shield kind (built in — the meter shields are fixed designs). */
@@ -273,6 +309,23 @@ export const REDUCE: ShieldSpec = Object.freeze({
   hurtSteps: REDUCE_HURT_STEPS,
 });
 
+/**
+ * The Direct-mode Arm (M2-05): a field that absorbs terrain contact too; `maxHits` is its first
+ * tier's (the blue items of {@link collectArm} grow it), `wearFrames` per tier.
+ */
+export const ARM: ShieldSpec = Object.freeze({
+  kind: ShieldKind.Arm,
+  maxHits: 3,
+  iFrames: SHIELD_HIT_IFRAMES,
+  absorbsTerrain: true,
+  sprite: ARM_SPRITE,
+  wearFrames: ARM_WEAR_FRAMES,
+  pods: 0,
+  podHits: 0,
+  podOrbit: 0,
+  hurtSteps: 0,
+});
+
 /** Shield specs by {@link ShieldKind} code (`null` for `None`). */
 export const SHIELD_SPECS: readonly (ShieldSpec | null)[] = Object.freeze([
   null,
@@ -281,6 +334,7 @@ export const SHIELD_SPECS: readonly (ShieldSpec | null)[] = Object.freeze([
   FREE_SHIELD,
   ROTATE_SHIELD,
   REDUCE,
+  ARM,
 ]);
 
 /** The spec of every `config` `ShieldChoice` (see {@link shieldSpecOf}). */
@@ -361,6 +415,15 @@ export class ShieldState {
   readonly podX = new Float64Array(MAX_SHIELD_PODS);
   /** World y of each pod. */
   readonly podY = new Float64Array(MAX_SHIELD_PODS);
+  /**
+   * The Arm's tier (M2-05): 0 none, 1 Arm, 2 Super Arm, 3 Hyper Arm (see {@link ARM_TIER_HITS}).
+   */
+  tier = 0;
+  /**
+   * Blue items counted towards the Arm's tiers since it was last lost (M2-05; at most
+   * {@link MAX_ARM_CHARGE}).
+   */
+  charge = 0;
 }
 
 /**
@@ -610,7 +673,69 @@ export function clearShield(state: ShieldState): void {
   state.iFrames = 0;
   state.absorbsTerrain = false;
   state.hurtScale = 1;
+  state.tier = 0;
+  state.charge = 0;
   clearPods(state);
+}
+
+/**
+ * The Arm tier a blue-item count reaches: the highest tier whose {@link ARM_TIER_BLUE} count it
+ * has (0 for none).
+ *
+ * @param charge - Blue items counted.
+ * @returns 0 … {@link ARM_TIERS}.
+ */
+export function armTierOf(charge: number): number {
+  let tier = 0;
+  for (let t = 1; t <= ARM_TIERS; t++) if (charge >= ARM_TIER_BLUE[t]) tier = t;
+  return tier;
+}
+
+/**
+ * A blue item (Direct mode, M2-05 — shmup_feat.md §9): counts it towards the Arm's tiers and
+ * grants, repairs or upgrades the Arm — a fresh or repaired field with its tier's
+ * {@link ARM_TIER_HITS} hits (green 3 after 1 blue item, silver 4 after 4, gold 5 after 9). Any
+ * other shield is replaced. Never allocates.
+ *
+ * @param state - The ship's shield.
+ * @returns The Arm's tier afterwards (1 … {@link ARM_TIERS}).
+ *
+ * @example
+ * ```ts
+ * collectArm(ship.shield); // → 1: the green Arm, 3 hits
+ * for (let i = 0; i < 3; i++) collectArm(ship.shield); // → 2: the silver Super Arm, 4 hits
+ * ```
+ */
+export function collectArm(state: ShieldState): number {
+  if (state.kind !== ShieldKind.Arm || !shieldActive(state)) {
+    // A fresh Arm: whatever stood before is replaced (the count survives only on a standing Arm).
+    const charge = state.kind === ShieldKind.Arm ? state.charge : 0;
+    clearShield(state);
+    state.charge = charge;
+  }
+  state.charge = state.charge >= MAX_ARM_CHARGE ? MAX_ARM_CHARGE : state.charge + 1;
+  const tier = armTierOf(state.charge);
+  state.kind = ShieldKind.Arm;
+  state.tier = tier;
+  state.maxHits = ARM_TIER_HITS[tier];
+  state.hits = state.maxHits;
+  state.absorbsTerrain = true;
+  state.hurtScale = 1;
+  return tier;
+}
+
+/**
+ * The frame of {@link ARM_SPRITE} to draw: the tier's block of {@link ARM_WEAR_FRAMES} frames,
+ * worn like a field ({@link shieldWearFrame}).
+ *
+ * @param state - The shield (an Arm).
+ * @returns The frame (0 without an Arm).
+ */
+export function armWearFrame(state: Readonly<ShieldState>): number {
+  const tier = state.tier;
+  if (!(tier >= 1)) return 0;
+  const t = tier > ARM_TIERS ? ARM_TIERS : tier;
+  return (t - 1) * ARM_WEAR_FRAMES + shieldWearFrame(state, ARM_WEAR_FRAMES);
 }
 
 /** What {@link absorbShieldHit} / {@link absorbPodHit} did. */
@@ -674,6 +799,9 @@ export function absorbShieldHit(state: ShieldState, terrain: boolean, tick: numb
   state.maxHits = 0;
   state.absorbsTerrain = false;
   state.hurtScale = 1;
+  // A broken Arm starts over from the green tier (M2-05).
+  state.tier = 0;
+  state.charge = 0;
   return ShieldHit.Broke;
 }
 

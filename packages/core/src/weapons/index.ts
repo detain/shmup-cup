@@ -1,10 +1,10 @@
 /**
  * # weapons — player weapons
  *
- * **Status: implemented** for meter mode: the **Type A** arsenal of M1-10 (the main shot, Double,
+ * **Status: implemented**: the meter mode's **Type A** arsenal of M1-10 (the main shot, Double,
  * Laser and ground Missile, fired with always-on autofire by the ship and its Options, with
- * per-shooter caps, piercing beams and grid-based hits) and the **Types B–D** behaviours, presets
- * and Weapon Edit of M2-03. The Direct-mode families join with M2-05.
+ * per-shooter caps, piercing beams and grid-based hits), the **Types B–D** behaviours, presets
+ * and Weapon Edit of M2-03, and the Direct mode's 9-level shot **families** of M2-05.
  *
  * **Responsibility.** The players' projectiles of a World ({@link WeaponSystem}):
  *
@@ -79,6 +79,23 @@
  * - `laser.twin` — two short beams `gap` px apart that follow their shooter; a pair fires while two
  *   more fit under the cap (non-piercing in the shipped content).
  *
+ * **Direct mode** (M2-05, shmup_feat.md §7B — `GameConfig.powerUpMode: 'direct'`, the MANTA). The
+ * content's shot **families** (`content/weapons/` `families`, `core/data` `WeaponFamilySpec`) are
+ * compiled at creation: every weapon a family's volleys fire gets a **direct role** of its own
+ * (roles {@link WEAPON_ROLE_COUNT} … — up to {@link MAX_DIRECT_WEAPONS} weapons, with the same
+ * tables as the meter roles), and every level becomes a list of emitters (weapon, heading, offset)
+ * grouped by weapon. The main shot fires the level {@link Loadout.shot} of the main family
+ * {@link Loadout.family} (the content's `main` families in order — Beam → Disc, Laser → Wave), the
+ * sub-weapon the level {@link Loadout.sub} of the first `sub` family, each on its own autofire timer
+ * (the level's `refireTicks`, else `config.autofireInterval` / `missileInterval`); a volley fires
+ * each weapon's shots only while `live + n` fits its cap (the level's `volleys × n`, else the
+ * weapon's `cap`). Two behaviours are made for the families: `direct.bolt` (a straight shot in the
+ * emitter's heading, optionally piercing; its sprite frame is the `frame` tunable, or with `turn`
+ * the heading's octant — un-rotated art) and `direct.bomb` (a Spread Bomb fired in the emitter's
+ * heading: `gravity` bends it, it bursts on terrain or its first target into a small blast).
+ * {@link applyDirectLoadout} sets a Direct-mode starting loadout. Meter mode never fires the
+ * families; Direct mode never fires the meter roles.
+ *
  * **Autofire** (shmup_feat.md §4 rule 1). While a ship is `alive`, every shooter fires its main
  * weapon whenever its timer allows (every `config.autofireInterval` ticks, or the weapon's
  * `refireTicks`) and its cap has room, if `config.autofire || config.remoteMode` or the player
@@ -111,6 +128,8 @@
  *   Laser), the preset loadouts and Weapon Edit, 7C on-screen caps,
  *   piercing vs non-piercing, per-projectile damage, damage over time for beams, ground-following
  *   projectiles, Options copy all weapons, weapons defined in data
+ * - shmup_feat.md §7B — the Direct-mode main-shot families (Beam → Disc, Laser → Wave, 9 levels
+ *   each) and the 9-level sub-weapon, as data (M2-05)
  * - shmup_feat.md §4 — always-on autofire for main shot and missile (remote rule 1)
  * - shmup_feat.md §22 — shots × enemies through the uniform grid, SoA shot pool
  *
@@ -125,9 +144,9 @@
  * {@link MAX_SHOT_HITS}, {@link SHOT_BATCH_CAPACITY}, {@link LASER_SEGMENT_LENGTH},
  * {@link DEFAULT_WEAPON_PRESET}, {@link FULL_LOADOUT_SPEED_LEVEL}; M2-03: {@link resolveArsenal},
  * {@link weaponsOfSlot}, {@link weaponLabel}, {@link WEAPON_BEHAVIOR_LABELS},
- * {@link SPREAD_BLAST_SPRITE}, {@link WEAPON_SPRITES}, {@link RIPPLE_RING_WIDTH}.
- *
- * **Planned API.** Direct-mode families and sub-weapons (M2-05).
+ * {@link SPREAD_BLAST_SPRITE}, {@link WEAPON_SPRITES}, {@link RIPPLE_RING_WIDTH}; M2-05:
+ * {@link applyDirectLoadout}, {@link DIRECT_MAX_LEVEL}, {@link MAX_DIRECT_WEAPONS},
+ * {@link WEAPON_ROLE_SLOTS}, {@link resolveFamilies}.
  *
  * @module
  */
@@ -151,6 +170,7 @@ import {
   type ContentDb,
   type PlayerShipSpec,
   type ValidationIssue,
+  type WeaponFamilySpec,
   type WeaponPresetSpec,
   type WeaponSlot,
   type WeaponSpec,
@@ -177,7 +197,14 @@ import {
 import type { PlayerCamera, PlayerIntent, PlayerShip } from '../player/index.js';
 import { createSoaPool, type SoaPool, type SoaSchema } from '../pools/index.js';
 import { LayerId, SpriteFlag, createSpriteBatch, type SpriteBatch } from '../presentation/index.js';
-import { FORCE_FIELD, clearShield, grantShield, type ShieldSpec } from '../shields/index.js';
+import {
+  ARM_TIERS,
+  FORCE_FIELD,
+  clearShield,
+  collectArm,
+  grantShield,
+  type ShieldSpec,
+} from '../shields/index.js';
 
 /** Module descriptor (see {@link defineModule}). */
 export const moduleInfo = defineModule({
@@ -268,6 +295,8 @@ export const WEAPON_BEHAVIOR_KINDS: Readonly<Record<WeaponBehaviorId, ShotKind>>
   'laser.ripple': ShotKind.Ripple,
   'laser.cyclone': ShotKind.Laser,
   'laser.twin': ShotKind.Twin,
+  'direct.bolt': ShotKind.Straight,
+  'direct.bomb': ShotKind.SpreadBomb,
 });
 
 /**
@@ -277,7 +306,9 @@ export const WEAPON_BEHAVIOR_KINDS: Readonly<Record<WeaponBehaviorId, ShotKind>>
  * Bomb's fall), `blastRadius` / `blastTicks` (its blast's half size and life), `startSize` /
  * `maxSize` / `growth` / `aspect` (the Ripple's half height when fired, at most, its growth per
  * tick and width ÷ height), `gap` (the distance between the Twin Laser's beams) and `frames` (the
- * blast's, ring's or swirl's animation frames).
+ * blast's, ring's or swirl's animation frames). The M2-05 Direct-mode behaviours add `frame`
+ * (the still frame a `direct.bolt` / `direct.bomb` shows) and `turn` (1 = a `direct.bolt` shows the
+ * frame of its heading's octant instead: 0 right, 1 down-right … 7 up-right).
  */
 export const WEAPON_BEHAVIOR_PARAMS: Readonly<
   Record<WeaponBehaviorId, Readonly<Record<string, number>>>
@@ -337,6 +368,27 @@ export const WEAPON_BEHAVIOR_PARAMS: Readonly<
     frames: 4,
   }),
   'laser.twin': Object.freeze({ maxLength: 16, gap: 8, ox: 8, oy: 0, hh: 1.5 }),
+  'direct.bolt': Object.freeze({
+    ox: 8,
+    oy: 0,
+    hw: 4,
+    hh: 2,
+    frame: 0,
+    turn: 0,
+    hitCooldownTicks: 6,
+  }),
+  'direct.bomb': Object.freeze({
+    gravity: 0,
+    ox: 2,
+    oy: 0,
+    hw: 3,
+    hh: 3,
+    blastRadius: 8,
+    blastTicks: 8,
+    hitCooldownTicks: 6,
+    frames: 4,
+    frame: 0,
+  }),
 });
 
 /** The loadout slot each behaviour belongs in (checked by {@link checkWeaponBehaviors}). */
@@ -355,6 +407,8 @@ export const WEAPON_BEHAVIOR_SLOTS: Readonly<Record<WeaponBehaviorId, readonly W
     'laser.ripple': Object.freeze(['laser'] as WeaponSlot[]),
     'laser.cyclone': Object.freeze(['laser'] as WeaponSlot[]),
     'laser.twin': Object.freeze(['laser'] as WeaponSlot[]),
+    'direct.bolt': Object.freeze(['main', 'sub'] as WeaponSlot[]),
+    'direct.bomb': Object.freeze(['sub'] as WeaponSlot[]),
   });
 
 /**
@@ -375,6 +429,8 @@ export const WEAPON_BEHAVIOR_LABELS: Readonly<Record<WeaponBehaviorId, string>> 
   'laser.ripple': 'RIPPLE',
   'laser.cyclone': 'CYCLONE',
   'laser.twin': 'TWIN',
+  'direct.bolt': 'BOLT',
+  'direct.bomb': 'BOMB',
 });
 
 /**
@@ -421,6 +477,21 @@ export type WeaponRole = (typeof WeaponRole)[keyof typeof WeaponRole];
 /** Number of {@link WeaponRole}s. */
 export const WEAPON_ROLE_COUNT = 4;
 
+/**
+ * Most distinct weapons the Direct-mode families may fire (M2-05): each gets a direct role
+ * `WEAPON_ROLE_COUNT + k`; the weapons of later families beyond it are left out.
+ */
+export const MAX_DIRECT_WEAPONS = 32;
+
+/**
+ * Role slots of the role tables and of {@link WeaponSystem.liveCounts}' stride: the meter roles,
+ * then the direct roles (M2-05).
+ */
+export const WEAPON_ROLE_SLOTS = WEAPON_ROLE_COUNT + MAX_DIRECT_WEAPONS;
+
+/** Highest Direct-mode shot / sub-weapon level (shmup_feat.md §7B: levels 0 … 8). */
+export const DIRECT_MAX_LEVEL = 8;
+
 /** What a loadout's main weapon is (Double and Laser are mutually exclusive, shmup_feat.md §6A). */
 export const MainWeapon = {
   /** The basic shot. */
@@ -466,7 +537,7 @@ export const SHOT_SCHEMA = Object.freeze({
   hh: 'f64',
   /** Damage per hit. */
   damage: 'i32',
-  /** {@link WeaponRole}. */
+  /** {@link WeaponRole}, or a Direct-mode role (≥ {@link WEAPON_ROLE_COUNT}, M2-05). */
   role: 'u8',
   /** {@link ShotKind}. */
   kind: 'u8',
@@ -490,9 +561,9 @@ export const SHOT_SCHEMA = Object.freeze({
 export type ShotSchema = typeof SHOT_SCHEMA;
 
 /**
- * One player's meter-mode loadout (plan M1-10). The ship's speed level and shield live on the ship
+ * One player's loadout (plan M1-10). The ship's speed level and shield live on the ship
  * (`PlayerShip.speedLevel`, `PlayerShip.shield`); the power meter (`core/powerups`, M1-11) equips
- * these fields.
+ * the meter fields, the Direct-mode items (M2-05) the direct ones.
  */
 export class Loadout {
   /** The main weapon ({@link MainWeapon}). */
@@ -501,6 +572,15 @@ export class Loadout {
   missile = false;
   /** Options owned (0–{@link MAX_OPTIONS}). */
   options = 0;
+  /** Direct mode: the main shot's level, 0 … {@link DIRECT_MAX_LEVEL} (red items — M2-05). */
+  shot = 0;
+  /** Direct mode: the sub-weapon's level, 0 … {@link DIRECT_MAX_LEVEL} (green items). */
+  sub = 0;
+  /**
+   * Direct mode: the main-shot family, an index into the content's `main` families (0 = the
+   * first — Beam → Disc; the red octagon moves on to the next).
+   */
+  family = 0;
 }
 
 /**
@@ -509,7 +589,8 @@ export class Loadout {
  * @remarks
  * `'default'` = the basic shot, no missile, no options, no shield, speed level 0. `'full'` (the
  * web app's `?loadout=full` dev override) = speed level {@link FULL_LOADOUT_SPEED_LEVEL}, the
- * Missile, the Laser, four Options and a fresh Force Field (`core/shields`).
+ * Missile, the Laser, four Options and a fresh Force Field (`core/shields`). The Direct-mode
+ * fields go to 0 (a Direct-mode session uses {@link applyDirectLoadout}).
  *
  * @param loadout - The player's loadout.
  * @param ship - The player's ship (its speed level and shield).
@@ -532,9 +613,73 @@ export function applyLoadoutPreset(
   loadout.main = full ? MainWeapon.Laser : MainWeapon.Basic;
   loadout.missile = full;
   loadout.options = full ? MAX_OPTIONS : 0;
+  loadout.shot = 0;
+  loadout.sub = 0;
+  loadout.family = 0;
   ship.speedLevel = full ? FULL_LOADOUT_SPEED_LEVEL : 0;
   if (full) grantShield(ship.shield, shield);
   else clearShield(ship.shield);
+}
+
+/**
+ * Applies a Direct-mode starting loadout to a player (M2-05): the meter fields empty and
+ *
+ * - `'default'` — main shot and sub-weapon at level 0, the first family, no Arm;
+ * - `'full'` (the web app's `?loadout=full`) — both at {@link DIRECT_MAX_LEVEL}, the first family,
+ *   the gold Hyper Arm (9 blue items).
+ *
+ * The speed level becomes the ship's `startSpeedLevel` in both (the Speed toggle is the player's
+ * choice, not power).
+ *
+ * @param loadout - The player's loadout.
+ * @param ship - The player's ship (speed level, shield).
+ * @param preset - Which loadout.
+ * @param startSpeedLevel - The ship spec's `startSpeedLevel` (default 0).
+ *
+ * @example
+ * ```ts
+ * applyDirectLoadout(world.weapons.loadouts[0], world.players[0], 'full', world.ship.startSpeedLevel);
+ * ```
+ */
+export function applyDirectLoadout(
+  loadout: Loadout,
+  ship: PlayerShip,
+  preset: StartingLoadout,
+  startSpeedLevel = 0,
+): void {
+  const full = preset === 'full';
+  loadout.main = MainWeapon.Basic;
+  loadout.missile = false;
+  loadout.options = 0;
+  loadout.shot = full ? DIRECT_MAX_LEVEL : 0;
+  loadout.sub = full ? DIRECT_MAX_LEVEL : 0;
+  loadout.family = 0;
+  ship.speedLevel = startSpeedLevel > 0 ? startSpeedLevel : 0;
+  clearShield(ship.shield);
+  if (full) {
+    // The gold Hyper Arm: as many blue items as its tier needs.
+    while (ship.shield.tier < ARM_TIERS) collectArm(ship.shield);
+  }
+}
+
+/**
+ * The Direct-mode families of a content (M2-05), as the weapons fire them.
+ *
+ * @param content - Validated content.
+ * @returns `main`: the content's `main` families in content order (the red octagon cycles through
+ *   them); `sub`: its first `sub` family, or `null`. New arrays (load time).
+ */
+export function resolveFamilies(content: ContentDb): {
+  main: WeaponFamilySpec[];
+  sub: WeaponFamilySpec | null;
+} {
+  const main: WeaponFamilySpec[] = [];
+  let sub: WeaponFamilySpec | null = null;
+  for (const family of content.weaponFamilies) {
+    if (family.slot === 'main') main.push(family);
+    else if (sub === null) sub = family;
+  }
+  return { main, sub };
 }
 
 /**
@@ -829,10 +974,23 @@ export interface WeaponSystem {
    */
   readonly freeWayHeading: Int32Array;
   /**
-   * Live shots per shooter and role, `[shooter × WEAPON_ROLE_COUNT + role]` (recounted at the
-   * start of phase 2, raised by every shot fired).
+   * Live shots per shooter and role, `[shooter × WEAPON_ROLE_SLOTS + role]` (recounted at the
+   * start of phase 2, raised by every shot fired; the Direct-mode roles after the meter ones).
    */
   readonly liveCounts: Int32Array;
+  /**
+   * Whether the session fires the Direct-mode families (`GameConfig.powerUpMode === 'direct'`,
+   * M2-05) instead of the meter roles.
+   */
+  readonly direct: boolean;
+  /**
+   * The content's `main` families (M2-05, `resolveFamilies`): {@link Loadout.family} indexes it
+   * (read-only content — the HUD shows the family's `label`, the power-ups cap the levels at
+   * `levels.length − 1`).
+   */
+  readonly mainFamilies: readonly WeaponFamilySpec[];
+  /** The sub-weapon's family (the content's first `sub` family), or `null`. */
+  readonly subFamily: WeaponFamilySpec | null;
   /**
    * Hit-cooldown tables of piercing shots ({@link PIERCE_TABLES} of them): table `t` is
    * `[t × MAX_ENEMIES, (t + 1) × MAX_ENEMIES)`, one entry per enemy slot (ticks left).
@@ -984,62 +1142,66 @@ export interface WeaponSystem {
 /** The shot pool's type. */
 type ShotPool = SoaPool<ShotSchema>;
 
-/** Compiled tables of the four roles (load time). */
+/** Compiled tables of the roles: the four meter roles, then the direct ones (load time). */
 class RoleTables {
   /** {@link ShotKind} per role, -1 = empty role. */
-  readonly kind = new Int32Array(WEAPON_ROLE_COUNT).fill(-1);
+  readonly kind = new Int32Array(WEAPON_ROLE_SLOTS).fill(-1);
   /** Damage per hit. */
-  readonly damage = new Int32Array(WEAPON_ROLE_COUNT);
+  readonly damage = new Int32Array(WEAPON_ROLE_SLOTS);
   /** Speed (px/tick). */
-  readonly speed = new Float64Array(WEAPON_ROLE_COUNT);
+  readonly speed = new Float64Array(WEAPON_ROLE_SLOTS);
   /** Cap per shooter. */
-  readonly cap = new Int32Array(WEAPON_ROLE_COUNT);
+  readonly cap = new Int32Array(WEAPON_ROLE_SLOTS);
   /** 1 = piercing. */
-  readonly pierce = new Uint8Array(WEAPON_ROLE_COUNT);
+  readonly pierce = new Uint8Array(WEAPON_ROLE_SLOTS);
   /** Sprite id (-1 = not drawn). */
-  readonly sprite = new Int32Array(WEAPON_ROLE_COUNT).fill(-1);
+  readonly sprite = new Int32Array(WEAPON_ROLE_SLOTS).fill(-1);
   /** Ticks between shots. */
-  readonly interval = new Int32Array(WEAPON_ROLE_COUNT);
+  readonly interval = new Int32Array(WEAPON_ROLE_SLOTS);
   /** SFX cue (-1 = silent). */
-  readonly sfx = new Int32Array(WEAPON_ROLE_COUNT).fill(-1);
+  readonly sfx = new Int32Array(WEAPON_ROLE_SLOTS).fill(-1);
   /** Angle parameter (binary units). */
-  readonly angle = new Int32Array(WEAPON_ROLE_COUNT);
+  readonly angle = new Int32Array(WEAPON_ROLE_SLOTS);
   /** Laser maximum length. */
-  readonly maxLength = new Float64Array(WEAPON_ROLE_COUNT);
+  readonly maxLength = new Float64Array(WEAPON_ROLE_SLOTS);
   /** Piercing hit cooldown in ticks. */
-  readonly cooldown = new Int32Array(WEAPON_ROLE_COUNT);
+  readonly cooldown = new Int32Array(WEAPON_ROLE_SLOTS);
   /** Missile slide speed. */
-  readonly slide = new Float64Array(WEAPON_ROLE_COUNT);
+  readonly slide = new Float64Array(WEAPON_ROLE_SLOTS);
   /** Missile: pixels a slide may climb or drop per tick before it is a wall / a cliff. */
-  readonly step = new Int32Array(WEAPON_ROLE_COUNT);
+  readonly step = new Int32Array(WEAPON_ROLE_SLOTS);
   /** Hitbox half width. */
-  readonly hw = new Float64Array(WEAPON_ROLE_COUNT);
+  readonly hw = new Float64Array(WEAPON_ROLE_SLOTS);
   /** Hitbox half height. */
-  readonly hh = new Float64Array(WEAPON_ROLE_COUNT);
+  readonly hh = new Float64Array(WEAPON_ROLE_SLOTS);
   /** Spawn offset x. */
-  readonly ox = new Float64Array(WEAPON_ROLE_COUNT);
+  readonly ox = new Float64Array(WEAPON_ROLE_SLOTS);
   /** Spawn offset y. */
-  readonly oy = new Float64Array(WEAPON_ROLE_COUNT);
+  readonly oy = new Float64Array(WEAPON_ROLE_SLOTS);
   /** Animation frames. */
-  readonly frames = new Int32Array(WEAPON_ROLE_COUNT).fill(1);
+  readonly frames = new Int32Array(WEAPON_ROLE_SLOTS).fill(1);
   /** 1 = the shot needs a hit-cooldown table (piercing, or a Spread Bomb's blast). */
-  readonly table = new Uint8Array(WEAPON_ROLE_COUNT);
+  readonly table = new Uint8Array(WEAPON_ROLE_SLOTS);
   /** Spread Bomb: fall acceleration (px/tick²). */
-  readonly gravity = new Float64Array(WEAPON_ROLE_COUNT);
+  readonly gravity = new Float64Array(WEAPON_ROLE_SLOTS);
   /** Spread Bomb: the blast's half size. */
-  readonly blastRadius = new Float64Array(WEAPON_ROLE_COUNT);
+  readonly blastRadius = new Float64Array(WEAPON_ROLE_SLOTS);
   /** Spread Bomb: the blast's life in ticks. */
-  readonly blastTicks = new Int32Array(WEAPON_ROLE_COUNT);
+  readonly blastTicks = new Int32Array(WEAPON_ROLE_SLOTS);
   /** Ripple: half height when fired. */
-  readonly startSize = new Float64Array(WEAPON_ROLE_COUNT);
+  readonly startSize = new Float64Array(WEAPON_ROLE_SLOTS);
   /** Ripple: largest half height. */
-  readonly maxSize = new Float64Array(WEAPON_ROLE_COUNT);
+  readonly maxSize = new Float64Array(WEAPON_ROLE_SLOTS);
   /** Ripple: half-height growth per tick. */
-  readonly growth = new Float64Array(WEAPON_ROLE_COUNT);
+  readonly growth = new Float64Array(WEAPON_ROLE_SLOTS);
   /** Ripple: half width ÷ half height. */
-  readonly aspect = new Float64Array(WEAPON_ROLE_COUNT);
+  readonly aspect = new Float64Array(WEAPON_ROLE_SLOTS);
   /** Twin Laser: half the distance between the two beams. */
-  readonly halfGap = new Float64Array(WEAPON_ROLE_COUNT);
+  readonly halfGap = new Float64Array(WEAPON_ROLE_SLOTS);
+  /** Direct mode: 1 = the shot shows its heading's octant frame (`turn`). */
+  readonly turn = new Uint8Array(WEAPON_ROLE_SLOTS);
+  /** Direct mode: the still frame of a `direct.bolt` / `direct.bomb` (`frame`). */
+  readonly frame0 = new Int32Array(WEAPON_ROLE_SLOTS);
 }
 
 /**
@@ -1061,10 +1223,10 @@ function tunable(spec: WeaponSpec, name: string): number {
 }
 
 /**
- * Compiles the role tables from the weapons into existing tables (creation, and
- * {@link WeaponSystem.setArsenal}). Never allocates.
+ * Compiles the meter roles' tables from the weapons into existing tables (creation, and
+ * {@link WeaponSystem.setArsenal}); the direct roles are not touched. Never allocates.
  *
- * @param t - The tables (every entry rewritten).
+ * @param t - The tables (every meter entry rewritten).
  * @param roles - The weapon per role (a missing entry = an empty role).
  * @param config - Autofire intervals.
  */
@@ -1074,75 +1236,194 @@ function compileRoles(
   config: GameConfig,
 ): void {
   for (let r = 0; r < WEAPON_ROLE_COUNT; r++) {
-    t.kind[r] = -1;
-    t.damage[r] = 0;
-    t.speed[r] = 0;
-    t.cap[r] = 0;
-    t.pierce[r] = 0;
-    t.sprite[r] = -1;
-    t.interval[r] = 0;
-    t.sfx[r] = -1;
-    t.angle[r] = 0;
-    t.maxLength[r] = 0;
-    t.cooldown[r] = 1;
-    t.slide[r] = 0;
-    t.step[r] = 1;
-    t.hw[r] = 0;
-    t.hh[r] = 0;
-    t.ox[r] = 0;
-    t.oy[r] = 0;
-    t.frames[r] = 1;
-    t.table[r] = 0;
-    t.gravity[r] = 0;
-    t.blastRadius[r] = 0;
-    t.blastTicks[r] = 0;
-    t.startSize[r] = 0;
-    t.maxSize[r] = 0;
-    t.growth[r] = 0;
-    t.aspect[r] = 0;
-    t.halfGap[r] = 0;
     const spec = r < roles.length ? roles[r] : null;
-    if (spec === null || spec === undefined) continue;
-    const kind = Object.prototype.hasOwnProperty.call(WEAPON_BEHAVIOR_KINDS, spec.behavior)
-      ? WEAPON_BEHAVIOR_KINDS[spec.behavior]
-      : -1;
-    if (kind < 0) continue;
-    t.kind[r] = kind;
-    t.damage[r] = spec.damage;
-    t.speed[r] = spec.speed;
-    t.cap[r] = spec.cap;
-    t.pierce[r] = spec.pierce ? 1 : 0;
-    t.sprite[r] = spec.spriteId;
     const fallback = r === WeaponRole.Missile ? config.missileInterval : config.autofireInterval;
-    t.interval[r] = spec.refireTicks ?? fallback;
-    t.sfx[r] = spec.sfxId ?? -1;
-    t.angle[r] = Math.round(tunable(spec, 'angle')) & ANGLE_MASK;
-    const maxLength = tunable(spec, 'maxLength');
-    t.maxLength[r] = maxLength > 0 ? maxLength : 0;
-    const cooldown = Math.round(tunable(spec, 'hitCooldownTicks'));
-    t.cooldown[r] = cooldown < 1 ? 1 : cooldown > 255 ? 255 : cooldown;
-    const slide = tunable(spec, 'slideSpeed');
-    t.slide[r] = slide > 0 ? slide : 0;
-    t.step[r] = Math.ceil(t.slide[r]) + 1;
-    t.hw[r] = Math.abs(tunable(spec, 'hw'));
-    t.hh[r] = Math.abs(tunable(spec, 'hh'));
-    t.ox[r] = tunable(spec, 'ox');
-    t.oy[r] = tunable(spec, 'oy');
-    const frames = Math.floor(tunable(spec, 'frames'));
-    t.frames[r] = frames >= 1 ? frames : 1;
-    t.table[r] = spec.pierce || kind === ShotKind.SpreadBomb ? 1 : 0;
-    const gravity = tunable(spec, 'gravity');
-    t.gravity[r] = gravity > 0 ? gravity : 0;
-    t.blastRadius[r] = Math.abs(tunable(spec, 'blastRadius'));
-    const blastTicks = Math.round(tunable(spec, 'blastTicks'));
-    t.blastTicks[r] = blastTicks >= 1 ? blastTicks : 1;
-    const start = Math.abs(tunable(spec, 'startSize'));
-    const max = Math.abs(tunable(spec, 'maxSize'));
-    t.startSize[r] = start;
-    t.maxSize[r] = max > start ? max : start;
-    t.growth[r] = Math.abs(tunable(spec, 'growth'));
-    t.aspect[r] = Math.abs(tunable(spec, 'aspect'));
-    t.halfGap[r] = Math.abs(tunable(spec, 'gap')) / 2;
+    compileRole(t, r, spec === undefined ? null : spec, fallback);
+  }
+}
+
+/**
+ * Compiles one role's tables from its weapon (every entry rewritten; `null` = an empty role).
+ * Never allocates.
+ *
+ * @param t - The tables.
+ * @param r - The role slot (a meter role, or a direct one ≥ {@link WEAPON_ROLE_COUNT}).
+ * @param spec - Its weapon, or `null`.
+ * @param fallback - Ticks between shots when the weapon has no `refireTicks`.
+ */
+function compileRole(t: RoleTables, r: number, spec: WeaponSpec | null, fallback: number): void {
+  t.kind[r] = -1;
+  t.damage[r] = 0;
+  t.speed[r] = 0;
+  t.cap[r] = 0;
+  t.pierce[r] = 0;
+  t.sprite[r] = -1;
+  t.interval[r] = 0;
+  t.sfx[r] = -1;
+  t.angle[r] = 0;
+  t.maxLength[r] = 0;
+  t.cooldown[r] = 1;
+  t.slide[r] = 0;
+  t.step[r] = 1;
+  t.hw[r] = 0;
+  t.hh[r] = 0;
+  t.ox[r] = 0;
+  t.oy[r] = 0;
+  t.frames[r] = 1;
+  t.table[r] = 0;
+  t.gravity[r] = 0;
+  t.blastRadius[r] = 0;
+  t.blastTicks[r] = 0;
+  t.startSize[r] = 0;
+  t.maxSize[r] = 0;
+  t.growth[r] = 0;
+  t.aspect[r] = 0;
+  t.halfGap[r] = 0;
+  t.turn[r] = 0;
+  t.frame0[r] = 0;
+  if (spec === null) return;
+  const kind = Object.prototype.hasOwnProperty.call(WEAPON_BEHAVIOR_KINDS, spec.behavior)
+    ? WEAPON_BEHAVIOR_KINDS[spec.behavior]
+    : -1;
+  if (kind < 0) return;
+  t.kind[r] = kind;
+  t.damage[r] = spec.damage;
+  t.speed[r] = spec.speed;
+  t.cap[r] = spec.cap;
+  t.pierce[r] = spec.pierce ? 1 : 0;
+  t.sprite[r] = spec.spriteId;
+  t.interval[r] = spec.refireTicks ?? fallback;
+  t.sfx[r] = spec.sfxId ?? -1;
+  t.angle[r] = Math.round(tunable(spec, 'angle')) & ANGLE_MASK;
+  const maxLength = tunable(spec, 'maxLength');
+  t.maxLength[r] = maxLength > 0 ? maxLength : 0;
+  const cooldown = Math.round(tunable(spec, 'hitCooldownTicks'));
+  t.cooldown[r] = cooldown < 1 ? 1 : cooldown > 255 ? 255 : cooldown;
+  const slide = tunable(spec, 'slideSpeed');
+  t.slide[r] = slide > 0 ? slide : 0;
+  t.step[r] = Math.ceil(t.slide[r]) + 1;
+  t.hw[r] = Math.abs(tunable(spec, 'hw'));
+  t.hh[r] = Math.abs(tunable(spec, 'hh'));
+  t.ox[r] = tunable(spec, 'ox');
+  t.oy[r] = tunable(spec, 'oy');
+  const frames = Math.floor(tunable(spec, 'frames'));
+  t.frames[r] = frames >= 1 ? frames : 1;
+  t.table[r] = spec.pierce || kind === ShotKind.SpreadBomb ? 1 : 0;
+  const gravity = tunable(spec, 'gravity');
+  t.gravity[r] = gravity > 0 ? gravity : 0;
+  t.blastRadius[r] = Math.abs(tunable(spec, 'blastRadius'));
+  const blastTicks = Math.round(tunable(spec, 'blastTicks'));
+  t.blastTicks[r] = blastTicks >= 1 ? blastTicks : 1;
+  const start = Math.abs(tunable(spec, 'startSize'));
+  const max = Math.abs(tunable(spec, 'maxSize'));
+  t.startSize[r] = start;
+  t.maxSize[r] = max > start ? max : start;
+  t.growth[r] = Math.abs(tunable(spec, 'growth'));
+  t.aspect[r] = Math.abs(tunable(spec, 'aspect'));
+  t.halfGap[r] = Math.abs(tunable(spec, 'gap')) / 2;
+  t.turn[r] = tunable(spec, 'turn') > 0 ? 1 : 0;
+  const frame0 = Math.floor(tunable(spec, 'frame'));
+  t.frame0[r] = frame0 > 0 ? frame0 : 0;
+}
+
+/**
+ * The Direct-mode families compiled for firing (M2-05, load time): every level's emitters grouped
+ * by weapon, in typed arrays.
+ */
+class FamilyTables {
+  /** Levels per family (index: `mainFamilies` order, then the sub family last). */
+  readonly levels: Int32Array;
+  /** First level (into the level arrays) per family. */
+  readonly base: Int32Array;
+  /** First emitter per level. */
+  readonly start: Int32Array;
+  /** Emitters per level. */
+  readonly count: Int32Array;
+  /** Ticks between volleys per level (the config's interval when the level has none). */
+  readonly interval: Int32Array;
+  /** Volleys at once per level (0 = the weapons' own caps). */
+  readonly volleys: Int32Array;
+  /** Role per emitter (a direct role). */
+  readonly role: Int32Array;
+  /** Heading per emitter (binary units). */
+  readonly angle: Int32Array;
+  /** Extra offset x per emitter. */
+  readonly ox: Float64Array;
+  /** Extra offset y per emitter. */
+  readonly oy: Float64Array;
+  /** Shots of the emitter's weapon in its level, on the group's first emitter (0 on the others). */
+  readonly group: Int32Array;
+
+  /**
+   * Compiles the families (see the class docs).
+   *
+   * @param families - The main families, then the sub family (if any).
+   * @param subIndex - Index of the sub family in `families` (-1 = none).
+   * @param roleOf - Weapon index → direct role (-1 = none).
+   * @param config - The config (the intervals of levels without `refireTicks`).
+   */
+  constructor(
+    families: readonly WeaponFamilySpec[],
+    subIndex: number,
+    roleOf: (weaponId: number) => number,
+    config: GameConfig,
+  ) {
+    const n = families.length;
+    this.levels = new Int32Array(n);
+    this.base = new Int32Array(n);
+    let levelTotal = 0;
+    let emitterTotal = 0;
+    for (const family of families) {
+      levelTotal += family.levels.length;
+      for (const level of family.levels) emitterTotal += level.shots.length;
+    }
+    this.start = new Int32Array(levelTotal);
+    this.count = new Int32Array(levelTotal);
+    this.interval = new Int32Array(levelTotal);
+    this.volleys = new Int32Array(levelTotal);
+    this.role = new Int32Array(emitterTotal);
+    this.angle = new Int32Array(emitterTotal);
+    this.ox = new Float64Array(emitterTotal);
+    this.oy = new Float64Array(emitterTotal);
+    this.group = new Int32Array(emitterTotal);
+    let lv = 0;
+    let e = 0;
+    for (let f = 0; f < n; f++) {
+      const family = families[f];
+      this.levels[f] = family.levels.length;
+      this.base[f] = lv;
+      const fallback = f === subIndex ? config.missileInterval : config.autofireInterval;
+      for (const level of family.levels) {
+        this.start[lv] = e;
+        this.interval[lv] = level.refireTicks ?? fallback;
+        this.volleys[lv] = level.volleys ?? 0;
+        // Group the shots by weapon (first appearance order), content order within a group.
+        const shots = level.shots;
+        const done: boolean[] = [];
+        for (let k = 0; k < shots.length; k++) {
+          if (done[k] === true) continue;
+          const role = roleOf(shots[k].weaponId);
+          const first = e;
+          let groupSize = 0;
+          for (let j = k; j < shots.length; j++) {
+            if (done[j] === true || roleOf(shots[j].weaponId) !== role) continue;
+            done[j] = true;
+            if (role < 0) continue;
+            const shot = shots[j];
+            this.role[e] = role;
+            this.angle[e] = Math.round(shot.angle ?? 0) & ANGLE_MASK;
+            this.ox[e] = shot.ox ?? 0;
+            this.oy[e] = shot.oy ?? 0;
+            this.group[e] = 0;
+            e++;
+            groupSize++;
+          }
+          if (groupSize > 0) this.group[first] = groupSize;
+        }
+        this.count[lv] = e - this.start[lv];
+        lv++;
+      }
+    }
   }
 }
 
@@ -1167,7 +1448,21 @@ class WeaponSystemImpl implements WeaponSystem {
   /** See {@link WeaponSystem.freeWayHeading}. */
   readonly freeWayHeading = new Int32Array(MAX_PLAYERS).fill(-1);
   /** See {@link WeaponSystem.liveCounts}. */
-  readonly liveCounts = new Int32Array(MAX_SHOOTERS * WEAPON_ROLE_COUNT);
+  readonly liveCounts = new Int32Array(MAX_SHOOTERS * WEAPON_ROLE_SLOTS);
+  /** See {@link WeaponSystem.direct}. */
+  readonly direct: boolean;
+  /** See {@link WeaponSystem.mainFamilies}. */
+  readonly mainFamilies: readonly WeaponFamilySpec[];
+  /** See {@link WeaponSystem.subFamily}. */
+  readonly subFamily: WeaponFamilySpec | null;
+  /** The families compiled for firing (`mainFamilies`, then the sub family). */
+  private readonly families: FamilyTables;
+  /** Index of the sub family in {@link WeaponSystemImpl.families} (-1 = none). */
+  private readonly subIndex: number;
+  /** Extra spawn offset x of the next shot {@link WeaponSystemImpl.emit} fills (a family volley). */
+  private offX = 0;
+  /** Extra spawn offset y of the next shot. */
+  private offY = 0;
   /** See {@link WeaponSystem.cooldowns}. */
   readonly cooldowns = new Uint8Array(PIERCE_TABLES * MAX_ENEMIES);
   /** See {@link WeaponSystem.partCooldowns}. */
@@ -1262,6 +1557,34 @@ class WeaponSystemImpl implements WeaponSystem {
     const content = host.content;
     this.roleWeapons = resolveArsenal(content, host.config);
     compileRoles(this.roles, this.roleWeapons, host.config);
+    // The Direct-mode families (M2-05): a direct role per distinct weapon they fire.
+    this.direct = host.config.powerUpMode === 'direct';
+    const families = resolveFamilies(content);
+    this.mainFamilies = Object.freeze(families.main);
+    this.subFamily = families.sub;
+    const compiled: WeaponFamilySpec[] = families.main.slice();
+    this.subIndex = families.sub === null ? -1 : compiled.length;
+    if (families.sub !== null) compiled.push(families.sub);
+    const roleOfWeapon = new Map<number, number>();
+    let directRoles = 0;
+    for (const family of compiled) {
+      for (const level of family.levels) {
+        for (const shot of level.shots) {
+          const id = shot.weaponId;
+          if (roleOfWeapon.has(id) || !(id >= 0 && id < content.weapons.length)) continue;
+          if (directRoles >= MAX_DIRECT_WEAPONS) continue;
+          const role = WEAPON_ROLE_COUNT + directRoles++;
+          roleOfWeapon.set(id, role);
+          compileRole(this.roles, role, content.weapons[id], host.config.autofireInterval);
+        }
+      }
+    }
+    this.families = new FamilyTables(
+      compiled,
+      this.subIndex,
+      (id) => roleOfWeapon.get(id) ?? -1,
+      host.config,
+    );
     this.alwaysFire = host.config.autofire || host.config.remoteMode;
     this.optionSprite = content.sprites.index.get(OPTION_SPRITE) ?? -1;
     this.blastSprite = content.sprites.index.get(SPREAD_BLAST_SPRITE) ?? -1;
@@ -1278,7 +1601,7 @@ class WeaponSystemImpl implements WeaponSystem {
 
   /** See {@link WeaponSystem.spawnShot}. */
   spawnShot(role: number, shooter: number, x: number, y: number): number {
-    if (!(role >= 0 && role < WEAPON_ROLE_COUNT && role % 1 === 0)) return -1;
+    if (!(role >= 0 && role < WEAPON_ROLE_SLOTS && role % 1 === 0)) return -1;
     if (!(shooter >= 0 && shooter < MAX_SHOOTERS && shooter % 1 === 0)) return -1;
     const kind = this.roles.kind[role];
     if (kind < 0) return -1;
@@ -1354,7 +1677,7 @@ class WeaponSystemImpl implements WeaponSystem {
     const n = this.pool.count;
     for (let i = 0; i < n; i++) {
       if ((f.flags[i] & ShotFlag.Dead) !== 0) continue;
-      counts[f.shooter[i] * WEAPON_ROLE_COUNT + f.role[i]]++;
+      counts[f.shooter[i] * WEAPON_ROLE_SLOTS + f.role[i]]++;
       const table = f.table[i];
       if (table > 0) used[table - 1] = 1;
     }
@@ -1408,6 +1731,10 @@ class WeaponSystemImpl implements WeaponSystem {
         }
       }
       const held = p < intents.length ? intents[p].held : 0;
+      if (this.direct) {
+        this.fireDirect(p, held, 1 + group.count);
+        continue;
+      }
       const wantMain = this.alwaysFire || (held & Action.Shot) !== 0;
       const wantSub =
         missileReady && loadout.missile && (this.alwaysFire || (held & Action.Sub) !== 0);
@@ -1435,6 +1762,86 @@ class WeaponSystemImpl implements WeaponSystem {
   }
 
   /**
+   * Direct-mode firing of one alive player's shooters (M2-05): the main family's level volley and
+   * the sub family's, each when its timer allows and it is wanted (`autofire || remoteMode`, or
+   * `Shot` / `Sub` held); a volley that fired restarts its timer with the level's interval.
+   *
+   * @param p - Player slot.
+   * @param held - The player's held actions.
+   * @param shooters - The ship plus its Options in play.
+   */
+  private fireDirect(p: number, held: number, shooters: number): void {
+    const loadout = this.loadouts[p];
+    const ship = this.host.players[p];
+    const group = this.options[p];
+    const timers = this.timers;
+    const wantMain = this.alwaysFire || (held & Action.Shot) !== 0;
+    const wantSub = this.subIndex >= 0 && (this.alwaysFire || (held & Action.Sub) !== 0);
+    const mains = this.mainFamilies.length;
+    const family = mains > 0 ? (loadout.family >= 0 ? loadout.family % mains : 0) : -1;
+    const base = p * SHOOTERS_PER_PLAYER;
+    for (let k = 0; k < shooters; k++) {
+      if (k === 0) {
+        this.fx = ship.x;
+        this.fy = ship.y;
+      } else {
+        this.fx = group.x[k - 1];
+        this.fy = group.y[k - 1];
+      }
+      const s = base + k;
+      if (wantMain && family >= 0 && timers[s * 2] === 0) {
+        const lv = this.fireLevel(family, loadout.shot, s);
+        if (lv >= 0) timers[s * 2] = this.families.interval[lv];
+      }
+      if (wantSub && timers[s * 2 + 1] === 0) {
+        const lv = this.fireLevel(this.subIndex, loadout.sub, s);
+        if (lv >= 0) timers[s * 2 + 1] = this.families.interval[lv];
+      }
+    }
+  }
+
+  /**
+   * Fires one volley of a family's level from {@link WeaponSystemImpl.fx} / `fy` (M2-05): each
+   * weapon's shots of the level (a group) fire together when `live + n` fits the cap — the level's
+   * `volleys × n`, else the weapon's `cap` —, each from its emitter's offset in its heading; every
+   * group that fired pushes its weapon's SFX (rate-limited).
+   *
+   * @param family - Index into the compiled families.
+   * @param level - The loadout's level (clamped to the family's levels).
+   * @param s - Shooter id.
+   * @returns The level index fired (into the level tables), or -1 when nothing fired.
+   */
+  private fireLevel(family: number, level: number, s: number): number {
+    const f = this.families;
+    const levels = f.levels[family];
+    if (!(levels > 0)) return -1;
+    const lv = f.base[family] + (level >= levels ? levels - 1 : level > 0 ? level | 0 : 0);
+    const start = f.start[lv];
+    const end = start + f.count[lv];
+    const volleys = f.volleys[lv];
+    const t = this.roles;
+    const live = this.liveCounts;
+    let fits = false;
+    let fired = false;
+    for (let e = start; e < end; e++) {
+      const role = f.role[e];
+      const n = f.group[e];
+      if (n > 0) {
+        const cap = volleys > 0 ? volleys * n : t.cap[role];
+        fits = t.kind[role] >= 0 && live[s * WEAPON_ROLE_SLOTS + role] + n <= cap;
+        if (fits) this.sfx(t.sfx[role]);
+      }
+      if (!fits) continue;
+      this.offX = f.ox[e];
+      this.offY = f.oy[e];
+      if (this.emit(role, s, f.angle[e], 0) >= 0) fired = true;
+    }
+    this.offX = 0;
+    this.offY = 0;
+    return fired ? lv : -1;
+  }
+
+  /**
    * The role a loadout's main weapon fires (an empty Double / Laser role falls back to the main
    * shot).
    *
@@ -1458,7 +1865,7 @@ class WeaponSystemImpl implements WeaponSystem {
   private fire(role: number, s: number): boolean {
     const t = this.roles;
     const kind = t.kind[role];
-    const live = this.liveCounts[s * WEAPON_ROLE_COUNT + role];
+    const live = this.liveCounts[s * WEAPON_ROLE_SLOTS + role];
     const cap = t.cap[role];
     let fired: boolean;
     if (kind === ShotKind.Double || kind === ShotKind.FreeWay) {
@@ -1546,8 +1953,8 @@ class WeaponSystemImpl implements WeaponSystem {
     const look = forward === 1 && t.kind[WeaponRole.Main] >= 0 ? WeaponRole.Main : role;
     const kind = t.kind[role];
     const lane = kind === ShotKind.Twin ? this.lane : 0;
-    f.x[i] = this.fx + t.ox[look];
-    f.y[i] = this.fy + t.oy[look] + lane;
+    f.x[i] = this.fx + t.ox[look] + this.offX;
+    f.y[i] = this.fy + t.oy[look] + lane + this.offY;
     const a = angle & ANGLE_MASK;
     const speed = t.speed[role];
     if (kind === ShotKind.Laser || kind === ShotKind.Twin) {
@@ -1567,6 +1974,9 @@ class WeaponSystemImpl implements WeaponSystem {
     }
     // The Two-Way's two missiles: frame 0 climbs, frame 1 dives.
     if (kind === ShotKind.TwoWay) f.frame[i] = a > ANGLE_UNITS / 2 ? 0 : 1;
+    // Direct-mode shots (M2-05): the heading's octant (un-rotated art), or a still frame.
+    else if (t.turn[role] === 1) f.frame[i] = ((a + 64) >> 7) & 7;
+    else if (t.frame0[role] > 0) f.frame[i] = t.frame0[role];
     f.damage[i] = t.damage[role];
     f.role[i] = role;
     f.kind[i] = kind;
@@ -1577,7 +1987,7 @@ class WeaponSystemImpl implements WeaponSystem {
     f.sprite[i] = sprite < 0 ? 0 : sprite;
     f.draw[i] = sprite < 0 ? SpriteFlag.Hidden : 0;
     f.table[i] = table;
-    this.liveCounts[s * WEAPON_ROLE_COUNT + role]++;
+    this.liveCounts[s * WEAPON_ROLE_SLOTS + role]++;
     return i;
   }
 

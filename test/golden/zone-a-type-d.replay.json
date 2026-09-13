@@ -22,6 +22,7 @@
       "continues": 3,
       "bulletSpeedMul": 1,
       "powerUpMode": "meter",
+      "shipId": "kestrel",
       "deathPenalty": "classic",
       "startingLives": 3,
       "autofire": true,
@@ -58,9 +59,9 @@
     "APsF"
   ],
   "hashes": [
-    913192077
+    3908264629
   ],
-  "finalHash": 4127371840,
+  "finalHash": 3865802180,
   "description": "HALCYON BULWARK with a full Type D loadout (M2-03): Twin Laser, Photon Torpedo, Free Way, FULL BARRIER on `!`",
   "expected": {
     "status": "stageClear",

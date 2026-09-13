@@ -5,8 +5,9 @@
  * resolution, tick rate, seed and every *sim-affecting* option (difficulty, power-up
  * model, death penalty, lives, autofire and its intervals, remote mode, the stage, the starting
  * loadout, Auto Power-Up and its order, the pickup magnet, the weapon preset / Weapon Edit and the
- * `!` / `?` slot choices of the weapon select — M2-03 — and the Option type, M2-04). Everything
- * here is copied into replay headers, so it must stay plain serialisable data.
+ * `!` / `?` slot choices of the weapon select — M2-03 —, the Option type, M2-04 — and the ship
+ * with its power-up model, M2-05). Everything here is copied into replay headers, so it must stay
+ * plain serialisable data.
  *
  * **Implements.**
  * - shmup_feat.md §2 (design forks: Meter vs Direct, death-penalty presets, difficulty)
@@ -19,6 +20,8 @@
  * - shmup_feat.md §7A (the preset loadouts Types A–D, Weapon Edit, the `!` slot choices) and §16
  *   (the weapon select that sets them) — M2-03
  * - shmup_feat.md §8 (the Option types) and §9 (the meter-mode `?` shields) — M2-04
+ * - shmup_feat.md §5 (ship selection: the meter ship KESTREL, the direct ship MANTA) and §6B
+ *   (Direct mode — `powerUpMode: 'direct'`) — M2-05
  * - shmup_feat.md §21 Options menu — audio master / music / SFX sliders, the controls profile
  *   (the presentation-only {@link UserOptions})
  *
@@ -33,7 +36,9 @@
  * {@link DEFAULT_AUTO_POWER_UP_ORDER}, {@link MAX_AUTO_POWER_UP_ORDER}), the meter arsenal of
  * M2-03 ({@link MegaChoice}, {@link MEGA_CHOICES}, {@link ShieldChoice}, {@link SHIELD_CHOICES},
  * {@link WeaponEdit}, {@link WEAPON_EDIT_SLOTS}, {@link ArsenalChoice}, {@link withArsenal},
- * {@link arsenalMatches}; M2-04: {@link OptionChoice}, {@link OPTION_CHOICES}) and the screen
+ * {@link arsenalMatches}; M2-04: {@link OptionChoice}, {@link OPTION_CHOICES}; M2-05: the ship
+ * choice {@link ShipChoice}, {@link withShip}, {@link shipMatches}, {@link POWER_UP_MODES},
+ * {@link DEFAULT_SHIP_ID}) and the screen
  * layout constants {@link HUD_BAR_HEIGHT}, {@link PLAYFIELD_Y}, {@link PLAYFIELD_W},
  * {@link PLAYFIELD_H} (decision D20: two 8-px HUD bars outside a 384×200 playfield). User options:
  * {@link UserOptions}, {@link AudioOptions}, {@link InputOptions}, {@link DisplayOptions},
@@ -82,11 +87,21 @@ export const moduleInfo = defineModule({
     'shmup_feat.md §16',
     'shmup_feat.md §8',
     'shmup_feat.md §9',
+    'shmup_feat.md §5',
   ],
 });
 
 /** Power-up model: Gradius-style meter or Darius-style direct items (shmup_feat.md §6). */
 export type PowerUpMode = 'meter' | 'direct';
+
+/** Every {@link PowerUpMode}: the meter (KESTREL, decision D1) first. */
+export const POWER_UP_MODES: readonly PowerUpMode[] = Object.freeze([
+  'meter',
+  'direct',
+] as PowerUpMode[]);
+
+/** The ship a session flies unless the config names another: the meter ship (decision D36). */
+export const DEFAULT_SHIP_ID = 'kestrel';
 
 /** What a death costs (shmup_feat.md §10). */
 export type DeathPenaltyPreset = 'arcade' | 'classic' | 'casual';
@@ -408,9 +423,16 @@ export interface GameConfig {
   readonly bulletSpeedMul: number;
   /**
    * Power-up model: `'meter'` (Gradius-style bar, the default — decision D1) or `'direct'`
-   * (Darius-style items — rejected by {@link resolveGameConfig} until M2-05 implements it).
+   * (Darius-style colour items, 9-level shot families and the Arm shield — M2-05). The ship select
+   * sets it from the chosen ship's `mode` (KESTREL meter, MANTA direct).
    */
   readonly powerUpMode: PowerUpMode;
+  /**
+   * Id of the ship every player flies (`content/player/`, plan M2-05 — default
+   * {@link DEFAULT_SHIP_ID}): `createWorld` takes that ship, or the content's first one when it has
+   * no such ship (`core/player` `resolvePlayerShip`).
+   */
+  readonly shipId: string;
   /** How much power a death costs (shmup_feat.md §10; the preset's value — Normal `classic`). */
   readonly deathPenalty: DeathPenaltyPreset;
   /** Lives at game start (1–5; the preset's value — Normal 3). */
@@ -529,6 +551,7 @@ export const DEFAULT_GAME_CONFIG: GameConfig = Object.freeze({
   continues: 3,
   bulletSpeedMul: 1,
   powerUpMode: 'meter',
+  shipId: DEFAULT_SHIP_ID,
   deathPenalty: 'classic',
   startingLives: 3,
   autofire: true,
@@ -633,7 +656,8 @@ export function withDifficulty(
  * `stage` must be `null` or a non-empty string (whether the id exists is
  * checked by `createWorld` against the content); `stageSkip` must be `'none'` or `'boss'`;
  * `loadout` must be `'default'` or `'full'`;
- * `powerUpMode` must be `'meter'` (`'direct'` is not implemented until M2-05);
+ * `powerUpMode` must be a {@link PowerUpMode} (`'direct'` since M2-05) and `shipId` a non-empty
+ * string (whether the content has that ship is `createWorld`'s business — it falls back);
  * `autoPowerUpOrder` must be an array of at most {@link MAX_AUTO_POWER_UP_ORDER}
  * {@link MeterSlotName}s — the result holds a frozen copy of it; `weaponPreset` must be a non-empty
  * string (whether the content has it is `core/weapons`' business), `weaponEdit` `null` or an object
@@ -649,7 +673,7 @@ export function withDifficulty(
  *   `aimDirections` is not a power of two, `difficulty` or `deathPenalty` is not a preset,
  *   `stage` is neither `null` nor a non-empty string,
  *   `stageSkip` is not a {@link StageSkip}, `loadout` is not a {@link StartingLoadout},
- *   `powerUpMode` is not `'meter'`,
+ *   `powerUpMode` is not a {@link PowerUpMode}, `shipId` is not a non-empty string,
  *   `autoPowerUpOrder` is not an array of meter slot names (or is too long), or `weaponPreset`,
  *   `weaponEdit`, `megaChoice`, `shieldChoice` or `optionChoice` is malformed.
  *
@@ -718,11 +742,14 @@ export function resolveGameConfig(
     throw new RangeError(`GameConfig.loadout must be 'default' or 'full', got ${String(loadout)}`);
   }
   const mode: unknown = config.powerUpMode;
-  if (mode === 'direct') {
-    throw new RangeError("GameConfig.powerUpMode 'direct' is not implemented until M2-05");
-  }
-  if (mode !== 'meter') {
+  if (POWER_UP_MODES.indexOf(mode as PowerUpMode) < 0) {
     throw new RangeError(`GameConfig.powerUpMode must be 'meter' or 'direct', got ${String(mode)}`);
+  }
+  const ship: unknown = config.shipId;
+  if (typeof ship !== 'string' || ship === '') {
+    throw new RangeError(
+      `GameConfig.shipId must be a non-empty ship id, got ${typeof ship === 'string' ? '""' : typeof ship}`,
+    );
   }
   const order: unknown = config.autoPowerUpOrder;
   if (!Array.isArray(order) || order.length > MAX_AUTO_POWER_UP_ORDER) {
@@ -869,6 +896,49 @@ export function withArsenal(config: GameConfig, arsenal: ArsenalChoice): GameCon
     if (source[key] !== undefined) merged[key] = source[key];
   }
   return resolveGameConfig(merged);
+}
+
+/**
+ * The ship choice of the ship select (plan M2-05): the ship every player flies and its power-up
+ * model. {@link withShip} applies one to a resolved config.
+ */
+export interface ShipChoice {
+  /** The ship's content id (`content/player/`, e.g. `manta`). */
+  readonly shipId: string;
+  /** Its power-up model (the ship's `mode`: KESTREL `meter`, MANTA `direct`). */
+  readonly powerUpMode: PowerUpMode;
+}
+
+/**
+ * Whether a config already flies a ship choice (so {@link withShip} would change nothing).
+ *
+ * @param config - A resolved config.
+ * @param ship - The ship choice.
+ * @returns `true` when both the ship id and the power-up mode are the config's.
+ */
+export function shipMatches(config: GameConfig, ship: ShipChoice): boolean {
+  return config.shipId === ship.shipId && config.powerUpMode === ship.powerUpMode;
+}
+
+/**
+ * Applies the ship select's choice to a resolved config (plan M2-05): the ship and its power-up
+ * model; everything else stays (a meter loadout of the weapon select is simply unused by a direct
+ * ship).
+ *
+ * @param config - A resolved config.
+ * @param ship - The ship choice.
+ * @returns A frozen, validated config (the same object when it already flies that ship).
+ * @throws RangeError when the result fails {@link resolveGameConfig} (an empty id, an unknown
+ *   mode).
+ *
+ * @example
+ * ```ts
+ * withShip(resolveGameConfig(), { shipId: 'manta', powerUpMode: 'direct' }).powerUpMode; // 'direct'
+ * ```
+ */
+export function withShip(config: GameConfig, ship: ShipChoice): GameConfig {
+  if (shipMatches(config, ship)) return config;
+  return resolveGameConfig({ ...config, shipId: ship.shipId, powerUpMode: ship.powerUpMode });
 }
 
 /**

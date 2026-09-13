@@ -22,6 +22,7 @@
       "continues": 3,
       "bulletSpeedMul": 1,
       "powerUpMode": "meter",
+      "shipId": "kestrel",
       "deathPenalty": "classic",
       "startingLives": 3,
       "autofire": true,
@@ -58,9 +59,9 @@
     "AIQH"
   ],
   "hashes": [
-    4222856795
+    3215982808
   ],
-  "finalHash": 3202483131,
+  "finalHash": 2677758848,
   "description": "HALCYON BULWARK with a full Type C loadout (M2-03): Cyclone Laser, 2-Way Missile, Vertical, SPEED DOWN on `!`",
   "expected": {
     "status": "stageClear",

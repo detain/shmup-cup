@@ -17,9 +17,14 @@ import { beforeAll, describe, expect, it } from 'vitest';
 const repo = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 let eslint: ESLint;
 
-beforeAll(() => {
+beforeAll(async () => {
   eslint = new ESLint({ cwd: repo, overrideConfig: [tseslint.configs.disableTypeChecked] });
-});
+  // Warm up once (the config, plugins and parser load on the first lint): under the load of the
+  // full `pnpm test` that first lint alone can outlast a test's default 5-s timeout.
+  await eslint.lintText('export {};', {
+    filePath: join(repo, 'packages/core/src/__lint_warmup__.ts'),
+  });
+}, 120_000);
 
 /**
  * Lints `code` as if it lived at `filePath` and returns `ruleId` of every message,

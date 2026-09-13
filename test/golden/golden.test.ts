@@ -60,7 +60,7 @@ describe('golden replays (zone A, playtest bots)', () => {
     },
   );
 
-  it('covers the whole stage, deaths to game over and the boss under the Arcade penalty', () => {
+  it('covers the whole stage, deaths to game over, the boss under the Arcade penalty and both ships', () => {
     const god = readGolden('zone-a-god').file.expected;
     expect(god.status).toBe('stageClear');
     expect(god.bossDefeated).toBe(true);
@@ -75,5 +75,12 @@ describe('golden replays (zone A, playtest bots)', () => {
     expect(boss.replay.header.config.stageSkip).toBe('boss');
     // The skip starts right before the WARNING: the run is short.
     expect(boss.file.expected.ticks).toBeLessThan(god.ticks);
+    // Both ships (M2-05): the MANTA clears the stage and its boss in Direct mode.
+    for (const name of ['zone-a-manta', 'zone-a-manta-boss']) {
+      const manta = readGolden(name);
+      expect(manta.replay.header.config).toMatchObject({ shipId: 'manta', powerUpMode: 'direct' });
+      expect(manta.file.expected.status).toBe('stageClear');
+      expect(manta.file.expected.bossDefeated).toBe(true);
+    }
   });
 });

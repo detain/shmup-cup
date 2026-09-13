@@ -97,12 +97,14 @@ describe('core/config power-up options (M1-11)', () => {
     ]);
   });
 
-  it('rejects Direct mode until M2-05 (and anything that is not a mode)', () => {
-    expect(() => resolveGameConfig({ powerUpMode: 'direct' })).toThrow(
-      "GameConfig.powerUpMode 'direct' is not implemented until M2-05",
-    );
+  it('accepts Direct mode since M2-05 (and rejects anything that is not a mode)', () => {
+    const direct = resolveGameConfig({ powerUpMode: 'direct', shipId: 'manta' });
+    expect(direct.powerUpMode).toBe('direct');
+    expect(direct.shipId).toBe('manta');
+    expect(DEFAULT_GAME_CONFIG.shipId).toBe('kestrel');
     const bad = { powerUpMode: 'items' } as unknown as Partial<GameConfig>;
     expect(() => resolveGameConfig(bad)).toThrow(RangeError);
+    expect(() => resolveGameConfig({ shipId: '' })).toThrow(/shipId/);
   });
 
   it('validates and copies the Auto Power-Up order', () => {

@@ -13,7 +13,8 @@
       "margins": { "left": 8, "right": 8, "top": 6, "bottom": 6 },
       "enterTicks": 40,
       "respawnInvulnTicks": 150,
-      "bankFrames": 1
+      "bankFrames": 1,
+      "mode": "meter"
     }
   ]
 }

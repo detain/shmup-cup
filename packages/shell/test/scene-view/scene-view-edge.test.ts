@@ -53,7 +53,8 @@ function press(game: Game, platform: HeadlessPlatform, action: number): void {
 }
 
 /**
- * Starts a game from the title (OK, START, NORMAL, then START in the weapon select).
+ * Starts a game from the title (OK, START, NORMAL, KESTREL in the ship select, then START in
+ * the weapon select).
  *
  * @param game - The game.
  * @param platform - Its platform.
@@ -62,6 +63,8 @@ function start(game: Game, platform: HeadlessPlatform): void {
   press(game, platform, Action.Confirm);
   press(game, platform, Action.Confirm); // START → the difficulty menu
   press(game, platform, Action.Confirm); // NORMAL (buffered by the menu's open lock)
+  game.step();
+  press(game, platform, Action.Confirm); // KESTREL in the ship select (M2-05; buffered too)
   game.step();
   press(game, platform, Action.Confirm); // START in the weapon select (M2-03; buffered too)
   game.step();

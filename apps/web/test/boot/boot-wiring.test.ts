@@ -298,6 +298,9 @@ describe('web/boot bootWebApp wiring', () => {
     expect(app.game.scenes?.stack.top?.id).toBe('difficulty');
     tap('Enter', 13); // NORMAL (buffered by the menu's open lock)
     frame();
+    expect(app.game.scenes?.stack.top?.id).toBe('shipSelect');
+    tap('Enter', 13); // KESTREL in the ship select (M2-05; buffered by its lock)
+    frame();
     expect(app.game.scenes?.stack.top?.id).toBe('weaponSelect');
     tap('Enter', 13); // START in the weapon select (M2-03; buffered by its lock too)
     frame();
@@ -471,6 +474,9 @@ describe('web/boot bootWebApp wiring', () => {
     enter();
     enter(); // START → the difficulty menu
     enter(); // NORMAL (buffered by the menu's open lock)
+    frame();
+    expect(app.game.scenes?.stack.top?.id).toBe('shipSelect');
+    enter(); // KESTREL in the ship select (M2-05)
     frame();
     expect(app.game.scenes?.stack.top?.id).toBe('weaponSelect');
     enter(); // START in the weapon select (M2-03)

@@ -1,0 +1,37 @@
+{
+  "name": "enemies/cube",
+  "description": "Direct-mode item carrier cube (original, plan M2-05): a bevelled violet cube with a glowing core; six of them make a pincer wave and the last one destroyed drops the item.",
+  "palette": { ".": null, "o": "#1a0a2e", "v": "#8a48e8", "d": "#4a2090", "l": "#c8a0ff", "y": "#f8e060" },
+  "hitFlash": true,
+  "frames": [
+    {
+      "rows": [
+        "oooooooooo",
+        "ollllllldo",
+        "olvvvvvvdo",
+        "olvddddvdo",
+        "olvdyydvdo",
+        "olvdyydvdo",
+        "olvddddvdo",
+        "olvvvvvvdo",
+        "odddddddo.",
+        "oooooooo.."
+      ]
+    },
+    {
+      "rows": [
+        "oooooooooo",
+        "ollllllldo",
+        "olvvvvvvdo",
+        "olvvvvvvdo",
+        "olvvyyvvdo",
+        "olvvyyvvdo",
+        "olvvvvvvdo",
+        "olvvvvvvdo",
+        "odddddddo.",
+        "oooooooo.."
+      ]
+    }
+  ],
+  "animations": { "spin": [0, 1] }
+}

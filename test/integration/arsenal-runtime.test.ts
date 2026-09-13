@@ -318,6 +318,9 @@ describe('integration: the weapon range of the select`s preview (M2-03)', () => 
     press(Action.Confirm); // START
     press(0);
     press(Action.Confirm); // NORMAL
+    expect(flow.stack.top?.id).toBe('shipSelect');
+    press(0);
+    press(Action.Confirm); // KESTREL (M2-05)
     expect(flow.stack.top?.id).toBe('weaponSelect');
     const preview = flow.weaponSelect.preview!;
     expect(preview.stage?.stage.id).toBe('weapon-range');

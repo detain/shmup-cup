@@ -245,7 +245,8 @@ function items(w: World): { x: number; y: number }[] {
 describe('core/powerups — the meter', () => {
   it('describes itself and names the seven slots in meter order', () => {
     expect(moduleInfo.name).toBe('powerups');
-    expect(moduleInfo.status).toBe('partial');
+    // Meter mode (M1-11 … M2-04) and Direct mode (M2-05).
+    expect(moduleInfo.status).toBe('implemented');
     expect(METER_SLOT_COUNT).toBe(7);
     expect(METER_LABELS).toEqual(['SPEED', 'MISSILE', 'DOUBLE', 'LASER', 'OPTION', '?', '!']);
     const names: MeterSlotName[] = [

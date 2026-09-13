@@ -107,6 +107,8 @@ test.describe('zone A (web build)', () => {
     await tap(page, 'Enter'); // START
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'difficulty');
     await tap(page, 'Enter'); // NORMAL
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'shipSelect');
+    await tap(page, 'Enter'); // KESTREL in the ship select (M2-05)
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'weaponSelect');
     await tap(page, 'Enter'); // START in the weapon select (M2-03)
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');

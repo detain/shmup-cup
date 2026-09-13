@@ -65,6 +65,9 @@
  *   {@link ContentMigrationTable}).
  * - Per-kind spec types: {@link PlayerShipSpec} ({@link BoxSpec}, {@link MarginSpec}),
  *   {@link WeaponSpec} ({@link WeaponSlot}, {@link WEAPON_SLOTS}), {@link WeaponPresetSpec},
+ *   {@link WeaponFamilySpec} ({@link WeaponLevelSpec}, {@link WeaponEmitterSpec},
+ *   {@link WeaponFamilySlot}, {@link MAX_FAMILY_LEVELS}, {@link MAX_LEVEL_SHOTS} — M2-05),
+ *   {@link DIRECT_ITEMS} / {@link DirectItemName} / {@link MAX_DIRECT_ITEM_PLAN} (M2-05),
  *   {@link EnemySpec} ({@link EnemyRankSpec}, {@link EnemyRevengeSpec}, {@link RevengePattern},
  *   {@link REVENGE_PATTERNS}, {@link DEFAULT_REVENGE_SPEED}, {@link EnemyAnimSpec},
  *   {@link EnemyMoverSpec},
@@ -100,6 +103,15 @@
  * enemies refer to an action with `pattern` (→ `patternId`). A `rules` file's optional `scoring`
  * section gives {@link ContentDb.scoring} (the points of a bullet cancelled into a point item).
  *
+ * **Direct mode (M2-05).** A player ship names its power-up model (`mode`: `meter` — the default —
+ * or `direct`) and its starting speed level (`startSpeedLevel`); a `weapons` file may hold
+ * Direct-mode shot **families** ({@link WeaponFamilySpec}: up to {@link MAX_FAMILY_LEVELS} levels,
+ * each a volley of weapon emitters — {@link WeaponLevelSpec}, {@link WeaponEmitterSpec}) collected
+ * into {@link ContentDb.weaponFamilies}; a stage may carry its **direct item plan**
+ * (`directItems`: the {@link DIRECT_ITEMS} colours, in the order its `powerup` drops hand them out
+ * in Direct mode); enemies and formations may drop `powerup` — a capsule in meter mode, the next
+ * planned item in Direct mode.
+ *
  * **Planned API (later steps).** Kinds `campaign`, `strings` (M2); `input-profiles`,
  * `sfx`/`music` and `fx` files stay *foreign* here and are validated by their owning packages
  * (see plan §3.5). Hosts pass
@@ -116,6 +128,7 @@
 import {
   DEATH_PENALTY_PRESETS,
   DIFFICULTY_PRESETS,
+  POWER_UP_MODES,
   MAX_BULLET_SPEED_MUL,
   MAX_CONTINUES,
   MAX_EXTEND_SCORE,
@@ -125,6 +138,7 @@ import {
   PLAYFIELD_W,
   type DifficultyRules,
   type DifficultyTable,
+  type PowerUpMode,
 } from '../config/index.js';
 import { MUSIC_CUES, SFX_CUES } from '../events/index.js';
 import { defineModule } from '../module-info.js';
@@ -310,6 +324,19 @@ export interface PlayerShipSpec {
   readonly respawnInvulnTicks: number;
   /** Number of bank (tilt) frames on each side of the idle frame. */
   readonly bankFrames: number;
+  /**
+   * The ship's power-up model (M2-05, shmup_feat.md §5 ship selection): `meter` (the KESTREL — the
+   * default when omitted) or `direct` (the MANTA). The ship select sets `GameConfig.powerUpMode`
+   * from it.
+   */
+  readonly mode: PowerUpMode;
+  /**
+   * Speed level a Direct-mode session starts the ship with (`core/weapons` `applyDirectLoadout` —
+   * also after a continue) — an index into {@link PlayerShipSpec.speeds} (default 0). The MANTA
+   * starts in the middle of its three speeds (decision D3: 2.25 px/tick; the Speed toggle cycles
+   * the others). The meter's Speed Ups always start from level 0.
+   */
+  readonly startSpeedLevel: number;
 }
 
 /** Where a weapon sits in a loadout (shmup_feat.md §7A/§7B). */
@@ -317,6 +344,91 @@ export type WeaponSlot = 'main' | 'double' | 'laser' | 'missile' | 'sub';
 
 /** Every {@link WeaponSlot} value, for validation and menus. */
 export const WEAPON_SLOTS = Object.freeze(['main', 'double', 'laser', 'missile', 'sub'] as const);
+
+/** The slot of a Direct-mode shot family: the main shot (red items) or the sub-weapon (green). */
+export type WeaponFamilySlot = 'main' | 'sub';
+
+/** Most levels a Direct-mode family may have (shmup_feat.md §7B: 9 — levels 0 … 8). */
+export const MAX_FAMILY_LEVELS = 9;
+
+/** Most weapon emitters one level of a family may fire at once. */
+export const MAX_LEVEL_SHOTS = 8;
+
+/**
+ * One projectile of a Direct-mode level's volley (M2-05): which weapon it fires and from where,
+ * in which direction.
+ */
+export interface WeaponEmitterSpec {
+  /** Weapon id (`weapons[].id`; its slot must be the family's). */
+  readonly weapon: string;
+  /** Resolved {@link ContentDb.weapons} index of {@link WeaponEmitterSpec.weapon}. */
+  readonly weaponId: number;
+  /**
+   * Heading in binary units (1024 per turn, 0 = forward, 256 = down, 768 = up; default 0), on
+   * top of nothing — the weapon's own `angle` tunable is not used by family volleys.
+   */
+  readonly angle?: number;
+  /** Extra spawn offset x in pixels (added to the weapon's `ox`; default 0). */
+  readonly ox?: number;
+  /** Extra spawn offset y in pixels (added to the weapon's `oy`; default 0). */
+  readonly oy?: number;
+}
+
+/** One level of a Direct-mode family: the volley it fires (M2-05). */
+export interface WeaponLevelSpec {
+  /** The volley's projectiles (1 … {@link MAX_LEVEL_SHOTS}). */
+  readonly shots: readonly WeaponEmitterSpec[];
+  /**
+   * Ticks between volleys; omitted = the config's `autofireInterval` (main) or `missileInterval`
+   * (sub).
+   */
+  readonly refireTicks?: number;
+  /**
+   * How many of this level's volleys may fly at once per shooter (1–16): a volley's shots of one
+   * weapon fire only while `live + n ≤ volleys × n` (`n` = that weapon's shots in the volley);
+   * omitted = the weapon's own `cap`.
+   */
+  readonly volleys?: number;
+}
+
+/**
+ * A Direct-mode shot family (`content/weapons/*.weapons.json` `families`, shmup_feat.md §7B, plan
+ * M2-05): the volleys of its levels 0 … `levels.length − 1`. The MANTA's main shot runs the
+ * content's `main` families (the red octagon switches to the next one), its sub-weapon the first
+ * `sub` family.
+ */
+export interface WeaponFamilySpec {
+  /** Unique id, e.g. `beam-disc`. */
+  readonly id: string;
+  /** Name (upper case, ≤ 16 characters, e.g. `BEAM TO DISC`); omitted = the id in upper case. */
+  readonly name?: string;
+  /** The HUD's short label (upper case, ≤ 5 characters, e.g. `DISC`). */
+  readonly label: string;
+  /** Main shot or sub-weapon. */
+  readonly slot: WeaponFamilySlot;
+  /** The levels (1 … {@link MAX_FAMILY_LEVELS}). */
+  readonly levels: readonly WeaponLevelSpec[];
+}
+
+/**
+ * The Direct-mode item colours (shmup_feat.md §6B, plan M2-05): red (main shot +1 level), green
+ * (sub-weapon +1 level), blue (the Arm shield: grant / repair / next tier), orange (1UP), yellow
+ * (smart bomb), octagon (switch the main-shot family). A stage's `directItems` plan lists them.
+ */
+export const DIRECT_ITEMS = Object.freeze([
+  'red',
+  'green',
+  'blue',
+  'orange',
+  'yellow',
+  'octagon',
+] as const);
+
+/** One of {@link DIRECT_ITEMS}. */
+export type DirectItemName = (typeof DIRECT_ITEMS)[number];
+
+/** Most entries of a stage's `directItems` plan. */
+export const MAX_DIRECT_ITEM_PLAN = 256;
 
 /** One player weapon (`content/weapons/*.weapons.json`, shmup_feat.md §7C). */
 export interface WeaponSpec {
@@ -438,13 +550,15 @@ export type EnemyExplosion = 'small' | 'medium' | 'large';
 export const ENEMY_EXPLOSIONS = Object.freeze(['small', 'medium', 'large'] as const);
 
 /**
- * What an enemy (or a completed formation) leaves behind: a power capsule (M1-11) or the rare
- * blue capsule that clears the screen's enemies (meter mode, M2-04).
+ * What an enemy (or a completed formation) leaves behind: a power capsule (M1-11), the rare blue
+ * capsule that clears the screen's enemies (meter mode, M2-04), or `powerup` (M2-05) — the
+ * mode-agnostic power-up: a capsule in meter mode, the stage's next planned item in Direct mode
+ * (the direct ship has no meter, so a `capsule` becomes that item too).
  */
-export type EnemyDrop = 'capsule' | 'blueCapsule';
+export type EnemyDrop = 'capsule' | 'blueCapsule' | 'powerup';
 
 /** Every {@link EnemyDrop}, in code order (the index + 1 is the drop code; 0 = none). */
-export const ENEMY_DROPS = Object.freeze(['capsule', 'blueCapsule'] as const);
+export const ENEMY_DROPS = Object.freeze(['capsule', 'blueCapsule', 'powerup'] as const);
 
 /** Default {@link EnemySpec.settleTicks}: half a second on screen before an enemy may fire. */
 export const DEFAULT_SETTLE_TICKS = 30;
@@ -1052,6 +1166,12 @@ export interface StageSpec {
   readonly events: readonly StageEvent[];
   /** Distinct flag names of the `flag` events, sorted (a flag's index is its bit). */
   readonly flagNames: readonly string[];
+  /**
+   * The Direct-mode item plan (M2-05): the colours the stage's `powerup` (and `capsule`) drops
+   * hand out in Direct mode, in order, cycling — empty (omitted) = `core/powerups`
+   * `DEFAULT_DIRECT_ITEM_PLAN`. Meter mode ignores it, so the stage data stays mode-agnostic.
+   */
+  readonly directItems: readonly DirectItemName[];
   /** The expanded tile grid (`null` without a tilemap or when it failed to expand). */
   readonly terrain: StageTerrain | null;
 }
@@ -1149,6 +1269,10 @@ export interface ContentDb {
   readonly weaponPresets: readonly WeaponPresetSpec[];
   /** Preset id → {@link ContentDb.weaponPresets} index. */
   readonly weaponPresetIndex: ReadonlyMap<string, number>;
+  /** Direct-mode shot families (M2-05), in file order. */
+  readonly weaponFamilies: readonly WeaponFamilySpec[];
+  /** Family id → {@link ContentDb.weaponFamilies} index. */
+  readonly weaponFamilyIndex: ReadonlyMap<string, number>;
   /** Enemies, in file order. */
   readonly enemies: readonly EnemySpec[];
   /** Enemy id → {@link ContentDb.enemies} index. */
@@ -1240,19 +1364,29 @@ const MARGIN_SCHEMA = s.object({
 });
 
 /** One entry of `ships` in a `player` file. */
-const SHIP_SCHEMA: Schema<Omit<PlayerShipSpec, 'spriteId'>> = s.object({
-  id: s.str(),
-  name: s.str(),
-  sprite: s.ref('sprite'),
-  speeds: s.array(s.num({ min: 0.1, max: 16 }), { min: 1, max: 16 }),
-  hurtRadius: s.num({ min: 0.25, max: 16 }),
-  terrainBox: BOX_SCHEMA,
-  pickupBox: BOX_SCHEMA,
-  margins: MARGIN_SCHEMA,
-  enterTicks: s.int({ min: 0, max: 600 }),
-  respawnInvulnTicks: s.int({ min: 0, max: 600 }),
-  bankFrames: s.int({ min: 0, max: 8 }),
-});
+const SHIP_SCHEMA: Schema<
+  Omit<PlayerShipSpec, 'spriteId' | 'mode' | 'startSpeedLevel'> & {
+    mode?: PowerUpMode;
+    startSpeedLevel?: number;
+  }
+> = s.object(
+  {
+    id: s.str(),
+    name: s.str(),
+    sprite: s.ref('sprite'),
+    speeds: s.array(s.num({ min: 0.1, max: 16 }), { min: 1, max: 16 }),
+    hurtRadius: s.num({ min: 0.25, max: 16 }),
+    terrainBox: BOX_SCHEMA,
+    pickupBox: BOX_SCHEMA,
+    margins: MARGIN_SCHEMA,
+    enterTicks: s.int({ min: 0, max: 600 }),
+    respawnInvulnTicks: s.int({ min: 0, max: 600 }),
+    bankFrames: s.int({ min: 0, max: 8 }),
+    mode: s.enumOf(POWER_UP_MODES),
+    startSpeedLevel: s.int({ min: 0, max: 15 }),
+  },
+  { optional: ['mode', 'startSpeedLevel'] },
+);
 
 /** A `content/player/*.player.json` file. */
 const PLAYER_FILE_SCHEMA = s.object({
@@ -1294,6 +1428,39 @@ const WEAPON_PRESET_SCHEMA: Schema<
   { optional: ['main'] },
 );
 
+/** One projectile of a family level's volley (M2-05). */
+const WEAPON_EMITTER_SCHEMA: Schema<Omit<WeaponEmitterSpec, 'weaponId'>> = s.object(
+  {
+    weapon: s.ref('weapon'),
+    angle: s.int({ min: -1024, max: 1024 }),
+    ox: s.num({ min: -64, max: 64 }),
+    oy: s.num({ min: -64, max: 64 }),
+  },
+  { optional: ['angle', 'ox', 'oy'] },
+);
+
+/** One level of a family (M2-05). */
+const WEAPON_LEVEL_SCHEMA = s.object(
+  {
+    shots: s.array(WEAPON_EMITTER_SCHEMA, { min: 1, max: MAX_LEVEL_SHOTS }),
+    refireTicks: s.int({ min: 1, max: 600 }),
+    volleys: s.int({ min: 1, max: 16 }),
+  },
+  { optional: ['refireTicks', 'volleys'] },
+);
+
+/** One entry of `families` in a `weapons` file (M2-05). */
+const WEAPON_FAMILY_SCHEMA = s.object(
+  {
+    id: s.str(),
+    name: s.str({ maxLength: 16, pattern: /^[A-Z0-9 .>-]+$/ }),
+    label: s.str({ maxLength: 5, pattern: /^[A-Z0-9 .-]+$/ }),
+    slot: s.enumOf(['main', 'sub'] as const),
+    levels: s.array(WEAPON_LEVEL_SCHEMA, { min: 1, max: MAX_FAMILY_LEVELS }),
+  },
+  { optional: ['name'] },
+);
+
 /** A `content/weapons/*.weapons.json` file. */
 const WEAPONS_FILE_SCHEMA = s.object(
   {
@@ -1301,8 +1468,9 @@ const WEAPONS_FILE_SCHEMA = s.object(
     kind: s.enumOf(['weapons'] as const),
     weapons: s.array(WEAPON_SCHEMA, { min: 1 }),
     presets: s.array(WEAPON_PRESET_SCHEMA),
+    families: s.array(WEAPON_FAMILY_SCHEMA),
   },
-  { optional: ['presets'] },
+  { optional: ['presets', 'families'] },
 );
 
 /** A velocity component in pixels per tick. */
@@ -1667,41 +1835,45 @@ const TILEMAP_SCHEMA: Schema<Omit<StageTilemapSpec, 'tilesetId'>> = s.object(
 );
 
 /** A `content/stages/*.stage.json` file. */
-const STAGE_FILE_SCHEMA = s.object({
-  ...HEADER_SHAPE,
-  kind: s.enumOf(['stage'] as const),
-  id: s.str(),
-  name: s.str(),
-  music: s.object({ stage: s.ref('music'), boss: s.ref('music') }),
-  length: s.int({ min: 1, max: 1000000 }),
-  camera: s.array(
-    s.object(
-      {
-        x: EVENT_X,
-        speed: SPEED,
-        ramp: TICKS,
-        yTo: s.num({ min: 0, max: 4096 }),
-        yTicks: TICKS,
-        lock: s.bool(),
-      },
-      { optional: ['ramp', 'yTo', 'yTicks', 'lock'] },
+const STAGE_FILE_SCHEMA = s.object(
+  {
+    ...HEADER_SHAPE,
+    kind: s.enumOf(['stage'] as const),
+    id: s.str(),
+    name: s.str(),
+    music: s.object({ stage: s.ref('music'), boss: s.ref('music') }),
+    length: s.int({ min: 1, max: 1000000 }),
+    camera: s.array(
+      s.object(
+        {
+          x: EVENT_X,
+          speed: SPEED,
+          ramp: TICKS,
+          yTo: s.num({ min: 0, max: 4096 }),
+          yTicks: TICKS,
+          lock: s.bool(),
+        },
+        { optional: ['ramp', 'yTo', 'yTicks', 'lock'] },
+      ),
+      { min: 1 },
     ),
-    { min: 1 },
-  ),
-  checkpoints: s.array(s.object({ x: EVENT_X })),
-  parallax: s.array(
-    s.object({
-      layer: s.enumOf(['far', 'mid'] as const),
-      sprite: s.ref('sprite'),
-      factor: s.num({ min: 0, max: 4 }),
-      y: s.num({ min: -512, max: 512 }),
-      spacing: s.int({ min: 8, max: 1024 }),
-    }),
-    { max: 8 },
-  ),
-  tilemap: s.nullable(TILEMAP_SCHEMA),
-  events: s.array(STAGE_EVENT_SCHEMA),
-});
+    checkpoints: s.array(s.object({ x: EVENT_X })),
+    parallax: s.array(
+      s.object({
+        layer: s.enumOf(['far', 'mid'] as const),
+        sprite: s.ref('sprite'),
+        factor: s.num({ min: 0, max: 4 }),
+        y: s.num({ min: -512, max: 512 }),
+        spacing: s.int({ min: 8, max: 1024 }),
+      }),
+      { max: 8 },
+    ),
+    tilemap: s.nullable(TILEMAP_SCHEMA),
+    events: s.array(STAGE_EVENT_SCHEMA),
+    directItems: s.array(s.enumOf(DIRECT_ITEMS), { min: 1, max: MAX_DIRECT_ITEM_PLAN }),
+  },
+  { optional: ['directItems'] },
+);
 
 /** One entry of `tiles` in a `tileset` file. */
 const TILE_SCHEMA: Schema<TileSpec> = s.object({
@@ -1778,6 +1950,12 @@ interface DbBuilder {
   weaponPresets: WeaponPresetSpec[];
   /** Preset id → position in {@link DbBuilder.weaponPresets}. */
   weaponPresetIndex: Map<string, number>;
+  /** Collected Direct-mode families (M2-05). */
+  weaponFamilies: WeaponFamilySpec[];
+  /** Family id → position in {@link DbBuilder.weaponFamilies}. */
+  weaponFamilyIndex: Map<string, number>;
+  /** Issue path (`<file>:families[i]`) of every collected family (the family pass). */
+  familyPaths: string[];
   /** Collected enemies. */
   enemies: EnemySpec[];
   /** Enemy id → position in {@link DbBuilder.enemies}. */
@@ -1830,6 +2008,8 @@ export const EMPTY_CONTENT_DB: ContentDb = Object.freeze({
   weaponIndex: new Map<string, number>(),
   weaponPresets: Object.freeze([]),
   weaponPresetIndex: new Map<string, number>(),
+  weaponFamilies: Object.freeze([]),
+  weaponFamilyIndex: new Map<string, number>(),
   enemies: Object.freeze([]),
   enemyIndex: new Map<string, number>(),
   paths: Object.freeze([]),
@@ -2139,6 +2319,9 @@ export function loadContent(
     weaponIndex: new Map(),
     weaponPresets: [],
     weaponPresetIndex: new Map(),
+    weaponFamilies: [],
+    weaponFamilyIndex: new Map(),
+    familyPaths: [],
     enemies: [],
     enemyIndex: new Map(),
     paths: [],
@@ -2191,6 +2374,7 @@ export function loadContent(
   const patterns = compilePatternBank(db.patternFiles, issues);
   for (const site of refs) resolveRef(site, db, sprites, scripts, knownScripts, patterns, issues);
   checkBossReferences(db, issues);
+  checkWeaponFamilies(db, issues);
   expandStageTerrains(db, issues);
 
   return {
@@ -2203,6 +2387,8 @@ export function loadContent(
       weaponIndex: db.weaponIndex,
       weaponPresets: db.weaponPresets,
       weaponPresetIndex: db.weaponPresetIndex,
+      weaponFamilies: db.weaponFamilies,
+      weaponFamilyIndex: db.weaponFamilyIndex,
       enemies: db.enemies,
       enemyIndex: db.enemyIndex,
       paths: db.paths,
@@ -2273,12 +2459,30 @@ function collect(
 ): void {
   switch (kind) {
     case 'player': {
-      const ships = parsed['ships'] as PlayerShipSpec[];
+      const ships = parsed['ships'] as Array<
+        Omit<PlayerShipSpec, 'mode' | 'startSpeedLevel'> & {
+          mode?: PowerUpMode;
+          startSpeedLevel?: number;
+        }
+      >;
       for (let i = 0; i < ships.length; i++) {
+        const ship = ships[i];
+        // Optional since M2-05: the meter ship's defaults, so every spec has the same fields.
+        if (ship.mode === undefined) ship.mode = 'meter';
+        const start = ship.startSpeedLevel ?? 0;
+        ship.startSpeedLevel = start;
+        if (start >= ship.speeds.length) {
+          issue(
+            issues,
+            at(path, 'ships[' + String(i) + '].startSpeedLevel'),
+            'must be < the number of speeds (' + String(ship.speeds.length) + ')',
+          );
+          continue;
+        }
         addEntry(
           db.ships,
           db.shipIndex,
-          ships[i],
+          ship as PlayerShipSpec,
           at(path, 'ships[' + String(i) + '].id'),
           'ship',
           issues,
@@ -2308,6 +2512,21 @@ function collect(
           'weapon preset',
           issues,
         );
+      }
+      const families = (parsed['families'] ?? []) as WeaponFamilySpec[];
+      for (let i = 0; i < families.length; i++) {
+        const before = db.weaponFamilies.length;
+        addEntry(
+          db.weaponFamilies,
+          db.weaponFamilyIndex,
+          families[i],
+          at(path, 'families[' + String(i) + '].id'),
+          'weapon family',
+          issues,
+        );
+        if (db.weaponFamilies.length > before) {
+          db.familyPaths.push(at(path, 'families[' + String(i) + ']'));
+        }
       }
       return;
     }
@@ -2753,6 +2972,41 @@ function checkBossReferences(db: DbBuilder, issues: ValidationIssue[]): void {
 }
 
 /**
+ * Fifth pass of {@link loadContent} (references resolved): every weapon a Direct-mode family's
+ * volley fires must belong in the family's slot (a `main` family fires `main`-slot weapons, a
+ * `sub` family `sub`-slot ones — M2-05).
+ *
+ * @param db - The builder (references already resolved).
+ * @param issues - Collector.
+ */
+function checkWeaponFamilies(db: DbBuilder, issues: ValidationIssue[]): void {
+  const weapons = db.weapons;
+  for (let f = 0; f < db.weaponFamilies.length; f++) {
+    const family = db.weaponFamilies[f];
+    for (let l = 0; l < family.levels.length; l++) {
+      const shots = family.levels[l].shots;
+      for (let k = 0; k < shots.length; k++) {
+        const index = shots[k].weaponId;
+        if (!(index >= 0 && index < weapons.length)) continue; // already an issue
+        if (weapons[index].slot !== family.slot) {
+          issue(
+            issues,
+            db.familyPaths[f] + '.levels[' + String(l) + '].shots[' + String(k) + '].weapon',
+            'weapon "' +
+              weapons[index].id +
+              '" belongs in slot ' +
+              weapons[index].slot +
+              ', not in a "' +
+              family.slot +
+              '" family',
+          );
+        }
+      }
+    }
+  }
+}
+
+/**
  * Bakes one path entry, reporting problems instead of throwing.
  *
  * @param entry - The parsed path.
@@ -2792,7 +3046,9 @@ function bakePathEntry(
 }
 
 /** A stage while the loader completes it (the fields it adds after the schema). */
-type MutableStage = Omit<StageSpec, 'flagNames' | 'terrain' | 'events'> & {
+type MutableStage = Omit<StageSpec, 'flagNames' | 'terrain' | 'events' | 'directItems'> & {
+  /** See {@link StageSpec.directItems} (optional in the file). */
+  directItems?: DirectItemName[];
   /** See {@link StageSpec.events}. */
   events: Array<StageEvent & { flagId?: number }>;
   /** See {@link StageSpec.flagNames}. */
@@ -2899,6 +3155,8 @@ function checkStage(stage: MutableStage, file: string, issues: ValidationIssue[]
     }
   }
   stage.terrain = null;
+  // Optional since M2-05: an empty plan means the engine's default one.
+  if (stage.directItems === undefined) stage.directItems = [];
   return ok;
 }
 

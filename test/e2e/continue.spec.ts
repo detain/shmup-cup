@@ -205,6 +205,8 @@ async function startGame(page: Page, url: string, downs: number): Promise<string
   await expect(canvas).toHaveAttribute('data-shmup-scene', 'difficulty');
   for (let i = 0; i < downs; i++) await tap(page, 'ArrowDown');
   await tap(page, 'Enter');
+  await expect(canvas).toHaveAttribute('data-shmup-scene', 'shipSelect');
+  await tap(page, 'Enter'); // KESTREL in the ship select (M2-05)
   await expect(canvas).toHaveAttribute('data-shmup-scene', 'weaponSelect');
   await tap(page, 'Enter'); // START in the weapon select (M2-03)
   await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');

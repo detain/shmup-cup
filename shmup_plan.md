@@ -2363,6 +2363,81 @@ Goal of the milestone: every **[P1]** feature. Steps are ordered so systems land
 - **Acceptance:** item effects and caps, family switch, Arm tiers, drop resolution per mode, HUD pips, golden replays
   for both ships.
 - **Refs:** `shmup_feat.md` §6B, §7B, §9 (Arm), §5 (ship selection), §2.
+- **As built:**
+  - **Config.** `GameConfig.shipId` (default `DEFAULT_SHIP_ID` = `kestrel`; `createWorld` flies that ship, else the
+    content's first) and `powerUpMode: 'direct'` accepted (`POWER_UP_MODES`); `ShipChoice`, `withShip`,
+    `shipMatches`. Replay headers record both (format version unchanged: a missing key resolves to the default).
+  - **Content formats.** A player ship gained optional `mode` (`meter` default / `direct`) and `startSpeedLevel`
+    (default 0; must index `speeds`): `manta.player.json` flies 1.75 / 2.25 / 2.75 px/tick starting at 2.25 (D3's
+    "fixed 2.25 with a 3-step toggle" as data — the toggle steps up and wraps). A `weapons` file may hold
+    `families` (`WeaponFamilySpec`: `id`, `label` ≤ 5 characters for the HUD, `slot` `main` | `sub`, 1–9 `levels`;
+    a level is one volley of 1–8 emitters `{ weapon, angle?, ox?, oy? }` with optional `refireTicks` and `volleys`)
+    → `ContentDb.weaponFamilies` (a family firing a weapon of another slot is an issue). A stage may carry
+    `directItems` (1–256 colours; empty/omitted = `core/powerups` `DEFAULT_DIRECT_ITEM_PLAN`). `EnemyDrop` gained
+    `powerup` (`DropKind.PowerUp` 3 — `DropKind.FreeOption` is 4 now, the content drops come first).
+  - **Drop resolution.** Resolved when the drop becomes an item (`PowerUpSystem.takeDrops`): meter → a capsule;
+    Direct → the plan's next colour (`dropDirect`, `planCursor` hashed; the plan **cycles and never rewinds** on a
+    checkpoint restart). A `capsule` drop resolves like `powerup` in Direct mode (the direct ship has no meter), so
+    zone A's content is unchanged apart from its new `directItems` plan (~8 red, 8 green, 7 blue, an octagon, a
+    yellow, an orange); the blue capsule stays a blue capsule in both modes.
+  - **Carriers.** Behaviour `cube.pincer` (+ enemy `cube`, `content/enemies/direct-carriers.enemies.json`): in a
+    `formation` of six, odd members start mirrored across the playfield's middle row, every cube flies to a meeting
+    point 8 px beside the middle row, then leaves left — the existing formation rule (every member killed → the
+    drop at the last kill) is "the last cube destroyed drops the item". The "coloured lead enemy" is a carrier with
+    `drop: "powerup"` (`lead-carrier`; zone A's red `tender` carriers act as such for the MANTA too). New dev stage
+    `content/stages/direct-range.stage.json` (six pincer waves, lead carriers, every colour in its first six drops).
+    **Zone A's events are unchanged** (its 4-way rules and playtest budgets).
+  - **Items** (`ItemKind.DirectRed` … `DirectOctagon`, 3–8; sprites `items/direct-*`, 300 points each): they drift
+    with the view like freed Options (`DIRECT_ITEM_DRIFT`: −0.35 px/tick, ±0.3 vertically, bouncing off the
+    playfield's top / bottom), live `DIRECT_ITEM_TICKS` (600) and blink their last 120. Effects
+    (`PowerUpSystem.collectDirect`): red / green a level up to the family's last (then points only), blue
+    `collectArm`, orange +1 life up to `MAX_LIVES` (9, the `ExtraLife` cue), yellow = Mega Crash's screen clear
+    (bullets → points, non-immune enemies, flash; **no boss damage** — "heavy damage to mid-bosses" waits for the
+    mid-bosses of M2-09), octagon = the next `main` family keeping the level. Every pickup pushes `SFX
+    CapsulePickup`; an effect `SFX PowerUpEquip` and `SimEventKind.PowerUp` with id `DIRECT_POWER_UP_EVENT_BASE`
+    (16) + the colour's index.
+  - **Weapons.** `core/weapons` compiles the families at creation: each distinct weapon they fire gets a **direct
+    role** (`WEAPON_ROLE_COUNT` … +`MAX_DIRECT_WEAPONS` 32; `WEAPON_ROLE_SLOTS` is now the stride of `liveCounts`),
+    each level a list of emitters grouped by weapon; a group fires all-or-nothing while `live + n ≤ volleys × n`
+    (else the weapon's `cap`). Main and sub volleys use the ship's main / missile autofire timers. New behaviours
+    `direct.bolt` (a straight shot in the emitter's heading, `frame` still frame or `turn` = the heading's octant
+    frame — un-rotated art) and `direct.bomb` (a Spread Bomb fired in the emitter's heading). `Loadout` gained
+    `shot`, `sub`, `family` (hashed); `applyDirectLoadout` (`'full'` = both levels 8 and the gold Hyper Arm).
+    `content/weapons/direct.weapons.json`: 20 weapons and the families `beam-disc` (BEAM > DISC), `laser-wave`
+    (LASER > WAVE — piercing from the round laser on) and `sub-weapon`, following §7B level by level.
+  - **Arm.** `ShieldKind.Arm` (6), `ShieldState.tier` / `charge` (hashed): the tier is the highest one whose blue
+    count (1 / 4 / 9) is reached, every blue item repairs to 3 / 4 / 5 hits; a field that **absorbs terrain** with
+    the usual 8-tick shield-hit i-frames; breaking (or losing it with a death) starts the count over. Sprite
+    `shields/arm` (9 frames: tier × fresh / worn / critical).
+  - **Speed toggle, death penalty, rank.** The `Speed` press (remote Ch−, keyboard ShiftLeft, pad LB / RB) cycles
+    the speed level in phase 2 (`PowerUpSystem.updatePlayers`, the meter ding); Direct mode ignores the PowerUp
+    press, meter mode the Speed press. `applyDirectDeathPenalty`: every preset takes the Arm; `classic` one main-shot
+    level (else one sub-weapon level), `arcade` both levels and the family, `casual` nothing more; the speed level
+    stays. `core/rank` `directPowerRank` = `floor((shot + sub) / 2)` + `RANK_ARM_TIER` (2 / 3 / 4) — 12 at full
+    power, like the fully powered meter ship.
+  - **HUD.** In Direct mode `buildHud` draws the tier pips instead of the meter: `SHOT` (8 pips, lit in the
+    family's colour), `SUB`, `ARM` (one pip per hit in the tier's colour), `SPD` and the family's label. The game's
+    HUD list is `HUD_COMMAND_COUNT` (64) commands / `HUD_STRING_COUNT` (9) strings (meter HUDs still use slots 0–3).
+  - **Ship select.** `ShipSelectScene` (id `shipSelect`, overlay) between the difficulty menu and the weapon select:
+    the content's ships by name, the focused one's picture, power-up model and hints; OK → `withShip` for every
+    difficulty's config, then the weapon select (meter ship) or the game at once (Direct mode); Back → the
+    difficulty menu, and the weapon select's Back now returns to the ship select. **Skipped** when the content has a
+    single ship (the flow tests on subset content are unaffected); with the shipped content every game start takes
+    one more OK — the flow-driving integration, shell, app and e2e specs press it (KESTREL). The session hi-scores
+    are kept per power-up mode and difficulty (the save's `direct-*` tables); UI string slots 160 → 192.
+  - **Assets.** Pixel maps `ships/manta` (3 frames) and `enemies/cube`; generator `procedural/direct.mjs` (the
+    shots, the six items, the Arm); the atlas stays 512×512.
+  - **Goldens.** Re-blessed: the new hashed state (levels, family, Arm tier / count, the plan cursor) and the new
+    content (sprite ids, enemy spec indices) change every hash — all twelve outcomes unchanged; new scenarios
+    `zone-a-manta` (the whole stage in Direct mode: planned items from the carriers, the Arm, a family switch at the
+    octagon — stage clear) and `zone-a-manta-boss` (HALCYON BULWARK with the full Direct loadout).
+  - **Tests.** `powerups-direct` (drop resolution per mode, plans, every effect and cap, drift / bounce / despawn,
+    the toggle, the penalty, loadouts, rank, determinism), `weapons-direct` (every level's volley of all three
+    families, headings / offsets / octant frames, bombs, the `volleys` cap, mode separation), `shields-arm`,
+    `ui-hud-direct`, `scenes-ship-select`, `behaviors-cube`, `data-direct`, `config-ship`, the
+    `powerups-direct-alloc` guard (no spawns: every spawn creates its coroutine, decision D29 — the direct range
+    alone measures ~70–80 KB of them, like a meter ship on it), a remote integration test (MANTA picked with the
+    arrows, Ch− toggling) and `test/e2e/ship-select.spec.ts` (web + Tizen).
 
 ### M2-06 — Two-player simultaneous co-op
 

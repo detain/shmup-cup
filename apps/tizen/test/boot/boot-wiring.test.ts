@@ -440,6 +440,8 @@ describe('tizen/boot bootTizenApp wiring', () => {
     tap(13); // START
     expect(app.game.scenes?.stack.top?.id).toBe('difficulty');
     tap(13); // NORMAL
+    expect(app.game.scenes?.stack.top?.id).toBe('shipSelect');
+    tap(13); // KESTREL in the ship select (M2-05)
     expect(app.game.scenes?.stack.top?.id).toBe('weaponSelect');
     tap(13); // START in the weapon select (M2-03)
     expect(app.game.scenes?.stack.top?.id).toBe('game');

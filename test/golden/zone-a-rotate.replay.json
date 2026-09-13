@@ -22,6 +22,7 @@
       "continues": 3,
       "bulletSpeedMul": 1,
       "powerUpMode": "meter",
+      "shipId": "kestrel",
       "deathPenalty": "classic",
       "startingLives": 3,
       "autofire": true,
@@ -58,9 +59,9 @@
     "AOcI"
   ],
   "hashes": [
-    2770227326
+    3260169749
   ],
-  "finalHash": 785575561,
+  "finalHash": 3522283035,
   "description": "HALCYON BULWARK with Rotate Options and the Rotate Shield (M2-04): orbiting Options, spinning pods",
   "expected": {
     "status": "stageClear",

@@ -99,6 +99,7 @@ describe('core/shields variants edge — tables', () => {
       'freeShield',
       'rotateShield',
       'reduce',
+      'arm',
     ]);
     for (const choice of SHIELD_CHOICES) {
       const spec = SHIELD_CHOICE_SPECS[choice];
@@ -107,7 +108,12 @@ describe('core/shields variants edge — tables', () => {
       expect(Object.isFrozen(spec)).toBe(true);
     }
     expect(Object.keys(SHIELD_CHOICE_SPECS)).toEqual([...SHIELD_CHOICES]);
-    expect(SHIELD_SPRITES).toEqual(['shields/force-field', SHIELD_POD_SPRITE, REDUCE_SPRITE]);
+    expect(SHIELD_SPRITES).toEqual([
+      'shields/force-field',
+      SHIELD_POD_SPRITE,
+      REDUCE_SPRITE,
+      'shields/arm',
+    ]);
     expect([POD_RADIUS, POD_ORBIT, ROTATE_POD_ORBIT, MAX_SHIELD_PODS]).toEqual([4, 13, 16, 4]);
   });
 

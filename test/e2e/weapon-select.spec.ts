@@ -2,10 +2,11 @@
  * Browser tests of the weapon select (plan M2-03) in headless Chromium, on the test builds (their
  * `window.__shmupDebug` hands the spec the game):
  *
- * - web build: OK on the difficulty menu opens the weapon select — its panel on the left, the live
+ * - web build: OK on the difficulty menu opens the ship select (M2-05) and OK on the KESTREL the
+ *   weapon select — its panel on the left, the live
  *   preview's KESTREL flying on the right; ArrowDown + ArrowRight choose TYPE B, whose Ripple rings
  *   the preview then draws; ArrowUp + Enter on START starts the game with Type B;
- * - Tizen build from `file://`: the remote's Back (10009) returns to the difficulty menu, OK (13)
+ * - Tizen build from `file://`: the remote's Back (10009) returns to the ship select, OK (13)
  *   opens the weapon select again and starts the game on its first press; the remote's arrows
  *   (37–40) alone choose EDIT and a weapon for each slot (the preview follows), the ROTATE Option
  *   type and the SHIELD `?` (M2-04), NORMAL on `!` and an Auto Power-Up order (the ORDER editor overlay, closed with Back), and START plays them;
@@ -160,7 +161,8 @@ async function countColour(
 }
 
 /**
- * Opens a build and goes through the title and the difficulty menu (NORMAL) to the weapon select.
+ * Opens a build and goes through the title, the difficulty menu (NORMAL) and the ship select
+ * (KESTREL — M2-05) to the weapon select.
  *
  * @param page - The page.
  * @param url - The build's URL.
@@ -181,6 +183,8 @@ async function openSelect(page: Page, url: string): Promise<string[]> {
   await tap(page, 'Enter'); // START
   await expect(canvas).toHaveAttribute('data-shmup-scene', 'difficulty');
   await tap(page, 'Enter'); // NORMAL
+  await expect(canvas).toHaveAttribute('data-shmup-scene', 'shipSelect');
+  await tap(page, 'Enter'); // KESTREL in the ship select (M2-05)
   await expect(canvas).toHaveAttribute('data-shmup-scene', 'weaponSelect');
   return errors;
 }
@@ -213,15 +217,15 @@ test.describe('weapon select (web build)', () => {
 });
 
 test.describe('weapon select (Tizen build via file://)', () => {
-  test('remote Back returns to the difficulty menu; OK starts the game', async ({ page }) => {
+  test('remote Back returns to the ship select; OK starts the game', async ({ page }) => {
     test.setTimeout(90_000);
     const errors = await openSelect(page, TIZEN_INDEX);
     const canvas = page.locator('#game');
     await waitFrames(page, 10);
     await remoteTap(page, 10009); // Back
-    await expect(canvas).toHaveAttribute('data-shmup-scene', 'difficulty');
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'shipSelect');
     await waitFrames(page, 4);
-    await remoteTap(page, 13); // OK: NORMAL
+    await remoteTap(page, 13); // OK: KESTREL (M2-05)
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'weaponSelect');
     await remoteTap(page, 13); // OK: START (the menu opens on it)
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');

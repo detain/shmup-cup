@@ -22,6 +22,7 @@
       "continues": 3,
       "bulletSpeedMul": 1,
       "powerUpMode": "meter",
+      "shipId": "kestrel",
       "deathPenalty": "classic",
       "startingLives": 3,
       "autofire": true,
@@ -62,9 +63,9 @@
     "AP0F"
   ],
   "hashes": [
-    168141270
+    4198002012
   ],
-  "finalHash": 1689430299,
+  "finalHash": 1876354969,
   "description": "HALCYON BULWARK with a Weapon Edit loadout (M2-03): Twin Laser, 2-Way Missile, LIFE OPTION on `!`",
   "expected": {
     "status": "stageClear",

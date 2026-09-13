@@ -35,5 +35,22 @@
   ],
   "presets": [
     { "id": "type-1", "missile": "missile.ground", "double": null, "laser": "laser.pierce" }
+  ],
+  "families": [
+    {
+      "id": "example-family",
+      "label": "SHOT",
+      "slot": "main",
+      "levels": [
+        { "shots": [{ "weapon": "shot.basic" }] },
+        {
+          "shots": [
+            { "weapon": "shot.basic", "angle": -16 },
+            { "weapon": "shot.basic", "angle": 16 }
+          ],
+          "volleys": 2
+        }
+      ]
+    }
   ]
 }

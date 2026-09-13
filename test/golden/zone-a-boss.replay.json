@@ -22,6 +22,7 @@
       "continues": 3,
       "bulletSpeedMul": 1,
       "powerUpMode": "meter",
+      "shipId": "kestrel",
       "deathPenalty": "arcade",
       "startingLives": 3,
       "autofire": true,
@@ -58,9 +59,9 @@
     "AIwH"
   ],
   "hashes": [
-    2332100979
+    1348610677
   ],
-  "finalHash": 3920705227,
+  "finalHash": 3982673585,
   "description": "the stage skip to HALCYON BULWARK with the full loadout and the Arcade penalty",
   "expected": {
     "status": "stageClear",

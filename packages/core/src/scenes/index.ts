@@ -23,13 +23,18 @@
  *   - {@link DifficultyScene} (overlay, M2-01 — START): EASY / NORMAL / HARD / ARCADE with the
  *     focused preset's lives, continues and hi-score; OK chooses that preset (its World gets
  *     `core/config` `withDifficulty` of the host config — {@link SceneFlow.gameConfig}) and opens
- *     the weapon select, Back returns to the title menu.
+ *     the ship select (skipped with a single ship in the content), Back returns to the title menu.
+ *   - {@link ShipSelectScene} (overlay, M2-05 — after the difficulty menu): the content's ships
+ *     (KESTREL — the power meter —, MANTA — Direct mode) with the focused one's picture, power-up
+ *     model and hints; OK chooses it (`core/config` `withShip`: `shipId` and `powerUpMode` for
+ *     every difficulty's config) and opens the weapon select for a meter ship or starts the game
+ *     for a Direct-mode one; Back returns to the difficulty menu.
  *   - {@link WeaponSelectScene} (M2-03 — after the difficulty menu): TYPE A–D or EDIT (Weapon
  *     Edit: each of the MISSILE / DOUBLE / LASER weapons), the Option type (M2-04), the `?` and
  *     `!` choices, Auto Power-Up and its ORDER ({@link AutoOrderScene}, an overlay editor), START —
  *     with a live preview (a mini World on the weapon range, drawn full screen behind the panel);
  *     START starts the game with that loadout (`core/config` `withArsenal`), Back returns to the
- *     difficulty menu.
+ *     ship select.
  *   - {@link GameScene}: **owns the World** — every start (and RETRY STAGE) creates a fresh one;
  *     ticks it with the snapshot; Pause (remote Play/Pause, Back — bound to Pause in the game
  *     context) opens the pause menu; `stageClear` / `gameOver` open their screens after a short
@@ -83,10 +88,12 @@
  * Input by scene (every player's input merged; the game table maps OK to PowerUp instead):
  * - **Title** — OK: `PRESS OK` → menu, then activate; Back: exit confirmation (when the platform
  *   can exit) or back to `PRESS OK`; Up / Down: move (auto-repeat).
- * - **Difficulty** — Up / Down: move; OK: choose the focused preset (→ weapon select); Back: title
+ * - **Difficulty** — Up / Down: move; OK: choose the focused preset (→ ship select); Back: title
  *   menu.
+ * - **Ship select** — Up / Down: move; OK: choose the focused ship (a meter ship → weapon select, a
+ *   Direct-mode ship → the game); Back: difficulty menu.
  * - **Weapon select** — Up / Down: move; Left / Right (or OK): change the focused value; OK on
- *   ORDER: the order editor; OK on START: start the game; Back: difficulty menu.
+ *   ORDER: the order editor; OK on START: start the game; Back: ship select.
  * - **Order editor** — Up / Down: move; Left / Right (or OK): change a row; DONE or Back: store
  *   and close.
  * - **Continue** — OK: continue; Back: give up (both after a 30-tick lock).
@@ -105,18 +112,21 @@
  * - shmup_feat.md §21 — the Options menu (audio sliders, controls profile) and saved hi-scores
  * - shmup_feat.md §16 — difficulty select, weapon select / Weapon Edit (M2-03); §10 — continues
  *   (the countdown); §6A — the editable Auto Power-Up order, §7A — the `!` choices
+ * - shmup_feat.md §5 — ship selection: the meter ship or the Direct-mode ship (M2-05)
  *
  * **Public API.** {@link SceneStack}, {@link createSceneStack}, {@link SCENE_STACK_DEPTH},
  * {@link Scene}, {@link SceneId}, {@link SceneFlow}, {@link SceneFlowHost}, {@link SceneStart},
  * {@link createSceneFlow}, {@link mergeMenuInput}, the scenes ({@link BootScene},
- * {@link TitleScene}, {@link DifficultyScene}, {@link WeaponSelectScene}, {@link AutoOrderScene},
+ * {@link TitleScene}, {@link DifficultyScene}, {@link ShipSelectScene} (M2-05),
+ * {@link WeaponSelectScene}, {@link AutoOrderScene},
  * {@link GameScene}, {@link PauseScene}, {@link OptionsScene}, {@link StageClearScene},
  * {@link ContinueScene}, {@link GameOverScene}, {@link ConfirmDialog}), {@link ConfirmPurpose},
  * the weapon select's items and labels ({@link WeaponSelectItem}, {@link MEGA_CHOICE_LABELS},
  * {@link SHIELD_CHOICE_LABELS}, {@link OPTION_CHOICE_LABELS} (M2-04), {@link WEAPON_EDIT_LABEL},
  * {@link AUTO_ORDER_LABELS}, {@link AUTO_ORDER_ROWS}) and its preview ({@link WEAPON_RANGE_STAGE},
  * {@link PREVIEW_SHIP_X}, {@link PREVIEW_WEAVE_TICKS}, {@link PREVIEW_OPTIONS},
- * {@link PREVIEW_SPREAD_TICKS}),
+ * {@link PREVIEW_SPREAD_TICKS}), the ship select's labels ({@link SHIP_MODE_LABELS},
+ * {@link SHIP_MODE_HINTS} — M2-05),
  * {@link InputProfileSetup}, the menu item indices ({@link TitleItem}, {@link PauseItem},
  * {@link OptionsItem} — BULLETS since M2-02 —), the Options screen's bullet palette labels
  * ({@link BULLET_PALETTE_LABELS}, M2-02) and the timing constants ({@link STAGE_CLEAR_DELAY_TICKS},
@@ -124,8 +134,8 @@
  * {@link STAGE_CLEAR_TALLY_TICKS}, {@link STAGE_CLEAR_CONTINUED_TICKS}, {@link PAUSE_DIM},
  * {@link CONTINUE_COUNTDOWN_TICKS}, {@link CONTINUE_LOCK_TICKS}).
  *
- * **Planned.** Attract mode, mode / ship select, the zone map, name entry, hi-score table, ending
- * and credits (M2); more option groups (controls rebinding, display, game — M2-16).
+ * **Planned.** Attract mode, the mode select, the zone map, name entry, hi-score table, ending and
+ * credits (M2); more option groups (controls rebinding, display, game — M2-16).
  *
  * @module
  */
@@ -137,13 +147,16 @@ import {
   MEGA_CHOICES,
   METER_SLOT_NAMES,
   OPTION_CHOICES,
+  POWER_UP_MODES,
   SHIELD_CHOICES,
   VOLUME_LEVELS,
   arsenalMatches,
   resolveGameConfig,
   withArsenal,
   withDifficulty,
+  withShip,
   type ArsenalChoice,
+  type ShipChoice,
   type DifficultyPreset,
   type GameConfig,
   type InputProfileChoice,
@@ -151,7 +164,13 @@ import {
   type UserOptions,
   type WeaponEdit,
 } from '../config/index.js';
-import type { ContentDb, WeaponPresetSpec, WeaponSlot, WeaponSpec } from '../data/index.js';
+import type {
+  ContentDb,
+  PlayerShipSpec,
+  WeaponPresetSpec,
+  WeaponSlot,
+  WeaponSpec,
+} from '../data/index.js';
 import { createDebugFlags, type DebugFlags } from '../debug/index.js';
 import {
   MUSIC_CUES,
@@ -176,10 +195,13 @@ import {
   hiScoreModeKey,
   type SaveStore,
 } from '../save/index.js';
+import { DEFAULT_PLAYER_SHIP } from '../player/index.js';
 import { MAX_SCORE } from '../scoring/index.js';
 import {
   CONFIRM_STRING_SLOTS,
   ConfirmChoice,
+  HUD_COMMAND_COUNT,
+  HUD_STRING_COUNT,
   MenuResult,
   UI_COLORS,
   confirmTick,
@@ -227,12 +249,14 @@ export const moduleInfo = defineModule({
     'shmup_feat.md §21',
     'shmup_feat.md §16',
     'shmup_feat.md §10',
+    'shmup_feat.md §5',
   ],
 });
 
 /**
  * Scene identifiers (the M1 set, the difficulty menu and continue countdown of M2-01, the weapon
- * select and its order editor of M2-03, plus the M2 screens already named by the spec).
+ * select and its order editor of M2-03, the ship select of M2-05, plus the M2 screens already
+ * named by the spec).
  */
 export type SceneId =
   | 'boot'
@@ -243,6 +267,7 @@ export type SceneId =
   | 'gameOver'
   | 'confirm'
   | 'difficulty'
+  | 'shipSelect'
   | 'weaponSelect'
   | 'autoOrder'
   | 'continue'
@@ -738,7 +763,7 @@ const WARNING_BAND_H = 48;
 const CX = 192;
 
 /** String slots of the UI list. */
-const UI_STRINGS = 160;
+const UI_STRINGS = 192;
 
 /** Where the title menu is drawn (a constant: redrawing allocates nothing). */
 const TITLE_MENU_LAYOUT: MenuLayout = Object.freeze({
@@ -799,7 +824,9 @@ interface FlowControl {
   readonly options: OptionsScene;
   /** The difficulty menu under START. */
   readonly difficultyMenu: DifficultyScene;
-  /** The weapon select after the difficulty menu (M2-03). */
+  /** The ship select after the difficulty menu (M2-05). */
+  readonly shipSelect: ShipSelectScene;
+  /** The weapon select after the ship select (M2-03). */
   readonly weaponSelect: WeaponSelectScene;
   /** The Auto Power-Up order editor (M2-03). */
   readonly autoOrder: AutoOrderScene;
@@ -807,6 +834,30 @@ interface FlowControl {
   readonly continueScreen: ContinueScene;
   /** The save the flow plays with. */
   readonly save: SaveStore;
+  /**
+   * The ships the ship select offers (M2-05): the content's, in content order (the built-in
+   * default ship when it has none).
+   */
+  readonly ships: readonly PlayerShipSpec[];
+  /** Index into {@link FlowControl.ships} of the ship the next game flies. */
+  shipIndex: number;
+  /** The ship chosen in the ship select (`null` until the first choice: the host config's ship). */
+  readonly ship: ShipChoice | null;
+  /**
+   * Index into {@link FlowControl.bests} of a preset's session hi-score for the next game's
+   * power-up mode (one table per mode and difficulty, like the save's).
+   *
+   * @param preset - The preset.
+   * @returns The index.
+   */
+  bestIndex(preset: DifficultyPreset): number;
+  /**
+   * Chooses the ship of the next games (the ship select's OK, M2-05): every difficulty's config
+   * gets its id and power-up model (`core/config` `withShip`).
+   *
+   * @param index - Index into {@link FlowControl.ships}.
+   */
+  chooseShip(index: number): void;
   /**
    * The hi-score table of the chosen difficulty's games ({@link hiScoreModeKey} of
    * {@link FlowControl.worldConfig}).
@@ -819,7 +870,11 @@ interface FlowControl {
    * for its own preset, `withDifficulty` of it for the others (built with the flow).
    */
   readonly configs: readonly GameConfig[];
-  /** The session hi-score of each preset (same order), starting from the save's best. */
+  /**
+   * The session hi-score of each power-up mode and preset (`mode index × 4 + preset index`, in
+   * `POWER_UP_MODES` / {@link DIFFICULTY_PRESETS} order — {@link FlowControl.bestIndex}), starting
+   * from the save's best of each table.
+   */
   readonly bests: Float64Array;
   /**
    * The config the next game's World gets: {@link FlowControl.difficulty}'s with the weapon
@@ -1167,7 +1222,7 @@ export class GameScene extends SceneBase {
   /** `'game'`: the gameplay binding table while the game is on top. */
   override readonly inputContext: InputContext = 'game';
   /** The HUD draw list (the frame's `hud` while the game is visible). */
-  readonly hudList: DrawList = createDrawList(64, 4);
+  readonly hudList: DrawList = createDrawList(HUD_COMMAND_COUNT, HUD_STRING_COUNT);
   /** The HUD's change detection. */
   readonly hud: Hud;
   /** The World being played (a placeholder before the first start). */
@@ -1231,13 +1286,15 @@ export class GameScene extends SceneBase {
     this.uiRevision++;
   }
 
-  /** Raises the session hi-score of the World's difficulty from the World's. */
+  /** Raises the session hi-score of the World's power-up mode and difficulty from the World's. */
   private recordHiScore(): void {
     const world = this.world;
-    const index = DIFFICULTY_PRESETS.indexOf(world.config.difficulty);
+    const preset = DIFFICULTY_PRESETS.indexOf(world.config.difficulty);
+    const mode = POWER_UP_MODES.indexOf(world.config.powerUpMode);
     const bests = this.flow.bests;
     const best = world.scoring.board.hiScore;
-    if (index >= 0 && best > bests[index]) bests[index] = best;
+    const index = (mode >= 0 ? mode : 0) * DIFFICULTY_PRESETS.length + preset;
+    if (preset >= 0 && best > bests[index]) bests[index] = best;
   }
 
   /**
@@ -1837,9 +1894,11 @@ const DIFFICULTY_LABELS: readonly string[] = Object.freeze(['EASY', 'NORMAL', 'H
  * presets, and for the focused one its starting lives, continues and saved / session hi-score
  * (from the flow's per-preset configs — `core/config` `withDifficulty`). Opening it focuses the
  * difficulty chosen last (at first the host config's) and locks activation for 2 ticks. OK
- * chooses the focused preset and opens the {@link WeaponSelectScene} (M2-03), whose START starts
- * the game on that preset's config; Back closes it (the title menu takes input again). Up / Down
- * move the focus (wrapping, auto-repeat) with the move sound.
+ * chooses the focused preset and opens the {@link ShipSelectScene} (M2-05; then the
+ * {@link WeaponSelectScene} of M2-03 for a meter ship), whose choice starts the game on that
+ * preset's config — with a single ship in the content the ship select is skipped: the weapon
+ * select opens (a Direct-mode config starts the game at once); Back closes it (the title menu
+ * takes input again). Up / Down move the focus (wrapping, auto-repeat) with the move sound.
  */
 export class DifficultyScene extends SceneBase {
   /** See {@link Scene.id}. */
@@ -1869,7 +1928,7 @@ export class DifficultyScene extends SceneBase {
     this.menu.open(MENU_OPEN_LOCK_TICKS);
   }
 
-  /** OK chooses and opens the weapon select; Back closes the menu. Never allocates. */
+  /** OK chooses and opens the ship select; Back closes the menu. Never allocates. */
   tick(): void {
     const flow = this.flow;
     const menu = this.menu;
@@ -1884,13 +1943,16 @@ export class DifficultyScene extends SceneBase {
     if (result === MenuResult.Confirmed) {
       flow.sfx(SFX_CUES.MenuSelect);
       flow.chooseDifficulty(this.focused);
-      flow.stack.push(flow.weaponSelect);
+      // With a single ship there is nothing to choose (M2-05): straight to what it plays with.
+      if (flow.ships.length > 1) flow.stack.push(flow.shipSelect);
+      else if (flow.worldConfig.powerUpMode === 'direct') flow.stack.reset(flow.game);
+      else flow.stack.push(flow.weaponSelect);
       return;
     }
     flow.menuSound(result);
   }
 
-  /** Back from the weapon select: the menu takes input again after a short lock. */
+  /** Back from the ship select: the menu takes input again after a short lock. */
   override uncover(): void {
     super.uncover();
     this.menu.open(MENU_OPEN_LOCK_TICKS);
@@ -1898,7 +1960,7 @@ export class DifficultyScene extends SceneBase {
 
   /**
    * Draws the panel, `DIFFICULTY`, the presets and the focused preset's lives, continues and
-   * hi-score.
+   * hi-score (of the chosen ship's power-up mode).
    *
    * @param list - The UI list.
    */
@@ -1920,7 +1982,8 @@ export class DifficultyScene extends SceneBase {
     list.text(base + 2, p.x + 80, y, UI_COLORS.title);
     list.number(config.continues, p.x + 164, y, 0, UI_COLORS.text, TextAlign.Right);
     list.text(base + 3, p.x + 12, y + 12, UI_COLORS.focus);
-    list.number(this.flow.bests[index] ?? 0, p.x + 164, y + 12, 8, UI_COLORS.text, TextAlign.Right);
+    const best = this.flow.bests[this.flow.bestIndex(this.focused)] ?? 0;
+    list.number(best, p.x + 164, y + 12, 8, UI_COLORS.text, TextAlign.Right);
   }
 }
 
@@ -2007,6 +2070,152 @@ export class ContinueScene extends SceneBase {
       UI_COLORS.text,
       TextAlign.Right,
     );
+  }
+}
+
+// ------------------------------------------------------------------------------ ship select
+
+/**
+ * The ship select's line for each power-up model, in `POWER_UP_MODES` order (M2-05): what the
+ * focused ship plays with.
+ */
+export const SHIP_MODE_LABELS: readonly string[] = Object.freeze(['POWER METER', 'DIRECT ITEMS']);
+
+/**
+ * The ship select's three hint lines for each power-up model, in `POWER_UP_MODES` order (M2-05).
+ */
+export const SHIP_MODE_HINTS: readonly (readonly string[])[] = Object.freeze([
+  Object.freeze(['CAPSULES MOVE THE METER', 'OK EQUIPS THE LIT SLOT', 'OPTIONS COPY YOUR FIRE']),
+  Object.freeze(['COLOUR ITEMS POWER UP', 'BLUE: THE ARM SHIELD', 'CH-: SPEED TOGGLE']),
+]);
+
+/** The ship select's panel: left, top, width, height. */
+const SHIP_PANEL = Object.freeze({ x: CX - 104, y: 44, w: 208, h: 136 });
+
+/** Where the ship select's menu is drawn (the ship names, left column). */
+const SHIP_MENU_LAYOUT: MenuLayout = Object.freeze({
+  x: CX - 80,
+  y: 70,
+  lineHeight: 14,
+  cursorX: CX - 92,
+});
+
+/**
+ * The ship select (shmup_feat.md §5 "ship selection", §17 "Ship / Weapon select"; plan M2-05):
+ * which ship — and so which power-up model — the next game plays.
+ *
+ * @remarks
+ * An overlay (dim {@link PAUSE_DIM}) with an opaque panel over the difficulty menu: `SHIP SELECT`,
+ * the content's ships by name (KESTREL, MANTA — the built-in default ship when the content has
+ * none) and, for the focused one, its picture (frame 0 of its sprite), its power-up model
+ * ({@link SHIP_MODE_LABELS}) and three hints ({@link SHIP_MODE_HINTS}). Opening it focuses the
+ * ship chosen last (at first the host config's `shipId`) and locks activation for 2 ticks. OK
+ * chooses the focused ship (`core/config` `withShip` for every difficulty's config — its
+ * `shipId` and its `mode` as `powerUpMode`) and opens the {@link WeaponSelectScene} for a meter
+ * ship, or starts the game at once for a Direct-mode one (it has no loadout to choose); Back
+ * returns to the difficulty menu. Up / Down move the focus (wrapping, auto-repeat).
+ */
+export class ShipSelectScene extends SceneBase {
+  /** See {@link Scene.id}. */
+  readonly id = 'shipSelect' as const;
+  /** An overlay: the title and the difficulty menu stay visible under it. */
+  override readonly overlay = true;
+  /** {@link PAUSE_DIM}. */
+  override readonly dim = PAUSE_DIM;
+  /** The ships, in {@link FlowControl.ships} order. */
+  readonly menu: ListMenu;
+
+  /**
+   * Creates the screen from the flow's ships.
+   *
+   * @param flow - The flow.
+   */
+  constructor(flow: FlowControl) {
+    super(flow);
+    const labels: string[] = [];
+    for (const ship of flow.ships) labels.push(ship.name.toUpperCase());
+    this.menu = createListMenu(labels, { wrap: true });
+  }
+
+  /** See {@link SceneBase.stringSlots}. */
+  get stringSlots(): number {
+    return 6 + menuStringSlots(this.menu);
+  }
+
+  /** The ship the focus is on. */
+  get focused(): PlayerShipSpec {
+    const ships = this.flow.ships;
+    return ships[this.menu.focus] ?? ships[0];
+  }
+
+  /** Focus on the ship chosen last, locked for 2 ticks. */
+  override enter(): void {
+    super.enter();
+    const index = this.flow.shipIndex;
+    this.menu.focus = index >= 0 && index < this.flow.ships.length ? index : 0;
+    this.menu.open(MENU_OPEN_LOCK_TICKS);
+  }
+
+  /** Back from the weapon select: the menu takes input again after a short lock. */
+  override uncover(): void {
+    super.uncover();
+    this.menu.open(MENU_OPEN_LOCK_TICKS);
+  }
+
+  /**
+   * OK chooses the ship (→ the weapon select, or the game for a Direct-mode ship); Back closes the
+   * screen. Never allocates (a choice re-arms the configs and a game start creates its World —
+   * transitions).
+   */
+  tick(): void {
+    const flow = this.flow;
+    const menu = this.menu;
+    const before = menu.revision;
+    const result = menuTick(menu, flow.menuInput);
+    if (menu.revision !== before) this.uiRevision++;
+    if (result === MenuResult.Back) {
+      flow.sfx(SFX_CUES.MenuBack);
+      flow.stack.pop();
+      return;
+    }
+    if (result === MenuResult.Confirmed) {
+      flow.sfx(SFX_CUES.MenuSelect);
+      flow.chooseShip(menu.focus);
+      if (this.focused.mode === 'direct') flow.stack.reset(flow.game);
+      else flow.stack.push(flow.weaponSelect);
+      return;
+    }
+    flow.menuSound(result);
+  }
+
+  /**
+   * Draws the panel, `SHIP SELECT`, the ships, the focused ship's picture, power-up model and
+   * hints.
+   *
+   * @param list - The UI list.
+   */
+  drawUi(list: DrawList): void {
+    const base = this.stringBase;
+    const p = SHIP_PANEL;
+    const ship = this.focused;
+    const mode = POWER_UP_MODES.indexOf(ship.mode);
+    const m = mode >= 0 ? mode : 0;
+    const hints = SHIP_MODE_HINTS[m];
+    drawPanel(list, p.x, p.y, p.w, p.h, UI_COLORS.panel, UI_COLORS.border, 255);
+    list.setString(base, 'SHIP SELECT');
+    list.setString(base + 1, SHIP_MODE_LABELS[m]);
+    list.setString(base + 2, hints[0]);
+    list.setString(base + 3, hints[1]);
+    list.setString(base + 4, hints[2]);
+    list.setString(base + 5, 'OK: CHOOSE');
+    list.text(base, CX, p.y + 8, UI_COLORS.title, TextAlign.Center);
+    drawMenu(list, this.menu, base + 6, SHIP_MENU_LAYOUT);
+    if (ship.spriteId >= 0) list.sprite(ship.spriteId, 0, CX + 52, SHIP_MENU_LAYOUT.y + 10);
+    list.text(base + 1, CX, p.y + 72, UI_COLORS.focus, TextAlign.Center);
+    list.text(base + 2, CX, p.y + 88, UI_COLORS.text, TextAlign.Center);
+    list.text(base + 3, CX, p.y + 98, UI_COLORS.text, TextAlign.Center);
+    list.text(base + 4, CX, p.y + 108, UI_COLORS.text, TextAlign.Center);
+    list.text(base + 5, CX, p.y + p.h - 14, UI_COLORS.disabled, TextAlign.Center);
   }
 }
 
@@ -2149,7 +2358,8 @@ function presetLabel(id: string): string {
  * loadout the next game plays, with a live preview.
  *
  * @remarks
- * Pushed by the difficulty menu's OK (a full screen over the title and the difficulty menu). A
+ * Pushed by the ship select's OK for a meter ship (M2-05; a full screen over the title, the
+ * difficulty menu and the ship select). A
  * panel on the left lists TYPE (the content's presets — `TYPE A` … `TYPE D` — and `EDIT`), the
  * MISSILE / DOUBLE / LASER weapons (the type's, disabled; with EDIT every weapon of that slot can
  * be chosen — Weapon Edit), OPTION (TRAIL / SNAKE / FORMATION / ROTATE — M2-04), `?` (FORCE FIELD /
@@ -2159,7 +2369,7 @@ function presetLabel(id: string): string {
  * at once — the choice of the last visit is kept) and locks activation for 2 ticks. Left / Right
  * (or OK) change a value, OK on START starts the game (the stack is reset to the game scene, whose
  * World gets the difficulty's config with this loadout — `core/config` `withArsenal`), Back returns
- * to the difficulty menu. The first visit starts from the host config's values.
+ * to the ship select. The first visit starts from the host config's values.
  *
  * **Live preview.** A private mini World flies the {@link WEAPON_RANGE_STAGE} range (harmless
  * targets over a floor and a ceiling; free flight when the content lacks it), drawn full screen
@@ -2348,7 +2558,7 @@ export class WeaponSelectScene extends SceneBase {
   }
 
   /**
-   * The screen closes (back to the difficulty menu, or the game starts): the preview is dropped.
+   * The screen closes (back to the ship select, or the game starts): the preview is dropped.
    */
   override exit(): void {
     this.preview = null;
@@ -2772,7 +2982,9 @@ export interface SceneFlow {
   readonly options: OptionsScene;
   /** The difficulty menu under START (M2-01). */
   readonly difficultyMenu: DifficultyScene;
-  /** The weapon select after the difficulty menu (M2-03). */
+  /** The ship select after the difficulty menu (M2-05). */
+  readonly shipSelect: ShipSelectScene;
+  /** The weapon select after the ship select (M2-03). */
   readonly weaponSelect: WeaponSelectScene;
   /** The Auto Power-Up order editor of the weapon select (M2-03). */
   readonly autoOrder: AutoOrderScene;
@@ -2793,11 +3005,19 @@ export interface SceneFlow {
   /**
    * The config the next game's World gets: the host's for its own difficulty, `withDifficulty` of
    * it for another (the content's `rules` table — or the built-in one — gives the preset fields),
-   * with the weapon select's loadout (`withArsenal`, M2-03).
+   * with the weapon select's loadout (`withArsenal`, M2-03) and the ship select's ship
+   * (`withShip`, M2-05).
    */
   readonly gameConfig: GameConfig;
   /** The loadout chosen in the weapon select (empty until its first START — M2-03). */
   readonly arsenal: ArsenalChoice;
+  /**
+   * The ship chosen in the ship select (M2-05; `null` until the first choice — the host config's
+   * ship flies).
+   */
+  readonly ship: ShipChoice | null;
+  /** The ships the ship select offers (the content's; M2-05). */
+  readonly ships: readonly PlayerShipSpec[];
   /** The input profiles the Options screen offers (empty: CONTROLS disabled). */
   readonly inputProfiles: readonly InputProfileChoice[];
   /**
@@ -2923,15 +3143,21 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
   // One config per difficulty preset (the difficulty menu): the host's for its own preset.
   const table = host.content.difficulty ?? DEFAULT_DIFFICULTY_TABLE;
   const configs: GameConfig[] = [];
-  const bests = new Float64Array(DIFFICULTY_PRESETS.length);
-  for (let i = 0; i < DIFFICULTY_PRESETS.length; i++) {
+  const presets = DIFFICULTY_PRESETS.length;
+  // One session hi-score per power-up mode and preset (M2-05), from the save's tables.
+  const bests = new Float64Array(POWER_UP_MODES.length * presets);
+  for (let i = 0; i < presets; i++) {
     const preset = DIFFICULTY_PRESETS[i];
     const config =
       preset === host.config.difficulty ? host.config : withDifficulty(host.config, preset, table);
     configs.push(config);
-    bests[i] = Math.min(MAX_SCORE, save.bestScore(hiScoreModeKey(config)));
+    for (let m = 0; m < POWER_UP_MODES.length; m++) {
+      const key = hiScoreModeKey({ powerUpMode: POWER_UP_MODES[m], difficulty: preset });
+      bests[m * presets + i] = Math.min(MAX_SCORE, save.bestScore(key));
+    }
   }
-  // The same with the weapon select's loadout (M2-03): the configs themselves until a START.
+  // The same with the weapon select's loadout (M2-03) and the ship select's ship (M2-05): the
+  // configs themselves until a choice.
   const armed: GameConfig[] = configs.slice();
   /**
    * Index of a preset in {@link DIFFICULTY_PRESETS} (0 for an unknown one).
@@ -2942,6 +3168,23 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
   const presetIndex = (preset: DifficultyPreset): number => {
     const i = DIFFICULTY_PRESETS.indexOf(preset);
     return i >= 0 ? i : 0;
+  };
+  // The ships of the ship select (M2-05): the content's, the built-in one without any.
+  const ships: readonly PlayerShipSpec[] =
+    host.content.ships.length > 0 ? host.content.ships : [DEFAULT_PLAYER_SHIP];
+  let firstShip = 0;
+  for (let i = 0; i < ships.length; i++) if (ships[i].id === host.config.shipId) firstShip = i;
+  /**
+   * Rebuilds every difficulty's armed config from the loadout and the ship chosen so far (a
+   * choice already in a config keeps its object).
+   */
+  const rearm = (): void => {
+    for (let i = 0; i < configs.length; i++) {
+      let config = configs[i];
+      if (!arsenalMatches(config, control.arsenal)) config = withArsenal(config, control.arsenal);
+      if (control.ship !== null) config = withShip(config, control.ship);
+      armed[i] = config;
+    }
   };
   const setup = host.inputProfiles ?? null;
   const profiles: readonly InputProfileChoice[] = setup === null ? [] : setup.choices;
@@ -2965,21 +3208,32 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     arsenal: {},
     chooseArsenal(arsenal: ArsenalChoice): void {
       // A loadout the config already has keeps the config object (the host's, for its preset).
-      for (let i = 0; i < configs.length; i++) {
-        armed[i] = arsenalMatches(configs[i], arsenal)
-          ? configs[i]
-          : withArsenal(configs[i], arsenal);
-      }
       control.arsenal = arsenal;
+      rearm();
+    },
+    ships,
+    shipIndex: firstShip,
+    ship: null,
+    chooseShip(index: number): void {
+      const spec = ships[index];
+      if (spec === undefined) return;
+      control.shipIndex = index;
+      control.ship = { shipId: spec.id, powerUpMode: spec.mode };
+      rearm();
+      control.title.uiRevision++;
+    },
+    bestIndex(preset: DifficultyPreset): number {
+      const mode = POWER_UP_MODES.indexOf(control.worldConfig.powerUpMode);
+      return (mode >= 0 ? mode : 0) * presets + presetIndex(preset);
     },
     get modeKey(): string {
       return hiScoreModeKey(control.worldConfig);
     },
     get hiScore(): number {
-      return bests[presetIndex(control.difficulty)];
+      return bests[control.bestIndex(control.difficulty)];
     },
     raiseHiScore(value: number): void {
-      const i = presetIndex(control.difficulty);
+      const i = control.bestIndex(control.difficulty);
       if (value > bests[i]) bests[i] = value > MAX_SCORE + 9 ? MAX_SCORE + 9 : Math.floor(value);
     },
     chooseDifficulty(difficulty: DifficultyPreset): void {
@@ -3044,6 +3298,7 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
   control.confirm = new ConfirmDialog(control);
   control.options = new OptionsScene(control);
   control.difficultyMenu = new DifficultyScene(control);
+  control.shipSelect = new ShipSelectScene(control);
   control.weaponSelect = new WeaponSelectScene(control);
   control.autoOrder = new AutoOrderScene(control);
   control.continueScreen = new ContinueScene(control);
@@ -3061,6 +3316,7 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     control.confirm,
     control.options,
     control.difficultyMenu,
+    control.shipSelect,
     control.weaponSelect,
     control.autoOrder,
     control.continueScreen,
@@ -3105,6 +3361,7 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     confirm: control.confirm,
     options: control.options,
     difficultyMenu: control.difficultyMenu,
+    shipSelect: control.shipSelect,
     weaponSelect: control.weaponSelect,
     autoOrder: control.autoOrder,
     continueScreen: control.continueScreen,
@@ -3121,6 +3378,10 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     get arsenal(): ArsenalChoice {
       return control.arsenal;
     },
+    get ship(): ShipChoice | null {
+      return control.ship;
+    },
+    ships,
     inputProfiles: profiles,
     get activeInputProfile(): number {
       return control.activeProfile;

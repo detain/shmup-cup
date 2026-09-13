@@ -440,8 +440,9 @@ function mixEnemy(e: Enemy): void {
 }
 
 /**
- * Mixes the player weapons' own state (loadouts, option groups, timers, the Free Way's last
- * directions — M2-03 —, the cooldown tables of live piercing shots) into {@link accumulator}.
+ * Mixes the player weapons' own state (loadouts — the Direct-mode levels and family too, M2-05 —,
+ * option groups, timers, the Free Way's last directions — M2-03 —, the cooldown tables of live
+ * piercing shots) into {@link accumulator}.
  *
  * @param weapons - The World's weapon system.
  */
@@ -452,6 +453,10 @@ function mixWeapons(weapons: World['weapons']): void {
     mixNumber(l.main);
     mixWord(l.missile ? 1 : 0);
     mixNumber(l.options);
+    // The Direct-mode levels and family (M2-05).
+    mixNumber(l.shot);
+    mixNumber(l.sub);
+    mixNumber(l.family);
     const g = weapons.options[p];
     mixNumber(g.count);
     mixNumber(g.stolen);
@@ -485,8 +490,8 @@ function mixWeapons(weapons: World['weapons']): void {
 }
 
 /**
- * Mixes the power-up state (meters, pending Mega Crashes, the ships' shields, taken drops) into
- * {@link accumulator}.
+ * Mixes the power-up state (meters, pending Mega Crashes, the ships' shields — the Arm's tier and
+ * count too —, taken drops, the Direct-mode item plan's cursor — M2-05) into {@link accumulator}.
  *
  * @param world - The world.
  */
@@ -515,8 +520,12 @@ function mixPowerUps(world: World): void {
     mixArray(shield.podAngle, shield.podAngle.length);
     mixArray(shield.podIFrames, shield.podIFrames.length);
     mixArray(shield.podHitTick, shield.podHitTick.length);
+    // The Arm's tier and blue-item count (M2-05).
+    mixNumber(shield.tier);
+    mixNumber(shield.charge);
   }
   mixNumber(powerups.dropsTaken);
+  mixNumber(powerups.planCursor);
 }
 
 /**

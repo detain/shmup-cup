@@ -67,7 +67,7 @@ function press(game: Game, platform: HeadlessPlatform, action: number): void {
 }
 
 /**
- * Opens the weapon select from the title (OK, START, NORMAL) and lets its lock run out.
+ * Opens the weapon select from the title (OK, START, NORMAL, KESTREL) and lets its lock run out.
  *
  * @param game - The game.
  * @param platform - Its platform.
@@ -78,6 +78,12 @@ function openSelect(game: Game, platform: HeadlessPlatform): void {
   press(game, platform, Action.Confirm);
   game.step();
   game.step();
+  // With more than one ship in the content, the ship select comes first (M2-05).
+  if (game.scenes?.stack.top?.id === 'shipSelect') {
+    press(game, platform, Action.Confirm);
+    game.step();
+    game.step();
+  }
   expect(game.scenes?.stack.top?.id).toBe('weaponSelect');
 }
 
@@ -125,7 +131,8 @@ describe('shell/scene-view with the weapon select`s preview (M2-03)', () => {
     expect(frame.world!.camera).toBe(preview.view.camera);
     expect(view.worldChanges).toBe(1);
     press(game, platform, Action.Back);
-    expect(game.scenes?.stack.top?.id).toBe('difficulty');
+    const back = game.scenes?.stack.top?.id;
+    expect(['difficulty', 'shipSelect']).toContain(back);
     expect(view.update(game.renderFrame()).world).toBe(view.backdrop);
     view.follow();
     expect([view.camera.x, view.camera.y]).toEqual([0, 0]);
@@ -135,6 +142,11 @@ describe('shell/scene-view with the weapon select`s preview (M2-03)', () => {
     press(game, platform, Action.Confirm);
     game.step();
     game.step();
+    if (game.scenes?.stack.top?.id === 'shipSelect') {
+      press(game, platform, Action.Confirm);
+      game.step();
+      game.step();
+    }
     expect(game.scenes?.stack.top?.id).toBe('weaponSelect');
     view.update(game.renderFrame());
     expect(view.worldChanges).toBe(2);

@@ -380,7 +380,8 @@ describe('core/weapons arsenal edges (M2-03): the behaviour tables', () => {
 
   it('gives every behaviour one kind, slot list, label and tunables', () => {
     const ids = Object.keys(WEAPON_BEHAVIOR_KINDS).sort();
-    expect(ids).toHaveLength(13);
+    // Types A–D (13) and the two Direct-mode behaviours of M2-05.
+    expect(ids).toHaveLength(15);
     expect(WEAPON_SCRIPT_IDS).toEqual(ids);
     expect(Object.keys(WEAPON_BEHAVIOR_PARAMS).sort()).toEqual(ids);
     expect(Object.keys(WEAPON_BEHAVIOR_SLOTS).sort()).toEqual(ids);
@@ -396,7 +397,8 @@ describe('core/weapons arsenal edges (M2-03): the behaviour tables', () => {
     }
     for (const id of ids) {
       expect(Object.isFrozen(WEAPON_BEHAVIOR_PARAMS[id]), id).toBe(true);
-      expect(WEAPON_BEHAVIOR_SLOTS[id], id).toHaveLength(1);
+      // `direct.bolt` fires in a main-shot and a sub-weapon family (M2-05).
+      expect(WEAPON_BEHAVIOR_SLOTS[id], id).toHaveLength(id === 'direct.bolt' ? 2 : 1);
     }
     // The slots of the M2-03 behaviours (shmup_feat.md §7A table).
     const slotOf = (id: string): string => WEAPON_BEHAVIOR_SLOTS[id][0];
@@ -419,7 +421,8 @@ describe('core/weapons arsenal edges (M2-03): the behaviour tables', () => {
     const labels = ids.map((id) => WEAPON_BEHAVIOR_LABELS[id]);
     expect(new Set(labels).size).toBe(labels.length);
     for (const id of ids) {
-      if (WEAPON_BEHAVIOR_SLOTS[id][0] === 'main') continue;
+      // The meter's MISSILE / DOUBLE / LASER weapons name their slots (not the Direct-mode ones).
+      if (WEAPON_BEHAVIOR_SLOTS[id][0] === 'main' || id.startsWith('direct.')) continue;
       expect(METER_LABEL_FRAMES, id).toContain(WEAPON_BEHAVIOR_LABELS[id]);
     }
     // The Ripple ring width is thinner than the ring can get.

@@ -1010,6 +1010,9 @@ describe('shell/boot the scene flow (M1-16, the default scene)', () => {
     at = press(Action.Confirm, at); // START → the difficulty menu
     at = press(Action.Confirm, at); // NORMAL (buffered by the menu's open lock)
     at = press(0, at);
+    expect(attributes.get(SCENE_ATTRIBUTE)).toBe('shipSelect');
+    at = press(Action.Confirm, at); // KESTREL in the ship select (M2-05; buffered too)
+    at = press(0, at);
     expect(attributes.get(SCENE_ATTRIBUTE)).toBe('weaponSelect');
     at = press(Action.Confirm, at); // START in the weapon select (M2-03; buffered too)
     at = press(0, at);
@@ -1446,6 +1449,8 @@ describe('shell/boot saves and options (M1-17 edge)', () => {
     press(Action.Confirm); // PRESS OK
     press(Action.Confirm); // START
     press(Action.Confirm); // NORMAL
+    press(0);
+    press(Action.Confirm); // KESTREL in the ship select (M2-05)
     press(0);
     press(Action.Confirm); // START in the weapon select (M2-03)
     press(0);

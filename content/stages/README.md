@@ -31,6 +31,21 @@ carriers to build up Options, then the three hunters (`content/enemies/option-hu
 the rare blue carrier, a second wave of carriers after the checkpoint at 1,800 and two hunters at
 once. `?stage=hunter-range` plays it (try `?loadout=full`).
 
+`direct-range.stage.json` (M2-05) is an open-space range for the Direct mode's item carriers: six
+**six-cube pincer waves** (`cube`, `content/enemies/direct-carriers.enemies.json` — three cubes
+from the top, three from the bottom, converging; the last one destroyed drops the wave's
+`powerup`) alternating with **coloured lead carriers** (`lead-carrier`, `drop: "powerup"`), and a
+`directItems` plan that hands out every colour in its first six drops. Pick the MANTA in the ship
+select, or play it with `?stage=direct-range`.
+
+**The Direct-mode item plan (M2-05).** `directItems` (optional, 1–256 of `red`, `green`, `blue`,
+`orange`, `yellow`, `octagon`) is the order in which the stage's `powerup` drops — and its
+`capsule` drops: the direct ship has no meter — hand out items **in Direct mode**, cycling; the
+meter ignores it (a `powerup` is a capsule there), so one stage file serves both ships. Without
+it the engine's default plan applies (`core/powerups` `DEFAULT_DIRECT_ITEM_PLAN`). Zone A has its
+own plan (about eight red, eight green and seven blue items, an octagon, a yellow bomb and an
+orange 1UP).
+
 ## Format (formatVersion 1)
 
 ```jsonc
@@ -68,7 +83,8 @@ once. `?stage=hunter-range` plays it (try `?loadout=full`).
     { "x": 2000, "type": "flag", "flag": "fast-lane" },
     { "x": 3840, "type": "warning", "enemy": "example-warden" }, // WARNING, then the boss
     { "x": 4096, "type": "end" }
-  ]
+  ],
+  "directItems": ["red", "blue", "green", "octagon"] // optional: the Direct-mode item plan (M2-05)
 }
 ```
 
@@ -92,7 +108,7 @@ tick, in file order.
 | `type` | Fields | Effect |
 |---|---|---|
 | `spawn` | `enemy`, optional `y`, `screenX`, `path` | one enemy |
-| `formation` | `enemy`, `count` (1–64), `interval` ticks, optional `y`, `screenX`, `path`, `drop` (`"capsule"` default, `"blueCapsule"` — M2-04 — or `null`), `bonus` (points, default 0) | a timed group, every member at the same spawn point; all killed (none escaped) → the drop at the last kill + the bonus (scored since M1-12 for the player who killed the last member) |
+| `formation` | `enemy`, `count` (1–64), `interval` ticks, optional `y`, `screenX`, `path`, `drop` (`"capsule"` default, `"blueCapsule"` — M2-04 —, `"powerup"` — M2-05, the mode-agnostic power-up — or `null`), `bonus` (points, default 0) | a timed group, every member at the same spawn point; all killed (none escaped) → the drop at the last kill + the bonus (scored since M1-12 for the player who killed the last member) |
 | `warning` | `enemy` (a boss) | the WARNING (M1-13): the camera brakes to a scroll lock, 3 s of siren and text, then the boss flies in with the boss theme; its death clears the stage and releases the lock |
 | `boss` | `enemy` (a boss) | the boss flies in at once (no WARNING, no brake) |
 | `music` | `cue` (a `MUSIC_CUES` name) | change the track |

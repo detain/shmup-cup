@@ -230,6 +230,8 @@ export const DEFAULT_PLAYER_SHIP: PlayerShipSpec = Object.freeze({
   enterTicks: 40,
   respawnInvulnTicks: 150,
   bankFrames: 1,
+  mode: 'meter',
+  startSpeedLevel: 0,
 });
 
 /**

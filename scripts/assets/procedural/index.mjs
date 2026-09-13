@@ -14,6 +14,7 @@
  */
 import * as backdrops from './backdrops.mjs';
 import * as bullets from './bullets.mjs';
+import * as direct from './direct.mjs';
 import * as explosions from './explosions.mjs';
 import * as hud from './hud.mjs';
 import * as items from './items.mjs';
@@ -36,6 +37,7 @@ import * as weapons from './weapons.mjs';
 export const PROCEDURAL_GENERATORS = [
   { id: 'backdrops', generate: backdrops.generate },
   { id: 'bullets', generate: bullets.generate },
+  { id: 'direct', generate: direct.generate },
   { id: 'explosions', generate: explosions.generate },
   { id: 'hud', generate: hud.generate },
   { id: 'items', generate: items.generate },

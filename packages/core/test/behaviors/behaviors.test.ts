@@ -95,6 +95,7 @@ describe('core/behaviors registry', () => {
     expect(moduleInfo.status).toBe('partial');
     expect(BEHAVIOR_IDS).toEqual([
       'carrier.straight',
+      'cube.pincer',
       'drifter.sine',
       'fan.loop',
       'hatch.spawner',
@@ -105,7 +106,7 @@ describe('core/behaviors registry', () => {
       'turret.floor',
       'walker.floor',
     ]);
-    expect(DEFAULT_BEHAVIOR_DEFS).toHaveLength(10);
+    expect(DEFAULT_BEHAVIOR_DEFS).toHaveLength(11);
     expect(DEFAULT_BEHAVIORS.get('pattern.loop')?.needsPattern).toBe(true);
     for (const id of BEHAVIOR_IDS) expect(DEFAULT_BEHAVIORS.get(id)?.id).toBe(id);
     expect(DEFAULT_BEHAVIORS.get('boss.warden')).toBeUndefined();
@@ -115,6 +116,9 @@ describe('core/behaviors registry', () => {
 
   it('knows the weapon behaviours too (one script table), sorted', () => {
     expect(WEAPON_SCRIPT_IDS).toEqual([
+      // The Direct-mode families' behaviours (M2-05).
+      'direct.bolt',
+      'direct.bomb',
       'laser.beam',
       'laser.cyclone',
       'laser.ripple',

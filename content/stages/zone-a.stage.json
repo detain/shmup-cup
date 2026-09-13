@@ -529,5 +529,34 @@
       "x": 9000,
       "type": "end"
     }
+  ],
+  "directItems": [
+    "red",
+    "blue",
+    "green",
+    "red",
+    "blue",
+    "green",
+    "blue",
+    "red",
+    "octagon",
+    "green",
+    "blue",
+    "red",
+    "green",
+    "blue",
+    "yellow",
+    "red",
+    "green",
+    "blue",
+    "red",
+    "green",
+    "blue",
+    "orange",
+    "red",
+    "green",
+    "blue",
+    "red",
+    "green"
   ]
 }

@@ -183,8 +183,10 @@ describe('scripts/assets/pipeline — buildAtlas', () => {
       (n) => n.startsWith('enemies/') && !n.endsWith('@flash'),
     );
     // The six initial enemies, the ground hatch of M1-08, zone A's vane and gyre (M1-18), the
-    // blue carrier and the Option Hunter (M2-04).
-    expect(enemies).toHaveLength(11);
+    // blue carrier and the Option Hunter (M2-04), the Direct mode's carrier cube (M2-05).
+    expect(enemies).toHaveLength(12);
+    // The Direct-mode ship MANTA (M2-05): level, banking up, banking down.
+    expect(count('ships/manta')).toBe(3);
     expect(count('enemies/hatch')).toBe(2);
     expect(manifest.sprites['enemies/hatch'].flash).toBe('enemies/hatch@flash');
     for (const part of ['core', 'shield-plate', 'hull-block', 'emitter']) {

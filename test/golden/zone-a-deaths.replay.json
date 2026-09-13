@@ -22,6 +22,7 @@
       "continues": 3,
       "bulletSpeedMul": 1,
       "powerUpMode": "meter",
+      "shipId": "kestrel",
       "deathPenalty": "classic",
       "startingLives": 3,
       "autofire": true,
@@ -58,16 +59,16 @@
     "AMwp"
   ],
   "hashes": [
-    1498165251,
-    1821252912,
-    2203969244,
-    1646902807,
-    2442881720,
-    4027805603,
-    844683404,
-    1360110289
+    1155858473,
+    2097297144,
+    2694198892,
+    175446393,
+    4019205674,
+    1442610111,
+    3455728732,
+    3037441503
   ],
-  "finalHash": 4231403592,
+  "finalHash": 507755218,
   "description": "a weaving pilot that never dodges, Classic penalty: deaths, respawns in place, game over",
   "expected": {
     "status": "gameOver",

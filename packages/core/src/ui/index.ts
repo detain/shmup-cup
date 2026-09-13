@@ -31,9 +31,13 @@
  *   power meter (`SPEED MISSILE DOUBLE LASER OPTION ? !` — the MISSILE / DOUBLE / LASER slots
  *   named after the session's weapons since M2-03 —, the highlighted slot flashing every
  *   {@link HUD_METER_FLASH_TICKS} ticks, slots that cannot be equipped dimmed) and the Force
- *   Field's pips; numbers use the `number` op. {@link Hud.update} rebuilds the list **only when
- *   something it shows changed** (the scores' dirty flags, lives, the meter cursor and equippable
- *   mask, the flash phase, the shield) and never allocates.
+ *   Field's pips; numbers use the `number` op. In **Direct mode** (M2-05 — shmup_feat.md §6B
+ *   "visible tier pips in the HUD") the meter makes way for the **tier pips**: `SHOT` (one pip per
+ *   level above 0, in the family's colour), `SUB`, `ARM` (one pip per hit it can take, in its
+ *   tier's colour — green, silver, gold), `SPD` (the Speed toggle's level) and the main-shot
+ *   family's label. {@link Hud.update} rebuilds the list **only when something it shows changed**
+ *   (the scores' dirty flags, lives, the meter cursor and equippable mask, the flash phase, the
+ *   shield, the Direct-mode levels, family and speed) and never allocates.
  *
  * The widgets are plain state objects the scenes own (`core/scenes` builds its title and pause
  * menus and the YES / NO dialog from them); nothing here knows about scenes, sounds or the stack.
@@ -67,8 +71,11 @@
  * {@link UI_SPRITES}, {@link UiSprites}, {@link resolveUiSprites}. `TextMetrics` (the bitmap-font
  * measuring contract, `presentation`) is re-exported.
  *
- * **Planned.** The key-rebind prompt and the 3-letter name entry (M2-15 / M2-16), the boss HP bar,
- * the Direct-mode tier pips and the co-op P2 meter (M2).
+ * M2-05: {@link HUD_FAMILY_COLORS}, {@link HUD_ARM_COLORS}, {@link HUD_STRING_COUNT},
+ * {@link HUD_COMMAND_COUNT}.
+ *
+ * **Planned.** The key-rebind prompt and the 3-letter name entry (M2-15 / M2-16), the boss HP bar
+ * and the co-op P2 meter (M2).
  *
  * @module
  */
@@ -76,9 +83,9 @@ import type { ContentDb } from '../data/index.js';
 import { SFX_CUES } from '../events/index.js';
 import { Action, type PlayerInput } from '../input/index.js';
 import { defineModule } from '../module-info.js';
-import { METER_SLOT_COUNT, MeterSlot } from '../powerups/index.js';
+import { METER_SLOT_COUNT, MeterSlot, directMaxLevel } from '../powerups/index.js';
 import { TextAlign, type DrawList } from '../presentation/index.js';
-import { shieldActive } from '../shields/index.js';
+import { ShieldKind, shieldActive } from '../shields/index.js';
 import { WEAPON_BEHAVIOR_LABELS, WeaponRole } from '../weapons/index.js';
 import type { World } from '../world/index.js';
 
@@ -1019,6 +1026,14 @@ export function drawConfirm(
 
 /** Colours of the HUD bars. */
 export const HUD_COLORS = Object.freeze({
+  /** Direct mode (M2-05): an unlit tier pip. */
+  pipOff: 0x2a3050,
+  /** Direct mode: a lit `SUB` pip. */
+  subPip: 0x58d858,
+  /** Direct mode: a lit `SPD` pip. */
+  speedPip: 0xe8e8f0,
+  /** Direct mode: the tier pips' labels. */
+  pipLabel: 0x9aa0c0,
   /** Bar fill (lifted navy, readable on VA panels). */
   bar: 0x1d2a5c,
   /** `1P` label. */
@@ -1065,7 +1080,26 @@ export const HUD_LAYOUT = Object.freeze({
   slotW: 40,
   /** First Force Field pip x (pips are 7 px apart). */
   shieldX: 344,
+  /** Direct mode (M2-05): `SHOT` label x; its pips (5 px apart) start 26 px later. */
+  shotX: 58,
+  /** Direct mode: `SUB` label x; its pips start 20 px later. */
+  subX: 130,
+  /** Direct mode: `ARM` label x; its pips (6 px apart) start 20 px later. */
+  armX: 196,
+  /** Direct mode: `SPD` label x; its pips (6 px apart) start 20 px later. */
+  speedX: 252,
+  /** Direct mode: the main-shot family's label x. */
+  familyX: 306,
 });
+
+/**
+ * The lit `SHOT` pips' colour of each Direct-mode main family (index = `Loadout.family`, wrapping):
+ * Beam → Disc orange, Laser → Wave blue (M2-05).
+ */
+export const HUD_FAMILY_COLORS: readonly number[] = Object.freeze([0xf87838, 0x58b8f8]);
+
+/** The `ARM` pips' colour per Arm tier (index = tier − 1): green, silver, gold (M2-05). */
+export const HUD_ARM_COLORS: readonly number[] = Object.freeze([0x48d860, 0xc8d0e8, 0xf8d030]);
 
 /**
  * The frames of the `hud/meter-labels` sprite, by label (shmup_feat.md §6A; the asset pipeline's
@@ -1121,8 +1155,27 @@ export function meterLabelFrame(world: World, slot: number): number {
   return frame >= 0 ? frame : slot;
 }
 
-/** HUD string slots: `1P`, `HI`, `2P`, the inactive player's dashes. */
-export const HUD_STRING_SLOTS = Object.freeze({ p1: 0, hi: 1, p2: 2, dashes: 3 });
+/**
+ * HUD string slots: `1P`, `HI`, `2P`, the inactive player's dashes; Direct mode (M2-05) adds the
+ * tier pips' labels `SHOT`, `SUB`, `ARM`, `SPD` and the main-shot family's label.
+ */
+export const HUD_STRING_SLOTS = Object.freeze({
+  p1: 0,
+  hi: 1,
+  p2: 2,
+  dashes: 3,
+  shot: 4,
+  sub: 5,
+  arm: 6,
+  speed: 7,
+  family: 8,
+});
+
+/** String slots a HUD list needs ({@link HUD_STRING_SLOTS}). */
+export const HUD_STRING_COUNT = 9;
+
+/** Commands a HUD list needs in the worst case (a Direct-mode HUD with five stock icons). */
+export const HUD_COMMAND_COUNT = 64;
 
 /** The highlighted meter slot alternates between highlighted and plain every this many ticks. */
 export const HUD_METER_FLASH_TICKS = 8;
@@ -1130,7 +1183,8 @@ export const HUD_METER_FLASH_TICKS = 8;
 /**
  * Draws the whole HUD for a World into a draw list (cleared first): both bars, player 1's score,
  * the session hi-score, player 2's score or `------`, player 1's stock, power meter and Force
- * Field. Never allocates (the four labels are written into their string slots only when changed).
+ * Field — or, in Direct mode (M2-05), its tier pips. Never allocates (the labels are written into
+ * their string slots only when changed).
  *
  * @remarks
  * Side effect: clears the scores' `displayDirty` and the board's `hiScoreDirty` flags (it has
@@ -1143,12 +1197,19 @@ export const HUD_METER_FLASH_TICKS = 8;
  * MISSILE / DOUBLE / LASER — M2-03) tinted {@link HUD_COLORS}.label or
  * `labelDisabled` — and, while the Force Field is up, one pip per hit it can take (at most 5, 7 px
  * apart from x 344), cyan for the hits left and dark for the spent ones.
- * Without the UI sprites the icons and slots become rectangles and the labels are left out. The
- * worst case is 32 commands (the game scene's HUD list has 64).
+ * Without the UI sprites the icons and slots become rectangles and the labels are left out.
+ *
+ * **Direct mode** (`config.powerUpMode === 'direct'`, M2-05) — instead of the meter and the Force
+ * Field: `SHOT` at x 58 with one 4×4 pip per level above 0 of the main family (8 for its 9 levels),
+ * the lit ones in the family's {@link HUD_FAMILY_COLORS} colour; `SUB` at 130 (green pips); `ARM`
+ * at 196 with one pip per hit the Arm can take (its tier's {@link HUD_ARM_COLORS} colour for the
+ * hits left, dark for the spent ones; nothing without an Arm); `SPD` at 252 with one pip per
+ * speed (the current level and those below lit); and the family's `label` at 306. The worst case
+ * is under {@link HUD_COMMAND_COUNT} commands (the game scene's HUD list has that many).
  *
  * @param world - The World shown.
- * @param list - Target draw list (≥ 32 commands, ≥ 4 string slots — slots 0–3 are the HUD's,
- *   {@link HUD_STRING_SLOTS}).
+ * @param list - Target draw list (≥ {@link HUD_COMMAND_COUNT} commands, ≥
+ *   {@link HUD_STRING_COUNT} string slots — {@link HUD_STRING_SLOTS} are the HUD's).
  * @param sprites - UI sprite ids ({@link resolveUiSprites}); missing ones fall back to rectangles.
  *
  * @example
@@ -1191,6 +1252,11 @@ export function buildHud(world: World, list: DrawList, sprites: UiSprites = NO_S
     }
   }
 
+  if (world.powerups.direct) {
+    buildDirectPips(world, list);
+    clearDirty(world);
+    return;
+  }
   const cursor = world.powerups.meters[0].cursor;
   const equippable = world.powerups.equippable(0);
   const flashOn = ((world.tick / HUD_METER_FLASH_TICKS) & 1) === 0;
@@ -1228,9 +1294,92 @@ export function buildHud(world: World, list: DrawList, sprites: UiSprites = NO_S
       );
     }
   }
+  clearDirty(world);
+}
+
+/**
+ * Clears the flags a HUD build has drawn: the scores' `displayDirty`, the board's `hiScoreDirty`.
+ *
+ * @param world - The World shown.
+ */
+function clearDirty(world: World): void {
+  const board = world.scoring.board;
   board.scores[0].displayDirty = false;
   if (board.scores.length > 1) board.scores[1].displayDirty = false;
   board.hiScoreDirty = false;
+}
+
+/**
+ * A row of 4×4 pips on the bottom bar: `lit` of `count` in `on`, the rest in `off`.
+ *
+ * @param list - The HUD list.
+ * @param x - First pip x.
+ * @param step - Pixels between pips.
+ * @param count - Pips.
+ * @param lit - Lit pips (the first ones).
+ * @param on - Lit colour.
+ * @param off - Unlit colour.
+ */
+function drawPips(
+  list: DrawList,
+  x: number,
+  step: number,
+  count: number,
+  lit: number,
+  on: number,
+  off: number,
+): void {
+  const y = HUD_LAYOUT.bottomY + 2;
+  for (let i = 0; i < count; i++) list.rect(x + i * step, y, 4, 4, i < lit ? on : off);
+}
+
+/**
+ * The Direct-mode tier pips of player 1 (M2-05; see {@link buildHud}). Never allocates.
+ *
+ * @param world - The World shown (Direct mode).
+ * @param list - The HUD list.
+ */
+function buildDirectPips(world: World, list: DrawList): void {
+  const L = HUD_LAYOUT;
+  const S = HUD_STRING_SLOTS;
+  const y = L.bottomY;
+  const loadout = world.weapons.loadouts[0];
+  const ship = world.players[0];
+  const families = world.weapons.mainFamilies;
+  const family = families.length > 0 ? families[loadout.family % families.length] : null;
+  list.setString(S.shot, 'SHOT');
+  list.setString(S.sub, 'SUB');
+  list.setString(S.arm, 'ARM');
+  list.setString(S.speed, 'SPD');
+  list.text(S.shot, L.shotX, y, HUD_COLORS.pipLabel);
+  const shotTop = directMaxLevel(family);
+  const color = HUD_FAMILY_COLORS[loadout.family % HUD_FAMILY_COLORS.length] ?? HUD_COLORS.label;
+  drawPips(list, L.shotX + 26, 5, shotTop, loadout.shot, color, HUD_COLORS.pipOff);
+  list.text(S.sub, L.subX, y, HUD_COLORS.pipLabel);
+  const subTop = directMaxLevel(world.weapons.subFamily);
+  drawPips(list, L.subX + 20, 5, subTop, loadout.sub, HUD_COLORS.subPip, HUD_COLORS.pipOff);
+  list.text(S.arm, L.armX, y, HUD_COLORS.pipLabel);
+  const shield = ship.shield;
+  if (shieldActive(shield) && shield.kind === ShieldKind.Arm && shield.tier >= 1) {
+    const tier = shield.tier > HUD_ARM_COLORS.length ? HUD_ARM_COLORS.length : shield.tier;
+    const max = shield.maxHits > 5 ? 5 : shield.maxHits;
+    drawPips(list, L.armX + 20, 6, max, shield.hits, HUD_ARM_COLORS[tier - 1], HUD_COLORS.pipOff);
+  }
+  list.text(S.speed, L.speedX, y, HUD_COLORS.pipLabel);
+  const speeds = world.ship.speeds.length > 5 ? 5 : world.ship.speeds.length;
+  drawPips(
+    list,
+    L.speedX + 20,
+    6,
+    speeds,
+    ship.speedLevel + 1,
+    HUD_COLORS.speedPip,
+    HUD_COLORS.pipOff,
+  );
+  if (family !== null) {
+    list.setString(S.family, family.label);
+    list.text(S.family, L.familyX, y, color);
+  }
 }
 
 /**
@@ -1251,6 +1400,11 @@ export class Hud {
   private flash = -1;
   private shieldHits = -1;
   private shieldMax = -1;
+  private shot = -1;
+  private sub = -1;
+  private family = -1;
+  private speed = -1;
+  private tier = -1;
 
   /**
    * Creates the HUD (use {@link createHud}).
@@ -1268,8 +1422,8 @@ export class Hud {
    * @remarks
    * Compared: player 1's and 2's score (their `displayDirty` flags), the hi-score
    * (`hiScoreDirty`), player 1's lives, whether player 2 plays, the meter cursor and equippable
-   * mask, the highlight's flash phase (only while a slot is highlighted) and the Force Field's
-   * hits. A rebuild clears the dirty flags ({@link buildHud}), so only one HUD should read a given
+   * mask, the highlight's flash phase (only while a slot is highlighted), the shield's hits and
+   * (Direct mode, M2-05) the shot / sub levels, the family, the speed level and the Arm's tier. A rebuild clears the dirty flags ({@link buildHud}), so only one HUD should read a given
    * World's flags. The game scene calls this once per displayed frame, not per tick.
    *
    * @param world - The World shown.
@@ -1286,6 +1440,8 @@ export class Hud {
     const active = shieldActive(ship.shield);
     const hits = active ? ship.shield.hits : 0;
     const max = active ? ship.shield.maxHits : 0;
+    const loadout = world.weapons.loadouts[0];
+    const tier = active ? ship.shield.tier : 0;
     const dirty =
       world !== this.world ||
       list !== this.list ||
@@ -1298,8 +1454,18 @@ export class Hud {
       equippable !== this.equippable ||
       flash !== this.flash ||
       hits !== this.shieldHits ||
-      max !== this.shieldMax;
+      max !== this.shieldMax ||
+      loadout.shot !== this.shot ||
+      loadout.sub !== this.sub ||
+      loadout.family !== this.family ||
+      ship.speedLevel !== this.speed ||
+      tier !== this.tier;
     if (!dirty) return false;
+    this.shot = loadout.shot;
+    this.sub = loadout.sub;
+    this.family = loadout.family;
+    this.speed = ship.speedLevel;
+    this.tier = tier;
     this.world = world;
     this.list = list;
     this.lives = ship.lives;

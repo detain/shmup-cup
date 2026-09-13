@@ -17,7 +17,10 @@
  * others 1; 0 = a constant rank). The **power** term ({@link powerRank}) adds, per ship: Speed
  * +0 per level, Missile +1, Double +2, Laser +3, each Option +1, a shield +4 (Reduce +2 — M2-04);
  * with several ships in play the World uses the most powerful one. `special` is for no-miss
- * streaks, loop bonuses and debug overrides (0 today).
+ * streaks, loop bonuses and debug overrides (0 today). A **Direct-mode** ship (M2-05,
+ * {@link directPowerRank}) counts half its main-shot and sub-weapon levels together
+ * (`floor((shot + sub) / 2)`) plus its Arm ({@link RANK_ARM_TIER}: +2 / +3 / +4 by tier) — at most
+ * 12, the fully powered meter ship's term (Missile, Laser, four Options, a shield).
  *
  * **Curves.** A {@link RankCurve} turns a rank into a multiplier that is **exactly 1 at
  * {@link RANK_NORMAL}** (Normal's base rank), so content speeds and fire intervals are the Normal
@@ -39,7 +42,8 @@
  * - shmup_feat.md §11 — per-enemy rank modifiers (fire rate, bullet speed)
  *
  * **Public API.** {@link RankInputs}, {@link createRankInputs}, {@link difficultyRankInputs},
- * {@link computeRank}, {@link powerRank}, {@link RANK_POWER}, {@link rankScale},
+ * {@link computeRank}, {@link powerRank}, {@link RANK_POWER}, {@link directPowerRank},
+ * {@link RANK_ARM_TIER} (M2-05), {@link rankScale},
  * {@link rankSensitivity}, {@link RankCurve}, {@link RANK_MAX}, {@link RANK_LOOP1_CAP},
  * {@link RANK_NORMAL}, {@link DIFFICULTY_RANK_BASE}, {@link BULLET_SPEED_RANK_CURVE},
  * {@link FIRE_RATE_RANK_CURVE}.
@@ -249,6 +253,38 @@ export function powerRank(
   if (shield > 0) power += RANK_POWER.shield;
   if (reduce > 0) power += RANK_POWER.reduce;
   return power;
+}
+
+/**
+ * Rank of the Direct-mode Arm by tier (M2-05; index = tier, 0 = none): the green Arm +2, the silver
+ * Super Arm +3, the gold Hyper Arm +4 (the meter's shield).
+ */
+export const RANK_ARM_TIER: readonly number[] = Object.freeze([0, 2, 3, 4]);
+
+/**
+ * The power term of a Direct-mode ship's rank (M2-05, shmup_feat.md §6C "power level feeds rank"):
+ * half its main-shot and sub-weapon levels together, plus its Arm. Never allocates.
+ *
+ * @remarks
+ * `floor((shot + sub) / 2) + RANK_ARM_TIER[tier]` — both levels at 8 with the Hyper Arm give 12,
+ * the fully powered meter ship's term. Negative or fractional levels count as their whole
+ * non-negative part; a tier above 3 counts as 3.
+ *
+ * @param shot - Main-shot level (0–8).
+ * @param sub - Sub-weapon level (0–8).
+ * @param armTier - Arm tier (0 = none … 3).
+ * @returns The ship's power rank (a whole number ≥ 0).
+ *
+ * @example
+ * ```ts
+ * directPowerRank(8, 8, 3); // → 8 + 4 = 12
+ * ```
+ */
+export function directPowerRank(shot: number, sub: number, armTier: number): number {
+  const s = shot > 0 ? Math.floor(shot) : 0;
+  const u = sub > 0 ? Math.floor(sub) : 0;
+  const tier = armTier >= 3 ? 3 : armTier >= 1 ? Math.floor(armTier) : 0;
+  return ((s + u) >> 1) + RANK_ARM_TIER[tier];
 }
 
 /**

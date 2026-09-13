@@ -1,13 +1,14 @@
 /**
  * # powerups — power-up economy (Meter mode + Direct mode) and pickups
  *
- * **Status: partial.** Meter mode is implemented (plan M1-11): the 7-slot power meter, equipping
- * on the PowerUp press, Auto Power-Up, power capsules (item pool, pickup magnet, pickups), the
- * Force Field grant (`core/shields`) and Mega Crash; since M2-03 the `!` choices (Mega Crash,
- * NORMAL, SPEED DOWN, LIFE OPTION, FULL BARRIER) and the `?` choice of the weapon select, and the
- * MISSILE / DOUBLE / LASER slots equip the session's arsenal (`core/weapons` `resolveArsenal`);
- * since M2-04 the other `?` shields (pods, Reduce), the rare blue capsule and the Options an
- * Option Hunter let go of. Direct-mode items arrive with M2-05.
+ * **Status: implemented.** Meter mode (plan M1-11): the 7-slot power meter, equipping on the
+ * PowerUp press, Auto Power-Up, power capsules (item pool, pickup magnet, pickups), the Force Field
+ * grant (`core/shields`) and Mega Crash; since M2-03 the `!` choices (Mega Crash, NORMAL, SPEED
+ * DOWN, LIFE OPTION, FULL BARRIER) and the `?` choice of the weapon select, and the MISSILE /
+ * DOUBLE / LASER slots equip the session's arsenal (`core/weapons` `resolveArsenal`); since M2-04
+ * the other `?` shields (pods, Reduce), the rare blue capsule and the Options an Option Hunter let
+ * go of. Since M2-05 **Direct mode**: the six colour items, the stage's item plan, the Arm and the
+ * Speed toggle.
  *
  * **Responsibility.** Both power-up models. **Meter mode** (Gradius): the 7-slot meter
  * `SPEED UP | MISSILE | DOUBLE | LASER | OPTION | ? | !`, each capsule advances the cursor
@@ -97,6 +98,30 @@
  * wear frame and every standing pod as its own sprite in its own wear frame (blinking during
  * their i-frames).
  *
+ * **Direct mode** (M2-05, shmup_feat.md §6B — `GameConfig.powerUpMode: 'direct'`, the MANTA).
+ * There is no meter: every `powerup` or `capsule` drop becomes the stage's **next planned item**
+ * (`StageSpec.directItems`, else {@link DEFAULT_DIRECT_ITEM_PLAN}; the plan cycles and never
+ * rewinds — {@link PowerUpSystem.planCursor}), so the stage data stays mode-agnostic. The items
+ * ({@link ItemKind.DirectRed} … {@link ItemKind.DirectOctagon}, {@link DIRECT_ITEM_SCORE} points)
+ * drift slowly left with the view and bounce off the playfield's top and bottom
+ * ({@link DIRECT_ITEM_DRIFT}), and vanish after {@link DIRECT_ITEM_TICKS} ticks (blinking the last
+ * {@link ITEM_EXPIRY_BLINK_TICKS}); whoever grabs one gets it ({@link PowerUpSystem.collectDirect}):
+ *
+ * | Item | Effect | At the cap |
+ * |---|---|---|
+ * | red | main shot + 1 level (`Loadout.shot`) | its family's top level: points only |
+ * | green | sub-weapon + 1 level (`Loadout.sub`) | the top level: points only |
+ * | blue | the Arm: grant / repair / next tier (`core/shields` `collectArm`) | repairs |
+ * | orange | 1UP (`lives + 1`, the `ExtraLife` SFX) | 9 lives: points only |
+ * | yellow | smart bomb: Mega Crash's screen clear (bullets → points, enemies, flash) | — |
+ * | octagon | the next main-shot family (Beam → Disc ↔ Laser → Wave), level kept | one family |
+ *
+ * Every pickup pushes `SFX CapsulePickup`; an effect that changed something `SFX PowerUpEquip` and
+ * `SimEventKind.PowerUp` (id {@link DIRECT_POWER_UP_EVENT_BASE} + the item's {@link DIRECT_ITEMS}
+ * index). The **Speed toggle** (the `Speed` press — remote Ch−, decision D3) cycles the ship's
+ * speed level through its `speeds` (the MANTA: 2.25 → 2.75 → 1.75 px/tick) with the meter ding;
+ * the PowerUp press does nothing. The death penalty is {@link applyDirectDeathPenalty}.
+ *
  * **Death penalty** (M1-12, decision D6): {@link applyDeathPenalty} — called by the World when a
  * ship dies — takes the shield in every preset, and `arcade` everything else too (cursor back to
  * -1), `classic` one level ({@link loseOneLevel}: Option → Double / Laser → Missile → Speed),
@@ -123,6 +148,9 @@
  * - shmup_feat.md §11 — capsule carriers and formation-kill drops
  * - shmup_feat.md §6A — the blue capsule (a rare pickup that clears the screen's enemies); §8 —
  *   the Options an Option Hunter stole, freed and re-collectable (M2-04)
+ * - shmup_feat.md §6B — Direct-mode items (red, green, blue, orange 1UP, yellow smart bomb, red
+ *   octagon family switch), dropped by carriers, drifting and despawning; §6C pickup feedback;
+ *   §4 — the optional Speed toggle (M2-05)
  *
  * **Public API.** {@link createPowerUpSystem}, {@link PowerUpSystem}, {@link PowerUpHost},
  * {@link PowerUpOutcomes}, {@link PowerMeter}, {@link createPowerMeter}, {@link advanceMeter},
@@ -138,7 +166,10 @@
  * {@link lifeOptionCount}; M2-04: {@link BLUE_CAPSULE_SPRITE}, {@link FREE_OPTION_TICKS},
  * {@link FREE_OPTION_DRIFT}, {@link ITEM_EXPIRY_BLINK_TICKS}.
  *
- * **Planned API.** Direct-mode items `applyDirectItem(player, item)` (M2-05).
+ * M2-05: {@link DIRECT_ITEMS}, {@link DIRECT_ITEM_KINDS}, {@link directItemKind},
+ * {@link DIRECT_ITEM_SPRITES}, {@link DIRECT_ITEM_SCORE}, {@link DIRECT_ITEM_TICKS},
+ * {@link DIRECT_ITEM_DRIFT}, {@link DEFAULT_DIRECT_ITEM_PLAN}, {@link DIRECT_POWER_UP_EVENT_BASE},
+ * {@link applyDirectDeathPenalty}, {@link directMaxLevel}.
  *
  * @module
  */
@@ -153,9 +184,16 @@ import {
   type MegaChoice,
   type MeterSlotName,
 } from '../config/index.js';
-import type { ContentDb, PlayerShipSpec } from '../data/index.js';
+import {
+  DIRECT_ITEMS,
+  type ContentDb,
+  type DirectItemName,
+  type PlayerShipSpec,
+  type StageSpec,
+  type WeaponFamilySpec,
+} from '../data/index.js';
 import { DropKind, type EnemyOutcomes } from '../enemies/index.js';
-import { FX_CUES, SFX_CUES, SimEventKind, type EventQueue } from '../events/index.js';
+import { FX_CUES, SFX_CUES, SfxPriority, SimEventKind, type EventQueue } from '../events/index.js';
 import { FLASH_KIND_TICKS, FlashKind, requestFlash, type FxState } from '../fx/index.js';
 import { Action, MAX_PLAYERS } from '../input/index.js';
 import { defineModule } from '../module-info.js';
@@ -163,7 +201,11 @@ import { MAX_OPTIONS, STOLEN_OPTION_SPRITE } from '../options/index.js';
 import type { PlayerCamera, PlayerIntent, PlayerShip } from '../player/index.js';
 import { createSoaPool, type SoaPool, type SoaSchema } from '../pools/index.js';
 import { LayerId, SpriteFlag, createSpriteBatch, type SpriteBatch } from '../presentation/index.js';
+import { MAX_LIVES } from '../scoring/index.js';
 import {
+  ShieldKind,
+  armWearFrame,
+  collectArm,
   FORCE_FIELD,
   MAX_SHIELD_PODS,
   SHIELD_SPECS,
@@ -180,12 +222,12 @@ import {
   tickShield,
   type ShieldSpec,
 } from '../shields/index.js';
-import { MainWeapon, type Loadout } from '../weapons/index.js';
+import { DIRECT_MAX_LEVEL, MainWeapon, type Loadout } from '../weapons/index.js';
 
 /** Module descriptor (see {@link defineModule}). */
 export const moduleInfo = defineModule({
   name: 'powerups',
-  status: 'partial',
+  status: 'implemented',
   specRefs: [
     'shmup_feat.md §6',
     'shmup_feat.md §7',
@@ -195,8 +237,8 @@ export const moduleInfo = defineModule({
   ],
 });
 
-/** Darius-style direct items (M2-05). */
-export type DirectItem = 'red' | 'green' | 'blue' | 'orange' | 'yellow' | 'octagon';
+/** A Darius-style Direct-mode item colour (M2-05; `core/data` {@link DIRECT_ITEMS}). */
+export type DirectItem = DirectItemName;
 
 /** The power-meter slots as codes, in meter order (`config` `METER_SLOT_NAMES` order). */
 export const MeterSlot = {
@@ -365,6 +407,49 @@ export const FREE_OPTION_DRIFT: readonly number[] = Object.freeze([
   -0.5, -0.6, -0.5, 0.6, -0.9, -0.3, -0.9, 0.3, -0.3, -0.9, -0.3, 0.9, -1.1, 0, -0.2, 0,
 ]);
 
+/** Points of every Direct-mode item (M2-05; the capsule's value). */
+export const DIRECT_ITEM_SCORE = 300;
+
+/** Ticks a Direct-mode item drifts before it vanishes (shmup_feat.md §6B "despawn after time"). */
+export const DIRECT_ITEM_TICKS = 600;
+
+/**
+ * Drift velocities of Direct-mode items (screen px/tick, `[vx0, vy0, vx1, vy1]`): an item takes
+ * pair `plan cursor & 1` — slowly left, alternately up and down (it bounces off the playfield's
+ * top and bottom).
+ */
+export const DIRECT_ITEM_DRIFT: readonly number[] = Object.freeze([-0.35, -0.3, -0.35, 0.3]);
+
+/**
+ * The item plan of a stage without `directItems` (M2-05): red and green a level each for every
+ * two blue items, an octagon, a yellow bomb and an orange 1UP along the way (cycling).
+ */
+export const DEFAULT_DIRECT_ITEM_PLAN: readonly DirectItemName[] = Object.freeze([
+  'red',
+  'blue',
+  'green',
+  'blue',
+  'red',
+  'green',
+  'blue',
+  'octagon',
+  'red',
+  'blue',
+  'green',
+  'yellow',
+  'red',
+  'blue',
+  'green',
+  'blue',
+  'orange',
+] as DirectItemName[]);
+
+/**
+ * `SimEventKind.PowerUp` id of a Direct-mode item's effect: this base + its {@link DIRECT_ITEMS}
+ * index (the meter's slot codes stay below it).
+ */
+export const DIRECT_POWER_UP_EVENT_BASE = 16;
+
 /** Kinds of item. Codes are hashed: append, never renumber. */
 export const ItemKind = {
   /** A meter-mode power capsule. */
@@ -379,6 +464,18 @@ export const ItemKind = {
    * {@link FREE_OPTION_TICKS} ticks; collecting it gives an Option back.
    */
   FreeOption: 2,
+  /** Direct mode (M2-05): the red item — main shot + 1 level. */
+  DirectRed: 3,
+  /** Direct mode: the green item — sub-weapon + 1 level. */
+  DirectGreen: 4,
+  /** Direct mode: the blue item — the Arm (grant / repair / next tier). */
+  DirectBlue: 5,
+  /** Direct mode: the orange item — 1UP. */
+  DirectOrange: 6,
+  /** Direct mode: the yellow item — smart bomb. */
+  DirectYellow: 7,
+  /** Direct mode: the red octagon — the next main-shot family. */
+  DirectOctagon: 8,
 } as const;
 
 /** An {@link ItemKind} code. */
@@ -394,11 +491,40 @@ export interface ItemKindSpec {
   readonly score: number;
 }
 
+/** The Direct-mode items' sprites, in {@link DIRECT_ITEMS} order (engine sprites, M2-05). */
+export const DIRECT_ITEM_SPRITES: readonly string[] = Object.freeze(
+  DIRECT_ITEMS.map((item) => 'items/direct-' + item),
+);
+
+/** The {@link ItemKind} of each Direct-mode item, in {@link DIRECT_ITEMS} order. */
+export const DIRECT_ITEM_KINDS: readonly ItemKind[] = Object.freeze([
+  ItemKind.DirectRed,
+  ItemKind.DirectGreen,
+  ItemKind.DirectBlue,
+  ItemKind.DirectOrange,
+  ItemKind.DirectYellow,
+  ItemKind.DirectOctagon,
+] as ItemKind[]);
+
+/**
+ * The item kind of a Direct-mode colour.
+ *
+ * @param item - A {@link DirectItem}.
+ * @returns Its {@link ItemKind} (-1 for an unknown name).
+ */
+export function directItemKind(item: DirectItem): number {
+  const index = DIRECT_ITEMS.indexOf(item);
+  return index >= 0 ? DIRECT_ITEM_KINDS[index] : -1;
+}
+
 /** Item kinds by {@link ItemKind} code. */
 export const ITEM_KINDS: readonly ItemKindSpec[] = Object.freeze([
   Object.freeze({ sprite: CAPSULE_SPRITE, frames: 2, score: CAPSULE_SCORE }),
   Object.freeze({ sprite: BLUE_CAPSULE_SPRITE, frames: 2, score: CAPSULE_SCORE }),
   Object.freeze({ sprite: STOLEN_OPTION_SPRITE, frames: 2, score: 0 }),
+  ...DIRECT_ITEM_SPRITES.map((sprite) =>
+    Object.freeze({ sprite, frames: 2, score: DIRECT_ITEM_SCORE }),
+  ),
 ]);
 
 /** The sprites of every item kind (part of the World's `ENGINE_SPRITES`). */
@@ -744,6 +870,64 @@ export function applyDeathPenalty(
   return -1;
 }
 
+/**
+ * Direct-mode death penalty (M2-05, shmup_feat.md §10 / decision D6 for the direct ship). Never
+ * allocates.
+ *
+ * @remarks
+ * Every preset loses the Arm (and its blue-item count). `arcade`: both levels to 0 and the first
+ * family (the stage also restarts at the last checkpoint, as in meter mode). `classic`: one level —
+ * the main shot's if it has any, else the sub-weapon's. `casual` (Darius Twin): nothing more. The
+ * Speed toggle's level is the player's choice and stays.
+ *
+ * @param preset - `GameConfig.deathPenalty`.
+ * @param ship - The player's ship (its shield).
+ * @param loadout - The player's loadout (`shot`, `sub`, `family`).
+ * @returns What `classic` took: 0 a main-shot level, 1 a sub-weapon level, -1 nothing (or another
+ *   preset).
+ *
+ * @example
+ * ```ts
+ * applyDirectDeathPenalty('classic', ship, loadout); // → 0: shot level 5 → 4, the Arm gone
+ * ```
+ */
+export function applyDirectDeathPenalty(
+  preset: DeathPenaltyPreset,
+  ship: Pick<PlayerShip, 'shield'>,
+  loadout: Loadout,
+): number {
+  clearShield(ship.shield);
+  if (preset === 'arcade') {
+    loadout.shot = 0;
+    loadout.sub = 0;
+    loadout.family = 0;
+    return -1;
+  }
+  if (preset !== 'classic') return -1;
+  if (loadout.shot > 0) {
+    loadout.shot--;
+    return 0;
+  }
+  if (loadout.sub > 0) {
+    loadout.sub--;
+    return 1;
+  }
+  return -1;
+}
+
+/**
+ * The top level a Direct-mode family allows: its `levels.length − 1`, at most
+ * {@link DIRECT_MAX_LEVEL} (0 without a family).
+ *
+ * @param family - The family, or `null` / `undefined`.
+ * @returns The top level.
+ */
+export function directMaxLevel(family: Readonly<WeaponFamilySpec> | null | undefined): number {
+  if (family === null || family === undefined) return 0;
+  const top = family.levels.length - 1;
+  return top < 0 ? 0 : top > DIRECT_MAX_LEVEL ? DIRECT_MAX_LEVEL : top;
+}
+
 /** Pickups of the last collision phase (reset at the start of phase 6). */
 export interface PowerUpOutcomes {
   /** Items collected. */
@@ -827,6 +1011,13 @@ export interface PowerUpHost {
     /** One loadout per player slot. */
     readonly loadouts: readonly Loadout[];
     /**
+     * The Direct-mode main families (`WeaponSystem.mainFamilies`, M2-05): the red items' cap and the
+     * octagon's cycle. Absent: none.
+     */
+    readonly mainFamilies?: readonly WeaponFamilySpec[];
+    /** The Direct-mode sub family (`WeaponSystem.subFamily`): the green items' cap. */
+    readonly subFamily?: WeaponFamilySpec | null;
+    /**
      * Per player: the heading of the last 8-way direction held (`WeaponSystem.freeWayHeading`, -1
      * before any) — where a Free Shield pair attaches (M2-04). Absent: ahead.
      */
@@ -859,6 +1050,36 @@ export interface PowerUpSystem {
   readonly maxSpeedLevel: number;
   /** What the `?` and `!` slots do in this session (from the config — M2-03). */
   readonly choices: Readonly<MeterChoices>;
+  /** Whether the session plays Direct mode (`GameConfig.powerUpMode === 'direct'`, M2-05). */
+  readonly direct: boolean;
+  /**
+   * The Direct-mode item plan as {@link DIRECT_ITEMS} indices (the stage's `directItems`, else
+   * {@link DEFAULT_DIRECT_ITEM_PLAN}).
+   */
+  readonly plan: Uint8Array;
+  /**
+   * Direct-mode items handed out so far (hashed): the next drop is `plan[planCursor % plan.length]`
+   * — the plan cycles, and a checkpoint restart does not rewind it.
+   */
+  readonly planCursor: number;
+  /**
+   * A Direct-mode item's effect on a player (every pickup of one calls it — M2-05; see the module
+   * docs' table). Never allocates.
+   *
+   * @param player - Player slot.
+   * @param item - The item's {@link DIRECT_ITEMS} index.
+   * @returns Whether it changed something (a level, the Arm, a life, the family, a smart bomb).
+   */
+  collectDirect(player: number, item: number): boolean;
+  /**
+   * Drops the next planned Direct-mode item (M2-05; what a `powerup` / `capsule` drop becomes in
+   * Direct mode — tests and tools may call it): advances {@link PowerUpSystem.planCursor}.
+   *
+   * @param x - World x.
+   * @param y - World y.
+   * @returns The item slot, or -1 (full pool — the plan still advances).
+   */
+  dropDirect(x: number, y: number): number;
   /**
    * Drops an item (enemy drops go through here; tests and tools may call it).
    *
@@ -956,8 +1177,9 @@ export interface PowerUpSystem {
   regainOption(player: number): boolean;
   /**
    * Phase 2, after the ships moved and before the weapons fire: the PowerUp press of every active
-   * ship that is not `dying` / `dead` (pressed edge only), then its shield pods are placed round
-   * it (`core/shields` `placeShieldPods`, M2-04) for this tick's collisions. Never allocates.
+   * ship that is not `dying` / `dead` (pressed edge only) — in Direct mode the Speed press instead
+   * (the toggle, M2-05) —, then its shield pods are placed round it (`core/shields`
+   * `placeShieldPods`, M2-04) for this tick's collisions. Never allocates.
    */
   updatePlayers(): void;
   /**
@@ -1027,6 +1249,16 @@ class PowerUpSystemImpl implements PowerUpSystem {
   readonly maxSpeedLevel: number;
   /** See {@link PowerUpSystem.choices}. */
   readonly choices: MeterChoices;
+  /** See {@link PowerUpSystem.direct}. */
+  readonly direct: boolean;
+  /** See {@link PowerUpSystem.plan}. */
+  readonly plan: Uint8Array;
+  /** See {@link PowerUpSystem.planCursor}. */
+  planCursor = 0;
+  /** Ticks an item lives per kind (0 = until it leaves the view). */
+  private readonly itemLife: Int32Array;
+  /** 1 per kind that drifts with the view and bounces (freed Options, Direct-mode items). */
+  private readonly itemDrift: Uint8Array;
   /** Sprite id per item kind (-1 = not drawn). */
   private readonly itemSprite: Int32Array;
   /** Animation frames per item kind. */
@@ -1060,8 +1292,9 @@ class PowerUpSystemImpl implements PowerUpSystem {
    * Builds the pool, meters, tables and batches (see {@link createPowerUpSystem}).
    *
    * @param host - The World.
+   * @param stage - The stage the World plays (its Direct-mode item plan), or `null`.
    */
-  constructor(host: PowerUpHost) {
+  constructor(host: PowerUpHost, stage: StageSpec | null) {
     this.host = host;
     this.pool = host.pools.register('items', createSoaPool(MAX_ITEMS, ITEM_SCHEMA));
     this.itemBatch = createSpriteBatch(LayerId.Items, MAX_ITEMS);
@@ -1074,14 +1307,28 @@ class PowerUpSystemImpl implements PowerUpSystem {
     this.itemSprite = new Int32Array(kinds);
     this.itemFrames = new Int32Array(kinds);
     this.itemScore = new Float64Array(kinds);
+    this.itemLife = new Int32Array(kinds);
+    this.itemDrift = new Uint8Array(kinds);
     for (let k = 0; k < kinds; k++) {
       const spec = ITEM_KINDS[k];
       this.itemSprite[k] = sprites.get(spec.sprite) ?? -1;
       this.itemFrames[k] = spec.frames;
       this.itemScore[k] = spec.score;
+      const drifts = k === ItemKind.FreeOption || k >= ItemKind.DirectRed;
+      this.itemDrift[k] = drifts ? 1 : 0;
+      this.itemLife[k] =
+        k === ItemKind.FreeOption ? FREE_OPTION_TICKS : drifts ? DIRECT_ITEM_TICKS : 0;
     }
     const config = host.config;
     this.choices = meterChoicesOf(config);
+    this.direct = config.powerUpMode === 'direct';
+    const planned = stage !== null && stage.directItems.length > 0 ? stage.directItems : null;
+    const plan = planned ?? DEFAULT_DIRECT_ITEM_PLAN;
+    this.plan = new Uint8Array(plan.length);
+    for (let i = 0; i < plan.length; i++) {
+      const index = DIRECT_ITEMS.indexOf(plan[i]);
+      this.plan[i] = index >= 0 ? index : 0;
+    }
     const shieldKinds = SHIELD_SPECS.length;
     this.shieldSprites = new Int32Array(shieldKinds).fill(-1);
     this.shieldFrames = new Int32Array(shieldKinds).fill(1);
@@ -1305,15 +1552,33 @@ class PowerUpSystemImpl implements PowerUpSystem {
   updatePlayers(): void {
     const players = this.host.players;
     const intents = this.host.intents;
+    const direct = this.direct;
     for (let p = 0; p < players.length && p < MAX_PLAYERS; p++) {
       const ship = players[p];
       if (!ship.active || ship.state === 'dying' || ship.state === 'dead') continue;
-      if (p < intents.length && (intents[p].pressed & Action.PowerUp) !== 0) {
+      const pressed = p < intents.length ? intents[p].pressed : 0;
+      if (direct) {
+        // The Speed toggle (remote Ch−, decision D3): the next of the ship's speeds, wrapping.
+        if ((pressed & Action.Speed) !== 0) this.toggleSpeed(ship);
+      } else if ((pressed & Action.PowerUp) !== 0) {
         this.equipHighlighted(p);
       }
       // The pods sit where this tick's collisions test them (after the move and the equip).
       placeShieldPods(ship.shield, ship);
     }
+  }
+
+  /**
+   * The Direct-mode Speed toggle: the next speed level, back to 0 after the last (with the meter
+   * ding).
+   *
+   * @param ship - The ship.
+   */
+  private toggleSpeed(ship: PlayerShip): void {
+    const count = this.host.ship.speeds.length;
+    const next = ship.speedLevel + 1;
+    ship.speedLevel = next >= 0 && next < count ? next : 0;
+    this.pushAtShip(SimEventKind.Sfx, SFX_CUES.MeterAdvance, ship, 0);
   }
 
   /** See {@link PowerUpSystem.beginTick}. */
@@ -1331,8 +1596,10 @@ class PowerUpSystemImpl implements PowerUpSystem {
     const n = o.dropCount;
     for (let d = this.dropsTaken; d < n; d++) {
       const kind = o.dropKind[d];
-      if (kind === DropKind.Capsule) {
-        this.spawnItem(ItemKind.Capsule, o.dropX[d], o.dropY[d]);
+      if (kind === DropKind.Capsule || kind === DropKind.PowerUp) {
+        // Mode-agnostic (M2-05): a capsule for the meter, the next planned item in Direct mode.
+        if (this.direct) this.dropDirect(o.dropX[d], o.dropY[d]);
+        else this.spawnItem(ItemKind.Capsule, o.dropX[d], o.dropY[d]);
       } else if (kind === DropKind.BlueCapsule) {
         this.spawnItem(ItemKind.BlueCapsule, o.dropX[d], o.dropY[d]);
       } else if (kind === DropKind.FreeOption) {
@@ -1346,6 +1613,21 @@ class PowerUpSystemImpl implements PowerUpSystem {
       }
     }
     if (n > this.dropsTaken) this.dropsTaken = n;
+  }
+
+  /** See {@link PowerUpSystem.dropDirect}. */
+  dropDirect(x: number, y: number): number {
+    const plan = this.plan;
+    const cursor = this.planCursor;
+    this.planCursor = cursor + 1;
+    const code = plan.length > 0 ? plan[cursor % plan.length] : 0;
+    const i = this.spawnItem(DIRECT_ITEM_KINDS[code], x, y);
+    if (i >= 0) {
+      const k = (cursor & 1) * 2;
+      this.pool.fields.vx[i] = DIRECT_ITEM_DRIFT[k];
+      this.pool.fields.vy[i] = DIRECT_ITEM_DRIFT[k + 1];
+    }
+    return i;
   }
 
   /**
@@ -1381,8 +1663,10 @@ class PowerUpSystemImpl implements PowerUpSystem {
       f.age[i]++;
       let x = f.x[i] + f.vx[i];
       let y = f.y[i] + f.vy[i];
-      if (f.kind[i] === ItemKind.FreeOption) {
-        // A freed Option drifts with the view and bounces off its top and bottom (M2-04).
+      const kind = f.kind[i];
+      if (this.itemDrift[kind] === 1) {
+        // Freed Options (M2-04) and Direct-mode items (M2-05) drift with the view and bounce off
+        // its top and bottom until their time is up.
         x += dx;
         y += dy;
         const vy = f.vy[i];
@@ -1392,7 +1676,7 @@ class PowerUpSystemImpl implements PowerUpSystem {
         ) {
           f.vy[i] = -vy;
         }
-        if (f.age[i] >= FREE_OPTION_TICKS) {
+        if (f.age[i] >= this.itemLife[kind]) {
           f.x[i] = x;
           f.y[i] = y;
           this.kill(i);
@@ -1490,6 +1774,9 @@ class PowerUpSystemImpl implements PowerUpSystem {
       if (kind === ItemKind.Capsule) this.collect(o.pickupPlayer[k]);
       else if (kind === ItemKind.BlueCapsule) this.clearScreen(o.pickupPlayer[k]);
       else if (kind === ItemKind.FreeOption) this.regainOption(o.pickupPlayer[k]);
+      else if (kind >= ItemKind.DirectRed && kind <= ItemKind.DirectOctagon) {
+        this.collectDirect(o.pickupPlayer[k], kind - ItemKind.DirectRed);
+      }
     }
     const pending = this.megaPending;
     for (let p = 0; p < pending.length; p++) {
@@ -1541,6 +1828,74 @@ class PowerUpSystemImpl implements PowerUpSystem {
     return true;
   }
 
+  /** See {@link PowerUpSystem.collectDirect}. */
+  collectDirect(player: number, item: number): boolean {
+    if (!this.valid(player)) return false;
+    const host = this.host;
+    const ship = host.players[player];
+    const loadout = host.weapons.loadouts[player];
+    this.pushAtShip(SimEventKind.Sfx, SFX_CUES.CapsulePickup, ship, 0);
+    const mains = host.weapons.mainFamilies;
+    const count = mains === undefined ? 0 : mains.length;
+    let changed = false;
+    switch (item) {
+      case 0: {
+        // Red: the main shot's next level (its family's top level caps it).
+        const top =
+          count > 0 && mains !== undefined ? directMaxLevel(mains[loadout.family % count]) : 0;
+        if (loadout.shot < top) {
+          loadout.shot++;
+          changed = true;
+        }
+        break;
+      }
+      case 1: {
+        // Green: the sub-weapon's next level.
+        if (loadout.sub < directMaxLevel(host.weapons.subFamily)) {
+          loadout.sub++;
+          changed = true;
+        }
+        break;
+      }
+      case 2:
+        // Blue: the Arm — grant, repair, next tier.
+        collectArm(ship.shield);
+        changed = true;
+        break;
+      case 3:
+        // Orange: 1UP.
+        if (ship.lives < MAX_LIVES) {
+          ship.lives++;
+          this.pushAtShip(SimEventKind.Sfx, SFX_CUES.ExtraLife, ship, SfxPriority.Critical);
+          changed = true;
+        }
+        break;
+      case 4:
+        // Yellow: the smart bomb.
+        this.detonateMegaCrash(player);
+        changed = true;
+        break;
+      case 5:
+        // The red octagon: the next main-shot family, the level kept (capped by the new family).
+        if (count > 1 && mains !== undefined) {
+          loadout.family = (loadout.family + 1) % count;
+          const top = directMaxLevel(mains[loadout.family]);
+          if (loadout.shot > top) loadout.shot = top;
+          changed = true;
+        }
+        break;
+      default:
+        return false;
+    }
+    if (changed && item !== 3 && item !== 4) {
+      this.pushAtShip(SimEventKind.Sfx, SFX_CUES.PowerUpEquip, ship, 0);
+    }
+    if (changed) {
+      this.pushAtShip(SimEventKind.PowerUp, DIRECT_POWER_UP_EVENT_BASE + item, ship, player);
+    }
+    return changed;
+  }
+
   /** See {@link PowerUpSystem.sync}. */
   sync(): void {
     const items = this.itemBatch;
@@ -1556,11 +1911,10 @@ class PowerUpSystemImpl implements PowerUpSystem {
       const slot = items.count;
       if (slot >= items.capacity) break;
       const frames = this.itemFrames[kind];
-      // A freed Option blinks through its last ticks.
+      // A drifting item (a freed Option, a Direct-mode item) blinks through its last ticks.
+      const life = this.itemLife[kind];
       const expiring =
-        kind === ItemKind.FreeOption &&
-        f.age[i] >= FREE_OPTION_TICKS - ITEM_EXPIRY_BLINK_TICKS &&
-        (f.age[i] & 4) !== 0;
+        life > 0 && f.age[i] >= life - ITEM_EXPIRY_BLINK_TICKS && (f.age[i] & 4) !== 0;
       items.x[slot] = f.x[i];
       items.y[slot] = f.y[i];
       items.spriteId[slot] = sprite;
@@ -1588,7 +1942,9 @@ class PowerUpSystemImpl implements PowerUpSystem {
         shields.x[slot] = ship.x;
         shields.y[slot] = ship.y;
         shields.spriteId[slot] = sprite;
-        shields.frame[slot] = shieldWearFrame(shield, frames);
+        // The Arm (M2-05) draws its tier's colour block of wear frames.
+        shields.frame[slot] =
+          shield.kind === ShieldKind.Arm ? armWearFrame(shield) : shieldWearFrame(shield, frames);
         shields.flags[slot] = hidden ? SpriteFlag.Hidden : 0;
         shields.count = slot + 1;
         continue;
@@ -1625,9 +1981,11 @@ class PowerUpSystemImpl implements PowerUpSystem {
  * Creates the power-up system of a World (load time): the item pool (registered as `items`), one
  * meter per player, the item and shield batches, the compiled Auto Power-Up order, the session's
  * `?` / `!` choices ({@link meterChoicesOf} of the config — M2-03) and the sprite ids of the item
- * kinds and the `?` shield.
+ * kinds and the `?` shield, and the Direct-mode item plan (the stage's `directItems`, else
+ * {@link DEFAULT_DIRECT_ITEM_PLAN} — M2-05).
  *
  * @param host - The World (read at every call — pass the World itself).
+ * @param stage - The stage the World plays (its item plan), or `null` (default — free flight).
  * @returns The system.
  * @throws {Error} When the World already registered a pool named `items`.
  *
@@ -1637,6 +1995,9 @@ class PowerUpSystemImpl implements PowerUpSystem {
  * powerups.spawnItem(ItemKind.Capsule, world.camera.x + 200, world.camera.y + 100);
  * ```
  */
-export function createPowerUpSystem(host: PowerUpHost): PowerUpSystem {
-  return new PowerUpSystemImpl(host);
+export function createPowerUpSystem(
+  host: PowerUpHost,
+  stage: StageSpec | null = null,
+): PowerUpSystem {
+  return new PowerUpSystemImpl(host, stage);
 }

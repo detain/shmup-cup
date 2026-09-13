@@ -134,9 +134,25 @@ class RemoteSession {
     expect(this.ids).toEqual(['title', 'difficulty']);
   }
 
-  /** OK on START in the weapon select (M2-03) that the difficulty menu's OK opened. */
+  /**
+   * OK on the ship select (M2-05) the difficulty menu's OK opened (past its lock): the KESTREL
+   * (focused first) opens the weapon select.
+   */
+  pickShip(): void {
+    expect(this.ids).toEqual(['title', 'difficulty', 'shipSelect']);
+    this.run(2);
+    this.press(TIZEN_KEY_CODES.Enter);
+    this.run(2);
+    expect(this.ids).toEqual(['title', 'difficulty', 'shipSelect', 'weaponSelect']);
+  }
+
+  /**
+   * OK on START in the weapon select (M2-03) that the ship select opened — after picking the
+   * KESTREL there first when the ship select is still on top.
+   */
   launch(): void {
-    expect(this.ids).toEqual(['title', 'difficulty', 'weaponSelect']);
+    if (this.ids[this.ids.length - 1] === 'shipSelect') this.pickShip();
+    expect(this.ids).toEqual(['title', 'difficulty', 'shipSelect', 'weaponSelect']);
     this.press(TIZEN_KEY_CODES.Enter);
     this.run(1);
     expect(this.ids).toEqual(['game']);
@@ -222,20 +238,47 @@ describe('integration: difficulty menu and continues with the remote (M2-01)', (
     expect(s.ids).toEqual(['game', 'gameOver']);
   });
 
+  it('picks the MANTA in the ship select: Direct mode, no weapon select, Ch- toggles the speed (M2-05)', () => {
+    const s = new RemoteSession();
+    s.openDifficulty();
+    s.press(TIZEN_KEY_CODES.Enter); // NORMAL
+    s.run(2);
+    expect(s.ids).toEqual(['title', 'difficulty', 'shipSelect']);
+    const select = s.game.scenes!.shipSelect;
+    expect(select.focused.id).toBe('kestrel');
+    s.press(TIZEN_KEY_CODES.ArrowDown);
+    expect(select.focused.id).toBe('manta');
+    s.press(TIZEN_KEY_CODES.Enter);
+    s.run(1);
+    expect(s.ids).toEqual(['game']);
+    const world = s.game.world;
+    expect(world.config).toMatchObject({ shipId: 'manta', powerUpMode: 'direct', stage: 'zone-a' });
+    expect(world.ship.id).toBe('manta');
+    expect(world.powerups.direct).toBe(true);
+    expect(world.players[0].speedLevel).toBe(1);
+    s.run(60); // the fly-in
+    s.press(TIZEN_KEY_CODES.ChannelDown);
+    expect(world.players[0].speedLevel).toBe(2);
+    s.press(TIZEN_KEY_CODES.ChannelDown);
+    expect(world.players[0].speedLevel).toBe(0);
+    // The session hi-score table of the MANTA's games is the Direct mode's.
+    expect(s.game.scenes!.modeKey).toBe('direct-normal');
+  });
+
   it('chooses a loadout in the weapon select with the remote only (M2-03, M2-04)', () => {
     const s = new RemoteSession({ stage: null });
     s.openDifficulty();
     s.press(TIZEN_KEY_CODES.Enter); // NORMAL
     s.run(2);
-    expect(s.ids).toEqual(['title', 'difficulty', 'weaponSelect']);
+    s.pickShip(); // KESTREL (M2-05)
     const select = s.game.scenes!.weaponSelect;
-    // Back to the difficulty menu and in again: nothing chosen.
+    // Back to the ship select and in again: nothing chosen.
     s.press(TIZEN_KEY_CODES.Back);
-    expect(s.ids).toEqual(['title', 'difficulty']);
+    expect(s.ids).toEqual(['title', 'difficulty', 'shipSelect']);
     s.run(2);
     s.press(TIZEN_KEY_CODES.Enter);
     s.run(2);
-    expect(s.ids).toEqual(['title', 'difficulty', 'weaponSelect']);
+    expect(s.ids).toEqual(['title', 'difficulty', 'shipSelect', 'weaponSelect']);
     s.press(TIZEN_KEY_CODES.ArrowDown); // START → TYPE
     s.press(TIZEN_KEY_CODES.ArrowRight); // TYPE B
     s.press(TIZEN_KEY_CODES.ArrowRight); // TYPE C

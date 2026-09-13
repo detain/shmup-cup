@@ -6,7 +6,9 @@ tiny hurtbox, separate terrain box, playfield clamping) and decision **D3** (met
 speed levels `1.5 … 4.0` px/tick).
 
 `kestrel.player.json` is the meter-mode ship of the M1 vertical slice (**KESTREL**, D36);
-the Direct-mode ship (**MANTA**) arrives in M2.
+`manta.player.json` is the Direct-mode ship (**MANTA**, M2-05): three speeds with a Speed toggle
+(remote Ch−), starting in the middle one (2.25 px/tick, decision D3). The ship select lists every
+ship in file order; the chosen ship's `mode` becomes the session's power-up model.
 
 ## Format (formatVersion 1)
 
@@ -26,7 +28,9 @@ the Direct-mode ship (**MANTA**) arrives in M2.
       "margins": { "left": 8, "right": 8, "top": 6, "bottom": 6 }, // clamp to the camera view
       "enterTicks": 40,                // uncontrollable fly-in after a spawn
       "respawnInvulnTicks": 150,       // blinking invincibility after a respawn
-      "bankFrames": 1                  // tilt frames on each side of the idle frame
+      "bankFrames": 1,                 // tilt frames on each side of the idle frame
+      "mode": "meter",                 // optional: "meter" (default, the power meter) or "direct" (colour items)
+      "startSpeedLevel": 0             // optional: index into speeds the ship starts with (default 0)
     }
   ]
 }

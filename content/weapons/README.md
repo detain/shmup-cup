@@ -30,6 +30,26 @@ Player weapon definitions for both power-up models, loaded by the core's `weapon
   "presets": [                       // meter-mode loadouts (Type A–D style, original names)
     // every slot is a weapon id or null; "main" is optional
     { "id": "type-a", "missile": "missile.ground", "double": "shot.double", "laser": "laser.pierce" }
+  ],
+  "families": [                      // optional: Direct-mode shot families (M2-05)
+    {
+      "id": "beam-disc",
+      "name": "BEAM > DISC",         // optional (A–Z, 0–9, space . > -; ≤ 16)
+      "label": "DISC",               // the HUD's family label (≤ 5 characters)
+      "slot": "main",                // main (red items, the octagon cycles) | sub (green items)
+      "levels": [                    // 1–9 levels: level 0 … 8
+        { "shots": [{ "weapon": "shot.basic" }], "volleys": 2 },
+        {
+          "shots": [                 // 1–8 projectiles of one volley
+            { "weapon": "shot.basic", "angle": -16, "oy": -2 }, // angle: binary units, 0 forward
+            { "weapon": "shot.basic", "angle": 16, "ox": 0, "oy": 2 }
+          ],
+          "refireTicks": 6,          // optional: ticks between volleys (default: autofireInterval /
+                                     // missileInterval for a sub family)
+          "volleys": 3               // optional: volleys on screen at once (default: the weapons' caps)
+        }
+      ]
+    }
   ]
 }
 ```
@@ -89,7 +109,22 @@ The Spread Bomb's blast is drawn with the engine sprite `shots/blast` (core `wea
 `SPREAD_BLAST_SPRITE`); the HUD shows each MISSILE / DOUBLE / LASER weapon's behaviour name
 (`SPREAD`, `TAIL`, `RIPPLE` … — core `weapons` `WEAPON_BEHAVIOR_LABELS`).
 
-Direct-mode families (9 levels each) will be expressed as `levels: [...]` arrays per
-family id.
+**Direct mode (M2-05, `shmup_feat.md` §7B).** [`direct.weapons.json`](direct.weapons.json) holds
+the MANTA's weapons (slots `main` and `sub`) and its three **families**: the main-shot families
+`beam-disc` (BEAM > DISC: weak missile → wider missiles → twin missiles → one, two, three small
+discs → ever bigger discs) and `laser-wave` (LASER > WAVE: weak missile → blue lasers → a longer
+yellow laser → a round piercing laser → ever bigger piercing crescent waves), and the `sub-weapon`
+family (an arcing bomb → diagonal bombs → diagonal lasers → piercing lasers → piercing discs). Each
+level is one **volley**: its `shots` fire together, each weapon's shots only while `live + n ≤
+volleys × n` (`n` = that weapon's shots in the volley; without `volleys`, the weapon's `cap`).
+The MANTA's main shot plays the content's `main` families in order (a red octagon switches to the
+next), its sub-weapon the first `sub` family; red and green items raise their level (0 … the
+family's last). Every weapon a family fires must belong in the family's slot (`pnpm
+content:check`). Two behaviours are made for them:
+
+| Behaviour | Slot | Params |
+|---|---|---|
+| `direct.bolt` | main, sub | `ox` 8, `oy` 0, `hw` 4, `hh` 2, `frame` 0 (the still sprite frame), `turn` 0 (1 = the frame of the heading's octant: 0 right, 1 down-right … 7 up-right), `hitCooldownTicks` 6 (with `pierce`) — flies straight in its emitter's heading |
+| `direct.bomb` | sub | `gravity` 0, `ox` 2, `oy` 0, `hw` 3, `hh` 3, `blastRadius` 8, `blastTicks` 8, `hitCooldownTicks` 6, `frames` 4 (blast), `frame` 0 — a Spread Bomb fired in its emitter's heading |
 
 See [`example.weapons.json`](example.weapons.json).

@@ -1,0 +1,742 @@
+{
+  "formatVersion": 1,
+  "kind": "weapons",
+  "weapons": [
+    {
+      "id": "direct.missile",
+      "name": "MISSILE",
+      "slot": "main",
+      "behavior": "direct.bolt",
+      "damage": 1,
+      "speed": 6,
+      "cap": 2,
+      "pierce": false,
+      "sprite": "shots/direct-missile",
+      "sfx": "PlayerShot",
+      "params": {
+        "frame": 0,
+        "hw": 4,
+        "hh": 2
+      }
+    },
+    {
+      "id": "direct.missile.wide",
+      "name": "WIDE MISSILE",
+      "slot": "main",
+      "behavior": "direct.bolt",
+      "damage": 2,
+      "speed": 6,
+      "cap": 4,
+      "pierce": false,
+      "sprite": "shots/direct-missile",
+      "sfx": "PlayerShot",
+      "params": {
+        "frame": 1,
+        "hw": 5,
+        "hh": 3
+      }
+    },
+    {
+      "id": "direct.disc.small",
+      "name": "SMALL DISC",
+      "slot": "main",
+      "behavior": "direct.bolt",
+      "damage": 3,
+      "speed": 6.5,
+      "cap": 6,
+      "pierce": false,
+      "sprite": "shots/disc",
+      "sfx": "PlayerShot",
+      "params": {
+        "frame": 0,
+        "hw": 3,
+        "hh": 3
+      }
+    },
+    {
+      "id": "direct.disc",
+      "name": "DISC",
+      "slot": "main",
+      "behavior": "direct.bolt",
+      "damage": 7,
+      "speed": 6.5,
+      "cap": 3,
+      "pierce": false,
+      "sprite": "shots/disc",
+      "sfx": "PlayerShot",
+      "params": {
+        "frame": 1,
+        "hw": 5,
+        "hh": 5
+      }
+    },
+    {
+      "id": "direct.disc.big",
+      "name": "BIG DISC",
+      "slot": "main",
+      "behavior": "direct.bolt",
+      "damage": 9,
+      "speed": 6.5,
+      "cap": 3,
+      "pierce": false,
+      "sprite": "shots/disc",
+      "sfx": "PlayerShot",
+      "params": {
+        "frame": 2,
+        "hw": 7,
+        "hh": 7
+      }
+    },
+    {
+      "id": "direct.disc.huge",
+      "name": "HUGE DISC",
+      "slot": "main",
+      "behavior": "direct.bolt",
+      "damage": 12,
+      "speed": 6.5,
+      "cap": 3,
+      "pierce": false,
+      "sprite": "shots/disc",
+      "sfx": "PlayerShot",
+      "params": {
+        "frame": 3,
+        "hw": 9,
+        "hh": 9
+      }
+    },
+    {
+      "id": "direct.laser",
+      "name": "LASER",
+      "slot": "main",
+      "behavior": "direct.bolt",
+      "damage": 2,
+      "speed": 8,
+      "cap": 2,
+      "pierce": false,
+      "sprite": "shots/beam",
+      "sfx": "PlayerShot",
+      "params": {
+        "frame": 0,
+        "hw": 8,
+        "hh": 1.5
+      }
+    },
+    {
+      "id": "direct.laser.wide",
+      "name": "WIDE LASER",
+      "slot": "main",
+      "behavior": "direct.bolt",
+      "damage": 3,
+      "speed": 8,
+      "cap": 2,
+      "pierce": false,
+      "sprite": "shots/beam",
+      "sfx": "PlayerShot",
+      "params": {
+        "frame": 1,
+        "hw": 8,
+        "hh": 2.5
+      }
+    },
+    {
+      "id": "direct.laser.long",
+      "name": "LONG LASER",
+      "slot": "main",
+      "behavior": "direct.bolt",
+      "damage": 4,
+      "speed": 9,
+      "cap": 2,
+      "pierce": false,
+      "sprite": "shots/beam",
+      "sfx": "PlayerShot",
+      "params": {
+        "frame": 2,
+        "hw": 12,
+        "hh": 2
+      }
+    },
+    {
+      "id": "direct.laser.round",
+      "name": "ROUND LASER",
+      "slot": "main",
+      "behavior": "direct.bolt",
+      "damage": 3,
+      "speed": 9,
+      "cap": 3,
+      "pierce": true,
+      "sprite": "shots/beam",
+      "sfx": "PlayerShot",
+      "params": {
+        "frame": 3,
+        "hw": 12,
+        "hh": 3,
+        "hitCooldownTicks": 6
+      }
+    },
+    {
+      "id": "direct.wave",
+      "name": "WAVE",
+      "slot": "main",
+      "behavior": "direct.bolt",
+      "damage": 3,
+      "speed": 7,
+      "cap": 3,
+      "pierce": true,
+      "sprite": "shots/wave",
+      "sfx": "PlayerShot",
+      "params": {
+        "frame": 0,
+        "hw": 4,
+        "hh": 7,
+        "hitCooldownTicks": 6
+      }
+    },
+    {
+      "id": "direct.wave.big",
+      "name": "BIG WAVE",
+      "slot": "main",
+      "behavior": "direct.bolt",
+      "damage": 4,
+      "speed": 7,
+      "cap": 3,
+      "pierce": true,
+      "sprite": "shots/wave",
+      "sfx": "PlayerShot",
+      "params": {
+        "frame": 1,
+        "hw": 5,
+        "hh": 10,
+        "hitCooldownTicks": 6
+      }
+    },
+    {
+      "id": "direct.wave.wide",
+      "name": "WIDE WAVE",
+      "slot": "main",
+      "behavior": "direct.bolt",
+      "damage": 5,
+      "speed": 7,
+      "cap": 3,
+      "pierce": true,
+      "sprite": "shots/wave",
+      "sfx": "PlayerShot",
+      "params": {
+        "frame": 2,
+        "hw": 6,
+        "hh": 13,
+        "hitCooldownTicks": 6
+      }
+    },
+    {
+      "id": "direct.wave.huge",
+      "name": "HUGE WAVE",
+      "slot": "main",
+      "behavior": "direct.bolt",
+      "damage": 6,
+      "speed": 7,
+      "cap": 3,
+      "pierce": true,
+      "sprite": "shots/wave",
+      "sfx": "PlayerShot",
+      "params": {
+        "frame": 3,
+        "hw": 7,
+        "hh": 16,
+        "hitCooldownTicks": 6
+      }
+    },
+    {
+      "id": "direct.bomb.arc",
+      "name": "ARC BOMB",
+      "slot": "sub",
+      "behavior": "direct.bomb",
+      "damage": 2,
+      "speed": 3,
+      "cap": 4,
+      "pierce": false,
+      "sprite": "shots/sub-bomb",
+      "sfx": "PlayerMissile",
+      "params": {
+        "gravity": 0.06,
+        "oy": 2
+      }
+    },
+    {
+      "id": "direct.bomb",
+      "name": "BOMB",
+      "slot": "sub",
+      "behavior": "direct.bomb",
+      "damage": 2,
+      "speed": 3,
+      "cap": 4,
+      "pierce": false,
+      "sprite": "shots/sub-bomb",
+      "sfx": "PlayerMissile",
+      "params": {}
+    },
+    {
+      "id": "direct.sub.laser",
+      "name": "SUB LASER",
+      "slot": "sub",
+      "behavior": "direct.bolt",
+      "damage": 2,
+      "speed": 5,
+      "cap": 4,
+      "pierce": false,
+      "sprite": "shots/sub-laser",
+      "sfx": "PlayerMissile",
+      "params": {
+        "turn": 1,
+        "ox": 0,
+        "hw": 3,
+        "hh": 3
+      }
+    },
+    {
+      "id": "direct.sub.laser.wide",
+      "name": "WIDE SUB LASER",
+      "slot": "sub",
+      "behavior": "direct.bolt",
+      "damage": 2,
+      "speed": 5,
+      "cap": 8,
+      "pierce": true,
+      "sprite": "shots/sub-laser-wide",
+      "sfx": "PlayerMissile",
+      "params": {
+        "turn": 1,
+        "ox": 0,
+        "hw": 4,
+        "hh": 4,
+        "hitCooldownTicks": 6
+      }
+    },
+    {
+      "id": "direct.sub.disc",
+      "name": "SUB DISC",
+      "slot": "sub",
+      "behavior": "direct.bolt",
+      "damage": 3,
+      "speed": 4.5,
+      "cap": 4,
+      "pierce": true,
+      "sprite": "shots/sub-disc",
+      "sfx": "PlayerMissile",
+      "params": {
+        "frame": 0,
+        "ox": 0,
+        "hw": 4,
+        "hh": 4,
+        "hitCooldownTicks": 6
+      }
+    },
+    {
+      "id": "direct.sub.disc.big",
+      "name": "BIG SUB DISC",
+      "slot": "sub",
+      "behavior": "direct.bolt",
+      "damage": 4,
+      "speed": 4.5,
+      "cap": 4,
+      "pierce": true,
+      "sprite": "shots/sub-disc",
+      "sfx": "PlayerMissile",
+      "params": {
+        "frame": 1,
+        "ox": 0,
+        "hw": 6,
+        "hh": 6,
+        "hitCooldownTicks": 6
+      }
+    }
+  ],
+  "families": [
+    {
+      "id": "beam-disc",
+      "name": "BEAM > DISC",
+      "label": "DISC",
+      "slot": "main",
+      "levels": [
+        {
+          "shots": [
+            {
+              "weapon": "direct.missile"
+            }
+          ],
+          "volleys": 2
+        },
+        {
+          "shots": [
+            {
+              "weapon": "direct.missile.wide"
+            }
+          ],
+          "volleys": 2
+        },
+        {
+          "shots": [
+            {
+              "weapon": "direct.missile.wide",
+              "oy": -4
+            },
+            {
+              "weapon": "direct.missile.wide",
+              "oy": 4
+            }
+          ],
+          "volleys": 2
+        },
+        {
+          "shots": [
+            {
+              "weapon": "direct.disc.small"
+            }
+          ],
+          "volleys": 3
+        },
+        {
+          "shots": [
+            {
+              "weapon": "direct.disc.small",
+              "angle": -16
+            },
+            {
+              "weapon": "direct.disc.small",
+              "angle": 16
+            }
+          ],
+          "volleys": 3
+        },
+        {
+          "shots": [
+            {
+              "weapon": "direct.disc.small",
+              "angle": -32
+            },
+            {
+              "weapon": "direct.disc.small"
+            },
+            {
+              "weapon": "direct.disc.small",
+              "angle": 32
+            }
+          ],
+          "volleys": 3
+        },
+        {
+          "shots": [
+            {
+              "weapon": "direct.disc"
+            }
+          ],
+          "volleys": 3
+        },
+        {
+          "shots": [
+            {
+              "weapon": "direct.disc.big"
+            }
+          ],
+          "volleys": 3
+        },
+        {
+          "shots": [
+            {
+              "weapon": "direct.disc.huge"
+            }
+          ],
+          "volleys": 3
+        }
+      ]
+    },
+    {
+      "id": "laser-wave",
+      "name": "LASER > WAVE",
+      "label": "WAVE",
+      "slot": "main",
+      "levels": [
+        {
+          "shots": [
+            {
+              "weapon": "direct.missile"
+            }
+          ],
+          "volleys": 2
+        },
+        {
+          "shots": [
+            {
+              "weapon": "direct.laser"
+            }
+          ],
+          "volleys": 2
+        },
+        {
+          "shots": [
+            {
+              "weapon": "direct.laser.wide"
+            }
+          ],
+          "volleys": 2
+        },
+        {
+          "shots": [
+            {
+              "weapon": "direct.laser.long"
+            }
+          ],
+          "volleys": 2
+        },
+        {
+          "shots": [
+            {
+              "weapon": "direct.laser.round"
+            }
+          ],
+          "volleys": 3
+        },
+        {
+          "shots": [
+            {
+              "weapon": "direct.wave"
+            }
+          ],
+          "volleys": 3
+        },
+        {
+          "shots": [
+            {
+              "weapon": "direct.wave.big"
+            }
+          ],
+          "volleys": 3
+        },
+        {
+          "shots": [
+            {
+              "weapon": "direct.wave.wide"
+            }
+          ],
+          "volleys": 3
+        },
+        {
+          "shots": [
+            {
+              "weapon": "direct.wave.huge"
+            }
+          ],
+          "volleys": 3
+        }
+      ]
+    },
+    {
+      "id": "sub-weapon",
+      "name": "SUB WEAPON",
+      "label": "SUB",
+      "slot": "sub",
+      "levels": [
+        {
+          "shots": [
+            {
+              "weapon": "direct.bomb.arc",
+              "angle": 32
+            }
+          ],
+          "volleys": 1
+        },
+        {
+          "shots": [
+            {
+              "weapon": "direct.bomb",
+              "angle": 896
+            },
+            {
+              "weapon": "direct.bomb",
+              "angle": 128
+            }
+          ],
+          "volleys": 1
+        },
+        {
+          "shots": [
+            {
+              "weapon": "direct.bomb",
+              "angle": 896
+            },
+            {
+              "weapon": "direct.bomb",
+              "angle": 128
+            },
+            {
+              "weapon": "direct.bomb",
+              "angle": 640
+            },
+            {
+              "weapon": "direct.bomb",
+              "angle": 384
+            }
+          ],
+          "volleys": 1
+        },
+        {
+          "shots": [
+            {
+              "weapon": "direct.sub.laser",
+              "angle": 896
+            },
+            {
+              "weapon": "direct.sub.laser",
+              "angle": 128
+            },
+            {
+              "weapon": "direct.bomb",
+              "angle": 640
+            },
+            {
+              "weapon": "direct.bomb",
+              "angle": 384
+            }
+          ],
+          "volleys": 1
+        },
+        {
+          "shots": [
+            {
+              "weapon": "direct.sub.laser",
+              "angle": 128
+            },
+            {
+              "weapon": "direct.sub.laser",
+              "angle": 384
+            },
+            {
+              "weapon": "direct.sub.laser",
+              "angle": 640
+            },
+            {
+              "weapon": "direct.sub.laser",
+              "angle": 896
+            }
+          ],
+          "volleys": 1
+        },
+        {
+          "shots": [
+            {
+              "weapon": "direct.sub.laser.wide",
+              "angle": 128
+            },
+            {
+              "weapon": "direct.sub.laser.wide",
+              "angle": 384
+            },
+            {
+              "weapon": "direct.sub.laser.wide",
+              "angle": 640
+            },
+            {
+              "weapon": "direct.sub.laser.wide",
+              "angle": 896
+            }
+          ],
+          "volleys": 1
+        },
+        {
+          "shots": [
+            {
+              "weapon": "direct.sub.laser.wide",
+              "angle": 128,
+              "ox": 2,
+              "oy": -2
+            },
+            {
+              "weapon": "direct.sub.laser.wide",
+              "angle": 128,
+              "ox": -2,
+              "oy": 2
+            },
+            {
+              "weapon": "direct.sub.laser.wide",
+              "angle": 384,
+              "ox": -2,
+              "oy": -2
+            },
+            {
+              "weapon": "direct.sub.laser.wide",
+              "angle": 384,
+              "ox": 2,
+              "oy": 2
+            },
+            {
+              "weapon": "direct.sub.laser.wide",
+              "angle": 640,
+              "ox": -2,
+              "oy": 2
+            },
+            {
+              "weapon": "direct.sub.laser.wide",
+              "angle": 640,
+              "ox": 2,
+              "oy": -2
+            },
+            {
+              "weapon": "direct.sub.laser.wide",
+              "angle": 896,
+              "ox": 2,
+              "oy": 2
+            },
+            {
+              "weapon": "direct.sub.laser.wide",
+              "angle": 896,
+              "ox": -2,
+              "oy": -2
+            }
+          ],
+          "volleys": 1
+        },
+        {
+          "shots": [
+            {
+              "weapon": "direct.sub.disc",
+              "angle": 128
+            },
+            {
+              "weapon": "direct.sub.disc",
+              "angle": 384
+            },
+            {
+              "weapon": "direct.sub.disc",
+              "angle": 640
+            },
+            {
+              "weapon": "direct.sub.disc",
+              "angle": 896
+            }
+          ],
+          "volleys": 1
+        },
+        {
+          "shots": [
+            {
+              "weapon": "direct.sub.disc.big",
+              "angle": 128
+            },
+            {
+              "weapon": "direct.sub.disc.big",
+              "angle": 384
+            },
+            {
+              "weapon": "direct.sub.disc.big",
+              "angle": 640
+            },
+            {
+              "weapon": "direct.sub.disc.big",
+              "angle": 896
+            }
+          ],
+          "volleys": 1
+        }
+      ]
+    }
+  ]
+}

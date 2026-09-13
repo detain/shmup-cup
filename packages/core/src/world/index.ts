@@ -85,6 +85,16 @@
  * +2 instead of a shield's +4. The view carries the Options a hunter carries as the last batch
  * (`EnemySystem.carriedBatch`).
  *
+ * **Direct mode and the ship (M2-05).** The players fly the config's ship (`shipId` — the
+ * KESTREL, or the MANTA of the ship select; `core/player` `resolvePlayerShip`). With
+ * `powerUpMode: 'direct'` the weapons fire the content's shot families at the loadouts' levels, the
+ * power-up system turns the tick's `powerup` / `capsule` drops into the stage's planned colour
+ * items (red, green, blue, orange, yellow, octagon — its `directItems`) and reads the Speed toggle
+ * in phase 2 instead of the PowerUp press, the blue items grow the Arm (which absorbs terrain
+ * contact too), a death costs {@link applyDirectDeathPenalty}'s power, the starting loadout is
+ * `core/weapons` `applyDirectLoadout` (the ship's `startSpeedLevel`) and the rank's power term is
+ * `core/rank` `directPowerRank` (half the shot and sub levels plus the Arm's tier).
+ *
  * **Player weapons (M1-10).** {@link World.weapons} (`core/weapons`, Options from `core/options`)
  * owns the `playerShots` pool, one loadout (`config.loadout` at creation) and one option group per
  * player: after the ships move in phase 2 the option trails advance and every shooter (ship and
@@ -212,6 +222,7 @@ import { createPatternVm, type PatternVm } from '../patterns/index.js';
 import {
   ITEM_SPRITES,
   applyDeathPenalty,
+  applyDirectDeathPenalty,
   createPowerUpSystem,
   type PowerUpSystem,
 } from '../powerups/index.js';
@@ -220,6 +231,7 @@ import { SHIELD_SPRITES, ShieldKind, shieldActive, shieldSpecOf } from '../shiel
 import {
   MainWeapon,
   WEAPON_SPRITES,
+  applyDirectLoadout,
   applyLoadoutPreset,
   createWeaponSystem,
   type WeaponSystem,
@@ -264,7 +276,13 @@ import {
   type WarningView,
   type WorldView,
 } from '../presentation/index.js';
-import { computeRank, createRankInputs, powerRank, type RankInputs } from '../rank/index.js';
+import {
+  computeRank,
+  createRankInputs,
+  directPowerRank,
+  powerRank,
+  type RankInputs,
+} from '../rank/index.js';
 import { createRngStreams, type RngStreams } from '../rng/index.js';
 import {
   StageEventCode,
@@ -785,7 +803,9 @@ const damageSystem: WorldSystem = (world) => {
 /**
  * Recomputes the World's rank (shmup_feat.md §15): the power term of the most powerful active
  * ship — dying, dead and respawning ones included (see the remarks) — (`core/rank` `powerRank`:
- * Missile +1, Double +2, Laser +3, each Option +1, a shield +4 — Reduce +2 instead, M2-04) goes
+ * Missile +1, Double +2, Laser +3, each Option +1, a shield +4 — Reduce +2 instead, M2-04; in
+ * Direct mode `directPowerRank`: half the shot and sub levels plus +2 / +3 / +4 for the Arm's
+ * tier, M2-05) goes
  * into {@link World.rankInputs}, `computeRank` gives the rank, and a changed rank is handed to the
  * bullet system (`BulletSystem.setRank` — the curves are only
  * evaluated then). The World calls it at the end of phase 3; call it after changing
@@ -809,10 +829,18 @@ export function updateWorldRank(world: World): number {
   const players = world.players;
   const loadouts = world.weapons.loadouts;
   let power = 0;
+  const direct = world.config.powerUpMode === 'direct';
   for (let i = 0; i < players.length; i++) {
     const ship = players[i];
     if (!ship.active) continue;
     const loadout = loadouts[i];
+    if (direct) {
+      // Direct mode (M2-05): half the shot and sub levels, plus the Arm's tier.
+      const shielded = shieldActive(ship.shield) && ship.shield.kind === ShieldKind.Arm;
+      const d = directPowerRank(loadout.shot, loadout.sub, shielded ? ship.shield.tier : 0);
+      if (d > power) power = d;
+      continue;
+    }
     const main = loadout.main;
     const shielded = shieldActive(ship.shield);
     const reduced = shielded && ship.shield.kind === ShieldKind.Reduce;
@@ -859,8 +887,9 @@ export function canContinue(world: World): boolean {
  *
  * @remarks
  * Every active ship: lives back to `config.startingLives`, power gone (`applyDeathPenalty`
- * `arcade`: no shield, basic shot, no Missile / Options, speed 0, meter cursor reset), then the
- * config's starting loadout (`applyLoadoutPreset`), and its score marks the continue
+ * `arcade`: no shield, basic shot, no Missile / Options, speed 0, meter cursor reset — in Direct
+ * mode `applyDirectDeathPenalty`), then the config's starting loadout (`applyLoadoutPreset`, or
+ * `applyDirectLoadout` in Direct mode), and its score marks the continue
  * (`markContinue`). The stage restarts at its last checkpoint (`StageRunner.restartAt`, which
  * empties every pool and system — the boss and its WARNING too) and its stage theme is queued
  * again (`SimEventKind.Music`; the continue countdown faded the music out), or the session is
@@ -886,8 +915,9 @@ export function continueWorld(world: World): boolean {
     if (!ship.active) continue;
     ship.lives = config.startingLives;
     const loadout = world.weapons.loadouts[i];
-    applyDeathPenalty('arcade', ship, loadout, world.powerups.meters[i]);
-    applyLoadoutPreset(loadout, ship, config.loadout, shieldSpecOf(config.shieldChoice));
+    if (config.powerUpMode === 'direct') applyDirectDeathPenalty('arcade', ship, loadout);
+    else applyDeathPenalty('arcade', ship, loadout, world.powerups.meters[i]);
+    applyStartingLoadout(world, i);
     markContinue(board, i);
   }
   const stage = world.stage;
@@ -940,12 +970,35 @@ function killShip(world: World, slot: number): void {
   requestHitStop(world, DEATH_HIT_STOP_TICKS);
   requestShake(world, ShakeMagnitude.Medium, DEATH_SHAKE_TICKS);
   world.bullets.cancelAll(CancelMode.Sparkle);
-  applyDeathPenalty(
-    world.config.deathPenalty,
-    ship,
-    world.weapons.loadouts[slot],
-    world.powerups.meters[slot],
-  );
+  if (world.config.powerUpMode === 'direct') {
+    applyDirectDeathPenalty(world.config.deathPenalty, ship, world.weapons.loadouts[slot]);
+  } else {
+    applyDeathPenalty(
+      world.config.deathPenalty,
+      ship,
+      world.weapons.loadouts[slot],
+      world.powerups.meters[slot],
+    );
+  }
+}
+
+/**
+ * Applies the config's starting loadout to one player (creation, a continue): `applyLoadoutPreset`
+ * with the `?` choice's shield for the meter, `applyDirectLoadout` with the ship's
+ * `startSpeedLevel` in Direct mode (M2-05). Cold path.
+ *
+ * @param world - The world (its weapons exist).
+ * @param slot - The player slot.
+ */
+function applyStartingLoadout(world: WorldUnderConstruction | World, slot: number): void {
+  const config = world.config;
+  const loadout = world.weapons.loadouts[slot];
+  const ship = world.players[slot];
+  if (config.powerUpMode === 'direct') {
+    applyDirectLoadout(loadout, ship, config.loadout, world.ship.startSpeedLevel);
+  } else {
+    applyLoadoutPreset(loadout, ship, config.loadout, shieldSpecOf(config.shieldChoice));
+  }
 }
 
 /**
@@ -1097,14 +1150,16 @@ export const ENGINE_SPRITES: readonly string[] = Object.freeze([
 ]);
 
 /**
- * Creates a gameplay session: RNG streams from `config.seed`, the ship from `content`, the stage
+ * Creates a gameplay session: RNG streams from `config.seed`, the ship `config.shipId` from
+ * `content` (M2-05; the content's first ship when it has no such one), the stage
  * `config.stage` (camera at its start — or just before its boss with `config.stageSkip: 'boss'` —,
  * stage theme queued as a music event) or a static camera,
  * the enemy system (specs and the stage's spawn events compiled, 64 free slots), player 1
  * starting its fly-in at the left edge of the view, player 2 inactive. The weapons fire the
  * config's arsenal (`weaponPreset` / `weaponEdit`, M2-03) and the `?` / `!` slots follow its
  * `shieldChoice` / `megaChoice`; the starting loadout (`config.loadout`) is applied to every
- * player (a `'full'` one with the `?` choice's shield).
+ * player (a `'full'` one with the `?` choice's shield; in Direct mode — M2-05 — the levels, the
+ * Arm and the ship's starting speed of `applyDirectLoadout`).
  *
  * @param config - The resolved session config (`resolveGameConfig`).
  * @param content - Validated content (`loadContent(...).db`; `EMPTY_CONTENT_DB` gives the
@@ -1129,7 +1184,7 @@ export function createWorld(
   content: ContentDb,
   options: WorldOptions = {},
 ): World {
-  const ship = resolvePlayerShip(content);
+  const ship = resolvePlayerShip(content, config.shipId);
   const stageSpec = resolveWorldStage(config, content);
   // A class instance, not a literal: see `createStageCamera` (keeps the fields unboxed doubles).
   const camera: WorldCamera = createStageCamera();
@@ -1202,12 +1257,9 @@ export function createWorld(
   world.bosses = createBossSystem(world, options.bossBehaviors ?? DEFAULT_BOSS_BEHAVIORS);
   world.laserSources = Object.freeze([...world.enemies.enemies, ...world.bosses.boss.parts]);
   world.weapons = createWeaponSystem(world);
-  world.powerups = createPowerUpSystem(world);
+  world.powerups = createPowerUpSystem(world, stageSpec);
   world.scoring = createScoringSystem(world);
-  const shield = shieldSpecOf(config.shieldChoice);
-  for (let slot = 0; slot < MAX_PLAYERS; slot++) {
-    applyLoadoutPreset(world.weapons.loadouts[slot], players[slot], config.loadout, shield);
-  }
+  for (let slot = 0; slot < MAX_PLAYERS; slot++) applyStartingLoadout(world, slot);
   // The starting loadout counts towards the rank from the first tick.
   updateWorldRank(world);
   // Same-layer batches draw in list order: the Options below the ships, the shields over them.

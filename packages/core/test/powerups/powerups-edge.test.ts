@@ -320,7 +320,18 @@ describe('core/powerups edge — meter helpers', () => {
     });
     expect(Object.isFrozen(ITEM_KINDS)).toBe(true);
     expect(Object.isFrozen(ITEM_KINDS[0])).toBe(true);
-    expect(ITEM_SPRITES).toEqual(['items/capsule', 'items/capsule-blue', 'options/stolen']);
+    expect(ITEM_SPRITES).toEqual([
+      'items/capsule',
+      'items/capsule-blue',
+      'options/stolen',
+      // The Direct-mode colour items (M2-05).
+      'items/direct-red',
+      'items/direct-green',
+      'items/direct-blue',
+      'items/direct-orange',
+      'items/direct-yellow',
+      'items/direct-octagon',
+    ]);
     expect(ENGINE_SPRITES).toContain(CAPSULE_SPRITE);
     expect(Object.keys(ITEM_SCHEMA).sort()).toEqual(['age', 'flags', 'kind', 'vx', 'vy', 'x', 'y']);
     expect(meterSlotOf('bogus' as MeterSlotName)).toBe(-1);

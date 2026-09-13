@@ -210,6 +210,10 @@ function referenceHash(w: World): number {
     num(l.main);
     word(l.missile ? 1 : 0);
     num(l.options);
+    // The Direct-mode levels and family (M2-05).
+    num(l.shot);
+    num(l.sub);
+    num(l.family);
     const g = weapons.options[p];
     num(g.count);
     num(g.stolen);
@@ -256,8 +260,13 @@ function referenceHash(w: World): number {
     for (const array of [shield.podHits, shield.podAngle, shield.podIFrames, shield.podHitTick]) {
       for (const value of array) num(value);
     }
+    // The Arm's tier and blue-item count (M2-05).
+    num(shield.tier);
+    num(shield.charge);
   }
   num(powerups.dropsTaken);
+  // The Direct-mode item plan's cursor (M2-05).
+  num(powerups.planCursor);
   // Effect timers and scores (M1-12) — not the session hi-score.
   const fx = w.fx;
   for (const value of [

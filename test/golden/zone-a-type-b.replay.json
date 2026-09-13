@@ -22,6 +22,7 @@
       "continues": 3,
       "bulletSpeedMul": 1,
       "powerUpMode": "meter",
+      "shipId": "kestrel",
       "deathPenalty": "classic",
       "startingLives": 3,
       "autofire": true,
@@ -58,10 +59,10 @@
     "ANkK"
   ],
   "hashes": [
-    2700936893,
-    2162624773
+    3899646349,
+    3373849525
   ],
-  "finalHash": 3247796430,
+  "finalHash": 2357588490,
   "description": "HALCYON BULWARK with a full Type B loadout (M2-03): Ripple Laser, Spread Bomb blasts, Options",
   "expected": {
     "status": "stageClear",

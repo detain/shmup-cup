@@ -215,9 +215,18 @@ describe('core/bullets', () => {
       // The blue capsule and the grey stolen Option; the shield pod and Reduce (M2-04).
       'items/capsule-blue',
       'options/stolen',
+      // The Direct-mode colour items (M2-05).
+      'items/direct-red',
+      'items/direct-green',
+      'items/direct-blue',
+      'items/direct-orange',
+      'items/direct-yellow',
+      'items/direct-octagon',
       'shields/force-field',
       'shields/pod',
       'shields/reduce',
+      // The Arm (M2-05).
+      'shields/arm',
       // The HUD pieces and the title logo of the scene flow (M1-16).
       ...UI_SPRITES,
     ]);
