@@ -61,4 +61,22 @@ describe('@shmup/core public API', () => {
       expect(testDirs).toContain(dir);
     }
   });
+
+  it('re-exports every runtime export of every module from the package entry (§1.3 item 4)', async () => {
+    const entry = core as Record<string, unknown>;
+    const missing: string[] = [];
+    for (const dir of moduleDirs) {
+      const mod = (await import(`../src/${dir}/index.ts`)) as Record<string, unknown>;
+      for (const name of Object.keys(mod)) {
+        if (name === 'moduleInfo') continue; // per-module metadata, deliberately not re-exported
+        // Object.is: some constants are NaN sentinels (bullets' UNCHANGED).
+        if (!(name in entry) || !Object.is(entry[name], mod[name])) missing.push(`${dir}.${name}`);
+      }
+    }
+    expect(missing).toEqual([]);
+  });
+
+  it('re-exports the Ripple ring width', () => {
+    expect(core.RIPPLE_RING_WIDTH).toBe(4);
+  });
 });
