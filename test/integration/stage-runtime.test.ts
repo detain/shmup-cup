@@ -173,5 +173,7 @@ describe('integration: checkpoint restarts on the shipped stages', () => {
         expect(hashWorld(a.game.world), label).toBe(hashWorld(b.game.world));
       }
     }
-  });
+    // Two full runs per checkpoint of every shipped stage (M2-07 added gimmick-range): seconds
+    // alone, longer under the parallel load of `pnpm test`.
+  }, 60_000);
 });

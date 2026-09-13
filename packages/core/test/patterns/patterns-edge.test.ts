@@ -59,6 +59,7 @@ function body(x = 0, y = 0, anchor: number = BodyAnchor.Air, hh = 4): MoverBody 
     y,
     vx: 0,
     vy: 0,
+    hw: 4,
     hh,
     anchor,
     age: 0,
@@ -293,7 +294,7 @@ describe('core/patterns edge — setMover', () => {
       expect(MOVER_NAMES[i + 1]).toBe(type);
     });
     expect(Object.isFrozen(MOVER_NAMES)).toBe(true);
-    expect(Object.values(MoverKind)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8]);
+    expect(Object.values(MoverKind)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
   });
 
   it('resets the mover state and tick count on every switch', () => {

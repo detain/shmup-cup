@@ -1,0 +1,49 @@
+{
+  "name": "enemies/suction",
+  "description": "Suction pod (original, plan M2-07): a green vortex core whose pull field drags ships towards it; two spin frames.",
+  "palette": { ".": null, "o": "#0a3a1a", "g": "#38c858", "l": "#a8f8b8", "d": "#1a7a3a", "w": "#f0fff0" },
+  "hitFlash": true,
+  "frames": [
+    {
+      "rows": [
+        ".....oooooo.....",
+        "...oodddddgoo...",
+        "..odddgglllgdo..",
+        ".oddglllddddgdo.",
+        ".odglddddddddgo.",
+        "odglddgggggdddgo",
+        "odglddgwwwgdddgo",
+        "odgldgwwwwwgddgo",
+        "odgddgwwwwwgdlgo",
+        "odgdddgwwwgddlgo",
+        "odgdddgggggddlgo",
+        ".ogddddddddddlo.",
+        ".odgddddddlllgo.",
+        "..odglllgggddo..",
+        "...oogdddddoo...",
+        ".....oooooo....."
+      ]
+    },
+    {
+      "rows": [
+        ".....oooooo.....",
+        "...oogdddddoo...",
+        "..odglllgggddo..",
+        ".odgddddddlllgo.",
+        ".ogddddddddddlo.",
+        "odgdddgggggddlgo",
+        "odgdddgwwwgddlgo",
+        "odgddgwwwwwgdlgo",
+        "odgldgwwwwwgddgo",
+        "odglddgwwwgdddgo",
+        "odglddgggggdddgo",
+        ".odglddddddddgo.",
+        ".oddglllddddgdo.",
+        "..odddgglllgdo..",
+        "...oodddddgoo...",
+        ".....oooooo....."
+      ]
+    }
+  ],
+  "animations": {"spin": [0, 1]}
+}

@@ -77,6 +77,8 @@ describe('shell/flight', () => {
       LayerId.AirEnemies,
       // The Options an Option Hunter carries (M2-04).
       LayerId.AirEnemies,
+      // The stage gimmicks' chains (M2-07).
+      LayerId.GroundEnemies,
     ]);
     expect(flight.world.batches.slice(2)).toEqual(game.world.view.batches);
     expect(flight.world.batches[2]).toBe(game.world.enemies.groundBatch);

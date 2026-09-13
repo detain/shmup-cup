@@ -440,7 +440,7 @@ describe('core/data loadContent — per-kind schemas', () => {
       'mover',
       { type: 'spiral' },
       'enemies[0].mover.type',
-      'type must be one of: straight, sine, path, waypoint, follow, groundCrawl, homing, aimedDash',
+      'type must be one of: straight, sine, path, waypoint, follow, groundCrawl, homing, aimedDash, ballistic',
     ],
     [
       'mover',
@@ -514,12 +514,12 @@ describe('core/data loadContent — per-kind schemas', () => {
     [
       { x: 0, type: 'midboss', enemy: 'a' },
       'events[0].type',
-      'type must be one of: spawn, formation, warning, boss, music, speed, flag, end',
+      'type must be one of: spawn, formation, warning, boss, music, speed, flag, end, trigger, block',
     ],
     [
       { x: 0, type: 'branch' },
       'events[0].type',
-      'type must be one of: spawn, formation, warning, boss, music, speed, flag, end',
+      'type must be one of: spawn, formation, warning, boss, music, speed, flag, end, trigger, block',
     ],
     [{ x: -1, type: 'end' }, 'events[0].x', 'must be a finite number in 0..1000000'],
     [{ x: 0, type: 'speed', speed: 17 }, 'events[0].speed', 'must be a finite number in 0..16'],

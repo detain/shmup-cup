@@ -2551,6 +2551,76 @@ Goal of the milestone: every **[P1]** feature. Steps are ordered so systems land
 - **Acceptance:** tile damage/regeneration, rollback restores terrain, branch selection, gimmick unit tests, Tiled
   import of a committed fixture map equals the expected stage JSON.
 - **Refs:** `shmup_feat.md` §14 (destructible terrain, moving floors, gimmicks, branching, authoring in Tiled).
+- **As built:**
+  - **Destructible tiles are tileset data, not a new collision type.** A colliding tile gets
+    optional `hp` (1–255), `regen` (ticks, needs `hp`) and `score`; it still collides as its
+    `type` (so `TerrainType` keeps its codes and "hazard beats solid"). `TilesetTables` gained
+    `hp` / `regen` / `score`. `terrain-a` gained `brick` (hp 4), `cube` (hp 2) and `tissue`
+    (hp 3, regen 240) with their own generated frames (tile ids 18–20).
+  - **`core/collision` `DestructibleTerrain`** (per World, over its private map; the stage's
+    tiles are the pristine copy): a sparse table of 512 damaged / regrowing cells; a shot hits
+    the **cell** of the pixel where it met the terrain (`core/weapons`: straight flights, a laser
+    head it blocks, a Spread Bomb bursting on it, a missile flying into a wall); a hit on a new
+    cell while the table is full is ignored unless it breaks the tile at once. A regenerating tile
+    heals after `regen` ticks without a hit and grows back `regen` ticks after breaking, waiting
+    while a keep-out rectangle (the ships' terrain boxes) overlaps the cell. **Rollback = the
+    stage's own tiles again** on every checkpoint restart / jump / continue (broken tiles back,
+    placed ones gone) — not a snapshot taken when the checkpoint was passed. Changed cells go to a
+    64-entry ring (`count` / `resets` / `cells`), exposed as the new render-contract
+    `TerrainChanges` (`TerrainView.changes`); render-pixi's terrain binding re-textures only the
+    logged cells in view and redraws the grid after a reset or an overflow.
+  - **Moving blocks live inside the terrain queries.** `TerrainMap.blocks` (optional
+    `TerrainBlocks`, ≤ 16 whole-pixel boxes) is tested by `terrainAt`, `terrainRectHit`,
+    `findFloor` and `findCeiling`, so ships die on them, shots / bullets stop at them and crawlers
+    and sliding missiles use them without changes to those systems. They come from a new stage
+    event `block` (`y`, `w`, `h` in whole tiles ≤ 64, `tile` name → `tileId` resolved in the
+    terrain pass, drift `vx` / `vy`, table-sine swing `dx` / `dy` / `period` / `phase`); the
+    left edge is **world** x `event.x + screenX` (default 400) rather than camera-relative, so
+    blocks align with the tiles. Drawn tile by tile (`LayerId.Terrain` batch, ≤ 256 tiles), gone
+    128 px behind the view, respawned at age 0 after a restart when their event lies behind the
+    camera. A block needs a tilemap (load issue otherwise).
+  - **Falling rocks = a mover.** New `MoverKind.Ballistic` (content `ballistic`: `vx`, `vy`,
+    `gravity`, `maxFall`, `trigger`, `land` = `pass` / `stop` / `shatter`); `MoverBody` gained
+    `hw` (its terrain box). The proximity trigger (nearest player within `trigger` px
+    horizontally) lives in the mover, so a waiting rock costs no script wakes. On landing the
+    enemy system shatters a `shatter` body (`EnemySystem.destroy`: explosion, no score / drop, a
+    formation member counts as escaped) or wakes its script on the next tick.
+  - **Branches and triggers.** A stage declares `branches: [{ id, flag, value }]`; every event
+    may name a `branch` (→ `branchId`); an event whose branch is not taken is passed by — neither
+    its runner part nor the hooks. New event `trigger` (`flag`, `value`, world `region`, `until`
+    defaulting to the region's right edge; ≤ 32 per stage) arms its region; the World probes it
+    with the living ships in phase 3 (`StageRunner.probe(point)` — an object, never boxed
+    fractions). `StageRunner` gained `eventActive`, `setFlag`, `holding`, `triggersArmed` /
+    `triggersFired`; `STAGE_STATE_SLOTS` 22 → 28 (hold, hold key, diagonal pan, trigger masks).
+    A restart keeps the outcome of triggers behind it that had fired (applied at their place in
+    the timeline — an approximation of the later tick they fired on) and re-arms unfired ones
+    whose region is still ahead.
+  - **Camera.** `hold` keys are timed scroll stops (a stop key like `lock`: the camera halts
+    exactly at their x, stays `hold` ticks while a `yTo` pan runs — the vertical sections — then
+    scrolls on at the key's speed / ramp; not with `lock`); `yOver` makes a pan diagonal (y linear
+    in the scroll x; not with `yTicks`). High-speed sections needed no new data: speed keys and
+    `speed` events up to 16 px/tick, tested to fire every event once, in order.
+  - **Gimmick modules** (`core/behaviors`): `rock.fall`, `bubble.split` (via the new
+    `BehaviorDef.death` / `EnemyBehavior.death` callback — not on a Mega Crash or the blue
+    capsule), `volcano.lob` (children thrown with the new `ScriptApi.setMoverOf`), `field.suction`,
+    `tentacle.grab` (a lunge with a short pull and a drawn chain — its body kills on contact like
+    any enemy; there is no "held" ship state) and `cube.stack` (the seeded cube rush: a random
+    row from the gameplay stream, aimed, becomes the tileset's `cube` tile where it stops —
+    `ScriptApi.placeTile` / `tileId`). The World-side services are `core/stage` `StageGimmicks`
+    (`stage/systems.ts`: destructible terrain, `MovingBlockSystem`, ≤ 8 pull fields, ≤ 8 chains of
+    ≤ 16 links drawn with the new engine sprite `gimmicks/chain-link`), `World.gimmicks`; the
+    view appends the chain batch (and the block batch) after the existing batches.
+  - **Hashes and goldens.** `hashWorld` mixes the new runner slots and the gimmicks' state; the
+    golden replays were re-blessed for the new hash layout (and the sprite ids shifted by the
+    new engine sprite) — before re-blessing, the goldens were run against the old hash layout
+    and passed, i.e. zone A's simulation is unchanged.
+  - **Content and tools.** `gimmick-range` dev stage + `gimmick-range.enemies.json` + eight
+    pixel-map enemy sprites (`?stage=gimmick-range`, e2e `gimmicks.spec.ts`);
+    `scripts/content/tiled-import.mjs` (root script `pnpm content:tiled`) with the fixture map
+    `test/scripts/content/fixtures/tiled-sample.tmj` and its expected stage / paths JSON. Tiled
+    objects are read by class (`class`, or `type` before Tiled 1.9); spawns fire 400 px before
+    their object's x (`screenX` only when nearer the start); gids map to content tile ids by
+    tileset order; flipped tiles and compressed / base64 layers are refused.
 
 ### M2-08 — Presentation polish: raster effects, palettes, visual options
 

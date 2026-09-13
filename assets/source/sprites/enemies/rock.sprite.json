@@ -1,0 +1,24 @@
+{
+  "name": "enemies/rock",
+  "description": "Falling rock (original, plan M2-07): a craggy grey boulder that hangs from the ceiling and drops when a ship comes near, shattering on the floor.",
+  "palette": { ".": null, "o": "#1e1a22", "g": "#7a7480", "l": "#b0a8b4", "d": "#4a444e" },
+  "hitFlash": true,
+  "frames": [
+    {
+      "rows": [
+        "...oooooo...",
+        "..ollllggo..",
+        ".olllggggdo.",
+        "ollgggggggdo",
+        "olggggdggddo",
+        "oggggdddgggo",
+        "ogggggggggdo",
+        "oggdggggdddo",
+        ".ogddggggdo.",
+        ".odddggddo..",
+        "..oddddddo..",
+        "...oooooo..."
+      ]
+    }
+  ]
+}

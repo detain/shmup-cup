@@ -1,0 +1,29 @@
+{
+  "name": "enemies/lava",
+  "description": "Lava stone (original, plan M2-07): a small glowing rock a volcano lobs on an arc; it shatters where it lands.",
+  "palette": { ".": null, "o": "#4a1000", "r": "#e83818", "y": "#f8a030", "w": "#fff0a0" },
+  "hitFlash": true,
+  "frames": [
+    {
+      "rows": [
+        ".oooo.",
+        "orryro",
+        "orywyo",
+        "oryyro",
+        "orrrro",
+        ".oooo."
+      ]
+    },
+    {
+      "rows": [
+        ".oooo.",
+        "oyrrro",
+        "oryyro",
+        "orywro",
+        "oyrrro",
+        ".oooo."
+      ]
+    }
+  ],
+  "animations": {"glow": [0, 1]}
+}

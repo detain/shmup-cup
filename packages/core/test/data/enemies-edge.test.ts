@@ -174,6 +174,7 @@ describe('core/data enemies — defaults and references', () => {
       'groundCrawl',
       'homing',
       'aimedDash',
+      'ballistic',
     ]);
     for (const table of [ENEMY_GROUNDS, ENEMY_EXPLOSIONS, ENEMY_DROPS, MOVER_TYPES]) {
       expect(Object.isFrozen(table)).toBe(true);

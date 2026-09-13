@@ -1,0 +1,15 @@
+{
+  "formatVersion": 1,
+  "kind": "paths",
+  "paths": [
+    {
+      "id": "tiled-loop",
+      "points": [
+        { "x": 0, "y": 0 },
+        { "x": -40.12, "y": 20 },
+        { "x": -80, "y": 0 },
+        { "x": -40, "y": -20 }
+      ]
+    }
+  ]
+}

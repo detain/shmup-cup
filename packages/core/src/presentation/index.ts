@@ -34,6 +34,7 @@
  * **Public API.** Back-ends: {@link IRenderer}, {@link IAudio}, {@link AudioBus},
  * {@link AudioState}. Frame: {@link RenderFrame}, {@link ScreenView}. World:
  * {@link WorldView}, {@link CameraView}, {@link ParallaxView}, {@link TerrainView},
+ * {@link TerrainChanges} (M2-07),
  * {@link LaserView}, {@link BendingLaserView} (M2-02), {@link WarningView},
  * {@link SpriteBatchView}, {@link SpriteBatch}, {@link createSpriteBatch}, {@link pushSprite},
  * {@link SpriteFlag}. Layers: {@link LayerId}, {@link LAYER_COUNT}, {@link LAYER_NAMES}.
@@ -285,13 +286,29 @@ export interface ParallaxView {
 }
 
 /**
+ * The cells of a terrain view that changed while in play (M2-07: destructible tiles breaking and
+ * growing back, tiles placed by the cube rush) — `core/collision` `DestructibleTerrain` implements
+ * it. The renderer remembers the counts it last saw and re-textures only the changed cells that
+ * are in view; a gap longer than the ring, or a new reset, re-textures the whole grid.
+ */
+export interface TerrainChanges {
+  /** Cells changed so far (a write count: cell `k` of the history is `cells[k % cells.length]`). */
+  readonly count: number;
+  /** Whole-grid rewrites so far (the checkpoint rollback). */
+  readonly resets: number;
+  /** Ring of the last changed cell indices (`row · cols + col`). */
+  readonly cells: ArrayLike<number>;
+}
+
+/**
  * Tile terrain of the current stage (`core/stage`). Drawn as a preallocated tile-sprite grid
  * that is re-textured column by column as the camera crosses tile columns.
  *
  * @remarks
  * Cell `(col, row)` sits at world `(col · tileSize, row · tileSize)`; tile id `t` draws frame
  * `tileFrame[t]` of the tileset sprite (`-1` = nothing). The grid and the tables are live
- * references; the renderer reads a cell when it scrolls into view.
+ * references; the renderer reads a cell when it scrolls into view, and — since M2-07 — again when
+ * {@link TerrainView.changes} lists it.
  */
 export interface TerrainView {
   /** Tile edge in pixels (8). */
@@ -306,6 +323,8 @@ export interface TerrainView {
   readonly tilesetSpriteId: number;
   /** Frame of the tileset sprite per tile id (index 0 = the empty cell, `-1`). */
   readonly tileFrame: ArrayLike<number>;
+  /** Cells changed in play (M2-07 destructible terrain), or `null` / absent for a static map. */
+  readonly changes?: TerrainChanges | null;
 }
 
 /**

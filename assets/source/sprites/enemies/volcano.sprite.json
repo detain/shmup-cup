@@ -1,0 +1,24 @@
+{
+  "name": "enemies/volcano",
+  "description": "Volcano (original, plan M2-07): a squat dark cone with a glowing crater that lobs lava stones; it stands on the floor.",
+  "palette": { ".": null, "o": "#1a0e0a", "b": "#5a3424", "d": "#3a2218", "r": "#e83818", "y": "#f8a030" },
+  "hitFlash": true,
+  "frames": [
+    {
+      "rows": [
+        ".......oyyyyo.......",
+        "......oryyyyro......",
+        ".....obrrrrrrbo.....",
+        "....obbbbbbbbbbo....",
+        "...obbbdbbbbdbbbo...",
+        "...obbbbbbbbbbbbo...",
+        "..obbdbbbbbbbbdbbo..",
+        "..obbbbbbdbbbbbbbo..",
+        ".obbbbbbbbbbbdbbbbo.",
+        ".obdbbbbbbbbbbbbbbo.",
+        "obbbbbdbbbbbbbbdbbbo",
+        "oooooooooooooooooooo"
+      ]
+    }
+  ]
+}

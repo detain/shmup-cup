@@ -84,7 +84,11 @@
  *   {@link StageParallaxLayerName}, {@link StageTilemapSpec}, {@link HeightfieldSpec},
  *   {@link HeightfieldSegment}, {@link HeightfieldProfile}, {@link StageTerrain},
  *   {@link StageEvent} and its variants, {@link STAGE_EVENT_TYPES},
- *   {@link MAX_STAGE_FLAGS}), {@link TilesetSpec} ({@link TileSpec}, {@link TileType},
+ *   {@link MAX_STAGE_FLAGS}; M2-07 {@link StageEventBase}, {@link StageBranch},
+ *   {@link StageTriggerEvent}, {@link StageRegion}, {@link StageBlockEvent},
+ *   {@link MAX_STAGE_TRIGGERS}, {@link MAX_STAGE_BRANCHES}, {@link MAX_BLOCK_CELLS},
+ *   {@link DEFAULT_BLOCK_SCREEN_X}, {@link DEFAULT_BLOCK_PERIOD}, {@link BallisticLandName},
+ *   {@link BALLISTIC_LANDS}), {@link TilesetSpec} ({@link TileSpec}, {@link TileType},
  *   {@link TILE_TYPES}, {@link TileAnchor}, {@link TILE_ANCHORS}, {@link TILE_SIZE},
  *   {@link TilesetTables}).
  * - Everything re-exported from {@link ./schema.js | data/schema}: the combinators `s`,
@@ -112,6 +116,14 @@
  * (`directItems`: the {@link DIRECT_ITEMS} colours, in the order its `powerup` drops hand them out
  * in Direct mode); enemies and formations may drop `powerup` — a capsule in meter mode, the next
  * planned item in Direct mode.
+ *
+ * **Advanced stages (M2-07).** Tiles may be destructible (`hp`, `regen`, `score` —
+ * {@link TileSpec}); camera keys gain timed stops (`hold`) and diagonal pans (`yOver`); a stage may
+ * declare **branches** ({@link StageBranch}: a flag and the value that takes it) and any event may
+ * name one (`branch` → `branchId`), `trigger` events arm world regions that set flags when a ship
+ * enters them and `block` events create moving blocks from a tileset tile (`tile` → `tileId`,
+ * resolved in the terrain pass). Enemy movers gain `ballistic` (thrown / falling bodies with an
+ * optional proximity trigger and a landing rule).
  *
  * **Co-op (M2-06).** Player 2 flies the same ship in its palette-swap colours: for every ship the
  * loader interns the sprite `<sprite>@p2` (the asset pipeline derives it — {@link P2_SPRITE_SUFFIX})
@@ -595,6 +607,7 @@ export const MOVER_TYPES = Object.freeze([
   'groundCrawl',
   'homing',
   'aimedDash',
+  'ballistic',
 ] as const);
 
 /** A mover's content name. */
@@ -677,7 +690,33 @@ export type EnemyMoverSpec =
       readonly speed: number;
       /** Ticks before the dash. */
       readonly windup: number;
+    }
+  | {
+      /**
+       * Thrown or falling (M2-07): starts at (`vx`, `vy`), `gravity` adds to `vy` every tick (at
+       * most `maxFall`); with `trigger` > 0 it waits, still, until the nearest player is within
+       * `trigger` px horizontally (falling rocks); `land` says what terrain does to it.
+       */
+      readonly type: 'ballistic';
+      /** Starting horizontal velocity. */
+      readonly vx: number;
+      /** Starting vertical velocity (negative = up). */
+      readonly vy: number;
+      /** Added to `vy` every tick (default 0). */
+      readonly gravity?: number;
+      /** Fastest fall in px/tick (default 0 = no limit). */
+      readonly maxFall?: number;
+      /** Proximity trigger distance in px (default 0 = moves at once). */
+      readonly trigger?: number;
+      /** `pass` through terrain, `stop` on it (default) or `shatter` (destroyed on landing). */
+      readonly land?: BallisticLandName;
     };
+
+/** What terrain does to a `ballistic` mover (M2-07): the index is the `core/patterns` code. */
+export type BallisticLandName = 'pass' | 'stop' | 'shatter';
+
+/** Every {@link BallisticLandName}, in code order. */
+export const BALLISTIC_LANDS = Object.freeze(['pass', 'stop', 'shatter'] as const);
 
 /**
  * One enemy (`content/enemies/*.enemies.json`, shmup_feat.md §11). Optional fields of the file
@@ -909,10 +948,21 @@ export interface StageCameraKey {
   /** Ticks the vertical pan takes (0 / omitted = at once; needs `yTo`). */
   readonly yTicks?: number;
   /**
+   * A **diagonal** pan (M2-07): the camera y moves linearly to `yTo` while the camera scrolls this
+   * many pixels past `x` (needs `yTo`; not with `yTicks`).
+   */
+  readonly yOver?: number;
+  /**
    * Scroll lock (bosses): the camera stops exactly at `x` and stays until the runner is
    * unlocked (the boss dies, M1-13); then it scrolls on at `speed`.
    */
   readonly lock?: boolean;
+  /**
+   * A timed **scroll stop** (M2-07 — vertical sections): the camera stops exactly at `x`, stays
+   * this many ticks (a `yTo` pan runs meanwhile), then scrolls on at `speed` (with `ramp`). Not
+   * with `lock`.
+   */
+  readonly hold?: number;
 }
 
 /** An invisible restart point (shmup_feat.md §10); sorted by `x`, strictly increasing. */
@@ -1017,8 +1067,22 @@ export interface StageTerrain {
   readonly tilesetId: number;
 }
 
+/**
+ * What every stage event has: its camera x and, since M2-07, an optional **branch** (in-stage
+ * branching paths, shmup_feat.md §14): an event naming a branch fires only while that branch is
+ * taken (its flag has the branch's value — {@link StageBranch}); otherwise the camera passes it.
+ */
+export interface StageEventBase {
+  /** Camera X that fires the event. */
+  readonly x: number;
+  /** Id of the {@link StageBranch} the event belongs to (omitted = always). */
+  readonly branch?: string;
+  /** Index of {@link StageEventBase.branch} in {@link StageSpec.branches} (-1 = none). */
+  readonly branchId?: number;
+}
+
 /** Spawn one enemy when the camera reaches `x` (`core/enemies` spawns it). */
-export interface StageSpawnEvent {
+export interface StageSpawnEvent extends StageEventBase {
   /** Camera X that fires the event. */
   readonly x: number;
   /** Discriminator. */
@@ -1044,7 +1108,7 @@ export interface StageSpawnEvent {
  * Spawn a formation: `count` enemies, one every `interval` ticks, all at the same spawn point;
  * killing every member (none escaped) drops a capsule and awards the bonus (`core/enemies`).
  */
-export interface StageFormationEvent {
+export interface StageFormationEvent extends StageEventBase {
   /** Camera X that fires the event. */
   readonly x: number;
   /** Discriminator. */
@@ -1081,7 +1145,7 @@ export interface StageFormationEvent {
  * Start a boss (shmup_feat.md §13, M1-13): `warning` plays the WARNING sequence (the camera brakes
  * to a lock, 180 ticks of siren and text) and then the boss flies in; `boss` brings it in at once.
  */
-export interface StageBossEvent {
+export interface StageBossEvent extends StageEventBase {
   /** Camera X that fires the event. */
   readonly x: number;
   /** Discriminator. */
@@ -1093,7 +1157,7 @@ export interface StageBossEvent {
 }
 
 /** Change the music track. */
-export interface StageMusicEvent {
+export interface StageMusicEvent extends StageEventBase {
   /** Camera X that fires the event. */
   readonly x: number;
   /** Discriminator. */
@@ -1105,7 +1169,7 @@ export interface StageMusicEvent {
 }
 
 /** Change the scroll speed between camera keys (scripted sections, high-speed runs). */
-export interface StageSpeedEvent {
+export interface StageSpeedEvent extends StageEventBase {
   /** Camera X that fires the event. */
   readonly x: number;
   /** Discriminator. */
@@ -1117,7 +1181,7 @@ export interface StageSpeedEvent {
 }
 
 /** Set or clear a named stage flag (in-stage branches, M2). */
-export interface StageFlagEvent {
+export interface StageFlagEvent extends StageEventBase {
   /** Camera X that fires the event. */
   readonly x: number;
   /** Discriminator. */
@@ -1131,11 +1195,82 @@ export interface StageFlagEvent {
 }
 
 /** The end of the stage (stage clear). */
-export interface StageEndEvent {
+export interface StageEndEvent extends StageEventBase {
   /** Camera X that fires the event. */
   readonly x: number;
   /** Discriminator. */
   readonly type: 'end';
+}
+
+/** A world-space rectangle in pixels (a trigger's region). */
+export interface StageRegion {
+  /** Left edge (world x). */
+  readonly x: number;
+  /** Top edge (world y). */
+  readonly y: number;
+  /** Width (> 0). */
+  readonly w: number;
+  /** Height (> 0). */
+  readonly h: number;
+}
+
+/**
+ * A **region trigger** (M2-07, in-stage branches): from the camera reaching `x` until it passes
+ * `until`, the first living player ship whose centre enters `region` sets (or clears) `flag` —
+ * branches ({@link StageBranch}) then pick the events that follow.
+ */
+export interface StageTriggerEvent extends StageEventBase {
+  /** Camera X that arms the trigger. */
+  readonly x: number;
+  /** Discriminator. */
+  readonly type: 'trigger';
+  /** Flag name (per stage). */
+  readonly flag: string;
+  /** Index of the flag in {@link StageSpec.flagNames}. */
+  readonly flagId: number;
+  /** `true` (default) sets the flag, `false` clears it. */
+  readonly value?: boolean;
+  /** World rectangle a ship's centre must enter. */
+  readonly region: StageRegion;
+  /** Camera x where the trigger disarms (default: `region.x + region.w`, the region gone by). */
+  readonly until?: number;
+}
+
+/**
+ * A **moving block** (M2-07, shmup_feat.md §14 moving floors / ceilings): a `w` × `h` box of the
+ * tileset's tile `tile` (drawn tile by tile) appearing at world x `x + screenX`, world y `y`, that
+ * moves `vx` / `vy` px per tick and swings `dx` / `dy` px around that path (a table sine of
+ * `period` ticks from `phase`). Every terrain query treats it as terrain of the tile's type.
+ */
+export interface StageBlockEvent extends StageEventBase {
+  /** Camera X that creates the block. */
+  readonly x: number;
+  /** Discriminator. */
+  readonly type: 'block';
+  /** Left edge relative to the event's `x` (default 400: just past the view's right edge). */
+  readonly screenX?: number;
+  /** Top edge in world pixels. */
+  readonly y: number;
+  /** Width in pixels (a multiple of the tile size). */
+  readonly w: number;
+  /** Height in pixels (a multiple of the tile size). */
+  readonly h: number;
+  /** Name of the tileset tile that draws it and gives its collision type (default `solid`). */
+  readonly tile?: string;
+  /** Resolved tile id of {@link StageBlockEvent.tile} (set by the loader's terrain pass). */
+  readonly tileId: number;
+  /** Drift in px/tick (default 0). */
+  readonly vx?: number;
+  /** Drift in px/tick (default 0). */
+  readonly vy?: number;
+  /** Swing amplitude in px (default 0). */
+  readonly dx?: number;
+  /** Swing amplitude in px (default 0). */
+  readonly dy?: number;
+  /** Swing period in ticks (default 120). */
+  readonly period?: number;
+  /** Swing phase in binary-angle units (default 0). */
+  readonly phase?: number;
 }
 
 /** One entry of a stage timeline, fired when the camera reaches its `x`. */
@@ -1146,9 +1281,11 @@ export type StageEvent =
   | StageMusicEvent
   | StageSpeedEvent
   | StageFlagEvent
-  | StageEndEvent;
+  | StageEndEvent
+  | StageTriggerEvent
+  | StageBlockEvent;
 
-/** Every stage event `type`, in schema order. */
+/** Every stage event `type`, in schema order (M2-07 appended `trigger` and `block`). */
 export const STAGE_EVENT_TYPES = Object.freeze([
   'spawn',
   'formation',
@@ -1158,10 +1295,43 @@ export const STAGE_EVENT_TYPES = Object.freeze([
   'speed',
   'flag',
   'end',
+  'trigger',
+  'block',
 ] as const);
 
 /** Most distinct flags one stage may use (they are bits of one 32-bit mask). */
 export const MAX_STAGE_FLAGS = 32;
+
+/** Most `trigger` events one stage may have (their states are bits of 32-bit masks). */
+export const MAX_STAGE_TRIGGERS = 32;
+
+/** Most branches one stage may declare. */
+export const MAX_STAGE_BRANCHES = 32;
+
+/** Most tiles (cells) one moving block may cover. */
+export const MAX_BLOCK_CELLS = 64;
+
+/** Default {@link StageBlockEvent.screenX}: the block appears just past the view's right edge. */
+export const DEFAULT_BLOCK_SCREEN_X = 400;
+
+/** Default swing period of a moving block, in ticks. */
+export const DEFAULT_BLOCK_PERIOD = 120;
+
+/**
+ * An in-stage **branch** (M2-07, shmup_feat.md §14 "in-stage branching paths"): the events naming
+ * it fire only while stage flag `flag` equals `value` — region triggers and `flag` events set the
+ * flags, branches select the event groups.
+ */
+export interface StageBranch {
+  /** Unique id inside the stage (lower-case kebab), named by events' `branch`. */
+  readonly id: string;
+  /** The flag it reads. */
+  readonly flag: string;
+  /** Index of the flag in {@link StageSpec.flagNames}. */
+  readonly flagId: number;
+  /** The flag value that takes the branch (default `true`). */
+  readonly value: boolean;
+}
 
 /** One stage/zone (`content/stages/*.stage.json`, shmup_feat.md §14). */
 export interface StageSpec {
@@ -1183,8 +1353,13 @@ export interface StageSpec {
   readonly tilemap: StageTilemapSpec | null;
   /** Timeline, sorted by `x` (several events may share one `x`; they fire in file order). */
   readonly events: readonly StageEvent[];
-  /** Distinct flag names of the `flag` events, sorted (a flag's index is its bit). */
+  /**
+   * Distinct flag names of the `flag` and `trigger` events and the branches, sorted (a flag's
+   * index is its bit).
+   */
   readonly flagNames: readonly string[];
+  /** The in-stage branches (M2-07; omitted in the file = none). */
+  readonly branches: readonly StageBranch[];
   /**
    * The Direct-mode item plan (M2-05): the colours the stage's `powerup` (and `capsule`) drops
    * hand out in Direct mode, in order, cycling — empty (omitted) = `core/powerups`
@@ -1222,6 +1397,18 @@ export interface TileSpec {
   readonly anchor: TileAnchor;
   /** Solid height of every pixel column (`tileSize` entries, 0 … tileSize). */
   readonly mask: readonly number[];
+  /**
+   * Hit points: the tile is **destructible** (M2-07, shmup_feat.md §14) and breaks after this much
+   * damage from player shots (omitted = indestructible; not for `empty` tiles).
+   */
+  readonly hp?: number;
+  /**
+   * Ticks a destructible tile takes to heal its damage and to grow back after breaking (organic
+   * walls; omitted = never).
+   */
+  readonly regen?: number;
+  /** Points for breaking the tile (omitted = 0). */
+  readonly score?: number;
 }
 
 /**
@@ -1536,6 +1723,18 @@ const MOVER_SCHEMA: Schema<Omit<EnemyMoverSpec, 'pathId'>> = s.oneOf('type', {
     speed: MOVER_SPEED,
     windup: s.int({ min: 0, max: 36000 }),
   }),
+  ballistic: s.object(
+    {
+      type: s.enumOf(['ballistic'] as const),
+      vx: VELOCITY,
+      vy: VELOCITY,
+      gravity: s.num({ min: -1, max: 1 }),
+      maxFall: s.num({ min: 0, max: 16 }),
+      trigger: s.num({ min: 0, max: 1024 }),
+      land: s.enumOf(BALLISTIC_LANDS),
+    },
+    { optional: ['gravity', 'maxFall', 'trigger', 'land'] },
+  ),
 });
 
 /** A boss part name (lower-case kebab). */
@@ -1771,53 +1970,117 @@ const SPAWN_Y = s.num({ min: -64, max: 320 });
 /** Spawn x in playfield pixels. */
 const SPAWN_SCREEN_X = s.num({ min: -128, max: 512 });
 
-/** One entry of `events` in a `stage` file. */
-const STAGE_EVENT_SCHEMA: Schema<Omit<StageEvent, 'enemyId' | 'cueId' | 'flagId' | 'pathId'>> =
-  s.oneOf('type', {
-    spawn: s.object(
-      {
-        x: EVENT_X,
-        type: s.enumOf(['spawn'] as const),
-        enemy: s.ref('enemy'),
-        y: SPAWN_Y,
-        screenX: SPAWN_SCREEN_X,
-        path: s.ref('path'),
-      },
-      { optional: ['y', 'screenX', 'path'] },
-    ),
-    formation: s.object(
-      {
-        x: EVENT_X,
-        type: s.enumOf(['formation'] as const),
-        enemy: s.ref('enemy'),
-        count: s.int({ min: 1, max: 64 }),
-        interval: s.int({ min: 1, max: 600 }),
-        y: SPAWN_Y,
-        screenX: SPAWN_SCREEN_X,
-        path: s.ref('path'),
-        drop: s.nullable(s.enumOf(ENEMY_DROPS)),
-        bonus: s.int({ min: 0, max: 1000000 }),
-      },
-      { optional: ['y', 'screenX', 'path', 'drop', 'bonus'] },
-    ),
-    warning: s.object({ x: EVENT_X, type: s.enumOf(['warning'] as const), enemy: s.ref('enemy') }),
-    boss: s.object({ x: EVENT_X, type: s.enumOf(['boss'] as const), enemy: s.ref('enemy') }),
-    music: s.object({ x: EVENT_X, type: s.enumOf(['music'] as const), cue: s.ref('music') }),
-    speed: s.object(
-      { x: EVENT_X, type: s.enumOf(['speed'] as const), speed: SPEED, ramp: TICKS },
-      { optional: ['ramp'] },
-    ),
-    flag: s.object(
-      {
-        x: EVENT_X,
-        type: s.enumOf(['flag'] as const),
-        flag: s.str({ maxLength: 64, pattern: /^[a-z][a-z0-9-]*$/ }),
-        value: s.bool(),
-      },
-      { optional: ['value'] },
-    ),
-    end: s.object({ x: EVENT_X, type: s.enumOf(['end'] as const) }),
-  });
+/** A stage flag or branch name (lower-case kebab). */
+const STAGE_NAME = s.str({ maxLength: 64, pattern: /^[a-z][a-z0-9-]*$/ });
+
+/** A world coordinate of a trigger region or a block, in pixels. */
+const WORLD_COORD = s.num({ min: -4096, max: 1001000 });
+
+/** One entry of `events` in a `stage` file (every variant may name a `branch` — M2-07). */
+const STAGE_EVENT_SCHEMA: Schema<
+  Omit<StageEvent, 'enemyId' | 'cueId' | 'flagId' | 'pathId' | 'tileId'>
+> = s.oneOf('type', {
+  spawn: s.object(
+    {
+      x: EVENT_X,
+      type: s.enumOf(['spawn'] as const),
+      enemy: s.ref('enemy'),
+      y: SPAWN_Y,
+      screenX: SPAWN_SCREEN_X,
+      path: s.ref('path'),
+      branch: STAGE_NAME,
+    },
+    { optional: ['y', 'screenX', 'path', 'branch'] },
+  ),
+  formation: s.object(
+    {
+      x: EVENT_X,
+      type: s.enumOf(['formation'] as const),
+      enemy: s.ref('enemy'),
+      count: s.int({ min: 1, max: 64 }),
+      interval: s.int({ min: 1, max: 600 }),
+      y: SPAWN_Y,
+      screenX: SPAWN_SCREEN_X,
+      path: s.ref('path'),
+      drop: s.nullable(s.enumOf(ENEMY_DROPS)),
+      bonus: s.int({ min: 0, max: 1000000 }),
+      branch: STAGE_NAME,
+    },
+    { optional: ['y', 'screenX', 'path', 'drop', 'bonus', 'branch'] },
+  ),
+  warning: s.object(
+    { x: EVENT_X, type: s.enumOf(['warning'] as const), enemy: s.ref('enemy'), branch: STAGE_NAME },
+    { optional: ['branch'] },
+  ),
+  boss: s.object(
+    { x: EVENT_X, type: s.enumOf(['boss'] as const), enemy: s.ref('enemy'), branch: STAGE_NAME },
+    { optional: ['branch'] },
+  ),
+  music: s.object(
+    { x: EVENT_X, type: s.enumOf(['music'] as const), cue: s.ref('music'), branch: STAGE_NAME },
+    { optional: ['branch'] },
+  ),
+  speed: s.object(
+    {
+      x: EVENT_X,
+      type: s.enumOf(['speed'] as const),
+      speed: SPEED,
+      ramp: TICKS,
+      branch: STAGE_NAME,
+    },
+    { optional: ['ramp', 'branch'] },
+  ),
+  flag: s.object(
+    {
+      x: EVENT_X,
+      type: s.enumOf(['flag'] as const),
+      flag: STAGE_NAME,
+      value: s.bool(),
+      branch: STAGE_NAME,
+    },
+    { optional: ['value', 'branch'] },
+  ),
+  end: s.object(
+    { x: EVENT_X, type: s.enumOf(['end'] as const), branch: STAGE_NAME },
+    { optional: ['branch'] },
+  ),
+  trigger: s.object(
+    {
+      x: EVENT_X,
+      type: s.enumOf(['trigger'] as const),
+      flag: STAGE_NAME,
+      value: s.bool(),
+      region: s.object({
+        x: WORLD_COORD,
+        y: WORLD_COORD,
+        w: s.num({ min: 1, max: 65536 }),
+        h: s.num({ min: 1, max: 65536 }),
+      }),
+      until: EVENT_X,
+      branch: STAGE_NAME,
+    },
+    { optional: ['value', 'until', 'branch'] },
+  ),
+  block: s.object(
+    {
+      x: EVENT_X,
+      type: s.enumOf(['block'] as const),
+      screenX: s.num({ min: -1024, max: 4096 }),
+      y: WORLD_COORD,
+      w: s.int({ min: 1, max: 1024 }),
+      h: s.int({ min: 1, max: 1024 }),
+      tile: s.str({ maxLength: 64 }),
+      vx: VELOCITY,
+      vy: VELOCITY,
+      dx: s.num({ min: -1024, max: 1024 }),
+      dy: s.num({ min: -1024, max: 1024 }),
+      period: s.int({ min: 1, max: 36000 }),
+      phase: s.int({ min: 0, max: 1023 }),
+      branch: STAGE_NAME,
+    },
+    { optional: ['screenX', 'tile', 'vx', 'vy', 'dx', 'dy', 'period', 'phase', 'branch'] },
+  ),
+});
 
 /** One wave profile of a heightfield segment. */
 const HEIGHTFIELD_PROFILE_SCHEMA = s.object({
@@ -1870,9 +2133,11 @@ const STAGE_FILE_SCHEMA = s.object(
           ramp: TICKS,
           yTo: s.num({ min: 0, max: 4096 }),
           yTicks: TICKS,
+          yOver: s.int({ min: 1, max: 1000000 }),
           lock: s.bool(),
+          hold: s.int({ min: 1, max: 36000 }),
         },
-        { optional: ['ramp', 'yTo', 'yTicks', 'lock'] },
+        { optional: ['ramp', 'yTo', 'yTicks', 'yOver', 'lock', 'hold'] },
       ),
       { min: 1 },
     ),
@@ -1890,18 +2155,28 @@ const STAGE_FILE_SCHEMA = s.object(
     tilemap: s.nullable(TILEMAP_SCHEMA),
     events: s.array(STAGE_EVENT_SCHEMA),
     directItems: s.array(s.enumOf(DIRECT_ITEMS), { min: 1, max: MAX_DIRECT_ITEM_PLAN }),
+    branches: s.array(
+      s.object({ id: STAGE_NAME, flag: STAGE_NAME, value: s.bool() }, { optional: ['value'] }),
+      { max: MAX_STAGE_BRANCHES },
+    ),
   },
-  { optional: ['directItems'] },
+  { optional: ['directItems', 'branches'] },
 );
 
 /** One entry of `tiles` in a `tileset` file. */
-const TILE_SCHEMA: Schema<TileSpec> = s.object({
-  name: s.str({ maxLength: 64 }),
-  type: s.enumOf(TILE_TYPES),
-  frame: s.int({ min: 0, max: 1023 }),
-  anchor: s.enumOf(TILE_ANCHORS),
-  mask: s.array(s.int({ min: 0, max: 64 }), { min: 1, max: 64 }),
-});
+const TILE_SCHEMA: Schema<TileSpec> = s.object(
+  {
+    name: s.str({ maxLength: 64 }),
+    type: s.enumOf(TILE_TYPES),
+    frame: s.int({ min: 0, max: 1023 }),
+    anchor: s.enumOf(TILE_ANCHORS),
+    mask: s.array(s.int({ min: 0, max: 64 }), { min: 1, max: 64 }),
+    hp: s.int({ min: 1, max: 255 }),
+    regen: s.int({ min: 1, max: 36000 }),
+    score: s.int({ min: 0, max: 65535 }),
+  },
+  { optional: ['hp', 'regen', 'score'] },
+);
 
 /** A `content/tilesets/*.tileset.json` file (one tileset per file). */
 const TILESET_FILE_SCHEMA = s.object({
@@ -3074,11 +3349,16 @@ function bakePathEntry(
 }
 
 /** A stage while the loader completes it (the fields it adds after the schema). */
-type MutableStage = Omit<StageSpec, 'flagNames' | 'terrain' | 'events' | 'directItems'> & {
+type MutableStage = Omit<
+  StageSpec,
+  'flagNames' | 'terrain' | 'events' | 'directItems' | 'branches'
+> & {
   /** See {@link StageSpec.directItems} (optional in the file). */
   directItems?: DirectItemName[];
+  /** See {@link StageSpec.branches} (optional in the file; the loader resolves the flags). */
+  branches?: Array<{ id: string; flag: string; value?: boolean; flagId?: number }>;
   /** See {@link StageSpec.events}. */
-  events: Array<StageEvent & { flagId?: number }>;
+  events: Array<StageEvent & { flagId?: number; branchId?: number; tileId?: number }>;
   /** See {@link StageSpec.flagNames}. */
   flagNames: string[];
   /** See {@link StageSpec.terrain}. */
@@ -3101,8 +3381,12 @@ function issue(issues: ValidationIssue[], path: string, message: string): false 
 /**
  * The checks a stage needs beyond its schema: sorted camera keys (the first at 0), checkpoints
  * and events inside the stage length, pan keys with a target, heightfield segments with
- * `from < to`, at most {@link MAX_STAGE_FLAGS} flags. Assigns the flag ids and initialises
- * `terrain` (filled by {@link expandStageTerrains}).
+ * `from < to`, at most {@link MAX_STAGE_FLAGS} flags; since M2-07 also diagonal pans (`yOver`
+ * needs `yTo`, not with `yTicks`), holds (not with `lock`), branches (unique ids, events naming
+ * known ones), triggers (at most {@link MAX_STAGE_TRIGGERS}, `until` not before the event) and
+ * blocks (sizes in whole tiles, at most {@link MAX_BLOCK_CELLS} of them, a tilemap to live in).
+ * Assigns the flag ids (of `flag` and `trigger` events and branches) and the branch ids, and
+ * initialises `terrain` (filled by {@link expandStageTerrains}).
  *
  * @param stage - The parsed stage.
  * @param file - Repo-relative file path.
@@ -3134,6 +3418,15 @@ function checkStage(stage: MutableStage, file: string, issues: ValidationIssue[]
     if (key.yTicks !== undefined && key.yTo === undefined) {
       ok = issue(issues, at(file, path + '.yTicks'), 'needs yTo');
     }
+    if (key.yOver !== undefined && key.yTo === undefined) {
+      ok = issue(issues, at(file, path + '.yOver'), 'needs yTo');
+    }
+    if (key.yOver !== undefined && key.yTicks !== undefined) {
+      ok = issue(issues, at(file, path + '.yOver'), 'a pan is either yTicks or yOver, not both');
+    }
+    if (key.hold !== undefined && key.lock === true) {
+      ok = issue(issues, at(file, path + '.hold'), 'a lock key cannot hold (it waits for unlock)');
+    }
   }
   const checkpoints = stage.checkpoints;
   for (let i = 0; i < checkpoints.length; i++) {
@@ -3147,11 +3440,27 @@ function checkStage(stage: MutableStage, file: string, issues: ValidationIssue[]
     }
     if (checkpoints[i].x > length) ok = issue(issues, at(file, path), 'must be <= length');
   }
-  const events = stage.events;
+  const branches = stage.branches ?? [];
+  const branchIds: string[] = [];
   const flags: string[] = [];
+  for (let i = 0; i < branches.length; i++) {
+    const branch = branches[i];
+    if (branchIds.indexOf(branch.id) >= 0) {
+      ok = issue(
+        issues,
+        at(file, 'branches[' + String(i) + '].id'),
+        'duplicate branch "' + branch.id + '"',
+      );
+    }
+    branchIds.push(branch.id);
+    if (flags.indexOf(branch.flag) < 0) flags.push(branch.flag);
+  }
+  const events = stage.events;
+  let triggers = 0;
   for (let i = 0; i < events.length; i++) {
     const event = events[i];
-    const path = 'events[' + String(i) + '].x';
+    const base = 'events[' + String(i) + ']';
+    const path = base + '.x';
     if (i > 0 && event.x < events[i - 1].x) {
       ok = issue(
         issues,
@@ -3160,7 +3469,49 @@ function checkStage(stage: MutableStage, file: string, issues: ValidationIssue[]
       );
     }
     if (event.x > length) ok = issue(issues, at(file, path), 'must be <= length');
-    if (event.type === 'flag' && flags.indexOf(event.flag) < 0) flags.push(event.flag);
+    if ((event.type === 'flag' || event.type === 'trigger') && flags.indexOf(event.flag) < 0) {
+      flags.push(event.flag);
+    }
+    const branch = event.branch;
+    if (branch !== undefined && branchIds.indexOf(branch) < 0) {
+      ok = issue(issues, at(file, base + '.branch'), 'no branch "' + branch + '" in branches');
+    }
+    if (event.type === 'trigger') {
+      triggers++;
+      const until = event.until ?? event.region.x + event.region.w;
+      if (until < event.x) {
+        ok = issue(
+          issues,
+          at(file, base + '.until'),
+          'must be >= x (the trigger disarms when the camera passes it)',
+        );
+      }
+    } else if (event.type === 'block') {
+      if (stage.tilemap === null) {
+        ok = issue(issues, at(file, base), 'a block needs the stage to have a tilemap');
+      }
+      const size = stage.tilemap?.tileSize ?? TILE_SIZE;
+      if (event.w % size !== 0 || event.h % size !== 0) {
+        ok = issue(
+          issues,
+          at(file, base + '.w'),
+          'w and h must be multiples of the tile size (' + String(size) + ')',
+        );
+      } else if ((event.w / size) * (event.h / size) > MAX_BLOCK_CELLS) {
+        ok = issue(
+          issues,
+          at(file, base + '.w'),
+          'covers more than ' + String(MAX_BLOCK_CELLS) + ' tiles',
+        );
+      }
+    }
+  }
+  if (triggers > MAX_STAGE_TRIGGERS) {
+    ok = issue(
+      issues,
+      at(file, 'events'),
+      'has ' + String(triggers) + ' triggers (at most ' + String(MAX_STAGE_TRIGGERS) + ')',
+    );
   }
   flags.sort();
   if (flags.length > MAX_STAGE_FLAGS) {
@@ -3170,7 +3521,16 @@ function checkStage(stage: MutableStage, file: string, issues: ValidationIssue[]
       'uses ' + String(flags.length) + ' flags (at most ' + String(MAX_STAGE_FLAGS) + ')',
     );
   }
-  for (const event of events) if (event.type === 'flag') event.flagId = flags.indexOf(event.flag);
+  for (const event of events) {
+    if (event.type === 'flag' || event.type === 'trigger') event.flagId = flags.indexOf(event.flag);
+    event.branchId = event.branch === undefined ? -1 : branchIds.indexOf(event.branch);
+    if (event.type === 'block') event.tileId = -1;
+  }
+  for (const branch of branches) {
+    branch.flagId = flags.indexOf(branch.flag);
+    if (branch.value === undefined) branch.value = true;
+  }
+  stage.branches = branches;
   stage.flagNames = flags;
   const segments = stage.tilemap?.generator?.segments ?? [];
   for (let i = 0; i < segments.length; i++) {
@@ -3190,7 +3550,8 @@ function checkStage(stage: MutableStage, file: string, issues: ValidationIssue[]
 
 /**
  * The checks a tileset needs beyond its schema: unique tile names, masks of `tileSize` columns
- * with heights in `0 … tileSize`.
+ * with heights in `0 … tileSize`; since M2-07 `hp` only on colliding tiles and `regen` only with
+ * `hp`.
  *
  * @param tileset - The parsed tileset.
  * @param file - Repo-relative file path.
@@ -3227,6 +3588,13 @@ function checkTileset(
         );
       }
     }
+    // Destructible tiles (M2-07): only rock breaks, and only a breakable tile regrows.
+    if (tile.hp !== undefined && tile.type === 'empty') {
+      ok = issue(issues, at(file, path + '.hp'), 'an empty (decorative) tile cannot be destroyed');
+    }
+    if (tile.regen !== undefined && tile.hp === undefined) {
+      ok = issue(issues, at(file, path + '.regen'), 'needs hp (only destructible tiles regrow)');
+    }
   }
   return ok;
 }
@@ -3253,6 +3621,22 @@ function expandStageTerrains(db: DbBuilder, issues: ValidationIssue[]): void {
         "must equal the tileset's tileSize (" + String(tileset.tileSize) + ')',
       );
       continue;
+    }
+    // Moving blocks (M2-07) name a tile of the tileset: resolve it (default `solid`).
+    for (let e = 0; e < stage.events.length; e++) {
+      const event = stage.events[e];
+      if (event.type !== 'block') continue;
+      const name = event.tile ?? 'solid';
+      const id = tileset.tables.byName.get(name);
+      if (id === undefined) {
+        issue(
+          issues,
+          at(db.stagePaths[i], 'events[' + String(e) + '].tile'),
+          'tileset "' + tileset.id + '" has no tile named "' + name + '"',
+        );
+      } else {
+        event.tileId = id;
+      }
     }
     const cols = Math.ceil((stage.length + PLAYFIELD_W) / tilemap.tileSize);
     const tiles = expandTilemap(tilemap, cols, tileset.tables, tileset.id, path, issues);

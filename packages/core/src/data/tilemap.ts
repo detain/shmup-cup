@@ -57,6 +57,12 @@ export interface TileTableInput {
   readonly anchor: 'floor' | 'ceiling';
   /** Column heights, one per pixel column (0 … tileSize). */
   readonly mask: readonly number[];
+  /** Hit points of a destructible tile (M2-07; absent / 0 = indestructible). */
+  readonly hp?: number;
+  /** Ticks a destructible tile takes to heal and grow back (M2-07; absent / 0 = never). */
+  readonly regen?: number;
+  /** Points for breaking it (M2-07; absent = 0). */
+  readonly score?: number;
 }
 
 /**
@@ -74,12 +80,19 @@ export interface TilesetTables {
   readonly mask: Uint8Array;
   /** Frame of the tileset sprite per id (-1 = not drawn). */
   readonly frame: Int16Array;
+  /** Hit points per id (0 = indestructible; M2-07 destructible tiles). */
+  readonly hp: Uint8Array;
+  /** Heal / regrow ticks per id (0 = never; M2-07 regenerating walls). */
+  readonly regen: Uint16Array;
+  /** Points for breaking a tile, per id (M2-07). */
+  readonly score: Uint16Array;
   /** Tile name → id. */
   readonly byName: ReadonlyMap<string, number>;
 }
 
 /**
- * Builds the lookup tables of a validated tileset.
+ * Builds the lookup tables of a validated tileset (since M2-07 also the destructible tiles'
+ * `hp` / `regen` / `score`).
  *
  * @param tiles - The tiles in file order (masks already validated to `tileSize` entries).
  * @param tileSize - Tile edge in pixels.
@@ -94,6 +107,9 @@ export function buildTilesetTables(
   const anchor = new Uint8Array(count);
   const mask = new Uint8Array(count * tileSize);
   const frame = new Int16Array(count);
+  const hp = new Uint8Array(count);
+  const regen = new Uint16Array(count);
+  const score = new Uint16Array(count);
   const byName = new Map<string, number>();
   frame[0] = -1;
   for (let i = 0; i < tiles.length; i++) {
@@ -108,9 +124,13 @@ export function buildTilesetTables(
     anchor[id] = tile.anchor === 'ceiling' ? TerrainAnchor.Ceiling : TerrainAnchor.Floor;
     for (let c = 0; c < tileSize; c++) mask[id * tileSize + c] = tile.mask[c] ?? 0;
     frame[id] = tile.frame;
+    // Only rock can break: an `empty` (decorative) tile never collides, so it is never hit.
+    hp[id] = tile.type === 'empty' ? 0 : (tile.hp ?? 0);
+    regen[id] = hp[id] > 0 ? (tile.regen ?? 0) : 0;
+    score[id] = tile.score ?? 0;
     if (!byName.has(tile.name)) byName.set(tile.name, id);
   }
-  return { count, type, anchor, mask, frame, byName };
+  return { count, type, anchor, mask, frame, hp, regen, score, byName };
 }
 
 /**

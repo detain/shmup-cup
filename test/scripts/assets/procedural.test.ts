@@ -856,10 +856,21 @@ describe('scripts/assets/procedural/terrain', () => {
   const tile = (name: (typeof terrain.TERRAIN_TILES)[number]): Image =>
     tileset.frames[terrain.TERRAIN_TILES.indexOf(name)];
 
-  it('draws 17 top-left-anchored 8×8 tiles, each also a one-frame animation by name', () => {
+  it('draws 20 top-left-anchored 8×8 tiles, each also a one-frame animation by name', () => {
     expect(tileset.name).toBe('tiles/terrain-a');
     expect(tileset.anchor).toEqual([0, 0]);
-    expect(tileset.frames).toHaveLength(17);
+    // The 17 rock tiles, then the destructible brick, cube and tissue (M2-07).
+    expect(tileset.frames).toHaveLength(20);
+    expect(terrain.TERRAIN_TILES.slice(17)).toEqual(['brick', 'cube', 'tissue']);
+    // The destructible blocks are full (every pixel opaque) and look unlike rock and each other.
+    const pixels = (name: (typeof terrain.TERRAIN_TILES)[number]): string =>
+      Array.from(tile(name).data).join(',');
+    for (const name of ['brick', 'cube', 'tissue'] as const) {
+      for (let y = 0; y < 8; y++)
+        for (let x = 0; x < 8; x++) expect(opaque(tile(name), x, y)).toBe(true);
+      expect(pixels(name)).not.toBe(pixels('solid'));
+    }
+    expect(new Set([pixels('brick'), pixels('cube'), pixels('tissue')]).size).toBe(3);
     expect(terrain.TILE_SIZE).toBe(8);
     for (const frame of tileset.frames) expect([frame.width, frame.height]).toEqual([8, 8]);
     expect(Object.keys(tileset.animations)).toEqual([...terrain.TERRAIN_TILES]);

@@ -56,7 +56,8 @@ function tick(r: StageRunner, n: number): void {
 
 describe('core/stage — brake to a lock (M1-13)', () => {
   it('keeps its state in the hashed slot array', () => {
-    expect(STAGE_STATE_SLOTS).toBe(22);
+    // M2-07 appended the hold, diagonal-pan and trigger slots (22 … 27).
+    expect(STAGE_STATE_SLOTS).toBe(28);
     expect([StageSlot.Braking, StageSlot.ResumeSpeed, StageSlot.BrakeRamp]).toEqual([19, 20, 21]);
   });
 

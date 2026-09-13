@@ -90,23 +90,32 @@ function spawn(w: World, id: string, sx: number, sy: number, path?: string): Ene
 }
 
 describe('core/behaviors registry', () => {
-  it('describes itself and registers the M1 roster', () => {
+  it('describes itself and registers the M1 roster (plus the M2 behaviours and gimmicks)', () => {
     expect(moduleInfo.name).toBe('behaviors');
     expect(moduleInfo.status).toBe('partial');
     expect(BEHAVIOR_IDS).toEqual([
+      'bubble.split',
       'carrier.straight',
       'cube.pincer',
+      'cube.stack',
       'drifter.sine',
       'fan.loop',
+      'field.suction',
       'hatch.spawner',
       'hunter.option',
       'orbiter.loop',
       'pattern.loop',
       'rammer.aimed',
+      'rock.fall',
+      'tentacle.grab',
       'turret.floor',
+      'volcano.lob',
       'walker.floor',
     ]);
-    expect(DEFAULT_BEHAVIOR_DEFS).toHaveLength(11);
+    expect(DEFAULT_BEHAVIOR_DEFS).toHaveLength(17);
+    expect(DEFAULT_BEHAVIORS.get('volcano.lob')?.needsChild).toBe(true);
+    expect(typeof DEFAULT_BEHAVIORS.get('bubble.split')?.death).toBe('function');
+    expect(DEFAULT_BEHAVIORS.get('drifter.sine')?.death).toBeUndefined();
     expect(DEFAULT_BEHAVIORS.get('pattern.loop')?.needsPattern).toBe(true);
     for (const id of BEHAVIOR_IDS) expect(DEFAULT_BEHAVIORS.get(id)?.id).toBe(id);
     expect(DEFAULT_BEHAVIORS.get('boss.warden')).toBeUndefined();

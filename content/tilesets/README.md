@@ -46,8 +46,15 @@ wall edges, and 45° and 22.5° slopes for floors and ceilings.
   generated heights (every 45° and 22.5° mask for both anchors) — a missing one is a load
   issue.
 
+- **Destructible tiles (M2-07).** `"hp": 4` (1–255) makes a colliding tile breakable: player
+  shots add their damage per cell and the cell empties at `hp` (`"score"`: points for the shooter,
+  0–65535). `"regen": 240` (ticks, needs `hp`) makes it heal after that many ticks without a hit
+  and grow back that many ticks after breaking — never onto a ship. A checkpoint restart restores
+  every broken tile. `terrain-a` has `brick` (hp 4), `cube` (hp 2 — what the cube rush stacks) and
+  `tissue` (hp 3, regrows in 240 ticks), each with its own art frame.
+
 Checks beyond the schema: tile names are unique, every mask has `tileSize` entries, no height
-exceeds `tileSize`, at most 255 tiles.
+exceeds `tileSize`, at most 255 tiles; `hp` only on colliding tiles, `regen` only with `hp`.
 
 See [`example.tileset.json`](example.tileset.json) (a small set with a hazard and a
 decorative tile, used by the example stage's RLE rows).

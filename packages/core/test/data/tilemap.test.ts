@@ -280,7 +280,7 @@ describe('core/data RLE rows', () => {
     expect(bad.issues).toEqual([
       {
         path: 'stages/s.stage.json:tilemap.rle[3]',
-        message: 'tile id 99 does not exist (the tileset has 17)',
+        message: 'tile id 99 does not exist (the tileset has 20)',
       },
     ]);
     expect(bad.db.stages[0]?.terrain).toBeNull();

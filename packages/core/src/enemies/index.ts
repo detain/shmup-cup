@@ -94,6 +94,16 @@
  * — Reduce) and, for a ship with shield pods, tests every standing pod against the grid: a body
  * that touches a pod costs it a hit (`core/shields` `absorbPodHit`) and flies on.
  *
+ * **Stage gimmicks (M2-07).** A body on the `Ballistic` mover (`core/patterns`: thrown, falling,
+ * proximity-triggered) that **lands** is handled once, in phase 5: with the `shatter` rule it is
+ * removed with its explosion ({@link EnemySystem.destroy} — no score, no drop, a formation member
+ * counts as escaped), otherwise its script is woken on the next tick (even from a timed sleep).
+ * A behaviour may have a **death** callback ({@link EnemyBehavior.death} — splitting bubbles), run by
+ * {@link EnemySystem.kill} while the enemy still stands there (not for a Mega Crash or the blue
+ * capsule's clear). The {@link ScriptApi} gained `setMoverOf` (steer a spawned child), `destroy`,
+ * `landed`, and — through the World's {@link EnemyGimmicks} host — `pull` / `release` (pull fields),
+ * `chain` (a drawn arm), `placeTile` and `tileId` (tiles placed into the terrain).
+ *
  * **Zero allocation.** Every enemy, script API, track and table is built by
  * {@link createEnemySystem}; the per-tick methods only write numbers. The allocations left are
  * inherent to the coroutines of decision D29: spawning an enemy with a behaviour creates its
@@ -115,7 +125,7 @@
  * {@link MAX_ENEMIES}, {@link MAX_FORMATIONS}, {@link DEFAULT_SPAWN_SCREEN_X},
  * {@link DESPAWN_MARGIN}, {@link UNSEEN_MARGIN}, {@link UNSEEN_TICKS}, {@link GHOST_MARGIN},
  * {@link HIT_FLASH_TICKS}; M2-04: {@link MAX_CARRIED_OPTIONS}, {@link CARRIED_OPTION_SPACING},
- * {@link CARRIED_BATCH_CAPACITY}.
+ * {@link CARRIED_BATCH_CAPACITY}; M2-07: {@link EnemyGimmicks}.
  *
  * **Planned API.** More behaviours' needs with the zones of M2 (M2-11 … M2-14).
  *
@@ -152,6 +162,7 @@ import {
 } from '../collision/index.js';
 import { PLAYFIELD_H, PLAYFIELD_W } from '../config/index.js';
 import {
+  BALLISTIC_LANDS,
   DEFAULT_REVENGE_SPEED,
   ENEMY_DROPS,
   ENEMY_EXPLOSIONS,
@@ -168,6 +179,8 @@ import type { DebugFlags } from '../debug/index.js';
 import { FX_CUES, SFX_CUES, SimEventKind, type EventQueue } from '../events/index.js';
 import { defineModule } from '../module-info.js';
 import {
+  BALLISTIC_LANDED,
+  BallisticLand,
   BodyAnchor,
   FOLLOW_HISTORY,
   FollowTrack,
@@ -467,6 +480,86 @@ export interface ScriptApi {
    */
   spawn(enemyIndex: number, dx: number, dy: number): Enemy | null;
   /**
+   * Switches **another** enemy's mover (M2-07: a volcano throws the rocks it spawned — the child's
+   * own script starts on the next tick and keeps the mover unless it sets one). Parameters as
+   * {@link ScriptApi.setMover}.
+   *
+   * @param other - The enemy (e.g. what {@link ScriptApi.spawn} returned); a free slot is ignored.
+   * @param kind - `MoverKind` code.
+   * @param p0 - Parameter 0.
+   * @param p1 - Parameter 1.
+   * @param p2 - Parameter 2.
+   * @param p3 - Parameter 3.
+   * @param p4 - Parameter 4.
+   * @param p5 - Parameter 5.
+   */
+  setMoverOf(
+    other: Enemy,
+    kind: MoverKind,
+    p0?: number,
+    p1?: number,
+    p2?: number,
+    p3?: number,
+    p4?: number,
+    p5?: number,
+  ): void;
+  /**
+   * Removes this enemy without a kill (M2-07 — a cube that became terrain, a rock that shattered):
+   * no score, no drop, no revenge, no death behaviour; a formation member counts as escaped. With
+   * `explode` its death explosion (SFX + particles) plays.
+   *
+   * @param explode - Play the explosion (default `true`).
+   */
+  destroy(explode?: boolean): void;
+  /**
+   * Whether this enemy's `Ballistic` mover has landed (stopped by terrain — M2-07). The enemy
+   * system wakes a sleeping script on the tick after its body lands.
+   *
+   * @returns `true` once landed.
+   */
+  landed(): boolean;
+  /**
+   * Starts a **pull field** around this enemy (M2-07: the suction field, the tentacle's grab):
+   * every living ship whose centre is within `radius` px is drawn towards the enemy by
+   * `strength` px per tick (at most the distance), for `ticks` ticks (≤ 0 = while the enemy
+   * lives). Replaces this enemy's previous field. Needs the World's gimmick host.
+   *
+   * @param radius - Reach in px.
+   * @param strength - Pull per tick in px.
+   * @param ticks - Duration (≤ 0 = until the enemy is gone or {@link ScriptApi.release}).
+   * @returns `false` without a gimmick host or a free field slot.
+   */
+  pull(radius: number, strength: number, ticks: number): boolean;
+  /** Ends this enemy's pull field (see {@link ScriptApi.pull}). */
+  release(): void;
+  /**
+   * Draws a **chain** of `links` sprites from a world point to this enemy every frame (M2-07: the
+   * grabbing tentacle's arm), until the enemy is gone. Replaces its previous chain.
+   *
+   * @param anchorX - World x of the fixed end.
+   * @param anchorY - World y of the fixed end.
+   * @param links - Links (1 … 16).
+   * @returns `false` without a gimmick host or a free chain slot.
+   */
+  chain(anchorX: number, anchorY: number, links: number): boolean;
+  /**
+   * Puts a tileset tile into the empty terrain cell containing a world point (M2-07: the cube
+   * rush stacking into walls). The checkpoint rollback removes it again.
+   *
+   * @param x - World x.
+   * @param y - World y.
+   * @param tile - Tile id ({@link ScriptApi.tileId}).
+   * @returns `true` when placed (an empty cell, no ship in it, a terrain map).
+   */
+  placeTile(x: number, y: number, tile: number): boolean;
+  /**
+   * The id of the stage tileset's tile with this name (read it when the script starts).
+   *
+   * @param name - Tile name, e.g. `cube`.
+   * @returns The id, or -1 (no such tile, no terrain, no gimmick host).
+   */
+  tileId(name: string): number;
+  /**
    * Whether the hurtbox overlaps the view this tick.
    *
    * @returns `true` while on screen.
@@ -665,6 +758,65 @@ export interface EnemyBehavior {
    * @returns The coroutine.
    */
   create(api: ScriptApi, params: Readonly<Record<string, number>>): Script;
+  /**
+   * Called when an enemy of this behaviour is killed (M2-07 — splitting bubbles), after its
+   * explosion and drops, while it still stands where it died; not for a Mega Crash or the blue
+   * capsule's screen clear, nor for {@link ScriptApi.destroy}. It may spawn (`api.spawn`) and
+   * steer the children (`api.setMoverOf`).
+   *
+   * @param api - The dying enemy's script API.
+   * @param params - Its resolved tunables.
+   */
+  death?(api: ScriptApi, params: Readonly<Record<string, number>>): void;
+}
+
+/**
+ * The stage gimmicks the World offers enemy scripts (M2-07; `core/stage` `StageGimmicks`
+ * implements it): pull fields, drawn chains and terrain tiles placed at run time.
+ */
+export interface EnemyGimmicks {
+  /**
+   * Starts or replaces the pull field of an enemy (see `ScriptApi.pull`).
+   *
+   * @param owner - The enemy.
+   * @param radius - Reach in px.
+   * @param strength - Pull per tick in px.
+   * @param ticks - Duration (≤ 0 = while the owner lives).
+   * @returns `false` when no field slot is free.
+   */
+  pull(owner: Enemy, radius: number, strength: number, ticks: number): boolean;
+  /**
+   * Ends an enemy's pull field.
+   *
+   * @param owner - The enemy.
+   */
+  release(owner: Enemy): void;
+  /**
+   * Starts or replaces the chain drawn to an enemy (see `ScriptApi.chain`).
+   *
+   * @param owner - The enemy.
+   * @param anchorX - World x of the fixed end.
+   * @param anchorY - World y of the fixed end.
+   * @param links - Links.
+   * @returns `false` when no chain slot is free.
+   */
+  chain(owner: Enemy, anchorX: number, anchorY: number, links: number): boolean;
+  /**
+   * Places a tile into the empty terrain cell at a world point.
+   *
+   * @param x - World x.
+   * @param y - World y.
+   * @param tile - Tile id.
+   * @returns `true` when placed.
+   */
+  placeTile(x: number, y: number, tile: number): boolean;
+  /**
+   * A tile id of the stage tileset by name.
+   *
+   * @param name - Tile name.
+   * @returns The id, or -1.
+   */
+  tileId(name: string): number;
 }
 
 /** Looks behaviours up by script id (load time only). */
@@ -710,6 +862,11 @@ export interface EnemyHost {
    * `stepPattern`. Absent = no DSL patterns (those calls do nothing).
    */
   readonly patterns?: PatternVm;
+  /**
+   * The stage gimmicks (M2-07: pull fields, chains, placed tiles) behind the `ScriptApi` calls of
+   * the same names. Absent / `null` = those calls do nothing.
+   */
+  readonly gimmicks?: EnemyGimmicks | null;
   /**
    * The players' Options (`core/weapons`, M2-04): what Option Hunters look for and steal. Absent =
    * nobody has Options (a hunter never spawns).
@@ -944,6 +1101,16 @@ export interface EnemySystem {
    * @returns `true` when it was alive (and not a ghost).
    */
   kill(enemy: Enemy, by?: number): boolean;
+  /**
+   * Removes a live enemy without a kill (M2-07, `ScriptApi.destroy`: a shattered rock, a cube that
+   * became terrain): no score, drop, revenge or death behaviour; a formation member counts as
+   * escaped. Cold path.
+   *
+   * @param enemy - The enemy.
+   * @param explode - Push its death explosion (SFX + particles; default `true`).
+   * @returns `true` when it was removed (a live, non-ghost enemy).
+   */
+  destroy(enemy: Enemy, explode?: boolean): boolean;
   /** Phase 8: frees the slots removed this tick. */
   flush(): void;
   /**
@@ -1287,6 +1454,14 @@ function compileSpecs(specs: readonly EnemySpec[], behaviors: EnemyBehaviorLooku
           mp[p] = mover.speed;
           mp[p + 1] = mover.windup;
           break;
+        case 'ballistic':
+          mp[p] = mover.vx;
+          mp[p + 1] = mover.vy;
+          mp[p + 2] = mover.gravity ?? 0;
+          mp[p + 3] = mover.maxFall ?? 0;
+          mp[p + 4] = mover.trigger ?? 0;
+          mp[p + 5] = BALLISTIC_LANDS.indexOf(mover.land ?? 'stop');
+          break;
         case 'follow':
           break;
       }
@@ -1430,6 +1605,59 @@ class EnemyScriptApi implements ScriptApi {
     const self = this.self;
     if (self.state !== EnemyState.Live || (self.flags & EnemyFlag.Ghost) !== 0) return null;
     return this.system.spawnEnemy(enemyIndex, self.x + dx, self.y + dy, -1, -1, -1, true);
+  }
+
+  /** See {@link ScriptApi.setMoverOf}. */
+  setMoverOf(other: Enemy, kind: MoverKind, p0 = 0, p1 = 0, p2 = 0, p3 = 0, p4 = 0, p5 = 0): void {
+    if (other.state !== EnemyState.Live) return;
+    setMover(other, this.system.movers, kind, p0, p1, p2, p3, p4, p5);
+  }
+
+  /** See {@link ScriptApi.destroy}. */
+  destroy(explode = true): void {
+    this.system.destroy(this.self, explode);
+  }
+
+  /** See {@link ScriptApi.landed}. */
+  landed(): boolean {
+    const self = this.self;
+    return self.mover === MoverKind.Ballistic && self.s0 === BALLISTIC_LANDED;
+  }
+
+  /** See {@link ScriptApi.pull}. */
+  pull(radius: number, strength: number, ticks: number): boolean {
+    const gimmicks = this.system.host.gimmicks;
+    if (gimmicks === undefined || gimmicks === null || this.self.state !== EnemyState.Live) {
+      return false;
+    }
+    return gimmicks.pull(this.self, radius, strength, ticks);
+  }
+
+  /** See {@link ScriptApi.release}. */
+  release(): void {
+    const gimmicks = this.system.host.gimmicks;
+    if (gimmicks !== undefined && gimmicks !== null) gimmicks.release(this.self);
+  }
+
+  /** See {@link ScriptApi.chain}. */
+  chain(anchorX: number, anchorY: number, links: number): boolean {
+    const gimmicks = this.system.host.gimmicks;
+    if (gimmicks === undefined || gimmicks === null || this.self.state !== EnemyState.Live) {
+      return false;
+    }
+    return gimmicks.chain(this.self, anchorX, anchorY, links);
+  }
+
+  /** See {@link ScriptApi.placeTile}. */
+  placeTile(x: number, y: number, tile: number): boolean {
+    const gimmicks = this.system.host.gimmicks;
+    return gimmicks === undefined || gimmicks === null ? false : gimmicks.placeTile(x, y, tile);
+  }
+
+  /** See {@link ScriptApi.tileId}. */
+  tileId(name: string): number {
+    const gimmicks = this.system.host.gimmicks;
+    return gimmicks === undefined || gimmicks === null ? -1 : gimmicks.tileId(name);
   }
 
   /** See {@link ScriptApi.onScreen}. */
@@ -2090,6 +2318,17 @@ class EnemySystemImpl implements EnemySystem {
         movers.targetY = target.y;
       }
       updateMover(e, movers);
+      // A `Ballistic` body that landed (M2-07): shatter, or wake its script next tick. `s3` marks
+      // the landing as handled (setMover resets it).
+      if (e.mover === MoverKind.Ballistic && e.s0 === BALLISTIC_LANDED && e.s3 === 0) {
+        e.s3 = 1;
+        if (e.m5 === BallisticLand.Shatter) {
+          this.destroy(e, true);
+          continue;
+        }
+        const wake = this.host.tick + 1;
+        if (e.script !== null && e.wakeTick > wake) e.wakeTick = wake;
+      }
       if (e.vx > 0) e.flags |= EnemyFlag.FaceRight;
       else if (e.vx < 0) e.flags &= ~EnemyFlag.FaceRight;
       const track = e.track;
@@ -2324,6 +2563,11 @@ class EnemySystemImpl implements EnemySystem {
     for (let c = 0; c < enemy.carried; c++) o.addDrop(DropKind.FreeOption, x, y);
     enemy.carried = 0;
     if (by >= 0 && !this.crashing && specs.revenge[spec] !== 0) this.revenge(enemy, spec);
+    // A death behaviour (M2-07 — splitting bubbles) acts while the enemy still stands there.
+    const behavior = specs.behavior[spec];
+    if (!this.crashing && behavior !== null && behavior.death !== undefined) {
+      behavior.death(this.apis[enemy.slot], specs.params[spec]);
+    }
     const slot = enemy.formation;
     if (slot < 0) {
       this.remove(enemy);
@@ -2337,6 +2581,21 @@ class EnemySystemImpl implements EnemySystem {
     this.creditBy = by;
     this.leaveFormation(enemy, slot);
     this.creditBy = -1;
+    return true;
+  }
+
+  /** See {@link EnemySystem.destroy}. */
+  destroy(enemy: Enemy, explode = true): boolean {
+    if (enemy.state !== EnemyState.Live || (enemy.flags & EnemyFlag.Ghost) !== 0) return false;
+    if (explode) {
+      const size = this.specs.explosion[enemy.specIndex];
+      const events = this.host.events;
+      const x = Math.floor(enemy.x) | 0;
+      const y = Math.floor(enemy.y) | 0;
+      events.push(SimEventKind.Sfx, EXPLOSION_SFX[size], x, y, 0);
+      events.push(SimEventKind.Particles, EXPLOSION_FX[size], x, y, 1);
+    }
+    this.escape(enemy);
     return true;
   }
 

@@ -1,0 +1,79 @@
+{
+  "formatVersion": 1,
+  "kind": "stage",
+  "id": "tiled-sample",
+  "name": "TILED SAMPLE",
+  "music": { "stage": "Stage", "boss": "Boss" },
+  "length": 416,
+  "camera": [
+    { "x": 0, "speed": 1, "ramp": 30 },
+    { "x": 200, "speed": 1.5 }
+  ],
+  "checkpoints": [{ "x": 0 }, { "x": 300 }],
+  "parallax": [],
+  "tilemap": {
+    "tileSize": 8,
+    "tileset": "terrain-a",
+    "rowsTall": 25,
+    "rle": [
+      "100*3",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "50*0, 2*18",
+      "50*0, 2*18",
+      "50*0, 2*18, 18*0, 6",
+      "100*2",
+      "100*1"
+    ]
+  },
+  "events": [
+    { "x": 0, "type": "spawn", "enemy": "drifter", "y": 60, "screenX": 300 },
+    {
+      "x": 116,
+      "type": "trigger",
+      "flag": "took-low",
+      "region": { "x": 500, "y": 150, "w": 60, "h": 40 }
+    },
+    {
+      "x": 160,
+      "type": "formation",
+      "enemy": "fan",
+      "count": 3,
+      "interval": 10,
+      "y": 100,
+      "path": "tiled-loop",
+      "bonus": 500
+    },
+    {
+      "x": 250,
+      "type": "block",
+      "y": 96,
+      "w": 16,
+      "h": 8,
+      "tile": "solid",
+      "dy": 16,
+      "period": 120
+    },
+    { "x": 300, "type": "spawn", "enemy": "carrier", "y": 150, "branch": "low" },
+    { "x": 380, "type": "music", "cue": "Boss" },
+    { "x": 416, "type": "end" }
+  ],
+  "branches": [{ "id": "low", "flag": "took-low" }]
+}

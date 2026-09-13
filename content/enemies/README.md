@@ -26,7 +26,14 @@ the player's column, diving down) — flown by the `hunter-range` dev stage, whi
 rare blue carrier (`carrier-blue` in `test-range.enemies.json`). `direct-carriers.enemies.json`
 (M2-05) holds the Direct mode's item carriers flown by the `direct-range` dev stage: the `cube`
 (`cube.pincer` — a formation of six makes a pincer wave, the last cube destroyed drops the wave's
-item) and the coloured `lead-carrier` (`drop: "powerup"`).
+item) and the coloured `lead-carrier` (`drop: "powerup"`). `gimmick-range.enemies.json` (M2-07)
+holds the stage gimmicks the `gimmick-range` dev stage flies: the `falling-rock` (`rock.fall`, hangs
+from the ceiling until a ship comes near, shatters on the floor), the `volcano` (`volcano.lob`)
+and its `lava-stone`s, the splitting `bubble` and its `bubble-small`s (`bubble.split`), the
+`suction-pod` (`field.suction`), the grabbing `tentacle` (`tentacle.grab`) and the `rush-cube`
+(`cube.stack`: a formation of them is a seeded cube rush that stacks into `cube` tiles). A mover may
+be `{ "type": "ballistic", "vx", "vy", "gravity"?, "maxFall"?, "trigger"?, "land"? }` (M2-07: thrown
+or falling; `land` = `pass` / `stop` (default) / `shatter`).
 
 ## Format (formatVersion 1)
 

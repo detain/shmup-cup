@@ -20,10 +20,18 @@
  *   checkpoint's x fire again, for the hooks) and calls `hooks.clear()`; {@link StageRunner.jumpTo}
  *   does the same at any scroll x (the debug stage skip of M1-18);
  * - the **terrain** and **parallax** descriptions: {@link createStageTerrain} turns the stage's
- *   expanded tile grid into the `TerrainMap` the collision queries read (a private copy, so later
+ *   expanded tile grid into the `TerrainMap` the collision queries read (a private copy, so the
  *   destructible terrain cannot touch the content), {@link createTerrainView} /
  *   {@link createParallaxView} build the read-only views the renderer draws and
- *   {@link updateParallaxView} scrolls the bands with the camera.
+ *   {@link updateParallaxView} scrolls the bands with the camera;
+ * - since M2-07 the **advanced stage systems** (shmup_feat.md §14): timed scroll stops (`hold`
+ *   keys — vertical sections), diagonal pans (`yOver`: the camera y follows the scroll x), in-stage
+ *   **branches** (an event naming a branch fires only while its flag has the branch's value;
+ *   {@link StageRunner.eventActive}) and **region triggers** (`trigger` events arm a world rectangle;
+ *   the first living ship inside it sets / clears a flag — {@link StageRunner.probe}); high-speed
+ *   sections are the speed keys and `speed` events (up to 16 px/tick). The World-side systems —
+ *   destructible terrain, moving blocks (`block` events), pull fields and chains of gimmick
+ *   scripts — are {@link StageGimmicks} (`./systems.ts`).
  *
  * **Tick order inside {@link StageRunner.tick}.** 1 apply the camera keys the camera has reached
  * (`key.x ≤ camera.x`), 2 advance the speed ramp and the vertical pan, 3 move the camera (not
@@ -35,6 +43,19 @@
  * outset, so the first tick applies the key at 0 and then fires the events at 0 — a `speed`
  * event at 0 overrides the first key.
  *
+ * **Holds, diagonal pans (M2-07).** A `hold` key is a stop key like a lock: the camera halts
+ * exactly at its x, and when the key applies it stays `hold` ticks (a `yTo` pan of the key runs
+ * meanwhile), then scrolls on at the key's speed with its ramp. A `yOver` key pans linearly: the
+ * camera y goes from where it was to `yTo` while the camera x goes from the key's x to `x + yOver`
+ * (so a speed change mid-pan keeps the slope).
+ *
+ * **Branches and triggers (M2-07).** Branches are data (`StageSpec.branches`: id, flag, value); an
+ * event with a `branch` is skipped — no runner part, no hooks — when the camera reaches it while
+ * its branch is not taken. A `trigger` event arms its region (its runner part); every tick the
+ * World probes the armed regions with its living ships; a trigger fires once (setting or clearing
+ * its flag), and disarms when the camera passes its `until`. The armed / fired masks are slots of
+ * the state array (hashed).
+ *
  * **Restart order.** {@link StageRunner.restartAt} replays that order by x: keys and events
  * before the checkpoint at once, an event before a key at the same x (but the key at 0 before
  * the events at 0, as the first tick applies them); then the events at exactly the checkpoint's
@@ -42,7 +63,11 @@
  * re-fire on the next tick for the hooks only; keys at the checkpoint's x apply on that tick, as
  * live play applied them the tick after arriving. Exact for ties; a key and a speed event less
  * than one tick's movement apart (key first) are replayed key → event, while live play may have
- * crossed both in one tick (event → key).
+ * crossed both in one tick (event → key). Branch-gated events are re-derived under the flags as
+ * they evolve in that order; a trigger before the restart x that had fired applies its flag at its
+ * place in the timeline (live play fired it later, while it was armed — an approximation) and stays
+ * fired, one that had not is armed again while its region lies ahead; a diagonal pan running at the
+ * restart x resumes where live play had it.
  *
  * **Zero allocation.** All numeric runner state lives in one `Float64Array`
  * ({@link StageRunner.state}, also what `hashWorld` hashes); at creation the camera keys, events
@@ -63,7 +88,11 @@
  * {@link StageEventCode}, {@link StageSlot}, {@link STAGE_STATE_SLOTS}, {@link findEventCursor};
  * camera {@link StageCamera}, {@link createStageCamera}; terrain {@link createStageTerrain},
  * {@link createTerrainView}, {@link stageMapWidth}; parallax {@link createParallaxView},
- * {@link updateParallaxView}, {@link StageParallaxView}.
+ * {@link updateParallaxView}, {@link StageParallaxView}; M2-07 (from `./systems.ts`)
+ * {@link StageGimmicks}, {@link StageGimmicksHost}, {@link createStageGimmicks},
+ * {@link MovingBlockSystem}, {@link MAX_PULL_FIELDS}, {@link MAX_CHAINS}, {@link MAX_CHAIN_LINKS},
+ * {@link CHAIN_SPRITE}, {@link GIMMICK_SPRITES}, {@link BLOCK_DESPAWN_MARGIN},
+ * {@link BLOCK_BATCH_CAPACITY}.
  *
  * @example
  * ```ts
@@ -75,12 +104,11 @@
  * runner.restartAt(runner.checkpoint); // after a death with the `arcade` penalty
  * ```
  *
- * **Planned API.** Time-keyed events during scroll stops and boss fights, diagonal scrolling,
- * in-stage branches and the zone map (M2-07, M2-10).
+ * **Planned API.** Bonus stages and the zone map (M2-10).
  *
  * @module
  */
-import type { TerrainMap } from '../collision/index.js';
+import { MAX_TERRAIN_BLOCKS, TerrainBlocks, type TerrainMap } from '../collision/index.js';
 import { PLAYFIELD_W } from '../config/index.js';
 import {
   STAGE_EVENT_TYPES,
@@ -91,7 +119,26 @@ import {
 } from '../data/index.js';
 import { EASINGS } from '../math/index.js';
 import { defineModule } from '../module-info.js';
-import { LayerId, type ParallaxView, type TerrainView } from '../presentation/index.js';
+import {
+  LayerId,
+  type ParallaxView,
+  type TerrainChanges,
+  type TerrainView,
+} from '../presentation/index.js';
+
+export {
+  BLOCK_BATCH_CAPACITY,
+  BLOCK_DESPAWN_MARGIN,
+  CHAIN_SPRITE,
+  GIMMICK_SPRITES,
+  MAX_CHAINS,
+  MAX_CHAIN_LINKS,
+  MAX_PULL_FIELDS,
+  MovingBlockSystem,
+  StageGimmicks,
+  createStageGimmicks,
+  type StageGimmicksHost,
+} from './systems.js';
 
 /** Module descriptor (see {@link defineModule}). */
 export const moduleInfo = defineModule({
@@ -121,6 +168,10 @@ export const StageEventCode = {
   Flag: 6,
   /** `end` — the stage is over (applied by the runner). */
   End: 7,
+  /** `trigger` — arm a region trigger (applied by the runner, M2-07). */
+  Trigger: 8,
+  /** `block` — a moving block (the World's `MovingBlockSystem`, M2-07). */
+  Block: 9,
 } as const;
 
 /** A {@link StageEventCode} value. */
@@ -245,10 +296,22 @@ export const StageSlot = {
   ResumeSpeed: 20,
   /** Ramp of the brake in ticks (also the ramp back up after the unlock). */
   BrakeRamp: 21,
+  /** Ticks a `hold` key still holds the camera (0 = none; M2-07). */
+  Hold: 22,
+  /** Index of the key holding the camera (its speed and ramp apply when the hold ends). */
+  HoldKey: 23,
+  /** Length in scroll pixels of the running diagonal pan (0 = none; M2-07 `yOver`). */
+  PanOver: 24,
+  /** Camera x where the running diagonal pan started (its key's x). */
+  PanStartX: 25,
+  /** Armed triggers: bit `t` = trigger `t` (in timeline order) is armed (M2-07). */
+  TriggersArmed: 26,
+  /** Fired triggers: bit `t` = trigger `t` fired (M2-07; kept by restarts behind them). */
+  TriggersFired: 27,
 } as const;
 
 /** Number of slots in {@link StageRunner.state}. */
-export const STAGE_STATE_SLOTS = 22;
+export const STAGE_STATE_SLOTS = 28;
 
 /** Drives one stage (see the module docs). */
 export interface StageRunner {
@@ -276,8 +339,49 @@ export interface StageRunner {
   readonly ended: boolean;
   /** Ticks since the stage started or was last restarted. */
   readonly ticks: number;
+  /** `true` while a `hold` key holds the camera (M2-07). */
+  readonly holding: boolean;
+  /** Armed triggers as a bit mask (bit `t` = the stage's `t`-th `trigger` event; M2-07). */
+  readonly triggersArmed: number;
+  /** Fired triggers as a bit mask (M2-07). */
+  readonly triggersFired: number;
   /** Advances the camera by one tick and fires the due events. Never allocates. */
   tick(): void;
+  /**
+   * Whether an event's branch is taken right now (M2-07): `true` for an event without a branch,
+   * else whether its branch's flag has the branch's value. The timeline skips an event whose branch
+   * is not taken when the camera reaches it.
+   *
+   * @param index - Index in `stage.events`.
+   * @returns `true` when it would fire.
+   */
+  eventActive(index: number): boolean;
+  /**
+   * Sets or clears a stage flag (M2-07: what `flag` events and triggers do; scripts and tools may
+   * too). Never allocates.
+   *
+   * @param flagId - Index in `stage.flagNames` (0 … 31; others do nothing).
+   * @param value - `true` sets, `false` clears.
+   */
+  setFlag(flagId: number, value: boolean): void;
+  /**
+   * Tests a point — a living ship's centre — against every armed region trigger (M2-07): each one
+   * whose region contains it (left / top edges inclusive, right / bottom exclusive) fires (sets /
+   * clears its flag) and disarms. Never allocates.
+   *
+   * @remarks
+   * Takes the point object (a ship), not two numbers: V8 boxes fractional arguments of a call it
+   * does not inline.
+   *
+   * @param point - The point (its `x` / `y` in world pixels).
+   * @returns Triggers fired by this call.
+   *
+   * @example
+   * ```ts
+   * for (const ship of world.players) if (ship.state === 'alive') runner.probe(ship);
+   * ```
+   */
+  probe(point: { readonly x: number; readonly y: number }): number;
   /**
    * Restarts from a checkpoint (death penalty `arcade`, continues): camera x at the checkpoint,
    * speed / pan / flags as the stage had them there (keys and events before it applied at once,
@@ -394,9 +498,13 @@ interface CompiledStage {
   readonly keyYTicks: Float64Array;
   /** 1 for a lock key. */
   readonly keyLock: Uint8Array;
+  /** Camera key hold ticks (0 = none; M2-07). */
+  readonly keyHold: Float64Array;
+  /** Camera key diagonal-pan length in scroll pixels (0 = a timed pan or none; M2-07). */
+  readonly keyYOver: Float64Array;
   /**
-   * Per key index `i` (and `keys.length`): the index of the first lock key at or after `i`
-   * (`keys.length` = none) — what step 3 clamps the movement against.
+   * Per key index `i` (and `keys.length`): the index of the first **stop** key — a lock or a hold
+   * — at or after `i` (`keys.length` = none): what step 3 clamps the movement against.
    */
   readonly keyNextLock: Int32Array;
   /** Event x. */
@@ -411,9 +519,32 @@ interface CompiledStage {
   readonly eventFlagBit: Uint32Array;
   /** 1 when a `flag` event sets its flag, 0 when it clears it. */
   readonly eventFlagSet: Uint8Array;
+  /** Flag bit of an event's branch (0 = no branch — always fires; M2-07). */
+  readonly eventBranchBit: Uint32Array;
+  /** 1 when the branch is taken with its flag set, 0 when with it clear. */
+  readonly eventBranchValue: Uint8Array;
+  /** Trigger ordinal of a `trigger` event (-1 for other events; M2-07). */
+  readonly eventTrigger: Int8Array;
+  /** Trigger regions (ordinal order): left edge. */
+  readonly triggerX0: Float64Array;
+  /** Trigger regions: top edge. */
+  readonly triggerY0: Float64Array;
+  /** Trigger regions: right edge (exclusive). */
+  readonly triggerX1: Float64Array;
+  /** Trigger regions: bottom edge (exclusive). */
+  readonly triggerY1: Float64Array;
+  /** Camera x past which a trigger disarms. */
+  readonly triggerUntil: Float64Array;
+  /** Flag bit a trigger sets / clears. */
+  readonly triggerBit: Uint32Array;
+  /** 1 when a trigger sets its flag, 0 when it clears it. */
+  readonly triggerSet: Uint8Array;
   /** Checkpoint x. */
   readonly checkpointX: Float64Array;
 }
+
+/** Most triggers the runner tracks (the bits of one 32-bit mask). */
+const MAX_TRIGGERS = 32;
 
 /**
  * Compiles a stage's keys, events and checkpoints into typed arrays (load time).
@@ -426,6 +557,8 @@ function compileStage(stage: StageSpec): CompiledStage {
   const keys = stage.camera;
   const events = stage.events;
   const checkpoints = stage.checkpoints;
+  let triggers = 0;
+  for (const event of events) if (event.type === 'trigger' && triggers < MAX_TRIGGERS) triggers++;
   const compiled: CompiledStage = {
     keyX: new Float64Array(keys.length),
     keySpeed: new Float64Array(keys.length),
@@ -433,6 +566,8 @@ function compileStage(stage: StageSpec): CompiledStage {
     keyYTo: new Float64Array(keys.length),
     keyYTicks: new Float64Array(keys.length),
     keyLock: new Uint8Array(keys.length),
+    keyHold: new Float64Array(keys.length),
+    keyYOver: new Float64Array(keys.length),
     keyNextLock: new Int32Array(keys.length + 1),
     eventX: new Float64Array(events.length),
     eventCode: new Uint8Array(events.length),
@@ -440,8 +575,19 @@ function compileStage(stage: StageSpec): CompiledStage {
     eventRamp: new Float64Array(events.length),
     eventFlagBit: new Uint32Array(events.length),
     eventFlagSet: new Uint8Array(events.length),
+    eventBranchBit: new Uint32Array(events.length),
+    eventBranchValue: new Uint8Array(events.length),
+    eventTrigger: new Int8Array(events.length),
+    triggerX0: new Float64Array(triggers),
+    triggerY0: new Float64Array(triggers),
+    triggerX1: new Float64Array(triggers),
+    triggerY1: new Float64Array(triggers),
+    triggerUntil: new Float64Array(triggers),
+    triggerBit: new Uint32Array(triggers),
+    triggerSet: new Uint8Array(triggers),
     checkpointX: new Float64Array(checkpoints.length),
   };
+  const branches = stage.branches ?? [];
   for (let i = 0; i < keys.length; i++) {
     const key: StageCameraKey = keys[i];
     compiled.keyX[i] = key.x;
@@ -451,23 +597,45 @@ function compileStage(stage: StageSpec): CompiledStage {
     // A pan "at once" is a one-tick pan: the same tick's step moves the camera all the way.
     compiled.keyYTicks[i] = key.yTicks === undefined || key.yTicks <= 0 ? 1 : key.yTicks;
     compiled.keyLock[i] = key.lock === true ? 1 : 0;
+    compiled.keyHold[i] = key.hold !== undefined && key.hold > 0 ? Math.floor(key.hold) : 0;
+    compiled.keyYOver[i] = key.yOver !== undefined && key.yOver > 0 ? key.yOver : 0;
   }
   compiled.keyNextLock[keys.length] = keys.length;
   for (let i = keys.length - 1; i >= 0; i--) {
-    compiled.keyNextLock[i] = compiled.keyLock[i] !== 0 ? i : compiled.keyNextLock[i + 1];
+    const stop = compiled.keyLock[i] !== 0 || compiled.keyHold[i] > 0;
+    compiled.keyNextLock[i] = stop ? i : compiled.keyNextLock[i + 1];
   }
+  let trigger = 0;
   for (let i = 0; i < events.length; i++) {
     const event = events[i];
     const code = (STAGE_EVENT_TYPES as readonly string[]).indexOf(event.type);
     if (code < 0) throw new RangeError(`stage "${stage.id}": unknown event type ${event.type}`);
     compiled.eventX[i] = event.x;
     compiled.eventCode[i] = code;
+    compiled.eventTrigger[i] = -1;
+    const branchId = event.branchId;
+    const branch = branchId !== undefined && branchId >= 0 ? branches[branchId] : undefined;
+    if (branch !== undefined && branch.flagId >= 0) {
+      compiled.eventBranchBit[i] = (1 << branch.flagId) >>> 0;
+      compiled.eventBranchValue[i] = branch.value ? 1 : 0;
+    }
     if (event.type === 'speed') {
       compiled.eventSpeed[i] = event.speed;
       compiled.eventRamp[i] = event.ramp === undefined ? 0 : event.ramp;
     } else if (event.type === 'flag') {
       compiled.eventFlagBit[i] = (1 << event.flagId) >>> 0;
       compiled.eventFlagSet[i] = event.value === false ? 0 : 1;
+    } else if (event.type === 'trigger' && trigger < MAX_TRIGGERS) {
+      const region = event.region;
+      compiled.eventTrigger[i] = trigger;
+      compiled.triggerX0[trigger] = region.x;
+      compiled.triggerY0[trigger] = region.y;
+      compiled.triggerX1[trigger] = region.x + region.w;
+      compiled.triggerY1[trigger] = region.y + region.h;
+      compiled.triggerUntil[trigger] = event.until ?? region.x + region.w;
+      compiled.triggerBit[trigger] = (1 << event.flagId) >>> 0;
+      compiled.triggerSet[trigger] = event.value === false ? 0 : 1;
+      trigger++;
     }
   }
   for (let i = 0; i < checkpoints.length; i++) compiled.checkpointX[i] = checkpoints[i].x;
@@ -553,6 +721,21 @@ class StageRunnerImpl implements StageRunner {
     return this.state[StageSlot.Ticks];
   }
 
+  /** See {@link StageRunner.holding}. */
+  get holding(): boolean {
+    return this.state[StageSlot.Hold] > 0;
+  }
+
+  /** See {@link StageRunner.triggersArmed}. */
+  get triggersArmed(): number {
+    return this.state[StageSlot.TriggersArmed];
+  }
+
+  /** See {@link StageRunner.triggersFired}. */
+  get triggersFired(): number {
+    return this.state[StageSlot.TriggersFired];
+  }
+
   /** See {@link StageRunner.tick}. */
   tick(): void {
     const state = this.state;
@@ -583,6 +766,14 @@ class StageRunnerImpl implements StageRunner {
     if (state[StageSlot.Braking] !== 0 && state[StageSlot.Speed] === 0) {
       state[StageSlot.Locked] = 1;
     }
+    // A hold (M2-07) keeps the camera still for its ticks; on its last one the key's speed and
+    // ramp take over (so the camera moves again from the next tick).
+    const holding = state[StageSlot.Hold] > 0;
+    if (holding) {
+      const left = state[StageSlot.Hold] - 1;
+      state[StageSlot.Hold] = left;
+      if (left === 0) this.endHold();
+    }
     let y = camera.y;
     const panTicks = state[StageSlot.PanTicks];
     if (state[StageSlot.PanElapsed] < panTicks) {
@@ -593,9 +784,9 @@ class StageRunnerImpl implements StageRunner {
       y = elapsed >= panTicks ? to : from + (to - from) * EASINGS.inOutQuad(elapsed / panTicks);
     }
 
-    // 3. Move: not while locked, never past the first pending lock key (other pending keys may
-    // lie before it within this tick's movement) or the stage end.
-    let dx = state[StageSlot.Locked] !== 0 ? 0 : state[StageSlot.Speed];
+    // 3. Move: not while locked or held, never past the first pending stop key (other pending
+    // keys may lie before it within this tick's movement) or the stage end.
+    let dx = state[StageSlot.Locked] !== 0 || holding ? 0 : state[StageSlot.Speed];
     const lock = compiled.keyNextLock[nextKey];
     if (lock < keyCount) {
       const stop = keyX[lock] - camera.x;
@@ -603,6 +794,19 @@ class StageRunnerImpl implements StageRunner {
     }
     const room = this.stage.length - camera.x;
     if (dx > room) dx = room > 0 ? room : 0;
+    // A diagonal pan (M2-07 `yOver`): y follows the scroll x linearly.
+    const over = state[StageSlot.PanOver];
+    if (over > 0) {
+      const t = (camera.x + dx - state[StageSlot.PanStartX]) / over;
+      const from = state[StageSlot.PanFrom];
+      const to = state[StageSlot.PanTo];
+      if (t >= 1) {
+        y = to;
+        state[StageSlot.PanOver] = 0;
+      } else if (t > 0) {
+        y = from + (to - from) * t;
+      }
+    }
     const dy = y - camera.y;
     camera.dx = dx;
     camera.dy = dy;
@@ -611,7 +815,8 @@ class StageRunnerImpl implements StageRunner {
     camera.x += dx;
     camera.y = y;
 
-    // 4. Every event the camera reached, in order, exactly once.
+    // 4. Every event the camera reached, in order, exactly once (skipped when its branch is not
+    // taken).
     const eventX = compiled.eventX;
     const restarts = state[StageSlot.Restarts];
     let cursor = state[StageSlot.Cursor];
@@ -621,6 +826,8 @@ class StageRunnerImpl implements StageRunner {
       if (state[StageSlot.Restarts] !== restarts) return; // a hook restarted the stage
       cursor = state[StageSlot.Cursor];
     }
+    // Armed triggers whose region the camera left behind disarm.
+    if (state[StageSlot.TriggersArmed] !== 0) this.disarmPassed();
 
     // 5. The last checkpoint passed.
     const checkpointX = compiled.checkpointX;
@@ -631,6 +838,93 @@ class StageRunnerImpl implements StageRunner {
     }
     state[StageSlot.NextCheckpoint] = next;
     state[StageSlot.Ticks]++;
+  }
+
+  /** See {@link StageRunner.eventActive}. */
+  eventActive(index: number): boolean {
+    const bit = this.compiled.eventBranchBit[index];
+    if (bit === 0 || bit === undefined) return true;
+    const set = (this.state[StageSlot.Flags] & bit) !== 0;
+    return set === (this.compiled.eventBranchValue[index] !== 0);
+  }
+
+  /** See {@link StageRunner.setFlag}. */
+  setFlag(flagId: number, value: boolean): void {
+    if (!(flagId >= 0 && flagId < 32 && flagId % 1 === 0)) return;
+    this.writeFlag((1 << flagId) >>> 0, value);
+  }
+
+  /** See {@link StageRunner.probe}. */
+  probe(point: { readonly x: number; readonly y: number }): number {
+    const x = point.x;
+    const y = point.y;
+    const state = this.state;
+    const armed = state[StageSlot.TriggersArmed];
+    if (armed === 0) return 0;
+    const c = this.compiled;
+    let fired = 0;
+    for (let t = 0; t < c.triggerX0.length; t++) {
+      const bit = (1 << t) >>> 0;
+      if ((armed & bit) === 0) continue;
+      if (!(
+        x >= c.triggerX0[t] &&
+        x < c.triggerX1[t] &&
+        y >= c.triggerY0[t] &&
+        y < c.triggerY1[t]
+      )) {
+        continue;
+      }
+      this.fireTrigger(t);
+      fired++;
+    }
+    return fired;
+  }
+
+  /**
+   * A trigger fires: its flag is set / cleared, it disarms and counts as fired.
+   *
+   * @param t - Trigger ordinal.
+   */
+  private fireTrigger(t: number): void {
+    const state = this.state;
+    const bit = (1 << t) >>> 0;
+    state[StageSlot.TriggersArmed] = (state[StageSlot.TriggersArmed] & ~bit) >>> 0;
+    state[StageSlot.TriggersFired] = (state[StageSlot.TriggersFired] | bit) >>> 0;
+    this.writeFlag(this.compiled.triggerBit[t], this.compiled.triggerSet[t] !== 0);
+  }
+
+  /** Disarms every armed trigger the camera has passed (`camera.x > until`). */
+  private disarmPassed(): void {
+    const state = this.state;
+    const c = this.compiled;
+    const x = this.camera.x;
+    let armed = state[StageSlot.TriggersArmed];
+    for (let t = 0; t < c.triggerUntil.length; t++) {
+      const bit = (1 << t) >>> 0;
+      if ((armed & bit) !== 0 && x > c.triggerUntil[t]) armed = (armed & ~bit) >>> 0;
+    }
+    state[StageSlot.TriggersArmed] = armed;
+  }
+
+  /**
+   * Sets or clears flag bits.
+   *
+   * @param bit - The bit(s).
+   * @param value - `true` sets them.
+   */
+  private writeFlag(bit: number, value: boolean): void {
+    const state = this.state;
+    const flags = state[StageSlot.Flags];
+    state[StageSlot.Flags] = value ? (flags | bit) >>> 0 : (flags & ~bit) >>> 0;
+  }
+
+  /** A hold ran out: the holding key's speed (and ramp) apply — or wait, while braking. */
+  private endHold(): void {
+    const state = this.state;
+    const key = state[StageSlot.HoldKey];
+    const speed = this.compiled.keySpeed[key];
+    if (state[StageSlot.Braking] !== 0) state[StageSlot.ResumeSpeed] = speed;
+    else this.setTarget(speed, this.compiled.keyRamp[key]);
   }
 
   /** See {@link StageRunner.restartAt}. */
@@ -699,14 +993,32 @@ class StageRunnerImpl implements StageRunner {
   private applyKey(index: number): void {
     const state = this.state;
     const compiled = this.compiled;
-    if (state[StageSlot.Braking] !== 0) state[StageSlot.ResumeSpeed] = compiled.keySpeed[index];
-    else this.setTarget(compiled.keySpeed[index], compiled.keyRamp[index]);
+    const hold = compiled.keyHold[index];
+    if (state[StageSlot.Braking] !== 0) {
+      state[StageSlot.ResumeSpeed] = compiled.keySpeed[index];
+    } else if (hold > 0) {
+      // A timed stop (M2-07): still at once; the key's speed applies when the hold ends.
+      state[StageSlot.Hold] = hold;
+      state[StageSlot.HoldKey] = index;
+      this.setTarget(0, 0);
+    } else {
+      this.setTarget(compiled.keySpeed[index], compiled.keyRamp[index]);
+    }
     const yTo = compiled.keyYTo[index];
     if (yTo === yTo) {
       state[StageSlot.PanFrom] = this.camera.y;
       state[StageSlot.PanTo] = yTo;
-      state[StageSlot.PanTicks] = compiled.keyYTicks[index];
       state[StageSlot.PanElapsed] = 0;
+      const over = compiled.keyYOver[index];
+      if (over > 0) {
+        // A diagonal pan: y follows the scroll from the key's x (step 3).
+        state[StageSlot.PanTicks] = 0;
+        state[StageSlot.PanOver] = over;
+        state[StageSlot.PanStartX] = compiled.keyX[index];
+      } else {
+        state[StageSlot.PanTicks] = compiled.keyYTicks[index];
+        state[StageSlot.PanOver] = 0;
+      }
     }
     if (compiled.keyLock[index] !== 0) state[StageSlot.Locked] = 1;
   }
@@ -717,11 +1029,7 @@ class StageRunnerImpl implements StageRunner {
    * @param index - Event index.
    */
   private applyFlag(index: number): void {
-    const state = this.state;
-    const bit = this.compiled.eventFlagBit[index];
-    const flags = state[StageSlot.Flags];
-    state[StageSlot.Flags] =
-      this.compiled.eventFlagSet[index] !== 0 ? (flags | bit) >>> 0 : (flags & ~bit) >>> 0;
+    this.writeFlag(this.compiled.eventFlagBit[index], this.compiled.eventFlagSet[index] !== 0);
   }
 
   /**
@@ -730,6 +1038,8 @@ class StageRunnerImpl implements StageRunner {
    * @param index - Event index.
    */
   private fire(index: number): void {
+    // An event whose branch is not taken is passed by (M2-07): no runner part, no hooks.
+    if (!this.eventActive(index)) return;
     const code = this.compiled.eventCode[index] as StageEventCode;
     // Events at a restart checkpoint's x already had their runner part applied by the restart.
     if (index >= this.state[StageSlot.Replay]) this.applyEvent(index, code, true);
@@ -738,7 +1048,7 @@ class StageRunnerImpl implements StageRunner {
 
   /**
    * The runner's own part of an event: `speed` sets the target speed, `flag` sets / clears its
-   * flag, `end` ends the stage.
+   * flag, `end` ends the stage, `trigger` arms its region (unless it already fired).
    *
    * @param index - Event index.
    * @param code - Its {@link StageEventCode}.
@@ -762,6 +1072,15 @@ class StageRunnerImpl implements StageRunner {
       this.applyFlag(index);
     } else if (code === StageEventCode.End && live) {
       state[StageSlot.Ended] = 1;
+    } else if (code === StageEventCode.Trigger) {
+      const t = compiled.eventTrigger[index];
+      if (t < 0) return;
+      const bit = (1 << t) >>> 0;
+      if ((state[StageSlot.TriggersFired] & bit) !== 0) return;
+      // Long passed (a restart): armed again only while its region is still ahead.
+      if (live || compiled.triggerUntil[t] > this.camera.x) {
+        state[StageSlot.TriggersArmed] = (state[StageSlot.TriggersArmed] | bit) >>> 0;
+      }
     }
   }
 
@@ -795,6 +1114,7 @@ class StageRunnerImpl implements StageRunner {
     const camera = this.camera;
     const compiled = this.compiled;
     const restarts = state[StageSlot.Restarts];
+    const firedBefore = state[StageSlot.TriggersFired];
     state.fill(0);
     state[StageSlot.Restarts] = restarts + 1;
     camera.x = x;
@@ -826,10 +1146,34 @@ class StageRunnerImpl implements StageRunner {
         state[StageSlot.Speed] = speed;
         state[StageSlot.Target] = speed;
         const yTo = compiled.keyYTo[k];
-        if (yTo === yTo) camera.y = yTo;
+        if (yTo === yTo) {
+          const over = compiled.keyYOver[k];
+          const t = over > 0 ? (x - keyX[k]) / over : 1;
+          state[StageSlot.PanOver] = 0;
+          if (t >= 1) {
+            camera.y = yTo;
+          } else {
+            // A diagonal pan still running at x (M2-07): where live play had it, and on it goes.
+            const from = camera.y;
+            camera.y = from + (yTo - from) * t;
+            state[StageSlot.PanFrom] = from;
+            state[StageSlot.PanTo] = yTo;
+            state[StageSlot.PanOver] = over;
+            state[StageSlot.PanStartX] = keyX[k];
+          }
+        }
         k++;
       } else {
-        this.applyEvent(e, compiled.eventCode[e] as StageEventCode, e >= cursor);
+        // A branch not taken under the flags re-derived so far is skipped, as live play did.
+        if (this.eventActive(e)) {
+          const code = compiled.eventCode[e] as StageEventCode;
+          const t = compiled.eventTrigger[e];
+          if (code === StageEventCode.Trigger && t >= 0 && e < cursor) {
+            this.restoreTrigger(t, firedBefore);
+          } else {
+            this.applyEvent(e, code, e >= cursor);
+          }
+        }
         e++;
       }
     }
@@ -839,6 +1183,26 @@ class StageRunnerImpl implements StageRunner {
     state[StageSlot.Checkpoint] = index;
     state[StageSlot.NextCheckpoint] = index + 1;
     if (notify) this.hooks.clear();
+  }
+
+  /**
+   * A trigger before a restart's x (M2-07): one that fired before keeps its outcome (its flag is
+   * applied here, in timeline order) and stays fired; one that did not is armed again while its
+   * region is still ahead.
+   *
+   * @param t - Trigger ordinal.
+   * @param firedBefore - The fired mask before the restart.
+   */
+  private restoreTrigger(t: number, firedBefore: number): void {
+    const state = this.state;
+    const c = this.compiled;
+    const bit = (1 << t) >>> 0;
+    if ((firedBefore & bit) !== 0) {
+      state[StageSlot.TriggersFired] = (state[StageSlot.TriggersFired] | bit) >>> 0;
+      this.writeFlag(c.triggerBit[t], c.triggerSet[t] !== 0);
+    } else if (c.triggerUntil[t] > this.camera.x) {
+      state[StageSlot.TriggersArmed] = (state[StageSlot.TriggersArmed] | bit) >>> 0;
+    }
   }
 }
 
@@ -895,7 +1259,9 @@ export function stageMapWidth(length: number, tileSize: number): number {
  *
  * @remarks
  * The tile grid is copied so that a World may change its map (destructible terrain, M2-07)
- * without touching the shared content; the tileset tables are shared read-only references.
+ * without touching the shared content; the tileset tables are shared read-only references. A
+ * stage with `block` events gets the map's moving-block slots ({@link TerrainBlocks}, filled by the
+ * World's `MovingBlockSystem`).
  *
  * @param stage - The stage.
  * @param content - The content DB holding its tileset.
@@ -906,6 +1272,8 @@ export function createStageTerrain(stage: StageSpec, content: ContentDb): Terrai
   if (terrain === null) return null;
   const tileset = content.tilesets[terrain.tilesetId];
   if (tileset === undefined) return null;
+  let blocks = false;
+  for (const event of stage.events) if (event.type === 'block') blocks = true;
   return {
     tileSize: terrain.tileSize,
     cols: terrain.cols,
@@ -914,6 +1282,7 @@ export function createStageTerrain(stage: StageSpec, content: ContentDb): Terrai
     tileType: tileset.tables.type,
     tileAnchor: tileset.tables.anchor,
     tileMask: tileset.tables.mask,
+    blocks: blocks ? new TerrainBlocks(MAX_TERRAIN_BLOCKS) : null,
   };
 }
 
@@ -928,7 +1297,9 @@ export function createStageTerrain(stage: StageSpec, content: ContentDb): Terrai
  * @param map - The stage's collision map ({@link createStageTerrain}).
  * @param stage - The stage.
  * @param content - The content DB holding its tileset.
- * @returns The view (the renderer re-reads `tiles` as the camera crosses tile columns).
+ * @param changes - The map's change log (M2-07: the World's `DestructibleTerrain`), or `null`.
+ * @returns The view (the renderer re-reads `tiles` as the camera crosses tile columns and when
+ *   `changes` lists a cell).
  * @throws {RangeError} When the stage has no expanded terrain or its tileset is missing.
  *
  * @example
@@ -941,6 +1312,7 @@ export function createTerrainView(
   map: TerrainMap,
   stage: StageSpec,
   content: ContentDb,
+  changes: TerrainChanges | null = null,
 ): TerrainView {
   const tileset = stage.terrain === null ? undefined : content.tilesets[stage.terrain.tilesetId];
   if (tileset === undefined) {
@@ -953,6 +1325,7 @@ export function createTerrainView(
     tiles: map.tiles,
     tilesetSpriteId: tileset.spriteId,
     tileFrame: tileset.tables.frame,
+    changes,
   };
 }
 

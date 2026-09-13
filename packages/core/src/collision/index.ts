@@ -1,19 +1,34 @@
 /**
  * # collision — collision shapes, broad phase and terrain queries
  *
- * **Status: partial.** The narrow-phase shape tests, the layer bits, the uniform-grid broad
- * phase (plan M1-06) and the terrain queries against a stage's tilemap (plan M1-07) are
- * implemented. The bending lasers' circle chains (plan M2-02) are tested inside `core/bullets`
- * (`BulletSystem.collidePlayers`: one squared-distance test per hit node, brute force like the
- * bullets) rather than through a shape of this module.
+ * **Status: implemented.** The narrow-phase shape tests, the layer bits, the uniform-grid broad
+ * phase (plan M1-06), the terrain queries against a stage's tilemap (plan M1-07) and — plan
+ * M2-07 — moving blocks inside those queries ({@link TerrainBlocks}) and destructible tiles
+ * ({@link DestructibleTerrain}). The bending lasers' circle chains (plan M2-02) are tested inside
+ * `core/bullets` (`BulletSystem.collidePlayers`: one squared-distance test per hit node, brute
+ * force like the bullets) rather than through a shape of this module.
  *
  * **Responsibility.** All collision detection. Narrow phase: circle-vs-circle for bullets (squared
  * distances), AABB for enemies/terrain, capsule (point-to-segment) for straight lasers, circle
  * chains for bending lasers (in `core/bullets`). Broad phase: a uniform grid (~32 px cells, rebuilt
  * each tick via counting sort) for player shots × enemies; brute force for enemy bullets ×
- * players. Layer/mask bitfields. Terrain: tilemap collision lookups (solid, hazard; destructible
- * in M2), per-tile column-height masks for slopes and "find floor / ceiling" queries for
- * crawlers and ground missiles.
+ * players. Layer/mask bitfields. Terrain: tilemap collision lookups (solid, hazard), per-tile
+ * column-height masks for slopes and "find floor / ceiling" queries for crawlers and ground
+ * missiles; moving floors / ceilings as AABB blocks every query also sees; destructible tiles
+ * with per-cell damage, optional regrowth and the checkpoint rollback.
+ *
+ * **Moving blocks (M2-07).** A map's optional {@link TerrainMap.blocks} holds up to
+ * {@link MAX_TERRAIN_BLOCKS} whole-pixel boxes (`core/stage` moves them every tick): every query
+ * — {@link terrainAt}, {@link terrainRectHit}, {@link findFloor}, {@link findCeiling} — treats a
+ * block's pixels as terrain of its type, so ships die on them, shots and bullets stop at them and
+ * crawlers and ground missiles walk on them with no change to those systems.
+ *
+ * **Destructible tiles (M2-07).** {@link DestructibleTerrain} keeps the damage of a World's map:
+ * tiles with `hp` break after that much damage (shots hit the cell they meet — `core/weapons`), a
+ * tile with `regen` heals and grows back after that many ticks (organic walls; not onto a ship's
+ * terrain box), {@link DestructibleTerrain.place} adds tiles at run time (the cube rush) and
+ * {@link DestructibleTerrain.restore} is the checkpoint rollback to the stage's own tiles. Changed
+ * cells go to a small ring the renderer reads (the render contract's `TerrainChanges`).
  *
  * **Shape tests take scalars.** Every test receives plain numbers (`circleCircle(ax, ay, ar, bx,
  * by, br)`) — no `{ x, y }` temporaries, so the per-tick collision phase never allocates. Shapes
@@ -42,9 +57,9 @@
  * {@link DEFAULT_GRID_CELL_SIZE}, {@link DEFAULT_GRID_CAPACITY}; the {@link Shape} union;
  * terrain {@link TerrainMap}, {@link TerrainType}, {@link TerrainAnchor}, {@link terrainAt},
  * {@link terrainSolidAt}, {@link boxHitsTerrain}, {@link terrainRectHit}, {@link findFloor},
- * {@link findCeiling}.
- *
- * **Planned API.** Destructible tiles (M2-07).
+ * {@link findCeiling}; M2-07 {@link TerrainBlocks}, {@link MAX_TERRAIN_BLOCKS},
+ * {@link DestructibleTerrain}, {@link TerrainHit}, {@link MAX_TERRAIN_DAMAGE},
+ * {@link TERRAIN_CHANGE_LOG}, {@link MAX_TERRAIN_KEEP_OUT}.
  *
  * @module
  */
@@ -53,7 +68,7 @@ import { defineModule } from '../module-info.js';
 /** Module descriptor (see {@link defineModule}). */
 export const moduleInfo = defineModule({
   name: 'collision',
-  status: 'partial',
+  status: 'implemented',
   specRefs: ['shmup_feat.md §22', 'shmup_feat.md §5', 'shmup_feat.md §14', 'shmup_tech.md §4.5'],
 });
 
@@ -704,6 +719,11 @@ export type TerrainAnchor = (typeof TerrainAnchor)[keyof typeof TerrainAnchor];
  * `tileMask[t·tileSize + column]` (0 … tileSize pixels, measured from the anchor edge) — a
  * full block is all `tileSize`, a 45° slope `1, 2, … 8` (shmup_feat.md §22 "per-tile
  * height/mask for slopes").
+ *
+ * Since M2-07 a map may carry **moving blocks** ({@link TerrainMap.blocks}, the stage's moving
+ * floors / ceilings): every query treats their pixels like terrain of their type, wherever they
+ * are (inside the map or not). A World's map is its own copy, so destructible tiles
+ * ({@link DestructibleTerrain}) change `tiles` in place.
  */
 export interface TerrainMap {
   /** Tile edge in pixels (8). */
@@ -720,26 +740,194 @@ export interface TerrainMap {
   readonly tileAnchor: Uint8Array;
   /** Column heights: `tileMask[tileId * tileSize + column]`, 0 … tileSize. */
   readonly tileMask: Uint8Array;
+  /**
+   * The moving blocks (M2-07) the queries also test, or `null` / absent for none (a stage without
+   * `block` events).
+   */
+  readonly blocks?: TerrainBlocks | null;
 }
 
+// ------------------------------------------------------------------------------ moving blocks
+
+/** Most moving blocks one terrain map holds at a time (plan M2-07: moving floors / ceilings). */
+export const MAX_TERRAIN_BLOCKS = 16;
+
 /**
- * Collision type of one world pixel.
+ * The moving blocks of a terrain map (plan M2-07, shmup_feat.md §14 "moving floors / ceilings"):
+ * axis-aligned boxes of whole pixels that every terrain query treats as terrain of their
+ * {@link TerrainType}. Their owner (`core/stage` `MovingBlockSystem`) moves them once per tick by
+ * rewriting the bounds; this class is only the geometry the queries read.
  *
- * @param map - The terrain.
- * @param x - World x in pixels (floored to the pixel column).
- * @param y - World y in pixels (floored to the pixel row).
- * @returns The {@link TerrainType} of the pixel: `Empty` (0) outside the map, in an empty cell,
- *   in a decorative tile or outside the tile's mask; otherwise the tile's type.
+ * @remarks
+ * Slots `[0, count)` are scanned (a free slot inside that range has `live` 0); bounds are
+ * **inclusive** whole pixels, so a query never boxes a fraction. A class (one hidden class, typed
+ * arrays) so the per-pixel tests inline and never allocate.
  *
  * @example
  * ```ts
- * terrainAt(map, 100, 196); // → TerrainType.Solid when the floor is there
+ * const blocks = new TerrainBlocks(4);
+ * blocks.set(0, 100, 150, 131, 157, TerrainType.Solid); // a 32×8 floor slab
+ * blocks.typeAt(110, 150); // → TerrainType.Solid
  * ```
  */
-export function terrainAt(map: TerrainMap, x: number, y: number): number {
+export class TerrainBlocks {
+  /** Slots. */
+  readonly capacity: number;
+  /** One past the highest live slot (the scanned range). */
+  count = 0;
+  /** 1 for a slot in use. */
+  readonly live: Uint8Array;
+  /** First pixel column (inclusive). */
+  readonly x0: Int32Array;
+  /** First pixel row (inclusive). */
+  readonly y0: Int32Array;
+  /** Last pixel column (inclusive). */
+  readonly x1: Int32Array;
+  /** Last pixel row (inclusive). */
+  readonly y1: Int32Array;
+  /** {@link TerrainType} code per slot. */
+  readonly type: Uint8Array;
+
+  /**
+   * Creates the slots (load time).
+   *
+   * @param capacity - Slots (default {@link MAX_TERRAIN_BLOCKS}).
+   */
+  constructor(capacity: number = MAX_TERRAIN_BLOCKS) {
+    this.capacity = capacity;
+    this.live = new Uint8Array(capacity);
+    this.x0 = new Int32Array(capacity);
+    this.y0 = new Int32Array(capacity);
+    this.x1 = new Int32Array(capacity);
+    this.y1 = new Int32Array(capacity);
+    this.type = new Uint8Array(capacity);
+  }
+
+  /**
+   * Places (or moves) a block. Never allocates.
+   *
+   * @param slot - Slot index (`0 … capacity − 1`; out of range does nothing).
+   * @param x0 - First pixel column.
+   * @param y0 - First pixel row.
+   * @param x1 - Last pixel column (inclusive, ≥ `x0`).
+   * @param y1 - Last pixel row (inclusive, ≥ `y0`).
+   * @param type - {@link TerrainType} code (`Empty` makes the block harmless).
+   */
+  set(slot: number, x0: number, y0: number, x1: number, y1: number, type: number): void {
+    if (!(slot >= 0 && slot < this.capacity)) return;
+    this.live[slot] = 1;
+    this.x0[slot] = x0;
+    this.y0[slot] = y0;
+    this.x1[slot] = x1;
+    this.y1[slot] = y1;
+    this.type[slot] = type;
+    if (slot >= this.count) this.count = slot + 1;
+  }
+
+  /**
+   * Frees a slot (and shrinks the scanned range past trailing free slots).
+   *
+   * @param slot - Slot index.
+   */
+  remove(slot: number): void {
+    if (!(slot >= 0 && slot < this.capacity)) return;
+    this.live[slot] = 0;
+    while (this.count > 0 && this.live[this.count - 1] === 0) this.count--;
+  }
+
+  /** Frees every slot. */
+  clear(): void {
+    this.live.fill(0);
+    this.count = 0;
+  }
+
+  /**
+   * The highest {@link TerrainType} of the live blocks covering one pixel.
+   *
+   * @param px - Pixel column (whole number).
+   * @param py - Pixel row (whole number).
+   * @returns The type, `Empty` (0) when no block covers it.
+   */
+  typeAt(px: number, py: number): number {
+    let found = 0;
+    for (let i = 0; i < this.count; i++) {
+      if (this.live[i] === 0) continue;
+      if (px < this.x0[i] || px > this.x1[i] || py < this.y0[i] || py > this.y1[i]) continue;
+      if (this.type[i] > found) found = this.type[i];
+    }
+    return found;
+  }
+
+  /**
+   * The highest {@link TerrainType} of the live blocks overlapping an inclusive pixel rectangle.
+   *
+   * @param x0 - First pixel column.
+   * @param y0 - First pixel row.
+   * @param x1 - Last pixel column (inclusive).
+   * @param y1 - Last pixel row (inclusive).
+   * @returns The type, `Empty` (0) for none.
+   */
+  rectType(x0: number, y0: number, x1: number, y1: number): number {
+    let found = 0;
+    for (let i = 0; i < this.count; i++) {
+      if (this.live[i] === 0) continue;
+      if (x1 < this.x0[i] || x0 > this.x1[i] || y1 < this.y0[i] || y0 > this.y1[i]) continue;
+      if (this.type[i] > found) found = this.type[i];
+    }
+    return found;
+  }
+
+  /**
+   * The first block row at or below `py` in pixel column `px` (a floor for whatever is above).
+   *
+   * @param px - Pixel column.
+   * @param py - First row scanned.
+   * @param end - Last row scanned (inclusive).
+   * @returns The row, or `NaN` when no live, non-empty block is there.
+   */
+  floorIn(px: number, py: number, end: number): number {
+    let best = NaN;
+    for (let i = 0; i < this.count; i++) {
+      if (this.live[i] === 0 || this.type[i] === 0) continue;
+      if (px < this.x0[i] || px > this.x1[i] || this.y1[i] < py || this.y0[i] > end) continue;
+      const hit = this.y0[i] > py ? this.y0[i] : py;
+      if (!(hit >= best)) best = hit;
+    }
+    return best;
+  }
+
+  /**
+   * The first block row at or above `py` in pixel column `px` (a ceiling for whatever is below).
+   *
+   * @param px - Pixel column.
+   * @param py - First row scanned (the scan goes up).
+   * @param end - Last row scanned (inclusive, ≤ `py`).
+   * @returns The row, or `NaN` when no live, non-empty block is there.
+   */
+  ceilingIn(px: number, py: number, end: number): number {
+    let best = NaN;
+    for (let i = 0; i < this.count; i++) {
+      if (this.live[i] === 0 || this.type[i] === 0) continue;
+      if (px < this.x0[i] || px > this.x1[i] || this.y0[i] > py || this.y1[i] < end) continue;
+      const hit = this.y1[i] < py ? this.y1[i] : py;
+      if (!(hit <= best)) best = hit;
+    }
+    return best;
+  }
+}
+
+// ------------------------------------------------------------------------------ queries
+
+/**
+ * Collision type of one pixel of the tile grid only (no blocks).
+ *
+ * @param map - The terrain.
+ * @param px - Pixel column (whole number).
+ * @param py - Pixel row (whole number).
+ * @returns The {@link TerrainType}.
+ */
+function tileTypeAt(map: TerrainMap, px: number, py: number): number {
   const size = map.tileSize;
-  const px = Math.floor(x);
-  const py = Math.floor(y);
   if (!(px >= 0 && py >= 0)) return TerrainType.Empty;
   const col = Math.floor(px / size);
   const row = Math.floor(py / size);
@@ -752,6 +940,32 @@ export function terrainAt(map: TerrainMap, x: number, y: number): number {
   const ly = py - row * size;
   const solid = map.tileAnchor[tile] === TerrainAnchor.Ceiling ? ly < height : ly >= size - height;
   return solid ? type : TerrainType.Empty;
+}
+
+/**
+ * Collision type of one world pixel.
+ *
+ * @param map - The terrain.
+ * @param x - World x in pixels (floored to the pixel column).
+ * @param y - World y in pixels (floored to the pixel row).
+ * @returns The {@link TerrainType} of the pixel: `Empty` (0) outside the map, in an empty cell,
+ *   in a decorative tile or outside the tile's mask; otherwise the tile's type — or a moving
+ *   block's (M2-07) when it covers the pixel with a higher type.
+ *
+ * @example
+ * ```ts
+ * terrainAt(map, 100, 196); // → TerrainType.Solid when the floor is there
+ * ```
+ */
+export function terrainAt(map: TerrainMap, x: number, y: number): number {
+  const px = Math.floor(x);
+  const py = Math.floor(y);
+  const type = tileTypeAt(map, px, py);
+  const blocks = map.blocks;
+  if (blocks === undefined || blocks === null || blocks.count === 0) return type;
+  if (type === TerrainType.Hazard) return type;
+  const block = blocks.typeAt(px, py);
+  return block > type ? block : type;
 }
 
 /**
@@ -845,8 +1059,9 @@ export function boxHitsTerrain(
  *
  * @remarks
  * Only the tiles under the rectangle are visited, and inside them only the covered mask
- * columns. Pass whole numbers (`Math.floor` / `Math.ceil` of fractional positions): V8 boxes a
- * fractional argument of a call it does not inline — a heap allocation per call.
+ * columns; the moving blocks (M2-07) are tested after the tiles. Pass whole numbers (`Math.floor`
+ * / `Math.ceil` of fractional positions): V8 boxes a fractional argument of a call it does not
+ * inline — a heap allocation per call.
  *
  * @param map - The terrain.
  * @param x0 - First pixel column.
@@ -854,7 +1069,7 @@ export function boxHitsTerrain(
  * @param x1 - Last pixel column (inclusive, ≥ `x0`).
  * @param y1 - Last pixel row (inclusive, ≥ `y0`).
  * @returns The highest {@link TerrainType} in the rectangle, `Empty` (0) for none (also for
- *   NaN bounds and rectangles outside the map).
+ *   NaN bounds and rectangles outside the map and every block).
  *
  * @example
  * ```ts
@@ -872,6 +1087,27 @@ export function terrainRectHit(
   x1: number,
   y1: number,
 ): number {
+  const found = tileRectHit(map, x0, y0, x1, y1);
+  const blocks = map.blocks;
+  if (blocks === undefined || blocks === null || blocks.count === 0) return found;
+  if (found === TerrainType.Hazard) return found;
+  // Negated so that NaN bounds miss the blocks too.
+  if (!(x0 <= x1 && y0 <= y1)) return found;
+  const block = blocks.rectType(x0, y0, x1, y1);
+  return block > found ? block : found;
+}
+
+/**
+ * The tile-grid part of {@link terrainRectHit}.
+ *
+ * @param map - The terrain.
+ * @param x0 - First pixel column.
+ * @param y0 - First pixel row.
+ * @param x1 - Last pixel column (inclusive).
+ * @param y1 - Last pixel row (inclusive).
+ * @returns The highest tile {@link TerrainType} in the rectangle.
+ */
+function tileRectHit(map: TerrainMap, x0: number, y0: number, x1: number, y1: number): number {
   const size = map.tileSize;
   const maxX = map.cols * size - 1;
   const maxY = map.rows * size - 1;
@@ -916,7 +1152,8 @@ export function terrainRectHit(
  * @remarks
  * Rows `floor(y) … floor(y) + floor(maxDist)` are scanned (rows above the map count as open
  * space, the scan stops at the map's bottom). Ceiling tiles count too — their rock is a floor for
- * whatever is below them. Tile by tile, not pixel by pixel. Pass whole pixels from per-tick code
+ * whatever is below them. Tile by tile, not pixel by pixel; the moving blocks (M2-07) count as
+ * floors too (their top row, anywhere in the scanned rows). Pass whole pixels from per-tick code
  * (see {@link terrainRectHit}).
  *
  * @param map - The terrain.
@@ -933,6 +1170,24 @@ export function terrainRectHit(
  * ```
  */
 export function findFloor(map: TerrainMap, x: number, y: number, maxDist: number): number {
+  const hit = tileFloor(map, x, y, maxDist);
+  const blocks = map.blocks;
+  if (blocks === undefined || blocks === null || blocks.count === 0 || !(maxDist >= 0)) return hit;
+  const py = Math.floor(y);
+  const block = blocks.floorIn(Math.floor(x), py, py + Math.floor(maxDist));
+  return block < hit || hit !== hit ? block : hit;
+}
+
+/**
+ * The tile-grid part of {@link findFloor}.
+ *
+ * @param map - The terrain.
+ * @param x - World x.
+ * @param y - Start y.
+ * @param maxDist - Pixels to search.
+ * @returns The surface row, or `NaN`.
+ */
+function tileFloor(map: TerrainMap, x: number, y: number, maxDist: number): number {
   const size = map.tileSize;
   const px = Math.floor(x);
   if (!(px >= 0 && px < map.cols * size && maxDist >= 0)) return NaN;
@@ -971,8 +1226,9 @@ export function findFloor(map: TerrainMap, x: number, y: number, maxDist: number
  * @remarks
  * Rows `floor(y) … floor(y) − floor(maxDist) − 1` are scanned, so the surface (a row's bottom
  * edge) lies at most `maxDist` above `floor(y)` — the mirror of {@link findFloor} (rows below the
- * map count as open space, the scan stops at the map's top). Floor tiles count too. Tile by
- * tile. Pass whole pixels from per-tick code (see {@link terrainRectHit}).
+ * map count as open space, the scan stops at the map's top). Floor tiles count too, and so do the
+ * moving blocks (M2-07, their bottom row). Tile by tile. Pass whole pixels from per-tick code (see
+ * {@link terrainRectHit}).
  *
  * @param map - The terrain.
  * @param x - World x in pixels.
@@ -989,6 +1245,26 @@ export function findFloor(map: TerrainMap, x: number, y: number, maxDist: number
  * ```
  */
 export function findCeiling(map: TerrainMap, x: number, y: number, maxDist: number): number {
+  const hit = tileCeiling(map, x, y, maxDist);
+  const blocks = map.blocks;
+  if (blocks === undefined || blocks === null || blocks.count === 0 || !(maxDist >= 0)) return hit;
+  const py = Math.floor(y);
+  const row = blocks.ceilingIn(Math.floor(x), py, py - Math.floor(maxDist) - 1);
+  if (row !== row) return hit;
+  const block = row + 1;
+  return block > hit || hit !== hit ? block : hit;
+}
+
+/**
+ * The tile-grid part of {@link findCeiling}.
+ *
+ * @param map - The terrain.
+ * @param x - World x.
+ * @param y - Start y.
+ * @param maxDist - Pixels to search.
+ * @returns The surface (row + 1), or `NaN`.
+ */
+function tileCeiling(map: TerrainMap, x: number, y: number, maxDist: number): number {
   const size = map.tileSize;
   const px = Math.floor(x);
   if (!(px >= 0 && px < map.cols * size && maxDist >= 0)) return NaN;
@@ -1018,4 +1294,406 @@ export function findCeiling(map: TerrainMap, x: number, y: number, maxDist: numb
     py = top - 1;
   }
   return NaN;
+}
+
+// ------------------------------------------------------------------------------ destructible tiles
+
+/** Cells of damaged or regrowing destructible terrain one map tracks at once (plan M2-07). */
+export const MAX_TERRAIN_DAMAGE = 512;
+
+/** Entries of the terrain change log the renderer reads ({@link DestructibleTerrain.cells}). */
+export const TERRAIN_CHANGE_LOG = 64;
+
+/** Keep-out rectangles a regrowing cell waits for (one per player ship). */
+export const MAX_TERRAIN_KEEP_OUT = 4;
+
+/** What {@link DestructibleTerrain.hit} did. */
+export const TerrainHit = {
+  /** Nothing: no destructible tile there (rock, empty, a moving block), or no room to track it. */
+  None: 0,
+  /** The tile took the damage and still stands. */
+  Damaged: 1,
+  /** The tile broke: its cell is empty now ({@link DestructibleTerrain.lastTile} says which). */
+  Destroyed: 2,
+} as const;
+
+/** A {@link TerrainHit} code. */
+export type TerrainHit = (typeof TerrainHit)[keyof typeof TerrainHit];
+
+/** State of a {@link DestructibleTerrain} entry. */
+const EntryState = {
+  /** Unused. */
+  Free: 0,
+  /** A standing tile with damage (heals after its `regen` ticks without a hit, when it has one). */
+  Damaged: 1,
+  /** A broken regenerating tile waiting to grow back. */
+  Regrowing: 2,
+} as const;
+
+/**
+ * Destructible terrain (plan M2-07, shmup_feat.md §14 "destructible terrain … regenerating
+ * walls"): the per-cell damage of a World's {@link TerrainMap}, tile regrowth, tiles placed at run
+ * time (the cube rush's stacks) and the rollback to the stage's own tiles.
+ *
+ * @remarks
+ * A tile is destructible when its tileset gives it `hp` (1–255, {@link DestructibleTerrain.tileHp}
+ * by tile id); hits add up per cell and a cell whose damage reaches its tile's `hp` becomes empty.
+ * A tile with `regen` ticks ({@link DestructibleTerrain.tileRegen}) heals its damage after that
+ * many ticks without a hit and grows back that many ticks after breaking — unless a keep-out
+ * rectangle (the players' terrain boxes, {@link DestructibleTerrain.setKeepOut}) overlaps the cell;
+ * then it waits. Only damaged and regrowing cells take an entry of the fixed table
+ * ({@link MAX_TERRAIN_DAMAGE}); a hit on a new cell while the table is full is ignored
+ * ({@link TerrainHit.None}) unless it breaks the tile at once (a broken tile without `regen` needs
+ * no entry; one with `regen` then does not grow back).
+ *
+ * {@link DestructibleTerrain.restore} copies the stage's own tiles back and forgets every entry —
+ * the checkpoint rollback. Every changed cell is written to a small ring
+ * ({@link DestructibleTerrain.cells}, the render contract's `TerrainChanges`) so the renderer
+ * re-textures only those; a restore counts as a reset. Deterministic and allocation-free: typed
+ * arrays and whole numbers only.
+ *
+ * @example
+ * ```ts
+ * const d = new DestructibleTerrain(map, stage.terrain.tiles, tileset.tables.hp, tileset.tables.regen);
+ * if (d.hit(px, py, 1) === TerrainHit.Destroyed) score += tileScore[d.lastTile];
+ * d.update(); // once per tick: heal / regrow
+ * d.restore(); // checkpoint restart: the stage's tiles again
+ * ```
+ */
+export class DestructibleTerrain {
+  /** The World's map (its `tiles` change in place). */
+  readonly map: TerrainMap;
+  /** The stage's own tiles (shared content — never written). */
+  readonly pristine: Uint8Array;
+  /** Hit points per tile id (0 = indestructible). */
+  readonly tileHp: Uint8Array;
+  /** Regeneration ticks per tile id (0 = never grows back). */
+  readonly tileRegen: Uint16Array;
+  /** Whether any tile of the tileset is destructible. */
+  readonly any: boolean;
+  /** Entry → cell index (`row · cols + col`). */
+  readonly entryCell: Int32Array;
+  /** Entry → the tile id it tracks. */
+  readonly entryTile: Uint8Array;
+  /** Entry → damage taken so far. */
+  readonly entryDamage: Uint16Array;
+  /** Entry → ticks left (heal or regrow; 0 = none). */
+  readonly entryTimer: Int32Array;
+  /** Entry → state (0 free, 1 damaged, 2 regrowing). */
+  readonly entryState: Uint8Array;
+  /** One past the highest entry in use (the scanned range). */
+  entries = 0;
+  /** Cells changed so far (the change log's write count — `TerrainChanges.count`). */
+  count = 0;
+  /** Whole-map rewrites so far ({@link DestructibleTerrain.restore} — `TerrainChanges.resets`). */
+  resets = 0;
+  /** Ring of the last {@link TERRAIN_CHANGE_LOG} changed cells (`cells[k % length]`). */
+  readonly cells: Int32Array;
+  /** Keep-out rectangles, 4 whole-pixel bounds each (`x0, y0, x1, y1`, inclusive). */
+  readonly keepOut: Int32Array;
+  /** Keep-out rectangles set this tick. */
+  keepOutCount = 0;
+  /** Cells broken since the last restore. */
+  destroyed = 0;
+  /** Tile id the last {@link DestructibleTerrain.hit} broke or damaged (0 = none). */
+  lastTile = 0;
+  /** Cell of the last {@link DestructibleTerrain.hit} that did something (-1 = none). */
+  lastCell = -1;
+
+  /**
+   * Tracks a map (load time).
+   *
+   * @param map - The World's own map (a copy — `core/stage` `createStageTerrain`).
+   * @param pristine - The stage's tiles (`StageSpec.terrain.tiles`, same size as `map.tiles`).
+   * @param tileHp - Hit points per tile id (the tileset tables' `hp`).
+   * @param tileRegen - Regeneration ticks per tile id (the tileset tables' `regen`).
+   * @param capacity - Tracked cells (default {@link MAX_TERRAIN_DAMAGE}).
+   * @throws {RangeError} When `pristine` and `map.tiles` differ in size.
+   */
+  constructor(
+    map: TerrainMap,
+    pristine: Uint8Array,
+    tileHp: Uint8Array,
+    tileRegen: Uint16Array,
+    capacity: number = MAX_TERRAIN_DAMAGE,
+  ) {
+    if (pristine.length !== map.tiles.length) {
+      throw new RangeError(
+        `pristine tiles (${pristine.length}) do not match the map (${map.tiles.length})`,
+      );
+    }
+    this.map = map;
+    this.pristine = pristine;
+    this.tileHp = tileHp;
+    this.tileRegen = tileRegen;
+    let any = false;
+    for (let i = 1; i < tileHp.length; i++) if (tileHp[i] > 0) any = true;
+    this.any = any;
+    this.entryCell = new Int32Array(capacity);
+    this.entryTile = new Uint8Array(capacity);
+    this.entryDamage = new Uint16Array(capacity);
+    this.entryTimer = new Int32Array(capacity);
+    this.entryState = new Uint8Array(capacity);
+    this.cells = new Int32Array(TERRAIN_CHANGE_LOG);
+    this.keepOut = new Int32Array(MAX_TERRAIN_KEEP_OUT * 4);
+  }
+
+  /**
+   * Damages the destructible tile under one pixel. Never allocates.
+   *
+   * @remarks
+   * The pixel's **cell** is hit (callers pass the pixel where a shot met the terrain; a moving
+   * block or rock there is no destructible tile — `None`). A hit of `amount` adds to the cell's
+   * damage; at the tile's `hp` the cell empties (`Destroyed`, {@link DestructibleTerrain.lastTile}
+   * = the tile) and, for a regenerating tile, starts growing back. Amounts are floored to whole
+   * points (at least 1 for any positive amount).
+   *
+   * @param px - Pixel column (whole number).
+   * @param py - Pixel row (whole number).
+   * @param amount - Damage (> 0).
+   * @returns The {@link TerrainHit} code.
+   */
+  hit(px: number, py: number, amount: number): number {
+    if (!this.any || !(amount > 0)) return TerrainHit.None;
+    const map = this.map;
+    const size = map.tileSize;
+    if (!(px >= 0 && py >= 0)) return TerrainHit.None;
+    const col = Math.floor(px / size);
+    const row = Math.floor(py / size);
+    if (col >= map.cols || row >= map.rows) return TerrainHit.None;
+    const cell = row * map.cols + col;
+    const tile = map.tiles[cell];
+    const hp = this.tileHp[tile];
+    if (tile === 0 || hp === 0) return TerrainHit.None;
+    const points = amount >= 1 ? Math.floor(amount) : 1;
+    let entry = this.find(cell, EntryState.Damaged);
+    const damage = (entry < 0 ? 0 : this.entryDamage[entry]) + points;
+    const regen = this.tileRegen[tile];
+    if (damage >= hp) {
+      map.tiles[cell] = 0;
+      this.log(cell);
+      this.destroyed++;
+      this.lastTile = tile;
+      this.lastCell = cell;
+      if (regen > 0) {
+        if (entry < 0) entry = this.alloc();
+        if (entry >= 0) {
+          this.entryState[entry] = EntryState.Regrowing;
+          this.entryCell[entry] = cell;
+          this.entryTile[entry] = tile;
+          this.entryDamage[entry] = 0;
+          this.entryTimer[entry] = regen;
+        }
+      } else if (entry >= 0) {
+        this.free(entry);
+      }
+      return TerrainHit.Destroyed;
+    }
+    if (entry < 0) entry = this.alloc();
+    if (entry < 0) return TerrainHit.None;
+    this.entryState[entry] = EntryState.Damaged;
+    this.entryCell[entry] = cell;
+    this.entryTile[entry] = tile;
+    this.entryDamage[entry] = damage;
+    this.entryTimer[entry] = regen;
+    this.lastTile = tile;
+    this.lastCell = cell;
+    return TerrainHit.Damaged;
+  }
+
+  /**
+   * Puts a tile into an empty cell (the cube rush stacking into walls — `core/behaviors`
+   * `cube.stack`). Never allocates.
+   *
+   * @remarks
+   * Only an empty cell (tile 0) of the map takes it, and never one a keep-out rectangle overlaps
+   * (a ship there would be buried). A regrowing entry of that cell is dropped (the new tile wins).
+   * The rollback ({@link DestructibleTerrain.restore}) removes placed tiles again.
+   *
+   * @param col - Tile column.
+   * @param row - Tile row.
+   * @param tile - Tile id (1 … the tileset's last id).
+   * @returns `true` when the tile was placed.
+   */
+  place(col: number, row: number, tile: number): boolean {
+    const map = this.map;
+    if (!(col >= 0 && row >= 0 && col < map.cols && row < map.rows)) return false;
+    if (!(tile >= 1 && tile < map.tileType.length && tile % 1 === 0)) return false;
+    const cell = row * map.cols + col;
+    if (map.tiles[cell] !== 0 || this.keptOut(cell)) return false;
+    const entry = this.find(cell, EntryState.Regrowing);
+    if (entry >= 0) this.free(entry);
+    map.tiles[cell] = tile;
+    this.log(cell);
+    return true;
+  }
+
+  /**
+   * Advances the heal / regrow timers by one tick (tick phase 3). Never allocates.
+   *
+   * @returns Cells that grew back this tick.
+   */
+  update(): number {
+    let grown = 0;
+    const map = this.map;
+    for (let i = 0; i < this.entries; i++) {
+      const state = this.entryState[i];
+      if (state === EntryState.Free) continue;
+      const timer = this.entryTimer[i];
+      if (state === EntryState.Damaged) {
+        if (timer <= 0) continue; // no regeneration: the damage stays
+        if (timer === 1) this.free(i);
+        else this.entryTimer[i] = timer - 1;
+        continue;
+      }
+      if (timer > 1) {
+        this.entryTimer[i] = timer - 1;
+        continue;
+      }
+      const cell = this.entryCell[i];
+      if (map.tiles[cell] !== 0) {
+        this.free(i); // something else filled it
+        continue;
+      }
+      if (this.keptOut(cell)) {
+        this.entryTimer[i] = 1; // a ship is in the way: try again next tick
+        continue;
+      }
+      map.tiles[cell] = this.entryTile[i];
+      this.log(cell);
+      this.free(i);
+      grown++;
+    }
+    return grown;
+  }
+
+  /**
+   * The checkpoint rollback: the stage's own tiles again (broken ones back, placed ones gone),
+   * no damage, no regrowth; a reset for the renderer. Cold path (copies the whole grid).
+   */
+  restore(): void {
+    this.map.tiles.set(this.pristine);
+    this.entryState.fill(0);
+    this.entries = 0;
+    this.destroyed = 0;
+    this.lastTile = 0;
+    this.lastCell = -1;
+    this.resets++;
+  }
+
+  /** Forgets the keep-out rectangles (the World sets them again every tick). */
+  clearKeepOut(): void {
+    this.keepOutCount = 0;
+  }
+
+  /**
+   * Adds a keep-out rectangle for this tick: cells overlapping it neither grow back nor take placed
+   * tiles. Ignored beyond {@link MAX_TERRAIN_KEEP_OUT}.
+   *
+   * @param x0 - First pixel column.
+   * @param y0 - First pixel row.
+   * @param x1 - Last pixel column (inclusive).
+   * @param y1 - Last pixel row (inclusive).
+   */
+  addKeepOut(x0: number, y0: number, x1: number, y1: number): void {
+    const k = this.keepOutCount;
+    if (k >= MAX_TERRAIN_KEEP_OUT) return;
+    const r = this.keepOut;
+    r[k * 4] = x0;
+    r[k * 4 + 1] = y0;
+    r[k * 4 + 2] = x1;
+    r[k * 4 + 3] = y1;
+    this.keepOutCount = k + 1;
+  }
+
+  /**
+   * Damage taken so far by a cell (0 when untracked or broken).
+   *
+   * @param col - Tile column.
+   * @param row - Tile row.
+   * @returns Damage points.
+   */
+  damageAt(col: number, row: number): number {
+    const entry = this.find(row * this.map.cols + col, EntryState.Damaged);
+    return entry < 0 ? 0 : this.entryDamage[entry];
+  }
+
+  /**
+   * Whether a keep-out rectangle overlaps a cell.
+   *
+   * @param cell - Cell index.
+   * @returns `true` when one does.
+   */
+  private keptOut(cell: number): boolean {
+    const map = this.map;
+    const size = map.tileSize;
+    const col = cell % map.cols;
+    const row = (cell - col) / map.cols;
+    const cx0 = col * size;
+    const cy0 = row * size;
+    const cx1 = cx0 + size - 1;
+    const cy1 = cy0 + size - 1;
+    const r = this.keepOut;
+    for (let k = 0; k < this.keepOutCount; k++) {
+      if (r[k * 4 + 2] < cx0 || r[k * 4] > cx1 || r[k * 4 + 3] < cy0 || r[k * 4 + 1] > cy1) {
+        continue;
+      }
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * The entry of a cell in one state.
+   *
+   * @param cell - Cell index.
+   * @param state - Entry state.
+   * @returns The entry, or -1.
+   */
+  private find(cell: number, state: number): number {
+    for (let i = 0; i < this.entries; i++) {
+      if (this.entryState[i] === state && this.entryCell[i] === cell) return i;
+    }
+    return -1;
+  }
+
+  /**
+   * The lowest free entry (the scanned range grows as needed).
+   *
+   * @returns The entry, or -1 when the table is full.
+   */
+  private alloc(): number {
+    const capacity = this.entryState.length;
+    for (let i = 0; i < capacity; i++) {
+      if (this.entryState[i] !== EntryState.Free) continue;
+      if (i >= this.entries) this.entries = i + 1;
+      this.entryDamage[i] = 0;
+      this.entryTimer[i] = 0;
+      return i;
+    }
+    return -1;
+  }
+
+  /**
+   * Frees an entry (and shrinks the scanned range past trailing free entries).
+   *
+   * @param entry - The entry.
+   */
+  private free(entry: number): void {
+    this.entryState[entry] = EntryState.Free;
+    while (this.entries > 0 && this.entryState[this.entries - 1] === EntryState.Free) {
+      this.entries--;
+    }
+  }
+
+  /**
+   * Records a changed cell in the ring.
+   *
+   * @param cell - Cell index.
+   */
+  private log(cell: number): void {
+    const cells = this.cells;
+    cells[this.count % cells.length] = cell;
+    this.count++;
+  }
 }

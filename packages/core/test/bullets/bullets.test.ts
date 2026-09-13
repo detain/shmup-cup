@@ -229,6 +229,8 @@ describe('core/bullets', () => {
       'shields/arm',
       // The HUD pieces and the title logo of the scene flow (M1-16).
       ...UI_SPRITES,
+      // The stage gimmicks' chain link (M2-07).
+      'gimmicks/chain-link',
     ]);
     for (const kind of BULLET_KINDS) {
       expect(kind.flags).toBe(BulletFlag.DieOnTerrain | BulletFlag.Cancelable);

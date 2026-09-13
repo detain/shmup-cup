@@ -41,6 +41,13 @@
  *   per tick).
  * - `AimedDash (speed, windup)` — hold `windup` ticks, aim at the target once (quantised to
  *   {@link AIM_DIRECTIONS}), dash straight.
+ * - `Ballistic (vx, vy, gravity, maxFall, trigger, land)` (M2-07) — thrown / falling bodies: from
+ *   (`vx`, `vy`), `gravity` added to the vertical speed every tick (capped at `maxFall` when > 0);
+ *   with `trigger` > 0 the body first waits, still, until the target is within `trigger` px
+ *   horizontally (falling rocks, shmup_feat.md §14). `land` ({@link BallisticLand}): `Pass`
+ *   ignores terrain, `Stop` and `Shatter` stop the body just before its box would enter terrain
+ *   (state {@link BALLISTIC_LANDED}; `core/enemies` wakes its script, and destroys a `Shatter`
+ *   body with its explosion).
  *
  * **Fire primitives** (shmup_feat.md §12 "pattern primitives") spawn enemy bullets through a
  * `core/bullets` {@link BulletSystem} from a {@link BulletOrigin} (the enemy `ScriptApi` fills
@@ -86,7 +93,8 @@
  * {@link SLEEP_FOREVER}. Movers: {@link MoverKind}, {@link MOVER_NAMES}, {@link moverKindOf},
  * {@link BodyAnchor}, {@link MoverBody}, {@link MoverContext}, {@link createMoverContext},
  * {@link setMover}, {@link updateMover}, {@link FollowTrack}, {@link FOLLOW_HISTORY},
- * {@link samplePath}, {@link CRAWL_STEP}, {@link AIM_DIRECTIONS}. Fire primitives:
+ * {@link samplePath}, {@link CRAWL_STEP}, {@link AIM_DIRECTIONS}; M2-07 {@link BallisticLand},
+ * {@link BALLISTIC_ARMED}, {@link BALLISTIC_FLYING}, {@link BALLISTIC_LANDED}. Fire primitives:
  * {@link fireAimed}, {@link fireNWay}, {@link fireRing}, {@link fireSpiral}, {@link fireStack},
  * {@link fireSpray}, {@link fireHoming}, {@link fireDelayed}, {@link rankedWait}. The DSL:
  * {@link createPatternVm}, {@link PatternVm}, {@link PatternHost}, {@link PatternSource},
@@ -116,7 +124,7 @@ import {
   type BulletProgramRunner,
   type BulletSystem,
 } from '../bullets/index.js';
-import { findCeiling, findFloor, type TerrainMap } from '../collision/index.js';
+import { findCeiling, findFloor, terrainRectHit, type TerrainMap } from '../collision/index.js';
 import { MOVER_TYPES, PATH_SAMPLE_STEP, type MoverType, type PathSpec } from '../data/index.js';
 import {
   ANGLE_MASK,
@@ -264,7 +272,31 @@ export const MoverKind = {
   Homing: 7,
   /** Hold, aim once, dash. */
   AimedDash: 8,
+  /** Thrown / falling with gravity, a proximity trigger and a landing rule (M2-07). */
+  Ballistic: 9,
 } as const;
+
+/** What terrain does to a `Ballistic` body (its `m5`; the positions of `BALLISTIC_LANDS`). */
+export const BallisticLand = {
+  /** Flies through terrain. */
+  Pass: 0,
+  /** Stops just before entering terrain (and stays). */
+  Stop: 1,
+  /** Stops like `Stop`; the enemy system then destroys it (explosion, no credit). */
+  Shatter: 2,
+} as const;
+
+/** A {@link BallisticLand} code. */
+export type BallisticLand = (typeof BallisticLand)[keyof typeof BallisticLand];
+
+/** `Ballistic` state `s0`: waiting for its proximity trigger. */
+export const BALLISTIC_ARMED = 0;
+
+/** `Ballistic` state `s0`: flying. */
+export const BALLISTIC_FLYING = 1;
+
+/** `Ballistic` state `s0`: landed (stopped by terrain). */
+export const BALLISTIC_LANDED = 2;
 
 /** A {@link MoverKind} code. */
 export type MoverKind = (typeof MoverKind)[keyof typeof MoverKind];
@@ -386,6 +418,8 @@ export interface MoverBody {
   vx: number;
   /** Velocity of the last mover step in the body's frame (px/tick). */
   vy: number;
+  /** Half width (the `Ballistic` mover's terrain box, M2-07). */
+  readonly hw: number;
   /** Half height (crawlers keep their bottom / top edge on the surface). */
   readonly hh: number;
   /** {@link BodyAnchor} code. */
@@ -656,6 +690,13 @@ export function setMover(
           ? aimFrom(body, body.x + body.vx, body.y + body.vy)
           : ANGLE_UNITS / 2;
       break;
+    case MoverKind.Ballistic:
+      body.vx = 0;
+      body.vy = 0;
+      body.s0 = p4 > 0 ? BALLISTIC_ARMED : BALLISTIC_FLYING;
+      body.s1 = p0;
+      body.s2 = p1;
+      break;
     default:
       break;
   }
@@ -702,6 +743,9 @@ export function updateMover(body: MoverBody, ctx: MoverContext): void {
       return;
     case MoverKind.AimedDash:
       moveAimedDash(body, ctx);
+      return;
+    case MoverKind.Ballistic:
+      moveBallistic(body, ctx);
       return;
     default:
       body.vx = 0;
@@ -926,6 +970,57 @@ function moveAimedDash(body: MoverBody, ctx: MoverContext): void {
   body.vy = (SIN_TABLE_Q16[angle] / TRIG_SCALE) * speed;
   body.x += body.vx;
   body.y += body.vy;
+}
+
+/**
+ * `Ballistic` (M2-07): wait for the trigger (`s0` armed), then fly with gravity — the velocity
+ * lives in `s1` / `s2` — and, unless `land` is `Pass`, stop just before the box would enter
+ * terrain (`s0` landed; `vx` / `vy` 0 from then on).
+ *
+ * @param body - The body.
+ * @param ctx - The context.
+ */
+function moveBallistic(body: MoverBody, ctx: MoverContext): void {
+  const state = body.s0;
+  if (state === BALLISTIC_ARMED) {
+    body.vx = 0;
+    body.vy = 0;
+    if (!ctx.hasTarget) return;
+    const d = ctx.targetX - body.x;
+    const reach = body.m4;
+    if (!(d <= reach && d >= -reach)) return;
+    body.s0 = BALLISTIC_FLYING;
+  } else if (state === BALLISTIC_LANDED) {
+    body.vx = 0;
+    body.vy = 0;
+    return;
+  }
+  let vy = body.s2 + body.m2;
+  if (body.m3 > 0 && vy > body.m3) vy = body.m3;
+  body.s2 = vy;
+  const vx = body.s1;
+  const nx = body.x + vx;
+  const ny = body.y + vy;
+  const map = ctx.terrain;
+  if (body.m5 !== BallisticLand.Pass && map !== null && nx - nx === 0 && ny - ny === 0) {
+    // Whole-pixel bounds of the moved box (small integers are never boxed as arguments).
+    const x0 = Math.floor(nx - body.hw) | 0;
+    const y0 = Math.floor(ny - body.hh) | 0;
+    let x1 = (Math.ceil(nx + body.hw) | 0) - 1;
+    let y1 = (Math.ceil(ny + body.hh) | 0) - 1;
+    if (x1 < x0) x1 = x0;
+    if (y1 < y0) y1 = y0;
+    if (terrainRectHit(map, x0, y0, x1, y1) !== 0) {
+      body.s0 = BALLISTIC_LANDED;
+      body.vx = 0;
+      body.vy = 0;
+      return;
+    }
+  }
+  body.vx = vx;
+  body.vy = vy;
+  body.x = nx;
+  body.y = ny;
 }
 
 // ------------------------------------------------------------------------------ fire primitives

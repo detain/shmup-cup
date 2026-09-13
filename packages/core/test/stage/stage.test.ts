@@ -308,7 +308,7 @@ describe('core/stage event timeline', () => {
       clear() {},
     });
     runner.tick();
-    expect(seen).toEqual([{ x: 1, type: 'music', cue: 'Boss', cueId: 5 }]);
+    expect(seen).toEqual([{ x: 1, type: 'music', cue: 'Boss', cueId: 5, branchId: -1 }]);
   });
 
   it('finds the cursor by binary search (first event at or after x)', () => {

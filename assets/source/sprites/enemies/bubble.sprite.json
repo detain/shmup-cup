@@ -1,0 +1,28 @@
+{
+  "name": "enemies/bubble",
+  "description": "Splitting bubble (original, plan M2-07): a glassy cyan sphere with a highlight; shot, it bursts into two small bubbles.",
+  "palette": { ".": null, "o": "#0a4a6a", "c": "#38b8e8", "l": "#a8f0ff", "w": "#ffffff", "t": "#1a7aa8" },
+  "hitFlash": true,
+  "frames": [
+    {
+      "rows": [
+        ".....oooooo.....",
+        "...oocccccooo...",
+        "..octtttttttco..",
+        ".octwwlttttttco.",
+        ".octwllttttttco.",
+        "octtlltttttttcco",
+        "octtttttttttttco",
+        "octtttttttttttco",
+        "octtttttttttttco",
+        "octtttttttttttco",
+        "occtttttttttttco",
+        ".octttttttttlco.",
+        ".occtttttttllco.",
+        "..occtttttttco..",
+        "...oocccccooo...",
+        ".....oooooo....."
+      ]
+    }
+  ]
+}

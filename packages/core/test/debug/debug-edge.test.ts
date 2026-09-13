@@ -317,6 +317,57 @@ function referenceHash(w: World): number {
   }
   word(w.bosses.warning.active ? 1 : 0);
   num(w.bosses.warning.ticks);
+  // The stage gimmicks (M2-07): destructible terrain, moving blocks, pull fields, chains.
+  const g = w.gimmicks;
+  const d = g.destructible;
+  if (d === null) {
+    word(0);
+  } else {
+    word(1);
+    num(d.count);
+    num(d.resets);
+    num(d.destroyed);
+    for (const cell of d.cells) num(cell);
+    num(d.entries);
+    for (let i = 0; i < d.entries; i++) {
+      word(d.entryState[i]);
+      if (d.entryState[i] === 0) continue;
+      word(d.entryCell[i]);
+      word(d.entryTile[i]);
+      word(d.entryDamage[i]);
+      word(d.entryTimer[i]);
+    }
+  }
+  if (g.blocks === null) {
+    word(0);
+  } else {
+    word(1);
+    for (let slot = 0; slot < g.blocks.slotEvent.length; slot++) {
+      word(g.blocks.slotEvent[slot]);
+      if (g.blocks.slotEvent[slot] < 0) continue;
+      num(g.blocks.slotAge[slot]);
+      word(g.blocks.blocks.x0[slot]);
+      word(g.blocks.blocks.y0[slot]);
+    }
+  }
+  for (let i = 0; i < g.fieldOwner.length; i++) {
+    word(g.fieldOwner[i]);
+    if (g.fieldOwner[i] < 0) continue;
+    for (const value of [
+      g.fieldOwnerTick[i],
+      g.fieldRadius[i],
+      g.fieldStrength[i],
+      g.fieldTicks[i],
+    ]) {
+      num(value);
+    }
+  }
+  for (let i = 0; i < g.chainOwner.length; i++) {
+    word(g.chainOwner[i]);
+    if (g.chainOwner[i] < 0) continue;
+    for (const value of [g.chainOwnerTick[i], g.chainX[i], g.chainY[i]]) num(value);
+    word(g.chainLinks[i]);
+  }
   let h = FNV_OFFSET_BASIS;
   for (const b of bytes) h = Math.imul(h ^ b, FNV_PRIME) >>> 0;
   return h;

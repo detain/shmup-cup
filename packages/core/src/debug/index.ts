@@ -41,7 +41,12 @@
  * its state, position, timers, phase, script wake tick, motion, destroyed-part mask, killer, blast
  * flag and every part's offset, position, hit points, destroyed / open flags and hit flash — plus
  * the WARNING's active flag and ticks; the piercing shots' boss-part cooldown tables join their
- * enemy tables above). Scripts are covered by their `wakeTick`; a coroutine's internal position
+ * enemy tables above), then the stage gimmicks (M2-07: the destructible terrain's change and
+ * reset counts, broken-cell count, change ring and every tracked cell — state, cell, tile, damage,
+ * timer —, each moving block slot's event, age and position, each pull field's owner, owner spawn
+ * tick, radius, strength and ticks, each chain's owner, spawn tick, anchor and links; the stage
+ * runner's holds, diagonal pans and trigger masks are slots of its state array). Scripts are
+ * covered by their `wakeTick`; a coroutine's internal position
  * cannot be hashed. Numbers are hashed as their little-endian IEEE-754 double bytes, so the hash
  * is identical on every engine and platform, and two worlds that simulated the same inputs from
  * the same seed hash equal. Golden replays (M1-19) compare these hashes. The hash reads state only
@@ -719,7 +724,67 @@ export function hashWorld(world: World): number {
   mixPowerUps(world);
   mixFxAndScores(world);
   mixBosses(world);
+  mixGimmicks(world.gimmicks);
   return accumulator[0];
+}
+
+/**
+ * Mixes the stage gimmicks (M2-07): the destructible terrain's change counts and tracked cells,
+ * the moving blocks' slots, the pull fields and the chains.
+ *
+ * @param g - The World's stage gimmicks.
+ */
+function mixGimmicks(g: World['gimmicks']): void {
+  const d = g.destructible;
+  if (d === null) {
+    mixWord(0);
+  } else {
+    mixWord(1);
+    mixNumber(d.count);
+    mixNumber(d.resets);
+    mixNumber(d.destroyed);
+    mixArray(d.cells, d.cells.length);
+    const entries = d.entries;
+    mixNumber(entries);
+    for (let i = 0; i < entries; i++) {
+      mixWord(d.entryState[i]);
+      if (d.entryState[i] === 0) continue;
+      mixWord(d.entryCell[i]);
+      mixWord(d.entryTile[i]);
+      mixWord(d.entryDamage[i]);
+      mixWord(d.entryTimer[i]);
+    }
+  }
+  const blocks = g.blocks;
+  if (blocks === null) {
+    mixWord(0);
+  } else {
+    mixWord(1);
+    const geometry = blocks.blocks;
+    for (let slot = 0; slot < blocks.slotEvent.length; slot++) {
+      mixWord(blocks.slotEvent[slot]);
+      if (blocks.slotEvent[slot] < 0) continue;
+      mixNumber(blocks.slotAge[slot]);
+      mixWord(geometry.x0[slot]);
+      mixWord(geometry.y0[slot]);
+    }
+  }
+  for (let f = 0; f < g.fieldOwner.length; f++) {
+    mixWord(g.fieldOwner[f]);
+    if (g.fieldOwner[f] < 0) continue;
+    mixNumber(g.fieldOwnerTick[f]);
+    mixNumber(g.fieldRadius[f]);
+    mixNumber(g.fieldStrength[f]);
+    mixNumber(g.fieldTicks[f]);
+  }
+  for (let c = 0; c < g.chainOwner.length; c++) {
+    mixWord(g.chainOwner[c]);
+    if (g.chainOwner[c] < 0) continue;
+    mixNumber(g.chainOwnerTick[c]);
+    mixNumber(g.chainX[c]);
+    mixNumber(g.chainY[c]);
+    mixWord(g.chainLinks[c]);
+  }
 }
 
 /**

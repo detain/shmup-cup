@@ -172,6 +172,20 @@
  * (`core/powerups`). Player 2 is drawn with the ship's palette swap (`<sprite>@p2`,
  * `PlayerShipSpec.spriteP2Id`). Replays record both players' input, so a join replays too.
  *
+ * **Advanced stage systems (M2-07).** {@link World.gimmicks} (`core/stage` `StageGimmicks`) owns
+ * the stage's destructible terrain, moving blocks, and the pull fields and chains of gimmick
+ * scripts: in phase 2, after the ships moved, the pull fields draw them (`applyFields`); in phase
+ * 3, after the stage runner, the living ships probe the armed region triggers, the moving blocks
+ * move (a stage `block` event creates one through the stage hooks) and the destructible terrain
+ * heals / regrows around the ships' terrain boxes (`updateStage`); in phase 5 the player shots
+ * that meet the terrain damage its destructible tiles (`core/weapons` → `hitTerrain`: points to
+ * the shooter); in phase 9 the blocks' and chains' batches are refilled. A checkpoint restart
+ * restores the stage's own tiles and brings back the blocks whose events lie behind the camera.
+ * Moving blocks live in {@link World.terrain}'s `blocks`, so the ship's terrain test, the shots,
+ * the bullets and the ground movers all treat them as rock. The view carries the chain batch
+ * (`LayerId.GroundEnemies`) and, on a stage with blocks, the block batch (`LayerId.Terrain`) as its
+ * last batches, and `view.terrain.changes` (the renderer's change log).
+ *
  * **Zero allocation.** Everything is allocated by {@link createWorld}; {@link stepWorld} and the
  * systems only write numbers into existing objects and typed arrays.
  *
@@ -186,6 +200,8 @@
  *   count in the score's last digit ({@link canContinue}, {@link continueWorld})
  * - shmup_feat.md §16 — 2-player simultaneous co-op: drop-in join, separate lives and continues
  *   ({@link joinPlayer}, M2-06)
+ * - shmup_feat.md §14 — destructible terrain, moving floors / ceilings, stage gimmicks and region
+ *   triggers wired into the tick (M2-07, {@link World.gimmicks})
  *
  * **Public API.** {@link createWorld}, {@link WorldOptions}, {@link stepWorld}, {@link World},
  * {@link WorldCamera},
@@ -291,6 +307,7 @@ import {
   type BendingLaserView,
   type LaserView,
   type SpriteBatchView,
+  type TerrainView,
   type WarningView,
   type WorldView,
 } from '../presentation/index.js';
@@ -303,13 +320,16 @@ import {
 } from '../rank/index.js';
 import { createRngStreams, type RngStreams } from '../rng/index.js';
 import {
+  GIMMICK_SPRITES,
   StageEventCode,
   createParallaxView,
   createStageCamera,
+  createStageGimmicks,
   createStageRunner,
   createStageTerrain,
   createTerrainView,
   updateParallaxView,
+  type StageGimmicks,
   type StageHooks,
   type StageParallaxView,
   type StageRunner,
@@ -326,6 +346,7 @@ export const moduleInfo = defineModule({
     'shmup_feat.md §15',
     'shmup_feat.md §10',
     'shmup_feat.md §16',
+    'shmup_feat.md §14',
   ],
 });
 
@@ -440,6 +461,11 @@ export interface World {
   readonly terrain: TerrainMap | null;
   /** The stage's parallax bands (also `view.parallax`), or `null`. */
   readonly parallax: StageParallaxView | null;
+  /**
+   * The stage gimmicks (M2-07, `core/stage` `StageGimmicks`): the destructible terrain of
+   * {@link World.terrain}, the moving blocks, the pull fields and chains of enemy scripts.
+   */
+  readonly gimmicks: StageGimmicks;
   /** The enemies (spawns, formations, scripts, movers, contact; `core/enemies`). */
   readonly enemies: EnemySystem;
   /** Enemy bullets and lasers (`core/bullets`). */
@@ -617,6 +643,8 @@ const playersSystem: WorldSystem = (world) => {
   for (let i = 0; i < players.length; i++) {
     updatePlayer(players[i], world.ship, world.intents[i], world.camera);
   }
+  // Pull fields (M2-07: suction, the tentacle's grab) draw the ships after they moved.
+  world.gimmicks.applyFields();
   lifecycleSystem(world);
   world.powerups.updatePlayers();
   world.weapons.updatePlayers();
@@ -692,6 +720,8 @@ function clearSession(world: World): void {
   world.weapons.clear();
   world.powerups.clear();
   world.scoring.clear();
+  // The stage's own terrain again, no fields or chains, the blocks before the camera (M2-07).
+  world.gimmicks.clear(world.stage, world.camera.x);
 }
 
 /**
@@ -720,6 +750,8 @@ const stageSystem: WorldSystem = (world) => {
     camera.x += camera.dx;
     camera.y += camera.dy;
   }
+  // Region triggers, moving blocks, terrain regrowth (M2-07).
+  world.gimmicks.updateStage(stage);
   enemies.spawnPending();
   updateWorldRank(world);
 };
@@ -1279,6 +1311,7 @@ type WorldUnderConstruction = Omit<
   | 'scoring'
   | 'bosses'
   | 'laserSources'
+  | 'gimmicks'
 > & {
   /** See {@link World.stage}. */
   stage: StageRunner | null;
@@ -1298,6 +1331,8 @@ type WorldUnderConstruction = Omit<
   bosses: BossSystem;
   /** See {@link World.laserSources}. */
   laserSources: readonly LaserSource[];
+  /** See {@link World.gimmicks}. */
+  gimmicks: StageGimmicks;
 };
 
 /**
@@ -1308,7 +1343,8 @@ type WorldUnderConstruction = Omit<
  * items (`core/powerups` `ITEM_SPRITES`: the power capsule, the blue capsule and the grey stolen
  * Option — M2-04, also the Option Hunter's carried ones) and the shields (`core/shields`
  * `SHIELD_SPRITES`: the Force Field, the shield pod and Reduce's shimmer — M2-04), plus the
- * HUD pieces and the title logo the scene flow draws (`core/ui` `UI_SPRITES`, M1-16). Hosts pass
+ * HUD pieces and the title logo the scene flow draws (`core/ui` `UI_SPRITES`, M1-16) and the
+ * stage gimmicks' chain link (`core/stage` `GIMMICK_SPRITES`, M2-07). Hosts pass
  * it as `loadContent`'s `extraSprites` (the shell's loader does by default) so the World and the
  * scenes can resolve their sprite ids and
  * `pnpm content:check` verifies them against the atlas.
@@ -1320,6 +1356,7 @@ export const ENGINE_SPRITES: readonly string[] = Object.freeze([
   ...ITEM_SPRITES,
   ...SHIELD_SPRITES,
   ...UI_SPRITES,
+  ...GIMMICK_SPRITES,
 ]);
 
 /**
@@ -1378,10 +1415,8 @@ export function createWorld(
   const view = {
     camera,
     parallax,
-    terrain:
-      stageSpec === null || terrain === null
-        ? null
-        : createTerrainView(terrain, stageSpec, content),
+    // Filled in below, once the destructible terrain (its change log) exists.
+    terrain: null as TerrainView | null,
     batches,
     lasers: null as LaserView | null,
     bendingLasers: null as BendingLaserView | null,
@@ -1415,6 +1450,7 @@ export function createWorld(
     powerups: null as unknown as PowerUpSystem,
     scoring: null as unknown as ScoringSystem,
     bosses: null as unknown as BossSystem,
+    gimmicks: null as unknown as StageGimmicks,
     laserSources: [],
     rank: 0,
     rankInputs: createRankInputs(config),
@@ -1429,6 +1465,10 @@ export function createWorld(
   world.enemies = createEnemySystem(world, options.behaviors ?? DEFAULT_BEHAVIORS, stageSpec);
   world.bosses = createBossSystem(world, options.bossBehaviors ?? DEFAULT_BOSS_BEHAVIORS);
   world.laserSources = Object.freeze([...world.enemies.enemies, ...world.bosses.boss.parts]);
+  world.gimmicks = createStageGimmicks(world, world.enemies.enemies, stageSpec, terrain, content);
+  if (stageSpec !== null && terrain !== null) {
+    view.terrain = createTerrainView(terrain, stageSpec, content, world.gimmicks.destructible);
+  }
   world.weapons = createWeaponSystem(world);
   world.powerups = createPowerUpSystem(world, stageSpec);
   world.scoring = createScoringSystem(world);
@@ -1448,7 +1488,12 @@ export function createWorld(
     world.bullets.pointBatch,
     world.bosses.batch,
     world.enemies.carriedBatch,
+    // The stage gimmicks (M2-07): the chains' links (over the ground enemies), then — on a stage
+    // with `block` events — the moving blocks (over the terrain grid, which is bound first).
+    world.gimmicks.chainBatch,
   );
+  const blocks = world.gimmicks.blocks;
+  if (blocks !== null) batches.push(blocks.batch);
   view.lasers = world.bullets.laserView;
   view.bendingLasers = world.bullets.bending;
   view.warning = world.bosses.warning;
@@ -1485,6 +1530,8 @@ function createWorldStageHooks(world: WorldUnderConstruction): StageHooks {
     event(code, event, index) {
       if (code === StageEventCode.Spawn || code === StageEventCode.Formation) {
         world.enemies.onStageEvent(index);
+      } else if (code === StageEventCode.Block) {
+        world.gimmicks.blocks?.spawn(index);
       } else if (code === StageEventCode.Music) {
         world.events.push(SimEventKind.Music, (event as StageMusicEvent).cueId, 0, 0, 0);
       } else if (code === StageEventCode.End) {
@@ -1552,6 +1599,7 @@ export function stepWorld(world: World, input: Readonly<InputSnapshot>): void {
 export function syncWorldView(world: World): void {
   const parallax = world.parallax;
   if (parallax !== null) updateParallaxView(parallax, world.camera.x, world.camera.y);
+  world.gimmicks.sync();
   world.enemies.sync();
   world.bosses.sync();
   world.weapons.sync();

@@ -44,6 +44,9 @@
  * in `params` — defaults in {@link WEAPON_BEHAVIOR_PARAMS}):
  *
  * - `shot.straight` — flies forward at `speed`; dies on hit, on terrain and outside the view.
+ *   (Since M2-07 every shot that dies on terrain — a straight flight, a laser head it blocks, a
+ *   Spread Bomb bursting on it, a missile flying into a wall — hits the destructible tile at that
+ *   pixel with its damage through the World's stage gimmicks, `WeaponHost.gimmicks`.)
  * - `shot.double` — a forward shot (drawn and sized like the main shot) and one `angle` binary
  *   units up from forward (45°); the pair fires only when **both** earlier shots are gone.
  * - `laser.beam` — a piercing beam: its head moves `speed` px/tick, its length grows to
@@ -901,6 +904,22 @@ export interface WeaponHost {
   readonly intents: readonly PlayerIntent[];
   /** The stage's collision map, or `null`. */
   readonly terrain: TerrainMap | null;
+  /**
+   * The stage gimmicks (M2-07, `core/stage` `StageGimmicks`): a shot that meets the terrain hits
+   * the destructible tile there (`hitTerrain`). Absent / `null` = terrain never breaks.
+   */
+  readonly gimmicks?: {
+    /**
+     * A shot met the terrain at a pixel.
+     *
+     * @param px - Pixel column.
+     * @param py - Pixel row.
+     * @param amount - The shot's damage.
+     * @param by - The shooter's player slot.
+     * @returns The `core/collision` `TerrainHit` code.
+     */
+    hitTerrain(px: number, py: number, amount: number, by: number): number;
+  } | null;
   /** The content (weapons, presets, sprite ids). */
   readonly content: ContentDb;
   /** Presentation events (SFX). */
@@ -2114,6 +2133,7 @@ class WeaponSystemImpl implements WeaponSystem {
                 head = c;
                 flags |= ShotFlag.Blocked;
                 f.flags[i] = flags;
+                this.hitTerrain(i, c, row);
                 break;
               }
             }
@@ -2155,15 +2175,16 @@ class WeaponSystemImpl implements WeaponSystem {
           f.x[i] = x;
           f.y[i] = y;
           // Bursts where its bottom (or its centre — a wall) meets terrain; finite positions only.
-          if (
-            map !== null &&
-            x - x === 0 &&
-            y - y === 0 &&
-            (terrainAt(map, Math.floor(x) | 0, Math.floor(y + f.hh[i]) | 0) !== TerrainType.Empty ||
-              terrainAt(map, Math.floor(x) | 0, Math.floor(y) | 0) !== TerrainType.Empty)
-          ) {
-            this.detonate(i);
-            continue;
+          if (map !== null && x - x === 0 && y - y === 0) {
+            const px = Math.floor(x) | 0;
+            const low = Math.floor(y + f.hh[i]) | 0;
+            const mid = Math.floor(y) | 0;
+            const hitLow = terrainAt(map, px, low) !== TerrainType.Empty;
+            if (hitLow || terrainAt(map, px, mid) !== TerrainType.Empty) {
+              this.hitTerrain(i, px, hitLow ? low : mid);
+              this.detonate(i);
+              continue;
+            }
           }
         }
         const bx = f.x[i];
@@ -2191,6 +2212,8 @@ class WeaponSystemImpl implements WeaponSystem {
               const scan = (Math.floor(y - hh) | 0) - t.step[role];
               const surface = findFloor(map, px, scan, low - scan);
               if (!(surface > scan)) {
+                // Flew into a wall: it dies there (and hits a destructible tile — M2-07).
+                this.hitTerrain(i, px, low);
                 this.kill(i);
                 continue;
               }
@@ -2210,6 +2233,7 @@ class WeaponSystemImpl implements WeaponSystem {
             f.flags[i] = flags & ~ShotFlag.Sliding;
             f.y[i] += dy;
           } else if (!(surface > scan)) {
+            this.hitTerrain(i, Math.floor(x) | 0, scan);
             this.kill(i);
             continue;
           } else {
@@ -2243,13 +2267,30 @@ class WeaponSystemImpl implements WeaponSystem {
       f.y[i] = y;
       if (!(x >= left && x <= right && y >= top && y <= bottom)) {
         this.kill(i);
-      } else if (
-        map !== null &&
-        terrainAt(map, Math.floor(x) | 0, Math.floor(y) | 0) !== TerrainType.Empty
-      ) {
-        this.kill(i);
+      } else if (map !== null) {
+        const px = Math.floor(x) | 0;
+        const py = Math.floor(y) | 0;
+        if (terrainAt(map, px, py) !== TerrainType.Empty) {
+          this.hitTerrain(i, px, py);
+          this.kill(i);
+        }
       }
     }
+  }
+
+  /**
+   * A shot met the terrain at a pixel (M2-07): the stage gimmicks damage the destructible tile
+   * there with the shot's damage, credited to its player. Whole pixels only (never boxed).
+   *
+   * @param i - The shot slot.
+   * @param px - Pixel column.
+   * @param py - Pixel row.
+   */
+  private hitTerrain(i: number, px: number, py: number): void {
+    const gimmicks = this.host.gimmicks;
+    if (gimmicks === undefined || gimmicks === null) return;
+    const f = this.pool.fields;
+    gimmicks.hitTerrain(px, py, f.damage[i], (f.shooter[i] / SHOOTERS_PER_PLAYER) | 0);
   }
 
   /** See {@link WeaponSystem.collide}. */

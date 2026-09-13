@@ -15,6 +15,9 @@
  *   ring: slot column `s` shows the map column `≡ s (mod 49)` inside the view, so when the
  *   camera crosses a tile column only the one column that scrolled in is re-textured (rows
  *   likewise for vertical pans); every frame the whole grid moves with one container offset.
+ *   Since M2-07 the view's `changes` log (destructible tiles breaking, growing back, cube-rush
+ *   tiles) re-textures just the changed cells in view; the checkpoint rollback (a reset) redraws
+ *   the grid.
  * - {@link createParallaxBinding} — each `ParallaxView` band as a row of repeated sprites
  *   (enough to cover the playfield plus one repeat), placed once; per frame only the band's
  *   container offset changes. No `TilingSprite` (WebGL1 NPOT restrictions).
@@ -230,6 +233,9 @@ export function createTerrainBinding(options: TerrainBindingOptions): TerrainBin
   const rowChanged = new Uint8Array(rows);
   let base: Int32Array | null = null;
   let updated = 0;
+  // The change log counts last seen (M2-07 destructible terrain; -1 = not yet).
+  let seenCount = -1;
+  let seenResets = -1;
 
   /**
    * Re-textures one slot from the map cell it now shows.
@@ -270,8 +276,25 @@ export function createTerrainBinding(options: TerrainBindingOptions): TerrainBin
       updated = 0;
       container.x = Math.round(-camX);
       container.y = offsetY + Math.round(-camY);
-      const all = tables.base !== base;
+      let all = tables.base !== base;
       base = tables.base;
+      // Cells changed in play (M2-07): a reset or a gap longer than the ring redraws the grid,
+      // otherwise the logged cells in view are re-textured after the scroll update below.
+      const changes = source.changes;
+      let fromChange = 0;
+      let toChange = 0;
+      if (changes !== undefined && changes !== null) {
+        if (changes.resets !== seenResets) {
+          all = all || seenResets >= 0;
+          seenResets = changes.resets;
+          seenCount = changes.count;
+        } else if (changes.count !== seenCount) {
+          if (seenCount < 0 || changes.count - seenCount > changes.cells.length) all = true;
+          else fromChange = seenCount;
+          toChange = changes.count;
+          seenCount = changes.count;
+        }
+      }
       const c0 = Math.floor(camX / size);
       const r0 = Math.floor(camY / size);
       for (let sr = 0; sr < rows; sr++) {
@@ -290,6 +313,17 @@ export function createTerrainBinding(options: TerrainBindingOptions): TerrainBin
         } else {
           for (let sr = 0; sr < rows; sr++) if (rowChanged[sr] !== 0) refresh(source, sc, sr);
         }
+      }
+      if (all || changes === undefined || changes === null) return;
+      const ring = changes.cells;
+      for (let k = fromChange; k < toChange; k++) {
+        const cell = ring[k % ring.length];
+        const col = cell % source.cols;
+        const row = (cell - col) / source.cols;
+        const sc = wrap(col, columns);
+        const sr = wrap(row, rows);
+        // Only a cell a slot shows right now (the others are read when they scroll in).
+        if (slotCol[sc] === col && slotRow[sr] === row) refresh(source, sc, sr);
       }
     },
     destroy() {

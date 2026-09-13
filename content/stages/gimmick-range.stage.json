@@ -1,0 +1,154 @@
+{
+  "formatVersion": 1,
+  "kind": "stage",
+  "id": "gimmick-range",
+  "name": "GIMMICK RANGE",
+  "music": { "stage": "Stage", "boss": "Boss" },
+  "length": 3200,
+  "camera": [
+    { "x": 0, "speed": 1, "ramp": 60 },
+    { "x": 600, "speed": 1.5, "ramp": 60 },
+    { "x": 1000, "speed": 1, "ramp": 60, "hold": 180, "yTo": 72, "yTicks": 150 },
+    { "x": 1400, "speed": 1, "yTo": 0, "yOver": 300 },
+    { "x": 1900, "speed": 4, "ramp": 60 },
+    { "x": 2300, "speed": 1, "ramp": 90 }
+  ],
+  "checkpoints": [{ "x": 0 }, { "x": 1200 }, { "x": 2400 }],
+  "parallax": [
+    { "layer": "far", "sprite": "bg/stars-far", "factor": 0.25, "y": 0, "spacing": 128 },
+    { "layer": "far", "sprite": "bg/stars-far", "factor": 0.25, "y": 128, "spacing": 128 },
+    { "layer": "mid", "sprite": "bg/stars-mid", "factor": 0.5, "y": 0, "spacing": 128 },
+    { "layer": "mid", "sprite": "bg/stars-mid", "factor": 0.5, "y": 128, "spacing": 128 }
+  ],
+  "tilemap": {
+    "tileSize": 8,
+    "tileset": "terrain-a",
+    "rowsTall": 34,
+    "rle": [
+      "",
+      "",
+      "",
+      "250*0, 4*20",
+      "250*0, 4*20",
+      "250*0, 4*20",
+      "250*0, 4*20",
+      "250*0, 4*20",
+      "250*0, 4*20",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "60*0, 4*18",
+      "60*0, 4*18",
+      "60*0, 4*18, 198*0, 4*20",
+      "60*0, 4*18, 198*0, 4*20",
+      "60*0, 4*18, 198*0, 4*20",
+      "60*0, 4*18, 116*0, 2*18, 80*0, 4*20",
+      "60*0, 4*18, 116*0, 2*18, 80*0, 4*20",
+      "180*0, 2*18, 80*0, 4*20",
+      "180*0, 2*18",
+      "180*0, 2*18",
+      "180*0, 2*18",
+      "180*0, 2*18",
+      "180*0, 2*18",
+      "180*0, 2*18",
+      "180*0, 2*18",
+      "180*0, 2*18",
+      "",
+      "",
+      ""
+    ],
+    "generator": {
+      "type": "heightfield",
+      "segments": [
+        {
+          "from": 64,
+          "to": 1000,
+          "floor": { "base": 100, "amp": 12, "period": 300, "seed": 11 },
+          "ceiling": { "base": 20, "amp": 8, "period": 240, "seed": 12 }
+        },
+        {
+          "from": 1000,
+          "to": 1700,
+          "floor": { "base": 24, "amp": 8, "period": 200, "seed": 13 },
+          "ceiling": { "base": 20, "amp": 8, "period": 240, "seed": 14 }
+        },
+        {
+          "from": 1700,
+          "to": 3584,
+          "floor": { "base": 100, "amp": 12, "period": 280, "seed": 15 },
+          "ceiling": { "base": 24, "amp": 10, "period": 260, "seed": 16 }
+        }
+      ]
+    }
+  },
+  "branches": [
+    { "id": "low", "flag": "took-low" },
+    { "id": "high", "flag": "took-low", "value": false }
+  ],
+  "events": [
+    { "x": 80, "type": "spawn", "enemy": "bubble", "y": 70 },
+    { "x": 200, "type": "spawn", "enemy": "bubble", "y": 130 },
+    { "x": 300, "type": "spawn", "enemy": "falling-rock" },
+    { "x": 360, "type": "spawn", "enemy": "falling-rock" },
+    { "x": 420, "type": "spawn", "enemy": "falling-rock" },
+    { "x": 700, "type": "spawn", "enemy": "volcano" },
+    {
+      "x": 800,
+      "type": "block",
+      "y": 96,
+      "w": 32,
+      "h": 8,
+      "tile": "solid",
+      "dy": 32,
+      "period": 160
+    },
+    { "x": 1000, "type": "spawn", "enemy": "suction-pod", "y": 120 },
+    {
+      "x": 1050,
+      "type": "trigger",
+      "flag": "took-low",
+      "region": { "x": 1300, "y": 180, "w": 240, "h": 92 }
+    },
+    { "x": 1560, "type": "spawn", "enemy": "bubble", "y": 150, "branch": "low" },
+    { "x": 1560, "type": "spawn", "enemy": "falling-rock", "branch": "high" },
+    { "x": 1620, "type": "spawn", "enemy": "bubble", "y": 60, "branch": "high" },
+    { "x": 1800, "type": "spawn", "enemy": "tentacle", "y": 60 },
+    { "x": 1900, "type": "flag", "flag": "high-speed" },
+    { "x": 2300, "type": "flag", "flag": "high-speed", "value": false },
+    {
+      "x": 2350,
+      "type": "formation",
+      "enemy": "rush-cube",
+      "count": 8,
+      "interval": 24,
+      "drop": null
+    },
+    {
+      "x": 2600,
+      "type": "block",
+      "y": 24,
+      "w": 48,
+      "h": 16,
+      "tile": "solid",
+      "vx": -0.25,
+      "dy": 16,
+      "period": 200
+    },
+    {
+      "x": 2700,
+      "type": "block",
+      "y": 152,
+      "w": 48,
+      "h": 16,
+      "tile": "solid",
+      "dy": -16,
+      "period": 200,
+      "phase": 512
+    },
+    { "x": 2800, "type": "spawn", "enemy": "tentacle", "y": 60 },
+    { "x": 3200, "type": "end" }
+  ]
+}

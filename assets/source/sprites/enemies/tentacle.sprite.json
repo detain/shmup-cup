@@ -1,0 +1,22 @@
+{
+  "name": "enemies/tentacle",
+  "description": "Tentacle claw (original, plan M2-07): the pink three-fingered tip of a grabbing tentacle; its arm is a chain of links.",
+  "palette": { ".": null, "o": "#3a0a2a", "p": "#e858a8", "l": "#f8a8d8", "d": "#a02870" },
+  "hitFlash": true,
+  "frames": [
+    {
+      "rows": [
+        ".o..oo..o.",
+        "op.oppo.po",
+        "opoplppopo",
+        ".oppllppo.",
+        "..oppppo..",
+        ".odppppdo.",
+        "odpplppdo.",
+        "odpppppdo.",
+        ".oddpddo..",
+        "..oooooo.."
+      ]
+    }
+  ]
+}

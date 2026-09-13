@@ -38,6 +38,14 @@ from the top, three from the bottom, converging; the last one destroyed drops th
 `directItems` plan that hands out every colour in its first six drops. Pick the MANTA in the ship
 select, or play it with `?stage=direct-range`.
 
+`gimmick-range.stage.json` (M2-07) is the dev stage of the **advanced stage systems**: a floor and
+ceiling with a destructible brick pillar, a regenerating tissue wall and mound (tiles of
+`terrain-a`), falling rocks, bubbles that split, a volcano, a suction pod, grabbing tentacles and a
+seeded cube rush that stacks into walls (`content/enemies/gimmick-range.enemies.json`), moving
+blocks, a timed stop with a vertical pan down into a dip, a diagonal pan back up, a region trigger
+that picks the events of a branch, and a 4 px/tick high-speed section. `?stage=gimmick-range`
+plays it.
+
 **The Direct-mode item plan (M2-05).** `directItems` (optional, 1–256 of `red`, `green`, `blue`,
 `orange`, `yellow`, `octagon`) is the order in which the stage's `powerup` drops — and its
 `capsule` drops: the direct ship has no meter — hand out items **in Direct mode**, cycling; the
@@ -115,6 +123,10 @@ tick, in file order.
 | `speed` | `speed`, optional `ramp` | new target scroll speed |
 | `flag` | `flag` (lower-case kebab), optional `value` (default `true`) | set / clear a stage flag (branches, M2; ≤ 32 per stage) |
 | `end` | — | the stage is cleared |
+| `trigger` | `flag`, `region` `{ x, y, w, h }` (world pixels), optional `value` (default `true`), `until` (camera x; default `region.x + region.w`) | M2-07: from its `x` until the camera passes `until`, the first living ship whose centre enters the region sets / clears the flag (once) |
+| `block` | `y` (world, top edge), `w`, `h` (multiples of 8, ≤ 64 tiles), optional `screenX` (default 400: left edge = `x + screenX`), `tile` (tileset tile name, default `solid`), `vx`, `vy` (drift px/tick), `dx`, `dy` (swing px), `period` (ticks, default 120), `phase` | M2-07: a moving block of that tile — terrain for the ship, shots, bullets and crawlers; needs a tilemap |
+
+Every event may also name a **`branch`** (M2-07): it then fires only while that branch is taken.
 
 **Spawn points** are in playfield pixels relative to the camera: `screenX` defaults to 400
 (16 px beyond the right edge; negative = behind the player), `y` to the middle of the
@@ -123,6 +135,22 @@ definition) stand on the floor below — or hang from the ceiling above — thei
 `path` names a curve in `content/paths/` for path movers and path-following behaviours. An
 enemy that leaves the view by 32 px after having been on screen is gone (it *escaped*: its
 formation can no longer be completed).
+
+## Holds, diagonal pans and branches (M2-07)
+
+- **`hold`** (ticks) on a camera key makes it a timed scroll stop: the camera stops exactly at the
+  key's `x`, stays `hold` ticks — a `yTo` / `yTicks` pan of the same key runs meanwhile, which is
+  how a vertical section is written — then scrolls on at the key's `speed` (with its `ramp`). Not
+  with `lock`.
+- **`yOver`** (pixels) instead of `yTicks` makes a pan **diagonal**: the camera y goes to `yTo`
+  linearly while the camera scrolls `yOver` pixels past the key's `x`, whatever the speed.
+- **High-speed sections** are camera keys or `speed` events up to 16 px/tick; every event still
+  fires exactly once, in order.
+- **`branches`** (optional, ≤ 32): `[{ "id": "low", "flag": "took-low" }, { "id": "high", "flag":
+  "took-low", "value": false }]` — an event with `"branch": "low"` fires only while the flag
+  `took-low` is set (`value` defaults to `true`); flags come from `flag` events and triggers.
+  A checkpoint restart re-derives the flags in timeline order (a trigger behind it that had fired
+  keeps its outcome; one that had not is armed again while its region lies ahead).
 
 ## Checkpoints
 
@@ -152,8 +180,16 @@ longer than the map, wrong row count) and generated heights the tileset has no t
 `enemy` ids must resolve against `content/enemies/` and `path` ids against `content/paths/`;
 stage ids are unique across all files.
 
-Later: authoring in **Tiled** or **LDtk** with an exporter to this format (`shmup_feat.md`
-§14 [P1]); the runtime format stays the same.
+Since M2-07 also: `yOver` without `yTo` or together with `yTicks`, a `hold` on a lock key,
+duplicate branch ids and events naming an unknown branch, a trigger whose `until` lies before its
+`x`, more than 32 triggers, a block without a tilemap, off the tile grid, over 64 tiles or naming a
+tile the tileset does not have.
+
+**Authoring in Tiled (M2-07).** `pnpm content:tiled <map.tmj>` (`scripts/content/tiled-import.mjs`)
+converts a Tiled JSON map into this format: the tile layer becomes the `rle` rows, object-layer
+entities become events at their scroll x (a spawn 400 px ahead of its object), camera keys,
+checkpoints, triggers, blocks and branches, polylines become a `content/paths/` file. See the
+script's docblock for the rules.
 
 See [`example.stage.json`](example.stage.json) (RLE rows over the example tileset, formations,
 a boss lock).

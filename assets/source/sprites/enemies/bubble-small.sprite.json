@@ -1,0 +1,20 @@
+{
+  "name": "enemies/bubble-small",
+  "description": "Small bubble (original, plan M2-07): what a splitting bubble bursts into.",
+  "palette": { ".": null, "o": "#0a4a6a", "c": "#38b8e8", "w": "#ffffff", "t": "#1a7aa8" },
+  "hitFlash": true,
+  "frames": [
+    {
+      "rows": [
+        "..oooo..",
+        ".octtco.",
+        "octwttco",
+        "octtttco",
+        "octtttco",
+        "occttcco",
+        ".occcco.",
+        "..oooo.."
+      ]
+    }
+  ]
+}

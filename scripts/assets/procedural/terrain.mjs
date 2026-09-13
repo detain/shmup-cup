@@ -14,6 +14,11 @@
  * 4,5,5,6,6,7,7,8 (22.5°: equal pairs, so low → high → the next row's low keeps the
  * rhythm); `-down` variants are mirrored left ↔ right, `ceil-` variants top ↔ bottom.
  *
+ * Plan M2-07 appended three full blocks for destructible terrain (the tileset gives them `hp`):
+ * `brick` (a cracked brick you can shoot through), `cube` (the crystal a cube rush stacks into
+ * walls) and `tissue` (organic wall that grows back). They are opaque on every pixel, like
+ * `solid`, and look different from rock so players can tell what breaks.
+ *
  * @module
  */
 import { createImage, flipHorizontal, flipVertical, getPixel, setPixel } from '../image.mjs';
@@ -42,6 +47,9 @@ export const TERRAIN_TILES = /** @type {const} */ ([
   'ceil-slope-up-high',
   'ceil-slope-down-high',
   'ceil-slope-down-low',
+  'brick',
+  'cube',
+  'tissue',
 ]);
 
 /** Tile side in pixels. */
@@ -85,6 +93,69 @@ function floorTile(height, openAbove) {
         const h = hash2(x, y, seed);
         setPixel(image, x, y, ROCK[h % 7 === 0 ? 2 : h % 3 === 0 ? 1 : 0]);
       }
+    }
+  }
+  return image;
+}
+
+/** Brick face, mortar and crack colours of the `brick` tile (M2-07). */
+const BRICK = [color('#b0704a'), color('#5a3424'), color('#7e4a32')];
+
+/** Crystal face, edge light and core of the `cube` tile (M2-07). */
+const CUBE = [color('#8a48e8'), color('#c8a0ff'), color('#4a2090')];
+
+/** Tissue flesh, highlight and dark cell nuclei of the `tissue` tile (M2-07). */
+const TISSUE = [color('#c8587a'), color('#f090b0'), color('#6a1a3a')];
+
+/**
+ * The `brick` tile: two courses of bricks with mortar lines and a diagonal crack.
+ *
+ * @returns {Image} The tile (every pixel opaque).
+ */
+function brickTile() {
+  const image = createImage(TILE_SIZE, TILE_SIZE);
+  for (let y = 0; y < TILE_SIZE; y++) {
+    for (let x = 0; x < TILE_SIZE; x++) {
+      const course = y < 4 ? 0 : 1;
+      const joint = course === 0 ? x === 3 : x === 7;
+      const mortar = y === 3 || y === 7 || joint;
+      const crack = x + y === 7 && !mortar;
+      setPixel(image, x, y, mortar ? BRICK[1] : crack ? BRICK[2] : BRICK[0]);
+    }
+  }
+  return image;
+}
+
+/**
+ * The `cube` tile: a bevelled crystal block (light top-left edge, dark bottom-right, a core).
+ *
+ * @returns {Image} The tile (every pixel opaque).
+ */
+function cubeTile() {
+  const image = createImage(TILE_SIZE, TILE_SIZE);
+  for (let y = 0; y < TILE_SIZE; y++) {
+    for (let x = 0; x < TILE_SIZE; x++) {
+      const light = x === 0 || y === 0;
+      const dark = x === TILE_SIZE - 1 || y === TILE_SIZE - 1;
+      const core = (x === 3 || x === 4) && (y === 3 || y === 4);
+      setPixel(image, x, y, light ? CUBE[1] : dark || core ? CUBE[2] : CUBE[0]);
+    }
+  }
+  return image;
+}
+
+/**
+ * The `tissue` tile: flesh with a position-hashed highlight and dark nuclei.
+ *
+ * @returns {Image} The tile (every pixel opaque).
+ */
+function tissueTile() {
+  const seed = seedOf('tiles/terrain-a/tissue');
+  const image = createImage(TILE_SIZE, TILE_SIZE);
+  for (let y = 0; y < TILE_SIZE; y++) {
+    for (let x = 0; x < TILE_SIZE; x++) {
+      const h = hash2(x, y, seed);
+      setPixel(image, x, y, h % 9 === 0 ? TISSUE[2] : h % 4 === 0 ? TISSUE[1] : TISSUE[0]);
     }
   }
   return image;
@@ -136,6 +207,9 @@ export function generate() {
     'ceil-slope-up-high': flipVertical(upHigh),
     'ceil-slope-down-high': flipVertical(flipHorizontal(upHigh)),
     'ceil-slope-down-low': flipVertical(flipHorizontal(upLow)),
+    brick: brickTile(),
+    cube: cubeTile(),
+    tissue: tissueTile(),
   };
   /** @type {Record<string, number[]>} */
   const animations = {};

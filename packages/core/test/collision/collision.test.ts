@@ -25,7 +25,7 @@ import { createRng } from '../../src/rng/index.js';
 describe('core/collision shapes', () => {
   it('describes itself', () => {
     expect(moduleInfo.name).toBe('collision');
-    expect(moduleInfo.status).toBe('partial');
+    expect(moduleInfo.status).toBe('implemented');
   });
 
   it('circleCircle: overlap, exact edge contact, apart', () => {

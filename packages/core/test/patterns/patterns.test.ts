@@ -53,6 +53,7 @@ function body(x = 0, y = 0, anchor: number = BodyAnchor.Air, hh = 4): MoverBody 
     y,
     vx: 0,
     vy: 0,
+    hw: 4,
     hh,
     anchor,
     age: 0,
@@ -139,8 +140,10 @@ describe('core/patterns module', () => {
       'groundCrawl',
       'homing',
       'aimedDash',
+      'ballistic',
     ]);
     expect(moverKindOf('sine')).toBe(MoverKind.Sine);
+    expect(moverKindOf('ballistic')).toBe(MoverKind.Ballistic);
     expect(moverKindOf('aimedDash')).toBe(MoverKind.AimedDash);
   });
 });

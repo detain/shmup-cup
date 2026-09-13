@@ -1,0 +1,20 @@
+{
+  "name": "enemies/rush-cube",
+  "description": "Rush cube (original, plan M2-07): a violet crystal cube of the seeded cube rush; where it stops it becomes a cube tile of the terrain.",
+  "palette": { ".": null, "o": "#1a0a2e", "v": "#8a48e8", "l": "#c8a0ff", "d": "#4a2090" },
+  "hitFlash": true,
+  "frames": [
+    {
+      "rows": [
+        "oooooooo",
+        "ollllldo",
+        "olvvvvdo",
+        "olvddvdo",
+        "olvddvdo",
+        "olvvvvdo",
+        "oddddddo",
+        "oooooooo"
+      ]
+    }
+  ]
+}

@@ -123,6 +123,34 @@
       "frame": 16,
       "anchor": "ceiling",
       "mask": [4, 3, 3, 2, 2, 1, 1, 0]
+    },
+    {
+      "name": "brick",
+      "type": "solid",
+      "frame": 17,
+      "anchor": "floor",
+      "mask": [8, 8, 8, 8, 8, 8, 8, 8],
+      "hp": 4,
+      "score": 10
+    },
+    {
+      "name": "cube",
+      "type": "solid",
+      "frame": 18,
+      "anchor": "floor",
+      "mask": [8, 8, 8, 8, 8, 8, 8, 8],
+      "hp": 2,
+      "score": 10
+    },
+    {
+      "name": "tissue",
+      "type": "solid",
+      "frame": 19,
+      "anchor": "floor",
+      "mask": [8, 8, 8, 8, 8, 8, 8, 8],
+      "hp": 3,
+      "regen": 240,
+      "score": 10
     }
   ]
 }

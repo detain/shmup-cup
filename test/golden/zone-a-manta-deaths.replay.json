@@ -61,9 +61,9 @@
     "AOsI"
   ],
   "hashes": [
-    3628382774
+    3057886677
   ],
-  "finalHash": 3340015858,
+  "finalHash": 1942947971,
   "description": "a weaving MANTA that never dodges, Arcade penalty (M2-05): Direct-mode deaths, checkpoint restarts, game over",
   "expected": {
     "status": "gameOver",

@@ -54,8 +54,22 @@
  *   `formation` event makes the wave — the last cube destroyed drops its `drop` (`powerup`: a
  *   capsule in meter mode, the next planned item in Direct mode).
  *
+ * **Stage gimmicks (M2-07, shmup_feat.md §14)** — reusable modules the zones of M2-11 … M2-14 build
+ * on (tunables in their docblocks):
+ *
+ * - `rock.fall` — a falling rock (a `Ballistic` body with a proximity trigger) that shatters on the
+ *   terrain; also the lava stones `volcano.lob` throws.
+ * - `bubble.split` — a drifting bubble that splits into its `child` enemies when shot (a
+ *   {@link BehaviorDef.death} behaviour).
+ * - `volcano.lob` — a ground volcano lobbing its `child` stones on ballistic arcs (seeded).
+ * - `field.suction` — a pod whose pull field draws the ships towards it while it lives.
+ * - `tentacle.grab` — an anchored claw on a drawn chain that lunges at a ship in reach, dragging it
+ *   with a short pull field, then retracts.
+ * - `cube.stack` — a cube of a seeded cube rush: a random row, aimed at the player, and where it
+ *   meets the terrain it becomes the tileset's `cube` tile — the rush stacks into walls.
+ *
  * `drifter.sine`, `fan.loop`, `carrier.straight`, `hatch.spawner`, `rammer.aimed`,
- * `hunter.option` and `cube.pincer` do not fire.
+ * `hunter.option`, `cube.pincer` and the M2-07 gimmicks do not fire.
  * Every shot goes through the primitives, so nothing fires off screen or before `settleTicks`.
  *
  * **Boss behaviours** (M1-13, {@link DEFAULT_BOSS_BEHAVIORS}; a boss phase's `script`, its
@@ -88,6 +102,8 @@
  * - shmup_feat.md §11 — archetypes (popcorn, formation fliers, capsule carriers, turrets,
  *   walkers, hatches, rammers, orbiters, the Option Hunter — M2-04) as coroutine scripts
  * - shmup_feat.md §6B — the Direct-mode item carriers: six-cube pincer waves (M2-05)
+ * - shmup_feat.md §14 — stage gimmicks as reusable modules: falling rocks, splitting bubbles,
+ *   volcanoes, suction, grabbing tentacles, the cube rush (M2-07)
  * - shmup_tech.md §4.6 — TS generator coroutines
  * - shmup_feat.md §13 — boss phases driven by behaviour scripts (the pattern set changes with the
  *   phase)
@@ -111,14 +127,26 @@ import type { ContentDb, ValidationIssue } from '../data/index.js';
 import type { EnemyBehavior, EnemyBehaviorLookup, ScriptApi } from '../enemies/index.js';
 import { EnemyFlag } from '../enemies/index.js';
 import { defineModule } from '../module-info.js';
-import { ANGLE_UNITS } from '../math/index.js';
-import { BodyAnchor, MoverKind, SLEEP_FOREVER, type Script } from '../patterns/index.js';
+import { ANGLE_UNITS, atan2B, cosB, quantizeAngle, sinB } from '../math/index.js';
+import {
+  BallisticLand,
+  BodyAnchor,
+  MoverKind,
+  SLEEP_FOREVER,
+  type Script,
+} from '../patterns/index.js';
 
 /** Module descriptor (see {@link defineModule}). */
 export const moduleInfo = defineModule({
   name: 'behaviors',
   status: 'partial',
-  specRefs: ['shmup_feat.md §11', 'shmup_tech.md §4.6', 'shmup_feat.md §13', 'shmup_feat.md §6'],
+  specRefs: [
+    'shmup_feat.md §11',
+    'shmup_tech.md §4.6',
+    'shmup_feat.md §13',
+    'shmup_feat.md §6',
+    'shmup_feat.md §14',
+  ],
 });
 
 /**
@@ -145,6 +173,14 @@ export interface BehaviorDef<
   readonly needsChild: boolean;
   /** Whether the enemy must name a `pattern` (DSL pattern runners, M2-02). */
   readonly needsPattern: boolean;
+  /**
+   * Called when an enemy of this behaviour is killed (M2-07 — splitting bubbles; see
+   * `core/enemies` `EnemyBehavior.death`).
+   *
+   * @param api - The dying enemy's script API.
+   * @param params - The resolved tunables.
+   */
+  readonly death?: (api: ScriptApi, params: P) => void;
 }
 
 /** A set of behaviours by id. */
@@ -177,6 +213,8 @@ export interface BehaviorRegistry extends EnemyBehaviorLookup {
  * @param create - The coroutine factory.
  * @param needsChild - Whether the enemy must name a `child` (default `false`).
  * @param needsPattern - Whether the enemy must name a `pattern` (default `false`).
+ * @param death - Called when such an enemy is killed (M2-07; default none — see
+ *   `core/enemies` `EnemyBehavior.death`).
  * @returns The frozen definition.
  *
  * @example
@@ -193,14 +231,19 @@ export function defineBehavior<P extends Readonly<Record<string, number>>>(
   create: (api: ScriptApi, params: P) => Script,
   needsChild = false,
   needsPattern = false,
+  death?: (api: ScriptApi, params: P) => void,
 ): BehaviorDef {
-  return Object.freeze({
+  const def: BehaviorDef = {
     id,
     params: Object.freeze({ ...params }),
-    create: create as (api: ScriptApi, params: Readonly<Record<string, number>>) => Script,
+    create,
     needsChild,
     needsPattern,
-  });
+  };
+  if (death !== undefined) {
+    (def as { death?: BehaviorDef['death'] }).death = death as BehaviorDef['death'];
+  }
+  return Object.freeze(def);
 }
 
 /**
@@ -508,6 +551,225 @@ const cubePincer = defineBehavior(
   },
 );
 
+// ------------------------------------------------------------------------------ gimmicks (M2-07)
+
+/**
+ * `rock.fall` (M2-07) — a falling rock or a lobbed lava stone: a `Ballistic` body that waits, still,
+ * until the nearest player is within [`trigger` 48] px horizontally (0 = falls at once), then
+ * falls under [`gravity` 0.15] px/tick² up to [`maxFall` 4] px/tick and **shatters** on the
+ * terrain it lands on (`core/enemies` destroys it with its explosion — no score). A body that
+ * already flies a `Ballistic` mover (thrown by `volcano.lob`) keeps it. It never fires.
+ */
+const rockFall = defineBehavior(
+  'rock.fall',
+  { trigger: 48, gravity: 0.15, maxFall: 4 },
+  function* rock(api, p): Script {
+    if (api.self.mover !== MoverKind.Ballistic) {
+      const trigger = p.trigger > 0 ? p.trigger : 0;
+      api.setMover(MoverKind.Ballistic, 0, 0, p.gravity, p.maxFall, trigger, BallisticLand.Shatter);
+    }
+    yield SLEEP_FOREVER;
+  },
+);
+
+/**
+ * `bubble.split` (M2-07) — a bubble that **splits** when shot: it drifts left at [`speed` 0.75] on
+ * a sine wave [`amp` 16, `period` 120]; killed, it releases [`count` 2] of its `child` enemy fanned
+ * [`spread` 256 binary units] around "left", flying out at [`splitSpeed` 1.25] for
+ * [`scatterTicks` 30] ticks before they drift in turn (a child may split again). The Mega Crash and
+ * the blue capsule pop it without a split.
+ */
+const bubbleSplit = defineBehavior(
+  'bubble.split',
+  { speed: 0.75, amp: 16, period: 120, count: 2, splitSpeed: 1.25, spread: 256, scatterTicks: 30 },
+  function* bubble(api, p): Script {
+    // A child of a split flies out first (its parent set a straight mover on it).
+    if (api.self.mover === MoverKind.Straight) yield p.scatterTicks >= 1 ? p.scatterTicks : 1;
+    api.setMover(MoverKind.Sine, -p.speed, p.amp, p.period, 0);
+    yield SLEEP_FOREVER;
+  },
+  false,
+  false,
+  (api, p) => {
+    const child = api.spec.childId;
+    const count = p.count >= 1 ? Math.floor(p.count) : 0;
+    if (child < 0 || count === 0) return;
+    const first = ANGLE_UNITS / 2 - p.spread / 2;
+    const step = count > 1 ? p.spread / (count - 1) : 0;
+    for (let k = 0; k < count; k++) {
+      const piece = api.spawn(child, 0, 0);
+      if (piece === null) continue;
+      const angle = Math.floor(count > 1 ? first + step * k : ANGLE_UNITS / 2);
+      api.setMoverOf(
+        piece,
+        MoverKind.Straight,
+        cosB(angle) * p.splitSpeed,
+        sinB(angle) * p.splitSpeed,
+      );
+    }
+  },
+);
+
+/**
+ * `volcano.lob` (M2-07) — a ground volcano: every [`interval` 90] ticks (rank-scaled) while it may
+ * fire it throws [`count` 3] of its `child` enemy (lava stones — give them `rock.fall`) from its top,
+ * each up at a random [`minUp` 2.5 … `maxUp` 3.5] px/tick and sideways at a random ± [`spread`
+ * 1.25], on a `Ballistic` arc of [`gravity` 0.08] (at most [`maxFall` 3]) that shatters on the
+ * terrain. Randomness is the gameplay stream (replay-safe).
+ */
+const volcanoLob = defineBehavior(
+  'volcano.lob',
+  { interval: 90, count: 3, minUp: 2.5, maxUp: 3.5, spread: 1.25, gravity: 0.08, maxFall: 3 },
+  function* volcano(api, p): Script {
+    api.setMover(MoverKind.None);
+    const child = api.spec.childId;
+    const self = api.self;
+    const count = p.count >= 1 ? Math.floor(p.count) : 1;
+    const rng = api.rng;
+    for (;;) {
+      yield api.fireWait(p.interval);
+      if (child < 0 || !api.canFire()) continue;
+      for (let k = 0; k < count; k++) {
+        const stone = api.spawn(child, 0, -self.hh - 4);
+        if (stone === null) break;
+        const up = p.minUp + (p.maxUp - p.minUp) * rng.nextFloat();
+        const side = (rng.nextFloat() * 2 - 1) * p.spread;
+        api.setMoverOf(
+          stone,
+          MoverKind.Ballistic,
+          side,
+          -up,
+          p.gravity,
+          p.maxFall,
+          0,
+          BallisticLand.Shatter,
+        );
+      }
+    }
+  },
+  true,
+);
+
+/**
+ * `field.suction` (M2-07) — a suction pod: once on screen it starts a **pull field** (`ScriptApi
+ * .pull`) that draws every living ship within [`radius` 160] px towards it at [`strength` 0.6]
+ * px/tick for as long as it lives (its spec's `mover` moves it). It never fires; destroying it ends
+ * the pull.
+ */
+const fieldSuction = defineBehavior(
+  'field.suction',
+  { radius: 160, strength: 0.6 },
+  function* suction(api, p): Script {
+    while (!api.onScreen()) yield 8;
+    api.pull(p.radius, p.strength, 0);
+    yield SLEEP_FOREVER;
+  },
+);
+
+/**
+ * `tentacle.grab` (M2-07) — a grabbing tentacle anchored where it spawns (a floor or ceiling
+ * enemy): its arm is a chain of [`links` 8] links drawn from the anchor to the claw (the enemy).
+ * When the nearest player comes within [`reach` 96] px of the anchor it lunges — homing at [`speed`
+ * 2] px/tick, turning [`turnRate` 12] units a tick, for [`extendTicks` 48] ticks — with a pull
+ * field of [`grabRadius` 40] px and [`grabPull` 0.5] px/tick dragging the ship towards the claw;
+ * then it lets go, retracts to the anchor at [`retractSpeed` 1.5] and rests [`restTicks` 60] ticks.
+ * The claw's body kills on contact like any enemy; it never fires.
+ */
+const tentacleGrab = defineBehavior(
+  'tentacle.grab',
+  {
+    links: 8,
+    reach: 96,
+    speed: 2,
+    turnRate: 12,
+    extendTicks: 48,
+    grabRadius: 40,
+    grabPull: 0.5,
+    retractSpeed: 1.5,
+    restTicks: 60,
+  },
+  function* tentacle(api, p): Script {
+    const self = api.self;
+    const anchorX = self.x;
+    const anchorY = self.y;
+    api.chain(anchorX, anchorY, p.links);
+    api.setMover(MoverKind.None);
+    const extend = p.extendTicks >= 1 ? Math.floor(p.extendTicks) : 1;
+    const rest = p.restTicks >= 1 ? Math.floor(p.restTicks) : 1;
+    for (;;) {
+      const target = api.target();
+      const near =
+        target !== null &&
+        api.canFire() &&
+        Math.abs(target.x - anchorX) <= p.reach &&
+        Math.abs(target.y - anchorY) <= p.reach;
+      if (!near) {
+        yield 12;
+        continue;
+      }
+      api.setMover(MoverKind.Homing, p.speed, Math.floor(p.turnRate));
+      api.pull(p.grabRadius, p.grabPull, extend);
+      yield extend;
+      api.release();
+      api.setMover(MoverKind.Waypoint, anchorX, anchorY, p.retractSpeed, 1, 0, 0);
+      const dx = self.x - anchorX;
+      const dy = self.y - anchorY;
+      const back = Math.ceil(
+        Math.sqrt(dx * dx + dy * dy) / (p.retractSpeed > 0 ? p.retractSpeed : 1),
+      );
+      yield back + rest;
+    }
+  },
+);
+
+/** Scale of the whole-number vectors a cube aims with (as the movers' `atan2B` calls). */
+const CUBE_AIM_SCALE = 64;
+
+/**
+ * `cube.stack` (M2-07) — one cube of a **seeded cube rush** (shmup_feat.md §14, the crystal
+ * stage): when it spawns it moves to a random row of the view — [`margin` 24] px from the top and
+ * bottom, drawn from the gameplay stream — aims at the nearest player (32 directions) and flies at
+ * [`speed` 2] px/tick on a `Ballistic` mover that stops at the terrain. Where it stops it **becomes
+ * terrain**: the tileset's tile named `cube` is placed in its cell (the rush stacks into walls —
+ * destructible when the tile has `hp`) and the cube is gone; with no such tile or cell it
+ * shatters. A `formation` event makes the rush. It never fires.
+ */
+const cubeStack = defineBehavior(
+  'cube.stack',
+  { speed: 2, margin: 24 },
+  function* cube(api, p): Script {
+    const self = api.self;
+    const camera = api.camera;
+    const span = PLAYFIELD_H - 2 * p.margin;
+    if (span > 0) self.y = camera.y + p.margin + api.rng.rangeInt(0, Math.floor(span));
+    const target = api.target();
+    let angle = ANGLE_UNITS / 2;
+    if (target !== null) {
+      angle = quantizeAngle(
+        atan2B(
+          ((target.y - self.y) * CUBE_AIM_SCALE) | 0,
+          ((target.x - self.x) * CUBE_AIM_SCALE) | 0,
+        ),
+        32,
+      );
+    }
+    const tile = api.tileId('cube');
+    api.setMover(
+      MoverKind.Ballistic,
+      cosB(angle) * p.speed,
+      sinB(angle) * p.speed,
+      0,
+      0,
+      0,
+      BallisticLand.Stop,
+    );
+    yield SLEEP_FOREVER;
+    // Woken the tick after it landed.
+    if (tile > 0 && api.placeTile(self.x, self.y, tile)) api.destroy(false);
+    else api.destroy(true);
+  },
+);
+
 /** The roster's definitions (see the module docs), e.g. to extend a registry in tests. */
 export const DEFAULT_BEHAVIOR_DEFS: readonly BehaviorDef[] = Object.freeze([
   drifterSine,
@@ -521,6 +783,12 @@ export const DEFAULT_BEHAVIOR_DEFS: readonly BehaviorDef[] = Object.freeze([
   patternLoop,
   hunterOption,
   cubePincer,
+  rockFall,
+  bubbleSplit,
+  volcanoLob,
+  fieldSuction,
+  tentacleGrab,
+  cubeStack,
 ]);
 
 /** The roster as a registry (what the World uses). */

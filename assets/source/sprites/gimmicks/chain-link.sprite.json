@@ -1,0 +1,18 @@
+{
+  "name": "gimmicks/chain-link",
+  "description": "Chain link (original, plan M2-07): one segment of a tentacle arm drawn by the stage gimmicks (an engine sprite).",
+  "palette": { ".": null, "o": "#3a0a2a", "p": "#c04890", "l": "#f090c8" },
+  "hitFlash": false,
+  "frames": [
+    {
+      "rows": [
+        ".oooo.",
+        "opllpo",
+        "olpppo",
+        "oppppo",
+        "oppppo",
+        ".oooo."
+      ]
+    }
+  ]
+}
