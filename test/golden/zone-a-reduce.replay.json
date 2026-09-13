@@ -3,7 +3,7 @@
   "header": {
     "formatVersion": 1,
     "buildId": "golden",
-    "seed": 7,
+    "seed": 11,
     "stageId": "zone-a",
     "checkpoint": -1,
     "loadout": "full",
@@ -13,7 +13,7 @@
       "internalHeight": 216,
       "tickRate": 60,
       "maxTicksPerFrame": 4,
-      "seed": 7,
+      "seed": 11,
       "difficulty": "normal",
       "rankBase": 2,
       "rankGrowth": 1,
@@ -45,31 +45,27 @@
       ],
       "pickupMagnet": true,
       "weaponPreset": "type-a",
-      "weaponEdit": {
-        "missile": "missile.twoWay",
-        "double": "shot.free",
-        "laser": "laser.twin"
-      },
-      "megaChoice": "lifeOption",
-      "shieldChoice": "forceField",
-      "optionChoice": "trail"
+      "weaponEdit": null,
+      "megaChoice": "megaCrash",
+      "shieldChoice": "reduce",
+      "optionChoice": "formation"
     }
   },
-  "ticks": 765,
+  "ticks": 1058,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgEA0wU=",
-    "AP0F"
+    "ACiCgAgBAgEA+Ac=",
+    "AKII"
   ],
   "hashes": [
-    168141270
+    2991032848
   ],
-  "finalHash": 1689430299,
-  "description": "HALCYON BULWARK with a Weapon Edit loadout (M2-03): Twin Laser, 2-Way Missile, LIFE OPTION on `!`",
+  "finalHash": 4124714046,
+  "description": "HALCYON BULWARK with Formation Options and Reduce (M2-04): a `>` of Options, the shrunken hurtbox",
   "expected": {
     "status": "stageClear",
-    "ticks": 765,
-    "score": 37060,
+    "ticks": 1058,
+    "score": 37130,
     "lives": 4,
     "deathTicks": [],
     "bossDefeated": true

@@ -1689,13 +1689,15 @@ class BossSystemImpl implements BossSystem {
     if (boss.state !== BossState.Intro && boss.state !== BossState.Fight) return;
     const host = this.host;
     const players = host.players;
-    const r = host.ship.hurtRadius;
+    const base = host.ship.hurtRadius;
     const parts = boss.parts;
     for (let p = 0; p < players.length; p++) {
       const ship = players[p];
       if (!ship.active || ship.state !== 'alive') continue;
       const sx = ship.x;
       const sy = ship.y;
+      // Reduce shrinks the hurt circle (`core/shields`, M2-04).
+      const r = base * ship.shield.hurtScale;
       for (let i = 0; i < boss.partCount; i++) {
         const part = parts[i];
         if (!part.target) continue;

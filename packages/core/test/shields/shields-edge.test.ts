@@ -46,7 +46,14 @@ describe('core/shields edge — tables', () => {
     expect(SHIELD_SPECS[ShieldKind.None]).toBeNull();
     expect(SHIELD_SPECS[ShieldKind.ForceField]).toBe(FORCE_FIELD);
     expect(SHIELD_SPECS).toHaveLength(Object.keys(ShieldKind).length);
-    expect(SHIELD_KIND_NAMES).toEqual(['none', 'forceField']);
+    expect(SHIELD_KIND_NAMES).toEqual([
+      'none',
+      'forceField',
+      'shield',
+      'freeShield',
+      'rotateShield',
+      'reduce',
+    ]);
     expect(Object.isFrozen(SHIELD_SPECS)).toBe(true);
     expect(Object.isFrozen(SHIELD_KIND_NAMES)).toBe(true);
     expect(Object.values(ShieldHit)).toEqual([0, 1, 2, 3]);
@@ -63,6 +70,17 @@ describe('core/shields edge — tables', () => {
       hitTick: -1,
       brokeTick: -1,
       absorbed: 0,
+      hurtScale: 1,
+      podCount: 0,
+      podMaxHits: 0,
+      podOrbit: 0,
+      spin: 0,
+      podHits: new Int32Array(4),
+      podAngle: new Int32Array(4),
+      podIFrames: new Int32Array(4),
+      podHitTick: new Float64Array(4).fill(-1),
+      podX: new Float64Array(4),
+      podY: new Float64Array(4),
     });
     expect(createShieldState()).not.toBe(s);
   });

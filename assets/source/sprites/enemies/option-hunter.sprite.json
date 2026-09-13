@@ -1,0 +1,41 @@
+{
+  "name": "enemies/option-hunter",
+  "description": "The Option Hunter: an armoured grabber with two open claws and a pulsing violet eye that steals Options.",
+  "palette": { ".": null, "o": "#140a20", "p": "#8a3ad8", "d": "#4a1a7a", "m": "#c890ff", "e": "#ff3860", "w": "#ffe0f0", "s": "#b0b0c0" },
+  "hitFlash": true,
+  "frames": [
+    {
+      "rows": [
+        "ss..........ss..",
+        ".ss..oooo..ss...",
+        "..sooppppoos....",
+        "...oppmmppo.....",
+        "..oppmeewmpo....",
+        "..opdmeeempdo...",
+        "..opdmeeempdo...",
+        "..oppmwwmppo....",
+        "...oppmmppo.....",
+        "..sooppppoos....",
+        ".ss..oooo..ss...",
+        "ss..........ss.."
+      ]
+    },
+    {
+      "rows": [
+        ".s..........s...",
+        "ss...oooo...ss..",
+        ".ssooppppooss...",
+        "...oppmmppo.....",
+        "..oppmwwmpo.....",
+        "..opdmeeempdo...",
+        "..opdmeeempdo...",
+        "..oppmeewppo....",
+        "...oppmmppo.....",
+        ".ssooppppooss...",
+        "ss...oooo...ss..",
+        ".s..........s..."
+      ]
+    }
+  ],
+  "animations": { "grab": [0, 1] }
+}

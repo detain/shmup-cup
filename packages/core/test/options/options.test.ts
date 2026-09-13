@@ -27,9 +27,9 @@ function camera(x = 0, y = 0): PlayerCamera {
 }
 
 describe('core/options', () => {
-  it('describes itself as a partial module', () => {
+  it('describes itself as an implemented module', () => {
     expect(moduleInfo.name).toBe('options');
-    expect(moduleInfo.status).toBe('partial');
+    expect(moduleInfo.status).toBe('implemented');
     expect(moduleInfo.specRefs).toContain('shmup_feat.md §8');
     expect(OPTION_TRAIL_CAPACITY).toBe(MAX_OPTIONS * OPTION_SPACING + 1);
   });

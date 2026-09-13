@@ -25,12 +25,14 @@
  * (every slot's state, and the numeric fields of each slot in use — M1-08), the formation table
  * (the fields of every active slot, and each track's recorded count), the player weapons (M1-10:
  * each player's loadout — main, missile, options — and option group — count, stolen, trail head,
- * the whole trail and the option positions — the autofire timers, the Free Way's last direction
+ * the whole trail and the option positions; since M2-04 also its type, spread progress, toggle,
+ * hold ticks, orbit angle and Snake links — the autofire timers, the Free Way's last direction
  * of each player (M2-03) and the hit-cooldown table of every live piercing shot or Spread Bomb),
  * then the power-ups (M1-11: each player's meter cursor, pending Mega
  * Crash and shield — kind, hits, max hits, i-frames, terrain flag, hit and break ticks, absorbed
- * count — and the count of enemy drops already turned into items; the items themselves are a
- * registered pool), then the effect timers and scores (M1-12: shake magnitude, ticks, duration and
+ * count; since M2-04 the hurt scale and the pods: count, hits each, orbit, spin and every slot's
+ * hits, angle, i-frames and hit tick — and the count of enemy drops already turned into items;
+ * the items themselves are a registered pool), then the effect timers and scores (M1-12: shake magnitude, ticks, duration and
  * request tick, flash ticks, kind and request tick, every player's score — with its next extend
  * threshold and continue count (M2-01) — and the counts of kills and formation bonuses already
  * credited — not the session hi-score, which a host may raise from its save —, then the continues
@@ -433,6 +435,7 @@ function mixEnemy(e: Enemy): void {
   mixNumber(e.pathId);
   mixNumber(e.camX);
   mixNumber(e.camY);
+  mixNumber(e.carried);
 }
 
 /**
@@ -456,6 +459,13 @@ function mixWeapons(weapons: World['weapons']): void {
     mixArray(g.trailY, g.trailY.length);
     mixArray(g.x, g.x.length);
     mixArray(g.y, g.y.length);
+    mixWord(g.mode);
+    mixNumber(g.spreadTicks);
+    mixWord(g.toggled ? 1 : 0);
+    mixNumber(g.holdTicks);
+    mixNumber(g.angle);
+    mixArray(g.snakeX, g.snakeX.length);
+    mixArray(g.snakeY, g.snakeY.length);
   }
   mixArray(weapons.timers, weapons.timers.length);
   mixArray(weapons.freeWayHeading, weapons.freeWayHeading.length);
@@ -495,6 +505,15 @@ function mixPowerUps(world: World): void {
     mixNumber(shield.hitTick);
     mixNumber(shield.brokeTick);
     mixNumber(shield.absorbed);
+    mixNumber(shield.hurtScale);
+    mixNumber(shield.podCount);
+    mixNumber(shield.podMaxHits);
+    mixNumber(shield.podOrbit);
+    mixNumber(shield.spin);
+    mixArray(shield.podHits, shield.podHits.length);
+    mixArray(shield.podAngle, shield.podAngle.length);
+    mixArray(shield.podIFrames, shield.podIFrames.length);
+    mixArray(shield.podHitTick, shield.podHitTick.length);
   }
   mixNumber(powerups.dropsTaken);
 }

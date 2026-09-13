@@ -551,7 +551,23 @@ describe('scripts/assets/procedural/weapons (M2-03)', () => {
 });
 
 describe('scripts/assets/procedural/items', () => {
-  const [capsule, point] = items.generate();
+  const [capsule, point, blue] = items.generate();
+
+  it('draws the blue capsule as the capsule`s shape in blue (M2-04)', () => {
+    expect(blue.name).toBe('items/capsule-blue');
+    expect(blue.animations).toEqual({ blink: [0, 1] });
+    expect(blue.frames).toHaveLength(2);
+    for (let f = 0; f < 2; f++) {
+      const a = blue.frames[f];
+      const b = capsule.frames[f];
+      expect([a.width, a.height]).toEqual([b.width, b.height]);
+      for (let y = 0; y < a.height; y++) {
+        for (let x = 0; x < a.width; x++) expect(opaque(a, x, y)).toBe(opaque(b, x, y));
+      }
+    }
+    const h = hue(getPixel(blue.frames[0], 6, 5));
+    expect(h > 190 && h < 250, `hue ${h}`).toBe(true);
+  });
 
   it('draws the 5×5 two-frame gold point item diamond of cancelled bullets (M2-02)', () => {
     expect(point.name).toBe('items/point');
@@ -650,7 +666,29 @@ describe('scripts/assets/procedural/particles', () => {
 });
 
 describe('scripts/assets/procedural/shields', () => {
-  const [field] = shields.generate();
+  const [field, pod, reduce] = shields.generate();
+
+  it('draws the 8×8 shield pod in four wear states that lose pixels as they wear (M2-04)', () => {
+    expect(pod.name).toBe('shields/pod');
+    expect(pod.animations).toEqual({ fresh: [0], worn: [1], damaged: [2], critical: [3] });
+    expect(pod.frames.map((f) => [f.width, f.height])).toEqual(Array(4).fill([8, 8]));
+    const counts = pod.frames.map(opaqueCount);
+    for (let s = 1; s < 4; s++) expect(counts[s]).toBeLessThan(counts[s - 1]);
+    // Warm (gold → red) — never a bullet colour's cool hue.
+    const h = hue(getPixel(pod.frames[0], 1, 3));
+    expect(h >= 0 && h < 60, `hue ${h}`).toBe(true);
+  });
+
+  it('draws Reduce as a dotted 20×14 ring, sparser one hit down (M2-04)', () => {
+    expect(reduce.name).toBe('shields/reduce');
+    expect(reduce.animations).toEqual({ full: [0], worn: [1] });
+    expect(reduce.frames.map((f) => [f.width, f.height])).toEqual(Array(2).fill([20, 14]));
+    const [full, worn] = reduce.frames.map(opaqueCount);
+    expect(full).toBeGreaterThan(0);
+    expect(worn).toBeLessThan(full);
+    // A ring: the middle (where the ship is) stays clear.
+    expect(opaque(reduce.frames[0], 10, 7)).toBe(false);
+  });
 
   it('draws four 30×24 wear states that lose pixels as they wear', () => {
     expect(field.name).toBe('shields/force-field');

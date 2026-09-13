@@ -98,13 +98,14 @@ describe('core/behaviors registry', () => {
       'drifter.sine',
       'fan.loop',
       'hatch.spawner',
+      'hunter.option',
       'orbiter.loop',
       'pattern.loop',
       'rammer.aimed',
       'turret.floor',
       'walker.floor',
     ]);
-    expect(DEFAULT_BEHAVIOR_DEFS).toHaveLength(9);
+    expect(DEFAULT_BEHAVIOR_DEFS).toHaveLength(10);
     expect(DEFAULT_BEHAVIORS.get('pattern.loop')?.needsPattern).toBe(true);
     for (const id of BEHAVIOR_IDS) expect(DEFAULT_BEHAVIORS.get(id)?.id).toBe(id);
     expect(DEFAULT_BEHAVIORS.get('boss.warden')).toBeUndefined();

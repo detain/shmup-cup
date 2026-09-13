@@ -21,8 +21,10 @@
  *   (`type-a` … `type-d`) with `GameConfig.weaponEdit` overriding the Missile / Double / Laser
  *   roles ({@link resolveArsenal}); the MISSILE, DOUBLE and LASER meter slots equip those roles.
  *   {@link WeaponSystem.setArsenal} swaps it in place (the weapon select's preview).
- * - **Options** — one `core/options` {@link OptionGroup} per player (the trail of decision D26);
- *   every Option fires every weapon of the loadout with its own caps.
+ * - **Options** — one `core/options` {@link OptionGroup} per player, of the session's type
+ *   (`GameConfig.optionChoice`: trail, Snake, Formation or Rotate — M2-04; steered by the
+ *   player's hold / toggle every tick); every Option fires every weapon of the loadout with its own
+ *   caps, wherever its type puts it.
  * - **Hits** — enemy hurtboxes are in the World's grid (phase 6); each shot queries the cells
  *   under its box and tests the hurtboxes exactly. A non-piercing shot hits the overlapping enemy
  *   with the lowest slot and dies; a piercing shot hits every overlapping enemy whose entry in the
@@ -125,8 +127,7 @@
  * {@link weaponsOfSlot}, {@link weaponLabel}, {@link WEAPON_BEHAVIOR_LABELS},
  * {@link SPREAD_BLAST_SPRITE}, {@link WEAPON_SPRITES}, {@link RIPPLE_RING_WIDTH}.
  *
- * **Planned API.** Direct-mode families and sub-weapons (M2-05); Snake / Formation / Rotate
- * options firing (M2-04).
+ * **Planned API.** Direct-mode families and sub-weapons (M2-05).
  *
  * @module
  */
@@ -885,7 +886,8 @@ export interface WeaponSystem {
    * then per active ship: a fly-in resets the trail on its first tick and records every tick
    * (no firing) — a fly-in of 0 or 1 ticks (`enterTicks ≤ 1`) is over before the weapons see it,
    * so an `alive` ship with `stateTicks` 0 then resets the trail instead; a `dying` / `dead`
-   * ship hides its options; an `alive` ship places its options (the trail records with movement
+   * ship hides its options; an `alive` ship steers its group (`OptionGroup.steer`: the Formation /
+   * Rotate spread — M2-04), places its options (the trail records with movement
    * input, and on the tick its fly-in ended — the fly-in's last step) and every shooter — ship
    * first, then the options in order — fires its main weapon and its missile when its timer is
    * 0, its cap has room and firing is wanted (see the module docs); a successful fire restarts
@@ -1252,7 +1254,8 @@ class WeaponSystemImpl implements WeaponSystem {
     const options: OptionGroup[] = [];
     for (let p = 0; p < MAX_PLAYERS; p++) {
       loadouts.push(new Loadout());
-      options.push(createOptionGroup());
+      // The session's Option type (M2-04; a host config without one flies the trail).
+      options.push(createOptionGroup(host.config.optionChoice));
     }
     this.loadouts = loadouts;
     this.options = options;
@@ -1393,6 +1396,8 @@ class WeaponSystemImpl implements WeaponSystem {
       // from before a death.
       const entered = ship.stateTicks === 0;
       if (entered && host.ship.enterTicks <= 1) group.reset(ship, camera);
+      // Formation / Rotate: spread or extend on the player's hold / toggle (M2-04).
+      if (p < intents.length) group.steer(intents[p]);
       group.follow(ship, camera, loadout.options, entered || ship.moving);
       if (p < intents.length) {
         // The Free Way aims where the ship last flew (8-way; the last direction is kept).

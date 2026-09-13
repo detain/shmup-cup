@@ -76,7 +76,7 @@ describe('core/config arsenal edges (M2-03): validation', () => {
       'GameConfig.megaChoice must be one of megaCrash, normal, speedDown, lifeOption, fullBarrier, got MEGA CRASH',
     );
     expect(() => resolveGameConfig({ shieldChoice: null as never })).toThrow(
-      'GameConfig.shieldChoice must be one of forceField, got null',
+      'GameConfig.shieldChoice must be one of forceField, shield, freeShield, rotateShield, reduce, got null',
     );
     // Every `!` choice resolves, in the order of core/powerups' MegaEffect codes.
     for (const choice of MEGA_CHOICES) {

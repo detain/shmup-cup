@@ -167,6 +167,36 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = Object.freeze([
     godMode: false,
     bot: 'four-way',
   },
+  {
+    name: 'zone-a-rotate',
+    description:
+      'HALCYON BULWARK with Rotate Options and the Rotate Shield (M2-04): orbiting Options, spinning pods',
+    stageId: 'zone-a',
+    config: {
+      seed: 10,
+      stageSkip: 'boss',
+      loadout: 'full',
+      optionChoice: 'rotate',
+      shieldChoice: 'rotateShield',
+    },
+    godMode: false,
+    bot: 'four-way',
+  },
+  {
+    name: 'zone-a-reduce',
+    description:
+      'HALCYON BULWARK with Formation Options and Reduce (M2-04): a `>` of Options, the shrunken hurtbox',
+    stageId: 'zone-a',
+    config: {
+      seed: 11,
+      stageSkip: 'boss',
+      loadout: 'full',
+      optionChoice: 'formation',
+      shieldChoice: 'reduce',
+    },
+    godMode: false,
+    bot: 'four-way',
+  },
 ]);
 
 /** What a golden run ended with (recorded in the file, checked on playback). */

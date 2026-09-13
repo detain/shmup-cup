@@ -25,6 +25,12 @@ and a ceiling (so missiles slide and bombs burst), a slow 0.75 px/tick scroll an
 120 px (`content/enemies/weapon-range.enemies.json`) up to its `end` at 2,400, after which the
 preview flies it again from the start. `?stage=weapon-range` plays it.
 
+`hunter-range.stage.json` (M2-04) is an open-space range for the Option Hunters: capsule
+carriers to build up Options, then the three hunters (`content/enemies/option-hunters.enemies.json`
+— rear, front, dive; each spawns only while the ship has an Option), a `blueCapsule` formation and
+the rare blue carrier, a second wave of carriers after the checkpoint at 1,800 and two hunters at
+once. `?stage=hunter-range` plays it (try `?loadout=full`).
+
 ## Format (formatVersion 1)
 
 ```jsonc
@@ -86,7 +92,7 @@ tick, in file order.
 | `type` | Fields | Effect |
 |---|---|---|
 | `spawn` | `enemy`, optional `y`, `screenX`, `path` | one enemy |
-| `formation` | `enemy`, `count` (1–64), `interval` ticks, optional `y`, `screenX`, `path`, `drop` (`"capsule"` default, or `null`), `bonus` (points, default 0) | a timed group, every member at the same spawn point; all killed (none escaped) → the drop at the last kill + the bonus (scored since M1-12 for the player who killed the last member) |
+| `formation` | `enemy`, `count` (1–64), `interval` ticks, optional `y`, `screenX`, `path`, `drop` (`"capsule"` default, `"blueCapsule"` — M2-04 — or `null`), `bonus` (points, default 0) | a timed group, every member at the same spawn point; all killed (none escaped) → the drop at the last kill + the bonus (scored since M1-12 for the player who killed the last member) |
 | `warning` | `enemy` (a boss) | the WARNING (M1-13): the camera brakes to a scroll lock, 3 s of siren and text, then the boss flies in with the boss theme; its death clears the stage and releases the lock |
 | `boss` | `enemy` (a boss) | the boss flies in at once (no WARNING, no brake) |
 | `music` | `cue` (a `MUSIC_CUES` name) | change the track |

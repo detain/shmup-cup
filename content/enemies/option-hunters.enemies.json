@@ -1,0 +1,48 @@
+{
+  "formatVersion": 1,
+  "kind": "enemies",
+  "enemies": [
+    {
+      "id": "option-hunter-rear",
+      "hp": 1,
+      "score": 1000,
+      "hurtbox": { "hw": 8, "hh": 6 },
+      "script": "hunter.option",
+      "sprite": "enemies/option-hunter",
+      "anim": { "frames": 2, "ticks": 6 },
+      "params": { "variant": 0 },
+      "drop": null,
+      "optionHunter": true,
+      "settleTicks": 0,
+      "explosion": "medium"
+    },
+    {
+      "id": "option-hunter-front",
+      "hp": 1,
+      "score": 1000,
+      "hurtbox": { "hw": 8, "hh": 6 },
+      "script": "hunter.option",
+      "sprite": "enemies/option-hunter",
+      "anim": { "frames": 2, "ticks": 6 },
+      "params": { "variant": 1, "chargeSpeed": 4 },
+      "drop": null,
+      "optionHunter": true,
+      "settleTicks": 0,
+      "explosion": "medium"
+    },
+    {
+      "id": "option-hunter-dive",
+      "hp": 1,
+      "score": 1000,
+      "hurtbox": { "hw": 8, "hh": 6 },
+      "script": "hunter.option",
+      "sprite": "enemies/option-hunter",
+      "anim": { "frames": 2, "ticks": 6 },
+      "params": { "variant": 2, "lineUpTicks": 72, "windup": 30 },
+      "drop": null,
+      "optionHunter": true,
+      "settleTicks": 0,
+      "explosion": "medium"
+    }
+  ]
+}

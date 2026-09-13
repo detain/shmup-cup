@@ -222,7 +222,7 @@ describe('integration: difficulty menu and continues with the remote (M2-01)', (
     expect(s.ids).toEqual(['game', 'gameOver']);
   });
 
-  it('chooses a loadout in the weapon select with the remote only (M2-03)', () => {
+  it('chooses a loadout in the weapon select with the remote only (M2-03, M2-04)', () => {
     const s = new RemoteSession({ stage: null });
     s.openDifficulty();
     s.press(TIZEN_KEY_CODES.Enter); // NORMAL
@@ -245,7 +245,15 @@ describe('integration: difficulty menu and continues with the remote (M2-01)', (
     s.press(TIZEN_KEY_CODES.ArrowDown); // MISSILE
     s.press(TIZEN_KEY_CODES.ArrowLeft); // PHOTON TORPEDO → 2-WAY MISSILE
     expect(select.missile.label).toBe('2-WAY MISSILE');
-    for (let i = 0; i < 4; i++) s.press(TIZEN_KEY_CODES.ArrowDown); // DOUBLE, LASER, ?, !
+    s.press(TIZEN_KEY_CODES.ArrowDown); // DOUBLE
+    s.press(TIZEN_KEY_CODES.ArrowDown); // LASER
+    s.press(TIZEN_KEY_CODES.ArrowDown); // OPTION (M2-04)
+    s.press(TIZEN_KEY_CODES.ArrowRight); // TRAIL → SNAKE
+    s.press(TIZEN_KEY_CODES.ArrowRight); // FORMATION
+    expect(select.option.label).toBe('FORMATION');
+    s.press(TIZEN_KEY_CODES.ArrowDown); // ?
+    s.press(TIZEN_KEY_CODES.ArrowRight); // FORCE FIELD → SHIELD
+    s.press(TIZEN_KEY_CODES.ArrowDown); // !
     s.press(TIZEN_KEY_CODES.ArrowRight); // NORMAL
     s.press(TIZEN_KEY_CODES.ArrowRight); // SPEED DOWN
     expect(select.mega.label).toBe('SPEED DOWN');
@@ -255,7 +263,10 @@ describe('integration: difficulty menu and continues with the remote (M2-01)', (
       weaponPreset: 'type-d',
       weaponEdit: { missile: 'missile.twoWay', double: 'shot.free', laser: 'laser.twin' },
       megaChoice: 'speedDown',
+      optionChoice: 'formation',
+      shieldChoice: 'shield',
     });
     expect(s.game.world.weapons.roleWeapons[3]?.id).toBe('missile.twoWay');
+    expect(s.game.world.weapons.options[0].formation).toBe('formation');
   });
 });

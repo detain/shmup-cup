@@ -26,7 +26,7 @@ import {
 describe('core/shields', () => {
   it('describes itself', () => {
     expect(moduleInfo.name).toBe('shields');
-    expect(moduleInfo.status).toBe('partial');
+    expect(moduleInfo.status).toBe('implemented');
     expect(moduleInfo.specRefs).toContain('shmup_feat.md §9');
   });
 

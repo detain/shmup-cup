@@ -38,8 +38,16 @@
  * - `pattern.loop` (M2-02) — runs the enemy's `pattern` (a `content/patterns/` DSL action) over
  *   and over, [`restTicks` 60] apart, `relative` directions from [`heading` 512]; it moves with
  *   its spec's `mover`.
+ * - `hunter.option` (M2-04) — the **Option Hunter**'s three variants: [`variant` 0] from behind
+ *   along the player's row, 1 from ahead along it, 2 diving down the player's column. For
+ *   [`lineUpTicks` 90] ticks it flies (at [`speed` 2]) to its line-up point — view x [`lineX` 48]
+ *   (variant 1: `384 − lineX`) on the player's row, or view y [`lineY` 24] over the player's column
+ *   —, re-aimed every 6 ticks, then holds [`windup` 24] ticks and charges through at
+ *   [`chargeSpeed` 4.5]. The stealing, its armour, its harmless body and its alarm come with its
+ *   spec's `optionHunter` flag (`core/enemies`); it only spawns while some ship has an Option.
  *
- * `drifter.sine`, `fan.loop`, `carrier.straight`, `hatch.spawner` and `rammer.aimed` do not fire.
+ * `drifter.sine`, `fan.loop`, `carrier.straight`, `hatch.spawner`, `rammer.aimed` and
+ * `hunter.option` do not fire.
  * Every shot goes through the primitives, so nothing fires off screen or before `settleTicks`.
  *
  * **Boss behaviours** (M1-13, {@link DEFAULT_BOSS_BEHAVIORS}; a boss phase's `script`, its
@@ -70,7 +78,7 @@
  *
  * **Implements.**
  * - shmup_feat.md §11 — archetypes (popcorn, formation fliers, capsule carriers, turrets,
- *   walkers, hatches, rammers, orbiters) as coroutine scripts
+ *   walkers, hatches, rammers, orbiters, the Option Hunter — M2-04) as coroutine scripts
  * - shmup_tech.md §4.6 — TS generator coroutines
  * - shmup_feat.md §13 — boss phases driven by behaviour scripts (the pattern set changes with the
  *   phase)
@@ -89,7 +97,7 @@
 import { BulletKind, LASER_FADE_TICKS, LASER_GROW_TICKS } from '../bullets/index.js';
 import { WEAPON_SCRIPT_IDS } from '../weapons/index.js';
 import type { BossBehavior, BossBehaviorLookup, BossScriptApi } from '../bosses/index.js';
-import { PLAYFIELD_H } from '../config/index.js';
+import { PLAYFIELD_H, PLAYFIELD_W } from '../config/index.js';
 import type { ContentDb, ValidationIssue } from '../data/index.js';
 import type { EnemyBehavior, EnemyBehaviorLookup, ScriptApi } from '../enemies/index.js';
 import { EnemyFlag } from '../enemies/index.js';
@@ -395,6 +403,74 @@ const patternLoop = defineBehavior(
   true,
 );
 
+/** Option Hunter variant: from behind, along the ship's row. */
+const HUNTER_REAR = 0;
+
+/** Option Hunter variant: from ahead, along the ship's row. */
+const HUNTER_FRONT = 1;
+
+/** Ticks between two re-aims of an Option Hunter lining up. */
+const HUNTER_RETARGET_TICKS = 6;
+
+/** Closest an Option Hunter lines up to the playfield's edges (px). */
+const HUNTER_EDGE = 12;
+
+/**
+ * `hunter.option` — the Option Hunter (plan M2-04, shmup_feat.md §8 / §11): lines up with the
+ * nearest player, then charges through; the enemy system does the stealing (its spec's
+ * `optionHunter`). Three variants (tunables in the module docs):
+ *
+ * - [`variant` 0] **rear** — lines up at view x [`lineX` 48] on the player's row, charges right;
+ * - `variant` 1 **front** — lines up at view x `384 − lineX` on the player's row, charges left;
+ * - `variant` 2 **dive** — lines up at view y [`lineY` 24] above the player's column, dives down.
+ *
+ * @remarks
+ * For [`lineUpTicks` 90] ticks it re-aims a `Waypoint` mover at the line-up point every
+ * {@link HUNTER_RETARGET_TICKS} ticks (approach at [`speed` 2]); the last one is kept: it arrives,
+ * holds [`windup` 24] ticks and charges at [`chargeSpeed` 4.5] until it leaves the view. Points
+ * stay {@link HUNTER_EDGE} px inside the playfield. It never fires. Without a living player it
+ * lines up where it is.
+ */
+const hunterOption = defineBehavior(
+  'hunter.option',
+  { variant: 0, lineUpTicks: 90, speed: 2, windup: 24, chargeSpeed: 4.5, lineX: 48, lineY: 24 },
+  function* hunter(api, p): Script {
+    const variant = p.variant >= 2 ? 2 : p.variant >= 1 ? HUNTER_FRONT : HUNTER_REAR;
+    const self = api.self;
+    const camera = api.camera;
+    const lineUp = p.lineUpTicks >= 1 ? Math.floor(p.lineUpTicks) : 1;
+    const hold = p.windup >= 0 ? Math.floor(p.windup) : 0;
+    let waited = 0;
+    while (waited < lineUp) {
+      const target = api.target();
+      if (variant === 2) {
+        let tx = (target === null ? self.x : target.x) - camera.x;
+        tx =
+          tx < HUNTER_EDGE
+            ? HUNTER_EDGE
+            : tx > PLAYFIELD_W - HUNTER_EDGE
+              ? PLAYFIELD_W - HUNTER_EDGE
+              : tx;
+        api.setMover(MoverKind.Waypoint, tx, p.lineY, p.speed, hold, 0, p.chargeSpeed);
+      } else {
+        let ty = (target === null ? self.y : target.y) - camera.y;
+        ty =
+          ty < HUNTER_EDGE
+            ? HUNTER_EDGE
+            : ty > PLAYFIELD_H - HUNTER_EDGE
+              ? PLAYFIELD_H - HUNTER_EDGE
+              : ty;
+        const lx = variant === HUNTER_REAR ? p.lineX : PLAYFIELD_W - p.lineX;
+        const vx = variant === HUNTER_REAR ? p.chargeSpeed : -p.chargeSpeed;
+        api.setMover(MoverKind.Waypoint, lx, ty, p.speed, hold, vx, 0);
+      }
+      yield HUNTER_RETARGET_TICKS;
+      waited += HUNTER_RETARGET_TICKS;
+    }
+    yield SLEEP_FOREVER;
+  },
+);
+
 /** The roster's definitions (see the module docs), e.g. to extend a registry in tests. */
 export const DEFAULT_BEHAVIOR_DEFS: readonly BehaviorDef[] = Object.freeze([
   drifterSine,
@@ -406,6 +482,7 @@ export const DEFAULT_BEHAVIOR_DEFS: readonly BehaviorDef[] = Object.freeze([
   rammerAimed,
   orbiterLoop,
   patternLoop,
+  hunterOption,
 ]);
 
 /** The roster as a registry (what the World uses). */

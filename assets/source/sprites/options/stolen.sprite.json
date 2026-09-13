@@ -1,0 +1,33 @@
+{
+  "name": "options/stolen",
+  "description": "A stolen Option: the orb gone grey (carried by an Option Hunter, or drifting free to be re-collected); two pulse frames.",
+  "palette": { ".": null, "o": "#26262e", "g": "#6c6c78", "l": "#a8a8b4", "w": "#e8e8f0" },
+  "hitFlash": false,
+  "frames": [
+    {
+      "rows": [
+        "..oooo..",
+        ".oggggo.",
+        "oggllggo",
+        "ogllwlgo",
+        "ogllllgo",
+        "oggllggo",
+        ".oggggo.",
+        "..oooo.."
+      ]
+    },
+    {
+      "rows": [
+        "..oooo..",
+        ".ogllgo.",
+        "ogllllgo",
+        "olllwllo",
+        "ollwwllo",
+        "ogllllgo",
+        ".ogllgo.",
+        "..oooo.."
+      ]
+    }
+  ],
+  "animations": { "pulse": [0, 1] }
+}

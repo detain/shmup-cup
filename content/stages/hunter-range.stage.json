@@ -1,0 +1,49 @@
+{
+  "formatVersion": 1,
+  "kind": "stage",
+  "id": "hunter-range",
+  "name": "HUNTER RANGE",
+  "music": { "stage": "Stage", "boss": "Boss" },
+  "length": 3600,
+  "camera": [{ "x": 0, "speed": 1 }],
+  "checkpoints": [{ "x": 0 }, { "x": 1800 }],
+  "parallax": [
+    { "layer": "far", "sprite": "bg/stars-far", "factor": 0.25, "y": 0, "spacing": 128 },
+    { "layer": "far", "sprite": "bg/stars-far", "factor": 0.25, "y": 128, "spacing": 128 },
+    { "layer": "mid", "sprite": "bg/stars-mid", "factor": 0.5, "y": 0, "spacing": 128 },
+    { "layer": "mid", "sprite": "bg/stars-mid", "factor": 0.5, "y": 128, "spacing": 128 }
+  ],
+  "tilemap": null,
+  "events": [
+    { "x": 60, "type": "spawn", "enemy": "carrier", "y": 60 },
+    { "x": 120, "type": "spawn", "enemy": "carrier", "y": 140 },
+    { "x": 180, "type": "spawn", "enemy": "carrier", "y": 100 },
+    { "x": 240, "type": "spawn", "enemy": "carrier", "y": 60 },
+    { "x": 300, "type": "spawn", "enemy": "carrier", "y": 140 },
+    { "x": 360, "type": "spawn", "enemy": "carrier", "y": 100 },
+    { "x": 700, "type": "spawn", "enemy": "option-hunter-rear", "screenX": -24 },
+    {
+      "x": 900,
+      "type": "formation",
+      "enemy": "drifter",
+      "count": 6,
+      "interval": 12,
+      "y": 70,
+      "drop": "blueCapsule",
+      "bonus": 500
+    },
+    { "x": 1100, "type": "spawn", "enemy": "option-hunter-front" },
+    { "x": 1300, "type": "spawn", "enemy": "carrier", "y": 80 },
+    { "x": 1360, "type": "spawn", "enemy": "carrier", "y": 120 },
+    { "x": 1500, "type": "spawn", "enemy": "option-hunter-dive", "screenX": 200, "y": -24 },
+    { "x": 1560, "type": "spawn", "enemy": "carrier-blue", "y": 100 },
+    { "x": 1900, "type": "spawn", "enemy": "carrier", "y": 60 },
+    { "x": 1960, "type": "spawn", "enemy": "carrier", "y": 140 },
+    { "x": 2020, "type": "spawn", "enemy": "carrier", "y": 100 },
+    { "x": 2080, "type": "spawn", "enemy": "carrier", "y": 60 },
+    { "x": 2140, "type": "spawn", "enemy": "carrier", "y": 140 },
+    { "x": 2400, "type": "spawn", "enemy": "option-hunter-rear", "screenX": -24, "y": 50 },
+    { "x": 2460, "type": "spawn", "enemy": "option-hunter-front", "y": 150 },
+    { "x": 3600, "type": "end" }
+  ]
+}

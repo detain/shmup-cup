@@ -795,7 +795,9 @@ export function buildDebugOutlines(
     if (!ship.active || ship.state === 'dying' || ship.state === 'dead') continue;
     scratch.centred(ship.x, ship.y, box.hw, box.hh);
     outline(lists.terrain, OUTLINE_COLORS.terrain);
-    scratch.centred(ship.x, ship.y, hurt, hurt);
+    // Reduce shrinks the hurt circle (M2-04); the terrain box never changes.
+    const r = hurt * ship.shield.hurtScale;
+    scratch.centred(ship.x, ship.y, r, r);
     outline(lists.hurt, OUTLINE_COLORS.hurt);
   }
 }

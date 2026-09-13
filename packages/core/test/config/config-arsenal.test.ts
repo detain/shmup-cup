@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_GAME_CONFIG,
   MEGA_CHOICES,
+  OPTION_CHOICES,
   SHIELD_CHOICES,
   WEAPON_EDIT_SLOTS,
   arsenalMatches,
@@ -24,9 +25,16 @@ describe('core/config arsenal fields (M2-03)', () => {
       weaponEdit: null,
       megaChoice: 'megaCrash',
       shieldChoice: 'forceField',
+      optionChoice: 'trail',
     });
     expect(MEGA_CHOICES).toEqual(['megaCrash', 'normal', 'speedDown', 'lifeOption', 'fullBarrier']);
-    expect(SHIELD_CHOICES).toEqual(['forceField']);
+    expect(SHIELD_CHOICES).toEqual([
+      'forceField',
+      'shield',
+      'freeShield',
+      'rotateShield',
+      'reduce',
+    ]);
     expect(WEAPON_EDIT_SLOTS).toEqual(['missile', 'double', 'laser']);
     for (const list of [MEGA_CHOICES, SHIELD_CHOICES, WEAPON_EDIT_SLOTS]) {
       expect(Object.isFrozen(list)).toBe(true);
@@ -39,7 +47,8 @@ describe('core/config arsenal fields (M2-03)', () => {
       /weaponPreset/,
     );
     expect(() => resolveGameConfig({ megaChoice: 'bomb' as never })).toThrow(/megaChoice/);
-    expect(() => resolveGameConfig({ shieldChoice: 'reduce' as never })).toThrow(/shieldChoice/);
+    expect(() => resolveGameConfig({ shieldChoice: 'barrier' as never })).toThrow(/shieldChoice/);
+    expect(() => resolveGameConfig({ optionChoice: 'spread' as never })).toThrow(/optionChoice/);
     expect(() => resolveGameConfig({ weaponEdit: 'x' as never })).toThrow(/weaponEdit must be/);
     expect(() =>
       resolveGameConfig({ weaponEdit: { missile: 'a', double: '', laser: 'c' } }),
@@ -112,6 +121,41 @@ describe('core/config arsenal fields (M2-03)', () => {
     expect(arsenalMatches(edited, { weaponEdit: { ...edit } })).toBe(true);
     expect(arsenalMatches(edited, { weaponEdit: { ...edit, laser: 'd' } })).toBe(false);
     expect(arsenalMatches(edited, { weaponEdit: null })).toBe(false);
+  });
+
+  it('the Option type (M2-04): validated, applied by withArsenal, compared by arsenalMatches', () => {
+    expect(OPTION_CHOICES).toEqual(['trail', 'snake', 'formation', 'rotate']);
+    expect(Object.isFrozen(OPTION_CHOICES)).toBe(true);
+    for (const choice of OPTION_CHOICES) {
+      expect(resolveGameConfig({ optionChoice: choice }).optionChoice).toBe(choice);
+    }
+    expect(() => resolveGameConfig({ optionChoice: null as never })).toThrow(
+      'GameConfig.optionChoice must be one of trail, snake, formation, rotate, got null',
+    );
+    const base = resolveGameConfig({ seed: 2 });
+    const armed = withArsenal(base, { optionChoice: 'rotate', shieldChoice: 'reduce' });
+    expect([armed.optionChoice, armed.shieldChoice, armed.seed]).toEqual(['rotate', 'reduce', 2]);
+    expect(arsenalMatches(base, { optionChoice: 'trail' })).toBe(true);
+    expect(arsenalMatches(base, { optionChoice: 'snake' })).toBe(false);
+    expect(arsenalMatches(armed, { optionChoice: 'rotate', shieldChoice: 'reduce' })).toBe(true);
+    // A replay header records it (a header without it resolves to the trail).
+    const header = createReplayHeader(armed, { buildId: 'test' });
+    const json = JSON.parse(
+      JSON.stringify(
+        encodeReplay({
+          header,
+          ticks: 0,
+          hashInterval: 600,
+          inputs: [new Uint32Array(0), new Uint32Array(0)],
+          hashes: new Uint32Array(0),
+          finalHash: 0,
+        }),
+      ),
+    ) as { header: { config: Record<string, unknown> } };
+    expect(json.header.config.optionChoice).toBe('rotate');
+    expect(decodeReplay(json).header.config.optionChoice).toBe('rotate');
+    delete json.header.config.optionChoice;
+    expect(decodeReplay(json).header.config.optionChoice).toBe('trail');
   });
 
   it('a replay header records the loadout and restores it', () => {

@@ -1,0 +1,35 @@
+{
+  "name": "enemies/carrier-blue",
+  "description": "Small enemy: the rare blue carrier saucer (drops the blue capsule that clears the screen); blinking lights.",
+  "palette": { ".": null, "o": "#0a1430", "b": "#3878e8", "d": "#18389a", "w": "#d0e0ff", "y": "#70f0ff" },
+  "hitFlash": true,
+  "frames": [
+    {
+      "rows": [
+        ".....oooo.....",
+        "...oowwwwoo...",
+        "..obbwwwwbbo..",
+        ".obbbbbbbbbbo.",
+        "obbdbbdbbdbbbo",
+        "oybdybdybdybbo",
+        ".obbbbbbbbbbo.",
+        "..oddddddddo..",
+        "...oooooooo..."
+      ]
+    },
+    {
+      "rows": [
+        ".....oooo.....",
+        "...oowwwwoo...",
+        "..obbwwwwbbo..",
+        ".obbbbbbbbbbo.",
+        "obbdbbdbbdbbbo",
+        "obydbydbydbybo",
+        ".obbbbbbbbbbo.",
+        "..oddddddddo..",
+        "...oooooooo..."
+      ]
+    }
+  ],
+  "animations": { "blink": [0, 1] }
+}

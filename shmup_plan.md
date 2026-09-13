@@ -2262,6 +2262,91 @@ Goal of the milestone: every **[P1]** feature. Steps are ordered so systems land
 - **Acceptance:** per-type movement tests, shield wear/independence, Reduce hurtbox sizes, Option Hunter steal/free
   cycle, golden re-bless.
 - **Refs:** `shmup_feat.md` §8, §9, §6A (blue capsule), §11 (Option Hunter).
+- **As built:**
+  - **Config.** `GameConfig.optionChoice` (`OPTION_CHOICES`: `trail` default, `snake`, `formation`,
+    `rotate`) and `ShieldChoice` grew to `forceField` / `shield` / `freeShield` / `rotateShield` /
+    `reduce`; both are part of `ArsenalChoice` / `arsenalMatches` and replay headers (format version
+    unchanged: a missing key resolves to the default). The weapon select gained an **OPTION** row
+    between LASER and `? SLOT` (`WeaponSelectItem.Option` 4 — `?` is now 5 … START 9), labels
+    `OPTION_CHOICE_LABELS` / the five `SHIELD_CHOICE_LABELS`; the preview flies the chosen type and,
+    while OPTION is focused, toggles its spread every `PREVIEW_SPREAD_TICKS` (90).
+  - **Option types** (`core/options` → implemented; `OptionGroup.formation` / numeric `mode`, set
+    from the config at creation, `setFormation` for the preview). **Snake** = a chain in screen space:
+    link `k` hangs `SNAKE_LINK` (16) px from its leader and is only *pulled* (so it swings out
+    opposite to the motion and keeps its shape when the ship stops or pushes against an edge).
+    **Formation** = fixed offsets, a `>` behind the ship (`FORMATION_RETRACTED`) spreading into a
+    wide `V` (`FORMATION_SPREAD`). **Rotate** = an even orbit, 12 binary units per tick, radius 20 →
+    40 extended. Spread / extend (`OptionGroup.steer`, phase 2, before `follow`) takes 12 ticks
+    (`spreadTicks`, whole steps): **PowerUp held ≥ `OPTION_HOLD_TICKS` (15)** extends while held —
+    whatever the meter cursor is on (the plan's "on the Option slot": the equip happens on the
+    press edge, so a hold never conflicts; a quick tap never moves the Options) — and **Special**
+    (remote Ch+, keyboard V, pad Y — an action bound but unused until now) toggles them out / in.
+    The trail keeps recording under every type; `follow` stays small (the new types' placement is
+    `place()`): with everything inline V8 stopped inlining it and boxed a fractional argument (the
+    options allocation guard caught it).
+  - **Shields** (`core/shields` → implemented for meter types). Two families: *fields* (Force Field,
+    **Reduce**) cover the ship through `playerHit`; *pods* (front **Shield**, **Free Shield**,
+    **Rotate Shield**) never cover the ship — each pod (radius 4, `absorbPodHit`) stops the enemy
+    bullets (used up) and enemy bodies (they fly on) that touch **it**, not lasers, boss parts or
+    terrain; 14 hits and its own i-frames per pod (independent wear), the state's `hits` / `maxHits`
+    are the pods' sums, the shield goes with its last pod; a pod break pushes the break SFX / FX.
+    Layouts (`placeShieldPods`, phase 2 after the move and the equip, and again when drawn): front
+    pods ±64 units off the heading, 13 px out; Free Shield pairs attach at the player's last 8-way
+    direction (`WeaponSystem.freeWayHeading`, ahead before any), 96 units apart, up to four pods —
+    `?` stays equippable while a pair fits or, all four slots taken, while one is worn (the next
+    `?` replaces the most worn pair); Rotate pods orbit 16 px out, 12 units per tick (`spin`, turned
+    by `tickShield`). **Reduce**: 2 hits; `ShieldState.hurtScale = (steps + 1 − hits) / (steps + 1)`
+    — ⅓, ⅔, 1 — scales every hurt-circle test (bullets, straight and bending lasers, enemy and boss
+    contact, the debug overlay's outline); the terrain box is untouched; rank counts it +2 instead
+    of a shield's +4. FULL BARRIER is `refillShield` (every pod slot back, broken ones included, in
+    place; a fresh shield when none stands) and is greyed only at full strength of the same kind.
+    Sprites: `shields/pod` (4 wear frames) and `shields/reduce` (2 frames) — `SHIELD_SPRITES`; the
+    shield batch holds a field sprite or one sprite per standing pod.
+  - **Option Hunter.** An enemy **data flag** `optionHunter` (not only a behaviour), so the enemy
+    system owns the rules: a spawn of one is refused unless some active ship has an Option (a
+    stage's scripted hunter simply does not come), a spawned one pushes the new `SFX_CUES.OptionHunter`
+    (23, the "audible cue"), is armoured (`EnemyFlag.Invulnerable`: shots clink) and never hurts a
+    ship or a pod by contact. Behaviour `hunter.option` (variants 0 rear / 1 front / 2 dive): re-aims
+    a `Waypoint` mover at its line-up point (the player's row at view x 48 / 336, or view y 24 over
+    the player's column) every 6 ticks for `lineUpTicks`, then holds `windup` and charges through at
+    `chargeSpeed`; `ScriptApi.camera` was added for the view conversion. Stealing is
+    `EnemySystem.huntOptions` in phase 7 (after the shots' hits, before the power-ups, so a Mega
+    Crash in the same tick frees what was just taken): the first Option a hunter's box touches
+    (radius `OPTION_RADIUS` 4) **and every Option behind it in the chain** go (the loadout loses
+    them, `OptionGroup.stolen` counts them, `SFX OptionStolen` 24); it carries up to 8
+    (`Enemy.carried`, hashed), drawn grey (`options/stolen`) behind it in the new
+    `EnemySystem.carriedBatch` — appended as the **last** view batch. Killed (Mega Crash, the blue
+    capsule) it drops one `DropKind.FreeOption` per carried Option → `ItemKind.FreeOption` items
+    that drift with the view (`FREE_OPTION_DRIFT`, bouncing off the playfield's top / bottom),
+    vanish after 600 ticks (blinking the last 120) and give an Option back to whoever grabs one
+    (`PowerUpSystem.regainOption`; with four already only the ding, 0 points); a hunter that leaves
+    the view keeps them.
+  - **Blue capsule.** `ENEMY_DROPS` gained `blueCapsule` (enemy `drop` and formation `drop`),
+    `DropKind.BlueCapsule` 2, `ItemKind.BlueCapsule` (`items/capsule-blue`, 300 points, not the
+    meter): collecting it runs `EnemySystem.clearOnScreen` — every live enemy **on screen** that is
+    not `megaCrashImmune` dies (credited, armour no help, no revenge bullets), no bullet is
+    cancelled — with Mega Crash's flash and SFX (`PowerUpSystem.clearScreen`).
+  - **Content / assets.** `content/enemies/option-hunters.enemies.json` (the three hunters),
+    `carrier-blue` in `test-range.enemies.json`, and a new dev stage
+    `content/stages/hunter-range.stage.json` (carriers, the three hunters, a `blueCapsule` formation,
+    the blue carrier, two hunters at once; `?stage=hunter-range`). **Zone A is unchanged** — its
+    4-way rules and playtest budgets were tuned without hunters; the zones of M2-11+ place them.
+    Pixel maps `options/stolen`, `enemies/option-hunter`, `enemies/carrier-blue`; generators
+    `items.mjs` (`items/capsule-blue`) and `shields.mjs` (`shields/pod`, `shields/reduce`); two
+    synthesized SFX presets in `content/audio/main.sfx.json`.
+  - **Hash / goldens.** `hashWorld` adds the option groups' type, spread, toggle, hold, orbit angle
+    and Snake links, the shields' hurt scale and pods, and each enemy's `carried`. Golden replays
+    re-blessed: the new hashed state and the new enemies file (shifting zone A's enemy spec indices)
+    change every hash — all eight outcomes unchanged; new scenarios `zone-a-rotate` (Rotate Options +
+    Rotate Shield) and `zone-a-reduce` (Formation Options + Reduce).
+  - **Tests.** `options-types` (per-type movement, steer, allocation), `shields-pods` (pods,
+    independence, Free Shield pairs, Rotate spin, Reduce steps, FULL BARRIER), `shields-world` (pods
+    vs bullets / bodies in a World, Reduce hurtbox sizes against real bullets, rank, determinism),
+    `shields-alloc` (pods, Reduce, every Option type, freed Options — no growth over the M1
+    baseline), `enemies-hunter` (appearance only with Options, the three variants, the chain cut,
+    the steal → Mega Crash / blue capsule → re-collect cycle, expiry, escape, the blue capsule's
+    on-screen clear, determinism of the hunter range), config / weapon-select / remote and e2e specs
+    for the OPTION row.
 
 ### M2-05 — Direct mode & ship select
 

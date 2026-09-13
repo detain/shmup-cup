@@ -437,11 +437,14 @@ export type EnemyExplosion = 'small' | 'medium' | 'large';
 /** Every {@link EnemyExplosion}, in code order. */
 export const ENEMY_EXPLOSIONS = Object.freeze(['small', 'medium', 'large'] as const);
 
-/** What an enemy (or a completed formation) leaves behind (M1: power capsules). */
-export type EnemyDrop = 'capsule';
+/**
+ * What an enemy (or a completed formation) leaves behind: a power capsule (M1-11) or the rare
+ * blue capsule that clears the screen's enemies (meter mode, M2-04).
+ */
+export type EnemyDrop = 'capsule' | 'blueCapsule';
 
 /** Every {@link EnemyDrop}, in code order (the index + 1 is the drop code; 0 = none). */
-export const ENEMY_DROPS = Object.freeze(['capsule'] as const);
+export const ENEMY_DROPS = Object.freeze(['capsule', 'blueCapsule'] as const);
 
 /** Default {@link EnemySpec.settleTicks}: half a second on screen before an enemy may fire. */
 export const DEFAULT_SETTLE_TICKS = 30;
@@ -580,6 +583,12 @@ export interface EnemySpec {
   readonly explosion: EnemyExplosion;
   /** Whether the Mega Crash leaves it alive (M1-11; default `false`). */
   readonly megaCrashImmune: boolean;
+  /**
+   * Whether it is an **Option Hunter** (plan M2-04, shmup_feat.md §8 / §11; default `false`): it
+   * spawns only while some ship owns an Option (with an alarm), steals the Options it touches,
+   * never hurts a ship by contact, and frees what it carries when it dies (`core/enemies`).
+   */
+  readonly optionHunter: boolean;
   /** Enemy a spawner releases (`hatch.spawner`), or `null` (default). */
   readonly child: string | null;
   /** Resolved {@link ContentDb.enemies} index of {@link EnemySpec.child} (-1 = none). */
@@ -923,7 +932,10 @@ export interface StageFormationEvent {
   readonly path?: string;
   /** Resolved {@link ContentDb.paths} index (-1 = none). */
   readonly pathId: number;
-  /** What the completed formation drops (default `capsule`; `null` = nothing). */
+  /**
+   * What the completed formation drops (default `capsule`; `blueCapsule` — M2-04; `null` =
+   * nothing).
+   */
   readonly drop?: EnemyDrop | null;
   /**
    * Bonus points for destroying the whole formation (default 0) — credited to the player who kills
@@ -1451,6 +1463,7 @@ const BOSS_OMITTED = Object.freeze([
   'settleTicks',
   'explosion',
   'megaCrashImmune',
+  'optionHunter',
   'child',
   'pattern',
   'rank',
@@ -1474,6 +1487,7 @@ const ENEMY_SCHEMA = s.object(
     settleTicks: s.int({ min: 0, max: 36000 }),
     explosion: s.enumOf(ENEMY_EXPLOSIONS),
     megaCrashImmune: s.bool(),
+    optionHunter: s.bool(),
     child: s.nullable(s.ref('enemy')),
     pattern: s.nullable(s.ref('pattern')),
     rank: s.object(
@@ -1507,6 +1521,7 @@ const ENEMY_SCHEMA = s.object(
       'settleTicks',
       'explosion',
       'megaCrashImmune',
+      'optionHunter',
       'child',
       'pattern',
       'rank',
@@ -2497,6 +2512,7 @@ function completeEnemy(
     if (enemy.settleTicks === undefined) enemy.settleTicks = DEFAULT_SETTLE_TICKS;
     if (enemy.explosion === undefined) enemy.explosion = 'small';
     if (enemy.megaCrashImmune === undefined) enemy.megaCrashImmune = false;
+    if (enemy.optionHunter === undefined) enemy.optionHunter = false;
     if (enemy.child === undefined) enemy.child = null;
     if (enemy.pattern === undefined) enemy.pattern = null;
     enemy.boss = null;
@@ -2527,6 +2543,7 @@ function completeEnemy(
   enemy.settleTicks = 0;
   enemy.explosion = 'large';
   enemy.megaCrashImmune = true;
+  enemy.optionHunter = false;
   enemy.child = null;
   enemy.pattern = null;
   return enemy as EnemySpec;

@@ -6,8 +6,8 @@
  * hit points, hit flash, deaths (explosion events, drops, formation bonus), enemy–player contact
  * and the sprite mirror are implemented (plan M1-08); behaviours fire bullets and lasers through
  * the `ScriptApi` fire primitives (plan M1-09); the player shots of `core/weapons` damage them
- * (plan M1-10); rank modifiers and revenge bullets (plan M2-01). The Option Hunter arrives with
- * M2-04.
+ * (plan M1-10); rank modifiers and revenge bullets (plan M2-01); the Option Hunter, the blue
+ * capsule's screen clear and the shield pods' contact test (plan M2-04).
  *
  * **Responsibility.** Enemies are pooled class instances ({@link Enemy}, {@link MAX_ENEMIES}
  * slots — the plan's "`Pool` (64)") composed of a mover (`core/patterns`), a hurtbox, hit points
@@ -71,6 +71,27 @@
  * end of phase 7, M1-11). {@link EnemySystem.megaCrash} kills every enemy that is not
  * `megaCrashImmune` (the meter's `!` slot).
  *
+ * **Option Hunters (M2-04, shmup_feat.md §8 / §11).** An enemy whose spec says `optionHunter`
+ * spawns only while some active ship owns an Option (else the spawn is refused — a stage's
+ * scripted hunter simply does not come) and pushes the alarm `SFX OptionHunter` when it does; it is
+ * armoured (`EnemyFlag.Invulnerable`: shots clink) and never hurts a ship or a shield pod by
+ * contact. Its behaviour (`core/behaviors` `hunter.option`) lines it up and charges;
+ * {@link EnemySystem.huntOptions} (tick phase 7, after the shots' hits) lets every live hunter take
+ * the Options it touches — the first one hit and every Option behind it in the chain: the
+ * loadout loses them, the hunter carries them ({@link Enemy.carried}, at most
+ * {@link MAX_CARRIED_OPTIONS}, drawn grey behind it in {@link EnemySystem.carriedBatch}) and
+ * `SFX OptionStolen` is pushed. When a hunter dies — Mega Crash or the blue capsule — every
+ * carried Option becomes a {@link DropKind.FreeOption} drop (`core/powerups` makes a drifting,
+ * re-collectable item of each); one that leaves the view keeps them.
+ *
+ * **Blue capsule and pods (M2-04).** {@link EnemySystem.clearOnScreen} is the blue capsule's
+ * effect: every live enemy on screen that is not `megaCrashImmune` dies (credited, no revenge
+ * bullets). Enemies and formations may drop it (`drop: 'blueCapsule'` →
+ * {@link DropKind.BlueCapsule}).
+ * The contact test of phase 6 uses each ship's own hurt radius (`hurtRadius × shield.hurtScale`
+ * — Reduce) and, for a ship with shield pods, tests every standing pod against the grid: a body
+ * that touches a pod costs it a hit (`core/shields` `absorbPodHit`) and flies on.
+ *
  * **Zero allocation.** Every enemy, script API, track and table is built by
  * {@link createEnemySystem}; the per-tick methods only write numbers. The allocations left are
  * inherent to the coroutines of decision D29: spawning an enemy with a behaviour creates its
@@ -83,15 +104,18 @@
  * - shmup_feat.md §22 — enemies as pooled objects composed of mover, hurtbox, health and script;
  *   enemies × players contact through the uniform grid
  * - shmup_feat.md §11 — rank modifiers per enemy (fire rate, bullet speed), revenge bullets
+ * - shmup_feat.md §8 / §11 — the Option Hunter (appears only with Options, audible cue, steals
+ *   Options, Mega Crash frees them); §6A — the blue capsule clears the enemies on screen
  *
  * **Public API.** {@link createEnemySystem}, {@link EnemySystem}, {@link EnemyHost},
  * {@link Enemy}, {@link EnemyState}, {@link EnemyFlag}, {@link ScriptApi}, {@link EnemyBehavior},
  * {@link EnemyBehaviorLookup}, {@link EnemyOutcomes}, {@link FormationTable}, {@link DropKind},
  * {@link MAX_ENEMIES}, {@link MAX_FORMATIONS}, {@link DEFAULT_SPAWN_SCREEN_X},
  * {@link DESPAWN_MARGIN}, {@link UNSEEN_MARGIN}, {@link UNSEEN_TICKS}, {@link GHOST_MARGIN},
- * {@link HIT_FLASH_TICKS}.
+ * {@link HIT_FLASH_TICKS}; M2-04: {@link MAX_CARRIED_OPTIONS}, {@link CARRIED_OPTION_SPACING},
+ * {@link CARRIED_BATCH_CAPACITY}.
  *
- * **Planned API.** The Option Hunter (M2-04).
+ * **Planned API.** More behaviours' needs with the zones of M2 (M2-11 … M2-14).
  *
  * **Bosses (M1-13).** Boss entries (`EnemySpec.boss`) are never spawned here (`spawn` returns
  * `null` for them); `core/bosses` runs them, and their parts take the grid ids after the
@@ -127,6 +151,7 @@ import {
 import { PLAYFIELD_H, PLAYFIELD_W } from '../config/index.js';
 import {
   DEFAULT_REVENGE_SPEED,
+  ENEMY_DROPS,
   ENEMY_EXPLOSIONS,
   ENEMY_GROUNDS,
   REVENGE_PATTERNS,
@@ -165,15 +190,23 @@ import {
   type Script,
   type ScriptHolder,
 } from '../patterns/index.js';
+import {
+  MAX_OPTIONS,
+  OPTION_ANIM_TICKS,
+  OPTION_RADIUS,
+  STOLEN_OPTION_SPRITE,
+  type OptionGroup,
+} from '../options/index.js';
 import { PlayerHitCause, playerHit, type PlayerCamera, type PlayerShip } from '../player/index.js';
 import { LayerId, SpriteFlag, createSpriteBatch, type SpriteBatch } from '../presentation/index.js';
 import type { Rng, RngStreams } from '../rng/index.js';
+import { POD_RADIUS, ShieldHit, absorbPodHit, type ShieldState } from '../shields/index.js';
 
 /** Module descriptor (see {@link defineModule}). */
 export const moduleInfo = defineModule({
   name: 'enemies',
   status: 'partial',
-  specRefs: ['shmup_feat.md §11', 'shmup_feat.md §22'],
+  specRefs: ['shmup_feat.md §11', 'shmup_feat.md §22', 'shmup_feat.md §8', 'shmup_feat.md §6'],
 });
 
 /** Enemy slots (shmup_feat.md §22 budget: 64 enemies / parts). */
@@ -231,13 +264,29 @@ export const EnemyFlag = {
   Leader: 64,
 } as const;
 
-/** What an enemy or a completed formation leaves behind (the codes of `ENEMY_DROPS` + 1). */
+/**
+ * What an enemy or a completed formation leaves behind: the codes of `ENEMY_DROPS` + 1, then the
+ * engine's own drops.
+ */
 export const DropKind = {
   /** Nothing. */
   None: 0,
   /** A power capsule (M1-11 turns it into an item). */
   Capsule: 1,
+  /** The rare blue capsule that clears the screen's enemies (content `blueCapsule`, M2-04). */
+  BlueCapsule: 2,
+  /** One Option a dead Option Hunter carried, drifting free to be re-collected (M2-04). */
+  FreeOption: 3,
 } as const;
+
+/** Options one Option Hunter can carry. */
+export const MAX_CARRIED_OPTIONS = 8;
+
+/** Pixels between the Options an Option Hunter carries (drawn trailing behind it). */
+export const CARRIED_OPTION_SPACING = 10;
+
+/** Capacity of the carried-Options sprite batch ({@link EnemySystem.carriedBatch}). */
+export const CARRIED_BATCH_CAPACITY = 16;
 
 /** A {@link DropKind} code. */
 export type DropKind = (typeof DropKind)[keyof typeof DropKind];
@@ -323,6 +372,8 @@ export class Enemy implements MoverBody, ScriptHolder {
   camX = 0;
   /** Camera y a flying enemy last rode along with. */
   camY = 0;
+  /** Options an Option Hunter carries (M2-04; freed as drops when it dies, lost when it leaves). */
+  carried = 0;
 
   /**
    * Creates a free slot (the enemy system builds all {@link MAX_ENEMIES} at load time).
@@ -352,6 +403,11 @@ export interface ScriptApi {
   readonly tick: number;
   /** The gameplay RNG stream (replay-safe randomness). */
   readonly rng: Rng;
+  /**
+   * The World's camera (read-only): converts world positions to the view points of the
+   * `Waypoint` mover (`ship.y − camera.y`) — M2-04, the Option Hunter lining up.
+   */
+  readonly camera: PlayerCamera;
   /**
    * The nearest living player ship.
    *
@@ -644,6 +700,16 @@ export interface EnemyHost {
    * `stepPattern`. Absent = no DSL patterns (those calls do nothing).
    */
   readonly patterns?: PatternVm;
+  /**
+   * The players' Options (`core/weapons`, M2-04): what Option Hunters look for and steal. Absent =
+   * nobody has Options (a hunter never spawns).
+   */
+  readonly weapons?: {
+    /** One loadout per player slot (its `options` count). */
+    readonly loadouts: readonly { options: number }[];
+    /** One option group per player slot (the Options flying this tick). */
+    readonly options: readonly OptionGroup[];
+  };
 }
 
 /**
@@ -735,6 +801,11 @@ export interface EnemySystem {
   readonly groundBatch: SpriteBatch;
   /** Sprite batch of the flying enemies (`LayerId.AirEnemies`). */
   readonly airBatch: SpriteBatch;
+  /**
+   * The Options Option Hunters carry, grey, trailing behind them (`LayerId.AirEnemies`, M2-04);
+   * nothing when the content's sprites lack `options/stolen`.
+   */
+  readonly carriedBatch: SpriteBatch;
   /** The mover context (camera, terrain, paths). */
   readonly movers: MoverContext;
   /**
@@ -883,6 +954,24 @@ export interface EnemySystem {
    * ```
    */
   megaCrash(by?: number): number;
+  /**
+   * The blue capsule (M2-04, shmup_feat.md §6A): kills every live enemy **on screen** whose spec is
+   * not `megaCrashImmune`, credited to `by` — like {@link EnemySystem.megaCrash} (armour does not
+   * protect, no revenge bullets), but enemies outside the view are spared and no bullet is touched.
+   * Never allocates.
+   *
+   * @param by - Player slot credited with the kills (default -1 = nobody).
+   * @returns Enemies killed.
+   */
+  clearOnScreen(by?: number): number;
+  /**
+   * Phase 7, after the player shots' hits and before the power-ups (so a Mega Crash of the same
+   * tick frees what was just taken): every live Option Hunter steals the Options it touches (see
+   * the module docs). Never allocates.
+   *
+   * @returns Options stolen this tick.
+   */
+  huntOptions(): number;
   /** Removes every enemy and formation at once (checkpoint restart). */
   clear(): void;
   /** Phase 9: refills the ground and air sprite batches. */
@@ -907,6 +996,7 @@ const NO_SPEC: EnemySpec = Object.freeze({
   settleTicks: 0,
   explosion: 'small',
   megaCrashImmune: false,
+  optionHunter: false,
   child: null,
   childId: -1,
   pattern: null,
@@ -1041,6 +1131,8 @@ interface SpecTable {
   readonly immune: Uint8Array;
   /** 1 = a boss entry (`core/bosses` runs it; the enemy system never spawns it). */
   readonly boss: Uint8Array;
+  /** 1 = an Option Hunter (M2-04). */
+  readonly hunter: Uint8Array;
   /** Starting `MoverKind`. */
   readonly mover: Uint8Array;
   /** Starting mover parameters, 6 per spec (a `path` mover's path: -1 = the spawn's). */
@@ -1088,6 +1180,7 @@ function compileSpecs(specs: readonly EnemySpec[], behaviors: EnemyBehaviorLooku
     drop: new Uint8Array(n),
     immune: new Uint8Array(n),
     boss: new Uint8Array(n),
+    hunter: new Uint8Array(n),
     mover: new Uint8Array(n),
     moverParams: new Float64Array(n * 6),
     behavior,
@@ -1124,9 +1217,10 @@ function compileSpecs(specs: readonly EnemySpec[], behaviors: EnemyBehaviorLooku
       spec.ground === null ? BodyAnchor.Air : ENEMY_GROUNDS.indexOf(spec.ground) + 1;
     table.settle[i] = spec.settleTicks;
     table.explosion[i] = ENEMY_EXPLOSIONS.indexOf(spec.explosion);
-    table.drop[i] = spec.drop === 'capsule' ? DropKind.Capsule : DropKind.None;
+    table.drop[i] = spec.drop === null ? DropKind.None : ENEMY_DROPS.indexOf(spec.drop) + 1;
     table.immune[i] = spec.megaCrashImmune ? 1 : 0;
     table.boss[i] = spec.boss === null ? 0 : 1;
+    table.hunter[i] = spec.optionHunter ? 1 : 0;
     const mover = spec.mover;
     const p = i * 6;
     if (mover !== null) {
@@ -1250,7 +1344,9 @@ function compileSpawnEvents(stage: StageSpec | null): SpawnEvents {
     if (event.type === 'formation') {
       out.count[i] = event.count;
       out.interval[i] = event.interval;
-      out.drop[i] = event.drop === null ? DropKind.None : DropKind.Capsule;
+      // An absent `drop` is the default capsule; `null` drops nothing.
+      const drop = event.drop === undefined ? 'capsule' : event.drop;
+      out.drop[i] = drop === null ? DropKind.None : ENEMY_DROPS.indexOf(drop) + 1;
       out.bonus[i] = event.bonus ?? 0;
     }
   }
@@ -1285,6 +1381,11 @@ class EnemyScriptApi implements ScriptApi {
   /** See {@link ScriptApi.rng}. */
   get rng(): Rng {
     return this.system.host.rng.gameplay;
+  }
+
+  /** See {@link ScriptApi.camera}. */
+  get camera(): PlayerCamera {
+    return this.system.host.camera;
   }
 
   /** See {@link ScriptApi.target}. */
@@ -1521,6 +1622,10 @@ class EnemySystemImpl implements EnemySystem {
   readonly groundBatch: SpriteBatch;
   /** See {@link EnemySystem.airBatch}. */
   readonly airBatch: SpriteBatch;
+  /** See {@link EnemySystem.carriedBatch}. */
+  readonly carriedBatch: SpriteBatch;
+  /** The carried Options' sprite id (-1 = not drawn). */
+  private readonly carriedSprite: number;
   /** See {@link EnemySystem.movers}. */
   readonly movers: MoverContext;
   /** The World. */
@@ -1543,8 +1648,22 @@ class EnemySystemImpl implements EnemySystem {
   private contactShip: PlayerShip | null = null;
   /** Whether the current contact query already hit its player. */
   private contactHit = false;
+  /** The hurt radius of the ship tested (its spec's × Reduce's `hurtScale`, set per query). */
+  private contactR = 0;
   /** The grid visitor of the contact test (created once). */
   private readonly onContact: SpatialGridVisitor;
+  /** The shield whose pod {@link EnemySystemImpl.onPodContact} tests (set per query). */
+  private podShield: ShieldState | null = null;
+  /** The pod slot tested. */
+  private podSlot = 0;
+  /** The tested pod's world x (a class field keeps the fraction unboxed). */
+  private podX = 0;
+  /** The tested pod's world y. */
+  private podY = 0;
+  /** Whether the current pod query already found a body. */
+  private podHit = false;
+  /** The grid visitor of the pod contact test (created once). */
+  private readonly onPodContact: SpatialGridVisitor;
 
   /**
    * Builds everything the system will ever use (see {@link createEnemySystem}).
@@ -1562,6 +1681,8 @@ class EnemySystemImpl implements EnemySystem {
     this.outcomes = new OutcomeLists();
     this.groundBatch = createSpriteBatch(LayerId.GroundEnemies, MAX_ENEMIES);
     this.airBatch = createSpriteBatch(LayerId.AirEnemies, MAX_ENEMIES);
+    this.carriedBatch = createSpriteBatch(LayerId.AirEnemies, CARRIED_BATCH_CAPACITY);
+    this.carriedSprite = host.content.sprites.index.get(STOLEN_OPTION_SPRITE) ?? -1;
     this.movers = createMoverContext(host.camera, host.terrain, host.content.paths);
     const enemies: Enemy[] = [];
     const apis: EnemyScriptApi[] = [];
@@ -1575,6 +1696,25 @@ class EnemySystemImpl implements EnemySystem {
     this.onContact = (slot: number): void => {
       this.contactVisit(slot);
     };
+    this.onPodContact = (slot: number): void => {
+      this.podVisit(slot);
+    };
+  }
+
+  /**
+   * Whether some active ship owns an Option (an Option Hunter spawns only then — M2-04).
+   *
+   * @returns `true` when a loadout of an active player has at least one Option.
+   */
+  private anyOptions(): boolean {
+    const weapons = this.host.weapons;
+    if (weapons === undefined) return false;
+    const players = this.host.players;
+    const loadouts = weapons.loadouts;
+    for (let p = 0; p < players.length && p < loadouts.length; p++) {
+      if (players[p].active && loadouts[p].options >= 1) return true;
+    }
+    return false;
   }
 
   /** See {@link EnemySystem.count}. */
@@ -1643,6 +1783,9 @@ class EnemySystemImpl implements EnemySystem {
     // boss entry is `core/bosses`' to run.
     if (!(enemyIndex >= 0 && enemyIndex < specs.hp.length && enemyIndex % 1 === 0)) return null;
     if (specs.boss[enemyIndex] !== 0) return null;
+    // Option Hunters appear only while there are Options to steal (shmup_feat.md §11, M2-04).
+    const hunter = specs.hunter[enemyIndex] !== 0;
+    if (hunter && !this.anyOptions()) return null;
     const enemies = this.enemies;
     let enemy: Enemy | null = null;
     for (let i = 0; i < enemies.length; i++) {
@@ -1670,7 +1813,9 @@ class EnemySystemImpl implements EnemySystem {
     enemy.spawnTick = tick;
     enemy.formation = formation;
     enemy.member = member;
-    enemy.flags = 0;
+    // An Option Hunter is armoured: shots clink off it, only a screen clear kills it.
+    enemy.flags = hunter ? EnemyFlag.Invulnerable : 0;
+    enemy.carried = 0;
     enemy.firstSeenTick = -1;
     enemy.spriteId = specs.sprite[enemyIndex];
     enemy.animFrame = 0;
@@ -1705,6 +1850,10 @@ class EnemySystemImpl implements EnemySystem {
     enemy.script = behavior === null ? null : behavior.create(api, specs.params[enemyIndex]);
     enemy.wakeTick = fromScript ? tick + 1 : tick;
     this.used++;
+    if (hunter) {
+      // The Option Hunter's alarm (shmup_feat.md §11 "audible cue").
+      host.events.push(SimEventKind.Sfx, SFX_CUES.OptionHunter, Math.floor(x) | 0, 0, 0);
+    }
     return enemy;
   }
 
@@ -2012,10 +2161,14 @@ class EnemySystemImpl implements EnemySystem {
   /** See {@link EnemySystem.collidePlayers}. */
   collidePlayers(grid: SpatialGrid): void {
     const players = this.host.players;
-    const r = this.host.ship.hurtRadius;
+    const base = this.host.ship.hurtRadius;
     for (let i = 0; i < players.length; i++) {
       const ship = players[i];
       if (!ship.active || ship.state !== 'alive') continue;
+      const shield = ship.shield;
+      // Reduce shrinks the hurt circle (`core/shields`, M2-04).
+      const r = base * shield.hurtScale;
+      this.contactR = r;
       this.contactShip = ship;
       this.contactHit = false;
       grid.query(
@@ -2025,8 +2178,56 @@ class EnemySystemImpl implements EnemySystem {
         Math.ceil(ship.y + r) | 0,
         this.onContact,
       );
+      if (shield.podCount > 0) this.podsVs(grid, shield);
     }
     this.contactShip = null;
+  }
+
+  /**
+   * Enemy bodies against the standing pods of one ship's shield (M2-04): each pod takes at most
+   * one hit per tick from a body it touches (the enemy flies on).
+   *
+   * @param grid - The World's grid.
+   * @param shield - The ship's shield (pods placed in phase 2).
+   */
+  private podsVs(grid: SpatialGrid, shield: ShieldState): void {
+    this.podShield = shield;
+    for (let k = 0; k < shield.podCount; k++) {
+      if (shield.podHits[k] <= 0) continue;
+      this.podSlot = k;
+      this.podX = shield.podX[k];
+      this.podY = shield.podY[k];
+      this.podHit = false;
+      grid.query(
+        Math.floor(this.podX - POD_RADIUS) | 0,
+        Math.floor(this.podY - POD_RADIUS) | 0,
+        Math.ceil(this.podX + POD_RADIUS) | 0,
+        Math.ceil(this.podY + POD_RADIUS) | 0,
+        this.onPodContact,
+      );
+    }
+    this.podShield = null;
+  }
+
+  /**
+   * Grid visitor of {@link EnemySystemImpl.podsVs}: exact circle-vs-box test of the pod against a
+   * live, solid enemy (not a ghost, not an Option Hunter) → `absorbPodHit`.
+   *
+   * @param slot - The enemy slot the grid returned.
+   */
+  private podVisit(slot: number): void {
+    const shield = this.podShield;
+    if (shield === null || this.podHit || !(slot >= 0 && slot < MAX_ENEMIES)) return;
+    const e = this.enemies[slot];
+    if (e.state !== EnemyState.Live || (e.flags & EnemyFlag.Ghost) !== 0) return;
+    if (this.specs.hunter[e.specIndex] !== 0) return;
+    const ox = Math.abs(this.podX - e.x) - e.hw;
+    const oy = Math.abs(this.podY - e.y) - e.hh;
+    const dx = ox > 0 ? ox : 0;
+    const dy = oy > 0 ? oy : 0;
+    if (dx * dx + dy * dy <= POD_RADIUS * POD_RADIUS) {
+      this.podHit = absorbPodHit(shield, this.podSlot, this.host.tick) !== ShieldHit.None;
+    }
   }
 
   /**
@@ -2040,9 +2241,11 @@ class EnemySystemImpl implements EnemySystem {
     if (ship === null || this.contactHit || !(slot >= 0 && slot < MAX_ENEMIES)) return;
     const e = this.enemies[slot];
     if (e.state !== EnemyState.Live || (e.flags & EnemyFlag.Ghost) !== 0) return;
+    // An Option Hunter never hurts a ship: it only takes Options (M2-04).
+    if (this.specs.hunter[e.specIndex] !== 0) return;
     const host = this.host;
     // `circleAabb` inlined (closed test: touching counts), so no fractional call arguments.
-    const r = host.ship.hurtRadius;
+    const r = this.contactR;
     const ox = Math.abs(ship.x - e.x) - e.hw;
     const oy = Math.abs(ship.y - e.y) - e.hh;
     const dx = ox > 0 ? ox : 0;
@@ -2090,6 +2293,9 @@ class EnemySystemImpl implements EnemySystem {
     events.push(SimEventKind.Sfx, EXPLOSION_SFX[size], x, y, 0);
     events.push(SimEventKind.Particles, EXPLOSION_FX[size], x, y, 1);
     if (specs.drop[spec] !== DropKind.None) o.addDrop(specs.drop[spec], x, y);
+    // A dead Option Hunter lets go of what it carried: each Option drifts free (M2-04).
+    for (let c = 0; c < enemy.carried; c++) o.addDrop(DropKind.FreeOption, x, y);
+    enemy.carried = 0;
     if (by >= 0 && !this.crashing && specs.revenge[spec] !== 0) this.revenge(enemy, spec);
     const slot = enemy.formation;
     if (slot < 0) {
@@ -2261,6 +2467,89 @@ class EnemySystemImpl implements EnemySystem {
     return killed;
   }
 
+  /** See {@link EnemySystem.clearOnScreen}. */
+  clearOnScreen(by = -1): number {
+    const enemies = this.enemies;
+    const immune = this.specs.immune;
+    let killed = 0;
+    this.crashing = true;
+    for (let i = 0; i < enemies.length; i++) {
+      const e = enemies[i];
+      if (e.state !== EnemyState.Live || (e.flags & EnemyFlag.Ghost) !== 0) continue;
+      if ((e.flags & EnemyFlag.OnScreen) === 0 || immune[e.specIndex] === 1) continue;
+      if (this.kill(e, by)) killed++;
+    }
+    this.crashing = false;
+    return killed;
+  }
+
+  /** See {@link EnemySystem.huntOptions}. */
+  huntOptions(): number {
+    const weapons = this.host.weapons;
+    if (weapons === undefined) return 0;
+    const enemies = this.enemies;
+    const hunters = this.specs.hunter;
+    let stolen = 0;
+    for (let i = 0; i < enemies.length; i++) {
+      const e = enemies[i];
+      if (e.state !== EnemyState.Live || (e.flags & EnemyFlag.Ghost) !== 0) continue;
+      if (hunters[e.specIndex] === 0 || e.carried >= MAX_CARRIED_OPTIONS) continue;
+      stolen += this.grabOptions(e, weapons.loadouts, weapons.options);
+    }
+    return stolen;
+  }
+
+  /**
+   * One Option Hunter against every ship's flying Options: the first Option it touches (circle of
+   * {@link OPTION_RADIUS} vs its box, closed) and every Option behind it in the chain are taken —
+   * the loadout loses them, the hunter carries them (up to {@link MAX_CARRIED_OPTIONS}), the group
+   * stops drawing them at once, `SFX OptionStolen` is pushed at the first one.
+   *
+   * @param e - The hunter.
+   * @param loadouts - The players' loadouts.
+   * @param groups - The players' option groups.
+   * @returns Options taken.
+   */
+  private grabOptions(
+    e: Enemy,
+    loadouts: readonly { options: number }[],
+    groups: readonly OptionGroup[],
+  ): number {
+    const players = this.host.players;
+    let taken = 0;
+    for (let p = 0; p < players.length && p < groups.length && p < loadouts.length; p++) {
+      if (!players[p].active) continue;
+      const group = groups[p];
+      const n = group.count < MAX_OPTIONS ? group.count : MAX_OPTIONS;
+      for (let k = 0; k < n; k++) {
+        const ox = Math.abs(group.x[k] - e.x) - e.hw;
+        const oy = Math.abs(group.y[k] - e.y) - e.hh;
+        const dx = ox > 0 ? ox : 0;
+        const dy = oy > 0 ? oy : 0;
+        if (!(dx * dx + dy * dy <= OPTION_RADIUS * OPTION_RADIUS)) continue;
+        const room = MAX_CARRIED_OPTIONS - e.carried;
+        let grab = n - k;
+        if (grab > room) grab = room;
+        if (grab <= 0) return taken;
+        const loadout = loadouts[p];
+        loadout.options = loadout.options > grab ? loadout.options - grab : 0;
+        group.count = n - grab;
+        group.stolen += grab;
+        e.carried += grab;
+        taken += grab;
+        this.host.events.push(
+          SimEventKind.Sfx,
+          SFX_CUES.OptionStolen,
+          Math.floor(group.x[k]) | 0,
+          Math.floor(group.y[k]) | 0,
+          0,
+        );
+        break;
+      }
+    }
+    return taken;
+  }
+
   /** See {@link EnemySystem.clear}. */
   clear(): void {
     const enemies = this.enemies;
@@ -2279,6 +2568,7 @@ class EnemySystemImpl implements EnemySystem {
     this.beginTick();
     this.groundBatch.count = 0;
     this.airBatch.count = 0;
+    this.carriedBatch.count = 0;
   }
 
   /** See {@link EnemySystem.sync}. */
@@ -2307,6 +2597,39 @@ class EnemySystemImpl implements EnemySystem {
       batch.frame[slot] = e.animFrame;
       batch.flags[slot] = draw;
       batch.count = slot + 1;
+    }
+    this.syncCarried();
+  }
+
+  /**
+   * Refills {@link EnemySystem.carriedBatch}: each live Option Hunter's carried Options, grey,
+   * {@link CARRIED_OPTION_SPACING} px apart behind it (away from where it flies; to its right
+   * while it stands still), pulsing like Options. Never allocates.
+   */
+  private syncCarried(): void {
+    const batch = this.carriedBatch;
+    batch.count = 0;
+    const sprite = this.carriedSprite;
+    if (sprite < 0) return;
+    const enemies = this.enemies;
+    const frame = Math.floor(this.host.tick / OPTION_ANIM_TICKS) & 1;
+    for (let i = 0; i < enemies.length; i++) {
+      const e = enemies[i];
+      if (e.state !== EnemyState.Live || e.carried <= 0) continue;
+      const speed = Math.sqrt(e.vx * e.vx + e.vy * e.vy);
+      const ux = speed > 0 ? -e.vx / speed : 1;
+      const uy = speed > 0 ? -e.vy / speed : 0;
+      for (let c = 0; c < e.carried; c++) {
+        const slot = batch.count;
+        if (slot >= batch.capacity) return;
+        const d = (c + 1) * CARRIED_OPTION_SPACING;
+        batch.x[slot] = e.x + ux * d;
+        batch.y[slot] = e.y + uy * d;
+        batch.spriteId[slot] = sprite;
+        batch.frame[slot] = frame;
+        batch.flags[slot] = 0;
+        batch.count = slot + 1;
+      }
     }
   }
 }

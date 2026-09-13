@@ -248,6 +248,13 @@ export const SFX_CUES = {
   Clink: 21,
   /** The power-up button was pressed on an empty or un-equippable meter slot (M1-11). */
   PowerUpDenied: 22,
+  /**
+   * The Option Hunter's alarm: one appeared (`core/enemies`, M2-04 — shmup_feat.md §11 "audible
+   * cue"; `x`/`y` = where it spawned).
+   */
+  OptionHunter: 23,
+  /** An Option Hunter grabbed Options (M2-04; `x`/`y` = the first Option taken). */
+  OptionStolen: 24,
 } as const;
 
 /** One of the {@link SFX_CUES} ids. */

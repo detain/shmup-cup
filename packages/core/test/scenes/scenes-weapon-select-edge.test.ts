@@ -271,7 +271,8 @@ describe('core/scenes weapon select edges (M2-03): TYPE, EDIT and the locked row
     s.press(Action.Down); // START → TYPE
     expect(menu.focus).toBe(WeaponSelectItem.Type);
     s.press(Action.Down);
-    expect(menu.focus).toBe(WeaponSelectItem.Shield);
+    // The locked slot rows are skipped: OPTION (M2-04) is next.
+    expect(menu.focus).toBe(WeaponSelectItem.Option);
     s.press(Action.Up);
     expect(menu.focus).toBe(WeaponSelectItem.Type);
     s.press(Action.Left); // TYPE A → EDIT (wraps)
@@ -317,13 +318,13 @@ describe('core/scenes weapon select edges (M2-03): TYPE, EDIT and the locked row
     s.focus(WeaponSelectItem.Mega);
     s.press(Action.Right, 3);
     expect(select.mega.label).toBe('LIFE OPTION');
-    s.press(Action.Up); // `?`: one choice only — Right keeps it
+    s.press(Action.Up); // `?`: FORCE FIELD → SHIELD (M2-04)
     s.press(Action.Right);
-    expect(select.shield.label).toBe('FORCE FIELD');
+    expect(select.shield.label).toBe('SHIELD');
     expect(preview.weapons.roleWeapons).toEqual(before);
     expect(select.arsenal()).toMatchObject({
       megaChoice: 'lifeOption',
-      shieldChoice: 'forceField',
+      shieldChoice: 'shield',
     });
   });
 });

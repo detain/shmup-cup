@@ -7,8 +7,8 @@
  *   the preview then draws; ArrowUp + Enter on START starts the game with Type B;
  * - Tizen build from `file://`: the remote's Back (10009) returns to the difficulty menu, OK (13)
  *   opens the weapon select again and starts the game on its first press; the remote's arrows
- *   (37–40) alone choose EDIT and a weapon for each slot (the preview follows), NORMAL on `!` and
- *   an Auto Power-Up order (the ORDER editor overlay, closed with Back), and START plays them;
+ *   (37–40) alone choose EDIT and a weapon for each slot (the preview follows), the ROTATE Option
+ *   type and the SHIELD `?` (M2-04), NORMAL on `!` and an Auto Power-Up order (the ORDER editor overlay, closed with Back), and START plays them;
  * - no console errors in either.
  *
  * Screenshots are ×3 (viewport 1152×648): frame pixel x is screenshot pixel 3x + 1.
@@ -229,7 +229,7 @@ test.describe('weapon select (Tizen build via file://)', () => {
     expect(errors).toEqual([]);
   });
 
-  test('the remote arrows choose a Weapon Edit, the `!` choice and the Auto order', async ({
+  test('the remote arrows choose a Weapon Edit, the Option type, `?`, `!` and the Auto order', async ({
     page,
   }) => {
     test.setTimeout(90_000);
@@ -245,7 +245,10 @@ test.describe('weapon select (Tizen build via file://)', () => {
     await remoteTap(page, 40); // LASER
     await remoteTap(page, 39); // LASER → RIPPLE LASER
     await expect.poll(async () => (await view(page)).preview).toBe('laser.ripple');
+    await remoteTap(page, 40); // OPTION (M2-04)
+    await remoteTap(page, 37); // TRAIL → ROTATE (wraps)
     await remoteTap(page, 40); // ? SLOT
+    await remoteTap(page, 39); // FORCE FIELD → SHIELD
     await remoteTap(page, 40); // ! SLOT
     await remoteTap(page, 39); // MEGA CRASH → NORMAL
     await remoteTap(page, 40); // AUTO
@@ -270,6 +273,8 @@ test.describe('weapon select (Tizen build via file://)', () => {
                   weaponPreset: string;
                   weaponEdit: unknown;
                   megaChoice: string;
+                  optionChoice: string;
+                  shieldChoice: string;
                   autoPowerUpOrder: readonly string[];
                 };
                 weapons: { roleWeapons: Array<{ id: string } | null> };
@@ -283,6 +288,8 @@ test.describe('weapon select (Tizen build via file://)', () => {
         weaponPreset: world.config.weaponPreset,
         weaponEdit: world.config.weaponEdit,
         megaChoice: world.config.megaChoice,
+        optionChoice: world.config.optionChoice,
+        shieldChoice: world.config.shieldChoice,
         autoPowerUpOrder: world.config.autoPowerUpOrder.slice(),
         roles: world.weapons.roleWeapons.map((weapon) => weapon?.id ?? null),
       };
@@ -291,6 +298,8 @@ test.describe('weapon select (Tizen build via file://)', () => {
       weaponPreset: 'type-a',
       weaponEdit: { missile: 'missile.spread', double: 'shot.free', laser: 'laser.ripple' },
       megaChoice: 'normal',
+      optionChoice: 'rotate',
+      shieldChoice: 'shield',
       autoPowerUpOrder: [
         'missile',
         'missile',

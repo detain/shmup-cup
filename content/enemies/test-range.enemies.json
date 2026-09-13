@@ -37,6 +37,18 @@
       "explosion": "medium"
     },
     {
+      "id": "carrier-blue",
+      "hp": 2,
+      "score": 500,
+      "hurtbox": { "hw": 6, "hh": 4 },
+      "script": "carrier.straight",
+      "sprite": "enemies/carrier-blue",
+      "anim": { "frames": 2, "ticks": 10 },
+      "params": { "speed": 0.75 },
+      "drop": "blueCapsule",
+      "explosion": "medium"
+    },
+    {
       "id": "turret",
       "hp": 3,
       "score": 300,

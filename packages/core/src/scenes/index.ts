@@ -25,7 +25,8 @@
  *     `core/config` `withDifficulty` of the host config — {@link SceneFlow.gameConfig}) and opens
  *     the weapon select, Back returns to the title menu.
  *   - {@link WeaponSelectScene} (M2-03 — after the difficulty menu): TYPE A–D or EDIT (Weapon
- *     Edit: each of the MISSILE / DOUBLE / LASER weapons), the `?` and `!` choices, Auto Power-Up
+ *     Edit: each of the MISSILE / DOUBLE / LASER weapons), the Option type (M2-04), the `?` and `!`
+ *     choices, Auto Power-Up
  *     and its ORDER ({@link AutoOrderScene}, an overlay editor), START — with a live preview (a
  *     mini World on the weapon range, drawn full screen behind the panel); START starts the game
  *     with that loadout (`core/config` `withArsenal`), Back returns to the difficulty menu.
@@ -112,9 +113,10 @@
  * {@link GameScene}, {@link PauseScene}, {@link OptionsScene}, {@link StageClearScene},
  * {@link ContinueScene}, {@link GameOverScene}, {@link ConfirmDialog}), {@link ConfirmPurpose},
  * the weapon select's items and labels ({@link WeaponSelectItem}, {@link MEGA_CHOICE_LABELS},
- * {@link SHIELD_CHOICE_LABELS}, {@link WEAPON_EDIT_LABEL}, {@link AUTO_ORDER_LABELS},
+ * {@link SHIELD_CHOICE_LABELS}, {@link OPTION_CHOICE_LABELS} (M2-04), {@link WEAPON_EDIT_LABEL},
+ * {@link AUTO_ORDER_LABELS},
  * {@link AUTO_ORDER_ROWS}) and its preview ({@link WEAPON_RANGE_STAGE}, {@link PREVIEW_SHIP_X},
- * {@link PREVIEW_WEAVE_TICKS}, {@link PREVIEW_OPTIONS}),
+ * {@link PREVIEW_WEAVE_TICKS}, {@link PREVIEW_OPTIONS}, {@link PREVIEW_SPREAD_TICKS}),
  * {@link InputProfileSetup}, the menu item indices ({@link TitleItem}, {@link PauseItem},
  * {@link OptionsItem} — BULLETS since M2-02 —), the Options screen's bullet palette labels
  * ({@link BULLET_PALETTE_LABELS}, M2-02) and the timing constants ({@link STAGE_CLEAR_DELAY_TICKS},
@@ -134,6 +136,7 @@ import {
   MAX_AUTO_POWER_UP_ORDER,
   MEGA_CHOICES,
   METER_SLOT_NAMES,
+  OPTION_CHOICES,
   SHIELD_CHOICES,
   VOLUME_LEVELS,
   arsenalMatches,
@@ -2019,16 +2022,18 @@ export const WeaponSelectItem = {
   Double: 2,
   /** LASER: the Laser slot's weapon. */
   Laser: 3,
+  /** OPTION: how the Options fly (`GameConfig.optionChoice`, M2-04). */
+  Option: 4,
   /** `?`: what the `?` slot grants (`GameConfig.shieldChoice`). */
-  Shield: 4,
+  Shield: 5,
   /** `!`: what the `!` slot does (`GameConfig.megaChoice`). */
-  Mega: 5,
+  Mega: 6,
   /** AUTO: Auto Power-Up on / off (`GameConfig.autoPowerUp`). */
-  Auto: 6,
+  Auto: 7,
   /** ORDER: opens the Auto Power-Up order editor ({@link AutoOrderScene}). */
-  Order: 7,
+  Order: 8,
   /** START: starts the game with this loadout. */
-  Start: 8,
+  Start: 9,
 } as const;
 
 /** The `!` choices' labels, in `config` `MEGA_CHOICES` order. */
@@ -2040,10 +2045,22 @@ export const MEGA_CHOICE_LABELS: readonly string[] = Object.freeze([
   'FULL BARRIER',
 ]);
 
-/**
- * The `?` choices' labels, in `config` `SHIELD_CHOICES` order (M2-04 appends the other shields).
- */
-export const SHIELD_CHOICE_LABELS: readonly string[] = Object.freeze(['FORCE FIELD']);
+/** The `?` choices' labels, in `config` `SHIELD_CHOICES` order. */
+export const SHIELD_CHOICE_LABELS: readonly string[] = Object.freeze([
+  'FORCE FIELD',
+  'SHIELD',
+  'FREE SHIELD',
+  'ROTATE',
+  'REDUCE',
+]);
+
+/** The Option types' labels, in `config` `OPTION_CHOICES` order (M2-04). */
+export const OPTION_CHOICE_LABELS: readonly string[] = Object.freeze([
+  'TRAIL',
+  'SNAKE',
+  'FORMATION',
+  'ROTATE',
+]);
 
 /** The TYPE choice's label for Weapon Edit. */
 export const WEAPON_EDIT_LABEL = 'EDIT';
@@ -2059,6 +2076,12 @@ export const PREVIEW_WEAVE_TICKS = 160;
 
 /** Options the preview ship flies with. */
 export const PREVIEW_OPTIONS = 2;
+
+/**
+ * Ticks between the preview's spread / retract toggles while OPTION is focused (a `Special` press
+ * — the Formation and Rotate types show both states; M2-04).
+ */
+export const PREVIEW_SPREAD_TICKS = 90;
 
 /** Rows of the Auto Power-Up order editor (the first entries of the order it edits). */
 export const AUTO_ORDER_ROWS = 12;
@@ -2129,8 +2152,9 @@ function presetLabel(id: string): string {
  * Pushed by the difficulty menu's OK (a full screen over the title and the difficulty menu). A
  * panel on the left lists TYPE (the content's presets — `TYPE A` … `TYPE D` — and `EDIT`), the
  * MISSILE / DOUBLE / LASER weapons (the type's, disabled; with EDIT every weapon of that slot can
- * be chosen — Weapon Edit), `?` (the shield: `FORCE FIELD` until M2-04), `!` (MEGA CRASH / NORMAL /
- * SPEED DOWN / LIFE OPTION / FULL BARRIER), AUTO (Auto Power-Up) with its ORDER (the one-letter
+ * be chosen — Weapon Edit), OPTION (TRAIL / SNAKE / FORMATION / ROTATE — M2-04), `?` (FORCE FIELD /
+ * SHIELD / FREE SHIELD / ROTATE / REDUCE — M2-04), `!` (MEGA CRASH / NORMAL / SPEED DOWN / LIFE
+ * OPTION / FULL BARRIER), AUTO (Auto Power-Up) with its ORDER (the one-letter
  * summary — OK opens the {@link AutoOrderScene}) and START. It opens focused on START (so OK starts
  * at once — the choice of the last visit is kept) and locks activation for 2 ticks. Left / Right
  * (or OK) change a value, OK on START starts the game (the stack is reset to the game scene, whose
@@ -2144,8 +2168,9 @@ function presetLabel(id: string): string {
  * mode (its own debug flags): the ship is held at x {@link PREVIEW_SHIP_X}, right of the panel, and
  * weaves up and down (so the Free Way and the Options show), its main weapon follows the focused
  * row (MISSILE: the shot, DOUBLE: the Double slot's weapon, LASER: the Laser slot's, otherwise
- * Laser and Double take turns every 4 s), the range restarts when it ends, and its presentation
- * events go to its own queue, cleared every tick (no sound). The World is created when the screen
+ * Laser and Double take turns every 4 s; on OPTION the Options fly the chosen type and spread /
+ * retract every {@link PREVIEW_SPREAD_TICKS} ticks), the range restarts when it ends, and its
+ * presentation events go to its own queue, cleared every tick (no sound). The World is created when the screen
  * opens (a transition: its fly-in is skipped there) and dropped when it closes; the flow shows its
  * view instead of the game's while this screen is visible. Ticking never allocates (the preview's
  * input, event queue and role list are reused) — except that the range's spawns create their
@@ -2162,6 +2187,8 @@ export class WeaponSelectScene extends SceneBase {
   readonly double: Choice;
   /** LASER: the content's laser-slot weapons. */
   readonly laser: Choice;
+  /** OPTION: {@link OPTION_CHOICE_LABELS} (M2-04). */
+  readonly option: Choice;
   /** `?`: {@link SHIELD_CHOICE_LABELS}. */
   readonly shield: Choice;
   /** `!`: {@link MEGA_CHOICE_LABELS}. */
@@ -2245,6 +2272,10 @@ export class WeaponSelectScene extends SceneBase {
     this.missile = slotChoices[0];
     this.double = slotChoices[1];
     this.laser = slotChoices[2];
+    this.option = createChoice(
+      OPTION_CHOICE_LABELS,
+      Math.max(0, OPTION_CHOICES.indexOf(config.optionChoice)),
+    );
     this.shield = createChoice(
       SHIELD_CHOICE_LABELS,
       Math.max(0, SHIELD_CHOICES.indexOf(config.shieldChoice)),
@@ -2260,6 +2291,7 @@ export class WeaponSelectScene extends SceneBase {
         { label: 'MISSILE', choice: this.missile },
         { label: 'DOUBLE', choice: this.double },
         { label: 'LASER', choice: this.laser },
+        { label: 'OPTION', choice: this.option },
         { label: '? SLOT', choice: this.shield },
         { label: '! SLOT', choice: this.mega },
         { label: 'AUTO', toggle: this.auto },
@@ -2350,7 +2382,7 @@ export class WeaponSelectScene extends SceneBase {
    * The loadout chosen now, as config fields (allocates — START only).
    *
    * @returns The {@link ArsenalChoice}: the preset (EDIT: the last preset chosen), the Weapon Edit
-   *   (EDIT only), the `?` / `!` choices, AUTO and the order.
+   *   (EDIT only), the Option type, the `?` / `!` choices, AUTO and the order.
    */
   arsenal(): ArsenalChoice {
     const preset = this.presets[this.basePreset];
@@ -2366,6 +2398,7 @@ export class WeaponSelectScene extends SceneBase {
     return {
       weaponPreset: preset === undefined ? this.flow.host.config.weaponPreset : preset.id,
       weaponEdit: edit,
+      optionChoice: OPTION_CHOICES[this.option.index] ?? 'trail',
       shieldChoice: SHIELD_CHOICES[this.shield.index] ?? 'forceField',
       megaChoice: MEGA_CHOICES[this.mega.index] ?? 'megaCrash',
       autoPowerUp: this.auto.value,
@@ -2428,7 +2461,18 @@ export class WeaponSelectScene extends SceneBase {
       item === WeaponSelectItem.Laser
     ) {
       this.applyArsenal();
+    } else if (item === WeaponSelectItem.Option) {
+      this.applyOptionType();
     }
+  }
+
+  /** Hands the chosen Option type to the preview's ship (`OptionGroup.setFormation`, M2-04). */
+  private applyOptionType(): void {
+    const world = this.preview;
+    if (world === null) return;
+    const group = world.weapons.options[0];
+    group.setFormation(OPTION_CHOICES[this.option.index] ?? 'trail');
+    group.reset(world.players[0], world.camera);
   }
 
   /** Puts the slot rows on the base preset's weapons (the first of the slot when it has none). */
@@ -2510,6 +2554,7 @@ export class WeaponSelectScene extends SceneBase {
     this.preview = world;
     this.previewTicks = 0;
     this.applyArsenal();
+    this.applyOptionType();
   }
 
   /** Hands the chosen weapons to the preview (`WeaponSystem.setArsenal`). */
@@ -2555,6 +2600,11 @@ export class WeaponSelectScene extends SceneBase {
     this.previewTicks++;
     const player = this.previewInput.players[0];
     player.held = t < 20 || t >= 140 ? Action.Up : t >= 60 && t < 100 ? Action.Down : 0;
+    // On OPTION the Formation / Rotate types spread and retract now and then (a `Special` press).
+    player.pressed =
+      focus === WeaponSelectItem.Option && this.previewTicks % PREVIEW_SPREAD_TICKS === 0
+        ? Action.Special
+        : 0;
     const ship = world.players[0];
     if (ship.state === 'alive') ship.x = world.camera.x + PREVIEW_SHIP_X;
     stepWorld(world, this.previewInput);

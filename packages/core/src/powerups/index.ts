@@ -5,8 +5,9 @@
  * on the PowerUp press, Auto Power-Up, power capsules (item pool, pickup magnet, pickups), the
  * Force Field grant (`core/shields`) and Mega Crash; since M2-03 the `!` choices (Mega Crash,
  * NORMAL, SPEED DOWN, LIFE OPTION, FULL BARRIER) and the `?` choice of the weapon select, and the
- * MISSILE / DOUBLE / LASER slots equip the session's arsenal (`core/weapons` `resolveArsenal`).
- * Direct-mode items arrive with M2-05.
+ * MISSILE / DOUBLE / LASER slots equip the session's arsenal (`core/weapons` `resolveArsenal`);
+ * since M2-04 the other `?` shields (pods, Reduce), the rare blue capsule and the Options an
+ * Option Hunter let go of. Direct-mode items arrive with M2-05.
  *
  * **Responsibility.** Both power-up models. **Meter mode** (Gradius): the 7-slot meter
  * `SPEED UP | MISSILE | DOUBLE | LASER | OPTION | ? | !`, each capsule advances the cursor
@@ -30,12 +31,12 @@
  * | Double | main = Double (replaces the Laser) | Double already current |
  * | Laser | main = Laser (replaces the Double) | Laser already current |
  * | Option | one more Option | 4 Options |
- * | `?` | a fresh `?` shield (`GameConfig.shieldChoice`: the Force Field) | a shield is up |
+ * | `?` | the `?` shield (`GameConfig.shieldChoice` — Force Field, Shield, Free Shield, Rotate Shield, Reduce); a Free Shield on a Free Shield adds a pod pair | a shield is up (a Free Shield: four fresh pods) |
  * | `!` Mega Crash | the screen clear (the default `GameConfig.megaChoice`) | never |
  * | `!` NORMAL | main = the basic shot | the basic shot is current |
  * | `!` SPEED DOWN | ship speed level − 1 | at speed level 0 |
  * | `!` LIFE OPTION | spare ships (`lives − 1`) become Options, up to 4 Options | no spare ship or 4 Options |
- * | `!` FULL BARRIER | a fresh `?` shield (full strength) | the shield is up at full strength |
+ * | `!` FULL BARRIER | the `?` shield back to full strength (every pod slot; a fresh one when none stands) | the shield is up at full strength |
  *
  * The MISSILE / DOUBLE / LASER slots equip whatever weapon the session's arsenal puts in that role
  * (Type A–D or Weapon Edit — the loadout → meter mapping of M2-03); the HUD shows its name.
@@ -57,9 +58,21 @@
  * item within {@link PICKUP_MAGNET_RANGE} px of an alive ship's pickup box drifts towards the
  * nearest such ship at {@link PICKUP_MAGNET_SPEED} px/tick. A ship collects every item whose
  * circle ({@link ITEM_RADIUS}) touches its pickup box (closed test; the lowest player slot wins
- * a tie); **every pickup advances the meter** (no merging, shmup_feat.md §6A), pushes the meter
- * "ding" (`SFX MeterAdvance`) and records {@link CAPSULE_SCORE} (300) points in
+ * a tie); **every capsule pickup advances the meter** (no merging, shmup_feat.md §6A), pushes the
+ * meter "ding" (`SFX MeterAdvance`) and records {@link CAPSULE_SCORE} (300) points in
  * {@link PowerUpSystem.outcomes} for scoring (M1-12).
+ *
+ * **The blue capsule** (M2-04, shmup_feat.md §6A — {@link ItemKind.BlueCapsule}, dropped by
+ * `drop: 'blueCapsule'` enemies and formations): world-space like a capsule, 300 points; collecting
+ * it destroys every enemy on screen ({@link PowerUpSystem.clearScreen} — Mega Crash's flash and
+ * sound, no bullet cancel, the meter untouched).
+ *
+ * **Freed Options** (M2-04, {@link ItemKind.FreeOption}): every Option a dead Option Hunter carried
+ * (`DropKind.FreeOption`) becomes a grey item that drifts with the view
+ * ({@link FREE_OPTION_DRIFT}, bouncing off the playfield's top and bottom, the magnet pulls it
+ * too) and vanishes after {@link FREE_OPTION_TICKS} ticks (blinking for the last
+ * {@link ITEM_EXPIRY_BLINK_TICKS}); collecting one gives an Option back
+ * ({@link PowerUpSystem.regainOption}), whoever grabs it.
  *
  * **Capsule sources** — every drop in the enemy system's tick outcomes (`drop: 'capsule'` enemies
  * and completed formations, M1-08) becomes a capsule where it happened, at the end of phase 7 (and,
@@ -75,11 +88,14 @@
  * pushed. Bosses (M1-13) take no damage.
  *
  * **Shields.** The `?` slot (and the `!` choice FULL BARRIER) grants the session's `?` shield
- * ({@link PowerUpSystem.choices} — the Force Field until M2-04) on `PlayerShip.shield`; this
- * system counts its
- * i-frames down in phase 7 and pushes `SFX ShieldHit` / `SFX ShieldBreak` + `FX ShieldBreak` for
- * the tick's absorbed hits in phase 7; the view shows it as a sprite around the ship in its wear
- * frame (blinking during its i-frames).
+ * ({@link PowerUpSystem.choices}: Force Field, Shield, Free Shield — its pairs attach where the
+ * player last flew (`WeaponSystem.freeWayHeading`) —, Rotate Shield or Reduce, M2-04) on
+ * `PlayerShip.shield`; this system places the pods round the ship in phase 2
+ * (`core/shields` `placeShieldPods`), counts the i-frames down (and spins the Rotate Shield) in
+ * phase 7 and pushes `SFX ShieldHit` / `SFX ShieldBreak` + `FX ShieldBreak` for the tick's absorbed
+ * hits (a pod breaking too) in phase 7; the view shows a field as a sprite around the ship in its
+ * wear frame and every standing pod as its own sprite in its own wear frame (blinking during
+ * their i-frames).
  *
  * **Death penalty** (M1-12, decision D6): {@link applyDeathPenalty} — called by the World when a
  * ship dies — takes the shield in every preset, and `arcade` everything else too (cursor back to
@@ -105,6 +121,8 @@
  *   Normal, Speed Down, Life Option, Full Barrier (M2-03)
  * - shmup_feat.md §4 rule 4 — OK = equip, a rare non-urgent press; Auto Power-Up for the remote
  * - shmup_feat.md §11 — capsule carriers and formation-kill drops
+ * - shmup_feat.md §6A — the blue capsule (a rare pickup that clears the screen's enemies); §8 —
+ *   the Options an Option Hunter stole, freed and re-collectable (M2-04)
  *
  * **Public API.** {@link createPowerUpSystem}, {@link PowerUpSystem}, {@link PowerUpHost},
  * {@link PowerUpOutcomes}, {@link PowerMeter}, {@link createPowerMeter}, {@link advanceMeter},
@@ -117,7 +135,8 @@
  * {@link MEGA_CRASH_FLASH_TICKS}, {@link DirectItem}, {@link applyDeathPenalty},
  * {@link loseOneLevel}; M2-03: {@link MegaEffect}, {@link megaEffectOf}, {@link MeterChoices},
  * {@link DEFAULT_METER_CHOICES}, {@link meterChoicesOf}, {@link MeterShip},
- * {@link lifeOptionCount}.
+ * {@link lifeOptionCount}; M2-04: {@link BLUE_CAPSULE_SPRITE}, {@link FREE_OPTION_TICKS},
+ * {@link FREE_OPTION_DRIFT}, {@link ITEM_EXPIRY_BLINK_TICKS}.
  *
  * **Planned API.** Direct-mode items `applyDirectItem(player, item)` (M2-05).
  *
@@ -140,15 +159,22 @@ import { FX_CUES, SFX_CUES, SimEventKind, type EventQueue } from '../events/inde
 import { FLASH_KIND_TICKS, FlashKind, requestFlash, type FxState } from '../fx/index.js';
 import { Action, MAX_PLAYERS } from '../input/index.js';
 import { defineModule } from '../module-info.js';
-import { MAX_OPTIONS } from '../options/index.js';
+import { MAX_OPTIONS, STOLEN_OPTION_SPRITE } from '../options/index.js';
 import type { PlayerCamera, PlayerIntent, PlayerShip } from '../player/index.js';
 import { createSoaPool, type SoaPool, type SoaSchema } from '../pools/index.js';
 import { LayerId, SpriteFlag, createSpriteBatch, type SpriteBatch } from '../presentation/index.js';
 import {
   FORCE_FIELD,
+  MAX_SHIELD_PODS,
+  SHIELD_SPECS,
+  canGrantShield,
   clearShield,
   grantShield,
+  placeShieldPods,
+  podWearFrame,
+  refillShield,
   shieldActive,
+  shieldFull,
   shieldSpecOf,
   shieldWearFrame,
   tickShield,
@@ -160,7 +186,13 @@ import { MainWeapon, type Loadout } from '../weapons/index.js';
 export const moduleInfo = defineModule({
   name: 'powerups',
   status: 'partial',
-  specRefs: ['shmup_feat.md §6', 'shmup_feat.md §7', 'shmup_feat.md §4', 'shmup_feat.md §11'],
+  specRefs: [
+    'shmup_feat.md §6',
+    'shmup_feat.md §7',
+    'shmup_feat.md §4',
+    'shmup_feat.md §11',
+    'shmup_feat.md §8',
+  ],
 });
 
 /** Darius-style direct items (M2-05). */
@@ -313,10 +345,40 @@ export const MEGA_CRASH_FLASH_TICKS = FLASH_KIND_TICKS[FlashKind.MegaCrash];
 /** The power capsule's sprite (an engine sprite — see core `world` `ENGINE_SPRITES`). */
 export const CAPSULE_SPRITE = 'items/capsule';
 
+/** The blue capsule's sprite (an engine sprite, M2-04). */
+export const BLUE_CAPSULE_SPRITE = 'items/capsule-blue';
+
+/**
+ * Ticks a freed Option drifts before it vanishes (it blinks for the last
+ * {@link ITEM_EXPIRY_BLINK_TICKS}).
+ */
+export const FREE_OPTION_TICKS = 600;
+
+/** Ticks an expiring item blinks before it vanishes. */
+export const ITEM_EXPIRY_BLINK_TICKS = 120;
+
+/**
+ * Drift velocities of freed Options (screen px/tick, `[vx0, vy0, vx1, vy1, …]`): the `n`-th Option
+ * a dead Option Hunter lets go of in a tick takes entry `n mod 8`.
+ */
+export const FREE_OPTION_DRIFT: readonly number[] = Object.freeze([
+  -0.5, -0.6, -0.5, 0.6, -0.9, -0.3, -0.9, 0.3, -0.3, -0.9, -0.3, 0.9, -1.1, 0, -0.2, 0,
+]);
+
 /** Kinds of item. Codes are hashed: append, never renumber. */
 export const ItemKind = {
   /** A meter-mode power capsule. */
   Capsule: 0,
+  /**
+   * The rare blue capsule (M2-04, shmup_feat.md §6A): collecting it destroys every enemy on screen
+   * (not the meter).
+   */
+  BlueCapsule: 1,
+  /**
+   * An Option a dead Option Hunter let go of (M2-04): grey, it drifts with the view for
+   * {@link FREE_OPTION_TICKS} ticks; collecting it gives an Option back.
+   */
+  FreeOption: 2,
 } as const;
 
 /** An {@link ItemKind} code. */
@@ -335,6 +397,8 @@ export interface ItemKindSpec {
 /** Item kinds by {@link ItemKind} code. */
 export const ITEM_KINDS: readonly ItemKindSpec[] = Object.freeze([
   Object.freeze({ sprite: CAPSULE_SPRITE, frames: 2, score: CAPSULE_SCORE }),
+  Object.freeze({ sprite: BLUE_CAPSULE_SPRITE, frames: 2, score: CAPSULE_SCORE }),
+  Object.freeze({ sprite: STOLEN_OPTION_SPRITE, frames: 2, score: 0 }),
 ]);
 
 /** The sprites of every item kind (part of the World's `ENGINE_SPRITES`). */
@@ -354,7 +418,10 @@ export const ITEM_SCHEMA = Object.freeze({
   x: 'f64',
   /** World y of the centre. */
   y: 'f64',
-  /** Own velocity x in world px/tick (0 for capsules: they stay with the terrain). */
+  /**
+   * Own velocity x in px/tick (0 for capsules: they stay with the terrain; a freed Option's drift,
+   * on top of the camera's scroll).
+   */
   vx: 'f64',
   /** Own velocity y. */
   vy: 'f64',
@@ -443,7 +510,7 @@ function canEquipMega(
     case MegaEffect.LifeOption:
       return lifeOptionCount(ship, loadout) > 0;
     case MegaEffect.FullBarrier:
-      return !(shieldActive(ship.shield) && ship.shield.hits >= choices.shield.maxHits);
+      return !(shieldFull(ship.shield) && ship.shield.kind === choices.shield.kind);
     default:
       return true;
   }
@@ -479,7 +546,7 @@ export function canEquipSlot(
     case MeterSlot.Option:
       return loadout.options < MAX_OPTIONS;
     case MeterSlot.Shield:
-      return !shieldActive(ship.shield);
+      return canGrantShield(ship.shield, choices.shield);
     case MeterSlot.Mega:
       return canEquipMega(ship, loadout, choices);
     default:
@@ -521,6 +588,8 @@ export function equippableSlots(
  * @param loadout - The player's loadout.
  * @param maxSpeedLevel - The ship's top speed level.
  * @param choices - What `?` and `!` do (default {@link DEFAULT_METER_CHOICES}).
+ * @param heading - Where a Free Shield pair attaches, in binary units (default 0 = ahead; the
+ *   power-up system passes the player's last 8-way direction — M2-04).
  * @returns Whether it was equipped.
  *
  * @example
@@ -534,6 +603,7 @@ export function equipSlot(
   loadout: Loadout,
   maxSpeedLevel: number,
   choices: Readonly<MeterChoices> = DEFAULT_METER_CHOICES,
+  heading = 0,
 ): boolean {
   if (!canEquipSlot(slot, ship, loadout, maxSpeedLevel, choices)) return false;
   switch (slot) {
@@ -553,10 +623,10 @@ export function equipSlot(
       loadout.options++;
       break;
     case MeterSlot.Shield:
-      grantShield(ship.shield, choices.shield);
+      grantShield(ship.shield, choices.shield, heading);
       break;
     case MeterSlot.Mega:
-      applyMega(ship, loadout, choices);
+      applyMega(ship, loadout, choices, heading);
       break;
     default:
       break;
@@ -570,8 +640,14 @@ export function equipSlot(
  * @param ship - The ship.
  * @param loadout - The loadout.
  * @param choices - The session's choices.
+ * @param heading - Where a fresh Free Shield pair attaches (FULL BARRIER).
  */
-function applyMega(ship: MeterShip, loadout: Loadout, choices: Readonly<MeterChoices>): void {
+function applyMega(
+  ship: MeterShip,
+  loadout: Loadout,
+  choices: Readonly<MeterChoices>,
+  heading: number,
+): void {
   switch (choices.mega) {
     case MegaEffect.Normal:
       loadout.main = MainWeapon.Basic;
@@ -586,7 +662,7 @@ function applyMega(ship: MeterShip, loadout: Loadout, choices: Readonly<MeterCho
       break;
     }
     case MegaEffect.FullBarrier:
-      grantShield(ship.shield, choices.shield);
+      refillShield(ship.shield, choices.shield, heading);
       break;
     default:
       break;
@@ -726,6 +802,14 @@ export interface PowerUpHost {
      * @returns Enemies killed.
      */
     megaCrash(by: number): number;
+    /**
+     * Kills every enemy on screen that is not `megaCrashImmune` (`EnemySystem.clearOnScreen` — the
+     * blue capsule, M2-04).
+     *
+     * @param by - Player credited.
+     * @returns Enemies killed.
+     */
+    clearOnScreen(by: number): number;
   };
   /** The enemy bullets (Mega Crash cancels them). */
   readonly bullets: {
@@ -742,6 +826,11 @@ export interface PowerUpHost {
   readonly weapons: {
     /** One loadout per player slot. */
     readonly loadouts: readonly Loadout[];
+    /**
+     * Per player: the heading of the last 8-way direction held (`WeaponSystem.freeWayHeading`, -1
+     * before any) — where a Free Shield pair attaches (M2-04). Absent: ahead.
+     */
+    readonly freeWayHeading?: Int32Array;
   };
 }
 
@@ -751,7 +840,10 @@ export interface PowerUpSystem {
   readonly pool: SoaPool<ItemSchema>;
   /** The items' mirror batch (`LayerId.Items`). */
   readonly itemBatch: SpriteBatch;
-  /** The shields' mirror batch (`LayerId.Player`, drawn over the ships). */
+  /**
+   * The shields' mirror batch (`LayerId.Player`, drawn over the ships): a field's sprite, or one
+   * sprite per standing pod (M2-04).
+   */
   readonly shieldBatch: SpriteBatch;
   /** One power meter per player slot. */
   readonly meters: readonly PowerMeter[];
@@ -845,8 +937,27 @@ export interface PowerUpSystem {
    */
   detonateMegaCrash(player: number): number;
   /**
+   * The blue capsule's effect (M2-04): every enemy on screen that is not `megaCrashImmune` is
+   * destroyed and credited to the player (`EnemySystem.clearOnScreen` — an Option Hunter among
+   * them lets its Options go), with Mega Crash's flash and sound; bullets and the meter are not
+   * touched. Never allocates.
+   *
+   * @param player - Player slot credited (a bad slot credits nobody).
+   * @returns Enemies destroyed.
+   */
+  clearScreen(player: number): number;
+  /**
+   * A freed Option's effect (M2-04): one more Option (`SFX PowerUpEquip` + `SimEventKind.PowerUp`
+   * for the Option slot), or — with {@link MAX_OPTIONS} already — only the meter ding.
+   *
+   * @param player - Player slot.
+   * @returns Whether an Option was added.
+   */
+  regainOption(player: number): boolean;
+  /**
    * Phase 2, after the ships moved and before the weapons fire: the PowerUp press of every active
-   * ship that is not `dying` / `dead` (pressed edge only). Never allocates.
+   * ship that is not `dying` / `dead` (pressed edge only), then its shield pods are placed round
+   * it (`core/shields` `placeShieldPods`, M2-04) for this tick's collisions. Never allocates.
    */
   updatePlayers(): void;
   /**
@@ -922,8 +1033,12 @@ class PowerUpSystemImpl implements PowerUpSystem {
   private readonly itemFrames: Int32Array;
   /** Score per item kind. */
   private readonly itemScore: Float64Array;
-  /** The Force Field's sprite id (-1 = not drawn). */
-  private readonly shieldSprite: number;
+  /** Sprite id per `ShieldKind` (-1 = not drawn). */
+  private readonly shieldSprites: Int32Array;
+  /** Wear frames per `ShieldKind`. */
+  private readonly shieldFrames: Int32Array;
+  /** Freed Options spawned this tick (picks their drift — {@link FREE_OPTION_DRIFT}). */
+  private freed = 0;
   /** The Auto Power-Up order as {@link MeterSlot} codes. */
   private readonly autoSlots: Int8Array;
   /** Per order entry: how many entries of the same slot up to and including it. */
@@ -950,7 +1065,7 @@ class PowerUpSystemImpl implements PowerUpSystem {
     this.host = host;
     this.pool = host.pools.register('items', createSoaPool(MAX_ITEMS, ITEM_SCHEMA));
     this.itemBatch = createSpriteBatch(LayerId.Items, MAX_ITEMS);
-    this.shieldBatch = createSpriteBatch(LayerId.Player, MAX_PLAYERS);
+    this.shieldBatch = createSpriteBatch(LayerId.Player, MAX_PLAYERS * (1 + MAX_SHIELD_PODS));
     const meters: PowerMeter[] = [];
     for (let p = 0; p < MAX_PLAYERS; p++) meters.push(createPowerMeter());
     this.meters = meters;
@@ -967,7 +1082,15 @@ class PowerUpSystemImpl implements PowerUpSystem {
     }
     const config = host.config;
     this.choices = meterChoicesOf(config);
-    this.shieldSprite = sprites.get(this.choices.shield.sprite) ?? -1;
+    const shieldKinds = SHIELD_SPECS.length;
+    this.shieldSprites = new Int32Array(shieldKinds).fill(-1);
+    this.shieldFrames = new Int32Array(shieldKinds).fill(1);
+    for (let k = 0; k < shieldKinds; k++) {
+      const spec = SHIELD_SPECS[k];
+      if (spec === null) continue;
+      this.shieldSprites[k] = sprites.get(spec.sprite) ?? -1;
+      this.shieldFrames[k] = spec.wearFrames;
+    }
     const speeds = host.ship.speeds;
     this.maxSpeedLevel = speeds.length > 0 ? speeds.length - 1 : 0;
     this.boxHw = host.ship.pickupBox.hw;
@@ -1108,13 +1231,34 @@ class PowerUpSystemImpl implements PowerUpSystem {
    */
   private equip(player: number, slot: number): void {
     const ship = this.host.players[player];
-    equipSlot(slot, ship, this.host.weapons.loadouts[player], this.maxSpeedLevel, this.choices);
+    equipSlot(
+      slot,
+      ship,
+      this.host.weapons.loadouts[player],
+      this.maxSpeedLevel,
+      this.choices,
+      this.headingOf(player),
+    );
     if (slot === MeterSlot.Mega && this.choices.mega === MegaEffect.MegaCrash) {
       this.megaPending[player] = 1;
     }
     this.meters[player].cursor = -1;
     this.pushAtShip(SimEventKind.Sfx, SFX_CUES.PowerUpEquip, ship, 0);
     this.pushAtShip(SimEventKind.PowerUp, slot, ship, player);
+  }
+
+  /**
+   * Where a Free Shield pair of a player attaches: the last 8-way direction the player held
+   * (`WeaponSystem.freeWayHeading`), ahead before any.
+   *
+   * @param player - Player slot (valid).
+   * @returns Binary units.
+   */
+  private headingOf(player: number): number {
+    const headings = this.host.weapons.freeWayHeading;
+    if (headings === undefined || player >= headings.length) return 0;
+    const heading = headings[player];
+    return heading >= 0 ? heading : 0;
   }
 
   /**
@@ -1167,6 +1311,8 @@ class PowerUpSystemImpl implements PowerUpSystem {
       if (p < intents.length && (intents[p].pressed & Action.PowerUp) !== 0) {
         this.equipHighlighted(p);
       }
+      // The pods sit where this tick's collisions test them (after the move and the equip).
+      placeShieldPods(ship.shield, ship);
     }
   }
 
@@ -1174,6 +1320,7 @@ class PowerUpSystemImpl implements PowerUpSystem {
   beginTick(): void {
     this.takeDrops();
     this.dropsTaken = 0;
+    this.freed = 0;
   }
 
   /**
@@ -1183,8 +1330,20 @@ class PowerUpSystemImpl implements PowerUpSystem {
     const o = this.host.enemies.outcomes;
     const n = o.dropCount;
     for (let d = this.dropsTaken; d < n; d++) {
-      if (o.dropKind[d] === DropKind.Capsule)
+      const kind = o.dropKind[d];
+      if (kind === DropKind.Capsule) {
         this.spawnItem(ItemKind.Capsule, o.dropX[d], o.dropY[d]);
+      } else if (kind === DropKind.BlueCapsule) {
+        this.spawnItem(ItemKind.BlueCapsule, o.dropX[d], o.dropY[d]);
+      } else if (kind === DropKind.FreeOption) {
+        const i = this.spawnItem(ItemKind.FreeOption, o.dropX[d], o.dropY[d]);
+        if (i >= 0) {
+          const k = (this.freed & 7) * 2;
+          this.pool.fields.vx[i] = FREE_OPTION_DRIFT[k];
+          this.pool.fields.vy[i] = FREE_OPTION_DRIFT[k + 1];
+          this.freed++;
+        }
+      }
     }
     if (n > this.dropsTaken) this.dropsTaken = n;
   }
@@ -1214,12 +1373,32 @@ class PowerUpSystemImpl implements PowerUpSystem {
     const hw = this.boxHw;
     const hh = this.boxHh;
     const reach = ITEM_RADIUS + PICKUP_MAGNET_RANGE;
+    const dx = camera.dx;
+    const dy = camera.dy;
     for (let i = 0; i < n; i++) {
       let flags = f.flags[i];
       if ((flags & ItemFlag.Dead) !== 0) continue;
       f.age[i]++;
       let x = f.x[i] + f.vx[i];
       let y = f.y[i] + f.vy[i];
+      if (f.kind[i] === ItemKind.FreeOption) {
+        // A freed Option drifts with the view and bounces off its top and bottom (M2-04).
+        x += dx;
+        y += dy;
+        const vy = f.vy[i];
+        if (
+          (y < top + ITEM_CULL_MARGIN + ITEM_RADIUS && vy < 0) ||
+          (y > bottom - ITEM_CULL_MARGIN - ITEM_RADIUS && vy > 0)
+        ) {
+          f.vy[i] = -vy;
+        }
+        if (f.age[i] >= FREE_OPTION_TICKS) {
+          f.x[i] = x;
+          f.y[i] = y;
+          this.kill(i);
+          continue;
+        }
+      }
       flags &= ~ItemFlag.Magnet;
       if (magnet) {
         // The nearest alive ship whose pickup box is within reach pulls the item.
@@ -1307,7 +1486,10 @@ class PowerUpSystemImpl implements PowerUpSystem {
   resolve(): void {
     const o = this.outcomes;
     for (let k = 0; k < o.pickupCount; k++) {
-      if (o.pickupKind[k] === ItemKind.Capsule) this.collect(o.pickupPlayer[k]);
+      const kind = o.pickupKind[k];
+      if (kind === ItemKind.Capsule) this.collect(o.pickupPlayer[k]);
+      else if (kind === ItemKind.BlueCapsule) this.clearScreen(o.pickupPlayer[k]);
+      else if (kind === ItemKind.FreeOption) this.regainOption(o.pickupPlayer[k]);
     }
     const pending = this.megaPending;
     for (let p = 0; p < pending.length; p++) {
@@ -1333,6 +1515,32 @@ class PowerUpSystemImpl implements PowerUpSystem {
     this.takeDrops();
   }
 
+  /** See {@link PowerUpSystem.clearScreen}. */
+  clearScreen(player: number): number {
+    const host = this.host;
+    const by = this.valid(player) ? player : -1;
+    const killed = host.enemies.clearOnScreen(by);
+    requestFlash(host, FlashKind.MegaCrash);
+    if (by >= 0) this.pushAtShip(SimEventKind.Sfx, SFX_CUES.MegaCrash, host.players[by], 0);
+    else host.events.push(SimEventKind.Sfx, SFX_CUES.MegaCrash, 0, 0, 0);
+    return killed;
+  }
+
+  /** See {@link PowerUpSystem.regainOption}. */
+  regainOption(player: number): boolean {
+    if (!this.valid(player)) return false;
+    const ship = this.host.players[player];
+    const loadout = this.host.weapons.loadouts[player];
+    if (loadout.options >= MAX_OPTIONS) {
+      this.pushAtShip(SimEventKind.Sfx, SFX_CUES.MeterAdvance, ship, 0);
+      return false;
+    }
+    loadout.options++;
+    this.pushAtShip(SimEventKind.Sfx, SFX_CUES.PowerUpEquip, ship, 0);
+    this.pushAtShip(SimEventKind.PowerUp, MeterSlot.Option, ship, player);
+    return true;
+  }
+
   /** See {@link PowerUpSystem.sync}. */
   sync(): void {
     const items = this.itemBatch;
@@ -1348,35 +1556,57 @@ class PowerUpSystemImpl implements PowerUpSystem {
       const slot = items.count;
       if (slot >= items.capacity) break;
       const frames = this.itemFrames[kind];
+      // A freed Option blinks through its last ticks.
+      const expiring =
+        kind === ItemKind.FreeOption &&
+        f.age[i] >= FREE_OPTION_TICKS - ITEM_EXPIRY_BLINK_TICKS &&
+        (f.age[i] & 4) !== 0;
       items.x[slot] = f.x[i];
       items.y[slot] = f.y[i];
       items.spriteId[slot] = sprite;
       items.frame[slot] = frames > 1 ? Math.floor(blink / ITEM_BLINK_TICKS) % frames : 0;
-      items.flags[slot] = 0;
+      items.flags[slot] = expiring ? SpriteFlag.Hidden : 0;
       items.count = slot + 1;
     }
     const shields = this.shieldBatch;
     shields.count = 0;
-    const sprite = this.shieldSprite;
-    if (sprite < 0) return;
     const players = this.host.players;
     for (let p = 0; p < players.length; p++) {
       const ship = players[p];
       if (!ship.active || ship.state === 'dying' || ship.state === 'dead') continue;
       const shield = ship.shield;
       if (!shieldActive(shield)) continue;
-      const slot = shields.count;
-      if (slot >= shields.capacity) break;
+      const sprite = this.shieldSprites[shield.kind];
+      if (sprite < 0) continue;
+      const frames = this.shieldFrames[shield.kind];
       // Blinks with the ship's invulnerability and during its own shield-hit i-frames.
-      const hidden =
-        (ship.invulnTicks > 0 && (ship.invulnTicks & 4) !== 0) ||
-        (shield.iFrames > 0 && (shield.iFrames & 2) !== 0);
-      shields.x[slot] = ship.x;
-      shields.y[slot] = ship.y;
-      shields.spriteId[slot] = sprite;
-      shields.frame[slot] = shieldWearFrame(shield, this.choices.shield.wearFrames);
-      shields.flags[slot] = hidden ? SpriteFlag.Hidden : 0;
-      shields.count = slot + 1;
+      const blinking = ship.invulnTicks > 0 && (ship.invulnTicks & 4) !== 0;
+      if (shield.podCount === 0) {
+        const slot = shields.count;
+        if (slot >= shields.capacity) break;
+        const hidden = blinking || (shield.iFrames > 0 && (shield.iFrames & 2) !== 0);
+        shields.x[slot] = ship.x;
+        shields.y[slot] = ship.y;
+        shields.spriteId[slot] = sprite;
+        shields.frame[slot] = shieldWearFrame(shield, frames);
+        shields.flags[slot] = hidden ? SpriteFlag.Hidden : 0;
+        shields.count = slot + 1;
+        continue;
+      }
+      // Pods: one sprite each, where they are after this tick's spin (M2-04).
+      placeShieldPods(shield, ship);
+      for (let k = 0; k < shield.podCount; k++) {
+        if (shield.podHits[k] <= 0) continue;
+        const slot = shields.count;
+        if (slot >= shields.capacity) return;
+        const pi = shield.podIFrames[k];
+        shields.x[slot] = shield.podX[k];
+        shields.y[slot] = shield.podY[k];
+        shields.spriteId[slot] = sprite;
+        shields.frame[slot] = podWearFrame(shield, k, frames);
+        shields.flags[slot] = blinking || (pi > 0 && (pi & 2) !== 0) ? SpriteFlag.Hidden : 0;
+        shields.count = slot + 1;
+      }
     }
   }
 
@@ -1385,6 +1615,7 @@ class PowerUpSystemImpl implements PowerUpSystem {
     this.outcomes.pickupCount = 0;
     this.megaPending.fill(0);
     this.dropsTaken = 0;
+    this.freed = 0;
     this.itemBatch.count = 0;
     this.shieldBatch.count = 0;
   }

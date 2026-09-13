@@ -75,6 +75,16 @@
  * power-up system applies its `!` / `?` choices; a `'full'` starting loadout grants the `?`
  * choice's shield (at creation and on a continue).
  *
+ * **Option types, meter shields, Option Hunter (M2-04).** The option groups fly the config's
+ * `optionChoice` (trail, Snake, Formation, Rotate — steered by the players' hold / toggle in
+ * phase 2); the `?` slot grants its `shieldChoice` — pods are placed round their ship in phase 2,
+ * stop the bullets (phase 6, `core/bullets`) and bodies (`core/enemies`) that touch them, and Reduce
+ * shrinks every hurt-circle test; in phase 7, after the shots' hits, the Option Hunters take the
+ * Options they touch (`EnemySystem.huntOptions`) before the power-ups (whose Mega Crash, or a blue
+ * capsule, may free them again as drifting items). The rank's power term counts Reduce +2 instead
+ * of a shield's +4. The view carries the Options a hunter carries as the last batch
+ * (`EnemySystem.carriedBatch`).
+ *
  * **Player weapons (M1-10).** {@link World.weapons} (`core/weapons`, Options from `core/options`)
  * owns the `playerShots` pool, one loadout (`config.loadout` at creation) and one option group per
  * player: after the ships move in phase 2 the option trails advance and every shooter (ship and
@@ -206,7 +216,7 @@ import {
   type PowerUpSystem,
 } from '../powerups/index.js';
 import { createScoringSystem, markContinue, type ScoringSystem } from '../scoring/index.js';
-import { FORCE_FIELD_SPRITE, shieldActive, shieldSpecOf } from '../shields/index.js';
+import { SHIELD_SPRITES, ShieldKind, shieldActive, shieldSpecOf } from '../shields/index.js';
 import {
   MainWeapon,
   WEAPON_SPRITES,
@@ -749,7 +759,8 @@ function terrainSystem(world: World, terrain: TerrainMap): void {
 
 /**
  * Phase 7: applies the player shots' hits (damage, deaths, drops, kill records — `core/weapons`;
- * boss parts through `core/bosses`), then the boss's phase changes, then the power-ups
+ * boss parts through `core/bosses`), then the boss's phase changes, then the Option Hunters take
+ * the Options they touch (`EnemySystem.huntOptions`, M2-04), then the power-ups
  * (`core/powerups`: pickups and Auto Power-Up, Mega Crash, shield feedback, capsules from the
  * tick's drops), then credits the tick's score (`core/scoring`), then starts the death sequence
  * of every ship hit this tick.
@@ -759,6 +770,7 @@ function terrainSystem(world: World, terrain: TerrainMap): void {
 const damageSystem: WorldSystem = (world) => {
   world.weapons.applyHits();
   world.bosses.resolve();
+  world.enemies.huntOptions();
   world.powerups.resolve();
   world.scoring.resolve();
   const players = world.players;
@@ -773,7 +785,8 @@ const damageSystem: WorldSystem = (world) => {
 /**
  * Recomputes the World's rank (shmup_feat.md §15): the power term of the most powerful active
  * ship — dying, dead and respawning ones included (see the remarks) — (`core/rank` `powerRank`:
- * Missile +1, Double +2, Laser +3, each Option +1, a shield +4) goes into
+ * Missile +1, Double +2, Laser +3, each Option +1, a shield +4 — Reduce +2 instead, M2-04) goes
+ * into
  * {@link World.rankInputs}, `computeRank` gives the rank, and a
  * changed rank is handed to the bullet system (`BulletSystem.setRank` — the curves are only
  * evaluated then). The World calls it at the end of phase 3; call it after changing
@@ -802,13 +815,15 @@ export function updateWorldRank(world: World): number {
     if (!ship.active) continue;
     const loadout = loadouts[i];
     const main = loadout.main;
+    const shielded = shieldActive(ship.shield);
+    const reduced = shielded && ship.shield.kind === ShieldKind.Reduce;
     const p = powerRank(
       loadout.missile ? 1 : 0,
       main === MainWeapon.Double ? 1 : 0,
       main === MainWeapon.Laser ? 1 : 0,
       loadout.options,
-      shieldActive(ship.shield) ? 1 : 0,
-      0,
+      shielded && !reduced ? 1 : 0,
+      reduced ? 1 : 0,
     );
     if (p > power) power = p;
   }
@@ -1065,9 +1080,10 @@ type WorldUnderConstruction = Omit<
  * laser beam, the bending laser segment and the cancel point item (`core/bullets`
  * `BULLET_SPRITES`; the last two since M2-02), the Spread Bomb's blast (`core/weapons`
  * `WEAPON_SPRITES`, M2-03), the Option (`core/options` `OPTION_SPRITE`), the
- * items (`core/powerups` `ITEM_SPRITES`: the power capsule) and the Force Field
- * (`core/shields` `FORCE_FIELD_SPRITE`), plus the HUD pieces and the title logo the scene flow
- * draws (`core/ui` `UI_SPRITES`, M1-16). Hosts pass it as `loadContent`'s `extraSprites` (the
+ * items (`core/powerups` `ITEM_SPRITES`: the power capsule, the blue capsule and the grey stolen
+ * Option — M2-04, also the Option Hunter's carried ones) and the shields (`core/shields`
+ * `SHIELD_SPRITES`: the Force Field, the shield pod and Reduce's shimmer — M2-04), plus the
+ * HUD pieces and the title logo the scene flow draws (`core/ui` `UI_SPRITES`, M1-16). Hosts pass it as `loadContent`'s `extraSprites` (the
  * shell's loader does by default) so the World and the scenes can resolve their sprite ids and
  * `pnpm content:check` verifies them against the atlas.
  */
@@ -1076,7 +1092,7 @@ export const ENGINE_SPRITES: readonly string[] = Object.freeze([
   ...WEAPON_SPRITES,
   OPTION_SPRITE,
   ...ITEM_SPRITES,
-  FORCE_FIELD_SPRITE,
+  ...SHIELD_SPRITES,
   ...UI_SPRITES,
 ]);
 
@@ -1206,6 +1222,7 @@ export function createWorld(
     world.powerups.itemBatch,
     world.bullets.pointBatch,
     world.bosses.batch,
+    world.enemies.carriedBatch,
   );
   view.lasers = world.bullets.laserView;
   view.bendingLasers = world.bullets.bending;

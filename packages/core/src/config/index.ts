@@ -5,8 +5,8 @@
  * resolution, tick rate, seed and every *sim-affecting* option (difficulty, power-up
  * model, death penalty, lives, autofire and its intervals, remote mode, the stage, the starting
  * loadout, Auto Power-Up and its order, the pickup magnet, the weapon preset / Weapon Edit and the
- * `!` / `?` slot choices of the weapon select — M2-03). Everything here is copied into replay
- * headers, so it must stay plain serialisable data.
+ * `!` / `?` slot choices of the weapon select — M2-03 — and the Option type, M2-04). Everything
+ * here is copied into replay headers, so it must stay plain serialisable data.
  *
  * **Implements.**
  * - shmup_feat.md §2 (design forks: Meter vs Direct, death-penalty presets, difficulty)
@@ -18,6 +18,7 @@
  *   magnet — D33)
  * - shmup_feat.md §7A (the preset loadouts Types A–D, Weapon Edit, the `!` slot choices) and §16
  *   (the weapon select that sets them) — M2-03
+ * - shmup_feat.md §8 (the Option types) and §9 (the meter-mode `?` shields) — M2-04
  * - shmup_feat.md §21 Options menu — audio master / music / SFX sliders, the controls profile
  *   (the presentation-only {@link UserOptions})
  *
@@ -32,7 +33,8 @@
  * {@link DEFAULT_AUTO_POWER_UP_ORDER}, {@link MAX_AUTO_POWER_UP_ORDER}), the meter arsenal of
  * M2-03 ({@link MegaChoice}, {@link MEGA_CHOICES}, {@link ShieldChoice}, {@link SHIELD_CHOICES},
  * {@link WeaponEdit}, {@link WEAPON_EDIT_SLOTS}, {@link ArsenalChoice}, {@link withArsenal},
- * {@link arsenalMatches}) and the screen layout constants {@link HUD_BAR_HEIGHT},
+ * {@link arsenalMatches}; M2-04: {@link OptionChoice}, {@link OPTION_CHOICES}) and the screen
+ * layout constants {@link HUD_BAR_HEIGHT},
  * {@link PLAYFIELD_Y}, {@link PLAYFIELD_W}, {@link PLAYFIELD_H} (decision D20: two 8-px HUD bars
  * outside a 384×200 playfield). User options: {@link UserOptions}, {@link AudioOptions}, {@link InputOptions}, {@link DisplayOptions},
  * {@link DEFAULT_USER_OPTIONS}, {@link VOLUME_LEVELS}, {@link volumeGain},
@@ -78,6 +80,8 @@ export const moduleInfo = defineModule({
     'shmup_feat.md §6',
     'shmup_feat.md §7',
     'shmup_feat.md §16',
+    'shmup_feat.md §8',
+    'shmup_feat.md §9',
   ],
 });
 
@@ -282,15 +286,45 @@ export const MEGA_CHOICES: readonly MegaChoice[] = Object.freeze([
 ] as MegaChoice[]);
 
 /**
- * What the meter's `?` slot grants (shmup_feat.md §9 meter-mode shields). The Force Field of M1-11
- * is the only one until M2-04 appends the front pods, Free / Rotate Shield and Reduce.
+ * What the meter's `?` slot grants (shmup_feat.md §9 meter-mode shields; `core/shields` maps each
+ * to its spec):
+ *
+ * - `forceField` — the barrier round the ship (M1-11; the default);
+ * - `shield` — two front pods at the nose, each wearing out on its own (M2-04);
+ * - `freeShield` — pods attached where the ship last flew towards; `?` adds a pair each time
+ *   (M2-04);
+ * - `rotateShield` — two pods orbiting the ship (M2-04);
+ * - `reduce` — the ship's hurtbox shrinks two steps and grows back one per hit (M2-04).
  */
-export type ShieldChoice = 'forceField';
+export type ShieldChoice = 'forceField' | 'shield' | 'freeShield' | 'rotateShield' | 'reduce';
 
 /** Every {@link ShieldChoice}, in menu order (`core/shields` `shieldSpecOf` maps them to specs). */
 export const SHIELD_CHOICES: readonly ShieldChoice[] = Object.freeze([
   'forceField',
+  'shield',
+  'freeShield',
+  'rotateShield',
+  'reduce',
 ] as ShieldChoice[]);
+
+/**
+ * How the meter's Options fly (shmup_feat.md §8, plan M2-04; `core/options`):
+ *
+ * - `trail` — follow the ship's flown path (M1-10; the default);
+ * - `snake` — a chain pulled along behind the ship, away from where it moves, that keeps its shape
+ *   when the ship stops;
+ * - `formation` — a fixed `>` behind the ship that spreads into a wide `V`;
+ * - `rotate` — orbiting the ship, the orbit widening when extended.
+ */
+export type OptionChoice = 'trail' | 'snake' | 'formation' | 'rotate';
+
+/** Every {@link OptionChoice}, in menu order (the index is `core/options` `OptionMode`'s code). */
+export const OPTION_CHOICES: readonly OptionChoice[] = Object.freeze([
+  'trail',
+  'snake',
+  'formation',
+  'rotate',
+] as OptionChoice[]);
 
 /**
  * Weapon Edit (shmup_feat.md §7A "Weapon Edit", plan M2-03): the weapon of each of the meter's
@@ -320,6 +354,7 @@ export type ArsenalChoice = Partial<
     | 'weaponEdit'
     | 'megaChoice'
     | 'shieldChoice'
+    | 'optionChoice'
     | 'autoPowerUp'
     | 'autoPowerUpOrder'
   >
@@ -452,6 +487,11 @@ export interface GameConfig {
   readonly megaChoice: MegaChoice;
   /** What the `?` slot grants ({@link ShieldChoice}; default `forceField`). */
   readonly shieldChoice: ShieldChoice;
+  /**
+   * How the Options fly ({@link OptionChoice}; default `trail` — plan M2-04). Chosen in the weapon
+   * select with the loadout; session-wide (both players).
+   */
+  readonly optionChoice: OptionChoice;
 }
 
 /** Height in pixels of each HUD bar outside the playfield (decision D20). */
@@ -472,8 +512,8 @@ export const PLAYFIELD_H = 200;
 /**
  * Defaults: remote-first, Normal difficulty (its {@link DEFAULT_DIFFICULTY_TABLE} row: rank base 2,
  * growth 1, 3 lives, extends at 20,000 / every 70,000, 3 continues, Classic death penalty, 32 aim
- * directions, bullet speed × 1), the power meter with Type A, Mega Crash on `!` and the Force Field
- * on `?`.
+ * directions, bullet speed × 1), the power meter with Type A, Mega Crash on `!`, the Force Field
+ * on `?` and trailing Options.
  */
 export const DEFAULT_GAME_CONFIG: GameConfig = Object.freeze({
   internalWidth: 384,
@@ -506,6 +546,7 @@ export const DEFAULT_GAME_CONFIG: GameConfig = Object.freeze({
   weaponEdit: null,
   megaChoice: 'megaCrash',
   shieldChoice: 'forceField',
+  optionChoice: 'trail',
 });
 
 /**
@@ -597,8 +638,8 @@ export function withDifficulty(
  * {@link MeterSlotName}s — the result holds a frozen copy of it; `weaponPreset` must be a non-empty
  * string (whether the content has it is `core/weapons`' business), `weaponEdit` `null` or an object
  * of three non-empty weapon ids (frozen copy), `megaChoice` a {@link MegaChoice} and `shieldChoice`
- * a {@link ShieldChoice} (M2-03). Other string presets and booleans are not validated at runtime —
- * the types cover them.
+ * a {@link ShieldChoice} (M2-03), `optionChoice` an {@link OptionChoice} (M2-04). Other string
+ * presets and booleans are not validated at runtime — the types cover them.
  *
  * @param overrides - Fields to change.
  * @param table - The difficulty table the preset fields come from (default
@@ -610,7 +651,7 @@ export function withDifficulty(
  *   `stageSkip` is not a {@link StageSkip}, `loadout` is not a {@link StartingLoadout},
  *   `powerUpMode` is not `'meter'`,
  *   `autoPowerUpOrder` is not an array of meter slot names (or is too long), or `weaponPreset`,
- *   `weaponEdit`, `megaChoice` or `shieldChoice` is malformed.
+ *   `weaponEdit`, `megaChoice`, `shieldChoice` or `optionChoice` is malformed.
  *
  * @example
  * ```ts
@@ -715,6 +756,12 @@ export function resolveGameConfig(
       `GameConfig.shieldChoice must be one of ${SHIELD_CHOICES.join(', ')}, got ${String(shield)}`,
     );
   }
+  const option: unknown = config.optionChoice;
+  if (OPTION_CHOICES.indexOf(option as OptionChoice) < 0) {
+    throw new RangeError(
+      `GameConfig.optionChoice must be one of ${OPTION_CHOICES.join(', ')}, got ${String(option)}`,
+    );
+  }
   const resolved: GameConfig = {
     ...config,
     autoPowerUpOrder:
@@ -770,6 +817,9 @@ export function arsenalMatches(config: GameConfig, arsenal: ArsenalChoice): bool
   if (arsenal.shieldChoice !== undefined && arsenal.shieldChoice !== config.shieldChoice) {
     return false;
   }
+  if (arsenal.optionChoice !== undefined && arsenal.optionChoice !== config.optionChoice) {
+    return false;
+  }
   if (arsenal.autoPowerUp !== undefined && arsenal.autoPowerUp !== config.autoPowerUp) {
     return false;
   }
@@ -797,7 +847,8 @@ export function arsenalMatches(config: GameConfig, arsenal: ArsenalChoice): bool
 
 /**
  * Applies the weapon select's loadout choice to a resolved config (plan M2-03): the preset,
- * Weapon Edit, the `!` and `?` choices and Auto Power-Up with its order; everything else stays.
+ * Weapon Edit, the `!` and `?` choices, the Option type (M2-04) and Auto Power-Up with its order;
+ * everything else stays.
  *
  * @param config - A resolved config.
  * @param arsenal - The fields to change ({@link ArsenalChoice}).

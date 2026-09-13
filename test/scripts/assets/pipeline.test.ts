@@ -182,8 +182,9 @@ describe('scripts/assets/pipeline — buildAtlas', () => {
     const enemies = Object.keys(manifest.sprites).filter(
       (n) => n.startsWith('enemies/') && !n.endsWith('@flash'),
     );
-    // The six initial enemies, the ground hatch of M1-08 and zone A's vane and gyre (M1-18).
-    expect(enemies).toHaveLength(9);
+    // The six initial enemies, the ground hatch of M1-08, zone A's vane and gyre (M1-18), the
+    // blue carrier and the Option Hunter (M2-04).
+    expect(enemies).toHaveLength(11);
     expect(count('enemies/hatch')).toBe(2);
     expect(manifest.sprites['enemies/hatch'].flash).toBe('enemies/hatch@flash');
     for (const part of ['core', 'shield-plate', 'hull-block', 'emitter']) {

@@ -47,7 +47,8 @@
       "weaponPreset": "type-a",
       "weaponEdit": null,
       "megaChoice": "megaCrash",
-      "shieldChoice": "forceField"
+      "shieldChoice": "forceField",
+      "optionChoice": "trail"
     }
   },
   "ticks": 908,
@@ -57,9 +58,9 @@
     "AIwH"
   ],
   "hashes": [
-    642216727
+    2332100979
   ],
-  "finalHash": 4010613967,
+  "finalHash": 3920705227,
   "description": "the stage skip to HALCYON BULWARK with the full loadout and the Arcade penalty",
   "expected": {
     "status": "stageClear",

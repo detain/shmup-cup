@@ -320,7 +320,7 @@ describe('core/powerups edge — meter helpers', () => {
     });
     expect(Object.isFrozen(ITEM_KINDS)).toBe(true);
     expect(Object.isFrozen(ITEM_KINDS[0])).toBe(true);
-    expect(ITEM_SPRITES).toEqual(['items/capsule']);
+    expect(ITEM_SPRITES).toEqual(['items/capsule', 'items/capsule-blue', 'options/stolen']);
     expect(ENGINE_SPRITES).toContain(CAPSULE_SPRITE);
     expect(Object.keys(ITEM_SCHEMA).sort()).toEqual(['age', 'flags', 'kind', 'vx', 'vy', 'x', 'y']);
     expect(meterSlotOf('bogus' as MeterSlotName)).toBe(-1);

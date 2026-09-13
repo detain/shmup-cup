@@ -175,6 +175,8 @@ function referenceHash(w: World): number {
     num(e.pathId);
     num(e.camX);
     num(e.camY);
+    // The Options an Option Hunter carries (M2-04).
+    num(e.carried);
   }
   const f = w.enemies.formations;
   for (let slot = 0; slot < f.active.length; slot++) {
@@ -213,6 +215,13 @@ function referenceHash(w: World): number {
     num(g.stolen);
     num(g.head);
     for (const array of [g.trailX, g.trailY, g.x, g.y]) for (const value of array) num(value);
+    // The Option types (M2-04): type, spread, toggle, hold, orbit angle, Snake links.
+    word(g.mode);
+    num(g.spreadTicks);
+    word(g.toggled ? 1 : 0);
+    num(g.holdTicks);
+    num(g.angle);
+    for (const array of [g.snakeX, g.snakeY]) for (const value of array) num(value);
   }
   for (const value of weapons.timers) num(value);
   // The Free Way's last direction per player (M2-03).
@@ -238,6 +247,15 @@ function referenceHash(w: World): number {
     num(shield.hitTick);
     num(shield.brokeTick);
     num(shield.absorbed);
+    // Reduce's hurt scale and the pods (M2-04).
+    num(shield.hurtScale);
+    num(shield.podCount);
+    num(shield.podMaxHits);
+    num(shield.podOrbit);
+    num(shield.spin);
+    for (const array of [shield.podHits, shield.podAngle, shield.podIFrames, shield.podHitTick]) {
+      for (const value of array) num(value);
+    }
   }
   num(powerups.dropsTaken);
   // Effect timers and scores (M1-12) — not the session hi-score.

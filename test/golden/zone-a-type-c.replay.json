@@ -47,7 +47,8 @@
       "weaponPreset": "type-c",
       "weaponEdit": null,
       "megaChoice": "speedDown",
-      "shieldChoice": "forceField"
+      "shieldChoice": "forceField",
+      "optionChoice": "trail"
     }
   },
   "ticks": 900,
@@ -57,9 +58,9 @@
     "AIQH"
   ],
   "hashes": [
-    3673280682
+    4222856795
   ],
-  "finalHash": 2463940670,
+  "finalHash": 3202483131,
   "description": "HALCYON BULWARK with a full Type C loadout (M2-03): Cyclone Laser, 2-Way Missile, Vertical, SPEED DOWN on `!`",
   "expected": {
     "status": "stageClear",

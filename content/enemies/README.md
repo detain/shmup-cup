@@ -19,7 +19,11 @@ alternating attached lane lasers, aimed 3-ways once two plates are down). Zone A
 `test-sentry.enemies.json` holds the `sentry`, which runs the `common.spiral` DSL pattern
 (`pattern.loop`, M2-02). `weapon-range.enemies.json` (M2-03) holds the harmless targets of the
 weapon select's live preview — `range-drone` (a slow sine flier) and the floor / ceiling
-`range-post`s — none of which fires, drops or scores.
+`range-post`s — none of which fires, drops or scores. `option-hunters.enemies.json` (M2-04) holds
+the three Option Hunters — `option-hunter-rear` (lines up behind the player on its row and
+charges right), `option-hunter-front` (from ahead, charging left) and `option-hunter-dive` (over
+the player's column, diving down) — flown by the `hunter-range` dev stage, which also brings the
+rare blue carrier (`carrier-blue` in `test-range.enemies.json`).
 
 ## Format (formatVersion 1)
 
@@ -38,11 +42,12 @@ weapon select's live preview — `range-drone` (a slow sine flier) and the floor
       "anim": { "frames": 2, "ticks": 8 }, // optional: loop frames 0…1, 8 ticks each (default: frame 0)
       "params": { "amp": 20 },         // optional: behaviour tunables by name (defaults in core/behaviors)
       "mover": { "type": "sine", "vx": -1, "amp": 16, "period": 90 }, // optional starting mover
-      "drop": null,                    // "capsule" | null
+      "drop": null,                    // "capsule" | "blueCapsule" | null
       "ground": null,                  // optional: "floor" | "ceiling" | null (flying, default)
       "settleTicks": 30,               // optional: ticks on screen before it may fire (default 30)
       "explosion": "small",            // optional: "small" (default) | "medium" | "large"
       "megaCrashImmune": false,        // optional: survives the Mega Crash (default false)
+      "optionHunter": false,           // optional: an Option Hunter (M2-04; default false)
       "child": null,                   // optional: enemy id a spawner releases (hatch.spawner)
       "pattern": null,                 // optional: content/patterns/ action the pattern.loop behaviour runs
       "rank": { "fireRate": 0.5 },     // optional rank modifiers (§11, §15; default 1 each)
@@ -67,7 +72,9 @@ flier: the leader flies the spawn event's path, the others follow its track), `c
 mover, then dashes at the player), `orbiter.loop` (loops along the spawn event's path, firing
 rings — `ringTicks`, `ringCount`, `bulletSpeed`), and since M2-02 `pattern.loop` (runs the
 enemy's `pattern` — a [`content/patterns/`](../patterns/README.md) DSL action — over and over,
-`restTicks` apart; it moves with its `mover`). Their tunables and defaults are listed in
+`restTicks` apart; it moves with its `mover`), and since M2-04 `hunter.option` (the Option
+Hunter: `variant` 0 rear / 1 front / 2 dive, `lineUpTicks`, `speed`, `windup`, `chargeSpeed`,
+`lineX`, `lineY`). Their tunables and defaults are listed in
 `packages/core/src/behaviors`. Bullet speeds are px/tick on Normal (rank scales them) and fire
 intervals are ticks on Normal.
 
@@ -90,9 +97,18 @@ enemy revenge ("suicide") bullets: shot down on screen by a player at a rank of 
 revenge bullets. Bosses take neither field.
 
 **Drops and Mega Crash.** `"drop": "capsule"` makes the enemy leave a power capsule where it
-dies (the player's power meter — `docs/dev/powerups-and-shields.md`); `"megaCrashImmune": true`
-lets it survive the meter's `!` slot (Mega Crash), which destroys every other enemy — armour
-included.
+dies (the player's power meter — `docs/dev/powerups-and-shields.md`); `"drop": "blueCapsule"`
+(M2-04) the rare blue capsule, which destroys every enemy on screen when collected (keep it
+rare). `"megaCrashImmune": true` lets it survive the meter's `!` slot (Mega Crash) and the blue
+capsule, which destroy every other enemy — armour included.
+
+**Option Hunters (M2-04).** `"optionHunter": true` makes the enemy an Option Hunter
+(`shmup_feat.md` §8, §11): a stage event spawns it only while some ship has an Option (it simply
+does not come otherwise) and it arrives with an alarm; it is armoured (shots clink), never hurts
+the ship, and takes every Option it touches (the first one and all behind it) — carrying them,
+grey, until it leaves the view (they are lost) or dies to a Mega Crash or a blue capsule (they
+drift free and can be picked up again). Give it the `hunter.option` behaviour, a generous
+hurtbox and no `megaCrashImmune`.
 
 Several files may exist (e.g. one per theme); ids must be unique across all of them.
 Formation-kill drops and bonuses are configured on the stage event (`formation`), not here.

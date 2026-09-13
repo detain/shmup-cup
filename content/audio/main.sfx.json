@@ -355,6 +355,38 @@
         "bitCrush": 4,
         "seed": 33
       }
+    },
+    "OptionHunter": {
+      "priority": "high",
+      "maxInstances": 1,
+      "volume": 0.45,
+      "params": {
+        "shape": "saw",
+        "frequency": 520,
+        "slide": 900,
+        "modulation": 9,
+        "modulationDepth": 0.25,
+        "attack": 0.02,
+        "sustain": 0.36,
+        "release": 0.12,
+        "tremolo": 0.3,
+        "tremoloRate": 18,
+        "seed": 34
+      }
+    },
+    "OptionStolen": {
+      "priority": "high",
+      "maxInstances": 1,
+      "volume": 0.4,
+      "params": {
+        "shape": "triangle",
+        "frequency": 980,
+        "slide": -2400,
+        "sustain": 0.1,
+        "release": 0.14,
+        "bitCrush": 3,
+        "seed": 35
+      }
     }
   }
 }

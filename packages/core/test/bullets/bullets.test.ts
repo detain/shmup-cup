@@ -212,7 +212,12 @@ describe('core/bullets', () => {
       'shots/blast',
       'options/orb',
       'items/capsule',
+      // The blue capsule and the grey stolen Option; the shield pod and Reduce (M2-04).
+      'items/capsule-blue',
+      'options/stolen',
       'shields/force-field',
+      'shields/pod',
+      'shields/reduce',
       // The HUD pieces and the title logo of the scene flow (M1-16).
       ...UI_SPRITES,
     ]);

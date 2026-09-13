@@ -118,6 +118,7 @@ import { ANGLE_MASK, ANGLE_QUARTER, ANGLE_UNITS, atan2B, quantizeAngle } from '.
 import { SIN_TABLE_Q16, TRIG_SCALE } from '../math/trig-table.js';
 import { defineModule } from '../module-info.js';
 import { PlayerHitCause, playerHit, type PlayerCamera, type PlayerShip } from '../player/index.js';
+import { POD_RADIUS, ShieldHit, absorbPodHit, type ShieldState } from '../shields/index.js';
 import { createSoaPool, type SoaPool, type SoaSchema } from '../pools/index.js';
 import {
   LayerId,
@@ -1154,6 +1155,11 @@ class BulletSystemImpl implements BulletSystem {
    * `host.ship` in the collision loops is a polymorphic load that boxes the number.
    */
   private readonly hurtRadius: number;
+  /**
+   * Hurt radius of the ship being tested: {@link BulletSystemImpl.hurtRadius} × its shield's
+   * `hurtScale` (Reduce, M2-04).
+   */
+  private shipR = 0;
   /** X of the ship {@link BulletSystemImpl.collidePlayers} is testing (see there). */
   private shipX = 0;
   /** Y of the ship being tested. */
@@ -2048,6 +2054,7 @@ class BulletSystemImpl implements BulletSystem {
       if (!ship.active || ship.state !== 'alive') continue;
       this.shipX = ship.x;
       this.shipY = ship.y;
+      this.shipR = this.hurtRadius * ship.shield.hurtScale;
       this.bulletsVs(ship);
       if (!ship.active || ship.state !== 'alive') continue;
       this.lasersVs(ship);
@@ -2070,9 +2077,13 @@ class BulletSystemImpl implements BulletSystem {
     const sx = this.shipX;
     const sy = this.shipY;
     const host = this.host;
-    const r = this.hurtRadius;
+    const r = this.shipR;
+    const shield = ship.shield;
+    const pods = shield.podCount > 0;
     for (let i = 0; i < n; i++) {
       if ((f.flags[i] & BulletFlag.Dead) !== 0) continue;
+      // Shield pods (M2-04) stop the bullets that touch them before they reach the ship.
+      if (pods && this.podBlocks(shield, i)) continue;
       const dx = f.x[i] - sx;
       const dy = f.y[i] - sy;
       const reach = f.radius[i] + r;
@@ -2088,6 +2099,32 @@ class BulletSystemImpl implements BulletSystem {
   }
 
   /**
+   * Whether a standing pod of a shield stops a bullet (circle vs circle, closed): the first pod it
+   * touches takes the hit (`core/shields` `absorbPodHit` — free during the pod's i-frames) and the
+   * bullet is used up.
+   *
+   * @param shield - The ship's shield (pods placed in phase 2).
+   * @param i - The bullet slot (live).
+   * @returns `true` when a pod took it (the bullet is gone).
+   */
+  private podBlocks(shield: ShieldState, i: number): boolean {
+    const f = this.pool.fields;
+    const bx = f.x[i];
+    const by = f.y[i];
+    const reach = f.radius[i] + POD_RADIUS;
+    for (let k = 0; k < shield.podCount; k++) {
+      if (shield.podHits[k] <= 0) continue;
+      const dx = bx - shield.podX[k];
+      const dy = by - shield.podY[k];
+      if (!(dx * dx + dy * dy <= reach * reach)) continue;
+      if (absorbPodHit(shield, k, this.host.tick) === ShieldHit.None) continue;
+      this.killBullet(i);
+      return true;
+    }
+    return false;
+  }
+
+  /**
    * Active lasers against one ship (capsule vs circle; `capsuleCircle` inlined); the first
    * overlap ends the test for this ship.
    *
@@ -2099,7 +2136,7 @@ class BulletSystemImpl implements BulletSystem {
     const px = this.shipX;
     const py = this.shipY;
     const host = this.host;
-    const r = this.hurtRadius;
+    const r = this.shipR;
     for (let i = 0; i < n; i++) {
       if (f.phase[i] !== LaserPhase.Active || (f.flags[i] & BulletFlag.Dead) !== 0) continue;
       const x1 = f.x[i];
