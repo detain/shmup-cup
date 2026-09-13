@@ -21,11 +21,27 @@ versions before 1.0 may change anything between minor releases. Development foll
   checkpoint with fresh ships and no power, and the score's last digit counts the continues.
 - Behaviour change for tools and tests: `{ difficulty: 'arcade' }` now means the whole preset
   (2 lives, 0 continues, the arcade penalty); the golden replays were re-blessed.
+- **Colour-blind bullet colours** (M2-02): OPTIONS → **BULLETS** — STANDARD, DEUTERANOPIA,
+  PROTANOPIA or TRITANOPIA, applied at once and remembered; in the colour-blind sets the bullet
+  centres are shape-coded (solid, ring, dot) so the three bullet families differ without colour.
+- **Points for cancelled bullets** (M2-02): when a boss is destroyed or a Mega Crash goes off,
+  every enemy bullet also leaves a gold diamond that flies up into the score — 10 points each
+  (`content/rules/scoring.rules.json`). The player's own loss still only clears them.
+- **Bullet patterns as data** (M2-02, for content authors): `content/patterns/` — BulletML-inspired
+  actions and bullets (`fire`, `wait`, `repeat`, `changeSpeed`, `changeDirection`, `accel`,
+  `vanish`, `actionRef`, `bulletRef`) with expressions over `$rank`, `$rand`, `$loop`, `$i`,
+  compiled at load and run by a zero-allocation interpreter; enemies run them with the
+  `pattern.loop` behaviour. **Bending lasers** (homing, circle-chain hitbox) exist in the engine.
+  Neither is used by zone A yet, so it plays as before (apart from the cancel points).
+- The golden replays were re-blessed again for M2-02 (new bullet state, cancel points).
 
 ### Documentation
 
-- New developer guide [`docs/dev/difficulty-and-rank.md`](docs/dev/difficulty-and-rank.md); the
-  tester guide's [difficulty, extra ships and continues](docs/client/preview-build.md#difficulty-extra-ships-and-continues).
+- New developer guides [`docs/dev/difficulty-and-rank.md`](docs/dev/difficulty-and-rank.md) and
+  [`docs/dev/pattern-dsl.md`](docs/dev/pattern-dsl.md); the pattern format for authors in
+  [`content/patterns/README.md`](content/patterns/README.md); the tester guide's
+  [difficulty, extra ships and continues](docs/client/preview-build.md#difficulty-extra-ships-and-continues)
+  and [Options screen](docs/client/preview-build.md#the-options-screen) (BULLETS).
 
 ## [0.1.0] — M1: playable vertical slice
 

@@ -10,7 +10,8 @@ no Pixi ticker; the host's fixed-step loop calls `render()` (`shmup_tech.md` §4
   ×10 on 4K (`shmup_feat.md` §3, `shmup_tech.md` §2.2).
 - It draws the core's render contract (plan §3.4) from the sprite atlas with zero per-frame
   allocation: world sprite batches bound once per `WorldView` (the enemy bullets are one), the
-  enemy lasers (rotated warning lines and stretched beams, M1-09), HUD / UI draw lists as glyph
+  enemy lasers (rotated warning lines and stretched beams, M1-09), the bending lasers (one
+  un-rotated segment sprite per node, M2-02), HUD / UI draw lists as glyph
   and rect quads, screen shake / flash / dim. Since M1-14 it also owns the **game feel** the
   host feeds from the sim's events: a 256-particle pool driven by the presets of `content/fx/`
   (`loadFxContent` is the owner of the `fx` content kind), 16 rising score popups, and screen
@@ -20,6 +21,9 @@ no Pixi ticker; the host's fixed-step loop calls `render()` (`shmup_tech.md` §4
   a panel with FPS, tick / render ms, draw calls (`countDrawCalls` → `renderer.drawCalls`), pool
   usage, rank, RNG calls, the state hash, WebGL version, boot ms and a 60-frame graph, plus
   hitbox / grid outlines — core draw lists, one colour per list, no allocation per frame.
+  Since M2-02 it swaps the enemy bullet, beam and bend sprites for the player's **colour-blind
+  palette** (`renderer.setBulletPalette`, `resolveBulletPaletteTable`: the pipeline's
+  `<sprite>@<palette>` variants in place of the plain frames — no rebinding, no sim change).
   With `testPattern: true` it also shows the
   **calibration test pattern** (1-px checker border, 16-px grid, colour bars, a placeholder
   ship, a marker moving one pixel per tick).
@@ -40,12 +44,12 @@ renderer.render(game.renderFrame()); // steps particles / popups / effects by th
 
 | Module | Status | Responsibility |
 |---|---|---|
-| `renderer` | partial | Pixi WebGL renderer, low-res target, upscale pass; draws a core `RenderFrame` (world batches, HUD / UI draw lists, shake, flash, dim); owns the particles, popups and screen effects and steps them by the `frame.tick` delta (M1-14); optional calibration pattern; optional draw-call counter (`countDrawCalls` → `drawCalls`, M1-19) |
+| `renderer` | partial | Pixi WebGL renderer, low-res target, upscale pass; draws a core `RenderFrame` (world batches, lasers, bending lasers — M2-02 —, HUD / UI draw lists, shake, flash, dim); `setBulletPalette` (M2-02); owns the particles, popups and screen effects and steps them by the `frame.tick` delta (M1-14); optional calibration pattern; optional draw-call counter (`countDrawCalls` → `drawCalls`, M1-19) |
 | `viewport` | partial | Integer-scale letterbox math (pure) |
 | `test-pattern` | implemented | Calibration scene (`?scene=calibration`) |
-| `palette` | partial | Placeholder colours (VA-panel-friendly, no pure black) |
+| `palette` | partial | Placeholder colours (VA-panel-friendly, no pure black); the colour-blind bullet palettes (M2-02: `bulletPaletteSpriteName`, `resolveBulletPaletteTable`, `BULLET_PALETTE_SUFFIX`); palette cycling later |
 | `atlas` | implemented | `createAtlas(manifest, images)`: one nearest-neighbour source per page, consecutive frame ids per sprite, `resolveSpriteTable` / `resolveFlashTable` (unknown → `ui/missing`, warned once) |
-| `layers` | implemented | One container per core `LayerId` in §18 draw order; world group (shake) under HUD / UI / DEBUG; the stage's terrain as a ring-buffered 49 × 26 tile-sprite grid (re-textured one column / row as the camera crosses tile edges) and its parallax bands as repeated sprites (M1-07); the enemy lasers (`createLaserBinding`, M1-09: two sprites per slot — a tinted 1-px warning line and a beam frame picked by width — on `ENEMY_BULLETS`) |
+| `layers` | implemented | One container per core `LayerId` in §18 draw order; world group (shake) under HUD / UI / DEBUG; the stage's terrain as a ring-buffered 49 × 26 tile-sprite grid (re-textured one column / row as the camera crosses tile edges) and its parallax bands as repeated sprites (M1-07); the enemy lasers (`createLaserBinding`, M1-09: two sprites per slot — a tinted 1-px warning line and a beam frame picked by width — on `ENEMY_BULLETS`); the bending lasers (`createBendingLaserBinding`, M2-02: one never-rotated segment sprite per ring node, tail first, after the lasers) |
 | `sprites` | implemented | `createSpriteLayerBinding` (preallocated sprites per `SpriteBatchView`: camera, `PLAYFIELD_Y`, anchors, flips, blink, hit flash), ordered `QuadPool` |
 | `text` | implemented | Bitmap font from the atlas, `TextMetrics`, allocation-free text and number layout |
 | `ui` | implemented | Draws a core `DrawList` (rect, sprite, text, number) into the HUD or UI layer — the core HUD and the scene flow's menus since M1-16 |
@@ -57,6 +61,7 @@ Guide (sprite ids → frames, bindings, quad pools, the terrain ring and paralla
 the two passes, gotchas): [`docs/dev/rendering-and-shell.md`](../../docs/dev/rendering-and-shell.md);
 what the terrain and parallax views contain: [`docs/dev/stage-runtime.md`](../../docs/dev/stage-runtime.md);
 the laser view and the beam art: [`docs/dev/bullets-and-patterns.md`](../../docs/dev/bullets-and-patterns.md#drawing-bullets-and-lasers);
+the bending lasers and the colour-blind palettes: [`docs/dev/rendering-and-shell.md`](../../docs/dev/rendering-and-shell.md#colour-blind-bullet-palettes), [`docs/dev/pattern-dsl.md`](../../docs/dev/pattern-dsl.md);
 particles, screen effects, score popups and the `fx` content: [`docs/dev/fx-and-game-feel.md`](../../docs/dev/fx-and-game-feel.md);
 the debug overlay and the draw-call counter: [`docs/dev/debug-and-replays.md`](../../docs/dev/debug-and-replays.md#the-overlay-shmuprender-pixi-debug);
 exports: [`docs/dev/api-reference.md`](../../docs/dev/api-reference.md#shmuprender-pixi).

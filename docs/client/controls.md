@@ -19,8 +19,10 @@ work too, and every device drives both the game and the menus.
 > no button: the next one flies in by itself; with continues left, OK on the **CONTINUE?**
 > countdown carries on from the last checkpoint (Back gives up), and after **GAME OVER** OK
 > returns to the title.
-> **OPTIONS** (on the title and in the pause menu) sets the game's volumes and lets you choose the
-> control profile (**CONTROLS**, [below](#control-profiles)); the game remembers both.
+> **OPTIONS** (on the title and in the pause menu) sets the game's volumes, lets you choose the
+> control profile (**CONTROLS**, [below](#control-profiles)) and the enemy bullets' colours
+> (**BULLETS** — standard or one of three colour-blind sets,
+> [preview-build.md](preview-build.md#the-options-screen)); the game remembers all of them.
 > The other buttons (Special, Speed) do nothing yet. The remote's settings may still change once
 > the input probe results from the M7 monitors are in, and a screen for rebinding single buttons
 > is planned.
@@ -33,7 +35,7 @@ and selects a menu entry in menus; Back pauses the game and goes back in menus.
 
 | Action | What it does |
 |---|---|
-| Move | Game: fly the ship (8 directions where the device allows it; diagonals are no faster than straight moves, and the ship stops as soon as you let go). Menus: move the highlight (▲ ▼; ◀ ▶ between YES and NO, and in the Options screen ◀ ▶ turn a volume down / up or change the control profile) — holding a direction repeats the move after about a third of a second, then about ten times a second |
+| Move | Game: fly the ship (8 directions where the device allows it; diagonals are no faster than straight moves, and the ship stops as soon as you let go). Menus: move the highlight (▲ ▼; ◀ ▶ between YES and NO, and in the Options screen ◀ ▶ turn a volume down / up or change the control profile or the bullet colours) — holding a direction repeats the move after about a third of a second, then about ten times a second |
 | Shot | Main gun. Today it fires **on its own** on every device (automatic fire is on by default, and always on with the TV remote), so you never need to press it; once automatic fire can be switched off in the Options menu, hold it to fire |
 | Sub | Missiles / sub-weapon, once you have them — automatic in the same way |
 | PowerUp | Take the highlighted power-up of the power meter — one per press (holding the button never takes a second); a press on an empty or maxed-out slot does nothing |

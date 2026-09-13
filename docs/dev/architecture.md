@@ -16,7 +16,8 @@ ship, collision and the state hash), [stage-runtime.md](stage-runtime.md) (scrol
 camera path, timeline, checkpoints, tile terrain, parallax),
 [enemies-and-behaviors.md](enemies-and-behaviors.md) (enemies, formations, behaviour coroutines,
 movers, spline paths), [bullets-and-patterns.md](bullets-and-patterns.md) (enemy bullets,
-lasers, fire primitives, rank), [weapons-and-options.md](weapons-and-options.md) (player
+lasers, fire primitives, rank), [pattern-dsl.md](pattern-dsl.md) (the bullet pattern DSL, bending
+lasers, cancel points, colour-blind palettes), [weapons-and-options.md](weapons-and-options.md) (player
 weapons, loadouts, autofire, hits on enemies, trailing Options),
 [scenes-and-ui.md](scenes-and-ui.md) (the scene stack and flow, menus, the HUD),
 [saves-and-options.md](saves-and-options.md) (the versioned save, user options, the Options
@@ -146,6 +147,7 @@ requestAnimationFrame(now)                       shell/frame-loop
      ├─ parallax.sync(view), terrain.sync(view, camera) render-pixi/layers (a stage only)
      ├─ binding.sync(batch, camX, camY) per batch      render-pixi/sprites
      ├─ lasers.sync(view.lasers, camera)               render-pixi/layers (warning lines, beams)
+     ├─ bendingLasers.sync(view.bendingLasers, camera) render-pixi/layers (segments, M2-02)
      ├─ shake offset (frame + effects), flash (the brighter), playfield dim, menu dim
      ├─ hudView.draw(hud), uiView.draw(ui)             render-pixi/ui + text (skipped if unchanged)
      ├─ pass 1: scene → 384×216 RenderTexture          nearest sampling, no antialias
@@ -206,7 +208,8 @@ One gameplay session, built in M1-06; the stage runtime joined in M1-07, the ene
 M1-08, the enemy bullets, lasers and rank in M1-09, the player weapons and Options in M1-10 and
 the power meter, capsules, Force Field and Mega Crash in M1-11, death, respawn, lives, score
 and the game-feel timers in M1-12, the bosses with their WARNING and death sequence in M1-13,
-and rank growth, extends and continues in M2-01.
+rank growth, extends and continues in M2-01, and the pattern DSL's interpreter, bending lasers
+and cancel point items in M2-02.
 Details: [sim-world.md](sim-world.md), [stage-runtime.md](stage-runtime.md),
 [enemies-and-behaviors.md](enemies-and-behaviors.md),
 [bullets-and-patterns.md](bullets-and-patterns.md),
@@ -214,7 +217,8 @@ Details: [sim-world.md](sim-world.md), [stage-runtime.md](stage-runtime.md),
 [powerups-and-shields.md](powerups-and-shields.md),
 [death-and-scoring.md](death-and-scoring.md),
 [bosses-and-warning.md](bosses-and-warning.md),
-[difficulty-and-rank.md](difficulty-and-rank.md).
+[difficulty-and-rank.md](difficulty-and-rank.md),
+[pattern-dsl.md](pattern-dsl.md).
 
 - **`world`** — `createWorld(config, content)` allocates the session: tick counter, RNG
   streams, event queue, two `PlayerShip`s (P2 inactive until co-op), the camera, the stage
@@ -244,12 +248,21 @@ system, status,
   aimed dash). Off-screen / settle rules, contact with the ships through the grid
   (`playerHit(Contact)`), hit flash, explosion events, tick outcomes for the capsule and score
   steps; enemies and formations are hashed. Behaviours fire through `ScriptApi` primitives that
-  enforce the fire rule (on screen, settled, not a ghost).
+  enforce the fire rule (on screen, settled, not a ghost). Since M2-02 attacks can also be
+  **data**: `content/patterns/` files are compiled at load (`core/patterns` `dsl.ts`: a
+  recursive-descent expression parser, constant folding, `actionRef` / `bulletRef` inlined) into
+  one `Float64Array` program bank, and the World's `PatternVm` (`world.patterns`: 64 emitters +
+  512 bullet program runners in typed arrays, hashed) runs them — an enemy's pattern from its
+  `pattern.loop` coroutine (the pattern's `wait`s are the coroutine's sleeps), a bullet's own
+  program inside the bullet update — without allocating ([pattern-dsl.md](pattern-dsl.md)).
 - **`bullets`**, **`rank`** — the enemy bullets (a 512-slot SoA pool that is also the
   `ENEMY_BULLETS` sprite batch) with acceleration, turning, delays, changes and capped homing,
   riding the camera and dying outside the view or on terrain; 16 telegraphed lasers (warning
   line → grow → full-width beam, the only phase with a hitbox → fade), attached to their enemy
   or fixed; brute-force collision with the ships (`playerHit(Bullet / Laser)`); bullet cancel.
+  Since M2-02 also 8 **bending lasers** (a homing head recording a 64-node ring, hit by a chain of
+  overlapping circles) and bullets **cancelled into point items** (a boss's death, a Mega Crash)
+  that fly to the credited player's score (`content/rules/` `scoring`).
   The fire primitives of `patterns` (aimed, N-way, ring, spiral, stack, spray, homing,
   delayed) scale bullet speeds and fire intervals by the session's rank — constant in M1, since
   M2-01 `base + floor(growth × (stage / loop / power terms))` (0–31, 16 on loop 1; Normal starts
@@ -484,7 +497,9 @@ Details: [saves-and-options.md](saves-and-options.md).
   nothing.
 - **User options are presentation** (plan §1.5): not in `GameConfig`, replays or hashes. The
   Options screen pushes each change as a `SimEventKind.UserOption` event through the one event
-  queue; the shell turns it into `setBusVolume` or asks the app to switch the input profile.
+  queue; the shell turns it into `setBusVolume`, asks the app to switch the input profile or —
+  since M2-02 — has the renderer swap in the chosen colour-blind bullet palette
+  (`setBulletPalette`: other sprite variants, the same sprite ids).
 
 ## Lifecycle
 
@@ -577,14 +592,14 @@ sections of `shmup_feat.md` / `shmup_tech.md`.
 
 Implemented or partial today: core `platform`, `input`, `config` (partial: `GameConfig` with the difficulty
 presets since M2-01 and, since M1-17, the `UserOptions` — display options later), `loop`, `game`,
-`presentation`, `rng`, `math`, `events`, `pools`, `save` (M1-17), `data` (partial: `rules` since M2-01 — the other M2 kinds are
-missing), `world`, `stage`, `player` (implemented for P0 since
-M1-12 — co-op joining comes with M2-06), `collision` (partial: no bending-laser chains yet), `debug` (M1-19: state hash, switches, controls,
+`presentation`, `rng`, `math`, `events`, `pools`, `save` (M1-17), `data` (partial: `rules` since M2-01, `patterns` since M2-02 —
+`campaign` and `strings` are missing), `world`, `stage`, `player` (implemented for P0 since
+M1-12 — co-op joining comes with M2-06), `collision` (partial: destructible tiles later — the bending lasers' circle chains live in `bullets`), `debug` (M1-19: state hash, switches, controls,
 counters, the stage skip and checkpoint jumps), `replay` (M1-19), `enemies` (partial: rank modifiers and revenge bullets since M2-01 — no Option Hunter
-yet), `patterns` (partial: runner, movers and fire primitives — no pattern DSL yet),
+yet), `patterns` (implemented with M2-02: runner, movers, fire primitives and the pattern DSL),
 `behaviors` (partial: the M1 enemy and boss rosters), `bosses` (partial: the P0 mechanics —
-timers, escapes, the HP bar, mid-bosses and raids with M2-09), `bullets` (implemented for P0 — bending lasers and cancel
-into points come with M2-02), `rank` (implemented with M2-01: growth, power terms, per-enemy sensitivity), `weapons`
+timers, escapes, the HP bar, mid-bosses and raids with M2-09), `bullets` (implemented: bending lasers and cancel
+into points since M2-02 — graze is P2), `rank` (implemented with M2-01: growth, power terms, per-enemy sensitivity), `weapons`
 (partial: Type A — loadouts B–D and Direct mode later), `options` (partial: the standard trail),
 `powerups` (partial: meter mode), `shields` (partial: the Force Field), `scoring` (partial:
 scores, the session hi-score, extends and the continue digit — 1UP items later), `fx` (partial: the
@@ -597,7 +612,8 @@ input-web `keymap`, `keyboard`, `gamepad`, `web-input`, `remote`, `rebind`
 M2-16); audio-web `web-audio` (partial; driven by the Options sliders since M1-17), `synth`, `sfx`,
 `music`, `loader`,
 `engine`;
-render-pixi `renderer`, `viewport`, `test-pattern`, `palette`, `atlas`, `layers`, `sprites`,
+render-pixi `renderer`, `viewport`, `test-pattern`, `palette` (partial: the colour-blind bullet palette tables since
+M2-02 — palette cycling later), `atlas`, `layers`, `sprites`,
 `text`, `ui`, `particles`, `effects` (partial: shake, flash, dim, popups — raster and palette
 effects later), `debug` (the overlay, M1-19); shell `boot`, `loader`, `dispatch`, `error-screen`,
 `frame-loop`, `scene-view`, `flight`, `showcase`, `fx-gallery`, `debug` (M1-19);
@@ -625,7 +641,7 @@ plugins in `vite.shared.ts`) has no `moduleInfo`; it is covered by the tests und
 | A zone (a stage with its roster and boss) | JSON under `content/stages/`, `content/enemies/`, `content/paths/`; `pnpm content:check`; a playtest run with the 4-way bot (`test/playtest/`) and its design-rule checks — [zone-a-and-playtest.md](zone-a-and-playtest.md#extending-it) |
 | A boss or a boss behaviour | A boss is an `enemies` entry with a `boss` section (parts, weak points, phases) started by a stage `warning` event; a boss behaviour is a `defineBossBehavior` coroutine added to `DEFAULT_BOSS_BEHAVIOR_DEFS` — [bosses-and-warning.md](bosses-and-warning.md#extending-it) |
 | An item kind, a meter slot rule or a shield kind | `ITEM_KINDS` / `ItemKind` (appended), the meter's `canEquipSlot` / `equipSlot` and Auto Power-Up rules, a `ShieldSpec` in `SHIELD_SPECS` — [powerups-and-shields.md](powerups-and-shields.md#extending-it) |
-| A bullet pattern, bullet kind or laser | A behaviour calling the `ScriptApi` fire primitives (`aimed`, `nWay`, `ring`, …, `laser`, `fireWait`); a new primitive in `core/patterns` with its `ScriptApi` wrapper; a kind in `BULLET_KINDS` — [bullets-and-patterns.md](bullets-and-patterns.md#extending-it) |
+| A bullet pattern, bullet kind or laser | Since M2-02 a pattern is data: a `content/patterns/` action run by `pattern.loop` ([pattern-dsl.md](pattern-dsl.md#extending-it)); or a behaviour calling the `ScriptApi` fire primitives (`aimed`, `nWay`, `ring`, …, `laser`, `bendingLaser`, `fireWait`); a new primitive in `core/patterns` with its `ScriptApi` wrapper; a kind in `BULLET_KINDS` — [bullets-and-patterns.md](bullets-and-patterns.md#extending-it) |
 | A weapon, a weapon behaviour or an Option formation | A weapon is JSON in `content/weapons/` (tunables in `params`); a behaviour is a `ShotKind` plus its tables and a branch of the weapon system's `update()`; formations branch in `OptionGroup.follow` — [weapons-and-options.md](weapons-and-options.md#extending-it) |
 | Something the engine draws whatever the content | Add its sprite name to `ENGINE_SPRITES` (`core/bullets` `BULLET_SPRITES`, `core/options` `OPTION_SPRITE`, `core/powerups` `ITEM_SPRITES`, `core/shields` `FORCE_FIELD_SPRITE` and `core/ui` `UI_SPRITES` today): hosts pass it as `loadContent`'s `extraSprites` and `pnpm content:check` verifies it against the atlas |
 | A game system | Fill in its placeholder module in `packages/core/src/<module>/`, set `moduleInfo.status`, export it from `packages/core/src/index.ts`, call it from its phase function in `core/world` (never reorder `WORLD_PHASES`), allocate its state in `createWorld` and add simulated state to `hashWorld` — [sim-world.md](sim-world.md#extending-it) |

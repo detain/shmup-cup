@@ -11,6 +11,8 @@
  * allocation. It also draws the game feel fed by the sim's events (plan M1-14): particle presets
  * from `content/fx/` ({@link createParticleSystem}, {@link loadFxContent} — the owner of the `fx`
  * content kind), score popups and the screen shake / flash / dim ({@link createScreenEffects}).
+ * Plan M2-02 adds the enemy bending lasers ({@link createBendingLaserBinding}) and the colour-blind
+ * bullet palettes ({@link resolveBulletPaletteTable}, the renderer's `setBulletPalette`).
  * Dev and test builds add the debug overlay (plan M1-19, {@link createDebugOverlay}): a stats panel
  * with a frame graph and the hitbox / grid outlines on the `DEBUG` layer.
  *

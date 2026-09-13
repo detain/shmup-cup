@@ -12,8 +12,9 @@ menu** over the frozen game: resume, retry, or quit to the title. When the last 
 **CONTINUE?** countdown lets you carry on from the last checkpoint (if the difficulty gives
 continues), then a **GAME OVER** screen appears, after a boss a **STAGE CLEAR** screen, and on the TV Back on the
 title asks **EXIT SHMUP CUP?** before it closes the app. **OPTIONS** — on the title and in the
-pause menu — sets the game's own volumes (MASTER, MUSIC, SFX) and the control profile, and the
-game **remembers** them and your **high scores** between launches. Everything is drawn by the game
+pause menu — sets the game's own volumes (MASTER, MUSIC, SFX), the control profile and the
+colours of the enemy bullets (**BULLETS**: the standard colours or one of three sets made for
+colour-blind players), and the game **remembers** them and your **high scores** between launches. Everything is drawn by the game
 itself and works with the remote's arrows, OK and Back alone ([The title screen and the
 menus](#the-title-screen-and-the-menus), [Pausing, quitting and the end
 screens](#pausing-quitting-and-the-end-screens), [Difficulty, extra ships and
@@ -39,7 +40,10 @@ gets stronger** ([Difficulty, extra ships and continues](#difficulty-extra-ships
 like hits: enemies burst into **explosions**, shots throw **sparks**, the picture **shakes** when
 your ship is lost, the screen **flashes** for a Mega Crash or a boss's final blast, and every kill
 shows its **points** rising from the spot
-([Explosions, sparks, shake and flashes](#explosions-sparks-shake-and-flashes)). And the game has
+([Explosions, sparks, shake and flashes](#explosions-sparks-shake-and-flashes)). When a boss is
+destroyed or a Mega Crash goes off, every enemy bullet on the screen turns into a small **gold
+diamond** that flies up into your score — 10 points each ([Lives, losing your ship and the
+score](#the-score)). And the game has
 **sound**: every shot, hit, explosion and pickup makes a sound, the menus click and chime, the
 WARNING wails its siren, and there is original **music** — the title theme, the zone's theme that
 loops seamlessly, the boss theme, a short stage-clear tune and a game-over tune
@@ -55,8 +59,9 @@ The earlier start-up pictures are still there: **free flight** straight away wit
 the animated **sprite showcase** and the **calibration screen**, plus the **effects gallery**
 that shows every explosion and screen effect in turn (see [below](#other-screens-browser-only)).
 
-This build is version **0.1.0** — the end of the first milestone — plus the first step of the
-second: the difficulties, extra ships and continues. For checking it on the monitors
+This build is version **0.1.0** — the end of the first milestone — plus the first two steps of
+the second: the difficulties, extra ships and continues, then the colour-blind bullet colours and
+points for cancelled bullets. For checking it on the monitors
 there is a **debug build** with developer tools — a panel with the frame rate, frame times and
 start-up time, hit-area outlines, invincibility, a freeze with single steps, slow motion and
 jumps to the next checkpoint or the boss — opened on the remote with Play/Pause and then Ch ▲
@@ -251,6 +256,7 @@ darkened picture:
      MUSIC    ▬▬▬▬▬▬▬▬▬▬  10
      SFX      ▬▬▬▬▬▬▬▬▬▬  10
      CONTROLS SAFE 4-WAY (DEFAULT)
+     BULLETS  STANDARD
      BACK
 ```
 
@@ -260,14 +266,17 @@ darkened picture:
 | **MUSIC** | The music's volume, 0–10 |
 | **SFX** | The sound effects' volume, 0–10 — the menu clicks and chimes follow it too |
 | **CONTROLS** | The control profile: on the TV **SAFE 4-WAY (DEFAULT)** or **FAST 8-WAY**, in a browser **KEYBOARD (DEFAULT)** or **KEYBOARD AS REMOTE** ([controls.md](controls.md#control-profiles)) |
+| **BULLETS** | The colours of the enemy bullets and lasers: **STANDARD** (pink, red and purple — the start setting), or a set made for a kind of colour blindness: **DEUTERANOPIA** and **PROTANOPIA** (red–green: light magenta, sky blue and near-white) or **TRITANOPIA** (blue–yellow: crimson, teal and near-white) — see below |
 | **BACK** | Keeps the settings and closes the box |
 
 - **▲ / ▼** move the highlight (MASTER is highlighted first). On a volume, **◀ / ▶** turn it down
   or up one step — the bar shrinks or grows and the number changes; holding the arrow keeps
-  going, like in the other menus. On CONTROLS, **◀ / ▶** (or OK) step to the next profile.
+  going, like in the other menus. On CONTROLS and BULLETS, **◀ / ▶** (or OK) step to the next
+  choice.
 - **Every change works at once**: the music gets quieter while you turn MUSIC down (on the title
   you hear the title music change), the clicks get quieter while you turn SFX or MASTER down, and a
-  new control profile is used from the next button press. OK on a volume does nothing.
+  new control profile is used from the next button press, and new bullet colours show on the very
+  next picture (over a paused game too). OK on a volume does nothing.
 - The steps follow your hearing rather than a ruler: 5 sounds about half as loud as 10, and 0 is
   silent.
 - **BACK** — or the **Back** button anywhere in the box — keeps the settings, plays the "back"
@@ -276,11 +285,19 @@ darkened picture:
 - The game's volumes come on top of the TV's (or the PC's) own volume: the remote's volume keys
   still set the monitor's volume as always.
 
+**The bullet colours.** Enemy bullets come in three families — pink, red and purple — and the
+three colour-blind sets give each family a colour that stays distinct for that kind of colour
+blindness and never looks like the gold capsules and point diamonds or the orange explosions. In
+those three sets the bullets' centres are also **shape-coded**, so the families differ even
+without colour: the pink family keeps a solid bright centre, the red one has a **dark dot** in the middle (it looks
+like a ring) and the purple one a **single bright dot**. The laser beams follow the same colours.
+Only the look changes — the bullets fly, hit and score exactly the same, whatever you choose.
+
 ### What the game remembers
 
 | What | When it is saved | Where |
 |---|---|---|
-| The three volumes and the control profile | When you leave the Options screen with BACK or Back | On the TV inside the app itself; in a browser (and the desktop app) in that browser's storage for the page |
+| The three volumes, the control profile and the bullet colours | When you leave the Options screen with BACK or Back | On the TV inside the app itself; in a browser (and the desktop app) in that browser's storage for the page |
 | High scores | When the **GAME OVER** or **STAGE CLEAR** screen appears | The same place |
 
 - **High scores**: the best ten of each kind of game are kept — each **difficulty** has its own
@@ -336,7 +353,21 @@ ship may move in four directions only; the game is designed to be fully playable
 
 ### What changed lately
 
-**New in this build: difficulties, extra ships and continues.** START now opens a **DIFFICULTY**
+**New in this build: bullet colours for colour-blind players, and points for cancelled bullets.**
+OPTIONS has a new line, **BULLETS**: besides the standard pink / red / purple, three colour sets
+made for the common kinds of colour blindness (DEUTERANOPIA, PROTANOPIA, TRITANOPIA), with the
+bullets' centres shape-coded (solid, ring, dot) so the three kinds of bullet can be told apart
+without colour at all; the choice changes the picture at once and is remembered like the volumes
+([The Options screen](#the-options-screen)). And when a boss is destroyed or you set off a **Mega
+Crash**, every enemy bullet on the screen still twinkles away but also leaves a small **gold
+diamond** that drifts for a moment and then flies up into your score in the top bar, adding **10
+points** each — clearing a crowded screen now pays ([The score](#the-score)). Losing your own
+ship still only makes them twinkle. Behind the scenes the game can now describe enemy attacks as
+data — patterns of bullets that turn, speed up and split on their own — and has **bending
+lasers**, long glowing snakes that curve after your ship; no enemy in AZURE VERGE uses them yet
+(the later zones will), so the zone plays as before.
+
+Before that, **difficulties, extra ships and continues.** START now opens a **DIFFICULTY**
 box — EASY (five ships, five continues, slower bullets, a loss only takes the Force Field), NORMAL
 (as before, plus three continues), HARD, and ARCADE (two ships, no continues, a loss sends you back
 to the last checkpoint without your power) — so a game starts with one more OK. The game now gets
@@ -490,7 +521,10 @@ game engine: every build added to this world, and version 0.1.0 completes its fi
 slice. Next comes the complete game — difficulty levels, more weapons and ships, two players,
 more zones.
 
-**Please re-test on the monitors:** this time with the **debug build**, and run the **M1 release
+**Please re-test on the monitors:** new since the last build are **BULLETS** and the **points for
+cancelled bullets** (checks 29–30) — please say whether each colour set keeps the three kinds of
+bullet easy to tell apart from the sofa, and whether the gold diamonds read clearly. Otherwise, as
+before, this time with the **debug build**, and run the **M1 release
 check** in [debug-tools.md](debug-tools.md#the-m1-release-check) on both monitors — start-up
 time, picture, remote-only play through AZURE VERGE, leaving and returning, sound, what is kept
 after closing and after an update, 15 minutes of play with no hitches in the frame graph, other
@@ -604,7 +638,7 @@ pass above and below you. When a warning line blinks across your row, step up or
 before the beam comes.
 
 **When the core is destroyed** everything happens as with the test boss: every bullet and laser
-disappears, the boss blinks and explodes for two seconds, a big white blast with a strong shake,
+disappears — each bullet leaving a gold diamond that flies to your score (+10 each) — the boss blinks and explodes for two seconds, a big white blast with a strong shake,
 **30,000 points** (a gold `30000`), the stage-clear tune, and a few seconds later the **STAGE
 CLEAR** screen and the title ([the end screens](#pausing-quitting-and-the-end-screens)).
 
@@ -764,6 +798,19 @@ Things to check on the monitor and report:
    ever did nothing.
 28. **ARCADE** (new): start on ARCADE and lose both ships: GAME OVER comes without a countdown, and
    each loss sends the stage back to its last checkpoint with the ship's power gone.
+29. **BULLETS** (new): on the title, OK → **OPTIONS**, move to **BULLETS** and press ▶: it steps
+   `STANDARD` → `DEUTERANOPIA` → `PROTANOPIA` → `TRITANOPIA` and round again. Choose one, BACK,
+   START and play: the enemy bullets (and HALCYON BULWARK's lasers) now have that set's colours,
+   and the red family's bullets have a dark centre, the purple family's a single bright dot.
+   Pause → OPTIONS → change BULLETS: the frozen bullets change colour at once. Close and reopen
+   the app: BULLETS still shows your choice. Report whether the three kinds of bullet are easy to
+   tell apart from the sofa in each set — and, if you (or a tester) have a colour vision
+   deficiency, which set works best.
+30. **Points for cancelled bullets** (new): destroy HALCYON BULWARK's core while its needles are in
+   the air (or take a Mega Crash with bullets on the screen): each bullet twinkles and leaves a
+   small gold diamond that hangs for a moment, then flies up to your score in the top bar, where
+   the score goes up by 10 for each one that arrives. Report whether the diamonds are visible
+   from the sofa and whether any of them gets stuck on the screen.
 
 The fully powered ship (`?loadout=full`), the shortcut to the boss (`?skip=boss`), the two test
 stages (the Test Range and the Boss Range with its test boss), free flight, the showcase, the
@@ -1050,9 +1097,10 @@ costs only one step. It does **not** protect against the rock. While it is up, `
 taken again; once it has broken, it can.
 
 **Mega Crash** (`!`). Every enemy — also the ones just about to come in — is destroyed at once,
-and every enemy bullet vanishes. Enemies destroyed this way count as shot down: a saucer or the
-last member of a formation still leaves its capsule. A **boss** is not hurt by it — only its
-bullets vanish. The playfield flashes white for a moment and a deep boom fills both speakers.
+and every enemy bullet vanishes — each one leaving a gold diamond that flies up into your score
+(+10 points). Enemies destroyed this way count as shot down: a saucer or the last member of a
+formation still leaves its capsule. A **boss** is not hurt by it — only its bullets vanish (and
+turn into points). The playfield flashes white for a moment and a deep boom fills both speakers.
 
 **Fully powered** (`&loadout=full`, see [Your weapons](#your-weapons)) now also starts with a
 fresh Force Field.
@@ -1066,7 +1114,8 @@ What "good" looks like:
   Double, the laser, one more orb, the ring, or an empty screen after a Mega Crash.
 - The Force Field sits centred on the ship and moves with it, wears one step per hit, flickers
   after each hit and disappears after the fifth.
-- After a Mega Crash no enemy and no enemy bullet is left on the screen.
+- After a Mega Crash no enemy and no enemy bullet is left on the screen — only gold diamonds on
+  their way to your score, gone within about three seconds.
 
 ## Lives, losing your ship and the score
 
@@ -1127,8 +1176,13 @@ and its boss's are in [its section](#the-first-zone-azure-verge)) — in the tes
 | a **whole formation** (every member destroyed — a bonus on top, for the one who destroys the last member) | 300 to 1,000, depending on the formation |
 | collect a **power capsule** | 300 |
 
-Enemies destroyed by a **Mega Crash** count too. Enemies that leave the screen, and destroyed
-ships, score nothing; the score is never taken away. It stops at 99,999,990. Points always end
+Enemies destroyed by a **Mega Crash** count too. **Cancelled bullets** score as well: when a
+boss is destroyed (for the player who destroyed it) or a Mega Crash goes off (for the player who
+set it off), every enemy bullet on the screen becomes a small gold diamond that flies up to the
+score and adds **10 points** when it arrives — a busy screen can be worth a few hundred. No
+number rises for them; the diamonds themselves are the sign. Bullets cleared by the loss of your
+own ship score nothing. Enemies that leave the screen, and destroyed ships, score nothing; the
+score is never taken away. It stops at 99,999,990. Points always end
 in 0; after a continue the last digit counts your continues ([Continues](#continues)).
 
 Every destroyed enemy also shows its points as a small **white number** that rises from where it
@@ -1197,7 +1251,9 @@ Flying into any part of the boss destroys your ship (a Force Field takes it like
 
 **When the core is destroyed:**
 
-- every enemy bullet and laser on the screen turns into twinkles and disappears at once;
+- every enemy bullet and laser on the screen turns into twinkles and disappears at once; each
+  **bullet** also leaves a small **gold diamond** that hangs for a moment, then flies up to your
+  score in the top bar and adds **10 points** when it gets there;
 - the boss **blinks** white for two seconds while **explosions** keep bursting all over it,
   then it vanishes in a **big blast** — a bright white flash, a strong screen shake of about two
   thirds of a second, flying debris — with a very short freeze; the boss music fades out as the
@@ -1255,7 +1311,7 @@ is in [Sound and music](#sound-and-music).
 | An enemy is destroyed | A **fireball bigger than the enemy** where it was — small enemies with a few sparks; the red saucers, turrets and the armoured hatch with grey chunks of **debris** that fly out and fall. The fireball stays on the spot even while the ground scrolls under it |
 | Its points | A small **white number** rises from the spot for about two thirds of a second and blinks out; a completed formation's bonus is a **gold** number |
 | You collect a capsule | A thin **cyan ring** flashes around your ship (no number) |
-| Enemy bullets are cancelled (you lost a ship, a Mega Crash, a boss destroyed) | Each bullet turns into a small pale-gold **twinkle** |
+| Enemy bullets are cancelled (you lost a ship, a Mega Crash, a boss destroyed) | Each bullet turns into a small pale-gold **twinkle**; after a Mega Crash or a boss, also a small **gold diamond** that drifts, then flies up into your score |
 | You lose your ship | Three fireballs and a spray of debris; the picture **shakes** for about a third of a second |
 | The Force Field breaks | A burst of sparks around the ship |
 | **Mega Crash** | The playfield (not the HUD bars) **flashes white** for a fifth of a second |
@@ -1445,7 +1501,10 @@ mean the build itself is broken; they are not caused by anything you did.
 | The ship flies through the rock or an enemy in the test stage | Expected only while it flies in or blinks after a loss (it cannot be hurt then), and in open space there is nothing to hit. Otherwise rock and enemies destroy it — please report where it passed through |
 | The ship vanished and a spare-ship icon went | It was destroyed (rock, an enemy or a bullet) — see [Lives](#lives-losing-your-ship-and-the-score). It should explode with a heavy sound and the picture should shake briefly |
 | The game froze for a moment when the ship was hit | Expected: a short freeze (an eighth of a second) marks every loss |
-| All enemy bullets vanished at once | Expected after a loss (and after a Mega Crash) |
+| All enemy bullets vanished at once | Expected after a loss (and after a Mega Crash or a destroyed boss, where they turn into gold diamonds that fly to your score) |
+| Small gold diamonds fly up to the top bar | Expected after a Mega Crash or a destroyed boss: each cancelled bullet is worth 10 points when its diamond reaches your score. Report one that stays on the screen for more than about three seconds |
+| The bullets have unusual colours, or a dark / bright dot in the middle | The **BULLETS** option is set to a colour-blind set — OPTIONS → BULLETS → STANDARD restores pink / red / purple. It is remembered between launches |
+| BULLETS changed nothing | The new colours show at once, also over a paused game; if they do not, please report it with the set you chose (the browser console, if any, names a missing picture) |
 | After a loss the ship lost an Option, the laser or a Speed Up | Expected: each loss costs one step of power, and always the Force Field ([Lives](#lives-losing-your-ship-and-the-score)) |
 | GAME OVER — how do I start again? | Press OK on the GAME OVER screen (after half a second) or wait ten seconds: the title appears, and START plays again. In free flight (`?scene=flight`) reload the page |
 | A CONTINUE? box with a countdown appeared | Your last ship was lost and the difficulty has continues left: OK (after half a second) continues from the last checkpoint, Back or waiting ten seconds gives up |

@@ -4,7 +4,8 @@ How the game remembers the player's settings and best scores, and how the Option
 them while the game runs: the versioned save document (`core/save`), the presentation-only
 `UserOptions` (`core/config`), the `OptionsScene` and its `Choice` widget (`core/scenes`,
 `core/ui`), the `UserOption` events, the shell's boot-time loading, the input-profile choice the
-apps offer, and the boot timing. Added by plan step **M1-17**.
+apps offer, and the boot timing. Added by plan step **M1-17**; **M2-02** added the first display
+option — the enemy bullets' colour-blind palette (BULLETS).
 
 This page is the *how and why*. Exact signatures are in
 [api-reference.md](api-reference.md#save--versioned-saves-hi-score-tables) (`save`),
@@ -59,7 +60,7 @@ tests use `createMemoryStorage()`. Electron's renderer runs the web build and us
   "options": {
     "audio": { "master": 10, "music": 7, "sfx": 10 },
     "input": { "profileId": "tizen-remote-diagonal" },
-    "display": {}
+    "display": { "bulletPalette": "standard" }
   },
   "hiScores": {
     "meter-normal": [
@@ -73,7 +74,7 @@ tests use `createMemoryStorage()`. Electron's renderer runs the web build and us
 | Field | Meaning |
 |---|---|
 | `version` | `SAVE_VERSION` = 1. Drives the migrations; a document without it counts as version 0 |
-| `options` | The player's `UserOptions` (below): volume levels 0–10, the chosen key / remote profile id (or `null` = the platform default), display options (none yet) |
+| `options` | The player's `UserOptions` (below): volume levels 0–10, the chosen key / remote profile id (or `null` = the platform default), display options (M2-02: `bulletPalette`) |
 | `hiScores` | Tables by **mode key** (`hiScoreModeKey(config)` = `<powerUpMode>-<difficulty>`, `meter-normal` in M1; since M2-01 one per difficulty — `meter-easy`, `meter-normal`, `meter-hard`, `meter-arcade`), each sorted best first, at most `HI_SCORE_TABLE_SIZE` = 10 rows, at most `MAX_HI_SCORE_TABLES` = 32 tables. A mode nobody scored in has no table |
 | `stats` | Counters: `gamesStarted` (START and RETRY STAGE), `gameOvers`, `stagesCleared` — whole numbers, capped at 2³¹−1 |
 
@@ -206,7 +207,7 @@ of continues used ([difficulty-and-rank.md](difficulty-and-rank.md#the-continue-
 interface UserOptions {
   readonly audio: { readonly master: number; readonly music: number; readonly sfx: number }; // 0…10
   readonly input: { readonly profileId: string | null }; // null = the platform's default
-  readonly display: Readonly<Record<string, never>>; // none until M2-08 / M2-16
+  readonly display: { readonly bulletPalette: BulletPalette }; // M2-02; more with M2-08 / M2-16
 }
 ```
 
@@ -218,6 +219,13 @@ rounded and clamped to 0–10 (anything else takes the default; `-0.4` becomes `
 `profileId` must match `INPUT_PROFILE_ID_PATTERN` (lower-case kebab) and be ≤ 64 characters, else
 `null`. Whether the id names an existing profile is the host's business — an unknown one is
 skipped when applied.
+
+**The bullet palette (M2-02).** `display.bulletPalette` is one of `BULLET_PALETTES` —
+`standard` (the default), `deuteranopia`, `protanopia`, `tritanopia` (`shmup_feat.md` §21); any
+other value resolves to `standard`. It only changes which sprite variants the renderer draws
+([rendering-and-shell.md](rendering-and-shell.md#colour-blind-bullet-palettes)). The save format
+stays **version 1**: a save written before M2-02 has `display: {}`, which resolves to `standard` —
+no migration step was needed, and `serializeSave` now writes the field.
 
 **The volume curve.** `volumeGain(level) = (level / 10)²` turns a slider level into the linear
 bus gain, so the slider's middle sounds about half as loud:
@@ -231,9 +239,11 @@ operator is banned in core).
 
 ## The Options screen (`OptionsScene`)
 
-An overlay (dim `PAUSE_DIM` = 0.5) with an opaque 288×112 panel, opened by **OPTIONS** on the
-title and on the pause menu — both items are enabled since M1-17 (a game under the pause menu
-stays frozen). Items (`OptionsItem`): `Master 0`, `Music 1`, `Sfx 2`, `Controls 3`, `Back 4`.
+An overlay (dim `PAUSE_DIM` = 0.5) with an opaque 288×128 panel (112 px tall before M2-02),
+opened by **OPTIONS** on the title and on the pause menu — both items are enabled since M1-17 (a
+game under the pause menu stays frozen). Items (`OptionsItem`): `Master 0`, `Music 1`, `Sfx 2`,
+`Controls 3`, `Bullets 4` (M2-02), `Back 5` (it was 4 — code that names `OptionsItem.Back`
+follows; a test or tool that counts rows does not).
 
 ```text
             OPTIONS
@@ -241,20 +251,25 @@ stays frozen). Items (`OptionsItem`): `Master 0`, `Music 1`, `Sfx 2`, `Controls 
      MUSIC    ▬▬▬▬▬▬▬     7
      SFX      ▬▬▬▬▬▬▬▬▬▬  10
      CONTROLS SAFE 4-WAY (DEFAULT)
+     BULLETS  STANDARD
      BACK
 ```
 
 - **Opening** reads the save's volumes into the three sliders (`createSlider(0, 10, 1, …)`), the
-  profile in use into CONTROLS, focuses MASTER and locks activation for 2 ticks (like every flow
+  profile in use into CONTROLS, the saved bullet palette into BULLETS (a `Choice` of
+  `BULLET_PALETTE_LABELS`: `STANDARD`, `DEUTERANOPIA`, `PROTANOPIA`, `TRITANOPIA`), focuses MASTER and locks activation for 2 ticks (like every flow
   menu). The screen re-reads the save every time it opens.
 - **Up / Down** move; **Left / Right** change the focused slider by one level (held directions
-  auto-repeat — 18 / 6 ticks) or step CONTROLS through the profiles, wrapping; **OK on CONTROLS**
-  steps forward too; OK on a slider does nothing and makes no sound.
+  auto-repeat — 18 / 6 ticks) or step CONTROLS through the profiles / BULLETS through the
+  palettes, wrapping; **OK on a choice** steps forward too; OK on a slider does nothing and makes
+  no sound.
 - **Every change applies at once**: a slider pushes a `UserOption` event with its new level, a
-  CONTROLS step one with the profile's index (below); both play the move sound, queued after the
+  CONTROLS step one with the profile's index, a BULLETS step one with the palette's
+  `BULLET_PALETTES` index (below); both play the move sound, queued after the
   change, so the MASTER and SFX sliders' clicks are already heard at their new volume.
-- **BACK or the Back button** stores the three levels and — only when CONTROLS ended on a different
-  profile than it opened with — the chosen profile id in the save (`setOptions`), calls
+- **BACK or the Back button** stores the three levels, the bullet palette and — only when CONTROLS
+  ended on a different profile than it opened with — the chosen profile id in the save
+  (`setOptions`), calls
   `flush()` (a write only if something differs), plays `MenuBack` and closes. A CONTROLS change
   stepped away and back is applied live but not stored.
 - **CONTROLS is disabled** (showing `DEFAULT`) when the host offers no profiles — the dev scenes,
@@ -283,6 +298,7 @@ drain. `SimEventKind.UserOption` = **13** (appended; `SIM_EVENT_KIND_NAMES[13]` 
 | `MusicVolume 1` | level 0–10 | the same for `music` |
 | `SfxVolume 2` | level 0–10 | the same for **`sfx` and `ui`** — the menu sounds follow the SFX slider |
 | `InputProfile 3` | index into the flow's profile choices | the app's `inputProfiles.apply(choices[index].id, 'options')`; a negative or out-of-range index is ignored |
+| `BulletPalette 4` (M2-02) | index into `BULLET_PALETTES` | the palette callback (`connectOptionEvents`' fourth argument) with `BULLET_PALETTES[index]` — the shell passes `renderer.setBulletPalette`; an index outside the list, or no callback, is ignored |
 
 `applyAudioOptions(audio, options)` sets all four buses from saved levels at boot. Both take a
 `VolumeTarget` (`{ setBusVolume(bus, gain) }` — any `IAudio`). The event carries the profile's
@@ -327,14 +343,15 @@ platform exists — it provides the storage — and before the game:
 
 1. `loadSave(platform.storage)` (never fails the boot — a bad save means defaults) and
    `createSaveStore(platform.storage, loaded)`;
-2. `applyAudioOptions(audio, save.options.audio)`;
+2. `applyAudioOptions(audio, save.options.audio)` — and (M2-02, a little later, before the
+   scene's sprite names are resolved) `renderer.setBulletPalette(save.options.display.bulletPalette)`;
 3. with `options.inputProfiles`: `choices()` once, `apply(savedId, 'save')` when the save names a
    profile, `active()`;
 4. `createGame(…, { scenes: 'boot', save, inputProfiles: { choices, active } })` in the scene flow.
    The dev scenes (`?scene=flight`, …) get the volumes and the profile but run bare gameplay,
    which ignores the store;
 5. in the scene flow, `connectOptionEvents(events, audio, index → apply(choices[index].id,
-   'options'))` next to the fx and audio handlers.
+   'options'), palette → renderer.setBulletPalette(palette))` next to the fx and audio handlers.
 
 A throw from the app's `choices()` / `apply()` / `active()` at boot ends on the boot error screen
 (`SHMUP CUP FAILED TO START`), like any other failure while the game is created.
@@ -418,14 +435,15 @@ title — the M1-17 acceptance test in `scenes-options.test.ts`.
 | Where | Covers |
 |---|---|
 | `packages/core/test/save/save.test.ts`, `save-edge.test.ts` | Round trip; the v0 fixture migrated field by field (rounded / clamped volumes, rows refiled as `meter-normal`, unlocks dropped, odd shapes never throwing); `migrateSave` with missing / mismatched steps and every malformed version; `parseSave` on empty / blank / truncated / BOM text and throwing or garbage-returning migrations; `__proto__` / `constructor` keys; sanitiser limits (32-character keys, 32 tables, cut texts, zero scores, stable ties, counters, `-0`); canonical serialisation; `loadSave` with non-string / throwing storages and which statuses are copied to `save.corrupt`; insertion at the table edges; `SaveStore` dirty rules per load status, the table limit, the counter cap, overlapping writes succeeding / failing |
-| `packages/core/test/config/config-user-options.test.ts`, `-edge.test.ts` | Defaults, `resolveUserOptions` (rounding, clamping, `-0`, profile-id limits, non-object groups, frozen fresh results), `volumeGain` at every level and out of range |
+| `packages/core/test/config/config-user-options.test.ts`, `-edge.test.ts` | Defaults, `resolveUserOptions` (rounding, clamping, `-0`, profile-id limits, non-object groups, frozen fresh results; M2-02: every `BULLET_PALETTES` name kept, anything else → `standard`), `volumeGain` at every level and out of range |
 | `packages/core/test/ui/ui-choice.test.ts`, `-edge.test.ts` | The `Choice` widget: 1–255 labels, index clamping, Left / Right wrap and held repeat, Up / Down never changing it, Confirm stepping, two-label toggling, a disabled item, the dimmed label, the string slot rewritten only on a label change |
-| `packages/core/test/scenes/scenes-options.test.ts`, `-edge.test.ts` | Opening from the title and the pause menu and back, drawing, the live `UserOption` events, Back during the open lock, sliders at their ends, a single profile, a profile stepped away and back, unknown / `null` active profiles, saving on BACK, the save re-read per open; hi-scores — recorded on game over and stage clear, `NEW HI-SCORE`, quitting and RETRY recording nothing, starts counted, a Hard game's table, the stage reached, a failing storage never breaking the flow, **the hi-score persisting across a new game instance on the same memory storage** |
+| `packages/core/test/scenes/scenes-options.test.ts`, `-edge.test.ts` | Opening from the title and the pause menu and back, drawing, the live `UserOption` events (M2-02: BULLETS stepping the palettes, its event and the palette saved on BACK), Back during the open lock, sliders at their ends, a single profile, a profile stepped away and back, unknown / `null` active profiles, saving on BACK, the save re-read per open; hi-scores — recorded on game over and stage clear, `NEW HI-SCORE`, quitting and RETRY recording nothing, starts counted, a Hard game's table, the stage reached, a failing storage never breaking the flow, **the hi-score persisting across a new game instance on the same memory storage** |
 | `packages/core/test/scenes/scenes-options-alloc.test.ts` | The Options screen without allocation |
 | `packages/input-web/test/rebind/rebind-choices.test.ts`, `-edge.test.ts` | Selectable profiles per key space, gamepads never offered, packed keys, order, the default suffix, the `extra` profile, fresh arrays |
-| `packages/shell/test/dispatch/dispatch-options.test.ts`, `-edge.test.ts` | The event → bus table (fake audio), SFX driving `sfx` + `ui`, clamped levels, raw profile indices, unregistering, `applyAudioOptions` at every level |
+| `packages/shell/test/dispatch/dispatch-options.test.ts`, `-edge.test.ts`, `dispatch-options-palette.test.ts` | The event → bus table (fake audio), SFX driving `sfx` + `ui`, clamped levels, raw profile indices, unregistering, `applyAudioOptions` at every level; M2-02: every palette by its index, indices outside the list and a missing callback ignored, nothing after disconnecting |
 | `packages/shell/test/boot/boot.test.ts` | The save at boot (fake audio volumes, fake app profiles, corrupt / unreadable / v0 saves, a failing storage, `choices()` asked once, dev scenes, no app profiles, a throwing `apply` as the start error), Options end to end, `blur`, boot timing and `data-shmup-boot-ms`, a game over writing the hi-score to the platform storage |
 | `apps/*/test/boot/boot-wiring.test.ts` | Web: the saved choice through the save, CONTROLS entries, a pick winning over `?profile=`, out-of-range picks, `?debounce=` kept, a corrupt save, the save on prefixed `localStorage`. TV: CONTROLS, a live switch registering keys, a pick of the profile in use registering nothing, switching back from a saved FAST 8-WAY, a corrupt save, and the manual M1-17 check driven by remote keys only (SFX + CONTROLS saved on Back, kept after a relaunch) |
+| `test/e2e/bullet-palette.spec.ts` | M2-02, web build: BULLETS → DEUTERANOPIA saved on Back and drawn by the next boot's bullets; without a save none of its colours (the control) |
 | `test/e2e/options.spec.ts` | Web build: OPTIONS opens the screen (`data-shmup-scene="options"`), a MUSIC change is written to `shmup-cup:save.v1` on Esc and read again after a reload, `data-shmup-boot-ms` < 10 s; a corrupt save boots with defaults, is copied to `shmup-cup:save.corrupt` and replaced on Back. Tizen build from `file://`: SFX and CONTROLS changed with the remote only, saved on Back, kept after a reload |
 
 ## Gotchas
@@ -441,6 +459,8 @@ title — the M1-17 acceptance test in `scenes-options.test.ts`.
 | Volumes react, but the menu sounds ignore MASTER / MUSIC | Expected for MUSIC; MASTER scales everything; the menu sounds (`ui` bus) follow **SFX** |
 | A test's `Game` has an Options screen but nothing persists | `GameOptions.save` omitted: the flow plays with a memory-only store. Pass `createSaveStore(platform.storage, await loadSave(platform.storage))` |
 | An old `shmup-cup:input.profile` entry does nothing | Since M1-17 the choice lives in the save document; the old key is not read |
+| A test that pressed Down four times to reach BACK now lands on BULLETS | M2-02 inserted BULLETS before BACK (`OptionsItem.Back` is 5) — navigate by `OptionsItem`, or press Back |
+| BULLETS shows `STANDARD` after a relaunch although another palette was picked | The screen was not closed with BACK / Back (only closing writes), or the save predates the pick; the palette itself is applied live when stepped |
 | `data-shmup-boot-ms` is larger than `Shell.bootTiming.bootMs` | By design: the attribute is `readyMs` (since the page started, i.e. the launch), `bootMs` only the time inside `bootShell` |
 | `gamesStarted` is larger than `gameOvers + stagesCleared` | Expected: it counts every START and RETRY STAGE, also games that were quit; it reaches storage with the next flush (the next Options close or finished game) |
 
@@ -453,7 +473,10 @@ title — the M1-17 acceptance test in `scenes-options.test.ts`.
 - **M2-01** (done) — a hi-score table per difficulty preset (`meter-easy` … `meter-arcade`) and a
   session hi-score per preset in the flow; the chosen difficulty is not saved yet
   ([difficulty-and-rank.md](difficulty-and-rank.md)).
-- **M2-08 / M2-16** — display options (scale mode, shake, flash reduction, hitbox), game options
+- **M2-02** (done) — the first display option, `display.bulletPalette` (BULLETS), applied live by
+  the renderer ([rendering-and-shell.md](rendering-and-shell.md#colour-blind-bullet-palettes)); the
+  save stays version 1.
+- **M2-08 / M2-16** — more display options (scale mode, shake, flash reduction, hitbox), game options
   (difficulty, lives, death penalty, auto power-up), per-device rebinding and the controls
   sub-screens; **save v2** with a migration from v1.
 - **M2-15** — the name entry replaces `---` and the hi-score table screen shows the tables.

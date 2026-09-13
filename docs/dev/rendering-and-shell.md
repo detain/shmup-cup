@@ -7,7 +7,9 @@ step **M1-04**. Later steps *fill* the contract (the World in M1-06, see
 [bullets-and-patterns.md](bullets-and-patterns.md); the player shots and Options in M1-10, see
 [weapons-and-options.md](weapons-and-options.md); particles, score popups and the screen shake /
 flash / dim fed by the sim's events in M1-14, see [fx-and-game-feel.md](fx-and-game-feel.md);
-the HUD, the menus and the scene flow's frame in M1-16, see [scenes-and-ui.md](scenes-and-ui.md))
+the HUD, the menus and the scene flow's frame in M1-16, see [scenes-and-ui.md](scenes-and-ui.md);
+the bending lasers' `BendingLaserView` and the colour-blind bullet palettes in M2-02, see
+[pattern-dsl.md](pattern-dsl.md) and [below](#colour-blind-bullet-palettes))
 without changing its shape. The shell's audio wiring (M1-15 — the
 SFX bank and the stage's music rendered during boot, the engine fed by the same event dispatch)
 is on [audio.md](audio.md); the dev / test builds' debug tools and overlay (M1-19 — the `DEBUG`
@@ -100,7 +102,7 @@ and per slot `x`, `y`, `spriteId`, `frame`, `flags`. Slots `[0, count)` are draw
 
 ### The world view
 
-`WorldView = { camera: { x, y }, parallax, terrain, batches, lasers?, warning? }`. Everything is a live
+`WorldView = { camera: { x, y }, parallax, terrain, batches, lasers?, bendingLasers?, warning? }`. Everything is a live
 reference into sim state; the renderer reads and never writes. **`batches` is read once, when
 the view is bound**: the renderer creates one preallocated binding per entry, and syncs
 binding `i` from `batches[i]` every frame. To change the list, hand the renderer a different
@@ -123,6 +125,13 @@ spacings) and `terrain` (map size, tile size); their per-frame values are read e
   only telegraphs — the renderer draws a 1-px warning line then), `spriteId` (the beam strip)
   and `flags` (`Hidden` = the warning line's blink). The bullet system's laser pool implements
   it directly ([bullets-and-patterns.md](bullets-and-patterns.md#drawing-bullets-and-lasers)).
+- `BendingLaserView` (optional `bendingLasers`, M2-02) — the enemy bending lasers: `capacity`
+  **stable** slots (not packed like the other views — a slot keeps its ring), each a ring of
+  `nodes` (a power of two) recorded head positions: per slot `active`, `filled` (the newest nodes
+  to draw), `head` (the ring index of the newest), `width`, `spriteId` (the segment sprite, frame
+  0) and `flags` (`Hidden`), per node `x`, `y` (slot-major); node `k` back from the head is
+  `(head − k) & (nodes − 1)`. The bullet system's `BendingLaserTable` implements it directly
+  ([bullets-and-patterns.md](bullets-and-patterns.md#bending-lasers)).
 - `WarningView` (optional `warning`, M1-13) — the boss WARNING: `active`, `ticks` (since it
   started), `duration` (180) and `text` (three lines split at `\n`, built once per boss at world
   creation from the game's own template — decision D10). The renderer's world binding ignores
@@ -252,6 +261,13 @@ error screen.
   sprite (frame `k` is a band `k + 1` px tall) stretched along the laser. Switching frames
   instead of scaling across and writing a rotation only when the angle changed keep the sync
   allocation-free (Pixi's tint and transform setters allocate).
+- **`BendingLaserBinding`** (`createBendingLaserBinding`, one per bound `BendingLaserView`, on
+  `ENEMY_BULLETS` after the laser binding, M2-02): `capacity × nodes` sprites (8 × 64) created
+  up front, hidden; `sync(view, camera)` shows each active, not hidden slot's newest `filled`
+  nodes as frame 0 of its segment sprite, anchored on the node at `round(x − camera.x)`,
+  `round(y − camera.y) + PLAYFIELD_Y`, **tail first** so the head is on top, and hides the slot's
+  other sprites. The segment is a round blob, so it is never rotated or scaled — the sync only
+  moves sprites and assigns a texture when it changed.
 
 `createDrawListView()` (`ui`) draws a `DrawList` into a quad pool in command order: rects,
 sprites (`Hidden` skips the command, `Flash` swaps to the sibling), `text` and `number` via
@@ -285,8 +301,8 @@ particle pool and the score popups (the last two on the `FX` layer, with an atla
 2. steps the effects, particles and popups by the ticks since the last frame (`frame.tick`
    delta: 0 while paused, ≤ 60; a tick going back clears them);
 3. rebinds if `frame.world` is a different object, then syncs the particles and popups (with the
-   world's camera), the parallax bands, the terrain grid, every sprite binding and the laser
-   binding;
+   world's camera), the parallax bands, the terrain grid, every sprite binding, the laser
+   binding and the bending laser binding (M2-02);
 4. offsets the world group by the rounded `frame.screen` shake plus the effects' shake, shows the
    brighter of the frame's white flash and the effects' tinted flash, sets both dims;
 5. draws the HUD and UI lists (skipped when unchanged);
@@ -302,10 +318,47 @@ reuse the first frame's cached state.
 
 **Allocation budget.** Pixi objects are created in `createPixiRenderer` and in `bindWorld()`
 (which also creates the parallax sprites and the terrain grid, below the batches, the laser
-sprites above them, and validates every band's layer before creating anything).
+sprites and the bending laser segments above them, and validates every band's layer before
+creating anything).
 The shell pre-binds its scene at load, so a running frame only assigns numbers and existing
 textures. Tint is set only when it changes, because Pixi's `tint` setter allocates before it
 compares (a HUD redrawn every frame used to allocate ~1 KB per frame).
+
+### Colour-blind bullet palettes
+
+Plan M2-02 (`shmup_feat.md` §21 "colorblind bullet palettes + shape coding"). The player picks
+the enemy bullets' colour set under OPTIONS → **BULLETS**: `standard` (pink / red / purple) or one
+of three sets for the common kinds of colour blindness — core `config` `BULLET_PALETTES`
+(`standard`, `deuteranopia`, `protanopia`, `tritanopia`), stored in
+`UserOptions.display.bulletPalette` ([saves-and-options.md](saves-and-options.md#user-options-coreconfig)).
+It is **presentation only**: the simulation, its sprite ids, replays and hashes never see it.
+
+- **The art.** The asset pipeline's `palettes` generator draws every bullet (9), laser beam (3)
+  and bending laser segment (3) again for each colour-blind palette as `<sprite>@<palette>`
+  (`bullets/oval-red@deuteranopia`, `lasers/beam-pink@tritanopia` …), with the same frames in the
+  same order. Each palette moves the three colour families to hues that stay apart for that
+  kind of colour blindness and away from the gold items and orange explosions (light magenta,
+  sky blue and near-white for red–green blindness; crimson, teal and near-white for blue–yellow),
+  and **shape-codes** the cores so the families differ without colour: pink keeps the solid bright
+  core, red gets a dark centre pixel (a ring), purple a single bright dot
+  ([asset-pipeline.md](asset-pipeline.md#procedural-generators-scriptsassetsprocedural)).
+- **The swap.** `resolveBulletPaletteTable(atlas, names, palette)` (render-pixi `palette`)
+  resolves the sprite name table like `createSpriteTables` and then points every name that has an
+  `@<palette>` variant at the variant's first frame. `renderer.setBulletPalette(palette)` stores
+  the choice and, once sprite names are set, replaces `tables.base` with that table and
+  invalidates the HUD / UI views; every binding reads the shared tables, so the next frame draws
+  the new colours with **no rebinding and no sim change**. `setSpriteNames` resolves with the
+  current palette. The swap allocates — it runs at boot and when the option changes, never per
+  frame. The flash table is untouched (a bullet never flashes).
+- **The shell.** At boot, after the save is read, the shell calls
+  `renderer.setBulletPalette(save.options.display.bulletPalette)` before the scene's sprite
+  names are resolved; in the scene flow `connectOptionEvents(…, onBulletPalette)` turns the
+  Options screen's live `UserOption` `BulletPalette` events (`param` = the `BULLET_PALETTES`
+  index; bad indices ignored) into `renderer.setBulletPalette`.
+- **Real art.** A PNG override of a bullet sprite replaces only the standard frames; without its
+  own `@<palette>` variants (overrides by name too) the colour-blind sets keep the procedural
+  variants' frames — `pnpm content:check` requires every variant of every engine bullet / laser
+  sprite, frame for frame.
 
 ## The browser shell (`@shmup/shell`)
 
@@ -345,7 +398,7 @@ const shell = await bootShell({
 | 4 | `createPixiRenderer(...)` — WebGL1 first; `fxSeed` = the game's seed xor a salt, `effects` = `ShellOptions.effects`, `countDrawCalls` only with `ShellOptions.debugTools` (M1-19) | `WEBGL IS NOT AVAILABLE` |
 | 5 | `options.platform(renderer)`; then (M1-17) `loadSave(platform.storage)` — never fails: a corrupt or unreadable save means defaults, its text copied to `save.corrupt` — `createSaveStore`, `applyAudioOptions(audio, save.options.audio)`, and with `options.inputProfiles` its `choices()`, `apply(savedId, 'save')` and `active()`; then `createGame(platform, gameConfig, content.db, options)` — `{ scenes: 'boot', save, inputProfiles: { choices, active } }` for the default scene `game` (the scene flow, M1-16), none for the dev scenes (bare gameplay) — [saves-and-options.md](saves-and-options.md#the-shells-side) | `SHMUP CUP FAILED TO START` (the platform factory, the profile callbacks or `createGame` threw) |
 | 5a | Audio (M1-15): `createAudioEngine({ sfx, music, loader })`, `engine.loadSfx()` (bar labelled `LOADING SOUND`), then for a booted stage `engine.prepareMusic(stage.id, stageMusicCues(stage))` (`LOADING MUSIC`; open space prepares none); the scene flow adds the title theme (and the stage-clear / game-over jingles in open space), then `game.scenes.finishBoot()` — [audio.md](audio.md#the-shells-wiring) | `AUDIO FAILED TO LOAD` (`AudioLoadError: could not load <url>: …`) |
-| 6 | `renderer.setFxContent(shell.fx)`; scene set up (the scene flow: `createSceneView(game)`, its name table + `bindWorld(view.backdrop)`; free flight / showcase / fx gallery: the scene's name table + `bindWorld(scene.world)`; calibration: content's names and a frame without a world), dispatcher created — in the scene flow and free flight with `connectFxEvents` (M1-14) and `connectAudioEvents(events, engine, camera)` (M1-15; the flow's `sceneView.camera`, free flight's `world.view.camera`); in the scene flow also `connectOptionEvents(events, audio, …)` (M1-17: the Options screen's volumes and profile, live) | — |
+| 6 | `renderer.setFxContent(shell.fx)`; `renderer.setBulletPalette(save.options.display.bulletPalette)` (M2-02 — before the sprite names are resolved); scene set up (the scene flow: `createSceneView(game)`, its name table + `bindWorld(view.backdrop)`; free flight / showcase / fx gallery: the scene's name table + `bindWorld(scene.world)`; calibration: content's names and a frame without a world), dispatcher created — in the scene flow and free flight with `connectFxEvents` (M1-14) and `connectAudioEvents(events, engine, camera)` (M1-15; the flow's `sceneView.camera`, free flight's `world.view.camera`); in the scene flow also `connectOptionEvents(events, audio, …)` (M1-17: the Options screen's volumes and profile, live; M2-02: the bullet palette → `renderer.setBulletPalette`) | — |
 | 7 | Suspend → `input.clear()` + `audio.suspend()`; resume → `audio.resume()`; window `blur` → `input.clear()` (M1-17 — a window without focus never sends its key-ups); audio unlock (first `keydown` / `pointerdown` in the capture phase, or immediately) followed by `engine.attach(audio)` right after `unlock()` returns and again when it resolves; `resize` → `renderer.resize()` | — |
 | 8 | rAF loop started, overlay removed, canvas marked `running`, `data-shmup-scene` = the top scene (`title`) or the dev scene, and `data-shmup-boot-ms` = the launch-to-ready time (M1-17, `Shell.bootTiming`); then, in dev / test builds, the debug tools from `ShellOptions.debugTools` (M1-19: keys, `window.__shmupDebug`, the overlay — before the first frame, which rAF runs later) | — |
 
@@ -431,7 +484,8 @@ playfield's left edge — it pans the sound), `Music` → `playMusic(cue, fadeTi
 the particle and the audio handler. Since M1-17 the scene flow also registers
 `connectOptionEvents(events, audio, onInputProfile)`: `UserOption` volume events →
 `audio.setBusVolume(bus, volumeGain(level))` (the SFX level on `sfx` and `ui`), the profile event →
-the app's `inputProfiles.apply(id, 'options')`
+the app's `inputProfiles.apply(id, 'options')`, and since M2-02 the `BulletPalette` event →
+`renderer.setBulletPalette(BULLET_PALETTES[param])`
 ([saves-and-options.md](saves-and-options.md#live-changes-the-useroption-event)). Only `HitStop`,
 `Rumble` and `PowerUp` are still counted as unhandled.
 
@@ -611,6 +665,12 @@ pnpm test:e2e                                        # builds web + tizen, then 
   countdown gives up to the game-over screen without leaving the app; no console errors
   ([difficulty-and-rank.md](difficulty-and-rank.md)). Every older spec that starts a game from
   the title presses one more Enter / OK for the difficulty menu.
+- `bullet-palette.spec.ts` (M2-02) — web build: OPTIONS → BULLETS steps STANDARD → DEUTERANOPIA,
+  Back writes `display.bulletPalette` to the save (`shmup-cup:save.v1`), and the next boot
+  (`?stage=test-range`, whose turrets, walkers and orbiters fire pink, red and purple bullets)
+  draws the enemy bullets in the deuteranopia variants' body colours with none of the standard
+  ones, no console error and no "unknown sprite" warning; without a save the standard palette
+  shows none of the deuteranopia colours (the control).
 - `frame-advance.ts` (M1-19) — `freezeSim(page)` and `stepTo(page, tick)`: specs that compare two
   captures a set number of ticks apart freeze the sim and run exact ticks, because under load the
   frame loop runs 1–4 ticks per rAF frame. Playwright uses half the cores, at most 8 workers
@@ -670,10 +730,12 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | `packages/render-pixi/test/atlas/` | Frame numbering, sprite / flash tables, `ui/missing` fallback and warn-once, stale / oversized / corrupt manifests |
 | `packages/render-pixi/test/sprites/`, `ui/`, `text/`, `layers/` | Binding sync (camera, `PLAYFIELD_Y`, anchors, flips, blink, flash, shrinking batches), quad-pool ordering and overflow, draw-list views (revision skipping, hidden sprites), text layout and metrics, number formatting, layer order |
 | `packages/render-pixi/test/layers/layers-stage*.test.ts` | Terrain grid size (49 × 26, capped at the map's rows), textures and positions, the ring (nothing re-textured inside a tile, one column / row per tile edge, all after a jump or new tables; after a long random camera walk it equals a freshly built grid), pixel agreement with the sprite bindings at half-pixel cameras, parallax coverage for any offset / spacing, validation, allocation-free syncs |
+| `packages/render-pixi/test/layers/layers-bending.test.ts` | The bending laser binding (M2-02): the newest `filled` nodes of each active slot, tail first, the head on top; a shrinking body's extra sprites, hidden and inactive slots hidden; clamping to its nodes; bad capacities and node counts; a moving body synced without allocating |
+| `packages/render-pixi/test/palette/palette-bullets.test.ts`, `renderer/renderer-wiring.test.ts` | M2-02: `bulletPaletteSpriteName`, `resolveBulletPaletteTable` (variants in place of their sprites, the rest kept); the renderer binding the bending laser view after the lasers and `setBulletPalette` swapping the sprite tables to a palette's variants and back |
 | `packages/render-pixi/test/layers/layers-lasers*.test.ts` | The laser binding (M1-09): two hidden sprites per slot, the tinted telegraph line vs the beam frame of the rounded width (band / frame boundaries, wider-than-frames scaling), blink and zero / NaN lengths hidden, rotation written only on change, camera rounding without `-0`, shrinking views, capacity validation, destroy, zero allocation through a whole laser life |
 | `packages/render-pixi/test/renderer/` | The renderer wired with a fake `WebGLRenderer`: passes, rebinding (incl. parallax / terrain bindings below the batches), shake / flash / dim, reused pass options (fails if `resetPass` is removed), allocation probes; `renderer-fx*` (M1-14): the particles / popups / effects it owns, stepping by the tick delta, flash tint composition, the two dims, the FX layer under the enemy bullets |
 | `packages/render-pixi/test/particles/`, `effects/` | The `fx` content validation, the particle pool, the screen effects and the score popups (M1-14 — [fx-and-game-feel.md](fx-and-game-feel.md#tests)) |
-| `packages/shell/test/` | The save at boot (M1-17: volumes on a fake audio, the app's profile callbacks, corrupt / unreadable / v0 saves, a failing storage, the Options screen end to end, `blur`, boot timing and `data-shmup-boot-ms`), `connectOptionEvents` / `applyAudioOptions` (`dispatch-options*.test.ts`); the scene flow's boot (title theme prepared, `finishBoot`, `data-shmup-scene` through boot → title → game → pause) and `scene-view` (backdrop, open-space wrapper per World, starfield frozen under pause, followed camera, `worldChanges` — M1-16); boot happy path and every failure (error screen, state attribute, cleanup), content owners (the default `input-profiles` owner, an app owner replacing it), the input context forwarded before a frame's polls, image loading and progress, dispatch (copy-on-write unsubscribe; `connectFxEvents` — its table, an allocation guard of the whole event path and an end-to-end game-feel run, M1-14; `connectAudioEvents` — its mapping, two allocation guards and the shipped boss range through a real audio engine, M1-15), the audio wiring of boot (bank and stage set prepared, attach after the unlock, `AUDIO FAILED TO LOAD` — M1-15), overlay drawing, the fx gallery, the free-flight scene (sprite ids, starfield drift / wrap / pause, HUD, the WARNING band — M1-13, empty content, zero allocation per frame), showcase determinism and allocation |
+| `packages/shell/test/` | The save at boot (M1-17: volumes on a fake audio, the app's profile callbacks, corrupt / unreadable / v0 saves, a failing storage, the Options screen end to end, `blur`, boot timing and `data-shmup-boot-ms`), `connectOptionEvents` / `applyAudioOptions` (`dispatch-options*.test.ts`; `dispatch-options-palette.test.ts` — M2-02: every palette by its index, bad indices and no callback ignored, disconnect), the saved palette applied at boot (`boot.test.ts`); the scene flow's boot (title theme prepared, `finishBoot`, `data-shmup-scene` through boot → title → game → pause) and `scene-view` (backdrop, open-space wrapper per World, starfield frozen under pause, followed camera, `worldChanges` — M1-16); boot happy path and every failure (error screen, state attribute, cleanup), content owners (the default `input-profiles` owner, an app owner replacing it), the input context forwarded before a frame's polls, image loading and progress, dispatch (copy-on-write unsubscribe; `connectFxEvents` — its table, an allocation guard of the whole event path and an end-to-end game-feel run, M1-14; `connectAudioEvents` — its mapping, two allocation guards and the shipped boss range through a real audio engine, M1-15), the audio wiring of boot (bank and stage set prepared, attach after the unlock, `AUDIO FAILED TO LOAD` — M1-15), overlay drawing, the fx gallery, the free-flight scene (sprite ids, starfield drift / wrap / pause, HUD, the WARNING band — M1-13, empty content, zero allocation per frame), showcase determinism and allocation |
 | `packages/render-pixi/test/debug/`, `renderer/renderer-draw-calls.test.ts` | The debug overlay (M1-19): panel lines and values, frame graph, every outline kind, one colour per list, no dropped commands with every pool full, allocation-free `update`; the draw-call counter ([debug-and-replays.md](debug-and-replays.md#tests)) |
 | `packages/shell/test/debug/` | The debug tools (M1-19): F-keys, the TV unlock sequence, `window.__shmupDebug`, the frame hooks |
 | `test/e2e/` | The real browser path, both builds (above) |
@@ -695,6 +757,9 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | Options fly and fire but are invisible | `options/orb` is an engine sprite: the content was loaded without `extraSprites: ENGINE_SPRITES` (the shell's `loadGameContent` passes it by default) |
 | A scene or test that picks a World batch by index shows the wrong sprites | M1-10 inserted the player-shot and Option batches: the World's order is ground enemies, air enemies, player shots, Options, ships, enemy bullets (the flight scene puts its star batches first) |
 | Lasers never appear | The bound `WorldView` has no `lasers` (a scene that builds its own view must pass `world.view.lasers` through, as the flight scene does), or the view was bound before it was set |
+| Bending lasers never appear | The same for `bendingLasers` (M2-02): a scene's own view must pass `world.view.bendingLasers` through — the flight scene and the scene view do |
+| BULLETS changes nothing on screen | The renderer has no atlas / sprite names yet (the choice is kept and applied by `setSpriteNames`), the event did not reach it (only the scene flow connects `connectOptionEvents`), or the atlas lacks the `@<palette>` variants (run `pnpm assets`; `pnpm content:check` names them) |
+| A real-art bullet keeps its standard colours in a colour-blind palette — or shows the placeholder's | A PNG override replaces a sprite by name; its `@<palette>` variants are separate sprites — draw and override them too |
 | A stage runs but shows no terrain | The stage has no `tilemap`, its tileset failed to load (see the boot issues), or no atlas was given; tiles whose `frame` the atlas lacks draw `ui/missing` |
 | `bindWorld` throws `parallax band i has layer …` | A `ParallaxView` band is not on `BG_FAR` / `BG_MID` — stage content only produces those; check a hand-made view |
 | Terrain and sprites disagree by one pixel | Something moved the terrain container by other than `round(−camera.x)`: sprite bindings draw `round(x − camera.x)`, and only that formula agrees for integer world positions (a test checks half-pixel cameras) |
@@ -756,3 +821,7 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
   draw-call counter, the overlay on the `DEBUG` layer (FPS, tick / render ms, draw calls, pools,
   boot ms from `Shell.bootTiming`, the frame graph, outlines), `window.__shmupDebug`; `pnpm
   test:e2e` on the test builds ([debug-and-replays.md](debug-and-replays.md)).
+- **M2-02** (done) — the `BendingLaserView` (optional `WorldView.bendingLasers`) and its segment
+  binding on `ENEMY_BULLETS`; the cancel point items as one more batch on `ITEMS`; the colour-blind
+  bullet palettes (`setBulletPalette`, the shell's boot and `connectOptionEvents`)
+  ([pattern-dsl.md](pattern-dsl.md), [above](#colour-blind-bullet-palettes)).

@@ -359,6 +359,10 @@ objects.
   tick is the World's) and are cleared for a new World ([scenes-and-ui.md](scenes-and-ui.md)).
 - **M2-08 / M2-16** — the Options screen's display options set `screenShake` and
   `reduceFlashing` (the M1-17 Options screen has the audio sliders and the controls profile only).
-- **M2-02** — bullet cancel into points (popups for the points).
+- **M2-02** (done) — bullet cancel into points: a boss's death and a Mega Crash still push the
+  cancel sparkles, and each cancelled bullet also becomes a gold `items/point` item that flies to
+  the score (a sim-side batch on `ITEMS`, no event and no popup —
+  [bullets-and-patterns.md](bullets-and-patterns.md#cancel)); the bending lasers are drawn by
+  their own binding on `ENEMY_BULLETS` ([rendering-and-shell.md](rendering-and-shell.md#layers-bindings-and-quad-pools)).
 - **M2-08** — raster / scanline effects, palette swaps and cycling (`effects` → implemented).
 - **M3-02** — the CRT filter (`EffectSettings.crt`).

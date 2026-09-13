@@ -102,11 +102,12 @@ Each module exports `generate(): SpriteDef[]` and is registered in
 
 | Module | Sprites |
 |---|---|
-| `bullets` | `bullets/{round,oval,needle}-{pink,red,purple}` — bright core, saturated body, dark rim (`shmup_feat.md` §12). Round 7×7 × 1 frame; oval 9×9 and needle 11×11 × 8 directional frames |
-| `lasers` | `lasers/beam-{pink,red,purple}` (M1-09) — enemy laser beams in the bullet colours: 8 frames of 4×8 px, frame `k` a horizontal band `k + 1` px tall (dark rim rows from 3 px, body rows from 5 px, a bright core). Every column is identical, so the renderer stretches a frame to any length and picks the frame of the beam's drawn width |
+| `bullets` | `bullets/{round,oval,needle}-{pink,red,purple}` — bright core, saturated body, dark rim (`shmup_feat.md` §12). Round 7×7 × 1 frame; oval 9×9 and needle 11×11 × 8 directional frames. Since M2-02 drawn by `bulletSprites(colours, suffix?, marks?, generator?)` — any body colours, a name suffix and per-family **core marks** (`CoreMark`: `solid` — the bright core disc, `ring` — the core with a dark centre pixel, `dot` — no core band, one bright centre pixel) |
+| `lasers` | `lasers/beam-{pink,red,purple}` (M1-09) — enemy laser beams in the bullet colours: 8 frames of 4×8 px, frame `k` a horizontal band `k + 1` px tall (dark rim rows from 3 px, body rows from 5 px, a bright core). Every column is identical, so the renderer stretches a frame to any length and picks the frame of the beam's drawn width. M2-02: `lasers/bend-{pink,red,purple}` — the bending lasers' segment, one 7×7 round blob (`BEND_SIZE`; rim outside radius 2.6, body, a bright core inside 1.3) drawn at every node; both drawn by `laserSprites(colours, suffix?, generator?)` |
+| `palettes` | M2-02 (`shmup_feat.md` §21): every bullet, beam and bend sprite again for each colour-blind palette as `<sprite>@<palette>` — 15 sprites × `deuteranopia`, `protanopia`, `tritanopia` (the names match `@shmup/core` `BULLET_PALETTES`; `standard` is the plain sprites). `BULLET_PALETTES` here maps each palette to the three families' body colours (deuteranopia `#ff8ad8` / `#3ab0ff` / `#e4e4ff`, protanopia `#ff9ce4` / `#44c4ff` / `#eeeeff`, tritanopia `#ff4870` / `#22d8cc` / `#f2f2f2` for pink / red / purple — hues apart for that colour blindness and away from the gold items and orange explosions), `CORE_MARKS` the shape coding (pink `solid`, red `ring`, purple `dot`). Same frames, same order, so directional frames and band widths still line up |
 | `explosions` | `fx/explosion-small` (16×16 × 6), `-medium` (32×32 × 7), `-large` (48×48 × 8); animation `burst` |
 | `particles` | `fx/spark` (5×5 × 3, `fade`), `fx/debris` (6×6 × 4, `tumble`), `fx/sparkle` (5×5 × 4, `twinkle` — fixed pixel lists, M1-14), `fx/ring` (9×9 × 4, `grow` — a 1-px ring of radius 1…4 by a `Math.sqrt` distance test, M1-14) |
-| `items` | `items/capsule` (12×8 × 2, `blink`) |
+| `items` | `items/capsule` (12×8 × 2, `blink`); M2-02: `items/point` (5×5 × 2, `twinkle`) — the gold diamond (`|dx| + |dy| ≤ 2`, dark rim, white centre) cancelled bullets turn into; frame 1 lights its tips |
 | `shields` | `shields/force-field` (30×24 × 4 wear states: `fresh`, `worn`, `damaged`, `critical`) |
 | `starfield` | `bg/stars-far`, `bg/stars-mid`, `bg/stars-near` — seamless 128×128 transparent tiles |
 | `backdrops` | M1-18: `bg/azure-verge` — zone A's far planet band, a 128×48 tile (`AZURE_TILE_W`, `AZURE_TILE_H`, anchored top-left) that repeats seamlessly along x: a translucent haze thickening towards a lit rim row (`AZURE_RIM_ROW` 10), then an opaque dark-azure-to-navy body with seeded cloud streaks that wrap round the tile edge. Dark and low in saturation so the pink / red / purple bullets and the gold capsules stay readable over it, never pure black |
@@ -186,10 +187,11 @@ is simpler for the renderer.) Today the seven enemies and the four boss parts fl
 | Player shots | `shots/basic`, `shots/double`, `shots/laser` (a segment, anchor on its left edge), `shots/missile` (`fly`) | pixel maps |
 | Enemies | `enemies/drifter`, `turret`, `carrier-red`, `hopper`, `spinner`, `darter`, since M1-08 the ground `hatch` (20 px wide, lid closed / open), and since M1-18 zone A's `vane` (12×10, an amber swept-wing fan flier, wings beat) and `gyre` (14×14, a teal ring round a bright core, the ring turns) — 2 frames each, all with `@flash` | pixel maps |
 | Boss parts | `bosses/core`, `shield-plate` (`intact`, `cracked`), `hull-block`, `emitter` (`idle`, `charge`), and since M1-18 HALCYON BULWARK's `bulwark-hull` (48×32), `bulwark-wing-top` / `-bottom` (56×14), `bulwark-emitter` (18×10, 2 frames — it glows) and `bulwark-plate` (6×18) — all with `@flash` | pixel maps |
-| Items | `items/capsule` (generated), `items/bonus`, `items/one-up` | both |
+| Items | `items/capsule`, `items/point` (M2-02) (generated), `items/bonus`, `items/one-up` | both |
 | HUD | `hud/meter-slot`, `hud/meter-labels` (generated), `hud/life` | both |
 | World | `bg/stars-{far,mid,near}`, `bg/azure-verge` (M1-18), `tiles/terrain-a` | generated |
-| FX / bullets / shield | explosions, spark, debris, 9 enemy bullets, 3 laser beams (M1-09), `shields/force-field` | generated |
+| FX / bullets / shield | explosions, spark, debris, 9 enemy bullets, 3 laser beams (M1-09), 3 bending laser segments (M2-02), `shields/force-field` | generated |
+| Colour-blind variants | M2-02: the 15 bullet / beam / bend sprites × 3 palettes as `<sprite>@<palette>` (45 sprites) | generated (`palettes`) |
 | Utility | `ui/pixel`, `ui/missing`, `ui/logo` (M1-16), `font/pixel` | generated / font |
 
 The enemy names cover every name the shipped and example content use (the `test-range`
@@ -314,8 +316,13 @@ runs `findMissingSprites(manifest, db.sprites.names)`, so a typo fails the check
 message that names the missing sprite and how to add it — instead of a magenta
 `ui/missing` box in the game. Only the shipped content is checked: the example files'
 `ships/example` and `enemies/example-warden` are documentation. The sprites the engine draws on
-its own — the nine bullet kinds and `lasers/beam-pink` (M1-09) and `options/orb` (M1-10),
-`core/world` `ENGINE_SPRITES` — are checked the same way; hosts intern them with `loadContent`'s `extraSprites`.
+its own — the nine bullet kinds and `lasers/beam-pink` (M1-09), `options/orb` (M1-10),
+`lasers/bend-pink` and `items/point` (M2-02), `core/world` `ENGINE_SPRITES` — are checked the same
+way; hosts intern them with `loadContent`'s `extraSprites`. Since M2-02 the check also requires
+every colour-blind variant (`<sprite>@<palette>` for each non-standard `BULLET_PALETTES` entry) of
+every bullet / beam / bend sprite, frame for frame. The variants are never content names — the
+renderer finds them by name when the player picks a palette
+([rendering-and-shell.md](rendering-and-shell.md#colour-blind-bullet-palettes)).
 
 ## Extending it
 
@@ -343,7 +350,10 @@ designs only, native resolution, no pure black next to small bright bullets.
 Drop `<name>.png` (and optionally the Aseprite `<name>.json` export) next to where the
 pixel map would live, keep the `.aseprite` file beside it and record third-party licences
 in a `LICENSES.md`. The pixel map can stay — frames the PNG lacks fall back to it — or be
-deleted once the PNG covers every frame.
+deleted once the PNG covers every frame. **Bullets, beams and bend segments** also have
+colour-blind variants (M2-02): a PNG named `bullets/oval-red.png` replaces only the standard
+sprite — override `bullets/oval-red@deuteranopia` (and the other two palettes) as well, or the
+colour-blind sets keep the placeholder's shapes.
 
 ### Adding glyphs or a font
 
@@ -375,7 +385,8 @@ pnpm exec vitest run --project integration test/scripts/assets   # pipeline unit
 | `test/scripts/assets/packer.test.ts`, `packer-edge.test.ts` | No overlaps (border + padding included), power-of-two pages ≤ 2048², determinism under reordering, spilling onto more pages, option validation, tie-breaks, a seeded fuzz |
 | `test/scripts/assets/sprite-source.test.ts`, `sprite-source-edge.test.ts` | Every validation path, Aseprite sidecars (hash/array, tags, pivot, trimmed, frameless), PNG overrides, loader error paths |
 | `test/scripts/assets/font.test.ts`, `font-edge.test.ts` | ASCII 32–126 + the specials, glyph-key rules, `loadFontSources()`, the pixel font's design rules |
-| `test/scripts/assets/procedural.test.ts`, `image.test.ts`, `rng.test.ts`, `manifest.test.ts` | Each generator's documented shapes (bullets outlined by the dark rim, slope profiles, seamless star tiles …), raster helpers, the asset RNG's known-answer vectors, the manifest layout and self-consistency |
+| `test/scripts/assets/palettes-names.test.ts` | M2-02: the pipeline's palettes are exactly core's `BULLET_PALETTES` other than `standard`, in core order; every family has a body colour and a core mark in every palette; one `<standard sprite>@<palette>` per standard sprite and palette; two runs draw the same pixels |
+| `test/scripts/assets/procedural.test.ts`, `image.test.ts`, `rng.test.ts`, `manifest.test.ts` | Each generator's documented shapes (bullets outlined by the dark rim, the M2-02 core marks, bend segments and the point diamond, slope profiles, seamless star tiles …), raster helpers, the asset RNG's known-answer vectors, the manifest layout and self-consistency |
 | `test/scripts/assets/pipeline.test.ts`, `pipeline-edge.test.ts` | The whole atlas: frames pixel-exact, extrusion, the initial sprite set, byte-identical runs, every cache state (including a pipeline edit after the code was loaded), stale-page removal, oversized frames as issues, parallel runs |
 | `test/scripts/generate-assets.test.ts`, `generate-assets-edge.test.ts` | The CLI: flags, the cache skip, `--force`, exit codes 1 and 2, issue listing without a stack trace |
 | `test/integration/assets-plugin.test.ts`, `assets-plugin-edge.test.ts` | The plugin: the virtual module, a real IIFE build emitting `assets/atlas/main.png`, the dev middleware and watcher (source edits regenerate, pipeline edits restart or warn), wiring in both apps and `turbo.json` |
@@ -395,6 +406,7 @@ pnpm exec vitest run --project integration test/scripts/assets   # pipeline unit
 | The atlas differs on another machine | Only a different zlib (Node version) can change the PNG bytes; the pixels never change. The zlib version is part of the input hash, so the cache rebuilds |
 | `pngjs` has no types in the editor | Deliberate — it is loaded untyped (no `@types/pngjs` dependency); only `png.mjs` and the hash in `pipeline.mjs` touch it |
 | TypeScript cannot see a new export of a `scripts/assets/*.mjs` module | The Node-side TS reads the JSDoc types through `allowJs` in `tsconfig.tooling.json` (no `checkJs`): give the export a JSDoc `@param` / `@returns` type |
+| A colour-blind palette shows the placeholder bullet next to real art | The `@<palette>` variants are sprites of their own — override them too (above) |
 | A real-art PNG seems ignored | Its path must be a valid sprite name (lower-case kebab segments) — otherwise it is reported as an issue, not skipped silently. Check that the sidecar has the same base name |
 
 ## Next steps that build on this page
@@ -425,4 +437,7 @@ shadow — the atlas page grew to 512×512; [scenes-and-ui.md](scenes-and-ui.md#
 M1-18 (done) added zone A's art: the pixel maps `enemies/vane`, `enemies/gyre` and HALCYON
 BULWARK's five `bosses/bulwark-*` parts (all with `@flash`; its core reuses `bosses/core`), and
 the new `backdrops` generator with the planet band `bg/azure-verge` — the page stays 512×512
-([zone-a-and-playtest.md](zone-a-and-playtest.md)).
+([zone-a-and-playtest.md](zone-a-and-playtest.md)); M2-02 (done) added `lasers/bend-*`,
+`items/point` and the `palettes` generator's 45 colour-blind variants, which the renderer swaps in
+when the player picks a palette ([pattern-dsl.md](pattern-dsl.md),
+[rendering-and-shell.md](rendering-and-shell.md#colour-blind-bullet-palettes)).

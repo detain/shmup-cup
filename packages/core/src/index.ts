@@ -13,7 +13,8 @@
  * `ui` (UI kit, HUD) and `scenes` (scene stack and flow) with M1-16, `save` (versioned saves,
  * hi-score tables) and the `config` user options with M1-17, the `debug` controls and counters and
  * `replay` (recording, playback, desync detection) with M1-19; the difficulty presets, rank growth,
- * extends and continues with M2-01.
+ * extends and continues with M2-01; the pattern DSL (compiler and interpreter), bending lasers,
+ * cancel point items, the scoring rules and the bullet palettes with M2-02.
  *
  * @packageDocumentation
  */

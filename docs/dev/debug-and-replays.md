@@ -350,15 +350,20 @@ Four committed zone A runs pin down what the simulation does (`test/golden/golde
 
 | File | Who plays | Covers | Ends |
 |---|---|---|---|
-| `zone-a-god.replay.json` | 4-way bot, god mode (seed 1) | the whole stage and HALCYON BULWARK | `stageClear` after 12,637 ticks, 62,750 points, 4 lives (one extend) |
-| `zone-a-arcade.replay.json` | 4-way bot, Arcade difficulty (seed 2) | the Arcade preset (rank from 6, 2 lives, the arcade penalty) without god mode | `stageClear` after 12,611 ticks, 64,450 points, 3 lives (one extend) |
+| `zone-a-god.replay.json` | 4-way bot, god mode (seed 1) | the whole stage and HALCYON BULWARK | `stageClear` after 12,637 ticks, 62,880 points, 4 lives (one extend) |
+| `zone-a-arcade.replay.json` | 4-way bot, Arcade difficulty (seed 2) | the Arcade preset (rank from 6, 2 lives, the arcade penalty) without god mode | `stageClear` after 12,611 ticks, 64,580 points, 3 lives (one extend) |
 | `zone-a-deaths.replay.json` | `weaverBot()` — weaves up / down, never dodges (seed 4) | deaths, Classic respawns, game over | `gameOver` after 5,324 ticks (deaths at 2,125 / 4,457 / 5,231) |
-| `zone-a-boss.replay.json` | 4-way bot, `stageSkip: 'boss'`, full loadout, Arcade penalty (seed 3) | the stage skip, the boss with everything | `stageClear` after 908 ticks, 37,000 points |
+| `zone-a-boss.replay.json` | 4-way bot, `stageSkip: 'boss'`, full loadout, Arcade penalty (seed 3) | the stage skip, the boss with everything | `stageClear` after 908 ticks, 37,180 points |
 
 The 4-way bot survives zone A even at Arcade, which is why the death scenario uses a careless
 weaving pilot. The files were re-blessed on purpose by M2-01 (`b31fac5`): rank growth changes
 fire rates and bullet speeds as the bot powers up, extends add a life at 20,000 points, and the
-Arcade preset now also means 2 lives and the arcade penalty — every scenario kept its outcome. Each file is an encoded replay plus the scenario's `description` and its
+Arcade preset now also means 2 lives and the arcade penalty — every scenario kept its outcome.
+M2-02 re-blessed them again (`3f69cf1`): the bullet pool's new fields (`runner`, `accelTerm`,
+`termSpeed`, `turnTerm`, `termAngle`) and the new `cancelPoints` pool change every hash, and the
+bullets HALCYON BULWARK's death cancels now score as point items (+130 points in the two
+full-stage clears, +180 in the boss run); the outcomes are unchanged, and zone A runs no DSL
+pattern, so the later M2-02 fixes left the files untouched. Each file is an encoded replay plus the scenario's `description` and its
 `expected` outcome (status, ticks, player 1's score and lives, death ticks, boss killed).
 
 - `golden.test.ts` (part of `pnpm test`, the `integration` project) plays every file into a fresh
@@ -498,7 +503,10 @@ testers in [../client/debug-tools.md](../client/debug-tools.md#the-m1-release-ch
   config records every difficulty-preset value; golden replays re-blessed; a continue is a
   scene-flow action, so it is not part of a bare-gameplay replay
   ([difficulty-and-rank.md](difficulty-and-rank.md)).
-- **M2-02 … M2-14** — every simulation change re-blesses the golden replays in the same commit;
+- **M2-02** (done) — golden replays re-blessed (new bullet pool fields, the `cancelPoints` pool,
+  cancel points); `hashWorld` mixes the bending lasers and the pattern runners. The overlay does
+  not outline bending lasers or count bullet programs yet ([pattern-dsl.md](pattern-dsl.md)).
+- **M2-03 … M2-14** — every simulation change re-blesses the golden replays in the same commit;
   zones B–I add a golden replay each.
 - **M2-06** — replays record both players (the body already has a word per player).
 - **M2-15** — attract mode plays bundled replays (and the scene flow gets recorded).

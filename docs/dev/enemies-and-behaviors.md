@@ -70,10 +70,14 @@ M2-01: `{ bulletSpeed?, fireRate? }`, 0–8, default 1 — how strongly the enem
 curves) and, since M2-01, the optional `revenge` (`{ minRank, pattern: 'aimed' | 'spread3' |
 'ring8', speed? }` — revenge bullets); bosses take neither. Both are compiled into typed arrays
 with the other specs ([difficulty-and-rank.md](difficulty-and-rank.md#per-enemy-rank-modifiers)).
+Since M2-02 an enemy may name a `pattern` → `patternId` (ref kind `pattern`: an action of a
+`content/patterns/` file, resolved against `ContentDb.patterns.actionIndex`; default `null` /
+`-1`, bosses never) — the DSL pattern its `pattern.loop` behaviour runs
+([pattern-dsl.md](pattern-dsl.md)).
 
 The loader fills the defaults of every optional field (`completeEnemy`): `anim` 1 frame,
 `params` `{}`, `mover` `null`, `ground` `null`, `settleTicks` `DEFAULT_SETTLE_TICKS` (30),
-`explosion` `'small'`, `megaCrashImmune` `false`, `child` `null`, `boss` `null`. So every spec has
+`explosion` `'small'`, `megaCrashImmune` `false`, `child` `null`, `pattern` `null` (M2-02), `boss` `null`. So every spec has
 the same fields in the same order — the enemy system compiles them into typed arrays once, and no
 code branches on "is this field present".
 
@@ -95,7 +99,7 @@ without `path` uses the spawn event's path. Bounds are checked by the schema (ve
 
 Weapon and enemy behaviours share one interned table, `ContentDb.scripts`. `loadContent`
 reports an unknown script id only when it is given `knownScripts`; the hosts pass
-`KNOWN_SCRIPT_IDS` (`core/behaviors`) = the eight enemy behaviours ∪ the boss behaviours
+`KNOWN_SCRIPT_IDS` (`core/behaviors`) = the nine enemy behaviours (`pattern.loop` since M2-02) ∪ the boss behaviours
 (`BOSS_BEHAVIOR_IDS`, M1-13) ∪ `WEAPON_SCRIPT_IDS` (the four Type A ids, defined in
 `core/weapons` since M1-10 and re-exported by `behaviors`). `checkEnemyBehaviors(db, registry?,
 bossRegistry?)` then reports what the schema cannot know:
@@ -104,6 +108,7 @@ bossRegistry?)` then reports what the schema cannot know:
 |---|---|
 | `enemies:<id>.params.<name>` | `unknown param for behaviour "<id>" (known: …)` |
 | `enemies:<id>.child` | `behaviour "<id>" needs a child enemy` (a `needsChild` behaviour — `hatch.spawner`) |
+| `enemies:<id>.pattern` | `behaviour "<id>" needs a pattern` (a `needsPattern` behaviour — `pattern.loop`, M2-02) |
 | `enemies:<id>.script` | `"<script>" is a boss behaviour (use it in a boss phase)` (M1-13) |
 | `enemies:<id>.boss.phases[<p>].script` | `"<script>" is an enemy behaviour, not a boss behaviour` (M1-13) |
 | `enemies:<id>.boss.phases[<p>].params.<name>` | `unknown param for behaviour "<id>" (known: …)` (M1-13) |
@@ -285,6 +290,8 @@ One reused object per slot (D29):
 | `onScreen()`, `canFire()` | Hurtbox overlaps the view; the §11 fire rule (live, on screen, settled, not a ghost) |
 | `aimed`, `nWay`, `ring`, `spiral`, `stack`, `spray`, `homing`, `delayed` | Fire a pattern from the enemy's centre (M1-09) — the `core/patterns` primitives, rank-scaled; each returns `-1` / `0` and fires nothing while `canFire()` is false (`spiral` still returns the advanced angle) |
 | `laser(angle?, length?, …)` | A straight laser **attached** to this enemy (warning line → grow → beam → fade); detached when the enemy is removed or turns ghost |
+| `bendingLaser(angle?, speed?, turnRate?, homing?, length?, width?, life?)` | M2-02: a **bending laser** from the enemy's centre (a homing head leaving a body of its last positions; not attached), speed × the rank's speed scale; `-1` while `canFire()` is false or all 8 slots are busy ([bullets-and-patterns.md](bullets-and-patterns.md#bending-lasers)) |
+| `startPattern(pattern, heading = 512)`, `stepPattern()` | M2-02: start (or restart) a `content/patterns/` DSL pattern — a `ContentDb.patterns` action index, usually `spec.patternId` — on this enemy's emitter of the World's `PatternVm`, and run it to its next `wait` → the ticks to `yield`, or `-1` at its end; fires follow `canFire()` (the pattern advances, nothing launches). The emitter stops when the enemy is removed ([pattern-dsl.md](pattern-dsl.md#the-interpreter-patternvm)) |
 | `fireWait(ticks)` | A fire interval on Normal scaled by the rank (`rankedWait`) — `yield` it between volleys |
 | `bullets` | The World's `BulletSystem` for raw access (`setMotion`, `setChange`, custom patterns) |
 
@@ -397,13 +404,13 @@ table lookup (the `Path` mover inlines the same code, see the hot-path rules).
 
 ## Behaviours (`core/behaviors`)
 
-A `BehaviorDef` is `{ id, params, create(api, params), needsChild }`, declared with
-`defineBehavior(id, defaults, generatorFunction, needsChild?)`; `createBehaviorRegistry(defs)`
+A `BehaviorDef` is `{ id, params, create(api, params), needsChild, needsPattern }`, declared with
+`defineBehavior(id, defaults, generatorFunction, needsChild?, needsPattern?)`; `createBehaviorRegistry(defs)`
 builds a lookup (throws on duplicate ids). `DEFAULT_BEHAVIORS` (from `DEFAULT_BEHAVIOR_DEFS`)
 is what the World uses; `createWorld(config, db, { behaviors })` swaps in another registry
 (tests, tools — not part of `GameConfig`, so never in a real session).
 
-The M1 roster (tunables and their defaults in brackets; the fire patterns are M1-09's — they go
+The roster — the eight of M1 and M2-02's `pattern.loop` (tunables and their defaults in brackets; the fire patterns are M1-09's — they go
 through the `ScriptApi` primitives, so nothing fires off screen or before `settleTicks`; bullet
 speeds are px/tick and intervals ticks, both Normal values scaled by the rank):
 
@@ -417,6 +424,7 @@ speeds are px/tick and intervals ticks, both Normal values scaled by the rank):
 | `hatch.spawner` | hatch (`needsChild`) | every [`interval` 60] ticks, while `canFire()`, releases its `child` from its open side; at most [`max` 8] (0 = no limit) |
 | `rammer.aimed` | rammer | enters with its spec mover for [`enterTicks` 40], then `AimedDash` with [`windup` 20] at [`speed` 2.5] |
 | `orbiter.loop` | orbiter | flies the spawn event's path at [`speed` 1.25]; without one: `Waypoint` to [`x` 256, `y` 100], hold [`hold` 90], leave left at [`leaveSpeed` 2]; every [`ringTicks` 120] (rank-scaled) a ring of [`ringCount` 8] purple bullets at [`bulletSpeed` 1], each ring turned half a gap |
+| `pattern.loop` | DSL pattern runner (`needsPattern`, M2-02) | runs the enemy's `pattern` — a `content/patterns/` action — over and over: `startPattern`, then `yield stepPattern()` until it ends, [`restTicks` 60] of rest, again; `relative` directions from [`heading` 512 = left]; sets no mover (the spec's `mover` moves it); without a compiled pattern it sleeps forever. The shipped test enemy `sentry` (`content/enemies/test-sentry.enemies.json`, not spawned by any stage) runs `common.spiral` with it ([pattern-dsl.md](pattern-dsl.md#the-patternloop-behaviour)) |
 
 Writing one:
 
@@ -514,7 +522,8 @@ code):
 |---|---|
 | An enemy | An entry in a `content/enemies/*.enemies.json` + a sprite (`hitFlash: true`) under `assets/source/sprites/enemies/`; spawn it from a stage event; `pnpm content:check` |
 | A path | An entry in `content/paths/*.paths.json` (points relative to the start, ≤ 16,384 px); name it in a stage event's `path` or a `path` mover |
-| A behaviour | `defineBehavior` in `core/behaviors`, added to `DEFAULT_BEHAVIOR_DEFS` (above); tunables with defaults; `needsChild` for spawners |
+| A behaviour | `defineBehavior` in `core/behaviors`, added to `DEFAULT_BEHAVIOR_DEFS` (above); tunables with defaults; `needsChild` for spawners, `needsPattern` for DSL pattern runners |
+| An attack pattern without code | A `content/patterns/` action and an enemy with `"script": "pattern.loop"`, `"pattern": "<id>"` ([pattern-dsl.md](pattern-dsl.md#extending-it)) |
 | A mover | Append the name to `MOVER_TYPES` (`core/data`) and a code to `MoverKind` (never renumber), a variant in `MOVER_SCHEMA`, its parameters in `compileSpecs` (`core/enemies`), its start state in `setMover` and a `move…` function in `updateMover` (numbers only, whole-number calls), the docs (module docblock, `content/enemies/README.md`, this page), tests incl. the allocation guard |
 | An enemy spec field | `EnemySpec` + `ENEMY_SCHEMA` (+ `optional` and a default in `completeEnemy`), a typed array in the `SpecTable` if per-tick code needs it, the README sample and `example.enemies.json` |
 | An `Enemy` field | The class field, its reset in the spawn function, and `mixEnemy` in `core/debug` (in a fixed place — or replays diverge unnoticed) |
@@ -529,7 +538,7 @@ code):
 | `packages/core/test/enemies/enemies.test.ts` | Stage spawns and formation spacing, pool exhaustion (a formation counts it as escaped), ground snapping, bonus + capsule only when every member died (not after an escape, not before the last spawn), follow delay and the ghost leader, the settle / fire rule, escape and never-seen removal, the runner never resuming a sleeping script (spy), script spawns starting next tick, target and RNG, damage / flash / explosion events / outcomes, invulnerability, contact once per tick, the air batch (animation, facing, hidden ghosts), checkpoint clears, lockstep hashes, the 64-enemy allocation guard |
 | `packages/core/test/enemies/enemies-edge.test.ts` | Spawn defaults and bounds, camera ride without a double move, slot order and reuse, unknown behaviours, bad and fractional spec indices (regression), formation arguments and a full table, outcome order, two formations completing in one tick, ghosts removed at `GHOST_MARGIN`, the off-screen rules at their exact boundaries in all four directions, contact boundaries, the sprite mirror |
 | `packages/core/test/patterns/patterns*.test.ts` | The runner (randomised spy, sub-tick waits, `SLEEP_FOREVER`, exceptions), `FollowTrack` ring limits, `setMover` state, every mover's maths (sine on the table, path speed vs `samplePath` on random curves, waypoint incl. `hold: 0` regression, follow, homing turn cap, 32 aim directions), crawling on the shipped tileset's slopes and hand-built steps of exactly `CRAWL_STEP` |
-| `packages/core/test/behaviors/behaviors*.test.ts` | Registry (sorted, frozen, duplicates), `KNOWN_SCRIPT_IDS`, `checkEnemyBehaviors`, every roster behaviour driving its enemy in a World, the documented details of each; `behaviors-fire*.test.ts` (M1-09): the roster's patterns, intervals and rank scaling, the `ScriptApi` fire rule, `laser()` defaults and detaching |
+| `packages/core/test/behaviors/behaviors*.test.ts` | Registry (sorted, frozen, duplicates), `KNOWN_SCRIPT_IDS` (with `pattern.loop` since M2-02), `checkEnemyBehaviors` (the `pattern` issue), every roster behaviour driving its enemy in a World, the documented details of each; `behaviors-fire*.test.ts` (M1-09): the roster's patterns, intervals and rank scaling, the `ScriptApi` fire rule, `laser()` defaults and detaching |
 | `packages/core/test/data/enemies-edge.test.ts`, `paths-edge.test.ts` | Enemy defaults (same keys, same order), `child` refs, every mover variant and bound, the code tables, stage `screenX` / `drop` / `bonus`; `bakePath` properties on random curves (uniform 1-px spacing ±0.5 px, ends, translation invariance, unit end tangent, exact `MAX_PATH_LENGTH`), the centripetal no-overshoot property, loader issues and `pathId` resolution |
 | `packages/core/test/debug/debug-edge.test.ts` | `hashWorld` covers every enemy field and the formation table |
 | `test/integration/enemies-runtime.test.ts` | The shipped `test-range` timeline end to end: every roster enemy spawns within 64 slots, every formation resolves, ground enemies on the generated terrain and walkers on the slopes, perfect play yields one `FormationBonus` per formation and the expected capsules, lockstep hashes |
@@ -552,6 +561,7 @@ code):
 | The allocation guard fails after a behaviour change | A closure, array, object literal or string in the generator body, or a `yield 1` loop resuming every tick. Sleep longer, keep state in `let`s of whole numbers or on the `Enemy` |
 | The ship flies through enemies | Only during the fly-in, while invulnerable (the respawn blink) and in god mode; a Force Field absorbs contact instead. Otherwise contact is a death since M1-12 — as are bullets and lasers |
 | A formation bonus went to nobody | It is credited to the killer of the last member; a debug `kill(enemy)` without `by` (`-1`) credits nobody |
+| A `pattern.loop` enemy never fires | Its `pattern` did not compile (entry 0 — look for the load issue), it names none (`enemies:<id>.pattern`), or `canFire()` is false ([pattern-dsl.md](pattern-dsl.md#gotchas)) |
 | A behaviour's shot never appears | `canFire()` was false (off screen, unsettled, ghost) — the wrappers return `-1` / `0` then; or the content was loaded without `ENGINE_SPRITES`, so bullets are hidden ([bullets-and-patterns.md](bullets-and-patterns.md#gotchas)) |
 | Enemies never die | The ship is not shooting at them: it is still flying in, the content has no weapons, or autofire is off; tests can also call `world.enemies.damage` / `kill` |
 | Enemies die in a test that expects them to fly past | The KESTREL autofires by default since M1-10 — pass `{ autofire: false, remoteMode: false }` |
@@ -579,6 +589,8 @@ code):
   `EnemyHit` sparks at a damaged enemy, and every credited kill pops its score (`Score` events
   from `core/scoring`) ([fx-and-game-feel.md](fx-and-game-feel.md)); **M2-01** (done) — rank
   modifiers and revenge bullets ([difficulty-and-rank.md](difficulty-and-rank.md));
-  **M2-02** — the pattern DSL; **M2-04** — the Option Hunter.
+  **M2-02** (done) — the pattern DSL (`pattern.loop`, `startPattern` / `stepPattern`, the enemy
+  `pattern` field) and `bendingLaser` ([pattern-dsl.md](pattern-dsl.md)); **M2-04** — the Option
+  Hunter.
 - **M1-18** (done) — zone A's roster on these behaviours, its paths, and HALCYON BULWARK's
   `boss.bulwark` ([zone-a-and-playtest.md](zone-a-and-playtest.md)).

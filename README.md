@@ -9,7 +9,7 @@ with the browser and Electron as additional targets.
 The [implementation plan](shmup_plan.md) is approved and under way. Progress per step is tracked in
 [`shmup_progress.md`](shmup_progress.md); milestone **M1 — playable vertical slice** is code-complete
 as version **0.1.0** ([`CHANGELOG.md`](CHANGELOG.md)) — its on-device release check on the monitors
-is next — and **M2 — complete v1.0** is under way (M2-01 done).
+is next — and **M2 — complete v1.0** is under way (M2-01 and M2-02 done).
 
 <!--
   Keep this section scannable: one entry per plan step, in plan order — a bold headline with the
@@ -31,7 +31,7 @@ is next — and **M2 — complete v1.0** is under way (M2-01 done).
   - Schema-validated JSON under [`content/`](content/README.md): the KESTREL ship, the Type A
     weapons, the test-range stage with its terrain tileset, enemy roster and movement paths, the
     boss range with its test boss, zone A with its roster and boss (M1-18), particle presets, sound
-    effects and music.
+    effects and music, the difficulty presets (M2-01) and the bullet pattern library (M2-02).
   - Checked by `pnpm content:check`, served to the builds as the virtual module
     `virtual:shmup-content`, and loaded by `loadContent()` with every string id resolved to a
     number.
@@ -42,8 +42,9 @@ is next — and **M2 — complete v1.0** is under way (M2-01 done).
     an original 6×8 pixel font are packed by `pnpm assets` into a texture atlas plus manifest,
     served to the builds as `virtual:shmup-assets`.
   - Covers the KESTREL, shots, nine enemies, boss parts (the test boss's and, since M1-18,
-    HALCYON BULWARK's), bullets, laser beams, explosions, items, particles, HUD pieces, the title
-    logo, terrain tiles, star layers and zone A's planet band.
+    HALCYON BULWARK's), bullets, laser beams, bending laser segments and their colour-blind
+    variants (M2-02), explosions, items, particles, HUD pieces, the title logo, terrain tiles, star
+    layers and zone A's planet band.
   - Real art can later replace any frame by name.
   - Docs: [developer guide](docs/dev/asset-pipeline.md)
 
@@ -332,6 +333,30 @@ is next — and **M2 — complete v1.0** is under way (M2-01 done).
   - Docs: [developer guide](docs/dev/difficulty-and-rank.md) ·
     [what testers should check](docs/client/preview-build.md#difficulty-extra-ships-and-continues)
 
+- **Pattern DSL, bending lasers, bullet cancel & readability** (M2-02)
+  - **Bullet patterns as data** ([`content/patterns/`](content/patterns/README.md), kind
+    `patterns`): BulletML-inspired actions and bullets — `fire`, `wait` (optionally rank-scaled),
+    `repeat`, `changeSpeed`, `changeDirection`, `accel`, `vanish`, `actionRef`, `bulletRef` —
+    with `aim` / `absolute` / `relative` / `sequence` directions and expressions over `$rank`,
+    `$rand`, `$loop`, `$i` and params, compiled at load by a small recursive-descent parser into
+    one `Float64Array` program bank (no `eval`); references inlined, params passed as values.
+  - A zero-allocation interpreter (`PatternVm`: 64 enemy emitters + 512 bullet programs in typed
+    arrays, hashed) stepped by the script runner — the new `pattern.loop` behaviour — and inside
+    the bullet update; DSL patterns fire exactly what the hand-written primitives fire (lockstep
+    hashes). The test enemy `sentry` runs `common.spiral`; zone A is unchanged.
+  - **Bending lasers**: 8 homing heads recording 64-node rings, hit by chains of overlapping
+    circles, drawn as round segment sprites.
+  - **Cancel into points**: a boss's death and a Mega Crash turn every cancelled bullet into a
+    gold point item that flies to the credited player's score (`bulletCancel` in
+    `content/rules/scoring.rules.json`, 10).
+  - **Colour-blind bullet palettes**: OPTIONS → **BULLETS** (standard, deuteranopia, protanopia,
+    tritanopia — saved, applied live); the asset pipeline draws every bullet, beam and bend again
+    as `<sprite>@<palette>`, recoloured and shape-coded; the renderer swaps its sprite tables.
+  - Golden replays re-blessed (new bullet fields, the point item pool, cancel points) with the
+    same outcomes.
+  - Docs: [developer guide](docs/dev/pattern-dsl.md) ·
+    [what testers should check](docs/client/preview-build.md#the-options-screen)
+
 ### Hardware spike
 
 - The **input probe** — a diagnostic Tizen app that measures the Samsung remote, gamepads and
@@ -352,7 +377,7 @@ is next — and **M2 — complete v1.0** is under way (M2-01 done).
 | [`shmup_prompt.md`](shmup_prompt.md) | Paste-into-a-new-session prompt that drives execution of the plan (workflow: build → review/fix loop → tests → docs → CI gate per step, progress in `shmup_progress.md`) |
 | [`docs/`](docs/README.md) | Player and developer documentation (start with [`docs/dev/repo-layout.md`](docs/dev/repo-layout.md)) |
 
-Game docs — testers: [preview build (the title screen, menus, HUD and pause menu, the Options screen and saved settings and high scores, the game-over and stage-clear screens, the difficulties, extra ships and continues, zone A — AZURE VERGE and its boss HALCYON BULWARK —, test stage, its enemies and their bullets, your weapons, power-ups, lives and score, the boss and its WARNING, explosions, shake and flashes, sound and music)](docs/client/preview-build.md) ·
+Game docs — testers: [preview build (the title screen, menus, HUD and pause menu, the Options screen — volumes, controls and the colour-blind bullet colours — and saved settings and high scores, the game-over and stage-clear screens, the difficulties, extra ships and continues, zone A — AZURE VERGE and its boss HALCYON BULWARK —, test stage, its enemies and their bullets, your weapons, power-ups, lives and score, the boss and its WARNING, explosions, shake and flashes, sound and music)](docs/client/preview-build.md) ·
 [controls](docs/client/controls.md) · [monitor setup & install](docs/client/install-on-tv.md).
 Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/architecture.md) ·
 [engine foundations](docs/dev/engine-foundations.md) · [content data](docs/dev/content-data.md) ·
@@ -372,6 +397,7 @@ Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/ar
 [saves & options](docs/dev/saves-and-options.md) ·
 [zone A & playtest](docs/dev/zone-a-and-playtest.md) ·
 [difficulty, rank, extends & continues](docs/dev/difficulty-and-rank.md) ·
+[pattern DSL, bending lasers & palettes](docs/dev/pattern-dsl.md) ·
 [input profiles](docs/dev/input-profiles.md) ·
 [API reference](docs/dev/api-reference.md) ·
 [build, test & deploy](docs/dev/build-test-deploy.md) · [conventions](docs/dev/conventions.md).
@@ -398,7 +424,7 @@ versions (`devEngines.runtime`).
 ```sh
 pnpm -v               # must print 12.x — an older global pnpm fails with ERR_PNPM_BROKEN_LOCKFILE
 pnpm install          # set ELECTRON_SKIP_BINARY_DOWNLOAD=1 to skip the Electron binary
-pnpm dev              # browser dev app → http://localhost:5173 (F1–F8: debug tools): the title (Enter twice starts zone A, AZURE VERGE; ?skip=boss starts right before its boss HALCYON BULWARK; Enter, Down, Enter opens OPTIONS — volumes and controls, saved in localStorage; Esc pauses), then fly the KESTREL (arrows/WASD, gamepad; the first key press turns the sound on; Enter/C takes a power-up; ?scene=flight skips the title; ?stage=test-range scrolls the test stage, its enemies, their bullets and the power capsules; ?stage=test-boss plays the WARNING and the test boss; ?profile=keyboard-remote-emulation feels like the TV remote; ?scene=showcase / ?scene=calibration / ?scene=fx-gallery)
+pnpm dev              # browser dev app → http://localhost:5173 (F1–F8: debug tools): the title (Enter three times — PRESS OK, START, NORMAL — starts zone A, AZURE VERGE; ?skip=boss starts right before its boss HALCYON BULWARK; Enter, Down, Enter opens OPTIONS — volumes, controls and bullet colours, saved in localStorage; Esc pauses), then fly the KESTREL (arrows/WASD, gamepad; the first key press turns the sound on; Enter/C takes a power-up; ?scene=flight skips the title; ?stage=test-range scrolls the test stage, its enemies, their bullets and the power capsules; ?stage=test-boss plays the WARNING and the test boss; ?profile=keyboard-remote-emulation feels like the TV remote; ?scene=showcase / ?scene=calibration / ?scene=fx-gallery)
 pnpm lint             # ESLint (typescript-eslint + compat: chrome >= 69)
 pnpm typecheck        # tsc --noEmit everywhere
 pnpm test             # Vitest per package + repo integration tests
@@ -464,7 +490,7 @@ pnpm workspace (`packages/*`, `apps/*`) + Turborepo. Full annotated tree:
 | [`apps/web`](apps/web/README.md) | Vite browser dev target (also Electron's renderer) |
 | [`apps/tizen`](apps/tizen/README.md) | Samsung Tizen `.wgt` (Chromium 69 classic IIFE build, config.xml, CLI scripts) |
 | [`apps/electron`](apps/electron/README.md) | Electron desktop shell |
-| [`content/`](content/README.md) | Game data: player ships, stages, terrain tilesets, enemies, movement paths, weapons, the difficulty presets (`rules/`), input profiles, particle presets, sound effects and music (JSON, `formatVersion` 1) |
+| [`content/`](content/README.md) | Game data: player ships, stages, terrain tilesets, enemies, movement paths, weapons, bullet patterns (`patterns/`), the difficulty presets and scoring values (`rules/`), input profiles, particle presets, sound effects and music (JSON, `formatVersion` 1) |
 | `types/` | Ambient declarations for the Vite virtual modules (`virtual:shmup-content`, `virtual:shmup-assets`) and the build-info defines (`__SHMUP_DEV__`, `__SHMUP_BUILD__`) |
 | [`assets/`](assets/README.md) | Art/audio sources (`source/`: sprite pixel maps, fonts) and pipeline output (`generated/`: atlas pages + manifest, ignored) |
 | [`scripts/`](scripts/README.md) | Repo-level Node scripts |
@@ -489,8 +515,9 @@ hitch in the overlay's frame graph, gamepad and keyboard — checklist in
 [`docs/client/debug-tools.md`](docs/client/debug-tools.md#the-m1-release-check). The M1 release
 is tagged `v0.1.0` on the final commit of step M1-19.
 
-Code: plan step **M2-02** (pattern DSL, bending lasers, bullet cancel & readability) — M2-01
-(rank, difficulty presets, extends & continues) opened milestone **M2 — complete v1.0**; every
+Code: plan step **M2-03** (meter arsenal: loadouts B–D, Weapon Edit, parking & weapon select) —
+M2-01 (rank, difficulty presets, extends & continues) opened milestone **M2 — complete v1.0** and
+M2-02 (pattern DSL, bending lasers, bullet cancel & readability) followed; every
 simulation change re-blesses the golden replays in the same commit. The per-step status board is [`shmup_progress.md`](shmup_progress.md).
 
 Also on hardware (unchanged, and still the gate for the remote control scheme): package and
@@ -504,8 +531,8 @@ is the first hands-on check of the control scheme — since M1-16 moving through
 pause menus and quitting with Back, since M1-17 the Options screen, settings kept after a
 relaunch and the FAST 8-WAY profile, since M1-18 **playing zone A through with the remote**
 — the plan's manual M1-18 check: every bullet and laser dodgeable with single arrow presses —
-and since M2-01 the DIFFICULTY box, the extra-ship jingle and the CONTINUE? countdown
-(checklist in
+since M2-01 the DIFFICULTY box, the extra-ship jingle and the CONTINUE? countdown, and since
+M2-02 the colour-blind **BULLETS** option and the points of cancelled bullets (checklist in
 [`docs/client/preview-build.md`](docs/client/preview-build.md#on-the-samsung-smart-monitor--tv)).
 
 Desktop prerequisites: Git, Node 24 (22.12+), Tizen Studio **or** VS Code + Samsung Tizen extension (with a Samsung

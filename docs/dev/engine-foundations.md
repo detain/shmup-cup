@@ -49,6 +49,11 @@ const spark = rng.cosmetic.nextFloat();     // presentation only
   when `min === max`. That is deliberate: a call site must consume the same number of
   draws on every run, whatever the bounds happen to be that tick.
 - `nextFloat()` is `nextU32() / 2^32` — uniform in `[0, 1)` in steps of 2^-32.
+  `nextFloatInto(out, index)` (M2-02) is the same draw written into a `Float64Array` element
+  instead of returned: per-tick code that needs a fraction uses it, because V8 boxes a
+  fractional **return value** of a call it does not inline into a heap number (the pattern
+  DSL's `$rand` draws straight into the interpreter's expression stack). It advances the stream
+  and `callCount` exactly like `nextFloat()`.
 - Snapshots: `getState()` allocates a 4-element array (fine at a checkpoint), while
   `getStateInto(out)` writes into a caller-owned `Uint32Array` of at least
   `RNG_STATE_WORDS` (use this per tick). `setState()` accepts either.
@@ -227,4 +232,7 @@ the `FX_CUES` / `SFX_CUES` registries for particles, shake, flash, dim and score
 ([fx-and-game-feel.md](fx-and-game-feel.md)); M1-15 (done) consumes the sound and music cues —
 its synth also takes its sines from `SIN_TABLE_Q16` and its noise from the core's sfc32, so
 every placeholder sound is bit-identical on every engine ([audio.md](audio.md#the-synth-synth));
-M1-19 (done) compares those hashes in golden replays ([debug-and-replays.md](debug-and-replays.md)).
+M1-19 (done) compares those hashes in golden replays ([debug-and-replays.md](debug-and-replays.md));
+M2-02 (done) adds `Rng.nextFloatInto` for the pattern DSL's `$rand`, evaluates `sin` / `cos` of
+DSL expressions from `SIN_TABLE_Q16`, registers a fourth SoA pool (`cancelPoints`) and appends
+`UserOptionKind.BulletPalette` ([pattern-dsl.md](pattern-dsl.md)).

@@ -611,13 +611,22 @@ export const TitleItem = { Start: 0, Options: 1, Exit: 2 } as const;
  */
 export const PauseItem = { Resume: 0, Options: 1, Retry: 2, Quit: 3 } as const;
 
-/** Options screen items: the three volume sliders, the input profile, BACK. */
+/**
+ * Options screen items: the three volume sliders, the input profile, the bullet palette (M2-02),
+ * BACK.
+ */
 export const OptionsItem = {
+  /** MASTER volume slider. */
   Master: 0,
+  /** MUSIC volume slider. */
   Music: 1,
+  /** SFX volume slider (menu sounds follow it). */
   Sfx: 2,
+  /** CONTROLS: the input profile choice (disabled when the host offers none). */
   Controls: 3,
+  /** BULLETS: the enemy bullet palette choice (M2-02). */
   Bullets: 4,
+  /** BACK: store the options, write the save and close (index 5 since M2-02 — was 4). */
   Back: 5,
 } as const;
 

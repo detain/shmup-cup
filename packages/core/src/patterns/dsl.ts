@@ -148,10 +148,32 @@ export const ExprOp = {
 } as const;
 
 /** Direction type codes of compiled programs (index into {@link DIRECTION_TYPES}). */
-export const DirType = { Aim: 0, Absolute: 1, Relative: 2, Sequence: 3 } as const;
+export const DirType = {
+  /** At the nearest living player (quantised to `config.aimDirections`) + the value. */
+  Aim: 0,
+  /** The value itself (0 = +x, 256 = down). */
+  Absolute: 1,
+  /** The runner's own heading + the value (a bullet's; an emitter's start heading). */
+  Relative: 2,
+  /**
+   * The runner's previous fire + the value (aimed before the first); in `changeDirection` the
+   * value is a turn per tick for `term` ticks.
+   */
+  Sequence: 3,
+} as const;
 
 /** Speed type codes of compiled programs (index into {@link SPEED_TYPES}). */
-export const SpeedType = { Absolute: 0, Relative: 1, Sequence: 2 } as const;
+export const SpeedType = {
+  /** The value itself (px/tick on Normal). */
+  Absolute: 0,
+  /** The runner's own speed + the value (0 for an emitter). */
+  Relative: 1,
+  /**
+   * The runner's previous fire + the value ({@link DEFAULT_PATTERN_SPEED} before the first); in
+   * `changeSpeed` the value is a change per tick for `term` ticks.
+   */
+  Sequence: 2,
+} as const;
 
 /** Direction type names (content), in {@link DirType} order. */
 export const DIRECTION_TYPES = Object.freeze(['aim', 'absolute', 'relative', 'sequence'] as const);
@@ -210,7 +232,10 @@ export type PatternSpeed = PatternExpr | PatternSpeedSpec;
 
 /** A bullet definition (inline in a `fire`, or named in a file's `bullets`). */
 export interface PatternBulletSpec {
-  /** Bullet kind name, `<shape>-<colour>` (`core/bullets` `BULLET_KIND_NAMES`; default round-pink). */
+  /**
+   * Bullet kind name, `<shape>-<colour>` (`core/bullets` `BULLET_KIND_NAMES`; default
+   * {@link DEFAULT_PATTERN_KIND}).
+   */
   readonly kind?: string;
   /** Direction used when the `fire` gives none. */
   readonly direction?: PatternDirection;
@@ -852,7 +877,8 @@ export const MAX_EXPR_STACK = 32;
  * @example
  * ```ts
  * compileExpression('2 + 3 * 4');     // → [2, ExprOp.Const, 14] (folded)
- * compileExpression('$rank / 8 + 1'); // → [6, Rank, Const, 8, Div, Const, 1, Add]
+ * compileExpression('$rank / 8 + 1'); // → [7, Rank, Const, 8, Div, Const, 1, Add]
+ * compileExpression('$1 * 2', [3]);   // → [2, Const, 6] (a constant param is folded)
  * ```
  */
 export function compileExpression(
@@ -924,9 +950,9 @@ interface BulletJob {
 class PatternCompiler {
   /** The code (grows; offset 0 is `End`). */
   readonly out: number[] = [PatternOp.End];
-  /** Action id → [entry, path]. */
+  /** Action id → its body and the issue path of the body. */
   private readonly actions = new Map<string, { body: readonly PatternNode[]; path: string }>();
-  /** Bullet id → [spec, path]. */
+  /** Bullet id → its spec and issue path. */
   private readonly bullets = new Map<string, { spec: PatternBulletSpec; path: string }>();
   /** Bullet programs still to compile. */
   private readonly jobs: BulletJob[] = [];

@@ -2,17 +2,20 @@
  * # save — persistent saves (hi-scores, options, stats)
  *
  * **Responsibility.** Persistence through `Platform.storage` (decision D31): the player's
- * {@link UserOptions} (volumes, the input profile), the hi-score tables and a few play statistics,
- * stored as one **versioned JSON document** with forward migrations and **defensive parsing** — a
- * corrupt, foreign or partly broken document never crashes the boot; it falls back to defaults
+ * {@link UserOptions} (volumes, the input profile, the bullet palette), the hi-score tables and a
+ * few play statistics, stored as one **versioned JSON document** with forward migrations and
+ * **defensive parsing** — a corrupt, foreign or partly broken document never crashes the boot; it
+ * falls back to defaults
  * (whole or field by field) and a corrupt original is kept under {@link SAVE_CORRUPT_KEY} for
  * inspection. Storage is async so Electron can use files (M2-17) and the web / Tizen
  * `localStorage`; Tizen deletes it on uninstall.
  *
  * - **Format** ({@link SaveData}, version {@link SAVE_VERSION} = 1) under the storage key
  *   {@link SAVE_STORAGE_KEY} (`save.v1`): `{ version, options: { audio: { master, music, sfx },
- *   input: { profileId }, display: { bulletPalette } }, hiScores: { [modeKey]: HiScoreEntry[≤ 10] }, stats: {
- *   gamesStarted, gameOvers, stagesCleared } }`.
+ *   input: { profileId }, display: { bulletPalette } }, hiScores: { [modeKey]:
+ *   HiScoreEntry[≤ 10] }, stats: { gamesStarted, gameOvers, stagesCleared } }`. `bulletPalette`
+ *   (M2-02) needs no migration: a version-1 save written before it has `display: {}` and resolves
+ *   to `standard` (`core/config` `resolveUserOptions`).
  *   A mode key ({@link hiScoreModeKey}) names the table a game's score belongs to
  *   (`meter-normal` in M1; one per difficulty preset since M2-01 — `meter-easy` … `meter-arcade`).
  * - **Loading** ({@link loadSave}, {@link parseSave}): JSON → migrations ({@link SAVE_MIGRATIONS}:

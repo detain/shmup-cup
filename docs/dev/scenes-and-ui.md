@@ -120,7 +120,7 @@ Options screen's CONTROLS — disabled when omitted). `createGame` passes `GameO
 | `DifficultyScene` (M2-01) | yes / 0.5 / menu | Opaque panel, `DIFFICULTY`, EASY / NORMAL / HARD / ARCADE (focus on the preset chosen last, at first the host config's), the focused preset's `LIVES`, `CONTINUES` and `HI` | Up / Down move (wrap); OK chooses the preset; Back closes | game (`reset` — its World on that preset's config), title menu (`pop`) |
 | `GameScene` | no / 0 / **game** | The World (view + HUD), the boss WARNING band in the UI list | Pause or Back → pause menu (that tick the World does not step) | pause, stage clear (90 World ticks after `stageClear`), game over (30 after `gameOver`) — or, with continues left (`canContinue`), the continue countdown (M2-01) — all `push` |
 | `PauseScene` | yes / 0.5 / menu | Panel, `PAUSE`, RESUME / OPTIONS / RETRY STAGE / QUIT TO TITLE | Pause, Back, RESUME → resume; OPTIONS → Options (the game stays frozen); RETRY STAGE → `game.restart()` + pop (no confirmation); QUIT TO TITLE → confirm | game (`pop`), options, confirm (`push`) |
-| `OptionsScene` (M1-17) | yes / 0.5 / menu | Opaque panel, `OPTIONS`, MASTER / MUSIC / SFX sliders (0–10), CONTROLS (the input profile's label, a `Choice`), BACK | Up / Down move; Left / Right change a slider or step CONTROLS (OK steps it too), each change pushed live as a `UserOption` event; BACK or Back store the options in the save, flush it and close | title / pause menu (`pop`) |
+| `OptionsScene` (M1-17) | yes / 0.5 / menu | Opaque panel, `OPTIONS`, MASTER / MUSIC / SFX sliders (0–10), CONTROLS (the input profile's label, a `Choice`), BULLETS (M2-02: the enemy bullet palette, a `Choice` of `BULLET_PALETTE_LABELS`), BACK | Up / Down move; Left / Right change a slider or step CONTROLS / BULLETS (OK steps them too), each change pushed live as a `UserOption` event; BACK or Back store the options in the save, flush it and close | title / pause menu (`pop`) |
 | `StageClearScene` | yes / 0.25 / menu | `STAGE CLEAR`, `SCORE`, `HI` for 240 ticks, then `TO BE CONTINUED` for 240 | OK skips a phase; entering it records the run in the save (M1's run ends here) | title (`reset`) |
 | `ContinueScene` (M2-01) | yes / 0.35 / menu | Red-edged panel, `CONTINUE?`, the seconds left (9 … 0, a tick sound each), `CREDITS` = continues left; the music fades out | OK / Back after 30 ticks: OK continues (`continueWorld` — checkpoint restart, fresh lives), Back gives up | game (`pop`), game over (`replace`, also after 600 ticks) |
 | `GameOverScene` | yes / 0.35 / menu | Red-edged panel, `GAME OVER`, the final score; `NEW HI-SCORE` below it for a new best | OK / Back after 30 ticks; entering it records the run in the save | title (`reset`) after OK / Back or 600 ticks |
@@ -243,7 +243,7 @@ slots, so a menu can be ticked and redrawn every frame without allocating.
   (call it when a menu appears).
 - **`Slider`** (`createSlider(min, max, step, value)` — the volumes 0–10 of M1-17): Left / Right
   change it by `step`, clamped. **`Toggle`**: Left = off, Right = on, OK flips it.
-- **`Choice`** (`createChoice(labels, index)`, 1–255 labels — the Options screen's CONTROLS, M1-17):
+- **`Choice`** (`createChoice(labels, index)`, 1–255 labels — the Options screen's CONTROLS, M1-17, and BULLETS, M2-02):
   one of several labels; Left / Right step through them and **wrap**, OK steps forward; a single
   label never changes. A class, so its `index` stays a small integer.
 - **`Confirm`** (`createConfirm(question)`): YES / NO, focused on **NO** whenever it opens, so a

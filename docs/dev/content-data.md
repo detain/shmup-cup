@@ -50,7 +50,9 @@ content on every machine.
 `pnpm content:check` are done, since M1-13 the `enemies` kind has its boss section (see
 [bosses-and-warning.md](bosses-and-warning.md#boss-data-contentenemies-the-boss-section)), and
 since M2-01 the `rules` kind holds the difficulty presets and enemies may carry `revenge` bullets
-(see [difficulty-and-rank.md](difficulty-and-rank.md#the-rules-kind-coredata)). Both
+(see [difficulty-and-rank.md](difficulty-and-rank.md#the-rules-kind-coredata)), and since M2-02
+the `patterns` kind holds the bullet pattern DSL (compiled at load into one program bank — see
+[pattern-dsl.md](pattern-dsl.md)), the `rules` kind a `scoring` section and enemies a `pattern`. Both
 apps register the plugin and their
 `main.ts` imports `virtual:shmup-content`; `@shmup/shell`'s `bootShell()` validates it with
 `loadGameContent()` (core kinds through `loadContent()`, foreign kinds through the
@@ -64,7 +66,7 @@ when there is any issue, and passes `db` to `createGame` (M1-04,
   selects the schema; the loader does not care about folder or file name (the content test
   does: files must be named `<folder>/<name>.<kind>.json`).
 - Core kinds (`CONTENT_KINDS`): `player`, `weapons`, `enemies`, `paths`, `stage`, `tileset`,
-  `rules` (M2-01). Any other kind is
+  `rules` (M2-01), `patterns` (M2-02). Any other kind is
   returned untouched in `foreign`, in path order, for its owning package to validate
   (`input-profiles` → input-web `rebind` since M1-05 — see
   [input-profiles.md](input-profiles.md); `fx` → render-pixi `particles` since M1-14 — see
@@ -106,12 +108,21 @@ const game = createGame(platform, { seed }, db);
    and a boss section checked and completed — part indices and masks, the regular fields filled
    from it); one bad entry skips its whole file, like a schema failure. A `rules` file's
    `difficulty` section (M2-01) is checked (`aimDirections` powers of two), frozen and stored as
-   `db.difficulty`; a second file defining it is an issue and is ignored.
+   `db.difficulty`; a second file defining it is an issue and is ignored. Its `scoring` section
+   (M2-02: `bulletCancel`, the points of a bullet cancelled into a point item, 0–10,000) is
+   frozen into `db.scoring`, again from one file only. A `patterns` file (M2-02) is only
+   **collected** here (in path order) — it is compiled after interning, below.
 7. **Intern** sprite and script names: every distinct name gets an index in *sorted* order
    (`db.sprites`, `db.scripts`), independent of which file mentioned it first. The names in
    `options.extraSprites` join the sprite names first (M1-09: hosts pass `core/world`
    `ENGINE_SPRITES` — the enemy bullet kinds and the laser beam, which the engine draws although
-   no content file names them).
+   no content file names them). Then (M2-02) the **patterns are compiled**:
+   `compilePatternBank` (`core/patterns` `dsl.ts`) turns every collected `patterns` file into
+   one `PatternBank` (`db.patterns`) — expressions parsed and folded, `actionRef` / `bulletRef`
+   inlined — *before* the references are resolved, so a `pattern` reference resolves against
+   the compiled action ids; its issues (unknown or recursive references, `$n` beyond the params,
+   too deep `repeat`s …) join the load's
+   ([pattern-dsl.md](pattern-dsl.md#the-pattern-compiler-compilepatternbank)).
 8. **Resolve** every recorded reference and write the index into `<field>Id`.
 9. **Check boss references** (M1-13, `checkBossReferences`): a stage `spawn` / `formation`
    event or an enemy `child` naming a boss, and a `warning` / `boss` event naming a regular
@@ -162,19 +173,21 @@ absent optional reference, or an id that did not resolve (which is also an issue
 | `script` | interned: `db.scripts` (sorted names) | an issue only when `options.knownScripts` is given — the shell and `pnpm content:check` pass `KNOWN_SCRIPT_IDS` (`core/behaviors`: enemy behaviours + Type A weapon behaviours) |
 | `ship`, `weapon`, `enemy`, `path`, `stage`, `tileset` | `db.shipIndex`, `weaponIndex`, `enemyIndex`, `pathIndex`, `stageIndex`, `tilesetIndex` — across all files, in any order | issue |
 | `sfx`, `music` | `SFX_CUES` / `MUSIC_CUES` in `core/events` (own properties only, so `"toString"` does not resolve) | issue |
+| `pattern` (M2-02) | `db.patterns.actionIndex` — the action ids of every `patterns` file, compiled first | issue |
 
 Examples from today's schemas: `sprite → spriteId`, `behavior → behaviorId` (weapons),
-`script → scriptId` and `child → childId` (enemies), a `path` mover's `path → pathId`,
+`script → scriptId`, `child → childId` and `pattern → patternId` (enemies), a `path` mover's `path → pathId`,
 `sfx → sfxId`, presets' `main/missile/double/laser → mainId/missileId/doubleId/laserId`, stage
 events' `enemy → enemyId`, `path → pathId` and `cue → cueId`.
 
 Beyond the reference checks, the enemies are checked against the behaviour registry by
 `checkEnemyBehaviors(db)` (`core/behaviors`): every `params` name must be a tunable of the
-enemy's behaviour, and spawners (`hatch.spawner`) need a `child`. `loadContent` itself does not
+enemy's behaviour, spawners (`hatch.spawner`) need a `child` and pattern runners (`pattern.loop`,
+M2-02) a `pattern`. `loadContent` itself does not
 know the registry; the shell's `loadGameContent` and `pnpm content:check` append these issues.
 
 **Defaults filled at load.** An `enemies` entry may omit `anim`, `params`, `mover`, `ground`,
-`settleTicks`, `explosion`, `megaCrashImmune` and `child`; the loader fills them in
+`settleTicks`, `explosion`, `megaCrashImmune`, `child` and `pattern`; the loader fills them in
 (`completeEnemy`), so every `EnemySpec` has every field in the same order. **Baked at load.**
 Every `paths` entry gets a `table` — its centripetal Catmull-Rom spline resampled at 1-px arc
 length (`bakePath`); a path with coincident neighbours or longer than 16,384 px is an issue and
@@ -185,9 +198,12 @@ is left out.
 `ContentDb` holds `sprites` / `scripts` (`StringTable { names, index }`) and, per kind, a
 list plus an id → position map: `ships`/`shipIndex`, `weapons`/`weaponIndex`,
 `weaponPresets`/`weaponPresetIndex`, `enemies`/`enemyIndex`, `paths`/`pathIndex`,
-`stages`/`stageIndex`, `tilesets`/`tilesetIndex` — and, from the `rules` kind (M2-01), one table:
-`difficulty` (a frozen `DifficultyTable`, or `null` without a `difficulty` section, when
-`createGame` uses `core/config` `DEFAULT_DIFFICULTY_TABLE`). Lists are
+`stages`/`stageIndex`, `tilesets`/`tilesetIndex` — and, from the `rules` kind, two tables:
+`difficulty` (M2-01: a frozen `DifficultyTable`, or `null` without a `difficulty` section, when
+`createGame` uses `core/config` `DEFAULT_DIFFICULTY_TABLE`) and `scoring` (M2-02: a frozen
+`ScoringRules`, or `null` — the bullet system then uses `DEFAULT_SCORING_RULES`); from the
+`patterns` kind (M2-02) `patterns`, the compiled `PatternBank` (`code`, `actions`,
+`actionIndex`, `entries`, `bullets`; `EMPTY_PATTERN_BANK` without pattern files). Lists are
 in path-then-document order. Systems resolve what they need **once** (at session or stage
 start) and keep the numbers; per-tick code indexes arrays only — no `Map.get`, no string
 compares (zero-allocation rule, [conventions.md](conventions.md#performance-zero-allocation-in-hot-paths)).
@@ -352,6 +368,7 @@ A failure prints the issue list (`path` + `message`) in the Vitest diff.
 |---|---|
 | `packages/core/test/data/schema.test.ts`, `schema-edge.test.ts` | Every combinator: valid input, each failure message, inclusive bounds, nested paths, reference-site recording through objects/records/unions, construction-time `TypeError`s, frozen schemas, a seeded fuzz (the parser never throws and fails exactly when it reports an issue), `Infer<>` type assertions |
 | `packages/core/test/data/data.test.ts`, `data-edge.test.ts` | Headers, migrations (and missing ones), per-kind bounds, every stage event variant, cue and id resolution (including prototype names), cross-file references, interning order, duplicates, issue order, input immutability, byte-identical output for every file order |
+| `packages/core/test/patterns/patterns-dsl*.test.ts` | M2-02: the `patterns` kind through `loadContent` — compiled bank, issue paths and entry 0, enemy `pattern` resolution, the `scoring` section (one file only), the schema limits ([pattern-dsl.md](pattern-dsl.md#tests)) |
 | `packages/core/test/data/enemies-edge.test.ts`, `paths-edge.test.ts` | Enemy defaults, `child` refs, every mover variant and bound, stage spawn fields (M1-08); `bakePath` properties and the `paths` loader ([enemies-and-behaviors.md](enemies-and-behaviors.md#tests)) |
 | `test/integration/content.test.ts` | `pnpm content:check` (above) |
 | `test/integration/content-plugin.test.ts`, `content-plugin-edge.test.ts` | The generated module evaluates to `readContentFiles()`, is byte-stable, honours custom roots, skips examples, names the file in JSON errors; dev-server watcher behaviour (including a sibling `content-old/` folder that must *not* trigger a reload); a real Vite IIFE build whose inlined content `loadContent()` accepts |
@@ -370,6 +387,7 @@ A failure prints the issue list (`path` + `message`) in the Vitest diff.
 | `formatVersion 2 is newer than this build reads (1)` | Content from a newer branch loaded by an older build — rebuild |
 | A content edit does not show up in `pnpm dev` | Only `*.json` inside the content root triggers a reload; files outside it (or a custom `root`) are not watched |
 | A content edit does not show up after `pnpm build` | Should not happen (`content/**` is a Turborepo global dependency); if a new root-level input is added, list it in `globalDependencies` too |
+| Every action of a `patterns` file is "unknown pattern action id" | The file failed its schema (a bad expression is a schema issue) and contributed nothing — fix its first issue ([pattern-dsl.md](pattern-dsl.md#gotchas)) |
 | Sprite/script indices changed after adding a file | Expected: interned names are numbered in sorted order. Never persist these indices (replays record input, not ids) |
 | `pnpm content:check` fails on a README | The JSONC format sample in that README no longer matches the schema — update the sample with the schema |
 | `unknown script id "…"` only in the shell / `content:check`, not in a unit test | Script ids are checked only when `knownScripts` is passed; tests that call `loadContent(files)` alone intern any name |
@@ -395,5 +413,6 @@ checked by `checkWeaponBehaviors`, `WEAPON_SCRIPT_IDS` moved to `weapons`, `opti
 `ENGINE_SPRITES` — [weapons-and-options.md](weapons-and-options.md#content-the-type-a-arsenal));
 M2-01 (done) — the `rules` kind with the difficulty presets (`ContentDb.difficulty`), the enemy
 `revenge` section and the `rank` modifiers given meaning
-([difficulty-and-rank.md](difficulty-and-rank.md)); the pattern content kind arrives with the DSL
-of M2-02.
+([difficulty-and-rank.md](difficulty-and-rank.md)); M2-02 (done) — the `patterns` kind compiled at
+load into `ContentDb.patterns`, the ref kind `pattern` (enemy `pattern` → `patternId`), the
+`rules` kind's `scoring` section ([pattern-dsl.md](pattern-dsl.md)).

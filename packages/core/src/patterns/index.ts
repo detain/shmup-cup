@@ -1291,7 +1291,14 @@ export const PATTERN_STEP_BUDGET = 1024;
 export const MAX_PATTERN_WAIT = 1_000_000;
 
 /** Runner state bits (`PatternVm` `state`). */
-const RunnerBit = { InUse: 1, SeqDir: 2, SeqSpeed: 4 } as const;
+const RunnerBit = {
+  /** The runner holds a program (an emitter started / a bullet runner handed out). */
+  InUse: 1,
+  /** A fire recorded its direction (`sequence` directions add to it; else they aim). */
+  SeqDir: 2,
+  /** A fire recorded its speed (`sequence` speeds add to it; else to the default speed). */
+  SeqSpeed: 4,
+} as const;
 
 /** What the pattern interpreter reads from its World (the World implements it). */
 export interface PatternHost {
@@ -1313,7 +1320,10 @@ export interface PatternHost {
  * runner). Live interpreter state — never write it.
  */
 export interface PatternRunners {
-  /** Runner state bits (0 = free / idle; bit 1 = in use, 2 = has a `sequence` direction, 4 = speed). */
+  /**
+   * Runner state bits (0 = free / idle; bit 1 = in use, 2 = has a `sequence` direction, 4 = has a
+   * `sequence` speed).
+   */
   readonly state: Uint8Array;
   /** Program counter (0 = nothing to run). */
   readonly pc: Int32Array;

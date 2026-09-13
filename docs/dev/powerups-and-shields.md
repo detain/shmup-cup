@@ -236,8 +236,11 @@ after the player shots' hits and the pickups (an Auto Power-Up order that reache
 detonates on the pickup's own tick) — so its kills are scored and drop capsules like any other.
 `detonateMegaCrash(player)` (also callable directly by tests and tools):
 
-1. `bullets.cancelAll(CancelMode.Sparkle)` — every cancelable enemy bullet and laser is removed,
-   with `FX_CUES.BulletCancel` sparkles at up to 64 of them (`core/bullets`);
+1. `bullets.cancelAll(CancelMode.Points, player)` — every cancelable enemy bullet and laser
+   (straight and bending) is removed, with `FX_CUES.BulletCancel` sparkles at up to 64 of them;
+   since M2-02 every cancelled bullet also becomes a gold **point item** that flies to the
+   bomber's score and adds `bulletCancel` points (10 by default; a bad player index only sparkles
+   — [bullets-and-patterns.md](bullets-and-patterns.md#cancel));
 2. `enemies.megaCrash(player)` — every live, non-ghost enemy whose spec is not
    `megaCrashImmune` goes through `EnemySystem.kill` in slot order: kill records with `killBy`
    = the player, explosion events, drops, formation completion (a formation it wipes out drops
@@ -404,5 +407,7 @@ powerups.detonateMegaCrash(0); // debug: clear the screen now
 - **M1-15** (done) — the sounds of every event above ([audio.md](audio.md)).
 - **M1-16** (done) — the HUD power meter (`cursor`, `equippable`, the `hud/meter-labels`
   frames, the highlighted slot flashing every 8 ticks) ([scenes-and-ui.md](scenes-and-ui.md#the-hud)).
+- **M2-02** (done) — Mega Crash cancels into point items for the bomber (`CancelMode.Points`)
+  ([bullets-and-patterns.md](bullets-and-patterns.md#cancel)).
 - **M2-03** — loadouts B–D and `!` variants; **M2-04** — the other meter shields and the Option
   Hunter; **M2-05** — Direct mode's items and the Arm tiers.

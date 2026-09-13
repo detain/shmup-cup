@@ -3,11 +3,13 @@
  *
  * **Status: partial.** The narrow-phase shape tests, the layer bits, the uniform-grid broad
  * phase (plan M1-06) and the terrain queries against a stage's tilemap (plan M1-07) are
- * implemented; circle chains for bending lasers arrive in M2-02.
+ * implemented. The bending lasers' circle chains (plan M2-02) are tested inside `core/bullets`
+ * (`BulletSystem.collidePlayers`: one squared-distance test per hit node, brute force like the
+ * bullets) rather than through a shape of this module.
  *
  * **Responsibility.** All collision detection. Narrow phase: circle-vs-circle for bullets (squared
- * distances), AABB for enemies/terrain, capsule (point-to-segment) for straight lasers,
- * circle chains for bending lasers. Broad phase: a uniform grid (~32 px cells, rebuilt
+ * distances), AABB for enemies/terrain, capsule (point-to-segment) for straight lasers, circle
+ * chains for bending lasers (in `core/bullets`). Broad phase: a uniform grid (~32 px cells, rebuilt
  * each tick via counting sort) for player shots × enemies; brute force for enemy bullets ×
  * players. Layer/mask bitfields. Terrain: tilemap collision lookups (solid, hazard; destructible
  * in M2), per-tile column-height masks for slopes and "find floor / ceiling" queries for
@@ -42,7 +44,7 @@
  * {@link terrainSolidAt}, {@link boxHitsTerrain}, {@link terrainRectHit}, {@link findFloor},
  * {@link findCeiling}.
  *
- * **Planned API.** Circle chains for bending lasers (M2-02); destructible tiles (M2-07).
+ * **Planned API.** Destructible tiles (M2-07).
  *
  * @module
  */

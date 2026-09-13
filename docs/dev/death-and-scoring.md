@@ -223,6 +223,7 @@ hi-score (setting `hiScoreDirty`) when beaten.
 | Capsule pickup | `CAPSULE_SCORE` (300) | the collector (`PowerUpOutcomes.pickupPlayer`) |
 | Boss part destroyed (M1-13) | the part's `score` (`content/enemies/`, e.g. 500 for a shield plate) | the player whose shot destroyed it — also every part destroyed with it; paid at once by `core/bosses` through `addScore` |
 | Boss defeated (M1-13) | the boss's `score` (TRIAL WARDEN: 20,000), at the tally of its death sequence | the player who destroyed the last core (`Boss.killer`); nobody for a tool's `defeat()` |
+| Cancelled bullet (M2-02) | `bulletCancel` of the `rules` content's `scoring` section (`content/rules/scoring.rules.json`: 10; `DEFAULT_SCORING_RULES` without one) per bullet, when its point item reaches the score (≤ 180 ticks) | the boss's killer (its death sequence) or the bomber (Mega Crash) — `CancelMode.Points`; paid by `core/bullets` through `addScore`, no `Score` popup. The player's own death cancels with sparkles only ([bullets-and-patterns.md](bullets-and-patterns.md#cancel)) |
 
 **Crediting** mirrors M1-11's drops. `scoring.resolve()` runs in phase 7 after the shots' hits,
 the pickups and Mega Crash; `scoring.beginTick()` runs at the start of phase 3, before
@@ -438,4 +439,7 @@ The next `game.step()` runs that tick, and its phase 7 turns the recorded hit in
   the checkpoint restart, the score's last digit), the difficulty presets choosing lives and
   penalty, rank falling with the power a death takes
   ([difficulty-and-rank.md](difficulty-and-rank.md)).
+- **M2-02** (done) — the `rules` content's `scoring` section and cancel point items credited
+  through `addScore` (a boss's death, a Mega Crash); the player's death keeps `CancelMode.Sparkle`
+  ([bullets-and-patterns.md](bullets-and-patterns.md#cancel)).
 - **M3** — option recovery after a death, authentic slowdown.

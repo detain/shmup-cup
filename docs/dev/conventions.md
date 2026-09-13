@@ -168,6 +168,16 @@ ES5 and linted with `ecmaVersion: 5`.
   need to measure a second instance after a throwaway one — the first carried V8 hidden-class
   transitions and made the render-pixi overlay guard flaky
   ([debug-and-replays.md](debug-and-replays.md#the-overlay-shmuprender-pixi-debug)).
+  And from M2-02: a fractional **return value** is boxed just like an argument — draw an RNG
+  fraction into a typed array (`Rng.nextFloatInto(out, i)`, the pattern DSL's `$rand`); hand a set
+  of fractional values to another system in a reused class instance (`BulletShot` →
+  `BulletSystem.launch`) and let a method read a point from class fields rather than take it as
+  arguments (the bending lasers' `aimPoint()`); an interpreter keeps all of its state in
+  preallocated typed arrays (runner tables, an expression stack whose slot 0 is the result) and
+  caps the work of one run (`PATTERN_STEP_BUDGET`); a sprite drawn many times per frame with no
+  need to turn is round art placed per node, never rotated or scaled (Pixi's transform setters
+  allocate — the bending laser segments)
+  ([pattern-dsl.md](pattern-dsl.md#zero-allocation)).
 - Behaviour coroutines (generators, D29) allocate a small result object on every resume:
   scripts **sleep** (`yield ticks`) and are resumed only when they wake; per-tick motion
   belongs in a mover (numbers on the body), never in a `yield 1` loop.
@@ -242,6 +252,8 @@ Only original names, art and music — never Konami or Taito names or assets
 | Placeholder art is source data, never a hand-drawn binary: a `*.sprite.json` pixel map under `assets/source/sprites/` or a seeded generator in `scripts/assets/procedural/` (plan §1.5). PNGs there are real-art overrides only | review; [asset-pipeline.md](asset-pipeline.md) |
 | A sprite's name is its path below `assets/source/sprites/` (lower-case kebab segments, `/`-separated) and the file's `name` field repeats it | `scripts/assets/sprite-source.mjs` (source issue) |
 | Every sprite name the shipped content uses exists in the atlas | `pnpm content:check` (`findMissingSprites`) |
+| Every bullet, laser beam and bending laser sprite has a `<sprite>@<palette>` variant for each colour-blind palette (`BULLET_PALETTES` other than `standard`), frame for frame — a real-art override of one needs its variants too (M2-02) | `pnpm content:check` |
+| Bullet patterns are data: expressions are parsed by the DSL's own compiler at load (no `eval` / `new Function`), every `patterns` action a shipped enemy names compiles, and zone speeds follow the 4-way rules like hand-written behaviours | `pnpm content:check`; [pattern-dsl.md](pattern-dsl.md) |
 | Every `script` id names a registered behaviour (`KNOWN_SCRIPT_IDS`), every enemy `params` name a tunable of its behaviour, every spawner a `child` | `pnpm content:check` and the shell's boot (`knownScripts`, `checkEnemyBehaviors`) |
 | Procedural generators seed from the sprite name (`seedOf`) and use only exactly rounded maths (no `Math.sin`/`cos`), so the atlas is byte-identical on every machine | review; `test/scripts/assets/pipeline*.test.ts` (byte-identical runs) |
 | A shipped zone is playable with four directions (`shmup_feat.md` §4 rule 2, D17): no aimed bullet over 2.0 px/tick on Normal, no two simultaneous laser lanes leaving under 16 px of gap (lanes widened by the ship's hurt radius), ≥ 3 capsule sources within 900 px after every checkpoint (§10); the 4-way playtest bot clears it in god mode | `pnpm content:check` (zone A block of `content.test.ts`), `test/playtest/` — [zone-a-and-playtest.md](zone-a-and-playtest.md#the-4-way-design-rules) |

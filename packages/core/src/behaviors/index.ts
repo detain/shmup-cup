@@ -9,9 +9,11 @@
  * (`core/patterns`) and by firing patterns through the `ScriptApi` fire primitives (M1-09 —
  * they respect the off-screen / settle rule themselves). Content validation uses the registry
  * ({@link KNOWN_SCRIPT_IDS}) as `loadContent`'s `knownScripts`, so an unknown id is a content
- * issue, and {@link checkEnemyBehaviors} reports unknown tunables and spawners without a child.
+ * issue, and {@link checkEnemyBehaviors} reports unknown tunables, spawners without a child and
+ * (M2-02) pattern runners without a `pattern`.
  *
- * **The M1 roster** ({@link DEFAULT_BEHAVIORS}; `params` defaults in brackets):
+ * **The roster** ({@link DEFAULT_BEHAVIORS}: the M1 behaviours and M2-02's `pattern.loop`;
+ * `params` defaults in brackets):
  *
  * - `drifter.sine` — popcorn: drifts left on a sine wave [`speed` 1.25, `amp` 24, `period` 96,
  *   `phase` 0, `memberPhase` 0 — extra phase per formation member].
@@ -406,7 +408,7 @@ export const DEFAULT_BEHAVIOR_DEFS: readonly BehaviorDef[] = Object.freeze([
   patternLoop,
 ]);
 
-/** The M1 roster as a registry (what the World uses). */
+/** The roster as a registry (what the World uses). */
 export const DEFAULT_BEHAVIORS: BehaviorRegistry = createBehaviorRegistry(DEFAULT_BEHAVIOR_DEFS);
 
 /** Ids of {@link DEFAULT_BEHAVIORS}, sorted. */

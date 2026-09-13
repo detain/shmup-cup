@@ -200,6 +200,12 @@ except while a rank-modified enemy's script runs. `bulletSpeedMul` applies from 
 bullet host without the field — a hand-made test host — counts as × 1). So Easy's bullets fly at
 `0.978 × 0.85 ≈ 0.83` of Normal's at the start, and its aimed shots snap to 16 directions.
 
+Since M2-02 the **pattern DSL** follows the same scales: its fire speeds are Normal values
+multiplied by `speedScale` when a pattern fires (a bullet's own program keeps the scale it was
+fired with), a `wait` with `ranked: true` is `round(ticks ÷ fireScale)` like `fireWait`, and
+expressions can read `$rank` (and `$loop`) directly — `common.ring` fires
+`8 + floor($rank / 4) · 2` bullets ([pattern-dsl.md](pattern-dsl.md#expressions)).
+
 ## Per-enemy rank modifiers
 
 An enemy spec may carry `"rank": { "bulletSpeed": k, "fireRate": k }` (0–8 each, default 1). The
@@ -431,8 +437,9 @@ preset's, the title shows it, and a finished game is inserted into its World's t
 
 ## Next steps that build on this page
 
-- **M2-02** — the pattern DSL can read `$rank` and `$loop`; revenge patterns may become pattern
-  references; cancel scores and the `rules` scoring section.
+- **M2-02** (done) — the pattern DSL reads `$rank` and `$loop` and scales like the primitives;
+  cancel points and the `rules` kind's `scoring` section. Revenge bullets still use their three
+  built-in patterns — DSL revenge patterns are M2-09 material ([pattern-dsl.md](pattern-dsl.md)).
 - **M2-04** — Reduce (`RANK_POWER.reduce`) and the front shields count in the power term.
 - **M2-05** — Direct mode's rare 1UP items through the same lives cap.
 - **M2-10** — the campaign sets `rankInputs.loop` / `stage` (8 per loop, 1 per stage).

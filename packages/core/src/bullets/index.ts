@@ -19,9 +19,6 @@
  *   the beam at full width — has a hitbox (a capsule); the telegraph is drawn as a blinking 1-px
  *   warning line (shmup_feat.md §20 telegraphing). {@link BulletSystem.laserView} is the render
  *   contract's `LaserView`.
- * - **Collision** with the players (brute force, shmup_feat.md §22): bullet circles against each
- *   ship's hurt radius, laser capsules against it → `playerHit(Bullet)` / `playerHit(Laser)`, at
- *   most one accepted hit of each cause per ship and tick; an accepted bullet is removed.
  * - **Bending lasers (M2-02)** — {@link MAX_BENDING_LASERS} stable slots
  *   ({@link BendingLaserTable}, also the render contract's `BendingLaserView`): a head that flies
  *   (homing for a while) and records one position per tick in a ring of
@@ -337,7 +334,10 @@ export const BENDING_LASER_LENGTH = 48;
 /** Default width of a bending laser (its hit circles' diameter), px. */
 export const BENDING_LASER_WIDTH = 6;
 
-/** Default emission time of a bending laser: its head flies this many ticks, then the tail catches up. */
+/**
+ * Default emission time of a bending laser: its head flies this many ticks, then the tail catches
+ * up.
+ */
 export const BENDING_LASER_LIFE = 120;
 
 /** Point item slots (one per enemy bullet — a full screen cancelled at once fits). */
@@ -432,11 +432,17 @@ export const BULLET_SCHEMA = Object.freeze({
    * `core/patterns` `PatternVm`'s).
    */
   runner: 'u16',
-  /** Ticks the acceleration lasts (0 = until changed), then it stops (DSL `changeSpeed` / `accel`). */
+  /**
+   * Ticks the acceleration lasts (0 = until changed), then it stops (DSL `changeSpeed` /
+   * `accel`).
+   */
   accelTerm: 'i32',
   /** Speed the bullet lands on when {@link BULLET_SCHEMA.accelTerm} runs out (NaN = keep). */
   termSpeed: 'f64',
-  /** Ticks the angular velocity lasts (0 = until changed), then it stops (DSL `changeDirection`). */
+  /**
+   * Ticks the angular velocity lasts (0 = until changed), then it stops (DSL
+   * `changeDirection`).
+   */
   turnTerm: 'i32',
   /** Heading the bullet lands on when {@link BULLET_SCHEMA.turnTerm} runs out (NaN = keep). */
   termAngle: 'f64',
@@ -523,9 +529,15 @@ export type PointItemSchema = typeof POINT_ITEM_SCHEMA;
 
 /**
  * The bending lasers of a World (plan M2-02, shmup_feat.md §12 "ring buffer of head positions,
- * subsampled hitbox nodes"): {@link MAX_BENDING_LASERS} **stable** slots (not a packed pool — a slot
- * keeps its ring of {@link BENDING_LASER_NODES} nodes), which is also the render contract's
+ * subsampled hitbox nodes"): {@link MAX_BENDING_LASERS} **stable** slots (not a packed pool — a
+ * slot keeps its ring of {@link BENDING_LASER_NODES} nodes), which is also the render contract's
  * `BendingLaserView`. `hashWorld` mixes its active slots (their fields and body nodes).
+ *
+ * @remarks
+ * Node `k` back from the head of slot `s` is at `x[s · nodes + ((head[s] − k) & (nodes − 1))]`;
+ * the body is the newest `filled[s]` nodes (at most `length[s]`). Written only by the bullet
+ * system ({@link BulletSystem.fireBendingLaser}, `update`, `cancelAll`, `clear`); everyone else
+ * reads it.
  */
 export class BendingLaserTable implements BendingLaserView {
   /** See {@link BendingLaserView.capacity}. */
@@ -565,7 +577,11 @@ export class BendingLaserTable implements BendingLaserView {
   /** Node y, slot-major. */
   readonly y = new Float64Array(MAX_BENDING_LASERS * BENDING_LASER_NODES);
 
-  /** Live lasers. */
+  /**
+   * Live lasers.
+   *
+   * @returns The active slots (counted over the slots on every read; used by tests and tools).
+   */
   get count(): number {
     let n = 0;
     for (let s = 0; s < MAX_BENDING_LASERS; s++) n += this.active[s];

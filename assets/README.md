@@ -36,6 +36,13 @@ assets/source/fonts/*.font.json ────────┘                     
   source issue naming the file.
 - **Hit flash** — `hitFlash: true` adds the sibling sprite `<name>@flash` (white
   silhouettes, same frames and anchor); the renderer swaps sprite ids on a hit (D30).
+- **Colour-blind bullet variants** (M2-02) — every enemy bullet, laser beam and bending laser
+  segment also exists as `<name>@deuteranopia`, `@protanopia` and `@tritanopia` (the
+  `palettes` generator: recoloured for that colour blindness and shape-coded — pink a solid
+  core, red a dark centre, purple a single bright dot); the renderer uses them when the player
+  picks OPTIONS → BULLETS. **Real art for a bullet needs its three variants too**
+  (`bullets/oval-red@tritanopia.png` …, same frames in the same order), or the colour-blind sets
+  keep the placeholder's frames; `pnpm content:check` requires every variant.
 - **Fonts** — `pixel6x8.font.json` is an original 6×8 font (ASCII 32–126 + `← ↑ → ↓ ● ✕ ★`);
   its glyphs become frames of the sprite `font/pixel`, its metrics go into the manifest.
 - **Manifest** (`atlas/main.json`, inlined into builds as `virtual:shmup-assets`):
@@ -54,6 +61,9 @@ assets/source/fonts/*.font.json ────────┘                     
   nearest-neighbour).
 - **VA-panel-friendly palette:** no pure-black backgrounds behind small bright bullets
   (`shmup_tech.md` §2.7).
+- **Readable bullets for everyone:** the three bullet colour families stay apart from each other
+  and from the gold items / orange explosions in every palette, and keep their core shapes
+  (`shmup_feat.md` §12, §21).
 - **Atlases ≤ 2048²** (TV GPU limit); one atlas per stage where possible.
 - **Audio:** music composed in a tracker and rendered to **OGG Vorbis** with loop points
   (MP3 padding breaks loops); SFX pre-decoded at load time (`shmup_feat.md` §19).

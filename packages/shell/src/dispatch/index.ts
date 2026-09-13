@@ -384,21 +384,27 @@ export function applyAudioOptions(audio: VolumeTarget, options: AudioOptions): v
 
 /**
  * Registers the Options screen's handler (plan M1-17, see the module docs): a `UserOption` event
- * sets a bus volume or calls `onInputProfile` with the chosen profile's index. Load time —
+ * sets a bus volume, calls `onInputProfile` with the chosen profile's index or (M2-02)
+ * `onBulletPalette` with the chosen bullet palette's name. Load time —
  * registering allocates the handler; volume events allocate nothing here.
  *
  * @param dispatcher - The shell's event dispatcher.
  * @param audio - The audio back-end.
  * @param onInputProfile - Applies the profile at an index of the flow's profile choices, or `null`
  *   (profile events are ignored).
- * @param onBulletPalette - Applies the bullet palette at an index of `BULLET_PALETTES` (M2-02 —
- *   normally `renderer.setBulletPalette`), or `null` / omitted (palette events are ignored; bad
- *   indices are ignored too).
+ * @param onBulletPalette - Applies a bullet palette (M2-02 — normally `renderer.setBulletPalette`);
+ *   it receives the name the event's `BULLET_PALETTES` index stands for. `null` / omitted: palette
+ *   events are ignored (so is an index outside `BULLET_PALETTES`).
  * @returns A function that unregisters the handler (idempotent).
  *
  * @example
  * ```ts
- * connectOptionEvents(shell.events, audio, (index) => profiles.apply(choices[index].id, 'options'));
+ * connectOptionEvents(
+ *   shell.events,
+ *   audio,
+ *   (index) => profiles.apply(choices[index].id, 'options'),
+ *   (palette) => renderer.setBulletPalette(palette),
+ * );
  * ```
  */
 export function connectOptionEvents(

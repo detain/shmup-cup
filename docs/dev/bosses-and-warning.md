@@ -307,8 +307,11 @@ end.
 
 When the last core is destroyed (by a shot in phase 7, a cascade from its parent, or
 `defeat(by)`), `startDeath(by)` runs at once: state `Dying`, `killer = by`, the script dropped, the
-motion held, every part's lasers detached, **`bullets.cancelAll(CancelMode.Sparkle)`** (every
-cancelable enemy bullet and laser, with sparkles), `MUSIC Silence` with a
+motion held, every part's lasers detached, **`bullets.cancelAll(CancelMode.Points, by)`** (every
+cancelable enemy bullet and laser, with sparkles — since M2-02 each bullet also becomes a gold
+point item that flies to the killer's score and adds `bulletCancel` points, 10 by default; a boss
+defeated by nobody, `by` −1, only sparkles —
+[bullets-and-patterns.md](bullets-and-patterns.md#cancel)), `MUSIC Silence` with a
 `BOSS_MUSIC_FADE_TICKS` (60) fade and a small shake for `BOSS_CHAIN_TICKS`. Then, in simulated
 ticks of the `Dying` state (counted in phase 3 from the next tick):
 
@@ -456,7 +459,7 @@ with the web app's `?skip=boss` (the debug stage skip, `GameConfig.stageSkip`).
 | Boss enters | `Music` = the stage's boss cue (`MUSIC_CUES.Boss` in free flight) |
 | Part hit / destroyed | `Sfx EnemyHit`; `Sfx EnemyExplodeSmall/Medium/Large` + `Particles ExplosionSmall/Medium/Large` (param 1) |
 | A shot clinks | `Sfx Clink` (pushed by `core/weapons` at the shot, at most once per cue every 4 ticks like its other SFX) |
-| Last core | `Particles BulletCancel` sparkles (the cancel), `Music Silence` (param 60), `Shake` (small) |
+| Last core | `Particles BulletCancel` sparkles (the cancel — and, M2-02, a point item per bullet, drawn from the `cancelPoints` batch, no event), `Music Silence` (param 60), `Shake` (small) |
 | Chain | `Particles BossChain` (6) + `Sfx BossExplode`, every 8 ticks |
 | Final blast | `Particles BossBlast` (7), `Sfx BossExplode` (param `SfxPriority.High` 3), `Rumble` per active player (param 2), `Flash` (`id` `FlashKind.BossBlast` 2, param 24), `Shake` (large, 40), `HitStop` (5) |
 | Tally | `BossDefeated` (11: `id` = enemy index, `param` = points), `Music StageClear` |
@@ -602,5 +605,8 @@ free flight).
 - **M1-19** (done) — the debug controls' "skip to boss" (F8, the TV debug build's 8 — on
   `core/debug` `skipToBoss`); the boss outlines of the debug overlay (parts with a hurtbox); the
   `zone-a-boss` golden replay ([debug-and-replays.md](debug-and-replays.md)).
-- **M2-09** — boss timers and escapes, the optional HP bar, mid-bosses, battleship raids,
+- **M2-02** (done) — the death sequence cancels into point items for the killer
+  (`CancelMode.Points`; the `zone-a-boss` golden replay scores +180); boss behaviours do not run
+  DSL patterns yet ([pattern-dsl.md](pattern-dsl.md)).
+- **M2-09** — boss behaviours running DSL patterns and bending lasers; boss timers and escapes, the optional HP bar, mid-bosses, battleship raids,
   boss-inside-boss, double bosses, boss rush.

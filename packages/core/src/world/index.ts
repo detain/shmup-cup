@@ -57,8 +57,8 @@
  * players in phase 6 (`playerHit(Bullet / Laser)`); the view carries the bullet pool as the
  * `LayerId.EnemyBullets` batch and the lasers as `view.lasers`. {@link World.rank} is the
  * session's rank (`core/rank`); the bullet system scales bullet speeds and fire intervals by it.
- * The engine's own sprites (bullets, laser beam) are {@link ENGINE_SPRITES} — hosts load content
- * with `extraSprites: ENGINE_SPRITES` so they draw.
+ * The engine's own sprites (bullets, laser beam, bending laser segment, point item) are
+ * {@link ENGINE_SPRITES} — hosts load content with `extraSprites: ENGINE_SPRITES` so they draw.
  *
  * **Pattern DSL, bending lasers, cancel points (M2-02).** {@link World.patterns} (`core/patterns`
  * `PatternVm`) interprets the content's DSL patterns: enemy behaviours step their emitters in
@@ -1055,8 +1055,9 @@ type WorldUnderConstruction = Omit<
 };
 
 /**
- * The sprites the engine draws on its own, whatever the content: the enemy bullet kinds and the
- * laser beam (`core/bullets` `BULLET_SPRITES`), the Option (`core/options` `OPTION_SPRITE`), the
+ * The sprites the engine draws on its own, whatever the content: the enemy bullet kinds, the
+ * laser beam, the bending laser segment and the cancel point item (`core/bullets`
+ * `BULLET_SPRITES`; the last two since M2-02), the Option (`core/options` `OPTION_SPRITE`), the
  * items (`core/powerups` `ITEM_SPRITES`: the power capsule) and the Force Field
  * (`core/shields` `FORCE_FIELD_SPRITE`), plus the HUD pieces and the title logo the scene flow
  * draws (`core/ui` `UI_SPRITES`, M1-16). Hosts pass it as `loadContent`'s `extraSprites` (the

@@ -7,7 +7,10 @@ How enemies shoot inside `@shmup/core`: the **bullet system** (`core/bullets`) w
 that behaviour scripts call through the enemy `ScriptApi`, the **rank** of `core/rank` that
 scales bullet speeds and fire intervals, and how render-pixi draws bullets and lasers without
 allocating. Built in plan step **M1-09** (at a constant rank); **M2-01** made the rank grow and
-added per-enemy rank modifiers and revenge bullets ([difficulty-and-rank.md](difficulty-and-rank.md)).
+added per-enemy rank modifiers and revenge bullets ([difficulty-and-rank.md](difficulty-and-rank.md));
+**M2-02** added the **bending lasers**, bullets **cancelled into point items**, and bullets that
+run a **program** of the pattern DSL — the DSL itself (format, compilers, interpreter) is
+[pattern-dsl.md](pattern-dsl.md).
 
 This page is the *how and why*. Exact signatures are in
 [api-reference.md](api-reference.md#bullets--enemy-bullets-and-lasers); the TSDoc in
@@ -33,26 +36,35 @@ createWorld(config, db)                                                       co
  ├─ world.bullets = createBulletSystem(world)                                 core/bullets
  │    pools.register('enemyBullets', 512 slots)  ← also the ENEMY_BULLETS sprite batch
  │    pools.register('enemyLasers', 16 slots)    ← also view.lasers (LaserView)
+ │    pools.register('cancelPoints', 512 slots)  ← also the ITEMS batch pointBatch (M2-02)
+ │    bending = BendingLaserTable (8 × 64 nodes) ← also view.bendingLasers (M2-02)
  │    kind tables: BULLET_KINDS sprite names → db.sprites ids (ENGINE_SPRITES, -1 = hidden)
- └─ world.bullets.setRank(world.rank)  → speedScale (× bulletSpeedMul), fireScale
+ ├─ world.bullets.setRank(world.rank)  → speedScale (× bulletSpeedMul), fireScale
+ └─ world.bullets.setProgramRunner(world.patterns)  ← the DSL interpreter (M2-02)
     (then updateWorldRank: the starting loadout's power term — and again every tick, phase 3)
 
 stepWorld, every tick
  ├─ 4 scripts    enemy coroutine wakes → api.aimed / nWay / ring / … / laser      core/enemies
  │               └─ fire rule (canFire) → core/patterns primitive → bullets.emit / fireLaser
- ├─ 5 movement   enemies.move()  then  bullets.update(): ride camera, delay, age, change,
- │               homing, accel / angVel, move, cull (view ± 16 px, terrain); lasers follow
- │               their enemy or ride the camera, step telegraph → grow → active → fade
+ ├─ 5 movement   enemies.move()  then  bullets.update(): ride camera, delay, age, the bullet's
+ │               DSL program (M2-02), change, homing, accel / angVel (timed terms), move, cull
+ │               (view ± 16 px, terrain); lasers follow their enemy or ride the camera, step
+ │               telegraph → grow → active → fade; bending lasers fly and record a node or
+ │               shrink; point items drift, then fly to the score and credit it
  ├─ 6 collision  … enemies × ships …  then  bullets.collidePlayers(): circles × hurt radius,
- │               active laser capsules × hurt radius → playerHit(Bullet / Laser)
- ├─ 8 removal    pools.flushAll(): freed bullet / laser slots swap-removed
- └─ (renderer)   ENEMY_BULLETS: bullet sprite binding, then the laser binding on top
+ │               active laser capsules and bending laser circle chains × hurt radius
+ │               → playerHit(Bullet / Laser)
+ ├─ 8 removal    pools.flushAll(): freed bullet / laser / point item slots swap-removed
+ └─ (renderer)   ENEMY_BULLETS: bullet sprite binding, then the laser binding, then the
+                 bending laser segments on top; ITEMS: the point items
 ```
 
 ## Bullet kinds and the engine's own sprites
 
-Bullets are not content yet (the BulletML-style pattern DSL of M2-02 brings pattern and bullet
-content). `BULLET_KINDS` is a built-in, frozen table indexed by a `BulletKind` code — M1-03's
+The kinds stay a built-in, frozen table: the pattern DSL of M2-02 picks one by name (`kind`:
+`round-pink` … `needle-purple` — `BULLET_KIND_NAMES`, built from `BULLET_SHAPES` ×
+`BULLET_COLORS` in the leaf `bullets/kinds.ts` so the content loader need not import the bullet
+system). `BULLET_KINDS` is indexed by a `BulletKind` code (`shape · 3 + colour`) — M1-03's
 procedural bullet art in the readability palette of §12:
 
 | Code | Kind | Sprite | Hit radius | Frames |
@@ -67,7 +79,8 @@ clockwise from +x, and the art is point-symmetric, so eight frames cover every h
 M1-03 generator's convention). It is recomputed whenever the velocity is.
 
 **Engine sprites.** No content file names these sprites, so `loadContent` would never intern
-them. `BULLET_SPRITES` (the nine kinds, then `LASER_SPRITE` = `lasers/beam-pink`) is exported by
+them. `BULLET_SPRITES` (the nine kinds, then `LASER_SPRITE` = `lasers/beam-pink`, and since
+M2-02 `BENDING_LASER_SPRITE` = `lasers/bend-pink` and `POINT_ITEM_SPRITE` = `items/point`) is exported by
 `core/world` as `ENGINE_SPRITES`, and `loadContent(files, { extraSprites })` interns extra
 names into `db.sprites` with the content's own. The shell's `loadGameContent` passes
 `ENGINE_SPRITES` by default and `pnpm content:check` verifies every engine sprite against the
@@ -88,10 +101,16 @@ the pool registry and the enemies). It allocates everything up front:
 - `batch`: the bullet pool **as** the `LayerId.EnemyBullets` `SpriteBatchView` (its `x`, `y`,
   `sprite`, `frame` and `draw` arrays — no mirror copy, plan §3.4);
 - `laserView`: the laser pool as the render contract's `LaserView`;
+- M2-02: the point item pool — `createSoaPool(MAX_POINT_ITEMS = 512, POINT_ITEM_SCHEMA)`,
+  registered as `cancelPoints` — and `pointBatch`, that pool as a `LayerId.Items` batch (one
+  `PoolBatchView` class serves both pools); the `bending` table (`BendingLaserTable`, 8 stable
+  slots); `cancelPoints` = `content.scoring.bulletCancel` (else `DEFAULT_SCORING_RULES`, 10);
 - per-kind typed arrays (sprite id, radius, frames, flags) resolved once from `BULLET_KINDS`.
 
-Both pools are registered with the World, so phase 8 flushes them and `hashWorld` hashes their
-live slots like any other pool; a checkpoint restart (`pools.clearAll()`) empties them.
+The pools are registered with the World, so phase 8 flushes them and `hashWorld` hashes their
+live slots like any other pool; a checkpoint restart (`pools.clearAll()`) empties them, and
+`BulletSystem.clear()` (M2-02, called right after) removes the bending lasers and frees every
+bullet program runner.
 
 ### The bullet pool
 
@@ -109,6 +128,9 @@ live slots like any other pool; a checkpoint restart (`pools.clearAll()`) emptie
 | `delay` | i32 | Ticks left before a delayed bullet launches (0 = moving) |
 | `changeAt`, `changeSpeed`, `changeAngle` | i32, f64, f64 | Scheduled change (age; `NaN` = keep; `AIM_AT_TARGET` = re-aim) |
 | `turnRate`, `homing` | f64, i32 | Homing turn cap per tick; homing ticks left |
+| `runner` | u16 | M2-02: the bullet's DSL program runner + 1 (0 = none) — a slot of `core/patterns`' `PatternVm` |
+| `accelTerm`, `termSpeed` | i32, f64 | M2-02: ticks the acceleration lasts (0 = until changed); the speed it lands on when they run out (`NaN` = keep) — DSL `changeSpeed` / `accel` |
+| `turnTerm`, `termAngle` | i32, f64 | M2-02: ticks the angular velocity lasts; the heading it lands on (`NaN` = keep) — DSL `changeDirection` |
 
 The plan's `anim` became `frame` + `kind`; `turnRate` / `homing` and `draw` were added.
 `BulletFlag` bits: `DieOnTerrain` 1, `Cancelable` 2, `Grazed` 4 (reserved for graze scoring,
@@ -155,14 +177,19 @@ For each live bullet, in slot order:
 2. **Delay**: a delayed bullet counts down and does nothing else; on the tick it launches it
    re-aims first if it was fired with `AIM_AT_TARGET`. `setDelay(i, n)` makes the first move
    happen `n` ticks after the tick's own.
-3. **Age** `++` (moving ticks only).
+3. **Age** `++` (moving ticks only). Then, since M2-02, the **program**: a bullet with a
+   `runner` runs its DSL program through the installed `BulletProgramRunner` when its wake age
+   has come — it may change the speed, heading and motion fields, fire bullets or `vanish` (the
+   loop then skips the rest); the velocity is recomputed.
 4. **Change**: on the tick `age === changeAt`, the new speed and / or heading apply (before
    this tick's kinematics).
 5. **Homing**: while `homing > 0` (decremented every moving tick) the heading turns the short
    way towards the nearest living player (unquantised) by at most `turnRate`; without a target
    it keeps its heading.
 6. **Acceleration**: `speed += accel`, clamped to `[minSpeed, maxSpeed]` (the clamp applies
-   only while accelerating). **Angular velocity**: `angle += angVel`, wrapped.
+   only while accelerating). **Angular velocity**: `angle += angVel`, wrapped. A timed term
+   (M2-02) counts down with each: on its last tick the acceleration / angular velocity stops and
+   the speed / heading lands exactly on `termSpeed` / `termAngle` (when not `NaN`).
 7. **Velocity** recomputed from the sine table — and the directional frame — only when speed or
    heading changed this tick; then `x += vx`, `y += vy`.
 8. **Cull**: removed unless inside the camera view ± `BULLET_CULL_MARGIN` (16) px on all four
@@ -204,6 +231,41 @@ on its part; the boss system calls `detachLasers(part.slot)` when the part is de
 the boss dies (every part) and on a clear
 ([bosses-and-warning.md](bosses-and-warning.md#boss-behaviours-corebehaviors)).
 
+### Bending lasers
+
+A bending laser (M2-02, §12 "ring buffer of head positions, subsampled hitbox nodes") is a head
+that flies and leaves a body of its recent positions — a homing snake. They live in
+`BendingLaserTable` (`world.bullets.bending`): **8 stable slots**, not a packed pool — each keeps
+its ring of `BENDING_LASER_NODES` (64) node positions, so a slot index is stable for the laser's
+life (unlike pool slots) and the table is also the render contract's `BendingLaserView`.
+
+`fireBendingLaser(world, src, angle = AIM_AT_TARGET, speed = 3, turnRate = 6, homing = 60,
+length = 48, width = 6, life = 120)` (or `BulletSystem.fireBendingLaser(origin, …)`) takes the first
+free slot → its index, or `-1` when all eight are busy or a value is bad (speed outside `(0, 16]`,
+width ≤ 0, life < 1, length outside `2 … 64`, a non-finite angle or origin). Like `fireLaser` it
+is raw — no fire rule, no rank scaling; `ScriptApi.bendingLaser(…)` fires from the enemy's centre
+through the fire rule, with the speed × the rank's speed scale. The laser does **not** follow its
+source.
+
+Every tick (phase 5, after the straight lasers):
+
+1. every node rides the camera (`+= camera.dx / dy`);
+2. while the head flies (`emit > 0`, counting down from `life`): during its first `homing` ticks it
+   turns towards the nearest living player (unquantised) by at most `turnRate` units, then its
+   next position is `head + speed × (cos, sin)` from the sine table; if that position is outside
+   the view ± `BULLET_CULL_MARGIN` or in terrain, the head **stops** (`emit = 0`); otherwise it
+   becomes the new head node and the body grows up to `length` nodes;
+3. once the head has stopped, the tail catches up one node per tick; the slot is freed when the
+   body is gone.
+
+**Hitbox**: a chain of circles of diameter `width` on every `stride`-th body node from the head,
+`stride = max(1, floor(width / 2 / speed))` — the nodes are `speed` px apart, so neighbouring
+circles overlap and nothing slips between them. `collidePlayers` tests each circle against the
+ship's hurt radius and reports `playerHit(Laser)` (one laser hit per ship and tick, shared with
+the straight lasers). Only the newest `filled` nodes count: the path the tail has left is safe.
+Bending lasers are cancelable (a cancel removes them without points) and hashed by `hashWorld` —
+each slot's active flag, and an active slot's fields and body nodes.
+
 ### Collision with the ships (phase 6, `collidePlayers()`)
 
 Brute force per active, `alive` ship (§22 — at most 512 × 2 cheap tests):
@@ -215,6 +277,8 @@ Brute force per active, `alive` ship (§22 — at most 512 × 2 cheap tests):
 - **Lasers**: if the ship is still alive, every `Active` laser's capsule (segment origin → end,
   radius `width / 2`) against the hurt radius → `playerHit(ship, PlayerHitCause.Laser, …)`
   (the plan wrote `playerHit('bullet')`; a separate cause tells them apart).
+- **Bending lasers** (M2-02): if no straight laser hit, every active bending laser's circle chain
+  (above) → `playerHit(ship, PlayerHitCause.Laser, …)`.
 
 So at most one bullet hit and one laser hit are offered per ship and tick. `playerHit` records
 the hit (`hitCause`, `hitTick`, `hits`); since M1-12 phase 7 of the same tick turns it into the
@@ -224,14 +288,35 @@ contact tests are written as "not within reach", so a `NaN` position or origin n
 
 ### Cancel
 
-`cancelAllBullets(world, CancelMode.Sparkle)` removes every cancelable bullet **and** laser at
-once (Mega Crash since M1-11, the player's death since M1-12 and a boss's death since M1-13 —
-all through `BulletSystem.cancelAll`) and returns the number
+`cancelAllBullets(world, mode, player = -1)` removes every cancelable bullet **and** laser —
+straight and, since M2-02, bending — at once (Mega Crash since M1-11, the player's death since
+M1-12 and a boss's death since M1-13 — all through `BulletSystem.cancelAll`) and returns the number
 of bullets cancelled. Each cancelled bullet pushes a `SimEventKind.Particles` event with
 `FX_CUES.BulletCancel` (3) at its position, floored to whole pixels (M1-12: the push is a call V8
 does not inline, so fractional positions were boxed — and every death now cancels) — up to `CANCEL_SPARKLE_LIMIT` (64) per call; beyond
 that an evenly spread subset (every `ceil(n / 64)`-th bullet), because the event ring is shared
-with everything else. Bullets without `Cancelable` survive. Points mode arrives with M2-02.
+with everything else. Bullets without `Cancelable` survive.
+
+**Cancel into points (M2-02).** `CancelMode.Points` — used for a **boss's death** (credited to its
+killer, `core/bosses`) and a **Mega Crash** (credited to the bomber, `core/powerups`); the
+player's death stays `Sparkle` — also turns every cancelled bullet (not the lasers) into a
+**point item** in the `cancelPoints` pool, drawn as `items/point` (a gold 5×5 diamond, two
+twinkle frames) on `LayerId.Items`:
+
+1. it starts where the bullet was with **half its velocity** and drifts for
+   `POINT_ITEM_HOVER_TICKS` (12) ticks, slowing (× 0.85 per tick), riding the camera;
+2. then it flies towards the credited player's score in the top HUD bar (`POINT_ITEM_TARGETS`:
+   `[40, −4]` / `[344, −4]` in playfield coordinates, above the playfield), faster every tick
+   (`POINT_ITEM_ACCEL` 0.35 px/tick², at most `POINT_ITEM_MAX_SPEED` 9);
+3. when it arrives — or after `POINT_ITEM_LIFETIME` (180) ticks at the latest — it adds
+   `ContentDb.scoring.bulletCancel` points (`content/rules/scoring.rules.json`, 10; the value is
+   read once at creation) through `core/scoring` `addScore` (which raises the hi-score; an extend it reaches is
+   given by the scoring system's pass in phase 7 of the same tick), and is removed.
+
+A full item pool credits the bullet's points at once. Without a valid player (a boss killed by
+nobody, a bad index) or with 0 points per bullet, `Points` behaves as `Sparkle`. A second cancel
+while items fly adds to them; a session clear drops them. A host without `scoring` (hand-made test
+hosts) removes arriving items without points.
 
 ## Fire primitives (`core/patterns`)
 
@@ -356,6 +441,18 @@ its revenge bullets), `setShooterRank(speedK, fireK, spec)` narrows the current 
   `LASER_WARNING_TINT` 0xff5aa0 once at creation) shown while the width is 0, and the beam —
   frame `round(width) − 1` of the beam sprite stretched along the laser (the last frame scaled
   across for beams wider than 8 px). A rotation is written only when a slot's angle changed.
+- **Bending lasers** (M2-02) are the render contract's `BendingLaserView`
+  (`WorldView.bendingLasers`); `bindWorld` creates a `BendingLaserBinding`
+  (`createBendingLaserBinding`, render-pixi `layers`) on `ENEMY_BULLETS` after the laser binding:
+  `capacity × nodes` (8 × 64) preallocated sprites, one per node — frame 0 of the segment sprite
+  `lasers/bend-pink` (a 7×7 round blob), anchored on the node at whole pixels, **never rotated or
+  scaled** (a round blob needs no rotation, and Pixi's transform setters allocate), tail first so
+  the head draws on top.
+- **Point items** are `bullets.pointBatch` — an ordinary sprite batch on `ITEMS` (under the
+  bullets), in `world.view.batches` after the capsules.
+- **Palettes** (M2-02): every bullet, beam and bend sprite has colour-blind `@<palette>` variants;
+  the renderer swaps its sprite tables when the player picks one
+  ([rendering-and-shell.md](rendering-and-shell.md#colour-blind-bullet-palettes)).
 - **The beam art** is procedural (`scripts/assets/procedural/lasers.mjs`):
   `lasers/beam-{pink,red,purple}`, 8 frames of 4×8 px, frame `k` a horizontal band `k + 1` px
   tall (dark rim rows from 3 px, body rows from 5 px, a bright core). Every column is identical,
@@ -364,8 +461,9 @@ its revenge bullets), `setShooterRank(speedK, fireK, spec)` narrows the current 
 
 ## Determinism and hashing
 
-Everything the bullet system simulates is in the two registered pools (hashed field by field in
-sorted field order, slots `0 … count − 1`) and `world.rank` (hashed after hit-stop). Randomness
+Everything the bullet system simulates is in the three registered pools (hashed field by field in
+sorted field order, slots `0 … count − 1`), the bending laser table (hashed after the pools, with
+the pattern interpreter's runners — M2-02) and `world.rank` (hashed after hit-stop). Randomness
 comes only from the gameplay stream (`fireSpray`; the cosmetic stream is never touched). Aiming
 uses `atan2B` and `quantizeAngle`, velocities the committed sine table — bit-identical on every
 engine. `test/integration/bullets-runtime.test.ts` runs two sessions of the shipped test stage
@@ -378,7 +476,10 @@ World with **512 live bullets** using every kind of motion, 16 lasers re-fired a
 the player collision for 10,000 ticks after a 20,000-tick warm-up, and a pool-churn World whose
 bullets die and are replaced every tick — each under 64 KB; `bullets-alloc-cancel.test.ts` adds
 delayed and changing bullets, attached lasers detached in every phase and a cancel every 40
-ticks. The render-pixi laser binding has its own guard through a whole laser life cycle.
+ticks. The render-pixi laser binding has its own guard through a whole laser life cycle. M2-02's
+guard (`packages/core/test/patterns/patterns-alloc.test.ts`) adds DSL bullet programs, bending
+lasers re-fired as they end and cancels into point items every 200 ticks
+([pattern-dsl.md](pattern-dsl.md#zero-allocation)); the bending laser binding has its own.
 V8 findings behind the code (all documented at the code):
 
 | Rule | Where it bit |
@@ -389,6 +490,7 @@ V8 findings behind the code (all documented at the code):
 | Read camera deltas once per update | not per bullet |
 | Whole numbers into `atan2B` | the aim vector is scaled by 64 and `\| 0`-ed first (1/64-px resolution) |
 | Measure in a quiet worker | type feedback from the many small worlds of the functional suites skewed the allocation measurement by an order of magnitude — hence the separate file and the long warm-up |
+| Pass fractional values in class fields, not arguments | M2-02: the interpreter launches through a reused `BulletShot` (`launch(shot, kind)`); bending laser homing reads its point from the system's `aimX` / `aimY` fields (`aimPoint()` takes no arguments) |
 | Pixi setters allocate | the laser binding tints its warning lines once, writes a rotation only on change, and picks a beam frame by width instead of writing a fractional scale every frame; `Math.round(…) \| 0` keeps `-0` out of positions |
 
 ## Using it headlessly
@@ -403,6 +505,7 @@ import {
   cancelAllBullets,
   createGame,
   createHeadlessPlatform,
+  fireBendingLaser,
   fireLaser,
   loadContent,
   spawnBullet,
@@ -416,7 +519,9 @@ world.bullets.count; // live enemy bullets
 const i = spawnBullet(world, world.camera.x + 300, 100, AIM_AT_TARGET, 1.5, BulletKind.NeedleRed);
 if (i >= 0) world.bullets.setMotion(i, 0.02, 0, 0, 3); // speeds up to 3 px/tick
 fireLaser(world, { slot: -1, x: world.camera.x + 380, y: 60 }, 512, 380); // fixed, pointing left
-cancelAllBullets(world, CancelMode.Sparkle); // → bullets cancelled; lasers go too
+fireBendingLaser(world, { slot: -1, x: world.camera.x + 360, y: 40 }); // a homing snake (M2-02)
+cancelAllBullets(world, CancelMode.Points, 0); // → bullets cancelled; each flies to 1P's score
+world.bullets.points.count; // point items in flight (10 points each on arrival)
 world.players[0].hits; // hits recorded by playerHit — each one a death since M1-12
 ```
 
@@ -428,8 +533,10 @@ world.players[0].hits; // hits recorded by playerHit — each one a death since 
 | A pattern primitive | A `fire…` function in `core/patterns` taking `(bullets, origin, …)`, scaling speeds by `bullets.speedScale`, no literals / closures; a `ScriptApi` wrapper in `core/enemies` that goes through `gun()` (the fire rule); export it from `src/index.ts`; tests in `patterns-fire*.test.ts` |
 | Bullet state | A field in `BULLET_SCHEMA` (hashed automatically), set in `initSlot` / a setter, used in `update()` (numbers only; skip `Dead` slots); document it in the schema table above |
 | A firing behaviour | `defineBehavior` using the `ScriptApi` primitives and `fireWait` (above); tunables with Normal values; add it to `DEFAULT_BEHAVIOR_DEFS` — [enemies-and-behaviors.md](enemies-and-behaviors.md#behaviours-corebehaviors) |
-| A laser colour | `lasers/beam-<colour>` already exists for every `BULLET_COLORS` entry; add the name to `BULLET_SPRITES` and a way to pick it per laser (today every laser uses `LASER_SPRITE`) |
-| A cancel mode | Append to `CancelMode` (points mode is M2-02's) and handle it in `cancelAll` |
+| A laser colour | `lasers/beam-<colour>` and `lasers/bend-<colour>` already exist for every `BULLET_COLORS` entry (with their palette variants); add the name to `BULLET_SPRITES` and a way to pick it per laser (today every laser uses `LASER_SPRITE`, every bending laser `BENDING_LASER_SPRITE`) |
+| A cancel mode | Append to `CancelMode` and handle it in `cancelAll` (`Points` shows how: a side pool of its own, registered so it is flushed and hashed) |
+| A bullet pattern as data | A `content/patterns/` action run by `pattern.loop` — no code ([pattern-dsl.md](pattern-dsl.md#extending-it)) |
+| Bending laser behaviour | Fields of `BendingLaserTable` (typed arrays sized `MAX_BENDING_LASERS`, nodes slot-major), advanced in `update()`, tested in `collidePlayers()`, mixed in `core/debug` `mixBendingLasers`; the view's shape is the render contract — change `BendingLaserView` and the binding together |
 | A rank-scaled quantity | A `RankCurve` that is 1 at Normal, applied where the rank changes (`setRank`), never per tick |
 
 ## Tests
@@ -447,6 +554,9 @@ world.players[0].hits; // hits recorded by playerHit — each one a death since 
 | `test/integration/bullets-runtime.test.ts`, `content.test.ts` | The shipped timeline fires exactly the roster patterns, bullets stay in bounds / off terrain / drawn, a passive ship takes hits, Arcade speeds, lockstep pools and hashes; engine sprites exist in the atlas |
 | `test/scripts/assets/procedural.test.ts` | The beam frames' band heights and rows |
 | `test/e2e/bullets.spec.ts` | In Chromium: the turrets' bullets appear inside the playfield in the palette's colours and move; no console errors |
+| `packages/core/test/bullets/bullets-bending.test.ts` | M2-02: bending lasers — the ring and `length`, homing at ≤ `turnRate`, head stopping at the view edge, `life`, hits along the body (overlapping circles, never beyond `width / 2` + hurt radius), the stride, `Laser` hits and god mode, the camera ride, cancel / bad arguments / 8 slots, the aimed default, hashing; cancel into points — flying to the score slot and crediting, the `ITEMS` batch and frames, `Sparkle` / no player / 0 points, the rules' value and a full pool, the lifetime straggler, Mega Crash and the player's death, the hashed pool |
+| `packages/core/test/bullets/bullets-bending-edge.test.ts` | Argument flooring / wrapping / rejection, the defaults, homing without a target, the head stopping in terrain, only the newest `length` nodes hit, a full wrapped ring, invulnerability, `ScriptApi.bendingLaser` (rank-scaled speed, fire rule), the view; point items: credited players, non-cancelable bullets, lasers give no points, hover and camera ride, big cancels with thinned sparkles, a bad Mega Crash, a second cancel and a session clear |
+| `packages/render-pixi/test/layers/layers-bending.test.ts` | The bending laser binding: newest `filled` nodes tail first, hidden extras / slots, clamping to its nodes, bad sizes, no allocation |
 
 ## Gotchas
 
@@ -464,7 +574,12 @@ world.players[0].hits; // hits recorded by playerHit — each one a death since 
 | A laser hit nothing while it was clearly on screen | Only `Active` lasers (full width) have a hitbox; the warning line and the growing / fading beam never hit |
 | A laser disappeared when its enemy died | By design: warning / growing lasers vanish with their source, active ones fade |
 | `RangeError: GameConfig.aimDirections must be a power of two` | Use 4, 8, 16, … 1024 |
-| Only 64 sparkles for a screen full of bullets | `CANCEL_SPARKLE_LIMIT` — the event ring is shared; the sparkles are spread evenly |
+| Only 64 sparkles for a screen full of bullets | `CANCEL_SPARKLE_LIMIT` — the event ring is shared; the sparkles are spread evenly (every bullet still becomes a point item with `CancelMode.Points`) |
+| A boss's death gave no cancel points | Nobody was credited with the kill (`killer` -1 — e.g. `defeat()` without a player), the content's `bulletCancel` is 0, or the bullets were not `Cancelable` |
+| The score rises for a few seconds after the boss exploded | By design: the point items fly to the score first (≤ 180 ticks); the replay hashes include them |
+| `fireBendingLaser` returns -1 | All 8 slots are busy, or a value is out of range (speed ≤ 0 or > 16, length outside 2–64, width ≤ 0, life < 1) |
+| A bending laser vanished early | Its head left the view ± 16 px or touched terrain: the head stops and the tail catches up at once — aim it into open space |
+| A bending laser slipped past the ship between two nodes | With `stride ≥ 1` from the formula the hit circles overlap; only a laser whose head speed exceeds `width` + twice the ship's hurt radius (the stride is then 1, every node, and the nodes are further apart than the reach) leaves gaps — keep `width` ≥ `speed` |
 | The allocation guard fails after a change to `update()` | A fractional argument / return across a non-inlined call, a field loaded through a polymorphic object, or the loops split into a tiny wrapper — see the table above |
 
 ## Next steps that build on this page
@@ -488,4 +603,8 @@ world.players[0].hits; // hits recorded by playerHit — each one a death since 
   `updateWorldRank` in phase 3), the preset's `bulletSpeedMul` in the session scales, Easy's 16
   aim directions, per-enemy modifiers through `setShooterRank`, revenge bullets
   ([difficulty-and-rank.md](difficulty-and-rank.md)).
-- **M2-02** — the pattern DSL, bending lasers, cancel into points, graze (`BulletFlag.Grazed`).
+- **M2-02** (done) — the pattern DSL and its bullet programs ([pattern-dsl.md](pattern-dsl.md)),
+  bending lasers and cancel into point items (above), the colour-blind palettes of the bullet,
+  beam and bend sprites ([rendering-and-shell.md](rendering-and-shell.md#colour-blind-bullet-palettes)).
+- **M2-09** — boss behaviours and revenge bullets running DSL patterns; DSL-fired lasers.
+- **P2** — graze scoring (`BulletFlag.Grazed`).

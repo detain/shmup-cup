@@ -263,7 +263,9 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   Pause, Ch+, Ch+, Ch+; F4 / F5 / `requestStep` run exact tick counts (M1-19), and START opens the
   difficulty menu, where ArrowDown + Enter starts on HARD, a game over opens the continue countdown
   and Enter continues in the web build while the remote's Back gives up in the Tizen build (M2-01
-  — every spec that starts a game presses one more Enter / OK for the difficulty menu). The gameplay specs
+  — every spec that starts a game presses one more Enter / OK for the difficulty menu), and
+  OPTIONS → BULLETS = DEUTERANOPIA is saved on Back and the next boot's test-range bullets are
+  drawn in that palette's colours, while a boot without a save shows none of them (M2-02). The gameplay specs
   open `?scene=flight` (bare gameplay, open space unless `?stage=` names a stage) since M1-16;
   specs comparing captures a set number of ticks apart freeze the sim and step exact ticks
   (`test/e2e/frame-advance.ts`, M1-19) instead of counting rAF frames. Since M1-19 the suite runs
