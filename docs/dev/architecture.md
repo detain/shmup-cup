@@ -219,7 +219,10 @@ and the blue capsule in M2-04 ([options-shields-hunter.md](options-shields-hunte
 Direct mode — the MANTA's colour items, shot families and the Arm, flown when the ship select's
 choice sets `GameConfig.shipId` / `powerUpMode` — in M2-05 ([direct-mode.md](direct-mode.md)), and
 two-player co-op — player 2's drop-in join in phase 1, per-player continues, the co-op drop
-scaling — in M2-06 ([coop.md](coop.md)).
+scaling — in M2-06 ([coop.md](coop.md)), and the advanced stage systems — destructible terrain,
+moving blocks, pull fields and chains in `world.gimmicks` (`core/stage` `StageGimmicks`), holds,
+diagonal pans, branches and region triggers in the runner — in M2-07
+([advanced-stages.md](advanced-stages.md)).
 Details: [sim-world.md](sim-world.md), [stage-runtime.md](stage-runtime.md),
 [enemies-and-behaviors.md](enemies-and-behaviors.md),
 [bullets-and-patterns.md](bullets-and-patterns.md),
@@ -251,12 +254,18 @@ system, status,
   World's hooks (`spawn` / `formation` → the enemy system, `warning` / `boss` → the boss system,
   music events → presentation events, `end` → `stageClear`), invisible checkpoints with
   `restartAt`, and the terrain / parallax views. All runner state is one hashed `Float64Array`.
+  Since M2-07: timed scroll stops (`hold`), diagonal pans (`yOver`), in-stage branches (an event
+  fires only while its branch's flag has the branch's value) and region triggers the World
+  probes with its ships; `stage/systems.ts` holds the World-side stage gimmicks — the
+  destructible terrain (regrowth, the checkpoint rollback, the renderer's change log), the moving
+  blocks of `block` events, the pull fields and chains of gimmick scripts.
 - **`enemies`**, **`patterns`**, **`behaviors`** — 64 enemies in fixed slots, spawned by the
   timeline (single enemies or formations that drop a capsule and pay a bonus when every member
   is killed), driven by **behaviour coroutines** — generators that sleep by yielding a tick
   count and are resumed only when they wake (D29) — and moved every tick by numeric **movers**
   (straight, sine, arc-length spline path, waypoint, follow-the-leader, ground crawl, homing,
-  aimed dash). Off-screen / settle rules, contact with the ships through the grid
+  aimed dash, and since M2-07 ballistic arcs with a proximity trigger and a landing rule).
+  Off-screen / settle rules, contact with the ships through the grid
   (`playerHit(Contact)`), hit flash, explosion events, tick outcomes for the capsule and score
   steps; enemies and formations are hashed. Behaviours fire through `ScriptApi` primitives that
   enforce the fire rule (on screen, settled, not a ghost). Since M2-02 attacks can also be
@@ -345,7 +354,8 @@ system, status,
   pushes a `Score` event for the popups ([fx-and-game-feel.md](fx-and-game-feel.md)).
 - **`collision`** — closed scalar shape tests (circle, AABB, circle–AABB, capsule–circle,
   segment–AABB), layer masks, a counting-sort uniform grid whose queries equal brute force,
-  and pixel-exact terrain queries over per-tile column-height masks (phase 6 tests the ship's
+  and pixel-exact terrain queries over per-tile column-height masks — since M2-07 also over the
+  moving blocks, with the destructible terrain's per-cell damage on top (phase 6 tests the ship's
   terrain box, the ships and the player shots against the enemies' and boss parts' hurtboxes;
   the bullet system
   tests bullets and laser capsules against the ships by brute force, the power-up system the
@@ -625,10 +635,10 @@ Implemented or partial today: core `platform`, `input`, `config` (partial: `Game
 presets since M2-01 and, since M1-17, the `UserOptions` — display options later), `loop`, `game`,
 `presentation`, `rng`, `math`, `events`, `pools`, `save` (M1-17), `data` (partial: `rules` since M2-01, `patterns` since M2-02 —
 `campaign` and `strings` are missing), `world`, `stage`, `player` (implemented for P0 since
-M1-12; co-op joining lives in `world` since M2-06), `collision` (partial: destructible tiles later — the bending lasers' circle chains live in `bullets`), `debug` (M1-19: state hash, switches, controls,
+M1-12; co-op joining lives in `world` since M2-06), `collision` (implemented with M2-07: moving blocks and destructible tiles — the bending lasers' circle chains live in `bullets`), `debug` (M1-19: state hash, switches, controls,
 counters, the stage skip and checkpoint jumps), `replay` (M1-19), `enemies` (partial: rank modifiers and revenge bullets since M2-01, the Option Hunter and
 the blue capsule's clear since M2-04), `patterns` (implemented with M2-02: runner, movers, fire primitives and the pattern DSL),
-`behaviors` (partial: the M1 enemy and boss rosters, `pattern.loop`, `hunter.option`), `bosses` (partial: the P0 mechanics —
+`behaviors` (partial: the M1 enemy and boss rosters, `pattern.loop`, `hunter.option`, `cube.pincer`, the six stage gimmicks of M2-07), `bosses` (partial: the P0 mechanics —
 timers, escapes, the HP bar, mid-bosses and raids with M2-09), `bullets` (implemented: bending lasers and cancel
 into points since M2-02 — graze is P2), `rank` (implemented with M2-01: growth, power terms, per-enemy sensitivity), `weapons`
 (implemented: Types A–D and Weapon Edit with M2-03, the Direct-mode families with M2-05), `options` (implemented with M2-04: trail, Snake, Formation, Rotate — recovery after death in M3),
@@ -677,10 +687,11 @@ plugins in `vite.shared.ts`) has no `moduleInfo`; it is covered by the tests und
 | A co-op rule (a join button, a leave, more players) | [coop.md](coop.md#extending-it) — anything that changes the sim must come through recorded input |
 | A bullet pattern, bullet kind or laser | Since M2-02 a pattern is data: a `content/patterns/` action run by `pattern.loop` ([pattern-dsl.md](pattern-dsl.md#extending-it)); or a behaviour calling the `ScriptApi` fire primitives (`aimed`, `nWay`, `ring`, …, `laser`, `bendingLaser`, `fireWait`); a new primitive in `core/patterns` with its `ScriptApi` wrapper; a kind in `BULLET_KINDS` — [bullets-and-patterns.md](bullets-and-patterns.md#extending-it) |
 | A weapon, a weapon behaviour, a preset, a Direct-mode family or an Option formation | A weapon is JSON in `content/weapons/` (tunables in `params`, a `name` for the weapon select); a preset is a `presets` entry the weapon select lists; a family is a `families` entry the MANTA fires (M2-05 — [direct-mode.md](direct-mode.md#extending-it)); a behaviour is a `ShotKind` plus its tables, a HUD label frame and a branch of the weapon system's `update()`; formations branch in `OptionGroup.follow` — [weapons-and-options.md](weapons-and-options.md#extending-it), [meter-arsenal.md](meter-arsenal.md#extending-it) |
-| Something the engine draws whatever the content | Add its sprite name to `ENGINE_SPRITES` (`core/bullets` `BULLET_SPRITES`, `core/options` `OPTION_SPRITE`, `core/powerups` `ITEM_SPRITES`, `core/shields` `FORCE_FIELD_SPRITE` and `core/ui` `UI_SPRITES` today): hosts pass it as `loadContent`'s `extraSprites` and `pnpm content:check` verifies it against the atlas |
+| Something the engine draws whatever the content | Add its sprite name to `ENGINE_SPRITES` (`core/bullets` `BULLET_SPRITES`, `core/options` `OPTION_SPRITE`, `core/powerups` `ITEM_SPRITES`, `core/shields` `FORCE_FIELD_SPRITE`, `core/ui` `UI_SPRITES` and — M2-07 — `core/stage` `GIMMICK_SPRITES` today): hosts pass it as `loadContent`'s `extraSprites` and `pnpm content:check` verifies it against the atlas |
 | A game system | Fill in its placeholder module in `packages/core/src/<module>/`, set `moduleInfo.status`, export it from `packages/core/src/index.ts`, call it from its phase function in `core/world` (never reorder `WORLD_PHASES`), allocate its state in `createWorld` and add simulated state to `hashWorld` — [sim-world.md](sim-world.md#extending-it) |
 | Content (enemies, weapons, stages, tilesets) | JSON under `content/` following its README, then `pnpm content:check` (try a stage with `pnpm dev` and `?stage=<id>`). New fields or a new kind: extend the schemas in `core/data` — checklist in [content-data.md](content-data.md#extending-it) |
 | A stage event type or camera feature | [stage-runtime.md](stage-runtime.md#extending-it): schema in `core/data`, a `StageEventCode`, the runner's own part (if any) and the World's hook |
+| A destructible tile, a stage gimmick, a moving-block motion, a Tiled class | Tileset `hp` / `regen` / `score` (data only); a `defineBehavior` using the script API's gimmick calls, and World-side slots in `core/stage` `StageGimmicks`; `scripts/content/tiled-import.mjs` — [advanced-stages.md](advanced-stages.md#extending-it) |
 | A sprite or animation | A `*.sprite.json` pixel map under `assets/source/sprites/` (its path is its name) or a generator in `scripts/assets/procedural/`; `hitFlash: true` for anything the player can shoot. Real art: a PNG (+ Aseprite export) of the same name — [asset-pipeline.md](asset-pipeline.md#extending-it) |
 | A sound, music or particle cue | Append a name to `SFX_CUES` / `MUSIC_CUES` / `FX_CUES` in `core/events` (never renumber — ids are recorded in replays and bound by `content/audio/` / `content/fx/`) |
 | A sound effect or a song | A cue entry in `content/audio/main.sfx.json` (synth parameters or a recorded file) or a `content/audio/music/<id>.music.json` track (a chip song or an OGG file) bound to its cue, optionally per stage; listen with `pnpm audio:preview`, check with `pnpm content:check` — no code ([audio.md](audio.md#extending-it)) |

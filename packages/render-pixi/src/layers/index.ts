@@ -178,7 +178,11 @@ export interface TerrainBinding {
   readonly columns: number;
   /** Slot rows (visible height / tile + 1, at most the map's rows). */
   readonly rows: number;
-  /** Cells re-textured by the last sync (0 while the camera stays inside one tile). */
+  /**
+   * Cells re-textured by the last sync: slots whose map column / row changed and, since M2-07,
+   * the logged changed cells in view (0 while the camera stays inside one tile and nothing
+   * changed; the whole ring after a reset).
+   */
   readonly updatedCells: number;
   /**
    * Moves the grid with the camera and re-textures the slots whose map column / row changed.
@@ -187,6 +191,10 @@ export interface TerrainBinding {
    * @remarks
    * Takes the camera object rather than two numbers: a fractional camera position passed as an
    * argument is boxed into a heap number whenever V8 does not inline the call.
+   *
+   * Since M2-07 it also reads the view's `changes` log (`TerrainChanges`): cells logged since the
+   * last sync are re-textured when a slot shows them; a new reset (the checkpoint rollback), or
+   * more new entries than the ring holds, re-textures every slot.
    *
    * @param view - The terrain view the binding was created for.
    * @param camera - The world camera (world pixels).

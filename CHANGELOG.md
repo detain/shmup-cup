@@ -106,6 +106,24 @@ versions before 1.0 may change anything between minor releases. Development foll
   `HUD_COMMAND_COUNT` 96; input adapters may implement `setSeats` (`Game.inputSeats`); the golden
   replays were re-blessed (the hashed co-op credit and the `@p2` sprite names — same outcomes) and
   two co-op runs were added.
+- **Stage mechanics for the later zones** (M2-07, in the browser's `?stage=gimmick-range` for now —
+  AZURE VERGE is unchanged): **bricks** you shoot through (each takes a few hits and scores),
+  pink **walls that grow back** a few seconds after breaking — never onto a ship —, **rocks** that
+  drop when you come near and shatter, **bubbles** that split in two when shot, a **volcano**
+  lobbing glowing stones, a **suction pod** that pulls ships towards it, **tentacles** on a chain
+  that lunge and tug, a **cube rush** whose cubes stick to the rock and build walls, **moving
+  blocks** as solid as the rock, a timed **stop** with the view panning down, a **diagonal** pan,
+  a **fork** chosen by flying through a region, and a 4× **fast stretch**. A checkpoint restart
+  (ARCADE losses, continues) puts every broken brick back and removes stacked cubes.
+- For content authors (M2-07): tiles may be destructible (`hp`, `regen`, `score`), camera keys
+  `hold` and `yOver`, stages `branches`, any event a `branch`, new `trigger` and `block` events and
+  the `ballistic` enemy mover ([`content/stages/README.md`](content/stages/README.md)); **`pnpm
+  content:tiled <map.tmj>`** converts a map drawn in Tiled into stage JSON.
+- Behaviour change for tools and tests (M2-07): `STAGE_STATE_SLOTS` is 28, `StageEventCode` has
+  `Trigger 8` / `Block 9`, `MoverKind.Ballistic` 9, `ENGINE_SPRITES` gained `gimmicks/chain-link`
+  (later sprite ids shift), `createTerrainView` takes an optional change log; the golden replays
+  were re-blessed (new hashed state — zone A's simulation unchanged) and three `gimmick-range` runs
+  were added.
 
 ### Documentation
 
@@ -126,7 +144,9 @@ versions before 1.0 may change anything between minor releases. Development foll
   [The Direct range](docs/client/preview-build.md#the-direct-range-browser-only) (M2-05); the
   developer guide [`docs/dev/coop.md`](docs/dev/coop.md), the tester guide's
   [Two players](docs/client/preview-build.md#two-players) and the controls page's
-  [Two players](docs/client/controls.md#two-players) (M2-06).
+  [Two players](docs/client/controls.md#two-players) (M2-06); the developer guide
+  [`docs/dev/advanced-stages.md`](docs/dev/advanced-stages.md) and the tester guide's
+  [The Gimmick range](docs/client/preview-build.md#the-gimmick-range-browser-only) (M2-07).
 
 ## [0.1.0] — M1: playable vertical slice
 

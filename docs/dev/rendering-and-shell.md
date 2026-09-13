@@ -118,7 +118,9 @@ spacings) and `terrain` (map size, tile size); their per-frame values are read e
 - `TerrainView` — `tileSize`, `cols`, `rows`, `tiles` (row-major tile ids, 0 = empty; a live
   array, read when a cell scrolls into view), `tilesetSpriteId` and `tileFrame` (tile id →
   frame of the tileset sprite, `-1` = not drawn). Cell `(col, row)` sits at world
-  `(col · tileSize, row · tileSize)`.
+  `(col · tileSize, row · tileSize)`. Since M2-07 an optional `changes` (`TerrainChanges`:
+  `count`, `resets`, a ring of changed cell indices — the World's destructible terrain) tells the
+  renderer which cells changed in play; a static map leaves it out.
 
 - `LaserView` (optional `lasers`, M1-09) — `capacity`, `count` and per slot `x`, `y` (world
   origin), `angle` (binary units), `length`, `width` (the **drawn** width: 0 while the laser
@@ -249,7 +251,12 @@ error screen.
   vertical pans) that scrolled in, and moves the whole grid as one container at
   `round(−camera.x)`, `PLAYFIELD_Y + round(−camera.y)` — which lands integer world positions on
   exactly the pixels the sprite bindings use. `updatedCells` reports how many cells the last
-  sync touched (0 inside one tile). New sprite tables re-texture everything.
+  sync touched (0 inside one tile). New sprite tables re-texture everything. Since M2-07 it
+  follows the view's `changes` log: cells logged since the last sync are re-textured when a slot
+  shows them (the others are read when they scroll in); a new `resets` (the checkpoint
+  rollback) or more new entries than the 64-entry ring holds re-textures the whole grid. Moving
+  blocks are not grid cells — the World draws them as a sprite batch on `TERRAIN`
+  ([advanced-stages.md](advanced-stages.md#rendering-the-change-log-shmuprender-pixi-layers)).
 - **`ParallaxBinding`** (`createParallaxBinding`, one per bound `ParallaxView`): per band one
   container on its layer holding `ceil(width / spacing) + 1` sprites `spacing` pixels apart,
   placed once; `sync(view)` only moves each container to `round(−offsetX)`, `PLAYFIELD_Y +
@@ -609,6 +616,10 @@ pnpm test:e2e                                        # builds web + tizen, then 
   advance and the captures are taken at World tick 90 and exactly 30 ticks later (a 29–31 px
   shift), instead of 30 rAF frames apart; an unknown `?stage=` warns and boots free flight
   without terrain (M1-07).
+- `gimmicks.spec.ts` (M2-07) — `?stage=gimmick-range` boots without errors or atlas warnings and
+  draws the destructible brick pillar (the `brick` tile's face colour) once the camera reaches it;
+  breaking its cells in the sim takes them off the screen on the next frame (the change log, no
+  scroll needed) and the checkpoint rollback draws them again (a reset redraws the grid).
 - `enemies.spec.ts` — on `?stage=test-range` the first formation of drifters (found by their
   placeholder colours, which no other sprite uses) appears inside the playfield, never in the
   HUD bars, and flies left (since M1-19 stepped in exact ticks: 15-tick steps until they show,
@@ -763,6 +774,7 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | `packages/render-pixi/test/atlas/` | Frame numbering, sprite / flash tables, `ui/missing` fallback and warn-once, stale / oversized / corrupt manifests |
 | `packages/render-pixi/test/sprites/`, `ui/`, `text/`, `layers/` | Binding sync (camera, `PLAYFIELD_Y`, anchors, flips, blink, flash, shrinking batches), quad-pool ordering and overflow, draw-list views (revision skipping, hidden sprites), text layout and metrics, number formatting, layer order |
 | `packages/render-pixi/test/layers/layers-stage*.test.ts` | Terrain grid size (49 × 26, capped at the map's rows), textures and positions, the ring (nothing re-textured inside a tile, one column / row per tile edge, all after a jump or new tables; after a long random camera walk it equals a freshly built grid), pixel agreement with the sprite bindings at half-pixel cameras, parallax coverage for any offset / spacing, validation, allocation-free syncs |
+| `packages/render-pixi/test/layers/layers-terrain-changes.test.ts`, `layers-terrain-changes-edge.test.ts` | M2-07: only the logged cells in view re-textured, a reset or an overflowing gap redraws the grid, a view without `changes` |
 | `packages/render-pixi/test/layers/layers-bending.test.ts` | The bending laser binding (M2-02): the newest `filled` nodes of each active slot, tail first, the head on top; a shrinking body's extra sprites, hidden and inactive slots hidden; clamping to its nodes; bad capacities and node counts; a moving body synced without allocating |
 | `packages/render-pixi/test/palette/palette-bullets.test.ts`, `renderer/renderer-wiring.test.ts` | M2-02: `bulletPaletteSpriteName`, `resolveBulletPaletteTable` (variants in place of their sprites, the rest kept); the renderer binding the bending laser view after the lasers and `setBulletPalette` swapping the sprite tables to a palette's variants and back |
 | `packages/render-pixi/test/layers/layers-lasers*.test.ts` | The laser binding (M1-09): two hidden sprites per slot, the tinted telegraph line vs the beam frame of the rounded width (band / frame boundaries, wider-than-frames scaling), blink and zero / NaN lengths hidden, rotation written only on change, camera rounding without `-0`, shrinking views, capacity validation, destroy, zero allocation through a whole laser life |
@@ -877,3 +889,7 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
   sprites in the existing batch and HUD list (now `HUD_COMMAND_COUNT` 96, `HUD_STRING_COUNT` 22);
   the shell forwards `game.inputSeats` to the optional `ShellInput.setSeats` like the binding
   context ([coop.md](coop.md#input-routing-shmupinput-web-shmupshell)).
+- **M2-07** (done) — `TerrainView.changes` (`TerrainChanges`) and the terrain binding's change
+  log (destructible tiles breaking, growing back, cube-rush tiles, the rollback's reset); the
+  moving blocks (on `TERRAIN`) and the tentacles' chain links (on `GROUND_ENEMIES`) are two more
+  World batches, appended last ([advanced-stages.md](advanced-stages.md)).

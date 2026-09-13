@@ -61,25 +61,30 @@ loops seamlessly, the boss theme, a short stage-clear tune and a game-over tune
 click.
 
 In a browser there is more to try: a shortcut straight to the zone's boss (`?skip=boss`), the
-fully powered ship (`?loadout=full`), and four test stages — the scrolling *Test Range*, with rocky
+fully powered ship (`?loadout=full`), and five test stages — the scrolling *Test Range*, with rocky
 ground, caves, speed changes and the first enemy roster
 ([The scrolling test stage](#the-scrolling-test-stage-browser-only)), the short *Boss Range*
 with a test boss ([The boss range and the WARNING](#the-boss-range-and-the-warning-browser-only)),
 the *Hunter Range*, where the Option Hunters try to steal your Options
 ([The Option Hunter range](#the-option-hunter-range-browser-only)), and the *Direct Range*, where
-the MANTA's colour items come thick and fast ([The Direct range](#the-direct-range-browser-only)).
+the MANTA's colour items come thick and fast ([The Direct range](#the-direct-range-browser-only)),
+and the *Gimmick Range*, a preview of what later zones are made of — rock you can shoot through,
+walls that grow back, falling rocks, splitting bubbles, a volcano, a suction pod, grabbing
+tentacles, cubes that stack into walls, moving blocks, a stop with the view panning down, a fork
+in the route and a very fast stretch ([The Gimmick range](#the-gimmick-range-browser-only)).
 The earlier start-up pictures are still there: **free flight** straight away without the title,
 the animated **sprite showcase** and the **calibration screen**, plus the **effects gallery**
 that shows every explosion and screen effect in turn (see [below](#other-screens-browser-only)).
 
-This build is version **0.1.0** — the end of the first milestone — plus the first five steps of
+This build is version **0.1.0** — the end of the first milestone — plus the first seven steps of
 the second: the difficulties, extra ships and continues, then the colour-blind bullet colours and
 points for cancelled bullets, then the **weapon types** and the WEAPON SELECT screen, then four
 kinds of **Options**, five **shields**, the **Option Hunter** that steals Options and the rare
 **blue capsule**, then the **second ship, the MANTA**, with its colour items, its growing
-weapons and its **Arm** shield, and the **SHIP SELECT** box, and now **two players at once**: the
+weapons and its **Arm** shield, and the **SHIP SELECT** box, then **two players at once**: the
 title's **2 PLAYERS**, a second player joining with START, each with their own ships, score and
-continues. For checking it on the monitors
+continues, and now the **stage mechanics** of the later zones — for now only in the browser's
+*Gimmick Range* (AZURE VERGE is unchanged). For checking it on the monitors
 there is a **debug build** with developer tools — a panel with the frame rate, frame times and
 start-up time, hit-area outlines, invincibility, a freeze with single steps, slow motion and
 jumps to the next checkpoint or the boss — opened on the remote with Play/Pause and then Ch ▲
@@ -630,7 +635,20 @@ ship may move in four directions only; the game is designed to be fully playable
 
 ### What changed lately
 
-**New in this build: two players at once.** The title menu now reads **1 PLAYER** (what START
+**New in this build: the stage mechanics of the later zones (browser only).** A new test stage,
+the *Gimmick Range* (http://localhost:5173/?stage=gimmick-range), shows what the coming zones will
+be built from: **bricks you can shoot through** (four hits each, 10 points), pink **walls that
+grow back** a few seconds after you break them (never onto your ship), **rocks** that hang from
+the ceiling and drop when you come near, **bubbles** that split in two when shot, a **volcano**
+lobbing glowing stones, a **suction pod** that drags your ship towards it, **tentacles** on a chain
+that lunge at you, a **cube rush** whose cubes stick to the rock and build walls, **moving blocks**
+that are as solid as the rock, a **stop** where the view pans down into a dip, a **fork**: flying
+through the bottom of the dip changes which enemies come next, and a **very fast** stretch.
+Losing a ship on ARCADE (or continuing) brings back every broken brick. Nothing changed in AZURE
+VERGE, and on the TV the stage cannot be chosen yet. See
+[The Gimmick range](#the-gimmick-range-browser-only).
+
+Before that, **two players at once.** The title menu now reads **1 PLAYER** (what START
 used to be), **2 PLAYERS**, OPTIONS and, on the TV, EXIT — so OPTIONS is one ▼ further down. With
 2 PLAYERS the game starts with player 1, and a second player **joins at any time** by pressing
 START on a gamepad (in a browser also Enter on the new **SPLIT KEYBOARD** control profile, which
@@ -1951,6 +1969,45 @@ What "good" looks like:
   describes; items drift and bounce and are gone after about ten seconds.
 - Nothing stays stuck on the screen, and there are no magenta-and-black squares.
 
+## The Gimmick range (browser only)
+
+Open http://localhost:5173/?stage=gimmick-range and choose 1 PLAYER (any difficulty and ship). It
+is a stage of about fifty seconds over a floor and under a ceiling, made to try the stage mechanics that the
+later zones will use — none of them is in AZURE VERGE yet, and the TV cannot open this stage
+(the widget has no address bar). It works with two players too.
+
+| Time (about) | What happens |
+|---|---|
+| 2–4 s | Two **bubbles** drift in on a wave. Shoot one and it bursts into two small bubbles that fly apart, then drift on; the small ones just pop |
+| 3–10 s | A brown **brick pillar** stands on the ground. Every brick takes four hits and crumbles with a small explosion (10 points). Shoot a way through, or fly over it |
+| 5–8 s | Three dark **rocks** hang from the ceiling. Each drops when you come near (horizontally) and shatters on the ground — stay out from under it, or shoot it (two hits) |
+| 12–13 s | A **volcano** on the ground lobs glowing stones in arcs every couple of seconds; they shatter where they land. A **block** swings up and down in the middle of the screen — it is as solid as rock |
+| 15–18 s | **The view stops** for three seconds and **pans down** into a dip. A slow **suction pod** comes in: while it lives it pulls your ship towards it — fly against the pull, or shoot it (16 hits; it leaves a power-up) |
+| 18–29 s | The dip. **The fork:** fly down into its lower part and you change the route — at about 28 s one bubble comes in low; stay up and a rock and a high bubble come instead. From about 25 s the view **slides back up** while it scrolls |
+| 32 s | A **tentacle** hangs from the ceiling on a chain. When you come within reach its claw lunges at you and tugs your ship towards it, then lets go and pulls back. The claw is deadly to touch; shoot it (six hits) |
+| 34–37 s | A **very fast** stretch (four times the normal speed) past pink **tissue** walls hanging from the ceiling and standing on the floor — they break in three hits and **grow back** about four seconds later, but never while your ship is in the way |
+| 37 s | Checkpoint (the others are at the start and at about 21 s); a **cube rush**: eight violet cubes come in one after the other at random heights and fly at you. A cube that reaches the rock **sticks to it** and becomes a block of the wall (two hits to break) |
+| 38–40 s | Two more **moving blocks**, one drifting slowly while it swings |
+| 42 s | A second tentacle |
+| 48 s | The end of the stage — STAGE CLEAR |
+
+What "good" looks like:
+
+- A brick disappears only after its fourth hit, with a pop and 10 points; your laser, missiles and
+  the Spread Bomb break bricks too. Shots never pass through a block or an unbroken brick.
+- Broken pink tissue grows back after about four seconds, one piece at a time, and never on top of
+  your ship — hover in the gap and it waits.
+- On ARCADE (or after a CONTINUE?) the game restarts at the last checkpoint with **every** brick
+  and wall as it was at the start, and the cubes the rush stacked gone. On the other difficulties
+  your ship flies back in where you were, and what you broke stays broken.
+- Touching a moving block, a rock, a stone or a tentacle's claw costs a ship, like any rock or
+  enemy.
+- The stop is exactly three seconds, the pan down and back up are smooth, and the fast stretch
+  does not skip any enemy.
+- Flying through the lower part of the dip gives the low route; not going there gives the other.
+  With two players, either ship can take the low route.
+- Nothing stays stuck on the screen, and there are no magenta-and-black squares.
+
 ## Explosions, sparks, shake and flashes
 
 Hits look like hits — in AZURE VERGE on every device, and in the browser's *Test Range*
@@ -2145,6 +2202,11 @@ mean the build itself is broken; they are not caused by anything you did.
 | A red (or green) item gave only points | Expected when SHOT (or SUB) is already at level 8 — all eight squares lit |
 | The yellow item did not hurt the boss | Expected: it destroys the other enemies and the bullets, but bosses are not affected (a later build makes it hurt the mid-bosses of the later zones) |
 | The MANTA's weapon suddenly changed from discs to lasers (or back) | You collected the red **octagon**: it switches the main gun's style and keeps the level |
+| Broken bricks came back (Gimmick range) | Expected after a loss on ARCADE or a CONTINUE?: the game restarts at the last checkpoint with the stage's rock as it was at the start |
+| A broken pink wall grew back (Gimmick range) | Expected: tissue grows back about four seconds after it breaks — never onto your ship |
+| My ship drifted without pressing anything (Gimmick range) | A **suction pod** or a **tentacle's** grab is pulling it — fly against it or shoot the pod / claw |
+| The view stopped and moved down with no boss (Gimmick range) | Expected: a timed stop with a pan down into the dip; it scrolls on after three seconds |
+| `?stage=gimmick-range` does nothing on the TV | Expected: the TV widget has no address bar; the Gimmick range is browser only for now |
 | The MANTA survived touching the rock | Expected while the **Arm** is up: it takes a hit for the ship, even from the rock (the KESTREL's shields do not) |
 | The MANTA's gun got weaker after a loss | Expected: a lost ship costs the Arm and, on NORMAL and HARD, one SHOT level (on ARCADE everything) — [The MANTA](#the-manta-colour-items-weapons-and-the-arm) |
 | `HI` changed after I chose the other ship | Expected: the KESTREL and the MANTA keep separate high scores for each difficulty |

@@ -50,6 +50,7 @@ desktop app, run `pnpm rebuild electron` without the variable set.
 | `pnpm clean` | Removes `dist/`, `coverage/`, `.turbo/` everywhere (never `node_modules`) |
 | `pnpm assets` | Placeholder asset pipeline (`scripts/generate-assets.mjs`): sprite pixel maps, procedural generators, PNG overrides and fonts → `assets/generated/atlas/main.png` + `main.json`; skipped when inputs are unchanged; `--force` rebuilds, `--out DIR` / `--source DIR` redirect, `--quiet` silences; exit 1 lists invalid sources. Also runs before every `build` / `dev` (Turborepo `//#assets`) and inside Vite builds (`shmupAssets()`). See [asset-pipeline.md](asset-pipeline.md#running-it) |
 | `pnpm content:check` | Validates every JSON file under `content/` with `loadContent()` from `@shmup/core` — the shipped files and the `example.*.json` samples as two independent sets, plus the README format samples — and checks that every sprite name of the shipped content exists in the atlas; the foreign kinds go through their owners, and `content/audio/` is also checked for sound (every `SFX_CUES` cue bound, audible, unclipped, short; every song looping sample-exactly; every cue a shipped stage names prepared and bound — M1-15) (`test/integration/content.test.ts`; also part of `pnpm test`). See [content-data.md](content-data.md#commands) |
+| `pnpm content:tiled <map.tmj>` | Converts a Tiled JSON map into stage content (`scripts/content/tiled-import.mjs`, M2-07): the tile layer → `tilemap.rle`, objects → events / camera keys / checkpoints / triggers / blocks / branches, polylines → a `paths` file; writes `content/stages/<id>.stage.json` (+ `content/paths/<id>.paths.json`), warnings on stderr. Options `--id ID`, `--stages DIR`, `--paths DIR`, `--print`. Run `pnpm format` and `pnpm content:check` afterwards — see [advanced-stages.md](advanced-stages.md#importing-a-tiled-map-pnpm-contenttiled) |
 | `pnpm audio:preview` | Renders every synthesized SFX cue and chip song of `content/audio/` to 16-bit mono WAV files in `assets/generated/audio-preview/` (git-ignored) for listening — a looping song as intro + loop + loop so the seam can be heard — and prints each file's `pcmHash` and a song's loop points (`scripts/audio-preview.mjs`, loads `@shmup/audio-web` through Vite's `ssrLoadModule`; `--out DIR`, `--only NAME`, `--quiet`). See [audio.md](audio.md#pnpm-audiopreview) |
 | `pnpm trig:tables` | Regenerates the committed `packages/core/src/math/trig-table.ts` (`scripts/gen-trig-tables.mjs`; `--check` verifies, `--out FILE` writes elsewhere). Re-run it in the same commit whenever the script changes — a test diffs the committed file |
 
@@ -219,8 +220,9 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   BULWARK and reach the stage clear in 3–6 minutes, the run without it only reports its deaths.
   `pnpm exec vitest run --project integration test/playtest --reporter=verbose` prints the runs —
   see [zone-a-and-playtest.md](zone-a-and-playtest.md#the-playtest-testplaytest).
-- **Golden replays** (M1-19, plan §1.3): `test/golden/golden.test.ts` plays the four committed
-  zone A replays (`test/golden/*.replay.json`) back and requires every state hash and the
+- **Golden replays** (M1-19, plan §1.3): `test/golden/golden.test.ts` plays the committed
+  replays — twenty since M2-07: seventeen of zone A, three of the `gimmick-range` dev stage
+  (`test/golden/*.replay.json`) — back and requires every state hash and the
   recorded outcome to match — part of `pnpm test` (the `integration` project). A failure means
   the simulation changed; re-bless an intended change with `pnpm golden:update` and say why in
   the commit message ([debug-and-replays.md](debug-and-replays.md#golden-replays-testgolden)).
@@ -282,7 +284,10 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   splits, player 2's arrows move it — and Esc still pauses; a fake `navigator.getGamepads()` pad
   drives the menus with one seat, joins as player 2 with START, moves player 2 only, and pauses and
   resumes without a phantom press (`coop.spec.ts`, `coop-gamepad.spec.ts`, M2-06 — every spec that
-  walked down to OPTIONS on the title presses ▼ once more). The gameplay specs
+  walked down to OPTIONS on the title presses ▼ once more), and the stage gimmicks:
+  `?stage=gimmick-range` boots without atlas warnings and draws the destructible brick pillar,
+  breaking it in the sim takes it off the next frame and the checkpoint rollback draws it again
+  (`gimmicks.spec.ts`, M2-07). The gameplay specs
   open `?scene=flight` (bare gameplay, open space unless `?stage=` names a stage) since M1-16;
   specs comparing captures a set number of ticks apart freeze the sim and step exact ticks
   (`test/e2e/frame-advance.ts`, M1-19) instead of counting rAF frames. Since M1-19 the suite runs

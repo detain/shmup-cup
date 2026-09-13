@@ -31,7 +31,13 @@
  * {@link StageGimmicks.hitTerrain}; phase 9 {@link StageGimmicks.sync}.
  *
  * **Zero allocation.** Fixed tables of typed arrays, whole-pixel event positions, points passed as
- * objects (the ships) rather than fractional arguments.
+ * objects (the ships) rather than fractional arguments. Only {@link StageGimmicks.clear} (a
+ * checkpoint restart — a cold path) creates a closure.
+ *
+ * **Implements.**
+ * - shmup_feat.md §14 Stages / zones — destructible terrain (regenerating walls), moving floors /
+ *   ceilings, the stage gimmicks' pull fields and chains, in-stage branching (region triggers)
+ * - shmup_feat.md §10 — the checkpoint rollback of the terrain
  *
  * **Public API.** Re-exported by `core/stage`: {@link StageGimmicks}, {@link StageGimmicksHost},
  * {@link createStageGimmicks}, {@link MovingBlockSystem}, {@link MAX_PULL_FIELDS},
@@ -516,11 +522,24 @@ export class StageGimmicks implements EnemyGimmicks {
    * move, the keep-out rectangles (the ships' terrain boxes) are set and the destructible terrain
    * heals / regrows. Never allocates.
    *
+   * @remarks
+   * The ships that probe the triggers are the `alive` ones (not flying in, dying or dead); the
+   * keep-out rectangles cover every active ship that is not `dying` / `dead` (a ship flying in or
+   * respawning is protected too). The keep-out rectangles are rebuilt on every tick of a stage
+   * with terrain — also when no tile has `hp`, since the cube rush's `placeTile` reads them.
+   *
    * @param runner - The stage runner (`probe`, `triggersArmed`), or `null` in free flight.
    */
   updateStage(
     runner: {
+      /** Armed triggers as a bit mask (`StageRunner.triggersArmed`; 0 = skip the probes). */
       readonly triggersArmed: number;
+      /**
+       * Tests a ship's centre against the armed triggers (`StageRunner.probe`).
+       *
+       * @param point - The ship.
+       * @returns Triggers fired.
+       */
       probe(point: { readonly x: number; readonly y: number }): number;
     } | null,
   ): void {
@@ -561,7 +580,18 @@ export class StageGimmicks implements EnemyGimmicks {
    * @param runner - The stage runner, or `null` (free flight: nothing to respawn).
    * @param cameraX - The camera x after the restart.
    */
-  clear(runner: { eventActive(index: number): boolean } | null, cameraX: number): void {
+  clear(
+    runner: {
+      /**
+       * Whether an event's branch is taken (`StageRunner.eventActive`).
+       *
+       * @param index - Index in `stage.events`.
+       * @returns `true` when it would fire.
+       */
+      eventActive(index: number): boolean;
+    } | null,
+    cameraX: number,
+  ): void {
     this.fieldOwner.fill(-1);
     this.chainOwner.fill(-1);
     this.chainBatch.count = 0;

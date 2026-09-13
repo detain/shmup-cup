@@ -385,8 +385,12 @@ the shell).
 
 ## Next steps that build on this page
 
-- **M2-07 … M2-14** — every new stage system and zone runs with two ships; anything per player
-  (bosses aiming, gimmicks grabbing a ship) targets the nearest living player like the aimed shots.
+- **M2-07** (done) — the stage systems run with two ships: both probe region triggers, both keep
+  regrowing rock out of their terrain boxes, pull fields pull both, the cube rush and the tentacle
+  aim at the nearest living player, and a broken tile's points go to the player whose shot broke it
+  ([advanced-stages.md](advanced-stages.md)).
+- **M2-08 … M2-14** — every new zone runs with two ships; anything per player (bosses aiming)
+  targets the nearest living player like the aimed shots.
 - **M2-15** — the name entry and hi-score table screen show `2p` rows; a replay of the scene flow
   records the title's player choice.
 - **M2-16** — the Options screen's control groups (rebinding per device) sit on the same profiles,

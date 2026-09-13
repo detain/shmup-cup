@@ -206,6 +206,14 @@ ES5 and linted with `ecmaVersion: 5`.
   (`PowerUpSystem.coopCredit`) lives in a one-slot `Float64Array`; and strings only one mode draws
   (the co-op HUD's) are written only when drawn, so draw lists sized for the other mode keep working
   ([coop.md](coop.md#zero-allocation-and-the-hot-path-rules)).
+  And from M2-07: a condition tested every tick is mover state, not a script loop (the falling
+  rock's proximity trigger lives in the `Ballistic` mover, whose landing wakes the sleeping
+  script once); a point handed to a per-tick query is the object that holds it
+  (`runner.probe(ship)`); state a renderer must follow as it changes in place (the terrain tiles)
+  is announced through write / reset counters and a ring of changed indices (`TerrainChanges`),
+  never by rescanning or a dirty list; and a closure a system needs goes on its cold path only
+  (`StageGimmicks.clear`'s block respawn)
+  ([advanced-stages.md](advanced-stages.md#zero-allocation-and-the-hot-path-rules)).
 - Behaviour coroutines (generators, D29) allocate a small result object on every resume:
   scripts **sleep** (`yield ticks`) and are resumed only when they wake; per-tick motion
   belongs in a mover (numbers on the body), never in a `yield 1` loop.

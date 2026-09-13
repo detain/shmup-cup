@@ -117,6 +117,9 @@ const BLOCK_FIELDS = ['tile', 'vx', 'vy', 'dx', 'dy', 'period', 'phase', 'branch
  */
 export class TiledImportError extends Error {
   /**
+   * Creates the error (`name` = `'TiledImportError'`, so the CLI and tests can tell it from a
+   * programming error).
+   *
    * @param {string} message - What is wrong (with the object / layer it concerns).
    */
   constructor(message) {

@@ -10,7 +10,10 @@ fire bullets and lasers through the `ScriptApi` — the bullet side is
 [bullets-and-patterns.md](bullets-and-patterns.md). Since **M1-13** an `enemies` entry may be a
 **boss** (a `boss` section instead of the regular fields); bosses are run by `core/bosses`, never
 by this system, and their parts share its hit path —
-[bosses-and-warning.md](bosses-and-warning.md).
+[bosses-and-warning.md](bosses-and-warning.md). Since **M2-07** the `Ballistic` mover (thrown and
+falling bodies), removal without a kill, death behaviours and the stage-gimmick calls of the
+script API (pull fields, chains, placed tiles) serve six gimmick behaviours —
+[advanced-stages.md](advanced-stages.md#gimmick-behaviours-corebehaviors-and-the-script-api).
 
 This page is the *how and why*. Exact signatures are in
 [api-reference.md](api-reference.md#enemies--the-enemy-system-partial); the TSDoc in
@@ -299,6 +302,10 @@ One reused object per slot (D29):
 | `bendingLaser(angle?, speed?, turnRate?, homing?, length?, width?, life?)` | M2-02: a **bending laser** from the enemy's centre (a homing head leaving a body of its last positions; not attached), speed × the rank's speed scale; `-1` while `canFire()` is false or all 8 slots are busy ([bullets-and-patterns.md](bullets-and-patterns.md#bending-lasers)) |
 | `startPattern(pattern, heading = 512)`, `stepPattern()` | M2-02: start (or restart) a `content/patterns/` DSL pattern — a `ContentDb.patterns` action index, usually `spec.patternId` — on this enemy's emitter of the World's `PatternVm`, and run it to its next `wait` → the ticks to `yield`, or `-1` at its end; fires follow `canFire()` (the pattern advances, nothing launches). The emitter stops when the enemy is removed ([pattern-dsl.md](pattern-dsl.md#the-interpreter-patternvm)) |
 | `fireWait(ticks)` | A fire interval on Normal scaled by the rank (`rankedWait`) — `yield` it between volleys |
+| `setMoverOf(other, kind, p0 … p5)` | M2-07: switch **another** enemy's mover (a volcano throwing the stone it just spawned) |
+| `destroy(explode = true)`, `landed()` | M2-07: remove this enemy without a kill (no score, drop, revenge or death behaviour; a formation member counts as escaped); whether its `Ballistic` body has landed |
+| `pull(radius, strength, ticks)`, `release()`, `chain(anchorX, anchorY, links)` | M2-07: a pull field on the `alive` ships around this enemy (≤ 8 fields in a World); a drawn chain from a world point to it (≤ 8 chains of ≤ 16 links) — both end with the enemy; `false` without a free slot or the World's gimmick host |
+| `placeTile(x, y, tile)`, `tileId(name)` | M2-07: put a tileset tile into the empty terrain cell at a world point (never onto a ship; the checkpoint rollback removes it); the stage tileset's tile id by name (-1 = none) |
 | `bullets` | The World's `BulletSystem` for raw access (`setMotion`, `setChange`, custom patterns) |
 
 Every wrapper shares the system's one `BulletOrigin`, set to the enemy's centre just before the
@@ -385,6 +392,9 @@ since M1-12 `core/scoring` credits every kill's `killScore` to `killBy` and ever
   `AirEnemies` (both below the ships, §18 draw order). `pushSprite` is inlined. Since M2-04 it
   also refills `carriedBatch` (`AirEnemies`, the view's last batch): each live Option Hunter's
   carried Options, grey, 10 px apart behind it.
+- **Removal without a kill** (M2-07, `destroy(enemy, explode)` / `ScriptApi.destroy`): a rock that
+  shattered, a rush cube that became terrain — no score, drop, revenge or death behaviour, a
+  formation member counts as escaped; the explosion (SFX + particles) only when asked.
 - **Checkpoint restart**: the World's stage `clear()` hook calls `enemies.clear()` — every
   slot and formation freed, tracks reset, outcomes and batches emptied.
 - **`hashWorld`** covers every slot's `state` and, for slots in use, every numeric field
@@ -410,6 +420,7 @@ order — append, never renumber (they are hashed).
 | `GroundCrawl` (`groundCrawl`) | `speed` | walk along the floor / ceiling, re-snapping every step with `findFloor` / `findCeiling`; a step up or down of more than `CRAWL_STEP` (8) px is a wall / cliff → turn round; also at the map edge. Flying bodies and open space just move horizontally |
 | `Homing` (`homing`) | `speed, turnRate` | turn the heading towards the target by at most `turnRate` whole binary units per tick (`turnToward`), move at `speed`; starts from the current heading (left at rest) |
 | `AimedDash` (`aimedDash`) | `speed, windup` | hold `windup` ticks, aim at the target once (quantised to `AIM_DIRECTIONS` = 32, D17; left without a target), dash straight |
+| `Ballistic` (`ballistic`, M2-07) | `vx, vy, gravity, maxFall, trigger, land` | wait, still, until the target is within `trigger` px horizontally (0 = at once), then fly from `(vx, vy)` with `gravity` added to the vertical speed every tick (capped at `maxFall` when > 0); `land` (`BallisticLand`): `Pass` flies through terrain, `Stop` / `Shatter` stop just before the body's box (`hw`, `hh`) would enter it (state `BALLISTIC_LANDED`). The enemy system then destroys a `Shatter` body (its explosion, no credit) or wakes the sleeping script on the next tick |
 
 Flying bodies' position-based movers (`Sine`, `Path`, `Waypoint`, `Follow`) measure from the
 camera (`camera.x · air`, with `air` = 1 for flying, 0 for ground bodies — both arms a
@@ -418,13 +429,15 @@ table lookup (the `Path` mover inlines the same code, see the hot-path rules).
 
 ## Behaviours (`core/behaviors`)
 
-A `BehaviorDef` is `{ id, params, create(api, params), needsChild, needsPattern }`, declared with
-`defineBehavior(id, defaults, generatorFunction, needsChild?, needsPattern?)`; `createBehaviorRegistry(defs)`
+A `BehaviorDef` is `{ id, params, create(api, params), needsChild, needsPattern, death? }`, declared
+with `defineBehavior(id, defaults, generatorFunction, needsChild?, needsPattern?, death?)` — `death`
+(M2-07) runs when an enemy of the behaviour is **killed**, in place (the splitting bubble spawns its
+pieces there); never when it escapes, is `destroy`ed, or dies in a Mega Crash or blue-capsule clear; `createBehaviorRegistry(defs)`
 builds a lookup (throws on duplicate ids). `DEFAULT_BEHAVIORS` (from `DEFAULT_BEHAVIOR_DEFS`)
 is what the World uses; `createWorld(config, db, { behaviors })` swaps in another registry
 (tests, tools — not part of `GameConfig`, so never in a real session).
 
-The roster — the eight of M1, M2-02's `pattern.loop`, M2-04's `hunter.option` and M2-05's `cube.pincer` (tunables and their defaults in brackets; the fire patterns are M1-09's — they go
+The roster — the eight of M1, M2-02's `pattern.loop`, M2-04's `hunter.option`, M2-05's `cube.pincer` and the six stage gimmicks of M2-07 (`rock.fall`, `bubble.split`, `volcano.lob`, `field.suction`, `tentacle.grab`, `cube.stack` — tunables and what they do in [advanced-stages.md](advanced-stages.md#gimmick-behaviours-corebehaviors-and-the-script-api)) (tunables and their defaults in brackets; the fire patterns are M1-09's — they go
 through the `ScriptApi` primitives, so nothing fires off screen or before `settleTicks`; bullet
 speeds are px/tick and intervals ticks, both Normal values scaled by the rank):
 
@@ -623,6 +636,8 @@ code):
   capsule's `clearOnScreen` and the shield pods' contact test
   ([options-shields-hunter.md](options-shields-hunter.md)); **M2-05** (done) — the `powerup` drop
   (`DropKind.PowerUp` 3, `FreeOption` now 4) and `cube.pincer` for the Direct mode's pincer waves
-  ([direct-mode.md](direct-mode.md)).
+  ([direct-mode.md](direct-mode.md)); **M2-07** (done) — the `Ballistic` mover, `destroy`,
+  death behaviours, the gimmick calls of the script API and six gimmick behaviours
+  ([advanced-stages.md](advanced-stages.md)).
 - **M1-18** (done) — zone A's roster on these behaviours, its paths, and HALCYON BULWARK's
   `boss.bulwark` ([zone-a-and-playtest.md](zone-a-and-playtest.md)).

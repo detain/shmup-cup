@@ -1340,8 +1340,8 @@ const EntryState = {
  * by tile id); hits add up per cell and a cell whose damage reaches its tile's `hp` becomes empty.
  * A tile with `regen` ticks ({@link DestructibleTerrain.tileRegen}) heals its damage after that
  * many ticks without a hit and grows back that many ticks after breaking — unless a keep-out
- * rectangle (the players' terrain boxes, {@link DestructibleTerrain.setKeepOut}) overlaps the cell;
- * then it waits. Only damaged and regrowing cells take an entry of the fixed table
+ * rectangle (the players' terrain boxes, {@link DestructibleTerrain.addKeepOut}, cleared every tick
+ * with {@link DestructibleTerrain.clearKeepOut}) overlaps the cell; then it waits. Only damaged and regrowing cells take an entry of the fixed table
  * ({@link MAX_TERRAIN_DAMAGE}); a hit on a new cell while the table is full is ignored
  * ({@link TerrainHit.None}) unless it breaks the tile at once (a broken tile without `regen` needs
  * no entry; one with `regen` then does not grow back).

@@ -136,12 +136,17 @@ const game = createGame(platform, { seed }, db);
    `<file>:families[f].levels[l].shots[k].weapon`.
 10. **Expand stage terrain** (third pass, M1-07): every stage with a `tilemap` whose tileset
    resolved gets its tile grid built from the `heightfield` generator and / or RLE rows into
-   `StageSpec.terrain` (`core/data/tilemap.ts`). Its issues (a tile the generator needs is
-   missing, bad RLE rows) come last. Stages are also checked beyond the schema at collect
-   time (sorted keys / checkpoints / events, the first key at 0, nothing past `length`,
-   `yTicks` without `yTo`, `to ≤ from` segments, > 32 flags) and their `flag` names are
-   numbered (`flagNames`, `event.flagId`); tilesets get their lookup `tables`. Details in
-   [stage-runtime.md](stage-runtime.md#stage-data-and-loading).
+   `StageSpec.terrain` (`core/data/tilemap.ts`); since M2-07 the same pass resolves each
+   `block` event's `tile` name into `tileId`. Its issues (a tile the generator needs is
+   missing, bad RLE rows, a block naming a tile the tileset lacks) come last. Stages are also
+   checked beyond the schema at collect time (sorted keys / checkpoints / events, the first key
+   at 0, nothing past `length`, `yTicks` without `yTo`, `to ≤ from` segments, > 32 flags; since
+   M2-07 the `yOver` / `hold` rules, branches, triggers and block sizes) and their flag names —
+   of `flag` and `trigger` events and of `branches` — are numbered (`flagNames`, `flagId`;
+   events naming a branch get `branchId`); tilesets get their lookup `tables` (since M2-07 with
+   `hp`, `regen`, `score`). Details in
+   [stage-runtime.md](stage-runtime.md#stage-data-and-loading) and
+   [advanced-stages.md](advanced-stages.md#content-coredata).
 
 A bad file is skipped, never fatal: one load reports every problem in every file.
 `loadContent` only throws (`TypeError`) when `files` is not an array — a programming error,
@@ -377,6 +382,7 @@ A failure prints the issue list (`path` + `message`) in the Vitest diff.
 | `packages/core/test/data/schema.test.ts`, `schema-edge.test.ts` | Every combinator: valid input, each failure message, inclusive bounds, nested paths, reference-site recording through objects/records/unions, construction-time `TypeError`s, frozen schemas, a seeded fuzz (the parser never throws and fails exactly when it reports an issue), `Infer<>` type assertions |
 | `packages/core/test/data/data.test.ts`, `data-edge.test.ts` | Headers, migrations (and missing ones), per-kind bounds, every stage event variant, cue and id resolution (including prototype names), cross-file references, interning order, duplicates, issue order, input immutability, byte-identical output for every file order |
 | `packages/core/test/patterns/patterns-dsl*.test.ts` | M2-02: the `patterns` kind through `loadContent` — compiled bank, issue paths and entry 0, enemy `pattern` resolution, the `scoring` section (one file only), the schema limits ([pattern-dsl.md](pattern-dsl.md#tests)) |
+| `packages/core/test/data/stage-advanced-data.test.ts`, `stage-advanced-data-edge.test.ts` | M2-07: tile `hp` / `regen` / `score`, `hold` / `yOver`, branches, `trigger` / `block` events, the `ballistic` mover, every new issue |
 | `packages/core/test/data/enemies-edge.test.ts`, `paths-edge.test.ts` | Enemy defaults, `child` refs, every mover variant and bound, stage spawn fields (M1-08); `bakePath` properties and the `paths` loader ([enemies-and-behaviors.md](enemies-and-behaviors.md#tests)) |
 | `test/integration/content.test.ts` | `pnpm content:check` (above) |
 | `test/integration/content-plugin.test.ts`, `content-plugin-edge.test.ts` | The generated module evaluates to `readContentFiles()`, is byte-stable, honours custom roots, skips examples, names the file in JSON errors; dev-server watcher behaviour (including a sibling `content-old/` folder that must *not* trigger a reload); a real Vite IIFE build whose inlined content `loadContent()` accepts |
@@ -446,3 +452,11 @@ M2-06 (done) — player 2's palette swap: the loader interns `<ship sprite>@p2` 
 (`PlayerShipSpec.spriteP2Id`); the `content/input/` profiles gained the optional `split` half (owned
 by `@shmup/input-web`, not by `loadContent`) and `content/audio/main.sfx.json` the `PlayerJoin` cue
 ([coop.md](coop.md)).
+
+M2-07 (done) — tiles gained `hp` / `regen` / `score` (destructible and regenerating terrain;
+`TilesetTables.hp` / `regen` / `score`), camera keys `hold` and `yOver`, stages `branches`, every
+event an optional `branch` (`StageEventBase`), two new event types `trigger` and `block`
+(appended to `STAGE_EVENT_TYPES`), the enemy mover `ballistic`; the content files
+`stages/gimmick-range.stage.json` and `enemies/gimmick-range.enemies.json`; and
+`pnpm content:tiled` (`scripts/content/tiled-import.mjs`), which writes ordinary stage and paths
+files from a Tiled map ([advanced-stages.md](advanced-stages.md)).

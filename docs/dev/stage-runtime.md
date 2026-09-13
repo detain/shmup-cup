@@ -3,7 +3,11 @@
 How a scrolling stage runs inside `@shmup/core`: the stage file and what the loader makes of
 it, the **stage runner** that moves the camera and fires the event timeline, invisible
 **checkpoints**, the **tile terrain** the ship collides with, the **parallax** bands, and how
-the World, the renderer and the web app use all of it. Built in plan step **M1-07**.
+the World, the renderer and the web app use all of it. Built in plan step **M1-07**; plan step
+**M2-07** added timed scroll stops (`hold`), diagonal pans (`yOver`), in-stage branches and region
+triggers, moving blocks inside the terrain queries, destructible tiles and a Tiled importer —
+their whole story is [advanced-stages.md](advanced-stages.md); this page keeps the runner-level
+facts current.
 
 This page is the *how and why*. Exact signatures are in
 [api-reference.md](api-reference.md#stage--stage-runtime); the TSDoc in
@@ -60,16 +64,20 @@ The annotated format is in [`content/stages/README.md`](../../content/stages/REA
 1. **Stage checks at collect time** (`checkStage`): the first camera key is at `x` 0; keys and
    checkpoints are *strictly* increasing, events *non-decreasing* (ties fire in file order);
    nothing lies past `length`; `yTicks` needs `yTo`; heightfield segments have `to > from`;
-   at most `MAX_STAGE_FLAGS` (32) distinct flags. Every problem of one file is reported in one
-   load; a stage with any of them is skipped.
-2. **Flag numbering.** The distinct `flag` names of a stage are sorted into
-   `stage.flagNames`; each `flag` event gets `flagId` = its index = its bit in the runner's
-   32-bit `flags`. Flag bits are per stage and change when a name is added — never persist
-   them.
+   at most `MAX_STAGE_FLAGS` (32) distinct flags. Since M2-07 also: `yOver` needs `yTo` and not
+   `yTicks`, `hold` not on a lock key, unique branch ids and events naming known branches, at
+   most 32 triggers each with `until ≥ x`, and `block` events on the tile grid (≤ 64 tiles) in a
+   stage with a tilemap. Every problem of one file is reported in one load; a stage with any of
+   them is skipped.
+2. **Flag numbering.** The distinct flag names of a stage — of `flag` and (M2-07) `trigger`
+   events and of `branches` — are sorted into `stage.flagNames`; each gets `flagId` = its index
+   = its bit in the runner's 32-bit `flags`; an event naming a branch gets `branchId`. Flag bits
+   are per stage and change when a name is added — never persist them.
 3. **Terrain expansion (third pass).** Once tileset ids are resolved, every stage with a
    tilemap gets `stage.terrain = { tileSize, cols, rows, tiles, tilesetId }`: a row-major
    `Uint8Array` of tile ids (0 = empty), `cols = ceil((length + 384) / 8)` (the camera's right
-   edge reaches `length + PLAYFIELD_W`), `rows = rowsTall` (25 = the 200-px playfield).
+   edge reaches `length + PLAYFIELD_W`), `rows = rowsTall` (25 = the 200-px playfield). The same
+   pass resolves each `block` event's `tile` name (default `solid`) into `tileId` (M2-07).
 
 ### Tilesets (`content/tilesets/`, kind `tileset`)
 
@@ -81,10 +89,13 @@ One tileset per file: `id`, `sprite` (the atlas sprite whose frames draw the til
 and a `mask` of 8 column heights (0 … 8). At load, `buildTilesetTables` turns them into
 per-id typed arrays — `type` (`TerrainType` code), `anchor` (`TerrainAnchor` code), `mask`
 (`[id * tileSize + column]`), `frame` (`-1` for id 0) and `byName` — which the queries and the
-renderer read.
+renderer read. Since M2-07 a colliding tile may also have `hp` (destructible, 1–255), `regen`
+(ticks to heal and grow back, needs `hp`) and `score`; the tables gain `hp`, `regen` and `score`
+per id ([advanced-stages.md](advanced-stages.md#destructible-terrain-corecollision-destructibleterrain)).
 
-`terrain-a.tileset.json` mirrors the 17 tiles the asset pipeline draws for `tiles/terrain-a`
-(solid, floor, ceiling, two walls, 45° and 22.5° slopes for both anchors);
+`terrain-a.tileset.json` mirrors the 20 tiles the asset pipeline draws for `tiles/terrain-a`
+(solid, floor, ceiling, two walls, 45° and 22.5° slopes for both anchors, and since M2-07 the
+destructible `brick`, `cube` and regenerating `tissue` — ids 18–20);
 `test/integration/stage-terrain.test.ts` compares every mask with the opaque pixels of its
 atlas frame, so art and collision cannot drift apart.
 
@@ -113,7 +124,8 @@ or the stage file changed).
 
 ### RLE rows
 
-`tilemap.rle` is the import path (for future Tiled / LDtk exports): exactly `rowsTall`
+`tilemap.rle` is the import path (`pnpm content:tiled` writes it from a Tiled map since M2-07 —
+[advanced-stages.md](advanced-stages.md#importing-a-tiled-map-pnpm-contenttiled)): exactly `rowsTall`
 strings, top to bottom, of comma-separated `<id>` or `<count>*<id>` tokens (spaces ignored),
 e.g. `"40*0, 3*2, 1"`. A row may be shorter than the map, never longer. Rows are applied
 **after** the generator and overwrite it where they are non-zero, so a stage can combine
@@ -150,12 +162,15 @@ runner.restartAt(runner.checkpoint); // back to the last checkpoint passed
 1. **Keys.** Apply every camera key the camera has reached (`key.x ≤ camera.x`).
 2. **Ramp and pan.** Advance the speed ramp (linear, exact at its last tick) and the vertical
    pan (eased with `EASINGS.inOutQuad`).
-3. **Move.** `dx = speed` (0 while locked), clamped so the camera stops exactly at the first
-   pending lock key — even when other, non-lock keys lie before it within this tick's movement
-   — and never passes `length`. `camera.dx` / `vx` = `dx`, `camera.dy` / `vy` = the pan step.
+3. **Move.** `dx = speed` (0 while locked or holding), clamped so the camera stops exactly at
+   the first pending stop key (a lock or, since M2-07, a hold) — even when other keys lie before
+   it within this tick's movement — and never passes `length`; a diagonal pan (`yOver`) sets y
+   from the new x. `camera.dx` / `vx` = `dx`, `camera.dy` / `vy` = the pan step.
 4. **Events.** Fire, in order, every event with `x ≤ camera.x`, exactly once; the runner
-   applies its own part (`speed`, `flag`, `end`) and then calls `hooks.event(code, event,
-   index)`. Several events may fire on one tick.
+   applies its own part (`speed`, `flag`, `end`, M2-07 `trigger` arming) and then calls
+   `hooks.event(code, event, index)`. Several events may fire on one tick. An event whose branch
+   is not taken is passed by (neither part runs). Then armed triggers the camera has passed
+   (`camera.x > until`) disarm.
 5. **Checkpoint.** Remember the last checkpoint passed (`runner.checkpoint`).
 
 Consequences worth knowing:
@@ -178,9 +193,11 @@ Consequences worth knowing:
 | `ramp` | Reach `speed` linearly over this many ticks from the current speed (0 / absent = at once) |
 | `yTo`, `yTicks` | Vertical pan: the camera's top edge moves to world y `yTo` over `yTicks` ticks, eased (0 / absent = in one tick) |
 | `lock: true` | Scroll lock: the camera has already stopped exactly at the key's x; it stays until `runner.unlock()`, then scrolls on at the current speed (the key's ramp and pan keep running while it waits) |
+| `hold` (M2-07) | Timed scroll stop: the camera has stopped exactly at the key's x and stays `hold` ticks (`runner.holding`) while the key's pan runs — a vertical section — then scrolls on at the key's `speed` / `ramp`. Not with `lock` |
+| `yOver` (M2-07, with `yTo`, instead of `yTicks`) | Diagonal pan: the camera y goes linearly to `yTo` while the camera x goes from the key's x to `x + yOver` (a speed change keeps the slope; a lock or hold freezes it) |
 
 `speed` events (`{ type: 'speed', speed, ramp? }`) change the target between keys — scripted
-and high-speed sections. `unlock()` before the camera reaches a lock key does nothing (the key
+and high-speed sections (up to 16 px/tick; every event still fires once, in order). `unlock()` before the camera reaches a lock key does nothing (the key
 locks when it applies). The camera never scrolls past `length`; the stage keeps ticking there.
 
 ### The brake (M1-13)
@@ -210,7 +227,8 @@ Events are pre-sorted by `x` (the loader checks it) and consumed through a curso
 (`runner.eventCursor`), so each tick looks at the next event only. The runner hands **every**
 event to its hooks as a numeric `StageEventCode` (`Spawn 0, Formation 1, Warning 2, Boss 3,
 Music 4, Speed 5, Flag 6, End 7` — the `STAGE_EVENT_TYPES` order) plus the content object and
-its index:
+its index — since M2-07 also `Trigger 8, Block 9`, and only while the event's branch is taken
+(`runner.eventActive(index)`):
 
 | `type` | Runner's own part | The World's hook today |
 |---|---|---|
@@ -220,6 +238,8 @@ its index:
 | `speed` | new target speed / ramp | — |
 | `flag` | sets / clears bit `flagId` of `runner.flags` (`value` defaults to `true`) | — |
 | `end` | `runner.ended = true` | `world.status = 'stageClear'` |
+| `trigger` (M2-07) | arms its region (bit in `triggersArmed`); the World probes it with its `alive` ships every tick (`runner.probe(ship)`): the first ship inside sets / clears `flagId` once | — |
+| `block` (M2-07) | — | `world.gimmicks.blocks.spawn(index)`: a moving block ([advanced-stages.md](advanced-stages.md#moving-blocks-terrainblocks-movingblocksystem)) |
 
 The World also queues the stage theme (`stage.music.stageId`) as a `Music` event when it is
 created. A hook may call `restartAt()`: the current tick's event loop stops there.
@@ -247,7 +267,15 @@ is the index of the last one the camera passed (`-1` before the first). `restart
 4. the event cursor is found by binary search (`findEventCursor`), then `hooks.clear()` runs
    (the World's `clearSession`: every pool, every enemy and formation, the boss and its WARNING
    (M1-13), the weapons', power-ups' and scoring system's per-session state — scores, lives,
-   loadouts and meters stay). A brake is forgotten with the rest of the state.
+   loadouts and meters stay; since M2-07 the stage gimmicks: the stage's own tiles again, no pull
+   fields or chains, the moving blocks behind the camera respawned). A brake and a running hold
+   are forgotten with the rest of the state.
+
+Since M2-07 the replay also re-derives branch-gated events under the flags as they evolve,
+settles hold keys behind the checkpoint, resumes a diagonal pan still running there, applies the
+flag of a trigger behind it that had fired at the trigger's place in the timeline (an
+approximation — live play fired it later) and re-arms an unfired one while `until ≥ camera.x`
+([advanced-stages.md](advanced-stages.md#branches-and-region-triggers-corestage)).
 
 The result depends only on the stage and the index, so a restart matches what live play had
 at the checkpoint — `stage-edge.test.ts` checks it on 60 random stages. One approximation
@@ -270,8 +298,9 @@ called from a hook.
 
 All numeric state lives in one `Float64Array`, `runner.state`, indexed by `StageSlot`
 (`Speed, Target, RampFrom, RampTicks, RampElapsed, PanFrom, PanTo, PanTicks, PanElapsed,
-Locked, Cursor, NextKey, NextCheckpoint, Checkpoint, Flags, Ended, Ticks, Restarts, Replay`, and
-since M1-13 `Braking, ResumeSpeed, BrakeRamp` — `STAGE_STATE_SLOTS` = 22). `hashWorld` hashes the whole array, so every piece of runner state
+Locked, Cursor, NextKey, NextCheckpoint, Checkpoint, Flags, Ended, Ticks, Restarts, Replay`,
+since M1-13 `Braking, ResumeSpeed, BrakeRamp`, and since M2-07 `Hold, HoldKey, PanOver, PanStartX,
+TriggersArmed, TriggersFired` — `STAGE_STATE_SLOTS` = 28). `hashWorld` hashes the whole array, so every piece of runner state
 is covered by lockstep and replay tests. At creation the keys, events (types resolved to codes)
 and checkpoints are compiled into typed arrays (`keyX`, `keySpeed`, …, `keyNextLock` — the
 first lock key at or after each key), so `tick()` reads only typed arrays; the content objects
@@ -283,8 +312,11 @@ shares one set of monomorphic methods (see [Gotchas](#gotchas) for why this matt
 `TerrainMap` (`core/collision`) is the stage's tile grid plus its tileset's tables:
 `tileSize`, `cols`, `rows`, `tiles`, `tileType`, `tileAnchor`, `tileMask`. Its top-left corner
 is world (0, 0); everything outside the map is open space. The World builds it with
-`createStageTerrain(stage, db)` — a **private copy** of the tiles, so destructible terrain
-(M2-07) can change it without touching the shared content.
+`createStageTerrain(stage, db)` — a **private copy** of the tiles, so the destructible terrain
+(M2-07, `core/collision` `DestructibleTerrain`) changes it without touching the shared content.
+Since M2-07 a map may also carry `blocks` (`TerrainBlocks`, up to 16 moving whole-pixel boxes —
+given only to stages with `block` events): every query below tests them after the tiles, so
+moving floors and ceilings are rock for everything that asks.
 
 | Query | Answers |
 |---|---|
@@ -322,9 +354,12 @@ called by the World in phase 9 — sets `offsetX = (camera.x · factor) mod spac
 baseY − camera.y · factor`. Bands repeat horizontally only: for two rows of 128-px star tiles,
 list the band twice with `y` 0 and 128 (as `test-range` does).
 
-**Terrain view.** `createTerrainView(map, stage, db)` gives the renderer a `TerrainView` over
-the collision map's own `tiles` array (not a copy) plus the tileset's sprite id and per-tile
-`tileFrame` table. The renderer's ring re-reads a cell only when it scrolls into view.
+**Terrain view.** `createTerrainView(map, stage, db, changes?)` gives the renderer a
+`TerrainView` over the collision map's own `tiles` array (not a copy) plus the tileset's sprite id
+and per-tile `tileFrame` table. The renderer's ring re-reads a cell when it scrolls into view and,
+since M2-07, when the view's `changes` log (`TerrainChanges` — the World passes its
+`DestructibleTerrain`) lists it; a reset (the rollback) redraws the grid. Moving blocks are not
+part of the grid: the World draws them as a `LayerId.Terrain` sprite batch.
 
 **Drawing** is `@shmup/render-pixi` `layers`: a ring-buffered 49 × 26 tile-sprite grid (one
 column / row re-textured per tile edge crossed, the whole grid moved as one container) and
@@ -394,6 +429,11 @@ the Direct mode's carriers: six six-cube pincer waves alternating with lead carr
 checkpoint at 1,800 and a 12-entry `directItems` plan whose first six drops are one of each colour
 — `?stage=direct-range`, then the MANTA in the ship select
 ([direct-mode.md](direct-mode.md#carriers-corebehaviors-and-the-dev-stage)).
+`content/stages/gimmick-range.stage.json` (GIMMICK RANGE, M2-07) is a 3,200-px stage with terrain
+for the advanced stage systems: destructible bricks and regenerating tissue, falling rocks,
+bubbles, a volcano, a suction pod, tentacles, a cube rush, moving blocks, a hold with a vertical
+pan, a diagonal pan, a region trigger choosing a branch and a 4 px/tick section —
+`?stage=gimmick-range` ([advanced-stages.md](advanced-stages.md#the-gimmick-range-dev-stage)).
 
 Headless:
 
@@ -412,7 +452,8 @@ world.stage!.restartAt(1); // back to x 1500: speed, pan and flags as live play 
 | A stage | A `content/stages/<id>.stage.json` following the README; `pnpm content:check`; fly it with `?stage=<id>`. `stage-runtime.test.ts` plays every shipped stage to `stageClear`, also after a restart at each of its checkpoints |
 | A tileset | `content/tilesets/<id>.tileset.json` + its atlas sprite; masks must match the art (the integration test compares them). For the heightfield generator it needs tiles named `solid`, `floor`, `ceiling` and a solid tile for every 45° / 22.5° mask of both anchors. Append new tiles — inserting one renumbers every later id in RLE rows |
 | An event type | Append the name to `STAGE_EVENT_TYPES` and a code to `StageEventCode` (never renumber — the code is the name's position and hooks switch on it), add the interface to the `StageEvent` union and a variant to `STAGE_EVENT_SCHEMA` in `core/data`, the runner's own part (if any) in `compileStage` / `applyEvent` and in the restart replay, the World's handling in its stage hooks, the README table, tests |
-| A camera-key feature | The field in `StageCameraKey` + schema, a compiled typed array in `compileStage`, its effect in `applyKey` **and** in `reset()`'s re-derivation (a restart must reproduce it), new `StageSlot`s appended (this changes `STAGE_STATE_SLOTS` and the hash) |
+| A camera-key feature | The field in `StageCameraKey` + schema, a compiled typed array in `compileStage`, its effect in `applyKey` **and** in `reset()`'s re-derivation (a restart must reproduce it), new `StageSlot`s appended (this changes `STAGE_STATE_SLOTS` and the hash) — `hold` and `yOver` (M2-07) are worked examples |
+| A stage gimmick, a destructible tile, a Tiled class | [advanced-stages.md](advanced-stages.md#extending-it) |
 | A tile collision type | Append to `TILE_TYPES` and `TerrainType` (the code order is the priority `boxHitsTerrain` returns), handle it where the World reacts to terrain |
 | A system that reacts to terrain | Query `world.terrain` in its phase with whole-pixel bounds (`terrainRectHit`, `findFloor` from floored positions); check for `null` (open-space stages, free flight) |
 
@@ -424,6 +465,8 @@ world.stage!.restartAt(1); // back to x 1500: speed, pan and flags as live play 
 | `packages/core/test/stage/stage-brake.test.ts`, `stage-brake-edge.test.ts` | The brake (M1-13): its hashed slots, linear deceleration then the lock where it stopped, speeds of keys and `speed` events met while braking recorded and resumed, `brake(0)`, a restart forgets it; a fractional ramp, resuming at a running ramp's target, `unlock()` mid-brake, pans under the lock, a lock key met while braking, a brake from a standstill, a restart replaying a passed `speed` event |
 | `packages/core/test/stage/stage-jump.test.ts`, `stage-jump-edge.test.ts` | `jumpTo` (M1-18): state equal to `restartAt` at a checkpoint's x, re-derived speed / pan / flags between keys, the events at `x` re-fired, the checkpoint index at or before `x`, range errors; no / late checkpoints, a pending key at `x`, key vs speed-event order, lock keys, a re-opened `end`, a brake released, a jump from a hook, independence from the run's history |
 | `packages/core/test/stage/stage-edge.test.ts` | Ramps and pans interrupted mid-way, scroll stops, locks (first key, stage end, behind a speed event, several in a row, fractional keys at fractional speeds, behind non-lock keys crossed in one tick), `unlock()` before a lock, flags up to bit 31, randomised invariants on 60 generated stages, a randomised live-vs-restart equivalence on 60 stages, `findEventCursor` vs a linear scan, allocation with locks, pans and unlocking hooks |
+| `packages/core/test/stage/stage-advanced*.test.ts`, `stage-systems-edge.test.ts` | M2-07: holds, diagonal pans, 16 px/tick sections, branches, triggers, restarts against live play; the World-side stage gimmicks ([advanced-stages.md](advanced-stages.md#tests)) |
+| `packages/core/test/collision/destructible*.test.ts` | M2-07: destructible tiles, regeneration, rollback, the change log; moving blocks in every query |
 | `packages/core/test/collision/terrain*.test.ts` | Every `terrain-a` tile shape pixel by pixel (`terrainAt`, `findFloor` from above, `findCeiling` from below), `boxHitsTerrain` edges, hazard priority, decoration, out-of-map and NaN input; every query against an independent pixel reference on random maps; the allocation guard |
 | `packages/core/test/data/tilemap*.test.ts`, `stage-edge.test.ts` | Tileset validation and tables; stage checks (sorting, first key, range, pans, flags, segments, unknown tileset) — all issues of one file in one load; RLE decoding and every error; the heightfield generator (deterministic, masks match tiles, slope rules, ramps, floor over ceiling, 120 random profiles where `findFloor` sees exactly the generated heights) |
 | `packages/core/test/world/world-stage*.test.ts` | `config.stage` (unknown ids throw), the runner driving the camera and the ship riding along (pans, locks), music events and the queued theme, `end` → `stageClear`, restarts clearing the pools, the view's parallax / terrain, terrain hits through `playerHit` (fly-in, god mode, hazard, decoration, ceilings, player 2), hit-stop freezing the timeline, determinism, zero allocation |
@@ -432,6 +475,7 @@ world.stage!.restartAt(1); // back to x 1500: speed, pan and flags as live play 
 | `packages/shell/test/flight/`, `apps/web/test/boot/` | The flight scene with a stage (no starfield, stage name, the World's views); `stageFromSearch`, `contentStageIds`, the unknown-id warning |
 | `test/integration/stage-terrain.test.ts`, `stage-runtime.test.ts` | Tileset masks = atlas pixels; `test-range` expands with existing frames and a pinned grid fingerprint; **every shipped stage with terrain** (`test-range`, and zone A since M1-18) leaves a ≥ 48-px corridor in every pixel column and a clear spawn at every checkpoint; every shipped stage plays to `stageClear` deterministically, also after a restart at each checkpoint; the World collides with the tiles the renderer draws |
 | `test/e2e/stage.spec.ts` | In Chromium: `?stage=test-range` shows terrain inside the playfield only and scrolls it while the ship stays put (captures 30 frames apart since M1-08 — see Gotchas); an unknown id boots free flight |
+| `test/e2e/gimmicks.spec.ts` | M2-07: `?stage=gimmick-range` draws the brick pillar; breaking it in the sim takes it off the next frame, the rollback draws it again |
 
 ## Gotchas
 
@@ -455,6 +499,8 @@ world.stage!.restartAt(1); // back to x 1500: speed, pan and flags as live play 
 | A stage loads without terrain | Its tileset id did not resolve, the tile sizes differ, or its RLE rows failed — all reported as issues; the heightfield issues (missing tile names or masks) keep the terrain |
 | `?stage=` does nothing on the TV | The widget has no query string: START plays zone A (`defaultStageId`, M1-18) and the zone map picks stages from M2-10 |
 | The skipped part of a stage never spawned after `jumpTo` | By design: events between the old and the new x never fire (the debug stage skip jumps over them) |
+| An event with a `branch` never fires | Its branch's flag did not have the branch's value when the camera reached it — the event is passed by for good (it does not wait for the flag) |
+| The camera stops without a lock or a boss | A `hold` key (M2-07): it scrolls on after `hold` ticks |
 | The `test-range` fingerprint test fails | The stage file or the generator changed. If intended, re-pin the value in `stage-runtime.test.ts` and say why in the commit |
 | A browser test that measures the scroll between two screenshots misses the shift | With enemies drawn and e2e files running in parallel, the frame loop may run up to 4 ticks per frame, so a frame count says little about the ticks run. Freeze the sim and step exact ticks (`freezeSim` / `stepTo` in `test/e2e/frame-advance.ts`): the stage test captures at tick 90 and 30 ticks later and expects a 30 px shift |
 
@@ -486,5 +532,8 @@ world.stage!.restartAt(1); // back to x 1500: speed, pan and flags as live play 
 - **M1-19** (done) — the debug controls: skip to the boss on `jumpTo`, jump to the next
   checkpoint on `restartAt`; replays starting at a checkpoint
   ([debug-and-replays.md](debug-and-replays.md#the-debug-controls)).
-- **M2-07** — time-keyed events during scroll stops, diagonal scrolling, in-stage branches on
-  the flags, destructible tiles, the Tiled / LDtk exporter to RLE rows.
+- **M2-07** (done) — timed scroll stops and vertical sections (`hold`), diagonal pans (`yOver`),
+  in-stage branches and region triggers, moving blocks in the terrain queries, destructible and
+  regenerating tiles rolled back on restarts, the gimmick behaviours, the Tiled importer
+  ([advanced-stages.md](advanced-stages.md)).
+- **M2-09 / M2-10** — raid camera segments; bonus stages and the zone map.

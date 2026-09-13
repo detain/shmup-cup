@@ -6,8 +6,8 @@ weapons and stages do not need engine changes (design pillar 4, `shmup_feat.md` 
 | Folder | Holds | Loaded by |
 |---|---|---|
 | [`player/`](player/README.md) | One JSON file per player ship: speed levels, hitboxes, playfield margins, timers | `@shmup/core` `player` + `data` modules |
-| [`stages/`](stages/README.md) | One JSON file per stage/zone: music, camera path, checkpoints, parallax bands, tilemap (heightfield generator / RLE rows), the event timeline | `@shmup/core` `stage` + `data` modules |
-| [`tilesets/`](tilesets/README.md) | Terrain tilesets: per tile the collision type, column-height mask (slopes) and atlas frame | `@shmup/core` `data` + `collision` modules, `@shmup/render-pixi` `layers` |
+| [`stages/`](stages/README.md) | One JSON file per stage/zone: music, camera path (holds and diagonal pans since M2-07), checkpoints, parallax bands, tilemap (heightfield generator / RLE rows — `pnpm content:tiled` writes them from a Tiled map), in-stage branches, the event timeline (region triggers and moving blocks since M2-07) | `@shmup/core` `stage` + `data` modules |
+| [`tilesets/`](tilesets/README.md) | Terrain tilesets: per tile the collision type, column-height mask (slopes) and atlas frame; destructible `hp`, regrowth `regen` and `score` (M2-07) | `@shmup/core` `data` + `collision` modules, `@shmup/render-pixi` `layers` |
 | [`enemies/`](enemies/README.md) | Enemy definitions: HP, score, hurtbox, behaviour script id and tunables, starting mover, ground anchor, drops, rank modifiers and revenge bullets; bosses (a `boss` section: WARNING name / code, parts with weak points, phases) | `@shmup/core` `enemies` + `bosses` + `behaviors` + `data` modules |
 | [`paths/`](paths/README.md) | Movement paths: spline control points, baked at load into arc-length tables for the `path` mover | `@shmup/core` `data` + `patterns` modules |
 | [`weapons/`](weapons/README.md) | Player weapon tunables: damage, speed, on-screen cap, piercing, behaviour id, menu name; the meter presets Type A–D (M2-03) | `@shmup/core` `weapons` + `data` modules |

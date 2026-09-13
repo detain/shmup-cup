@@ -260,6 +260,14 @@ tick), so their on-screen speed does not depend on the scroll. Per live shot, pe
   4 ticks through `frames`. A missile at a non-finite position never touches terrain and is
   culled.
 
+**Destructible terrain (M2-07).** Every shot that **dies on terrain** — a straight flight (main
+shot, Double and the other straight kinds), a laser head the rock blocks (once per beam), a Spread
+Bomb bursting on it, a missile flying into a wall — hands the pixel where it met the rock and its
+damage to `WeaponHost.gimmicks.hitTerrain(px, py, damage, player)` (the World's `StageGimmicks`):
+a destructible tile there takes the damage, and its `score` goes to that player when it breaks.
+Without a gimmick host (a bare `WeaponSystem` in a test) or in open space terrain never breaks. Moving blocks are terrain for every shot too, but never break
+([advanced-stages.md](advanced-stages.md#shots-meeting-the-terrain-coreweapons)).
+
 A piercing shot's cooldown table counts down by one per entry every tick it is alive.
 
 The Types B–D kinds (M2-03) are branches of the same `update()`: the Spread Bomb's arc, burst and
@@ -484,3 +492,5 @@ autofire) and hold no `Shot` / `Sub`.
 - **M2-05** (done) — Direct-mode weapon families: every weapon a family fires gets a direct role
   (`WEAPON_ROLE_SLOTS`), level volleys on the main / missile timers, `direct.bolt` /
   `direct.bomb`, `applyDirectLoadout` ([direct-mode.md](direct-mode.md)).
+- **M2-07** (done) — shots that die on terrain damage destructible tiles (`WeaponHost.gimmicks`),
+  credited to their shooter ([advanced-stages.md](advanced-stages.md)).

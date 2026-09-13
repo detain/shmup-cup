@@ -194,7 +194,8 @@ For each live bullet, in slot order:
    heading changed this tick; then `x += vx`, `y += vy`.
 8. **Cull**: removed unless inside the camera view ± `BULLET_CULL_MARGIN` (16) px on all four
    sides (exact, closed); a bullet with `DieOnTerrain` is removed when its centre pixel is
-   terrain (`terrainAt` — one lookup, hazards count). The test is written as "not inside", so a
+   terrain (`terrainAt` — one lookup, hazards count; since M2-07 the moving blocks count too, and a
+   bullet never damages a destructible tile). The test is written as "not inside", so a
    bullet whose position became `NaN` (a `NaN` speed, say) is culled on its next move instead of
    living forever — a TEST-agent fix.
 

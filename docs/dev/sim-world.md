@@ -44,6 +44,7 @@ game.step()                                        core/game (one fixed tick)
  └─ stepWorld(world, input)                         core/world
      ├─ 1 input      readPlayerIntent × 2           world.intents: masks + moveX / moveY
      ├─ 2 players    updatePlayer × 2               ride the scroll, move, clamp, bank, fly-in, dying → dead;
+     │               gimmicks.applyFields()         pull fields draw the ships, clamp again (M2-07)
      │               lifecycle                      respawns after the dead time, game over (M1-12)
      │               powerups.updatePlayers()       PowerUp press → equip the meter (M1-11)
      │               weapons.updatePlayers()        option trails, autofire timers, firing (M1-10)
@@ -52,6 +53,7 @@ game.step()                                        core/game (one fixed tick)
      │               bosses.update()                WARNING / intro / death-sequence timers (M1-13)
      │               stage.tick() | camera += (vx, vy)  keys, ramps, pans, locks, brake, timeline events;
      │               enemies: spawn events, due formation members; warning / boss → bosses
+     │               gimmicks.updateStage()         triggers, moving blocks, terrain regrowth (M2-07)
      ├─ 4 scripts    enemies.runScripts(), bosses.runScript()  wake the coroutines; they fire bullets / lasers
      ├─ 5 movement   enemies.move(), bosses.move(), bullets.update(), weapons.update(), powerups.update()
      │               movers; the boss and its parts; bullets / lasers / shots move, cull; items: magnet, cull
@@ -119,14 +121,14 @@ debug overlay can profile.
 | # | Phase | Today | Filled by |
 |---|---|---|---|
 | 1 | `input` | copies each player's `PlayerInput` into its `PlayerIntent` (all slots, active or not); in a co-op World a `JOIN_ACTIONS` press of a player who may join → `joinPlayer` (M2-06 — runs during hit-stop too) | M2-06 (done) |
-| 2 | `players` | `updatePlayer` for each ship, then the life cycle (`lifecycleSystem`, M1-12: respawn every ship whose dead time is over and that has a life left — the `arcade` penalty restarts the stage at its last checkpoint first; `gameOver` when every active ship is out), then `weapons.updatePlayers()` — recount live shots (stride `WEAPON_ROLE_SLOTS` since M2-05), count the autofire timers down, per ship the option trail (reset on a fly-in's first tick, record on movement input and fly-in ticks, hide while not `alive`; since M2-04 `OptionGroup.steer` then the type's placement — Snake, Formation, Rotate) and firing: every shooter (ship, then Options) fires its main weapon and missile when its timer is 0 and its cap has room (M1-10) — in Direct mode (M2-05) the main family's level volley and the sub family's on those timers | M1-11 (done: `powerups.updatePlayers()` between the two — the `PowerUp` press equips the highlighted meter slot, so a new weapon fires this tick; since M2-04 it then places each ship's shield pods; in Direct mode — M2-05 — the `Speed` press cycles the speed level instead), M1-12 (done: respawn, game over) |
-| 3 | `stage` | `powerups.beginTick()` (drops of kills made between ticks become capsules — M1-11), `scoring.beginTick()` (their kills and bonuses are credited — M1-12), `enemies.beginTick()` (reset the tick's outcomes), `bosses.update()` (the WARNING pulses and the boss's entry, the intro, the phase clock, the death sequence — M1-13); with a stage: `world.stage.tick()` — camera keys, ramps, pans, locks, then the due timeline events through the World's hooks (`spawn` / `formation` → `enemies.onStageEvent`, `warning` / `boss` → `bosses.startWarning` / `startBoss`); in free flight: moves the camera by its scroll velocity, recording the step; then `enemies.spawnPending()` (formation members due this tick); last, `updateWorldRank(world)` — the rank for this tick's scripts (M2-01). `scoring.beginTick()` also gives the extends its credits reached (M2-01) | M1-07, M1-08, M1-13, M2-01 (done) |
+| 2 | `players` | `updatePlayer` for each ship, then the life cycle (`lifecycleSystem`, M1-12: respawn every ship whose dead time is over and that has a life left — the `arcade` penalty restarts the stage at its last checkpoint first; `gameOver` when every active ship is out), then `weapons.updatePlayers()` — recount live shots (stride `WEAPON_ROLE_SLOTS` since M2-05), count the autofire timers down, per ship the option trail (reset on a fly-in's first tick, record on movement input and fly-in ticks, hide while not `alive`; since M2-04 `OptionGroup.steer` then the type's placement — Snake, Formation, Rotate) and firing: every shooter (ship, then Options) fires its main weapon and missile when its timer is 0 and its cap has room (M1-10) — in Direct mode (M2-05) the main family's level volley and the sub family's on those timers. Right after `updatePlayer`, before the life cycle, `world.gimmicks.applyFields()` (M2-07) lets the pull fields draw the `alive` ships towards their owners and clamps them to the view again | M1-11 (done: `powerups.updatePlayers()` between the two — the `PowerUp` press equips the highlighted meter slot, so a new weapon fires this tick; since M2-04 it then places each ship's shield pods; in Direct mode — M2-05 — the `Speed` press cycles the speed level instead), M1-12 (done: respawn, game over) |
+| 3 | `stage` | `powerups.beginTick()` (drops of kills made between ticks become capsules — M1-11), `scoring.beginTick()` (their kills and bonuses are credited — M1-12), `enemies.beginTick()` (reset the tick's outcomes), `bosses.update()` (the WARNING pulses and the boss's entry, the intro, the phase clock, the death sequence — M1-13); with a stage: `world.stage.tick()` — camera keys, ramps, pans, locks, holds and diagonal pans (M2-07), then the due timeline events whose branch is taken through the World's hooks (`spawn` / `formation` → `enemies.onStageEvent`, `warning` / `boss` → `bosses.startWarning` / `startBoss`, `block` → `gimmicks.blocks.spawn` — M2-07); in free flight: moves the camera by its scroll velocity, recording the step; then `world.gimmicks.updateStage(stage)` (M2-07: the `alive` ships probe the armed region triggers, the moving blocks move, the ships' terrain boxes become the keep-out rectangles, destructible tiles heal / grow back); then `enemies.spawnPending()` (formation members due this tick); last, `updateWorldRank(world)` — the rank for this tick's scripts (M2-01). `scoring.beginTick()` also gives the extends its credits reached (M2-01) | M1-07, M1-08, M1-13, M2-01, M2-07 (done) |
 | 4 | `scripts` | `enemies.runScripts()` — resumes the behaviour coroutines whose `wakeTick` has come (M1-08); they fire bullets and lasers through the `ScriptApi` primitives (M1-09) — since M2-02 also bending lasers and DSL patterns (`pattern.loop` steps its emitter in `world.patterns` to the pattern's next `wait`); then `bosses.runScript()` — the boss phase's coroutine (M1-13) | M1-13 (done) |
-| 5 | `movement` | `enemies.move()` — age, hit flash, camera ride, movers, leader tracks, animation, on-screen / settle / despawn rules (M1-08); then `bosses.move()` — the intro fly-in or the fight motion, the camera ride, the part transforms (M1-13); then `bullets.update()` — bullets ride the camera, delay, run their DSL program when it is due (M2-02), change / home / accelerate (timed terms land on their target — M2-02), move, die outside the view ± 16 px or on terrain; lasers follow their enemy or boss part (it has already moved) and step their phases (M1-09); bending lasers ride the camera, fly (homing) and record a node or shrink; point items drift, fly to their player's score and credit `bulletCancel` points (M2-02); then `weapons.update()` — shots ride the camera and fly by behaviour (straight / Double, laser head and length, missile fall / slide), die outside the view ± 16 px or on terrain; cooldown tables count down (M1-10); then `powerups.update()` — items age, feel the pickup magnet, die outside the view ± 32 px (M1-11) | — |
+| 5 | `movement` | `enemies.move()` — age, hit flash, camera ride, movers, leader tracks, animation, on-screen / settle / despawn rules (M1-08); then `bosses.move()` — the intro fly-in or the fight motion, the camera ride, the part transforms (M1-13); then `bullets.update()` — bullets ride the camera, delay, run their DSL program when it is due (M2-02), change / home / accelerate (timed terms land on their target — M2-02), move, die outside the view ± 16 px or on terrain; lasers follow their enemy or boss part (it has already moved) and step their phases (M1-09); bending lasers ride the camera, fly (homing) and record a node or shrink; point items drift, fly to their player's score and credit `bulletCancel` points (M2-02); then `weapons.update()` — shots ride the camera and fly by behaviour (straight / Double, laser head and length, missile fall / slide), die outside the view ± 16 px or on terrain — since M2-07 a shot that dies on terrain damages the destructible tile there (`gimmicks.hitTerrain`); cooldown tables count down (M1-10); then `powerups.update()` — items age, feel the pickup magnet, die outside the view ± 32 px (M1-11) | — |
 | 6 | `collision` | `grid.begin(camera − 64)`, `enemies.insertColliders(grid)` (hurtboxes, id = slot), `bosses.insertColliders(grid)` (part hurtboxes, id = 64 + part — M1-13), `grid.build()`, `enemies.collidePlayers(grid)` → `playerHit(ship, PlayerHitCause.Contact, …)` (M1-08), `bosses.collidePlayers()` (the ships × the parts — M1-13); `bullets.collidePlayers()` — bullet circles, active laser capsules and (M2-02) bending laser circle chains × each ship's hurt radius → `playerHit(…, Bullet / Laser, …)` (M1-09); `weapons.collide(grid)` — each shot's box against the enemy and boss-part hurtboxes in the grid → this tick's hit list (M1-10, parts M1-13); each alive ship's terrain box against the stage terrain → `playerHit(…, Terrain, …)` (M1-07); `powerups.collide()` — every item's circle × each alive ship's pickup box → the tick's pickups (M1-11). Every `playerHit` hands the hit to the ship's Force Field first (`core/shields`, M1-11) | — |
 | 7 | `damage` | `weapons.applyHits()` — armour → `Clink`, else `enemies.damage(enemy, damage, player)` (hit flash, deaths, drops, formation accounting, the kill record with its killer); non-piercing shots die, piercing ones start their per-enemy cooldown (M1-10); a hit on a boss part goes through `bosses.damagePart` (clink, damage, destruction, the death sequence — M1-13); then `bosses.resolve()` — the boss's phase changes (M1-13); then `enemies.huntOptions()` — every live Option Hunter takes the Options it touches (M2-04; before the power-ups, so a Mega Crash this tick frees them again); then `powerups.resolve()` — the pickups advance the meters (Auto Power-Up), armed Mega Crashes detonate, the shields' i-frames count down and their hit / break events are pushed, the tick's enemy drops become capsules (M1-11 — in Direct mode, M2-05, `capsule` / `powerup` drops become the stage's planned colour items and pickups run `collectDirect`); then `scoring.resolve()` — kills, formation bonuses and pickups credited to their players (M1-12), then the extends reached (+1 life, capped at 9, `ExtraLife` — M2-01); then the **death sequence** of every active `alive` ship hit this tick (`hitTick === tick`): `killPlayer`, the explosion / debris / rumble / music-duck events, hit-stop 8, a medium shake, `bullets.cancelAll(Sparkle)`, the death penalty (M1-12; `applyDirectDeathPenalty` in Direct mode — M2-05) | — |
 | 8 | `removal` | `pools.flushAll()` (the enemy bullet and laser pools since M1-09, the player shots since M1-10, the cancel point items since M2-02), `enemies.flush()` (removed enemy slots → free) | — |
-| 9 | `fx` | `tickFx` — the hit-stop −1 on frozen ticks, the shake / flash timers −1 except on their request's tick (M1-12); `syncWorldView` (parallax, enemy batches, the boss's parts batch — M1-13, player-shot and Option batches, item and shield batches, the Options Option Hunters carry — M2-04, player batch) | M1-14 (drawing shake / flash / particles from the events) |
+| 9 | `fx` | `tickFx` — the hit-stop −1 on frozen ticks, the shake / flash timers −1 except on their request's tick (M1-12); `syncWorldView` (parallax, the stage gimmicks' block and chain batches — M2-07, enemy batches, the boss's parts batch — M1-13, player-shot and Option batches, item and shield batches, the Options Option Hunters carry — M2-04, player batch) | M1-14 (drawing shake / flash / particles from the events) |
 
 **Hit-stop.** `stepWorld` reads `world.hitStop > 0` once, at the start of the tick, and records
 it in `world.fx.frozen`. While it is set, only the phases with `runsDuringHitStop` — `input` and
@@ -164,10 +166,12 @@ restart (`clearAll`). A pool that is not registered is never flushed or hashed.
 
 `world.view` is created once — `{ camera, parallax, terrain, batches: [groundEnemies,
 airEnemies, playerShots, options, playerBatch, enemyBullets, shields, items, cancelPoints,
-bossParts, carriedOptions], lasers, bendingLasers, warning }` (the point items' batch and
+bossParts, carriedOptions, chains, blocks?], lasers, bendingLasers, warning }` (the point items' batch and
 `bendingLasers` since M2-02 — both the bullet system's; the carried Options since M2-04 — the
-enemy system's `carriedBatch`, `LayerId.AirEnemies`, appended last so the grey Options draw over
-the enemies), where `parallax` /
+enemy system's `carriedBatch`, `LayerId.AirEnemies`, appended so the grey Options draw over
+the enemies; since M2-07 the stage gimmicks' chain links, `LayerId.GroundEnemies`, and — only on a
+stage with `block` events — the moving blocks' tiles, `LayerId.Terrain`, drawn over the terrain grid;
+`terrain.changes` is the destructible terrain's change log), where `parallax` /
 `terrain` are the stage's views (`null` in free flight), the two enemy batches belong to the
 enemy system (M1-08), the player-shot batch (`LayerId.PlayerShots`) and the Options' batch
 (`LayerId.Player`, listed before the ships so the Options draw below them) to the weapon system
@@ -354,7 +358,8 @@ little-endian IEEE-754 double bytes (so the hash is the same on every engine):
 3. the camera: `x`, `y`, `dx`, `dy`, `vx`, `vy`;
 4. the stage runner: `0` in free flight, else `1` and every slot of `world.stage.state`
    (speed, ramp, pan, lock, cursor, next key / checkpoint, checkpoint, flags, ended, ticks,
-   restarts, replay, and since M1-13 the brake — `StageSlot` order);
+   restarts, replay, since M1-13 the brake, since M2-07 the hold, the diagonal pan and the trigger
+   masks — `StageSlot` order);
 5. the status code (`WORLD_STATUSES` order), `hitStop` and `rank` (M1-09);
 6. per player: `active`, `x`, `y`, the state code (`PLAYER_STATES` order), `stateTicks`,
    `speedLevel`, `invulnTicks`, `bank`, `lives`, `moving`, `hitCause`, `hitTick`, `hits`;
@@ -396,9 +401,16 @@ little-endian IEEE-754 double bytes (so the hash is the same on every engine):
     open flags and hit flash; then the WARNING's `active` and `ticks`. (The piercing shots'
     boss-part cooldown tables join their enemy tables in step 10; the stage brake's slots are in
     step 4.)
+14. the stage gimmicks (M2-07, `mixGimmicks`): the destructible terrain (`0`, or `1` + `count`,
+    `resets`, `destroyed`, the change ring and every tracked entry's state, cell, tile, damage and
+    timer), the moving blocks (`0`, or `1` + per slot its event and, in use, its age and
+    position), then per pull field its owner (and, in use, owner spawn tick, radius, strength,
+    ticks) and per chain its owner (and spawn tick, anchor, links).
 
-Not hashed: config and content (fixed per session — the terrain map included, which nothing
-modifies yet), intents, `device`, `slot`, debug flags, the event queue, the grid, the enemies'
+Not hashed: config and content (fixed per session), the terrain map's tiles (since M2-07 they
+change, but only through the destructible terrain, whose change log and entries are hashed — a
+restore puts back the content's tiles), the keep-out rectangles (rebuilt from the ships every
+tick), intents, `device`, `slot`, debug flags, the event queue, the grid, the enemies'
 tick outcomes, the weapons' role tables (the direct roles and compiled families of M2-05 too), live counts and hit list, the power-ups' pickup outcomes, compiled Auto Power-Up order and Direct-mode item plan (derived from content,
 config and the pool, or rebuilt every tick), the session hi-score and the HUD's dirty flags (a
 host may raise the hi-score — the scene flow starts it from the save's best since M1-17), `fx.frozen` (derived from `hitStop`) and the view (parallax offsets are derived from the
@@ -601,3 +613,8 @@ Inside the game, use `createGame(platform, overrides, db)` and `game.step()` /
   `joinPlayer`, also on frozen ticks), per-player continues (`continuesLeft`, `continueWorld`'s
   player mask), the co-op drop credit hashed with the power-ups, player 2 drawn with `<ship>@p2`
   ([coop.md](coop.md)).
+- **M2-07** (done) — `world.gimmicks` (`core/stage` `StageGimmicks`) in phases 2, 3, 5 and 9:
+  pull fields after the ships moved, region triggers / moving blocks / terrain regrowth after the
+  stage runner, shots breaking destructible tiles, the block and chain batches; the terrain map's
+  tiles change in play and are rolled back by `clearSession`; the hash's step 14
+  ([advanced-stages.md](advanced-stages.md)).

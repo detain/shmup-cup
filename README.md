@@ -9,7 +9,7 @@ with the browser and Electron as additional targets.
 The [implementation plan](shmup_plan.md) is approved and under way. Progress per step is tracked in
 [`shmup_progress.md`](shmup_progress.md); milestone **M1 — playable vertical slice** is code-complete
 as version **0.1.0** ([`CHANGELOG.md`](CHANGELOG.md)) — its on-device release check on the monitors
-is next — and **M2 — complete v1.0** is under way (M2-01 … M2-06 done).
+is next — and **M2 — complete v1.0** is under way (M2-01 … M2-07 done).
 
 <!--
   Keep this section scannable: one entry per plan step, in plan order — a bold headline with the
@@ -443,6 +443,29 @@ is next — and **M2 — complete v1.0** is under way (M2-01 … M2-06 done).
     [what testers should check](docs/client/preview-build.md#two-players) ·
     [two-player controls](docs/client/controls.md#two-players)
 
+- **Advanced stage systems & Tiled import** (M2-07)
+  - **Destructible tiles** are tileset data (`hp`, `regen`, `score`): player shots damage the
+    cell they meet (`DestructibleTerrain`, 512 tracked cells), regenerating walls grow back
+    around the ships, and every checkpoint restart rolls the terrain back to the stage's own
+    tiles; the renderer re-textures only the changed cells (`TerrainChanges`). `terrain-a` gained
+    `brick`, `cube` and `tissue`.
+  - **Moving floors / ceilings** (`block` events) live inside every terrain query
+    (`TerrainBlocks`, ≤ 16), so ships, shots, bullets and crawlers treat them as rock;
+    **falling rocks** ride a new `Ballistic` mover with a proximity trigger and a landing rule.
+  - **In-stage branches** (`branches`, any event's `branch`) chosen by **region triggers** the
+    ships fly into; camera **holds** (vertical sections), **diagonal pans** (`yOver`) and
+    high-speed sections up to 16 px/tick; restarts reproduce all of it.
+  - **Gimmick behaviours**: `rock.fall`, `bubble.split`, `volcano.lob`, `field.suction`,
+    `tentacle.grab`, `cube.stack` (the seeded cube rush that stacks into walls), with pull fields
+    and chains in `world.gimmicks`. Dev stage `?stage=gimmick-range`; zone A unchanged.
+  - **`pnpm content:tiled <map.tmj>`** converts a Tiled map (tile layer → RLE rows, objects →
+    events at scroll x, polylines → paths) into stage JSON; a committed fixture pins it.
+  - Golden replays re-blessed (new hashed state and an engine sprite — zone A's simulation
+    unchanged); three new `gimmick-range` runs.
+  - Docs: [developer guide](docs/dev/advanced-stages.md) ·
+    [what testers should check](docs/client/preview-build.md#the-gimmick-range-browser-only) ·
+    [authoring stages](content/stages/README.md#holds-diagonal-pans-and-branches-m2-07)
+
 ### Hardware spike
 
 - The **input probe** — a diagnostic Tizen app that measures the Samsung remote, gamepads and
@@ -514,7 +537,7 @@ versions (`devEngines.runtime`).
 ```sh
 pnpm -v               # must print 12.x — an older global pnpm fails with ERR_PNPM_BROKEN_LOCKFILE
 pnpm install          # set ELECTRON_SKIP_BINARY_DOWNLOAD=1 to skip the Electron binary
-pnpm dev              # browser dev app → http://localhost:5173 (F1–F8: debug tools): the title (Enter five times — PRESS OK, 1 PLAYER, NORMAL, KESTREL in the ship select, START in the weapon select — starts zone A, AZURE VERGE; Down on the title picks 2 PLAYERS — a gamepad's START (or Enter with ?profile=keyboard-split) drops player 2 in; Down + Enter in the ship select flies the MANTA instead — its colour items power up on contact, Left Shift toggles its speed; in the weapon select ↑ / ←→ choose the weapon type, EDIT, the Option type, the ? shield, the ! choice and Auto Power-Up — V or a held Enter spreads FORMATION / ROTATE Options in the game; ?skip=boss starts right before its boss HALCYON BULWARK; Enter, Down, Down, Enter opens OPTIONS — volumes, controls and bullet colours, saved in localStorage; Esc pauses), then fly the KESTREL (arrows/WASD, gamepad; the first key press turns the sound on; Enter/C takes a power-up; ?scene=flight skips the title; ?stage=test-range scrolls the test stage, its enemies, their bullets and the power capsules; ?stage=test-boss plays the WARNING and the test boss; ?stage=hunter-range&loadout=full sends in the Option Hunters; ?stage=direct-range (then the MANTA) sends pincer waves of item carriers; ?profile=keyboard-remote-emulation feels like the TV remote; ?profile=keyboard-split puts two players on one keyboard; ?scene=showcase / ?scene=calibration / ?scene=fx-gallery)
+pnpm dev              # browser dev app → http://localhost:5173 (F1–F8: debug tools): the title (Enter five times — PRESS OK, 1 PLAYER, NORMAL, KESTREL in the ship select, START in the weapon select — starts zone A, AZURE VERGE; Down on the title picks 2 PLAYERS — a gamepad's START (or Enter with ?profile=keyboard-split) drops player 2 in; Down + Enter in the ship select flies the MANTA instead — its colour items power up on contact, Left Shift toggles its speed; in the weapon select ↑ / ←→ choose the weapon type, EDIT, the Option type, the ? shield, the ! choice and Auto Power-Up — V or a held Enter spreads FORMATION / ROTATE Options in the game; ?skip=boss starts right before its boss HALCYON BULWARK; Enter, Down, Down, Enter opens OPTIONS — volumes, controls and bullet colours, saved in localStorage; Esc pauses), then fly the KESTREL (arrows/WASD, gamepad; the first key press turns the sound on; Enter/C takes a power-up; ?scene=flight skips the title; ?stage=test-range scrolls the test stage, its enemies, their bullets and the power capsules; ?stage=test-boss plays the WARNING and the test boss; ?stage=hunter-range&loadout=full sends in the Option Hunters; ?stage=direct-range (then the MANTA) sends pincer waves of item carriers; ?stage=gimmick-range tries the M2-07 stage systems — bricks to shoot through, regrowing walls, rocks, bubbles, a volcano, suction, tentacles, the cube rush, moving blocks, a pan, a fork; ?profile=keyboard-remote-emulation feels like the TV remote; ?profile=keyboard-split puts two players on one keyboard; ?scene=showcase / ?scene=calibration / ?scene=fx-gallery)
 pnpm lint             # ESLint (typescript-eslint + compat: chrome >= 69)
 pnpm typecheck        # tsc --noEmit everywhere
 pnpm test             # Vitest per package + repo integration tests
@@ -525,6 +548,7 @@ pnpm golden:update    # re-bless the golden replays (only for an intended simula
 pnpm format           # Prettier
 pnpm trig:tables      # regenerate the committed core trig tables (a test checks they are current)
 pnpm content:check    # validate every JSON under content/ + its sprite names exist in the atlas + zone A's 4-way design rules (part of pnpm test)
+pnpm content:tiled level.tmj  # convert a Tiled map into content/stages/<id>.stage.json (+ paths); --print to preview
 pnpm assets           # rebuild the placeholder sprite atlas (automatic before build/dev; skipped when unchanged)
 pnpm audio:preview    # render every placeholder sound and song to WAV files in assets/generated/audio-preview/
 pnpm clean            # remove build output
@@ -583,7 +607,7 @@ pnpm workspace (`packages/*`, `apps/*`) + Turborepo. Full annotated tree:
 | [`content/`](content/README.md) | Game data: player ships, stages, terrain tilesets, enemies, movement paths, weapons, bullet patterns (`patterns/`), the difficulty presets and scoring values (`rules/`), input profiles, particle presets, sound effects and music (JSON, `formatVersion` 1) |
 | `types/` | Ambient declarations for the Vite virtual modules (`virtual:shmup-content`, `virtual:shmup-assets`) and the build-info defines (`__SHMUP_DEV__`, `__SHMUP_BUILD__`) |
 | [`assets/`](assets/README.md) | Art/audio sources (`source/`: sprite pixel maps, fonts) and pipeline output (`generated/`: atlas pages + manifest, ignored) |
-| [`scripts/`](scripts/README.md) | Repo-level Node scripts |
+| [`scripts/`](scripts/README.md) | Repo-level Node scripts (asset pipeline, trig tables, audio preview, golden update, the Tiled importer `content/tiled-import.mjs`) |
 | [`test/`](test/README.md) | Cross-package integration tests; `test/playtest/` the 4-way playtest bot; `test/golden/` golden replays; `test/bench/` the stress benchmark; `test/e2e/` browser smoke tests (Playwright) |
 | [`docs/`](docs/README.md) | Player (`client/`) and developer (`dev/`) documentation |
 | `tools/` | Standalone dev tools with their own npm projects (not workspace members) |
@@ -605,11 +629,12 @@ hitch in the overlay's frame graph, gamepad and keyboard — checklist in
 [`docs/client/debug-tools.md`](docs/client/debug-tools.md#the-m1-release-check). The M1 release
 is tagged `v0.1.0` on the final commit of step M1-19.
 
-Code: plan step **M2-07** (advanced stage systems & Tiled import) — M2-01 (rank, difficulty presets,
-extends & continues) opened milestone **M2 — complete v1.0**, M2-02 (pattern DSL, bending lasers,
-bullet cancel & readability), M2-03 (meter arsenal: loadouts B–D, Weapon Edit, parking & weapon
-select), M2-04 (Option & shield variants + Option Hunter), M2-05 (Direct mode & ship select) and
-M2-06 (two-player simultaneous co-op) followed; every simulation change re-blesses the golden replays in the same
+Code: plan step **M2-08** (presentation polish: raster effects, palettes, visual options) — M2-01
+(rank, difficulty presets, extends & continues) opened milestone **M2 — complete v1.0**, M2-02
+(pattern DSL, bending lasers, bullet cancel & readability), M2-03 (meter arsenal: loadouts B–D,
+Weapon Edit, parking & weapon select), M2-04 (Option & shield variants + Option Hunter), M2-05
+(Direct mode & ship select), M2-06 (two-player simultaneous co-op) and M2-07 (advanced stage
+systems & Tiled import) followed; every simulation change re-blesses the golden replays in the same
 commit. The per-step status board is [`shmup_progress.md`](shmup_progress.md).
 
 Also on hardware (unchanged, and still the gate for the remote control scheme): package and
