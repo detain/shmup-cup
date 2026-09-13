@@ -131,6 +131,72 @@ async function remoteTap(page: Page, keyCode: number): Promise<void> {
 }
 
 /**
+ * Ticks of each half of the preview's main-weapon cycle on the TYPE row (`WeaponSelectScene`'s
+ * `stepPreview`: Laser while `(previewTicks / 240) & 1` is 0, then Double for as long).
+ */
+const PREVIEW_MAIN_HALF_TICKS = 240;
+
+/**
+ * Freezes the sim (the debug tools' frame advance — it holds the scene flow, the preview
+ * included) and runs exactly the ticks that put the weapon select's preview `into` ticks into the
+ * next Laser half of its TYPE cycle, then waits two frames so the canvas shows it. The preview's
+ * clock counts from the screen's opening, not from the TYPE focus, and a loaded machine runs far
+ * fewer ticks than 60 a second — so waiting in wall time can see only the Double half.
+ * Resume with {@link resumeSim}.
+ *
+ * @param page - The page (the weapon select open, its preview flying).
+ * @param into - Ticks into the Laser half (`1`–`239`).
+ */
+async function holdLaserTurn(page: Page, into: number): Promise<void> {
+  const target = await page.evaluate(
+    ([half, offset]) => {
+      const api = (
+        window as unknown as {
+          __shmupDebug: {
+            flags: { frameAdvance: boolean };
+            game: {
+              requestStep(count: number): void;
+              scenes: { weaponSelect: { previewTicks: number } };
+            };
+          };
+        }
+      ).__shmupDebug;
+      api.flags.frameAdvance = true;
+      const ticks = api.game.scenes.weaponSelect.previewTicks;
+      let next = ticks - (ticks % (2 * half)) + offset;
+      if (next <= ticks) next += 2 * half;
+      api.game.requestStep(next - ticks);
+      return next;
+    },
+    [PREVIEW_MAIN_HALF_TICKS, into] as const,
+  );
+  await page.waitForFunction(
+    (goal) =>
+      (
+        window as unknown as {
+          __shmupDebug: { game: { scenes: { weaponSelect: { previewTicks: number } } } };
+        }
+      ).__shmupDebug.game.scenes.weaponSelect.previewTicks >= goal,
+    target,
+  );
+  await waitFrames(page, 2);
+}
+
+/**
+ * Turns frame advance off again: the sim runs on its own clock.
+ *
+ * @param page - The page.
+ */
+async function resumeSim(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    (
+      window as unknown as { __shmupDebug: { flags: { frameAdvance: boolean } } }
+    ).__shmupDebug.flags.frameAdvance = false;
+  });
+  await waitFrames(page, 2);
+}
+
+/**
  * Counts the canvas pixels within 2 of a colour, and how many of them lie right of a frame x.
  *
  * @param page - The page.
@@ -203,10 +269,11 @@ test.describe('weapon select (web build)', () => {
     await tap(page, 'ArrowDown'); // START → TYPE
     await tap(page, 'ArrowRight'); // TYPE B
     await expect.poll(async () => (await view(page)).preview).toBe('laser.ripple');
-    // The Laser slot's turn comes first on TYPE: Ripple rings on screen.
-    await expect
-      .poll(async () => (await countColour(page, RIPPLE_CYAN, 190))[1], { timeout: 10_000 })
-      .toBeGreaterThan(20);
+    // On TYPE the preview alternates Laser and Double: held 150 ticks into a Laser half, the
+    // Ripple rings are on screen (whatever the machine's load).
+    await holdLaserTurn(page, 150);
+    expect((await countColour(page, RIPPLE_CYAN, 190))[1]).toBeGreaterThan(20);
+    await resumeSim(page);
     await tap(page, 'ArrowUp'); // TYPE → START
     await tap(page, 'Enter');
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
