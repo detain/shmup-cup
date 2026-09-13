@@ -222,6 +222,58 @@ describe('core/stage — diagonal pans and high speed', () => {
     expect(r.camera.y).toBe(60);
   });
 
+  it('matches live play after a restart inside a diagonal pan that overlaps an earlier one', () => {
+    // The second pan starts at x 500, while the first still runs (it ends at 1000): live play
+    // starts it from the first pan's y at 500 (50), so at 800 the camera is at 50 - 50 * 0.3 = 35.
+    const s = stage({
+      camera: [
+        { x: 0, speed: 1, yTo: 100, yOver: 1000 },
+        { x: 500, speed: 1, yTo: 0, yOver: 1000 },
+        { x: 600, speed: 1 },
+      ],
+      checkpoints: [{ x: 800 }, { x: 1600 }],
+    });
+    const live = createStageRunner(s, recorder());
+    while (live.camera.x < 800) live.tick();
+    const r = createStageRunner(s, recorder());
+    r.restartAt(0);
+    expect([r.camera.x, r.camera.y]).toEqual([800, live.camera.y]);
+    expect(r.camera.y).toBeCloseTo(35, 9);
+    for (let i = 0; i < 800; i++) {
+      live.tick();
+      r.tick();
+      expect(r.camera.x).toBe(live.camera.x);
+      expect(r.camera.y).toBeCloseTo(live.camera.y, 9);
+    }
+    expect(r.camera.y).toBe(0);
+    // Past both pans the camera y is final.
+    r.restartAt(1);
+    expect([r.camera.x, r.camera.y]).toEqual([1600, 0]);
+    expect(r.state[StageSlot.PanOver]).toBe(0);
+  });
+
+  it('starts a timed pan key from where an earlier diagonal pan had the camera', () => {
+    const s = stage({
+      camera: [
+        { x: 0, speed: 1, yTo: 100, yOver: 1000 },
+        { x: 400, speed: 1, yTo: 20, yTicks: 30 },
+        { x: 700, speed: 1, yTo: 80, yOver: 200 },
+      ],
+      checkpoints: [{ x: 800 }],
+    });
+    const live = createStageRunner(s, recorder());
+    while (live.camera.x < 800) live.tick();
+    const r = createStageRunner(s, recorder());
+    r.restartAt(0);
+    // The timed pan cancelled the first diagonal one; the second starts from 20 at 700.
+    expect(r.camera.y).toBeCloseTo(50, 9);
+    expect(r.camera.y).toBeCloseTo(live.camera.y, 9);
+    tick(r, 150);
+    tick(live, 150);
+    expect(r.camera.y).toBe(80);
+    expect(live.camera.y).toBe(80);
+  });
+
   it('runs a high-speed section: every event fires once, in order, even several per tick', () => {
     const events = [];
     for (let x = 10; x <= 400; x += 5) events.push({ x, type: 'flag', flag: 'f' });

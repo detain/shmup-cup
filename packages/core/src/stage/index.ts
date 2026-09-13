@@ -67,7 +67,8 @@
  * they evolve in that order; a trigger before the restart x that had fired applies its flag at its
  * place in the timeline (live play fired it later, while it was armed — an approximation) and stays
  * fired, one that had not is armed again while its region lies ahead; a diagonal pan running at the
- * restart x resumes where live play had it.
+ * restart x resumes where live play had it (a `yTo` key replayed while an earlier diagonal pan
+ * still runs starts from that pan's y at the key's x, as live play did).
  *
  * **Zero allocation.** All numeric runner state lives in one `Float64Array`
  * ({@link StageRunner.state}, also what `hashWorld` hashes); at creation the camera keys, events
@@ -1135,6 +1136,13 @@ class StageRunnerImpl implements StageRunner {
     const cursor = findEventCursor(this.stage.events, x);
     let replay = cursor;
     if (x > 0) while (replay < eventX.length && eventX[replay] <= x) replay++;
+    // The diagonal pan (M2-07 `yOver`) of the last replayed `yTo` key: from `panFrom` to `panTo`
+    // over `panOver` scroll px from `panStartX` (0 = none: the camera y is final). A later `yTo`
+    // key starts from where this pan had the camera at that key's x, as in live play.
+    let panFrom = 0;
+    let panTo = 0;
+    let panStartX = 0;
+    let panOver = 0;
     let k = 0;
     let e = 0;
     while (true) {
@@ -1147,19 +1155,19 @@ class StageRunnerImpl implements StageRunner {
         state[StageSlot.Target] = speed;
         const yTo = compiled.keyYTo[k];
         if (yTo === yTo) {
+          if (panOver > 0) {
+            const t = (keyX[k] - panStartX) / panOver;
+            camera.y = t >= 1 ? panTo : panFrom + (panTo - panFrom) * t;
+          }
           const over = compiled.keyYOver[k];
-          const t = over > 0 ? (x - keyX[k]) / over : 1;
-          state[StageSlot.PanOver] = 0;
-          if (t >= 1) {
-            camera.y = yTo;
+          if (over > 0) {
+            panFrom = camera.y;
+            panTo = yTo;
+            panStartX = keyX[k];
+            panOver = over;
           } else {
-            // A diagonal pan still running at x (M2-07): where live play had it, and on it goes.
-            const from = camera.y;
-            camera.y = from + (yTo - from) * t;
-            state[StageSlot.PanFrom] = from;
-            state[StageSlot.PanTo] = yTo;
-            state[StageSlot.PanOver] = over;
-            state[StageSlot.PanStartX] = keyX[k];
+            camera.y = yTo;
+            panOver = 0;
           }
         }
         k++;
@@ -1175,6 +1183,19 @@ class StageRunnerImpl implements StageRunner {
           }
         }
         e++;
+      }
+    }
+    if (panOver > 0) {
+      const t = (x - panStartX) / panOver;
+      if (t >= 1) {
+        camera.y = panTo;
+      } else {
+        // A diagonal pan still running at x: where live play had it, and on it goes.
+        camera.y = panFrom + (panTo - panFrom) * t;
+        state[StageSlot.PanFrom] = panFrom;
+        state[StageSlot.PanTo] = panTo;
+        state[StageSlot.PanOver] = panOver;
+        state[StageSlot.PanStartX] = panStartX;
       }
     }
     state[StageSlot.NextKey] = k;
