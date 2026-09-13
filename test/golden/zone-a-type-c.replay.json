@@ -1,0 +1,72 @@
+{
+  "kind": "replay",
+  "header": {
+    "formatVersion": 1,
+    "buildId": "golden",
+    "seed": 8,
+    "stageId": "zone-a",
+    "checkpoint": -1,
+    "loadout": "full",
+    "assisted": false,
+    "config": {
+      "internalWidth": 384,
+      "internalHeight": 216,
+      "tickRate": 60,
+      "maxTicksPerFrame": 4,
+      "seed": 8,
+      "difficulty": "normal",
+      "rankBase": 2,
+      "rankGrowth": 1,
+      "extendFirst": 20000,
+      "extendEvery": 70000,
+      "continues": 3,
+      "bulletSpeedMul": 1,
+      "powerUpMode": "meter",
+      "deathPenalty": "classic",
+      "startingLives": 3,
+      "autofire": true,
+      "remoteMode": true,
+      "stage": "zone-a",
+      "stageSkip": "boss",
+      "aimDirections": 32,
+      "autofireInterval": 4,
+      "missileInterval": 10,
+      "loadout": "full",
+      "autoPowerUp": false,
+      "autoPowerUpOrder": [
+        "speed",
+        "missile",
+        "laser",
+        "option",
+        "option",
+        "option",
+        "option",
+        "shield"
+      ],
+      "pickupMagnet": true,
+      "weaponPreset": "type-c",
+      "weaponEdit": null,
+      "megaChoice": "speedDown",
+      "shieldChoice": "forceField"
+    }
+  },
+  "ticks": 900,
+  "hashInterval": 600,
+  "inputs": [
+    "ACiCgAgBAgEA2gY=",
+    "AIQH"
+  ],
+  "hashes": [
+    3673280682
+  ],
+  "finalHash": 2463940670,
+  "description": "HALCYON BULWARK with a full Type C loadout (M2-03): Cyclone Laser, 2-Way Missile, Vertical, SPEED DOWN on `!`",
+  "expected": {
+    "status": "stageClear",
+    "ticks": 900,
+    "score": 37180,
+    "lives": 4,
+    "deathTicks": [],
+    "bossDefeated": true
+  }
+}

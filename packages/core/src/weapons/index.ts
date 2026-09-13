@@ -917,8 +917,9 @@ export interface WeaponSystem {
    * Each live shot queries the grid with its box (a laser's spans tail to head) and tests the
    * hurtboxes exactly (closed: touching hits; ghost and removed enemies never). A non-piercing
    * shot records the overlapping enemy with the lowest slot; a piercing one every overlapping
-   * enemy whose cooldown entry is 0 (armoured ones always), in slot order. The result equals a
-   * brute-force test of every shot against every enemy.
+   * enemy whose cooldown entry is 0 (armoured ones always — the shot dies on them — except for a
+   * Spread Bomb's blast, which burns on), in slot order. The result equals a brute-force test of
+   * every shot against every enemy.
    *
    * @param grid - The World's grid.
    */
@@ -1199,6 +1200,11 @@ class WeaponSystemImpl implements WeaponSystem {
   private qBest = -1;
   /** Whether the queried shot is a Ripple (its ring, not its box, is the hitbox). */
   private qRing = false;
+  /**
+   * Whether the queried shot is a Spread Bomb's blast (its cooldown applies to armour too: it
+   * clinks and burns on instead of dying).
+   */
+  private qBlast = false;
   /** The ring's centre x. */
   private qcx = 0;
   /** The ring's centre y. */
@@ -1838,6 +1844,7 @@ class WeaponSystemImpl implements WeaponSystem {
       if (!(this.qx0 <= this.qx1 && this.qy0 <= this.qy1)) continue;
       const pierce = (flags & ShotFlag.Pierce) !== 0;
       this.qPierce = pierce;
+      this.qBlast = (flags & ShotFlag.Blast) !== 0;
       // A Ripple hits with its ring: targets it touches, not those wholly inside it.
       const ring = kind === ShotKind.Ripple && f.hw[i] > 0 && hh > 0;
       this.qRing = ring;
@@ -1894,13 +1901,17 @@ class WeaponSystemImpl implements WeaponSystem {
       if (this.qBest < 0 || slot < this.qBest) this.qBest = slot;
       return;
     }
-    if ((e.flags & EnemyFlag.Invulnerable) === 0 && this.cooldowns[this.qTable + slot] > 0) return;
+    // Armour is hit whatever the cooldown (the shot dies on it) — except by a blast, which burns
+    // on and clinks at most once per cooldown.
+    const armoured = (e.flags & EnemyFlag.Invulnerable) !== 0 && !this.qBlast;
+    if (!armoured && this.cooldowns[this.qTable + slot] > 0) return;
     this.insertHit(slot);
   }
 
   /**
    * The grid visitor's boss-part case: exact box test against a part that is a target this tick
-   * (an armoured one ignores the piercing cooldown, like armour).
+   * (an armoured one ignores the piercing cooldown, like armour — except for a Spread Bomb's
+   * blast, which clinks at most once per cooldown).
    *
    * @param id - The part's hit id (`BOSS_PART_ID_BASE` + index).
    */
@@ -1927,7 +1938,7 @@ class WeaponSystemImpl implements WeaponSystem {
       if (this.qBest < 0 || id < this.qBest) this.qBest = id;
       return;
     }
-    if (!part.armoured && this.partCooldowns[this.qPartTable + index] > 0) return;
+    if ((!part.armoured || this.qBlast) && this.partCooldowns[this.qPartTable + index] > 0) return;
     this.insertHit(id);
   }
 

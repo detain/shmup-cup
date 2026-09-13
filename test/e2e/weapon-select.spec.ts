@@ -6,7 +6,9 @@
  *   preview's KESTREL flying on the right; ArrowDown + ArrowRight choose TYPE B, whose Ripple rings
  *   the preview then draws; ArrowUp + Enter on START starts the game with Type B;
  * - Tizen build from `file://`: the remote's Back (10009) returns to the difficulty menu, OK (13)
- *   opens the weapon select again and starts the game on its first press;
+ *   opens the weapon select again and starts the game on its first press; the remote's arrows
+ *   (37–40) alone choose EDIT and a weapon for each slot (the preview follows), NORMAL on `!` and
+ *   an Auto Power-Up order (the ORDER editor overlay, closed with Back), and START plays them;
  * - no console errors in either.
  *
  * Screenshots are ×3 (viewport 1152×648): frame pixel x is screenshot pixel 3x + 1.
@@ -224,6 +226,83 @@ test.describe('weapon select (Tizen build via file://)', () => {
     await remoteTap(page, 13); // OK: START (the menu opens on it)
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
     expect((await view(page)).weaponPreset).toBe('type-a');
+    expect(errors).toEqual([]);
+  });
+
+  test('the remote arrows choose a Weapon Edit, the `!` choice and the Auto order', async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    const errors = await openSelect(page, TIZEN_INDEX);
+    const canvas = page.locator('#game');
+    await waitFrames(page, 10);
+    await remoteTap(page, 40); // START → TYPE (wraps)
+    await remoteTap(page, 37); // TYPE A → EDIT (wraps)
+    await remoteTap(page, 40); // MISSILE (unlocked by EDIT)
+    await remoteTap(page, 39); // MISSILE → SPREAD BOMB
+    await remoteTap(page, 40); // DOUBLE
+    await remoteTap(page, 37); // DOUBLE → FREE WAY (wraps)
+    await remoteTap(page, 40); // LASER
+    await remoteTap(page, 39); // LASER → RIPPLE LASER
+    await expect.poll(async () => (await view(page)).preview).toBe('laser.ripple');
+    await remoteTap(page, 40); // ? SLOT
+    await remoteTap(page, 40); // ! SLOT
+    await remoteTap(page, 39); // MEGA CRASH → NORMAL
+    await remoteTap(page, 40); // AUTO
+    await remoteTap(page, 40); // ORDER
+    await remoteTap(page, 13); // the order editor (an overlay)
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'autoOrder');
+    await waitFrames(page, 4);
+    await remoteTap(page, 39); // row 1: SPEED → MISSILE
+    await remoteTap(page, 10009); // Back stores the rows and closes
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'weaponSelect');
+    await waitFrames(page, 4);
+    await remoteTap(page, 40); // START
+    await remoteTap(page, 13);
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
+    const config = await page.evaluate(() => {
+      const api = (
+        window as unknown as {
+          __shmupDebug: {
+            game: {
+              world: {
+                config: {
+                  weaponPreset: string;
+                  weaponEdit: unknown;
+                  megaChoice: string;
+                  autoPowerUpOrder: readonly string[];
+                };
+                weapons: { roleWeapons: Array<{ id: string } | null> };
+              };
+            };
+          };
+        }
+      ).__shmupDebug;
+      const world = api.game.world;
+      return {
+        weaponPreset: world.config.weaponPreset,
+        weaponEdit: world.config.weaponEdit,
+        megaChoice: world.config.megaChoice,
+        autoPowerUpOrder: world.config.autoPowerUpOrder.slice(),
+        roles: world.weapons.roleWeapons.map((weapon) => weapon?.id ?? null),
+      };
+    });
+    expect(config).toEqual({
+      weaponPreset: 'type-a',
+      weaponEdit: { missile: 'missile.spread', double: 'shot.free', laser: 'laser.ripple' },
+      megaChoice: 'normal',
+      autoPowerUpOrder: [
+        'missile',
+        'missile',
+        'laser',
+        'option',
+        'option',
+        'option',
+        'option',
+        'shield',
+      ],
+      roles: ['shot.basic', 'shot.free', 'laser.ripple', 'missile.spread'],
+    });
     expect(errors).toEqual([]);
   });
 });

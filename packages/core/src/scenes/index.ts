@@ -2561,9 +2561,10 @@ export class WeaponSelectScene extends SceneBase {
  * An overlay (dim 0.35) with a panel on the right: {@link AUTO_ORDER_ROWS} rows, each one of
  * `SPEED MISSILE DOUBLE LASER OPTION ? !` or `-` (no entry — Left / Right or OK step it), and DONE.
  * Opening it shows the weapon select's order (its first rows; the rest `-`), focuses row 1 and
- * locks activation for 2 ticks. DONE or Back stores the rows that are not `-`, in order, as the new
- * order ({@link WeaponSelectScene.setOrder}) and closes it. A slot listed `n` times asks Auto
- * Power-Up for `n` levels (`GameConfig.autoPowerUpOrder`).
+ * locks activation for 2 ticks. DONE or Back stores the rows that are not `-`, in order, as the
+ * order's first entries ({@link WeaponSelectScene.setOrder}) — entries past the
+ * {@link AUTO_ORDER_ROWS} rows (a host config's longer order) are kept after them — and closes it.
+ * A slot listed `n` times asks Auto Power-Up for `n` levels (`GameConfig.autoPowerUpOrder`).
  */
 export class AutoOrderScene extends SceneBase {
   /** See {@link Scene.id}. */
@@ -2613,12 +2614,17 @@ export class AutoOrderScene extends SceneBase {
     this.menu.open(MENU_OPEN_LOCK_TICKS);
   }
 
-  /** Stores the rows as the order (allocates — a menu action) and closes. */
+  /**
+   * Stores the rows as the order's first entries — the entries past the rows, which the editor
+   * does not show, are kept after them — (allocates — a menu action) and closes.
+   */
   private close(): void {
+    const select = this.flow.weaponSelect;
     const slots: number[] = [];
     const none = AUTO_ORDER_LABELS.length - 1;
     for (const entry of this.entries) if (entry.index !== none) slots.push(entry.index);
-    this.flow.weaponSelect.setOrder(slots);
+    for (let i = AUTO_ORDER_ROWS; i < select.orderLength; i++) slots.push(select.orderSlots[i]);
+    select.setOrder(slots);
     this.flow.sfx(SFX_CUES.MenuBack);
     this.flow.stack.pop();
   }

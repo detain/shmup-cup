@@ -11,8 +11,9 @@
  * The scenarios cover the whole stage with god mode (the boss killed, `stageClear`), the stage at
  * Arcade difficulty without god mode (the 4-way bot survives it), a careless weaving pilot that
  * dies until the game is over (the Classic penalty, respawns, `gameOver`) and the stage skip to
- * HALCYON BULWARK with the full loadout under the Arcade penalty; two more boss runs fly the meter
- * arsenal of M2-03 (a full Type B loadout, and a Weapon Edit with LIFE OPTION on `!`).
+ * HALCYON BULWARK with the full loadout under the Arcade penalty; four more boss runs fly the meter
+ * arsenal of M2-03 (full Type B, Type C and Type D loadouts, and a Weapon Edit with LIFE OPTION on
+ * `!`) — together every Types B–D weapon.
  *
  * @module
  */
@@ -132,6 +133,36 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = Object.freeze([
       loadout: 'full',
       weaponEdit: { missile: 'missile.twoWay', double: 'shot.free', laser: 'laser.twin' },
       megaChoice: 'lifeOption',
+    },
+    godMode: false,
+    bot: 'four-way',
+  },
+  {
+    name: 'zone-a-type-c',
+    description:
+      'HALCYON BULWARK with a full Type C loadout (M2-03): Cyclone Laser, 2-Way Missile, Vertical, SPEED DOWN on `!`',
+    stageId: 'zone-a',
+    config: {
+      seed: 8,
+      stageSkip: 'boss',
+      loadout: 'full',
+      weaponPreset: 'type-c',
+      megaChoice: 'speedDown',
+    },
+    godMode: false,
+    bot: 'four-way',
+  },
+  {
+    name: 'zone-a-type-d',
+    description:
+      'HALCYON BULWARK with a full Type D loadout (M2-03): Twin Laser, Photon Torpedo, Free Way, FULL BARRIER on `!`',
+    stageId: 'zone-a',
+    config: {
+      seed: 9,
+      stageSkip: 'boss',
+      loadout: 'full',
+      weaponPreset: 'type-d',
+      megaChoice: 'fullBarrier',
     },
     godMode: false,
     bot: 'four-way',
