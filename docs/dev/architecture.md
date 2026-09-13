@@ -19,6 +19,8 @@ movers, spline paths), [bullets-and-patterns.md](bullets-and-patterns.md) (enemy
 lasers, fire primitives, rank), [pattern-dsl.md](pattern-dsl.md) (the bullet pattern DSL, bending
 lasers, cancel points, colour-blind palettes), [weapons-and-options.md](weapons-and-options.md) (player
 weapons, loadouts, autofire, hits on enemies, trailing Options),
+[meter-arsenal.md](meter-arsenal.md) (Types B–D, Weapon Edit, the `!` / `?` choices, the weapon
+select and its live preview),
 [scenes-and-ui.md](scenes-and-ui.md) (the scene stack and flow, menus, the HUD),
 [saves-and-options.md](saves-and-options.md) (the versioned save, user options, the Options
 screen), [difficulty-and-rank.md](difficulty-and-rank.md) (difficulty presets, rank growth,
@@ -208,8 +210,9 @@ One gameplay session, built in M1-06; the stage runtime joined in M1-07, the ene
 M1-08, the enemy bullets, lasers and rank in M1-09, the player weapons and Options in M1-10 and
 the power meter, capsules, Force Field and Mega Crash in M1-11, death, respawn, lives, score
 and the game-feel timers in M1-12, the bosses with their WARNING and death sequence in M1-13,
-rank growth, extends and continues in M2-01, and the pattern DSL's interpreter, bending lasers
-and cancel point items in M2-02.
+rank growth, extends and continues in M2-01, the pattern DSL's interpreter, bending lasers
+and cancel point items in M2-02, and the meter arsenal — Types B–D, Weapon Edit and the `!` / `?`
+choices of the config — in M2-03.
 Details: [sim-world.md](sim-world.md), [stage-runtime.md](stage-runtime.md),
 [enemies-and-behaviors.md](enemies-and-behaviors.md),
 [bullets-and-patterns.md](bullets-and-patterns.md),
@@ -274,7 +277,10 @@ system, status,
   `content/weapons/` (main shot, Double pair, piercing Laser that grows and follows its shooter,
   Missile that falls and slides along the floor), one loadout per player (`GameConfig.loadout`
   at creation), always-on autofire paced by `GameConfig.autofireInterval` / `missileInterval`
-  with caps per shooter; shots ride the camera, die on terrain, and hit the enemies through the
+  with caps per shooter; since M2-03 the arsenal is the config's (`weaponPreset` Type A–D,
+  `weaponEdit`) with nine more behaviours — Spread Bomb blasts, 2-Way volleys, the Photon Torpedo,
+  Tail Gun / Vertical / Free Way pairs, Ripple rings, Cyclone and Twin beams
+  ([meter-arsenal.md](meter-arsenal.md)); shots ride the camera, die on terrain, and hit the enemies through the
   grid (phase 6 finds the hits — equal to brute force — phase 7 applies them: armour clinks,
   piercing shots keep per-enemy cooldowns, kills are credited to a player). Up to four Options
   per ship follow a screen-space trail that advances only with movement input (D26) and fire
@@ -600,13 +606,14 @@ yet), `patterns` (implemented with M2-02: runner, movers, fire primitives and th
 `behaviors` (partial: the M1 enemy and boss rosters), `bosses` (partial: the P0 mechanics —
 timers, escapes, the HP bar, mid-bosses and raids with M2-09), `bullets` (implemented: bending lasers and cancel
 into points since M2-02 — graze is P2), `rank` (implemented with M2-01: growth, power terms, per-enemy sensitivity), `weapons`
-(partial: Type A — loadouts B–D and Direct mode later), `options` (partial: the standard trail),
-`powerups` (partial: meter mode), `shields` (partial: the Force Field), `scoring` (partial:
+(implemented for meter mode with M2-03: Types A–D and Weapon Edit — Direct mode with M2-05), `options` (partial: the standard trail),
+`powerups` (partial: meter mode, the `!` / `?` choices since M2-03 — Direct mode later), `shields` (partial: the Force Field), `scoring` (partial:
 scores, the session hi-score, extends and the continue digit — 1UP items later), `fx` (partial: the
 hit-stop / shake / flash requests — slowdown later), `ui` (partial: the list menu, slider,
 toggle, choice and confirm widgets, builders and the HUD — rebind prompt, name entry and the boss
 HP bar later), `scenes` (partial: the scene stack, the M1 flow, the Options screen, the difficulty
-menu and the continue countdown — the other M2 screens later);
+menu and the continue countdown, the weapon select with its live preview and the Auto order editor
+(M2-03) — the other M2 screens later);
 input-web `keymap`, `keyboard`, `gamepad`, `web-input`, `remote`, `rebind`
 (partial: profiles, contexts, the selectable profiles of CONTROLS — the rebinding UI comes in
 M2-16); audio-web `web-audio` (partial; driven by the Options sliders since M1-17), `synth`, `sfx`,
@@ -642,7 +649,7 @@ plugins in `vite.shared.ts`) has no `moduleInfo`; it is covered by the tests und
 | A boss or a boss behaviour | A boss is an `enemies` entry with a `boss` section (parts, weak points, phases) started by a stage `warning` event; a boss behaviour is a `defineBossBehavior` coroutine added to `DEFAULT_BOSS_BEHAVIOR_DEFS` — [bosses-and-warning.md](bosses-and-warning.md#extending-it) |
 | An item kind, a meter slot rule or a shield kind | `ITEM_KINDS` / `ItemKind` (appended), the meter's `canEquipSlot` / `equipSlot` and Auto Power-Up rules, a `ShieldSpec` in `SHIELD_SPECS` — [powerups-and-shields.md](powerups-and-shields.md#extending-it) |
 | A bullet pattern, bullet kind or laser | Since M2-02 a pattern is data: a `content/patterns/` action run by `pattern.loop` ([pattern-dsl.md](pattern-dsl.md#extending-it)); or a behaviour calling the `ScriptApi` fire primitives (`aimed`, `nWay`, `ring`, …, `laser`, `bendingLaser`, `fireWait`); a new primitive in `core/patterns` with its `ScriptApi` wrapper; a kind in `BULLET_KINDS` — [bullets-and-patterns.md](bullets-and-patterns.md#extending-it) |
-| A weapon, a weapon behaviour or an Option formation | A weapon is JSON in `content/weapons/` (tunables in `params`); a behaviour is a `ShotKind` plus its tables and a branch of the weapon system's `update()`; formations branch in `OptionGroup.follow` — [weapons-and-options.md](weapons-and-options.md#extending-it) |
+| A weapon, a weapon behaviour, a preset or an Option formation | A weapon is JSON in `content/weapons/` (tunables in `params`, a `name` for the weapon select); a preset is a `presets` entry the weapon select lists; a behaviour is a `ShotKind` plus its tables, a HUD label frame and a branch of the weapon system's `update()`; formations branch in `OptionGroup.follow` — [weapons-and-options.md](weapons-and-options.md#extending-it), [meter-arsenal.md](meter-arsenal.md#extending-it) |
 | Something the engine draws whatever the content | Add its sprite name to `ENGINE_SPRITES` (`core/bullets` `BULLET_SPRITES`, `core/options` `OPTION_SPRITE`, `core/powerups` `ITEM_SPRITES`, `core/shields` `FORCE_FIELD_SPRITE` and `core/ui` `UI_SPRITES` today): hosts pass it as `loadContent`'s `extraSprites` and `pnpm content:check` verifies it against the atlas |
 | A game system | Fill in its placeholder module in `packages/core/src/<module>/`, set `moduleInfo.status`, export it from `packages/core/src/index.ts`, call it from its phase function in `core/world` (never reorder `WORLD_PHASES`), allocate its state in `createWorld` and add simulated state to `hashWorld` — [sim-world.md](sim-world.md#extending-it) |
 | Content (enemies, weapons, stages, tilesets) | JSON under `content/` following its README, then `pnpm content:check` (try a stage with `pnpm dev` and `?stage=<id>`). New fields or a new kind: extend the schemas in `core/data` — checklist in [content-data.md](content-data.md#extending-it) |

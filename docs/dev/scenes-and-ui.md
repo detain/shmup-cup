@@ -7,6 +7,9 @@ the title and the pause menu), the `Choice` widget and the saved hi-scores — t
 user options and their live application are [saves-and-options.md](saves-and-options.md).
 **M2-01** added the difficulty menu under START and the continue countdown after a game over
 (the presets, rank, extends and continues themselves are [difficulty-and-rank.md](difficulty-and-rank.md)).
+**M2-03** added the weapon select after the difficulty menu — with its live preview and the Auto
+Power-Up order editor — and the HUD meter's weapon names (the arsenal itself is
+[meter-arsenal.md](meter-arsenal.md)).
 
 This page is the *how and why*. Exact signatures are in
 [api-reference.md](api-reference.md#scenes--scene-stack-and-the-m1-flow-partial) (`scenes`) and
@@ -37,6 +40,7 @@ outside the playfield).
 │      └─────────┘   └──────────┘   │ WARNING)│  start/retry)  │    │  sceneView.update(         │
 │      stageClear / continue / gameOver (overlays, frozen game)│    │    game.renderFrame())     │
 │      boot → title (PRESS OK, START/OPTIONS/EXIT) → difficulty│    │  → renderer.render(frame)  │
+│      → weapon select (live preview World, ORDER editor)      │    │                            │
 │  step(): poll → flow.tick(input) → top scene only            │    │ canvas data-shmup-scene    │
 │  renderFrame(): flow.updateFrame() → world view + HUD while  │    └────────────────────────────┘
 │    the game is visible, one UI list, the top scene's dim     │
@@ -103,9 +107,9 @@ is on top) and `uiRevision` (bumped whenever `drawUi` would draw something else)
 
 ## The M1 flow (`createSceneFlow`)
 
-`createSceneFlow(host, start)` creates the ten scenes (eight in M1, the difficulty menu and the
-continue countdown since M2-01), their menus, the UI draw list (256
-commands, 96 string slots) and the game scene's placeholder World once, then `reset`s the stack to
+`createSceneFlow(host, start)` creates the twelve scenes (eight in M1, the difficulty menu and the
+continue countdown since M2-01, the weapon select and its order editor since M2-03), their menus,
+the UI draw list (256 commands, 160 string slots — 96 before M2-03) and the game scene's placeholder World once, then `reset`s the stack to
 the start scene. `SceneFlowHost` is what the flow needs from the session: `config`, `content`,
 `events`, `exit` (`platform.exit` or `null`), `createWorld(config?)` (since M2-01 with the chosen
 difficulty's config) and, since M1-17, `save` (a `core/save`
@@ -117,7 +121,9 @@ Options screen's CONTROLS — disabled when omitted). `createGame` passes `GameO
 |---|---|---|---|---|
 | `BootScene` | no / 0 / menu | `LOADING` (or a label) and a progress bar (`setBootProgress`) | — | title on the tick after `finishBoot()` (`replace`) |
 | `TitleScene` | no / 0 / menu | `ui/logo` (or `SHMUP CUP` as text), `PRESS OK` blinking (32-tick half period), then the menu START / OPTIONS / EXIT at y 118; `HI` and the session hi-score (the save's best at start) at the bottom | OK: prompt → menu (locked 2 ticks, focus START); START → the difficulty menu (M2-01; before, the game); OPTIONS → Options; EXIT → confirm; Back: confirm if the platform can exit, else menu → `PRESS OK` | difficulty, options, confirm (`push`) |
-| `DifficultyScene` (M2-01) | yes / 0.5 / menu | Opaque panel, `DIFFICULTY`, EASY / NORMAL / HARD / ARCADE (focus on the preset chosen last, at first the host config's), the focused preset's `LIVES`, `CONTINUES` and `HI` | Up / Down move (wrap); OK chooses the preset; Back closes | game (`reset` — its World on that preset's config), title menu (`pop`) |
+| `DifficultyScene` (M2-01) | yes / 0.5 / menu | Opaque panel, `DIFFICULTY`, EASY / NORMAL / HARD / ARCADE (focus on the preset chosen last, at first the host config's), the focused preset's `LIVES`, `CONTINUES` and `HI` | Up / Down move (wrap); OK chooses the preset; Back closes | weapon select (`push`, M2-03 — before, the game), title menu (`pop`) |
+| `WeaponSelectScene` (M2-03) | no / 0 / menu | Panel on the left: `WEAPON SELECT`, TYPE (`TYPE A` … `TYPE D`, `EDIT`), MISSILE / DOUBLE / LASER (the type's weapons, disabled unless EDIT), `? SLOT`, `! SLOT`, AUTO, ORDER (one-letter summary), START, two hints; behind it, full screen, the live preview World (no HUD) | Up / Down move (disabled rows skipped); Left / Right / OK change a value; OK on ORDER → the editor; OK on START starts; Back closes. Opens focused on START (2-tick lock) | game (`reset` — its World on the difficulty's config with this loadout, `withArsenal`), order editor (`push`), difficulty menu (`pop`) |
+| `AutoOrderScene` (M2-03) | yes / 0.35 / menu | Panel on the right: `AUTO ORDER`, rows `1` … `12` (a meter slot or `-`), DONE | Up / Down move; Left / Right / OK step a row; DONE or Back store the rows and close | weapon select (`pop`) |
 | `GameScene` | no / 0 / **game** | The World (view + HUD), the boss WARNING band in the UI list | Pause or Back → pause menu (that tick the World does not step) | pause, stage clear (90 World ticks after `stageClear`), game over (30 after `gameOver`) — or, with continues left (`canContinue`), the continue countdown (M2-01) — all `push` |
 | `PauseScene` | yes / 0.5 / menu | Panel, `PAUSE`, RESUME / OPTIONS / RETRY STAGE / QUIT TO TITLE | Pause, Back, RESUME → resume; OPTIONS → Options (the game stays frozen); RETRY STAGE → `game.restart()` + pop (no confirmation); QUIT TO TITLE → confirm | game (`pop`), options, confirm (`push`) |
 | `OptionsScene` (M1-17) | yes / 0.5 / menu | Opaque panel, `OPTIONS`, MASTER / MUSIC / SFX sliders (0–10), CONTROLS (the input profile's label, a `Choice`), BULLETS (M2-02: the enemy bullet palette, a `Choice` of `BULLET_PALETTE_LABELS`), BACK | Up / Down move; Left / Right change a slider or step CONTROLS / BULLETS (OK steps them too), each change pushed live as a `UserOption` event; BACK or Back store the options in the save, flush it and close | title / pause menu (`pop`) |
@@ -150,6 +156,8 @@ screen and the live `UserOption` events are in [saves-and-options.md](saves-and-
 | Options screen | store the options, write the save if they changed, close (back to the title or the pause menu) | — |
 | Confirm dialog | NO (close) | — |
 | Difficulty menu (M2-01) | back to the title menu | — |
+| Weapon select (M2-03) | back to the difficulty menu (the choice made so far is kept, but only START hands it to a game) | — |
+| Auto order editor (M2-03) | store the rows (like DONE) and close | — |
 | Continue countdown (M2-01) | give up → game over (after the 30-tick lock) | — |
 | Game over | title (after the 30-tick lock) | — |
 | Stage clear | — | — |
@@ -179,7 +187,8 @@ both tables give it.
 ## Worlds, events and the frame
 
 The game scene **owns the World**: its `enter()` (a game start) and `restart()` (RETRY STAGE) call
-`host.createWorld(flow.gameConfig)` — a new World from the chosen difficulty's config (M2-01; the
+`host.createWorld(flow.gameConfig)` — a new World from the chosen difficulty's config (M2-01;
+since M2-03 with the weapon select's loadout applied by `withArsenal`; the
 same config for every start on that preset, so the same inputs replay the same game;
 the flow's lockstep test runs two flows through menus and retries and compares `hashWorld`), with
 the session hi-score set on its scoring board. Creating a World is a scene transition, never part
@@ -200,8 +209,8 @@ stage theme again.
 
 | Frame field | While the game scene is visible (on top or under overlays) | Otherwise (boot, title) |
 |---|---|---|
-| `world` | the World's view | `null` |
-| `tick` | the **World's** tick — frozen under the pause menu and the end screens, back to 0 for a new World | the flow's own tick count |
+| `world` | the World's view | `null` — or, while the weapon select is visible (also under its order editor), its preview World's view (M2-03) |
+| `tick` | the **World's** tick — frozen under the pause menu and the end screens, back to 0 for a new World | the flow's own tick count (the preview's tick while it shows) |
 | `hud` | the game scene's HUD list (`Hud.update` — rebuilt only on a change) | an empty list |
 | `ui` | every visible scene's widgets (one list) | same |
 | `screen.dim` | the top scene's `dim` | same |
@@ -216,7 +225,7 @@ The visible scenes are the topmost non-overlay scene and every overlay above it 
 the pause menu under the dialog). `updateFrame()` rebuilds the UI list — `clear()`, then each
 visible scene's `drawUi(list)` bottom to top — **only when** the visible set changed or one of
 their `uiRevision`s moved since the last build; otherwise the list keeps its `revision` and the
-renderer skips it. Each scene owns a disjoint range of the 96 string slots (`stringBase`,
+renderer skips it. Each scene owns a disjoint range of the 160 string slots (96 before M2-03; `stringBase`,
 `stringSlots`, assigned in the flow's constructor — it throws if they do not fit), so scenes drawn
 together never overwrite each other's text. That is why the confirm dialog sits over the still
 visible pause menu; its panel is opaque (alpha 255) so the menu's text does not show through.
@@ -307,7 +316,11 @@ stock icons (`hud/life`; more than 5 show one icon and the count); the seven met
 (`HUD_METER_FLASH_TICKS`), frame 2 for a slot `world.powerups.equippable(0)` excludes, frame 0
 otherwise) with the slot's `hud/meter-labels` frame tinted white or grey; and, while the Force
 Field is up, one pip per hit it can take (at most 5), cyan for the hits left. The labels are the
-atlas's (`SPEED MISSILE DOUBLE LASER OPTION ? !`), not the plan's abbreviations. Without the UI
+atlas's (`SPEED MISSILE DOUBLE LASER OPTION ? !`), not the plan's abbreviations; since M2-03
+`meterLabelFrame(world, slot)` names the MISSILE / DOUBLE / LASER boxes after the session's
+weapons (`SPREAD`, `TAIL`, `RIPPLE` for Type B, `2-WAY`, `VERTICAL`, `CYCLONE` for Type C,
+`TORPEDO`, `FREE WAY`, `TWIN` for Type D — 16 frames in `METER_LABEL_FRAMES`); `?` and `!` keep
+their symbols. Without the UI
 sprites (a content table that lacks them, `EMPTY_CONTENT_DB`) icons and slots become rectangles and
 the labels are left out. The worst case is 32 commands; the game scene's HUD list has 64.
 
@@ -348,13 +361,16 @@ only up for the first tick; the loading before the renderer exists stays on the 
 - **In a game in open space** a wrapper `WorldView` — two starfield batches, then the World's
   batches, on the World's camera with its terrain / laser / WARNING views — built **once per
   World** (a new object, bound by the renderer on its first frame). A stage's own view (it has
-  parallax bands) is used as is.
+  parallax bands) is used as is. Since M2-03 "the World" is whichever World view the frame shows —
+  the game's or the weapon select's preview (on the weapon range, a stage: used as is) — so opening
+  the weapon select counts as a new World too.
 - `camera` follows the World on screen (`follow()` after the ticks, before the drain — the audio
   pans against it); `worldChanges` counts new Worlds (the shell then clears particles and popups).
 - `spriteNames` = the content's names, then `SCENE_VIEW_SPRITES` (the three star tiles).
 
 The canvas carries `data-shmup-scene` (`SCENE_ATTRIBUTE`): the top scene's id (`boot`, `title`,
-`game`, `pause`, `options`, `confirm`, `stageClear`, `gameOver`) or the dev scene's name — the e2e tests wait
+`difficulty`, `weaponSelect`, `autoOrder`, `game`, `pause`, `options`, `confirm`, `stageClear`,
+`gameOver`, …) or the dev scene's name — the e2e tests wait
 on it. `?scene=flight` keeps the old bare-gameplay free flight with its own dev HUD (`FREE
 FLIGHT`, `ARROWS MOVE`, `GAME OVER` in the top bar); the gameplay e2e specs of M1-06…M1-15 open it.
 
@@ -381,7 +397,9 @@ outside the World.
 - Text is `setString` into the scene's own slots only when it changes; numbers are `number`
   commands.
 - The only allocation in the flow is `host.createWorld()` on a game start or RETRY — a scene
-  transition — plus, in the shell, one wrapper view per open-space World. Since M1-17 also the
+  transition — and since M2-03 the weapon select's preview World (created when the screen opens;
+  its range's spawns create their behaviour coroutines, D29) and its START (the loadout and the
+  armed configs), plus, in the shell, one wrapper view per open-space World. Since M1-17 also the
   save's new document when the Options screen closes or a game ends (menu actions, never ticks);
   the Options screen itself ticks and redraws allocation-free (`scenes-options-alloc.test.ts`).
 
@@ -408,17 +426,19 @@ outside the World.
 | `packages/core/test/scenes/scenes-alloc.test.ts`, `scenes-menu-alloc.test.ts` | A whole game and 20,000 menu ticks without allocation |
 | `packages/core/test/ui/ui-choice.test.ts`, `ui-choice-edge.test.ts` | The `Choice` widget (M1-17): label limits, clamping, wrap and repeat, Confirm stepping, disabled, the label's string slot |
 | `packages/core/test/scenes/scenes-options.test.ts`, `scenes-options-edge.test.ts`, `scenes-options-alloc.test.ts` | The Options screen from the title and the pause menu, live `UserOption` events, saving on BACK / Back, hi-scores recorded on the end screens and `NEW HI-SCORE`, the hi-score persisting across game instances, allocation-free ticking (M1-17 — [saves-and-options.md](saves-and-options.md#tests)) |
+| `packages/core/test/scenes/scenes-weapon-select.test.ts`, `-edge`, `-alloc` | M2-03: the weapon select (flow, TYPE / EDIT / locked rows, `?` / `!` / AUTO / ORDER into the config, Back, RETRY keeping the loadout, the live preview, no weapons / no range) and the order editor; allocation-free with the preview flying — [meter-arsenal.md](meter-arsenal.md#tests) |
 | `packages/core/test/scenes/scenes-continue.test.ts`, `scenes-continue-edge.test.ts`, `scenes-continue-alloc.test.ts` | M2-01: the difficulty menu (order, wrap, sounds, Back, the World's preset, per-preset hi-scores) and the continue countdown (timing, lock, held OK, timeout, resume, the recorded score) — [difficulty-and-rank.md](difficulty-and-rank.md#tests) |
 | `packages/core/test/game/game-scenes.test.ts`, `game-scenes-edge.test.ts` | `GameOptions.scenes`, `game.world` / `inputContext` across transitions, EXIT only with `platform.exit`, the dim cleared on resume, bare gameplay ignoring a game over |
-| `packages/shell/test/boot/`, `scene-view/` | The flow's boot (title theme prepared, `finishBoot`, `data-shmup-scene`), the scene view (backdrop drift per layer, open-space starfield frozen under pause, the followed camera before a frame and after quitting, `worldChanges`) |
+| `packages/shell/test/boot/`, `scene-view/` | The flow's boot (title theme prepared, `finishBoot`, `data-shmup-scene`), the scene view (backdrop drift per layer, open-space starfield frozen under pause, the followed camera before a frame and after quitting, `worldChanges`; since M2-03 the weapon select's preview view — `scene-view-preview.test.ts`) |
 | `apps/*/test/boot/boot-wiring.test.ts` | Title start and Back through the stack (Tizen: the exit confirmation, `exit` only after YES; a direct exit only from the boot error screen) |
-| `test/e2e/scenes.spec.ts`, `boot.spec.ts`, `options.spec.ts` (M1-17: the Options screen and the save, both builds) | Web: Enter starts the game from the title (past `PRESS OK`, START, then OK on the difficulty menu since M2-01), Esc pauses (dimmed, frozen) and resumes, Back on the title only backs out; Tizen from disk: OK starts, Back (10009) pauses and resumes, with a fake `window.tizen` Back on the title opens the confirmation and `exit()` runs only after YES; both builds boot to the title (logo, no ship), `?scene=flight` to free flight |
+| `test/e2e/scenes.spec.ts`, `boot.spec.ts`, `options.spec.ts` (M1-17: the Options screen and the save, both builds), `weapon-select.spec.ts` (M2-03) | Web: Enter starts the game from the title (past `PRESS OK`, START, then OK on the difficulty menu since M2-01 and OK on the weapon select's START since M2-03), Esc pauses (dimmed, frozen) and resumes, Back on the title only backs out; Tizen from disk: OK starts, Back (10009) pauses and resumes, with a fake `window.tizen` Back on the title opens the confirmation and `exit()` runs only after YES; both builds boot to the title (logo, no ship), `?scene=flight` to free flight |
 
 ## Gotchas
 
 | Symptom | Cause / fix |
 |---|---|
-| START does not start a game | Since M2-01 it opens the difficulty menu — one more OK starts. Scripts and specs that pressed OK twice from the title need a third |
+| START does not start a game | Since M2-01 it opens the difficulty menu, and since M2-03 its OK opens the weapon select (focused on START) — two more OKs start. From `PRESS OK` a game takes four OKs |
+| A game's weapons are not the host config's | The weapon select's START applied its loadout (`SceneFlow.arsenal`, `withArsenal`) to every difficulty's config for the rest of the session — read `game.world.config` |
 | A game's World has another `difficulty` than `game.config` | The difficulty menu: the World runs `withDifficulty(host config, chosen)` — read `game.world.config` |
 | A test or tool that keeps `game.world` sees a frozen game after START or RETRY | With the flow, every start creates a new World — read `game.world` again (or use bare gameplay: no `options.scenes`) |
 | Events already in `host.events` when `createSceneFlow` ran are gone | The flow clears the queue after creating its placeholder World (to drop the stage theme it queued) — create the flow before pushing anything |
@@ -429,7 +449,8 @@ outside the World.
 | OK on the title does nothing the first time | Expected: the first OK only leaves `PRESS OK`; the menu then locks activation for 2 ticks (an OK in that window is buffered, not lost) |
 | Back on the title does nothing in a browser | Expected on `PRESS OK`; in the menu it goes back to `PRESS OK`. The exit confirmation needs `platform.exit` (the TV) |
 | OK on an Options slider does nothing | Expected: sliders change with Left / Right; OK is silent on them (it steps CONTROLS and activates BACK) |
-| A new scene throws `RangeError` about string slots at flow creation | The scenes together need more than the UI list's 96 string slots — a choice item takes one slot more than `items + 3` |
+| A new scene throws `RangeError` about string slots at flow creation | The scenes together need more than the UI list's 160 string slots (96 before M2-03) — a choice item takes one slot more than `items + 3` |
+| The renderer shows a World while no game runs | The weapon select's live preview (M2-03) — `SceneFlowView.world` is its view while that screen is visible |
 | The HUD never updates | Something else clears the scores' dirty flags (another HUD over the same World), or the new state is not in `Hud.update`'s comparison |
 | The HUD shows rectangles instead of the meter boxes | The content was loaded without `ENGINE_SPRITES` (the UI sprites are in it since M1-16) or the atlas lacks them |
 | Explosions of the last game show after RETRY | The host did not clear its particles on a new World — watch `sceneView.worldChanges` (the shell does) |
@@ -451,6 +472,9 @@ outside the World.
 - **M2-01** (done) — the difficulty menu under START (a config and a session hi-score per
   preset), the continue countdown between the game and the game-over screen
   ([difficulty-and-rank.md](difficulty-and-rank.md)).
-- **M2-10 / M2-15** — the zone map, attract mode, mode / ship / weapon select, name entry, the
-  hi-score table; **M2-16** — rebinding and accessibility options; the boss HP bar and the co-op P2
-  meter in the HUD (M2).
+- **M2-03** (done) — the weapon select after the difficulty menu (TYPE A–D / EDIT, `?`, `!`, AUTO,
+  ORDER, START) with a live preview World and the Auto Power-Up order editor; the HUD meter names
+  its MISSILE / DOUBLE / LASER boxes after the arsenal ([meter-arsenal.md](meter-arsenal.md)).
+- **M2-05 / M2-10 / M2-15** — the ship select, the zone map, attract mode, mode select, name
+  entry, the hi-score table; **M2-16** — rebinding and accessibility options (and the loadout
+  saved); the boss HP bar and the co-op P2 meter in the HUD (M2).

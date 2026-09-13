@@ -5,7 +5,9 @@ How meter mode's power-up economy works inside `@shmup/core`: the **power-up sys
 the `PowerUp` action (remote OK), the optional **Auto Power-Up**, the 32-slot struct-of-arrays
 **item pool** of power capsules (drops, pickup magnet, pickups worth 300 points), **Mega Crash**
 (the `!` slot), and the **Force Field** of `core/shields` that lives on every ship and takes hits
-inside `playerHit`. Built in plan step **M1-11**.
+inside `playerHit`. Built in plan step **M1-11**; plan step **M2-03** added the **`!` choices**
+(Mega Crash, NORMAL, SPEED DOWN, LIFE OPTION, FULL BARRIER), the **`?` choice** and the meter
+equipping the session's weapon type — the step's own page is [meter-arsenal.md](meter-arsenal.md).
 
 This page is the *how and why*. Exact signatures are in
 [api-reference.md](api-reference.md#powerups--power-meter-capsules-mega-crash-partial-meter-mode);
@@ -18,7 +20,8 @@ loadout the meter equips and the weapons it switches on are
 
 Background: `shmup_feat.md` §6A (the Gradius meter: `SPEED UP | MISSILE | DOUBLE | LASER |
 OPTION | ? | !`, capsules from red enemies and whole formations, 300-point capsules, every quick
-pickup counts, Auto Power-Up), §6C (pickup feedback), §7A (the `!` slot: Mega Crash), §9 (the
+pickup counts, Auto Power-Up), §6C (pickup feedback), §7A (the `!` slot: Mega Crash, and since
+M2-03 its other choices), §9 (the
 Force Field: hit counter, visible wear, break effect, shield-hit i-frames), §4 rule 4 (OK = equip,
 a rare non-urgent press; Auto Power-Up for the remote), §11 (capsule carriers); plan §3.2 (tick
 phases) and decisions **D1** (Meter mode is the default), **D2** (Auto Power-Up, off by
@@ -53,7 +56,7 @@ stepWorld, every tick
 
 ## Configuration
 
-Four `GameConfig` fields drive it — sim-affecting, so they are recorded in replay headers and
+Six `GameConfig` fields drive it — sim-affecting, so they are recorded in replay headers and
 validated by `resolveGameConfig`:
 
 | Field | Default | Meaning |
@@ -62,12 +65,17 @@ validated by `resolveGameConfig`:
 | `autoPowerUp` | `false` (D2) | Equip the next wanted slot of the order as soon as a capsule moves the cursor onto it |
 | `autoPowerUpOrder` | `DEFAULT_AUTO_POWER_UP_ORDER` | `speed, missile, laser, option ×4, shield` — 0 to `MAX_AUTO_POWER_UP_ORDER` (32) `MeterSlotName`s; anything else throws `RangeError`; the resolved config holds a frozen copy |
 | `pickupMagnet` | `true` (D33) | Items near an alive ship drift into it |
+| `megaChoice` | `'megaCrash'` | What `!` does (M2-03): `megaCrash`, `normal`, `speedDown`, `lifeOption`, `fullBarrier` |
+| `shieldChoice` | `'forceField'` | What `?` grants (M2-03): `forceField` only until M2-04 |
 
 The slot **names** (`MeterSlotName`, `METER_SLOT_NAMES`: `speed missile double laser option
 shield mega` — `?` = `shield`, `!` = `mega`) live in `core/config`, so the config never imports
-`core/powerups`; `core/powerups` numbers them (`MeterSlot` 0–6, `meterSlotOf(name)`). No app
-exposes these fields yet: the Options screen's Game group of M2-16 will (the M1-17 Options screen
-has the audio sliders and the controls profile only).
+`core/powerups`; `core/powerups` numbers them (`MeterSlot` 0–6, `meterSlotOf(name)`). Since M2-03
+the **weapon select** before every game sets `autoPowerUp` (AUTO), `autoPowerUpOrder` (ORDER — the
+order editor's 12 rows), `megaChoice` (`! SLOT`) and `shieldChoice` (`? SLOT`) for the session
+([meter-arsenal.md](meter-arsenal.md#the-weapon-select-corescenes)); `pickupMagnet` and
+`powerUpMode` wait for the Options screen's Game group of M2-16, which will also save them.
+`meterChoicesOf(config)` turns the two choices into the system's `choices` (`MeterChoices`).
 
 ## The meter
 
@@ -77,12 +85,16 @@ unboxed small integer). `cursor` is `-1` (nothing highlighted) or a `MeterSlot`:
 | Code | Slot | Equips | Greyed (`canEquipSlot` false) when |
 |---|---|---|---|
 | 0 | `Speed` | `ship.speedLevel + 1` | at the top speed — `speeds.length − 1` (5 for the KESTREL's six speeds) |
-| 1 | `Missile` | `loadout.missile = true` | already owned |
-| 2 | `Double` | `loadout.main = MainWeapon.Double` (the Laser is gone) | the Double is already the main weapon |
-| 3 | `Laser` | `loadout.main = MainWeapon.Laser` (the Double is gone) | the Laser is already the main weapon |
+| 1 | `Missile` | `loadout.missile = true` — the arsenal's Missile-role weapon (M2-03) | already owned |
+| 2 | `Double` | `loadout.main = MainWeapon.Double` (the Laser is gone) — the arsenal's Double-role weapon | the Double is already the main weapon |
+| 3 | `Laser` | `loadout.main = MainWeapon.Laser` (the Double is gone) — the arsenal's Laser-role weapon | the Laser is already the main weapon |
 | 4 | `Option` | `loadout.options + 1` | `MAX_OPTIONS` (4) |
-| 5 | `Shield` (`?`) | a fresh Force Field (`grantShield`) | a shield is up |
-| 6 | `Mega` (`!`) | arms Mega Crash (below) | never |
+| 5 | `Shield` (`?`) | a fresh `?` shield (`grantShield(choices.shield)` — the Force Field until M2-04) | a shield is up |
+| 6 | `Mega` (`!`) | the `!` choice: Mega Crash arms a detonation (below); NORMAL, SPEED DOWN, LIFE OPTION and FULL BARRIER act at once (M2-03 — [meter-arsenal.md](meter-arsenal.md#the--and--choices-corepowerups)) | Mega Crash never; NORMAL on the basic shot, SPEED DOWN at level 0, LIFE OPTION without a spare ship or room, FULL BARRIER at full strength |
+
+Which *weapon* a MISSILE / DOUBLE / LASER slot switches on is the session's arsenal (`core/weapons`
+`resolveArsenal`: `GameConfig.weaponPreset`, Type A by default, and `weaponEdit` — M2-03); the
+meter itself only sets the loadout fields.
 
 - **A capsule** advances the cursor (`advanceMeter`): `-1 → Speed`, then one slot per capsule,
   wrapping after `!` back to Speed. A cursor that is not a slot or `-1` (a debug tool wrote it,
@@ -96,15 +108,18 @@ unboxed small integer). `cursor` is `-1` (nothing highlighted) or a `MeterSlot`:
   pairs) never re-equips — `test/integration/powerups-remote.test.ts` drives this through the
   shipped `tizen-remote-safe` profile, including OK while an arrow is held (the ship keeps
   moving).
-- **Double / Laser** are mutually exclusive through `loadout.main`; there is no way back to the
-  basic shot through the meter.
+- **Double / Laser** are mutually exclusive through `loadout.main`; the only way back to the
+  basic shot through the meter is the `!` choice NORMAL (M2-03).
 - The plan's `canEquip(slot)` needs the state, so the pure form is
-  `canEquipSlot(slot, ship, loadout, maxSpeedLevel)` (and `equipSlot` with the same arguments);
+  `canEquipSlot(slot, ship, loadout, maxSpeedLevel, choices?)` (and `equipSlot` with the same
+  arguments; `choices` defaults to `DEFAULT_METER_CHOICES`, the ship is a `MeterShip` — `lives`
+  only for LIFE OPTION — since M2-03);
   the system adds `canEquip(player, slot)` and `equippable(player)` — a bit mask of the
   equippable slots (`equippableSlots`) for the HUD, which greys the others. Since M1-16 the core
   HUD (`core/ui` `buildHud`, drawn by the scene flow) shows the meter in the bottom bar: seven
   `hud/meter-slot` boxes with the `hud/meter-labels` frames (`METER_LABELS`, here and in the
-  asset pipeline's `hud.mjs`: `SPEED MISSILE DOUBLE LASER OPTION ? !`), the highlighted slot
+  asset pipeline's `hud.mjs`: `SPEED MISSILE DOUBLE LASER OPTION ? !` — since M2-03 the MISSILE /
+  DOUBLE / LASER boxes show the arsenal's weapon names, `core/ui` `meterLabelFrame`), the highlighted slot
   (`meters[0].cursor`) flashing every 8 ticks, the slots `equippable(0)` excludes greyed
   ([scenes-and-ui.md](scenes-and-ui.md#the-hud)). The `?scene=flight` dev scene still draws no
   meter.
@@ -124,7 +139,7 @@ slot, and for Double / Laser entries the set of main weapons that satisfy them),
 | `double` / `laser` | the main weapon is that one **or** the weapon of any later Double / Laser entry (so `laser, double` never ping-pongs) |
 | `option` (the `n`-th) | `options ≥ min(n, 4)` |
 | `shield` | a shield is up |
-| `mega` | never (the order stops there) |
+| `mega` | never (the order stops there) — a `!` choice other than Mega Crash is applied whenever a capsule lands on `!` and it can act; a greyed choice parks the cursor (M2-03) |
 
 The order is re-evaluated at every pickup, so a loss — a broken Force Field, a death penalty
 (M1-12) — is wanted again. `-1` means the order is satisfied (or empty): the meter then only
@@ -216,8 +231,9 @@ on the tick of the hit that started them: a hit on tick `t` (phase 6) blocks the
 `t + 1 … t + 8`. `resolve()` then pushes the events of a hit on this tick: `SFX ShieldHit`, or on
 a break `SFX ShieldBreak` + `Particles FX_CUES.ShieldBreak` (param 1). Blocked hits push nothing.
 
-**Granting and clearing.** The `?` slot (and `applyLoadoutPreset(…, 'full')`) calls
-`grantShield(state, spec = FORCE_FIELD)`: full hits, **i-frames reset to 0**, replacing whatever
+**Granting and clearing.** The `?` slot, the `!` choice FULL BARRIER and
+`applyLoadoutPreset(…, 'full', shield)` call `grantShield(state, spec)` with the session's `?`
+spec (`shieldSpecOf(config.shieldChoice)` — `FORCE_FIELD` until M2-04; M2-03): full hits, **i-frames reset to 0**, replacing whatever
 was there. `clearShield` removes it without a break (the `'default'` loadout; every death
 penalty since M1-12). `shieldActive(state)` = a kind other than `None` with hits left — while it is true the
 `?` slot is greyed.
@@ -231,7 +247,8 @@ field shows fresh at 5 and 4 hits, then worn (3), damaged (2), critical (1). It 
 
 ## Mega Crash (the `!` slot)
 
-Equipping `!` sets `megaPending[p]`; `resolve()` detonates it in phase 7 of the **same tick** —
+With the default `!` choice (`megaChoice: 'megaCrash'` — the only one that does, M2-03), equipping
+`!` sets `megaPending[p]`; `resolve()` detonates it in phase 7 of the **same tick** —
 after the player shots' hits and the pickups (an Auto Power-Up order that reaches `mega`
 detonates on the pickup's own tick) — so its kills are scored and drop capsules like any other.
 `detonateMegaCrash(player)` (also callable directly by tests and tools):
@@ -357,7 +374,8 @@ powerups.detonateMegaCrash(0); // debug: clear the screen now
 |---|---|
 | An item kind (Direct mode, M2-05) | Append an `ItemKind` code (hashed) and an `ITEM_KINDS` entry (sprite, frames, score) — `ITEM_SPRITES` and `ENGINE_SPRITES` follow; its art in `scripts/assets/procedural/`; what it does in `resolve()` (today only capsules call `collect`) |
 | A drop kind | `DropKind` in `core/enemies` (M1-08), then map it in `takeDrops` |
-| A meter slot rule or a `!` variant (M2-03) | `canEquipSlot` / `equipSlot`, the matching `nextAutoSlot` rule, `METER_LABELS` and the `hud/meter-labels` art; a new slot also needs `METER_SLOT_NAMES` / `MeterSlotName` in `core/config` |
+| A meter slot rule | `canEquipSlot` / `equipSlot`, the matching `nextAutoSlot` rule, `METER_LABELS` and the `hud/meter-labels` art (`core/ui` `METER_LABEL_FRAMES`); a new slot also needs `METER_SLOT_NAMES` / `MeterSlotName` in `core/config` |
+| A `!` choice | `MegaChoice` / `MEGA_CHOICES` in `core/config` and `MegaEffect` here (same order), its rule in `canEquipMega` and its effect in `applyMega`, a label in `core/scenes` `MEGA_CHOICE_LABELS` ([meter-arsenal.md](meter-arsenal.md#extending-it)) |
 | A shield kind (pods, Free / Rotate Shield, Reduce — M2-04; Arm tiers — M2-05) | Append a `ShieldKind` code and name, a `ShieldSpec` in `SHIELD_SPECS` (`absorbsTerrain: true` for the Arm tiers), its sprite in `ENGINE_SPRITES`, grant it from its slot; keep `absorbShieldHit` allocation-free and hash any new state in `mixPowerUps` |
 | Something that reacts to pickups (like `core/scoring`, M1-12) | Read `world.powerups.outcomes` (`pickupCount`, `pickupPlayer`, `pickupScore`, …) after `powerups.resolve()` in phase 7 — reset in phase 6 |
 | Something the HUD meter shows | `core/ui` `buildHud` draws `meters[0].cursor` (flashing every `HUD_METER_FLASH_TICKS`) and greys the slots missing from `equippable(0)`; add any new state it depends on to `Hud.update`'s comparison ([scenes-and-ui.md](scenes-and-ui.md#the-hud)) |
@@ -374,6 +392,7 @@ powerups.detonateMegaCrash(0); // debug: clear the screen now
 | `packages/core/test/config/`, `debug/`, `events/`, `player/`, `weapons/`, `world/`, `packages/shell/test/flight/` | `powerUpMode` / `autoPowerUpOrder` validation and defaults; the power-ups in `hashWorld`; the new event codes; the `shield` field; the `'full'` loadout's Force Field; the World's and the flight scene's batch lists |
 | `test/integration/powerups-runtime.test.ts` | The shipped `test-range`: formation kill → capsule → one OK press equips Speed (input only); a carrier's capsule drawn as `items/capsule`; Auto Power-Up growing the loadout without a button; Mega Crash mid-stage; a capsule-hunting bot within every bound, lockstep hashes |
 | `test/integration/powerups-remote.test.ts` | Real `keydown` / `keyup` through `@shmup/input-web` and the `tizen-remote-safe` profile: one equip per OK press (auto-repeat and fake release pairs never re-equip), OK while an arrow is held keeps the ship moving, a denied press, replay to the same hash |
+| `packages/core/test/powerups/powerups-arsenal*.test.ts` | M2-03: the loadout → meter mapping for every type and a Weapon Edit, every `!` choice (pure rules and in a World — only Mega Crash detonates), Auto Power-Up equipping or parking on `!`, the HUD's label frames ([meter-arsenal.md](meter-arsenal.md#tests)) |
 | `test/e2e/powerups.spec.ts` | In Chromium: `?loadout=full` draws the fresh cyan Force Field ring around the ship; the default web boot and the Tizen build (which ignores `?loadout=full`) never show it; no console errors or unknown-sprite warnings |
 
 ## Gotchas
@@ -409,5 +428,8 @@ powerups.detonateMegaCrash(0); // debug: clear the screen now
   frames, the highlighted slot flashing every 8 ticks) ([scenes-and-ui.md](scenes-and-ui.md#the-hud)).
 - **M2-02** (done) — Mega Crash cancels into point items for the bomber (`CancelMode.Points`)
   ([bullets-and-patterns.md](bullets-and-patterns.md#cancel)).
-- **M2-03** — loadouts B–D and `!` variants; **M2-04** — the other meter shields and the Option
-  Hunter; **M2-05** — Direct mode's items and the Arm tiers.
+- **M2-03** (done) — the `!` choices and the `?` choice (`MeterChoices`), the meter equipping
+  the session's weapon type, the weapon select setting them with Auto Power-Up and its order
+  ([meter-arsenal.md](meter-arsenal.md)).
+- **M2-04** — the other meter shields (they join `SHIELD_CHOICES`) and the Option Hunter;
+  **M2-05** — Direct mode's items and the Arm tiers.

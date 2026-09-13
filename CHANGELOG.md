@@ -34,14 +34,34 @@ versions before 1.0 may change anything between minor releases. Development foll
   `pattern.loop` behaviour. **Bending lasers** (homing, circle-chain hitbox) exist in the engine.
   Neither is used by zone A yet, so it plays as before (apart from the cancel points).
 - The golden replays were re-blessed again for M2-02 (new bullet state, cancel points).
+- **Weapon types B–D and Weapon Edit** (M2-03): nine new weapons with original names — Spread Bomb
+  (bursts into a blast that hits twice), 2-Way Missile, Photon Torpedo (flies on through what it
+  destroys), Tail Gun, Vertical, Free Way (its second shot follows the last direction you moved),
+  Ripple Laser (growing rings that hit with their edge), Cyclone Laser, Twin Laser — as presets
+  **Type B**, **C** and **D** next to the classic Type A, or mixed freely with **EDIT**. The power
+  meter's boxes are named after the chosen weapons.
+- **`!` and `?` choices** (M2-03): the `!` box can be the Mega Crash, NORMAL (back to the basic
+  gun), SPEED DOWN, LIFE OPTION (spare ships become Options) or FULL BARRIER (a fresh Force Field);
+  `?` gives the Force Field (more shields come with M2-04).
+- **WEAPON SELECT** screen after the DIFFICULTY menu (M2-03) — one more OK to start a game (START is
+  highlighted): the type, the three slot weapons under EDIT, `?`, `!`, Auto Power-Up and its
+  **order** (an AUTO ORDER box), with a **live preview** of the choice flying over a practice range
+  behind the panel. The choice lasts for the session.
+- Behaviour change for tools and tests (M2-03): `GameConfig` has `weaponPreset`, `weaponEdit`,
+  `megaChoice` and `shieldChoice` (replay headers record them; older headers decode to the
+  defaults); the golden replays were re-blessed (the new content shifts sprite ids, the Free Way
+  direction is hashed — same outcomes) and four boss runs with the new weapons were added.
 
 ### Documentation
 
-- New developer guides [`docs/dev/difficulty-and-rank.md`](docs/dev/difficulty-and-rank.md) and
-  [`docs/dev/pattern-dsl.md`](docs/dev/pattern-dsl.md); the pattern format for authors in
+- New developer guides [`docs/dev/difficulty-and-rank.md`](docs/dev/difficulty-and-rank.md),
+  [`docs/dev/pattern-dsl.md`](docs/dev/pattern-dsl.md) and
+  [`docs/dev/meter-arsenal.md`](docs/dev/meter-arsenal.md); the pattern format for authors in
   [`content/patterns/README.md`](content/patterns/README.md); the tester guide's
   [difficulty, extra ships and continues](docs/client/preview-build.md#difficulty-extra-ships-and-continues)
-  and [Options screen](docs/client/preview-build.md#the-options-screen) (BULLETS).
+  and [Options screen](docs/client/preview-build.md#the-options-screen) (BULLETS), and
+  [Choosing your weapons](docs/client/preview-build.md#choosing-your-weapons) (the WEAPON SELECT
+  screen, M2-03).
 
 ## [0.1.0] — M1: playable vertical slice
 

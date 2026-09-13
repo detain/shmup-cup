@@ -47,7 +47,8 @@
  * satisfied by a later Double / Laser entry of the order; `?` wants a shield up; `!` is never
  * satisfied). When a capsule moves the cursor onto the next wanted slot and it can be equipped,
  * it is equipped at once. The order is re-evaluated every time, so losses (a broken shield, a
- * death penalty) are wanted again.
+ * death penalty) are wanted again. A `!` entry applies the session's `!` choice (M2-03); while
+ * that choice is greyed (SPEED DOWN at level 0 …) the cursor parks there like on any greyed slot.
  *
  * **Items** — a struct-of-arrays pool of {@link MAX_ITEMS} (32) registered with the World as
  * `items` (flushed in phase 8, hashed). Capsules ({@link ItemKind.Capsule}) are world-space: they
@@ -64,7 +65,8 @@
  * and completed formations, M1-08) becomes a capsule where it happened, at the end of phase 7 (and,
  * for kills made between ticks by tools, at the start of the next phase 3).
  *
- * **Mega Crash** (the `!` slot): equipping it arms a detonation that runs in phase 7 of the same
+ * **Mega Crash** (the `!` slot's default choice): equipping it arms a detonation that runs in phase
+ * 7 of the same
  * tick (so its kills are scored and drop capsules like any other): every cancelable enemy bullet
  * and laser is cancelled — sparkles, and point items for the bomber (`core/bullets`
  * `cancelAllBullets` with `CancelMode.Points`, M2-02) —, every enemy that is not
@@ -72,7 +74,9 @@
  * {@link MEGA_CRASH_FLASH_TICKS}-tick screen flash (`SimEventKind.Flash`) and `SFX MegaCrash` are
  * pushed. Bosses (M1-13) take no damage.
  *
- * **Shields.** The `?` slot grants the Force Field on `PlayerShip.shield`; this system counts its
+ * **Shields.** The `?` slot (and the `!` choice FULL BARRIER) grants the session's `?` shield
+ * ({@link PowerUpSystem.choices} — the Force Field until M2-04) on `PlayerShip.shield`; this
+ * system counts its
  * i-frames down in phase 7 and pushes `SFX ShieldHit` / `SFX ShieldBreak` + `FX ShieldBreak` for
  * the tick's absorbed hits in phase 7; the view shows it as a sprite around the ship in its wear
  * frame (blinking during its i-frames).
@@ -246,7 +250,13 @@ export const DEFAULT_METER_CHOICES: Readonly<MeterChoices> = Object.freeze(new M
  * Builds the meter choices of a config.
  *
  * @param config - The session config (`megaChoice`, `shieldChoice`).
- * @returns A fresh {@link MeterChoices}.
+ * @returns A fresh {@link MeterChoices} (load time — it allocates).
+ *
+ * @example
+ * ```ts
+ * const choices = meterChoicesOf(resolveGameConfig({ megaChoice: 'lifeOption' }));
+ * equipSlot(MeterSlot.Mega, ship, loadout, maxSpeedLevel, choices); // spare ships → Options
+ * ```
  */
 export function meterChoicesOf(
   config: Readonly<Pick<GameConfig, 'megaChoice' | 'shieldChoice'>>,
@@ -799,8 +809,10 @@ export interface PowerUpSystem {
    *
    * @remarks
    * An empty cursor or a greyed slot is denied (the cursor stays). Equipping applies
-   * {@link equipSlot}, arms Mega Crash for `!` (it detonates in phase 7 — or at once with
-   * {@link PowerUpSystem.detonateMegaCrash}), resets the cursor to -1 and pushes
+   * {@link equipSlot} with the session's {@link PowerUpSystem.choices} (the other `!` choices act
+   * there — M2-03), arms Mega Crash for `!` only when the `!` choice is Mega Crash (it detonates in
+   * phase 7 — or at once with {@link PowerUpSystem.detonateMegaCrash}), resets the cursor to -1
+   * and pushes
    * `SFX PowerUpEquip` + `SimEventKind.PowerUp` (id = slot, param = player).
    *
    * @param player - Player slot.
@@ -1380,8 +1392,9 @@ class PowerUpSystemImpl implements PowerUpSystem {
 
 /**
  * Creates the power-up system of a World (load time): the item pool (registered as `items`), one
- * meter per player, the item and shield batches, the compiled Auto Power-Up order and the sprite
- * ids of the item kinds and the Force Field.
+ * meter per player, the item and shield batches, the compiled Auto Power-Up order, the session's
+ * `?` / `!` choices ({@link meterChoicesOf} of the config — M2-03) and the sprite ids of the item
+ * kinds and the `?` shield.
  *
  * @param host - The World (read at every call — pass the World itself).
  * @returns The system.

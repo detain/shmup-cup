@@ -72,8 +72,8 @@
  *
  * **Meter arsenal (M2-03).** The weapon system fires the config's arsenal (`weaponPreset` /
  * `weaponEdit` — `core/weapons` `resolveArsenal`, which throws for a bad Weapon Edit) and the
- * power-up system applies its `!` / `?` choices; a `'full'` starting loadout grants the `?` choice's
- * shield.
+ * power-up system applies its `!` / `?` choices; a `'full'` starting loadout grants the `?`
+ * choice's shield (at creation and on a continue).
  *
  * **Player weapons (M1-10).** {@link World.weapons} (`core/weapons`, Options from `core/options`)
  * owns the `playerShots` pool, one loadout (`config.loadout` at creation) and one option group per
@@ -1085,14 +1085,20 @@ export const ENGINE_SPRITES: readonly string[] = Object.freeze([
  * `config.stage` (camera at its start — or just before its boss with `config.stageSkip: 'boss'` —,
  * stage theme queued as a music event) or a static camera,
  * the enemy system (specs and the stage's spawn events compiled, 64 free slots), player 1
- * starting its fly-in at the left edge of the view, player 2 inactive.
+ * starting its fly-in at the left edge of the view, player 2 inactive. The weapons fire the
+ * config's arsenal (`weaponPreset` / `weaponEdit`, M2-03) and the `?` / `!` slots follow its
+ * `shieldChoice` / `megaChoice`; the starting loadout (`config.loadout`) is applied to every
+ * player (a `'full'` one with the `?` choice's shield).
  *
  * @param config - The resolved session config (`resolveGameConfig`).
  * @param content - Validated content (`loadContent(...).db`; `EMPTY_CONTENT_DB` gives the
  *   built-in default ship, which is not drawn).
- * @param options - Extra options (a behaviour registry for tests).
+ * @param options - Extra options (a behaviour registry for tests; the event queue and debug flags
+ *   to use instead of new ones — the weapon select's preview passes its own).
  * @returns The world at tick 0, view already filled (the first frame shows the ship).
- * @throws {RangeError} When `config.stage` names a stage the content does not have.
+ * @throws {RangeError} When `config.stage` names a stage the content does not have, or
+ *   `config.weaponEdit` names a weapon the content does not have or one of another slot
+ *   (`core/weapons` `resolveArsenal`).
  *
  * @example
  * ```ts

@@ -88,8 +88,9 @@ no laser, no Force Field — M1-11). To open `dist/index.html` from disk in desk
 WebGL refuses it (the TV serves the widget's files as same-origin). On the TV the app always
 runs the shell's default scene, the **scene flow** (M1-16), because a widget has no `?scene=`
 query string (and so no `?stage=` or `?loadout=` either): the title (logo, `PRESS OK`, START /
-OPTIONS / EXIT, the title theme), then START opens the difficulty menu (M2-01) and OK on a
-difficulty plays **zone A, AZURE VERGE** (M1-18 — `@shmup/shell`
+OPTIONS / EXIT, the title theme), then START opens the difficulty menu (M2-01), OK on a
+difficulty opens the weapon select (M2-03 — remote arrows and OK only), and OK on its START
+plays **zone A, AZURE VERGE** (M1-18 — `@shmup/shell`
 `defaultStageId`; the dev scenes still fly in open space) with the remote's
 directional pad, its main gun firing on its own (`remoteMode` forces autofire,
 `shmup_feat.md` §4 rule 1), under the core HUD with the power meter. **Back** goes through the

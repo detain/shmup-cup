@@ -332,8 +332,11 @@ overlay (dim `PAUSE_DIM`) with an opaque panel — `DIFFICULTY`, EASY / NORMAL /
 for the focused preset its `LIVES`, `CONTINUES` and `HI` (that preset's session best). It opens on
 the difficulty chosen last (at first the host config's — Normal in the apps) with the usual
 2-tick activation lock; Up / Down move with wrap and auto-repeat. **OK** calls
-`flow.chooseDifficulty(preset)` and `stack.reset(flow.game)` — the game scene's World is created
-with that preset's config; **Back** pops back to the title menu.
+`flow.chooseDifficulty(preset)` and — since M2-03 — pushes the **weapon select**, whose START
+resets the stack to the game scene (M2-01 reset it here directly); the game scene's World is
+created with that preset's config plus the chosen loadout
+([meter-arsenal.md](meter-arsenal.md#the-weapon-select-corescenes)); **Back** pops back to the
+title menu (and Back on the weapon select returns here, the menu re-locked for 2 ticks).
 
 The flow builds **one config per preset** when it is created (`FlowControl.configs`, in
 `DIFFICULTY_PRESETS` order): the host's config for its own preset, `withDifficulty(host.config,
@@ -345,8 +348,9 @@ preset, table)` for the others (the content's `rules` table, or the built-in one
 - `SceneFlow.difficulty` / `SceneFlow.gameConfig` name the preset and config of the next game;
   `SceneFlow.modeKey` is `hiScoreModeKey(gameConfig)`.
 - The choice lives for the session only — it is saved with the options of M2-16.
-- Starting a game takes one more OK than in M1 (title OK, START, then OK on the preset). Every flow
-  test and e2e spec was updated for it.
+- Starting a game takes one more OK than in M1 (title OK, START, then OK on the preset) — and
+  since M2-03 one more again (OK on the weapon select's START). Every flow test and e2e spec was
+  updated each time.
 
 **Hi-scores per difficulty.** The session hi-score is kept per preset (`FlowControl.bests`, a
 `Float64Array`), each starting from the save's best of its own table (`meter-easy`,
@@ -430,7 +434,7 @@ preset's, the title shows it, and a finished game is inserted into its World's t
 | A score ends in 1–9 | A continue: the last digit counts the continues used (`markContinue`) |
 | The extend did not come at 20,000 during a game over | Intended — extends wait while the status is `gameOver` and come at the next crediting after a continue |
 | Lives stop at 9 | `MAX_LIVES`; the threshold is still used up |
-| START does not start the game | It opens the difficulty menu now; OK on a preset starts. Tools that press OK twice from the title need a third OK |
+| START does not start the game | It opens the difficulty menu; OK on a preset opens the weapon select (M2-03), and OK on its START starts. From `PRESS OK` a game takes four OKs |
 | A replay of a game with a continue desyncs | Bare-gameplay replays end at the game over; the continue is a scene-flow action between ticks and is not recorded |
 | The difficulty menu's `HI` differs from the title's before choosing | The title shows the chosen preset's best (Normal at first); the menu shows the focused preset's |
 | The chosen difficulty is back to NORMAL after a restart of the app | Expected until M2-16 saves it with the options |
@@ -440,6 +444,12 @@ preset's, the title shows it, and a finished game is inserted into its World's t
 - **M2-02** (done) — the pattern DSL reads `$rank` and `$loop` and scales like the primitives;
   cancel points and the `rules` kind's `scoring` section. Revenge bullets still use their three
   built-in patterns — DSL revenge patterns are M2-09 material ([pattern-dsl.md](pattern-dsl.md)).
+- **M2-03** (done) — the weapon select after the difficulty menu (one more OK to start; the
+  loadout applied on top of every difficulty's config with `withArsenal`). The rank's power term
+  counts roles, not weapons, so a Type B–D ship with the same meter levels has the same rank; of
+  the `!` choices NORMAL lowers it (the Double / Laser term goes), LIFE OPTION (more Options) and
+  FULL BARRIER (a shield) can raise it, SPEED DOWN leaves it (speed counts 0)
+  ([meter-arsenal.md](meter-arsenal.md)).
 - **M2-04** — Reduce (`RANK_POWER.reduce`) and the front shields count in the power term.
 - **M2-05** — Direct mode's rare 1UP items through the same lives cap.
 - **M2-10** — the campaign sets `rankInputs.loop` / `stage` (8 per loop, 1 per stage).

@@ -16,6 +16,8 @@
  *   menu (sim-affecting subset)
  * - shmup_feat.md §6 (Meter mode by default — decision D1; Auto Power-Up — D2; the pickup
  *   magnet — D33)
+ * - shmup_feat.md §7A (the preset loadouts Types A–D, Weapon Edit, the `!` slot choices) and §16
+ *   (the weapon select that sets them) — M2-03
  * - shmup_feat.md §21 Options menu — audio master / music / SFX sliders, the controls profile
  *   (the presentation-only {@link UserOptions})
  *
@@ -30,9 +32,9 @@
  * {@link DEFAULT_AUTO_POWER_UP_ORDER}, {@link MAX_AUTO_POWER_UP_ORDER}), the meter arsenal of
  * M2-03 ({@link MegaChoice}, {@link MEGA_CHOICES}, {@link ShieldChoice}, {@link SHIELD_CHOICES},
  * {@link WeaponEdit}, {@link WEAPON_EDIT_SLOTS}, {@link ArsenalChoice}, {@link withArsenal},
- * {@link arsenalMatches}) and the screen layout constants {@link HUD_BAR_HEIGHT}, {@link PLAYFIELD_Y}, {@link PLAYFIELD_W}, {@link PLAYFIELD_H}
- * (decision D20: two 8-px HUD bars outside a 384×200 playfield). User options:
- * {@link UserOptions}, {@link AudioOptions}, {@link InputOptions}, {@link DisplayOptions},
+ * {@link arsenalMatches}) and the screen layout constants {@link HUD_BAR_HEIGHT},
+ * {@link PLAYFIELD_Y}, {@link PLAYFIELD_W}, {@link PLAYFIELD_H} (decision D20: two 8-px HUD bars
+ * outside a 384×200 playfield). User options: {@link UserOptions}, {@link AudioOptions}, {@link InputOptions}, {@link DisplayOptions},
  * {@link DEFAULT_USER_OPTIONS}, {@link VOLUME_LEVELS}, {@link volumeGain},
  * {@link resolveUserOptions}, {@link InputProfileChoice}, {@link INPUT_PROFILE_ID_PATTERN},
  * {@link BULLET_PALETTES}, {@link BulletPalette}.
@@ -74,6 +76,8 @@ export const moduleInfo = defineModule({
     'shmup_feat.md §15',
     'shmup_feat.md §21',
     'shmup_feat.md §6',
+    'shmup_feat.md §7',
+    'shmup_feat.md §16',
   ],
 });
 

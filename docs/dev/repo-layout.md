@@ -45,7 +45,7 @@ shmup-cup/
 │   │   │   ├── rng/ math/ events/ pools/                 ✔ engine foundations (sfc32, trig tables, event ring, SoA pools)
 │   │   │   ├── data/           ✔ (partial) content loader: schema.ts combinators, loadContent(), ContentDb, migrations, tilemap.ts (tileset tables, heightfield / RLE expansion), paths.ts (spline → arc-length tables); kinds incl. rules (difficulty, scoring) and patterns (M2-02)
 │   │   │   ├── player/         ✔ KESTREL movement, speed levels, clamp, banking, fly-in, life cycle (killPlayer / respawnPlayer / playerOut)
-│   │   │   ├── weapons/        ✔ (partial) player shots (96-slot SoA pool), Type A roles from content, loadouts, autofire + caps per shooter, grid hits (Type B–D / Direct: M2)
+│   │   │   ├── weapons/        ✔ player shots (96-slot SoA pool), the meter arsenal Types A–D + Weapon Edit from the config (resolveArsenal, setArsenal — M2-03), loadouts, autofire + caps per shooter, grid hits (Direct mode: M2-05)
 │   │   │   ├── options/        ✔ (partial) trailing Options: screen-space trail ring buffer (Snake / Formation / Rotate: M2-04)
 │   │   │   ├── powerups/       ✔ (partial) 7-slot power meter, equip on the PowerUp edge, Auto Power-Up, capsule pool + magnet, Mega Crash (Direct mode: M2-05)
 │   │   │   ├── shields/        ✔ (partial) the Force Field on every ship: hits, shield-hit i-frames, wear, never terrain (pods, Arm tiers: M2-04 / M2-05)
@@ -59,8 +59,8 @@ shmup-cup/
 │   │   │   ├── rank/           ✔ rank 0–31 (difficulty base + growth × stage / loop / power terms, 16 on loop 1), rankScale curves, per-enemy sensitivity (M2-01)
 │   │   │   ├── scoring/        ✔ (partial) per-player scores (clamp 99,999,990), session hi-score, crediting kills / bonuses / capsules, extends (cap 9) and the continue digit (M2-01; 1UP items: M2-05)
 │   │   │   ├── fx/             ✔ (partial) hit-stop / shake / flash requests + timers (FxState), exact hit-stop (slowdown: M3-02)
-│   │   │   ├── scenes/         ✔ (partial) scene stack (depth 8, deferred transitions) + the M1 flow: boot → title → difficulty menu (M2-01) → game ⇄ pause → stage clear / continue countdown (M2-01) / game over, YES / NO dialog (Tizen exit confirm), Options overlay (M1-17)
-│   │   │   ├── ui/             ✔ (partial) canvas UI kit (list menu, slider, toggle, choice, confirm; 18/6-tick auto-repeat, 4-tick Confirm buffer; draw builders) + the HUD (buildHud, rebuilt only on change)
+│   │   │   ├── scenes/         ✔ (partial) scene stack (depth 8, deferred transitions) + the M1 flow: boot → title → difficulty menu (M2-01) → weapon select with live preview + Auto order editor (M2-03) → game ⇄ pause → stage clear / continue countdown (M2-01) / game over, YES / NO dialog (Tizen exit confirm), Options overlay (M1-17)
+│   │   │   ├── ui/             ✔ (partial) canvas UI kit (list menu, slider, toggle, choice, confirm; 18/6-tick auto-repeat, 4-tick Confirm buffer; draw builders) + the HUD (buildHud, rebuilt only on change; meter labels named after the arsenal — M2-03)
 │   │   │   ├── debug/          ✔ hashWorld state hash, debug switches + controls (god mode, outlines, frame advance, slow-mo, checkpoint jump, stage skip), overlay counters (M1-19)
 │   │   │   ├── save/           ✔ versioned save (save.v1): options, hi-score tables, stats; migrations, defensive parsing, SaveStore (writes only on change) — M1-17
 │   │   │   └── replay/         ✔ replays: header, per-tick input recorder, playback + desync report, RLE/varint/base64 JSON format (M1-19)
@@ -92,11 +92,11 @@ shmup-cup/
 │
 ├── content/                game DATA (JSON, formatVersion 1, validated at load by core/data ✔)
 │   ├── player/             ✔ one file per ship: speed levels, hitboxes, margins, timers (+ README, example)
-│   ├── stages/             ✔ one file per stage: music, camera path, checkpoints, parallax, tilemap (heightfield / RLE), event timeline; zone-a (AZURE VERGE, the game's stage — M1-18), test-range, test-boss (+ README, example)
+│   ├── stages/             ✔ one file per stage: music, camera path, checkpoints, parallax, tilemap (heightfield / RLE), event timeline; zone-a (AZURE VERGE, the game's stage — M1-18), test-range, test-boss, weapon-range (the weapon select's live preview — M2-03) (+ README, example)
 │   ├── tilesets/           ✔ terrain tilesets: per tile collision type, column-height mask, atlas frame (+ README, example)
 │   ├── enemies/            ✔ enemy definitions: hp, score, hurtbox, behaviour script + tunables, mover, ground anchor, drop, child; boss sections (parts, weak points, phases); zone A roster + HALCYON BULWARK (M1-18), test-range roster, test boss (+ README, example)
 │   ├── paths/              ✔ movement paths: spline control points, baked to arc-length tables at load; zone A's fan / orbit curves, test-range's (+ README, example)
-│   ├── weapons/            ✔ weapon tunables + preset loadouts: the Type A arsenal the game fires (+ README, example)
+│   ├── weapons/            ✔ weapon tunables + preset loadouts: Type A (type-a) and Types B–D (types-b-d, M2-03) with their menu names (+ README, example)
 │   ├── input/              ✔ input profiles (kind input-profiles, validated by input-web rebind): per-context key/button tables, remote debounce/diagonal/SOCD, Tizen keys to register
 │   ├── audio/              ✔ SFX bank (kind sfx: synth parameters or a file per SFX_CUES cue) + music/ (kind music: original chip songs or OGG, bound to MUSIC_CUES), validated by audio-web loader (+ README, examples)
 │   ├── rules/              ✔ game-wide rule tables (kind rules, validated by core/data): the difficulty presets Easy / Normal / Hard / Arcade — rank base / growth, lives, extends, continues, death penalty, aim directions, bullet speed (M2-01); the scoring values — points per cancelled bullet (M2-02; + README, example)

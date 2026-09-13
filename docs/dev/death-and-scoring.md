@@ -442,4 +442,8 @@ The next `game.step()` runs that tick, and its phase 7 turns the recorded hit in
 - **M2-02** (done) — the `rules` content's `scoring` section and cancel point items credited
   through `addScore` (a boss's death, a Mega Crash); the player's death keeps `CancelMode.Sparkle`
   ([bullets-and-patterns.md](bullets-and-patterns.md#cancel)).
+- **M2-03** (done) — the `!` choice LIFE OPTION spends lives: `min(lives − 1, 4 − options)`
+  spare ships become Options (the stock icons drop at once; extends still add lives up to
+  `MAX_LIVES`); the death penalties act on whichever weapons the session's arsenal holds, since
+  they only change loadout fields ([meter-arsenal.md](meter-arsenal.md#the--and--choices-corepowerups)).
 - **M3** — option recovery after a death, authentic slowdown.

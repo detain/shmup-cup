@@ -21,7 +21,9 @@
  * **Where it acts.** Every ship carries one {@link ShieldState} (`PlayerShip.shield`, created with
  * the ship). `core/player` `playerHit` — the one entry point of every hit — asks
  * {@link absorbShieldHit} first; an absorbed hit is "accepted" (the bullet is used up) but never
- * reaches the ship. `core/powerups` grants the shield (the `?` slot), counts the i-frames down
+ * reaches the ship. `core/powerups` grants the shield (the `?` slot — and the `!` slot's FULL
+ * BARRIER, M2-03 — with the spec of the session's `?` choice, {@link shieldSpecOf}
+ * `(config.shieldChoice)`), counts the i-frames down
  * ({@link tickShield}, tick phase 7), turns the tick's hit / break records into presentation
  * events (tick phase 7) and draws it ({@link shieldWearFrame}).
  *
@@ -34,8 +36,8 @@
  *
  * **Public API.** {@link ShieldKind}, {@link SHIELD_KIND_NAMES}, {@link ShieldState},
  * {@link createShieldState}, {@link ShieldSpec}, {@link FORCE_FIELD}, {@link SHIELD_SPECS},
- * {@link shieldSpecOf} and {@link SHIELD_CHOICE_SPECS} (the `?` choice of the weapon select, M2-03),
- * {@link grantShield}, {@link clearShield}, {@link absorbShieldHit}, {@link ShieldHit},
+ * {@link shieldSpecOf} and {@link SHIELD_CHOICE_SPECS} (the `?` choice of the weapon select,
+ * M2-03), {@link grantShield}, {@link clearShield}, {@link absorbShieldHit}, {@link ShieldHit},
  * {@link tickShield}, {@link shieldActive}, {@link shieldWearFrame}, {@link FORCE_FIELD_HITS},
  * {@link SHIELD_HIT_IFRAMES}, {@link FORCE_FIELD_SPRITE}, {@link FORCE_FIELD_WEAR_FRAMES}.
  *

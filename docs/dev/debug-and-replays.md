@@ -10,7 +10,7 @@ Plan step **M1-19** closes the first milestone with the developer tooling of `sh
   Ch+, Ch+ on the TV, and `window.__shmupDebug` for tests and the remote inspector;
 - **replays** (`core/replay`): a session's input per tick, a header with everything needed to
   recreate its start, state hashes to detect a desync;
-- **golden replays** of zone A (`test/golden/`) checked by every `pnpm test`, re-blessed with
+- **golden replays** of zone A (`test/golden/` — eight since M2-03) checked by every `pnpm test`, re-blessed with
   `pnpm golden:update`;
 - **budgets**: `pnpm bench` (ms per tick and heap growth under maximum load) and the Tizen bundle
   check's size limits;
@@ -345,7 +345,7 @@ the replay contains them (a session recorded through `createReplayGame` has no k
 
 ## Golden replays (`test/golden/`)
 
-Four committed zone A runs pin down what the simulation does (`test/golden/golden.ts`
+Eight committed zone A runs pin down what the simulation does (`test/golden/golden.ts`
 `GOLDEN_SCENARIOS`, recorded from the M1-18 playtest bots with the build id `'golden'`):
 
 | File | Who plays | Covers | Ends |
@@ -354,6 +354,10 @@ Four committed zone A runs pin down what the simulation does (`test/golden/golde
 | `zone-a-arcade.replay.json` | 4-way bot, Arcade difficulty (seed 2) | the Arcade preset (rank from 6, 2 lives, the arcade penalty) without god mode | `stageClear` after 12,611 ticks, 64,580 points, 3 lives (one extend) |
 | `zone-a-deaths.replay.json` | `weaverBot()` — weaves up / down, never dodges (seed 4) | deaths, Classic respawns, game over | `gameOver` after 5,324 ticks (deaths at 2,125 / 4,457 / 5,231) |
 | `zone-a-boss.replay.json` | 4-way bot, `stageSkip: 'boss'`, full loadout, Arcade penalty (seed 3) | the stage skip, the boss with everything | `stageClear` after 908 ticks, 37,180 points |
+| `zone-a-type-b.replay.json` (M2-03) | 4-way bot, stage skip, full loadout, `weaponPreset: 'type-b'` (seed 6) | the Ripple Laser's rings and the Spread Bomb's blasts against HALCYON BULWARK | `stageClear` after 1,369 ticks, 37,140 points |
+| `zone-a-edit.replay.json` (M2-03) | 4-way bot, stage skip, full loadout, a Weapon Edit (2-Way Missile, Free Way, Twin Laser), LIFE OPTION on `!` (seed 7) | Weapon Edit and a `!` choice | `stageClear` after 765 ticks, 37,060 points |
+| `zone-a-type-c.replay.json` (M2-03) | 4-way bot, stage skip, full loadout, Type C, SPEED DOWN on `!` (seed 8) | the Cyclone Laser, 2-Way Missile and Vertical | `stageClear` after 900 ticks, 37,180 points |
+| `zone-a-type-d.replay.json` (M2-03) | 4-way bot, stage skip, full loadout, Type D, FULL BARRIER on `!` (seed 9) | the Twin Laser, Photon Torpedo and Free Way | `stageClear` after 763 ticks, 37,060 points |
 
 The 4-way bot survives zone A even at Arcade, which is why the death scenario uses a careless
 weaving pilot. The files were re-blessed on purpose by M2-01 (`b31fac5`): rank growth changes
@@ -363,7 +367,12 @@ M2-02 re-blessed them again (`3f69cf1`): the bullet pool's new fields (`runner`,
 `termSpeed`, `turnTerm`, `termAngle`) and the new `cancelPoints` pool change every hash, and the
 bullets HALCYON BULWARK's death cancels now score as point items (+130 points in the two
 full-stage clears, +180 in the boss run); the outcomes are unchanged, and zone A runs no DSL
-pattern, so the later M2-02 fixes left the files untouched. Each file is an encoded replay plus the scenario's `description` and its
+pattern, so the later M2-02 fixes left the files untouched. M2-03 re-blessed the four again
+(`06e47aa`): the Types B–D content shifts sprite ids and enemy spec indices, and each player's
+Free Way direction joined the hash — the outcomes are unchanged — and added `zone-a-type-b` and
+`zone-a-edit`; its test round added `zone-a-type-c` and `zone-a-type-d` (`1bc676e`, the older six
+files byte-identical), so every Types B–D weapon flies in a golden run
+([meter-arsenal.md](meter-arsenal.md#determinism-hashing-and-golden-replays)). Each file is an encoded replay plus the scenario's `description` and its
 `expected` outcome (status, ticks, player 1's score and lives, death ticks, boss killed).
 
 - `golden.test.ts` (part of `pnpm test`, the `integration` project) plays every file into a fresh
@@ -421,7 +430,7 @@ in dist/ (812.4 KB of 8192.0 KB)`. `checkTizenBundle(dir)` also returns `gzipByt
 `window.__shmupDebug`:
 
 - `smoke.spec.ts` — the M1 gameplay smoke on the web build (`vite preview`) and the Tizen `dist/`
-  via `file://`: title → OK (past `PRESS OK`, START, then NORMAL in the difficulty menu — M2-01) → hold → then ↑ for 2.5 s each (a
+  via `file://`: title → OK (past `PRESS OK`, START, NORMAL in the difficulty menu — M2-01 — and START in the weapon select — M2-03) → hold → then ↑ for 2.5 s each (a
   remote holds one arrow at a time) → `sceneId === 'game'`, the World ticked, the ship alive or
   flying in again → no console errors. Then the tools: F1 shows the overlay and F2 turns god mode
   on (web); on the TV build nothing works until Pause, Ch+, Ch+, Ch+ (dispatched as key codes
@@ -506,7 +515,10 @@ testers in [../client/debug-tools.md](../client/debug-tools.md#the-m1-release-ch
 - **M2-02** (done) — golden replays re-blessed (new bullet pool fields, the `cancelPoints` pool,
   cancel points); `hashWorld` mixes the bending lasers and the pattern runners. The overlay does
   not outline bending lasers or count bullet programs yet ([pattern-dsl.md](pattern-dsl.md)).
-- **M2-03 … M2-14** — every simulation change re-blesses the golden replays in the same commit;
+- **M2-03** (done) — the replay header records `weaponPreset`, `weaponEdit`, `megaChoice` and
+  `shieldChoice` (no format change: a header without them decodes to the defaults); golden
+  replays re-blessed, four arsenal scenarios added ([meter-arsenal.md](meter-arsenal.md)).
+- **M2-04 … M2-14** — every simulation change re-blesses the golden replays in the same commit;
   zones B–I add a golden replay each.
 - **M2-06** — replays record both players (the body already has a word per player).
 - **M2-15** — attract mode plays bundled replays (and the scene flow gets recorded).

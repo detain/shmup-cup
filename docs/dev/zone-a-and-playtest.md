@@ -382,5 +382,9 @@ in the right half of the playfield, with no console errors or atlas warnings.
 - **M2-01** (done) — rank growth, the `vane` revenge bullets from rank 12, the presets' lives and
   penalties in the Arcade scenarios; the golden replays re-blessed with the same outcomes
   ([difficulty-and-rank.md](difficulty-and-rank.md)).
+- **M2-03** (done) — four more golden runs fight HALCYON BULWARK with the 4-way bot and the
+  Types B–D weapons (`zone-a-type-b`, `-type-c`, `-type-d`, `zone-a-edit`); the Ripple's ring
+  hitbox exists because its box could not get past HB-01's fringe armour; the weapon select plays
+  in front of every zone A game (one more OK) ([meter-arsenal.md](meter-arsenal.md)).
 - **M2-10 / M2-11 … M2-14** — the zone map picks stages (replacing `DEFAULT_STAGE_ID`); the other
   zones, each with a playtest run and its own design-rule checks.

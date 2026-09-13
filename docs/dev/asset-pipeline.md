@@ -112,7 +112,8 @@ Each module exports `generate(): SpriteDef[]` and is registered in
 | `starfield` | `bg/stars-far`, `bg/stars-mid`, `bg/stars-near` — seamless 128×128 transparent tiles |
 | `backdrops` | M1-18: `bg/azure-verge` — zone A's far planet band, a 128×48 tile (`AZURE_TILE_W`, `AZURE_TILE_H`, anchored top-left) that repeats seamlessly along x: a translucent haze thickening towards a lit rim row (`AZURE_RIM_ROW` 10), then an opaque dark-azure-to-navy body with seeded cloud streaks that wrap round the tile edge. Dark and low in saturation so the pink / red / purple bullets and the gold capsules stay readable over it, never pure black |
 | `terrain` | `tiles/terrain-a` — 17 8×8 tiles (solid, floor, ceiling, walls, 45° and 22.5° slopes); every tile is also a one-frame animation named after it (`floor → [1]`, list in `TERRAIN_TILES`); collision masks and frames live in `content/tilesets/terrain-a.tileset.json` — change both together |
-| `hud` | `hud/meter-slot` (40×8: `normal`, `highlighted`, `disabled`), `hud/meter-labels` (36×5 × 7 slot labels in meter order) |
+| `hud` | `hud/meter-slot` (40×8: `normal`, `highlighted`, `disabled`), `hud/meter-labels` (36×5 — the 7 slot labels in meter order, then since M2-03 the Types B–D weapon names `SPREAD 2-WAY TORPEDO TAIL VERTICAL FREE WAY RIPPLE CYCLONE TWIN`: 16 frames in the order of `@shmup/core` `METER_LABEL_FRAMES`, which a test keeps equal to `METER_LABELS`; original 3×5 micro glyphs, M2-03 added `C F V W Y 2 - space`) |
+| `weapons` | M2-03 (`shmup_feat.md` §7A): `shots/blast` (32×32 × 4, centred — the Spread Bomb's blast: a hot disc opening into a ring, cooling white-yellow → orange → red; an engine sprite), `shots/ripple` (24×44 × 6, centred — the Ripple's upright ring at half heights 4 → 20 with half the width; the engine picks the frame from the ring's size), `shots/cyclone` (8×9 × 4, anchored at the left end of the middle row — one Cyclone Laser segment, two violet strands twisting round a white core, one wave period per segment so it tiles; the engine steps the frames along the beam). Triangle waves and square roots only |
 | `ui` | `ui/pixel` (1×1 white, for rectangles), `ui/missing` (8×8 magenta checker the renderer shows for an unknown name), `ui/logo` (M1-16: the 165×27 title logo `SHMUP CUP` — original 5×7 block letters ×3 (`LOGO_TEXT`, `LOGO_SCALE`), a yellow → orange → red gradient with a highlight row, a dark outline and a 2-px drop shadow; anchored at its centre) |
 
 Rules that keep generated pixels identical on every machine:
@@ -184,7 +185,7 @@ is simpler for the renderer.) Today the seven enemies and the four boss parts fl
 | Group | Sprites | Source |
 |---|---|---|
 | Player | `ships/kestrel` (16×9: `level`, `up`, `down`, from `PLACEHOLDER_SHIP`), `ships/kestrel-thruster` (6×3 × 2, `burn`, drawn behind the ship), `options/orb` (`pulse`) | pixel maps |
-| Player shots | `shots/basic`, `shots/double`, `shots/laser` (a segment, anchor on its left edge), `shots/missile` (`fly`) | pixel maps |
+| Player shots | `shots/basic`, `shots/double`, `shots/laser` (a segment, anchor on its left edge), `shots/missile` (`fly`); since M2-03 the Types B–D shots `shots/bomb` (the Spread Bomb), `shots/two-way` (2 frames: climbing / diving), `shots/torpedo` (2 frames, violet), `shots/tail`, `shots/vertical`, `shots/free` (cyan darts), `shots/twin` (a green beam segment) | pixel maps; `shots/blast`, `shots/ripple`, `shots/cyclone` generated (`weapons`) |
 | Enemies | `enemies/drifter`, `turret`, `carrier-red`, `hopper`, `spinner`, `darter`, since M1-08 the ground `hatch` (20 px wide, lid closed / open), and since M1-18 zone A's `vane` (12×10, an amber swept-wing fan flier, wings beat) and `gyre` (14×14, a teal ring round a bright core, the ring turns) — 2 frames each, all with `@flash` | pixel maps |
 | Boss parts | `bosses/core`, `shield-plate` (`intact`, `cracked`), `hull-block`, `emitter` (`idle`, `charge`), and since M1-18 HALCYON BULWARK's `bulwark-hull` (48×32), `bulwark-wing-top` / `-bottom` (56×14), `bulwark-emitter` (18×10, 2 frames — it glows) and `bulwark-plate` (6×18) — all with `@flash` | pixel maps |
 | Items | `items/capsule`, `items/point` (M2-02) (generated), `items/bonus`, `items/one-up` | both |
@@ -317,7 +318,7 @@ message that names the missing sprite and how to add it — instead of a magenta
 `ui/missing` box in the game. Only the shipped content is checked: the example files'
 `ships/example` and `enemies/example-warden` are documentation. The sprites the engine draws on
 its own — the nine bullet kinds and `lasers/beam-pink` (M1-09), `options/orb` (M1-10),
-`lasers/bend-pink` and `items/point` (M2-02), `core/world` `ENGINE_SPRITES` — are checked the same
+`lasers/bend-pink` and `items/point` (M2-02), the Spread Bomb's `shots/blast` (M2-03), `core/world` `ENGINE_SPRITES` — are checked the same
 way; hosts intern them with `loadContent`'s `extraSprites`. Since M2-02 the check also requires
 every colour-blind variant (`<sprite>@<palette>` for each non-standard `BULLET_PALETTES` entry) of
 every bullet / beam / bend sprite, frame for frame. The variants are never content names — the
@@ -440,4 +441,7 @@ the new `backdrops` generator with the planet band `bg/azure-verge` — the page
 ([zone-a-and-playtest.md](zone-a-and-playtest.md)); M2-02 (done) added `lasers/bend-*`,
 `items/point` and the `palettes` generator's 45 colour-blind variants, which the renderer swaps in
 when the player picks a palette ([pattern-dsl.md](pattern-dsl.md),
-[rendering-and-shell.md](rendering-and-shell.md#colour-blind-bullet-palettes)).
+[rendering-and-shell.md](rendering-and-shell.md#colour-blind-bullet-palettes)); M2-03 (done) added
+the Types B–D shots (seven pixel maps and the new `weapons` generator's `shots/blast`,
+`shots/ripple`, `shots/cyclone`) and grew `hud/meter-labels` to 16 frames — the page stays
+512×512 ([meter-arsenal.md](meter-arsenal.md#assets)).

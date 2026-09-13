@@ -92,7 +92,7 @@ event queue (`WorldOptions.events`) — [scenes-and-ui.md](scenes-and-ui.md#worl
 | `bullets`, `rank` | The `BulletSystem` (M1-09): the `enemyBullets` (512) and `enemyLasers` (16) pools, the enemy-bullet batch and the laser view — since M2-02 also the `cancelPoints` pool (512 point items, the `ITEMS` batch `pointBatch`) and the bending laser table (`bending`, 8 × 64 nodes, `view.bendingLasers`); the session's rank (hashed), which scales bullet speeds and fire intervals ([bullets-and-patterns.md](bullets-and-patterns.md)) — constant in M1; since M2-01 recomputed from `rankInputs` (the config's `rankBase` / `rankGrowth`, `loop` / `stage`, the strongest ship's `power`, `special` — hashed) at the end of phase 3 by `updateWorldRank` ([difficulty-and-rank.md](difficulty-and-rank.md#rank-corerank)) |
 | `patterns` | The `PatternVm` (M2-02): the pattern DSL's interpreter — 64 enemy emitters and 512 bullet program runners in typed arrays (hashed: the runners in use), installed as the bullet system's program runner ([pattern-dsl.md](pattern-dsl.md#the-interpreter-patternvm)) |
 | `continuesUsed` | Continues used this game (M2-01, hashed): `continueWorld` counts them, `canContinue` compares with `config.continues` ([difficulty-and-rank.md](difficulty-and-rank.md#continues)) |
-| `weapons` | The `WeaponSystem` (M1-10): the `playerShots` pool (96), one `Loadout` (`config.loadout` applied at creation) and one `OptionGroup` per player, autofire timers, the hit list, the player-shot and Option batches ([weapons-and-options.md](weapons-and-options.md)) |
+| `weapons` | The `WeaponSystem` (M1-10): the `playerShots` pool (96), one `Loadout` (`config.loadout` applied at creation) and one `OptionGroup` per player, autofire timers, the hit list, the player-shot and Option batches; since M2-03 the config's arsenal (`weaponPreset` / `weaponEdit` → `roleWeapons` — a bad Weapon Edit makes `createWorld` throw `RangeError`) and each player's Free Way direction ([weapons-and-options.md](weapons-and-options.md), [meter-arsenal.md](meter-arsenal.md)) |
 | `powerups` | The `PowerUpSystem` (M1-11): one `PowerMeter` per player, the `items` pool (32 capsules), pending Mega Crashes, the tick's pickup outcomes, the item and shield batches; the shields themselves live on the ships (`PlayerShip.shield`) ([powerups-and-shields.md](powerups-and-shields.md)) |
 | `scoring` | The `ScoringSystem` (M1-12): `board.scores[p]` (`score`, `displayDirty`; `nextExtend`, `extendsEarned`, `continues` since M2-01), the session `hiScore`, the credit counters ([death-and-scoring.md](death-and-scoring.md#score-corescoring)) |
 | `bosses`, `laserSources` | The `BossSystem` (M1-13): one boss slot with 16 parts, the WARNING (`view.warning`), the parts' batch; every laser source by id — the 64 enemies, then the 16 parts — so lasers can stay attached to either; `createWorld(config, content, { bossBehaviors })` swaps the boss roster ([bosses-and-warning.md](bosses-and-warning.md)) |
@@ -364,7 +364,8 @@ little-endian IEEE-754 double bytes (so the hash is the same on every engine):
    `recorded` count;
 10. the player weapons (M1-10): per player the loadout (`main`, `missile`, `options`) and the
     option group (`count`, `stolen`, `head`, the whole trail, the Option positions), then every
-    autofire timer, then the cooldown table of every live piercing shot;
+    autofire timer, then (M2-03) each player's Free Way direction, then the cooldown table of
+    every live piercing shot or Spread Bomb;
 11. the power-ups (M1-11): per player the meter `cursor`, the pending Mega Crash flag and the
     ship's shield (`kind`, `hits`, `maxHits`, `iFrames`, `absorbsTerrain`, `hitTick`,
     `brokeTick`, `absorbed`), then `dropsTaken` (the `items` pool is covered by step 7);
@@ -575,3 +576,8 @@ Inside the game, use `createGame(platform, overrides, db)` and `game.step()` /
   programs in phase 5), bending lasers (phases 5–6), cancel point items (the `cancelPoints` pool,
   phase 5), `BulletSystem.clear()` in `clearSession`, the hash's bending lasers and runners
   ([pattern-dsl.md](pattern-dsl.md)).
+- **M2-03** (done) — the World fires the config's arsenal and applies its `!` / `?` choices
+  (`createWorld` throws for a bad Weapon Edit; a `'full'` loadout grants the `?` choice's shield,
+  also on a continue); `ENGINE_SPRITES` gained `shots/blast`; the weapon select flies a private
+  World as its live preview — its own event queue and debug flags through `WorldOptions`
+  ([meter-arsenal.md](meter-arsenal.md)).

@@ -5,10 +5,12 @@ How the player shoots inside `@shmup/core`: the **weapon system** (`core/weapons
 piercing Laser, ground-sliding Missile) compiled from `content/weapons/`, per-player
 **loadouts**, always-on **autofire** with per-shooter caps, grid-based **hits** on the enemies
 (damage, armour clinks, piercing cooldowns, kill credit), and the trailing **Options** of
-`core/options` that copy every weapon. Built in plan step **M1-10**.
+`core/options` that copy every weapon. Built in plan step **M1-10**; plan step **M2-03** added the
+**Types B–D** behaviours, the presets and Weapon Edit as `GameConfig` fields and
+`WeaponSystem.setArsenal` — their own page is [meter-arsenal.md](meter-arsenal.md).
 
 This page is the *how and why*. Exact signatures are in
-[api-reference.md](api-reference.md#weapons--player-weapons-partial-type-a); the TSDoc in
+[api-reference.md](api-reference.md#weapons--player-weapons-meter-mode-implemented); the TSDoc in
 `packages/core/src/{weapons,options}/index.ts` is the authoritative reference. The enemies that
 take the hits are [enemies-and-behaviors.md](enemies-and-behaviors.md); the World, its tick
 phases and the grid are [sim-world.md](sim-world.md); the render contract is
@@ -30,7 +32,8 @@ screen space).
 createWorld(config, db)                                                         core/world
  ├─ world.weapons = createWeaponSystem(world)                                  core/weapons
  │    pools.register('playerShots', 96 slots)
- │    roles: preset 'type-a' (else the first preset, else the first weapon of each slot)
+ │    roles: resolveArsenal(content, config) — preset config.weaponPreset ('type-a'; else the
+ │           first preset, else the first weapon of each slot) + config.weaponEdit (M2-03)
  │           → RoleTables (kind, damage, speed, cap, pierce, sprite, interval, sfx, tunables)
  │    2 × Loadout, 2 × OptionGroup (core/options), PlayerShots batch (192), Options batch (8)
  └─ applyLoadoutPreset(loadouts[p], players[p], config.loadout)   'default' | 'full'
@@ -53,9 +56,11 @@ stepWorld, every tick
 A weapon (`content/weapons/*.weapons.json`, kind `weapons`) names a **slot** (`main`, `double`,
 `laser`, `missile`), a coded **behaviour** (a script id), `damage`, `speed` (px/tick), `cap`
 (live shots per shooter), `pierce`, a `sprite`, optionally `refireTicks`, an `sfx` cue and
-behaviour-specific `params`. A **preset** (`presets`) names the weapon of each slot — a
-meter-mode loadout type (Type A today; B–D arrive with M2-03). The shipped
-`type-a.weapons.json`:
+behaviour-specific `params`, and since M2-03 an optional `name` (the weapon select's label). A
+**preset** (`presets`) names the weapon of each slot — a meter-mode loadout type: Type A in
+`type-a.weapons.json`, Types B–D in `types-b-d.weapons.json` (M2-03 — their nine behaviours,
+tunables and hit rules are in [meter-arsenal.md](meter-arsenal.md#the-nine-behaviours)). The
+shipped `type-a.weapons.json`:
 
 | Weapon | Slot / behaviour | Damage | Speed | Cap | Pierce | Sprite | SFX |
 |---|---|---|---|---|---|---|---|
@@ -94,15 +99,20 @@ The shell's `loadGameContent` and `pnpm content:check` run it after `checkEnemyB
 typo stops the boot on the error screen instead of shipping a weapon that never fires.
 `WEAPON_SCRIPT_IDS` lives in `core/weapons` since M1-10 (`core/behaviors` re-exports it).
 
-**Roles.** At World creation `resolveWeaponPreset(content)` picks preset `type-a` (else the
-first preset), and `resolveRoleWeapons(content, preset)` fills the four `WeaponRole`s — `Main`,
-`Double`, `Laser`, `Missile` — from it (the main role falls back to the first `main`-slot
-weapon; without any preset, the first weapon of each slot). `compileRoles` turns them into typed
+**Roles.** At World creation `resolveArsenal(content, config)` (M2-03) calls
+`resolveWeaponPreset(content, config.weaponPreset)` — the session's preset, `type-a` by default,
+else the content's first preset — and `resolveRoleWeapons(content, preset)` fills the four
+`WeaponRole`s — `Main`, `Double`, `Laser`, `Missile` — from it (the main role falls back to the
+first `main`-slot weapon; without any preset, the first weapon of each slot); a
+`config.weaponEdit` then replaces the Missile / Double / Laser roles (a bad edit throws
+`RangeError`). `compileRoles` turns them into typed
 arrays (`RoleTables`: kind, damage, speed, cap, pierce, sprite id, interval, SFX cue, angle,
 max length, cooldown, slide speed and step, hitbox, offsets, frames) — per-tick code never reads
 a content object. A role whose weapon is missing or has no weapon behaviour is **empty**:
 content without weapons fires nothing (there is no built-in arsenal, unlike the ship's
-`DEFAULT_PLAYER_SHIP`).
+`DEFAULT_PLAYER_SHIP`). `roleWeapons` is the resolved list; since M2-03 it is not frozen —
+`WeaponSystem.setArsenal(roles)` rewrites it and recompiles the tables in place (the weapon
+select's preview; never in a recorded session).
 
 ## Loadouts and the starting loadout
 
@@ -201,15 +211,15 @@ Fields (`SHOT_SCHEMA`, hashed in sorted name order):
 | Field | Type | Meaning |
 |---|---|---|
 | `x`, `y` | f64 | World centre — a laser's **head** |
-| `vx`, `vy` | f64 | Velocity (px/tick, before the camera ride) |
+| `vx`, `vy` | f64 | Velocity (px/tick, before the camera ride); a Twin Laser beam's `vy` is its lane (row offset from its shooter, M2-03) |
 | `length` | f64 | Laser length (tail at `x − length`); 0 for other shots |
 | `hw`, `hh` | f64 | Hitbox half sizes (a laser's box spans its length) |
 | `damage` | i32 | Damage per hit |
-| `role`, `kind` | u8 | `WeaponRole`; `ShotKind` (`Straight` 0, `Double` 1, `Laser` 2, `Missile` 3 — hashed: append, never renumber) |
+| `role`, `kind` | u8 | `WeaponRole`; `ShotKind` (`Straight` 0, `Double` 1, `Laser` 2, `Missile` 3, and since M2-03 `SpreadBomb` 4, `TwoWay` 5, `Torpedo` 6, `FreeWay` 7, `Ripple` 8, `Twin` 9 — hashed: append, never renumber) |
 | `shooter` | u8 | `player × 5 + k` |
-| `flags` | u8 | `ShotFlag`: `Pierce` 1, `Blocked` 2 (a laser head stopped by terrain), `Sliding` 4 (a missile on the floor), `Dead` 8 (removed this tick) |
+| `flags` | u8 | `ShotFlag`: `Pierce` 1, `Blocked` 2 (a laser head stopped by terrain), `Sliding` 4 (a missile on the floor), `Dead` 8 (removed this tick), `Blast` 16 (a Spread Bomb that burst — M2-03) |
 | `sprite`, `frame`, `draw` | u16, u16, u8 | Sprite id, animation frame, `SpriteFlag` bits (`Hidden` when the role has no sprite or the shot is dead) |
-| `age` | i32 | Ticks moved |
+| `age` | i32 | Ticks moved (a Spread Bomb's blast: ticks since the burst) |
 | `table` | i32 | Hit-cooldown table index + 1 (0 = not piercing) |
 
 Shots live in world pixels and **ride the camera** like enemy bullets (`x += camera.dx` every
@@ -217,8 +227,10 @@ tick), so their on-screen speed does not depend on the scroll. Per live shot, pe
 
 - **Straight / Double** — move by velocity; removed outside the view ± `SHOT_CULL_MARGIN` (16 px)
   or on a non-empty terrain pixel (player shots die on terrain).
-- **Laser** — its row follows the shooter while that shooter is in play (an `alive` ship, or an
-  Option it still flies; afterwards it keeps its row). The head rides the camera and advances
+- **Laser** (and the Cyclone Laser, a `Laser` with other tunables) — its row follows the shooter
+  while that shooter is in play (an `alive` ship, or an Option it still flies; afterwards it keeps
+  its row) — since M2-03 at `shooter y + oy + vy`, which is the shooter's row for Type A (`oy` and
+  the lane 0) and a Twin beam's own lane. The head rides the camera and advances
   `speed` (10) px, scanning every column it crosses: the first non-empty one stops it there
   (`Blocked`). The length grows by the step up to `maxLength` (64). A blocked head stays at its
   wall (world-anchored) while the tail rides the camera and advances, so the beam shrinks away
@@ -235,6 +247,11 @@ tick), so their on-screen speed does not depend on the scroll. Per live shot, pe
   culled.
 
 A piercing shot's cooldown table counts down by one per entry every tick it is alive.
+
+The Types B–D kinds (M2-03) are branches of the same `update()`: the Spread Bomb's arc, burst and
+world-anchored blast, the 2-Way volleys and the Ripple's growing ring on the straight path, the
+Photon Torpedo on the missile path, the Twin beams on the laser path —
+[meter-arsenal.md](meter-arsenal.md#the-nine-behaviours).
 
 ## Hits (phases 6–7, `collide()` / `applyHits()`)
 
@@ -261,10 +278,18 @@ The hit list (`hitShot` / `hitEnemy`, at most `MAX_SHOT_HITS` 1024 a tick, the r
    debug kill — a Mega Crash credits the player who fired it, M1-11). Then a non-piercing shot dies; a piercing one sets its cooldown for that enemy
    to `hitCooldownTicks` (6) — damage over time for beams.
 
+**M2-03 exceptions.** A falling **Spread Bomb** bursts on its first hit (no damage — its blast
+does it) and its **blast** is piercing but keeps burning on armour: it clinks at most once per
+cooldown instead of dying. A **Photon Torpedo** flies on through every enemy its hit destroys. A
+**Ripple** is hit-tested with its ring, not its box: a target wholly inside the ring's inner edge
+(`RIPPLE_RING_WIDTH` 4 px in) is not hit — with the box, the lowest-slot rule gave every ring to
+HALCYON BULWARK's fringe armour ([meter-arsenal.md](meter-arsenal.md#the-nine-behaviours)).
+
 **Cooldown tables.** Instead of a 64-entry table per shot slot, a pool of `PIERCE_TABLES` (32)
 tables of `MAX_ENEMIES` (64) entries (`weapons.cooldowns`, a `Uint8Array`) is shared: a
 piercing shot takes the first free table when it is fired (zeroed then) and stores its index + 1
-in `table`; a piercing shot with no free table is **not fired**. Only the tables of live
+in `table`; a piercing shot with no free table is **not fired**. A Spread Bomb reserves its blast's
+table the same way when it is fired (M2-03). Only the tables of live
 piercing shots are hashed.
 
 **Boss parts** (M1-13) are hit targets too. The boss system inserts each part that is a target
@@ -290,16 +315,18 @@ ships, enemy bullets.
 - `weapons.batch` is a mirror `SpriteBatch` on `LayerId.PlayerShots` with
   `SHOT_BATCH_CAPACITY` (192) slots, refilled in phase 9 by `sync()`: one sprite per shot, and a
   laser as `ceil(length / LASER_SEGMENT_LENGTH)` `shots/laser` segments (8 px, anchored on their
-  left edge) laid back from the head, the last clamped to the tail. A full batch drops sprites
-  (drawing only).
+  left edge) laid back from the head, the last clamped to the tail — a Twin beam the same way, and
+  a Cyclone's segments stepping its swirl frames along the beam and every 4 ticks (M2-03). A full
+  batch drops sprites (drawing only).
 - `weapons.optionBatch` (`LayerId.Player`, 8 slots) holds the Options flying this tick as
   `options/orb` with a two-frame pulse (`OPTION_ANIM_TICKS` 8). It sits before the ships' batch
   in the list, and same-layer batches draw in list order, so the Options are drawn below the
   ships.
-- The shot sprites come from the content (`shots/*`); `options/orb` (`OPTION_SPRITE`) is an
-  **engine sprite** — `ENGINE_SPRITES` = the bullet sprites + `options/orb`, interned by hosts
-  through `loadContent`'s `extraSprites` (the shell's loader does by default). Without it the
-  Options still fly and fire but are not drawn.
+- The shot sprites come from the content (`shots/*`); `options/orb` (`OPTION_SPRITE`) and, since
+  M2-03, the Spread Bomb's blast `shots/blast` (`SPREAD_BLAST_SPRITE`, `WEAPON_SPRITES`) are
+  **engine sprites** — part of `ENGINE_SPRITES` (with the bullet, item, shield and UI sprites),
+  interned by hosts through `loadContent`'s `extraSprites` (the shell's loader does by default).
+  Without it the Options still fly and fire but are not drawn (and neither are the blasts).
 
 The renderer needs no change: it binds one sprite binding per batch
 ([rendering-and-shell.md](rendering-and-shell.md#drawing-a-new-entity-kind)).
@@ -309,8 +336,9 @@ The renderer needs no change: it binds one sprite binding per batch
 `hashWorld` covers the shot pool (as a registered pool) and, after the formation table, the
 weapons' own state (`mixWeapons`): per player the loadout (`main`, `missile`, `options`; the
 shield is hashed with the power-ups since M1-11) and the option group (`count`, `stolen`, `head`, the whole trail, the positions), then
-every autofire timer, then the cooldown table of every live piercing shot (and, since M1-13,
-its boss-part table). Not hashed: the role
+every autofire timer, then (M2-03) each player's Free Way direction (`freeWayHeading`), then the
+cooldown table of every live piercing shot or Spread Bomb (and, since M1-13, its boss-part
+table). Not hashed: the role
 tables (derived from content and config), `liveCounts` (recounted every phase 2), the hit list
 (rebuilt every phase 6) and the batches. Two sessions fed the same input keep equal hashes,
 shot pools and trails (`weapons.test.ts`, `weapons-runtime.test.ts`); a different
@@ -372,10 +400,10 @@ autofire) and hold no `Shot` / `Sub`.
 | To add… | Do this |
 |---|---|
 | A weapon of an existing behaviour | JSON in `content/weapons/` (a new file or a new entry) with its `params`; reference it from a preset; `pnpm content:check` |
-| A weapon behaviour | A `ShotKind` code (append — it is hashed), an entry in `WEAPON_BEHAVIOR_KINDS`, `WEAPON_BEHAVIOR_PARAMS` (its tunables with defaults) and `WEAPON_BEHAVIOR_SLOTS`; its per-tick motion as a branch of `update()` (numbers only, no calls with fractional arguments); spawning in `emit` if it needs a special heading; `WEAPON_SCRIPT_IDS` follows automatically; tests in `test/weapons/` |
+| A weapon behaviour | A `ShotKind` code (append — it is hashed), an entry in `WEAPON_BEHAVIOR_KINDS`, `WEAPON_BEHAVIOR_PARAMS` (its tunables with defaults), `WEAPON_BEHAVIOR_SLOTS` and `WEAPON_BEHAVIOR_LABELS` (+ its HUD label frame — M2-03); new tunables as `RoleTables` arrays reset in `compileRoles`; its per-tick motion as a branch of `update()` (numbers only, no calls with fractional arguments); spawning in `emit` / `fireRole` if it needs a special heading or a pair; `WEAPON_SCRIPT_IDS` follows automatically; tests in `test/weapons/` — the full checklist is in [meter-arsenal.md](meter-arsenal.md#extending-it) |
 | A loadout field | A field on `Loadout` (a class), set in `applyLoadoutPreset`, added to `mixWeapons` in `core/debug`; a meter slot that equips it in `core/powerups` (`canEquipSlot` / `equipSlot`) |
 | A starting loadout | Extend `StartingLoadout` and its check in `resolveGameConfig`, then `applyLoadoutPreset` (and `loadoutFromSearch` in `apps/web` for a dev override) |
-| Another loadout type (B–D, M2-03) | A preset in the weapons file; the session picks it instead of `DEFAULT_WEAPON_PRESET` |
+| Another loadout type | A preset in a weapons file; `GameConfig.weaponPreset` picks it and the weapon select lists it (M2-03 — [meter-arsenal.md](meter-arsenal.md#extending-it)) |
 | An Option formation (M2-04) | A branch in `OptionGroup.follow` keyed by `formation`; keep it allocation-free and hash any new state |
 | Something that reacts to kills | Read `world.enemies.outcomes` (`killCount`, `killSpec`, `killX` / `killY`, `killScore`, `killBy`) — reset at the start of phase 3, complete after phase 7 |
 
@@ -386,6 +414,7 @@ autofire) and hold no `Shot` / `Sub`.
 | `packages/core/test/weapons/weapons.test.ts` | The plan's acceptance: Type A roles, no weapons → no fire, caps per shooter incl. Options, the Double rule, laser pierce + cooldown and growth, missiles sliding on slopes and dying at walls, Options bunching / spreading and the fresh trail for every fly-in length, grid hits = brute force, kills (events, record, killer), clinks, SFX rate limit, autofire intervals and `refireTicks`, buttons without autofire, shots on terrain, the `'full'` loadout, full pools / tables, `checkWeaponBehaviors`, lockstep hashes |
 | `packages/core/test/weapons/weapons-edge.test.ts` | Constant tables, presets and empty roles, spawn offsets / velocities / boxes per behaviour, first volley on the tick the fly-in ends, dying / dead / inactive ships, refire the tick after a free, missiles with `Sub` alone, Double edge caps, player 2's shooters and credit, camera ride on both axes, exact culling (lasers by head and tail, non-finite spawns), laser heads on walls while scrolling, missile steps and cliffs, hit edge cases (closed boxes, lowest slot, ghosts, damage 0, armour, `MAX_SHOT_HITS`), cooldown tables and clamps, drawing (segments, batch overflow, the orb pulse), restarts, hash coverage |
 | `packages/core/test/weapons/weapons-alloc*.test.ts` | The allocation guards above (own workers) |
+| `packages/core/test/weapons/weapons-arsenal*.test.ts`, `test/integration/arsenal-runtime.test.ts` | The Types B–D behaviours, presets, Weapon Edit and `setArsenal` (M2-03 — [meter-arsenal.md](meter-arsenal.md#tests)) |
 | `packages/core/test/options/` | The trail entry by entry (every head position), reset, convergence at an edge, vertical scrolling, count clamping, hide / reset, independent groups, zero allocation |
 | `packages/core/test/config/`, `debug/`, `world/`, `helpers/alloc.test.ts` | `autofireInterval` / `missileInterval` / `loadout` validation; the weapons in `hashWorld`; the World's batch list; the allocation helper's windows and early stop |
 | `test/integration/weapons-runtime.test.ts` | The shipped arsenal loaded like the shell does; the `'full'` loadout and the Double playing the whole `test-range` within every cap, bound and surface; remote mode firing with no button; lockstep sessions |
@@ -409,7 +438,8 @@ autofire) and hold no `Shot` / `Sub`.
 | A laser hits an enemy only every 6th tick | `hitCooldownTicks` per enemy — damage over time |
 | Shots fired by an Option inside rock vanish | Options pass through terrain; their shots do not |
 | `?loadout=full` does nothing on the TV | It is a web-only dev override (`apps/web`); the TV has no query string |
-| `RangeError: GameConfig.loadout must be 'default' or 'full'` | Only those two presets exist |
+| `RangeError: GameConfig.loadout must be 'default' or 'full'` | Only those two presets exist (the weapon *types* are `GameConfig.weaponPreset`, M2-03) |
+| A test's weapons are not Type A | The config's `weaponPreset` / `weaponEdit` (M2-03) — or a scene flow whose weapon select chose another type |
 | Code that picks a batch from `view.batches` by index broke | M1-10 inserted the player-shot and Option batches before the ships: the order is ground enemies, air enemies, shots, Options, ships, enemy bullets |
 | A stored shot slot points at another shot | Slots are only stable within the tick (phase 8 swap-removes freed slots) |
 | The allocation guard fails after a weapons change | A fractional argument to a non-inlined call (events, helpers), a closure or literal in the tick, or the loop split into a small wrapper — see the table above |
@@ -432,5 +462,8 @@ autofire) and hold no `Shot` / `Sub`.
   score ([fx-and-game-feel.md](fx-and-game-feel.md)).
 - **M1-15** (done) — the sounds of the explosion, `PlayerShot`, `PlayerMissile` and `Clink`
   events, panned from where they happen ([audio.md](audio.md)).
-- **M2-03** — loadouts B–D, Weapon Edit, weapon select; **M2-04** — Snake / Formation / Rotate
-  Options and the Option Hunter; **M2-05** — Direct-mode weapon families.
+- **M2-03** (done) — the Types B–D behaviours, the presets Type A–D and Weapon Edit as
+  `GameConfig` fields, `setArsenal`, the weapon select with its live preview
+  ([meter-arsenal.md](meter-arsenal.md)).
+- **M2-04** — Snake / Formation / Rotate Options and the Option Hunter; **M2-05** — Direct-mode
+  weapon families.

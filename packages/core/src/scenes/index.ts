@@ -26,9 +26,9 @@
  *     the weapon select, Back returns to the title menu.
  *   - {@link WeaponSelectScene} (M2-03 — after the difficulty menu): TYPE A–D or EDIT (Weapon
  *     Edit: each of the MISSILE / DOUBLE / LASER weapons), the `?` and `!` choices, Auto Power-Up
- *     and its ORDER ({@link AutoOrderScene}, an overlay editor), START — with a live preview (a mini
- *     World on the weapon range) beside the panel; START starts the game with that loadout
- *     (`core/config` `withArsenal`), Back returns to the difficulty menu.
+ *     and its ORDER ({@link AutoOrderScene}, an overlay editor), START — with a live preview (a
+ *     mini World on the weapon range, drawn full screen behind the panel); START starts the game
+ *     with that loadout (`core/config` `withArsenal`), Back returns to the difficulty menu.
  *   - {@link GameScene}: **owns the World** — every start (and RETRY STAGE) creates a fresh one;
  *     ticks it with the snapshot; Pause (remote Play/Pause, Back — bound to Pause in the game
  *     context) opens the pause menu; `stageClear` / `gameOver` open their screens after a short
@@ -60,13 +60,16 @@
  *   A platform resume while the game scene is on top pushes the pause menu (the player returns to a
  *   paused game — shmup_feat.md §23); Play/Pause toggles pause. **Back** walks the stack: game →
  *   pause, pause → resume, menus → back, title → exit confirmation. The flow composes what the
- *   renderer draws: the World's view and HUD while the game scene is visible (under overlays), one
- *   UI draw list with every visible scene's widgets (rebuilt only when a visible scene's look
- *   changed), and the dim of the top overlay. Menu sounds, the pause toggle and the title / stage
- *   clear / game over music are pushed into the game's event queue.
+ *   renderer draws: the World's view and HUD while the game scene is visible (under overlays) — or
+ *   the weapon select's preview World (no HUD) while that screen is visible (M2-03) —, one UI draw
+ *   list with every visible scene's widgets (rebuilt only when a visible scene's look changed),
+ *   and the dim of the top overlay. Menu sounds, the pause toggle and the title / stage clear /
+ *   game over music are pushed into the game's event queue.
  *
  * Nothing allocates per tick or per frame: every scene, menu and draw list is created with the
- * flow; only a World is created per game start (a scene transition, not a tick).
+ * flow; only a World is created per game start and per visit of the weapon select (its preview) —
+ * scene transitions, not ticks. (The preview's range spawns targets whose behaviour coroutines are
+ * created per spawn, decision D29 — the same small cost as a stage's spawns in a game.)
  *
  * **Where it runs.** Hosts rarely call {@link createSceneFlow} themselves: `core/game`
  * `createGame(platform, overrides, content, { scenes: 'boot' | 'title' | 'game' })` builds the flow
@@ -2037,7 +2040,9 @@ export const MEGA_CHOICE_LABELS: readonly string[] = Object.freeze([
   'FULL BARRIER',
 ]);
 
-/** The `?` choices' labels, in `config` `SHIELD_CHOICES` order (M2-04 appends the other shields). */
+/**
+ * The `?` choices' labels, in `config` `SHIELD_CHOICES` order (M2-04 appends the other shields).
+ */
 export const SHIELD_CHOICE_LABELS: readonly string[] = Object.freeze(['FORCE FIELD']);
 
 /** The TYPE choice's label for Weapon Edit. */
@@ -2079,7 +2084,10 @@ const ORDER_CODES: readonly string[] = Object.freeze(['S', 'M', 'D', 'L', 'O', '
 /** Entries the ORDER summary spells out before `+`. */
 const ORDER_SUMMARY_ENTRIES = 8;
 
-/** The weapon select's panel (left half; the preview flies on the right): left, top, width, height. */
+/**
+ * The weapon select's panel (left half; the preview ship flies on the right): left, top, width,
+ * height.
+ */
 const WEAPON_PANEL = Object.freeze({ x: 4, y: 12, w: 184, h: 192 });
 
 /** Where the weapon select's menu is drawn (labels at x 18, values from x 72). */
@@ -2129,16 +2137,19 @@ function presetLabel(id: string): string {
  * World gets the difficulty's config with this loadout — `core/config` `withArsenal`), Back returns
  * to the difficulty menu. The first visit starts from the host config's values.
  *
- * **Live preview.** On the right a private mini World flies the {@link WEAPON_RANGE_STAGE} range
- * (harmless targets over a floor and a ceiling; free flight when the content lacks it) with the
- * chosen weapons (`WeaponSystem.setArsenal` on every change), Missile, {@link PREVIEW_OPTIONS}
- * Options and god mode: the ship is held at x {@link PREVIEW_SHIP_X} and weaves up and down (so the
- * Free Way and the Options show), its main weapon follows the focused row (MISSILE: the shot,
- * DOUBLE: the Double slot's weapon, LASER: the Laser slot's, otherwise Laser and Double take turns
- * every 4 s), the range restarts when it ends, and its presentation events are dropped (no sound).
- * The World is created when the screen opens (a transition: its fly-in is skipped there) and
- * dropped when it closes; the flow shows its view instead of the game's while this screen is
- * visible. Ticking never allocates (the preview's input, event queue and role list are reused).
+ * **Live preview.** A private mini World flies the {@link WEAPON_RANGE_STAGE} range (harmless
+ * targets over a floor and a ceiling; free flight when the content lacks it), drawn full screen
+ * behind the panel — not in a smaller viewport — with the chosen weapons
+ * (`WeaponSystem.setArsenal` on every change), Missile, {@link PREVIEW_OPTIONS} Options and god
+ * mode (its own debug flags): the ship is held at x {@link PREVIEW_SHIP_X}, right of the panel, and
+ * weaves up and down (so the Free Way and the Options show), its main weapon follows the focused
+ * row (MISSILE: the shot, DOUBLE: the Double slot's weapon, LASER: the Laser slot's, otherwise
+ * Laser and Double take turns every 4 s), the range restarts when it ends, and its presentation
+ * events go to its own queue, cleared every tick (no sound). The World is created when the screen
+ * opens (a transition: its fly-in is skipped there) and dropped when it closes; the flow shows its
+ * view instead of the game's while this screen is visible. Ticking never allocates (the preview's
+ * input, event queue and role list are reused) — except that the range's spawns create their
+ * behaviour coroutines (per spawn, decision D29), so the allocation guard flies it without targets.
  */
 export class WeaponSelectScene extends SceneBase {
   /** See {@link Scene.id}. */
@@ -2159,7 +2170,10 @@ export class WeaponSelectScene extends SceneBase {
   readonly auto: Toggle;
   /** The menu ({@link WeaponSelectItem} order). */
   readonly menu: ListMenu;
-  /** The Auto Power-Up order as `MeterSlot` codes (the first {@link WeaponSelectScene.orderLength}). */
+  /**
+   * The Auto Power-Up order as `MeterSlot` codes (the first {@link WeaponSelectScene.orderLength}
+   * entries are in use).
+   */
   readonly orderSlots = new Int8Array(MAX_AUTO_POWER_UP_ORDER);
   /** Entries of {@link WeaponSelectScene.orderSlots} in use. */
   orderLength = 0;
@@ -2300,7 +2314,9 @@ export class WeaponSelectScene extends SceneBase {
     this.ensurePreview();
   }
 
-  /** The screen closes (back to the difficulty menu, or the game starts): the preview is dropped. */
+  /**
+   * The screen closes (back to the difficulty menu, or the game starts): the preview is dropped.
+   */
   override exit(): void {
     this.preview = null;
   }
@@ -2312,7 +2328,11 @@ export class WeaponSelectScene extends SceneBase {
   }
 
   /**
-   * Replaces the Auto Power-Up order (the order editor's DONE).
+   * Replaces the Auto Power-Up order (the order editor's DONE) and rebuilds the ORDER summary.
+   *
+   * @remarks
+   * Codes outside `0…METER_SLOT_COUNT − 1` are skipped. A menu action, not a tick (the summary
+   * string is built here).
    *
    * @param slots - `MeterSlot` codes, in order (at most `MAX_AUTO_POWER_UP_ORDER` are kept).
    */
@@ -2436,7 +2456,12 @@ export class WeaponSelectScene extends SceneBase {
     this.menu.setDisabled(WeaponSelectItem.Laser, locked);
   }
 
-  /** The ORDER summary: one letter per entry (`+` past eight), `NONE` when empty. */
+  /**
+   * The ORDER row's summary (allocates — built when the order changes, never per tick).
+   *
+   * @returns One letter per entry separated by spaces (`S M L O O O O ?`), `+` after the first
+   *   eight when there are more, or `NONE` when the order is empty.
+   */
   private buildOrderLabel(): string {
     if (this.orderLength === 0) return 'NONE';
     const parts: string[] = [];
@@ -2447,7 +2472,17 @@ export class WeaponSelectScene extends SceneBase {
     return parts.join(' ');
   }
 
-  /** Creates the preview World (when the screen opens), its fly-in skipped. */
+  /**
+   * Creates the preview World (when the screen opens), its fly-in skipped.
+   *
+   * @remarks
+   * A transition (allocates the World). Its config is the next game's
+   * ({@link SceneFlow.gameConfig}) on the {@link WEAPON_RANGE_STAGE} (or free flight), with
+   * autofire, remote mode, the default starting loadout, no Auto Power-Up and no Weapon Edit (the
+   * arsenal is handed over afterwards); its events go to the scene's own queue and god mode is on in
+   * its own debug flags. The fly-in is stepped through here (at most 120 ticks) and its events
+   * dropped. Does nothing while a preview exists.
+   */
   private ensurePreview(): void {
     if (this.preview !== null) return;
     const flow = this.flow;
@@ -2496,7 +2531,9 @@ export class WeaponSelectScene extends SceneBase {
     world.weapons.setArsenal(roles);
   }
 
-  /** One preview tick: the loadout of the focused row, the weave, the World, the range's restart. */
+  /**
+   * One preview tick: the loadout of the focused row, the weave, the World, the range's restart.
+   */
   private stepPreview(): void {
     const world = this.preview;
     if (world === null) return;

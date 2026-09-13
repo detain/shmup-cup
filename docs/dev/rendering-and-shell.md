@@ -493,7 +493,7 @@ the app's `inputProfiles.apply(id, 'options')`, and since M2-02 the `BulletPalet
 
 | `?scene=` | What is drawn | Sprite name table |
 |---|---|---|
-| (none) / `game` | **The scene flow** (M1-16, `createSceneView(game)`; the game created with `{ scenes: 'boot' }`): the title (logo, `PRESS OK`, START / OPTIONS / EXIT, the session hi-score — the saved best since M1-17) over a drifting starfield backdrop; a game with the core HUD (score, `HI`, `2P`, stock, the power meter, Force Field pips), the stage's own parallax and terrain — zone A by default since M1-18 (`defaultStageId`), another with `?stage=` — or the World over the starfield in open space; the difficulty menu under START and the continue countdown (M2-01), the pause menu, the Options screen (M1-17), the YES / NO dialog, the stage-clear and game-over screens over the frozen, dimmed game — all drawn by the core into the HUD / UI lists ([scenes-and-ui.md](scenes-and-ui.md)) | `content.db.sprites.names` + `SCENE_VIEW_SPRITES` |
+| (none) / `game` | **The scene flow** (M1-16, `createSceneView(game)`; the game created with `{ scenes: 'boot' }`): the title (logo, `PRESS OK`, START / OPTIONS / EXIT, the session hi-score — the saved best since M1-17) over a drifting starfield backdrop; a game with the core HUD (score, `HI`, `2P`, stock, the power meter, Force Field pips), the stage's own parallax and terrain — zone A by default since M1-18 (`defaultStageId`), another with `?stage=` — or the World over the starfield in open space; the difficulty menu under START and the continue countdown (M2-01), the weapon select with its live preview World drawn full screen behind its panel and the Auto order editor (M2-03), the pause menu, the Options screen (M1-17), the YES / NO dialog, the stage-clear and game-over screens over the frozen, dimmed game — all drawn by the core into the HUD / UI lists ([scenes-and-ui.md](scenes-and-ui.md)) | `content.db.sprites.names` + `SCENE_VIEW_SPRITES` |
 | `flight` | **Free flight** (`createFlightScene(game)`, M1-06): the game's World — the KESTREL flying in, then moving under the player's control — over three drifting star layers, both HUD bars (`1P` and player 1's score, `FREE FLIGHT`, `HI` and the session hi-score, `lives − 1` stock ships, `ARROWS MOVE` — M1-12). With a stage (`gameConfig.stage`, the web app's `?stage=<id>`, M1-07): the stage's parallax bands and scrolling terrain instead of the starfield, the stage name as the title, the enemies its timeline spawns (M1-08) and their bullets (M1-09). The ship autofires in every build, with Options and lasers under the web app's `?loadout=full` (M1-10); power capsules and the Force Field are World batches too (M1-11 — the power meter itself is not drawn before the M1-16 HUD); ships that are `dying` / `dead` are not drawn, a respawn blinks, and `GAME OVER` (red) replaces the title once the World's status says so (M1-12); a boss's parts are a World batch, and a running WARNING is drawn as a translucent band with its text in the UI list (M1-13, `?stage=test-boss`) | `content.db.sprites.names` + `FLIGHT_SPRITES` |
 | `showcase` | The **sprite showcase** (`createShowcase()`): three scrolling star layers, the KESTREL flying a figure-eight with its thruster and two Options replaying its path, five drifters with periodic hit flashes, a rotating ring of twelve bullets, both HUD bars (scores via the `number` op, lives, power meter with a moving highlight) and the title "SHMUP CUP" / "SPRITE SHOWCASE" in the bitmap font | `SHOWCASE_SPRITES` |
 | `calibration` | The skeleton's test pattern (checker border, grid, colour bars, placeholder ship, moving marker) under empty layers | `content.db.sprites.names` |
@@ -505,9 +505,12 @@ is `null`) its **backdrop** — a static camera and two starfield batches, pre-b
 with the flow's tick; in a game in open space a **wrapper** `WorldView` with two starfield batches
 before the World's batches (on the World's camera, with its terrain, laser and WARNING views),
 built once per World — a new object, so the renderer binds it on the first frame it appears; a
-stage's own view (it has parallax bands) as is. `camera` follows the World on screen for the audio
-pan, and `worldChanges` counts new Worlds — the shell clears the particles and popups when it
-moves. No allocation per frame beyond that one wrapper per open-space World.
+stage's own view (it has parallax bands) as is. Since M2-03 the World is **whichever World view
+the frame shows** — the game's, or the weapon select's live preview (a private World flying the
+`weapon-range` stage behind the panel) — instead of `game.world`; the wrapper is keyed by the view
+object. `camera` follows the World on screen for the audio pan, and `worldChanges` counts new
+World views (a game start, RETRY, opening the weapon select) — the shell clears the particles and
+popups when it moves. No allocation per frame beyond that one wrapper per open-space World.
 
 **Free flight** (`?scene=flight`, the default until M1-16 — bare gameplay, no title or pause)
 owns a `WorldView` whose batches are two starfield batches **followed by the
@@ -536,7 +539,7 @@ UI list is built once (the renderer never redraws it); its HUD list is rebuilt e
 The calibration scene renders the game's frame through a small wrapper whose `world` is always
 `null`, so only the test pattern and the (empty) HUD / UI lists show. `sceneFromSearch()`
 turns unknown or missing values into `game`. On the TV the widget starts without a query string,
-so the TV always runs the scene flow (the title; START opens the difficulty menu since M2-01 and plays zone A since M1-18).
+so the TV always runs the scene flow (the title; START opens the difficulty menu since M2-01, then the weapon select since M2-03, and plays zone A since M1-18).
 
 ## The apps
 
@@ -580,8 +583,8 @@ pnpm test:e2e                                        # builds web + tizen, then 
   with `?scene=calibration`), and nothing is logged as a console error, page error or failed
   request.
 - `scenes.spec.ts` (M1-16) — both builds boot to the title (`data-shmup-scene="title"`); web:
-  **Enter starts the game from the title** (past `PRESS OK`, START, then OK on the difficulty menu
-  — M2-01) and the KESTREL flies in
+  **Enter starts the game from the title** (past `PRESS OK`, START, OK on the difficulty menu
+  — M2-01 — and OK on the weapon select's START — M2-03) and the KESTREL flies in
   with the HUD and the power meter, Esc pauses (dimmed and frozen) and resumes, Back on the title
   only backs out of the menu; Tizen from disk: OK (13) starts, Back (10009) pauses and resumes
   without exiting, and with a fake `window.tizen` Back on the title opens the exit confirmation —
@@ -644,7 +647,7 @@ pnpm test:e2e                                        # builds web + tizen, then 
   `shmup-cup:save.corrupt` and replaced on Back. Tizen from disk: SFX and CONTROLS changed with the
   remote's key codes only, saved on Back, kept after a reload.
 - `zone-a.spec.ts` (M1-18) — the web build's scene flow plays zone A; with the debug stage skip
-  `?skip=boss`, Enter past `PRESS OK`, Enter on START and Enter on the difficulty menu reach the WARNING band (its red edge rows
+  `?skip=boss`, Enter past `PRESS OK`, Enter on START, Enter on the difficulty menu and Enter on the weapon select reach the WARNING band (its red edge rows
   across the whole width) within seconds, then HALCYON BULWARK's hull colour (`#2e5082`, used by no
   other sprite) holds the right half of the playfield; no console errors or atlas warnings
   ([zone-a-and-playtest.md](zone-a-and-playtest.md)).
@@ -652,7 +655,7 @@ pnpm test:e2e                                        # builds web + tizen, then 
   state `error`); a 1000×600 window gets a centred ×2 frame on the letterbox colour and a
   resize to 1920×1080 re-fits it to ×5; free flight animates.
 - `smoke.spec.ts` (M1-19) — the M1 gameplay smoke on both builds: title → OK, OK (START), OK on
-  NORMAL in the difficulty menu (M2-01) → hold → then ↑
+  NORMAL in the difficulty menu (M2-01), OK on the weapon select's START (M2-03) → hold → then ↑
   for 2.5 s each → `window.__shmupDebug.sceneId === 'game'`, the World ticked, no console errors;
   F1 / F2 on the web, and on the TV build the locked tools until Pause, Ch+, Ch+, Ch+.
 - `debug-tools.spec.ts` (M1-19) — F4 freezes, F5 steps exactly one tick, `requestStep(n)` exactly
@@ -664,13 +667,23 @@ pnpm test:e2e                                        # builds web + tizen, then 
   score's last digit counting it. Tizen build from `file://`: the remote's Back (10009) on the
   countdown gives up to the game-over screen without leaving the app; no console errors
   ([difficulty-and-rank.md](difficulty-and-rank.md)). Every older spec that starts a game from
-  the title presses one more Enter / OK for the difficulty menu.
+  the title presses one more Enter / OK for the difficulty menu — and since M2-03 one more for
+  the weapon select.
 - `bullet-palette.spec.ts` (M2-02) — web build: OPTIONS → BULLETS steps STANDARD → DEUTERANOPIA,
   Back writes `display.bulletPalette` to the save (`shmup-cup:save.v1`), and the next boot
   (`?stage=test-range`, whose turrets, walkers and orbiters fire pink, red and purple bullets)
   draws the enemy bullets in the deuteranopia variants' body colours with none of the standard
   ones, no console error and no "unknown sprite" warning; without a save the standard palette
   shows none of the deuteranopia colours (the control).
+- `weapon-select.spec.ts` (M2-03) — web build: OK on the difficulty menu opens the weapon select
+  (`data-shmup-scene="weaponSelect"`) — its panel on the left, the live preview's KESTREL (hull
+  colour) flying on the right; ArrowDown + ArrowRight choose TYPE B and the preview draws its
+  Ripple rings (`shots/ripple` cyan); ArrowUp + Enter on START starts a game whose World runs
+  `type-b`. Tizen build from `file://`: the remote's Back (10009) returns to the difficulty menu, OK
+  (13) opens the select again and starts on its first press; the remote's arrows (37–40) alone
+  choose EDIT and a weapon per slot (the preview follows — read through `__shmupDebug`), NORMAL on
+  `!` and an Auto order through the ORDER overlay (closed with Back), and START plays them; no
+  console errors ([meter-arsenal.md](meter-arsenal.md)).
 - `frame-advance.ts` (M1-19) — `freezeSim(page)` and `stepTo(page, tick)`: specs that compare two
   captures a set number of ticks apart freeze the sim and run exact ticks, because under load the
   frame loop runs 1–4 ticks per rAF frame. Playwright uses half the cores, at most 8 workers
@@ -825,3 +838,7 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
   binding on `ENEMY_BULLETS`; the cancel point items as one more batch on `ITEMS`; the colour-blind
   bullet palettes (`setBulletPalette`, the shell's boot and `connectOptionEvents`)
   ([pattern-dsl.md](pattern-dsl.md), [above](#colour-blind-bullet-palettes)).
+- **M2-03** (done) — `scene-view` draws whichever World view the flow's frame shows (the weapon
+  select's live preview as well as the game's); the renderer binds the preview's view like any
+  new World view; the new shot sprites and `shots/blast` (an engine sprite) need no renderer change
+  ([meter-arsenal.md](meter-arsenal.md#the-live-preview)).

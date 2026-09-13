@@ -178,6 +178,14 @@ ES5 and linted with `ecmaVersion: 5`.
   need to turn is round art placed per node, never rotated or scaled (Pixi's transform setters
   allocate — the bending laser segments)
   ([pattern-dsl.md](pattern-dsl.md#zero-allocation)).
+  And from M2-03: a per-call variant of a shared routine (the Twin Laser's lane in `emit`) travels
+  in a class field set around the call, not as an extra fractional argument; a grid visitor that
+  needs more than a box test (the Ripple's ring) reads its per-query geometry from class fields set
+  once per queried shot; state compiled from content that a menu may swap at run time (the weapon
+  select's preview arsenal) is recompiled **into the existing typed arrays** and copied into the
+  existing list (`WeaponSystem.setArsenal`), never rebuilt; and a screen that runs a private World
+  (the live preview) gives it its own event queue and debug flags and reuses one input snapshot
+  ([meter-arsenal.md](meter-arsenal.md#zero-allocation-and-the-hot-path-rules)).
 - Behaviour coroutines (generators, D29) allocate a small result object on every resume:
   scripts **sleep** (`yield ticks`) and are resumed only when they wake; per-tick motion
   belongs in a mover (numbers on the body), never in a `yield 1` loop.

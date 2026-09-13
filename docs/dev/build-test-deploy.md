@@ -256,7 +256,7 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   reload, a corrupt save boots with defaults and is copied to `shmup-cup:save.corrupt`, the Tizen
   build keeps SFX and CONTROLS changed with the remote alone across a reload, and the boot time on
   the canvas (`data-shmup-boot-ms`) stays under 10 s (M1-17), and the scene flow plays zone A:
-  with `?skip=boss`, Enter three times (since M2-01) reaches the WARNING band within seconds and then HALCYON
+  with `?skip=boss`, Enter four times (three since M2-01, four since M2-03) reaches the WARNING band within seconds and then HALCYON
   BULWARK's hull in the right half of the playfield (M1-18), and the M1 gameplay smoke plays both
   builds from the title (hold the arrows 5 s → `window.__shmupDebug.sceneId` is `game`, no console
   errors) while the debug tools answer F1–F8 on the web and unlock on the TV build only after
@@ -265,7 +265,11 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   and Enter continues in the web build while the remote's Back gives up in the Tizen build (M2-01
   — every spec that starts a game presses one more Enter / OK for the difficulty menu), and
   OPTIONS → BULLETS = DEUTERANOPIA is saved on Back and the next boot's test-range bullets are
-  drawn in that palette's colours, while a boot without a save shows none of them (M2-02). The gameplay specs
+  drawn in that palette's colours, while a boot without a save shows none of them (M2-02), and
+  the weapon select opens after the difficulty menu with its live preview, TYPE B draws Ripple
+  rings, the remote's arrows alone choose a Weapon Edit, a `!` choice and an Auto order and START
+  plays them (M2-03 — every spec that starts a game presses one more Enter / OK for the weapon
+  select's START). The gameplay specs
   open `?scene=flight` (bare gameplay, open space unless `?stage=` names a stage) since M1-16;
   specs comparing captures a set number of ticks apart freeze the sim and step exact ticks
   (`test/e2e/frame-advance.ts`, M1-19) instead of counting rAF frames. Since M1-19 the suite runs

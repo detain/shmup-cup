@@ -6,7 +6,9 @@ work too, and every device drives both the game and the menus.
 > **Status:** these controls are built into the game as **control profiles** and are read
 > every frame. The current build ([preview-build.md](preview-build.md)) starts on the **title
 > screen**: OK (Enter / A) opens the menu, ▲ ▼ move the highlight, OK chooses — START opens the
-> **DIFFICULTY** box, where ▲ ▼ pick EASY / NORMAL / HARD / ARCADE and OK begins a game — the
+> **DIFFICULTY** box, where ▲ ▼ pick EASY / NORMAL / HARD / ARCADE and OK opens the **WEAPON
+> SELECT** screen — ▲ ▼ move between its lines, ◀ ▶ change the weapon type, the `?` / `!`
+> power-ups and Auto Power-Up, and OK on START (highlighted when it opens) begins a game — the
 > first zone, **AZURE VERGE**, on every device. In the game the **directions fly the
 > ship** and the gun **fires on its own**; enemies fly past and shoot at you — every bullet pattern
 > and every boss laser is dodgeable with the four arrow directions alone, no diagonals needed (a
@@ -35,15 +37,15 @@ and selects a menu entry in menus; Back pauses the game and goes back in menus.
 
 | Action | What it does |
 |---|---|
-| Move | Game: fly the ship (8 directions where the device allows it; diagonals are no faster than straight moves, and the ship stops as soon as you let go). Menus: move the highlight (▲ ▼; ◀ ▶ between YES and NO, and in the Options screen ◀ ▶ turn a volume down / up or change the control profile or the bullet colours) — holding a direction repeats the move after about a third of a second, then about ten times a second |
+| Move | Game: fly the ship (8 directions where the device allows it; diagonals are no faster than straight moves, and the ship stops as soon as you let go). Menus: move the highlight (▲ ▼; ◀ ▶ between YES and NO, in the Options screen ◀ ▶ turn a volume down / up or change the control profile or the bullet colours, and in the WEAPON SELECT screen ◀ ▶ change the highlighted line's choice) — holding a direction repeats the move after about a third of a second, then about ten times a second |
 | Shot | Main gun. Today it fires **on its own** on every device (automatic fire is on by default, and always on with the TV remote), so you never need to press it; once automatic fire can be switched off in the Options menu, hold it to fire |
 | Sub | Missiles / sub-weapon, once you have them — automatic in the same way |
 | PowerUp | Take the highlighted power-up of the power meter — one per press (holding the button never takes a second); a press on an empty or maxed-out slot does nothing |
 | Special | Screen-clearing special, when you have one |
 | Speed | Cycle ship speed (item mode) |
 | Pause | Pause / resume (the pause menu: RESUME, OPTIONS, RETRY STAGE, QUIT TO TITLE) |
-| Confirm | Menus: select the highlighted entry; on the title first leaves `PRESS OK`. A press made while a menu is just appearing is remembered for a moment, not lost |
-| Back | Menus: previous screen (in the pause menu: resume; in a YES / NO question: NO; in the Options screen: keep the settings and close it, like BACK; in the DIFFICULTY box: back to the title menu; on the CONTINUE? countdown: give up — GAME OVER); on the TV's title screen it asks **EXIT SHMUP CUP?** — only YES quits |
+| Confirm | Menus: select the highlighted entry; on the title first leaves `PRESS OK`; in the WEAPON SELECT screen OK also steps the highlighted choice, opens ORDER and, on START, begins the game. A press made while a menu is just appearing is remembered for a moment, not lost |
+| Back | Menus: previous screen (in the pause menu: resume; in a YES / NO question: NO; in the Options screen: keep the settings and close it, like BACK; in the DIFFICULTY box: back to the title menu; in the WEAPON SELECT screen: back to the DIFFICULTY box; in its AUTO ORDER box: keep the order and close it, like DONE; on the CONTINUE? countdown: give up — GAME OVER); on the TV's title screen it asks **EXIT SHMUP CUP?** — only YES quits |
 
 If you are holding a button at the moment a menu opens (or closes), it keeps doing only what
 it does in both sets until you let go — holding the Sub key while the pause menu appears will
@@ -207,14 +209,15 @@ profile chosen under CONTROLS — SAFE 4-WAY until you pick another.
 | A button does something in the game but nothing in a menu (or the other way round) | Expected — see the two tables above; for example C (PowerUp) has no menu function |
 | The game shows a start-up error screen mentioning `input-profiles.json` | The control profiles in this build are broken. Report the lines on the screen — see [preview-build.md](preview-build.md) |
 | Back closes the game on the TV instead of pausing | Not expected any more — Back pauses in the game and asks before quitting on the title. It closes the app at once only on the loading and error screens; otherwise please report it (and check the installed build is the latest) |
-| Nothing reacts for a moment after the app starts | The title screen needs OK first (`PRESS OK`), then START, then OK on a difficulty; after that the ship flies in (about ⅔ of a second) and ignores the controls until it arrives — see [preview-build.md](preview-build.md#flying-the-ship) |
+| Nothing reacts for a moment after the app starts | The title screen needs OK first (`PRESS OK`), then START, then OK on a difficulty, then OK on START in the WEAPON SELECT screen; after that the ship flies in (about ⅔ of a second) and ignores the controls until it arrives — see [preview-build.md](preview-build.md#flying-the-ship) |
 | Holding Shot (Z / Space, A / Cross) or Sub (X, B / Circle) changes nothing | Expected: the gun already fires on its own (automatic fire is on by default), and the missiles fire on their own too once a power-up gave them to you (in a browser, `?loadout=full` gives them to you right away) |
 | PowerUp (OK, Enter, C, X) does nothing | Expected until you have collected a power capsule (no box of the power meter is highlighted) — the red saucers and completed formations of AZURE VERGE leave them. Also expected when you already have the most of the highlighted power-up. Such a press plays a short, low "no" buzz. See [preview-build.md](preview-build.md#power-ups) |
 | No sound in the browser | Press a key or click into the picture once — the sound starts then (a gamepad button does not count). See [preview-build.md](preview-build.md#sound-and-music) |
 | Pressing OK while holding an arrow stops the ship on the TV | Not expected — the game keeps the arrow held. Please report it with the remote model: it means the remote itself drops the arrow when OK is pressed |
 | OK or Back does nothing on the CONTINUE? countdown | Both are ignored for the first half second, so a button still pressed from the game never decides; press again. If they never react, please report it |
-| Pause does nothing | On the title, the DIFFICULTY box, the CONTINUE? countdown and the end screens Pause has no job — it pauses only a running game. In the game it should open the PAUSE menu; if not, please report the device and the button |
+| Pause does nothing | On the title, the DIFFICULTY box, the WEAPON SELECT screen, the CONTINUE? countdown and the end screens Pause has no job — it pauses only a running game. In the game it should open the PAUSE menu; if not, please report the device and the button |
 | Special, Speed and the other buttons do nothing | Expected in the current preview — nothing uses them yet |
 | F1–F8 (or 1–8 on the TV) do nothing | They are developer keys of debug builds only; on the TV the tools must be opened first with Play/Pause, Ch ▲, Ch ▲, Ch ▲ — see [Developer keys](#developer-keys-debug-builds-only) |
 | The game froze without a PAUSE box, or runs in slow motion (debug build) | A developer tool is on — F4 / 4 unfreezes, F6 / 6 cycles slow motion back to normal ([debug-tools.md](debug-tools.md#troubleshooting)) |
 | A menu moves two steps for one press, or skips a press | Not expected — please report the device (and the remote model) |
+| ▼ in the WEAPON SELECT screen jumps over MISSILE, DOUBLE and LASER | Expected: those lines show the chosen type's weapons and can only be changed with TYPE set to **EDIT** — see [preview-build.md](preview-build.md#choosing-your-weapons) |

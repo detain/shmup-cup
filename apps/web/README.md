@@ -6,7 +6,9 @@ The **browser dev target** (Vite dev server with HMR) and the renderer that
 It boots behind a loading bar (or a boot error screen listing every problem) into the game's
 **scene flow** (M1-16): the title (`PRESS OK`, then START / OPTIONS — no EXIT: a browser has no
 `platform.exit`, so Back on the title only backs out of the menu), the difficulty menu under
-START (EASY / NORMAL / HARD / ARCADE — M2-01), the game with its HUD, the pause menu (Esc / P /
+START (EASY / NORMAL / HARD / ARCADE — M2-01), the weapon select after it (weapon types A–D /
+EDIT, the `?` / `!` choices, Auto Power-Up and its order, a live preview — M2-03,
+[`docs/dev/meter-arsenal.md`](../../docs/dev/meter-arsenal.md)), the game with its HUD, the pause menu (Esc / P /
 Backspace), stage clear, the continue countdown (M2-01) and game over — guides:
 [`docs/dev/scenes-and-ui.md`](../../docs/dev/scenes-and-ui.md),
 [`docs/dev/difficulty-and-rank.md`](../../docs/dev/difficulty-and-rank.md). `?scene=flight` goes straight into **free

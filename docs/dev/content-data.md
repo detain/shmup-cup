@@ -170,7 +170,7 @@ absent optional reference, or an id that did not resolve (which is also an issue
 | `ContentRefKind` | Resolved against | Unknown id |
 |---|---|---|
 | `sprite` | interned: `db.sprites` (sorted names, `extraSprites` included) | never an issue here — `pnpm content:check` checks the names against the atlas (M1-03) |
-| `script` | interned: `db.scripts` (sorted names) | an issue only when `options.knownScripts` is given — the shell and `pnpm content:check` pass `KNOWN_SCRIPT_IDS` (`core/behaviors`: enemy behaviours + Type A weapon behaviours) |
+| `script` | interned: `db.scripts` (sorted names) | an issue only when `options.knownScripts` is given — the shell and `pnpm content:check` pass `KNOWN_SCRIPT_IDS` (`core/behaviors`: enemy behaviours + the weapon behaviours — Type A's, and the Types B–D ones since M2-03) |
 | `ship`, `weapon`, `enemy`, `path`, `stage`, `tileset` | `db.shipIndex`, `weaponIndex`, `enemyIndex`, `pathIndex`, `stageIndex`, `tilesetIndex` — across all files, in any order | issue |
 | `sfx`, `music` | `SFX_CUES` / `MUSIC_CUES` in `core/events` (own properties only, so `"toString"` does not resolve) | issue |
 | `pattern` (M2-02) | `db.patterns.actionIndex` — the action ids of every `patterns` file, compiled first | issue |
@@ -415,4 +415,9 @@ M2-01 (done) — the `rules` kind with the difficulty presets (`ContentDb.diffic
 `revenge` section and the `rank` modifiers given meaning
 ([difficulty-and-rank.md](difficulty-and-rank.md)); M2-02 (done) — the `patterns` kind compiled at
 load into `ContentDb.patterns`, the ref kind `pattern` (enemy `pattern` → `patternId`), the
-`rules` kind's `scoring` section ([pattern-dsl.md](pattern-dsl.md)).
+`rules` kind's `scoring` section ([pattern-dsl.md](pattern-dsl.md)); M2-03 (done) — weapons gained
+an optional `name` (`s.str({ maxLength: 16, pattern: /^[A-Z0-9 .-]+$/ })` — the weapon select's
+label), `content/weapons/types-b-d.weapons.json` holds the Types B–D weapons and presets (named so
+it sorts after `type-a…`: the weapon select lists presets in content order), and the weapon
+select's range is content too — `content/stages/weapon-range.stage.json` with its harmless
+targets in `content/enemies/weapon-range.enemies.json` ([meter-arsenal.md](meter-arsenal.md)).

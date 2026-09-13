@@ -2,8 +2,10 @@
 
 The game now starts like a real game. Every build — browser, Samsung TV and desktop — shows a
 short loading bar and then the **title screen**: the SHMUP CUP logo, a blinking `PRESS OK`, and
-after OK a small menu. **START** asks for a **difficulty** — EASY, NORMAL, HARD or ARCADE — and
-then begins a game: the KESTREL, the player ship, flies in from the
+after OK a small menu. **START** asks for a **difficulty** — EASY, NORMAL, HARD or ARCADE — then
+shows the **WEAPON SELECT** screen, where you pick the ship's **weapons** — four ready-made weapon
+types or your own mix, what the `?` and `!` power-ups do, and automatic power-ups — while a
+**live preview** flies them behind the menu, and then begins a game: the KESTREL, the player ship, flies in from the
 left and from then on follows the directional buttons of the TV remote, the arrow keys or a
 gamepad — **its gun fires on its own**, with a sound for every shot — under the new **HUD**: your
 score, the best score and the second player's slot along the top, your spare ships, the **power
@@ -18,7 +20,8 @@ colour-blind players), and the game **remembers** them and your **high scores** 
 itself and works with the remote's arrows, OK and Back alone ([The title screen and the
 menus](#the-title-screen-and-the-menus), [Pausing, quitting and the end
 screens](#pausing-quitting-and-the-end-screens), [Difficulty, extra ships and
-continues](#difficulty-extra-ships-and-continues), [The Options screen](#the-options-screen)).
+continues](#difficulty-extra-ships-and-continues), [Choosing your weapons](#choosing-your-weapons),
+[The Options screen](#the-options-screen)).
 
 **START plays the first real zone, AZURE VERGE** — on the TV too: about three minutes of
 scrolling over rolling ground, through a long cave and a high-speed stretch, with enemies that fly
@@ -59,9 +62,9 @@ The earlier start-up pictures are still there: **free flight** straight away wit
 the animated **sprite showcase** and the **calibration screen**, plus the **effects gallery**
 that shows every explosion and screen effect in turn (see [below](#other-screens-browser-only)).
 
-This build is version **0.1.0** — the end of the first milestone — plus the first two steps of
+This build is version **0.1.0** — the end of the first milestone — plus the first three steps of
 the second: the difficulties, extra ships and continues, then the colour-blind bullet colours and
-points for cancelled bullets. For checking it on the monitors
+points for cancelled bullets, and now the **weapon types** and the WEAPON SELECT screen. For checking it on the monitors
 there is a **debug build** with developer tools — a panel with the frame rate, frame times and
 start-up time, hit-area outlines, invincibility, a freeze with single steps, slow motion and
 jumps to the next checkpoint or the boss — opened on the remote with Play/Pause and then Ch ▲
@@ -99,7 +102,7 @@ The title music (SHMUP CUP) plays — in a browser from your first key press or 
 
 | Entry | What it does |
 |---|---|
-| **START** | Opens the **DIFFICULTY** box (highlighted first); OK there starts the game — see [Difficulty, extra ships and continues](#difficulty-extra-ships-and-continues) |
+| **START** | Opens the **DIFFICULTY** box (highlighted first); OK there opens the **WEAPON SELECT** screen, and OK on its START begins the game — see [Difficulty, extra ships and continues](#difficulty-extra-ships-and-continues) and [Choosing your weapons](#choosing-your-weapons) |
 | **OPTIONS** | Opens the **Options screen**: the volumes and the control profile — see [The Options screen](#the-options-screen) |
 | **EXIT** | Only on the TV: asks **EXIT SHMUP CUP?** — see below |
 
@@ -117,7 +120,8 @@ The title music (SHMUP CUP) plays — in a browser from your first key press or 
 
 ## What you should see
 
-After **START** and **OK** on a difficulty the title music fades and the game begins — AZURE
+After **START**, **OK** on a difficulty and **OK** on START in the WEAPON SELECT screen the title
+music fades and the game begins — AZURE
 VERGE's own music starts, and
 the picture is a deep navy
 picture (never pure black — the M7 monitors' VA panels smear dark-to-bright transitions) framed by
@@ -129,7 +133,7 @@ two thin bars, one along the top edge and one along the bottom (the **HUD**):
 | **KESTREL**, the player ship | Enters from the left edge | Glides in from off-screen during the first ⅔ of a second, slowing down as it arrives, and stops at mid-height about a sixth of the way across. Then it is yours to fly |
 | **Shots** from the ship's nose | In front of the ship, flying right | As soon as the ship has arrived, small cyan-and-white darts leave its nose and race to the right edge, two at a time, each with a tiny white-and-yellow **muzzle spark** flickering just in front of the nose as it leaves — see [Your weapons](#your-weapons) |
 | **Top bar** | Top edge | `1P` (cyan) and your score `00000000` on the left; `HI` (yellow) and the best score so far (kept between launches) in the middle; `2P` and `------` (grey — nobody is playing player 2) on the right |
-| **Bottom bar** | Bottom edge | On the left small ship icons (your spare ships — on NORMAL you start with three, the one you fly plus two icons; EASY gives five, ARCADE two; with more than five spare ships you see one icon and the number); then the **power meter**: seven boxes labelled `SPEED` `MISSILE` `DOUBLE` `LASER` `OPTION` `?` `!` ([Power-ups](#power-ups)); on the right, while you have a Force Field, five small blocks — cyan for each hit it can still take, dark for the spent ones |
+| **Bottom bar** | Bottom edge | On the left small ship icons (your spare ships — on NORMAL you start with three, the one you fly plus two icons; EASY gives five, ARCADE two; with more than five spare ships you see one icon and the number); then the **power meter**: seven boxes labelled `SPEED` `MISSILE` `DOUBLE` `LASER` `OPTION` `?` `!` — with another weapon type the second, third and fourth boxes carry that type's weapon names instead, e.g. `SPREAD` `TAIL` `RIPPLE` ([Power-ups](#power-ups)); on the right, while you have a Force Field, five small blocks — cyan for each hit it can still take, dark for the spent ones |
 
 Every pixel should be a crisp little square. The game draws at 384×216 and scales that up
 by a whole number: on the 1080p M7 monitors (and any 1920×1080 browser window) the scale is
@@ -197,12 +201,12 @@ game over's (this screen ends the run in this preview).
 - **▲ / ▼** move the highlight (it wraps round); the lines at the bottom show the highlighted
   difficulty's **LIVES** (ships), **CONTINUES** and **HI** — each difficulty keeps its own best
   scores.
-- **OK** starts the game on the highlighted difficulty (a chime); **Back** returns to the title
-  menu.
+- **OK** chooses the highlighted difficulty (a chime) and opens the **WEAPON SELECT** screen
+  ([Choosing your weapons](#choosing-your-weapons)); **Back** returns to the title menu.
 - The box opens on the difficulty you chose last — NORMAL the first time. The choice lasts until
   the app is closed; remembering it between launches comes with a later build's game options.
-- Starting a game therefore takes one more OK than before: OK (`PRESS OK`), OK (START), OK (the
-  difficulty).
+- Starting a game therefore takes four OKs: OK (`PRESS OK`), OK (START), OK (the difficulty), OK
+  (START in the WEAPON SELECT screen, which is highlighted when it opens).
 
 ### The game gets harder as your ship gets stronger
 
@@ -244,6 +248,95 @@ fades out.
 - **Back** gives up, and so does waiting until the countdown ends: the **GAME OVER** screen
   appears and the game is saved as usual.
 - On **ARCADE** there are no continues: GAME OVER comes straight away.
+
+## Choosing your weapons
+
+OK on a difficulty opens the **WEAPON SELECT** screen. A framed panel on the left lists what the
+ship will carry; behind it, over the whole picture, a **live preview** shows the choice in action:
+the KESTREL, with the Missile and two Options, flies over a small practice range with a floor and
+a ceiling and harmless targets, weaving up and down to the right of the panel and firing what
+you choose. The preview makes no sound (the title music keeps playing), the ship cannot be hit, and
+the range starts over when it ends.
+
+```text
+        WEAPON SELECT
+    TYPE     TYPE A
+    MISSILE  MISSILE          ← grey unless TYPE is EDIT
+    DOUBLE   DOUBLE
+    LASER    LASER
+    ? SLOT   FORCE FIELD
+    ! SLOT   MEGA CRASH
+    AUTO     OFF
+    ORDER    S M L O O O O ?
+  → START
+    LEFT/RIGHT: CHANGE
+    OK ON START: GO
+```
+
+- The screen opens with **START** highlighted, so OK starts a game straight away with what is
+  shown — the first time the classic **TYPE A**, later whatever you chose last.
+- **▲ / ▼** move between the lines (the grey MISSILE / DOUBLE / LASER lines are skipped); **◀ / ▶**
+  — or OK — change the highlighted line, with a click each time.
+- **OK on START** begins the game; **Back** returns to the DIFFICULTY box (what you changed stays
+  on the screen for next time, but only START uses it).
+- Your choice is kept for RETRY STAGE and every later game **until the app is closed** — it is
+  not remembered between launches yet (a later build's game options will).
+
+**TYPE — the four weapon types.** Every type has the same small darts as its main gun; they differ
+in what the power meter's **MISSILE**, **DOUBLE** and **LASER** boxes give you:
+
+| Type | MISSILE box | DOUBLE box | LASER box |
+|---|---|---|---|
+| **TYPE A** (as before) | **MISSILE** — drops diagonally and slides along the ground | **DOUBLE** — a second shot climbing at 45° | **LASER** — a long pale-blue beam that passes through enemies |
+| **TYPE B** | **SPREAD BOMB** — an orange bomb that arcs down and bursts on the ground (or the first enemy it touches) into a fiery blast; everything inside the blast is hit twice | **TAIL GUN** — a second shot straight **backwards** | **RIPPLE LASER** — cyan rings that grow as they fly (up to three at a time); an enemy is hit where the ring touches it |
+| **TYPE C** | **2-WAY MISSILE** — two grey missiles at once, one climbing, one diving | **VERTICAL** — a second shot straight **up** | **CYCLONE LASER** — a thicker, longer beam with violet strands swirling round a white core; passes through enemies |
+| **TYPE D** | **PHOTON TORPEDO** — a fast violet torpedo that drops and slides along the ground, and keeps going through the small enemies it destroys | **FREE WAY** — a second shot in the **direction you last moved** (up, down, back, diagonally …) | **TWIN LASER** — pairs of short green beams side by side, fast (two pairs at a time) |
+
+The last TYPE choice, **EDIT** (Weapon Edit), makes MISSILE, DOUBLE and LASER white: you can then
+pick each of the three from **all four types** (for example the Spread Bomb, the Free Way and the
+Cyclone Laser together). The labels show the full names (`SPREAD BOMB`, `2-WAY MISSILE` …). EDIT
+starts from the weapons of the type you had chosen before it. While MISSILE is highlighted the
+preview shows the missile on its own, on DOUBLE the Double weapon, on LASER the laser; on every
+other line it switches between the Laser and the Double weapon every four seconds.
+
+**? SLOT** — what the power meter's `?` box gives: **FORCE FIELD** (the ring that takes five hits;
+more shields come in a later build).
+
+**! SLOT** — what the power meter's `!` box does:
+
+| Choice | What OK on `!` does | `!` is greyed out when |
+|---|---|---|
+| **MEGA CRASH** (as before) | Every enemy and enemy bullet on screen is destroyed | never |
+| **NORMAL** | Back to the small darts — drops the Double or Laser weapon (the missiles and Options stay) — for when you prefer the basic gun | you already fire the darts |
+| **SPEED DOWN** | One speed level slower — for when you took too many Speed Ups | the ship is at its normal speed |
+| **LIFE OPTION** | Your **spare ships become Options** — as many as fit up to four; each one takes a spare-ship icon | you have no spare ship, or four Options |
+| **FULL BARRIER** | A fresh **Force Field**, even over a worn one | the Force Field is up at full strength |
+
+**AUTO** — **Auto Power-Up**: ON takes power-ups by itself when the power meter reaches the next
+one in the order below (you can still press OK yourself). OFF (the default) leaves the highlight
+where the capsules put it until you press OK — you can "park" it on a power-up for as long as you
+like.
+
+**ORDER** — the order Auto Power-Up follows, shown in letters (`S` Speed Up, `M` MISSILE, `D`
+DOUBLE, `L` LASER, `O` Option, `?`, `!`; `+` when there are more than eight, `NONE` when empty).
+OK on ORDER opens the **AUTO ORDER** box on the right over the darkened screen: twelve numbered
+lines, each one power-up or `-` (nothing). ▲ / ▼ move, ◀ / ▶ (or OK) change a line; **DONE** or
+**Back** keep the order (the `-` lines are left out) and close the box. A power-up listed twice
+asks for two of it (e.g. two Speed Ups).
+
+In the game, the power meter's boxes then carry the weapon type's names — Type B shows `SPREAD`
+`TAIL` `RIPPLE`, Type C `2-WAY` `VERTICAL` `CYCLONE`, Type D `TORPEDO` `FREE WAY` `TWIN`
+([Power-ups](#power-ups)); the `?` and `!` boxes keep their symbols.
+
+What "good" looks like:
+
+- The WEAPON SELECT panel is readable from the sofa; the grey lines are clearly grey.
+- The preview's ship is always visible to the right of the panel, weaving smoothly, and the
+  weapons change the moment you change TYPE or a weapon — never a magenta-and-black square.
+- Missiles, bombs and torpedoes land on the preview's floor; nothing ever hits the preview ship.
+- Moving through the lines never skips or doubles a step; Back always returns to the DIFFICULTY
+  box, and the AUTO ORDER box always closes with DONE or Back.
+- The game that starts has exactly the weapons, `!` choice and Auto Power-Up setting shown.
 
 ## The Options screen
 
@@ -353,7 +446,20 @@ ship may move in four directions only; the game is designed to be fully playable
 
 ### What changed lately
 
-**New in this build: bullet colours for colour-blind players, and points for cancelled bullets.**
+**New in this build: four weapon types and the WEAPON SELECT screen.** After the DIFFICULTY box a
+new screen lets you choose the ship's weapons before every game — so starting a game takes one
+more OK (START is highlighted, so OK goes straight on). Besides the classic **TYPE A** (Missile,
+Double, Laser) there are **TYPE B** (a Spread Bomb that bursts into a blast, a Tail Gun that fires
+backwards, the growing rings of the Ripple Laser), **TYPE C** (a 2-Way Missile, a Vertical shot
+straight up, the thick swirling Cyclone Laser) and **TYPE D** (a Photon Torpedo that ploughs
+through small enemies, a Free Way shot that follows your last direction, the paired beams of the
+Twin Laser) — or **EDIT** to mix the three weapons from all four types. The same screen chooses
+what the `!` box does (the Mega Crash, or NORMAL, SPEED DOWN, LIFE OPTION — spare ships become
+Options — and FULL BARRIER), turns **Auto Power-Up** on and sets its **order**. A live preview flies
+your choice behind the menu, and in the game the power meter names its boxes after your weapons.
+See [Choosing your weapons](#choosing-your-weapons).
+
+Before that, **bullet colours for colour-blind players, and points for cancelled bullets.**
 OPTIONS has a new line, **BULLETS**: besides the standard pink / red / purple, three colour sets
 made for the common kinds of colour blindness (DEUTERANOPIA, PROTANOPIA, TRITANOPIA), with the
 bullets' centres shape-coded (solid, ring, dot) so the three kinds of bullet can be told apart
@@ -521,9 +627,14 @@ game engine: every build added to this world, and version 0.1.0 completes its fi
 slice. Next comes the complete game — difficulty levels, more weapons and ships, two players,
 more zones.
 
-**Please re-test on the monitors:** new since the last build are **BULLETS** and the **points for
-cancelled bullets** (checks 29–30) — please say whether each colour set keeps the three kinds of
-bullet easy to tell apart from the sofa, and whether the gold diamonds read clearly. Otherwise, as
+**Please re-test on the monitors:** new since the last build is the **WEAPON SELECT** screen
+(checks 31–35) — please say whether it is quick to use with the remote's arrows and OK alone,
+whether its panel and the AUTO ORDER box are readable from the sofa, whether the live preview
+behind the panel shows each weapon clearly, and how the new weapons feel against the enemies and
+the boss (which type you liked, and whether any weapon felt useless or too strong). Still worth
+answering from the build before: **BULLETS** and the **points for cancelled bullets** (checks
+29–30) — whether each colour set keeps the three kinds of bullet easy to tell apart from the sofa,
+and whether the gold diamonds read clearly. Otherwise, as
 before, this time with the **debug build**, and run the **M1 release
 check** in [debug-tools.md](debug-tools.md#the-m1-release-check) on both monitors — start-up
 time, picture, remote-only play through AZURE VERGE, leaving and returning, sound, what is kept
@@ -687,8 +798,8 @@ Things to check on the monitor and report:
 
 1. A loading bar (or nothing at all, if it is very quick) and then the **title screen** — the
    logo, a blinking `PRESS OK`, `HI` at the bottom, drifting stars — never a black screen that
-   stays black. OK, then OK on START, then OK on NORMAL in the DIFFICULTY box: the view starts to
-   scroll and the ship flies in.
+   stays black. OK, then OK on START, then OK on NORMAL in the DIFFICULTY box, then OK on START
+   in the WEAPON SELECT screen: the view starts to scroll and the ship flies in.
 2. **Both HUD bars are complete** (new layout): the top bar's `1P` and score on the left, `HI`
    and its score in the middle, `2P ------` on the right; the bottom bar's two ship icons on the
    left and the power meter's seven boxes `SPEED` … `!` after them — every label readable. If one edge is cut off, note which — that would mean the monitor overscans or the
@@ -785,8 +896,8 @@ Things to check on the monitor and report:
 25. **The DIFFICULTY box** (new): on the title, OK → START opens it with NORMAL highlighted and
    `LIVES 3`, `CONTINUES 3` and `HI` underneath. ▲ / ▼ move the highlight (wrapping round) and the
    numbers change with it — EASY `5` / `5`, HARD `3` / `2`, ARCADE `2` / `0`. Back returns to the
-   title menu; OK on **EASY** starts a game with four spare-ship icons. Report whether the box is
-   readable from the sofa.
+   title menu; OK on **EASY** (then OK on START in the WEAPON SELECT screen) starts a game with four
+   spare-ship icons. Report whether the box is readable from the sofa.
 26. **Extra ship** (new): play NORMAL until the score passes 20,000: a short "1UP" jingle plays even in the middle of explosions, and a spare-ship icon
    appears. Report if it is missing or drowned out.
 27. **Continue** (new): on NORMAL lose every ship (fly into the rock of the cave, for example):
@@ -811,6 +922,32 @@ Things to check on the monitor and report:
    small gold diamond that hangs for a moment, then flies up to your score in the top bar, where
    the score goes up by 10 for each one that arrives. Report whether the diamonds are visible
    from the sofa and whether any of them gets stuck on the screen.
+31. **The WEAPON SELECT screen** (new): OK on a difficulty opens it with START highlighted, the
+   panel on the left and the KESTREL flying on the right behind it, firing. ▲ moves up the lines —
+   MISSILE, DOUBLE and LASER are grey and skipped. On **TYPE** press ▶: `TYPE B`, `TYPE C`, `TYPE D`,
+   `EDIT`, then `TYPE A` again, and the preview's weapons change each time (Type B's cyan rings,
+   Type C's swirling beam, Type D's twin beams). **Back** returns to the DIFFICULTY box; OK there
+   brings the screen back with your choice still shown. Report whether it is quick to use, whether
+   the text is readable, and whether the preview ever stutters.
+32. **Playing another type** (new): choose **TYPE B**, START, and collect capsules in AZURE VERGE:
+   the power meter's boxes read `SPREAD` `TAIL` `RIPPLE`. Take MISSILE — orange bombs arc down and
+   burst on the ground; take LASER — rings grow as they fly and hit what they touch; take DOUBLE —
+   a second shot flies backwards. Try TYPE C and TYPE D the same way (Type D's FREE WAY shot follows
+   the last direction you moved — fly up, and it fires up). Report which weapons are easy to see
+   and use with the remote.
+33. **EDIT** (new): choose `EDIT` on TYPE — MISSILE, DOUBLE and LASER turn white. Pick a weapon on
+   each with ◀ / ▶ (the preview shows the one on the highlighted line), START, and check the game
+   fires exactly those weapons.
+34. **The `!` choices** (new): set **! SLOT** to **LIFE OPTION**, START, and collect seven capsules
+   (the highlight reaches `!`): OK turns your spare ships into Options — the orbs appear and the
+   spare-ship icons go. Try **FULL BARRIER** (a fresh Force Field even when the old one is worn),
+   **SPEED DOWN** and **NORMAL** too; a greyed `!` box gives the "no" buzz on OK. Report whether
+   the choices are clear.
+35. **AUTO and ORDER** (new): set AUTO to **ON**, highlight ORDER and press OK: the AUTO ORDER box
+   opens on the right with the order in twelve lines. Change a line or two with ◀ / ▶, then Back:
+   the box closes and ORDER shows the new letters. START and collect capsules: the power-ups are
+   taken by themselves in that order, without OK. Report whether the box is readable and whether
+   Back ever did something else than close it.
 
 The fully powered ship (`?loadout=full`), the shortcut to the boss (`?skip=boss`), the two test
 stages (the Test Range and the Boss Range with its test boss), free flight, the showcase, the
@@ -835,8 +972,9 @@ pnpm dev
 ```
 
 Open http://localhost:5173 (other devices on the same network can use the PC's IP
-address, e.g. `http://192.168.1.20:5173`): the title screen appears. Press **Enter** three times
-(past `PRESS OK`, START, then NORMAL in the DIFFICULTY box — or ▼ to choose another) to play AZURE VERGE and fly with the arrow keys, W A S D or a gamepad;
+address, e.g. `http://192.168.1.20:5173`): the title screen appears. Press **Enter** four times
+(past `PRESS OK`, START, NORMAL in the DIFFICULTY box — or ▼ to choose another — and START in the
+WEAPON SELECT screen — or ▲ to change the weapons first) to play AZURE VERGE and fly with the arrow keys, W A S D or a gamepad;
 **Esc** (or P, Backspace) pauses. http://localhost:5173/?skip=boss starts every game a moment
 before the zone's WARNING, to try the boss without playing the three minutes before it. The browser version has no EXIT entry — a browser tab cannot close itself — so
 Back (Esc) on the title only goes back from the menu to `PRESS OK`. To skip the title and fly
@@ -1011,10 +1149,30 @@ playable with the TV remote. The pictures are placeholders (original designs).
   ([the score](#the-score)); saucers and completed formations leave a power capsule
   ([Power-ups](#power-ups)).
 
+**Other weapon types.** Everything above describes **TYPE A**, the weapons the game starts with.
+The WEAPON SELECT screen before each game offers three more types and a mix of your own — their
+weapons are described in [Choosing your weapons](#choosing-your-weapons). What they should look
+like in play:
+
+| Weapon | What "good" looks like |
+|---|---|
+| **SPREAD BOMB** (Type B) | A small orange-and-yellow bomb drops forward in a curve and bursts where it meets the ground or an enemy: a white-yellow flash that swells into a ring and cools to red in about a fifth of a second, staying where it burst while the ground scrolls on. Enemies in it flash twice. On armour it clinks but the blast keeps burning |
+| **TAIL GUN** (Type B) | With each pair of darts, one flies forward and one straight back to the left edge |
+| **RIPPLE LASER** (Type B) | Cyan oval rings leave the nose and grow as they fly (up to three at a time); a ring hits an enemy it touches with its edge and vanishes — a small enemy it has already passed around is not hit |
+| **2-WAY MISSILE** (Type C) | Two grey missiles with red flames leave together, one climbing, one diving; the next pair follows when both are gone |
+| **VERTICAL** (Type C) | With each pair of darts, one flies forward and one straight up |
+| **CYCLONE LASER** (Type C) | Like the laser, but longer and thicker, with violet strands swirling round a bright core |
+| **PHOTON TORPEDO** (Type D) | A violet torpedo drops forward, slides fast along the ground and keeps going through the small enemies it destroys; a tougher enemy, armour or a wall stops it |
+| **FREE WAY** (Type D) | With each pair of darts, one flies forward and one in the direction you last moved — also backwards or diagonally; before you have moved, up and forward |
+| **TWIN LASER** (Type D) | Pairs of short green beams, one just above the other, race forward and move up and down with the ship; each beam vanishes on the first enemy it hits |
+
+The Options fire the chosen weapons too, each with its own bombs, rings or beams.
+
 **Fully powered** (browser only, for testing): add `&loadout=full` to the address, e.g.
 http://localhost:5173/?stage=test-range&loadout=full (or `?loadout=full` alone for AZURE VERGE,
 `?skip=boss&loadout=full` for its boss), then START. Every game you start (and every RETRY STAGE) begins with most of what the power-ups give
-you:
+you — with the weapon type chosen in the WEAPON SELECT screen (TYPE B gives the Ripple Laser
+instead of the laser below, and so on):
 
 | What | What "good" looks like |
 |---|---|
@@ -1070,12 +1228,12 @@ Force Field that is still up …) are **greyed out**:
 | Capsules since your last power-up | Highlighted | What OK gives you |
 |---|---|---|
 | 1 | SPEED UP | The ship moves faster (five Speed Ups at most) |
-| 2 | MISSILE | Missiles that drop to the ground and slide along it |
-| 3 | DOUBLE | A second shot that climbs diagonally — replaces the laser |
-| 4 | LASER | The long piercing laser — replaces the Double |
+| 2 | MISSILE | Missiles that drop to the ground and slide along it (with another weapon type: that type's missile — the box shows its name, e.g. `SPREAD`) |
+| 3 | DOUBLE | A second shot that climbs diagonally — replaces the laser (another type: its Double weapon, e.g. `TAIL`) |
+| 4 | LASER | The long piercing laser — replaces the Double (another type: its laser, e.g. `RIPPLE`) |
 | 5 | OPTION | One more glowing orb that follows the ship and copies its fire (four at most) |
 | 6 | ? | A **Force Field** around the ship (below) |
-| 7 | ! | **Mega Crash**: every enemy and every enemy bullet is destroyed at once |
+| 7 | ! | **Mega Crash**: every enemy and every enemy bullet is destroyed at once — or what you chose for `!` in the WEAPON SELECT screen (NORMAL, SPEED DOWN, LIFE OPTION, FULL BARRIER — [Choosing your weapons](#choosing-your-weapons)) |
 | 8 | SPEED UP again | After `!` the highlight starts over |
 
 - **One press, one power-up.** Holding OK never takes a second one; let go and press again.
@@ -1085,7 +1243,8 @@ Force Field that is still up …) are **greyed out**:
   is still up — its box is greyed out. Collect another capsule to move the highlight on. Such a
   press plays a short, low "no" buzz.
 - You may leave the highlight "parked" on a power-up as long as you like and press OK when it
-  suits you — it is never taken by itself.
+  suits you — it is never taken by itself, unless you turned **AUTO** on in the WEAPON SELECT
+  screen (then the power-ups of its ORDER are taken as soon as the highlight reaches them).
 - Pressing OK never stops or slows the ship, also while you hold a direction.
 
 **The Force Field** (`?`). A glowing ring around the ship. It stops **five** hits — enemy
@@ -1476,7 +1635,17 @@ mean the build itself is broken; they are not caused by anything you did.
 | A panel of numbers (FPS, TICK, …) and a small bar graph appear in the top-left corner | That is the developer panel of a **debug build** (`build:dev`), opened by Play/Pause followed by Ch ▲ three times. Press **1** to hide it — see [debug-tools.md](debug-tools.md). The normal build never shows it |
 | The game froze without a PAUSE box, or everything runs in slow motion (debug build) | A developer tool is on (`STEP` or `SLOW` in the panel): press **4** or **6** until it is off — [debug-tools.md](debug-tools.md#troubleshooting) |
 | The title screen stays, the game does not start | Press OK (Enter) once to leave `PRESS OK`, OK again on START, then OK on a difficulty in the DIFFICULTY box. In a browser click once into the page first so it has the keyboard focus |
-| START opened a DIFFICULTY box instead of the game | Expected since this build: choose a difficulty with ▲ / ▼ and press OK (Back returns to the title menu) |
+| START opened a DIFFICULTY box instead of the game | Expected: choose a difficulty with ▲ / ▼ and press OK (Back returns to the title menu) — then OK once more on START in the WEAPON SELECT screen |
+| OK on a difficulty opened a WEAPON SELECT screen instead of the game | Expected since this build: START is highlighted, so OK starts the game with the weapons shown; ▲ / ▼ and ◀ / ▶ change them first if you like ([Choosing your weapons](#choosing-your-weapons)) |
+| ▼ jumps over MISSILE, DOUBLE and LASER in the WEAPON SELECT screen | Expected: they show the chosen type's weapons; choose **EDIT** on TYPE to change them one by one |
+| The WEAPON SELECT screen is back on TYPE A after reopening the app | Expected: the choice is kept only until the app is closed (a later build remembers it) |
+| The power meter says `SPREAD` / `TAIL` / `RIPPLE` (or other names) instead of MISSILE / DOUBLE / LASER | Expected with another weapon type: the boxes carry the chosen type's weapon names |
+| OK on the `!` box gave the "no" buzz | Expected when the `!` choice cannot do anything right now: NORMAL while you fire the darts, SPEED DOWN at normal speed, LIFE OPTION without a spare ship or with four Options, FULL BARRIER while the Force Field is at full strength |
+| A spare-ship icon vanished without a loss | Expected after OK on `!` with **LIFE OPTION**: spare ships turned into Options |
+| The preview ship behind the WEAPON SELECT panel was hit and nothing happened | Expected: the preview is a harmless practice range and its ship cannot be hurt |
+| A Ripple ring passed through a small enemy without hitting it | Expected when the ring had already grown around it: rings hit with their edge |
+| A Spread Bomb touched an enemy and did no damage at once | Expected: the bomb bursts, and its blast does the damage (twice) a moment later |
+| Power-ups are taken without pressing OK | **AUTO** is on in the WEAPON SELECT screen — they follow its ORDER. Set AUTO to OFF to take them only with OK |
 | The DIFFICULTY box is back on NORMAL after reopening the app | Expected: the choice is kept only until the app is closed (a later build remembers it) |
 | The title's `HI` changed after I chose another difficulty | Expected: each difficulty keeps its own high scores, and the title shows the one you chose last |
 | OK on the title menu did nothing | The menu ignores OK for a split second after it appears (an OK pressed then still counts a moment later). If START or OPTIONS never reacts, please report it with the remote model |

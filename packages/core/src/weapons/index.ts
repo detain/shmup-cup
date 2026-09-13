@@ -59,7 +59,8 @@
  * - `missile.spreadBomb` — falls in an arc (`angle` down, `gravity`) and bursts on terrain or on
  *   the first target it touches into a piercing, world-anchored blast of `blastRadius` that burns
  *   `blastTicks` ticks and hits each target at most once every `hitCooldownTicks` — twice with the
- *   defaults (12 / 6). A blast is not stopped by armour (it clinks). Cap: bombs and blasts together.
+ *   defaults (12 / 6). A blast is not stopped by armour (it clinks, at most once per cooldown).
+ *   Cap: bombs and blasts together.
  * - `missile.twoWay` — a volley of two missiles, one `angle` units up from forward, one down; each
  *   dies on its first hit or on terrain; the next volley waits until both are gone.
  * - `missile.torpedo` — a fast `missile.groundSlide` (falls, then slides) that flies on through
@@ -813,7 +814,11 @@ export interface WeaponSystem {
   readonly loadouts: readonly Loadout[];
   /** One option group per player slot. */
   readonly options: readonly OptionGroup[];
-  /** The weapon of each {@link WeaponRole} (`null` = the role is empty). */
+  /**
+   * The weapon of each {@link WeaponRole} (`null` = the role is empty): the session's arsenal
+   * ({@link resolveArsenal} of the config). Not frozen since M2-03 — {@link WeaponSystem.setArsenal}
+   * rewrites it in place; read it, never keep a copy across a swap.
+   */
   readonly roleWeapons: readonly (WeaponSpec | null)[];
   /** Autofire timers per shooter: `[shooter × 2]` main, `[shooter × 2 + 1]` missile (hashed). */
   readonly timers: Int32Array;
@@ -958,9 +963,18 @@ export interface WeaponSystem {
    *
    * @remarks
    * Never allocates (`roles` is copied into {@link WeaponSystem.roleWeapons}); a cold path — a
-   * gameplay session keeps the arsenal of its config (`resolveArsenal`).
+   * gameplay session keeps the arsenal of its config (`resolveArsenal`). The loadouts, Options and
+   * Free Way directions are kept; the hit list and cooldown tables are freed with the shots. The
+   * role tables are not hashed, but the emptied pool is: a recorded session must never call it
+   * (a replay header only knows the config's arsenal). The weapons are not checked against their
+   * slots here — {@link resolveArsenal} does that for a config.
    *
    * @param roles - The weapon of each {@link WeaponRole} (`null` = empty; missing entries too).
+   *
+   * @example
+   * ```ts
+   * preview.weapons.setArsenal(resolveArsenal(db, resolveGameConfig({ weaponPreset: 'type-c' })));
+   * ```
    */
   setArsenal(roles: readonly (WeaponSpec | null)[]): void;
 }
@@ -1142,7 +1156,9 @@ class WeaponSystemImpl implements WeaponSystem {
   readonly loadouts: readonly Loadout[];
   /** See {@link WeaponSystem.options}. */
   readonly options: readonly OptionGroup[];
-  /** See {@link WeaponSystem.roleWeapons} (rewritten in place by {@link WeaponSystem.setArsenal}). */
+  /**
+   * See {@link WeaponSystem.roleWeapons} (rewritten in place by {@link WeaponSystem.setArsenal}).
+   */
   readonly roleWeapons: (WeaponSpec | null)[];
   /** See {@link WeaponSystem.timers}. */
   readonly timers = new Int32Array(MAX_SHOOTERS * 2);
@@ -1589,7 +1605,8 @@ class WeaponSystemImpl implements WeaponSystem {
   /**
    * Bursts a falling Spread Bomb where it is: it becomes a piercing blast of `blastRadius` that
    * stays put for `blastTicks` ticks and hits each target at most once every `hitCooldownTicks`
-   * (twice with the defaults), drawn with the blast sprite; pushes an explosion sound and particles.
+   * (twice with the defaults), drawn with the blast sprite; pushes an explosion sound and
+   * particles at whole pixels. Its cooldown table was reserved when the bomb was fired.
    *
    * @param i - The shot slot (a Spread Bomb that has not burst).
    */
@@ -2185,12 +2202,15 @@ class WeaponSystemImpl implements WeaponSystem {
 
 /**
  * Creates the weapon system of a World (load time): the shot pool (registered as `playerShots`),
- * one loadout and option group per player, the role tables compiled from the content's preset
- * (sprite ids, SFX, tunables, intervals from the config), the hit list and the batches.
+ * one loadout and option group per player, the role tables compiled from the config's arsenal
+ * ({@link resolveArsenal}: `weaponPreset` and `weaponEdit` — sprite ids, SFX, tunables, intervals
+ * from the config), the hit list and the batches.
  *
  * @param host - The World (read at every call — pass the World itself).
  * @returns The system.
  * @throws {Error} When the World already registered a pool named `playerShots`.
+ * @throws {RangeError} When `config.weaponEdit` names a weapon the content does not have, or one of
+ *   another slot ({@link resolveArsenal}).
  *
  * @example
  * ```ts

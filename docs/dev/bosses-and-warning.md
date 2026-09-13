@@ -608,5 +608,11 @@ free flight).
 - **M2-02** (done) — the death sequence cancels into point items for the killer
   (`CancelMode.Points`; the `zone-a-boss` golden replay scores +180); boss behaviours do not run
   DSL patterns yet ([pattern-dsl.md](pattern-dsl.md)).
+- **M2-03** (done) — the Types B–D weapons against boss parts: a Spread Bomb bursts on a part
+  and its blast clinks on an armoured part at most once per hit cooldown without going out; the
+  Photon Torpedo's fly-on-through-kills never applies to parts; the Ripple hits with its ring —
+  with its box, the lowest-id rule had given every ring to HALCYON BULWARK's fringe armour and
+  Type B could not hurt the boss. Four golden replays fight HB-01 with the new weapons
+  ([meter-arsenal.md](meter-arsenal.md#the-nine-behaviours)).
 - **M2-09** — boss behaviours running DSL patterns and bending lasers; boss timers and escapes, the optional HP bar, mid-bosses, battleship raids,
   boss-inside-boss, double bosses, boss rush.

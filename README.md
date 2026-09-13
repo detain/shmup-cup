@@ -9,7 +9,7 @@ with the browser and Electron as additional targets.
 The [implementation plan](shmup_plan.md) is approved and under way. Progress per step is tracked in
 [`shmup_progress.md`](shmup_progress.md); milestone **M1 — playable vertical slice** is code-complete
 as version **0.1.0** ([`CHANGELOG.md`](CHANGELOG.md)) — its on-device release check on the monitors
-is next — and **M2 — complete v1.0** is under way (M2-01 and M2-02 done).
+is next — and **M2 — complete v1.0** is under way (M2-01, M2-02 and M2-03 done).
 
 <!--
   Keep this section scannable: one entry per plan step, in plan order — a bold headline with the
@@ -28,10 +28,11 @@ is next — and **M2 — complete v1.0** is under way (M2-01 and M2-02 done).
   - Docs: [developer guide](docs/dev/engine-foundations.md)
 
 - **Game data** (M1-02)
-  - Schema-validated JSON under [`content/`](content/README.md): the KESTREL ship, the Type A
-    weapons, the test-range stage with its terrain tileset, enemy roster and movement paths, the
+  - Schema-validated JSON under [`content/`](content/README.md): the KESTREL ship, the Type A–D
+    weapons and presets (M2-03), the test-range stage with its terrain tileset, enemy roster and movement paths, the
     boss range with its test boss, zone A with its roster and boss (M1-18), particle presets, sound
-    effects and music, the difficulty presets (M2-01) and the bullet pattern library (M2-02).
+    effects and music, the difficulty presets (M2-01), the bullet pattern library (M2-02) and the
+    weapon select's practice range (M2-03).
   - Checked by `pnpm content:check`, served to the builds as the virtual module
     `virtual:shmup-content`, and loaded by `loadContent()` with every string id resolved to a
     number.
@@ -41,7 +42,7 @@ is next — and **M2 — complete v1.0** is under way (M2-01 and M2-02 done).
   - Sprite pixel maps under [`assets/source/`](assets/README.md), seeded procedural generators and
     an original 6×8 pixel font are packed by `pnpm assets` into a texture atlas plus manifest,
     served to the builds as `virtual:shmup-assets`.
-  - Covers the KESTREL, shots, nine enemies, boss parts (the test boss's and, since M1-18,
+  - Covers the KESTREL, shots (the Types B–D weapons' since M2-03), nine enemies, boss parts (the test boss's and, since M1-18,
     HALCYON BULWARK's), bullets, laser beams, bending laser segments and their colour-blind
     variants (M2-02), explosions, items, particles, HUD pieces, the title logo, terrain tiles, star
     layers and zone A's planet band.
@@ -357,6 +358,27 @@ is next — and **M2 — complete v1.0** is under way (M2-01 and M2-02 done).
   - Docs: [developer guide](docs/dev/pattern-dsl.md) ·
     [what testers should check](docs/client/preview-build.md#the-options-screen)
 
+- **Meter arsenal: weapon types B–D, Weapon Edit and the weapon select** (M2-03)
+  - **Nine new weapons** in `content/weapons/types-b-d.weapons.json` with presets **Type B–D**
+    (original names): Spread Bomb (arcs down, bursts into a world-anchored blast that hits twice),
+    2-Way Missile, Photon Torpedo (slides and flies on through what it destroys), Tail Gun,
+    Vertical, Free Way (second shot in the last 8-way direction held), Ripple Laser (a growing
+    ring whose *ring* is the hitbox), Cyclone Laser, Twin Laser.
+  - **`GameConfig`** gained `weaponPreset`, `weaponEdit` (Weapon Edit: any weapon per slot),
+    `megaChoice` and `shieldChoice` (recorded in replay headers); `withArsenal` applies the
+    weapon select's choice; the meter's MISSILE / DOUBLE / LASER equip the session's arsenal and
+    the HUD names them after it.
+  - **`!` choices**: Mega Crash, NORMAL, SPEED DOWN, LIFE OPTION (spare ships → Options), FULL
+    BARRIER; the `?` choice (the Force Field until M2-04).
+  - **WEAPON SELECT** screen after the difficulty box (one more OK to start): TYPE A–D / EDIT, the
+    slot weapons, `?`, `!`, AUTO and an **editable Auto Power-Up order** (the AUTO ORDER box) —
+    remote-navigable, with a **live preview**: a private, silent mini World flying the chosen
+    weapons over `content/stages/weapon-range.stage.json`, drawn behind the panel.
+  - Golden replays re-blessed (sprite ids, the hashed Free Way direction — same outcomes) and four
+    new boss runs cover every new weapon.
+  - Docs: [developer guide](docs/dev/meter-arsenal.md) ·
+    [what testers should check](docs/client/preview-build.md#choosing-your-weapons)
+
 ### Hardware spike
 
 - The **input probe** — a diagnostic Tizen app that measures the Samsung remote, gamepads and
@@ -377,7 +399,7 @@ is next — and **M2 — complete v1.0** is under way (M2-01 and M2-02 done).
 | [`shmup_prompt.md`](shmup_prompt.md) | Paste-into-a-new-session prompt that drives execution of the plan (workflow: build → review/fix loop → tests → docs → CI gate per step, progress in `shmup_progress.md`) |
 | [`docs/`](docs/README.md) | Player and developer documentation (start with [`docs/dev/repo-layout.md`](docs/dev/repo-layout.md)) |
 
-Game docs — testers: [preview build (the title screen, menus, HUD and pause menu, the Options screen — volumes, controls and the colour-blind bullet colours — and saved settings and high scores, the game-over and stage-clear screens, the difficulties, extra ships and continues, zone A — AZURE VERGE and its boss HALCYON BULWARK —, test stage, its enemies and their bullets, your weapons, power-ups, lives and score, the boss and its WARNING, explosions, shake and flashes, sound and music)](docs/client/preview-build.md) ·
+Game docs — testers: [preview build (the title screen, menus, HUD and pause menu, the weapon select (weapon types A–D, Weapon Edit, the `?` / `!` choices, Auto Power-Up), the Options screen — volumes, controls and the colour-blind bullet colours — and saved settings and high scores, the game-over and stage-clear screens, the difficulties, extra ships and continues, zone A — AZURE VERGE and its boss HALCYON BULWARK —, test stage, its enemies and their bullets, your weapons, power-ups, lives and score, the boss and its WARNING, explosions, shake and flashes, sound and music)](docs/client/preview-build.md) ·
 [controls](docs/client/controls.md) · [monitor setup & install](docs/client/install-on-tv.md).
 Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/architecture.md) ·
 [engine foundations](docs/dev/engine-foundations.md) · [content data](docs/dev/content-data.md) ·
@@ -398,6 +420,7 @@ Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/ar
 [zone A & playtest](docs/dev/zone-a-and-playtest.md) ·
 [difficulty, rank, extends & continues](docs/dev/difficulty-and-rank.md) ·
 [pattern DSL, bending lasers & palettes](docs/dev/pattern-dsl.md) ·
+[meter arsenal & weapon select](docs/dev/meter-arsenal.md) ·
 [input profiles](docs/dev/input-profiles.md) ·
 [API reference](docs/dev/api-reference.md) ·
 [build, test & deploy](docs/dev/build-test-deploy.md) · [conventions](docs/dev/conventions.md).
@@ -424,7 +447,7 @@ versions (`devEngines.runtime`).
 ```sh
 pnpm -v               # must print 12.x — an older global pnpm fails with ERR_PNPM_BROKEN_LOCKFILE
 pnpm install          # set ELECTRON_SKIP_BINARY_DOWNLOAD=1 to skip the Electron binary
-pnpm dev              # browser dev app → http://localhost:5173 (F1–F8: debug tools): the title (Enter three times — PRESS OK, START, NORMAL — starts zone A, AZURE VERGE; ?skip=boss starts right before its boss HALCYON BULWARK; Enter, Down, Enter opens OPTIONS — volumes, controls and bullet colours, saved in localStorage; Esc pauses), then fly the KESTREL (arrows/WASD, gamepad; the first key press turns the sound on; Enter/C takes a power-up; ?scene=flight skips the title; ?stage=test-range scrolls the test stage, its enemies, their bullets and the power capsules; ?stage=test-boss plays the WARNING and the test boss; ?profile=keyboard-remote-emulation feels like the TV remote; ?scene=showcase / ?scene=calibration / ?scene=fx-gallery)
+pnpm dev              # browser dev app → http://localhost:5173 (F1–F8: debug tools): the title (Enter four times — PRESS OK, START, NORMAL, START in the weapon select — starts zone A, AZURE VERGE; in the weapon select ↑ / ←→ choose the weapon type, EDIT, the ! choice and Auto Power-Up; ?skip=boss starts right before its boss HALCYON BULWARK; Enter, Down, Enter opens OPTIONS — volumes, controls and bullet colours, saved in localStorage; Esc pauses), then fly the KESTREL (arrows/WASD, gamepad; the first key press turns the sound on; Enter/C takes a power-up; ?scene=flight skips the title; ?stage=test-range scrolls the test stage, its enemies, their bullets and the power capsules; ?stage=test-boss plays the WARNING and the test boss; ?profile=keyboard-remote-emulation feels like the TV remote; ?scene=showcase / ?scene=calibration / ?scene=fx-gallery)
 pnpm lint             # ESLint (typescript-eslint + compat: chrome >= 69)
 pnpm typecheck        # tsc --noEmit everywhere
 pnpm test             # Vitest per package + repo integration tests
@@ -515,10 +538,11 @@ hitch in the overlay's frame graph, gamepad and keyboard — checklist in
 [`docs/client/debug-tools.md`](docs/client/debug-tools.md#the-m1-release-check). The M1 release
 is tagged `v0.1.0` on the final commit of step M1-19.
 
-Code: plan step **M2-03** (meter arsenal: loadouts B–D, Weapon Edit, parking & weapon select) —
-M2-01 (rank, difficulty presets, extends & continues) opened milestone **M2 — complete v1.0** and
-M2-02 (pattern DSL, bending lasers, bullet cancel & readability) followed; every
-simulation change re-blesses the golden replays in the same commit. The per-step status board is [`shmup_progress.md`](shmup_progress.md).
+Code: plan step **M2-04** (Option & shield variants + Option Hunter) — M2-01 (rank, difficulty
+presets, extends & continues) opened milestone **M2 — complete v1.0**, M2-02 (pattern DSL, bending
+lasers, bullet cancel & readability) and M2-03 (meter arsenal: loadouts B–D, Weapon Edit, parking
+& weapon select) followed; every simulation change re-blesses the golden replays in the same
+commit. The per-step status board is [`shmup_progress.md`](shmup_progress.md).
 
 Also on hardware (unchanged, and still the gate for the remote control scheme): package and
 deploy the input probe from the **Windows desktop** that sits on the same LAN as the monitors and holds
@@ -531,8 +555,9 @@ is the first hands-on check of the control scheme — since M1-16 moving through
 pause menus and quitting with Back, since M1-17 the Options screen, settings kept after a
 relaunch and the FAST 8-WAY profile, since M1-18 **playing zone A through with the remote**
 — the plan's manual M1-18 check: every bullet and laser dodgeable with single arrow presses —
-since M2-01 the DIFFICULTY box, the extra-ship jingle and the CONTINUE? countdown, and since
-M2-02 the colour-blind **BULLETS** option and the points of cancelled bullets (checklist in
+since M2-01 the DIFFICULTY box, the extra-ship jingle and the CONTINUE? countdown, since
+M2-02 the colour-blind **BULLETS** option and the points of cancelled bullets, and since M2-03 the
+**WEAPON SELECT** screen and the new weapon types (checklist in
 [`docs/client/preview-build.md`](docs/client/preview-build.md#on-the-samsung-smart-monitor--tv)).
 
 Desktop prerequisites: Git, Node 24 (22.12+), Tizen Studio **or** VS Code + Samsung Tizen extension (with a Samsung
