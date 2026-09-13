@@ -215,6 +215,8 @@ function referenceHash(w: World): number {
     for (const array of [g.trailX, g.trailY, g.x, g.y]) for (const value of array) num(value);
   }
   for (const value of weapons.timers) num(value);
+  // The Free Way's last direction per player (M2-03).
+  for (const value of weapons.freeWayHeading) num(value);
   const shots = weapons.pool;
   for (let i = 0; i < shots.count; i++) {
     const table = shots.fields.table[i];
@@ -461,6 +463,8 @@ describe('core/debug hashWorld — what it ignores, odd values, purity', () => {
     gb.x.set(ga.x);
     gb.y.set(ga.y);
     gb.head = ga.head;
+    // …and so did the Free Way's last direction (M2-03).
+    b.weapons.freeWayHeading.set(a.weapons.freeWayHeading);
     expect(hashWorld(b)).toBe(hashWorld(a));
   });
 });

@@ -99,6 +99,9 @@ class Session {
     this.openDifficulty();
     for (let i = 0; i < downs; i++) this.press(Action.Down);
     this.press(Action.Confirm);
+    // The weapon select (M2-03) opens focused on START: OK starts once its lock is over.
+    expect(this.ids).toEqual(['title', 'difficulty', 'weaponSelect']);
+    this.press(Action.Confirm);
     expect(this.ids).toEqual(['game']);
   }
 
@@ -217,6 +220,7 @@ describe('core/scenes the difficulty menu (M2-01)', () => {
     s.press(Action.Up);
     s.press(Action.Up);
     s.press(Action.Confirm);
+    s.press(Action.Confirm); // START in the weapon select (M2-03)
     expect(s.game.world.config).toMatchObject({
       difficulty: 'easy',
       aimDirections: 16,
@@ -234,6 +238,7 @@ describe('core/scenes the difficulty menu (M2-01)', () => {
     s.press(Action.Down);
     expect(s.uiNumbers().slice(-1)).toEqual([7_000]);
     s.press(Action.Confirm);
+    s.press(Action.Confirm); // START in the weapon select (M2-03)
     expect(s.game.world.scoring.board.hiScore).toBe(7_000);
     expect(s.flow.hiScore).toBe(7_000);
     // A Hard game over: its score goes into the Hard table, with its difficulty.

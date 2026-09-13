@@ -34,6 +34,7 @@
  *
  * **Public API.** {@link ShieldKind}, {@link SHIELD_KIND_NAMES}, {@link ShieldState},
  * {@link createShieldState}, {@link ShieldSpec}, {@link FORCE_FIELD}, {@link SHIELD_SPECS},
+ * {@link shieldSpecOf} and {@link SHIELD_CHOICE_SPECS} (the `?` choice of the weapon select, M2-03),
  * {@link grantShield}, {@link clearShield}, {@link absorbShieldHit}, {@link ShieldHit},
  * {@link tickShield}, {@link shieldActive}, {@link shieldWearFrame}, {@link FORCE_FIELD_HITS},
  * {@link SHIELD_HIT_IFRAMES}, {@link FORCE_FIELD_SPRITE}, {@link FORCE_FIELD_WEAR_FRAMES}.
@@ -43,6 +44,7 @@
  *
  * @module
  */
+import type { ShieldChoice } from '../config/index.js';
 import { defineModule } from '../module-info.js';
 
 /** Module descriptor (see {@link defineModule}). */
@@ -106,6 +108,29 @@ export const FORCE_FIELD: ShieldSpec = Object.freeze({
 
 /** Shield specs by {@link ShieldKind} code (`null` for `None`). */
 export const SHIELD_SPECS: readonly (ShieldSpec | null)[] = Object.freeze([null, FORCE_FIELD]);
+
+/** The spec of every `config` `ShieldChoice` (see {@link shieldSpecOf}). */
+export const SHIELD_CHOICE_SPECS: Readonly<Record<ShieldChoice, ShieldSpec>> = Object.freeze({
+  forceField: FORCE_FIELD,
+});
+
+/**
+ * The shield a `?`-slot choice grants (`GameConfig.shieldChoice`, plan M2-03 — the weapon select's
+ * `?` list). Only the Force Field until M2-04 appends the other meter shields.
+ *
+ * @param choice - A `config` `ShieldChoice`.
+ * @returns Its spec ({@link FORCE_FIELD} for an unknown name).
+ *
+ * @example
+ * ```ts
+ * grantShield(ship.shield, shieldSpecOf(config.shieldChoice));
+ * ```
+ */
+export function shieldSpecOf(choice: ShieldChoice): ShieldSpec {
+  return Object.prototype.hasOwnProperty.call(SHIELD_CHOICE_SPECS, choice)
+    ? SHIELD_CHOICE_SPECS[choice]
+    : FORCE_FIELD;
+}
 
 /**
  * The shield of one ship (a class, so its numeric fields stay unboxed). `kind` `None` = no shield;

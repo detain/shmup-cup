@@ -28,7 +28,8 @@
  *   writes a slot only when its text changed, so redrawing a menu never builds strings.
  * - **HUD** (decision D20: two 8-px bars outside the playfield). {@link buildHud} draws the top bar
  *   `1P 00012300  HI 00050000  2P ------` and the bottom bar — `lives − 1` stock icons, the 7-slot
- *   power meter (`SPEED MISSILE DOUBLE LASER OPTION ? !`, the highlighted slot flashing every
+ *   power meter (`SPEED MISSILE DOUBLE LASER OPTION ? !` — the MISSILE / DOUBLE / LASER slots
+ *   named after the session's weapons since M2-03 —, the highlighted slot flashing every
  *   {@link HUD_METER_FLASH_TICKS} ticks, slots that cannot be equipped dimmed) and the Force
  *   Field's pips; numbers use the `number` op. {@link Hud.update} rebuilds the list **only when
  *   something it shows changed** (the scores' dirty flags, lives, the meter cursor and equippable
@@ -61,7 +62,8 @@
  * {@link MENU_CONFIRM_BUFFER_TICKS}. Builders: {@link drawPanel}, {@link drawMenu},
  * {@link drawConfirm}, {@link menuStringSlots}, {@link CONFIRM_STRING_SLOTS}, {@link MenuLayout},
  * {@link UI_COLORS}. HUD: {@link Hud}, {@link createHud}, {@link buildHud}, {@link HUD_COLORS},
- * {@link HUD_LAYOUT}, {@link HUD_STRING_SLOTS}, {@link HUD_METER_FLASH_TICKS}. Sprites:
+ * {@link HUD_LAYOUT}, {@link HUD_STRING_SLOTS}, {@link HUD_METER_FLASH_TICKS},
+ * {@link METER_LABEL_FRAMES}, {@link meterLabelFrame} (M2-03). Sprites:
  * {@link UI_SPRITES}, {@link UiSprites}, {@link resolveUiSprites}. `TextMetrics` (the bitmap-font
  * measuring contract, `presentation`) is re-exported.
  *
@@ -74,9 +76,10 @@ import type { ContentDb } from '../data/index.js';
 import { SFX_CUES } from '../events/index.js';
 import { Action, type PlayerInput } from '../input/index.js';
 import { defineModule } from '../module-info.js';
-import { METER_SLOT_COUNT } from '../powerups/index.js';
+import { METER_SLOT_COUNT, MeterSlot } from '../powerups/index.js';
 import { TextAlign, type DrawList } from '../presentation/index.js';
 import { shieldActive } from '../shields/index.js';
+import { WEAPON_BEHAVIOR_LABELS, WeaponRole } from '../weapons/index.js';
 import type { World } from '../world/index.js';
 
 /** Module descriptor (see {@link defineModule}). */
@@ -1064,6 +1067,60 @@ export const HUD_LAYOUT = Object.freeze({
   shieldX: 344,
 });
 
+/**
+ * The frames of the `hud/meter-labels` sprite, by label (shmup_feat.md §6A; the asset pipeline's
+ * `procedural/hud.mjs` draws them in this order): the seven slot labels of Type A, then the names
+ * of the Types B–D weapons the MISSILE / DOUBLE / LASER slots may hold (M2-03 — `core/weapons`
+ * `WEAPON_BEHAVIOR_LABELS`).
+ */
+export const METER_LABEL_FRAMES: readonly string[] = Object.freeze([
+  'SPEED',
+  'MISSILE',
+  'DOUBLE',
+  'LASER',
+  'OPTION',
+  '?',
+  '!',
+  'SPREAD',
+  '2-WAY',
+  'TORPEDO',
+  'TAIL',
+  'VERTICAL',
+  'FREE WAY',
+  'RIPPLE',
+  'CYCLONE',
+  'TWIN',
+]);
+
+/**
+ * The `hud/meter-labels` frame a meter slot shows in a World: the MISSILE / DOUBLE / LASER slots
+ * show the name of the weapon the session's arsenal puts there (the loadout → meter mapping of
+ * M2-03 — `SPREAD`, `TAIL`, `RIPPLE` … for Types B–D), every other slot its own label. Never
+ * allocates.
+ *
+ * @param world - The World shown.
+ * @param slot - `core/powerups` `MeterSlot` code.
+ * @returns A frame index into {@link METER_LABEL_FRAMES} (the slot's own for an empty role or a
+ *   weapon without a label frame).
+ */
+export function meterLabelFrame(world: World, slot: number): number {
+  const role =
+    slot === MeterSlot.Missile
+      ? WeaponRole.Missile
+      : slot === MeterSlot.Double
+        ? WeaponRole.Double
+        : slot === MeterSlot.Laser
+          ? WeaponRole.Laser
+          : -1;
+  if (role < 0) return slot;
+  const weapon = world.weapons.roleWeapons[role];
+  if (weapon === null) return slot;
+  const behavior = weapon.behavior;
+  if (!Object.prototype.hasOwnProperty.call(WEAPON_BEHAVIOR_LABELS, behavior)) return slot;
+  const frame = METER_LABEL_FRAMES.indexOf(WEAPON_BEHAVIOR_LABELS[behavior]);
+  return frame >= 0 ? frame : slot;
+}
+
 /** HUD string slots: `1P`, `HI`, `2P`, the inactive player's dashes. */
 export const HUD_STRING_SLOTS = Object.freeze({ p1: 0, hi: 1, p2: 2, dashes: 3 });
 
@@ -1082,7 +1139,8 @@ export const HUD_METER_FLASH_TICKS = 8;
  * stock icons 10 px apart from x 4 (more: one icon and the count), the seven 40-px meter slots
  * from x 58 — `hud/meter-slot` frame 1 on the "on" half of the {@link HUD_METER_FLASH_TICKS}
  * flash for the highlighted slot, frame 2 for a slot that cannot be equipped, frame 0 otherwise,
- * with the `hud/meter-labels` frame of the slot tinted {@link HUD_COLORS}.label or
+ * with the slot's `hud/meter-labels` frame ({@link meterLabelFrame}: the arsenal's weapon names on
+ * MISSILE / DOUBLE / LASER — M2-03) tinted {@link HUD_COLORS}.label or
  * `labelDisabled` — and, while the Force Field is up, one pip per hit it can take (at most 5, 7 px
  * apart from x 344), cyan for the hits left and dark for the spent ones.
  * Without the UI sprites the icons and slots become rectangles and the labels are left out. The
@@ -1149,7 +1207,7 @@ export function buildHud(world: World, list: DrawList, sprites: UiSprites = NO_S
     if (sprites.meterLabels >= 0) {
       list.sprite(
         sprites.meterLabels,
-        slot,
+        meterLabelFrame(world, slot),
         x + 2,
         L.bottomY + 2,
         0,

@@ -1,0 +1,27 @@
+{
+  "name": "shots/two-way",
+  "description": "2-Way Missile: frame 0 climbing (up and to the right), frame 1 diving.",
+  "palette": { ".": null, "o": "#2a3a4a", "g": "#a0a8b8", "w": "#ffffff", "r": "#e84818" },
+  "hitFlash": false,
+  "frames": [
+    {
+      "rows": [
+        "...ow",
+        "..ogo",
+        ".ogo.",
+        "rgo..",
+        "rr..."
+      ]
+    },
+    {
+      "rows": [
+        "rr...",
+        "rgo..",
+        ".ogo.",
+        "..ogo",
+        "...ow"
+      ]
+    }
+  ],
+  "animations": { "climb": [0], "dive": [1] }
+}

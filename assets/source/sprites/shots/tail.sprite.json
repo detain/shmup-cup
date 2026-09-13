@@ -1,0 +1,16 @@
+{
+  "name": "shots/tail",
+  "description": "Tail Gun: the shot fired straight back.",
+  "palette": { ".": null, "b": "#1e5a9a", "c": "#38c8e8", "w": "#ffffff" },
+  "anchor": [4, 1],
+  "hitFlash": false,
+  "frames": [
+    {
+      "rows": [
+        "..cccb..",
+        "wwwwwwcb",
+        "..cccb.."
+      ]
+    }
+  ]
+}

@@ -17,7 +17,9 @@ alternating attached lane lasers, aimed 3-ways once two plates are down). Zone A
 4-way design rules (no aimed bullet over 2 px/tick, no two laser lanes closer than 16 px) by
 `pnpm content:check`. `test-range.enemies.json` / `test-boss.enemies.json` serve the dev stages;
 `test-sentry.enemies.json` holds the `sentry`, which runs the `common.spiral` DSL pattern
-(`pattern.loop`, M2-02).
+(`pattern.loop`, M2-02). `weapon-range.enemies.json` (M2-03) holds the harmless targets of the
+weapon select's live preview — `range-drone` (a slow sine flier) and the floor / ceiling
+`range-post`s — none of which fires, drops or scores.
 
 ## Format (formatVersion 1)
 

@@ -221,12 +221,22 @@ function shots(w: World, kind: number): { x: number; y: number; flags: number; l
 describe('core/weapons', () => {
   it('describes itself and owns the weapon behaviour ids', () => {
     expect(moduleInfo.name).toBe('weapons');
-    expect(moduleInfo.status).toBe('partial');
+    expect(moduleInfo.status).toBe('implemented');
+    // Type A (M1-10) and the Types B–D behaviours (M2-03).
     expect(WEAPON_SCRIPT_IDS).toEqual([
       'laser.beam',
+      'laser.cyclone',
+      'laser.ripple',
+      'laser.twin',
       'missile.groundSlide',
+      'missile.spreadBomb',
+      'missile.torpedo',
+      'missile.twoWay',
       'shot.double',
+      'shot.freeWay',
       'shot.straight',
+      'shot.tailGun',
+      'shot.vertical',
     ]);
   });
 

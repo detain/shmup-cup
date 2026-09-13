@@ -4,6 +4,7 @@
   "weapons": [
     {
       "id": "shot.basic",
+      "name": "SHOT",
       "slot": "main",
       "behavior": "shot.straight",
       "damage": 1,
@@ -15,6 +16,7 @@
     },
     {
       "id": "shot.double",
+      "name": "DOUBLE",
       "slot": "double",
       "behavior": "shot.double",
       "damage": 1,
@@ -23,10 +25,13 @@
       "pierce": false,
       "sprite": "shots/double",
       "sfx": "PlayerShot",
-      "params": { "angle": 128 }
+      "params": {
+        "angle": 128
+      }
     },
     {
       "id": "laser.pierce",
+      "name": "LASER",
       "slot": "laser",
       "behavior": "laser.beam",
       "damage": 1,
@@ -35,10 +40,14 @@
       "pierce": true,
       "sprite": "shots/laser",
       "sfx": "PlayerShot",
-      "params": { "maxLength": 64, "hitCooldownTicks": 6 }
+      "params": {
+        "maxLength": 64,
+        "hitCooldownTicks": 6
+      }
     },
     {
       "id": "missile.ground",
+      "name": "MISSILE",
       "slot": "missile",
       "behavior": "missile.groundSlide",
       "damage": 2,
@@ -47,7 +56,9 @@
       "pierce": false,
       "sprite": "shots/missile",
       "sfx": "PlayerMissile",
-      "params": { "slideSpeed": 3 }
+      "params": {
+        "slideSpeed": 3
+      }
     }
   ],
   "presets": [

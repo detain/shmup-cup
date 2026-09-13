@@ -1,0 +1,161 @@
+{
+  "formatVersion": 1,
+  "kind": "stage",
+  "id": "weapon-range",
+  "name": "WEAPON RANGE",
+  "music": { "stage": "Stage", "boss": "Boss" },
+  "length": 2400,
+  "camera": [{ "x": 0, "speed": 0.75 }],
+  "checkpoints": [{ "x": 0 }],
+  "parallax": [
+    { "layer": "far", "sprite": "bg/stars-far", "factor": 0.25, "y": 0, "spacing": 128 },
+    { "layer": "far", "sprite": "bg/stars-far", "factor": 0.25, "y": 128, "spacing": 128 },
+    { "layer": "mid", "sprite": "bg/stars-mid", "factor": 0.5, "y": 0, "spacing": 128 },
+    { "layer": "mid", "sprite": "bg/stars-mid", "factor": 0.5, "y": 128, "spacing": 128 }
+  ],
+  "tilemap": {
+    "tileSize": 8,
+    "tileset": "terrain-a",
+    "rowsTall": 25,
+    "generator": {
+      "type": "heightfield",
+      "segments": [
+        {
+          "from": 0,
+          "to": 2784,
+          "floor": { "base": 24, "amp": 8, "period": 256, "seed": 21 },
+          "ceiling": { "base": 16, "amp": 6, "period": 320, "seed": 22 }
+        }
+      ]
+    }
+  },
+  "events": [
+    {
+      "x": 80,
+      "type": "formation",
+      "enemy": "range-drone",
+      "count": 4,
+      "interval": 16,
+      "y": 50,
+      "drop": null
+    },
+    { "x": 200, "type": "spawn", "enemy": "range-post" },
+    { "x": 200, "type": "spawn", "enemy": "range-drone", "y": 120 },
+    { "x": 320, "type": "spawn", "enemy": "range-post-ceiling" },
+    {
+      "x": 320,
+      "type": "formation",
+      "enemy": "range-drone",
+      "count": 3,
+      "interval": 20,
+      "y": 100,
+      "drop": null
+    },
+    {
+      "x": 440,
+      "type": "formation",
+      "enemy": "range-drone",
+      "count": 4,
+      "interval": 16,
+      "y": 90,
+      "drop": null
+    },
+    { "x": 560, "type": "spawn", "enemy": "range-post" },
+    { "x": 560, "type": "spawn", "enemy": "range-drone", "y": 120 },
+    { "x": 680, "type": "spawn", "enemy": "range-post-ceiling" },
+    {
+      "x": 680,
+      "type": "formation",
+      "enemy": "range-drone",
+      "count": 3,
+      "interval": 20,
+      "y": 100,
+      "drop": null
+    },
+    {
+      "x": 800,
+      "type": "formation",
+      "enemy": "range-drone",
+      "count": 4,
+      "interval": 16,
+      "y": 50,
+      "drop": null
+    },
+    { "x": 920, "type": "spawn", "enemy": "range-post" },
+    { "x": 920, "type": "spawn", "enemy": "range-drone", "y": 120 },
+    { "x": 1040, "type": "spawn", "enemy": "range-post-ceiling" },
+    {
+      "x": 1040,
+      "type": "formation",
+      "enemy": "range-drone",
+      "count": 3,
+      "interval": 20,
+      "y": 100,
+      "drop": null
+    },
+    {
+      "x": 1160,
+      "type": "formation",
+      "enemy": "range-drone",
+      "count": 4,
+      "interval": 16,
+      "y": 90,
+      "drop": null
+    },
+    { "x": 1280, "type": "spawn", "enemy": "range-post" },
+    { "x": 1280, "type": "spawn", "enemy": "range-drone", "y": 120 },
+    { "x": 1400, "type": "spawn", "enemy": "range-post-ceiling" },
+    {
+      "x": 1400,
+      "type": "formation",
+      "enemy": "range-drone",
+      "count": 3,
+      "interval": 20,
+      "y": 100,
+      "drop": null
+    },
+    {
+      "x": 1520,
+      "type": "formation",
+      "enemy": "range-drone",
+      "count": 4,
+      "interval": 16,
+      "y": 50,
+      "drop": null
+    },
+    { "x": 1640, "type": "spawn", "enemy": "range-post" },
+    { "x": 1640, "type": "spawn", "enemy": "range-drone", "y": 120 },
+    { "x": 1760, "type": "spawn", "enemy": "range-post-ceiling" },
+    {
+      "x": 1760,
+      "type": "formation",
+      "enemy": "range-drone",
+      "count": 3,
+      "interval": 20,
+      "y": 100,
+      "drop": null
+    },
+    {
+      "x": 1880,
+      "type": "formation",
+      "enemy": "range-drone",
+      "count": 4,
+      "interval": 16,
+      "y": 90,
+      "drop": null
+    },
+    { "x": 2000, "type": "spawn", "enemy": "range-post" },
+    { "x": 2000, "type": "spawn", "enemy": "range-drone", "y": 120 },
+    { "x": 2120, "type": "spawn", "enemy": "range-post-ceiling" },
+    {
+      "x": 2120,
+      "type": "formation",
+      "enemy": "range-drone",
+      "count": 3,
+      "interval": 20,
+      "y": 100,
+      "drop": null
+    },
+    { "x": 2400, "type": "end" }
+  ]
+}

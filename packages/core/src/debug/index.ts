@@ -25,8 +25,9 @@
  * (every slot's state, and the numeric fields of each slot in use — M1-08), the formation table
  * (the fields of every active slot, and each track's recorded count), the player weapons (M1-10:
  * each player's loadout — main, missile, options — and option group — count, stolen, trail head,
- * the whole trail and the option positions — the autofire timers, and the hit-cooldown table of
- * every live piercing shot), then the power-ups (M1-11: each player's meter cursor, pending Mega
+ * the whole trail and the option positions — the autofire timers, the Free Way's last direction
+ * of each player (M2-03) and the hit-cooldown table of every live piercing shot or Spread Bomb),
+ * then the power-ups (M1-11: each player's meter cursor, pending Mega
  * Crash and shield — kind, hits, max hits, i-frames, terrain flag, hit and break ticks, absorbed
  * count — and the count of enemy drops already turned into items; the items themselves are a
  * registered pool), then the effect timers and scores (M1-12: shake magnitude, ticks, duration and
@@ -435,8 +436,8 @@ function mixEnemy(e: Enemy): void {
 }
 
 /**
- * Mixes the player weapons' own state (loadouts, option groups, timers, the cooldown tables of
- * live piercing shots) into {@link accumulator}.
+ * Mixes the player weapons' own state (loadouts, option groups, timers, the Free Way's last
+ * directions — M2-03 —, the cooldown tables of live piercing shots) into {@link accumulator}.
  *
  * @param weapons - The World's weapon system.
  */
@@ -457,6 +458,7 @@ function mixWeapons(weapons: World['weapons']): void {
     mixArray(g.y, g.y.length);
   }
   mixArray(weapons.timers, weapons.timers.length);
+  mixArray(weapons.freeWayHeading, weapons.freeWayHeading.length);
   const f = weapons.pool.fields;
   const n = weapons.pool.count;
   const cooldowns = weapons.cooldowns;

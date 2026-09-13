@@ -20,6 +20,11 @@ high-speed section, parallax stars): run it with `pnpm dev` and `?stage=test-ran
 `test-boss.stage.json` is a short open-space range that ends with the WARNING and the test
 boss (M1-13): `?stage=test-boss`.
 
+`weapon-range.stage.json` (M2-03) is the range the weapon select's live preview flies: a floor
+and a ceiling (so missiles slide and bombs burst), a slow 0.75 px/tick scroll and a target every
+120 px (`content/enemies/weapon-range.enemies.json`) up to its `end` at 2,400, after which the
+preview flies it again from the start. `?stage=weapon-range` plays it.
+
 ## Format (formatVersion 1)
 
 ```jsonc

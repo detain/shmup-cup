@@ -379,6 +379,8 @@ describe('core/scenes saves: hi-scores', () => {
     s.press(Action.Confirm); // START
     s.press(Action.Confirm); // NORMAL
     s.hold(0); // the difficulty menu's lock: the buffered OK acts now
+    s.press(Action.Confirm); // START in the weapon select (M2-03)
+    s.hold(0);
     expect(s.game.world.scoring.board.hiScore).toBe(48000);
     expect(save.data.stats.gamesStarted).toBe(1);
   });
@@ -446,6 +448,8 @@ describe('core/scenes saves: hi-scores', () => {
     second.press(Action.Confirm);
     second.press(Action.Confirm); // START
     second.press(Action.Confirm); // NORMAL
+    second.hold(0);
+    second.press(Action.Confirm); // START in the weapon select (M2-03)
     second.hold(0);
     expect(second.game.world.scoring.board.hiScore).toBe(31400);
     expect(second.save.hiScores('meter-normal').map((r) => r.score)).toEqual([31400]);

@@ -1,0 +1,41 @@
+{
+  "formatVersion": 1,
+  "kind": "enemies",
+  "enemies": [
+    {
+      "id": "range-drone",
+      "hp": 3,
+      "score": 0,
+      "hurtbox": { "hw": 5, "hh": 5 },
+      "script": "drifter.sine",
+      "sprite": "enemies/drifter",
+      "anim": { "frames": 2, "ticks": 8 },
+      "params": { "speed": 0.75, "amp": 16, "period": 120 },
+      "drop": null
+    },
+    {
+      "id": "range-post",
+      "hp": 6,
+      "score": 0,
+      "hurtbox": { "hw": 5, "hh": 4 },
+      "script": "carrier.straight",
+      "sprite": "enemies/turret",
+      "params": { "speed": 0 },
+      "drop": null,
+      "ground": "floor",
+      "explosion": "medium"
+    },
+    {
+      "id": "range-post-ceiling",
+      "hp": 6,
+      "score": 0,
+      "hurtbox": { "hw": 5, "hh": 4 },
+      "script": "carrier.straight",
+      "sprite": "enemies/turret",
+      "params": { "speed": 0 },
+      "drop": null,
+      "ground": "ceiling",
+      "explosion": "medium"
+    }
+  ]
+}

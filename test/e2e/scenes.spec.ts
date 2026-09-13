@@ -175,6 +175,8 @@ test.describe('scene flow (web build)', () => {
     await tap(page, 'Enter'); // START
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'difficulty');
     await tap(page, 'Enter'); // NORMAL
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'weaponSelect');
+    await tap(page, 'Enter'); // START in the weapon select (M2-03)
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
     await waitFrames(page, 60); // the fly-in
     const game = await shoot(page);
@@ -210,6 +212,8 @@ test.describe('scene flow (web build)', () => {
     await tap(page, 'Enter'); // START
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'difficulty');
     await tap(page, 'Enter'); // NORMAL
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'weaponSelect');
+    await tap(page, 'Enter'); // START in the weapon select (M2-03)
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
     expect(errors).toEqual([]);
   });
@@ -224,6 +228,8 @@ test.describe('scene flow (Tizen build via file://)', () => {
     await tap(page, 'Enter'); // START
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'difficulty');
     await tap(page, 'Enter'); // NORMAL
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'weaponSelect');
+    await tap(page, 'Enter'); // START in the weapon select (M2-03)
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
     await waitFrames(page, 60);
     expect(count(await shoot(page), KESTREL_HULL)).toBeGreaterThan(0);

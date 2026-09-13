@@ -1,0 +1,144 @@
+{
+  "formatVersion": 1,
+  "kind": "weapons",
+  "weapons": [
+    {
+      "id": "missile.spread",
+      "name": "SPREAD BOMB",
+      "slot": "missile",
+      "behavior": "missile.spreadBomb",
+      "damage": 2,
+      "speed": 2.5,
+      "cap": 1,
+      "pierce": false,
+      "sprite": "shots/bomb",
+      "sfx": "PlayerMissile",
+      "params": { "angle": 64, "gravity": 0.12, "blastRadius": 14, "blastTicks": 12 }
+    },
+    {
+      "id": "missile.twoWay",
+      "name": "2-WAY MISSILE",
+      "slot": "missile",
+      "behavior": "missile.twoWay",
+      "damage": 2,
+      "speed": 3,
+      "cap": 2,
+      "pierce": false,
+      "sprite": "shots/two-way",
+      "sfx": "PlayerMissile",
+      "params": { "angle": 128 }
+    },
+    {
+      "id": "missile.torpedo",
+      "name": "PHOTON TORPEDO",
+      "slot": "missile",
+      "behavior": "missile.torpedo",
+      "damage": 2,
+      "speed": 4,
+      "cap": 1,
+      "pierce": false,
+      "sprite": "shots/torpedo",
+      "sfx": "PlayerMissile",
+      "params": { "slideSpeed": 5 }
+    },
+    {
+      "id": "shot.tail",
+      "name": "TAIL GUN",
+      "slot": "double",
+      "behavior": "shot.tailGun",
+      "damage": 1,
+      "speed": 7,
+      "cap": 2,
+      "pierce": false,
+      "sprite": "shots/tail",
+      "sfx": "PlayerShot"
+    },
+    {
+      "id": "shot.vertical",
+      "name": "VERTICAL",
+      "slot": "double",
+      "behavior": "shot.vertical",
+      "damage": 1,
+      "speed": 7,
+      "cap": 2,
+      "pierce": false,
+      "sprite": "shots/vertical",
+      "sfx": "PlayerShot"
+    },
+    {
+      "id": "shot.free",
+      "name": "FREE WAY",
+      "slot": "double",
+      "behavior": "shot.freeWay",
+      "damage": 1,
+      "speed": 7,
+      "cap": 2,
+      "pierce": false,
+      "sprite": "shots/free",
+      "sfx": "PlayerShot"
+    },
+    {
+      "id": "laser.ripple",
+      "name": "RIPPLE LASER",
+      "slot": "laser",
+      "behavior": "laser.ripple",
+      "damage": 1,
+      "speed": 6,
+      "cap": 3,
+      "pierce": false,
+      "sprite": "shots/ripple",
+      "sfx": "PlayerShot",
+      "refireTicks": 8,
+      "params": { "startSize": 4, "maxSize": 20, "growth": 0.5 }
+    },
+    {
+      "id": "laser.cyclone",
+      "name": "CYCLONE LASER",
+      "slot": "laser",
+      "behavior": "laser.cyclone",
+      "damage": 1,
+      "speed": 10,
+      "cap": 1,
+      "pierce": true,
+      "sprite": "shots/cyclone",
+      "sfx": "PlayerShot",
+      "params": { "maxLength": 80, "hitCooldownTicks": 6 }
+    },
+    {
+      "id": "laser.twin",
+      "name": "TWIN LASER",
+      "slot": "laser",
+      "behavior": "laser.twin",
+      "damage": 1,
+      "speed": 12,
+      "cap": 4,
+      "pierce": false,
+      "sprite": "shots/twin",
+      "sfx": "PlayerShot",
+      "params": { "maxLength": 16, "gap": 8 }
+    }
+  ],
+  "presets": [
+    {
+      "id": "type-b",
+      "main": "shot.basic",
+      "missile": "missile.spread",
+      "double": "shot.tail",
+      "laser": "laser.ripple"
+    },
+    {
+      "id": "type-c",
+      "main": "shot.basic",
+      "missile": "missile.twoWay",
+      "double": "shot.vertical",
+      "laser": "laser.cyclone"
+    },
+    {
+      "id": "type-d",
+      "main": "shot.basic",
+      "missile": "missile.torpedo",
+      "double": "shot.free",
+      "laser": "laser.twin"
+    }
+  ]
+}

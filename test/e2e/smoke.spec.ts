@@ -142,6 +142,8 @@ async function smoke(page: Page, url: string): Promise<string[]> {
   await tap(page, 'Enter'); // OK on START
   await expect.poll(async () => (await debugState(page))?.sceneId).toBe('difficulty');
   await tap(page, 'Enter'); // OK on NORMAL
+  await expect.poll(async () => (await debugState(page))?.sceneId).toBe('weaponSelect');
+  await tap(page, 'Enter'); // OK on START in the weapon select (M2-03)
   await expect.poll(async () => (await debugState(page))?.sceneId).toBe('game');
   const before = await debugState(page);
   // Hold the arrows: right and up for 2.5 s each (a remote holds one at a time).

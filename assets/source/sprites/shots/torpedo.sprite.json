@@ -1,0 +1,24 @@
+{
+  "name": "shots/torpedo",
+  "description": "Photon Torpedo: a sleek ground runner with a flickering violet exhaust.",
+  "palette": { ".": null, "o": "#302058", "p": "#a060f0", "w": "#ffffff", "c": "#f0d8ff" },
+  "anchor": [5, 1],
+  "hitFlash": false,
+  "frames": [
+    {
+      "rows": [
+        "...ooooo..",
+        "cppppppwwo",
+        "...ooooo.."
+      ]
+    },
+    {
+      "rows": [
+        "...ooooo..",
+        "pcpppppwwo",
+        "...ooooo.."
+      ]
+    }
+  ],
+  "animations": { "run": [0, 1] }
+}

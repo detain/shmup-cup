@@ -1,10 +1,10 @@
 /**
  * # weapons — player weapons
  *
- * **Status: partial.** Meter mode's **Type A** arsenal is implemented (plan M1-10): the main
- * shot, Double, Laser and ground Missile, fired with always-on autofire by the ship and its
- * Options, with per-shooter caps, piercing beams and grid-based hits. Types B–D and Weapon Edit
- * arrive with M2-03, the Direct-mode families with M2-05.
+ * **Status: implemented** for meter mode: the **Type A** arsenal of M1-10 (the main shot, Double,
+ * Laser and ground Missile, fired with always-on autofire by the ship and its Options, with
+ * per-shooter caps, piercing beams and grid-based hits) and the **Types B–D** behaviours, presets
+ * and Weapon Edit of M2-03. The Direct-mode families join with M2-05.
  *
  * **Responsibility.** The players' projectiles of a World ({@link WeaponSystem}):
  *
@@ -17,6 +17,10 @@
  *   `options` (0–4), plus the ship's own `speedLevel` and `shield` (`core/player`,
  *   `core/shields`). The power meter of M1-11 (`core/powerups`) changes them;
  *   `GameConfig.loadout: 'full'` starts a session fully powered (dev).
+ * - **The arsenal** (M2-03) — which weapon each role fires: the preset `GameConfig.weaponPreset`
+ *   (`type-a` … `type-d`) with `GameConfig.weaponEdit` overriding the Missile / Double / Laser
+ *   roles ({@link resolveArsenal}); the MISSILE, DOUBLE and LASER meter slots equip those roles.
+ *   {@link WeaponSystem.setArsenal} swaps it in place (the weapon select's preview).
  * - **Options** — one `core/options` {@link OptionGroup} per player (the trail of decision D26);
  *   every Option fires every weapon of the loadout with its own caps.
  * - **Hits** — enemy hurtboxes are in the World's grid (phase 6); each shot queries the cells
@@ -50,6 +54,28 @@
  *   slopes; a wall (a step higher than the slide can climb) destroys it; over a cliff it falls
  *   again.
  *
+ * **Types B–D behaviours** (M2-03, shmup_feat.md §7A; defaults in {@link WEAPON_BEHAVIOR_PARAMS}):
+ *
+ * - `missile.spreadBomb` — falls in an arc (`angle` down, `gravity`) and bursts on terrain or on
+ *   the first target it touches into a piercing, world-anchored blast of `blastRadius` that burns
+ *   `blastTicks` ticks and hits each target at most once every `hitCooldownTicks` — twice with the
+ *   defaults (12 / 6). A blast is not stopped by armour (it clinks). Cap: bombs and blasts together.
+ * - `missile.twoWay` — a volley of two missiles, one `angle` units up from forward, one down; each
+ *   dies on its first hit or on terrain; the next volley waits until both are gone.
+ * - `missile.torpedo` — a fast `missile.groundSlide` (falls, then slides) that flies on through
+ *   every enemy its hit destroys ("pierces small enemies"); a survivor, armour or a boss part
+ *   stops it.
+ * - `shot.tailGun` / `shot.vertical` — Doubles whose second shot flies straight back / straight up.
+ * - `shot.freeWay` — a Double whose second shot flies in the last 8-way direction the player held
+ *   ({@link WeaponSystem.freeWayHeading}; `angle` up from forward before any).
+ * - `laser.ripple` — a non-piercing ring flying forward that grows from `startSize` by `growth` per
+ *   tick up to `maxSize` (half heights; the width is `aspect` × the height). Its ring is the
+ *   hitbox: a target touches it when it reaches into the ellipse without being wholly inside the
+ *   ring's inner edge ({@link RIPPLE_RING_WIDTH} px in).
+ * - `laser.cyclone` — a `laser.beam` with a thicker box and swirling segments (`frames`).
+ * - `laser.twin` — two short beams `gap` px apart that follow their shooter; a pair fires while two
+ *   more fit under the cap (non-piercing in the shipped content).
+ *
  * **Autofire** (shmup_feat.md §4 rule 1). While a ship is `alive`, every shooter fires its main
  * weapon whenever its timer allows (every `config.autofireInterval` ticks, or the weapon's
  * `refireTicks`) and its cap has room, if `config.autofire || config.remoteMode` or the player
@@ -68,15 +94,18 @@
  * (lasers as rows of 8-px beam segments) and the Options batch (`Player` layer).
  *
  * **Content.** Without a weapons file (or with nothing usable in a role) the role is empty: a
- * World built from content without weapons never fires. The preset `type-a` (else the first
- * preset, else the first weapon of each slot) decides which weapon each role uses.
+ * World built from content without weapons never fires. The config's preset (`type-a` by default;
+ * else the first preset, else the first weapon of each slot) and its Weapon Edit decide which
+ * weapon each role uses ({@link resolveArsenal}).
  *
  * **Zero allocation.** Pools, tables, batches and the grid visitor are built by
  * {@link createWeaponSystem}; per-tick code passes whole numbers across calls (positions travel
  * through class fields) and writes typed arrays.
  *
  * **Implements.**
- * - shmup_feat.md §7 Weapons catalog — 7A Type A (Missile, Double, Laser), 7C on-screen caps,
+ * - shmup_feat.md §7 Weapons catalog — 7A Type A (Missile, Double, Laser), Types B–D (Spread
+ *   Bomb, 2-Way Missile, Photon Torpedo, Tail Gun, Vertical, Free Way, Ripple, Cyclone Laser, Twin
+ *   Laser), the preset loadouts and Weapon Edit, 7C on-screen caps,
  *   piercing vs non-piercing, per-projectile damage, damage over time for beams, ground-following
  *   projectiles, Options copy all weapons, weapons defined in data
  * - shmup_feat.md §4 — always-on autofire for main shot and missile (remote rule 1)
@@ -91,10 +120,12 @@
  * {@link ShotSchema}, {@link MAX_PLAYER_SHOTS}, {@link SHOOTERS_PER_PLAYER}, {@link MAX_SHOOTERS},
  * {@link SHOT_CULL_MARGIN}, {@link SFX_RATE_TICKS}, {@link PIERCE_TABLES},
  * {@link MAX_SHOT_HITS}, {@link SHOT_BATCH_CAPACITY}, {@link LASER_SEGMENT_LENGTH},
- * {@link DEFAULT_WEAPON_PRESET}, {@link FULL_LOADOUT_SPEED_LEVEL}.
+ * {@link DEFAULT_WEAPON_PRESET}, {@link FULL_LOADOUT_SPEED_LEVEL}; M2-03: {@link resolveArsenal},
+ * {@link weaponsOfSlot}, {@link weaponLabel}, {@link WEAPON_BEHAVIOR_LABELS},
+ * {@link SPREAD_BLAST_SPRITE}, {@link WEAPON_SPRITES}, {@link RIPPLE_RING_WIDTH}.
  *
- * **Planned API.** Loadouts B–D, Weapon Edit and weapon select (M2-03); Direct-mode families and
- * sub-weapons (M2-05); Snake / Formation / Rotate options firing (M2-04).
+ * **Planned API.** Direct-mode families and sub-weapons (M2-05); Snake / Formation / Rotate
+ * options firing (M2-04).
  *
  * @module
  */
@@ -123,7 +154,13 @@ import {
   type WeaponSpec,
 } from '../data/index.js';
 import { EnemyFlag, EnemyState, MAX_ENEMIES, type Enemy } from '../enemies/index.js';
-import { SFX_CUES, SFX_CUE_NAMES, SimEventKind, type EventQueue } from '../events/index.js';
+import {
+  FX_CUES,
+  SFX_CUES,
+  SFX_CUE_NAMES,
+  SimEventKind,
+  type EventQueue,
+} from '../events/index.js';
 import { Action, MAX_PLAYERS } from '../input/index.js';
 import { ANGLE_MASK, ANGLE_QUARTER, ANGLE_UNITS } from '../math/index.js';
 import { SIN_TABLE_Q16, TRIG_SCALE } from '../math/trig-table.js';
@@ -138,12 +175,12 @@ import {
 import type { PlayerCamera, PlayerIntent, PlayerShip } from '../player/index.js';
 import { createSoaPool, type SoaPool, type SoaSchema } from '../pools/index.js';
 import { LayerId, SpriteFlag, createSpriteBatch, type SpriteBatch } from '../presentation/index.js';
-import { clearShield, grantShield } from '../shields/index.js';
+import { FORCE_FIELD, clearShield, grantShield, type ShieldSpec } from '../shields/index.js';
 
 /** Module descriptor (see {@link defineModule}). */
 export const moduleInfo = defineModule({
   name: 'weapons',
-  status: 'partial',
+  status: 'implemented',
   specRefs: ['shmup_feat.md §7', 'shmup_feat.md §4', 'shmup_feat.md §22'],
 });
 
@@ -193,23 +230,52 @@ export const ShotKind = {
   Laser: 2,
   /** `missile.groundSlide`: falls, then slides along the floor. */
   Missile: 3,
+  /** `missile.spreadBomb`: falls in an arc, then bursts into a blast that hits twice (M2-03). */
+  SpreadBomb: 4,
+  /** `missile.twoWay`: a volley of two missiles, one climbing, one diving (M2-03). */
+  TwoWay: 5,
+  /** `missile.torpedo`: a fast ground slider that flies on through what it destroys (M2-03). */
+  Torpedo: 6,
+  /** `shot.freeWay`: forward + a shot in the ship's last 8-way direction (M2-03). */
+  FreeWay: 7,
+  /** `laser.ripple`: a ring that grows as it flies (M2-03). */
+  Ripple: 8,
+  /** `laser.twin`: two short parallel beams (M2-03). */
+  Twin: 9,
 } as const;
 
 /** A {@link ShotKind} code. */
 export type ShotKind = (typeof ShotKind)[keyof typeof ShotKind];
 
-/** Coded weapon behaviours by script id → {@link ShotKind}. */
+/**
+ * Coded weapon behaviours by script id → {@link ShotKind}. Several behaviours share a kind with
+ * other defaults: the Tail Gun and the Vertical are Doubles whose second shot turns 180° / 90°,
+ * the Cyclone Laser is a thicker, swirling beam.
+ */
 export const WEAPON_BEHAVIOR_KINDS: Readonly<Record<WeaponBehaviorId, ShotKind>> = Object.freeze({
   'shot.straight': ShotKind.Straight,
   'shot.double': ShotKind.Double,
   'laser.beam': ShotKind.Laser,
   'missile.groundSlide': ShotKind.Missile,
+  'missile.spreadBomb': ShotKind.SpreadBomb,
+  'missile.twoWay': ShotKind.TwoWay,
+  'missile.torpedo': ShotKind.Torpedo,
+  'shot.tailGun': ShotKind.Double,
+  'shot.vertical': ShotKind.Double,
+  'shot.freeWay': ShotKind.FreeWay,
+  'laser.ripple': ShotKind.Ripple,
+  'laser.cyclone': ShotKind.Laser,
+  'laser.twin': ShotKind.Twin,
 });
 
 /**
  * Behaviour tunables (content `params`) with their defaults, per behaviour. Angles are binary
  * units (1024 per turn); `ox` / `oy` place the new shot relative to its shooter's centre; `hw` /
- * `hh` are the hitbox half sizes.
+ * `hh` are the hitbox half sizes. The M2-03 behaviours add: `gravity` (px/tick² of the Spread
+ * Bomb's fall), `blastRadius` / `blastTicks` (its blast's half size and life), `startSize` /
+ * `maxSize` / `growth` / `aspect` (the Ripple's half height when fired, at most, its growth per
+ * tick and width ÷ height), `gap` (the distance between the Twin Laser's beams) and `frames` (the
+ * blast's, ring's or swirl's animation frames).
  */
 export const WEAPON_BEHAVIOR_PARAMS: Readonly<
   Record<WeaponBehaviorId, Readonly<Record<string, number>>>
@@ -226,6 +292,49 @@ export const WEAPON_BEHAVIOR_PARAMS: Readonly<
     hh: 1.5,
     frames: 2,
   }),
+  'missile.spreadBomb': Object.freeze({
+    angle: 64,
+    gravity: 0.12,
+    ox: 2,
+    oy: 4,
+    hw: 3,
+    hh: 3,
+    blastRadius: 14,
+    blastTicks: 12,
+    hitCooldownTicks: 6,
+    frames: 4,
+  }),
+  'missile.twoWay': Object.freeze({ angle: 128, ox: 2, oy: 0, hw: 3, hh: 3 }),
+  'missile.torpedo': Object.freeze({
+    slideSpeed: 5,
+    angle: 96,
+    ox: 0,
+    oy: 4,
+    hw: 5,
+    hh: 1.5,
+    frames: 2,
+  }),
+  'shot.tailGun': Object.freeze({ angle: 512, ox: -6, oy: 0, hw: 4, hh: 2 }),
+  'shot.vertical': Object.freeze({ angle: 256, ox: 0, oy: -6, hw: 2, hh: 4 }),
+  'shot.freeWay': Object.freeze({ angle: 128, ox: 0, oy: 0, hw: 3, hh: 3 }),
+  'laser.ripple': Object.freeze({
+    startSize: 4,
+    maxSize: 20,
+    growth: 0.5,
+    aspect: 0.5,
+    ox: 8,
+    oy: 0,
+    frames: 6,
+  }),
+  'laser.cyclone': Object.freeze({
+    maxLength: 80,
+    hitCooldownTicks: 6,
+    ox: 8,
+    oy: 0,
+    hh: 4,
+    frames: 4,
+  }),
+  'laser.twin': Object.freeze({ maxLength: 16, gap: 8, ox: 8, oy: 0, hh: 1.5 }),
 });
 
 /** The loadout slot each behaviour belongs in (checked by {@link checkWeaponBehaviors}). */
@@ -235,7 +344,54 @@ export const WEAPON_BEHAVIOR_SLOTS: Readonly<Record<WeaponBehaviorId, readonly W
     'shot.double': Object.freeze(['double'] as WeaponSlot[]),
     'laser.beam': Object.freeze(['laser'] as WeaponSlot[]),
     'missile.groundSlide': Object.freeze(['missile'] as WeaponSlot[]),
+    'missile.spreadBomb': Object.freeze(['missile'] as WeaponSlot[]),
+    'missile.twoWay': Object.freeze(['missile'] as WeaponSlot[]),
+    'missile.torpedo': Object.freeze(['missile'] as WeaponSlot[]),
+    'shot.tailGun': Object.freeze(['double'] as WeaponSlot[]),
+    'shot.vertical': Object.freeze(['double'] as WeaponSlot[]),
+    'shot.freeWay': Object.freeze(['double'] as WeaponSlot[]),
+    'laser.ripple': Object.freeze(['laser'] as WeaponSlot[]),
+    'laser.cyclone': Object.freeze(['laser'] as WeaponSlot[]),
+    'laser.twin': Object.freeze(['laser'] as WeaponSlot[]),
   });
+
+/**
+ * The power meter's label of each behaviour (the HUD draws it in the slot the weapon sits in —
+ * `core/ui` `METER_LABEL_FRAMES` holds the matching `hud/meter-labels` frames, shmup_feat.md §6A).
+ */
+export const WEAPON_BEHAVIOR_LABELS: Readonly<Record<WeaponBehaviorId, string>> = Object.freeze({
+  'shot.straight': 'SHOT',
+  'shot.double': 'DOUBLE',
+  'laser.beam': 'LASER',
+  'missile.groundSlide': 'MISSILE',
+  'missile.spreadBomb': 'SPREAD',
+  'missile.twoWay': '2-WAY',
+  'missile.torpedo': 'TORPEDO',
+  'shot.tailGun': 'TAIL',
+  'shot.vertical': 'VERTICAL',
+  'shot.freeWay': 'FREE WAY',
+  'laser.ripple': 'RIPPLE',
+  'laser.cyclone': 'CYCLONE',
+  'laser.twin': 'TWIN',
+});
+
+/**
+ * Width of the Ripple's ring in pixels (measured on its height): a target the ring has grown
+ * around further than this is inside it and no longer hit.
+ */
+export const RIPPLE_RING_WIDTH = 4;
+
+/** The Spread Bomb's blast sprite (an engine sprite — see core `world` `ENGINE_SPRITES`). */
+export const SPREAD_BLAST_SPRITE = 'shots/blast';
+
+/** The sprites the weapons draw on their own, whatever the content (part of `ENGINE_SPRITES`). */
+export const WEAPON_SPRITES: readonly string[] = Object.freeze([SPREAD_BLAST_SPRITE]);
+
+/**
+ * The Free Way's heading per 8-way direction, `[(moveY + 1) × 3 + (moveX + 1)]` (binary units; -1
+ * for no direction).
+ */
+const DIRECTION_HEADINGS = Object.freeze([640, 768, 896, 512, -1, 0, 384, 256, 128]);
 
 /**
  * Every weapon behaviour id, sorted. Weapon and enemy behaviours share the content's one script
@@ -286,6 +442,8 @@ export const ShotFlag = {
   Sliding: 4,
   /** Removed this tick (the slot is freed in phase 8). */
   Dead: 8,
+  /** A Spread Bomb that burst: the blast (piercing, world-anchored — M2-03). */
+  Blast: 16,
 } as const;
 
 /** Field layout of the shot pool (hashed in sorted field order). */
@@ -296,7 +454,7 @@ export const SHOT_SCHEMA = Object.freeze({
   y: 'f64',
   /** Velocity x (px/tick, before the camera ride). */
   vx: 'f64',
-  /** Velocity y. */
+  /** Velocity y (a Twin Laser beam: its row offset from the shooter's). */
   vy: 'f64',
   /** Laser length in pixels (the tail is at `x − length`); 0 for other shots. */
   length: 'f64',
@@ -320,7 +478,7 @@ export const SHOT_SCHEMA = Object.freeze({
   frame: 'u16',
   /** `SpriteFlag` bits for the renderer. */
   draw: 'u8',
-  /** Ticks the shot has moved. */
+  /** Ticks the shot has moved (a Spread Bomb's blast: ticks since it burst). */
   age: 'i32',
   /** Hit-cooldown table index + 1 (0 = none: a non-piercing shot). */
   table: 'i32',
@@ -354,6 +512,8 @@ export class Loadout {
  * @param loadout - The player's loadout.
  * @param ship - The player's ship (its speed level and shield).
  * @param preset - Which loadout.
+ * @param shield - The shield `'full'` grants (default the Force Field; the session's `?` choice —
+ *   `core/shields` `shieldSpecOf(config.shieldChoice)`).
  *
  * @example
  * ```ts
@@ -364,13 +524,14 @@ export function applyLoadoutPreset(
   loadout: Loadout,
   ship: PlayerShip,
   preset: StartingLoadout,
+  shield: ShieldSpec = FORCE_FIELD,
 ): void {
   const full = preset === 'full';
   loadout.main = full ? MainWeapon.Laser : MainWeapon.Basic;
   loadout.missile = full;
   loadout.options = full ? MAX_OPTIONS : 0;
   ship.speedLevel = full ? FULL_LOADOUT_SPEED_LEVEL : 0;
-  if (full) grantShield(ship.shield);
+  if (full) grantShield(ship.shield, shield);
   else clearShield(ship.shield);
 }
 
@@ -430,6 +591,86 @@ export function resolveRoleWeapons(
     at(preset.laserId),
     at(preset.missileId),
   ];
+}
+
+/**
+ * The session's arsenal (plan M2-03): the weapon of each {@link WeaponRole} for a config's
+ * `weaponPreset` ({@link resolveWeaponPreset} — a content without it falls back to its first
+ * preset) with `weaponEdit` overriding the Missile / Double / Laser roles.
+ *
+ * @remarks
+ * Load time only (it allocates the result).
+ *
+ * @param content - Validated content.
+ * @param config - The session config (`weaponPreset`, `weaponEdit`).
+ * @returns Four entries in {@link WeaponRole} order, `null` for an empty role.
+ * @throws {RangeError} When `weaponEdit` names a weapon the content does not have, or one of
+ *   another slot.
+ *
+ * @example
+ * ```ts
+ * resolveArsenal(db, resolveGameConfig({ weaponPreset: 'type-b' }))[WeaponRole.Laser]?.id;
+ * // → 'laser.ripple'
+ * ```
+ */
+export function resolveArsenal(
+  content: ContentDb,
+  config: Readonly<Pick<GameConfig, 'weaponPreset' | 'weaponEdit'>>,
+): (WeaponSpec | null)[] {
+  const roles = resolveRoleWeapons(content, resolveWeaponPreset(content, config.weaponPreset));
+  const edit = config.weaponEdit;
+  if (edit !== null) {
+    roles[WeaponRole.Missile] = editedWeapon(content, edit.missile, 'missile');
+    roles[WeaponRole.Double] = editedWeapon(content, edit.double, 'double');
+    roles[WeaponRole.Laser] = editedWeapon(content, edit.laser, 'laser');
+  }
+  return roles;
+}
+
+/**
+ * One weapon of a Weapon Edit.
+ *
+ * @param content - Validated content.
+ * @param id - The weapon id.
+ * @param slot - The slot it must sit in.
+ * @returns The weapon.
+ * @throws {RangeError} When the content has no such weapon or it belongs in another slot.
+ */
+function editedWeapon(content: ContentDb, id: string, slot: WeaponSlot): WeaponSpec {
+  const index = content.weaponIndex.get(id);
+  if (index === undefined) {
+    throw new RangeError(`GameConfig.weaponEdit.${slot}: no weapon "${id}" in the content`);
+  }
+  const weapon = content.weapons[index];
+  if (weapon.slot !== slot) {
+    throw new RangeError(
+      `GameConfig.weaponEdit.${slot}: weapon "${id}" belongs in slot ${weapon.slot}`,
+    );
+  }
+  return weapon;
+}
+
+/**
+ * The content's weapons of one slot, in content order (the weapon select's Weapon Edit lists).
+ *
+ * @param content - Validated content.
+ * @param slot - The slot.
+ * @returns A new array (load time).
+ */
+export function weaponsOfSlot(content: ContentDb, slot: WeaponSlot): WeaponSpec[] {
+  const out: WeaponSpec[] = [];
+  for (const weapon of content.weapons) if (weapon.slot === slot) out.push(weapon);
+  return out;
+}
+
+/**
+ * The name the weapon select shows for a weapon: its `name`, else its id in upper case.
+ *
+ * @param weapon - The weapon.
+ * @returns The label.
+ */
+export function weaponLabel(weapon: Readonly<Pick<WeaponSpec, 'id' | 'name'>>): string {
+  return weapon.name ?? weapon.id.toUpperCase();
 }
 
 /**
@@ -577,6 +818,11 @@ export interface WeaponSystem {
   /** Autofire timers per shooter: `[shooter × 2]` main, `[shooter × 2 + 1]` missile (hashed). */
   readonly timers: Int32Array;
   /**
+   * Per player: the heading (binary units) of the last 8-way direction held while alive, or -1
+   * before any — the Free Way's second shot flies that way (M2-03; hashed).
+   */
+  readonly freeWayHeading: Int32Array;
+  /**
    * Live shots per shooter and role, `[shooter × WEAPON_ROLE_COUNT + role]` (recounted at the
    * start of phase 2, raised by every shot fired).
    */
@@ -705,6 +951,17 @@ export interface WeaponSystem {
    * World).
    */
   clear(): void;
+  /**
+   * Swaps the arsenal in place (the weapon select's live preview, M2-03): recompiles the role
+   * tables from `roles`, removes every shot at once and restarts the autofire timers.
+   *
+   * @remarks
+   * Never allocates (`roles` is copied into {@link WeaponSystem.roleWeapons}); a cold path — a
+   * gameplay session keeps the arsenal of its config (`resolveArsenal`).
+   *
+   * @param roles - The weapon of each {@link WeaponRole} (`null` = empty; missing entries too).
+   */
+  setArsenal(roles: readonly (WeaponSpec | null)[]): void;
 }
 
 /** The shot pool's type. */
@@ -748,6 +1005,24 @@ class RoleTables {
   readonly oy = new Float64Array(WEAPON_ROLE_COUNT);
   /** Animation frames. */
   readonly frames = new Int32Array(WEAPON_ROLE_COUNT).fill(1);
+  /** 1 = the shot needs a hit-cooldown table (piercing, or a Spread Bomb's blast). */
+  readonly table = new Uint8Array(WEAPON_ROLE_COUNT);
+  /** Spread Bomb: fall acceleration (px/tick²). */
+  readonly gravity = new Float64Array(WEAPON_ROLE_COUNT);
+  /** Spread Bomb: the blast's half size. */
+  readonly blastRadius = new Float64Array(WEAPON_ROLE_COUNT);
+  /** Spread Bomb: the blast's life in ticks. */
+  readonly blastTicks = new Int32Array(WEAPON_ROLE_COUNT);
+  /** Ripple: half height when fired. */
+  readonly startSize = new Float64Array(WEAPON_ROLE_COUNT);
+  /** Ripple: largest half height. */
+  readonly maxSize = new Float64Array(WEAPON_ROLE_COUNT);
+  /** Ripple: half-height growth per tick. */
+  readonly growth = new Float64Array(WEAPON_ROLE_COUNT);
+  /** Ripple: half width ÷ half height. */
+  readonly aspect = new Float64Array(WEAPON_ROLE_COUNT);
+  /** Twin Laser: half the distance between the two beams. */
+  readonly halfGap = new Float64Array(WEAPON_ROLE_COUNT);
 }
 
 /**
@@ -769,17 +1044,48 @@ function tunable(spec: WeaponSpec, name: string): number {
 }
 
 /**
- * Compiles the role tables from the content (load time).
+ * Compiles the role tables from the weapons into existing tables (creation, and
+ * {@link WeaponSystem.setArsenal}). Never allocates.
  *
- * @param roles - The weapon per role.
+ * @param t - The tables (every entry rewritten).
+ * @param roles - The weapon per role (a missing entry = an empty role).
  * @param config - Autofire intervals.
- * @returns The tables.
  */
-function compileRoles(roles: readonly (WeaponSpec | null)[], config: GameConfig): RoleTables {
-  const t = new RoleTables();
+function compileRoles(
+  t: RoleTables,
+  roles: readonly (WeaponSpec | null)[],
+  config: GameConfig,
+): void {
   for (let r = 0; r < WEAPON_ROLE_COUNT; r++) {
-    const spec = roles[r];
-    if (spec === null) continue;
+    t.kind[r] = -1;
+    t.damage[r] = 0;
+    t.speed[r] = 0;
+    t.cap[r] = 0;
+    t.pierce[r] = 0;
+    t.sprite[r] = -1;
+    t.interval[r] = 0;
+    t.sfx[r] = -1;
+    t.angle[r] = 0;
+    t.maxLength[r] = 0;
+    t.cooldown[r] = 1;
+    t.slide[r] = 0;
+    t.step[r] = 1;
+    t.hw[r] = 0;
+    t.hh[r] = 0;
+    t.ox[r] = 0;
+    t.oy[r] = 0;
+    t.frames[r] = 1;
+    t.table[r] = 0;
+    t.gravity[r] = 0;
+    t.blastRadius[r] = 0;
+    t.blastTicks[r] = 0;
+    t.startSize[r] = 0;
+    t.maxSize[r] = 0;
+    t.growth[r] = 0;
+    t.aspect[r] = 0;
+    t.halfGap[r] = 0;
+    const spec = r < roles.length ? roles[r] : null;
+    if (spec === null || spec === undefined) continue;
     const kind = Object.prototype.hasOwnProperty.call(WEAPON_BEHAVIOR_KINDS, spec.behavior)
       ? WEAPON_BEHAVIOR_KINDS[spec.behavior]
       : -1;
@@ -807,8 +1113,20 @@ function compileRoles(roles: readonly (WeaponSpec | null)[], config: GameConfig)
     t.oy[r] = tunable(spec, 'oy');
     const frames = Math.floor(tunable(spec, 'frames'));
     t.frames[r] = frames >= 1 ? frames : 1;
+    t.table[r] = spec.pierce || kind === ShotKind.SpreadBomb ? 1 : 0;
+    const gravity = tunable(spec, 'gravity');
+    t.gravity[r] = gravity > 0 ? gravity : 0;
+    t.blastRadius[r] = Math.abs(tunable(spec, 'blastRadius'));
+    const blastTicks = Math.round(tunable(spec, 'blastTicks'));
+    t.blastTicks[r] = blastTicks >= 1 ? blastTicks : 1;
+    const start = Math.abs(tunable(spec, 'startSize'));
+    const max = Math.abs(tunable(spec, 'maxSize'));
+    t.startSize[r] = start;
+    t.maxSize[r] = max > start ? max : start;
+    t.growth[r] = Math.abs(tunable(spec, 'growth'));
+    t.aspect[r] = Math.abs(tunable(spec, 'aspect'));
+    t.halfGap[r] = Math.abs(tunable(spec, 'gap')) / 2;
   }
-  return t;
 }
 
 /** The weapon system (a class: monomorphic methods, typed-array fields). */
@@ -823,10 +1141,12 @@ class WeaponSystemImpl implements WeaponSystem {
   readonly loadouts: readonly Loadout[];
   /** See {@link WeaponSystem.options}. */
   readonly options: readonly OptionGroup[];
-  /** See {@link WeaponSystem.roleWeapons}. */
-  readonly roleWeapons: readonly (WeaponSpec | null)[];
+  /** See {@link WeaponSystem.roleWeapons} (rewritten in place by {@link WeaponSystem.setArsenal}). */
+  readonly roleWeapons: (WeaponSpec | null)[];
   /** See {@link WeaponSystem.timers}. */
   readonly timers = new Int32Array(MAX_SHOOTERS * 2);
+  /** See {@link WeaponSystem.freeWayHeading}. */
+  readonly freeWayHeading = new Int32Array(MAX_PLAYERS).fill(-1);
   /** See {@link WeaponSystem.liveCounts}. */
   readonly liveCounts = new Int32Array(MAX_SHOOTERS * WEAPON_ROLE_COUNT);
   /** See {@link WeaponSystem.cooldowns}. */
@@ -846,11 +1166,15 @@ class WeaponSystemImpl implements WeaponSystem {
   /** Tick each SFX cue was last pushed (rate limit). */
   private readonly sfxTicks: Float64Array;
   /** The role tables. */
-  private readonly roles: RoleTables;
+  private readonly roles = new RoleTables();
   /** Whether firing needs no button (`autofire || remoteMode`). */
   private readonly alwaysFire: boolean;
   /** The option sprite id (-1 = not drawn). */
   private readonly optionSprite: number;
+  /** The Spread Bomb blast's sprite id (-1 = not drawn). */
+  private readonly blastSprite: number;
+  /** Row offset of the next Twin Laser beam {@link WeaponSystemImpl.emit} fills (a class field). */
+  private lane = 0;
   /** The World. */
   private readonly host: WeaponHost;
   /** Shooter x of the current fire / lookup (class fields keep fractions unboxed). */
@@ -873,6 +1197,18 @@ class WeaponSystemImpl implements WeaponSystem {
   private qPartTable = 0;
   /** Lowest overlapping enemy slot of a non-piercing query (-1 = none). */
   private qBest = -1;
+  /** Whether the queried shot is a Ripple (its ring, not its box, is the hitbox). */
+  private qRing = false;
+  /** The ring's centre x. */
+  private qcx = 0;
+  /** The ring's centre y. */
+  private qcy = 0;
+  /** The ring's outer half height. */
+  private qb = 0;
+  /** Horizontal scale that turns the ring's ellipse into a circle (half height ÷ half width). */
+  private qk = 1;
+  /** The ring's inner half height (outer − {@link RIPPLE_RING_WIDTH}). */
+  private qInner = 0;
   /** The queried shot's slot. */
   private qShot = 0;
   /** First hit of the queried shot in the hit list. */
@@ -899,10 +1235,11 @@ class WeaponSystemImpl implements WeaponSystem {
     this.loadouts = loadouts;
     this.options = options;
     const content = host.content;
-    this.roleWeapons = Object.freeze(resolveRoleWeapons(content, resolveWeaponPreset(content)));
-    this.roles = compileRoles(this.roleWeapons, host.config);
+    this.roleWeapons = resolveArsenal(content, host.config);
+    compileRoles(this.roles, this.roleWeapons, host.config);
     this.alwaysFire = host.config.autofire || host.config.remoteMode;
     this.optionSprite = content.sprites.index.get(OPTION_SPRITE) ?? -1;
+    this.blastSprite = content.sprites.index.get(SPREAD_BLAST_SPRITE) ?? -1;
     this.sfxTicks = new Float64Array(SFX_CUE_NAMES.length).fill(-Infinity);
     this.visitor = (slot: number): void => {
       this.visit(slot);
@@ -923,10 +1260,48 @@ class WeaponSystemImpl implements WeaponSystem {
     this.fx = x;
     this.fy = y;
     const t = this.roles;
-    if (kind === ShotKind.Double) {
+    if (kind === ShotKind.Double || kind === ShotKind.FreeWay) {
+      return this.emit(role, shooter, this.secondHeading(role, shooter), 0);
+    }
+    if (kind === ShotKind.TwoWay) {
       return this.emit(role, shooter, (ANGLE_UNITS - t.angle[role]) & ANGLE_MASK, 0);
     }
-    return this.emit(role, shooter, kind === ShotKind.Missile ? t.angle[role] : 0, 0);
+    if (kind === ShotKind.Twin) {
+      this.lane = -t.halfGap[role];
+      const i = this.emit(role, shooter, 0, 0);
+      this.lane = 0;
+      return i;
+    }
+    return this.emit(role, shooter, this.launchHeading(role), 0);
+  }
+
+  /**
+   * The heading of a role's single shot: the fall angle of the missiles, forward otherwise.
+   *
+   * @param role - The role (non-empty).
+   * @returns Binary units.
+   */
+  private launchHeading(role: number): number {
+    const kind = this.roles.kind[role];
+    return kind === ShotKind.Missile || kind === ShotKind.Torpedo || kind === ShotKind.SpreadBomb
+      ? this.roles.angle[role]
+      : 0;
+  }
+
+  /**
+   * The heading of the second shot of a Double-kind pair: `angle` units up from forward (the
+   * Double, Tail Gun and Vertical), or for the Free Way the shooter's player's last direction
+   * ({@link WeaponSystem.freeWayHeading}; `angle` up before any).
+   *
+   * @param role - The role (a Double or Free Way).
+   * @param s - Shooter id.
+   * @returns Binary units.
+   */
+  private secondHeading(role: number, s: number): number {
+    const fallback = (ANGLE_UNITS - this.roles.angle[role]) & ANGLE_MASK;
+    if (this.roles.kind[role] !== ShotKind.FreeWay) return fallback;
+    const heading = this.freeWayHeading[(s / SHOOTERS_PER_PLAYER) | 0];
+    return heading >= 0 ? heading : fallback;
   }
 
   /** See {@link WeaponSystem.countShots}. */
@@ -997,6 +1372,14 @@ class WeaponSystemImpl implements WeaponSystem {
       const entered = ship.stateTicks === 0;
       if (entered && host.ship.enterTicks <= 1) group.reset(ship, camera);
       group.follow(ship, camera, loadout.options, entered || ship.moving);
+      if (p < intents.length) {
+        // The Free Way aims where the ship last flew (8-way; the last direction is kept).
+        const mx = intents[p].moveX;
+        const my = intents[p].moveY;
+        if ((mx !== 0 || my !== 0) && mx >= -1 && mx <= 1 && my >= -1 && my <= 1) {
+          this.freeWayHeading[p] = DIRECTION_HEADINGS[(my + 1) * 3 + (mx + 1)];
+        }
+      }
       const held = p < intents.length ? intents[p].held : 0;
       const wantMain = this.alwaysFire || (held & Action.Shot) !== 0;
       const wantSub =
@@ -1049,20 +1432,29 @@ class WeaponSystemImpl implements WeaponSystem {
     const t = this.roles;
     const kind = t.kind[role];
     const live = this.liveCounts[s * WEAPON_ROLE_COUNT + role];
+    const cap = t.cap[role];
     let fired: boolean;
-    if (kind === ShotKind.Double) {
+    if (kind === ShotKind.Double || kind === ShotKind.FreeWay) {
       // "No refire until both are gone": the pair needs every earlier shot of the role gone.
-      if (live > 0 || t.cap[role] < 1) return false;
+      if (live > 0 || cap < 1) return false;
       fired = this.emit(role, s, 0, 1) >= 0;
-      if (
-        t.cap[role] >= 2 &&
-        this.emit(role, s, (ANGLE_UNITS - t.angle[role]) & ANGLE_MASK, 0) >= 0
-      ) {
-        fired = true;
-      }
+      if (cap >= 2 && this.emit(role, s, this.secondHeading(role, s), 0) >= 0) fired = true;
+    } else if (kind === ShotKind.TwoWay) {
+      // One volley at a time: a climbing and a diving missile, refired once both are gone.
+      if (live > 0 || cap < 1) return false;
+      fired = this.emit(role, s, (ANGLE_UNITS - t.angle[role]) & ANGLE_MASK, 0) >= 0;
+      if (cap >= 2 && this.emit(role, s, t.angle[role], 0) >= 0) fired = true;
+    } else if (kind === ShotKind.Twin && cap >= 2) {
+      // A pair of beams side by side while two more fit under the cap.
+      if (live + 2 > cap) return false;
+      this.lane = -t.halfGap[role];
+      fired = this.emit(role, s, 0, 0) >= 0;
+      this.lane = t.halfGap[role];
+      if (this.emit(role, s, 0, 0) >= 0) fired = true;
+      this.lane = 0;
     } else {
-      if (live >= t.cap[role]) return false;
-      fired = this.emit(role, s, kind === ShotKind.Missile ? t.angle[role] : 0, 0) >= 0;
+      if (live >= cap) return false;
+      fired = this.emit(role, s, this.launchHeading(role), 0) >= 0;
     }
     if (fired) this.sfx(t.sfx[role]);
     return fired;
@@ -1104,7 +1496,7 @@ class WeaponSystemImpl implements WeaponSystem {
     const t = this.roles;
     const pierce = t.pierce[role] === 1;
     let table = 0;
-    if (pierce) {
+    if (t.table[role] === 1) {
       const used = this.tableUsed;
       for (let k = 0; k < PIERCE_TABLES; k++) {
         if (used[k] === 0) {
@@ -1125,25 +1517,35 @@ class WeaponSystemImpl implements WeaponSystem {
     }
     const f = this.pool.fields;
     const look = forward === 1 && t.kind[WeaponRole.Main] >= 0 ? WeaponRole.Main : role;
+    const kind = t.kind[role];
+    const lane = kind === ShotKind.Twin ? this.lane : 0;
     f.x[i] = this.fx + t.ox[look];
-    f.y[i] = this.fy + t.oy[look];
+    f.y[i] = this.fy + t.oy[look] + lane;
     const a = angle & ANGLE_MASK;
     const speed = t.speed[role];
-    const kind = t.kind[role];
-    if (kind === ShotKind.Laser) {
+    if (kind === ShotKind.Laser || kind === ShotKind.Twin) {
       f.vx[i] = speed;
-      f.vy[i] = 0;
+      // A beam's `vy` is its row offset from the shooter's (the Twin Laser's lanes).
+      f.vy[i] = lane;
     } else {
       f.vx[i] = (SIN_TABLE_Q16[a + ANGLE_QUARTER] / TRIG_SCALE) * speed;
       f.vy[i] = (SIN_TABLE_Q16[a] / TRIG_SCALE) * speed;
     }
-    f.hw[i] = t.hw[look];
-    f.hh[i] = t.hh[look];
+    if (kind === ShotKind.Ripple) {
+      f.hh[i] = t.startSize[role];
+      f.hw[i] = t.startSize[role] * t.aspect[role];
+    } else {
+      f.hw[i] = t.hw[look];
+      f.hh[i] = t.hh[look];
+    }
+    // The Two-Way's two missiles: frame 0 climbs, frame 1 dives.
+    if (kind === ShotKind.TwoWay) f.frame[i] = a > ANGLE_UNITS / 2 ? 0 : 1;
     f.damage[i] = t.damage[role];
     f.role[i] = role;
     f.kind[i] = kind;
     f.shooter[i] = s;
-    f.flags[i] = pierce ? ShotFlag.Pierce : 0;
+    // A Spread Bomb is not piercing until it bursts (its blast is — `detonate`).
+    f.flags[i] = pierce && kind !== ShotKind.SpreadBomb ? ShotFlag.Pierce : 0;
     const sprite = forward === 1 && t.sprite[look] >= 0 ? t.sprite[look] : t.sprite[role];
     f.sprite[i] = sprite < 0 ? 0 : sprite;
     f.draw[i] = sprite < 0 ? SpriteFlag.Hidden : 0;
@@ -1176,6 +1578,35 @@ class WeaponSystemImpl implements WeaponSystem {
     this.fx = group.x[k - 1];
     this.fy = group.y[k - 1];
     return true;
+  }
+
+  /**
+   * Bursts a falling Spread Bomb where it is: it becomes a piercing blast of `blastRadius` that
+   * stays put for `blastTicks` ticks and hits each target at most once every `hitCooldownTicks`
+   * (twice with the defaults), drawn with the blast sprite; pushes an explosion sound and particles.
+   *
+   * @param i - The shot slot (a Spread Bomb that has not burst).
+   */
+  private detonate(i: number): void {
+    const f = this.pool.fields;
+    const role = f.role[i];
+    const radius = this.roles.blastRadius[role];
+    f.flags[i] = (f.flags[i] | ShotFlag.Blast | ShotFlag.Pierce) & ~ShotFlag.Sliding;
+    f.vx[i] = 0;
+    f.vy[i] = 0;
+    f.hw[i] = radius;
+    f.hh[i] = radius;
+    f.age[i] = 0;
+    f.frame[i] = 0;
+    const sprite = this.blastSprite;
+    f.sprite[i] = sprite < 0 ? 0 : sprite;
+    f.draw[i] = sprite < 0 ? SpriteFlag.Hidden : 0;
+    this.fx = f.x[i];
+    this.fy = f.y[i];
+    this.sfx(SFX_CUES.EnemyExplodeSmall);
+    const x = Math.floor(this.fx) | 0;
+    const y = Math.floor(this.fy) | 0;
+    this.host.events.push(SimEventKind.Particles, FX_CUES.ExplosionSmall, x, y, 1);
   }
 
   /**
@@ -1228,8 +1659,9 @@ class WeaponSystemImpl implements WeaponSystem {
           if (partCooldowns[e] > 0) partCooldowns[e]--;
         }
       }
-      if (kind === ShotKind.Laser) {
-        if (this.locate(f.shooter[i])) f.y[i] = this.fy;
+      if (kind === ShotKind.Laser || kind === ShotKind.Twin) {
+        // The beam keeps its row relative to its shooter (`vy` = a Twin beam's lane).
+        if (this.locate(f.shooter[i])) f.y[i] = this.fy + t.oy[role] + f.vy[i];
         const y = f.y[i];
         const speed = t.speed[role];
         if ((flags & ShotFlag.Blocked) === 0) {
@@ -1265,7 +1697,42 @@ class WeaponSystemImpl implements WeaponSystem {
         if (!(x - f.length[i] <= right && x >= left && y >= top && y <= bottom)) this.kill(i);
         continue;
       }
-      if (kind === ShotKind.Missile) {
+      if (kind === ShotKind.SpreadBomb) {
+        if ((flags & ShotFlag.Blast) !== 0) {
+          // The blast stays where it burst (world-anchored) and burns `blastTicks` ticks.
+          const life = t.blastTicks[role];
+          if (age >= life) {
+            this.kill(i);
+            continue;
+          }
+          const frames = t.frames[role];
+          const frame = ((age * frames) / life) | 0;
+          f.frame[i] = frame < frames ? frame : frames - 1;
+        } else {
+          const vy = f.vy[i] + t.gravity[role];
+          f.vy[i] = vy;
+          const x = f.x[i] + dx + f.vx[i];
+          const y = f.y[i] + dy + vy;
+          f.x[i] = x;
+          f.y[i] = y;
+          // Bursts where its bottom (or its centre — a wall) meets terrain; finite positions only.
+          if (
+            map !== null &&
+            x - x === 0 &&
+            y - y === 0 &&
+            (terrainAt(map, Math.floor(x) | 0, Math.floor(y + f.hh[i]) | 0) !== TerrainType.Empty ||
+              terrainAt(map, Math.floor(x) | 0, Math.floor(y) | 0) !== TerrainType.Empty)
+          ) {
+            this.detonate(i);
+            continue;
+          }
+        }
+        const bx = f.x[i];
+        const by = f.y[i];
+        if (!(bx >= left && bx <= right && by >= top && by <= bottom)) this.kill(i);
+        continue;
+      }
+      if (kind === ShotKind.Missile || kind === ShotKind.Torpedo) {
         const frames = t.frames[role];
         f.frame[i] = frames > 1 ? (age >> 2) % frames : 0;
         const hh = f.hh[i];
@@ -1317,7 +1784,20 @@ class WeaponSystemImpl implements WeaponSystem {
         if (!(mx >= left && mx <= right && my >= top && my <= bottom)) this.kill(i);
         continue;
       }
-      // Straight and Double shots.
+      // Straight flights: the main shot, the Double pairs (Tail Gun, Vertical, Free Way), the
+      // Two-Way missiles and the Ripple, whose ring grows as it flies.
+      if (kind === ShotKind.Ripple) {
+        const grown = t.startSize[role] + t.growth[role] * age;
+        const size = grown < t.maxSize[role] ? grown : t.maxSize[role];
+        f.hh[i] = size;
+        f.hw[i] = size * t.aspect[role];
+        const frames = t.frames[role];
+        const span = t.maxSize[role] - t.startSize[role];
+        f.frame[i] =
+          frames > 1 && span > 0
+            ? Math.round(((size - t.startSize[role]) * (frames - 1)) / span) | 0
+            : 0;
+      }
       const x = f.x[i] + dx + f.vx[i];
       const y = f.y[i] + dy + f.vy[i];
       f.x[i] = x;
@@ -1344,7 +1824,8 @@ class WeaponSystemImpl implements WeaponSystem {
       const x = f.x[i];
       const y = f.y[i];
       const hh = f.hh[i];
-      if (f.kind[i] === ShotKind.Laser) {
+      const kind = f.kind[i];
+      if (kind === ShotKind.Laser || kind === ShotKind.Twin) {
         this.qx0 = x - f.length[i];
         this.qx1 = x;
       } else {
@@ -1357,6 +1838,16 @@ class WeaponSystemImpl implements WeaponSystem {
       if (!(this.qx0 <= this.qx1 && this.qy0 <= this.qy1)) continue;
       const pierce = (flags & ShotFlag.Pierce) !== 0;
       this.qPierce = pierce;
+      // A Ripple hits with its ring: targets it touches, not those wholly inside it.
+      const ring = kind === ShotKind.Ripple && f.hw[i] > 0 && hh > 0;
+      this.qRing = ring;
+      if (ring) {
+        this.qcx = x;
+        this.qcy = y;
+        this.qb = hh;
+        this.qk = hh / f.hw[i];
+        this.qInner = hh > RIPPLE_RING_WIDTH ? hh - RIPPLE_RING_WIDTH : 0;
+      }
       this.qTable = pierce ? (f.table[i] - 1) * MAX_ENEMIES : 0;
       this.qPartTable = pierce ? (f.table[i] - 1) * MAX_BOSS_PARTS : 0;
       this.qBest = -1;
@@ -1398,6 +1889,7 @@ class WeaponSystemImpl implements WeaponSystem {
     )) {
       return;
     }
+    if (this.qRing && !this.ringTouches(ex - e.hw, ey - e.hh, ex + e.hw, ey + e.hh)) return;
     if (!this.qPierce) {
       if (this.qBest < 0 || slot < this.qBest) this.qBest = slot;
       return;
@@ -1428,12 +1920,44 @@ class WeaponSystemImpl implements WeaponSystem {
     )) {
       return;
     }
+    if (this.qRing && !this.ringTouches(px - part.hw, py - part.hh, px + part.hw, py + part.hh)) {
+      return;
+    }
     if (!this.qPierce) {
       if (this.qBest < 0 || id < this.qBest) this.qBest = id;
       return;
     }
     if (!part.armoured && this.partCooldowns[this.qPartTable + index] > 0) return;
     this.insertHit(id);
+  }
+
+  /**
+   * Whether a target box touches the queried Ripple's ring: it reaches into the ring's outer
+   * ellipse (closed) and is not wholly inside its inner one. Exact on the ellipse scaled to a
+   * circle; never allocates.
+   *
+   * @param x0 - Box left.
+   * @param y0 - Box top.
+   * @param x1 - Box right.
+   * @param y1 - Box bottom.
+   * @returns Whether the ring hits it.
+   */
+  private ringTouches(x0: number, y0: number, x1: number, y1: number): boolean {
+    const cx = this.qcx;
+    const cy = this.qcy;
+    const k = this.qk;
+    const nx = (x0 > cx ? x0 - cx : x1 < cx ? cx - x1 : 0) * k;
+    const ny = y0 > cy ? y0 - cy : y1 < cy ? cy - y1 : 0;
+    const b = this.qb;
+    if (!(nx * nx + ny * ny <= b * b)) return false;
+    const ax = x0 - cx;
+    const bx = x1 - cx;
+    const ay = y0 - cy;
+    const by = y1 - cy;
+    const fx = (ax < 0 ? -ax : ax) > (bx < 0 ? -bx : bx) ? ax * k : bx * k;
+    const fy = (ay < 0 ? -ay : ay) > (by < 0 ? -by : by) ? ay : by;
+    const inner = this.qInner;
+    return fx * fx + fy * fy >= inner * inner;
   }
 
   /**
@@ -1493,17 +2017,29 @@ class WeaponSystemImpl implements WeaponSystem {
       }
       const e = enemies[target];
       if (e.state !== EnemyState.Live || (e.flags & EnemyFlag.Ghost) !== 0) continue;
+      const kind = f.kind[i];
+      if (kind === ShotKind.SpreadBomb && (flags & ShotFlag.Blast) === 0) {
+        // A falling Spread Bomb bursts on contact (armour too); the blast does the damage.
+        this.detonate(i);
+        continue;
+      }
       if ((e.flags & EnemyFlag.Invulnerable) !== 0) {
         this.fx = f.x[i];
         this.fy = f.y[i];
         this.sfx(SFX_CUES.Clink);
-        this.kill(i);
+        // A blast keeps burning (its cooldown spaces the clinks); every other shot dies.
+        if ((flags & ShotFlag.Blast) !== 0) {
+          this.cooldowns[(f.table[i] - 1) * MAX_ENEMIES + e.slot] = t.cooldown[f.role[i]];
+        } else {
+          this.kill(i);
+        }
         continue;
       }
-      enemySystem.damage(e, f.damage[i], (f.shooter[i] / SHOOTERS_PER_PLAYER) | 0);
+      const died = enemySystem.damage(e, f.damage[i], (f.shooter[i] / SHOOTERS_PER_PLAYER) | 0);
       if ((flags & ShotFlag.Pierce) !== 0) {
         this.cooldowns[(f.table[i] - 1) * MAX_ENEMIES + e.slot] = t.cooldown[f.role[i]];
-      } else {
+      } else if (!(died && kind === ShotKind.Torpedo)) {
+        // The Photon Torpedo flies on through what it destroys ("pierces small enemies").
         this.kill(i);
       }
     }
@@ -1519,6 +2055,10 @@ class WeaponSystemImpl implements WeaponSystem {
    */
   private applyPartHit(i: number, index: number): void {
     const f = this.pool.fields;
+    if (f.kind[i] === ShotKind.SpreadBomb && (f.flags[i] & ShotFlag.Blast) === 0) {
+      this.detonate(i);
+      return;
+    }
     const result = this.host.bosses.damagePart(
       index,
       f.damage[i],
@@ -1529,7 +2069,12 @@ class WeaponSystemImpl implements WeaponSystem {
       this.fx = f.x[i];
       this.fy = f.y[i];
       this.sfx(SFX_CUES.Clink);
-      this.kill(i);
+      if ((f.flags[i] & ShotFlag.Blast) !== 0) {
+        this.partCooldowns[(f.table[i] - 1) * MAX_BOSS_PARTS + index] =
+          this.roles.cooldown[f.role[i]];
+      } else {
+        this.kill(i);
+      }
       return;
     }
     if ((f.flags[i] & ShotFlag.Pierce) !== 0) {
@@ -1553,10 +2098,14 @@ class WeaponSystemImpl implements WeaponSystem {
       const x = f.x[i];
       const y = f.y[i];
       const sprite = f.sprite[i];
-      if (f.kind[i] === ShotKind.Laser) {
+      const kind = f.kind[i];
+      if (kind === ShotKind.Laser || kind === ShotKind.Twin) {
         const length = f.length[i];
         const tail = x - length;
         const segments = Math.ceil(length / LASER_SEGMENT_LENGTH) | 0;
+        // A swirling beam (the Cyclone Laser) steps its segments' frames along the beam.
+        const frames = this.roles.frames[f.role[i]];
+        const phase = f.age[i] >> 2;
         for (let s = 1; s <= segments; s++) {
           let sx = x - s * LASER_SEGMENT_LENGTH;
           if (sx < tail) sx = tail;
@@ -1565,7 +2114,7 @@ class WeaponSystemImpl implements WeaponSystem {
           batch.x[slot] = sx;
           batch.y[slot] = y;
           batch.spriteId[slot] = sprite;
-          batch.frame[slot] = 0;
+          batch.frame[slot] = frames > 1 ? (phase + s) % frames : 0;
           batch.flags[slot] = draw;
           batch.count = slot + 1;
         }
@@ -1607,6 +2156,19 @@ class WeaponSystemImpl implements WeaponSystem {
     this.optionBatch.count = 0;
     this.tableUsed.fill(0);
     this.liveCounts.fill(0);
+  }
+
+  /** See {@link WeaponSystem.setArsenal}. */
+  setArsenal(roles: readonly (WeaponSpec | null)[]): void {
+    const own = this.roleWeapons;
+    for (let r = 0; r < WEAPON_ROLE_COUNT; r++) {
+      const spec = r < roles.length ? roles[r] : null;
+      own[r] = spec === undefined ? null : spec;
+    }
+    compileRoles(this.roles, own, this.host.config);
+    this.pool.clear();
+    this.clear();
+    this.timers.fill(0);
   }
 }
 

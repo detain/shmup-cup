@@ -4,7 +4,8 @@
  * **Responsibility.** The typed {@link GameConfig} that parameterises a run: internal
  * resolution, tick rate, seed and every *sim-affecting* option (difficulty, power-up
  * model, death penalty, lives, autofire and its intervals, remote mode, the stage, the starting
- * loadout, Auto Power-Up and its order, the pickup magnet). Everything here is copied into replay
+ * loadout, Auto Power-Up and its order, the pickup magnet, the weapon preset / Weapon Edit and the
+ * `!` / `?` slot choices of the weapon select — M2-03). Everything here is copied into replay
  * headers, so it must stay plain serialisable data.
  *
  * **Implements.**
@@ -26,8 +27,10 @@
  * {@link MIN_BULLET_SPEED_MUL}, {@link MAX_BULLET_SPEED_MUL}, {@link DEATH_PENALTY_PRESETS}), the
  * preset types ({@link StartingLoadout}, {@link StageSkip} …), the
  * power-meter slot names ({@link MeterSlotName}, {@link METER_SLOT_NAMES},
- * {@link DEFAULT_AUTO_POWER_UP_ORDER}, {@link MAX_AUTO_POWER_UP_ORDER}) and the screen layout
- * constants {@link HUD_BAR_HEIGHT}, {@link PLAYFIELD_Y}, {@link PLAYFIELD_W}, {@link PLAYFIELD_H}
+ * {@link DEFAULT_AUTO_POWER_UP_ORDER}, {@link MAX_AUTO_POWER_UP_ORDER}), the meter arsenal of
+ * M2-03 ({@link MegaChoice}, {@link MEGA_CHOICES}, {@link ShieldChoice}, {@link SHIELD_CHOICES},
+ * {@link WeaponEdit}, {@link WEAPON_EDIT_SLOTS}, {@link ArsenalChoice}, {@link withArsenal},
+ * {@link arsenalMatches}) and the screen layout constants {@link HUD_BAR_HEIGHT}, {@link PLAYFIELD_Y}, {@link PLAYFIELD_W}, {@link PLAYFIELD_H}
  * (decision D20: two 8-px HUD bars outside a 384×200 playfield). User options:
  * {@link UserOptions}, {@link AudioOptions}, {@link InputOptions}, {@link DisplayOptions},
  * {@link DEFAULT_USER_OPTIONS}, {@link VOLUME_LEVELS}, {@link volumeGain},
@@ -253,6 +256,71 @@ export const DEFAULT_AUTO_POWER_UP_ORDER: readonly MeterSlotName[] = Object.free
 /** Most entries {@link GameConfig.autoPowerUpOrder} may have. */
 export const MAX_AUTO_POWER_UP_ORDER = 32;
 
+/**
+ * What the meter's `!` slot does (shmup_feat.md §7A "`!` slot", plan M2-03), chosen before the
+ * game with the loadout:
+ *
+ * - `megaCrash` — the screen clear (bullets and small enemies, no boss damage; the default);
+ * - `normal` — the Double / Laser back to the basic shot;
+ * - `speedDown` — one speed level less;
+ * - `lifeOption` — spare ships become Options (as many as there is room for);
+ * - `fullBarrier` — the `?` shield back to full (or a fresh one).
+ */
+export type MegaChoice = 'megaCrash' | 'normal' | 'speedDown' | 'lifeOption' | 'fullBarrier';
+
+/** Every {@link MegaChoice}, in menu order (the index is `core/powerups` `MegaEffect`'s code). */
+export const MEGA_CHOICES: readonly MegaChoice[] = Object.freeze([
+  'megaCrash',
+  'normal',
+  'speedDown',
+  'lifeOption',
+  'fullBarrier',
+] as MegaChoice[]);
+
+/**
+ * What the meter's `?` slot grants (shmup_feat.md §9 meter-mode shields). The Force Field of M1-11
+ * is the only one until M2-04 appends the front pods, Free / Rotate Shield and Reduce.
+ */
+export type ShieldChoice = 'forceField';
+
+/** Every {@link ShieldChoice}, in menu order (`core/shields` `shieldSpecOf` maps them to specs). */
+export const SHIELD_CHOICES: readonly ShieldChoice[] = Object.freeze([
+  'forceField',
+] as ShieldChoice[]);
+
+/**
+ * Weapon Edit (shmup_feat.md §7A "Weapon Edit", plan M2-03): the weapon of each of the meter's
+ * Missile / Double / Laser slots, by content weapon id (`content/weapons/`) — any weapon of that
+ * slot, whatever preset it comes from. The main shot stays the preset's.
+ */
+export interface WeaponEdit {
+  /** Weapon of the MISSILE slot (a `missile`-slot weapon id). */
+  readonly missile: string;
+  /** Weapon of the DOUBLE slot (a `double`-slot weapon id). */
+  readonly double: string;
+  /** Weapon of the LASER slot (a `laser`-slot weapon id). */
+  readonly laser: string;
+}
+
+/** The meter slots a {@link WeaponEdit} names, in meter order. */
+export const WEAPON_EDIT_SLOTS = Object.freeze(['missile', 'double', 'laser'] as const);
+
+/**
+ * The loadout choice of the weapon select (plan M2-03): the {@link GameConfig} fields it sets.
+ * {@link withArsenal} applies one to a resolved config.
+ */
+export type ArsenalChoice = Partial<
+  Pick<
+    GameConfig,
+    | 'weaponPreset'
+    | 'weaponEdit'
+    | 'megaChoice'
+    | 'shieldChoice'
+    | 'autoPowerUp'
+    | 'autoPowerUpOrder'
+  >
+>;
+
 /** Parameters of one game session. All fields are sim-affecting and replay-recorded. */
 export interface GameConfig {
   /** Internal render width in pixels (384 → ×5 on 1080p). */
@@ -363,6 +431,23 @@ export interface GameConfig {
    * towards it. On by default.
    */
   readonly pickupMagnet: boolean;
+  /**
+   * The meter-mode weapon preset (shmup_feat.md §7A "Preset loadouts", plan M2-03): the id of a
+   * `content/weapons/` preset — `type-a` (the default) … `type-d`. It decides which weapon each of
+   * the meter's MISSILE / DOUBLE / LASER slots equips (`core/weapons` `resolveArsenal`); a content
+   * without that preset falls back to its first one.
+   */
+  readonly weaponPreset: string;
+  /**
+   * Weapon Edit (plan M2-03): the weapon of each of the Missile / Double / Laser slots, overriding
+   * the preset's — or `null` (the default) for the preset's weapons. `createWorld` throws for an id
+   * the content does not have or a weapon of another slot.
+   */
+  readonly weaponEdit: WeaponEdit | null;
+  /** What the `!` slot does ({@link MegaChoice}; default `megaCrash`). */
+  readonly megaChoice: MegaChoice;
+  /** What the `?` slot grants ({@link ShieldChoice}; default `forceField`). */
+  readonly shieldChoice: ShieldChoice;
 }
 
 /** Height in pixels of each HUD bar outside the playfield (decision D20). */
@@ -383,7 +468,8 @@ export const PLAYFIELD_H = 200;
 /**
  * Defaults: remote-first, Normal difficulty (its {@link DEFAULT_DIFFICULTY_TABLE} row: rank base 2,
  * growth 1, 3 lives, extends at 20,000 / every 70,000, 3 continues, Classic death penalty, 32 aim
- * directions, bullet speed × 1), the power meter.
+ * directions, bullet speed × 1), the power meter with Type A, Mega Crash on `!` and the Force Field
+ * on `?`.
  */
 export const DEFAULT_GAME_CONFIG: GameConfig = Object.freeze({
   internalWidth: 384,
@@ -412,6 +498,10 @@ export const DEFAULT_GAME_CONFIG: GameConfig = Object.freeze({
   autoPowerUp: false,
   autoPowerUpOrder: DEFAULT_AUTO_POWER_UP_ORDER,
   pickupMagnet: true,
+  weaponPreset: 'type-a',
+  weaponEdit: null,
+  megaChoice: 'megaCrash',
+  shieldChoice: 'forceField',
 });
 
 /**
@@ -500,8 +590,11 @@ export function withDifficulty(
  * `loadout` must be `'default'` or `'full'`;
  * `powerUpMode` must be `'meter'` (`'direct'` is not implemented until M2-05);
  * `autoPowerUpOrder` must be an array of at most {@link MAX_AUTO_POWER_UP_ORDER}
- * {@link MeterSlotName}s — the result holds a frozen copy of it. Other string presets and
- * booleans are not validated at runtime — the types cover them.
+ * {@link MeterSlotName}s — the result holds a frozen copy of it; `weaponPreset` must be a non-empty
+ * string (whether the content has it is `core/weapons`' business), `weaponEdit` `null` or an object
+ * of three non-empty weapon ids (frozen copy), `megaChoice` a {@link MegaChoice} and `shieldChoice`
+ * a {@link ShieldChoice} (M2-03). Other string presets and booleans are not validated at runtime —
+ * the types cover them.
  *
  * @param overrides - Fields to change.
  * @param table - The difficulty table the preset fields come from (default
@@ -511,8 +604,9 @@ export function withDifficulty(
  *   `aimDirections` is not a power of two, `difficulty` or `deathPenalty` is not a preset,
  *   `stage` is neither `null` nor a non-empty string,
  *   `stageSkip` is not a {@link StageSkip}, `loadout` is not a {@link StartingLoadout},
- *   `powerUpMode` is not `'meter'`, or
- *   `autoPowerUpOrder` is not an array of meter slot names (or is too long).
+ *   `powerUpMode` is not `'meter'`,
+ *   `autoPowerUpOrder` is not an array of meter slot names (or is too long), or `weaponPreset`,
+ *   `weaponEdit`, `megaChoice` or `shieldChoice` is malformed.
  *
  * @example
  * ```ts
@@ -599,14 +693,127 @@ export function resolveGameConfig(
       );
     }
   }
+  const preset: unknown = config.weaponPreset;
+  if (typeof preset !== 'string' || preset === '') {
+    throw new RangeError(
+      `GameConfig.weaponPreset must be a non-empty weapon preset id, got ${typeof preset === 'string' ? '""' : typeof preset}`,
+    );
+  }
+  const mega: unknown = config.megaChoice;
+  if (MEGA_CHOICES.indexOf(mega as MegaChoice) < 0) {
+    throw new RangeError(
+      `GameConfig.megaChoice must be one of ${MEGA_CHOICES.join(', ')}, got ${String(mega)}`,
+    );
+  }
+  const shield: unknown = config.shieldChoice;
+  if (SHIELD_CHOICES.indexOf(shield as ShieldChoice) < 0) {
+    throw new RangeError(
+      `GameConfig.shieldChoice must be one of ${SHIELD_CHOICES.join(', ')}, got ${String(shield)}`,
+    );
+  }
   const resolved: GameConfig = {
     ...config,
     autoPowerUpOrder:
       order === DEFAULT_AUTO_POWER_UP_ORDER
         ? DEFAULT_AUTO_POWER_UP_ORDER
         : Object.freeze((order as MeterSlotName[]).slice()),
+    weaponEdit: resolveWeaponEdit(config.weaponEdit),
   };
   return Object.freeze(resolved);
+}
+
+/**
+ * Validates a {@link GameConfig.weaponEdit} and returns a frozen copy of it.
+ *
+ * @param edit - The candidate (`null` or `{ missile, double, laser }`; `undefined` — an explicit
+ *   `weaponEdit: undefined` override — counts as `null`).
+ * @returns `null`, or a frozen copy with exactly the three fields.
+ * @throws RangeError when it is neither `null` nor an object whose three fields are non-empty
+ *   strings.
+ */
+function resolveWeaponEdit(edit: unknown): WeaponEdit | null {
+  if (edit === null || edit === undefined) return null;
+  if (!isRecord(edit)) {
+    throw new RangeError('GameConfig.weaponEdit must be null or { missile, double, laser }');
+  }
+  for (const slot of WEAPON_EDIT_SLOTS) {
+    const id = edit[slot];
+    if (typeof id !== 'string' || id === '') {
+      throw new RangeError(`GameConfig.weaponEdit.${slot} must be a non-empty weapon id`);
+    }
+  }
+  return Object.freeze({
+    missile: edit.missile as string,
+    double: edit.double as string,
+    laser: edit.laser as string,
+  });
+}
+
+/**
+ * Whether a config already has every field of a loadout choice (so {@link withArsenal} would
+ * change nothing).
+ *
+ * @param config - A resolved config.
+ * @param arsenal - The loadout choice.
+ * @returns `true` when every field the choice sets (not `undefined`) equals the config's — the
+ *   Weapon Edit and the order compared by value.
+ */
+export function arsenalMatches(config: GameConfig, arsenal: ArsenalChoice): boolean {
+  if (arsenal.weaponPreset !== undefined && arsenal.weaponPreset !== config.weaponPreset) {
+    return false;
+  }
+  if (arsenal.megaChoice !== undefined && arsenal.megaChoice !== config.megaChoice) return false;
+  if (arsenal.shieldChoice !== undefined && arsenal.shieldChoice !== config.shieldChoice) {
+    return false;
+  }
+  if (arsenal.autoPowerUp !== undefined && arsenal.autoPowerUp !== config.autoPowerUp) {
+    return false;
+  }
+  const edit = arsenal.weaponEdit;
+  if (edit !== undefined) {
+    const own = config.weaponEdit;
+    if (edit === null || own === null) {
+      if (edit !== own) return false;
+    } else if (
+      edit.missile !== own.missile ||
+      edit.double !== own.double ||
+      edit.laser !== own.laser
+    ) {
+      return false;
+    }
+  }
+  const order = arsenal.autoPowerUpOrder;
+  if (order !== undefined) {
+    const own = config.autoPowerUpOrder;
+    if (order.length !== own.length) return false;
+    for (let i = 0; i < order.length; i++) if (order[i] !== own[i]) return false;
+  }
+  return true;
+}
+
+/**
+ * Applies the weapon select's loadout choice to a resolved config (plan M2-03): the preset,
+ * Weapon Edit, the `!` and `?` choices and Auto Power-Up with its order; everything else stays.
+ *
+ * @param config - A resolved config.
+ * @param arsenal - The fields to change ({@link ArsenalChoice}).
+ * @returns A frozen, validated config.
+ * @throws RangeError when the result fails {@link resolveGameConfig}.
+ *
+ * @example
+ * ```ts
+ * withArsenal(resolveGameConfig({ seed: 3 }), { weaponPreset: 'type-c' }).weaponPreset; // 'type-c'
+ * ```
+ */
+export function withArsenal(config: GameConfig, arsenal: ArsenalChoice): GameConfig {
+  // Every field of `config` is explicit, so the table's preset fields never replace them; fields
+  // the choice leaves `undefined` keep the config's value.
+  const merged: Record<string, unknown> = { ...config };
+  const source = arsenal as Readonly<Record<string, unknown>>;
+  for (const key of Object.keys(source)) {
+    if (source[key] !== undefined) merged[key] = source[key];
+  }
+  return resolveGameConfig(merged);
 }
 
 /**

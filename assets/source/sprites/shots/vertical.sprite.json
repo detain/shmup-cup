@@ -1,0 +1,21 @@
+{
+  "name": "shots/vertical",
+  "description": "Vertical: the shot fired straight up.",
+  "palette": { ".": null, "b": "#1e5a9a", "c": "#38c8e8", "w": "#ffffff" },
+  "anchor": [1, 4],
+  "hitFlash": false,
+  "frames": [
+    {
+      "rows": [
+        ".w.",
+        ".w.",
+        "cwc",
+        "cwc",
+        "cwc",
+        ".w.",
+        ".c.",
+        ".b."
+      ]
+    }
+  ]
+}

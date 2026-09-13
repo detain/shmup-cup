@@ -2182,6 +2182,71 @@ Goal of the milestone: every **[P1]** feature. Steps are ordered so systems land
 - **Acceptance:** each behaviour's caps/hit rules, loadout → meter mapping, `!` effects, select scene flow, golden
   replays re-blessed.
 - **Refs:** `shmup_feat.md` §7A, §6A (loadout, parking, Auto Power-Up), §16 (weapon select).
+- **As built:**
+  - **Config.** `GameConfig` gained `weaponPreset` (a `content/weapons/` preset id, default `type-a`;
+    a content without it falls back to its first preset), `weaponEdit` (`null` or `{ missile, double,
+    laser }` weapon ids — Weapon Edit; `createWorld` throws for an unknown id or a weapon of another
+    slot), `megaChoice` (`megaCrash` | `normal` | `speedDown` | `lifeOption` | `fullBarrier`) and
+    `shieldChoice` (`forceField` only — M2-04 appends the other `?` shields). `withArsenal` applies
+    the weapon select's choice (`ArsenalChoice`: those four plus `autoPowerUp` / `autoPowerUpOrder`),
+    `arsenalMatches` tells whether it changes a config. Replay headers record them (format version
+    unchanged: a missing key resolves to the default). The loadout is session-wide (both players) and
+    lives for the session only (saved with the options of M2-16).
+  - **Content.** `content/weapons/types-b-d.weapons.json` (named to load after `type-a` — the select
+    lists presets in content order) holds nine weapons and presets `type-b` / `type-c` / `type-d`;
+    weapons gained an optional `name` (the select's label, e.g. `SPREAD BOMB`). The Twin Laser ships
+    non-piercing (two beams × 2 pairs × 5 shooters would outrun the 32 hit-cooldown tables).
+  - **Behaviours.** Nine ids, `ShotKind` 4–9 appended (`SpreadBomb`, `TwoWay`, `Torpedo`, `FreeWay`,
+    `Ripple`, `Twin`); the Tail Gun / Vertical are Double-kind pairs turned 180° / 90° (`angle` 512 /
+    256) and the Cyclone Laser a thicker `Laser` (hh 4, 80 px) whose segments step 4 swirl frames.
+    Spread Bomb: `angle` 64 down + `gravity` 0.12; bursts where its bottom (or centre) meets terrain
+    or on its first target (no damage of its own) into a world-anchored piercing box of
+    `blastRadius` 14 for `blastTicks` 12 that hits each target at most every `hitCooldownTicks` 6 —
+    twice; armour clinks without putting it out; the cooldown table is reserved at launch (new
+    `ShotFlag.Blast`; `age` restarts at the burst). 2-Way: a climbing + diving volley (frames 0 / 1),
+    refired once both are gone. Photon Torpedo: a `groundSlide` at 5 px/tick whose "pierces small
+    enemies" means it flies on through every enemy its hit destroys (not boss parts). Free Way: the
+    second shot's heading is the player's last 8-way direction held while alive
+    (`WeaponSystem.freeWayHeading`, hashed; `angle` up-forward before any). Ripple: hh 4 → 20
+    (+0.5/tick, width = half) and its **ring**, 4 px thick (`RIPPLE_RING_WIDTH`), is the hitbox — with
+    its box, the lowest-slot rule gave every ring to HALCYON BULWARK's fringe armour plates and Type B
+    could not hurt the boss. Twin: beams keep their lane as `vy` (row offset from the shooter; the
+    beam follow now adds `oy` + lane, 0 for Type A); a pair fires while two more fit under the cap.
+    `WeaponSystem.setArsenal` recompiles the role tables in place (the preview); `roleWeapons` is no
+    longer frozen. `resolveArsenal`, `weaponsOfSlot`, `weaponLabel`, `WEAPON_BEHAVIOR_LABELS`.
+  - **Power-ups.** `MeterChoices` from the config (`meterChoicesOf`); `canEquipSlot` / `equipSlot` /
+    `equippableSlots` take them (default = Type A's). NORMAL greyed on the basic shot; SPEED DOWN at
+    level 0; LIFE OPTION turns `min(lives − 1, 4 − options)` spare ships into Options (greyed at 0);
+    FULL BARRIER grants a fresh `?` shield, also over a worn one (greyed at full strength); only Mega
+    Crash arms `megaPending`. `?` grants `shieldSpecOf(shieldChoice)`.
+  - **HUD.** `hud/meter-labels` grew to 16 frames (the Types B–D weapon names, new micro glyphs);
+    `core/ui` `meterLabelFrame` names the MISSILE / DOUBLE / LASER slots after the arsenal (`SPREAD`,
+    `TAIL`, `RIPPLE` …); `?` and `!` keep their symbols.
+  - **Scenes.** The difficulty menu's OK now pushes `WeaponSelectScene` (id `weaponSelect`, a full
+    screen): TYPE (the content's presets + `EDIT`), MISSILE / DOUBLE / LASER (disabled unless EDIT),
+    `? SLOT`, `! SLOT`, AUTO, ORDER (one-letter summary) and START; it opens focused on START, so a
+    game start takes one more OK than in M2-01 (every flow test and e2e spec was updated). ORDER opens
+    `AutoOrderScene` (id `autoOrder`, overlay) over the first 12 entries (`-` = none). START →
+    `chooseArsenal` (every difficulty's config; one the loadout does not change keeps its object) and
+    the game; the choice is kept for RETRY and later games (`SceneFlow.arsenal`); Back → the
+    difficulty menu. UI string slots 96 → 160. Parking needs nothing new: with AUTO off (the default)
+    the cursor stays where the capsules left it until OK.
+  - **Live preview.** "Mini World" = a private World (own event queue, cleared every tick — silent;
+    own god-mode flags) drawn full screen behind the panel (the panel on the left, the ship held at x
+    232, weaving), not a smaller viewport: `content/stages/weapon-range.stage.json` (floor + ceiling,
+    0.75 px/tick, restarted at its `end`) with the harmless targets of
+    `content/enemies/weapon-range.enemies.json`; created when the screen opens (fly-in skipped),
+    dropped when it closes; its main weapon follows the focused row (TYPE: Laser / Double every 4 s).
+    The flow's frame shows its view; `@shmup/shell` `scene-view` now wraps whichever World view the
+    frame shows (it assumed `game.world`). The preview ticks allocation-free; the range's spawns
+    create their coroutines (per spawn, D29), so its guard flies the range without targets.
+  - **Assets.** Pixel maps `shots/bomb`, `two-way`, `torpedo`, `tail`, `vertical`, `free`, `twin`;
+    generator `procedural/weapons.mjs` (`shots/blast`, `shots/ripple`, `shots/cyclone`);
+    `ENGINE_SPRITES` gained `shots/blast` (`WEAPON_SPRITES`).
+  - Golden replays re-blessed: the new content shifts sprite ids / enemy spec indices and the Free
+    Way direction is hashed (the four scenarios' outcomes are unchanged); new scenarios
+    `zone-a-type-b` (full Type B vs HALCYON BULWARK) and `zone-a-edit` (a Weapon Edit, LIFE OPTION).
+    `terrain-edge`'s CPU-bound linear-scan test got a 30 s timeout (it timed out under machine load).
 
 ### M2-04 — Option & shield variants + Option Hunter
 

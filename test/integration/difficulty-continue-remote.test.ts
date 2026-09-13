@@ -8,7 +8,9 @@
  *   lives, aim directions);
  * - a game over with continues left opens the countdown; OK (after its lock) continues zone A at
  *   its last checkpoint — fresh lives, the continue digit, the stage theme queued again — and the
- *   game runs on; with none left the game-over screen opens instead.
+ *   game runs on; with none left the game-over screen opens instead;
+ * - the weapon select (M2-03) after the difficulty menu: OK on START starts at once; Down / Up,
+ *   Left / Right and Back choose TYPE C, an edited Missile and SPEED DOWN, and the game plays them.
  */
 import {
   CONTINUE_LOCK_TICKS,
@@ -132,6 +134,14 @@ class RemoteSession {
     expect(this.ids).toEqual(['title', 'difficulty']);
   }
 
+  /** OK on START in the weapon select (M2-03) that the difficulty menu's OK opened. */
+  launch(): void {
+    expect(this.ids).toEqual(['title', 'difficulty', 'weaponSelect']);
+    this.press(TIZEN_KEY_CODES.Enter);
+    this.run(1);
+    expect(this.ids).toEqual(['game']);
+  }
+
   /** Every life gone: waits for the end screen. */
   gameOver(): void {
     const world = this.game.world;
@@ -158,7 +168,7 @@ describe('integration: difficulty menu and continues with the remote (M2-01)', (
     s.press(TIZEN_KEY_CODES.ArrowDown);
     expect(menu.focused).toBe('hard');
     s.press(TIZEN_KEY_CODES.Enter);
-    expect(s.ids).toEqual(['game']);
+    s.launch();
     const world = s.game.world;
     expect(world.stage?.stage.id).toBe('zone-a');
     expect(world.config).toMatchObject({
@@ -174,6 +184,7 @@ describe('integration: difficulty menu and continues with the remote (M2-01)', (
     const s = new RemoteSession();
     s.openDifficulty();
     s.press(TIZEN_KEY_CODES.Enter); // NORMAL
+    s.launch();
     const world = s.game.world;
     s.run(60);
     const stage = world.stage!;
@@ -205,8 +216,46 @@ describe('integration: difficulty menu and continues with the remote (M2-01)', (
     s.press(TIZEN_KEY_CODES.ArrowUp);
     s.press(TIZEN_KEY_CODES.ArrowUp); // wraps from EASY
     s.press(TIZEN_KEY_CODES.Enter);
+    s.launch();
     expect(s.game.world.config).toMatchObject({ difficulty: 'arcade', continues: 0 });
     s.gameOver();
     expect(s.ids).toEqual(['game', 'gameOver']);
+  });
+
+  it('chooses a loadout in the weapon select with the remote only (M2-03)', () => {
+    const s = new RemoteSession({ stage: null });
+    s.openDifficulty();
+    s.press(TIZEN_KEY_CODES.Enter); // NORMAL
+    s.run(2);
+    expect(s.ids).toEqual(['title', 'difficulty', 'weaponSelect']);
+    const select = s.game.scenes!.weaponSelect;
+    // Back to the difficulty menu and in again: nothing chosen.
+    s.press(TIZEN_KEY_CODES.Back);
+    expect(s.ids).toEqual(['title', 'difficulty']);
+    s.run(2);
+    s.press(TIZEN_KEY_CODES.Enter);
+    s.run(2);
+    expect(s.ids).toEqual(['title', 'difficulty', 'weaponSelect']);
+    s.press(TIZEN_KEY_CODES.ArrowDown); // START → TYPE
+    s.press(TIZEN_KEY_CODES.ArrowRight); // TYPE B
+    s.press(TIZEN_KEY_CODES.ArrowRight); // TYPE C
+    expect(select.type.label).toBe('TYPE C');
+    s.press(TIZEN_KEY_CODES.ArrowRight); // TYPE D
+    s.press(TIZEN_KEY_CODES.ArrowRight); // EDIT: the rows keep TYPE D's weapons
+    s.press(TIZEN_KEY_CODES.ArrowDown); // MISSILE
+    s.press(TIZEN_KEY_CODES.ArrowLeft); // PHOTON TORPEDO → 2-WAY MISSILE
+    expect(select.missile.label).toBe('2-WAY MISSILE');
+    for (let i = 0; i < 4; i++) s.press(TIZEN_KEY_CODES.ArrowDown); // DOUBLE, LASER, ?, !
+    s.press(TIZEN_KEY_CODES.ArrowRight); // NORMAL
+    s.press(TIZEN_KEY_CODES.ArrowRight); // SPEED DOWN
+    expect(select.mega.label).toBe('SPEED DOWN');
+    for (let i = 0; i < 3; i++) s.press(TIZEN_KEY_CODES.ArrowDown); // AUTO, ORDER, START
+    s.launch();
+    expect(s.game.world.config).toMatchObject({
+      weaponPreset: 'type-d',
+      weaponEdit: { missile: 'missile.twoWay', double: 'shot.free', laser: 'laser.twin' },
+      megaChoice: 'speedDown',
+    });
+    expect(s.game.world.weapons.roleWeapons[3]?.id).toBe('missile.twoWay');
   });
 });

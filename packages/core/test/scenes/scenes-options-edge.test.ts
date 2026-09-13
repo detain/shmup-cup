@@ -431,6 +431,8 @@ describe('core/scenes saves (edge): what counts as a finished game', () => {
     s.press(Action.Confirm); // START
     s.press(Action.Confirm); // NORMAL
     s.hold(0); // the difficulty menu's lock: the buffered OK acts now
+    s.press(Action.Confirm); // START in the weapon select (M2-03)
+    s.hold(0);
     expect(s.ids).toEqual(['game']);
     addScore(s.game.world, 0, 9000);
     s.press(Action.Pause);
@@ -511,6 +513,8 @@ describe('core/scenes saves (edge): what counts as a finished game', () => {
     s.press(Action.Confirm); // START
     s.press(Action.Confirm); // NORMAL
     s.hold(0);
+    s.press(Action.Confirm); // START in the weapon select (M2-03)
+    s.hold(0);
     addScore(s.game.world, 0, 100);
     s.gameOver();
     expect(s.flow.gameOver.rank).toBe(1);
@@ -537,6 +541,8 @@ describe('core/scenes saves (edge): what counts as a finished game', () => {
     s.press(Action.Confirm);
     s.press(Action.Confirm); // START
     s.press(Action.Confirm); // NORMAL
+    s.hold(0);
+    s.press(Action.Confirm); // START in the weapon select (M2-03)
     s.hold(0);
     s.game.world.status = 'stageClear';
     s.hold(0, STAGE_CLEAR_DELAY_TICKS + 1);

@@ -220,7 +220,8 @@ describe('core/collision terrain edge — against a pixel reference', () => {
         }
       }
     }
-  });
+    // ~1 s alone, but CPU-bound: give it room while the allocation guards load the machine.
+  }, 30_000);
 });
 
 describe('core/collision terrain edge — odd inputs and borders', () => {

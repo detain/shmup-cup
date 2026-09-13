@@ -43,7 +43,11 @@
         "option",
         "shield"
       ],
-      "pickupMagnet": true
+      "pickupMagnet": true,
+      "weaponPreset": "type-a",
+      "weaponEdit": null,
+      "megaChoice": "megaCrash",
+      "shieldChoice": "forceField"
     }
   },
   "ticks": 5324,
@@ -53,16 +57,16 @@
     "AMwp"
   ],
   "hashes": [
-    1615579442,
-    207937589,
-    403635715,
-    442089907,
-    274259958,
-    4005157370,
-    3509747941,
-    3217321435
+    1554397447,
+    2833407794,
+    3962520700,
+    3605879147,
+    1413936412,
+    3036266443,
+    2348897796,
+    3686772772
   ],
-  "finalHash": 4284791495,
+  "finalHash": 3807447388,
   "description": "a weaving pilot that never dodges, Classic penalty: deaths, respawns in place, game over",
   "expected": {
     "status": "gameOver",

@@ -1,0 +1,17 @@
+{
+  "name": "shots/free",
+  "description": "Free Way: the round shot fired in the last direction held.",
+  "palette": { ".": null, "b": "#1e5a9a", "c": "#38c8e8", "w": "#ffffff" },
+  "hitFlash": false,
+  "frames": [
+    {
+      "rows": [
+        ".bcb.",
+        "bcwcb",
+        "cwwwc",
+        "bcwcb",
+        ".bcb."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "shots/twin",
+  "description": "Twin Laser beam segment; tiles horizontally (anchor at its left end).",
+  "palette": { ".": null, "g": "#90f070", "w": "#ffffff" },
+  "anchor": [0, 1],
+  "hitFlash": false,
+  "frames": [
+    {
+      "rows": [
+        "gggggggg",
+        "wwwwwwww",
+        "gggggggg"
+      ]
+    }
+  ]
+}

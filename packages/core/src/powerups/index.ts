@@ -3,8 +3,10 @@
  *
  * **Status: partial.** Meter mode is implemented (plan M1-11): the 7-slot power meter, equipping
  * on the PowerUp press, Auto Power-Up, power capsules (item pool, pickup magnet, pickups), the
- * Force Field grant (`core/shields`) and Mega Crash. Direct-mode items arrive with M2-05; Weapon
- * Edit / parking UI with M2-03.
+ * Force Field grant (`core/shields`) and Mega Crash; since M2-03 the `!` choices (Mega Crash,
+ * NORMAL, SPEED DOWN, LIFE OPTION, FULL BARRIER) and the `?` choice of the weapon select, and the
+ * MISSILE / DOUBLE / LASER slots equip the session's arsenal (`core/weapons` `resolveArsenal`).
+ * Direct-mode items arrive with M2-05.
  *
  * **Responsibility.** Both power-up models. **Meter mode** (Gradius): the 7-slot meter
  * `SPEED UP | MISSILE | DOUBLE | LASER | OPTION | ? | !`, each capsule advances the cursor
@@ -28,8 +30,15 @@
  * | Double | main = Double (replaces the Laser) | Double already current |
  * | Laser | main = Laser (replaces the Double) | Laser already current |
  * | Option | one more Option | 4 Options |
- * | `?` | a fresh Force Field (`core/shields`) | a shield is up |
- * | `!` | Mega Crash | never |
+ * | `?` | a fresh `?` shield (`GameConfig.shieldChoice`: the Force Field) | a shield is up |
+ * | `!` Mega Crash | the screen clear (the default `GameConfig.megaChoice`) | never |
+ * | `!` NORMAL | main = the basic shot | the basic shot is current |
+ * | `!` SPEED DOWN | ship speed level − 1 | at speed level 0 |
+ * | `!` LIFE OPTION | spare ships (`lives − 1`) become Options, up to 4 Options | no spare ship or 4 Options |
+ * | `!` FULL BARRIER | a fresh `?` shield (full strength) | the shield is up at full strength |
+ *
+ * The MISSILE / DOUBLE / LASER slots equip whatever weapon the session's arsenal puts in that role
+ * (Type A–D or Weapon Edit — the loadout → meter mapping of M2-03); the HUD shows its name.
  *
  * **Auto Power-Up** (`GameConfig.autoPowerUp`, decision D2): the order
  * (`GameConfig.autoPowerUpOrder`, default Speed → Missile → Laser → Option ×4 → `?`) is compiled at
@@ -88,7 +97,8 @@
  *   power-up button, maxed slots greyed, Double / Laser exclusive, capsule sources (red enemies,
  *   whole formations), 300-point capsules, every quick pickup counts, Auto Power-Up; 6C pickup
  *   feedback
- * - shmup_feat.md §7A — the `!` slot: Mega Crash (bullets and small enemies, no boss damage)
+ * - shmup_feat.md §7A — the `!` slot: Mega Crash (bullets and small enemies, no boss damage),
+ *   Normal, Speed Down, Life Option, Full Barrier (M2-03)
  * - shmup_feat.md §4 rule 4 — OK = equip, a rare non-urgent press; Auto Power-Up for the remote
  * - shmup_feat.md §11 — capsule carriers and formation-kill drops
  *
@@ -101,20 +111,23 @@
  * {@link CAPSULE_SCORE}, {@link ITEM_RADIUS}, {@link PICKUP_MAGNET_RANGE},
  * {@link PICKUP_MAGNET_SPEED}, {@link ITEM_CULL_MARGIN}, {@link ITEM_BLINK_TICKS},
  * {@link MEGA_CRASH_FLASH_TICKS}, {@link DirectItem}, {@link applyDeathPenalty},
- * {@link loseOneLevel}.
+ * {@link loseOneLevel}; M2-03: {@link MegaEffect}, {@link megaEffectOf}, {@link MeterChoices},
+ * {@link DEFAULT_METER_CHOICES}, {@link meterChoicesOf}, {@link MeterShip},
+ * {@link lifeOptionCount}.
  *
- * **Planned API.** Direct-mode items `applyDirectItem(player, item)` (M2-05); `!`-slot variants
- * and Weapon Edit (M2-03).
+ * **Planned API.** Direct-mode items `applyDirectItem(player, item)` (M2-05).
  *
  * @module
  */
 import { CancelMode } from '../bullets/index.js';
 import {
+  MEGA_CHOICES,
   METER_SLOT_NAMES,
   PLAYFIELD_H,
   PLAYFIELD_W,
   type DeathPenaltyPreset,
   type GameConfig,
+  type MegaChoice,
   type MeterSlotName,
 } from '../config/index.js';
 import type { ContentDb, PlayerShipSpec } from '../data/index.js';
@@ -132,8 +145,10 @@ import {
   clearShield,
   grantShield,
   shieldActive,
+  shieldSpecOf,
   shieldWearFrame,
   tickShield,
+  type ShieldSpec,
 } from '../shields/index.js';
 import { MainWeapon, type Loadout } from '../weapons/index.js';
 
@@ -181,6 +196,72 @@ export const METER_LABELS: readonly string[] = Object.freeze([
   '?',
   '!',
 ]);
+
+/**
+ * What the `!` slot does, as codes in `config` `MEGA_CHOICES` order (`GameConfig.megaChoice`,
+ * plan M2-03).
+ */
+export const MegaEffect = {
+  /** Mega Crash: the screen clear (the default). */
+  MegaCrash: 0,
+  /** NORMAL: the Double / Laser back to the basic shot. */
+  Normal: 1,
+  /** SPEED DOWN: one speed level less. */
+  SpeedDown: 2,
+  /** LIFE OPTION: spare ships become Options. */
+  LifeOption: 3,
+  /** FULL BARRIER: the `?` shield back to full strength. */
+  FullBarrier: 4,
+} as const;
+
+/** A {@link MegaEffect} code. */
+export type MegaEffect = (typeof MegaEffect)[keyof typeof MegaEffect];
+
+/**
+ * The code of a `!` choice.
+ *
+ * @param choice - A `config` `MegaChoice`.
+ * @returns Its {@link MegaEffect} (Mega Crash for an unknown name).
+ */
+export function megaEffectOf(choice: MegaChoice): MegaEffect {
+  const index = MEGA_CHOICES.indexOf(choice);
+  return (index >= 0 ? index : MegaEffect.MegaCrash) as MegaEffect;
+}
+
+/**
+ * What the `?` and `!` slots do in a session (plan M2-03; built from the config by the power-up
+ * system). A class so its fields stay monomorphic.
+ */
+export class MeterChoices {
+  /** The `!` slot's {@link MegaEffect}. */
+  mega: MegaEffect = MegaEffect.MegaCrash;
+  /** The shield the `?` slot (and FULL BARRIER) grants. */
+  shield: ShieldSpec = FORCE_FIELD;
+}
+
+/** The defaults: Mega Crash on `!`, the Force Field on `?` (Type A of M1-11). */
+export const DEFAULT_METER_CHOICES: Readonly<MeterChoices> = Object.freeze(new MeterChoices());
+
+/**
+ * Builds the meter choices of a config.
+ *
+ * @param config - The session config (`megaChoice`, `shieldChoice`).
+ * @returns A fresh {@link MeterChoices}.
+ */
+export function meterChoicesOf(
+  config: Readonly<Pick<GameConfig, 'megaChoice' | 'shieldChoice'>>,
+): MeterChoices {
+  const choices = new MeterChoices();
+  choices.mega = megaEffectOf(config.megaChoice);
+  choices.shield = shieldSpecOf(config.shieldChoice);
+  return choices;
+}
+
+/** The ship fields the meter reads and changes (`lives` only for LIFE OPTION). */
+export type MeterShip = Pick<PlayerShip, 'speedLevel' | 'shield'> & {
+  /** Ships left including the one in play (LIFE OPTION turns the spare ones into Options). */
+  lives?: number;
+};
 
 /**
  * The code of a slot name.
@@ -317,19 +398,64 @@ export function advanceMeter(meter: PowerMeter): number {
 }
 
 /**
+ * The Options a LIFE OPTION would make now: the spare ships (`lives − 1`), at most the room left
+ * for Options.
+ *
+ * @param ship - The ship (`lives`; none = 0 spare ships).
+ * @param loadout - The loadout (its Options).
+ * @returns The count (0 when nothing would change).
+ */
+export function lifeOptionCount(ship: Readonly<MeterShip>, loadout: Readonly<Loadout>): number {
+  const spare = (ship.lives ?? 1) - 1;
+  const room = MAX_OPTIONS - loadout.options;
+  const n = spare < room ? spare : room;
+  return n > 0 ? n : 0;
+}
+
+/**
+ * Whether the `!` slot can be equipped now (by its {@link MegaEffect}).
+ *
+ * @param ship - The ship.
+ * @param loadout - The loadout.
+ * @param choices - The session's choices.
+ * @returns See the module docs' table.
+ */
+function canEquipMega(
+  ship: Readonly<MeterShip>,
+  loadout: Readonly<Loadout>,
+  choices: Readonly<MeterChoices>,
+): boolean {
+  switch (choices.mega) {
+    case MegaEffect.Normal:
+      return loadout.main !== MainWeapon.Basic;
+    case MegaEffect.SpeedDown:
+      return ship.speedLevel > 0;
+    case MegaEffect.LifeOption:
+      return lifeOptionCount(ship, loadout) > 0;
+    case MegaEffect.FullBarrier:
+      return !(shieldActive(ship.shield) && ship.shield.hits >= choices.shield.maxHits);
+    default:
+      return true;
+  }
+}
+
+/**
  * Whether a slot can be equipped now (see the module docs' table: maxed slots are greyed).
  *
  * @param slot - {@link MeterSlot} code.
- * @param ship - The player's ship (speed level, shield).
+ * @param ship - The player's ship (speed level, shield; `lives` for LIFE OPTION).
  * @param loadout - The player's loadout.
  * @param maxSpeedLevel - The ship's top speed level (`speeds.length − 1`).
+ * @param choices - What `?` and `!` do (default {@link DEFAULT_METER_CHOICES}: the Force Field and
+ *   Mega Crash).
  * @returns `false` for a maxed slot or an unknown code.
  */
 export function canEquipSlot(
   slot: number,
-  ship: Readonly<Pick<PlayerShip, 'speedLevel' | 'shield'>>,
+  ship: Readonly<MeterShip>,
   loadout: Readonly<Loadout>,
   maxSpeedLevel: number,
+  choices: Readonly<MeterChoices> = DEFAULT_METER_CHOICES,
 ): boolean {
   switch (slot) {
     case MeterSlot.Speed:
@@ -345,7 +471,7 @@ export function canEquipSlot(
     case MeterSlot.Shield:
       return !shieldActive(ship.shield);
     case MeterSlot.Mega:
-      return true;
+      return canEquipMega(ship, loadout, choices);
     default:
       return false;
   }
@@ -357,28 +483,34 @@ export function canEquipSlot(
  * @param ship - The player's ship.
  * @param loadout - The player's loadout.
  * @param maxSpeedLevel - The ship's top speed level.
+ * @param choices - What `?` and `!` do (default {@link DEFAULT_METER_CHOICES}).
  * @returns The mask (bits 0–6).
  */
 export function equippableSlots(
-  ship: Readonly<Pick<PlayerShip, 'speedLevel' | 'shield'>>,
+  ship: Readonly<MeterShip>,
   loadout: Readonly<Loadout>,
   maxSpeedLevel: number,
+  choices: Readonly<MeterChoices> = DEFAULT_METER_CHOICES,
 ): number {
   let mask = 0;
   for (let slot = 0; slot < METER_SLOT_COUNT; slot++) {
-    if (canEquipSlot(slot, ship, loadout, maxSpeedLevel)) mask |= 1 << slot;
+    if (canEquipSlot(slot, ship, loadout, maxSpeedLevel, choices)) mask |= 1 << slot;
   }
   return mask;
 }
 
 /**
  * Applies a slot's effect to a ship and loadout when {@link canEquipSlot} allows it. Mega Crash
- * has no lasting effect: the caller detonates it ({@link PowerUpSystem.detonateMegaCrash}).
+ * has no lasting effect: the caller detonates it ({@link PowerUpSystem.detonateMegaCrash}); the
+ * other `!` choices act here (M2-03): NORMAL (main = the basic shot), SPEED DOWN (speed level − 1),
+ * LIFE OPTION ({@link lifeOptionCount} spare ships become Options), FULL BARRIER (a fresh `?`
+ * shield).
  *
  * @param slot - {@link MeterSlot} code.
- * @param ship - The player's ship (speed level, shield).
+ * @param ship - The player's ship (speed level, shield; `lives` for LIFE OPTION).
  * @param loadout - The player's loadout.
  * @param maxSpeedLevel - The ship's top speed level.
+ * @param choices - What `?` and `!` do (default {@link DEFAULT_METER_CHOICES}).
  * @returns Whether it was equipped.
  *
  * @example
@@ -388,11 +520,12 @@ export function equippableSlots(
  */
 export function equipSlot(
   slot: number,
-  ship: Pick<PlayerShip, 'speedLevel' | 'shield'>,
+  ship: MeterShip,
   loadout: Loadout,
   maxSpeedLevel: number,
+  choices: Readonly<MeterChoices> = DEFAULT_METER_CHOICES,
 ): boolean {
-  if (!canEquipSlot(slot, ship, loadout, maxSpeedLevel)) return false;
+  if (!canEquipSlot(slot, ship, loadout, maxSpeedLevel, choices)) return false;
   switch (slot) {
     case MeterSlot.Speed:
       ship.speedLevel++;
@@ -410,12 +543,44 @@ export function equipSlot(
       loadout.options++;
       break;
     case MeterSlot.Shield:
-      grantShield(ship.shield, FORCE_FIELD);
+      grantShield(ship.shield, choices.shield);
+      break;
+    case MeterSlot.Mega:
+      applyMega(ship, loadout, choices);
       break;
     default:
       break;
   }
   return true;
+}
+
+/**
+ * The lasting effect of an equippable `!` slot (none for Mega Crash).
+ *
+ * @param ship - The ship.
+ * @param loadout - The loadout.
+ * @param choices - The session's choices.
+ */
+function applyMega(ship: MeterShip, loadout: Loadout, choices: Readonly<MeterChoices>): void {
+  switch (choices.mega) {
+    case MegaEffect.Normal:
+      loadout.main = MainWeapon.Basic;
+      break;
+    case MegaEffect.SpeedDown:
+      ship.speedLevel--;
+      break;
+    case MegaEffect.LifeOption: {
+      const n = lifeOptionCount(ship, loadout);
+      loadout.options += n;
+      ship.lives = (ship.lives ?? 1) - n;
+      break;
+    }
+    case MegaEffect.FullBarrier:
+      grantShield(ship.shield, choices.shield);
+      break;
+    default:
+      break;
+  }
 }
 
 /**
@@ -590,6 +755,8 @@ export interface PowerUpSystem {
   readonly count: number;
   /** The ship's top speed level (`speeds.length − 1`). */
   readonly maxSpeedLevel: number;
+  /** What the `?` and `!` slots do in this session (from the config — M2-03). */
+  readonly choices: Readonly<MeterChoices>;
   /**
    * Drops an item (enemy drops go through here; tests and tools may call it).
    *
@@ -735,6 +902,8 @@ class PowerUpSystemImpl implements PowerUpSystem {
   dropsTaken = 0;
   /** See {@link PowerUpSystem.maxSpeedLevel}. */
   readonly maxSpeedLevel: number;
+  /** See {@link PowerUpSystem.choices}. */
+  readonly choices: MeterChoices;
   /** Sprite id per item kind (-1 = not drawn). */
   private readonly itemSprite: Int32Array;
   /** Animation frames per item kind. */
@@ -784,12 +953,13 @@ class PowerUpSystemImpl implements PowerUpSystem {
       this.itemFrames[k] = spec.frames;
       this.itemScore[k] = spec.score;
     }
-    this.shieldSprite = sprites.get(FORCE_FIELD.sprite) ?? -1;
+    const config = host.config;
+    this.choices = meterChoicesOf(config);
+    this.shieldSprite = sprites.get(this.choices.shield.sprite) ?? -1;
     const speeds = host.ship.speeds;
     this.maxSpeedLevel = speeds.length > 0 ? speeds.length - 1 : 0;
     this.boxHw = host.ship.pickupBox.hw;
     this.boxHh = host.ship.pickupBox.hh;
-    const config = host.config;
     this.auto = config.autoPowerUp;
     this.magnet = config.pickupMagnet;
     const order = config.autoPowerUpOrder;
@@ -851,6 +1021,7 @@ class PowerUpSystemImpl implements PowerUpSystem {
       this.host.players[player],
       this.host.weapons.loadouts[player],
       this.maxSpeedLevel,
+      this.choices,
     );
   }
 
@@ -861,6 +1032,7 @@ class PowerUpSystemImpl implements PowerUpSystem {
       this.host.players[player],
       this.host.weapons.loadouts[player],
       this.maxSpeedLevel,
+      this.choices,
     );
   }
 
@@ -924,8 +1096,10 @@ class PowerUpSystemImpl implements PowerUpSystem {
    */
   private equip(player: number, slot: number): void {
     const ship = this.host.players[player];
-    equipSlot(slot, ship, this.host.weapons.loadouts[player], this.maxSpeedLevel);
-    if (slot === MeterSlot.Mega) this.megaPending[player] = 1;
+    equipSlot(slot, ship, this.host.weapons.loadouts[player], this.maxSpeedLevel, this.choices);
+    if (slot === MeterSlot.Mega && this.choices.mega === MegaEffect.MegaCrash) {
+      this.megaPending[player] = 1;
+    }
     this.meters[player].cursor = -1;
     this.pushAtShip(SimEventKind.Sfx, SFX_CUES.PowerUpEquip, ship, 0);
     this.pushAtShip(SimEventKind.PowerUp, slot, ship, player);
@@ -1188,7 +1362,7 @@ class PowerUpSystemImpl implements PowerUpSystem {
       shields.x[slot] = ship.x;
       shields.y[slot] = ship.y;
       shields.spriteId[slot] = sprite;
-      shields.frame[slot] = shieldWearFrame(shield, FORCE_FIELD.wearFrames);
+      shields.frame[slot] = shieldWearFrame(shield, this.choices.shield.wearFrames);
       shields.flags[slot] = hidden ? SpriteFlag.Hidden : 0;
       shields.count = slot + 1;
     }

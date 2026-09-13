@@ -322,6 +322,11 @@ export const WEAPON_SLOTS = Object.freeze(['main', 'double', 'laser', 'missile',
 export interface WeaponSpec {
   /** Unique id, e.g. `shot.basic`. */
   readonly id: string;
+  /**
+   * Name shown by the weapon select (upper case, ≤ 16 characters, e.g. `SPREAD BOMB` — plan
+   * M2-03); omitted = the id in upper case.
+   */
+  readonly name?: string;
   /** Loadout slot. */
   readonly slot: WeaponSlot;
   /** Coded behaviour id (core `weapons`), e.g. `shot.straight`. */
@@ -1248,6 +1253,7 @@ const PLAYER_FILE_SCHEMA = s.object({
 const WEAPON_SCHEMA: Schema<Omit<WeaponSpec, 'behaviorId' | 'spriteId' | 'sfxId'>> = s.object(
   {
     id: s.str(),
+    name: s.str({ maxLength: 16, pattern: /^[A-Z0-9 .-]+$/ }),
     slot: s.enumOf(WEAPON_SLOTS),
     behavior: s.ref('script'),
     damage: s.int({ min: 0, max: 9999 }),
@@ -1259,7 +1265,7 @@ const WEAPON_SCHEMA: Schema<Omit<WeaponSpec, 'behaviorId' | 'spriteId' | 'sfxId'
     sfx: s.nullable(s.ref('sfx')),
     params: s.record(s.num(), /^[a-zA-Z][a-zA-Z0-9]*$/),
   },
-  { optional: ['refireTicks', 'sfx', 'params'] },
+  { optional: ['name', 'refireTicks', 'sfx', 'params'] },
 );
 
 /** One entry of `presets` in a `weapons` file. */

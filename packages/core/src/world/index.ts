@@ -70,6 +70,11 @@
  * drawn as the `cancelPoints` batch on `ITEMS`. `hashWorld` covers the bending lasers and the
  * interpreter's runners.
  *
+ * **Meter arsenal (M2-03).** The weapon system fires the config's arsenal (`weaponPreset` /
+ * `weaponEdit` — `core/weapons` `resolveArsenal`, which throws for a bad Weapon Edit) and the
+ * power-up system applies its `!` / `?` choices; a `'full'` starting loadout grants the `?` choice's
+ * shield.
+ *
  * **Player weapons (M1-10).** {@link World.weapons} (`core/weapons`, Options from `core/options`)
  * owns the `playerShots` pool, one loadout (`config.loadout` at creation) and one option group per
  * player: after the ships move in phase 2 the option trails advance and every shooter (ship and
@@ -201,9 +206,10 @@ import {
   type PowerUpSystem,
 } from '../powerups/index.js';
 import { createScoringSystem, markContinue, type ScoringSystem } from '../scoring/index.js';
-import { FORCE_FIELD_SPRITE, shieldActive } from '../shields/index.js';
+import { FORCE_FIELD_SPRITE, shieldActive, shieldSpecOf } from '../shields/index.js';
 import {
   MainWeapon,
+  WEAPON_SPRITES,
   applyLoadoutPreset,
   createWeaponSystem,
   type WeaponSystem,
@@ -867,7 +873,7 @@ export function continueWorld(world: World): boolean {
     ship.lives = config.startingLives;
     const loadout = world.weapons.loadouts[i];
     applyDeathPenalty('arcade', ship, loadout, world.powerups.meters[i]);
-    applyLoadoutPreset(loadout, ship, config.loadout);
+    applyLoadoutPreset(loadout, ship, config.loadout, shieldSpecOf(config.shieldChoice));
     markContinue(board, i);
   }
   const stage = world.stage;
@@ -1057,7 +1063,8 @@ type WorldUnderConstruction = Omit<
 /**
  * The sprites the engine draws on its own, whatever the content: the enemy bullet kinds, the
  * laser beam, the bending laser segment and the cancel point item (`core/bullets`
- * `BULLET_SPRITES`; the last two since M2-02), the Option (`core/options` `OPTION_SPRITE`), the
+ * `BULLET_SPRITES`; the last two since M2-02), the Spread Bomb's blast (`core/weapons`
+ * `WEAPON_SPRITES`, M2-03), the Option (`core/options` `OPTION_SPRITE`), the
  * items (`core/powerups` `ITEM_SPRITES`: the power capsule) and the Force Field
  * (`core/shields` `FORCE_FIELD_SPRITE`), plus the HUD pieces and the title logo the scene flow
  * draws (`core/ui` `UI_SPRITES`, M1-16). Hosts pass it as `loadContent`'s `extraSprites` (the
@@ -1066,6 +1073,7 @@ type WorldUnderConstruction = Omit<
  */
 export const ENGINE_SPRITES: readonly string[] = Object.freeze([
   ...BULLET_SPRITES,
+  ...WEAPON_SPRITES,
   OPTION_SPRITE,
   ...ITEM_SPRITES,
   FORCE_FIELD_SPRITE,
@@ -1174,8 +1182,9 @@ export function createWorld(
   world.weapons = createWeaponSystem(world);
   world.powerups = createPowerUpSystem(world);
   world.scoring = createScoringSystem(world);
+  const shield = shieldSpecOf(config.shieldChoice);
   for (let slot = 0; slot < MAX_PLAYERS; slot++) {
-    applyLoadoutPreset(world.weapons.loadouts[slot], players[slot], config.loadout);
+    applyLoadoutPreset(world.weapons.loadouts[slot], players[slot], config.loadout, shield);
   }
   // The starting loadout counts towards the rank from the first tick.
   updateWorldRank(world);

@@ -11,7 +11,8 @@
  * The scenarios cover the whole stage with god mode (the boss killed, `stageClear`), the stage at
  * Arcade difficulty without god mode (the 4-way bot survives it), a careless weaving pilot that
  * dies until the game is over (the Classic penalty, respawns, `gameOver`) and the stage skip to
- * HALCYON BULWARK with the full loadout under the Arcade penalty.
+ * HALCYON BULWARK with the full loadout under the Arcade penalty; two more boss runs fly the meter
+ * arsenal of M2-03 (a full Type B loadout, and a Weapon Edit with LIFE OPTION on `!`).
  *
  * @module
  */
@@ -108,6 +109,30 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = Object.freeze([
     description: 'the stage skip to HALCYON BULWARK with the full loadout and the Arcade penalty',
     stageId: 'zone-a',
     config: { seed: 3, stageSkip: 'boss', loadout: 'full', deathPenalty: 'arcade' },
+    godMode: false,
+    bot: 'four-way',
+  },
+  {
+    name: 'zone-a-type-b',
+    description:
+      'HALCYON BULWARK with a full Type B loadout (M2-03): Ripple Laser, Spread Bomb blasts, Options',
+    stageId: 'zone-a',
+    config: { seed: 6, stageSkip: 'boss', loadout: 'full', weaponPreset: 'type-b' },
+    godMode: false,
+    bot: 'four-way',
+  },
+  {
+    name: 'zone-a-edit',
+    description:
+      'HALCYON BULWARK with a Weapon Edit loadout (M2-03): Twin Laser, 2-Way Missile, LIFE OPTION on `!`',
+    stageId: 'zone-a',
+    config: {
+      seed: 7,
+      stageSkip: 'boss',
+      loadout: 'full',
+      weaponEdit: { missile: 'missile.twoWay', double: 'shot.free', laser: 'laser.twin' },
+      megaChoice: 'lifeOption',
+    },
     godMode: false,
     bot: 'four-way',
   },

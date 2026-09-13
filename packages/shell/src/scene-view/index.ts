@@ -8,7 +8,8 @@
  * - **In a game in open space** (no stage — free flight) the drifting starfield of the `flight`
  *   scene is drawn under the World's batches; a stage brings its own parallax and terrain, so its
  *   World view is used as is. The wrapper view of a World is built **once per World** (a game start
- *   creates one — a scene transition, not a frame); the renderer binds it on its first frame.
+ *   creates one — a scene transition, not a frame); the renderer binds it on its first frame. The
+ *   World is whichever the frame shows: the game's, or the weapon select's live preview (M2-03).
  * - **Outside the game** (boot, title — the frame has no world) a starfield backdrop drifts behind
  *   the title and its menus (its own static camera).
  *
@@ -40,7 +41,6 @@ import {
   type RenderFrame,
   type ScreenView,
   type SpriteBatch,
-  type World,
   type WorldView,
 } from '@shmup/core';
 
@@ -98,11 +98,15 @@ export interface SceneView {
   readonly backdrop: WorldView;
   /** The frame handed to the renderer (reused). */
   readonly frame: RenderFrame;
-  /** The camera of what is on screen: the World's while a game shows, else the backdrop's. */
+  /**
+   * The camera of what is on screen: the shown World's (the game's, or the weapon select's
+   * preview) while one shows, else the backdrop's.
+   */
   readonly camera: CameraView;
   /**
-   * How many different Worlds have been shown (a game start or RETRY adds one) — the shell clears
-   * the renderer's particles and score popups when it changes.
+   * How many different Worlds have been shown (a game start or RETRY adds one, so does opening the
+   * weapon select's preview) — the shell clears the renderer's particles and score popups when it
+   * changes.
    */
   readonly worldChanges: number;
   /**
@@ -110,7 +114,7 @@ export interface SceneView {
    * events are drained). Never allocates.
    *
    * @remarks
-   * Follows `game.world.camera` when the last {@link SceneView.update} showed a World, else the
+   * Follows the camera of the World view the last {@link SceneView.update} showed, else the
    * backdrop's static camera — so a sound pushed while the title shows pans from the backdrop, and
    * after a quit to the title the view stops following the old World.
    */
@@ -201,8 +205,9 @@ export function createSceneView(game: Game): SceneView {
     warning: null,
   };
 
-  // The wrapper of the World on screen (rebuilt when the game scene starts another World).
-  let shownWorld: World | null = null;
+  // The wrapper of the World view on screen (rebuilt when the frame shows another World's view —
+  // a new game, or the weapon select's preview of M2-03).
+  let shownView: WorldView | null = null;
   let worldView: WorldView = backdrop;
   let worldStars: Starfield | null = null;
   let worldChanges = 0;
@@ -210,11 +215,10 @@ export function createSceneView(game: Game): SceneView {
   /**
    * The renderer's view of a World: its own view on a stage, else the starfield under its batches.
    *
-   * @param world - The World.
-   * @returns The view.
+   * @param view - The World's view.
+   * @returns The view to draw.
    */
-  const wrap = (world: World): WorldView => {
-    const view = world.view;
+  const wrap = (view: WorldView): WorldView => {
     if (view.parallax !== null) {
       worldStars = null;
       return view;
@@ -259,7 +263,7 @@ export function createSceneView(game: Game): SceneView {
       return worldChanges;
     },
     follow() {
-      const source = showingWorld ? game.world.camera : backdropCamera;
+      const source = showingWorld && shownView !== null ? shownView.camera : backdropCamera;
       camera.x = source.x;
       camera.y = source.y;
     },
@@ -270,14 +274,14 @@ export function createSceneView(game: Game): SceneView {
       frame.hud = source.hud;
       frame.ui = source.ui;
       frame.screen = source.screen;
-      if (source.world !== null) {
-        const world = game.world;
-        if (world !== shownWorld) {
-          shownWorld = world;
-          worldView = wrap(world);
+      const view = source.world;
+      if (view !== null) {
+        if (view !== shownView) {
+          shownView = view;
+          worldView = wrap(view);
           worldChanges++;
         }
-        if (worldStars !== null) fillStarfield(worldStars, world.view.camera, tick);
+        if (worldStars !== null) fillStarfield(worldStars, view.camera, tick);
         frame.world = worldView;
         showingWorld = true;
       } else {

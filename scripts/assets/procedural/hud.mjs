@@ -3,9 +3,11 @@
  *
  * - `hud/meter-slot` (40×8): one power-meter slot box — frame 0 normal, 1 highlighted
  *   (the cursor), 2 disabled (maxed / unavailable).
- * - `hud/meter-labels` (36×5): the seven slot labels in a tiny 3×5 pixel script, white
- *   for tinting — `SPEED`, `MISSILE`, `DOUBLE`, `LASER`, `OPTION`, `?`, `!` (frames 0…6,
- *   the meter's slot order, `shmup_feat.md` §6A).
+ * - `hud/meter-labels` (36×5): the meter's labels in a tiny 3×5 pixel script, white for
+ *   tinting — the seven slot labels `SPEED`, `MISSILE`, `DOUBLE`, `LASER`, `OPTION`, `?`, `!`
+ *   (frames 0…6, the meter's slot order, `shmup_feat.md` §6A), then the names of the Types B–D
+ *   weapons the MISSILE / DOUBLE / LASER slots may hold (frames 7…15, plan M2-03 — the order of
+ *   core `ui` `METER_LABEL_FRAMES`).
  *
  * @module
  */
@@ -15,7 +17,10 @@ import { color, makeSprite } from './common.mjs';
 /** @typedef {import('../image.mjs').Image} Image */
 /** @typedef {import('../sprite-source.mjs').SpriteDef} SpriteDef */
 
-/** Labels of the seven meter slots, in slot order. */
+/**
+ * The label frames: the seven meter slots in slot order, then the Types B–D weapon names (the
+ * order of core `ui` `METER_LABEL_FRAMES` — a test keeps them equal).
+ */
 export const METER_LABELS = /** @type {const} */ ([
   'SPEED',
   'MISSILE',
@@ -24,14 +29,25 @@ export const METER_LABELS = /** @type {const} */ ([
   'OPTION',
   '?',
   '!',
+  'SPREAD',
+  '2-WAY',
+  'TORPEDO',
+  'TAIL',
+  'VERTICAL',
+  'FREE WAY',
+  'RIPPLE',
+  'CYCLONE',
+  'TWIN',
 ]);
 
 /** Original 3×5 micro glyphs for the letters the labels need. */
 const MICRO = /** @type {Record<string, string[]>} */ ({
   A: ['.#.', '#.#', '###', '#.#', '#.#'],
   B: ['##.', '#.#', '##.', '#.#', '##.'],
+  C: ['.##', '#..', '#..', '#..', '.##'],
   D: ['##.', '#.#', '#.#', '#.#', '##.'],
   E: ['###', '#..', '##.', '#..', '###'],
+  F: ['###', '#..', '##.', '#..', '#..'],
   I: ['###', '.#.', '.#.', '.#.', '###'],
   L: ['#..', '#..', '#..', '#..', '###'],
   M: ['#.#', '###', '###', '#.#', '#.#'],
@@ -42,11 +58,20 @@ const MICRO = /** @type {Record<string, string[]>} */ ({
   S: ['.##', '#..', '.#.', '..#', '##.'],
   T: ['###', '.#.', '.#.', '.#.', '.#.'],
   U: ['#.#', '#.#', '#.#', '#.#', '###'],
+  V: ['#.#', '#.#', '#.#', '#.#', '.#.'],
+  W: ['#.#', '#.#', '###', '###', '#.#'],
+  Y: ['#.#', '#.#', '.#.', '.#.', '.#.'],
+  2: ['##.', '..#', '.#.', '#..', '###'],
+  '-': ['...', '...', '###', '...', '...'],
+  ' ': ['...', '...', '...', '...', '...'],
   '?': ['##.', '..#', '.#.', '...', '.#.'],
   '!': ['.#.', '.#.', '.#.', '...', '.#.'],
 });
 
-/** Label frame width: the longest label (`MISSILE`, 7 glyphs × 4 px − 1) fits with a margin. */
+/**
+ * Label frame width: the longest labels (`VERTICAL`, `FREE WAY` — 8 glyphs × 4 px − 1) fit with a
+ * margin.
+ */
 const LABEL_W = 36;
 
 /** Label frame height: one row of 3×5 micro glyphs. */

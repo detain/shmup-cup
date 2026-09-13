@@ -181,7 +181,8 @@ async function countColour(page: Page, rgb: readonly [number, number, number]): 
 }
 
 /**
- * Opens a build, goes through the title and the difficulty menu and starts a game.
+ * Opens a build, goes through the title, the difficulty menu and the weapon select (M2-03) and
+ * starts a game.
  *
  * @param page - The page.
  * @param url - The build's URL.
@@ -204,6 +205,8 @@ async function startGame(page: Page, url: string, downs: number): Promise<string
   await expect(canvas).toHaveAttribute('data-shmup-scene', 'difficulty');
   for (let i = 0; i < downs; i++) await tap(page, 'ArrowDown');
   await tap(page, 'Enter');
+  await expect(canvas).toHaveAttribute('data-shmup-scene', 'weaponSelect');
+  await tap(page, 'Enter'); // START in the weapon select (M2-03)
   await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
   return errors;
 }

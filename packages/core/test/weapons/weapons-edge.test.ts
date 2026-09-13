@@ -504,9 +504,12 @@ describe('core/weapons edge cases — tables, content and roles', () => {
       expect(Object.isFrozen(WEAPON_BEHAVIOR_PARAMS[id]), id).toBe(true);
       expect(Object.isFrozen(WEAPON_BEHAVIOR_SLOTS[id]), id).toBe(true);
     }
-    // Every shot kind is used by exactly one behaviour.
-    expect(Object.values(WEAPON_BEHAVIOR_KINDS).sort()).toEqual(
-      Object.values(ShotKind).slice().sort(),
+    // Every shot kind is used by a behaviour (the Tail Gun and the Vertical share the Double's,
+    // the Cyclone Laser the Laser's — M2-03).
+    expect([...new Set(Object.values(WEAPON_BEHAVIOR_KINDS))].sort((a, b) => a - b)).toEqual(
+      Object.values(ShotKind)
+        .slice()
+        .sort((a, b) => a - b),
     );
     expect(Object.isFrozen(SHOT_SCHEMA)).toBe(true);
     // The Double's and the missile's climb / fall default to 45°.
@@ -593,7 +596,8 @@ describe('core/weapons edge cases — tables, content and roles', () => {
     // The World uses what the resolution picked.
     const w = world(MANUAL, both);
     expect(w.weapons.roleWeapons.map((x) => x?.id ?? null)).toEqual(['m1', null, null, 'mis']);
-    expect(Object.isFrozen(w.weapons.roleWeapons)).toBe(true);
+    // `setArsenal` (M2-03) rewrites the list in place.
+    expect(w.weapons.roleWeapons).toHaveLength(4);
   });
 
   it('leaves a role empty when its weapon has no weapon behaviour', () => {

@@ -21,9 +21,14 @@
  *     EXIT only when the platform can quit (`platform.exit`). Shows the saved hi-score, plays the
  *     title music.
  *   - {@link DifficultyScene} (overlay, M2-01 — START): EASY / NORMAL / HARD / ARCADE with the
- *     focused preset's lives, continues and hi-score; OK starts the game on that preset (its World
- *     gets `core/config` `withDifficulty` of the host config — {@link SceneFlow.gameConfig}), Back
- *     returns to the title menu.
+ *     focused preset's lives, continues and hi-score; OK chooses that preset (its World gets
+ *     `core/config` `withDifficulty` of the host config — {@link SceneFlow.gameConfig}) and opens
+ *     the weapon select, Back returns to the title menu.
+ *   - {@link WeaponSelectScene} (M2-03 — after the difficulty menu): TYPE A–D or EDIT (Weapon
+ *     Edit: each of the MISSILE / DOUBLE / LASER weapons), the `?` and `!` choices, Auto Power-Up
+ *     and its ORDER ({@link AutoOrderScene}, an overlay editor), START — with a live preview (a mini
+ *     World on the weapon range) beside the panel; START starts the game with that loadout
+ *     (`core/config` `withArsenal`), Back returns to the difficulty menu.
  *   - {@link GameScene}: **owns the World** — every start (and RETRY STAGE) creates a fresh one;
  *     ticks it with the snapshot; Pause (remote Play/Pause, Back — bound to Pause in the game
  *     context) opens the pause menu; `stageClear` / `gameOver` open their screens after a short
@@ -74,7 +79,12 @@
  * Input by scene (every player's input merged; the game table maps OK to PowerUp instead):
  * - **Title** — OK: `PRESS OK` → menu, then activate; Back: exit confirmation (when the platform
  *   can exit) or back to `PRESS OK`; Up / Down: move (auto-repeat).
- * - **Difficulty** — Up / Down: move; OK: start the game on the focused preset; Back: title menu.
+ * - **Difficulty** — Up / Down: move; OK: choose the focused preset (→ weapon select); Back: title
+ *   menu.
+ * - **Weapon select** — Up / Down: move; Left / Right (or OK): change the focused value; OK on
+ *   ORDER: the order editor; OK on START: start the game; Back: difficulty menu.
+ * - **Order editor** — Up / Down: move; Left / Right (or OK): change a row; DONE or Back: store
+ *   and close.
  * - **Continue** — OK: continue; Back: give up (both after a 30-tick lock).
  * - **Game** — Pause or Back: pause menu.
  * - **Pause** — Pause or Back: resume; OK: activate; Up / Down: move.
@@ -89,14 +99,19 @@
  * - shmup_feat.md §23 — Tizen Back key and exit confirmation, pause on resume
  * - shmup_feat.md §4 — rule 8: menus fully D-pad + OK + Back navigable
  * - shmup_feat.md §21 — the Options menu (audio sliders, controls profile) and saved hi-scores
- * - shmup_feat.md §16 — difficulty select; §10 — continues (the countdown)
+ * - shmup_feat.md §16 — difficulty select, weapon select / Weapon Edit (M2-03); §10 — continues
+ *   (the countdown); §6A — the editable Auto Power-Up order, §7A — the `!` choices
  *
  * **Public API.** {@link SceneStack}, {@link createSceneStack}, {@link SCENE_STACK_DEPTH},
  * {@link Scene}, {@link SceneId}, {@link SceneFlow}, {@link SceneFlowHost}, {@link SceneStart},
  * {@link createSceneFlow}, {@link mergeMenuInput}, the scenes ({@link BootScene},
- * {@link TitleScene}, {@link DifficultyScene}, {@link GameScene}, {@link PauseScene},
- * {@link OptionsScene}, {@link StageClearScene}, {@link ContinueScene}, {@link GameOverScene},
- * {@link ConfirmDialog}), {@link ConfirmPurpose},
+ * {@link TitleScene}, {@link DifficultyScene}, {@link WeaponSelectScene}, {@link AutoOrderScene},
+ * {@link GameScene}, {@link PauseScene}, {@link OptionsScene}, {@link StageClearScene},
+ * {@link ContinueScene}, {@link GameOverScene}, {@link ConfirmDialog}), {@link ConfirmPurpose},
+ * the weapon select's items and labels ({@link WeaponSelectItem}, {@link MEGA_CHOICE_LABELS},
+ * {@link SHIELD_CHOICE_LABELS}, {@link WEAPON_EDIT_LABEL}, {@link AUTO_ORDER_LABELS},
+ * {@link AUTO_ORDER_ROWS}) and its preview ({@link WEAPON_RANGE_STAGE}, {@link PREVIEW_SHIP_X},
+ * {@link PREVIEW_WEAVE_TICKS}, {@link PREVIEW_OPTIONS}),
  * {@link InputProfileSetup}, the menu item indices ({@link TitleItem}, {@link PauseItem},
  * {@link OptionsItem} — BULLETS since M2-02 —), the Options screen's bullet palette labels
  * ({@link BULLET_PALETTE_LABELS}, M2-02) and the timing constants ({@link STAGE_CLEAR_DELAY_TICKS},
@@ -104,8 +119,8 @@
  * {@link STAGE_CLEAR_TALLY_TICKS}, {@link STAGE_CLEAR_CONTINUED_TICKS}, {@link PAUSE_DIM},
  * {@link CONTINUE_COUNTDOWN_TICKS}, {@link CONTINUE_LOCK_TICKS}).
  *
- * **Planned.** Attract mode, mode / ship / weapon select, the zone map, name entry, hi-score
- * table, ending and credits (M2); more option groups (controls rebinding, display, game — M2-16).
+ * **Planned.** Attract mode, mode / ship select, the zone map, name entry, hi-score table, ending
+ * and credits (M2); more option groups (controls rebinding, display, game — M2-16).
  *
  * @module
  */
@@ -113,22 +128,40 @@ import {
   BULLET_PALETTES,
   DEFAULT_DIFFICULTY_TABLE,
   DIFFICULTY_PRESETS,
+  MAX_AUTO_POWER_UP_ORDER,
+  MEGA_CHOICES,
+  METER_SLOT_NAMES,
+  SHIELD_CHOICES,
   VOLUME_LEVELS,
+  arsenalMatches,
+  resolveGameConfig,
+  withArsenal,
   withDifficulty,
+  type ArsenalChoice,
   type DifficultyPreset,
   type GameConfig,
   type InputProfileChoice,
+  type MeterSlotName,
   type UserOptions,
+  type WeaponEdit,
 } from '../config/index.js';
-import type { ContentDb } from '../data/index.js';
+import type { ContentDb, WeaponPresetSpec, WeaponSlot, WeaponSpec } from '../data/index.js';
+import { createDebugFlags, type DebugFlags } from '../debug/index.js';
 import {
   MUSIC_CUES,
   SFX_CUES,
   SimEventKind,
   UserOptionKind,
+  createEventQueue,
   type EventQueue,
 } from '../events/index.js';
-import { Action, type InputContext, type InputSnapshot, type PlayerInput } from '../input/index.js';
+import {
+  Action,
+  createInputSnapshot,
+  type InputContext,
+  type InputSnapshot,
+  type PlayerInput,
+} from '../input/index.js';
 import { defineModule } from '../module-info.js';
 import { TextAlign, createDrawList, type DrawList, type WorldView } from '../presentation/index.js';
 import {
@@ -149,6 +182,7 @@ import {
   createHud,
   createListMenu,
   createSlider,
+  createToggle,
   drawConfirm,
   drawMenu,
   drawPanel,
@@ -160,11 +194,20 @@ import {
   type Confirm,
   type Hud,
   type ListMenu,
+  type MenuItemSpec,
   type MenuLayout,
   type Slider,
+  type Toggle,
   type UiSprites,
 } from '../ui/index.js';
-import { canContinue, continueWorld, stepWorld, type World } from '../world/index.js';
+import {
+  MainWeapon,
+  WeaponRole,
+  resolveRoleWeapons,
+  weaponLabel,
+  weaponsOfSlot,
+} from '../weapons/index.js';
+import { canContinue, continueWorld, createWorld, stepWorld, type World } from '../world/index.js';
 
 /** Module descriptor (see {@link defineModule}). */
 export const moduleInfo = defineModule({
@@ -182,8 +225,8 @@ export const moduleInfo = defineModule({
 });
 
 /**
- * Scene identifiers (the M1 set, the difficulty menu and continue countdown of M2-01, plus the M2
- * screens already named by the spec).
+ * Scene identifiers (the M1 set, the difficulty menu and continue countdown of M2-01, the weapon
+ * select and its order editor of M2-03, plus the M2 screens already named by the spec).
  */
 export type SceneId =
   | 'boot'
@@ -194,6 +237,8 @@ export type SceneId =
   | 'gameOver'
   | 'confirm'
   | 'difficulty'
+  | 'weaponSelect'
+  | 'autoOrder'
   | 'continue'
   | 'attract'
   | 'select'
@@ -687,7 +732,7 @@ const WARNING_BAND_H = 48;
 const CX = 192;
 
 /** String slots of the UI list. */
-const UI_STRINGS = 96;
+const UI_STRINGS = 160;
 
 /** Where the title menu is drawn (a constant: redrawing allocates nothing). */
 const TITLE_MENU_LAYOUT: MenuLayout = Object.freeze({
@@ -748,6 +793,10 @@ interface FlowControl {
   readonly options: OptionsScene;
   /** The difficulty menu under START. */
   readonly difficultyMenu: DifficultyScene;
+  /** The weapon select after the difficulty menu (M2-03). */
+  readonly weaponSelect: WeaponSelectScene;
+  /** The Auto Power-Up order editor (M2-03). */
+  readonly autoOrder: AutoOrderScene;
   /** The continue countdown. */
   readonly continueScreen: ContinueScene;
   /** The save the flow plays with. */
@@ -766,8 +815,13 @@ interface FlowControl {
   readonly configs: readonly GameConfig[];
   /** The session hi-score of each preset (same order), starting from the save's best. */
   readonly bests: Float64Array;
-  /** The config the next game's World gets ({@link FlowControl.difficulty}'s). */
+  /**
+   * The config the next game's World gets: {@link FlowControl.difficulty}'s with the weapon
+   * select's loadout ({@link FlowControl.arsenal}).
+   */
   readonly worldConfig: GameConfig;
+  /** The loadout chosen in the weapon select (empty until the first START — M2-03). */
+  readonly arsenal: ArsenalChoice;
   /** The input profiles CONTROLS offers (empty: CONTROLS disabled). */
   readonly profiles: readonly InputProfileChoice[];
   /** Index of the profile in use in {@link FlowControl.profiles} (-1 = none of them). */
@@ -828,6 +882,14 @@ interface FlowControl {
    * @param difficulty - The preset.
    */
   chooseDifficulty(difficulty: DifficultyPreset): void;
+  /**
+   * Chooses the loadout of the next games (the weapon select's START): every difficulty's config
+   * gets it (`core/config` `withArsenal`).
+   *
+   * @param arsenal - The loadout.
+   * @throws RangeError when the loadout fails `resolveGameConfig` (a programming error).
+   */
+  chooseArsenal(arsenal: ArsenalChoice): void;
 }
 
 /**
@@ -1769,8 +1831,8 @@ const DIFFICULTY_LABELS: readonly string[] = Object.freeze(['EASY', 'NORMAL', 'H
  * presets, and for the focused one its starting lives, continues and saved / session hi-score
  * (from the flow's per-preset configs — `core/config` `withDifficulty`). Opening it focuses the
  * difficulty chosen last (at first the host config's) and locks activation for 2 ticks. OK
- * chooses the focused preset and starts the game (the stack is reset to the game scene, whose
- * World gets that preset's config); Back closes it (the title menu takes input again). Up / Down
+ * chooses the focused preset and opens the {@link WeaponSelectScene} (M2-03), whose START starts
+ * the game on that preset's config; Back closes it (the title menu takes input again). Up / Down
  * move the focus (wrapping, auto-repeat) with the move sound.
  */
 export class DifficultyScene extends SceneBase {
@@ -1801,7 +1863,7 @@ export class DifficultyScene extends SceneBase {
     this.menu.open(MENU_OPEN_LOCK_TICKS);
   }
 
-  /** OK chooses and starts the game; Back closes the menu. Never allocates. */
+  /** OK chooses and opens the weapon select; Back closes the menu. Never allocates. */
   tick(): void {
     const flow = this.flow;
     const menu = this.menu;
@@ -1816,10 +1878,16 @@ export class DifficultyScene extends SceneBase {
     if (result === MenuResult.Confirmed) {
       flow.sfx(SFX_CUES.MenuSelect);
       flow.chooseDifficulty(this.focused);
-      flow.stack.reset(flow.game);
+      flow.stack.push(flow.weaponSelect);
       return;
     }
     flow.menuSound(result);
+  }
+
+  /** Back from the weapon select: the menu takes input again after a short lock. */
+  override uncover(): void {
+    super.uncover();
+    this.menu.open(MENU_OPEN_LOCK_TICKS);
   }
 
   /**
@@ -1936,6 +2004,658 @@ export class ContinueScene extends SceneBase {
   }
 }
 
+// ------------------------------------------------------------------------------ weapon select
+
+/** Weapon select items (plan M2-03), top to bottom. */
+export const WeaponSelectItem = {
+  /** TYPE: a preset (`TYPE A` … `TYPE D`) or `EDIT` (Weapon Edit). */
+  Type: 0,
+  /** MISSILE: the Missile slot's weapon (chosen with EDIT, else the type's). */
+  Missile: 1,
+  /** DOUBLE: the Double slot's weapon. */
+  Double: 2,
+  /** LASER: the Laser slot's weapon. */
+  Laser: 3,
+  /** `?`: what the `?` slot grants (`GameConfig.shieldChoice`). */
+  Shield: 4,
+  /** `!`: what the `!` slot does (`GameConfig.megaChoice`). */
+  Mega: 5,
+  /** AUTO: Auto Power-Up on / off (`GameConfig.autoPowerUp`). */
+  Auto: 6,
+  /** ORDER: opens the Auto Power-Up order editor ({@link AutoOrderScene}). */
+  Order: 7,
+  /** START: starts the game with this loadout. */
+  Start: 8,
+} as const;
+
+/** The `!` choices' labels, in `config` `MEGA_CHOICES` order. */
+export const MEGA_CHOICE_LABELS: readonly string[] = Object.freeze([
+  'MEGA CRASH',
+  'NORMAL',
+  'SPEED DOWN',
+  'LIFE OPTION',
+  'FULL BARRIER',
+]);
+
+/** The `?` choices' labels, in `config` `SHIELD_CHOICES` order (M2-04 appends the other shields). */
+export const SHIELD_CHOICE_LABELS: readonly string[] = Object.freeze(['FORCE FIELD']);
+
+/** The TYPE choice's label for Weapon Edit. */
+export const WEAPON_EDIT_LABEL = 'EDIT';
+
+/** The stage the weapon select's live preview flies (free flight when the content lacks it). */
+export const WEAPON_RANGE_STAGE = 'weapon-range';
+
+/** Screen x (playfield pixels) the preview ship is held at. */
+export const PREVIEW_SHIP_X = 232;
+
+/** Length of the preview ship's scripted weave (up, pause, down, pause), in ticks. */
+export const PREVIEW_WEAVE_TICKS = 160;
+
+/** Options the preview ship flies with. */
+export const PREVIEW_OPTIONS = 2;
+
+/** Rows of the Auto Power-Up order editor (the first entries of the order it edits). */
+export const AUTO_ORDER_ROWS = 12;
+
+/**
+ * Labels of an order editor row: the meter slots in `config` `METER_SLOT_NAMES` order, then `-`
+ * (no entry — rows set to `-` are left out of the order).
+ */
+export const AUTO_ORDER_LABELS: readonly string[] = Object.freeze([
+  'SPEED',
+  'MISSILE',
+  'DOUBLE',
+  'LASER',
+  'OPTION',
+  '?',
+  '!',
+  '-',
+]);
+
+/** One-letter codes of the meter slots for the ORDER summary, in slot order. */
+const ORDER_CODES: readonly string[] = Object.freeze(['S', 'M', 'D', 'L', 'O', '?', '!']);
+
+/** Entries the ORDER summary spells out before `+`. */
+const ORDER_SUMMARY_ENTRIES = 8;
+
+/** The weapon select's panel (left half; the preview flies on the right): left, top, width, height. */
+const WEAPON_PANEL = Object.freeze({ x: 4, y: 12, w: 184, h: 192 });
+
+/** Where the weapon select's menu is drawn (labels at x 18, values from x 72). */
+const WEAPON_MENU_LAYOUT: MenuLayout = Object.freeze({
+  x: 18,
+  y: 34,
+  lineHeight: 13,
+  cursorX: 9,
+  valueX: 72,
+});
+
+/** The order editor's panel (right half, over the preview). */
+const ORDER_PANEL = Object.freeze({ x: 196, y: 12, w: 184, h: 192 });
+
+/** Where the order editor's menu is drawn. */
+const ORDER_MENU_LAYOUT: MenuLayout = Object.freeze({
+  x: 218,
+  y: 32,
+  lineHeight: 12,
+  cursorX: 207,
+  valueX: 252,
+});
+
+/**
+ * The TYPE label of a preset id: upper case, `-` → space (`type-b` → `TYPE B`).
+ *
+ * @param id - Preset id.
+ * @returns The label.
+ */
+function presetLabel(id: string): string {
+  return id.toUpperCase().replace(/-/g, ' ');
+}
+
+/**
+ * The weapon select (shmup_feat.md §16 "Weapon select / Weapon Edit", §7A; plan M2-03): the
+ * loadout the next game plays, with a live preview.
+ *
+ * @remarks
+ * Pushed by the difficulty menu's OK (a full screen over the title and the difficulty menu). A
+ * panel on the left lists TYPE (the content's presets — `TYPE A` … `TYPE D` — and `EDIT`), the
+ * MISSILE / DOUBLE / LASER weapons (the type's, disabled; with EDIT every weapon of that slot can
+ * be chosen — Weapon Edit), `?` (the shield: `FORCE FIELD` until M2-04), `!` (MEGA CRASH / NORMAL /
+ * SPEED DOWN / LIFE OPTION / FULL BARRIER), AUTO (Auto Power-Up) with its ORDER (the one-letter
+ * summary — OK opens the {@link AutoOrderScene}) and START. It opens focused on START (so OK starts
+ * at once — the choice of the last visit is kept) and locks activation for 2 ticks. Left / Right
+ * (or OK) change a value, OK on START starts the game (the stack is reset to the game scene, whose
+ * World gets the difficulty's config with this loadout — `core/config` `withArsenal`), Back returns
+ * to the difficulty menu. The first visit starts from the host config's values.
+ *
+ * **Live preview.** On the right a private mini World flies the {@link WEAPON_RANGE_STAGE} range
+ * (harmless targets over a floor and a ceiling; free flight when the content lacks it) with the
+ * chosen weapons (`WeaponSystem.setArsenal` on every change), Missile, {@link PREVIEW_OPTIONS}
+ * Options and god mode: the ship is held at x {@link PREVIEW_SHIP_X} and weaves up and down (so the
+ * Free Way and the Options show), its main weapon follows the focused row (MISSILE: the shot,
+ * DOUBLE: the Double slot's weapon, LASER: the Laser slot's, otherwise Laser and Double take turns
+ * every 4 s), the range restarts when it ends, and its presentation events are dropped (no sound).
+ * The World is created when the screen opens (a transition: its fly-in is skipped there) and
+ * dropped when it closes; the flow shows its view instead of the game's while this screen is
+ * visible. Ticking never allocates (the preview's input, event queue and role list are reused).
+ */
+export class WeaponSelectScene extends SceneBase {
+  /** See {@link Scene.id}. */
+  readonly id = 'weaponSelect' as const;
+  /** TYPE: the presets' labels, then `EDIT` (when every slot has a weapon). */
+  readonly type: Choice;
+  /** MISSILE: the content's missile-slot weapons. */
+  readonly missile: Choice;
+  /** DOUBLE: the content's double-slot weapons. */
+  readonly double: Choice;
+  /** LASER: the content's laser-slot weapons. */
+  readonly laser: Choice;
+  /** `?`: {@link SHIELD_CHOICE_LABELS}. */
+  readonly shield: Choice;
+  /** `!`: {@link MEGA_CHOICE_LABELS}. */
+  readonly mega: Choice;
+  /** AUTO: Auto Power-Up. */
+  readonly auto: Toggle;
+  /** The menu ({@link WeaponSelectItem} order). */
+  readonly menu: ListMenu;
+  /** The Auto Power-Up order as `MeterSlot` codes (the first {@link WeaponSelectScene.orderLength}). */
+  readonly orderSlots = new Int8Array(MAX_AUTO_POWER_UP_ORDER);
+  /** Entries of {@link WeaponSelectScene.orderSlots} in use. */
+  orderLength = 0;
+  /** The ORDER row's summary (`S M L O O O O ?`; `NONE` when empty). */
+  orderLabel = '';
+  /** The preview World while the screen is open, else `null`. */
+  preview: World | null = null;
+  /** The TYPE index of `EDIT` (-1 when Weapon Edit is not offered). */
+  readonly editIndex: number;
+  /** The presets TYPE offers (content order). */
+  private readonly presets: readonly WeaponPresetSpec[];
+  /** The weapon of each role per preset (`core/weapons` `resolveRoleWeapons`). */
+  private readonly presetRoles: readonly (readonly (WeaponSpec | null)[])[];
+  /** The weapons MISSILE, DOUBLE and LASER offer (`weaponsOfSlot`). */
+  private readonly slotWeapons: readonly (readonly WeaponSpec[])[];
+  /** The TYPE preset EDIT keeps the main shot of (the last preset chosen). */
+  private basePreset = 0;
+  /** The preview's input (its player 1 weaves; reused). */
+  private readonly previewInput: InputSnapshot = createInputSnapshot();
+  /** The preview's own event queue (cleared every tick: the preview makes no sound). */
+  private readonly previewEvents: EventQueue = createEventQueue();
+  /** The preview's debug switches (god mode). */
+  private readonly previewFlags: DebugFlags = createDebugFlags();
+  /** The arsenal handed to the preview (reused). */
+  private readonly previewRoles: (WeaponSpec | null)[] = [null, null, null, null];
+  /** Ticks the preview has flown (its weave's clock). */
+  private previewTicks = 0;
+
+  /**
+   * Creates the screen from the content's presets and weapons and the host config's loadout.
+   *
+   * @param flow - The flow.
+   */
+  constructor(flow: FlowControl) {
+    super(flow);
+    const content = flow.host.content;
+    const config = flow.host.config;
+    this.presets = content.weaponPresets;
+    const presetRoles: (readonly (WeaponSpec | null)[])[] = [];
+    const typeLabels: string[] = [];
+    for (const preset of this.presets) {
+      presetRoles.push(Object.freeze(resolveRoleWeapons(content, preset)));
+      typeLabels.push(presetLabel(preset.id));
+    }
+    if (presetRoles.length === 0) {
+      presetRoles.push(Object.freeze(resolveRoleWeapons(content, null)));
+      typeLabels.push('DEFAULT');
+    }
+    this.presetRoles = presetRoles;
+    const slots: WeaponSlot[] = ['missile', 'double', 'laser'];
+    const slotWeapons: (readonly WeaponSpec[])[] = [];
+    const slotChoices: Choice[] = [];
+    let editable = true;
+    for (const slot of slots) {
+      const list = weaponsOfSlot(content, slot);
+      const labels: string[] = [];
+      for (const weapon of list) labels.push(weaponLabel(weapon));
+      if (labels.length === 0) {
+        labels.push('NONE');
+        editable = false;
+      }
+      slotWeapons.push(Object.freeze(list));
+      slotChoices.push(createChoice(labels, 0));
+    }
+    this.slotWeapons = slotWeapons;
+    this.editIndex = editable ? typeLabels.length : -1;
+    if (editable) typeLabels.push(WEAPON_EDIT_LABEL);
+    this.type = createChoice(typeLabels, 0);
+    this.missile = slotChoices[0];
+    this.double = slotChoices[1];
+    this.laser = slotChoices[2];
+    this.shield = createChoice(
+      SHIELD_CHOICE_LABELS,
+      Math.max(0, SHIELD_CHOICES.indexOf(config.shieldChoice)),
+    );
+    this.mega = createChoice(
+      MEGA_CHOICE_LABELS,
+      Math.max(0, MEGA_CHOICES.indexOf(config.megaChoice)),
+    );
+    this.auto = createToggle(config.autoPowerUp);
+    this.menu = createListMenu(
+      [
+        { label: 'TYPE', choice: this.type },
+        { label: 'MISSILE', choice: this.missile },
+        { label: 'DOUBLE', choice: this.double },
+        { label: 'LASER', choice: this.laser },
+        { label: '? SLOT', choice: this.shield },
+        { label: '! SLOT', choice: this.mega },
+        { label: 'AUTO', toggle: this.auto },
+        'ORDER',
+        'START',
+      ],
+      { focus: WeaponSelectItem.Start },
+    );
+    // The host config's loadout: its preset (else the first), its Weapon Edit, its order.
+    let base = 0;
+    for (let i = 0; i < this.presets.length; i++) {
+      if (this.presets[i].id === config.weaponPreset) base = i;
+    }
+    this.basePreset = base;
+    this.type.index = base;
+    this.syncSlots();
+    const edit = config.weaponEdit;
+    if (edit !== null && this.editIndex >= 0) {
+      this.type.index = this.editIndex;
+      const ids = [edit.missile, edit.double, edit.laser];
+      const choices = [this.missile, this.double, this.laser];
+      for (let k = 0; k < 3; k++) {
+        const at = slotWeapons[k].findIndex((weapon) => weapon.id === ids[k]);
+        if (at >= 0) choices[k].index = at;
+      }
+    }
+    this.syncDisabled();
+    const order = config.autoPowerUpOrder;
+    this.orderLength = 0;
+    for (let i = 0; i < order.length && i < MAX_AUTO_POWER_UP_ORDER; i++) {
+      const slot = METER_SLOT_NAMES.indexOf(order[i]);
+      if (slot >= 0) this.orderSlots[this.orderLength++] = slot;
+    }
+    this.orderLabel = this.buildOrderLabel();
+  }
+
+  /** See {@link SceneBase.stringSlots}. */
+  get stringSlots(): number {
+    return 4 + menuStringSlots(this.menu);
+  }
+
+  /** Whether TYPE is on `EDIT` (Weapon Edit). */
+  get editing(): boolean {
+    return this.type.index === this.editIndex;
+  }
+
+  /** Focus on START, locked for 2 ticks; the preview World takes off. */
+  override enter(): void {
+    super.enter();
+    this.menu.focus = WeaponSelectItem.Start;
+    this.menu.open(MENU_OPEN_LOCK_TICKS);
+    this.ensurePreview();
+  }
+
+  /** The screen closes (back to the difficulty menu, or the game starts): the preview is dropped. */
+  override exit(): void {
+    this.preview = null;
+  }
+
+  /** The order editor closed: the menu takes input again after a short lock. */
+  override uncover(): void {
+    super.uncover();
+    this.menu.open(MENU_OPEN_LOCK_TICKS);
+  }
+
+  /**
+   * Replaces the Auto Power-Up order (the order editor's DONE).
+   *
+   * @param slots - `MeterSlot` codes, in order (at most `MAX_AUTO_POWER_UP_ORDER` are kept).
+   */
+  setOrder(slots: readonly number[]): void {
+    this.orderLength = 0;
+    for (let i = 0; i < slots.length && i < MAX_AUTO_POWER_UP_ORDER; i++) {
+      const slot = slots[i];
+      if (slot >= 0 && slot < METER_SLOT_NAMES.length) this.orderSlots[this.orderLength++] = slot;
+    }
+    this.orderLabel = this.buildOrderLabel();
+    this.uiRevision++;
+  }
+
+  /**
+   * The loadout chosen now, as config fields (allocates — START only).
+   *
+   * @returns The {@link ArsenalChoice}: the preset (EDIT: the last preset chosen), the Weapon Edit
+   *   (EDIT only), the `?` / `!` choices, AUTO and the order.
+   */
+  arsenal(): ArsenalChoice {
+    const preset = this.presets[this.basePreset];
+    const order: MeterSlotName[] = [];
+    for (let i = 0; i < this.orderLength; i++) order.push(METER_SLOT_NAMES[this.orderSlots[i]]);
+    const edit: WeaponEdit | null = this.editing
+      ? {
+          missile: this.slotWeapons[0][this.missile.index].id,
+          double: this.slotWeapons[1][this.double.index].id,
+          laser: this.slotWeapons[2][this.laser.index].id,
+        }
+      : null;
+    return {
+      weaponPreset: preset === undefined ? this.flow.host.config.weaponPreset : preset.id,
+      weaponEdit: edit,
+      shieldChoice: SHIELD_CHOICES[this.shield.index] ?? 'forceField',
+      megaChoice: MEGA_CHOICES[this.mega.index] ?? 'megaCrash',
+      autoPowerUp: this.auto.value,
+      autoPowerUpOrder: order,
+    };
+  }
+
+  /**
+   * Menu input, then one preview tick. Never allocates (START builds the loadout and the game's
+   * World — a transition).
+   */
+  tick(): void {
+    const flow = this.flow;
+    const menu = this.menu;
+    const before = menu.revision;
+    const result = menuTick(menu, flow.menuInput);
+    if (menu.revision !== before) this.uiRevision++;
+    if (result === MenuResult.Back) {
+      flow.sfx(SFX_CUES.MenuBack);
+      flow.stack.pop();
+      return;
+    }
+    if (result === MenuResult.Confirmed) {
+      if (menu.focus === WeaponSelectItem.Start) {
+        flow.sfx(SFX_CUES.MenuSelect);
+        flow.chooseArsenal(this.arsenal());
+        flow.stack.reset(flow.game);
+        return;
+      }
+      if (menu.focus === WeaponSelectItem.Order) {
+        flow.sfx(SFX_CUES.MenuSelect);
+        flow.stack.push(flow.autoOrder);
+        return;
+      }
+    } else {
+      if (result === MenuResult.Changed) this.changed(menu.focus);
+      flow.menuSound(result);
+    }
+    this.stepPreview();
+  }
+
+  /**
+   * A value changed: TYPE sets the slot rows (and their disabled state), a weapon change swaps the
+   * preview's arsenal.
+   *
+   * @param item - The {@link WeaponSelectItem} that changed.
+   */
+  private changed(item: number): void {
+    if (item === WeaponSelectItem.Type) {
+      if (!this.editing) {
+        this.basePreset = this.type.index;
+        this.syncSlots();
+      }
+      this.syncDisabled();
+      this.uiRevision++;
+      this.applyArsenal();
+    } else if (
+      item === WeaponSelectItem.Missile ||
+      item === WeaponSelectItem.Double ||
+      item === WeaponSelectItem.Laser
+    ) {
+      this.applyArsenal();
+    }
+  }
+
+  /** Puts the slot rows on the base preset's weapons (the first of the slot when it has none). */
+  private syncSlots(): void {
+    const roles = this.presetRoles[this.basePreset] ?? this.presetRoles[0];
+    this.missile.index = Math.max(
+      0,
+      this.slotWeapons[0].indexOf(roles[WeaponRole.Missile] as WeaponSpec),
+    );
+    this.double.index = Math.max(
+      0,
+      this.slotWeapons[1].indexOf(roles[WeaponRole.Double] as WeaponSpec),
+    );
+    this.laser.index = Math.max(
+      0,
+      this.slotWeapons[2].indexOf(roles[WeaponRole.Laser] as WeaponSpec),
+    );
+  }
+
+  /** MISSILE / DOUBLE / LASER can be changed only with EDIT. */
+  private syncDisabled(): void {
+    const locked = !this.editing;
+    this.menu.setDisabled(WeaponSelectItem.Missile, locked);
+    this.menu.setDisabled(WeaponSelectItem.Double, locked);
+    this.menu.setDisabled(WeaponSelectItem.Laser, locked);
+  }
+
+  /** The ORDER summary: one letter per entry (`+` past eight), `NONE` when empty. */
+  private buildOrderLabel(): string {
+    if (this.orderLength === 0) return 'NONE';
+    const parts: string[] = [];
+    for (let i = 0; i < this.orderLength && i < ORDER_SUMMARY_ENTRIES; i++) {
+      parts.push(ORDER_CODES[this.orderSlots[i]]);
+    }
+    if (this.orderLength > ORDER_SUMMARY_ENTRIES) parts.push('+');
+    return parts.join(' ');
+  }
+
+  /** Creates the preview World (when the screen opens), its fly-in skipped. */
+  private ensurePreview(): void {
+    if (this.preview !== null) return;
+    const flow = this.flow;
+    const content = flow.host.content;
+    const config = resolveGameConfig({
+      ...flow.worldConfig,
+      stage: content.stageIndex.has(WEAPON_RANGE_STAGE) ? WEAPON_RANGE_STAGE : null,
+      stageSkip: 'none',
+      autofire: true,
+      remoteMode: true,
+      loadout: 'default',
+      autoPowerUp: false,
+      weaponEdit: null,
+    });
+    this.previewEvents.clear();
+    this.previewFlags.godMode = true;
+    const world = createWorld(config, content, {
+      events: this.previewEvents,
+      debugFlags: this.previewFlags,
+    });
+    const input = this.previewInput;
+    input.players[0].held = 0;
+    for (let i = 0; i < 120 && world.players[0].state !== 'alive'; i++) stepWorld(world, input);
+    world.events.clear();
+    this.preview = world;
+    this.previewTicks = 0;
+    this.applyArsenal();
+  }
+
+  /** Hands the chosen weapons to the preview (`WeaponSystem.setArsenal`). */
+  private applyArsenal(): void {
+    const world = this.preview;
+    if (world === null) return;
+    const roles = this.previewRoles;
+    const preset = this.presetRoles[this.basePreset] ?? this.presetRoles[0];
+    roles[WeaponRole.Main] = preset[WeaponRole.Main];
+    if (this.editing) {
+      roles[WeaponRole.Missile] = this.slotWeapons[0][this.missile.index] ?? null;
+      roles[WeaponRole.Double] = this.slotWeapons[1][this.double.index] ?? null;
+      roles[WeaponRole.Laser] = this.slotWeapons[2][this.laser.index] ?? null;
+    } else {
+      roles[WeaponRole.Missile] = preset[WeaponRole.Missile];
+      roles[WeaponRole.Double] = preset[WeaponRole.Double];
+      roles[WeaponRole.Laser] = preset[WeaponRole.Laser];
+    }
+    world.weapons.setArsenal(roles);
+  }
+
+  /** One preview tick: the loadout of the focused row, the weave, the World, the range's restart. */
+  private stepPreview(): void {
+    const world = this.preview;
+    if (world === null) return;
+    const loadout = world.weapons.loadouts[0];
+    const focus = this.menu.focus;
+    loadout.missile = true;
+    loadout.options = PREVIEW_OPTIONS;
+    loadout.main =
+      focus === WeaponSelectItem.Missile
+        ? MainWeapon.Basic
+        : focus === WeaponSelectItem.Double
+          ? MainWeapon.Double
+          : focus === WeaponSelectItem.Laser
+            ? MainWeapon.Laser
+            : ((this.previewTicks / 240) & 1) === 0
+              ? MainWeapon.Laser
+              : MainWeapon.Double;
+    const t = this.previewTicks % PREVIEW_WEAVE_TICKS;
+    this.previewTicks++;
+    const player = this.previewInput.players[0];
+    player.held = t < 20 || t >= 140 ? Action.Up : t >= 60 && t < 100 ? Action.Down : 0;
+    const ship = world.players[0];
+    if (ship.state === 'alive') ship.x = world.camera.x + PREVIEW_SHIP_X;
+    stepWorld(world, this.previewInput);
+    if (world.status !== 'playing') {
+      // The range ended (or anything else): fly it again from the start.
+      if (world.stage !== null) world.stage.restartAt(0);
+      world.status = 'playing';
+    }
+    world.events.clear();
+  }
+
+  /**
+   * Draws the panel, `WEAPON SELECT`, the menu, the ORDER summary and the hints.
+   *
+   * @param list - The UI list.
+   */
+  drawUi(list: DrawList): void {
+    const base = this.stringBase;
+    const p = WEAPON_PANEL;
+    const layout = WEAPON_MENU_LAYOUT;
+    drawPanel(list, p.x, p.y, p.w, p.h, UI_COLORS.panel, UI_COLORS.border, 232);
+    list.setString(base, 'WEAPON SELECT');
+    list.setString(base + 1, this.orderLabel);
+    list.setString(base + 2, 'LEFT/RIGHT: CHANGE');
+    list.setString(base + 3, 'OK ON START: GO');
+    list.text(base, p.x + (p.w >> 1), p.y + 8, UI_COLORS.title, TextAlign.Center);
+    const y = drawMenu(list, this.menu, base + 4, layout);
+    const orderY = layout.y + WeaponSelectItem.Order * (layout.lineHeight ?? 12);
+    const focused = this.menu.focus === WeaponSelectItem.Order;
+    list.text(base + 1, layout.valueX ?? 72, orderY, focused ? UI_COLORS.focus : UI_COLORS.text);
+    list.text(base + 2, p.x + 10, y + 8, UI_COLORS.disabled);
+    list.text(base + 3, p.x + 10, y + 20, UI_COLORS.disabled);
+  }
+}
+
+/**
+ * The Auto Power-Up order editor (plan M2-03 "editable Auto Power-Up order"; shmup_feat.md §6A
+ * Auto Power-Up) — opened by the weapon select's ORDER.
+ *
+ * @remarks
+ * An overlay (dim 0.35) with a panel on the right: {@link AUTO_ORDER_ROWS} rows, each one of
+ * `SPEED MISSILE DOUBLE LASER OPTION ? !` or `-` (no entry — Left / Right or OK step it), and DONE.
+ * Opening it shows the weapon select's order (its first rows; the rest `-`), focuses row 1 and
+ * locks activation for 2 ticks. DONE or Back stores the rows that are not `-`, in order, as the new
+ * order ({@link WeaponSelectScene.setOrder}) and closes it. A slot listed `n` times asks Auto
+ * Power-Up for `n` levels (`GameConfig.autoPowerUpOrder`).
+ */
+export class AutoOrderScene extends SceneBase {
+  /** See {@link Scene.id}. */
+  readonly id = 'autoOrder' as const;
+  /** An overlay: the weapon select stays visible under it. */
+  override readonly overlay = true;
+  /** Dim 0.35. */
+  override readonly dim = 0.35;
+  /** One choice per row ({@link AUTO_ORDER_LABELS}). */
+  readonly entries: readonly Choice[];
+  /** The rows, then DONE. */
+  readonly menu: ListMenu;
+
+  /**
+   * Creates the editor.
+   *
+   * @param flow - The flow.
+   */
+  constructor(flow: FlowControl) {
+    super(flow);
+    const entries: Choice[] = [];
+    const items: MenuItemSpec[] = [];
+    for (let i = 0; i < AUTO_ORDER_ROWS; i++) {
+      const choice = createChoice(AUTO_ORDER_LABELS, AUTO_ORDER_LABELS.length - 1);
+      entries.push(choice);
+      items.push({ label: String(i + 1), choice });
+    }
+    items.push('DONE');
+    this.entries = entries;
+    this.menu = createListMenu(items);
+  }
+
+  /** See {@link SceneBase.stringSlots}. */
+  get stringSlots(): number {
+    return 1 + menuStringSlots(this.menu);
+  }
+
+  /** Shows the weapon select's order; focus on row 1, locked for 2 ticks. */
+  override enter(): void {
+    super.enter();
+    const select = this.flow.weaponSelect;
+    const none = AUTO_ORDER_LABELS.length - 1;
+    for (let i = 0; i < AUTO_ORDER_ROWS; i++) {
+      this.entries[i].index = i < select.orderLength ? select.orderSlots[i] : none;
+    }
+    this.menu.focus = 0;
+    this.menu.open(MENU_OPEN_LOCK_TICKS);
+  }
+
+  /** Stores the rows as the order (allocates — a menu action) and closes. */
+  private close(): void {
+    const slots: number[] = [];
+    const none = AUTO_ORDER_LABELS.length - 1;
+    for (const entry of this.entries) if (entry.index !== none) slots.push(entry.index);
+    this.flow.weaponSelect.setOrder(slots);
+    this.flow.sfx(SFX_CUES.MenuBack);
+    this.flow.stack.pop();
+  }
+
+  /** Rows change with Left / Right / OK; DONE or Back stores and closes. Never allocates. */
+  tick(): void {
+    const flow = this.flow;
+    const menu = this.menu;
+    const before = menu.revision;
+    const result = menuTick(menu, flow.menuInput);
+    if (menu.revision !== before) this.uiRevision++;
+    if (
+      result === MenuResult.Back ||
+      (result === MenuResult.Confirmed && menu.focus === AUTO_ORDER_ROWS)
+    ) {
+      this.close();
+      return;
+    }
+    if (result === MenuResult.Confirmed) return;
+    flow.menuSound(result);
+  }
+
+  /**
+   * Draws the panel, `AUTO ORDER` and the rows.
+   *
+   * @param list - The UI list.
+   */
+  drawUi(list: DrawList): void {
+    const base = this.stringBase;
+    const p = ORDER_PANEL;
+    drawPanel(list, p.x, p.y, p.w, p.h, UI_COLORS.panel, UI_COLORS.border, 255);
+    list.setString(base, 'AUTO ORDER');
+    list.text(base, p.x + (p.w >> 1), p.y + 8, UI_COLORS.title, TextAlign.Center);
+    drawMenu(list, this.menu, base + 1, ORDER_MENU_LAYOUT);
+  }
+}
+
 /** The M1 scene flow (see the module docs). */
 export interface SceneFlow {
   /** The scene stack. */
@@ -1958,6 +2678,10 @@ export interface SceneFlow {
   readonly options: OptionsScene;
   /** The difficulty menu under START (M2-01). */
   readonly difficultyMenu: DifficultyScene;
+  /** The weapon select after the difficulty menu (M2-03). */
+  readonly weaponSelect: WeaponSelectScene;
+  /** The Auto Power-Up order editor of the weapon select (M2-03). */
+  readonly autoOrder: AutoOrderScene;
   /** The continue countdown (M2-01). */
   readonly continueScreen: ContinueScene;
   /**
@@ -1974,9 +2698,12 @@ export interface SceneFlow {
   readonly difficulty: DifficultyPreset;
   /**
    * The config the next game's World gets: the host's for its own difficulty, `withDifficulty` of
-   * it for another (the content's `rules` table — or the built-in one — gives the preset fields).
+   * it for another (the content's `rules` table — or the built-in one — gives the preset fields),
+   * with the weapon select's loadout (`withArsenal`, M2-03).
    */
   readonly gameConfig: GameConfig;
+  /** The loadout chosen in the weapon select (empty until its first START — M2-03). */
+  readonly arsenal: ArsenalChoice;
   /** The input profiles the Options screen offers (empty: CONTROLS disabled). */
   readonly inputProfiles: readonly InputProfileChoice[];
   /**
@@ -2054,7 +2781,10 @@ export interface SceneFlowView {
    * backdrop keeps drifting).
    */
   readonly tick: number;
-  /** The game's World view while the game scene is visible, else `null`. */
+  /**
+   * The game's World view while the game scene is visible, the weapon select's preview while that
+   * is visible (M2-03), else `null`.
+   */
   readonly world: WorldView | null;
   /** The HUD list while the game scene is visible, else an empty list. */
   readonly hud: DrawList;
@@ -2107,6 +2837,8 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     configs.push(config);
     bests[i] = Math.min(MAX_SCORE, save.bestScore(hiScoreModeKey(config)));
   }
+  // The same with the weapon select's loadout (M2-03): the configs themselves until a START.
+  const armed: GameConfig[] = configs.slice();
   /**
    * Index of a preset in {@link DIFFICULTY_PRESETS} (0 for an unknown one).
    *
@@ -2134,7 +2866,17 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     configs,
     bests,
     get worldConfig(): GameConfig {
-      return configs[presetIndex(control.difficulty)];
+      return armed[presetIndex(control.difficulty)];
+    },
+    arsenal: {},
+    chooseArsenal(arsenal: ArsenalChoice): void {
+      // A loadout the config already has keeps the config object (the host's, for its preset).
+      for (let i = 0; i < configs.length; i++) {
+        armed[i] = arsenalMatches(configs[i], arsenal)
+          ? configs[i]
+          : withArsenal(configs[i], arsenal);
+      }
+      control.arsenal = arsenal;
     },
     get modeKey(): string {
       return hiScoreModeKey(control.worldConfig);
@@ -2208,6 +2950,8 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
   control.confirm = new ConfirmDialog(control);
   control.options = new OptionsScene(control);
   control.difficultyMenu = new DifficultyScene(control);
+  control.weaponSelect = new WeaponSelectScene(control);
+  control.autoOrder = new AutoOrderScene(control);
   control.continueScreen = new ContinueScene(control);
   control.game.world.scoring.board.setHiScore(control.hiScore);
   // The placeholder World queued its stage theme; the flow does not start in the stage.
@@ -2223,6 +2967,8 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     control.confirm,
     control.options,
     control.difficultyMenu,
+    control.weaponSelect,
+    control.autoOrder,
     control.continueScreen,
   ];
   let base = 0;
@@ -2265,6 +3011,8 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     confirm: control.confirm,
     options: control.options,
     difficultyMenu: control.difficultyMenu,
+    weaponSelect: control.weaponSelect,
+    autoOrder: control.autoOrder,
     continueScreen: control.continueScreen,
     save,
     get modeKey(): string {
@@ -2275,6 +3023,9 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     },
     get gameConfig(): GameConfig {
       return control.worldConfig;
+    },
+    get arsenal(): ArsenalChoice {
+      return control.arsenal;
     },
     inputProfiles: profiles,
     get activeInputProfile(): number {
@@ -2303,13 +3054,25 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
       while (bottom > 0 && stack.sceneAt(bottom)?.overlay === true) bottom--;
       if (bottom < 0) bottom = 0;
       const game = control.game;
+      const select = control.weaponSelect;
       let gameVisible = false;
-      for (let i = bottom; i < depth; i++) if (stack.sceneAt(i) === game) gameVisible = true;
+      let selectVisible = false;
+      for (let i = bottom; i < depth; i++) {
+        const scene = stack.sceneAt(i);
+        if (scene === game) gameVisible = true;
+        else if (scene === select) selectVisible = true;
+      }
+      const preview = select.preview;
       if (gameVisible) {
         view.tick = game.world.tick;
         view.world = game.world.view;
         game.hud.update(game.world, game.hudList);
         view.hud = game.hudList;
+      } else if (selectVisible && preview !== null) {
+        // The weapon select's live preview (M2-03): its World, no HUD.
+        view.tick = preview.tick;
+        view.world = preview.view;
+        view.hud = emptyHud;
       } else {
         view.tick = flowTicks;
         view.world = null;

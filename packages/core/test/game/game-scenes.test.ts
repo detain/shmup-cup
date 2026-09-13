@@ -51,10 +51,13 @@ describe('core/game with and without the scene flow', () => {
     expect(game.scenes?.stack.top?.id).toBe('difficulty');
     press(Action.Confirm); // NORMAL (buffered by the menu's open lock)
     game.step();
+    expect(game.scenes?.stack.top?.id).toBe('weaponSelect');
+    press(Action.Confirm); // START in the weapon select (M2-03), buffered by its lock too
+    game.step();
     expect(game.scenes?.stack.top?.id).toBe('game');
     expect(game.world).not.toBe(placeholder);
     expect(game.world.events).toBe(game.events);
-    expect(game.state.tick).toBe(7);
+    expect(game.state.tick).toBe(10);
   });
 
   it('host pause and platform suspend freeze the flow; resume opens the pause menu', () => {

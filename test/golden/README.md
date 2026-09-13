@@ -13,6 +13,8 @@ score, lives, death ticks, boss kill).
 | `zone-a-arcade` | 4-way playtest bot | Arcade difficulty (rank 6) without god mode, to `stageClear` |
 | `zone-a-deaths` | a weaving pilot that never dodges | deaths, Classic respawns, `gameOver` |
 | `zone-a-boss` | 4-way playtest bot | the stage skip to the boss, full loadout, Arcade penalty |
+| `zone-a-type-b` | 4-way playtest bot | the boss with a full Type B loadout (M2-03): Ripple Laser, Spread Bomb blasts |
+| `zone-a-edit` | 4-way playtest bot | the boss with a Weapon Edit (Twin Laser, 2-Way Missile, Free Way) and LIFE OPTION on `!` (M2-03) |
 
 - `golden.test.ts` (part of `pnpm test`) plays every file back into a fresh session: every hash and
   the outcome must match. A failure means the simulation changed.

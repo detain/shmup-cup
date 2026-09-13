@@ -24,6 +24,7 @@ import * as shields from './shields.mjs';
 import * as starfield from './starfield.mjs';
 import * as terrain from './terrain.mjs';
 import * as ui from './ui.mjs';
+import * as weapons from './weapons.mjs';
 
 /** @typedef {import('../sprite-source.mjs').SpriteDef} SpriteDef */
 
@@ -45,6 +46,7 @@ export const PROCEDURAL_GENERATORS = [
   { id: 'starfield', generate: starfield.generate },
   { id: 'terrain', generate: terrain.generate },
   { id: 'ui', generate: ui.generate },
+  { id: 'weapons', generate: weapons.generate },
 ];
 
 /**

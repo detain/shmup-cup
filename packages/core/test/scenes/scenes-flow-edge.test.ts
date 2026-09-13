@@ -163,6 +163,10 @@ class Session {
   chooseNormal(player = 0): void {
     this.press(Action.Confirm, player);
     this.hold(0, 1, player);
+    // The weapon select (M2-03) opens focused on START: the same buffered OK starts the game.
+    expect(this.top).toBe('weaponSelect');
+    this.press(Action.Confirm, player);
+    this.hold(0, 1, player);
     expect(this.top).toBe('game');
   }
 

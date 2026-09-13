@@ -242,6 +242,8 @@ describe('core/scenes flow: title → game → pause → quit → title', () => 
     expect(s.ids).toEqual(['title', 'difficulty']);
     s.press(Action.Confirm); // NORMAL (buffered: it acts once the menu's 2-tick lock is over)
     s.hold(0);
+    s.press(Action.Confirm); // START in the weapon select (M2-03; buffered by its lock)
+    s.hold(0);
     expect(s.top).toBe('game');
     expect(s.game.inputContext).toBe('game');
     const world = s.game.world;
@@ -383,6 +385,8 @@ describe('core/scenes flow: game over and stage clear', () => {
     s.press(Action.Confirm);
     s.press(Action.Confirm); // NORMAL (buffered: it acts once the menu's 2-tick lock is over)
     s.hold(0);
+    s.press(Action.Confirm); // START in the weapon select (M2-03; buffered by its lock)
+    s.hold(0);
     expect(s.game.world.scoring.board.hiScore).toBe(4200);
     expect(s.game.world.scoring.board.scores[0].score).toBe(0);
     s.flow.setHiScore(90_000);
@@ -399,6 +403,8 @@ describe('core/scenes flow: the render frame', () => {
     s.press(Action.Confirm);
     s.press(Action.Confirm);
     s.press(Action.Confirm); // NORMAL (buffered: it acts once the menu's 2-tick lock is over)
+    s.hold(0);
+    s.press(Action.Confirm); // START in the weapon select (M2-03; buffered by its lock)
     s.hold(0);
     frame = s.game.renderFrame();
     expect(frame.world).toBe(s.game.world.view);
@@ -439,6 +445,8 @@ describe('core/scenes flow: the render frame', () => {
     s.press(Action.Confirm);
     s.press(Action.Confirm); // NORMAL (buffered: it acts once the menu's 2-tick lock is over)
     s.hold(0);
+    s.press(Action.Confirm); // START in the weapon select (M2-03; buffered by its lock)
+    s.hold(0);
     expect(s.game.renderFrame().tick).toBe(s.game.world.tick);
     s.hold(0, 30);
     const tick = s.game.renderFrame().tick;
@@ -469,6 +477,8 @@ describe('core/scenes flow: the render frame', () => {
       s.press(Action.Confirm);
       s.press(Action.Confirm);
       s.press(Action.Confirm); // NORMAL (buffered: it acts once the menu's 2-tick lock is over)
+      s.hold(0);
+      s.press(Action.Confirm); // START in the weapon select (M2-03; buffered by its lock)
       s.hold(0);
       for (let t = 0; t < 400; t++) s.hold(t % 90 < 45 ? Action.Up : Action.Down | Action.Shot);
       s.press(Action.Pause);

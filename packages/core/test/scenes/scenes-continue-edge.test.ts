@@ -101,6 +101,9 @@ class Session {
     this.openDifficulty();
     for (let i = 0; i < downs; i++) this.press(Action.Down);
     this.press(Action.Confirm);
+    // The weapon select (M2-03) opens focused on START: OK starts once its lock is over.
+    expect(this.ids).toEqual(['title', 'difficulty', 'weaponSelect']);
+    this.press(Action.Confirm);
     expect(this.ids).toEqual(['game']);
   }
 
@@ -228,6 +231,7 @@ describe('core/scenes difficulty menu edges (M2-01)', () => {
     from = s.events.length;
     s.press(Action.Confirm);
     expect(s.sounds(from)[0]).toBe(SFX_CUES.MenuSelect);
+    s.press(Action.Confirm); // START in the weapon select (M2-03)
     expect(s.game.world.config.difficulty).toBe('easy');
   });
 
@@ -246,6 +250,7 @@ describe('core/scenes difficulty menu edges (M2-01)', () => {
     s.openDifficulty();
     s.press(Action.Up);
     s.press(Action.Confirm);
+    s.press(Action.Confirm); // START in the weapon select (M2-03): the loadout it had
     expect(s.game.world.config).toBe(s.game.config);
     expect(s.game.world.config.startingLives).toBe(5);
   });

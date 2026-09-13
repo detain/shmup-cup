@@ -36,6 +36,9 @@ describe('core/game edge: the scene flow', () => {
     press(game, platform, Action.Confirm); // NORMAL (buffered by the menu's open lock)
     game.step();
     contexts.push(game.inputContext);
+    press(game, platform, Action.Confirm); // START in the weapon select (M2-03)
+    game.step();
+    contexts.push(game.inputContext);
     const first = game.world;
     expect(first).toBe(flow.world);
     press(game, platform, Action.Pause);
@@ -46,7 +49,7 @@ describe('core/game edge: the scene flow', () => {
     contexts.push(game.inputContext);
     expect(game.world).not.toBe(first);
     expect(game.world).toBe(flow.world);
-    expect(contexts).toEqual(['menu', 'game', 'menu', 'game']);
+    expect(contexts).toEqual(['menu', 'menu', 'game', 'menu', 'game']);
   });
 
   it('offers EXIT only on a platform that can quit', () => {

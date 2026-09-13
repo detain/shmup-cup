@@ -115,9 +115,18 @@ describe('core/behaviors registry', () => {
   it('knows the weapon behaviours too (one script table), sorted', () => {
     expect(WEAPON_SCRIPT_IDS).toEqual([
       'laser.beam',
+      'laser.cyclone',
+      'laser.ripple',
+      'laser.twin',
       'missile.groundSlide',
+      'missile.spreadBomb',
+      'missile.torpedo',
+      'missile.twoWay',
       'shot.double',
+      'shot.freeWay',
       'shot.straight',
+      'shot.tailGun',
+      'shot.vertical',
     ]);
     expect(KNOWN_SCRIPT_IDS).toEqual(
       [...BEHAVIOR_IDS, ...BOSS_BEHAVIOR_IDS, ...WEAPON_SCRIPT_IDS].sort(),

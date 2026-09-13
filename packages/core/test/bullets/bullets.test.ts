@@ -208,6 +208,8 @@ describe('core/bullets', () => {
     ]);
     expect(ENGINE_SPRITES).toEqual([
       ...BULLET_SPRITES,
+      // The Spread Bomb's blast (M2-03).
+      'shots/blast',
       'options/orb',
       'items/capsule',
       'shields/force-field',

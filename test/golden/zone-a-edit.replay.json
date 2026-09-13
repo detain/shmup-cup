@@ -1,0 +1,76 @@
+{
+  "kind": "replay",
+  "header": {
+    "formatVersion": 1,
+    "buildId": "golden",
+    "seed": 7,
+    "stageId": "zone-a",
+    "checkpoint": -1,
+    "loadout": "full",
+    "assisted": false,
+    "config": {
+      "internalWidth": 384,
+      "internalHeight": 216,
+      "tickRate": 60,
+      "maxTicksPerFrame": 4,
+      "seed": 7,
+      "difficulty": "normal",
+      "rankBase": 2,
+      "rankGrowth": 1,
+      "extendFirst": 20000,
+      "extendEvery": 70000,
+      "continues": 3,
+      "bulletSpeedMul": 1,
+      "powerUpMode": "meter",
+      "deathPenalty": "classic",
+      "startingLives": 3,
+      "autofire": true,
+      "remoteMode": true,
+      "stage": "zone-a",
+      "stageSkip": "boss",
+      "aimDirections": 32,
+      "autofireInterval": 4,
+      "missileInterval": 10,
+      "loadout": "full",
+      "autoPowerUp": false,
+      "autoPowerUpOrder": [
+        "speed",
+        "missile",
+        "laser",
+        "option",
+        "option",
+        "option",
+        "option",
+        "shield"
+      ],
+      "pickupMagnet": true,
+      "weaponPreset": "type-a",
+      "weaponEdit": {
+        "missile": "missile.twoWay",
+        "double": "shot.free",
+        "laser": "laser.twin"
+      },
+      "megaChoice": "lifeOption",
+      "shieldChoice": "forceField"
+    }
+  },
+  "ticks": 765,
+  "hashInterval": 600,
+  "inputs": [
+    "ACiCgAgBAgEA0wU=",
+    "AP0F"
+  ],
+  "hashes": [
+    1065476602
+  ],
+  "finalHash": 2641635175,
+  "description": "HALCYON BULWARK with a Weapon Edit loadout (M2-03): Twin Laser, 2-Way Missile, LIFE OPTION on `!`",
+  "expected": {
+    "status": "stageClear",
+    "ticks": 765,
+    "score": 37060,
+    "lives": 4,
+    "deathTicks": [],
+    "bossDefeated": true
+  }
+}

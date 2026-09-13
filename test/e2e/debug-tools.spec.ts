@@ -154,6 +154,8 @@ async function startGame(page: Page, url: string): Promise<string[]> {
   await tap(page, 'Enter'); // START
   await expect.poll(async () => (await view(page)).sceneId).toBe('difficulty');
   await tap(page, 'Enter'); // NORMAL
+  await expect.poll(async () => (await view(page)).sceneId).toBe('weaponSelect');
+  await tap(page, 'Enter'); // START in the weapon select (M2-03)
   await expect.poll(async () => (await view(page)).sceneId).toBe('game');
   return errors;
 }
