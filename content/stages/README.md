@@ -188,8 +188,10 @@ tile the tileset does not have.
 **Authoring in Tiled (M2-07).** `pnpm content:tiled <map.tmj>` (`scripts/content/tiled-import.mjs`)
 converts a Tiled JSON map into this format: the tile layer becomes the `rle` rows, object-layer
 entities become events at their scroll x (a spawn 400 px ahead of its object), camera keys,
-checkpoints, triggers, blocks and branches, polylines become a `content/paths/` file. See the
-script's docblock for the rules.
+checkpoints, triggers, blocks and branches, polylines become a `content/paths/` file. Objects sit
+at world positions; since a spawn's `y` is camera-relative, the importer subtracts the camera y
+the imported keys give when the spawn fires (vertical and diagonal pans included; a spawn that may
+fire during a timed `yTicks` pan gets a warning). See the script's docblock for the rules.
 
 See [`example.stage.json`](example.stage.json) (RLE rows over the example tileset, formations,
 a boss lock).

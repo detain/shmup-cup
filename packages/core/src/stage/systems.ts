@@ -535,7 +535,9 @@ export class StageGimmicks implements EnemyGimmicks {
     const blocks = this.blocks;
     if (blocks !== null) blocks.update(host.camera);
     const d = this.destructible;
-    if (d === null || !d.any) return;
+    if (d === null) return;
+    // The keep-out rectangles are set whether or not a tile is destructible: `place` (the cube
+    // rush) reads them too, and its tile need not have `hp`.
     d.clearKeepOut();
     const box = host.ship.terrainBox;
     for (let i = 0; i < players.length; i++) {
@@ -548,7 +550,7 @@ export class StageGimmicks implements EnemyGimmicks {
         (Math.ceil(ship.y + box.hh) | 0) - 1,
       );
     }
-    d.update();
+    if (d.any) d.update();
   }
 
   /**

@@ -2619,8 +2619,10 @@ Goal of the milestone: every **[P1]** feature. Steps are ordered so systems land
     `scripts/content/tiled-import.mjs` (root script `pnpm content:tiled`) with the fixture map
     `test/scripts/content/fixtures/tiled-sample.tmj` and its expected stage / paths JSON. Tiled
     objects are read by class (`class`, or `type` before Tiled 1.9); spawns fire 400 px before
-    their object's x (`screenX` only when nearer the start); gids map to content tile ids by
-    tileset order; flipped tiles and compressed / base64 layers are refused.
+    their object's x (`screenX` only when nearer the start), their `y` made camera-relative with
+    the camera y the imported keys give at the event (`cameraYAt`; a spawn during a timed pan is
+    warned about); gids map to content tile ids by tileset order; flipped tiles and compressed /
+    base64 layers are refused.
 
 ### M2-08 — Presentation polish: raster effects, palettes, visual options
 

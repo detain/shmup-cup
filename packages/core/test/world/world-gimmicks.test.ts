@@ -214,6 +214,61 @@ describe('core/world — destructible terrain', () => {
     run(w, input, 0, 4);
     expect(map.tiles[12 * map.cols + 20]).toBe(TISSUE);
   });
+
+  it('keeps placed tiles off the ships even when no tile of the tileset has hp', () => {
+    // `terrain-a` without any `hp`: a cube rush whose `cube` tile is plain solid terrain.
+    const tileset = shipped('tilesets/terrain-a.tileset.json');
+    const data = tileset.data as { id: string; tiles: Record<string, unknown>[] };
+    const hard = {
+      ...data,
+      id: 'terrain-hard',
+      tiles: data.tiles.map(({ hp: _hp, regen: _regen, score: _score, ...tile }) => tile),
+    };
+    const { db: content, issues } = loadContent(
+      [
+        shipped('player/kestrel.player.json'),
+        shipped('weapons/type-a.weapons.json'),
+        { path: 'tilesets/terrain-hard.tileset.json', data: hard },
+        {
+          path: 'stages/t.stage.json',
+          data: {
+            formatVersion: 1,
+            kind: 'stage',
+            id: 't',
+            name: 'T',
+            music: { stage: 'Stage', boss: 'Boss' },
+            length: 2000,
+            camera: [{ x: 0, speed: 0 }],
+            checkpoints: [{ x: 0 }],
+            parallax: [],
+            tilemap: {
+              tileSize: 8,
+              tileset: 'terrain-hard',
+              rowsTall: 25,
+              rle: Array.from({ length: 25 }, () => ''),
+            },
+            events: [],
+          },
+        },
+      ],
+      { extraSprites: ENGINE_SPRITES },
+    );
+    expect(issues).toEqual([]);
+    const w = world(content);
+    const d = w.gimmicks.destructible;
+    if (d === null) throw new Error('no destructible terrain');
+    expect(d.any).toBe(false);
+    expect(d.keepOutCount).toBe(1);
+    const ship = w.players[0];
+    const col = Math.floor(ship.x / 8);
+    const row = Math.floor(ship.y / 8);
+    const cube = w.gimmicks.tileId('cube');
+    expect(cube).toBeGreaterThan(0);
+    // Under the ship: refused (it would be buried); a few cells ahead: placed.
+    expect(d.place(col, row, cube)).toBe(false);
+    expect(w.terrain?.tiles[row * (w.terrain?.cols ?? 0) + col]).toBe(0);
+    expect(d.place(col + 8, row, cube)).toBe(true);
+  });
 });
 
 describe('core/world — moving blocks', () => {

@@ -7,7 +7,9 @@
   "length": 416,
   "camera": [
     { "x": 0, "speed": 1, "ramp": 30 },
-    { "x": 200, "speed": 1.5 }
+    { "x": 200, "speed": 1.5 },
+    { "x": 320, "speed": 1.5, "yTo": 16, "yOver": 64 },
+    { "x": 380, "speed": 1, "yTo": 40, "yTicks": 30, "hold": 60 }
   ],
   "checkpoints": [{ "x": 0 }, { "x": 300 }],
   "parallax": [],
@@ -72,7 +74,9 @@
       "period": 120
     },
     { "x": 300, "type": "spawn", "enemy": "carrier", "y": 150, "branch": "low" },
+    { "x": 352, "type": "spawn", "enemy": "drifter", "y": 100 },
     { "x": 380, "type": "music", "cue": "Boss" },
+    { "x": 390, "type": "spawn", "enemy": "drifter", "y": 80 },
     { "x": 416, "type": "end" }
   ],
   "branches": [{ "id": "low", "flag": "took-low" }]

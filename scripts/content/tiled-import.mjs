@@ -27,9 +27,14 @@
  * - `spawn`, `formation` — the object's position is the enemy's spawn point in the world: the
  *   event fires at `x = max(0, round(obj.x) − 400)` (so the enemy appears 16 px past the right
  *   edge, the default `screenX`), `screenX` is written only when it is not 400 (an object nearer
- *   the start than 400 px), `y = round(obj.y)`; the enemy id is the `enemy` property or the
- *   object's name. A spawn takes `path` and `branch`; a formation also `count`, `interval`,
- *   `drop` and `bonus`.
+ *   the start than 400 px); the enemy id is the `enemy` property or the object's name. A spawn
+ *   takes `path` and `branch`; a formation also `count`, `interval`, `drop` and `bonus`. A
+ *   stage's spawn `y` is **relative to the camera** (playfield pixels), so the importer writes
+ *   `y = round(obj.y − cameraY)`, where `cameraY` is the camera y the imported camera keys give
+ *   when the event fires ({@link cameraYAt}: `yTo` of the keys before the event's x, a diagonal
+ *   `yOver` pan interpolated). A timed pan (`yTicks`) counts as finished at its key; a spawn that
+ *   fires while one may still be running (estimated from the key's speed, after its `hold`) gets
+ *   a warning — move it, or make the pan diagonal or part of a hold.
  * - `warning`, `boss`, `music`, `speed`, `flag`, `end` — an event at `x = round(obj.x)` (the camera
  *   x); `enemy` (or the object's name), `cue`, `speed`, `ramp`, `flag`, `value`, `branch`.
  * - `camera` — a camera key at `round(obj.x)`: `speed` (required), `ramp`, `yTo`, `yTicks`,
@@ -49,13 +54,14 @@
  * drawing order). Unknown classes are errors, so a typo does not silently drop an enemy.
  *
  * **Output.** `<stages>/<id>.stage.json` (`parallax: []` — add bands in the JSON) and, when the
- * map has polylines, `<paths>/<id>.paths.json`; formatted like the rest of `content/`. Options:
+ * map has polylines, `<paths>/<id>.paths.json`; formatted like the rest of `content/`; warnings
+ * go to stderr (the files are still written). Options:
  * `--stages DIR` (default `content/stages`), `--paths DIR` (default `content/paths`), `--id ID`
  * (overrides the map's `id`), `--print` (writes nothing, prints the JSON).
  *
- * **Public API.** {@link convertTiledMap}, {@link encodeRleRow}, {@link readTiledProperties},
- * {@link decodeTileLayer}, {@link TiledImportError}, {@link SPAWN_LEAD}, {@link VIEW_WIDTH},
- * {@link TILED_TILE_SIZE}.
+ * **Public API.** {@link convertTiledMap}, {@link cameraYAt}, {@link encodeRleRow},
+ * {@link readTiledProperties}, {@link decodeTileLayer}, {@link TiledImportError},
+ * {@link SPAWN_LEAD}, {@link VIEW_WIDTH}, {@link TILED_TILE_SIZE}.
  *
  * @module
  */
@@ -266,12 +272,92 @@ function round2(value) {
 }
 
 /**
+ * The camera y a stage's camera keys give when the camera reaches scroll x `x` — what a spawn
+ * event at `x` adds to its `y` (`core/enemies` spawns at `camera.y + y`). Follows the runner
+ * (`core/stage`): a key applies one tick after the camera reaches it, so only keys before `x`
+ * count (and the key at 0, which the first tick applies before the events at 0); a `yTo` pan
+ * starts from the y the camera had at its key; a diagonal pan (`yOver`) is interpolated linearly
+ * in the scroll x; a timed pan (`yTicks`, time-based) counts as finished.
+ *
+ * @param {readonly Record<string, unknown>[]} keys - Camera keys, sorted by `x`.
+ * @param {number} x - Scroll x (the event's `x`).
+ * @returns {number} The camera y.
+ *
+ * @example
+ * ```js
+ * cameraYAt([{ x: 0, speed: 1 }, { x: 100, speed: 1, yTo: 40, yOver: 80 }], 120); // → 10
+ * ```
+ */
+export function cameraYAt(keys, x) {
+  // The running pan: from `from` to `to` over `over` scroll px from `startX` (0 = done at once).
+  let from = 0;
+  let to = 0;
+  let startX = 0;
+  let over = 0;
+  for (const key of keys) {
+    const kx = Number(key.x);
+    if (!(kx < x || kx === 0)) break;
+    if (key.yTo === undefined) continue;
+    from = panY(from, to, startX, over, kx);
+    to = Number(key.yTo);
+    startX = kx;
+    over = Number(key.yOver ?? 0) > 0 ? Number(key.yOver) : 0;
+  }
+  return panY(from, to, startX, over, x);
+}
+
+/**
+ * The y of a pan at scroll x (see {@link cameraYAt}).
+ *
+ * @param {number} from - Start y.
+ * @param {number} to - Target y.
+ * @param {number} startX - Scroll x the pan starts at.
+ * @param {number} over - Scroll pixels it takes (0 = at once).
+ * @param {number} x - Scroll x.
+ * @returns {number} The y.
+ */
+function panY(from, to, startX, over, x) {
+  if (over <= 0) return to;
+  const t = (x - startX) / over;
+  if (t >= 1) return to;
+  return t > 0 ? from + (to - from) * t : from;
+}
+
+/**
+ * Why a spawn event at `x` may see a timed pan (`yTicks`) still running, or `null`: the pan runs
+ * `yTicks` ticks from its key, minus the key's `hold` (the camera stands still meanwhile; not
+ * after a `lock`, which waits for the boss), estimated at the key's speed.
+ *
+ * @param {readonly Record<string, unknown>[]} keys - Camera keys, sorted by `x`.
+ * @param {number} x - Scroll x of the event.
+ * @returns {string | null} The warning text, or `null`.
+ */
+function runningPanAt(keys, x) {
+  /** @type {Record<string, unknown> | null} */
+  let last = null;
+  for (const key of keys) {
+    const kx = Number(key.x);
+    if (!(kx < x || kx === 0)) break;
+    if (key.yTo !== undefined) last = key;
+  }
+  if (last === null || last.yTicks === undefined || last.lock === true) return null;
+  const ticks = Number(last.yTicks) - Number(last.hold ?? 0);
+  const end = Number(last.x) + ticks * Number(last.speed ?? 0);
+  if (!(ticks > 0) || x >= end) return null;
+  return (
+    `the timed camera pan of the key at x ${String(last.x)} may still be running at x ${x} ` +
+    `(until about x ${Math.round(end)}); y assumes it has reached ${String(last.yTo)}`
+  );
+}
+
+/**
  * Converts a parsed Tiled JSON map into a stage (and its paths). Pure: no file access.
  *
  * @param {Record<string, any>} map - The parsed `.tmj`.
  * @param {{ id?: string }} [options] - `id` overrides the map's `id` property.
- * @returns {{ stage: Record<string, unknown>, paths: Record<string, unknown> | null }} The stage
- *   file's JSON, and the paths file's JSON (`null` without polylines).
+ * @returns {{ stage: Record<string, unknown>, paths: Record<string, unknown> | null,
+ *   warnings: string[] }} The stage file's JSON, the paths file's JSON (`null` without
+ *   polylines) and the warnings (spawns placed during a timed camera pan).
  * @throws {TiledImportError} When the map breaks the rules in the module docs.
  *
  * @example
@@ -320,6 +406,8 @@ export function convertTiledMap(map, options = {}) {
   const paths = [];
   /** @type {{ event: Record<string, unknown>, order: number }[]} */
   const events = [];
+  /** @type {{ event: Record<string, unknown>, worldY: number, where: string }[]} */
+  const spawns = [];
 
   let order = 0;
   for (const layer of layers) {
@@ -357,9 +445,10 @@ export function convertTiledMap(map, options = {}) {
           event.count = p.count;
           event.interval = p.interval;
         }
-        event.y = oy;
+        event.y = oy; // world y for now: made camera-relative once the camera keys are known
         if (ox - x !== SPAWN_LEAD) event.screenX = ox - x;
         copyFields(event, p, cls === 'formation' ? FORMATION_FIELDS : SPAWN_FIELDS);
+        spawns.push({ event, worldY: Number(object.y), where });
       } else if (MARKER_EVENTS.has(cls)) {
         event = { x: ox, type: cls };
         if (cls === 'warning' || cls === 'boss') event.enemy = p.enemy ?? object.name;
@@ -408,6 +497,16 @@ export function convertTiledMap(map, options = {}) {
   if (camera.length === 0 || camera[0].x !== 0) {
     camera.unshift({ x: 0, speed: props.speed !== undefined ? Number(props.speed) : 1 });
   }
+  // Spawn y is relative to the camera: subtract the camera y at the moment the event fires.
+  /** @type {string[]} */
+  const warnings = [];
+  for (const { event, worldY, where } of spawns) {
+    const at = Number(event.x);
+    const y = Math.round(worldY - cameraYAt(camera, at));
+    event.y = y === 0 ? 0 : y;
+    const running = runningPanAt(camera, at);
+    if (running !== null) warnings.push(`${where}: ${running}`);
+  }
 
   /** @type {Record<string, unknown>} */
   const stage = {
@@ -435,6 +534,7 @@ export function convertTiledMap(map, options = {}) {
   return {
     stage,
     paths: paths.length === 0 ? null : { formatVersion: 1, kind: 'paths', paths },
+    warnings,
   };
 }
 
@@ -492,7 +592,8 @@ function main(args) {
     const map = JSON.parse(readFileSync(options.file, 'utf8'));
     const fallbackId = basename(options.file).replace(/\.(tmj|json)$/i, '');
     const id = options.id ?? readTiledProperties(map.properties).id ?? fallbackId;
-    const { stage, paths } = convertTiledMap(map, { id: String(id) });
+    const { stage, paths, warnings } = convertTiledMap(map, { id: String(id) });
+    for (const warning of warnings) console.error(`warning: ${warning}`);
     if (options.print) {
       process.stdout.write(formatJson(stage));
       if (paths !== null) process.stdout.write(formatJson(paths));

@@ -9,12 +9,13 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { loadContent } from '@shmup/core';
+import { StageEventCode, createStageRunner, loadContent } from '@shmup/core';
 import { afterAll, describe, expect, it } from 'vitest';
 import {
   SPAWN_LEAD,
   TiledImportError,
   VIEW_WIDTH,
+  cameraYAt,
   convertTiledMap,
   decodeTileLayer,
   encodeRleRow,
@@ -100,6 +101,44 @@ describe('scripts/content/tiled-import.mjs — the committed fixture', () => {
     expect(spec.events.find((e) => e.type === 'block')).toMatchObject({
       tileId: db.tilesets[spec.terrain?.tilesetId ?? -1].tables.byName.get('solid'),
     });
+  });
+
+  it('puts every spawn where its object is in the world, under the panning camera too', () => {
+    const tmj = fixture('tiled-sample.tmj') as {
+      layers: { objects?: { class?: string; x: number; y: number }[] }[];
+    };
+    const { stage, paths, warnings } = convertTiledMap(tmj);
+    expect(warnings).toEqual([]);
+    const { db, issues } = loadContent([
+      ...readContentFiles(),
+      { path: 'stages/tiled-sample.stage.json', data: stage },
+      { path: 'paths/tiled-sample.paths.json', data: paths },
+    ]);
+    expect(issues).toEqual([]);
+    const spec = db.stages[db.stageIndex.get('tiled-sample') ?? -1];
+    // The world y each spawn event lands on when the real runner fires it (the enemy system
+    // spawns at camera.y + y), keyed by the event's x.
+    const landed = new Map<number, number>();
+    const runner = createStageRunner(spec, {
+      event(code, event) {
+        if (code !== StageEventCode.Spawn && code !== StageEventCode.Formation) return;
+        landed.set(event.x, runner.camera.y + ((event as { y?: number }).y ?? NaN));
+      },
+      clear() {},
+    });
+    // The low branch too (its trigger is never probed here).
+    runner.setFlag(0, true);
+    for (let t = 0; t < 2000 && !runner.ended; t++) runner.tick();
+    expect(runner.ended).toBe(true);
+    const spawns = tmj.layers
+      .flatMap((l) => l.objects ?? [])
+      .filter((o) => o.class === 'spawn' || o.class === 'formation');
+    expect(landed.size).toBe(spawns.length);
+    for (const object of spawns) {
+      const at = Math.max(0, Math.round(object.x) - SPAWN_LEAD);
+      // Within a pixel: the camera may overshoot the event's x by up to one tick's scroll.
+      expect(Math.abs((landed.get(at) ?? NaN) - object.y)).toBeLessThanOrEqual(1);
+    }
   });
 });
 
@@ -200,6 +239,103 @@ describe('scripts/content/tiled-import.mjs — conversion rules', () => {
     expect(stage.music).toEqual({ stage: 'Title', boss: 'Boss' });
   });
 
+  it('cameraYAt: keys before x (and at 0), timed pans finished, diagonal pans interpolated', () => {
+    const keys = [
+      { x: 0, speed: 1, yTo: 8 },
+      { x: 100, speed: 1, yTo: 40, yTicks: 60 },
+      { x: 200, speed: 1, yTo: 0, yOver: 100 },
+      { x: 250, speed: 1, yTo: 60, yOver: 40 },
+    ];
+    expect(cameraYAt([], 50)).toBe(0);
+    expect(cameraYAt(keys, 0)).toBe(8); // the first tick applies the key at 0 before the events
+    expect(cameraYAt(keys, 100)).toBe(8); // a key applies the tick after the camera reaches it
+    expect(cameraYAt(keys, 101)).toBe(40);
+    expect(cameraYAt(keys, 225)).toBe(30); // a quarter of the way from 40 to 0
+    // The next diagonal pan starts where the first one had the camera (20 at x 250).
+    expect(cameraYAt(keys, 270)).toBe(40);
+    expect(cameraYAt(keys, 400)).toBe(60);
+  });
+
+  it('writes spawn y relative to the camera the keys give; blocks and triggers stay in world', () => {
+    const { stage, warnings } = convertTiledMap(
+      map([
+        objects(
+          { id: 1, class: 'camera', x: 0, properties: [{ name: 'speed', value: 2 }] },
+          {
+            id: 2,
+            class: 'camera',
+            x: 100,
+            properties: [
+              { name: 'speed', value: 2 },
+              { name: 'hold', value: 90 },
+              { name: 'yTo', value: 72 },
+              { name: 'yTicks', value: 60 },
+            ],
+          },
+          { id: 3, class: 'spawn', name: 'drifter', x: 600, y: 200 },
+          {
+            id: 4,
+            class: 'formation',
+            x: 650,
+            y: 150,
+            properties: [
+              { name: 'enemy', value: 'fan' },
+              { name: 'count', value: 2 },
+              { name: 'interval', value: 8 },
+            ],
+          },
+          { id: 5, class: 'block', x: 640, y: 200, width: 16, height: 8 },
+          {
+            id: 6,
+            class: 'trigger',
+            x: 500,
+            y: 180,
+            width: 40,
+            height: 40,
+            properties: [{ name: 'flag', value: 'f' }],
+          },
+        ),
+      ]),
+    );
+    expect(warnings).toEqual([]);
+    expect(stage.events).toEqual([
+      { x: 116, type: 'trigger', flag: 'f', region: { x: 500, y: 180, w: 40, h: 40 } },
+      { x: 200, type: 'spawn', enemy: 'drifter', y: 200 - 72 },
+      { x: 240, type: 'block', y: 200, w: 16, h: 8 },
+      { x: 250, type: 'formation', enemy: 'fan', count: 2, interval: 8, y: 150 - 72 },
+    ]);
+  });
+
+  it('warns about a spawn that fires while a timed pan may still be running', () => {
+    const pan = (extra: { name: string; value: unknown }[]) =>
+      map([
+        objects(
+          {
+            id: 1,
+            class: 'camera',
+            x: 100,
+            properties: [
+              { name: 'speed', value: 2 },
+              { name: 'yTo', value: 40 },
+              { name: 'yTicks', value: 60 },
+              ...extra,
+            ],
+          },
+          { id: 2, class: 'spawn', name: 'drifter', x: 560, y: 100 },
+        ),
+      ]);
+    // 60 ticks at 2 px/tick: the pan runs until about x 220; the spawn fires at 160.
+    const running = convertTiledMap(pan([]));
+    expect(running.warnings).toEqual([
+      'object 2 "drifter": the timed camera pan of the key at x 100 may still be running at x ' +
+        '160 (until about x 220); y assumes it has reached 40',
+    ]);
+    expect(running.stage.events).toEqual([{ x: 160, type: 'spawn', enemy: 'drifter', y: 60 }]);
+    // Over during a hold, or waiting behind a boss lock: no warning.
+    expect(convertTiledMap(pan([{ name: 'hold', value: 60 }])).warnings).toEqual([]);
+    expect(convertTiledMap(pan([{ name: 'lock', value: true }])).warnings).toEqual([]);
+  });
+
   it('refuses maps and objects that break the rules', () => {
     expect(() => convertTiledMap(map([], { tilewidth: 16, tileheight: 16 }))).toThrow(
       'tiles are 16 × 16',
@@ -229,6 +365,7 @@ describe('scripts/content/tiled-import.mjs — CLI', () => {
       { cwd: repo, encoding: 'utf8' },
     );
     expect(result.status, String(result.stderr)).toBe(0);
+    expect(String(result.stderr)).toBe('');
     const written = JSON.parse(
       readFileSync(join(stages, 'tiled-sample.stage.json'), 'utf8'),
     ) as unknown;
