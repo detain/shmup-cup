@@ -145,7 +145,8 @@ export interface RefreshMonitor {
 /**
  * Creates a refresh-rate probe (plan M2-08).
  *
- * @param samples - Deltas kept (default {@link REFRESH_SAMPLES}; at least 1).
+ * @param samples - Deltas kept (default {@link REFRESH_SAMPLES}; floored, at least 1 — NaN counts
+ *   as 1).
  * @returns The monitor (not ready until `samples` deltas were seen).
  *
  * @example
@@ -158,20 +159,91 @@ export interface RefreshMonitor {
  * ```
  */
 export function createRefreshMonitor(samples: number = REFRESH_SAMPLES): RefreshMonitor {
-  const size = Math.max(1, Math.floor(samples));
-  const ring = new Float64Array(size);
-  const sorted = new Float64Array(size);
-  // [last timestamp, estimated Hz] — fractional numbers live in a typed array, not in closure
-  // variables (which V8 re-boxes on every assignment).
-  const state = new Float64Array(2);
-  let started = false;
-  let count = 0;
-  let cursor = 0;
-  let sinceMedian = 0;
+  // At least one sample: `Math.max(1, NaN)` would be NaN (an empty ring that is never ready).
+  const whole = Math.floor(samples);
+  return new RefreshMonitorImpl(whole >= 1 ? whole : 1);
+}
 
-  /** Recomputes the estimate (the interquartile mean of the ring) into `state[1]`. */
-  const estimate = (): void => {
-    const n = count < size ? count : size;
+/**
+ * The {@link RefreshMonitor} behind {@link createRefreshMonitor}: a class, so `ready` and `hz` are
+ * plain fields the shell reads every frame — a getter returning the fractional rate boxed it, an
+ * allocation per frame (docs/dev/conventions.md: "a fractional value … read every frame is a field
+ * updated when it changes, not a getter").
+ */
+class RefreshMonitorImpl implements RefreshMonitor {
+  /** See {@link RefreshMonitor.ready}. */
+  ready = false;
+  /** See {@link RefreshMonitor.hz} (0 until ready). */
+  hz = 0;
+  /** The recent deltas (a ring). */
+  private readonly ring: Float64Array;
+  /** Scratch for the sorted deltas. */
+  private readonly sorted: Float64Array;
+  /** The last timestamp (a typed array: fractional, written every frame). */
+  private readonly last = new Float64Array(1);
+  /** Whether a first timestamp started the clock. */
+  private started = false;
+  /** Deltas in the ring (up to its size). */
+  private count = 0;
+  /** Next ring slot. */
+  private cursor = 0;
+  /** Deltas since the last estimate. */
+  private sinceEstimate = 0;
+
+  /**
+   * Creates the monitor.
+   *
+   * @param size - Deltas kept (a positive integer).
+   */
+  constructor(private readonly size: number) {
+    this.ring = new Float64Array(size);
+    this.sorted = new Float64Array(size);
+  }
+
+  /**
+   * See {@link RefreshMonitor.sample}.
+   *
+   * @param now - The rAF timestamp in ms.
+   */
+  sample(now: number): void {
+    if (!this.started) {
+      this.started = true;
+      this.last[0] = now;
+      return;
+    }
+    const delta = now - this.last[0];
+    this.last[0] = now;
+    if (!(delta > 0) || delta > MAX_SAMPLE_MS) return;
+    const size = this.size;
+    this.ring[this.cursor] = delta;
+    this.cursor = this.cursor + 1 < size ? this.cursor + 1 : 0;
+    if (this.count < size) this.count++;
+    this.sinceEstimate++;
+    if (
+      this.count === size &&
+      (this.sinceEstimate >= MEDIAN_EVERY || this.sinceEstimate === size)
+    ) {
+      this.sinceEstimate = 0;
+      this.estimate();
+      this.ready = true;
+    }
+  }
+
+  /** See {@link RefreshMonitor.reset}. */
+  reset(): void {
+    this.started = false;
+    this.count = 0;
+    this.cursor = 0;
+    this.sinceEstimate = 0;
+    this.ready = false;
+    this.hz = 0;
+  }
+
+  /** Recomputes the estimate (the interquartile mean of the ring) into {@link hz}. */
+  private estimate(): void {
+    const ring = this.ring;
+    const sorted = this.sorted;
+    const n = this.count;
     for (let i = 0; i < n; i++) {
       const value = ring[i];
       let j = i - 1;
@@ -187,40 +259,6 @@ export function createRefreshMonitor(samples: number = REFRESH_SAMPLES): Refresh
     let sum = 0;
     for (let i = from; i < to; i++) sum += sorted[i];
     const mean = sum / (to - from);
-    state[1] = mean > 0 ? 1000 / mean : 0;
-  };
-
-  return {
-    get ready() {
-      return count >= size;
-    },
-    get hz() {
-      return count >= size ? state[1] : 0;
-    },
-    sample(now) {
-      if (!started) {
-        started = true;
-        state[0] = now;
-        return;
-      }
-      const delta = now - state[0];
-      state[0] = now;
-      if (!(delta > 0) || delta > MAX_SAMPLE_MS) return;
-      ring[cursor] = delta;
-      cursor = cursor + 1 < size ? cursor + 1 : 0;
-      if (count < size) count++;
-      sinceMedian++;
-      if (count === size && (sinceMedian >= MEDIAN_EVERY || sinceMedian === count)) {
-        sinceMedian = 0;
-        estimate();
-      }
-    },
-    reset() {
-      started = false;
-      count = 0;
-      cursor = 0;
-      sinceMedian = 0;
-      state[1] = 0;
-    },
-  };
+    this.hz = mean > 0 ? 1000 / mean : 0;
+  }
 }

@@ -171,7 +171,8 @@ describe('core/data stage raster effects and palette cycles (M2-08)', () => {
     expect(issuesOf({ cycles: [{ ...SEA, colors: ['#010101', '#010101'] }] })).toEqual([
       'cycles[0].colors[1]: colour #010101 is already cycled on layer "mid"',
     ]);
-    const nine = ['#000001', '#000002', '#000003', '#000004', '#000005'];
+    // Five more colours, each at least 2 apart from the others (M2-08 tests: closer ones clash).
+    const nine = ['#000010', '#000020', '#000030', '#000040', '#000050'];
     expect(issuesOf({ cycles: [SEA, { ...SEA, colors: nine }] })).toEqual([
       'cycles[1].colors: layer "mid" cycles more than 8 colours (all its cycles together)',
     ]);

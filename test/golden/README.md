@@ -1,6 +1,7 @@
 # test/golden — golden replays
 
-Committed replays of zone A (AZURE VERGE) — and, since M2-07, of the `gimmick-range` dev stage —
+Committed replays of zone A (AZURE VERGE) — and, since M2-07 / M2-08, of the `gimmick-range` and
+`raster-range` dev stages —
 that pin down what the simulation does (plan M1-19, `shmup_feat.md` §24). Each `<scenario>.replay.json` is a `core/replay` document — the header (every
 sim-affecting `GameConfig` field, the stage, god mode as `assisted`), every tick's input
 (`held | pressed << 16` per player, run-length encoded, base64), a state hash every 600 ticks and
@@ -30,6 +31,7 @@ continues).
 | `gimmick-range-god` | 4-way playtest bot, god mode | the M2-07 stage systems: a brick shot open, both moving blocks, the suction pod, the tentacle, the cube rush, the high branch |
 | `gimmick-range-weaver` | a weaving pilot, god mode | the region trigger fired (the low branch), a dozen bricks broken |
 | `gimmick-range-deaths` | a weaving pilot that never dodges | the Arcade penalty on the gimmick range: checkpoint restarts rolling the terrain back, `gameOver` |
+| `raster-range-god` | 4-way playtest bot, god mode | the M2-08 raster-effect dev stage to `stageClear`; `golden.test.ts` also plays it back with the stage's `raster` / `cycles` stripped — every hash matches: they are presentation only |
 
 - `golden.test.ts` (part of `pnpm test`) plays every file back into a fresh session: every hash and
   the outcome must match. A failure means the simulation changed.

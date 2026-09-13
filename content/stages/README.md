@@ -190,8 +190,9 @@ the layer's effects is on screen. Both are optional lists (at most 8 entries eac
 - **`cycles`** — palette cycling: every pixel of the layer (`far`, `mid`, `terrain`, `ground` or
   `air` — glowing cores on the enemy layers) drawn in `colors[i]` shows `colors[(i + step) mod n]`,
   `step` advancing every `ticks` ticks while the camera x is in `[from, to)`. The art must use the
-  ramp's exact `#rrggbb` colours (2–8, distinct); all cycles of one layer together may use at most
-  8 colours.
+  ramp's exact `#rrggbb` colours (2–8, distinct — at least 2 apart in some channel, since the layer
+  shader matches pixel colours within 1 per channel); all cycles of one layer together may use at
+  most 8 colours.
 
 ## Checkpoints
 
@@ -226,10 +227,11 @@ duplicate branch ids and events naming an unknown branch, a trigger whose `until
 `x`, more than 32 triggers, a block without a tilemap, off the tile grid, over 64 tiles or naming a
 tile the tileset does not have.
 
-Since M2-08 also: a raster effect with `bottom ≤ top` or `to ≤ from`, a `wave` / `haze` without
-`amplitude` and `wavelength`, a `lines` without `factorTop` and `factorBottom`, `bands` that do not
-add up to the rows (or on a `wave` / `haze`), a cycle colour used
-twice on one layer, and more than 8 cycled colours on one layer.
+Since M2-08 also: a raster effect or cycle with `bottom ≤ top` or `to ≤ from` (`from` defaulting
+to 0), a `wave` / `haze` without `amplitude` and `wavelength`, a `lines` without `factorTop` and
+`factorBottom`, `bands` that do not add up to the rows (or on a `wave` / `haze`), a cycle colour
+used twice on one layer — or within 1 per channel of another one there —, and more than 8 cycled
+colours on one layer.
 
 **Authoring in Tiled (M2-07).** `pnpm content:tiled <map.tmj>` (`scripts/content/tiled-import.mjs`)
 converts a Tiled JSON map into this format: the tile layer becomes the `rle` rows, object-layer

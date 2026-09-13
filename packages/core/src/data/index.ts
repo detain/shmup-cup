@@ -3732,9 +3732,10 @@ function checkStage(stage: MutableStage, file: string, issues: ValidationIssue[]
 
 /**
  * Checks and completes a stage's raster effects and palette cycles (M2-08) in place: `top <
- * bottom`, `from < to`, the fields each raster kind needs (`wave` / `haze`: `amplitude` and
+ * bottom`, `from < to` (`from` defaulting to 0), the fields each raster kind needs (`wave` / `haze`: `amplitude` and
  * `wavelength`; `lines`: `factorTop` and `factorBottom`, `bands` — only there — adding up to the
- * rows), and for the cycles distinct colours with
+ * rows), and for the cycles distinct colours — at least 2 apart in some channel, so the layer
+ * shader can tell them apart — with
  * at most {@link MAX_CYCLE_COLORS_PER_LAYER} per layer (all the layer's cycles together); fills the
  * defaults (`period` {@link DEFAULT_RASTER_PERIOD}, `wavelength` 32, factors / `wrap` / `from` 0,
  * `to` `Infinity`) and resolves every cycle colour to 0xRRGGBB (`rgb`).
@@ -3753,7 +3754,8 @@ function checkStageEffects(stage: MutableStage, file: string, issues: Validation
     if ((effect.bottom ?? 0) <= (effect.top ?? 0)) {
       ok = issue(issues, at(file, path + '.bottom'), 'must be greater than top');
     }
-    if (effect.from !== undefined && effect.to !== undefined && effect.to <= effect.from) {
+    // `from` defaults to 0: a `to` of 0 alone is an empty range too.
+    if (effect.to !== undefined && effect.to <= (effect.from ?? 0)) {
       ok = issue(issues, at(file, path + '.to'), 'must be greater than from');
     }
     if (effect.kind === 'lines') {
@@ -3811,6 +3813,23 @@ function checkStageEffects(stage: MutableStage, file: string, issues: Validation
           at(file, path + '.colors[' + String(c) + ']'),
           'colour ' + colors[c] + ' is already cycled on layer "' + layer + '"',
         );
+      } else {
+        // The layer shader matches a pixel within 1.5 / 255 per channel: key colours one step
+        // apart would both match the first of them.
+        const near = nearColor(value, rgb, used);
+        if (near >= 0) {
+          ok = issue(
+            issues,
+            at(file, path + '.colors[' + String(c) + ']'),
+            'colour ' +
+              colors[c] +
+              ' is too close to #' +
+              ('00000' + near.toString(16)).slice(-6) +
+              ', cycled on layer "' +
+              layer +
+              '" (the layer shader matches colours within 1 per channel)',
+          );
+        }
       }
       rgb.push(value);
     }
@@ -3826,7 +3845,7 @@ function checkStageEffects(stage: MutableStage, file: string, issues: Validation
           ' colours (all its cycles together)',
       );
     }
-    if (cycle.from !== undefined && cycle.to !== undefined && cycle.to <= cycle.from) {
+    if (cycle.to !== undefined && cycle.to <= (cycle.from ?? 0)) {
       ok = issue(issues, at(file, path + '.to'), 'must be greater than from');
     }
     cycle.rgb = rgb;
@@ -3835,6 +3854,28 @@ function checkStageEffects(stage: MutableStage, file: string, issues: Validation
   }
   stage.cycles = cycles;
   return ok;
+}
+
+/**
+ * Finds a colour the layer shader could not tell from `value`: another one at most 1 away in
+ * every channel (`LAYER_EFFECT_FRAGMENT` in `@shmup/render-pixi` matches within 1.5 / 255).
+ *
+ * @param value - The colour, 0xRRGGBB.
+ * @param a - Colours to compare with.
+ * @param b - More colours to compare with.
+ * @returns The first such colour, or -1.
+ */
+function nearColor(value: number, a: readonly number[], b: readonly number[]): number {
+  for (const list of [a, b]) {
+    for (const other of list) {
+      if (other === value) continue;
+      const dr = ((other >> 16) & 0xff) - ((value >> 16) & 0xff);
+      const dg = ((other >> 8) & 0xff) - ((value >> 8) & 0xff);
+      const db = (other & 0xff) - (value & 0xff);
+      if (dr >= -1 && dr <= 1 && dg >= -1 && dg <= 1 && db >= -1 && db <= 1) return other;
+    }
+  }
+  return -1;
 }
 
 /**

@@ -65,8 +65,9 @@
  * {@link ShellOptions.effects} still win over the saved shake / flash settings).
  *
  * **Render interpolation (M2-08).** The frame loop feeds a refresh-rate probe (`frame-loop`
- * `createRefreshMonitor`, the median rAF delta); with {@link ShellOptions.interpolation} `'auto'`
- * (the default) the renderer interpolates while the display runs faster than
+ * `createRefreshMonitor`, the interquartile mean of the recent rAF deltas); with
+ * {@link ShellOptions.interpolation} `'auto'` (the default) the renderer interpolates while the
+ * display runs faster than
  * `INTERPOLATION_MIN_HZ` (120 / 144 Hz monitors) and draws the current tick at 60 Hz. The probe
  * restarts when the app resumes.
  *

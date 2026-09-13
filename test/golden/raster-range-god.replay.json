@@ -1,0 +1,81 @@
+{
+  "kind": "replay",
+  "header": {
+    "formatVersion": 1,
+    "buildId": "golden",
+    "seed": 41,
+    "stageId": "raster-range",
+    "checkpoint": -1,
+    "loadout": "default",
+    "assisted": true,
+    "config": {
+      "internalWidth": 384,
+      "internalHeight": 216,
+      "tickRate": 60,
+      "maxTicksPerFrame": 4,
+      "seed": 41,
+      "difficulty": "normal",
+      "rankBase": 2,
+      "rankGrowth": 1,
+      "extendFirst": 20000,
+      "extendEvery": 70000,
+      "continues": 3,
+      "bulletSpeedMul": 1,
+      "powerUpMode": "meter",
+      "shipId": "kestrel",
+      "deathPenalty": "classic",
+      "startingLives": 3,
+      "autofire": true,
+      "remoteMode": true,
+      "stage": "raster-range",
+      "stageSkip": "none",
+      "aimDirections": 32,
+      "autofireInterval": 4,
+      "missileInterval": 10,
+      "loadout": "default",
+      "autoPowerUp": false,
+      "autoPowerUpOrder": [
+        "speed",
+        "missile",
+        "laser",
+        "option",
+        "option",
+        "option",
+        "option",
+        "shield"
+      ],
+      "pickupMagnet": true,
+      "weaponPreset": "type-a",
+      "weaponEdit": null,
+      "megaChoice": "megaCrash",
+      "shieldChoice": "forceField",
+      "optionChoice": "trail",
+      "coop": false,
+      "coopExtra": 0.5
+    }
+  },
+  "ticks": 3630,
+  "hashInterval": 600,
+  "inputs": [
+    "ACiCgAgBAgIAng3AgIACAQDkDg==",
+    "AK4c"
+  ],
+  "hashes": [
+    1263685876,
+    2779177831,
+    2926835525,
+    1672187193,
+    3799001643,
+    642266948
+  ],
+  "finalHash": 642268432,
+  "description": "RASTER RANGE with god mode (M2-08): the 4-way bot flies the raster-effect dev stage — its wave, floor, haze and palette cycle are presentation only",
+  "expected": {
+    "status": "stageClear",
+    "ticks": 3630,
+    "score": 800,
+    "lives": 3,
+    "deathTicks": [],
+    "bossDefeated": false
+  }
+}

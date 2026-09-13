@@ -1,6 +1,7 @@
 /**
  * The golden-replay test (plan M1-19, part of `pnpm test`): every committed
- * `test/golden/<scenario>.replay.json` — zone A (and, since M2-07, the `gimmick-range` dev stage)
+ * `test/golden/<scenario>.replay.json` — zone A (and, since M2-07 / M2-08, the `gimmick-range` and
+ * `raster-range` dev stages)
  * played by the 4-way bot and recorded with `core/replay` (the 4-way bot, or a careless weaving
  * pilot for the deaths) — plays back into a
  * fresh session with **every state hash** (one per 600 ticks and
@@ -12,7 +13,8 @@
  * scenario from the bot and rewrites its file, then checks the new files the same way.
  */
 import { describe, expect, it } from 'vitest';
-import { REPLAY_HASH_INTERVAL } from '@shmup/core';
+import { ENGINE_SPRITES, KNOWN_SCRIPT_IDS, REPLAY_HASH_INTERVAL, loadContent } from '@shmup/core';
+import { readContentFiles } from '../../vite.shared.js';
 import {
   GOLDEN_BUILD_ID,
   GOLDEN_SCENARIOS,
@@ -26,7 +28,7 @@ import {
 /** Whether this run re-blesses the files. */
 const updating = process.env[GOLDEN_UPDATE_ENV] === '1';
 
-describe('golden replays (zone A and the gimmick range, playtest bots)', () => {
+describe('golden replays (zone A, the gimmick range and the raster range, playtest bots)', () => {
   it.each(GOLDEN_SCENARIOS.map((scenario) => [scenario.name, scenario] as const))(
     '%s reproduces every state hash and its outcome',
     (_name, scenario) => {
@@ -141,5 +143,34 @@ describe('golden replays (zone A and the gimmick range, playtest bots)', () => {
     expect(deaths.outcome.status).toBe('gameOver');
     expect(deaths.outcome.deathTicks).toHaveLength(3);
     expect(deaths.resets).toBeGreaterThanOrEqual(2);
+  });
+
+  it('covers the raster range of M2-08: its effects never reach the simulation', () => {
+    const { file, replay } = readGolden('raster-range-god');
+    expect(file.expected).toMatchObject({ status: 'stageClear', deathTicks: [] });
+    // The stage has raster effects and a palette cycle: its World hands them to the renderer …
+    const { world } = playGolden(replay);
+    expect(world.view.effects?.raster).toHaveLength(3);
+    expect(world.view.effects?.cycles).toHaveLength(1);
+    // … and the same inputs on the stage without them reproduce every hash and the outcome.
+    const files = readContentFiles().map((content) => {
+      if (content.path !== 'stages/raster-range.stage.json') return content;
+      const data = { ...(content.data as Record<string, unknown>) };
+      delete data.raster;
+      delete data.cycles;
+      return { ...content, data };
+    });
+    const { db, issues } = loadContent(files, {
+      knownScripts: KNOWN_SCRIPT_IDS,
+      extraSprites: ENGINE_SPRITES,
+    });
+    expect(issues).toEqual([]);
+    const bare = db.stages.find((stage) => stage.id === 'raster-range');
+    expect([bare?.raster, bare?.cycles]).toEqual([[], []]);
+    const plain = playGolden(replay, db);
+    expect(plain.world.view.effects).toBeNull();
+    expect(plain.report).toMatchObject({ ok: true, finished: true, buildMatches: true });
+    expect(plain.report.checked).toBe(replay.hashes.length + 1);
+    expect(plain.outcome).toEqual(file.expected);
   });
 });

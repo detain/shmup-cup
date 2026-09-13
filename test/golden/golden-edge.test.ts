@@ -37,7 +37,8 @@ describe.skipIf(updating)('golden replays — file guards', () => {
     const names = GOLDEN_SCENARIOS.map((scenario) => scenario.name);
     expect(new Set(names).size).toBe(names.length);
     // `<stage id>-…`: zone A and (M2-07) the gimmick range.
-    for (const name of names) expect(name).toMatch(/^(zone-a|gimmick-range)-[a-z0-9-]+$/);
+    for (const name of names)
+      expect(name).toMatch(/^(zone-a|gimmick-range|raster-range)-[a-z0-9-]+$/);
     for (const scenario of GOLDEN_SCENARIOS)
       expect(scenario.name.startsWith(scenario.stageId)).toBe(true);
     const files = readdirSync(folder)

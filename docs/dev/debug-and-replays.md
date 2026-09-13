@@ -415,6 +415,11 @@ scenarios (`fc0f676`, the seventeen older files byte-identical; the name rule no
 what each run went through — the branch taken, the trigger fired or not, cells broken, terrain
 rollbacks
 ([advanced-stages.md](advanced-stages.md#determinism-hashing-and-golden-replays)).
+M2-08 re-blessed the twenty for the two new content sprites (sorted sprite ids); its test round
+added `raster-range-god` (the older files byte-identical; the name rule now allows
+`raster-range-*`) and `playGolden(replay, content?)` — `golden.test.ts` plays that run back on the
+stage with its `raster` / `cycles` stripped and every hash matches: the effects are presentation
+only.
 Each file is an encoded replay plus the scenario's `description` and its
 `expected` outcome (status, ticks, player 1's score and lives, death ticks, boss killed — and for
 a co-op run player 2's score, lives, death ticks and continues).

@@ -130,7 +130,7 @@ export function resolveBulletPaletteTable(
  *
  * @param tick - The tick (negative ticks count backwards).
  * @param ticksPerStep - Ticks per step (≤ 0 or NaN → 0).
- * @param count - Colours in the ramp (≤ 0 or NaN → 0).
+ * @param count - Colours in the ramp (floored; below 1 or NaN → 0).
  * @returns The step, `0 … count − 1`.
  *
  * @example
@@ -139,10 +139,12 @@ export function resolveBulletPaletteTable(
  * ```
  */
 export function colorCycleStep(tick: number, ticksPerStep: number, count: number): number {
-  if (!(count > 0) || !(ticksPerStep > 0)) return 0;
   const n = Math.floor(count);
+  // `n` below 1 (a count in (0, 1) included) would make the `% n` below NaN.
+  if (!(n >= 1) || !(ticksPerStep > 0)) return 0;
   const steps = Math.floor(tick / ticksPerStep) % n;
-  return steps < 0 ? steps + n : steps;
+  // A NaN or infinite tick has no position: step 0.
+  return steps >= 0 ? steps : steps < 0 ? steps + n : 0;
 }
 
 /**

@@ -40,9 +40,9 @@
  * `effects.settings.screenShake` / `reduceFlashing`, {@link PixiRenderer.setShowHitbox} (the
  * `HITBOX` layer with a marker per `WorldView.hitboxes` slot). **Render interpolation**
  * ({@link PixiRenderer.setInterpolation}; the shell turns it on for displays faster than the tick
- * rate): the camera, the parallax bands and every sprite batch are drawn between the previous and
- * the current tick by `frame.alpha` (see `sprites` for the slot rules); at 60 Hz it stays off, so
- * nothing lags a tick behind.
+ * rate): the camera, the parallax bands, every sprite batch and the hitbox markers are drawn
+ * between the previous and the current tick by `frame.alpha` (see `sprites` for the slot rules); at
+ * 60 Hz it stays off, so nothing lags a tick behind.
  *
  * **Debug (plan M1-19).** With {@link PixiRendererOptions.countDrawCalls} (the shell sets it only
  * in dev / test builds, together with its debug tools) the WebGL context's draw entry points are
@@ -269,8 +269,8 @@ export interface PixiRenderer extends IRenderer {
   readonly interpolation: boolean;
   /**
    * Turns render interpolation on or off (plan M2-08, decision D32): with it, the camera, the
-   * parallax bands and every sprite batch are drawn between the previous and the current tick by
-   * `frame.alpha` — for displays that show more than one frame per tick (> 60 Hz). Off (the
+   * parallax bands, every sprite batch and the hitbox markers are drawn between the previous and the
+   * current tick by `frame.alpha` — for displays that show more than one frame per tick (> 60 Hz). Off (the
    * default) draws the current tick, which on a 60 Hz display is always right and a tick fresher.
    *
    * @param on - `true` to interpolate.
@@ -637,6 +637,10 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
   const cameraHistory = new Float64Array(4);
   const drawnCamera = new DrawnCamera();
   const blend = new FrameBlend();
+  // The hitbox markers' blend (they are synced only while shown) and whether the last frame drew
+  // them interpolated — their history is stale otherwise.
+  const hitboxBlend = new FrameBlend();
+  let hitboxHistory = false;
 
   // Pass 2: one sprite showing the frame texture, integer-scaled and centred.
   const screen = new Container({ label: 'screen' });
@@ -909,6 +913,7 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
       const screen = frame.screen;
       const shakeX = (Math.round(screen.shakeX) + effects.shakeX) | 0;
       const shakeY = (Math.round(screen.shakeY) + effects.shakeY) | 0;
+      let hitboxesInterpolated = false;
       if (world !== null) {
         const camX = camera.x;
         const camY = camera.y;
@@ -934,10 +939,20 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
         }
         const hitboxView = world.hitboxes;
         if (showHitbox && hitboxes !== null && hitboxView !== undefined && hitboxView !== null) {
-          hitboxes.sync(hitboxView, camera);
+          if (interpolate) {
+            // On the interpolated ship; a history older than the last frame (the markers were
+            // hidden) is reset rather than blended from.
+            hitboxBlend.alpha = blend.alpha;
+            hitboxBlend.advance = hitboxHistory ? blend.advance : -1;
+            hitboxes.syncInterpolated(hitboxView, camera, hitboxBlend);
+            hitboxesInterpolated = true;
+          } else {
+            hitboxes.sync(hitboxView, camera);
+          }
         }
         layerEffects.sync(tick, camera, shakeY, effects.settings.rasterEffects);
       }
+      hitboxHistory = hitboxesInterpolated;
       layers.world.position.set(shakeX, shakeY);
       // The brighter of the frame's own flash (white) and the event-driven one (its look's colour;
       // an additive look — the Mega Crash, M2-08 — goes to the additive overlay).

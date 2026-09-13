@@ -113,5 +113,7 @@ describe('core/debug', () => {
     );
     expect(sink).not.toBe(0.5);
     expect(growth.bytesPerIteration).toBeLessThan(128);
-  });
+    // 30,000 hashes of a world: ~4.5 s under the full `pnpm test` load — past the 5 s default
+    // timeout once the M2-08 test round added its suites.
+  }, 20_000);
 });

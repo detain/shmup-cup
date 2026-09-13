@@ -39,8 +39,9 @@
  *
  * **Render interpolation (M2-08).** On displays faster than the 60 Hz tick the renderer draws
  * between the last two ticks: {@link ParallaxBinding.syncInterpolated} blends each band's previous
- * and current offset (across the repeat seam); the terrain grid and the lasers just take the
- * renderer's interpolated camera.
+ * and current offset (across the repeat seam) and {@link HitboxBinding.syncInterpolated} each hitbox
+ * marker's centre (so it stays on the interpolated ship sprite); the terrain grid and the lasers
+ * just take the renderer's interpolated camera.
  *
  * Pixel snapping: the renderer is created with `roundPixels: true` and every binding writes
  * integer positions (`Math.round`), so nothing in the stack is drawn at sub-pixel offsets. The
@@ -82,7 +83,12 @@ import {
 } from '@shmup/core';
 import { Container, Sprite } from 'pixi.js';
 import type { Atlas, FrameId } from '../atlas/index.js';
-import { resolveFrame, type RenderBlend, type SpriteTables } from '../sprites/index.js';
+import {
+  INTERPOLATION_MAX_STEP,
+  resolveFrame,
+  type RenderBlend,
+  type SpriteTables,
+} from '../sprites/index.js';
 
 /** Module descriptor. */
 export const moduleInfo = defineModule({
@@ -865,6 +871,23 @@ export interface HitboxBinding {
    * @param camera - The world camera.
    */
   sync(view: HitboxView, camera: CameraView): void;
+  /**
+   * Like {@link HitboxBinding.sync}, but places each marker between its centre at the previous
+   * tick and the current one (render interpolation — M2-08), so it stays on the ship sprite, which
+   * is drawn interpolated too. Never allocates.
+   *
+   * @remarks
+   * The same history rules as the sprite bindings' `syncInterpolated`: `blend.advance` = 1 shifts
+   * the binding's record of the last two ticks, 0 keeps it, anything else (and the first call)
+   * resets it — nothing is blended then; a marker is blended only when it moved at most
+   * `INTERPOLATION_MAX_STEP` pixels on each axis (a respawn or a slot taken by another ship is
+   * drawn where it is now).
+   *
+   * @param view - The hitbox view the binding was created for.
+   * @param camera - The camera (the renderer's interpolated one).
+   * @param blend - The frame's blend factor and tick advance.
+   */
+  syncInterpolated(view: HitboxView, camera: CameraView, blend: RenderBlend): void;
   /** Destroys the sprites and the container. */
   destroy(): void;
 }
@@ -905,6 +928,54 @@ export function createHitboxBinding(options: HitboxBindingOptions): HitboxBindin
     container.addChild(rim, core);
   }
   let visible = 0;
+  // Render interpolation (M2-08): each marker's centre at the previous tick and at the last tick
+  // seen, and how many markers each record holds (`history` false = reset on the next call).
+  const prevX = new Float64Array(capacity);
+  const prevY = new Float64Array(capacity);
+  const seenX = new Float64Array(capacity);
+  const seenY = new Float64Array(capacity);
+  let prevCount = 0;
+  let seenCount = 0;
+  let history = false;
+
+  /**
+   * Places one marker (whole-pixel arguments: a fractional number passed to a call V8 does not
+   * inline is boxed).
+   *
+   * @param i - The slot.
+   * @param cx - Screen x of the centre.
+   * @param cy - Screen y of the centre.
+   * @param half - Half the core's size (`floor(radius)`, 0 below 1).
+   */
+  const placeMarker = (i: number, cx: number, cy: number, half: number): void => {
+    const size = 2 * half + 1;
+    const core = cores[i];
+    core.x = cx - half;
+    core.y = cy - half;
+    core.scale.x = size;
+    core.scale.y = size;
+    core.visible = true;
+    const rim = rims[i];
+    rim.x = cx - half - 1;
+    rim.y = cy - half - 1;
+    rim.scale.x = size + 2;
+    rim.scale.y = size + 2;
+    rim.visible = true;
+  };
+
+  /**
+   * Hides the markers from a slot on and records how many are drawn.
+   *
+   * @param count - Markers drawn.
+   */
+  const hideFrom = (count: number): void => {
+    for (let i = count; i < capacity; i++) {
+      cores[i].visible = false;
+      rims[i].visible = false;
+    }
+    visible = count;
+  };
+
   return {
     container,
     capacity,
@@ -922,28 +993,71 @@ export function createHitboxBinding(options: HitboxBindingOptions): HitboxBindin
       const count = view.count < capacity ? view.count : capacity;
       for (let i = 0; i < count; i++) {
         const r = view.radius[i];
-        const half = r >= 1 ? Math.floor(r) | 0 : 0;
-        const size = 2 * half + 1;
-        const cx = Math.round(view.x[i] - camera.x) | 0;
-        const cy = (Math.round(view.y[i] - camera.y) + offsetY) | 0;
-        const core = cores[i];
-        core.x = cx - half;
-        core.y = cy - half;
-        core.scale.x = size;
-        core.scale.y = size;
-        core.visible = true;
-        const rim = rims[i];
-        rim.x = cx - half - 1;
-        rim.y = cy - half - 1;
-        rim.scale.x = size + 2;
-        rim.scale.y = size + 2;
-        rim.visible = true;
+        placeMarker(
+          i,
+          Math.round(view.x[i] - camera.x) | 0,
+          (Math.round(view.y[i] - camera.y) + offsetY) | 0,
+          r >= 1 ? Math.floor(r) | 0 : 0,
+        );
       }
-      for (let i = count; i < capacity; i++) {
-        cores[i].visible = false;
-        rims[i].visible = false;
+      hideFrom(count);
+    },
+    /**
+     * See {@link HitboxBinding.syncInterpolated}.
+     *
+     * @param view - The view.
+     * @param camera - The camera.
+     * @param blend - The blend.
+     */
+    syncInterpolated(view, camera, blend) {
+      const camX = camera.x;
+      const camY = camera.y;
+      let advance = blend.advance;
+      if (!history) {
+        history = true;
+        advance = -1;
       }
-      visible = count;
+      const count = view.count < capacity ? view.count : capacity;
+      if (advance === 1) {
+        for (let i = 0; i < seenCount; i++) {
+          prevX[i] = seenX[i];
+          prevY[i] = seenY[i];
+        }
+        prevCount = seenCount;
+      } else if (advance !== 0) {
+        prevCount = 0;
+      }
+      if (advance !== 0) {
+        for (let i = 0; i < count; i++) {
+          seenX[i] = view.x[i];
+          seenY[i] = view.y[i];
+        }
+        seenCount = count;
+      }
+      const alpha = blend.alpha;
+      const t = alpha > 0 ? (alpha < 1 ? alpha : 1) : 0;
+      for (let i = 0; i < count; i++) {
+        let x = view.x[i];
+        let y = view.y[i];
+        if (i < prevCount) {
+          const dx = x - prevX[i];
+          const dy = y - prevY[i];
+          if (dx <= INTERPOLATION_MAX_STEP && dx >= -INTERPOLATION_MAX_STEP) {
+            if (dy <= INTERPOLATION_MAX_STEP && dy >= -INTERPOLATION_MAX_STEP) {
+              x = prevX[i] + dx * t;
+              y = prevY[i] + dy * t;
+            }
+          }
+        }
+        const r = view.radius[i];
+        placeMarker(
+          i,
+          Math.round(x - camX) | 0,
+          (Math.round(y - camY) + offsetY) | 0,
+          r >= 1 ? Math.floor(r) | 0 : 0,
+        );
+      }
+      hideFrom(count);
     },
     /** See {@link HitboxBinding.destroy}. */
     destroy() {

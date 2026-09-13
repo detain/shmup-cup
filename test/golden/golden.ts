@@ -29,7 +29,9 @@
  * pod's pull, the tentacle's chain, the cube rush stacking a cube into the terrain), the weaving
  * pilot with god mode (it dives through the region trigger: the low branch, a dozen bricks broken)
  * and the weaving pilot without it under the Arcade penalty (deaths, the checkpoint restarts
- * rolling the terrain back, `gameOver`).
+ * rolling the terrain back, `gameOver`). One more (M2-08) flies the `raster-range` dev stage with
+ * the 4-way bot and god mode: its raster effects and palette cycle never touch the simulation —
+ * `golden.test.ts` also plays it back on the stage with them stripped.
  *
  * @module
  */
@@ -47,6 +49,7 @@ import {
   decodeReplay,
   encodeReplay,
   resolveGameConfig,
+  type ContentDb,
   type DesyncReport,
   type Game,
   type GameConfig,
@@ -333,6 +336,15 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = Object.freeze([
     godMode: false,
     bot: 'weaver',
   },
+  {
+    name: 'raster-range-god',
+    description:
+      'RASTER RANGE with god mode (M2-08): the 4-way bot flies the raster-effect dev stage — its wave, floor, haze and palette cycle are presentation only',
+    stageId: 'raster-range',
+    config: { seed: 41 },
+    godMode: true,
+    bot: 'four-way',
+  },
 ]);
 
 /** Player 2's side of a co-op golden run (M2-06). */
@@ -500,10 +512,15 @@ export function recordGolden(scenario: GoldenScenario): { replay: Replay; outcom
  * Plays a golden replay back into a fresh session.
  *
  * @param replay - The replay.
+ * @param content - The content to play it on (default the shipped content; M2-08 tests pass a
+ *   variant — the raster range without its presentation effects).
  * @returns The desync report, the outcome of the playback and the session's World after its last
  *   tick (for checks of what the run went through).
  */
-export function playGolden(replay: Replay): {
+export function playGolden(
+  replay: Replay,
+  content: ContentDb = shippedContent(),
+): {
   report: DesyncReport;
   outcome: GoldenOutcome;
   world: Game['world'];
@@ -512,7 +529,7 @@ export function playGolden(replay: Replay): {
   const game = createReplayGame(
     { ...createHeadlessPlatform(), input: playback },
     replay.header,
-    shippedContent(),
+    content,
   );
   const watch = new OutcomeWatch(game);
   while (!playback.done) {
