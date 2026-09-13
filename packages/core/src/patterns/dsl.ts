@@ -1384,7 +1384,9 @@ class PatternCompiler {
         strict: ctx.strict,
         locals: args.length,
       };
-    } else if (node.params !== undefined) {
+    }
+    // `params` go with a `bulletRef` only (an inline bullet would silently drop them).
+    if (node.params !== undefined && node.bulletRef === undefined) {
       this.issue(path + '.params', 'params need a bulletRef');
     }
     const kind = BULLET_KIND_NAMES.indexOf(spec.kind ?? DEFAULT_PATTERN_KIND);
