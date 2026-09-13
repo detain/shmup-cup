@@ -1078,8 +1078,9 @@ class StageRunnerImpl implements StageRunner {
       if (t < 0) return;
       const bit = (1 << t) >>> 0;
       if ((state[StageSlot.TriggersFired] & bit) !== 0) return;
-      // Long passed (a restart): armed again only while its region is still ahead.
-      if (live || compiled.triggerUntil[t] > this.camera.x) {
+      // Long passed (a restart): armed again only while the camera has not passed its `until`
+      // (live play disarms it once `camera.x > until`).
+      if (live || compiled.triggerUntil[t] >= this.camera.x) {
         state[StageSlot.TriggersArmed] = (state[StageSlot.TriggersArmed] | bit) >>> 0;
       }
     }
@@ -1209,7 +1210,8 @@ class StageRunnerImpl implements StageRunner {
   /**
    * A trigger before a restart's x (M2-07): one that fired before keeps its outcome (its flag is
    * applied here, in timeline order) and stays fired; one that did not is armed again while its
-   * region is still ahead.
+   * region is still ahead — while the camera has not passed its `until`, as live play keeps it
+   * armed up to `camera.x = until`.
    *
    * @param t - Trigger ordinal.
    * @param firedBefore - The fired mask before the restart.
@@ -1221,7 +1223,7 @@ class StageRunnerImpl implements StageRunner {
     if ((firedBefore & bit) !== 0) {
       state[StageSlot.TriggersFired] = (state[StageSlot.TriggersFired] | bit) >>> 0;
       this.writeFlag(c.triggerBit[t], c.triggerSet[t] !== 0);
-    } else if (c.triggerUntil[t] > this.camera.x) {
+    } else if (c.triggerUntil[t] >= this.camera.x) {
       state[StageSlot.TriggersArmed] = (state[StageSlot.TriggersArmed] | bit) >>> 0;
     }
   }

@@ -1,7 +1,7 @@
 # test/golden — golden replays
 
-Committed replays of zone A (AZURE VERGE) that pin down what the simulation does (plan M1-19,
-`shmup_feat.md` §24). Each `<scenario>.replay.json` is a `core/replay` document — the header (every
+Committed replays of zone A (AZURE VERGE) — and, since M2-07, of the `gimmick-range` dev stage —
+that pin down what the simulation does (plan M1-19, `shmup_feat.md` §24). Each `<scenario>.replay.json` is a `core/replay` document — the header (every
 sim-affecting `GameConfig` field, the stage, god mode as `assisted`), every tick's input
 (`held | pressed << 16` per player, run-length encoded, base64), a state hash every 600 ticks and
 the final hash — plus the scenario's `description` and its `expected` outcome (status, ticks,
@@ -27,6 +27,9 @@ continues).
 | `zone-a-manta-deaths` | a weaving pilot that never dodges | the MANTA under the Arcade penalty (M2-05): Direct-mode deaths, checkpoint restarts, `gameOver` |
 | `zone-a-coop` | two 4-way playtest bots (player 2 from its START at tick 300) | a co-op game (M2-06): the drop-in join, two ships sharing the capsules, the co-op drop scaling, to `stageClear` |
 | `zone-a-coop-deaths` | the 4-way bot and a weaving player 2 (START at tick 120) | co-op deaths (M2-06): player 2 dies and continues with START while player 1 plays on |
+| `gimmick-range-god` | 4-way playtest bot, god mode | the M2-07 stage systems: a brick shot open, both moving blocks, the suction pod, the tentacle, the cube rush, the high branch |
+| `gimmick-range-weaver` | a weaving pilot, god mode | the region trigger fired (the low branch), a dozen bricks broken |
+| `gimmick-range-deaths` | a weaving pilot that never dodges | the Arcade penalty on the gimmick range: checkpoint restarts rolling the terrain back, `gameOver` |
 
 - `golden.test.ts` (part of `pnpm test`) plays every file back into a fresh session: every hash and
   the outcome must match. A failure means the simulation changed.

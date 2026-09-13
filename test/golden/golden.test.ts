@@ -1,7 +1,8 @@
 /**
  * The golden-replay test (plan M1-19, part of `pnpm test`): every committed
- * `test/golden/<scenario>.replay.json` — zone A played by the 4-way bot and recorded with
- * `core/replay` (the 4-way bot, or a careless weaving pilot for the deaths) — plays back into a
+ * `test/golden/<scenario>.replay.json` — zone A (and, since M2-07, the `gimmick-range` dev stage)
+ * played by the 4-way bot and recorded with `core/replay` (the 4-way bot, or a careless weaving
+ * pilot for the deaths) — plays back into a
  * fresh session with **every state hash** (one per 600 ticks and
  * the final one) and the recorded outcome (status, ticks, score, lives, death ticks, boss kill)
  * reproduced. A failure means the simulation changed: fix the change, or — when it is intended —
@@ -25,7 +26,7 @@ import {
 /** Whether this run re-blesses the files. */
 const updating = process.env[GOLDEN_UPDATE_ENV] === '1';
 
-describe('golden replays (zone A, playtest bots)', () => {
+describe('golden replays (zone A and the gimmick range, playtest bots)', () => {
   it.each(GOLDEN_SCENARIOS.map((scenario) => [scenario.name, scenario] as const))(
     '%s reproduces every state hash and its outcome',
     (_name, scenario) => {
@@ -102,5 +103,43 @@ describe('golden replays (zone A, playtest bots)', () => {
     expect(coopDeaths.p2?.continues).toBeGreaterThan(0);
     expect(coopDeaths.p2?.deathTicks.length).toBeGreaterThan(3);
     expect(coopDeaths.deathTicks).toEqual([]); // player 1 played on
+  });
+
+  it('covers the stage gimmicks of M2-07: both branches, broken bricks, blocks, pulls, rollbacks', () => {
+    /**
+     * Plays a gimmick-range golden back and reads what its World went through.
+     *
+     * @param name - Scenario name.
+     * @returns The outcome, the low branch's flag, the trigger mask and the terrain counts.
+     */
+    const play = (name: string) => {
+      const { outcome, world } = playGolden(readGolden(name).replay);
+      const stage = world.stage;
+      const terrain = world.gimmicks.destructible;
+      if (stage === null || terrain === null) throw new Error('the gimmick range has no stage');
+      const low = 1 << stage.stage.flagNames.indexOf('took-low');
+      return {
+        outcome,
+        low: (stage.flags & low) !== 0,
+        fired: stage.triggersFired,
+        destroyed: terrain.destroyed,
+        resets: terrain.resets,
+      };
+    };
+    // The 4-way bot: the whole range, the region trigger left alone (the high branch).
+    const god = play('gimmick-range-god');
+    expect(god.outcome).toMatchObject({ status: 'stageClear', deathTicks: [] });
+    expect([god.low, god.fired]).toEqual([false, 0]);
+    expect(god.destroyed).toBeGreaterThanOrEqual(1);
+    // The weaving pilot dives through the trigger: the low branch, bricks broken all along.
+    const weaver = play('gimmick-range-weaver');
+    expect(weaver.outcome).toMatchObject({ status: 'stageClear', deathTicks: [] });
+    expect([weaver.low, weaver.fired]).toEqual([true, 1]);
+    expect(weaver.destroyed).toBeGreaterThanOrEqual(5);
+    // Without god mode under the Arcade penalty: the checkpoint restarts roll the terrain back.
+    const deaths = play('gimmick-range-deaths');
+    expect(deaths.outcome.status).toBe('gameOver');
+    expect(deaths.outcome.deathTicks).toHaveLength(3);
+    expect(deaths.resets).toBeGreaterThanOrEqual(2);
   });
 });

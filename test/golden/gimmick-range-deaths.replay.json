@@ -1,0 +1,81 @@
+{
+  "kind": "replay",
+  "header": {
+    "formatVersion": 1,
+    "buildId": "golden",
+    "seed": 33,
+    "stageId": "gimmick-range",
+    "checkpoint": -1,
+    "loadout": "default",
+    "assisted": false,
+    "config": {
+      "internalWidth": 384,
+      "internalHeight": 216,
+      "tickRate": 60,
+      "maxTicksPerFrame": 4,
+      "seed": 33,
+      "difficulty": "normal",
+      "rankBase": 2,
+      "rankGrowth": 1,
+      "extendFirst": 20000,
+      "extendEvery": 70000,
+      "continues": 3,
+      "bulletSpeedMul": 1,
+      "powerUpMode": "meter",
+      "shipId": "kestrel",
+      "deathPenalty": "arcade",
+      "startingLives": 3,
+      "autofire": true,
+      "remoteMode": true,
+      "stage": "gimmick-range",
+      "stageSkip": "none",
+      "aimDirections": 32,
+      "autofireInterval": 4,
+      "missileInterval": 10,
+      "loadout": "default",
+      "autoPowerUp": false,
+      "autoPowerUpOrder": [
+        "speed",
+        "missile",
+        "laser",
+        "option",
+        "option",
+        "option",
+        "option",
+        "shield"
+      ],
+      "pickupMagnet": true,
+      "weaponPreset": "type-a",
+      "weaponEdit": null,
+      "megaChoice": "megaCrash",
+      "shieldChoice": "forceField",
+      "optionChoice": "trail",
+      "coop": false,
+      "coopExtra": 0.5
+    }
+  },
+  "ticks": 1429,
+  "hashInterval": 600,
+  "inputs": [
+    "gYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIc",
+    "AJUL"
+  ],
+  "hashes": [
+    3902550101,
+    2089393213
+  ],
+  "finalHash": 2233047957,
+  "description": "GIMMICK RANGE, a weaving pilot that never dodges, Arcade penalty (M2-07): checkpoint restarts roll the terrain back",
+  "expected": {
+    "status": "gameOver",
+    "ticks": 1429,
+    "score": 60,
+    "lives": 0,
+    "deathTicks": [
+      238,
+      782,
+      1336
+    ],
+    "bossDefeated": false
+  }
+}

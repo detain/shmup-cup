@@ -23,7 +23,13 @@
  * drops in with START at a set tick and is flown by a second bot on player 2's input slot — the
  * whole stage with two 4-way bots (two ships sharing the capsules, the co-op drop scaling), and the
  * 4-way bot with a weaving player 2 (player 2's deaths and its continues back into the running game
- * with START while player 1 plays on, until its continues are used up).
+ * with START while player 1 plays on, until its continues are used up). Three more play the M2-07
+ * dev stage `gimmick-range` (the advanced stage systems): the 4-way bot with god mode (the high
+ * branch — the region trigger left alone —, a brick shot open, both moving blocks, the suction
+ * pod's pull, the tentacle's chain, the cube rush stacking a cube into the terrain), the weaving
+ * pilot with god mode (it dives through the region trigger: the low branch, a dozen bricks broken)
+ * and the weaving pilot without it under the Arcade penalty (deaths, the checkpoint restarts
+ * rolling the terrain back, `gameOver`).
  *
  * @module
  */
@@ -59,7 +65,7 @@ export const GOLDEN_UPDATE_ENV = 'SHMUP_GOLDEN_UPDATE';
 
 /** One golden replay: how it is recorded. */
 export interface GoldenScenario {
-  /** File name without `.replay.json` (`zone-a-…`). */
+  /** File name without `.replay.json` (`<stage id>-…`: `zone-a-…`, `gimmick-range-…`). */
   readonly name: string;
   /** What the run covers. */
   readonly description: string;
@@ -300,6 +306,33 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = Object.freeze([
     bot: 'four-way',
     p2: { bot: 'weaver', joinTick: 120 },
   },
+  {
+    name: 'gimmick-range-god',
+    description:
+      'GIMMICK RANGE with god mode (M2-07): a brick shot open, moving blocks, suction, a tentacle, the cube rush',
+    stageId: 'gimmick-range',
+    config: { seed: 31 },
+    godMode: true,
+    bot: 'four-way',
+  },
+  {
+    name: 'gimmick-range-weaver',
+    description:
+      'GIMMICK RANGE with a weaving pilot and god mode (M2-07): it dives through the region trigger — the low branch',
+    stageId: 'gimmick-range',
+    config: { seed: 35 },
+    godMode: true,
+    bot: 'weaver',
+  },
+  {
+    name: 'gimmick-range-deaths',
+    description:
+      'GIMMICK RANGE, a weaving pilot that never dodges, Arcade penalty (M2-07): checkpoint restarts roll the terrain back',
+    stageId: 'gimmick-range',
+    config: { seed: 33, deathPenalty: 'arcade' },
+    godMode: false,
+    bot: 'weaver',
+  },
 ]);
 
 /** Player 2's side of a co-op golden run (M2-06). */
@@ -467,9 +500,14 @@ export function recordGolden(scenario: GoldenScenario): { replay: Replay; outcom
  * Plays a golden replay back into a fresh session.
  *
  * @param replay - The replay.
- * @returns The desync report and the outcome of the playback.
+ * @returns The desync report, the outcome of the playback and the session's World after its last
+ *   tick (for checks of what the run went through).
  */
-export function playGolden(replay: Replay): { report: DesyncReport; outcome: GoldenOutcome } {
+export function playGolden(replay: Replay): {
+  report: DesyncReport;
+  outcome: GoldenOutcome;
+  world: Game['world'];
+} {
   const playback = createPlayback(replay, { buildId: GOLDEN_BUILD_ID });
   const game = createReplayGame(
     { ...createHeadlessPlatform(), input: playback },
@@ -484,7 +522,7 @@ export function playGolden(replay: Replay): { report: DesyncReport; outcome: Gol
     playback.check(game.world);
     watch.after();
   }
-  return { report: playback.report, outcome: watch.outcome() };
+  return { report: playback.report, outcome: watch.outcome(), world: game.world };
 }
 
 /**
