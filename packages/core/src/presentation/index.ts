@@ -493,7 +493,10 @@ export interface RasterEffectView {
  * inside `[from, to)`. Presentation only.
  */
 export interface ColorCycleView {
-  /** The layer whose pixels are recoloured (`BgFar`, `BgMid`, `Terrain`, `GroundEnemies`, `AirEnemies`). */
+  /**
+   * The layer whose pixels are recoloured (`BgFar`, `BgMid`, `Terrain`, `GroundEnemies`,
+   * `AirEnemies`).
+   */
   readonly layer: LayerId;
   /** The ramp, 0xRRGGBB, distinct (2 … 8). */
   readonly colors: readonly number[];
@@ -518,9 +521,9 @@ export interface StageEffectsView {
 
 /**
  * The ships' hurtboxes for the "show hitbox" display option (plan M2-08, shmup_feat.md §5 / §21):
- * slot `i < count` is a live ship (active, not dying or dead), centred at world `(x[i], y[i])` with hurt radius
- * `radius[i]` pixels. A mirror the World refills every tick; drawn on `LayerId.Hitbox` only while
- * the option is on.
+ * slot `i < count` is a live ship (active, not dying or dead), centred at world `(x[i], y[i])`
+ * with hurt radius `radius[i]` pixels. A mirror the World refills every tick; drawn on
+ * `LayerId.Hitbox` only while the option is on. Presentation only — `hashWorld` never reads it.
  */
 export interface HitboxView {
   /** Slots in every array. */

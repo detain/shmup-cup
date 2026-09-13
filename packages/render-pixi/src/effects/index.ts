@@ -51,9 +51,9 @@
  *   Crash, explosions and hit flash drawn over the world
  * - shmup_feat.md §20 — juice: score popups, screen shake used sparingly
  * - shmup_feat.md §21 — accessibility: reduced flashing (≤ 3 flashes a second always), shake toggle
- * - shmup_feat.md §18 — palette effects (palette cycling, flash on Mega Crash) and raster/HDMA-style
- *   effects (per-scanline offset table in a 1×H data texture: wavy water, heat haze, per-line
- *   parallax floors)
+ * - shmup_feat.md §18 — palette effects (palette cycling, flash on Mega Crash) and
+ *   raster/HDMA-style effects (per-scanline offset table in a 1×H data texture: wavy water, heat
+ *   haze, per-line parallax floors)
  * - shmup_feat.md §22 — raster-effect shader (per-scanline offset table texture); no per-frame
  *   allocation
  *
@@ -121,8 +121,10 @@ export const moduleInfo = defineModule({
 });
 
 /**
- * Presentation options for effects (the Display settings — set from `core/config`
- * `UserOptions.display` once the display options arrive, M2-08 / M2-16).
+ * Presentation options for effects (the Display settings). Mutable on
+ * {@link ScreenEffects.settings}: since M2-08 the shell sets `screenShake` / `reduceFlashing` from
+ * `core/config` `UserOptions.display` at boot (`applyDisplayOptions`) and from the Options screen's
+ * live `UserOption` events (`connectOptionEvents`); `ShellOptions.effects` may override them.
  */
 export interface EffectSettings {
   /** Apply sim-requested screen shake to the world layers (the global off switch). */

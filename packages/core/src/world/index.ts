@@ -186,6 +186,12 @@
  * (`LayerId.GroundEnemies`) and, on a stage with blocks, the block batch (`LayerId.Terrain`) as its
  * last batches, and `view.terrain.changes` (the renderer's change log).
  *
+ * **Presentation mirrors (M2-08).** The view also carries the stage's raster effects and palette
+ * cycles (`view.effects` — `core/stage` `createStageEffectsView`, static data built once, `null` in
+ * free flight) and the ships' hurtboxes for the "show hitbox" display option (`view.hitboxes` =
+ * {@link World.hitboxBatch}, refilled in phase 9 by {@link syncWorldView}). The simulation never
+ * reads either and `hashWorld` skips them.
+ *
  * **Zero allocation.** Everything is allocated by {@link createWorld}; {@link stepWorld} and the
  * systems only write numbers into existing objects and typed arrays.
  *
@@ -202,6 +208,8 @@
  *   ({@link joinPlayer}, M2-06)
  * - shmup_feat.md §14 — destructible terrain, moving floors / ceilings, stage gimmicks and region
  *   triggers wired into the tick (M2-07, {@link World.gimmicks})
+ * - shmup_feat.md §18 / §21 — the view's presentation mirrors for raster effects, palette cycling
+ *   and the hitbox display option (M2-08; drawn by the renderer, never read by the sim)
  *
  * **Public API.** {@link createWorld}, {@link WorldOptions}, {@link stepWorld}, {@link World},
  * {@link WorldCamera},
@@ -1598,9 +1606,9 @@ export function stepWorld(world: World, input: Readonly<InputSnapshot>): void {
 }
 
 /**
- * Refills {@link World.hitboxBatch}: one marker per live ship (active, not `dying` / `dead`), at its
- * centre, radius = the ship's hurt radius × its shield's hurt scale (Reduce shrinks
- * it — M2-04). Never allocates.
+ * Refills {@link World.hitboxBatch}: one marker per live ship (active, not `dying` / `dead`),
+ * at its centre, radius = the ship's hurt radius × its shield's hurt scale (Reduce shrinks it —
+ * M2-04). Never allocates.
  *
  * @param world - The world.
  */
@@ -1629,7 +1637,9 @@ function syncHitboxes(world: World): void {
  * A ship is drawn when its slot is active, it is not `dying` / `dead` and its spec has a sprite;
  * during invulnerability it blinks (`SpriteFlag.Hidden` every other 4 ticks). Player 2 is drawn
  * with the ship's palette-swap sprite (`PlayerShipSpec.spriteP2Id`, M2-06) when the content has
- * it.
+ * it. Since M2-08 it also refills {@link World.hitboxBatch} (every active ship not `dying` /
+ * `dead` — also a ship blinking or without a sprite — at its hurt radius × its shield's
+ * `hurtScale`).
  *
  * @param world - The world.
  */

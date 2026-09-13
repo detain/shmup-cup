@@ -38,10 +38,10 @@
  * that layer only while the option is on).
  *
  * **Render interpolation (M2-08).** On displays faster than the 60 Hz tick the renderer draws
- * between the last two ticks: {@link ParallaxBinding.syncInterpolated} blends each band's previous
- * and current offset (across the repeat seam) and {@link HitboxBinding.syncInterpolated} each hitbox
- * marker's centre (so it stays on the interpolated ship sprite); the terrain grid and the lasers
- * just take the renderer's interpolated camera.
+ * between the last two ticks: {@link ParallaxBinding.syncInterpolated} blends each band's
+ * previous and current offset (across the repeat seam) and {@link HitboxBinding.syncInterpolated}
+ * each hitbox marker's centre (so it stays on the interpolated ship sprite); the terrain grid and
+ * the lasers just take the renderer's interpolated camera.
  *
  * Pixel snapping: the renderer is created with `roundPixels: true` and every binding writes
  * integer positions (`Math.round`), so nothing in the stack is drawn at sub-pixel offsets. The

@@ -17,9 +17,11 @@ menu** over the frozen game: resume, retry, or quit to the title. When the last 
 **CONTINUE?** countdown lets you carry on from the last checkpoint (if the difficulty gives
 continues), then a **GAME OVER** screen appears, after a boss a **STAGE CLEAR** screen, and on the TV Back on the
 title asks **EXIT SHMUP CUP?** before it closes the app. **OPTIONS** — on the title and in the
-pause menu — sets the game's own volumes (MASTER, MUSIC, SFX), the control profile and the
+pause menu — sets the game's own volumes (MASTER, MUSIC, SFX), the control profile, the
 colours of the enemy bullets (**BULLETS**: the standard colours or one of three sets made for
-colour-blind players), and the game **remembers** them and your **high scores** between launches. Everything is drawn by the game
+colour-blind players), how the picture fills the screen (**SCALE**), the screen **SHAKE**, gentler
+**FLASHES** and a **HITBOX** marker on your ship, and the game **remembers** them and your **high
+scores** between launches. Everything is drawn by the game
 itself and works with the remote's arrows, OK and Back alone ([The title screen and the
 menus](#the-title-screen-and-the-menus), [Pausing, quitting and the end
 screens](#pausing-quitting-and-the-end-screens), [Difficulty, extra ships and
@@ -61,7 +63,7 @@ loops seamlessly, the boss theme, a short stage-clear tune and a game-over tune
 click.
 
 In a browser there is more to try: a shortcut straight to the zone's boss (`?skip=boss`), the
-fully powered ship (`?loadout=full`), and five test stages — the scrolling *Test Range*, with rocky
+fully powered ship (`?loadout=full`), and six test stages — the scrolling *Test Range*, with rocky
 ground, caves, speed changes and the first enemy roster
 ([The scrolling test stage](#the-scrolling-test-stage-browser-only)), the short *Boss Range*
 with a test boss ([The boss range and the WARNING](#the-boss-range-and-the-warning-browser-only)),
@@ -71,20 +73,26 @@ the MANTA's colour items come thick and fast ([The Direct range](#the-direct-ran
 and the *Gimmick Range*, a preview of what later zones are made of — rock you can shoot through,
 walls that grow back, falling rocks, splitting bubbles, a volcano, a suction pod, grabbing
 tentacles, cubes that stack into walls, moving blocks, a stop with the view panning down, a fork
-in the route and a very fast stretch ([The Gimmick range](#the-gimmick-range-browser-only)).
+in the route and a very fast stretch ([The Gimmick range](#the-gimmick-range-browser-only)),
+and the *Raster Range*, a showcase of the SNES-style picture effects the later zones will use — a
+sea that waves and shimmers through its colours, a checkered floor that runs to the horizon like
+in old racing games, and heat haze over the stars ([The Raster range](#the-raster-range-browser-only)).
 The earlier start-up pictures are still there: **free flight** straight away without the title,
 the animated **sprite showcase** and the **calibration screen**, plus the **effects gallery**
 that shows every explosion and screen effect in turn (see [below](#other-screens-browser-only)).
 
-This build is version **0.1.0** — the end of the first milestone — plus the first seven steps of
+This build is version **0.1.0** — the end of the first milestone — plus the first eight steps of
 the second: the difficulties, extra ships and continues, then the colour-blind bullet colours and
 points for cancelled bullets, then the **weapon types** and the WEAPON SELECT screen, then four
 kinds of **Options**, five **shields**, the **Option Hunter** that steals Options and the rare
 **blue capsule**, then the **second ship, the MANTA**, with its colour items, its growing
 weapons and its **Arm** shield, and the **SHIP SELECT** box, then **two players at once**: the
 title's **2 PLAYERS**, a second player joining with START, each with their own ships, score and
-continues, and now the **stage mechanics** of the later zones — for now only in the browser's
-*Gimmick Range* (AZURE VERGE is unchanged). For checking it on the monitors
+continues, then the **stage mechanics** of the later zones — for now only in the browser's
+*Gimmick Range* —, and now the **picture options** and **effects**: SCALE, SHAKE, FLASHES and
+HITBOX in the Options screen, a Mega Crash flash that brightens the picture instead of covering
+it, smoother motion on 120 / 144 Hz monitors, and the SNES-style water, floor and haze effects of
+the browser's *Raster Range* (AZURE VERGE itself looks and plays as before). For checking it on the monitors
 there is a **debug build** with developer tools — a panel with the frame rate, frame times and
 start-up time, hit-area outlines, invincibility, a freeze with single steps, slow motion and
 jumps to the next checkpoint or the boss — opened on the remote with Play/Pause and then Ch ▲
@@ -529,6 +537,10 @@ darkened picture:
      SFX      ▬▬▬▬▬▬▬▬▬▬  10
      CONTROLS SAFE 4-WAY (DEFAULT)
      BULLETS  STANDARD
+     SCALE    INTEGER
+     SHAKE    ON
+     FLASHES  NORMAL
+     HITBOX   OFF
      BACK
 ```
 
@@ -539,16 +551,21 @@ darkened picture:
 | **SFX** | The sound effects' volume, 0–10 — the menu clicks and chimes follow it too |
 | **CONTROLS** | The control profile: on the TV **SAFE 4-WAY (DEFAULT)** or **FAST 8-WAY**, in a browser **KEYBOARD (DEFAULT)**, **KEYBOARD AS REMOTE** or **SPLIT KEYBOARD** (two players on one keyboard — [Two players](#two-players)) ([controls.md](controls.md#control-profiles)) |
 | **BULLETS** | The colours of the enemy bullets and lasers: **STANDARD** (pink, red and purple — the start setting), or a set made for a kind of colour blindness: **DEUTERANOPIA** and **PROTANOPIA** (red–green: light magenta, sky blue and near-white) or **TRITANOPIA** (blue–yellow: crimson, teal and near-white) — see below |
+| **SCALE** | How the picture fills the screen: **INTEGER** (the start setting — every game pixel is exactly the same size, with a black border where the screen does not fit a whole multiple), **FIT** (as large as possible without changing the shape — a thinner border or none, but some pixel rows and columns come out one screen pixel wider than others) or **STRETCH** (the whole screen, the shape stretched to fit) — see below |
+| **SHAKE** | **ON** (the start setting): the picture shakes for the big moments — your ship lost, a boss exploding; **OFF**: it never shakes |
+| **FLASHES** | **NORMAL** (the start setting) or **REDUCED**: at most one full-screen flash a second, and every flash much dimmer — for players sensitive to flashing light (even on NORMAL the game never flashes more than three times a second) |
+| **HITBOX** | **OFF** (the start setting) or **ON**: a small white square with a pink-red rim in the middle of your ship (and player 2's) shows the spot that must not be hit — only that spot counts for bullets and enemies |
 | **BACK** | Keeps the settings and closes the box |
 
 - **▲ / ▼** move the highlight (MASTER is highlighted first). On a volume, **◀ / ▶** turn it down
   or up one step — the bar shrinks or grows and the number changes; holding the arrow keeps
-  going, like in the other menus. On CONTROLS and BULLETS, **◀ / ▶** (or OK) step to the next
-  choice.
+  going, like in the other menus. On CONTROLS, BULLETS, SCALE and FLASHES, **◀ / ▶** (or OK) step
+  to the next choice. On SHAKE and HITBOX, **◀** is OFF, **▶** is ON and OK switches.
 - **Every change works at once**: the music gets quieter while you turn MUSIC down (on the title
   you hear the title music change), the clicks get quieter while you turn SFX or MASTER down, and a
-  new control profile is used from the next button press, and new bullet colours show on the very
-  next picture (over a paused game too). OK on a volume does nothing.
+  new control profile is used from the next button press, and new bullet colours, a new SCALE, the
+  HITBOX marker and the SHAKE / FLASHES settings show on the very next picture or effect (over a
+  paused game too). OK on a volume does nothing.
 - The steps follow your hearing rather than a ruler: 5 sounds about half as loud as 10, and 0 is
   silent.
 - **BACK** — or the **Back** button anywhere in the box — keeps the settings, plays the "back"
@@ -565,11 +582,26 @@ without colour: the pink family keeps a solid bright centre, the red one has a *
 like a ring) and the purple one a **single bright dot**. The laser beams follow the same colours.
 Only the look changes — the bullets fly, hit and score exactly the same, whatever you choose.
 
+**The picture size (SCALE).** The game draws a small 384 × 216 picture and enlarges it to your
+screen. On a 1920 × 1080 screen — the TV app's usual size — it fits exactly five times, so
+**INTEGER, FIT and STRETCH look the same there**. They differ on other sizes: in a browser window,
+on a 1280 × 720 picture (INTEGER leaves a black border of 64 pixels left and right and 36 top and
+bottom; FIT and STRETCH fill it) or on a screen that is not 16:9 (only STRETCH fills it, and the
+picture looks wider or taller). With FIT and STRETCH small details can look slightly uneven —
+that is expected; INTEGER is the sharpest.
+
+**The hitbox marker.** Your ship is only hit where its small weak spot is — bullets that merely
+brush a wing miss. HITBOX ON draws that spot: a white 3 × 3 square in a pink-red frame in the
+middle of the KESTREL or the MANTA (smaller while a **REDUCE** shield is up). It moves exactly with
+the ship, disappears while the ship is exploding, and changes nothing about the game. (The
+*hit-area outlines* of the debug build are a different, developer-only tool —
+[debug-tools.md](debug-tools.md).)
+
 ### What the game remembers
 
 | What | When it is saved | Where |
 |---|---|---|
-| The three volumes, the control profile and the bullet colours | When you leave the Options screen with BACK or Back | On the TV inside the app itself; in a browser (and the desktop app) in that browser's storage for the page |
+| The three volumes, the control profile, the bullet colours and SCALE, SHAKE, FLASHES and HITBOX | When you leave the Options screen with BACK or Back | On the TV inside the app itself; in a browser (and the desktop app) in that browser's storage for the page |
 | High scores | When the **GAME OVER** or **STAGE CLEAR** screen appears | The same place |
 
 - **High scores**: the best ten of each kind of game are kept — each **difficulty** has its own
@@ -635,7 +667,20 @@ ship may move in four directions only; the game is designed to be fully playable
 
 ### What changed lately
 
-**New in this build: the stage mechanics of the later zones (browser only).** A new test stage,
+**New in this build: picture options and SNES-style effects.** The Options screen has four new
+entries under BULLETS — **SCALE** (INTEGER, FIT or STRETCH: how the picture fills the screen),
+**SHAKE** (ON / OFF), **FLASHES** (NORMAL / REDUCED) and **HITBOX** (OFF / ON: a marker on your
+ship's weak spot) — so BACK is now four entries further down. They work at once, over a paused
+game too, and are remembered ([The Options screen](#the-options-screen)). The **Mega Crash** flash
+now brightens the whole picture for a moment instead of covering it with white, so your ship and
+the bullets stay visible. On a **120 or 144 Hz** PC monitor the ship, the enemies and the
+scrolling now glide more smoothly (on the TV, which shows 60 pictures a second, nothing changes).
+And a new browser test stage, the *Raster Range* (http://localhost:5173/?stage=raster-range),
+shows the picture effects the later zones will use: a sea that waves and whose colours roll, a
+checkered floor that races to the horizon, and heat haze over the stars
+([The Raster range](#the-raster-range-browser-only)). AZURE VERGE looks and plays as before.
+
+Before that, **the stage mechanics of the later zones (browser only).** A new test stage,
 the *Gimmick Range* (http://localhost:5173/?stage=gimmick-range), shows what the coming zones will
 be built from: **bricks you can shoot through** (four hits each, 10 points), pink **walls that
 grow back** a few seconds after you break them (never onto your ship), **rocks** that hang from
@@ -1257,10 +1302,23 @@ Things to check on the monitor and report:
 47. **Unplugging** (new): during a two-player game unplug (or switch off) the gamepad: its ship
    stays in the game, still firing but not moving. Plug it back in and press **A** on it: it flies
    player 2's ship again. Report anything unexpected.
+48. **The picture options** (new): OPTIONS now lists SCALE, SHAKE, FLASHES and HITBOX under
+   BULLETS, and all ten entries fit inside the box. Step SCALE through INTEGER, FIT and STRETCH with
+   ◀ / ▶: on the monitor's usual 1920 × 1080 picture all three should look the same, sharp and
+   without a border — report the monitor model if the picture changes size or gets a border.
+49. **SHAKE and HITBOX** (new): set SHAKE to OFF and HITBOX to ON, press BACK and play: losing the
+   ship no longer shakes the picture, and a small white square in a pink-red frame sits in the
+   middle of your ship all the time (not while it explodes). Report whether the marker is easy to
+   see from the sofa. Close and reopen the app: both settings are kept.
+50. **FLASHES and the Mega Crash** (new): with FLASHES on NORMAL, take the `!` Mega Crash: the
+   playfield brightens towards white for a moment, but the ship and the enemies stay visible
+   through it. Then set FLASHES to REDUCED and do it again: a much dimmer flash. Report whether
+   either is uncomfortable.
 
-The fully powered ship (`?loadout=full`), the shortcut to the boss (`?skip=boss`), the four test
+The fully powered ship (`?loadout=full`), the shortcut to the boss (`?skip=boss`), the six test
 stages (the Test Range, the Boss Range with its test boss, the Hunter Range with the Option
-Hunters and the blue capsule, and the Direct Range with the MANTA's pincer waves), free flight, the showcase, the
+Hunters and the blue capsule, the Direct Range with the MANTA's pincer waves, the Gimmick Range
+with the later zones' stage mechanics and the Raster Range with the picture effects), free flight, the showcase, the
 calibration screen and the effects gallery can only be opened in a browser — the monitor's own
 web browser works too, pointed at a PC running `pnpm dev` (below).
 
@@ -2008,6 +2066,33 @@ What "good" looks like:
   With two players, either ship can take the low route.
 - Nothing stays stuck on the screen, and there are no magenta-and-black squares.
 
+## The Raster range (browser only)
+
+Open http://localhost:5173/?stage=raster-range and choose 1 PLAYER (any difficulty and ship). It
+is a calm stage of about a minute in open space, made to show the SNES-style **picture effects**
+the later zones will use — the TV cannot open it (the widget has no address bar), and none of the
+effects is in AZURE VERGE yet. It works with two players too.
+
+| Where on the screen | What you should see |
+|---|---|
+| Top half | Two layers of **stars** drifting slowly. From about **20 to 40 seconds** in, the stars in the upper part **shimmer** as if seen through **heat haze** — a fast, irregular wobble — then settle again |
+| Middle | A band of **deep-blue sea** with light rows of swell. Its rows **wave** gently left and right, and its four shades of blue **roll** through the band all the time, so the swell seems to move |
+| Bottom | A violet **checkered floor** from a thin bright horizon line down to the bottom bar. The lines near the horizon move slowly, the ones near you fast, so it looks like a floor racing past towards the horizon — the old racing-game trick |
+| Enemies | A few rows of small pods weaving on a wave (about 5, 24 and 44 seconds in) and red saucers (about 12 and 34 seconds) that leave power capsules — the Test Range's |
+| About 60 s | The end of the stage — STAGE CLEAR |
+
+What "good" looks like:
+
+- The sea's waving is smooth and never tears into separate bits; the rolling colours stay inside
+  the sea — nothing else on the screen changes colour with them.
+- The checkered floor keeps its squares: each strip moves as one piece, nearer strips faster, and
+  the pattern never breaks up into noise, even after a minute.
+- The heat haze only runs in its middle stretch; the stars are still before and after it.
+- Your ship, the enemies, the bullets and the HUD are never distorted — only the backgrounds.
+- The effects stay put when the picture shakes (lose a ship): the waves stay on the sea.
+- The game stays as smooth as elsewhere. If a monitor or browser gets jerky here and not in
+  AZURE VERGE, please report it with the device.
+
 ## Explosions, sparks, shake and flashes
 
 Hits look like hits — in AZURE VERGE on every device, and in the browser's *Test Range*
@@ -2026,7 +2111,7 @@ is in [Sound and music](#sound-and-music).
 | Enemy bullets are cancelled (you lost a ship, a Mega Crash, a boss destroyed) | Each bullet turns into a small pale-gold **twinkle**; after a Mega Crash or a boss, also a small **gold diamond** that drifts, then flies up into your score |
 | You lose your ship | Three fireballs and a spray of debris; the picture **shakes** for about a third of a second |
 | The Force Field breaks | A burst of sparks around the ship |
-| **Mega Crash** | The playfield (not the HUD bars) **flashes white** for a fifth of a second |
+| **Mega Crash** | The playfield (not the HUD bars) **brightens towards white** for a fifth of a second — everything on it stays visible through the flash |
 | The boss **WARNING** | The playfield darkens to about half and pulses **red** three times, once a second |
 | A boss part is destroyed | It explodes; its points rise from it |
 | The boss is destroyed | Two seconds of explosions all over it, then a big blast: a bright **white flash**, a **strong shake** (about two thirds of a second), debris, and a gold `30000` (HALCYON BULWARK) or `20000` (the test boss) |
@@ -2041,9 +2126,10 @@ What "good" looks like:
   where it was.
 - Explosions stay where the enemy was destroyed and scroll away with the ground.
 - The screen never flashes more than three times in one second (a built-in limit that protects
-  players sensitive to flashing light). There is no setting yet to turn the shake off or to tone
-  the flashes down — both come with the options screen of a later build. If the shake or the
-  flashes are uncomfortable, please say so.
+  players sensitive to flashing light). **OPTIONS → FLASHES → REDUCED** tones them down further (at
+  most one a second, much dimmer) and **OPTIONS → SHAKE → OFF** turns the shake off
+  ([The Options screen](#the-options-screen)). If the shake or the flashes are still
+  uncomfortable, please say so.
 - Everything freezes when the game is paused (the pause menu, switching tabs, the TV's Home
   button) and carries on from where it stopped. A new game (1 PLAYER, 2 PLAYERS, RETRY STAGE) starts without
   the last game's explosions and numbers.
@@ -2137,6 +2223,7 @@ What "good" sounds like:
 | http://localhost:5173/?stage=test-range | The **Test Range**, the first scrolling stage (above) |
 | http://localhost:5173/?stage=test-range&loadout=full | The Test Range with the **fully powered** ship: laser, missiles, four Options, Force Field ([Your weapons](#your-weapons)) |
 | http://localhost:5173/?stage=test-boss | The **Boss Range**: the WARNING and the test boss ([above](#the-boss-range-and-the-warning-browser-only)); add `&loadout=full` to fight it fully powered |
+| http://localhost:5173/?stage=raster-range | The **Raster Range**: the SNES-style picture effects — the waving, colour-rolling sea, the checkered floor, the heat haze ([above](#the-raster-range-browser-only)) |
 | http://localhost:5173/?scene=showcase | The **sprite showcase** the previous builds started with: the KESTREL flying a figure-eight with two Options, five enemies with hit flashes, a ring of bullets, both HUD bars with a counting score and a blinking power meter. Nothing reacts to the controls |
 | http://localhost:5173/?scene=calibration | The **calibration screen**, for judging scaling and colours on a new display (below) |
 | http://localhost:5173/?scene=fx-gallery | The **effects gallery**: over still stars, one effect a second — each explosion and spark (three bursts in the middle of the picture), then the small, medium and large screen shake, the three flashes (Mega Crash, WARNING, boss blast), the darkening and a row of score numbers — then it starts over. The name of the effect shows near the top (`1/19  EXPLOSION.SMALL` …). Nothing reacts to the controls. Useful for judging the effects on a monitor without having to play to them |
@@ -2207,6 +2294,15 @@ mean the build itself is broken; they are not caused by anything you did.
 | My ship drifted without pressing anything (Gimmick range) | A **suction pod** or a **tentacle's** grab is pulling it — fly against it or shoot the pod / claw |
 | The view stopped and moved down with no boss (Gimmick range) | Expected: a timed stop with a pan down into the dip; it scrolls on after three seconds |
 | `?stage=gimmick-range` does nothing on the TV | Expected: the TV widget has no address bar; the Gimmick range is browser only for now |
+| The picture has black borders on the sides and top (PC) | Expected with **SCALE → INTEGER** (the start setting) when the window is not a whole multiple of the game's picture; choose FIT (thinner or no border) or STRETCH (no border) in OPTIONS |
+| The picture looks stretched, or some pixels look wider than others | **SCALE** is FIT or STRETCH — expected; OPTIONS → SCALE → INTEGER gives the sharpest, evenly sized pixels |
+| SCALE changes nothing on the TV | Expected on a 1920 × 1080 picture: the game fits it exactly five times, so all three settings look the same |
+| A white square with a pink-red frame sits on my ship | **HITBOX** is ON — it shows the ship's weak spot. OPTIONS → HITBOX → OFF hides it |
+| The picture no longer shakes when the ship is lost | **SHAKE** is OFF in OPTIONS |
+| The Mega Crash flash is weak or the boss's blast barely flashes | **FLASHES** is REDUCED in OPTIONS (at most one dim flash a second) — set NORMAL for the full flashes |
+| The Mega Crash no longer turns the screen white | Expected since this build: the flash brightens the picture so you can still see the bullets; it should still be clearly visible |
+| The sea or the floor in the Raster range wobbles / changes colour | Expected — those are the stage's picture effects ([The Raster range](#the-raster-range-browser-only)). Report it if the ship, enemies, bullets or the HUD ever wobble or change colour |
+| Motion looks smoother on my gaming monitor than on the TV | Expected: on monitors faster than 60 Hz the game draws the in-between positions; the TV shows 60 pictures a second and draws each one exactly |
 | The MANTA survived touching the rock | Expected while the **Arm** is up: it takes a hit for the ship, even from the rock (the KESTREL's shields do not) |
 | The MANTA's gun got weaker after a loss | Expected: a lost ship costs the Arm and, on NORMAL and HARD, one SHOT level (on ARCADE everything) — [The MANTA](#the-manta-colour-items-weapons-and-the-arm) |
 | `HI` changed after I chose the other ship | Expected: the KESTREL and the MANTA keep separate high scores for each difficulty |

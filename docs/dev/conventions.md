@@ -214,6 +214,15 @@ ES5 and linted with `ecmaVersion: 5`.
   never by rescanning or a dirty list; and a closure a system needs goes on its cold path only
   (`StageGimmicks.clear`'s block respawn)
   ([advanced-stages.md](advanced-stages.md#zero-allocation-and-the-hot-path-rules)).
+  And from M2-08: a fraction many per-frame calls need (render interpolation's blend factor) travels
+  in a reused class instance (`RenderBlend` / `FrameBlend`, the drawn camera), never as a call
+  argument, and a clamp of it is written inline rather than in a helper that returns it; a value
+  the host reads every frame from a probe (`RefreshMonitor.hz`) is a plain field — the getter
+  boxed it; per-binding history a feature may never use is allocated on first use and swapped by
+  reference; Pixi state that copies or rebuilds on assignment (a layer's `filters` list, a sprite's
+  `blendMode`) is set only at a range edge — or never, with one sprite per blend mode — and a
+  data texture is re-uploaded only when its bytes changed
+  ([presentation-polish.md](presentation-polish.md#zero-allocation-and-the-hot-path-rules)).
 - Behaviour coroutines (generators, D29) allocate a small result object on every resume:
   scripts **sleep** (`yield ticks`) and are resumed only when they wake; per-tick motion
   belongs in a mover (numbers on the body), never in a `yield 1` loop.

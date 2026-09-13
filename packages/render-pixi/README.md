@@ -6,8 +6,9 @@ no Pixi ticker; the host's fixed-step loop calls `render()` (`shmup_tech.md` §4
 - **WebGL1 first** (`preferWebGLVersion: 1`; WebGL2 on Tizen 5.5 GPUs is unverified —
   `webGLVersion` reports what was obtained).
 - The game is drawn into a **384×216 render texture** (nearest-neighbour), then presented
-  with **one integer-scaled quad**, centred with a letterbox: ×5 on 1080p, ×3 on 720p,
-  ×10 on 4K (`shmup_feat.md` §3, `shmup_tech.md` §2.2).
+  with **one quad**, by default integer-scaled and centred with a letterbox: ×5 on 1080p, ×3 on
+  720p, ×10 on 4K (`shmup_feat.md` §3, `shmup_tech.md` §2.2); since M2-08 also `fit` or `stretch`
+  (`computeViewport`, `renderer.setScaleMode`).
 - It draws the core's render contract (plan §3.4) from the sprite atlas with zero per-frame
   allocation: world sprite batches bound once per `WorldView` (the enemy bullets are one), the
   enemy lasers (rotated warning lines and stretched beams, M1-09), the bending lasers (one
@@ -24,6 +25,11 @@ no Pixi ticker; the host's fixed-step loop calls `render()` (`shmup_tech.md` §4
   Since M2-02 it swaps the enemy bullet, beam and bend sprites for the player's **colour-blind
   palette** (`renderer.setBulletPalette`, `resolveBulletPaletteTable`: the pipeline's
   `<sprite>@<palette>` variants in place of the plain frames — no rebinding, no sim change).
+  Since M2-08 it draws the stage's **raster effects** (wavy water, heat haze, line-band parallax
+  floors) and **palette cycles** with one GLSL ES 1.0 filter per layer (`renderer.layerEffects`,
+  attached only while an effect is in camera range), an **additive** Mega Crash flash, the ships'
+  **hitbox markers** (`setShowHitbox`) and, with `setInterpolation(true)`, the world between the
+  last two ticks for displays faster than 60 Hz.
   With `testPattern: true` it also shows the
   **calibration test pattern** (1-px checker border, 16-px grid, colour bars, a placeholder
   ship, a marker moving one pixel per tick).
@@ -44,17 +50,17 @@ renderer.render(game.renderFrame()); // steps particles / popups / effects by th
 
 | Module | Status | Responsibility |
 |---|---|---|
-| `renderer` | partial | Pixi WebGL renderer, low-res target, upscale pass; draws a core `RenderFrame` (world batches, lasers, bending lasers — M2-02 —, HUD / UI draw lists, shake, flash, dim); `setBulletPalette` (M2-02); owns the particles, popups and screen effects and steps them by the `frame.tick` delta (M1-14); optional calibration pattern; optional draw-call counter (`countDrawCalls` → `drawCalls`, M1-19) |
-| `viewport` | partial | Integer-scale letterbox math (pure) |
+| `renderer` | partial | Pixi WebGL renderer, low-res target, upscale pass; draws a core `RenderFrame` (world batches, lasers, bending lasers — M2-02 —, HUD / UI draw lists, shake, flash, dim); `setBulletPalette` (M2-02); M2-08: `setScaleMode`, `setShowHitbox` (the `HITBOX` layer), `setInterpolation`, `layerEffects` (bound from `world.effects`), the additive flash quad; owns the particles, popups and screen effects and steps them by the `frame.tick` delta (M1-14); optional calibration pattern; optional draw-call counter (`countDrawCalls` → `drawCalls`, M1-19) |
+| `viewport` | implemented | Scale modes (pure): `computeIntegerViewport` (the default letterbox) and `computeViewport` (M2-08: integer / fit / stretch) |
 | `test-pattern` | implemented | Calibration scene (`?scene=calibration`) |
-| `palette` | partial | Placeholder colours (VA-panel-friendly, no pure black); the colour-blind bullet palettes (M2-02: `bulletPaletteSpriteName`, `resolveBulletPaletteTable`, `BULLET_PALETTE_SUFFIX`); palette cycling later |
+| `palette` | implemented | Placeholder colours (VA-panel-friendly, no pure black); the colour-blind bullet palettes (M2-02: `bulletPaletteSpriteName`, `resolveBulletPaletteTable`, `BULLET_PALETTE_SUFFIX`); palette cycling (M2-08: `colorCycleStep`, `writeCycleColors`, `writeColorUnit` — the layer shader's colour pairs; the art keeps its RGBA colours) — `implemented` |
 | `atlas` | implemented | `createAtlas(manifest, images)`: one nearest-neighbour source per page, consecutive frame ids per sprite, `resolveSpriteTable` / `resolveFlashTable` (unknown → `ui/missing`, warned once) |
-| `layers` | implemented | One container per core `LayerId` in §18 draw order; world group (shake) under HUD / UI / DEBUG; the stage's terrain as a ring-buffered 49 × 26 tile-sprite grid (re-textured one column / row as the camera crosses tile edges) and its parallax bands as repeated sprites (M1-07) — since M2-07 following the view's `changes` log (only the changed cells in view re-textured; a reset or an overflowing gap redraws the grid); the enemy lasers (`createLaserBinding`, M1-09: two sprites per slot — a tinted 1-px warning line and a beam frame picked by width — on `ENEMY_BULLETS`); the bending lasers (`createBendingLaserBinding`, M2-02: one never-rotated segment sprite per ring node, tail first, after the lasers) |
-| `sprites` | implemented | `createSpriteLayerBinding` (preallocated sprites per `SpriteBatchView`: camera, `PLAYFIELD_Y`, anchors, flips, blink, hit flash), ordered `QuadPool` |
+| `layers` | implemented | One container per core `LayerId` in §18 draw order; world group (shake) under HUD / UI / DEBUG; the stage's terrain as a ring-buffered 49 × 26 tile-sprite grid (re-textured one column / row as the camera crosses tile edges) and its parallax bands as repeated sprites (M1-07) — since M2-07 following the view's `changes` log (only the changed cells in view re-textured; a reset or an overflowing gap redraws the grid); the enemy lasers (`createLaserBinding`, M1-09: two sprites per slot — a tinted 1-px warning line and a beam frame picked by width — on `ENEMY_BULLETS`); the bending lasers (`createBendingLaserBinding`, M2-02: one never-rotated segment sprite per ring node, tail first, after the lasers); the hitbox markers (`createHitboxBinding`, M2-08: a white core in a pink-red rim per `HitboxView` slot on `HITBOX`); `syncInterpolated` of the parallax bands and markers (M2-08) |
+| `sprites` | implemented | `createSpriteLayerBinding` (preallocated sprites per `SpriteBatchView`: camera, `PLAYFIELD_Y`, anchors, flips, blink, hit flash; M2-08: `syncInterpolated` — a slot drawn between its last two positions when it kept its sprite and moved ≤ `INTERPOLATION_MAX_STEP`), ordered `QuadPool` |
 | `text` | implemented | Bitmap font from the atlas, `TextMetrics`, allocation-free text and number layout |
 | `ui` | implemented | Draws a core `DrawList` (rect, sprite, text, number) into the HUD or UI layer — the core HUD and the scene flow's menus since M1-16 |
 | `particles` | implemented | `content/fx/` presets (kind `fx`: `loadFxContent`) and the 256-particle pool on the FX layer (additive / normal, presentation RNG, oldest recycled, world space, ticks not frames), spawned by FX and SFX cues (M1-14) |
-| `effects` | partial | Screen shake (3 magnitudes, decaying, off switch), per-kind flash behind a ≤ 3-a-second limiter, playfield dim, score popups (M1-14); raster & palette effects, CRT later |
+| `effects` | implemented | Screen shake (3 magnitudes, decaying, off switch), per-kind flash behind a ≤ 3-a-second limiter (additive Mega Crash look — M2-08), playfield dim, score popups (M1-14); M2-08: the raster offset tables (`raster.ts`: `addRasterEffect`, `encodeRasterTable` into a 1 × 216 RGBA8 texture), the GLSL ES 1.0 layer shader (`shaders.ts`) and `createLayerEffects` / `createLayerEffectFilter` (`layer-effects.ts`: one filter per layer, raster + palette cycle in one pass); CRT later (M3-02) |
 | `debug` | implemented | The debug overlay on the `DEBUG` layer (M1-19): `createDebugOverlay`, the pure builders `buildDebugPanel` (five lines + the frame graph) and `buildDebugOutlines` (hurt circles, terrain boxes, enemy / boss-part hurtboxes, shot boxes, bullet circles, items, laser capsules, grid cells) — sixteen one-colour draw lists, allocation-free; created only by dev / test builds |
 
 Guide (sprite ids → frames, bindings, quad pools, the terrain ring and parallax bands, text,
@@ -63,6 +69,7 @@ what the terrain and parallax views contain: [`docs/dev/stage-runtime.md`](../..
 the laser view and the beam art: [`docs/dev/bullets-and-patterns.md`](../../docs/dev/bullets-and-patterns.md#drawing-bullets-and-lasers);
 the bending lasers and the colour-blind palettes: [`docs/dev/rendering-and-shell.md`](../../docs/dev/rendering-and-shell.md#colour-blind-bullet-palettes), [`docs/dev/pattern-dsl.md`](../../docs/dev/pattern-dsl.md);
 particles, screen effects, score popups and the `fx` content: [`docs/dev/fx-and-game-feel.md`](../../docs/dev/fx-and-game-feel.md);
+raster effects, palette cycling, scale modes, hitbox markers and render interpolation (M2-08): [`docs/dev/presentation-polish.md`](../../docs/dev/presentation-polish.md);
 the debug overlay and the draw-call counter: [`docs/dev/debug-and-replays.md`](../../docs/dev/debug-and-replays.md#the-overlay-shmuprender-pixi-debug);
 exports: [`docs/dev/api-reference.md`](../../docs/dev/api-reference.md#shmuprender-pixi).
 

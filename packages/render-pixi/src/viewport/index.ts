@@ -7,8 +7,8 @@
  * - `integer` (the default) — the largest *integer* scale that fits, centred, with a letterbox;
  *   every frame pixel is the same number of screen pixels ({@link computeIntegerViewport}).
  * - `fit` — the largest scale that fits keeping the 16:9 aspect ratio, not a whole number: the
- *   frame is still sampled nearest-neighbour, so some pixel rows / columns come out one screen pixel
- *   wider than others, but the letterbox is as thin as it can be.
+ *   frame is still sampled nearest-neighbour, so some pixel rows / columns come out one screen
+ *   pixel wider than others, but the letterbox is as thin as it can be.
  * - `stretch` — the whole display, the aspect ratio ignored (x and y scaled separately).
  *
  * Pure functions — no Pixi, no DOM — so they are unit-tested in Node.

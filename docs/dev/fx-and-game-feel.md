@@ -175,9 +175,13 @@ simulated ticks with `step(ticks)`; the renderer reads `shakeX`, `shakeY`, `flas
   `[0, 1, −1, 1, 0, −1, 1, −1]`), so the same shake always looks the same. `settings.screenShake
   = false` is the **global off switch**: `shakeX` / `shakeY` become 0 at once while the
   amplitude is still tracked.
-- **Flash.** `flash(kind, ticks)` looks the kind up in `FLASH_LOOKS` — `MegaCrash` white 0.85,
-  `Warning` red `0xf85858` 0.35, `BossBlast` white 1.0 (unknown kinds `DEFAULT_FLASH_LOOK`, white
-  0.6) — and fades linearly from that opacity to 0 over `ticks`. The **limiter**
+- **Flash.** `flash(kind, ticks)` looks the kind up in `FLASH_LOOKS` — `MegaCrash` white 0.7
+  **additive** (since M2-08; it was 0.85 over the picture), `Warning` red `0xf85858` 0.35,
+  `BossBlast` white 1.0 (unknown kinds `DEFAULT_FLASH_LOOK`, white 0.6) — and fades linearly from
+  that opacity to 0 over `ticks`. A look with `additive: true` sets `flashAdditive`, and the
+  renderer draws it on its additive overlay: the SNES's colour-addition flash brightens the
+  world towards white instead of covering it, so the ship and the bullets stay readable
+  ([presentation-polish.md](presentation-polish.md#the-mega-crash-flash)). The **limiter**
   (photosensitivity, `shmup_feat.md` §21) keeps the start clocks of the last `FLASH_LIMIT` (3)
   accepted flashes in a ring: a flash is dropped (and counted in `flashesSuppressed`) when the
   oldest of the last `limit` starts is less than `FLASH_WINDOW_TICKS` (60) old — so at most 3
@@ -189,7 +193,11 @@ simulated ticks with `step(ticks)`; the renderer reads `shakeX`, `shakeY`, `flas
   `level / DIM_FADE_OUT_TICKS` (16) a tick to 0.
 - `clear()` stops everything and resets the limiter; `settings` is the object passed at creation
   (copied from `PixiRendererOptions.effects` / `ShellOptions.effects`, defaults
-  `DEFAULT_EFFECT_SETTINGS`: shake on, normal flashing, CRT off — the CRT field waits for M3-02).
+  `DEFAULT_EFFECT_SETTINGS`: shake on, normal flashing, CRT off — the CRT field waits for M3-02 —,
+  layer effects on — `rasterEffects`, M2-08). Since M2-08 the shell writes `screenShake` and
+  `reduceFlashing` from the player's saved display options at boot (`applyDisplayOptions`) and
+  from the Options screen's SHAKE and FLASHES rows live (`connectOptionEvents`); an explicit
+  `ShellOptions.effects` value still wins at boot.
 
 ## Score popups (`createScorePopups`)
 
@@ -215,7 +223,7 @@ presentation-only: nothing in the sim reads it, and it is not hashed.
 | Where | What |
 |---|---|
 | `FX` layer (9, world group) | the particles' normal set, their additive set, then the popups — above ships, shots and items, **below `ENEMY_BULLETS`** (10), so a bullet is never hidden by an explosion (`shmup_feat.md` §18; a renderer test checks the order) |
-| world group, above every world layer | the **playfield dim** (new, black) and then the **flash** quad, both 32 px larger than the frame on each side so the shake never uncovers an edge |
+| world group, above every world layer | the **playfield dim** (new, black), then the **flash** quad and — M2-08 — the **additive flash** quad (blend mode `add`, for additive looks; a frame shows one of the two), all 32 px larger than the frame on each side so the shake never uncovers an edge |
 | `UI` layer, first child | the menu dim (`frame.screen.dim`), under the UI list — unchanged |
 | `HUD`, `UI`, `DEBUG` | never shaken |
 
@@ -234,7 +242,8 @@ and `effects`. `render(frame)`:
    pixels; the game's own `frame.screen` is all zeros today, the event-driven effects are what
    moves;
 5. shows the flash at the brighter of `frame.screen.flash` (white) and `effects.flashAlpha` (the
-   kind's colour) — the quad's tint is written only when it changes, since Pixi's tint setter
+   kind's colour) — on the additive quad when the event's look is additive (M2-08), else on the
+   normal one; a quad's tint is written only when it changes, since Pixi's tint setter
    allocates; sets the playfield dim from `effects.dimAlpha` and the menu dim from
    `frame.screen.dim`.
 
@@ -247,7 +256,8 @@ and `effects`. `render(frame)`:
 
 - keeps the `fx` content its owner validated (`Shell.fx`) and calls `renderer.setFxContent(fx)`
   after creating the renderer (with `fxSeed` from the game's seed and `effects` from
-  `ShellOptions.effects` — neither app passes settings yet, so shake is on and flashing normal);
+  `ShellOptions.effects` — neither app passes settings; since M2-08 the saved SHAKE / FLASHES
+  options decide, [saves-and-options.md](saves-and-options.md#the-shells-side));
 - in **free flight** calls `connectFxEvents(events, renderer)`; the showcase, calibration and
   gallery scenes do not draw the World, so their events stay unconnected;
 - `?scene=fx-gallery` creates the gallery (below).
@@ -315,7 +325,7 @@ objects.
 | A particle sprite | A `*.sprite.json` pixel map or a procedural generator ([asset-pipeline.md](asset-pipeline.md)); name it in `sprite` |
 | A flash kind | Append to `FlashKind` / `FLASH_KIND_TICKS` in `core/fx` and its look to `FLASH_LOOKS` (same index); unknown kinds fall back to `DEFAULT_FLASH_LOOK` |
 | A popup for another event | A handler in `connectFxEvents` calling `popups.show(points, x, y, color)`, or a `Score` event pushed by the system |
-| A user setting | `EffectSettings` (render-pixi `effects`) — the Options screen's display options (M2-08 / M2-16) will set `screenShake` / `reduceFlashing` through `ShellOptions.effects` or `renderer.effects.settings`, saved in the save's `options.display` ([saves-and-options.md](saves-and-options.md#extending-it)) |
+| A user setting | `EffectSettings` (render-pixi `effects`) plus a `DisplayOptions` field, an Options row and a `UserOptionKind` — the path SHAKE and FLASHES took in M2-08 (`applyDisplayOptions`, `connectOptionEvents`; [presentation-polish.md](presentation-polish.md#display-options), [saves-and-options.md](saves-and-options.md#extending-it)) |
 
 ## Tests
 
@@ -357,12 +367,13 @@ objects.
 - **M1-16** (done) — the scene flow (the shell's default scene) connects the effects like free
   flight; the renderer's particles, popups and effects freeze under the pause menu (the frame's
   tick is the World's) and are cleared for a new World ([scenes-and-ui.md](scenes-and-ui.md)).
-- **M2-08 / M2-16** — the Options screen's display options set `screenShake` and
-  `reduceFlashing` (the M1-17 Options screen has the audio sliders and the controls profile only).
 - **M2-02** (done) — bullet cancel into points: a boss's death and a Mega Crash still push the
   cancel sparkles, and each cancelled bullet also becomes a gold `items/point` item that flies to
   the score (a sim-side batch on `ITEMS`, no event and no popup —
   [bullets-and-patterns.md](bullets-and-patterns.md#cancel)); the bending lasers are drawn by
   their own binding on `ENEMY_BULLETS` ([rendering-and-shell.md](rendering-and-shell.md#layers-bindings-and-quad-pools)).
-- **M2-08** — raster / scanline effects, palette swaps and cycling (`effects` → implemented).
+- **M2-08** (done) — the Options screen's SHAKE and FLASHES set `screenShake` / `reduceFlashing`
+  (saved, applied at boot and live); the Mega Crash flash turned additive; raster / scanline
+  effects and palette cycling as layer filters (`effects` → implemented) —
+  [presentation-polish.md](presentation-polish.md).
 - **M3-02** — the CRT filter (`EffectSettings.crt`).

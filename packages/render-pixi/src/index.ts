@@ -15,9 +15,9 @@
  * bullet palettes ({@link resolveBulletPaletteTable}, the renderer's `setBulletPalette`). Plan
  * M2-08 adds the SNES-style layer effects — per-scanline raster offsets and palette cycling in one
  * GLSL ES 1.0 filter per layer ({@link createLayerEffects}, {@link addRasterEffect},
- * {@link colorCycleStep}) —, the additive Mega Crash flash, the scale modes ({@link computeViewport}),
- * the hitbox markers ({@link createHitboxBinding}) and render interpolation for displays faster
- * than the tick rate.
+ * {@link colorCycleStep}) —, the additive Mega Crash flash, the scale modes
+ * ({@link computeViewport}), the hitbox markers ({@link createHitboxBinding}) and render
+ * interpolation for displays faster than the tick rate.
  * Dev and test builds add the debug overlay (plan M1-19, {@link createDebugOverlay}): a stats panel
  * with a frame graph and the hitbox / grid outlines on the `DEBUG` layer.
  *

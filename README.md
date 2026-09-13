@@ -9,7 +9,7 @@ with the browser and Electron as additional targets.
 The [implementation plan](shmup_plan.md) is approved and under way. Progress per step is tracked in
 [`shmup_progress.md`](shmup_progress.md); milestone **M1 — playable vertical slice** is code-complete
 as version **0.1.0** ([`CHANGELOG.md`](CHANGELOG.md)) — its on-device release check on the monitors
-is next — and **M2 — complete v1.0** is under way (M2-01 … M2-07 done).
+is next — and **M2 — complete v1.0** is under way (M2-01 … M2-08 done).
 
 <!--
   Keep this section scannable: one entry per plan step, in plan order — a bold headline with the
@@ -466,6 +466,25 @@ is next — and **M2 — complete v1.0** is under way (M2-01 … M2-07 done).
     [what testers should check](docs/client/preview-build.md#the-gimmick-range-browser-only) ·
     [authoring stages](content/stages/README.md#holds-diagonal-pans-and-branches-m2-07)
 
+- **Presentation polish: raster effects, palettes, visual options** (M2-08)
+  - **Raster effects** as stage data (`raster`: wavy water, heat haze, line-band parallax floors
+    whose strips scroll as one piece) and **palette cycling** (`cycles`: ramps of exact colours in
+    the RGBA art), drawn by one **GLSL ES 1.0** filter per layer from a 1 × 216 RGBA8 offset table —
+    attached only while an effect is in camera range (2 → 5 → 7 draw calls, budget 12).
+  - The **Mega Crash** flash is additive (the picture brightens instead of being covered).
+  - **Display options** in OPTIONS, saved and applied at boot and live: **SCALE** (integer / fit /
+    stretch — `computeViewport`), **SHAKE**, **FLASHES** (reduced), **HITBOX** (a marker on each
+    ship's hurtbox — `WorldView.hitboxes`).
+  - **Render interpolation** for displays faster than 60 Hz, switched on by the shell's refresh
+    probe (interquartile mean of the rAF deltas, > 70 Hz); off on the TV.
+  - Dev stage `?stage=raster-range` with the procedural `bg/sea-swell` and `bg/checker-floor`;
+    zone A unchanged. Golden replays re-blessed (two new sprites shift the sprite ids — the
+    simulation is unchanged); a new `raster-range` run proves the effects presentation-only.
+  - Docs: [developer guide](docs/dev/presentation-polish.md) ·
+    [the Options screen for testers](docs/client/preview-build.md#the-options-screen) ·
+    [the Raster range](docs/client/preview-build.md#the-raster-range-browser-only) ·
+    [authoring effects](content/stages/README.md#raster-effects-and-palette-cycles-m2-08)
+
 ### Hardware spike
 
 - The **input probe** — a diagnostic Tizen app that measures the Samsung remote, gamepads and
@@ -537,7 +556,7 @@ versions (`devEngines.runtime`).
 ```sh
 pnpm -v               # must print 12.x — an older global pnpm fails with ERR_PNPM_BROKEN_LOCKFILE
 pnpm install          # set ELECTRON_SKIP_BINARY_DOWNLOAD=1 to skip the Electron binary
-pnpm dev              # browser dev app → http://localhost:5173 (F1–F8: debug tools): the title (Enter five times — PRESS OK, 1 PLAYER, NORMAL, KESTREL in the ship select, START in the weapon select — starts zone A, AZURE VERGE; Down on the title picks 2 PLAYERS — a gamepad's START (or Enter with ?profile=keyboard-split) drops player 2 in; Down + Enter in the ship select flies the MANTA instead — its colour items power up on contact, Left Shift toggles its speed; in the weapon select ↑ / ←→ choose the weapon type, EDIT, the Option type, the ? shield, the ! choice and Auto Power-Up — V or a held Enter spreads FORMATION / ROTATE Options in the game; ?skip=boss starts right before its boss HALCYON BULWARK; Enter, Down, Down, Enter opens OPTIONS — volumes, controls and bullet colours, saved in localStorage; Esc pauses), then fly the KESTREL (arrows/WASD, gamepad; the first key press turns the sound on; Enter/C takes a power-up; ?scene=flight skips the title; ?stage=test-range scrolls the test stage, its enemies, their bullets and the power capsules; ?stage=test-boss plays the WARNING and the test boss; ?stage=hunter-range&loadout=full sends in the Option Hunters; ?stage=direct-range (then the MANTA) sends pincer waves of item carriers; ?stage=gimmick-range tries the M2-07 stage systems — bricks to shoot through, regrowing walls, rocks, bubbles, a volcano, suction, tentacles, the cube rush, moving blocks, a pan, a fork; ?profile=keyboard-remote-emulation feels like the TV remote; ?profile=keyboard-split puts two players on one keyboard; ?scene=showcase / ?scene=calibration / ?scene=fx-gallery)
+pnpm dev              # browser dev app → http://localhost:5173 (F1–F8: debug tools): the title (Enter five times — PRESS OK, 1 PLAYER, NORMAL, KESTREL in the ship select, START in the weapon select — starts zone A, AZURE VERGE; Down on the title picks 2 PLAYERS — a gamepad's START (or Enter with ?profile=keyboard-split) drops player 2 in; Down + Enter in the ship select flies the MANTA instead — its colour items power up on contact, Left Shift toggles its speed; in the weapon select ↑ / ←→ choose the weapon type, EDIT, the Option type, the ? shield, the ! choice and Auto Power-Up — V or a held Enter spreads FORMATION / ROTATE Options in the game; ?skip=boss starts right before its boss HALCYON BULWARK; Enter, Down, Down, Enter opens OPTIONS — volumes, controls, bullet colours, SCALE, SHAKE, FLASHES and HITBOX, saved in localStorage; Esc pauses), then fly the KESTREL (arrows/WASD, gamepad; the first key press turns the sound on; Enter/C takes a power-up; ?scene=flight skips the title; ?stage=test-range scrolls the test stage, its enemies, their bullets and the power capsules; ?stage=test-boss plays the WARNING and the test boss; ?stage=hunter-range&loadout=full sends in the Option Hunters; ?stage=direct-range (then the MANTA) sends pincer waves of item carriers; ?stage=gimmick-range tries the M2-07 stage systems — bricks to shoot through, regrowing walls, rocks, bubbles, a volcano, suction, tentacles, the cube rush, moving blocks, a pan, a fork; ?stage=raster-range shows the M2-08 raster effects and palette cycling — a waving, colour-rolling sea, a line-band floor, heat haze; ?profile=keyboard-remote-emulation feels like the TV remote; ?profile=keyboard-split puts two players on one keyboard; ?scene=showcase / ?scene=calibration / ?scene=fx-gallery)
 pnpm lint             # ESLint (typescript-eslint + compat: chrome >= 69)
 pnpm typecheck        # tsc --noEmit everywhere
 pnpm test             # Vitest per package + repo integration tests
@@ -629,12 +648,13 @@ hitch in the overlay's frame graph, gamepad and keyboard — checklist in
 [`docs/client/debug-tools.md`](docs/client/debug-tools.md#the-m1-release-check). The M1 release
 is tagged `v0.1.0` on the final commit of step M1-19.
 
-Code: plan step **M2-08** (presentation polish: raster effects, palettes, visual options) — M2-01
+Code: plan step **M2-09** (advanced bosses: mid-bosses, raids, multi-bosses) — M2-01
 (rank, difficulty presets, extends & continues) opened milestone **M2 — complete v1.0**, M2-02
 (pattern DSL, bending lasers, bullet cancel & readability), M2-03 (meter arsenal: loadouts B–D,
 Weapon Edit, parking & weapon select), M2-04 (Option & shield variants + Option Hunter), M2-05
-(Direct mode & ship select), M2-06 (two-player simultaneous co-op) and M2-07 (advanced stage
-systems & Tiled import) followed; every simulation change re-blesses the golden replays in the same
+(Direct mode & ship select), M2-06 (two-player simultaneous co-op), M2-07 (advanced stage
+systems & Tiled import) and M2-08 (presentation polish: raster effects, palettes, visual options)
+followed; every simulation change re-blesses the golden replays in the same
 commit. The per-step status board is [`shmup_progress.md`](shmup_progress.md).
 
 Also on hardware (unchanged, and still the gate for the remote control scheme): package and
@@ -653,7 +673,8 @@ M2-02 the colour-blind **BULLETS** option and the points of cancelled bullets, s
 **WEAPON SELECT** screen and the new weapon types, since M2-04 the Option types (spread with
 the remote's Ch+) and the pod shields and REDUCE, since M2-05 the SHIP SELECT box and the
 MANTA — its colour items, the Arm and the speed toggle on the remote's Ch−, and since M2-06
-**two players** — the remote plus a USB / Bluetooth gamepad joining with START (checklist in
+**two players** — the remote plus a USB / Bluetooth gamepad joining with START — and since M2-08
+the Options screen's SCALE, SHAKE, FLASHES and HITBOX and the brighter Mega Crash flash (checklist in
 [`docs/client/preview-build.md`](docs/client/preview-build.md#on-the-samsung-smart-monitor--tv)).
 
 Desktop prerequisites: Git, Node 24 (22.12+), Tizen Studio **or** VS Code + Samsung Tizen extension (with a Samsung

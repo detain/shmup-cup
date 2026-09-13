@@ -180,8 +180,9 @@ boot is done (after the canvas is marked `running`, before the first frame), cal
 - publishes `window.__shmupDebug` (`DEBUG_GLOBAL`) — a `ShmupDebugApi`: `sceneId` (the scene
   flow's top scene or the dev scene's name — what the e2e smoke waits for), `tick`
   (`game.state.tick`), `worldTick`, `flags` (the live `game.debug`), `counters`, `stats`,
-  `unlocked`, `buildId`, `game` and `run(command)` (works locked or not — for tests and the
-  remote inspector);
+  `unlocked`, `buildId`, `game`, since M2-08 `renderer` (the `PixiRenderer` — its scale mode,
+  hitbox markers, interpolation, layer effects and effect settings, for the M2-08 browser specs and
+  the console) and `run(command)` (works locked or not — for tests and the remote inspector);
 - hooks into the shell's frame (below).
 
 On the TV, `apps/tizen` `tizenDebugTools(win, buildId)` is `debugToolsFactory({ unlock:
@@ -345,8 +346,8 @@ the replay contains them (a session recorded through `createReplayGame` has no k
 
 ## Golden replays (`test/golden/`)
 
-Twenty committed runs — seventeen of zone A and, since M2-07, three of the `gimmick-range` dev
-stage — pin down what the simulation does (`test/golden/golden.ts` `GOLDEN_SCENARIOS`, recorded
+Twenty-one committed runs — seventeen of zone A, since M2-07 three of the `gimmick-range` dev
+stage and since M2-08 one of the `raster-range` dev stage — pin down what the simulation does (`test/golden/golden.ts` `GOLDEN_SCENARIOS`, recorded
 from the M1-18 playtest bots with the build id `'golden'`):
 
 | File | Who plays | Covers | Ends |
@@ -370,6 +371,7 @@ from the M1-18 playtest bots with the build id `'golden'`):
 | `zone-a-coop-deaths.replay.json` (M2-06) | the 4-way bot and a weaving player 2 from its START at tick 120, `coop: true` (seed 18) | player 2's deaths, its mid-game continues with START (no stage restart) while player 1 plays on | `stageClear` after 12,399 ticks; player 1 61,770 points, 4 lives; player 2 8,002 points (two continues), 2 lives, seven deaths |
 | `gimmick-range-god.replay.json` (M2-07) | 4-way bot, god mode, `stage: 'gimmick-range'` (seed 31) | the advanced stage systems: a brick shot open, both moving blocks, the suction pod's pull, the tentacle's chain, the cube rush stacking a cube into the terrain, the hold and both pans, the high branch (the region trigger left alone) | `stageClear` after 2,906 ticks, 460 points |
 | `gimmick-range-weaver.replay.json` (M2-07) | `weaverBot()`, god mode (seed 35) | the region trigger fired — the low branch — and a dozen bricks broken | `stageClear` after 2,906 ticks, 760 points |
+| `raster-range-god.replay.json` (M2-08) | 4-way bot, god mode, `stage: 'raster-range'` (seed 41) | the raster-effect dev stage to its end; `golden.test.ts` plays it back a second time on the stage with its `raster` / `cycles` stripped and every hash still matches — the effects are presentation only | `stageClear` after 3,630 ticks, 800 points, no deaths |
 | `gimmick-range-deaths.replay.json` (M2-07) | `weaverBot()`, the Arcade penalty (seed 33) | deaths on the gimmick range, checkpoint restarts rolling the terrain back | `gameOver` after 1,429 ticks (deaths at 238 / 782 / 1,336) |
 
 The 4-way bot survives zone A even at Arcade, which is why the death scenario uses a careless
@@ -579,7 +581,10 @@ testers in [../client/debug-tools.md](../client/debug-tools.md#the-m1-release-ch
   ([coop.md](coop.md)).
 - **M2-07** (done) — `hashWorld` mixes the stage gimmicks and the runner's new slots; golden
   replays re-blessed, three `gimmick-range` scenarios added ([advanced-stages.md](advanced-stages.md)).
-- **M2-08 … M2-14** — every simulation change re-blesses the golden replays in the same commit;
+- **M2-08** (done) — `window.__shmupDebug.renderer`; golden replays re-blessed for two new
+  content sprites, `raster-range-god` added and proven presentation-only
+  ([presentation-polish.md](presentation-polish.md#determinism-hashing-and-golden-replays)).
+- **M2-09 … M2-14** — every simulation change re-blesses the golden replays in the same commit;
   zones B–I add a golden replay each.
 - **M2-15** — attract mode plays bundled replays (and the scene flow gets recorded).
 - **M2-17** — the device info (model, firmware) in the debug overlay.

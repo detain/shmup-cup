@@ -476,8 +476,9 @@ terrain.destroyed; // → 0; terrain.resets → 1
 
 ## Next steps that build on this page
 
-- **M2-08** — raster effects and palette cycling on the terrain layers (lava, water, glowing
-  tissue); the block batch sits on `LayerId.Terrain` like the grid.
+- **M2-08** (done) — raster effects and palette cycling can target the terrain layer (lava,
+  water, glowing tissue); the block batch sits on `LayerId.Terrain` like the grid, so a terrain
+  filter covers the blocks too ([presentation-polish.md](presentation-polish.md)).
 - **M2-09** — raids and boss camera segments on top of holds, locks and diagonal pans.
 - **M2-10** — the zone map, run-state flags beyond one stage, bonus-stage entrances (a marked gap,
   all ground targets destroyed) that can reuse region triggers and the destroyed count.

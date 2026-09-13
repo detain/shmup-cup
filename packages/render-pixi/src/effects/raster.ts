@@ -16,7 +16,9 @@
 import { PLAYFIELD_Y, RasterKind, sinB, type CameraView, type RasterEffectView } from '@shmup/core';
 import { LAYER_EFFECT_ROWS } from './shaders.js';
 
-/** Largest offset / wrap period (pixels) the texture encoding carries (the shader's mediump range). */
+/**
+ * Largest offset / wrap period (pixels) the texture encoding carries (the shader's mediump range).
+ */
 export const RASTER_MAX_OFFSET = 2047;
 
 /** Binary-angle units per turn (`sinB`). */

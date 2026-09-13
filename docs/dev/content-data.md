@@ -144,9 +144,13 @@ const game = createGame(platform, { seed }, db);
    M2-07 the `yOver` / `hold` rules, branches, triggers and block sizes) and their flag names —
    of `flag` and `trigger` events and of `branches` — are numbered (`flagNames`, `flagId`;
    events naming a branch get `branchId`); tilesets get their lookup `tables` (since M2-07 with
-   `hp`, `regen`, `score`). Details in
-   [stage-runtime.md](stage-runtime.md#stage-data-and-loading) and
-   [advanced-stages.md](advanced-stages.md#content-coredata).
+   `hp`, `regen`, `score`). Since M2-08 `checkStageEffects` also checks and completes a stage's
+   `raster` effects and palette `cycles` (ranges, the fields each raster kind needs, `bands`,
+   distinct and not-too-close cycle colours per layer, ≤ 8 per layer; defaults filled, colours
+   resolved to `rgb`). Details in
+   [stage-runtime.md](stage-runtime.md#stage-data-and-loading),
+   [advanced-stages.md](advanced-stages.md#content-coredata) and
+   [presentation-polish.md](presentation-polish.md#stage-data-coredata).
 
 A bad file is skipped, never fatal: one load reports every problem in every file.
 `loadContent` only throws (`TypeError`) when `files` is not an array — a programming error,
@@ -460,3 +464,8 @@ event an optional `branch` (`StageEventBase`), two new event types `trigger` and
 `stages/gimmick-range.stage.json` and `enemies/gimmick-range.enemies.json`; and
 `pnpm content:tiled` (`scripts/content/tiled-import.mjs`), which writes ordinary stage and paths
 files from a Tiled map ([advanced-stages.md](advanced-stages.md)).
+
+M2-08 (done) — stages gained the optional presentation lists `raster` (`StageRasterEffect`: `wave`,
+`haze`, `lines` on `far` / `mid` / `terrain`) and `cycles` (`StageColorCycle`: `#rrggbb` ramps on
+`far` / `mid` / `terrain` / `ground` / `air`), both `[]` when omitted — no format change; the content
+file `stages/raster-range.stage.json` ([presentation-polish.md](presentation-polish.md)).

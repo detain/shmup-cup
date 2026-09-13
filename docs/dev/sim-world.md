@@ -166,7 +166,7 @@ restart (`clearAll`). A pool that is not registered is never flushed or hashed.
 
 `world.view` is created once — `{ camera, parallax, terrain, batches: [groundEnemies,
 airEnemies, playerShots, options, playerBatch, enemyBullets, shields, items, cancelPoints,
-bossParts, carriedOptions, chains, blocks?], lasers, bendingLasers, warning }` (the point items' batch and
+bossParts, carriedOptions, chains, blocks?], lasers, bendingLasers, warning, effects, hitboxes }` (the point items' batch and
 `bendingLasers` since M2-02 — both the bullet system's; the carried Options since M2-04 — the
 enemy system's `carriedBatch`, `LayerId.AirEnemies`, appended so the grey Options draw over
 the enemies; since M2-07 the stage gimmicks' chain links, `LayerId.GroundEnemies`, and — only on a
@@ -187,6 +187,14 @@ already shows the ship) scrolls the parallax bands with the camera, refills the 
 hit flash) and the players' mirror batch with `syncWorldView`: a ship is drawn when its slot is active, it is neither
 `dying` nor `dead`, and the spec has a sprite (`spriteId >= 0`); while `invulnTicks > 0` it
 blinks (`SpriteFlag.Hidden` four ticks on, four off). The frame is the bank frame (below).
+
+**Presentation mirrors (M2-08).** `view.effects` is the stage's `StageEffectsView` (its raster
+effects and palette cycles — `core/stage` `createStageEffectsView`, built once, `null` in free
+flight) and `view.hitboxes` is `world.hitboxBatch` (`createHitboxBatch(MAX_PLAYERS)`), which
+`syncWorldView` refills every tick: one entry per active ship that is not `dying` / `dead` —
+blinking or not, with or without a sprite — at its centre with the hurt radius × its shield's
+`hurtScale`. The renderer draws them for the display options; the simulation never reads them and
+`hashWorld` skips both ([presentation-polish.md](presentation-polish.md#the-render-contract-corepresentation-corestage-coreworld)).
 
 SoA-backed batches are the pools' own arrays (the enemy bullets since M1-09); object-based
 systems (enemies since M1-08, the boss's parts since M1-13) and pools whose entries draw as several sprites

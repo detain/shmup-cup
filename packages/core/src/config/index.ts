@@ -1180,12 +1180,12 @@ function volumeLevel(value: unknown, fallback: number): number {
  * @remarks
  * Volumes: finite numbers are rounded and clamped to `0…`{@link VOLUME_LEVELS}; anything else takes
  * the default. `input.profileId`: a string matching {@link INPUT_PROFILE_ID_PATTERN} of at most 64
- * characters, else `null`. `display.bulletPalette`: one of {@link BULLET_PALETTES}, else `standard`;
- * `display.scaleMode`: one of {@link SCALE_MODES}, else `integer`; `display.screenShake`,
- * `reduceFlashing`, `showHitbox`: booleans, else their defaults (unknown display fields are
- * dropped). Whether the
- * profile id names an existing profile is the host's business (an unknown one is skipped when
- * applied).
+ * characters, else `null`. `display.bulletPalette`: one of {@link BULLET_PALETTES}, else
+ * `standard`; `display.scaleMode`: one of {@link SCALE_MODES}, else `integer` (M2-08);
+ * `display.screenShake`, `reduceFlashing`, `showHitbox`: booleans, else their defaults (M2-08 —
+ * a save written before them resolves without a migration; unknown display fields are dropped).
+ * Whether the profile id names an existing profile is the host's business (an unknown one is
+ * skipped when applied).
  *
  * @param value - Candidate options (e.g. `JSON.parse(text).options`).
  * @returns Frozen, valid options.

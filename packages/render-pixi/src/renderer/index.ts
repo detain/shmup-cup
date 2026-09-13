@@ -269,9 +269,15 @@ export interface PixiRenderer extends IRenderer {
   readonly interpolation: boolean;
   /**
    * Turns render interpolation on or off (plan M2-08, decision D32): with it, the camera, the
-   * parallax bands, every sprite batch and the hitbox markers are drawn between the previous and the
-   * current tick by `frame.alpha` — for displays that show more than one frame per tick (> 60 Hz). Off (the
-   * default) draws the current tick, which on a 60 Hz display is always right and a tick fresher.
+   * parallax bands, every sprite batch and the hitbox markers are drawn between the previous and
+   * the current tick by `frame.alpha` — for displays that show more than one frame per tick
+   * (> 60 Hz). Off (the default) draws the current tick, which on a 60 Hz display is always right
+   * and a tick fresher.
+   *
+   * @remarks
+   * Switching resets the interpolation history, so the next frame draws the current tick and the
+   * blending starts from there (so does binding a new world). The shell switches it from its
+   * refresh-rate probe (`ShellOptions.interpolation`).
    *
    * @param on - `true` to interpolate.
    */

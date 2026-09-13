@@ -55,7 +55,11 @@ A stage file (`content/stages/<id>.stage.json`, kind `stage`, format 1) holds `i
 `music: { stage, boss }` (`MUSIC_CUES` names), `length` (camera-x length in pixels), `camera`
 (keys), `checkpoints`, `parallax` (bands), `tilemap` (or `null` for open space), `events` and,
 since M2-05, the optional `directItems` (the Direct-mode item plan — the runner never reads it;
-`core/powerups` does, [direct-mode.md](direct-mode.md#drop-resolution-and-the-item-plan-corepowerups)).
+`core/powerups` does, [direct-mode.md](direct-mode.md#drop-resolution-and-the-item-plan-corepowerups))
+and, since M2-08, the optional presentation lists `raster` (per-scanline offsets of a background or
+the terrain: wave, haze, line-band floor) and `cycles` (palette cycling) — the runner never reads
+them either; `createWorld` hands them to the renderer as `view.effects`
+([presentation-polish.md](presentation-polish.md#stage-data-coredata)).
 The annotated format is in [`content/stages/README.md`](../../content/stages/README.md).
 
 `loadContent()` does three things beyond the schema (see
@@ -67,8 +71,9 @@ The annotated format is in [`content/stages/README.md`](../../content/stages/REA
    at most `MAX_STAGE_FLAGS` (32) distinct flags. Since M2-07 also: `yOver` needs `yTo` and not
    `yTicks`, `hold` not on a lock key, unique branch ids and events naming known branches, at
    most 32 triggers each with `until ≥ x`, and `block` events on the tile grid (≤ 64 tiles) in a
-   stage with a tilemap. Every problem of one file is reported in one load; a stage with any of
-   them is skipped.
+   stage with a tilemap. Since M2-08 the raster effects' and palette cycles' ranges, required
+   fields and colours (`checkStageEffects`). Every problem of one file is reported in one load; a
+   stage with any of them is skipped.
 2. **Flag numbering.** The distinct flag names of a stage — of `flag` and (M2-07) `trigger`
    events and of `branches` — are sorted into `stage.flagNames`; each gets `flagId` = its index
    = its bit in the runner's 32-bit `flags`; an event naming a branch gets `branchId`. Flag bits
@@ -364,7 +369,10 @@ part of the grid: the World draws them as a `LayerId.Terrain` sprite batch.
 **Drawing** is `@shmup/render-pixi` `layers`: a ring-buffered 49 × 26 tile-sprite grid (one
 column / row re-textured per tile edge crossed, the whole grid moved as one container) and
 repeated sprites per parallax band — see
-[rendering-and-shell.md](rendering-and-shell.md#layers-bindings-and-quad-pools).
+[rendering-and-shell.md](rendering-and-shell.md#layers-bindings-and-quad-pools). Since M2-08 a
+stage's `raster` effects distort whole layers (bands or terrain) row by row in a filter, and a
+`lines` effect over a band with `"factor": 0` turns it into a pseudo-3D floor — the parallax view
+itself is unchanged ([presentation-polish.md](presentation-polish.md)).
 
 ## Running a stage
 
@@ -434,6 +442,11 @@ for the advanced stage systems: destructible bricks and regenerating tissue, fal
 bubbles, a volcano, a suction pod, tentacles, a cube rush, moving blocks, a hold with a vertical
 pan, a diagonal pan, a region trigger choosing a branch and a 4 px/tick section —
 `?stage=gimmick-range` ([advanced-stages.md](advanced-stages.md#the-gimmick-range-dev-stage)).
+`content/stages/raster-range.stage.json` (RASTER RANGE, M2-08) is a 3,600-px open-space stage for
+the raster effects and palette cycles: a waving, colour-cycling sea band, a line-band checker
+floor and a heat haze over the stars between camera x 1,200 and 2,400, with a few test-range
+formations — `?stage=raster-range`
+([presentation-polish.md](presentation-polish.md#content-and-assets)).
 
 Headless:
 
@@ -536,4 +549,7 @@ world.stage!.restartAt(1); // back to x 1500: speed, pan and flags as live play 
   in-stage branches and region triggers, moving blocks in the terrain queries, destructible and
   regenerating tiles rolled back on restarts, the gimmick behaviours, the Tiled importer
   ([advanced-stages.md](advanced-stages.md)).
+- **M2-08** (done) — the stage's presentation lists `raster` and `cycles` (raster effects and
+  palette cycles, never read by the runner) and the `raster-range` dev stage
+  ([presentation-polish.md](presentation-polish.md)).
 - **M2-09 / M2-10** — raid camera segments; bonus stages and the zone map.

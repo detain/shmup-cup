@@ -1074,7 +1074,10 @@ export interface StageRasterEffect {
   readonly amplitude: number;
   /** Rows per sine period (`wave`, `haze`; default 32). */
   readonly wavelength: number;
-  /** Ticks per sine period over time (`wave`, `haze`; default {@link DEFAULT_RASTER_PERIOD}; 0 = still). */
+  /**
+   * Ticks per sine period over time (`wave`, `haze`; default {@link DEFAULT_RASTER_PERIOD};
+   * 0 = still).
+   */
   readonly period: number;
   /** Scroll factor of the top row (`lines`; default 0). */
   readonly factorTop: number;
@@ -3731,14 +3734,17 @@ function checkStage(stage: MutableStage, file: string, issues: ValidationIssue[]
 }
 
 /**
- * Checks and completes a stage's raster effects and palette cycles (M2-08) in place: `top <
- * bottom`, `from < to` (`from` defaulting to 0), the fields each raster kind needs (`wave` / `haze`: `amplitude` and
- * `wavelength`; `lines`: `factorTop` and `factorBottom`, `bands` — only there — adding up to the
- * rows), and for the cycles distinct colours — at least 2 apart in some channel, so the layer
- * shader can tell them apart — with
- * at most {@link MAX_CYCLE_COLORS_PER_LAYER} per layer (all the layer's cycles together); fills the
- * defaults (`period` {@link DEFAULT_RASTER_PERIOD}, `wavelength` 32, factors / `wrap` / `from` 0,
- * `to` `Infinity`) and resolves every cycle colour to 0xRRGGBB (`rgb`).
+ * Checks and completes a stage's raster effects and palette cycles (M2-08) in place.
+ *
+ * @remarks
+ * Checks: `top < bottom`; `from < to` (`from` defaulting to 0, so a lone `to: 0` is an empty range
+ * too); the fields each raster kind needs (`wave` / `haze`: `amplitude` and `wavelength`; `lines`:
+ * `factorTop` and `factorBottom`; `bands` only on `lines`, adding up to the rows); and for the
+ * cycles distinct colours — at least 2 apart in some channel ({@link nearColor}), so the layer
+ * shader can tell them apart — with at most {@link MAX_CYCLE_COLORS_PER_LAYER} per layer (all the
+ * layer's cycles together). Then it fills the defaults (`period` {@link DEFAULT_RASTER_PERIOD},
+ * `wavelength` 32, factors / `wrap` / `from` 0, `to` `Infinity`, `bands` `[]`) and resolves every
+ * cycle colour to 0xRRGGBB (`rgb`). Load time (allocates).
  *
  * @param stage - The parsed stage (completed in place).
  * @param file - Repo-relative file path.

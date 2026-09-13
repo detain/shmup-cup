@@ -67,9 +67,8 @@
  * **Render interpolation (M2-08).** The frame loop feeds a refresh-rate probe (`frame-loop`
  * `createRefreshMonitor`, the interquartile mean of the recent rAF deltas); with
  * {@link ShellOptions.interpolation} `'auto'` (the default) the renderer interpolates while the
- * display runs faster than
- * `INTERPOLATION_MIN_HZ` (120 / 144 Hz monitors) and draws the current tick at 60 Hz. The probe
- * restarts when the app resumes.
+ * display runs faster than `INTERPOLATION_MIN_HZ` (70 — 120 / 144 Hz monitors) and draws the
+ * current tick at 60 Hz. The probe restarts when the app resumes; {@link Shell.refresh} exposes it.
  *
  * **Boot time.** The shell measures its boot (`ShellOptions.now`, default `performance.now()` —
  * whose origin is the page's start, i.e. the app launch on the TV) and exposes it as
@@ -432,8 +431,8 @@ export interface ShellOptions {
   readonly effects?: Partial<EffectSettings>;
   /**
    * Render interpolation (M2-08): `'auto'` (default) — on while the refresh probe reads more than
-   * `INTERPOLATION_MIN_HZ` (a display faster than the 60 Hz tick), off otherwise; `'on'` / `'off'` —
-   * always / never.
+   * `INTERPOLATION_MIN_HZ` (a display faster than the 60 Hz tick), off otherwise; `'on'` /
+   * `'off'` — always / never (the probe still runs; {@link Shell.refresh}).
    */
   readonly interpolation?: 'auto' | 'on' | 'off';
   /**

@@ -60,13 +60,18 @@ waves and lead carriers whose drops become the MANTA's colour items; Left Shift 
 regenerating tissue (rolled back on a checkpoint restart), falling rocks, splitting bubbles, a
 volcano, a suction pod, tentacles, the cube rush, moving blocks, a hold with a vertical pan, a
 diagonal pan, a region trigger picking a branch and a 4 px/tick section (guide:
-[`docs/dev/advanced-stages.md`](../../docs/dev/advanced-stages.md)). Since M1-14 hits
+[`docs/dev/advanced-stages.md`](../../docs/dev/advanced-stages.md)). Since M2-08
+`?stage=raster-range` (RASTER RANGE) shows the raster effects and palette cycling — a waving,
+colour-cycling sea, a line-band checker floor, a heat haze over the stars — and on a monitor over
+70 Hz the shell draws the world interpolated between ticks (guide:
+[`docs/dev/presentation-polish.md`](../../docs/dev/presentation-polish.md)). Since M1-14 hits
 have **game feel**: explosions, sparks, debris, cancel sparkles and a muzzle flash from the
 presets of `content/fx/`, the screen shake of a lost ship or a boss's final blast, flashes
 (behind a ≤ 3-a-second limiter), the WARNING's dim and rising score numbers;
 `?scene=fx-gallery` cycles through every preset and screen effect (guide:
 [`docs/dev/fx-and-game-feel.md`](../../docs/dev/fx-and-game-feel.md)). The app passes no effect
-settings yet (shake on, normal flashing — display options come with M2-08 / M2-16).
+settings (since M2-08 the player's saved SHAKE / FLASHES options decide — shake on and normal
+flashing by default).
 
 Since M1-19 dev and test builds (`pnpm dev`, `build:test` — what `pnpm test:e2e` opens —,
 `build:dev`) carry the **debug tools**: `main.ts` passes `debugToolsFactory({ buildId:
@@ -97,7 +102,7 @@ Guide: [`docs/dev/input-profiles.md`](../../docs/dev/input-profiles.md).
 
 ```sh
 pnpm dev                          # from the repo root (= turbo run dev --filter=@shmup/web)
-# → http://localhost:5173 (title → game) · ?scene=flight (free flight at once) · ?stage=test-range (scrolling test stage) · ?stage=test-boss (the WARNING and the test boss) · ?stage=hunter-range (the Option Hunters and the blue capsule) · ?stage=direct-range (the MANTA's item carriers) · ?stage=gimmick-range (the M2-07 stage systems) · &loadout=full (fully powered; with the MANTA both levels 8 and the Hyper Arm) · ?scene=showcase (sprite showcase) · ?scene=calibration (test pattern) · ?scene=fx-gallery (every particle preset and screen effect)
+# → http://localhost:5173 (title → game) · ?scene=flight (free flight at once) · ?stage=test-range (scrolling test stage) · ?stage=test-boss (the WARNING and the test boss) · ?stage=hunter-range (the Option Hunters and the blue capsule) · ?stage=direct-range (the MANTA's item carriers) · ?stage=gimmick-range (the M2-07 stage systems) · ?stage=raster-range (the M2-08 raster effects and palette cycles) · &loadout=full (fully powered; with the MANTA both levels 8 and the Hyper Arm) · ?scene=showcase (sprite showcase) · ?scene=calibration (test pattern) · ?scene=fx-gallery (every particle preset and screen effect)
 pnpm --filter @shmup/web build    # → apps/web/dist (relocatable, base './'), release: no debug tools
 pnpm --filter @shmup/web build:test   # the same plus the debug tools (vite build --mode test — what pnpm test:e2e builds)
 pnpm --filter @shmup/web build:dev    # likewise, --mode development

@@ -233,7 +233,7 @@ export interface SpriteLayerBinding {
   /**
    * Like {@link SpriteLayerBinding.sync}, but draws each slot between its position at the previous
    * tick and the current one (render interpolation for displays faster than the tick rate —
-   * M2-08). Never allocates.
+   * M2-08). Never allocates after its first call.
    *
    * @remarks
    * The binding keeps the slots' positions and sprite ids of the last two ticks it saw:
@@ -241,6 +241,10 @@ export interface SpriteLayerBinding {
    * else (a jump, the first call, interpolation just switched on) resets it to the current values
    * — nothing is blended then. A slot is blended only when its sprite id is the one it had a tick
    * ago and it moved at most {@link INTERPOLATION_MAX_STEP} pixels on each axis.
+   *
+   * The first call allocates the history (six typed arrays of `capacity` entries, swapped by
+   * reference afterwards), so bindings that never interpolate — every binding on a 60 Hz display —
+   * carry none.
    *
    * @param view - The batch to draw.
    * @param camera - The camera (world pixels; normally the interpolated one).

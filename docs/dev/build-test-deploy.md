@@ -221,8 +221,8 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   `pnpm exec vitest run --project integration test/playtest --reporter=verbose` prints the runs —
   see [zone-a-and-playtest.md](zone-a-and-playtest.md#the-playtest-testplaytest).
 - **Golden replays** (M1-19, plan §1.3): `test/golden/golden.test.ts` plays the committed
-  replays — twenty since M2-07: seventeen of zone A, three of the `gimmick-range` dev stage
-  (`test/golden/*.replay.json`) — back and requires every state hash and the
+  replays — twenty-one since M2-08: seventeen of zone A, three of the `gimmick-range` dev stage,
+  one of the `raster-range` dev stage (`test/golden/*.replay.json`) — back and requires every state hash and the
   recorded outcome to match — part of `pnpm test` (the `integration` project). A failure means
   the simulation changed; re-bless an intended change with `pnpm golden:update` and say why in
   the commit message ([debug-and-replays.md](debug-and-replays.md#golden-replays-testgolden)).
@@ -287,7 +287,12 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   walked down to OPTIONS on the title presses ▼ once more), and the stage gimmicks:
   `?stage=gimmick-range` boots without atlas warnings and draws the destructible brick pillar,
   breaking it in the sim takes it off the next frame and the checkpoint rollback draws it again
-  (`gimmicks.spec.ts`, M2-07). The gameplay specs
+  (`gimmicks.spec.ts`, M2-07), and the presentation polish: the layer shader compiles and links in
+  a real WebGL1 context, `?stage=raster-range` draws its wave, palette cycle, line-band floor and
+  in-range heat haze within 12 draw calls, `stretch` fills what `integer` letterboxes and the
+  hitbox markers show only while on (`raster.spec.ts`, M2-08), and OPTIONS → SCALE / SHAKE /
+  FLASHES / HITBOX apply live, are saved on Back and applied at the next boot on both builds
+  (`display-options.spec.ts`, M2-08). The gameplay specs
   open `?scene=flight` (bare gameplay, open space unless `?stage=` names a stage) since M1-16;
   specs comparing captures a set number of ticks apart freeze the sim and step exact ticks
   (`test/e2e/frame-advance.ts`, M1-19) instead of counting rAF frames. Since M1-19 the suite runs
@@ -300,7 +305,9 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   `test-boss` for the WARNING and the test boss, or `hunter-range` for the Option Hunters and the
   blue capsule — M2-04, [options-shields-hunter.md](options-shields-hunter.md) —, or
   `direct-range` for the Direct mode's carriers — pick the MANTA in the ship select, M2-05,
-  [direct-mode.md](direct-mode.md) — see
+  [direct-mode.md](direct-mode.md) —, `gimmick-range` for the advanced stage systems — M2-07,
+  [advanced-stages.md](advanced-stages.md) —, or `raster-range` for the raster effects and palette
+  cycles — M2-08, [presentation-polish.md](presentation-polish.md) — see
   [stage-runtime.md](stage-runtime.md#running-a-stage) and
   [bosses-and-warning.md](bosses-and-warning.md#the-test-boss-and-stagetest-boss)), `?skip=boss`
   (the debug stage skip: every game starts about two seconds before the stage's WARNING — M1-18,

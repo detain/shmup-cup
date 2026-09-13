@@ -9,7 +9,9 @@ step **M1-04**. Later steps *fill* the contract (the World in M1-06, see
 flash / dim fed by the sim's events in M1-14, see [fx-and-game-feel.md](fx-and-game-feel.md);
 the HUD, the menus and the scene flow's frame in M1-16, see [scenes-and-ui.md](scenes-and-ui.md);
 the bending lasers' `BendingLaserView` and the colour-blind bullet palettes in M2-02, see
-[pattern-dsl.md](pattern-dsl.md) and [below](#colour-blind-bullet-palettes))
+[pattern-dsl.md](pattern-dsl.md) and [below](#colour-blind-bullet-palettes); the stage's raster
+effects and palette cycles, the ships' hitbox markers, the scale modes and render interpolation
+in M2-08, see [presentation-polish.md](presentation-polish.md) and [below](#presentation-polish-m2-08))
 without changing its shape. The shell's audio wiring (M1-15 — the
 SFX bank and the stage's music rendered during boot, the engine fed by the same event dispatch)
 is on [audio.md](audio.md); the dev / test builds' debug tools and overlay (M1-19 — the `DEBUG`
@@ -69,7 +71,7 @@ Strings enter only through a draw list's string slots, and only when the text ch
 | 4 | `AirEnemies` | world | flying enemies (the enemy system's air batch, M1-08), the boss's parts (their own batch after every other World batch, so they draw over the air enemies — M1-13) |
 | 5 | `PlayerShots` | world | shots, lasers (rows of 8-px segments), missiles — the weapon system's mirror batch (M1-10) |
 | 6 | `Player` | world | Options (their own batch, listed before the ships so they draw below them — M1-10), ships, shields (the Force Field's batch, listed after the ships so it draws over them — M1-11) |
-| 7 | `Hitbox` | world | hitbox marker |
+| 7 | `Hitbox` | world | the ships' hitbox markers (the Options screen's HITBOX, M2-08 — `WorldView.hitboxes`; the layer is hidden while the option is off) |
 | 8 | `Items` | world | capsules (M1-11) |
 | 9 | `Fx` | world | the particle pool (normal-blend sprites, then additive) and the score popups — the renderer's own, fed by events (M1-14, [fx-and-game-feel.md](fx-and-game-feel.md)) |
 | 10 | `EnemyBullets` | world | enemy bullets (the bullet pool itself, M1-09), then the enemy lasers — above explosions and items so they stay readable (§12) |
@@ -102,7 +104,7 @@ and per slot `x`, `y`, `spriteId`, `frame`, `flags`. Slots `[0, count)` are draw
 
 ### The world view
 
-`WorldView = { camera: { x, y }, parallax, terrain, batches, lasers?, bendingLasers?, warning? }`. Everything is a live
+`WorldView = { camera: { x, y }, parallax, terrain, batches, lasers?, bendingLasers?, warning?, effects?, hitboxes? }`. Everything is a live
 reference into sim state; the renderer reads and never writes. **`batches` is read once, when
 the view is bound**: the renderer creates one preallocated binding per entry, and syncs
 binding `i` from `batches[i]` every frame. To change the list, hand the renderer a different
@@ -141,6 +143,15 @@ spacings) and `terrain` (map size, tile size); their per-frame values are read e
   changed (the flight scene does —
   [bosses-and-warning.md](bosses-and-warning.md#the-warning)). The World's is the boss system's
   live `WarningState`.
+- `StageEffectsView` (optional `effects`, M2-08) — the stage's raster effects
+  (`RasterEffectView`: a per-scanline offset of `BgFar`, `BgMid` or `Terrain` — `Wave`, `Haze` or
+  `Lines` — over playfield rows `[top, bottom)` while the camera x is in `[from, to)`) and palette
+  cycles (`ColorCycleView`). Static data (`core/stage` `createStageEffectsView`), read once when
+  the view is bound; the renderer's layer effects draw them
+  ([presentation-polish.md](presentation-polish.md#layer-effects-effectslayer-effectsts)).
+- `HitboxView` (optional `hitboxes`, M2-08) — `capacity`, `count` and per slot world `x`, `y` and
+  `radius` of every live ship's hurtbox; the World's `hitboxBatch`, refilled each tick. The
+  renderer draws it on `HITBOX` only while `showHitbox` is on.
 
 How the stage builds these views: [stage-runtime.md](stage-runtime.md#parallax-and-the-terrain-view).
 
@@ -296,10 +307,12 @@ stops at 20 digits). `createTextMetrics([font])` implements core's `TextMetrics`
 ### One frame
 
 `createPixiRenderer({ canvas, displayWidth, displayHeight, atlas, testPattern?, font?,
-glyphCapacity?, preferWebGLVersion?, effects?, fxSeed?, particleCapacity? })` builds the scene
-once: a lifted-navy background quad (never black — VA panels), the optional calibration pattern,
-the layer stack, a playfield-dim quad and a flash quad (the last children of the world group, 32
-px bigger than the frame on each side so shake never uncovers an edge), a menu-dim quad (first
+glyphCapacity?, preferWebGLVersion?, effects?, fxSeed?, particleCapacity?, scaleMode?, showHitbox?,
+interpolation? })` builds the scene once: a lifted-navy background quad (never black — VA panels),
+the optional calibration pattern, the layer stack, a playfield-dim quad and two flash quads — a
+normal one and (M2-08) an `add`-blended one for additive looks (the last children of the world
+group, 32 px bigger than the frame on each side so shake never uncovers an edge), the layer
+effects (M2-08, no filter until a bound view needs one), a menu-dim quad (first
 child of the UI layer), the HUD / UI draw-list views and — M1-14 — the screen effects, the
 particle pool and the score popups (the last two on the `FX` layer, with an atlas / font).
 `render(frame)` then:
@@ -308,13 +321,18 @@ particle pool and the score popups (the last two on the `FX` layer, with an atla
 2. steps the effects, particles and popups by the ticks since the last frame (`frame.tick`
    delta: 0 while paused, ≤ 60; a tick going back clears them);
 3. rebinds if `frame.world` is a different object, then syncs the particles and popups (with the
-   world's camera), the parallax bands, the terrain grid, every sprite binding, the laser
-   binding and the bending laser binding (M2-02);
+   world's camera — or, with render interpolation on (M2-08), the camera between the last two
+   ticks by `frame.alpha`), the parallax bands, the terrain grid, every sprite binding (the
+   interpolating `syncInterpolated` variants while interpolation is on), the laser binding, the
+   bending laser binding (M2-02), the hitbox markers while `showHitbox` is on and the layer
+   effects (`layerEffects.sync(tick, camera, shakeY, settings.rasterEffects)` — M2-08);
 4. offsets the world group by the rounded `frame.screen` shake plus the effects' shake, shows the
-   brighter of the frame's white flash and the effects' tinted flash, sets both dims;
+   brighter of the frame's white flash and the effects' tinted flash (on the additive quad for an
+   additive look — the Mega Crash since M2-08), sets both dims;
 5. draws the HUD and UI lists (skipped when unchanged);
-6. renders the scene into the 384×216 render texture, then that texture as one sprite,
-   integer-scaled and centred, onto the canvas (`computeIntegerViewport`).
+6. renders the scene into the 384×216 render texture, then that texture as one sprite onto the
+   canvas, placed by the scale mode (`computeViewport` — integer-scaled and centred by default;
+   `fit` / `stretch` since M2-08).
 
 How the effects work: [fx-and-game-feel.md](fx-and-game-feel.md).
 
@@ -367,6 +385,29 @@ It is **presentation only**: the simulation, its sprite ids, replays and hashes 
   variants' frames — `pnpm content:check` requires every variant of every engine bullet / laser
   sprite, frame for frame.
 
+### Presentation polish (M2-08)
+
+The whole story is on [presentation-polish.md](presentation-polish.md); in brief, for this page:
+
+- **Layer effects.** `renderer.layerEffects` (`effects` module, `createLayerEffects`) binds the
+  world's `effects` in `bindWorld` and, every frame, attaches one GLSL ES 1.0 filter to a world
+  layer while one of its raster effects or palette cycles is in camera range — a per-row offset
+  table in a 1 × 216 RGBA8 texture plus up to 8 colour pairs, one program. A plain frame is 2 WebGL
+  draw calls; each filtered layer adds about 3. `effects.settings.rasterEffects = false` draws every
+  layer plain.
+- **Scale modes.** `computeViewport(mode, …)` (`viewport`) places the frame sprite: `integer`
+  (default, `computeIntegerViewport`), `fit`, `stretch` (`scaleX` ≠ `scaleY`);
+  `renderer.setScaleMode(mode)` re-places at once and `resize()` keeps the mode.
+- **Hitbox markers.** `createHitboxBinding` on the `HITBOX` layer, bound from `world.hitboxes`;
+  `setShowHitbox(on)` shows or hides the layer (the markers are synced only while shown).
+- **Additive flash.** A second flash quad with blend mode `add` takes looks with `additive: true`
+  (the Mega Crash); the normal quad keeps the others — no sprite ever changes blend mode.
+- **Render interpolation.** `setInterpolation(on)`: the camera, the bands, every sprite binding
+  and the hitbox markers are drawn between the last two ticks by `frame.alpha`
+  (`syncInterpolated(…, blend)` — the blend is a reused `RenderBlend` object; a slot is blended only
+  when it kept its sprite id and moved ≤ 24 px). The shell turns it on only while its refresh
+  probe reads more than 70 Hz.
+
 ## The browser shell (`@shmup/shell`)
 
 `bootShell(options)` is the one boot path of `apps/web` and `apps/tizen` (D34). The apps
@@ -405,7 +446,7 @@ const shell = await bootShell({
 | 4 | `createPixiRenderer(...)` — WebGL1 first; `fxSeed` = the game's seed xor a salt, `effects` = `ShellOptions.effects`, `countDrawCalls` only with `ShellOptions.debugTools` (M1-19) | `WEBGL IS NOT AVAILABLE` |
 | 5 | `options.platform(renderer)`; then (M1-17) `loadSave(platform.storage)` — never fails: a corrupt or unreadable save means defaults, its text copied to `save.corrupt` — `createSaveStore`, `applyAudioOptions(audio, save.options.audio)`, and with `options.inputProfiles` its `choices()`, `apply(savedId, 'save')` and `active()`; then `createGame(platform, gameConfig, content.db, options)` — `{ scenes: 'boot', save, inputProfiles: { choices, active } }` for the default scene `game` (the scene flow, M1-16), none for the dev scenes (bare gameplay) — [saves-and-options.md](saves-and-options.md#the-shells-side) | `SHMUP CUP FAILED TO START` (the platform factory, the profile callbacks or `createGame` threw) |
 | 5a | Audio (M1-15): `createAudioEngine({ sfx, music, loader })`, `engine.loadSfx()` (bar labelled `LOADING SOUND`), then for a booted stage `engine.prepareMusic(stage.id, stageMusicCues(stage))` (`LOADING MUSIC`; open space prepares none); the scene flow adds the title theme (and the stage-clear / game-over jingles in open space), then `game.scenes.finishBoot()` — [audio.md](audio.md#the-shells-wiring) | `AUDIO FAILED TO LOAD` (`AudioLoadError: could not load <url>: …`) |
-| 6 | `renderer.setFxContent(shell.fx)`; `renderer.setBulletPalette(save.options.display.bulletPalette)` (M2-02 — before the sprite names are resolved); scene set up (the scene flow: `createSceneView(game)`, its name table + `bindWorld(view.backdrop)`; free flight / showcase / fx gallery: the scene's name table + `bindWorld(scene.world)`; calibration: content's names and a frame without a world), dispatcher created — in the scene flow and free flight with `connectFxEvents` (M1-14) and `connectAudioEvents(events, engine, camera)` (M1-15; the flow's `sceneView.camera`, free flight's `world.view.camera`); in the scene flow also `connectOptionEvents(events, audio, …)` (M1-17: the Options screen's volumes and profile, live; M2-02: the bullet palette → `renderer.setBulletPalette`) | — |
+| 6 | `renderer.setFxContent(shell.fx)`; `applyDisplayOptions(renderer, save.options.display)` (M2-02: the bullet palette — before the sprite names are resolved; M2-08: the scale mode, shake, flashing and hitbox markers — then `ShellOptions.effects.screenShake` / `reduceFlashing` override them), `renderer.setInterpolation(interpolation === 'on')` and the refresh probe (M2-08); scene set up (the scene flow: `createSceneView(game)`, its name table + `bindWorld(view.backdrop)`; free flight / showcase / fx gallery: the scene's name table + `bindWorld(scene.world)`; calibration: content's names and a frame without a world), dispatcher created — in the scene flow and free flight with `connectFxEvents` (M1-14) and `connectAudioEvents(events, engine, camera)` (M1-15; the flow's `sceneView.camera`, free flight's `world.view.camera`); in the scene flow also `connectOptionEvents(events, audio, …)` (M1-17: the Options screen's volumes and profile, live; M2-02: the bullet palette → `renderer.setBulletPalette`; M2-08: the renderer as the display target — scale mode, shake, flashing, hitbox markers) | — |
 | 7 | Suspend → `input.clear()` + `audio.suspend()`; resume → `audio.resume()`; window `blur` → `input.clear()` (M1-17 — a window without focus never sends its key-ups); audio unlock (first `keydown` / `pointerdown` in the capture phase, or immediately) followed by `engine.attach(audio)` right after `unlock()` returns and again when it resolves; `resize` → `renderer.resize()` | — |
 | 8 | rAF loop started, overlay removed, canvas marked `running`, `data-shmup-scene` = the top scene (`title`) or the dev scene, and `data-shmup-boot-ms` = the launch-to-ready time (M1-17, `Shell.bootTiming`); then, in dev / test builds, the debug tools from `ShellOptions.debugTools` (M1-19: keys, `window.__shmupDebug`, the overlay — before the first frame, which rAF runs later) | — |
 
@@ -446,6 +487,11 @@ input.setContext(inputContext); // once at boot
 let inputSeats = game.inputSeats;
 input.setSeats?.(inputSeats); // M2-06: player seats, once at boot (optional on the adapter)
 const onFrame = (now: number): void => {
+  refresh.sample(now); // M2-08: the refresh probe — 'auto' interpolates while hz > 70
+  if (interpolationMode === 'auto' && refresh.ready) {
+    const fast = refresh.hz > INTERPOLATION_MIN_HZ;
+    if (fast !== renderer.interpolation) renderer.setInterpolation(fast);
+  }
   if (game.inputContext !== inputContext) {
     inputContext = game.inputContext;
     input.setContext(inputContext); // game / menu binding tables (D15), before this frame's ticks
@@ -498,7 +544,9 @@ the particle and the audio handler. Since M1-17 the scene flow also registers
 `connectOptionEvents(events, audio, onInputProfile)`: `UserOption` volume events →
 `audio.setBusVolume(bus, volumeGain(level))` (the SFX level on `sfx` and `ui`), the profile event →
 the app's `inputProfiles.apply(id, 'options')`, and since M2-02 the `BulletPalette` event →
-`renderer.setBulletPalette(BULLET_PALETTES[param])`
+`renderer.setBulletPalette(BULLET_PALETTES[param])`, and since M2-08 the `ScaleMode`,
+`ScreenShake`, `ReduceFlashing` and `ShowHitbox` events → the renderer (`setScaleMode`,
+`effects.settings`, `setShowHitbox`)
 ([saves-and-options.md](saves-and-options.md#live-changes-the-useroption-event)). Only `HitStop`,
 `Rumble` and `PowerUp` are still counted as unhandled.
 
@@ -715,6 +763,19 @@ pnpm test:e2e                                        # builds web + tizen, then 
   atlas, a blue item flown into draws the green Arm round the ship with the HUD's ARM pips,
   ShiftLeft (the keyboard's Speed) toggles the speed level; no console errors and no "unknown
   sprite" warning.
+- `raster.spec.ts` (M2-08) — the layer shader (`LAYER_EFFECT_VERTEX` / `LAYER_EFFECT_FRAGMENT`)
+  compiles and links in a real WebGL1 context; `?stage=raster-range` boots without errors, and the
+  sea (a `wave` effect and a palette cycle) and the checker floor (a `lines` effect) differ from
+  the same frame with `rasterEffects` off, the far layer's heat haze runs only inside its camera
+  range (`layerEffects.attachedMask`), a frame stays within 12 WebGL draw calls (the overlay's
+  counter; 2 plain, 5 / 7 with one / two filtered layers); `stretch` fills a display `integer`
+  letterboxes; the hitbox markers' rim colour shows on the ship only while shown. Screenshots with
+  the effects on are attached to the report.
+- `display-options.spec.ts` (M2-08) — web keyboard and the Tizen build's remote key codes:
+  OPTIONS → SCALE / SHAKE / FLASHES / HITBOX reach the renderer live (`window.__shmupDebug.renderer`),
+  Back writes them to `display` in `shmup-cup:save.v1`, and the next boot applies them before the
+  first frame (`stretch` fills the 1000×600 canvas, the markers on the ship); without a save the
+  frame is letterboxed and no marker shows.
 - `frame-advance.ts` (M1-19) — `freezeSim(page)` and `stepTo(page, tick)`: specs that compare two
   captures a set number of ticks apart freeze the sim and run exact ticks, because under load the
   frame loop runs 1–4 ticks per rAF frame. Playwright uses half the cores, at most 8 workers
@@ -815,6 +876,8 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | No sound, but the game runs | In a browser nothing plays before the first key press or click (autoplay policy); the scene is not the scene flow or free flight (only they connect the game's events); the `audio` passed to `bootShell` does not expose `context` / `bus()`; or a game in open space, which has no stage music — [audio.md](audio.md#gotchas) |
 | Settings or the hi-score are back to the defaults after a reload | Nothing was written yet (the save is written when the Options screen closes and when a game ends), `localStorage` failed and the adapter fell back to memory, or the save was corrupt (look for `shmup-cup:save.corrupt`; `shell.loadedSave.status`) — [saves-and-options.md](saves-and-options.md#gotchas) |
 | `stage.spec.ts` / `enemies.spec.ts` fail with "not scrolling" / "not moving" on a busy machine | Fixed in M1-19: they no longer count rAF frames (the loop runs 1–4 ticks a frame under load) but freeze the sim and step exact ticks (`test/e2e/frame-advance.ts`). A new spec comparing two captures should do the same |
+| A raster effect / palette cycle never shows | The camera x is outside the effect's `[from, to)`, `renderer.effects.settings.rasterEffects` is off, or a scene's own `WorldView` dropped `effects` (the flight scene and the scene view pass it through) — [presentation-polish.md](presentation-polish.md#gotchas) |
+| The frame is stretched, or has no black border on a PC | The saved SCALE option is `fit` / `stretch`; OPTIONS → SCALE → INTEGER restores the letterbox (`renderer.scaleMode`) |
 | e2e specs time out waiting for `window.__shmupDebug` | The `dist/` folders are release builds (`pnpm build` ran after the test builds). `pnpm test:e2e` builds `build:test` first; do not run `playwright test` alone on release builds |
 
 ## Next steps that build on this page
@@ -893,3 +956,9 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
   log (destructible tiles breaking, growing back, cube-rush tiles, the rollback's reset); the
   moving blocks (on `TERRAIN`) and the tentacles' chain links (on `GROUND_ENEMIES`) are two more
   World batches, appended last ([advanced-stages.md](advanced-stages.md)).
+- **M2-08** (done) — `WorldView.effects` (raster effects and palette cycles, drawn by one GLSL ES
+  1.0 filter per layer — `renderer.layerEffects`) and `WorldView.hitboxes` (the `HITBOX` layer's
+  markers); the additive flash quad; the scale modes (`computeViewport`, `setScaleMode`); render
+  interpolation (`setInterpolation`, the `syncInterpolated` bindings) switched by the shell's
+  refresh probe; `applyDisplayOptions` at boot and the display target of `connectOptionEvents`
+  ([presentation-polish.md](presentation-polish.md)).

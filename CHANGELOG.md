@@ -124,6 +124,25 @@ versions before 1.0 may change anything between minor releases. Development foll
   (later sprite ids shift), `createTerrainView` takes an optional change log; the golden replays
   were re-blessed (new hashed state — zone A's simulation unchanged) and three `gimmick-range` runs
   were added.
+- **Picture options** (M2-08): OPTIONS gained **SCALE** (INTEGER — the sharp, letterboxed default —,
+  FIT or STRETCH), **SHAKE** (on / off), **FLASHES** (NORMAL / REDUCED: at most one dim flash a
+  second) and **HITBOX** (a white-and-pink marker on each ship's weak spot); they apply at once and
+  are remembered. The **Mega Crash** flash now brightens the picture (additive) instead of covering
+  it. On monitors faster than 60 Hz the world is drawn between ticks for smoother motion; the TV is
+  unchanged.
+- **SNES-style picture effects** (M2-08, in the browser's `?stage=raster-range` for now — AZURE
+  VERGE is unchanged): per-scanline **raster effects** — wavy water, heat haze, a pseudo-3D
+  line-band floor — and **palette cycling** (a sea whose colours roll), drawn by one WebGL1 filter
+  per background layer only while an effect is on screen.
+- For content authors (M2-08): stages may list `raster` effects (`wave`, `haze`, `lines` with
+  optional `bands`) and palette `cycles` (exact `#rrggbb` ramps, ≤ 8 colours per layer) —
+  [`content/stages/README.md`](content/stages/README.md#raster-effects-and-palette-cycles-m2-08).
+- Behaviour change for tools and tests (M2-08): `OptionsItem.Back` is 9 (SCALE, SHAKE, FLASHES and
+  HITBOX sit between BULLETS and BACK); `UserOptionKind` gained `ScaleMode 5` … `ShowHitbox 8`;
+  `UserOptions.display` has four more fields (save format 1, no migration); `WorldView` may carry
+  `effects` and `hitboxes`; `window.__shmupDebug.renderer`; the golden replays were re-blessed (two
+  new content sprites shift the sprite ids — the simulation is unchanged) and a `raster-range` run
+  was added.
 
 ### Documentation
 
@@ -146,7 +165,11 @@ versions before 1.0 may change anything between minor releases. Development foll
   [Two players](docs/client/preview-build.md#two-players) and the controls page's
   [Two players](docs/client/controls.md#two-players) (M2-06); the developer guide
   [`docs/dev/advanced-stages.md`](docs/dev/advanced-stages.md) and the tester guide's
-  [The Gimmick range](docs/client/preview-build.md#the-gimmick-range-browser-only) (M2-07).
+  [The Gimmick range](docs/client/preview-build.md#the-gimmick-range-browser-only) (M2-07); the
+  developer guide [`docs/dev/presentation-polish.md`](docs/dev/presentation-polish.md), the tester
+  guide's [Options screen](docs/client/preview-build.md#the-options-screen) (SCALE, SHAKE, FLASHES,
+  HITBOX) and [The Raster range](docs/client/preview-build.md#the-raster-range-browser-only)
+  (M2-08).
 
 ## [0.1.0] — M1: playable vertical slice
 

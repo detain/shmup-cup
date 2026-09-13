@@ -470,7 +470,9 @@ Details: [rendering-and-shell.md](rendering-and-shell.md).
   adds `image-rendering: pixelated` so HiDPI browsers upscale it crisply too.
 - `computeIntegerViewport()` picks the largest integer scale that fits: 1920×1080 → ×5
   exactly (the M7 monitors), 1280×720 → ×3 with a 64/36 px letterbox, smaller than
-  384×216 → ×1 cropped (never blurred).
+  384×216 → ×1 cropped (never blurred). That is the default **scale mode**; since M2-08 the
+  player may pick `fit` (the largest 16:9 scale, not whole) or `stretch` (the whole display) —
+  `computeViewport(mode, …)`, still nearest-neighbour.
 - The 384×216 scene is a lifted-navy background, one container per core `LayerId` in the
   §18 draw order (the world layers in a group offset by screen shake; HUD, UI and DEBUG
   fixed), a playfield-dim and a flash quad over the world and a menu-dim quad under the UI.
@@ -486,6 +488,13 @@ Details: [rendering-and-shell.md](rendering-and-shell.md).
 - **HUD and menus:** each `DrawList` (rect, sprite, text, number) is drawn into an ordered
   quad pool of 1024 sprites with the atlas's bitmap font; a list whose `revision` did not
   change is skipped.
+- **Presentation polish** (M2-08): the stage's raster effects (wavy water, heat haze, line-band
+  floors) and palette cycles are drawn by one GLSL ES 1.0 filter per world layer, attached only
+  while one of the layer's effects is in camera range (a 1 × 216 RGBA8 offset table + up to 8
+  colour pairs); the Mega Crash flash is additive; the `HITBOX` layer draws the ships' hurtbox
+  markers for the show-hitbox option; on displays over 70 Hz the shell turns on render
+  interpolation (the camera, bands, sprites and markers drawn between the last two ticks by
+  `frame.alpha`) ([presentation-polish.md](presentation-polish.md)).
 - Zero per-frame allocation: Pixi objects are only created at load / bind time, pass options
   are reused (and reset, because Pixi writes into them), tints are only set when they change.
 
@@ -540,7 +549,9 @@ Details: [saves-and-options.md](saves-and-options.md).
   Options screen pushes each change as a `SimEventKind.UserOption` event through the one event
   queue; the shell turns it into `setBusVolume`, asks the app to switch the input profile or —
   since M2-02 — has the renderer swap in the chosen colour-blind bullet palette
-  (`setBulletPalette`: other sprite variants, the same sprite ids).
+  (`setBulletPalette`: other sprite variants, the same sprite ids) and — since M2-08 — change the
+  scale mode, the shake switch, reduced flashing and the hitbox markers (the same options are
+  applied from the save at boot, `applyDisplayOptions`).
 
 ## Lifecycle
 
@@ -654,10 +665,10 @@ input-web `keymap`, `keyboard`, `gamepad`, `web-input` (implemented with M2-06's
 M2-16); audio-web `web-audio` (partial; driven by the Options sliders since M1-17), `synth`, `sfx`,
 `music`, `loader`,
 `engine`;
-render-pixi `renderer`, `viewport`, `test-pattern`, `palette` (partial: the colour-blind bullet palette tables since
-M2-02 — palette cycling later), `atlas`, `layers`, `sprites`,
-`text`, `ui`, `particles`, `effects` (partial: shake, flash, dim, popups — raster and palette
-effects later), `debug` (the overlay, M1-19); shell `boot`, `loader`, `dispatch`, `error-screen`,
+render-pixi `renderer`, `viewport` (the scale modes since M2-08), `test-pattern`, `palette` (the colour-blind bullet
+palette tables since M2-02, palette cycling since M2-08), `atlas`, `layers`, `sprites`,
+`text`, `ui`, `particles`, `effects` (shake, flash, dim, popups; raster and palette-cycle layer
+filters since M2-08), `debug` (the overlay, M1-19); shell `boot`, `loader`, `dispatch`, `error-screen`,
 `frame-loop`, `scene-view`, `flight`, `showcase`, `fx-gallery`, `debug` (M1-19);
 the apps' `boot` and `platform`. Everything else declares its intended API only. The
 build-time tooling outside the packages (the asset pipeline in `scripts/assets/`, the Vite
