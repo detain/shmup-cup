@@ -42,11 +42,12 @@ import { measureAllocation, pageImages, testManifest } from '../helpers.js';
 describe('render-pixi/effects screen shake', () => {
   it('describes itself', () => {
     expect(moduleInfo.name).toBe('effects');
-    expect(moduleInfo.status).toBe('partial');
+    expect(moduleInfo.status).toBe('implemented');
     expect(DEFAULT_EFFECT_SETTINGS).toEqual({
       screenShake: true,
       reduceFlashing: false,
       crt: 'off',
+      rasterEffects: true,
     });
   });
 

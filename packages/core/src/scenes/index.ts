@@ -134,8 +134,9 @@
  * {@link PREVIEW_SPREAD_TICKS}), the ship select's labels ({@link SHIP_MODE_LABELS},
  * {@link SHIP_MODE_HINTS} — M2-05),
  * {@link InputProfileSetup}, the menu item indices ({@link TitleItem}, {@link PauseItem},
- * {@link OptionsItem} — BULLETS since M2-02 —), the Options screen's bullet palette labels
- * ({@link BULLET_PALETTE_LABELS}, M2-02) and the timing constants ({@link STAGE_CLEAR_DELAY_TICKS},
+ * {@link OptionsItem} — BULLETS since M2-02, SCALE / SHAKE / FLASHES / HITBOX since M2-08 —),
+ * the Options screen's labels ({@link BULLET_PALETTE_LABELS}, M2-02; {@link SCALE_MODE_LABELS},
+ * {@link FLASH_LABELS}, M2-08) and the timing constants ({@link STAGE_CLEAR_DELAY_TICKS},
  * {@link GAME_OVER_DELAY_TICKS}, {@link GAME_OVER_TIMEOUT_TICKS}, {@link GAME_OVER_LOCK_TICKS},
  * {@link STAGE_CLEAR_TALLY_TICKS}, {@link STAGE_CLEAR_CONTINUED_TICKS}, {@link PAUSE_DIM},
  * {@link CONTINUE_COUNTDOWN_TICKS}, {@link CONTINUE_LOCK_TICKS}).
@@ -145,12 +146,13 @@
  * countdown on top). A co-op game records its scores with the hi-score mode `2p`.
  *
  * **Planned.** Attract mode, the mode select, the zone map, name entry, hi-score table, ending and
- * credits (M2); more option groups (controls rebinding, display, game — M2-16).
+ * credits (M2); more option groups (controls rebinding, game — M2-16).
  *
  * @module
  */
 import {
   BULLET_PALETTES,
+  SCALE_MODES,
   DEFAULT_DIFFICULTY_TABLE,
   DIFFICULTY_PRESETS,
   MAX_AUTO_POWER_UP_ORDER,
@@ -723,8 +725,16 @@ export const OptionsItem = {
   Controls: 3,
   /** BULLETS: the enemy bullet palette choice (M2-02). */
   Bullets: 4,
-  /** BACK: store the options, write the save and close (index 5 since M2-02 — was 4). */
-  Back: 5,
+  /** SCALE: how the frame fills the display — `SCALE_MODES` (M2-08). */
+  Scale: 5,
+  /** SHAKE: screen shake on / off (M2-08). */
+  Shake: 6,
+  /** FLASHES: normal / reduced flashing (M2-08). */
+  Flashes: 7,
+  /** HITBOX: the ships' hitbox markers off / on (M2-08). */
+  Hitbox: 8,
+  /** BACK: store the options, write the save and close (index 9 since M2-08 — was 5, then 4). */
+  Back: 9,
 } as const;
 
 /** The Options screen's BULLETS labels, in `BULLET_PALETTES` order (M2-02). */
@@ -734,6 +744,12 @@ export const BULLET_PALETTE_LABELS: readonly string[] = Object.freeze([
   'PROTANOPIA',
   'TRITANOPIA',
 ]);
+
+/** The Options screen's SCALE labels, in `SCALE_MODES` order (M2-08). */
+export const SCALE_MODE_LABELS: readonly string[] = Object.freeze(['INTEGER', 'FIT', 'STRETCH']);
+
+/** The Options screen's FLASHES labels (M2-08): index 0 = normal, 1 = reduced flashing. */
+export const FLASH_LABELS: readonly string[] = Object.freeze(['NORMAL', 'REDUCED']);
 
 /** Ticks the game runs on after `stageClear` before the stage-clear screen opens. */
 export const STAGE_CLEAR_DELAY_TICKS = 90;
@@ -805,13 +821,13 @@ const PAUSE_MENU_LAYOUT: MenuLayout = Object.freeze({
   cursorX: CX - 60,
 });
 
-/** The Options screen's panel: left, top, width, height. */
-const OPTIONS_PANEL = Object.freeze({ x: 48, y: 44, w: 288, h: 128 });
+/** The Options screen's panel: left, top, width, height (taller since M2-08: ten rows). */
+const OPTIONS_PANEL = Object.freeze({ x: 48, y: 18, w: 288, h: 182 });
 
 /** Where the Options menu is drawn (labels left, values from x 150). */
 const OPTIONS_MENU_LAYOUT: MenuLayout = Object.freeze({
   x: 72,
-  y: 74,
+  y: 46,
   lineHeight: 14,
   cursorX: 62,
   valueX: 150,
@@ -1506,7 +1522,9 @@ export class PauseScene extends SceneBase {
 
 /**
  * The Options screen: MASTER / MUSIC / SFX sliders, CONTROLS (the input profile), BULLETS (the
- * enemy bullet colour set — plan M2-02), BACK (shmup_feat.md §21, plan M1-17).
+ * enemy bullet colour set — plan M2-02), the display options SCALE (integer / fit / stretch),
+ * SHAKE (on / off), FLASHES (normal / reduced) and HITBOX (off / on) — plan M2-08 —, BACK
+ * (shmup_feat.md §21, plan M1-17).
  *
  * @remarks
  * An overlay (dim {@link PAUSE_DIM}) with an opaque panel, opened from the title and from the pause
@@ -1516,9 +1534,12 @@ export class PauseScene extends SceneBase {
  * slider pushes a `UserOption` event with its level (`MasterVolume` / `MusicVolume` /
  * `SfxVolume`), CONTROLS — Left / Right, or OK stepping forward, wrapping — one with the profile's
  * index (`InputProfile`), BULLETS one with the palette's index in `BULLET_PALETTES`
- * (`BulletPalette` — the host swaps the renderer's bullet sprites); all play the move sound (at the
- * new volume). BACK or the Back button stores the sliders, the bullet palette and — when it
- * changed — the profile id in the save, writes the save when
+ * (`BulletPalette` — the host swaps the renderer's bullet sprites), SCALE / SHAKE / FLASHES /
+ * HITBOX one with the choice's index (`ScaleMode` — the index in `SCALE_MODES` —,
+ * `ScreenShake`, `ReduceFlashing`, `ShowHitbox` — 1 = on; the host applies them to the renderer —
+ * SHAKE and HITBOX are toggles: Left = OFF, Right = ON, OK flips);
+ * all play the move sound (at the new volume). BACK or the Back button stores the sliders, the
+ * display options and — when it changed — the profile id in the save, writes the save when
  * anything differs from what is stored (`SaveStore.flush`), plays `MenuBack` and closes. CONTROLS
  * is disabled when the host offers no profiles (it then shows `DEFAULT`).
  */
@@ -1539,6 +1560,14 @@ export class OptionsScene extends SceneBase {
   readonly controls: Choice;
   /** BULLETS: the enemy bullet colour set (`BULLET_PALETTES`, M2-02). */
   readonly bullets: Choice = createChoice(BULLET_PALETTE_LABELS, 0);
+  /** SCALE: the scale mode (`SCALE_MODES`, M2-08). */
+  readonly scale: Choice = createChoice(SCALE_MODE_LABELS, 0);
+  /** SHAKE: screen shake on / off (M2-08). */
+  readonly shake: Toggle = createToggle(true);
+  /** FLASHES: 0 = normal, 1 = reduced flashing (M2-08). */
+  readonly flashes: Choice = createChoice(FLASH_LABELS, 0);
+  /** HITBOX: the ships' hitbox markers on / off (M2-08). */
+  readonly hitbox: Toggle = createToggle(false);
   /** The menu. */
   readonly menu: ListMenu;
   /** The CONTROLS index when the screen opened (a different one on close is saved). */
@@ -1563,6 +1592,10 @@ export class OptionsScene extends SceneBase {
         { label: 'SFX', slider: this.sfx },
         { label: 'CONTROLS', choice: this.controls },
         { label: 'BULLETS', choice: this.bullets },
+        { label: 'SCALE', choice: this.scale },
+        { label: 'SHAKE', toggle: this.shake },
+        { label: 'FLASHES', choice: this.flashes },
+        { label: 'HITBOX', toggle: this.hitbox },
         'BACK',
       ],
       { disabledMask: profiles.length === 0 ? 1 << OptionsItem.Controls : 0 },
@@ -1584,8 +1617,14 @@ export class OptionsScene extends SceneBase {
     this.sfx.value = audio.sfx;
     this.controls.index = flow.activeProfile >= 0 ? flow.activeProfile : 0;
     this.openedProfile = this.controls.index;
-    const palette = BULLET_PALETTES.indexOf(flow.save.options.display.bulletPalette);
+    const display = flow.save.options.display;
+    const palette = BULLET_PALETTES.indexOf(display.bulletPalette);
     this.bullets.index = palette >= 0 ? palette : 0;
+    const scale = SCALE_MODES.indexOf(display.scaleMode);
+    this.scale.index = scale >= 0 ? scale : 0;
+    this.shake.value = display.screenShake;
+    this.flashes.index = display.reduceFlashing ? 1 : 0;
+    this.hitbox.value = display.showHitbox;
     this.menu.focus = OptionsItem.Master;
     this.menu.open(MENU_OPEN_LOCK_TICKS);
   }
@@ -1604,7 +1643,13 @@ export class OptionsScene extends SceneBase {
     const options: UserOptions = {
       audio: { master: this.master.value, music: this.music.value, sfx: this.sfx.value },
       input: { profileId },
-      display: { bulletPalette: BULLET_PALETTES[this.bullets.index] ?? 'standard' },
+      display: {
+        bulletPalette: BULLET_PALETTES[this.bullets.index] ?? 'standard',
+        scaleMode: SCALE_MODES[this.scale.index] ?? 'integer',
+        screenShake: this.shake.value,
+        reduceFlashing: this.flashes.index === 1,
+        showHitbox: this.hitbox.value,
+      },
     };
     save.setOptions(options);
     void save.flush();
@@ -1646,6 +1691,18 @@ export class OptionsScene extends SceneBase {
           break;
         case OptionsItem.Bullets:
           flow.userOption(UserOptionKind.BulletPalette, this.bullets.index);
+          break;
+        case OptionsItem.Scale:
+          flow.userOption(UserOptionKind.ScaleMode, this.scale.index);
+          break;
+        case OptionsItem.Shake:
+          flow.userOption(UserOptionKind.ScreenShake, this.shake.value ? 1 : 0);
+          break;
+        case OptionsItem.Flashes:
+          flow.userOption(UserOptionKind.ReduceFlashing, this.flashes.index);
+          break;
+        case OptionsItem.Hitbox:
+          flow.userOption(UserOptionKind.ShowHitbox, this.hitbox.value ? 1 : 0);
           break;
         default:
           break;

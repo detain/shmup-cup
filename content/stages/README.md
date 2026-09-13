@@ -46,6 +46,12 @@ blocks, a timed stop with a vertical pan down into a dip, a diagonal pan back up
 that picks the events of a branch, and a 4 px/tick high-speed section. `?stage=gimmick-range`
 plays it.
 
+`raster-range.stage.json` (M2-08) is the dev stage of the **raster effects and palette cycles**:
+over the far starfield a sea band (`bg/sea-swell`, painted in the four colours of one palette cycle)
+with a `wave` effect and a checker floor (`bg/checker-floor`, a static band) that a `lines` effect
+turns into a pseudo-3D floor, and a heat `haze` over the stars between camera x 1,200 and 2,400;
+a few drifter formations and carriers. `?stage=raster-range` plays it.
+
 **The Direct-mode item plan (M2-05).** `directItems` (optional, 1–256 of `red`, `green`, `blue`,
 `orange`, `yellow`, `octagon`) is the order in which the stage's `powerup` drops — and its
 `capsule` drops: the direct ship has no meter — hand out items **in Direct mode**, cycling; the
@@ -92,7 +98,15 @@ orange 1UP).
     { "x": 3840, "type": "warning", "enemy": "example-warden" }, // WARNING, then the boss
     { "x": 4096, "type": "end" }
   ],
-  "directItems": ["red", "blue", "green", "octagon"] // optional: the Direct-mode item plan (M2-05)
+  "directItems": ["red", "blue", "green", "octagon"], // optional: the Direct-mode item plan (M2-05)
+  "raster": [                      // optional (M2-08): per-scanline offsets of a layer
+    { "layer": "mid", "kind": "wave", "top": 150, "bottom": 200, "amplitude": 3, "wavelength": 20 },
+    { "layer": "mid", "kind": "lines", "top": 160, "bottom": 200, "factorTop": 0.25,
+      "factorBottom": 1.5, "wrap": 64, "from": 2048 }
+  ],
+  "cycles": [                      // optional (M2-08): palette cycling of a layer
+    { "layer": "terrain", "colors": ["#801808", "#c83010", "#f06018"], "ticks": 8 }
+  ]
 }
 ```
 
@@ -152,6 +166,33 @@ formation can no longer be completed).
   A checkpoint restart re-derives the flags in timeline order (a trigger behind it that had fired
   keeps its outcome; one that had not is armed again while its region lies ahead).
 
+## Raster effects and palette cycles (M2-08)
+
+Presentation only — the simulation never reads them (they are not in replays or state hashes);
+the renderer applies them through one GLSL ES 1.0 filter per affected layer, and only while one of
+the layer's effects is on screen. Both are optional lists (at most 8 entries each).
+
+- **`raster`** — a per-scanline horizontal offset of one layer (`far`, `mid` or `terrain`) on the
+  playfield rows `top … bottom − 1` (0 = the row under the top HUD bar, ≤ 200), while the camera x
+  is in `[from, to)` (defaults: the whole stage):
+  - `wave` — wavy water: `amplitude` px (≤ 32) along a sine of `wavelength` rows, drifting once
+    every `period` ticks (default 120; 0 = still);
+  - `haze` — heat haze: two short sines against each other (same fields), a fast shimmer;
+  - `lines` — a line-band parallax floor: row `k` scrolls at `factorTop` (the first row, the
+    horizon) … `factorBottom` (the last) × the camera x, wrapped every `wrap` px — the band's art
+    repeat, so the rows join seamlessly. Give the band itself `"factor": 0`. With `bands` (the
+    heights of the art's strips, top → bottom, adding up to `bottom − top`) each strip scrolls as
+    one piece at its own factor — draw nearer strips with a wider pattern and the floor keeps its
+    shape at any camera x (`bg/checker-floor` in the raster range).
+
+  Effects on one layer add up. A raster effect shifts the whole layer's pixels on those rows —
+  on `terrain` the collision does not move (keep it to decoration rows or small amplitudes).
+- **`cycles`** — palette cycling: every pixel of the layer (`far`, `mid`, `terrain`, `ground` or
+  `air` — glowing cores on the enemy layers) drawn in `colors[i]` shows `colors[(i + step) mod n]`,
+  `step` advancing every `ticks` ticks while the camera x is in `[from, to)`. The art must use the
+  ramp's exact `#rrggbb` colours (2–8, distinct); all cycles of one layer together may use at most
+  8 colours.
+
 ## Checkpoints
 
 The runner remembers the last checkpoint the camera passed. Restarting there (death penalty
@@ -184,6 +225,11 @@ Since M2-07 also: `yOver` without `yTo` or together with `yTicks`, a `hold` on a
 duplicate branch ids and events naming an unknown branch, a trigger whose `until` lies before its
 `x`, more than 32 triggers, a block without a tilemap, off the tile grid, over 64 tiles or naming a
 tile the tileset does not have.
+
+Since M2-08 also: a raster effect with `bottom ≤ top` or `to ≤ from`, a `wave` / `haze` without
+`amplitude` and `wavelength`, a `lines` without `factorTop` and `factorBottom`, `bands` that do not
+add up to the rows (or on a `wave` / `haze`), a cycle colour used
+twice on one layer, and more than 8 cycled colours on one layer.
 
 **Authoring in Tiled (M2-07).** `pnpm content:tiled <map.tmj>` (`scripts/content/tiled-import.mjs`)
 converts a Tiled JSON map into this format: the tile layer becomes the `rle` rows, object-layer

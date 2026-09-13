@@ -8,8 +8,9 @@
  *   {@link IRenderer}, `@shmup/audio-web` → {@link IAudio});
  * - the **render contract** (plan §3.4): the per-frame {@link RenderFrame} with a read-only
  *   {@link WorldView} (camera, parallax, terrain, a list of {@link SpriteBatchView}s, the
- *   enemy lasers, {@link LaserView}, the bending lasers, {@link BendingLaserView}, and the boss
- *   WARNING, {@link WarningView}),
+ *   enemy lasers, {@link LaserView}, the bending lasers, {@link BendingLaserView}, the boss
+ *   WARNING, {@link WarningView}, and — since M2-08 — the stage's raster effects and palette
+ *   cycles, {@link StageEffectsView}, and the ships' hurtboxes, {@link HitboxView}),
  *   two {@link DrawList} command buffers (HUD and UI) and the {@link ScreenView} effects;
  * - the draw layers ({@link LayerId}), sprite flags ({@link SpriteFlag}) and the bitmap-text
  *   measuring contract ({@link TextMetrics}) the renderer implements for layout code.
@@ -36,6 +37,8 @@
  * {@link WorldView}, {@link CameraView}, {@link ParallaxView}, {@link TerrainView},
  * {@link TerrainChanges} (M2-07),
  * {@link LaserView}, {@link BendingLaserView} (M2-02), {@link WarningView},
+ * {@link StageEffectsView}, {@link RasterEffectView}, {@link RasterKind}, {@link ColorCycleView},
+ * {@link HitboxView}, {@link HitboxBatch}, {@link createHitboxBatch} (M2-08),
  * {@link SpriteBatchView}, {@link SpriteBatch}, {@link createSpriteBatch}, {@link pushSprite},
  * {@link SpriteFlag}. Layers: {@link LayerId}, {@link LAYER_COUNT}, {@link LAYER_NAMES}.
  * Command lists: {@link DrawList}, {@link createDrawList}, {@link DrawOp}, {@link TextAlign},
@@ -416,6 +419,161 @@ export interface WarningView {
 }
 
 /**
+ * Kinds of raster (per-scanline) effect of a {@link RasterEffectView} (plan M2-08, shmup_feat.md
+ * §18 "Raster/HDMA-style effects"). Numeric codes; append, never renumber.
+ */
+export const RasterKind = {
+  /**
+   * Wavy water: every row shifted by `amplitude · sin(row / wavelength + tick / period)` (one
+   * slow sine along the rows, drifting over time).
+   */
+  Wave: 0,
+  /**
+   * Heat haze: the sum of two short sines (the second at about 2.3× the frequency, running the
+   * other way, half as strong) — a fast, irregular shimmer.
+   */
+  Haze: 1,
+  /**
+   * Line-band parallax floor: row `r` of the band scrolls at a factor interpolated from
+   * `factorTop` (the band's first row, the horizon) to `factorBottom` (its last row) × the camera,
+   * wrapped every `wrap` pixels (the floor art's repeat) — or, with `bands`, strip by strip.
+   */
+  Lines: 2,
+} as const;
+
+/** A {@link RasterKind} code. */
+export type RasterKind = (typeof RasterKind)[keyof typeof RasterKind];
+
+/**
+ * One raster effect of a stage (plan M2-08): a per-scanline horizontal offset applied to one world
+ * layer while the camera is inside `[from, to)`. Presentation only — the simulation never reads it.
+ *
+ * @remarks
+ * Rows are **playfield rows** on screen (0 = the row under the top HUD bar, `PLAYFIELD_H` − 1 the
+ * last); the renderer adds `PLAYFIELD_Y`. Effects on the same layer add up (offsets summed; the
+ * last `Lines` effect's `wrap` wins on the rows it covers).
+ */
+export interface RasterEffectView {
+  /** The layer the effect distorts (`BgFar`, `BgMid` or `Terrain`). */
+  readonly layer: LayerId;
+  /** {@link RasterKind} code. */
+  readonly kind: RasterKind;
+  /** First playfield row affected. */
+  readonly top: number;
+  /** Row after the last one affected (`top < bottom ≤ PLAYFIELD_H`). */
+  readonly bottom: number;
+  /** Peak offset in pixels (`Wave`, `Haze`). */
+  readonly amplitude: number;
+  /** Rows per sine period (`Wave`, `Haze`). */
+  readonly wavelength: number;
+  /** Ticks per sine period over time (`Wave`, `Haze`; 0 = frozen). */
+  readonly period: number;
+  /** Scroll factor of the band's top row (`Lines`). */
+  readonly factorTop: number;
+  /** Scroll factor of the band's bottom row (`Lines`). */
+  readonly factorBottom: number;
+  /**
+   * `Lines`: heights of the art's strips, top → bottom (summing to `bottom − top`) — every row of
+   * strip `i` scrolls at the factor interpolated for the strip (`i / (n − 1)`); empty = a factor
+   * per row.
+   */
+  readonly bands: readonly number[];
+  /** Horizontal repeat of the distorted art in pixels (`Lines`; 0 = clamp at the edges). */
+  readonly wrap: number;
+  /** Camera x from which the effect is on. */
+  readonly from: number;
+  /** Camera x from which it is off again (`Infinity` = to the stage's end). */
+  readonly to: number;
+}
+
+/**
+ * One palette cycle of a stage (plan M2-08, shmup_feat.md §18 "palette cycling (glowing cores,
+ * water, lava)"): every pixel of the layer whose colour is `colors[i]` is drawn in
+ * `colors[(i + step) mod n]`, where `step` advances every `ticks` ticks — while the camera is
+ * inside `[from, to)`. Presentation only.
+ */
+export interface ColorCycleView {
+  /** The layer whose pixels are recoloured (`BgFar`, `BgMid`, `Terrain`, `GroundEnemies`, `AirEnemies`). */
+  readonly layer: LayerId;
+  /** The ramp, 0xRRGGBB, distinct (2 … 8). */
+  readonly colors: readonly number[];
+  /** Ticks per step of the cycle. */
+  readonly ticks: number;
+  /** Camera x from which the cycle runs. */
+  readonly from: number;
+  /** Camera x from which it stops (`Infinity` = to the stage's end). */
+  readonly to: number;
+}
+
+/**
+ * The presentation effects a stage asks for (plan M2-08): raster effects and palette cycles, both
+ * static data read once when the renderer binds the view.
+ */
+export interface StageEffectsView {
+  /** Raster effects, in file order. */
+  readonly raster: readonly RasterEffectView[];
+  /** Palette cycles, in file order. */
+  readonly cycles: readonly ColorCycleView[];
+}
+
+/**
+ * The ships' hurtboxes for the "show hitbox" display option (plan M2-08, shmup_feat.md §5 / §21):
+ * slot `i < count` is a live ship (active, not dying or dead), centred at world `(x[i], y[i])` with hurt radius
+ * `radius[i]` pixels. A mirror the World refills every tick; drawn on `LayerId.Hitbox` only while
+ * the option is on.
+ */
+export interface HitboxView {
+  /** Slots in every array. */
+  readonly capacity: number;
+  /** Live markers, packed in `[0, count)`. */
+  readonly count: number;
+  /** World x of each hurtbox centre. */
+  readonly x: ArrayLike<number>;
+  /** World y of each hurtbox centre. */
+  readonly y: ArrayLike<number>;
+  /** Hurt radius in pixels. */
+  readonly radius: ArrayLike<number>;
+}
+
+/** A writable {@link HitboxView} with canonical typed arrays (see {@link createHitboxBatch}). */
+export interface HitboxBatch extends HitboxView {
+  /** Live markers; the producer resets it to 0 and refills every tick. */
+  count: number;
+  /** World x per slot. */
+  readonly x: Float64Array;
+  /** World y per slot. */
+  readonly y: Float64Array;
+  /** Hurt radius per slot. */
+  readonly radius: Float64Array;
+}
+
+/**
+ * Allocates a hitbox mirror (the World's, tests).
+ *
+ * @param capacity - Slots (positive integer).
+ * @returns An empty batch (`count` 0).
+ * @throws {RangeError} When `capacity` is not a positive integer.
+ *
+ * @example
+ * ```ts
+ * const hitboxes = createHitboxBatch(2);
+ * hitboxes.x[0] = ship.x; hitboxes.y[0] = ship.y; hitboxes.radius[0] = 2; hitboxes.count = 1;
+ * ```
+ */
+export function createHitboxBatch(capacity: number): HitboxBatch {
+  if (!Number.isInteger(capacity) || capacity <= 0) {
+    throw new RangeError('hitbox batch capacity must be a positive integer');
+  }
+  return {
+    capacity,
+    count: 0,
+    x: new Float64Array(capacity),
+    y: new Float64Array(capacity),
+    radius: new Float64Array(capacity),
+  };
+}
+
+/**
  * Read-only view of the gameplay world for one frame (plan §3.4). All members are
  * references to live sim state — the renderer reads, never writes.
  */
@@ -447,6 +605,16 @@ export interface WorldView {
    * host's HUD / UI layer, not by the renderer's world binding.
    */
   readonly warning?: WarningView | null;
+  /**
+   * The stage's raster effects and palette cycles (plan M2-08), or `null` / absent for none. Read
+   * once when the view is bound, like the batches.
+   */
+  readonly effects?: StageEffectsView | null;
+  /**
+   * The ships' hurtboxes (plan M2-08 — the "show hitbox" option), or `null` / absent. Read once
+   * when the view is bound (its arrays are live).
+   */
+  readonly hitboxes?: HitboxView | null;
 }
 
 /** Whole-screen effects for one frame (filled by the fx system, M1-14). */

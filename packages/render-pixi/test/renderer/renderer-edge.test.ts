@@ -251,7 +251,7 @@ describe('render-pixi/renderer scene structure (edge)', () => {
     const renderer = await makeRenderer();
     renderer.bindWorld(busyWorld().world);
     const world = renderer.layers.world;
-    const flash = world.children[world.children.length - 1] as Pixi.Sprite;
+    const flash = world.children[world.children.length - 2] as Pixi.Sprite;
     expect(renderer.layers.layers.slice(0, LayerId.Hud).every((layer) => layer !== flash)).toBe(
       true,
     );

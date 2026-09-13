@@ -110,7 +110,9 @@ export const SimEventKind = {
    * {@link UserOptionKind} code, `param` = the new value — a volume level `0…10` (the host sets the
    * bus gain, `core/config` `volumeGain`), for `InputProfile`, the index of the chosen profile in
    * the scene flow's profile choices (the host applies that profile to its input adapter), or, for
-   * `BulletPalette` (M2-02), the index of the bullet palette in `BULLET_PALETTES`. Pushed
+   * `BulletPalette` (M2-02), the index of the bullet palette in `BULLET_PALETTES`; for `ScaleMode`
+   * (M2-08) the index in `SCALE_MODES`; for `ScreenShake` / `ReduceFlashing` / `ShowHitbox` (M2-08)
+   * 1 = on, 0 = off. Pushed
    * live, on every change; the save is written when the screen closes.
    */
   UserOption: 13,
@@ -155,6 +157,17 @@ export const UserOptionKind = {
    * `BULLET_PALETTES` (the host re-resolves the renderer's bullet sprites).
    */
   BulletPalette: 4,
+  /**
+   * SCALE (M2-08): `param` = index of the chosen scale mode in `core/config` `SCALE_MODES` (the
+   * host re-places the frame on the display).
+   */
+  ScaleMode: 5,
+  /** SHAKE (M2-08): `param` = 1 (screen shake on) or 0 (off). */
+  ScreenShake: 6,
+  /** FLASHES (M2-08): `param` = 1 (reduced flashing) or 0 (normal). */
+  ReduceFlashing: 7,
+  /** HITBOX (M2-08): `param` = 1 (draw the ships' hitbox markers) or 0 (hide them). */
+  ShowHitbox: 8,
 } as const;
 
 /** A {@link UserOptionKind} code. */

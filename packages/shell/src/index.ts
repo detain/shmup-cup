@@ -46,9 +46,11 @@ export {
 } from './loader/index.js';
 export {
   applyAudioOptions,
+  applyDisplayOptions,
   connectFxEvents,
   connectOptionEvents,
   createEventDispatcher,
+  type DisplayTarget,
   type EventDispatcher,
   type FxTargets,
   type SimEventHandler,
@@ -63,7 +65,15 @@ export {
   type BootOverlay,
   type Canvas2DLike,
 } from './error-screen/index.js';
-export { startFrameLoop, type FrameLoop, type FrameScheduler } from './frame-loop/index.js';
+export {
+  INTERPOLATION_MIN_HZ,
+  REFRESH_SAMPLES,
+  createRefreshMonitor,
+  startFrameLoop,
+  type FrameLoop,
+  type FrameScheduler,
+  type RefreshMonitor,
+} from './frame-loop/index.js';
 export {
   FLIGHT_SPRITES,
   createFlightScene,

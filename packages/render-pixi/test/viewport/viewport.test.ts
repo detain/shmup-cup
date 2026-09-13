@@ -7,7 +7,7 @@ describe('render-pixi/viewport computeIntegerViewport', () => {
   });
 
   it('scales 384x216 by exactly 5 on 1080p (Tizen UHD web apps) with no letterbox', () => {
-    expect(computeIntegerViewport(1920, 1080, 384, 216)).toEqual({
+    expect(computeIntegerViewport(1920, 1080, 384, 216)).toMatchObject({
       scale: 5,
       x: 0,
       y: 0,
@@ -17,7 +17,7 @@ describe('render-pixi/viewport computeIntegerViewport', () => {
   });
 
   it('scales by 3 with a centred letterbox on 720p (Tizen FHD web apps)', () => {
-    expect(computeIntegerViewport(1280, 720, 384, 216)).toEqual({
+    expect(computeIntegerViewport(1280, 720, 384, 216)).toMatchObject({
       scale: 3,
       x: 64,
       y: 36,

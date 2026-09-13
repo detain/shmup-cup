@@ -562,12 +562,24 @@ describe('core/save SaveStore (edge)', () => {
     store.setOptions({
       audio: { master: 99, music: 4.4, sfx: -2 },
       input: { profileId: 'NOT OK' },
-      display: { bulletPalette: 'standard' },
+      display: {
+        bulletPalette: 'standard',
+        scaleMode: 'integer',
+        screenShake: true,
+        reduceFlashing: false,
+        showHitbox: false,
+      },
     });
     expect(store.options).toEqual({
       audio: { master: 10, music: 4, sfx: 0 },
       input: { profileId: null },
-      display: { bulletPalette: 'standard' },
+      display: {
+        bulletPalette: 'standard',
+        scaleMode: 'integer',
+        screenShake: true,
+        reduceFlashing: false,
+        showHitbox: false,
+      },
     });
     expect(before.options.audio.master).toBe(10);
     expect(store.data).not.toBe(before);

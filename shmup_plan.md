@@ -2637,6 +2637,56 @@ Goal of the milestone: every **[P1]** feature. Steps are ordered so systems land
 - **Acceptance:** offset-table builders, shader source compiles under a GLSL ES 1.0 syntax check, e2e screenshots with
   effects on, draw-call count within budget (overlay counter in e2e).
 - **Refs:** `shmup_feat.md` §18 (palette effects, raster effects, shake), §3 (scale modes), §21 (display options).
+- **As built:**
+  - **Stage data, presentation only.** A stage gains optional `raster` (≤ 8: `layer` far / mid / terrain, `kind`
+    `wave` / `haze` / `lines`, playfield rows `top`…`bottom`, `amplitude` / `wavelength` / `period` for the sines,
+    `factorTop` / `factorBottom` / `wrap` for line bands, camera-x range `from` / `to`) and `cycles` (≤ 8: `layer` far /
+    mid / terrain / ground / air, 2–8 distinct `#rrggbb` `colors`, `ticks` per step, `from` / `to`; ≤ 8 cycled colours
+    per layer), validated by `core/data` (`StageSpec.raster` / `cycles`, colours resolved to `rgb`). A `lines` effect may
+    list `bands` (strip heights): each strip then scrolls as one piece — per-row factors on a uniform pattern desync into
+    noise after a few hundred pixels of scroll, strips drawn with a wider pattern nearer the bottom keep their shape.
+    The World hands them to the renderer as the new render-contract `WorldView.effects` (`StageEffectsView` /
+    `RasterEffectView` / `ColorCycleView` / `RasterKind`, `core/stage` `createStageEffectsView`); the sim never reads
+    them and they are not hashed.
+  - **One filter per layer, both effects.** Raster offsets and palette cycling share one GLSL ES 1.0 program
+    (`render-pixi/effects/shaders.ts`, plain strings — Pixi keeps a source without `#version 300 es` as ES 1.0):
+    `effects/raster.ts` builds the 216-row offset table (core `sinB`, so frames are identical on every engine) and
+    encodes it as a 1 × 216 RGBA8 texture — R, G = the whole-pixel offset `+ 32768`, B, A = the row's wrap period
+    (decoded exactly under `mediump`: every value < 2048); `effects/layer-effects.ts` (`createLayerEffects`) attaches a
+    layer's filter only while one of its effects is in camera range (the `filters` list is swapped only at range
+    edges), so stages without effects render exactly as before. Palette cycling matches the ramp's exact colours in the
+    RGBA art (no indexed-colour sprites). `EffectSettings.rasterEffects` (default on) turns them all off. Draw calls
+    (e2e, the debug overlay's counter): 2 for a plain frame, 5 with one filtered layer, 7 with two; budget 12.
+  - **GLSL ES 1.0 check.** No dependency: a test-side tokenising checker (`render-pixi/test/effects/glsl-es100.ts`:
+    ES 3.00 keywords / `in`/`out` globals / `texture()`, reserved operators, Appendix A loops, precision, unknown
+    identifiers, swizzles) plus the real WebGL1 compile + link in headless Chromium (`test/e2e/raster.spec.ts`).
+  - **Mega Crash flash = colour addition.** `FlashLook.additive`: the Mega Crash look is additive white at 0.7 (the
+    world brightens instead of being covered); the renderer has a second, `add`-blended overlay (a sprite never changes
+    blend mode). The limiter and reduced flashing apply as before.
+  - **Display options** join `UserOptions.display` (save v1, defaults for missing fields — no migration):
+    `scaleMode` (`SCALE_MODES` integer / fit / stretch — render-pixi `computeViewport`, `renderer.setScaleMode`),
+    `screenShake`, `reduceFlashing`, `showHitbox`. The Options screen got four rows (SCALE, SHAKE and HITBOX toggles,
+    FLASHES normal / reduced — the panel grew to ten rows, `OptionsItem.Back` is 9) pushing `UserOptionKind`
+    `ScaleMode` 5, `ScreenShake` 6, `ReduceFlashing` 7, `ShowHitbox` 8; the shell applies the saved ones at boot
+    (`applyDisplayOptions`; `ShellOptions.effects` still wins) and the events live (`connectOptionEvents`' new `display`
+    target). The debug API (`window.__shmupDebug`) exposes the renderer for the browser tests.
+  - **Show hitbox** is a new render-contract mirror `WorldView.hitboxes` (`HitboxView`, `createHitboxBatch`; the World's
+    `hitboxBatch`: every live ship's centre and hurt radius × its shield's hurt scale) drawn on the `HITBOX` layer as a
+    white core in a 1-px rim (`createHitboxBinding`, quads of the atlas' white pixel — no new sprite); the layer is
+    hidden while the option is off.
+  - **Render interpolation** lives in the renderer (`setInterpolation`): the camera, parallax bands and every sprite
+    batch are drawn between the previous and the current tick by `frame.alpha`; a pooled slot is only blended when it
+    kept its sprite and moved ≤ `INTERPOLATION_MAX_STEP` (24) px. The blend travels as an object (`RenderBlend`) —
+    fractional call arguments were boxed. The shell decides: `ShellOptions.interpolation` `'auto'` (default) turns it
+    on while the new refresh probe (`frame-loop` `createRefreshMonitor`, the interquartile mean of the last 31 rAF
+    deltas — a median picked one extreme of alternating jitter) reads above `INTERPOLATION_MIN_HZ` (70), off at 60 Hz
+    (no added tick of lag on the TV); `'on'` / `'off'` force it. Electron's window / refresh settings stay M2-17.
+  - **Content and goldens.** New procedural bands `bg/sea-swell` (painted only in its four-colour ramp) and
+    `bg/checker-floor` (strips widening towards the bottom) — generator `raster-bands` — and the dev stage
+    `raster-range` (`?stage=raster-range`: a waving, colour-cycling sea, a line-band floor, a heat haze over the stars
+    between camera x 1,200 and 2,400). The two new content sprites shift the sorted sprite ids the pools hash, so the
+    golden replays were re-blessed; with the new stage file removed they pass unchanged, i.e. the simulation is
+    unchanged. Zone A is untouched.
 
 ### M2-09 — Advanced bosses: mid-bosses, raids, multi-bosses
 

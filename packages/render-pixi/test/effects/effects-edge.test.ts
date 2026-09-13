@@ -385,6 +385,7 @@ describe('render-pixi/effects dim and settings (edges)', () => {
       screenShake: true,
       reduceFlashing: false,
       crt: 'full',
+      rasterEffects: true,
     });
     const idle = createScreenEffects();
     expect([idle.shakeX, idle.shakeY, idle.flashAlpha, idle.dimAlpha]).toEqual([0, 0, 0, 0]);

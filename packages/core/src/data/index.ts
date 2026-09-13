@@ -21,6 +21,15 @@
  * and/or RLE rows, {@link ./tilemap.js | data/tilemap}) into {@link StageSpec.terrain}. Tilesets
  * get per-tile-id lookup tables ({@link TilesetSpec.tables}) the terrain queries read.
  *
+ * **Stage presentation effects (M2-08).** A stage may list `raster` effects
+ * ({@link StageRasterEffect}: wavy water, heat haze or a line-band parallax floor on the `far` /
+ * `mid` background or the terrain, over a band of playfield rows and a camera-x range) and palette
+ * `cycles` ({@link StageColorCycle}: a ramp of `#rrggbb` colours rotated every `ticks` ticks on a
+ * background, the terrain or an enemy layer). The loader checks the ranges, the fields each raster
+ * kind needs and that no layer cycles more than {@link MAX_CYCLE_COLORS_PER_LAYER} distinct
+ * colours, fills the defaults and resolves the colours to numbers. The simulation never reads them
+ * — the World hands them to the renderer through its view (`WorldView.effects`).
+ *
  * **Enemies and paths (M1-08).** An enemy names its behaviour coroutine (`script`, checked against
  * the engine's registry when `knownScripts` is given), its sprite and animation, hit points,
  * score, hurtbox, ground anchor, settle time, explosion size, drop, behaviour tunables
@@ -993,6 +1002,120 @@ export interface StageParallaxLayer {
   readonly spacing: number;
 }
 
+/** The layers a stage's raster effect may distort (M2-08): the backgrounds and the terrain. */
+export const STAGE_RASTER_LAYERS = Object.freeze(['far', 'mid', 'terrain'] as const);
+
+/** One of {@link STAGE_RASTER_LAYERS}. */
+export type StageRasterLayerName = (typeof STAGE_RASTER_LAYERS)[number];
+
+/**
+ * Raster effect kinds (M2-08; the index is the core `presentation` `RasterKind` code): `wave`
+ * (wavy water), `haze` (heat haze), `lines` (line-band parallax floor).
+ */
+export const STAGE_RASTER_KINDS = Object.freeze(['wave', 'haze', 'lines'] as const);
+
+/** One of {@link STAGE_RASTER_KINDS}. */
+export type StageRasterKindName = (typeof STAGE_RASTER_KINDS)[number];
+
+/**
+ * The layers a stage's palette cycle may recolour (M2-08): the backgrounds, the terrain and the
+ * enemy layers (`ground`, `air` — glowing cores).
+ */
+export const STAGE_CYCLE_LAYERS = Object.freeze([
+  'far',
+  'mid',
+  'terrain',
+  'ground',
+  'air',
+] as const);
+
+/** One of {@link STAGE_CYCLE_LAYERS}. */
+export type StageCycleLayerName = (typeof STAGE_CYCLE_LAYERS)[number];
+
+/** Most raster effects one stage may have. */
+export const MAX_STAGE_RASTER_EFFECTS = 8;
+
+/** Most palette cycles one stage may have. */
+export const MAX_STAGE_COLOR_CYCLES = 8;
+
+/**
+ * Most cycled colours on one layer (all its cycles together — the layer shader compares every
+ * pixel with each of them).
+ */
+export const MAX_CYCLE_COLORS_PER_LAYER = 8;
+
+/** Most bands one `lines` raster effect may list ({@link StageRasterEffect.bands}). */
+export const MAX_RASTER_BANDS = 64;
+
+/** Default {@link StageRasterEffect.period}: two seconds per sine period. */
+export const DEFAULT_RASTER_PERIOD = 120;
+
+/**
+ * One **raster effect** of a stage (M2-08, shmup_feat.md §18 "Raster/HDMA-style effects"): a
+ * per-scanline horizontal offset the renderer applies to one layer while the camera is inside
+ * `[from, to)` — presentation only, the simulation never reads it.
+ *
+ * @remarks
+ * `top` / `bottom` are playfield rows on screen (0 = just under the top HUD bar). `wave` and
+ * `haze` need `amplitude` and `wavelength`; `lines` needs `factorTop` and `factorBottom` (and
+ * usually `wrap`, the distorted art's repeat, so the rows wrap seamlessly; with `bands` the rows
+ * scroll in strips). Effects on the same layer add up.
+ */
+export interface StageRasterEffect {
+  /** The layer distorted. */
+  readonly layer: StageRasterLayerName;
+  /** Effect kind. */
+  readonly kind: StageRasterKindName;
+  /** First playfield row affected (0 … 199). */
+  readonly top: number;
+  /** Row after the last affected (`top < bottom ≤ 200`). */
+  readonly bottom: number;
+  /** Peak offset in pixels (`wave`, `haze`; 0 in `lines`). */
+  readonly amplitude: number;
+  /** Rows per sine period (`wave`, `haze`; default 32). */
+  readonly wavelength: number;
+  /** Ticks per sine period over time (`wave`, `haze`; default {@link DEFAULT_RASTER_PERIOD}; 0 = still). */
+  readonly period: number;
+  /** Scroll factor of the top row (`lines`; default 0). */
+  readonly factorTop: number;
+  /** Scroll factor of the bottom row (`lines`; default 0). */
+  readonly factorBottom: number;
+  /**
+   * `lines` only: heights of the art's horizontal bands, top → bottom (they sum to `bottom − top`;
+   * ≤ 64 bands). Every row of band `i` scrolls at the factor interpolated for the band
+   * (`factorTop` … `factorBottom` by `i / (n − 1)`), so a band moves as one strip; empty (the
+   * default) = every row its own factor.
+   */
+  readonly bands: readonly number[];
+  /** Horizontal repeat of the distorted art in pixels (default 0 = clamp at the screen edges). */
+  readonly wrap: number;
+  /** Camera x from which the effect is on (default 0). */
+  readonly from: number;
+  /** Camera x from which it is off (default `Infinity` — to the stage's end). */
+  readonly to: number;
+}
+
+/**
+ * One **palette cycle** of a stage (M2-08, shmup_feat.md §18 "palette cycling (glowing cores,
+ * water, lava)"): pixels of the layer drawn in `colors[i]` show `colors[(i + step) mod n]`, `step`
+ * advancing every `ticks` ticks while the camera is inside `[from, to)`. The art has to use the
+ * ramp's exact colours. Presentation only.
+ */
+export interface StageColorCycle {
+  /** The layer recoloured. */
+  readonly layer: StageCycleLayerName;
+  /** The ramp as written (`#rrggbb`, 2 … 8, distinct). */
+  readonly colors: readonly string[];
+  /** The ramp as 0xRRGGBB numbers (resolved by the loader). */
+  readonly rgb: readonly number[];
+  /** Ticks per step. */
+  readonly ticks: number;
+  /** Camera x from which the cycle runs (default 0). */
+  readonly from: number;
+  /** Camera x from which it stops (default `Infinity`). */
+  readonly to: number;
+}
+
 /** Music of a stage (cue names from `MUSIC_CUES`). */
 export interface StageMusic {
   /** Cue of the stage theme. */
@@ -1349,6 +1472,10 @@ export interface StageSpec {
   readonly checkpoints: readonly StageCheckpoint[];
   /** Background bands, far to near. */
   readonly parallax: readonly StageParallaxLayer[];
+  /** Raster effects (M2-08; omitted in the file = none). Presentation only. */
+  readonly raster: readonly StageRasterEffect[];
+  /** Palette cycles (M2-08; omitted in the file = none). Presentation only. */
+  readonly cycles: readonly StageColorCycle[];
   /** Terrain block, or `null` for an open-space stage. */
   readonly tilemap: StageTilemapSpec | null;
   /** Timeline, sorted by `x` (several events may share one `x`; they fire in file order). */
@@ -2116,6 +2243,53 @@ const TILEMAP_SCHEMA: Schema<Omit<StageTilemapSpec, 'tilesetId'>> = s.object(
   { optional: ['rle', 'generator'] },
 );
 
+/** One entry of a stage's `raster` list (M2-08). */
+const RASTER_EFFECT_SCHEMA = s.object(
+  {
+    layer: s.enumOf(STAGE_RASTER_LAYERS),
+    kind: s.enumOf(STAGE_RASTER_KINDS),
+    top: s.int({ min: 0, max: PLAYFIELD_H - 1 }),
+    bottom: s.int({ min: 1, max: PLAYFIELD_H }),
+    amplitude: s.num({ min: 0, max: 32 }),
+    wavelength: s.num({ min: 2, max: 1024 }),
+    period: s.int({ min: 0, max: 36000 }),
+    factorTop: s.num({ min: -4, max: 4 }),
+    factorBottom: s.num({ min: -4, max: 4 }),
+    bands: s.array(s.int({ min: 1, max: PLAYFIELD_H }), { min: 1, max: MAX_RASTER_BANDS }),
+    wrap: s.int({ min: 0, max: 1024 }),
+    from: EVENT_X,
+    to: EVENT_X,
+  },
+  {
+    optional: [
+      'amplitude',
+      'wavelength',
+      'period',
+      'factorTop',
+      'factorBottom',
+      'bands',
+      'wrap',
+      'from',
+      'to',
+    ],
+  },
+);
+
+/** A `#rrggbb` colour. */
+const HEX_COLOR = s.str({ maxLength: 7, pattern: /^#[0-9a-fA-F]{6}$/ });
+
+/** One entry of a stage's `cycles` list (M2-08). */
+const COLOR_CYCLE_SCHEMA = s.object(
+  {
+    layer: s.enumOf(STAGE_CYCLE_LAYERS),
+    colors: s.array(HEX_COLOR, { min: 2, max: MAX_CYCLE_COLORS_PER_LAYER }),
+    ticks: s.int({ min: 1, max: 600 }),
+    from: EVENT_X,
+    to: EVENT_X,
+  },
+  { optional: ['from', 'to'] },
+);
+
 /** A `content/stages/*.stage.json` file. */
 const STAGE_FILE_SCHEMA = s.object(
   {
@@ -2159,8 +2333,10 @@ const STAGE_FILE_SCHEMA = s.object(
       s.object({ id: STAGE_NAME, flag: STAGE_NAME, value: s.bool() }, { optional: ['value'] }),
       { max: MAX_STAGE_BRANCHES },
     ),
+    raster: s.array(RASTER_EFFECT_SCHEMA, { max: MAX_STAGE_RASTER_EFFECTS }),
+    cycles: s.array(COLOR_CYCLE_SCHEMA, { max: MAX_STAGE_COLOR_CYCLES }),
   },
-  { optional: ['directItems', 'branches'] },
+  { optional: ['directItems', 'branches', 'raster', 'cycles'] },
 );
 
 /** One entry of `tiles` in a `tileset` file. */
@@ -3351,8 +3527,12 @@ function bakePathEntry(
 /** A stage while the loader completes it (the fields it adds after the schema). */
 type MutableStage = Omit<
   StageSpec,
-  'flagNames' | 'terrain' | 'events' | 'directItems' | 'branches'
+  'flagNames' | 'terrain' | 'events' | 'directItems' | 'branches' | 'raster' | 'cycles'
 > & {
+  /** See {@link StageSpec.raster} (optional in the file; the loader fills the defaults). */
+  raster?: Array<{ -readonly [K in keyof StageRasterEffect]?: StageRasterEffect[K] }>;
+  /** See {@link StageSpec.cycles} (optional in the file; the loader resolves the colours). */
+  cycles?: Array<{ -readonly [K in keyof StageColorCycle]?: StageColorCycle[K] }>;
   /** See {@link StageSpec.directItems} (optional in the file). */
   directItems?: DirectItemName[];
   /** See {@link StageSpec.branches} (optional in the file; the loader resolves the flags). */
@@ -3545,6 +3725,115 @@ function checkStage(stage: MutableStage, file: string, issues: ValidationIssue[]
   stage.terrain = null;
   // Optional since M2-05: an empty plan means the engine's default one.
   if (stage.directItems === undefined) stage.directItems = [];
+  // Presentation effects (M2-08).
+  if (!checkStageEffects(stage, file, issues)) ok = false;
+  return ok;
+}
+
+/**
+ * Checks and completes a stage's raster effects and palette cycles (M2-08) in place: `top <
+ * bottom`, `from < to`, the fields each raster kind needs (`wave` / `haze`: `amplitude` and
+ * `wavelength`; `lines`: `factorTop` and `factorBottom`, `bands` — only there — adding up to the
+ * rows), and for the cycles distinct colours with
+ * at most {@link MAX_CYCLE_COLORS_PER_LAYER} per layer (all the layer's cycles together); fills the
+ * defaults (`period` {@link DEFAULT_RASTER_PERIOD}, `wavelength` 32, factors / `wrap` / `from` 0,
+ * `to` `Infinity`) and resolves every cycle colour to 0xRRGGBB (`rgb`).
+ *
+ * @param stage - The parsed stage (completed in place).
+ * @param file - Repo-relative file path.
+ * @param issues - Collector.
+ * @returns `true` when the effects are usable.
+ */
+function checkStageEffects(stage: MutableStage, file: string, issues: ValidationIssue[]): boolean {
+  let ok = true;
+  const raster = stage.raster ?? [];
+  for (let i = 0; i < raster.length; i++) {
+    const effect = raster[i];
+    const path = 'raster[' + String(i) + ']';
+    if ((effect.bottom ?? 0) <= (effect.top ?? 0)) {
+      ok = issue(issues, at(file, path + '.bottom'), 'must be greater than top');
+    }
+    if (effect.from !== undefined && effect.to !== undefined && effect.to <= effect.from) {
+      ok = issue(issues, at(file, path + '.to'), 'must be greater than from');
+    }
+    if (effect.kind === 'lines') {
+      if (effect.factorTop === undefined || effect.factorBottom === undefined) {
+        ok = issue(issues, at(file, path), 'a lines effect needs factorTop and factorBottom');
+      }
+      const bands = effect.bands;
+      if (bands !== undefined) {
+        let rows = 0;
+        for (const height of bands) rows += height;
+        if (rows !== (effect.bottom ?? 0) - (effect.top ?? 0)) {
+          ok = issue(
+            issues,
+            at(file, path + '.bands'),
+            'must add up to bottom - top (' + String(rows) + ' rows listed)',
+          );
+        }
+      }
+    } else if (effect.bands !== undefined) {
+      ok = issue(issues, at(file, path + '.bands'), 'only a lines effect has bands');
+    } else if (effect.amplitude === undefined || effect.wavelength === undefined) {
+      ok = issue(
+        issues,
+        at(file, path),
+        'a ' + String(effect.kind) + ' effect needs amplitude and wavelength',
+      );
+    }
+    if (effect.amplitude === undefined) effect.amplitude = 0;
+    if (effect.wavelength === undefined) effect.wavelength = 32;
+    if (effect.period === undefined) effect.period = DEFAULT_RASTER_PERIOD;
+    if (effect.factorTop === undefined) effect.factorTop = 0;
+    if (effect.factorBottom === undefined) effect.factorBottom = 0;
+    if (effect.bands === undefined) effect.bands = [];
+    if (effect.wrap === undefined) effect.wrap = 0;
+    if (effect.from === undefined) effect.from = 0;
+    if (effect.to === undefined) effect.to = Number.POSITIVE_INFINITY;
+  }
+  stage.raster = raster;
+  const cycles = stage.cycles ?? [];
+  // Colours already cycled on each layer (the shader's key colours must be distinct).
+  const layerColors = new Map<string, number[]>();
+  for (let i = 0; i < cycles.length; i++) {
+    const cycle = cycles[i];
+    const path = 'cycles[' + String(i) + ']';
+    const layer = String(cycle.layer);
+    const used = layerColors.get(layer) ?? [];
+    layerColors.set(layer, used);
+    const rgb: number[] = [];
+    const colors = cycle.colors ?? [];
+    for (let c = 0; c < colors.length; c++) {
+      const value = parseInt(colors[c].slice(1), 16);
+      if (rgb.indexOf(value) >= 0 || used.indexOf(value) >= 0) {
+        ok = issue(
+          issues,
+          at(file, path + '.colors[' + String(c) + ']'),
+          'colour ' + colors[c] + ' is already cycled on layer "' + layer + '"',
+        );
+      }
+      rgb.push(value);
+    }
+    for (const value of rgb) used.push(value);
+    if (used.length > MAX_CYCLE_COLORS_PER_LAYER) {
+      ok = issue(
+        issues,
+        at(file, path + '.colors'),
+        'layer "' +
+          layer +
+          '" cycles more than ' +
+          String(MAX_CYCLE_COLORS_PER_LAYER) +
+          ' colours (all its cycles together)',
+      );
+    }
+    if (cycle.from !== undefined && cycle.to !== undefined && cycle.to <= cycle.from) {
+      ok = issue(issues, at(file, path + '.to'), 'must be greater than from');
+    }
+    cycle.rgb = rgb;
+    if (cycle.from === undefined) cycle.from = 0;
+    if (cycle.to === undefined) cycle.to = Number.POSITIVE_INFINITY;
+  }
+  stage.cycles = cycles;
   return ok;
 }
 

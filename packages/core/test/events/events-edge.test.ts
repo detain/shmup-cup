@@ -274,6 +274,10 @@ describe('core/events — cue registries', () => {
       SfxVolume: 2,
       InputProfile: 3,
       BulletPalette: 4,
+      ScaleMode: 5,
+      ScreenShake: 6,
+      ReduceFlashing: 7,
+      ShowHitbox: 8,
     });
     expect(FX_CUES).toEqual({
       ExplosionSmall: 0,

@@ -301,8 +301,10 @@ import type { SoaArray, SoaPool, SoaSchema } from '../pools/index.js';
 import {
   LayerId,
   SpriteFlag,
+  createHitboxBatch,
   createSpriteBatch,
   pushSprite,
+  type HitboxBatch,
   type SpriteBatch,
   type BendingLaserView,
   type LaserView,
@@ -324,6 +326,7 @@ import {
   StageEventCode,
   createParallaxView,
   createStageCamera,
+  createStageEffectsView,
   createStageGimmicks,
   createStageRunner,
   createStageTerrain,
@@ -455,6 +458,12 @@ export interface World {
   readonly grid: SpatialGrid;
   /** The player ships' mirror batch (`LayerId.Player`). */
   readonly playerBatch: SpriteBatch;
+  /**
+   * The ships' hurtboxes (M2-08, `view.hitboxes`): refilled with {@link World.playerBatch} at the
+   * end of every tick — each live ship's centre and hurt radius (× its shield's hurt
+   * scale). Drawn only while the "show hitbox" display option is on; never read by the sim.
+   */
+  readonly hitboxBatch: HitboxBatch;
   /** The stage runner (`config.stage`), or `null` in free flight. */
   readonly stage: StageRunner | null;
   /** The stage's collision map (a private copy of its tiles), or `null` in open space. */
@@ -1408,6 +1417,7 @@ export function createWorld(
   spawnPlayer(players[0], camera);
 
   const playerBatch = createSpriteBatch(LayerId.Player, MAX_PLAYERS);
+  const hitboxBatch = createHitboxBatch(MAX_PLAYERS);
   const terrain = stageSpec === null ? null : createStageTerrain(stageSpec, content);
   const parallax = stageSpec === null ? null : createParallaxView(stageSpec);
   const batches: SpriteBatchView[] = [];
@@ -1421,6 +1431,9 @@ export function createWorld(
     lasers: null as LaserView | null,
     bendingLasers: null as BendingLaserView | null,
     warning: null as WarningView | null,
+    // Presentation only (M2-08): the stage's raster effects / palette cycles, the ships' hurtboxes.
+    effects: stageSpec === null ? null : createStageEffectsView(stageSpec),
+    hitboxes: hitboxBatch,
   };
   const world: WorldUnderConstruction = {
     config,
@@ -1439,6 +1452,7 @@ export function createWorld(
     pools: createPoolRegistry(),
     grid: createSpatialGrid(PLAYFIELD_W + 2 * GRID_MARGIN, PLAYFIELD_H + 2 * GRID_MARGIN),
     playerBatch,
+    hitboxBatch,
     stage: null,
     terrain,
     parallax,
@@ -1584,6 +1598,29 @@ export function stepWorld(world: World, input: Readonly<InputSnapshot>): void {
 }
 
 /**
+ * Refills {@link World.hitboxBatch}: one marker per live ship (active, not `dying` / `dead`), at its
+ * centre, radius = the ship's hurt radius × its shield's hurt scale (Reduce shrinks
+ * it — M2-04). Never allocates.
+ *
+ * @param world - The world.
+ */
+function syncHitboxes(world: World): void {
+  const hitboxes = world.hitboxBatch;
+  const players = world.players;
+  const hurt = world.ship.hurtRadius;
+  let n = 0;
+  for (let i = 0; i < players.length && n < hitboxes.capacity; i++) {
+    const p = players[i];
+    if (!p.active || p.state === 'dying' || p.state === 'dead') continue;
+    hitboxes.x[n] = p.x;
+    hitboxes.y[n] = p.y;
+    hitboxes.radius[n] = hurt * p.shield.hurtScale;
+    n++;
+  }
+  hitboxes.count = n;
+}
+
+/**
  * Refreshes the mirror batches of {@link World.view} (the enemies, the player shots and Options,
  * the items and shields, the player ships) and scrolls the parallax bands with the camera. Runs
  * at the end of every tick (phase 9) and once at creation. Never allocates.
@@ -1607,6 +1644,7 @@ export function syncWorldView(world: World): void {
   const batch = world.playerBatch;
   batch.count = 0;
   const spec = world.ship;
+  syncHitboxes(world);
   if (spec.spriteId < 0) return;
   // Player 2 flies the palette swap (M2-06), when the content has it.
   const p2Sprite = spec.spriteP2Id >= 0 ? spec.spriteP2Id : spec.spriteId;

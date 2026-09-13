@@ -64,5 +64,26 @@
     { "x": 2048, "type": "flag", "flag": "fast-lane" },
     { "x": 3840, "type": "warning", "enemy": "example-warden" },
     { "x": 4096, "type": "end" }
-  ]
+  ],
+  "raster": [
+    {
+      "layer": "mid",
+      "kind": "wave",
+      "top": 150,
+      "bottom": 200,
+      "amplitude": 3,
+      "wavelength": 20
+    },
+    {
+      "layer": "terrain",
+      "kind": "haze",
+      "top": 100,
+      "bottom": 150,
+      "amplitude": 1,
+      "wavelength": 8,
+      "period": 40,
+      "from": 2048
+    }
+  ],
+  "cycles": [{ "layer": "terrain", "colors": ["#801808", "#c83010", "#f06018"], "ticks": 8 }]
 }

@@ -21,6 +21,7 @@ import * as items from './items.mjs';
 import * as lasers from './lasers.mjs';
 import * as palettes from './palettes.mjs';
 import * as particles from './particles.mjs';
+import * as rasterBands from './raster-bands.mjs';
 import * as shields from './shields.mjs';
 import * as starfield from './starfield.mjs';
 import * as terrain from './terrain.mjs';
@@ -44,6 +45,7 @@ export const PROCEDURAL_GENERATORS = [
   { id: 'lasers', generate: lasers.generate },
   { id: 'palettes', generate: palettes.generate },
   { id: 'particles', generate: particles.generate },
+  { id: 'raster-bands', generate: rasterBands.generate },
   { id: 'shields', generate: shields.generate },
   { id: 'starfield', generate: starfield.generate },
   { id: 'terrain', generate: terrain.generate },

@@ -176,7 +176,13 @@ describe('core/scenes options: opening and drawing', () => {
     save.setOptions({
       audio: { master: 6, music: 4, sfx: 9 },
       input: save.options.input,
-      display: { bulletPalette: 'standard' },
+      display: {
+        bulletPalette: 'standard',
+        scaleMode: 'integer',
+        screenShake: true,
+        reduceFlashing: false,
+        showHitbox: false,
+      },
     });
     const s = new Session(save);
     s.openOptionsFromTitle();
@@ -197,6 +203,14 @@ describe('core/scenes options: opening and drawing', () => {
       'SAFE 4-WAY (DEFAULT)',
       'BULLETS',
       'STANDARD',
+      'SCALE',
+      'INTEGER',
+      'SHAKE',
+      'ON',
+      'FLASHES',
+      'NORMAL',
+      'HITBOX',
+      'OFF',
       'BACK',
     ]);
   });
@@ -235,7 +249,7 @@ describe('core/scenes options: opening and drawing', () => {
     none.press(Action.Down);
     none.press(Action.Down); // CONTROLS is skipped
     expect(none.flow.options.menu.focus).toBe(OptionsItem.Bullets);
-    none.press(Action.Down);
+    for (let i = 0; i < 5; i++) none.press(Action.Down); // SCALE … HITBOX, BACK
     expect(none.flow.options.menu.focus).toBe(OptionsItem.Back);
   });
 });
@@ -310,7 +324,13 @@ describe('core/scenes options: saving', () => {
       [UserOptionKind.BulletPalette, 1],
     ]);
     s.press(Action.Back);
-    expect(save.options.display).toEqual({ bulletPalette: 'deuteranopia' });
+    expect(save.options.display).toEqual({
+      bulletPalette: 'deuteranopia',
+      scaleMode: 'integer',
+      screenShake: true,
+      reduceFlashing: false,
+      showHitbox: false,
+    });
     s.hold(0, 3);
     s.press(Action.Confirm);
     s.hold(0, 2);
@@ -328,7 +348,7 @@ describe('core/scenes options: saving', () => {
     for (let i = 0; i < 2; i++) s.press(Action.Down);
     s.press(Action.Right); // CONTROLS → FAST 8-WAY
     s.press(Action.Down); // BULLETS
-    s.press(Action.Down); // BACK
+    for (let i = 0; i < 5; i++) s.press(Action.Down); // SCALE … HITBOX, BACK
     const from = s.events.length;
     s.press(Action.Confirm);
     expect(s.ids).toEqual(['title']);
@@ -336,7 +356,13 @@ describe('core/scenes options: saving', () => {
     expect(save.options).toEqual({
       audio: { master: 10, music: 9, sfx: 10 },
       input: { profileId: 'tizen-remote-diagonal' },
-      display: { bulletPalette: 'standard' },
+      display: {
+        bulletPalette: 'standard',
+        scaleMode: 'integer',
+        screenShake: true,
+        reduceFlashing: false,
+        showHitbox: false,
+      },
     });
     await settle();
     expect(writes).toEqual([SAVE_STORAGE_KEY]);
@@ -454,5 +480,61 @@ describe('core/scenes saves: hi-scores', () => {
     second.hold(0);
     expect(second.game.world.scoring.board.hiScore).toBe(31400);
     expect(second.save.hiScores('meter-normal').map((r) => r.score)).toEqual([31400]);
+  });
+});
+
+describe('core/scenes options: display options (plan M2-08)', () => {
+  it('shows SCALE, SHAKE, FLASHES and HITBOX, pushes each change live and saves them on BACK', async () => {
+    const { storage } = countingStorage();
+    const save = createSaveStore(storage, await loadSave(storage));
+    const s = new Session(save);
+    s.openOptionsFromTitle();
+    const o = s.flow.options;
+    expect([o.scale.label, o.shake.value, o.flashes.label, o.hitbox.value]).toEqual([
+      'INTEGER',
+      true,
+      'NORMAL',
+      false,
+    ]);
+    for (let i = 0; i < OptionsItem.Scale; i++) s.press(Action.Down);
+    expect(o.menu.focus).toBe(OptionsItem.Scale);
+    const from = s.events.length;
+    s.press(Action.Right); // FIT
+    s.press(Action.Right); // STRETCH
+    s.press(Action.Down);
+    s.press(Action.Left); // SHAKE OFF
+    s.press(Action.Down);
+    s.press(Action.Right); // FLASHES REDUCED
+    s.press(Action.Down);
+    s.press(Action.Confirm); // HITBOX flips ON
+    expect(s.options(from)).toEqual([
+      [UserOptionKind.ScaleMode, 1],
+      [UserOptionKind.ScaleMode, 2],
+      [UserOptionKind.ScreenShake, 0],
+      [UserOptionKind.ReduceFlashing, 1],
+      [UserOptionKind.ShowHitbox, 1],
+    ]);
+    expect(s.uiTexts()).toEqual(expect.arrayContaining(['STRETCH', 'OFF', 'REDUCED', 'ON']));
+    s.press(Action.Down);
+    expect(o.menu.focus).toBe(OptionsItem.Back);
+    s.press(Action.Confirm);
+    expect(save.options.display).toEqual({
+      bulletPalette: 'standard',
+      scaleMode: 'stretch',
+      screenShake: false,
+      reduceFlashing: true,
+      showHitbox: true,
+    });
+    await settle();
+    // The next session reads them back into the screen.
+    const again = new Session(createSaveStore(storage, await loadSave(storage)));
+    again.openOptionsFromTitle();
+    const a = again.flow.options;
+    expect([a.scale.label, a.shake.value, a.flashes.label, a.hitbox.value]).toEqual([
+      'STRETCH',
+      false,
+      'REDUCED',
+      true,
+    ]);
   });
 });

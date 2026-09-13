@@ -1,0 +1,79 @@
+{
+  "formatVersion": 1,
+  "kind": "stage",
+  "id": "raster-range",
+  "name": "RASTER RANGE",
+  "music": { "stage": "Stage", "boss": "Boss" },
+  "length": 3600,
+  "camera": [{ "x": 0, "speed": 1, "ramp": 60 }],
+  "checkpoints": [{ "x": 0 }, { "x": 1800 }],
+  "parallax": [
+    { "layer": "far", "sprite": "bg/stars-far", "factor": 0.25, "y": 0, "spacing": 128 },
+    { "layer": "far", "sprite": "bg/stars-far", "factor": 0.25, "y": 128, "spacing": 128 },
+    { "layer": "mid", "sprite": "bg/sea-swell", "factor": 0.5, "y": 112, "spacing": 128 },
+    { "layer": "mid", "sprite": "bg/checker-floor", "factor": 0, "y": 152, "spacing": 64 }
+  ],
+  "tilemap": null,
+  "events": [
+    {
+      "x": 300,
+      "type": "formation",
+      "enemy": "drifter",
+      "count": 5,
+      "interval": 12,
+      "y": 50
+    },
+    { "x": 700, "type": "spawn", "enemy": "carrier", "y": 70 },
+    {
+      "x": 1400,
+      "type": "formation",
+      "enemy": "drifter",
+      "count": 5,
+      "interval": 12,
+      "y": 80
+    },
+    { "x": 2000, "type": "spawn", "enemy": "carrier", "y": 60 },
+    {
+      "x": 2600,
+      "type": "formation",
+      "enemy": "drifter",
+      "count": 5,
+      "interval": 12,
+      "y": 40
+    },
+    { "x": 3600, "type": "end" }
+  ],
+  "raster": [
+    {
+      "layer": "mid",
+      "kind": "wave",
+      "top": 112,
+      "bottom": 152,
+      "amplitude": 3,
+      "wavelength": 20,
+      "period": 96
+    },
+    {
+      "layer": "mid",
+      "kind": "lines",
+      "top": 152,
+      "bottom": 200,
+      "factorTop": 0.25,
+      "factorBottom": 1.5,
+      "bands": [2, 2, 3, 3, 4, 5, 6, 7, 8, 8],
+      "wrap": 64
+    },
+    {
+      "layer": "far",
+      "kind": "haze",
+      "top": 40,
+      "bottom": 112,
+      "amplitude": 2,
+      "wavelength": 8,
+      "period": 40,
+      "from": 1200,
+      "to": 2400
+    }
+  ],
+  "cycles": [{ "layer": "mid", "colors": ["#183c78", "#24569c", "#3474bc", "#5096d8"], "ticks": 8 }]
+}

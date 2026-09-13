@@ -23,6 +23,7 @@ import {
 } from '@shmup/core';
 import {
   FLASH_LIMIT,
+  FLASH_LOOKS,
   SCORE_POPUP_COLOR,
   createAtlas,
   createBitmapFont,
@@ -83,7 +84,8 @@ describe('shell/dispatch connectFxEvents (edges)', () => {
     dispatcher.drain(queue);
     expect(effects.flashesSuppressed).toBe(5 - FLASH_LIMIT);
     effects.step(1);
-    expect(effects.flashAlpha).toBeCloseTo(0.85);
+    expect(effects.flashAlpha).toBeCloseTo(FLASH_LOOKS[FlashKind.MegaCrash].alpha);
+    expect(effects.flashAdditive).toBe(true);
   });
 
   it('keeps a stronger shake against a weaker Shake event, and reads Dim as a percentage', () => {

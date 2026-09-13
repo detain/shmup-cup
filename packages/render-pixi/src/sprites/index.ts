@@ -26,14 +26,24 @@
  * **Public API.** {@link createSpriteLayerBinding}, {@link SpriteLayerBinding},
  * {@link SpriteLayerBindingOptions}, {@link createQuadPool}, {@link QuadPool},
  * {@link QuadPoolOptions}, {@link createSpriteTables}, {@link SpriteTables},
- * {@link resolveFrame}.
+ * {@link resolveFrame}, {@link INTERPOLATION_MAX_STEP}, {@link RenderBlend}.
  *
- * **Planned.** Render interpolation with the loop's `alpha` for > 60 Hz displays (M2,
- * decision D32).
+ * **Render interpolation (M2-08, decision D32).** On displays faster than the 60 Hz tick
+ * ({@link SpriteLayerBinding.syncInterpolated}) a binding draws each slot between its position at
+ * the previous tick and the current one, by the loop's `alpha`. Pools pack their slots, so a slot
+ * may hold another entity than a tick ago: a slot is only blended when it shows the same sprite
+ * and moved at most {@link INTERPOLATION_MAX_STEP} pixels on both axes — anything else (a new
+ * entity, a teleport, a respawn) is drawn where it is now.
  *
  * @module
  */
-import { PLAYFIELD_Y, SpriteFlag, defineModule, type SpriteBatchView } from '@shmup/core';
+import {
+  PLAYFIELD_Y,
+  SpriteFlag,
+  defineModule,
+  type CameraView,
+  type SpriteBatchView,
+} from '@shmup/core';
 import { Container, Sprite } from 'pixi.js';
 import type { Atlas, FrameId } from '../atlas/index.js';
 
@@ -162,6 +172,26 @@ function setAlpha(sprite: Sprite, alphas: Float64Array, slot: number, alpha: num
   sprite.alpha = alpha / 255;
 }
 
+/**
+ * Largest move per tick (pixels, on each axis) a sprite slot is interpolated across; a longer jump
+ * is a different entity in the slot or a teleport and is drawn where it is now (M2-08).
+ */
+export const INTERPOLATION_MAX_STEP = 24;
+
+/**
+ * One frame's render interpolation (M2-08), handed to the interpolating syncs as an object — a
+ * fractional number passed as a call argument is boxed whenever V8 does not inline the call.
+ */
+export interface RenderBlend {
+  /** Blend factor 0 (the previous tick) … 1 (the current tick). */
+  readonly alpha: number;
+  /**
+   * Ticks since the last interpolated frame: 1 shifts the bindings' history by one tick, 0 keeps
+   * it, anything else (a jump, the first frame, interpolation just switched on) resets it.
+   */
+  readonly advance: number;
+}
+
 /** Options of {@link createSpriteLayerBinding}. */
 export interface SpriteLayerBindingOptions {
   /** The atlas the frames come from. */
@@ -200,6 +230,23 @@ export interface SpriteLayerBinding {
    * @param camY - Camera y (world pixels).
    */
   sync(view: SpriteBatchView, camX: number, camY: number): void;
+  /**
+   * Like {@link SpriteLayerBinding.sync}, but draws each slot between its position at the previous
+   * tick and the current one (render interpolation for displays faster than the tick rate —
+   * M2-08). Never allocates.
+   *
+   * @remarks
+   * The binding keeps the slots' positions and sprite ids of the last two ticks it saw:
+   * `blend.advance` = 1 (one tick since the last call) shifts that history, 0 keeps it, anything
+   * else (a jump, the first call, interpolation just switched on) resets it to the current values
+   * — nothing is blended then. A slot is blended only when its sprite id is the one it had a tick
+   * ago and it moved at most {@link INTERPOLATION_MAX_STEP} pixels on each axis.
+   *
+   * @param view - The batch to draw.
+   * @param camera - The camera (world pixels; normally the interpolated one).
+   * @param blend - The frame's blend factor and tick advance.
+   */
+  syncInterpolated(view: SpriteBatchView, camera: CameraView, blend: RenderBlend): void;
   /** Destroys the sprites and the container (textures belong to the atlas). */
   destroy(): void;
 }
@@ -234,6 +281,32 @@ export function createSpriteLayerBinding(options: SpriteLayerBindingOptions): Sp
   }
   let used = 0;
   let visible = 0;
+  // Render interpolation (M2-08): positions and sprite ids at the previous tick (`prev*`) and at
+  // the last tick seen (`seen*`) — two buffer sets swapped by reference when a tick passes.
+  let prevX: Float64Array | null = null;
+  let prevY: Float64Array | null = null;
+  let prevSprite: Int32Array | null = null;
+  let seenX: Float64Array | null = null;
+  let seenY: Float64Array | null = null;
+  let seenSprite: Int32Array | null = null;
+  let prevCount = 0;
+  let seenCount = 0;
+
+  /**
+   * Draws one slot at a screen position.
+   *
+   * @param view - The batch.
+   * @param i - The slot.
+   * @param sx - Screen x of the anchor.
+   * @param sy - Screen y of the anchor.
+   */
+  const drawSlot = (view: SpriteBatchView, i: number, sx: number, sy: number): void => {
+    const flags = view.flags[i];
+    const frameId = resolveFrame(atlas, tables, view.spriteId[i], view.frame[i], flags);
+    place(sprites[i], atlas, frameId, sx, sy, flags);
+    sprites[i].visible = true;
+    visible++;
+  };
 
   return {
     layer,
@@ -246,18 +319,84 @@ export function createSpriteLayerBinding(options: SpriteLayerBindingOptions): Sp
       const count = view.count < capacity ? view.count : capacity;
       visible = 0;
       for (let i = 0; i < count; i++) {
-        const sprite = sprites[i];
-        const flags = view.flags[i];
-        if ((flags & SpriteFlag.Hidden) !== 0) {
-          sprite.visible = false;
+        if ((view.flags[i] & SpriteFlag.Hidden) !== 0) {
+          sprites[i].visible = false;
           continue;
         }
-        const frameId = resolveFrame(atlas, tables, view.spriteId[i], view.frame[i], flags);
-        const sx = Math.round(view.x[i] - camX);
-        const sy = Math.round(view.y[i] - camY) + offsetY;
-        place(sprite, atlas, frameId, sx, sy, flags);
-        sprite.visible = true;
-        visible++;
+        drawSlot(
+          view,
+          i,
+          Math.round(view.x[i] - camX) | 0,
+          (Math.round(view.y[i] - camY) + offsetY) | 0,
+        );
+      }
+      for (let i = count; i < used; i++) sprites[i].visible = false;
+      used = count;
+    },
+    syncInterpolated(view, camera, blend) {
+      const camX = camera.x;
+      const camY = camera.y;
+      let advance = blend.advance;
+      if (prevX === null || prevY === null || prevSprite === null) {
+        // Created on first use: bindings that never interpolate (60 Hz displays) carry none.
+        prevX = new Float64Array(capacity);
+        prevY = new Float64Array(capacity);
+        prevSprite = new Int32Array(capacity);
+        seenX = new Float64Array(capacity);
+        seenY = new Float64Array(capacity);
+        seenSprite = new Int32Array(capacity);
+        advance = -1;
+      }
+      const count = view.count < capacity ? view.count : capacity;
+      if (advance === 1 && seenX !== null && seenY !== null && seenSprite !== null) {
+        const x = prevX;
+        const y = prevY;
+        const id = prevSprite;
+        prevX = seenX;
+        prevY = seenY;
+        prevSprite = seenSprite;
+        seenX = x;
+        seenY = y;
+        seenSprite = id;
+        prevCount = seenCount;
+      } else if (advance !== 0) {
+        prevCount = 0;
+      }
+      const sx = seenX as Float64Array;
+      const sy = seenY as Float64Array;
+      const sid = seenSprite as Int32Array;
+      if (advance !== 0) {
+        for (let i = 0; i < count; i++) {
+          sx[i] = view.x[i];
+          sy[i] = view.y[i];
+          sid[i] = view.spriteId[i];
+        }
+        seenCount = count;
+      }
+      const alpha = blend.alpha;
+      const t = alpha > 0 ? (alpha < 1 ? alpha : 1) : 0;
+      const px = prevX;
+      const py = prevY;
+      const pid = prevSprite;
+      visible = 0;
+      for (let i = 0; i < count; i++) {
+        if ((view.flags[i] & SpriteFlag.Hidden) !== 0) {
+          sprites[i].visible = false;
+          continue;
+        }
+        let x = view.x[i];
+        let y = view.y[i];
+        if (i < prevCount && pid[i] === view.spriteId[i]) {
+          const dx = x - px[i];
+          const dy = y - py[i];
+          if (dx <= INTERPOLATION_MAX_STEP && dx >= -INTERPOLATION_MAX_STEP) {
+            if (dy <= INTERPOLATION_MAX_STEP && dy >= -INTERPOLATION_MAX_STEP) {
+              x = px[i] + dx * t;
+              y = py[i] + dy * t;
+            }
+          }
+        }
+        drawSlot(view, i, Math.round(x - camX) | 0, (Math.round(y - camY) + offsetY) | 0);
       }
       for (let i = count; i < used; i++) sprites[i].visible = false;
       used = count;

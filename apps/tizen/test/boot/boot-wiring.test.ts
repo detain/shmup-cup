@@ -74,6 +74,12 @@ vi.mock('@shmup/render-pixi', async (importOriginal) => {
         popups: null,
         setFxContent: () => {},
         setBulletPalette: () => {},
+        setScaleMode: () => {},
+        setShowHitbox: () => {},
+        interpolation: false,
+        setInterpolation(this: { interpolation: boolean }, on: boolean) {
+          this.interpolation = on;
+        },
       });
     },
   };

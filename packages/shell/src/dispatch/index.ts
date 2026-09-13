@@ -39,9 +39,13 @@
  * | `UserOption` `SfxVolume` | the same for the `sfx` **and** `ui` buses (menu sounds follow SFX) |
  * | `UserOption` `InputProfile` (`param` = choice index) | the host's profile callback |
  * | `UserOption` `BulletPalette` (`param` = `BULLET_PALETTES` index, M2-02) | the palette callback (the renderer's `setBulletPalette`) |
+ * | `UserOption` `ScaleMode` (`param` = `SCALE_MODES` index, M2-08) | `display.setScaleMode` |
+ * | `UserOption` `ScreenShake` / `ReduceFlashing` (`param` 1 = on, M2-08) | `display.effects.settings.screenShake` / `.reduceFlashing` |
+ * | `UserOption` `ShowHitbox` (`param` 1 = on, M2-08) | `display.setShowHitbox` |
  *
- * {@link applyAudioOptions} sets all three volumes from saved options at boot; the boot sequence
- * also hands the saved bullet palette to the renderer.
+ * {@link applyAudioOptions} sets all three volumes from saved options at boot;
+ * {@link applyDisplayOptions} (M2-08) hands the saved display options to the renderer (the bullet
+ * palette, the scale mode, shake, flash reduction and the hitbox markers).
  *
  * **Implements.**
  * - shmup_feat.md §22 Architecture — presentation fed by read-only views + the event queue
@@ -50,12 +54,14 @@
  * **Public API.** {@link createEventDispatcher}, {@link EventDispatcher},
  * {@link SimEventHandler}, {@link connectFxEvents}, {@link FxTargets},
  * {@link connectAudioEvents}, {@link AudioEventTarget}, {@link CameraPosition},
- * {@link connectOptionEvents}, {@link applyAudioOptions}, {@link VolumeTarget}.
+ * {@link connectOptionEvents}, {@link applyAudioOptions}, {@link VolumeTarget},
+ * {@link applyDisplayOptions}, {@link DisplayTarget} (M2-08).
  *
  * @module
  */
 import {
   BULLET_PALETTES,
+  SCALE_MODES,
   SIM_EVENT_KIND_NAMES,
   SimEventKind,
   UserOptionKind,
@@ -64,7 +70,9 @@ import {
   type AudioBus,
   type AudioOptions,
   type BulletPalette,
+  type DisplayOptions,
   type EventQueue,
+  type ScaleMode,
   type SimEvent,
 } from '@shmup/core';
 import {
@@ -383,10 +391,65 @@ export function applyAudioOptions(audio: VolumeTarget, options: AudioOptions): v
 }
 
 /**
+ * What the display options change (plan M2-08) — `@shmup/render-pixi`'s `PixiRenderer` satisfies
+ * it.
+ */
+export interface DisplayTarget {
+  /**
+   * Switches the enemy bullet palette.
+   *
+   * @param palette - The palette.
+   */
+  setBulletPalette(palette: BulletPalette): void;
+  /**
+   * Switches the scale mode.
+   *
+   * @param mode - The mode.
+   */
+  setScaleMode(mode: ScaleMode): void;
+  /**
+   * Shows or hides the ships' hitbox markers.
+   *
+   * @param on - `true` to show them.
+   */
+  setShowHitbox(on: boolean): void;
+  /** The screen effects, whose settings hold the shake switch and reduced flashing. */
+  readonly effects: {
+    /** Mutable effect settings. */
+    readonly settings: {
+      /** Screen shake on. */
+      screenShake: boolean;
+      /** Reduced flashing on. */
+      reduceFlashing: boolean;
+    };
+  };
+}
+
+/**
+ * Hands saved display options to the renderer (boot, after the save is read — plan M2-08): the
+ * bullet palette, the scale mode, the shake switch, reduced flashing and the hitbox markers.
+ *
+ * @param target - The renderer.
+ * @param display - The options.
+ *
+ * @example
+ * ```ts
+ * applyDisplayOptions(renderer, save.options.display);
+ * ```
+ */
+export function applyDisplayOptions(target: DisplayTarget, display: DisplayOptions): void {
+  target.setBulletPalette(display.bulletPalette);
+  target.setScaleMode(display.scaleMode);
+  target.effects.settings.screenShake = display.screenShake;
+  target.effects.settings.reduceFlashing = display.reduceFlashing;
+  target.setShowHitbox(display.showHitbox);
+}
+
+/**
  * Registers the Options screen's handler (plan M1-17, see the module docs): a `UserOption` event
  * sets a bus volume, calls `onInputProfile` with the chosen profile's index or (M2-02)
- * `onBulletPalette` with the chosen bullet palette's name. Load time —
- * registering allocates the handler; volume events allocate nothing here.
+ * `onBulletPalette` with the chosen bullet palette's name, or (M2-08) changes a display option of
+ * `display`. Load time — registering allocates the handler; the events allocate nothing here.
  *
  * @param dispatcher - The shell's event dispatcher.
  * @param audio - The audio back-end.
@@ -395,6 +458,9 @@ export function applyAudioOptions(audio: VolumeTarget, options: AudioOptions): v
  * @param onBulletPalette - Applies a bullet palette (M2-02 — normally `renderer.setBulletPalette`);
  *   it receives the name the event's `BULLET_PALETTES` index stands for. `null` / omitted: palette
  *   events are ignored (so is an index outside `BULLET_PALETTES`).
+ * @param display - The renderer's display options (M2-08: scale mode, shake, flash reduction,
+ *   hitbox markers), or `null` / omitted (those events are ignored — so is a scale-mode index outside
+ *   `SCALE_MODES`).
  * @returns A function that unregisters the handler (idempotent).
  *
  * @example
@@ -404,6 +470,7 @@ export function applyAudioOptions(audio: VolumeTarget, options: AudioOptions): v
  *   audio,
  *   (index) => profiles.apply(choices[index].id, 'options'),
  *   (palette) => renderer.setBulletPalette(palette),
+ *   renderer, // M2-08: scale mode, shake, flashing, hitbox markers
  * );
  * ```
  */
@@ -412,6 +479,7 @@ export function connectOptionEvents(
   audio: VolumeTarget,
   onInputProfile: ((index: number) => void) | null,
   onBulletPalette: ((palette: BulletPalette) => void) | null = null,
+  display: DisplayTarget | null = null,
 ): () => void {
   return dispatcher.on(SimEventKind.UserOption, (event) => {
     const value = event.param;
@@ -434,6 +502,20 @@ export function connectOptionEvents(
         if (onBulletPalette !== null && palette !== undefined) onBulletPalette(palette);
         break;
       }
+      case UserOptionKind.ScaleMode: {
+        const mode = SCALE_MODES[value];
+        if (display !== null && mode !== undefined) display.setScaleMode(mode);
+        break;
+      }
+      case UserOptionKind.ScreenShake:
+        if (display !== null) display.effects.settings.screenShake = value !== 0;
+        break;
+      case UserOptionKind.ReduceFlashing:
+        if (display !== null) display.effects.settings.reduceFlashing = value !== 0;
+        break;
+      case UserOptionKind.ShowHitbox:
+        if (display !== null) display.setShowHitbox(value !== 0);
+        break;
       default:
         break;
     }

@@ -1,14 +1,17 @@
 /**
- * # effects — screen effects and score popups
+ * # effects — screen effects, score popups and the layer (raster / palette) effects
  *
- * **Responsibility.** The presentation side of the sim's game-feel requests (plan M1-14):
+ * **Responsibility.** The presentation side of the sim's game-feel requests (plan M1-14) and the
+ * stage's SNES-style layer effects (plan M2-08):
  *
  * - {@link createScreenEffects} — pure state (no Pixi) fed by the `Shake`, `Flash` and `Dim`
  *   events and advanced by simulated ticks: an **integer screen shake** of three magnitudes that
  *   decays exactly like the sim's `shakeAmount` (`ceil(magnitude · ticksLeft / duration)`) along
  *   a fixed jitter pattern, with a global off switch ({@link EffectSettings.screenShake}); a
  *   **full-screen flash** per `FlashKind` ({@link FLASH_LOOKS}: colour and peak opacity, fading
- *   linearly over the event's duration) behind a **photosensitivity limiter** — at most
+ *   linearly over the event's duration; since M2-08 the Mega Crash flash is **additive** — the
+ *   SNES's "colour addition" palette flash: the world brightens towards white instead of being
+ *   covered, so bullets and the ship stay visible) behind a **photosensitivity limiter** — at most
  *   {@link FLASH_LIMIT} flashes start in any {@link FLASH_WINDOW_TICKS}-tick window (1 with
  *   {@link EffectSettings.reduceFlashing}, which also caps the opacity), extra flashes are
  *   dropped and counted; and a **playfield dim** that fades in, holds for the event's duration
@@ -18,6 +21,16 @@
  *   where points were scored and vanish after {@link SCORE_POPUP_TICKS} (40) ticks, blinking at
  *   the end; the oldest is replaced when all are in use. Drawn into one small quad pool per slot
  *   on the `FX` layer (below the enemy bullets), camera-converted like the particles.
+ * - **Raster effects (M2-08, `./raster.ts`)** — a per-scanline offset table (216 rows:
+ *   {@link createRasterTable}, {@link addRasterEffect} — wavy water, heat haze, line-band parallax
+ *   floors — and {@link encodeRasterTable} into the RGBA8 texels of a 1 × 216 texture), driven by
+ *   the stage's `raster` data (core `RasterEffectView`s).
+ * - **Layer effects (M2-08, `./layer-effects.ts`)** — {@link createLayerEffects}: per world layer
+ *   one GLSL ES 1.0 Pixi filter ({@link createLayerEffectFilter}; sources
+ *   {@link LAYER_EFFECT_VERTEX} / {@link LAYER_EFFECT_FRAGMENT} in `./shaders.ts`) that samples the
+ *   layer through the offset table and recolours the stage's palette cycles (water, lava, glowing
+ *   cores — the `palette` module's `colorCycleStep`), attached only while one of the layer's
+ *   effects is on screen; {@link EffectSettings.rasterEffects} turns them all off.
  *
  * The sim-side hit flash (`<sprite>@flash` frames while `flashTicks > 0`, decision D30) and the
  * invulnerability blink (`SpriteFlag.Hidden` every other 4 ticks) are already in the sprite
@@ -37,8 +50,12 @@
  * - shmup_feat.md §18 — screen shake (integer, decaying, 3 magnitudes, off switch), flash on Mega
  *   Crash, explosions and hit flash drawn over the world
  * - shmup_feat.md §20 — juice: score popups, screen shake used sparingly
- * - shmup_feat.md §21 — accessibility: reduced flashing (≤ 3 flashes a second always)
- * - shmup_feat.md §22 — no per-frame allocation
+ * - shmup_feat.md §21 — accessibility: reduced flashing (≤ 3 flashes a second always), shake toggle
+ * - shmup_feat.md §18 — palette effects (palette cycling, flash on Mega Crash) and raster/HDMA-style
+ *   effects (per-scanline offset table in a 1×H data texture: wavy water, heat haze, per-line
+ *   parallax floors)
+ * - shmup_feat.md §22 — raster-effect shader (per-scanline offset table texture); no per-frame
+ *   allocation
  *
  * **Public API.** {@link EffectSettings}, {@link DEFAULT_EFFECT_SETTINGS},
  * {@link ScreenEffects}, {@link createScreenEffects}, {@link FlashLook}, {@link FLASH_LOOKS},
@@ -48,8 +65,14 @@
  * {@link ScorePopupsOptions}, {@link createScorePopups}, {@link SCORE_POPUP_SLOTS},
  * {@link SCORE_POPUP_TICKS}, {@link SCORE_POPUP_COLOR}, {@link BONUS_POPUP_COLOR}.
  *
- * **Planned.** Raster/HDMA-style scanline offsets, palette swap and cycling (M2-08), CRT filter
- * (M3-02).
+ * Raster effects: {@link RasterTable}, {@link createRasterTable}, {@link clearRasterTable},
+ * {@link addRasterEffect}, {@link encodeRasterTable}, {@link decodeRasterRow},
+ * {@link stageEffectActive}, {@link RASTER_MAX_OFFSET}; layer effects: {@link LayerEffects},
+ * {@link LayerEffectsOptions}, {@link createLayerEffects}, {@link LayerEffectFilter},
+ * {@link createLayerEffectFilter}, {@link LAYER_EFFECT_VERTEX}, {@link LAYER_EFFECT_FRAGMENT},
+ * {@link LAYER_EFFECT_ROWS}, {@link LAYER_EFFECT_MAX_COLORS}.
+ *
+ * **Planned.** CRT filter (M3-02), Mode 7-style floors (M3-02).
  *
  * @module
  */
@@ -66,10 +89,34 @@ import type { Atlas } from '../atlas/index.js';
 import { createQuadPool, type QuadPool } from '../sprites/index.js';
 import { drawNumber, type BitmapFont } from '../text/index.js';
 
+export {
+  RASTER_MAX_OFFSET,
+  addRasterEffect,
+  clearRasterTable,
+  createRasterTable,
+  decodeRasterRow,
+  encodeRasterTable,
+  stageEffectActive,
+  type RasterTable,
+} from './raster.js';
+export {
+  createLayerEffectFilter,
+  createLayerEffects,
+  type LayerEffectFilter,
+  type LayerEffects,
+  type LayerEffectsOptions,
+} from './layer-effects.js';
+export {
+  LAYER_EFFECT_FRAGMENT,
+  LAYER_EFFECT_MAX_COLORS,
+  LAYER_EFFECT_ROWS,
+  LAYER_EFFECT_VERTEX,
+} from './shaders.js';
+
 /** Module descriptor. */
 export const moduleInfo = defineModule({
   name: 'effects',
-  status: 'partial',
+  status: 'implemented',
   specRefs: ['shmup_feat.md §18', 'shmup_feat.md §20', 'shmup_feat.md §21', 'shmup_feat.md §22'],
 });
 
@@ -87,13 +134,19 @@ export interface EffectSettings {
   reduceFlashing: boolean;
   /** CRT post-filter strength (scanlines / mask); `'off'` on weak TV GPUs by default (M3-02). */
   crt: 'off' | 'light' | 'full';
+  /**
+   * Draw the stage's raster effects and palette cycles (M2-08, the layer effects). `false` draws
+   * every layer plain — for GPUs too weak for the extra passes, and for comparisons in tests.
+   */
+  rasterEffects: boolean;
 }
 
-/** The default settings: shake on, normal flashing, no CRT. */
+/** The default settings: shake on, normal flashing, no CRT, layer effects on. */
 export const DEFAULT_EFFECT_SETTINGS: Readonly<EffectSettings> = Object.freeze({
   screenShake: true,
   reduceFlashing: false,
   crt: 'off',
+  rasterEffects: true,
 });
 
 /** Most flashes that may start in one {@link FLASH_WINDOW_TICKS} window (photosensitivity). */
@@ -126,14 +179,20 @@ export interface FlashLook {
   readonly color: number;
   /** Opacity at the flash's start (fades linearly to 0 over its duration). */
   readonly alpha: number;
+  /**
+   * Added to the world's colours instead of covering them (M2-08 — the SNES's colour-addition
+   * palette flash; default `false`, an ordinary translucent overlay).
+   */
+  readonly additive?: boolean;
 }
 
 /**
- * Looks by core `FlashKind` code: Mega Crash (white, 0.85), a WARNING pulse (red, 0.35), a
- * boss's final blast (white, 1.0). Unknown kinds use {@link DEFAULT_FLASH_LOOK}.
+ * Looks by core `FlashKind` code: Mega Crash (white, 0.7, **additive** — M2-08: the palette flash
+ * that brightens the whole picture), a WARNING pulse (red, 0.35), a boss's final blast (white,
+ * 1.0). Unknown kinds use {@link DEFAULT_FLASH_LOOK}.
  */
 export const FLASH_LOOKS: readonly FlashLook[] = Object.freeze([
-  Object.freeze({ color: 0xffffff, alpha: 0.85 }),
+  Object.freeze({ color: 0xffffff, alpha: 0.7, additive: true }),
   Object.freeze({ color: 0xf85858, alpha: 0.35 }),
   Object.freeze({ color: 0xffffff, alpha: 1 }),
 ]);
@@ -155,6 +214,8 @@ export interface ScreenEffects {
   readonly flashAlpha: number;
   /** Flash overlay colour 0xRRGGBB. */
   readonly flashColor: number;
+  /** Whether the running flash adds to the picture ({@link FlashLook.additive}, M2-08). */
+  readonly flashAdditive: boolean;
   /** Playfield dim opacity 0…1. */
   readonly dimAlpha: number;
   /** Flashes dropped by the limiter since creation or the last {@link ScreenEffects.clear}. */
@@ -229,6 +290,8 @@ class ScreenEffectsImpl implements ScreenEffects {
   private flashFresh = false;
   /** See {@link ScreenEffects.flashColor}. */
   flashColor = 0xffffff;
+  /** See {@link ScreenEffects.flashAdditive}. */
+  flashAdditive = false;
   /** See {@link ScreenEffects.flashAlpha}. */
   flashAlpha = 0;
   /** Start clocks of the last {@link FLASH_LIMIT} accepted flashes (ring). */
@@ -257,6 +320,7 @@ class ScreenEffectsImpl implements ScreenEffects {
       screenShake: settings.screenShake ?? DEFAULT_EFFECT_SETTINGS.screenShake,
       reduceFlashing: settings.reduceFlashing ?? DEFAULT_EFFECT_SETTINGS.reduceFlashing,
       crt: settings.crt ?? DEFAULT_EFFECT_SETTINGS.crt,
+      rasterEffects: settings.rasterEffects ?? DEFAULT_EFFECT_SETTINGS.rasterEffects,
     };
   }
 
@@ -334,6 +398,7 @@ class ScreenEffectsImpl implements ScreenEffects {
         ? FLASH_LOOKS[kind]
         : DEFAULT_FLASH_LOOK;
     this.flashColor = look.color;
+    this.flashAdditive = look.additive === true;
     this.flashPeak = reduced && look.alpha > REDUCED_FLASH_ALPHA ? REDUCED_FLASH_ALPHA : look.alpha;
     this.flashLeft = n;
     this.flashDuration = n;

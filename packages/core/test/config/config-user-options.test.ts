@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 import {
   BULLET_PALETTES,
   DEFAULT_USER_OPTIONS,
+  SCALE_MODES,
   VOLUME_LEVELS,
   resolveUserOptions,
   volumeGain,
@@ -17,7 +18,13 @@ describe('core/config user options', () => {
     expect(DEFAULT_USER_OPTIONS).toEqual({
       audio: { master: 10, music: 10, sfx: 10 },
       input: { profileId: null },
-      display: { bulletPalette: 'standard' },
+      display: {
+        bulletPalette: 'standard',
+        scaleMode: 'integer',
+        screenShake: true,
+        reduceFlashing: false,
+        showHitbox: false,
+      },
     });
     expect(Object.isFrozen(DEFAULT_USER_OPTIONS.audio)).toBe(true);
   });
@@ -34,7 +41,40 @@ describe('core/config user options', () => {
         'standard',
       );
     }
-    expect(resolveUserOptions({ display: 'x' }).display).toEqual({ bulletPalette: 'standard' });
+    expect(resolveUserOptions({ display: 'x' }).display).toEqual({
+      bulletPalette: 'standard',
+      scaleMode: 'integer',
+      screenShake: true,
+      reduceFlashing: false,
+      showHitbox: false,
+    });
+  });
+
+  it('resolves the display options of M2-08: scale mode, shake, flashing, hitbox', () => {
+    expect(SCALE_MODES).toEqual(['integer', 'fit', 'stretch']);
+    for (const mode of SCALE_MODES) {
+      expect(resolveUserOptions({ display: { scaleMode: mode } }).display.scaleMode).toBe(mode);
+    }
+    for (const bad of ['Fit', '', 2, null]) {
+      expect(resolveUserOptions({ display: { scaleMode: bad } }).display.scaleMode).toBe('integer');
+    }
+    expect(
+      resolveUserOptions({
+        display: { screenShake: false, reduceFlashing: true, showHitbox: true, bulletPalette: 'x' },
+      }).display,
+    ).toEqual({
+      bulletPalette: 'standard',
+      scaleMode: 'integer',
+      screenShake: false,
+      reduceFlashing: true,
+      showHitbox: true,
+    });
+    // Anything but a boolean takes the default.
+    expect(
+      resolveUserOptions({ display: { screenShake: 0, reduceFlashing: 'yes', showHitbox: 1 } })
+        .display,
+    ).toMatchObject({ screenShake: true, reduceFlashing: false, showHitbox: false });
+    expect(Object.isFrozen(resolveUserOptions({}).display)).toBe(true);
   });
 
   it('maps volume levels to a squared gain', () => {
@@ -58,7 +98,13 @@ describe('core/config user options', () => {
     ).toEqual({
       audio: { master: 4, music: 0, sfx: 10 },
       input: { profileId: 'tizen-remote-safe' },
-      display: { bulletPalette: 'standard' },
+      display: {
+        bulletPalette: 'standard',
+        scaleMode: 'integer',
+        screenShake: true,
+        reduceFlashing: false,
+        showHitbox: false,
+      },
     });
     for (const id of ['', 'Upper', 'a b', '-x', 'x'.repeat(65), 7, null]) {
       expect(resolveUserOptions({ input: { profileId: id } }).input.profileId, String(id)).toBe(

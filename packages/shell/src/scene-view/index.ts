@@ -233,6 +233,9 @@ export function createSceneView(game: Game): SceneView {
       lasers: view.lasers ?? null,
       bendingLasers: view.bendingLasers ?? null,
       warning: view.warning ?? null,
+      // The stage's raster effects / palette cycles and the hitbox markers (M2-08).
+      effects: view.effects ?? null,
+      hitboxes: view.hitboxes ?? null,
     };
   };
 

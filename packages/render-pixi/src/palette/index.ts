@@ -1,5 +1,5 @@
 /**
- * # palette — placeholder colour palette and the colour-blind bullet palettes
+ * # palette — placeholder colour palette, colour-blind bullet palettes, palette cycling
  *
  * **Responsibility.** Named colours used by the skeleton's test pattern and debug
  * drawing until real art exists. Backgrounds are *lifted* dark blues, never pure black:
@@ -14,14 +14,20 @@
  * resolves a sprite name table with those variants in place of the plain frames, and the renderer's
  * `setBulletPalette` swaps its tables — the simulation's sprite ids never change.
  *
- * **Implements.** shmup_feat.md §18 (VA-panel-friendly palette, readable bullet colours),
- * shmup_feat.md §21 (colour-blind bullet palettes + shape coding).
+ * **Palette cycling (M2-08).** A stage's `cycles` (core `ColorCycleView`) rotate a ramp of colours
+ * on a layer: {@link colorCycleStep} is the ramp position at a tick and {@link writeCycleColors}
+ * writes the "draw this colour as that one" pairs of one cycle into the float arrays the `effects`
+ * module's layer shader reads (RGB 0 … 1 triples). The art needs no index channel: the shader
+ * matches the ramp's exact colours in the RGBA atlas art, so one sprite serves plain and cycled
+ * layers alike. Palette swaps of whole sprites (player 2's ship, M2-06; the bullet palettes) stay
+ * pre-rendered variants.
+ *
+ * **Implements.** shmup_feat.md §18 (VA-panel-friendly palette, readable bullet colours, palette
+ * cycling), shmup_feat.md §21 (colour-blind bullet palettes + shape coding).
  *
  * **Public API.** {@link PALETTE}, {@link PaletteColor}, {@link bulletPaletteSpriteName},
- * {@link resolveBulletPaletteTable}, {@link BULLET_PALETTE_SUFFIX}.
- *
- * **Planned.** Palette textures for indexed-colour sprites, palette swap / cycling
- * (shmup_feat.md §18 [P1]) move to `effects`.
+ * {@link resolveBulletPaletteTable}, {@link BULLET_PALETTE_SUFFIX}, {@link colorCycleStep},
+ * {@link writeCycleColors}, {@link writeColorUnit}.
  *
  * @module
  */
@@ -31,7 +37,7 @@ import type { Atlas } from '../atlas/index.js';
 /** Module descriptor. */
 export const moduleInfo = defineModule({
   name: 'palette',
-  status: 'partial',
+  status: 'implemented',
   specRefs: ['shmup_feat.md §18', 'shmup_tech.md §2.7', 'shmup_feat.md §21'],
 });
 
@@ -117,4 +123,82 @@ export function resolveBulletPaletteTable(
     if (variant >= 0) table[i] = variant;
   }
   return table;
+}
+
+/**
+ * The position of a palette cycle at a tick: `floor(tick / ticksPerStep) mod count`.
+ *
+ * @param tick - The tick (negative ticks count backwards).
+ * @param ticksPerStep - Ticks per step (≤ 0 or NaN → 0).
+ * @param count - Colours in the ramp (≤ 0 or NaN → 0).
+ * @returns The step, `0 … count − 1`.
+ *
+ * @example
+ * ```ts
+ * colorCycleStep(25, 6, 4); // → 0 (step 4 of a 4-colour ramp wraps to 0)
+ * ```
+ */
+export function colorCycleStep(tick: number, ticksPerStep: number, count: number): number {
+  if (!(count > 0) || !(ticksPerStep > 0)) return 0;
+  const n = Math.floor(count);
+  const steps = Math.floor(tick / ticksPerStep) % n;
+  return steps < 0 ? steps + n : steps;
+}
+
+/**
+ * Writes a 0xRRGGBB colour as an RGB triple of 0 … 1 floats. Never allocates.
+ *
+ * @param color - The colour.
+ * @param out - Target array.
+ * @param index - Triple index (writes `out[3·index … 3·index + 2]`).
+ */
+export function writeColorUnit(color: number, out: Float32Array, index: number): void {
+  const k = index * 3;
+  out[k] = ((color >> 16) & 0xff) / 255;
+  out[k + 1] = ((color >> 8) & 0xff) / 255;
+  out[k + 2] = (color & 0xff) / 255;
+}
+
+/**
+ * Writes one palette cycle's colour pairs at a step: pixel colour `colors[i]` (into `from`) is
+ * drawn as `colors[(i + step) mod n]` (into `to`), as RGB 0 … 1 triples starting at triple
+ * `start`. Never allocates.
+ *
+ * @remarks
+ * Stops when the arrays are full (`from.length / 3` triples); several cycles of one layer are
+ * written one after the other by passing the returned index as the next `start`.
+ *
+ * @param colors - The ramp, 0xRRGGBB.
+ * @param step - The cycle position ({@link colorCycleStep}; any integer, taken mod `n`).
+ * @param from - Key colours (the art's).
+ * @param to - Colours drawn instead.
+ * @param start - First triple to write.
+ * @returns The triple after the last one written.
+ *
+ * @example
+ * ```ts
+ * let count = 0;
+ * for (const cycle of layerCycles) {
+ *   count = writeCycleColors(cycle.colors, colorCycleStep(tick, cycle.ticks, cycle.colors.length), from, to, count);
+ * }
+ * ```
+ */
+export function writeCycleColors(
+  colors: readonly number[],
+  step: number,
+  from: Float32Array,
+  to: Float32Array,
+  start: number,
+): number {
+  const n = colors.length;
+  const capacity = Math.min(from.length, to.length) / 3;
+  // Any integer step (a negative one counts backwards).
+  const shift = n > 0 ? ((Math.floor(step) % n) + n) % n : 0;
+  let k = start;
+  for (let i = 0; i < n && k < capacity; i++) {
+    writeColorUnit(colors[i], from, k);
+    writeColorUnit(colors[(i + shift) % n], to, k);
+    k++;
+  }
+  return k;
 }

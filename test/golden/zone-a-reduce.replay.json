@@ -61,9 +61,9 @@
     "AKII"
   ],
   "hashes": [
-    3266366815
+    849691135
   ],
-  "finalHash": 2078274788,
+  "finalHash": 1553888740,
   "description": "HALCYON BULWARK with Formation Options and Reduce (M2-04): a `>` of Options, the shrunken hurtbox",
   "expected": {
     "status": "stageClear",

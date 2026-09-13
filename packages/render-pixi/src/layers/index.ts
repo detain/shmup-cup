@@ -32,6 +32,16 @@
  * never-rotated segment sprite per node of every `BendingLaserView` slot, placed on the recorded
  * head positions (tail first, so the head draws on top).
  *
+ * And the hitbox markers of plan M2-08 (the "show hitbox" display option) —
+ * {@link createHitboxBinding}: per `HitboxView` slot a white square the size of the ship's hurt
+ * circle inside a 1-px {@link HITBOX_RIM_TINT} rim, drawn on the `HITBOX` layer (the renderer shows
+ * that layer only while the option is on).
+ *
+ * **Render interpolation (M2-08).** On displays faster than the 60 Hz tick the renderer draws
+ * between the last two ticks: {@link ParallaxBinding.syncInterpolated} blends each band's previous
+ * and current offset (across the repeat seam); the terrain grid and the lasers just take the
+ * renderer's interpolated camera.
+ *
  * Pixel snapping: the renderer is created with `roundPixels: true` and every binding writes
  * integer positions (`Math.round`), so nothing in the stack is drawn at sub-pixel offsets. The
  * terrain container sits at `round(−camera.x)`, which lands integer world positions on exactly
@@ -49,7 +59,8 @@
  * {@link createParallaxBinding}, {@link ParallaxBinding}, {@link ParallaxBindingOptions},
  * {@link createLaserBinding}, {@link LaserBinding}, {@link LaserBindingOptions},
  * {@link LASER_WARNING_TINT}, {@link createBendingLaserBinding}, {@link BendingLaserBinding},
- * {@link BendingLaserBindingOptions}.
+ * {@link BendingLaserBindingOptions}, {@link createHitboxBinding}, {@link HitboxBinding},
+ * {@link HitboxBindingOptions}, {@link HITBOX_CORE_TINT}, {@link HITBOX_RIM_TINT}.
  *
  * @module
  */
@@ -64,13 +75,14 @@ import {
   defineModule,
   type BendingLaserView,
   type CameraView,
+  type HitboxView,
   type LaserView,
   type ParallaxView,
   type TerrainView,
 } from '@shmup/core';
 import { Container, Sprite } from 'pixi.js';
 import type { Atlas, FrameId } from '../atlas/index.js';
-import { resolveFrame, type SpriteTables } from '../sprites/index.js';
+import { resolveFrame, type RenderBlend, type SpriteTables } from '../sprites/index.js';
 
 /** Module descriptor. */
 export const moduleInfo = defineModule({
@@ -366,6 +378,22 @@ export interface ParallaxBinding {
    * @param view - The parallax view the binding was created for.
    */
   sync(view: ParallaxView): void;
+  /**
+   * Places every band between its offset at the previous tick and the current one (render
+   * interpolation for displays faster than the tick rate — M2-08). Never allocates.
+   *
+   * @remarks
+   * The binding remembers each band's offset and row at the last two ticks it saw:
+   * `blend.advance` = 1 (one tick since the last call) shifts that history, 0 keeps it, anything
+   * else (a jump, the first call, interpolation just switched on) resets it to the current values.
+   * The offset is blended the short way round the band's repeat (`spacing`) and wrapped back into
+   * `[0, spacing)`, so a wrap from `spacing − 1` to 0 does not sweep across the band.
+   *
+   * @param view - The parallax view the binding was created for.
+   * @param blend - The frame's blend factor and tick advance (the `sprites` module's
+   *   `RenderBlend`).
+   */
+  syncInterpolated(view: ParallaxView, blend: RenderBlend): void;
   /** Destroys the sprites and containers. */
   destroy(): void;
 }
@@ -416,18 +444,76 @@ export function createParallaxBinding(options: ParallaxBindingOptions): Parallax
     bands.push(sprites);
   }
 
+  // Render interpolation (M2-08): each band's offset / row at the last two ticks seen.
+  const prevOffset = new Float64Array(bands.length);
+  const prevY = new Float64Array(bands.length);
+  const seenOffset = new Float64Array(bands.length);
+  const seenY = new Float64Array(bands.length);
+
+  /**
+   * Places one band's container and sprites.
+   *
+   * @remarks
+   * Takes whole-pixel positions: a fractional number passed to a call V8 does not inline is
+   * boxed (an allocation per band per frame).
+   *
+   * @param source - The view.
+   * @param i - Band index.
+   * @param x - Container x (whole pixels: the rounded, negated offset).
+   * @param y - Container y (whole pixels).
+   */
+  const place = (source: ParallaxView, i: number, x: number, y: number): void => {
+    const container = containers[i];
+    container.x = x;
+    container.y = y;
+    const frameId = resolveFrame(atlas, tables, source.spriteId[i], 0, 0);
+    const sprites = bands[i];
+    const spacing = source.spacing[i];
+    for (let k = 0; k < sprites.length; k++) show(sprites[k], atlas, frameId, k * spacing, 0);
+  };
+
   return {
     containers,
     layers: bandLayers,
     sync(source) {
       for (let i = 0; i < bands.length; i++) {
-        const container = containers[i];
-        container.x = Math.round(-source.offsetX[i]);
-        container.y = offsetY + Math.round(source.y[i]);
-        const frameId = resolveFrame(atlas, tables, source.spriteId[i], 0, 0);
-        const sprites = bands[i];
+        place(
+          source,
+          i,
+          Math.round(-source.offsetX[i]) | 0,
+          (offsetY + Math.round(source.y[i])) | 0,
+        );
+      }
+    },
+    syncInterpolated(source, blend) {
+      const alpha = blend.alpha;
+      const advance = blend.advance;
+      const t = alpha > 0 ? (alpha < 1 ? alpha : 1) : 0;
+      for (let i = 0; i < bands.length; i++) {
+        const offset = source.offsetX[i];
+        const y = source.y[i];
+        if (advance === 1) {
+          prevOffset[i] = seenOffset[i];
+          prevY[i] = seenY[i];
+        } else if (advance !== 0) {
+          prevOffset[i] = offset;
+          prevY[i] = y;
+        }
+        seenOffset[i] = offset;
+        seenY[i] = y;
         const spacing = source.spacing[i];
-        for (let k = 0; k < sprites.length; k++) show(sprites[k], atlas, frameId, k * spacing, 0);
+        // The short way round the repeat seam.
+        let delta = offset - prevOffset[i];
+        if (delta > spacing / 2) delta -= spacing;
+        else if (delta < -spacing / 2) delta += spacing;
+        let drawn = prevOffset[i] + delta * t;
+        drawn -= Math.floor(drawn / spacing) * spacing;
+        place(
+          source,
+          i,
+          Math.round(-drawn) | 0,
+          (offsetY + Math.round(prevY[i] + (y - prevY[i]) * t)) | 0,
+        );
       }
     },
     destroy() {
@@ -737,6 +823,129 @@ export function createBendingLaserBinding(
       }
     },
     /** See {@link BendingLaserBinding.destroy}. */
+    destroy() {
+      container.destroy({ children: true });
+    },
+  };
+}
+
+/** Colour of a hitbox marker's core (M2-08). */
+export const HITBOX_CORE_TINT = 0xffffff;
+
+/** Colour of a hitbox marker's 1-px rim (M2-08 — the pink-red that reads on any background). */
+export const HITBOX_RIM_TINT = 0xff3050;
+
+/** Options of {@link createHitboxBinding}. */
+export interface HitboxBindingOptions {
+  /** The atlas (its white pixel). */
+  readonly atlas: Atlas;
+  /** Markers to preallocate — the hitbox view's capacity. */
+  readonly capacity: number;
+  /** Screen row of world row 0 at camera y 0 (default `PLAYFIELD_Y`). */
+  readonly offsetY?: number;
+}
+
+/** The preallocated hitbox markers of one hitbox view (M2-08). */
+export interface HitboxBinding {
+  /** Holds the markers (add it to the `HITBOX` layer). */
+  readonly container: Container;
+  /** Marker slots. */
+  readonly capacity: number;
+  /** Markers drawn by the last sync. */
+  readonly visibleCount: number;
+  /**
+   * Draws the view's live hurtboxes and hides the rest. Never allocates.
+   *
+   * @remarks
+   * A marker is centred on `(round(x − camera.x), round(y − camera.y) + offsetY)`: a white core
+   * `2·floor(radius) + 1` pixels square (1 for radii below 1) inside a 1-px rim tinted
+   * {@link HITBOX_RIM_TINT}. Tints are set once, at creation (Pixi's tint setter allocates).
+   *
+   * @param view - The hitbox view the binding was created for.
+   * @param camera - The world camera.
+   */
+  sync(view: HitboxView, camera: CameraView): void;
+  /** Destroys the sprites and the container. */
+  destroy(): void;
+}
+
+/**
+ * Creates the hitbox markers of a hitbox view (load time).
+ *
+ * @param options - Atlas, capacity and y offset.
+ * @returns The binding (two sprites per slot created now, hidden).
+ * @throws {RangeError} When `capacity` is not a positive integer.
+ *
+ * @example
+ * ```ts
+ * const hitboxes = createHitboxBinding({ atlas, capacity: world.hitboxes.capacity });
+ * layers.layers[LayerId.Hitbox].addChild(hitboxes.container);
+ * hitboxes.sync(world.hitboxes, world.camera); // every frame the option is on
+ * ```
+ */
+export function createHitboxBinding(options: HitboxBindingOptions): HitboxBinding {
+  const { atlas, capacity } = options;
+  if (!Number.isInteger(capacity) || capacity <= 0) {
+    throw new RangeError('hitbox binding capacity must be a positive integer');
+  }
+  const offsetY = options.offsetY ?? PLAYFIELD_Y;
+  const container = new Container({ label: 'hitboxes' });
+  const pixel = atlas.textures[atlas.pixelFrame];
+  const rims: Sprite[] = [];
+  const cores: Sprite[] = [];
+  for (let i = 0; i < capacity; i++) {
+    const rim = new Sprite(pixel);
+    rim.tint = HITBOX_RIM_TINT;
+    rim.visible = false;
+    const core = new Sprite(pixel);
+    core.tint = HITBOX_CORE_TINT;
+    core.visible = false;
+    rims.push(rim);
+    cores.push(core);
+    container.addChild(rim, core);
+  }
+  let visible = 0;
+  return {
+    container,
+    capacity,
+    /** See {@link HitboxBinding.visibleCount}. */
+    get visibleCount(): number {
+      return visible;
+    },
+    /**
+     * See {@link HitboxBinding.sync}.
+     *
+     * @param view - The view.
+     * @param camera - The camera.
+     */
+    sync(view, camera) {
+      const count = view.count < capacity ? view.count : capacity;
+      for (let i = 0; i < count; i++) {
+        const r = view.radius[i];
+        const half = r >= 1 ? Math.floor(r) | 0 : 0;
+        const size = 2 * half + 1;
+        const cx = Math.round(view.x[i] - camera.x) | 0;
+        const cy = (Math.round(view.y[i] - camera.y) + offsetY) | 0;
+        const core = cores[i];
+        core.x = cx - half;
+        core.y = cy - half;
+        core.scale.x = size;
+        core.scale.y = size;
+        core.visible = true;
+        const rim = rims[i];
+        rim.x = cx - half - 1;
+        rim.y = cy - half - 1;
+        rim.scale.x = size + 2;
+        rim.scale.y = size + 2;
+        rim.visible = true;
+      }
+      for (let i = count; i < capacity; i++) {
+        cores[i].visible = false;
+        rims[i].visible = false;
+      }
+      visible = count;
+    },
+    /** See {@link HitboxBinding.destroy}. */
     destroy() {
       container.destroy({ children: true });
     },

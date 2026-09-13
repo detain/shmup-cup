@@ -63,6 +63,8 @@ const fakes = vi.hoisted(() => ({
   fxCalls: [] as unknown[][],
   /** Bullet palettes handed to the renderer (M2-02). */
   palettes: [] as string[],
+  /** Display calls into the renderer (M2-08): `[what, value]`. */
+  display: [] as unknown[][],
 }));
 
 vi.mock('@shmup/render-pixi', async (importOriginal) => {
@@ -94,6 +96,13 @@ vi.mock('@shmup/render-pixi', async (importOriginal) => {
           fakes.fxContent = content;
         },
         setBulletPalette: (palette: string) => fakes.palettes.push(palette),
+        setScaleMode: (mode: string) => fakes.display.push(['scale', mode]),
+        setShowHitbox: (on: boolean) => fakes.display.push(['hitbox', on]),
+        interpolation: false,
+        setInterpolation(this: { interpolation: boolean }, on: boolean) {
+          this.interpolation = on;
+          fakes.display.push(['interpolation', on]);
+        },
         setSpriteNames: (names: readonly string[]) => fakes.spriteNames.push(names),
         bindWorld: (world: unknown) => fakes.bound.push(world),
         render: (frame: RenderFrame) =>
@@ -216,6 +225,7 @@ beforeEach(() => {
   fakes.fxContent = null;
   fakes.fxCalls.length = 0;
   fakes.palettes.length = 0;
+  fakes.display.length = 0;
   unlocks = 0;
   platform = createHeadlessPlatform();
   input = {
@@ -1531,5 +1541,91 @@ describe('shell/boot saves and options (M1-17 edge)', () => {
     };
     expect(stored.hiScores['meter-normal'][0].score).toBe(4321);
     expect(stored.stats.gameOvers).toBe(1);
+  });
+});
+
+describe('shell/boot display options and render interpolation (M2-08)', () => {
+  /**
+   * Writes a save with display options.
+   *
+   * @param display - The display options.
+   */
+  async function saveDisplay(display: Record<string, unknown>): Promise<void> {
+    await platform.storage.set(
+      SAVE_STORAGE_KEY,
+      JSON.stringify({ version: 1, options: { display }, hiScores: {}, stats: {} }),
+    );
+  }
+
+  it('applies the saved display options to the renderer at boot', async () => {
+    await saveDisplay({
+      scaleMode: 'fit',
+      screenShake: false,
+      reduceFlashing: true,
+      showHitbox: true,
+    });
+    const shell = await boot({ scene: 'game' }).promise;
+    expect(fakes.display).toEqual([
+      ['scale', 'fit'],
+      ['hitbox', true],
+      ['interpolation', false],
+    ]);
+    expect(shell.renderer.effects.settings).toMatchObject({
+      screenShake: false,
+      reduceFlashing: true,
+    });
+  });
+
+  it("lets the host's explicit effect settings win over the saved ones", async () => {
+    await saveDisplay({ screenShake: false, reduceFlashing: true });
+    const shell = await boot({ effects: { screenShake: true } }).promise;
+    expect(shell.renderer.effects.settings).toMatchObject({
+      screenShake: true,
+      reduceFlashing: true,
+    });
+  });
+
+  it('applies the Options screen display changes live', async () => {
+    const shell = await boot({ scene: 'game' }).promise;
+    fakes.display.length = 0;
+    const events = shell.game.events;
+    events.push(SimEventKind.UserOption, UserOptionKind.ScaleMode, 0, 0, 2);
+    events.push(SimEventKind.UserOption, UserOptionKind.ShowHitbox, 0, 0, 1);
+    events.push(SimEventKind.UserOption, UserOptionKind.ScreenShake, 0, 0, 0);
+    events.push(SimEventKind.UserOption, UserOptionKind.ReduceFlashing, 0, 0, 1);
+    win.frame(1000);
+    expect(fakes.display).toEqual([
+      ['scale', 'stretch'],
+      ['hitbox', true],
+    ]);
+    expect(shell.renderer.effects.settings).toMatchObject({
+      screenShake: false,
+      reduceFlashing: true,
+    });
+  });
+
+  it('interpolates while the display runs faster than the tick (auto) and not at 60 Hz', async () => {
+    const shell = await boot().promise;
+    expect(shell.renderer.interpolation).toBe(false);
+    let now = 1000;
+    for (let i = 0; i < 40; i++) win.frame((now += 1000 / 120));
+    expect(shell.refresh.hz).toBeCloseTo(120, 3);
+    expect(shell.renderer.interpolation).toBe(true);
+    for (let i = 0; i < 60; i++) win.frame((now += 1000 / 60));
+    expect(shell.renderer.interpolation).toBe(false);
+    // A resume measures afresh.
+    platform.resume();
+    expect(shell.refresh.ready).toBe(false);
+  });
+
+  it("keeps interpolation 'on' or 'off' whatever the display does", async () => {
+    const on = await boot({ interpolation: 'on' }).promise;
+    let now = 1000;
+    for (let i = 0; i < 40; i++) win.frame((now += 1000 / 60));
+    expect(on.renderer.interpolation).toBe(true);
+    on.stop();
+    const off = await boot({ interpolation: 'off' }).promise;
+    for (let i = 0; i < 40; i++) win.frame((now += 1000 / 144));
+    expect(off.renderer.interpolation).toBe(false);
   });
 });

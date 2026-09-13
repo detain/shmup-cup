@@ -227,7 +227,7 @@ describe('render-pixi/renderer createPixiRenderer (mocked WebGL)', () => {
     const quad = screen.children[0] as Pixi.Sprite;
     expect(quad.texture).toBe(record.textures[0]);
     expect([quad.scale.x, quad.x, quad.y]).toEqual([5, 0, 0]);
-    expect(renderer.viewport).toEqual({ scale: 5, x: 0, y: 0, width: 1920, height: 1080 });
+    expect(renderer.viewport).toMatchObject({ scale: 5, x: 0, y: 0, width: 1920, height: 1080 });
   });
 
   it('reuses its two pass-option objects every frame and restores what Pixi wrote into them', async () => {
@@ -294,7 +294,7 @@ describe('render-pixi/renderer createPixiRenderer (mocked WebGL)', () => {
     const renderer = await createPixiRenderer({ canvas, displayWidth: 1920, displayHeight: 1080 });
     renderer.resize(1280.9, 720.4);
     expect(record.resizes).toEqual([[1280, 720]]);
-    expect(renderer.viewport).toEqual({ scale: 3, x: 64, y: 36, width: 1152, height: 648 });
+    expect(renderer.viewport).toMatchObject({ scale: 3, x: 64, y: 36, width: 1152, height: 648 });
     renderer.resize(0, -5);
     expect(record.resizes[1]).toEqual([1, 1]);
     expect(renderer.viewport.scale).toBe(1);
@@ -378,7 +378,7 @@ describe('render-pixi/renderer render contract (plan §3.4)', () => {
     });
     const frame = frameOf(0);
     const world = renderer.layers.world;
-    const flash = world.children[world.children.length - 1] as Pixi.Sprite;
+    const flash = world.children[world.children.length - 2] as Pixi.Sprite;
     const dim = renderer.layers.layers[LayerId.Ui].children[0] as Pixi.Sprite;
     renderer.render(frame);
     expect([world.x, world.y, flash.visible, dim.visible]).toEqual([0, 0, false, false]);

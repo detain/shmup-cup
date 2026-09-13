@@ -89,7 +89,8 @@
  * {@link StageEventCode}, {@link StageSlot}, {@link STAGE_STATE_SLOTS}, {@link findEventCursor};
  * camera {@link StageCamera}, {@link createStageCamera}; terrain {@link createStageTerrain},
  * {@link createTerrainView}, {@link stageMapWidth}; parallax {@link createParallaxView},
- * {@link updateParallaxView}, {@link StageParallaxView}; M2-07 (from `./systems.ts`)
+ * {@link updateParallaxView}, {@link StageParallaxView}; presentation effects
+ * {@link createStageEffectsView} (M2-08); M2-07 (from `./systems.ts`)
  * {@link StageGimmicks}, {@link StageGimmicksHost}, {@link createStageGimmicks},
  * {@link MovingBlockSystem}, {@link MAX_PULL_FIELDS}, {@link MAX_CHAINS}, {@link MAX_CHAIN_LINKS},
  * {@link CHAIN_SPRITE}, {@link GIMMICK_SPRITES}, {@link BLOCK_DESPAWN_MARGIN},
@@ -122,7 +123,11 @@ import { EASINGS } from '../math/index.js';
 import { defineModule } from '../module-info.js';
 import {
   LayerId,
+  RasterKind,
+  type ColorCycleView,
   type ParallaxView,
+  type RasterEffectView,
+  type StageEffectsView,
   type TerrainChanges,
   type TerrainView,
 } from '../presentation/index.js';
@@ -1430,4 +1435,70 @@ export function updateParallaxView(
     view.offsetX[i] = scrolled - Math.floor(scrolled / spacing) * spacing;
     view.y[i] = view.baseY[i] - cameraY * factor;
   }
+}
+
+/** `LayerId` of each stage effect layer name (M2-08). */
+const EFFECT_LAYERS: Readonly<Record<string, LayerId>> = Object.freeze({
+  far: LayerId.BgFar,
+  mid: LayerId.BgMid,
+  terrain: LayerId.Terrain,
+  ground: LayerId.GroundEnemies,
+  air: LayerId.AirEnemies,
+});
+
+/** `RasterKind` of each raster kind name (M2-08). */
+const RASTER_KINDS: Readonly<Record<string, RasterKind>> = Object.freeze({
+  wave: RasterKind.Wave,
+  haze: RasterKind.Haze,
+  lines: RasterKind.Lines,
+});
+
+/**
+ * Builds the presentation effects view of a stage (plan M2-08): its raster effects and palette
+ * cycles with the layer names turned into `LayerId`s and the kinds into `RasterKind` codes — static
+ * data the renderer reads once when it binds the World's view. Load time (allocates).
+ *
+ * @param stage - The stage.
+ * @returns The view (frozen), or `null` when the stage has neither raster effects nor cycles.
+ *
+ * @example
+ * ```ts
+ * const effects = createStageEffectsView(stage); // → WorldView.effects
+ * ```
+ */
+export function createStageEffectsView(stage: StageSpec): StageEffectsView | null {
+  if (stage.raster.length === 0 && stage.cycles.length === 0) return null;
+  const raster: RasterEffectView[] = [];
+  for (const effect of stage.raster) {
+    raster.push(
+      Object.freeze({
+        layer: EFFECT_LAYERS[effect.layer],
+        kind: RASTER_KINDS[effect.kind],
+        top: effect.top,
+        bottom: effect.bottom,
+        amplitude: effect.amplitude,
+        wavelength: effect.wavelength,
+        period: effect.period,
+        factorTop: effect.factorTop,
+        factorBottom: effect.factorBottom,
+        bands: Object.freeze(effect.bands.slice()),
+        wrap: effect.wrap,
+        from: effect.from,
+        to: effect.to,
+      }),
+    );
+  }
+  const cycles: ColorCycleView[] = [];
+  for (const cycle of stage.cycles) {
+    cycles.push(
+      Object.freeze({
+        layer: EFFECT_LAYERS[cycle.layer],
+        colors: Object.freeze(cycle.rgb.slice()),
+        ticks: cycle.ticks,
+        from: cycle.from,
+        to: cycle.to,
+      }),
+    );
+  }
+  return Object.freeze({ raster: Object.freeze(raster), cycles: Object.freeze(cycles) });
 }

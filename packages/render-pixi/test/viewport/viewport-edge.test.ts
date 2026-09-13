@@ -45,12 +45,12 @@ describe('render-pixi/viewport invariants', () => {
 
   it('floors an odd border (the extra pixel goes right/bottom)', () => {
     const vp = computeIntegerViewport(1921, 1081, BASE_W, BASE_H);
-    expect(vp).toEqual({ scale: 5, x: 0, y: 0, width: 1920, height: 1080 });
+    expect(vp).toMatchObject({ scale: 5, x: 0, y: 0, width: 1920, height: 1080 });
     expect(computeIntegerViewport(1923, 1083, BASE_W, BASE_H)).toMatchObject({ x: 1, y: 1 });
   });
 
   it('crops a display smaller than one frame symmetrically (scale 1, negative offsets)', () => {
-    expect(computeIntegerViewport(192, 108, BASE_W, BASE_H)).toEqual({
+    expect(computeIntegerViewport(192, 108, BASE_W, BASE_H)).toMatchObject({
       scale: 1,
       x: -96,
       y: -54,
@@ -62,7 +62,9 @@ describe('render-pixi/viewport invariants', () => {
   it('survives a zero-sized display (hidden window) without NaN', () => {
     const vp = computeIntegerViewport(0, 0, BASE_W, BASE_H);
     expect(vp.scale).toBe(1);
-    for (const value of Object.values(vp)) expect(Number.isFinite(value)).toBe(true);
+    const { mode, ...numbers } = vp;
+    expect(mode).toBe('integer');
+    for (const value of Object.values(numbers)) expect(Number.isFinite(value)).toBe(true);
   });
 
   it('handles portrait and ultra-wide displays by the limiting axis', () => {

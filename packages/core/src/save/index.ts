@@ -12,10 +12,12 @@
  *
  * - **Format** ({@link SaveData}, version {@link SAVE_VERSION} = 1) under the storage key
  *   {@link SAVE_STORAGE_KEY} (`save.v1`): `{ version, options: { audio: { master, music, sfx },
- *   input: { profileId }, display: { bulletPalette } }, hiScores: { [modeKey]:
- *   HiScoreEntry[≤ 10] }, stats: { gamesStarted, gameOvers, stagesCleared } }`. `bulletPalette`
- *   (M2-02) needs no migration: a version-1 save written before it has `display: {}` and resolves
- *   to `standard` (`core/config` `resolveUserOptions`).
+ *   input: { profileId }, display: { bulletPalette, scaleMode, screenShake, reduceFlashing,
+ *   showHitbox } }, hiScores: { [modeKey]: HiScoreEntry[≤ 10] }, stats: { gamesStarted, gameOvers,
+ *   stagesCleared } }`. The display fields need no migration: a version-1 save written before
+ *   `bulletPalette` (M2-02) or the M2-08 fields resolves the missing ones to their defaults
+ *   (`standard`, `integer`, shake on, normal flashing, no hitbox marker — `core/config`
+ *   `resolveUserOptions`).
  *   A mode key ({@link hiScoreModeKey}) names the table a game's score belongs to
  *   (`meter-normal` in M1; one per difficulty preset since M2-01 — `meter-easy` … `meter-arcade`;
  *   the Direct-mode MANTA's games since M2-05 — `direct-easy` … `direct-arcade`).
@@ -447,6 +449,7 @@ export function parseSave(
  */
 export function serializeSave(data: SaveData): string {
   const a = data.options.audio;
+  const display = data.options.display;
   // No prototype: a key can never reach Object.prototype, whatever the document holds.
   const hiScores = Object.create(null) as Record<string, HiScoreEntry[]>;
   for (const key of Object.keys(data.hiScores).sort()) {
@@ -467,7 +470,13 @@ export function serializeSave(data: SaveData): string {
     options: {
       audio: { master: a.master, music: a.music, sfx: a.sfx },
       input: { profileId: data.options.input.profileId },
-      display: { bulletPalette: data.options.display.bulletPalette },
+      display: {
+        bulletPalette: display.bulletPalette,
+        scaleMode: display.scaleMode,
+        screenShake: display.screenShake,
+        reduceFlashing: display.reduceFlashing,
+        showHitbox: display.showHitbox,
+      },
     },
     hiScores,
     stats: {

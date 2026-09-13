@@ -174,8 +174,8 @@ async function makeRenderer(
 function overlays(renderer: PixiRenderer): { flash: Pixi.Sprite; dim: Pixi.Sprite } {
   const children = renderer.layers.world.children;
   return {
-    flash: children[children.length - 1] as Pixi.Sprite,
-    dim: children[children.length - 2] as Pixi.Sprite,
+    flash: children[children.length - 2] as Pixi.Sprite,
+    dim: children[children.length - 3] as Pixi.Sprite,
   };
 }
 
@@ -235,6 +235,7 @@ describe('render-pixi/renderer game feel — options (edges)', () => {
       screenShake: false,
       reduceFlashing: true,
       crt: 'off',
+      rasterEffects: true,
     });
     expect(renderer.particles?.capacity).toBe(32);
     const { frame } = frameWithWorld();

@@ -47,7 +47,7 @@
  * {@link UserOptions}, {@link AudioOptions}, {@link InputOptions}, {@link DisplayOptions},
  * {@link DEFAULT_USER_OPTIONS}, {@link VOLUME_LEVELS}, {@link volumeGain},
  * {@link resolveUserOptions}, {@link InputProfileChoice}, {@link INPUT_PROFILE_ID_PATTERN},
- * {@link BULLET_PALETTES}, {@link BulletPalette}.
+ * {@link BULLET_PALETTES}, {@link BulletPalette}, {@link SCALE_MODES}, {@link ScaleMode} (M2-08).
  *
  * **User options (M1-17).** {@link UserOptions} — the *presentation-only* options the player sets
  * in the Options screen and `core/save` persists (plan §1.5: sim-affecting options live in
@@ -55,7 +55,9 @@
  * `0…`{@link VOLUME_LEVELS} ({@link volumeGain} turns a level into the linear bus gain), the chosen
  * keyboard / remote input profile ({@link InputOptions.profileId}, `null` = the platform's default)
  * and the display options (M2-02: the enemy bullet colour set, {@link DisplayOptions.bulletPalette}
- * — {@link BULLET_PALETTES}). {@link DEFAULT_USER_OPTIONS},
+ * — {@link BULLET_PALETTES}; M2-08: the scale mode {@link DisplayOptions.scaleMode} —
+ * {@link SCALE_MODES} —, the screen-shake switch, reduced flashing and the hitbox marker).
+ * {@link DEFAULT_USER_OPTIONS},
  * {@link resolveUserOptions} (defensive: anything malformed falls back field by field),
  * {@link InputProfileChoice} (one entry of the Options screen's profile selector).
  *
@@ -70,7 +72,7 @@
  * {@link difficultyOverrides} gives one row as config fields and {@link withDifficulty} switches a
  * resolved config to another preset (the difficulty menu under START, `core/scenes`).
  *
- * **Planned API.** Display options (scale mode, shake, flash reduction — M2-08 / M2-16).
+ * **Planned API.** The remaining option groups of the Options screen (controls, game — M2-16).
  *
  * @module
  */
@@ -1070,12 +1072,35 @@ export const BULLET_PALETTES = Object.freeze([
 export type BulletPalette = (typeof BULLET_PALETTES)[number];
 
 /**
- * Display options (presentation only). M2-02 brings the bullet palette; scale mode, shake and flash
- * reduction arrive with M2-08 / M2-16.
+ * How the 384×216 frame fills the display (plan M2-08, shmup_feat.md §3): `integer` — the largest
+ * whole multiple that fits, letterboxed (the default: every frame pixel the same size); `fit` — the
+ * largest scale that fits keeping the aspect ratio, not a whole number (nearest-neighbour, so some
+ * pixel rows / columns are one screen pixel wider); `stretch` — the whole display, aspect ratio
+ * ignored.
+ */
+export const SCALE_MODES = Object.freeze(['integer', 'fit', 'stretch'] as const);
+
+/** One of {@link SCALE_MODES}. */
+export type ScaleMode = (typeof SCALE_MODES)[number];
+
+/**
+ * Display options (presentation only). M2-02 brought the bullet palette, M2-08 the scale mode, the
+ * screen-shake switch, reduced flashing and the hitbox marker.
  */
 export interface DisplayOptions {
   /** The enemy bullet colour set ({@link BULLET_PALETTES}; default `standard`). */
   readonly bulletPalette: BulletPalette;
+  /** How the frame is scaled to the display ({@link SCALE_MODES}; default `integer`). */
+  readonly scaleMode: ScaleMode;
+  /** Screen shake on (default `true`; shmup_feat.md §18 "off switch", §21 accessibility). */
+  readonly screenShake: boolean;
+  /**
+   * Reduced flashing (default `false`): at most one full-screen flash a second at a capped opacity
+   * (shmup_feat.md §21 — the ≤ 3 flashes a second limit applies either way).
+   */
+  readonly reduceFlashing: boolean;
+  /** Draw a marker on each ship's hurtbox (default `false`; shmup_feat.md §5, §21). */
+  readonly showHitbox: boolean;
 }
 
 /**
@@ -1095,7 +1120,13 @@ export interface UserOptions {
 export const DEFAULT_USER_OPTIONS: UserOptions = Object.freeze({
   audio: Object.freeze({ master: VOLUME_LEVELS, music: VOLUME_LEVELS, sfx: VOLUME_LEVELS }),
   input: Object.freeze({ profileId: null }),
-  display: Object.freeze({ bulletPalette: 'standard' }),
+  display: Object.freeze({
+    bulletPalette: 'standard',
+    scaleMode: 'integer',
+    screenShake: true,
+    reduceFlashing: false,
+    showHitbox: false,
+  }),
 });
 
 /** Shape of an input profile id (lower-case kebab, as `content/input/` requires), ≤ 64 characters. */
@@ -1149,8 +1180,10 @@ function volumeLevel(value: unknown, fallback: number): number {
  * @remarks
  * Volumes: finite numbers are rounded and clamped to `0…`{@link VOLUME_LEVELS}; anything else takes
  * the default. `input.profileId`: a string matching {@link INPUT_PROFILE_ID_PATTERN} of at most 64
- * characters, else `null`. `display.bulletPalette`: one of {@link BULLET_PALETTES}, else `standard`
- * (unknown display fields are dropped). Whether the
+ * characters, else `null`. `display.bulletPalette`: one of {@link BULLET_PALETTES}, else `standard`;
+ * `display.scaleMode`: one of {@link SCALE_MODES}, else `integer`; `display.screenShake`,
+ * `reduceFlashing`, `showHitbox`: booleans, else their defaults (unknown display fields are
+ * dropped). Whether the
  * profile id names an existing profile is the host's business (an unknown one is skipped when
  * applied).
  *
@@ -1169,6 +1202,8 @@ export function resolveUserOptions(value: unknown): UserOptions {
   const input = isRecord(root.input) ? root.input : {};
   const display = isRecord(root.display) ? root.display : {};
   const palette = display.bulletPalette;
+  const scaleMode = display.scaleMode;
+  const dd = DEFAULT_USER_OPTIONS.display;
   const d = DEFAULT_USER_OPTIONS.audio;
   const id = input.profileId;
   return Object.freeze({
@@ -1185,7 +1220,15 @@ export function resolveUserOptions(value: unknown): UserOptions {
       bulletPalette:
         typeof palette === 'string' && (BULLET_PALETTES as readonly string[]).indexOf(palette) >= 0
           ? (palette as BulletPalette)
-          : DEFAULT_USER_OPTIONS.display.bulletPalette,
+          : dd.bulletPalette,
+      scaleMode:
+        typeof scaleMode === 'string' && (SCALE_MODES as readonly string[]).indexOf(scaleMode) >= 0
+          ? (scaleMode as ScaleMode)
+          : dd.scaleMode,
+      screenShake: typeof display.screenShake === 'boolean' ? display.screenShake : dd.screenShake,
+      reduceFlashing:
+        typeof display.reduceFlashing === 'boolean' ? display.reduceFlashing : dd.reduceFlashing,
+      showHitbox: typeof display.showHitbox === 'boolean' ? display.showHitbox : dd.showHitbox,
     }),
   });
 }

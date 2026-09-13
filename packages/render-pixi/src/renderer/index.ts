@@ -32,6 +32,18 @@
  * tables with the chosen colour-blind variants (`palette` `resolveBulletPaletteTable`): every
  * binding reads the shared tables, so the swap takes effect on the next frame without re-binding.
  *
+ * **Presentation polish (plan M2-08).** The world's `effects` (the stage's raster effects and
+ * palette cycles) are bound to the `effects` module's layer effects — a GLSL ES 1.0 filter on each
+ * layer while one of its effects is on screen, off with `effects.settings.rasterEffects`; the
+ * Mega Crash flash is additive (a second, `add`-blended flash overlay). Display options:
+ * {@link PixiRenderer.setScaleMode} (integer / fit / stretch — `viewport`),
+ * `effects.settings.screenShake` / `reduceFlashing`, {@link PixiRenderer.setShowHitbox} (the
+ * `HITBOX` layer with a marker per `WorldView.hitboxes` slot). **Render interpolation**
+ * ({@link PixiRenderer.setInterpolation}; the shell turns it on for displays faster than the tick
+ * rate): the camera, the parallax bands and every sprite batch are drawn between the previous and
+ * the current tick by `frame.alpha` (see `sprites` for the slot rules); at 60 Hz it stays off, so
+ * nothing lags a tick behind.
+ *
  * **Debug (plan M1-19).** With {@link PixiRendererOptions.countDrawCalls} (the shell sets it only
  * in dev / test builds, together with its debug tools) the WebGL context's draw entry points are
  * wrapped with a counter and {@link PixiRenderer.drawCalls} reports the last frame's calls (both
@@ -47,10 +59,13 @@
  * **Implements.** shmup_tech.md §2.2 (WebGL1-first, low-res render texture + one
  * nearest upscale quad), §4.1 (Pixi as renderer only), shmup_feat.md §3 (integer
  * scaling, pixel-perfect), §18 (draw order, one atlas, flash/dim, shake, particles), §20 (juice),
- * §22 Rendering pipeline.
+ * §22 Rendering pipeline (raster-effect shader), §21 display options (scale mode, shake, flash
+ * reduction, hitbox).
  *
- * **Public API.** {@link createPixiRenderer}, {@link PixiRenderer} (incl. `drawCalls`, M1-19),
- * {@link PixiRendererOptions} (incl. `countDrawCalls`, M1-19).
+ * **Public API.** {@link createPixiRenderer}, {@link PixiRenderer} (incl. `drawCalls`, M1-19; the
+ * scale mode, hitbox, interpolation and layer effects, M2-08), {@link PixiRendererOptions} (incl.
+ * `countDrawCalls`, M1-19; `scaleMode`, `showHitbox`, `interpolation`, `createLayerEffectFilter`,
+ * M2-08).
  *
  * @module
  */
@@ -60,6 +75,7 @@ import {
   type BulletPalette,
   type CameraView,
   type IRenderer,
+  type ScaleMode,
   type RenderFrame,
   type TextMetrics,
   type WorldView,
@@ -74,19 +90,24 @@ import {
 } from 'pixi.js';
 import type { Atlas } from '../atlas/index.js';
 import {
+  createLayerEffects,
   createScorePopups,
   createScreenEffects,
   type EffectSettings,
+  type LayerEffectFilter,
+  type LayerEffects,
   type ScorePopups,
   type ScreenEffects,
 } from '../effects/index.js';
 import {
   createBendingLaserBinding,
+  createHitboxBinding,
   createLayerStack,
   createLaserBinding,
   createParallaxBinding,
   createTerrainBinding,
   type BendingLaserBinding,
+  type HitboxBinding,
   type LaserBinding,
   type LayerStack,
   type ParallaxBinding,
@@ -102,6 +123,7 @@ import {
 import {
   createSpriteLayerBinding,
   createSpriteTables,
+  type RenderBlend,
   type SpriteLayerBinding,
   type SpriteTables,
 } from '../sprites/index.js';
@@ -114,7 +136,7 @@ import {
   type BitmapFont,
 } from '../text/index.js';
 import { createDrawListView, type DrawListView } from '../ui/index.js';
-import { computeIntegerViewport, type Viewport } from '../viewport/index.js';
+import { computeViewport, type Viewport } from '../viewport/index.js';
 
 /** Module descriptor. */
 export const moduleInfo = defineModule({
@@ -138,6 +160,25 @@ const MAX_EFFECT_STEP = 60;
 
 /** Camera of frames without a world (particles and popups then use frame pixels). */
 const NO_CAMERA: CameraView = Object.freeze({ x: 0, y: 0 });
+
+/**
+ * The camera drawn this frame when render interpolation is on (a class instance: its fields stay
+ * unboxed doubles, so writing fractional positions every frame allocates nothing).
+ */
+class DrawnCamera implements CameraView {
+  /** World x. */
+  x = 0;
+  /** World y. */
+  y = 0;
+}
+
+/** The frame's render interpolation handed to the bindings (a class: unboxed fields). */
+class FrameBlend implements RenderBlend {
+  /** Blend factor 0 … 1. */
+  alpha = 0;
+  /** Ticks since the last interpolated frame (-1 = reset). */
+  advance = -1;
+}
 
 /** Options for {@link createPixiRenderer}. */
 export interface PixiRendererOptions {
@@ -176,6 +217,23 @@ export interface PixiRendererOptions {
    * counter; dev / test builds only (default `false`).
    */
   readonly countDrawCalls?: boolean;
+  /** How the frame fills the display (default `'integer'` — plan M2-08, the scale modes). */
+  readonly scaleMode?: ScaleMode;
+  /** Draw the ships' hitbox markers (default `false` — the "show hitbox" display option, M2-08). */
+  readonly showHitbox?: boolean;
+  /**
+   * Render interpolation from the start (default `false`; see
+   * {@link PixiRenderer.setInterpolation}).
+   */
+  readonly interpolation?: boolean;
+  /**
+   * Creates the layer effects' filters (default the `effects` module's `createLayerEffectFilter`).
+   * Tests in Node — where Pixi cannot probe a WebGL context to build a program — pass a fake.
+   *
+   * @param rows - Offset table rows.
+   * @returns The filter.
+   */
+  readonly createLayerEffectFilter?: (rows: number) => LayerEffectFilter;
 }
 
 /** The Pixi-backed renderer. */
@@ -189,6 +247,39 @@ export interface PixiRenderer extends IRenderer {
   readonly drawCalls: number;
   /** Current placement of the scaled frame on the canvas. */
   readonly viewport: Viewport;
+  /** The scale mode in use (plan M2-08). */
+  readonly scaleMode: ScaleMode;
+  /**
+   * Switches the scale mode (integer / fit / stretch — the Options screen's SCALE, plan M2-08) and
+   * re-places the frame at once.
+   *
+   * @param mode - The mode.
+   */
+  setScaleMode(mode: ScaleMode): void;
+  /** Whether the ships' hitbox markers are drawn (plan M2-08). */
+  readonly showHitbox: boolean;
+  /**
+   * Shows or hides the `HITBOX` layer — the ships' hitbox markers of `WorldView.hitboxes` (the
+   * Options screen's HITBOX, plan M2-08).
+   *
+   * @param on - `true` to draw them.
+   */
+  setShowHitbox(on: boolean): void;
+  /** Whether render interpolation is on (plan M2-08). */
+  readonly interpolation: boolean;
+  /**
+   * Turns render interpolation on or off (plan M2-08, decision D32): with it, the camera, the
+   * parallax bands and every sprite batch are drawn between the previous and the current tick by
+   * `frame.alpha` — for displays that show more than one frame per tick (> 60 Hz). Off (the
+   * default) draws the current tick, which on a 60 Hz display is always right and a tick fresher.
+   *
+   * @param on - `true` to interpolate.
+   */
+  setInterpolation(on: boolean): void;
+  /** The layer effects: the bound world's raster effects and palette cycles (plan M2-08). */
+  readonly layerEffects: LayerEffects;
+  /** Hitbox markers of the bound world (`null` without a hitbox view or atlas — plan M2-08). */
+  readonly hitboxes: HitboxBinding | null;
   /** Low-res scene root (384×216 coordinates). */
   readonly scene: Container;
   /** The layer containers (one per core `LayerId`). */
@@ -252,7 +343,8 @@ export interface PixiRenderer extends IRenderer {
    * Binds a world view: creates the parallax band sprites (on `BG_FAR` / `BG_MID`), the terrain
    * tile grid (on `TERRAIN`), one sprite binding per batch (in its layer, batch order) and the
    * laser sprites of `world.lasers` and the segment sprites of `world.bendingLasers` (on
-   * `ENEMY_BULLETS`, after the batches, in that order), and destroys the
+   * `ENEMY_BULLETS`, after the batches, in that order), the hitbox markers of `world.hitboxes` (on
+   * `HITBOX`) and binds `world.effects` to the layer effects (M2-08), and destroys the
    * previous world's bindings. `render()` does this automatically when
    * `frame.world` is a different object; hosts call it at load time so the first frame does
    * not create Pixi objects.
@@ -458,12 +550,20 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
   const layers = createLayerStack();
   scene.addChild(layers.root);
 
-  // Screen flash: last child of the world group (over every world layer, under the HUD).
+  // Screen flash: last children of the world group (over every world layer, under the HUD) — an
+  // ordinary overlay and an additive one (M2-08: the Mega Crash palette flash). Two sprites, so a
+  // flash never changes a sprite's blend mode (that rebuilds Pixi's render group).
   const flash = new Sprite(Texture.WHITE);
   flash.position.set(-OVERLAY_MARGIN, -OVERLAY_MARGIN);
   flash.scale.set(width + 2 * OVERLAY_MARGIN, height + 2 * OVERLAY_MARGIN);
   flash.visible = false;
   layers.world.addChild(flash);
+  const flashAdd = new Sprite(Texture.WHITE);
+  flashAdd.position.set(-OVERLAY_MARGIN, -OVERLAY_MARGIN);
+  flashAdd.scale.set(width + 2 * OVERLAY_MARGIN, height + 2 * OVERLAY_MARGIN);
+  flashAdd.blendMode = 'add';
+  flashAdd.visible = false;
+  layers.world.addChild(flashAdd);
 
   // Playfield dim (the boss WARNING): over every world layer, under the flash and the HUD.
   const playfieldDim = new Sprite(Texture.WHITE);
@@ -471,8 +571,9 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
   playfieldDim.scale.set(width + 2 * OVERLAY_MARGIN, height + 2 * OVERLAY_MARGIN);
   playfieldDim.tint = 0x000000;
   playfieldDim.visible = false;
-  layers.world.addChildAt(playfieldDim, layers.world.children.length - 1);
+  layers.world.addChildAt(playfieldDim, layers.world.children.length - 2);
   let flashTint = 0xffffff;
+  let flashAddTint = 0xffffff;
 
   // Dim: first child of the UI layer (darkens world + HUD under a menu).
   const uiLayer = layers.layers[LayerId.Ui];
@@ -519,16 +620,37 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
   }
   let lastTick = -1;
 
+  // Presentation polish (plan M2-08): the layer effects, the hitbox layer, interpolation.
+  const layerEffects = createLayerEffects({
+    layers: layers.layers,
+    width,
+    height,
+    createFilter: options.createLayerEffectFilter,
+  });
+  const hitboxLayer = layers.layers[LayerId.Hitbox];
+  let showHitbox = options.showHitbox === true;
+  hitboxLayer.visible = showHitbox;
+  let interpolation = options.interpolation === true;
+  // Interpolation history: the tick of the last frame drawn with it (-1 = reset next frame).
+  let interpolatedTick = -1;
+  // Camera at the previous tick and at the last tick seen, and the camera drawn this frame.
+  const cameraHistory = new Float64Array(4);
+  const drawnCamera = new DrawnCamera();
+  const blend = new FrameBlend();
+
   // Pass 2: one sprite showing the frame texture, integer-scaled and centred.
   const screen = new Container({ label: 'screen' });
   const frameSprite = new Sprite(frameTexture);
   screen.addChild(frameSprite);
 
-  let viewport = computeIntegerViewport(options.displayWidth, options.displayHeight, width, height);
+  let scaleMode: ScaleMode = options.scaleMode ?? 'integer';
+  let displayW = Math.max(1, Math.floor(options.displayWidth));
+  let displayH = Math.max(1, Math.floor(options.displayHeight));
+  let viewport = computeViewport(scaleMode, displayW, displayH, width, height);
 
   /** Positions and scales the frame sprite according to the current `viewport`. */
   const applyViewport = (): void => {
-    frameSprite.scale.set(viewport.scale);
+    frameSprite.scale.set(viewport.scaleX, viewport.scaleY);
     frameSprite.position.set(viewport.x, viewport.y);
   };
   applyViewport();
@@ -544,6 +666,7 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
   let parallax: ParallaxBinding | null = null;
   let lasers: LaserBinding | null = null;
   let bendingLasers: BendingLaserBinding | null = null;
+  let hitboxes: HitboxBinding | null = null;
   let bulletPalette: BulletPalette = 'standard';
   let spriteNames: readonly string[] | null = null;
 
@@ -563,6 +686,10 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
     lasers = null;
     bendingLasers?.destroy();
     bendingLasers = null;
+    hitboxes?.destroy();
+    hitboxes = null;
+    layerEffects.bind(null);
+    interpolatedTick = -1;
     boundWorld = null;
     if (world !== null) {
       // Validate first, so a bad view leaves nothing half-bound.
@@ -618,7 +745,14 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
           });
           layers.layers[LayerId.EnemyBullets].addChild(bendingLasers.container);
         }
+        const hitboxView = world.hitboxes ?? null;
+        if (hitboxView !== null) {
+          hitboxes = createHitboxBinding({ atlas, capacity: hitboxView.capacity });
+          hitboxLayer.addChild(hitboxes.container);
+        }
       }
+      // Presentation effects (M2-08) — also without an atlas (they only filter layers).
+      layerEffects.bind(world.effects ?? null);
     }
     boundWorld = world;
   };
@@ -646,6 +780,34 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
     },
     get bendingLasers() {
       return bendingLasers;
+    },
+    get hitboxes() {
+      return hitboxes;
+    },
+    layerEffects,
+    get scaleMode() {
+      return scaleMode;
+    },
+    setScaleMode(mode) {
+      if (mode === scaleMode) return;
+      scaleMode = mode;
+      viewport = computeViewport(scaleMode, displayW, displayH, width, height);
+      applyViewport();
+    },
+    get showHitbox() {
+      return showHitbox;
+    },
+    setShowHitbox(on) {
+      showHitbox = on;
+      hitboxLayer.visible = on;
+    },
+    get interpolation() {
+      return interpolation;
+    },
+    setInterpolation(on) {
+      if (on === interpolation) return;
+      interpolation = on;
+      interpolatedTick = -1;
     },
     get bulletPalette() {
       return bulletPalette;
@@ -690,7 +852,9 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
       const w = Math.max(1, Math.floor(cssWidth));
       const h = Math.max(1, Math.floor(cssHeight));
       renderer.resize(w, h);
-      viewport = computeIntegerViewport(w, h, width, height);
+      displayW = w;
+      displayH = h;
+      viewport = computeViewport(scaleMode, w, h, width, height);
       applyViewport();
     },
     render(frame: RenderFrame) {
@@ -714,43 +878,92 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
       }
       const world = frame.world;
       if (world !== boundWorld) bindWorld(world);
-      const camera = world !== null ? world.camera : NO_CAMERA;
+      // Render interpolation (M2-08): ticks since the last interpolated frame (anything but 0 or 1
+      // resets the bindings' history), and the camera between the previous and current tick.
+      let camera: CameraView = world !== null ? world.camera : NO_CAMERA;
+      if (interpolation && world !== null) {
+        const advance =
+          interpolatedTick >= 0 && tick >= interpolatedTick ? tick - interpolatedTick : -1;
+        interpolatedTick = tick;
+        // Clamped inline (a fractional result returned from a call V8 does not inline is boxed).
+        const raw = frame.alpha;
+        const alpha = raw > 0 ? (raw < 1 ? raw : 1) : 0;
+        blend.advance = advance;
+        blend.alpha = alpha;
+        const cam = world.camera;
+        if (advance === 1) {
+          cameraHistory[0] = cameraHistory[2];
+          cameraHistory[1] = cameraHistory[3];
+        } else if (advance !== 0) {
+          cameraHistory[0] = cam.x;
+          cameraHistory[1] = cam.y;
+        }
+        cameraHistory[2] = cam.x;
+        cameraHistory[3] = cam.y;
+        drawnCamera.x = cameraHistory[0] + (cam.x - cameraHistory[0]) * alpha;
+        drawnCamera.y = cameraHistory[1] + (cam.y - cameraHistory[1]) * alpha;
+        camera = drawnCamera;
+      }
       particles?.sync(camera);
       popups?.sync(camera);
+      const screen = frame.screen;
+      const shakeX = (Math.round(screen.shakeX) + effects.shakeX) | 0;
+      const shakeY = (Math.round(screen.shakeY) + effects.shakeY) | 0;
       if (world !== null) {
-        const camX = world.camera.x;
-        const camY = world.camera.y;
-        if (parallax !== null && world.parallax !== null) parallax.sync(world.parallax);
-        if (terrain !== null && world.terrain !== null) terrain.sync(world.terrain, world.camera);
+        const camX = camera.x;
+        const camY = camera.y;
+        const interpolate = interpolation;
+        const bands = world.parallax;
+        if (parallax !== null && bands !== null) {
+          if (interpolate) parallax.syncInterpolated(bands, blend);
+          else parallax.sync(bands);
+        }
+        if (terrain !== null && world.terrain !== null) terrain.sync(world.terrain, camera);
         const batches = world.batches;
         for (let i = 0; i < bindings.length; i++) {
-          bindings[i].sync(batches[i], camX, camY);
+          if (interpolate) bindings[i].syncInterpolated(batches[i], camera, blend);
+          else bindings[i].sync(batches[i], camX, camY);
         }
         const laserView = world.lasers;
         if (lasers !== null && laserView !== undefined && laserView !== null) {
-          lasers.sync(laserView, world.camera);
+          lasers.sync(laserView, camera);
         }
         const bendView = world.bendingLasers;
         if (bendingLasers !== null && bendView !== undefined && bendView !== null) {
-          bendingLasers.sync(bendView, world.camera);
+          bendingLasers.sync(bendView, camera);
         }
+        const hitboxView = world.hitboxes;
+        if (showHitbox && hitboxes !== null && hitboxView !== undefined && hitboxView !== null) {
+          hitboxes.sync(hitboxView, camera);
+        }
+        layerEffects.sync(tick, camera, shakeY, effects.settings.rasterEffects);
       }
-      const screen = frame.screen;
-      layers.world.position.set(
-        (Math.round(screen.shakeX) + effects.shakeX) | 0,
-        (Math.round(screen.shakeY) + effects.shakeY) | 0,
-      );
-      // The brighter of the frame's own flash (white) and the event-driven one (its look's colour).
+      layers.world.position.set(shakeX, shakeY);
+      // The brighter of the frame's own flash (white) and the event-driven one (its look's colour;
+      // an additive look — the Mega Crash, M2-08 — goes to the additive overlay).
       const frameFlash = unit(screen.flash);
       const eventFlash = unit(effects.flashAlpha);
-      const flashAlpha = eventFlash > frameFlash ? eventFlash : frameFlash;
-      const tint = eventFlash > frameFlash ? effects.flashColor : 0xffffff;
-      if (flashAlpha > 0 && tint !== flashTint) {
-        flashTint = tint;
-        flash.tint = tint;
+      const eventWins = eventFlash > frameFlash;
+      const additive = eventWins && effects.flashAdditive;
+      const flashAlpha = eventWins ? eventFlash : frameFlash;
+      const tint = eventWins ? effects.flashColor : 0xffffff;
+      if (additive) {
+        if (tint !== flashAddTint) {
+          flashAddTint = tint;
+          flashAdd.tint = tint;
+        }
+        flashAdd.alpha = flashAlpha;
+        flashAdd.visible = true;
+        flash.visible = false;
+      } else {
+        if (flashAlpha > 0 && tint !== flashTint) {
+          flashTint = tint;
+          flash.tint = tint;
+        }
+        flash.alpha = flashAlpha;
+        flash.visible = flashAlpha > 0;
+        flashAdd.visible = false;
       }
-      flash.alpha = flashAlpha;
-      flash.visible = flashAlpha > 0;
       const playfieldAlpha = unit(effects.dimAlpha);
       playfieldDim.alpha = playfieldAlpha;
       playfieldDim.visible = playfieldAlpha > 0;
@@ -766,6 +979,7 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
     },
     destroy() {
       bindWorld(null);
+      layerEffects.destroy();
       hudView?.destroy();
       uiView?.destroy();
       scene.destroy({ children: true });

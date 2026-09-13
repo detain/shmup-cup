@@ -163,6 +163,9 @@ export function createFlightScene(game: Game, options: FlightSceneOptions = {}):
     lasers: gameView.lasers ?? null,
     bendingLasers: gameView.bendingLasers ?? null,
     warning: gameView.warning ?? null,
+    // The stage's raster effects / palette cycles and the hitbox markers (M2-08).
+    effects: gameView.effects ?? null,
+    hitboxes: gameView.hitboxes ?? null,
   };
   const warning = gameView.warning ?? null;
   const stage = game.world.stage;

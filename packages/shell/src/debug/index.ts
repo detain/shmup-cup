@@ -187,6 +187,11 @@ export interface ShmupDebugApi {
   /** The game session. */
   readonly game: Game;
   /**
+   * The renderer (M2-08: its display options, layer effects and draw calls, for the browser tests
+   * and the DevTools console).
+   */
+  readonly renderer: PixiRenderer;
+  /**
    * Runs a debug command (`DebugCommand` code), unlocked or not.
    *
    * @param command - The command.
@@ -393,6 +398,7 @@ export function createDebugTools(
     },
     buildId,
     game,
+    renderer: host.renderer,
     run(command) {
       return controls.run(command);
     },

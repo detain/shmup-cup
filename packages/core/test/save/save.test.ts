@@ -100,7 +100,14 @@ describe('core/save round trip', () => {
     store.setOptions({
       audio: { master: 7, music: 3, sfx: 0 },
       input: { profileId: 'tizen-remote-diagonal' },
-      display: { bulletPalette: 'standard' },
+      // The display options of M2-08 round-trip too.
+      display: {
+        bulletPalette: 'protanopia',
+        scaleMode: 'fit',
+        screenShake: false,
+        reduceFlashing: true,
+        showHitbox: true,
+      },
     });
     store.recordScore('meter-normal', createHiScoreEntry(12300, { reached: 'zone-a', mode: '1p' }));
     store.count('gameOvers');
@@ -114,6 +121,32 @@ describe('core/save round trip', () => {
     expect(loaded.data.hiScores['meter-normal']).toEqual([
       { name: '---', score: 12300, reached: 'zone-a', mode: '1p', difficulty: '' },
     ]);
+    expect(loaded.data.options.display).toEqual({
+      bulletPalette: 'protanopia',
+      scaleMode: 'fit',
+      screenShake: false,
+      reduceFlashing: true,
+      showHitbox: true,
+    });
+  });
+
+  it('reads a version-1 save written before the M2-08 display options with their defaults', () => {
+    const parsed = parseSave(
+      JSON.stringify({
+        version: 1,
+        options: { display: { bulletPalette: 'tritanopia' } },
+        hiScores: {},
+        stats: {},
+      }),
+    );
+    expect(parsed.status).toBe('ok');
+    expect(parsed.data.options.display).toEqual({
+      bulletPalette: 'tritanopia',
+      scaleMode: 'integer',
+      screenShake: true,
+      reduceFlashing: false,
+      showHitbox: false,
+    });
   });
 
   it('serialises every field and parses its own output unchanged', () => {
@@ -129,7 +162,13 @@ describe('core/save round trip', () => {
       options: {
         audio: { master: 2, music: 4, sfx: 6 },
         input: { profileId: 'x' },
-        display: { bulletPalette: 'standard' },
+        display: {
+          bulletPalette: 'standard',
+          scaleMode: 'integer',
+          screenShake: true,
+          reduceFlashing: false,
+          showHitbox: false,
+        },
       },
       hiScores: {
         'meter-hard': [{ name: 'ZED', score: 5, reached: '', mode: '', difficulty: '' }],
@@ -156,7 +195,13 @@ describe('core/save migrations', () => {
     expect(loaded.data.options).toEqual({
       audio: { master: 8, music: 5, sfx: 10 },
       input: { profileId: 'tizen-remote-diagonal' },
-      display: { bulletPalette: 'standard' },
+      display: {
+        bulletPalette: 'standard',
+        scaleMode: 'integer',
+        screenShake: true,
+        reduceFlashing: false,
+        showHitbox: false,
+      },
     });
     // The flat list became the meter-normal table: sorted, ties keep their order, bad rows dropped.
     const rows = loaded.data.hiScores['meter-normal'];
@@ -273,7 +318,13 @@ describe('core/save sanitising', () => {
     expect(data.options).toEqual({
       audio: { master: 10, music: 0, sfx: 10 },
       input: { profileId: null },
-      display: { bulletPalette: 'standard' },
+      display: {
+        bulletPalette: 'standard',
+        scaleMode: 'integer',
+        screenShake: true,
+        reduceFlashing: false,
+        showHitbox: false,
+      },
     });
     expect(data.hiScores).toEqual({
       'meter-normal': [

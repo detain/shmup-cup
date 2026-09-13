@@ -59,8 +59,16 @@
  * the app to apply it (`ShellOptions.inputProfiles`). The scene flow gets the save store (the
  * title's HI, the Options screen, hi-score tables — the flow writes it on changes) and the profile
  * choices; the Options screen's `UserOption` events set bus volumes, switch profiles and — since
- * M2-02 — the renderer's enemy bullet palette live (`connectOptionEvents`); the saved palette is
- * applied before the sprite tables are resolved (`renderer.setBulletPalette`).
+ * M2-02 — the renderer's enemy bullet palette and — since M2-08 — its scale mode, shake, flash
+ * reduction and hitbox markers live (`connectOptionEvents`); the saved display options are applied
+ * before the sprite tables are resolved (`applyDisplayOptions`; explicit
+ * {@link ShellOptions.effects} still win over the saved shake / flash settings).
+ *
+ * **Render interpolation (M2-08).** The frame loop feeds a refresh-rate probe (`frame-loop`
+ * `createRefreshMonitor`, the median rAF delta); with {@link ShellOptions.interpolation} `'auto'`
+ * (the default) the renderer interpolates while the display runs faster than
+ * `INTERPOLATION_MIN_HZ` (120 / 144 Hz monitors) and draws the current tick at 60 Hz. The probe
+ * restarts when the app resumes.
  *
  * **Boot time.** The shell measures its boot (`ShellOptions.now`, default `performance.now()` —
  * whose origin is the page's start, i.e. the app launch on the TV) and exposes it as
@@ -147,6 +155,7 @@ import {
 } from '@shmup/render-pixi';
 import {
   applyAudioOptions,
+  applyDisplayOptions,
   connectAudioEvents,
   connectFxEvents,
   connectOptionEvents,
@@ -155,7 +164,12 @@ import {
 } from '../dispatch/index.js';
 import type { DebugTools, DebugToolsFactory } from '../debug/index.js';
 import { createBootOverlay, formatIssues, type BootOverlay } from '../error-screen/index.js';
-import { startFrameLoop } from '../frame-loop/index.js';
+import {
+  INTERPOLATION_MIN_HZ,
+  createRefreshMonitor,
+  startFrameLoop,
+  type RefreshMonitor,
+} from '../frame-loop/index.js';
 import {
   AssetLoadError,
   loadGameContent,
@@ -410,9 +424,17 @@ export interface ShellOptions {
   readonly contentOwners?: ContentOwners;
   /**
    * Effect settings to change from the renderer's defaults (screen shake on, normal flashing —
-   * plan M1-14; the Options screen sets them later).
+   * plan M1-14). The save's display options are applied at boot (M2-08); `screenShake` /
+   * `reduceFlashing` given here win over them (a host override), until the Options screen changes
+   * them.
    */
   readonly effects?: Partial<EffectSettings>;
+  /**
+   * Render interpolation (M2-08): `'auto'` (default) — on while the refresh probe reads more than
+   * `INTERPOLATION_MIN_HZ` (a display faster than the 60 Hz tick), off otherwise; `'on'` / `'off'` —
+   * always / never.
+   */
+  readonly interpolation?: 'auto' | 'on' | 'off';
   /**
    * Image factory for the atlas pages (default `() => new Image()`).
    *
@@ -476,6 +498,8 @@ export interface Shell {
   readonly save: SaveStore;
   /** How long boot took (for the debug overlay, M1-19). */
   readonly bootTiming: BootTiming;
+  /** The refresh-rate probe the frame loop feeds (M2-08: it switches render interpolation). */
+  readonly refresh: RefreshMonitor;
   /** The debug tools (dev / test builds — {@link ShellOptions.debugTools}), else `null`. */
   readonly debug: DebugTools | null;
   /**
@@ -855,8 +879,19 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   game.scenes?.finishBoot();
 
   readyRenderer.setFxContent(fx);
-  // The saved enemy bullet palette (plan M2-02), before the sprite tables are resolved.
-  readyRenderer.setBulletPalette(save.options.display.bulletPalette);
+  // The saved display options (the bullet palette of M2-02 — before the sprite tables are
+  // resolved —, the scale mode, shake, flashing and hitbox markers of M2-08); the host's explicit
+  // effect settings win.
+  applyDisplayOptions(readyRenderer, save.options.display);
+  if (options.effects?.screenShake !== undefined) {
+    readyRenderer.effects.settings.screenShake = options.effects.screenShake;
+  }
+  if (options.effects?.reduceFlashing !== undefined) {
+    readyRenderer.effects.settings.reduceFlashing = options.effects.reduceFlashing;
+  }
+  const interpolationMode = options.interpolation ?? 'auto';
+  readyRenderer.setInterpolation(interpolationMode === 'on');
+  const refresh = createRefreshMonitor();
   const flowView = flowMode ? createSceneView(game) : null;
   const flight = scene === 'flight' ? createFlightScene(game) : null;
   const showcase = scene === 'showcase' ? createShowcase() : null;
@@ -891,6 +926,7 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
             if (choice !== undefined) profiles.apply(choice.id, 'options');
           },
       (palette) => readyRenderer.setBulletPalette(palette),
+      readyRenderer,
     );
   } else if (flight !== null) {
     connectFxEvents(events, readyRenderer);
@@ -904,6 +940,8 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   });
   platform.lifecycle.onResume(() => {
     void audio.resume();
+    // The rAF clock paused with the page: measure the refresh rate afresh.
+    refresh.reset();
   });
 
   const gestureOptions: AddEventListenerOptions = { capture: true };
@@ -978,6 +1016,12 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   const onFrame = (now: number): void => {
     const tools = debug;
     if (tools !== null) tools.beginFrame(now);
+    // Render interpolation follows the display's refresh rate (M2-08).
+    refresh.sample(now);
+    if (interpolationMode === 'auto' && refresh.ready) {
+      const fast = refresh.hz > INTERPOLATION_MIN_HZ;
+      if (fast !== readyRenderer.interpolation) readyRenderer.setInterpolation(fast);
+    }
     const context = game.inputContext;
     if (context !== inputContext) {
       inputContext = context;
@@ -1052,6 +1096,7 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     loadedSave,
     save,
     bootTiming,
+    refresh,
     get debug() {
       return debug;
     },

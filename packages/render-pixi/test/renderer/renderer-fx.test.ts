@@ -166,13 +166,15 @@ describe('render-pixi/renderer game feel (plan M1-14)', () => {
       expect(at(renderer.layers.layers[layer])).toBeLessThan(at(fxLayer));
     }
     expect(at(fxLayer)).toBeLessThan(at(renderer.layers.layers[LayerId.EnemyBullets]));
-    // Then the playfield dim and the flash over every world layer, the HUD above both.
+    // Then the playfield dim and the flashes (plain, additive — M2-08) over every world layer,
+    // the HUD above them.
     const world = renderer.layers.world.children;
-    const [dim, flash] = world.slice(-2) as Pixi.Sprite[];
-    expect(world.indexOf(renderer.layers.layers[LayerId.EnemyBullets])).toBe(world.length - 3);
+    const [dim, flash, flashAdd] = world.slice(-3) as Pixi.Sprite[];
+    expect(world.indexOf(renderer.layers.layers[LayerId.EnemyBullets])).toBe(world.length - 4);
     expect(dim.tint).toBe(0x000000);
     expect(flash.tint).toBe(0xffffff);
-    expect(at(flash)).toBeLessThan(at(renderer.layers.layers[LayerId.Hud]));
+    expect(flashAdd.blendMode).toBe('add');
+    expect(at(flashAdd)).toBeLessThan(at(renderer.layers.layers[LayerId.Hud]));
   });
 
   it('advances the effects by simulated ticks: frozen while the tick stands still', async () => {
@@ -243,7 +245,7 @@ describe('render-pixi/renderer game feel (plan M1-14)', () => {
     expect([renderer.layers.world.x, renderer.layers.world.y]).toEqual([1, 0]);
 
     const world = renderer.layers.world.children;
-    const flash = world[world.length - 1] as Pixi.Sprite;
+    const flash = world[world.length - 2] as Pixi.Sprite;
     effects.flash(FlashKind.Warning, 8);
     frame.tick = 3;
     renderer.render(frame);
@@ -269,7 +271,7 @@ describe('render-pixi/renderer game feel (plan M1-14)', () => {
     frame.tick = 20;
     renderer.render(frame);
     const world = renderer.layers.world.children;
-    const playfieldDim = world[world.length - 2] as Pixi.Sprite;
+    const playfieldDim = world[world.length - 3] as Pixi.Sprite;
     expect(playfieldDim.visible).toBe(true);
     expect(playfieldDim.alpha).toBeCloseTo(0.5);
     const menuDim = renderer.layers.layers[LayerId.Ui].children[0] as Pixi.Sprite;
