@@ -11,7 +11,13 @@
  *
  * @packageDocumentation
  */
-export { createWebInput, type WebInput, type WebInputOptions } from './web-input/index.js';
+export {
+  createWebInput,
+  PAD_SEAT_NONE,
+  PAD_SEAT_P2,
+  type WebInput,
+  type WebInputOptions,
+} from './web-input/index.js';
 export {
   MAX_TRACKED_KEYS,
   createKeyboardSource,

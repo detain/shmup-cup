@@ -12,6 +12,7 @@ import { Action } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
 import type { GamepadLike } from '../../src/gamepad/index.js';
 import { loadInputProfiles, type InputProfile } from '../../src/rebind/index.js';
+import * as inputWeb from '../../src/index.js';
 import { PAD_SEAT_NONE, PAD_SEAT_P2, createWebInput } from '../../src/web-input/index.js';
 import { key, measureAllocation, pad } from '../helpers.js';
 
@@ -40,6 +41,12 @@ function profile(id: string): InputProfile {
 }
 
 describe('input-web/web-input seats (M2-06)', () => {
+  it('exports the pad-seat constants from the package entry', () => {
+    expect(inputWeb.PAD_SEAT_NONE).toBe(PAD_SEAT_NONE);
+    expect(inputWeb.PAD_SEAT_P2).toBe(PAD_SEAT_P2);
+    expect(PAD_SEAT_NONE).not.toBe(PAD_SEAT_P2);
+  });
+
   it('starts with one seat and clamps setSeats to 1 or 2', () => {
     const input = createWebInput({ keyTarget: null });
     expect(input.seats).toBe(1);
