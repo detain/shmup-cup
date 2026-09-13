@@ -201,3 +201,98 @@ and a short freeze, pays `score` to the player who destroyed the last core and c
 See [`example.enemies.json`](example.enemies.json), the test range's roster in
 [`test-range.enemies.json`](test-range.enemies.json) and the test boss in
 [`test-boss.enemies.json`](test-boss.enemies.json) (`pnpm dev` with `?stage=test-boss`).
+
+## Advanced bosses (M2-09)
+
+The boss section has optional fields for the Darius-style variety of `shmup_feat.md` §13 — see
+[`advanced-bosses.enemies.json`](advanced-bosses.enemies.json) for one of each (fly them on the
+dev stages `captain-range`, `raid-range`, `twin-range` and the boss rush `gauntlet-range`):
+
+```jsonc
+{
+  "formatVersion": 1,
+  "kind": "enemies",
+  "enemies": [
+    {
+      "id": "orbit-warden",
+      "boss": {
+        "code": "CP-03",
+        "displayName": "ORBIT WARDEN",
+        "role": "captain",               // a mid-boss: a "boss" event, rides the scroll, no stage clear
+        "x": 332, "y": 100,
+        "parts": [
+          { "name": "hub", "hp": 30, "radius": 8, "spin": 6, "core": true, "gun": true,
+            "sprite": "bosses/core" },  // a circle hurtbox; spins 6 binary units (of 1024) a tick
+          { "name": "orb", "parent": "hub", "x": 20, "radius": 6, "vulnerable": "never",
+            "sprite": "bosses/orb" }    // placed by the hub's turn: it circles the hub
+        ],
+        "phases": [{ "script": "captain.circler" }]
+      }
+    },
+    {
+      "id": "leviathan",
+      "boss": {
+        "code": "RL-01",
+        "displayName": "IRON LEVIATHAN",
+        "x": 96, "y": 150,
+        "timeLimit": 5400,               // fight ticks, then it escapes (the BossEscaped ending flag)
+        "inner": "heart",                // revealed by its final blast
+        "raid": {                        // anchored in the world; the camera follows these offsets
+          "segments": [                  // (the camera's top-left minus the boss's origin)
+            { "x": -40, "y": -150, "ticks": 150, "hold": 150 },
+            { "x": 140, "y": -100, "ticks": 240 }
+          ],
+          "loop": true
+        },
+        "parts": [
+          { "name": "keel", "sprite": "bosses/raid-hull" },
+          { "name": "turret", "parent": "keel", "x": 24, "y": -26, "hp": 12, "radius": 7,
+            "angle": 768, "turn": 16, "gun": true, "sprite": "bosses/turret" },
+          { "name": "reactor", "parent": "keel", "x": 60, "hp": 60, "radius": 8, "core": true }
+        ],
+        "phases": [{ "script": "boss.raid" }]
+      }
+    },
+    {
+      "id": "ember",
+      "boss": {
+        "code": "TE-01",
+        "displayName": "EMBER TWIN",
+        "partner": "frost",              // enters with it (a double boss)
+        "alternate": 300,                // they take turns: the other withdraws behind
+        "enrage": { "fireRate": 0.5, "speed": 1.6, "phase": 1 }, // when its partner dies
+        "minion": "bubble",              // what its behaviours launch (captain.launcher)
+        "parts": [{ "name": "core", "hp": 30, "radius": 7, "core": true }],
+        "phases": [
+          { "script": "boss.hover", "until": { "hpBelow": 15 } },
+          { "script": "boss.lanes" }
+        ]
+      }
+    }
+  ]
+}
+```
+
+| Field | Default | Meaning |
+|---|---|---|
+| `role` | `boss` | `boss` — a stage boss (the WARNING, the scroll lock, the stage clear; one at a time) · `captain` — a mid-boss: flies in with a `boss` event (never a `warning`), rides the scrolling camera until destroyed, keeps the stage music, a short death sequence, no stage clear; no `raid` / `partner` / `inner` / `alternate` |
+| `timeLimit` | none | Fight ticks (60–36,000) after which the boss **escapes**: it flies off to the right, no tally; a stage boss's escape sets the World's `BossEscaped` ending flag and ends the encounter |
+| `raid` | none | A **battleship raid**: `segments` (1–16) of `x` / `y` (the camera's top-left minus the boss's origin), `ticks` (the eased move, default 120) and `hold` (default 0), `loop` (default `true`). The boss stays where it entered (the camera stops); from its fight the camera follows the segments, and eases back when it dies or escapes. Its parts fire only while on screen |
+| `partner` | none | Another stage boss (without a partner or raid of its own) that enters with this one — a **double boss** |
+| `alternate` | none | With a `partner`: ticks each of the pair fights while the other withdraws behind the right edge (not hit, not touched, its script paused, drawn behind) |
+| `enrage` | `fireRate` 0.625, `speed` 1.5, no `phase` | When its partner dies: fire intervals × `fireRate`, motion × `speed`, and a jump to `phase` if it is later than the running one |
+| `inner` | none | A stage boss revealed by this one's final blast (**boss inside a boss**): it flies in from the first core; the stage clears after it |
+| `minion` | none | A regular enemy the behaviours launch from a part (`captain.launcher`) |
+
+**Turned parts.** `angle` (−1023…1023) is a part's turn relative to its parent in binary units
+(1024 per turn, clockwise), `spin` (−32…32) its turn per tick; the parts attached to it are
+placed by its **world** angle (its parent's plus its own), so a spinning hub carries a ring of
+pods. Boxes never turn: give a turned part a circle hurtbox — `radius` (1–128) instead of a
+`hurtbox` — and, to show its heading, `turn` (2–64): the sprite's frames are that many headings
+(frame `k` = `k × 1024 / turn`), and the part is drawn with the one nearest its world angle (not
+with `anim`; `bosses/turret` has 16).
+
+**Behaviours** for them (`core/behaviors`): `captain.ram` (fans of waves, then a ram along the
+player's row), `captain.launcher` (launches its `minion` from the guns in turn), `captain.circler`
+(circles an ellipse round the playfield's middle, rings), `captain.crab` (sidesteps in a box,
+turning rings) and `boss.raid` (turrets turned to the player, firing along their headings).

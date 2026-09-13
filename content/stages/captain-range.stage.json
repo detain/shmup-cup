@@ -1,0 +1,30 @@
+{
+  "formatVersion": 1,
+  "kind": "stage",
+  "id": "captain-range",
+  "name": "CAPTAIN RANGE",
+  "music": { "stage": "Stage", "boss": "Boss" },
+  "length": 6400,
+  "camera": [{ "x": 0, "speed": 1, "ramp": 30 }],
+  "checkpoints": [{ "x": 0 }, { "x": 2900 }],
+  "parallax": [
+    { "layer": "far", "sprite": "bg/stars-far", "factor": 0.25, "y": 0, "spacing": 128 },
+    { "layer": "far", "sprite": "bg/stars-far", "factor": 0.25, "y": 128, "spacing": 128 },
+    { "layer": "mid", "sprite": "bg/stars-mid", "factor": 0.5, "y": 0, "spacing": 128 },
+    { "layer": "mid", "sprite": "bg/stars-mid", "factor": 0.5, "y": 128, "spacing": 128 }
+  ],
+  "tilemap": null,
+  "events": [
+    { "x": 40, "type": "spawn", "enemy": "carrier", "y": 70 },
+    { "x": 120, "type": "spawn", "enemy": "carrier", "y": 130 },
+    { "x": 200, "type": "spawn", "enemy": "carrier", "y": 100 },
+    { "x": 300, "type": "boss", "enemy": "captain-ram" },
+    { "x": 1500, "type": "spawn", "enemy": "carrier", "y": 60 },
+    { "x": 1600, "type": "boss", "enemy": "captain-launcher" },
+    { "x": 2900, "type": "spawn", "enemy": "carrier", "y": 140 },
+    { "x": 3000, "type": "boss", "enemy": "captain-circler" },
+    { "x": 4300, "type": "spawn", "enemy": "carrier", "y": 100 },
+    { "x": 4400, "type": "boss", "enemy": "captain-crab" },
+    { "x": 6400, "type": "end" }
+  ]
+}

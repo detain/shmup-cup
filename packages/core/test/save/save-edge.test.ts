@@ -568,6 +568,7 @@ describe('core/save SaveStore (edge)', () => {
         screenShake: true,
         reduceFlashing: false,
         showHitbox: false,
+        bossHpBar: false,
       },
     });
     expect(store.options).toEqual({
@@ -579,6 +580,7 @@ describe('core/save SaveStore (edge)', () => {
         screenShake: true,
         reduceFlashing: false,
         showHitbox: false,
+        bossHpBar: false,
       },
     });
     expect(before.options.audio.master).toBe(10);

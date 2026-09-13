@@ -254,6 +254,7 @@ test.describe('display options through the Options screen (web build)', () => {
         screenShake: false,
         reduceFlashing: true,
         showHitbox: true,
+        bossHpBar: false,
       });
 
     // The next boot (free flight on the raster range) starts with them.

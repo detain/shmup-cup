@@ -1,0 +1,24 @@
+{
+  "formatVersion": 1,
+  "kind": "stage",
+  "id": "raid-range",
+  "name": "RAID RANGE",
+  "music": { "stage": "Stage", "boss": "Boss" },
+  "length": 2400,
+  "camera": [{ "x": 0, "speed": 1, "ramp": 30 }],
+  "checkpoints": [{ "x": 0 }],
+  "parallax": [
+    { "layer": "far", "sprite": "bg/stars-far", "factor": 0.25, "y": 0, "spacing": 128 },
+    { "layer": "far", "sprite": "bg/stars-far", "factor": 0.25, "y": 128, "spacing": 128 },
+    { "layer": "mid", "sprite": "bg/stars-mid", "factor": 0.5, "y": 0, "spacing": 128 },
+    { "layer": "mid", "sprite": "bg/stars-mid", "factor": 0.5, "y": 128, "spacing": 128 }
+  ],
+  "tilemap": null,
+  "events": [
+    { "x": 40, "type": "spawn", "enemy": "carrier", "y": 70 },
+    { "x": 120, "type": "spawn", "enemy": "carrier", "y": 130 },
+    { "x": 200, "type": "spawn", "enemy": "carrier", "y": 100 },
+    { "x": 400, "type": "warning", "enemy": "raid-leviathan" },
+    { "x": 2400, "type": "end" }
+  ]
+}

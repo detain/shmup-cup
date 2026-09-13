@@ -74,6 +74,8 @@ describe('shell/flight', () => {
       LayerId.Player,
       LayerId.Items,
       LayerId.Items,
+      // A double boss's resting half (M2-09), then the bosses in front.
+      LayerId.GroundEnemies,
       LayerId.AirEnemies,
       // The Options an Option Hunter carries (M2-04).
       LayerId.AirEnemies,
@@ -90,7 +92,8 @@ describe('shell/flight', () => {
     expect(flight.world.batches[8]).toBe(game.world.powerups.shieldBatch); // M1-11
     expect(flight.world.batches[9]).toBe(game.world.powerups.itemBatch);
     expect(flight.world.batches[10]).toBe(game.world.bullets.pointBatch); // M2-02
-    expect(flight.world.batches[11]).toBe(game.world.bosses.batch); // M1-13
+    expect(flight.world.batches[11]).toBe(game.world.bosses.backBatch); // M2-09
+    expect(flight.world.batches[12]).toBe(game.world.bosses.batch); // M1-13
     expect(flight.world.warning).toBe(game.world.bosses.warning);
     expect(flight.world.lasers).toBe(game.world.bullets.laserView); // M1-09
     expect(flight.world.bendingLasers).toBe(game.world.bullets.bending); // M2-02

@@ -13,11 +13,11 @@
  * - **Format** ({@link SaveData}, version {@link SAVE_VERSION} = 1) under the storage key
  *   {@link SAVE_STORAGE_KEY} (`save.v1`): `{ version, options: { audio: { master, music, sfx },
  *   input: { profileId }, display: { bulletPalette, scaleMode, screenShake, reduceFlashing,
- *   showHitbox } }, hiScores: { [modeKey]: HiScoreEntry[≤ 10] }, stats: { gamesStarted, gameOvers,
- *   stagesCleared } }`. The display fields need no migration: a version-1 save written before
- *   `bulletPalette` (M2-02) or the M2-08 fields resolves the missing ones to their defaults
- *   (`standard`, `integer`, shake on, normal flashing, no hitbox marker — `core/config`
- *   `resolveUserOptions`).
+ *   showHitbox, bossHpBar } }, hiScores: { [modeKey]: HiScoreEntry[≤ 10] }, stats: {
+ *   gamesStarted, gameOvers, stagesCleared } }`. The display fields need no migration: a
+ *   version-1 save written before `bulletPalette` (M2-02), the M2-08 fields or `bossHpBar`
+ *   (M2-09) resolves the missing ones to their defaults (`standard`, `integer`, shake on, normal
+ *   flashing, no hitbox marker, no boss HP bar — `core/config` `resolveUserOptions`).
  *   A mode key ({@link hiScoreModeKey}) names the table a game's score belongs to
  *   (`meter-normal` in M1; one per difficulty preset since M2-01 — `meter-easy` … `meter-arcade`;
  *   the Direct-mode MANTA's games since M2-05 — `direct-easy` … `direct-arcade`).
@@ -476,6 +476,7 @@ export function serializeSave(data: SaveData): string {
         screenShake: display.screenShake,
         reduceFlashing: display.reduceFlashing,
         showHitbox: display.showHitbox,
+        bossHpBar: display.bossHpBar,
       },
     },
     hiScores,

@@ -1085,7 +1085,7 @@ export type ScaleMode = (typeof SCALE_MODES)[number];
 
 /**
  * Display options (presentation only). M2-02 brought the bullet palette, M2-08 the scale mode, the
- * screen-shake switch, reduced flashing and the hitbox marker.
+ * screen-shake switch, reduced flashing and the hitbox marker, M2-09 the boss HP bar.
  */
 export interface DisplayOptions {
   /** The enemy bullet colour set ({@link BULLET_PALETTES}; default `standard`). */
@@ -1101,6 +1101,11 @@ export interface DisplayOptions {
   readonly reduceFlashing: boolean;
   /** Draw a marker on each ship's hurtbox (default `false`; shmup_feat.md §5, §21). */
   readonly showHitbox: boolean;
+  /**
+   * Show the boss HP bar in the top HUD bar during boss fights (default `false` — neither source
+   * game had one; M2-09, shmup_feat.md §13).
+   */
+  readonly bossHpBar: boolean;
 }
 
 /**
@@ -1126,6 +1131,7 @@ export const DEFAULT_USER_OPTIONS: UserOptions = Object.freeze({
     screenShake: true,
     reduceFlashing: false,
     showHitbox: false,
+    bossHpBar: false,
   }),
 });
 
@@ -1182,8 +1188,9 @@ function volumeLevel(value: unknown, fallback: number): number {
  * the default. `input.profileId`: a string matching {@link INPUT_PROFILE_ID_PATTERN} of at most 64
  * characters, else `null`. `display.bulletPalette`: one of {@link BULLET_PALETTES}, else
  * `standard`; `display.scaleMode`: one of {@link SCALE_MODES}, else `integer` (M2-08);
- * `display.screenShake`, `reduceFlashing`, `showHitbox`: booleans, else their defaults (M2-08 —
- * a save written before them resolves without a migration; unknown display fields are dropped).
+ * `display.screenShake`, `reduceFlashing`, `showHitbox` and `bossHpBar` (M2-09): booleans, else
+ * their defaults (M2-08 — a save written before them resolves without a migration; unknown display
+ * fields are dropped).
  * Whether the profile id names an existing profile is the host's business (an unknown one is
  * skipped when applied).
  *
@@ -1229,6 +1236,7 @@ export function resolveUserOptions(value: unknown): UserOptions {
       reduceFlashing:
         typeof display.reduceFlashing === 'boolean' ? display.reduceFlashing : dd.reduceFlashing,
       showHitbox: typeof display.showHitbox === 'boolean' ? display.showHitbox : dd.showHitbox,
+      bossHpBar: typeof display.bossHpBar === 'boolean' ? display.bossHpBar : dd.bossHpBar,
     }),
   });
 }

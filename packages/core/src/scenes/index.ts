@@ -134,7 +134,8 @@
  * {@link PREVIEW_SPREAD_TICKS}), the ship select's labels ({@link SHIP_MODE_LABELS},
  * {@link SHIP_MODE_HINTS} — M2-05),
  * {@link InputProfileSetup}, the menu item indices ({@link TitleItem}, {@link PauseItem},
- * {@link OptionsItem} — BULLETS since M2-02, SCALE / SHAKE / FLASHES / HITBOX since M2-08 —),
+ * {@link OptionsItem} — BULLETS since M2-02, SCALE / SHAKE / FLASHES / HITBOX since M2-08, BOSS HP
+ *   since M2-09 —),
  * the Options screen's labels ({@link BULLET_PALETTE_LABELS}, M2-02; {@link SCALE_MODE_LABELS},
  * {@link FLASH_LABELS}, M2-08) and the timing constants ({@link STAGE_CLEAR_DELAY_TICKS},
  * {@link GAME_OVER_DELAY_TICKS}, {@link GAME_OVER_TIMEOUT_TICKS}, {@link GAME_OVER_LOCK_TICKS},
@@ -712,7 +713,7 @@ export const PauseItem = { Resume: 0, Options: 1, Retry: 2, Quit: 3 } as const;
 
 /**
  * Options screen items: the three volume sliders, the input profile, the bullet palette (M2-02),
- * BACK.
+ * the display options (M2-08), the boss HP bar (M2-09), BACK.
  */
 export const OptionsItem = {
   /** MASTER volume slider. */
@@ -733,8 +734,10 @@ export const OptionsItem = {
   Flashes: 7,
   /** HITBOX: the ships' hitbox markers off / on (M2-08). */
   Hitbox: 8,
-  /** BACK: store the options, write the save and close (index 9 since M2-08 — was 5, then 4). */
-  Back: 9,
+  /** BOSS HP: the boss HP bar in the top HUD bar off / on (M2-09). */
+  BossHp: 9,
+  /** BACK: store the options, write the save and close (index 10 since M2-09 — was 9, 5, 4). */
+  Back: 10,
 } as const;
 
 /** The Options screen's BULLETS labels, in `BULLET_PALETTES` order (M2-02). */
@@ -821,13 +824,13 @@ const PAUSE_MENU_LAYOUT: MenuLayout = Object.freeze({
   cursorX: CX - 60,
 });
 
-/** The Options screen's panel: left, top, width, height (taller since M2-08: ten rows). */
-const OPTIONS_PANEL = Object.freeze({ x: 48, y: 18, w: 288, h: 182 });
+/** The Options screen's panel: left, top, width, height (taller since M2-09: eleven rows). */
+const OPTIONS_PANEL = Object.freeze({ x: 48, y: 12, w: 288, h: 192 });
 
 /** Where the Options menu is drawn (labels left, values from x 150). */
 const OPTIONS_MENU_LAYOUT: MenuLayout = Object.freeze({
   x: 72,
-  y: 46,
+  y: 38,
   lineHeight: 14,
   cursorX: 62,
   valueX: 150,
@@ -1523,7 +1526,8 @@ export class PauseScene extends SceneBase {
 /**
  * The Options screen: MASTER / MUSIC / SFX sliders, CONTROLS (the input profile), BULLETS (the
  * enemy bullet colour set — plan M2-02), the display options SCALE (integer / fit / stretch),
- * SHAKE (on / off), FLASHES (normal / reduced) and HITBOX (off / on) — plan M2-08 —, BACK
+ * SHAKE (on / off), FLASHES (normal / reduced) and HITBOX (off / on) — plan M2-08 —, BOSS HP
+ * (off / on — the boss HP bar in the top HUD bar, plan M2-09), BACK
  * (shmup_feat.md §21, plan M1-17).
  *
  * @remarks
@@ -1537,7 +1541,8 @@ export class PauseScene extends SceneBase {
  * (`BulletPalette` — the host swaps the renderer's bullet sprites), SCALE / SHAKE / FLASHES /
  * HITBOX one with the choice's index (`ScaleMode` — the index in `SCALE_MODES` —,
  * `ScreenShake`, `ReduceFlashing`, `ShowHitbox` — 1 = on; the host applies them to the renderer —
- * SHAKE and HITBOX are toggles: Left = OFF, Right = ON, OK flips);
+ * SHAKE and HITBOX are toggles: Left = OFF, Right = ON, OK flips), BOSS HP one with 1 = on
+ * (`BossHpBar`, M2-09 — a toggle; the game's HUD follows the saved value once the screen closes);
  * all play the move sound (at the new volume). BACK or the Back button stores the sliders, the
  * display options and — when it changed — the profile id in the save, writes the save when
  * anything differs from what is stored (`SaveStore.flush`), plays `MenuBack` and closes. CONTROLS
@@ -1568,6 +1573,8 @@ export class OptionsScene extends SceneBase {
   readonly flashes: Choice = createChoice(FLASH_LABELS, 0);
   /** HITBOX: the ships' hitbox markers on / off (M2-08). */
   readonly hitbox: Toggle = createToggle(false);
+  /** BOSS HP: the boss HP bar on / off (M2-09). */
+  readonly bossHp: Toggle = createToggle(false);
   /** The menu. */
   readonly menu: ListMenu;
   /** The CONTROLS index when the screen opened (a different one on close is saved). */
@@ -1596,6 +1603,7 @@ export class OptionsScene extends SceneBase {
         { label: 'SHAKE', toggle: this.shake },
         { label: 'FLASHES', choice: this.flashes },
         { label: 'HITBOX', toggle: this.hitbox },
+        { label: 'BOSS HP', toggle: this.bossHp },
         'BACK',
       ],
       { disabledMask: profiles.length === 0 ? 1 << OptionsItem.Controls : 0 },
@@ -1625,6 +1633,7 @@ export class OptionsScene extends SceneBase {
     this.shake.value = display.screenShake;
     this.flashes.index = display.reduceFlashing ? 1 : 0;
     this.hitbox.value = display.showHitbox;
+    this.bossHp.value = display.bossHpBar;
     this.menu.focus = OptionsItem.Master;
     this.menu.open(MENU_OPEN_LOCK_TICKS);
   }
@@ -1649,6 +1658,7 @@ export class OptionsScene extends SceneBase {
         screenShake: this.shake.value,
         reduceFlashing: this.flashes.index === 1,
         showHitbox: this.hitbox.value,
+        bossHpBar: this.bossHp.value,
       },
     };
     save.setOptions(options);
@@ -1703,6 +1713,9 @@ export class OptionsScene extends SceneBase {
           break;
         case OptionsItem.Hitbox:
           flow.userOption(UserOptionKind.ShowHitbox, this.hitbox.value ? 1 : 0);
+          break;
+        case OptionsItem.BossHp:
+          flow.userOption(UserOptionKind.BossHpBar, this.bossHp.value ? 1 : 0);
           break;
         default:
           break;
@@ -3595,6 +3608,8 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
       if (gameVisible) {
         view.tick = game.world.tick;
         view.world = game.world.view;
+        // The boss HP bar follows the saved display option (M2-09).
+        game.hud.showBossHp = control.save.options.display.bossHpBar;
         game.hud.update(game.world, game.hudList);
         view.hud = game.hudList;
       } else if (selectVisible && preview !== null) {

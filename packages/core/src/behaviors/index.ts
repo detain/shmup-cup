@@ -98,6 +98,31 @@
  *   threatened when the boss's slow tracking sweeps a lane across, and every lane is dodged by
  *   moving up or down (4-way).
  *
+ * **Captains and raids (M2-09)** — the mid-boss archetypes of shmup_feat.md §13 (a boss section of
+ * role `captain`) and the battleship raid's turrets; they fire from the standing guns (the first
+ * standing part when the boss has no gun):
+ *
+ * - `captain.ram` — wave shooter + ram: [`waves` 3] fans of [`ways` 5] red bullets [`spread` 40,
+ *   `bulletSpeed` 1.5], [`waveTicks` 36] apart (rank-scaled), then it rams — eases in [`ramTicks`
+ *   45] to view x [`ramX` 40] at the nearest player's height (a straight, telegraphed horizontal
+ *   dash: dodge up or down) —, flies home in [`returnTicks` 70] and rests [`restTicks` 50].
+ * - `captain.launcher` — splitting launcher: tracks the player's height [`trackSpeed` 0.4,
+ *   `margin` 40]; every [`launchTicks` 100] ticks up to [`count` 2] guns in turn each launch the
+ *   boss's `minion` (a splitting enemy — `bubble.split`); every [`fireTicks` 70] ticks each gun an
+ *   aimed [`ways` 3]-way [`spread` 48] at [`bulletSpeed` 1.25].
+ * - `captain.circler` — screen-crossing circler: from its home it circles an ellipse round view
+ *   point [`cx` 192, `cy` 100] with radii [`rx` 140, `ry` 64] at [`speed` 3] binary units a tick
+ *   (it should start at `cx + rx`, `cy` — its home); every [`fireTicks` 60] ticks a ring of
+ *   [`ring` 8] bullets [`bulletSpeed` 1.25], each turned half a gap from the last.
+ * - `captain.crab` — ring-firing crab: every [`stepTicks` 70] ticks it sidesteps to a random point
+ *   of the box [`minX` 250 … `maxX` 340, `minY` 40 … `maxY` 160] (gameplay RNG, in 60 % of the
+ *   step); every [`ringTicks` 90] ticks each gun fires a ring of [`ring` 12] bullets
+ *   [`bulletSpeed` 1.1], turned [`turn` 16] units further each time.
+ * - `boss.raid` — a battleship raid's turrets: every [`fireTicks` 50] ticks each standing gun on
+ *   screen turns to the nearest player (by at most [`aimStep` 0 = at once] units; its heading
+ *   frames follow) and fires a [`ways` 1]-way [`spread` 32] at [`bulletSpeed` 1.5] along its new
+ *   heading.
+ *
  * **Implements.**
  * - shmup_feat.md §11 — archetypes (popcorn, formation fliers, capsule carriers, turrets,
  *   walkers, hatches, rammers, orbiters, the Option Hunter — M2-04) as coroutine scripts
@@ -1089,11 +1114,312 @@ const bossBulwark = defineBossBehavior(
   },
 );
 
-/** The M1 boss roster's definitions (see the module docs). */
+/**
+ * The part a captain's generic fire comes from when it has no standing gun: its first standing
+ * part (-1 = none).
+ *
+ * @param api - The boss's API.
+ * @returns A part index, or -1.
+ */
+function firstStanding(api: BossScriptApi): number {
+  const parts = api.self.parts;
+  for (let i = 0; i < api.partCount; i++) if (!parts[i].destroyed) return i;
+  return -1;
+}
+
+/**
+ * Whether the boss has a standing gun.
+ *
+ * @param api - The boss's API.
+ * @returns `true` when one stands.
+ */
+function hasGun(api: BossScriptApi): boolean {
+  const parts = api.self.parts;
+  for (let i = 0; i < api.partCount; i++) if (parts[i].gun && !parts[i].destroyed) return true;
+  return false;
+}
+
+/**
+ * Fires an aimed spread from every standing gun — or, without one, from the first standing part.
+ *
+ * @param api - The boss's API.
+ * @param ways - Bullets per volley.
+ * @param spread - Units between neighbours.
+ * @param speed - Speed on Normal.
+ * @param kind - `BulletKind`.
+ * @returns Bullets fired.
+ */
+function fireSpreads(
+  api: BossScriptApi,
+  ways: number,
+  spread: number,
+  speed: number,
+  kind: number,
+): number {
+  if (hasGun(api)) return fireGuns(api, ways, spread, speed, kind);
+  const part = firstStanding(api);
+  return part < 0 ? 0 : api.nWay(part, ways, spread, speed, kind);
+}
+
+/**
+ * Fires a ring from every standing gun — or, without one, from the first standing part.
+ *
+ * @param api - The boss's API.
+ * @param count - Bullets per ring.
+ * @param speed - Speed on Normal.
+ * @param kind - `BulletKind`.
+ * @param offset - First heading.
+ * @returns Bullets fired.
+ */
+function fireRings(
+  api: BossScriptApi,
+  count: number,
+  speed: number,
+  kind: number,
+  offset: number,
+): number {
+  if (!hasGun(api)) {
+    const part = firstStanding(api);
+    return part < 0 ? 0 : api.ring(part, count, speed, kind, offset);
+  }
+  const parts = api.self.parts;
+  let fired = 0;
+  for (let i = 0; i < api.partCount; i++) {
+    if (parts[i].gun && !parts[i].destroyed) fired += api.ring(i, count, speed, kind, offset);
+  }
+  return fired;
+}
+
+/**
+ * `captain.ram` — a mid-boss that shoots waves of fans, then rams along the player's row (the
+ * tunables are listed in the module docs).
+ *
+ * @remarks
+ * The ram is a `moveTo` (eased in-out): it leaves its home at the height of the nearest living
+ * player (clamped 24 px inside the playfield; its home height without a target), reaches `ramX`
+ * after `ramTicks`, waits 10 ticks there and flies home. Its body is the danger (contact), so the
+ * ram is dodged by leaving its row. Every local stays a whole number (the ram row is floored).
+ */
+const captainRam = defineBossBehavior(
+  'captain.ram',
+  {
+    waves: 3,
+    waveTicks: 36,
+    ways: 5,
+    spread: 40,
+    bulletSpeed: 1.5,
+    ramTicks: 45,
+    ramX: 40,
+    returnTicks: 70,
+    restTicks: 50,
+  },
+  function* ram(api, p): Script {
+    const waves = p.waves >= 1 ? Math.floor(p.waves) : 1;
+    const ways = p.ways >= 1 ? Math.floor(p.ways) : 1;
+    const ramTicks = p.ramTicks >= 1 ? Math.floor(p.ramTicks) : 1;
+    const returnTicks = p.returnTicks >= 1 ? Math.floor(p.returnTicks) : 1;
+    const restTicks = p.restTicks >= 1 ? Math.floor(p.restTicks) : 1;
+    const self = api.self;
+    api.hold();
+    for (;;) {
+      for (let w = 0; w < waves; w++) {
+        yield api.fireWait(p.waveTicks);
+        fireSpreads(api, ways, p.spread, p.bulletSpeed, BulletKind.RoundRed);
+      }
+      const target = api.target();
+      let row = Math.floor(target === null ? self.homeY : target.y - self.y + self.screenY);
+      if (row < 24) row = 24;
+      else if (row > PLAYFIELD_H - 24) row = PLAYFIELD_H - 24;
+      api.moveTo(p.ramX, row, ramTicks);
+      yield ramTicks + 10;
+      api.moveTo(self.homeX, self.homeY, returnTicks);
+      yield returnTicks + restTicks;
+    }
+  },
+);
+
+/**
+ * `captain.launcher` — a mid-boss that launches its splitting minions and fires spreads (the
+ * tunables are listed in the module docs).
+ *
+ * @remarks
+ * The launches go through `api.launch` (the boss section's `minion`, spawned at the gun's centre —
+ * without a gun, the first standing part), taking the guns in turn so the minions leave from
+ * different points; the sleeps follow the sooner of the two timers, like `boss.hover`.
+ */
+const captainLauncher = defineBossBehavior(
+  'captain.launcher',
+  {
+    trackSpeed: 0.4,
+    margin: 40,
+    launchTicks: 100,
+    count: 2,
+    fireTicks: 70,
+    bulletSpeed: 1.25,
+    ways: 3,
+    spread: 48,
+  },
+  function* launcher(api, p): Script {
+    api.track(p.trackSpeed, p.margin, PLAYFIELD_H - p.margin);
+    const ways = p.ways >= 1 ? Math.floor(p.ways) : 1;
+    const count = p.count >= 1 ? Math.floor(p.count) : 1;
+    const parts = api.self.parts;
+    let next = 0;
+    let launchIn = api.fireWait(p.launchTicks);
+    let fireIn = api.fireWait(p.fireTicks);
+    for (;;) {
+      const wait = fireIn < launchIn ? fireIn : launchIn;
+      yield wait;
+      fireIn -= wait;
+      launchIn -= wait;
+      if (launchIn <= 0) {
+        const n = api.partCount;
+        let launched = 0;
+        if (hasGun(api)) {
+          for (let k = 0; k < n && launched < count; k++) {
+            const i = (next + k) % n;
+            if (!parts[i].gun || parts[i].destroyed) continue;
+            api.launch(i);
+            launched++;
+            next = i + 1;
+          }
+        } else {
+          const part = firstStanding(api);
+          if (part >= 0) api.launch(part);
+        }
+        launchIn = api.fireWait(p.launchTicks);
+      }
+      if (fireIn <= 0) {
+        fireSpreads(api, ways, p.spread, p.bulletSpeed, BulletKind.OvalPink);
+        fireIn = api.fireWait(p.fireTicks);
+      }
+    }
+  },
+);
+
+/**
+ * `captain.circler` — a mid-boss that circles the screen, firing rings (the tunables are listed
+ * in the module docs).
+ *
+ * @remarks
+ * `api.orbit` moves it (a per-tick motion of the boss system — the script only sleeps between its
+ * rings); the orbit starts at the angle of where the boss is, so a home at `cx + rx`, `cy` starts
+ * it without a jump. Each ring is turned half a gap from the last (`ring` / 2 of a gap, in binary
+ * units, kept whole).
+ */
+const captainCircler = defineBossBehavior(
+  'captain.circler',
+  {
+    cx: 192,
+    cy: 100,
+    rx: 140,
+    ry: 64,
+    speed: 3,
+    fireTicks: 60,
+    bulletSpeed: 1.25,
+    ring: 8,
+  },
+  function* circler(api, p): Script {
+    api.orbit(p.cx, p.cy, p.rx, p.ry, p.speed);
+    const ring = p.ring >= 1 ? Math.floor(p.ring) : 1;
+    const half = Math.floor(ANGLE_UNITS / ring / 2);
+    let offset = 0;
+    for (;;) {
+      yield api.fireWait(p.fireTicks);
+      fireRings(api, ring, p.bulletSpeed, BulletKind.RoundPurple, offset);
+      offset = (offset + half) % ANGLE_UNITS;
+    }
+  },
+);
+
+/**
+ * `captain.crab` — a mid-boss that sidesteps around its corner of the screen and fires rings (the
+ * tunables are listed in the module docs).
+ *
+ * @remarks
+ * The sidesteps are `moveTo`s to whole-pixel points drawn from the gameplay RNG (deterministic),
+ * each taking 60 % of the step; the rings turn `turn` units further every time, so their gaps
+ * sweep round and a 4-way player can always find the next gap.
+ */
+const captainCrab = defineBossBehavior(
+  'captain.crab',
+  {
+    stepTicks: 70,
+    minX: 250,
+    maxX: 340,
+    minY: 40,
+    maxY: 160,
+    ringTicks: 90,
+    ring: 12,
+    bulletSpeed: 1.1,
+    turn: 16,
+  },
+  function* crab(api, p): Script {
+    api.hold();
+    const stepTicks = p.stepTicks >= 1 ? Math.floor(p.stepTicks) : 1;
+    const ring = p.ring >= 1 ? Math.floor(p.ring) : 1;
+    const turn = Math.floor(p.turn);
+    const minX = Math.floor(p.minX < p.maxX ? p.minX : p.maxX);
+    const maxX = Math.floor(p.minX < p.maxX ? p.maxX : p.minX);
+    const minY = Math.floor(p.minY < p.maxY ? p.minY : p.maxY);
+    const maxY = Math.floor(p.minY < p.maxY ? p.maxY : p.minY);
+    let offset = 0;
+    let stepIn = stepTicks;
+    let ringIn = api.fireWait(p.ringTicks);
+    for (;;) {
+      const wait = stepIn < ringIn ? stepIn : ringIn;
+      yield wait;
+      stepIn -= wait;
+      ringIn -= wait;
+      if (stepIn <= 0) {
+        const x = api.rng.rangeInt(minX, maxX);
+        const y = api.rng.rangeInt(minY, maxY);
+        api.moveTo(x, y, Math.floor((stepTicks * 3) / 5));
+        stepIn = stepTicks;
+      }
+      if (ringIn <= 0) {
+        fireRings(api, ring, p.bulletSpeed, BulletKind.OvalRed, offset);
+        offset = (((offset + turn) % ANGLE_UNITS) + ANGLE_UNITS) % ANGLE_UNITS;
+        ringIn = api.fireWait(p.ringTicks);
+      }
+    }
+  },
+);
+
+/**
+ * `boss.raid` — a battleship raid's turrets (the tunables are listed in the module docs): every
+ * volley, each standing gun that may fire (on screen — `canFire` checks it for a raid) turns to
+ * the nearest player (`aimPart`: its heading frames follow) and fires along its new heading.
+ */
+const bossRaid = defineBossBehavior(
+  'boss.raid',
+  { fireTicks: 50, bulletSpeed: 1.5, ways: 1, spread: 32, aimStep: 0 },
+  function* raid(api, p): Script {
+    api.hold();
+    const ways = p.ways >= 1 ? Math.floor(p.ways) : 1;
+    const parts = api.self.parts;
+    for (;;) {
+      yield api.fireWait(p.fireTicks);
+      for (let i = 0; i < api.partCount; i++) {
+        if (!parts[i].gun || !api.canFire(i)) continue;
+        const heading = api.aimPart(i, p.aimStep);
+        if (heading < 0) continue;
+        api.nWay(i, ways, p.spread, p.bulletSpeed, BulletKind.RoundPink, heading);
+      }
+    }
+  },
+);
+
+/** The boss roster's definitions: M1's, and the captains and raid turrets of M2-09. */
 export const DEFAULT_BOSS_BEHAVIOR_DEFS: readonly BossBehaviorDef[] = Object.freeze([
   bossHover,
   bossLanes,
   bossBulwark,
+  bossRaid,
+  captainRam,
+  captainLauncher,
+  captainCircler,
+  captainCrab,
 ]);
 
 /** The boss roster as a registry (what the World uses). */

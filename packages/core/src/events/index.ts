@@ -112,10 +112,16 @@ export const SimEventKind = {
    * the scene flow's profile choices (the host applies that profile to its input adapter), or, for
    * `BulletPalette` (M2-02), the index of the bullet palette in `BULLET_PALETTES`; for `ScaleMode`
    * (M2-08) the index in `SCALE_MODES`; for `ScreenShake` / `ReduceFlashing` / `ShowHitbox` (M2-08)
-   * 1 = on, 0 = off. Pushed
+   * and `BossHpBar` (M2-09) 1 = on, 0 = off. Pushed
    * live, on every change; the save is written when the screen closes.
    */
   UserOption: 13,
+  /**
+   * A boss escaped when its time limit ran out (M2-09, shmup_feat.md §13 "boss timer / escape"):
+   * `id` = the boss's `ContentDb.enemies` index, `x`/`y` = its origin as it left (whole world
+   * pixels), `param` 0. No tally; a stage boss's escape sets the World's `BossEscaped` ending flag.
+   */
+  BossEscaped: 14,
 } as const;
 
 /** One of the {@link SimEventKind} codes. */
@@ -137,6 +143,7 @@ export const SIM_EVENT_KIND_NAMES: readonly string[] = Object.freeze([
   'bossDefeated',
   'score',
   'userOption',
+  'bossEscaped',
 ]);
 
 /**
@@ -168,6 +175,8 @@ export const UserOptionKind = {
   ReduceFlashing: 7,
   /** HITBOX (M2-08): `param` = 1 (draw the ships' hitbox markers) or 0 (hide them). */
   ShowHitbox: 8,
+  /** BOSS HP (M2-09): `param` = 1 (draw the boss HP bar in the top HUD bar) or 0 (hide it). */
+  BossHpBar: 9,
 } as const;
 
 /** A {@link UserOptionKind} code. */

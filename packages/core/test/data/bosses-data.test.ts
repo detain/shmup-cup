@@ -240,7 +240,7 @@ describe('core/data — boss section (M1-13)', () => {
       { parts: [{ name: 'core', core: true, vulnerable: 'never' }] },
       [
         ['parts[0].vulnerable', 'a core cannot be "never" (the boss could not die)'],
-        ['parts[0].hurtbox', 'is required for a core'],
+        ['parts[0].hurtbox', 'is required for a core (a hurtbox or a radius)'],
       ],
     ],
     [

@@ -91,6 +91,7 @@ describe('shell/dispatch display option events (M2-08)', () => {
       screenShake: false,
       reduceFlashing: true,
       showHitbox: true,
+      bossHpBar: false,
     });
     expect(calls).toEqual([
       ['palette', 'deuteranopia'],

@@ -218,6 +218,7 @@ describe('core/scenes options: display rows (edges)', () => {
         screenShake: false,
         reduceFlashing: true,
         showHitbox: true,
+        bossHpBar: false,
       },
     });
     await first.flush();
@@ -280,7 +281,7 @@ describe('core/scenes options: display rows (edges)', () => {
     expect(save.options.display.scaleMode).toBe('integer');
   });
 
-  it('draws all ten rows inside the panel and the frame, one line apart', () => {
+  it('draws all eleven rows inside the panel and the frame, one line apart', () => {
     const s = new Session(createSaveStore(null));
     s.openOptionsFromTitle();
     const ui = s.game.renderFrame().ui;
@@ -305,6 +306,7 @@ describe('core/scenes options: display rows (edges)', () => {
       'SHAKE',
       'FLASHES',
       'HITBOX',
+      'BOSS HP',
       'BACK',
     ];
     const ys = labels.map((label) => rows.get(label));

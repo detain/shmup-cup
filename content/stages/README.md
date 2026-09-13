@@ -52,6 +52,44 @@ with a `wave` effect and a checker floor (`bg/checker-floor`, a static band) tha
 turns into a pseudo-3D floor, and a heat `haze` over the stars between camera x 1,200 and 2,400;
 a few drifter formations and carriers. `?stage=raster-range` plays it.
 
+The advanced bosses of M2-09 have four dev stages (their bosses in
+[`content/enemies/advanced-bosses.enemies.json`](../enemies/advanced-bosses.enemies.json)):
+`captain-range.stage.json` (**CAPTAIN RANGE** — the four captains, one after another with `boss`
+events while the stage scrolls on: SURGE RAMMER, BROOD LAUNCHER, ORBIT WARDEN, TIDE CRAB),
+`raid-range.stage.json` (**RAID RANGE** — the WARNING, then IRON LEVIATHAN, a battleship wider than
+the screen: the camera pans round it, and its final blast reveals LEVIATHAN HEART; left alone for
+90 s of fight it escapes), `twin-range.stage.json` (**TWIN RANGE** — the EMBER AND FROST TWINS
+taking turns; the survivor enrages) and `gauntlet-range.stage.json` (**GAUNTLET RANGE**, a boss
+rush: TRIAL WARDEN with its WARNING, LEVIATHAN HEART, the twins). `?stage=<id>` plays each.
+
+**Boss rushes (M2-09).** A stage of `"type": "bossRush"` (default `normal`) runs its `rush` list
+(1–16 entries, each a stage boss — role `boss`): each boss comes `delay` ticks (default 60) after
+the stage start or after the last one's end — with the WARNING when `warning` is `true` (default:
+it flies in at once) — and the last one's end clears the stage. Such a stage has no `end` event;
+its camera path and events work as usual (its camera may scroll or stop). A checkpoint restart
+brings the current boss again.
+
+```jsonc
+{
+  "formatVersion": 1,
+  "kind": "stage",
+  "id": "rush-sample",
+  "name": "RUSH SAMPLE",
+  "music": { "stage": "Stage", "boss": "Boss" },
+  "length": 3600,
+  "camera": [{ "x": 0, "speed": 1 }],
+  "checkpoints": [{ "x": 0 }],
+  "parallax": [],
+  "tilemap": null,
+  "events": [],
+  "type": "bossRush",
+  "rush": [
+    { "enemy": "test-boss", "delay": 360, "warning": true },
+    { "enemy": "raid-heart" }
+  ]
+}
+```
+
 **The Direct-mode item plan (M2-05).** `directItems` (optional, 1–256 of `red`, `green`, `blue`,
 `orange`, `yellow`, `octagon`) is the order in which the stage's `powerup` drops — and its
 `capsule` drops: the direct ship has no meter — hand out items **in Direct mode**, cycling; the

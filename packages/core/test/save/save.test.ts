@@ -107,6 +107,7 @@ describe('core/save round trip', () => {
         screenShake: false,
         reduceFlashing: true,
         showHitbox: true,
+        bossHpBar: false,
       },
     });
     store.recordScore('meter-normal', createHiScoreEntry(12300, { reached: 'zone-a', mode: '1p' }));
@@ -127,6 +128,7 @@ describe('core/save round trip', () => {
       screenShake: false,
       reduceFlashing: true,
       showHitbox: true,
+      bossHpBar: false,
     });
   });
 
@@ -146,6 +148,7 @@ describe('core/save round trip', () => {
       screenShake: true,
       reduceFlashing: false,
       showHitbox: false,
+      bossHpBar: false,
     });
   });
 
@@ -168,6 +171,7 @@ describe('core/save round trip', () => {
           screenShake: true,
           reduceFlashing: false,
           showHitbox: false,
+          bossHpBar: false,
         },
       },
       hiScores: {
@@ -201,6 +205,7 @@ describe('core/save migrations', () => {
         screenShake: true,
         reduceFlashing: false,
         showHitbox: false,
+        bossHpBar: false,
       },
     });
     // The flat list became the meter-normal table: sorted, ties keep their order, bad rows dropped.
@@ -324,6 +329,7 @@ describe('core/save sanitising', () => {
         screenShake: true,
         reduceFlashing: false,
         showHitbox: false,
+        bossHpBar: false,
       },
     });
     expect(data.hiScores).toEqual({

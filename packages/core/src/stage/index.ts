@@ -49,6 +49,11 @@
  * camera y goes from where it was to `yTo` while the camera x goes from the key's x to `x + yOver`
  * (so a speed change mid-pan keeps the slope).
  *
+ * **Following (M2-09).** A battleship raid (`core/bosses`) makes the camera follow a target it
+ * moves around the boss ({@link StageRunner.follow}): while set, step 3 puts the camera on the
+ * target (the recorded `dx` / `dy` carry the ships along) instead of scrolling; `null` hands the
+ * camera back to the scroll, a restart forgets the target.
+ *
  * **Branches and triggers (M2-07).** Branches are data (`StageSpec.branches`: id, flag, value); an
  * event with a `branch` is skipped — no runner part, no hooks — when the camera reaches it while
  * its branch is not taken. A `trigger` event arms its region (its runner part); every tick the
@@ -86,7 +91,8 @@
  *   tilemap collider, parallax manager
  *
  * **Public API.** Runner {@link createStageRunner}, {@link StageRunner}, {@link StageHooks},
- * {@link StageEventCode}, {@link StageSlot}, {@link STAGE_STATE_SLOTS}, {@link findEventCursor};
+ * {@link StageEventCode}, {@link StageSlot}, {@link STAGE_STATE_SLOTS}, {@link findEventCursor},
+ * {@link StageCameraTarget} (M2-09: {@link StageRunner.follow} — a raid's camera path);
  * camera {@link StageCamera}, {@link createStageCamera}; terrain {@link createStageTerrain},
  * {@link createTerrainView}, {@link stageMapWidth}; parallax {@link createParallaxView},
  * {@link updateParallaxView}, {@link StageParallaxView}; presentation effects
@@ -461,6 +467,44 @@ export interface StageRunner {
    * ```
    */
   brake(ticks: number): void;
+  /**
+   * The target the camera follows (M2-09 — a battleship raid's boss-relative camera path,
+   * `core/bosses`), or `null`.
+   */
+  readonly following: StageCameraTarget | null;
+  /**
+   * Makes the camera follow a target (M2-09, a raid): while set, step 3 of every tick moves the
+   * camera **to the target's x / y** instead of scrolling (the speed, the pans and the stop keys
+   * wait; the stage length still caps x), recording `dx` / `dy` so the ships, shots and bullets
+   * ride along. `null` stops following: scrolling resumes from where the camera is.
+   *
+   * @remarks
+   * The owner writes the target's fields before the runner's tick (the boss system in phase 3);
+   * the runner only reads them — never allocates. A restart ({@link StageRunner.restartAt},
+   * {@link StageRunner.jumpTo}) forgets the target. The target is not part of
+   * {@link StageRunner.state}: its owner hashes it.
+   *
+   * @param target - The target (a reused object), or `null`.
+   *
+   * @example
+   * ```ts
+   * const target = { x: runner.camera.x, y: runner.camera.y };
+   * runner.brake(0); // locked…
+   * runner.follow(target); // …and following: target.x += 1 per tick pans the view
+   * ```
+   */
+  follow(target: StageCameraTarget | null): void;
+}
+
+/**
+ * Where the camera goes while a {@link StageRunner} follows it (M2-09): the view's top-left corner
+ * in world pixels, written by the target's owner every tick.
+ */
+export interface StageCameraTarget {
+  /** World x of the playfield's left edge to move to. */
+  readonly x: number;
+  /** World y of the playfield's top edge to move to. */
+  readonly y: number;
 }
 
 /**
@@ -667,6 +711,8 @@ class StageRunnerImpl implements StageRunner {
   private readonly hooks: StageHooks;
   /** The timeline as typed arrays. */
   private readonly compiled: CompiledStage;
+  /** See {@link StageRunner.following}. */
+  following: StageCameraTarget | null = null;
 
   /**
    * Compiles the timeline and puts the runner at the stage start (no `hooks.clear()`).
@@ -798,11 +844,16 @@ class StageRunnerImpl implements StageRunner {
       const stop = keyX[lock] - camera.x;
       if (dx > stop) dx = stop > 0 ? stop : 0;
     }
+    // A raid (M2-09): the camera goes where its target is.
+    const target = this.following;
+    if (target !== null) dx = target.x - camera.x;
     const room = this.stage.length - camera.x;
     if (dx > room) dx = room > 0 ? room : 0;
     // A diagonal pan (M2-07 `yOver`): y follows the scroll x linearly.
     const over = state[StageSlot.PanOver];
-    if (over > 0) {
+    if (target !== null) {
+      y = target.y;
+    } else if (over > 0) {
       const t = (camera.x + dx - state[StageSlot.PanStartX]) / over;
       const from = state[StageSlot.PanFrom];
       const to = state[StageSlot.PanTo];
@@ -958,6 +1009,11 @@ class StageRunnerImpl implements StageRunner {
       state[StageSlot.Braking] = 0;
       this.setTarget(state[StageSlot.ResumeSpeed], state[StageSlot.BrakeRamp]);
     }
+  }
+
+  /** See {@link StageRunner.follow}. */
+  follow(target: StageCameraTarget | null): void {
+    this.following = target;
   }
 
   /** See {@link StageRunner.brake}. */
@@ -1124,6 +1180,7 @@ class StageRunnerImpl implements StageRunner {
     const firedBefore = state[StageSlot.TriggersFired];
     state.fill(0);
     state[StageSlot.Restarts] = restarts + 1;
+    this.following = null;
     camera.x = x;
     camera.y = 0;
     camera.dx = 0;

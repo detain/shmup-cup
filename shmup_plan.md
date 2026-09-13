@@ -2700,6 +2700,72 @@ Goal of the milestone: every **[P1]** feature. Steps are ordered so systems land
   ending flag); boss-rush sequence support (stage type `bossRush`).
 - **Acceptance:** rotation transforms, raid camera paths, nested boss spawn, enrage rule, timer escape, HP bar model.
 - **Refs:** `shmup_feat.md` §13.
+- **As built:**
+  - **Four boss slots.** `BossSystem.slots` (`MAX_BOSSES` 4, slot 0 is still `bosses.boss`), each
+    with its 16 parts; part slot `g = slot × 16 + index` is `BossPart.global`, its hit / grid /
+    laser-source id `BOSS_PART_ID_BASE + g` (`BOSS_PART_SLOTS` 64, `MAX_HIT_TARGETS` 128, the
+    weapons' part cooldown tables 32 × 64, the World's `laserSources` enemies + 64 parts).
+    `damagePart` / `isArmoured` take the part slot (boss slot 0's part index, as before). Stage
+    bosses (role `boss`) form the **main encounter** — one at a time, as in M1; the last of it to
+    end (death or escape, no other stage boss in play) releases the lock and clears the stage (or
+    brings the next rush boss). A boss that enters during `update()` from another slot's timer (a
+    partner, an inner boss) counts its intro from the next tick, like the boss that brought it.
+  - **Rotation.** Parts gain `angle` / `spin` (binary units) and a world angle (parent's + own);
+    `place()` turns the child offsets by the parent's world angle with a module-level copy of the
+    committed sine table (a zero turn keeps the M1 translation exactly). Sprites are **not**
+    rotated (Pixi's transform setters allocate, M2-02): a turned part shows its heading through
+    **heading frames** (`turn`: frame nearest the world angle — `turnedFrame`), and is hit as a
+    **circle** (`radius`, exclusive with `hurtbox`; the grid gets its square, the shots' visitor
+    and the ship contact test the circle). A box never turns (the loader refuses `turn` on one).
+  - **Captains** are a boss-section `role` (`captain`): any free slot, `boss` event only (a
+    `warning` naming one is a content issue and `startWarning` refuses it), no lock or music,
+    short death (`CAPTAIN_CHAIN_TICKS` 48, blast with a medium shake, tally at 49, `Dead` at 72).
+    The four archetypes are boss behaviours `captain.ram`, `captain.launcher` (the boss's
+    `minion` via `BossScriptApi.launch`), `captain.circler` (the new `BossMotion.Orbit`,
+    `api.orbit`), `captain.crab`.
+  - **Raids.** A boss `raid` (segments `x` / `y` relative to the boss's origin, `ticks`, `hold`,
+    `loop`) anchors the boss where it entered (`Boss.anchored` / `anchorX` / `anchorY`; a `boss`
+    event stops the camera at once) and, from its fight, drives the camera through the new
+    `StageRunner.follow(target)` (`StageCameraTarget`; the boss system's `RaidCamera`; in free flight
+    the camera's velocity): the runner's step 3 puts the camera on the target and records `dx` /
+    `dy`, so ships, shots and bullets ride along. At death / escape the camera eases back to where
+    the raid began (`RAID_RETURN_TICKS` / `BOSS_ESCAPE_TICKS`) and is handed back the tick after.
+    A raid's parts fire only while in view (`BossPart.inView`, set in `place()`); the turrets'
+    behaviour is `boss.raid` (`api.aimPart` turns a part to the aimed-shot heading —
+    quantised like aimed shots, the arithmetic in the bullet system's hot `aimFrom`).
+  - **Double bosses** are a `partner` (entered with the leader's intro in another slot) with
+    `alternate` turns: the resting one moves to `BOSS_REST_X` over `BOSS_TURN_TICKS`, is drawn from
+    the new `bosses.backBatch` (`LayerId.GroundEnemies`), is not hit / touched, its script and phase
+    clock wait (and its motion before the turn resumes on its way back). **Enrage**: the survivor
+    of a death comes forward for good, `fireWait` × `enrage.fireRate`, track / orbit speed ×
+    `enrage.speed`, a jump to `enrage.phase`.
+  - **Boss inside a boss:** `inner`, revealed at the outer's final blast from its first core (the
+    new `Boss.startX` / `startY` of the intro); the outer's tally pays, its jingle and stage clear
+    wait for the inner boss.
+  - **Timers:** `timeLimit` → the new `BossState.Escape` (6): no hits, flies to its intro start over
+    `BOSS_ESCAPE_TICKS` 90 (its partner too), then `Dead` with `escaped`, the new
+    `SimEventKind.BossEscaped` (14) and — a stage boss — `EndingFlag.BossEscaped` in the new
+    `World.endingFlags` (hashed; M2-10 carries it through the run).
+  - **HP bar.** Model: `bosses.hpBar` (`BossHpBar`: the cores and the parts they require of the
+    main bosses in play — else of the captains —, full strength × progress during an intro, 0
+    while dying). View: `core/ui` `bossHpBarFill` / `BOSS_HP_BAR_WIDTH`; `buildHud(…, bossHp)` and
+    `Hud.showBossHp` draw `BOSS` and the bar in place of the hi-score. Option: the new
+    `UserOptions.display.bossHpBar` (default **off**; save v1, no migration), the Options row BOSS
+    HP (`OptionsItem.BossHp` 9, BACK 10, the panel taller), `UserOptionKind.BossHpBar` (9); the
+    scene flow sets `Hud.showBossHp` from the saved option every displayed frame.
+  - **Boss rush:** stage `type` (`normal` / `bossRush`) and `rush` (`enemy`, `delay` 60, `warning`),
+    run by the boss system (`rushIndex` / `rushDelay`, hashed); a bossRush stage may not have an
+    `end` event; a checkpoint restart brings the current entry again.
+  - **Content.** `content/enemies/advanced-bosses.enemies.json` (four captains, IRON LEVIATHAN with
+    LEVIATHAN HEART inside, the EMBER / FROST twins) and the dev stages `captain-range`,
+    `raid-range`, `twin-range`, `gauntlet-range`; placeholder sprites from the new procedural
+    generator `bosses` (`bosses/turret` with 16 heading frames, `bosses/orb`, `bosses/raid-hull`,
+    `bosses/captain-shell`). Zone A is untouched.
+  - **Goldens re-blessed**: the hash layout changed (four boss slots and their new fields, the
+    part cooldown tables of 64, the rush state, the ending flags) and the new content shifts the
+    sorted sprite and script ids; every replay's inputs, tick count and outcome stayed identical
+    (only `hashes` / `finalHash` changed), i.e. the simulation of the existing content is
+    unchanged. The stage-runtime integration test now defeats a fighting boss in any slot.
 
 ### M2-10 — Zone map, campaign flow, transitions & bonus stages
 

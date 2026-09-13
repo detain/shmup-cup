@@ -182,6 +182,7 @@ describe('core/scenes options: opening and drawing', () => {
         screenShake: true,
         reduceFlashing: false,
         showHitbox: false,
+        bossHpBar: false,
       },
     });
     const s = new Session(save);
@@ -210,6 +211,9 @@ describe('core/scenes options: opening and drawing', () => {
       'FLASHES',
       'NORMAL',
       'HITBOX',
+      'OFF',
+      // M2-09.
+      'BOSS HP',
       'OFF',
       'BACK',
     ]);
@@ -249,7 +253,7 @@ describe('core/scenes options: opening and drawing', () => {
     none.press(Action.Down);
     none.press(Action.Down); // CONTROLS is skipped
     expect(none.flow.options.menu.focus).toBe(OptionsItem.Bullets);
-    for (let i = 0; i < 5; i++) none.press(Action.Down); // SCALE … HITBOX, BACK
+    for (let i = 0; i < 6; i++) none.press(Action.Down); // SCALE … HITBOX, BOSS HP, BACK
     expect(none.flow.options.menu.focus).toBe(OptionsItem.Back);
   });
 });
@@ -330,6 +334,7 @@ describe('core/scenes options: saving', () => {
       screenShake: true,
       reduceFlashing: false,
       showHitbox: false,
+      bossHpBar: false,
     });
     s.hold(0, 3);
     s.press(Action.Confirm);
@@ -348,7 +353,7 @@ describe('core/scenes options: saving', () => {
     for (let i = 0; i < 2; i++) s.press(Action.Down);
     s.press(Action.Right); // CONTROLS → FAST 8-WAY
     s.press(Action.Down); // BULLETS
-    for (let i = 0; i < 5; i++) s.press(Action.Down); // SCALE … HITBOX, BACK
+    for (let i = 0; i < 6; i++) s.press(Action.Down); // SCALE … HITBOX, BOSS HP, BACK
     const from = s.events.length;
     s.press(Action.Confirm);
     expect(s.ids).toEqual(['title']);
@@ -362,6 +367,7 @@ describe('core/scenes options: saving', () => {
         screenShake: true,
         reduceFlashing: false,
         showHitbox: false,
+        bossHpBar: false,
       },
     });
     await settle();
@@ -515,6 +521,7 @@ describe('core/scenes options: display options (plan M2-08)', () => {
       [UserOptionKind.ShowHitbox, 1],
     ]);
     expect(s.uiTexts()).toEqual(expect.arrayContaining(['STRETCH', 'OFF', 'REDUCED', 'ON']));
+    s.press(Action.Down); // BOSS HP (M2-09), left OFF
     s.press(Action.Down);
     expect(o.menu.focus).toBe(OptionsItem.Back);
     s.press(Action.Confirm);
@@ -524,6 +531,7 @@ describe('core/scenes options: display options (plan M2-08)', () => {
       screenShake: false,
       reduceFlashing: true,
       showHitbox: true,
+      bossHpBar: false,
     });
     await settle();
     // The next session reads them back into the screen.
@@ -536,5 +544,39 @@ describe('core/scenes options: display options (plan M2-08)', () => {
       'REDUCED',
       true,
     ]);
+  });
+});
+
+describe('core/scenes options: the boss HP bar (plan M2-09)', () => {
+  it('BOSS HP toggles live, is saved on BACK, and the game HUD follows the saved value', async () => {
+    const { storage } = countingStorage();
+    const save = createSaveStore(storage, await loadSave(storage));
+    // Over the paused game, so the HUD is on screen.
+    const s = new Session(save, 'game');
+    s.hold(0, 10);
+    s.press(Action.Pause);
+    s.press(Action.Down); // OPTIONS
+    s.press(Action.Confirm);
+    s.hold(0, 2);
+    expect(s.ids).toEqual(['game', 'pause', 'options']);
+    const o = s.flow.options;
+    expect(o.bossHp.value).toBe(false);
+    while (o.menu.focus !== OptionsItem.BossHp) s.press(Action.Down);
+    const from = s.events.length;
+    s.press(Action.Confirm); // flips ON
+    expect(s.options(from)).toEqual([[UserOptionKind.BossHpBar, 1]]);
+    expect(s.uiTexts()).toEqual(expect.arrayContaining(['BOSS HP', 'ON']));
+    // The HUD reads the saved option: still off until the screen closes.
+    s.game.renderFrame();
+    expect(s.flow.game.hud.showBossHp).toBe(false);
+    s.press(Action.Back);
+    expect(s.ids).toEqual(['game', 'pause']);
+    expect(save.options.display.bossHpBar).toBe(true);
+    s.game.renderFrame();
+    expect(s.flow.game.hud.showBossHp).toBe(true);
+    await settle();
+    const again = new Session(createSaveStore(storage, await loadSave(storage)));
+    again.openOptionsFromTitle();
+    expect(again.flow.options.bossHp.value).toBe(true);
   });
 });

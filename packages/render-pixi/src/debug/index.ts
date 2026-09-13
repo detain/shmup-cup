@@ -156,7 +156,7 @@ const OUTLINE_CAPACITY: Readonly<Record<keyof DebugOutlineLists, number>> = Obje
   grid: 64,
   items: 32 * 4,
   enemies: 64 * 4,
-  boss: 16 * 4,
+  boss: 64 * 4, // every boss slot's parts (M2-09: 4 × 16)
   shots: 96 * 4,
   lasers: 16 * (LASER_SQUARES + 1) * 4,
   bullets: 512 * 4,
@@ -738,14 +738,19 @@ export function buildDebugOutlines(
     scratch.centred(e.x, e.y, e.hw, e.hh);
     outline(lists.enemies, OUTLINE_COLORS.enemies);
   }
-  const boss = world.bosses.boss;
-  const parts = boss.parts;
-  for (let i = 0; i < boss.partCount; i++) {
-    const part = parts[i];
-    // A part without a hurtbox is never hit or touched: nothing to outline.
-    if (!part.active || !part.hurtbox || part.destroyed) continue;
-    scratch.centred(part.x, part.y, part.hw, part.hh);
-    outline(lists.boss, OUTLINE_COLORS.boss);
+  // Every boss slot's parts in use (M2-09: captains, double and inner bosses share the World); a
+  // circle part is outlined by its bounding square.
+  const slots = world.bosses.slots;
+  for (let s = 0; s < slots.length; s++) {
+    const boss = slots[s];
+    const parts = boss.parts;
+    for (let i = 0; i < boss.partCount; i++) {
+      const part = parts[i];
+      // A part without a hurtbox is never hit or touched: nothing to outline.
+      if (!part.active || !part.hurtbox || part.destroyed) continue;
+      scratch.centred(part.x, part.y, part.hw, part.hh);
+      outline(lists.boss, OUTLINE_COLORS.boss);
+    }
   }
 
   const shots = world.weapons.pool;

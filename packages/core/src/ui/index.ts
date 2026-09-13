@@ -75,15 +75,20 @@
  *
  * M2-05: {@link HUD_FAMILY_COLORS}, {@link HUD_ARM_COLORS}, {@link HUD_STRING_COUNT},
  * {@link HUD_COMMAND_COUNT}. M2-06: {@link HudPlayerState}, {@link hudPlayerState},
- * {@link METER_SHORT_LABELS}, {@link HUD_PROMPT_BLINK_TICKS}.
+ * {@link METER_SHORT_LABELS}, {@link HUD_PROMPT_BLINK_TICKS}. M2-09: {@link BOSS_HP_BAR_WIDTH},
+ * {@link BossHpBarView}, {@link bossHpBarFill}.
+ *
+ * **Boss HP bar (M2-09).** With the `bossHpBar` display option ({@link Hud.showBossHp}, the
+ * `buildHud` argument) the top bar shows `BOSS` and a bar filled by {@link bossHpBarFill} of the
+ * World's `bosses.hpBar` in place of the hi-score while a boss is fought; the HUD rebuilds when the
+ * fill's pixel count changes.
  *
  * **Co-op HUD (M2-06).** In a co-op game a player who may drop in shows a blinking `PRESS START`
  * where its score goes; while both ships play, the bottom bar splits into two compact halves
  * (player 2's stock icon in its palette swap), and a player out of lives shows `PRESS START` (it
  * may continue) or `GAME OVER` in its half — see {@link buildHud}.
  *
- * **Planned.** The key-rebind prompt and the 3-letter name entry (M2-15 / M2-16) and the boss HP
- * bar (M2).
+ * **Planned.** The key-rebind prompt and the 3-letter name entry (M2-15 / M2-16).
  *
  * @module
  */
@@ -1084,6 +1089,12 @@ export const HUD_COLORS = Object.freeze({
   slotLit: 0x5a3c10,
   /** Co-op compact meter: a slot box that cannot be equipped. */
   slotOff: 0x1c2030,
+  /** The boss HP bar's `BOSS` label (M2-09). */
+  bossLabel: 0xf85858,
+  /** The boss HP bar's frame (and its empty part). */
+  bossFrame: 0x0a1020,
+  /** The boss HP bar's fill. */
+  bossFill: 0xf85858,
 });
 
 /** Pixel positions of the HUD (frame coordinates, 384×216). */
@@ -1120,6 +1131,10 @@ export const HUD_LAYOUT = Object.freeze({
   speedX: 252,
   /** Direct mode: the main-shot family's label x. */
   familyX: 306,
+  /** The boss HP bar's `BOSS` label x (M2-09; the bar replaces the hi-score while shown). */
+  bossX: 148,
+  /** The boss HP bar's frame x; the frame is {@link BOSS_HP_BAR_WIDTH} wide, 4 px tall. */
+  bossBarX: 176,
   /**
    * Co-op (M2-06): width of each player's half of the bottom bar while both play (player 1 from
    * x 0, player 2 from x 192); the offsets below are relative to the half's left edge.
@@ -1252,16 +1267,60 @@ export const HUD_STRING_SLOTS = Object.freeze({
   shortArm: 13,
   shortSpeed: 14,
   meterShort: 15,
+  /** `BOSS` (M2-09) — after the seven compact meter labels. */
+  boss: 22,
 });
 
-/** String slots a HUD list needs ({@link HUD_STRING_SLOTS}; seven compact meter labels last). */
-export const HUD_STRING_COUNT = 22;
+/**
+ * String slots a HUD list needs ({@link HUD_STRING_SLOTS}: the seven compact meter labels from 15,
+ * then `BOSS` — M2-09).
+ */
+export const HUD_STRING_COUNT = 23;
 
 /**
  * Commands a HUD list needs in the worst case (the co-op Direct-mode HUD: both halves with every
- * tier pip).
+ * tier pip — and, since M2-09, the boss HP bar).
  */
-export const HUD_COMMAND_COUNT = 96;
+export const HUD_COMMAND_COUNT = 100;
+
+/** Width of the boss HP bar's frame in the top HUD bar (M2-09); the fill is 2 px narrower. */
+export const BOSS_HP_BAR_WIDTH = 64;
+
+/**
+ * The boss HP bar as the HUD reads it (M2-09 — `core/bosses` `BossHpBar`, the World's
+ * `bosses.hpBar`).
+ */
+export interface BossHpBarView {
+  /** Whether a boss is counted (the bar is shown). */
+  readonly visible: boolean;
+  /** Remaining hit points counted. */
+  readonly hp: number;
+  /** Full strength counted. */
+  readonly maxHp: number;
+}
+
+/**
+ * The boss HP bar's fill in whole pixels (M2-09, the HP bar model): `⌈hp × width / maxHp⌉`, at
+ * most `width`; 0 when the bar is not shown or nothing is left — so any hit point left shows at
+ * least 1 px, and the bar is full only at full strength (an intro fills it up).
+ *
+ * @param bar - The bar (`world.bosses.hpBar`).
+ * @param width - Width of the fill at full strength, in pixels.
+ * @returns Pixels to fill, `0 … width`.
+ *
+ * @example
+ * ```ts
+ * bossHpBarFill({ visible: true, hp: 30, maxHp: 120 }, 62); // → 16 (⌈15.5⌉)
+ * bossHpBarFill({ visible: false, hp: 30, maxHp: 120 }, 62); // → 0
+ * ```
+ */
+export function bossHpBarFill(bar: BossHpBarView, width: number): number {
+  const hp = bar.hp;
+  const max = bar.maxHp;
+  if (!bar.visible || !(hp > 0) || !(max > 0) || !(width > 0)) return 0;
+  const fill = Math.ceil((hp * width) / max);
+  return fill >= width ? Math.floor(width) : fill;
+}
 
 /** The highlighted meter slot alternates between highlighted and plain every this many ticks. */
 export const HUD_METER_FLASH_TICKS = 8;
@@ -1373,13 +1432,22 @@ export function hudPlayerState(world: World, slot: number): HudPlayerState {
  * @param list - Target draw list (≥ {@link HUD_COMMAND_COUNT} commands, ≥
  *   {@link HUD_STRING_COUNT} string slots — {@link HUD_STRING_SLOTS} are the HUD's).
  * @param sprites - UI sprite ids ({@link resolveUiSprites}); missing ones fall back to rectangles.
+ * @param bossHp - Draw the boss HP bar (M2-09 — the `bossHpBar` display option; default `false`):
+ *   while the World's `bosses.hpBar` is visible, `BOSS` (red) at x 148 and a 4-px frame
+ *   {@link BOSS_HP_BAR_WIDTH} wide at x 176 with a 2-px red fill of {@link bossHpBarFill} over
+ *   the frame's inner width replace the hi-score.
  *
  * @example
  * ```ts
  * buildHud(game.world, hudList, resolveUiSprites(game.content));
  * ```
  */
-export function buildHud(world: World, list: DrawList, sprites: UiSprites = NO_SPRITES): void {
+export function buildHud(
+  world: World,
+  list: DrawList,
+  sprites: UiSprites = NO_SPRITES,
+  bossHp = false,
+): void {
   const L = HUD_LAYOUT;
   const S = HUD_STRING_SLOTS;
   list.clear();
@@ -1395,8 +1463,18 @@ export function buildHud(world: World, list: DrawList, sprites: UiSprites = NO_S
   const state1 = hudPlayerState(world, 0);
   const state2 = hudPlayerState(world, 1);
   topScore(list, board.scores[0].score, state1, S.p1, L.p1X, HUD_COLORS.p1, blinkOn);
-  list.text(S.hi, L.hiX, L.topY, HUD_COLORS.hi);
-  list.number(board.hiScore, L.hiX + 16, L.topY, L.digits, HUD_COLORS.number);
+  const bar = world.bosses.hpBar;
+  if (bossHp && bar.visible) {
+    // The boss HP bar (M2-09) replaces the hi-score during a boss fight.
+    list.setString(S.boss, 'BOSS');
+    list.text(S.boss, L.bossX, L.topY, HUD_COLORS.bossLabel);
+    list.rect(L.bossBarX, L.topY + 2, BOSS_HP_BAR_WIDTH, 4, HUD_COLORS.bossFrame);
+    const fill = bossHpBarFill(bar, BOSS_HP_BAR_WIDTH - 2);
+    if (fill > 0) list.rect(L.bossBarX + 1, L.topY + 3, fill, 2, HUD_COLORS.bossFill);
+  } else {
+    list.text(S.hi, L.hiX, L.topY, HUD_COLORS.hi);
+    list.number(board.hiScore, L.hiX + 16, L.topY, L.digits, HUD_COLORS.number);
+  }
   const score2 = board.scores.length > 1 ? board.scores[1].score : 0;
   topScore(list, score2, state2, S.p2, L.p2X, HUD_COLORS.p2, blinkOn);
 
@@ -1759,10 +1837,17 @@ export class Hud {
   readonly sprites: UiSprites;
   /** How many times the list was rebuilt (tests, debug overlays). */
   builds = 0;
+  /**
+   * Draw the boss HP bar (M2-09 — the `bossHpBar` display option; the scene flow sets it from the
+   * save before every update). Default `false`.
+   */
+  showBossHp = false;
   private world: World | null = null;
   private list: DrawList | null = null;
   private flash = -1;
   private blink = -1;
+  /** The last build's boss HP bar fill (-1 = not drawn). */
+  private barFill = -1;
   /** The last build's per-player values ({@link HUD_PLAYER_FIELDS} per player). */
   private readonly shown = new Int32Array(2 * HUD_PLAYER_FIELDS);
   /** This update's per-player values (compared with {@link Hud.shown}). */
@@ -1819,8 +1904,9 @@ export class Hud {
    * (`hiScoreDirty`) and, for each player, its {@link HudPlayerState} (M2-06), whether it plays,
    * its lives, meter cursor and equippable mask, the shield's hits, maximum and tier, and (Direct
    * mode, M2-05) the shot / sub levels, the family and the speed level; the highlight's flash
-   * phase (only while a meter slot is highlighted) and the `PRESS START` blink (only while a
-   * player may join or continue). A rebuild clears the dirty flags ({@link buildHud}), so only one
+   * phase (only while a meter slot is highlighted), the `PRESS START` blink (only while a
+   * player may join or continue) and — with {@link Hud.showBossHp} — the boss HP bar's fill in
+   * pixels (M2-09). A rebuild clears the dirty flags ({@link buildHud}), so only one
    * HUD should read a given World's flags. The game scene calls this once per displayed frame, not
    * per tick.
    *
@@ -1840,6 +1926,9 @@ export class Hud {
       next[HUD_PLAYER_FIELDS] === HudPlayerState.Join ||
       next[HUD_PLAYER_FIELDS] === HudPlayerState.Continue;
     const blink = prompt ? (world.tick / HUD_PROMPT_BLINK_TICKS) & 1 : 0;
+    const hpBar = world.bosses.hpBar;
+    const barFill =
+      this.showBossHp && hpBar.visible ? bossHpBarFill(hpBar, BOSS_HP_BAR_WIDTH - 2) : -1;
     let dirty =
       world !== this.world ||
       list !== this.list ||
@@ -1847,7 +1936,8 @@ export class Hud {
       (board.scores.length > 1 && board.scores[1].displayDirty) ||
       board.hiScoreDirty ||
       flash !== this.flash ||
-      blink !== this.blink;
+      blink !== this.blink ||
+      barFill !== this.barFill;
     const shown = this.shown;
     for (let i = 0; !dirty && i < next.length; i++) if (next[i] !== shown[i]) dirty = true;
     if (!dirty) return false;
@@ -1856,8 +1946,9 @@ export class Hud {
     this.list = list;
     this.flash = flash;
     this.blink = blink;
+    this.barFill = barFill;
     this.builds++;
-    buildHud(world, list, this.sprites);
+    buildHud(world, list, this.sprites, this.showBossHp);
     return true;
   }
 

@@ -135,10 +135,13 @@ describe('integration: checkpoint restarts on the shipped stages', () => {
     world.debugFlags.godMode = true;
     const runner = world.stage;
     if (runner === null) throw new Error('no stage');
-    /** One tick: a scroll lock without a boss is released, a boss is defeated once it fights. */
+    /**
+     * One tick: a scroll lock without a boss is released, a boss is defeated once it fights — in
+     * any slot (M2-09: a double boss's partner, an inner boss, a captain).
+     */
     const step = (): void => {
       if (runner.locked && !world.bosses.active) runner.unlock();
-      if (world.bosses.boss.state === BossState.Fight) world.bosses.defeat(0);
+      if (world.bosses.slots.some((b) => b.state === BossState.Fight)) world.bosses.defeat(0);
       game.step();
     };
     // 200 px past the checkpoint (300 ticks for the stage start), then back to it.

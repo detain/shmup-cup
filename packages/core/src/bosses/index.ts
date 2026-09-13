@@ -1,84 +1,117 @@
 /**
- * # bosses — multi-part bosses, weak points, phases, the WARNING and the death sequence
+ * # bosses — multi-part bosses, weak points, phases, the WARNING, mid-bosses, raids, multi-bosses
  *
- * **Status: partial.** The P0 mechanics of plan M1-13 are implemented: multi-part bosses with
- * translation-only part transforms, per-part hit points and hurtboxes, weak points (armour,
- * parts that need others destroyed first, parts vulnerable only while open), phase state machines
- * (HP threshold, destroyed-part mask, timer), the WARNING intro and the death sequence. Boss
- * timers / escapes, the HP bar, mid-bosses, raids and multi-bosses arrive with M2-09.
+ * **Status: implemented.** The P0 mechanics of plan M1-13 — multi-part bosses with per-part hit
+ * points and hurtboxes, weak points (armour, parts that need others destroyed first, parts
+ * vulnerable only while open), phase state machines (HP threshold, destroyed-part mask, timer),
+ * the WARNING intro and the death sequence — and the Darius-style variety of plan M2-09: turned
+ * parts (binary-angle transforms, circle hurtboxes, heading frames), mid-bosses ("captains") that
+ * stay until destroyed, battleship raids larger than the screen with boss-relative camera
+ * segments, a boss inside a boss, double bosses (alternating, the survivor enrages), boss timers
+ * (escape after the limit — an ending flag), the boss HP bar's model and boss-rush stages.
  *
- * **Responsibility.** One boss at a time per World ({@link BossSystem}, the World's `bosses`):
+ * **Responsibility.** Up to {@link MAX_BOSSES} boss **slots** per World ({@link BossSystem}, the
+ * World's `bosses`; slot 0 is {@link BossSystem.boss}):
  *
  * - **Parts.** A boss (an enemy entry with a `boss` section — `core/data` `BossSpec`) has up to
- *   {@link MAX_BOSS_PARTS} {@link BossPart}s, each a translation from its parent (or the boss's
- *   origin), recomputed every tick parents first. Parts share the enemies' hit path: their
- *   hurtboxes go into the World's grid with ids {@link BOSS_PART_ID_BASE} + index (after the 64
- *   enemy slots), the player shots find them there and apply their hits through
- *   {@link BossSystem.damagePart}; touching a part is contact damage for the ships. A destroyed
- *   part explodes (score to the shooter), takes its children with it and is no longer drawn,
- *   hit or touched.
- * - **Weak points** ({@link BossVulnerable}): `always`, `afterParts` (every part of its `requires`
- *   list destroyed first — a core behind shield plates), `whenOpen` (only while the behaviour
- *   holds it open — a mouth) and `never` (armour). A hit on a part that cannot take damage right
- *   now — or on any part during the intro — `clink`s: the shot dies without damage.
- * - **Phases.** The boss runs the behaviour of its current phase (a boss behaviour of
- *   `core/behaviors`, {@link BossBehavior}); when the phase's condition is met (the cores' total
- *   hit points fall below `hpBelow`, `count` of its `partsDestroyed` are destroyed, or it has run
- *   `ticks` ticks) the next phase starts and its behaviour replaces the running script.
- * - **The WARNING** (shmup_feat.md §13 / §19, decision D10). A stage `warning` event starts it:
- *   the camera brakes to a scroll lock (`StageRunner.brake`, {@link WARNING_BRAKE_TICKS}), the
- *   World's status is `bossWarning` for {@link WARNING_TICKS} ticks, the music stops, the
- *   playfield dims (`SimEventKind.Dim`), and once a second the siren wails (`SFX WarningSiren`,
- *   priority `Critical`) with a flash (`FlashKind.Warning`); the {@link WarningView} carries the
- *   text — built once per boss at world creation from the game's own template
- *   ({@link WARNING_TEMPLATE}, never the arcade original's words). Then the boss flies in from the
- *   right edge (its **intro**: `introTicks`, invulnerable, eased) and the boss music starts. A
- *   stage `boss` event brings a boss in at once (no WARNING, no brake).
+ *   `MAX_BOSS_PARTS` {@link BossPart}s, each placed from its parent (or the boss's origin), parents
+ *   first, every tick. Since M2-09 a part may be **turned**: its world angle is its parent's plus
+ *   its own (`angle`, changed by `spin` every tick or by a behaviour), and the offsets of the parts
+ *   attached to it are rotated by that angle (the committed sine table — binary angles, 1024 per
+ *   turn, clockwise). Boxes never turn: a turned part is hit as a **circle** (`radius`) and may be
+ *   drawn from **heading frames** (`turn`). Parts share the enemies' hit path: every slot's
+ *   parts take the ids {@link BOSS_PART_ID_BASE} + slot × 16 + index (after the 64 enemy slots) in
+ *   the World's grid; the player shots apply their hits through {@link BossSystem.damagePart};
+ *   touching a part is contact damage. A destroyed part explodes (score to the shooter), takes
+ *   its children with it and is no longer drawn, hit or touched.
+ * - **Weak points** ({@link BossVulnerable}): `always`, `afterParts`, `whenOpen`, `never` — a hit
+ *   on a part that cannot take damage now (or on any part during the intro) `clink`s.
+ * - **Phases.** The boss runs the behaviour of its current phase ({@link BossBehavior}); when the
+ *   phase's condition is met the next phase's behaviour replaces the running script.
+ * - **The WARNING** (shmup_feat.md §13 / §19, decision D10). A stage `warning` event: the camera
+ *   brakes to a scroll lock, status `bossWarning` for {@link WARNING_TICKS} ticks, the music stops,
+ *   the playfield dims, the siren wails once a second with a flash; the {@link WarningView} text is
+ *   the game's own template ({@link WARNING_TEMPLATE}). Then the boss flies in (its invulnerable
+ *   intro) and the boss music starts. A stage `boss` event brings a boss in at once.
+ * - **Roles (M2-09).** A **stage boss** ({@link BossRole}.Boss) is one of the World's *main
+ *   encounter*: only one runs at a time (a WARNING or `boss` event meanwhile is ignored). A
+ *   **captain** ({@link BossRole}.Captain, a mid-boss) takes any free slot, flies in with a `boss`
+ *   event, rides the scrolling camera until destroyed — never locks the scroll or changes the
+ *   music — and ends with a short death sequence ({@link CAPTAIN_CHAIN_TICKS} …
+ *   {@link CAPTAIN_CLEAR_TICKS}) that does not clear the stage.
+ * - **Double bosses (M2-09).** A boss with a `partner` brings it in with its intro, in another
+ *   slot. With `alternate` the pair takes turns: the resting one withdraws behind the playfield's
+ *   right edge ({@link BOSS_REST_X}, over {@link BOSS_TURN_TICKS}) — drawn on the ground-enemy
+ *   layer, not hit or touched, its script and phase clock paused. When one of them dies the
+ *   survivor **enrages**: it comes forward for good, its fire intervals × `enrage.fireRate`, its
+ *   motion × `enrage.speed`, and it may jump to `enrage.phase`.
+ * - **Raids (M2-09).** A boss with a `raid` is anchored in the world where it entered instead of
+ *   riding the camera (a `boss` event stops the camera at once). When its fight starts the camera
+ *   is locked and follows the raid's segments — offsets from the boss's origin, eased in turn
+ *   (`core/stage` `StageRunner.follow`); when it dies or escapes the camera eases back to where
+ *   the raid began ({@link RAID_RETURN_TICKS} / {@link BOSS_ESCAPE_TICKS}) and is handed back to
+ *   the stage the tick after. Its parts fire only while on screen.
+ * - **Boss inside a boss (M2-09).** A boss with an `inner` boss reveals it at its final blast:
+ *   the inner boss flies from the outer's first core to its home (its own intro) in another slot.
+ * - **Timers (M2-09).** A boss with a `timeLimit` escapes when its fight has lasted that long: it
+ *   stops fighting, flies off to the right over {@link BOSS_ESCAPE_TICKS} (its partner with it),
+ *   no tally; a stage boss's escape sets {@link EndingFlag}.BossEscaped in the host's
+ *   `endingFlags` and ends the encounter like a death.
  * - **The death sequence.** When the last core is destroyed: every cancelable bullet and laser is
- *   cancelled (sparkles; each bullet becomes a point item for the killer — `CancelMode.Points`,
- *   M2-02), the music fades out, then chained explosions (`FX BossChain` + `SFX
- *   BossExplode` every {@link BOSS_CHAIN_INTERVAL} ticks at random points of the boss — cosmetic
- *   RNG) until {@link BOSS_CHAIN_TICKS}, the final blast (`FX BossBlast`, a large shake, a flash,
- *   rumble, a {@link BOSS_BLAST_HIT_STOP_TICKS}-tick hit-stop), the **score tally** after the
- *   hit-stop (the boss's `score` to the player who destroyed the last core,
- *   `SimEventKind.BossDefeated`, the stage-clear jingle `MUSIC StageClear`) and at
- *   {@link BOSS_CLEAR_TICKS} the status `stageClear`; the camera lock is released.
+ *   cancelled (point items for the killer), the music fades (unless another main boss still
+ *   fights or an inner boss follows), chained explosions every {@link BOSS_CHAIN_INTERVAL} ticks
+ *   (cosmetic RNG), the final blast (flash, large shake, rumble, hit-stop), the **score tally**
+ *   (`SimEventKind.BossDefeated`; the stage-clear jingle when it ends the encounter) and at
+ *   {@link BOSS_CLEAR_TICKS} the slot is `Dead`. The **last** boss of the main encounter to finish
+ *   (no other main boss in play) releases the scroll lock and sets the status `stageClear` — or,
+ *   in a boss-rush stage with bosses left, schedules the next one.
+ * - **Boss rush (M2-09).** A `bossRush` stage's `rush` list (`core/data` `StageRushEntry`) runs in
+ *   order: each entry comes `delay` ticks after the stage start or the end of the last one (with
+ *   the WARNING when it says so); the last one's end clears the stage. A checkpoint restart brings
+ *   the current entry again.
+ * - **HP bar (M2-09).** {@link BossSystem.hpBar} ({@link BossHpBar}) sums the hit points that stand
+ *   between the players and the kill — every core and the parts a core requires — of the main
+ *   bosses in play (else of the captains); during an intro it fills up. `core/ui` draws it in the
+ *   top HUD bar when the display option asks for it.
  *
- * **Tick.** Phase 3 — {@link BossSystem.update} (state timers: the WARNING, the intro, the phase
- * clock, the death sequence), then the stage hooks may start a boss; phase 4 —
- * {@link BossSystem.runScript}; phase 5 — {@link BossSystem.move} (intro fly-in, tracking /
- * move-to motion, riding the camera, part transforms, hit flash); phase 6 —
- * {@link BossSystem.insertColliders}, {@link BossSystem.collidePlayers}; phase 7 — the player
- * shots call {@link BossSystem.damagePart}, then {@link BossSystem.resolve} (phase changes);
- * phase 9 — {@link BossSystem.sync} (the parts' sprite batch on `LayerId.AirEnemies`). The state
- * timers count simulated ticks: a hit-stop (the final blast's, a player's death) pauses them.
+ * **Tick.** Phase 3 — {@link BossSystem.update} (state timers, turns, time limits, the raid camera,
+ * the boss rush), then the stage hooks may start a boss; phase 4 — {@link BossSystem.runScript};
+ * phase 5 — {@link BossSystem.move} (fly-in, motion, spins, part transforms, frames, hit flash);
+ * phase 6 — {@link BossSystem.insertColliders}, {@link BossSystem.collidePlayers}; phase 7 — the
+ * shots call {@link BossSystem.damagePart}, then {@link BossSystem.resolve} (phase changes); phase
+ * 9 — {@link BossSystem.sync} (the parts' batches, the HP bar). The state timers count simulated
+ * ticks: a hit-stop pauses them.
  *
- * **Zero allocation.** The boss, its parts, the script API, the compiled specs and the batch are
- * built by {@link createBossSystem}; the per-tick methods only write numbers. As with the
- * enemies (decision D29), starting a phase creates its generator and every wake allocates the
- * generator's `{ value, done }` result.
+ * **Zero allocation.** The slots, their parts, the script APIs, the compiled specs, the batches,
+ * the raid camera target and the HP bar are built by {@link createBossSystem}; the per-tick
+ * methods only write numbers (turned parts read a module-level sine table). As with the enemies
+ * (decision D29), starting a phase creates its generator and every wake allocates the generator's
+ * `{ value, done }` result; a captain's launch spawns an enemy (its coroutine).
  *
  * **Implements.**
  * - shmup_feat.md §13 Bosses & mid-bosses — the WARNING intro, the death sequence, multi-part
- *   bosses, weak points, the phase state machine
+ *   bosses, weak points, the phase state machine; the boss HP bar, boss timers / escapes,
+ *   battleship raids, boss inside a boss, double bosses, mid-bosses ("captains"), boss rush
  * - shmup_feat.md §19 — the WARNING siren (critical), music switch to the boss theme, the
  *   stage-clear jingle
  * - shmup_feat.md §20 — clink on invulnerable parts, big explosions, bullet cancel on boss death,
  *   rumble on boss kill, screen shake used sparingly
  *
  * **Public API.** {@link createBossSystem}, {@link BossSystem}, {@link BossHost}, {@link Boss},
- * {@link BossPart}, {@link BossState}, {@link BOSS_STATE_NAMES}, {@link BossVulnerable},
- * {@link BossHit}, {@link BossMotion}, {@link BossScriptApi}, {@link BossBehavior},
- * {@link BossBehaviorLookup}, {@link EMPTY_BOSS_BEHAVIORS}, {@link WarningState},
- * {@link WARNING_TEMPLATE}, {@link formatWarningText}, {@link BOSS_PART_ID_BASE},
- * {@link MAX_HIT_TARGETS}, {@link WARNING_TICKS}, {@link WARNING_PULSE_TICKS},
- * {@link WARNING_BRAKE_TICKS}, {@link WARNING_DIM_PERCENT}, {@link WARNING_MUSIC_FADE_TICKS},
- * {@link BOSS_CHAIN_TICKS}, {@link BOSS_CHAIN_INTERVAL}, {@link BOSS_BLAST_HIT_STOP_TICKS},
- * {@link BOSS_BLAST_SHAKE_TICKS}, {@link BOSS_TALLY_TICKS}, {@link BOSS_CLEAR_TICKS},
- * {@link BOSS_MUSIC_FADE_TICKS}, {@link BOSS_ENTRY_MARGIN}.
- *
- * **Planned API.** Boss timers and escapes, the optional HP bar, mid-bosses ("captains"),
- * battleship raids, boss-inside-boss, double bosses, boss rush (M2-09); rotating part transforms.
+ * {@link BossPart}, {@link BossState}, {@link BOSS_STATE_NAMES}, {@link BossRole},
+ * {@link BossVulnerable}, {@link BossHit}, {@link BossMotion}, {@link BossScriptApi},
+ * {@link BossBehavior}, {@link BossBehaviorLookup}, {@link EMPTY_BOSS_BEHAVIORS}, {@link BossCamera},
+ * {@link WarningState}, {@link BossHpBar}, {@link RaidCamera}, {@link EndingFlag},
+ * {@link WARNING_TEMPLATE}, {@link formatWarningText}, {@link MAX_BOSSES},
+ * {@link BOSS_PART_SLOTS}, {@link BOSS_PART_ID_BASE}, {@link MAX_HIT_TARGETS},
+ * {@link WARNING_TICKS}, {@link WARNING_PULSE_TICKS}, {@link WARNING_BRAKE_TICKS},
+ * {@link WARNING_DIM_PERCENT}, {@link WARNING_MUSIC_FADE_TICKS}, {@link BOSS_CHAIN_TICKS},
+ * {@link BOSS_CHAIN_INTERVAL}, {@link BOSS_BLAST_HIT_STOP_TICKS}, {@link BOSS_BLAST_SHAKE_TICKS},
+ * {@link BOSS_TALLY_TICKS}, {@link BOSS_CLEAR_TICKS}, {@link BOSS_MUSIC_FADE_TICKS},
+ * {@link BOSS_ENTRY_MARGIN}, {@link CAPTAIN_CHAIN_TICKS}, {@link CAPTAIN_TALLY_TICKS},
+ * {@link CAPTAIN_CLEAR_TICKS}, {@link CAPTAIN_BLAST_SHAKE_TICKS}, {@link BOSS_ESCAPE_TICKS},
+ * {@link BOSS_TURN_TICKS}, {@link BOSS_REST_X}, {@link RAID_RETURN_TICKS},
+ * {@link BOSS_FIRE_MARGIN}, {@link turnedFrame}.
  *
  * @module
  */
@@ -94,8 +127,9 @@ import {
   type BulletSystem,
 } from '../bullets/index.js';
 import type { SpatialGrid } from '../collision/index.js';
-import { PLAYFIELD_W } from '../config/index.js';
+import { PLAYFIELD_H, PLAYFIELD_W } from '../config/index.js';
 import {
+  BOSS_ROLES,
   BOSS_VULNERABILITIES,
   ENEMY_EXPLOSIONS,
   MAX_BOSS_PARTS,
@@ -123,6 +157,7 @@ import {
   requestShake,
   type FxState,
 } from '../fx/index.js';
+import { ANGLE_MASK, ANGLE_QUARTER, ANGLE_UNITS, atan2B, sinB } from '../math/index.js';
 import { defineModule } from '../module-info.js';
 import {
   fireAimed,
@@ -144,23 +179,31 @@ import {
 } from '../presentation/index.js';
 import type { Rng, RngStreams } from '../rng/index.js';
 import { addScore, type ScoreBoard } from '../scoring/index.js';
+import type { StageCameraTarget } from '../stage/index.js';
 import type { WorldStatus } from '../world/index.js';
 
 /** Module descriptor (see {@link defineModule}). */
 export const moduleInfo = defineModule({
   name: 'bosses',
-  status: 'partial',
+  status: 'implemented',
   specRefs: ['shmup_feat.md §13', 'shmup_feat.md §19', 'shmup_feat.md §20'],
 });
 
+/** Boss slots per World (M2-09): a double boss, a captain and an inner boss at once. */
+export const MAX_BOSSES = 4;
+
+/** Part slots of every boss slot together: slot `s`'s part `i` is part slot `s × 16 + i`. */
+export const BOSS_PART_SLOTS = MAX_BOSSES * MAX_BOSS_PARTS;
+
 /**
- * Hit / grid / laser-source id of boss part `i`: `BOSS_PART_ID_BASE + i`, right after the
- * {@link MAX_ENEMIES} enemy slots, so one id space covers every hit target.
+ * Hit / grid / laser-source id of part slot `g` (see {@link BOSS_PART_SLOTS}):
+ * `BOSS_PART_ID_BASE + g`, right after the {@link MAX_ENEMIES} enemy slots, so one id space
+ * covers every hit target.
  */
 export const BOSS_PART_ID_BASE = MAX_ENEMIES;
 
-/** Hit-target ids of a World: the enemy slots, then the boss parts. */
-export const MAX_HIT_TARGETS = MAX_ENEMIES + MAX_BOSS_PARTS;
+/** Hit-target ids of a World: the enemy slots, then every boss slot's parts. */
+export const MAX_HIT_TARGETS = MAX_ENEMIES + BOSS_PART_SLOTS;
 
 /** Length of the WARNING in ticks (plan M1-13: three seconds). */
 export const WARNING_TICKS = 180;
@@ -192,7 +235,7 @@ export const BOSS_BLAST_SHAKE_TICKS = 40;
 /** Tick of the death sequence the score tally happens on: the first one after the hit-stop. */
 export const BOSS_TALLY_TICKS = BOSS_CHAIN_TICKS + 1;
 
-/** Tick of the death sequence the World's status becomes `stageClear` on (plan M1-13: 180). */
+/** Tick of the death sequence the boss's slot becomes `Dead` on (plan M1-13: 180). */
 export const BOSS_CLEAR_TICKS = 180;
 
 /** Fade-out of the boss music when the last core is destroyed, in ticks. */
@@ -200,6 +243,45 @@ export const BOSS_MUSIC_FADE_TICKS = 60;
 
 /** A boss starts its intro this many pixels beyond the right edge of the view (its left edge). */
 export const BOSS_ENTRY_MARGIN = 8;
+
+/** A captain's (mid-boss's) shorter death chain, in ticks (its blast comes on its last tick). */
+export const CAPTAIN_CHAIN_TICKS = 48;
+
+/** Tick of a captain's death sequence its score tally happens on. */
+export const CAPTAIN_TALLY_TICKS = CAPTAIN_CHAIN_TICKS + 1;
+
+/** Tick of a captain's death sequence its slot becomes `Dead` on. */
+export const CAPTAIN_CLEAR_TICKS = 72;
+
+/** Length of a captain's blast shake (medium), in ticks — no flash, no hit-stop. */
+export const CAPTAIN_BLAST_SHAKE_TICKS = 20;
+
+/** Ticks an escaping boss takes to fly off (M2-09 boss timers). */
+export const BOSS_ESCAPE_TICKS = 90;
+
+/** Ticks a double boss's turn takes: the resting one withdraws, the other comes forward. */
+export const BOSS_TURN_TICKS = 60;
+
+/** Playfield x the resting boss of a double boss withdraws to (its origin; mostly off screen). */
+export const BOSS_REST_X = PLAYFIELD_W + 40;
+
+/** Ticks a raid's camera takes to ease back to where the raid began (death or escape). */
+export const RAID_RETURN_TICKS = BOSS_CHAIN_TICKS;
+
+/** A raid's part fires only when its centre is inside the view grown by this many pixels. */
+export const BOSS_FIRE_MARGIN = 8;
+
+/**
+ * Bits of the World's `endingFlags` (M2-09; the ending selection of M2-10 reads them). Append,
+ * never renumber.
+ */
+export const EndingFlag = {
+  /** A stage boss escaped when its time limit ran out. */
+  BossEscaped: 1,
+} as const;
+
+/** An {@link EndingFlag} bit. */
+export type EndingFlag = (typeof EndingFlag)[keyof typeof EndingFlag];
 
 /**
  * The WARNING text (decision D10): the game's own paraphrase, never the arcade original's words.
@@ -224,7 +306,7 @@ export function formatWarningText(displayName: string, code: string): string {
   return WARNING_TEMPLATE.split('{name}').join(displayName).split('{code}').join(code);
 }
 
-/** Life-cycle state of the World's boss slot ({@link Boss.state}). Hashed: append only. */
+/** Life-cycle state of a boss slot ({@link Boss.state}). Hashed: append only. */
 export const BossState = {
   /** No boss. */
   None: 0,
@@ -236,8 +318,10 @@ export const BossState = {
   Fight: 3,
   /** The death sequence (chain of explosions, blast, tally). */
   Dying: 4,
-  /** Defeated; the stage is clear. */
+  /** Defeated (or escaped); the slot is free again. */
   Dead: 5,
+  /** Escaping after its time limit (M2-09): flying off, no hits, no contact. */
+  Escape: 6,
 } as const;
 
 /** A {@link BossState} code. */
@@ -251,7 +335,19 @@ export const BOSS_STATE_NAMES: readonly string[] = Object.freeze([
   'fight',
   'dying',
   'dead',
+  'escape',
 ]);
+
+/** What a boss is to its stage: the codes of `core/data` `BOSS_ROLES`, in order (M2-09). */
+export const BossRole = {
+  /** A stage boss: the main encounter (the WARNING, the lock, the stage clear). */
+  Boss: 0,
+  /** A mid-boss: rides the scrolling camera until destroyed, a short death, no stage clear. */
+  Captain: 1,
+} as const;
+
+/** A {@link BossRole} code. */
+export type BossRole = (typeof BossRole)[keyof typeof BossRole];
 
 /** When a part takes damage: the codes of `core/data` `BOSS_VULNERABILITIES`, in order. */
 export const BossVulnerable = {
@@ -283,35 +379,67 @@ export const BossHit = {
 /** A {@link BossHit} code. */
 export type BossHit = (typeof BossHit)[keyof typeof BossHit];
 
-/** How the boss moves during the fight ({@link Boss.motion}). */
+/** How a boss moves ({@link Boss.motion}). */
 export const BossMotion = {
-  /** Stays where it is (on screen: it rides the camera). */
+  /** Stays where it is (relative to its anchor: it rides the camera unless it is a raid). */
   Hold: 0,
   /** Follows the nearest player's height ({@link BossScriptApi.track}). */
   Track: 1,
-  /** Eases to a view point ({@link BossScriptApi.moveTo}), then holds. */
+  /** Eases to a point ({@link BossScriptApi.moveTo}), then holds. */
   MoveTo: 2,
+  /** Circles an ellipse ({@link BossScriptApi.orbit}, M2-09 — a screen-crossing circler). */
+  Orbit: 3,
 } as const;
 
 /** A {@link BossMotion} code. */
 export type BossMotion = (typeof BossMotion)[keyof typeof BossMotion];
 
 /**
- * One part of the World's boss (a pooled class: its numeric fields stay unboxed). Satisfies
+ * Sine of every binary angle, plus a quarter turn of overhang so `SIN[a + ANGLE_QUARTER]` is the
+ * cosine — the same values as `core/math` `sinB` / `cosB`, read here without a call per part.
+ */
+const SIN = new Float64Array(ANGLE_UNITS + ANGLE_QUARTER);
+for (let i = 0; i < SIN.length; i++) SIN[i] = sinB(i);
+
+/**
+ * The heading frame of a turned part (M2-09): the frame whose heading (`frame × 1024 / frames`)
+ * is nearest the angle.
+ *
+ * @param angle - World angle in binary units, `[0, 1024)`.
+ * @param frames - Heading frames of the sprite (≥ 1).
+ * @returns The frame, `0 … frames − 1`.
+ *
+ * @example
+ * ```ts
+ * turnedFrame(256, 16); // → 4 (a quarter turn: pointing down)
+ * turnedFrame(1000, 16); // → 0 (rounds up to a whole turn)
+ * ```
+ */
+export function turnedFrame(angle: number, frames: number): number {
+  if (!(frames > 1)) return 0;
+  return (((angle * frames) / ANGLE_UNITS + 0.5) | 0) % frames;
+}
+
+/**
+ * One part of a boss slot (a pooled class: its numeric fields stay unboxed). Satisfies
  * `core/bullets` `LaserSource`, so lasers can stay attached to it.
  */
 export class BossPart {
-  /** Index in {@link Boss.parts}. */
+  /** Index in its boss's {@link Boss.parts}. */
   readonly index: number;
-  /** Hit / grid / laser-source id: {@link BOSS_PART_ID_BASE} + index. */
+  /** The boss slot it belongs to (M2-09). */
+  readonly owner: number;
+  /** Part slot across every boss slot: `owner × 16 + index` ({@link BossSystem.parts}). */
+  readonly global: number;
+  /** Hit / grid / laser-source id: {@link BOSS_PART_ID_BASE} + {@link BossPart.global}. */
   readonly slot: number;
-  /** Whether the current boss has this part (index < its part count). */
+  /** Whether the slot's current boss has this part (index < its part count). */
   active = false;
   /** Name from the boss data (set on activation; tools only). */
   name = '';
   /** Index of the parent part, -1 = the boss's origin. */
   parent = -1;
-  /** X offset from the parent (a behaviour may change it — {@link BossScriptApi.setPartOffset}). */
+  /** X offset from the parent, before its turn (a behaviour may change it). */
   localX = 0;
   /** Y offset from the parent. */
   localY = 0;
@@ -319,12 +447,22 @@ export class BossPart {
   x = 0;
   /** World y of the part's centre. */
   y = 0;
-  /** Whether it has a hurtbox (else it is never hit or touched). */
+  /** Whether it has a hurtbox (a box or a circle; else it is never hit or touched). */
   hurtbox = false;
-  /** Hurtbox half width. */
+  /** Hurtbox half width (the radius for a circle — the grid's box). */
   hw = 0;
-  /** Hurtbox half height. */
+  /** Hurtbox half height (the radius for a circle). */
   hh = 0;
+  /** Circle hurtbox radius, 0 = a box (M2-09). */
+  radius = 0;
+  /** Turn relative to the parent, binary units `[0, 1024)` (M2-09). */
+  angle = 0;
+  /** Turn speed in binary units per tick (M2-09). */
+  spin = 0;
+  /** World angle: the parent's plus its own, `[0, 1024)` (phase 5; M2-09). */
+  worldAngle = 0;
+  /** Heading frames of its sprite, 0 = none (M2-09). */
+  turnFrames = 0;
   /** Remaining hit points. */
   hp = 0;
   /** Hit points at full strength. */
@@ -347,7 +485,7 @@ export class BossPart {
   animFrames = 1;
   /** Ticks per animation frame. */
   animTicks = 1;
-  /** Current animation frame. */
+  /** Current frame (animation or heading). */
   frame = 0;
   /** Remaining hit-flash ticks. */
   flashTicks = 0;
@@ -359,59 +497,87 @@ export class BossPart {
   target = false;
   /** A hit would clink this tick (refreshed in phase 6 with {@link BossPart.target}). */
   armoured = false;
+  /**
+   * A raid's part: its centre is inside the view grown by {@link BOSS_FIRE_MARGIN} (refreshed in
+   * phase 5; M2-09 — it may fire only then). Always `true` for a boss riding the camera.
+   */
+  inView = true;
 
   /**
-   * Creates an unused part slot (the boss system builds all {@link MAX_BOSS_PARTS} at load).
+   * Creates an unused part slot (the boss system builds all of them at load).
    *
-   * @param index - Its index.
+   * @param index - Its index in its boss.
+   * @param owner - Its boss slot (default 0).
    */
-  constructor(index: number) {
+  constructor(index: number, owner = 0) {
     this.index = index;
-    this.slot = BOSS_PART_ID_BASE + index;
+    this.owner = owner;
+    this.global = owner * MAX_BOSS_PARTS + index;
+    this.slot = BOSS_PART_ID_BASE + this.global;
   }
 }
 
-/** The World's boss slot (a class: numeric fields unboxed; see the module docs). */
+/** One boss slot of the World (a class: numeric fields unboxed; see the module docs). */
 export class Boss implements ScriptHolder {
+  /** Its index in {@link BossSystem.slots} (M2-09). */
+  readonly slot: number;
   /** {@link BossState} code. */
   state: number = BossState.None;
   /** `ContentDb.enemies` index of the boss's entry (-1 = none). */
   specIndex = -1;
-  /** World x of the boss's origin (phase 5: camera + {@link Boss.screenX}). */
+  /** {@link BossRole} code (M2-09). */
+  role = 0;
+  /** World x of the boss's origin (phase 5: its anchor + {@link Boss.screenX}). */
   x = 0;
   /** World y of the origin. */
   y = 0;
-  /** Playfield x of the origin (the boss rides the camera: this is what moves it). */
+  /** X of the origin relative to its anchor — the playfield x, unless it is a raid. */
   screenX = 0;
-  /** Playfield y of the origin. */
+  /** Y of the origin relative to its anchor. */
   screenY = 0;
-  /** Playfield x its intro ends at. */
+  /** A raid (M2-09): anchored at a world point instead of the camera. */
+  anchored = false;
+  /** World x of a raid's anchor (the camera where it entered). */
+  anchorX = 0;
+  /** World y of a raid's anchor. */
+  anchorY = 0;
+  /** X its intro ends at (relative to the anchor). */
   homeX = 0;
-  /** Playfield y its intro ends at. */
+  /** Y its intro ends at. */
   homeY = 0;
-  /** Playfield x its intro starts at (just past the right edge). */
+  /** X its intro starts at (just past the right edge; an inner boss: where it was revealed). */
   startX = 0;
+  /** Y its intro starts at (M2-09; the home row unless it is an inner boss). */
+  startY = 0;
   /** Length of its intro in ticks. */
   introTicks = 0;
   /** Ticks since the current state began (simulated ticks). */
   stateTicks = 0;
   /** Current phase index. */
   phase = 0;
-  /** Ticks since the current phase began. */
+  /** Ticks since the current phase began (paused while resting). */
   phaseTicks = 0;
+  /** Fight ticks so far — the time limit's clock (M2-09). */
+  fightTicks = 0;
+  /** Fight ticks before it escapes, 0 = never (M2-09). */
+  timeLimit = 0;
+  /** It escaped (its time ran out) rather than died (M2-09). */
+  escaped = false;
   /** The current phase's coroutine, or `null`. */
   script: Script | null = null;
   /** Tick the script wakes on. */
   wakeTick = 0;
   /** {@link BossMotion} code. */
   motion = 0;
+  /** Motion to take up when the running move-to ends (M2-09; `Hold` unless a turn saved one). */
+  afterMove = 0;
   /** Tracking speed in px/tick. */
   trackSpeed = 0;
-  /** Highest playfield row the tracking may take the origin to. */
+  /** Highest row the tracking may take the origin to (relative to the anchor). */
   trackMin = 0;
-  /** Lowest playfield row. */
+  /** Lowest row. */
   trackMax = 0;
-  /** Move-to start x (playfield). */
+  /** Move-to start x. */
   moveFromX = 0;
   /** Move-to start y. */
   moveFromY = 0;
@@ -423,6 +589,18 @@ export class Boss implements ScriptHolder {
   moveTicks = 0;
   /** Move-to ticks done. */
   moveElapsed = 0;
+  /** Orbit centre x (M2-09). */
+  orbitX = 0;
+  /** Orbit centre y. */
+  orbitY = 0;
+  /** Orbit radius along x. */
+  orbitRX = 0;
+  /** Orbit radius along y. */
+  orbitRY = 0;
+  /** Orbit angle, binary units `[0, 1024)`. */
+  orbitAngle = 0;
+  /** Orbit speed, binary units per tick (negative = counter-clockwise). */
+  orbitSpeed = 0;
   /** Bit mask of the destroyed parts. */
   destroyedMask = 0;
   /** Bit mask of the core parts. */
@@ -431,16 +609,68 @@ export class Boss implements ScriptHolder {
   killer = -1;
   /** The final blast went off: the parts are not drawn any more. */
   blasted = false;
+  /** Slot of its double-boss partner, -1 = none (M2-09). */
+  partner = -1;
+  /** It leads its pair (its entry names the partner; it counts the turns). */
+  leader = false;
+  /** Withdrawn to the back while its partner fights (M2-09): not hit, touched or scripted. */
+  resting = false;
+  /** A turn's move runs (to the rest point or back): the script waits. */
+  turning = false;
+  /** Ticks until the pair's next turn (the leader's; M2-09). */
+  turnTicks = 0;
+  /** Its partner died: faster (M2-09). */
+  enraged = false;
+  /** Fire-interval factor while enraged. */
+  enrageFireRate = 1;
+  /** Motion-speed factor while enraged. */
+  enrageSpeed = 1;
+  /** The raid's camera path runs (M2-09). */
+  raiding = false;
+  /** The raid's camera eases back (death / escape). */
+  returning = false;
+  /** Current raid segment. */
+  raidSegment = 0;
+  /** Ticks into the segment (or the return). */
+  raidTicks = 0;
+  /** Camera offset (from the origin) the segment started at — or the return's start (world). */
+  raidFromX = 0;
+  /** Y of {@link Boss.raidFromX}. */
+  raidFromY = 0;
+  /** World x of the camera where the raid began (the return's end). */
+  raidHomeX = 0;
+  /** World y of the camera where the raid began. */
+  raidHomeY = 0;
+  /** Length of the running return in ticks. */
+  raidReturnTicks = 0;
+  /** Index of the boss-rush entry that brought it (-1 = none; M2-09). */
+  rushEntry = -1;
+  /**
+   * Tick it flew in (M2-09): a boss that enters during phase 3 from another slot's timer (a
+   * double boss's partner, an inner boss) starts counting its intro on the next tick, like the
+   * boss that brought it.
+   */
+  enterTick = -1;
   /** Parts of the current boss. */
   partCount = 0;
-  /** Every part slot ({@link MAX_BOSS_PARTS}); `[0, partCount)` are in use. */
+  /** Its part slots ({@link MAX_BOSS_PARTS}); `[0, partCount)` are in use. */
   readonly parts: readonly BossPart[];
 
-  /** Builds the part slots (load time). */
-  constructor() {
-    const parts: BossPart[] = [];
-    for (let i = 0; i < MAX_BOSS_PARTS; i++) parts.push(new BossPart(i));
-    this.parts = parts;
+  /**
+   * Builds the part slots (load time).
+   *
+   * @param slot - The boss slot (default 0).
+   * @param parts - Its part slots (default: new ones).
+   */
+  constructor(slot = 0, parts?: readonly BossPart[]) {
+    this.slot = slot;
+    if (parts !== undefined) {
+      this.parts = parts;
+      return;
+    }
+    const own: BossPart[] = [];
+    for (let i = 0; i < MAX_BOSS_PARTS; i++) own.push(new BossPart(i, slot));
+    this.parts = own;
   }
 }
 
@@ -457,15 +687,48 @@ export class WarningState implements WarningView {
 }
 
 /**
- * What a boss behaviour can use — one reused object (decision D29).
+ * The boss HP bar's model (M2-09, shmup_feat.md §13 "boss HP bar"; the World's
+ * `bosses.hpBar`, refreshed in phase 9): what `core/ui` draws in the top HUD bar.
+ *
+ * @remarks
+ * Counted: the **main** bosses (role `boss`) in their intro, fight, death sequence (until the
+ * blast) or escape — or, when none is, the captains. Each contributes the hit points of its
+ * cores and of the parts a core requires (what must go for the kill); a boss in its intro
+ * contributes its full strength × the intro's progress (the bar fills up), a dying one 0.
+ */
+export class BossHpBar {
+  /** Whether a boss is counted (the bar is shown). */
+  visible = false;
+  /** Remaining hit points counted. */
+  hp = 0;
+  /** Full strength counted. */
+  maxHp = 0;
+  /** Bosses counted. */
+  bosses = 0;
+}
+
+/**
+ * The camera target of a raid (M2-09): a class, so its fields stay unboxed doubles — the stage
+ * runner follows it (`StageRunner.follow`).
+ */
+export class RaidCamera implements StageCameraTarget {
+  /** See {@link StageCameraTarget.x}. */
+  x = 0;
+  /** See {@link StageCameraTarget.y}. */
+  y = 0;
+}
+
+/**
+ * What a boss behaviour can use — one reused object per boss slot (decision D29).
  *
  * @remarks
  * Part indices are positions in the boss's `parts` list (look a name up once when the script
  * starts — {@link BossScriptApi.partIndex}). The fire primitives fire from the part's centre
  * through `core/patterns` (rank-scaled speeds; `AIM_AT_TARGET` — the default of every optional
  * angle — aims at the nearest living player) and do nothing while
- * {@link BossScriptApi.canFire} is `false` for that part (-1 / 0 fired). Positions are playfield
- * pixels (the boss rides the camera).
+ * {@link BossScriptApi.canFire} is `false` for that part (-1 / 0 fired). Positions are relative
+ * to the boss's anchor: playfield pixels, unless the boss is a raid (then relative to where it
+ * entered).
  */
 export interface BossScriptApi {
   /** The boss. */
@@ -480,6 +743,8 @@ export interface BossScriptApi {
   readonly partCount: number;
   /** The World's bullet system (raw access). */
   readonly bullets: BulletSystem;
+  /** Whether the boss is enraged (its partner died; M2-09). */
+  readonly enraged: boolean;
   /**
    * The nearest living player ship.
    *
@@ -514,18 +779,50 @@ export interface BossScriptApi {
    */
   setOpenAll(open: boolean): void;
   /**
-   * Moves a part relative to its parent (translation only).
+   * Moves a part relative to its parent (before the parent's turn).
    *
    * @param index - Part index.
    * @param localX - X offset from the parent.
    * @param localY - Y offset.
    */
   setPartOffset(index: number, localX: number, localY: number): void;
-  /** Stops the boss's own motion (it still rides the camera). */
+  /**
+   * Sets a part's turn relative to its parent (M2-09): the parts attached to it turn with it.
+   *
+   * @param index - Part index.
+   * @param angle - Binary units (wrapped into `[0, 1024)`).
+   */
+  setPartAngle(index: number, angle: number): void;
+  /**
+   * Sets a part's turn speed (M2-09).
+   *
+   * @param index - Part index.
+   * @param speed - Binary units per tick (0 = still).
+   */
+  spinPart(index: number, speed: number): void;
+  /**
+   * A part's world angle (M2-09).
+   *
+   * @param index - Part index.
+   * @returns Binary units `0 … 1023` (whole), 0 for a bad index.
+   */
+  partAngle(index: number): number;
+  /**
+   * Turns a part toward the nearest living player (M2-09 — a turret): its own turn changes by at
+   * most `maxStep` units so its world angle heads at the target — the heading of an aimed shot
+   * from the part's centre (quantised to the config's aim directions). Its world angle and
+   * heading frame follow in the next phase 5.
+   *
+   * @param index - Part index.
+   * @param maxStep - Most units to turn (≤ 0 = at once).
+   * @returns The part's new world heading (whole units), or -1 (bad index, no target).
+   */
+  aimPart(index: number, maxStep: number): number;
+  /** Stops the boss's own motion (it still rides its anchor). */
   hold(): void;
   /**
-   * Follows the nearest living player's height at up to `speed` px/tick, keeping the origin
-   * between the playfield rows `minY` and `maxY`.
+   * Follows the nearest living player's height at up to `speed` px/tick (× the enrage factor),
+   * keeping the origin between the rows `minY` and `maxY`.
    *
    * @param speed - Pixels per tick (≤ 0 = hold).
    * @param minY - Highest row.
@@ -533,7 +830,7 @@ export interface BossScriptApi {
    */
   track(speed: number, minY: number, maxY: number): void;
   /**
-   * Eases the origin to a playfield point over `ticks` ticks (in-out), then holds.
+   * Eases the origin to a point over `ticks` ticks (in-out), then holds.
    *
    * @param screenX - Target x.
    * @param screenY - Target y.
@@ -541,15 +838,27 @@ export interface BossScriptApi {
    */
   moveTo(screenX: number, screenY: number, ticks: number): void;
   /**
-   * Whether a part may fire now: the boss fights (not in its intro or death) and the part is in
-   * play (not destroyed).
+   * Circles an ellipse (M2-09 — a screen-crossing circler): from the angle of where the boss is
+   * now, `speed` units per tick (× the enrage factor), origin = centre + (cos × `rx`, sin × `ry`).
+   *
+   * @param cx - Centre x.
+   * @param cy - Centre y.
+   * @param rx - Radius along x.
+   * @param ry - Radius along y.
+   * @param speed - Binary units per tick (negative = counter-clockwise; 0 = hold).
+   */
+  orbit(cx: number, cy: number, rx: number, ry: number, speed: number): void;
+  /**
+   * Whether a part may fire now: the boss fights (not in its intro, death or escape, not resting),
+   * the part stands and — for a raid — its centre is on screen.
    *
    * @param index - Part index.
    * @returns `true` when it may fire.
    */
   canFire(index: number): boolean;
   /**
-   * A fire interval scaled by the rank's fire rate (`core/patterns` `rankedWait`).
+   * A fire interval scaled by the rank's fire rate (`core/patterns` `rankedWait`) and, while
+   * enraged, by the boss's `enrage.fireRate`.
    *
    * @param ticks - The interval on Normal.
    * @returns Ticks (≥ 1).
@@ -642,6 +951,17 @@ export interface BossScriptApi {
     fade?: number,
     attach?: boolean,
   ): number;
+  /**
+   * Launches the boss's `minion` enemy from a part (M2-09 — a captain's splitting launcher): it
+   * spawns at the part's centre as a regular enemy (its own script and mover).
+   *
+   * @remarks
+   * Allocates the minion's coroutine (like every spawn, decision D29).
+   *
+   * @param index - Part index.
+   * @returns `true` when one was launched (the boss may fire, has a minion, a slot was free).
+   */
+  launch(index: number): boolean;
 }
 
 /** A boss behaviour as the boss system uses it (`core/behaviors` provides the roster). */
@@ -684,12 +1004,20 @@ export const EMPTY_BOSS_BEHAVIORS: BossBehaviorLookup = Object.freeze({
   },
 });
 
+/** The camera a boss system reads and — in free flight, for a raid — steers (M2-09). */
+export interface BossCamera extends PlayerCamera {
+  /** Horizontal scroll velocity (a free-flight raid writes it; the World moves the camera). */
+  vx: number;
+  /** Vertical scroll velocity. */
+  vy: number;
+}
+
 /** What the boss system needs from its World (the World implements it). */
 export interface BossHost {
   /** The tick being run. */
   readonly tick: number;
-  /** The camera (the boss rides it; the view edges place the intro). */
-  readonly camera: PlayerCamera;
+  /** The camera (bosses ride it; the view edges place the intro; a raid steers it). */
+  readonly camera: BossCamera;
   /** The player ships (targets, contact). */
   readonly players: readonly PlayerShip[];
   /** The ship spec (hurt radius for contact). */
@@ -706,11 +1034,25 @@ export interface BossHost {
   readonly bullets: BulletSystem;
   /** Effect timers (flash, shake). */
   readonly fx: FxState;
+  /** The enemies (a captain launches its minions through them; M2-09). */
+  readonly enemies: {
+    /**
+     * Spawns a regular enemy (`EnemySystem.spawn`).
+     *
+     * @param enemyIndex - `ContentDb.enemies` index.
+     * @param x - World x.
+     * @param y - World y.
+     * @returns The enemy, or `null`.
+     */
+    spawn(enemyIndex: number, x: number, y: number): unknown;
+  };
   /** Remaining hit-stop ticks (the final blast raises it). */
   hitStop: number;
-  /** The session status (`bossWarning` during the WARNING, `stageClear` after the death). */
+  /** The session status (`bossWarning` during the WARNING, `stageClear` after the encounter). */
   status: WorldStatus;
-  /** The stage runner (brake / unlock, music ids), or `null` in free flight. */
+  /** Ending flags ({@link EndingFlag}; a stage boss's escape sets `BossEscaped` — M2-09). */
+  endingFlags: number;
+  /** The stage runner (brake / unlock / follow, music ids), or `null` in free flight. */
   readonly stage: {
     /** The stage (its boss and stage music). */
     readonly stage: StageSpec;
@@ -722,6 +1064,12 @@ export interface BossHost {
     brake(ticks: number): void;
     /** Releases the lock. */
     unlock(): void;
+    /**
+     * Makes the camera follow a target (a raid), or stops it (`null`).
+     *
+     * @param target - The target, or `null`.
+     */
+    follow(target: StageCameraTarget | null): void;
   } | null;
   /** The scores (part and boss points). */
   readonly scoring: {
@@ -732,14 +1080,36 @@ export interface BossHost {
 
 /** The boss system of one World (see the module docs for its part of each tick phase). */
 export interface BossSystem {
-  /** The World's boss slot. */
+  /** Boss slot 0 (the one a single boss takes). */
   readonly boss: Boss;
-  /** The parts' sprite batch (`LayerId.AirEnemies`, {@link MAX_BOSS_PARTS} sprites). */
+  /** Every boss slot ({@link MAX_BOSSES}; M2-09). */
+  readonly slots: readonly Boss[];
+  /**
+   * Every slot's part slots, flat ({@link BOSS_PART_SLOTS}): index = part slot
+   * ({@link BossPart.global}) — what the hit path addresses.
+   */
+  readonly parts: readonly BossPart[];
+  /**
+   * The parts' sprite batch (`LayerId.AirEnemies`, {@link BOSS_PART_SLOTS} sprites): every boss
+   * not resting.
+   */
   readonly batch: SpriteBatch;
+  /** The resting bosses' parts (`LayerId.GroundEnemies` — behind the air; M2-09). */
+  readonly backBatch: SpriteBatch;
   /** The WARNING (the World's `view.warning`). */
   readonly warning: WarningState;
-  /** Whether a boss sequence runs (WARNING, intro, fight or death sequence). */
+  /** The HP bar's model (M2-09; refreshed in phase 9). */
+  readonly hpBar: BossHpBar;
+  /** The raid camera's target (M2-09; the stage runner follows it during a raid). */
+  readonly raidCamera: RaidCamera;
+  /** Whether any boss sequence runs (WARNING, intro, fight, death sequence or escape). */
   readonly active: boolean;
+  /** Whether the main encounter runs: a stage boss (role `boss`) in any of those states. */
+  readonly mainActive: boolean;
+  /** Index of the boss-rush entry that comes or runs next (M2-09; the rush length when done). */
+  readonly rushIndex: number;
+  /** Ticks until the next rush boss comes (-1 = none waiting; M2-09). */
+  readonly rushDelay: number;
   /**
    * Whether an enemy entry is a boss.
    *
@@ -755,12 +1125,13 @@ export interface BossSystem {
    */
   warningText(enemyIndex: number): string;
   /**
-   * The stage `warning` event: starts the WARNING of a boss (see the module docs), after which
-   * the boss flies in.
+   * The stage `warning` event: starts the WARNING of a stage boss (see the module docs), after
+   * which the boss flies in.
    *
    * @remarks
-   * Ignored (→ `false`) while another boss sequence runs, and for an index that is not a boss.
-   * The status becomes `bossWarning` only from `playing`.
+   * Ignored (→ `false`) while the main encounter or another WARNING runs, when no slot is free,
+   * for a captain and for an index that is not a boss. The status becomes `bossWarning` only from
+   * `playing`.
    *
    * @param enemyIndex - `ContentDb.enemies` index of the boss.
    * @returns Whether it started.
@@ -772,52 +1143,58 @@ export interface BossSystem {
    */
   startWarning(enemyIndex: number): boolean;
   /**
-   * The stage `boss` event: the boss flies in at once (no WARNING, no brake), boss music.
+   * The stage `boss` event: the boss flies in at once (no WARNING, no brake); a stage boss's
+   * music starts (a captain keeps the stage music).
+   *
+   * @remarks
+   * A stage boss is ignored (→ `false`) while the main encounter runs; any boss when no slot is
+   * free or the index is not a boss.
    *
    * @param enemyIndex - `ContentDb.enemies` index of the boss.
-   * @returns Whether it started (see {@link BossSystem.startWarning}).
+   * @returns Whether it started.
    */
   startBoss(enemyIndex: number): boolean;
   /**
    * Phase 3 (before the stage runner): advances the state timers — the WARNING (siren pulses,
-   * then the boss enters), the intro (then the fight), the phase clock, the death sequence
-   * (chain, blast, tally, stage clear). Never allocates.
+   * then the boss enters), the intro (then the fight), the phase and fight clocks (time limits),
+   * a pair's turns, the death sequence (chain, blast, tally, end), an escape —, a raid's camera
+   * target and the boss rush. Never allocates.
    */
   update(): void;
-  /** Phase 4: resumes the current phase's script when it wakes (fight only). */
+  /** Phase 4: resumes the current phase's script of every fighting boss (not resting). */
   runScript(): void;
   /**
-   * Phase 5: the intro fly-in or the fight motion (tracking, move-to), the camera ride, the part
-   * transforms (parents first), animation frames and hit flash. Never allocates.
+   * Phase 5: the intro fly-in, the fight or escape motion (tracking, move-to, orbit), the anchor
+   * ride, spins and part transforms (parents first), frames and hit flash. Never allocates.
    */
   move(): void;
   /**
    * Phase 6, between `grid.begin` and `grid.build`: refreshes each part's
    * {@link BossPart.target} / {@link BossPart.armoured} and inserts the targets' hurtboxes with
-   * their ids ({@link BOSS_PART_ID_BASE} + index). Parts are targets during the intro and the
-   * fight while they have a hurtbox and are not destroyed.
+   * their ids ({@link BossPart.slot}). Parts are targets during the intro and the fight (not
+   * resting) while they have a hurtbox and are not destroyed.
    *
    * @param grid - The World's grid.
    */
   insertColliders(grid: SpatialGrid): void;
   /**
-   * Phase 6: the ships' hurt circles against the target parts' hurtboxes (closed) →
+   * Phase 6: the ships' hurt circles against the target parts' boxes (closed) or circles →
    * `playerHit(Contact)`, at most one accepted hit per ship and tick.
    */
   collidePlayers(): void;
   /**
-   * Phase 7 (the player shots, `core/weapons`): a hit on part `index`.
+   * Phase 7 (the player shots, `core/weapons`): a hit on part slot `index`
+   * ({@link BossPart.global} — for boss slot 0 the part's own index).
    *
    * @remarks
-   * {@link BossHit.None} when no boss is in its intro or fight or the part is not in play (the
-   * shot flies on); {@link BossHit.Clink} during the intro and for a part that cannot take damage
-   * now (armour, `afterParts` with parts of its `requires` left, `whenOpen` while closed — the
-   * caller answers with the clink); otherwise the part loses `amount` hit points and flashes —
+   * {@link BossHit.None} when its boss is not in its intro or fight (or rests) or the part is not
+   * in play (the shot flies on); {@link BossHit.Clink} during the intro and for a part that cannot
+   * take damage now; otherwise the part loses `amount` hit points and flashes —
    * {@link BossHit.Damaged} (`SFX EnemyHit`), or at 0 {@link BossHit.Destroyed}: it explodes, its
    * `score` goes to `by`, its children are destroyed with it, lasers attached to them stop; the
    * last core starts the death sequence.
    *
-   * @param index - Part index.
+   * @param index - Part slot.
    * @param amount - Damage.
    * @param by - Player slot credited (-1 = nobody).
    * @returns A {@link BossHit} code.
@@ -827,29 +1204,31 @@ export interface BossSystem {
    * Whether a hit on a part would clink right now (live — {@link BossPart.armoured} is the
    * phase-6 snapshot).
    *
-   * @param index - Part index.
+   * @param index - Part slot.
    * @returns `true` during the intro and for a part that cannot take damage now.
    */
   isArmoured(index: number): boolean;
   /**
-   * Phase 7, after the shots' hits: ends the current phase while its condition is met (several
-   * in one tick if the next ones are met too); the new phase's script starts next tick.
+   * Phase 7, after the shots' hits: ends the current phase of every fighting boss while its
+   * condition is met (several in one tick if the next ones are met too); the new phase's script
+   * starts next tick.
    */
   resolve(): void;
   /**
-   * Destroys every core at once (debug tools, tests): the death sequence starts.
+   * Destroys every core of every boss in its intro or fight at once (debug tools, tests): their
+   * death sequences start.
    *
    * @param by - Player slot credited (default -1 = nobody).
-   * @returns `true` when a boss in its intro or fight was defeated.
+   * @returns `true` when at least one boss was defeated.
    */
   defeat(by?: number): boolean;
   /**
-   * Session clear (a checkpoint restart): removes the boss and the WARNING, gives the status
-   * `bossWarning` back as `playing` and restores the stage theme when the boss had changed the
-   * music.
+   * Session clear (a checkpoint restart): removes every boss and the WARNING, gives the status
+   * `bossWarning` back as `playing`, stops a raid's camera, brings the current boss-rush entry
+   * again and restores the stage theme when a boss had changed the music.
    */
   clear(): void;
-  /** Phase 9: refills the parts' sprite batch. Never allocates. */
+  /** Phase 9: refills the parts' batches and the HP bar. Never allocates. */
   sync(): void;
 }
 
@@ -859,14 +1238,18 @@ class CompiledBoss {
   readonly specIndex: number;
   /** The boss section. */
   readonly spec: BossSpec;
-  /** Home x (playfield). */
+  /** {@link BossRole} code. */
+  readonly role: number;
+  /** Home x (relative to the anchor). */
   readonly homeX: number;
   /** Home y. */
   readonly homeY: number;
-  /** Intro start x (playfield). */
+  /** Intro start x (just past the right edge). */
   readonly startX: number;
   /** Bit mask of the cores. */
   readonly coreMask: number;
+  /** Bit mask of the parts the HP bar counts: the cores and the parts a core requires. */
+  readonly barMask: number;
   /** The WARNING text. */
   readonly warningText: string;
   /** Phase behaviours (`null` = unknown: no script). */
@@ -881,6 +1264,32 @@ class CompiledBoss {
   readonly untilCount: Int32Array;
   /** Phase ends after this many ticks (0 = no such condition). */
   readonly untilTicks: Float64Array;
+  /** Fight ticks before it escapes (0 = never). */
+  readonly timeLimit: number;
+  /** Raid segments: camera x offset from the origin (empty = no raid). */
+  readonly raidX: Float64Array;
+  /** Raid segments: camera y offset. */
+  readonly raidY: Float64Array;
+  /** Raid segments: move ticks. */
+  readonly raidTicks: Float64Array;
+  /** Raid segments: hold ticks. */
+  readonly raidHold: Float64Array;
+  /** The raid loops. */
+  readonly raidLoop: boolean;
+  /** Partner's enemy index (-1 = none). */
+  readonly partnerId: number;
+  /** Ticks per turn of the pair (0 = none). */
+  readonly alternate: number;
+  /** Enraged fire-interval factor. */
+  readonly enrageFireRate: number;
+  /** Enraged motion factor. */
+  readonly enrageSpeed: number;
+  /** Phase to jump to when enraged (-1 = none). */
+  readonly enragePhase: number;
+  /** Inner boss's enemy index (-1 = none). */
+  readonly innerId: number;
+  /** Minion's enemy index (-1 = none). */
+  readonly minionId: number;
 
   /**
    * Compiles one boss entry (load time).
@@ -892,20 +1301,40 @@ class CompiledBoss {
   constructor(specIndex: number, spec: BossSpec, behaviors: BossBehaviorLookup) {
     this.specIndex = specIndex;
     this.spec = spec;
+    const role = BOSS_ROLES.indexOf(spec.role ?? 'boss');
+    this.role = role >= 0 ? role : BossRole.Boss;
     this.homeX = spec.x;
     this.homeY = spec.y;
-    // Absolute offsets (parents first) → the leftmost pixel, so the intro starts off screen.
+    // Absolute offsets (parents first, before any turn) → the leftmost pixel, so the intro starts
+    // off screen.
     const offX: number[] = [];
     let left = 0;
     let cores = 0;
+    let required = 0;
     for (let i = 0; i < spec.parts.length; i++) {
       const part = spec.parts[i];
       const ox = (part.parentIndex >= 0 ? offX[part.parentIndex] : 0) + part.x;
       offX.push(ox);
-      const edge = ox - (part.hurtbox === null ? 8 : part.hurtbox.hw);
+      const radius = part.radius ?? 0;
+      const half = part.hurtbox !== null ? part.hurtbox.hw : radius > 0 ? radius : 8;
+      const edge = ox - half;
       if (edge < left) left = edge;
-      if (part.core) cores |= 1 << i;
+      if (part.core) {
+        cores |= 1 << i;
+        required |= part.requiresMask;
+      }
     }
+    // The parts a core requires, and what those require in turn.
+    let bar = (cores | required) >>> 0;
+    for (let round = 0; round < MAX_BOSS_PARTS; round++) {
+      let grown = bar;
+      for (let i = 0; i < spec.parts.length; i++) {
+        if ((bar & (1 << i)) !== 0) grown = (grown | spec.parts[i].requiresMask) >>> 0;
+      }
+      if (grown === bar) break;
+      bar = grown;
+    }
+    this.barMask = bar;
     this.startX = PLAYFIELD_W + BOSS_ENTRY_MARGIN - left;
     this.coreMask = cores >>> 0;
     this.warningText = formatWarningText(spec.displayName, spec.code);
@@ -932,6 +1361,28 @@ class CompiledBoss {
     }
     this.behaviors = defs;
     this.params = params;
+    // M2-09 (fields a hand-built spec may lack take their defaults).
+    this.timeLimit = spec.timeLimit ?? 0;
+    const segments = spec.raid === null || spec.raid === undefined ? [] : spec.raid.segments;
+    this.raidX = new Float64Array(segments.length);
+    this.raidY = new Float64Array(segments.length);
+    this.raidTicks = new Float64Array(segments.length);
+    this.raidHold = new Float64Array(segments.length);
+    for (let s = 0; s < segments.length; s++) {
+      this.raidX[s] = segments[s].x;
+      this.raidY[s] = segments[s].y;
+      this.raidTicks[s] = segments[s].ticks;
+      this.raidHold[s] = segments[s].hold;
+    }
+    this.raidLoop = spec.raid === null || spec.raid === undefined ? true : spec.raid.loop;
+    this.partnerId = spec.partnerId ?? -1;
+    this.alternate = spec.alternate ?? 0;
+    const enrage = spec.enrage;
+    this.enrageFireRate = enrage === undefined ? 1 : enrage.fireRate;
+    this.enrageSpeed = enrage === undefined ? 1 : enrage.speed;
+    this.enragePhase = enrage === undefined ? -1 : enrage.phase;
+    this.innerId = spec.innerId ?? -1;
+    this.minionId = spec.minionId ?? -1;
   }
 }
 
@@ -966,7 +1417,22 @@ const EXPLOSION_FX = [FX_CUES.ExplosionSmall, FX_CUES.ExplosionMedium, FX_CUES.E
 /** Ends of the chain explosions around a part without a hurtbox, in pixels. */
 const CHAIN_SPREAD = 8;
 
-/** The {@link BossScriptApi} (one per system, reused by every phase of every boss). */
+/** Half a turn in binary units. */
+const HALF_TURN = ANGLE_UNITS / 2;
+
+/**
+ * Wraps a binary angle (any finite double) into `[0, 1024)`, keeping its fraction.
+ *
+ * @param a - The angle.
+ * @returns The wrapped angle.
+ */
+function wrapTurn(a: number): number {
+  if (a >= 0 && a < ANGLE_UNITS) return a;
+  const r = a - Math.floor(a / ANGLE_UNITS) * ANGLE_UNITS;
+  return r >= 0 && r < ANGLE_UNITS ? r : 0;
+}
+
+/** The {@link BossScriptApi} of one boss slot (reused by every phase of every boss in it). */
 class BossScriptApiImpl implements BossScriptApi {
   /** See {@link BossScriptApi.self}. */
   readonly self: Boss;
@@ -1009,9 +1475,14 @@ class BossScriptApiImpl implements BossScriptApi {
     return this.system.host.bullets;
   }
 
+  /** See {@link BossScriptApi.enraged}. */
+  get enraged(): boolean {
+    return this.self.enraged;
+  }
+
   /** See {@link BossScriptApi.target}. */
   target(): PlayerShip | null {
-    return this.system.nearestPlayer();
+    return this.system.nearestPlayer(this.self);
   }
 
   /** See {@link BossScriptApi.partIndex}. */
@@ -1061,6 +1532,46 @@ class BossScriptApiImpl implements BossScriptApi {
     part.localY = localY;
   }
 
+  /** See {@link BossScriptApi.setPartAngle}. */
+  setPartAngle(index: number, angle: number): void {
+    const part = this.part(index);
+    if (part !== null && angle === angle) part.angle = wrapTurn(angle);
+  }
+
+  /** See {@link BossScriptApi.spinPart}. */
+  spinPart(index: number, speed: number): void {
+    const part = this.part(index);
+    if (part !== null) part.spin = speed === speed ? speed : 0;
+  }
+
+  /** See {@link BossScriptApi.partAngle}. */
+  partAngle(index: number): number {
+    const part = this.part(index);
+    return part === null ? 0 : Math.floor(part.worldAngle) & ANGLE_MASK;
+  }
+
+  /** See {@link BossScriptApi.aimPart}. */
+  aimPart(index: number, maxStep: number): number {
+    const part = this.part(index);
+    const system = this.system;
+    if (part === null || !system.hasTarget()) return -1;
+    // The heading comes from the bullet system's aim (quantised like aimed shots); the arithmetic
+    // stays in its hot code — this cold script path only moves whole numbers.
+    const origin = system.origin;
+    origin.x = part.x;
+    origin.y = part.y;
+    const want = system.host.bullets.aimFrom(origin);
+    const current = Math.floor(part.worldAngle) & ANGLE_MASK;
+    let delta = ((want - current + HALF_TURN) & ANGLE_MASK) - HALF_TURN;
+    if (maxStep > 0) {
+      if (delta > maxStep) delta = maxStep;
+      else if (delta < -maxStep) delta = -maxStep;
+    }
+    // Its own turn changes; phase 5 recomputes the world angle and the heading frame.
+    part.angle = (Math.floor(part.angle) + delta) & ANGLE_MASK;
+    return (current + delta) & ANGLE_MASK;
+  }
+
   /** See {@link BossScriptApi.hold}. */
   hold(): void {
     this.self.motion = BossMotion.Hold;
@@ -1081,26 +1592,37 @@ class BossScriptApiImpl implements BossScriptApi {
 
   /** See {@link BossScriptApi.moveTo}. */
   moveTo(screenX: number, screenY: number, ticks: number): void {
+    this.system.startMove(this.self, screenX, screenY, ticks, BossMotion.Hold);
+  }
+
+  /** See {@link BossScriptApi.orbit}. */
+  orbit(cx: number, cy: number, rx: number, ry: number, speed: number): void {
     const self = this.self;
-    if (!(ticks >= 1)) {
-      self.screenX = screenX;
-      self.screenY = screenY;
+    if (!(speed !== 0 && speed === speed)) {
       self.motion = BossMotion.Hold;
       return;
     }
-    self.motion = BossMotion.MoveTo;
-    self.moveFromX = self.screenX;
-    self.moveFromY = self.screenY;
-    self.moveToX = screenX;
-    self.moveToY = screenY;
-    self.moveTicks = Math.floor(ticks);
-    self.moveElapsed = 0;
+    self.orbitX = cx;
+    self.orbitY = cy;
+    self.orbitRX = rx;
+    self.orbitRY = ry;
+    self.orbitSpeed = speed;
+    // The ellipse angle of where the boss is now (so the orbit starts without a jump when it is
+    // on the ellipse).
+    self.orbitAngle = atan2B((self.screenY - cy) * rx, (self.screenX - cx) * ry);
+    self.motion = BossMotion.Orbit;
   }
 
   /** See {@link BossScriptApi.canFire}. */
   canFire(index: number): boolean {
     const part = this.part(index);
-    return part !== null && !part.destroyed && this.self.state === BossState.Fight;
+    const self = this.self;
+    if (part === null || part.destroyed || self.state !== BossState.Fight || self.resting) {
+      return false;
+    }
+    // A raid's parts fire only from the screen (phase 5's snapshot: no arithmetic in the cold
+    // script path, whose lower V8 tiers would box every double).
+    return part.inView;
   }
 
   /**
@@ -1120,7 +1642,11 @@ class BossScriptApiImpl implements BossScriptApi {
 
   /** See {@link BossScriptApi.fireWait}. */
   fireWait(ticks: number): number {
-    return rankedWait(this.system.host.bullets, ticks);
+    const wait = rankedWait(this.system.host.bullets, ticks);
+    const self = this.self;
+    if (!self.enraged) return wait;
+    const faster = Math.floor(wait * self.enrageFireRate);
+    return faster >= 1 ? faster : 1;
   }
 
   /** See {@link BossScriptApi.aimed}. */
@@ -1204,42 +1730,99 @@ class BossScriptApiImpl implements BossScriptApi {
           attach ? this.self.parts[index].slot : -1,
         );
   }
+
+  /** See {@link BossScriptApi.launch}. */
+  launch(index: number): boolean {
+    const minion = this.system.minionOf(this.self);
+    if (minion < 0 || !this.canFire(index)) return false;
+    const part = this.self.parts[index];
+    return this.system.host.enemies.spawn(minion, part.x, part.y) !== null;
+  }
 }
 
 /** The boss system (a class: one set of monomorphic methods for every World). */
 class BossSystemImpl implements BossSystem {
   /** See {@link BossSystem.boss}. */
   readonly boss: Boss;
+  /** See {@link BossSystem.slots}. */
+  readonly slots: readonly Boss[];
+  /** See {@link BossSystem.parts}. */
+  readonly parts: readonly BossPart[];
   /** See {@link BossSystem.batch}. */
   readonly batch: SpriteBatch;
+  /** See {@link BossSystem.backBatch}. */
+  readonly backBatch: SpriteBatch;
   /** See {@link BossSystem.warning}. */
   readonly warning: WarningState;
+  /** See {@link BossSystem.hpBar}. */
+  readonly hpBar: BossHpBar;
+  /** See {@link BossSystem.raidCamera}. */
+  readonly raidCamera: RaidCamera;
   /** The World. */
   readonly host: BossHost;
-  /** The fire origin the script API shares. */
+  /** The fire origin the script APIs share. */
   readonly origin = new BulletOrigin();
   /** Compiled boss entries by `ContentDb.enemies` index (`null` for regular enemies). */
   private readonly compiled: ReadonlyArray<CompiledBoss | null>;
-  /** The script API. */
-  private readonly api: BossScriptApiImpl;
-  /** The compiled entry of the running boss (`null` when none). */
-  private current: CompiledBoss | null = null;
-  /** Whether the running sequence changed the music (a clear then restores the stage theme). */
+  /** The script API of each slot. */
+  private readonly apis: readonly BossScriptApiImpl[];
+  /** The compiled entry of each slot's boss (`null` when none). */
+  private readonly entries: Array<CompiledBoss | null>;
+  /** Whether a boss sequence changed the music (a clear then restores the stage theme). */
   private musicChanged = false;
+  /** A free-flight raid steers the camera's velocity (reset to 0 when it ends). */
+  private steering = false;
+  /** The motion each slot had when it withdrew to rest (restored when it comes back). */
+  private readonly restMotion = new Uint8Array(MAX_BOSSES);
+  /** `update()` is running (an entry then waits a tick — {@link Boss.enterTick}). */
+  private updating = false;
+  /** Boss-rush entries: enemy index. */
+  private readonly rushEnemy: Int32Array;
+  /** Boss-rush entries: delay ticks. */
+  private readonly rushWait: Float64Array;
+  /** Boss-rush entries: with the WARNING. */
+  private readonly rushWarning: Uint8Array;
+  /** See {@link BossSystem.rushIndex}. */
+  rushIndex = 0;
+  /** See {@link BossSystem.rushDelay}. */
+  rushDelay = -1;
 
   /**
-   * Builds the boss slot, the API, the batch and the compiled bosses (see
+   * Builds the slots, the APIs, the batches and the compiled bosses (see
    * {@link createBossSystem}).
    *
    * @param host - The World.
    * @param behaviors - Boss behaviour lookup.
+   * @param stage - The World's stage (its boss rush), or `null`.
    */
-  constructor(host: BossHost, behaviors: BossBehaviorLookup) {
+  constructor(host: BossHost, behaviors: BossBehaviorLookup, stage: StageSpec | null) {
     this.host = host;
-    this.boss = new Boss();
-    this.batch = createSpriteBatch(LayerId.AirEnemies, MAX_BOSS_PARTS);
+    const slots: Boss[] = [];
+    const parts: BossPart[] = [];
+    const apis: BossScriptApiImpl[] = [];
+    const entries: Array<CompiledBoss | null> = [];
+    for (let s = 0; s < MAX_BOSSES; s++) {
+      const own: BossPart[] = [];
+      for (let i = 0; i < MAX_BOSS_PARTS; i++) {
+        const part = new BossPart(i, s);
+        own.push(part);
+        parts.push(part);
+      }
+      const boss = new Boss(s, own);
+      slots.push(boss);
+      apis.push(new BossScriptApiImpl(boss, this));
+      entries.push(null);
+    }
+    this.slots = slots;
+    this.parts = parts;
+    this.apis = apis;
+    this.entries = entries;
+    this.boss = slots[0];
+    this.batch = createSpriteBatch(LayerId.AirEnemies, BOSS_PART_SLOTS);
+    this.backBatch = createSpriteBatch(LayerId.GroundEnemies, BOSS_PART_SLOTS);
     this.warning = new WarningState();
-    this.api = new BossScriptApiImpl(this.boss, this);
+    this.hpBar = new BossHpBar();
+    this.raidCamera = new RaidCamera();
     const specs = host.content.enemies;
     const compiled: Array<CompiledBoss | null> = [];
     for (let i = 0; i < specs.length; i++) {
@@ -1247,12 +1830,52 @@ class BossSystemImpl implements BossSystem {
       compiled.push(boss === null ? null : new CompiledBoss(i, boss, behaviors));
     }
     this.compiled = compiled;
+    const rush = stage === null || stage.rush === undefined ? [] : stage.rush;
+    this.rushEnemy = new Int32Array(rush.length);
+    this.rushWait = new Float64Array(rush.length);
+    this.rushWarning = new Uint8Array(rush.length);
+    for (let i = 0; i < rush.length; i++) {
+      this.rushEnemy[i] = rush[i].enemyId;
+      this.rushWait[i] = rush[i].delay;
+      this.rushWarning[i] = rush[i].warning ? 1 : 0;
+    }
+    this.rushIndex = 0;
+    this.rushDelay = rush.length > 0 ? this.rushWait[0] : -1;
   }
 
   /** See {@link BossSystem.active}. */
   get active(): boolean {
-    const state = this.boss.state;
-    return state !== BossState.None && state !== BossState.Dead;
+    const slots = this.slots;
+    for (let s = 0; s < slots.length; s++) {
+      const state = slots[s].state;
+      if (state !== BossState.None && state !== BossState.Dead) return true;
+    }
+    return false;
+  }
+
+  /** See {@link BossSystem.mainActive}. */
+  get mainActive(): boolean {
+    return this.mainInPlay(null, true);
+  }
+
+  /**
+   * Whether a stage boss (role `boss`) other than `except` is in a sequence.
+   *
+   * @param except - A slot to leave out, or `null`.
+   * @param dying - Whether a death sequence counts.
+   * @returns `true` when one is.
+   */
+  private mainInPlay(except: Boss | null, dying: boolean): boolean {
+    const slots = this.slots;
+    for (let s = 0; s < slots.length; s++) {
+      const boss = slots[s];
+      if (boss === except || boss.role !== BossRole.Boss) continue;
+      const state = boss.state;
+      if (state === BossState.None || state === BossState.Dead) continue;
+      if (state === BossState.Dying && !dying) continue;
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -1268,6 +1891,31 @@ class BossSystemImpl implements BossSystem {
       : null;
   }
 
+  /**
+   * The minion enemy of a slot's boss (the script API's `launch`).
+   *
+   * @param boss - The slot.
+   * @returns Its `ContentDb.enemies` index, or -1.
+   */
+  minionOf(boss: Boss): number {
+    const entry = this.entries[boss.slot];
+    return entry === null ? -1 : entry.minionId;
+  }
+
+  /**
+   * The lowest free slot (no boss, or a dead one).
+   *
+   * @returns The slot, or `null` when every slot is busy.
+   */
+  private freeSlot(): Boss | null {
+    const slots = this.slots;
+    for (let s = 0; s < slots.length; s++) {
+      const state = slots[s].state;
+      if (state === BossState.None || state === BossState.Dead) return slots[s];
+    }
+    return null;
+  }
+
   /** See {@link BossSystem.isBoss}. */
   isBoss(enemyIndex: number): boolean {
     return this.entry(enemyIndex) !== null;
@@ -1280,12 +1928,25 @@ class BossSystemImpl implements BossSystem {
   }
 
   /**
-   * The nearest living player to the boss's origin.
+   * Whether any player is alive to aim at (no arithmetic: the cold script path calls it).
    *
+   * @returns `true` when one is.
+   */
+  hasTarget(): boolean {
+    const players = this.host.players;
+    for (let i = 0; i < players.length; i++) {
+      if (players[i].active && players[i].state === 'alive') return true;
+    }
+    return false;
+  }
+
+  /**
+   * The nearest living player to a boss's origin.
+   *
+   * @param boss - The boss.
    * @returns The ship, or `null`.
    */
-  nearestPlayer(): PlayerShip | null {
-    const boss = this.boss;
+  nearestPlayer(boss: Boss): PlayerShip | null {
     const x = boss.x;
     const y = boss.y;
     const players = this.host.players;
@@ -1319,11 +1980,12 @@ class BossSystemImpl implements BossSystem {
   /** See {@link BossSystem.startWarning}. */
   startWarning(enemyIndex: number): boolean {
     const entry = this.entry(enemyIndex);
-    if (entry === null || this.active) return false;
+    if (entry === null || entry.role !== BossRole.Boss) return false;
+    if (this.mainActive || this.warning.active) return false;
+    const boss = this.freeSlot();
+    if (boss === null) return false;
     const host = this.host;
-    const boss = this.boss;
-    this.current = entry;
-    boss.specIndex = enemyIndex;
+    this.assign(boss, entry);
     boss.state = BossState.Warning;
     boss.stateTicks = 0;
     const warning = this.warning;
@@ -1344,11 +2006,28 @@ class BossSystemImpl implements BossSystem {
   /** See {@link BossSystem.startBoss}. */
   startBoss(enemyIndex: number): boolean {
     const entry = this.entry(enemyIndex);
-    if (entry === null || this.active) return false;
-    this.current = entry;
-    this.boss.specIndex = enemyIndex;
-    this.enter();
+    if (entry === null) return false;
+    if (entry.role === BossRole.Boss && this.mainActive) return false;
+    const boss = this.freeSlot();
+    if (boss === null) return false;
+    this.assign(boss, entry);
+    this.enter(boss, true);
     return true;
+  }
+
+  /**
+   * Gives a slot a boss entry (cold path): its entry, spec index and role, no rush entry.
+   *
+   * @param boss - The slot.
+   * @param entry - The entry.
+   */
+  private assign(boss: Boss, entry: CompiledBoss): void {
+    this.entries[boss.slot] = entry;
+    boss.specIndex = entry.specIndex;
+    boss.role = entry.role;
+    boss.rushEntry = -1;
+    boss.partner = -1;
+    boss.leader = false;
   }
 
   /** One wail of the WARNING: the siren (critical) and a flash. */
@@ -1365,12 +2044,19 @@ class BossSystemImpl implements BossSystem {
     requestFlash(host, FlashKind.Warning);
   }
 
-  /** The boss flies in: parts from its entry, intro state, boss music (cold path). */
-  private enter(): void {
-    const entry = this.current;
+  /**
+   * A boss flies in (cold path): its parts from its entry, the intro state, a stage boss's music
+   * — and, for the leader of a double boss, its partner in another slot.
+   *
+   * @param boss - The slot (its entry assigned).
+   * @param withPartner - Bring the entry's partner in too.
+   * @param fromX - Intro start x (NaN = just past the right edge).
+   * @param fromY - Intro start y (NaN = the home row).
+   */
+  private enter(boss: Boss, withPartner: boolean, fromX = NaN, fromY = NaN): void {
+    const entry = this.entries[boss.slot];
     if (entry === null) return;
     const host = this.host;
-    const boss = this.boss;
     const spec = entry.spec;
     const specs = spec.parts;
     const parts = boss.parts;
@@ -1387,14 +2073,20 @@ class BossSystemImpl implements BossSystem {
         part.spriteId = -1;
         continue;
       }
+      const radius = source.radius ?? 0;
       part.active = true;
       part.name = source.name;
       part.parent = source.parentIndex;
       part.localX = source.x;
       part.localY = source.y;
-      part.hurtbox = source.hurtbox !== null;
-      part.hw = source.hurtbox === null ? 0 : source.hurtbox.hw;
-      part.hh = source.hurtbox === null ? 0 : source.hurtbox.hh;
+      part.radius = radius > 0 ? radius : 0;
+      part.hurtbox = source.hurtbox !== null || part.radius > 0;
+      part.hw = source.hurtbox !== null ? source.hurtbox.hw : part.radius;
+      part.hh = source.hurtbox !== null ? source.hurtbox.hh : part.radius;
+      part.angle = wrapTurn(source.angle ?? 0);
+      part.spin = source.spin ?? 0;
+      part.worldAngle = 0;
+      part.turnFrames = source.turn ?? 0;
       part.hp = source.hp;
       part.maxHp = source.hp;
       part.vulnerable = BOSS_VULNERABILITIES.indexOf(source.vulnerable);
@@ -1412,94 +2104,306 @@ class BossSystemImpl implements BossSystem {
     boss.partCount = specs.length;
     boss.state = BossState.Intro;
     boss.stateTicks = 0;
+    // Only an entry during `update()` (a WARNING's end, a partner, an inner boss) waits a tick.
+    boss.enterTick = this.updating ? host.tick : -1;
     boss.phase = 0;
     boss.phaseTicks = 0;
+    boss.fightTicks = 0;
+    boss.timeLimit = entry.timeLimit;
+    boss.escaped = false;
     boss.script = null;
     boss.wakeTick = 0;
     boss.motion = BossMotion.Hold;
+    boss.afterMove = BossMotion.Hold;
     boss.trackSpeed = 0;
     boss.destroyedMask = 0;
     boss.coreMask = entry.coreMask;
     boss.killer = -1;
     boss.blasted = false;
+    boss.resting = false;
+    boss.turning = false;
+    boss.turnTicks = 0;
+    boss.enraged = false;
+    boss.enrageFireRate = entry.enrageFireRate;
+    boss.enrageSpeed = entry.enrageSpeed;
+    boss.raiding = false;
+    boss.returning = false;
+    boss.raidSegment = 0;
+    boss.raidTicks = 0;
+    boss.anchored = entry.raidX.length > 0;
+    boss.anchorX = host.camera.x;
+    boss.anchorY = host.camera.y;
     boss.homeX = entry.homeX;
     boss.homeY = entry.homeY;
-    boss.startX = entry.startX;
+    boss.startX = fromX === fromX ? fromX : entry.startX;
+    boss.startY = fromY === fromY ? fromY : entry.homeY;
     boss.introTicks = spec.introTicks;
-    boss.screenX = spec.introTicks > 0 ? entry.startX : entry.homeX;
-    boss.screenY = entry.homeY;
-    this.place();
-    this.warning.active = false;
-    if (host.status === 'bossWarning') host.status = 'playing';
-    host.events.push(SimEventKind.Music, this.bossMusic(), 0, 0, 0);
-    this.musicChanged = true;
-    if (spec.introTicks <= 0) this.startFight();
+    boss.screenX = spec.introTicks > 0 ? boss.startX : entry.homeX;
+    boss.screenY = spec.introTicks > 0 ? boss.startY : entry.homeY;
+    this.place(boss);
+    // A raid is anchored where it enters: the camera stops there at once (a WARNING has already
+    // braked it — then this changes nothing).
+    if (boss.anchored && host.stage !== null) host.stage.brake(0);
+    if (this.warning.active && boss.role === BossRole.Boss) this.warning.active = false;
+    if (boss.role === BossRole.Boss) {
+      if (host.status === 'bossWarning') host.status = 'playing';
+      host.events.push(SimEventKind.Music, this.bossMusic(), 0, 0, 0);
+      this.musicChanged = true;
+    }
+    if (withPartner && entry.partnerId >= 0) this.enterPartner(boss, entry);
+    if (spec.introTicks <= 0) this.startFight(boss);
   }
 
-  /** The intro is over: the fight and its first phase start (the script runs this tick). */
-  private startFight(): void {
-    const boss = this.boss;
+  /**
+   * The partner of a double boss flies in with its leader (cold path): another slot, linked.
+   *
+   * @param leader - The leader's slot.
+   * @param entry - The leader's entry.
+   */
+  private enterPartner(leader: Boss, entry: CompiledBoss): void {
+    const partnerEntry = this.entry(entry.partnerId);
+    if (partnerEntry === null) return;
+    const mate = this.freeSlot();
+    if (mate === null) return;
+    this.assign(mate, partnerEntry);
+    leader.partner = mate.slot;
+    leader.leader = true;
+    mate.partner = leader.slot;
+    mate.leader = false;
+    this.enter(mate, false);
+  }
+
+  /**
+   * The intro is over: the fight and its first phase start (the script runs this tick); a
+   * raid's camera path begins; the follower of an alternating pair withdraws.
+   *
+   * @param boss - The slot.
+   */
+  private startFight(boss: Boss): void {
+    const entry = this.entries[boss.slot];
     boss.state = BossState.Fight;
     boss.stateTicks = 0;
+    boss.fightTicks = 0;
     boss.screenX = boss.homeX;
     boss.screenY = boss.homeY;
-    this.startPhase(0, this.host.tick);
+    const jump = entry === null || !boss.enraged ? -1 : entry.enragePhase;
+    this.startPhase(boss, jump > 0 ? jump : 0, this.host.tick);
+    if (entry === null) return;
+    if (boss.anchored && entry.raidX.length > 0) this.startRaid(boss);
+    const partner = boss.partner;
+    if (partner < 0 || boss.enraged) return;
+    const lead = boss.leader ? entry : this.entries[partner];
+    if (lead === null || lead.alternate <= 0) return;
+    if (boss.leader) boss.turnTicks = lead.alternate;
+    else this.setResting(boss, true);
   }
 
   /**
    * Starts a phase: its behaviour replaces the running script.
    *
+   * @param boss - The slot.
    * @param phase - Phase index.
    * @param wakeTick - Tick its script first runs on.
    */
-  private startPhase(phase: number, wakeTick: number): void {
-    const boss = this.boss;
-    const entry = this.current;
+  private startPhase(boss: Boss, phase: number, wakeTick: number): void {
+    const entry = this.entries[boss.slot];
     boss.phase = phase;
     boss.phaseTicks = 0;
     const def = entry === null ? null : entry.behaviors[phase];
-    boss.script = def === null || entry === null ? null : def.create(this.api, entry.params[phase]);
+    boss.script =
+      def === null || entry === null || def === undefined
+        ? null
+        : def.create(this.apis[boss.slot], entry.params[phase]);
     boss.wakeTick = wakeTick;
+  }
+
+  /**
+   * Starts an eased move of a boss's origin (the script API's `moveTo`, a pair's turns, an
+   * escape).
+   *
+   * @param boss - The slot.
+   * @param x - Target x (relative to the anchor).
+   * @param y - Target y.
+   * @param ticks - Duration (≤ 0 / NaN = at once).
+   * @param after - {@link BossMotion} to take up when it ends.
+   */
+  startMove(boss: Boss, x: number, y: number, ticks: number, after: number): void {
+    boss.afterMove = after;
+    if (!(ticks >= 1)) {
+      boss.screenX = x;
+      boss.screenY = y;
+      boss.motion = after;
+      boss.turning = false;
+      return;
+    }
+    boss.motion = BossMotion.MoveTo;
+    boss.moveFromX = boss.screenX;
+    boss.moveFromY = boss.screenY;
+    boss.moveToX = x;
+    boss.moveToY = y;
+    boss.moveTicks = Math.floor(ticks);
+    boss.moveElapsed = 0;
+  }
+
+  /**
+   * A double boss's turn for one of the pair (cold path): withdraw to the rest point, or come
+   * back home (its script waits until it is there, then its motion before the turn resumes).
+   *
+   * @param boss - The slot.
+   * @param resting - Withdraw (`true`) or come forward.
+   */
+  private setResting(boss: Boss, resting: boolean): void {
+    if (boss.resting === resting) return;
+    const saved = boss.motion === BossMotion.MoveTo ? boss.afterMove : boss.motion;
+    boss.resting = resting;
+    boss.turning = true;
+    if (resting) {
+      // Its motion before the turn is kept for the way back (its speeds stay in its fields).
+      this.restMotion[boss.slot] = saved;
+      this.startMove(boss, BOSS_REST_X, boss.homeY, BOSS_TURN_TICKS, BossMotion.Hold);
+    } else {
+      this.startMove(boss, boss.homeX, boss.homeY, BOSS_TURN_TICKS, this.restMotion[boss.slot]);
+    }
+    const parts = boss.parts;
+    for (let i = 0; i < boss.partCount; i++) this.host.bullets.detachLasers(parts[i].slot);
   }
 
   /** See {@link BossSystem.update}. */
   update(): void {
-    const boss = this.boss;
-    const state = boss.state;
-    if (state === BossState.Warning) {
-      const ticks = boss.stateTicks + 1;
-      boss.stateTicks = ticks;
-      this.warning.ticks = ticks;
-      if (ticks >= WARNING_TICKS) this.enter();
-      else if (ticks % WARNING_PULSE_TICKS === 0) this.pulse();
-    } else if (state === BossState.Intro) {
-      boss.stateTicks++;
-      if (boss.stateTicks >= boss.introTicks) this.startFight();
-    } else if (state === BossState.Fight) {
-      boss.stateTicks++;
-      boss.phaseTicks++;
-    } else if (state === BossState.Dying) {
-      this.dyingTick();
+    this.updating = true;
+    const slots = this.slots;
+    for (let s = 0; s < slots.length; s++) {
+      const boss = slots[s];
+      const state = boss.state;
+      if (state === BossState.Warning) {
+        const ticks = boss.stateTicks + 1;
+        boss.stateTicks = ticks;
+        this.warning.ticks = ticks;
+        if (ticks >= WARNING_TICKS) this.enter(boss, true);
+        else if (ticks % WARNING_PULSE_TICKS === 0) this.pulse();
+      } else if (state === BossState.Intro) {
+        if (boss.enterTick === this.host.tick) continue;
+        boss.stateTicks++;
+        if (boss.stateTicks >= boss.introTicks) this.startFight(boss);
+      } else if (state === BossState.Fight) {
+        boss.stateTicks++;
+        if (!boss.resting) boss.phaseTicks++;
+        boss.fightTicks++;
+        if (boss.timeLimit > 0 && boss.fightTicks >= boss.timeLimit) {
+          this.startEscape(boss);
+        } else if (boss.leader && boss.turnTicks > 0 && !boss.enraged) {
+          boss.turnTicks--;
+          if (boss.turnTicks === 0) this.turn(boss);
+        }
+      } else if (state === BossState.Dying) {
+        this.dyingTick(boss);
+      } else if (state === BossState.Escape) {
+        boss.stateTicks++;
+        if (boss.stateTicks >= BOSS_ESCAPE_TICKS) this.finishEscape(boss);
+      }
+      if (boss.raiding || boss.returning) this.steerRaid(boss);
+    }
+    this.updating = false;
+    if (this.rushDelay >= 0) this.rushTick();
+  }
+
+  /**
+   * An alternating pair's turn (the leader's clock ran out; cold path): the fighting one
+   * withdraws, the resting one comes forward.
+   *
+   * @param leader - The leader.
+   */
+  private turn(leader: Boss): void {
+    const entry = this.entries[leader.slot];
+    if (entry === null) return;
+    const mate = this.slots[leader.partner];
+    if (mate === undefined || mate.state !== BossState.Fight || mate.enraged) return;
+    const leaderRests = !leader.resting;
+    this.setResting(leader, leaderRests);
+    this.setResting(mate, !leaderRests);
+    leader.turnTicks = entry.alternate;
+  }
+
+  /**
+   * The boss rush's clock (M2-09): counts the wait down while no main boss runs, then brings the
+   * current entry.
+   */
+  private rushTick(): void {
+    if (this.mainInPlay(null, true)) return;
+    if (this.rushDelay > 0) {
+      this.rushDelay--;
+      return;
+    }
+    const index = this.rushIndex;
+    this.rushDelay = -1;
+    if (index >= this.rushEnemy.length) return;
+    const enemy = this.rushEnemy[index];
+    const started =
+      this.rushWarning[index] !== 0 ? this.startWarning(enemy) : this.startBoss(enemy);
+    if (!started) {
+      // A broken entry is skipped (only possible without validation).
+      this.advanceRush();
+      return;
+    }
+    const slots = this.slots;
+    for (let s = 0; s < slots.length; s++) {
+      const boss = slots[s];
+      if (
+        boss.specIndex === enemy &&
+        boss.role === BossRole.Boss &&
+        boss.state !== BossState.Dead
+      ) {
+        boss.rushEntry = index;
+      }
     }
   }
 
-  /** One tick of the death sequence (cold path: at most once per tick while dying). */
-  private dyingTick(): void {
-    const boss = this.boss;
+  /**
+   * The current rush entry is over: the next one waits its delay, or — after the last — the
+   * stage is clear.
+   *
+   * @returns `true` when another entry comes (the stage is not clear yet).
+   */
+  private advanceRush(): boolean {
+    const n = this.rushEnemy.length;
+    if (this.rushIndex < n) this.rushIndex++;
+    if (this.rushIndex < n) {
+      this.rushDelay = this.rushWait[this.rushIndex];
+      return true;
+    }
+    this.rushDelay = -1;
+    return false;
+  }
+
+  /** One tick of a boss's death sequence (cold path: at most once per tick and slot while dying). */
+  private dyingTick(boss: Boss): void {
     const ticks = boss.stateTicks + 1;
     boss.stateTicks = ticks;
-    if (ticks < BOSS_CHAIN_TICKS) {
-      if (ticks % BOSS_CHAIN_INTERVAL === 0) this.chainExplosion();
-    } else if (ticks === BOSS_CHAIN_TICKS) {
-      this.finalBlast();
+    if (boss.role === BossRole.Captain) {
+      if (ticks < CAPTAIN_CHAIN_TICKS) {
+        if (ticks % BOSS_CHAIN_INTERVAL === 0) this.chainExplosion(boss);
+      } else if (ticks === CAPTAIN_CHAIN_TICKS) {
+        this.captainBlast(boss);
+      }
+      if (ticks === CAPTAIN_TALLY_TICKS) this.tally(boss);
+      if (ticks >= CAPTAIN_CLEAR_TICKS) this.finish(boss);
+      return;
     }
-    if (ticks === BOSS_TALLY_TICKS) this.tally();
-    if (ticks >= BOSS_CLEAR_TICKS) this.finish();
+    if (ticks < BOSS_CHAIN_TICKS) {
+      if (ticks % BOSS_CHAIN_INTERVAL === 0) this.chainExplosion(boss);
+    } else if (ticks === BOSS_CHAIN_TICKS) {
+      this.finalBlast(boss);
+    }
+    if (ticks === BOSS_TALLY_TICKS) this.tally(boss);
+    if (ticks >= BOSS_CLEAR_TICKS) this.finish(boss);
   }
 
-  /** One explosion of the death chain at a random point of a random part (cosmetic RNG). */
-  private chainExplosion(): void {
-    const boss = this.boss;
+  /**
+   * One explosion of the death chain at a random point of a random part (cosmetic RNG).
+   *
+   * @param boss - The dying boss.
+   */
+  private chainExplosion(boss: Boss): void {
     const host = this.host;
     const rng = host.rng.cosmetic;
     const part = boss.parts[rng.rangeInt(0, boss.partCount > 0 ? boss.partCount - 1 : 0)];
@@ -1511,9 +2415,14 @@ class BossSystemImpl implements BossSystem {
     host.events.push(SimEventKind.Sfx, SFX_CUES.BossExplode, x, y, 0);
   }
 
-  /** The final blast: the boss vanishes in a big explosion, flash, shake, rumble, hit-stop. */
-  private finalBlast(): void {
-    const boss = this.boss;
+  /**
+   * The final blast: the boss vanishes in a big explosion, flash, shake, rumble, hit-stop — and
+   * its inner boss, if any, is revealed (a raid's camera is home by now: its return took the
+   * whole chain).
+   *
+   * @param boss - The dying boss.
+   */
+  private finalBlast(boss: Boss): void {
     const host = this.host;
     boss.blasted = true;
     const x = Math.floor(boss.x) | 0;
@@ -1528,13 +2437,62 @@ class BossSystemImpl implements BossSystem {
     requestFlash(host, FlashKind.BossBlast);
     requestShake(host, ShakeMagnitude.Large, BOSS_BLAST_SHAKE_TICKS);
     requestHitStop(host, BOSS_BLAST_HIT_STOP_TICKS);
+    const entry = this.entries[boss.slot];
+    if (entry !== null && entry.innerId >= 0) this.revealInner(boss, entry.innerId);
   }
 
-  /** The score tally: the boss's points to its killer, the defeat event, the stage-clear jingle. */
-  private tally(): void {
-    const boss = this.boss;
+  /**
+   * A captain's smaller blast: a large explosion and a medium shake — no flash, no hit-stop.
+   *
+   * @param boss - The dying captain.
+   */
+  private captainBlast(boss: Boss): void {
     const host = this.host;
-    const entry = this.current;
+    boss.blasted = true;
+    const x = Math.floor(boss.x) | 0;
+    const y = Math.floor(boss.y) | 0;
+    host.events.push(SimEventKind.Particles, FX_CUES.ExplosionLarge, x, y, 1);
+    host.events.push(SimEventKind.Particles, FX_CUES.BossChain, x, y, 1);
+    host.events.push(SimEventKind.Sfx, SFX_CUES.BossExplode, x, y, 0);
+    requestShake(host, ShakeMagnitude.Medium, CAPTAIN_BLAST_SHAKE_TICKS);
+  }
+
+  /**
+   * The boss inside a boss (cold path): the inner one flies from the outer's first standing-or-
+   * not core (its origin without one) to its home, in another slot.
+   *
+   * @param outer - The blasted boss.
+   * @param innerId - The inner boss's enemy index.
+   */
+  private revealInner(outer: Boss, innerId: number): void {
+    const entry = this.entry(innerId);
+    if (entry === null) return;
+    const slot = this.freeSlot();
+    if (slot === null) return;
+    const camera = this.host.camera;
+    let fromX = outer.x - camera.x;
+    let fromY = outer.y - camera.y;
+    const parts = outer.parts;
+    for (let i = 0; i < outer.partCount; i++) {
+      if (!parts[i].core) continue;
+      fromX = parts[i].x - camera.x;
+      fromY = parts[i].y - camera.y;
+      break;
+    }
+    this.assign(slot, entry);
+    slot.rushEntry = outer.rushEntry;
+    this.enter(slot, true, fromX, fromY);
+  }
+
+  /**
+   * The score tally: the boss's points to its killer, the defeat event, the stage-clear jingle
+   * when this ends the encounter.
+   *
+   * @param boss - The dying boss.
+   */
+  private tally(boss: Boss): void {
+    const host = this.host;
+    const entry = this.entries[boss.slot];
     const points = entry === null || boss.killer < 0 ? 0 : entry.spec.score;
     if (points > 0) addScore(host, boss.killer, points);
     host.events.push(
@@ -1544,51 +2502,269 @@ class BossSystemImpl implements BossSystem {
       Math.floor(boss.y) | 0,
       points,
     );
+    if (boss.role !== BossRole.Boss || this.mainInPlay(boss, false)) return;
+    if (this.rushEnemy.length > 0 && this.rushIndex < this.rushEnemy.length - 1) return;
     host.events.push(SimEventKind.Music, MUSIC_CUES.StageClear, 0, 0, 0);
   }
 
-  /** The end of the death sequence: the stage is clear, the camera free again. */
-  private finish(): void {
+  /**
+   * The end of a death sequence: the slot is `Dead`; the last stage boss of the encounter
+   * releases the scroll lock and clears the stage (or brings the next rush boss).
+   *
+   * @param boss - The boss.
+   */
+  private finish(boss: Boss): void {
+    boss.state = BossState.Dead;
+    // A raid's camera ends its own return (the tick after it is home).
+    if (boss.raiding) this.endRaid(boss);
+    this.encounterEnd(boss);
+  }
+
+  /**
+   * After a stage boss's death or escape: when no other stage boss is in play, the lock is
+   * released and the stage is clear — unless a boss rush has more to come.
+   *
+   * @param boss - The boss that ended.
+   */
+  private encounterEnd(boss: Boss): void {
+    if (boss.role !== BossRole.Boss || this.mainInPlay(boss, true)) return;
     const host = this.host;
-    this.boss.state = BossState.Dead;
-    if (host.status === 'playing' || host.status === 'bossWarning') host.status = 'stageClear';
     const stage = host.stage;
     if (stage !== null) stage.unlock();
+    if (this.rushEnemy.length > 0 && this.advanceRush()) return;
+    if (host.status === 'playing' || host.status === 'bossWarning') host.status = 'stageClear';
+  }
+
+  /**
+   * The time limit ran out (cold path): the boss stops fighting and flies off (its partner with
+   * it); a raid's camera eases back.
+   *
+   * @param boss - The fighting boss.
+   */
+  private startEscape(boss: Boss): void {
+    boss.state = BossState.Escape;
+    boss.stateTicks = 0;
+    boss.script = null;
+    boss.resting = false;
+    boss.turning = false;
+    const parts = boss.parts;
+    for (let i = 0; i < parts.length; i++) {
+      parts[i].target = false;
+      this.host.bullets.detachLasers(parts[i].slot);
+    }
+    this.startMove(boss, boss.startX, boss.screenY, BOSS_ESCAPE_TICKS, BossMotion.Hold);
+    if (boss.raiding) this.startReturn(boss, BOSS_ESCAPE_TICKS);
+    if (boss.role === BossRole.Boss && !this.mainInPlay(boss, false)) {
+      this.host.events.push(SimEventKind.Music, MUSIC_CUES.Silence, 0, 0, BOSS_MUSIC_FADE_TICKS);
+    }
+    const partner = boss.partner;
+    if (partner >= 0) {
+      const mate = this.slots[partner];
+      if (mate.state === BossState.Fight || mate.state === BossState.Intro) this.startEscape(mate);
+    }
+  }
+
+  /**
+   * An escape is over (cold path): the slot is `Dead` (escaped), a stage boss sets
+   * {@link EndingFlag}.BossEscaped and ends the encounter like a death (no tally).
+   *
+   * @param boss - The escaping boss.
+   */
+  private finishEscape(boss: Boss): void {
+    const host = this.host;
+    boss.state = BossState.Dead;
+    boss.escaped = true;
+    if (boss.raiding) this.endRaid(boss);
+    host.events.push(
+      SimEventKind.BossEscaped,
+      boss.specIndex,
+      Math.floor(boss.x) | 0,
+      Math.floor(boss.y) | 0,
+      0,
+    );
+    if (boss.role === BossRole.Boss)
+      host.endingFlags = (host.endingFlags | EndingFlag.BossEscaped) >>> 0;
+    this.encounterEnd(boss);
+  }
+
+  /**
+   * A raid's fight starts (cold path): the camera is locked where it is and follows the raid's
+   * segments from now on.
+   *
+   * @param boss - The raid boss.
+   */
+  private startRaid(boss: Boss): void {
+    const host = this.host;
+    const camera = host.camera;
+    boss.raiding = true;
+    boss.returning = false;
+    boss.raidSegment = 0;
+    boss.raidTicks = 0;
+    boss.raidFromX = camera.x - boss.x;
+    boss.raidFromY = camera.y - boss.y;
+    boss.raidHomeX = camera.x;
+    boss.raidHomeY = camera.y;
+    const target = this.raidCamera;
+    target.x = camera.x;
+    target.y = camera.y;
+    const stage = host.stage;
+    if (stage !== null) {
+      stage.brake(0);
+      stage.follow(target);
+    } else {
+      this.steering = true;
+    }
+  }
+
+  /**
+   * A raid's camera starts easing back to where the raid began (death or escape).
+   *
+   * @param boss - The raid boss.
+   * @param ticks - Length of the return.
+   */
+  private startReturn(boss: Boss, ticks: number): void {
+    const camera = this.host.camera;
+    boss.raiding = false;
+    boss.returning = true;
+    boss.raidTicks = 0;
+    boss.raidReturnTicks = ticks;
+    boss.raidFromX = camera.x;
+    boss.raidFromY = camera.y;
+  }
+
+  /**
+   * The raid is over: the camera stops following (it is back where the raid began).
+   *
+   * @param boss - The raid boss.
+   */
+  private endRaid(boss: Boss): void {
+    boss.raiding = false;
+    boss.returning = false;
+    const host = this.host;
+    const stage = host.stage;
+    if (stage !== null) {
+      stage.follow(null);
+    } else if (this.steering) {
+      this.steering = false;
+      host.camera.vx = 0;
+      host.camera.vy = 0;
+    }
+  }
+
+  /**
+   * Phase 3: moves a raid's camera target — along its segments (boss-relative) or back home —
+   * and, in free flight, steers the camera's velocity to it. Never allocates.
+   *
+   * @param boss - The raid boss.
+   */
+  private steerRaid(boss: Boss): void {
+    const target = this.raidCamera;
+    const ticks = boss.raidTicks + 1;
+    boss.raidTicks = ticks;
+    if (boss.returning) {
+      const total = boss.raidReturnTicks;
+      if (ticks > total) {
+        // Home since the last tick: the camera is the stage's again.
+        this.endRaid(boss);
+        return;
+      }
+      const u = total > 0 && ticks < total ? ticks / total : 1;
+      // `EASINGS.inOutQuad` written out.
+      const e = u < 0.5 ? 2 * u * u : 1 - 2 * (1 - u) * (1 - u);
+      target.x = boss.raidFromX + (boss.raidHomeX - boss.raidFromX) * e;
+      target.y = boss.raidFromY + (boss.raidHomeY - boss.raidFromY) * e;
+    } else {
+      const entry = this.entries[boss.slot];
+      if (entry === null) return;
+      const n = entry.raidX.length;
+      const seg = boss.raidSegment;
+      const move = entry.raidTicks[seg];
+      const toX = entry.raidX[seg];
+      const toY = entry.raidY[seg];
+      let ox = toX;
+      let oy = toY;
+      if (move > 0 && ticks < move) {
+        const u = ticks / move;
+        const e = u < 0.5 ? 2 * u * u : 1 - 2 * (1 - u) * (1 - u);
+        ox = boss.raidFromX + (toX - boss.raidFromX) * e;
+        oy = boss.raidFromY + (toY - boss.raidFromY) * e;
+      }
+      target.x = boss.x + ox;
+      target.y = boss.y + oy;
+      if (ticks >= move + entry.raidHold[seg]) {
+        const last = seg >= n - 1;
+        if (!last || entry.raidLoop) {
+          boss.raidFromX = toX;
+          boss.raidFromY = toY;
+          boss.raidSegment = last ? 0 : seg + 1;
+          boss.raidTicks = 0;
+        } else {
+          boss.raidTicks = move + entry.raidHold[seg];
+        }
+      }
+    }
+    if (this.steering) {
+      const camera = this.host.camera;
+      camera.vx = target.x - camera.x;
+      camera.vy = target.y - camera.y;
+    }
   }
 
   /** See {@link BossSystem.runScript}. */
   runScript(): void {
-    const boss = this.boss;
-    if (boss.state !== BossState.Fight || boss.script === null) return;
     const tick = this.host.tick;
-    if (boss.wakeTick > tick) return;
-    resumeScript(boss, tick);
+    const slots = this.slots;
+    for (let s = 0; s < slots.length; s++) {
+      const boss = slots[s];
+      if (boss.state !== BossState.Fight || boss.script === null) continue;
+      if (boss.resting || boss.turning || boss.wakeTick > tick) continue;
+      resumeScript(boss, tick);
+    }
   }
 
   /** See {@link BossSystem.move}. */
   move(): void {
-    const boss = this.boss;
-    const state = boss.state;
-    if (state !== BossState.Intro && state !== BossState.Fight && state !== BossState.Dying) {
-      return;
+    const slots = this.slots;
+    for (let s = 0; s < slots.length; s++) {
+      const boss = slots[s];
+      const state = boss.state;
+      if (
+        state === BossState.Intro ||
+        state === BossState.Fight ||
+        state === BossState.Dying ||
+        state === BossState.Escape
+      ) {
+        this.moveBoss(boss);
+      }
     }
+  }
+
+  /**
+   * Phase 5 for one boss in play (see {@link BossSystem.move}).
+   *
+   * @param boss - The boss.
+   */
+  private moveBoss(boss: Boss): void {
+    const state = boss.state;
     if (state === BossState.Intro) {
       const total = boss.introTicks;
       const u = total > 0 && boss.stateTicks < total ? boss.stateTicks / total : 1;
       const v = 1 - u;
       // `EASINGS.outCubic` written out (no fractional call arguments or results).
-      boss.screenX = boss.startX + (boss.homeX - boss.startX) * (1 - v * v * v);
-      boss.screenY = boss.homeY;
-    } else if (state === BossState.Fight) {
+      const e = 1 - v * v * v;
+      boss.screenX = boss.startX + (boss.homeX - boss.startX) * e;
+      boss.screenY = boss.startY + (boss.homeY - boss.startY) * e;
+    } else if (state === BossState.Fight || state === BossState.Escape) {
       const motion = boss.motion;
       if (motion === BossMotion.Track) {
-        const target = this.nearestPlayer();
+        const target = this.nearestPlayer(boss);
         if (target !== null) {
-          let goal = target.y - this.host.camera.y;
+          const anchorY = boss.anchored ? boss.anchorY : this.host.camera.y;
+          let goal = target.y - anchorY;
           if (goal < boss.trackMin) goal = boss.trackMin;
           else if (goal > boss.trackMax) goal = boss.trackMax;
           const d = goal - boss.screenY;
-          const speed = boss.trackSpeed;
+          const speed = boss.trackSpeed * (boss.enraged ? boss.enrageSpeed : 1);
           boss.screenY += d > speed ? speed : d < -speed ? -speed : d;
         }
       } else if (motion === BossMotion.MoveTo) {
@@ -1599,39 +2775,96 @@ class BossSystemImpl implements BossSystem {
         const e = u < 0.5 ? 2 * u * u : 1 - 2 * (1 - u) * (1 - u);
         boss.screenX = boss.moveFromX + (boss.moveToX - boss.moveFromX) * e;
         boss.screenY = boss.moveFromY + (boss.moveToY - boss.moveFromY) * e;
-        if (u >= 1) boss.motion = BossMotion.Hold;
+        if (u >= 1) {
+          boss.motion = boss.afterMove;
+          boss.afterMove = BossMotion.Hold;
+          boss.turning = false;
+        }
+      } else if (motion === BossMotion.Orbit) {
+        const a = wrapTurn(
+          boss.orbitAngle + boss.orbitSpeed * (boss.enraged ? boss.enrageSpeed : 1),
+        );
+        boss.orbitAngle = a;
+        const i = a | 0;
+        boss.screenX = boss.orbitX + SIN[i + ANGLE_QUARTER] * boss.orbitRX;
+        boss.screenY = boss.orbitY + SIN[i] * boss.orbitRY;
       }
     }
-    this.place();
+    const spinning = state !== BossState.Dying;
     const parts = boss.parts;
+    if (spinning) {
+      for (let i = 0; i < boss.partCount; i++) {
+        const part = parts[i];
+        if (part.spin !== 0) part.angle = wrapTurn(part.angle + part.spin);
+      }
+    }
+    this.place(boss);
     const tick = this.host.tick;
     for (let i = 0; i < boss.partCount; i++) {
       const part = parts[i];
       if (part.flashTicks > 0) part.flashTicks--;
-      const frames = part.animFrames;
-      part.frame = frames > 1 ? Math.floor(tick / part.animTicks) % frames : 0;
+      const turn = part.turnFrames;
+      if (turn > 1) {
+        // `turnedFrame` written out (a fractional argument to a call V8 does not inline is boxed).
+        part.frame = (((part.worldAngle * turn) / ANGLE_UNITS + 0.5) | 0) % turn;
+      } else {
+        const frames = part.animFrames;
+        part.frame = frames > 1 ? Math.floor(tick / part.animTicks) % frames : 0;
+      }
     }
   }
 
-  /** Puts the origin at the camera + its playfield position and every part after its parent. */
-  private place(): void {
-    const boss = this.boss;
+  /**
+   * Puts a boss's origin at its anchor (the camera, or a raid's world point) + its position and
+   * every part after its parent: the parent's centre + the local offset turned by the parent's
+   * world angle (a part's world angle is its parent's plus its own).
+   *
+   * @param boss - The boss.
+   */
+  private place(boss: Boss): void {
     const camera = this.host.camera;
-    const x = camera.x + boss.screenX;
-    const y = camera.y + boss.screenY;
+    const anchored = boss.anchored;
+    const x = (anchored ? boss.anchorX : camera.x) + boss.screenX;
+    const y = (anchored ? boss.anchorY : camera.y) + boss.screenY;
     boss.x = x;
     boss.y = y;
+    // A raid's parts fire only from the view (+ the margin): whole-view bounds once per boss.
+    const left = camera.x - BOSS_FIRE_MARGIN;
+    const top = camera.y - BOSS_FIRE_MARGIN;
     const parts = boss.parts;
     for (let i = 0; i < boss.partCount; i++) {
       const part = parts[i];
       const parent = part.parent;
       if (parent >= 0) {
         const p = parts[parent];
-        part.x = p.x + part.localX;
-        part.y = p.y + part.localY;
+        const turn = p.worldAngle;
+        if (turn === 0) {
+          part.x = p.x + part.localX;
+          part.y = p.y + part.localY;
+        } else {
+          const k = turn | 0;
+          const sin = SIN[k];
+          const cos = SIN[k + ANGLE_QUARTER];
+          part.x = p.x + part.localX * cos - part.localY * sin;
+          part.y = p.y + part.localX * sin + part.localY * cos;
+        }
+        const world = turn + part.angle;
+        part.worldAngle = world >= ANGLE_UNITS ? world - ANGLE_UNITS : world;
       } else {
         part.x = x + part.localX;
         part.y = y + part.localY;
+        part.worldAngle = part.angle;
+      }
+      if (anchored) {
+        const vx = part.x - left;
+        const vy = part.y - top;
+        part.inView =
+          vx >= 0 &&
+          vx <= PLAYFIELD_W + 2 * BOSS_FIRE_MARGIN &&
+          vy >= 0 &&
+          vy <= PLAYFIELD_H + 2 * BOSS_FIRE_MARGIN;
+      } else {
+        part.inView = true;
       }
     }
   }
@@ -1639,11 +2872,11 @@ class BossSystemImpl implements BossSystem {
   /**
    * Whether a part cannot take damage now (the rules of {@link BossSystem.isArmoured}).
    *
+   * @param boss - Its boss.
    * @param part - The part.
    * @returns `true` when a hit clinks.
    */
-  private armouredNow(part: BossPart): boolean {
-    const boss = this.boss;
+  private armouredNow(boss: Boss, part: BossPart): boolean {
     if (boss.state === BossState.Intro) return true;
     const vulnerable = part.vulnerable;
     if (vulnerable === BossVulnerable.Always) return false;
@@ -1656,37 +2889,54 @@ class BossSystemImpl implements BossSystem {
 
   /** See {@link BossSystem.isArmoured}. */
   isArmoured(index: number): boolean {
-    if (!(index >= 0 && index < MAX_BOSS_PARTS && index % 1 === 0)) return false;
-    return this.armouredNow(this.boss.parts[index]);
+    if (!(index >= 0 && index < BOSS_PART_SLOTS && index % 1 === 0)) return false;
+    const part = this.parts[index];
+    return this.armouredNow(this.slots[part.owner], part);
   }
 
   /** See {@link BossSystem.insertColliders}. */
   insertColliders(grid: SpatialGrid): void {
-    const boss = this.boss;
-    const state = boss.state;
-    const fighting = state === BossState.Intro || state === BossState.Fight;
-    const parts = boss.parts;
-    for (let i = 0; i < parts.length; i++) {
-      const part = parts[i];
-      const target = fighting && part.active && part.hurtbox && !part.destroyed;
-      part.target = target;
-      part.armoured = target && this.armouredNow(part);
-      if (!target) continue;
-      // Whole-pixel bounds (the grid is the broad phase; see `EnemySystem.insertColliders`).
-      grid.insert(
-        part.slot,
-        Math.floor(part.x - part.hw) | 0,
-        Math.floor(part.y - part.hh) | 0,
-        Math.ceil(part.x + part.hw) | 0,
-        Math.ceil(part.y + part.hh) | 0,
-      );
+    const slots = this.slots;
+    for (let s = 0; s < slots.length; s++) {
+      const boss = slots[s];
+      const state = boss.state;
+      const fighting = (state === BossState.Intro || state === BossState.Fight) && !boss.resting;
+      const parts = boss.parts;
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i];
+        const target = fighting && part.active && part.hurtbox && !part.destroyed;
+        part.target = target;
+        part.armoured = target && this.armouredNow(boss, part);
+        if (!target) continue;
+        // Whole-pixel bounds (the grid is the broad phase; see `EnemySystem.insertColliders`).
+        grid.insert(
+          part.slot,
+          Math.floor(part.x - part.hw) | 0,
+          Math.floor(part.y - part.hh) | 0,
+          Math.ceil(part.x + part.hw) | 0,
+          Math.ceil(part.y + part.hh) | 0,
+        );
+      }
     }
   }
 
   /** See {@link BossSystem.collidePlayers}. */
   collidePlayers(): void {
-    const boss = this.boss;
-    if (boss.state !== BossState.Intro && boss.state !== BossState.Fight) return;
+    const slots = this.slots;
+    for (let s = 0; s < slots.length; s++) {
+      const boss = slots[s];
+      if (boss.state !== BossState.Intro && boss.state !== BossState.Fight) continue;
+      if (boss.resting) continue;
+      this.touch(boss);
+    }
+  }
+
+  /**
+   * The ships against one boss's target parts (see {@link BossSystem.collidePlayers}).
+   *
+   * @param boss - The boss.
+   */
+  private touch(boss: Boss): void {
     const host = this.host;
     const players = host.players;
     const base = host.ship.hurtRadius;
@@ -1701,29 +2951,38 @@ class BossSystemImpl implements BossSystem {
       for (let i = 0; i < boss.partCount; i++) {
         const part = parts[i];
         if (!part.target) continue;
-        // `circleAabb` inlined (closed: touching counts), no fractional call arguments.
-        const ox = Math.abs(sx - part.x) - part.hw;
-        const oy = Math.abs(sy - part.y) - part.hh;
-        const dx = ox > 0 ? ox : 0;
-        const dy = oy > 0 ? oy : 0;
-        if (dx * dx + dy * dy <= r * r) {
-          if (playerHit(ship, PlayerHitCause.Contact, host.tick, host.debugFlags)) break;
+        let hit: boolean;
+        const radius = part.radius;
+        if (radius > 0) {
+          // Circle against circle (M2-09: turned parts are hit as circles).
+          const dx = sx - part.x;
+          const dy = sy - part.y;
+          const reach = r + radius;
+          hit = dx * dx + dy * dy <= reach * reach;
+        } else {
+          // `circleAabb` inlined (closed: touching counts), no fractional call arguments.
+          const ox = Math.abs(sx - part.x) - part.hw;
+          const oy = Math.abs(sy - part.y) - part.hh;
+          const dx = ox > 0 ? ox : 0;
+          const dy = oy > 0 ? oy : 0;
+          hit = dx * dx + dy * dy <= r * r;
         }
+        if (hit && playerHit(ship, PlayerHitCause.Contact, host.tick, host.debugFlags)) break;
       }
     }
   }
 
   /** See {@link BossSystem.damagePart}. */
   damagePart(index: number, amount: number, by: number): number {
-    if (!(index >= 0 && index < MAX_BOSS_PARTS && index % 1 === 0)) return BossHit.None;
-    const boss = this.boss;
+    if (!(index >= 0 && index < BOSS_PART_SLOTS && index % 1 === 0)) return BossHit.None;
+    const part = this.parts[index];
+    const boss = this.slots[part.owner];
     const state = boss.state;
-    const part = boss.parts[index];
-    if ((state !== BossState.Intro && state !== BossState.Fight) || !part.active) {
+    if ((state !== BossState.Intro && state !== BossState.Fight) || !part.active || boss.resting) {
       return BossHit.None;
     }
     if (part.destroyed) return BossHit.None;
-    if (this.armouredNow(part)) return BossHit.Clink;
+    if (this.armouredNow(boss, part)) return BossHit.Clink;
     part.hp -= amount;
     part.flashTicks = HIT_FLASH_TICKS;
     if (part.hp > 0) {
@@ -1736,7 +2995,7 @@ class BossSystemImpl implements BossSystem {
       );
       return BossHit.Damaged;
     }
-    this.destroyPart(index, by);
+    this.destroyPart(boss, part.index, by);
     return BossHit.Destroyed;
   }
 
@@ -1744,11 +3003,11 @@ class BossSystemImpl implements BossSystem {
    * Destroys a part and every part attached below it (cold path), credits their points, then
    * starts the death sequence when no core is left.
    *
-   * @param index - The part.
+   * @param boss - Its boss.
+   * @param index - The part's index in its boss.
    * @param by - Player slot credited (-1 = nobody).
    */
-  private destroyPart(index: number, by: number): void {
-    const boss = this.boss;
+  private destroyPart(boss: Boss, index: number, by: number): void {
     const parts = boss.parts;
     let cascade = 0;
     for (let i = index; i < boss.partCount; i++) {
@@ -1756,19 +3015,19 @@ class BossSystemImpl implements BossSystem {
       if (part.destroyed) continue;
       if (i !== index && (part.parent < 0 || (cascade & (1 << part.parent)) === 0)) continue;
       cascade |= 1 << i;
-      this.destroyOne(part, by);
+      this.destroyOne(boss, part, by);
     }
-    if ((boss.destroyedMask & boss.coreMask) === boss.coreMask) this.startDeath(by);
+    if ((boss.destroyedMask & boss.coreMask) === boss.coreMask) this.startDeath(boss, by);
   }
 
   /**
    * One part goes: destroyed, its explosion, its points, its lasers stop.
    *
+   * @param boss - Its boss.
    * @param part - The part.
    * @param by - Player slot credited.
    */
-  private destroyOne(part: BossPart, by: number): void {
-    const boss = this.boss;
+  private destroyOne(boss: Boss, part: BossPart, by: number): void {
     const host = this.host;
     part.destroyed = true;
     if (part.hp > 0) part.hp = 0;
@@ -1789,36 +3048,67 @@ class BossSystemImpl implements BossSystem {
   }
 
   /**
-   * The last core is gone: the death sequence starts (cold path).
+   * The last core is gone: the death sequence starts (cold path); the partner of a double boss
+   * enrages; a raid's camera eases back.
    *
+   * @param boss - The boss.
    * @param by - Player slot credited with the kill.
    */
-  private startDeath(by: number): void {
-    const boss = this.boss;
+  private startDeath(boss: Boss, by: number): void {
     const host = this.host;
     boss.state = BossState.Dying;
     boss.stateTicks = 0;
     boss.killer = by;
     boss.script = null;
     boss.motion = BossMotion.Hold;
+    boss.resting = false;
+    boss.turning = false;
     const parts = boss.parts;
     for (let i = 0; i < parts.length; i++) {
       parts[i].target = false;
       host.bullets.detachLasers(parts[i].slot);
     }
-    // The boss's bullets turn into points for its killer (M2-02); nobody's kill only sparkles.
+    // The bullets turn into points for the killer (M2-02); nobody's kill only sparkles.
     host.bullets.cancelAll(CancelMode.Points, by);
-    host.events.push(SimEventKind.Music, MUSIC_CUES.Silence, 0, 0, BOSS_MUSIC_FADE_TICKS);
-    requestShake(host, ShakeMagnitude.Small, BOSS_CHAIN_TICKS);
+    const captain = boss.role === BossRole.Captain;
+    const entry = this.entries[boss.slot];
+    const inner = entry !== null && entry.innerId >= 0;
+    if (!captain && !inner && !this.mainInPlay(boss, false)) {
+      host.events.push(SimEventKind.Music, MUSIC_CUES.Silence, 0, 0, BOSS_MUSIC_FADE_TICKS);
+    }
+    requestShake(host, ShakeMagnitude.Small, captain ? CAPTAIN_CHAIN_TICKS : BOSS_CHAIN_TICKS);
+    if (boss.raiding) this.startReturn(boss, RAID_RETURN_TICKS);
+    const partner = boss.partner;
+    if (partner >= 0) this.enrage(this.slots[partner]);
+  }
+
+  /**
+   * A double boss's survivor enrages (cold path): it comes forward for good, its turns stop,
+   * its intervals and motion speed up (`enrage`) and it may jump to its enrage phase.
+   *
+   * @param boss - The surviving partner.
+   */
+  private enrage(boss: Boss): void {
+    const state = boss.state;
+    if ((state !== BossState.Intro && state !== BossState.Fight) || boss.enraged) return;
+    boss.enraged = true;
+    boss.turnTicks = 0;
+    if (boss.resting) this.setResting(boss, false);
+    const entry = this.entries[boss.slot];
+    if (state !== BossState.Fight || entry === null) return;
+    const jump = entry.enragePhase;
+    if (jump > boss.phase && jump < entry.behaviors.length) {
+      this.startPhase(boss, jump, this.host.tick + 1);
+    }
   }
 
   /**
    * The cores' total remaining hit points.
    *
+   * @param boss - The boss.
    * @returns The sum (destroyed cores count 0).
    */
-  private coreHp(): number {
-    const boss = this.boss;
+  private coreHp(boss: Boss): number {
     const parts = boss.parts;
     let hp = 0;
     for (let i = 0; i < boss.partCount; i++) {
@@ -1831,14 +3121,14 @@ class BossSystemImpl implements BossSystem {
   /**
    * Whether the current phase's condition is met.
    *
-   * @param entry - The running boss's entry.
+   * @param boss - The boss.
+   * @param entry - Its entry.
    * @param phase - The phase.
    * @returns `true` when it ends.
    */
-  private phaseOver(entry: CompiledBoss, phase: number): boolean {
-    const boss = this.boss;
+  private phaseOver(boss: Boss, entry: CompiledBoss, phase: number): boolean {
     const hp = entry.untilHp[phase];
-    if (hp > 0 && this.coreHp() < hp) return true;
+    if (hp > 0 && this.coreHp(boss) < hp) return true;
     const mask = entry.untilMask[phase];
     if (mask !== 0) {
       let hits = (boss.destroyedMask & mask) >>> 0;
@@ -1855,51 +3145,78 @@ class BossSystemImpl implements BossSystem {
 
   /** See {@link BossSystem.resolve}. */
   resolve(): void {
-    const boss = this.boss;
-    const entry = this.current;
-    if (boss.state !== BossState.Fight || entry === null) return;
-    const last = entry.behaviors.length - 1;
-    while (boss.phase < last && this.phaseOver(entry, boss.phase)) {
-      this.startPhase(boss.phase + 1, this.host.tick + 1);
+    const slots = this.slots;
+    for (let s = 0; s < slots.length; s++) {
+      const boss = slots[s];
+      const entry = this.entries[s];
+      if (boss.state !== BossState.Fight || entry === null) continue;
+      const last = entry.behaviors.length - 1;
+      while (boss.phase < last && this.phaseOver(boss, entry, boss.phase)) {
+        this.startPhase(boss, boss.phase + 1, this.host.tick + 1);
+      }
     }
   }
 
   /** See {@link BossSystem.defeat}. */
   defeat(by = -1): boolean {
-    const boss = this.boss;
-    if (boss.state !== BossState.Intro && boss.state !== BossState.Fight) return false;
-    const parts = boss.parts;
-    for (let i = 0; i < boss.partCount; i++) {
-      if (boss.state !== BossState.Intro && boss.state !== BossState.Fight) break;
-      const part = parts[i];
-      if (part.core && !part.destroyed) this.destroyPart(i, by);
+    let defeated = false;
+    const slots = this.slots;
+    for (let s = 0; s < slots.length; s++) {
+      const boss = slots[s];
+      if (boss.state !== BossState.Intro && boss.state !== BossState.Fight) continue;
+      const parts = boss.parts;
+      for (let i = 0; i < boss.partCount; i++) {
+        if (boss.state !== BossState.Intro && boss.state !== BossState.Fight) break;
+        const part = parts[i];
+        if (part.core && !part.destroyed) this.destroyPart(boss, i, by);
+      }
+      const after: number = boss.state;
+      if (after === BossState.Dying) defeated = true;
     }
-    const after: number = boss.state;
-    return after === BossState.Dying;
+    return defeated;
   }
 
   /** See {@link BossSystem.clear}. */
   clear(): void {
-    const boss = this.boss;
     const host = this.host;
-    const parts = boss.parts;
-    for (let i = 0; i < parts.length; i++) {
-      const part = parts[i];
-      if (part.active) host.bullets.detachLasers(part.slot);
-      part.active = false;
-      part.target = false;
-      part.armoured = false;
+    const slots = this.slots;
+    for (let s = 0; s < slots.length; s++) {
+      const boss = slots[s];
+      if (boss.raiding || boss.returning) this.endRaid(boss);
+      const parts = boss.parts;
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i];
+        if (part.active) host.bullets.detachLasers(part.slot);
+        part.active = false;
+        part.target = false;
+        part.armoured = false;
+      }
+      boss.state = BossState.None;
+      boss.specIndex = -1;
+      boss.partCount = 0;
+      boss.script = null;
+      boss.destroyedMask = 0;
+      boss.killer = -1;
+      boss.blasted = false;
+      boss.resting = false;
+      boss.turning = false;
+      boss.enraged = false;
+      boss.partner = -1;
+      boss.leader = false;
+      boss.anchored = false;
+      boss.rushEntry = -1;
+      this.entries[s] = null;
     }
-    boss.state = BossState.None;
-    boss.specIndex = -1;
-    boss.partCount = 0;
-    boss.script = null;
-    boss.destroyedMask = 0;
-    boss.killer = -1;
-    boss.blasted = false;
-    this.current = null;
+    // The current rush entry comes again (it was not beaten).
+    if (this.rushIndex < this.rushEnemy.length) this.rushDelay = this.rushWait[this.rushIndex];
     this.warning.active = false;
     this.batch.count = 0;
+    this.backBatch.count = 0;
+    const bar = this.hpBar;
+    bar.visible = false;
+    bar.hp = 0;
+    bar.maxHp = 0;
+    bar.bosses = 0;
     if (host.status === 'bossWarning') host.status = 'playing';
     if (this.musicChanged) {
       this.musicChanged = false;
@@ -1911,22 +3228,42 @@ class BossSystemImpl implements BossSystem {
 
   /** See {@link BossSystem.sync}. */
   sync(): void {
-    const batch = this.batch;
-    batch.count = 0;
-    const boss = this.boss;
-    const state = boss.state;
-    if (
-      (state !== BossState.Intro && state !== BossState.Fight && state !== BossState.Dying) ||
-      boss.blasted
-    ) {
-      return;
+    const front = this.batch;
+    const back = this.backBatch;
+    front.count = 0;
+    back.count = 0;
+    const slots = this.slots;
+    for (let s = 0; s < slots.length; s++) {
+      const boss = slots[s];
+      const state = boss.state;
+      if (
+        (state !== BossState.Intro &&
+          state !== BossState.Fight &&
+          state !== BossState.Dying &&
+          state !== BossState.Escape) ||
+        boss.blasted
+      ) {
+        continue;
+      }
+      this.draw(boss, boss.resting ? back : front);
     }
-    const blink = state === BossState.Dying && (boss.stateTicks & 4) !== 0;
+    this.syncHpBar();
+  }
+
+  /**
+   * Appends a boss's standing, drawn parts to a batch (see {@link BossSystem.sync}).
+   *
+   * @param boss - The boss.
+   * @param batch - The batch.
+   */
+  private draw(boss: Boss, batch: SpriteBatch): void {
+    const blink = boss.state === BossState.Dying && (boss.stateTicks & 4) !== 0;
     const parts = boss.parts;
     for (let i = 0; i < boss.partCount; i++) {
       const part = parts[i];
       if (part.destroyed || part.spriteId < 0) continue;
       const slot = batch.count;
+      if (slot >= batch.capacity) return;
       // `pushSprite` inlined (fractional x / y arguments would be boxed if not inlined).
       batch.x[slot] = part.x;
       batch.y[slot] = part.y;
@@ -1936,24 +3273,88 @@ class BossSystemImpl implements BossSystem {
       batch.count = slot + 1;
     }
   }
+
+  /** Refreshes {@link BossSystem.hpBar} (see {@link BossHpBar}). Never allocates. */
+  private syncHpBar(): void {
+    const slots = this.slots;
+    let main = false;
+    for (let s = 0; s < slots.length; s++) {
+      if (slots[s].role === BossRole.Boss && this.barCounts(slots[s])) main = true;
+    }
+    const role = main ? BossRole.Boss : BossRole.Captain;
+    let hp = 0;
+    let max = 0;
+    let count = 0;
+    for (let s = 0; s < slots.length; s++) {
+      const boss = slots[s];
+      const entry = this.entries[s];
+      if (boss.role !== role || entry === null || !this.barCounts(boss)) continue;
+      count++;
+      const mask = entry.barMask;
+      const parts = boss.parts;
+      let left = 0;
+      let full = 0;
+      for (let i = 0; i < boss.partCount; i++) {
+        if ((mask & (1 << i)) === 0) continue;
+        const part = parts[i];
+        full += part.maxHp;
+        if (!part.destroyed && part.hp > 0) left += part.hp;
+      }
+      max += full;
+      if (boss.state === BossState.Intro) {
+        const total = boss.introTicks;
+        hp += total > 0 ? Math.floor((full * boss.stateTicks) / total) : full;
+      } else if (boss.state !== BossState.Dying) {
+        hp += left;
+      }
+    }
+    const bar = this.hpBar;
+    bar.visible = count > 0;
+    bar.hp = hp;
+    bar.maxHp = max;
+    bar.bosses = count;
+  }
+
+  /**
+   * Whether a boss counts for the HP bar: in its intro, fight or escape, or dying before its
+   * blast.
+   *
+   * @param boss - The slot.
+   * @returns `true` when counted.
+   */
+  private barCounts(boss: Boss): boolean {
+    const state = boss.state;
+    return (
+      state === BossState.Intro ||
+      state === BossState.Fight ||
+      state === BossState.Escape ||
+      (state === BossState.Dying && !boss.blasted)
+    );
+  }
 }
 
 /**
- * Creates the boss system of a World (load time): the boss slot with its
- * {@link MAX_BOSS_PARTS} parts, the script API, the parts' batch, the WARNING state and every boss
- * entry of the content compiled (its WARNING text built from {@link WARNING_TEMPLATE}).
+ * Creates the boss system of a World (load time): the {@link MAX_BOSSES} slots with their parts,
+ * the script APIs, the parts' batches, the WARNING state, the HP bar, the raid camera target,
+ * every boss entry of the content compiled (its WARNING text built from {@link WARNING_TEMPLATE})
+ * and the stage's boss rush.
  *
  * @param host - The World (read at every call — pass the World itself).
  * @param behaviors - Boss behaviour lookup (`core/behaviors` `DEFAULT_BOSS_BEHAVIORS`); a phase
  *   whose script it does not know runs no script (content validation reports it).
- * @returns The system (no boss yet).
+ * @param stage - The World's stage (its `rush` list — M2-09), or `null` / omitted (no rush).
+ * @returns The system (no boss yet; a boss rush waits its first delay).
  *
  * @example
  * ```ts
- * const bosses = createBossSystem(world, DEFAULT_BOSS_BEHAVIORS);
+ * const bosses = createBossSystem(world, DEFAULT_BOSS_BEHAVIORS, stageSpec);
  * bosses.startBoss(db.enemyIndex.get('test-boss')!);
  * ```
  */
-export function createBossSystem(host: BossHost, behaviors: BossBehaviorLookup): BossSystem {
-  return new BossSystemImpl(host, behaviors);
+export function createBossSystem(
+  host: BossHost,
+  behaviors: BossBehaviorLookup,
+  stage: StageSpec | null = null,
+): BossSystem {
+  return new BossSystemImpl(host, behaviors, stage);
 }

@@ -48,6 +48,19 @@
  * resolved, stage `spawn` / `formation` events and enemy `child`ren must name regular enemies and
  * `warning` / `boss` events bosses.
  *
+ * **Advanced bosses (M2-09).** A boss section may give a `role` (`boss` — the default — or
+ * `captain`, a mid-boss that stays until destroyed and never locks the scroll or clears the
+ * stage; {@link BossRoleName}), a `timeLimit` (fight ticks before it escapes), a `raid`
+ * ({@link BossRaidSpec}: boss-relative camera segments — a battleship larger than the screen), a
+ * `partner` (a second boss that enters with it — a double boss — with `alternate` turns and the
+ * survivor's `enrage`, {@link BossEnrageSpec}), an `inner` boss (a boss inside a boss, revealed by
+ * its final blast) and a `minion` enemy its behaviours launch. Parts may be turned (`angle`, `spin`
+ * in binary units — children follow the turned offsets), hit by a circle (`radius` instead of a
+ * `hurtbox`) and drawn from heading frames (`turn`). A stage of `type: 'bossRush'` runs its `rush`
+ * list of bosses one after another ({@link StageRushEntry}). The reference pass checks that
+ * partners, inner bosses and rush entries are bosses of role `boss`, minions are regular enemies,
+ * no `warning` event names a captain and no inner-boss chain loops.
+ *
  * **Rules (M2-01).** A `rules` file (`content/rules/*.rules.json`) holds game-wide tables; its
  * optional `difficulty` section gives the four difficulty presets (`core/config`
  * {@link DifficultyRules}: rank base and growth, lives, extends, continues, death penalty, aim
@@ -86,7 +99,12 @@
  *   {@link DEFAULT_SETTLE_TICKS}), {@link BossSpec} ({@link BossPartSpec}, {@link BossPhaseSpec},
  *   {@link BossUntilSpec}, {@link BossVulnerability}, {@link BOSS_VULNERABILITIES},
  *   {@link MAX_BOSS_PARTS}, {@link MAX_BOSS_PHASES}, {@link DEFAULT_BOSS_X},
- *   {@link DEFAULT_BOSS_Y}, {@link DEFAULT_BOSS_INTRO_TICKS}), {@link PathSpec}
+ *   {@link DEFAULT_BOSS_Y}, {@link DEFAULT_BOSS_INTRO_TICKS}; M2-09 {@link BossRoleName},
+ *   {@link BOSS_ROLES}, {@link BossRaidSpec}, {@link BossRaidSegmentSpec},
+ *   {@link BossEnrageSpec}, {@link MAX_RAID_SEGMENTS}, {@link DEFAULT_RAID_SEGMENT_TICKS},
+ *   {@link DEFAULT_ENRAGE_FIRE_RATE}, {@link DEFAULT_ENRAGE_SPEED}, {@link MAX_TURN_FRAMES}),
+ *   {@link StageType}, {@link STAGE_TYPES}, {@link StageRushEntry}, {@link MAX_RUSH_BOSSES},
+ *   {@link DEFAULT_RUSH_DELAY} (M2-09), {@link PathSpec}
  *   ({@link PathPointSpec}, {@link PathTable}, {@link bakePath}, {@link PATH_SAMPLE_STEP},
  *   {@link MAX_PATH_LENGTH}), {@link StageSpec} and its parts ({@link StageMusic},
  *   {@link StageCameraKey}, {@link StageCheckpoint}, {@link StageParallaxLayer},
@@ -826,6 +844,74 @@ export const DEFAULT_BOSS_Y = 100;
 export const DEFAULT_BOSS_INTRO_TICKS = 120;
 
 /**
+ * What a boss is to its stage (M2-09, shmup_feat.md §13): `boss` — a stage boss (the WARNING, the
+ * scroll lock, the stage clear after its death sequence); `captain` — a mid-boss that flies in
+ * with a `boss` event, rides the scrolling camera until destroyed, never locks the scroll, keeps
+ * the stage music and ends with a short death sequence (no stage clear).
+ */
+export type BossRoleName = 'boss' | 'captain';
+
+/** Every {@link BossRoleName}, in code order (the index is the `core/bosses` `BossRole` code). */
+export const BOSS_ROLES = Object.freeze(['boss', 'captain'] as const);
+
+/** Most camera segments one raid may list. */
+export const MAX_RAID_SEGMENTS = 16;
+
+/** Default length of a raid camera segment's move, in ticks. */
+export const DEFAULT_RAID_SEGMENT_TICKS = 120;
+
+/** Default fire-interval factor of an enraged boss (its partner died): shorter waits. */
+export const DEFAULT_ENRAGE_FIRE_RATE = 0.625;
+
+/** Default motion-speed factor of an enraged boss. */
+export const DEFAULT_ENRAGE_SPEED = 1.5;
+
+/** Most heading frames a turned part's sprite may have (`BossPartSpec.turn`). */
+export const MAX_TURN_FRAMES = 64;
+
+/**
+ * One segment of a raid's camera path (M2-09): the camera's top-left corner moves to `x` / `y`
+ * **relative to the boss's origin** (eased in-out over `ticks`), then stays there `hold` ticks
+ * while the boss moves — so the camera keeps following the boss.
+ */
+export interface BossRaidSegmentSpec {
+  /** Camera left edge minus the boss's origin x, in pixels. */
+  readonly x: number;
+  /** Camera top edge minus the boss's origin y, in pixels. */
+  readonly y: number;
+  /** Ticks of the move to this offset (default {@link DEFAULT_RAID_SEGMENT_TICKS}; 0 = at once). */
+  readonly ticks: number;
+  /** Ticks the camera then stays at the offset (default 0). */
+  readonly hold: number;
+}
+
+/**
+ * A **battleship raid** (M2-09, shmup_feat.md §13 "huge bosses bigger than the screen that you fly
+ * around"): the boss is anchored in the world where it entered instead of riding the camera, and
+ * from the start of its fight the camera pans around it along `segments` (boss-relative).
+ */
+export interface BossRaidSpec {
+  /** The camera path (1–{@link MAX_RAID_SEGMENTS}). */
+  readonly segments: readonly BossRaidSegmentSpec[];
+  /** Start again from the first segment after the last (default `true`; `false` = stay). */
+  readonly loop: boolean;
+}
+
+/**
+ * How a boss of a double boss enrages when its partner dies (M2-09, "survivor speeds up"): its
+ * fire intervals are multiplied by `fireRate`, its motion speeds by `speed`, and — when `phase` is
+ * a later phase than the running one — it jumps to that phase.
+ */
+export interface BossEnrageSpec {
+  /** Fire-interval factor (0.1–1; default {@link DEFAULT_ENRAGE_FIRE_RATE}). */
+  readonly fireRate: number;
+  /** Motion-speed factor (1–4; default {@link DEFAULT_ENRAGE_SPEED}). */
+  readonly speed: number;
+  /** Phase index to jump to (default -1 = keep the phase). */
+  readonly phase: number;
+}
+
+/**
  * One part of a boss (`boss.parts[]`): a translation from its parent (or from the boss's origin),
  * hit points, a hurtbox, a sprite and its weak-point rule. Parts are listed parents first; later
  * parts are drawn over earlier ones.
@@ -843,8 +929,30 @@ export interface BossPartSpec {
   readonly y: number;
   /** Hit points (default 1; unused by `never` parts). */
   readonly hp: number;
-  /** Half-extents of the hurtbox (also the contact box), or `null`: never hit, never touched. */
+  /**
+   * Half-extents of the hurtbox (also the contact box), or `null`: never hit, never touched
+   * (unless it has a {@link BossPartSpec.radius}).
+   */
   readonly hurtbox: BoxSpec | null;
+  /**
+   * A **circle** hurtbox instead of the box (M2-09 — rotated parts are hit as circles): its radius
+   * in pixels, 0 = none (default). Not with `hurtbox`.
+   */
+  readonly radius: number;
+  /**
+   * The part's turn relative to its parent, in binary angle units (1024 per turn, clockwise;
+   * default 0, M2-09): the offsets of the parts attached to it are turned by its world angle (the
+   * parent's plus its own).
+   */
+  readonly angle: number;
+  /** Turn speed in binary units per tick (default 0; M2-09): a rotating arm, a ring of pods. */
+  readonly spin: number;
+  /**
+   * Heading frames (M2-09; default 0 = none): the sprite's frames show the part turned to
+   * `frame × 1024 / turn` units, and the part is drawn with the frame nearest its world angle (a
+   * turret). Not with `anim`; needs a circle hurtbox (`radius`) when it has one — boxes never turn.
+   */
+  readonly turn: number;
   /** When it takes damage (default `always`). */
   readonly vulnerable: BossVulnerability;
   /** Parts that must be destroyed first (`afterParts` only). */
@@ -918,6 +1026,35 @@ export interface BossSpec {
   readonly parts: readonly BossPartSpec[];
   /** The phases (1–{@link MAX_BOSS_PHASES}), in order. */
   readonly phases: readonly BossPhaseSpec[];
+  /** Stage boss or mid-boss (default `boss`; M2-09 — {@link BossRoleName}). */
+  readonly role: BossRoleName;
+  /**
+   * Fight ticks after which the boss **escapes** (M2-09, shmup_feat.md §13 "boss timer / escape"):
+   * it stops fighting, flies off and the World records the `BossEscaped` ending flag; 0 (default)
+   * = no limit.
+   */
+  readonly timeLimit: number;
+  /** A battleship raid's camera path (M2-09), or `null` (default: the boss rides the camera). */
+  readonly raid: BossRaidSpec | null;
+  /** The boss that enters together with this one — a double boss (M2-09), or `null`. */
+  readonly partner: string | null;
+  /** Resolved {@link ContentDb.enemies} index of {@link BossSpec.partner} (-1 = none). */
+  readonly partnerId: number;
+  /**
+   * With a partner: ticks each of the pair fights in turn while the other withdraws to the back
+   * (M2-09, "alternating"); 0 (default) = both fight at once.
+   */
+  readonly alternate: number;
+  /** How this boss enrages when its partner dies (M2-09; defaults when omitted). */
+  readonly enrage: BossEnrageSpec;
+  /** The boss inside this one, revealed by its final blast (M2-09), or `null`. */
+  readonly inner: string | null;
+  /** Resolved {@link ContentDb.enemies} index of {@link BossSpec.inner} (-1 = none). */
+  readonly innerId: number;
+  /** A regular enemy its behaviours launch (`BossScriptApi.launch`, M2-09), or `null`. */
+  readonly minion: string | null;
+  /** Resolved {@link ContentDb.enemies} index of {@link BossSpec.minion} (-1 = none). */
+  readonly minionId: number;
 }
 
 /** One control point of a path, in pixels relative to where the mover starts. */
@@ -1459,12 +1596,47 @@ export interface StageBranch {
   readonly value: boolean;
 }
 
+/**
+ * What kind of stage it is (M2-09): `normal` — a zone with its timeline; `bossRush` — a boss-rush
+ * sequence (shmup_feat.md §13 "boss rush stage"): its `rush` bosses come one after another and the
+ * last one's death clears the stage.
+ */
+export type StageType = 'normal' | 'bossRush';
+
+/** Every {@link StageType}. */
+export const STAGE_TYPES = Object.freeze(['normal', 'bossRush'] as const);
+
+/** Most bosses one boss rush may list. */
+export const MAX_RUSH_BOSSES = 16;
+
+/** Default wait before a boss of a rush comes (after the stage start or the last one's end). */
+export const DEFAULT_RUSH_DELAY = 60;
+
+/** One boss of a boss rush (`StageSpec.rush`, M2-09). */
+export interface StageRushEntry {
+  /** The boss (an enemy with a `boss` section of role `boss`). */
+  readonly enemy: string;
+  /** Resolved {@link ContentDb.enemies} index of {@link StageRushEntry.enemy}. */
+  readonly enemyId: number;
+  /** Ticks to wait before it comes (default {@link DEFAULT_RUSH_DELAY}). */
+  readonly delay: number;
+  /** Whether it comes with the WARNING (default `false`: it flies in at once). */
+  readonly warning: boolean;
+}
+
 /** One stage/zone (`content/stages/*.stage.json`, shmup_feat.md §14). */
 export interface StageSpec {
   /** Unique id, referenced by the zone map. */
   readonly id: string;
   /** Display name. */
   readonly name: string;
+  /** `normal` (default) or `bossRush` (M2-09 — {@link StageType}). */
+  readonly type: StageType;
+  /**
+   * The bosses of a `bossRush` stage, in order (M2-09; empty — and not allowed — on a `normal`
+   * one).
+   */
+  readonly rush: readonly StageRushEntry[];
   /** Stage and boss music. */
   readonly music: StageMusic;
   /** Camera-X length in pixels (the camera never scrolls past it). */
@@ -1888,6 +2060,10 @@ const BOSS_PART_SCHEMA = s.object(
     y: s.num({ min: -512, max: 512 }),
     hp: s.int({ min: 1, max: 100000 }),
     hurtbox: BOX_SCHEMA,
+    radius: s.num({ min: 1, max: 128 }),
+    angle: s.int({ min: -1023, max: 1023 }),
+    spin: s.num({ min: -32, max: 32 }),
+    turn: s.int({ min: 2, max: MAX_TURN_FRAMES }),
     vulnerable: s.enumOf(BOSS_VULNERABILITIES),
     requires: s.array(PART_NAME, { min: 1, max: MAX_BOSS_PARTS }),
     core: s.bool(),
@@ -1905,6 +2081,10 @@ const BOSS_PART_SCHEMA = s.object(
       'y',
       'hp',
       'hurtbox',
+      'radius',
+      'angle',
+      'spin',
+      'turn',
       'vulnerable',
       'requires',
       'core',
@@ -1916,6 +2096,17 @@ const BOSS_PART_SCHEMA = s.object(
       'explosion',
     ],
   },
+);
+
+/** One segment of `boss.raid.segments` (M2-09). */
+const RAID_SEGMENT_SCHEMA = s.object(
+  {
+    x: s.num({ min: -2048, max: 2048 }),
+    y: s.num({ min: -2048, max: 2048 }),
+    ticks: s.int({ min: 0, max: 3600 }),
+    hold: s.int({ min: 0, max: 36000 }),
+  },
+  { optional: ['ticks', 'hold'] },
 );
 
 /** One entry of `boss.phases`. */
@@ -1947,8 +2138,44 @@ const BOSS_SCHEMA = s.object(
     y: s.num({ min: 0, max: PLAYFIELD_H }),
     parts: s.array(BOSS_PART_SCHEMA, { min: 1, max: MAX_BOSS_PARTS }),
     phases: s.array(BOSS_PHASE_SCHEMA, { min: 1, max: MAX_BOSS_PHASES }),
+    role: s.enumOf(BOSS_ROLES),
+    timeLimit: s.int({ min: 60, max: 36000 }),
+    raid: s.object(
+      {
+        segments: s.array(RAID_SEGMENT_SCHEMA, { min: 1, max: MAX_RAID_SEGMENTS }),
+        loop: s.bool(),
+      },
+      { optional: ['loop'] },
+    ),
+    partner: s.ref('enemy'),
+    alternate: s.int({ min: 1, max: 3600 }),
+    enrage: s.object(
+      {
+        fireRate: s.num({ min: 0.1, max: 1 }),
+        speed: s.num({ min: 1, max: 4 }),
+        phase: s.int({ min: 0, max: MAX_BOSS_PHASES - 1 }),
+      },
+      { optional: ['fireRate', 'speed', 'phase'] },
+    ),
+    inner: s.ref('enemy'),
+    minion: s.ref('enemy'),
   },
-  { optional: ['introTicks', 'score', 'x', 'y'] },
+  {
+    optional: [
+      'introTicks',
+      'score',
+      'x',
+      'y',
+      'role',
+      'timeLimit',
+      'raid',
+      'partner',
+      'alternate',
+      'enrage',
+      'inner',
+      'minion',
+    ],
+  },
 );
 
 /**
@@ -2338,8 +2565,16 @@ const STAGE_FILE_SCHEMA = s.object(
     ),
     raster: s.array(RASTER_EFFECT_SCHEMA, { max: MAX_STAGE_RASTER_EFFECTS }),
     cycles: s.array(COLOR_CYCLE_SCHEMA, { max: MAX_STAGE_COLOR_CYCLES }),
+    type: s.enumOf(STAGE_TYPES),
+    rush: s.array(
+      s.object(
+        { enemy: s.ref('enemy'), delay: s.int({ min: 0, max: 3600 }), warning: s.bool() },
+        { optional: ['delay', 'warning'] },
+      ),
+      { min: 1, max: MAX_RUSH_BOSSES },
+    ),
   },
-  { optional: ['directItems', 'branches', 'raster', 'cycles'] },
+  { optional: ['directItems', 'branches', 'raster', 'cycles', 'type', 'rush'] },
 );
 
 /** One entry of `tiles` in a `tileset` file. */
@@ -3298,6 +3533,24 @@ function completeBoss(boss: MutableBoss, path: string, issues: ValidationIssue[]
     if (part.y === undefined) part.y = 0;
     if (part.hp === undefined) part.hp = 1;
     if (part.hurtbox === undefined) part.hurtbox = null;
+    // M2-09: circle hurtboxes, turns, heading frames.
+    if (part.radius === undefined) part.radius = 0;
+    if (part.angle === undefined) part.angle = 0;
+    if (part.spin === undefined) part.spin = 0;
+    if (part.turn === undefined) part.turn = 0;
+    if (part.radius > 0 && part.hurtbox !== null) {
+      ok = issue(issues, where + '.radius', 'a part is hit by a hurtbox or a radius, not both');
+    }
+    if (part.turn > 0 && part.anim !== undefined) {
+      ok = issue(issues, where + '.turn', 'heading frames (turn) and anim cannot be combined');
+    }
+    if (part.turn > 0 && part.hurtbox !== null) {
+      ok = issue(
+        issues,
+        where + '.turn',
+        'a part drawn turned needs a circle hurtbox (radius): boxes never turn',
+      );
+    }
     if (part.vulnerable === undefined) part.vulnerable = 'always';
     const requires = part.requires ?? [];
     let mask = 0;
@@ -3338,7 +3591,9 @@ function completeBoss(boss: MutableBoss, path: string, issues: ValidationIssue[]
           'a core cannot be "never" (the boss could not die)',
         );
       }
-      if (part.hurtbox === null) ok = issue(issues, where + '.hurtbox', 'is required for a core');
+      if (part.hurtbox === null && part.radius <= 0) {
+        ok = issue(issues, where + '.hurtbox', 'is required for a core (a hurtbox or a radius)');
+      }
     }
   }
   if (cores === 0) ok = issue(issues, path + '.parts', 'needs at least one core ("core": true)');
@@ -3408,7 +3663,75 @@ function completeBoss(boss: MutableBoss, path: string, issues: ValidationIssue[]
   if (boss.score === undefined) boss.score = 0;
   if (boss.x === undefined) boss.x = DEFAULT_BOSS_X;
   if (boss.y === undefined) boss.y = DEFAULT_BOSS_Y;
+  if (!completeAdvancedBoss(boss, path, issues)) ok = false;
   return ok ? coreHp : -1;
+}
+
+/**
+ * Checks and completes the M2-09 fields of a boss section in place: `role` (default `boss`),
+ * `timeLimit` (0), `raid` (`null`; segment defaults, `loop` `true`), `partner` / `inner` /
+ * `minion` (`null` when absent — their ids come from the reference resolution), `alternate` (0),
+ * `enrage` (the defaults, `phase` -1).
+ *
+ * @remarks
+ * Reported: a captain with a `raid`, a `partner`, an `inner` boss or an `alternate`; `alternate`
+ * without a `partner`; an `enrage.phase` past the last phase. The reference checks (partners and
+ * inner bosses must be bosses of role `boss`, minions regular enemies, no loops) run once the
+ * references are resolved ({@link checkBossReferences}).
+ *
+ * @param boss - The parsed boss section.
+ * @param path - Issue path of the section.
+ * @param issues - Collector.
+ * @returns `true` when these fields are usable.
+ */
+function completeAdvancedBoss(boss: MutableBoss, path: string, issues: ValidationIssue[]): boolean {
+  let ok = true;
+  const record = boss as unknown as Record<string, unknown>;
+  // Which of the pair / nesting fields the file gave (before the defaults fill them).
+  const given = {
+    raid: record['raid'] !== undefined,
+    partner: record['partner'] !== undefined,
+    inner: record['inner'] !== undefined,
+    alternate: record['alternate'] !== undefined,
+  };
+  if (boss.role === undefined) boss.role = 'boss';
+  if (boss.timeLimit === undefined) boss.timeLimit = 0;
+  if (boss.alternate === undefined) boss.alternate = 0;
+  if (record['partner'] === undefined) boss.partner = null;
+  if (record['inner'] === undefined) boss.inner = null;
+  if (record['minion'] === undefined) boss.minion = null;
+  const raid = record['raid'] as
+    { segments: Array<{ ticks?: number; hold?: number }>; loop?: boolean } | undefined;
+  if (raid === undefined) {
+    boss.raid = null;
+  } else {
+    for (const segment of raid.segments) {
+      if (segment.ticks === undefined) segment.ticks = DEFAULT_RAID_SEGMENT_TICKS;
+      if (segment.hold === undefined) segment.hold = 0;
+    }
+    if (raid.loop === undefined) raid.loop = true;
+  }
+  const enrage = record['enrage'] as
+    { fireRate?: number; speed?: number; phase?: number } | undefined;
+  const filled = enrage ?? {};
+  if (filled.fireRate === undefined) filled.fireRate = DEFAULT_ENRAGE_FIRE_RATE;
+  if (filled.speed === undefined) filled.speed = DEFAULT_ENRAGE_SPEED;
+  if (filled.phase === undefined) filled.phase = -1;
+  if (filled.phase >= boss.phases.length) {
+    ok = issue(issues, path + '.enrage.phase', 'must name one of the phases (0-based)');
+  }
+  boss.enrage = filled as BossEnrageSpec;
+  if (boss.role === 'captain') {
+    for (const field of ['raid', 'partner', 'inner', 'alternate'] as const) {
+      if (given[field]) {
+        ok = issue(issues, path + '.' + field, 'is only for bosses of role "boss" (not captains)');
+      }
+    }
+  }
+  if (given.alternate && !given.partner) {
+    ok = issue(issues, path + '.alternate', 'needs a partner (the pair takes turns)');
+  }
+  return ok;
 }
 
 /**
@@ -3449,6 +3772,88 @@ function checkBossReferences(db: DbBuilder, issues: ValidationIssue[]): void {
   for (let e = 0; e < enemies.length; e++) {
     if (isBoss(enemies[e].childId) === true) {
       issue(issues, db.enemyPaths[e] + '.child', 'is a boss: a spawner cannot release it');
+    }
+  }
+  checkAdvancedBossReferences(db, issues);
+}
+
+/**
+ * The M2-09 part of the reference pass: a `warning` event must not name a captain (captains fly
+ * in with a `boss` event); a boss's `partner` must be another boss of role `boss` without a
+ * partner or raid of its own; an `inner` boss must be a boss of role `boss` other than itself and
+ * the inner chain must not loop; a `minion` must be a regular enemy; every entry of a stage's
+ * `rush` must be a boss of role `boss`.
+ *
+ * @param db - The builder (references already resolved).
+ * @param issues - Collector.
+ */
+function checkAdvancedBossReferences(db: DbBuilder, issues: ValidationIssue[]): void {
+  const enemies = db.enemies;
+  /**
+   * The boss section of a resolved enemy index.
+   *
+   * @param index - The index (-1 = none).
+   * @returns The section, or `null` for a regular enemy / no enemy.
+   */
+  const bossOf = (index: number): BossSpec | null =>
+    index >= 0 && index < enemies.length ? enemies[index].boss : null;
+  for (let s = 0; s < db.stages.length; s++) {
+    const stage = db.stages[s];
+    const file = db.stagePaths[s];
+    for (let i = 0; i < stage.events.length; i++) {
+      const event = stage.events[i];
+      if (event.type !== 'warning') continue;
+      if (bossOf(event.enemyId)?.role === 'captain') {
+        issue(
+          issues,
+          at(file, 'events[' + String(i) + '].enemy'),
+          'is a captain: captains fly in with a "boss" event (no WARNING)',
+        );
+      }
+    }
+    for (let i = 0; i < stage.rush.length; i++) {
+      const entry = stage.rush[i];
+      const boss = bossOf(entry.enemyId);
+      if (entry.enemyId >= 0 && (boss === null || boss.role !== 'boss')) {
+        issue(issues, at(file, 'rush[' + String(i) + '].enemy'), 'must name a boss of role "boss"');
+      }
+    }
+  }
+  for (let e = 0; e < enemies.length; e++) {
+    const boss = enemies[e].boss;
+    if (boss === null) continue;
+    const path = db.enemyPaths[e] + '.boss';
+    if (boss.partnerId >= 0) {
+      const partner = bossOf(boss.partnerId);
+      if (boss.partnerId === e) {
+        issue(issues, path + '.partner', 'must name another boss');
+      } else if (partner === null || partner.role !== 'boss') {
+        issue(issues, path + '.partner', 'must name a boss of role "boss"');
+      } else if (partner.partnerId >= 0 || partner.raid !== null) {
+        issue(issues, path + '.partner', 'the partner must not have a partner or raid of its own');
+      }
+    }
+    if (boss.innerId >= 0) {
+      const inner = bossOf(boss.innerId);
+      if (boss.innerId === e) {
+        issue(issues, path + '.inner', 'must name another boss');
+      } else if (inner === null || inner.role !== 'boss') {
+        issue(issues, path + '.inner', 'must name a boss of role "boss"');
+      } else {
+        // Follow the chain: it must end (at most one step per boss).
+        let cursor = boss.innerId;
+        for (let step = 0; cursor >= 0 && step <= enemies.length; step++) {
+          if (cursor === e) {
+            issue(issues, path + '.inner', 'the inner-boss chain loops back to this boss');
+            break;
+          }
+          const next = bossOf(cursor);
+          cursor = next === null ? -1 : next.innerId;
+        }
+      }
+    }
+    if (boss.minionId >= 0 && bossOf(boss.minionId) !== null) {
+      issue(issues, path + '.minion', 'must name a regular enemy (not a boss)');
     }
   }
 }
@@ -3530,8 +3935,20 @@ function bakePathEntry(
 /** A stage while the loader completes it (the fields it adds after the schema). */
 type MutableStage = Omit<
   StageSpec,
-  'flagNames' | 'terrain' | 'events' | 'directItems' | 'branches' | 'raster' | 'cycles'
+  | 'flagNames'
+  | 'terrain'
+  | 'events'
+  | 'directItems'
+  | 'branches'
+  | 'raster'
+  | 'cycles'
+  | 'type'
+  | 'rush'
 > & {
+  /** See {@link StageSpec.type} (optional in the file). */
+  type?: StageType;
+  /** See {@link StageSpec.rush} (optional in the file; the loader fills the defaults). */
+  rush?: Array<{ -readonly [K in keyof StageRushEntry]?: StageRushEntry[K] }>;
   /** See {@link StageSpec.raster} (optional in the file; the loader fills the defaults). */
   raster?: Array<{ -readonly [K in keyof StageRasterEffect]?: StageRasterEffect[K] }>;
   /** See {@link StageSpec.cycles} (optional in the file; the loader resolves the colours). */
@@ -3728,8 +4145,49 @@ function checkStage(stage: MutableStage, file: string, issues: ValidationIssue[]
   stage.terrain = null;
   // Optional since M2-05: an empty plan means the engine's default one.
   if (stage.directItems === undefined) stage.directItems = [];
+  // Boss rushes (M2-09).
+  if (!checkStageRush(stage, file, issues)) ok = false;
   // Presentation effects (M2-08).
   if (!checkStageEffects(stage, file, issues)) ok = false;
+  return ok;
+}
+
+/**
+ * Checks and completes a stage's type and boss rush (M2-09) in place: `type` defaults to
+ * `normal`; a `bossRush` stage needs a `rush` list and no `end` event (the last rush boss ends
+ * it), a `normal` one must not have a `rush`; rush entries get their defaults (`delay`
+ * {@link DEFAULT_RUSH_DELAY}, `warning` `false`). That the entries name bosses of role `boss` is
+ * checked once the references are resolved ({@link checkBossReferences}).
+ *
+ * @param stage - The parsed stage.
+ * @param file - Repo-relative file path.
+ * @param issues - Collector.
+ * @returns `true` when the rush part is usable.
+ */
+function checkStageRush(stage: MutableStage, file: string, issues: ValidationIssue[]): boolean {
+  let ok = true;
+  if (stage.type === undefined) stage.type = 'normal';
+  const rush = stage.rush ?? [];
+  if (stage.type === 'bossRush') {
+    if (rush.length === 0) ok = issue(issues, at(file, 'rush'), 'is required for a bossRush stage');
+    const events = stage.events;
+    for (let i = 0; i < events.length; i++) {
+      if (events[i].type === 'end') {
+        ok = issue(
+          issues,
+          at(file, 'events[' + String(i) + ']'),
+          'a bossRush stage has no end event (its last boss ends it)',
+        );
+      }
+    }
+  } else if (rush.length > 0) {
+    ok = issue(issues, at(file, 'rush'), 'is only used by a bossRush stage (type "bossRush")');
+  }
+  for (const entry of rush) {
+    if (entry.delay === undefined) entry.delay = DEFAULT_RUSH_DELAY;
+    if (entry.warning === undefined) entry.warning = false;
+  }
+  stage.rush = rush;
   return ok;
 }
 

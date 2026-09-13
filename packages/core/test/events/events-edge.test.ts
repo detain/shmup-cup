@@ -251,7 +251,7 @@ describe('core/events — cue registries', () => {
     expect(MUSIC_CUES.Escape).toBe(14);
     expect(MUSIC_CUE_NAMES.length).toBe(15);
 
-    expect(Object.values(SimEventKind)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
+    expect(Object.values(SimEventKind)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]);
     expect(SIM_EVENT_KIND_NAMES).toEqual([
       'sfx',
       'music',
@@ -267,6 +267,8 @@ describe('core/events — cue registries', () => {
       'bossDefeated',
       'score',
       'userOption',
+      // M2-09: a boss escaped when its time limit ran out.
+      'bossEscaped',
     ]);
     expect(UserOptionKind).toEqual({
       MasterVolume: 0,
@@ -278,6 +280,8 @@ describe('core/events — cue registries', () => {
       ScreenShake: 6,
       ReduceFlashing: 7,
       ShowHitbox: 8,
+      // M2-09.
+      BossHpBar: 9,
     });
     expect(FX_CUES).toEqual({
       ExplosionSmall: 0,

@@ -123,11 +123,11 @@ describe('core/world', () => {
     expect(w.rng.gameplay.nextU32()).toBe(createRng(9).nextU32());
   });
 
-  it('exposes a WorldView: live camera, no parallax/terrain yet, enemy, shot, option, player, bullet, shield, item, boss, carried-Option and chain batches', () => {
+  it('exposes a WorldView: live camera, no parallax/terrain yet, enemy, shot, option, player, bullet, shield, item, resting-boss, boss, carried-Option and chain batches', () => {
     const w = world();
     expect(w.view.camera).toBe(w.camera);
     expect([w.view.parallax, w.view.terrain]).toEqual([null, null]);
-    expect(w.view.batches).toHaveLength(12);
+    expect(w.view.batches).toHaveLength(13);
     expect(w.view.batches[0]).toBe(w.enemies.groundBatch);
     expect(w.view.batches[1]).toBe(w.enemies.airBatch);
     expect(w.view.batches[2]).toBe(w.weapons.batch);
@@ -137,11 +137,13 @@ describe('core/world', () => {
     expect(w.view.batches[6]).toBe(w.powerups.shieldBatch);
     expect(w.view.batches[7]).toBe(w.powerups.itemBatch);
     expect(w.view.batches[8]).toBe(w.bullets.pointBatch);
-    expect(w.view.batches[9]).toBe(w.bosses.batch);
+    // A double boss's resting half (M2-09), then the bosses in front.
+    expect(w.view.batches[9]).toBe(w.bosses.backBatch);
+    expect(w.view.batches[10]).toBe(w.bosses.batch);
     // The Options an Option Hunter carries (M2-04).
-    expect(w.view.batches[10]).toBe(w.enemies.carriedBatch);
+    expect(w.view.batches[11]).toBe(w.enemies.carriedBatch);
     // The stage gimmicks' chains (M2-07; no moving blocks without a stage).
-    expect(w.view.batches[11]).toBe(w.gimmicks.chainBatch);
+    expect(w.view.batches[12]).toBe(w.gimmicks.chainBatch);
     expect(w.gimmicks.blocks).toBeNull();
     expect(w.view.lasers).toBe(w.bullets.laserView);
     expect(w.view.bendingLasers).toBe(w.bullets.bending);
@@ -156,6 +158,7 @@ describe('core/world', () => {
       LayerId.Player,
       LayerId.Items,
       LayerId.Items,
+      LayerId.GroundEnemies,
       LayerId.AirEnemies,
       LayerId.AirEnemies,
       LayerId.GroundEnemies,

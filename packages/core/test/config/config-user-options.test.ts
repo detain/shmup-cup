@@ -24,6 +24,7 @@ describe('core/config user options', () => {
         screenShake: true,
         reduceFlashing: false,
         showHitbox: false,
+        bossHpBar: false,
       },
     });
     expect(Object.isFrozen(DEFAULT_USER_OPTIONS.audio)).toBe(true);
@@ -47,6 +48,7 @@ describe('core/config user options', () => {
       screenShake: true,
       reduceFlashing: false,
       showHitbox: false,
+      bossHpBar: false,
     });
   });
 
@@ -68,6 +70,7 @@ describe('core/config user options', () => {
       screenShake: false,
       reduceFlashing: true,
       showHitbox: true,
+      bossHpBar: false,
     });
     // Anything but a boolean takes the default.
     expect(
@@ -104,6 +107,7 @@ describe('core/config user options', () => {
         screenShake: true,
         reduceFlashing: false,
         showHitbox: false,
+        bossHpBar: false,
       },
     });
     for (const id of ['', 'Upper', 'a b', '-x', 'x'.repeat(65), 7, null]) {

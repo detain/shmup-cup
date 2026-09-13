@@ -144,6 +144,10 @@
  * little before the boss (`core/debug` `skipToBoss`, the debug stage skip of M1-18). The parts
  * are drawn from the boss batch (`LayerId.AirEnemies`, after the other batches);
  * {@link World.laserSources} lists enemies then parts, so lasers can stay attached to either.
+ * Since M2-09 the boss system has four slots (captains, double bosses and inner bosses share the
+ * stage with the main boss; a resting half of a double boss is drawn from `bosses.backBatch`),
+ * the stage's boss rush is handed to it at creation, a raid makes the stage runner's camera follow
+ * the boss, and a stage boss's escape sets {@link World.endingFlags}.
  *
  * **Rank, extends and continues (M2-01).** At the end of phase 3 the World recomputes its rank
  * ({@link updateWorldRank}): `core/rank` `computeRank` over {@link World.rankInputs} — the
@@ -522,6 +526,12 @@ export interface World {
    * {@link continuesLeft}.
    */
   continuesUsed: number;
+  /**
+   * Ending flags of the session (M2-09, `core/bosses` `EndingFlag`): a stage boss that escaped
+   * when its time limit ran out sets `BossEscaped`. The campaign (M2-10) carries them between
+   * zones and picks the ending with them. Hashed.
+   */
+  endingFlags: number;
   /** What the renderer draws: live references, refreshed at the end of every tick. */
   readonly view: WorldView;
 }
@@ -1477,6 +1487,7 @@ export function createWorld(
     rank: 0,
     rankInputs: createRankInputs(config),
     continuesUsed: 0,
+    endingFlags: 0,
     view,
   };
   world.rank = computeRank(world.rankInputs);
@@ -1485,8 +1496,13 @@ export function createWorld(
   world.patterns = createPatternVm(world);
   world.bullets.setProgramRunner(world.patterns);
   world.enemies = createEnemySystem(world, options.behaviors ?? DEFAULT_BEHAVIORS, stageSpec);
-  world.bosses = createBossSystem(world, options.bossBehaviors ?? DEFAULT_BOSS_BEHAVIORS);
-  world.laserSources = Object.freeze([...world.enemies.enemies, ...world.bosses.boss.parts]);
+  world.bosses = createBossSystem(
+    world,
+    options.bossBehaviors ?? DEFAULT_BOSS_BEHAVIORS,
+    stageSpec,
+  );
+  // Every boss slot's parts (M2-09: four slots of 16), after the enemy slots.
+  world.laserSources = Object.freeze([...world.enemies.enemies, ...world.bosses.parts]);
   world.gimmicks = createStageGimmicks(world, world.enemies.enemies, stageSpec, terrain, content);
   if (stageSpec !== null && terrain !== null) {
     view.terrain = createTerrainView(terrain, stageSpec, content, world.gimmicks.destructible);
@@ -1508,6 +1524,8 @@ export function createWorld(
     world.powerups.shieldBatch,
     world.powerups.itemBatch,
     world.bullets.pointBatch,
+    // A double boss's resting half is drawn behind (ground-enemy layer; M2-09).
+    world.bosses.backBatch,
     world.bosses.batch,
     world.enemies.carriedBatch,
     // The stage gimmicks (M2-07): the chains' links (over the ground enemies), then — on a stage

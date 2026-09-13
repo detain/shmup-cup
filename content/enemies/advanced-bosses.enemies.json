@@ -1,0 +1,479 @@
+{
+  "formatVersion": 1,
+  "kind": "enemies",
+  "enemies": [
+    {
+      "id": "captain-ram",
+      "boss": {
+        "code": "CP-01",
+        "displayName": "SURGE RAMMER",
+        "role": "captain",
+        "introTicks": 60,
+        "score": 3000,
+        "x": 320,
+        "y": 100,
+        "parts": [
+          {
+            "name": "shell",
+            "hp": 40,
+            "radius": 11,
+            "core": true,
+            "gun": true,
+            "sprite": "bosses/captain-shell",
+            "anim": { "frames": 2, "ticks": 20 },
+            "explosion": "large"
+          }
+        ],
+        "phases": [{ "script": "captain.ram" }]
+      }
+    },
+    {
+      "id": "captain-launcher",
+      "boss": {
+        "code": "CP-02",
+        "displayName": "BROOD LAUNCHER",
+        "role": "captain",
+        "introTicks": 60,
+        "score": 3000,
+        "x": 316,
+        "y": 100,
+        "minion": "bubble",
+        "parts": [
+          {
+            "name": "shell",
+            "hp": 36,
+            "hurtbox": { "hw": 13, "hh": 9 },
+            "core": true,
+            "sprite": "bosses/captain-shell",
+            "anim": { "frames": 2, "ticks": 24 },
+            "explosion": "large"
+          },
+          {
+            "name": "tube-top",
+            "parent": "shell",
+            "x": -4,
+            "y": -14,
+            "hp": 10,
+            "hurtbox": { "hw": 6, "hh": 6 },
+            "gun": true,
+            "sprite": "bosses/emitter",
+            "score": 500
+          },
+          {
+            "name": "tube-bottom",
+            "parent": "shell",
+            "x": -4,
+            "y": 14,
+            "hp": 10,
+            "hurtbox": { "hw": 6, "hh": 6 },
+            "gun": true,
+            "sprite": "bosses/emitter",
+            "score": 500
+          }
+        ],
+        "phases": [{ "script": "captain.launcher" }]
+      }
+    },
+    {
+      "id": "captain-circler",
+      "boss": {
+        "code": "CP-03",
+        "displayName": "ORBIT WARDEN",
+        "role": "captain",
+        "introTicks": 60,
+        "score": 3000,
+        "x": 332,
+        "y": 100,
+        "parts": [
+          {
+            "name": "hub",
+            "hp": 30,
+            "radius": 8,
+            "spin": 6,
+            "core": true,
+            "gun": true,
+            "sprite": "bosses/core",
+            "anim": { "frames": 2, "ticks": 12 },
+            "explosion": "large"
+          },
+          {
+            "name": "orb-east",
+            "parent": "hub",
+            "x": 20,
+            "radius": 6,
+            "vulnerable": "never",
+            "sprite": "bosses/orb",
+            "anim": { "frames": 2, "ticks": 16 }
+          },
+          {
+            "name": "orb-south",
+            "parent": "hub",
+            "y": 20,
+            "radius": 6,
+            "vulnerable": "never",
+            "sprite": "bosses/orb",
+            "anim": { "frames": 2, "ticks": 16 }
+          },
+          {
+            "name": "orb-west",
+            "parent": "hub",
+            "x": -20,
+            "radius": 6,
+            "vulnerable": "never",
+            "sprite": "bosses/orb",
+            "anim": { "frames": 2, "ticks": 16 }
+          },
+          {
+            "name": "orb-north",
+            "parent": "hub",
+            "y": -20,
+            "radius": 6,
+            "vulnerable": "never",
+            "sprite": "bosses/orb",
+            "anim": { "frames": 2, "ticks": 16 }
+          }
+        ],
+        "phases": [{ "script": "captain.circler" }]
+      }
+    },
+    {
+      "id": "captain-crab",
+      "boss": {
+        "code": "CP-04",
+        "displayName": "TIDE CRAB",
+        "role": "captain",
+        "introTicks": 60,
+        "score": 3000,
+        "x": 300,
+        "y": 100,
+        "parts": [
+          {
+            "name": "shell",
+            "hp": 40,
+            "hurtbox": { "hw": 13, "hh": 9 },
+            "core": true,
+            "gun": true,
+            "sprite": "bosses/captain-shell",
+            "anim": { "frames": 2, "ticks": 30 },
+            "explosion": "large"
+          },
+          {
+            "name": "claw-top",
+            "parent": "shell",
+            "x": -17,
+            "y": -8,
+            "hp": 8,
+            "hurtbox": { "hw": 4, "hh": 8 },
+            "sprite": "bosses/shield-plate",
+            "score": 300
+          },
+          {
+            "name": "claw-bottom",
+            "parent": "shell",
+            "x": -17,
+            "y": 8,
+            "hp": 8,
+            "hurtbox": { "hw": 4, "hh": 8 },
+            "sprite": "bosses/shield-plate",
+            "score": 300
+          }
+        ],
+        "phases": [{ "script": "captain.crab" }]
+      }
+    },
+    {
+      "id": "raid-leviathan",
+      "boss": {
+        "code": "RL-01",
+        "displayName": "IRON LEVIATHAN",
+        "introTicks": 240,
+        "score": 40000,
+        "x": 96,
+        "y": 150,
+        "timeLimit": 5400,
+        "inner": "raid-heart",
+        "raid": {
+          "segments": [
+            { "x": -40, "y": -150, "ticks": 150, "hold": 150 },
+            { "x": 140, "y": -100, "ticks": 240, "hold": 150 },
+            { "x": 300, "y": -40, "ticks": 240, "hold": 200 },
+            { "x": 100, "y": -150, "ticks": 240, "hold": 120 }
+          ]
+        },
+        "parts": [
+          { "name": "keel", "sprite": "bosses/raid-hull" },
+          { "name": "hull-2", "parent": "keel", "x": 96, "sprite": "bosses/raid-hull" },
+          { "name": "hull-3", "parent": "keel", "x": 192, "sprite": "bosses/raid-hull" },
+          { "name": "hull-4", "parent": "keel", "x": 288, "sprite": "bosses/raid-hull" },
+          { "name": "hull-5", "parent": "keel", "x": 384, "sprite": "bosses/raid-hull" },
+          {
+            "name": "turret-t1",
+            "parent": "keel",
+            "x": 24,
+            "y": -26,
+            "hp": 12,
+            "radius": 7,
+            "angle": 768,
+            "turn": 16,
+            "gun": true,
+            "sprite": "bosses/turret",
+            "score": 800
+          },
+          {
+            "name": "turret-t2",
+            "parent": "keel",
+            "x": 144,
+            "y": -26,
+            "hp": 12,
+            "radius": 7,
+            "angle": 768,
+            "turn": 16,
+            "gun": true,
+            "sprite": "bosses/turret",
+            "score": 800
+          },
+          {
+            "name": "turret-t3",
+            "parent": "keel",
+            "x": 264,
+            "y": -26,
+            "hp": 12,
+            "radius": 7,
+            "angle": 768,
+            "turn": 16,
+            "gun": true,
+            "sprite": "bosses/turret",
+            "score": 800
+          },
+          {
+            "name": "turret-t4",
+            "parent": "keel",
+            "x": 384,
+            "y": -26,
+            "hp": 12,
+            "radius": 7,
+            "angle": 768,
+            "turn": 16,
+            "gun": true,
+            "sprite": "bosses/turret",
+            "score": 800
+          },
+          {
+            "name": "turret-b1",
+            "parent": "keel",
+            "x": 72,
+            "y": 26,
+            "hp": 12,
+            "radius": 7,
+            "angle": 256,
+            "turn": 16,
+            "gun": true,
+            "sprite": "bosses/turret",
+            "score": 800
+          },
+          {
+            "name": "turret-b2",
+            "parent": "keel",
+            "x": 216,
+            "y": 26,
+            "hp": 12,
+            "radius": 7,
+            "angle": 256,
+            "turn": 16,
+            "gun": true,
+            "sprite": "bosses/turret",
+            "score": 800
+          },
+          {
+            "name": "turret-b3",
+            "parent": "keel",
+            "x": 336,
+            "y": 26,
+            "hp": 12,
+            "radius": 7,
+            "angle": 256,
+            "turn": 16,
+            "gun": true,
+            "sprite": "bosses/turret",
+            "score": 800
+          },
+          {
+            "name": "reactor",
+            "parent": "keel",
+            "x": 360,
+            "hp": 60,
+            "radius": 8,
+            "vulnerable": "afterParts",
+            "requires": ["turret-t4", "turret-b3"],
+            "core": true,
+            "sprite": "bosses/core",
+            "anim": { "frames": 2, "ticks": 12 },
+            "score": 5000,
+            "explosion": "large"
+          }
+        ],
+        "phases": [
+          {
+            "script": "boss.raid",
+            "params": { "fireTicks": 70, "bulletSpeed": 1.25 },
+            "until": { "hpBelow": 30 }
+          },
+          { "script": "boss.raid", "params": { "fireTicks": 55, "ways": 3, "spread": 40 } }
+        ]
+      }
+    },
+    {
+      "id": "raid-heart",
+      "boss": {
+        "code": "LH-02",
+        "displayName": "LEVIATHAN HEART",
+        "introTicks": 90,
+        "score": 20000,
+        "x": 296,
+        "y": 100,
+        "parts": [
+          {
+            "name": "heart",
+            "hp": 40,
+            "radius": 9,
+            "spin": 8,
+            "core": true,
+            "gun": true,
+            "sprite": "bosses/core",
+            "anim": { "frames": 2, "ticks": 8 },
+            "score": 5000,
+            "explosion": "large"
+          },
+          {
+            "name": "ward-a",
+            "parent": "heart",
+            "x": 22,
+            "radius": 6,
+            "vulnerable": "never",
+            "sprite": "bosses/orb",
+            "anim": { "frames": 2, "ticks": 16 }
+          },
+          {
+            "name": "ward-b",
+            "parent": "heart",
+            "x": -22,
+            "radius": 6,
+            "vulnerable": "never",
+            "sprite": "bosses/orb",
+            "anim": { "frames": 2, "ticks": 16 }
+          }
+        ],
+        "phases": [
+          {
+            "script": "boss.hover",
+            "params": { "trackSpeed": 0.6, "fireTicks": 60, "ways": 3, "bulletSpeed": 1.25 }
+          }
+        ]
+      }
+    },
+    {
+      "id": "twin-ember",
+      "boss": {
+        "code": "TE-01",
+        "displayName": "EMBER AND FROST TWINS",
+        "introTicks": 150,
+        "score": 15000,
+        "x": 292,
+        "y": 64,
+        "partner": "twin-frost",
+        "alternate": 300,
+        "enrage": { "fireRate": 0.5, "speed": 1.6, "phase": 1 },
+        "parts": [
+          {
+            "name": "hull",
+            "hurtbox": { "hw": 8, "hh": 8 },
+            "vulnerable": "never",
+            "sprite": "bosses/hull-block"
+          },
+          {
+            "name": "core",
+            "parent": "hull",
+            "x": -14,
+            "hp": 30,
+            "radius": 7,
+            "core": true,
+            "sprite": "bosses/core",
+            "anim": { "frames": 2, "ticks": 12 },
+            "score": 3000,
+            "explosion": "large"
+          },
+          {
+            "name": "gun",
+            "parent": "hull",
+            "x": -6,
+            "y": -14,
+            "hp": 12,
+            "hurtbox": { "hw": 6, "hh": 6 },
+            "gun": true,
+            "sprite": "bosses/emitter",
+            "score": 1000
+          }
+        ],
+        "phases": [
+          {
+            "script": "boss.hover",
+            "params": { "trackSpeed": 0, "fireTicks": 60, "ways": 3, "bulletSpeed": 1.25 },
+            "until": { "hpBelow": 15 }
+          },
+          { "script": "boss.lanes", "params": { "trackSpeed": 0, "laserTicks": 120 } }
+        ]
+      }
+    },
+    {
+      "id": "twin-frost",
+      "boss": {
+        "code": "TF-02",
+        "displayName": "FROST TWIN",
+        "introTicks": 150,
+        "score": 15000,
+        "x": 292,
+        "y": 136,
+        "enrage": { "fireRate": 0.5, "speed": 1.6, "phase": 1 },
+        "parts": [
+          {
+            "name": "hull",
+            "hurtbox": { "hw": 8, "hh": 8 },
+            "vulnerable": "never",
+            "sprite": "bosses/hull-block"
+          },
+          {
+            "name": "core",
+            "parent": "hull",
+            "x": -14,
+            "hp": 30,
+            "radius": 7,
+            "core": true,
+            "sprite": "bosses/core",
+            "anim": { "frames": 2, "ticks": 12 },
+            "score": 3000,
+            "explosion": "large"
+          },
+          {
+            "name": "gun",
+            "parent": "hull",
+            "x": -6,
+            "y": 14,
+            "hp": 12,
+            "hurtbox": { "hw": 6, "hh": 6 },
+            "gun": true,
+            "sprite": "bosses/emitter",
+            "score": 1000
+          }
+        ],
+        "phases": [
+          {
+            "script": "boss.hover",
+            "params": { "trackSpeed": 0, "fireTicks": 60, "ways": 3, "bulletSpeed": 1.25 },
+            "until": { "hpBelow": 15 }
+          },
+          { "script": "boss.lanes", "params": { "trackSpeed": 0, "laserTicks": 120 } }
+        ]
+      }
+    }
+  ]
+}

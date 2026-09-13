@@ -328,12 +328,13 @@ function fighting(): World {
 }
 
 describe('core/bosses', () => {
-  it('describes itself (partial: the P0 mechanics)', () => {
+  it('describes itself (implemented since M2-09)', () => {
     expect(moduleInfo.name).toBe('bosses');
-    expect(moduleInfo.status).toBe('partial');
+    expect(moduleInfo.status).toBe('implemented');
     expect(moduleInfo.specRefs).toContain('shmup_feat.md §13');
     expect(BOSS_PART_ID_BASE).toBe(MAX_ENEMIES);
-    expect(MAX_HIT_TARGETS).toBe(MAX_ENEMIES + MAX_BOSS_PARTS);
+    // Four boss slots of 16 parts each (M2-09).
+    expect(MAX_HIT_TARGETS).toBe(MAX_ENEMIES + 4 * MAX_BOSS_PARTS);
   });
 
   it("builds the WARNING text from the game's own template (D10), once per boss", () => {

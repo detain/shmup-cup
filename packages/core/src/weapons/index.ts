@@ -35,10 +35,12 @@
  *   ({@link WeaponSystem.applyHits}) through `EnemySystem.damage`, which pushes the explosion
  *   events and records the kill (spec, position, score, killer) for scoring.
  * - **Boss parts** (M1-13) are hit targets too: their ids in the grid and in the hit list follow
- *   the enemy slots (`core/bosses` `BOSS_PART_ID_BASE` + part index), piercing shots keep a
- *   second cooldown table for them ({@link WeaponSystem.partCooldowns}), and a hit goes through
- *   `BossSystem.damagePart` — a part that cannot take damage now (the intro, armour, a closed or
- *   still shielded weak point) answers with a `Clink` and the shot dies, like armour.
+ *   the enemy slots (`core/bosses` `BOSS_PART_ID_BASE` + part slot — every boss slot's parts since
+ *   M2-09), piercing shots keep a second cooldown table for them
+ *   ({@link WeaponSystem.partCooldowns}), and a hit goes through `BossSystem.damagePart` — a part
+ *   that cannot take damage now (the intro, armour, a closed or still shielded weak point)
+ *   answers with a `Clink` and the shot dies, like armour. A circle part (M2-09 — a turned part's
+ *   `radius`) is hit when the shot's box reaches into its circle.
  *
  * **Type A behaviours** (tunables from `content/weapons/*.weapons.json`, behaviour-specific ones
  * in `params` — defaults in {@link WEAPON_BEHAVIOR_PARAMS}):
@@ -167,9 +169,8 @@ import {
   type GameConfig,
   type StartingLoadout,
 } from '../config/index.js';
-import { BOSS_PART_ID_BASE, BossHit, type BossPart } from '../bosses/index.js';
+import { BOSS_PART_ID_BASE, BOSS_PART_SLOTS, BossHit, type BossPart } from '../bosses/index.js';
 import {
-  MAX_BOSS_PARTS,
   type ContentDb,
   type PlayerShipSpec,
   type ValidationIssue,
@@ -949,17 +950,17 @@ export interface WeaponHost {
      */
     damage(enemy: Enemy, amount: number, by: number): boolean;
   };
-  /** The boss (its parts are hit targets — `core/bosses`, M1-13). */
+  /** The bosses (their parts are hit targets — `core/bosses`, M1-13; four slots since M2-09). */
   readonly bosses: {
-    /** The boss slot's parts (`target` / `armoured` refreshed in phase 6). */
-    readonly boss: {
-      /** Every part slot. */
-      readonly parts: readonly BossPart[];
-    };
+    /**
+     * Every boss slot's parts, flat (`BOSS_PART_SLOTS`; `target` / `armoured` refreshed in phase
+     * 6): index = the part slot, hit id − `BOSS_PART_ID_BASE`.
+     */
+    readonly parts: readonly BossPart[];
     /**
      * A hit on a part (`BossSystem.damagePart`).
      *
-     * @param index - Part index.
+     * @param index - Part slot.
      * @param amount - Damage.
      * @param by - Player slot credited.
      * @returns A `BossHit` code.
@@ -1018,7 +1019,7 @@ export interface WeaponSystem {
   readonly cooldowns: Uint8Array;
   /**
    * Hit-cooldown tables of piercing shots for the boss parts: table `t` is
-   * `[t × MAX_BOSS_PARTS, (t + 1) × MAX_BOSS_PARTS)` (same table index as
+   * `[t × BOSS_PART_SLOTS, (t + 1) × BOSS_PART_SLOTS)` (same table index as
    * {@link WeaponSystem.cooldowns}).
    */
   readonly partCooldowns: Uint8Array;
@@ -1026,7 +1027,7 @@ export interface WeaponSystem {
   readonly hitShot: Int32Array;
   /**
    * Target per hit (same order: shot order, then target): an enemy slot, or a boss part as
-   * `BOSS_PART_ID_BASE` + part index.
+   * `BOSS_PART_ID_BASE` + part slot (`core/bosses` `BossPart.global`).
    */
   readonly hitEnemy: Int32Array;
   /** Hits found by the last {@link WeaponSystem.collide}. */
@@ -1486,7 +1487,7 @@ class WeaponSystemImpl implements WeaponSystem {
   /** See {@link WeaponSystem.cooldowns}. */
   readonly cooldowns = new Uint8Array(PIERCE_TABLES * MAX_ENEMIES);
   /** See {@link WeaponSystem.partCooldowns}. */
-  readonly partCooldowns = new Uint8Array(PIERCE_TABLES * MAX_BOSS_PARTS);
+  readonly partCooldowns = new Uint8Array(PIERCE_TABLES * BOSS_PART_SLOTS);
   /** See {@link WeaponSystem.hitShot}. */
   readonly hitShot = new Int32Array(MAX_SHOT_HITS);
   /** See {@link WeaponSystem.hitEnemy}. */
@@ -1527,7 +1528,7 @@ class WeaponSystemImpl implements WeaponSystem {
   private qPierce = false;
   /** The queried shot's cooldown-table offset (table × MAX_ENEMIES). */
   private qTable = 0;
-  /** The queried shot's boss-part cooldown-table offset (table × MAX_BOSS_PARTS). */
+  /** The queried shot's boss-part cooldown-table offset (table × BOSS_PART_SLOTS). */
   private qPartTable = 0;
   /** Lowest overlapping enemy slot of a non-piercing query (-1 = none). */
   private qBest = -1;
@@ -1966,8 +1967,8 @@ class WeaponSystemImpl implements WeaponSystem {
       this.tableUsed[table - 1] = 1;
       const base = (table - 1) * MAX_ENEMIES;
       this.cooldowns.fill(0, base, base + MAX_ENEMIES);
-      const partBase = (table - 1) * MAX_BOSS_PARTS;
-      this.partCooldowns.fill(0, partBase, partBase + MAX_BOSS_PARTS);
+      const partBase = (table - 1) * BOSS_PART_SLOTS;
+      this.partCooldowns.fill(0, partBase, partBase + BOSS_PART_SLOTS);
     }
     const f = this.pool.fields;
     const look = forward === 1 && t.kind[WeaponRole.Main] >= 0 ? WeaponRole.Main : role;
@@ -2112,8 +2113,8 @@ class WeaponSystemImpl implements WeaponSystem {
       if (table > 0) {
         const base = (table - 1) * MAX_ENEMIES;
         for (let e = base; e < base + MAX_ENEMIES; e++) if (cooldowns[e] > 0) cooldowns[e]--;
-        const partBase = (table - 1) * MAX_BOSS_PARTS;
-        for (let e = partBase; e < partBase + MAX_BOSS_PARTS; e++) {
+        const partBase = (table - 1) * BOSS_PART_SLOTS;
+        for (let e = partBase; e < partBase + BOSS_PART_SLOTS; e++) {
           if (partCooldowns[e] > 0) partCooldowns[e]--;
         }
       }
@@ -2330,7 +2331,7 @@ class WeaponSystemImpl implements WeaponSystem {
         this.qInner = hh > RIPPLE_RING_WIDTH ? hh - RIPPLE_RING_WIDTH : 0;
       }
       this.qTable = pierce ? (f.table[i] - 1) * MAX_ENEMIES : 0;
-      this.qPartTable = pierce ? (f.table[i] - 1) * MAX_BOSS_PARTS : 0;
+      this.qPartTable = pierce ? (f.table[i] - 1) * BOSS_PART_SLOTS : 0;
       this.qBest = -1;
       this.qShot = i;
       this.qStart = this.hitCount;
@@ -2391,7 +2392,7 @@ class WeaponSystemImpl implements WeaponSystem {
    */
   private visitPart(id: number): void {
     const index = id - BOSS_PART_ID_BASE;
-    const parts = this.host.bosses.boss.parts;
+    const parts = this.host.bosses.parts;
     if (!(index >= 0 && index < parts.length)) return;
     const part = parts[index];
     if (!part.target) return;
@@ -2404,6 +2405,13 @@ class WeaponSystemImpl implements WeaponSystem {
       py - part.hh <= this.qy1
     )) {
       return;
+    }
+    // A circle part (M2-09 — turned parts): the box's nearest point must lie inside the circle.
+    const radius = part.radius;
+    if (radius > 0) {
+      const nx = px < this.qx0 ? this.qx0 - px : px > this.qx1 ? px - this.qx1 : 0;
+      const ny = py < this.qy0 ? this.qy0 - py : py > this.qy1 ? py - this.qy1 : 0;
+      if (!(nx * nx + ny * ny <= radius * radius)) return;
     }
     if (this.qRing && !this.ringTouches(px - part.hw, py - part.hh, px + part.hw, py + part.hh)) {
       return;
@@ -2555,7 +2563,7 @@ class WeaponSystemImpl implements WeaponSystem {
       this.fy = f.y[i];
       this.sfx(SFX_CUES.Clink);
       if ((f.flags[i] & ShotFlag.Blast) !== 0) {
-        this.partCooldowns[(f.table[i] - 1) * MAX_BOSS_PARTS + index] =
+        this.partCooldowns[(f.table[i] - 1) * BOSS_PART_SLOTS + index] =
           this.roles.cooldown[f.role[i]];
       } else {
         this.kill(i);
@@ -2563,7 +2571,7 @@ class WeaponSystemImpl implements WeaponSystem {
       return;
     }
     if ((f.flags[i] & ShotFlag.Pierce) !== 0) {
-      this.partCooldowns[(f.table[i] - 1) * MAX_BOSS_PARTS + index] =
+      this.partCooldowns[(f.table[i] - 1) * BOSS_PART_SLOTS + index] =
         this.roles.cooldown[f.role[i]];
     } else {
       this.kill(i);

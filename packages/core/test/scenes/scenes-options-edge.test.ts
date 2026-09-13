@@ -269,8 +269,8 @@ describe('core/scenes options (edge): opening and closing', () => {
     expect(s.ids).toEqual(['game', 'pause', 'options']);
     s.focus(OptionsItem.Sfx);
     s.press(Action.Left); // SFX 9
-    // Past CONTROLS, BULLETS (M2-02) and the display rows (M2-08).
-    for (let i = 0; i < 7; i++) s.press(Action.Down);
+    // Past CONTROLS, BULLETS (M2-02), the display rows (M2-08) and BOSS HP (M2-09).
+    for (let i = 0; i < 8; i++) s.press(Action.Down);
     expect(s.flow.options.menu.focus).toBe(OptionsItem.Back);
     s.press(Action.Confirm);
     expect(s.ids).toEqual(['game', 'pause']);
@@ -307,6 +307,7 @@ describe('core/scenes options (edge): opening and closing', () => {
         screenShake: true,
         reduceFlashing: false,
         showHitbox: false,
+        bossHpBar: false,
       },
     });
   });

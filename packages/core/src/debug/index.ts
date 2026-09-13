@@ -37,11 +37,14 @@
  * score — with its next extend
  * threshold and continue count (M2-01) — and the counts of kills and formation bonuses already
  * credited — not the session hi-score, which a host may raise from its save —, then the continues
- * used and the rank inputs' loop, stage, power and special terms, M2-01), then the boss (M1-13:
- * its state, position, timers, phase, script wake tick, motion, destroyed-part mask, killer, blast
- * flag and every part's offset, position, hit points, destroyed / open flags and hit flash — plus
- * the WARNING's active flag and ticks; the piercing shots' boss-part cooldown tables join their
- * enemy tables above), then the stage gimmicks (M2-07: the destructible terrain's change and
+ * used and the rank inputs' loop, stage, power and special terms, M2-01), then the bosses (M1-13:
+ * per slot its state — nothing more for an empty one —, position, timers, phase, script wake
+ * tick, motion, destroyed-part mask, killer, blast flag and every part's offset, position, hit
+ * points, destroyed / open flags and hit flash; since M2-09 also its role, anchor, intro start,
+ * fight clock and escape, orbit, pair (partner, resting, turning, turn clock, enrage), raid
+ * camera state, rush entry and every part's turn and spin — plus the WARNING's active flag and
+ * ticks, the raid camera target, the boss rush's index and delay and the World's ending flags;
+ * the piercing shots' boss-part cooldown tables join their enemy tables above), then the stage gimmicks (M2-07: the destructible terrain's change and
  * reset counts, broken-cell count, change ring and every tracked cell — state, cell, tile, damage,
  * timer —, each moving block slot's event, age and position, each pull field's owner, owner spawn
  * tick, radius, strength and ticks, each chain's owner, spawn tick, anchor and links; the stage
@@ -83,7 +86,7 @@
  * @module
  */
 import type { BendingLaserTable } from '../bullets/index.js';
-import { MAX_BOSS_PARTS } from '../data/index.js';
+import { BOSS_PART_SLOTS } from '../bosses/index.js';
 import {
   EnemyState,
   MAX_ENEMIES,
@@ -489,8 +492,8 @@ function mixWeapons(weapons: World['weapons']): void {
     if (table <= 0) continue;
     const base = (table - 1) * MAX_ENEMIES;
     for (let e = base; e < base + MAX_ENEMIES; e++) mixWord(cooldowns[e]);
-    const partBase = (table - 1) * MAX_BOSS_PARTS;
-    for (let e = partBase; e < partBase + MAX_BOSS_PARTS; e++) mixWord(partCooldowns[e]);
+    const partBase = (table - 1) * BOSS_PART_SLOTS;
+    for (let e = partBase; e < partBase + BOSS_PART_SLOTS; e++) mixWord(partCooldowns[e]);
   }
 }
 
@@ -570,53 +573,92 @@ function mixFxAndScores(world: World): void {
 }
 
 /**
- * Mixes the boss slot, its parts and the WARNING into {@link accumulator} (M1-13; fixed order).
+ * Mixes the boss slots, their parts, the WARNING, the raid camera, the boss rush and the ending
+ * flags into {@link accumulator} (M1-13, M2-09; fixed order).
  *
  * @param world - The world.
  */
 function mixBosses(world: World): void {
   const bosses = world.bosses;
-  const b = bosses.boss;
-  mixWord(b.state);
-  mixNumber(b.specIndex);
-  mixNumber(b.x);
-  mixNumber(b.y);
-  mixNumber(b.screenX);
-  mixNumber(b.screenY);
-  mixNumber(b.stateTicks);
-  mixNumber(b.phase);
-  mixNumber(b.phaseTicks);
-  mixWord(b.script === null ? 0 : 1);
-  mixNumber(b.wakeTick);
-  mixWord(b.motion);
-  mixNumber(b.trackSpeed);
-  mixNumber(b.trackMin);
-  mixNumber(b.trackMax);
-  mixNumber(b.moveFromX);
-  mixNumber(b.moveFromY);
-  mixNumber(b.moveToX);
-  mixNumber(b.moveToY);
-  mixNumber(b.moveTicks);
-  mixNumber(b.moveElapsed);
-  mixWord(b.destroyedMask);
-  mixNumber(b.killer);
-  mixWord(b.blasted ? 1 : 0);
-  mixNumber(b.partCount);
-  const parts = b.parts;
-  for (let i = 0; i < b.partCount; i++) {
-    const part = parts[i];
-    mixNumber(part.localX);
-    mixNumber(part.localY);
-    mixNumber(part.x);
-    mixNumber(part.y);
-    mixNumber(part.hp);
-    mixWord(part.destroyed ? 1 : 0);
-    mixWord(part.open ? 1 : 0);
-    mixNumber(part.flashTicks);
+  const slots = bosses.slots;
+  for (let s = 0; s < slots.length; s++) {
+    const b = slots[s];
+    mixWord(b.state);
+    if (b.state === 0) continue;
+    mixNumber(b.specIndex);
+    mixWord(b.role);
+    mixNumber(b.x);
+    mixNumber(b.y);
+    mixNumber(b.screenX);
+    mixNumber(b.screenY);
+    mixWord(b.anchored ? 1 : 0);
+    mixNumber(b.anchorX);
+    mixNumber(b.anchorY);
+    mixNumber(b.startX);
+    mixNumber(b.startY);
+    mixNumber(b.stateTicks);
+    mixNumber(b.phase);
+    mixNumber(b.phaseTicks);
+    mixNumber(b.fightTicks);
+    mixWord(b.escaped ? 1 : 0);
+    mixWord(b.script === null ? 0 : 1);
+    mixNumber(b.wakeTick);
+    mixWord(b.motion);
+    mixWord(b.afterMove);
+    mixNumber(b.trackSpeed);
+    mixNumber(b.trackMin);
+    mixNumber(b.trackMax);
+    mixNumber(b.moveFromX);
+    mixNumber(b.moveFromY);
+    mixNumber(b.moveToX);
+    mixNumber(b.moveToY);
+    mixNumber(b.moveTicks);
+    mixNumber(b.moveElapsed);
+    mixNumber(b.orbitX);
+    mixNumber(b.orbitY);
+    mixNumber(b.orbitRX);
+    mixNumber(b.orbitRY);
+    mixNumber(b.orbitAngle);
+    mixNumber(b.orbitSpeed);
+    mixWord(b.destroyedMask);
+    mixNumber(b.killer);
+    mixWord(b.blasted ? 1 : 0);
+    mixNumber(b.partner);
+    mixWord(b.resting ? 1 : 0);
+    mixWord(b.turning ? 1 : 0);
+    mixNumber(b.turnTicks);
+    mixWord(b.enraged ? 1 : 0);
+    mixWord(b.raiding ? 1 : 0);
+    mixWord(b.returning ? 1 : 0);
+    mixNumber(b.raidSegment);
+    mixNumber(b.raidTicks);
+    mixNumber(b.raidFromX);
+    mixNumber(b.raidFromY);
+    mixNumber(b.rushEntry);
+    mixNumber(b.partCount);
+    const parts = b.parts;
+    for (let i = 0; i < b.partCount; i++) {
+      const part = parts[i];
+      mixNumber(part.localX);
+      mixNumber(part.localY);
+      mixNumber(part.x);
+      mixNumber(part.y);
+      mixNumber(part.angle);
+      mixNumber(part.spin);
+      mixNumber(part.hp);
+      mixWord(part.destroyed ? 1 : 0);
+      mixWord(part.open ? 1 : 0);
+      mixNumber(part.flashTicks);
+    }
   }
   const warning = bosses.warning;
   mixWord(warning.active ? 1 : 0);
   mixNumber(warning.ticks);
+  mixNumber(bosses.raidCamera.x);
+  mixNumber(bosses.raidCamera.y);
+  mixNumber(bosses.rushIndex);
+  mixNumber(bosses.rushDelay);
+  mixWord(world.endingFlags);
 }
 
 /**
