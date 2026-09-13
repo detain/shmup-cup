@@ -155,6 +155,13 @@ then its laser, missile and speed levels. The shield is cleared with `clearShiel
 With Auto Power-Up on, the order is re-evaluated at every pickup, so what a death took is wanted
 again ([powerups-and-shields.md](powerups-and-shields.md#auto-power-up)).
 
+**Direct mode** (M2-05, the MANTA): `killShip` calls `applyDirectDeathPenalty(preset, ship,
+loadout)` instead — every preset takes the Arm (and its blue-item count); `classic` one main-shot
+level, else one sub-weapon level; `arcade` both levels and the family (and the same checkpoint
+restart); `casual` nothing more. The Speed toggle's level is the player's choice and stays. A
+continue applies it as `arcade`, then `applyDirectLoadout`
+([direct-mode.md](direct-mode.md#speed-toggle-death-penalty-and-rank)).
+
 ### The arcade restart
 
 At the respawn (not at the death — the explosion and the dead time play out where the ship
@@ -375,11 +382,11 @@ The next `game.step()` runs that tick, and its phase 7 turns the recorded hit in
 
 | To add… | Do this |
 |---|---|
-| A death penalty preset | Extend `DeathPenaltyPreset` and `DEATH_PENALTY_PRESETS` (`core/config` — `resolveGameConfig` and the `rules` schema validate against the list since M2-01), its branch in `applyDeathPenalty`, and — if it moves the camera — `respawnShip` |
+| A death penalty preset | Extend `DeathPenaltyPreset` and `DEATH_PENALTY_PRESETS` (`core/config` — `resolveGameConfig` and the `rules` schema validate against the list since M2-01), its branch in `applyDeathPenalty` and `applyDirectDeathPenalty` (M2-05), and — if it moves the camera — `respawnShip` |
 | Something else that kills a ship | Call `playerHit(ship, cause, tick, debugFlags)` in phase 6 (append a `PlayerHitCause` — hashed); the World does the rest in phase 7 |
 | Another effect on death (a bomb refund, option recovery — M3) | In `killShip`, after `killPlayer` and before the penalty; keep it cold and allocation-free |
 | A scoring event | Record it in a system's tick outcomes (with the player credited), credit it in `ScoringSystemImpl.resolve` (and `beginTick` if tools can cause it between ticks), exactly once; hash any new counter in `mixFxAndScores` |
-| Another way to earn a life (1UP items — M2-05) | Raise `ship.lives` up to `MAX_LIVES` and push `Sfx ExtraLife` with `SfxPriority.Critical`, like `ScoringSystem.checkExtends` ([difficulty-and-rank.md](difficulty-and-rank.md#extends-corescoring)) |
+| Another way to earn a life | Raise `ship.lives` up to `MAX_LIVES` and push `Sfx ExtraLife` with `SfxPriority.Critical`, like `ScoringSystem.checkExtends` ([difficulty-and-rank.md](difficulty-and-rank.md#extends-corescoring)) — the Direct-mode orange 1UP item does exactly this (M2-05, `PowerUpSystem.collectDirect`) |
 | A flash kind | Append to `FlashKind` and `FLASH_KIND_TICKS` (never renumber — the code travels in the event); M1-13 added `Warning` and `BossBlast` this way |
 | A hit-stop or shake elsewhere (boss kills, big explosions) | `requestHitStop` / `requestShake(ShakeMagnitude.…)` from phase 7 code; never write `world.hitStop` directly |
 | Something new on the HUD | `core/ui` `buildHud` reads `world.scoring.board` (`scores[p].score`, `hiScore`) on the dirty flags and clears them; add any other input to `Hud.update`'s comparison ([scenes-and-ui.md](scenes-and-ui.md#extending-it)) |
@@ -446,4 +453,7 @@ The next `game.step()` runs that tick, and its phase 7 turns the recorded hit in
   spare ships become Options (the stock icons drop at once; extends still add lives up to
   `MAX_LIVES`); the death penalties act on whichever weapons the session's arsenal holds, since
   they only change loadout fields ([meter-arsenal.md](meter-arsenal.md#the--and--choices-corepowerups)).
+- **M2-05** (done) — Direct mode: `applyDirectDeathPenalty` (the Arm, then levels / the family
+  by preset), the orange 1UP item through the same `MAX_LIVES` cap and `ExtraLife` cue, a colour
+  item worth 300 like a capsule ([direct-mode.md](direct-mode.md)).
 - **M3** — option recovery after a death, authentic slowdown.

@@ -118,7 +118,7 @@ import { BodyAnchor, MoverKind, SLEEP_FOREVER, type Script } from '../patterns/i
 export const moduleInfo = defineModule({
   name: 'behaviors',
   status: 'partial',
-  specRefs: ['shmup_feat.md §11', 'shmup_tech.md §4.6', 'shmup_feat.md §13'],
+  specRefs: ['shmup_feat.md §11', 'shmup_tech.md §4.6', 'shmup_feat.md §13', 'shmup_feat.md §6'],
 });
 
 /**

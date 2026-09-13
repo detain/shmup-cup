@@ -10,11 +10,14 @@ inside `playerHit`. Built in plan step **M1-11**; plan step **M2-03** added the 
 equipping the session's weapon type — the step's own page is [meter-arsenal.md](meter-arsenal.md);
 plan step **M2-04** added the other `?` shields (the front Shield, Free Shield and Rotate Shield
 pods, Reduce), the rare **blue capsule** and the **freed Options** an Option Hunter lets go of —
-[options-shields-hunter.md](options-shields-hunter.md). This page keeps the Force Field as the
-worked example of a shield.
+[options-shields-hunter.md](options-shields-hunter.md); plan step **M2-05** added the other
+power-up model, **Direct mode** (the MANTA's colour items, the stage's item plan, the Arm shield
+and the Speed toggle — `core/powerups` is `implemented` with it) —
+[direct-mode.md](direct-mode.md). This page keeps the meter as the worked example of an economy
+and the Force Field as the worked example of a shield.
 
 This page is the *how and why*. Exact signatures are in
-[api-reference.md](api-reference.md#powerups--power-meter-capsules-mega-crash-partial-meter-mode);
+[api-reference.md](api-reference.md#powerups--power-meter-capsules-direct-mode-items-mega-crash);
 the TSDoc in `packages/core/src/{powerups,shields}/index.ts` is the authoritative reference. The
 loadout the meter equips and the weapons it switches on are
 [weapons-and-options.md](weapons-and-options.md); the enemies whose drops become capsules are
@@ -65,7 +68,7 @@ validated by `resolveGameConfig`:
 
 | Field | Default | Meaning |
 |---|---|---|
-| `powerUpMode` | `'meter'` (D1) | The only accepted value until M2-05: `'direct'` throws `RangeError("GameConfig.powerUpMode 'direct' is not implemented until M2-05")`, any other string `RangeError` too |
+| `powerUpMode` | `'meter'` (D1) | This page's model; `'direct'` (since M2-05 — the ship select's MANTA) switches the system to Direct mode ([direct-mode.md](direct-mode.md)); any other string throws `RangeError` |
 | `autoPowerUp` | `false` (D2) | Equip the next wanted slot of the order as soon as a capsule moves the cursor onto it |
 | `autoPowerUpOrder` | `DEFAULT_AUTO_POWER_UP_ORDER` | `speed, missile, laser, option ×4, shield` — 0 to `MAX_AUTO_POWER_UP_ORDER` (32) `MeterSlotName`s; anything else throws `RangeError`; the resolved config holds a frozen copy |
 | `pickupMagnet` | `true` (D33) | Items near an alive ship drift into it |
@@ -161,11 +164,13 @@ Fields (`ITEM_SCHEMA`, hashed in sorted name order):
 |---|---|---|
 | `x`, `y` | f64 | World centre |
 | `vx`, `vy` | f64 | Own velocity (0 for capsules: they stay with the terrain) |
-| `kind` | u8 | `ItemKind` (`Capsule` 0, M2-04: `BlueCapsule` 1, `FreeOption` 2 — hashed: append, never renumber) |
+| `kind` | u8 | `ItemKind` (`Capsule` 0, M2-04: `BlueCapsule` 1, `FreeOption` 2, M2-05: the Direct-mode colour items `DirectRed` 3 … `DirectOctagon` 8 — hashed: append, never renumber) |
 | `age` | i32 | Ticks since the drop |
 | `flags` | u8 | `ItemFlag`: `Dead` 1 (collected / culled this tick, freed in phase 8), `Magnet` 2 (pulled this tick) |
 
-Kinds come from a built-in table, `ITEM_KINDS` (Direct-mode items bring data in M2-05): the
+Kinds come from a built-in table, `ITEM_KINDS` (M2-05 appended the six Direct-mode colour items —
+`items/direct-*`, 300 points, drifting like freed Options for `DIRECT_ITEM_TICKS` 600 —
+[direct-mode.md](direct-mode.md#the-items)): the
 capsule draws `items/capsule` (`CAPSULE_SPRITE`, an **engine sprite** — `ITEM_SPRITES` is part of
 `ENGINE_SPRITES`) with a two-frame blink every `ITEM_BLINK_TICKS` (8) ticks from the World tick
 (all capsules blink together), and is worth `CAPSULE_SCORE` (300). Since M2-04 the **blue
@@ -183,7 +188,10 @@ carried) drifts with the view, bounces off the playfield's top and bottom, expir
   for every drop not taken yet (`dropsTaken`); a kill made **between** ticks (a debug tool, a
   test calling `enemies.kill`) is recorded after that, so `beginTick()` at the start of phase 3
   takes it before `enemies.beginTick()` resets the outcomes. `spawnItem(kind, x, y)` drops one by
-  hand (→ slot, or `-1` for a bad kind or a full pool — dropped quietly).
+  hand (→ slot, or `-1` for a bad kind or a full pool — dropped quietly). Since M2-05 a drop of
+  `drop: "powerup"` (`DropKind.PowerUp`) is the mode-agnostic power-up: a capsule here, and in
+  Direct mode `capsule` and `powerup` drops both become the stage's next planned colour item
+  (`dropDirect` — [direct-mode.md](direct-mode.md#drop-resolution-and-the-item-plan-corepowerups)).
 - **Motion and culling (phase 5).** Capsules are world-space: they stay where they dropped and
   scroll away with the terrain. An item more than `ITEM_CULL_MARGIN` (32) px outside the camera
   view — or at a `NaN` position — is removed.
@@ -307,7 +315,11 @@ pickups (so a capsule collected on the fatal tick still advanced the meter first
 
 `loseOneLevel` returns the `MeterSlot` it took (`-1` when the ship is bare); a pending Mega Crash
 is never touched (it detonates on that tick). The whole death sequence is
-[death-and-scoring.md](death-and-scoring.md#the-death-penalty-d6).
+[death-and-scoring.md](death-and-scoring.md#the-death-penalty-d6). In Direct mode (M2-05) the
+World calls `applyDirectDeathPenalty(preset, ship, loadout)` instead: the Arm always goes,
+`classic` takes one main-shot level (else a sub-weapon level), `arcade` both levels and the
+family, `casual` nothing more — the speed level stays
+([direct-mode.md](direct-mode.md#speed-toggle-death-penalty-and-rank)).
 
 ## Presentation events
 
@@ -328,8 +340,8 @@ on every capsule pickup ([fx-and-game-feel.md](fx-and-game-feel.md)); capsules s
 popup (it would cover the ship). Since M1-15 the events are heard (`MeterAdvance`,
 `PowerUpEquip`, `PowerUpDenied`, `ShieldHit`, `ShieldBreak`, a centred `MegaCrash` —
 [audio.md](audio.md)), and since M1-16 the HUD redraws the meter from the state (`cursor`,
-`equippable`), not from these events. `SFX_CUES.CapsulePickup` (9) is **not** used by meter mode
-(Direct-mode items, M2-05).
+`equippable`), not from these events. `SFX_CUES.CapsulePickup` (9) is **not** used by meter mode —
+since M2-05 every Direct-mode colour item pickup pushes it ([direct-mode.md](direct-mode.md#the-items)).
 
 ## Determinism, restarts and hashing
 
@@ -397,11 +409,11 @@ powerups.detonateMegaCrash(0); // debug: clear the screen now
 
 | To add… | Do this |
 |---|---|
-| An item kind (Direct mode, M2-05) | Append an `ItemKind` code (hashed) and an `ITEM_KINDS` entry (sprite, frames, score) — `ITEM_SPRITES` and `ENGINE_SPRITES` follow; its art in `scripts/assets/procedural/`; what it does in `resolve()`'s pickup switch (capsules `collect`, blue capsules `clearScreen`, freed Options `regainOption` — M2-04) and, if it moves, in `update()` |
-| A drop kind | `DropKind` in `core/enemies` (M1-08), then map it in `takeDrops` |
+| An item kind | Append an `ItemKind` code (hashed) and an `ITEM_KINDS` entry (sprite, frames, score) — `ITEM_SPRITES` and `ENGINE_SPRITES` follow; its art in `scripts/assets/procedural/`; what it does in `resolve()`'s pickup switch (capsules `collect`, blue capsules `clearScreen`, freed Options `regainOption` — M2-04, colour items `collectDirect` — M2-05) and, if it drifts and expires, its `itemDrift` / `itemLife` entries (set in the constructor) |
+| A drop kind | `DropKind` in `core/enemies` (M1-08 — content drops first: M2-05 moved `FreeOption` to 4 behind `PowerUp` 3), then map it in `takeDrops` (per power-up model if it differs — `powerup`: a capsule or `dropDirect`) |
 | A meter slot rule | `canEquipSlot` / `equipSlot`, the matching `nextAutoSlot` rule, `METER_LABELS` and the `hud/meter-labels` art (`core/ui` `METER_LABEL_FRAMES`); a new slot also needs `METER_SLOT_NAMES` / `MeterSlotName` in `core/config` |
 | A `!` choice | `MegaChoice` / `MEGA_CHOICES` in `core/config` and `MegaEffect` here (same order), its rule in `canEquipMega` and its effect in `applyMega`, a label in `core/scenes` `MEGA_CHOICE_LABELS` ([meter-arsenal.md](meter-arsenal.md#extending-it)) |
-| A shield kind (Arm tiers — M2-05) | Append a `ShieldKind` code and name, a `ShieldSpec` in `SHIELD_SPECS` (`absorbsTerrain: true` for the Arm tiers; `pods` / `hurtSteps` as the M2-04 kinds show), its sprite in `SHIELD_SPRITES`, grant it from its slot; keep `absorbShieldHit` / `absorbPodHit` allocation-free and hash any new state in `mixPowerUps` — [options-shields-hunter.md](options-shields-hunter.md#extending-it) |
+| A shield kind | Append a `ShieldKind` code and name, a `ShieldSpec` in `SHIELD_SPECS` (`absorbsTerrain: true` like the Arm of M2-05; `pods` / `hurtSteps` as the M2-04 kinds show; tiers as `ShieldState.tier` / `charge` and `collectArm` show), its sprite in `SHIELD_SPRITES`, grant it from its slot; keep `absorbShieldHit` / `absorbPodHit` allocation-free and hash any new state in `mixPowerUps` — [options-shields-hunter.md](options-shields-hunter.md#extending-it) |
 | Something that reacts to pickups (like `core/scoring`, M1-12) | Read `world.powerups.outcomes` (`pickupCount`, `pickupPlayer`, `pickupScore`, …) after `powerups.resolve()` in phase 7 — reset in phase 6 |
 | Something the HUD meter shows | `core/ui` `buildHud` draws `meters[0].cursor` (flashing every `HUD_METER_FLASH_TICKS`) and greys the slots missing from `equippable(0)`; add any new state it depends on to `Hud.update`'s comparison ([scenes-and-ui.md](scenes-and-ui.md#the-hud)) |
 | An enemy Mega Crash spares | `"megaCrashImmune": true` in its `content/enemies/` entry |
@@ -429,7 +441,7 @@ powerups.detonateMegaCrash(0); // debug: clear the screen now
 | A test presses `PowerUp` every tick and equips only once | By design — only the `pressed` edge equips. Commit `0` (release) between presses |
 | A capsule spawned by a test vanishes | It was more than 32 px outside the camera view (culled in the next phase 5), or it landed on the ship during the fly-in and is waiting — ships collect only while `alive` |
 | A kill made between ticks produced no capsule yet | It appears at the next tick's phase 3 (`beginTick`) |
-| `RangeError: GameConfig.powerUpMode 'direct' is not implemented until M2-05` | Direct mode is M2-05; the default is `'meter'` |
+| OK does nothing at all with the MANTA | Direct mode (M2-05) has no meter: the PowerUp press is ignored, items act on pickup ([direct-mode.md](direct-mode.md#gotchas)) |
 | The ship still takes terrain hits with a Force Field | By design (D8): rock is never absorbed, not even during the shield-hit i-frames |
 | A Force Field drains while the ship sits inside an enemy | Contact is absorbed like a bullet: one hit, 8 free ticks, the next hit — five hits last about 40 ticks |
 | Bullet hits on a `'full'`-loadout ship are not recorded | Since M1-11 `'full'` includes a Force Field: the first five (plus i-frame) hits are absorbed; use the `'default'` loadout or `clearShield(ship.shield)` |
@@ -462,4 +474,6 @@ powerups.detonateMegaCrash(0); // debug: clear the screen now
 - **M2-04** (done) — the other meter shields (pods, Reduce), `refillShield` for FULL BARRIER, the
   blue capsule and the freed Options of the Option Hunter
   ([options-shields-hunter.md](options-shields-hunter.md)).
-- **M2-05** — Direct mode's items and the Arm tiers.
+- **M2-05** (done) — Direct mode: the drop resolution per model, the stage's item plan, the six
+  colour items, the Arm tiers, the Speed toggle and the Direct death penalty
+  ([direct-mode.md](direct-mode.md)).

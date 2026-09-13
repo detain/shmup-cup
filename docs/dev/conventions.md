@@ -68,7 +68,8 @@ tests — the "Enforced by" column says where, so a red check points you here.
 - no `console` — `no-console`.
 
 `test/integration/eslint-rules.test.ts` lints fixture snippets to prove these rules stay
-active.
+active (one ESLint instance, warmed up in `beforeAll` since M2-05 — its first lint timed out
+under the full `pnpm test` load).
 
 ## Chromium 69 rules
 
@@ -193,6 +194,12 @@ ES5 and linted with `ecmaVersion: 5`.
   fraction derived from state (the spread `t`) is computed inside the method that uses it, never
   passed
   ([options-shields-hunter.md](options-shields-hunter.md#zero-allocation-and-the-hot-path-rules)).
+  And from M2-05: content with a variable shape (a family's levels of emitters) is compiled once
+  into flat typed arrays with per-level start / count indices (`FamilyTables`), and a per-shot
+  variant (an emitter's offset) reaches the shared `emit` through class fields reset after the
+  volley; an allocation guard of a system whose test stage spawns enemies measures without the
+  spawns — each spawn's coroutine allocates (D29), which on the direct range alone is ~70–80 KB
+  ([direct-mode.md](direct-mode.md#zero-allocation-and-the-hot-path-rules)).
 - Behaviour coroutines (generators, D29) allocate a small result object on every resume:
   scripts **sleep** (`yield ticks`) and are resumed only when they wake; per-tick motion
   belongs in a mover (numbers on the body), never in a `yield 1` loop.

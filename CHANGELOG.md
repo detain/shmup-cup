@@ -69,6 +69,23 @@ versions before 1.0 may change anything between minor releases. Development foll
   `shieldChoice` and `WeaponSelectItem` codes (`Option` 4, so `?` … START are 5–9); the golden
   replays were re-blessed (new hashed state, shifted enemy spec indices — same outcomes) and four
   runs covering every Option type and shield were added.
+- **The second ship, the MANTA, and Direct mode** (M2-05): a **SHIP SELECT** box after the
+  DIFFICULTY menu — the KESTREL (power meter, then the WEAPON SELECT screen) or the MANTA (the game
+  starts at once). The MANTA has no meter: enemies that leave capsules leave **colour items**
+  instead, in an order set per stage — **red** and **green** raise the main gun and the sub-weapon
+  through nine levels (missiles → discs, or lasers → piercing waves; the sub-weapon from an arcing
+  bomb to piercing discs), **blue** gives the **Arm** (green 3, silver 4, gold 5 hits after 1, 4, 9
+  blue items — it also stops the rock), **orange** an extra ship, **yellow** a smart bomb, and the
+  red **octagon** switches the main gun's style. Items drift across the screen and vanish after
+  ten seconds. **Ch ▼** (Left Shift, LB / RB) switches the MANTA's three speeds; OK does nothing in
+  its games. The HUD shows its levels as pips; a loss costs the Arm (and a level on Classic, all
+  power on Arcade). The MANTA keeps its own hi-score tables. In a browser `?stage=direct-range`
+  sends six-cube pincer waves; AZURE VERGE's enemies are unchanged (its capsules become items).
+- Behaviour change for tools and tests (M2-05): `GameConfig.shipId` (default `kestrel`) and
+  `powerUpMode: 'direct'` (replay headers record them; older headers decode to the KESTREL),
+  `DropKind.FreeOption` is 4 (`PowerUp` took 3), the `liveCounts` stride is `WEAPON_ROLE_SLOTS`
+  (36), every flow that starts a game presses one more OK (the ship select); the golden replays
+  were re-blessed (new hashed state and content — same outcomes) and three MANTA runs were added.
 
 ### Documentation
 
@@ -82,7 +99,11 @@ versions before 1.0 may change anything between minor releases. Development foll
   screen, M2-03; the Option types and shields, M2-04) and
   [The Option Hunter range](docs/client/preview-build.md#the-option-hunter-range-browser-only)
   (M2-04); the developer guide
-  [`docs/dev/options-shields-hunter.md`](docs/dev/options-shields-hunter.md) (M2-04).
+  [`docs/dev/options-shields-hunter.md`](docs/dev/options-shields-hunter.md) (M2-04); the
+  developer guide [`docs/dev/direct-mode.md`](docs/dev/direct-mode.md) and the tester guide's
+  [Choosing your ship](docs/client/preview-build.md#choosing-your-ship),
+  [The MANTA](docs/client/preview-build.md#the-manta-colour-items-weapons-and-the-arm) and
+  [The Direct range](docs/client/preview-build.md#the-direct-range-browser-only) (M2-05).
 
 ## [0.1.0] — M1: playable vertical slice
 

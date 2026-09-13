@@ -5,8 +5,8 @@
  * the fly-in (plan M1-06), hits (M1-07 … M1-11) and the life cycle — death, dead time, respawn
  * with invulnerability and lives (M1-12). Co-op specifics arrive with M2-06.
  *
- * **Responsibility.** The player ship: 8-way movement with no inertia, speed levels (meter Speed Ups or
- * a fixed Direct-mode speed), a tiny centred hurtbox plus a separate terrain box,
+ * **Responsibility.** The player ship: 8-way movement with no inertia, speed levels (meter Speed
+ * Ups or the Direct-mode Speed toggle), a tiny centred hurtbox plus a separate terrain box,
  * clamping to the playfield, terrain kills (unless shielded), respawn invincibility,
  * launch / fly-out animations and the death sequence (hit-stop, bullet cancel, life loss,
  * death-penalty preset). Supports up to two ships for co-op.
@@ -43,7 +43,16 @@
  *
  * **Shields (M1-11).** Every ship carries its {@link PlayerShip.shield} (`core/shields`); a hit
  * goes to the shield first (`absorbShieldHit`): an absorbed hit is accepted — the bullet is used
- * up — but never recorded on the ship. The Force Field does not absorb terrain.
+ * up — but never recorded on the ship. The Force Field does not absorb terrain; the Direct-mode
+ * Arm (M2-05) does.
+ *
+ * **Ships (M2-05).** The content may hold several ships (`content/player/`): the World flies
+ * `GameConfig.shipId` ({@link resolvePlayerShip}; the ship select sets it). A ship's `mode` names
+ * its power-up model — the KESTREL `meter`, the MANTA `direct` — and `startSpeedLevel` the speed
+ * level a Direct-mode session starts at (the MANTA: 2.25 of 1.75 / 2.25 / 2.75 px/tick, decision
+ * D3); in Direct mode `core/powerups` steps {@link PlayerShip.speedLevel} with the Speed toggle
+ * (remote Ch−), wrapping, instead of the meter's Speed Ups. Movement reads the level the same way
+ * in both modes.
  *
  * **Implements.**
  * - shmup_feat.md §5 Player ship
@@ -131,7 +140,10 @@ export interface PlayerShip {
   state: PlayerState;
   /** Ticks spent in the current state (1 after the first update in it). */
   stateTicks: number;
-  /** Index into the ship's `speeds` (0 = base speed; meter Speed Ups add levels). */
+  /**
+   * Index into the ship's `speeds` (0 = base speed; meter Speed Ups add levels; in Direct mode the
+   * Speed toggle cycles it, from the ship's `startSpeedLevel` — M2-05).
+   */
   speedLevel: number;
   /** Remaining invulnerability ticks (the respawn blink); 0 = vulnerable. */
   invulnTicks: number;
@@ -239,11 +251,19 @@ export const DEFAULT_PLAYER_SHIP: PlayerShipSpec = Object.freeze({
  * ship, else {@link DEFAULT_PLAYER_SHIP}.
  *
  * @remarks
- * Load-time lookup (it reads a `Map`); systems keep the returned spec.
+ * Load-time lookup (it reads a `Map`); systems keep the returned spec. `createWorld` passes
+ * `GameConfig.shipId` (M2-05 — the ship select's choice); an unknown id falls back silently, so a
+ * replay recorded with a ship the content no longer has still loads.
  *
  * @param content - Validated content.
- * @param id - Preferred ship id (default `'kestrel'`, the meter ship of decision D36).
+ * @param id - Preferred ship id (default `'kestrel'`, the meter ship of decision D36 —
+ *   `core/config` `DEFAULT_SHIP_ID`).
  * @returns The ship spec.
+ *
+ * @example
+ * ```ts
+ * resolvePlayerShip(content, 'manta').mode; // → 'direct' with the shipped content
+ * ```
  */
 export function resolvePlayerShip(content: ContentDb, id = 'kestrel'): PlayerShipSpec {
   const index = content.shipIndex.get(id);

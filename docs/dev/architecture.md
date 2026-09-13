@@ -212,8 +212,10 @@ the power meter, capsules, Force Field and Mega Crash in M1-11, death, respawn, 
 and the game-feel timers in M1-12, the bosses with their WARNING and death sequence in M1-13,
 rank growth, extends and continues in M2-01, the pattern DSL's interpreter, bending lasers
 and cancel point items in M2-02, the meter arsenal — Types B–D, Weapon Edit and the `!` / `?`
-choices of the config — in M2-03, and the Option types, the meter shields, the Option Hunter
-and the blue capsule in M2-04 ([options-shields-hunter.md](options-shields-hunter.md)).
+choices of the config — in M2-03, the Option types, the meter shields, the Option Hunter
+and the blue capsule in M2-04 ([options-shields-hunter.md](options-shields-hunter.md)), and
+Direct mode — the MANTA's colour items, shot families and the Arm, flown when the ship select's
+choice sets `GameConfig.shipId` / `powerUpMode` — in M2-05 ([direct-mode.md](direct-mode.md)).
 Details: [sim-world.md](sim-world.md), [stage-runtime.md](stage-runtime.md),
 [enemies-and-behaviors.md](enemies-and-behaviors.md),
 [bullets-and-patterns.md](bullets-and-patterns.md),
@@ -287,7 +289,10 @@ system, status,
   per ship follow a screen-space trail that advances only with movement input (D26) — or, since
   M2-04, fly as a pulled Snake chain, a `>` / `V` Formation or a Rotate orbit
   (`GameConfig.optionChoice`; spread by holding PowerUp or pressing Special) — and fire every
-  weapon with their own caps.
+  weapon with their own caps. In Direct mode (M2-05) the same pool and hit path fire the
+  content's 9-level shot **families** instead: every weapon a family fires gets a direct role
+  after the four meter roles, and each level is a volley of emitters (heading, offset) paced by
+  the main / missile timers ([direct-mode.md](direct-mode.md#families-and-firing-coreweapons)).
 - **`powerups`**, **`shields`** — meter mode's economy: a 7-slot power meter per player
   (`SPEED | MISSILE | DOUBLE | LASER | OPTION | ? | !`) advanced by every capsule and equipped on
   the **pressed edge** of `PowerUp` (remote OK) in phase 2, maxed slots greyed, Double / Laser
@@ -299,7 +304,11 @@ system, status,
   Since M2-04 the `?` choice may instead be Reduce (a field that shrinks every hurt-circle test)
   or a pod shield (front, Free, Rotate: pods that stop only the bullets and bodies touching them,
   each wearing on its own); the blue capsule clears the enemies on screen, and freed Options
-  (from a dead Option Hunter) drift as items.
+  (from a dead Option Hunter) drift as items. **Direct mode** (M2-05) has no meter: the
+  mode-agnostic `powerup` drop (and a `capsule`) becomes the stage's next planned colour item —
+  red / green a shot / sub-weapon level, blue the **Arm** (green / silver / gold, 3 / 4 / 5 hits,
+  absorbs terrain too), orange a 1UP, yellow a smart bomb, the octagon the next main-shot family —
+  and the Speed press (remote Ch−) cycles the ship's speeds ([direct-mode.md](direct-mode.md)).
 - **`bosses`** — one multi-part boss per World (M1-13), an `enemies` entry with a `boss`
   section: up to 16 parts placed parent + offset every tick (riding the camera), sharing the
   enemies' hit path (grid ids after the 64 enemy slots, hits through `damagePart`), weak points
@@ -613,14 +622,14 @@ the blue capsule's clear since M2-04), `patterns` (implemented with M2-02: runne
 `behaviors` (partial: the M1 enemy and boss rosters, `pattern.loop`, `hunter.option`), `bosses` (partial: the P0 mechanics —
 timers, escapes, the HP bar, mid-bosses and raids with M2-09), `bullets` (implemented: bending lasers and cancel
 into points since M2-02 — graze is P2), `rank` (implemented with M2-01: growth, power terms, per-enemy sensitivity), `weapons`
-(implemented for meter mode with M2-03: Types A–D and Weapon Edit — Direct mode with M2-05), `options` (implemented with M2-04: trail, Snake, Formation, Rotate — recovery after death in M3),
-`powerups` (partial: meter mode, the `!` / `?` choices since M2-03, the blue capsule and freed Options since M2-04 — Direct mode later), `shields` (implemented for meter mode with M2-04 — the Arm tiers with M2-05), `scoring` (partial:
-scores, the session hi-score, extends and the continue digit — 1UP items later), `fx` (partial: the
+(implemented: Types A–D and Weapon Edit with M2-03, the Direct-mode families with M2-05), `options` (implemented with M2-04: trail, Snake, Formation, Rotate — recovery after death in M3),
+`powerups` (implemented with M2-05: meter mode, the `!` / `?` choices since M2-03, the blue capsule and freed Options since M2-04, Direct mode's items, plan and Speed toggle), `shields` (implemented: the meter shields with M2-04, the Arm with M2-05), `scoring` (partial:
+scores, the session hi-score, extends and the continue digit — co-op later), `fx` (partial: the
 hit-stop / shake / flash requests — slowdown later), `ui` (partial: the list menu, slider,
-toggle, choice and confirm widgets, builders and the HUD — rebind prompt, name entry and the boss
-HP bar later), `scenes` (partial: the scene stack, the M1 flow, the Options screen, the difficulty
+toggle, choice and confirm widgets, builders and the HUD with the Direct-mode tier pips since M2-05 —
+rebind prompt, name entry and the boss HP bar later), `scenes` (partial: the scene stack, the M1 flow, the Options screen, the difficulty
 menu and the continue countdown, the weapon select with its live preview and the Auto order editor
-(M2-03; its OPTION row M2-04) — the other M2 screens later);
+(M2-03; its OPTION row M2-04), the ship select (M2-05) — the other M2 screens later);
 input-web `keymap`, `keyboard`, `gamepad`, `web-input`, `remote`, `rebind`
 (partial: profiles, contexts, the selectable profiles of CONTROLS — the rebinding UI comes in
 M2-16); audio-web `web-audio` (partial; driven by the Options sliders since M1-17), `synth`, `sfx`,
@@ -654,9 +663,10 @@ plugins in `vite.shared.ts`) has no `moduleInfo`; it is covered by the tests und
 | An enemy, a path, a behaviour or a mover | Enemies and paths are JSON (`content/enemies/`, `content/paths/`); a behaviour is a `defineBehavior` coroutine added to `DEFAULT_BEHAVIOR_DEFS`; a mover a new `MoverKind` — [enemies-and-behaviors.md](enemies-and-behaviors.md#extending-it) |
 | A zone (a stage with its roster and boss) | JSON under `content/stages/`, `content/enemies/`, `content/paths/`; `pnpm content:check`; a playtest run with the 4-way bot (`test/playtest/`) and its design-rule checks — [zone-a-and-playtest.md](zone-a-and-playtest.md#extending-it) |
 | A boss or a boss behaviour | A boss is an `enemies` entry with a `boss` section (parts, weak points, phases) started by a stage `warning` event; a boss behaviour is a `defineBossBehavior` coroutine added to `DEFAULT_BOSS_BEHAVIOR_DEFS` — [bosses-and-warning.md](bosses-and-warning.md#extending-it) |
-| An item kind, a meter slot rule or a shield kind | `ITEM_KINDS` / `ItemKind` (appended), the meter's `canEquipSlot` / `equipSlot` and Auto Power-Up rules, a `ShieldSpec` in `SHIELD_SPECS` — [powerups-and-shields.md](powerups-and-shields.md#extending-it) |
+| An item kind, a meter slot rule or a shield kind | `ITEM_KINDS` / `ItemKind` (appended), the meter's `canEquipSlot` / `equipSlot` and Auto Power-Up rules, a `ShieldSpec` in `SHIELD_SPECS` — [powerups-and-shields.md](powerups-and-shields.md#extending-it); a Direct-mode colour item or plan — [direct-mode.md](direct-mode.md#extending-it) |
+| A player ship | A `content/player/` entry with its `mode` (`meter` / `direct`) and sprite — the ship select lists it ([direct-mode.md](direct-mode.md#extending-it)) |
 | A bullet pattern, bullet kind or laser | Since M2-02 a pattern is data: a `content/patterns/` action run by `pattern.loop` ([pattern-dsl.md](pattern-dsl.md#extending-it)); or a behaviour calling the `ScriptApi` fire primitives (`aimed`, `nWay`, `ring`, …, `laser`, `bendingLaser`, `fireWait`); a new primitive in `core/patterns` with its `ScriptApi` wrapper; a kind in `BULLET_KINDS` — [bullets-and-patterns.md](bullets-and-patterns.md#extending-it) |
-| A weapon, a weapon behaviour, a preset or an Option formation | A weapon is JSON in `content/weapons/` (tunables in `params`, a `name` for the weapon select); a preset is a `presets` entry the weapon select lists; a behaviour is a `ShotKind` plus its tables, a HUD label frame and a branch of the weapon system's `update()`; formations branch in `OptionGroup.follow` — [weapons-and-options.md](weapons-and-options.md#extending-it), [meter-arsenal.md](meter-arsenal.md#extending-it) |
+| A weapon, a weapon behaviour, a preset, a Direct-mode family or an Option formation | A weapon is JSON in `content/weapons/` (tunables in `params`, a `name` for the weapon select); a preset is a `presets` entry the weapon select lists; a family is a `families` entry the MANTA fires (M2-05 — [direct-mode.md](direct-mode.md#extending-it)); a behaviour is a `ShotKind` plus its tables, a HUD label frame and a branch of the weapon system's `update()`; formations branch in `OptionGroup.follow` — [weapons-and-options.md](weapons-and-options.md#extending-it), [meter-arsenal.md](meter-arsenal.md#extending-it) |
 | Something the engine draws whatever the content | Add its sprite name to `ENGINE_SPRITES` (`core/bullets` `BULLET_SPRITES`, `core/options` `OPTION_SPRITE`, `core/powerups` `ITEM_SPRITES`, `core/shields` `FORCE_FIELD_SPRITE` and `core/ui` `UI_SPRITES` today): hosts pass it as `loadContent`'s `extraSprites` and `pnpm content:check` verifies it against the atlas |
 | A game system | Fill in its placeholder module in `packages/core/src/<module>/`, set `moduleInfo.status`, export it from `packages/core/src/index.ts`, call it from its phase function in `core/world` (never reorder `WORLD_PHASES`), allocate its state in `createWorld` and add simulated state to `hashWorld` — [sim-world.md](sim-world.md#extending-it) |
 | Content (enemies, weapons, stages, tilesets) | JSON under `content/` following its README, then `pnpm content:check` (try a stage with `pnpm dev` and `?stage=<id>`). New fields or a new kind: extend the schemas in `core/data` — checklist in [content-data.md](content-data.md#extending-it) |

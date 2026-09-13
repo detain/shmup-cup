@@ -147,6 +147,12 @@ Reduce +2 (used since M2-04: `updateWorldRank` passes a standing Reduce as the `
 included, counts +4). Flags count when positive; Double and Laser are both main weapons, so a ship
 has at most one of them.
 
+**In Direct mode** (M2-05, the MANTA) `updateWorldRank` uses `directPowerRank(shot, sub, armTier)`
+instead: `floor((shot + sub) / 2)` plus `RANK_ARM_TIER` (the green Arm +2, the silver Super Arm
++3, the gold Hyper Arm +4). Both levels at 8 with the Hyper Arm give **12** — the same as the
+fully powered meter ship, so both ships share the difficulty curve; the Speed toggle counts 0
+like the meter's Speed Ups ([direct-mode.md](direct-mode.md#speed-toggle-death-penalty-and-rank)).
+
 | Ship (Normal: base 2, growth 1, loop 1, stage 1) | Power | Rank |
 |---|---|---|
 | Fresh — speed, basic shot | 0 | 2 |
@@ -155,6 +161,8 @@ has at most one of them.
 | Missile + Laser + 4 Options | 8 | 10 |
 | Missile + Laser + 4 Options + Force Field | 12 | 14 |
 | Missile + Laser + 4 Options + Reduce (M2-04) | 10 | 12 |
+| MANTA: shot 5, sub 3, the green Arm (M2-05) | 4 + 2 = 6 | 8 |
+| MANTA: both levels 8, the Hyper Arm (M2-05) | 8 + 4 = 12 | 14 |
 | The same on Arcade (base 6) | 12 | 16 (the loop-1 cap; 18 uncapped) |
 | The same on Easy (base 0, growth 0.5) | 12 | 6 |
 
@@ -165,8 +173,8 @@ the World. **`updateWorldRank(world)`** runs at the **end of phase 3**, after th
 the scripts of phase 4:
 
 1. the power term of every **active** ship (`loadout.missile`, `main === MainWeapon.Double /
-   Laser`, `loadout.options`, `shieldActive(ship.shield)`) — the maximum goes into
-   `rankInputs.power`;
+   Laser`, `loadout.options`, `shieldActive(ship.shield)`; in Direct mode `loadout.shot`, `sub`
+   and the Arm's tier) — the maximum goes into `rankInputs.power`;
 2. `computeRank(rankInputs)`;
 3. only when the rank **changed**: `world.rank = rank` and `world.bullets.setRank(rank)` —
    `rankScale` returns fractions, so the curves are evaluated on a change, never every tick.
@@ -335,11 +343,13 @@ overlay (dim `PAUSE_DIM`) with an opaque panel — `DIFFICULTY`, EASY / NORMAL /
 for the focused preset its `LIVES`, `CONTINUES` and `HI` (that preset's session best). It opens on
 the difficulty chosen last (at first the host config's — Normal in the apps) with the usual
 2-tick activation lock; Up / Down move with wrap and auto-repeat. **OK** calls
-`flow.chooseDifficulty(preset)` and — since M2-03 — pushes the **weapon select**, whose START
-resets the stack to the game scene (M2-01 reset it here directly); the game scene's World is
-created with that preset's config plus the chosen loadout
-([meter-arsenal.md](meter-arsenal.md#the-weapon-select-corescenes)); **Back** pops back to the
-title menu (and Back on the weapon select returns here, the menu re-locked for 2 ticks).
+`flow.chooseDifficulty(preset)` and — since M2-05 — pushes the **ship select** (the weapon
+select of M2-03 follows it for the meter ship; with a single ship in the content the ship select
+is skipped), whose choice resets the stack to the game scene (M2-01 reset it here directly); the
+game scene's World is created with that preset's config plus the chosen ship and loadout
+([direct-mode.md](direct-mode.md#the-ship-select-corescenes),
+[meter-arsenal.md](meter-arsenal.md#the-weapon-select-corescenes)); **Back** pops back to the
+title menu (and Back on the ship select returns here, the menu re-locked for 2 ticks).
 
 The flow builds **one config per preset** when it is created (`FlowControl.configs`, in
 `DIFFICULTY_PRESETS` order): the host's config for its own preset, `withDifficulty(host.config,
@@ -352,14 +362,17 @@ preset, table)` for the others (the content's `rules` table, or the built-in one
   `SceneFlow.modeKey` is `hiScoreModeKey(gameConfig)`.
 - The choice lives for the session only — it is saved with the options of M2-16.
 - Starting a game takes one more OK than in M1 (title OK, START, then OK on the preset) — and
-  since M2-03 one more again (OK on the weapon select's START). Every flow test and e2e spec was
-  updated each time.
+  since M2-03 one more again (OK on the weapon select's START), and since M2-05 one more (OK on
+  the ship select — KESTREL is focused first). Every flow test and e2e spec was updated each time.
 
 **Hi-scores per difficulty.** The session hi-score is kept per preset (`FlowControl.bests`, a
 `Float64Array`), each starting from the save's best of its own table (`meter-easy`,
 `meter-normal`, `meter-hard`, `meter-arcade`); `flow.hiScore` and `setHiScore` act on the chosen
 preset's, the title shows it, and a finished game is inserted into its World's table (the row's
-`difficulty` field too). The M1 table `meter-normal` keeps its scores.
+`difficulty` field too). The M1 table `meter-normal` keeps its scores. Since M2-05 the bests are
+kept per **power-up mode** too (`bests[mode × 4 + preset]`, `FlowControl.bestIndex`): the MANTA's
+games read and fill the `direct-easy` … `direct-arcade` tables, and the menu's `HI` is the chosen
+ship's.
 
 ## Determinism, hashing and golden replays
 
@@ -401,7 +414,7 @@ preset's, the title shows it, and a finished game is inserted into its World's t
 | A `special` term (no-miss streak, debug override) | Keep a counter in sim state (hashed), write `rankInputs.special` before phase 3 ends |
 | A revenge pattern | Append to `REVENGE_PATTERNS` (never reorder — the code is the index + 1), a `RevengeCode` and its branch in `EnemySystemImpl.revenge`; M2-02's DSL may replace the built-ins with pattern references |
 | A rank-dependent behaviour tunable | Prefer the fire primitives (they scale by the current scales); for anything else read `world.rank` in a cold place and convert once |
-| 1UP items (Direct mode, M2-05) | Give the life through the same cap (`MAX_LIVES`) and push `ExtraLife` with `SfxPriority.Critical` |
+| Another life source (like the Direct-mode orange 1UP of M2-05) | Give the life through the same cap (`MAX_LIVES`) and push `ExtraLife` with `SfxPriority.Critical` |
 | Saving the chosen difficulty (M2-16) | Store it with the options and pass it to `createSceneFlow` through the host config's `difficulty`, or call `chooseDifficulty` after creation |
 
 ## Tests
@@ -456,7 +469,9 @@ preset's, the title shows it, and a finished game is inserted into its World's t
 - **M2-04** (done) — Reduce counts +2 (`RANK_POWER.reduce`) instead of a shield's +4; the pod
   shields (front, Free, Rotate) count +4 like the Force Field; the Option type does not matter
   ([options-shields-hunter.md](options-shields-hunter.md#shields-coreshields)).
-- **M2-05** — Direct mode's rare 1UP items through the same lives cap.
+- **M2-05** (done) — the Direct-mode power term `directPowerRank` (max 12, like the meter), the
+  orange 1UP through the same lives cap, per-mode hi-score tables and one more OK (the ship
+  select) ([direct-mode.md](direct-mode.md)).
 - **M2-10** — the campaign sets `rankInputs.loop` / `stage` (8 per loop, 1 per stage).
 - **M2-15 / M3-01** — recording the scene flow (continues included) in replays.
 - **M2-16** — the chosen difficulty saved with the options; the Options screen's `deathPenalty` /

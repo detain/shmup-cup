@@ -493,7 +493,7 @@ the app's `inputProfiles.apply(id, 'options')`, and since M2-02 the `BulletPalet
 
 | `?scene=` | What is drawn | Sprite name table |
 |---|---|---|
-| (none) / `game` | **The scene flow** (M1-16, `createSceneView(game)`; the game created with `{ scenes: 'boot' }`): the title (logo, `PRESS OK`, START / OPTIONS / EXIT, the session hi-score — the saved best since M1-17) over a drifting starfield backdrop; a game with the core HUD (score, `HI`, `2P`, stock, the power meter, Force Field pips), the stage's own parallax and terrain — zone A by default since M1-18 (`defaultStageId`), another with `?stage=` — or the World over the starfield in open space; the difficulty menu under START and the continue countdown (M2-01), the weapon select with its live preview World drawn full screen behind its panel and the Auto order editor (M2-03), the pause menu, the Options screen (M1-17), the YES / NO dialog, the stage-clear and game-over screens over the frozen, dimmed game — all drawn by the core into the HUD / UI lists ([scenes-and-ui.md](scenes-and-ui.md)) | `content.db.sprites.names` + `SCENE_VIEW_SPRITES` |
+| (none) / `game` | **The scene flow** (M1-16, `createSceneView(game)`; the game created with `{ scenes: 'boot' }`): the title (logo, `PRESS OK`, START / OPTIONS / EXIT, the session hi-score — the saved best since M1-17) over a drifting starfield backdrop; a game with the core HUD (score, `HI`, `2P`, stock, the power meter, Force Field pips — the MANTA's tier pips in Direct mode, M2-05), the stage's own parallax and terrain — zone A by default since M1-18 (`defaultStageId`), another with `?stage=` — or the World over the starfield in open space; the difficulty menu under START and the continue countdown (M2-01), the ship select (M2-05), the weapon select with its live preview World drawn full screen behind its panel and the Auto order editor (M2-03), the pause menu, the Options screen (M1-17), the YES / NO dialog, the stage-clear and game-over screens over the frozen, dimmed game — all drawn by the core into the HUD / UI lists ([scenes-and-ui.md](scenes-and-ui.md)) | `content.db.sprites.names` + `SCENE_VIEW_SPRITES` |
 | `flight` | **Free flight** (`createFlightScene(game)`, M1-06): the game's World — the KESTREL flying in, then moving under the player's control — over three drifting star layers, both HUD bars (`1P` and player 1's score, `FREE FLIGHT`, `HI` and the session hi-score, `lives − 1` stock ships, `ARROWS MOVE` — M1-12). With a stage (`gameConfig.stage`, the web app's `?stage=<id>`, M1-07): the stage's parallax bands and scrolling terrain instead of the starfield, the stage name as the title, the enemies its timeline spawns (M1-08) and their bullets (M1-09). The ship autofires in every build, with Options and lasers under the web app's `?loadout=full` (M1-10); power capsules and the Force Field are World batches too (M1-11 — the power meter itself is not drawn before the M1-16 HUD); ships that are `dying` / `dead` are not drawn, a respawn blinks, and `GAME OVER` (red) replaces the title once the World's status says so (M1-12); a boss's parts are a World batch, and a running WARNING is drawn as a translucent band with its text in the UI list (M1-13, `?stage=test-boss`) | `content.db.sprites.names` + `FLIGHT_SPRITES` |
 | `showcase` | The **sprite showcase** (`createShowcase()`): three scrolling star layers, the KESTREL flying a figure-eight with its thruster and two Options replaying its path, five drifters with periodic hit flashes, a rotating ring of twelve bullets, both HUD bars (scores via the `number` op, lives, power meter with a moving highlight) and the title "SHMUP CUP" / "SPRITE SHOWCASE" in the bitmap font | `SHOWCASE_SPRITES` |
 | `calibration` | The skeleton's test pattern (checker border, grid, colour bars, placeholder ship, moving marker) under empty layers | `content.db.sprites.names` |
@@ -584,7 +584,8 @@ pnpm test:e2e                                        # builds web + tizen, then 
   request.
 - `scenes.spec.ts` (M1-16) — both builds boot to the title (`data-shmup-scene="title"`); web:
   **Enter starts the game from the title** (past `PRESS OK`, START, OK on the difficulty menu
-  — M2-01 — and OK on the weapon select's START — M2-03) and the KESTREL flies in
+  — M2-01 —, OK on the ship select's KESTREL — M2-05 — and OK on the weapon select's START —
+  M2-03) and the KESTREL flies in
   with the HUD and the power meter, Esc pauses (dimmed and frozen) and resumes, Back on the title
   only backs out of the menu; Tizen from disk: OK (13) starts, Back (10009) pauses and resumes
   without exiting, and with a fake `window.tizen` Back on the title opens the exit confirmation —
@@ -647,7 +648,7 @@ pnpm test:e2e                                        # builds web + tizen, then 
   `shmup-cup:save.corrupt` and replaced on Back. Tizen from disk: SFX and CONTROLS changed with the
   remote's key codes only, saved on Back, kept after a reload.
 - `zone-a.spec.ts` (M1-18) — the web build's scene flow plays zone A; with the debug stage skip
-  `?skip=boss`, Enter past `PRESS OK`, Enter on START, Enter on the difficulty menu and Enter on the weapon select reach the WARNING band (its red edge rows
+  `?skip=boss`, Enter past `PRESS OK`, Enter on START, Enter on the difficulty menu, Enter on the ship select (M2-05) and Enter on the weapon select reach the WARNING band (its red edge rows
   across the whole width) within seconds, then HALCYON BULWARK's hull colour (`#2e5082`, used by no
   other sprite) holds the right half of the playfield; no console errors or atlas warnings
   ([zone-a-and-playtest.md](zone-a-and-playtest.md)).
@@ -655,7 +656,8 @@ pnpm test:e2e                                        # builds web + tizen, then 
   state `error`); a 1000×600 window gets a centred ×2 frame on the letterbox colour and a
   resize to 1920×1080 re-fits it to ×5; free flight animates.
 - `smoke.spec.ts` (M1-19) — the M1 gameplay smoke on both builds: title → OK, OK (START), OK on
-  NORMAL in the difficulty menu (M2-01), OK on the weapon select's START (M2-03) → hold → then ↑
+  NORMAL in the difficulty menu (M2-01), OK on the ship select's KESTREL (M2-05), OK on the weapon
+  select's START (M2-03) → hold → then ↑
   for 2.5 s each → `window.__shmupDebug.sceneId === 'game'`, the World ticked, no console errors;
   F1 / F2 on the web, and on the TV build the locked tools until Pause, Ch+, Ch+, Ch+.
 - `debug-tools.spec.ts` (M1-19) — F4 freezes, F5 steps exactly one tick, `requestStep(n)` exactly
@@ -667,8 +669,8 @@ pnpm test:e2e                                        # builds web + tizen, then 
   score's last digit counting it. Tizen build from `file://`: the remote's Back (10009) on the
   countdown gives up to the game-over screen without leaving the app; no console errors
   ([difficulty-and-rank.md](difficulty-and-rank.md)). Every older spec that starts a game from
-  the title presses one more Enter / OK for the difficulty menu — and since M2-03 one more for
-  the weapon select.
+  the title presses one more Enter / OK for the difficulty menu — since M2-03 one more for
+  the weapon select, and since M2-05 one more for the ship select.
 - `bullet-palette.spec.ts` (M2-02) — web build: OPTIONS → BULLETS steps STANDARD → DEUTERANOPIA,
   Back writes `display.bulletPalette` to the save (`shmup-cup:save.v1`), and the next boot
   (`?stage=test-range`, whose turrets, walkers and orbiters fire pink, red and purple bullets)
@@ -683,7 +685,19 @@ pnpm test:e2e                                        # builds web + tizen, then 
   (13) opens the select again and starts on its first press; the remote's arrows (37–40) alone
   choose EDIT and a weapon per slot (the preview follows — read through `__shmupDebug`), NORMAL on
   `!` and an Auto order through the ORDER overlay (closed with Back), and START plays them; no
-  console errors ([meter-arsenal.md](meter-arsenal.md)).
+  console errors ([meter-arsenal.md](meter-arsenal.md)). Since M2-05 OK on the difficulty menu
+  opens the ship select first; OK on the KESTREL opens the weapon select.
+- `ship-select.spec.ts` (M2-05) — web build: OK on the difficulty menu opens the ship select
+  (`data-shmup-scene="shipSelect"`), its panel names both ships and pictures the focused one (the
+  MANTA's green canopy after ArrowDown); Enter starts the game with the MANTA in Direct mode (no
+  weapon select), the HUD shows the tier pips' labels (`SHOT`, `SUB`, `ARM`, `SPD`, `DISC`) and
+  the MANTA flies. Tizen build from `file://`: the remote's arrows and OK (37–40, 13) pick the
+  MANTA and Ch− (428) toggles its speed; no console errors ([direct-mode.md](direct-mode.md)).
+- `direct-items.spec.ts` (M2-05) — web build on `?stage=direct-range` with the MANTA: the six
+  colour items (spawned ahead of the ship, held still) are drawn in their own colours from the
+  atlas, a blue item flown into draws the green Arm round the ship with the HUD's ARM pips,
+  ShiftLeft (the keyboard's Speed) toggles the speed level; no console errors and no "unknown
+  sprite" warning.
 - `frame-advance.ts` (M1-19) — `freezeSim(page)` and `stepTo(page, tick)`: specs that compare two
   captures a set number of ticks apart freeze the sim and run exact ticks, because under load the
   frame loop runs 1–4 ticks per rAF frame. Playwright uses half the cores, at most 8 workers
@@ -848,3 +862,8 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
   `items/capsule-blue`, `shields/pod`, `shields/reduce`) bind like any other; the debug overlay's
   hurt outline follows Reduce's `hurtScale` (`buildDebugOutlines`)
   ([options-shields-hunter.md](options-shields-hunter.md)).
+- **M2-05** (done) — no renderer change: the MANTA, the cube carriers, the Direct-mode shots (the
+  sub-lasers pick an octant frame instead of rotating), the colour items and the Arm are sprites of
+  the existing batches; the ship select's picture is a `DrawList` sprite command and the tier pips
+  are rects of the HUD list (`HUD_COMMAND_COUNT` 64, `HUD_STRING_COUNT` 9)
+  ([direct-mode.md](direct-mode.md)).

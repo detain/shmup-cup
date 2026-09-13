@@ -37,30 +37,30 @@ shmup-cup/
 │   │   │   ├── module-info.ts  ModuleInfo / defineModule
 │   │   │   ├── platform/       ✔ Platform interface (tech §3.2), headless platform, memory storage
 │   │   │   ├── input/          ✔ Action bits, InputSnapshot, edge latching (feat §4)
-│   │   │   ├── config/         ✔ GameConfig + defaults + validation; difficulty presets (DEFAULT_DIFFICULTY_TABLE, withDifficulty — M2-01); UserOptions (volumes, input profile — M1-17)
+│   │   │   ├── config/         ✔ GameConfig + defaults + validation; difficulty presets (DEFAULT_DIFFICULTY_TABLE, withDifficulty — M2-01); the ship choice (shipId, powerUpMode 'direct', withShip — M2-05); UserOptions (volumes, input profile — M1-17)
 │   │   │   ├── loop/           ✔ fixed-step accumulator (snap, cap, reset)
 │   │   │   ├── game/           ✔ createGame(): composition root, suspend/resume; bare gameplay (one World) or the scene flow (options.scenes, M1-16)
 │   │   │   ├── world/          ✔ createWorld / stepWorld: session state + the fixed 9-phase tick pipeline (plan §3.2), pool registry, view
 │   │   │   ├── presentation/   ✔ IRenderer / IAudio contracts + the render contract (RenderFrame, WorldView, SpriteBatchView, DrawList, LayerId)
 │   │   │   ├── rng/ math/ events/ pools/                 ✔ engine foundations (sfc32, trig tables, event ring, SoA pools)
-│   │   │   ├── data/           ✔ (partial) content loader: schema.ts combinators, loadContent(), ContentDb, migrations, tilemap.ts (tileset tables, heightfield / RLE expansion), paths.ts (spline → arc-length tables); kinds incl. rules (difficulty, scoring) and patterns (M2-02)
-│   │   │   ├── player/         ✔ KESTREL movement, speed levels, clamp, banking, fly-in, life cycle (killPlayer / respawnPlayer / playerOut)
-│   │   │   ├── weapons/        ✔ player shots (96-slot SoA pool), the meter arsenal Types A–D + Weapon Edit from the config (resolveArsenal, setArsenal — M2-03), loadouts, autofire + caps per shooter, grid hits (Direct mode: M2-05)
+│   │   │   ├── data/           ✔ (partial) content loader: schema.ts combinators, loadContent(), ContentDb, migrations, tilemap.ts (tileset tables, heightfield / RLE expansion), paths.ts (spline → arc-length tables); kinds incl. rules (difficulty, scoring) and patterns (M2-02); Direct-mode families, ship mode, stage directItems (M2-05)
+│   │   │   ├── player/         ✔ ship movement (KESTREL, MANTA — the config's shipId since M2-05), speed levels, clamp, banking, fly-in, life cycle (killPlayer / respawnPlayer / playerOut)
+│   │   │   ├── weapons/        ✔ player shots (96-slot SoA pool), the meter arsenal Types A–D + Weapon Edit from the config (resolveArsenal, setArsenal — M2-03), loadouts, autofire + caps per shooter, grid hits; the Direct-mode shot families (direct roles, level volleys, applyDirectLoadout — M2-05)
 │   │   │   ├── options/        ✔ Options: the screen-space trail ring buffer and, since M2-04, the Snake (pulled chain), Formation (> / V) and Rotate (orbit) types with spread / extend (steer)
-│   │   │   ├── powerups/       ✔ (partial) 7-slot power meter, equip on the PowerUp edge, Auto Power-Up, capsule pool + magnet, Mega Crash, the blue capsule and freed Options (M2-04) (Direct mode: M2-05)
-│   │   │   ├── shields/        ✔ the meter shields on every ship: Force Field, Reduce (hurtbox steps), front / Free / Rotate Shield pods (M2-04) — hits, shield-hit i-frames, wear, never terrain (Arm tiers: M2-05)
+│   │   │   ├── powerups/       ✔ 7-slot power meter, equip on the PowerUp edge, Auto Power-Up, capsule pool + magnet, Mega Crash, the blue capsule and freed Options (M2-04); Direct mode: the stage's item plan, six drifting colour items, the Speed toggle, the Direct death penalty (M2-05)
+│   │   │   ├── shields/        ✔ the meter shields on every ship: Force Field, Reduce (hurtbox steps), front / Free / Rotate Shield pods (M2-04) — hits, shield-hit i-frames, wear, never terrain; the Direct-mode Arm (green / silver / gold tiers, absorbs terrain — M2-05)
 │   │   │   ├── enemies/        ✔ (partial) 64 enemy slots: spawns, formations, off-screen rules, contact (shield pods too), damage, sprite mirror; the Option Hunter's rules and the blue capsule's on-screen clear (M2-04)
 │   │   │   ├── patterns/       ✔ sleeping behaviour coroutines (runner) + per-tick movers + fire primitives + the BulletML-inspired pattern DSL (dsl.ts: expression + pattern compiler → one Float64Array bank; PatternVm interpreter: enemy emitters, bullets' own programs — M2-02)
-│   │   │   ├── behaviors/      ✔ (partial) behaviour registry referenced by content script ids; the M1 roster, pattern.loop (M2-02), hunter.option (M2-04)
+│   │   │   ├── behaviors/      ✔ (partial) behaviour registry referenced by content script ids; the M1 roster, pattern.loop (M2-02), hunter.option (M2-04), cube.pincer (M2-05)
 │   │   │   ├── bullets/        ✔ enemy bullets (512-slot SoA pool = the ENEMY_BULLETS batch) + telegraphed lasers, bending lasers (8 × 64-node rings, circle-chain hitbox — M2-02), player collision, cancel (sparkles, or point items that fly to the score — M2-02); kinds.ts = the kind names (leaf)
 │   │   │   ├── bosses/         ✔ (partial) multi-part bosses: weak points, phases, the WARNING, the death sequence (mid-bosses, raids: M2-09)
 │   │   │   ├── collision/      ✔ (partial) scalar shape tests, layer masks, counting-sort uniform grid, pixel-exact terrain queries
 │   │   │   ├── stage/          ✔ stage runtime: camera keys / ramps / pans / locks, event cursor, checkpoints, terrain map + parallax / terrain views
-│   │   │   ├── rank/           ✔ rank 0–31 (difficulty base + growth × stage / loop / power terms, 16 on loop 1), rankScale curves, per-enemy sensitivity (M2-01)
-│   │   │   ├── scoring/        ✔ (partial) per-player scores (clamp 99,999,990), session hi-score, crediting kills / bonuses / capsules, extends (cap 9) and the continue digit (M2-01; 1UP items: M2-05)
+│   │   │   ├── rank/           ✔ rank 0–31 (difficulty base + growth × stage / loop / power terms, 16 on loop 1), rankScale curves, per-enemy sensitivity (M2-01), the Direct-mode power term (M2-05)
+│   │   │   ├── scoring/        ✔ (partial) per-player scores (clamp 99,999,990), session hi-score, crediting kills / bonuses / capsules, extends (cap 9) and the continue digit (M2-01)
 │   │   │   ├── fx/             ✔ (partial) hit-stop / shake / flash requests + timers (FxState), exact hit-stop (slowdown: M3-02)
-│   │   │   ├── scenes/         ✔ (partial) scene stack (depth 8, deferred transitions) + the M1 flow: boot → title → difficulty menu (M2-01) → weapon select with live preview + Auto order editor (M2-03) → game ⇄ pause → stage clear / continue countdown (M2-01) / game over, YES / NO dialog (Tizen exit confirm), Options overlay (M1-17)
-│   │   │   ├── ui/             ✔ (partial) canvas UI kit (list menu, slider, toggle, choice, confirm; 18/6-tick auto-repeat, 4-tick Confirm buffer; draw builders) + the HUD (buildHud, rebuilt only on change; meter labels named after the arsenal — M2-03)
+│   │   │   ├── scenes/         ✔ (partial) scene stack (depth 8, deferred transitions) + the M1 flow: boot → title → difficulty menu (M2-01) → ship select (M2-05) → weapon select with live preview + Auto order editor (M2-03) → game ⇄ pause → stage clear / continue countdown (M2-01) / game over, YES / NO dialog (Tizen exit confirm), Options overlay (M1-17)
+│   │   │   ├── ui/             ✔ (partial) canvas UI kit (list menu, slider, toggle, choice, confirm; 18/6-tick auto-repeat, 4-tick Confirm buffer; draw builders) + the HUD (buildHud, rebuilt only on change; meter labels named after the arsenal — M2-03; Direct-mode tier pips — M2-05)
 │   │   │   ├── debug/          ✔ hashWorld state hash, debug switches + controls (god mode, outlines, frame advance, slow-mo, checkpoint jump, stage skip), overlay counters (M1-19)
 │   │   │   ├── save/           ✔ versioned save (save.v1): options, hi-score tables, stats; migrations, defensive parsing, SaveStore (writes only on change) — M1-17
 │   │   │   └── replay/         ✔ replays: header, per-tick input recorder, playback + desync report, RLE/varint/base64 JSON format (M1-19)
@@ -91,12 +91,12 @@ shmup-cup/
 │       └── src/ main/ (main.ts, app-protocol.ts, window-options.ts ✔ · saves.ts steam.ts placeholders) · preload/preload.cts · shared/ipc.ts
 │
 ├── content/                game DATA (JSON, formatVersion 1, validated at load by core/data ✔)
-│   ├── player/             ✔ one file per ship: speed levels, hitboxes, margins, timers (+ README, example)
-│   ├── stages/             ✔ one file per stage: music, camera path, checkpoints, parallax, tilemap (heightfield / RLE), event timeline; zone-a (AZURE VERGE, the game's stage — M1-18), test-range, test-boss, weapon-range (the weapon select's live preview — M2-03), hunter-range (the Option Hunters — M2-04) (+ README, example)
+│   ├── player/             ✔ one file per ship: speed levels, hitboxes, margins, timers, power-up model; kestrel (meter), manta (Direct mode, M2-05) (+ README, example)
+│   ├── stages/             ✔ one file per stage: music, camera path, checkpoints, parallax, tilemap (heightfield / RLE), event timeline; zone-a (AZURE VERGE, the game's stage — M1-18), test-range, test-boss, weapon-range (the weapon select's live preview — M2-03), hunter-range (the Option Hunters — M2-04), direct-range (the Direct-mode carriers — M2-05); zone A's Direct-mode item plan (directItems) (+ README, example)
 │   ├── tilesets/           ✔ terrain tilesets: per tile collision type, column-height mask, atlas frame (+ README, example)
-│   ├── enemies/            ✔ enemy definitions: hp, score, hurtbox, behaviour script + tunables, mover, ground anchor, drop, child; boss sections (parts, weak points, phases); zone A roster + HALCYON BULWARK (M1-18), test-range roster, test boss, the three Option Hunters (option-hunters, M2-04) (+ README, example)
+│   ├── enemies/            ✔ enemy definitions: hp, score, hurtbox, behaviour script + tunables, mover, ground anchor, drop, child; boss sections (parts, weak points, phases); zone A roster + HALCYON BULWARK (M1-18), test-range roster, test boss, the three Option Hunters (option-hunters, M2-04), the Direct-mode carriers cube / lead-carrier (direct-carriers, M2-05) (+ README, example)
 │   ├── paths/              ✔ movement paths: spline control points, baked to arc-length tables at load; zone A's fan / orbit curves, test-range's (+ README, example)
-│   ├── weapons/            ✔ weapon tunables + preset loadouts: Type A (type-a) and Types B–D (types-b-d, M2-03) with their menu names (+ README, example)
+│   ├── weapons/            ✔ weapon tunables + preset loadouts: Type A (type-a) and Types B–D (types-b-d, M2-03) with their menu names; the MANTA's weapons and shot families (direct, M2-05) (+ README, example)
 │   ├── input/              ✔ input profiles (kind input-profiles, validated by input-web rebind): per-context key/button tables, remote debounce/diagonal/SOCD, Tizen keys to register
 │   ├── audio/              ✔ SFX bank (kind sfx: synth parameters or a file per SFX_CUES cue) + music/ (kind music: original chip songs or OGG, bound to MUSIC_CUES), validated by audio-web loader (+ README, examples)
 │   ├── rules/              ✔ game-wide rule tables (kind rules, validated by core/data): the difficulty presets Easy / Normal / Hard / Arcade — rank base / growth, lives, extends, continues, death penalty, aim directions, bullet speed (M2-01); the scoring values — points per cancelled bullet (M2-02; + README, example)
@@ -110,7 +110,7 @@ shmup-cup/
 ├── test/                   cross-package integration tests (Vitest project "integration", part of `pnpm test`); playtest/ = headless playtest harness + 4-way bot + design rules (M1-18, same project); golden/ = golden zone A replays + their test (M1-19, same project); bench/ = `pnpm bench` stress benchmark (own Vitest config, not in `pnpm test`); e2e/ = Playwright browser smoke tests (`pnpm test:e2e`)
 ├── docs/
 │   ├── client/             player/tester docs
-│   └── dev/                contributor docs (this file, architecture, engine-foundations, content-data, asset-pipeline, rendering-and-shell, sim-world, stage-runtime, enemies-and-behaviors, fx-and-game-feel, scenes-and-ui, saves-and-options, zone-a-and-playtest, debug-and-replays, difficulty-and-rank, pattern-dsl, api-reference, …)
+│   └── dev/                contributor docs (this file, architecture, engine-foundations, content-data, asset-pipeline, rendering-and-shell, sim-world, stage-runtime, enemies-and-behaviors, fx-and-game-feel, scenes-and-ui, saves-and-options, zone-a-and-playtest, debug-and-replays, difficulty-and-rank, pattern-dsl, meter-arsenal, options-shields-hunter, direct-mode, api-reference, …)
 ├── tools/                  standalone tools, NOT workspace members (own package.json/lockfile, npm not pnpm)
 │   └── input-probe/        Tizen diagnostic .wgt: remote/gamepad/display measurements (see input-probe.md)
 └── shmup_feat.md  shmup_tech.md  input_probe_spec.md  shmup_plan.md  shmup_progress.md  CHANGELOG.md  README.md  LICENSE (MPL-2.0)
@@ -198,5 +198,6 @@ replays, the benchmark and budgets), [difficulty-and-rank.md](difficulty-and-ran
 presets, rank growth, extends, continues), [pattern-dsl.md](pattern-dsl.md) (the bullet pattern
 DSL, bending lasers, cancel points, colour-blind palettes), [meter-arsenal.md](meter-arsenal.md)
 (weapon types, Weapon Edit, the weapon select), [options-shields-hunter.md](options-shields-hunter.md)
-(Option types, meter shields, the Option Hunter, the blue capsule), [api-reference.md](api-reference.md) and
+(Option types, meter shields, the Option Hunter, the blue capsule), [direct-mode.md](direct-mode.md)
+(Direct mode, the MANTA, the ship select), [api-reference.md](api-reference.md) and
 [conventions.md](conventions.md).

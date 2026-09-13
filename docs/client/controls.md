@@ -6,15 +6,17 @@ work too, and every device drives both the game and the menus.
 > **Status:** these controls are built into the game as **control profiles** and are read
 > every frame. The current build ([preview-build.md](preview-build.md)) starts on the **title
 > screen**: OK (Enter / A) opens the menu, ▲ ▼ move the highlight, OK chooses — START opens the
-> **DIFFICULTY** box, where ▲ ▼ pick EASY / NORMAL / HARD / ARCADE and OK opens the **WEAPON
-> SELECT** screen — ▲ ▼ move between its lines, ◀ ▶ change the weapon type, the Option type, the
+> **DIFFICULTY** box, where ▲ ▼ pick EASY / NORMAL / HARD / ARCADE and OK opens the **SHIP
+> SELECT** box, where ▲ ▼ pick the KESTREL or the MANTA — OK on the MANTA begins a game at once,
+> OK on the KESTREL opens the **WEAPON SELECT** screen — ▲ ▼ move between its lines, ◀ ▶ change the weapon type, the Option type, the
 > `?` / `!` power-ups and Auto Power-Up, and OK on START (highlighted when it opens) begins a game — the
 > first zone, **AZURE VERGE**, on every device. In the game the **directions fly the
 > ship** and the gun **fires on its own**; enemies fly past and shoot at you — every bullet pattern
 > and every boss laser is dodgeable with the four arrow directions alone, no diagonals needed (a
 > test program that plays with single arrow presses clears the whole zone) — and are shot down. **PowerUp** (OK on the remote, Enter or C on a keyboard, X on a gamepad)
 > takes the highlighted power-up of the power meter once you have collected capsules
-> ([preview-build.md](preview-build.md#power-ups)). **Pause** — Back or Play/Pause on the remote,
+> ([preview-build.md](preview-build.md#power-ups)) — the KESTREL's; the MANTA powers up by flying
+> into colour items and ignores OK in the game. **Pause** — Back or Play/Pause on the remote,
 > Esc / P / Backspace on a keyboard, Start / Back on a gamepad — opens the pause menu; in menus
 > **Back** goes back, and on the TV's title screen it asks before quitting
 > ([preview-build.md](preview-build.md#pausing-quitting-and-the-end-screens)). Losing a ship needs
@@ -27,7 +29,10 @@ work too, and every device drives both the game and the menus.
 > [preview-build.md](preview-build.md#the-options-screen)); the game remembers all of them.
 > **Special** (Channel up on the remote, V on a keyboard, Y on a gamepad) spreads FORMATION and
 > ROTATE Options out and back in — as does **holding** PowerUp
-> ([preview-build.md](preview-build.md#choosing-your-weapons)); Speed does nothing yet. The remote's settings may still change once
+> ([preview-build.md](preview-build.md#choosing-your-weapons)); **Speed** (Channel down on the
+> remote, Left Shift on a keyboard, LB / RB on a gamepad) switches the **MANTA** between its three
+> speeds ([preview-build.md](preview-build.md#the-manta-colour-items-weapons-and-the-arm)) and does
+> nothing for the KESTREL. The remote's settings may still change once
 > the input probe results from the M7 monitors are in, and a screen for rebinding single buttons
 > is planned.
 
@@ -39,15 +44,15 @@ and selects a menu entry in menus; Back pauses the game and goes back in menus.
 
 | Action | What it does |
 |---|---|
-| Move | Game: fly the ship (8 directions where the device allows it; diagonals are no faster than straight moves, and the ship stops as soon as you let go). Menus: move the highlight (▲ ▼; ◀ ▶ between YES and NO, in the Options screen ◀ ▶ turn a volume down / up or change the control profile or the bullet colours, and in the WEAPON SELECT screen ◀ ▶ change the highlighted line's choice) — holding a direction repeats the move after about a third of a second, then about ten times a second |
+| Move | Game: fly the ship (8 directions where the device allows it; diagonals are no faster than straight moves, and the ship stops as soon as you let go). Menus: move the highlight (▲ ▼; ◀ ▶ between YES and NO, in the Options screen ◀ ▶ turn a volume down / up or change the control profile or the bullet colours, and in the WEAPON SELECT screen ◀ ▶ change the highlighted line's choice; in the SHIP SELECT box ▲ ▼ pick the ship) — holding a direction repeats the move after about a third of a second, then about ten times a second |
 | Shot | Main gun. Today it fires **on its own** on every device (automatic fire is on by default, and always on with the TV remote), so you never need to press it; once automatic fire can be switched off in the Options menu, hold it to fire |
 | Sub | Missiles / sub-weapon, once you have them — automatic in the same way |
-| PowerUp | Take the highlighted power-up of the power meter — one per press (holding the button never takes a second); a press on an empty or maxed-out slot does nothing. **Held** for a quarter of a second or more, it also spreads FORMATION / ROTATE Options for as long as you hold it |
+| PowerUp | KESTREL: take the highlighted power-up of the power meter — one per press (holding the button never takes a second); a press on an empty or maxed-out slot does nothing. **Held** for a quarter of a second or more, it also spreads FORMATION / ROTATE Options for as long as you hold it. MANTA: nothing (its colour items work when you touch them) |
 | Special | Spread FORMATION / ROTATE Options out, and back in on the next press (a press, never a hold); TRAIL and SNAKE Options ignore it |
-| Speed | Cycle ship speed (item mode) |
+| Speed | MANTA: switch to its next speed — middle → fast → slow → middle — one step per press, with a ding. KESTREL: nothing (it speeds up with the power meter's SPEED UP) |
 | Pause | Pause / resume (the pause menu: RESUME, OPTIONS, RETRY STAGE, QUIT TO TITLE) |
 | Confirm | Menus: select the highlighted entry; on the title first leaves `PRESS OK`; in the WEAPON SELECT screen OK also steps the highlighted choice, opens ORDER and, on START, begins the game. A press made while a menu is just appearing is remembered for a moment, not lost |
-| Back | Menus: previous screen (in the pause menu: resume; in a YES / NO question: NO; in the Options screen: keep the settings and close it, like BACK; in the DIFFICULTY box: back to the title menu; in the WEAPON SELECT screen: back to the DIFFICULTY box; in its AUTO ORDER box: keep the order and close it, like DONE; on the CONTINUE? countdown: give up — GAME OVER); on the TV's title screen it asks **EXIT SHMUP CUP?** — only YES quits |
+| Back | Menus: previous screen (in the pause menu: resume; in a YES / NO question: NO; in the Options screen: keep the settings and close it, like BACK; in the DIFFICULTY box: back to the title menu; in the SHIP SELECT box: back to the DIFFICULTY box; in the WEAPON SELECT screen: back to the SHIP SELECT box; in its AUTO ORDER box: keep the order and close it, like DONE; on the CONTINUE? countdown: give up — GAME OVER); on the TV's title screen it asks **EXIT SHMUP CUP?** — only YES quits |
 
 If you are holding a button at the moment a menu opens (or closes), it keeps doing only what
 it does in both sets until you let go — holding the Sub key while the pause menu appears will
@@ -63,14 +68,15 @@ the TV remote, the keyboard and both gamepads.
 | Back (↩) | Pause | Back |
 | Play/Pause ⏯ (if your remote has it) | Pause | Pause |
 | Channel up | Special (spread / retract FORMATION and ROTATE Options) | — |
-| Channel down | Speed | — |
+| Channel down | Speed (the MANTA's speed toggle) | — |
 
 - On the TV the ship fires its main gun **and** its missiles automatically, so no button is
   ever needed for shooting (in the current build the gun starts firing as soon as the ship has
   flown in). **OK** is the only other button the game needs: a rare press to take a power-up,
   which never stops a direction you are holding. Channel up / down are optional extras —
   nothing ever requires them: Channel up spreads FORMATION / ROTATE Options, which holding OK
-  does too.
+  does too, and Channel down switches the MANTA's speed (it starts at a good middle speed). With
+  the MANTA even OK is not needed in the game.
 - Some TV remotes briefly report a held button as released and pressed again. The game hides
   such hiccups (up to about 1/30 of a second), so a held direction never stutters; in return,
   letting go of a button registers two frames later — too short to notice.
@@ -102,7 +108,7 @@ click the picture once.
 | B / Circle | Sub | Back |
 | X / Square | PowerUp | — |
 | Y / Triangle | Special | — |
-| LB / L1, RB / R1 | Speed | — |
+| LB / L1, RB / R1 | Speed (the MANTA's speed toggle) | — |
 | Start / Options | Pause | Pause |
 | Back / Share (Select) | Pause | Back |
 
@@ -119,7 +125,7 @@ The left stick has a dead zone of 20 % and snaps to 8 directions. The first cont
 | C | PowerUp | — |
 | Enter (or numpad Enter) | PowerUp | Confirm |
 | V | Special | — |
-| Left Shift | Speed | — |
+| Left Shift | Speed (the MANTA's speed toggle) | — |
 | P | Pause | Pause |
 | Esc | Pause | Back |
 | Backspace | Pause | Back |
@@ -212,15 +218,16 @@ profile chosen under CONTROLS — SAFE 4-WAY until you pick another.
 | A button does something in the game but nothing in a menu (or the other way round) | Expected — see the two tables above; for example C (PowerUp) has no menu function |
 | The game shows a start-up error screen mentioning `input-profiles.json` | The control profiles in this build are broken. Report the lines on the screen — see [preview-build.md](preview-build.md) |
 | Back closes the game on the TV instead of pausing | Not expected any more — Back pauses in the game and asks before quitting on the title. It closes the app at once only on the loading and error screens; otherwise please report it (and check the installed build is the latest) |
-| Nothing reacts for a moment after the app starts | The title screen needs OK first (`PRESS OK`), then START, then OK on a difficulty, then OK on START in the WEAPON SELECT screen; after that the ship flies in (about ⅔ of a second) and ignores the controls until it arrives — see [preview-build.md](preview-build.md#flying-the-ship) |
+| Nothing reacts for a moment after the app starts | The title screen needs OK first (`PRESS OK`), then START, then OK on a difficulty, then OK on a ship in the SHIP SELECT box, then (for the KESTREL) OK on START in the WEAPON SELECT screen; after that the ship flies in (about ⅔ of a second) and ignores the controls until it arrives — see [preview-build.md](preview-build.md#flying-the-ship) |
 | Holding Shot (Z / Space, A / Cross) or Sub (X, B / Circle) changes nothing | Expected: the gun already fires on its own (automatic fire is on by default), and the missiles fire on their own too once a power-up gave them to you (in a browser, `?loadout=full` gives them to you right away) |
-| PowerUp (OK, Enter, C, X) does nothing | Expected until you have collected a power capsule (no box of the power meter is highlighted) — the red saucers and completed formations of AZURE VERGE leave them. Also expected when you already have the most of the highlighted power-up. Such a press plays a short, low "no" buzz. See [preview-build.md](preview-build.md#power-ups) |
+| PowerUp (OK, Enter, C, X) does nothing | Always expected with the **MANTA** (no power meter — its colour items work when you fly into them). With the KESTREL expected until you have collected a power capsule (no box of the power meter is highlighted) — the red saucers and completed formations of AZURE VERGE leave them. Also expected when you already have the most of the highlighted power-up. Such a press plays a short, low "no" buzz. See [preview-build.md](preview-build.md#power-ups) |
 | No sound in the browser | Press a key or click into the picture once — the sound starts then (a gamepad button does not count). See [preview-build.md](preview-build.md#sound-and-music) |
 | Pressing OK while holding an arrow stops the ship on the TV | Not expected — the game keeps the arrow held. Please report it with the remote model: it means the remote itself drops the arrow when OK is pressed |
 | OK or Back does nothing on the CONTINUE? countdown | Both are ignored for the first half second, so a button still pressed from the game never decides; press again. If they never react, please report it |
-| Pause does nothing | On the title, the DIFFICULTY box, the WEAPON SELECT screen, the CONTINUE? countdown and the end screens Pause has no job — it pauses only a running game. In the game it should open the PAUSE menu; if not, please report the device and the button |
+| Pause does nothing | On the title, the DIFFICULTY box, the SHIP SELECT box, the WEAPON SELECT screen, the CONTINUE? countdown and the end screens Pause has no job — it pauses only a running game. In the game it should open the PAUSE menu; if not, please report the device and the button |
 | Special (Channel up, V, Y) does nothing | Expected unless your Options fly FORMATION or ROTATE (chosen on the WEAPON SELECT screen's OPTION line) — then each press spreads them out or back in. Holding OK does the same while held |
-| Speed and the other buttons do nothing | Expected in the current preview — nothing uses them yet |
+| Speed (Channel down, Left Shift, LB / RB) does nothing | Expected with the KESTREL. With the MANTA each press switches its speed (the SPD squares in the bottom bar follow) — if not, please report the device and the remote model |
+| Speed changed twice for one press | Not expected — the game ignores held buttons and the remote's hiccups for it. Please report the remote model |
 | My FORMATION / ROTATE Options spread when I take a power-up | OK was held a quarter of a second or more — a longer hold spreads them. Press OK briefly |
 | F1–F8 (or 1–8 on the TV) do nothing | They are developer keys of debug builds only; on the TV the tools must be opened first with Play/Pause, Ch ▲, Ch ▲, Ch ▲ — see [Developer keys](#developer-keys-debug-builds-only) |
 | The game froze without a PAUSE box, or runs in slow motion (debug build) | A developer tool is on — F4 / 4 unfreezes, F6 / 6 cycles slow motion back to normal ([debug-tools.md](debug-tools.md#troubleshooting)) |

@@ -75,7 +75,7 @@ tests use `createMemoryStorage()`. Electron's renderer runs the web build and us
 |---|---|
 | `version` | `SAVE_VERSION` = 1. Drives the migrations; a document without it counts as version 0 |
 | `options` | The player's `UserOptions` (below): volume levels 0–10, the chosen key / remote profile id (or `null` = the platform default), display options (M2-02: `bulletPalette`) |
-| `hiScores` | Tables by **mode key** (`hiScoreModeKey(config)` = `<powerUpMode>-<difficulty>`, `meter-normal` in M1; since M2-01 one per difficulty — `meter-easy`, `meter-normal`, `meter-hard`, `meter-arcade`), each sorted best first, at most `HI_SCORE_TABLE_SIZE` = 10 rows, at most `MAX_HI_SCORE_TABLES` = 32 tables. A mode nobody scored in has no table |
+| `hiScores` | Tables by **mode key** (`hiScoreModeKey(config)` = `<powerUpMode>-<difficulty>`, `meter-normal` in M1; since M2-01 one per difficulty — `meter-easy`, `meter-normal`, `meter-hard`, `meter-arcade`; since M2-05 the Direct-mode MANTA's games in `direct-easy` … `direct-arcade` — no format change, the key was always `<powerUpMode>-<difficulty>`), each sorted best first, at most `HI_SCORE_TABLE_SIZE` = 10 rows, at most `MAX_HI_SCORE_TABLES` = 32 tables. A mode nobody scored in has no table |
 | `stats` | Counters: `gamesStarted` (START and RETRY STAGE), `gameOvers`, `stagesCleared` — whole numbers, capped at 2³¹−1 |
 
 The key stays `save.v1` for the whole format family: a new format bumps the document's
@@ -195,8 +195,9 @@ opens — M1's run ends at the stage clear, since there is one zone):
 **QUIT TO TITLE and RETRY STAGE record nothing** (the arcade rule: only finished games count),
 although the session hi-score in memory still takes the abandoned game's best score, as before.
 The session hi-score (the title's `HI`, the HUD's `HI`) starts from `save.bestScore(modeKey)`
-when the flow is created — since M2-01 one per difficulty preset, each from its own table; the
-title shows the chosen preset's and the difficulty menu the focused one's. The table is chosen by
+when the flow is created — since M2-01 one per difficulty preset, each from its own table, and
+since M2-05 one per power-up mode and preset (the ship select's choice picks the mode); the
+title shows the chosen ship's and preset's and the difficulty menu the focused preset's. The table is chosen by
 the config's power-up mode and difficulty, not the stage: the Test Range, the Boss Range and open
 space on Normal all share `meter-normal`. A score recorded after a continue ends in the number
 of continues used ([difficulty-and-rank.md](difficulty-and-rank.md#the-continue-digit-markcontinue)).
@@ -476,6 +477,9 @@ title — the M1-17 acceptance test in `scenes-options.test.ts`.
 - **M2-02** (done) — the first display option, `display.bulletPalette` (BULLETS), applied live by
   the renderer ([rendering-and-shell.md](rendering-and-shell.md#colour-blind-bullet-palettes)); the
   save stays version 1.
+- **M2-05** (done) — the MANTA's games go into their own tables (`direct-<difficulty>`) and the
+  flow keeps a session hi-score per power-up mode and preset; the chosen ship is not saved yet
+  (the save stays version 1 — [direct-mode.md](direct-mode.md#the-ship-select-corescenes)).
 - **M2-08 / M2-16** — more display options (scale mode, shake, flash reduction, hitbox), game options
   (difficulty, lives, death penalty, auto power-up), per-device rebinding and the controls
   sub-screens; **save v2** with a migration from v1.

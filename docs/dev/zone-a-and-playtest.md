@@ -69,7 +69,10 @@ with the bot.
 **Capsule budget** (the recovery rule of `shmup_feat.md` §10): a *source* is a `spawn` of an
 enemy with `drop: "capsule"` or a `formation` whose `drop` is not `null`. Zone A has 28 before the
 boss, and 5 / 3 / 4 within 900 px after the checkpoints at 0 / 3,500 / 6,000 (the rule asks ≥ 3),
-2 in the calm.
+2 in the calm. The same sources serve the Direct-mode MANTA (M2-05): its ship has no meter, so
+every `capsule` drop becomes the next colour item of the stage's **`directItems`** plan — 27
+entries, eight each of red, green and blue plus an octagon, a yellow and an orange, cycling and
+never rewound at a checkpoint ([direct-mode.md](direct-mode.md#drop-resolution-and-the-item-plan-corepowerups)).
 
 **Terrain.** The heightfield generator of M1-07 on `terrain-a` (8-px tiles, 25 rows): three
 segments — a low floor (base 20, amplitude 12), the corridor (floor base 40 ± 16, ceiling base
@@ -392,5 +395,11 @@ in the right half of the playfield, with no console errors or atlas warnings.
   the golden replays were re-blessed (outcomes unchanged), and four more runs fly zone A with the
   Option types and meter shields (`zone-a-rotate`, `-reduce`, `-snake`, `-free-shield`)
   ([options-shields-hunter.md](options-shields-hunter.md)).
+- **M2-05** (done) — **zone A's events are unchanged** (a `capsule` drop resolves to a planned
+  colour item in Direct mode, so the 4-way rules and bot budgets hold for both ships); the stage
+  only gained its `directItems` plan. The new content shifts sprite ids and enemy spec indices, so
+  the golden replays were re-blessed (outcomes unchanged), and three runs fly zone A with the
+  MANTA (`zone-a-manta`, `-manta-boss`, `-manta-deaths`); the ship select plays before every zone A
+  game (one more OK) ([direct-mode.md](direct-mode.md)).
 - **M2-10 / M2-11 … M2-14** — the zone map picks stages (replacing `DEFAULT_STAGE_ID`); the other
   zones, each with a playtest run and its own design-rule checks.

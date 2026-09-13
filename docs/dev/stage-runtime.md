@@ -49,7 +49,9 @@ renderer.render(frame)                                                        re
 
 A stage file (`content/stages/<id>.stage.json`, kind `stage`, format 1) holds `id`, `name`,
 `music: { stage, boss }` (`MUSIC_CUES` names), `length` (camera-x length in pixels), `camera`
-(keys), `checkpoints`, `parallax` (bands), `tilemap` (or `null` for open space) and `events`.
+(keys), `checkpoints`, `parallax` (bands), `tilemap` (or `null` for open space), `events` and,
+since M2-05, the optional `directItems` (the Direct-mode item plan — the runner never reads it;
+`core/powerups` does, [direct-mode.md](direct-mode.md#drop-resolution-and-the-item-plan-corepowerups)).
 The annotated format is in [`content/stages/README.md`](../../content/stages/README.md).
 
 `loadContent()` does three things beyond the schema (see
@@ -375,7 +377,8 @@ with OK ([powerups-and-shields.md](powerups-and-shields.md)).
 A checkpoint restart empties the enemy bullet and laser pools, the player shots and the items
 with every other registered pool (`pools.clearAll()`), resets the weapon system's hit list and
 batches (`weapons.clear()`) and forgets the power-ups' pickups, pending Mega Crashes and taken
-drops (`powerups.clear()` — the meters and shields stay).
+drops (`powerups.clear()` — the meters and shields stay, and so does the Direct-mode item plan's
+cursor, M2-05: the plan never rewinds).
 `example.stage.json` shows the rest of the format (RLE rows over `example.tileset.json`,
 formations, a pan, a scroll lock, the `warning` event of the example warden).
 `content/stages/test-boss.stage.json` (BOSS RANGE, M1-13) is a 1200-px open-space range: two
@@ -386,6 +389,11 @@ the Option Hunters: capsule carriers to build up Options, the three hunters (eac
 the ship has an Option), a `blueCapsule` formation, the blue carrier, a checkpoint at 1,800, a
 second wave and two hunters at once — `?stage=hunter-range&loadout=full`
 ([options-shields-hunter.md](options-shields-hunter.md#content-and-assets)).
+`content/stages/direct-range.stage.json` (DIRECT RANGE, M2-05) is a 3,620-px open-space range for
+the Direct mode's carriers: six six-cube pincer waves alternating with lead carriers, a
+checkpoint at 1,800 and a 12-entry `directItems` plan whose first six drops are one of each colour
+— `?stage=direct-range`, then the MANTA in the ship select
+([direct-mode.md](direct-mode.md#carriers-corebehaviors-and-the-dev-stage)).
 
 Headless:
 

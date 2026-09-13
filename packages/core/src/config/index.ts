@@ -933,7 +933,8 @@ export function shipMatches(config: GameConfig, ship: ShipChoice): boolean {
  *
  * @example
  * ```ts
- * withShip(resolveGameConfig(), { shipId: 'manta', powerUpMode: 'direct' }).powerUpMode; // 'direct'
+ * const manta = withShip(resolveGameConfig(), { shipId: 'manta', powerUpMode: 'direct' });
+ * manta.powerUpMode; // → 'direct'
  * ```
  */
 export function withShip(config: GameConfig, ship: ShipChoice): GameConfig {

@@ -6,11 +6,12 @@ Ripple Laser, Cyclone Laser, Twin Laser), the **presets** Type A–D and **Weapo
 `GameConfig` fields, the **`!` choices** (Mega Crash, NORMAL, SPEED DOWN, LIFE OPTION, FULL
 BARRIER) and the **`?` choice**, the HUD meter naming its slots after the arsenal, and the
 **weapon select** screen after the difficulty menu — with an editable Auto Power-Up order and a
-**live preview** flown by a private mini World. `core/weapons` is `implemented` for meter mode
-with it (Direct mode is M2-05).
+**live preview** flown by a private mini World. `core/weapons` was `implemented` for meter mode
+with it; Direct mode's shot families followed in M2-05 ([direct-mode.md](direct-mode.md)), and
+since then the ship select sits between the difficulty menu and this screen.
 
 This page is the *how and why* and the map of the whole step. Exact signatures are in
-[api-reference.md](api-reference.md#weapons--player-weapons-meter-mode-implemented); the TSDoc in
+[api-reference.md](api-reference.md#weapons--player-weapons-implemented); the TSDoc in
 `packages/core/src/{weapons,powerups,config,scenes}/index.ts` is the authoritative reference. The
 weapon file format for authors is next to the data:
 [`content/weapons/README.md`](../../content/weapons/README.md). The systems this step extends
@@ -227,7 +228,10 @@ needs no new comparison for the game (the preview draws no HUD).
 ## The weapon select (`core/scenes`)
 
 The difficulty menu's OK now calls `chooseDifficulty` and **pushes `WeaponSelectScene`** (id
-`weaponSelect`) instead of starting the game: a full screen (not an overlay) with a panel on the
+`weaponSelect`) instead of starting the game — since M2-05 through the **ship select**, whose OK
+on a meter ship (the KESTREL) pushes it (a Direct-mode ship starts the game at once; with one
+ship in the content the ship select is skipped —
+[direct-mode.md](direct-mode.md#the-ship-select-corescenes)): a full screen (not an overlay) with a panel on the
 left (184×192 from x 4, y 12) and the live preview behind it.
 
 | Row (`WeaponSelectItem`) | Value | Notes |
@@ -245,8 +249,8 @@ The row codes above are M2-04's: the OPTION row moved `?` … START up by one (t
 M2-03) — address rows by `WeaponSelectItem` name, never by number.
 
 - **Input.** Up / Down move (the disabled rows are skipped), Left / Right — or OK — change the
-  focused value; OK on ORDER / START acts; Back pops to the difficulty menu (which re-locks its
-  menu for 2 ticks on `uncover`). The screen **opens focused on START** with the usual 2-tick lock,
+  focused value; OK on ORDER / START acts; Back pops to the ship select (M2-05; the difficulty
+  menu when the ship select was skipped — either re-locks its menu for 2 ticks on `uncover`). The screen **opens focused on START** with the usual 2-tick lock,
   so a game start takes **one more OK** than in M2-01 (`PRESS OK`, START, a difficulty, START) —
   every flow test and e2e spec was updated.
 - **State.** The first visit starts from the host config's loadout (its preset, else the first;
@@ -431,13 +435,17 @@ resolveArsenal(db, edited)[WeaponRole.Missile]?.name; // → 'PHOTON TORPEDO'
 | The HUD shows `MISSILE` for a Type B ship | The content's weapon uses a behaviour without a label frame, or the atlas is older than the 16-frame `hud/meter-labels` — run `pnpm assets` |
 | The preview makes no sound / never loses its ship | By design: own event queue (cleared every tick) and its own god mode |
 | The weapon select allocation guard fails after adding targets to the range | Spawns create coroutines (D29) — the guard flies a copy of the range without targets |
-| `RangeError: the scenes need N string slots` | The flow's UI list has 160 slots since M2-03; a new row or scene must fit |
+| `RangeError: the scenes need N string slots` | The flow's UI list has 192 slots since M2-05 (160 in M2-03); a new row or scene must fit |
+| A script or spec that starts a game from the title stops on `SHIP SELECT` | Since M2-05 the shipped content has two ships: OK on the KESTREL (focused first) opens this screen — five OKs from `PRESS OK` |
+| Code reading `liveCounts[shooter * 4 + role]` broke | Since M2-05 the stride is `WEAPON_ROLE_SLOTS` (36): the Direct-mode roles follow the four meter roles |
 
 ## Next steps that build on this page
 
 - **M2-04** (done) — the other `?` shields (front pods, Free / Rotate Shield, Reduce) joined
   `SHIELD_CHOICES` and the weapon select's `? SLOT`; the Snake / Formation / Rotate Options got
   the new OPTION row (`optionChoice`) — [options-shields-hunter.md](options-shields-hunter.md).
-- **M2-05** — Direct mode's weapon families (the `weapons` module's other half) and the ship select.
+- **M2-05** (done) — Direct mode's weapon families (the `weapons` module's other half: direct
+  roles after the meter ones, `setArsenal` leaves them alone) and the ship select before this
+  screen ([direct-mode.md](direct-mode.md)).
 - **M2-06** — two players share the session's arsenal; the P2 meter in the HUD.
 - **M2-16** — the loadout and the Auto Power-Up order saved with the game options.

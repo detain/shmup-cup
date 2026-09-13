@@ -3,14 +3,16 @@
 The game now starts like a real game. Every build — browser, Samsung TV and desktop — shows a
 short loading bar and then the **title screen**: the SHMUP CUP logo, a blinking `PRESS OK`, and
 after OK a small menu. **START** asks for a **difficulty** — EASY, NORMAL, HARD or ARCADE — then
-shows the **WEAPON SELECT** screen, where you pick the ship's **weapons** — four ready-made weapon
+for a **ship** (the **SHIP SELECT** box): the **KESTREL**, which powers up with the **power meter**,
+or the **MANTA**, which powers up with **colour items** you simply fly into. For the KESTREL the
+**WEAPON SELECT** screen follows, where you pick the ship's **weapons** — four ready-made weapon
 types or your own mix, how the **Options** fly, which **shield** the `?` power-up gives, what `!`
 does, and automatic power-ups — while a
-**live preview** flies them behind the menu, and then begins a game: the KESTREL, the player ship, flies in from the
+**live preview** flies them behind the menu; the MANTA starts at once. Then the game begins: your ship flies in from the
 left and from then on follows the directional buttons of the TV remote, the arrow keys or a
 gamepad — **its gun fires on its own**, with a sound for every shot — under the new **HUD**: your
-score, the best score and the second player's slot along the top, your spare ships, the **power
-meter** and the Force Field's strength along the bottom. **Back** (or Pause) opens the **pause
+score, the best score and the second player's slot along the top, your spare ships and the **power
+meter** with the Force Field's strength (the KESTREL) or the MANTA's **power pips** along the bottom. **Back** (or Pause) opens the **pause
 menu** over the frozen game: resume, retry, or quit to the title. When the last ship is lost a
 **CONTINUE?** countdown lets you carry on from the last checkpoint (if the difficulty gives
 continues), then a **GAME OVER** screen appears, after a boss a **STAGE CLEAR** screen, and on the TV Back on the
@@ -21,8 +23,8 @@ colour-blind players), and the game **remembers** them and your **high scores** 
 itself and works with the remote's arrows, OK and Back alone ([The title screen and the
 menus](#the-title-screen-and-the-menus), [Pausing, quitting and the end
 screens](#pausing-quitting-and-the-end-screens), [Difficulty, extra ships and
-continues](#difficulty-extra-ships-and-continues), [Choosing your weapons](#choosing-your-weapons),
-[The Options screen](#the-options-screen)).
+continues](#difficulty-extra-ships-and-continues), [Choosing your ship](#choosing-your-ship),
+[Choosing your weapons](#choosing-your-weapons), [The Options screen](#the-options-screen)).
 
 **START plays the first real zone, AZURE VERGE** — on the TV too: about three minutes of
 scrolling over rolling ground, through a long cave and a high-speed stretch, with enemies that fly
@@ -36,7 +38,8 @@ first real test of how the game plays with the remote.
 
 Along the way your ship shoots the enemies down ([Your weapons](#your-weapons)), powers up with
 the capsules some enemies leave behind, taken with the remote's OK button
-([Power-ups](#power-ups)), and can be lost: rock, enemies and bullets destroy the KESTREL, it
+([Power-ups](#power-ups) — the MANTA's colour items instead: [The MANTA: colour items, weapons and
+the Arm](#the-manta-colour-items-weapons-and-the-arm)), and can be lost: rock, enemies and bullets destroy the ship, it
 comes back with a life less, and after the last one it is **GAME OVER** — unless you continue
 ([Lives, losing your ship and the score](#lives-losing-your-ship-and-the-score)). Scores of
 20,000, 90,000, 160,000 … points earn **extra ships**, and the game gets **harder as your ship
@@ -55,21 +58,23 @@ loops seamlessly, the boss theme, a short stage-clear tune and a game-over tune
 click.
 
 In a browser there is more to try: a shortcut straight to the zone's boss (`?skip=boss`), the
-fully powered ship (`?loadout=full`), and three test stages — the scrolling *Test Range*, with rocky
+fully powered ship (`?loadout=full`), and four test stages — the scrolling *Test Range*, with rocky
 ground, caves, speed changes and the first enemy roster
 ([The scrolling test stage](#the-scrolling-test-stage-browser-only)), the short *Boss Range*
-with a test boss ([The boss range and the WARNING](#the-boss-range-and-the-warning-browser-only))
-and the *Hunter Range*, where the Option Hunters try to steal your Options
-([The Option Hunter range](#the-option-hunter-range-browser-only)).
+with a test boss ([The boss range and the WARNING](#the-boss-range-and-the-warning-browser-only)),
+the *Hunter Range*, where the Option Hunters try to steal your Options
+([The Option Hunter range](#the-option-hunter-range-browser-only)), and the *Direct Range*, where
+the MANTA's colour items come thick and fast ([The Direct range](#the-direct-range-browser-only)).
 The earlier start-up pictures are still there: **free flight** straight away without the title,
 the animated **sprite showcase** and the **calibration screen**, plus the **effects gallery**
 that shows every explosion and screen effect in turn (see [below](#other-screens-browser-only)).
 
-This build is version **0.1.0** — the end of the first milestone — plus the first three steps of
+This build is version **0.1.0** — the end of the first milestone — plus the first five steps of
 the second: the difficulties, extra ships and continues, then the colour-blind bullet colours and
-points for cancelled bullets, then the **weapon types** and the WEAPON SELECT screen, and now four
+points for cancelled bullets, then the **weapon types** and the WEAPON SELECT screen, then four
 kinds of **Options**, five **shields**, the **Option Hunter** that steals Options and the rare
-**blue capsule**. For checking it on the monitors
+**blue capsule**, and now the **second ship, the MANTA**, with its colour items, its growing
+weapons and its **Arm** shield, and the **SHIP SELECT** box. For checking it on the monitors
 there is a **debug build** with developer tools — a panel with the frame rate, frame times and
 start-up time, hit-area outlines, invincibility, a freeze with single steps, slow motion and
 jumps to the next checkpoint or the boss — opened on the remote with Play/Pause and then Ch ▲
@@ -99,7 +104,7 @@ stays black.
 | **Stars** | Behind everything | Three layers of stars drift slowly to the left, as in the game |
 | **SHMUP CUP** logo | Upper middle | Big blocky letters, yellow at the top turning orange and red towards the bottom, with a dark outline and a shadow; crisp square pixels |
 | **PRESS OK** | Under the logo | Blinks on and off about once a second |
-| **HI** and a number | Bottom | The best score kept on this device for the difficulty you chose last (NORMAL at first) — from earlier launches too (0 on a fresh install) |
+| **HI** and a number | Bottom | The best score kept on this device for the difficulty and the kind of ship you chose last (NORMAL and the KESTREL at first) — from earlier launches too (0 on a fresh install) |
 
 The title music (SHMUP CUP) plays — in a browser from your first key press or click.
 
@@ -107,7 +112,7 @@ The title music (SHMUP CUP) plays — in a browser from your first key press or 
 
 | Entry | What it does |
 |---|---|
-| **START** | Opens the **DIFFICULTY** box (highlighted first); OK there opens the **WEAPON SELECT** screen, and OK on its START begins the game — see [Difficulty, extra ships and continues](#difficulty-extra-ships-and-continues) and [Choosing your weapons](#choosing-your-weapons) |
+| **START** | Opens the **DIFFICULTY** box (highlighted first); OK there opens the **SHIP SELECT** box; OK on the KESTREL opens the **WEAPON SELECT** screen, whose START begins the game — OK on the MANTA begins it at once — see [Difficulty, extra ships and continues](#difficulty-extra-ships-and-continues), [Choosing your ship](#choosing-your-ship) and [Choosing your weapons](#choosing-your-weapons) |
 | **OPTIONS** | Opens the **Options screen**: the volumes and the control profile — see [The Options screen](#the-options-screen) |
 | **EXIT** | Only on the TV: asks **EXIT SHMUP CUP?** — see below |
 
@@ -125,8 +130,8 @@ The title music (SHMUP CUP) plays — in a browser from your first key press or 
 
 ## What you should see
 
-After **START**, **OK** on a difficulty and **OK** on START in the WEAPON SELECT screen the title
-music fades and the game begins — AZURE
+After **START**, **OK** on a difficulty, **OK** on the KESTREL in the SHIP SELECT box and **OK** on
+START in the WEAPON SELECT screen (or **OK** on the MANTA) the title music fades and the game begins — AZURE
 VERGE's own music starts, and
 the picture is a deep navy
 picture (never pure black — the M7 monitors' VA panels smear dark-to-bright transitions) framed by
@@ -135,10 +140,10 @@ two thin bars, one along the top edge and one along the bottom (the **HUD**):
 | Element | Where | What "good" looks like |
 |---|---|---|
 | **Background** | Whole picture behind the ship | Two layers of stars move to the left as the view scrolls, the far ones slower, and the rim of a blue planet fills the bottom of the picture, moving slowest of all; everything moves steadily, with no jumps, and repeats seamlessly. (In free flight and on the title, three star layers drift by themselves instead) |
-| **KESTREL**, the player ship | Enters from the left edge | Glides in from off-screen during the first ⅔ of a second, slowing down as it arrives, and stops at mid-height about a sixth of the way across. Then it is yours to fly |
+| **KESTREL** (or the **MANTA**), the player ship | Enters from the left edge | Glides in from off-screen during the first ⅔ of a second, slowing down as it arrives, and stops at mid-height about a sixth of the way across. Then it is yours to fly |
 | **Shots** from the ship's nose | In front of the ship, flying right | As soon as the ship has arrived, small cyan-and-white darts leave its nose and race to the right edge, two at a time, each with a tiny white-and-yellow **muzzle spark** flickering just in front of the nose as it leaves — see [Your weapons](#your-weapons) |
 | **Top bar** | Top edge | `1P` (cyan) and your score `00000000` on the left; `HI` (yellow) and the best score so far (kept between launches) in the middle; `2P` and `------` (grey — nobody is playing player 2) on the right |
-| **Bottom bar** | Bottom edge | On the left small ship icons (your spare ships — on NORMAL you start with three, the one you fly plus two icons; EASY gives five, ARCADE two; with more than five spare ships you see one icon and the number); then the **power meter**: seven boxes labelled `SPEED` `MISSILE` `DOUBLE` `LASER` `OPTION` `?` `!` — with another weapon type the second, third and fourth boxes carry that type's weapon names instead, e.g. `SPREAD` `TAIL` `RIPPLE` ([Power-ups](#power-ups)); on the right, while you have a Force Field, five small blocks — cyan for each hit it can still take, dark for the spent ones |
+| **Bottom bar** | Bottom edge | On the left small ship icons (your spare ships — on NORMAL you start with three, the one you fly plus two icons; EASY gives five, ARCADE two; with more than five spare ships you see one icon and the number); then the **power meter**: seven boxes labelled `SPEED` `MISSILE` `DOUBLE` `LASER` `OPTION` `?` `!` — with another weapon type the second, third and fourth boxes carry that type's weapon names instead, e.g. `SPREAD` `TAIL` `RIPPLE` ([Power-ups](#power-ups)); on the right, while you have a Force Field, five small blocks — cyan for each hit it can still take, dark for the spent ones. With the **MANTA** the power meter makes way for rows of small square **pips** — `SHOT`, `SUB`, `ARM`, `SPD` and the weapon's name ([The MANTA](#the-manta-colour-items-weapons-and-the-arm)) |
 
 Every pixel should be a crisp little square. The game draws at 384×216 and scales that up
 by a whole number: on the 1080p M7 monitors (and any 1920×1080 browser window) the scale is
@@ -205,19 +210,23 @@ game over's (this screen ends the run in this preview).
 
 - **▲ / ▼** move the highlight (it wraps round); the lines at the bottom show the highlighted
   difficulty's **LIVES** (ships), **CONTINUES** and **HI** — each difficulty keeps its own best
-  scores.
-- **OK** chooses the highlighted difficulty (a chime) and opens the **WEAPON SELECT** screen
-  ([Choosing your weapons](#choosing-your-weapons)); **Back** returns to the title menu.
+  scores (and the KESTREL and the MANTA keep separate ones).
+- **OK** chooses the highlighted difficulty (a chime) and opens the **SHIP SELECT** box
+  ([Choosing your ship](#choosing-your-ship)); **Back** returns to the title menu.
 - The box opens on the difficulty you chose last — NORMAL the first time. The choice lasts until
   the app is closed; remembering it between launches comes with a later build's game options.
-- Starting a game therefore takes four OKs: OK (`PRESS OK`), OK (START), OK (the difficulty), OK
-  (START in the WEAPON SELECT screen, which is highlighted when it opens).
+- Starting a game therefore takes five OKs with the KESTREL: OK (`PRESS OK`), OK (START), OK (the
+  difficulty), OK (the KESTREL, highlighted first in the SHIP SELECT box), OK (START in the WEAPON
+  SELECT screen, which is highlighted when it opens) — and four with the MANTA (▼ then OK in the
+  SHIP SELECT box starts the game).
 
 ### The game gets harder as your ship gets stronger
 
 Like the classic games, Shmup Cup keeps a hidden difficulty level, the **rank**. It starts at the
 difficulty's level and goes up with the power your ship carries: the Missile, the Double or the
-Laser, each Option and the Force Field all raise it (Speed Ups do not). The higher the rank, the
+Laser, each Option and the Force Field all raise it (Speed Ups do not) — for the MANTA its SHOT
+and SUB levels and its Arm (fully powered, it counts exactly as much as a fully powered KESTREL;
+the speed toggle does not count). The higher the rank, the
 more often enemies fire and the faster their bullets fly — a fully powered ship on NORMAL faces
 bullets about a fifth faster and shots about 40 % more often than a bare one. Losing power (a lost
 ship) lowers it again. The debug build's panel shows it as `RANK`
@@ -246,7 +255,8 @@ fades out.
   pressing does not decide for you): the stage goes back to its last invisible checkpoint — in
   AZURE VERGE the start, the entrance of the cave (about 1:15) or the start of the fast stretch
   (about 2:25) — the zone's music starts again and your ship flies in with the difficulty's full
-  number of ships but **without its power** (small darts, no Missile or Options, normal speed).
+  number of ships but **without its power** (small darts, no Missile or Options, normal speed; the
+  MANTA back to its weakest SHOT and SUB, no Arm, the middle speed).
 - **Your score is kept**, and its **last digit** now counts your continues: 12,340 becomes 12,341
   after the first continue, 12,342 after the second. Points always end in 0, so that digit shows
   at a glance — also in the saved high scores — how many continues a score needed.
@@ -254,10 +264,49 @@ fades out.
   appears and the game is saved as usual.
 - On **ARCADE** there are no continues: GAME OVER comes straight away.
 
+## Choosing your ship
+
+OK on a difficulty opens a framed box over the darkened title — the **SHIP SELECT**:
+
+```text
+            SHIP SELECT
+    → KESTREL            [picture of the
+      MANTA               highlighted ship]
+
+             POWER METER
+       CAPSULES MOVE THE METER
+       OK EQUIPS THE LIT SLOT
+       OPTIONS COPY YOUR FIRE
+
+             OK: CHOOSE
+```
+
+The two ships play differently — they are the two classic ways of powering up a ship:
+
+| | **KESTREL** (as before) | **MANTA** (new) |
+|---|---|---|
+| Looks like | The blue-and-grey ship of the earlier builds | A flat ray-winged ship with a **green canopy** |
+| Powers up with | The **power meter**: capsules move the highlight, OK takes the power-up ([Power-ups](#power-ups)) | **Colour items**: fly into one and it works at once — there is no meter, and **OK does nothing** in the game ([The MANTA](#the-manta-colour-items-weapons-and-the-arm)) |
+| Weapons | Chosen on the WEAPON SELECT screen (types A–D or your own mix), plus up to four Options | A main gun and a sub-weapon that each grow through **nine levels** — the main gun in one of two styles; no Options |
+| Shield | The `?` shield you chose (Force Field …) — never against rock | The **Arm**: 3, then 4, then 5 hits — and it **also protects against rock** |
+| Speed | Six speeds, one more with each SPEED UP (it starts at the slowest) | Three speeds, switched with **Ch ▼** (channel down) at any time — it starts in the middle one |
+
+- **▲ / ▼** move the highlight (it wraps round, with a click); the picture and the three lines of
+  hints below it change with it — `POWER METER` for the KESTREL, `DIRECT ITEMS` for the MANTA.
+- **OK** on the **KESTREL** opens the **WEAPON SELECT** screen ([Choosing your
+  weapons](#choosing-your-weapons)); OK on the **MANTA** starts the game straight away — it has no
+  weapons to choose.
+- **Back** returns to the DIFFICULTY box, and Back on the WEAPON SELECT screen returns here.
+- The box opens on the ship you chose last — the KESTREL the first time (so OK goes straight on
+  as before). The choice lasts until the app is closed, like the difficulty.
+- The two ships keep **separate high scores** for each difficulty: after choosing the MANTA, the
+  title's `HI` and the DIFFICULTY box show the MANTA's best.
+
 ## Choosing your weapons
 
-OK on a difficulty opens the **WEAPON SELECT** screen. A framed panel on the left lists what the
-ship will carry; behind it, over the whole picture, a **live preview** shows the choice in action:
+OK on the **KESTREL** in the SHIP SELECT box opens the **WEAPON SELECT** screen (the MANTA has no
+weapons to choose — [Choosing your ship](#choosing-your-ship)). A framed panel on the left lists
+what the ship will carry; behind it, over the whole picture, a **live preview** shows the choice in action:
 the KESTREL, with the Missile and two Options, flies over a small practice range with a floor and
 a ceiling and harmless targets, weaving up and down to the right of the panel and firing what
 you choose. The preview makes no sound (the title music keeps playing), the ship cannot be hit, and
@@ -283,7 +332,7 @@ the range starts over when it ends.
   shown — the first time the classic **TYPE A**, later whatever you chose last.
 - **▲ / ▼** move between the lines (the grey MISSILE / DOUBLE / LASER lines are skipped); **◀ / ▶**
   — or OK — change the highlighted line, with a click each time.
-- **OK on START** begins the game; **Back** returns to the DIFFICULTY box (what you changed stays
+- **OK on START** begins the game; **Back** returns to the SHIP SELECT box (what you changed stays
   on the screen for next time, but only START uses it).
 - Your choice is kept for RETRY STAGE and every later game **until the app is closed** — it is
   not remembered between launches yet (a later build's game options will).
@@ -366,7 +415,7 @@ What "good" looks like:
 - The preview's ship is always visible to the right of the panel, weaving smoothly, and the
   weapons change the moment you change TYPE or a weapon — never a magenta-and-black square.
 - Missiles, bombs and torpedoes land on the preview's floor; nothing ever hits the preview ship.
-- Moving through the lines never skips or doubles a step; Back always returns to the DIFFICULTY
+- Moving through the lines never skips or doubles a step; Back always returns to the SHIP SELECT
   box, and the AUTO ORDER box always closes with DONE or Back.
 - The game that starts has exactly the weapons, Option type, `?` and `!` choices and Auto
   Power-Up setting shown.
@@ -429,11 +478,12 @@ Only the look changes — the bullets fly, hit and score exactly the same, whate
 | High scores | When the **GAME OVER** or **STAGE CLEAR** screen appears | The same place |
 
 - **High scores**: the best ten of each kind of game are kept — each **difficulty** has its own
-  list; the title's `HI` (and the HUD's) shows the best one of the difficulty you chose last. A
+  list, separately for the KESTREL and the MANTA; the title's `HI` (and the HUD's) shows the best
+  one of the difficulty and the ship you chose last. A
   score that needed continues ends in the number of continues used. Names are `---` for now — typing your initials and a high-score table to
   look at come with a later build.
-- **The difficulty you chose** is not remembered yet: after the app is closed the DIFFICULTY box
-  opens on NORMAL again.
+- **The difficulty and the ship you chose** are not remembered yet: after the app is closed the
+  DIFFICULTY box opens on NORMAL and the SHIP SELECT box on the KESTREL again.
 - **Only finished games count**, like in the arcade: a game you leave with QUIT TO TITLE or start
   over with RETRY STAGE is not saved. (Its score can still show as `HI` until you close the app.)
 - Nothing needs saving when you close the app — Back → YES, Home, or even pulling the plug loses
@@ -475,6 +525,11 @@ How it should feel:
 - **Ch ▲** (channel up; V on a keyboard, Y on a gamepad) spreads FORMATION and ROTATE Options
   out, and pulls them back in on the next press ([Choosing your weapons](#choosing-your-weapons)).
   Nothing else needs it.
+- **With the MANTA**: OK does nothing (its colour items work when you touch them), and **Ch ▼**
+  (channel down; Left Shift on a keyboard, LB / RB on a gamepad) switches between its three speeds
+  ([The MANTA](#the-manta-colour-items-weapons-and-the-arm)). At its middle speed — the one it
+  starts with — it crosses the picture in under three seconds, noticeably faster than a KESTREL
+  without Speed Ups (even its slow speed is a little faster).
 - **Back** or **Play/Pause** pauses the game
   ([Pausing, quitting and the end screens](#pausing-quitting-and-the-end-screens)).
 
@@ -485,7 +540,23 @@ ship may move in four directions only; the game is designed to be fully playable
 
 ### What changed lately
 
-**New in this build: Option types, more shields, the Option Hunter and the blue capsule.** The
+**New in this build: the second ship, the MANTA.** After the DIFFICULTY box a new **SHIP SELECT**
+box asks which ship to fly — so starting a game with the KESTREL takes one more OK (the KESTREL is
+highlighted, so OK goes straight on to the WEAPON SELECT screen). The **MANTA** plays the other
+classic way: it has no power meter, and the enemies that leave capsules leave **colour items**
+instead — **red** makes the main gun stronger, **green** the sub-weapon (each through nine
+levels: missiles that turn into ever bigger discs, or lasers that turn into waves passing through
+enemies — the red **octagon** switches between the two), **blue** puts up the **Arm**, a shield
+that grows from green (3 hits) to silver (4) and gold (5) and even protects against the rock,
+**orange** gives an extra ship and **yellow** destroys every enemy on the screen. Items drift
+across the screen and vanish after ten seconds, OK does nothing, and **Ch ▼** on the remote
+switches between the MANTA's three speeds. The bottom bar shows its levels as rows of small
+squares. The MANTA keeps its own high scores. In a browser the new *Direct Range*
+(`?stage=direct-range`) sends in waves of six violet cubes closing in from the top and the bottom.
+See [Choosing your ship](#choosing-your-ship), [The MANTA](#the-manta-colour-items-weapons-and-the-arm)
+and [The Direct range](#the-direct-range-browser-only).
+
+Before that, **Option types, more shields, the Option Hunter and the blue capsule.** The
 WEAPON SELECT screen has a new line, **OPTION**: besides the classic **TRAIL**, the Options can
 fly as a **SNAKE** (a chain that swings behind the ship and keeps its shape when you stop), in a
 **FORMATION** (a `>` behind the ship that spreads into a `V`) or **ROTATE** round the ship — spread
@@ -853,8 +924,9 @@ Things to check on the monitor and report:
 
 1. A loading bar (or nothing at all, if it is very quick) and then the **title screen** — the
    logo, a blinking `PRESS OK`, `HI` at the bottom, drifting stars — never a black screen that
-   stays black. OK, then OK on START, then OK on NORMAL in the DIFFICULTY box, then OK on START
-   in the WEAPON SELECT screen: the view starts to scroll and the ship flies in.
+   stays black. OK, then OK on START, then OK on NORMAL in the DIFFICULTY box, then OK on the
+   KESTREL in the SHIP SELECT box, then OK on START in the WEAPON SELECT screen: the view starts to
+   scroll and the ship flies in.
 2. **Both HUD bars are complete** (new layout): the top bar's `1P` and score on the left, `HI`
    and its score in the middle, `2P ------` on the right; the bottom bar's two ship icons on the
    left and the power meter's seven boxes `SPEED` … `!` after them — every label readable. If one edge is cut off, note which — that would mean the monitor overscans or the
@@ -1023,10 +1095,31 @@ Things to check on the monitor and report:
    dotted green ring appears round the ship, and bullets that pass close by no longer destroy it;
    two hits end it. With **! SLOT** on **FULL BARRIER**, taking `!` restores a worn shield — pods
    included — to full strength. Report whether you can tell REDUCE is active.
+40. **The SHIP SELECT box** (new): after OK on NORMAL the SHIP SELECT box appears with the KESTREL
+   highlighted and its picture on the right; ▼ highlights the **MANTA** (a flat ship with a green
+   canopy, `DIRECT ITEMS` and its hints below). ▲ / ▼ wrap round. Back returns to the DIFFICULTY
+   box, and Back on the WEAPON SELECT screen returns to the SHIP SELECT box. Report whether the box
+   and the picture are readable from the sofa.
+41. **Flying the MANTA** (new): OK on the MANTA starts AZURE VERGE at once (no WEAPON SELECT). The
+   bottom bar shows `SHOT`, `SUB`, `ARM`, `SPD` with small squares and `DISC` at the end instead of
+   the power meter. Shoot the red saucers and complete groups: each leaves a **colour item** that
+   drifts slowly left and bounces off the bars. Fly into a red one (a SHOT square lights and the
+   gun gets stronger), a green one (SUB), a blue one (a green ring round the ship, three ARM
+   squares). OK must do nothing. Report whether the colours are easy to tell apart and from the
+   enemy bullets, and whether ten seconds is enough time to reach an item with the remote.
+42. **The speed toggle** (new): with the MANTA, press **Ch ▼** (channel down) a few times: the ship
+   gets faster, then slow, then back to the middle speed, with a ding each time, and the SPD squares
+   follow. Hold Ch ▼ for a second: it must change only once. Report whether the three speeds feel
+   useful and whether Ch ▼ ever changed twice for one press.
+43. **The Arm and the rock** (new): with the MANTA and an Arm (a blue item), touch the cave's
+   floor or ceiling briefly: the Arm loses a hit instead of the ship being destroyed (the KESTREL's
+   shields never do that). Collect more blue items later: after the fourth the ring turns silver
+   (four hits), after the ninth gold (five hits). Then lose the ship on NORMAL: it comes back
+   without the Arm and one SHOT level lower. Report anything unexpected.
 
-The fully powered ship (`?loadout=full`), the shortcut to the boss (`?skip=boss`), the three test
-stages (the Test Range, the Boss Range with its test boss and the Hunter Range with the Option
-Hunters and the blue capsule), free flight, the showcase, the
+The fully powered ship (`?loadout=full`), the shortcut to the boss (`?skip=boss`), the four test
+stages (the Test Range, the Boss Range with its test boss, the Hunter Range with the Option
+Hunters and the blue capsule, and the Direct Range with the MANTA's pincer waves), free flight, the showcase, the
 calibration screen and the effects gallery can only be opened in a browser — the monitor's own
 web browser works too, pointed at a PC running `pnpm dev` (below).
 
@@ -1048,9 +1141,10 @@ pnpm dev
 ```
 
 Open http://localhost:5173 (other devices on the same network can use the PC's IP
-address, e.g. `http://192.168.1.20:5173`): the title screen appears. Press **Enter** four times
-(past `PRESS OK`, START, NORMAL in the DIFFICULTY box — or ▼ to choose another — and START in the
-WEAPON SELECT screen — or ▲ to change the weapons first) to play AZURE VERGE and fly with the arrow keys, W A S D or a gamepad;
+address, e.g. `http://192.168.1.20:5173`): the title screen appears. Press **Enter** five times
+(past `PRESS OK`, START, NORMAL in the DIFFICULTY box — or ▼ to choose another —, the KESTREL in
+the SHIP SELECT box — or ▼ for the MANTA, which starts at once — and START in the WEAPON SELECT
+screen — or ▲ to change the weapons first) to play AZURE VERGE and fly with the arrow keys, W A S D or a gamepad;
 **Esc** (or P, Backspace) pauses. http://localhost:5173/?skip=boss starts every game a moment
 before the zone's WARNING, to try the boss without playing the three minutes before it. The browser version has no EXIT entry — a browser tab cannot close itself — so
 Back (Esc) on the title only goes back from the menu to `PRESS OK`. To skip the title and fly
@@ -1206,7 +1300,9 @@ What "good" looks like:
 The KESTREL's gun fires **by itself** as soon as the ship has flown in — on the TV, in the
 browser and on the desktop, in every stage. There is no fire button to
 press (holding Shot or Sub changes nothing); this "always-on" fire is what makes the game
-playable with the TV remote. The pictures are placeholders (original designs).
+playable with the TV remote. The pictures are placeholders (original designs). This section is
+about the KESTREL; the MANTA's guns fire by themselves too and are described in [The
+MANTA](#the-manta-colour-items-weapons-and-the-arm).
 
 **The normal ship** (every build) has the basic gun:
 
@@ -1272,7 +1368,8 @@ What "good" looks like, with either loadout:
 
 ## Power-ups
 
-The KESTREL powers up the classic way, with a **power meter**. Capsules come in AZURE VERGE on
+The KESTREL powers up the classic way, with a **power meter** (the MANTA uses colour items instead —
+[The MANTA](#the-manta-colour-items-weapons-and-the-arm)). Capsules come in AZURE VERGE on
 every device (28 of them — [The first zone](#the-first-zone-azure-verge)) and in the browser's
 *Test Range* (http://localhost:5173/?stage=test-range, then START). The meter is the row of seven boxes in the bottom
 bar — `SPEED` `MISSILE` `DOUBLE` `LASER` `OPTION` `?` `!` — and you hear it too: a bright ding
@@ -1375,6 +1472,101 @@ What "good" looks like:
 - With REDUCE, bullets that pass close to the ship (but not through its centre) no longer
   destroy it — turn on the hit-area outlines of the debug build to see the smaller green circle.
 
+## The MANTA: colour items, weapons and the Arm
+
+The MANTA (chosen in the [SHIP SELECT](#choosing-your-ship) box) has **no power meter**. The
+enemies that leave a capsule for the KESTREL — in AZURE VERGE the red saucers and every group
+you destroy completely — leave a **colour item** for the MANTA instead, and flying into it is
+all it takes: the item works the moment you touch it. **OK does nothing** in the game with the
+MANTA.
+
+**Which colour comes next** is set for each stage and simply follows a list: AZURE VERGE hands out
+red, blue, green, red, blue, green, blue, red, then the **octagon**, … — eight each of red, green
+and blue along the way, one yellow, one orange and one octagon — and starts the list again from the
+top if it runs out. A lost ship or a continue never rewinds it: the next item is always the next
+one on the list.
+
+| Item | Looks like | What it does | When you already have the most |
+|---|---|---|---|
+| **Red** | A glossy red ball | **SHOT** one level stronger (the main gun) | Points only (level 8 is the top) |
+| **Green** | A glossy green ball | **SUB** one level stronger (the sub-weapon) | Points only |
+| **Blue** | A glossy blue ball | The **Arm** shield: puts it up, or repairs it to full — and it grows (below) | — (it always repairs) |
+| **Orange** | A glossy orange ball | **An extra ship**, with the "1UP" jingle | At nine ships: points only |
+| **Yellow** | A glossy yellow ball | A **smart bomb**: every enemy on the screen is destroyed and every enemy bullet turns into a gold diamond worth 10 points, with Mega Crash's white flash and roar. A boss is not hurt by it | — |
+| **Octagon** | A red eight-sided gem | Switches the main gun's style between **BEAM > DISC** and **LASER > WAVE**, keeping its level | — |
+
+- Every item is worth **300** points, like a capsule, and plays a short rising two-note blip when
+  you collect it; one that powers you up also plays the rising power-up trill (the orange item the
+  "1UP" jingle, the yellow one the smart bomb's roar).
+- Items do not stay where they appeared: they **drift slowly to the left** across the screen,
+  some upwards and some downwards, bouncing off the top and bottom bars. After about eight seconds
+  they start to blink, and at **ten seconds** they are gone — so go and get them. Like capsules,
+  an item close to the ship is pulled into it.
+- Whoever touches an item gets it.
+
+**The main gun (SHOT).** It fires by itself, like the KESTREL's. Each red item makes it one level
+stronger, from level 0 to level 8, in one of two styles — the octagon switches between them:
+
+| Level | **BEAM > DISC** (the start) | **LASER > WAVE** |
+|---|---|---|
+| 0 | A small orange missile | A small orange missile |
+| 1 | A wider missile | A thin blue laser |
+| 2 | Two wide missiles | A wider blue laser |
+| 3 | A small gold disc | A longer yellow laser |
+| 4 | Two small discs, slightly fanned out | A round-ended yellow laser that **passes through** enemies |
+| 5 | Three small discs in a fan | A crescent **wave** that passes through enemies |
+| 6 | A bigger disc | A bigger wave |
+| 7 | A bigger disc still | A wider wave |
+| 8 | A huge disc | The biggest wave |
+
+**The sub-weapon (SUB).** Also automatic, from the start. Each green item makes it stronger:
+level 0 is a green bomb that arcs down ahead of the ship; then two bombs flying diagonally forward
+(up and down), four (forward and backward), diagonal lasers joining the bombs, four diagonal lasers,
+wider lasers that pass through enemies, eight of them, and at the top four discs — then bigger ones —
+that pass through enemies, all flying diagonally away from the ship.
+
+**The Arm.** The first blue item puts a green ring round the ship — the **Arm**, which takes
+**3 hits**. Every further blue item repairs it to full. After **4** blue items it becomes the silver
+**Super Arm** (**4 hits**), after **9** the gold **Hyper Arm** (**5 hits**). Unlike the KESTREL's
+shields it also protects you against the **rock**. After each hit it flickers for a moment during
+which further hits are free; as it wears, the ring shrinks and thins. When it breaks (or the ship
+is lost) the count starts over: the next blue item gives a green Arm again.
+
+**Speed.** The MANTA starts at its middle speed. **Ch ▼** (channel down on the remote; Left Shift
+on a keyboard — PageDown with KEYBOARD AS REMOTE —; LB or RB on a gamepad) switches to the next
+speed, with a ding: middle → fast → slow → middle. Speed is your choice, not power — a lost ship
+keeps it.
+
+**The bottom bar with the MANTA.** Instead of the power meter:
+
+```text
+  ▲ ▲   SHOT ■■■■■□□□   SUB ■■■□□□□□   ARM ■■□   SPD ■■□   DISC
+```
+
+`SHOT` and `SUB` have eight small squares each — one lights up per level (orange for BEAM > DISC,
+blue for LASER > WAVE; green for SUB); `ARM` has one square per hit the Arm can take (green, silver
+or gold, dark for the spent hits; empty without an Arm); `SPD` lights one, two or three squares for
+the slow, middle and fast speed; the name at the end is the main gun's style — `DISC` or `WAVE`.
+
+**What a lost ship costs the MANTA.** The **Arm** is always lost. On NORMAL and HARD (*Classic*)
+also one SHOT level (or, when SHOT is already at level 0, one SUB level); on EASY (*Casual*)
+nothing more; on ARCADE (*Arcade*) SHOT and SUB go back to level 0 and the main gun back to
+BEAM > DISC, and the stage goes back to its last checkpoint. The speed stays.
+
+**Fully powered** (`&loadout=full` in a browser): SHOT and SUB at level 8 and the gold Hyper Arm.
+
+What "good" looks like:
+
+- Every item has its own clear colour and is easy to tell from enemy bullets, even from the sofa;
+  items never get stuck at the top or bottom of the screen.
+- A red item makes the main gun visibly stronger at once and lights one more SHOT square; a
+  green one the same for SUB; an octagon switches between missiles / discs and lasers / waves
+  without losing the level.
+- The Arm's ring appears with the first blue item, changes to silver after the fourth and gold
+  after the ninth, and a hit on the rock with the Arm up costs a hit instead of the ship.
+- Ch ▼ changes the speed exactly once per press (the SPD squares follow) — also when you hold it.
+- OK does nothing during a MANTA game (Back and Play/Pause still pause it).
+
 ## Lives, losing your ship and the score
 
 The KESTREL can be **destroyed**, and the game keeps score — in AZURE VERGE on every device and in
@@ -1406,7 +1598,9 @@ The **Force Field** is always lost. The capsules you have collected towards the 
 back with three Options, then two, one, none, then without the laser … This is the *Classic*
 rule of NORMAL and HARD. **EASY** uses *Casual* (a loss costs only the Force Field) and
 **ARCADE** uses *Arcade* (a loss costs all your power and sends you back to the last invisible
-checkpoint of the stage) — see [Choosing a difficulty](#choosing-a-difficulty).
+checkpoint of the stage) — see [Choosing a difficulty](#choosing-a-difficulty). The **MANTA** loses
+its Arm and, on NORMAL and HARD, one SHOT level (or one SUB level when SHOT is at its weakest) —
+[The MANTA](#the-manta-colour-items-weapons-and-the-arm).
 
 **Game over.** On NORMAL you start with **three ships** — the one you fly and the two icons in
 the bottom bar (EASY five, ARCADE two); extra ships come at 20,000, 90,000, 160,000 … points.
@@ -1600,6 +1794,33 @@ What "good" looks like:
 - A blue capsule destroys every enemy on the screen (the hunters too) but leaves the bullets.
 - Nothing stays stuck on the screen, and there are no magenta-and-black squares.
 
+## The Direct range (browser only)
+
+Open http://localhost:5173/?stage=direct-range, choose START, a difficulty and then the **MANTA**
+in the SHIP SELECT box. It is a one-minute stage in open space made to try the colour items: its
+first six items are one of each colour (red, green, blue, orange, yellow, octagon), then blue,
+red, green, blue, red, blue — and the list starts again.
+
+| Time (about) | What happens |
+|---|---|
+| 1 s | A **pincer wave**: six small violet **cubes**, three coming from the top and three from the bottom, closing in on each other in the middle of the screen, then leaving to the left. Destroy **all six** — the last one leaves an item (and a 600-point bonus) |
+| 5 s | A red saucer flying slowly to the left — it takes two small hits and leaves an item |
+| 10, 20, 29, 38, 48 s | More pincer waves, starting at slightly different heights |
+| 15, 24, 33, 43, 52 s | More red saucers, alternately low and high |
+| 30 s | Checkpoint |
+| 60 s | The end of the stage |
+
+With the KESTREL the same stage gives power capsules instead of colour items — every stage works
+with both ships.
+
+What "good" looks like:
+
+- Every pincer wave meets near the middle and leaves to the left; the item appears where the last
+  cube was destroyed. If a cube escapes, that wave leaves nothing — by design.
+- The six colours are all different and readable; each does what [The MANTA](#the-manta-colour-items-weapons-and-the-arm)
+  describes; items drift and bounce and are gone after about ten seconds.
+- Nothing stays stuck on the screen, and there are no magenta-and-black squares.
+
 ## Explosions, sparks, shake and flashes
 
 Hits look like hits — in AZURE VERGE on every device, and in the browser's *Test Range*
@@ -1670,8 +1891,10 @@ What you should hear:
 | An enemy is destroyed | A noisy burst — bigger enemies, bigger bursts |
 | You collect a capsule | A bright ding |
 | OK takes a power-up | A short rising trill |
+| The MANTA collects a colour item | A short rising two-note blip — and the rising trill when it powers you up (the "1UP" jingle for orange, the roar for yellow) |
+| Ch ▼ changes the MANTA's speed | The bright ding |
 | OK has nothing to give | A low "no" buzz |
-| The Force Field (or a shield pod) is hit / breaks | A soft thud / a crackling break |
+| The Force Field (or a shield pod, or the MANTA's Arm) is hit / breaks | A soft thud / a crackling break |
 | An **Option Hunter** appears | A rising, wobbling alarm |
 | A hunter takes your Options | A short falling "zip" |
 | **Mega Crash** | A long, deep roar |
@@ -1781,9 +2004,19 @@ mean the build itself is broken; they are not caused by anything you did.
 |---|---|
 | A panel of numbers (FPS, TICK, …) and a small bar graph appear in the top-left corner | That is the developer panel of a **debug build** (`build:dev`), opened by Play/Pause followed by Ch ▲ three times. Press **1** to hide it — see [debug-tools.md](debug-tools.md). The normal build never shows it |
 | The game froze without a PAUSE box, or everything runs in slow motion (debug build) | A developer tool is on (`STEP` or `SLOW` in the panel): press **4** or **6** until it is off — [debug-tools.md](debug-tools.md#troubleshooting) |
-| The title screen stays, the game does not start | Press OK (Enter) once to leave `PRESS OK`, OK again on START, then OK on a difficulty in the DIFFICULTY box. In a browser click once into the page first so it has the keyboard focus |
-| START opened a DIFFICULTY box instead of the game | Expected: choose a difficulty with ▲ / ▼ and press OK (Back returns to the title menu) — then OK once more on START in the WEAPON SELECT screen |
-| OK on a difficulty opened a WEAPON SELECT screen instead of the game | Expected since this build: START is highlighted, so OK starts the game with the weapons shown; ▲ / ▼ and ◀ / ▶ change them first if you like ([Choosing your weapons](#choosing-your-weapons)) |
+| The title screen stays, the game does not start | Press OK (Enter) once to leave `PRESS OK`, OK again on START, then OK on a difficulty in the DIFFICULTY box and OK on a ship in the SHIP SELECT box. In a browser click once into the page first so it has the keyboard focus |
+| START opened a DIFFICULTY box instead of the game | Expected: choose a difficulty with ▲ / ▼ and press OK (Back returns to the title menu) — then OK on a ship in the SHIP SELECT box and, for the KESTREL, OK once more on START in the WEAPON SELECT screen |
+| OK on a difficulty opened a SHIP SELECT box instead of the game | Expected since this build: the KESTREL is highlighted, so OK goes on to the WEAPON SELECT screen as before; ▼ and OK choose the MANTA, which starts at once ([Choosing your ship](#choosing-your-ship)) |
+| OK on the KESTREL opened a WEAPON SELECT screen instead of the game | Expected: START is highlighted, so OK starts the game with the weapons shown; ▲ / ▼ and ◀ / ▶ change them first if you like ([Choosing your weapons](#choosing-your-weapons)) |
+| OK does nothing in the game | Expected with the **MANTA**: it has no power meter — its colour items work when you fly into them. With the KESTREL OK needs a highlighted box on the power meter ([Power-ups](#power-ups)) |
+| Ch ▼ does nothing | Expected with the KESTREL (it speeds up with SPEED UP on the power meter). With the MANTA each press should switch its speed and light the SPD squares — if not, please report it with the remote model |
+| A colour item vanished before I got to it | Expected after about ten seconds (it blinks for the last two) — items do not wait |
+| A red (or green) item gave only points | Expected when SHOT (or SUB) is already at level 8 — all eight squares lit |
+| The yellow item did not hurt the boss | Expected: it destroys the other enemies and the bullets, but bosses are not affected (a later build makes it hurt the mid-bosses of the later zones) |
+| The MANTA's weapon suddenly changed from discs to lasers (or back) | You collected the red **octagon**: it switches the main gun's style and keeps the level |
+| The MANTA survived touching the rock | Expected while the **Arm** is up: it takes a hit for the ship, even from the rock (the KESTREL's shields do not) |
+| The MANTA's gun got weaker after a loss | Expected: a lost ship costs the Arm and, on NORMAL and HARD, one SHOT level (on ARCADE everything) — [The MANTA](#the-manta-colour-items-weapons-and-the-arm) |
+| `HI` changed after I chose the other ship | Expected: the KESTREL and the MANTA keep separate high scores for each difficulty |
 | ▼ jumps over MISSILE, DOUBLE and LASER in the WEAPON SELECT screen | Expected: they show the chosen type's weapons; choose **EDIT** on TYPE to change them one by one |
 | The WEAPON SELECT screen is back on TYPE A after reopening the app | Expected: the choice is kept only until the app is closed (a later build remembers it) |
 | The power meter says `SPREAD` / `TAIL` / `RIPPLE` (or other names) instead of MISSILE / DOUBLE / LASER | Expected with another weapon type: the boxes carry the chosen type's weapon names |
@@ -1801,7 +2034,7 @@ mean the build itself is broken; they are not caused by anything you did.
 | Shots do not hurt the violet enemy | Expected: the Option Hunter is armoured — only a Mega Crash or a blue capsule destroys it |
 | An Option Hunter never came in the Hunter Range | Expected when you had no Options at that moment — hunters come only for Options. Use `&loadout=full` or take OPTION first |
 | A blue capsule left the enemy bullets on the screen | Expected: unlike Mega Crash, the blue capsule only destroys the enemies on the screen |
-| The DIFFICULTY box is back on NORMAL after reopening the app | Expected: the choice is kept only until the app is closed (a later build remembers it) |
+| The DIFFICULTY box is back on NORMAL (or the SHIP SELECT box on the KESTREL) after reopening the app | Expected: the choices are kept only until the app is closed (a later build remembers them) |
 | The title's `HI` changed after I chose another difficulty | Expected: each difficulty keeps its own high scores, and the title shows the one you chose last |
 | OK on the title menu did nothing | The menu ignores OK for a split second after it appears (an OK pressed then still counts a moment later). If START or OPTIONS never reacts, please report it with the remote model |
 | The highlight in a menu jumps two steps, or a press is lost | Not expected — please report it with the remote model (and whether you held the button) |

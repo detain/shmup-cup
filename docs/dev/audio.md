@@ -80,7 +80,12 @@ exactly the same game.
 Since M2-01 the scoring system pushes `Sfx ExtraLife` at the ship for every extend, with
 `SfxPriority.Critical` (never stolen — shmup_feat.md §19), and a continue queues the stage theme
 again (`Music <stage theme>` — the continue countdown faded it out with `Music Silence`).
-Bound but not pushed by the sim yet: `LaserHum`, `CapsulePickup` (Direct mode, M2-05). Since M1-16 the **scene flow** pushes its own events into the same
+Since M2-05 the Direct mode pushes `Sfx CapsulePickup` at the ship for every colour item it
+collects (then `PowerUpEquip` when the item changed something — a level, the Arm, the family —,
+`ExtraLife` (critical) for the orange 1UP, Mega Crash's `MegaCrash` for the yellow smart bomb),
+and the Speed toggle (remote Ch−) plays the meter's `MeterAdvance` ding
+([direct-mode.md](direct-mode.md#the-items)). Bound but not pushed by the sim yet: `LaserHum`.
+Since M1-16 the **scene flow** pushes its own events into the same
 queue: `MenuMove` / `MenuSelect` / `MenuBack` (widget results — a denied OK plays `MenuBack`) and
 `PauseToggle` (the pause menu opening or closing), all at x 0 on the unpanned `ui` bus; `Music
 Title` (30-tick fade) when the title shows, `Music Silence` (30 ticks) when a game starts (the new
@@ -407,4 +412,6 @@ song's loop points and render time. Options: `--out DIR`, `--only NAME` (one cue
   asks for launch ≤ 10 s on the TV ([debug-and-replays.md](debug-and-replays.md)).
 - **M2-01** (done) — extends push `ExtraLife` (critical priority); the continue countdown fades
   the music and a continue restarts the stage theme ([difficulty-and-rank.md](difficulty-and-rank.md)).
-- **M2-05** — Direct mode (`CapsulePickup`); **M3-03** — tracker music.
+- **M2-05** (done) — Direct mode: `CapsulePickup` for every colour item, the Speed toggle's ding
+  ([direct-mode.md](direct-mode.md)); no new cue.
+- **M3-03** — tracker music.

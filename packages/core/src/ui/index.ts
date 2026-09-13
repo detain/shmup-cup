@@ -56,6 +56,7 @@
  *   and greyed slots) and the canvas-drawn UI kit (list menu, slider, toggle, confirm dialog)
  * - shmup_feat.md §4 — remote-first menus: D-pad + OK + Back only (rule 8), buffered presses
  * - shmup_tech.md §4.10 — no UI framework; canvas menus + bitmap font
+ * - shmup_feat.md §6B — the Direct-mode HUD's visible tier pips (M2-05)
  *
  * **Public API.** Widgets: {@link ListMenu}, {@link MenuItem}, {@link MenuItemKind},
  * {@link Slider}, {@link Toggle}, {@link Choice}, {@link Confirm}, {@link ConfirmChoice},
@@ -93,7 +94,7 @@ import type { World } from '../world/index.js';
 export const moduleInfo = defineModule({
   name: 'ui',
   status: 'partial',
-  specRefs: ['shmup_feat.md §17', 'shmup_feat.md §4', 'shmup_tech.md §4.10'],
+  specRefs: ['shmup_feat.md §17', 'shmup_feat.md §4', 'shmup_tech.md §4.10', 'shmup_feat.md §6'],
 });
 
 // Bitmap-font metrics for layout live in `presentation` (the renderer implements them).
@@ -1425,8 +1426,9 @@ export class Hud {
    * Compared: player 1's and 2's score (their `displayDirty` flags), the hi-score
    * (`hiScoreDirty`), player 1's lives, whether player 2 plays, the meter cursor and equippable
    * mask, the highlight's flash phase (only while a slot is highlighted), the shield's hits and
-   * (Direct mode, M2-05) the shot / sub levels, the family, the speed level and the Arm's tier. A rebuild clears the dirty flags ({@link buildHud}), so only one HUD should read a given
-   * World's flags. The game scene calls this once per displayed frame, not per tick.
+   * (Direct mode, M2-05) the shot / sub levels, the family, the speed level and the Arm's tier. A
+   * rebuild clears the dirty flags ({@link buildHud}), so only one HUD should read a given World's
+   * flags. The game scene calls this once per displayed frame, not per tick.
    *
    * @param world - The World shown.
    * @param list - The HUD draw list.

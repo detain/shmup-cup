@@ -10,7 +10,7 @@ Plan step **M1-19** closes the first milestone with the developer tooling of `sh
   Ch+, Ch+ on the TV, and `window.__shmupDebug` for tests and the remote inspector;
 - **replays** (`core/replay`): a session's input per tick, a header with everything needed to
   recreate its start, state hashes to detect a desync;
-- **golden replays** of zone A (`test/golden/` — eight since M2-03) checked by every `pnpm test`, re-blessed with
+- **golden replays** of zone A (`test/golden/` — fifteen since M2-05) checked by every `pnpm test`, re-blessed with
   `pnpm golden:update`;
 - **budgets**: `pnpm bench` (ms per tick and heap growth under maximum load) and the Tizen bundle
   check's size limits;
@@ -275,7 +275,7 @@ playback path for golden tests, the future cross-engine check (M2-18) and attrac
 | `formatVersion` | `REPLAY_FORMAT_VERSION` (1); another version is rejected |
 | `buildId` | the build that recorded it (`__SHMUP_BUILD__`; golden replays: `'golden'`) |
 | `seed` | `config.seed`, repeated for readability |
-| `config` | the session's **whole resolved `GameConfig`** — every sim-affecting option, so a new `GameConfig` field is recorded without touching the replay code (since M2-01 the difficulty preset's rank base / growth, lives, extends, continues, penalty, aim directions and bullet speed — a replay does not depend on the content's `rules` table; an M1 header without them decodes to its preset's values) |
+| `config` | the session's **whole resolved `GameConfig`** — every sim-affecting option, so a new `GameConfig` field is recorded without touching the replay code (since M2-01 the difficulty preset's rank base / growth, lives, extends, continues, penalty, aim directions and bullet speed — a replay does not depend on the content's `rules` table; an M1 header without them decodes to its preset's values; since M2-05 the ship — `shipId` — and a `powerUpMode` that may be `'direct'`: a header without `shipId` decodes to `kestrel`, which is what it flew) |
 | `stageId` | `config.stage` (`null` = free flight) |
 | `checkpoint` | `-1` = the stage start, else the checkpoint the run started from |
 | `loadout` | `config.loadout` |
@@ -345,7 +345,7 @@ the replay contains them (a session recorded through `createReplayGame` has no k
 
 ## Golden replays (`test/golden/`)
 
-Twelve committed zone A runs pin down what the simulation does (`test/golden/golden.ts`
+Fifteen committed zone A runs pin down what the simulation does (`test/golden/golden.ts`
 `GOLDEN_SCENARIOS`, recorded from the M1-18 playtest bots with the build id `'golden'`):
 
 | File | Who plays | Covers | Ends |
@@ -362,6 +362,9 @@ Twelve committed zone A runs pin down what the simulation does (`test/golden/gol
 | `zone-a-reduce.replay.json` (M2-04) | 4-way bot, stage skip, full loadout, Formation Options, Reduce (seed 11) | the `>` of Options and the shrunken hurtbox | `stageClear` after 1,058 ticks, 37,130 points |
 | `zone-a-snake.replay.json` (M2-04) | 4-way bot, full loadout, Snake Options, the front Shield (seed 12) | the whole stage: the pulled chain, two pods wearing apart, a death | `stageClear` after 11,930 ticks, 69,770 points, 3 lives (death at 5,839) |
 | `zone-a-free-shield.replay.json` (M2-04) | 4-way bot, Arcade difficulty, full loadout, the Free Shield (seed 13) | the whole stage at Arcade: a pod pair ahead taking hits, a death | `stageClear` after 14,026 ticks, 66,820 points, 2 lives (death at 5,837) |
+| `zone-a-manta.replay.json` (M2-05) | 4-way bot, `shipId: 'manta'`, `powerUpMode: 'direct'` (seed 14) | the whole stage in Direct mode: planned colour items from the carriers, the Arm, a family switch at the octagon | `stageClear` after 11,584 ticks, 59,610 points, 4 lives |
+| `zone-a-manta-boss.replay.json` (M2-05) | 4-way bot, the MANTA, stage skip, full loadout (seed 15) | HALCYON BULWARK against level-8 discs and sub discs and the gold Hyper Arm | `stageClear` after 716 ticks, 37,000 points |
+| `zone-a-manta-deaths.replay.json` (M2-05) | `weaverBot()`, the MANTA, the Arcade penalty (seed 16) | Direct-mode deaths (the Arm, levels and family lost), checkpoint restarts, game over | `gameOver` after 1,131 ticks (deaths at 236 / 637 / 1,038) |
 
 The 4-way bot survives zone A even at Arcade, which is why the death scenario uses a careless
 weaving pilot. The files were re-blessed on purpose by M2-01 (`b31fac5`): rank growth changes
@@ -384,6 +387,12 @@ added `zone-a-rotate` and `zone-a-reduce`; its test round added `zone-a-snake` a
 `zone-a-free-shield` (`60b1328`, the ten older files byte-identical), so every Option type and
 every meter shield flies in a golden run
 ([options-shields-hunter.md](options-shields-hunter.md#determinism-hashing-and-golden-replays)).
+M2-05 re-blessed the twelve again (`f68cead`): the Direct-mode loadout fields (`shot`, `sub`,
+`family`), the Arm's `tier` / `charge` and the item plan's `planCursor` joined the hash, and the
+new content (sprite ids, enemy spec indices) shifts the rest — every outcome unchanged — and added
+`zone-a-manta` and `zone-a-manta-boss`; its test round added `zone-a-manta-deaths` (`0767e27`, the
+fourteen older files byte-identical), so both ships and both power-up models fly in golden runs
+([direct-mode.md](direct-mode.md#determinism-hashing-and-golden-replays)).
 Each file is an encoded replay plus the scenario's `description` and its
 `expected` outcome (status, ticks, player 1's score and lives, death ticks, boss killed).
 
@@ -533,7 +542,10 @@ testers in [../client/debug-tools.md](../client/debug-tools.md#the-m1-release-ch
 - **M2-04** (done) — the replay header records `optionChoice` (no format change: a header
   without it decodes to `trail`); golden replays re-blessed, four Option / shield scenarios
   added; the overlay's hurt outline follows Reduce ([options-shields-hunter.md](options-shields-hunter.md)).
-- **M2-05 … M2-14** — every simulation change re-blesses the golden replays in the same commit;
+- **M2-05** (done) — the replay header records `shipId` and the accepted `powerUpMode: 'direct'`
+  (no format change: a header without `shipId` decodes to `kestrel`); golden replays re-blessed,
+  three MANTA scenarios added ([direct-mode.md](direct-mode.md)).
+- **M2-06 … M2-14** — every simulation change re-blesses the golden replays in the same commit;
   zones B–I add a golden replay each.
 - **M2-06** — replays record both players (the body already has a word per player).
 - **M2-15** — attract mode plays bundled replays (and the scene flow gets recorded).

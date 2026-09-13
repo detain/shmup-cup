@@ -29,7 +29,8 @@ assets/source/fonts/*.font.json ────────┘                     
 the shield pod's wear states and Reduce's shimmer (`shields`, M2-04), star layers, the 8×8
   terrain tileset, HUD meter pieces (the meter labels, with the Types B–D weapon names since
   M2-03), the Types B–D weapons' Spread Bomb blast, Ripple ring and Cyclone Laser segment
-  (`weapons`, M2-03), the title logo `ui/logo` (original block letters),
+  (`weapons`, M2-03), the MANTA's shots, the six Direct-mode colour items and the Arm's three
+  tiers (`direct`, M2-05), the title logo `ui/logo` (original block letters),
   `ui/pixel` (1×1 white, for rectangles) and `ui/missing` (magenta checker).
 - **Real art replaces placeholders by name** — drop `sprites/ships/kestrel.png` (optionally
   with an Aseprite JSON export `ships/kestrel.json` for several frames, tags and a slice

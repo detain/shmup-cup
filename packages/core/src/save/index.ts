@@ -17,7 +17,8 @@
  *   (M2-02) needs no migration: a version-1 save written before it has `display: {}` and resolves
  *   to `standard` (`core/config` `resolveUserOptions`).
  *   A mode key ({@link hiScoreModeKey}) names the table a game's score belongs to
- *   (`meter-normal` in M1; one per difficulty preset since M2-01 — `meter-easy` … `meter-arcade`).
+ *   (`meter-normal` in M1; one per difficulty preset since M2-01 — `meter-easy` … `meter-arcade`;
+ *   the Direct-mode MANTA's games since M2-05 — `direct-easy` … `direct-arcade`).
  * - **Loading** ({@link loadSave}, {@link parseSave}): JSON → migrations ({@link SAVE_MIGRATIONS}:
  *   entry `n` turns version `n` into `n + 1`; a document without a version counts as version 0) →
  *   sanitising ({@link sanitizeSave}: every field checked, clamped or replaced by its default,
@@ -610,11 +611,14 @@ export function insertHiScore(table: readonly HiScoreEntry[], entry: HiScoreEntr
  * The hi-score table a game belongs to: `<powerUpMode>-<difficulty>` (`meter-normal` in M1). Since
  * M2-01 each difficulty preset has its own table (`meter-easy`, `meter-normal`, `meter-hard`,
  * `meter-arcade`) — the scene flow passes the World's config, whose preset was chosen under
- * START. Co-op and the other modes of M2 add their own keys.
+ * START. Since M2-05 the ship select's Direct-mode ship (the MANTA) plays into its own tables
+ * (`direct-easy` … `direct-arcade`): the power-up model is part of the key. Co-op and the other
+ * modes of M2 add their own keys.
  *
  * @example
  * ```ts
  * hiScoreModeKey(resolveGameConfig({ difficulty: 'hard' })); // → 'meter-hard'
+ * hiScoreModeKey({ powerUpMode: 'direct', difficulty: 'normal' }); // → 'direct-normal'
  * ```
  *
  * @param config - The session config.

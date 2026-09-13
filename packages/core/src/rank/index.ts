@@ -40,6 +40,7 @@
  * - shmup_feat.md §15 — rank formula (difficulty, loop / stage, power-ups, special; 0–31, 16 on
  *   loop 1), rank scaling of bullet speed and fire rate, difficulty presets' rank base / growth
  * - shmup_feat.md §11 — per-enemy rank modifiers (fire rate, bullet speed)
+ * - shmup_feat.md §6C — the Direct-mode power level feeds rank ({@link directPowerRank}, M2-05)
  *
  * **Public API.** {@link RankInputs}, {@link createRankInputs}, {@link difficultyRankInputs},
  * {@link computeRank}, {@link powerRank}, {@link RANK_POWER}, {@link directPowerRank},
@@ -57,7 +58,7 @@ import { defineModule } from '../module-info.js';
 export const moduleInfo = defineModule({
   name: 'rank',
   status: 'implemented',
-  specRefs: ['shmup_feat.md §15', 'shmup_feat.md §11'],
+  specRefs: ['shmup_feat.md §15', 'shmup_feat.md §11', 'shmup_feat.md §6'],
 });
 
 /** Everything the rank formula reads ({@link computeRank}). */

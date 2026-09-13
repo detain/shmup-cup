@@ -105,7 +105,8 @@
  * ({@link ItemKind.DirectRed} … {@link ItemKind.DirectOctagon}, {@link DIRECT_ITEM_SCORE} points)
  * drift slowly left with the view and bounce off the playfield's top and bottom
  * ({@link DIRECT_ITEM_DRIFT}), and vanish after {@link DIRECT_ITEM_TICKS} ticks (blinking the last
- * {@link ITEM_EXPIRY_BLINK_TICKS}); whoever grabs one gets it ({@link PowerUpSystem.collectDirect}):
+ * {@link ITEM_EXPIRY_BLINK_TICKS}); whoever grabs one gets it
+ * ({@link PowerUpSystem.collectDirect}):
  *
  * | Item | Effect | At the cap |
  * |---|---|---|
@@ -1011,8 +1012,8 @@ export interface PowerUpHost {
     /** One loadout per player slot. */
     readonly loadouts: readonly Loadout[];
     /**
-     * The Direct-mode main families (`WeaponSystem.mainFamilies`, M2-05): the red items' cap and the
-     * octagon's cycle. Absent: none.
+     * The Direct-mode main families (`WeaponSystem.mainFamilies`, M2-05): the red items' cap and
+     * the octagon's cycle. Absent: none.
      */
     readonly mainFamilies?: readonly WeaponFamilySpec[];
     /** The Direct-mode sub family (`WeaponSystem.subFamily`): the green items' cap. */
@@ -1199,17 +1200,21 @@ export interface PowerUpSystem {
   collide(): void;
   /**
    * Phase 7, after the player shots' hits: applies the pickups in order
-   * ({@link PowerUpSystem.collect}), detonates armed Mega Crashes, counts the shields' i-frames
-   * down (`core/shields` `tickShield` — not on the tick of a hit, so a hit on tick `t` blocks
-   * ticks `t + 1 … t + 8`) and pushes their hit / break events of the tick, then turns the tick's
-   * enemy drops into capsules. Never allocates.
+   * ({@link PowerUpSystem.collect} for a capsule; the blue capsule, a freed Option and — M2-05 —
+   * a Direct-mode colour item, {@link PowerUpSystem.collectDirect}, each their own), detonates
+   * armed Mega Crashes, counts the shields' i-frames down (`core/shields` `tickShield` — not on
+   * the tick of a hit, so a hit on tick `t` blocks ticks `t + 1 … t + 8`) and pushes their hit /
+   * break events of the tick, then turns the tick's enemy drops into items (capsules; in Direct
+   * mode a `capsule` or `powerup` drop becomes the plan's next colour item —
+   * {@link PowerUpSystem.dropDirect}). Never allocates.
    */
   resolve(): void;
   /** Phase 9: refills the item and shield batches. Never allocates. */
   sync(): void;
   /**
    * Checkpoint restart: forgets pickups, pending Mega Crashes and taken drops (the World clears
-   * the pool).
+   * the pool). The Direct-mode {@link PowerUpSystem.planCursor} stays: the item plan never rewinds
+   * (M2-05).
    */
   clear(): void;
 }

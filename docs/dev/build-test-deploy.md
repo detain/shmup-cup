@@ -271,7 +271,11 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   plays them (M2-03 — every spec that starts a game presses one more Enter / OK for the weapon
   select's START), and on `?stage=hunter-range&loadout=full` an Option Hunter steals and carries
   the Options (violet body, grey haul), a Mega Crash frees them and they are collected again, while
-  the weapon select's OPTION row is driven by the remote (M2-04). The gameplay specs
+  the weapon select's OPTION row is driven by the remote (M2-04), and the ship select (between the
+  difficulty menu and the weapon select) picks the MANTA with the remote's arrows, which starts at
+  once with the tier pips on the HUD, Ch− / ShiftLeft toggle its speed, and on
+  `?stage=direct-range` the six colour items and the Arm are drawn from the atlas (M2-05 — every
+  spec that starts a game presses one more Enter / OK for the ship select's KESTREL). The gameplay specs
   open `?scene=flight` (bare gameplay, open space unless `?stage=` names a stage) since M1-16;
   specs comparing captures a set number of ticks apart freeze the sim and step exact ticks
   (`test/e2e/frame-advance.ts`, M1-19) instead of counting rAF frames. Since M1-19 the suite runs
@@ -282,7 +286,9 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   `?scene=flight` (free flight straight away, no title or pause menu — bare gameplay, open space),
   `?stage=<id>` (START — or free flight — runs that stage instead, e.g. `test-range`,
   `test-boss` for the WARNING and the test boss, or `hunter-range` for the Option Hunters and the
-  blue capsule — M2-04, [options-shields-hunter.md](options-shields-hunter.md) — see
+  blue capsule — M2-04, [options-shields-hunter.md](options-shields-hunter.md) —, or
+  `direct-range` for the Direct mode's carriers — pick the MANTA in the ship select, M2-05,
+  [direct-mode.md](direct-mode.md) — see
   [stage-runtime.md](stage-runtime.md#running-a-stage) and
   [bosses-and-warning.md](bosses-and-warning.md#the-test-boss-and-stagetest-boss)), `?skip=boss`
   (the debug stage skip: every game starts about two seconds before the stage's WARNING — M1-18,
@@ -319,6 +325,7 @@ whenever dependencies change, or the frozen install fails.
 | `pnpm install --frozen-lockfile` fails in CI | `pnpm-lock.yaml` not updated after a `package.json` change — run `pnpm install` locally and commit the lockfile |
 | Tizen build fails in `check-bundle.mjs` with "not a valid ES2018 script" | Something reached `app.js` unlowered — usually `import.meta` or a dependency shipping newer syntax the build did not lower. The report shows the code around the error position |
 | ESLint `compat/compat` or "needs Chrome NN" errors | A runtime API newer than Chrome 69 in shipped code; use an older API or feature-detect behind a fallback |
+| `eslint-rules.test.ts` times out on its first check under the full `pnpm test` | Loading ESLint and its plugins is slow when every project runs at once; since M2-05 the suite warms ESLint up once in `beforeAll` (a 120 s hook timeout), so the checks themselves stay short. Keep new lint checks inside that suite, sharing its instance |
 | `electron: command not found` / Electron failed to install | The binary was skipped (`ELECTRON_SKIP_BINARY_DOWNLOAD=1`); run `pnpm rebuild electron` |
 | Electron window blank: "Web build not found" at build | Build `@shmup/web` first (`pnpm build` does it via Turborepo) |
 | `pnpm content:check` (or `pnpm test`) lists `path` / `message` issues | A content file breaks its schema (`unknown field`, a bound, an id that does not resolve). The path is `<file>:<json path>`; fix the file or, if the format changed on purpose, the schema in `packages/core/src/data` — see [content-data.md](content-data.md#gotchas) |

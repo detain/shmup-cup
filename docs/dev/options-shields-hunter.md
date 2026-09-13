@@ -6,7 +6,7 @@ How meter mode got the rest of its Gradius III–style toolbox in plan step **M2
 **Option Hunter** — an armoured enemy that steals Options, which a Mega Crash frees again as
 drifting, re-collectable items — and the rare **blue capsule** that destroys every enemy on
 screen. `core/options` is `implemented` with it, and so is `core/shields` for meter mode (the
-Direct-mode Arm tiers are M2-05).
+Direct-mode Arm tiers followed in M2-05 — [direct-mode.md](direct-mode.md#the-arm-coreshields)).
 
 This page is the *how and why* and the map of the whole step. Exact signatures are in
 [api-reference.md](api-reference.md#options--options-implemented); the TSDoc in
@@ -356,8 +356,10 @@ world.powerups.detonateMegaCrash(0); // kills it; its Options come back as ItemK
 
 ## Next steps that build on this page
 
-- **M2-05** — Direct mode: the Arm → Super Arm → Hyper Arm shield tiers (they absorb terrain) join
-  `core/shields`; the blue Direct-mode item is a different thing from this blue capsule.
+- **M2-05** (done) — Direct mode: the Arm → Super Arm → Hyper Arm shield tiers (they absorb
+  terrain) joined `core/shields`; the blue Direct-mode item is a different thing from this blue
+  capsule (which stays a blue capsule in both modes); the colour items reuse the freed Options'
+  drift, bounce and expiry ([direct-mode.md](direct-mode.md)).
 - **M2-06** — two-player co-op: both players' Options and shields are already per player, and the
   hunter visits every active ship in slot order.
 - **M2-11 … M2-14** — the zones of M2 place Option Hunters and blue capsules in their stages.

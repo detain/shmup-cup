@@ -111,7 +111,10 @@ const game = createGame(platform, { seed }, db);
    `db.difficulty`; a second file defining it is an issue and is ignored. Its `scoring` section
    (M2-02: `bulletCancel`, the points of a bullet cancelled into a point item, 0–10,000) is
    frozen into `db.scoring`, again from one file only. A `patterns` file (M2-02) is only
-   **collected** here (in path order) — it is compiled after interning, below.
+   **collected** here (in path order) — it is compiled after interning, below. Since M2-05 a
+   ship without `mode` / `startSpeedLevel` gets `'meter'` / 0 (a `startSpeedLevel` past its
+   `speeds` is an issue and the ship is left out), a `weapons` file's `families` join
+   `db.weaponFamilies`, and a stage without `directItems` gets `[]`.
 7. **Intern** sprite and script names: every distinct name gets an index in *sorted* order
    (`db.sprites`, `db.scripts`), independent of which file mentioned it first. The names in
    `options.extraSprites` join the sprite names first (M1-09: hosts pass `core/world`
@@ -126,7 +129,9 @@ const game = createGame(platform, { seed }, db);
 8. **Resolve** every recorded reference and write the index into `<field>Id`.
 9. **Check boss references** (M1-13, `checkBossReferences`): a stage `spawn` / `formation`
    event or an enemy `child` naming a boss, and a `warning` / `boss` event naming a regular
-   enemy, are issues.
+   enemy, are issues. Then (M2-05, `checkWeaponFamilies`) every weapon a Direct-mode family's
+   level fires must belong in the family's slot (`main` / `sub`) — issue path
+   `<file>:families[f].levels[l].shots[k].weapon`.
 10. **Expand stage terrain** (third pass, M1-07): every stage with a `tilemap` whose tileset
    resolved gets its tile grid built from the `heightfield` generator and / or RLE rows into
    `StageSpec.terrain` (`core/data/tilemap.ts`). Its issues (a tile the generator needs is
@@ -197,7 +202,8 @@ is left out.
 
 `ContentDb` holds `sprites` / `scripts` (`StringTable { names, index }`) and, per kind, a
 list plus an id → position map: `ships`/`shipIndex`, `weapons`/`weaponIndex`,
-`weaponPresets`/`weaponPresetIndex`, `enemies`/`enemyIndex`, `paths`/`pathIndex`,
+`weaponPresets`/`weaponPresetIndex`, `weaponFamilies`/`weaponFamilyIndex` (M2-05),
+`enemies`/`enemyIndex`, `paths`/`pathIndex`,
 `stages`/`stageIndex`, `tilesets`/`tilesetIndex` — and, from the `rules` kind, two tables:
 `difficulty` (M2-01: a frozen `DifficultyTable`, or `null` without a `difficulty` section, when
 `createGame` uses `core/config` `DEFAULT_DIFFICULTY_TABLE`) and `scoring` (M2-02: a frozen
@@ -427,4 +433,9 @@ the drop `blueCapsule` (`ENEMY_DROPS`, for an enemy's `drop` and a formation eve
 `test-range.enemies.json` and the dev stage `content/stages/hunter-range.stage.json`
 ([options-shields-hunter.md](options-shields-hunter.md#content-and-assets)). Enemy spec indices
 follow the files' sorted paths, so a new enemies file that sorts before `zone-a…` shifts zone A's
-indices — they are hashed, and the golden replays were re-blessed for it.
+indices — they are hashed, and the golden replays were re-blessed for it; M2-05 (done) — a ship's
+`mode` (`meter` / `direct`) and `startSpeedLevel`, a `weapons` file's `families`
+(`WeaponFamilySpec` → `ContentDb.weaponFamilies`, the fifth pass `checkWeaponFamilies`), a stage's
+`directItems` plan, the drop `powerup` (`ENEMY_DROPS` index 2 → code 3), and the content files
+`player/manta.player.json`, `weapons/direct.weapons.json`, `enemies/direct-carriers.enemies.json`
+and `stages/direct-range.stage.json` ([direct-mode.md](direct-mode.md#content-coredata)).

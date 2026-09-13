@@ -86,15 +86,15 @@
  * tables as the meter roles), and every level becomes a list of emitters (weapon, heading, offset)
  * grouped by weapon. The main shot fires the level {@link Loadout.shot} of the main family
  * {@link Loadout.family} (the content's `main` families in order — Beam → Disc, Laser → Wave), the
- * sub-weapon the level {@link Loadout.sub} of the first `sub` family, each on its own autofire timer
- * (the level's `refireTicks`, else `config.autofireInterval` / `missileInterval`); a volley fires
- * each weapon's shots only while `live + n` fits its cap (the level's `volleys × n`, else the
- * weapon's `cap`). Two behaviours are made for the families: `direct.bolt` (a straight shot in the
- * emitter's heading, optionally piercing; its sprite frame is the `frame` tunable, or with `turn`
- * the heading's octant — un-rotated art) and `direct.bomb` (a Spread Bomb fired in the emitter's
- * heading: `gravity` bends it, it bursts on terrain or its first target into a small blast).
- * {@link applyDirectLoadout} sets a Direct-mode starting loadout. Meter mode never fires the
- * families; Direct mode never fires the meter roles.
+ * sub-weapon the level {@link Loadout.sub} of the first `sub` family, each on its own autofire
+ * timer (the level's `refireTicks`, else `config.autofireInterval` / `missileInterval`); a volley
+ * fires each weapon's shots only while `live + n` fits its cap (the level's `volleys × n`, else
+ * the weapon's `cap`). Two behaviours are made for the families: `direct.bolt` (a straight shot in
+ * the emitter's heading, optionally piercing; its sprite frame is the `frame` tunable, or with
+ * `turn` the heading's octant — un-rotated art) and `direct.bomb` (a Spread Bomb fired in the
+ * emitter's heading: `gravity` bends it, it bursts on terrain or its first target into a small
+ * blast). {@link applyDirectLoadout} sets a Direct-mode starting loadout. Meter mode never fires
+ * the families; Direct mode never fires the meter roles.
  *
  * **Autofire** (shmup_feat.md §4 rule 1). While a ship is `alive`, every shooter fires its main
  * weapon whenever its timer allows (every `config.autofireInterval` ticks, or the weapon's
@@ -638,7 +638,8 @@ export function applyLoadoutPreset(
  *
  * @example
  * ```ts
- * applyDirectLoadout(world.weapons.loadouts[0], world.players[0], 'full', world.ship.startSpeedLevel);
+ * const start = world.ship.startSpeedLevel;
+ * applyDirectLoadout(world.weapons.loadouts[0], world.players[0], 'full', start);
  * ```
  */
 export function applyDirectLoadout(
@@ -1459,7 +1460,7 @@ class WeaponSystemImpl implements WeaponSystem {
   private readonly families: FamilyTables;
   /** Index of the sub family in {@link WeaponSystemImpl.families} (-1 = none). */
   private readonly subIndex: number;
-  /** Extra spawn offset x of the next shot {@link WeaponSystemImpl.emit} fills (a family volley). */
+  /** Extra spawn offset x of the next shot {@link WeaponSystemImpl.emit} fills (family volleys). */
   private offX = 0;
   /** Extra spawn offset y of the next shot. */
   private offY = 0;

@@ -63,7 +63,9 @@ stepWorld, every tick
 `EnemySpec` (`core/data`): `id`, `hp`, `score`, `hurtbox { hw, hh }` (half sizes; also the
 contact box), `script` → `scriptId`, `sprite` → `spriteId`, and the fields M1-08 added —
 `anim { frames, ticks }`, `params` (behaviour tunables by name), `mover` (a starting mover or
-`null`), `drop` (`'capsule'`, since M2-04 `'blueCapsule'`, or `null`), `ground` (`'floor'`, `'ceiling'` or `null` = flying),
+`null`), `drop` (`'capsule'`, since M2-04 `'blueCapsule'`, since M2-05 the mode-agnostic
+`'powerup'` — a capsule in meter mode, the stage's next planned colour item in Direct mode —, or
+`null`), `ground` (`'floor'`, `'ceiling'` or `null` = flying),
 `settleTicks`, `explosion` (`'small' | 'medium' | 'large'`), `megaCrashImmune` (compiled into a table `EnemySystem.megaCrash` reads — M1-11),
 `child` → `childId` (the enemy a spawner releases) — plus the older optional `rank` (read since
 M2-01: `{ bulletSpeed?, fireRate? }`, 0–8, default 1 — how strongly the enemy follows the rank's
@@ -422,7 +424,7 @@ builds a lookup (throws on duplicate ids). `DEFAULT_BEHAVIORS` (from `DEFAULT_BE
 is what the World uses; `createWorld(config, db, { behaviors })` swaps in another registry
 (tests, tools — not part of `GameConfig`, so never in a real session).
 
-The roster — the eight of M1, M2-02's `pattern.loop` and M2-04's `hunter.option` (tunables and their defaults in brackets; the fire patterns are M1-09's — they go
+The roster — the eight of M1, M2-02's `pattern.loop`, M2-04's `hunter.option` and M2-05's `cube.pincer` (tunables and their defaults in brackets; the fire patterns are M1-09's — they go
 through the `ScriptApi` primitives, so nothing fires off screen or before `settleTicks`; bullet
 speeds are px/tick and intervals ticks, both Normal values scaled by the rank):
 
@@ -437,6 +439,7 @@ speeds are px/tick and intervals ticks, both Normal values scaled by the rank):
 | `rammer.aimed` | rammer | enters with its spec mover for [`enterTicks` 40], then `AimedDash` with [`windup` 20] at [`speed` 2.5] |
 | `orbiter.loop` | orbiter | flies the spawn event's path at [`speed` 1.25]; without one: `Waypoint` to [`x` 256, `y` 100], hold [`hold` 90], leave left at [`leaveSpeed` 2]; every [`ringTicks` 120] (rank-scaled) a ring of [`ringCount` 8] purple bullets at [`bulletSpeed` 1], each ring turned half a gap |
 | `pattern.loop` | DSL pattern runner (`needsPattern`, M2-02) | runs the enemy's `pattern` — a `content/patterns/` action — over and over: `startPattern`, then `yield stepPattern()` until it ends, [`restTicks` 60] of rest, again; `relative` directions from [`heading` 512 = left]; sets no mover (the spec's `mover` moves it); without a compiled pattern it sleeps forever. The shipped test enemy `sentry` (`content/enemies/test-sentry.enemies.json`, not spawned by any stage) runs `common.spiral` with it ([pattern-dsl.md](pattern-dsl.md#the-patternloop-behaviour)) |
+| `cube.pincer` | Direct-mode item carrier (M2-05, shmup_feat.md §6B) | one cube of a six-cube pincer wave: odd `formation` members start mirrored across the playfield's middle row (once, on the spawn tick), every cube flies a `Waypoint` at [`speed` 1.5] to view x [`meetX` 176], [`gap` 8] px above / below the middle row on its own half, then leaves left at [`leaveSpeed` 1.75]; sleeps forever, never fires — the formation's drop (at the last kill) is the wave's item ([direct-mode.md](direct-mode.md#carriers-corebehaviors-and-the-dev-stage)) |
 | `hunter.option` | Option Hunter (M2-04; its spec's `optionHunter` brings the rules) | [`variant` 0] rear / 1 front / 2 dive: for [`lineUpTicks` 90] re-aims a `Waypoint` mover every 6 ticks at its line-up point — view x [`lineX` 48] (front: `384 − lineX`) on the nearest player's row, or view y [`lineY` 24] over its column, 12 px inside the playfield — at [`speed` 2]; the last aim holds [`windup` 24] and charges at [`chargeSpeed` 4.5] until it leaves the view; never fires. The shipped hunters are in `content/enemies/option-hunters.enemies.json`, flown by the `hunter-range` dev stage ([options-shields-hunter.md](options-shields-hunter.md#the-option-hunter-coreenemies-corebehaviors)) |
 
 Writing one:
@@ -486,7 +489,10 @@ off (`{ autofire: false, remoteMode: false }`). No `test-range` enemy is armoure
 file also holds `carrier-blue` (a slow `carrier.straight` with `drop: "blueCapsule"`, the
 `enemies/carrier-blue` pixel map) — spawned only by the `hunter-range` dev stage, together with
 the three **Option Hunters** of `content/enemies/option-hunters.enemies.json` (armoured, `variant`
-0 / 1 / 2 of `hunter.option`); `test-range`'s timeline is unchanged.
+0 / 1 / 2 of `hunter.option`); `test-range`'s timeline is unchanged. Since M2-05
+`content/enemies/direct-carriers.enemies.json` holds the Direct mode's carriers — `cube` (1 hp,
+`cube.pincer`) and the coloured `lead-carrier` (2 hp, `carrier.straight`, `drop: "powerup"`) —
+flown by the `direct-range` dev stage (`?stage=direct-range`, pick the MANTA).
 
 Fly it with `pnpm dev` → `http://localhost:5173/?stage=test-range` (the hunters:
 `?stage=hunter-range&loadout=full`); headless:
@@ -545,7 +551,7 @@ code):
 | A mover | Append the name to `MOVER_TYPES` (`core/data`) and a code to `MoverKind` (never renumber), a variant in `MOVER_SCHEMA`, its parameters in `compileSpecs` (`core/enemies`), its start state in `setMover` and a `move…` function in `updateMover` (numbers only, whole-number calls), the docs (module docblock, `content/enemies/README.md`, this page), tests incl. the allocation guard |
 | An enemy spec field | `EnemySpec` + `ENEMY_SCHEMA` (+ `optional` and a default in `completeEnemy`), a typed array in the `SpecTable` if per-tick code needs it, the README sample and `example.enemies.json` |
 | An `Enemy` field | The class field, its reset in the spawn function, and `mixEnemy` in `core/debug` (in a fixed place — or replays diverge unnoticed) |
-| A drop kind | Append to `ENEMY_DROPS` and `DropKind` (code = position + 1), the schema picks it up; map it to an item in `core/powerups` `takeDrops` (capsules and, since M2-04, blue capsules and freed Options — [powerups-and-shields.md](powerups-and-shields.md#extending-it)) |
+| A drop kind | Append to `ENEMY_DROPS` and `DropKind` (code = position + 1), the schema picks it up; map it to an item in `core/powerups` `takeDrops` (capsules and, since M2-04, blue capsules and freed Options; since M2-05 `powerup` — per power-up model — [powerups-and-shields.md](powerups-and-shields.md#extending-it)). Content drops come first: M2-05 put `PowerUp` at 3 and moved the engine-only `FreeOption` to 4 |
 | An Option Hunter | An entry with `"optionHunter": true`, `"script": "hunter.option"` and a `variant`, no `megaCrashImmune` (only Mega Crash and the blue capsule can kill it) — [options-shields-hunter.md](options-shields-hunter.md#extending-it) |
 | A particle cue | Append to `FX_CUES` (never renumber) and bind it to presets in `content/fx/` ([fx-and-game-feel.md](fx-and-game-feel.md#extending-it)); a visual for an existing sound needs only an `sfx` trigger there |
 | A new use of the tick outcomes | Read `world.enemies.outcomes` after phase 7 of the same tick (it is reset in the next phase 3) |
@@ -564,6 +570,7 @@ code):
 | `test/integration/content.test.ts` | The shipped content validates with `KNOWN_SCRIPT_IDS` and `checkEnemyBehaviors`; an unknown script id is an issue |
 | `test/e2e/enemies.spec.ts` | In Chromium: the first drifter formation appears inside the playfield (never in the HUD bars) and flies left; no console errors or unknown-sprite warnings |
 | `packages/core/test/enemies/enemies-hunter*.test.ts`, `data/enemies-hunter-data-edge.test.ts`, `test/e2e/option-hunter.spec.ts` | M2-04: the Option Hunter (appearance only with Options, the variants, the steal and chain cut, carry, free, escape, expiry), the blue capsule's `clearOnScreen`, `optionHunter` / `blueCapsule` in the loader, the steal / carry / free allocation guard; in Chromium a hunter stealing and Mega Crash freeing ([options-shields-hunter.md](options-shields-hunter.md#tests)) |
+| `packages/core/test/behaviors/behaviors-cube*.test.ts` | M2-05: `cube.pincer` — the odd members' mirror, the meeting points on each half, the leave, a formation of six dropping at its last kill ([direct-mode.md](direct-mode.md#tests)) |
 
 ## Gotchas
 
@@ -614,6 +621,8 @@ code):
   `pattern` field) and `bendingLaser` ([pattern-dsl.md](pattern-dsl.md)); **M2-04** (done) — the
   Option Hunter (`optionHunter`, `hunter.option`, `huntOptions`, `carriedBatch`), the blue
   capsule's `clearOnScreen` and the shield pods' contact test
-  ([options-shields-hunter.md](options-shields-hunter.md)).
+  ([options-shields-hunter.md](options-shields-hunter.md)); **M2-05** (done) — the `powerup` drop
+  (`DropKind.PowerUp` 3, `FreeOption` now 4) and `cube.pincer` for the Direct mode's pincer waves
+  ([direct-mode.md](direct-mode.md)).
 - **M1-18** (done) — zone A's roster on these behaviours, its paths, and HALCYON BULWARK's
   `boss.bulwark` ([zone-a-and-playtest.md](zone-a-and-playtest.md)).

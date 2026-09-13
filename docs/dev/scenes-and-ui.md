@@ -9,7 +9,9 @@ user options and their live application are [saves-and-options.md](saves-and-opt
 (the presets, rank, extends and continues themselves are [difficulty-and-rank.md](difficulty-and-rank.md)).
 **M2-03** added the weapon select after the difficulty menu — with its live preview and the Auto
 Power-Up order editor — and the HUD meter's weapon names (the arsenal itself is
-[meter-arsenal.md](meter-arsenal.md)).
+[meter-arsenal.md](meter-arsenal.md)). **M2-05** added the **ship select** between the difficulty
+menu and the weapon select, per-mode session hi-scores and the HUD's Direct-mode **tier pips**
+(Direct mode itself is [direct-mode.md](direct-mode.md)).
 
 This page is the *how and why*. Exact signatures are in
 [api-reference.md](api-reference.md#scenes--scene-stack-and-the-m1-flow-partial) (`scenes`) and
@@ -40,7 +42,7 @@ outside the playfield).
 │      └─────────┘   └──────────┘   │ WARNING)│  start/retry)  │    │  sceneView.update(         │
 │      stageClear / continue / gameOver (overlays, frozen game)│    │    game.renderFrame())     │
 │      boot → title (PRESS OK, START/OPTIONS/EXIT) → difficulty│    │  → renderer.render(frame)  │
-│      → weapon select (live preview World, ORDER editor)      │    │                            │
+│      → ship select → weapon select (preview World, ORDER)    │    │                            │
 │  step(): poll → flow.tick(input) → top scene only            │    │ canvas data-shmup-scene    │
 │  renderFrame(): flow.updateFrame() → world view + HUD while  │    └────────────────────────────┘
 │    the game is visible, one UI list, the top scene's dim     │
@@ -107,9 +109,10 @@ is on top) and `uiRevision` (bumped whenever `drawUi` would draw something else)
 
 ## The M1 flow (`createSceneFlow`)
 
-`createSceneFlow(host, start)` creates the twelve scenes (eight in M1, the difficulty menu and the
-continue countdown since M2-01, the weapon select and its order editor since M2-03), their menus,
-the UI draw list (256 commands, 160 string slots — 96 before M2-03) and the game scene's placeholder World once, then `reset`s the stack to
+`createSceneFlow(host, start)` creates the thirteen scenes (eight in M1, the difficulty menu and the
+continue countdown since M2-01, the weapon select and its order editor since M2-03, the ship
+select since M2-05), their menus,
+the UI draw list (256 commands, 192 string slots — 160 before M2-05, 96 before M2-03) and the game scene's placeholder World once, then `reset`s the stack to
 the start scene. `SceneFlowHost` is what the flow needs from the session: `config`, `content`,
 `events`, `exit` (`platform.exit` or `null`), `createWorld(config?)` (since M2-01 with the chosen
 difficulty's config) and, since M1-17, `save` (a `core/save`
@@ -121,8 +124,9 @@ Options screen's CONTROLS — disabled when omitted). `createGame` passes `GameO
 |---|---|---|---|---|
 | `BootScene` | no / 0 / menu | `LOADING` (or a label) and a progress bar (`setBootProgress`) | — | title on the tick after `finishBoot()` (`replace`) |
 | `TitleScene` | no / 0 / menu | `ui/logo` (or `SHMUP CUP` as text), `PRESS OK` blinking (32-tick half period), then the menu START / OPTIONS / EXIT at y 118; `HI` and the session hi-score (the save's best at start) at the bottom | OK: prompt → menu (locked 2 ticks, focus START); START → the difficulty menu (M2-01; before, the game); OPTIONS → Options; EXIT → confirm; Back: confirm if the platform can exit, else menu → `PRESS OK` | difficulty, options, confirm (`push`) |
-| `DifficultyScene` (M2-01) | yes / 0.5 / menu | Opaque panel, `DIFFICULTY`, EASY / NORMAL / HARD / ARCADE (focus on the preset chosen last, at first the host config's), the focused preset's `LIVES`, `CONTINUES` and `HI` | Up / Down move (wrap); OK chooses the preset; Back closes | weapon select (`push`, M2-03 — before, the game), title menu (`pop`) |
-| `WeaponSelectScene` (M2-03) | no / 0 / menu | Panel on the left: `WEAPON SELECT`, TYPE (`TYPE A` … `TYPE D`, `EDIT`), MISSILE / DOUBLE / LASER (the type's weapons, disabled unless EDIT), OPTION (M2-04: `TRAIL` / `SNAKE` / `FORMATION` / `ROTATE`), `? SLOT` (five shields since M2-04), `! SLOT`, AUTO, ORDER (one-letter summary), START, two hints; behind it, full screen, the live preview World (no HUD) | Up / Down move (disabled rows skipped); Left / Right / OK change a value; OK on ORDER → the editor; OK on START starts; Back closes. Opens focused on START (2-tick lock) | game (`reset` — its World on the difficulty's config with this loadout, `withArsenal`), order editor (`push`), difficulty menu (`pop`) |
+| `DifficultyScene` (M2-01) | yes / 0.5 / menu | Opaque panel, `DIFFICULTY`, EASY / NORMAL / HARD / ARCADE (focus on the preset chosen last, at first the host config's), the focused preset's `LIVES`, `CONTINUES` and `HI` | Up / Down move (wrap); OK chooses the preset; Back closes | ship select (`push`, M2-05; with a single ship in the content the weapon select — M2-03 — or, for a Direct-mode config, the game), title menu (`pop`) |
+| `ShipSelectScene` (M2-05) | yes / 0.5 / menu | Opaque 208×136 panel, `SHIP SELECT`, the content's ships by name (KESTREL, MANTA; focus on the ship chosen last, at first the host config's `shipId`), the focused ship's picture (frame 0 of its sprite), its model (`POWER METER` / `DIRECT ITEMS`) and three hints, `OK: CHOOSE` | Up / Down move (wrap); OK chooses the ship (`withShip` for every difficulty's config); Back closes | weapon select (`push`, a meter ship), game (`reset`, a Direct-mode ship — no loadout to choose), difficulty menu (`pop`) |
+| `WeaponSelectScene` (M2-03) | no / 0 / menu | Panel on the left: `WEAPON SELECT`, TYPE (`TYPE A` … `TYPE D`, `EDIT`), MISSILE / DOUBLE / LASER (the type's weapons, disabled unless EDIT), OPTION (M2-04: `TRAIL` / `SNAKE` / `FORMATION` / `ROTATE`), `? SLOT` (five shields since M2-04), `! SLOT`, AUTO, ORDER (one-letter summary), START, two hints; behind it, full screen, the live preview World (no HUD) | Up / Down move (disabled rows skipped); Left / Right / OK change a value; OK on ORDER → the editor; OK on START starts; Back closes. Opens focused on START (2-tick lock) | game (`reset` — its World on the difficulty's config with this loadout, `withArsenal`, and the chosen ship), order editor (`push`), ship select (`pop`; the difficulty menu when it was skipped) |
 | `AutoOrderScene` (M2-03) | yes / 0.35 / menu | Panel on the right: `AUTO ORDER`, rows `1` … `12` (a meter slot or `-`), DONE | Up / Down move; Left / Right / OK step a row; DONE or Back store the rows and close | weapon select (`pop`) |
 | `GameScene` | no / 0 / **game** | The World (view + HUD), the boss WARNING band in the UI list | Pause or Back → pause menu (that tick the World does not step) | pause, stage clear (90 World ticks after `stageClear`), game over (30 after `gameOver`) — or, with continues left (`canContinue`), the continue countdown (M2-01) — all `push` |
 | `PauseScene` | yes / 0.5 / menu | Panel, `PAUSE`, RESUME / OPTIONS / RETRY STAGE / QUIT TO TITLE | Pause, Back, RESUME → resume; OPTIONS → Options (the game stays frozen); RETRY STAGE → `game.restart()` + pop (no confirmation); QUIT TO TITLE → confirm | game (`pop`), options, confirm (`push`) |
@@ -140,7 +144,8 @@ title's Back only backs out of the menu to `PRESS OK`.
 
 **Saves in the flow (M1-17).** The flow's session hi-score starts from the save's best score of the
 game's mode (`SceneFlow.modeKey`) — since M2-01 one per difficulty preset (`meter-easy` …
-`meter-arcade`), the chosen preset's shown on the title; the game-over and stage-clear screens
+`meter-arcade`), since M2-05 one per power-up mode and preset (the MANTA's `direct-easy` …
+`direct-arcade`), the chosen ship's and preset's shown on the title and the difficulty menu; the game-over and stage-clear screens
 insert every playing player's score into its World's table, count the statistic and flush the save; every game start and
 RETRY STAGE counts `gamesStarted`; QUIT TO TITLE and RETRY record no score. Details, the Options
 screen and the live `UserOption` events are in [saves-and-options.md](saves-and-options.md).
@@ -188,7 +193,8 @@ both tables give it.
 
 The game scene **owns the World**: its `enter()` (a game start) and `restart()` (RETRY STAGE) call
 `host.createWorld(flow.gameConfig)` — a new World from the chosen difficulty's config (M2-01;
-since M2-03 with the weapon select's loadout applied by `withArsenal`; the
+since M2-03 with the weapon select's loadout applied by `withArsenal`, since M2-05 with the ship
+select's ship applied by `withShip`; the
 same config for every start on that preset, so the same inputs replay the same game;
 the flow's lockstep test runs two flows through menus and retries and compares `hashWorld`), with
 the session hi-score set on its scoring board. Creating a World is a scene transition, never part
@@ -196,7 +202,8 @@ of a tick's hot path. `exit()` and `restart()` first raise the session hi-score 
 World's (`flow.hiScore`, also shown on the title; `setHiScore(value)` raises it from outside,
 floored and capped at `MAX_SCORE` like the board's). Since M1-17 it starts from the save's best score
 of the session's mode; since M2-01 each difficulty keeps its own (`FlowControl.bests`) and the old
-World's best goes to its own preset's.
+World's best goes to its own preset's — since M2-05 per power-up mode too (`bests[mode × 4 +
+preset]`, `FlowControl.bestIndex`).
 
 Music follows the scenes through the same event queue: the title queues `Music Title` (30-tick
 fade), a game start `Music Silence` (the new World then queues its stage theme, if it has a stage),
@@ -225,7 +232,7 @@ The visible scenes are the topmost non-overlay scene and every overlay above it 
 the pause menu under the dialog). `updateFrame()` rebuilds the UI list — `clear()`, then each
 visible scene's `drawUi(list)` bottom to top — **only when** the visible set changed or one of
 their `uiRevision`s moved since the last build; otherwise the list keeps its `revision` and the
-renderer skips it. Each scene owns a disjoint range of the 160 string slots (96 before M2-03; `stringBase`,
+renderer skips it. Each scene owns a disjoint range of the 192 string slots (160 before M2-05, 96 before M2-03; `stringBase`,
 `stringSlots`, assigned in the flow's constructor — it throws if they do not fit), so scenes drawn
 together never overwrite each other's text. That is why the confirm dialog sits over the still
 visible pause menu; its panel is opaque (alpha 255) so the menu's text does not show through.
@@ -322,12 +329,30 @@ weapons (`SPREAD`, `TAIL`, `RIPPLE` for Type B, `2-WAY`, `VERTICAL`, `CYCLONE` f
 `TORPEDO`, `FREE WAY`, `TWIN` for Type D — 16 frames in `METER_LABEL_FRAMES`); `?` and `!` keep
 their symbols. Without the UI
 sprites (a content table that lacks them, `EMPTY_CONTENT_DB`) icons and slots become rectangles and
-the labels are left out. The worst case is 32 commands; the game scene's HUD list has 64.
+the labels are left out. The worst case is 32 commands; the game scene's HUD list has
+`HUD_COMMAND_COUNT` (64) commands and `HUD_STRING_COUNT` (9) strings.
+
+**Direct mode (M2-05).** With `powerUpMode: 'direct'` the bottom bar shows the **tier pips**
+instead of the meter and the Force Field pips:
+
+```text
+    ▲ ▲ ▲   SHOT ▪▪▪▪▪▫▫▫  SUB ▪▪▪▫▫▫▫▫  ARM ▪▪▫  SPD ▪▪▫  DISC      ← bottom bar, y 208
+ x: 4       58 (+26, 5 px) 130 (+20)      196 (+20, 6 px) 252   306
+```
+
+`SHOT` has one 4×4 pip per level above 0 of the current main family (8 for its 9 levels), the
+lit ones in the family's `HUD_FAMILY_COLORS` colour (Beam → Disc orange, Laser → Wave blue);
+`SUB` the same for the sub-weapon (green); `ARM` one pip per hit the Arm can take, the hits left
+in its tier's `HUD_ARM_COLORS` colour (green, silver, gold; nothing without an Arm); `SPD` one
+pip per speed, the current level and those below lit; then the family's `label` (`DISC`,
+`WAVE`). The labels use string slots 4–8 (`HUD_STRING_SLOTS.shot` … `family`); meter HUDs still
+use 0–3 only ([direct-mode.md](direct-mode.md#the-hud-coreui)).
 
 `buildHud` **clears the scores' `displayDirty` and the board's `hiScoreDirty`**. `Hud.update(world,
 list)` is the change detection around it: it rebuilds only when a dirty flag is set, player 1's
 lives, whether player 2 plays, the meter cursor, the equippable mask, the flash phase (only while a
-slot is highlighted) or the shield's hits changed — or the World or list is another object
+slot is highlighted), the shield's hits or — since M2-05 — player 1's shot / sub levels, family,
+speed level or Arm tier changed — or the World or list is another object
 (`invalidate()` forces it; the game scene calls it on every new World). `builds` counts rebuilds
 for tests and debug overlays. It runs once per **displayed frame** (from `updateFrame`), never per
 tick.
@@ -478,6 +503,9 @@ outside the World.
 - **M2-04** (done) — the weapon select's OPTION row (`WeaponSelectItem.Option` 4, so `?` … START
   moved to 5–9) and the five `?` labels; the preview flies the chosen Option type and spreads it
   while OPTION is focused ([options-shields-hunter.md](options-shields-hunter.md#the-weapon-select-corescenes)).
-- **M2-05 / M2-10 / M2-15** — the ship select, the zone map, attract mode, mode select, name
+- **M2-05** (done) — the ship select between the difficulty menu and the weapon select (skipped
+  with a single ship; a Direct-mode ship starts the game at once), per-mode session hi-scores, the
+  HUD's tier pips, 192 UI string slots ([direct-mode.md](direct-mode.md#the-ship-select-corescenes)).
+- **M2-10 / M2-15** — the zone map, attract mode, mode select, name
   entry, the hi-score table; **M2-16** — rebinding and accessibility options (and the loadout
   saved); the boss HP bar and the co-op P2 meter in the HUD (M2).

@@ -11,10 +11,12 @@ piercing Laser, ground-sliding Missile) compiled from `content/weapons/`, per-pl
 **M2-04** added the Snake, Formation and Rotate **Option types** (`GameConfig.optionChoice`) and
 the Option Hunter that steals Options —
 [options-shields-hunter.md](options-shields-hunter.md). This page describes the trail, the
-machinery every type shares.
+machinery every type shares. Plan step **M2-05** added the Direct mode's 9-level shot
+**families** fired through the same pool and hit path (direct roles after the four meter roles,
+level volleys, the MANTA's `Loadout.shot` / `sub` / `family`) — [direct-mode.md](direct-mode.md#families-and-firing-coreweapons).
 
 This page is the *how and why*. Exact signatures are in
-[api-reference.md](api-reference.md#weapons--player-weapons-meter-mode-implemented); the TSDoc in
+[api-reference.md](api-reference.md#weapons--player-weapons-implemented); the TSDoc in
 `packages/core/src/{weapons,options}/index.ts` is the authoritative reference. The enemies that
 take the hits are [enemies-and-behaviors.md](enemies-and-behaviors.md); the World, its tick
 phases and the grid are [sim-world.md](sim-world.md); the render contract is
@@ -148,7 +150,8 @@ the kill credit is `floor(shooter / 5)`.
 
 `updatePlayers()` runs right after `updatePlayer` moved the ships:
 
-1. **Recount** `liveCounts[shooter × 4 + role]` (live shots per shooter and role) and the
+1. **Recount** `liveCounts[shooter × WEAPON_ROLE_SLOTS + role]` (live shots per shooter and role —
+   a stride of 36 since M2-05: the four meter roles, then up to 32 Direct-mode roles) and the
    pierce tables in use, from the pool.
 2. **Timers.** Every autofire timer above 0 counts down (`timers[shooter × 2]` main,
    `[shooter × 2 + 1]` missile — hashed).
@@ -478,4 +481,6 @@ autofire) and hold no `Shot` / `Sub`.
   ([meter-arsenal.md](meter-arsenal.md)).
 - **M2-04** (done) — Snake / Formation / Rotate Options (`optionChoice`, `steer`), the meter
   shields and the Option Hunter ([options-shields-hunter.md](options-shields-hunter.md)).
-- **M2-05** — Direct-mode weapon families.
+- **M2-05** (done) — Direct-mode weapon families: every weapon a family fires gets a direct role
+  (`WEAPON_ROLE_SLOTS`), level volleys on the main / missile timers, `direct.bolt` /
+  `direct.bomb`, `applyDirectLoadout` ([direct-mode.md](direct-mode.md)).
