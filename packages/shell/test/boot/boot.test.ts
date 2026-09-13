@@ -824,6 +824,67 @@ describe('shell/boot input profiles and binding contexts (M1-05)', () => {
   });
 });
 
+describe('shell/boot player seats (M2-06)', () => {
+  it('forwards the seats at boot and each change before the ticks of the frame poll input', async () => {
+    const log: string[] = [];
+    const seatInput: ShellInput = {
+      ...input,
+      setContext: () => {},
+      setSeats: (count) => {
+        log.push(`seats:${count}`);
+      },
+    };
+    const shell = await boot({
+      input: seatInput,
+      platform: (): Platform => ({
+        ...platform,
+        input: {
+          poll: () => {
+            log.push('poll');
+            return platform.snapshot;
+          },
+        },
+      }),
+    }).promise;
+    expect(log).toEqual(['seats:1']);
+    let seats = 1;
+    Object.defineProperty(shell.game, 'inputSeats', { get: () => seats });
+    win.frame(0);
+    win.frame(STEP);
+    seats = 2;
+    win.frame(3 * STEP); // two ticks in this frame, both after the change
+    win.frame(4 * STEP); // unchanged: not forwarded again
+    seats = 1;
+    win.frame(5 * STEP);
+    expect(log).toEqual(['seats:1', 'poll', 'seats:2', 'poll', 'poll', 'poll', 'seats:1', 'poll']);
+  });
+
+  it('routes two seats from the start of a co-op session`s bare gameplay', async () => {
+    const counts: number[] = [];
+    const shell = await boot({
+      input: { ...input, setSeats: (count: number) => counts.push(count) },
+      gameConfig: { coop: true },
+    }).promise;
+    expect(shell.game.scenes).toBeNull();
+    expect(shell.game.inputSeats).toBe(2);
+    expect(counts).toEqual([2]);
+    win.frame(0);
+    win.frame(STEP);
+    expect(counts).toEqual([2]);
+  });
+
+  it('boots and runs with an adapter that has no setSeats (every device drives player 1)', async () => {
+    expect('setSeats' in input).toBe(false);
+    const shell = await boot({ gameConfig: { coop: true } }).promise;
+    let seats = 2;
+    Object.defineProperty(shell.game, 'inputSeats', { get: () => seats });
+    win.frame(0);
+    seats = 1;
+    win.frame(STEP);
+    expect(fakes.frames.length).toBeGreaterThan(0);
+  });
+});
+
 describe('shell/boot audio (M1-15)', () => {
   /**
    * An audio back-end that exposes a Web Audio graph on a fake context once unlocked.

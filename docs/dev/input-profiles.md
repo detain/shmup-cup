@@ -220,6 +220,14 @@ Since M1-17 the choice lives in the **save document** (`core/save`, `options.inp
   `pressedButtons` into `staleButtons`; `readGamepadActions(pad, state, buttons,
   previousButtons)` gives a stale button `buttons[i] & previousButtons[i]` and clears the bit
   when the button is released.
+- **No phantom presses across a seat change either (M2-06):** `bootShell` forwards
+  `Game.inputSeats` the same way (`input.setSeats`, before the frame's ticks). A source that
+  changes players with it — a pad seated as player 2, the split keyboard's right half — keeps
+  what it holds on its new player without a press edge on the next poll: player 2's START (Pause
+  in both of the pad's tables) that opened the pause menu is not also a press on player 1's slot
+  that resumes it at once, and the START that resumes does not pause again on player 2's slot.
+  A pad that disappears — `null`, `connected: false` or missing from a shorter
+  `getGamepads()` list — gives player 2's seat up on that same poll.
 
 ## Release debounce (`remote.createReleaseDebouncer`)
 
@@ -359,11 +367,13 @@ measures ~30 KB of test noise).
 | `packages/input-web/test/remote/` | The exact debounce window for every tick count 0–10, per-slot ageing, resumes and re-releases inside the window, `setTicks`, capacities (incl. `NaN`); `resolveDirections` exhaustively against a reference model and its invariants; press-order numbering |
 | `packages/input-web/test/rebind/` | Every schema limit, the semantic checks alone and combined, dropped profiles never claiming ids, compiled tables (frozen, prototype-free, `0` placeholders, button gaps), path-order independence, the registry, `chooseInputProfile`, `overrideInputTuning` clamping, the persistence hook; `selectableKeyProfiles` / `inputProfileChoices` per key space (gamepads never offered, order, the default suffix, the `extra` profile — `rebind-choices*.test.ts`, M1-17) |
 | `packages/input-web/test/keyboard/`, `keymap/` | Fake pairs never renewing press order, pending releases across table / tuning switches, `0`-mask keys tracked and prevented, `findKeyActions` `-1` / `0` / fall-through |
-| `packages/input-web/test/web-input/` | The probe scenarios replayed as timed fake event sequences (clean hold, fake pairs 30 ms apart with debounce 2 vs 0, OK while an arrow is held, diagonal and SOCD policies, `game` vs `menu`), no phantom edges across switches, gamepad profiles, the debounce boundary at any poll phase, the allocation probe |
-| `packages/shell/test/` | Context forwarded before the frame's polls (also while paused), a bad `input-profiles` file stops boot on the error screen, an app owner replaces the default owner |
+| `packages/input-web/test/web-input/` | The probe scenarios replayed as timed fake event sequences (clean hold, fake pairs 30 ms apart with debounce 2 vs 0, OK while an arrow is held, diagonal and SOCD policies, `game` vs `menu`), no phantom edges across switches, gamepad profiles, the debounce boundary at any poll phase, the allocation probe; player seats (M2-06, `web-input-seats*.test.ts`): the join press as an edge from the menu table, one pad per seat, seats given up by pads that disappear (also from a shorter list), no phantom presses across a seat change, the split keyboard |
+| `packages/shell/test/` | Context and seats (M2-06) forwarded before the frame's polls (context also while paused), an adapter without `setSeats`, a bad `input-profiles` file stops boot on the error screen, an app owner replaces the default owner |
 | `apps/*/test/boot/` | Profile choice per app, `?profile=` / `?debounce=` (incl. `inputOverridesFromSearch` edge cases), the saved choice through the save (M1-17), CONTROLS entries and live switches (the TV registering the new keys), a pick winning over `?profile=`, content without profiles (fallback), Tizen registration lists |
 | `test/integration/input-profiles.test.ts` | Every key and button of every shipped profile, in both contexts, reaches the core snapshot as exactly its actions; a fake-pair remote session records and replays tick for tick |
+| `test/integration/coop-remote-pad.test.ts` | Co-op (M2-06) through a real `WebInput` and the scene flow with the shell's per-frame forwarding: the remote plays player 1, a pad's START takes player 2's seat and joins, pausing / resuming with player 2's held START, an unplugged seated pad, each device's OK in the continue countdown |
 | `test/e2e/input.spec.ts` | The built web page: bound keys prevented, unbound keys not; `?profile=keyboard-remote-emulation` knows only the remote's keys; an unknown `?profile=` warns and boots |
+| `test/e2e/coop.spec.ts`, `coop-gamepad.spec.ts` | Co-op on the built web page (M2-06): the split keyboard; a fake `navigator.getGamepads()` pad that drives the menus with one seat, joins as player 2 with START, moves player 2 only, and pauses / resumes without a phantom second press |
 
 ## Gotchas
 

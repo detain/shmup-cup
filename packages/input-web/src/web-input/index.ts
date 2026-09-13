@@ -30,7 +30,13 @@
  *   — `core/world` `JOIN_ACTIONS`). A seated pad drives player 2 only (in one-seat mode it folds
  *   into player 1 again); it keeps its seat across games until it disconnects. With the seat taken
  *   every other pad drives player 1 (two pads with an idle keyboard: the pad that did not join
- *   drives player 1).
+ *   drives player 1). A pad that goes away — `null`, disconnected, or no longer in the list —
+ *   gives its seat up on that poll, so another pad may take it at once.
+ *
+ * When the seats change, a source that moves to the other player (a seated pad, the split
+ * keyboard's right half) keeps what it holds **without a new press** there: player 2's START that
+ * opened the pause menu (one seat) does not also resume it as player 1's, nor pause again when the
+ * game comes back (two seats); a new press counts as usual.
  *
  * **Implements.** shmup_tech.md §3.2 (`input.poll(): InputSnapshot`), §4.4 (custom
  * InputManager: key flags + edge latches, gamepads polled once per update, action
@@ -144,6 +150,10 @@ export interface WebInput extends PlatformInput {
    * Sets how many player seats to route (M2-06; the host forwards `Game.inputSeats` — the shell
    * does, once per frame): see the module docs. Allocation-free.
    *
+   * @remarks
+   * On a change, what a moving source (a seated pad, the split keyboard's right half) held on the
+   * last poll stays held on its new player without a press edge on the next poll.
+   *
    * @param count - 2 for a co-op game, anything else = 1.
    *
    * @example
@@ -245,6 +255,12 @@ export function createWebInput(options: WebInputOptions): WebInput {
   let split = false;
   let seats = 1;
   const padSeats = new Int8Array(MAX_PADS).fill(PAD_SEAT_NONE);
+  // Each pad's resolved actions on the last poll (0 when absent), the split half's held actions,
+  // and what a seat change moved onto each player — held there without a new press (M2-06).
+  const padLast = new Int32Array(MAX_PADS);
+  let halfLast = 0;
+  let carry1 = 0;
+  let carry2 = 0;
   let joinButtons = joinButtonsOf(DEFAULT_GAMEPAD_BUTTONS);
   let keyDevice: InputDeviceKind = options.keyDevice ?? 'keyboard';
   const getGamepads = options.getGamepads;
@@ -298,6 +314,7 @@ export function createWebInput(options: WebInputOptions): WebInput {
     let p1Device: InputDeviceKind = keyHeld !== 0 || keyLatched !== 0 ? keyDevice : 'none';
     let p2Device: InputDeviceKind = 'none';
     const halfUsed = halfHeld !== 0 || halfLatched !== 0;
+    halfLast = halfHeld;
     if (split && coop) {
       // The split keyboard's right half is player 2's seat.
       p2 = halfHeld;
@@ -312,9 +329,19 @@ export function createWebInput(options: WebInputOptions): WebInput {
     if (getGamepads !== undefined) {
       const pads = getGamepads();
       const count = Math.min(pads.length, MAX_PADS);
-      // Player 2's seat is free for a pad: co-op, no split keyboard, no pad seated.
+      // Player 2's seat is free for a pad: co-op, no split keyboard, no pad seated. A pad that
+      // went away — null, disconnected, or no longer listed (a shorter list) — gives its seat up
+      // first, so another pad may take it on this very poll.
       let seatFree = coop && !split;
-      for (let i = 0; i < MAX_PADS; i++) if (padSeats[i] === PAD_SEAT_P2) seatFree = false;
+      for (let i = 0; i < MAX_PADS; i++) {
+        const listed = i < count ? pads[i] : null;
+        if (listed === null || listed === undefined || !listed.connected) {
+          padSeats[i] = PAD_SEAT_NONE;
+          padLast[i] = 0;
+        } else if (padSeats[i] === PAD_SEAT_P2) {
+          seatFree = false;
+        }
+      }
       for (let i = 0; i < count; i++) {
         const pad = pads[i];
         const state = padStates[i];
@@ -334,6 +361,7 @@ export function createWebInput(options: WebInputOptions): WebInput {
         const newly = (state.pressedButtons ?? 0) & ~before;
         order.update(raw);
         const mask = resolveDirections(raw, order.order, padTuning.diagonals, padTuning.socd);
+        padLast[i] = mask;
         if (coop && padSeats[i] === PAD_SEAT_P2) {
           p2 |= mask;
           if (mask !== 0) p2Device = 'gamepad';
@@ -355,12 +383,17 @@ export function createWebInput(options: WebInputOptions): WebInput {
     const player2 = snapshot.players[1];
     if (player1 !== undefined) {
       commitPlayerInput(player1, p1, p1Latched);
+      // Held across a seat change: no new press on its new player (M2-06).
+      if (carry1 !== 0) player1.pressed &= ~(carry1 & ~p1Latched);
       if (p1Device !== 'none') player1.device = p1Device;
     }
     if (player2 !== undefined) {
       commitPlayerInput(player2, p2, p2Latched);
+      if (carry2 !== 0) player2.pressed &= ~(carry2 & ~p2Latched);
       if (p2Device !== 'none') player2.device = p2Device;
     }
+    carry1 = 0;
+    carry2 = 0;
     return snapshot;
   };
 
@@ -375,7 +408,16 @@ export function createWebInput(options: WebInputOptions): WebInput {
       return seats;
     },
     setSeats(count) {
-      seats = count === 2 ? 2 : 1;
+      const next = count === 2 ? 2 : 1;
+      if (next === seats) return;
+      seats = next;
+      // The sources that change players — a seated pad, a split keyboard's right half — keep what
+      // they hold without pressing it anew on their new player (player 2's START that opened the
+      // pause menu must not resume it as player 1's).
+      let moved = split ? halfLast : 0;
+      for (let i = 0; i < MAX_PADS; i++) if (padSeats[i] === PAD_SEAT_P2) moved |= padLast[i];
+      if (next === 2) carry2 |= moved;
+      else carry1 |= moved;
     },
     padSeat(index) {
       return index >= 0 && index < MAX_PADS ? (padSeats[index] ?? PAD_SEAT_NONE) : PAD_SEAT_NONE;

@@ -257,7 +257,7 @@ export const SFX_CUES = {
   OptionStolen: 24,
   /**
    * A player joined a co-op game or came back with a continue while the other played on
-   * (`core/world` `joinPlayer` / `continuePlayer`, M2-06; `x`/`y` = where the ship flies in).
+   * (`core/world` `joinPlayer`, M2-06; `x`/`y` = where the ship flies in).
    */
   PlayerJoin: 25,
 } as const;
