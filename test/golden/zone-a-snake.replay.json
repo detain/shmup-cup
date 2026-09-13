@@ -1,0 +1,93 @@
+{
+  "kind": "replay",
+  "header": {
+    "formatVersion": 1,
+    "buildId": "golden",
+    "seed": 12,
+    "stageId": "zone-a",
+    "checkpoint": -1,
+    "loadout": "full",
+    "assisted": false,
+    "config": {
+      "internalWidth": 384,
+      "internalHeight": 216,
+      "tickRate": 60,
+      "maxTicksPerFrame": 4,
+      "seed": 12,
+      "difficulty": "normal",
+      "rankBase": 2,
+      "rankGrowth": 1,
+      "extendFirst": 20000,
+      "extendEvery": 70000,
+      "continues": 3,
+      "bulletSpeedMul": 1,
+      "powerUpMode": "meter",
+      "deathPenalty": "classic",
+      "startingLives": 3,
+      "autofire": true,
+      "remoteMode": true,
+      "stage": "zone-a",
+      "stageSkip": "none",
+      "aimDirections": 32,
+      "autofireInterval": 4,
+      "missileInterval": 10,
+      "loadout": "full",
+      "autoPowerUp": false,
+      "autoPowerUpOrder": [
+        "speed",
+        "missile",
+        "laser",
+        "option",
+        "option",
+        "option",
+        "option",
+        "shield"
+      ],
+      "pickupMagnet": true,
+      "weaponPreset": "type-a",
+      "weaponEdit": null,
+      "megaChoice": "megaCrash",
+      "shieldChoice": "shield",
+      "optionChoice": "snake"
+    }
+  },
+  "ticks": 11930,
+  "hashInterval": 600,
+  "inputs": [
+    "ACiCgAgBAgEA9gaCgAgBAgUAG4KACAECDIGABAEBDACYBYKACAECBQDXBIGABAEBBQBOgoAIAYGABAGCgAgBAgUA7AKBgAQBAQsAF4GABAEBBgAGgoAIAQIMAIQBgYAEAQEFAJsDgoAIAQIFAP8BgoAIAQIFAIYCgYAEAQESAA6BgAQBAQUAQIKACAECBQBbgYAEAYKACAGBgAQBAQUA3gGCgAgBAgwAVYKACAECBQAngYAEAYKACAGBgAQBAQUAfoGABAEBBgArgoAIAQIGAOcGgYAEAQEGAGWCgAgBAgYAM4GABAEBBgAzgoAIAQIGAEmCgAgBAgGBgAQBgoAIAQIKACCBgAQBgoAIAYGABAEBAQCEAYKACAECAQD7AoGABAEBBgBYgoAIAQIGAFKCgAgBAgUABoKACAECBQAngYAEAYKACAGBgAQBAQUAAoGABAEBBQAZgoAIAQIFACuBgAQBAQUAkgSBgAQBAQYAKIKACAGBgAQBgoAIAQIGAAKBgAQBAQYAIoKACAGBgAQBgoAIAQIGAAmCgAgBAgUAJYGABAGCgAgBgYAEAQEFABSCgAgBAgsALYGABAGCgAgBgYAEAQEFAAKBgAQBAQUAGoKACAECBQAigYAEAYKACAGBgAQBAQUA+gaBgAQBAQYAXoKACAECBgAwgYAEAQEGACiCgAgBAgYATIKACAECCwAngYAEAYKACAGBgAQBAQsA6gGCgAgBAgUAXsCAgAIBAHKBgAQBAQUAsgKCgAgBAgUAxQGCgAgBAgmBgAQBAQMA7BA=",
+    "AJpd"
+  ],
+  "hashes": [
+    3290528441,
+    1670054372,
+    113384907,
+    184706900,
+    2190106942,
+    393798468,
+    749272342,
+    2763973679,
+    667259892,
+    1542920853,
+    3757597437,
+    441895016,
+    3608951731,
+    3395516967,
+    4192632565,
+    879070331,
+    2057269583,
+    1421276320,
+    3939944061
+  ],
+  "finalHash": 2947013621,
+  "description": "AZURE VERGE with Snake Options and the front Shield (M2-04): a pulled chain, two pods wearing apart",
+  "expected": {
+    "status": "stageClear",
+    "ticks": 11930,
+    "score": 69770,
+    "lives": 3,
+    "deathTicks": [
+      5839
+    ],
+    "bossDefeated": true
+  }
+}

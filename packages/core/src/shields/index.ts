@@ -694,7 +694,8 @@ export function absorbShieldHit(state: ShieldState, terrain: boolean, tick: numb
  * ```
  */
 export function absorbPodHit(state: ShieldState, pod: number, tick: number): ShieldHit {
-  if (!(pod >= 0 && pod < state.podCount) || state.podHits[pod] <= 0) return ShieldHit.None;
+  // "Not a standing pod" (as `podActive`): a slot that is not whole reads `undefined`.
+  if (!(pod >= 0 && pod < state.podCount && state.podHits[pod] > 0)) return ShieldHit.None;
   if (state.podIFrames[pod] > 0) {
     state.absorbed++;
     return ShieldHit.Blocked;
@@ -794,7 +795,7 @@ export function shieldWearFrame(state: Readonly<ShieldState>, frames: number): n
  */
 export function podWearFrame(state: Readonly<ShieldState>, pod: number, frames: number): number {
   const max = state.podMaxHits;
-  if (!(pod >= 0 && pod < state.podCount) || max <= 0 || frames <= 1) return 0;
+  if (!(pod >= 0 && pod < state.podCount) || pod % 1 !== 0 || max <= 0 || frames <= 1) return 0;
   const frame = frames - Math.ceil((state.podHits[pod] * frames) / max);
   return frame < 0 ? 0 : frame > frames - 1 ? frames - 1 : frame;
 }

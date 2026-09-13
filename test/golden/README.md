@@ -19,6 +19,8 @@ score, lives, death ticks, boss kill).
 | `zone-a-type-d` | 4-way playtest bot | the boss with a full Type D loadout (M2-03): Twin Laser, Photon Torpedo, Free Way, FULL BARRIER on `!` |
 | `zone-a-rotate` | 4-way playtest bot | the boss with Rotate Options and the Rotate Shield (M2-04): orbiting Options, spinning pods |
 | `zone-a-reduce` | 4-way playtest bot | the boss with Formation Options and Reduce (M2-04): the `>` of Options, the shrunken hurtbox |
+| `zone-a-snake` | 4-way playtest bot | the whole stage with Snake Options and the front Shield (M2-04): the pulled chain, pods taking hits, a death |
+| `zone-a-free-shield` | 4-way playtest bot | the whole stage at Arcade difficulty with the Free Shield (M2-04): a pod pair ahead taking hits, a death |
 
 - `golden.test.ts` (part of `pnpm test`) plays every file back into a fresh session: every hash and
   the outcome must match. A failure means the simulation changed.

@@ -13,7 +13,9 @@
  * dies until the game is over (the Classic penalty, respawns, `gameOver`) and the stage skip to
  * HALCYON BULWARK with the full loadout under the Arcade penalty; four more boss runs fly the meter
  * arsenal of M2-03 (full Type B, Type C and Type D loadouts, and a Weapon Edit with LIFE OPTION on
- * `!`) — together every Types B–D weapon.
+ * `!`) — together every Types B–D weapon; four more fly the Option types and `?` shields of M2-04
+ * (Rotate Options with the Rotate Shield, Formation with Reduce, Snake with the front Shield, the
+ * trail with the Free Shield) — together every Option type and every meter shield.
  *
  * @module
  */
@@ -193,6 +195,34 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = Object.freeze([
       loadout: 'full',
       optionChoice: 'formation',
       shieldChoice: 'reduce',
+    },
+    godMode: false,
+    bot: 'four-way',
+  },
+  {
+    name: 'zone-a-snake',
+    description:
+      'AZURE VERGE with Snake Options and the front Shield (M2-04): a pulled chain, two pods wearing apart',
+    stageId: 'zone-a',
+    config: {
+      seed: 12,
+      loadout: 'full',
+      optionChoice: 'snake',
+      shieldChoice: 'shield',
+    },
+    godMode: false,
+    bot: 'four-way',
+  },
+  {
+    name: 'zone-a-free-shield',
+    description:
+      'AZURE VERGE at Arcade difficulty with trailing Options and the Free Shield (M2-04): a pod pair ahead',
+    stageId: 'zone-a',
+    config: {
+      seed: 13,
+      difficulty: 'arcade',
+      loadout: 'full',
+      shieldChoice: 'freeShield',
     },
     godMode: false,
     bot: 'four-way',
