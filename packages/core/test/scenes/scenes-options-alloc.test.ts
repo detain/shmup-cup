@@ -38,6 +38,7 @@ describe('core/scenes options allocation', () => {
       game.step();
     };
     tap(Action.Confirm); // PRESS OK
+    tap(Action.Down); // 2 PLAYERS (M2-06)
     tap(Action.Down); // OPTIONS
     tap(Action.Confirm);
     tap(0);

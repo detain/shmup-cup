@@ -61,5 +61,6 @@ describe('core/scenes allocation', () => {
     expect(game.world).toBe(world); // no game was started inside the loop
     expect(flow.stack.top?.id).toBe('game');
     expect(growth.bytes).toBeLessThan(64 * 1024);
-  });
+    // ~0.8 s alone; the full parallel `pnpm test` load pushed it past the default 5 s (M2-06).
+  }, 30_000);
 });

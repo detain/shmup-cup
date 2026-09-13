@@ -172,6 +172,11 @@
  * {@link DIRECT_ITEM_DRIFT}, {@link DEFAULT_DIRECT_ITEM_PLAN}, {@link DIRECT_POWER_UP_EVENT_BASE},
  * {@link applyDirectDeathPenalty}, {@link directMaxLevel}.
  *
+ * **Co-op (M2-06).** Every player has its own meter (or Direct-mode levels) and shield; an item
+ * goes to whoever touches it first (player 1 when both touch it on the same tick). While two ships
+ * are in play, power-up drops are scaled by `GameConfig.coopExtra`
+ * ({@link PowerUpSystem.coopCredit}, {@link COOP_EXTRA_OFFSET}).
+ *
  * @module
  */
 import { CancelMode } from '../bullets/index.js';
@@ -199,7 +204,12 @@ import { FLASH_KIND_TICKS, FlashKind, requestFlash, type FxState } from '../fx/i
 import { Action, MAX_PLAYERS } from '../input/index.js';
 import { defineModule } from '../module-info.js';
 import { MAX_OPTIONS, STOLEN_OPTION_SPRITE } from '../options/index.js';
-import type { PlayerCamera, PlayerIntent, PlayerShip } from '../player/index.js';
+import {
+  playerOut,
+  type PlayerCamera,
+  type PlayerIntent,
+  type PlayerShip,
+} from '../player/index.js';
 import { createSoaPool, type SoaPool, type SoaSchema } from '../pools/index.js';
 import { LayerId, SpriteFlag, createSpriteBatch, type SpriteBatch } from '../presentation/index.js';
 import { MAX_LIVES } from '../scoring/index.js';
@@ -224,6 +234,12 @@ import {
   type ShieldSpec,
 } from '../shields/index.js';
 import { DIRECT_MAX_LEVEL, MainWeapon, type Loadout } from '../weapons/index.js';
+
+/**
+ * How far below a power-up drop the co-op extra item appears, in pixels (M2-06 —
+ * `GameConfig.coopExtra`), so the two items do not overlap.
+ */
+export const COOP_EXTRA_OFFSET = 12;
 
 /** Module descriptor (see {@link defineModule}). */
 export const moduleInfo = defineModule({
@@ -1064,6 +1080,13 @@ export interface PowerUpSystem {
    */
   readonly planCursor: number;
   /**
+   * The co-op drop scaling credit (M2-06, hashed): while two ships are in play (active and not out)
+   * every capsule / power-up drop adds `config.coopExtra` to it, and each whole credit drops one
+   * more item ({@link COOP_EXTRA_OFFSET} px below the first — a capsule, or the plan's next item in
+   * Direct mode). Never reset (like the plan cursor).
+   */
+  readonly coopCredit: number;
+  /**
    * A Direct-mode item's effect on a player (every pickup of one calls it — M2-05; see the module
    * docs' table). Never allocates.
    *
@@ -1261,6 +1284,10 @@ class PowerUpSystemImpl implements PowerUpSystem {
   readonly plan: Uint8Array;
   /** See {@link PowerUpSystem.planCursor}. */
   planCursor = 0;
+  /** The co-op credit (a typed array: a fraction in a closure or field write could box). */
+  private readonly credit = new Float64Array(1);
+  /** `config.coopExtra` (0 = no co-op drop scaling). */
+  private readonly coopExtra: number;
   /** Ticks an item lives per kind (0 = until it leaves the view). */
   private readonly itemLife: Int32Array;
   /** 1 per kind that drifts with the view and bounces (freed Options, Direct-mode items). */
@@ -1326,6 +1353,7 @@ class PowerUpSystemImpl implements PowerUpSystem {
         k === ItemKind.FreeOption ? FREE_OPTION_TICKS : drifts ? DIRECT_ITEM_TICKS : 0;
     }
     const config = host.config;
+    this.coopExtra = config.coopExtra > 0 ? config.coopExtra : 0;
     this.choices = meterChoicesOf(config);
     this.direct = config.powerUpMode === 'direct';
     const planned = stage !== null && stage.directItems.length > 0 ? stage.directItems : null;
@@ -1594,18 +1622,50 @@ class PowerUpSystemImpl implements PowerUpSystem {
     this.freed = 0;
   }
 
+  /** See {@link PowerUpSystem.coopCredit}. */
+  get coopCredit(): number {
+    return this.credit[0];
+  }
+
   /**
-   * Turns the enemy outcomes' drops not taken yet into items.
+   * Whether two ships are in play (active and not out): the co-op drop scaling applies.
+   *
+   * @returns `true` with two or more such ships.
+   */
+  private twoInPlay(): boolean {
+    const players = this.host.players;
+    let n = 0;
+    for (let p = 0; p < players.length; p++) {
+      const ship = players[p];
+      if (ship.active && !playerOut(ship)) n++;
+    }
+    return n >= 2;
+  }
+
+  /**
+   * Turns the enemy outcomes' drops not taken yet into items (M2-06: with two ships in play, a
+   * power-up drop adds `config.coopExtra` to the co-op credit and each whole credit drops one more
+   * item — {@link PowerUpSystem.coopCredit}).
    */
   private takeDrops(): void {
     const o = this.host.enemies.outcomes;
     const n = o.dropCount;
+    const scaled = n > this.dropsTaken && this.coopExtra > 0 && this.twoInPlay();
+    const credit = this.credit;
     for (let d = this.dropsTaken; d < n; d++) {
       const kind = o.dropKind[d];
       if (kind === DropKind.Capsule || kind === DropKind.PowerUp) {
         // Mode-agnostic (M2-05): a capsule for the meter, the next planned item in Direct mode.
         if (this.direct) this.dropDirect(o.dropX[d], o.dropY[d]);
         else this.spawnItem(ItemKind.Capsule, o.dropX[d], o.dropY[d]);
+        if (!scaled) continue;
+        credit[0] += this.coopExtra;
+        while (credit[0] >= 1) {
+          credit[0] -= 1;
+          const y = o.dropY[d] + COOP_EXTRA_OFFSET;
+          if (this.direct) this.dropDirect(o.dropX[d], y);
+          else this.spawnItem(ItemKind.Capsule, o.dropX[d], y);
+        }
       } else if (kind === DropKind.BlueCapsule) {
         this.spawnItem(ItemKind.BlueCapsule, o.dropX[d], o.dropY[d]);
       } else if (kind === DropKind.FreeOption) {

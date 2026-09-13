@@ -18,7 +18,9 @@ import { DrawOp, createDrawList, type DrawList } from '../../src/presentation/in
 import { ShieldKind } from '../../src/shields/index.js';
 import {
   HUD_COLORS,
+  HUD_COMMAND_COUNT,
   HUD_LAYOUT,
+  HUD_STRING_COUNT,
   HUD_STRING_SLOTS,
   buildHud,
   createHud,
@@ -55,7 +57,7 @@ const DB: ContentDb = (() => {
 const SPRITES = resolveUiSprites(DB);
 
 /** No UI sprite at all. */
-const NONE: UiSprites = { life: -1, meterSlot: -1, meterLabels: -1, logo: -1 };
+const NONE: UiSprites = { life: -1, lifeP2: -1, meterSlot: -1, meterLabels: -1, logo: -1 };
 
 /**
  * A world of the test content.
@@ -229,7 +231,8 @@ describe('core/ui HUD edge: Force Field and player 2', () => {
 
   it("rebuilds when player 2 joins, when player 2's score changes and when the shield grows", () => {
     const w = world();
-    const list = createDrawList(64, 4);
+    // Both ships in play: the co-op halves (M2-06) need the HUD's full string slots.
+    const list = createDrawList(HUD_COMMAND_COUNT, HUD_STRING_COUNT);
     const hud = createHud(SPRITES);
     expect(hud.update(w, list)).toBe(true);
     expect(hud.update(w, list)).toBe(false);
@@ -259,16 +262,22 @@ describe('core/ui HUD edge: Force Field and player 2', () => {
 });
 
 describe('core/ui HUD edge: the list', () => {
-  it('fits the worst case into the game scene’s 64-command HUD list without drops', () => {
+  it('fits the worst case into the game scene’s HUD list without drops', () => {
     for (const sprites of [SPRITES, NONE]) {
       const w = world({ loadout: 'full' });
-      (w.players[1] as { active: boolean }).active = true;
       setLives(w, 6); // five stock icons
       w.powerups.meters[0].cursor = 6;
       const list = createDrawList(64, 4);
       buildHud(w, list, sprites);
       expect(list.dropped).toBe(0);
       expect(list.count).toBeLessThanOrEqual(32);
+      // Both ships in play (M2-06): the co-op halves.
+      (w.players[1] as { active: boolean }).active = true;
+      w.powerups.meters[1].cursor = 6;
+      const coop = createDrawList(HUD_COMMAND_COUNT, HUD_STRING_COUNT);
+      buildHud(w, coop, sprites);
+      expect(coop.dropped).toBe(0);
+      expect(coop.count).toBeLessThanOrEqual(HUD_COMMAND_COUNT);
     }
   });
 

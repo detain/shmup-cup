@@ -68,12 +68,27 @@ describe.skipIf(updating)('golden replays — file guards', () => {
       }
       expect(expected.lives).toBeGreaterThanOrEqual(0);
       expect(expected.score).toBeGreaterThanOrEqual(0);
-      // The bots only drive player 1; player 2 never pressed anything.
-      expect(Array.from(replay.inputs[1]).every((word) => word === 0)).toBe(true);
+      // One-player runs: the bots only drive player 1; player 2 never pressed anything. Co-op runs
+      // (M2-06): player 2's first input is its START at the scenario's join tick.
+      const scenario = GOLDEN_SCENARIOS.find((candidate) => candidate.name === name);
+      const p2 = scenario?.p2;
+      const words2 = Array.from(replay.inputs[1]);
+      if (p2 === undefined) {
+        expect(words2.every((word) => word === 0)).toBe(true);
+        expect(expected.p2).toBeUndefined();
+      } else {
+        expect(replay.header.config.coop).toBe(true);
+        expect(words2.findIndex((word) => word !== 0)).toBe(p2.joinTick);
+        expect(words2[p2.joinTick]).toBe(Action.Pause | (Action.Pause << 16));
+        expect(expected.p2).toBeDefined();
+        expect([...(expected.p2?.deathTicks ?? [])].sort((a, b) => a - b)).toEqual(
+          expected.p2?.deathTicks,
+        );
+      }
       // Every recorded word is a held | pressed << 16 pair of real actions.
       const known = 0xffff;
-      for (const word of replay.inputs[0]) {
-        expect(word & ~(known | (known << 16))).toBe(0);
+      for (const words of replay.inputs) {
+        for (const word of words) expect(word & ~(known | (known << 16))).toBe(0);
       }
     },
   );

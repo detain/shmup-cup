@@ -172,6 +172,71 @@
       "register": []
     },
     {
+      "id": "keyboard-split",
+      "label": "SPLIT KEYBOARD",
+      "device": "keyboard",
+      "context": {
+        "game": {
+          "byCode": {
+            "KeyW": ["Up"],
+            "KeyS": ["Down"],
+            "KeyA": ["Left"],
+            "KeyD": ["Right"],
+            "KeyF": ["PowerUp"],
+            "KeyG": ["Special", "Speed"],
+            "Escape": ["Pause"],
+            "KeyQ": ["Pause"]
+          },
+          "byKeyCode": {}
+        },
+        "menu": {
+          "byCode": {
+            "KeyW": ["Up"],
+            "KeyS": ["Down"],
+            "KeyA": ["Left"],
+            "KeyD": ["Right"],
+            "KeyF": ["Confirm"],
+            "KeyG": ["Back"],
+            "Escape": ["Back"],
+            "KeyQ": ["Pause"]
+          },
+          "byKeyCode": {}
+        }
+      },
+      "split": {
+        "game": {
+          "byCode": {
+            "ArrowUp": ["Up"],
+            "ArrowDown": ["Down"],
+            "ArrowLeft": ["Left"],
+            "ArrowRight": ["Right"],
+            "KeyK": ["PowerUp"],
+            "KeyL": ["Special", "Speed"],
+            "Enter": ["Pause"],
+            "NumpadEnter": ["Pause"]
+          },
+          "byKeyCode": {}
+        },
+        "menu": {
+          "byCode": {
+            "ArrowUp": ["Up"],
+            "ArrowDown": ["Down"],
+            "ArrowLeft": ["Left"],
+            "ArrowRight": ["Right"],
+            "KeyK": ["Confirm"],
+            "KeyL": ["Back"],
+            "Enter": ["Confirm"],
+            "NumpadEnter": ["Confirm"]
+          },
+          "byKeyCode": {}
+        }
+      },
+      "releaseDebounceTicks": 0,
+      "diagonals": "combine",
+      "socd": "neutral",
+      "register": []
+    },
+    {
       "id": "gamepad-standard",
       "label": "GAMEPAD",
       "device": "gamepad",

@@ -47,6 +47,11 @@
  * {@link addScore} keeps that digit (a point value that is not a multiple of 10 cannot change
  * it) and the clamp becomes `MAX_SCORE + digit`.
  *
+ * **Co-op (M2-06).** Each player keeps its own score, extends and continue count
+ * ({@link PlayerScore.continues} — also each player's continue budget: `core/world`
+ * `continuesLeft` is `GameConfig.continues` minus it); a kill, bonus or pickup is credited to the
+ * player who made it.
+ *
  * **Hi-score.** Session-wide, starting at 0 or at the value set from outside
  * ({@link ScoreBoard.setHiScore}) — the scene flow sets the save's best score of the game's mode
  * (`core/save`, M1-17). It is presentation data derived from the scores, so it is
@@ -83,7 +88,7 @@ import type { PowerUpOutcomes } from '../powerups/index.js';
 export const moduleInfo = defineModule({
   name: 'scoring',
   status: 'partial',
-  specRefs: ['shmup_feat.md §15', 'shmup_feat.md §10'],
+  specRefs: ['shmup_feat.md §15', 'shmup_feat.md §10', 'shmup_feat.md §16'],
 });
 
 /** Highest score a player can reach (plan M1-12): eight digits, the last one kept for continues. */
@@ -128,6 +133,7 @@ export class PlayerScore {
   extendsEarned = 0;
   /**
    * Continues used (M2-01, capped at 9 — shown in the score's last digit: {@link markContinue}).
+   * Since M2-06 also the player's own continue count (per-player continues in co-op).
    */
   continues = 0;
 }

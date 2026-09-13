@@ -60,7 +60,7 @@ describe('golden replays (zone A, playtest bots)', () => {
     },
   );
 
-  it('covers the whole stage, deaths to game over, the boss under the Arcade penalty and both ships', () => {
+  it('covers the whole stage, deaths to game over, the boss under the Arcade penalty, both ships and co-op', () => {
     const god = readGolden('zone-a-god').file.expected;
     expect(god.status).toBe('stageClear');
     expect(god.bossDefeated).toBe(true);
@@ -92,5 +92,15 @@ describe('golden replays (zone A, playtest bots)', () => {
     expect(mantaDeaths.file.expected.status).toBe('gameOver');
     expect(mantaDeaths.file.expected.deathTicks).toHaveLength(3);
     expect(mantaDeaths.file.expected.lives).toBe(0);
+    // Co-op (M2-06): player 2 drops in and scores; a weaving player 2 continues with START.
+    const coop = readGolden('zone-a-coop');
+    expect(coop.replay.header.config.coop).toBe(true);
+    expect(coop.file.expected.status).toBe('stageClear');
+    expect(coop.file.expected.p2?.score).toBeGreaterThan(0);
+    expect(readGolden('zone-a-god').file.expected.p2).toBeUndefined();
+    const coopDeaths = readGolden('zone-a-coop-deaths').file.expected;
+    expect(coopDeaths.p2?.continues).toBeGreaterThan(0);
+    expect(coopDeaths.p2?.deathTicks.length).toBeGreaterThan(3);
+    expect(coopDeaths.deathTicks).toEqual([]); // player 1 played on
   });
 });

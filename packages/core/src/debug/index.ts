@@ -491,7 +491,8 @@ function mixWeapons(weapons: World['weapons']): void {
 
 /**
  * Mixes the power-up state (meters, pending Mega Crashes, the ships' shields — the Arm's tier and
- * count too —, taken drops, the Direct-mode item plan's cursor — M2-05) into {@link accumulator}.
+ * count too —, taken drops, the Direct-mode item plan's cursor — M2-05 —, the co-op drop credit —
+ * M2-06) into {@link accumulator}.
  *
  * @param world - The world.
  */
@@ -526,6 +527,8 @@ function mixPowerUps(world: World): void {
   }
   mixNumber(powerups.dropsTaken);
   mixNumber(powerups.planCursor);
+  // The co-op drop scaling credit (M2-06).
+  mixNumber(powerups.coopCredit);
 }
 
 /**

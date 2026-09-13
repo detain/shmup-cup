@@ -5,7 +5,8 @@ Committed replays of zone A (AZURE VERGE) that pin down what the simulation does
 sim-affecting `GameConfig` field, the stage, god mode as `assisted`), every tick's input
 (`held | pressed << 16` per player, run-length encoded, base64), a state hash every 600 ticks and
 the final hash — plus the scenario's `description` and its `expected` outcome (status, ticks,
-score, lives, death ticks, boss kill).
+score, lives, death ticks, boss kill; for a co-op run also player 2's score, lives, death ticks and
+continues).
 
 | Scenario | Who plays | Covers |
 |---|---|---|
@@ -24,6 +25,8 @@ score, lives, death ticks, boss kill).
 | `zone-a-manta` | 4-way playtest bot | the whole stage with the Direct-mode MANTA (M2-05): planned colour items from the carriers, the Arm, a family switch |
 | `zone-a-manta-boss` | 4-way playtest bot | the boss with a fully powered MANTA (M2-05): level-8 discs and sub discs, the gold Hyper Arm |
 | `zone-a-manta-deaths` | a weaving pilot that never dodges | the MANTA under the Arcade penalty (M2-05): Direct-mode deaths, checkpoint restarts, `gameOver` |
+| `zone-a-coop` | two 4-way playtest bots (player 2 from its START at tick 300) | a co-op game (M2-06): the drop-in join, two ships sharing the capsules, the co-op drop scaling, to `stageClear` |
+| `zone-a-coop-deaths` | the 4-way bot and a weaving player 2 (START at tick 120) | co-op deaths (M2-06): player 2 dies and continues with START while player 1 plays on |
 
 - `golden.test.ts` (part of `pnpm test`) plays every file back into a fresh session: every hash and
   the outcome must match. A failure means the simulation changed.

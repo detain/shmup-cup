@@ -63,7 +63,8 @@
  * - File format: {@link CONTENT_FORMAT_VERSION}, {@link CONTENT_KINDS} / {@link ContentKind},
  *   {@link ContentFileHeader}, {@link CONTENT_MIGRATIONS} ({@link ContentMigration},
  *   {@link ContentMigrationTable}).
- * - Per-kind spec types: {@link PlayerShipSpec} ({@link BoxSpec}, {@link MarginSpec}),
+ * - Per-kind spec types: {@link PlayerShipSpec} ({@link BoxSpec}, {@link MarginSpec},
+ *   {@link P2_SPRITE_SUFFIX} — M2-06),
  *   {@link WeaponSpec} ({@link WeaponSlot}, {@link WEAPON_SLOTS}), {@link WeaponPresetSpec},
  *   {@link WeaponFamilySpec} ({@link WeaponLevelSpec}, {@link WeaponEmitterSpec},
  *   {@link WeaponFamilySlot}, {@link MAX_FAMILY_LEVELS}, {@link MAX_LEVEL_SHOTS} — M2-05),
@@ -111,6 +112,11 @@
  * (`directItems`: the {@link DIRECT_ITEMS} colours, in the order its `powerup` drops hand them out
  * in Direct mode); enemies and formations may drop `powerup` — a capsule in meter mode, the next
  * planned item in Direct mode.
+ *
+ * **Co-op (M2-06).** Player 2 flies the same ship in its palette-swap colours: for every ship the
+ * loader interns the sprite `<sprite>@p2` (the asset pipeline derives it — {@link P2_SPRITE_SUFFIX})
+ * and resolves it into {@link PlayerShipSpec.spriteP2Id}; `pnpm content:check` verifies the atlas
+ * has it like every other sprite name the content uses.
  *
  * **Planned API (later steps).** Kinds `campaign`, `strings` (M2); `input-profiles`,
  * `sfx`/`music` and `fx` files stay *foreign* here and are validated by their owning packages
@@ -308,6 +314,12 @@ export interface PlayerShipSpec {
   readonly sprite: string;
   /** Resolved {@link ContentDb.sprites} index of {@link PlayerShipSpec.sprite}. */
   readonly spriteId: number;
+  /**
+   * Resolved {@link ContentDb.sprites} index of player 2's palette-swap variant
+   * `<sprite>`{@link P2_SPRITE_SUFFIX} (M2-06 — interned by {@link loadContent} for every ship; -1
+   * without it, e.g. the built-in default ship: player 2 then uses {@link PlayerShipSpec.spriteId}).
+   */
+  readonly spriteP2Id: number;
   /** Movement speed per speed level, in pixels per tick (decision D3). */
   readonly speeds: readonly number[];
   /** Radius of the tiny centred hurtbox, in pixels. */
@@ -338,6 +350,13 @@ export interface PlayerShipSpec {
    */
   readonly startSpeedLevel: number;
 }
+
+/**
+ * Suffix of player 2's palette-swap sprite of a ship (plan M2-06, shmup_feat.md §5 "co-op ships in
+ * different colors"): the asset pipeline derives `ships/kestrel@p2` from `ships/kestrel`, and
+ * {@link loadContent} interns `<sprite>@p2` for every ship ({@link PlayerShipSpec.spriteP2Id}).
+ */
+export const P2_SPRITE_SUFFIX = '@p2';
 
 /** Where a weapon sits in a loadout (shmup_feat.md §7A/§7B). */
 export type WeaponSlot = 'main' | 'double' | 'laser' | 'missile' | 'sub';
@@ -1365,7 +1384,7 @@ const MARGIN_SCHEMA = s.object({
 
 /** One entry of `ships` in a `player` file. */
 const SHIP_SCHEMA: Schema<
-  Omit<PlayerShipSpec, 'spriteId' | 'mode' | 'startSpeedLevel'> & {
+  Omit<PlayerShipSpec, 'spriteId' | 'spriteP2Id' | 'mode' | 'startSpeedLevel'> & {
     mode?: PowerUpMode;
     startSpeedLevel?: number;
   }
@@ -2369,10 +2388,16 @@ export function loadContent(
   if (options.extraSprites !== undefined) {
     for (const name of options.extraSprites) spriteNames.add(name);
   }
+  // Player 2's palette swap of every ship (M2-06).
+  for (const ship of db.ships) spriteNames.add(ship.sprite + P2_SPRITE_SUFFIX);
   const sprites = buildStringTable(spriteNames);
   const scripts = buildStringTable(scriptNames);
   const patterns = compilePatternBank(db.patternFiles, issues);
   for (const site of refs) resolveRef(site, db, sprites, scripts, knownScripts, patterns, issues);
+  for (const ship of db.ships) {
+    (ship as { spriteP2Id: number }).spriteP2Id =
+      sprites.index.get(ship.sprite + P2_SPRITE_SUFFIX) ?? -1;
+  }
   checkBossReferences(db, issues);
   checkWeaponFamilies(db, issues);
   expandStageTerrains(db, issues);
@@ -2460,15 +2485,18 @@ function collect(
   switch (kind) {
     case 'player': {
       const ships = parsed['ships'] as Array<
-        Omit<PlayerShipSpec, 'mode' | 'startSpeedLevel'> & {
+        Omit<PlayerShipSpec, 'mode' | 'startSpeedLevel' | 'spriteP2Id'> & {
           mode?: PowerUpMode;
           startSpeedLevel?: number;
+          spriteP2Id?: number;
         }
       >;
       for (let i = 0; i < ships.length; i++) {
         const ship = ships[i];
         // Optional since M2-05: the meter ship's defaults, so every spec has the same fields.
         if (ship.mode === undefined) ship.mode = 'meter';
+        // Resolved with the references (M2-06: player 2's palette swap).
+        ship.spriteP2Id = -1;
         const start = ship.startSpeedLevel ?? 0;
         ship.startSpeedLevel = start;
         if (start >= ship.speeds.length) {

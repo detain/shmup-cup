@@ -19,7 +19,11 @@
  * the Direct-mode MANTA of M2-05 (the whole stage collecting its planned colour items — a family
  * switch and the Arm included —, HALCYON BULWARK fully powered: level-8 discs and sub discs, the
  * Hyper Arm — and the careless weaving pilot under the Arcade penalty: Direct-mode deaths, the
- * checkpoint restarts, `gameOver`).
+ * checkpoint restarts, `gameOver`). Two more are co-op games of M2-06 (`coop: true`): player 2
+ * drops in with START at a set tick and is flown by a second bot on player 2's input slot — the
+ * whole stage with two 4-way bots (two ships sharing the capsules, the co-op drop scaling), and the
+ * 4-way bot with a weaving player 2 (player 2's deaths and its continues back into the running game
+ * with START while player 1 plays on, until its continues are used up).
  *
  * @module
  */
@@ -28,6 +32,7 @@ import {
   Action,
   BossState,
   commitPlayerInput,
+  playerCanJoin,
   createHeadlessPlatform,
   createPlayback,
   createReplayGame,
@@ -66,6 +71,17 @@ export interface GoldenScenario {
   readonly godMode: boolean;
   /** Who plays: the 4-way playtest bot or the careless {@link weaverBot}. */
   readonly bot: 'four-way' | 'weaver';
+  /**
+   * Co-op (M2-06; with `config.coop`): player 2's pilot and the tick its controller first presses
+   * START (it drops in); afterwards it presses START again every other tick while it may join —
+   * a continue once it is out of lives.
+   */
+  readonly p2?: {
+    /** Player 2's pilot. */
+    readonly bot: 'four-way' | 'weaver';
+    /** The tick of its first START. */
+    readonly joinTick: number;
+  };
 }
 
 /**
@@ -264,7 +280,39 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = Object.freeze([
     godMode: false,
     bot: 'four-way',
   },
+  {
+    name: 'zone-a-coop',
+    description:
+      'AZURE VERGE in co-op (M2-06): player 2 drops in with START, two 4-way bots share the capsules',
+    stageId: 'zone-a',
+    config: { seed: 17, coop: true },
+    godMode: false,
+    bot: 'four-way',
+    p2: { bot: 'four-way', joinTick: 300 },
+  },
+  {
+    name: 'zone-a-coop-deaths',
+    description:
+      'co-op with a weaving player 2 (M2-06): it dies, continues with START while player 1 plays on',
+    stageId: 'zone-a',
+    config: { seed: 18, coop: true },
+    godMode: false,
+    bot: 'four-way',
+    p2: { bot: 'weaver', joinTick: 120 },
+  },
 ]);
+
+/** Player 2's side of a co-op golden run (M2-06). */
+export interface GoldenPlayer2 {
+  /** Player 2's score. */
+  readonly score: number;
+  /** Player 2's lives left. */
+  readonly lives: number;
+  /** Ticks on which player 2 died. */
+  readonly deathTicks: readonly number[];
+  /** Continues player 2 used (its score's last digit). */
+  readonly continues: number;
+}
 
 /** What a golden run ended with (recorded in the file, checked on playback). */
 export interface GoldenOutcome {
@@ -280,6 +328,8 @@ export interface GoldenOutcome {
   readonly deathTicks: readonly number[];
   /** Whether the boss was destroyed. */
   readonly bossDefeated: boolean;
+  /** Player 2 — co-op runs only (M2-06). */
+  readonly p2?: GoldenPlayer2;
 }
 
 /** A golden file: the encoded replay plus what it is and how it must end. */
@@ -304,10 +354,14 @@ export function goldenPath(name: string): URL {
 class OutcomeWatch {
   /** Deaths so far. */
   readonly deathTicks: number[] = [];
+  /** Player 2's deaths so far (co-op). */
+  readonly p2DeathTicks: number[] = [];
   /** Whether the boss reached its death sequence. */
   bossDefeated = false;
   /** Whether player 1 was alive before the tick. */
   private wasAlive = false;
+  /** Whether player 2 was alive before the tick. */
+  private p2WasAlive = false;
 
   /**
    * Starts watching a session (before its first tick).
@@ -319,12 +373,16 @@ class OutcomeWatch {
   /** Call before each tick. */
   before(): void {
     this.wasAlive = this.game.world.players[0].state === 'alive';
+    this.p2WasAlive = this.game.world.players[1].state === 'alive';
   }
 
   /** Call after each tick. */
   after(): void {
     const world = this.game.world;
     if (this.wasAlive && world.players[0].state === 'dying') this.deathTicks.push(world.tick - 1);
+    if (this.p2WasAlive && world.players[1].state === 'dying') {
+      this.p2DeathTicks.push(world.tick - 1);
+    }
     if (world.bosses.boss.state === BossState.Dying) this.bossDefeated = true;
   }
 
@@ -335,13 +393,24 @@ class OutcomeWatch {
    */
   outcome(): GoldenOutcome {
     const world = this.game.world;
-    return {
+    const outcome: GoldenOutcome = {
       status: world.status,
       ticks: world.tick,
       score: world.scoring.board.scores[0].score,
       lives: world.players[0].lives,
       deathTicks: this.deathTicks.slice(),
       bossDefeated: this.bossDefeated,
+    };
+    if (!world.config.coop) return outcome;
+    const p2 = world.scoring.board.scores[1];
+    return {
+      ...outcome,
+      p2: {
+        score: p2.score,
+        lives: world.players[1].lives,
+        deathTicks: this.p2DeathTicks.slice(),
+        continues: p2.continues,
+      },
     };
   }
 }
@@ -364,11 +433,26 @@ export function recordGolden(scenario: GoldenScenario): { replay: Replay; outcom
   const recorder = createReplayRecorder(platform.input, header);
   const game = createReplayGame({ ...platform, input: recorder }, header, shippedContent());
   const bot = scenario.bot === 'weaver' ? weaverBot() : fourWayBot();
+  const p2 = scenario.p2;
+  const bot2 = p2 === undefined ? null : p2.bot === 'weaver' ? weaverBot() : fourWayBot(1);
   const watch = new OutcomeWatch(game);
   const input = platform.snapshot.players[0];
+  const input2 = platform.snapshot.players[1];
   for (let i = 0; i < DEFAULT_MAX_TICKS; i++) {
     const world = game.world;
     commitPlayerInput(input, bot.decide(world) & 0xffff);
+    if (p2 !== undefined && bot2 !== null) {
+      // Player 2's controller (M2-06): START at the join tick, then again every other tick while
+      // it may join (a continue once out of lives); its pilot while its ship plays.
+      const tick = world.tick;
+      let mask = 0;
+      if (tick >= p2.joinTick && playerCanJoin(world, 1)) {
+        mask = (tick - p2.joinTick) % 2 === 0 ? Action.Pause : 0;
+      } else if (world.players[1].active) {
+        mask = bot2.decide(world) & 0xffff;
+      }
+      commitPlayerInput(input2, mask);
+    }
     watch.before();
     game.step();
     game.events.clear();

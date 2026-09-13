@@ -612,8 +612,10 @@ describe('integration: content/ sprites exist in the atlas', () => {
     const { db, issues } = loadContent(edited);
     expect(issues).toEqual([]);
     const missing = findMissingSprites(manifest, db.sprites.names, 'db.sprites.names');
-    expect(missing).toHaveLength(1);
+    // The ship and its player 2 palette swap (M2-06: interned for every ship).
+    expect(missing).toHaveLength(2);
     expect(missing[0]?.message).toContain('"ships/kestrell"');
+    expect(missing[1]?.message).toContain('"ships/kestrell@p2"');
   });
 });
 

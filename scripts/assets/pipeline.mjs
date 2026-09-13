@@ -5,9 +5,9 @@
  *
  * ```
  * assets/source/sprites/**\/*.sprite.json ─┐
- * scripts/assets/procedural/*.mjs ─────────┼─► sprites ─► + PNG overrides ─► + @flash ─┐
- * assets/source/fonts/*.font.json ─────────┘                                         │
- *                         packRects() ◄─────────────────── frames ◄──────────────────┘
+ * scripts/assets/procedural/*.mjs ─────────┼─► sprites ─► + PNG overrides ─► + @flash, @p2 ─┐
+ * assets/source/fonts/*.font.json ─────────┘                                                │
+ *                         packRects() ◄─────────────────── frames ◄─────────────────────────┘
  *                             └─► main.png (+ main-1.png …) + main.json
  * ```
  *
@@ -44,6 +44,7 @@ import { dirname, isAbsolute, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { generateProceduralSprites } from './procedural/index.mjs';
 import { FLASH_SUFFIX, makeFlashSprite } from './flash.mjs';
+import { P2_SUFFIX, makeP2Sprite, wantsP2Variant } from './coop.mjs';
 import { buildFontSprite, loadFontSources } from './font.mjs';
 import { createImage, blit, getPixel, setPixel } from './image.mjs';
 import { MANIFEST_FORMAT_VERSION, formatManifest, frameName } from './manifest.mjs';
@@ -144,7 +145,8 @@ function displayPath(path) {
  * @remarks
  * Order of work: pixel maps and procedural sprites (a name defined twice is an issue) →
  * PNG overrides by name → font sprites (`font/<name>`) → `<name>@flash` siblings for
- * `hitFlash` sprites → default anchors (centre of frame 0). Never throws for bad sources:
+ * `hitFlash` sprites → `<name>@p2` palette swaps of the ships and the stock icon (M2-06,
+ * `coop.mjs`) → default anchors (centre of frame 0). Never throws for bad sources:
  * everything is reported in `issues`, and the caller decides ({@link buildAtlas} throws
  * {@link AssetSourceError}).
  *
@@ -206,6 +208,13 @@ export function collectSprites(options = {}) {
     if (sprite.hitFlash) {
       const flash = makeFlashSprite(sprite);
       byName.set(flash.name, flash);
+    }
+  }
+  // Player 2's palette swap of the ships and the stock icon (plan M2-06).
+  for (const sprite of [...byName.values()]) {
+    if (wantsP2Variant(sprite.name)) {
+      const p2 = makeP2Sprite(sprite);
+      byName.set(p2.name, p2);
     }
   }
 
@@ -282,7 +291,8 @@ export function buildAtlas(options = {}) {
   /** @type {AssetIssue[]} */
   const oversized = [];
   for (const sprite of sprites) {
-    if (sprite.name.endsWith(FLASH_SUFFIX)) continue; // reported for its source sprite
+    // Generated siblings are reported for their source sprite.
+    if (sprite.name.endsWith(FLASH_SUFFIX) || sprite.name.endsWith(P2_SUFFIX)) continue;
     sprite.frames.forEach((frame, i) => {
       if (frame.width > limit || frame.height > limit) {
         oversized.push({

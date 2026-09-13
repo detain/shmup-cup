@@ -17,7 +17,9 @@ import { DrawOp, createDrawList, type DrawList } from '../../src/presentation/in
 import { clearShield } from '../../src/shields/index.js';
 import {
   HUD_COLORS,
+  HUD_COMMAND_COUNT,
   HUD_LAYOUT,
+  HUD_STRING_COUNT,
   HUD_METER_FLASH_TICKS,
   buildHud,
   createHud,
@@ -113,7 +115,7 @@ describe('core/ui HUD: bars and scores', () => {
     const w = world();
     (w.players[1] as { active: boolean }).active = true;
     w.scoring.board.scores[1].score = 777;
-    const list = createDrawList(64, 4);
+    const list = createDrawList(HUD_COMMAND_COUNT, HUD_STRING_COUNT);
     buildHud(w, list, SPRITES);
     const cmds = commands(list);
     expect(cmds[6]).toEqual([DrawOp.Text, 2, 0, 292, 0, HUD_COLORS.p2]);

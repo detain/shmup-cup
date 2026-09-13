@@ -34,11 +34,11 @@ describe('input-web/web-input edge cases', () => {
     expect(p1?.device).toBe('gamepad');
   });
 
-  it('ignores pad slots 2 and 3 (placeholder until "press Start to join")', () => {
+  it('routes pad slots 2 and 3 to player 1 like every pad while one seat is routed (M2-06)', () => {
     const pads: Array<GamepadLike | null> = [null, null, pad(2, [0]), pad(3, [9])];
     const input = createWebInput({ keyTarget: null, getGamepads: () => pads });
     const snapshot = input.poll();
-    expect(snapshot.players[0]?.held).toBe(0);
+    expect(snapshot.players[0]?.held).toBe(Action.Shot | Action.Confirm | Action.Pause);
     expect(snapshot.players[1]?.held).toBe(0);
   });
 

@@ -36,17 +36,25 @@ describe('input-web/web-input createWebInput', () => {
     expect(p1?.pressed).toBe(Action.Confirm | Action.PowerUp);
   });
 
-  it('merges gamepad 0 into player 1 and gamepad 1 into player 2', () => {
+  it('merges every gamepad into player 1 with one seat, a joined pad into player 2 with two', () => {
     let pads: Array<GamepadLike | null> = [pad(0, [0]), pad(1, [15])];
     const input = createWebInput({ keyTarget: null, getGamepads: () => pads });
-    const snapshot = input.poll();
-    expect(snapshot.players[0]?.held).toBe(Action.Shot | Action.Confirm);
+    let snapshot = input.poll();
+    expect(snapshot.players[0]?.held).toBe(Action.Shot | Action.Confirm | Action.Right);
     expect(snapshot.players[0]?.device).toBe('gamepad');
-    expect(snapshot.players[1]?.held).toBe(Action.Right);
+    expect(snapshot.players[1]?.held).toBe(0);
+
+    // A co-op game (M2-06): pad 1's START takes player 2's seat.
+    input.setSeats(2);
+    pads = [pad(0, [0]), pad(1, [15, 9])];
+    snapshot = input.poll();
+    expect(snapshot.players[0]?.held).toBe(Action.Shot | Action.Confirm);
+    expect(snapshot.players[1]?.held).toBe(Action.Right | Action.Pause);
+    expect(snapshot.players[1]?.pressed).toBe(Action.Right | Action.Pause | Action.Confirm);
     expect(snapshot.players[1]?.device).toBe('gamepad');
 
     pads = [null, null];
-    expect(input.poll().players[1]?.released).toBe(Action.Right);
+    expect(input.poll().players[1]?.released).toBe(Action.Right | Action.Pause);
   });
 
   it('clear() drops held input', () => {

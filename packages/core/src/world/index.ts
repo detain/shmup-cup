@@ -30,9 +30,9 @@
  * still run, so hit-stop is deterministic and replays stay in sync.
  *
  * **State built in M1-06.** Player 1's KESTREL (spec from `content/player/`, fly-in at session
- * start); player 2's ship exists but stays inactive until co-op (M2-06). The view's sprite
- * batches — the ground and flying enemies (M1-08) and the players (`LayerId.Player`) — are
- * mirrored from the objects at the end of every tick.
+ * start); player 2's ship exists but stays inactive until it joins a co-op game (M2-06). The
+ * view's sprite batches — the ground and flying enemies (M1-08) and the players
+ * (`LayerId.Player`) — are mirrored from the objects at the end of every tick.
  *
  * **The stage (M1-07).** With `config.stage` set, the World runs that stage: its
  * {@link World.stage | runner} drives the camera in phase 3 (keys, ramps, pans, locks) and fires
@@ -158,6 +158,20 @@
  * continue (`core/scoring` `markContinue`), the stage restarts at its last checkpoint and the
  * ships fly in — status `playing`.
  *
+ * **Two-player co-op (M2-06).** With `config.coop` (the title's `2 PLAYERS`) player 2 **drops in**:
+ * a {@link JOIN_ACTIONS} press (`Confirm` or `Pause` — the HUD's `PRESS START`) on its input slot
+ * while it may join ({@link playerCanJoin}) brings it in during phase 1 ({@link joinPlayer}: a
+ * blinking fly-in with the config's lives, `SFX PlayerJoin`). Each player keeps its own lives,
+ * score, meter / items, shield and **continues** ({@link continuesLeft}: `config.continues` per
+ * player, counted in its score's last digit): a player out of lives leaves play while the other
+ * plays on, and comes back the same way with a continue (no stage restart); the game is over only
+ * when every active player is out, and the continue countdown then continues the players who
+ * press OK ({@link continueWorld}'s `who`). Items go to whoever touches them first (player 1 on a
+ * tie), aimed shots target the nearest living player (player 1 on a tie), and while two ships are
+ * in play every power-up drop adds `config.coopExtra` to a credit that drops extra items
+ * (`core/powerups`). Player 2 is drawn with the ship's palette swap (`<sprite>@p2`,
+ * `PlayerShipSpec.spriteP2Id`). Replays record both players' input, so a join replays too.
+ *
  * **Zero allocation.** Everything is allocated by {@link createWorld}; {@link stepWorld} and the
  * systems only write numbers into existing objects and typed arrays.
  *
@@ -170,6 +184,8 @@
  *   strongest ship's power ({@link updateWorldRank})
  * - shmup_feat.md §10 — continues: restart at the last checkpoint with fresh lives, the continue
  *   count in the score's last digit ({@link canContinue}, {@link continueWorld})
+ * - shmup_feat.md §16 — 2-player simultaneous co-op: drop-in join, separate lives and continues
+ *   ({@link joinPlayer}, M2-06)
  *
  * **Public API.** {@link createWorld}, {@link WorldOptions}, {@link stepWorld}, {@link World},
  * {@link WorldCamera},
@@ -178,11 +194,12 @@
  * {@link RegisteredPool}, {@link syncWorldView}, {@link GRID_MARGIN}, {@link resolveWorldStage},
  * {@link ENGINE_SPRITES}, {@link DEATH_HIT_STOP_TICKS}, {@link DEATH_SHAKE_TICKS},
  * {@link DEATH_MUSIC_DUCK_TICKS}, {@link updateWorldRank}, {@link canContinue},
- * {@link continueWorld}.
+ * {@link continueWorld}; co-op (M2-06): {@link JOIN_ACTIONS}, {@link playerCanJoin},
+ * {@link joinPlayer}, {@link continuesLeft}.
  *
  * @module
  */
-import { MAX_PLAYERS, type InputSnapshot } from '../input/index.js';
+import { Action, MAX_PLAYERS, type InputSnapshot } from '../input/index.js';
 import { PLAYFIELD_H, PLAYFIELD_W, type GameConfig } from '../config/index.js';
 import {
   TerrainType,
@@ -240,6 +257,7 @@ import { UI_SPRITES } from '../ui/index.js';
 import {
   FX_CUES,
   SFX_CUES,
+  SfxPriority,
   SimEventKind,
   createEventQueue,
   type EventQueue,
@@ -307,6 +325,7 @@ export const moduleInfo = defineModule({
     'shmup_feat.md §18',
     'shmup_feat.md §15',
     'shmup_feat.md §10',
+    'shmup_feat.md §16',
   ],
 });
 
@@ -386,7 +405,10 @@ export interface World {
   readonly rng: RngStreams;
   /** Presentation events (SFX, particles, shake …); the host drains it once per frame. */
   readonly events: EventQueue;
-  /** Exactly {@link MAX_PLAYERS} ships; index 0 = player 1 (P2 inactive until co-op). */
+  /**
+   * Exactly {@link MAX_PLAYERS} ships; index 0 = player 1 (player 2 inactive until it joins a co-op
+   * game — {@link joinPlayer}, M2-06).
+   */
   readonly players: readonly PlayerShip[];
   /** Per-player intents of the current tick (phase 1). */
   readonly intents: readonly PlayerIntent[];
@@ -451,7 +473,11 @@ export interface World {
    * (written by {@link updateWorldRank}) and `special` (0).
    */
   readonly rankInputs: { -readonly [K in keyof RankInputs]: RankInputs[K] };
-  /** Continues used so far this game (M2-01; {@link continueWorld}). */
+  /**
+   * Continues used so far this game (M2-01): one per {@link continueWorld} (whoever continued) and
+   * one per co-op player continuing mid-game ({@link joinPlayer}, M2-06). The per-player budget is
+   * {@link continuesLeft}.
+   */
   continuesUsed: number;
   /** What the renderer draws: live references, refreshed at the end of every tick. */
   readonly view: WorldView;
@@ -559,7 +585,9 @@ export const GRID_MARGIN = 64;
 
 /**
  * Phase 1: copies each player's input into its intent (every slot, active or not, so a joining
- * player's device is known).
+ * player's device is known); in a co-op game (M2-06) a {@link JOIN_ACTIONS} press of a player who
+ * may join ({@link playerCanJoin}) then brings that player in ({@link joinPlayer}). Runs during
+ * hit-stop too, so a join press is never lost to one.
  *
  * @param world - The world.
  * @param input - The tick's input.
@@ -569,6 +597,10 @@ const inputSystem: WorldSystem = (world, input) => {
   const intents = world.intents;
   for (let i = 0; i < intents.length && i < players.length; i++) {
     readPlayerIntent(intents[i], players[i]);
+  }
+  if (!world.config.coop) return;
+  for (let i = 0; i < intents.length; i++) {
+    if ((intents[i].pressed & JOIN_ACTIONS) !== 0) joinPlayer(world, i);
   }
 };
 
@@ -865,8 +897,119 @@ export function updateWorldRank(world: World): number {
 }
 
 /**
- * Whether the game can go on with a continue (shmup_feat.md §10): the status is `gameOver` and
- * `config.continues` is more than {@link World.continuesUsed}.
+ * The presses that bring a player into a co-op game (plan M2-06, shmup_feat.md §16 "drop-in"):
+ * `Confirm` (an unassigned controller's first OK — the input adapter forwards it on the free
+ * player slot) or `Pause` (the controller's START, the HUD's `PRESS START`). The World reads them in
+ * phase 1 on every slot that may join ({@link playerCanJoin}); the scene flow's game scene does not
+ * pause on such a press.
+ */
+export const JOIN_ACTIONS = Action.Confirm | Action.Pause;
+
+/** Every player slot, as a {@link continueWorld} mask. */
+const ALL_PLAYERS = (1 << MAX_PLAYERS) - 1;
+
+/**
+ * How many continues a player has left (shmup_feat.md §10 continues, per player since M2-06):
+ * `config.continues` minus the continues its score counts (`core/scoring`
+ * `PlayerScore.continues`), never below 0.
+ *
+ * @param world - The world.
+ * @param slot - The player slot.
+ * @returns Continues left (0 for a bad slot).
+ *
+ * @example
+ * ```ts
+ * continuesLeft(world, 1); // → 3 on Normal before player 2 ever continued
+ * ```
+ */
+export function continuesLeft(world: World, slot: number): number {
+  const scores = world.scoring.board.scores;
+  if (!(slot >= 0 && slot < scores.length && slot % 1 === 0)) return 0;
+  const left = world.config.continues - scores[slot].continues;
+  return left > 0 ? left : 0;
+}
+
+/**
+ * Whether a player may drop into the running game now (plan M2-06): the game is a co-op one
+ * (`config.coop`), it is being played (`playing` or `bossWarning`) and the slot is either
+ * **inactive** (it never joined — a fresh ship) or **out** (`core/player` `playerOut`) with
+ * continues left ({@link continuesLeft} — it comes back with a continue while the other player
+ * plays on). Never allocates.
+ *
+ * @param world - The world.
+ * @param slot - The player slot.
+ * @returns `true` when a {@link JOIN_ACTIONS} press of that player would {@link joinPlayer}.
+ *
+ * @example
+ * ```ts
+ * playerCanJoin(world, 1); // → true in a co-op game until player 2 presses START
+ * ```
+ */
+export function playerCanJoin(world: World, slot: number): boolean {
+  if (!world.config.coop) return false;
+  const status = world.status;
+  if (status !== 'playing' && status !== 'bossWarning') return false;
+  const players = world.players;
+  if (!(slot >= 0 && slot < players.length && slot % 1 === 0)) return false;
+  const ship = players[slot];
+  if (!ship.active) return true;
+  return playerOut(ship) && continuesLeft(world, slot) > 0;
+}
+
+/**
+ * Brings a player into the running co-op game (plan M2-06 — drop-in join and per-player
+ * continues, shmup_feat.md §16): a cold path, deterministic, called by phase 1 on a
+ * {@link JOIN_ACTIONS} press (tests and tools may call it directly).
+ *
+ * @remarks
+ * Does nothing unless {@link playerCanJoin}. An **inactive** slot becomes active with
+ * `config.startingLives` and the loadout it was given at creation (the config's starting loadout);
+ * its score starts at 0. A player who is **out** continues instead: lives back to
+ * `config.startingLives`, power gone and the starting loadout again (as {@link continueWorld}
+ * does), the continue written into its score's last digit (`core/scoring` `markContinue`) and
+ * counted in {@link World.continuesUsed} — the stage does **not** restart (the other player is
+ * still playing). Either way the ship flies in blinking from the left edge of the view
+ * (`core/player` `respawnPlayer`, invulnerable like after a death) and `SFX PlayerJoin` is pushed
+ * where it enters.
+ *
+ * @param world - The world.
+ * @param slot - The player slot.
+ * @returns `true` when the player joined or continued.
+ *
+ * @example
+ * ```ts
+ * const world = createWorld(resolveGameConfig({ coop: true, stage: 'zone-a' }), db);
+ * joinPlayer(world, 1); // → true: player 2 flies in
+ * ```
+ */
+export function joinPlayer(world: World, slot: number): boolean {
+  if (!playerCanJoin(world, slot)) return false;
+  const config = world.config;
+  const ship = world.players[slot];
+  if (!ship.active) {
+    ship.active = true;
+    ship.lives = config.startingLives;
+  } else {
+    world.continuesUsed++;
+    ship.lives = config.startingLives;
+    resetPower(world, slot);
+    markContinue(world.scoring.board, slot);
+  }
+  respawnPlayer(ship, world.ship, world.camera);
+  world.events.push(
+    SimEventKind.Sfx,
+    SFX_CUES.PlayerJoin,
+    Math.floor(ship.x) | 0,
+    Math.floor(ship.y) | 0,
+    SfxPriority.High,
+  );
+  return true;
+}
+
+/**
+ * Whether the game can go on with a continue (shmup_feat.md §10): the status is `gameOver` and at
+ * least one active player has continues left ({@link continuesLeft} — per player since M2-06; in a
+ * one-player game that is `config.continues` more than the continues used).
  *
  * @param world - The world.
  * @returns `true` when {@link continueWorld} would continue.
@@ -877,7 +1020,12 @@ export function updateWorldRank(world: World): number {
  * ```
  */
 export function canContinue(world: World): boolean {
-  return world.status === 'gameOver' && world.continuesUsed < world.config.continues;
+  if (world.status !== 'gameOver') return false;
+  const players = world.players;
+  for (let i = 0; i < players.length; i++) {
+    if (players[i].active && continuesLeft(world, i) > 0) return true;
+  }
+  return false;
 }
 
 /**
@@ -886,38 +1034,47 @@ export function canContinue(world: World): boolean {
  * tick reproduces the same state — and a cold path (it restarts the stage).
  *
  * @remarks
- * Every active ship: lives back to `config.startingLives`, power gone (`applyDeathPenalty`
- * `arcade`: no shield, basic shot, no Missile / Options, speed 0, meter cursor reset — in Direct
- * mode `applyDirectDeathPenalty`), then the config's starting loadout (`applyLoadoutPreset`, or
- * `applyDirectLoadout` in Direct mode), and its score marks the continue
- * (`markContinue`). The stage restarts at its last checkpoint (`StageRunner.restartAt`, which
- * empties every pool and system — the boss and its WARNING too) and its stage theme is queued
- * again (`SimEventKind.Music`; the continue countdown faded the music out), or the session is
- * cleared in free flight; the ships fly in at the view, the hit-stop ends and the status becomes
- * `playing`. {@link World.continuesUsed} counts it.
+ * Every active player in `who` that has continues left ({@link continuesLeft}): lives back to
+ * `config.startingLives`, power gone (`applyDeathPenalty` `arcade`: no shield, basic shot, no
+ * Missile / Options, speed 0, meter cursor reset — in Direct mode `applyDirectDeathPenalty`), then
+ * the config's starting loadout (`applyLoadoutPreset`, or `applyDirectLoadout` in Direct mode),
+ * and its score marks the continue (`markContinue`). The stage restarts at its last checkpoint
+ * (`StageRunner.restartAt`, which empties every pool and system — the boss and its WARNING too)
+ * and its stage theme is queued again (`SimEventKind.Music`; the continue countdown faded the music
+ * out), or the session is cleared in free flight; the continued ships fly in at the view, the
+ * hit-stop ends and the status becomes `playing`. {@link World.continuesUsed} counts it once. A
+ * co-op player who did not continue stays out — with continues left it may drop back in later
+ * ({@link joinPlayer}).
  *
  * @param world - The world.
- * @returns `true` when it continued; `false` when {@link canContinue} is `false` (nothing changes).
+ * @param who - Bit mask of the player slots that continue (bit 0 = player 1; default: every
+ *   player — M2-06, the co-op continue countdown passes the players who pressed OK).
+ * @returns `true` when it continued; `false` when {@link canContinue} is `false` or no player of
+ *   `who` has continues left (nothing changes).
  *
  * @example
  * ```ts
  * if (canContinue(world)) continueWorld(world); // world.status → 'playing'
+ * continueWorld(world, 1 << 1); // only player 2 continues (co-op)
  * ```
  */
-export function continueWorld(world: World): boolean {
-  if (!canContinue(world)) return false;
+export function continueWorld(world: World, who: number = ALL_PLAYERS): boolean {
+  if (world.status !== 'gameOver') return false;
+  const players = world.players;
+  let chosen = 0;
+  for (let i = 0; i < players.length; i++) {
+    if ((who & (1 << i)) !== 0 && players[i].active && continuesLeft(world, i) > 0) {
+      chosen |= 1 << i;
+    }
+  }
+  if (chosen === 0) return false;
   world.continuesUsed++;
   const config = world.config;
-  const players = world.players;
   const board = world.scoring.board;
   for (let i = 0; i < players.length; i++) {
-    const ship = players[i];
-    if (!ship.active) continue;
-    ship.lives = config.startingLives;
-    const loadout = world.weapons.loadouts[i];
-    if (config.powerUpMode === 'direct') applyDirectDeathPenalty('arcade', ship, loadout);
-    else applyDeathPenalty('arcade', ship, loadout, world.powerups.meters[i]);
-    applyStartingLoadout(world, i);
+    if ((chosen & (1 << i)) === 0) continue;
+    players[i].lives = config.startingLives;
+    resetPower(world, i);
     markContinue(board, i);
   }
   const stage = world.stage;
@@ -931,13 +1088,29 @@ export function continueWorld(world: World): boolean {
   }
   const camera = world.camera;
   for (let i = 0; i < players.length; i++) {
-    if (players[i].active) respawnPlayer(players[i], world.ship, camera);
+    if ((chosen & (1 << i)) !== 0) respawnPlayer(players[i], world.ship, camera);
   }
   world.hitStop = 0;
   world.status = 'playing';
   updateWorldRank(world);
   syncWorldView(world);
   return true;
+}
+
+/**
+ * Takes all of a player's power (the `arcade` penalty — in Direct mode `applyDirectDeathPenalty`
+ * — whatever the config's), then gives the config's starting loadout: what a continue does to a
+ * ship (cold path).
+ *
+ * @param world - The world.
+ * @param slot - The player slot.
+ */
+function resetPower(world: World, slot: number): void {
+  const ship = world.players[slot];
+  const loadout = world.weapons.loadouts[slot];
+  if (world.config.powerUpMode === 'direct') applyDirectDeathPenalty('arcade', ship, loadout);
+  else applyDeathPenalty('arcade', ship, loadout, world.powerups.meters[slot]);
+  applyStartingLoadout(world, slot);
 }
 
 /** Hit-stop of a player's death, in ticks (plan M1-12). */
@@ -1370,7 +1543,9 @@ export function stepWorld(world: World, input: Readonly<InputSnapshot>): void {
  *
  * @remarks
  * A ship is drawn when its slot is active, it is not `dying` / `dead` and its spec has a sprite;
- * during invulnerability it blinks (`SpriteFlag.Hidden` every other 4 ticks).
+ * during invulnerability it blinks (`SpriteFlag.Hidden` every other 4 ticks). Player 2 is drawn
+ * with the ship's palette-swap sprite (`PlayerShipSpec.spriteP2Id`, M2-06) when the content has
+ * it.
  *
  * @param world - The world.
  */
@@ -1385,11 +1560,14 @@ export function syncWorldView(world: World): void {
   batch.count = 0;
   const spec = world.ship;
   if (spec.spriteId < 0) return;
+  // Player 2 flies the palette swap (M2-06), when the content has it.
+  const p2Sprite = spec.spriteP2Id >= 0 ? spec.spriteP2Id : spec.spriteId;
   const players = world.players;
   for (let i = 0; i < players.length; i++) {
     const p = players[i];
     if (!p.active || p.state === 'dying' || p.state === 'dead') continue;
     const flags = p.invulnTicks > 0 && (p.invulnTicks & 4) !== 0 ? SpriteFlag.Hidden : 0;
-    pushSprite(batch, p.x, p.y, spec.spriteId, playerBankFrame(p.bank, spec.bankFrames), flags);
+    const sprite = i === 1 ? p2Sprite : spec.spriteId;
+    pushSprite(batch, p.x, p.y, sprite, playerBankFrame(p.bank, spec.bankFrames), flags);
   }
 }

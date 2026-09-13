@@ -6,8 +6,8 @@
  * model, death penalty, lives, autofire and its intervals, remote mode, the stage, the starting
  * loadout, Auto Power-Up and its order, the pickup magnet, the weapon preset / Weapon Edit and the
  * `!` / `?` slot choices of the weapon select — M2-03 —, the Option type, M2-04 — and the ship
- * with its power-up model, M2-05). Everything here is copied into replay headers, so it must stay
- * plain serialisable data.
+ * with its power-up model, M2-05 — and two-player co-op with its drop scaling, M2-06). Everything
+ * here is copied into replay headers, so it must stay plain serialisable data.
  *
  * **Implements.**
  * - shmup_feat.md §2 (design forks: Meter vs Direct, death-penalty presets, difficulty)
@@ -22,6 +22,8 @@
  * - shmup_feat.md §8 (the Option types) and §9 (the meter-mode `?` shields) — M2-04
  * - shmup_feat.md §5 (ship selection: the meter ship KESTREL, the direct ship MANTA) and §6B
  *   (Direct mode — `powerUpMode: 'direct'`) — M2-05
+ * - shmup_feat.md §16 (2-player simultaneous co-op — {@link GameConfig.coop}, the item count
+ *   scaled for two ships — {@link GameConfig.coopExtra}; M2-06)
  * - shmup_feat.md §21 Options menu — audio master / music / SFX sliders, the controls profile
  *   (the presentation-only {@link UserOptions})
  *
@@ -38,7 +40,8 @@
  * {@link WeaponEdit}, {@link WEAPON_EDIT_SLOTS}, {@link ArsenalChoice}, {@link withArsenal},
  * {@link arsenalMatches}; M2-04: {@link OptionChoice}, {@link OPTION_CHOICES}; M2-05: the ship
  * choice {@link ShipChoice}, {@link withShip}, {@link shipMatches}, {@link POWER_UP_MODES},
- * {@link DEFAULT_SHIP_ID}) and the screen
+ * {@link DEFAULT_SHIP_ID}; M2-06: the co-op choice {@link withCoop}, {@link DEFAULT_COOP_EXTRA},
+ * {@link MAX_COOP_EXTRA}) and the screen
  * layout constants {@link HUD_BAR_HEIGHT}, {@link PLAYFIELD_Y}, {@link PLAYFIELD_W},
  * {@link PLAYFIELD_H} (decision D20: two 8-px HUD bars outside a 384×200 playfield). User options:
  * {@link UserOptions}, {@link AudioOptions}, {@link InputOptions}, {@link DisplayOptions},
@@ -375,6 +378,15 @@ export type ArsenalChoice = Partial<
   >
 >;
 
+/**
+ * The default {@link GameConfig.coopExtra}: half an extra item per power-up drop while two ships
+ * play (plan M2-06).
+ */
+export const DEFAULT_COOP_EXTRA = 0.5;
+
+/** Highest {@link GameConfig.coopExtra}. */
+export const MAX_COOP_EXTRA = 4;
+
 /** Parameters of one game session. All fields are sim-affecting and replay-recorded. */
 export interface GameConfig {
   /** Internal render width in pixels (384 → ×5 on 1080p). */
@@ -514,6 +526,23 @@ export interface GameConfig {
    * select with the loadout; session-wide (both players).
    */
   readonly optionChoice: OptionChoice;
+  /**
+   * Two-player simultaneous co-op (shmup_feat.md §16, plan M2-06 — the title's `2 PLAYERS`):
+   * player 1 starts, player 2 **drops in** with a join press (`core/world` `JOIN_ACTIONS`) on its
+   * controller, each player has their own lives, score, meter / items and continues — a player
+   * out of lives with continues left drops back in the same way while the other plays on — and
+   * the game is over when both are out. `false` (the default): one player, the second player slot
+   * never joins.
+   */
+  readonly coop: boolean;
+  /**
+   * Co-op drop scaling (shmup_feat.md §6B "consider scaling item count in co-op", plan M2-06):
+   * while two ships are in play, every power-up drop (a capsule, or a Direct-mode item) adds this
+   * much to a credit, and each whole credit drops one more item beside it — 0.5 (the default,
+   * {@link DEFAULT_COOP_EXTRA}) = every second drop comes twice. A finite number 0–
+   * {@link MAX_COOP_EXTRA}; ignored with one ship in play.
+   */
+  readonly coopExtra: number;
 }
 
 /** Height in pixels of each HUD bar outside the playfield (decision D20). */
@@ -535,7 +564,8 @@ export const PLAYFIELD_H = 200;
  * Defaults: remote-first, Normal difficulty (its {@link DEFAULT_DIFFICULTY_TABLE} row: rank base 2,
  * growth 1, 3 lives, extends at 20,000 / every 70,000, 3 continues, Classic death penalty, 32 aim
  * directions, bullet speed × 1), the power meter with Type A, Mega Crash on `!`, the Force Field
- * on `?` and trailing Options.
+ * on `?` and trailing Options; one player (co-op off, its drop scaling at
+ * {@link DEFAULT_COOP_EXTRA}).
  */
 export const DEFAULT_GAME_CONFIG: GameConfig = Object.freeze({
   internalWidth: 384,
@@ -570,6 +600,8 @@ export const DEFAULT_GAME_CONFIG: GameConfig = Object.freeze({
   megaChoice: 'megaCrash',
   shieldChoice: 'forceField',
   optionChoice: 'trail',
+  coop: false,
+  coopExtra: DEFAULT_COOP_EXTRA,
 });
 
 /**
@@ -651,7 +683,8 @@ export function withDifficulty(
  * `startingLives` 1–5, `aimDirections` a power of two in 4–1024, `autofireInterval` /
  * `missileInterval` 1–60, `rankBase` 0–31, `rankGrowth` a finite number 0–{@link MAX_RANK_GROWTH},
  * `extendFirst` / `extendEvery` 0–{@link MAX_EXTEND_SCORE}, `continues` 0–{@link MAX_CONTINUES},
- * `bulletSpeedMul` a finite number {@link MIN_BULLET_SPEED_MUL}–{@link MAX_BULLET_SPEED_MUL}.
+ * `bulletSpeedMul` a finite number {@link MIN_BULLET_SPEED_MUL}–{@link MAX_BULLET_SPEED_MUL},
+ * `coopExtra` a finite number 0–{@link MAX_COOP_EXTRA} and `coop` a boolean (M2-06).
  * `difficulty` must be a {@link DifficultyPreset} and `deathPenalty` a {@link DeathPenaltyPreset};
  * `stage` must be `null` or a non-empty string (whether the id exists is
  * checked by `createWorld` against the content); `stageSkip` must be `'none'` or `'boss'`;
@@ -674,8 +707,9 @@ export function withDifficulty(
  *   `stage` is neither `null` nor a non-empty string,
  *   `stageSkip` is not a {@link StageSkip}, `loadout` is not a {@link StartingLoadout},
  *   `powerUpMode` is not a {@link PowerUpMode}, `shipId` is not a non-empty string,
- *   `autoPowerUpOrder` is not an array of meter slot names (or is too long), or `weaponPreset`,
- *   `weaponEdit`, `megaChoice`, `shieldChoice` or `optionChoice` is malformed.
+ *   `autoPowerUpOrder` is not an array of meter slot names (or is too long), `weaponPreset`,
+ *   `weaponEdit`, `megaChoice`, `shieldChoice` or `optionChoice` is malformed, `coop` is not a
+ *   boolean or `coopExtra` is out of range.
  *
  * @example
  * ```ts
@@ -716,6 +750,11 @@ export function resolveGameConfig(
     MIN_BULLET_SPEED_MUL,
     MAX_BULLET_SPEED_MUL,
   );
+  requireNumber('coopExtra', config.coopExtra, 0, MAX_COOP_EXTRA);
+  const coop: unknown = config.coop;
+  if (typeof coop !== 'boolean') {
+    throw new RangeError(`GameConfig.coop must be a boolean, got ${String(coop)}`);
+  }
   if ((config.aimDirections & (config.aimDirections - 1)) !== 0) {
     throw new RangeError(
       `GameConfig.aimDirections must be a power of two, got ${config.aimDirections}`,
@@ -940,6 +979,24 @@ export function shipMatches(config: GameConfig, ship: ShipChoice): boolean {
 export function withShip(config: GameConfig, ship: ShipChoice): GameConfig {
   if (shipMatches(config, ship)) return config;
   return resolveGameConfig({ ...config, shipId: ship.shipId, powerUpMode: ship.powerUpMode });
+}
+
+/**
+ * Switches a resolved config to one or two players (plan M2-06 — the title's `1 PLAYER` /
+ * `2 PLAYERS`): {@link GameConfig.coop}; everything else stays.
+ *
+ * @param config - A resolved config.
+ * @param coop - `true` for a two-player co-op game.
+ * @returns A frozen, validated config (the same object when it already has that value).
+ *
+ * @example
+ * ```ts
+ * withCoop(resolveGameConfig(), true).coop; // → true
+ * ```
+ */
+export function withCoop(config: GameConfig, coop: boolean): GameConfig {
+  if (config.coop === coop) return config;
+  return resolveGameConfig({ ...config, coop });
 }
 
 /**

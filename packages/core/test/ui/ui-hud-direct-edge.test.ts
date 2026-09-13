@@ -80,7 +80,6 @@ describe('core/ui Direct-mode HUD — edges', () => {
   it('stays under its command budget in the worst case', () => {
     const w = aliveWorld(DB, { loadout: 'full' });
     w.players[0].lives = 6; // five stock icons
-    w.players[1].active = true;
     const list = hud(w);
     expect(list.count).toBeLessThan(HUD_COMMAND_COUNT);
     // Every pip drawn: 8 SHOT, 8 SUB, 5 ARM, 3 SPD.

@@ -39,7 +39,9 @@ describe('playtest: zone A with the 4-way bot (M1-18)', () => {
     expect(rules.maxBulletSpeed).toBeLessThanOrEqual(MAX_AIMED_BULLET_SPEED);
     expect(rules.maxSeparate).toBeGreaterThanOrEqual(2); // HB-01's last phase overlaps its lanes
     expect(rules.narrowestGap).toBeGreaterThanOrEqual(MIN_LANE_GAP);
-  });
+    // A whole stage runs ~1.6 s alone; the full parallel `pnpm test` load once pushed it past the
+    // default 5 s (M2-06).
+  }, 30_000);
 
   it('records a run without god mode and reports its deaths', () => {
     const run = runStage('zone-a', fourWayBot(), {});
@@ -62,7 +64,7 @@ describe('playtest: zone A with the 4-way bot (M1-18)', () => {
     expect(replay.deathTicks).toEqual(run.deaths.map((d) => d.tick));
     expect(replay.status).toBe(run.status);
     expect(replay.hash).toBe(run.hash);
-  });
+  }, 30_000);
 
   it('reaches the boss within seconds with the debug stage skip', () => {
     const run = runStage('zone-a', fourWayBot(), { godMode: true, stageSkip: 'boss' });

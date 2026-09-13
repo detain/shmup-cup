@@ -172,26 +172,37 @@ describe('core/scenes flow: boot and title', () => {
     expect(s.events.filter((e) => e[0] === SimEventKind.Music)).toHaveLength(1);
   });
 
-  it('shows PRESS OK (blinking), then the menu START / OPTIONS / EXIT', () => {
+  it('shows PRESS OK (blinking), then the menu 1 PLAYER / 2 PLAYERS / OPTIONS / EXIT', () => {
     const s = new Session();
     expect(s.uiTexts()).toEqual(['PRESS OK', 'HI']);
     s.hold(0, 32);
     expect(s.uiTexts()).toEqual(['HI']); // the off half of the blink
     s.press(Action.Confirm);
     expect(s.flow.title.menuOpen).toBe(true);
-    expect(s.uiTexts()).toEqual(['→', 'START', 'OPTIONS', 'EXIT', 'HI']);
+    expect(s.uiTexts()).toEqual(['→', '1 PLAYER', '2 PLAYERS', 'OPTIONS', 'EXIT', 'HI']);
     expect(s.flow.title.menu.enabled(TitleItem.Options)).toBe(true);
+    s.press(Action.Down);
+    expect(s.flow.title.menu.focus).toBe(TitleItem.TwoPlayers);
     s.press(Action.Down);
     expect(s.flow.title.menu.focus).toBe(TitleItem.Options);
     s.press(Action.Down);
     expect(s.flow.title.menu.focus).toBe(TitleItem.Exit);
-    expect(s.sounds()).toEqual([SFX_CUES.MenuSelect, SFX_CUES.MenuMove, SFX_CUES.MenuMove]);
+    expect(s.sounds()).toEqual([
+      SFX_CUES.MenuSelect,
+      SFX_CUES.MenuMove,
+      SFX_CUES.MenuMove,
+      SFX_CUES.MenuMove,
+    ]);
   });
 
   it('has no EXIT on a platform that cannot quit; Back there returns to PRESS OK', () => {
     const s = new Session('title', false);
     s.press(Action.Confirm);
-    expect(s.flow.title.menu.items.map((i) => i.label)).toEqual(['START', 'OPTIONS']);
+    expect(s.flow.title.menu.items.map((i) => i.label)).toEqual([
+      '1 PLAYER',
+      '2 PLAYERS',
+      'OPTIONS',
+    ]);
     s.press(Action.Back);
     expect([s.top, s.flow.title.menuOpen]).toEqual(['title', false]);
     s.press(Action.Back); // nothing to confirm without exit

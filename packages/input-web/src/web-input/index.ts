@@ -15,19 +15,36 @@
  * Keys and buttons held across a switch keep only the actions they have in both tables until
  * released. Before any profile is applied the built-in `keymap` / `gamepad` defaults are used.
  *
- * Player assignment (placeholder until "press Start to join" lands, shmup_feat.md §4
- * [P1]): keyboard / TV remote → player 1; gamepad slot 0 → player 1 too (so a pad works
- * solo); gamepad slot 1 → player 2.
+ * **Player seats (M2-06, shmup_feat.md §4 "press Start to join", §16 co-op).** The host tells the
+ * adapter how many seats to route ({@link WebInput.setSeats} — `Game.inputSeats`: 2 while a co-op
+ * game is played, else 1):
+ * - **One seat** (menus, one-player games): every device drives player 1 — the keyboard / TV
+ *   remote, both halves of a split keyboard and every gamepad (so a pad works solo, and every
+ *   controller drives the menus).
+ * - **Two seats** (a co-op game): the keyboard / TV remote is player 1's (the left half of a split
+ *   keyboard — `WASD` + `F` / `G` in `keyboard-split` — and its right half, arrows + `K` / `L`, is
+ *   player 2's seat). Otherwise **pads take player 2's seat by default**: while that seat is free,
+ *   an unassigned pad still drives player 1, but its first join press — a button its gamepad
+ *   profile's **menu** table binds to Confirm or Pause (A, START) — seats it as player 2 and is
+ *   forwarded as a latched `Confirm` on player 2's slot (the core's World then brings player 2 in
+ *   — `core/world` `JOIN_ACTIONS`). A seated pad drives player 2 only (in one-seat mode it folds
+ *   into player 1 again); it keeps its seat across games until it disconnects. With the seat taken
+ *   every other pad drives player 1 (two pads with an idle keyboard: the pad that did not join
+ *   drives player 1).
  *
  * **Implements.** shmup_tech.md §3.2 (`input.poll(): InputSnapshot`), §4.4 (custom
  * InputManager: key flags + edge latches, gamepads polled once per update, action
- * bitmask snapshot), shmup_feat.md §4 (remote-first rules, SOCD, per-device bindings).
+ * bitmask snapshot), shmup_feat.md §4 (remote-first rules, SOCD, per-device bindings, 2-player
+ * co-op input: press Start to join, per-player device assignment, the split keyboard) and §16
+ * (co-op).
  *
- * **Public API.** {@link createWebInput}, {@link WebInput}, {@link WebInputOptions}.
+ * **Public API.** {@link createWebInput}, {@link WebInput}, {@link WebInputOptions},
+ * {@link PAD_SEAT_NONE}, {@link PAD_SEAT_P2}.
  *
  * @module
  */
 import {
+  Action,
   commitPlayerInput,
   createInputSnapshot,
   defineModule,
@@ -58,12 +75,39 @@ import {
 /** Module descriptor. */
 export const moduleInfo = defineModule({
   name: 'web-input',
-  status: 'partial',
-  specRefs: ['shmup_tech.md §3.2', 'shmup_tech.md §4.4', 'shmup_feat.md §4'],
+  status: 'implemented',
+  specRefs: ['shmup_tech.md §3.2', 'shmup_tech.md §4.4', 'shmup_feat.md §4', 'shmup_feat.md §16'],
 });
 
 /** Maximum gamepads tracked (Samsung TVs expose up to 4). */
 const MAX_PADS = 4;
+
+/** {@link WebInput.padSeat}: the pad has no seat (it drives player 1). */
+export const PAD_SEAT_NONE = -1;
+
+/** {@link WebInput.padSeat}: the pad holds player 2's seat (M2-06). */
+export const PAD_SEAT_P2 = 1;
+
+/** A binding table that binds nothing (the split keyboard's second source without a split). */
+const NO_KEYS: KeyBindings = Object.freeze({
+  byCode: Object.freeze({}),
+  byKeyCode: Object.freeze({}),
+});
+
+/**
+ * Bit mask of the button indices whose actions include Confirm or Pause — a pad's join press
+ * (M2-06).
+ *
+ * @param buttons - A button table (a gamepad profile's `menu` table, or the default buttons).
+ * @returns The mask (indices 0–31).
+ */
+function joinButtonsOf(buttons: readonly ActionMask[]): number {
+  let mask = 0;
+  for (let i = 0; i < buttons.length && i < 32; i++) {
+    if (((buttons[i] ?? 0) & (Action.Confirm | Action.Pause)) !== 0) mask |= 1 << i;
+  }
+  return mask;
+}
 
 /** Options for {@link createWebInput}. */
 export interface WebInputOptions {
@@ -87,8 +131,34 @@ export interface WebInputOptions {
 
 /** Browser input adapter. */
 export interface WebInput extends PlatformInput {
-  /** The keyboard/remote source (for rebinding UIs and tests). */
+  /** The keyboard/remote source (for rebinding UIs and tests) — player 1's half when split. */
   readonly keyboard: KeyboardSource;
+  /**
+   * Player 2's half of a split keyboard (M2-06): a second keyboard source on the same event target,
+   * bound to the key profile's `split` tables (nothing bound without a split).
+   */
+  readonly splitKeyboard: KeyboardSource;
+  /** Player seats routed now: 1 (every device drives player 1) or 2 (co-op; M2-06). */
+  readonly seats: number;
+  /**
+   * Sets how many player seats to route (M2-06; the host forwards `Game.inputSeats` — the shell
+   * does, once per frame): see the module docs. Allocation-free.
+   *
+   * @param count - 2 for a co-op game, anything else = 1.
+   *
+   * @example
+   * ```ts
+   * if (game.inputSeats !== input.seats) input.setSeats(game.inputSeats);
+   * ```
+   */
+  setSeats(count: number): void;
+  /**
+   * The seat a gamepad holds (M2-06).
+   *
+   * @param index - Gamepad slot 0–3.
+   * @returns {@link PAD_SEAT_P2} for the pad seated as player 2, else {@link PAD_SEAT_NONE}.
+   */
+  padSeat(index: number): number;
   /** The binding context in use (`'game'` until {@link WebInput.setContext} changes it). */
   readonly context: InputContext;
   /** The keyboard / remote profile in use, or `null` (built-in default bindings). */
@@ -96,9 +166,10 @@ export interface WebInput extends PlatformInput {
   /** The gamepad profile in use, or `null` (built-in default buttons). */
   readonly gamepadProfile: InputProfile | null;
   /**
-   * Applies an input profile: a `keyboard` / `remote` profile to the keyboard source, a
-   * `gamepad` profile to every pad — its table for the current context, its debounce and
-   * direction policies.
+   * Applies an input profile: a `keyboard` / `remote` profile to the keyboard source (and a
+   * split keyboard profile's second half to {@link WebInput.splitKeyboard} — M2-06), a `gamepad`
+   * profile to every pad — its table for the current context, its debounce and direction
+   * policies (and its menu table's Confirm / Pause buttons as the pads' join press).
    *
    * @remarks
    * One key profile and one gamepad profile are active at a time; applying a profile of the
@@ -144,9 +215,9 @@ export interface WebInput extends PlatformInput {
  *
  * @remarks
  * `poll()` must be called exactly once per simulation tick (it ages the release debounce and
- * consumes the keyboard tap latch). Only gamepad slots 0 and 1 produce input (players 1 and
- * 2); slots 2–3 are read but ignored until join-in lands. A player's `device` only changes
- * when that device produced input on this poll. Gamepads get the gamepad profile's diagonal
+ * consumes the keyboard tap latch). Devices are routed to the players by the seats (see the
+ * module docs; M2-06). A player's `device` only changes when that device produced input on this
+ * poll. Gamepads get the gamepad profile's diagonal
  * and SOCD policies with a per-pad press order (gamepads are polled, so they have no release
  * debounce). `poll()`, `setContext()` and the event handlers allocate nothing.
  *
@@ -169,6 +240,12 @@ export function createWebInput(options: WebInputOptions): WebInput {
     options.keyTarget,
     options.bindings ?? DEFAULT_KEY_BINDINGS,
   );
+  // Player 2's half of a split keyboard (M2-06): bound only while a split profile is applied.
+  const splitKeyboard = createKeyboardSource(options.keyTarget, NO_KEYS);
+  let split = false;
+  let seats = 1;
+  const padSeats = new Int8Array(MAX_PADS).fill(PAD_SEAT_NONE);
+  let joinButtons = joinButtonsOf(DEFAULT_GAMEPAD_BUTTONS);
   let keyDevice: InputDeviceKind = options.keyDevice ?? 'keyboard';
   const getGamepads = options.getGamepads;
   const snapshot = createInputSnapshot();
@@ -208,33 +285,66 @@ export function createWebInput(options: WebInputOptions): WebInput {
    */
   const poll = (): InputSnapshot => {
     keyboard.advance();
+    splitKeyboard.advance();
     const keyHeld = keyboard.held;
     const keyLatched = keyboard.consumeLatched();
+    const halfHeld = splitKeyboard.held;
+    const halfLatched = splitKeyboard.consumeLatched();
+    const coop = seats >= 2;
     let p1 = keyHeld;
+    let p1Latched = keyLatched;
     let p2 = 0;
+    let p2Latched = 0;
     let p1Device: InputDeviceKind = keyHeld !== 0 || keyLatched !== 0 ? keyDevice : 'none';
     let p2Device: InputDeviceKind = 'none';
+    const halfUsed = halfHeld !== 0 || halfLatched !== 0;
+    if (split && coop) {
+      // The split keyboard's right half is player 2's seat.
+      p2 = halfHeld;
+      p2Latched = halfLatched;
+      if (halfUsed) p2Device = keyDevice;
+    } else {
+      p1 |= halfHeld;
+      p1Latched |= halfLatched;
+      if (halfUsed) p1Device = keyDevice;
+    }
 
     if (getGamepads !== undefined) {
       const pads = getGamepads();
       const count = Math.min(pads.length, MAX_PADS);
+      // Player 2's seat is free for a pad: co-op, no split keyboard, no pad seated.
+      let seatFree = coop && !split;
+      for (let i = 0; i < MAX_PADS; i++) if (padSeats[i] === PAD_SEAT_P2) seatFree = false;
       for (let i = 0; i < count; i++) {
         const pad = pads[i];
         const state = padStates[i];
         const order = padOrders[i];
         if (state === undefined || order === undefined) continue;
-        if (pad === null || pad === undefined) {
+        if (pad === null || pad === undefined || !pad.connected) {
+          // A pad that went away gives its seat up (M2-06).
+          padSeats[i] = PAD_SEAT_NONE;
+          if (pad !== null && pad !== undefined) {
+            readGamepadActions(pad, state, padButtons, padPreviousButtons);
+          }
           order.update(0);
           continue;
         }
+        const before = state.pressedButtons ?? 0;
         const raw = readGamepadActions(pad, state, padButtons, padPreviousButtons);
+        const newly = (state.pressedButtons ?? 0) & ~before;
         order.update(raw);
         const mask = resolveDirections(raw, order.order, padTuning.diagonals, padTuning.socd);
-        if (mask === 0) continue;
-        if (i === 1) {
+        if (coop && padSeats[i] === PAD_SEAT_P2) {
           p2 |= mask;
+          if (mask !== 0) p2Device = 'gamepad';
+        } else if (seatFree && (newly & joinButtons) !== 0) {
+          // The first join press of an unassigned pad takes player 2's seat (M2-06).
+          padSeats[i] = PAD_SEAT_P2;
+          seatFree = false;
+          p2 |= mask;
+          p2Latched |= Action.Confirm;
           p2Device = 'gamepad';
-        } else if (i === 0) {
+        } else if (mask !== 0) {
           p1 |= mask;
           p1Device = 'gamepad';
         }
@@ -244,11 +354,11 @@ export function createWebInput(options: WebInputOptions): WebInput {
     const player1 = snapshot.players[0];
     const player2 = snapshot.players[1];
     if (player1 !== undefined) {
-      commitPlayerInput(player1, p1, keyLatched);
+      commitPlayerInput(player1, p1, p1Latched);
       if (p1Device !== 'none') player1.device = p1Device;
     }
     if (player2 !== undefined) {
-      commitPlayerInput(player2, p2);
+      commitPlayerInput(player2, p2, p2Latched);
       if (p2Device !== 'none') player2.device = p2Device;
     }
     return snapshot;
@@ -256,9 +366,19 @@ export function createWebInput(options: WebInputOptions): WebInput {
 
   return {
     keyboard,
+    splitKeyboard,
     poll,
     get context() {
       return context;
+    },
+    get seats() {
+      return seats;
+    },
+    setSeats(count) {
+      seats = count === 2 ? 2 : 1;
+    },
+    padSeat(index) {
+      return index >= 0 && index < MAX_PADS ? (padSeats[index] ?? PAD_SEAT_NONE) : PAD_SEAT_NONE;
     },
     get keyProfile() {
       return keyProfile;
@@ -270,6 +390,7 @@ export function createWebInput(options: WebInputOptions): WebInput {
       if (profile.device === 'gamepad') {
         padProfile = profile;
         padTuning = profile;
+        joinButtons = joinButtonsOf(profile.tables.menu.buttons);
         setPadButtons(profile.tables[context].buttons);
         return;
       }
@@ -277,19 +398,29 @@ export function createWebInput(options: WebInputOptions): WebInput {
       keyDevice = profile.device;
       keyboard.setTuning(profile);
       keyboard.setBindings(profile.tables[context].keys);
+      const halves = profile.splitTables ?? null;
+      split = halves !== null;
+      splitKeyboard.setTuning(profile);
+      splitKeyboard.setBindings(halves !== null ? halves[context].keys : NO_KEYS);
     },
     setContext(next) {
       if (next === context) return;
       context = next;
-      if (keyProfile !== null) keyboard.setBindings(keyProfile.tables[next].keys);
+      if (keyProfile !== null) {
+        keyboard.setBindings(keyProfile.tables[next].keys);
+        const halves = keyProfile.splitTables ?? null;
+        if (halves !== null) splitKeyboard.setBindings(halves[next].keys);
+      }
       if (padProfile !== null) setPadButtons(padProfile.tables[next].buttons);
     },
     clear() {
       keyboard.clear();
+      splitKeyboard.clear();
       resetInputSnapshot(snapshot);
     },
     destroy() {
       keyboard.detach();
+      splitKeyboard.detach();
     },
   };
 }

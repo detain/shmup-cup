@@ -56,13 +56,15 @@ describe('core/game edge: the scene flow', () => {
     const tv = Object.assign(createHeadlessPlatform(), { exit: () => {} });
     const labels = (game: Game): string[] => game.scenes!.title.menu.items.map((i) => i.label);
     expect(labels(createGame(tv, {}, undefined, { scenes: 'title' }))).toEqual([
-      'START',
+      '1 PLAYER',
+      '2 PLAYERS',
       'OPTIONS',
       'EXIT',
     ]);
     const browser = Object.assign(createHeadlessPlatform(), { exit: null });
     expect(labels(createGame(browser, {}, undefined, { scenes: 'title' }))).toEqual([
-      'START',
+      '1 PLAYER',
+      '2 PLAYERS',
       'OPTIONS',
     ]);
   });

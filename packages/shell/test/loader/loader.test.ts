@@ -110,7 +110,7 @@ describe('shell/loader loadGameContent', () => {
         message: `duplicate input profile id "${id}" (first defined in input/remote.input-profiles.json)`,
       })),
     );
-    expect(result.issues).toHaveLength(5);
+    expect(result.issues).toHaveLength(6); // the six shipped profiles (keyboard-split: M2-06)
   });
 
   it('validates input profiles with the default owner (plan §3.5)', () => {

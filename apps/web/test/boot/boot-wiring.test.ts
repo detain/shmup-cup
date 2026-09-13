@@ -311,7 +311,8 @@ describe('web/boot bootWebApp wiring', () => {
     expect(app.game.scenes?.stack.top?.id).toBe('pause');
     expect(app.game.platform.exit).toBeNull(); // no EXIT item in a browser
     expect(app.game.scenes?.title.menu.items.map((item) => item.label)).toEqual([
-      'START',
+      '1 PLAYER',
+      '2 PLAYERS',
       'OPTIONS',
     ]);
   });
@@ -770,6 +771,7 @@ describe('web/boot input profiles (edge cases)', () => {
     expect(flow.inputProfiles).toEqual([
       { id: 'keyboard-default', label: 'KEYBOARD (DEFAULT)' },
       { id: 'keyboard-remote-emulation', label: 'KEYBOARD AS REMOTE' },
+      { id: 'keyboard-split', label: 'SPLIT KEYBOARD' }, // M2-06
     ]);
     expect(flow.activeInputProfile).toBe(0);
     // The Options screen's change reaches the input adapter through the event dispatch.
@@ -784,9 +786,10 @@ describe('web/boot input profiles (edge cases)', () => {
     expect(app.game.scenes!.inputProfiles.map((p) => p.id)).toEqual([
       'keyboard-default',
       'keyboard-remote-emulation',
+      'keyboard-split',
       'tizen-remote-safe',
     ]);
-    expect(app.game.scenes!.activeInputProfile).toBe(2);
+    expect(app.game.scenes!.activeInputProfile).toBe(3);
   });
 
   it('boots on the built-in bindings when the content has no input profiles', async () => {
@@ -861,12 +864,13 @@ describe('web/boot saves and the Options screen (M1-17 edge)', () => {
     win.location.search = '?profile=tizen-remote-safe';
     const { app } = await boot();
     expect(app.input.keyProfile?.id).toBe('tizen-remote-safe');
-    // CONTROLS: keyboard-default (DEFAULT), keyboard-remote-emulation, tizen-remote-safe.
+    // CONTROLS: keyboard-default (DEFAULT), keyboard-remote-emulation, keyboard-split,
+    // tizen-remote-safe.
     app.game.events.push(SimEventKind.UserOption, UserOptionKind.InputProfile, 0, 0, 0);
     win.frame(0);
     expect(app.input.keyProfile?.id).toBe('keyboard-default');
     // ... and the override stays offered: it can be picked again.
-    app.game.events.push(SimEventKind.UserOption, UserOptionKind.InputProfile, 0, 0, 2);
+    app.game.events.push(SimEventKind.UserOption, UserOptionKind.InputProfile, 0, 0, 3);
     win.frame(1000 / 60);
     expect(app.input.keyProfile?.id).toBe('tizen-remote-safe');
   });

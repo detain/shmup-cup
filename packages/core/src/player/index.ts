@@ -3,7 +3,9 @@
  *
  * **Status: implemented** for P0: movement, speed levels, clamping to the camera view, banking and
  * the fly-in (plan M1-06), hits (M1-07 … M1-11) and the life cycle — death, dead time, respawn
- * with invulnerability and lives (M1-12). Co-op specifics arrive with M2-06.
+ * with invulnerability and lives (M1-12). Co-op (M2-06): player 2's ship joins a running co-op
+ * game — and a ship out of lives comes back with a continue — through `core/world` `joinPlayer`,
+ * which activates the slot and flies it in with {@link respawnPlayer} (a blinking fly-in).
  *
  * **Responsibility.** The player ship: 8-way movement with no inertia, speed levels (meter Speed
  * Ups or the Direct-mode Speed toggle), a tiny centred hurtbox plus a separate terrain box,
@@ -66,7 +68,8 @@
  * {@link playerHit}, {@link PlayerHitCause}, {@link PLAYER_HIT_CAUSE_NAMES}, {@link killPlayer},
  * {@link respawnPlayer}, {@link playerOut}, {@link PLAYER_DYING_TICKS}, {@link PLAYER_DEAD_TICKS}.
  *
- * **Planned API.** Joining / leaving co-op mid-game (M2-06); continues (M2-01).
+ * **Planned API.** None (joining co-op mid-game and the per-player continues live in
+ * `core/world`: `joinPlayer`, `continueWorld` — M2-01 / M2-06).
  *
  * @module
  */
@@ -130,7 +133,10 @@ export const PLAYER_DEAD_TICKS = 60;
 export interface PlayerShip {
   /** 0 = player 1, 1 = player 2. */
   readonly slot: number;
-  /** `false` for a player slot nobody plays (P2 until co-op, M2-06): never updated or drawn. */
+  /**
+   * `false` for a player slot nobody plays (player 2 until it joins a co-op game — `core/world`
+   * `joinPlayer`, M2-06): never updated or drawn.
+   */
   active: boolean;
   /** World x of the ship's centre, sub-pixel (the renderer rounds). */
   x: number;
@@ -234,6 +240,7 @@ export const DEFAULT_PLAYER_SHIP: PlayerShipSpec = Object.freeze({
   name: 'DEFAULT',
   sprite: '',
   spriteId: -1,
+  spriteP2Id: -1,
   speeds: Object.freeze([1.5, 2.0, 2.5, 3.0, 3.5, 4.0]),
   hurtRadius: 1.5,
   terrainBox: Object.freeze({ hw: 5, hh: 3 }),

@@ -80,9 +80,16 @@ describe('core/ui', () => {
   });
 
   it('names the HUD pieces and the logo, and finds their ids in a content table', () => {
-    expect(UI_SPRITES).toEqual(['hud/life', 'hud/meter-slot', 'hud/meter-labels', 'ui/logo']);
+    expect(UI_SPRITES).toEqual([
+      'hud/life',
+      'hud/life@p2',
+      'hud/meter-slot',
+      'hud/meter-labels',
+      'ui/logo',
+    ]);
     expect(resolveUiSprites(EMPTY_CONTENT_DB)).toEqual({
       life: -1,
+      lifeP2: -1,
       meterSlot: -1,
       meterLabels: -1,
       logo: -1,
@@ -90,6 +97,7 @@ describe('core/ui', () => {
     const { db } = loadContent([], { extraSprites: UI_SPRITES });
     const sprites = resolveUiSprites(db);
     expect(db.sprites.names[sprites.life]).toBe('hud/life');
+    expect(db.sprites.names[sprites.lifeP2]).toBe('hud/life@p2');
     expect(db.sprites.names[sprites.meterSlot]).toBe('hud/meter-slot');
     expect(db.sprites.names[sprites.meterLabels]).toBe('hud/meter-labels');
     expect(db.sprites.names[sprites.logo]).toBe('ui/logo');

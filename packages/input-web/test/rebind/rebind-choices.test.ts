@@ -38,6 +38,7 @@ describe('rebind selectable profiles', () => {
     expect(selectableKeyProfiles(profiles, 'code').map((p) => p.id)).toEqual([
       'keyboard-default',
       'keyboard-remote-emulation',
+      'keyboard-split', // M2-06: two players on one keyboard
     ]);
     expect(selectableKeyProfiles(profiles, 'keyCode').map((p) => p.id)).toEqual([
       'tizen-remote-safe',
@@ -97,6 +98,7 @@ describe('rebind selectable profiles', () => {
     expect(inputProfileChoices(profiles, 'code', DEFAULT_KEYBOARD_PROFILE_ID)).toEqual([
       { id: 'keyboard-default', label: 'KEYBOARD (DEFAULT)' },
       { id: 'keyboard-remote-emulation', label: 'KEYBOARD AS REMOTE' },
+      { id: 'keyboard-split', label: 'SPLIT KEYBOARD' },
     ]);
   });
 
@@ -105,9 +107,14 @@ describe('rebind selectable profiles', () => {
     const keyboard = profiles.find((p) => p.id === 'keyboard-default') ?? null;
     expect(
       inputProfileChoices(profiles, 'code', DEFAULT_KEYBOARD_PROFILE_ID, tv).map((c) => c.id),
-    ).toEqual(['keyboard-default', 'keyboard-remote-emulation', 'tizen-remote-safe']);
+    ).toEqual([
+      'keyboard-default',
+      'keyboard-remote-emulation',
+      'keyboard-split',
+      'tizen-remote-safe',
+    ]);
     expect(
       inputProfileChoices(profiles, 'code', DEFAULT_KEYBOARD_PROFILE_ID, keyboard).map((c) => c.id),
-    ).toEqual(['keyboard-default', 'keyboard-remote-emulation']);
+    ).toEqual(['keyboard-default', 'keyboard-remote-emulation', 'keyboard-split']);
   });
 });

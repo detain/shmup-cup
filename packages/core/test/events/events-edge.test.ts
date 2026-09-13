@@ -241,7 +241,8 @@ describe('core/events — cue registries', () => {
     expect(SFX_CUES.PowerUpDenied).toBe(22);
     expect(SFX_CUES.OptionHunter).toBe(23);
     expect(SFX_CUES.OptionStolen).toBe(24);
-    expect(SFX_CUE_NAMES.length).toBe(25);
+    expect(SFX_CUES.PlayerJoin).toBe(25);
+    expect(SFX_CUE_NAMES.length).toBe(26);
 
     expect(MUSIC_CUES.Silence).toBe(0);
     expect(MUSIC_CUES.Title).toBe(1);

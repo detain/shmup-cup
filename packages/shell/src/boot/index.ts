@@ -21,7 +21,8 @@
  * 6. runs the rAF frame loop: `game.frame(now)` → `game.events.drain(dispatch)` →
  *    `renderer.render(frame)` (plan §3.3). Before the ticks of each frame it forwards a change of
  *    `game.inputContext` to the input adapter (`input.setContext` — the `game` / `menu` binding
- *    tables of decision D15).
+ *    tables of decision D15) and of `game.inputSeats` (`input.setSeats` — player 2's seat during
+ *    a co-op game, M2-06).
  *
  * **Scenes.** By default the game runs the core's **scene flow** (M1-16, `?scene=game`): boot →
  * title → game ⇄ pause → stage clear / game over, the HUD and the canvas menus, drawn through the
@@ -334,6 +335,14 @@ export interface ShellInput extends PlatformInput {
    * @param context - `'game'` or `'menu'`.
    */
   setContext(context: InputContext): void;
+  /**
+   * Sets how many player seats the adapter routes (M2-06, two-player co-op — `WebInput.setSeats`):
+   * the shell calls it once at boot and whenever `game.inputSeats` changes. Optional: an adapter
+   * without it routes every device to player 1.
+   *
+   * @param count - 2 during a co-op game, else 1.
+   */
+  setSeats?(count: number): void;
   /** Removes the adapter's event listeners. */
   destroy(): void;
 }
@@ -942,6 +951,9 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   const visit = events.visit;
   let inputContext: InputContext = game.inputContext;
   input.setContext(inputContext);
+  // Player seats (M2-06): 2 while a co-op game is on top.
+  let inputSeats = game.inputSeats;
+  input.setSeats?.(inputSeats);
   const flow = game.scenes;
   let shownScene = '';
   let shownWorlds = 0;
@@ -970,6 +982,11 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     if (context !== inputContext) {
       inputContext = context;
       input.setContext(context);
+    }
+    const seats = game.inputSeats;
+    if (seats !== inputSeats) {
+      inputSeats = seats;
+      input.setSeats?.(seats);
     }
     game.frame(now);
     if (tools !== null) tools.endTicks();

@@ -57,6 +57,7 @@
  * - shmup_feat.md §4 — remote-first menus: D-pad + OK + Back only (rule 8), buffered presses
  * - shmup_tech.md §4.10 — no UI framework; canvas menus + bitmap font
  * - shmup_feat.md §6B — the Direct-mode HUD's visible tier pips (M2-05)
+ * - shmup_feat.md §17 — the co-op P2 HUD and the `PRESS START` join prompt (M2-06)
  *
  * **Public API.** Widgets: {@link ListMenu}, {@link MenuItem}, {@link MenuItemKind},
  * {@link Slider}, {@link Toggle}, {@link Choice}, {@link Confirm}, {@link ConfirmChoice},
@@ -73,10 +74,16 @@
  * measuring contract, `presentation`) is re-exported.
  *
  * M2-05: {@link HUD_FAMILY_COLORS}, {@link HUD_ARM_COLORS}, {@link HUD_STRING_COUNT},
- * {@link HUD_COMMAND_COUNT}.
+ * {@link HUD_COMMAND_COUNT}. M2-06: {@link HudPlayerState}, {@link hudPlayerState},
+ * {@link METER_SHORT_LABELS}, {@link HUD_PROMPT_BLINK_TICKS}.
  *
- * **Planned.** The key-rebind prompt and the 3-letter name entry (M2-15 / M2-16), the boss HP bar
- * and the co-op P2 meter (M2).
+ * **Co-op HUD (M2-06).** In a co-op game a player who may drop in shows a blinking `PRESS START`
+ * where its score goes; while both ships play, the bottom bar splits into two compact halves
+ * (player 2's stock icon in its palette swap), and a player out of lives shows `PRESS START` (it
+ * may continue) or `GAME OVER` in its half — see {@link buildHud}.
+ *
+ * **Planned.** The key-rebind prompt and the 3-letter name entry (M2-15 / M2-16) and the boss HP
+ * bar (M2).
  *
  * @module
  */
@@ -84,6 +91,7 @@ import type { ContentDb } from '../data/index.js';
 import { SFX_CUES } from '../events/index.js';
 import { Action, type PlayerInput } from '../input/index.js';
 import { defineModule } from '../module-info.js';
+import { playerOut } from '../player/index.js';
 import { METER_SLOT_COUNT, MeterSlot, directMaxLevel } from '../powerups/index.js';
 import { TextAlign, type DrawList } from '../presentation/index.js';
 import { ShieldKind, shieldActive } from '../shields/index.js';
@@ -103,12 +111,14 @@ export type { TextMetrics } from '../presentation/index.js';
 // ------------------------------------------------------------------------------ sprites
 
 /**
- * Atlas sprites the UI kit draws: the HUD's stock icon, meter slot box (frames normal /
- * highlighted / disabled) and slot labels (one frame per slot), and the title logo. Part of the
+ * Atlas sprites the UI kit draws: the HUD's stock icon (and player 2's palette swap of it —
+ * M2-06), meter slot box (frames normal / highlighted / disabled) and slot labels (one frame per
+ * slot), and the title logo. Part of the
  * core's `ENGINE_SPRITES`, so every host interns them.
  */
 export const UI_SPRITES: readonly string[] = Object.freeze([
   'hud/life',
+  'hud/life@p2',
   'hud/meter-slot',
   'hud/meter-labels',
   'ui/logo',
@@ -118,6 +128,8 @@ export const UI_SPRITES: readonly string[] = Object.freeze([
 export interface UiSprites {
   /** `hud/life` — a stock ship. */
   readonly life: number;
+  /** `hud/life@p2` — player 2's stock ship, the palette swap (M2-06; the co-op HUD). */
+  readonly lifeP2: number;
   /** `hud/meter-slot` — frame 0 normal, 1 highlighted, 2 disabled. */
   readonly meterSlot: number;
   /** `hud/meter-labels` — frame = the slot's `MeterSlot` code. */
@@ -146,6 +158,7 @@ export function resolveUiSprites(content: ContentDb): UiSprites {
   };
   return Object.freeze({
     life: id('hud/life'),
+    lifeP2: id('hud/life@p2'),
     meterSlot: id('hud/meter-slot'),
     meterLabels: id('hud/meter-labels'),
     logo: id('ui/logo'),
@@ -153,7 +166,13 @@ export function resolveUiSprites(content: ContentDb): UiSprites {
 }
 
 /** Sprite ids that draw nothing (every UI sprite missing). */
-const NO_SPRITES: UiSprites = Object.freeze({ life: -1, meterSlot: -1, meterLabels: -1, logo: -1 });
+const NO_SPRITES: UiSprites = Object.freeze({
+  life: -1,
+  lifeP2: -1,
+  meterSlot: -1,
+  meterLabels: -1,
+  logo: -1,
+});
 
 // ------------------------------------------------------------------------------ input
 
@@ -1055,6 +1074,16 @@ export const HUD_COLORS = Object.freeze({
   shield: 0x38c8e8,
   /** A spent Force Field pip. */
   shieldSpent: 0x2a3050,
+  /** Co-op (M2-06): the `PRESS START` prompt of a player who may join or continue. */
+  prompt: 0xf8d030,
+  /** Co-op: `GAME OVER` in the half of a player who is out for good. */
+  over: 0xf84848,
+  /** Co-op compact meter: a slot box that can be equipped. */
+  slotOn: 0x18204a,
+  /** Co-op compact meter: the highlighted slot's box. */
+  slotLit: 0x5a3c10,
+  /** Co-op compact meter: a slot box that cannot be equipped. */
+  slotOff: 0x1c2030,
 });
 
 /** Pixel positions of the HUD (frame coordinates, 384×216). */
@@ -1091,6 +1120,27 @@ export const HUD_LAYOUT = Object.freeze({
   speedX: 252,
   /** Direct mode: the main-shot family's label x. */
   familyX: 306,
+  /**
+   * Co-op (M2-06): width of each player's half of the bottom bar while both play (player 1 from
+   * x 0, player 2 from x 192); the offsets below are relative to the half's left edge.
+   */
+  halfW: 192,
+  /** Co-op: the stock icon x; the count follows 10 px later. */
+  coopStockX: 2,
+  /** Co-op: the first compact meter slot x (slots are {@link HUD_LAYOUT}.coopSlotW wide). */
+  coopMeterX: 22,
+  /** Co-op: compact meter slot width (a box with the slot's two-letter label). */
+  coopSlotW: 20,
+  /** Co-op: the first shield pip x (pips are 5 px apart). */
+  coopShieldX: 164,
+  /** Co-op Direct mode: `SH` (shot) label x; its pips (4 px apart) start 13 px later. */
+  coopShotX: 22,
+  /** Co-op Direct mode: `SB` (sub-weapon) label x. */
+  coopSubX: 68,
+  /** Co-op Direct mode: `AR` (Arm) label x. */
+  coopArmX: 114,
+  /** Co-op Direct mode: `SP` (speed) label x. */
+  coopSpeedX: 148,
 });
 
 /**
@@ -1128,6 +1178,29 @@ export const METER_LABEL_FRAMES: readonly string[] = Object.freeze([
 ]);
 
 /**
+ * The co-op HUD's compact meter labels (M2-06): two letters per {@link METER_LABEL_FRAMES} entry, in
+ * the same order, drawn with the bitmap font in the 20-px slots of each player's half.
+ */
+export const METER_SHORT_LABELS: readonly string[] = Object.freeze([
+  'SP',
+  'MS',
+  'DB',
+  'LS',
+  'OP',
+  '?',
+  '!',
+  'SB',
+  '2W',
+  'TP',
+  'TL',
+  'VT',
+  'FW',
+  'RP',
+  'CY',
+  'TW',
+]);
+
+/**
  * The `hud/meter-labels` frame a meter slot shows in a World: the MISSILE / DOUBLE / LASER slots
  * show the name of the weapon the session's arsenal puts there (the loadout → meter mapping of
  * M2-03 — `SPREAD`, `TAIL`, `RIPPLE` … for Types B–D), every other slot its own label. Never
@@ -1158,7 +1231,9 @@ export function meterLabelFrame(world: World, slot: number): number {
 
 /**
  * HUD string slots: `1P`, `HI`, `2P`, the inactive player's dashes; Direct mode (M2-05) adds the
- * tier pips' labels `SHOT`, `SUB`, `ARM`, `SPD` and the main-shot family's label.
+ * tier pips' labels `SHOT`, `SUB`, `ARM`, `SPD` and the main-shot family's label; co-op (M2-06)
+ * adds `PRESS START`, `GAME OVER`, the compact Direct labels `SH`, `SB`, `AR`, `SP` and the seven
+ * compact meter labels (`meterShort` … `meterShort + 6`, {@link METER_SHORT_LABELS}).
  */
 export const HUD_STRING_SLOTS = Object.freeze({
   p1: 0,
@@ -1170,34 +1245,111 @@ export const HUD_STRING_SLOTS = Object.freeze({
   arm: 6,
   speed: 7,
   family: 8,
+  pressStart: 9,
+  gameOver: 10,
+  shortShot: 11,
+  shortSub: 12,
+  shortArm: 13,
+  shortSpeed: 14,
+  meterShort: 15,
 });
 
-/** String slots a HUD list needs ({@link HUD_STRING_SLOTS}). */
-export const HUD_STRING_COUNT = 9;
+/** String slots a HUD list needs ({@link HUD_STRING_SLOTS}; seven compact meter labels last). */
+export const HUD_STRING_COUNT = 22;
 
-/** Commands a HUD list needs in the worst case (a Direct-mode HUD with five stock icons). */
-export const HUD_COMMAND_COUNT = 64;
+/**
+ * Commands a HUD list needs in the worst case (the co-op Direct-mode HUD: both halves with every
+ * tier pip).
+ */
+export const HUD_COMMAND_COUNT = 96;
 
 /** The highlighted meter slot alternates between highlighted and plain every this many ticks. */
 export const HUD_METER_FLASH_TICKS = 8;
 
+/** Co-op (M2-06): `PRESS START` blinks with this half-period, in ticks. */
+export const HUD_PROMPT_BLINK_TICKS = 32;
+
+/**
+ * What the HUD shows for one player (M2-06; {@link hudPlayerState}): `Playing` — a ship in the
+ * game (its score, stock and power); `Join` — a co-op slot that may drop in (`PRESS START` where
+ * its score goes); `Continue` — a co-op player out of lives with continues left (score kept,
+ * `PRESS START` in its half); `Out` — out for good (`GAME OVER` in its half); `Absent` — no ship
+ * and no way in (a one-player game's `2P ------`).
+ */
+export const HudPlayerState = {
+  /** In the game. */
+  Playing: 0,
+  /** May join the co-op game. */
+  Join: 1,
+  /** Out of lives, may continue (co-op). */
+  Continue: 2,
+  /** Out for good. */
+  Out: 3,
+  /** Not in the game and cannot join. */
+  Absent: 4,
+} as const;
+
+/** A {@link HudPlayerState} code. */
+export type HudPlayerState = (typeof HudPlayerState)[keyof typeof HudPlayerState];
+
+/**
+ * Whether a player may drop into a World now — `core/world` `playerCanJoin`'s rule, repeated here
+ * because `core/world` imports this module (the HUD test keeps the two in step).
+ *
+ * @param world - The World.
+ * @param slot - The player slot (valid).
+ * @returns `true` when a join press would bring the player in.
+ */
+function canJoin(world: World, slot: number): boolean {
+  if (!world.config.coop) return false;
+  const status = world.status;
+  if (status !== 'playing' && status !== 'bossWarning') return false;
+  const ship = world.players[slot];
+  if (!ship.active) return true;
+  if (!playerOut(ship)) return false;
+  const scores = world.scoring.board.scores;
+  return slot < scores.length && world.config.continues - scores[slot].continues > 0;
+}
+
+/**
+ * The HUD state of one player (M2-06, see {@link HudPlayerState}). Never allocates.
+ *
+ * @param world - The World shown.
+ * @param slot - The player slot.
+ * @returns The state code (`Absent` for a slot the World does not have).
+ *
+ * @example
+ * ```ts
+ * hudPlayerState(coopWorld, 1); // → HudPlayerState.Join until player 2 presses START
+ * ```
+ */
+export function hudPlayerState(world: World, slot: number): HudPlayerState {
+  const players = world.players;
+  if (!(slot >= 0 && slot < players.length)) return HudPlayerState.Absent;
+  const ship = players[slot];
+  if (!ship.active) return canJoin(world, slot) ? HudPlayerState.Join : HudPlayerState.Absent;
+  if (!playerOut(ship)) return HudPlayerState.Playing;
+  return canJoin(world, slot) ? HudPlayerState.Continue : HudPlayerState.Out;
+}
+
 /**
  * Draws the whole HUD for a World into a draw list (cleared first): both bars, player 1's score,
  * the session hi-score, player 2's score or `------`, player 1's stock, power meter and Force
- * Field — or, in Direct mode (M2-05), its tier pips. Never allocates (the labels are written into
- * their string slots only when changed).
+ * Field — or, in Direct mode (M2-05), its tier pips; in a co-op game (M2-06) each player's half of
+ * the bottom bar. Never allocates (the labels are written into their string slots only when
+ * changed).
  *
  * @remarks
  * Side effect: clears the scores' `displayDirty` and the board's `hiScoreDirty` flags (it has
  * drawn them). Layout ({@link HUD_LAYOUT}): top bar `1P` at x 8, `HI` at 156, `2P` at 292, each
- * followed 16 px later by an 8-digit number (`------` while player 2 is out); bottom bar: up to 5
- * stock icons 10 px apart from x 4 (more: one icon and the count), the seven 40-px meter slots
- * from x 58 — `hud/meter-slot` frame 1 on the "on" half of the {@link HUD_METER_FLASH_TICKS}
- * flash for the highlighted slot, frame 2 for a slot that cannot be equipped, frame 0 otherwise,
- * with the slot's `hud/meter-labels` frame ({@link meterLabelFrame}: the arsenal's weapon names on
- * MISSILE / DOUBLE / LASER — M2-03) tinted {@link HUD_COLORS}.label or
- * `labelDisabled` — and, while the Force Field is up, one pip per hit it can take (at most 5, 7 px
- * apart from x 344), cyan for the hits left and dark for the spent ones.
+ * followed 16 px later by an 8-digit number (`------` while player 2 is out of a one-player game);
+ * bottom bar: up to 5 stock icons 10 px apart from x 4 (more: one icon and the count), the seven
+ * 40-px meter slots from x 58 — `hud/meter-slot` frame 1 on the "on" half of the
+ * {@link HUD_METER_FLASH_TICKS} flash for the highlighted slot, frame 2 for a slot that cannot be
+ * equipped, frame 0 otherwise, with the slot's `hud/meter-labels` frame ({@link meterLabelFrame}:
+ * the arsenal's weapon names on MISSILE / DOUBLE / LASER — M2-03) tinted {@link HUD_COLORS}.label
+ * or `labelDisabled` — and, while the Force Field is up, one pip per hit it can take (at most 5, 7
+ * px apart from x 344), cyan for the hits left and dark for the spent ones.
  * Without the UI sprites the icons and slots become rectangles and the labels are left out.
  *
  * **Direct mode** (`config.powerUpMode === 'direct'`, M2-05) — instead of the meter and the Force
@@ -1205,8 +1357,17 @@ export const HUD_METER_FLASH_TICKS = 8;
  * the lit ones in the family's {@link HUD_FAMILY_COLORS} colour; `SUB` at 130 (green pips); `ARM`
  * at 196 with one pip per hit the Arm can take (its tier's {@link HUD_ARM_COLORS} colour for the
  * hits left, dark for the spent ones; nothing without an Arm); `SPD` at 252 with one pip per
- * speed (the current level and those below lit); and the family's `label` at 306. The worst case
- * is under {@link HUD_COMMAND_COUNT} commands (the game scene's HUD list has that many).
+ * speed (the current level and those below lit); and the family's `label` at 306.
+ *
+ * **Co-op** (M2-06, `config.coop`) — the top bar shows a slot that may join
+ * ({@link HudPlayerState}.Join) as `PRESS START` (blinking every {@link HUD_PROMPT_BLINK_TICKS}
+ * ticks) instead of `------`. While **both** ships are in the game the bottom bar splits into two
+ * 192-px halves (player 1 left, player 2 right — its stock icon `hud/life@p2`), each compact: the
+ * stock icon and count, then the seven meter slots as 20-px boxes with two-letter labels
+ * ({@link METER_SHORT_LABELS}) and the shield pips from x 164 — or, in Direct mode, `SH` / `SB` /
+ * `AR` / `SP` with 3×4 pips 4 px apart; a player out of lives shows `PRESS START` (blinking, when it
+ * may continue) or `GAME OVER` in its half. The worst case stays under {@link HUD_COMMAND_COUNT}
+ * commands (the game scene's HUD list has that many).
  *
  * @param world - The World shown.
  * @param list - Target draw list (≥ {@link HUD_COMMAND_COUNT} commands, ≥
@@ -1230,14 +1391,22 @@ export function buildHud(world: World, list: DrawList, sprites: UiSprites = NO_S
   list.rect(0, L.bottomY, 384, 8, HUD_COLORS.bar);
   const board = world.scoring.board;
   const players = world.players;
-  list.text(S.p1, L.p1X, L.topY, HUD_COLORS.p1);
-  list.number(board.scores[0].score, L.p1X + 16, L.topY, L.digits, HUD_COLORS.number);
+  const blinkOn = ((world.tick / HUD_PROMPT_BLINK_TICKS) & 1) === 0;
+  const state1 = hudPlayerState(world, 0);
+  const state2 = hudPlayerState(world, 1);
+  topScore(list, board.scores[0].score, state1, S.p1, L.p1X, HUD_COLORS.p1, blinkOn);
   list.text(S.hi, L.hiX, L.topY, HUD_COLORS.hi);
   list.number(board.hiScore, L.hiX + 16, L.topY, L.digits, HUD_COLORS.number);
-  const p2 = players.length > 1 && players[1].active;
-  list.text(S.p2, L.p2X, L.topY, p2 ? HUD_COLORS.p2 : HUD_COLORS.inactive);
-  if (p2) list.number(board.scores[1].score, L.p2X + 16, L.topY, L.digits, HUD_COLORS.number);
-  else list.text(S.dashes, L.p2X + 16, L.topY, HUD_COLORS.inactive);
+  const score2 = board.scores.length > 1 ? board.scores[1].score : 0;
+  topScore(list, score2, state2, S.p2, L.p2X, HUD_COLORS.p2, blinkOn);
+
+  if (players.length > 1 && players[0].active && players[1].active) {
+    // Co-op (M2-06): each player's compact half.
+    coopHalf(world, list, sprites, 0, state1, blinkOn);
+    coopHalf(world, list, sprites, 1, state2, blinkOn);
+    clearDirty(world);
+    return;
+  }
 
   const ship = players[0];
   const stock = ship.lives - 1;
@@ -1269,7 +1438,13 @@ export function buildHud(world: World, list: DrawList, sprites: UiSprites = NO_S
     if (sprites.meterSlot >= 0) {
       list.sprite(sprites.meterSlot, frame, x, L.bottomY);
     } else {
-      list.rect(x + 1, L.bottomY + 1, L.slotW - 2, 6, lit ? 0x5a3c10 : can ? 0x18204a : 0x1c2030);
+      list.rect(
+        x + 1,
+        L.bottomY + 1,
+        L.slotW - 2,
+        6,
+        lit ? HUD_COLORS.slotLit : can ? HUD_COLORS.slotOn : HUD_COLORS.slotOff,
+      );
     }
     if (sprites.meterLabels >= 0) {
       list.sprite(
@@ -1299,6 +1474,125 @@ export function buildHud(world: World, list: DrawList, sprites: UiSprites = NO_S
 }
 
 /**
+ * One player's label and score on the top bar: the score for a player in the game (or out of
+ * it), `PRESS START` (on the blink's "on" half) for a slot that may join, `------` for an absent
+ * one (M2-06).
+ *
+ * @param list - The HUD list.
+ * @param score - The player's score.
+ * @param state - Its {@link HudPlayerState}.
+ * @param slot - The label's string slot (`1P` / `2P`).
+ * @param x - The label's x.
+ * @param color - The label's colour.
+ * @param blinkOn - The prompt's blink phase.
+ */
+function topScore(
+  list: DrawList,
+  score: number,
+  state: HudPlayerState,
+  slot: number,
+  x: number,
+  color: number,
+  blinkOn: boolean,
+): void {
+  const L = HUD_LAYOUT;
+  const S = HUD_STRING_SLOTS;
+  const absent = state === HudPlayerState.Absent || state === HudPlayerState.Join;
+  list.text(slot, x, L.topY, absent ? HUD_COLORS.inactive : color);
+  if (state === HudPlayerState.Join) {
+    // Written only when a co-op HUD needs it (a one-player HUD list may have 4 string slots).
+    list.setString(S.pressStart, 'PRESS START');
+    if (blinkOn) list.text(S.pressStart, x + 16, L.topY, HUD_COLORS.prompt);
+  } else if (state === HudPlayerState.Absent) {
+    list.text(S.dashes, x + 16, L.topY, HUD_COLORS.inactive);
+  } else {
+    list.number(score, x + 16, L.topY, L.digits, HUD_COLORS.number);
+  }
+}
+
+/**
+ * One player's compact half of the bottom bar in a co-op game (M2-06; see {@link buildHud}). Never
+ * allocates.
+ *
+ * @param world - The World shown.
+ * @param list - The HUD list.
+ * @param sprites - UI sprite ids.
+ * @param slot - The player slot (0 = left half, 1 = right half).
+ * @param state - Its {@link HudPlayerState}.
+ * @param blinkOn - The prompt's blink phase.
+ */
+function coopHalf(
+  world: World,
+  list: DrawList,
+  sprites: UiSprites,
+  slot: number,
+  state: HudPlayerState,
+  blinkOn: boolean,
+): void {
+  const L = HUD_LAYOUT;
+  const S = HUD_STRING_SLOTS;
+  const ox = slot * L.halfW;
+  const y = L.bottomY;
+  const centre = ox + (L.halfW >> 1);
+  if (state === HudPlayerState.Continue) {
+    list.setString(S.pressStart, 'PRESS START');
+    if (blinkOn) list.text(S.pressStart, centre, y, HUD_COLORS.prompt, TextAlign.Center);
+    return;
+  }
+  if (state !== HudPlayerState.Playing) {
+    list.setString(S.gameOver, 'GAME OVER');
+    list.text(S.gameOver, centre, y, HUD_COLORS.over, TextAlign.Center);
+    return;
+  }
+  const ship = world.players[slot];
+  const life = slot === 1 && sprites.lifeP2 >= 0 ? sprites.lifeP2 : sprites.life;
+  const stock = ship.lives > 0 ? ship.lives - 1 : 0;
+  if (life >= 0) list.sprite(life, 0, ox + L.coopStockX, y + 2);
+  else list.rect(ox + L.coopStockX, y + 2, 8, 4, slot === 1 ? HUD_COLORS.p2 : HUD_COLORS.p1);
+  list.number(stock, ox + L.coopStockX + 10, y, 0, HUD_COLORS.number);
+  if (world.powerups.direct) {
+    coopDirectPips(world, list, slot, ox);
+    return;
+  }
+  const cursor = world.powerups.meters[slot].cursor;
+  const equippable = world.powerups.equippable(slot);
+  const flashOn = ((world.tick / HUD_METER_FLASH_TICKS) & 1) === 0;
+  for (let m = 0; m < METER_SLOT_COUNT; m++) {
+    const x = ox + L.coopMeterX + m * L.coopSlotW;
+    const can = (equippable & (1 << m)) !== 0;
+    const lit = m === cursor && flashOn;
+    list.rect(
+      x + 1,
+      y + 1,
+      L.coopSlotW - 2,
+      6,
+      lit ? HUD_COLORS.slotLit : can ? HUD_COLORS.slotOn : HUD_COLORS.slotOff,
+    );
+    const label = S.meterShort + m;
+    list.setString(label, METER_SHORT_LABELS[meterLabelFrame(world, m)] ?? '');
+    list.text(
+      label,
+      x + (L.coopSlotW >> 1),
+      y,
+      lit ? HUD_COLORS.hi : can ? HUD_COLORS.label : HUD_COLORS.labelDisabled,
+      TextAlign.Center,
+    );
+  }
+  const shield = ship.shield;
+  if (shieldActive(shield)) {
+    for (let i = 0; i < shield.maxHits && i < 5; i++) {
+      list.rect(
+        ox + L.coopShieldX + i * 5,
+        y + 2,
+        4,
+        4,
+        i < shield.hits ? HUD_COLORS.shield : HUD_COLORS.shieldSpent,
+      );
+    }
+  }
+}
+
+/**
  * Clears the flags a HUD build has drawn: the scores' `displayDirty`, the board's `hiScoreDirty`.
  *
  * @param world - The World shown.
@@ -1311,7 +1605,7 @@ function clearDirty(world: World): void {
 }
 
 /**
- * A row of 4×4 pips on the bottom bar: `lit` of `count` in `on`, the rest in `off`.
+ * A row of pips on the bottom bar: `lit` of `count` in `on`, the rest in `off`.
  *
  * @param list - The HUD list.
  * @param x - First pip x.
@@ -1320,6 +1614,7 @@ function clearDirty(world: World): void {
  * @param lit - Lit pips (the first ones).
  * @param on - Lit colour.
  * @param off - Unlit colour.
+ * @param width - Pip width (default 4; the co-op HUD's compact pips are 3).
  */
 function drawPips(
   list: DrawList,
@@ -1329,9 +1624,24 @@ function drawPips(
   lit: number,
   on: number,
   off: number,
+  width = 4,
 ): void {
   const y = HUD_LAYOUT.bottomY + 2;
-  for (let i = 0; i < count; i++) list.rect(x + i * step, y, 4, 4, i < lit ? on : off);
+  for (let i = 0; i < count; i++) list.rect(x + i * step, y, width, 4, i < lit ? on : off);
+}
+
+/**
+ * The main family a player's Direct-mode loadout fires, and its index (M2-05).
+ *
+ * @param world - The World (Direct mode).
+ * @param slot - The player slot.
+ * @returns The family's index in `mainFamilies` (0 without families).
+ */
+function familyIndex(world: World, slot: number): number {
+  const loadout = world.weapons.loadouts[slot];
+  const families = world.weapons.mainFamilies;
+  // `core/weapons` reads a negative index as the first family.
+  return loadout.family >= 0 && families.length > 0 ? loadout.family % families.length : 0;
 }
 
 /**
@@ -1347,8 +1657,7 @@ function buildDirectPips(world: World, list: DrawList): void {
   const loadout = world.weapons.loadouts[0];
   const ship = world.players[0];
   const families = world.weapons.mainFamilies;
-  // The family the weapons fire (`core/weapons` reads a negative index as the first family).
-  const index = loadout.family >= 0 && families.length > 0 ? loadout.family % families.length : 0;
+  const index = familyIndex(world, 0);
   const family = families.length > 0 ? (families[index] ?? null) : null;
   list.setString(S.shot, 'SHOT');
   list.setString(S.sub, 'SUB');
@@ -1386,8 +1695,64 @@ function buildDirectPips(world: World, list: DrawList): void {
 }
 
 /**
+ * The compact Direct-mode tier pips of one player's co-op half (M2-06; see {@link buildHud}):
+ * `SH`, `SB`, `AR`, `SP`, each followed by 3×4 pips 4 px apart. Never allocates.
+ *
+ * @param world - The World shown (Direct mode).
+ * @param list - The HUD list.
+ * @param slot - The player slot.
+ * @param ox - The half's left edge.
+ */
+function coopDirectPips(world: World, list: DrawList, slot: number, ox: number): void {
+  const L = HUD_LAYOUT;
+  const S = HUD_STRING_SLOTS;
+  const y = L.bottomY;
+  const loadout = world.weapons.loadouts[slot];
+  const ship = world.players[slot];
+  const families = world.weapons.mainFamilies;
+  const index = familyIndex(world, slot);
+  const family = families.length > 0 ? (families[index] ?? null) : null;
+  list.setString(S.shortShot, 'SH');
+  list.setString(S.shortSub, 'SB');
+  list.setString(S.shortArm, 'AR');
+  list.setString(S.shortSpeed, 'SP');
+  const color = HUD_FAMILY_COLORS[index % HUD_FAMILY_COLORS.length] ?? HUD_COLORS.label;
+  list.text(S.shortShot, ox + L.coopShotX, y, HUD_COLORS.pipLabel);
+  const shotTop = directMaxLevel(family);
+  drawPips(list, ox + L.coopShotX + 13, 4, shotTop, loadout.shot, color, HUD_COLORS.pipOff, 3);
+  list.text(S.shortSub, ox + L.coopSubX, y, HUD_COLORS.pipLabel);
+  const subTop = directMaxLevel(world.weapons.subFamily);
+  drawPips(
+    list,
+    ox + L.coopSubX + 13,
+    4,
+    subTop,
+    loadout.sub,
+    HUD_COLORS.subPip,
+    HUD_COLORS.pipOff,
+    3,
+  );
+  list.text(S.shortArm, ox + L.coopArmX, y, HUD_COLORS.pipLabel);
+  const shield = ship.shield;
+  if (shieldActive(shield) && shield.kind === ShieldKind.Arm && shield.tier >= 1) {
+    const tier = shield.tier > HUD_ARM_COLORS.length ? HUD_ARM_COLORS.length : shield.tier;
+    const max = shield.maxHits > 5 ? 5 : shield.maxHits;
+    const on = HUD_ARM_COLORS[tier - 1];
+    drawPips(list, ox + L.coopArmX + 13, 4, max, shield.hits, on, HUD_COLORS.pipOff, 3);
+  }
+  list.text(S.shortSpeed, ox + L.coopSpeedX, y, HUD_COLORS.pipLabel);
+  const speeds = world.ship.speeds.length > 5 ? 5 : world.ship.speeds.length;
+  const lit = ship.speedLevel + 1;
+  drawPips(list, ox + L.coopSpeedX + 13, 4, speeds, lit, HUD_COLORS.speedPip, HUD_COLORS.pipOff, 3);
+}
+
+/** Values the HUD compares per player (M2-06: both players' power and state). */
+const HUD_PLAYER_FIELDS = 12;
+
+/**
  * The HUD with change detection: {@link Hud.update} rebuilds the list only when something it shows
- * changed. A class, so the remembered values stay unboxed small integers.
+ * changed. A class, so the remembered values stay unboxed small integers (a typed array holds the
+ * per-player values).
  */
 export class Hud {
   /** The sprite ids the HUD draws with. */
@@ -1396,18 +1761,12 @@ export class Hud {
   builds = 0;
   private world: World | null = null;
   private list: DrawList | null = null;
-  private lives = -1;
-  private p2 = false;
-  private cursor = -2;
-  private equippable = -1;
   private flash = -1;
-  private shieldHits = -1;
-  private shieldMax = -1;
-  private shot = -1;
-  private sub = -1;
-  private family = -1;
-  private speed = -1;
-  private tier = -1;
+  private blink = -1;
+  /** The last build's per-player values ({@link HUD_PLAYER_FIELDS} per player). */
+  private readonly shown = new Int32Array(2 * HUD_PLAYER_FIELDS);
+  /** This update's per-player values (compared with {@link Hud.shown}). */
+  private readonly next = new Int32Array(2 * HUD_PLAYER_FIELDS);
 
   /**
    * Creates the HUD (use {@link createHud}).
@@ -1419,16 +1778,51 @@ export class Hud {
   }
 
   /**
+   * Writes the values the HUD shows of one player into {@link Hud.next}.
+   *
+   * @param world - The World shown.
+   * @param slot - The player slot.
+   * @returns Whether its meter cursor highlights a slot (the flash matters).
+   */
+  private sample(world: World, slot: number): boolean {
+    const out = this.next;
+    const base = slot * HUD_PLAYER_FIELDS;
+    if (slot >= world.players.length) {
+      out.fill(-1, base, base + HUD_PLAYER_FIELDS);
+      return false;
+    }
+    const ship = world.players[slot];
+    const loadout = world.weapons.loadouts[slot];
+    const active = shieldActive(ship.shield);
+    const cursor = world.powerups.meters[slot].cursor;
+    out[base] = hudPlayerState(world, slot);
+    out[base + 1] = ship.active ? 1 : 0;
+    out[base + 2] = ship.lives;
+    out[base + 3] = cursor;
+    out[base + 4] = world.powerups.equippable(slot);
+    out[base + 5] = active ? ship.shield.hits : 0;
+    out[base + 6] = active ? ship.shield.maxHits : 0;
+    out[base + 7] = active ? ship.shield.tier : 0;
+    out[base + 8] = loadout.shot;
+    out[base + 9] = loadout.sub;
+    out[base + 10] = loadout.family;
+    out[base + 11] = ship.speedLevel;
+    return cursor >= 0 && ship.active;
+  }
+
+  /**
    * Rebuilds `list` from `world` when the shown state changed since the last build (or the World or
    * list is a different object). Never allocates.
    *
    * @remarks
    * Compared: player 1's and 2's score (their `displayDirty` flags), the hi-score
-   * (`hiScoreDirty`), player 1's lives, whether player 2 plays, the meter cursor and equippable
-   * mask, the highlight's flash phase (only while a slot is highlighted), the shield's hits and
-   * (Direct mode, M2-05) the shot / sub levels, the family, the speed level and the Arm's tier. A
-   * rebuild clears the dirty flags ({@link buildHud}), so only one HUD should read a given World's
-   * flags. The game scene calls this once per displayed frame, not per tick.
+   * (`hiScoreDirty`) and, for each player, its {@link HudPlayerState} (M2-06), whether it plays,
+   * its lives, meter cursor and equippable mask, the shield's hits, maximum and tier, and (Direct
+   * mode, M2-05) the shot / sub levels, the family and the speed level; the highlight's flash
+   * phase (only while a meter slot is highlighted) and the `PRESS START` blink (only while a
+   * player may join or continue). A rebuild clears the dirty flags ({@link buildHud}), so only one
+   * HUD should read a given World's flags. The game scene calls this once per displayed frame, not
+   * per tick.
    *
    * @param world - The World shown.
    * @param list - The HUD draw list.
@@ -1436,49 +1830,32 @@ export class Hud {
    */
   update(world: World, list: DrawList): boolean {
     const board = world.scoring.board;
-    const ship = world.players[0];
-    const cursor = world.powerups.meters[0].cursor;
-    const equippable = world.powerups.equippable(0);
-    const flash = cursor >= 0 ? (world.tick / HUD_METER_FLASH_TICKS) & 1 : 0;
-    const p2 = world.players.length > 1 && world.players[1].active;
-    const active = shieldActive(ship.shield);
-    const hits = active ? ship.shield.hits : 0;
-    const max = active ? ship.shield.maxHits : 0;
-    const loadout = world.weapons.loadouts[0];
-    const tier = active ? ship.shield.tier : 0;
-    const dirty =
+    const lit1 = this.sample(world, 0);
+    const lit2 = this.sample(world, 1);
+    const next = this.next;
+    const flash = lit1 || lit2 ? (world.tick / HUD_METER_FLASH_TICKS) & 1 : 0;
+    const prompt =
+      next[0] === HudPlayerState.Join ||
+      next[0] === HudPlayerState.Continue ||
+      next[HUD_PLAYER_FIELDS] === HudPlayerState.Join ||
+      next[HUD_PLAYER_FIELDS] === HudPlayerState.Continue;
+    const blink = prompt ? (world.tick / HUD_PROMPT_BLINK_TICKS) & 1 : 0;
+    let dirty =
       world !== this.world ||
       list !== this.list ||
       board.scores[0].displayDirty ||
       (board.scores.length > 1 && board.scores[1].displayDirty) ||
       board.hiScoreDirty ||
-      ship.lives !== this.lives ||
-      p2 !== this.p2 ||
-      cursor !== this.cursor ||
-      equippable !== this.equippable ||
       flash !== this.flash ||
-      hits !== this.shieldHits ||
-      max !== this.shieldMax ||
-      loadout.shot !== this.shot ||
-      loadout.sub !== this.sub ||
-      loadout.family !== this.family ||
-      ship.speedLevel !== this.speed ||
-      tier !== this.tier;
+      blink !== this.blink;
+    const shown = this.shown;
+    for (let i = 0; !dirty && i < next.length; i++) if (next[i] !== shown[i]) dirty = true;
     if (!dirty) return false;
-    this.shot = loadout.shot;
-    this.sub = loadout.sub;
-    this.family = loadout.family;
-    this.speed = ship.speedLevel;
-    this.tier = tier;
+    shown.set(next);
     this.world = world;
     this.list = list;
-    this.lives = ship.lives;
-    this.p2 = p2;
-    this.cursor = cursor;
-    this.equippable = equippable;
     this.flash = flash;
-    this.shieldHits = hits;
-    this.shieldMax = max;
+    this.blink = blink;
     this.builds++;
     buildHud(world, list, this.sprites);
     return true;

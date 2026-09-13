@@ -49,7 +49,9 @@
       "weaponEdit": null,
       "megaChoice": "megaCrash",
       "shieldChoice": "forceField",
-      "optionChoice": "trail"
+      "optionChoice": "trail",
+      "coop": false,
+      "coopExtra": 0.5
     }
   },
   "ticks": 1369,
@@ -59,10 +61,10 @@
     "ANkK"
   ],
   "hashes": [
-    3899646349,
-    3373849525
+    293921229,
+    2904082155
   ],
-  "finalHash": 2357588490,
+  "finalHash": 3482516520,
   "description": "HALCYON BULWARK with a full Type B loadout (M2-03): Ripple Laser, Spread Bomb blasts, Options",
   "expected": {
     "status": "stageClear",

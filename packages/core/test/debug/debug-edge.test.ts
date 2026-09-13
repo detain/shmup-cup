@@ -267,6 +267,8 @@ function referenceHash(w: World): number {
   num(powerups.dropsTaken);
   // The Direct-mode item plan's cursor (M2-05).
   num(powerups.planCursor);
+  // The co-op drop scaling credit (M2-06).
+  num(powerups.coopCredit);
   // Effect timers and scores (M1-12) — not the session hi-score.
   const fx = w.fx;
   for (const value of [

@@ -145,6 +145,7 @@ async function openOptions(page: Page): Promise<void> {
   await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
   await waitFrames(page, 10);
   await tap(page, 'Enter'); // PRESS OK → the menu
+  await tap(page, 'ArrowDown'); // 2 PLAYERS (M2-06)
   await tap(page, 'ArrowDown'); // OPTIONS
   await tap(page, 'Enter');
   await expect(canvas).toHaveAttribute('data-shmup-scene', 'options');

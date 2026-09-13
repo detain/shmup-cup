@@ -17,9 +17,10 @@
  * - **{@link SceneFlow}** — the M1 scene set and its rules, built by {@link createSceneFlow}:
  *   - {@link BootScene}: a progress bar until the host calls {@link SceneFlow.finishBoot}; then the
  *     title.
- *   - {@link TitleScene}: the logo, a blinking `PRESS OK`, then the menu START / OPTIONS / EXIT —
- *     EXIT only when the platform can quit (`platform.exit`). Shows the saved hi-score, plays the
- *     title music.
+ *   - {@link TitleScene}: the logo, a blinking `PRESS OK`, then the menu 1 PLAYER / 2 PLAYERS /
+ *     OPTIONS / EXIT — EXIT only when the platform can quit (`platform.exit`); 2 PLAYERS (M2-06)
+ *     makes the next games co-op ones (`core/config` `withCoop` — player 2 drops in with START).
+ *     Shows the saved hi-score, plays the title music.
  *   - {@link DifficultyScene} (overlay, M2-01 — START): EASY / NORMAL / HARD / ARCADE with the
  *     focused preset's lives, continues and hi-score; OK chooses that preset (its World gets
  *     `core/config` `withDifficulty` of the host config — {@link SceneFlow.gameConfig}) and opens
@@ -37,8 +38,9 @@
  *     ship select.
  *   - {@link GameScene}: **owns the World** — every start (and RETRY STAGE) creates a fresh one;
  *     ticks it with the snapshot; Pause (remote Play/Pause, Back — bound to Pause in the game
- *     context) opens the pause menu; `stageClear` / `gameOver` open their screens after a short
- *     delay; draws the HUD (`core/ui` {@link Hud}) and the boss WARNING band.
+ *     context) opens the pause menu — except the START of a co-op player who may drop in, which is
+ *     its join (M2-06); `stageClear` / `gameOver` open their screens after a short delay; draws the
+ *     HUD (`core/ui` {@link Hud}) and the boss WARNING band.
  *   - {@link PauseScene} (overlay): RESUME / OPTIONS / RETRY STAGE / QUIT TO TITLE — the last one
  *     through the {@link ConfirmDialog}; Pause or Back resumes.
  *   - {@link OptionsScene} (overlay, M1-17 — from the title and the pause menu): MASTER / MUSIC /
@@ -96,8 +98,10 @@
  *   ORDER: the order editor; OK on START: start the game; Back: ship select.
  * - **Order editor** — Up / Down: move; Left / Right (or OK): change a row; DONE or Back: store
  *   and close.
- * - **Continue** — OK: continue; Back: give up (both after a 30-tick lock).
- * - **Game** — Pause or Back: pause menu.
+ * - **Continue** — OK: continue (in a co-op game: the players who press it); Back: give up (both
+ *   after a 30-tick lock).
+ * - **Game** — Pause or Back: pause menu; in a co-op game (M2-06) the START / OK of a player who
+ *   may drop in joins instead (the World reads it — `core/world` `JOIN_ACTIONS`).
  * - **Pause** — Pause or Back: resume; OK: activate; Up / Down: move.
  * - **Options** — Up / Down: move; Left / Right: change the slider / profile (OK steps the profile
  *   too); Back or BACK: save and close.
@@ -113,6 +117,8 @@
  * - shmup_feat.md §16 — difficulty select, weapon select / Weapon Edit (M2-03); §10 — continues
  *   (the countdown); §6A — the editable Auto Power-Up order, §7A — the `!` choices
  * - shmup_feat.md §5 — ship selection: the meter ship or the Direct-mode ship (M2-05)
+ * - shmup_feat.md §16 — 2-player simultaneous co-op: `2 PLAYERS` on the title, the drop-in join,
+ *   per-player continues and both players' scores on the end screens (M2-06)
  *
  * **Public API.** {@link SceneStack}, {@link createSceneStack}, {@link SCENE_STACK_DEPTH},
  * {@link Scene}, {@link SceneId}, {@link SceneFlow}, {@link SceneFlowHost}, {@link SceneStart},
@@ -134,6 +140,10 @@
  * {@link STAGE_CLEAR_TALLY_TICKS}, {@link STAGE_CLEAR_CONTINUED_TICKS}, {@link PAUSE_DIM},
  * {@link CONTINUE_COUNTDOWN_TICKS}, {@link CONTINUE_LOCK_TICKS}).
  *
+ * **Co-op (M2-06).** {@link SceneFlow.coop} is the title's choice; {@link SceneFlow.inputSeats}
+ * tells the host's input adapter whether player 2's seat is routed (a co-op game or its continue
+ * countdown on top). A co-op game records its scores with the hi-score mode `2p`.
+ *
  * **Planned.** Attract mode, the mode select, the zone map, name entry, hi-score table, ending and
  * credits (M2); more option groups (controls rebinding, display, game — M2-16).
  *
@@ -153,6 +163,7 @@ import {
   arsenalMatches,
   resolveGameConfig,
   withArsenal,
+  withCoop,
   withDifficulty,
   withShip,
   type ArsenalChoice,
@@ -235,7 +246,16 @@ import {
   weaponLabel,
   weaponsOfSlot,
 } from '../weapons/index.js';
-import { canContinue, continueWorld, createWorld, stepWorld, type World } from '../world/index.js';
+import {
+  JOIN_ACTIONS,
+  canContinue,
+  continueWorld,
+  continuesLeft,
+  createWorld,
+  playerCanJoin,
+  stepWorld,
+  type World,
+} from '../world/index.js';
 
 /** Module descriptor (see {@link defineModule}). */
 export const moduleInfo = defineModule({
@@ -676,10 +696,11 @@ export const ConfirmPurpose = {
 export type ConfirmPurpose = (typeof ConfirmPurpose)[keyof typeof ConfirmPurpose];
 
 /**
- * Title menu items (indices into the title menu; EXIT only exists when the platform can quit).
- * OPTIONS opens the {@link OptionsScene}.
+ * Title menu items (indices into the title menu; EXIT only exists when the platform can quit):
+ * `1 PLAYER` (`Start`), `2 PLAYERS` (a co-op game — M2-06; both open the difficulty menu), OPTIONS
+ * (the {@link OptionsScene}), EXIT. OPTIONS and EXIT moved down one row in M2-06.
  */
-export const TitleItem = { Start: 0, Options: 1, Exit: 2 } as const;
+export const TitleItem = { Start: 0, TwoPlayers: 1, Options: 2, Exit: 3 } as const;
 
 /**
  * Pause menu items: RESUME, OPTIONS (the {@link OptionsScene} over the paused game), RETRY STAGE
@@ -743,6 +764,9 @@ export const CONTINUE_LOCK_TICKS = 30;
 
 /** The `mode` of the hi-score rows a game records (one player — shmup_feat.md §16). */
 const HI_SCORE_MODE_1P = '1p';
+
+/** The `mode` of the hi-score rows a co-op game records (M2-06). */
+const HI_SCORE_MODE_2P = '2p';
 
 /** Ticks a menu ignores input after it opened (a buffered OK still counts). */
 const MENU_OPEN_LOCK_TICKS = 2;
@@ -865,6 +889,15 @@ interface FlowControl {
   readonly modeKey: string;
   /** The difficulty the next game plays (the host config's until one is chosen under START). */
   difficulty: DifficultyPreset;
+  /** Whether the next game is a two-player co-op one (the title's `2 PLAYERS`, M2-06). */
+  readonly coop: boolean;
+  /**
+   * Chooses one or two players for the next games (the title's `1 PLAYER` / `2 PLAYERS`, M2-06):
+   * every difficulty's config gets `core/config` `withCoop`.
+   *
+   * @param coop - `true` for a co-op game.
+   */
+  choosePlayers(coop: boolean): void;
   /**
    * The config of each difficulty preset, in {@link DIFFICULTY_PRESETS} order: the host's config
    * for its own preset, `withDifficulty` of it for the others (built with the flow).
@@ -1077,7 +1110,10 @@ const TitlePhase = { Prompt: 0, Menu: 1 } as const;
 export class TitleScene extends SceneBase {
   /** See {@link Scene.id}. */
   readonly id = 'title' as const;
-  /** The title menu (START / OPTIONS / EXIT — EXIT only when the platform can quit). */
+  /**
+   * The title menu (1 PLAYER / 2 PLAYERS / OPTIONS / EXIT — EXIT only when the platform can quit;
+   * M2-06 added 2 PLAYERS).
+   */
   readonly menu: ListMenu;
   /** 0 = `PRESS OK`, 1 = the menu. */
   phase: number = TitlePhase.Prompt;
@@ -1091,7 +1127,10 @@ export class TitleScene extends SceneBase {
    */
   constructor(flow: FlowControl) {
     super(flow);
-    const items = flow.host.exit !== null ? ['START', 'OPTIONS', 'EXIT'] : ['START', 'OPTIONS'];
+    const items =
+      flow.host.exit !== null
+        ? ['1 PLAYER', '2 PLAYERS', 'OPTIONS', 'EXIT']
+        : ['1 PLAYER', '2 PLAYERS', 'OPTIONS'];
     this.menu = createListMenu(items);
   }
 
@@ -1120,9 +1159,9 @@ export class TitleScene extends SceneBase {
   }
 
   /**
-   * `PRESS OK` → menu; START → the difficulty menu (then the game); OPTIONS → the Options screen;
-   * EXIT / Back → exit confirmation (when the platform can quit). Reads the merged menu input.
-   * Never allocates.
+   * `PRESS OK` → menu; 1 PLAYER / 2 PLAYERS → the difficulty menu (then the game — one player or a
+   * co-op game, M2-06); OPTIONS → the Options screen; EXIT / Back → exit confirmation (when the
+   * platform can quit). Reads the merged menu input. Never allocates.
    */
   tick(): void {
     const flow = this.flow;
@@ -1159,8 +1198,9 @@ export class TitleScene extends SceneBase {
       return;
     }
     if (result === MenuResult.Confirmed) {
-      if (menu.focus === TitleItem.Start) {
+      if (menu.focus === TitleItem.Start || menu.focus === TitleItem.TwoPlayers) {
         flow.sfx(SFX_CUES.MenuSelect);
+        flow.choosePlayers(menu.focus === TitleItem.TwoPlayers);
         flow.stack.push(flow.difficultyMenu);
       } else if (menu.focus === TitleItem.Options) {
         flow.sfx(SFX_CUES.MenuSelect);
@@ -1302,20 +1342,26 @@ export class GameScene extends SceneBase {
    * decides whether the stage-clear or game-over screen opens. Never allocates.
    *
    * @remarks
-   * Pause / Back are read from the merged menu input (any player); on that tick the World does
-   * not step. The remote's game table binds Back to Pause anyway; Back is checked too so a table
-   * that keeps `Action.Back` in the game context still pauses.
+   * Pause / Back are read from every player's input (any player pauses); on that tick the World
+   * does not step. The remote's game table binds Back to Pause anyway; Back is checked too so a
+   * table that keeps `Action.Back` in the game context still pauses. In a co-op game (M2-06) the
+   * press of a player who may drop in (`core/world` `playerCanJoin`) is its **join** instead
+   * (`JOIN_ACTIONS` — the World brings it in), so it does not pause.
    *
    * @param input - This tick's input (the World gets it unmerged — per player).
    */
   tick(input: InputSnapshot): void {
     const flow = this.flow;
-    if ((flow.menuInput.pressed & (Action.Pause | Action.Back)) !== 0) {
+    const world = this.world;
+    const players = input.players;
+    for (let p = 0; p < players.length; p++) {
+      const pressed = players[p].pressed;
+      if ((pressed & (Action.Pause | Action.Back)) === 0) continue;
+      if ((pressed & JOIN_ACTIONS) !== 0 && playerCanJoin(world, p)) continue;
       flow.sfx(SFX_CUES.PauseToggle);
       flow.stack.push(flow.pause);
       return;
     }
-    const world = this.world;
     stepWorld(world, input);
     const status = world.status;
     if (status === 'stageClear' || status === 'gameOver') {
@@ -1655,7 +1701,7 @@ export class StageClearScene extends SceneBase {
 
   /** See {@link SceneBase.stringSlots}. */
   get stringSlots(): number {
-    return 4;
+    return 6;
   }
 
   /**
@@ -1691,7 +1737,8 @@ export class StageClearScene extends SceneBase {
   }
 
   /**
-   * Draws `STAGE CLEAR` with the score and hi-score, or `TO BE CONTINUED`.
+   * Draws `STAGE CLEAR` with the score (both players' in a co-op game — M2-06) and hi-score, or
+   * `TO BE CONTINUED`.
    *
    * @param list - The UI list.
    */
@@ -1703,10 +1750,23 @@ export class StageClearScene extends SceneBase {
     list.setString(base + 1, 'SCORE');
     list.setString(base + 2, 'HI');
     list.setString(base + 3, 'TO BE CONTINUED');
+    list.setString(base + 4, '1P');
+    list.setString(base + 5, '2P');
     if (this.phase === ClearPhase.Tally) {
+      const scores = world.scoring.board.scores;
       list.text(base, CX, 74, UI_COLORS.focus, TextAlign.Center);
+      if (world.players.length > 1 && world.players[1].active && scores.length > 1) {
+        // Co-op (M2-06): both players' scores.
+        list.text(base + 4, CX - 64, 90, UI_COLORS.title);
+        list.number(scores[0].score, CX + 64, 90, 8, UI_COLORS.text, 2);
+        list.text(base + 5, CX - 64, 102, UI_COLORS.title);
+        list.number(scores[1].score, CX + 64, 102, 8, UI_COLORS.text, 2);
+        list.text(base + 2, CX - 64, 116, UI_COLORS.focus);
+        list.number(world.scoring.board.hiScore, CX + 64, 116, 8, UI_COLORS.text, 2);
+        return;
+      }
       list.text(base + 1, CX - 64, 96, UI_COLORS.title);
-      list.number(world.scoring.board.scores[0].score, CX + 64, 96, 8, UI_COLORS.text, 2);
+      list.number(scores[0].score, CX + 64, 96, 8, UI_COLORS.text, 2);
       list.text(base + 2, CX - 64, 110, UI_COLORS.focus);
       list.number(world.scoring.board.hiScore, CX + 64, 110, 8, UI_COLORS.text, 2);
     } else {
@@ -1740,7 +1800,7 @@ export class GameOverScene extends SceneBase {
 
   /** See {@link SceneBase.stringSlots}. */
   get stringSlots(): number {
-    return 3;
+    return 5;
   }
 
   /** Records the run (and saves), game-over music. */
@@ -1766,27 +1826,35 @@ export class GameOverScene extends SceneBase {
   }
 
   /**
-   * Draws `GAME OVER`, the final score and — when it is the new best — `NEW HI-SCORE`.
+   * Draws `GAME OVER`, the final score (both players' in a co-op game — M2-06) and — when it is
+   * the new best — `NEW HI-SCORE`.
    *
    * @param list - The UI list.
    */
   drawUi(list: DrawList): void {
     const base = this.stringBase;
-    drawPanel(list, CX - 72, 80, 144, 44, UI_COLORS.panel, UI_COLORS.alert);
+    const world = this.flow.game.world;
+    const scores = world.scoring.board.scores;
+    const coop = world.players.length > 1 && world.players[1].active && scores.length > 1;
+    drawPanel(list, CX - 72, 80, 144, coop ? 56 : 44, UI_COLORS.panel, UI_COLORS.alert);
     list.setString(base, 'GAME OVER');
     list.setString(base + 1, 'SCORE');
     list.setString(base + 2, 'NEW HI-SCORE');
-    if (this.rank === 0) list.text(base + 2, CX, 130, UI_COLORS.focus, TextAlign.Center);
+    list.setString(base + 3, '1P');
+    list.setString(base + 4, '2P');
     list.text(base, CX, 88, UI_COLORS.alert, TextAlign.Center);
+    if (coop) {
+      // Co-op (M2-06): both players' final scores.
+      if (this.rank === 0) list.text(base + 2, CX, 142, UI_COLORS.focus, TextAlign.Center);
+      list.text(base + 3, CX - 56, 104, UI_COLORS.title);
+      list.number(scores[0].score, CX + 56, 104, 8, UI_COLORS.text, 2);
+      list.text(base + 4, CX - 56, 116, UI_COLORS.title);
+      list.number(scores[1].score, CX + 56, 116, 8, UI_COLORS.text, 2);
+      return;
+    }
+    if (this.rank === 0) list.text(base + 2, CX, 130, UI_COLORS.focus, TextAlign.Center);
     list.text(base + 1, CX - 56, 106, UI_COLORS.title);
-    list.number(
-      this.flow.game.world.scoring.board.scores[0].score,
-      CX + 56,
-      106,
-      8,
-      UI_COLORS.text,
-      2,
-    );
+    list.number(scores[0].score, CX + 56, 106, 8, UI_COLORS.text, 2);
   }
 }
 
@@ -1997,7 +2065,9 @@ export class DifficultyScene extends SceneBase {
  * every change) and the continues left. After {@link CONTINUE_LOCK_TICKS} ticks OK continues —
  * `continueWorld`: the stage restarts at its last checkpoint with fresh lives, the score's last
  * digit counts the continue — and closes the countdown (the game runs on); Back gives up. Giving up
- * or running out of time replaces it with the {@link GameOverScene} (which records the run).
+ * or running out of time replaces it with the {@link GameOverScene} (which records the run). In a
+ * co-op game (M2-06) each player's OK continues that player with its own continues (the panel
+ * shows both players' credits); a player who does not press stays out and may drop back in later.
  */
 export class ContinueScene extends SceneBase {
   /** See {@link Scene.id}. */
@@ -2011,7 +2081,7 @@ export class ContinueScene extends SceneBase {
 
   /** See {@link SceneBase.stringSlots}. */
   get stringSlots(): number {
-    return 2;
+    return 4;
   }
 
   /** Seconds left on the countdown: 9 … 0. */
@@ -2027,8 +2097,14 @@ export class ContinueScene extends SceneBase {
     this.flow.music(MUSIC_CUES.Silence, MUSIC_FADE_TICKS);
   }
 
-  /** OK continues, Back or the timeout gives up (after the lock). Never allocates. */
-  tick(): void {
+  /**
+   * OK continues, Back or the timeout gives up (after the lock). In a co-op game (M2-06) OK
+   * continues only the players who pressed it (each with its own continues — `core/world`
+   * `continueWorld`'s `who`); the others stay out and may drop in later. Never allocates.
+   *
+   * @param input - This tick's input (per player: whose OK it was).
+   */
+  tick(input: InputSnapshot): void {
     const flow = this.flow;
     const before = this.seconds;
     this.ticks++;
@@ -2037,10 +2113,22 @@ export class ContinueScene extends SceneBase {
       flow.sfx(SFX_CUES.MenuMove);
     }
     const pressed = this.ticks > CONTINUE_LOCK_TICKS ? flow.menuInput.pressed : 0;
-    if ((pressed & Action.Confirm) !== 0 && continueWorld(flow.game.world)) {
-      flow.sfx(SFX_CUES.MenuSelect);
-      flow.stack.pop();
-      return;
+    if ((pressed & Action.Confirm) !== 0) {
+      const world = flow.game.world;
+      let who = 0;
+      if (world.config.coop) {
+        const players = input.players;
+        for (let p = 0; p < players.length; p++) {
+          if ((players[p].pressed & Action.Confirm) !== 0) who |= 1 << p;
+        }
+      } else {
+        who = -1; // One player: any controller's OK.
+      }
+      if (continueWorld(world, who)) {
+        flow.sfx(SFX_CUES.MenuSelect);
+        flow.stack.pop();
+        return;
+      }
     }
     if ((pressed & Action.Back) !== 0 || this.ticks >= CONTINUE_COUNTDOWN_TICKS) {
       if ((pressed & Action.Back) !== 0) flow.sfx(SFX_CUES.MenuBack);
@@ -2049,7 +2137,8 @@ export class ContinueScene extends SceneBase {
   }
 
   /**
-   * Draws `CONTINUE?`, the seconds left and the continues left.
+   * Draws `CONTINUE?`, the seconds left and the continues left — each player's in a co-op game
+   * (M2-06).
    *
    * @param list - The UI list.
    */
@@ -2059,17 +2148,20 @@ export class ContinueScene extends SceneBase {
     drawPanel(list, CX - 72, 72, 144, 64, UI_COLORS.panel, UI_COLORS.alert);
     list.setString(base, 'CONTINUE?');
     list.setString(base + 1, 'CREDITS');
+    list.setString(base + 2, '1P');
+    list.setString(base + 3, '2P');
     list.text(base, CX, 80, UI_COLORS.focus, TextAlign.Center);
     list.number(this.seconds, CX, 96, 0, UI_COLORS.alert, TextAlign.Center);
+    if (world.config.coop && world.players.length > 1 && world.players[1].active) {
+      // Co-op (M2-06): each player's own continues.
+      list.text(base + 2, CX - 56, 118, UI_COLORS.title);
+      list.number(continuesLeft(world, 0), CX - 16, 118, 0, UI_COLORS.text, TextAlign.Right);
+      list.text(base + 3, CX + 16, 118, UI_COLORS.title);
+      list.number(continuesLeft(world, 1), CX + 56, 118, 0, UI_COLORS.text, TextAlign.Right);
+      return;
+    }
     list.text(base + 1, CX - 56, 118, UI_COLORS.title);
-    list.number(
-      world.config.continues - world.continuesUsed,
-      CX + 56,
-      118,
-      0,
-      UI_COLORS.text,
-      TextAlign.Right,
-    );
+    list.number(continuesLeft(world, 0), CX + 56, 118, 0, UI_COLORS.text, TextAlign.Right);
   }
 }
 
@@ -3027,6 +3119,16 @@ export interface SceneFlow {
   readonly activeInputProfile: number;
   /** The top scene's binding context (`'menu'` on an empty stack). */
   readonly inputContext: InputContext;
+  /** Whether the next game is a two-player co-op one (the title's `2 PLAYERS`, M2-06). */
+  readonly coop: boolean;
+  /**
+   * How many player seats the host's input adapter should route now (M2-06): `2` while a co-op
+   * game is on top (the game scene with a `config.coop` World — player 2's controller drives player
+   * 2, an unassigned one may join) or its continue countdown (whose OK continues the player who
+   * pressed it), else `1` (other menus and one-player games: every controller drives player 1).
+   * `Game.inputSeats` forwards it; `@shmup/input-web` `WebInput.setSeats` takes it.
+   */
+  readonly inputSeats: number;
   /** The World of the game scene (a fresh one per game; a placeholder before the first). */
   readonly world: World;
   /** Every player's input of the current tick merged (what the menus read; reused). */
@@ -3183,7 +3285,7 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
       let config = configs[i];
       if (!arsenalMatches(config, control.arsenal)) config = withArsenal(config, control.arsenal);
       if (control.ship !== null) config = withShip(config, control.ship);
-      armed[i] = config;
+      armed[i] = withCoop(config, control.coop);
     }
   };
   const setup = host.inputProfiles ?? null;
@@ -3200,6 +3302,12 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     menuInput,
     save,
     difficulty: host.config.difficulty,
+    coop: host.config.coop,
+    choosePlayers(coop: boolean): void {
+      if (control.coop === coop) return;
+      control.coop = coop;
+      rearm();
+    },
     configs,
     bests,
     get worldConfig(): GameConfig {
@@ -3259,7 +3367,7 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
           key,
           createHiScoreEntry(scores[p].score, {
             reached,
-            mode: HI_SCORE_MODE_1P,
+            mode: world.config.coop ? HI_SCORE_MODE_2P : HI_SCORE_MODE_1P,
             difficulty: world.config.difficulty,
           }),
         );
@@ -3389,6 +3497,15 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     get inputContext(): InputContext {
       const top = stack.top;
       return top === null ? 'menu' : top.inputContext;
+    },
+    get coop(): boolean {
+      return control.coop;
+    },
+    get inputSeats(): number {
+      // The game and its continue countdown (whose OK is per player) read player 2's seat.
+      const top = stack.top;
+      const perPlayer = top === control.game || top === control.continueScreen;
+      return perPlayer && control.game.world.config.coop ? 2 : 1;
     },
     get world(): World {
       return control.game.world;

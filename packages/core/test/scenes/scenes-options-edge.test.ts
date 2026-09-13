@@ -148,6 +148,7 @@ class Session {
   /** Title → menu → OPTIONS, past its open lock. */
   openFromTitle(): void {
     this.press(Action.Confirm);
+    this.press(Action.Down); // 2 PLAYERS (M2-06)
     this.press(Action.Down);
     expect(this.flow.title.menu.focus).toBe(TitleItem.Options);
     this.press(Action.Confirm);
@@ -290,6 +291,7 @@ describe('core/scenes options (edge): opening and closing', () => {
     const save = createSaveStore(null);
     const s = new Session(save);
     s.press(Action.Confirm);
+    s.press(Action.Down); // 2 PLAYERS (M2-06)
     s.press(Action.Down);
     s.press(Action.Confirm); // opens; locked for two ticks
     expect(s.ids).toEqual(['title', 'options']);

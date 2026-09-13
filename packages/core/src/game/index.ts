@@ -48,7 +48,8 @@
  * (`game.debug`, `requestStep()` for frame advance) and builds the reused
  * {@link RenderFrame} of the render contract (`game.renderFrame()`).
  * `game.inputContext` names the binding context (`'game'` / `'menu'`, decision D15) the host's
- * input adapter should use.
+ * input adapter should use, `game.inputSeats` how many player seats it should route (2 during a
+ * co-op game — M2-06).
  *
  * **Difficulty (M2-01).** The session config is resolved with the content's difficulty table
  * (`content.difficulty` — the `rules` kind — or `core/config` `DEFAULT_DIFFICULTY_TABLE`), so the
@@ -163,6 +164,19 @@ export interface Game {
    * `input.setContext`); reading it never allocates.
    */
   readonly inputContext: InputContext;
+  /**
+   * How many player seats the host's input adapter should route right now (M2-06, two-player
+   * co-op): `2` while a co-op game (`config.coop`) is being played — player 2's controller drives
+   * player 2 and an unassigned controller may take that seat —, `1` otherwise (every controller
+   * drives player 1; menus merge every player anyway).
+   *
+   * @remarks
+   * Bare gameplay: `2` when the session's config is a co-op one. With the scene flow: its
+   * `inputSeats` (the game scene — or its continue countdown — on top with a co-op World). The host
+   * reads it once per frame and forwards a change (`@shmup/shell` calls `input.setSeats`); reading
+   * it never allocates.
+   */
+  readonly inputSeats: number;
   /**
    * Runs exactly one simulation tick: polls `platform.input` once, then advances the
    * {@link Game.world} by one tick (`stepWorld`) — with the scene flow, the top scene instead (the
@@ -404,6 +418,10 @@ export function createGame(
     debug,
     get inputContext(): InputContext {
       return flow === null ? 'game' : flow.inputContext;
+    },
+    get inputSeats(): number {
+      if (flow !== null) return flow.inputSeats;
+      return bareWorld !== null && bareWorld.config.coop ? 2 : 1;
     },
     step,
     frame(nowMs) {

@@ -131,6 +131,7 @@ class Session {
   /** Opens the title menu and the Options screen, waiting out its open lock. */
   openOptionsFromTitle(): void {
     this.press(Action.Confirm); // PRESS OK → menu
+    this.press(Action.Down); // 2 PLAYERS (M2-06)
     this.press(Action.Down); // OPTIONS
     expect(this.flow.title.menu.focus).toBe(TitleItem.Options);
     this.press(Action.Confirm);

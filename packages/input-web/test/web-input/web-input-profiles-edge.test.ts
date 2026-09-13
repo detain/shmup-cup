@@ -324,9 +324,12 @@ describe('input-web/web-input gamepad profiles (edge cases)', () => {
   });
 
   it('keeps a separate press order per pad (players 1 and 2)', () => {
-    let pads: Array<GamepadLike | null> = [pad(0, [15]), pad(1, [12])];
+    let pads: Array<GamepadLike | null> = [pad(0, [15]), pad(1, [9])];
     const input = createWebInput({ keyTarget: null, getGamepads: () => pads });
     input.setProfile(profile('gamepad-standard', { diagonals: 'lastWins' }));
+    input.setSeats(2);
+    input.poll(); // pad 1's START takes player 2's seat (M2-06)
+    pads = [pad(0, [15]), pad(1, [12])];
     input.poll();
     pads = [pad(0, [15, 12]), pad(1, [12, 15])];
     const snapshot = input.poll();

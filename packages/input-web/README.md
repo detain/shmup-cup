@@ -56,7 +56,7 @@ table, e.g. Z = Shot + Confirm).
 | `keymap` | implemented | Built-in bindings, Tizen key codes, `code`/`keyCode` resolution |
 | `keyboard` | implemented | Held/latched masks from key events; debounce, direction policies, table swaps |
 | `gamepad` | implemented | Gamepad → actions (deadzone, hysteresis, buttons held across a table swap) |
-| `web-input` | partial | Merges sources into the `InputSnapshot`; profiles + contexts; player assignment |
+| `web-input` | implemented | Merges sources into the `InputSnapshot`; profiles + contexts; player seats — every device drives player 1, or in a co-op game a pad (or the split keyboard's right half) takes player 2's seat with its START (M2-06) |
 | `remote` | implemented | Release debounce, diagonal policy, SOCD — tuned from the input-probe results |
 | `rebind` | partial | Input profiles: validation, compiled `game`/`menu` tables, choice; the profiles an Options screen may offer (`selectableKeyProfiles`, `inputProfileChoices` — M1-17) |
 

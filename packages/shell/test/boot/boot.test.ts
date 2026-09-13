@@ -1213,6 +1213,7 @@ describe('shell/boot saves and options (M1-17)', () => {
     };
     press(0);
     press(Action.Confirm); // PRESS OK
+    press(Action.Down); // 2 PLAYERS (M2-06)
     press(Action.Down); // OPTIONS
     press(Action.Confirm);
     press(0);

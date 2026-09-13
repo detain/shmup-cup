@@ -145,13 +145,14 @@ function mark(scan: LaneScan, y: number, reach: number, slot: number): void {
  *
  * @param world - The World.
  * @param scan - Receives the result (cleared first).
+ * @param player - The player slot whose ship scans (default 0; M2-06 co-op runs fly a second bot).
  */
-export function scanLanes(world: World, scan: LaneScan): void {
+export function scanLanes(world: World, scan: LaneScan, player = 0): void {
   scan.centre.fill(0);
   scan.span.fill(0);
   scan.terrain.fill(0);
   scan.wall.fill(0);
-  const ship = world.players[0];
+  const ship = world.players[player];
   const camera = world.camera;
   const sx = ship.x - camera.x;
   const hurt = world.ship.hurtRadius;
@@ -264,6 +265,8 @@ function firstSlot(mask: number, from: number, to: number): number {
  * Creates a four-way playtest bot (see the module docs). Each bot keeps a little state (its
  * target lane, its last PowerUp press), so use one per run.
  *
+ * @param player - The player slot it flies (default 0 — player 1; the co-op golden replay of
+ *   M2-06 flies player 2 with a second bot).
  * @returns The bot.
  *
  * @example
@@ -271,7 +274,7 @@ function firstSlot(mask: number, from: number, to: number): number {
  * const run = runStage('zone-a', fourWayBot(), { godMode: true });
  * ```
  */
-export function fourWayBot(): PlaytestBot {
+export function fourWayBot(player = 0): PlaytestBot {
   const scan = createLaneScan();
   const bonus = new Float64Array(LANES);
   const cost = new Float64Array(LANES);
@@ -285,10 +288,10 @@ export function fourWayBot(): PlaytestBot {
    * @returns `true` to press PowerUp now.
    */
   const wantsEquip = (world: World): boolean => {
-    const slot = world.powerups.meters[0].cursor;
-    if (slot < 0 || !world.powerups.canEquip(0, slot)) return false;
-    const ship = world.players[0];
-    const loadout = world.weapons.loadouts[0];
+    const slot = world.powerups.meters[player].cursor;
+    if (slot < 0 || !world.powerups.canEquip(player, slot)) return false;
+    const ship = world.players[player];
+    const loadout = world.weapons.loadouts[player];
     if (slot === MeterSlot.Speed) return ship.speedLevel < BOT_MAX_SPEED_LEVEL;
     if (slot === MeterSlot.Missile) return !loadout.missile;
     if (slot === MeterSlot.Option) return loadout.options < 4;
@@ -308,7 +311,7 @@ export function fourWayBot(): PlaytestBot {
      * @returns The `Action` mask to hold: at most one direction, plus `PowerUp` on a press tick.
      */
     decide(world) {
-      const ship = world.players[0];
+      const ship = world.players[player];
       let mask = 0;
       // PowerUp: one-tick presses (an edge), never two ticks in a row.
       if (!pressed && ship.state === 'alive' && wantsEquip(world)) {
@@ -324,7 +327,7 @@ export function fourWayBot(): PlaytestBot {
       const camera = world.camera;
       const sx = ship.x - camera.x;
       const sy = ship.y - camera.y;
-      scanLanes(world, scan);
+      scanLanes(world, scan, player);
       const current = laneOf(sy);
       const speed = world.ship.speeds[ship.speedLevel] ?? 1.5;
 

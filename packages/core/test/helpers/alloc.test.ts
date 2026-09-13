@@ -76,5 +76,6 @@ describe('test helper measureHeapGrowth', () => {
     }, 200);
     expect(growth.collections).toBeGreaterThan(0);
     expect(growth.bytes).toBeGreaterThan(100 * 1024 * 1024);
-  });
+    // ~1 s alone; the full parallel `pnpm test` load pushed it past the default 5 s (M2-06).
+  }, 30_000);
 });

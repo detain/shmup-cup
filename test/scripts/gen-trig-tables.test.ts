@@ -67,7 +67,8 @@ describe('scripts/gen-trig-tables.mjs — CLI', () => {
     execFileSync(process.execPath, [script, '--out', first], { cwd: repo });
     execFileSync(process.execPath, [script, '--out', second], { cwd: repo });
     expect(readFileSync(second, 'utf8')).toBe(readFileSync(first, 'utf8'));
-  });
+    // Two child processes: the full parallel `pnpm test` load pushed it past the default 5 s once.
+  }, 30_000);
 
   it('fails with a usable message when --out has no path', () => {
     const result = runScript('--out');

@@ -2452,6 +2452,89 @@ Goal of the milestone: every **[P1]** feature. Steps are ordered so systems land
 - **Acceptance:** headless 2-player runs, join/leave, targeting tie-break, item ownership, HUD, replay determinism with
   two inputs.
 - **Refs:** `shmup_feat.md` §16 (co-op), §4 (2P input), §6B (item sharing), §17 (P2 HUD).
+- **As built:**
+  - **Config.** `GameConfig.coop` (default `false`) and `coopExtra` (default `DEFAULT_COOP_EXTRA` 0.5,
+    0–`MAX_COOP_EXTRA` 4) — sim-affecting, so replay headers record them (format version unchanged:
+    a missing key resolves to the default); `withCoop`. `coopExtra` lives in the config (not in a
+    rules file) like every other sim-affecting session value.
+  - **Title.** The menu is `1 PLAYER` / `2 PLAYERS` / OPTIONS / EXIT (`TitleItem.Start` 0 is 1
+    PLAYER, `TwoPlayers` 1, OPTIONS 2, EXIT 3 — every test and e2e spec that walked down to OPTIONS
+    presses Down once more). Both go through the difficulty menu, ship and weapon select as before;
+    `SceneFlow.coop` / `choosePlayers` fold `withCoop` into every difficulty's armed config. The
+    ship and loadout are session-wide (both players fly the same ship; player 2 in its palette swap).
+  - **Drop-in join** (`core/world`): `JOIN_ACTIONS` = `Confirm | Pause` pressed on an inactive slot
+    of a co-op World while it is `playing` / `bossWarning` (`playerCanJoin`) joins it in **phase 1**
+    (so a press during a hit-stop is not lost) — `joinPlayer`: active, `startingLives`, the starting
+    loadout it got at creation, score 0, the blinking respawn fly-in, new `SFX_CUES.PlayerJoin` (25,
+    a synthesized preset in `content/audio/main.sfx.json`). The join is plain input, so replays need
+    nothing new. The game scene no longer pauses on a join press of a joinable player (any other
+    player's Pause / Back still pauses — it now reads the per-player input instead of the merged one).
+  - **Leave / per-player continues.** "Leave" is running out of lives: that player leaves play
+    (`playerOut`), the other plays on, the game is over only when every active player is out (as
+    before). Continues are **per player**: `continuesLeft` = `config.continues` minus the player's own
+    `PlayerScore.continues` (the score digit). An out player with continues left drops back in with
+    the same join press mid-game (`joinPlayer`: fresh lives, power reset + starting loadout, the
+    continue digit, **no stage restart**); `continueWorld(world, who)` takes a player mask (default
+    all) and the continue countdown passes the players who pressed OK in a co-op game (any
+    controller's OK in a one-player game); `World.continuesUsed` counts continue events (one per
+    `continueWorld`, one per mid-game continue). There is no host-driven leave (a disconnected pad's
+    ship stays in play): anything that changes the sim must come through recorded input.
+  - **Device routing** (`input-web` `web-input`, module now implemented): the host routes **seats**
+    (`WebInput.setSeats`, forwarded by the shell from the new `Game.inputSeats` — 2 only while a
+    co-op game or its continue countdown is on top). With one seat every device drives player 1 (a change: pad slot 1 used to
+    be player 2 always; now pads work solo in any slot). With two seats the keyboard / remote stays
+    player 1's and **pads take player 2's seat**: an unassigned pad keeps driving player 1 until its
+    first join press — a button the gamepad profile's *menu* table binds to Confirm or Pause (A,
+    START) — seats it (`padSeat`) and is forwarded as a latched `Confirm` on player 2's slot; the seat
+    stays across games until the pad disconnects; other pads then drive player 1. The
+    **split-keyboard preset** is a keyboard profile with a new optional `split` section (player 2's
+    half; validated like `context`, no key in both halves, keyboard profiles only → `splitTables`):
+    `keyboard-split` = WASD + F (PowerUp / OK) + G (Special + Speed / Back) + Esc / Q (Pause) vs
+    arrows + K / L + Enter (Pause = player 2's START / OK in menus); a second keyboard source drives
+    it; offered in Options → CONTROLS on the web (`?profile=keyboard-split`), never on the TV.
+  - **Targets, items.** Aimed shots, movers and boss aims already took the nearest *living* ship
+    with player 1 on a tie (strict `<` since M1-09), and items already went to the first ship that
+    touches them (player 1 on a tie) — tested for co-op now, no code change.
+  - **`coopExtra`** (`core/powerups`): while two ships are in play (active, not out), each capsule /
+    power-up drop adds `coopExtra` to a credit (`PowerUpSystem.coopCredit`, a `Float64Array` slot,
+    hashed, never reset); each whole credit drops one more item `COOP_EXTRA_OFFSET` (12) px below —
+    a capsule, or the plan's next item in Direct mode. The blue capsule and freed Options are not
+    scaled.
+  - **Palette swap.** The asset pipeline's new `scripts/assets/coop.mjs` adds `<name>@p2` (red ↔ blue
+    channels swapped — the KESTREL turns red-orange and gold) for every `ships/*` sprite and
+    `hud/life`; `loadContent` interns `<ship sprite>@p2` for every ship (`P2_SPRITE_SUFFIX`,
+    `PlayerShipSpec.spriteP2Id`, -1 for the built-in ship), `pnpm content:check` verifies them, the
+    World draws player 2 with it and the co-op HUD its stock icon (`UI_SPRITES` gained
+    `hud/life@p2`, `UiSprites.lifeP2`). The atlas stays 512×512.
+  - **HUD.** `HudPlayerState` / `hudPlayerState` (Playing, Join, Continue, Out, Absent — the World's
+    join rule repeated in `core/ui`, which `core/world` imports). Top bar: a joinable slot shows a
+    blinking `PRESS START` (`HUD_PROMPT_BLINK_TICKS` 32) instead of `------`. While **both** ships
+    are active the bottom bar splits into two 192-px halves: stock icon + count, the seven meter
+    slots as 20-px boxes with two-letter labels (`METER_SHORT_LABELS`, following the arsenal), the
+    shield pips — or the compact Direct-mode pips `SH` / `SB` / `AR` / `SP`; an out player's half
+    shows `PRESS START` (may continue) or `GAME OVER`. `HUD_STRING_COUNT` 9 → 22,
+    `HUD_COMMAND_COUNT` 64 → 96; the co-op strings are written only when drawn, so one-player HUD
+    lists with 4 string slots still work. `Hud.update` compares both players' values (a typed
+    array) and the blink only while a prompt shows.
+  - **End screens.** Stage clear and game over show both scores in a co-op game, the continue
+    countdown both players' credits; co-op scores are recorded with the hi-score mode `2p` (same
+    tables per power-up mode and difficulty).
+  - **Goldens.** Re-blessed: the hashed co-op credit and the sprite table's new `@p2` names change
+    every hash — all fifteen outcomes unchanged. New co-op scenarios (`GoldenScenario.p2`: player 2's
+    bot and join tick; the outcome gains `p2`): `zone-a-coop` (two 4-way bots, player 2 from tick
+    300, stage clear) and `zone-a-coop-deaths` (the 4-way bot and a weaving player 2 that dies and
+    continues with START twice while player 1 plays on). `fourWayBot(player)` flies any slot. The
+    stage-long zone A playtests, the scene-flow allocation guard, the alloc helper's
+    reclaimed-garbage test and the trig-table generator's two-run CLI test got a 30 s timeout (with the new suites the full parallel `pnpm test` load
+    pushed each past the default 5 s once; ~1 s alone).
+  - **Tests.** `world-coop` (join rules, hit-stop join, leave / continue / game over, the continue
+    mask, aim tie-break, item ownership, `coopExtra` in both modes, the P2 sprite, lockstep of two
+    co-op worlds with a join and a continue), `world-coop-alloc`, `ui-hud-coop`,
+    `ui-hud-coop-alloc`, `scenes-coop`,
+    `replay-coop`, `config-coop`, input-web `web-input-seats` (seats, join press, disconnect, split
+    keyboard, allocation) and `rebind-split`, `test/scripts/assets/coop.test.ts`,
+    `test/e2e/coop.spec.ts` (web, split keyboard: 2 PLAYERS, Enter joins player 2, the split HUD,
+    player 2 moves, Esc still pauses).
 
 ### M2-07 — Advanced stage systems & Tiled import
 

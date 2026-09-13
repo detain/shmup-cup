@@ -174,12 +174,19 @@ describe('core/data loadContent', () => {
     const files = [playerFile(), weaponsFile(), enemiesFile()];
     const forward = loadContent(files).db;
     const reversed = loadContent(files.slice().reverse()).db;
-    expect(forward.sprites.names).toEqual(['enemies/drifter', 'ships/kestrel', 'shots/basic']);
+    // `ships/kestrel@p2`: player 2's palette swap, interned for every ship (M2-06).
+    expect(forward.sprites.names).toEqual([
+      'enemies/drifter',
+      'ships/kestrel',
+      'ships/kestrel@p2',
+      'shots/basic',
+    ]);
     const withStage = loadContent([...files, stageFile()]).db;
     expect(withStage.sprites.names).toContain('bg/stars-far');
     expect(reversed.sprites.names).toEqual(forward.sprites.names);
     expect(forward.scripts.names).toEqual(['drifter.sine', 'shot.straight']);
     expect(forward.ships[0]?.spriteId).toBe(forward.sprites.index.get('ships/kestrel'));
+    expect(forward.ships[0]?.spriteP2Id).toBe(forward.sprites.index.get('ships/kestrel@p2'));
     expect(forward.enemies[0]?.scriptId).toBe(forward.scripts.index.get('drifter.sine'));
     expect(forward.weapons[0]?.behaviorId).toBe(forward.scripts.index.get('shot.straight'));
   });
@@ -195,6 +202,7 @@ describe('core/data loadContent', () => {
       'bullets/round-pink',
       'enemies/drifter',
       'ships/kestrel',
+      'ships/kestrel@p2',
       'shots/basic',
     ]);
     expect(db.ships[0]?.spriteId).toBe(3);

@@ -128,13 +128,14 @@ describe('input-web/rebind the shipped profiles (content/input)', () => {
     return profile;
   };
 
-  it('validate without a single issue and contain the five planned profiles', () => {
+  it('validate without a single issue and contain the six planned profiles', () => {
     expect(issues).toEqual([]);
     expect(profiles.map((p) => p.id)).toEqual([
       'tizen-remote-safe',
       'tizen-remote-diagonal',
       'keyboard-default',
       'keyboard-remote-emulation',
+      'keyboard-split', // M2-06
       'gamepad-standard',
     ]);
     for (const id of [DEFAULT_KEYBOARD_PROFILE_ID, DEFAULT_REMOTE_PROFILE_ID]) {
@@ -400,7 +401,7 @@ describe('input-web/rebind registry, choice, overrides, persistence', () => {
     expect(registry.profiles).toEqual([]);
     const load = registry.load; // passed unbound as a content owner
     expect(load([shipped])).toEqual([]);
-    expect(registry.profiles).toHaveLength(5);
+    expect(registry.profiles).toHaveLength(6);
     expect(registry.get('gamepad-standard')?.device).toBe('gamepad');
     expect(registry.get('nope')).toBeNull();
     expect(load([{ path: 'x.json', data: file() }])).toEqual([

@@ -678,6 +678,7 @@ describe('tizen/boot saves and the Options screen (M1-17 edge)', () => {
     const first = await boot();
     frames(2);
     tap(13); // PRESS OK → menu
+    tap(40); // 2 PLAYERS (M2-06)
     tap(40); // OPTIONS
     tap(13);
     frames(2);

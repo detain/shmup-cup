@@ -27,9 +27,16 @@
  * `WebInput.setProfile()` / `WebInput.setContext()` (`web-input`) apply a profile and switch
  * its tables; nothing here runs per tick.
  *
+ * **Split keyboard (M2-06).** A `keyboard` profile may carry a `split` section — player 2's half
+ * of the keyboard (`game` and `menu` tables like `context`, which is then player 1's half; no key
+ * in both halves). `keyboard-split` ships the preset WASD + F / G (player 1) vs arrows + K / L
+ * (player 2) (shmup_feat.md §4 "split-keyboard preset"); `WebInput` drives a second keyboard
+ * source with {@link InputProfile.splitTables}.
+ *
  * **Implements.**
  * - shmup_feat.md §4 — remote-first rules 2–3 and 8 (tunable per device, menus fully
- *   D-pad + OK + Back navigable), [P1] rebinding per device + persistence (data side)
+ *   D-pad + OK + Back navigable), [P1] rebinding per device + persistence (data side), the [P1]
+ *   split-keyboard preset for 2-player co-op (M2-06)
  * - shmup_feat.md §21 — controls options (profile choice)
  *
  * **Public API.** {@link InputProfile}, {@link ProfileBindings}, {@link ContextTables},
@@ -166,6 +173,18 @@ export interface InputProfile extends InputTuning {
   readonly register: readonly string[];
   /** The compiled tables per context. */
   readonly tables: Readonly<Record<InputContext, ContextTables>>;
+  /**
+   * The **split keyboard**'s second half (M2-06 — `keyboard` profiles only, e.g.
+   * `keyboard-split`): the binding tables of player 2's half of the keyboard, per context, as
+   * written. {@link InputProfile.context} is then player 1's half. Absent = one keyboard for one
+   * player.
+   */
+  readonly split?: Readonly<Record<InputContext, ProfileBindings>>;
+  /**
+   * The compiled tables of {@link InputProfile.split} (`WebInput` drives a second keyboard source
+   * with them — player 2's seat), or `null` / absent without a split.
+   */
+  readonly splitTables?: Readonly<Record<InputContext, ContextTables>> | null;
 }
 
 /** What {@link parseInputProfiles} and {@link loadInputProfiles} produce. */
@@ -190,16 +209,20 @@ const BINDINGS_SCHEMA = s.object(
 );
 
 /** One profile entry. */
-const PROFILE_SCHEMA = s.object({
-  id: s.str({ maxLength: 64, pattern: /^[a-z0-9]+(?:-[a-z0-9]+)*$/ }),
-  label: s.str({ maxLength: 40 }),
-  device: s.enumOf(INPUT_PROFILE_DEVICES),
-  context: s.object({ game: BINDINGS_SCHEMA, menu: BINDINGS_SCHEMA }),
-  releaseDebounceTicks: s.int({ min: 0, max: MAX_RELEASE_DEBOUNCE_TICKS }),
-  diagonals: s.enumOf(DIAGONAL_POLICIES),
-  socd: s.enumOf(SOCD_POLICIES),
-  register: s.array(s.str({ maxLength: 40, pattern: /^[A-Za-z][A-Za-z0-9]*$/ }), { max: 32 }),
-});
+const PROFILE_SCHEMA = s.object(
+  {
+    id: s.str({ maxLength: 64, pattern: /^[a-z0-9]+(?:-[a-z0-9]+)*$/ }),
+    label: s.str({ maxLength: 40 }),
+    device: s.enumOf(INPUT_PROFILE_DEVICES),
+    context: s.object({ game: BINDINGS_SCHEMA, menu: BINDINGS_SCHEMA }),
+    split: s.object({ game: BINDINGS_SCHEMA, menu: BINDINGS_SCHEMA }),
+    releaseDebounceTicks: s.int({ min: 0, max: MAX_RELEASE_DEBOUNCE_TICKS }),
+    diagonals: s.enumOf(DIAGONAL_POLICIES),
+    socd: s.enumOf(SOCD_POLICIES),
+    register: s.array(s.str({ maxLength: 40, pattern: /^[A-Za-z][A-Za-z0-9]*$/ }), { max: 32 }),
+  },
+  { optional: ['split'] },
+);
 
 /** A whole `input-profiles` file. */
 const FILE_SCHEMA = s.object({
@@ -209,7 +232,7 @@ const FILE_SCHEMA = s.object({
 });
 
 /** A parsed (not yet compiled) profile entry. */
-type ParsedProfile = Omit<InputProfile, 'tables'>;
+type ParsedProfile = Omit<InputProfile, 'tables' | 'splitTables'>;
 
 /**
  * Prefixes a JSON path with its file, the way `loadContent` does.
@@ -278,12 +301,27 @@ function compileButtons(own: ProfileBindings): readonly ActionMask[] {
  * @returns The frozen {@link InputProfile}.
  */
 function compileProfile(profile: ParsedProfile): InputProfile {
-  const { game, menu } = profile.context;
-  const tables = Object.freeze({
+  return Object.freeze({
+    ...profile,
+    tables: compileContexts(profile.context),
+    splitTables: profile.split === undefined ? null : compileContexts(profile.split),
+  });
+}
+
+/**
+ * Compiles both contexts of one binding set (a profile's `context`, or its `split` half).
+ *
+ * @param context - The bindings per context.
+ * @returns The frozen tables per context.
+ */
+function compileContexts(
+  context: Readonly<Record<InputContext, ProfileBindings>>,
+): Readonly<Record<InputContext, ContextTables>> {
+  const { game, menu } = context;
+  return Object.freeze({
     game: Object.freeze({ keys: compileKeys(game, menu), buttons: compileButtons(game) }),
     menu: Object.freeze({ keys: compileKeys(menu, game), buttons: compileButtons(menu) }),
   });
-  return Object.freeze({ ...profile, tables });
 }
 
 /**
@@ -298,6 +336,14 @@ function compileProfile(profile: ParsedProfile): InputProfile {
 function checkProfile(profile: ParsedProfile, path: string, issues: ValidationIssue[]): boolean {
   const start = issues.length;
   const gamepad = profile.device === 'gamepad';
+  const split = profile.split;
+  if (split !== undefined) {
+    if (profile.device !== 'keyboard') {
+      issues.push({ path: path + '.split', message: 'only keyboard profiles split the keyboard' });
+    } else {
+      checkSplit(profile, path, issues);
+    }
+  }
   for (const context of ['game', 'menu'] as const) {
     const bindings = profile.context[context];
     const contextPath = path + '.context.' + context;
@@ -350,6 +396,57 @@ function checkProfile(profile: ParsedProfile, path: string, issues: ValidationIs
     }
   }
   return issues.length === start;
+}
+
+/**
+ * The checks of a split keyboard's second half (M2-06): no gamepad buttons, the required actions
+ * of each context (player 2 must be able to move, pause and use the menus with its half), and no
+ * key bound in both halves of the same context (one key must never drive both players).
+ *
+ * @param profile - A schema-valid keyboard entry with a `split`.
+ * @param path - JSON path of the entry.
+ * @param issues - Collector (document-relative paths).
+ */
+function checkSplit(profile: ParsedProfile, path: string, issues: ValidationIssue[]): void {
+  const split = profile.split;
+  if (split === undefined) return;
+  for (const context of ['game', 'menu'] as const) {
+    const bindings = split[context];
+    const own = profile.context[context];
+    const contextPath = path + '.split.' + context;
+    if (bindings.buttons !== undefined) {
+      issues.push({
+        path: contextPath + '.buttons',
+        message: 'only gamepad profiles bind buttons',
+      });
+    }
+    let bound = 0;
+    for (const table of [bindings.byCode, bindings.byKeyCode]) {
+      for (const key of Object.keys(table)) bound |= maskOf(table[key] ?? []);
+    }
+    const missing = REQUIRED_CONTEXT_ACTIONS[context].filter(
+      (name) => (bound & Action[name]) === 0,
+    );
+    if (missing.length > 0) {
+      issues.push({ path: contextPath, message: 'must bind ' + missing.join(', ') });
+    }
+    for (const code of Object.keys(bindings.byCode)) {
+      if (Object.prototype.hasOwnProperty.call(own.byCode, code)) {
+        issues.push({
+          path: contextPath + '.byCode.' + code,
+          message: 'is bound in both halves of the keyboard',
+        });
+      }
+    }
+    for (const key of Object.keys(bindings.byKeyCode)) {
+      if (Object.prototype.hasOwnProperty.call(own.byKeyCode, key)) {
+        issues.push({
+          path: contextPath + '.byKeyCode.' + key,
+          message: 'is bound in both halves of the keyboard',
+        });
+      }
+    }
+  }
 }
 
 /**

@@ -53,7 +53,9 @@
       },
       "megaChoice": "lifeOption",
       "shieldChoice": "forceField",
-      "optionChoice": "trail"
+      "optionChoice": "trail",
+      "coop": false,
+      "coopExtra": 0.5
     }
   },
   "ticks": 765,
@@ -63,9 +65,9 @@
     "AP0F"
   ],
   "hashes": [
-    4198002012
+    3004716604
   ],
-  "finalHash": 1876354969,
+  "finalHash": 4255466297,
   "description": "HALCYON BULWARK with a Weapon Edit loadout (M2-03): Twin Laser, 2-Way Missile, LIFE OPTION on `!`",
   "expected": {
     "status": "stageClear",

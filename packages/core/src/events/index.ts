@@ -255,6 +255,11 @@ export const SFX_CUES = {
   OptionHunter: 23,
   /** An Option Hunter grabbed Options (M2-04; `x`/`y` = the first Option taken). */
   OptionStolen: 24,
+  /**
+   * A player joined a co-op game or came back with a continue while the other played on
+   * (`core/world` `joinPlayer` / `continuePlayer`, M2-06; `x`/`y` = where the ship flies in).
+   */
+  PlayerJoin: 25,
 } as const;
 
 /** One of the {@link SFX_CUES} ids. */

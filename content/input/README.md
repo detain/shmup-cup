@@ -7,7 +7,7 @@ code. Validated and compiled by `@shmup/input-web` (`rebind` module, kind `input
 the shell's content owner reports every problem on the boot error screen, and
 `pnpm content:check` checks the shipped file and the example.
 
-`remote.input-profiles.json` ships five profiles:
+`remote.input-profiles.json` ships six profiles:
 
 | Profile | Used | Notes |
 |---|---|---|
@@ -15,6 +15,7 @@ the shell's content owner reports every problem on the boot error screen, and
 | `tizen-remote-diagonal` | after a positive probe result | same bindings, debounce 0 |
 | `keyboard-default` | default on the web | arrows / WASD, Z Shot, X Sub, C / Enter PowerUp, V Special, Shift Speed, P / Esc Pause |
 | `keyboard-remote-emulation` | `?profile=keyboard-remote-emulation` | only the remote's keys: arrows (`lastWins`), Enter = OK, Backspace = Back, P = Play/Pause, PgUp/PgDn = Ch± |
+| `keyboard-split` | Options → CONTROLS (web), `?profile=keyboard-split` | two players on one keyboard (M2-06): player 1 WASD, F = OK / PowerUp, G = Back / Special + Speed, Esc / Q = Pause; player 2 (`split`) arrows, K = OK / PowerUp, L = Back / Special + Speed, Enter = START (join) |
 | `gamepad-standard` | every gamepad | standard mapping: A Shot, B Sub, X PowerUp, Y Special, LB/RB Speed, Start/Select Pause |
 
 Each profile has separate **`game`** and **`menu`** tables (decision **D15**): keyboard X is
@@ -125,3 +126,62 @@ Actions: `Up`, `Down`, `Left`, `Right`, `Shot`, `Sub`, `PowerUp`, `Special`, `Sp
 - A registrable key that never arrives → drop it from `register`.
 
 See [`example.input-profiles.json`](example.input-profiles.json).
+
+## Split keyboard (M2-06)
+
+A `keyboard` profile may add a `split` section — player 2's half of the keyboard, with its own
+`game` and `menu` tables in the same format as `context` (which is then player 1's half). No key
+may be bound in both halves of a context, and each half must bind the required actions (the four
+directions and Pause in the game; the directions, Confirm and Back in menus). In a co-op game the
+right half drives player 2 and its Pause key (Enter in `keyboard-split`) is player 2's `START`
+(join); in menus and one-player games both halves drive player 1.
+
+```jsonc
+{
+  "formatVersion": 1,
+  "kind": "input-profiles",
+  "profiles": [
+    {
+      "id": "keyboard-split",
+      "label": "SPLIT KEYBOARD",
+      "device": "keyboard",       // split halves: keyboard profiles only
+      "context": {                // player 1's half
+        "game": {
+          "byCode": {
+            "KeyW": ["Up"], "KeyS": ["Down"], "KeyA": ["Left"], "KeyD": ["Right"],
+            "KeyF": ["PowerUp"], "KeyG": ["Special", "Speed"], "Escape": ["Pause"]
+          },
+          "byKeyCode": {}
+        },
+        "menu": {
+          "byCode": {
+            "KeyW": ["Up"], "KeyS": ["Down"], "KeyA": ["Left"], "KeyD": ["Right"],
+            "KeyF": ["Confirm"], "KeyG": ["Back"], "Escape": ["Back"]
+          },
+          "byKeyCode": {}
+        }
+      },
+      "split": {                  // player 2's half (no key of player 1's half)
+        "game": {
+          "byCode": {
+            "ArrowUp": ["Up"], "ArrowDown": ["Down"], "ArrowLeft": ["Left"], "ArrowRight": ["Right"],
+            "KeyK": ["PowerUp"], "KeyL": ["Special", "Speed"], "Enter": ["Pause"]
+          },
+          "byKeyCode": {}
+        },
+        "menu": {
+          "byCode": {
+            "ArrowUp": ["Up"], "ArrowDown": ["Down"], "ArrowLeft": ["Left"], "ArrowRight": ["Right"],
+            "KeyK": ["Confirm"], "KeyL": ["Back"], "Enter": ["Confirm"]
+          },
+          "byKeyCode": {}
+        }
+      },
+      "releaseDebounceTicks": 0,
+      "diagonals": "combine",
+      "socd": "neutral",
+      "register": []
+    }
+  ]
+}
+```

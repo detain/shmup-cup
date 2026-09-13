@@ -387,6 +387,22 @@
         "bitCrush": 3,
         "seed": 35
       }
+    },
+    "PlayerJoin": {
+      "priority": "high",
+      "maxInstances": 1,
+      "volume": 0.45,
+      "params": {
+        "shape": "square",
+        "duty": 0.25,
+        "frequency": 392,
+        "slide": 1400,
+        "sustain": 0.12,
+        "release": 0.16,
+        "tremolo": 0.2,
+        "tremoloRate": 24,
+        "seed": 36
+      }
     }
   }
 }

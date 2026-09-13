@@ -49,7 +49,9 @@
       "weaponEdit": null,
       "megaChoice": "megaCrash",
       "shieldChoice": "forceField",
-      "optionChoice": "trail"
+      "optionChoice": "trail",
+      "coop": false,
+      "coopExtra": 0.5
     }
   },
   "ticks": 5324,
@@ -59,16 +61,16 @@
     "AMwp"
   ],
   "hashes": [
-    1155858473,
-    2097297144,
-    2694198892,
-    175446393,
-    4019205674,
-    1442610111,
-    3455728732,
-    3037441503
+    2960649481,
+    2194549242,
+    330405036,
+    3673958425,
+    1392797418,
+    3328709791,
+    158098076,
+    118347135
   ],
-  "finalHash": 507755218,
+  "finalHash": 343655378,
   "description": "a weaving pilot that never dodges, Classic penalty: deaths, respawns in place, game over",
   "expected": {
     "status": "gameOver",
