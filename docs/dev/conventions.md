@@ -200,6 +200,12 @@ ES5 and linted with `ecmaVersion: 5`.
   volley; an allocation guard of a system whose test stage spawns enemies measures without the
   spawns — each spawn's coroutine allocates (D29), which on the direct range alone is ~70–80 KB
   ([direct-mode.md](direct-mode.md#zero-allocation-and-the-hot-path-rules)).
+  And from M2-06: change detection that grows per player keeps its remembered values in typed
+  arrays sampled and compared in a loop (`Hud`'s `shown` / `next`, twelve values a player) rather
+  than a field per value and player; a fractional credit that a system carries from tick to tick
+  (`PowerUpSystem.coopCredit`) lives in a one-slot `Float64Array`; and strings only one mode draws
+  (the co-op HUD's) are written only when drawn, so draw lists sized for the other mode keep working
+  ([coop.md](coop.md#zero-allocation-and-the-hot-path-rules)).
 - Behaviour coroutines (generators, D29) allocate a small result object on every resume:
   scripts **sleep** (`yield ticks`) and are resumed only when they wake; per-tick motion
   belongs in a mover (numbers on the body), never in a `yield 1` loop.

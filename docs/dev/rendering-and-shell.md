@@ -436,10 +436,16 @@ when there are more lines than fit, the last one reads `… and N more`. Colours
 ```ts
 let inputContext = game.inputContext;
 input.setContext(inputContext); // once at boot
+let inputSeats = game.inputSeats;
+input.setSeats?.(inputSeats); // M2-06: player seats, once at boot (optional on the adapter)
 const onFrame = (now: number): void => {
   if (game.inputContext !== inputContext) {
     inputContext = game.inputContext;
     input.setContext(inputContext); // game / menu binding tables (D15), before this frame's ticks
+  }
+  if (game.inputSeats !== inputSeats) {
+    inputSeats = game.inputSeats;
+    input.setSeats?.(inputSeats); // 2 during a co-op game — player 2's seat (M2-06)
   }
   game.frame(now); // 0…4 fixed ticks
   sceneView?.follow(); // the scene flow: copy the camera on screen (sounds pan against it)
@@ -493,7 +499,7 @@ the app's `inputProfiles.apply(id, 'options')`, and since M2-02 the `BulletPalet
 
 | `?scene=` | What is drawn | Sprite name table |
 |---|---|---|
-| (none) / `game` | **The scene flow** (M1-16, `createSceneView(game)`; the game created with `{ scenes: 'boot' }`): the title (logo, `PRESS OK`, START / OPTIONS / EXIT, the session hi-score — the saved best since M1-17) over a drifting starfield backdrop; a game with the core HUD (score, `HI`, `2P`, stock, the power meter, Force Field pips — the MANTA's tier pips in Direct mode, M2-05), the stage's own parallax and terrain — zone A by default since M1-18 (`defaultStageId`), another with `?stage=` — or the World over the starfield in open space; the difficulty menu under START and the continue countdown (M2-01), the ship select (M2-05), the weapon select with its live preview World drawn full screen behind its panel and the Auto order editor (M2-03), the pause menu, the Options screen (M1-17), the YES / NO dialog, the stage-clear and game-over screens over the frozen, dimmed game — all drawn by the core into the HUD / UI lists ([scenes-and-ui.md](scenes-and-ui.md)) | `content.db.sprites.names` + `SCENE_VIEW_SPRITES` |
+| (none) / `game` | **The scene flow** (M1-16, `createSceneView(game)`; the game created with `{ scenes: 'boot' }`): the title (logo, `PRESS OK`, 1 PLAYER / 2 PLAYERS / OPTIONS / EXIT — M2-06, the session hi-score — the saved best since M1-17) over a drifting starfield backdrop; a game with the core HUD (score, `HI`, `2P`, stock, the power meter, Force Field pips — the MANTA's tier pips in Direct mode, M2-05), the stage's own parallax and terrain — zone A by default since M1-18 (`defaultStageId`), another with `?stage=` — or the World over the starfield in open space; the difficulty menu under START and the continue countdown (M2-01), the ship select (M2-05), the weapon select with its live preview World drawn full screen behind its panel and the Auto order editor (M2-03), the pause menu, the Options screen (M1-17), the YES / NO dialog, the stage-clear and game-over screens over the frozen, dimmed game — all drawn by the core into the HUD / UI lists ([scenes-and-ui.md](scenes-and-ui.md)) | `content.db.sprites.names` + `SCENE_VIEW_SPRITES` |
 | `flight` | **Free flight** (`createFlightScene(game)`, M1-06): the game's World — the KESTREL flying in, then moving under the player's control — over three drifting star layers, both HUD bars (`1P` and player 1's score, `FREE FLIGHT`, `HI` and the session hi-score, `lives − 1` stock ships, `ARROWS MOVE` — M1-12). With a stage (`gameConfig.stage`, the web app's `?stage=<id>`, M1-07): the stage's parallax bands and scrolling terrain instead of the starfield, the stage name as the title, the enemies its timeline spawns (M1-08) and their bullets (M1-09). The ship autofires in every build, with Options and lasers under the web app's `?loadout=full` (M1-10); power capsules and the Force Field are World batches too (M1-11 — the power meter itself is not drawn before the M1-16 HUD); ships that are `dying` / `dead` are not drawn, a respawn blinks, and `GAME OVER` (red) replaces the title once the World's status says so (M1-12); a boss's parts are a World batch, and a running WARNING is drawn as a translucent band with its text in the UI list (M1-13, `?stage=test-boss`) | `content.db.sprites.names` + `FLIGHT_SPRITES` |
 | `showcase` | The **sprite showcase** (`createShowcase()`): three scrolling star layers, the KESTREL flying a figure-eight with its thruster and two Options replaying its path, five drifters with periodic hit flashes, a rotating ring of twelve bullets, both HUD bars (scores via the `number` op, lives, power meter with a moving highlight) and the title "SHMUP CUP" / "SPRITE SHOWCASE" in the bitmap font | `SHOWCASE_SPRITES` |
 | `calibration` | The skeleton's test pattern (checker border, grid, colour bars, placeholder ship, moving marker) under empty layers | `content.db.sprites.names` |
@@ -865,5 +871,9 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 - **M2-05** (done) — no renderer change: the MANTA, the cube carriers, the Direct-mode shots (the
   sub-lasers pick an octant frame instead of rotating), the colour items and the Arm are sprites of
   the existing batches; the ship select's picture is a `DrawList` sprite command and the tier pips
-  are rects of the HUD list (`HUD_COMMAND_COUNT` 64, `HUD_STRING_COUNT` 9)
+  are rects of the HUD list (`HUD_COMMAND_COUNT` 64, `HUD_STRING_COUNT` 9 then)
   ([direct-mode.md](direct-mode.md)).
+- **M2-06** (done) — no renderer change: player 2's ship and stock icon are the atlas's `@p2`
+  sprites in the existing batch and HUD list (now `HUD_COMMAND_COUNT` 96, `HUD_STRING_COUNT` 22);
+  the shell forwards `game.inputSeats` to the optional `ShellInput.setSeats` like the binding
+  context ([coop.md](coop.md#input-routing-shmupinput-web-shmupshell)).

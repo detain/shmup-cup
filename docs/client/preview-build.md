@@ -2,7 +2,7 @@
 
 The game now starts like a real game. Every build — browser, Samsung TV and desktop — shows a
 short loading bar and then the **title screen**: the SHMUP CUP logo, a blinking `PRESS OK`, and
-after OK a small menu. **START** asks for a **difficulty** — EASY, NORMAL, HARD or ARCADE — then
+after OK a small menu. **1 PLAYER** (or **2 PLAYERS**, for two people at once) asks for a **difficulty** — EASY, NORMAL, HARD or ARCADE — then
 for a **ship** (the **SHIP SELECT** box): the **KESTREL**, which powers up with the **power meter**,
 or the **MANTA**, which powers up with **colour items** you simply fly into. For the KESTREL the
 **WEAPON SELECT** screen follows, where you pick the ship's **weapons** — four ready-made weapon
@@ -25,8 +25,11 @@ menus](#the-title-screen-and-the-menus), [Pausing, quitting and the end
 screens](#pausing-quitting-and-the-end-screens), [Difficulty, extra ships and
 continues](#difficulty-extra-ships-and-continues), [Choosing your ship](#choosing-your-ship),
 [Choosing your weapons](#choosing-your-weapons), [The Options screen](#the-options-screen)).
+With **2 PLAYERS** a second player joins the running game whenever they like with **START** on a
+gamepad (in a browser also with Enter on the **SPLIT KEYBOARD**), flies the same ship in other
+colours and has their own ships, score, power-ups and continues ([Two players](#two-players)).
 
-**START plays the first real zone, AZURE VERGE** — on the TV too: about three minutes of
+**Every game plays the first real zone, AZURE VERGE** — on the TV too: about three minutes of
 scrolling over rolling ground, through a long cave and a high-speed stretch, with enemies that fly
 and walk past and shoot at you, power capsules to collect, and at the end the **WARNING** and the
 zone's boss, the battleship **HALCYON BULWARK** ([The first zone: AZURE
@@ -73,8 +76,10 @@ This build is version **0.1.0** — the end of the first milestone — plus the 
 the second: the difficulties, extra ships and continues, then the colour-blind bullet colours and
 points for cancelled bullets, then the **weapon types** and the WEAPON SELECT screen, then four
 kinds of **Options**, five **shields**, the **Option Hunter** that steals Options and the rare
-**blue capsule**, and now the **second ship, the MANTA**, with its colour items, its growing
-weapons and its **Arm** shield, and the **SHIP SELECT** box. For checking it on the monitors
+**blue capsule**, then the **second ship, the MANTA**, with its colour items, its growing
+weapons and its **Arm** shield, and the **SHIP SELECT** box, and now **two players at once**: the
+title's **2 PLAYERS**, a second player joining with START, each with their own ships, score and
+continues. For checking it on the monitors
 there is a **debug build** with developer tools — a panel with the frame rate, frame times and
 start-up time, hit-area outlines, invincibility, a freeze with single steps, slow motion and
 jumps to the next checkpoint or the boss — opened on the remote with Play/Pause and then Ch ▲
@@ -112,7 +117,8 @@ The title music (SHMUP CUP) plays — in a browser from your first key press or 
 
 | Entry | What it does |
 |---|---|
-| **START** | Opens the **DIFFICULTY** box (highlighted first); OK there opens the **SHIP SELECT** box; OK on the KESTREL opens the **WEAPON SELECT** screen, whose START begins the game — OK on the MANTA begins it at once — see [Difficulty, extra ships and continues](#difficulty-extra-ships-and-continues), [Choosing your ship](#choosing-your-ship) and [Choosing your weapons](#choosing-your-weapons) |
+| **1 PLAYER** | A game for one player (it was called **START** in earlier builds). Opens the **DIFFICULTY** box (highlighted first); OK there opens the **SHIP SELECT** box; OK on the KESTREL opens the **WEAPON SELECT** screen, whose START begins the game — OK on the MANTA begins it at once — see [Difficulty, extra ships and continues](#difficulty-extra-ships-and-continues), [Choosing your ship](#choosing-your-ship) and [Choosing your weapons](#choosing-your-weapons) |
+| **2 PLAYERS** | The same, but the game is a **two-player** one: a second player joins with START on a gamepad (or Enter on the SPLIT KEYBOARD) — see [Two players](#two-players) |
 | **OPTIONS** | Opens the **Options screen**: the volumes and the control profile — see [The Options screen](#the-options-screen) |
 | **EXIT** | Only on the TV: asks **EXIT SHMUP CUP?** — see below |
 
@@ -126,11 +132,12 @@ The title music (SHMUP CUP) plays — in a browser from your first key press or 
   stray OK never quits. ◀ / ▶ move between YES and NO; OK on **YES** closes the app and returns
   to the monitor's home screen, OK on **NO** (or Back again) goes back to the title. In a browser
   (which cannot close itself) Back only goes from the menu back to `PRESS OK`.
-- Any controller works in the menus — also a second gamepad.
+- Any controller works in the menus — also a second gamepad (in the menus every controller
+  counts as player 1's).
 
 ## What you should see
 
-After **START**, **OK** on a difficulty, **OK** on the KESTREL in the SHIP SELECT box and **OK** on
+After **1 PLAYER**, **OK** on a difficulty, **OK** on the KESTREL in the SHIP SELECT box and **OK** on
 START in the WEAPON SELECT screen (or **OK** on the MANTA) the title music fades and the game begins — AZURE
 VERGE's own music starts, and
 the picture is a deep navy
@@ -142,7 +149,7 @@ two thin bars, one along the top edge and one along the bottom (the **HUD**):
 | **Background** | Whole picture behind the ship | Two layers of stars move to the left as the view scrolls, the far ones slower, and the rim of a blue planet fills the bottom of the picture, moving slowest of all; everything moves steadily, with no jumps, and repeats seamlessly. (In free flight and on the title, three star layers drift by themselves instead) |
 | **KESTREL** (or the **MANTA**), the player ship | Enters from the left edge | Glides in from off-screen during the first ⅔ of a second, slowing down as it arrives, and stops at mid-height about a sixth of the way across. Then it is yours to fly |
 | **Shots** from the ship's nose | In front of the ship, flying right | As soon as the ship has arrived, small cyan-and-white darts leave its nose and race to the right edge, two at a time, each with a tiny white-and-yellow **muzzle spark** flickering just in front of the nose as it leaves — see [Your weapons](#your-weapons) |
-| **Top bar** | Top edge | `1P` (cyan) and your score `00000000` on the left; `HI` (yellow) and the best score so far (kept between launches) in the middle; `2P` and `------` (grey — nobody is playing player 2) on the right |
+| **Top bar** | Top edge | `1P` (cyan) and your score `00000000` on the left; `HI` (yellow) and the best score so far (kept between launches) in the middle; `2P` and `------` (grey — nobody is playing player 2) on the right — in a **2 PLAYERS** game a blinking yellow `PRESS START` instead, until player 2 joins ([Two players](#two-players)) |
 | **Bottom bar** | Bottom edge | On the left small ship icons (your spare ships — on NORMAL you start with three, the one you fly plus two icons; EASY gives five, ARCADE two; with more than five spare ships you see one icon and the number); then the **power meter**: seven boxes labelled `SPEED` `MISSILE` `DOUBLE` `LASER` `OPTION` `?` `!` — with another weapon type the second, third and fourth boxes carry that type's weapon names instead, e.g. `SPREAD` `TAIL` `RIPPLE` ([Power-ups](#power-ups)); on the right, while you have a Force Field, five small blocks — cyan for each hit it can still take, dark for the spent ones. With the **MANTA** the power meter makes way for rows of small square **pips** — `SHOT`, `SUB`, `ARM`, `SPD` and the weapon's name ([The MANTA](#the-manta-colour-items-weapons-and-the-arm)) |
 
 Every pixel should be a crisp little square. The game draws at 384×216 and scales that up
@@ -189,7 +196,7 @@ game over's (this screen ends the run in this preview).
 
 ### Choosing a difficulty
 
-**START** on the title opens a framed box over the darkened title:
+**1 PLAYER** (or **2 PLAYERS**) on the title opens a framed box over the darkened title:
 
 ```text
           DIFFICULTY
@@ -215,7 +222,7 @@ game over's (this screen ends the run in this preview).
   ([Choosing your ship](#choosing-your-ship)); **Back** returns to the title menu.
 - The box opens on the difficulty you chose last — NORMAL the first time. The choice lasts until
   the app is closed; remembering it between launches comes with a later build's game options.
-- Starting a game therefore takes five OKs with the KESTREL: OK (`PRESS OK`), OK (START), OK (the
+- Starting a game therefore takes five OKs with the KESTREL: OK (`PRESS OK`), OK (1 PLAYER), OK (the
   difficulty), OK (the KESTREL, highlighted first in the SHIP SELECT box), OK (START in the WEAPON
   SELECT screen, which is highlighted when it opens) — and four with the MANTA (▼ then OK in the
   SHIP SELECT box starts the game).
@@ -262,6 +269,8 @@ fades out.
   at a glance — also in the saved high scores — how many continues a score needed.
 - **Back** gives up, and so does waiting until the countdown ends: the **GAME OVER** screen
   appears and the game is saved as usual.
+- In a **2 PLAYERS** game each player has their own continues, and the box shows both players'
+  credits — see [Two players](#two-players).
 - On **ARCADE** there are no continues: GAME OVER comes straight away.
 
 ## Choosing your ship
@@ -422,6 +431,87 @@ What "good" looks like:
 - With OPTION highlighted, the preview's Options fly the chosen way (and FORMATION / ROTATE
   spread and pull back every second and a half); TRAIL and SNAKE just follow.
 
+## Two players
+
+Two people can play at once on the same screen, side by side — like the classic two-player
+arcade shooters.
+
+**Starting.** On the title choose **2 PLAYERS** (the second entry) instead of 1 PLAYER. The rest is
+the same as always: the DIFFICULTY box, the SHIP SELECT box and, for the KESTREL, the WEAPON
+SELECT screen — both players fly the same ship with the same weapons. The game starts with
+**player 1 alone**, flown with the TV remote or the keyboard (a gamepad moves player 1's ship too,
+until START or A makes it player 2's — so in a two-player game player 1 should not play on a
+gamepad).
+
+**Player 2 joins whenever they like.** While player 2 is not in the game, a yellow `PRESS START`
+blinks on the right of the top bar, where player 2's score goes. Player 2 presses **START** (or
+**A**) on a **gamepad** — in a browser with the **SPLIT KEYBOARD** control profile, **Enter** — and a
+second ship flies in from the left, blinking (it cannot be hit for a moment), with a short chirp.
+It is the same ship **in other colours**: the KESTREL red-orange and gold instead of blue and
+cyan. Player 2 can join during the WARNING too, but not once the STAGE CLEAR or GAME OVER screen
+is on its way. Pressing START does **not** pause the game while it lets a player join.
+
+Who controls which ship:
+
+| Controller | In a 2 PLAYERS game | In the menus and in 1 PLAYER games |
+|---|---|---|
+| Samsung remote, keyboard | Player 1 | Player 1 |
+| A gamepad | Player 1 until you press **START** or **A** on it — from then on it is **player 2's** (until it is unplugged); any other gamepad stays player 1's | Player 1 — every gamepad, whichever one |
+| **SPLIT KEYBOARD** (browser only, OPTIONS → CONTROLS) | Left half (W A S D, F, G, Esc / Q) player 1; right half (arrows, K, L, Enter) player 2 | Both halves move through the menus |
+
+**On the TV** a second player needs a **gamepad** connected to the monitor (USB or Bluetooth) —
+the remote is always player 1's. The button layouts are in
+[controls.md](controls.md#two-players).
+
+**Each player has their own** ships (the difficulty's number each), score, extra ships at 20,000 /
+90,000 / … points, continues and power:
+
+- Capsules (and the MANTA's colour items) go to **whoever touches them first** — player 1 when
+  both touch one at the same moment — and move that player's own power meter; OK takes a
+  power-up for the player whose controller pressed it. Shields and Options belong to each ship.
+- While both ships are flying, enemies that leave a capsule leave **an extra one** every second
+  time, just below the first (with the MANTA: the next colour item), so there is enough for two.
+- The enemies aim at the **nearest** ship (at player 1 when both are equally close).
+
+**The HUD.** The top bar shows `1P` and player 1's score on the left, `2P` and player 2's score
+on the right. While **both** ships are in the game the bottom bar splits into two halves — player
+1 on the left, player 2 on the right — each with a spare-ship icon (player 2's in its own colours)
+and the number of spare ships, a small power meter of seven narrow boxes with two-letter labels
+(`SP` `MS` `DB` `LS` `OP` `?` `!` — with another weapon type its own letters, e.g. `SB` `TL` `RP`
+for TYPE B) and the shield's blocks; with the MANTA the rows `SH`, `SB`, `AR`, `SP` of small
+squares instead. With only one ship in the game the bottom bar looks as in a one-player game.
+
+**Losing your ships.** When one player loses their last ship, **the other plays on**. The out
+player's half of the bottom bar then shows:
+
+- a blinking **`PRESS START`** if they still have continues: their join button (START on the
+  gamepad; for player 1 **Back** or **Play/Pause** on the remote, P, Esc or Backspace on a keyboard;
+  on the SPLIT KEYBOARD Esc / Q for player 1, Enter for player 2) brings them back **straight away** — flying in from the left with
+  the difficulty's full number of ships but without power, the last digit of their score counting
+  the continue. The stage does **not** go back to a checkpoint;
+- **`GAME OVER`** if they have no continues left: they stay out for the rest of the game.
+
+**When both are out** the game is over. If either player still has continues, the **CONTINUE?**
+countdown appears with each player's credits (`1P` and `2P`), and a player presses **OK on their
+own controller** to carry on — the stage goes back to its last checkpoint, as in a one-player game.
+The first OK ends the countdown: only the players who pressed it at that moment come back (press
+together to continue together); the other stays out, but can still come back later with START
+while the first one plays (continues permitting).
+
+**Pausing.** Either player's pause button pauses (player 2: START or Back / Select on the
+gamepad) — except while a player can join or come back: then that player's START does that
+instead. The pause menu answers every controller. **RETRY STAGE** starts the stage again as a two
+player game (player 2 presses START again to join); **QUIT TO TITLE** ends it — choose 1 PLAYER on
+the title to play alone again.
+
+**Unplugging player 2's gamepad** does not remove its ship: it stays in the game, still firing
+but no longer moving, until it is lost. Plug a gamepad in and press **A** on it to fly that ship
+again (START works too, but also opens the pause menu).
+
+**The end screens and high scores.** GAME OVER and STAGE CLEAR show both players' scores (`1P`
+and `2P`). Both scores are saved in the high scores of the difficulty and the ship you played, like
+one-player scores; the **NEW HI-SCORE** line refers to player 1's score.
+
 ## The Options screen
 
 **OPTIONS** on the title menu — or in the pause menu during a game — opens a framed box over the
@@ -442,7 +532,7 @@ darkened picture:
 | **MASTER** | The volume of everything the game plays, from 0 (silent) to 10 (full, the start setting) |
 | **MUSIC** | The music's volume, 0–10 |
 | **SFX** | The sound effects' volume, 0–10 — the menu clicks and chimes follow it too |
-| **CONTROLS** | The control profile: on the TV **SAFE 4-WAY (DEFAULT)** or **FAST 8-WAY**, in a browser **KEYBOARD (DEFAULT)** or **KEYBOARD AS REMOTE** ([controls.md](controls.md#control-profiles)) |
+| **CONTROLS** | The control profile: on the TV **SAFE 4-WAY (DEFAULT)** or **FAST 8-WAY**, in a browser **KEYBOARD (DEFAULT)**, **KEYBOARD AS REMOTE** or **SPLIT KEYBOARD** (two players on one keyboard — [Two players](#two-players)) ([controls.md](controls.md#control-profiles)) |
 | **BULLETS** | The colours of the enemy bullets and lasers: **STANDARD** (pink, red and purple — the start setting), or a set made for a kind of colour blindness: **DEUTERANOPIA** and **PROTANOPIA** (red–green: light magenta, sky blue and near-white) or **TRITANOPIA** (blue–yellow: crimson, teal and near-white) — see below |
 | **BACK** | Keeps the settings and closes the box |
 
@@ -540,7 +630,19 @@ ship may move in four directions only; the game is designed to be fully playable
 
 ### What changed lately
 
-**New in this build: the second ship, the MANTA.** After the DIFFICULTY box a new **SHIP SELECT**
+**New in this build: two players at once.** The title menu now reads **1 PLAYER** (what START
+used to be), **2 PLAYERS**, OPTIONS and, on the TV, EXIT — so OPTIONS is one ▼ further down. With
+2 PLAYERS the game starts with player 1, and a second player **joins at any time** by pressing
+START on a gamepad (in a browser also Enter on the new **SPLIT KEYBOARD** control profile, which
+puts two players on one keyboard); player 2's ship is the same ship in red-orange and gold. Each
+player has their own ships, score, power-ups and continues: a player who loses their last ship
+comes back with START while the other plays on, and the game is over only when both are out. The
+bottom bar splits into two halves while both play, and the GAME OVER and STAGE CLEAR screens show
+both scores. Also new: a gamepad now controls **player 1** in the menus and in one-player games,
+whichever gamepad it is (before, the second gamepad was always player 2). See
+[Two players](#two-players).
+
+Before that, **the second ship, the MANTA.** After the DIFFICULTY box a new **SHIP SELECT**
 box asks which ship to fly — so starting a game with the KESTREL takes one more OK (the KESTREL is
 highlighted, so OK goes straight on to the WEAPON SELECT screen). The **MANTA** plays the other
 classic way: it has no power meter, and the enemies that leave capsules leave **colour items**
@@ -810,10 +912,10 @@ build) is all it takes, and the TV never needs a network connection to load it.
 
 ## The first zone: AZURE VERGE
 
-**START plays AZURE VERGE** — on the TV, in a browser and on the desktop. It is the first real
+**Every game plays AZURE VERGE** — on the TV, in a browser and on the desktop. It is the first real
 level of the game: about three minutes of scrolling in five parts, then the **WARNING** and the
 zone's boss, **HALCYON BULWARK**. Everything in it is an original placeholder made for this
-project (names, pictures, music). Times below count from START (about):
+project (names, pictures, music). Times below count from the start of the game (about):
 
 | Time | What happens |
 |---|---|
@@ -914,8 +1016,9 @@ the first install it appears in the monitor's **Apps** list as **Shmup Cup**.
 | **Home** | Leaves the app; everything freezes (and falls silent) while it is in the background. Reopening it brings you back where you were — during a game, to the pause menu — and nothing jumps ahead |
 | **Volume +/−, Mute** | The monitor's own volume, as in any app. The game's own volumes (MASTER, MUSIC, SFX) are under **OPTIONS** |
 | Everything else | Read by the game every tick, but nothing reacts to it yet (the gun fires without any button) |
+| A **gamepad** (USB or Bluetooth, optional) | Menus and 1 PLAYER games: works like the remote (player 1). In a **2 PLAYERS** game: START (or A) makes it **player 2's** and brings player 2 in ([Two players](#two-players), checks 45–47) |
 
-On the TV, START plays **AZURE VERGE** ([The first zone](#the-first-zone-azure-verge)), with
+On the TV, every game plays **AZURE VERGE** ([The first zone](#the-first-zone-azure-verge)), with
 enemies, capsules, the boss and the zone's music. The normal TV build has no shortcut to the
 boss — it comes after about three minutes; the debug build has one (key 8 once the developer
 tools are open — [debug-tools.md](debug-tools.md)).
@@ -924,7 +1027,7 @@ Things to check on the monitor and report:
 
 1. A loading bar (or nothing at all, if it is very quick) and then the **title screen** — the
    logo, a blinking `PRESS OK`, `HI` at the bottom, drifting stars — never a black screen that
-   stays black. OK, then OK on START, then OK on NORMAL in the DIFFICULTY box, then OK on the
+   stays black. OK, then OK on 1 PLAYER, then OK on NORMAL in the DIFFICULTY box, then OK on the
    KESTREL in the SHIP SELECT box, then OK on START in the WEAPON SELECT screen: the view starts to
    scroll and the ship flies in.
 2. **Both HUD bars are complete** (new layout): the top bar's `1P` and score on the left, `HI`
@@ -963,7 +1066,7 @@ Things to check on the monitor and report:
    or noticeably late, and whether they ever crackle, stutter, drop out or stop. The **title
    music** (SHMUP CUP) plays on the title screen and fades out when a game starts; then AZURE
    VERGE's own theme plays, and at the WARNING the siren and the boss theme (BULWARK ASSAULT).
-12. **The title menu**: OK on `PRESS OK` shows START / OPTIONS / EXIT with START
+12. **The title menu**: OK on `PRESS OK` shows 1 PLAYER / 2 PLAYERS / OPTIONS / EXIT with 1 PLAYER
    highlighted; ▲ / ▼ move the highlight, each move with a soft click; holding ▼ keeps moving it
    after a moment. Report any skipped or doubled step, or a press that did nothing.
 13. **Pause**: in a game, **Back** freezes and darkens the picture and shows PAUSE with
@@ -990,11 +1093,11 @@ Things to check on the monitor and report:
    kept once you choose BACK.
 18. **CONTROLS** (new): in OPTIONS move to CONTROLS and press ◀ / ▶: it switches between
    `SAFE 4-WAY (DEFAULT)` and `FAST 8-WAY`, and the menu keeps working with the arrows, OK and Back
-   whichever is shown. Choose **FAST 8-WAY**, BACK, START and fly: hold each direction for a few
+   whichever is shown. Choose **FAST 8-WAY**, BACK, 1 PLAYER and fly: hold each direction for a few
    seconds — report whether the ship moves smoothly or stutters / stops for a moment (FAST 8-WAY
    has no hiccup protection; if it stutters, your remote needs SAFE 4-WAY — switch back). Close
    and reopen the app: CONTROLS still shows the profile you chose.
-19. **AZURE VERGE** (new): after START the view scrolls to the right on its own over rolling
+19. **AZURE VERGE** (new): once the game starts the view scrolls to the right on its own over rolling
    ground, with a blue planet's rim low in the background, and the first row of green pods weaves
    in about three seconds later. Watch the scrolling for a few minutes: it should stay smooth in
    the slow cave (from about 1:15) and in the fast stretch (from about 2:25) — report any stutter,
@@ -1020,7 +1123,7 @@ Things to check on the monitor and report:
    ship — it flies in again blinking, a spare-ship icon goes, and after the last one comes
    **GAME OVER** (with **NEW HI-SCORE** for a new best). Close the app (Back on the title → YES),
    open it again: the title's `HI` shows your best score.
-25. **The DIFFICULTY box** (new): on the title, OK → START opens it with NORMAL highlighted and
+25. **The DIFFICULTY box** (new): on the title, OK → 1 PLAYER opens it with NORMAL highlighted and
    `LIVES 3`, `CONTINUES 3` and `HI` underneath. ▲ / ▼ move the highlight (wrapping round) and the
    numbers change with it — EASY `5` / `5`, HARD `3` / `2`, ARCADE `2` / `0`. Back returns to the
    title menu; OK on **EASY** (then OK on START in the WEAPON SELECT screen) starts a game with four
@@ -1116,6 +1219,26 @@ Things to check on the monitor and report:
    shields never do that). Collect more blue items later: after the fourth the ring turns silver
    (four hits), after the ninth gold (five hits). Then lose the ship on NORMAL: it comes back
    without the Arm and one SHOT level lower. Report anything unexpected.
+44. **The new title menu** (new): OK on `PRESS OK` shows **1 PLAYER** / **2 PLAYERS** / OPTIONS /
+   EXIT with 1 PLAYER highlighted; OK on 1 PLAYER plays exactly as START did before (DIFFICULTY,
+   SHIP SELECT, …), and OPTIONS is now the third entry.
+45. **Two players on the TV** (new — you need a gamepad connected to the monitor by USB or
+   Bluetooth; press one of its buttons once so the monitor notices it): on the title choose
+   **2 PLAYERS**, then NORMAL, the KESTREL and START with the remote. The game starts with one ship,
+   and a yellow `PRESS START` blinks on the right of the top bar. Press **START** on the gamepad: a
+   red-orange KESTREL flies in with a short chirp (the game does not pause), the bottom bar splits
+   into two halves, and from then on the remote flies the blue ship and the gamepad the red one.
+   Report whether each controller moves only its own ship, whether both halves of the bottom bar
+   are readable from the sofa, and whether the two ships are easy to tell apart.
+46. **Out and back in** (new): in a two-player game let the gamepad's ship lose all its ships (fly
+   it into the cave's rock): the remote's ship plays on, and the right half of the bottom bar
+   blinks `PRESS START`. Press START on the gamepad: the ship flies in again at once, without the
+   stage going back, and the last digit of the right-hand score is now `1`. Then press START on the
+   gamepad again: the pause menu opens; RESUME (or START once more) continues without the game
+   pausing a second time.
+47. **Unplugging** (new): during a two-player game unplug (or switch off) the gamepad: its ship
+   stays in the game, still firing but not moving. Plug it back in and press **A** on it: it flies
+   player 2's ship again. Report anything unexpected.
 
 The fully powered ship (`?loadout=full`), the shortcut to the boss (`?skip=boss`), the four test
 stages (the Test Range, the Boss Range with its test boss, the Hunter Range with the Option
@@ -1142,7 +1265,7 @@ pnpm dev
 
 Open http://localhost:5173 (other devices on the same network can use the PC's IP
 address, e.g. `http://192.168.1.20:5173`): the title screen appears. Press **Enter** five times
-(past `PRESS OK`, START, NORMAL in the DIFFICULTY box — or ▼ to choose another —, the KESTREL in
+(past `PRESS OK`, 1 PLAYER, NORMAL in the DIFFICULTY box — or ▼ to choose another —, the KESTREL in
 the SHIP SELECT box — or ▼ for the MANTA, which starts at once — and START in the WEAPON SELECT
 screen — or ▲ to change the weapons first) to play AZURE VERGE and fly with the arrow keys, W A S D or a gamepad;
 **Esc** (or P, Backspace) pauses. http://localhost:5173/?skip=boss starts every game a moment
@@ -1171,6 +1294,13 @@ To feel the TV remote's limits on a keyboard — one direction at a time, the sa
 delay as on the TV — open http://localhost:5173/?profile=keyboard-remote-emulation (details in
 [controls.md](controls.md#feeling-the-remote-on-a-desktop-keyboard)).
 
+**Two players in a browser**: plug in a gamepad (press one of its buttons once so the browser
+notices it), choose **2 PLAYERS** and, in the game, press START (or A) on the pad — or, without a
+pad, choose **SPLIT KEYBOARD** under OPTIONS → CONTROLS (or open
+http://localhost:5173/?profile=keyboard-split): player 1 then flies with W A S D (F = OK, G =
+Back, Esc / Q = Pause), player 2 with the arrows (K = OK, L = Back, **Enter = START**) — see
+[Two players](#two-players) and [controls.md](controls.md#two-players).
+
 `pnpm --filter @shmup/tizen dev` (http://localhost:5174) opens the *TV* build in the
 browser instead. It behaves the same, except that its title has no EXIT entry and Back never
 closes it (there is no TV system to return to) — Back still pauses and goes back in menus.
@@ -1178,12 +1308,12 @@ closes it (there is no TV system to return to) — Back still pauses and goes ba
 ### The scrolling test stage (browser only)
 
 Open http://localhost:5173/?stage=test-range (add `&profile=keyboard-remote-emulation` to fly
-it with the TV remote's limits) and choose START on the title: the game now runs the *Test Range*
+it with the TV remote's limits) and choose 1 PLAYER on the title: the game now runs the *Test Range*
 instead of AZURE VERGE (also after RETRY STAGE), and the view scrolls to the right on its own
 while you fly — the ship keeps its place on screen unless you move it, and the world slides past
 from right to left. The stage theme, AZURE VERGE, starts with the game
 ([Sound and music](#sound-and-music)). The whole run takes about a minute and a quarter (times
-below count from START):
+below count from the start of the game):
 
 | Time (about) | What happens |
 |---|---|
@@ -1342,7 +1472,7 @@ The Options fire the chosen weapons too, each with its own bombs, rings or beams
 
 **Fully powered** (browser only, for testing): add `&loadout=full` to the address, e.g.
 http://localhost:5173/?stage=test-range&loadout=full (or `?loadout=full` alone for AZURE VERGE,
-`?skip=boss&loadout=full` for its boss), then START. Every game you start (and every RETRY STAGE) begins with most of what the power-ups give
+`?skip=boss&loadout=full` for its boss), then 1 PLAYER. Every game you start (and every RETRY STAGE) begins with most of what the power-ups give
 you — with the weapon type chosen in the WEAPON SELECT screen (TYPE B gives the Ripple Laser
 instead of the laser below, and so on):
 
@@ -1371,7 +1501,7 @@ What "good" looks like, with either loadout:
 The KESTREL powers up the classic way, with a **power meter** (the MANTA uses colour items instead —
 [The MANTA](#the-manta-colour-items-weapons-and-the-arm)). Capsules come in AZURE VERGE on
 every device (28 of them — [The first zone](#the-first-zone-azure-verge)) and in the browser's
-*Test Range* (http://localhost:5173/?stage=test-range, then START). The meter is the row of seven boxes in the bottom
+*Test Range* (http://localhost:5173/?stage=test-range, then 1 PLAYER). The meter is the row of seven boxes in the bottom
 bar — `SPEED` `MISSILE` `DOUBLE` `LASER` `OPTION` `?` `!` — and you hear it too: a bright ding
 for every capsule, a short rising trill when OK takes a power-up and a low "no" buzz when it has
 nothing to give.
@@ -1608,7 +1738,7 @@ When the last one is destroyed there is no icon left and the ship does not come 
 seconds later the game freezes and darkens — first under the **CONTINUE?** countdown while you
 have continues ([Continues](#continues)), then under the **GAME OVER** screen (red frame, your
 final score, a short sad tune). Half a second later **OK** takes you back to the title (it also
-goes by itself after ten seconds), where START plays again. In
+goes by itself after ten seconds), where 1 PLAYER plays again. In
 free flight (`?scene=flight`) there is no such screen: **GAME OVER** (red) appears in the middle
 of the top bar and the stage keeps scrolling.
 
@@ -1644,7 +1774,7 @@ cover your ship — a cyan ring flashes around the ship instead).
 
 `HI` in the middle of the top bar is the **best score** of the difficulty you are playing: it
 follows your score while you are beating it, it carries over into every new game on that
-difficulty (START, RETRY STAGE), and the title screen shows it too. Since this build it is **kept between launches**: every game that ends on the GAME OVER or
+difficulty (1 PLAYER, 2 PLAYERS, RETRY STAGE), and the title screen shows it too. Since this build it is **kept between launches**: every game that ends on the GAME OVER or
 STAGE CLEAR screen is saved, so after closing and reopening the app `HI` starts from the best
 saved score, and a new best shows **NEW HI-SCORE** on the GAME OVER screen
 ([What the game remembers](#what-the-game-remembers)). A game you quit or retry is not saved.
@@ -1666,8 +1796,8 @@ What "good" looks like:
 ## The boss range and the WARNING (browser only)
 
 Open http://localhost:5173/?stage=test-boss (add `&loadout=full` to fight fully powered, or
-`&profile=keyboard-remote-emulation` to fly with the TV remote's limits) and choose START on the
-title (times below count from START). It is a short stage in open space — no rock — made to try out the
+`&profile=keyboard-remote-emulation` to fly with the TV remote's limits) and choose 1 PLAYER on the
+title (times below count from the start of the game). It is a short stage in open space — no rock — made to try out the
 first boss mechanics with the **TRIAL WARDEN**, a test boss (the zone's real boss, HALCYON BULWARK,
 ends AZURE VERGE — [above](#halcyon-bulwark-hb-01)). Everything
 here is a placeholder made for this project, including the boss's name and the WARNING's
@@ -1714,7 +1844,7 @@ Flying into any part of the boss destroys your ship (a Force Field takes it like
   where the boss was, and a short, cheerful stage-clear tune plays;
 - about a second later the scrolling starts again, and a second and a half after that the
   game freezes under the **STAGE CLEAR** screen: your score and the best score, then
-  `TO BE CONTINUED`, then the title — START (or RETRY STAGE from the pause menu during the
+  `TO BE CONTINUED`, then the title — 1 PLAYER (or RETRY STAGE from the pause menu during the
   fight) to fight again ([the end screens](#pausing-quitting-and-the-end-screens)).
 
 **Losing a ship during the fight** works as everywhere else: the bullets vanish, you fly in
@@ -1750,7 +1880,7 @@ What "good" looks like:
 
 ## The Option Hunter range (browser only)
 
-Open http://localhost:5173/?stage=hunter-range&loadout=full and choose START on the title (the
+Open http://localhost:5173/?stage=hunter-range&loadout=full and choose 1 PLAYER on the title (the
 fully powered ship starts with four Options; without `&loadout=full`, collect five capsules and
 take OPTION first — a hunter only comes while you **have** Options). It is a one-minute stage in
 open space made to meet the **Option Hunter**: a violet, armoured enemy that is not after your
@@ -1796,7 +1926,7 @@ What "good" looks like:
 
 ## The Direct range (browser only)
 
-Open http://localhost:5173/?stage=direct-range, choose START, a difficulty and then the **MANTA**
+Open http://localhost:5173/?stage=direct-range, choose 1 PLAYER, a difficulty and then the **MANTA**
 in the SHIP SELECT box. It is a one-minute stage in open space made to try the colour items: its
 first six items are one of each colour (red, green, blue, orange, yellow, octagon), then blue,
 red, green, blue, red, blue — and the list starts again.
@@ -1858,7 +1988,7 @@ What "good" looks like:
   the flashes down — both come with the options screen of a later build. If the shake or the
   flashes are uncomfortable, please say so.
 - Everything freezes when the game is paused (the pause menu, switching tabs, the TV's Home
-  button) and carries on from where it stopped. A new game (START, RETRY STAGE) starts without
+  button) and carries on from where it stopped. A new game (1 PLAYER, 2 PLAYERS, RETRY STAGE) starts without
   the last game's explosions and numbers.
 - The game stays smooth even with many explosions at once.
 
@@ -1943,7 +2073,8 @@ What "good" sounds like:
 
 | Address | Screen |
 |---|---|
-| http://localhost:5173 | The **title screen** (the normal start); START plays AZURE VERGE; `?stage=…`, `?skip=…` and `?loadout=…` below change what START plays |
+| http://localhost:5173 | The **title screen** (the normal start); 1 PLAYER and 2 PLAYERS play AZURE VERGE; `?stage=…`, `?skip=…` and `?loadout=…` below change what a game plays |
+| http://localhost:5173/?profile=keyboard-split | Two players on one keyboard (the **SPLIT KEYBOARD** profile — [Two players](#two-players)) |
 | http://localhost:5173/?skip=boss | AZURE VERGE, but every game starts about two seconds before the **WARNING** and **HALCYON BULWARK**; add `&loadout=full` to fight it fully powered ([above](#halcyon-bulwark-hb-01)) |
 | http://localhost:5173/?scene=flight | **Free flight**: straight into the game without the title — the older start-up picture, with its simpler HUD (FREE FLIGHT or the stage name in the top bar, `ARROWS MOVE`, no power meter), no pause menu and no end screens, in empty space; combine it with `&stage=…` (e.g. `&stage=zone-a`) and `&loadout=full` |
 | http://localhost:5173/?stage=test-range | The **Test Range**, the first scrolling stage (above) |
@@ -1973,7 +2104,7 @@ pnpm --filter @shmup/electron start
 ```
 
 A 1152×648 window (×3) opens with the same title screen as the browser (no EXIT entry yet —
-close the window to quit); START plays AZURE VERGE; play with the keyboard or a gamepad. The Options screen and the saved
+close the window to quit); 1 PLAYER plays AZURE VERGE; play with the keyboard or a gamepad (2 PLAYERS with a second gamepad or the SPLIT KEYBOARD). The Options screen and the saved
 settings and high scores work as in the browser.
 Set `SHMUP_FULLSCREEN=1` before the last command to start in fullscreen. Close the window (or
 Alt+F4 / Cmd+Q) to quit.
@@ -2004,8 +2135,8 @@ mean the build itself is broken; they are not caused by anything you did.
 |---|---|
 | A panel of numbers (FPS, TICK, …) and a small bar graph appear in the top-left corner | That is the developer panel of a **debug build** (`build:dev`), opened by Play/Pause followed by Ch ▲ three times. Press **1** to hide it — see [debug-tools.md](debug-tools.md). The normal build never shows it |
 | The game froze without a PAUSE box, or everything runs in slow motion (debug build) | A developer tool is on (`STEP` or `SLOW` in the panel): press **4** or **6** until it is off — [debug-tools.md](debug-tools.md#troubleshooting) |
-| The title screen stays, the game does not start | Press OK (Enter) once to leave `PRESS OK`, OK again on START, then OK on a difficulty in the DIFFICULTY box and OK on a ship in the SHIP SELECT box. In a browser click once into the page first so it has the keyboard focus |
-| START opened a DIFFICULTY box instead of the game | Expected: choose a difficulty with ▲ / ▼ and press OK (Back returns to the title menu) — then OK on a ship in the SHIP SELECT box and, for the KESTREL, OK once more on START in the WEAPON SELECT screen |
+| The title screen stays, the game does not start | Press OK (Enter) once to leave `PRESS OK`, OK again on 1 PLAYER, then OK on a difficulty in the DIFFICULTY box and OK on a ship in the SHIP SELECT box. In a browser click once into the page first so it has the keyboard focus |
+| 1 PLAYER opened a DIFFICULTY box instead of the game | Expected: choose a difficulty with ▲ / ▼ and press OK (Back returns to the title menu) — then OK on a ship in the SHIP SELECT box and, for the KESTREL, OK once more on START in the WEAPON SELECT screen |
 | OK on a difficulty opened a SHIP SELECT box instead of the game | Expected since this build: the KESTREL is highlighted, so OK goes on to the WEAPON SELECT screen as before; ▼ and OK choose the MANTA, which starts at once ([Choosing your ship](#choosing-your-ship)) |
 | OK on the KESTREL opened a WEAPON SELECT screen instead of the game | Expected: START is highlighted, so OK starts the game with the weapons shown; ▲ / ▼ and ◀ / ▶ change them first if you like ([Choosing your weapons](#choosing-your-weapons)) |
 | OK does nothing in the game | Expected with the **MANTA**: it has no power meter — its colour items work when you fly into them. With the KESTREL OK needs a highlighted box on the power meter ([Power-ups](#power-ups)) |
@@ -2036,7 +2167,7 @@ mean the build itself is broken; they are not caused by anything you did.
 | A blue capsule left the enemy bullets on the screen | Expected: unlike Mega Crash, the blue capsule only destroys the enemies on the screen |
 | The DIFFICULTY box is back on NORMAL (or the SHIP SELECT box on the KESTREL) after reopening the app | Expected: the choices are kept only until the app is closed (a later build remembers them) |
 | The title's `HI` changed after I chose another difficulty | Expected: each difficulty keeps its own high scores, and the title shows the one you chose last |
-| OK on the title menu did nothing | The menu ignores OK for a split second after it appears (an OK pressed then still counts a moment later). If START or OPTIONS never reacts, please report it with the remote model |
+| OK on the title menu did nothing | The menu ignores OK for a split second after it appears (an OK pressed then still counts a moment later). If 1 PLAYER or OPTIONS never reacts, please report it with the remote model |
 | The highlight in a menu jumps two steps, or a press is lost | Not expected — please report it with the remote model (and whether you held the button) |
 | Back closed the app on the TV | Expected only on the loading and error screens, and after answering **YES** to **EXIT SHMUP CUP?** on the title. Anywhere else, please report it (an older build closed the app on Back) |
 | Back on the title does nothing in a browser | Expected on `PRESS OK`; in the menu it goes back to `PRESS OK`. A browser tab cannot close itself, so there is no EXIT |
@@ -2063,7 +2194,7 @@ mean the build itself is broken; they are not caused by anything you did.
 | The bullets have unusual colours, or a dark / bright dot in the middle | The **BULLETS** option is set to a colour-blind set — OPTIONS → BULLETS → STANDARD restores pink / red / purple. It is remembered between launches |
 | BULLETS changed nothing | The new colours show at once, also over a paused game; if they do not, please report it with the set you chose (the browser console, if any, names a missing picture) |
 | After a loss the ship lost an Option, the laser or a Speed Up | Expected: each loss costs one step of power, and always the Force Field ([Lives](#lives-losing-your-ship-and-the-score)) |
-| GAME OVER — how do I start again? | Press OK on the GAME OVER screen (after half a second) or wait ten seconds: the title appears, and START plays again. In free flight (`?scene=flight`) reload the page |
+| GAME OVER — how do I start again? | Press OK on the GAME OVER screen (after half a second) or wait ten seconds: the title appears, and 1 PLAYER plays again. In free flight (`?scene=flight`) reload the page |
 | A CONTINUE? box with a countdown appeared | Your last ship was lost and the difficulty has continues left: OK (after half a second) continues from the last checkpoint, Back or waiting ten seconds gives up |
 | OK on CONTINUE? did nothing | It is ignored for the first half second; press it again. If it never reacts, please report it with the remote model |
 | After a continue the ship has no power | Expected: a continue restarts without power, like in the arcade — collect capsules again |
@@ -2109,7 +2240,7 @@ mean the build itself is broken; they are not caused by anything you did.
 | An enemy floats above the ground, sinks into it, or walks through a wall | Please report it with a screenshot and roughly how far into the stage it was |
 | An enemy jumps, stutters or suddenly vanishes in the middle of the screen | Please report it with the time into the stage — enemies should only disappear after leaving the screen |
 | No enemies at all in the test stage | Check the address says `?stage=test-range` (with rock along the bottom from the start). Free flight in empty space has no enemies |
-| START flies in empty space (no rock, no enemies) | A misspelled `?stage=` in the address (the browser console names it), or `?scene=flight` without `&stage=…`. Without either, START plays AZURE VERGE — on the TV always. If the TV shows empty space, please report it |
+| A game flies in empty space (no rock, no enemies) | A misspelled `?stage=` in the address (the browser console names it), or `?scene=flight` without `&stage=…`. Without either, every game plays AZURE VERGE — on the TV always. If the TV shows empty space, please report it |
 | The screen slows down or stutters when many bullets are around | Not expected — the game is built for hundreds of bullets. Please report it with the time into the stage and the browser or TV model |
 | The test stage stopped scrolling | At the end of the stage (after about 75 seconds) that is expected — the STAGE CLEAR screen follows. If it stops earlier, please report where |
 | `?stage=test-boss` flies in open space with no WARNING | The stage name is misspelled — it is `test-boss`; the browser console names the unknown stage |
@@ -2147,6 +2278,11 @@ mean the build itself is broken; they are not caused by anything you did.
 | Blurry picture in the browser | Browser zoom is not 100 % (press Ctrl+0), or the operating system scales the window unevenly. At 100 % zoom the pixels stay sharp on any display |
 | Stars or ship stutter in the browser | Expected on 120/144 Hz monitors for now (smooth-motion interpolation is not in the preview yet); on a 60 Hz display it should be smooth. Also check the PC is not busy |
 | Stars or ship stutter on the TV | Please report it — the M7 runs at 60 Hz and should show one step per refresh |
+| Player 2's gamepad does nothing when I press START | The game must be a **2 PLAYERS** one (1 PLAYER games have no player 2). Press any button on the pad once so the TV / browser notices it. If `PRESS START` is not blinking, player 2 cannot join right now (the stage is ending, or the game is over) |
+| In a 2 PLAYERS game my gamepad moves player 1's ship | Expected until you press START or A on it — then it flies player 2. Only one gamepad can be player 2; any other stays player 1's |
+| Player 2 cannot join on the TV without a gamepad | Expected: the remote is always player 1's. The SPLIT KEYBOARD (two players on one keyboard) exists only in a browser |
+| Player 2's START paused the game instead of bringing it back | Its ship is still flying or still exploding (wait until its half shows `PRESS START`), or it has no continues left (`GAME OVER` in its half) |
+| An out player's half shows `GAME OVER` while the other plays on | Expected: that player has used all their continues; they are out until the game ends |
 | Top or bottom HUD bar cut off on the TV | Check the monitor's picture size setting ("Fit to screen" / no overscan) and report which edge is missing |
 | Opening `apps/tizen/dist/index.html` by double-clicking it shows an error or nothing | Desktop Chrome blocks the sprite sheet for files opened straight from disk. Use `pnpm --filter @shmup/tizen dev` instead (the TV itself is not affected) |
 | The app does not appear on the TV | See the troubleshooting table in [install-on-tv.md](install-on-tv.md#troubleshooting) |

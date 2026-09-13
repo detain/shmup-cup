@@ -79,7 +79,8 @@ extends, continues, the difficulty menu and the continue countdown).
   audio-web for the `sfx` / `music` content kinds and the audio engine it creates (M1-15), and on
   input-web only for the default owner of the `input-profiles` content (M1-05, allowed by plan
   §3.1); the input and audio *adapters* reach
-  it through interfaces (`ShellInput` = `PlatformInput` + `clear` / `setContext` / `destroy`,
+  it through interfaces (`ShellInput` = `PlatformInput` + `clear` / `setContext` / optional
+  `setSeats` (M2-06) / `destroy`,
   `IAudio` — plus, optionally, the `context` / `bus()` graph a `WebAudio` exposes for the
   engine), so the shell never creates them itself.
 - **Apps are thin composition roots.** `src/boot/` in each app creates the input adapter,
@@ -120,6 +121,7 @@ every `pnpm test` ([debug-and-replays.md](debug-and-replays.md)).
 ```text
 requestAnimationFrame(now)                       shell/frame-loop
  └─ game.inputContext changed? → input.setContext(ctx)   shell/boot → input-web: game/menu tables
+ └─ game.inputSeats changed?   → input.setSeats(n)      shell/boot → input-web: player seats (M2-06)
  └─ debug.beginFrame(now)                        shell/debug (dev / test builds only): frame time
  └─ game.frame(now)                              core/game (debug frame advance / slow-mo here)
      └─ loop.advance(now)                        core/loop: delta snapping, accumulator, cap
@@ -215,7 +217,9 @@ and cancel point items in M2-02, the meter arsenal — Types B–D, Weapon Edit 
 choices of the config — in M2-03, the Option types, the meter shields, the Option Hunter
 and the blue capsule in M2-04 ([options-shields-hunter.md](options-shields-hunter.md)), and
 Direct mode — the MANTA's colour items, shot families and the Arm, flown when the ship select's
-choice sets `GameConfig.shipId` / `powerUpMode` — in M2-05 ([direct-mode.md](direct-mode.md)).
+choice sets `GameConfig.shipId` / `powerUpMode` — in M2-05 ([direct-mode.md](direct-mode.md)), and
+two-player co-op — player 2's drop-in join in phase 1, per-player continues, the co-op drop
+scaling — in M2-06 ([coop.md](coop.md)).
 Details: [sim-world.md](sim-world.md), [stage-runtime.md](stage-runtime.md),
 [enemies-and-behaviors.md](enemies-and-behaviors.md),
 [bullets-and-patterns.md](bullets-and-patterns.md),
@@ -227,7 +231,8 @@ Details: [sim-world.md](sim-world.md), [stage-runtime.md](stage-runtime.md),
 [pattern-dsl.md](pattern-dsl.md).
 
 - **`world`** — `createWorld(config, content)` allocates the session: tick counter, RNG
-  streams, event queue, two `PlayerShip`s (P2 inactive until co-op), the camera, the stage
+  streams, event queue, two `PlayerShip`s (P2 inactive until it joins a co-op game — M2-06,
+  [coop.md](coop.md)), the camera, the stage
   `config.stage` names (runner, collision map, parallax and terrain views — or none: free
   flight with a static camera), the enemy system, the rank, the bullet system, the weapon
   system (with `config.loadout` applied), the power-up system, the scoring system and the boss
@@ -436,8 +441,12 @@ D24, "art as code"); nothing is drawn at run time and nothing is fetched on the 
   `lastWins`) and a diagonal policy (`combine` / `lastWins` / `firstWins`) applied to the held
   mask with the press order.
 - Pads are polled once per tick: standard-mapping buttons + left stick (radial deadzone
-  0.2, 8-way with hysteresis 0.1). Pad 0 and the keyboard/remote feed player 1, pad 1
-  feeds player 2.
+  0.2, 8-way with hysteresis 0.1). Devices reach the players by **seats** (M2-06): the shell
+  forwards `Game.inputSeats` to `input.setSeats()` like the context. With one seat (menus,
+  one-player games) every device — every pad included — feeds player 1; with two (a co-op game)
+  the keyboard / remote feeds player 1 and a pad takes player 2's seat with its first A / START
+  (or the split keyboard profile's right half feeds player 2). A seat change never creates a
+  press. Guide: [coop.md](coop.md#input-routing-shmupinput-web-shmupshell).
 - One `InputSnapshot` object is reused forever — `poll()` never allocates.
 
 ### Rendering pipeline (`@shmup/render-pixi`)
@@ -616,7 +625,7 @@ Implemented or partial today: core `platform`, `input`, `config` (partial: `Game
 presets since M2-01 and, since M1-17, the `UserOptions` — display options later), `loop`, `game`,
 `presentation`, `rng`, `math`, `events`, `pools`, `save` (M1-17), `data` (partial: `rules` since M2-01, `patterns` since M2-02 —
 `campaign` and `strings` are missing), `world`, `stage`, `player` (implemented for P0 since
-M1-12 — co-op joining comes with M2-06), `collision` (partial: destructible tiles later — the bending lasers' circle chains live in `bullets`), `debug` (M1-19: state hash, switches, controls,
+M1-12; co-op joining lives in `world` since M2-06), `collision` (partial: destructible tiles later — the bending lasers' circle chains live in `bullets`), `debug` (M1-19: state hash, switches, controls,
 counters, the stage skip and checkpoint jumps), `replay` (M1-19), `enemies` (partial: rank modifiers and revenge bullets since M2-01, the Option Hunter and
 the blue capsule's clear since M2-04), `patterns` (implemented with M2-02: runner, movers, fire primitives and the pattern DSL),
 `behaviors` (partial: the M1 enemy and boss rosters, `pattern.loop`, `hunter.option`), `bosses` (partial: the P0 mechanics —
@@ -624,13 +633,13 @@ timers, escapes, the HP bar, mid-bosses and raids with M2-09), `bullets` (implem
 into points since M2-02 — graze is P2), `rank` (implemented with M2-01: growth, power terms, per-enemy sensitivity), `weapons`
 (implemented: Types A–D and Weapon Edit with M2-03, the Direct-mode families with M2-05), `options` (implemented with M2-04: trail, Snake, Formation, Rotate — recovery after death in M3),
 `powerups` (implemented with M2-05: meter mode, the `!` / `?` choices since M2-03, the blue capsule and freed Options since M2-04, Direct mode's items, plan and Speed toggle), `shields` (implemented: the meter shields with M2-04, the Arm with M2-05), `scoring` (partial:
-scores, the session hi-score, extends and the continue digit — co-op later), `fx` (partial: the
+scores, the session hi-score, extends and the continue digit — per player, co-op included, since M2-06), `fx` (partial: the
 hit-stop / shake / flash requests — slowdown later), `ui` (partial: the list menu, slider,
-toggle, choice and confirm widgets, builders and the HUD with the Direct-mode tier pips since M2-05 —
+toggle, choice and confirm widgets, builders and the HUD with the Direct-mode tier pips since M2-05 and the co-op halves since M2-06 —
 rebind prompt, name entry and the boss HP bar later), `scenes` (partial: the scene stack, the M1 flow, the Options screen, the difficulty
 menu and the continue countdown, the weapon select with its live preview and the Auto order editor
-(M2-03; its OPTION row M2-04), the ship select (M2-05) — the other M2 screens later);
-input-web `keymap`, `keyboard`, `gamepad`, `web-input`, `remote`, `rebind`
+(M2-03; its OPTION row M2-04), the ship select (M2-05), 1 PLAYER / 2 PLAYERS and the co-op rules (M2-06) — the other M2 screens later);
+input-web `keymap`, `keyboard`, `gamepad`, `web-input` (implemented with M2-06's seats), `remote`, `rebind`
 (partial: profiles, contexts, the selectable profiles of CONTROLS — the rebinding UI comes in
 M2-16); audio-web `web-audio` (partial; driven by the Options sliders since M1-17), `synth`, `sfx`,
 `music`, `loader`,
@@ -664,7 +673,8 @@ plugins in `vite.shared.ts`) has no `moduleInfo`; it is covered by the tests und
 | A zone (a stage with its roster and boss) | JSON under `content/stages/`, `content/enemies/`, `content/paths/`; `pnpm content:check`; a playtest run with the 4-way bot (`test/playtest/`) and its design-rule checks — [zone-a-and-playtest.md](zone-a-and-playtest.md#extending-it) |
 | A boss or a boss behaviour | A boss is an `enemies` entry with a `boss` section (parts, weak points, phases) started by a stage `warning` event; a boss behaviour is a `defineBossBehavior` coroutine added to `DEFAULT_BOSS_BEHAVIOR_DEFS` — [bosses-and-warning.md](bosses-and-warning.md#extending-it) |
 | An item kind, a meter slot rule or a shield kind | `ITEM_KINDS` / `ItemKind` (appended), the meter's `canEquipSlot` / `equipSlot` and Auto Power-Up rules, a `ShieldSpec` in `SHIELD_SPECS` — [powerups-and-shields.md](powerups-and-shields.md#extending-it); a Direct-mode colour item or plan — [direct-mode.md](direct-mode.md#extending-it) |
-| A player ship | A `content/player/` entry with its `mode` (`meter` / `direct`) and sprite — the ship select lists it ([direct-mode.md](direct-mode.md#extending-it)) |
+| A player ship | A `content/player/` entry with its `mode` (`meter` / `direct`) and sprite — the ship select lists it ([direct-mode.md](direct-mode.md#extending-it)); the pipeline derives player 2's `<sprite>@p2` palette swap for every `ships/*` sprite ([coop.md](coop.md#player-2s-palette-swap)) |
+| A co-op rule (a join button, a leave, more players) | [coop.md](coop.md#extending-it) — anything that changes the sim must come through recorded input |
 | A bullet pattern, bullet kind or laser | Since M2-02 a pattern is data: a `content/patterns/` action run by `pattern.loop` ([pattern-dsl.md](pattern-dsl.md#extending-it)); or a behaviour calling the `ScriptApi` fire primitives (`aimed`, `nWay`, `ring`, …, `laser`, `bendingLaser`, `fireWait`); a new primitive in `core/patterns` with its `ScriptApi` wrapper; a kind in `BULLET_KINDS` — [bullets-and-patterns.md](bullets-and-patterns.md#extending-it) |
 | A weapon, a weapon behaviour, a preset, a Direct-mode family or an Option formation | A weapon is JSON in `content/weapons/` (tunables in `params`, a `name` for the weapon select); a preset is a `presets` entry the weapon select lists; a family is a `families` entry the MANTA fires (M2-05 — [direct-mode.md](direct-mode.md#extending-it)); a behaviour is a `ShotKind` plus its tables, a HUD label frame and a branch of the weapon system's `update()`; formations branch in `OptionGroup.follow` — [weapons-and-options.md](weapons-and-options.md#extending-it), [meter-arsenal.md](meter-arsenal.md#extending-it) |
 | Something the engine draws whatever the content | Add its sprite name to `ENGINE_SPRITES` (`core/bullets` `BULLET_SPRITES`, `core/options` `OPTION_SPRITE`, `core/powerups` `ITEM_SPRITES`, `core/shields` `FORCE_FIELD_SPRITE` and `core/ui` `UI_SPRITES` today): hosts pass it as `loadContent`'s `extraSprites` and `pnpm content:check` verifies it against the atlas |

@@ -186,7 +186,8 @@ What the scene flow records (`FlowControl.recordRun`, when the game-over or stag
 opens — M1's run ends at the stage clear, since there is one zone):
 
 - a row per playing player: player 1 always, player 2 when active — `reached` = the World's
-  stage id (`''` in open space), `mode` `1p`, `difficulty` = the World's (since M2-01 the preset
+  stage id (`''` in open space), `mode` `1p` (`2p` for both rows of a co-op game — M2-06; they go
+  into the same table as one-player games), `difficulty` = the World's (since M2-01 the preset
   chosen under START), into that preset's table (`hiScoreModeKey(world.config)`);
 - the statistic (`gameOvers` or `stagesCleared`), then `flush()`;
 - player 1's rank is kept on the screen (`GameOverScene.rank`, `StageClearScene.rank`): the
@@ -427,7 +428,7 @@ title — the M1-17 acceptance test in `scenes-options.test.ts`.
 | A user option | A field in `UserOptions` / `DEFAULT_USER_OPTIONS`, read defensively in `resolveUserOptions`, serialised in `serializeSave`; if it changes live, a new `UserOptionKind` code (appended) and a case in `connectOptionEvents`; if it affects the simulation it belongs in `GameConfig` instead |
 | An Options item | A widget in `OptionsScene` (slider, toggle or choice), its index in `OptionsItem`, a `userOption` push on `Changed`, the value in `close()`; keep within 31 items and the flow's 96 string slots (the constructor throws otherwise) |
 | A statistic | A counter in `SaveStats`, its default in `createDefaultSave`, `counter()` in `sanitizeSave`, a field in `serializeSave`, `save.count('…')` where it happens |
-| A hi-score mode | A config field that feeds `hiScoreModeKey` (co-op, practice — M2); keys must stay lower-case kebab ≤ 32 characters |
+| A hi-score mode | A config field that feeds `hiScoreModeKey` (practice, boss rush — M2; co-op shares the tables and tags its rows `2p` since M2-06); keys must stay lower-case kebab ≤ 32 characters |
 | Another storage (Electron files, M2-17) | Implement `PlatformStorage` (`get` / `set`, async); nothing in `core/save` changes. Keep failures as rejections or swallow them — `flush` handles both |
 | A selectable profile | A `keyboard` / `remote` profile whose menu table binds the six menu actions in the host's key space (`byCode` on the web, `byKeyCode` on the TV) appears in CONTROLS by itself |
 

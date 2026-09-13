@@ -360,7 +360,8 @@ world.powerups.detonateMegaCrash(0); // kills it; its Options come back as ItemK
   terrain) joined `core/shields`; the blue Direct-mode item is a different thing from this blue
   capsule (which stays a blue capsule in both modes); the colour items reuse the freed Options'
   drift, bounce and expiry ([direct-mode.md](direct-mode.md)).
-- **M2-06** — two-player co-op: both players' Options and shields are already per player, and the
-  hunter visits every active ship in slot order.
+- **M2-06** (done) — two-player co-op: both players' Options and shields are per player, and the
+  hunter visits every active ship in slot order; freed Options and the blue capsule are not scaled
+  by the co-op drop credit ([coop.md](coop.md)).
 - **M2-11 … M2-14** — the zones of M2 place Option Hunters and blue capsules in their stages.
 - **M3** — option recovery after death.

@@ -59,6 +59,8 @@
  * **Implements.**
  * - shmup_feat.md §5 Player ship
  * - shmup_feat.md §10 Death, respawn & checkpoints
+ * - shmup_feat.md §16 2-player simultaneous co-op — player 2's ship in slot 1, with its own lives
+ *   and shield (M2-06; joining, leaving and continuing are `core/world`'s)
  *
  * **Public API.** {@link PlayerShip}, {@link PlayerState}, {@link PLAYER_STATES},
  * {@link PlayerIntent}, {@link PlayerCamera}, {@link createPlayer}, {@link createPlayerIntent},
@@ -90,7 +92,7 @@ import {
 export const moduleInfo = defineModule({
   name: 'player',
   status: 'implemented',
-  specRefs: ['shmup_feat.md §5', 'shmup_feat.md §10'],
+  specRefs: ['shmup_feat.md §5', 'shmup_feat.md §10', 'shmup_feat.md §16'],
 });
 
 /** Life-cycle state of a ship (see the module docs' life cycle). */

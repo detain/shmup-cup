@@ -387,7 +387,9 @@ for (let t = 0; t < 600; t++) stepWorld(world, input);
 
 ## Next steps that build on this page
 
-- **M2-06** — two-player co-op: items already go to whoever grabs them, and the levels, family,
-  Arm and speed level are already per player.
+- **M2-06** (done) — two-player co-op: items go to whoever grabs them, and the levels, family,
+  Arm and speed level are per player; a mid-game continue resets a Direct player's levels; the
+  co-op HUD shows compact `SH` / `SB` / `AR` / `SP` pips per player; the co-op extra item is the
+  plan's next one ([coop.md](coop.md)).
 - **M2-09** — mid-bosses: the yellow item's heavy damage to them.
 - **M2-11 … M2-14** — the zones of M2 get their own `directItems` plans and carrier waves.

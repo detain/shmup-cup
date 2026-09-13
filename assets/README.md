@@ -15,8 +15,8 @@ to the pipeline code in `scripts/assets/` restart the dev server, which then reg
 
 ```text
 assets/source/sprites/**/*.sprite.json ─┐   pixel maps (palette + rows)
-scripts/assets/procedural/*.mjs ────────┼─► sprites ─► PNG overrides ─► + <name>@flash ─┐
-assets/source/fonts/*.font.json ────────┘                                              │
+scripts/assets/procedural/*.mjs ────────┼─► sprites ─► PNG overrides ─► + <name>@flash, <name>@p2 ─┐
+assets/source/fonts/*.font.json ────────┘                                                         │
                          MaxRects packer (1-px padding + edge extrusion, ≤ 2048²) ◄──────┘
                              └─► generated/atlas/main.png + main.json
 ```
@@ -40,6 +40,10 @@ the shield pod's wear states and Reduce's shimmer (`shields`, M2-04), star layer
   source issue naming the file.
 - **Hit flash** — `hitFlash: true` adds the sibling sprite `<name>@flash` (white
   silhouettes, same frames and anchor); the renderer swaps sprite ids on a hit (D30).
+- **Player 2's colours** (M2-06) — every player ship (`ships/*`) and the HUD's stock icon
+  (`hud/life`) also exist as `<name>@p2`: the same pixels with red and blue swapped (the KESTREL
+  turns red-orange and gold), drawn for player 2 in a two-player game. A real-art override of a
+  ship gets its variant derived automatically.
 - **Colour-blind bullet variants** (M2-02) — every enemy bullet, laser beam and bending laser
   segment also exists as `<name>@deuteranopia`, `@protanopia` and `@tritanopia` (the
   `palettes` generator: recoloured for that colour blindness and shape-coded — pink a solid

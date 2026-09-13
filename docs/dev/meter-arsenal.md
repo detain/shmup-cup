@@ -447,5 +447,6 @@ resolveArsenal(db, edited)[WeaponRole.Missile]?.name; // → 'PHOTON TORPEDO'
 - **M2-05** (done) — Direct mode's weapon families (the `weapons` module's other half: direct
   roles after the meter ones, `setArsenal` leaves them alone) and the ship select before this
   screen ([direct-mode.md](direct-mode.md)).
-- **M2-06** — two players share the session's arsenal; the P2 meter in the HUD.
+- **M2-06** (done) — both players fly the session's arsenal; each player's meter shows in its half
+  of the co-op HUD with two-letter labels after the arsenal (`METER_SHORT_LABELS`) ([coop.md](coop.md)).
 - **M2-16** — the loadout and the Auto Power-Up order saved with the game options.

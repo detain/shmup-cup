@@ -291,8 +291,12 @@ score.
 ### In the World (`core/world`)
 
 `world.continuesUsed` counts the continues of this game. **`canContinue(world)`** is `status ===
-'gameOver' && continuesUsed < config.continues`. **`continueWorld(world)`** (→ `false`, changing
-nothing, when it cannot):
+'gameOver' && continuesUsed < config.continues` — since M2-06 per player: at least one active
+player with `continuesLeft(world, p) > 0` (`config.continues` minus that player's own continue
+digit), which is the same in a one-player game. **`continueWorld(world, who)`** (→ `false`,
+changing nothing, when it cannot; `who` — M2-06 — is the mask of the players who continue, default
+all; a co-op player who did not continue stays out and may drop back in later with START —
+[coop.md](coop.md#leaving-per-player-continues-and-the-game-over)):
 
 1. `continuesUsed++`;
 2. every **active** ship: `lives = config.startingLives`; its power goes (`applyDeathPenalty
@@ -326,7 +330,7 @@ before:
 | Looks | Overlay (dim 0.35) over the frozen game: a red-edged panel, `CONTINUE?`, the seconds left (9 … 0, big, red) and `CREDITS` with the continues left |
 | Timing | `CONTINUE_COUNTDOWN_TICKS` (600 = 10 s); `seconds = floor((600 − ticks − 1) / 60)`; every change of the digit plays `MenuMove` (nine ticks) |
 | Music | fades out on entry (`Music Silence`, 30 ticks) |
-| Input | ignored for `CONTINUE_LOCK_TICKS` (30), so a mashed button decides nothing; then an OK **press** → `continueWorld`, `MenuSelect`, pop (the game runs on); Back → `MenuBack`, replace with the game-over screen |
+| Input | ignored for `CONTINUE_LOCK_TICKS` (30), so a mashed button decides nothing; then an OK **press** → `continueWorld` (in a co-op game — M2-06 — only the players whose OK was pressed, the panel showing `1P` / `2P` credits), `MenuSelect`, pop (the game runs on); Back → `MenuBack`, replace with the game-over screen |
 | Timeout | after 600 ticks → replace with the game-over screen (which records the run) |
 
 A held OK never continues (only a press edge counts). The run is recorded in the save only when
@@ -472,6 +476,9 @@ ship's.
 - **M2-05** (done) — the Direct-mode power term `directPowerRank` (max 12, like the meter), the
   orange 1UP through the same lives cap, per-mode hi-score tables and one more OK (the ship
   select) ([direct-mode.md](direct-mode.md)).
+- **M2-06** (done) — per-player continues (`continuesLeft`, a mid-game continue with START in
+  co-op, `continueWorld`'s player mask, the countdown's per-player OKs); the rank's power term is
+  still the strongest active ship's ([coop.md](coop.md)).
 - **M2-10** — the campaign sets `rankInputs.loop` / `stage` (8 per loop, 1 per stage).
 - **M2-15 / M3-01** — recording the scene flow (continues included) in replays.
 - **M2-16** — the chosen difficulty saved with the options; the Options screen's `deathPenalty` /

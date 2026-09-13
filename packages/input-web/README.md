@@ -13,7 +13,12 @@ per-tick `InputSnapshot`** (action bitmasks). The core never sees key codes
   (`neutral` / `lastWins`) resolve simultaneous directions.
 - **Gamepads** (standard mapping): D-pad 12–15 + left stick (radial deadzone 0.2, 8-way
   with hysteresis); A = Shot/Confirm, B = Sub/Back, X = PowerUp, Y = Special, LB/RB = Speed,
-  Select = Back, Start = Pause. Pad 0 → player 1, pad 1 → player 2.
+  Select = Back, Start = Pause.
+- **Player seats** (M2-06, two-player co-op): the host forwards the core's `Game.inputSeats` to
+  `input.setSeats(n)`. One seat — every device, every pad included, drives player 1. Two seats (a
+  co-op game) — the keyboard / remote drives player 1, and a pad's first A / START (or the right
+  half of the `keyboard-split` profile) takes player 2's seat (`padSeat(i)` → `PAD_SEAT_P2`) until
+  it disconnects; a seat change never makes a press.
 - `poll()` reuses one snapshot object (no per-tick allocation).
 
 ```ts
@@ -23,6 +28,7 @@ const input = createWebInput({ keyTarget: window, keyDevice: 'remote', getGamepa
 const { profiles } = loadInputProfiles(inputProfileFiles); // content/input/*.input-profiles.json
 input.setProfile(profiles.find((p) => p.id === 'tizen-remote-safe')!);
 input.setContext('menu'); // when Game.inputContext changes (the shell does this)
+input.setSeats(game.inputSeats); // when it changes: 2 during a co-op game (the shell does this)
 const snapshot = input.poll(); // once per simulation tick (via Platform.input)
 ```
 
@@ -31,7 +37,8 @@ const snapshot = input.poll(); // once per simulation tick (via Platform.input)
 The mapping is data: `content/input/remote.input-profiles.json` ships `tizen-remote-safe`
 (TV default: release debounce 2 ticks, diagonals `combine`, registers Play/Pause + Ch±),
 `tizen-remote-diagonal` (debounce 0), `keyboard-default` (web default),
-`keyboard-remote-emulation` (only the remote's keys, arrows `lastWins`) and
+`keyboard-remote-emulation` (only the remote's keys, arrows `lastWins`), `keyboard-split` (M2-06:
+two players on one keyboard — WASD + F / G vs arrows + K / L, Enter = player 2's START) and
 `gamepad-standard`. Each profile has a **`game`** and a **`menu`** table:
 
 | Action | `keyboard-default` game / menu | `tizen-remote-safe` game / menu | `gamepad-standard` game / menu |
@@ -58,7 +65,7 @@ table, e.g. Z = Shot + Confirm).
 | `gamepad` | implemented | Gamepad → actions (deadzone, hysteresis, buttons held across a table swap) |
 | `web-input` | implemented | Merges sources into the `InputSnapshot`; profiles + contexts; player seats — every device drives player 1, or in a co-op game a pad (or the split keyboard's right half) takes player 2's seat with its START (M2-06) |
 | `remote` | implemented | Release debounce, diagonal policy, SOCD — tuned from the input-probe results |
-| `rebind` | partial | Input profiles: validation, compiled `game`/`menu` tables, choice; the profiles an Options screen may offer (`selectableKeyProfiles`, `inputProfileChoices` — M1-17) |
+| `rebind` | partial | Input profiles: validation, compiled `game`/`menu` tables, choice; the profiles an Options screen may offer (`selectableKeyProfiles`, `inputProfileChoices` — M1-17); a keyboard profile's optional `split` half for two players on one keyboard (`splitTables`, `keyboard-split` — M2-06) |
 
 Profile choice (done by the apps in their platform factory and through the shell's
 `inputProfiles`): the web uses `?profile=<id>` › the saved choice › `keyboard-default`, with

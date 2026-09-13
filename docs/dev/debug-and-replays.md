@@ -10,7 +10,7 @@ Plan step **M1-19** closes the first milestone with the developer tooling of `sh
   Ch+, Ch+ on the TV, and `window.__shmupDebug` for tests and the remote inspector;
 - **replays** (`core/replay`): a session's input per tick, a header with everything needed to
   recreate its start, state hashes to detect a desync;
-- **golden replays** of zone A (`test/golden/` — fifteen since M2-05) checked by every `pnpm test`, re-blessed with
+- **golden replays** of zone A (`test/golden/` — seventeen since M2-06) checked by every `pnpm test`, re-blessed with
   `pnpm golden:update`;
 - **budgets**: `pnpm bench` (ms per tick and heap growth under maximum load) and the Tizen bundle
   check's size limits;
@@ -345,7 +345,7 @@ the replay contains them (a session recorded through `createReplayGame` has no k
 
 ## Golden replays (`test/golden/`)
 
-Fifteen committed zone A runs pin down what the simulation does (`test/golden/golden.ts`
+Seventeen committed zone A runs pin down what the simulation does (`test/golden/golden.ts`
 `GOLDEN_SCENARIOS`, recorded from the M1-18 playtest bots with the build id `'golden'`):
 
 | File | Who plays | Covers | Ends |
@@ -365,6 +365,8 @@ Fifteen committed zone A runs pin down what the simulation does (`test/golden/go
 | `zone-a-manta.replay.json` (M2-05) | 4-way bot, `shipId: 'manta'`, `powerUpMode: 'direct'` (seed 14) | the whole stage in Direct mode: planned colour items from the carriers, the Arm, a family switch at the octagon | `stageClear` after 11,584 ticks, 59,610 points, 4 lives |
 | `zone-a-manta-boss.replay.json` (M2-05) | 4-way bot, the MANTA, stage skip, full loadout (seed 15) | HALCYON BULWARK against level-8 discs and sub discs and the gold Hyper Arm | `stageClear` after 716 ticks, 37,000 points |
 | `zone-a-manta-deaths.replay.json` (M2-05) | `weaverBot()`, the MANTA, the Arcade penalty (seed 16) | Direct-mode deaths (the Arm, levels and family lost), checkpoint restarts, game over | `gameOver` after 1,131 ticks (deaths at 236 / 637 / 1,038) |
+| `zone-a-coop.replay.json` (M2-06) | two 4-way bots, `coop: true` — player 2's controller presses START at tick 300 (seed 17) | a co-op game: the drop-in join, two ships sharing the capsules, the co-op drop scaling | `stageClear` after 11,607 ticks; player 1 64,210 points, 4 lives; player 2 7,100 points, 3 lives |
+| `zone-a-coop-deaths.replay.json` (M2-06) | the 4-way bot and a weaving player 2 from its START at tick 120, `coop: true` (seed 18) | player 2's deaths, its mid-game continues with START (no stage restart) while player 1 plays on | `stageClear` after 12,399 ticks; player 1 61,770 points, 4 lives; player 2 8,002 points (two continues), 2 lives, seven deaths |
 
 The 4-way bot survives zone A even at Arcade, which is why the death scenario uses a careless
 weaving pilot. The files were re-blessed on purpose by M2-01 (`b31fac5`): rank growth changes
@@ -393,8 +395,15 @@ new content (sprite ids, enemy spec indices) shifts the rest — every outcome u
 `zone-a-manta` and `zone-a-manta-boss`; its test round added `zone-a-manta-deaths` (`0767e27`, the
 fourteen older files byte-identical), so both ships and both power-up models fly in golden runs
 ([direct-mode.md](direct-mode.md#determinism-hashing-and-golden-replays)).
+M2-06 re-blessed the fifteen again (`2ebb4a4`): the co-op drop credit (`PowerUpSystem.coopCredit`)
+joined the hash and the sprite table's new `@p2` names shift the sprite ids — every outcome
+unchanged — and added the two co-op scenarios (`GoldenScenario.p2`: player 2's bot and the tick of
+its first START, then START every other tick while it may join; `GoldenOutcome.p2`: player 2's
+score, lives, death ticks and continues; `fourWayBot(player)` flies either slot)
+([coop.md](coop.md#determinism-hashing-and-golden-replays)).
 Each file is an encoded replay plus the scenario's `description` and its
-`expected` outcome (status, ticks, player 1's score and lives, death ticks, boss killed).
+`expected` outcome (status, ticks, player 1's score and lives, death ticks, boss killed — and for
+a co-op run player 2's score, lives, death ticks and continues).
 
 - `golden.test.ts` (part of `pnpm test`, the `integration` project) plays every file into a fresh
   session: **every hash** and the outcome must match. A failure means the simulation changed.
@@ -545,9 +554,12 @@ testers in [../client/debug-tools.md](../client/debug-tools.md#the-m1-release-ch
 - **M2-05** (done) — the replay header records `shipId` and the accepted `powerUpMode: 'direct'`
   (no format change: a header without `shipId` decodes to `kestrel`); golden replays re-blessed,
   three MANTA scenarios added ([direct-mode.md](direct-mode.md)).
-- **M2-06 … M2-14** — every simulation change re-blesses the golden replays in the same commit;
+- **M2-06** (done) — the replay header records `coop` / `coopExtra` (no format change: a header
+  without them decodes to a one-player game); a co-op replay records both players' input — a join
+  or a mid-game continue is plain input; golden replays re-blessed, two co-op scenarios added
+  ([coop.md](coop.md)).
+- **M2-07 … M2-14** — every simulation change re-blesses the golden replays in the same commit;
   zones B–I add a golden replay each.
-- **M2-06** — replays record both players (the body already has a word per player).
 - **M2-15** — attract mode plays bundled replays (and the scene flow gets recorded).
 - **M2-17** — the device info (model, firmware) in the debug overlay.
 - **M2-18** — cross-engine determinism: golden replays in Chromium and Firefox.

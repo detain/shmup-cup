@@ -86,6 +86,26 @@ versions before 1.0 may change anything between minor releases. Development foll
   `DropKind.FreeOption` is 4 (`PowerUp` took 3), the `liveCounts` stride is `WEAPON_ROLE_SLOTS`
   (36), every flow that starts a game presses one more OK (the ship select); the golden replays
   were re-blessed (new hashed state and content — same outcomes) and three MANTA runs were added.
+- **Two players at once** (M2-06): the title menu is now **1 PLAYER** (what START was) /
+  **2 PLAYERS** / OPTIONS / EXIT. In a 2 PLAYERS game player 1 starts and a second player **joins
+  any time** with START on a gamepad (on the TV a USB or Bluetooth pad; in a browser also Enter on
+  the new **SPLIT KEYBOARD** control profile — WASD + F / G for player 1, arrows + K / L for player
+  2). Player 2 flies the same ship in red-orange and gold. Each player has their own ships, score,
+  extra ships, power-ups (items go to whoever touches them first), shields and **continues**: a
+  player who loses their last ship comes back with START while the other plays on, and the game
+  is over only when both are out — the CONTINUE? countdown then continues whoever presses OK.
+  While both play, enemies leave an extra capsule every second time, the bottom bar splits into two
+  halves, and GAME OVER / STAGE CLEAR show both scores. A short chirp plays when a player joins.
+- Behaviour change (M2-06): in the menus and in one-player games **every gamepad** controls player
+  1 (before, the second gamepad was always player 2); in a 2 PLAYERS game a gamepad becomes player
+  2's with its first START or A.
+- Behaviour change for tools and tests (M2-06): `GameConfig.coop` and `coopExtra` (replay headers
+  record them; older headers decode to a one-player game); `TitleItem` is `Start 0`, `TwoPlayers 1`,
+  `Options 2`, `Exit 3` (a flow walking to OPTIONS presses Down once more); `continueWorld(world,
+  who)` takes a player mask and continues are per player (`continuesLeft`); `HUD_STRING_COUNT` 22,
+  `HUD_COMMAND_COUNT` 96; input adapters may implement `setSeats` (`Game.inputSeats`); the golden
+  replays were re-blessed (the hashed co-op credit and the `@p2` sprite names — same outcomes) and
+  two co-op runs were added.
 
 ### Documentation
 
@@ -103,7 +123,10 @@ versions before 1.0 may change anything between minor releases. Development foll
   developer guide [`docs/dev/direct-mode.md`](docs/dev/direct-mode.md) and the tester guide's
   [Choosing your ship](docs/client/preview-build.md#choosing-your-ship),
   [The MANTA](docs/client/preview-build.md#the-manta-colour-items-weapons-and-the-arm) and
-  [The Direct range](docs/client/preview-build.md#the-direct-range-browser-only) (M2-05).
+  [The Direct range](docs/client/preview-build.md#the-direct-range-browser-only) (M2-05); the
+  developer guide [`docs/dev/coop.md`](docs/dev/coop.md), the tester guide's
+  [Two players](docs/client/preview-build.md#two-players) and the controls page's
+  [Two players](docs/client/controls.md#two-players) (M2-06).
 
 ## [0.1.0] — M1: playable vertical slice
 

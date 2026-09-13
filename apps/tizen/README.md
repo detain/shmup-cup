@@ -87,8 +87,10 @@ no laser, no Force Field — M1-11). To open `dist/index.html` from disk in desk
 `--allow-file-access-from-files` — otherwise Chrome treats the atlas page as cross-origin and
 WebGL refuses it (the TV serves the widget's files as same-origin). On the TV the app always
 runs the shell's default scene, the **scene flow** (M1-16), because a widget has no `?scene=`
-query string (and so no `?stage=` or `?loadout=` either): the title (logo, `PRESS OK`, START /
-OPTIONS / EXIT, the title theme), then START opens the difficulty menu (M2-01), OK on a
+query string (and so no `?stage=` or `?loadout=` either): the title (logo, `PRESS OK`, 1 PLAYER /
+2 PLAYERS / OPTIONS / EXIT, the title theme — 2 PLAYERS, M2-06, is a co-op game: the remote flies
+player 1 and a USB / Bluetooth gamepad joins as player 2 with START), then 1 PLAYER (or 2 PLAYERS)
+opens the difficulty menu (M2-01), OK on a
 difficulty opens the ship select (M2-05 — the KESTREL, or the Direct-mode MANTA, which starts at
 once and whose speed the remote's Ch− toggles), OK on the KESTREL opens the weapon select (M2-03 —
 remote arrows and OK only; its OPTION row since M2-04, whose FORMATION / ROTATE Options the

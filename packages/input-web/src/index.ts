@@ -9,6 +9,12 @@
  * `content/input/` (`rebind`) give every device separate `game` / `menu` binding tables, a
  * release debounce, a diagonal and an SOCD policy (`remote`).
  *
+ * Player seats (M2-06, two-player co-op — `web-input`): the host forwards the core's
+ * `Game.inputSeats` to {@link WebInput.setSeats}. With one seat every device drives player 1; with
+ * two (a co-op game) the keyboard / remote stays player 1's, and a pad's first A / START — or the
+ * right half of the split keyboard profile `keyboard-split` — takes player 2's seat
+ * ({@link PAD_SEAT_P2}, {@link WebInput.padSeat}).
+ *
  * @packageDocumentation
  */
 export {

@@ -118,7 +118,7 @@ debug overlay can profile.
 
 | # | Phase | Today | Filled by |
 |---|---|---|---|
-| 1 | `input` | copies each player's `PlayerInput` into its `PlayerIntent` (all slots, active or not) | — |
+| 1 | `input` | copies each player's `PlayerInput` into its `PlayerIntent` (all slots, active or not); in a co-op World a `JOIN_ACTIONS` press of a player who may join → `joinPlayer` (M2-06 — runs during hit-stop too) | M2-06 (done) |
 | 2 | `players` | `updatePlayer` for each ship, then the life cycle (`lifecycleSystem`, M1-12: respawn every ship whose dead time is over and that has a life left — the `arcade` penalty restarts the stage at its last checkpoint first; `gameOver` when every active ship is out), then `weapons.updatePlayers()` — recount live shots (stride `WEAPON_ROLE_SLOTS` since M2-05), count the autofire timers down, per ship the option trail (reset on a fly-in's first tick, record on movement input and fly-in ticks, hide while not `alive`; since M2-04 `OptionGroup.steer` then the type's placement — Snake, Formation, Rotate) and firing: every shooter (ship, then Options) fires its main weapon and missile when its timer is 0 and its cap has room (M1-10) — in Direct mode (M2-05) the main family's level volley and the sub family's on those timers | M1-11 (done: `powerups.updatePlayers()` between the two — the `PowerUp` press equips the highlighted meter slot, so a new weapon fires this tick; since M2-04 it then places each ship's shield pods; in Direct mode — M2-05 — the `Speed` press cycles the speed level instead), M1-12 (done: respawn, game over) |
 | 3 | `stage` | `powerups.beginTick()` (drops of kills made between ticks become capsules — M1-11), `scoring.beginTick()` (their kills and bonuses are credited — M1-12), `enemies.beginTick()` (reset the tick's outcomes), `bosses.update()` (the WARNING pulses and the boss's entry, the intro, the phase clock, the death sequence — M1-13); with a stage: `world.stage.tick()` — camera keys, ramps, pans, locks, then the due timeline events through the World's hooks (`spawn` / `formation` → `enemies.onStageEvent`, `warning` / `boss` → `bosses.startWarning` / `startBoss`); in free flight: moves the camera by its scroll velocity, recording the step; then `enemies.spawnPending()` (formation members due this tick); last, `updateWorldRank(world)` — the rank for this tick's scripts (M2-01). `scoring.beginTick()` also gives the extends its credits reached (M2-01) | M1-07, M1-08, M1-13, M2-01 (done) |
 | 4 | `scripts` | `enemies.runScripts()` — resumes the behaviour coroutines whose `wakeTick` has come (M1-08); they fire bullets and lasers through the `ScriptApi` primitives (M1-09) — since M2-02 also bending lasers and DSL patterns (`pattern.loop` steps its emitter in `world.patterns` to the pattern's next `wait`); then `bosses.runScript()` — the boss phase's coroutine (M1-13) | M1-13 (done) |
@@ -243,8 +243,12 @@ with `invulnTicks > 0` and god mode, and otherwise records `hitCause`, `hitTick`
 of the same tick turns the recorded hit into the death sequence (M1-12). A Force Field on the
 ship takes bullets, lasers and contact first (M1-11).
 
-Player 2's ship exists from the start but stays inactive (never updated, never drawn) until
-co-op joins it (M2-06); the input phase still reads its intent, so a joining device is known.
+Player 2's ship exists from the start but stays inactive (never updated, never drawn) until it
+joins a co-op game (M2-06): the input phase reads every slot's intent, and in a `config.coop`
+World a Confirm / Pause press (`JOIN_ACTIONS`) of a slot that `playerCanJoin` brings it in —
+`joinPlayer` flies it in blinking with the config's lives; a player out of lives with continues
+left comes back the same way. Player 2 is drawn with the ship's palette swap (`spriteP2Id`).
+See [coop.md](coop.md).
 
 ### Movement (`updatePlayer`, tick phase 2)
 
@@ -555,7 +559,7 @@ Inside the game, use `createGame(platform, overrides, db)` and `game.step()` /
 | `measureHeapGrowth needs node --expose-gc` | The project's `vitest.config.ts` lacks `execArgv: ['--expose-gc']` |
 | `SpatialGrid.query() before build()` | Every tick is `begin` → `insert`… → `build` → `query`…; an insert after `build` needs another `build` |
 | Grid misses a hit | It cannot: queries equal brute force. Check the layer masks and the box sizes (half sizes vs full sizes) instead |
-| Player 2 never moves | It is inactive until co-op (M2-06); set `world.players[1].active = true` and `spawnPlayer` it in tests |
+| Player 2 never moves | It is inactive until it joins a co-op game: use a `coop: true` config and press START on its slot (or call `joinPlayer(world, 1)`) — or, in a one-player test, set `world.players[1].active = true` and `spawnPlayer` it |
 | Enemies die in a test that never presses a button | The ship autofires by default (`autofire` and `remoteMode` true); pass `{ autofire: false, remoteMode: false }` to keep it quiet ([weapons-and-options.md](weapons-and-options.md#gotchas)) |
 
 ## Next steps that build on this page
@@ -593,3 +597,7 @@ Inside the game, use `createGame(platform, overrides, db)` and `game.step()` /
   also on a continue); `ENGINE_SPRITES` gained `shots/blast`; the weapon select flies a private
   World as its live preview — its own event queue and debug flags through `WorldOptions`
   ([meter-arsenal.md](meter-arsenal.md)).
+- **M2-06** (done) — two-player co-op: the join in phase 1 (`JOIN_ACTIONS`, `playerCanJoin`,
+  `joinPlayer`, also on frozen ticks), per-player continues (`continuesLeft`, `continueWorld`'s
+  player mask), the co-op drop credit hashed with the power-ups, player 2 drawn with `<ship>@p2`
+  ([coop.md](coop.md)).

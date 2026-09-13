@@ -123,17 +123,17 @@ Options screen's CONTROLS — disabled when omitted). `createGame` passes `GameO
 | Scene | Overlay / dim / context | Shows | Input (any player) | Leads to |
 |---|---|---|---|---|
 | `BootScene` | no / 0 / menu | `LOADING` (or a label) and a progress bar (`setBootProgress`) | — | title on the tick after `finishBoot()` (`replace`) |
-| `TitleScene` | no / 0 / menu | `ui/logo` (or `SHMUP CUP` as text), `PRESS OK` blinking (32-tick half period), then the menu START / OPTIONS / EXIT at y 118; `HI` and the session hi-score (the save's best at start) at the bottom | OK: prompt → menu (locked 2 ticks, focus START); START → the difficulty menu (M2-01; before, the game); OPTIONS → Options; EXIT → confirm; Back: confirm if the platform can exit, else menu → `PRESS OK` | difficulty, options, confirm (`push`) |
+| `TitleScene` | no / 0 / menu | `ui/logo` (or `SHMUP CUP` as text), `PRESS OK` blinking (32-tick half period), then the menu 1 PLAYER / 2 PLAYERS / OPTIONS / EXIT at y 118 (M2-06 — 1 PLAYER was START); `HI` and the session hi-score (the save's best at start) at the bottom | OK: prompt → menu (locked 2 ticks, focus 1 PLAYER); 1 PLAYER / 2 PLAYERS → `choosePlayers` (every difficulty's config `withCoop`, M2-06), then the difficulty menu (M2-01; before, the game); OPTIONS → Options; EXIT → confirm; Back: confirm if the platform can exit, else menu → `PRESS OK` | difficulty, options, confirm (`push`) |
 | `DifficultyScene` (M2-01) | yes / 0.5 / menu | Opaque panel, `DIFFICULTY`, EASY / NORMAL / HARD / ARCADE (focus on the preset chosen last, at first the host config's), the focused preset's `LIVES`, `CONTINUES` and `HI` | Up / Down move (wrap); OK chooses the preset; Back closes | ship select (`push`, M2-05; with a single ship in the content the weapon select — M2-03 — or, for a Direct-mode config, the game), title menu (`pop`) |
 | `ShipSelectScene` (M2-05) | yes / 0.5 / menu | Opaque 208×136 panel, `SHIP SELECT`, the content's ships by name (KESTREL, MANTA; focus on the ship chosen last, at first the host config's `shipId`), the focused ship's picture (frame 0 of its sprite), its model (`POWER METER` / `DIRECT ITEMS`) and three hints, `OK: CHOOSE` | Up / Down move (wrap); OK chooses the ship (`withShip` for every difficulty's config); Back closes | weapon select (`push`, a meter ship), game (`reset`, a Direct-mode ship — no loadout to choose), difficulty menu (`pop`) |
 | `WeaponSelectScene` (M2-03) | no / 0 / menu | Panel on the left: `WEAPON SELECT`, TYPE (`TYPE A` … `TYPE D`, `EDIT`), MISSILE / DOUBLE / LASER (the type's weapons, disabled unless EDIT), OPTION (M2-04: `TRAIL` / `SNAKE` / `FORMATION` / `ROTATE`), `? SLOT` (five shields since M2-04), `! SLOT`, AUTO, ORDER (one-letter summary), START, two hints; behind it, full screen, the live preview World (no HUD) | Up / Down move (disabled rows skipped); Left / Right / OK change a value; OK on ORDER → the editor; OK on START starts; Back closes. Opens focused on START (2-tick lock) | game (`reset` — its World on the difficulty's config with this loadout, `withArsenal`, and the chosen ship), order editor (`push`), ship select (`pop`; the difficulty menu when it was skipped) |
 | `AutoOrderScene` (M2-03) | yes / 0.35 / menu | Panel on the right: `AUTO ORDER`, rows `1` … `12` (a meter slot or `-`), DONE | Up / Down move; Left / Right / OK step a row; DONE or Back store the rows and close | weapon select (`pop`) |
-| `GameScene` | no / 0 / **game** | The World (view + HUD), the boss WARNING band in the UI list | Pause or Back → pause menu (that tick the World does not step) | pause, stage clear (90 World ticks after `stageClear`), game over (30 after `gameOver`) — or, with continues left (`canContinue`), the continue countdown (M2-01) — all `push` |
+| `GameScene` | no / 0 / **game** | The World (view + HUD), the boss WARNING band in the UI list | Pause or Back of any player → pause menu (that tick the World does not step) — except, in a co-op game (M2-06), the START / OK of a player who may drop in: the World joins it ([coop.md](coop.md#joining-coreworld)) | pause, stage clear (90 World ticks after `stageClear`), game over (30 after `gameOver`) — or, with continues left (`canContinue`), the continue countdown (M2-01) — all `push` |
 | `PauseScene` | yes / 0.5 / menu | Panel, `PAUSE`, RESUME / OPTIONS / RETRY STAGE / QUIT TO TITLE | Pause, Back, RESUME → resume; OPTIONS → Options (the game stays frozen); RETRY STAGE → `game.restart()` + pop (no confirmation); QUIT TO TITLE → confirm | game (`pop`), options, confirm (`push`) |
 | `OptionsScene` (M1-17) | yes / 0.5 / menu | Opaque panel, `OPTIONS`, MASTER / MUSIC / SFX sliders (0–10), CONTROLS (the input profile's label, a `Choice`), BULLETS (M2-02: the enemy bullet palette, a `Choice` of `BULLET_PALETTE_LABELS`), BACK | Up / Down move; Left / Right change a slider or step CONTROLS / BULLETS (OK steps them too), each change pushed live as a `UserOption` event; BACK or Back store the options in the save, flush it and close | title / pause menu (`pop`) |
-| `StageClearScene` | yes / 0.25 / menu | `STAGE CLEAR`, `SCORE`, `HI` for 240 ticks, then `TO BE CONTINUED` for 240 | OK skips a phase; entering it records the run in the save (M1's run ends here) | title (`reset`) |
-| `ContinueScene` (M2-01) | yes / 0.35 / menu | Red-edged panel, `CONTINUE?`, the seconds left (9 … 0, a tick sound each), `CREDITS` = continues left; the music fades out | OK / Back after 30 ticks: OK continues (`continueWorld` — checkpoint restart, fresh lives), Back gives up | game (`pop`), game over (`replace`, also after 600 ticks) |
-| `GameOverScene` | yes / 0.35 / menu | Red-edged panel, `GAME OVER`, the final score; `NEW HI-SCORE` below it for a new best | OK / Back after 30 ticks; entering it records the run in the save | title (`reset`) after OK / Back or 600 ticks |
+| `StageClearScene` | yes / 0.25 / menu | `STAGE CLEAR`, `SCORE` (`1P` / `2P` once player 2 joined a co-op game, M2-06), `HI` for 240 ticks, then `TO BE CONTINUED` for 240 | OK skips a phase; entering it records the run in the save (M1's run ends here) | title (`reset`) |
+| `ContinueScene` (M2-01) | yes / 0.35 / menu | Red-edged panel, `CONTINUE?`, the seconds left (9 … 0, a tick sound each), `CREDITS` = continues left (`1P` / `2P` credits once player 2 joined, M2-06); the music fades out | OK / Back after 30 ticks: OK continues (`continueWorld` — checkpoint restart, fresh lives; in a co-op game only the players whose OK was pressed, M2-06), Back gives up | game (`pop`), game over (`replace`, also after 600 ticks) |
+| `GameOverScene` | yes / 0.35 / menu | Red-edged panel, `GAME OVER`, the final score (both players', `1P` / `2P`, once player 2 joined a co-op game — M2-06); `NEW HI-SCORE` below it for a new best (player 1's place) | OK / Back after 30 ticks; entering it records the run in the save | title (`reset`) after OK / Back or 600 ticks |
 | `ConfirmDialog` | yes / 0.5 / menu | Opaque panel, `EXIT SHMUP CUP?` or `QUIT TO TITLE?`, YES / NO focused on **NO** | Left / Up → YES, Right / Down → NO; OK answers; Back = NO | `Exit`: pop, then `host.exit()`; `QuitToTitle`: title (`reset`); NO: pop |
 
 OPTIONS is **enabled** in both menus since M1-17 and pushes the `OptionsScene` over them (the
@@ -184,7 +184,10 @@ under the pause menu; the World is frozen.
 `flow.tick(input)` first merges every player's masks into `flow.menuInput` (`mergeMenuInput`:
 the OR of `held` / `pressed` / `released`, player 1's device), and every menu scene reads that —
 player 2's pad can drive the title and the pause menu. The game scene steps the World with the
-unmerged snapshot. Because a menu opens with a 2-tick activation lock and the adapters switch the
+unmerged snapshot. Since M2-06 the input adapter itself routes by **seats**: outside a co-op game
+(and its continue countdown) every device drives player 1 anyway (`SceneFlow.inputSeats` = 1 —
+[coop.md](coop.md#input-routing-shmupinput-web-shmupshell)); the game scene reads Pause / Back per
+player, and the co-op continue countdown reads whose OK it was. Because a menu opens with a 2-tick activation lock and the adapters switch the
 binding tables without phantom presses ([input-profiles.md](input-profiles.md)), an OK that started
 the game is never read as a PowerUp, and a held button crossing a context change keeps only what
 both tables give it.
@@ -317,7 +320,8 @@ an object literal written at the call site allocates on every redraw.
 
 `buildHud(world, list, sprites)` clears the list and draws: both bars (`HUD_COLORS.bar`, the
 lifted navy of the VA panels); `1P`, `HI`, `2P` with 8-digit numbers 16 px after each label (the
-`number` op — no strings), `------` in grey while player 2 is not playing; player 1's `lives − 1`
+`number` op — no strings), `------` in grey while player 2 is not playing (in a co-op game a
+blinking `PRESS START` while it may join — M2-06); player 1's `lives − 1`
 stock icons (`hud/life`; more than 5 show one icon and the count); the seven meter slots
 (`hud/meter-slot`: frame 1 for the highlighted slot on the "on" half of its 8-tick flash
 (`HUD_METER_FLASH_TICKS`), frame 2 for a slot `world.powerups.equippable(0)` excludes, frame 0
@@ -330,7 +334,7 @@ weapons (`SPREAD`, `TAIL`, `RIPPLE` for Type B, `2-WAY`, `VERTICAL`, `CYCLONE` f
 their symbols. Without the UI
 sprites (a content table that lacks them, `EMPTY_CONTENT_DB`) icons and slots become rectangles and
 the labels are left out. The worst case is 32 commands; the game scene's HUD list has
-`HUD_COMMAND_COUNT` (64) commands and `HUD_STRING_COUNT` (9) strings.
+`HUD_COMMAND_COUNT` (96 since M2-06) commands and `HUD_STRING_COUNT` (22 since M2-06) strings.
 
 **Direct mode (M2-05).** With `powerUpMode: 'direct'` the bottom bar shows the **tier pips**
 instead of the meter and the Force Field pips:
@@ -348,11 +352,20 @@ pip per speed, the current level and those below lit; then the family's `label` 
 `WAVE`). The labels use string slots 4–8 (`HUD_STRING_SLOTS.shot` … `family`); meter HUDs still
 use 0–3 only ([direct-mode.md](direct-mode.md#the-hud-coreui)).
 
+**Co-op (M2-06).** While **both** ships are active the bottom bar splits into two 192-px halves
+(player 1 left, player 2 right — its stock icon `hud/life@p2`): each with the stock icon and count,
+the seven meter slots as 20-px boxes with two-letter labels (`METER_SHORT_LABELS`) and the shield
+pips — or the compact Direct pips `SH` / `SB` / `AR` / `SP`; an out player's half shows
+`PRESS START` (it may continue) or `GAME OVER`. `hudPlayerState(world, slot)` decides what a player
+shows; the co-op strings (slots 9–21) are written only when drawn, so one-player lists with 4 string
+slots still work ([coop.md](coop.md#the-hud-coreui)).
+
 `buildHud` **clears the scores' `displayDirty` and the board's `hiScoreDirty`**. `Hud.update(world,
-list)` is the change detection around it: it rebuilds only when a dirty flag is set, player 1's
-lives, whether player 2 plays, the meter cursor, the equippable mask, the flash phase (only while a
-slot is highlighted), the shield's hits or — since M2-05 — player 1's shot / sub levels, family,
-speed level or Arm tier changed — or the World or list is another object
+list)` is the change detection around it: it rebuilds only when a dirty flag is set, a
+player's HUD state, whether it plays, its lives, meter cursor, equippable mask, shield hits / max /
+tier or — since M2-05 — its shot / sub levels, family or speed level changed (both players since
+M2-06, kept in two typed arrays), the flash phase (only while a slot is highlighted) or the
+`PRESS START` blink (only while a prompt shows) moved — or the World or list is another object
 (`invalidate()` forces it; the game scene calls it on every new World). `builds` counts rebuilds
 for tests and debug overlays. It runs once per **displayed frame** (from `updateFrame`), never per
 tick.
@@ -453,6 +466,7 @@ outside the World.
 | `packages/core/test/scenes/scenes-options.test.ts`, `scenes-options-edge.test.ts`, `scenes-options-alloc.test.ts` | The Options screen from the title and the pause menu, live `UserOption` events, saving on BACK / Back, hi-scores recorded on the end screens and `NEW HI-SCORE`, the hi-score persisting across game instances, allocation-free ticking (M1-17 — [saves-and-options.md](saves-and-options.md#tests)) |
 | `packages/core/test/scenes/scenes-weapon-select.test.ts`, `-edge`, `-alloc` | M2-03: the weapon select (flow, TYPE / EDIT / locked rows, `?` / `!` / AUTO / ORDER into the config, Back, RETRY keeping the loadout, the live preview, no weapons / no range) and the order editor; allocation-free with the preview flying — [meter-arsenal.md](meter-arsenal.md#tests) |
 | `packages/core/test/scenes/scenes-continue.test.ts`, `scenes-continue-edge.test.ts`, `scenes-continue-alloc.test.ts` | M2-01: the difficulty menu (order, wrap, sounds, Back, the World's preset, per-preset hi-scores) and the continue countdown (timing, lock, held OK, timeout, resume, the recorded score) — [difficulty-and-rank.md](difficulty-and-rank.md#tests) |
+| `packages/core/test/scenes/scenes-coop.test.ts`, `scenes-coop-edge.test.ts`, `packages/core/test/ui/ui-hud-coop*.test.ts` | M2-06: 2 PLAYERS vs 1 PLAYER, the seats per scene, joining without pausing, the per-player continue countdown, both scores and `2p` rows on the end screens; the co-op HUD (the prompt, both halves, `hudPlayerState`, allocation) — see [coop.md](coop.md#tests) |
 | `packages/core/test/game/game-scenes.test.ts`, `game-scenes-edge.test.ts` | `GameOptions.scenes`, `game.world` / `inputContext` across transitions, EXIT only with `platform.exit`, the dim cleared on resume, bare gameplay ignoring a game over |
 | `packages/shell/test/boot/`, `scene-view/` | The flow's boot (title theme prepared, `finishBoot`, `data-shmup-scene`), the scene view (backdrop drift per layer, open-space starfield frozen under pause, the followed camera before a frame and after quitting, `worldChanges`; since M2-03 the weapon select's preview view — `scene-view-preview.test.ts`) |
 | `apps/*/test/boot/boot-wiring.test.ts` | Title start and Back through the stack (Tizen: the exit confirmation, `exit` only after YES; a direct exit only from the boot error screen) |
@@ -506,6 +520,10 @@ outside the World.
 - **M2-05** (done) — the ship select between the difficulty menu and the weapon select (skipped
   with a single ship; a Direct-mode ship starts the game at once), per-mode session hi-scores, the
   HUD's tier pips, 192 UI string slots ([direct-mode.md](direct-mode.md#the-ship-select-corescenes)).
+- **M2-06** (done) — `1 PLAYER` / `2 PLAYERS` on the title (`TitleItem` Options 2, Exit 3), the
+  co-op game scene (a joinable player's START joins instead of pausing), the per-player continue
+  countdown, both scores on the end screens with `2p` hi-score rows, `inputSeats`, the co-op HUD
+  halves ([coop.md](coop.md)).
 - **M2-10 / M2-15** — the zone map, attract mode, mode select, name
   entry, the hi-score table; **M2-16** — rebinding and accessibility options (and the loadout
-  saved); the boss HP bar and the co-op P2 meter in the HUD (M2).
+  saved); the boss HP bar in the HUD (M2).

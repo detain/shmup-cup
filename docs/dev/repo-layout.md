@@ -73,7 +73,7 @@ shmup-cup/
 │   ├── audio-web/          @shmup/audio-web — Web Audio IAudio (interactive latency, buses, suspend/resume) + the game's audio
 │   │   └── src/ web-audio ✔ synth ✔ (deterministic PCM: ZzFX-style SFX, chip songs with sample-exact loops) sfx ✔ (voice manager) music ✔ (loop, fades, ducking) loader ✔ (sfx / music kinds, OGG path) engine ✔
 │   ├── input-web/          @shmup/input-web — keyboard/remote + Gamepad API → InputSnapshot
-│   │   └── src/ keymap ✔ keyboard ✔ gamepad ✔ web-input ✔ remote ✔ (debounce, diagonal/SOCD policies) rebind ✔ (partial: input profiles, game/menu tables, profile choice)
+│   │   └── src/ keymap ✔ keyboard ✔ gamepad ✔ web-input ✔ (player seats — M2-06) remote ✔ (debounce, diagonal/SOCD policies) rebind ✔ (partial: input profiles, game/menu tables, the split keyboard, profile choice)
 │   └── shell/              @shmup/shell — shared browser host of apps/web + apps/tizen (decision D34)
 │       └── src/ boot ✔ loader ✔ dispatch ✔ (+ connectFxEvents, connectAudioEvents, connectOptionEvents / applyAudioOptions — M1-17) error-screen ✔ frame-loop ✔ scene-view ✔ (default scene: the scene flow, M1-16) flight ✔ (?scene=flight: free flight) showcase ✔ fx-gallery ✔ (?scene=fx-gallery) debug ✔ (dev / test builds: F1–F8, the TV's Pause + Ch+ ×3 unlock, per-frame timing, window.__shmupDebug — M1-19)
 │
@@ -97,7 +97,7 @@ shmup-cup/
 │   ├── enemies/            ✔ enemy definitions: hp, score, hurtbox, behaviour script + tunables, mover, ground anchor, drop, child; boss sections (parts, weak points, phases); zone A roster + HALCYON BULWARK (M1-18), test-range roster, test boss, the three Option Hunters (option-hunters, M2-04), the Direct-mode carriers cube / lead-carrier (direct-carriers, M2-05) (+ README, example)
 │   ├── paths/              ✔ movement paths: spline control points, baked to arc-length tables at load; zone A's fan / orbit curves, test-range's (+ README, example)
 │   ├── weapons/            ✔ weapon tunables + preset loadouts: Type A (type-a) and Types B–D (types-b-d, M2-03) with their menu names; the MANTA's weapons and shot families (direct, M2-05) (+ README, example)
-│   ├── input/              ✔ input profiles (kind input-profiles, validated by input-web rebind): per-context key/button tables, remote debounce/diagonal/SOCD, Tizen keys to register
+│   ├── input/              ✔ input profiles (kind input-profiles, validated by input-web rebind): per-context key/button tables, remote debounce/diagonal/SOCD, Tizen keys to register; the split keyboard's `split` half for two players (M2-06)
 │   ├── audio/              ✔ SFX bank (kind sfx: synth parameters or a file per SFX_CUES cue) + music/ (kind music: original chip songs or OGG, bound to MUSIC_CUES), validated by audio-web loader (+ README, examples)
 │   ├── rules/              ✔ game-wide rule tables (kind rules, validated by core/data): the difficulty presets Easy / Normal / Hard / Arcade — rank base / growth, lives, extends, continues, death penalty, aim directions, bullet speed (M2-01); the scoring values — points per cancelled bullet (M2-02; + README, example)
 │   ├── patterns/           ✔ bullet patterns as data (kind patterns, compiled by core/data + core/patterns): BulletML-inspired actions and bullets, expressions over $rank / $rand / $loop / $i; the common library (M2-02; + README, example)
@@ -105,12 +105,12 @@ shmup-cup/
 ├── assets/
 │   ├── source/             editable sources — in git: sprites/**/*.sprite.json pixel maps (+ real-art PNG overrides), fonts/*.font.json, tilesets, audio
 │   └── generated/          pipeline output (atlas/main.png + main.json, cache) — ignored
-├── scripts/                repo-level Node scripts: clean.mjs, generate-assets.mjs (pnpm assets) + assets/ (PNG encoder, sprite sources, procedural generators, packer, font), gen-trig-tables.mjs, audio-preview.mjs (pnpm audio:preview → WAV files), golden-update.mjs (pnpm golden:update)
+├── scripts/                repo-level Node scripts: clean.mjs, generate-assets.mjs (pnpm assets) + assets/ (PNG encoder, sprite sources, procedural generators, packer, font, the `@flash` and — M2-06, coop.mjs — player 2's `@p2` palette-swap siblings), gen-trig-tables.mjs, audio-preview.mjs (pnpm audio:preview → WAV files), golden-update.mjs (pnpm golden:update)
 ├── types/                  ambient declarations for the Vite virtual modules (virtual:shmup-content, virtual:shmup-assets) and the build-info defines (build-info.d.ts: __SHMUP_DEV__, __SHMUP_BUILD__)
-├── test/                   cross-package integration tests (Vitest project "integration", part of `pnpm test`); playtest/ = headless playtest harness + 4-way bot + design rules (M1-18, same project); golden/ = golden zone A replays + their test (M1-19, same project); bench/ = `pnpm bench` stress benchmark (own Vitest config, not in `pnpm test`); e2e/ = Playwright browser smoke tests (`pnpm test:e2e`)
+├── test/                   cross-package integration tests (Vitest project "integration", part of `pnpm test`); playtest/ = headless playtest harness + 4-way bot + design rules (M1-18, same project); golden/ = golden zone A replays + their test (M1-19, same project; two co-op runs since M2-06); bench/ = `pnpm bench` stress benchmark (own Vitest config, not in `pnpm test`); e2e/ = Playwright browser smoke tests (`pnpm test:e2e`)
 ├── docs/
 │   ├── client/             player/tester docs
-│   └── dev/                contributor docs (this file, architecture, engine-foundations, content-data, asset-pipeline, rendering-and-shell, sim-world, stage-runtime, enemies-and-behaviors, fx-and-game-feel, scenes-and-ui, saves-and-options, zone-a-and-playtest, debug-and-replays, difficulty-and-rank, pattern-dsl, meter-arsenal, options-shields-hunter, direct-mode, api-reference, …)
+│   └── dev/                contributor docs (this file, architecture, engine-foundations, content-data, asset-pipeline, rendering-and-shell, sim-world, stage-runtime, enemies-and-behaviors, fx-and-game-feel, scenes-and-ui, saves-and-options, zone-a-and-playtest, debug-and-replays, difficulty-and-rank, pattern-dsl, meter-arsenal, options-shields-hunter, direct-mode, coop, api-reference, …)
 ├── tools/                  standalone tools, NOT workspace members (own package.json/lockfile, npm not pnpm)
 │   └── input-probe/        Tizen diagnostic .wgt: remote/gamepad/display measurements (see input-probe.md)
 └── shmup_feat.md  shmup_tech.md  input_probe_spec.md  shmup_plan.md  shmup_progress.md  CHANGELOG.md  README.md  LICENSE (MPL-2.0)
@@ -199,5 +199,6 @@ presets, rank growth, extends, continues), [pattern-dsl.md](pattern-dsl.md) (the
 DSL, bending lasers, cancel points, colour-blind palettes), [meter-arsenal.md](meter-arsenal.md)
 (weapon types, Weapon Edit, the weapon select), [options-shields-hunter.md](options-shields-hunter.md)
 (Option types, meter shields, the Option Hunter, the blue capsule), [direct-mode.md](direct-mode.md)
-(Direct mode, the MANTA, the ship select), [api-reference.md](api-reference.md) and
+(Direct mode, the MANTA, the ship select), [coop.md](coop.md) (two-player co-op, player seats, the
+split keyboard), [api-reference.md](api-reference.md) and
 [conventions.md](conventions.md).

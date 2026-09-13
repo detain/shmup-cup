@@ -200,7 +200,9 @@ the game ends **after** the last explosion and dead time (`DEATH_HIT_STOP_TICKS 
 + PLAYER_DEAD_TICKS` = 92 ticks after the fatal hit), not at the hit. In co-op the game goes on
 while one active ship has a life; an inactive slot never counts. `gameOver` is only set from
 `playing` or `bossWarning` — a death after the stage's `end` event (`stageClear`) never overrides
-it. The out ship stays `dead`, and the World **keeps simulating** (the camera scrolls, enemies fly
+it. Since M2-06 a co-op player who is out leaves play while the other plays on and may come back
+with a continue of its own (`core/world` `joinPlayer` — no stage restart); per-player continues
+are `continuesLeft` ([coop.md](coop.md#leaving-per-player-continues-and-the-game-over)). The out ship stays `dead`, and the World **keeps simulating** (the camera scrolls, enemies fly
 and fire): what follows a game over — continue, name entry, the title — is the scene flow's.
 Since M1-16 the flow's game scene keeps stepping the World for 30 ticks after `gameOver`, then
 opens the game-over screen over the frozen game (OK after half a second, or 10 s, returns to the
@@ -264,7 +266,8 @@ counters are.
 
 **The HUD.** Since M1-16 the core HUD (`core/ui` `buildHud` / `Hud.update`, drawn by the scene
 flow's game scene) reads the board: `1P` and player 1's score at x 8 / 24, `HI` and the hi-score at
-156 / 172, `2P` and player 2's score (or `------`) at 292 / 308 — eight digits each through the
+156 / 172, `2P` and player 2's score (or `------`; in a co-op game a blinking `PRESS START` while it
+may join — M2-06) at 292 / 308 — eight digits each through the
 `number` op — and `lives − 1` stock icons (at most 5; more show one icon and the count). It
 rebuilds only when a dirty flag, the lives or another HUD input changed, and clears
 `displayDirty` / `hiScoreDirty` itself ([scenes-and-ui.md](scenes-and-ui.md#the-hud)). The
@@ -456,4 +459,8 @@ The next `game.step()` runs that tick, and its phase 7 turns the recorded hit in
 - **M2-05** (done) — Direct mode: `applyDirectDeathPenalty` (the Arm, then levels / the family
   by preset), the orange 1UP item through the same `MAX_LIVES` cap and `ExtraLife` cue, a colour
   item worth 300 like a capsule ([direct-mode.md](direct-mode.md)).
+- **M2-06** (done) — co-op: each player's own score, extends and continues (`PlayerScore.continues`
+  is also its budget), a player out of lives leaving play while the other plays on, the game over
+  when every active player is out, kills / bonuses / pickups credited to the player who made them
+  ([coop.md](coop.md)).
 - **M3** — option recovery after a death, authentic slowdown.

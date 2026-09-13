@@ -5,8 +5,8 @@ work too, and every device drives both the game and the menus.
 
 > **Status:** these controls are built into the game as **control profiles** and are read
 > every frame. The current build ([preview-build.md](preview-build.md)) starts on the **title
-> screen**: OK (Enter / A) opens the menu, ▲ ▼ move the highlight, OK chooses — START opens the
-> **DIFFICULTY** box, where ▲ ▼ pick EASY / NORMAL / HARD / ARCADE and OK opens the **SHIP
+> screen**: OK (Enter / A) opens the menu, ▲ ▼ move the highlight, OK chooses — **1 PLAYER** (or
+> **2 PLAYERS**, [below](#two-players)) opens the **DIFFICULTY** box, where ▲ ▼ pick EASY / NORMAL / HARD / ARCADE and OK opens the **SHIP
 > SELECT** box, where ▲ ▼ pick the KESTREL or the MANTA — OK on the MANTA begins a game at once,
 > OK on the KESTREL opens the **WEAPON SELECT** screen — ▲ ▼ move between its lines, ◀ ▶ change the weapon type, the Option type, the
 > `?` / `!` power-ups and Auto Power-Up, and OK on START (highlighted when it opens) begins a game — the
@@ -22,7 +22,8 @@ work too, and every device drives both the game and the menus.
 > ([preview-build.md](preview-build.md#pausing-quitting-and-the-end-screens)). Losing a ship needs
 > no button: the next one flies in by itself; with continues left, OK on the **CONTINUE?**
 > countdown carries on from the last checkpoint (Back gives up), and after **GAME OVER** OK
-> returns to the title.
+> returns to the title. In a **2 PLAYERS** game a second player joins at any time with START on a
+> gamepad (or Enter on the SPLIT KEYBOARD in a browser) — [Two players](#two-players).
 > **OPTIONS** (on the title and in the pause menu) sets the game's volumes, lets you choose the
 > control profile (**CONTROLS**, [below](#control-profiles)) and the enemy bullets' colours
 > (**BULLETS** — standard or one of three colour-blind sets,
@@ -112,8 +113,10 @@ click the picture once.
 | Start / Options | Pause | Pause |
 | Back / Share (Select) | Pause | Back |
 
-The left stick has a dead zone of 20 % and snaps to 8 directions. The first controller
-(and the remote or keyboard) control player 1; the second controller controls player 2.
+The left stick has a dead zone of 20 % and snaps to 8 directions. In the menus and in 1 PLAYER
+games **every** gamepad controls player 1, whichever one it is (together with the remote or
+keyboard). In a **2 PLAYERS** game a gamepad becomes **player 2's** when you press START or A on it
+([Two players](#two-players)).
 
 ## Keyboard
 
@@ -136,6 +139,46 @@ is never lost. Pressing Left and Right (or Up and Down) together cancels out on 
 The game keeps the keys it uses from scrolling or navigating the page; browser shortcuts
 with Ctrl / Cmd (reload, developer tools) keep working. Switching to another window
 releases every key, so nothing stays stuck.
+
+## Two players
+
+In a **2 PLAYERS** game (the title's second entry) two people play at once; player 2 joins
+whenever they like ([preview-build.md](preview-build.md#two-players)). Which controller drives
+which ship:
+
+| Controller | 2 PLAYERS game | Menus and 1 PLAYER games |
+|---|---|---|
+| Samsung remote | Player 1 | Player 1 |
+| Keyboard (KEYBOARD, KEYBOARD AS REMOTE) | Player 1 | Player 1 |
+| Gamepad | Player 1 **until you press START or A** on it — that gamepad is then **player 2's** until it is unplugged; any other gamepad stays player 1's | Player 1 (every gamepad) |
+| SPLIT KEYBOARD | Left half player 1, right half player 2 | Both halves player 1 |
+
+**Joining and coming back.** Player 2 joins with **START** (a gamepad's START or A; Enter on the
+SPLIT KEYBOARD) while `PRESS START` blinks on the right of the top bar. A player who lost their
+last ship but still has continues comes back with their START while the other plays on: START on
+player 2's gamepad, and for player 1 **Back** or **Play/Pause** on the remote (P, Esc or Backspace
+on the keyboard; Esc or Q on the SPLIT KEYBOARD). While a player can join or come back, their
+START does that instead of pausing; otherwise any player's pause button pauses. On the
+**CONTINUE?** countdown each player presses OK on their own controller.
+
+On the **TV**, player 2 needs a gamepad connected to the monitor (USB or Bluetooth): the remote is
+always player 1's, and the SPLIT KEYBOARD is not offered there.
+
+### The split keyboard
+
+**SPLIT KEYBOARD** (in a browser: OPTIONS → CONTROLS, or add `?profile=keyboard-split` to the
+address) puts two players on one keyboard:
+
+| | Player 1 (left half) | Player 2 (right half) |
+|---|---|---|
+| Move | W A S D | Arrow keys |
+| PowerUp (game) / OK (menus) | F | K |
+| Special + Speed (game) / Back (menus) | G | L |
+| Pause | Esc or Q (Esc is Back in menus) | Enter or numpad Enter — player 2's **START**; OK in menus |
+
+There are no Shot or Sub keys: both ships fire on their own. In the menus and in 1 PLAYER games
+both halves move the same highlight / ship (player 1's); the right half becomes player 2's only in
+a 2 PLAYERS game. A gamepad cannot become player 2 while this profile is chosen.
 
 ## Developer keys (debug builds only)
 
@@ -171,12 +214,13 @@ of the code.
 | `tizen-remote-diagonal` | FAST 8-WAY | On the TV, when chosen: the same buttons, without the hiccup protection — for remotes that turn out not to need it (the ship then also stops the instant you let go) |
 | `keyboard-default` | KEYBOARD | In a browser and on the desktop (default) |
 | `keyboard-remote-emulation` | KEYBOARD AS REMOTE | In a browser, when chosen: for desktop testers who want to feel the remote's limits (below) |
+| `keyboard-split` | SPLIT KEYBOARD | In a browser, when chosen: two players on one keyboard ([below](#the-split-keyboard)) |
 | `gamepad-standard` | GAMEPAD | Every gamepad, on every device (always; not a choice) |
 
 **Choosing a profile.** Open **OPTIONS** (on the title, or in the pause menu during a game), move
 the highlight to **CONTROLS** and press ◀ / ▶ (or OK) to step through the profiles this device
 can use: on the TV **SAFE 4-WAY (DEFAULT)** and **FAST 8-WAY**, in a browser **KEYBOARD
-(DEFAULT)** and **KEYBOARD AS REMOTE**. `(DEFAULT)` marks the one the game starts with until you
+(DEFAULT)**, **KEYBOARD AS REMOTE** and **SPLIT KEYBOARD**. `(DEFAULT)` marks the one the game starts with until you
 choose another. The new profile works **at once** — you can try it right away in the menu — and
 the game remembers it when you leave the Options screen with **BACK** (or the Back button), also
 after the app is closed and opened again. Only profiles that can still move through the menus
@@ -218,7 +262,7 @@ profile chosen under CONTROLS — SAFE 4-WAY until you pick another.
 | A button does something in the game but nothing in a menu (or the other way round) | Expected — see the two tables above; for example C (PowerUp) has no menu function |
 | The game shows a start-up error screen mentioning `input-profiles.json` | The control profiles in this build are broken. Report the lines on the screen — see [preview-build.md](preview-build.md) |
 | Back closes the game on the TV instead of pausing | Not expected any more — Back pauses in the game and asks before quitting on the title. It closes the app at once only on the loading and error screens; otherwise please report it (and check the installed build is the latest) |
-| Nothing reacts for a moment after the app starts | The title screen needs OK first (`PRESS OK`), then START, then OK on a difficulty, then OK on a ship in the SHIP SELECT box, then (for the KESTREL) OK on START in the WEAPON SELECT screen; after that the ship flies in (about ⅔ of a second) and ignores the controls until it arrives — see [preview-build.md](preview-build.md#flying-the-ship) |
+| Nothing reacts for a moment after the app starts | The title screen needs OK first (`PRESS OK`), then 1 PLAYER (or 2 PLAYERS), then OK on a difficulty, then OK on a ship in the SHIP SELECT box, then (for the KESTREL) OK on START in the WEAPON SELECT screen; after that the ship flies in (about ⅔ of a second) and ignores the controls until it arrives — see [preview-build.md](preview-build.md#flying-the-ship) |
 | Holding Shot (Z / Space, A / Cross) or Sub (X, B / Circle) changes nothing | Expected: the gun already fires on its own (automatic fire is on by default), and the missiles fire on their own too once a power-up gave them to you (in a browser, `?loadout=full` gives them to you right away) |
 | PowerUp (OK, Enter, C, X) does nothing | Always expected with the **MANTA** (no power meter — its colour items work when you fly into them). With the KESTREL expected until you have collected a power capsule (no box of the power meter is highlighted) — the red saucers and completed formations of AZURE VERGE leave them. Also expected when you already have the most of the highlighted power-up. Such a press plays a short, low "no" buzz. See [preview-build.md](preview-build.md#power-ups) |
 | No sound in the browser | Press a key or click into the picture once — the sound starts then (a gamepad button does not count). See [preview-build.md](preview-build.md#sound-and-music) |
@@ -231,5 +275,10 @@ profile chosen under CONTROLS — SAFE 4-WAY until you pick another.
 | My FORMATION / ROTATE Options spread when I take a power-up | OK was held a quarter of a second or more — a longer hold spreads them. Press OK briefly |
 | F1–F8 (or 1–8 on the TV) do nothing | They are developer keys of debug builds only; on the TV the tools must be opened first with Play/Pause, Ch ▲, Ch ▲, Ch ▲ — see [Developer keys](#developer-keys-debug-builds-only) |
 | The game froze without a PAUSE box, or runs in slow motion (debug build) | A developer tool is on — F4 / 4 unfreezes, F6 / 6 cycles slow motion back to normal ([debug-tools.md](debug-tools.md#troubleshooting)) |
+| Player 2 cannot join | Only a **2 PLAYERS** game has a player 2, and only while `PRESS START` blinks in its place. Press START (or A) on a gamepad — press any of its buttons once first so the device notices the pad — or Enter with the SPLIT KEYBOARD. On the TV a gamepad is needed: the remote is always player 1's |
+| My gamepad flies player 1 in a 2 PLAYERS game | Expected until you press START or A on it; then it is player 2's. Only one gamepad can be player 2 (and none while the SPLIT KEYBOARD is chosen) |
+| Player 2's START (or Enter) opened the pause menu | Player 2 is already in the game — then START pauses, as for player 1. It only joins while `PRESS START` shows |
+| OK on the remote does not bring player 1 back in a 2 PLAYERS game | In the game OK is PowerUp; player 1's START is **Back** or **Play/Pause** on the remote (P, Esc or Backspace on a keyboard) |
+| With the SPLIT KEYBOARD both halves move the menu highlight | Expected: in the menus (and in 1 PLAYER games) both halves are player 1's; the right half is player 2's only in a 2 PLAYERS game |
 | A menu moves two steps for one press, or skips a press | Not expected — please report the device (and the remote model) |
 | ▼ in the WEAPON SELECT screen jumps over MISSILE, DOUBLE and LASER | Expected: those lines show the chosen type's weapons and can only be changed with TYPE set to **EDIT** — see [preview-build.md](preview-build.md#choosing-your-weapons) |

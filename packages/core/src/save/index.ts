@@ -612,8 +612,9 @@ export function insertHiScore(table: readonly HiScoreEntry[], entry: HiScoreEntr
  * M2-01 each difficulty preset has its own table (`meter-easy`, `meter-normal`, `meter-hard`,
  * `meter-arcade`) — the scene flow passes the World's config, whose preset was chosen under
  * START. Since M2-05 the ship select's Direct-mode ship (the MANTA) plays into its own tables
- * (`direct-easy` … `direct-arcade`): the power-up model is part of the key. Co-op and the other
- * modes of M2 add their own keys.
+ * (`direct-easy` … `direct-arcade`): the power-up model is part of the key. A co-op game (M2-06)
+ * plays into the same tables — both players' scores are recorded there, each row with the mode
+ * `2p` (`HiScoreEntry.mode`). Other modes of M2 (practice, boss rush …) may add their own keys.
  *
  * @example
  * ```ts

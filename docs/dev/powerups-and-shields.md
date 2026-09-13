@@ -192,6 +192,10 @@ carried) drifts with the view, bounces off the playfield's top and bottom, expir
   `drop: "powerup"` (`DropKind.PowerUp`) is the mode-agnostic power-up: a capsule here, and in
   Direct mode `capsule` and `powerup` drops both become the stage's next planned colour item
   (`dropDirect` — [direct-mode.md](direct-mode.md#drop-resolution-and-the-item-plan-corepowerups)).
+  Since M2-06, while **two ships are in play** (co-op), every capsule / power-up drop also adds
+  `config.coopExtra` (0.5) to the hashed `coopCredit`, and each whole credit drops one more item
+  `COOP_EXTRA_OFFSET` (12) px below — the blue capsule and freed Options are not scaled
+  ([coop.md](coop.md#co-op-drop-scaling-corepowerups)).
 - **Motion and culling (phase 5).** Capsules are world-space: they stay where they dropped and
   scroll away with the terrain. An item more than `ITEM_CULL_MARGIN` (32) px outside the camera
   view — or at a `NaN` position — is removed.
@@ -477,3 +481,6 @@ powerups.detonateMegaCrash(0); // debug: clear the screen now
 - **M2-05** (done) — Direct mode: the drop resolution per model, the stage's item plan, the six
   colour items, the Arm tiers, the Speed toggle and the Direct death penalty
   ([direct-mode.md](direct-mode.md)).
+- **M2-06** (done) — co-op: an item goes to whoever touches it first (player 1 on a tie) — its
+  meter, shield and score; the co-op drop scaling (`coopCredit`, `COOP_EXTRA_OFFSET`)
+  ([coop.md](coop.md)).

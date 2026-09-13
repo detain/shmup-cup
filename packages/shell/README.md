@@ -94,7 +94,9 @@ unvalidated.
 
 The input adapter must implement `ShellInput`: `PlatformInput` plus `clear()` (suspend),
 `setContext(ctx)` (the `game` / `menu` binding tables, decision D15 — called once at boot and
-before a frame's ticks whenever `game.inputContext` changed) and `destroy()`. `@shmup/input-web`'s
+before a frame's ticks whenever `game.inputContext` changed), optionally `setSeats(count)` (M2-06 —
+the player seats for two-player co-op, forwarded the same way from `game.inputSeats`; an adapter
+without it routes every device to player 1) and `destroy()`. `@shmup/input-web`'s
 `WebInput` is one; see [`docs/dev/input-profiles.md`](../../docs/dev/input-profiles.md).
 
 Dependency direction (plan §3.1): `apps/* → @shmup/shell → {render-pixi, audio-web, input-web}

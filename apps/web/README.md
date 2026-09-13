@@ -4,9 +4,11 @@ The **browser dev target** (Vite dev server with HMR) and the renderer that
 `apps/electron` loads. Wires `@shmup/core` + `@shmup/render-pixi` + `@shmup/audio-web` +
 `@shmup/input-web` together through the shared shell [`@shmup/shell`](../../packages/shell/README.md).
 It boots behind a loading bar (or a boot error screen listing every problem) into the game's
-**scene flow** (M1-16): the title (`PRESS OK`, then START / OPTIONS — no EXIT: a browser has no
-`platform.exit`, so Back on the title only backs out of the menu), the difficulty menu under
-START (EASY / NORMAL / HARD / ARCADE — M2-01), the ship select after it (the KESTREL or the
+**scene flow** (M1-16): the title (`PRESS OK`, then 1 PLAYER / 2 PLAYERS / OPTIONS — no EXIT: a
+browser has no `platform.exit`, so Back on the title only backs out of the menu; 2 PLAYERS is a
+co-op game that player 2 joins with a gamepad's START or, with the `keyboard-split` profile, Enter
+— M2-06, [`docs/dev/coop.md`](../../docs/dev/coop.md)), the difficulty menu under
+1 PLAYER / 2 PLAYERS (EASY / NORMAL / HARD / ARCADE — M2-01), the ship select after it (the KESTREL or the
 Direct-mode MANTA, which starts at once — M2-05, [`docs/dev/direct-mode.md`](../../docs/dev/direct-mode.md)),
 the weapon select for the KESTREL (weapon types A–D /
 EDIT, the `?` / `!` choices, Auto Power-Up and its order, a live preview — M2-03,
@@ -74,7 +76,8 @@ Since M1-17 **OPTIONS** opens the Options screen (MASTER / MUSIC / SFX volume sl
 and the shell keeps the options and the hi-scores in a versioned save in `localStorage`
 (`shmup-cup:save.v1`, read before the title; a corrupt one is copied to `shmup-cup:save.corrupt`
 and replaced by defaults). This app gives the shell its `inputProfiles`: CONTROLS offers
-`KEYBOARD (DEFAULT)` and `KEYBOARD AS REMOTE` (plus a `?profile=` override in use) and switches
+`KEYBOARD (DEFAULT)`, `KEYBOARD AS REMOTE` and `SPLIT KEYBOARD` (M2-06: two players on one
+keyboard — also `?profile=keyboard-split`) (plus a `?profile=` override in use) and switches
 at once (with `?debounce=` applied); guide:
 [`docs/dev/saves-and-options.md`](../../docs/dev/saves-and-options.md).
 

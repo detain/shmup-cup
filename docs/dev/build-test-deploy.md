@@ -213,7 +213,8 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   The long 64-enemy tests carry explicit timeouts (several seconds on a CI runner).
 - **Playtest** (plan §1.4, M1-18): `test/playtest/` plays shipped stages headless with a bot at
   the controls — `runStage(stageId, bot, flags)` records and reports the run, `replayStage`
-  replays it, `fourWayBot()` plays like a Samsung-remote player (never a diagonal). Part of the
+  replays it, `fourWayBot()` plays like a Samsung-remote player (never a diagonal; since M2-06
+  `fourWayBot(player)` flies either slot — the co-op golden replays fly player 2 with a second bot). Part of the
   `integration` project, so of `pnpm test`; the zone A run with god mode must kill HALCYON
   BULWARK and reach the stage clear in 3–6 minutes, the run without it only reports its deaths.
   `pnpm exec vitest run --project integration test/playtest --reporter=verbose` prints the runs —
@@ -275,7 +276,13 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   difficulty menu and the weapon select) picks the MANTA with the remote's arrows, which starts at
   once with the tier pips on the HUD, Ch− / ShiftLeft toggle its speed, and on
   `?stage=direct-range` the six colour items and the Arm are drawn from the atlas (M2-05 — every
-  spec that starts a game presses one more Enter / OK for the ship select's KESTREL). The gameplay specs
+  spec that starts a game presses one more Enter / OK for the ship select's KESTREL), and co-op:
+  with `?profile=keyboard-split` the title's 2 PLAYERS starts a game whose HUD blinks player 2's
+  `PRESS START`, Enter (player 2's START) drops player 2 in without pausing — the bottom bar
+  splits, player 2's arrows move it — and Esc still pauses; a fake `navigator.getGamepads()` pad
+  drives the menus with one seat, joins as player 2 with START, moves player 2 only, and pauses and
+  resumes without a phantom press (`coop.spec.ts`, `coop-gamepad.spec.ts`, M2-06 — every spec that
+  walked down to OPTIONS on the title presses ▼ once more). The gameplay specs
   open `?scene=flight` (bare gameplay, open space unless `?stage=` names a stage) since M1-16;
   specs comparing captures a set number of ticks apart freeze the sim and step exact ticks
   (`test/e2e/frame-advance.ts`, M1-19) instead of counting rAF frames. Since M1-19 the suite runs

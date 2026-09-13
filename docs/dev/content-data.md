@@ -119,7 +119,9 @@ const game = createGame(platform, { seed }, db);
    (`db.sprites`, `db.scripts`), independent of which file mentioned it first. The names in
    `options.extraSprites` join the sprite names first (M1-09: hosts pass `core/world`
    `ENGINE_SPRITES` — the enemy bullet kinds and the laser beam, which the engine draws although
-   no content file names them). Then (M2-02) the **patterns are compiled**:
+   no content file names them). Since M2-06 every ship's `<sprite>@p2` (player 2's palette swap,
+   `P2_SPRITE_SUFFIX`) joins them too and resolves into `PlayerShipSpec.spriteP2Id` (-1 without it)
+   right after the references — so `pnpm content:check` requires the atlas to have it. Then (M2-02) the **patterns are compiled**:
    `compilePatternBank` (`core/patterns` `dsl.ts`) turns every collected `patterns` file into
    one `PatternBank` (`db.patterns`) — expressions parsed and folded, `actionRef` / `bulletRef`
    inlined — *before* the references are resolved, so a `pattern` reference resolves against
@@ -439,3 +441,8 @@ indices — they are hashed, and the golden replays were re-blessed for it; M2-0
 `directItems` plan, the drop `powerup` (`ENEMY_DROPS` index 2 → code 3), and the content files
 `player/manta.player.json`, `weapons/direct.weapons.json`, `enemies/direct-carriers.enemies.json`
 and `stages/direct-range.stage.json` ([direct-mode.md](direct-mode.md#content-coredata)).
+
+M2-06 (done) — player 2's palette swap: the loader interns `<ship sprite>@p2` for every ship
+(`PlayerShipSpec.spriteP2Id`); the `content/input/` profiles gained the optional `split` half (owned
+by `@shmup/input-web`, not by `loadContent`) and `content/audio/main.sfx.json` the `PlayerJoin` cue
+([coop.md](coop.md)).

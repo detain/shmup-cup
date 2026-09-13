@@ -23,7 +23,7 @@ assets/source/sprites/**/*.sprite.json ─┐  pixel maps: palette + rows, one f
 scripts/assets/procedural/*.mjs ────────┤  seeded generators: explosions, bullets, terrain …
 assets/source/sprites/**/*.png (+ .json)┤  real-art overrides, replace frames by name
 assets/source/fonts/*.font.json ────────┘  bitmap fonts → one sprite, a frame per glyph
-   │  collectSprites()     validate, merge, add <name>@flash siblings, default anchors
+   │  collectSprites()     validate, merge, add <name>@flash and <name>@p2 siblings, default anchors
    ▼
 packRects()                 MaxRects, 1-px padding + 1-px edge extrusion, power-of-two pages ≤ 2048²
    │  buildAtlas()          place frames, encodePng() each page, build the manifest
@@ -180,6 +180,18 @@ turned white with its alpha kept. The renderer shows a hit by drawing
 `manifest.sprites[name].flash` with the same frame index — one sprite-id swap, still one
 atlas page and one batch. (The plan sketched one `<frame>@flash` per frame; a whole sprite
 is simpler for the renderer.) Today the seven enemies and the four boss parts flash.
+
+### Player 2's palette swap (M2-06)
+
+After the `@flash` siblings, `collectSprites` adds a `<name>@p2` sibling (`scripts/assets/coop.mjs`)
+for every sprite under `ships/` and for `hud/life`: the same anchor, frame sizes and animations,
+`hitFlash: false`, every pixel with its **red and blue channels swapped** (green and alpha kept) —
+the KESTREL's blue hull stripe turns red-orange, its cyan canopy gold, its orange engine glow blue.
+It is exact integer work, so the atlas stays byte-identical on every machine; a real-art PNG
+override of a ship gets its variant derived from the override's pixels. The core interns
+`<ship sprite>@p2` for every ship (`P2_SPRITE_SUFFIX`, `PlayerShipSpec.spriteP2Id`) and the HUD
+`hud/life@p2`, and `pnpm content:check` requires them; the oversize report skips generated
+siblings. The atlas page stays 512×512 ([coop.md](coop.md#player-2s-palette-swap)).
 
 ## The initial sprite set
 
@@ -387,6 +399,7 @@ pnpm exec vitest run --project integration test/scripts/assets   # pipeline unit
 | `test/scripts/assets/packer.test.ts`, `packer-edge.test.ts` | No overlaps (border + padding included), power-of-two pages ≤ 2048², determinism under reordering, spilling onto more pages, option validation, tie-breaks, a seeded fuzz |
 | `test/scripts/assets/sprite-source.test.ts`, `sprite-source-edge.test.ts` | Every validation path, Aseprite sidecars (hash/array, tags, pivot, trimmed, frameless), PNG overrides, loader error paths |
 | `test/scripts/assets/font.test.ts`, `font-edge.test.ts` | ASCII 32–126 + the specials, glyph-key rules, `loadFontSources()`, the pixel font's design rules |
+| `test/scripts/assets/coop.test.ts` | M2-06: the core's suffix, `wantsP2Variant` (ships and the stock icon only), the exact red / blue swap, `makeP2Sprite`, every ship's and the stock icon's variant in the atlas |
 | `test/scripts/assets/palettes-names.test.ts` | M2-02: the pipeline's palettes are exactly core's `BULLET_PALETTES` other than `standard`, in core order; every family has a body colour and a core mark in every palette; one `<standard sprite>@<palette>` per standard sprite and palette; two runs draw the same pixels |
 | `test/scripts/assets/procedural.test.ts`, `image.test.ts`, `rng.test.ts`, `manifest.test.ts` | Each generator's documented shapes (bullets outlined by the dark rim, the M2-02 core marks, bend segments and the point diamond, slope profiles, seamless star tiles …), raster helpers, the asset RNG's known-answer vectors, the manifest layout and self-consistency |
 | `test/scripts/assets/pipeline.test.ts`, `pipeline-edge.test.ts` | The whole atlas: frames pixel-exact, extrusion, the initial sprite set, byte-identical runs, every cache state (including a pipeline edit after the code was loaded), stale-page removal, oversized frames as issues, parallel runs |
@@ -451,4 +464,6 @@ the Types B–D shots (seven pixel maps and the new `weapons` generator's `shots
 (`ITEM_SPRITES`, `SHIELD_SPRITES`) ([options-shields-hunter.md](options-shields-hunter.md#content-and-assets));
 M2-05 (done) added the pixel maps `ships/manta` and `enemies/cube` and the `direct` generator
 (the MANTA's shots, the six colour items, `shields/arm`) — the items and the Arm joined
-`ENGINE_SPRITES`, and the page stays 512×512 ([direct-mode.md](direct-mode.md#assets)).
+`ENGINE_SPRITES`, and the page stays 512×512 ([direct-mode.md](direct-mode.md#assets)); M2-06
+(done) added `coop.mjs` — the `<name>@p2` palette swaps of every ship and `hud/life` (which joined
+`UI_SPRITES`) — and the page stays 512×512 ([coop.md](coop.md#player-2s-palette-swap)).

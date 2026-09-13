@@ -9,7 +9,7 @@ with the browser and Electron as additional targets.
 The [implementation plan](shmup_plan.md) is approved and under way. Progress per step is tracked in
 [`shmup_progress.md`](shmup_progress.md); milestone **M1 — playable vertical slice** is code-complete
 as version **0.1.0** ([`CHANGELOG.md`](CHANGELOG.md)) — its on-device release check on the monitors
-is next — and **M2 — complete v1.0** is under way (M2-01 … M2-05 done).
+is next — and **M2 — complete v1.0** is under way (M2-01 … M2-06 done).
 
 <!--
   Keep this section scannable: one entry per plan step, in plan order — a bold headline with the
@@ -419,6 +419,30 @@ is next — and **M2 — complete v1.0** is under way (M2-01 … M2-05 done).
     [what testers should check](docs/client/preview-build.md#choosing-your-ship) ·
     [the MANTA](docs/client/preview-build.md#the-manta-colour-items-weapons-and-the-arm)
 
+- **Two-player simultaneous co-op** (M2-06)
+  - Title menu **1 PLAYER** / **2 PLAYERS** / OPTIONS / EXIT (`GameConfig.coop`, `withCoop`,
+    recorded in replay headers). Player 2 **drops in** any time with START (`JOIN_ACTIONS`,
+    `joinPlayer` in tick phase 1 — also during hit-stop); both fly the session's ship and loadout,
+    player 2 in a generated **palette swap** (`<sprite>@p2`, red ↔ blue).
+  - Separate lives, scores, meters / items, shields and **per-player continues**: a player out of
+    lives leaves play while the other plays on and comes back with START (no stage restart); the
+    game is over only when both are out; the CONTINUE? countdown continues whoever presses OK.
+    Items go to whoever touches them first, aimed shots target the nearest living ship (P1 on a
+    tie), and `coopExtra` (0.5) drops extra items while two ships play.
+  - **Device routing by seats** (`WebInput.setSeats` ← `Game.inputSeats`): the remote / keyboard
+    is player 1's, a gamepad takes player 2's seat with its first A / START, and the new
+    **SPLIT KEYBOARD** profile (`keyboard-split`: WASD + F / G vs arrows + K / L, Enter = player 2's
+    START) puts two players on one keyboard in the browser. In menus every device drives player 1;
+    seat changes never make phantom presses.
+  - Co-op HUD: a blinking `PRESS START`, the bottom bar split into two compact halves,
+    `PRESS START` / `GAME OVER` for an out player; both scores on the end screens (`2p` hi-score
+    rows); a new join sound.
+  - Golden replays re-blessed (new hashed co-op credit and `@p2` sprite names — same outcomes); two
+    new co-op runs.
+  - Docs: [developer guide](docs/dev/coop.md) ·
+    [what testers should check](docs/client/preview-build.md#two-players) ·
+    [two-player controls](docs/client/controls.md#two-players)
+
 ### Hardware spike
 
 - The **input probe** — a diagnostic Tizen app that measures the Samsung remote, gamepads and
@@ -439,7 +463,7 @@ is next — and **M2 — complete v1.0** is under way (M2-01 … M2-05 done).
 | [`shmup_prompt.md`](shmup_prompt.md) | Paste-into-a-new-session prompt that drives execution of the plan (workflow: build → review/fix loop → tests → docs → CI gate per step, progress in `shmup_progress.md`) |
 | [`docs/`](docs/README.md) | Player and developer documentation (start with [`docs/dev/repo-layout.md`](docs/dev/repo-layout.md)) |
 
-Game docs — testers: [preview build (the title screen, menus, HUD and pause menu, the ship select (the KESTREL or the MANTA), the weapon select (weapon types A–D, Weapon Edit, the Option types, the `?` shields and `!` choices, Auto Power-Up), the Options screen — volumes, controls and the colour-blind bullet colours — and saved settings and high scores, the game-over and stage-clear screens, the difficulties, extra ships and continues, zone A — AZURE VERGE and its boss HALCYON BULWARK —, test stage, its enemies and their bullets, your weapons, power-ups, the MANTA's colour items, weapons and Arm, lives and score, the boss and its WARNING, the Option Hunter range, the Direct range, explosions, shake and flashes, sound and music)](docs/client/preview-build.md) ·
+Game docs — testers: [preview build (the title screen, menus, HUD and pause menu, the ship select (the KESTREL or the MANTA), the weapon select (weapon types A–D, Weapon Edit, the Option types, the `?` shields and `!` choices, Auto Power-Up), two players at once (2 PLAYERS, joining with START, the split keyboard), the Options screen — volumes, controls and the colour-blind bullet colours — and saved settings and high scores, the game-over and stage-clear screens, the difficulties, extra ships and continues, zone A — AZURE VERGE and its boss HALCYON BULWARK —, test stage, its enemies and their bullets, your weapons, power-ups, the MANTA's colour items, weapons and Arm, lives and score, the boss and its WARNING, the Option Hunter range, the Direct range, explosions, shake and flashes, sound and music)](docs/client/preview-build.md) ·
 [controls](docs/client/controls.md) · [monitor setup & install](docs/client/install-on-tv.md).
 Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/architecture.md) ·
 [engine foundations](docs/dev/engine-foundations.md) · [content data](docs/dev/content-data.md) ·
@@ -463,6 +487,7 @@ Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/ar
 [meter arsenal & weapon select](docs/dev/meter-arsenal.md) ·
 [Option types, shields & the Option Hunter](docs/dev/options-shields-hunter.md) ·
 [Direct mode, the MANTA & the ship select](docs/dev/direct-mode.md) ·
+[two-player co-op](docs/dev/coop.md) ·
 [input profiles](docs/dev/input-profiles.md) ·
 [API reference](docs/dev/api-reference.md) ·
 [build, test & deploy](docs/dev/build-test-deploy.md) · [conventions](docs/dev/conventions.md).
@@ -489,7 +514,7 @@ versions (`devEngines.runtime`).
 ```sh
 pnpm -v               # must print 12.x — an older global pnpm fails with ERR_PNPM_BROKEN_LOCKFILE
 pnpm install          # set ELECTRON_SKIP_BINARY_DOWNLOAD=1 to skip the Electron binary
-pnpm dev              # browser dev app → http://localhost:5173 (F1–F8: debug tools): the title (Enter five times — PRESS OK, START, NORMAL, KESTREL in the ship select, START in the weapon select — starts zone A, AZURE VERGE; Down + Enter in the ship select flies the MANTA instead — its colour items power up on contact, Left Shift toggles its speed; in the weapon select ↑ / ←→ choose the weapon type, EDIT, the Option type, the ? shield, the ! choice and Auto Power-Up — V or a held Enter spreads FORMATION / ROTATE Options in the game; ?skip=boss starts right before its boss HALCYON BULWARK; Enter, Down, Enter opens OPTIONS — volumes, controls and bullet colours, saved in localStorage; Esc pauses), then fly the KESTREL (arrows/WASD, gamepad; the first key press turns the sound on; Enter/C takes a power-up; ?scene=flight skips the title; ?stage=test-range scrolls the test stage, its enemies, their bullets and the power capsules; ?stage=test-boss plays the WARNING and the test boss; ?stage=hunter-range&loadout=full sends in the Option Hunters; ?stage=direct-range (then the MANTA) sends pincer waves of item carriers; ?profile=keyboard-remote-emulation feels like the TV remote; ?scene=showcase / ?scene=calibration / ?scene=fx-gallery)
+pnpm dev              # browser dev app → http://localhost:5173 (F1–F8: debug tools): the title (Enter five times — PRESS OK, 1 PLAYER, NORMAL, KESTREL in the ship select, START in the weapon select — starts zone A, AZURE VERGE; Down on the title picks 2 PLAYERS — a gamepad's START (or Enter with ?profile=keyboard-split) drops player 2 in; Down + Enter in the ship select flies the MANTA instead — its colour items power up on contact, Left Shift toggles its speed; in the weapon select ↑ / ←→ choose the weapon type, EDIT, the Option type, the ? shield, the ! choice and Auto Power-Up — V or a held Enter spreads FORMATION / ROTATE Options in the game; ?skip=boss starts right before its boss HALCYON BULWARK; Enter, Down, Down, Enter opens OPTIONS — volumes, controls and bullet colours, saved in localStorage; Esc pauses), then fly the KESTREL (arrows/WASD, gamepad; the first key press turns the sound on; Enter/C takes a power-up; ?scene=flight skips the title; ?stage=test-range scrolls the test stage, its enemies, their bullets and the power capsules; ?stage=test-boss plays the WARNING and the test boss; ?stage=hunter-range&loadout=full sends in the Option Hunters; ?stage=direct-range (then the MANTA) sends pincer waves of item carriers; ?profile=keyboard-remote-emulation feels like the TV remote; ?profile=keyboard-split puts two players on one keyboard; ?scene=showcase / ?scene=calibration / ?scene=fx-gallery)
 pnpm lint             # ESLint (typescript-eslint + compat: chrome >= 69)
 pnpm typecheck        # tsc --noEmit everywhere
 pnpm test             # Vitest per package + repo integration tests
@@ -580,11 +605,11 @@ hitch in the overlay's frame graph, gamepad and keyboard — checklist in
 [`docs/client/debug-tools.md`](docs/client/debug-tools.md#the-m1-release-check). The M1 release
 is tagged `v0.1.0` on the final commit of step M1-19.
 
-Code: plan step **M2-06** (two-player simultaneous co-op) — M2-01 (rank, difficulty presets,
+Code: plan step **M2-07** (advanced stage systems & Tiled import) — M2-01 (rank, difficulty presets,
 extends & continues) opened milestone **M2 — complete v1.0**, M2-02 (pattern DSL, bending lasers,
 bullet cancel & readability), M2-03 (meter arsenal: loadouts B–D, Weapon Edit, parking & weapon
-select), M2-04 (Option & shield variants + Option Hunter) and M2-05 (Direct mode & ship select)
-followed; every simulation change re-blesses the golden replays in the same
+select), M2-04 (Option & shield variants + Option Hunter), M2-05 (Direct mode & ship select) and
+M2-06 (two-player simultaneous co-op) followed; every simulation change re-blesses the golden replays in the same
 commit. The per-step status board is [`shmup_progress.md`](shmup_progress.md).
 
 Also on hardware (unchanged, and still the gate for the remote control scheme): package and
@@ -601,8 +626,9 @@ relaunch and the FAST 8-WAY profile, since M1-18 **playing zone A through with t
 since M2-01 the DIFFICULTY box, the extra-ship jingle and the CONTINUE? countdown, since
 M2-02 the colour-blind **BULLETS** option and the points of cancelled bullets, since M2-03 the
 **WEAPON SELECT** screen and the new weapon types, since M2-04 the Option types (spread with
-the remote's Ch+) and the pod shields and REDUCE, and since M2-05 the SHIP SELECT box and the
-MANTA — its colour items, the Arm and the speed toggle on the remote's Ch− (checklist in
+the remote's Ch+) and the pod shields and REDUCE, since M2-05 the SHIP SELECT box and the
+MANTA — its colour items, the Arm and the speed toggle on the remote's Ch−, and since M2-06
+**two players** — the remote plus a USB / Bluetooth gamepad joining with START (checklist in
 [`docs/client/preview-build.md`](docs/client/preview-build.md#on-the-samsung-smart-monitor--tv)).
 
 Desktop prerequisites: Git, Node 24 (22.12+), Tizen Studio **or** VS Code + Samsung Tizen extension (with a Samsung

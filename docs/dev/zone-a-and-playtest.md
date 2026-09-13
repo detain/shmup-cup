@@ -283,6 +283,8 @@ mask }` at player 1's controls.
 
 `four-way-bot.ts` has the Samsung remote's limits (`shmup_feat.md` §4 rule 2): it **never holds two
 directions**, relies on the forced autofire and keeps its ship at playfield x ≈ `BOT_X` (64).
+`fourWayBot(player = 0)` flies the given player slot (M2-06: the co-op golden replays fly player 2
+with a second bot; `scanLanes(world, scan, player)` scans from that ship).
 
 - **Lane scan** (`scanLanes`, into a reused `LaneScan`): `LANES` = 12 lanes of `LANE_HEIGHT` 16 px;
   `SLOTS` = 20 time slots of `SLOT_TICKS` 2 over `BULLET_HORIZON` 40 ticks. Per lane two bit masks
@@ -401,5 +403,10 @@ in the right half of the playfield, with no console errors or atlas warnings.
   the golden replays were re-blessed (outcomes unchanged), and three runs fly zone A with the
   MANTA (`zone-a-manta`, `-manta-boss`, `-manta-deaths`); the ship select plays before every zone A
   game (one more OK) ([direct-mode.md](direct-mode.md)).
+- **M2-06** (done) — **zone A's content is unchanged**; two co-op runs fly it with two ships
+  (`zone-a-coop`: two 4-way bots, `zone-a-coop-deaths`: a weaving player 2 that dies and continues
+  while player 1 plays on), and `fourWayBot(player)` flies either slot; the co-op drop scaling
+  adds capsules while two ships play, so the capsule budget per checkpoint only grows
+  ([coop.md](coop.md)).
 - **M2-10 / M2-11 … M2-14** — the zone map picks stages (replacing `DEFAULT_STAGE_ID`); the other
   zones, each with a playtest run and its own design-rule checks.

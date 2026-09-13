@@ -3,8 +3,10 @@
 How a key, a remote button or a gamepad button becomes an action the simulation sees, and
 why the Samsung remote's mapping and quirks are **data**. Filled in by plan step **M1-05**.
 Since **M1-17** the Options screen's CONTROLS lets the player pick a key / remote profile, and the
-choice is kept in the save ([the saved choice](#the-saved-choice)); M2-16 adds a rebinding UI on
-top of the same profiles — nothing on this page changes shape for it.
+choice is kept in the save ([the saved choice](#the-saved-choice)); **M2-06** added player seats
+(two-player co-op: which device drives which player) and the split keyboard
+([player seats and the split keyboard](#player-seats-and-the-split-keyboard-m2-06)); M2-16 adds a
+rebinding UI on top of the same profiles — nothing on this page changes shape for it.
 
 This page is the *how and why*. Exact signatures are in
 [api-reference.md](api-reference.md#shmupinput-web); the TSDoc in
@@ -48,11 +50,14 @@ player held X would have pressed Back. Profiles fix both: every tunable lives in
         │
         ▼  every frame (shell/boot onFrame), before the ticks
  game.inputContext changed? → input.setContext('game' | 'menu')   swap tables, held keys keep common actions
+ game.inputSeats changed?   → input.setSeats(1 | 2)            player seats (M2-06); held keys make no press
         │
         ▼  every tick: WebInput.poll()
  keyboard.advance()               age the release debounce          (remote.createReleaseDebouncer)
  keyboard.held                    tracked keys → mask → SOCD → diagonal policy (remote.resolveDirections)
+ splitKeyboard.held               the split profile's second half (M2-06; nothing bound without one)
  readGamepadActions(pad, …)       buttons (stale ones masked) + stick, per-pad press order → same policies
+ route by seats                   1: every device → player 1; 2: keys → P1, split half / seated pad → P2
  commitPlayerInput(p1 / p2, …)    core/input: held, pressed, released, device
 ```
 
@@ -69,10 +74,10 @@ headless game (`test/integration/input-profiles.test.ts`).
 | `keyboard` | implemented | Key events → 32 fixed key slots with the debounce; `setBindings` (table swap without phantom presses), `setTuning`, `advance` |
 | `gamepad` | implemented | One pad → mask; `pressedButtons` / `staleButtons` for table swaps |
 | `keymap` | implemented | Built-in fallback tables, `TIZEN_KEY_CODES`, `findKeyActions` (`-1` unbound vs `0` known) |
-| `web-input` | partial | The `PlatformInput`: `setProfile`, `setContext`, `context`, `keyProfile`, `gamepadProfile`, `poll` |
+| `web-input` | implemented (M2-06) | The `PlatformInput`: `setProfile`, `setContext`, `context`, `keyProfile`, `gamepadProfile`, `poll`; the player seats — `seats`, `setSeats`, `padSeat` (`PAD_SEAT_NONE` / `PAD_SEAT_P2`) — and the split keyboard's second source `splitKeyboard` (M2-06) |
 
 Around it: core `input` owns `InputContext` / `INPUT_CONTEXTS`, core `game` the
-`Game.inputContext` getter, `@shmup/shell` the per-frame context forwarding and
+`Game.inputContext` and (M2-06) `Game.inputSeats` getters, `@shmup/shell` the per-frame context and seat forwarding and
 `DEFAULT_CONTENT_OWNERS`, the apps the profile choice and (Tizen) key registration.
 
 ## The shipped profiles
@@ -83,6 +88,7 @@ Around it: core `input` owns `InputContext` / `INPUT_CONTEXTS`, core `game` the
 | `tizen-remote-diagonal` | `FAST 8-WAY` | `remote` | TV, picked in CONTROLS (or after a positive probe result) | 0 | `combine` / `neutral` | same |
 | `keyboard-default` | `KEYBOARD` | `keyboard` | web default | 0 | `combine` / `neutral` | — |
 | `keyboard-remote-emulation` | `KEYBOARD AS REMOTE` | `remote` | web, picked in CONTROLS or `?profile=keyboard-remote-emulation` | 2 | `lastWins` / `lastWins` | — |
+| `keyboard-split` | `SPLIT KEYBOARD` | `keyboard` | web, picked in CONTROLS or `?profile=keyboard-split` — two players on one keyboard (M2-06; its `split` half is player 2's) | 0 | `combine` / `neutral` | — |
 | `gamepad-standard` | `GAMEPAD` | `gamepad` | every pad, both apps (never offered in CONTROLS) | 0 (must be) | `combine` / `neutral` | — |
 
 M1-17 renamed the labels for the Options screen (they were `TV REMOTE`, `TV REMOTE 8-WAY`,
@@ -99,6 +105,11 @@ M1-17 renamed the labels for the Options screen (they were `TV REMOTE`, `TV REMO
 | Confirm | — / Enter, Space, Z | — / OK | — / A |
 | Back | — / X, Backspace, Esc | — / Back (10009) | — / B, Select |
 | Pause | P, Esc, Backspace / P | Back, Play/Pause (10252) / Play/Pause | Start, Select / Start |
+
+`keyboard-split` (M2-06): player 1's half (`context`) — WASD move, F = PowerUp / Confirm, G =
+Special + Speed / Back, Esc = Pause / Back, Q = Pause / Pause; player 2's half (`split`) — the
+arrows, K = PowerUp / Confirm, L = Special + Speed / Back, Enter and numpad Enter = Pause (player
+2's START, its join press) / Confirm. No Shot or Sub keys: both ships autofire.
 
 Remote profiles bind by **`keyCode` only**: the TV delivers most remote keys with an empty
 `code`, and binding by key code also lets a desktop keyboard's arrows and Enter reach a
@@ -229,6 +240,39 @@ Since M1-17 the choice lives in the **save document** (`core/save`, `options.inp
   A pad that disappears — `null`, `connected: false` or missing from a shorter
   `getGamepads()` list — gives player 2's seat up on that same poll.
 
+## Player seats and the split keyboard (M2-06)
+
+Two-player co-op needs to know **which device drives which player**. The core tells the host how
+many **seats** to route — `Game.inputSeats`: `2` while a co-op game (or its continue countdown) is
+on top, else `1` — and `bootShell` forwards a change to `WebInput.setSeats()` before the frame's
+ticks, exactly like the binding context.
+
+| Seats | Keyboard / remote | Split keyboard's second half | Pads |
+|---|---|---|---|
+| 1 | player 1 | player 1 | every pad → player 1 (any slot works solo — before M2-06 pad slot 1 was always player 2) |
+| 2 | player 1 | player 2 | unseated pads drive player 1 **until their first join press** — a button the gamepad profile's **menu** table binds to Confirm or Pause (`joinButtonsOf`: A, START) — which seats the pad (`padSeat(i)` = `PAD_SEAT_P2`) and forwards a **latched Confirm** on player 2's slot (the World's join, `core/world` `JOIN_ACTIONS`); the seated pad drives player 2 only; other pads player 1 |
+
+- A seat lasts across games and seat changes until the pad goes away: `null`, `connected:
+  false` or missing from a shorter `getGamepads()` list gives it up on that poll, before the seat
+  check, so another pad can take it at once. While a split profile is active no pad is seated —
+  the right half owns player 2's seat.
+- **No phantom presses across a seat change** (above, [binding
+  contexts](#binding-contexts-game--menu-decision-d15)): `setSeats` remembers what the moving
+  sources held (`padLast`, the split half) and the next poll clears those actions' press edges on
+  their new player.
+- **The split keyboard** is a second `KeyboardSource` on the same event target
+  (`WebInput.splitKeyboard`), bound to the key profile's `splitTables[context]` (an empty table
+  without a split). `setContext` swaps both halves; `clear()` / `destroy()` cover both.
+- **Validation** (`checkSplit`, after the schema): `split` only on `keyboard` profiles, no
+  `buttons`, each half binds `REQUIRED_CONTEXT_ACTIONS`, and no `byCode` / `byKeyCode` entry of a
+  context appears in both halves (one key must never drive both players). The compiled halves are
+  `InputProfile.splitTables` (`null` without a split).
+- The TV never offers `keyboard-split` (its key space is `keyCode`; the profile binds `code`), so
+  on the TV co-op is the remote plus a gamepad.
+
+The whole co-op step — the World's join, per-player continues, the HUD — is in
+[coop.md](coop.md).
+
 ## Release debounce (`remote.createReleaseDebouncer`)
 
 Feat §4 rule 3: some TV remotes send fake `keyup`/`keydown` pairs while a key is held. With a
@@ -358,7 +402,8 @@ measures ~30 KB of test noise).
 | Add a device kind | Extend `InputProfileDevice` / `INPUT_PROFILE_DEVICES`, decide its rules in `checkProfile`, and route it in `WebInput.setProfile` |
 | Offer a new profile in CONTROLS | Nothing to do if its menu table binds the six menu actions in the host's key space (`byCode` for the web, `byKeyCode` for the TV) — `selectableKeyProfiles` picks it up; otherwise it stays reachable only through `?profile=` on the web |
 | Build the rebinding UI (M2-16) | Planned in `rebind`: capture the next input, conflict detection, reset to defaults, a per-device choice. Persist in the save document (save v2 — [saves-and-options.md](saves-and-options.md#extending-it)); apply with `WebInput.setProfile` (held keys are handled) |
-| Another host | Implement `ShellInput.setContext` in its adapter; pass a registry's `load` as the `input-profiles` owner if the host needs the profiles, otherwise the shell's default owner still validates them |
+| Another split preset | A `keyboard` profile with a `split` section (same format as `context`; no key in both halves; the required actions in each half) — `checkSplit` validates it, `WebInput` routes it by seats ([coop.md](coop.md#input-routing-shmupinput-web-shmupshell)) |
+| Another host | Implement `ShellInput.setContext` (and, for co-op, the optional `setSeats`) in its adapter; pass a registry's `load` as the `input-profiles` owner if the host needs the profiles, otherwise the shell's default owner still validates them |
 
 ## Tests
 
@@ -389,6 +434,9 @@ measures ~30 KB of test noise).
 | A remote key never arrives on the TV | It must be in the active profile's `register` list (and supported by that remote model); Play/Pause and Ch± are registered by default, the colour keys only without a profile |
 | Back closes the TV app instead of pausing | Only expected on the loading and boot error screens; since M1-16 Back pauses in the game and asks before quitting on the title. An older build exits — reinstall |
 | A profile edit does not show in `pnpm dev` | Content edits reload the page; a saved choice (`options.input.profileId` in `shmup-cup:save.v1`) may be overriding the default — pick the default in CONTROLS or use `?profile=` |
+| A pad drives player 1 in a co-op game | Expected until it presses a button its gamepad profile's **menu** table binds to Confirm or Pause (A, START) — that seats it as player 2. With the seat taken (another pad, or `keyboard-split` active) every other pad drives player 1 |
+| Player 2's START paused the game instead of joining | Player 2 cannot join right now (still flying, dying, out for good) — or the host never forwards `Game.inputSeats` (`setSeats` missing), so every device drives player 1 |
+| `…input-profiles.json:profiles[n].split.game.byCode.KeyW: is bound in both halves of the keyboard` | A split half may not reuse a key of the other half in the same context; `split` on a `remote` / `gamepad` profile is an issue too |
 | A profile is missing from CONTROLS | Its menu table cannot be driven by this host's keys (a remote profile binds by `keyCode`, which the web key space does not consult) or it is a gamepad profile — by design ([the saved choice](#the-saved-choice)) |
 
 ## Next steps that build on this page
@@ -405,6 +453,9 @@ measures ~30 KB of test noise).
 - **M1-17** (done) — the Options screen's CONTROLS: the selectable profiles, the choice stored in
   the save and applied live (the TV registering the new profile's keys)
   ([saves-and-options.md](saves-and-options.md)).
+- **M2-06** (done) — player seats (`WebInput.setSeats` from `Game.inputSeats`; pads join as player
+  2 with A / START), the split keyboard (`split`, `splitTables`, `keyboard-split`), no phantom
+  presses across a seat change ([coop.md](coop.md)).
 - **M2-16** — Options: per-device rebinding, conflict detection, reset to defaults, the advanced
   debounce slider.
 - **On hardware** — run the input probe (plan §8.2) and set `releaseDebounceTicks` /

@@ -149,7 +149,11 @@ export interface HiScoreEntry {
   readonly score: number;
   /** Stage / zone reached (a stage id; `''` in open space). */
   readonly reached: string;
-  /** Game mode the score was set in (`1p` in M1; co-op, practice, boss rush … later). */
+  /**
+   * Game mode the score was set in: `1p` for a one-player game, `2p` for either player's score of
+   * a co-op game (M2-06 — the scene flow records both players' rows in the same table); practice,
+   * boss rush … later.
+   */
   readonly mode: string;
   /** Difficulty preset of the run. */
   readonly difficulty: string;
