@@ -1346,14 +1346,16 @@ function buildDirectPips(world: World, list: DrawList): void {
   const loadout = world.weapons.loadouts[0];
   const ship = world.players[0];
   const families = world.weapons.mainFamilies;
-  const family = families.length > 0 ? families[loadout.family % families.length] : null;
+  // The family the weapons fire (`core/weapons` reads a negative index as the first family).
+  const index = loadout.family >= 0 && families.length > 0 ? loadout.family % families.length : 0;
+  const family = families.length > 0 ? (families[index] ?? null) : null;
   list.setString(S.shot, 'SHOT');
   list.setString(S.sub, 'SUB');
   list.setString(S.arm, 'ARM');
   list.setString(S.speed, 'SPD');
   list.text(S.shot, L.shotX, y, HUD_COLORS.pipLabel);
   const shotTop = directMaxLevel(family);
-  const color = HUD_FAMILY_COLORS[loadout.family % HUD_FAMILY_COLORS.length] ?? HUD_COLORS.label;
+  const color = HUD_FAMILY_COLORS[index % HUD_FAMILY_COLORS.length] ?? HUD_COLORS.label;
   drawPips(list, L.shotX + 26, 5, shotTop, loadout.shot, color, HUD_COLORS.pipOff);
   list.text(S.sub, L.subX, y, HUD_COLORS.pipLabel);
   const subTop = directMaxLevel(world.weapons.subFamily);

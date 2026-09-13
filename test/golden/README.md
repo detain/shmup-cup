@@ -21,6 +21,9 @@ score, lives, death ticks, boss kill).
 | `zone-a-reduce` | 4-way playtest bot | the boss with Formation Options and Reduce (M2-04): the `>` of Options, the shrunken hurtbox |
 | `zone-a-snake` | 4-way playtest bot | the whole stage with Snake Options and the front Shield (M2-04): the pulled chain, pods taking hits, a death |
 | `zone-a-free-shield` | 4-way playtest bot | the whole stage at Arcade difficulty with the Free Shield (M2-04): a pod pair ahead taking hits, a death |
+| `zone-a-manta` | 4-way playtest bot | the whole stage with the Direct-mode MANTA (M2-05): planned colour items from the carriers, the Arm, a family switch |
+| `zone-a-manta-boss` | 4-way playtest bot | the boss with a fully powered MANTA (M2-05): level-8 discs and sub discs, the gold Hyper Arm |
+| `zone-a-manta-deaths` | a weaving pilot that never dodges | the MANTA under the Arcade penalty (M2-05): Direct-mode deaths, checkpoint restarts, `gameOver` |
 
 - `golden.test.ts` (part of `pnpm test`) plays every file back into a fresh session: every hash and
   the outcome must match. A failure means the simulation changed.

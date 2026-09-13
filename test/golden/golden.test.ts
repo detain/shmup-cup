@@ -82,5 +82,15 @@ describe('golden replays (zone A, playtest bots)', () => {
       expect(manta.file.expected.status).toBe('stageClear');
       expect(manta.file.expected.bossDefeated).toBe(true);
     }
+    // And dies (M2-05 tests): the Direct-mode Arcade penalty, checkpoint restarts, game over.
+    const mantaDeaths = readGolden('zone-a-manta-deaths');
+    expect(mantaDeaths.replay.header.config).toMatchObject({
+      shipId: 'manta',
+      powerUpMode: 'direct',
+      deathPenalty: 'arcade',
+    });
+    expect(mantaDeaths.file.expected.status).toBe('gameOver');
+    expect(mantaDeaths.file.expected.deathTicks).toHaveLength(3);
+    expect(mantaDeaths.file.expected.lives).toBe(0);
   });
 });

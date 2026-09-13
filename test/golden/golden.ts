@@ -15,10 +15,11 @@
  * arsenal of M2-03 (full Type B, Type C and Type D loadouts, and a Weapon Edit with LIFE OPTION on
  * `!`) — together every Types B–D weapon; four more fly the Option types and `?` shields of M2-04
  * (Rotate Options with the Rotate Shield, Formation with Reduce, Snake with the front Shield, the
- * trail with the Free Shield) — together every Option type and every meter shield; two more fly the
- * Direct-mode MANTA of M2-05 (the whole stage collecting its planned colour items — a family switch
- * and the Arm included —, and HALCYON BULWARK fully powered: level-8 discs and sub discs, the Hyper
- * Arm).
+ * trail with the Free Shield) — together every Option type and every meter shield; three more fly
+ * the Direct-mode MANTA of M2-05 (the whole stage collecting its planned colour items — a family
+ * switch and the Arm included —, HALCYON BULWARK fully powered: level-8 discs and sub discs, the
+ * Hyper Arm — and the careless weaving pilot under the Arcade penalty: Direct-mode deaths, the
+ * checkpoint restarts, `gameOver`).
  *
  * @module
  */
@@ -239,6 +240,15 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = Object.freeze([
     },
     godMode: false,
     bot: 'four-way',
+  },
+  {
+    name: 'zone-a-manta-deaths',
+    description:
+      'a weaving MANTA that never dodges, Arcade penalty (M2-05): Direct-mode deaths, checkpoint restarts, game over',
+    stageId: 'zone-a',
+    config: { seed: 16, shipId: 'manta', powerUpMode: 'direct', deathPenalty: 'arcade' },
+    godMode: false,
+    bot: 'weaver',
   },
   {
     name: 'zone-a-free-shield',

@@ -1068,7 +1068,8 @@ export interface PowerUpSystem {
    *
    * @param player - Player slot.
    * @param item - The item's {@link DIRECT_ITEMS} index.
-   * @returns Whether it changed something (a level, the Arm, a life, the family, a smart bomb).
+   * @returns Whether it changed something (a level, the Arm, a life, the family, a smart bomb);
+   *   `false` without any event for a bad player slot or item index.
    */
   collectDirect(player: number, item: number): boolean;
   /**
@@ -1830,7 +1831,10 @@ class PowerUpSystemImpl implements PowerUpSystem {
 
   /** See {@link PowerUpSystem.collectDirect}. */
   collectDirect(player: number, item: number): boolean {
-    if (!this.valid(player)) return false;
+    // A bad player or item is no pickup: no cue either.
+    if (!this.valid(player) || !(item >= 0 && item < DIRECT_ITEMS.length && item % 1 === 0)) {
+      return false;
+    }
     const host = this.host;
     const ship = host.players[player];
     const loadout = host.weapons.loadouts[player];
@@ -1840,9 +1844,10 @@ class PowerUpSystemImpl implements PowerUpSystem {
     let changed = false;
     switch (item) {
       case 0: {
-        // Red: the main shot's next level (its family's top level caps it).
-        const top =
-          count > 0 && mains !== undefined ? directMaxLevel(mains[loadout.family % count]) : 0;
+        // Red: the main shot's next level (its family's top level caps it; a negative family index
+        // is the first family, as `core/weapons` fires it).
+        const index = loadout.family >= 0 ? loadout.family % count : 0;
+        const top = count > 0 && mains !== undefined ? directMaxLevel(mains[index]) : 0;
         if (loadout.shot < top) {
           loadout.shot++;
           changed = true;
@@ -1878,7 +1883,7 @@ class PowerUpSystemImpl implements PowerUpSystem {
       case 5:
         // The red octagon: the next main-shot family, the level kept (capped by the new family).
         if (count > 1 && mains !== undefined) {
-          loadout.family = (loadout.family + 1) % count;
+          loadout.family = ((loadout.family >= 0 ? loadout.family % count : 0) + 1) % count;
           const top = directMaxLevel(mains[loadout.family]);
           if (loadout.shot > top) loadout.shot = top;
           changed = true;

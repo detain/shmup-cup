@@ -76,6 +76,68 @@ export function directDb(): ContentDb {
   return db;
 }
 
+/**
+ * A test weapon (M2-05 edge tests): a `direct.bolt` unless the params say otherwise.
+ *
+ * @param id - Id.
+ * @param slot - `main` or `sub`.
+ * @param extra - Fields over the defaults (behaviour, cap, params …).
+ * @returns The entry.
+ */
+export function testWeapon(
+  id: string,
+  slot: 'main' | 'sub',
+  extra: Record<string, unknown> = {},
+): Record<string, unknown> {
+  return {
+    id,
+    slot,
+    behavior: 'direct.bolt',
+    damage: 1,
+    speed: 4,
+    cap: 8,
+    pierce: false,
+    sprite: 'shots/direct-missile',
+    sfx: 'PlayerShot',
+    ...extra,
+  };
+}
+
+/**
+ * Content with the KESTREL, the MANTA, Type A, the still stage and a weapons file of one's own
+ * families (M2-05 edge tests: a single main family, levels of other lengths, no sub family …).
+ *
+ * @param weapons - The weapons of the families' file (see {@link testWeapon}).
+ * @param families - Its `families` (omitted from the file when empty).
+ * @returns The DB (validated without an issue).
+ */
+export function familyDb(
+  weapons: readonly Record<string, unknown>[],
+  families: readonly Record<string, unknown>[],
+): ContentDb {
+  const own: ContentFile = {
+    path: 'weapons/own.weapons.json',
+    data: {
+      formatVersion: 1,
+      kind: 'weapons',
+      weapons,
+      ...(families.length > 0 ? { families } : {}),
+    },
+  };
+  const { db, issues } = loadContent(
+    [
+      shipped('player/kestrel.player.json'),
+      shipped('player/manta.player.json'),
+      shipped('weapons/type-a.weapons.json'),
+      own,
+      STILL_STAGE,
+    ],
+    { extraSprites: ENGINE_SPRITES, knownScripts: KNOWN_SCRIPT_IDS },
+  );
+  expect(issues).toEqual([]);
+  return db;
+}
+
 /** The MANTA's config fields. */
 export const MANTA: Partial<GameConfig> = Object.freeze({
   shipId: 'manta',
