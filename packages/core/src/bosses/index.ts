@@ -50,12 +50,14 @@
  *   is locked and follows the raid's segments — offsets from the boss's origin, eased in turn
  *   (`core/stage` `StageRunner.follow`); when it dies or escapes the camera eases back to where
  *   the raid began ({@link RAID_RETURN_TICKS} / {@link BOSS_ESCAPE_TICKS}) and is handed back to
- *   the stage the tick after. Its parts fire only while on screen.
+ *   the stage the tick after; the stage's timeline waits at that point meanwhile (no event past it
+ *   fires during the pan). Its parts fire only while on screen.
  * - **Boss inside a boss (M2-09).** A boss with an `inner` boss reveals it at its final blast:
  *   the inner boss flies from the outer's first core to its home (its own intro) in another slot.
  * - **Timers (M2-09).** A boss with a `timeLimit` escapes when its fight has lasted that long: it
- *   stops fighting, flies off to the right over {@link BOSS_ESCAPE_TICKS} (its partner with it),
- *   no tally; a stage boss's escape sets {@link EndingFlag}.BossEscaped in the host's
+ *   stops fighting and flies off to the right over {@link BOSS_ESCAPE_TICKS} (to its entry's intro
+ *   start past the right edge — an inner boss too, not back to where it was revealed; its partner
+ *   with it), no tally; a stage boss's escape sets {@link EndingFlag}.BossEscaped in the host's
  *   `endingFlags` and ends the encounter like a death.
  * - **The death sequence.** When the last core is destroyed: every cancelable bullet and laser is
  *   cancelled (point items for the killer), the music fades (unless another main boss still
@@ -609,7 +611,10 @@ export class Boss implements ScriptHolder {
   killer = -1;
   /** The final blast went off: the parts are not drawn any more. */
   blasted = false;
-  /** Slot of its double-boss partner, -1 = none (M2-09). */
+  /**
+   * Slot of its double-boss partner, -1 = none (M2-09) — cut both ways when either of the pair's
+   * slot ends (death sequence over or escaped), so a boss that takes that slot later is no mate.
+   */
   partner = -1;
   /** It leads its pair (its entry names the partner; it counts the turns). */
   leader = false;
@@ -2190,9 +2195,9 @@ class BossSystemImpl implements BossSystem {
     this.startPhase(boss, jump > 0 ? jump : 0, this.host.tick);
     if (entry === null) return;
     if (boss.anchored && entry.raidX.length > 0) this.startRaid(boss);
-    const partner = boss.partner;
-    if (partner < 0 || boss.enraged) return;
-    const lead = boss.leader ? entry : this.entries[partner];
+    const mate = this.mateOf(boss);
+    if (mate === null || boss.enraged) return;
+    const lead = boss.leader ? entry : this.entries[mate.slot];
     if (lead === null || lead.alternate <= 0) return;
     if (boss.leader) boss.turnTicks = lead.alternate;
     else this.setResting(boss, true);
@@ -2316,8 +2321,8 @@ class BossSystemImpl implements BossSystem {
   private turn(leader: Boss): void {
     const entry = this.entries[leader.slot];
     if (entry === null) return;
-    const mate = this.slots[leader.partner];
-    if (mate === undefined || mate.state !== BossState.Fight || mate.enraged) return;
+    const mate = this.mateOf(leader);
+    if (mate === null || mate.state !== BossState.Fight || mate.enraged) return;
     const leaderRests = !leader.resting;
     this.setResting(leader, leaderRests);
     this.setResting(mate, !leaderRests);
@@ -2517,6 +2522,7 @@ class BossSystemImpl implements BossSystem {
     boss.state = BossState.Dead;
     // A raid's camera ends its own return (the tick after it is home).
     if (boss.raiding) this.endRaid(boss);
+    this.unlink(boss);
     this.encounterEnd(boss);
   }
 
@@ -2552,16 +2558,44 @@ class BossSystemImpl implements BossSystem {
       parts[i].target = false;
       this.host.bullets.detachLasers(parts[i].slot);
     }
-    this.startMove(boss, boss.startX, boss.screenY, BOSS_ESCAPE_TICKS, BossMotion.Hold);
+    // Off past the right edge: the entry's intro start — not `boss.startX`, which is where an
+    // inner boss was revealed (on screen).
+    const entry = this.entries[boss.slot];
+    const offX = entry === null ? boss.startX : entry.startX;
+    this.startMove(boss, offX, boss.screenY, BOSS_ESCAPE_TICKS, BossMotion.Hold);
     if (boss.raiding) this.startReturn(boss, BOSS_ESCAPE_TICKS);
     if (boss.role === BossRole.Boss && !this.mainInPlay(boss, false)) {
       this.host.events.push(SimEventKind.Music, MUSIC_CUES.Silence, 0, 0, BOSS_MUSIC_FADE_TICKS);
     }
-    const partner = boss.partner;
-    if (partner >= 0) {
-      const mate = this.slots[partner];
-      if (mate.state === BossState.Fight || mate.state === BossState.Intro) this.startEscape(mate);
+    const mate = this.mateOf(boss);
+    if (mate !== null && (mate.state === BossState.Fight || mate.state === BossState.Intro)) {
+      this.startEscape(mate);
     }
+  }
+
+  /**
+   * A double boss's partner, while the pair is still linked both ways (M2-09).
+   *
+   * @param boss - One of the pair.
+   * @returns The partner, or `null` (none, or its slot has ended and been handed to another boss).
+   */
+  private mateOf(boss: Boss): Boss | null {
+    const partner = boss.partner;
+    if (partner < 0) return null;
+    const mate = this.slots[partner];
+    return mate !== undefined && mate.partner === boss.slot ? mate : null;
+  }
+
+  /**
+   * A boss's slot has ended (death sequence over or escaped; cold path): the pair's link is cut
+   * both ways, so the survivor never touches whatever boss takes the slot next.
+   *
+   * @param boss - The ended boss.
+   */
+  private unlink(boss: Boss): void {
+    const mate = this.mateOf(boss);
+    if (mate !== null) mate.partner = -1;
+    boss.partner = -1;
   }
 
   /**
@@ -2575,6 +2609,7 @@ class BossSystemImpl implements BossSystem {
     boss.state = BossState.Dead;
     boss.escaped = true;
     if (boss.raiding) this.endRaid(boss);
+    this.unlink(boss);
     host.events.push(
       SimEventKind.BossEscaped,
       boss.specIndex,
@@ -2671,8 +2706,9 @@ class BossSystemImpl implements BossSystem {
       const u = total > 0 && ticks < total ? ticks / total : 1;
       // `EASINGS.inOutQuad` written out.
       const e = u < 0.5 ? 2 * u * u : 1 - 2 * (1 - u) * (1 - u);
-      target.x = boss.raidFromX + (boss.raidHomeX - boss.raidFromX) * e;
-      target.y = boss.raidFromY + (boss.raidHomeY - boss.raidFromY) * e;
+      // Exactly home at the end (the stage's timeline resumes from there — `follow`).
+      target.x = u >= 1 ? boss.raidHomeX : boss.raidFromX + (boss.raidHomeX - boss.raidFromX) * e;
+      target.y = u >= 1 ? boss.raidHomeY : boss.raidFromY + (boss.raidHomeY - boss.raidFromY) * e;
     } else {
       const entry = this.entries[boss.slot];
       if (entry === null) return;
@@ -3078,8 +3114,8 @@ class BossSystemImpl implements BossSystem {
     }
     requestShake(host, ShakeMagnitude.Small, captain ? CAPTAIN_CHAIN_TICKS : BOSS_CHAIN_TICKS);
     if (boss.raiding) this.startReturn(boss, RAID_RETURN_TICKS);
-    const partner = boss.partner;
-    if (partner >= 0) this.enrage(this.slots[partner]);
+    const mate = this.mateOf(boss);
+    if (mate !== null) this.enrage(mate);
   }
 
   /**

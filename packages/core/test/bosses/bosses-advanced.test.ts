@@ -17,6 +17,7 @@ import {
   BOSS_BLAST_HIT_STOP_TICKS,
   BOSS_CLEAR_TICKS,
   BOSS_CHAIN_TICKS,
+  BOSS_ENTRY_MARGIN,
   BOSS_ESCAPE_TICKS,
   BOSS_PART_ID_BASE,
   BOSS_REST_X,
@@ -31,9 +32,10 @@ import {
   RAID_RETURN_TICKS,
   WARNING_TICKS,
   turnedFrame,
+  type Boss,
   type BossScriptApi,
 } from '../../src/bosses/index.js';
-import { resolveGameConfig, type GameConfig } from '../../src/config/index.js';
+import { PLAYFIELD_W, resolveGameConfig, type GameConfig } from '../../src/config/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
 import { hashWorld } from '../../src/debug/index.js';
 import { MUSIC_CUES, SimEventKind } from '../../src/events/index.js';
@@ -267,7 +269,8 @@ function stage(id: string, events: unknown[], extra: Record<string, unknown> = {
 
 /**
  * The KESTREL, Type A, the test bosses and the stages `arena` (no event), `raid` (the raid's
- * WARNING at 10), `rush` (a boss rush: `timed`, then `outer`).
+ * WARNING at 10), `raid-end` (the same, but the stage ends at 150 — inside the raid's camera
+ * path, like zone A's `end` right after its boss), `rush` (a boss rush: `timed`, then `outer`).
  *
  * @returns The DB.
  */
@@ -282,6 +285,14 @@ function db(): ContentDb {
       },
       stage('arena', []),
       stage('raid', [{ x: 10, type: 'warning', enemy: 'raid' }]),
+      stage(
+        'raid-end',
+        [
+          { x: 10, type: 'warning', enemy: 'raid' },
+          { x: 150, type: 'end' },
+        ],
+        { length: 150 },
+      ),
       stage('rush', [], {
         type: 'bossRush',
         rush: [
@@ -562,6 +573,33 @@ describe('core/bosses — raids (M2-09)', () => {
     expect(runner.locked).toBe(false);
   });
 
+  it('keeps the stage timeline where the raid began: a pan over the end event clears nothing', () => {
+    const w = world('raid-end');
+    const runner = w.stage;
+    if (runner === null) throw new Error('no stage');
+    const boss = w.bosses.boss;
+    untilState(w, BossState.Fight);
+    const home = boss.raidHomeX;
+    expect(home).toBeLessThan(150 - 100);
+    // Segment 1 takes the camera to the origin + 50 — past the end, capped at the length.
+    run(w, 60);
+    expect(w.camera.x).toBeCloseTo(150, 9);
+    expect(runner.ended).toBe(false);
+    expect(runner.eventCursor).toBe(1);
+    expect(boss.state).toBe(BossState.Fight);
+    expect(w.status).toBe('playing');
+    // Its death clears the stage (after the return); the end event is reached only after that.
+    w.bosses.defeat(0);
+    run(w, BOSS_CLEAR_TICKS + BOSS_BLAST_HIT_STOP_TICKS - 1);
+    expect(w.camera.x).toBeCloseTo(home, 9);
+    expect(runner.following).toBeNull();
+    expect(runner.ended).toBe(false);
+    expect(w.status).toBe('playing');
+    run(w, 1);
+    expect(boss.state).toBe(BossState.Dead);
+    expect(w.status).toBe('stageClear');
+  });
+
   it('steers the free-flight camera by its velocity', () => {
     const w = world('arena', { stage: null });
     w.bosses.startBoss(index('raid'));
@@ -575,6 +613,32 @@ describe('core/bosses — raids (M2-09)', () => {
 });
 
 describe('core/bosses — boss inside a boss (M2-09)', () => {
+  it('escapes an inner boss off past the right edge, not back to where it was revealed', () => {
+    const w = world();
+    w.bosses.startBoss(index('outer'));
+    const inner = w.bosses.slots[1];
+    run(w, 5);
+    w.bosses.defeat(0);
+    run(w, BOSS_CHAIN_TICKS);
+    expect(inner.state).toBe(BossState.Intro);
+    const revealX = inner.startX;
+    expect(revealX).toBeLessThan(PLAYFIELD_W);
+    // A timed inner boss (the loader accepts `timeLimit` on one).
+    inner.timeLimit = 30;
+    untilState(w, BossState.Escape, 1);
+    run(w, BOSS_ESCAPE_TICKS - 1);
+    expect(inner.state).toBe(BossState.Escape);
+    // Its entry's intro start: the playfield's right edge + the margin + its leftmost pixel (the
+    // 6-px core), so no part is left in view.
+    expect(inner.screenX).toBeCloseTo(PLAYFIELD_W + BOSS_ENTRY_MARGIN + 6, 9);
+    const core = inner.parts[0];
+    expect(core.x - core.hw - w.camera.x).toBeGreaterThanOrEqual(PLAYFIELD_W);
+    run(w, 1);
+    expect(inner.state).toBe(BossState.Dead);
+    expect(inner.escaped).toBe(true);
+    expect(w.status).toBe('stageClear');
+  });
+
   it('reveals the inner boss at the outer’s blast, from its core, and clears after it', () => {
     const w = world();
     const events: string[] = [];
@@ -696,6 +760,51 @@ describe('core/bosses — double bosses and the enrage rule (M2-09)', () => {
     w.bosses.defeat(0);
     run(w, BOSS_CLEAR_TICKS + 10);
     expect(w.status).toBe('stageClear');
+  });
+});
+
+describe('core/bosses — a double boss’s ended slot (M2-09)', () => {
+  /**
+   * The twins fight; the lead dies and its slot 0 ends (`Dead`); a captain takes slot 0.
+   *
+   * @returns The world, the surviving mate and the captain.
+   */
+  function survivorAndNewcomer(): { w: World; mate: Boss; cap: Boss } {
+    const w = world();
+    w.bosses.startBoss(index('lead'));
+    const [lead, mate] = w.bosses.slots;
+    untilState(w, BossState.Fight);
+    w.bosses.damagePart(lead.parts[0].global, 1000, 0);
+    expect(mate.enraged).toBe(true);
+    // Still linked while the lead's death sequence runs; cut both ways when its slot ends.
+    expect([lead.partner, mate.partner]).toEqual([1, 0]);
+    run(w, BOSS_CLEAR_TICKS + BOSS_BLAST_HIT_STOP_TICKS);
+    expect(lead.state).toBe(BossState.Dead);
+    expect([lead.partner, mate.partner]).toEqual([-1, -1]);
+    expect(w.bosses.startBoss(index('cap'))).toBe(true);
+    const cap = w.bosses.slots[0];
+    expect(cap.specIndex).toBe(index('cap'));
+    untilState(w, BossState.Fight);
+    return { w, mate, cap };
+  }
+
+  it('does not enrage the boss that took the dead partner’s slot when the survivor dies', () => {
+    const { w, mate, cap } = survivorAndNewcomer();
+    const phase = cap.phase;
+    w.bosses.damagePart(mate.parts[0].global, 1000, 0);
+    expect(mate.state).toBe(BossState.Dying);
+    expect([cap.enraged, cap.phase, cap.state]).toEqual([false, phase, BossState.Fight]);
+  });
+
+  it('does not take the newcomer along when the survivor escapes', () => {
+    const { w, mate, cap } = survivorAndNewcomer();
+    mate.timeLimit = mate.fightTicks + 1;
+    run(w, 1);
+    expect(mate.state).toBe(BossState.Escape);
+    expect(cap.state).toBe(BossState.Fight);
+    run(w, BOSS_ESCAPE_TICKS);
+    expect(mate.state).toBe(BossState.Dead);
+    expect(cap.state).toBe(BossState.Fight);
   });
 });
 

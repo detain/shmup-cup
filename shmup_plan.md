@@ -2728,7 +2728,9 @@ Goal of the milestone: every **[P1]** feature. Steps are ordered so systems land
     event stops the camera at once) and, from its fight, drives the camera through the new
     `StageRunner.follow(target)` (`StageCameraTarget`; the boss system's `RaidCamera`; in free flight
     the camera's velocity): the runner's step 3 puts the camera on the target and records `dx` /
-    `dy`, so ships, shots and bullets ride along. At death / escape the camera eases back to where
+    `dy`, so ships, shots and bullets ride along; the timeline stays at the x where the follow
+    began (no key, event, checkpoint or trigger disarm past it — a pan over the stage's `end`
+    right after the boss clears nothing). At death / escape the camera eases back exactly to where
     the raid began (`RAID_RETURN_TICKS` / `BOSS_ESCAPE_TICKS`) and is handed back the tick after.
     A raid's parts fire only while in view (`BossPart.inView`, set in `place()`); the turrets'
     behaviour is `boss.raid` (`api.aimPart` turns a part to the aimed-shot heading —
@@ -2736,14 +2738,16 @@ Goal of the milestone: every **[P1]** feature. Steps are ordered so systems land
   - **Double bosses** are a `partner` (entered with the leader's intro in another slot) with
     `alternate` turns: the resting one moves to `BOSS_REST_X` over `BOSS_TURN_TICKS`, is drawn from
     the new `bosses.backBatch` (`LayerId.GroundEnemies`), is not hit / touched, its script and phase
-    clock wait (and its motion before the turn resumes on its way back). **Enrage**: the survivor
+    clock wait (and its motion before the turn resumes on its way back). The pair's link is cut
+    both ways when either slot ends (a later boss in that slot is no mate). **Enrage**: the survivor
     of a death comes forward for good, `fireWait` × `enrage.fireRate`, track / orbit speed ×
     `enrage.speed`, a jump to `enrage.phase`.
   - **Boss inside a boss:** `inner`, revealed at the outer's final blast from its first core (the
     new `Boss.startX` / `startY` of the intro); the outer's tally pays, its jingle and stage clear
     wait for the inner boss.
-  - **Timers:** `timeLimit` → the new `BossState.Escape` (6): no hits, flies to its intro start over
-    `BOSS_ESCAPE_TICKS` 90 (its partner too), then `Dead` with `escaped`, the new
+  - **Timers:** `timeLimit` → the new `BossState.Escape` (6): no hits, flies to its entry's intro
+    start past the right edge (an inner boss too — not its reveal point) over `BOSS_ESCAPE_TICKS` 90
+    (its partner too), then `Dead` with `escaped`, the new
     `SimEventKind.BossEscaped` (14) and — a stage boss — `EndingFlag.BossEscaped` in the new
     `World.endingFlags` (hashed; M2-10 carries it through the run).
   - **HP bar.** Model: `bosses.hpBar` (`BossHpBar`: the cores and the parts they require of the

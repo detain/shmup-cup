@@ -51,8 +51,10 @@
  *
  * **Following (M2-09).** A battleship raid (`core/bosses`) makes the camera follow a target it
  * moves around the boss ({@link StageRunner.follow}): while set, step 3 puts the camera on the
- * target (the recorded `dx` / `dy` carry the ships along) instead of scrolling; `null` hands the
- * camera back to the scroll, a restart forgets the target.
+ * target (the recorded `dx` / `dy` carry the ships along) instead of scrolling. The timeline
+ * stays where the follow began — no key, event, checkpoint or trigger disarm past that x until the
+ * camera is back — so a pan beyond the boss cannot fire the `end` event. `null` hands the camera
+ * back to the scroll, a restart forgets the target.
  *
  * **Branches and triggers (M2-07).** Branches are data (`StageSpec.branches`: id, flag, value); an
  * event with a `branch` is skipped — no runner part, no hooks — when the camera reaches it while
@@ -479,6 +481,13 @@ export interface StageRunner {
    * ride along. `null` stops following: scrolling resumes from where the camera is.
    *
    * @remarks
+   * The **timeline stays where the follow began**: while following, camera keys, events,
+   * checkpoints and trigger disarms go no further than the camera x at the `follow(target)` call
+   * (a raid's pan past the boss must not fire the stage's `end` or use up the spawns beyond it).
+   * The owner brings the camera back there before `follow(null)` — a raid's return — and the
+   * timeline carries on from it; a camera handed back further on catches up on the next tick.
+   * Re-targeting while following keeps the original x.
+   *
    * The owner writes the target's fields before the runner's tick (the boss system in phase 3);
    * the runner only reads them — never allocates. A restart ({@link StageRunner.restartAt},
    * {@link StageRunner.jumpTo}) forgets the target. The target is not part of
@@ -713,6 +722,12 @@ class StageRunnerImpl implements StageRunner {
   private readonly compiled: CompiledStage;
   /** See {@link StageRunner.following}. */
   following: StageCameraTarget | null = null;
+  /**
+   * Camera x when the current follow began: the timeline goes no further while following. Not
+   * part of {@link StageRunner.state}: it is the (hashed) camera x of that tick — a raid's home,
+   * where its camera returns before it lets go.
+   */
+  private followX = 0;
 
   /**
    * Compiles the timeline and puts the runner at the stage start (no `hooks.clear()`).
@@ -795,10 +810,14 @@ class StageRunnerImpl implements StageRunner {
     const compiled = this.compiled;
     const keyX = compiled.keyX;
     const keyCount = keyX.length;
+    // While a raid moves the camera (M2-09) the timeline stays where the follow began: its keys,
+    // events, checkpoints and trigger disarms wait for the camera's return (see `follow`).
+    const followX = this.followX;
 
     // 1. Camera keys the camera has reached.
+    let reach = this.following === null || camera.x < followX ? camera.x : followX;
     let nextKey = state[StageSlot.NextKey];
-    while (nextKey < keyCount && keyX[nextKey] <= camera.x) {
+    while (nextKey < keyCount && keyX[nextKey] <= reach) {
       this.applyKey(nextKey);
       nextKey++;
     }
@@ -873,23 +892,24 @@ class StageRunnerImpl implements StageRunner {
     camera.y = y;
 
     // 4. Every event the camera reached, in order, exactly once (skipped when its branch is not
-    // taken).
+    // taken) — while following, only up to where the follow began.
+    reach = target === null || camera.x < followX ? camera.x : followX;
     const eventX = compiled.eventX;
     const restarts = state[StageSlot.Restarts];
     let cursor = state[StageSlot.Cursor];
-    while (cursor < eventX.length && eventX[cursor] <= camera.x) {
+    while (cursor < eventX.length && eventX[cursor] <= reach) {
       state[StageSlot.Cursor] = cursor + 1;
       this.fire(cursor);
       if (state[StageSlot.Restarts] !== restarts) return; // a hook restarted the stage
       cursor = state[StageSlot.Cursor];
     }
     // Armed triggers whose region the camera left behind disarm.
-    if (state[StageSlot.TriggersArmed] !== 0) this.disarmPassed();
+    if (state[StageSlot.TriggersArmed] !== 0) this.disarmPassed(reach);
 
     // 5. The last checkpoint passed.
     const checkpointX = compiled.checkpointX;
     let next = state[StageSlot.NextCheckpoint];
-    while (next < checkpointX.length && checkpointX[next] <= camera.x) {
+    while (next < checkpointX.length && checkpointX[next] <= reach) {
       state[StageSlot.Checkpoint] = next;
       next++;
     }
@@ -950,11 +970,15 @@ class StageRunnerImpl implements StageRunner {
     this.writeFlag(this.compiled.triggerBit[t], this.compiled.triggerSet[t] !== 0);
   }
 
-  /** Disarms every armed trigger the camera has passed (`camera.x > until`). */
-  private disarmPassed(): void {
+  /**
+   * Disarms every armed trigger the camera has passed (`x > until`).
+   *
+   * @param x - How far the timeline has come (the camera x; while following, at most where the
+   * follow began).
+   */
+  private disarmPassed(x: number): void {
     const state = this.state;
     const c = this.compiled;
-    const x = this.camera.x;
     let armed = state[StageSlot.TriggersArmed];
     for (let t = 0; t < c.triggerUntil.length; t++) {
       const bit = (1 << t) >>> 0;
@@ -1013,6 +1037,7 @@ class StageRunnerImpl implements StageRunner {
 
   /** See {@link StageRunner.follow}. */
   follow(target: StageCameraTarget | null): void {
+    if (target !== null && this.following === null) this.followX = this.camera.x;
     this.following = target;
   }
 
