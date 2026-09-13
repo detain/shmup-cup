@@ -34,9 +34,9 @@
  * M2-03 ({@link MegaChoice}, {@link MEGA_CHOICES}, {@link ShieldChoice}, {@link SHIELD_CHOICES},
  * {@link WeaponEdit}, {@link WEAPON_EDIT_SLOTS}, {@link ArsenalChoice}, {@link withArsenal},
  * {@link arsenalMatches}; M2-04: {@link OptionChoice}, {@link OPTION_CHOICES}) and the screen
- * layout constants {@link HUD_BAR_HEIGHT},
- * {@link PLAYFIELD_Y}, {@link PLAYFIELD_W}, {@link PLAYFIELD_H} (decision D20: two 8-px HUD bars
- * outside a 384×200 playfield). User options: {@link UserOptions}, {@link AudioOptions}, {@link InputOptions}, {@link DisplayOptions},
+ * layout constants {@link HUD_BAR_HEIGHT}, {@link PLAYFIELD_Y}, {@link PLAYFIELD_W},
+ * {@link PLAYFIELD_H} (decision D20: two 8-px HUD bars outside a 384×200 playfield). User options:
+ * {@link UserOptions}, {@link AudioOptions}, {@link InputOptions}, {@link DisplayOptions},
  * {@link DEFAULT_USER_OPTIONS}, {@link VOLUME_LEVELS}, {@link volumeGain},
  * {@link resolveUserOptions}, {@link InputProfileChoice}, {@link INPUT_PROFILE_ID_PATTERN},
  * {@link BULLET_PALETTES}, {@link BulletPalette}.

@@ -279,6 +279,12 @@ Brute force per active, `alive` ship (§22 — at most 512 × 2 cheap tests):
   (the plan wrote `playerHit('bullet')`; a separate cause tells them apart).
 - **Bending lasers** (M2-02): if no straight laser hit, every active bending laser's circle chain
   (above) → `playerHit(ship, PlayerHitCause.Laser, …)`.
+- **Shields (M2-04).** The hurt radius of all three tests is `hurtRadius × ship.shield.hurtScale`
+  (`shipR`, set per ship) — Reduce shrinks it to ⅓ / ⅔. A ship with **shield pods** first lets
+  each live bullet meet its standing pods (`podBlocks`: circle vs the pod's `POD_RADIUS` 4,
+  closed): the first pod it touches takes the hit (`absorbPodHit` — free during that pod's
+  i-frames) and the bullet is used up before it can reach the ship. Pods never stop lasers or
+  bending lasers ([options-shields-hunter.md](options-shields-hunter.md#shields-coreshields)).
 
 So at most one bullet hit and one laser hit are offered per ship and tick. `playerHit` records
 the hit (`hitCause`, `hitTick`, `hits`); since M1-12 phase 7 of the same tick turns it into the

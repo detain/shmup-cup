@@ -17,12 +17,12 @@
  *   {@link FORCE_FIELD_HITS} (5) hits. **Reduce** ({@link REDUCE}): {@link REDUCE_HITS} (2) hits,
  *   and while it stands the ship's hurt radius shrinks — {@link ShieldState.hurtScale} is
  *   `(hurtSteps + 1 − hits) / (hurtSteps + 1)`: ⅓ at 2 hits, ⅔ at 1 hit, the full radius once it
- *   broke (two hurtbox steps, the ship growing back one per hit); the terrain box never changes. Both absorb
- *   enemy bullets, lasers and enemy contact but **not terrain** (`absorbsTerrain: false`, decision
- *   D8). Every absorbed hit costs one hit and starts {@link SHIELD_HIT_IFRAMES} (8) ticks of
- *   shield-hit i-frames (decision D33), during which further absorbable hits are swallowed for
- *   free; the hit that takes the last point breaks the field, and its i-frames still cover the
- *   bare ship (not against terrain), so the break is survivable.
+ *   broke (two hurtbox steps, the ship growing back one per hit); the terrain box never changes.
+ *   Both absorb enemy bullets, lasers and enemy contact but **not terrain** (`absorbsTerrain:
+ *   false`, decision D8). Every absorbed hit costs one hit and starts {@link SHIELD_HIT_IFRAMES}
+ *   (8) ticks of shield-hit i-frames (decision D33), during which further absorbable hits are
+ *   swallowed for free; the hit that takes the last point breaks the field, and its i-frames still
+ *   cover the bare ship (not against terrain), so the break is survivable.
  * - **Pods** ({@link ShieldState.podCount} of at most {@link MAX_SHIELD_PODS}) are small blockers
  *   attached to the ship; a pod stops what touches **it** — enemy bullets (the bullet is used up)
  *   and enemy bodies (the enemy flies on) — never what reaches the ship past it, never lasers or
@@ -321,7 +321,9 @@ export class ShieldState {
   hits = 0;
   /** Hits of the fresh shield (wear is `hits / maxHits`; pod shields: the pods' sum). */
   maxHits = 0;
-  /** Remaining shield-hit i-frames of a field (pods have their own: {@link ShieldState.podIFrames}). */
+  /**
+   * Remaining shield-hit i-frames of a field (pods have their own: {@link ShieldState.podIFrames}).
+   */
   iFrames = 0;
   /** Whether terrain contact is absorbed (copied from the spec). */
   absorbsTerrain = false;
@@ -336,7 +338,10 @@ export class ShieldState {
    * {@link reduceHurtScale}). Read by every hurt-circle test.
    */
   hurtScale = 1;
-  /** Pod slots in use (0 for fields; a broken pod keeps its slot with 0 hits until the shield goes). */
+  /**
+   * Pod slots in use (0 for fields; a broken pod keeps its slot with 0 hits until the shield goes —
+   * a Free Shield's next `?` may reuse it, FULL BARRIER refills it in place).
+   */
   podCount = 0;
   /** Hits each pod takes when fresh. */
   podMaxHits = 0;

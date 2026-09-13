@@ -817,8 +817,8 @@ export interface WeaponSystem {
   readonly options: readonly OptionGroup[];
   /**
    * The weapon of each {@link WeaponRole} (`null` = the role is empty): the session's arsenal
-   * ({@link resolveArsenal} of the config). Not frozen since M2-03 — {@link WeaponSystem.setArsenal}
-   * rewrites it in place; read it, never keep a copy across a swap.
+   * ({@link resolveArsenal} of the config). Not frozen since M2-03 —
+   * {@link WeaponSystem.setArsenal} rewrites it in place; read it, never keep a copy across a swap.
    */
   readonly roleWeapons: readonly (WeaponSpec | null)[];
   /** Autofire timers per shooter: `[shooter × 2]` main, `[shooter × 2 + 1]` missile (hashed). */

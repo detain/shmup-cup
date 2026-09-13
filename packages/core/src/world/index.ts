@@ -78,11 +78,11 @@
  * **Option types, meter shields, Option Hunter (M2-04).** The option groups fly the config's
  * `optionChoice` (trail, Snake, Formation, Rotate — steered by the players' hold / toggle in
  * phase 2); the `?` slot grants its `shieldChoice` — pods are placed round their ship in phase 2,
- * stop the bullets (phase 6, `core/bullets`) and bodies (`core/enemies`) that touch them, and Reduce
- * shrinks every hurt-circle test; in phase 7, after the shots' hits, the Option Hunters take the
- * Options they touch (`EnemySystem.huntOptions`) before the power-ups (whose Mega Crash, or a blue
- * capsule, may free them again as drifting items). The rank's power term counts Reduce +2 instead
- * of a shield's +4. The view carries the Options a hunter carries as the last batch
+ * stop the bullets (phase 6, `core/bullets`) and bodies (`core/enemies`) that touch them, and
+ * Reduce shrinks every hurt-circle test; in phase 7, after the shots' hits, the Option Hunters
+ * take the Options they touch (`EnemySystem.huntOptions`) before the power-ups (whose Mega Crash,
+ * or a blue capsule, may free them again as drifting items). The rank's power term counts Reduce
+ * +2 instead of a shield's +4. The view carries the Options a hunter carries as the last batch
  * (`EnemySystem.carriedBatch`).
  *
  * **Player weapons (M1-10).** {@link World.weapons} (`core/weapons`, Options from `core/options`)
@@ -786,9 +786,8 @@ const damageSystem: WorldSystem = (world) => {
  * Recomputes the World's rank (shmup_feat.md §15): the power term of the most powerful active
  * ship — dying, dead and respawning ones included (see the remarks) — (`core/rank` `powerRank`:
  * Missile +1, Double +2, Laser +3, each Option +1, a shield +4 — Reduce +2 instead, M2-04) goes
- * into
- * {@link World.rankInputs}, `computeRank` gives the rank, and a
- * changed rank is handed to the bullet system (`BulletSystem.setRank` — the curves are only
+ * into {@link World.rankInputs}, `computeRank` gives the rank, and a changed rank is handed to the
+ * bullet system (`BulletSystem.setRank` — the curves are only
  * evaluated then). The World calls it at the end of phase 3; call it after changing
  * `rankInputs` (the campaign's loop / stage) outside a tick. Never allocates.
  *
@@ -1083,8 +1082,9 @@ type WorldUnderConstruction = Omit<
  * items (`core/powerups` `ITEM_SPRITES`: the power capsule, the blue capsule and the grey stolen
  * Option — M2-04, also the Option Hunter's carried ones) and the shields (`core/shields`
  * `SHIELD_SPRITES`: the Force Field, the shield pod and Reduce's shimmer — M2-04), plus the
- * HUD pieces and the title logo the scene flow draws (`core/ui` `UI_SPRITES`, M1-16). Hosts pass it as `loadContent`'s `extraSprites` (the
- * shell's loader does by default) so the World and the scenes can resolve their sprite ids and
+ * HUD pieces and the title logo the scene flow draws (`core/ui` `UI_SPRITES`, M1-16). Hosts pass
+ * it as `loadContent`'s `extraSprites` (the shell's loader does by default) so the World and the
+ * scenes can resolve their sprite ids and
  * `pnpm content:check` verifies them against the atlas.
  */
 export const ENGINE_SPRITES: readonly string[] = Object.freeze([

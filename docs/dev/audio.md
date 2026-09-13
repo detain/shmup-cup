@@ -28,7 +28,7 @@ owners) and decisions **D22** (OGG decoded through `OfflineAudioContext(2, 1, 32
                                   `music` content owners — issues on the boot error screen)
                                          │
  boot (loading phase, behind the bar)    ▼
-   engine.loadSfx()        ── synth.renderSfx  (23 cues, 22,050 Hz mono Float32Array)
+   engine.loadSfx()        ── synth.renderSfx  (25 cues, 22,050 Hz mono Float32Array)
    engine.prepareMusic(    ── synth.renderSong (the stage's music set; a `file` → XHR +
      stage.id,                 OfflineAudioContext(2, 1, 32000) decode)
      stageMusicCues(stage))
@@ -63,7 +63,9 @@ exactly the same game.
 | `Sfx EnemyExplodeSmall / Medium / Large` (`core/enemies`, boss parts) | panned | Noise bursts of three sizes |
 | `Sfx BossExplode` (`core/bosses`, the chain and the final blast — the blast with `SfxPriority.High`) | panned | The boss's chained explosions |
 | `Sfx PlayerDeath` (`core/world`, phase 7) | panned, `critical` | The ship's explosion — never cut by another cue |
-| `Sfx MeterAdvance`, `PowerUpEquip`, `PowerUpDenied`, `ShieldHit`, `ShieldBreak` (`core/powerups`) | panned | Pickup ding, equip jingle, the denied buzz, the Force Field's hit and break |
+| `Sfx MeterAdvance`, `PowerUpEquip`, `PowerUpDenied`, `ShieldHit`, `ShieldBreak` (`core/powerups`) | panned | Pickup ding, equip jingle, the denied buzz, a shield's (or, since M2-04, a shield pod's) hit and break |
+| `Sfx OptionHunter` (`core/enemies`, an Option Hunter spawned — M2-04) | panned from its spawn point | The alarm: a rising, trembling saw (the §11 "audible cue") |
+| `Sfx OptionStolen` (`core/enemies`, a hunter grabbed Options — M2-04) | panned from the first Option taken | A falling, bit-crushed blip |
 | `Sfx MegaCrash` (`core/powerups`) | centred (`pan: false`) | The screen-clearing boom |
 | `Sfx WarningSiren` + `SfxPriority.Critical` (`core/bosses`, ticks 0 / 60 / 120 of the WARNING) | centred, critical | One 0.92-s wail per pulse (a square wave swept by a 1.1 Hz modulation), ending before the next |
 | `Music <cue>` at world creation (`core/world`, the stage's `music.stage` theme) | `playMusic(cue, 0)` | The stage theme — on the web from the first key press (below) |
@@ -105,14 +107,14 @@ at load), `bus` (`sfx`, or `ui` for menus — never panned), `positional` (the f
 default `true` on the `sfx` bus) and exactly one of `params` (a synth parameter set) or `file`
 (a relative URL of a recorded sound). Issues: schema errors with paths, an unknown cue name,
 both or neither of `params` / `file`, a cue defined twice (the first wins). A cue no file binds
-is silent — `pnpm content:check` requires the shipped bank to bind all 23.
+is silent — `pnpm content:check` requires the shipped bank to bind all 25 (`OptionHunter` and `OptionStolen` joined in M2-04).
 
 The shipped bank:
 
 | Tier | Cues (instances) |
 |---|---|
 | `critical` | `PlayerDeath` (1), `ExtraLife` (1, centred), `WarningSiren` (1, centred) |
-| `high` | `EnemyExplodeLarge` (2), `BossExplode` (4), `MeterAdvance` (2), `PowerUpEquip` (1), `ShieldBreak` (1), `MegaCrash` (1, centred) |
+| `high` | `EnemyExplodeLarge` (2), `BossExplode` (4), `MeterAdvance` (2), `PowerUpEquip` (1), `ShieldBreak` (1), `MegaCrash` (1, centred), `OptionHunter` (1), `OptionStolen` (1) (M2-04) |
 | `normal` | `EnemyExplodeSmall` (3), `EnemyExplodeMedium` (3), `CapsulePickup` (2), `ShieldHit` (2), `PowerUpDenied` (1); `MenuMove`, `MenuSelect`, `MenuBack`, `PauseToggle` (1 each, `ui` bus) |
 | `low` | `PlayerShot` (2), `PlayerMissile` (2), `LaserHum` (1), `EnemyHit` (3), `Clink` (2) |
 

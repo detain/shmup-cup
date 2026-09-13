@@ -142,8 +142,10 @@ allocates. `createRankInputs(config)` builds the mutable inputs a World keeps;
 
 **The power term** (`powerRank(missile, double, laser, options, shield, reduce)`, values in
 `RANK_POWER`): Speed +0 per level, Missile +1, Double +2, Laser +3, each Option +1, a shield +4,
-Reduce +2 (defined now, used by M2-04). Flags count when positive; Double and Laser are both main
-weapons, so a ship has at most one of them.
+Reduce +2 (used since M2-04: `updateWorldRank` passes a standing Reduce as the `reduce` flag and
+**not** as `shield` — a smaller hurtbox is worth less than a barrier; every other `?` shield, pods
+included, counts +4). Flags count when positive; Double and Laser are both main weapons, so a ship
+has at most one of them.
 
 | Ship (Normal: base 2, growth 1, loop 1, stage 1) | Power | Rank |
 |---|---|---|
@@ -152,6 +154,7 @@ weapons, so a ship has at most one of them.
 | Missile + Laser + 2 Options | 6 | 8 |
 | Missile + Laser + 4 Options | 8 | 10 |
 | Missile + Laser + 4 Options + Force Field | 12 | 14 |
+| Missile + Laser + 4 Options + Reduce (M2-04) | 10 | 12 |
 | The same on Arcade (base 6) | 12 | 16 (the loop-1 cap; 18 uncapped) |
 | The same on Easy (base 0, growth 0.5) | 12 | 6 |
 
@@ -450,7 +453,9 @@ preset's, the title shows it, and a finished game is inserted into its World's t
   the `!` choices NORMAL lowers it (the Double / Laser term goes), LIFE OPTION (more Options) and
   FULL BARRIER (a shield) can raise it, SPEED DOWN leaves it (speed counts 0)
   ([meter-arsenal.md](meter-arsenal.md)).
-- **M2-04** — Reduce (`RANK_POWER.reduce`) and the front shields count in the power term.
+- **M2-04** (done) — Reduce counts +2 (`RANK_POWER.reduce`) instead of a shield's +4; the pod
+  shields (front, Free, Rotate) count +4 like the Force Field; the Option type does not matter
+  ([options-shields-hunter.md](options-shields-hunter.md#shields-coreshields)).
 - **M2-05** — Direct mode's rare 1UP items through the same lives cap.
 - **M2-10** — the campaign sets `rankInputs.loop` / `stage` (8 per loop, 1 per stage).
 - **M2-15 / M3-01** — recording the scene flow (continues included) in replays.

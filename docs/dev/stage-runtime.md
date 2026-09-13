@@ -381,6 +381,11 @@ formations, a pan, a scroll lock, the `warning` event of the example warden).
 `content/stages/test-boss.stage.json` (BOSS RANGE, M1-13) is a 1200-px open-space range: two
 capsule carriers, then a `warning` for the test boss at x 300 — `?stage=test-boss`
 ([bosses-and-warning.md](bosses-and-warning.md#the-test-boss-and-stagetest-boss)).
+`content/stages/hunter-range.stage.json` (HUNTER RANGE, M2-04) is a 3,600-px open-space range for
+the Option Hunters: capsule carriers to build up Options, the three hunters (each spawns only while
+the ship has an Option), a `blueCapsule` formation, the blue carrier, a checkpoint at 1,800, a
+second wave and two hunters at once — `?stage=hunter-range&loadout=full`
+([options-shields-hunter.md](options-shields-hunter.md#content-and-assets)).
 
 Headless:
 

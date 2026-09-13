@@ -25,11 +25,11 @@
  *     `core/config` `withDifficulty` of the host config — {@link SceneFlow.gameConfig}) and opens
  *     the weapon select, Back returns to the title menu.
  *   - {@link WeaponSelectScene} (M2-03 — after the difficulty menu): TYPE A–D or EDIT (Weapon
- *     Edit: each of the MISSILE / DOUBLE / LASER weapons), the Option type (M2-04), the `?` and `!`
- *     choices, Auto Power-Up
- *     and its ORDER ({@link AutoOrderScene}, an overlay editor), START — with a live preview (a
- *     mini World on the weapon range, drawn full screen behind the panel); START starts the game
- *     with that loadout (`core/config` `withArsenal`), Back returns to the difficulty menu.
+ *     Edit: each of the MISSILE / DOUBLE / LASER weapons), the Option type (M2-04), the `?` and
+ *     `!` choices, Auto Power-Up and its ORDER ({@link AutoOrderScene}, an overlay editor), START —
+ *     with a live preview (a mini World on the weapon range, drawn full screen behind the panel);
+ *     START starts the game with that loadout (`core/config` `withArsenal`), Back returns to the
+ *     difficulty menu.
  *   - {@link GameScene}: **owns the World** — every start (and RETRY STAGE) creates a fresh one;
  *     ticks it with the snapshot; Pause (remote Play/Pause, Back — bound to Pause in the game
  *     context) opens the pause menu; `stageClear` / `gameOver` open their screens after a short
@@ -114,9 +114,9 @@
  * {@link ContinueScene}, {@link GameOverScene}, {@link ConfirmDialog}), {@link ConfirmPurpose},
  * the weapon select's items and labels ({@link WeaponSelectItem}, {@link MEGA_CHOICE_LABELS},
  * {@link SHIELD_CHOICE_LABELS}, {@link OPTION_CHOICE_LABELS} (M2-04), {@link WEAPON_EDIT_LABEL},
- * {@link AUTO_ORDER_LABELS},
- * {@link AUTO_ORDER_ROWS}) and its preview ({@link WEAPON_RANGE_STAGE}, {@link PREVIEW_SHIP_X},
- * {@link PREVIEW_WEAVE_TICKS}, {@link PREVIEW_OPTIONS}, {@link PREVIEW_SPREAD_TICKS}),
+ * {@link AUTO_ORDER_LABELS}, {@link AUTO_ORDER_ROWS}) and its preview ({@link WEAPON_RANGE_STAGE},
+ * {@link PREVIEW_SHIP_X}, {@link PREVIEW_WEAVE_TICKS}, {@link PREVIEW_OPTIONS},
+ * {@link PREVIEW_SPREAD_TICKS}),
  * {@link InputProfileSetup}, the menu item indices ({@link TitleItem}, {@link PauseItem},
  * {@link OptionsItem} — BULLETS since M2-02 —), the Options screen's bullet palette labels
  * ({@link BULLET_PALETTE_LABELS}, M2-02) and the timing constants ({@link STAGE_CLEAR_DELAY_TICKS},
@@ -2170,11 +2170,12 @@ function presetLabel(id: string): string {
  * row (MISSILE: the shot, DOUBLE: the Double slot's weapon, LASER: the Laser slot's, otherwise
  * Laser and Double take turns every 4 s; on OPTION the Options fly the chosen type and spread /
  * retract every {@link PREVIEW_SPREAD_TICKS} ticks), the range restarts when it ends, and its
- * presentation events go to its own queue, cleared every tick (no sound). The World is created when the screen
- * opens (a transition: its fly-in is skipped there) and dropped when it closes; the flow shows its
- * view instead of the game's while this screen is visible. Ticking never allocates (the preview's
- * input, event queue and role list are reused) — except that the range's spawns create their
- * behaviour coroutines (per spawn, decision D29), so the allocation guard flies it without targets.
+ * presentation events go to its own queue, cleared every tick (no sound). The World is created
+ * when the screen opens (a transition: its fly-in is skipped there) and dropped when it closes;
+ * the flow shows its view instead of the game's while this screen is visible. Ticking never
+ * allocates (the preview's input, event queue and role list are reused) — except that the range's
+ * spawns create their behaviour coroutines (per spawn, decision D29), so the allocation guard
+ * flies it without targets.
  */
 export class WeaponSelectScene extends SceneBase {
   /** See {@link Scene.id}. */
@@ -2523,9 +2524,9 @@ export class WeaponSelectScene extends SceneBase {
    * A transition (allocates the World). Its config is the next game's
    * ({@link SceneFlow.gameConfig}) on the {@link WEAPON_RANGE_STAGE} (or free flight), with
    * autofire, remote mode, the default starting loadout, no Auto Power-Up and no Weapon Edit (the
-   * arsenal is handed over afterwards); its events go to the scene's own queue and god mode is on in
-   * its own debug flags. The fly-in is stepped through here (at most 120 ticks) and its events
-   * dropped. Does nothing while a preview exists.
+   * arsenal and, since M2-04, the Option type are handed over afterwards); its events go to the
+   * scene's own queue and god mode is on in its own debug flags. The fly-in is stepped through here
+   * (at most 120 ticks) and its events dropped. Does nothing while a preview exists.
    */
   private ensurePreview(): void {
     if (this.preview !== null) return;

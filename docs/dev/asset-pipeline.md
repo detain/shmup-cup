@@ -107,8 +107,8 @@ Each module exports `generate(): SpriteDef[]` and is registered in
 | `palettes` | M2-02 (`shmup_feat.md` §21): every bullet, beam and bend sprite again for each colour-blind palette as `<sprite>@<palette>` — 15 sprites × `deuteranopia`, `protanopia`, `tritanopia` (the names match `@shmup/core` `BULLET_PALETTES`; `standard` is the plain sprites). `BULLET_PALETTES` here maps each palette to the three families' body colours (deuteranopia `#ff8ad8` / `#3ab0ff` / `#e4e4ff`, protanopia `#ff9ce4` / `#44c4ff` / `#eeeeff`, tritanopia `#ff4870` / `#22d8cc` / `#f2f2f2` for pink / red / purple — hues apart for that colour blindness and away from the gold items and orange explosions), `CORE_MARKS` the shape coding (pink `solid`, red `ring`, purple `dot`). Same frames, same order, so directional frames and band widths still line up |
 | `explosions` | `fx/explosion-small` (16×16 × 6), `-medium` (32×32 × 7), `-large` (48×48 × 8); animation `burst` |
 | `particles` | `fx/spark` (5×5 × 3, `fade`), `fx/debris` (6×6 × 4, `tumble`), `fx/sparkle` (5×5 × 4, `twinkle` — fixed pixel lists, M1-14), `fx/ring` (9×9 × 4, `grow` — a 1-px ring of radius 1…4 by a `Math.sqrt` distance test, M1-14) |
-| `items` | `items/capsule` (12×8 × 2, `blink`); M2-02: `items/point` (5×5 × 2, `twinkle`) — the gold diamond (`|dx| + |dy| ≤ 2`, dark rim, white centre) cancelled bullets turn into; frame 1 lights its tips |
-| `shields` | `shields/force-field` (30×24 × 4 wear states: `fresh`, `worn`, `damaged`, `critical`) |
+| `items` | `items/capsule` (12×8 × 2, `blink`); M2-02: `items/point` (5×5 × 2, `twinkle`) — the gold diamond (`|dx| + |dy| ≤ 2`, dark rim, white centre) cancelled bullets turn into; frame 1 lights its tips; M2-04: `items/capsule-blue` (12×8 × 2, `blink`) — the same pill in blue with a white core (`capsule(bright, tint)`, `CAPSULE_COLORS`) |
+| `shields` | `shields/force-field` (30×24 × 4 wear states: `fresh`, `worn`, `damaged`, `critical`); M2-04: `shields/pod` (8×8 × 4 wear states, same names — a faceted orange-gold gem that dims to red and loses facets, seeded holes) and `shields/reduce` (20×14 × 2: `full`, `worn` — a dotted green ring round the shrunken ship, every 2nd / 4th ring pixel lit) |
 | `starfield` | `bg/stars-far`, `bg/stars-mid`, `bg/stars-near` — seamless 128×128 transparent tiles |
 | `backdrops` | M1-18: `bg/azure-verge` — zone A's far planet band, a 128×48 tile (`AZURE_TILE_W`, `AZURE_TILE_H`, anchored top-left) that repeats seamlessly along x: a translucent haze thickening towards a lit rim row (`AZURE_RIM_ROW` 10), then an opaque dark-azure-to-navy body with seeded cloud streaks that wrap round the tile edge. Dark and low in saturation so the pink / red / purple bullets and the gold capsules stay readable over it, never pure black |
 | `terrain` | `tiles/terrain-a` — 17 8×8 tiles (solid, floor, ceiling, walls, 45° and 22.5° slopes); every tile is also a one-frame animation named after it (`floor → [1]`, list in `TERRAIN_TILES`); collision masks and frames live in `content/tilesets/terrain-a.tileset.json` — change both together |
@@ -184,14 +184,14 @@ is simpler for the renderer.) Today the seven enemies and the four boss parts fl
 
 | Group | Sprites | Source |
 |---|---|---|
-| Player | `ships/kestrel` (16×9: `level`, `up`, `down`, from `PLACEHOLDER_SHIP`), `ships/kestrel-thruster` (6×3 × 2, `burn`, drawn behind the ship), `options/orb` (`pulse`) | pixel maps |
+| Player | `ships/kestrel` (16×9: `level`, `up`, `down`, from `PLACEHOLDER_SHIP`), `ships/kestrel-thruster` (6×3 × 2, `burn`, drawn behind the ship), `options/orb` (`pulse`), since M2-04 `options/stolen` (the grey Option a hunter carries or that drifts free, 2 frames, no `@flash`) | pixel maps |
 | Player shots | `shots/basic`, `shots/double`, `shots/laser` (a segment, anchor on its left edge), `shots/missile` (`fly`); since M2-03 the Types B–D shots `shots/bomb` (the Spread Bomb), `shots/two-way` (2 frames: climbing / diving), `shots/torpedo` (2 frames, violet), `shots/tail`, `shots/vertical`, `shots/free` (cyan darts), `shots/twin` (a green beam segment) | pixel maps; `shots/blast`, `shots/ripple`, `shots/cyclone` generated (`weapons`) |
-| Enemies | `enemies/drifter`, `turret`, `carrier-red`, `hopper`, `spinner`, `darter`, since M1-08 the ground `hatch` (20 px wide, lid closed / open), and since M1-18 zone A's `vane` (12×10, an amber swept-wing fan flier, wings beat) and `gyre` (14×14, a teal ring round a bright core, the ring turns) — 2 frames each, all with `@flash` | pixel maps |
+| Enemies | `enemies/drifter`, `turret`, `carrier-red`, `hopper`, `spinner`, `darter`, since M1-08 the ground `hatch` (20 px wide, lid closed / open), and since M1-18 zone A's `vane` (12×10, an amber swept-wing fan flier, wings beat) and `gyre` (14×14, a teal ring round a bright core, the ring turns), and since M2-04 the violet `option-hunter` and the blue `carrier-blue` — 2 frames each, all with `@flash` | pixel maps |
 | Boss parts | `bosses/core`, `shield-plate` (`intact`, `cracked`), `hull-block`, `emitter` (`idle`, `charge`), and since M1-18 HALCYON BULWARK's `bulwark-hull` (48×32), `bulwark-wing-top` / `-bottom` (56×14), `bulwark-emitter` (18×10, 2 frames — it glows) and `bulwark-plate` (6×18) — all with `@flash` | pixel maps |
-| Items | `items/capsule`, `items/point` (M2-02) (generated), `items/bonus`, `items/one-up` | both |
+| Items | `items/capsule`, `items/point` (M2-02), `items/capsule-blue` (M2-04) (generated), `items/bonus`, `items/one-up` | both |
 | HUD | `hud/meter-slot`, `hud/meter-labels` (generated), `hud/life` | both |
 | World | `bg/stars-{far,mid,near}`, `bg/azure-verge` (M1-18), `tiles/terrain-a` | generated |
-| FX / bullets / shield | explosions, spark, debris, 9 enemy bullets, 3 laser beams (M1-09), 3 bending laser segments (M2-02), `shields/force-field` | generated |
+| FX / bullets / shield | explosions, spark, debris, 9 enemy bullets, 3 laser beams (M1-09), 3 bending laser segments (M2-02), `shields/force-field`, `shields/pod` and `shields/reduce` (M2-04) | generated |
 | Colour-blind variants | M2-02: the 15 bullet / beam / bend sprites × 3 palettes as `<sprite>@<palette>` (45 sprites) | generated (`palettes`) |
 | Utility | `ui/pixel`, `ui/missing`, `ui/logo` (M1-16), `font/pixel` | generated / font |
 
@@ -444,4 +444,7 @@ when the player picks a palette ([pattern-dsl.md](pattern-dsl.md),
 [rendering-and-shell.md](rendering-and-shell.md#colour-blind-bullet-palettes)); M2-03 (done) added
 the Types B–D shots (seven pixel maps and the new `weapons` generator's `shots/blast`,
 `shots/ripple`, `shots/cyclone`) and grew `hud/meter-labels` to 16 frames — the page stays
-512×512 ([meter-arsenal.md](meter-arsenal.md#assets)).
+512×512 ([meter-arsenal.md](meter-arsenal.md#assets)); M2-04 (done) added the pixel maps
+`options/stolen`, `enemies/option-hunter` and `enemies/carrier-blue` and the generated
+`items/capsule-blue`, `shields/pod` and `shields/reduce`, which joined `ENGINE_SPRITES`
+(`ITEM_SPRITES`, `SHIELD_SPRITES`) ([options-shields-hunter.md](options-shields-hunter.md#content-and-assets)).

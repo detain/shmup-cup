@@ -681,8 +681,9 @@ function outline(list: DrawList, color: number): void {
 }
 
 /**
- * Rebuilds the outline lists from a World: with `flags.showHitboxes` the ships' hurt circles and
- * terrain boxes, enemy and boss-part hurtboxes, player-shot boxes (a laser shot spans its length),
+ * Rebuilds the outline lists from a World: with `flags.showHitboxes` the ships' hurt circles
+ * (scaled by `shield.hurtScale`, so Reduce's smaller hurtbox shows — M2-04) and terrain boxes
+ * (never scaled), enemy and boss-part hurtboxes, player-shot boxes (a laser shot spans its length),
  * bullet circles, item radii and active laser capsules (17 squares along each beam); with
  * `flags.showGrid` the broad-phase grid's cell lines. Clears every list first; never allocates.
  *

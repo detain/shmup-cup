@@ -842,3 +842,9 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
   select's live preview as well as the game's); the renderer binds the preview's view like any
   new World view; the new shot sprites and `shots/blast` (an engine sprite) need no renderer change
   ([meter-arsenal.md](meter-arsenal.md#the-live-preview)).
+- **M2-04** (done) — no renderer change: the Options Option Hunters carry are one more batch
+  (`enemies.carriedBatch`, on `AIR_ENEMIES`, now **last** in the World's list), the shield pods
+  are sprites of the existing shield batch, and the new engine sprites (`options/stolen`,
+  `items/capsule-blue`, `shields/pod`, `shields/reduce`) bind like any other; the debug overlay's
+  hurt outline follows Reduce's `hurtScale` (`buildDebugOutlines`)
+  ([options-shields-hunter.md](options-shields-hunter.md)).

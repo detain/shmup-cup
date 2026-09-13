@@ -7,7 +7,11 @@ the `PowerUp` action (remote OK), the optional **Auto Power-Up**, the 32-slot st
 (the `!` slot), and the **Force Field** of `core/shields` that lives on every ship and takes hits
 inside `playerHit`. Built in plan step **M1-11**; plan step **M2-03** added the **`!` choices**
 (Mega Crash, NORMAL, SPEED DOWN, LIFE OPTION, FULL BARRIER), the **`?` choice** and the meter
-equipping the session's weapon type — the step's own page is [meter-arsenal.md](meter-arsenal.md).
+equipping the session's weapon type — the step's own page is [meter-arsenal.md](meter-arsenal.md);
+plan step **M2-04** added the other `?` shields (the front Shield, Free Shield and Rotate Shield
+pods, Reduce), the rare **blue capsule** and the **freed Options** an Option Hunter lets go of —
+[options-shields-hunter.md](options-shields-hunter.md). This page keeps the Force Field as the
+worked example of a shield.
 
 This page is the *how and why*. Exact signatures are in
 [api-reference.md](api-reference.md#powerups--power-meter-capsules-mega-crash-partial-meter-mode);
@@ -66,7 +70,7 @@ validated by `resolveGameConfig`:
 | `autoPowerUpOrder` | `DEFAULT_AUTO_POWER_UP_ORDER` | `speed, missile, laser, option ×4, shield` — 0 to `MAX_AUTO_POWER_UP_ORDER` (32) `MeterSlotName`s; anything else throws `RangeError`; the resolved config holds a frozen copy |
 | `pickupMagnet` | `true` (D33) | Items near an alive ship drift into it |
 | `megaChoice` | `'megaCrash'` | What `!` does (M2-03): `megaCrash`, `normal`, `speedDown`, `lifeOption`, `fullBarrier` |
-| `shieldChoice` | `'forceField'` | What `?` grants (M2-03): `forceField` only until M2-04 |
+| `shieldChoice` | `'forceField'` | What `?` grants (M2-03): `forceField`, and since M2-04 `shield`, `freeShield`, `rotateShield`, `reduce` ([options-shields-hunter.md](options-shields-hunter.md#shields-coreshields)) |
 
 The slot **names** (`MeterSlotName`, `METER_SLOT_NAMES`: `speed missile double laser option
 shield mega` — `?` = `shield`, `!` = `mega`) live in `core/config`, so the config never imports
@@ -89,7 +93,7 @@ unboxed small integer). `cursor` is `-1` (nothing highlighted) or a `MeterSlot`:
 | 2 | `Double` | `loadout.main = MainWeapon.Double` (the Laser is gone) — the arsenal's Double-role weapon | the Double is already the main weapon |
 | 3 | `Laser` | `loadout.main = MainWeapon.Laser` (the Double is gone) — the arsenal's Laser-role weapon | the Laser is already the main weapon |
 | 4 | `Option` | `loadout.options + 1` | `MAX_OPTIONS` (4) |
-| 5 | `Shield` (`?`) | a fresh `?` shield (`grantShield(choices.shield)` — the Force Field until M2-04) | a shield is up |
+| 5 | `Shield` (`?`) | a fresh `?` shield (`grantShield(choices.shield, heading)`); a Free Shield on a standing Free Shield adds a pod pair at the player's last 8-way direction instead (M2-04) | a shield is up (`canGrantShield` — a Free Shield stays equippable while a pair fits or a pod is worn) |
 | 6 | `Mega` (`!`) | the `!` choice: Mega Crash arms a detonation (below); NORMAL, SPEED DOWN, LIFE OPTION and FULL BARRIER act at once (M2-03 — [meter-arsenal.md](meter-arsenal.md#the--and--choices-corepowerups)) | Mega Crash never; NORMAL on the basic shot, SPEED DOWN at level 0, LIFE OPTION without a spare ship or room, FULL BARRIER at full strength |
 
 Which *weapon* a MISSILE / DOUBLE / LASER slot switches on is the session's arsenal (`core/weapons`
@@ -157,14 +161,21 @@ Fields (`ITEM_SCHEMA`, hashed in sorted name order):
 |---|---|---|
 | `x`, `y` | f64 | World centre |
 | `vx`, `vy` | f64 | Own velocity (0 for capsules: they stay with the terrain) |
-| `kind` | u8 | `ItemKind` (`Capsule` 0 — hashed: append, never renumber) |
+| `kind` | u8 | `ItemKind` (`Capsule` 0, M2-04: `BlueCapsule` 1, `FreeOption` 2 — hashed: append, never renumber) |
 | `age` | i32 | Ticks since the drop |
 | `flags` | u8 | `ItemFlag`: `Dead` 1 (collected / culled this tick, freed in phase 8), `Magnet` 2 (pulled this tick) |
 
 Kinds come from a built-in table, `ITEM_KINDS` (Direct-mode items bring data in M2-05): the
 capsule draws `items/capsule` (`CAPSULE_SPRITE`, an **engine sprite** — `ITEM_SPRITES` is part of
 `ENGINE_SPRITES`) with a two-frame blink every `ITEM_BLINK_TICKS` (8) ticks from the World tick
-(all capsules blink together), and is worth `CAPSULE_SCORE` (300).
+(all capsules blink together), and is worth `CAPSULE_SCORE` (300). Since M2-04 the **blue
+capsule** (`items/capsule-blue`, 300 points, from `drop: "blueCapsule"` enemies and formations —
+`DropKind.BlueCapsule`) behaves like a capsule but, collected, runs `clearScreen` (every enemy on
+screen dies — no bullet cancel, no meter advance) instead of `collect`; the **freed Option**
+(`options/stolen`, 0 points, from `DropKind.FreeOption` — one per Option a dead Option Hunter
+carried) drifts with the view, bounces off the playfield's top and bottom, expires after
+`FREE_OPTION_TICKS` (600, blinking the last 120) and gives an Option back (`regainOption`) —
+[options-shields-hunter.md](options-shields-hunter.md#the-option-hunter-coreenemies-corebehaviors).
 
 - **Where capsules come from.** The enemy system records every drop of the tick in
   `EnemySystem.outcomes` (`drop: "capsule"` carriers where they die; a formation whose members
@@ -231,12 +242,23 @@ on the tick of the hit that started them: a hit on tick `t` (phase 6) blocks the
 `t + 1 … t + 8`. `resolve()` then pushes the events of a hit on this tick: `SFX ShieldHit`, or on
 a break `SFX ShieldBreak` + `Particles FX_CUES.ShieldBreak` (param 1). Blocked hits push nothing.
 
-**Granting and clearing.** The `?` slot, the `!` choice FULL BARRIER and
-`applyLoadoutPreset(…, 'full', shield)` call `grantShield(state, spec)` with the session's `?`
-spec (`shieldSpecOf(config.shieldChoice)` — `FORCE_FIELD` until M2-04; M2-03): full hits, **i-frames reset to 0**, replacing whatever
-was there. `clearShield` removes it without a break (the `'default'` loadout; every death
-penalty since M1-12). `shieldActive(state)` = a kind other than `None` with hits left — while it is true the
-`?` slot is greyed.
+**Granting and clearing.** The `?` slot and `applyLoadoutPreset(…, 'full', shield)` call
+`grantShield(state, spec, heading)` with the session's `?` spec (`shieldSpecOf(config.shieldChoice)`,
+M2-03): full hits, **i-frames reset to 0**, replacing whatever was there (a Free Shield on a Free
+Shield adds a pair instead — M2-04). The `!` choice FULL BARRIER calls `refillShield` (M2-04):
+the same kind standing gets every hit back in place, anything else a fresh one. `clearShield` removes it without a break (the `'default'` loadout; every death
+penalty since M1-12). `shieldActive(state)` = a kind other than `None` with hits left — while it
+is true the `?` slot is greyed (`canGrantShield`, which keeps a worn or unfinished Free Shield
+equippable — M2-04).
+
+**The other `?` shields (M2-04).** Reduce is a field like the Force Field (2 hits) that also
+shrinks the ship's hurt radius — `hurtScale` ⅓ → ⅔ → 1, the terrain box unchanged. The front
+Shield, Free Shield and Rotate Shield are **pods**: `absorbShieldHit` returns `None` while they
+stand (they never cover the ship), and `core/bullets` / `core/enemies` test each pod
+(`absorbPodHit`) against the bullets and bodies that touch it; each pod has 14 hits and its own
+i-frames; this system places them in phase 2 (`placeShieldPods`, after the equip) and spins the
+Rotate Shield in `tickShield`. The whole story is
+[options-shields-hunter.md](options-shields-hunter.md#shields-coreshields).
 
 **Drawing.** `sync()` puts one sprite per active, not-`dying` / `dead` ship with a shield into
 `shieldBatch` (`LayerId.Player`, listed after the ships' batch, so it draws over the ship) at the
@@ -295,7 +317,9 @@ is never touched (it detonates on that tick). The whole death sequence is
 | Equip | `Sfx PowerUpEquip` (11) + `SimEventKind.PowerUp` (8: `id` = the `MeterSlot`, `param` = the player) — for callouts and the HUD flash |
 | Denied press | `Sfx PowerUpDenied` (22, new) |
 | Shield hit that cost a point | `Sfx ShieldHit` (12) |
-| Break | `Sfx ShieldBreak` (13) + `Particles` `FX_CUES.ShieldBreak` (4, new), param 1 |
+| Break | `Sfx ShieldBreak` (13) + `Particles` `FX_CUES.ShieldBreak` (4, new), param 1 — since M2-04 also when one shield pod breaks |
+| Blue capsule collected (M2-04) | `Flash` (`FlashKind.MegaCrash`) + `Sfx MegaCrash` at the collector — plus the enemies' explosions |
+| Freed Option collected (M2-04) | `Sfx PowerUpEquip` + `SimEventKind.PowerUp` (`id` = `MeterSlot.Option`), or only `Sfx MeterAdvance` with four Options |
 | Mega Crash | `Flash` (`id` = `FlashKind.MegaCrash` 0, param 12, at 0, 0 — through `core/fx` `requestFlash` since M1-12) + `Sfx MegaCrash` (15) — plus the cancel sparkles and the enemies' explosions |
 
 Since M1-14 the renderer draws the shield break's `shield.break` sparks, the Mega Crash flash
@@ -310,7 +334,8 @@ popup (it would cover the ship). Since M1-15 the events are heard (`MeterAdvance
 ## Determinism, restarts and hashing
 
 `hashWorld` covers the `items` pool (a registered pool) and, after the weapons, `mixPowerUps`: per
-player the meter `cursor`, `megaPending` and every `ShieldState` field, then `dropsTaken`. Not
+player the meter `cursor`, `megaPending` and every `ShieldState` field (since M2-04 also
+`hurtScale` and the pods), then `dropsTaken`. Not
 hashed: the pickup outcomes (rebuilt every phase 6), the compiled Auto Power-Up order and the
 sprite / score tables (derived from config and content) and the batches. A checkpoint restart
 (`stage.restartAt` → the World's `clear` hook) empties the item pool (`pools.clearAll()`) and
@@ -372,11 +397,11 @@ powerups.detonateMegaCrash(0); // debug: clear the screen now
 
 | To add… | Do this |
 |---|---|
-| An item kind (Direct mode, M2-05) | Append an `ItemKind` code (hashed) and an `ITEM_KINDS` entry (sprite, frames, score) — `ITEM_SPRITES` and `ENGINE_SPRITES` follow; its art in `scripts/assets/procedural/`; what it does in `resolve()` (today only capsules call `collect`) |
+| An item kind (Direct mode, M2-05) | Append an `ItemKind` code (hashed) and an `ITEM_KINDS` entry (sprite, frames, score) — `ITEM_SPRITES` and `ENGINE_SPRITES` follow; its art in `scripts/assets/procedural/`; what it does in `resolve()`'s pickup switch (capsules `collect`, blue capsules `clearScreen`, freed Options `regainOption` — M2-04) and, if it moves, in `update()` |
 | A drop kind | `DropKind` in `core/enemies` (M1-08), then map it in `takeDrops` |
 | A meter slot rule | `canEquipSlot` / `equipSlot`, the matching `nextAutoSlot` rule, `METER_LABELS` and the `hud/meter-labels` art (`core/ui` `METER_LABEL_FRAMES`); a new slot also needs `METER_SLOT_NAMES` / `MeterSlotName` in `core/config` |
 | A `!` choice | `MegaChoice` / `MEGA_CHOICES` in `core/config` and `MegaEffect` here (same order), its rule in `canEquipMega` and its effect in `applyMega`, a label in `core/scenes` `MEGA_CHOICE_LABELS` ([meter-arsenal.md](meter-arsenal.md#extending-it)) |
-| A shield kind (pods, Free / Rotate Shield, Reduce — M2-04; Arm tiers — M2-05) | Append a `ShieldKind` code and name, a `ShieldSpec` in `SHIELD_SPECS` (`absorbsTerrain: true` for the Arm tiers), its sprite in `ENGINE_SPRITES`, grant it from its slot; keep `absorbShieldHit` allocation-free and hash any new state in `mixPowerUps` |
+| A shield kind (Arm tiers — M2-05) | Append a `ShieldKind` code and name, a `ShieldSpec` in `SHIELD_SPECS` (`absorbsTerrain: true` for the Arm tiers; `pods` / `hurtSteps` as the M2-04 kinds show), its sprite in `SHIELD_SPRITES`, grant it from its slot; keep `absorbShieldHit` / `absorbPodHit` allocation-free and hash any new state in `mixPowerUps` — [options-shields-hunter.md](options-shields-hunter.md#extending-it) |
 | Something that reacts to pickups (like `core/scoring`, M1-12) | Read `world.powerups.outcomes` (`pickupCount`, `pickupPlayer`, `pickupScore`, …) after `powerups.resolve()` in phase 7 — reset in phase 6 |
 | Something the HUD meter shows | `core/ui` `buildHud` draws `meters[0].cursor` (flashing every `HUD_METER_FLASH_TICKS`) and greys the slots missing from `equippable(0)`; add any new state it depends on to `Hud.update`'s comparison ([scenes-and-ui.md](scenes-and-ui.md#the-hud)) |
 | An enemy Mega Crash spares | `"megaCrashImmune": true` in its `content/enemies/` entry |
@@ -388,7 +413,8 @@ powerups.detonateMegaCrash(0); // debug: clear the screen now
 | `packages/core/test/powerups/powerups.test.ts` | The plan's acceptance: wrap and maxed rules, Double / Laser exclusivity, equip only on the pressed edge, the Auto Power-Up order, rapid successive pickups each advancing, the magnet, capsules from carriers and formations, the Force Field in the World (hits, i-frames, no terrain absorption, break events), Mega Crash (bullets, enemies, immunity, flash, credit), lockstep hashes |
 | `packages/core/test/powerups/powerups-edge.test.ts` | Out-of-range and `NaN` cursors, bad player indices and item kinds, a full pool, who may press, whole-pixel events, co-op presses and two Mega Crashes on one tick, order corners (repeats, Laser-then-Double, `mega` in the order, entries past a maximum), culling while scrolling, `NaN` items, the blink, the magnet's reach / snap / nearest ship, pickup ties, non-cancelable bullets, ghosts, a formation wiped out by Mega Crash, break and re-grant on one tick, restarts |
 | `packages/core/test/powerups/powerups-alloc*.test.ts` | The allocation guards above (own workers) |
-| `packages/core/test/shields/` | The hit counter, i-frames (never below 0, not on the hit's tick), the break, terrain, wear frames in and out of range, what grant / clear keep, `playerHit` with the shield in every ship state |
+| `packages/core/test/shields/` | The hit counter, i-frames (never below 0, not on the hit's tick), the break, terrain, wear frames in and out of range, what grant / clear keep, `playerHit` with the shield in every ship state; since M2-04 the pods, Free Shield pairs, the Rotate spin, Reduce and FULL BARRIER (`shields-pods`, `shields-variants-edge`, `shields-world*`, `shields-alloc` — [options-shields-hunter.md](options-shields-hunter.md#tests)) |
+| `packages/core/test/powerups/powerups-m204-edge.test.ts` | M2-04: blue capsules and freed Options in the item pool (drift, bounce, expiry, pickup by either player, `regainOption` at four) |
 | `packages/core/test/config/`, `debug/`, `events/`, `player/`, `weapons/`, `world/`, `packages/shell/test/flight/` | `powerUpMode` / `autoPowerUpOrder` validation and defaults; the power-ups in `hashWorld`; the new event codes; the `shield` field; the `'full'` loadout's Force Field; the World's and the flight scene's batch lists |
 | `test/integration/powerups-runtime.test.ts` | The shipped `test-range`: formation kill → capsule → one OK press equips Speed (input only); a carrier's capsule drawn as `items/capsule`; Auto Power-Up growing the loadout without a button; Mega Crash mid-stage; a capsule-hunting bot within every bound, lockstep hashes |
 | `test/integration/powerups-remote.test.ts` | Real `keydown` / `keyup` through `@shmup/input-web` and the `tizen-remote-safe` profile: one equip per OK press (auto-repeat and fake release pairs never re-equip), OK while an arrow is held keeps the ship moving, a denied press, replay to the same hash |
@@ -410,7 +436,9 @@ powerups.detonateMegaCrash(0); // debug: clear the screen now
 | `loadout.shield` does not exist | Moved to the ship in M1-11: `ship.shield.hits` |
 | Re-granting right after a break loses the free ticks | `grantShield` resets `iFrames` to 0 (a fresh shield) |
 | Mega Crash killed an enemy that had not appeared yet | It kills every live enemy, on screen or not (except `megaCrashImmune`) |
-| Code picking a batch from `view.batches` by index broke | M1-11 appended the shields and the items after the enemy bullets: ground enemies, air enemies, shots, Options, ships, enemy bullets, shields, items (earlier indices unchanged) |
+| Code picking a batch from `view.batches` by index broke | M1-11 appended the shields and the items after the enemy bullets: ground enemies, air enemies, shots, Options, ships, enemy bullets, shields, items (earlier indices unchanged); M2-02 / M1-13 / M2-04 appended the point items, the boss and the Options Option Hunters carry |
+| `?` is not greyed with a Free Shield up | By design (M2-04): it adds a pair while one fits, then replaces the most worn pair while any pod is worn |
+| Bullets reach the ship through a pod shield | Pods stop only what touches them and never cover the ship (M2-04) — the Force Field and Reduce do |
 | Capsules or the Force Field simulate but are invisible | The content was loaded without `extraSprites: ENGINE_SPRITES` (`items/capsule` and `shields/force-field` are engine sprites); the shell passes it by default |
 | The allocation guard creeps up after a change here | A fractional argument to a non-inlined call (events, helpers), a closure or literal in `update` / `collide` / `resolve` / `sync`, or hot work moved into the cold press / pickup paths |
 
@@ -431,5 +459,7 @@ powerups.detonateMegaCrash(0); // debug: clear the screen now
 - **M2-03** (done) — the `!` choices and the `?` choice (`MeterChoices`), the meter equipping
   the session's weapon type, the weapon select setting them with Auto Power-Up and its order
   ([meter-arsenal.md](meter-arsenal.md)).
-- **M2-04** — the other meter shields (they join `SHIELD_CHOICES`) and the Option Hunter;
-  **M2-05** — Direct mode's items and the Arm tiers.
+- **M2-04** (done) — the other meter shields (pods, Reduce), `refillShield` for FULL BARRIER, the
+  blue capsule and the freed Options of the Option Hunter
+  ([options-shields-hunter.md](options-shields-hunter.md)).
+- **M2-05** — Direct mode's items and the Arm tiers.

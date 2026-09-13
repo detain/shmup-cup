@@ -386,5 +386,11 @@ in the right half of the playfield, with no console errors or atlas warnings.
   Types B–D weapons (`zone-a-type-b`, `-type-c`, `-type-d`, `zone-a-edit`); the Ripple's ring
   hitbox exists because its box could not get past HB-01's fringe armour; the weapon select plays
   in front of every zone A game (one more OK) ([meter-arsenal.md](meter-arsenal.md)).
+- **M2-04** (done) — **zone A's content is unchanged**: its 4-way rules and bot budgets were tuned
+  without Option Hunters, so none is placed here (they fly in the `hunter-range` dev stage; the
+  zones of M2-11 … M2-14 place them). The new enemies file shifts zone A's enemy spec indices, so
+  the golden replays were re-blessed (outcomes unchanged), and four more runs fly zone A with the
+  Option types and meter shields (`zone-a-rotate`, `-reduce`, `-snake`, `-free-shield`)
+  ([options-shields-hunter.md](options-shields-hunter.md)).
 - **M2-10 / M2-11 … M2-14** — the zone map picks stages (replacing `DEFAULT_STAGE_ID`); the other
   zones, each with a playtest run and its own design-rule checks.

@@ -212,7 +212,9 @@ player's). Details: [weapons-and-options.md](weapons-and-options.md#hits-phases-
 **Contact.** `collidePlayers()` tests each active, `alive` ship's hurt circle against every
 target part's box (closed: touching counts; brute force over ≤ 16 parts) during the intro **and**
 the fight and calls `playerHit(ship, Contact, …)` — at most one accepted hit per ship and tick. A
-dying boss touches nobody.
+dying boss touches nobody. Since M2-04 the circle is `hurtRadius × ship.shield.hurtScale` (Reduce
+shrinks it); shield pods do not stop boss parts
+([options-shields-hunter.md](options-shields-hunter.md#shields-coreshields)).
 
 ### Phases
 

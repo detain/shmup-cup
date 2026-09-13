@@ -186,6 +186,13 @@ ES5 and linted with `ecmaVersion: 5`.
   existing list (`WeaponSystem.setArsenal`), never rebuilt; and a screen that runs a private World
   (the live preview) gives it its own event queue and debug flags and reuses one input snapshot
   ([meter-arsenal.md](meter-arsenal.md#zero-allocation-and-the-hot-path-rules)).
+  And from M2-04: a small hot method that other code calls every tick (`OptionGroup.follow`) must
+  stay small enough for V8 to inline — adding the Snake / Formation / Rotate placement inline made
+  it too big, V8 stopped inlining it and a fractional argument was boxed on every call; move the
+  new branches into a separate method (`place()`) and keep only the common path inline. A
+  fraction derived from state (the spread `t`) is computed inside the method that uses it, never
+  passed
+  ([options-shields-hunter.md](options-shields-hunter.md#zero-allocation-and-the-hot-path-rules)).
 - Behaviour coroutines (generators, D29) allocate a small result object on every resume:
   scripts **sleep** (`yield ticks`) and are resumed only when they wake; per-tick motion
   belongs in a mover (numbers on the body), never in a `yield 1` loop.

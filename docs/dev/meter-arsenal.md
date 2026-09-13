@@ -62,12 +62,14 @@ headers:
 | `weaponPreset` | `'type-a'` | A `content/weapons/` preset id; a content without it falls back to its first preset | a non-empty string (whether the content has it is `core/weapons`' business) |
 | `weaponEdit` | `null` | Weapon Edit: `{ missile, double, laser }` weapon ids replacing the preset's for those three slots (the main shot stays the preset's) | `null` (an explicit `undefined` counts as `null`) or an object whose three fields are non-empty strings — the result holds a frozen copy with exactly those fields; `createWorld` then throws `RangeError` for an id the content lacks or a weapon of another slot, checking `missile`, `double`, `laser` in that order |
 | `megaChoice` | `'megaCrash'` | What the `!` slot does (`MegaChoice`, `MEGA_CHOICES` in menu order) | one of `megaCrash normal speedDown lifeOption fullBarrier` |
-| `shieldChoice` | `'forceField'` | What the `?` slot grants (`ShieldChoice`, `SHIELD_CHOICES`) | `forceField` only — M2-04 appends the front pods, Free / Rotate Shield and Reduce |
+| `shieldChoice` | `'forceField'` | What the `?` slot grants (`ShieldChoice`, `SHIELD_CHOICES`) | one of `forceField shield freeShield rotateShield reduce` (the last four since M2-04 — [options-shields-hunter.md](options-shields-hunter.md#shields-coreshields)) |
+| `optionChoice` (M2-04) | `'trail'` | How the Options fly (`OptionChoice`, `OPTION_CHOICES`) | one of `trail snake formation rotate` ([options-shields-hunter.md](options-shields-hunter.md#option-types-coreoptions)) |
 
 `WEAPON_EDIT_SLOTS` (`missile, double, laser`) is the meter order of a Weapon Edit.
 
 **The weapon select's choice.** `ArsenalChoice` is `Partial<Pick<GameConfig, 'weaponPreset' |
-'weaponEdit' | 'megaChoice' | 'shieldChoice' | 'autoPowerUp' | 'autoPowerUpOrder'>>`:
+'weaponEdit' | 'megaChoice' | 'shieldChoice' | 'optionChoice' | 'autoPowerUp' |
+'autoPowerUpOrder'>>` (`optionChoice` since M2-04):
 
 - `withArsenal(config, choice)` → a frozen, validated config with those fields set; a field the
   choice leaves `undefined` keeps the config's value (`weaponEdit: null` *clears* an edit). Every
@@ -201,10 +203,11 @@ and the ship argument is now a `MeterShip` (`speedLevel`, `shield`, optional `li
 | `normal` (1) | `loadout.main` = the basic shot (Missile and Options stay) | the basic shot is current |
 | `speedDown` (2) | `speedLevel − 1` | speed level 0 |
 | `lifeOption` (3) | `lifeOptionCount(ship, loadout)` = `min(lives − 1, 4 − options)` spare ships become Options (`lives` drops by as many) | no spare ship, or four Options |
-| `fullBarrier` (4) | a fresh `?` shield (full hits, i-frames reset) — also over a worn one, or after a break | the shield is up at full strength |
+| `fullBarrier` (4) | a fresh `?` shield (full hits, i-frames reset) — also over a worn one, or after a break; since M2-04 `refillShield`: the same kind standing gets every hit back **in place** (every pod slot, broken pods included) | the shield is up at full strength |
 
 `?` grants `choices.shield` instead of the hard-wired Force Field (so does a `'full'` starting
-loadout, at creation and on a continue); the shield batch draws that spec's sprite and wear frames.
+loadout, at creation and on a continue); the shield batch draws that spec's sprite and wear frames
+— since M2-04 one sprite per standing pod for the pod shields.
 **Auto Power-Up** treats a `mega` entry as before (never "satisfied"), so it applies the `!` choice
 whenever a capsule lands the cursor on `!` and the choice can act; a greyed choice parks the
 cursor there like any greyed slot. **Parking** needed nothing new: with AUTO off (the default) the
@@ -231,11 +234,15 @@ left (184×192 from x 4, y 12) and the live preview behind it.
 |---|---|---|
 | TYPE (0) | `TYPE A` … `TYPE D` (each preset id upper-cased, `-` → space), then `EDIT` | `EDIT` is offered only when every Missile / Double / Laser slot has a weapon; a content without presets shows `DEFAULT` |
 | MISSILE / DOUBLE / LASER (1–3) | the slot's weapons by `weaponLabel` (`SPREAD BOMB` …) | **disabled** unless TYPE is `EDIT`; they show the type's weapons, and entering EDIT starts from the last type's |
-| `? SLOT` (4) | `SHIELD_CHOICE_LABELS`: `FORCE FIELD` | |
-| `! SLOT` (5) | `MEGA_CHOICE_LABELS`: `MEGA CRASH`, `NORMAL`, `SPEED DOWN`, `LIFE OPTION`, `FULL BARRIER` | |
-| AUTO (6) | `ON` / `OFF` (a `Toggle`) | Auto Power-Up |
-| ORDER (7) | the order in one-letter codes (`S M D L O ? !`, `+` past eight entries, `NONE` when empty) | OK opens the order editor |
-| START (8) | — | OK starts the game |
+| OPTION (4, M2-04) | `OPTION_CHOICE_LABELS`: `TRAIL`, `SNAKE`, `FORMATION`, `ROTATE` | the preview flies the chosen type; while focused it spreads / retracts every `PREVIEW_SPREAD_TICKS` (90) |
+| `? SLOT` (5) | `SHIELD_CHOICE_LABELS`: `FORCE FIELD`, and since M2-04 `SHIELD`, `FREE SHIELD`, `ROTATE`, `REDUCE` | |
+| `! SLOT` (6) | `MEGA_CHOICE_LABELS`: `MEGA CRASH`, `NORMAL`, `SPEED DOWN`, `LIFE OPTION`, `FULL BARRIER` | |
+| AUTO (7) | `ON` / `OFF` (a `Toggle`) | Auto Power-Up |
+| ORDER (8) | the order in one-letter codes (`S M D L O ? !`, `+` past eight entries, `NONE` when empty) | OK opens the order editor |
+| START (9) | — | OK starts the game |
+
+The row codes above are M2-04's: the OPTION row moved `?` … START up by one (they were 4–8 in
+M2-03) — address rows by `WeaponSelectItem` name, never by number.
 
 - **Input.** Up / Down move (the disabled rows are skipped), Left / Right — or OK — change the
   focused value; OK on ORDER / START acts; Back pops to the difficulty menu (which re-locks its
@@ -386,7 +393,8 @@ resolveArsenal(db, edited)[WeaponRole.Missile]?.name; // → 'PHOTON TORPEDO'
 | A preset (Type E …) | A `presets` entry in a weapons file; the weapon select lists it in content order (file path, then entry order) and labels it from its id |
 | A weapon behaviour | Append a `ShotKind` (hashed — never renumber), `WEAPON_BEHAVIOR_KINDS` / `_PARAMS` / `_SLOTS` / `_LABELS` entries, new tunables as `RoleTables` arrays reset in `compileRoles`, its motion as a branch of `update()`, its spawning in `emit` / `fireRole` and its hit rule in `visit` / `applyHits`; a HUD label frame in `METER_LABEL_FRAMES` **and** `procedural/hud.mjs` `METER_LABELS` (same order), its sprite; extend `weapons-arsenal*.test.ts`, the arsenal runtime test and a golden scenario |
 | A `!` choice | Append to `MegaChoice` / `MEGA_CHOICES` (config) and `MegaEffect` (same order), its rule in `canEquipMega` and effect in `applyMega`, a label in `MEGA_CHOICE_LABELS`; re-bless if a default changes |
-| A `?` shield (M2-04) | Append to `ShieldChoice` / `SHIELD_CHOICES`, a spec in `SHIELD_CHOICE_SPECS` (`core/shields`), a label in `SHIELD_CHOICE_LABELS`; the weapon select and the meter pick it up |
+| A `?` shield | Append to `ShieldChoice` / `SHIELD_CHOICES`, a spec in `SHIELD_CHOICE_SPECS` (`core/shields`), a label in `SHIELD_CHOICE_LABELS`; the weapon select and the meter pick it up — the M2-04 shields show the rest ([options-shields-hunter.md](options-shields-hunter.md#extending-it)) |
+| An Option type | Append to `OptionChoice` / `OPTION_CHOICES`, `OptionMode`, a label in `OPTION_CHOICE_LABELS` and the placement in `OptionGroup.place()` ([options-shields-hunter.md](options-shields-hunter.md#extending-it)) |
 | A weapon select row | A `WeaponSelectItem` code (START stays last — the screen opens on it), the widget in the constructor's menu, what it sets in `arsenal()` (and `ArsenalChoice` / `withArsenal` / `arsenalMatches` if it is a new config field); mind the 160 string slots |
 | Another preview behaviour | `stepPreview()` — keep it allocation-free and silent (its own queue) |
 
@@ -427,8 +435,9 @@ resolveArsenal(db, edited)[WeaponRole.Missile]?.name; // → 'PHOTON TORPEDO'
 
 ## Next steps that build on this page
 
-- **M2-04** — the other `?` shields (front pods, Free / Rotate Shield, Reduce) join
-  `SHIELD_CHOICES` and the weapon select's `? SLOT`; the Snake / Formation / Rotate Options.
+- **M2-04** (done) — the other `?` shields (front pods, Free / Rotate Shield, Reduce) joined
+  `SHIELD_CHOICES` and the weapon select's `? SLOT`; the Snake / Formation / Rotate Options got
+  the new OPTION row (`optionChoice`) — [options-shields-hunter.md](options-shields-hunter.md).
 - **M2-05** — Direct mode's weapon families (the `weapons` module's other half) and the ship select.
 - **M2-06** — two players share the session's arsenal; the P2 meter in the HUD.
 - **M2-16** — the loadout and the Auto Power-Up order saved with the game options.

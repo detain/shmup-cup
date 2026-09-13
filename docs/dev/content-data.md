@@ -187,7 +187,7 @@ M2-02) a `pattern`. `loadContent` itself does not
 know the registry; the shell's `loadGameContent` and `pnpm content:check` append these issues.
 
 **Defaults filled at load.** An `enemies` entry may omit `anim`, `params`, `mover`, `ground`,
-`settleTicks`, `explosion`, `megaCrashImmune`, `child` and `pattern`; the loader fills them in
+`settleTicks`, `explosion`, `megaCrashImmune`, `optionHunter` (M2-04), `child` and `pattern`; the loader fills them in
 (`completeEnemy`), so every `EnemySpec` has every field in the same order. **Baked at load.**
 Every `paths` entry gets a `table` — its centripetal Catmull-Rom spline resampled at 1-px arc
 length (`bakePath`); a path with coincident neighbours or longer than 16,384 px is an issue and
@@ -420,4 +420,11 @@ an optional `name` (`s.str({ maxLength: 16, pattern: /^[A-Z0-9 .-]+$/ })` — th
 label), `content/weapons/types-b-d.weapons.json` holds the Types B–D weapons and presets (named so
 it sorts after `type-a…`: the weapon select lists presets in content order), and the weapon
 select's range is content too — `content/stages/weapon-range.stage.json` with its harmless
-targets in `content/enemies/weapon-range.enemies.json` ([meter-arsenal.md](meter-arsenal.md)).
+targets in `content/enemies/weapon-range.enemies.json` ([meter-arsenal.md](meter-arsenal.md));
+M2-04 (done) — the enemy field `optionHunter` (a boolean, default `false`, boss entries `false`),
+the drop `blueCapsule` (`ENEMY_DROPS`, for an enemy's `drop` and a formation event's `drop`),
+`content/enemies/option-hunters.enemies.json` (the three Option Hunters), `carrier-blue` in
+`test-range.enemies.json` and the dev stage `content/stages/hunter-range.stage.json`
+([options-shields-hunter.md](options-shields-hunter.md#content-and-assets)). Enemy spec indices
+follow the files' sorted paths, so a new enemies file that sorts before `zone-a…` shifts zone A's
+indices — they are hashed, and the golden replays were re-blessed for it.

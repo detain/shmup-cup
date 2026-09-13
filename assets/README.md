@@ -25,7 +25,8 @@ assets/source/fonts/*.font.json ────────┘                     
   `sprites/` (`ships/kestrel.sprite.json` → `ships/kestrel`). Format:
   [`scripts/assets/sprite-source.mjs`](../scripts/assets/sprite-source.mjs).
 - **Procedural generators** — seeded, engine-independent code for explosions, sparks,
-  debris, enemy bullets, the capsule, the Force Field wear states, star layers, the 8×8
+  debris, enemy bullets, the capsule (and the blue capsule, M2-04), the Force Field wear states,
+the shield pod's wear states and Reduce's shimmer (`shields`, M2-04), star layers, the 8×8
   terrain tileset, HUD meter pieces (the meter labels, with the Types B–D weapon names since
   M2-03), the Types B–D weapons' Spread Bomb blast, Ripple ring and Cyclone Laser segment
   (`weapons`, M2-03), the title logo `ui/logo` (original block letters),

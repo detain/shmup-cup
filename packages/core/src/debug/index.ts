@@ -32,8 +32,9 @@
  * Crash and shield — kind, hits, max hits, i-frames, terrain flag, hit and break ticks, absorbed
  * count; since M2-04 the hurt scale and the pods: count, hits each, orbit, spin and every slot's
  * hits, angle, i-frames and hit tick — and the count of enemy drops already turned into items;
- * the items themselves are a registered pool), then the effect timers and scores (M1-12: shake magnitude, ticks, duration and
- * request tick, flash ticks, kind and request tick, every player's score — with its next extend
+ * the items themselves are a registered pool), then the effect timers and scores (M1-12: shake
+ * magnitude, ticks, duration and request tick, flash ticks, kind and request tick, every player's
+ * score — with its next extend
  * threshold and continue count (M2-01) — and the counts of kills and formation bonuses already
  * credited — not the session hi-score, which a host may raise from its save —, then the continues
  * used and the rank inputs' loop, stage, power and special terms, M2-01), then the boss (M1-13:

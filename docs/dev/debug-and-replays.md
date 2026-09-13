@@ -248,7 +248,7 @@ bounding square:
 | `lasers` | pink `#ff90c8` | active enemy lasers as 17 squares along the beam |
 | `bullets` | magenta `#ff50ff` | enemy bullet circles |
 | `terrain` | yellow `#ffe040` | the ships' terrain boxes |
-| `hurt` | green `#50ff50` | the ships' hurt circles |
+| `hurt` | green `#50ff50` | the ships' hurt circles (× `shield.hurtScale` — Reduce shows a smaller one, M2-04) |
 
 **One colour per list.** The overlay is core `DrawList`s drawn through the `ui` module's quad
 pools (`createDrawListView`) — no Pixi `Graphics`. Pixi's `tint` setter allocates, and a quad pool
@@ -345,7 +345,7 @@ the replay contains them (a session recorded through `createReplayGame` has no k
 
 ## Golden replays (`test/golden/`)
 
-Eight committed zone A runs pin down what the simulation does (`test/golden/golden.ts`
+Twelve committed zone A runs pin down what the simulation does (`test/golden/golden.ts`
 `GOLDEN_SCENARIOS`, recorded from the M1-18 playtest bots with the build id `'golden'`):
 
 | File | Who plays | Covers | Ends |
@@ -358,6 +358,10 @@ Eight committed zone A runs pin down what the simulation does (`test/golden/gold
 | `zone-a-edit.replay.json` (M2-03) | 4-way bot, stage skip, full loadout, a Weapon Edit (2-Way Missile, Free Way, Twin Laser), LIFE OPTION on `!` (seed 7) | Weapon Edit and a `!` choice | `stageClear` after 765 ticks, 37,060 points |
 | `zone-a-type-c.replay.json` (M2-03) | 4-way bot, stage skip, full loadout, Type C, SPEED DOWN on `!` (seed 8) | the Cyclone Laser, 2-Way Missile and Vertical | `stageClear` after 900 ticks, 37,180 points |
 | `zone-a-type-d.replay.json` (M2-03) | 4-way bot, stage skip, full loadout, Type D, FULL BARRIER on `!` (seed 9) | the Twin Laser, Photon Torpedo and Free Way | `stageClear` after 763 ticks, 37,060 points |
+| `zone-a-rotate.replay.json` (M2-04) | 4-way bot, stage skip, full loadout, `optionChoice: 'rotate'`, `shieldChoice: 'rotateShield'` (seed 10) | orbiting Options and the spinning Rotate Shield pods against the boss | `stageClear` after 1,127 ticks, 37,130 points |
+| `zone-a-reduce.replay.json` (M2-04) | 4-way bot, stage skip, full loadout, Formation Options, Reduce (seed 11) | the `>` of Options and the shrunken hurtbox | `stageClear` after 1,058 ticks, 37,130 points |
+| `zone-a-snake.replay.json` (M2-04) | 4-way bot, full loadout, Snake Options, the front Shield (seed 12) | the whole stage: the pulled chain, two pods wearing apart, a death | `stageClear` after 11,930 ticks, 69,770 points, 3 lives (death at 5,839) |
+| `zone-a-free-shield.replay.json` (M2-04) | 4-way bot, Arcade difficulty, full loadout, the Free Shield (seed 13) | the whole stage at Arcade: a pod pair ahead taking hits, a death | `stageClear` after 14,026 ticks, 66,820 points, 2 lives (death at 5,837) |
 
 The 4-way bot survives zone A even at Arcade, which is why the death scenario uses a careless
 weaving pilot. The files were re-blessed on purpose by M2-01 (`b31fac5`): rank growth changes
@@ -372,7 +376,15 @@ pattern, so the later M2-02 fixes left the files untouched. M2-03 re-blessed the
 Free Way direction joined the hash — the outcomes are unchanged — and added `zone-a-type-b` and
 `zone-a-edit`; its test round added `zone-a-type-c` and `zone-a-type-d` (`1bc676e`, the older six
 files byte-identical), so every Types B–D weapon flies in a golden run
-([meter-arsenal.md](meter-arsenal.md#determinism-hashing-and-golden-replays)). Each file is an encoded replay plus the scenario's `description` and its
+([meter-arsenal.md](meter-arsenal.md#determinism-hashing-and-golden-replays)). M2-04 re-blessed the
+eight again (`1434577`): the option groups' type, spread, toggle, hold, orbit angle and Snake
+links, the shields' hurt scale and pods and each enemy's `carried` joined the hash, and the new
+`option-hunters.enemies.json` shifts zone A's enemy spec indices — every outcome unchanged — and
+added `zone-a-rotate` and `zone-a-reduce`; its test round added `zone-a-snake` and
+`zone-a-free-shield` (`60b1328`, the ten older files byte-identical), so every Option type and
+every meter shield flies in a golden run
+([options-shields-hunter.md](options-shields-hunter.md#determinism-hashing-and-golden-replays)).
+Each file is an encoded replay plus the scenario's `description` and its
 `expected` outcome (status, ticks, player 1's score and lives, death ticks, boss killed).
 
 - `golden.test.ts` (part of `pnpm test`, the `integration` project) plays every file into a fresh
@@ -518,7 +530,10 @@ testers in [../client/debug-tools.md](../client/debug-tools.md#the-m1-release-ch
 - **M2-03** (done) — the replay header records `weaponPreset`, `weaponEdit`, `megaChoice` and
   `shieldChoice` (no format change: a header without them decodes to the defaults); golden
   replays re-blessed, four arsenal scenarios added ([meter-arsenal.md](meter-arsenal.md)).
-- **M2-04 … M2-14** — every simulation change re-blesses the golden replays in the same commit;
+- **M2-04** (done) — the replay header records `optionChoice` (no format change: a header
+  without it decodes to `trail`); golden replays re-blessed, four Option / shield scenarios
+  added; the overlay's hurt outline follows Reduce ([options-shields-hunter.md](options-shields-hunter.md)).
+- **M2-05 … M2-14** — every simulation change re-blesses the golden replays in the same commit;
   zones B–I add a golden replay each.
 - **M2-06** — replays record both players (the body already has a word per player).
 - **M2-15** — attract mode plays bundled replays (and the scene flow gets recorded).

@@ -7,7 +7,11 @@ piercing Laser, ground-sliding Missile) compiled from `content/weapons/`, per-pl
 (damage, armour clinks, piercing cooldowns, kill credit), and the trailing **Options** of
 `core/options` that copy every weapon. Built in plan step **M1-10**; plan step **M2-03** added the
 **Types B–D** behaviours, the presets and Weapon Edit as `GameConfig` fields and
-`WeaponSystem.setArsenal` — their own page is [meter-arsenal.md](meter-arsenal.md).
+`WeaponSystem.setArsenal` — their own page is [meter-arsenal.md](meter-arsenal.md); plan step
+**M2-04** added the Snake, Formation and Rotate **Option types** (`GameConfig.optionChoice`) and
+the Option Hunter that steals Options —
+[options-shields-hunter.md](options-shields-hunter.md). This page describes the trail, the
+machinery every type shares.
 
 This page is the *how and why*. Exact signatures are in
 [api-reference.md](api-reference.md#weapons--player-weapons-meter-mode-implemented); the TSDoc in
@@ -175,7 +179,10 @@ event's position is floored to whole pixels (see the V8 notes below).
 
 ## Options (`core/options`)
 
-One `OptionGroup` per player (`weapons.options[p]`, a class so its numbers stay unboxed): a ring
+One `OptionGroup` per player (`weapons.options[p]`, a class so its numbers stay unboxed), of the
+session's type (`GameConfig.optionChoice`, M2-04 — this section is the default `trail`; the Snake,
+Formation and Rotate placement and the spread / extend control are in
+[options-shields-hunter.md](options-shields-hunter.md#option-types-coreoptions)): a ring
 buffer of `OPTION_TRAIL_CAPACITY` (4 × 12 + 1 = 49) past ship positions in **screen space**
 (`ship − camera`, decision D26), `head` (newest entry), `count` (Options flying this tick) and
 their world positions `x[k]`, `y[k]`.
@@ -199,8 +206,12 @@ their world positions `x[k]`, `y[k]`.
   pass through terrain (they are not a collision layer), but the **shots** they fire from inside
   rock die on their first move.
 
-The Formation / Snake / Rotate types and the Option Hunter's `stolen` count are M2-04
-(`formation` is always `'trail'` and `stolen` 0 today; both are hashed already).
+Every type shares the rest: the trail records under every type (so a type change never finds a
+stale one), `reset` / `hide` / firing work the same, and since M2-04 `updatePlayers()` calls
+`group.steer(intent)` before `follow` (the Formation / Rotate spread: `Special` pressed toggles,
+`PowerUp` held 15 ticks extends). `stolen` counts the Options an Option Hunter took from the group
+(`core/enemies` `huntOptions` also lowers the loadout's `options` and the group's `count` at once —
+[options-shields-hunter.md](options-shields-hunter.md#the-option-hunter-coreenemies-corebehaviors)).
 
 ## The shot pool and one shot tick (phase 5, `update()`)
 
@@ -404,7 +415,7 @@ autofire) and hold no `Shot` / `Sub`.
 | A loadout field | A field on `Loadout` (a class), set in `applyLoadoutPreset`, added to `mixWeapons` in `core/debug`; a meter slot that equips it in `core/powerups` (`canEquipSlot` / `equipSlot`) |
 | A starting loadout | Extend `StartingLoadout` and its check in `resolveGameConfig`, then `applyLoadoutPreset` (and `loadoutFromSearch` in `apps/web` for a dev override) |
 | Another loadout type | A preset in a weapons file; `GameConfig.weaponPreset` picks it and the weapon select lists it (M2-03 — [meter-arsenal.md](meter-arsenal.md#extending-it)) |
-| An Option formation (M2-04) | A branch in `OptionGroup.follow` keyed by `formation`; keep it allocation-free and hash any new state |
+| An Option type | Append to `OptionChoice` / `OPTION_CHOICES` and `OptionMode`, a branch in the private `OptionGroup.place()` (**not** in `follow` — it must stay small enough to inline), hash any new state — the checklist is in [options-shields-hunter.md](options-shields-hunter.md#extending-it) |
 | Something that reacts to kills | Read `world.enemies.outcomes` (`killCount`, `killSpec`, `killX` / `killY`, `killScore`, `killBy`) — reset at the start of phase 3, complete after phase 7 |
 
 ## Tests
@@ -415,7 +426,7 @@ autofire) and hold no `Shot` / `Sub`.
 | `packages/core/test/weapons/weapons-edge.test.ts` | Constant tables, presets and empty roles, spawn offsets / velocities / boxes per behaviour, first volley on the tick the fly-in ends, dying / dead / inactive ships, refire the tick after a free, missiles with `Sub` alone, Double edge caps, player 2's shooters and credit, camera ride on both axes, exact culling (lasers by head and tail, non-finite spawns), laser heads on walls while scrolling, missile steps and cliffs, hit edge cases (closed boxes, lowest slot, ghosts, damage 0, armour, `MAX_SHOT_HITS`), cooldown tables and clamps, drawing (segments, batch overflow, the orb pulse), restarts, hash coverage |
 | `packages/core/test/weapons/weapons-alloc*.test.ts` | The allocation guards above (own workers) |
 | `packages/core/test/weapons/weapons-arsenal*.test.ts`, `test/integration/arsenal-runtime.test.ts` | The Types B–D behaviours, presets, Weapon Edit and `setArsenal` (M2-03 — [meter-arsenal.md](meter-arsenal.md#tests)) |
-| `packages/core/test/options/` | The trail entry by entry (every head position), reset, convergence at an edge, vertical scrolling, count clamping, hide / reset, independent groups, zero allocation |
+| `packages/core/test/options/` | The trail entry by entry (every head position), reset, convergence at an edge, vertical scrolling, count clamping, hide / reset, independent groups, zero allocation; since M2-04 `options-types*.test.ts` — the Snake, Formation and Rotate placement and `steer` ([options-shields-hunter.md](options-shields-hunter.md#tests)) |
 | `packages/core/test/config/`, `debug/`, `world/`, `helpers/alloc.test.ts` | `autofireInterval` / `missileInterval` / `loadout` validation; the weapons in `hashWorld`; the World's batch list; the allocation helper's windows and early stop |
 | `test/integration/weapons-runtime.test.ts` | The shipped arsenal loaded like the shell does; the `'full'` loadout and the Double playing the whole `test-range` within every cap, bound and surface; remote mode firing with no button; lockstep sessions |
 | `test/integration/enemies-runtime.test.ts`, `content.test.ts` | Enemies killed by the autofiring KESTREL (the "nobody shoots" tests turn autofire off); `checkWeaponBehaviors` on the shipped content |
@@ -440,7 +451,7 @@ autofire) and hold no `Shot` / `Sub`.
 | `?loadout=full` does nothing on the TV | It is a web-only dev override (`apps/web`); the TV has no query string |
 | `RangeError: GameConfig.loadout must be 'default' or 'full'` | Only those two presets exist (the weapon *types* are `GameConfig.weaponPreset`, M2-03) |
 | A test's weapons are not Type A | The config's `weaponPreset` / `weaponEdit` (M2-03) — or a scene flow whose weapon select chose another type |
-| Code that picks a batch from `view.batches` by index broke | M1-10 inserted the player-shot and Option batches before the ships: the order is ground enemies, air enemies, shots, Options, ships, enemy bullets |
+| Code that picks a batch from `view.batches` by index broke | M1-10 inserted the player-shot and Option batches before the ships: the order is ground enemies, air enemies, shots, Options, ships, enemy bullets (then the shield, item, point-item and boss batches, and since M2-04 the Options Option Hunters carry — `enemies.carriedBatch` — last) |
 | A stored shot slot points at another shot | Slots are only stable within the tick (phase 8 swap-removes freed slots) |
 | The allocation guard fails after a weapons change | A fractional argument to a non-inlined call (events, helpers), a closure or literal in the tick, or the loop split into a small wrapper — see the table above |
 
@@ -465,5 +476,6 @@ autofire) and hold no `Shot` / `Sub`.
 - **M2-03** (done) — the Types B–D behaviours, the presets Type A–D and Weapon Edit as
   `GameConfig` fields, `setArsenal`, the weapon select with its live preview
   ([meter-arsenal.md](meter-arsenal.md)).
-- **M2-04** — Snake / Formation / Rotate Options and the Option Hunter; **M2-05** — Direct-mode
-  weapon families.
+- **M2-04** (done) — Snake / Formation / Rotate Options (`optionChoice`, `steer`), the meter
+  shields and the Option Hunter ([options-shields-hunter.md](options-shields-hunter.md)).
+- **M2-05** — Direct-mode weapon families.

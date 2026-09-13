@@ -63,7 +63,7 @@ stepWorld, every tick
 `EnemySpec` (`core/data`): `id`, `hp`, `score`, `hurtbox { hw, hh }` (half sizes; also the
 contact box), `script` → `scriptId`, `sprite` → `spriteId`, and the fields M1-08 added —
 `anim { frames, ticks }`, `params` (behaviour tunables by name), `mover` (a starting mover or
-`null`), `drop` (`'capsule'` or `null`), `ground` (`'floor'`, `'ceiling'` or `null` = flying),
+`null`), `drop` (`'capsule'`, since M2-04 `'blueCapsule'`, or `null`), `ground` (`'floor'`, `'ceiling'` or `null` = flying),
 `settleTicks`, `explosion` (`'small' | 'medium' | 'large'`), `megaCrashImmune` (compiled into a table `EnemySystem.megaCrash` reads — M1-11),
 `child` → `childId` (the enemy a spawner releases) — plus the older optional `rank` (read since
 M2-01: `{ bulletSpeed?, fireRate? }`, 0–8, default 1 — how strongly the enemy follows the rank's
@@ -73,11 +73,14 @@ with the other specs ([difficulty-and-rank.md](difficulty-and-rank.md#per-enemy-
 Since M2-02 an enemy may name a `pattern` → `patternId` (ref kind `pattern`: an action of a
 `content/patterns/` file, resolved against `ContentDb.patterns.actionIndex`; default `null` /
 `-1`, bosses never) — the DSL pattern its `pattern.loop` behaviour runs
-([pattern-dsl.md](pattern-dsl.md)).
+([pattern-dsl.md](pattern-dsl.md)). Since M2-04 `optionHunter` (default `false`) makes the entry an
+**Option Hunter** — compiled into the `hunter` column, which the system reads for its spawn rule,
+armour, contact exemption and stealing
+([options-shields-hunter.md](options-shields-hunter.md#the-option-hunter-coreenemies-corebehaviors)).
 
 The loader fills the defaults of every optional field (`completeEnemy`): `anim` 1 frame,
 `params` `{}`, `mover` `null`, `ground` `null`, `settleTicks` `DEFAULT_SETTLE_TICKS` (30),
-`explosion` `'small'`, `megaCrashImmune` `false`, `child` `null`, `pattern` `null` (M2-02), `boss` `null`. So every spec has
+`explosion` `'small'`, `megaCrashImmune` `false`, `optionHunter` `false` (M2-04), `child` `null`, `pattern` `null` (M2-02), `boss` `null`. So every spec has
 the same fields in the same order — the enemy system compiles them into typed arrays once, and no
 code branches on "is this field present".
 
@@ -284,6 +287,7 @@ One reused object per slot (D29):
 | `self` | The `Enemy` (read `self.member`, `self.pathId`, `self.anchor`, `self.hh`, set `self.flags` bits such as `FaceRight`) |
 | `spec` | Its `EnemySpec` — content data: read it when the script starts, not every wake |
 | `tick`, `rng` | The current tick; the **gameplay** RNG stream (replay-safe) |
+| `camera` | M2-04: the World's camera (read-only) — `ship.y − camera.y` is the view point a `Waypoint` mover wants (the Option Hunter lining up) |
 | `target()` | The nearest active, `alive` player ship, or `null` (during the fly-in, after death) |
 | `setMover(kind, p0 … p5)` | Switch the mover (parameters per kind below) |
 | `spawn(enemyIndex, dx, dy)` | Spawn another enemy relative to this one → the `Enemy` or `null` |
@@ -329,6 +333,10 @@ accepted hit per ship and tick**. Since M1-12 a hit that gets through (no Force 
 death, run in phase 7 ([death-and-scoring.md](death-and-scoring.md)). Since M1-13 the boss's
 parts join the same grid with the ids after the 64 enemy slots (`BOSS_PART_ID_BASE` + part), so
 this contact query skips ids ≥ 64 — the boss system tests its parts against the ships itself.
+Since M2-04 the hurt circle is `hurtRadius × ship.shield.hurtScale` (Reduce shrinks it), a ship
+with **shield pods** also tests every standing pod (radius 4) against the grid — a body touching
+a pod costs the pod a hit (`absorbPodHit`) and flies on — and Option Hunters (and ghosts) never
+touch a ship or a pod.
 
 Phase 7 is where the player shots (M1-10, `weapons.applyHits()`) call `damage(enemy, amount,
 by)` — `by` is the player credited with a kill (default `-1` = nobody). It is ignored for
@@ -343,10 +351,11 @@ non-ghost enemy that is not `megaCrashImmune` — armour does not protect — M1
    M1-10);
 2. `Sfx EnemyExplodeSmall | Medium | Large` and `Particles` with `FX_CUES.ExplosionSmall |
    Medium | Large` (intensity 1) are pushed at its position;
-3. its own drop is added to the outcomes;
+3. its own drop is added to the outcomes — and, for an Option Hunter, one `DropKind.FreeOption`
+   drop per Option it carried (M2-04);
 4. its revenge bullets (M2-01), when the spec has `revenge`, the kill is credited to a player
-   (`by ≥ 0`), it is not part of a Mega Crash, the enemy is on screen and the World's rank is at
-   least `minRank` ([difficulty-and-rank.md](difficulty-and-rank.md#revenge-bullets));
+   (`by ≥ 0`), it is not part of a Mega Crash (or the blue capsule's `clearOnScreen`, M2-04), the
+   enemy is on screen and the World's rank is at least `minRank` ([difficulty-and-rank.md](difficulty-and-rank.md#revenge-bullets));
 5. formation accounting: `killed++`, last-kill position, a leader may turn ghost, the
    completion check (which may add the formation's drop and `FormationBonus` right away).
 
@@ -356,7 +365,8 @@ formations in kill order), `bonusPoints` and, since M1-12, one entry per complet
 (`bonusCount`, `bonusScore[]`, `bonusBy[]` — the player who killed its last member: `kill` sets a
 private `creditBy` around the formation accounting); it is reset at the start of phase 3. Since
 M1-11 `core/powerups` turns every drop into a capsule at the end of phase 7 (drops of kills made
-between ticks at the next phase 3 — [powerups-and-shields.md](powerups-and-shields.md#items-and-capsules));
+between ticks at the next phase 3 — [powerups-and-shields.md](powerups-and-shields.md#items-and-capsules);
+since M2-04 also blue capsules and freed Options);
 since M1-12 `core/scoring` credits every kill's `killScore` to `killBy` and every bonus to
 `bonusBy`, exactly once ([death-and-scoring.md](death-and-scoring.md#score-corescoring)).
 
@@ -370,7 +380,9 @@ since M1-12 `core/scoring` credits every kill's `killScore` to `killBy` and ever
 - **Phase 9** `sync()` refills the two batches in slot order: live, drawn (`spriteId ≥ 0`),
   non-ghost enemies, with `SpriteFlag.Flash` while `flashTicks > 0`, `FlipX` when facing right
   and `FlipY` for ceiling enemies; ground enemies go to `GroundEnemies`, flying ones to
-  `AirEnemies` (both below the ships, §18 draw order). `pushSprite` is inlined.
+  `AirEnemies` (both below the ships, §18 draw order). `pushSprite` is inlined. Since M2-04 it
+  also refills `carriedBatch` (`AirEnemies`, the view's last batch): each live Option Hunter's
+  carried Options, grey, 10 px apart behind it.
 - **Checkpoint restart**: the World's stage `clear()` hook calls `enemies.clear()` — every
   slot and formation freed, tracks reset, outcomes and batches emptied.
 - **`hashWorld`** covers every slot's `state` and, for slots in use, every numeric field
@@ -410,7 +422,7 @@ builds a lookup (throws on duplicate ids). `DEFAULT_BEHAVIORS` (from `DEFAULT_BE
 is what the World uses; `createWorld(config, db, { behaviors })` swaps in another registry
 (tests, tools — not part of `GameConfig`, so never in a real session).
 
-The roster — the eight of M1 and M2-02's `pattern.loop` (tunables and their defaults in brackets; the fire patterns are M1-09's — they go
+The roster — the eight of M1, M2-02's `pattern.loop` and M2-04's `hunter.option` (tunables and their defaults in brackets; the fire patterns are M1-09's — they go
 through the `ScriptApi` primitives, so nothing fires off screen or before `settleTicks`; bullet
 speeds are px/tick and intervals ticks, both Normal values scaled by the rank):
 
@@ -425,6 +437,7 @@ speeds are px/tick and intervals ticks, both Normal values scaled by the rank):
 | `rammer.aimed` | rammer | enters with its spec mover for [`enterTicks` 40], then `AimedDash` with [`windup` 20] at [`speed` 2.5] |
 | `orbiter.loop` | orbiter | flies the spawn event's path at [`speed` 1.25]; without one: `Waypoint` to [`x` 256, `y` 100], hold [`hold` 90], leave left at [`leaveSpeed` 2]; every [`ringTicks` 120] (rank-scaled) a ring of [`ringCount` 8] purple bullets at [`bulletSpeed` 1], each ring turned half a gap |
 | `pattern.loop` | DSL pattern runner (`needsPattern`, M2-02) | runs the enemy's `pattern` — a `content/patterns/` action — over and over: `startPattern`, then `yield stepPattern()` until it ends, [`restTicks` 60] of rest, again; `relative` directions from [`heading` 512 = left]; sets no mover (the spec's `mover` moves it); without a compiled pattern it sleeps forever. The shipped test enemy `sentry` (`content/enemies/test-sentry.enemies.json`, not spawned by any stage) runs `common.spiral` with it ([pattern-dsl.md](pattern-dsl.md#the-patternloop-behaviour)) |
+| `hunter.option` | Option Hunter (M2-04; its spec's `optionHunter` brings the rules) | [`variant` 0] rear / 1 front / 2 dive: for [`lineUpTicks` 90] re-aims a `Waypoint` mover every 6 ticks at its line-up point — view x [`lineX` 48] (front: `384 − lineX`) on the nearest player's row, or view y [`lineY` 24] over its column, 12 px inside the playfield — at [`speed` 2]; the last aim holds [`windup` 24] and charges at [`chargeSpeed` 4.5] until it leaves the view; never fires. The shipped hunters are in `content/enemies/option-hunters.enemies.json`, flown by the `hunter-range` dev stage ([options-shields-hunter.md](options-shields-hunter.md#the-option-hunter-coreenemies-corebehaviors)) |
 
 Writing one:
 
@@ -469,9 +482,14 @@ enemy flies past; at most 11 are alive at once. Since M1-09 the turrets, walkers
 orbiters fire (at most about a dozen bullets are alive at once with a ship that stands still;
 no laser is fired). Since M1-10 the KESTREL autofires, so enemies in front of it die (hit
 flash first for those with more than 1 hp); a test that needs them all alive turns autofire
-off (`{ autofire: false, remoteMode: false }`). No shipped enemy is armoured.
+off (`{ autofire: false, remoteMode: false }`). No `test-range` enemy is armoured. Since M2-04 the
+file also holds `carrier-blue` (a slow `carrier.straight` with `drop: "blueCapsule"`, the
+`enemies/carrier-blue` pixel map) — spawned only by the `hunter-range` dev stage, together with
+the three **Option Hunters** of `content/enemies/option-hunters.enemies.json` (armoured, `variant`
+0 / 1 / 2 of `hunter.option`); `test-range`'s timeline is unchanged.
 
-Fly it with `pnpm dev` → `http://localhost:5173/?stage=test-range`; headless:
+Fly it with `pnpm dev` → `http://localhost:5173/?stage=test-range` (the hunters:
+`?stage=hunter-range&loadout=full`); headless:
 
 ```ts
 const db = loadContent(files, { knownScripts: KNOWN_SCRIPT_IDS }).db;
@@ -527,7 +545,8 @@ code):
 | A mover | Append the name to `MOVER_TYPES` (`core/data`) and a code to `MoverKind` (never renumber), a variant in `MOVER_SCHEMA`, its parameters in `compileSpecs` (`core/enemies`), its start state in `setMover` and a `move…` function in `updateMover` (numbers only, whole-number calls), the docs (module docblock, `content/enemies/README.md`, this page), tests incl. the allocation guard |
 | An enemy spec field | `EnemySpec` + `ENEMY_SCHEMA` (+ `optional` and a default in `completeEnemy`), a typed array in the `SpecTable` if per-tick code needs it, the README sample and `example.enemies.json` |
 | An `Enemy` field | The class field, its reset in the spawn function, and `mixEnemy` in `core/debug` (in a fixed place — or replays diverge unnoticed) |
-| A drop kind | Append to `ENEMY_DROPS` and `DropKind` (code = position + 1), the schema picks it up; map it to an item in `core/powerups` `takeDrops` (capsules today — [powerups-and-shields.md](powerups-and-shields.md#extending-it)) |
+| A drop kind | Append to `ENEMY_DROPS` and `DropKind` (code = position + 1), the schema picks it up; map it to an item in `core/powerups` `takeDrops` (capsules and, since M2-04, blue capsules and freed Options — [powerups-and-shields.md](powerups-and-shields.md#extending-it)) |
+| An Option Hunter | An entry with `"optionHunter": true`, `"script": "hunter.option"` and a `variant`, no `megaCrashImmune` (only Mega Crash and the blue capsule can kill it) — [options-shields-hunter.md](options-shields-hunter.md#extending-it) |
 | A particle cue | Append to `FX_CUES` (never renumber) and bind it to presets in `content/fx/` ([fx-and-game-feel.md](fx-and-game-feel.md#extending-it)); a visual for an existing sound needs only an `sfx` trigger there |
 | A new use of the tick outcomes | Read `world.enemies.outcomes` after phase 7 of the same tick (it is reset in the next phase 3) |
 
@@ -544,6 +563,7 @@ code):
 | `test/integration/enemies-runtime.test.ts` | The shipped `test-range` timeline end to end: every roster enemy spawns within 64 slots, every formation resolves, ground enemies on the generated terrain and walkers on the slopes, perfect play yields one `FormationBonus` per formation and the expected capsules, lockstep hashes |
 | `test/integration/content.test.ts` | The shipped content validates with `KNOWN_SCRIPT_IDS` and `checkEnemyBehaviors`; an unknown script id is an issue |
 | `test/e2e/enemies.spec.ts` | In Chromium: the first drifter formation appears inside the playfield (never in the HUD bars) and flies left; no console errors or unknown-sprite warnings |
+| `packages/core/test/enemies/enemies-hunter*.test.ts`, `data/enemies-hunter-data-edge.test.ts`, `test/e2e/option-hunter.spec.ts` | M2-04: the Option Hunter (appearance only with Options, the variants, the steal and chain cut, carry, free, escape, expiry), the blue capsule's `clearOnScreen`, `optionHunter` / `blueCapsule` in the loader, the steal / carry / free allocation guard; in Chromium a hunter stealing and Mega Crash freeing ([options-shields-hunter.md](options-shields-hunter.md#tests)) |
 
 ## Gotchas
 
@@ -559,7 +579,8 @@ code):
 | A child spawned by a script does nothing on its first tick | By design: a script spawn's script starts on the next tick (it spawned during phase 4) |
 | `yield 0` did not run the next step in the same tick | `0` (and anything below 1) means the next tick |
 | The allocation guard fails after a behaviour change | A closure, array, object literal or string in the generator body, or a `yield 1` loop resuming every tick. Sleep longer, keep state in `let`s of whole numbers or on the `Enemy` |
-| The ship flies through enemies | Only during the fly-in, while invulnerable (the respawn blink) and in god mode; a Force Field absorbs contact instead. Otherwise contact is a death since M1-12 — as are bullets and lasers |
+| A stage's Option Hunter never spawns | By design (M2-04): `spawn` refuses a hunter while no active ship has an Option |
+| The ship flies through enemies | Only during the fly-in, while invulnerable (the respawn blink) and in god mode, and through Option Hunters (they never hurt by contact — M2-04); a Force Field absorbs contact instead. Otherwise contact is a death since M1-12 — as are bullets and lasers |
 | A formation bonus went to nobody | It is credited to the killer of the last member; a debug `kill(enemy)` without `by` (`-1`) credits nobody |
 | A `pattern.loop` enemy never fires | Its `pattern` did not compile (entry 0 — look for the load issue), it names none (`enemies:<id>.pattern`), or `canFire()` is false ([pattern-dsl.md](pattern-dsl.md#gotchas)) |
 | A behaviour's shot never appears | `canFire()` was false (off screen, unsettled, ghost) — the wrappers return `-1` / `0` then; or the content was loaded without `ENGINE_SPRITES`, so bullets are hidden ([bullets-and-patterns.md](bullets-and-patterns.md#gotchas)) |
@@ -590,7 +611,9 @@ code):
   from `core/scoring`) ([fx-and-game-feel.md](fx-and-game-feel.md)); **M2-01** (done) — rank
   modifiers and revenge bullets ([difficulty-and-rank.md](difficulty-and-rank.md));
   **M2-02** (done) — the pattern DSL (`pattern.loop`, `startPattern` / `stepPattern`, the enemy
-  `pattern` field) and `bendingLaser` ([pattern-dsl.md](pattern-dsl.md)); **M2-04** — the Option
-  Hunter.
+  `pattern` field) and `bendingLaser` ([pattern-dsl.md](pattern-dsl.md)); **M2-04** (done) — the
+  Option Hunter (`optionHunter`, `hunter.option`, `huntOptions`, `carriedBatch`), the blue
+  capsule's `clearOnScreen` and the shield pods' contact test
+  ([options-shields-hunter.md](options-shields-hunter.md)).
 - **M1-18** (done) — zone A's roster on these behaviours, its paths, and HALCYON BULWARK's
   `boss.bulwark` ([zone-a-and-playtest.md](zone-a-and-playtest.md)).

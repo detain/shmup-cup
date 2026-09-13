@@ -7,8 +7,8 @@ work too, and every device drives both the game and the menus.
 > every frame. The current build ([preview-build.md](preview-build.md)) starts on the **title
 > screen**: OK (Enter / A) opens the menu, ▲ ▼ move the highlight, OK chooses — START opens the
 > **DIFFICULTY** box, where ▲ ▼ pick EASY / NORMAL / HARD / ARCADE and OK opens the **WEAPON
-> SELECT** screen — ▲ ▼ move between its lines, ◀ ▶ change the weapon type, the `?` / `!`
-> power-ups and Auto Power-Up, and OK on START (highlighted when it opens) begins a game — the
+> SELECT** screen — ▲ ▼ move between its lines, ◀ ▶ change the weapon type, the Option type, the
+> `?` / `!` power-ups and Auto Power-Up, and OK on START (highlighted when it opens) begins a game — the
 > first zone, **AZURE VERGE**, on every device. In the game the **directions fly the
 > ship** and the gun **fires on its own**; enemies fly past and shoot at you — every bullet pattern
 > and every boss laser is dodgeable with the four arrow directions alone, no diagonals needed (a
@@ -25,7 +25,9 @@ work too, and every device drives both the game and the menus.
 > control profile (**CONTROLS**, [below](#control-profiles)) and the enemy bullets' colours
 > (**BULLETS** — standard or one of three colour-blind sets,
 > [preview-build.md](preview-build.md#the-options-screen)); the game remembers all of them.
-> The other buttons (Special, Speed) do nothing yet. The remote's settings may still change once
+> **Special** (Channel up on the remote, V on a keyboard, Y on a gamepad) spreads FORMATION and
+> ROTATE Options out and back in — as does **holding** PowerUp
+> ([preview-build.md](preview-build.md#choosing-your-weapons)); Speed does nothing yet. The remote's settings may still change once
 > the input probe results from the M7 monitors are in, and a screen for rebinding single buttons
 > is planned.
 
@@ -40,8 +42,8 @@ and selects a menu entry in menus; Back pauses the game and goes back in menus.
 | Move | Game: fly the ship (8 directions where the device allows it; diagonals are no faster than straight moves, and the ship stops as soon as you let go). Menus: move the highlight (▲ ▼; ◀ ▶ between YES and NO, in the Options screen ◀ ▶ turn a volume down / up or change the control profile or the bullet colours, and in the WEAPON SELECT screen ◀ ▶ change the highlighted line's choice) — holding a direction repeats the move after about a third of a second, then about ten times a second |
 | Shot | Main gun. Today it fires **on its own** on every device (automatic fire is on by default, and always on with the TV remote), so you never need to press it; once automatic fire can be switched off in the Options menu, hold it to fire |
 | Sub | Missiles / sub-weapon, once you have them — automatic in the same way |
-| PowerUp | Take the highlighted power-up of the power meter — one per press (holding the button never takes a second); a press on an empty or maxed-out slot does nothing |
-| Special | Screen-clearing special, when you have one |
+| PowerUp | Take the highlighted power-up of the power meter — one per press (holding the button never takes a second); a press on an empty or maxed-out slot does nothing. **Held** for a quarter of a second or more, it also spreads FORMATION / ROTATE Options for as long as you hold it |
+| Special | Spread FORMATION / ROTATE Options out, and back in on the next press (a press, never a hold); TRAIL and SNAKE Options ignore it |
 | Speed | Cycle ship speed (item mode) |
 | Pause | Pause / resume (the pause menu: RESUME, OPTIONS, RETRY STAGE, QUIT TO TITLE) |
 | Confirm | Menus: select the highlighted entry; on the title first leaves `PRESS OK`; in the WEAPON SELECT screen OK also steps the highlighted choice, opens ORDER and, on START, begins the game. A press made while a menu is just appearing is remembered for a moment, not lost |
@@ -60,14 +62,15 @@ the TV remote, the keyboard and both gamepads.
 | OK (centre) | PowerUp | Confirm |
 | Back (↩) | Pause | Back |
 | Play/Pause ⏯ (if your remote has it) | Pause | Pause |
-| Channel up | Special | — |
+| Channel up | Special (spread / retract FORMATION and ROTATE Options) | — |
 | Channel down | Speed | — |
 
 - On the TV the ship fires its main gun **and** its missiles automatically, so no button is
   ever needed for shooting (in the current build the gun starts firing as soon as the ship has
   flown in). **OK** is the only other button the game needs: a rare press to take a power-up,
   which never stops a direction you are holding. Channel up / down are optional extras —
-  nothing ever requires them.
+  nothing ever requires them: Channel up spreads FORMATION / ROTATE Options, which holding OK
+  does too.
 - Some TV remotes briefly report a held button as released and pressed again. The game hides
   such hiccups (up to about 1/30 of a second), so a held direction never stutters; in return,
   letting go of a button registers two frames later — too short to notice.
@@ -216,7 +219,9 @@ profile chosen under CONTROLS — SAFE 4-WAY until you pick another.
 | Pressing OK while holding an arrow stops the ship on the TV | Not expected — the game keeps the arrow held. Please report it with the remote model: it means the remote itself drops the arrow when OK is pressed |
 | OK or Back does nothing on the CONTINUE? countdown | Both are ignored for the first half second, so a button still pressed from the game never decides; press again. If they never react, please report it |
 | Pause does nothing | On the title, the DIFFICULTY box, the WEAPON SELECT screen, the CONTINUE? countdown and the end screens Pause has no job — it pauses only a running game. In the game it should open the PAUSE menu; if not, please report the device and the button |
-| Special, Speed and the other buttons do nothing | Expected in the current preview — nothing uses them yet |
+| Special (Channel up, V, Y) does nothing | Expected unless your Options fly FORMATION or ROTATE (chosen on the WEAPON SELECT screen's OPTION line) — then each press spreads them out or back in. Holding OK does the same while held |
+| Speed and the other buttons do nothing | Expected in the current preview — nothing uses them yet |
+| My FORMATION / ROTATE Options spread when I take a power-up | OK was held a quarter of a second or more — a longer hold spreads them. Press OK briefly |
 | F1–F8 (or 1–8 on the TV) do nothing | They are developer keys of debug builds only; on the TV the tools must be opened first with Play/Pause, Ch ▲, Ch ▲, Ch ▲ — see [Developer keys](#developer-keys-debug-builds-only) |
 | The game froze without a PAUSE box, or runs in slow motion (debug build) | A developer tool is on — F4 / 4 unfreezes, F6 / 6 cycles slow motion back to normal ([debug-tools.md](debug-tools.md#troubleshooting)) |
 | A menu moves two steps for one press, or skips a press | Not expected — please report the device (and the remote model) |

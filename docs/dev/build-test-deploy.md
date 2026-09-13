@@ -269,7 +269,9 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   the weapon select opens after the difficulty menu with its live preview, TYPE B draws Ripple
   rings, the remote's arrows alone choose a Weapon Edit, a `!` choice and an Auto order and START
   plays them (M2-03 — every spec that starts a game presses one more Enter / OK for the weapon
-  select's START). The gameplay specs
+  select's START), and on `?stage=hunter-range&loadout=full` an Option Hunter steals and carries
+  the Options (violet body, grey haul), a Mega Crash frees them and they are collected again, while
+  the weapon select's OPTION row is driven by the remote (M2-04). The gameplay specs
   open `?scene=flight` (bare gameplay, open space unless `?stage=` names a stage) since M1-16;
   specs comparing captures a set number of ticks apart freeze the sim and step exact ticks
   (`test/e2e/frame-advance.ts`, M1-19) instead of counting rAF frames. Since M1-19 the suite runs
@@ -278,8 +280,9 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
 - **Dev query parameters** of the web build (`pnpm dev`, `vite preview`; without `?scene=` the
   game starts on the title — the scene flow, M1-16 — and START plays zone A, AZURE VERGE, M1-18):
   `?scene=flight` (free flight straight away, no title or pause menu — bare gameplay, open space),
-  `?stage=<id>` (START — or free flight — runs that stage instead, e.g. `test-range`, or
-  `test-boss` for the WARNING and the test boss — see
+  `?stage=<id>` (START — or free flight — runs that stage instead, e.g. `test-range`,
+  `test-boss` for the WARNING and the test boss, or `hunter-range` for the Option Hunters and the
+  blue capsule — M2-04, [options-shields-hunter.md](options-shields-hunter.md) — see
   [stage-runtime.md](stage-runtime.md#running-a-stage) and
   [bosses-and-warning.md](bosses-and-warning.md#the-test-boss-and-stagetest-boss)), `?skip=boss`
   (the debug stage skip: every game starts about two seconds before the stage's WARNING — M1-18,
@@ -288,7 +291,7 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   `?scene=fx-gallery` (every particle preset, shake, flash, the dim and the score popups in turn —
   M1-14, [fx-and-game-feel.md](fx-and-game-feel.md#the-fx-gallery-scenefx-gallery)),
   `?loadout=full` (start fully powered: speed 2, Missile, Laser, four Options — M1-10 — and a
-  Force Field since M1-11; see
+  Force Field since M1-11 — since M2-03 the weapon select's `?` shield; see
   [weapons-and-options.md](weapons-and-options.md#loadouts-and-the-starting-loadout)),
   `?profile=<id>` (another keyboard / remote input profile, e.g.
   `keyboard-remote-emulation` or `tizen-remote-safe`) and `?debounce=<0…10>` (release debounce

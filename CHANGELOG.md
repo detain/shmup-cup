@@ -42,7 +42,7 @@ versions before 1.0 may change anything between minor releases. Development foll
   meter's boxes are named after the chosen weapons.
 - **`!` and `?` choices** (M2-03): the `!` box can be the Mega Crash, NORMAL (back to the basic
   gun), SPEED DOWN, LIFE OPTION (spare ships become Options) or FULL BARRIER (a fresh Force Field);
-  `?` gives the Force Field (more shields come with M2-04).
+  `?` gives the Force Field (more shields came with M2-04).
 - **WEAPON SELECT** screen after the DIFFICULTY menu (M2-03) — one more OK to start a game (START is
   highlighted): the type, the three slot weapons under EDIT, `?`, `!`, Auto Power-Up and its
   **order** (an AUTO ORDER box), with a **live preview** of the choice flying over a practice range
@@ -51,6 +51,24 @@ versions before 1.0 may change anything between minor releases. Development foll
   `megaChoice` and `shieldChoice` (replay headers record them; older headers decode to the
   defaults); the golden replays were re-blessed (the new content shifts sprite ids, the Free Way
   direction is hashed — same outcomes) and four boss runs with the new weapons were added.
+- **Option types** (M2-04): a new **OPTION** line on the WEAPON SELECT screen — TRAIL (as before),
+  **SNAKE** (a chain that swings out behind the ship and keeps its shape when it stops),
+  **FORMATION** (a `>` behind the ship that spreads into a `V`) and **ROTATE** (orbiting the
+  ship). FORMATION and ROTATE spread out with **Ch ▲** on the remote (V / gamepad Y) or while
+  PowerUp (OK) is held for a quarter of a second; a quick OK never moves them.
+- **More shields** on `?` (M2-04): **SHIELD** (two pods at the nose), **FREE SHIELD** (a pair of
+  pods where you last moved — `?` again adds a second pair), **ROTATE** (two circling pods) — each
+  pod stops the bullets and enemies that touch it, 14 hits, wearing on its own — and **REDUCE**
+  (the ship's hit spot shrinks to a third, two hits; the rock still counts). FULL BARRIER restores
+  whichever shield you chose.
+- **Option Hunter** (M2-04): an armoured enemy that arrives with an alarm only while you have
+  Options, lines up and charges through them, and carries off the ones it touches; a Mega Crash —
+  or the new rare **blue capsule**, which destroys every enemy on screen — frees them to be caught
+  again. They appear in the browser's `?stage=hunter-range` for now; AZURE VERGE is unchanged.
+- Behaviour change for tools and tests (M2-04): `GameConfig.optionChoice`, the grown
+  `shieldChoice` and `WeaponSelectItem` codes (`Option` 4, so `?` … START are 5–9); the golden
+  replays were re-blessed (new hashed state, shifted enemy spec indices — same outcomes) and four
+  runs covering every Option type and shield were added.
 
 ### Documentation
 
@@ -61,7 +79,10 @@ versions before 1.0 may change anything between minor releases. Development foll
   [difficulty, extra ships and continues](docs/client/preview-build.md#difficulty-extra-ships-and-continues)
   and [Options screen](docs/client/preview-build.md#the-options-screen) (BULLETS), and
   [Choosing your weapons](docs/client/preview-build.md#choosing-your-weapons) (the WEAPON SELECT
-  screen, M2-03).
+  screen, M2-03; the Option types and shields, M2-04) and
+  [The Option Hunter range](docs/client/preview-build.md#the-option-hunter-range-browser-only)
+  (M2-04); the developer guide
+  [`docs/dev/options-shields-hunter.md`](docs/dev/options-shields-hunter.md) (M2-04).
 
 ## [0.1.0] — M1: playable vertical slice
 

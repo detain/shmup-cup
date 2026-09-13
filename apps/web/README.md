@@ -8,7 +8,8 @@ It boots behind a loading bar (or a boot error screen listing every problem) int
 `platform.exit`, so Back on the title only backs out of the menu), the difficulty menu under
 START (EASY / NORMAL / HARD / ARCADE — M2-01), the weapon select after it (weapon types A–D /
 EDIT, the `?` / `!` choices, Auto Power-Up and its order, a live preview — M2-03,
-[`docs/dev/meter-arsenal.md`](../../docs/dev/meter-arsenal.md)), the game with its HUD, the pause menu (Esc / P /
+[`docs/dev/meter-arsenal.md`](../../docs/dev/meter-arsenal.md); the Option type row and the five
+`?` shields — M2-04, [`docs/dev/options-shields-hunter.md`](../../docs/dev/options-shields-hunter.md)), the game with its HUD, the pause menu (Esc / P /
 Backspace), stage clear, the continue countdown (M2-01) and game over — guides:
 [`docs/dev/scenes-and-ui.md`](../../docs/dev/scenes-and-ui.md),
 [`docs/dev/difficulty-and-rank.md`](../../docs/dev/difficulty-and-rank.md). `?scene=flight` goes straight into **free
@@ -43,7 +44,11 @@ parameter for the penalty or the lives yet. Since M1-13 `?stage=test-boss` (BOSS
 the **boss WARNING** — the camera brakes to a stop under a flashing `WARNING!!` band for three
 seconds — and the test boss TRIAL WARDEN, whose shield plates, core and guns the ship shoots
 down; its death clears the stage (guide:
-[`docs/dev/bosses-and-warning.md`](../../docs/dev/bosses-and-warning.md)). Since M1-14 hits
+[`docs/dev/bosses-and-warning.md`](../../docs/dev/bosses-and-warning.md)). Since M2-04
+`?stage=hunter-range` (HUNTER RANGE, best with `&loadout=full`) sends in the armoured **Option
+Hunters**, which steal the Options they touch until a Mega Crash or the rare **blue capsule**
+frees them as drifting items (guide:
+[`docs/dev/options-shields-hunter.md`](../../docs/dev/options-shields-hunter.md)). Since M1-14 hits
 have **game feel**: explosions, sparks, debris, cancel sparkles and a muzzle flash from the
 presets of `content/fx/`, the screen shake of a lost ship or a boss's final blast, flashes
 (behind a ≤ 3-a-second limiter), the WARNING's dim and rising score numbers;
@@ -79,7 +84,7 @@ Guide: [`docs/dev/input-profiles.md`](../../docs/dev/input-profiles.md).
 
 ```sh
 pnpm dev                          # from the repo root (= turbo run dev --filter=@shmup/web)
-# → http://localhost:5173 (title → game) · ?scene=flight (free flight at once) · ?stage=test-range (scrolling test stage) · ?stage=test-boss (the WARNING and the test boss) · &loadout=full (fully powered) · ?scene=showcase (sprite showcase) · ?scene=calibration (test pattern) · ?scene=fx-gallery (every particle preset and screen effect)
+# → http://localhost:5173 (title → game) · ?scene=flight (free flight at once) · ?stage=test-range (scrolling test stage) · ?stage=test-boss (the WARNING and the test boss) · ?stage=hunter-range (the Option Hunters and the blue capsule) · &loadout=full (fully powered) · ?scene=showcase (sprite showcase) · ?scene=calibration (test pattern) · ?scene=fx-gallery (every particle preset and screen effect)
 pnpm --filter @shmup/web build    # → apps/web/dist (relocatable, base './'), release: no debug tools
 pnpm --filter @shmup/web build:test   # the same plus the debug tools (vite build --mode test — what pnpm test:e2e builds)
 pnpm --filter @shmup/web build:dev    # likewise, --mode development

@@ -211,8 +211,9 @@ M1-08, the enemy bullets, lasers and rank in M1-09, the player weapons and Optio
 the power meter, capsules, Force Field and Mega Crash in M1-11, death, respawn, lives, score
 and the game-feel timers in M1-12, the bosses with their WARNING and death sequence in M1-13,
 rank growth, extends and continues in M2-01, the pattern DSL's interpreter, bending lasers
-and cancel point items in M2-02, and the meter arsenal — Types B–D, Weapon Edit and the `!` / `?`
-choices of the config — in M2-03.
+and cancel point items in M2-02, the meter arsenal — Types B–D, Weapon Edit and the `!` / `?`
+choices of the config — in M2-03, and the Option types, the meter shields, the Option Hunter
+and the blue capsule in M2-04 ([options-shields-hunter.md](options-shields-hunter.md)).
 Details: [sim-world.md](sim-world.md), [stage-runtime.md](stage-runtime.md),
 [enemies-and-behaviors.md](enemies-and-behaviors.md),
 [bullets-and-patterns.md](bullets-and-patterns.md),
@@ -283,8 +284,10 @@ system, status,
   ([meter-arsenal.md](meter-arsenal.md)); shots ride the camera, die on terrain, and hit the enemies through the
   grid (phase 6 finds the hits — equal to brute force — phase 7 applies them: armour clinks,
   piercing shots keep per-enemy cooldowns, kills are credited to a player). Up to four Options
-  per ship follow a screen-space trail that advances only with movement input (D26) and fire
-  every weapon with their own caps.
+  per ship follow a screen-space trail that advances only with movement input (D26) — or, since
+  M2-04, fly as a pulled Snake chain, a `>` / `V` Formation or a Rotate orbit
+  (`GameConfig.optionChoice`; spread by holding PowerUp or pressing Special) — and fire every
+  weapon with their own caps.
 - **`powerups`**, **`shields`** — meter mode's economy: a 7-slot power meter per player
   (`SPEED | MISSILE | DOUBLE | LASER | OPTION | ? | !`) advanced by every capsule and equipped on
   the **pressed edge** of `PowerUp` (remote OK) in phase 2, maxed slots greyed, Double / Laser
@@ -293,6 +296,10 @@ system, status,
   collected by the ships' pickup boxes; Mega Crash (the `!` slot: cancels bullets, destroys every
   non-immune enemy, screen flash). The Force Field lives on the ship (`PlayerShip.shield`):
   `playerHit` hands every hit to it first — 5 hits, 8-tick shield-hit i-frames, never terrain.
+  Since M2-04 the `?` choice may instead be Reduce (a field that shrinks every hurt-circle test)
+  or a pod shield (front, Free, Rotate: pods that stop only the bullets and bodies touching them,
+  each wearing on its own); the blue capsule clears the enemies on screen, and freed Options
+  (from a dead Option Hunter) drift as items.
 - **`bosses`** — one multi-part boss per World (M1-13), an `enemies` entry with a `boss`
   section: up to 16 parts placed parent + offset every tick (riding the camera), sharing the
   enemies' hit path (grid ids after the 64 enemy slots, hits through `damagePart`), weak points
@@ -601,19 +608,19 @@ presets since M2-01 and, since M1-17, the `UserOptions` — display options late
 `presentation`, `rng`, `math`, `events`, `pools`, `save` (M1-17), `data` (partial: `rules` since M2-01, `patterns` since M2-02 —
 `campaign` and `strings` are missing), `world`, `stage`, `player` (implemented for P0 since
 M1-12 — co-op joining comes with M2-06), `collision` (partial: destructible tiles later — the bending lasers' circle chains live in `bullets`), `debug` (M1-19: state hash, switches, controls,
-counters, the stage skip and checkpoint jumps), `replay` (M1-19), `enemies` (partial: rank modifiers and revenge bullets since M2-01 — no Option Hunter
-yet), `patterns` (implemented with M2-02: runner, movers, fire primitives and the pattern DSL),
-`behaviors` (partial: the M1 enemy and boss rosters), `bosses` (partial: the P0 mechanics —
+counters, the stage skip and checkpoint jumps), `replay` (M1-19), `enemies` (partial: rank modifiers and revenge bullets since M2-01, the Option Hunter and
+the blue capsule's clear since M2-04), `patterns` (implemented with M2-02: runner, movers, fire primitives and the pattern DSL),
+`behaviors` (partial: the M1 enemy and boss rosters, `pattern.loop`, `hunter.option`), `bosses` (partial: the P0 mechanics —
 timers, escapes, the HP bar, mid-bosses and raids with M2-09), `bullets` (implemented: bending lasers and cancel
 into points since M2-02 — graze is P2), `rank` (implemented with M2-01: growth, power terms, per-enemy sensitivity), `weapons`
-(implemented for meter mode with M2-03: Types A–D and Weapon Edit — Direct mode with M2-05), `options` (partial: the standard trail),
-`powerups` (partial: meter mode, the `!` / `?` choices since M2-03 — Direct mode later), `shields` (partial: the Force Field), `scoring` (partial:
+(implemented for meter mode with M2-03: Types A–D and Weapon Edit — Direct mode with M2-05), `options` (implemented with M2-04: trail, Snake, Formation, Rotate — recovery after death in M3),
+`powerups` (partial: meter mode, the `!` / `?` choices since M2-03, the blue capsule and freed Options since M2-04 — Direct mode later), `shields` (implemented for meter mode with M2-04 — the Arm tiers with M2-05), `scoring` (partial:
 scores, the session hi-score, extends and the continue digit — 1UP items later), `fx` (partial: the
 hit-stop / shake / flash requests — slowdown later), `ui` (partial: the list menu, slider,
 toggle, choice and confirm widgets, builders and the HUD — rebind prompt, name entry and the boss
 HP bar later), `scenes` (partial: the scene stack, the M1 flow, the Options screen, the difficulty
 menu and the continue countdown, the weapon select with its live preview and the Auto order editor
-(M2-03) — the other M2 screens later);
+(M2-03; its OPTION row M2-04) — the other M2 screens later);
 input-web `keymap`, `keyboard`, `gamepad`, `web-input`, `remote`, `rebind`
 (partial: profiles, contexts, the selectable profiles of CONTROLS — the rebinding UI comes in
 M2-16); audio-web `web-audio` (partial; driven by the Options sliders since M1-17), `synth`, `sfx`,

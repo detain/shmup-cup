@@ -147,7 +147,7 @@ with `shell.events.on(kind, handler)` ([rendering-and-shell.md](rendering-and-sh
   there; a visitor that calls `clear()` also ends it. (The first implementation released
   the whole pending block up front and re-visited overwritten slots — caught by the test
   agent, regression tests in `packages/core/test/events/events-edge.test.ts`.)
-- The module owns the canonical cue registries `SFX_CUES` (23 cues since M1-11) and
+- The module owns the canonical cue registries `SFX_CUES` (23 cues since M1-11, 25 since M2-04) and
   `MUSIC_CUES` (15 cues) plus their `*_NAMES` arrays. The sim emits numbers;
   `content/audio/` binds the names to synthesized sounds and songs (M1-15 —
   [audio.md](audio.md)).

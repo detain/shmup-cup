@@ -46,12 +46,12 @@ shmup-cup/
 │   │   │   ├── data/           ✔ (partial) content loader: schema.ts combinators, loadContent(), ContentDb, migrations, tilemap.ts (tileset tables, heightfield / RLE expansion), paths.ts (spline → arc-length tables); kinds incl. rules (difficulty, scoring) and patterns (M2-02)
 │   │   │   ├── player/         ✔ KESTREL movement, speed levels, clamp, banking, fly-in, life cycle (killPlayer / respawnPlayer / playerOut)
 │   │   │   ├── weapons/        ✔ player shots (96-slot SoA pool), the meter arsenal Types A–D + Weapon Edit from the config (resolveArsenal, setArsenal — M2-03), loadouts, autofire + caps per shooter, grid hits (Direct mode: M2-05)
-│   │   │   ├── options/        ✔ (partial) trailing Options: screen-space trail ring buffer (Snake / Formation / Rotate: M2-04)
-│   │   │   ├── powerups/       ✔ (partial) 7-slot power meter, equip on the PowerUp edge, Auto Power-Up, capsule pool + magnet, Mega Crash (Direct mode: M2-05)
-│   │   │   ├── shields/        ✔ (partial) the Force Field on every ship: hits, shield-hit i-frames, wear, never terrain (pods, Arm tiers: M2-04 / M2-05)
-│   │   │   ├── enemies/        ✔ (partial) 64 enemy slots: spawns, formations, off-screen rules, contact, damage, sprite mirror
+│   │   │   ├── options/        ✔ Options: the screen-space trail ring buffer and, since M2-04, the Snake (pulled chain), Formation (> / V) and Rotate (orbit) types with spread / extend (steer)
+│   │   │   ├── powerups/       ✔ (partial) 7-slot power meter, equip on the PowerUp edge, Auto Power-Up, capsule pool + magnet, Mega Crash, the blue capsule and freed Options (M2-04) (Direct mode: M2-05)
+│   │   │   ├── shields/        ✔ the meter shields on every ship: Force Field, Reduce (hurtbox steps), front / Free / Rotate Shield pods (M2-04) — hits, shield-hit i-frames, wear, never terrain (Arm tiers: M2-05)
+│   │   │   ├── enemies/        ✔ (partial) 64 enemy slots: spawns, formations, off-screen rules, contact (shield pods too), damage, sprite mirror; the Option Hunter's rules and the blue capsule's on-screen clear (M2-04)
 │   │   │   ├── patterns/       ✔ sleeping behaviour coroutines (runner) + per-tick movers + fire primitives + the BulletML-inspired pattern DSL (dsl.ts: expression + pattern compiler → one Float64Array bank; PatternVm interpreter: enemy emitters, bullets' own programs — M2-02)
-│   │   │   ├── behaviors/      ✔ (partial) behaviour registry referenced by content script ids; the M1 roster
+│   │   │   ├── behaviors/      ✔ (partial) behaviour registry referenced by content script ids; the M1 roster, pattern.loop (M2-02), hunter.option (M2-04)
 │   │   │   ├── bullets/        ✔ enemy bullets (512-slot SoA pool = the ENEMY_BULLETS batch) + telegraphed lasers, bending lasers (8 × 64-node rings, circle-chain hitbox — M2-02), player collision, cancel (sparkles, or point items that fly to the score — M2-02); kinds.ts = the kind names (leaf)
 │   │   │   ├── bosses/         ✔ (partial) multi-part bosses: weak points, phases, the WARNING, the death sequence (mid-bosses, raids: M2-09)
 │   │   │   ├── collision/      ✔ (partial) scalar shape tests, layer masks, counting-sort uniform grid, pixel-exact terrain queries
@@ -92,9 +92,9 @@ shmup-cup/
 │
 ├── content/                game DATA (JSON, formatVersion 1, validated at load by core/data ✔)
 │   ├── player/             ✔ one file per ship: speed levels, hitboxes, margins, timers (+ README, example)
-│   ├── stages/             ✔ one file per stage: music, camera path, checkpoints, parallax, tilemap (heightfield / RLE), event timeline; zone-a (AZURE VERGE, the game's stage — M1-18), test-range, test-boss, weapon-range (the weapon select's live preview — M2-03) (+ README, example)
+│   ├── stages/             ✔ one file per stage: music, camera path, checkpoints, parallax, tilemap (heightfield / RLE), event timeline; zone-a (AZURE VERGE, the game's stage — M1-18), test-range, test-boss, weapon-range (the weapon select's live preview — M2-03), hunter-range (the Option Hunters — M2-04) (+ README, example)
 │   ├── tilesets/           ✔ terrain tilesets: per tile collision type, column-height mask, atlas frame (+ README, example)
-│   ├── enemies/            ✔ enemy definitions: hp, score, hurtbox, behaviour script + tunables, mover, ground anchor, drop, child; boss sections (parts, weak points, phases); zone A roster + HALCYON BULWARK (M1-18), test-range roster, test boss (+ README, example)
+│   ├── enemies/            ✔ enemy definitions: hp, score, hurtbox, behaviour script + tunables, mover, ground anchor, drop, child; boss sections (parts, weak points, phases); zone A roster + HALCYON BULWARK (M1-18), test-range roster, test boss, the three Option Hunters (option-hunters, M2-04) (+ README, example)
 │   ├── paths/              ✔ movement paths: spline control points, baked to arc-length tables at load; zone A's fan / orbit curves, test-range's (+ README, example)
 │   ├── weapons/            ✔ weapon tunables + preset loadouts: Type A (type-a) and Types B–D (types-b-d, M2-03) with their menu names (+ README, example)
 │   ├── input/              ✔ input profiles (kind input-profiles, validated by input-web rebind): per-context key/button tables, remote debounce/diagonal/SOCD, Tizen keys to register
@@ -196,5 +196,7 @@ runtime), [content-data.md](content-data.md) (game data and its loader),
 playtest bot), [debug-and-replays.md](debug-and-replays.md) (debug tools, replays, golden
 replays, the benchmark and budgets), [difficulty-and-rank.md](difficulty-and-rank.md) (difficulty
 presets, rank growth, extends, continues), [pattern-dsl.md](pattern-dsl.md) (the bullet pattern
-DSL, bending lasers, cancel points, colour-blind palettes), [api-reference.md](api-reference.md) and
+DSL, bending lasers, cancel points, colour-blind palettes), [meter-arsenal.md](meter-arsenal.md)
+(weapon types, Weapon Edit, the weapon select), [options-shields-hunter.md](options-shields-hunter.md)
+(Option types, meter shields, the Option Hunter, the blue capsule), [api-reference.md](api-reference.md) and
 [conventions.md](conventions.md).

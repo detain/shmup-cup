@@ -923,7 +923,9 @@ export interface EnemySystem {
    * Records the kill in {@link EnemySystem.outcomes} (spec, position, score, killer), pushes the
    * explosion `Sfx` + `Particles` events of its spec's size, adds its own drop, fires its revenge
    * bullets (M2-01: a kill credited to a player, on screen, at a rank of at least its
-   * `revenge.minRank`, not during {@link EnemySystem.megaCrash}), then resolves its formation
+   * `revenge.minRank`, not during {@link EnemySystem.megaCrash} or
+   * {@link EnemySystem.clearOnScreen}), adds one {@link DropKind.FreeOption} drop per Option an
+   * Option Hunter carried (M2-04 — `carried` goes back to 0), then resolves its formation
    * membership (killed count, last-kill position, completion check — which may add the
    * formation's drop and `FormationBonus` in the same tick). The slot is freed in phase 8.
    *
@@ -962,6 +964,11 @@ export interface EnemySystem {
    *
    * @param by - Player slot credited with the kills (default -1 = nobody).
    * @returns Enemies killed.
+   *
+   * @example
+   * ```ts
+   * world.enemies.clearOnScreen(0); // → enemies in view destroyed, credited to player 1
+   * ```
    */
   clearOnScreen(by?: number): number;
   /**
@@ -969,12 +976,22 @@ export interface EnemySystem {
    * tick frees what was just taken): every live Option Hunter steals the Options it touches (see
    * the module docs). Never allocates.
    *
+   * @remarks
+   * Does nothing without the host's `weapons` (a World always has them). Players are visited in
+   * slot order, so with two ships in reach the lower slot loses its Options first; a hunter that
+   * already carries {@link MAX_CARRIED_OPTIONS} takes nothing more, and one with less room takes
+   * only as many as it can carry (the group's `count` drops by that many — the chain is cut from
+   * its end). A stolen Option is gone from the loadout: only a freed one gives it back.
+   *
    * @returns Options stolen this tick.
    */
   huntOptions(): number;
   /** Removes every enemy and formation at once (checkpoint restart). */
   clear(): void;
-  /** Phase 9: refills the ground and air sprite batches. */
+  /**
+   * Phase 9: refills the ground and air sprite batches and (M2-04) the
+   * {@link EnemySystem.carriedBatch} of the Options the live Option Hunters carry. Never allocates.
+   */
   sync(): void;
 }
 

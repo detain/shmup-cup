@@ -4,7 +4,8 @@ The game now starts like a real game. Every build — browser, Samsung TV and de
 short loading bar and then the **title screen**: the SHMUP CUP logo, a blinking `PRESS OK`, and
 after OK a small menu. **START** asks for a **difficulty** — EASY, NORMAL, HARD or ARCADE — then
 shows the **WEAPON SELECT** screen, where you pick the ship's **weapons** — four ready-made weapon
-types or your own mix, what the `?` and `!` power-ups do, and automatic power-ups — while a
+types or your own mix, how the **Options** fly, which **shield** the `?` power-up gives, what `!`
+does, and automatic power-ups — while a
 **live preview** flies them behind the menu, and then begins a game: the KESTREL, the player ship, flies in from the
 left and from then on follows the directional buttons of the TV remote, the arrow keys or a
 gamepad — **its gun fires on its own**, with a sound for every shot — under the new **HUD**: your
@@ -54,17 +55,21 @@ loops seamlessly, the boss theme, a short stage-clear tune and a game-over tune
 click.
 
 In a browser there is more to try: a shortcut straight to the zone's boss (`?skip=boss`), the
-fully powered ship (`?loadout=full`), and two test stages — the scrolling *Test Range*, with rocky
+fully powered ship (`?loadout=full`), and three test stages — the scrolling *Test Range*, with rocky
 ground, caves, speed changes and the first enemy roster
-([The scrolling test stage](#the-scrolling-test-stage-browser-only)), and the short *Boss Range*
-with a test boss ([The boss range and the WARNING](#the-boss-range-and-the-warning-browser-only)).
+([The scrolling test stage](#the-scrolling-test-stage-browser-only)), the short *Boss Range*
+with a test boss ([The boss range and the WARNING](#the-boss-range-and-the-warning-browser-only))
+and the *Hunter Range*, where the Option Hunters try to steal your Options
+([The Option Hunter range](#the-option-hunter-range-browser-only)).
 The earlier start-up pictures are still there: **free flight** straight away without the title,
 the animated **sprite showcase** and the **calibration screen**, plus the **effects gallery**
 that shows every explosion and screen effect in turn (see [below](#other-screens-browser-only)).
 
 This build is version **0.1.0** — the end of the first milestone — plus the first three steps of
 the second: the difficulties, extra ships and continues, then the colour-blind bullet colours and
-points for cancelled bullets, and now the **weapon types** and the WEAPON SELECT screen. For checking it on the monitors
+points for cancelled bullets, then the **weapon types** and the WEAPON SELECT screen, and now four
+kinds of **Options**, five **shields**, the **Option Hunter** that steals Options and the rare
+**blue capsule**. For checking it on the monitors
 there is a **debug build** with developer tools — a panel with the frame rate, frame times and
 start-up time, hit-area outlines, invincibility, a freeze with single steps, slow motion and
 jumps to the next checkpoint or the boss — opened on the remote with Play/Pause and then Ch ▲
@@ -264,6 +269,7 @@ the range starts over when it ends.
     MISSILE  MISSILE          ← grey unless TYPE is EDIT
     DOUBLE   DOUBLE
     LASER    LASER
+    OPTION   TRAIL
     ? SLOT   FORCE FIELD
     ! SLOT   MEGA CRASH
     AUTO     OFF
@@ -299,8 +305,34 @@ starts from the weapons of the type you had chosen before it. While MISSILE is h
 preview shows the missile on its own, on DOUBLE the Double weapon, on LASER the laser; on every
 other line it switches between the Laser and the Double weapon every four seconds.
 
-**? SLOT** — what the power meter's `?` box gives: **FORCE FIELD** (the ring that takes five hits;
-more shields come in a later build).
+**OPTION** — how the Options (the glowing orbs the power meter's OPTION box gives you) fly. The
+preview's two Options show the choice at once; while OPTION is highlighted they also spread out
+and pull back in every second and a half.
+
+| Choice | How the Options fly |
+|---|---|
+| **TRAIL** (as before) | They follow the path your ship has flown: they string out behind you when you move and stay put on screen when you stop |
+| **SNAKE** | A chain hanging behind the ship, one link at a time: when you move, it swings out the opposite way, like a tail; when you stop, it **keeps its shape**, so you can hold a curve of Options where you want it |
+| **FORMATION** | A tight `>` behind the ship that can **spread** into a wide `V` (above and below you) |
+| **ROTATE** | They circle round the ship; **spread** makes the circle twice as wide |
+
+**Spreading FORMATION and ROTATE:** on the TV remote press **Ch ▲** (channel up) to spread them
+out, and again to pull them back in — or **hold OK** for a quarter of a second or more: they
+spread while you hold it and come back when you let go. A normal quick OK (to take a power-up)
+never moves them. On a keyboard the same is **V** (press) or holding **C** / **Enter**; on a
+gamepad **Y** (press) or holding **X**. TRAIL and SNAKE ignore it.
+
+**? SLOT** — what the power meter's `?` box gives:
+
+| Choice | What `?` gives | How it protects you |
+|---|---|---|
+| **FORCE FIELD** (as before) | A glowing ring round the ship | Takes **five** hits from bullets, lasers and enemies you touch, then breaks |
+| **SHIELD** | Two small **pods** at the ship's nose | Each pod stops the bullets and enemies that touch **it** — up to **14** hits each, and each wears out on its own. They guard the front only: what comes from behind or above still hits you, and they never stop lasers |
+| **FREE SHIELD** | A pair of pods on the side you **last moved towards** (ahead if you have not moved yet) | Like SHIELD, but you choose where: move up, then take `?`, and the pair sits above you. Taking `?` again adds a second pair where you last moved (four pods at most); after that, `?` replaces the most worn pair (while all four are unharmed, `?` is greyed) |
+| **ROTATE** | Two pods **circling** the ship | Like SHIELD, but they sweep all round you |
+| **REDUCE** | No ring — the ship's **weak spot shrinks** to a third, with a faint green shimmer round it | Bullets must come much closer to hit you. It takes **two** hits: after the first the weak spot grows to two thirds, after the second it is back to normal. Hitting the rock still destroys the ship |
+
+No shield protects you from the **rock**.
 
 **! SLOT** — what the power meter's `!` box does:
 
@@ -310,7 +342,7 @@ more shields come in a later build).
 | **NORMAL** | Back to the small darts — drops the Double or Laser weapon (the missiles and Options stay) — for when you prefer the basic gun | you already fire the darts |
 | **SPEED DOWN** | One speed level slower — for when you took too many Speed Ups | the ship is at its normal speed |
 | **LIFE OPTION** | Your **spare ships become Options** — as many as fit up to four; each one takes a spare-ship icon | you have no spare ship, or four Options |
-| **FULL BARRIER** | A fresh **Force Field**, even over a worn one | the Force Field is up at full strength |
+| **FULL BARRIER** | Your `?` shield back to **full strength** — a fresh Force Field even over a worn one; with pods, every pod back where it was (broken ones too); REDUCE back to its smallest | the shield is up at full strength |
 
 **AUTO** — **Auto Power-Up**: ON takes power-ups by itself when the power meter reaches the next
 one in the order below (you can still press OK yourself). OFF (the default) leaves the highlight
@@ -336,7 +368,10 @@ What "good" looks like:
 - Missiles, bombs and torpedoes land on the preview's floor; nothing ever hits the preview ship.
 - Moving through the lines never skips or doubles a step; Back always returns to the DIFFICULTY
   box, and the AUTO ORDER box always closes with DONE or Back.
-- The game that starts has exactly the weapons, `!` choice and Auto Power-Up setting shown.
+- The game that starts has exactly the weapons, Option type, `?` and `!` choices and Auto
+  Power-Up setting shown.
+- With OPTION highlighted, the preview's Options fly the chosen way (and FORMATION / ROTATE
+  spread and pull back every second and a half); TRAIL and SNAKE just follow.
 
 ## The Options screen
 
@@ -435,7 +470,11 @@ How it should feel:
   edge; it never covers the top or bottom bar and never disappears off the side.
 - **The gun fires by itself** — you never press a button to shoot ([Your weapons](#your-weapons)).
 - **OK** (Enter or C on a keyboard, X on a gamepad) takes a power-up once you have collected
-  capsules ([Power-ups](#power-ups)) — pressing it never stops or slows the ship.
+  capsules ([Power-ups](#power-ups)) — pressing it never stops or slows the ship. With FORMATION
+  or ROTATE Options, **holding** it spreads them while you hold it.
+- **Ch ▲** (channel up; V on a keyboard, Y on a gamepad) spreads FORMATION and ROTATE Options
+  out, and pulls them back in on the next press ([Choosing your weapons](#choosing-your-weapons)).
+  Nothing else needs it.
 - **Back** or **Play/Pause** pauses the game
   ([Pausing, quitting and the end screens](#pausing-quitting-and-the-end-screens)).
 
@@ -446,7 +485,23 @@ ship may move in four directions only; the game is designed to be fully playable
 
 ### What changed lately
 
-**New in this build: four weapon types and the WEAPON SELECT screen.** After the DIFFICULTY box a
+**New in this build: Option types, more shields, the Option Hunter and the blue capsule.** The
+WEAPON SELECT screen has a new line, **OPTION**: besides the classic **TRAIL**, the Options can
+fly as a **SNAKE** (a chain that swings behind the ship and keeps its shape when you stop), in a
+**FORMATION** (a `>` behind the ship that spreads into a `V`) or **ROTATE** round the ship — spread
+FORMATION and ROTATE out with **Ch ▲** on the remote (or by holding OK). **? SLOT** now offers
+five shields: the **FORCE FIELD**, the **SHIELD** (two pods at the nose that stop what touches
+them, 14 hits each), the **FREE SHIELD** (pods on the side you last moved towards — take `?` again
+for a second pair), **ROTATE** (two pods circling the ship) and **REDUCE** (the ship's weak spot
+shrinks). In the browser's new *Hunter Range* a violet, armoured **Option Hunter** announces
+itself with an alarm, lines up with your ship and dives through your Options — those it touches
+are carried off, grey, behind it; set it off with a **Mega Crash** (or the rare **blue capsule**,
+which destroys every enemy on screen) and the stolen Options drift free for you to catch again.
+AZURE VERGE itself has no hunters and no blue capsules yet. See [Choosing your
+weapons](#choosing-your-weapons), [Power-ups](#power-ups) and [The Option Hunter
+range](#the-option-hunter-range-browser-only).
+
+Before that, **four weapon types and the WEAPON SELECT screen.** After the DIFFICULTY box a
 new screen lets you choose the ship's weapons before every game — so starting a game takes one
 more OK (START is highlighted, so OK goes straight on). Besides the classic **TYPE A** (Missile,
 Double, Laser) there are **TYPE B** (a Spread Bomb that bursts into a blast, a Tail Gun that fires
@@ -948,9 +1003,30 @@ Things to check on the monitor and report:
    the box closes and ORDER shows the new letters. START and collect capsules: the power-ups are
    taken by themselves in that order, without OK. Report whether the box is readable and whether
    Back ever did something else than close it.
+36. **Option types** (new): on the WEAPON SELECT screen move to **OPTION** and step through
+   `TRAIL`, `SNAKE`, `FORMATION`, `ROTATE` with ◀ / ▶ — the preview's two orbs change at once, and
+   FORMATION / ROTATE spread out and pull back every second and a half. Play AZURE VERGE with
+   each: take OPTION a few times and fly around. SNAKE should swing out behind the ship and keep
+   its curve when you stop; FORMATION sits in a `>` behind you; ROTATE circles the ship. Report
+   which ones are useful with the remote.
+37. **Spreading with the remote** (new): with FORMATION or ROTATE Options in the game, press **Ch ▲**
+   once — the Options spread out (FORMATION into a wide `V`, ROTATE into a wider circle) — and
+   again to pull them back. Then **hold OK** for a moment: they spread while you hold it and come
+   back when you let go; a quick OK press to take a power-up must never move them. Report whether
+   Ch ▲ answers every press exactly once (no double toggles).
+38. **The pod shields** (new): set **? SLOT** to **SHIELD**, START and take `?` (six capsules): two
+   small gold pods appear at the ship's nose. Let enemy bullets hit them — a pod dims towards red
+   as it wears and breaks after 14 hits while the other stays. Try **FREE SHIELD** (move up, then
+   take `?` — the pair appears above the ship; take `?` again after moving down for a second pair)
+   and **ROTATE** (two pods circling the ship). Report whether the pods are visible from the sofa.
+39. **REDUCE and FULL BARRIER** (new): set **? SLOT** to **REDUCE**, START and take `?`: a faint
+   dotted green ring appears round the ship, and bullets that pass close by no longer destroy it;
+   two hits end it. With **! SLOT** on **FULL BARRIER**, taking `!` restores a worn shield — pods
+   included — to full strength. Report whether you can tell REDUCE is active.
 
-The fully powered ship (`?loadout=full`), the shortcut to the boss (`?skip=boss`), the two test
-stages (the Test Range and the Boss Range with its test boss), free flight, the showcase, the
+The fully powered ship (`?loadout=full`), the shortcut to the boss (`?skip=boss`), the three test
+stages (the Test Range, the Boss Range with its test boss and the Hunter Range with the Option
+Hunters and the blue capsule), free flight, the showcase, the
 calibration screen and the effects gallery can only be opened in a browser — the monitor's own
 web browser works too, pointed at a PC running `pnpm dev` (below).
 
@@ -1179,8 +1255,8 @@ instead of the laser below, and so on):
 | **Faster ship** | The ship moves noticeably faster than normal (speed level 3 of 6) |
 | **Laser** instead of the darts | A thin pale-blue beam shoots out of the nose, grows to about a sixth of the screen's width and races right. It passes **through** enemies, damaging each one it touches up to ten times a second, and it moves up and down with the ship that fired it. It stops at rock: the beam's front stays at the wall while its tail catches up and it vanishes. One beam per ship or Option at a time |
 | **Missiles** | Small grey missiles with a flickering orange flame drop diagonally forward and down — one at a time from the ship and from each Option; the next follows as soon as the last one is gone. On the ground they **slide along the rock**, following slopes up and down; a steep wall stops them, and over a drop they fall again. Where there is no ground they simply fall off the bottom of the screen |
-| **Four Options** | Four glowing red-and-orange orbs that pulse gently. They follow the path your ship has flown: **when you move, they string out behind you** along your path; **when you stop, they stay where they are on screen** (even while the stage scrolls); pushing against the edge of the screen gathers them onto the ship. Each one fires the laser and the missiles too. They float through rock, cannot be hurt, and start on top of the ship when it flies in |
-| **Force Field** | A glowing cyan ring around the ship that takes five hits — see [Power-ups](#power-ups) |
+| **Four Options** | Four glowing red-and-orange orbs that pulse gently. They follow the path your ship has flown: **when you move, they string out behind you** along your path; **when you stop, they stay where they are on screen** (even while the stage scrolls); pushing against the edge of the screen gathers them onto the ship. Each one fires the laser and the missiles too. They float through rock, cannot be hurt, and start on top of the ship when it flies in. With another OPTION choice (SNAKE, FORMATION, ROTATE) they fly that way instead — [Choosing your weapons](#choosing-your-weapons) |
+| **Force Field** | A glowing cyan ring around the ship that takes five hits — see [Power-ups](#power-ups); with another `? SLOT` choice, that shield |
 
 What "good" looks like, with either loadout:
 
@@ -1231,8 +1307,8 @@ Force Field that is still up …) are **greyed out**:
 | 2 | MISSILE | Missiles that drop to the ground and slide along it (with another weapon type: that type's missile — the box shows its name, e.g. `SPREAD`) |
 | 3 | DOUBLE | A second shot that climbs diagonally — replaces the laser (another type: its Double weapon, e.g. `TAIL`) |
 | 4 | LASER | The long piercing laser — replaces the Double (another type: its laser, e.g. `RIPPLE`) |
-| 5 | OPTION | One more glowing orb that follows the ship and copies its fire (four at most) |
-| 6 | ? | A **Force Field** around the ship (below) |
+| 5 | OPTION | One more glowing orb that follows the ship and copies its fire (four at most) — flying the way chosen on the WEAPON SELECT screen (TRAIL, SNAKE, FORMATION or ROTATE) |
+| 6 | ? | A **Force Field** around the ship (below) — or the shield chosen for `? SLOT` (SHIELD, FREE SHIELD, ROTATE, REDUCE — below) |
 | 7 | ! | **Mega Crash**: every enemy and every enemy bullet is destroyed at once — or what you chose for `!` in the WEAPON SELECT screen (NORMAL, SPEED DOWN, LIFE OPTION, FULL BARRIER — [Choosing your weapons](#choosing-your-weapons)) |
 | 8 | SPEED UP again | After `!` the highlight starts over |
 
@@ -1240,7 +1316,8 @@ Force Field that is still up …) are **greyed out**:
 - A press **does nothing** (and the highlight stays where it is) when no capsule was collected
   since the last power-up, or when you already have the most of the highlighted one: the fifth
   Speed Up, the missiles, the Double or laser you already fire, four Options, a Force Field that
-  is still up — its box is greyed out. Collect another capsule to move the highlight on. Such a
+  is still up — its box is greyed out. (A FREE SHIELD is the exception: `?` stays available to add
+  or renew a pair of pods.) Collect another capsule to move the highlight on. Such a
   press plays a short, low "no" buzz.
 - You may leave the highlight "parked" on a power-up as long as you like and press OK when it
   suits you — it is never taken by itself, unless you turned **AUTO** on in the WEAPON SELECT
@@ -1255,14 +1332,32 @@ moment (about an eighth of a second) during which further hits are free, so a bu
 costs only one step. It does **not** protect against the rock. While it is up, `?` cannot be
 taken again; once it has broken, it can.
 
+**The other shields** (`?`, chosen on the WEAPON SELECT screen).
+**SHIELD**, **FREE SHIELD** and **ROTATE** give small orange-gold **pods** instead of a ring —
+two at the nose, a pair on the side you last moved towards (take `?` again for a second pair), or
+two circling the ship. A pod stops the enemy bullets and enemies that **touch it** (the bullet
+vanishes, the enemy flies on) — but it never covers the ship itself, so something that slips past
+the pods still hits you, and pods never stop lasers. Each pod takes **14 hits** on its own: it
+dims from gold to red and loses facets as it wears, flickers after each hit, and breaks with the
+same crackle as the Force Field; the others keep going. **REDUCE** shows a thin dotted green ring
+round the ship: while it is there the ship's weak spot is **a third** of its normal size (bullets
+must come very close), after one hit two thirds, and the second hit ends it. No shield helps
+against the rock.
+
 **Mega Crash** (`!`). Every enemy — also the ones just about to come in — is destroyed at once,
 and every enemy bullet vanishes — each one leaving a gold diamond that flies up into your score
 (+10 points). Enemies destroyed this way count as shot down: a saucer or the last member of a
 formation still leaves its capsule. A **boss** is not hurt by it — only its bullets vanish (and
 turn into points). The playfield flashes white for a moment and a deep boom fills both speakers.
 
+**The blue capsule** (browser *Hunter Range* only for now). A rare **blue** pill, left by a blue
+saucer or a complete formation. Collecting it destroys **every enemy on the screen** at once
+(enemies still outside the screen are spared), with Mega Crash's white flash and roar — but it
+does **not** clear the bullets, and it does not move the power meter's highlight. It is worth 300
+points like a capsule.
+
 **Fully powered** (`&loadout=full`, see [Your weapons](#your-weapons)) now also starts with a
-fresh Force Field.
+fresh Force Field — or the shield chosen for `? SLOT`.
 
 What "good" looks like:
 
@@ -1275,6 +1370,10 @@ What "good" looks like:
   after each hit and disappears after the fifth.
 - After a Mega Crash no enemy and no enemy bullet is left on the screen — only gold diamonds on
   their way to your score, gone within about three seconds.
+- Shield pods sit at the right places (nose / the side you moved towards / circling), move with
+  the ship, wear one step at a time, and a broken pod disappears while the others stay.
+- With REDUCE, bullets that pass close to the ship (but not through its centre) no longer
+  destroy it — turn on the hit-area outlines of the debug build to see the smaller green circle.
 
 ## Lives, losing your ship and the score
 
@@ -1455,6 +1554,52 @@ What "good" looks like:
 - During the WARNING the playfield is darker and pulses red three times; the band's text stays
   readable on top of it.
 
+## The Option Hunter range (browser only)
+
+Open http://localhost:5173/?stage=hunter-range&loadout=full and choose START on the title (the
+fully powered ship starts with four Options; without `&loadout=full`, collect five capsules and
+take OPTION first — a hunter only comes while you **have** Options). It is a one-minute stage in
+open space made to meet the **Option Hunter**: a violet, armoured enemy that is not after your
+ship but after your **Options**. Try it with every OPTION choice of the WEAPON SELECT screen —
+each one gives the hunter a different chance.
+
+| Time (about) | What happens |
+|---|---|
+| 1–6 s | Six **red saucers** — shoot them for capsules |
+| 12 s | **An Option Hunter** from behind: an alarm sounds, it flies in from the left, lines up with your ship's row, waits a moment and charges straight to the right |
+| 15 s | A row of six green pods — destroy them **all** and the last one leaves a **blue capsule** |
+| 18 s | A hunter from the front: lines up on your row near the right edge, then charges left |
+| 22 s | Two more saucers |
+| 25 s | A hunter from above: lines up over your ship, then dives down |
+| 26 s | A slow **blue saucer** — it also leaves a blue capsule |
+| 30 s | Checkpoint; five more saucers |
+| 40 s | **Two hunters at once**, from behind (upper half) and from the front (lower half) |
+| 60 s | The end of the stage |
+
+**What the hunter does.** When it appears you hear a rising, wobbling **alarm**. Your shots only
+**clink** off it — it cannot be shot down — and it never hurts your ship, even if it flies right
+through it. When it touches one of your Options it takes that Option **and every Option behind
+it in the line** (a short falling "zip" sound): they vanish from your ship and trail behind the
+hunter, **grey**. If it leaves the screen with them, they are gone — collect capsules and take
+OPTION again.
+
+**Getting them back.** Only a **Mega Crash** (the `!` box) or a **blue capsule** destroys a hunter.
+Then each Option it carried is set free as a grey orb that drifts slowly across the screen (it
+moves with the screen, bouncing off the top and bottom) — fly into it and it becomes one of your
+Options again (with four already, you only hear the ding). A freed Option blinks after about
+eight seconds and vanishes at ten.
+
+What "good" looks like:
+
+- The alarm is clearly audible and comes before the hunter reaches you; the hunter is easy to
+  tell apart from other enemies (violet, and shots clink off it).
+- The hunter never takes an Option it did not touch; with TRAIL or SNAKE Options it takes the
+  one it hits and the ones further back, never the ones closer to the ship.
+- Grey stolen Options stay behind the hunter as it flies; after a Mega Crash or a blue capsule
+  they drift free and each one you touch comes back as a normal Option at once.
+- A blue capsule destroys every enemy on the screen (the hunters too) but leaves the bullets.
+- Nothing stays stuck on the screen, and there are no magenta-and-black squares.
+
 ## Explosions, sparks, shake and flashes
 
 Hits look like hits — in AZURE VERGE on every device, and in the browser's *Test Range*
@@ -1526,7 +1671,9 @@ What you should hear:
 | You collect a capsule | A bright ding |
 | OK takes a power-up | A short rising trill |
 | OK has nothing to give | A low "no" buzz |
-| The Force Field is hit / breaks | A soft thud / a crackling break |
+| The Force Field (or a shield pod) is hit / breaks | A soft thud / a crackling break |
+| An **Option Hunter** appears | A rising, wobbling alarm |
+| A hunter takes your Options | A short falling "zip" |
 | **Mega Crash** | A long, deep roar |
 | You lose your ship | A heavy explosion; the music goes quiet for about two seconds and comes back up |
 | The boss **WARNING** | The stage music fades out within half a second and a **siren** wails three times, once a second, with the red pulses |
@@ -1640,12 +1787,20 @@ mean the build itself is broken; they are not caused by anything you did.
 | ▼ jumps over MISSILE, DOUBLE and LASER in the WEAPON SELECT screen | Expected: they show the chosen type's weapons; choose **EDIT** on TYPE to change them one by one |
 | The WEAPON SELECT screen is back on TYPE A after reopening the app | Expected: the choice is kept only until the app is closed (a later build remembers it) |
 | The power meter says `SPREAD` / `TAIL` / `RIPPLE` (or other names) instead of MISSILE / DOUBLE / LASER | Expected with another weapon type: the boxes carry the chosen type's weapon names |
-| OK on the `!` box gave the "no" buzz | Expected when the `!` choice cannot do anything right now: NORMAL while you fire the darts, SPEED DOWN at normal speed, LIFE OPTION without a spare ship or with four Options, FULL BARRIER while the Force Field is at full strength |
+| OK on the `!` box gave the "no" buzz | Expected when the `!` choice cannot do anything right now: NORMAL while you fire the darts, SPEED DOWN at normal speed, LIFE OPTION without a spare ship or with four Options, FULL BARRIER while your shield is at full strength |
 | A spare-ship icon vanished without a loss | Expected after OK on `!` with **LIFE OPTION**: spare ships turned into Options |
 | The preview ship behind the WEAPON SELECT panel was hit and nothing happened | Expected: the preview is a harmless practice range and its ship cannot be hurt |
 | A Ripple ring passed through a small enemy without hitting it | Expected when the ring had already grown around it: rings hit with their edge |
 | A Spread Bomb touched an enemy and did no damage at once | Expected: the bomb bursts, and its blast does the damage (twice) a moment later |
 | Power-ups are taken without pressing OK | **AUTO** is on in the WEAPON SELECT screen — they follow its ORDER. Set AUTO to OFF to take them only with OK |
+| Ch ▲ does nothing | Expected with TRAIL or SNAKE Options (and without Options): it only spreads FORMATION and ROTATE. If it does nothing with those, please report it with the remote model |
+| The Options spread out while I took a power-up | OK was held for a quarter of a second or more — holding OK spreads FORMATION / ROTATE Options. Press it briefly to only take the power-up |
+| The `?` box is not greyed although a FREE SHIELD is up | Expected: with FREE SHIELD `?` adds a second pair of pods, then renews the most worn pair |
+| Bullets hit the ship although pods were up | Expected when they came past the pods: pods stop only what touches them, and never lasers or the rock. The FORCE FIELD and REDUCE protect the whole ship |
+| My Options vanished | An **Option Hunter** (the violet enemy after the alarm) took them — a Mega Crash or a blue capsule frees them to be caught again; if it leaves the screen they are lost. Hunters appear only in the browser's Hunter Range for now. Also: each loss costs an Option |
+| Shots do not hurt the violet enemy | Expected: the Option Hunter is armoured — only a Mega Crash or a blue capsule destroys it |
+| An Option Hunter never came in the Hunter Range | Expected when you had no Options at that moment — hunters come only for Options. Use `&loadout=full` or take OPTION first |
+| A blue capsule left the enemy bullets on the screen | Expected: unlike Mega Crash, the blue capsule only destroys the enemies on the screen |
 | The DIFFICULTY box is back on NORMAL after reopening the app | Expected: the choice is kept only until the app is closed (a later build remembers it) |
 | The title's `HI` changed after I chose another difficulty | Expected: each difficulty keeps its own high scores, and the title shows the one you chose last |
 | OK on the title menu did nothing | The menu ignores OK for a split second after it appears (an OK pressed then still counts a moment later). If START or OPTIONS never reacts, please report it with the remote model |

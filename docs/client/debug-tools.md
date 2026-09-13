@@ -119,7 +119,7 @@ During normal play the graph should be a flat row of short green bars.
 
 | Colour | What |
 |---|---|
-| Green square | Your ship's hit spot — a bullet has to touch this small spot to destroy the ship |
+| Green square | Your ship's hit spot — a bullet has to touch this small spot to destroy the ship (with the REDUCE shield up it is smaller: a third, then two thirds of its size) |
 | Yellow box | Your ship's body against rock |
 | Red boxes | Enemies |
 | Orange boxes | The boss's parts that can be hit |
