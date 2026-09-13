@@ -64,14 +64,14 @@ field ([`content/enemies/`](../enemies/README.md)).
 
 | Node | Fields | What it does |
 |---|---|---|
-| `fire` | `direction?`, `speed?`, `bullet?` / `bulletRef?`, `params?` | Fires one bullet. Missing direction / speed come from the bullet, else aimed at 1 px/tick. `params` (`$1` …) go with a `bulletRef`. |
+| `fire` | `direction?`, `speed?`, `bullet?` / `bulletRef?`, `params?` | Fires one bullet. Missing direction / speed come from the bullet, else aimed at 1 px/tick. `params` (`$1` …) go with a `bulletRef`: evaluated when the fire runs and handed to the bullet. |
 | `wait` | `ticks`, `ranked?` | Sleeps (floored; below 1 = no wait). `ranked`: `round(ticks ÷ fire rate)`, at least 1 — like `ScriptApi.fireWait`. |
 | `repeat` | `times`, `body` | Runs `body` `times` times (floored; below 1 = never); `$i` counts from 0. At most 4 nested (after `actionRef` inlining). |
 | `changeSpeed` | `speed`, `term?` | Bullet only: reach the speed evenly over `term` ticks (0 = at once); a `sequence` value is a change per tick for `term` ticks. |
 | `changeDirection` | `direction`, `term?` | Bullet only: turn the short way to the heading over `term` ticks; `sequence` = turn per tick for `term` ticks. In an enemy's pattern it sets the heading `relative` fires measure from. |
 | `accel` | `accel`, `min?`, `max?`, `term?` | Bullet only: speed change per tick, clamped to `[min, max]` (defaults 0 and 16), for `term` ticks (0 = until changed). |
 | `vanish` | — | Removes the bullet (no sparkle); ends an enemy's pattern. |
-| `actionRef` | `action`, `params?` | Inlines another action, its `$1` … `$9` replaced by `params`. Recursion is an error. |
+| `actionRef` | `action`, `params?` | Runs another action (inlined at load), its `$1` … `$9` set to the values of `params`, evaluated when the `actionRef` runs. Recursion is an error. |
 
 **Directions** `{ "type", "value" }`: `aim` (default: at the nearest living player, snapped to the
 difficulty's aim directions, + value), `absolute` (0 = right, 256 = down, 512 = left), `relative`
@@ -84,11 +84,16 @@ the first).
 **Expressions**: `+ - * / %`, unary `-`, parentheses, `floor`, `round`, `abs`, `min`, `max`,
 `sin`, `cos` (binary units) and `$rank` (0–31), `$rand` (a replay-safe random number in [0, 1),
 drawn each time it is evaluated), `$loop`, `$i`, `$1` … `$9`. They are parsed once at load (no
-`eval`) and constant parts are folded.
+`eval`) and constant parts are folded. Params are **values**, as in BulletML: a param is evaluated
+once, when its `actionRef` / `fire` runs, so `"params": ["$i"]` passes the caller's loop index
+(inside the referenced action or bullet `$i` is its own loop's) and a `$rand` param is one draw,
+the same wherever `$1` is used.
 
 **Rules.** The loader reports bad expressions, unknown / recursive references, `$n` beyond a
-reference's params, `repeat` deeper than 4, both `bullet` and `bulletRef` in one fire, and a
-compiled bank over 262,144 numbers — with the JSON path of the problem. Enemy speeds follow the
+reference's params, `repeat` deeper than 4, more than 16 non-constant param values live at once
+(nested references), both `bullet` and `bulletRef` in one fire, and a compiled bank over 262,144
+numbers — with the JSON path of the problem; an action that runs a problem (its own, an inlined
+action's or a bullet program's) runs nothing. Enemy speeds follow the
 same 4-way limits as hand-written behaviours (zone A: aimed bullets ≤ 2 px/tick on Normal). A
 bullet may `bulletRef` itself (no params) — the 512-bullet pool bounds it.
 

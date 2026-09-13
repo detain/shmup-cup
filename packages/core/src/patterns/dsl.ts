@@ -34,15 +34,22 @@
  * committed tables) and the variables `$rank` (the session's rank, 0–31), `$rand` (a gameplay-RNG
  * draw in `[0, 1)`, one per occurrence and evaluation), `$loop` (the loop, 1 until M2-10's
  * campaign), `$i` (the innermost `repeat`'s index, from 0) and `$1` … `$9` (the `params` of the
- * `actionRef` / `bulletRef` that inlined it — missing ones are 0 in a pattern run on its own). They
+ * `actionRef` / `bulletRef` that inlined it — missing ones are 0 in a pattern run on its own). A
+ * param is a **value**, evaluated once when its reference runs (BulletML's meaning): `$i` in a
+ * param is the caller's loop index, `$rand` one draw shared by every use of the `$n`. They
  * are parsed once at load by a small recursive-descent parser (no `eval` / `new Function`),
  * constant-folded and emitted as postfix code.
  *
- * **Compilation.** `actionRef` and `bulletRef` are **inlined** (their `params` substituted into
- * the referenced expressions), so the interpreter needs no call stack; recursion is an issue.
- * `repeat` nests at most {@link MAX_REPEAT_DEPTH} deep (after inlining). A bullet with `actions`
- * gets its own program (shared by every `fire` naming the same bullet without params). The whole
- * bank is at most {@link MAX_PATTERN_CODE} numbers.
+ * **Compilation.** `actionRef` and `bulletRef` are **inlined**, so the interpreter needs no call
+ * stack; recursion is an issue. A constant param is substituted into the referenced expressions
+ * and folded; any other param is evaluated when the reference runs and kept in a **local** of the
+ * runner: an `actionRef` stores it (`SetLocal`) before the inlined body, a `fire` evaluates its
+ * bulletRef's params (and the enclosing params an inline bullet's program reads) and hands the
+ * values to the new bullet's runner; `$n` then reads the local (`ExprOp.Local`). At most
+ * {@link MAX_PATTERN_LOCALS} locals are live in a program at once. `repeat` nests at most
+ * {@link MAX_REPEAT_DEPTH} deep (after inlining). A bullet with `actions` gets its own program
+ * (shared by every `fire` naming the same bullet without params). The whole bank is at most
+ * {@link MAX_PATTERN_CODE} numbers.
  *
  * **Program layout** (`PatternOp` codes; every expression is `[length, …postfix]`):
  *
@@ -52,11 +59,15 @@
  * | `Wait` | `[1, ranked, expr]` |
  * | `Repeat` | `[2, exitPc, expr]` — the count; below 1 jumps to `exitPc` |
  * | `Loop` | `[3, bodyPc]` — the end of a `repeat` body |
- * | `Fire` | `[4, dirType, speedType, kind, bulletEntry, dirExpr, speedExpr]` |
+ * | `Fire` | `[4, dirType, speedType, kind, bulletEntry, argCount, …argExprs, dirExpr, speedExpr]` |
  * | `ChangeSpeed` | `[5, speedType, speedExpr, termExpr]` |
  * | `ChangeDirection` | `[6, dirType, dirExpr, termExpr]` |
  * | `Accel` | `[7, flags (1 min, 2 max), accelExpr, minExpr, maxExpr, termExpr]` |
  * | `Vanish` | `[8]` |
+ * | `SetLocal` | `[9, slot, expr]` — the runner's local `slot` = the value |
+ *
+ * A `Fire` evaluates its `argCount` args first (`ExprOp.Arg k` in its direction and speed reads
+ * arg `k`); the launched bullet's runner starts with local `k` = arg `k`.
  *
  * @module
  */
@@ -75,7 +86,10 @@ export const PatternOp = {
   Repeat: 2,
   /** End of a `repeat` body: `[3, bodyPc]`. */
   Loop: 3,
-  /** Fire one bullet: `[4, dirType, speedType, kind, bulletEntry, dirExpr, speedExpr]`. */
+  /**
+   * Fire one bullet: `[4, dirType, speedType, kind, bulletEntry, argCount, …argExprs, dirExpr,
+   * speedExpr]`.
+   */
   Fire: 4,
   /** The bullet's speed: `[5, speedType, speedExpr, termExpr]`. */
   ChangeSpeed: 5,
@@ -85,6 +99,8 @@ export const PatternOp = {
   Accel: 7,
   /** Remove the bullet / end the pattern: `[8]`. */
   Vanish: 8,
+  /** Store a value in a runner local (a reference's param): `[9, slot, expr]`. */
+  SetLocal: 9,
 } as const;
 
 /** Expression op codes (postfix, evaluated on a small stack). */
@@ -125,6 +141,10 @@ export const ExprOp = {
   Sin: 16,
   /** `cos(a)`. */
   Cos: 17,
+  /** Push the runner's local of the next number (a param's value). */
+  Local: 18,
+  /** Push the running `Fire`'s arg of the next number (its bullet's param values). */
+  Arg: 19,
 } as const;
 
 /** Direction type codes of compiled programs (index into {@link DIRECTION_TYPES}). */
@@ -141,6 +161,15 @@ export const SPEED_TYPES = Object.freeze(['absolute', 'relative', 'sequence'] as
 
 /** Deepest `repeat` nesting of a compiled program (after `actionRef` inlining). */
 export const MAX_REPEAT_DEPTH = 4;
+
+/** Most `params` of one reference (`$1` … `$9`). */
+export const MAX_PATTERN_PARAMS = 9;
+
+/**
+ * Locals of a runner: the param values live in one program at once (a bullet's own params, then
+ * those of the `actionRef`s nested around a node; a deeper nesting is an issue).
+ */
+export const MAX_PATTERN_LOCALS = 16;
 
 /** Largest compiled bank, in numbers (2 MB of `Float64Array`). */
 export const MAX_PATTERN_CODE = 262144;
@@ -353,7 +382,7 @@ const SPEED: Schema<PatternSpeed> = Object.freeze({
 });
 
 /** `params` of a reference (at most 9: `$1` … `$9`). */
-const PARAMS = s.array(EXPR, { max: 9 });
+const PARAMS = s.array(EXPR, { max: MAX_PATTERN_PARAMS });
 
 /** The node list, lazily (nodes nest). */
 const NODE_LIST: Schema<PatternNode[]> = Object.freeze({
@@ -446,6 +475,8 @@ type Ast =
   | { readonly t: 'num'; readonly v: number }
   | { readonly t: 'var'; readonly op: number }
   | { readonly t: 'param'; readonly n: number }
+  | { readonly t: 'local'; readonly slot: number }
+  | { readonly t: 'arg'; readonly k: number }
   | { readonly t: 'neg'; readonly a: Ast }
   | { readonly t: 'bin'; readonly op: number; readonly a: Ast; readonly b: Ast }
   | { readonly t: 'call'; readonly op: number; readonly args: readonly Ast[] };
@@ -703,8 +734,9 @@ export function applyExprOp(op: number, a: number, b: number): number {
  * Replaces `$n` nodes by the caller's closed params and folds constant subtrees.
  *
  * @param ast - The tree.
- * @param params - Closed param trees of the enclosing reference, or `null` (a pattern run on its
- *   own: missing params are 0).
+ * @param params - Closed param trees of the enclosing reference (in the pattern compiler a
+ *   constant, a runner local or a `Fire` arg — values, never a tree that reads `$i` / `$rand`
+ *   again), or `null` (a pattern run on its own: missing params are 0).
  * @param missing - Receives the highest `$n` a reference did not pass (0 = none).
  * @returns The closed, folded tree.
  */
@@ -712,6 +744,8 @@ function close(ast: Ast, params: readonly Ast[] | null, missing: { n: number }):
   switch (ast.t) {
     case 'num':
     case 'var':
+    case 'local':
+    case 'arg':
       return ast;
     case 'param':
       if (params !== null && ast.n <= params.length) return params[ast.n - 1];
@@ -752,6 +786,12 @@ function emitPostfix(ast: Ast, out: number[]): void {
       return;
     case 'var':
       out.push(ast.op);
+      return;
+    case 'local':
+      out.push(ExprOp.Local, ast.slot);
+      return;
+    case 'arg':
+      out.push(ExprOp.Arg, ast.k);
       return;
     case 'param':
       out.push(ExprOp.Const, 0);
@@ -800,10 +840,12 @@ export const MAX_EXPR_STACK = 32;
 
 /**
  * Compiles one expression to `[length, …postfix]` — the unit test entry of the expression
- * compiler; the pattern compiler uses the same code path.
+ * compiler; the pattern compiler uses the same parser, folding and emitter.
  *
  * @param expr - A number or an expression string.
- * @param params - Param expressions (`$1` …), or omitted (they are then 0).
+ * @param params - Param expressions (`$1` …), substituted as trees and folded, or omitted (they
+ *   are then 0). (The pattern compiler substitutes only constant params; others are evaluated
+ *   once when the reference runs and read from a runner local — see the module docs.)
  * @returns The code (a fresh array).
  * @throws {SyntaxError} On a syntax error, an unknown variable / function or a too deep expression.
  *
@@ -842,7 +884,10 @@ export interface CollectedPatterns {
 
 /** Compile context of one node list. */
 interface Ctx {
-  /** Closed params of the enclosing reference, or `null`. */
+  /**
+   * Closed params of the enclosing reference (each a constant, a runner local or — only for the
+   * direction / speed a `fire` takes from its bullet — a `Fire` arg), or `null`.
+   */
   readonly params: readonly Ast[] | null;
   /** `repeat` depth so far. */
   readonly depth: number;
@@ -850,9 +895,14 @@ interface Ctx {
   readonly stack: readonly string[];
   /** Whether a reference passed the params (missing `$n` are then an issue). */
   readonly strict: boolean;
+  /** Runner locals in use (the next `SetLocal` takes this slot). */
+  readonly locals: number;
 }
 
-/** A bullet program waiting to be compiled, and the `Fire` operands to patch with its entry. */
+/**
+ * A bullet program: waiting to be compiled (then the `Fire` operands to patch with its entry are
+ * collected), or compiled (a later `fire` of a shared program writes {@link entry} at once).
+ */
 interface BulletJob {
   /** The bullet's actions. */
   readonly actions: readonly PatternNode[];
@@ -860,8 +910,14 @@ interface BulletJob {
   readonly ctx: Ctx;
   /** Issue path of the actions. */
   readonly path: string;
-  /** Code offsets of `bulletEntry` operands to patch. */
+  /** Code offsets of `bulletEntry` operands to patch once it is compiled. */
   readonly patches: number[];
+  /** Its code offset (0 until it is being compiled). */
+  entry: number;
+  /** Whether compiling its own program reported an issue. */
+  failed: boolean;
+  /** The bullet programs its `fire`s launch (failure spreads to whatever fires it). */
+  readonly links: BulletJob[];
 }
 
 /** The pattern compiler (one per {@link compilePatternBank} call). */
@@ -874,10 +930,19 @@ class PatternCompiler {
   private readonly bullets = new Map<string, { spec: PatternBulletSpec; path: string }>();
   /** Bullet programs still to compile. */
   private readonly jobs: BulletJob[] = [];
-  /** Shared programs of bullets fired without params. */
-  private readonly shared = new Map<PatternBulletSpec, BulletJob>();
+  /** Shared programs of bullets fired without params, compiled with a strict context. */
+  private readonly sharedStrict = new Map<PatternBulletSpec, BulletJob>();
+  /** Shared programs of inline bullets of a pattern compiled on its own (missing `$n` = 0). */
+  private readonly sharedLoose = new Map<PatternBulletSpec, BulletJob>();
+  /** The bullet programs the program being compiled launches. */
+  private links: BulletJob[] = [];
   /** Issues already reported (`path|message`). */
   private readonly reported = new Set<string>();
+  /**
+   * Issues found, repeats included (an inlined action reports its problems once, but every
+   * action inlining it fails).
+   */
+  private issueCount = 0;
 
   /**
    * Creates the compiler.
@@ -893,6 +958,7 @@ class PatternCompiler {
    * @param message - What is wrong.
    */
   issue(path: string, message: string): void {
+    this.issueCount++;
     const key = path + '|' + message;
     if (this.reported.has(key)) return;
     this.reported.add(key);
@@ -955,27 +1021,60 @@ class PatternCompiler {
    * Compiles one action as a program of its own.
    *
    * @param id - The action id.
-   * @returns Its entry offset, or 0 when it produced issues.
+   * @returns Its entry offset, or 0 when it — or a bullet program it launches, directly or
+   *   through other bullets — produced issues.
    */
   compileAction(id: string): number {
     const action = this.actions.get(id);
     if (action === undefined) return 0;
-    const before = this.issues.length;
+    const before = this.issueCount;
     const entry = this.out.length;
-    this.block(action.body, { params: null, depth: 0, stack: [id], strict: false }, action.path);
+    const links: BulletJob[] = [];
+    this.links = links;
+    this.block(
+      action.body,
+      { params: null, depth: 0, stack: [id], strict: false, locals: 0 },
+      action.path,
+    );
     this.out.push(PatternOp.End);
+    const ok = this.issueCount === before;
     this.drainJobs();
-    return this.issues.length === before ? entry : 0;
+    return ok && !PatternCompiler.reachesFailure(links) ? entry : 0;
   }
 
-  /** Compiles every queued bullet program. */
+  /**
+   * Whether any of the bullet programs, or one they launch in turn, failed to compile.
+   *
+   * @param links - The programs.
+   * @returns `true` on a failure.
+   */
+  private static reachesFailure(links: readonly BulletJob[]): boolean {
+    const seen = new Set<BulletJob>();
+    const todo = links.slice();
+    while (todo.length > 0) {
+      const job = todo.pop() as BulletJob;
+      if (seen.has(job)) continue;
+      seen.add(job);
+      if (job.failed) return true;
+      for (const next of job.links) todo.push(next);
+    }
+    return false;
+  }
+
+  /**
+   * Compiles every queued bullet program: its entry is known before its code (a bullet firing
+   * itself links to it at once), the `Fire`s queued before are patched after.
+   */
   private drainJobs(): void {
     while (this.jobs.length > 0) {
       const job = this.jobs.shift() as BulletJob;
-      const entry = this.out.length;
+      job.entry = this.out.length;
+      const before = this.issueCount;
+      this.links = job.links;
       this.block(job.actions, job.ctx, job.path);
       this.out.push(PatternOp.End);
-      for (const at of job.patches) this.out[at] = entry;
+      job.failed = this.issueCount !== before;
+      for (const at of job.patches) this.out[at] = job.entry;
     }
   }
 
@@ -1001,11 +1100,52 @@ class PatternCompiler {
     if (ctx.strict && missing.n > 0) {
       this.issue(path, 'uses $' + String(missing.n) + ' but the reference passes fewer params');
     }
-    if (stackDepth(closed) > MAX_EXPR_STACK) this.issue(path, 'expression too deep');
+    this.emit(closed, path);
+  }
+
+  /**
+   * Emits a closed tree into the code (`[length, …postfix]`).
+   *
+   * @param ast - The tree.
+   * @param path - Issue path.
+   */
+  private emit(ast: Ast, path: string): void {
+    if (stackDepth(ast) > MAX_EXPR_STACK) this.issue(path, 'expression too deep');
     const code: number[] = [];
-    emitPostfix(closed, code);
+    emitPostfix(ast, code);
     this.out.push(code.length);
     for (let i = 0; i < code.length; i++) this.out.push(code[i]);
+  }
+
+  /**
+   * Splits closed params into the values a `fire` hands to its bullet's runner: constants stay
+   * substituted, every other param becomes arg `k` (read by the fire's own expressions) and local
+   * `k` of the bullet's program.
+   *
+   * @param params - Closed params (in the firing runner's context).
+   * @returns `args` (the trees the `Fire` evaluates), `atFire` (the params as the fire's
+   *   expressions see them) and `inProgram` (as the bullet's program sees them).
+   */
+  private static bind(params: readonly Ast[]): {
+    args: Ast[];
+    atFire: Ast[];
+    inProgram: Ast[];
+  } {
+    const args: Ast[] = [];
+    const atFire: Ast[] = [];
+    const inProgram: Ast[] = [];
+    for (const p of params) {
+      if (p.t === 'num') {
+        atFire.push(p);
+        inProgram.push(p);
+        continue;
+      }
+      const k = args.length;
+      args.push(p);
+      atFire.push({ t: 'arg', k });
+      inProgram.push({ t: 'local', slot: k });
+    }
+    return { args, atFire, inProgram };
   }
 
   /**
@@ -1145,10 +1285,32 @@ class PatternCompiler {
           this.issue(path + '.action', 'recursive actionRef "' + node.action + '"');
           return;
         }
-        const params = this.closeParams(node.params ?? [], ctx, path + '.params');
+        // Params are values: a constant is substituted, anything else is evaluated here, once per
+        // run of the reference, into a local the inlined body reads (a local of an enclosing
+        // reference already is one).
+        const closed = this.closeParams(node.params ?? [], ctx, path + '.params');
+        const params: Ast[] = [];
+        let locals = ctx.locals;
+        for (let i = 0; i < closed.length; i++) {
+          const p = closed[i];
+          if (p.t === 'num' || p.t === 'local') {
+            params.push(p);
+          } else if (locals >= MAX_PATTERN_LOCALS) {
+            this.issue(
+              path + '.params',
+              'more than ' + String(MAX_PATTERN_LOCALS) + ' param values held at once',
+            );
+            params.push({ t: 'num', v: 0 });
+          } else {
+            out.push(PatternOp.SetLocal, locals);
+            this.emit(p, path + '.params[' + String(i) + ']');
+            params.push({ t: 'local', slot: locals });
+            locals++;
+          }
+        }
         this.block(
           action.body,
-          { params, depth: ctx.depth, stack: [...ctx.stack, node.action], strict: true },
+          { params, depth: ctx.depth, stack: [...ctx.stack, node.action], strict: true, locals },
           action.path,
         );
         return;
@@ -1167,7 +1329,11 @@ class PatternCompiler {
   private fire(node: Extract<PatternNode, { op: 'fire' }>, ctx: Ctx, path: string): void {
     const out = this.out;
     let spec: PatternBulletSpec = {};
+    // The bullet's direction / speed are evaluated by this fire (`specCtx`), its program by the
+    // bullet's own runner (`programCtx`); `args` carries the param values from one to the other.
     let specCtx = ctx;
+    let programCtx = ctx;
+    let args: Ast[] = [];
     let specPath = path + '.bullet';
     let shareable = true;
     if (node.bullet !== undefined && node.bulletRef !== undefined) {
@@ -1188,18 +1354,36 @@ class PatternCompiler {
         spec = named.spec;
         specPath = named.path;
         shareable = params.length === 0;
-        specCtx = {
-          params,
+        const stack = shareable ? [key] : [...ctx.stack, key];
+        const bound = PatternCompiler.bind(params);
+        args = bound.args;
+        specCtx = { params: bound.atFire, depth: 0, stack, strict: true, locals: ctx.locals };
+        programCtx = {
+          params: bound.inProgram,
           depth: 0,
-          stack: shareable ? [key] : [...ctx.stack, key],
+          stack,
           strict: true,
+          locals: args.length,
         };
       }
     } else if (node.bullet !== undefined) {
       spec = node.bullet;
-      // An inline bullet sees the enclosing params: its program is compiled per fire site.
+      // An inline bullet sees the enclosing params: its program is compiled per fire site and
+      // gets their values from this fire (constants stay substituted).
       shareable = ctx.params === null || ctx.params.length === 0;
-      specCtx = { params: ctx.params, depth: 0, stack: ctx.stack, strict: ctx.strict };
+      let inProgram = ctx.params;
+      if (ctx.params !== null && spec.actions !== undefined && spec.actions.length > 0) {
+        const bound = PatternCompiler.bind(ctx.params);
+        args = bound.args;
+        inProgram = bound.inProgram;
+      }
+      programCtx = {
+        params: inProgram,
+        depth: 0,
+        stack: ctx.stack,
+        strict: ctx.strict,
+        locals: args.length,
+      };
     } else if (node.params !== undefined) {
       this.issue(path + '.params', 'params need a bulletRef');
     }
@@ -1214,25 +1398,34 @@ class PatternCompiler {
       speed === undefined
         ? [SpeedType.Absolute, DEFAULT_PATTERN_SPEED]
         : PatternCompiler.speed(speed);
-    out.push(PatternOp.Fire, dirType, speedType, kind < 0 ? 0 : kind, 0);
-    const entryAt = out.length - 1;
+    out.push(PatternOp.Fire, dirType, speedType, kind < 0 ? 0 : kind, 0, args.length);
+    const entryAt = out.length - 2;
+    for (let k = 0; k < args.length; k++) this.emit(args[k], path + '.params');
     this.expr(dirValue, fireDir ? ctx : specCtx, fireDir ? path + '.direction' : specPath);
     this.expr(speedValue, fireSpeed ? ctx : specCtx, fireSpeed ? path + '.speed' : specPath);
     const actions = spec.actions;
     if (actions === undefined || actions.length === 0) return;
-    const job = shareable ? this.shared.get(spec) : undefined;
+    const shared = !shareable ? null : programCtx.strict ? this.sharedStrict : this.sharedLoose;
+    const job = shared === null ? undefined : shared.get(spec);
     if (job !== undefined) {
-      job.patches.push(entryAt);
+      this.links.push(job);
+      // Compiled (or being compiled) already: link at once; else when its turn comes.
+      if (job.entry > 0) out[entryAt] = job.entry;
+      else job.patches.push(entryAt);
       return;
     }
     const fresh: BulletJob = {
       actions,
-      ctx: specCtx,
+      ctx: programCtx,
       path: specPath + '.actions',
       patches: [entryAt],
+      entry: 0,
+      failed: false,
+      links: [],
     };
     this.jobs.push(fresh);
-    if (shareable) this.shared.set(spec, fresh);
+    this.links.push(fresh);
+    if (shared !== null) shared.set(spec, fresh);
   }
 }
 
@@ -1243,11 +1436,13 @@ class PatternCompiler {
  * @remarks
  * Every action is compiled as a program of its own (entry in {@link PatternBank.entries}, in
  * registration order — files by path, then document order); `actionRef` / `bulletRef` are inlined
- * with their params, each bullet with `actions` gets a program. Reported: duplicate ids, unknown
- * or recursive references, both `bullet` and `bulletRef` in one fire, `params` without a
- * `bulletRef`, `$n` beyond a reference's params, bad expressions, `repeat` deeper than
- * {@link MAX_REPEAT_DEPTH}, expressions deeper than {@link MAX_EXPR_STACK}, a bank larger than
- * {@link MAX_PATTERN_CODE}. An action with issues gets entry 0 (it runs nothing).
+ * with their params as values (constants folded in, others held in runner locals), each bullet
+ * with `actions` gets a program. Reported: duplicate ids, unknown or recursive references, both
+ * `bullet` and `bulletRef` in one fire, `params` without a `bulletRef`, `$n` beyond a reference's
+ * params, more than {@link MAX_PATTERN_LOCALS} param values live at once, bad expressions,
+ * `repeat` deeper than {@link MAX_REPEAT_DEPTH}, expressions deeper than {@link MAX_EXPR_STACK}, a
+ * bank larger than {@link MAX_PATTERN_CODE}. An action with issues — its own, those of an action
+ * it inlines, or those of a bullet program it launches — gets entry 0 (it runs nothing).
  *
  * @param files - The files, in path order.
  * @param issues - Collector (paths `<file>:actions[i].body[j]…`).

@@ -11,6 +11,7 @@ import {
   DirType,
   ExprOp,
   MAX_EXPR_STACK,
+  MAX_PATTERN_LOCALS,
   MAX_REPEAT_DEPTH,
   PatternOp,
   SpeedType,
@@ -205,16 +206,17 @@ describe('core/patterns DSL — pattern compiler (loadContent, kind patterns)', 
     expect(issues).toEqual([]);
     const code = db.patterns.code;
     const e = db.patterns.entries[0];
-    // [Repeat, exit, [2, Const, 3]] [Fire, dir, speed, kind, entry, [2, Const, 48], [2, Const, .5]]
-    // [Loop, body] [End]
+    // [Repeat, exit, [2, Const, 3]]
+    // [Fire, dir, speed, kind, entry, args 0, [2, Const, 48], [2, Const, .5]] [Loop, body] [End]
     const body = e + 5;
-    expect([...code.slice(e, e + 5)]).toEqual([PatternOp.Repeat, body + 13, 2, ExprOp.Const, 3]);
-    expect([...code.slice(body, body + 13)]).toEqual(
+    expect([...code.slice(e, e + 5)]).toEqual([PatternOp.Repeat, body + 14, 2, ExprOp.Const, 3]);
+    expect([...code.slice(body, body + 14)]).toEqual(
       [
         PatternOp.Fire,
         DirType.Sequence,
         SpeedType.Relative,
         8,
+        0,
         0,
         2,
         ExprOp.Const,
@@ -224,7 +226,7 @@ describe('core/patterns DSL — pattern compiler (loadContent, kind patterns)', 
         0.5,
       ].concat([PatternOp.Loop, body]),
     );
-    expect(code[body + 13]).toBe(PatternOp.End);
+    expect(code[body + 14]).toBe(PatternOp.End);
   });
 
   it('defaults a fire to aimed, 1 px/tick, round pink — or to its bullet’s direction and speed', () => {
@@ -240,10 +242,23 @@ describe('core/patterns DSL — pattern compiler (loadContent, kind patterns)', 
     );
     expect(issues).toEqual([]);
     const { code, entries } = db.patterns;
-    const fire = (e: number): number[] => [...code.slice(e, e + 11)];
-    expect(fire(entries[0])).toEqual([4, DirType.Aim, SpeedType.Absolute, 0, 0, 2, 0, 0, 2, 0, 1]);
-    expect(fire(entries[1])).toEqual([4, DirType.Absolute, 0, 4, 0, 2, 0, 256, 2, 0, 0.5]);
-    expect(fire(entries[2])).toEqual([4, DirType.Absolute, 0, 4, 0, 2, 0, 256, 2, 0, 3]);
+    const fire = (e: number): number[] => [...code.slice(e, e + 12)];
+    expect(fire(entries[0])).toEqual([
+      4,
+      DirType.Aim,
+      SpeedType.Absolute,
+      0,
+      0,
+      0,
+      2,
+      0,
+      0,
+      2,
+      0,
+      1,
+    ]);
+    expect(fire(entries[1])).toEqual([4, DirType.Absolute, 0, 4, 0, 0, 2, 0, 256, 2, 0, 0.5]);
+    expect(fire(entries[2])).toEqual([4, DirType.Absolute, 0, 4, 0, 0, 2, 0, 256, 2, 0, 3]);
   });
 
   it('inlines actionRef with its params and shares the program of a bullet fired without params', () => {
@@ -268,18 +283,28 @@ describe('core/patterns DSL — pattern compiler (loadContent, kind patterns)', 
     expect(issues).toEqual([]);
     const { code, entries } = db.patterns;
     const e = entries[0];
-    // The inlined repeat counts 2; its fire's speed is `$rank + 1`.
-    expect([...code.slice(e, e + 5)]).toEqual([PatternOp.Repeat, code[e + 1], 2, ExprOp.Const, 2]);
-    const fireA = e + 5;
-    expect([...code.slice(fireA + 8, fireA + 14)]).toEqual([
-      4,
-      ExprOp.Rank,
+    // The constant param is folded in; `$rank` is a value: stored in local 0 on entry.
+    expect([...code.slice(e, e + 4)]).toEqual([PatternOp.SetLocal, 0, 1, ExprOp.Rank]);
+    const repeat = e + 4;
+    expect([...code.slice(repeat, repeat + 5)]).toEqual([
+      PatternOp.Repeat,
+      code[repeat + 1],
+      2,
+      ExprOp.Const,
+      2,
+    ]);
+    // The inlined fire's speed `$2 + 1` reads the local.
+    const fireA = repeat + 5;
+    expect([...code.slice(fireA + 9, fireA + 16)]).toEqual([
+      5,
+      ExprOp.Local,
+      0,
       ExprOp.Const,
       1,
       ExprOp.Add,
       PatternOp.Loop,
     ]);
-    const fireB = code[e + 1];
+    const fireB = code[repeat + 1];
     expect(code[fireB]).toBe(PatternOp.Fire);
     // Both fires name the same bullet program: a ChangeSpeed, then End.
     const program = code[fireA + 4];
@@ -287,9 +312,152 @@ describe('core/patterns DSL — pattern compiler (loadContent, kind patterns)', 
     expect(code[fireB + 4]).toBe(program);
     expect(code[program]).toBe(PatternOp.ChangeSpeed);
     expect(code[program + 8]).toBe(PatternOp.End);
-    // `inner` alone runs with $1 = 0: its repeat never runs.
+    // `inner` alone runs with $1 = 0 (its repeat never runs); compiled after `outer`, its fire
+    // still links to the shared program.
     const inner = entries[1];
     expect([...code.slice(inner + 2, inner + 5)]).toEqual([2, ExprOp.Const, 0]);
+    expect(code[inner + 5]).toBe(PatternOp.Fire);
+    expect(code[inner + 5 + 4]).toBe(program);
+  });
+
+  it('links every action firing a named bullet to its one program, whatever the compile order', () => {
+    const { db, issues } = load(
+      file(
+        [
+          action('a', [{ op: 'fire', bulletRef: 'b' }]),
+          action('mid', [{ op: 'wait', ticks: 1 }]),
+          action('c', [
+            { op: 'wait', ticks: 2 },
+            { op: 'fire', bulletRef: 'b' },
+          ]),
+          action('d', [{ op: 'actionRef', action: 'c' }]),
+        ],
+        [{ id: 'b', actions: [{ op: 'changeSpeed', speed: 2 }] }],
+      ),
+    );
+    expect(issues).toEqual([]);
+    const { code, entries } = db.patterns;
+    const program = code[entries[0] + 4];
+    expect(program).toBeGreaterThan(0);
+    expect(code[program]).toBe(PatternOp.ChangeSpeed);
+    const fireOfC = entries[2] + 5; // after the wait
+    expect(code[fireOfC]).toBe(PatternOp.Fire);
+    expect(code[fireOfC + 4]).toBe(program);
+    expect(code[entries[3] + 5 + 4]).toBe(program);
+    // One copy of the program in the bank.
+    let copies = 0;
+    for (let i = 0; i < code.length; i++) {
+      if (code[i] === PatternOp.Fire && code[i + 4] > 0) copies += code[i + 4] === program ? 1 : 0;
+    }
+    expect(copies).toBe(3);
+  });
+
+  it('passes params by value: $i / $rand in a param are read once, where the reference runs', () => {
+    const { db, issues } = load(
+      file(
+        [
+          action('by-ref', [
+            {
+              op: 'repeat',
+              times: 3,
+              body: [{ op: 'fire', bulletRef: 'b', params: ['$i', 5] }],
+            },
+          ]),
+          action('by-action', [{ op: 'actionRef', action: 'twice', params: ['$rand * 100'] }]),
+          action('twice', [
+            { op: 'wait', ticks: '$1' },
+            { op: 'wait', ticks: '$1' },
+          ]),
+        ],
+        [{ id: 'b', actions: [{ op: 'changeSpeed', speed: '$1 + $2' }] }],
+      ),
+    );
+    expect(issues).toEqual([]);
+    const { code, entries } = db.patterns;
+    // [Repeat, exit, [2, Const, 3]] [Fire, aim, abs, kind, entry, 1 arg, [1, Index], dir, speed]
+    const fire = entries[0] + 5;
+    expect([...code.slice(fire + 5, fire + 8)]).toEqual([1, 1, ExprOp.Index]);
+    // The program reads `$1` from local 0; the constant `$2` is folded in.
+    const program = code[fire + 4];
+    expect([...code.slice(program, program + 8)]).toEqual([
+      PatternOp.ChangeSpeed,
+      SpeedType.Absolute,
+      5,
+      ExprOp.Local,
+      0,
+      ExprOp.Const,
+      5,
+      ExprOp.Add,
+    ]);
+    // One `$rand` draw, stored once, read by both waits.
+    const e = entries[1];
+    expect([...code.slice(e, e + 8)]).toEqual([
+      PatternOp.SetLocal,
+      0,
+      4,
+      ExprOp.Rand,
+      ExprOp.Const,
+      100,
+      ExprOp.Mul,
+      PatternOp.Wait,
+    ]);
+    expect([...code.slice(e + 7, e + 17)]).toEqual([
+      PatternOp.Wait,
+      0,
+      2,
+      ExprOp.Local,
+      0,
+      PatternOp.Wait,
+      0,
+      2,
+      ExprOp.Local,
+      0,
+    ]);
+  });
+
+  it(`reports more than ${MAX_PATTERN_LOCALS} param values held at once`, () => {
+    const nine = Array.from({ length: 9 }, () => '$rand');
+    const { db, issues } = load(
+      file([
+        action('outer', [{ op: 'actionRef', action: 'middle', params: nine }]),
+        action('middle', [{ op: 'actionRef', action: 'leaf', params: nine }]),
+        action('leaf', [{ op: 'wait', ticks: '$9' }]),
+      ]),
+    );
+    expect(issues.map((i) => i.path + ' — ' + i.message)).toEqual([
+      `patterns/t.patterns.json:actions[1].body[0].params — more than ${MAX_PATTERN_LOCALS} param values held at once`,
+    ]);
+    expect(db.patterns.entries[0]).toBe(0);
+    expect(db.patterns.entries[1]).toBeGreaterThan(0); // alone: 9 values
+  });
+
+  it('fails every action that inlines a broken action or fires a broken bullet program', () => {
+    const { db, issues } = load(
+      file(
+        [
+          action('broken', [{ op: 'actionRef', action: 'nowhere' }]),
+          action('wraps', [{ op: 'actionRef', action: 'broken' }]),
+          action('fires-1', [{ op: 'fire', bulletRef: 'bad' }]),
+          action('fires-2', [{ op: 'fire', bulletRef: 'bad' }]),
+          action('fires-outer', [{ op: 'fire', bulletRef: 'carrier' }]),
+          action('fine', [{ op: 'fire', bulletRef: 'good' }]),
+        ],
+        [
+          { id: 'bad', actions: [{ op: 'actionRef', action: 'nowhere' }] },
+          { id: 'carrier', actions: [{ op: 'fire', bulletRef: 'bad' }] },
+          { id: 'good', actions: [{ op: 'vanish' }] },
+        ],
+      ),
+    );
+    // Each problem is reported once …
+    expect(issues.map((i) => i.path)).toEqual([
+      'patterns/t.patterns.json:actions[0].body[0].action',
+      'patterns/t.patterns.json:bullets[0].actions[0].action',
+    ]);
+    // … but everything that runs the broken code gets entry 0.
+    const entries = [...db.patterns.entries];
+    expect(entries.slice(0, 5)).toEqual([0, 0, 0, 0, 0]);
+    expect(entries[5]).toBeGreaterThan(0);
   });
 
   it('lets a bullet fire itself without params (one shared program)', () => {

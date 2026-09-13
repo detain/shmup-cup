@@ -16,7 +16,7 @@ import { resolveGameConfig } from '../../src/config/index.js';
 import { EMPTY_CONTENT_DB } from '../../src/data/index.js';
 import { FNV_OFFSET_BASIS, FNV_PRIME, hashWorld } from '../../src/debug/index.js';
 import { Action, commitPlayerInput, createInputSnapshot } from '../../src/input/index.js';
-import { MAX_REPEAT_DEPTH } from '../../src/patterns/index.js';
+import { MAX_PATTERN_LOCALS, MAX_REPEAT_DEPTH } from '../../src/patterns/index.js';
 import { PLAYER_STATES, spawnPlayer } from '../../src/player/index.js';
 import { createSoaPool } from '../../src/pools/index.js';
 import { createRng } from '../../src/rng/index.js';
@@ -125,6 +125,7 @@ function referenceHash(w: World): number {
       num(runners.loopI[i * MAX_REPEAT_DEPTH + d]);
       num(runners.loopN[i * MAX_REPEAT_DEPTH + d]);
     }
+    for (let k = 0; k < MAX_PATTERN_LOCALS; k++) num(runners.locals[i * MAX_PATTERN_LOCALS + k]);
     for (const value of [
       runners.wake[i],
       runners.seqDir[i],

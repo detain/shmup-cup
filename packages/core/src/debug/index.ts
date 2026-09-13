@@ -84,7 +84,7 @@ import {
 } from '../enemies/index.js';
 import type { Game } from '../game/index.js';
 import { defineModule } from '../module-info.js';
-import { MAX_REPEAT_DEPTH, type PatternRunners } from '../patterns/index.js';
+import { MAX_PATTERN_LOCALS, MAX_REPEAT_DEPTH, type PatternRunners } from '../patterns/index.js';
 import { PLAYER_STATES, spawnPlayer } from '../player/index.js';
 import { RNG_STATE_WORDS } from '../rng/index.js';
 import { StageEventCode } from '../stage/index.js';
@@ -343,8 +343,8 @@ function mixBendingLasers(b: BendingLaserTable): void {
 
 /**
  * Mixes the pattern interpreter's runners (M2-02): the bullet runner search hint and count, then
- * every runner in use (its slot, entry, counter, `repeat` stack, wake age, `sequence` values,
- * heading, scale and state bits).
+ * every runner in use (its slot, entry, counter, `repeat` stack, locals, wake age, `sequence`
+ * values, heading, scale and state bits).
  *
  * @param r - The runner table.
  */
@@ -364,6 +364,7 @@ function mixPatternRunners(r: PatternRunners): void {
       mixNumber(r.loopI[i * MAX_REPEAT_DEPTH + d]);
       mixNumber(r.loopN[i * MAX_REPEAT_DEPTH + d]);
     }
+    for (let k = 0; k < MAX_PATTERN_LOCALS; k++) mixNumber(r.locals[i * MAX_PATTERN_LOCALS + k]);
     mixNumber(r.wake[i]);
     mixNumber(r.seqDir[i]);
     mixNumber(r.seqSpeed[i]);

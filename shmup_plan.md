@@ -2126,12 +2126,16 @@ Goal of the milestone: every **[P1]** feature. Steps are ordered so systems land
     enemy's pattern measures from a heading it starts with (left) and its `changeDirection` sets; relative speed of an
     enemy is 0. Expressions add `floor`, `round`, `abs`, `min`, `max`, `sin`, `cos` (table).
   - **Compiler** (`core/patterns/dsl.ts`, run by `loadContent` after collecting, before references resolve):
-    recursive-descent parser → constant folding → postfix code; `actionRef` / `bulletRef` are **inlined** with their
-    params substituted (no call stack at run time; recursion is an issue, except a bullet firing itself without
-    params, whose program is shared). `repeat` nests ≤ 4 after inlining; bank ≤ 262,144 numbers. A bad expression
-    fails its file's schema; reference problems give the action entry 0 (it runs nothing). Bullet kind names come from
-    a leaf `bullets/kinds.ts` so `core/data` needs no import of the bullet system. Enemies name an action with
-    `pattern` (→ `patternId`, ref kind `pattern`).
+    recursive-descent parser → constant folding → postfix code; `actionRef` / `bulletRef` are **inlined** (no call
+    stack at run time; recursion is an issue, except a bullet firing itself without params, whose program is shared).
+    Params are values (BulletML's meaning; review round 1): a constant is folded in, any other param is evaluated once
+    when the reference runs into a runner local (`SetLocal` before an inlined action; a `Fire`'s args for its bullet's
+    runner) that `$n` reads — ≤ 16 locals live per program. Every action firing a shared bullet program links to it,
+    whatever the compile order, and an action inlining a broken action or launching a broken bullet program gets
+    entry 0. `repeat` nests ≤ 4 after inlining; bank ≤ 262,144 numbers. A bad expression fails its file's schema;
+    reference problems give the action entry 0 (it runs nothing). Bullet kind names come from a leaf
+    `bullets/kinds.ts` so `core/data` needs no import of the bullet system. Enemies name an action with `pattern`
+    (→ `patternId`, ref kind `pattern`).
   - **Interpreter** (`createPatternVm`, `World.patterns`): 576 runner slots in typed arrays — 64 emitters (one per
     enemy slot) + 512 bullet programs (a bullet stores `runner + 1`; slots handed out from a rotating hint so the
     choice depends only on hashed state). The script runner steps it: `ScriptApi.startPattern` / `stepPattern` (the
@@ -2139,8 +2143,8 @@ Goal of the milestone: every **[P1]** feature. Steps are ordered so systems land
     `checkEnemyBehaviors` requires a `pattern`). Bullet programs run inside `BulletSystem.update` through an injected
     `BulletProgramRunner` (no module cycle). A run executes ≤ 1,024 instructions, then sleeps a tick. `$rand` draws
     through the new `Rng.nextFloatInto` (a returned fraction was boxed per draw). Fires obey the enemy fire rule (the
-    pattern advances, nothing launches). `hashWorld` mixes the runners in use. Boss behaviours and revenge bullets do
-    not run DSL patterns yet (M2-09 material). Shipped: `common.patterns.json` (5 patterns) and a `sentry` enemy
+    pattern advances, nothing launches). `hashWorld` mixes the runners in use (locals included). Boss behaviours
+    and revenge bullets do not run DSL patterns yet (M2-09 material). Shipped: `common.patterns.json` (5 patterns) and a `sentry` enemy
     (`content/enemies/test-sentry.enemies.json`, own file so suites loading the test range alone stay valid) that runs
     `common.spiral`; zone A is unchanged.
   - **Bending lasers:** 8 stable slots (`BendingLaserTable`, not a packed pool — each keeps its 64-node ring; hashed

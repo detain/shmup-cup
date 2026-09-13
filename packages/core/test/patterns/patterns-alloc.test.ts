@@ -2,8 +2,9 @@
  * Allocation guard of the M2-02 pattern DSL, bending lasers and point items (plan §1.3 "zero
  * allocations in per-tick paths"), in its own file so the worker's V8 type feedback comes only from
  * these worlds: `pattern.loop` enemies fire rare volleys of bullets whose own programs run every
- * few ticks (timed turns, speed changes, sub-fires, vanish), bending lasers are re-fired as they
- * end, and every 200 ticks the bullets are cancelled into point items that fly to the score.
+ * few ticks (timed turns, speed changes, sub-fires, vanish, param values), bending lasers are
+ * re-fired as they end, and every 200 ticks the bullets are cancelled into point items that fly to
+ * the score.
  * Coroutine resumes allocate their small result object (D29), so the emitters wake rarely.
  */
 import { describe, expect, it } from 'vitest';
@@ -40,11 +41,21 @@ const DB = (() => {
               {
                 op: 'repeat',
                 times: 8,
-                body: [
-                  { op: 'fire', direction: { type: 'sequence', value: 128 }, bulletRef: 'seeder' },
-                ],
+                body: [{ op: 'actionRef', action: 'seed', params: ['$i * 0.05 + $rand * 0.01'] }],
               },
               { op: 'wait', ticks: 200 },
+            ],
+          },
+          {
+            // Param values: a local set by the actionRef, args handed to the bullet's runner.
+            id: 'seed',
+            body: [
+              {
+                op: 'fire',
+                direction: { type: 'sequence', value: 128 },
+                bulletRef: 'seeder',
+                params: ['$1 + 0.2', '$rand * 4'],
+              },
             ],
           },
         ],
@@ -75,8 +86,8 @@ const DB = (() => {
             id: 'seeder',
             kind: 'round-red',
             actions: [
-              { op: 'changeSpeed', speed: 0.2, term: 10 },
-              { op: 'wait', ticks: 30 },
+              { op: 'changeSpeed', speed: '$1', term: 10 },
+              { op: 'wait', ticks: '28 + $2' },
               {
                 op: 'repeat',
                 times: 2,

@@ -100,7 +100,8 @@
  * {@link PatternSpeedSpec}, {@link PatternExpr}), the codes ({@link PatternOp}, {@link ExprOp},
  * {@link DirType}, {@link SpeedType}, {@link DIRECTION_TYPES}, {@link SPEED_TYPES},
  * {@link ACCEL_HAS_MIN}, {@link ACCEL_HAS_MAX}) and limits ({@link MAX_REPEAT_DEPTH},
- * {@link MAX_EXPR_STACK}, {@link MAX_PATTERN_CODE}, {@link DEFAULT_PATTERN_SPEED},
+ * {@link MAX_EXPR_STACK}, {@link MAX_PATTERN_CODE}, {@link MAX_PATTERN_PARAMS},
+ * {@link MAX_PATTERN_LOCALS}, {@link DEFAULT_PATTERN_SPEED},
  * {@link DEFAULT_PATTERN_KIND}).
  *
  * @module
@@ -137,6 +138,8 @@ import {
   DirType,
   ExprOp,
   MAX_EXPR_STACK,
+  MAX_PATTERN_LOCALS,
+  MAX_PATTERN_PARAMS,
   MAX_REPEAT_DEPTH,
   PatternOp,
   SpeedType,
@@ -154,6 +157,8 @@ export {
   ExprOp,
   MAX_EXPR_STACK,
   MAX_PATTERN_CODE,
+  MAX_PATTERN_LOCALS,
+  MAX_PATTERN_PARAMS,
   MAX_REPEAT_DEPTH,
   PATTERNS_FILE_SCHEMA,
   PatternOp,
@@ -1304,7 +1309,8 @@ export interface PatternHost {
 
 /**
  * The runner table of a {@link PatternVm} ({@link PATTERN_RUNNERS} slots; `repeat` arrays are
- * runner-major, {@link MAX_REPEAT_DEPTH} per runner). Live interpreter state — never write it.
+ * runner-major, {@link MAX_REPEAT_DEPTH} per runner, `locals` {@link MAX_PATTERN_LOCALS} per
+ * runner). Live interpreter state — never write it.
  */
 export interface PatternRunners {
   /** Runner state bits (0 = free / idle; bit 1 = in use, 2 = has a `sequence` direction, 4 = speed). */
@@ -1319,6 +1325,8 @@ export interface PatternRunners {
   readonly loopI: Int32Array;
   /** `repeat` counts. */
   readonly loopN: Int32Array;
+  /** Param values (`$n` of non-constant params; 0 until set). */
+  readonly locals: Float64Array;
   /** Bullets: the age their program runs again. */
   readonly wake: Int32Array;
   /** Direction of the previous fire. */
@@ -1352,9 +1360,10 @@ export interface PatternSource {
  * out to bullets fired with `actions` (the first free slot from a rotating hint, so the choice
  * depends only on hashed state; a bullet stores `runner + 1` in its pool field) and freed when the
  * program ends or the bullet goes. A runner holds its program counter, its `repeat`
- * stack ({@link MAX_REPEAT_DEPTH} × index / count), the previous fire's direction and speed
- * (`sequence`), its heading (emitters: `relative`), the rank speed scale it fires with (bullets:
- * the shooter's at launch) and when it wakes (bullets: the age).
+ * stack ({@link MAX_REPEAT_DEPTH} × index / count), its locals (the values of non-constant
+ * params, {@link MAX_PATTERN_LOCALS}), the previous fire's direction and speed (`sequence`), its
+ * heading (emitters: `relative`), the rank speed scale it fires with (bullets: the shooter's at
+ * launch) and when it wakes (bullets: the age).
  *
  * **Running.** An emitter runs when its behaviour's coroutine wakes: {@link PatternVm.stepEmitter}
  * executes until a `wait` (its ticks are the coroutine's next `yield` — decision D29) or the end.
@@ -1368,7 +1377,9 @@ export interface PatternSource {
  * `sequence`, and — when the emitter may fire (the enemy's fire rule) — launches one bullet at
  * `speed × the rank's speed scale` (`BulletSystem.speedScale` — the shooter's modifiers apply
  * while its script runs; a bullet's program uses the scale it was fired with), giving it a runner
- * of its own when its bullet has `actions` (no free runner: it flies without its program).
+ * of its own when its bullet has `actions` (no free runner: it flies without its program). The
+ * fire evaluates its args — the bullet's param values — first; the new runner starts with them as
+ * its locals.
  */
 export interface PatternVm extends BulletProgramRunner {
   /** The bank the programs come from. */
@@ -1422,6 +1433,10 @@ class PatternVmImpl implements PatternVm {
   private readonly loopI = new Int32Array(PATTERN_RUNNERS * MAX_REPEAT_DEPTH);
   /** `repeat` counts, runner-major. */
   private readonly loopN = new Int32Array(PATTERN_RUNNERS * MAX_REPEAT_DEPTH);
+  /** Param values, runner-major ({@link MAX_PATTERN_LOCALS} per runner). */
+  private readonly locals = new Float64Array(PATTERN_RUNNERS * MAX_PATTERN_LOCALS);
+  /** The running `Fire`'s args (its bullet's param values, before the bullet has a runner). */
+  private readonly args = new Float64Array(MAX_PATTERN_PARAMS);
   /** Bullets: the age their program runs again. */
   private readonly wake = new Int32Array(PATTERN_RUNNERS);
   /** Direction of the previous fire (`sequence`). */
@@ -1461,6 +1476,7 @@ class PatternVmImpl implements PatternVm {
       depth: this.depth,
       loopI: this.loopI,
       loopN: this.loopN,
+      locals: this.locals,
       wake: this.wake,
       seqDir: this.seqDir,
       seqSpeed: this.seqSpeed,
@@ -1531,6 +1547,7 @@ class PatternVmImpl implements PatternVm {
     this.seqDir[r] = 0;
     this.seqSpeed[r] = 0;
     this.state[r] = RunnerBit.InUse;
+    this.locals.fill(0, r * MAX_PATTERN_LOCALS, (r + 1) * MAX_PATTERN_LOCALS);
   }
 
   /** See {@link PatternVm.startEmitter}. */
@@ -1671,6 +1688,12 @@ class PatternVmImpl implements PatternVm {
           this.pc[r] = 0;
           if (bullet >= 0) this.host.bullets.remove(bullet);
           return 0;
+        case PatternOp.SetLocal: {
+          const slot = code[pc + 1];
+          pc = this.evalExpr(pc + 2, r);
+          this.locals[r * MAX_PATTERN_LOCALS + slot] = this.stack[0];
+          break;
+        }
         default:
           // `End` (and anything unknown).
           this.pc[r] = 0;
@@ -1683,7 +1706,7 @@ class PatternVmImpl implements PatternVm {
    * Evaluates the expression at `pc` into `stack[0]`.
    *
    * @param pc - Offset of the expression's length.
-   * @param r - Runner slot (`$i`).
+   * @param r - Runner slot (`$i`, locals).
    * @returns The offset after the expression.
    */
   private evalExpr(pc: number, r: number): number {
@@ -1696,6 +1719,14 @@ class PatternVmImpl implements PatternVm {
       const op = code[p++];
       if (op === ExprOp.Const) {
         stack[sp++] = code[p++];
+        continue;
+      }
+      if (op === ExprOp.Local) {
+        stack[sp++] = this.locals[r * MAX_PATTERN_LOCALS + code[p++]];
+        continue;
+      }
+      if (op === ExprOp.Arg) {
+        stack[sp++] = this.args[code[p++]];
         continue;
       }
       switch (op) {
@@ -1810,7 +1841,14 @@ class PatternVmImpl implements PatternVm {
     const speedType = code[pc + 2];
     const kind = code[pc + 3];
     const entry = code[pc + 4];
-    let p = this.evalExpr(pc + 5, r);
+    const argCount = code[pc + 5];
+    const args = this.args;
+    let p = pc + 6;
+    for (let k = 0; k < argCount; k++) {
+      p = this.evalExpr(p, r);
+      args[k] = stack[0];
+    }
+    p = this.evalExpr(p, r);
     this.resolveDirection(dirType, r, bullet);
     const dir = stack[1];
     p = this.evalExpr(p, r);
@@ -1842,6 +1880,8 @@ class PatternVmImpl implements PatternVm {
       this.reset(child, entry);
       this.scale[child] = scale;
       this.heading[child] = 0;
+      const base = child * MAX_PATTERN_LOCALS;
+      for (let k = 0; k < argCount; k++) this.locals[base + k] = args[k];
       bullets.pool.fields.runner[j] = child + 1;
     }
     return p;
