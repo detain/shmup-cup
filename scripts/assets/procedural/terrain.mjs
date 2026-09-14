@@ -1,5 +1,6 @@
 /**
- * The placeholder 8×8 terrain tileset `tiles/terrain-a`: solid rock, flat floor /
+ * The placeholder 8×8 terrain tilesets — `tiles/terrain-a` and, since M2-11, its recoloured
+ * zone sets `tiles/terrain-reef` and `tiles/terrain-dune`: solid rock, flat floor /
  * ceiling / wall edges, and slopes at 45° and 22.5° (two tiles per 22.5° slope) for
  * floors and ceilings in both directions.
  *
@@ -23,7 +24,11 @@
  * own terrain ({@link TERRAIN_PALETTES}): `tiles/terrain-reef` (BRINE NEBULA's pale coral over
  * deep blue-grey stone) and `tiles/terrain-dune` (DUNE EXPANSE's sand). Only the rock colours
  * differ (the rock texture's hash is seeded per set); the destructible blocks look the same in
- * every set, so a brick reads as a brick in every zone.
+ * every set, so a brick reads as a brick in every zone. A new zone set is one more
+ * {@link TERRAIN_PALETTES} entry (plus a `content/tilesets/` file naming the sprite).
+ *
+ * **Public API.** {@link generate}, {@link TERRAIN_TILES}, {@link TILE_SIZE},
+ * {@link TERRAIN_PALETTES} (and the `TerrainPalette` typedef).
  *
  * @module
  */

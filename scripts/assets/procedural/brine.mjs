@@ -25,6 +25,10 @@
  * asset RNG and `hash2` (seeded from the sprite names), so the pixels are identical on every
  * engine.
  *
+ * **Public API.** {@link generate}, {@link BRINE_SPRITES}, {@link BRINE_RAMP} (the colours zone B's
+ * palette cycle must name), {@link NEBULA_TILE_W} / {@link NEBULA_TILE_H}, {@link BRINE_SEA_W} /
+ * {@link BRINE_SEA_H} (the bands' tile sizes, their parallax `spacing`).
+ *
  * @module
  */
 import { createImage, flipVertical, setPixel } from '../image.mjs';

@@ -73,9 +73,12 @@ FROST TWINS taking turns; the survivor enrages) and `?stage=gauntlet-range` (a b
 [`docs/dev/advanced-bosses.md`](../../docs/dev/advanced-bosses.md)). Since M2-10 a game on zone A
 (the default) is a **campaign run** across the zone map — the zone tally, the ZONE MAP, stub zones
 B–I, the ending; `?skip=boss` then starts every zone near its boss — while any other `?stage=`
-plays alone; `?stage=zone-b` … `zone-i` flies one stub zone, and `?stage=bonus-range` has the three
+plays alone; `?stage=zone-b` … `zone-i` flies one zone alone, and `?stage=bonus-range` has the three
 hidden bonus-stage entrances into `bonus-vault` (guide:
-[`docs/dev/campaign-and-bonus-stages.md`](../../docs/dev/campaign-and-bonus-stages.md)). Since M1-14 hits
+[`docs/dev/campaign-and-bonus-stages.md`](../../docs/dev/campaign-and-bonus-stages.md)). Since M2-11
+zones B and C are real — `?stage=zone-b` is BRINE NEBULA (GALVANIC MAW, the mid-boss SPUME HERALD,
+the gap into `?stage=brine-grotto`, PEARL GROTTO) and `?stage=zone-c` DUNE EXPANSE (SANDGRAVE WIDOW);
+D–I are still stubs (guide: [`docs/dev/zones-b-and-c.md`](../../docs/dev/zones-b-and-c.md)). Since M1-14 hits
 have **game feel**: explosions, sparks, debris, cancel sparkles and a muzzle flash from the
 presets of `content/fx/`, the screen shake of a lost ship or a boss's final blast, flashes
 (behind a ≤ 3-a-second limiter), the WARNING's dim and rising score numbers;

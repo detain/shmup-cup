@@ -60,8 +60,8 @@ keyboard's F1–F8):
 | **4** | Freeze the game / let it run again (`STEP` in the panel) |
 | **5** | While frozen: advance by one tick (1/60 s); hold for a slow crawl |
 | **6** | Slow motion: normal → half speed → quarter speed → normal (`SLOW 2`, `SLOW 4`) |
-| **7** | Jump to the next checkpoint of the zone (of whichever zone of the run you are in) |
-| **8** | Jump to just before the boss (about two seconds before the WARNING) — in every zone of the run, so a whole run through the ZONE MAP takes a few minutes |
+| **7** | Jump to the next checkpoint of the zone (of whichever zone of the run you are in). Zones B and C have four checkpoints each; in BRINE NEBULA, pressing 7 twice (the third checkpoint) and flying on for about 20 seconds brings the secret gap into PEARL GROTTO ([preview-build.md](preview-build.md#the-secret-bonus-stage-pearl-grotto)) |
+| **8** | Jump to just before the boss (about two seconds before the WARNING) — in every zone of the run, so a whole run through the ZONE MAP takes a few minutes. In BRINE NEBULA this skips the mid-boss and the secret entrance too |
 
 Good to know:
 

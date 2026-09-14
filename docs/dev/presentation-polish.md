@@ -480,8 +480,11 @@ const refresh = createRefreshMonitor();
 - **M2-09** (done) — the boss HP bar followed the display-option path (`display.bossHpBar`, the
   BOSS HP row, `UserOptionKind.BossHpBar`), drawn by the core HUD from the saved value instead of
   the renderer ([advanced-bosses.md](advanced-bosses.md#the-boss-hp-bar)).
-- **M2-11 … M2-14** — the zones use raster water (BRINE NEBULA), lava and glowing cores (MAGMA DEEP,
-  CELL VAULT) through `raster` / `cycles` in their stage files.
+- **M2-11** (done) — BRINE NEBULA's wavy water (a `wave` on the palette-cycled `bg/brine-sea`, painted
+  only in its cycle's four colours, and on the nebula band) and DUNE EXPANSE's heat `haze` over the
+  suns and the dune ridge ([zones-b-and-c.md](zones-b-and-c.md)).
+- **M2-12 … M2-14** — lava and glowing cores (MAGMA DEEP, CELL VAULT) through `raster` / `cycles`
+  in their stage files.
 - **M2-16** — the remaining option groups (controls rebinding, game options).
 - **M2-17** — Electron's window, fullscreen and refresh settings.
 - **M3-02** — the CRT filter (`EffectSettings.crt`) and Mode 7-style floors as further filters.

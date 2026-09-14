@@ -155,6 +155,10 @@
  * - shmup_feat.md §6B — the Direct-mode item carriers: six-cube pincer waves (M2-05)
  * - shmup_feat.md §14 — stage gimmicks as reusable modules: falling rocks, splitting bubbles,
  *   volcanoes, suction, grabbing tentacles, the cube rush (M2-07)
+ * - shmup_feat.md §11 / §14 — zone B and C archetypes: homing rockets and segmented sand worms
+ *   (M2-11)
+ * - shmup_feat.md §13 — the zone bosses GALVANIC MAW (mechanical fish: mouth weak point, homing
+ *   rockets, cutters) and SANDGRAVE WIDOW (arachnid: spider drones, silk-line lasers) (M2-11)
  * - shmup_tech.md §4.6 — TS generator coroutines
  * - shmup_feat.md §13 — boss phases driven by behaviour scripts (the pattern set changes with the
  *   phase)

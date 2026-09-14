@@ -435,7 +435,10 @@ The bending laser, cancel point and palette suites are listed on their home page
   boss rushes — [advanced-bosses.md](advanced-bosses.md)) added TS boss behaviours only; boss
   behaviours and revenge bullets running DSL patterns, DSL-fired lasers and bending lasers in the
   boss roster move to the zones' bosses (M2-11 … M2-14).
-- **M2-11 … M2-14** (zones B–I) — the first shipped enemies and bosses built on the DSL, the
-  bending lasers and the colour-blind palettes' real-art variants (a PNG override of a bullet
+- **M2-11** (done) — the first shipped enemies built on the DSL: zone B's `reef-jelly`
+  (`brine.jelly-ring`) and zone C's `dust-devil` (`dune.whirl`), both `pattern.loop` runners from
+  `content/patterns/zones.patterns.json`; the zone bosses are still TS behaviours
+  ([zones-b-and-c.md](zones-b-and-c.md)).
+- **M2-12 … M2-14** (zones D–I) — bosses built on the DSL, the bending lasers and the colour-blind palettes' real-art variants (a PNG override of a bullet
   sprite needs its own `@<palette>` variants).
 - **M2-16** (options) — the bullet palette joins the display options group.

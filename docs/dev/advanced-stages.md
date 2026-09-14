@@ -487,6 +487,10 @@ terrain.destroyed; // → 0; terrain.resets → 1
   (a marked gap, all ground targets destroyed, a score digit) as their own `bonus` stage events
   (`core/stage` `BonusEntrances` — a gap is marked with terrain or moving blocks, as in
   `bonus-range`) ([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md#hidden-bonus-stages)).
-- **M2-11 … M2-14** — the zones: BRINE NEBULA (splitting bubbles), MAGMA DEEP (volcanoes, falling
-  rocks, a destructible maze), CELL VAULT (tissue walls, tentacles), PRISM LABYRINTH (the cube
+- **M2-11** (done) — BRINE NEBULA's splitting `froth` bubbles and `brood-bubble`s with a fish
+  inside (`bubble.split`), DUNE EXPANSE's `sand-geyser`s (`volcano.lob` throwing `rock.fall` clods)
+  and its sand worms (`worm.burst`: a `Ballistic` leader with a proximity trigger landing
+  `BallisticLand.Pass`); zone B's bonus `gap` marked by two static blocks
+  ([zones-b-and-c.md](zones-b-and-c.md)).
+- **M2-12 … M2-14** — the other zones: MAGMA DEEP (volcanoes, falling rocks, a destructible maze), CELL VAULT (tissue walls, tentacles), PRISM LABYRINTH (the cube
   rush), IRON CITADEL (moving floors) — authored by hand or in Tiled.

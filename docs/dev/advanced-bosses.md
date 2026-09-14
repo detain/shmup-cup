@@ -505,8 +505,12 @@ hashWorld(game.world); // covers every slot, the raid camera, the rush and the e
   bonus stage skips the zone's boss; the zone tally's time bonus counts defeated, not escaped,
   stage bosses; the 4-way playtest bot faces the first fighting boss slot
   ([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md)).
-- **M2-11 … M2-13** — the zones' mid-bosses (captains) and bosses with the new mechanics
-  (BRINE NEBULA's mid-boss, MAGMA DEEP's rotating shield arms — turned parts).
+- **M2-11** (done) — BRINE NEBULA's mid-boss SPUME HERALD is a captain on `captain.launcher`
+  (launching brood bubbles, a 30-s time limit); GALVANIC MAW and SANDGRAVE WIDOW launch their homing
+  rockets and spider drones as `minion`s through `BossScriptApi.launch`; `BossPart.restX` / `restY`
+  keep a moved part's data offsets ([zones-b-and-c.md](zones-b-and-c.md)).
+- **M2-12 … M2-13** — the other zones' mid-bosses (captains) and bosses with the new mechanics
+  (MAGMA DEEP's rotating shield arms — turned parts).
 - **M2-14** — IRON CITADEL's parade of earlier bosses in reduced form and ABYSSAL THRONE's
   whale-class raid with a boss-inside-boss finale; the endings read the flags.
 - **M2-15** — a practice start at a boss; the attract mode's demo plays.

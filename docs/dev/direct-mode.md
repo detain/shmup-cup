@@ -395,4 +395,8 @@ for (let t = 0; t < 600; t++) stepWorld(world, input);
   plan's next one ([coop.md](coop.md)).
 - **M2-09** (done) — mid-bosses (captains) exist; the yellow item's heavy damage to them is still
   planned (with the zones' captains, M2-11 … M2-14).
-- **M2-11 … M2-14** — the zones of M2 get their own `directItems` plans and carrier waves.
+- **M2-11** (done) — zones B and C have their own `directItems` plans (26 entries each), handed out
+  by zone A's `tender` carriers and completed formations; `zones-bc-direct.test.ts` flies both with
+  the MANTA ([zones-b-and-c.md](zones-b-and-c.md#direct-mode-item-plans)). The yellow item's damage
+  to mid-bosses is still planned.
+- **M2-12 … M2-14** — the other zones' `directItems` plans and carrier waves.

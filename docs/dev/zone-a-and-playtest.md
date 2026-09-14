@@ -274,7 +274,9 @@ mask }` at player 1's controls.
   `stageClear`, `gameOver` or the tick limit.
 - The report (`PlaytestResult`): status, ticks, `clearTick`, `seconds`, `bossDefeated`,
   `bossFightTicks`, every player-1 death (`tick`, `cameraX`, `cause` from `PLAYER_HIT_CAUSE_NAMES`,
-  `y`, `boss`, `livesLeft`), score, pickups, equips per meter slot, `diagonalTicks`, the ship's x
+  `y`, `boss`, `livesLeft`) — since M2-11 the boss figures follow the stage's **main encounter**
+  (the first slot with a boss of role `boss` in its fight or death), never a captain: zone B's
+  mid-boss comes first and takes slot 0 —, score, pickups, equips per meter slot, `diagonalTicks`, the ship's x
   range, the recorded `inputs` (`Uint16Array`) and the final `hashWorld`.
 - `replayStage(stageId, inputs, flags)` replays the recording in a fresh session with the same
   flags → `{ status, ticks, deathTicks, hash }`; equal to the run's because the sim is
@@ -318,7 +320,8 @@ with a second bot; `scanLanes(world, scan, player)` scans from that ship).
 | File | What |
 |---|---|
 | `zone-a.test.ts` | God mode: the bot kills HB-01 and reaches `stageClear` in 3–6 minutes, never diagonal, x within ±4 of 64, the rules hold, and HB-01's last phase really overlaps two lanes. Without god mode: the run is recorded, `replayStage` reproduces its deaths and hash, the deaths are **printed, not asserted** (they measure the balance). With `stageSkip: 'boss'`: everything but the fight takes < 15 s |
-| `zone-a-recovery.test.ts` | The recovery rule at runtime: restarted at each zone A checkpoint and played perfectly (every enemy killed on its first on-screen tick), the capsules dropped before the next source beyond 900 px are exactly the ≥ 3 sources of the window |
+| `zone-a-recovery.test.ts` | The recovery rule at runtime: restarted at each zone A checkpoint and played perfectly (every enemy killed on its first on-screen tick), the capsules dropped before the next source beyond 900 px are exactly the ≥ 3 sources of the window — since M2-11 through the shared helper `recovery.ts` (`capsuleSources`, `perfectFrom`, `recoveryAt`) |
+| `zone-b.test.ts`, `zone-c.test.ts`, `zone-bc-recovery.test.ts` (M2-11) | The same for BRINE NEBULA and DUNE EXPANSE: god-mode clears in 3–6 minutes with the boss's three phases (and zone B's captain), the rules on every tick, a reported no-god run; the recovery rule at all eight checkpoints ([zones-b-and-c.md](zones-b-and-c.md#playtests-the-recovery-rule-and-the-harness)) |
 | `campaign-routes-b.test.ts`, `campaign-routes-c.test.ts` (M2-10) | All 16 routes of the zone map flown in god mode with the campaign harness `campaign.ts` (`playRunZone`, `walkCampaignRoutes` — each zone a fresh World built as the scene flow builds it, the players carried): every zone cleared, the rank stage term = depth + 1, the score growing, an ending per route ([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md#using-it-headlessly)) |
 | `harness.test.ts`, `four-way-bot.test.ts`, `rules.test.ts` | The tooling itself: scripted bots, the tick limit, a terrain death to `gameOver` that replays; lane geometry, the danger scan, the decisions (including the two regressions), one-tick presses; the rules on hand-made lasers and bullets (merging, clipping, the off-playfield beam regression, the violation cap) |
 
@@ -361,7 +364,7 @@ in the right half of the playfield, with no console errors or atlas warnings.
 
 | To add… | Do this |
 |---|---|
-| A zone | `content/stages/<id>.stage.json` + its `enemies` / `paths` files (formats in the content READMEs); `pnpm content:check` (the corridor check of `stage-runtime.test.ts` covers every stage with terrain, and every shipped stage plays to `stageClear`); fly it with `?stage=<id>`, reach its boss with `&skip=boss`; add a `runStage('<id>', fourWayBot(), { godMode: true, observe: rules.observe })` test beside `zone-a.test.ts`, and its own 4-way / capsule-budget checks to `content.test.ts` |
+| A zone | The full recipe is in [zones-b-and-c.md](zones-b-and-c.md#building-the-next-zone-m2-12--m2-14). In short: `content/stages/<id>.stage.json` + its `enemies` / `paths` files (formats in the content READMEs); `pnpm content:check` (the corridor check of `stage-runtime.test.ts` covers every stage with terrain, and every shipped stage plays to `stageClear`); fly it with `?stage=<id>`, reach its boss with `&skip=boss`; add a `runStage('<id>', fourWayBot(), { godMode: true, observe: rules.observe })` test beside `zone-a.test.ts`, and its own 4-way / capsule-budget checks to `content.test.ts` |
 | Another default stage | `DEFAULT_STAGE_ID` in `@shmup/shell`; since M2-10 only a stage that is the campaign's `start` zone gives campaign runs (else the flow plays it as a single stage) |
 | A boss built on `boss.bulwark` | An `enemies` entry whose phases name it, with two or more `gun` parts (the lanes alternate between them in part order); keep the guns ≥ 16 px + beam width + 2 × hurt radius apart and the core between them if the lanes may overlap — the content test's geometry check shows how |
 | A new rule for the 4-way checks | A pure function of the World in `rules.ts`, collected in `createRuleWatch`, with a hand-made test in `rules.test.ts` |
@@ -419,4 +422,7 @@ in the right half of the playfield, with no console errors or atlas warnings.
   shipped stage; the zone-A-only design-rule suite does not cover them yet); the bot faces the first
   fighting boss slot; the route playtests fly all 16 routes
   ([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md)).
-- **M2-11 … M2-14** — the real zones, each with a playtest run and its own design-rule checks.
+- **M2-11** (done) — zones B and C, each with a playtest run, its own block of design-rule checks
+  in `content.test.ts` and its recovery checkpoints; the harness reads the main encounter; the
+  recovery rule moved into `recovery.ts` ([zones-b-and-c.md](zones-b-and-c.md)).
+- **M2-12 … M2-14** — the other real zones, the same way.

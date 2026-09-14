@@ -46,13 +46,19 @@ with its name on a title card while your ship flies in, and after its boss your 
 the right, a **zone result** adds a bonus for the enemies you shot down and for a quick boss
 fight, and the **ZONE MAP** lets you choose which of two zones comes next — up to one of two final
 zones, H or I, and an **ending** that depends on your route and on how you played. Your score,
-ships and power-ups carry over from zone to zone. For now zones B to I are **short stand-ins** (about
-a minute each, with zone A's enemies and bosses you already know) so every one of the 16 routes can
-be flown to the end today; the real zones follow in the next builds ([The zone map: a run through
-nine zones](#the-zone-map-a-run-through-nine-zones)). Some zones will hide a **secret bonus
-stage** with extra ships and 1,000-point capsules — none of the zones has one yet, but the browser's
-*Bonus Range* shows all three kinds of secret entrance ([Hidden bonus
-stages](#hidden-bonus-stages-browser-only-for-now)).
+ships and power-ups carry over from zone to zone ([The zone map: a run through
+nine zones](#the-zone-map-a-run-through-nine-zones)). **Zones B and C are now real zones** too:
+**BRINE NEBULA** (B) — bubbles that burst into smaller bubbles or free the fish inside them, a
+wobbling sea, a mid-boss that fights while the screen scrolls on and the boss **GALVANIC MAW**, a
+mechanical fish whose weak point is its mouth ([Zone B: BRINE NEBULA](#zone-b-brine-nebula)) — and
+**DUNE EXPANSE** (C) — sand worms that burst out of the dunes, beetles walking on the ceiling and
+the boss **SANDGRAVE WIDOW**, a giant spider that sends out spider drones
+([Zone C: DUNE EXPANSE](#zone-c-dune-expanse)) —, each with its own music. Zones D to I are still
+**short stand-ins** (about a minute each, with zone A's enemies and bosses you already know) so
+every one of the 16 routes can be flown to the end; the real ones follow in the next builds.
+**Zone B hides a secret bonus stage**, PEARL GROTTO, with an extra ship and 1,000-point capsules —
+the way in is a gap at the very top of the screen — and the browser's *Bonus Range* shows all three
+kinds of secret entrance ([Hidden bonus stages](#hidden-bonus-stages)).
 
 Along the way your ship shoots the enemies down ([Your weapons](#your-weapons)), powers up with
 the capsules some enemies leave behind, taken with the remote's OK button
@@ -95,12 +101,12 @@ screen scrolls on, a battleship bigger than the screen that the view flies aroun
 boss inside it, and a time limit after which it escapes), twin bosses that take turns and a boss
 rush ([The advanced boss ranges](#the-advanced-boss-ranges-browser-only)), and the *Bonus Range*
 with its three secret entrances into the *Bonus Vault*, a bonus stage full of 1,000-point capsules
-and an extra ship ([Hidden bonus stages](#hidden-bonus-stages-browser-only-for-now)).
+and an extra ship ([Hidden bonus stages](#hidden-bonus-stages)).
 The earlier start-up pictures are still there: **free flight** straight away without the title,
 the animated **sprite showcase** and the **calibration screen**, plus the **effects gallery**
 that shows every explosion and screen effect in turn (see [below](#other-screens-browser-only)).
 
-This build is version **0.1.0** — the end of the first milestone — plus the first ten steps of
+This build is version **0.1.0** — the end of the first milestone — plus the first eleven steps of
 the second: the difficulties, extra ships and continues, then the colour-blind bullet colours and
 points for cancelled bullets, then the **weapon types** and the WEAPON SELECT screen, then four
 kinds of **Options**, five **shields**, the **Option Hunter** that steals Options and the rare
@@ -113,10 +119,13 @@ HITBOX in the Options screen, a Mega Crash flash that brightens the picture inst
 it, smoother motion on 120 / 144 Hz monitors, and the SNES-style water, floor and haze effects of
 the browser's *Raster Range*, and now the **advanced bosses**: mid-bosses, a battleship raid with
 a boss inside, twin bosses and a boss rush in the browser's four boss ranges, and the optional
-**BOSS HP** bar in the Options screen, which works on the TV too, and now the **zone map**: a
+**BOSS HP** bar in the Options screen, which works on the TV too, then the **zone map**: a
 run through five of nine zones with the zone title card, the fly-out after each boss, the zone
-result, the ZONE MAP, eight short stand-in zones B–I, a placeholder ending after zone H or I, and
-the secret **bonus stages** of the browser's *Bonus Range* (AZURE VERGE itself plays as before).
+result, the ZONE MAP, short stand-in zones, a placeholder ending after zone H or I, and
+the secret **bonus stages** of the browser's *Bonus Range*, and now the **real zones B and C**:
+BRINE NEBULA with its mid-boss SPUME HERALD, its boss GALVANIC MAW and the secret bonus stage PEARL
+GROTTO, and DUNE EXPANSE with its boss SANDGRAVE WIDOW, each with its own music (AZURE VERGE itself
+plays as before).
 For checking it on the monitors
 there is a **debug build** with developer tools — a panel with the frame rate, frame times and
 start-up time, hit-area outlines, invincibility, a freeze with single steps, slow motion and
@@ -1135,8 +1144,8 @@ there are **16 different routes**:
 | Zone | Name | For now |
 |---|---|---|
 | A | AZURE VERGE | The real zone ([above](#the-first-zone-azure-verge)) |
-| B | BRINE NEBULA | Stand-in, open space; boss HALCYON BULWARK |
-| C | DUNE EXPANSE | Stand-in with a rolling floor; the EMBER AND FROST TWINS |
+| B | BRINE NEBULA | **The real zone** — bubbles, a reef tunnel, the mid-boss SPUME HERALD, the boss GALVANIC MAW and a secret bonus stage ([below](#zone-b-brine-nebula)) |
+| C | DUNE EXPANSE | **The real zone** — sand worms, a canyon with beetles on its ceiling, the boss SANDGRAVE WIDOW ([below](#zone-c-dune-expanse)) |
 | D | MAGMA DEEP | Stand-in with a floor and a cave; HALCYON BULWARK |
 | E | TEMPEST RIDGE | Stand-in with a floor; the EMBER AND FROST TWINS |
 | F | CELL VAULT | Stand-in with a floor; HALCYON BULWARK |
@@ -1144,11 +1153,12 @@ there are **16 different routes**:
 | H | IRON CITADEL | Final zone — stand-in with a floor; HALCYON BULWARK |
 | I | ABYSSAL THRONE | Final zone — stand-in, open space; the battleship IRON LEVIATHAN (the view flies round it; it escapes if you take too long) |
 
-The stand-ins are short — about a minute of zone A's enemies (small pods, red saucers with
-capsules, fan fliers, an arrowhead fighter, a ring spinner; turrets and walkers where there is a
-floor) and then the WARNING and a boss you know from zone A or the browser's boss ranges. They
-play zone A's music. The real zones replace them in the next builds; their names and the text on
-the map are already the real ones.
+Zones A, B and C are real zones of about three and a half to four minutes each. The stand-ins D–I
+are short — about a minute of zone A's enemies (small pods, red saucers with capsules, fan fliers,
+an arrowhead fighter, a ring spinner; turrets and walkers where there is a floor) and then the
+WARNING and a boss you know from zone A or the browser's boss ranges. They play zone A's music.
+The real zones replace them in the next builds; their names and the text on the map are already
+the real ones.
 
 **A zone, start to end:**
 
@@ -1209,8 +1219,9 @@ zone works as before: CONTINUE? (if you have continues) carries on at the zone's
 **Quicker ways through (browser):** http://localhost:5173/?skip=boss starts every zone just
 before its WARNING, so a run is five boss fights (add `&loadout=full`); the debug build's key 8
 (or the remote's unlock sequence — [debug-tools.md](debug-tools.md)) jumps to the boss in any
-zone. `?stage=zone-b` … `?stage=zone-i` plays one stand-in zone on its own (like a test stage,
-without the map).
+zone. `?stage=zone-b` … `?stage=zone-i` plays one zone on its own (like a test stage, without the
+map) — `zone-b` and `zone-c` are the real BRINE NEBULA and DUNE EXPANSE, and `?stage=brine-grotto`
+plays zone B's secret bonus stage.
 
 What "good" looks like:
 
@@ -1227,6 +1238,142 @@ What "good" looks like:
 - Score, ships and power-ups are the same after the map as before it.
 - All 16 routes can be finished; each ends with an ending card whose route line matches the
   zones you flew.
+
+## Zone B: BRINE NEBULA
+
+The first zone after AZURE VERGE on the upper route: a teal and violet **nebula** over a drifting
+**sea** of light that gently **wobbles** and shimmers through its colours along the bottom of the
+picture, bubbles everywhere, a reef to fly through, a **mid-boss** and, at the end, the mechanical
+fish **GALVANIC MAW**. About three and a half minutes. Times count from the start of the zone
+(about):
+
+| Time | What happens |
+|---|---|
+| 0–40 s | **The shallows.** Streams of small **bubbles** drift through; big **iridescent bubbles** burst into two small ones when shot; **green bubbles** have a small fish curled up inside — shoot the bubble and the **fish** darts out at you. Red saucers bring capsules as in zone A |
+| about 40 s | **The reef tunnel.** Pale coral rock closes in above and below; spiny **urchins** sit on the floor and hang from the ceiling and shoot at you. Checkpoint |
+| about 1:30 | **SPUME HERALD** — a ridged shell with two launch tubes glides in from the right **without a WARNING, while the screen keeps scrolling**. It follows your height, fires fans of three, and its tubes launch green bubbles (with fish inside). Shoot the shell (40 hits) — or survive: after 30 seconds it leaves on its own |
+| about 1:50 | **The deep current.** Open water; **jellyfish** sway through, each sending out a ring of six bullets (the first one aimed at you). Checkpoint. Somewhere here is the **secret entrance** ([below](#the-secret-bonus-stage-pearl-grotto)) |
+| about 2:35 | **The riptide.** The scrolling nearly doubles its speed for about 20 seconds; schools of fish and bubbles. Checkpoint |
+| about 3:00 | **The calm.** Two red saucers — the capsules for the boss — and nothing else |
+| about 3:13 | **The WARNING** (`GIANT HOSTILE "GALVANIC MAW"` · `CLOSING IN - CODE GM-02`), then the boss and its own theme |
+
+**The enemies of BRINE NEBULA:**
+
+| Enemy | Hits to destroy | Points | Shoots? |
+|---|---|---|---|
+| Small bubble (streams) | 1 | 50 | No |
+| Big iridescent bubble | 3 | 200 | No — it bursts into two small bubbles |
+| Green bubble with a fish inside | 4 | 300 | No — it frees the fish |
+| Fish (from a bubble, or in schools) | 1 | 150 | No — it stops, aims and darts at you |
+| Jellyfish | 4 | 400 | A **ring of six** slow bullets, the first one aimed at you |
+| Urchin (reef floor or ceiling) | 3 | 300 | One **pink round** bullet aimed at you about every 2½ seconds |
+| Red saucer (as in zone A) | 3 | 200 | No — it always leaves a capsule |
+| Homing rocket (from the boss) | 1 | 100 | No — it chases you for a second, then flies straight on |
+
+### GALVANIC MAW (GM-02)
+
+A big mechanical fish on the right that **follows your ship's height up and down**:
+
+| Part | Looks like | What your shots do |
+|---|---|---|
+| **Hull** | The steel body with its eye, gill slits and plating; a tail fin behind | Nothing, ever (a small spark bounces back) |
+| **Jaws** | Two steel jaws at the front, above and below the mouth | Nothing — they are armour. They **open apart** when the mouth opens |
+| **Mouth** | The glowing gullet between the jaws | Nothing while it is **shut**; while it is **open** it takes the hits: 64 in all. Destroying it destroys the boss (35,000 points) |
+| **Rocket pods** | Two pods above and below the hull | 16 hits each, 1,000 points — each one destroyed means fewer rockets |
+
+**How it fights.** The mouth stays shut for about two and a half seconds, then opens for about
+one and a half: **that is when to shoot**. While it is open it spits fans of three **purple
+needles** (the cutters) at you, and every few seconds a pod launches a **homing rocket** that
+flies out diagonally, turns to follow you for about a second and then flies straight on — shoot it
+(one hit) or step out of its way. After the mouth has taken 24 hits the mouth also fires a **ring
+of eight bullets** each time it opens and both pods launch rockets; after 48 hits the mouth opens
+longer and more often, the fans have five needles and the rings ten bullets.
+
+**Tip:** stay level with the mouth and fire when it opens; step up or down when the needles come,
+and keep an eye on the rockets — they cannot turn sharply, so a single step at the last moment
+gets you out of their way.
+
+### The secret bonus stage: PEARL GROTTO
+
+About 20 seconds after the third checkpoint (roughly 2:10 into the zone), two **reef blocks** come
+along at the **very top of the screen** with a gap between them. **Fly under the left block and then
+up into the gap** while it passes — the power-up chime sounds and about ⅔ of a second later the
+picture switches to **PEARL GROTTO**, with **BONUS STAGE** / **PEARL GROTTO** on the title card.
+Your score, ships and power-ups come along.
+
+The grotto is a short reef cave over the shimmering sea, about half a minute long: nothing shoots
+at you; carriers fly across leaving **gold capsules** worth **1,000 points** each, one bigger
+carrier leaves a green **1UP** capsule (**one extra ship**), a few big bubbles drift through, and
+two brick walls have to be shot through. At its end the zone counts as **cleared**: GALVANIC MAW is
+**skipped**, the zone result and the ZONE MAP follow, and the ending card will show **BONUS STAGE
+CLEARED**. Lose a ship in the grotto and you are back in BRINE NEBULA at the gap about a second
+later, and the entrance stays shut for the rest of the zone (RETRY STAGE opens it again). The whole
+thing also works on the TV.
+
+## Zone C: DUNE EXPANSE
+
+The first zone after AZURE VERGE on the lower route: a desert under **two suns** — a big pale one
+and a small orange one — with dune ridges behind that **shimmer in the heat**, sand-coloured rock,
+sand worms and, at the end, the giant spider **SANDGRAVE WIDOW**. About four minutes. Times from the
+start of the zone (about):
+
+| Time | What happens |
+|---|---|
+| 0–45 s | **The dunes.** Sand-coloured ground along the bottom. **Sand worms** lie hidden in the dunes: when your ship comes near, a worm's armoured head **bursts out of the sand** in an arc, its body following segment by segment, and dives back into the ground ahead. Flocks of **skimmers** swoop through in curves; **sand geysers** on the ground throw clods of sand in arcs; red saucers bring capsules |
+| about 45 s | **The canyon.** A rock ceiling closes in above the floor; armoured **beetles walk along the ceiling** (upside down) and the floor and shoot when they stop; **dust devils** spin through, sending out short spirals of needles. Checkpoint |
+| about 1:40 | **The worm field.** Worm after worm bursts from the dunes, with geysers between them. Checkpoint |
+| about 2:25 | **The sandstorm run.** The scrolling speeds up for about 20 seconds; flocks of skimmers and dust devils. Checkpoint |
+| about 2:50 | **The calm.** Two red saucers for the boss |
+| about 3:03 | **The WARNING** (`GIANT HOSTILE "SANDGRAVE WIDOW"` · `CLOSING IN - CODE SW-03`), then the boss and its own theme |
+
+**The enemies of DUNE EXPANSE:**
+
+| Enemy | Hits to destroy | Points | Shoots? |
+|---|---|---|---|
+| Sand worm segment (a worm is a whole group) | 2 | 100 | No — its body is the danger; destroying a whole worm gives a bonus (and some worms leave a capsule) |
+| Skimmer (flocks on curved paths) | 1 | 100 | No |
+| Beetle (canyon ceiling or floor) | 3 | 250 | A fan of three **red ovals** each time it stops |
+| Dust devil | 6 | 500 | A short two-armed **spiral of needles** |
+| Sand geyser (on the ground) | 10 | 700 | Throws three **clods of sand** in arcs every two seconds or so (one hit each, 30 points; they burst on the ground) |
+| Red saucer (as in zone A) | 3 | 200 | No — it always leaves a capsule |
+| Spider drone (from the boss) | 2 | 150 | No — it stops, aims and dashes at you |
+
+### SANDGRAVE WIDOW (SW-03)
+
+A giant spider on the right that **scuttles to a new spot** every one and a half to two seconds:
+
+| Part | Looks like | What your shots do |
+|---|---|---|
+| **Body** | The big abdomen with a red hourglass; four jointed legs | Nothing, ever |
+| **Fangs** | Two bone fangs in front of the head, one above and one below | 14 hits each, 800 points. They are in the way of the head — **shoot them first** |
+| **Head** | The head with four glowing eyes, at the front | Nothing while a fang stands; then 56 hits. Destroying it destroys the boss (35,000 points) |
+| **Spinnerets** | Two silk glands above and below the body | 20 hits each, 1,000 points — fewer drones and silk lines |
+
+**How it fights.** From the start the head spits fans of three **red ovals** at you and the
+spinnerets send out **spider drones** that stop, aim and dash at you. **Once both fangs are gone**
+it gets angry: both spinnerets send drones, and every few seconds a spinneret spins a **silk line**
+— a thin blinking warning line straight across the screen along its row for almost a second, then
+a beam for about ⅔ of a second. Only the beam hurts, and it **stays where it was spun** while the
+spider keeps moving — step up or down out of its row. When the head has taken 32 hits, the fans have
+five ovals and everything comes faster.
+
+**Tip:** clear the fangs quickly while there are no silk lines yet, then stay level with the head
+and watch the blinking lines; shoot the drones as they come.
+
+What "good" looks like in zones B and C:
+
+- The sea in BRINE NEBULA and the dunes and suns in DUNE EXPANSE move smoothly; the wobble and the
+  shimmer affect **only the background** — never your ship, the enemies, the bullets or the HUD.
+- Every sand worm comes out of the ground and goes back into it (it may pass through the rock);
+  every beetle walks exactly on the ceiling or floor.
+- A bubble that is shot bursts where it was; a green bubble's fish appears exactly there.
+- GALVANIC MAW's jaws always open and close together with the mouth and never slip out of place;
+  shots clink on the shut mouth and hit the open one.
+- SANDGRAVE WIDOW's head only reacts once both fangs are gone; each silk line blinks as a warning
+  first and can be avoided by one step up or down.
+- Every bullet, rocket, drone and silk line can be dodged with single arrow presses — please report
+  the zone and the time of any spot where you could not get out of the way.
+- Each zone, boss included, takes about three and a half to four minutes when nothing goes wrong.
 
 ## On the Samsung Smart Monitor / TV
 
@@ -1248,8 +1395,8 @@ the first install it appears in the monitor's **Apps** list as **Shmup Cup**.
 On the TV, every game starts in **AZURE VERGE** ([The first zone](#the-first-zone-azure-verge)), with
 enemies, capsules, the boss and the zone's music, and goes on across the **ZONE MAP** through
 four more zones to an ending ([The zone map](#the-zone-map-a-run-through-nine-zones)). The normal
-TV build has no shortcut to the boss — it comes after about three minutes in zone A and about a
-minute in the stand-in zones; the debug build has one (key 8 once the developer tools are open —
+TV build has no shortcut to the boss — it comes after about three minutes in zones A, B and C and
+about a minute in the stand-in zones D–I; the debug build has one (key 8 once the developer tools are open —
 [debug-tools.md](debug-tools.md)).
 
 Things to check on the monitor and report:
@@ -1497,8 +1644,9 @@ Things to check on the monitor and report:
    Report whether the map is readable from the sofa.
 54. **The next zone** (new): the zone starts with **ZONE B** (or C) and its name on a band near
    the top while the ship flies in; the music starts with the zone; your score, spare ships and
-   power-ups are exactly what they were before the map. About a minute later the WARNING and a
-   boss you know come, then the result and the map again.
+   power-ups are exactly what they were before the map. Zone B (BRINE NEBULA) or C (DUNE EXPANSE)
+   plays for about three minutes before its WARNING and its own boss (checks 57–60), then the result
+   and the map again.
 55. **A whole run** (new): play on through D or E, F or G, to **H or I** (the debug build's key 8
    saves time). After the final zone's result the **ENDING** card shows the ending's name, your
    route, your score and `THANK YOU FOR PLAYING`; OK (after a second) returns to the title — with
@@ -1506,13 +1654,38 @@ Things to check on the monitor and report:
    music plays again from the start. Report the route and the ending name.
 56. **Game over in a later zone** (new): lose all ships in zone B or later: CONTINUE? and GAME OVER
    work as in zone A, and the run's score is saved.
+57. **BRINE NEBULA** (new): choose B on the map. The title card reads **ZONE B** / **BRINE NEBULA**
+   and a new tune plays (not AZURE VERGE's). The sea along the bottom wobbles and shifts colour
+   smoothly — only the background, never the ship or the bullets. Bubbles burst into smaller ones
+   and green bubbles free a fish where they were; urchins sit exactly on the reef. About 1½ minutes
+   in, SPUME HERALD comes in without a WARNING while the screen keeps scrolling, and leaves after 30
+   seconds if you do not destroy it. Report whether the bubbles are easy to tell apart from the
+   enemy bullets on the TV.
+58. **GALVANIC MAW** (new): after the WARNING the mechanical fish comes with its own boss tune. Its
+   jaws open apart and close together with the mouth, every time and in every phase — they never
+   end up out of place; shots clink while the mouth is shut and hit it while open; the homing
+   rockets can be outrun with single arrow presses. The boss HP bar (if BOSS HP is ON) moves only
+   when the mouth is hit.
+59. **The secret bonus stage** (new): in BRINE NEBULA, about 2:10 in (the debug build: key 7 twice
+   — the third checkpoint —, then about 20 seconds), fly under the left of the two reef blocks at the top and up
+   into the gap between them: the chime, then **BONUS STAGE** / **PEARL GROTTO**. Collect the gold
+   capsules (+1,000 each) and the 1UP (one more ship icon), shoot through the two brick walls; at
+   the end the zone result follows without GALVANIC MAW and the map opens. Report whether the gap
+   is easy to find and to fly into with the remote.
+60. **DUNE EXPANSE** (new): choose C on the map (in a new game). Its own tune;
+   the dune ridge and the suns shimmer in the heat (background only). Sand worms burst out of the
+   ground in front of the ship and dive back in; beetles walk upside down on the canyon ceiling.
+   At the end SANDGRAVE WIDOW scuttles about with its own boss tune; its head reacts only after
+   both fangs are gone, and then the blinking silk lines come one at a time — each avoidable by a
+   single step up or down.
 
 The fully powered ship (`?loadout=full`), the shortcut to each zone's boss (`?skip=boss`), the
 twelve test stages (the Test Range, the Boss Range with its test boss, the Hunter Range with the
 Option Hunters and the blue capsule, the Direct Range with the MANTA's pincer waves, the Gimmick
 Range with the later zones' stage mechanics, the Raster Range with the picture effects, the
 Captain, Raid, Twin and Gauntlet Ranges with the advanced bosses, and the Bonus Range with its
-Bonus Vault), a single stand-in zone on its own (`?stage=zone-b` …), free flight, the showcase, the
+Bonus Vault), a single zone on its own (`?stage=zone-b` …) and zone B's bonus stage on its own
+(`?stage=brine-grotto`), free flight, the showcase, the
 calibration screen and the effects gallery can only be opened in a browser — the monitor's own
 web browser works too, pointed at a PC running `pnpm dev` (below).
 
@@ -2395,12 +2568,15 @@ What "good" looks like in these stages:
   where you could not get out of the way (the rammer's dash and the rings included).
 - No magenta-and-black squares, and no part of a boss left floating after it exploded.
 
-## Hidden bonus stages (browser only for now)
+## Hidden bonus stages
 
-Some zones of the finished game hide a **secret entrance** to a short **bonus stage** full of
-points and extra ships. None of the nine zones has one yet (zone B gets the first in a coming
-build), so this build shows them in a test stage: open http://localhost:5173/?stage=bonus-range
-and choose 1 PLAYER (add `&loadout=full` to have the firepower for the second entrance).
+Some zones hide a **secret entrance** to a short **bonus stage** full of points and extra ships.
+The first real one is in **zone B, BRINE NEBULA** — a marked gap at the top of the screen into
+**PEARL GROTTO**, on every device ([The secret bonus stage: PEARL
+GROTTO](#the-secret-bonus-stage-pearl-grotto)); zone G gets another in a later build. All three
+kinds of entrance can be tried in a browser test stage: open
+http://localhost:5173/?stage=bonus-range and choose 1 PLAYER (add `&loadout=full` to have the
+firepower for the second entrance).
 
 The *Bonus Range* scrolls over a floor and has **three secret entrances**, each of another kind —
 the first one you open is the one you take:
@@ -2486,7 +2662,7 @@ will be replaced by finished sound and music later.
 
 | Where | Sound effects | Music |
 |---|---|---|
-| **TV** | From the start | The title theme on the title; in a game AZURE VERGE's theme, the boss theme, the stage-clear and game-over tunes |
+| **TV** | From the start | The title theme on the title; in a game AZURE VERGE's theme, the boss theme, the stage-clear and game-over tunes — and in zones B and C their own stage and boss themes |
 | **Browser** | After your first key press or click | The title theme from that first key press; in a game the same as on the TV |
 | **Browser**, `?stage=test-range` or `?stage=test-boss` | After your first key press or click | The title theme, then the stage theme when the game starts; the boss theme, the stage-clear and game-over tunes |
 | **Browser**, `?scene=flight` (free flight) | After your first key press or click | None in open space; with `&stage=…` the stage theme starts with the first key press |
@@ -2515,15 +2691,15 @@ What you should hear:
 | **Mega Crash** | A long, deep roar |
 | You lose your ship | A heavy explosion; the music goes quiet for about two seconds and comes back up |
 | The boss **WARNING** | The stage music fades out within half a second and a **siren** wails three times, once a second, with the red pulses |
-| The boss glides in | The boss theme, **BULWARK ASSAULT**, starts |
+| The boss glides in | The boss theme, **BULWARK ASSAULT**, starts (GALVANIC MAW: **MAW OF THE NEBULA**; SANDGRAVE WIDOW: **SANDGRAVE ASSAULT**) |
 | The boss is destroyed | The boss music fades out over a second while the explosions crackle over it; with the final blast's `20000` a short, cheerful **stage-clear tune** (VERGE SECURED) plays, then it is quiet |
 | The menus | A soft click for each move of the highlight (and each step of a volume or the control profile in the Options screen), a short chime when you choose an entry, a lower "back" sound for Back, NO and a greyed-out entry; a short sound when the pause menu opens and closes. Menu sounds come from the middle and follow the SFX volume |
 | The title screen | The title theme, **SHMUP CUP**; it fades out when a game starts |
 | **GAME OVER** screen | A short, sad tune (**SILENT VERGE**) |
 | **STAGE CLEAR** screen, the **zone result** | The stage-clear tune (if it is not playing already) |
 | The **ZONE MAP** | The music fades out — the map is quiet for now (its own tune comes later); a chime when you choose, the menu click for ▲ / ▼ |
-| The next zone starts | Its zone theme from the start of the zone (the stand-in zones B–I use AZURE VERGE's theme and BULWARK ASSAULT) |
-| Entering a secret bonus stage | The power-up chime when the entrance opens; the 1UP capsule plays the extra-ship jingle |
+| The next zone starts | Its zone theme from the start of the zone: **BRINE NEBULA** in zone B, **DUNE EXPANSE** in zone C (the stand-in zones D–I use AZURE VERGE's theme and BULWARK ASSAULT) |
+| Entering a secret bonus stage | The power-up chime when the entrance opens; the 1UP capsule plays the extra-ship jingle. PEARL GROTTO keeps zone B's music going (it has no tune of its own) |
 | The **ending** card | The rest of the stage-clear tune, then quiet (the ending music comes with the real endings) |
 
 **The stage theme** (AZURE VERGE — in the zone of the same name and in both browser test stages)
@@ -2631,12 +2807,18 @@ mean the build itself is broken; they are not caused by anything you did.
 | OK on the KESTREL opened a WEAPON SELECT screen instead of the game | Expected: START is highlighted, so OK starts the game with the weapons shown; ▲ / ▼ and ◀ / ▶ change them first if you like ([Choosing your weapons](#choosing-your-weapons)) |
 | My ship flew off to the right on its own after the boss | Expected: the fly-out at the end of every zone — the zone result follows |
 | A **ZONE MAP** appeared instead of the title after the boss | Expected since this build: choose the next zone with ▲ / ▼ and press OK ([The zone map](#the-zone-map-a-run-through-nine-zones)); Back → YES returns to the title |
-| Zone B (or another zone after A) is very short and has zone A's enemies and boss | Expected: zones B–I are stand-ins until the real zones come |
+| Zone D (or another zone after B or C) is very short and has zone A's enemies and boss | Expected: zones D–I are stand-ins until the real zones come. Zones B and C are the real BRINE NEBULA and DUNE EXPANSE — if one of them is short, please report it |
+| Shots do nothing to GALVANIC MAW | Expected while its mouth is shut (a clink) and on the hull and jaws, which are armour: wait for the mouth to open. The rocket pods can be destroyed too |
+| SANDGRAVE WIDOW's head takes no damage | Expected until both fangs in front of it are destroyed |
+| A sand worm came out of the ground right in front of me | Expected — worms burst out when your ship comes near. Watch for the head and step up out of its arc |
+| A mid-boss came without a WARNING and then flew away (zone B) | Expected: SPUME HERALD fights while the screen scrolls on and leaves after 30 seconds if it survives |
+| I flew into the gap at the top of BRINE NEBULA and nothing happened | The ship has to be **inside** the gap between the two reef blocks while it passes (fly under the left block, then up); it only works once per zone, and never again after a ship was lost in PEARL GROTTO (RETRY STAGE resets that) |
+| The sea (BRINE NEBULA) or the dunes and suns (DUNE EXPANSE) wobble or shimmer | Expected — the zones' picture effects. Report it if the ship, enemies, bullets or the HUD ever wobble |
 | A browser test stage (`?stage=…`) ended with STAGE CLEAR, not the zone map | Expected: test stages are played on their own; only a normal game (no `?stage=`, or `?stage=zone-a`) is a run across the map |
 | The next zone started silent, or with the wrong tune | Not expected — please report the route (e.g. `A C E`), the device and whether it happened after a previous run ended |
 | The ending screen came without an ending I expected | The ending depends on the final zone and the run: THE … FALLS SILENT / THE DEEP IS STILL need no ship lost in the **whole** run (a RETRY STAGE after a loss still counts the loss) |
 | An entrance in the Bonus Range did not open | Only the first entrance you open counts, and after a loss in the Bonus Vault none opens again (RETRY STAGE resets that). The gap needs the ship itself in the gap while it passes; the ground entrance needs **all three** turrets |
-| `?stage=bonus-range` (or a zone) does nothing on the TV | Expected: the TV widget has no address bar; the zones are reached through the map, the Bonus Range is browser only for now |
+| `?stage=bonus-range` (or a zone) does nothing on the TV | Expected: the TV widget has no address bar; the zones (and zone B's secret bonus stage) are reached through the map, the Bonus Range is browser only for now |
 | OK does nothing in the game | Expected with the **MANTA**: it has no power meter — its colour items work when you fly into them. With the KESTREL OK needs a highlighted box on the power meter ([Power-ups](#power-ups)) |
 | Ch ▼ does nothing | Expected with the KESTREL (it speeds up with SPEED UP on the power meter). With the MANTA each press should switch its speed and light the SPD squares — if not, please report it with the remote model |
 | A colour item vanished before I got to it | Expected after about ten seconds (it blinks for the last two) — items do not wait |

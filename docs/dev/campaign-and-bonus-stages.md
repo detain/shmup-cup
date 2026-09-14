@@ -8,7 +8,9 @@ card over the fly-in) and the **stage-clear fly-out**, the **zone result tally**
 time bonus), the **zone map** screen, the next zone **prepared on the map**, the **hidden
 bonus-stage framework** (three kinds of secret entrance, bonus stages, 1UPs and 1,000-point
 capsules, the lock-out after a death), the **ending selection hook**, the **practice plumbing**
-and eight short **stub zones B–I**, so every route is playable end to end today.
+and eight short **stub zones B–I**, so every route is playable end to end. Since M2-11 zones B and
+C are real ([zones-b-and-c.md](zones-b-and-c.md)) and zone B holds the first campaign bonus
+entrance; D–I are still stubs.
 
 This page is the *how and why* of that step and the map of its code. Exact signatures are in
 [api-reference.md](api-reference.md) (`data`, `scenes`, `stage`, `player`, `enemies`, `powerups`,
@@ -355,8 +357,10 @@ generator (the pill in green with a white `+`, and in gold).
 two brick blocks at the top of the screen, a `ground` window with three floor turrets, a `digit`
 entrance reading the thousands digit 0 — all into `bonus-vault.stage.json` (type `bonus`: carriers
 dropping bonus capsules, a 1UP carrier, two brick barriers to shoot through), then HALCYON
-BULWARK. Enemies in `content/enemies/bonus.enemies.json`. **No campaign zone has an entrance
-yet**: M2-11 puts the first one into zone B.
+BULWARK. Enemies in `content/enemies/bonus.enemies.json`. **The first campaign entrance** came
+with M2-11: zone B's `gap` at world x 5,616–5,680, y 0–24, marked by two reef blocks, into
+`brine-grotto.stage.json` (PEARL GROTTO — the vault's carriers, a 1UP, bubbles, two brick
+barriers; it plays the zone's resident music) — [zones-b-and-c.md](zones-b-and-c.md#the-hidden-bonus-stage-pearl-grotto).
 
 ## The ending hook (`EndingScene`, id `ending`)
 
@@ -387,6 +391,10 @@ over). The practice select screen and its own table come with M2-15.
 - Practice records nothing. RETRY STAGE and QUIT TO TITLE still record nothing.
 
 ## The stub zones B–I
+
+**Since M2-11 only D–I are stubs**: `zone-b` and `zone-c` were replaced by the real BRINE NEBULA
+and DUNE EXPANSE ([zones-b-and-c.md](zones-b-and-c.md)). What follows describes the stubs as M2-10
+built them.
 
 `content/stages/zone-b … zone-i.stage.json` are short placeholders (≈ 45–70 s, 2,000 px, two
 checkpoints each, the shared `Stage` / `Boss` cues): zone A's roster (popcorn, capsule carriers,
@@ -520,9 +528,11 @@ the menus with action presses; `game.scenes.run` / `.map` / `.ending` expose the
 
 ## Next steps that build on this page
 
-- **M2-11 … M2-14** — the real zones replace the stubs (B BRINE NEBULA with the first hidden bonus
-  stage, C DUNE EXPANSE, D MAGMA DEEP, E TEMPEST RIDGE, F CELL VAULT, G PRISM LABYRINTH with the
-  second, H IRON CITADEL, I ABYSSAL THRONE), each with its own songs through `PrepareStage`; M2-14
+- **M2-11** (done) — zones B (BRINE NEBULA, with the first hidden bonus stage of a real zone, PEARL
+  GROTTO) and C (DUNE EXPANSE) replace their stubs, each with its own songs through `PrepareStage`
+  ([zones-b-and-c.md](zones-b-and-c.md)).
+- **M2-12 … M2-14** — the other real zones replace the stubs (D MAGMA DEEP, E TEMPEST RIDGE,
+  F CELL VAULT, G PRISM LABYRINTH with the second hidden bonus stage, H IRON CITADEL, I ABYSSAL THRONE), each with its own songs through `PrepareStage`; M2-14
   turns the ending hook into ending scenes (one per final zone plus a no-death variant) and credits.
 - **M2-15** — the practice select (zone, checkpoint, loadout; its own table) on
   `startPractice`, name entry and the hi-score table showing the zone reached, attract demos per

@@ -124,7 +124,9 @@ least one atlas page exists under `dist/assets/atlas/` (without it the widget ca
 the boot error screen), and — since M1-19 — the **budgets** hold: `app.js` ≤ 350 KB gzipped
 (`APP_JS_GZIP_BUDGET`), every atlas page a readable PNG of at most 2048² (`ATLAS_PAGE_MAX_SIZE`),
 the whole `dist/` ≤ 8 MB (`DIST_BUDGET`). The OK line prints the sizes against them
-(M1-19: `app.js` 773.6 KB, 228.6 KB gzipped; `dist/` 812.4 KB). A release build must also carry
+(M1-19: `app.js` 773.6 KB, 228.6 KB gzipped; `dist/` 812.4 KB; after M2-11 `app.js` is 307.5 KB
+gzipped — the content of every zone is inlined, zones B and C added ≈ 6 KB — so zones D–I need the
+same care: [zones-b-and-c.md](zones-b-and-c.md#bundle-budget)). A release build must also carry
 no debug code (`tizen-build.test.ts` looks for `__shmupDebug` / `debug-overlay`).
 `apps/tizen/test/build/tizen-build.test.ts` also executes the bundle in a V8 realm with
 `globalThis` deleted.
@@ -221,14 +223,18 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   Since M2-10 `campaign-routes-b` / `-c.test.ts` fly all 16 routes of the zone map in god mode
   with the campaign harness (`test/playtest/campaign.ts` — each zone built as the scene flow
   builds it, the players carried), split in two files so the halves run in parallel
-  ([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md#tests)).
+  ([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md#tests)). Since M2-11
+  `zone-b` / `zone-c.test.ts` fly the real zones B and C the same way and `zone-bc-recovery.test.ts`
+  checks the recovery rule at their eight checkpoints (the shared `recovery.ts` —
+  [zones-b-and-c.md](zones-b-and-c.md#playtests-the-recovery-rule-and-the-harness)).
   `pnpm exec vitest run --project integration test/playtest --reporter=verbose` prints the runs —
   see [zone-a-and-playtest.md](zone-a-and-playtest.md#the-playtest-testplaytest).
 - **Golden replays** (M1-19, plan §1.3): `test/golden/golden.test.ts` plays the committed
-  replays — twenty-eight since M2-10: seventeen of zone A, three of the `gimmick-range` dev stage,
+  replays — thirty-three since M2-11: seventeen of zone A, three of the `gimmick-range` dev stage,
   one of the `raster-range` dev stage, four of the advanced-boss dev stages (`captain-range`,
   `raid-range` twice, `twin-range`), three of the bonus-stage dev stages (`bonus-range` twice,
-  `bonus-vault`) (`test/golden/*.replay.json`) — back and requires every state hash and the
+  `bonus-vault`), five of zones B and C (`zone-b` twice, `zone-c` twice, `brine-grotto`)
+  (`test/golden/*.replay.json`) — back and requires every state hash and the
   recorded outcome to match — part of `pnpm test` (the `integration` project). A failure means
   the simulation changed; re-bless an intended change with `pnpm golden:update` and say why in
   the commit message ([debug-and-replays.md](debug-and-replays.md#golden-replays-testgolden)).

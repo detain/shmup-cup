@@ -22,6 +22,9 @@
  * the hourglass and the eyes. Geometry uses only `+ - * /` and `Math.sqrt`, randomness `hash2`
  * seeded from the sprite names, so the pixels are identical on every engine.
  *
+ * **Public API.** {@link generate}, {@link DUNE_SPRITES}, {@link SUNS_TILE_W} /
+ * {@link SUNS_TILE_H}, {@link RIDGE_TILE_W} / {@link RIDGE_TILE_H} (the bands' tile sizes).
+ *
  * @module
  */
 import { createImage, flipVertical, setPixel } from '../image.mjs';

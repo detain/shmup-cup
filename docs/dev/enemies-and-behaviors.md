@@ -437,7 +437,7 @@ builds a lookup (throws on duplicate ids). `DEFAULT_BEHAVIORS` (from `DEFAULT_BE
 is what the World uses; `createWorld(config, db, { behaviors })` swaps in another registry
 (tests, tools — not part of `GameConfig`, so never in a real session).
 
-The roster — the eight of M1, M2-02's `pattern.loop`, M2-04's `hunter.option`, M2-05's `cube.pincer` and the six stage gimmicks of M2-07 (`rock.fall`, `bubble.split`, `volcano.lob`, `field.suction`, `tentacle.grab`, `cube.stack` — tunables and what they do in [advanced-stages.md](advanced-stages.md#gimmick-behaviours-corebehaviors-and-the-script-api)) (tunables and their defaults in brackets; the fire patterns are M1-09's — they go
+The roster — the eight of M1, M2-02's `pattern.loop`, M2-04's `hunter.option`, M2-05's `cube.pincer` and the six stage gimmicks of M2-07 (`rock.fall`, `bubble.split`, `volcano.lob`, `field.suction`, `tentacle.grab`, `cube.stack` — tunables and what they do in [advanced-stages.md](advanced-stages.md#gimmick-behaviours-corebehaviors-and-the-script-api)) and M2-11's `rocket.homing` and `worm.burst` (rows below; the whole story in [zones-b-and-c.md](zones-b-and-c.md#the-new-behaviours-corebehaviors)) (tunables and their defaults in brackets; the fire patterns are M1-09's — they go
 through the `ScriptApi` primitives, so nothing fires off screen or before `settleTicks`; bullet
 speeds are px/tick and intervals ticks, both Normal values scaled by the rank):
 
@@ -453,6 +453,8 @@ speeds are px/tick and intervals ticks, both Normal values scaled by the rank):
 | `orbiter.loop` | orbiter | flies the spawn event's path at [`speed` 1.25]; without one: `Waypoint` to [`x` 256, `y` 100], hold [`hold` 90], leave left at [`leaveSpeed` 2]; every [`ringTicks` 120] (rank-scaled) a ring of [`ringCount` 8] purple bullets at [`bulletSpeed` 1], each ring turned half a gap |
 | `pattern.loop` | DSL pattern runner (`needsPattern`, M2-02) | runs the enemy's `pattern` — a `content/patterns/` action — over and over: `startPattern`, then `yield stepPattern()` until it ends, [`restTicks` 60] of rest, again; `relative` directions from [`heading` 512 = left]; sets no mover (the spec's `mover` moves it); without a compiled pattern it sleeps forever. The shipped test enemy `sentry` (`content/enemies/test-sentry.enemies.json`, not spawned by any stage) runs `common.spiral` with it ([pattern-dsl.md](pattern-dsl.md#the-patternloop-behaviour)) |
 | `cube.pincer` | Direct-mode item carrier (M2-05, shmup_feat.md §6B) | one cube of a six-cube pincer wave: odd `formation` members start mirrored across the playfield's middle row (once, on the spawn tick), every cube flies a `Waypoint` at [`speed` 1.5] to view x [`meetX` 176], [`gap` 8] px above / below the middle row on its own half, then leaves left at [`leaveSpeed` 1.75]; sleeps forever, never fires — the formation's drop (at the last kill) is the wave's item ([direct-mode.md](direct-mode.md#carriers-corebehaviors-and-the-dev-stage)) |
+| `rocket.homing` | homing rocket (M2-11; GALVANIC MAW's minion) | `Straight` diagonally away from the playfield's middle row and to the left at [`launchSpeed` 1] for [`launchTicks` 24], then `Homing` on the nearest living player at [`speed` 1.25], turning ≤ [`turnRate` 5] units a tick, for [`homeTicks` 60], then straight on (a `Homing` mover with turn rate 0 keeps the heading); never fires — it is shot down or outturned |
+| `worm.burst` | sand worm (M2-11, floor) | a `formation` is one worm: the leader (member 0 or a lone spawn) waits on a `Ballistic` mover until a player is within [`trigger` 128] px horizontally (0 = at once), then bursts out at ([`vx` −0.8], −[`up` 3.4]) with [`gravity` 0.075], ≤ [`maxFall` 4], passing through the terrain (`BallisticLand.Pass`); the other members `Follow` its track (a dead leader's ghost keeps recording); never fires |
 | `hunter.option` | Option Hunter (M2-04; its spec's `optionHunter` brings the rules) | [`variant` 0] rear / 1 front / 2 dive: for [`lineUpTicks` 90] re-aims a `Waypoint` mover every 6 ticks at its line-up point — view x [`lineX` 48] (front: `384 − lineX`) on the nearest player's row, or view y [`lineY` 24] over its column, 12 px inside the playfield — at [`speed` 2]; the last aim holds [`windup` 24] and charges at [`chargeSpeed` 4.5] until it leaves the view; never fires. The shipped hunters are in `content/enemies/option-hunters.enemies.json`, flown by the `hunter-range` dev stage ([options-shields-hunter.md](options-shields-hunter.md#the-option-hunter-coreenemies-corebehaviors)) |
 
 Writing one:
@@ -481,13 +483,15 @@ document it in the module docblock and in `content/enemies/README.md`, and test 
 **Boss behaviours** (M1-13) are a second roster in the same module — `defineBossBehavior`,
 `createBossBehaviorRegistry`, `DEFAULT_BOSS_BEHAVIORS` (`boss.hover`, `boss.lanes`,
 `boss.bulwark` since M1-18, and since M2-09 the captains `captain.ram`, `captain.launcher`,
-`captain.circler`, `captain.crab` and the raid turrets' `boss.raid`) — driving a
+`captain.circler`, `captain.crab` and the raid turrets' `boss.raid`, since M2-11 the zone bosses
+`boss.maw` and `boss.widow` — [zones-b-and-c.md](zones-b-and-c.md#bossmaw)) — driving a
 `BossScriptApi` instead of a `ScriptApi`; a boss phase's `script` names one. They follow the same
 coroutine rules ([bosses-and-warning.md](bosses-and-warning.md#boss-behaviours-corebehaviors),
 [advanced-bosses.md](advanced-bosses.md#behaviours)). A captain's `minion` (M2-09) is an ordinary
 regular enemy: `BossScriptApi.launch` spawns it at a boss part's centre through the enemy
 system's `spawn` (the World's `BossHost.enemies`), with its own script and mover — BROOD
-LAUNCHER launches the gimmick range's splitting `bubble`.
+LAUNCHER launches the gimmick range's splitting `bubble`; zone B's SPUME HERALD launches brood
+bubbles, GALVANIC MAW its homing rockets and SANDGRAVE WIDOW its spider drones the same way (M2-11).
 
 ## The `test-range` roster
 
@@ -539,6 +543,18 @@ stage's sections and the boss are in
 [zone-a-and-playtest.md](zone-a-and-playtest.md#the-roster). Because the shipped content now
 has both rosters, `test/integration/enemies-runtime.test.ts` expects the `test-range` timeline
 to spawn only the enemies it names.
+
+## The zone B and C rosters
+
+`content/enemies/zone-b.enemies.json` and `zone-c.enemies.json` (M2-11) play BRINE NEBULA and DUNE
+EXPANSE mostly on existing behaviours with their own tunables — `bubble.split` bubbles (a `froth`
+splitting into two beads, a `brood-bubble` with one `gill-dart` fish inside), `rammer.aimed`
+fish and drones, `pattern.loop` jellies and dust devils (the DSL patterns of
+`content/patterns/zones.patterns.json`), `turret.floor` urchins, `walker.floor` beetles on the
+ceiling, `fan.loop` skimmers on `content/paths/zone-c.paths.json`, a `volcano.lob` geyser throwing
+`rock.fall` clods — plus the two new ones above and the bosses. The carriers are zone A's `tender`;
+both files sort after zone A's, so no earlier spec index moved. Tables, hit points and scores:
+[zones-b-and-c.md](zones-b-and-c.md).
 
 ## Zero allocation and the hot-path rules
 
@@ -650,3 +666,5 @@ code):
   now 6) ([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md)).
 - **M1-18** (done) — zone A's roster on these behaviours, its paths, and HALCYON BULWARK's
   `boss.bulwark` ([zone-a-and-playtest.md](zone-a-and-playtest.md)).
+- **M2-11** (done) — zones B and C: `rocket.homing`, `worm.burst`, the boss behaviours `boss.maw` /
+  `boss.widow` and the zone rosters ([zones-b-and-c.md](zones-b-and-c.md)).

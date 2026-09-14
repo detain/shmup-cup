@@ -502,3 +502,11 @@ the drops `oneUp` / `bonusCapsule` (`ENEMY_DROPS` codes 4 / 5); the content file
 so zone A's enemy spec indices shifted and the goldens were re-blessed. Shell tests that needed
 an unowned foreign kind now use `strings` (M2-16's kind) instead of `campaign`
 ([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md)).
+
+M2-11 (done) — **no schema change**: zones B and C are content on the existing kinds —
+`stages/zone-b.stage.json` and `zone-c.stage.json` (replacing their stubs),
+`stages/brine-grotto.stage.json` (a bonus stage), `enemies/zone-b.enemies.json` /
+`zone-c.enemies.json` (sorting after `zone-a…`, so no earlier spec index moved),
+`paths/zone-c.paths.json`, `patterns/zones.patterns.json`, `tilesets/terrain-reef` /
+`terrain-dune.tileset.json` and four stage-scoped songs in `audio/music/`. The shell's boot and
+loader tests list the new files among the shipped ones ([zones-b-and-c.md](zones-b-and-c.md)).

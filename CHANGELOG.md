@@ -197,6 +197,30 @@ versions before 1.0 may change anything between minor releases. Development foll
   two new engine sprites and a new enemies file shift ids — zone A's inputs, tick counts and
   outcomes are unchanged; three boss-range runs were re-recorded with the improved playtest bot)
   and three bonus-stage runs were added.
+- **Zone B, BRINE NEBULA** (M2-11) replaces its stand-in: about 3½ minutes of bubbles that burst
+  into smaller bubbles or free the fish inside them, jellyfish firing rings, spiny urchins in a reef
+  tunnel, a riptide and a wobbling, colour-shifting sea; the mid-boss **SPUME HERALD** fights while
+  the screen scrolls on (and leaves after 30 seconds); the boss **GALVANIC MAW** is a mechanical fish
+  whose mouth can only be hit while open, with jaws that open apart, needle fans, rings and homing
+  rockets you can shoot down. Its own stage and boss music.
+- **Zone B's secret bonus stage, PEARL GROTTO** (M2-11): fly into the gap between two reef blocks at
+  the top of the screen (about 2:10 into the zone) — 1,000-point capsules, an extra ship, two brick
+  walls; clearing it clears the zone (the boss is skipped). Works on every device.
+- **Zone C, DUNE EXPANSE** (M2-11) replaces its stand-in: about 4 minutes of sand worms bursting out
+  of the dunes, beetles walking on the canyon ceiling, dust devils, sand geysers throwing clods, heat
+  haze and a sandstorm run; the boss **SANDGRAVE WIDOW** is a giant spider — shoot its two fangs,
+  then its head — sending spider drones and, once angry, blinking silk-line lasers. Its own music.
+- For content authors (M2-11): the behaviours `rocket.homing` (homing rockets as shootable enemies),
+  `worm.burst` (a formation is one sand worm), `boss.maw` and `boss.widow`; the zone patterns
+  `brine.jelly-ring` and `dune.whirl`; the tilesets `terrain-reef` / `terrain-dune`; stage-scoped
+  songs for zones B and C ([`content/stages/README.md`](content/stages/README.md),
+  [`content/enemies/README.md`](content/enemies/README.md)).
+- Behaviour change for tools and tests (M2-11): `BossPart` gained `restX` / `restY` (the boss data's
+  offsets — `boss.maw` places its jaws from them); the playtest harness times the stage's main
+  encounter, never a captain; the recovery rule lives in `test/playtest/recovery.ts`. The golden
+  replays were re-blessed (the new sprites and scripts shift ids — inputs, tick counts and outcomes
+  unchanged) and five zone B / C runs were added. The Tizen `app.js` is 307.5 KB gzip of its
+  350 KB budget.
 
 ### Documentation
 
@@ -230,8 +254,11 @@ versions before 1.0 may change anything between minor releases. Development foll
   developer guide [`docs/dev/campaign-and-bonus-stages.md`](docs/dev/campaign-and-bonus-stages.md),
   the map format for authors in [`content/campaign/README.md`](content/campaign/README.md), and the
   tester guide's [The zone map](docs/client/preview-build.md#the-zone-map-a-run-through-nine-zones)
-  and [Hidden bonus stages](docs/client/preview-build.md#hidden-bonus-stages-browser-only-for-now)
-  (M2-10).
+  and [Hidden bonus stages](docs/client/preview-build.md#hidden-bonus-stages)
+  (M2-10); the developer guide [`docs/dev/zones-b-and-c.md`](docs/dev/zones-b-and-c.md) and the
+  tester guide's [Zone B: BRINE NEBULA](docs/client/preview-build.md#zone-b-brine-nebula) (with
+  the secret bonus stage PEARL GROTTO) and
+  [Zone C: DUNE EXPANSE](docs/client/preview-build.md#zone-c-dune-expanse) (M2-11).
 
 ## [0.1.0] — M1: playable vertical slice
 

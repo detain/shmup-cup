@@ -23,7 +23,10 @@
  *   parts take the ids {@link BOSS_PART_ID_BASE} + slot × 16 + index (after the 64 enemy slots) in
  *   the World's grid; the player shots apply their hits through {@link BossSystem.damagePart};
  *   touching a part is contact damage. A destroyed part explodes (score to the shooter), takes
- *   its children with it and is no longer drawn, hit or touched.
+ *   its children with it and is no longer drawn, hit or touched. A behaviour may move a part
+ *   (`BossScriptApi.setPartOffset`); since M2-11 every part also keeps its offsets from the boss
+ *   data as `restX` / `restY` (set on activation), so a move measured from them never drifts from
+ *   one phase to the next (`boss.maw`'s jaws).
  * - **Weak points** ({@link BossVulnerable}): `always`, `afterParts`, `whenOpen`, `never` — a hit
  *   on a part that cannot take damage now (or on any part during the intro) `clink`s.
  * - **Phases.** The boss runs the behaviour of its current phase ({@link BossBehavior}); when the

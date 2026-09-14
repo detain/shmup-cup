@@ -441,7 +441,8 @@ The dev entry point is the web app:
 pnpm dev
 # → http://localhost:5173                      START plays zone A (M1-18); ?skip=boss starts near its boss
 # → http://localhost:5173/?stage=test-range   (or ?stage=test-boss — the boss range, M1-13)
-# → http://localhost:5173/?stage=zone-c       one stub zone of the campaign alone (M2-10)
+# → http://localhost:5173/?stage=zone-c       one zone of the campaign alone (DUNE EXPANSE since M2-11)
+# → http://localhost:5173/?stage=zone-d       a stub zone of the campaign alone (M2-10)
 # → http://localhost:5173/?stage=bonus-range  the three bonus entrances into bonus-vault (M2-10)
 ```
 
@@ -519,6 +520,13 @@ entrance between two brick blocks at the top, a `ground` window with three floor
 `digit` entrance on the thousands digit 0, then HALCYON BULWARK) and `bonus-vault.stage.json`
 (BONUS VAULT, type `bonus`, 1,600 px — bonus-capsule carriers, a 1UP carrier, brick barriers)
 ([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md#shipped-dev-content)).
+
+M2-11 replaced the stubs of B and C with the real zones: `zone-b.stage.json` (BRINE NEBULA,
+9,800 px, `terrain-reef`, four checkpoints, a 1.4 px/tick riptide, `wave` rasters and a palette
+cycle, a `boss` event for the captain SPUME HERALD, two `block`s marking a `gap` entrance into
+`brine-grotto.stage.json` — PEARL GROTTO, type `bonus`, 1,800 px) and `zone-c.stage.json` (DUNE
+EXPANSE, 9,600 px, `terrain-dune`, four checkpoints, a 1.3 px/tick sandstorm run, `haze` rasters)
+([zones-b-and-c.md](zones-b-and-c.md)).
 
 Headless:
 
@@ -632,3 +640,5 @@ world.stage!.restartAt(1); // back to x 1500: speed, pan and flags as live play 
   the rank's stage term set); stage type `bonus`, the `bonus` event (`StageEventCode.Bonus` 10)
   and `core/stage` `bonus.ts` (`BonusEntrances`, `World.bonus`); the stub zones B–I and the
   `bonus-range` / `bonus-vault` dev stages ([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md)).
+- **M2-11** (done) — the real zones B and C and zone B's bonus stage — content only, on the runner
+  as it is ([zones-b-and-c.md](zones-b-and-c.md)).

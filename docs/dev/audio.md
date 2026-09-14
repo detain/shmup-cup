@@ -147,7 +147,12 @@ for the same stage (or both as its default). A track with an issue is left out.
 The shipped songs are original: `zone-a` (AZURE VERGE, cue `Stage` — 6.4 s intro + 44.8 s
 loop), `boss` (BULWARK ASSAULT, `Boss` — 2.7 s + 21.3 s), `title` (SHMUP CUP, `Title` — 3.7 s +
 14.9 s; the title scene's since M1-16), `stage-clear` (VERGE SECURED, jingle) and `game-over`
-(SILENT VERGE, jingle). None is limited to a stage yet, so every stage uses them.
+(SILENT VERGE, jingle). Since M2-11 four **stage-scoped** songs join them: `zone-b` (BRINE NEBULA,
+`Stage`) and `boss-b` (MAW OF THE NEBULA, `Boss`) with `"stages": ["zone-b"]`, `zone-c` (DUNE
+EXPANSE) and `boss-c` (SANDGRAVE ASSAULT) with `["zone-c"]` — the stage themes 6.4 s intro + 44.8 s
+loop, the boss themes in the shape of BULWARK ASSAULT. They win over the defaults only in their
+zone; every other stage (zone A, the dev stages, the stub zones D–I, zone B's bonus stage played
+alone) uses the defaults ([zones-b-and-c.md](zones-b-and-c.md#songs)).
 
 ## The synth (`synth`)
 
@@ -428,5 +433,8 @@ song's loop points and render time. Options: `--out DIR`, `--only NAME` (one cue
   resident set follows the stage about to play; the map fades the music out (no `ZoneMap` track
   yet); a bonus capsule / 1UP reuse `CapsulePickup` / `ExtraLife`, an opened bonus entrance
   `PowerUpEquip` ([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md)).
-- **M2-11 … M2-14** — the zones' own songs (`stages`-scoped tracks), prepared on the map.
+- **M2-11** (done) — zones B and C's own stage and boss songs (`stages`-scoped tracks), prepared on
+  the map by `PrepareStage`; zone B's bonus stage plays the zone's resident set
+  ([zones-b-and-c.md](zones-b-and-c.md#songs)).
+- **M2-12 … M2-14** — the other zones' own songs.
 - **M3-03** — tracker music.
