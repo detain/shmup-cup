@@ -139,7 +139,16 @@ describe('integration: zones F and G in the game (M2-13)', () => {
     expect(cache.bosses.boss.specIndex).toBe(-1);
   }, 60_000);
 
-  it('keeps the gallery entrance shut when a turret survives its window', () => {
+  /**
+   * Plays zone G from a checkpoint through the prism gallery, shooting nothing until the gallery's
+   * `ground` entrance arms, then every ground enemy on screen — sparing the first ceiling turret
+   * when asked — until its window has closed.
+   *
+   * @param checkpoint - Checkpoint to start from.
+   * @param spare - Whether a gallery turret is left standing.
+   * @returns The entrance that opened (-1 = none).
+   */
+  function playGallery(checkpoint: number, spare: boolean): number {
     const game = createGame(
       createHeadlessPlatform(),
       { seed: 1, stage: 'zone-g', autofire: false, remoteMode: false },
@@ -147,24 +156,45 @@ describe('integration: zones F and G in the game (M2-13)', () => {
     );
     const world = game.world;
     world.debugFlags.godMode = true;
-    world.stage?.restartAt(1);
+    world.stage?.restartAt(checkpoint);
     spawnPlayer(world.players[0], world.camera);
-    let spare = -1;
-    for (let i = 0; i < 2000 && world.camera.x <= 3160; i++) {
-      for (const e of world.enemies.enemies) {
-        if (e.state !== EnemyState.Live || e.anchor === BodyAnchor.Air) continue;
-        if ((e.flags & EnemyFlag.OnScreen) === 0) continue;
-        // Spare the gallery's first ceiling turret; shoot down every other one.
-        if (e.anchor === BodyAnchor.Ceiling && (spare < 0 || spare === e.slot)) {
-          spare = e.slot;
-          continue;
+    const entrance = world.stage?.stage.events.find((e) => e.type === 'bonus');
+    const armX = entrance?.x ?? 0;
+    const until = entrance?.type === 'bonus' ? entrance.until : 0;
+    expect(world.camera.x).toBeLessThan(armX);
+    let spared = -1;
+    for (let i = 0; i < 6000 && world.camera.x <= until + 60; i++) {
+      if (world.bonus.armed[0] === 1) {
+        for (const e of world.enemies.enemies) {
+          if (e.state !== EnemyState.Live || e.anchor === BodyAnchor.Air) continue;
+          if ((e.flags & EnemyFlag.OnScreen) === 0) continue;
+          // Spare the gallery's first ceiling turret; shoot down every other one.
+          if (spare && e.anchor === BodyAnchor.Ceiling && (spared < 0 || spared === e.slot)) {
+            spared = e.slot;
+            continue;
+          }
+          world.enemies.kill(e, 0);
         }
-        world.enemies.kill(e, 0);
       }
       game.step();
       game.events.clear();
     }
-    expect(world.bonus.entered).toBe(-1);
+    expect(world.camera.x).toBeGreaterThan(until);
+    if (spare) expect(spared).toBeGreaterThanOrEqual(0);
+    return world.bonus.entered;
+  }
+
+  // From the start, the turret before the gallery has left the screen when the window arms: it
+  // cannot be shot in the gallery turret's place (a kill of it would count toward the window).
+  it.each([0, 1])(
+    'keeps the gallery entrance shut when a turret survives its window (checkpoint %i)',
+    (checkpoint) => {
+      expect(playGallery(checkpoint, true)).toBe(-1);
+    },
+  );
+
+  it('opens the gallery entrance from the zone’s start when every gallery turret is shot', () => {
+    expect(playGallery(0, false)).toBe(0);
   });
 
   it('grows CELL VAULT’s tissue back after it was shot open — not into a ship', () => {

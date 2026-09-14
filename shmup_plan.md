@@ -3164,7 +3164,11 @@ Goal of the milestone: every **[P1]** feature. Steps are ordered so systems land
     `geode-shard`s, `facet-turret`s), the **prism gallery** (checkpoint 2,200: four turrets on the
     floor and ceiling in a `ground` entrance's window, x 2,300 until 3,100 — shoot every one down and
     the **second hidden bonus stage** `glimmer-cache.stage.json`, **GLIMMER CACHE** (type `bonus`,
-    1,800 px: bonus-capsule carriers, a 1UP carrier, a cube rush, two `cube` block walls) opens), the
+    1,800 px: bonus-capsule carriers, a 1UP carrier, a cube rush, two `cube` block walls) opens;
+    the turret before the gallery spawns at x 1,830 so it has scrolled off — and despawned — when
+    the window arms: a `ground` window counts every ground kill made while armed, and the first
+    build's turret at x 2,000 was still on screen at 2,300, so shooting it stood in for a gallery
+    turret — found in review), the
     **crystal labyrinth** (seven solid crystal walls at world x 3,392–4,272, hanging from the ceiling
     and rising from the floor in turn, drawn with the tileset's wall-edge, floor and ceiling tiles),
     the **cube rush** (checkpoint 4,600: four seeded `prism-cube` rushes — `cube.stack` formations,
@@ -3228,16 +3232,21 @@ Goal of the milestone: every **[P1]** feature. Steps are ordered so systems land
     tentacles and the tentacle-break phase change; G's hanging and rising crystal walls, ≥ 3 seeded
     rushes, the core behind its crystals, the arms, the `ground` entrance (only the gallery's
     turrets, floor and ceiling, in its window) into its own bonus stage with bonus capsules and a
-    1UP. Also `zones-fg-runtime.test.ts` (the gallery → GLIMMER CACHE through the scene flow from a
+    1UP; and, for every shipped stage with a `ground` entrance (`bonus-range`, `zone-g`), played
+    from its start, no ground enemy of an earlier event standing when the window arms. Also
+    `zones-fg-runtime.test.ts` (the gallery → GLIMMER CACHE through the scene flow from a
     practice start — the zone's clear, FACET MONARCH skipped —, the entrance shut when a turret
-    survives, tissue growing back but not into a ship, a claw's chain, lunge, pull and retract, the
+    survives, from checkpoint 0 and 1, and opened from the zone's start when every gallery turret
+    is shot, tissue growing back but not into a ship, a claw's chain, lunge, pull and retract, the
     rush stacking and a restart rolling it back), `zones-fg-direct.test.ts` (the MANTA clears both,
     each plan in order), `behaviors-zones-fg.test.ts`, allocation guards
     `behaviors-squid-alloc` / `-facet-alloc` / `-chase-alloc`, `procedural-zones-fg.test.ts`.
   - **Goldens:** new `zone-f-god` (13,190 ticks), `zone-g-god` (14,043) and `glimmer-cache-god`
     (1,815, full loadout: the bonus capsules and the 1UP). **Re-blessed:** the new sprites and
     scripts shift the sorted sprite / script ids hashed through the pools; all 38 older files kept
-    their inputs, tick counts, headers and outcomes (only hashes changed).
+    their inputs, tick counts, headers and outcomes (only hashes changed). The review fix (the
+    turret moved to x 1,830) re-blessed `zone-g-god` again: the bot's inputs and the hashes
+    changed, its 14,043 ticks and outcome did not.
   - Tests that pin shipped lists were updated: the music tracks (content test, `@shmup/shell` boot
     / loader tests), the enemy and boss behaviour rosters, the atlas's enemy sprite count (60), the
     zone tilesets of the terrain generator test, the golden file-name pattern. Zone G's map preview

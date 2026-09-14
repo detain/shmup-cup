@@ -141,7 +141,8 @@ section, a calm with two carriers, their own tileset, songs, item plan and roste
   `prism-lens`es that hover at the right fanning needles, then drift off up or down, `geode`s that
   shatter into shards, `facet-turret`s), the **prism gallery** (checkpoint 2,200: four
   `facet-turret`s on the floor and ceiling — shoot every one down before the camera passes 3,100
-  and the `ground` entrance opens the **hidden bonus stage** `glimmer-cache.stage.json`, **GLIMMER
+  and the `ground` entrance, armed at 2,300 once the turret before the gallery has left the
+  screen, opens the **hidden bonus stage** `glimmer-cache.stage.json`, **GLIMMER
   CACHE**: carriers dropping bonus capsules, a 1UP carrier, a cube rush and two cube walls), the
   **crystal labyrinth** (seven solid crystal walls at world x 3,392–4,272, hanging from the ceiling
   and rising from the floor in turn — the route zigzags), the **cube rush** (checkpoint 4,600: four
@@ -158,7 +159,10 @@ clear, which counts as the clear of the zone it was entered from — the zone's 
 passes `until` it waits for its condition — `"entrance": "gap"` (a living ship's centre inside
 `region`, world pixels — mark the gap with terrain or blocks; `until` defaults to the region's right
 edge), `"ground"` (every ground enemy that appeared in the window destroyed by the players, at
-least one; `until` defaults to `x + 600`) or `"digit"` (a playing ship's score shows `digit` at
+least one; `until` defaults to `x + 600` — the window counts every ground kill made while it is
+armed, so place no ground enemy that is still standing when it arms: one could be shot in place of
+one of the window's own; `pnpm content:check` plays every shipped stage to its `ground` windows and
+holds it to that) or `"digit"` (a playing ship's score shows `digit` at
 `place` — 10, 100 — the default —, 1,000, 10,000 or 100,000 — when the window closes; `until`
 defaults to `x`). The first entrance to open flies the players into its `stage` after a short warp,
 their score, lives and loadout carried; a death in the bonus stage sends them back to the entrance

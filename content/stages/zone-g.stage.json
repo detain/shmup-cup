@@ -253,16 +253,16 @@
       "drop": null
     },
     {
+      "x": 1830,
+      "type": "spawn",
+      "enemy": "facet-turret"
+    },
+    {
       "x": 1880,
       "type": "spawn",
       "enemy": "halo-crystal",
       "y": 150,
       "path": "gyre-orbit-up"
-    },
-    {
-      "x": 2000,
-      "type": "spawn",
-      "enemy": "facet-turret"
     },
     {
       "x": 2240,

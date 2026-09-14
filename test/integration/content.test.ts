@@ -30,6 +30,8 @@ import { fileURLToPath } from 'node:url';
 import {
   BULLET_PALETTES,
   BULLET_SPRITES,
+  BodyAnchor,
+  BonusEntrance,
   BossState,
   DEFAULT_BEHAVIORS,
   DEFAULT_BOSS_BEHAVIORS,
@@ -37,6 +39,7 @@ import {
   DEFAULT_SCORING_RULES,
   DIFFICULTY_PRESETS,
   ENGINE_SPRITES,
+  EnemyState,
   KNOWN_SCRIPT_IDS,
   MUSIC_CUES,
   PLAYFIELD_H,
@@ -52,6 +55,7 @@ import {
   loadContent,
   powerRank,
   resolveGameConfig,
+  spawnPlayer,
   terrainAt,
   type BossPartSpec,
   type ContentDb,
@@ -474,6 +478,46 @@ describe('integration: content/ validates', () => {
         .filter((e) => e.type === 'spawn' || e.type === 'formation')
         .map((e) => ('enemy' in e ? e.enemy : '')),
     ).toContain('vault-carrier-1up');
+  });
+
+  // A `ground` entrance weighs the ground kills made while it is armed against the ground enemies
+  // that appeared while it was armed: one of an earlier event still standing when the window arms
+  // could be shot in place of one of the window's own (M2-13 review — the prism gallery opened with
+  // a gallery turret left standing). Played from the stage's start, nothing shot.
+  it('leaves no ground enemy of an earlier event standing when a `ground` bonus window arms', () => {
+    const db = shippedDb();
+    const stages = db.stages.filter((stage) =>
+      stage.events.some((e) => e.type === 'bonus' && e.entrance === 'ground'),
+    );
+    expect(stages.map((stage) => stage.id).sort()).toEqual(['bonus-range', 'zone-g']);
+    for (const stage of stages) {
+      const game = createGame(
+        createHeadlessPlatform(),
+        { seed: 1, stage: stage.id, autofire: false, remoteMode: false },
+        db,
+      );
+      const world = game.world;
+      world.debugFlags.godMode = true;
+      spawnPlayer(world.players[0], world.camera);
+      const bonus = world.bonus;
+      for (let e = 0; e < bonus.count; e++) {
+        if (bonus.kind[e] !== BonusEntrance.Ground) continue;
+        for (let t = 0; t < 60 * 60 * 10 && bonus.armed[e] === 0; t++) {
+          game.step();
+          game.events.clear();
+        }
+        expect(bonus.armed[e], `${stage.id}: entrance ${String(e)} arms`).toBe(1);
+        // Every ground enemy up now appeared in the window (at its first tick, usually none).
+        const inWindow = world.enemies.stats.groundSpawned - bonus.groundSpawned0[e];
+        const standing = world.enemies.enemies
+          .filter((en) => en.state === EnemyState.Live && en.anchor !== BodyAnchor.Air)
+          .map((en) => `${db.enemies[en.specIndex].id} at ${String(Math.round(en.x))}`);
+        expect(
+          standing.length,
+          `${stage.id}: camera ${String(Math.round(world.camera.x))}, ${standing.join(', ')}`,
+        ).toBeLessThanOrEqual(inWindow);
+      }
+    }
   });
 });
 
