@@ -1,8 +1,9 @@
 # test/golden — golden replays
 
 Committed replays of zone A (AZURE VERGE) — and, since M2-07 / M2-08 / M2-09, of the
-`gimmick-range`, `raster-range`, `captain-range`, `raid-range` and `twin-range` dev stages, and
-since M2-10 of `bonus-range` and `bonus-vault` —
+`gimmick-range`, `raster-range`, `captain-range`, `raid-range` and `twin-range` dev stages,
+since M2-10 of `bonus-range` and `bonus-vault`, and since M2-11 of zones B and C (BRINE NEBULA,
+DUNE EXPANSE) and zone B's bonus stage `brine-grotto` —
 that pin down what the simulation does (plan M1-19, `shmup_feat.md` §24). Each `<scenario>.replay.json` is a `core/replay` document — the header (every
 sim-affecting `GameConfig` field, the stage, god mode as `assisted`), every tick's input
 (`held | pressed << 16` per player, run-length encoded, base64), a state hash every 600 ticks and
@@ -40,6 +41,11 @@ continues).
 | `bonus-range-god` | 4-way playtest bot, god mode, full loadout | the M2-10 `ground` bonus entrance: the window's three turrets shot down, the entry recorded (the World plays on to the boss — the scene flow does the warp) |
 | `bonus-range-digit` | 4-way playtest bot, god mode, no power-ups | the M2-10 `digit` bonus entrance: the turrets survive, the score's thousands digit is 0 when the last window closes |
 | `bonus-vault-god` | 4-way playtest bot, god mode, full loadout | the M2-10 bonus stage: the vault carriers' 1,000-point bonus capsules and the 1UP collected, its `end` reached (no boss) |
+| `zone-b-god` | 4-way playtest bot, god mode | BRINE NEBULA (M2-11) start to `stageClear`: the bubbles, the reef tunnel, SPUME HERALD, the riptide, GALVANIC MAW shot down |
+| `zone-b-deaths` | a weaving pilot that never dodges | BRINE NEBULA under the Arcade penalty (M2-11 tests): deaths among the bubbles, checkpoint restarts, `gameOver` |
+| `zone-c-god` | 4-way playtest bot, god mode | DUNE EXPANSE (M2-11) start to `stageClear`: the sand worms, the ceiling walkers, the sandstorm run, SANDGRAVE WIDOW shot down |
+| `zone-c-bot` | 4-way playtest bot | DUNE EXPANSE without god mode (M2-11 tests): a death and a Classic respawn in place, SANDGRAVE WIDOW shot down, `stageClear` |
+| `brine-grotto-god` | 4-way playtest bot, god mode, full loadout | PEARL GROTTO, zone B's hidden bonus stage (M2-11): the bonus capsules and the 1UP collected, its `end` reached (no boss) |
 
 - `golden.test.ts` (part of `pnpm test`) plays every file back into a fresh session: every hash and
   the outcome must match. A failure means the simulation changed.

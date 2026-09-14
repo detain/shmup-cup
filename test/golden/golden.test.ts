@@ -306,4 +306,26 @@ describe('golden replays (zone A and the dev stages, playtest bots)', () => {
     expect(outcome.lives - 3 - p1.extendsEarned).toBeGreaterThanOrEqual(1);
     expect(outcome.score).toBeGreaterThan(5 * BONUS_CAPSULE_SCORE);
   });
+
+  it('covers zones B and C without god mode (M2-11 tests): deaths and restarts, a clear with a death', () => {
+    // BRINE NEBULA under the Arcade penalty: every death restarts at a checkpoint, then game over.
+    const deaths = readGolden('zone-b-deaths');
+    expect(deaths.replay.header.assisted).toBe(false);
+    expect(deaths.replay.header.config.deathPenalty).toBe('arcade');
+    expect(deaths.file.expected).toMatchObject({
+      status: 'gameOver',
+      lives: 0,
+      bossDefeated: false,
+    });
+    expect(deaths.file.expected.deathTicks).toHaveLength(3);
+    // DUNE EXPANSE with the 4-way bot and no god mode: it dies at least once, respawns in place
+    // (the Classic penalty) and still shoots SANDGRAVE WIDOW down in 3–6 minutes.
+    const bot = readGolden('zone-c-bot');
+    expect(bot.replay.header.assisted).toBe(false);
+    expect(bot.replay.header.config.deathPenalty).toBe('classic');
+    expect(bot.file.expected).toMatchObject({ status: 'stageClear', bossDefeated: true });
+    expect(bot.file.expected.deathTicks.length).toBeGreaterThanOrEqual(1);
+    expect(bot.file.expected.ticks / 60).toBeGreaterThanOrEqual(180);
+    expect(bot.file.expected.ticks / 60).toBeLessThanOrEqual(360);
+  });
 });

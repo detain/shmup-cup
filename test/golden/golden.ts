@@ -44,7 +44,9 @@
  * capsules and the 1UP collected). Three more (M2-11) fly the real zones B and C with the 4-way bot and
  * god mode — `zone-b` (BRINE NEBULA: its mid-boss and GALVANIC MAW) and `zone-c` (DUNE EXPANSE: the
  * sand worms and SANDGRAVE WIDOW) start to stage clear — and zone B's hidden bonus stage
- * `brine-grotto` with the full loadout.
+ * `brine-grotto` with the full loadout. Two more (M2-11 tests) fly them without god mode: the
+ * weaving pilot in zone B under the Arcade penalty (deaths, the checkpoint restarts, `gameOver`)
+ * and the 4-way bot through the whole of zone C (its deaths and respawns in place, the boss).
  *
  * @module
  */
@@ -437,6 +439,24 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = Object.freeze([
     stageId: 'zone-c',
     config: { seed: 1 },
     godMode: true,
+    bot: 'four-way',
+  },
+  {
+    name: 'zone-b-deaths',
+    description:
+      'BRINE NEBULA, a weaving pilot that never dodges, Arcade penalty (M2-11 tests): deaths among the bubbles, the checkpoint restarts, game over',
+    stageId: 'zone-b',
+    config: { seed: 72, deathPenalty: 'arcade' },
+    godMode: false,
+    bot: 'weaver',
+  },
+  {
+    name: 'zone-c-bot',
+    description:
+      'DUNE EXPANSE without god mode (M2-11 tests): the 4-way bot from the start, Classic penalty, through the sand worms to SANDGRAVE WIDOW',
+    stageId: 'zone-c',
+    config: { seed: 73 },
+    godMode: false,
     bot: 'four-way',
   },
   {

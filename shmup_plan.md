@@ -2995,6 +2995,18 @@ Goal of the milestone: every **[P1]** feature. Steps are ordered so systems land
     `brine-grotto-god` (full loadout). **Re-blessed:** the new sprites and scripts shift the sorted
     sprite / script ids hashed through the pools; all 28 older files kept their inputs, tick counts,
     headers and outcomes (only hashes changed).
+  - **Test round:** `behaviors-zones-edge.test.ts` (the four behaviours' defaults and tunable
+    floors / clamps, rocket phase lengths, a trigger-0 and a ghost-led worm, the worm arc through
+    terrain, the maw's 12-tick cutter delay, ring offsets, pods in turn, a rest-0 part that never
+    moves, tracking margins, `restX` / `restY` on activation and reset for the next boss, the
+    widow's swapped box, whole-pixel rests, drones per spinneret, silk lines in turn),
+    `behaviors-rocket-worm-alloc` (homing rockets and waiting worms allocate nothing),
+    `procedural-zones-edge.test.ts` (shape-helper edges, every hurtbox inside its sprite),
+    `zones-bc-direct.test.ts` (the MANTA clears both zones in Direct mode, the carriers handing out
+    each stage's own plan in order), the browser spec `zones-bc.spec.ts` (both zones' backdrops and
+    bosses, the grotto, the widow on the Tizen build) and two more goldens — `zone-b-deaths` (the
+    weaving pilot, Arcade penalty: checkpoint restarts, game over) and `zone-c-bot` (the 4-way bot
+    without god mode: a death, the clear). No existing golden changed.
   - Tests that pin shipped lists were updated: the music tracks, the foreign content files
     (`@shmup/shell` boot / loader tests), the enemy and boss behaviour rosters, the atlas's enemy
     sprite count.

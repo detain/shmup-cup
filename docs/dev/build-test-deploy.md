@@ -308,7 +308,10 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   it reached, `?stage=bonus-range`'s digit entrance flying into `bonus-vault` with the 1UP and
   bonus capsule drawn in their colours, and the Tizen build's OK skipping a tally and launching
   the next zone (`campaign-run.spec.ts`, M2-10 — the specs clear zones through
-  `window.__shmupDebug`). The gameplay specs
+  `window.__shmupDebug`), and zones B and C: `?stage=zone-b`'s palette-cycled brine sea and, the
+  stage jumped to its end, GALVANIC MAW's hull fighting with its mouth opening, `?stage=zone-c`'s
+  dune ridge and SANDGRAVE WIDOW, `?stage=brine-grotto`'s reef over the brine sea, and the widow
+  drawn on the Tizen build from `file://` (`zones-bc.spec.ts`, M2-11). The gameplay specs
   open `?scene=flight` (bare gameplay, open space unless `?stage=` names a stage) since M1-16;
   specs comparing captures a set number of ticks apart freeze the sim and step exact ticks
   (`test/e2e/frame-advance.ts`, M1-19) instead of counting rAF frames. Since M1-19 the suite runs
