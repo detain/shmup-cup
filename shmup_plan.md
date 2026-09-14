@@ -2886,6 +2886,22 @@ Goal of the milestone: every **[P1]** feature. Steps are ordered so systems land
     improved bot (same outcomes; shorter fights).
   - Shell tests used `campaign` as the example of a foreign kind nobody owns; they use `strings`
     (M2-16's kind) now. App tests that drop zone A from the content drop the campaign with it.
+  - **Test round.** Edge suites for the campaign kind (one-zone and uneven maps, the schema limits,
+    `completeCampaign` alone, the shipped endings under all 16 flag masks), the entrances (every
+    ship state, region edges, each digit place, arming / restart edges, the data limits; an
+    allocation guard of `update` with all three kinds armed), the run state (carry of every ship
+    state, co-op, shields, the tally's rounding and boss rules) and the flow (Back → YES, the
+    `LAUNCH` blink, map layout, a map without campaign, game over / continue / practice records,
+    RETRY STAGE inside a bonus stage, an entrance opening just before the clear, a single-stage
+    run's bonus stage); `test/integration/bonus-stage-runtime.test.ts` (the shipped range → vault →
+    clear, and the lock-out after a death); three goldens (`bonus-range-god` — the ground
+    entrance —, `bonus-range-digit`, `bonus-vault-god` — capsules and the 1UP; no existing golden
+    changed); `test/e2e/campaign-run.spec.ts` (A-B-D-F-H to the ending and the saved run, the
+    vault's items drawn, the remote on the Tizen build). Fixes: a self-loop edge was reported twice
+    (the second as a contradictory depth error); the largest maps the validation accepts overflowed
+    the 384-command UI list (a 32-zone map dropped 603 commands) — `MapScene.edgeDots` thins the
+    edge dots to fit (the shipped map keeps 7); `connectStagePreparation` modified the cue picker's
+    list (`unshift`) — it builds its own now, the title theme first and once.
 
 ### M2-11 — Zones B & C
 

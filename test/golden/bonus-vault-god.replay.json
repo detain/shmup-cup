@@ -1,0 +1,77 @@
+{
+  "kind": "replay",
+  "header": {
+    "formatVersion": 1,
+    "buildId": "golden",
+    "seed": 65,
+    "stageId": "bonus-vault",
+    "checkpoint": -1,
+    "loadout": "full",
+    "assisted": true,
+    "config": {
+      "internalWidth": 384,
+      "internalHeight": 216,
+      "tickRate": 60,
+      "maxTicksPerFrame": 4,
+      "seed": 65,
+      "difficulty": "normal",
+      "rankBase": 2,
+      "rankGrowth": 1,
+      "extendFirst": 20000,
+      "extendEvery": 70000,
+      "continues": 3,
+      "bulletSpeedMul": 1,
+      "powerUpMode": "meter",
+      "shipId": "kestrel",
+      "deathPenalty": "classic",
+      "startingLives": 3,
+      "autofire": true,
+      "remoteMode": true,
+      "stage": "bonus-vault",
+      "stageSkip": "none",
+      "aimDirections": 32,
+      "autofireInterval": 4,
+      "missileInterval": 10,
+      "loadout": "full",
+      "autoPowerUp": false,
+      "autoPowerUpOrder": [
+        "speed",
+        "missile",
+        "laser",
+        "option",
+        "option",
+        "option",
+        "option",
+        "shield"
+      ],
+      "pickupMagnet": true,
+      "weaponPreset": "type-a",
+      "weaponEdit": null,
+      "megaChoice": "megaCrash",
+      "shieldChoice": "forceField",
+      "optionChoice": "trail",
+      "coop": false,
+      "coopExtra": 0.5
+    }
+  },
+  "ticks": 1615,
+  "hashInterval": 600,
+  "inputs": [
+    "ACiCgAgBAgEApwWCgAgBAgsAY4GABAEBCwDtAYKACAECDoGABAEBDgCHAYKACAECCwC4AYGABAEBCwChAQ==",
+    "AM8M"
+  ],
+  "hashes": [
+    3684065823,
+    65477607
+  ],
+  "finalHash": 1127771863,
+  "description": "BONUS VAULT with god mode and the full loadout (M2-10): the vault carriers drop 1,000-point bonus capsules and a 1UP, the bot collects them to the end",
+  "expected": {
+    "status": "stageClear",
+    "ticks": 1615,
+    "score": 21210,
+    "lives": 5,
+    "deathTicks": [],
+    "bossDefeated": false
+  }
+}

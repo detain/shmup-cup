@@ -378,6 +378,9 @@ from the M1-18 playtest bots with the build id `'golden'`):
 | `raid-range-god.replay.json` (M2-09) | 4-way bot, god mode, full loadout, `stage: 'raid-range'` (seed 52) | IRON LEVIATHAN: the WARNING, the raid's boss-relative camera path, its death and the camera's return, LEVIATHAN HEART revealed by the blast (slot 1) and shot down, the camera handed back | `stageClear` after 3,591 ticks, 76,450 points, no deaths |
 | `raid-range-escape.replay.json` (M2-09) | 4-way bot, god mode, no power-ups (seed 52) | the boss timer: the battleship outlasts the bot and escapes after 5,400 fight ticks — `escaped`, `EndingFlag.BossEscaped`, no heart | `stageClear` after 6,325 ticks, 1,800 points, no boss killed |
 | `twin-range-god.replay.json` (M2-09) | 4-way bot, god mode, full loadout, `stage: 'twin-range'` (seed 53) | the EMBER and FROST twins taking turns, one down and the survivor enraged, both shot down | `stageClear` after 3,758 ticks, 36,650 points, no deaths |
+| `bonus-range-god.replay.json` (M2-10) | 4-way bot, god mode, full loadout, `stage: 'bonus-range'` (seed 62) | the `ground` bonus entrance: the window's three turrets shot down, the entry recorded while the World plays on to the boss (the warp is the scene flow's) | `stageClear` after 3,257 ticks, 38,580 points, no deaths |
+| `bonus-range-digit.replay.json` (M2-10) | 4-way bot, god mode, no power-ups (seed 61) | the `digit` bonus entrance: the turrets survive, the thousands digit is 0 when the last window closes | `stageClear` after 4,367 ticks, 37,620 points, no deaths |
+| `bonus-vault-god.replay.json` (M2-10) | 4-way bot, god mode, full loadout, `stage: 'bonus-vault'` (seed 65) | the bonus stage: the carriers' 1,000-point bonus capsules and the 1UP collected (5 lives: the 1UP and one extend), no boss | `stageClear` after 1,615 ticks, 21,210 points, no deaths |
 
 The 4-way bot survives zone A even at Arcade, which is why the death scenario uses a careless
 weaving pilot. The files were re-blessed on purpose by M2-01 (`b31fac5`): rank growth changes
@@ -436,6 +439,11 @@ older files byte-identical; the name rule now allows `captain-range-*`, `raid-ra
 `twin-range-*`), and `golden.test.ts` checks what each went through — which slots ran, escaped or
 enraged, the ending flags, the camera handed back
 ([advanced-bosses.md](advanced-bosses.md#determinism-hashing-and-golden-replays)).
+M2-10 re-blessed them all (`10b5fea`: the hash covers the bonus entrances and the enemy totals,
+two new engine sprites and `bonus.enemies.json` shift ids — inputs and outcomes unchanged); its test
+round added `bonus-range-god`, `bonus-range-digit` and `bonus-vault-god` (the name rule now allows
+`bonus-range-*` and `bonus-vault-*`), and `golden.test.ts` checks which entrance opened, the ground
+kills and the vault's 1UP and capsules.
 Each file is an encoded replay plus the scenario's `description` and its
 `expected` outcome (status, ticks, player 1's score and lives, death ticks, boss killed — and for
 a co-op run player 2's score, lives, death ticks and continues).

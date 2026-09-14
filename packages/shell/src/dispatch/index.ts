@@ -388,6 +388,10 @@ export interface StagePreparationTarget {
  * (`cuesOf(stage)` — the shell passes `@shmup/audio-web` `stageMusicCues`) plus the title theme
  * is prepared in the background. An index outside `stages` is ignored.
  *
+ * @remarks
+ * The engine gets a new list — the title theme first, then the picker's cues without it — so a
+ * picker may return a shared (memoised) array: it is never modified.
+ *
  * @param dispatcher - The dispatcher.
  * @param audio - The audio engine.
  * @param stages - The content's stages (`ContentDb.stages`).
@@ -410,9 +414,10 @@ export function connectStagePreparation(
   return dispatcher.on(SimEventKind.PrepareStage, (event) => {
     const stage = stages[event.id];
     if (stage === undefined) return;
-    const cues = cuesOf(stage);
-    // The title theme stays resident: the run returns to the title afterwards.
-    cues.unshift(MUSIC_CUES.Title);
+    // The title theme stays resident: the run returns to the title afterwards. A new list (the
+    // picker's own may be shared), the title first and once.
+    const cues: number[] = [MUSIC_CUES.Title];
+    for (const cue of cuesOf(stage)) if (cue !== MUSIC_CUES.Title) cues.push(cue);
     audio.prepareMusic(stage.id, cues).catch(onError);
   });
 }

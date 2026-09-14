@@ -1,7 +1,8 @@
 /**
  * The golden-replay test (plan M1-19, part of `pnpm test`): every committed
- * `test/golden/<scenario>.replay.json` — zone A (and, since M2-07 / M2-08 / M2-09, the
- * `gimmick-range`, `raster-range`, `captain-range`, `raid-range` and `twin-range` dev stages)
+ * `test/golden/<scenario>.replay.json` — zone A (and, since M2-07 / M2-08 / M2-09 / M2-10, the
+ * `gimmick-range`, `raster-range`, `captain-range`, `raid-range`, `twin-range`, `bonus-range` and
+ * `bonus-vault` dev stages)
  * played by the 4-way bot and recorded with `core/replay` (the 4-way bot, or a careless weaving
  * pilot for the deaths) — plays back into a
  * fresh session with **every state hash** (one per 600 ticks and
@@ -14,6 +15,8 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
+  BONUS_CAPSULE_SCORE,
+  BonusEntrance,
   BossState,
   ENGINE_SPRITES,
   EndingFlag,
@@ -235,5 +238,47 @@ describe('golden replays (zone A and the dev stages, playtest bots)', () => {
     ]);
     expect(twins.slots.slice(0, 2).filter((s) => s.enraged)).toHaveLength(1);
     expect(twins.world.endingFlags).toBe(0);
+  });
+
+  it('covers the hidden bonus stages of M2-10: two entrances opened, the vault`s items collected', () => {
+    const db = shippedContent();
+    const vaultIndex = db.stageIndex.get('bonus-vault');
+    /**
+     * Plays an M2-10 golden back.
+     *
+     * @param name - Scenario name.
+     * @returns The outcome and the final World.
+     */
+    const play = (name: string) => playGolden(readGolden(name).replay);
+    // The full loadout shoots all three ground turrets of the window: the ground entrance opens.
+    const god = play('bonus-range-god');
+    expect(god.outcome).toMatchObject({ status: 'stageClear', deathTicks: [], bossDefeated: true });
+    expect(god.world.enemies.stats).toMatchObject({ groundSpawned: 3, groundKilled: 3 });
+    const opened = god.world.bonus;
+    expect(opened.kind[opened.entered]).toBe(BonusEntrance.Ground);
+    expect(opened.enteredStage()).toBe(vaultIndex);
+    expect(opened.enteredTick).toBeGreaterThan(0);
+    expect(opened.locked).toBe(false);
+    // Without power-ups the turrets survive; the thousands digit at the last window opens it.
+    const digit = play('bonus-range-digit');
+    expect(digit.outcome).toMatchObject({ status: 'stageClear', deathTicks: [] });
+    expect(digit.world.enemies.stats.groundKilled).toBeLessThan(3);
+    expect(digit.world.bonus.kind[digit.world.bonus.entered]).toBe(BonusEntrance.Digit);
+    // Both played on to the boss: the World never leaves by itself (the scene flow warps).
+    expect(god.world.stage?.stage.id).toBe('bonus-range');
+    // The vault: no boss, its carriers' capsules and the 1UP collected (lives beyond the extends).
+    const vault = play('bonus-vault-god');
+    expect(vault.outcome).toMatchObject({
+      status: 'stageClear',
+      deathTicks: [],
+      bossDefeated: false,
+    });
+    expect(vault.world.stage?.stage.type).toBe('bonus');
+    const p1 = vault.world.scoring.board.scores[0];
+    expect(vault.outcome.lives - 3 - p1.extendsEarned).toBeGreaterThanOrEqual(1);
+    // 19 kills of carriers worth at most 500 each: the rest of the score is bonus capsules.
+    expect(vault.world.enemies.stats.killed).toBeGreaterThan(10);
+    expect(vault.outcome.score).toBeGreaterThan(10 * BONUS_CAPSULE_SCORE);
+    expect(vault.world.bonus.count).toBe(0);
   });
 });

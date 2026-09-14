@@ -3544,8 +3544,15 @@ const MAP_NODE_W = 18;
 /** A zone node's box: height. */
 const MAP_NODE_H = 12;
 
-/** Dots drawn along one edge of the map. */
+/** Dots drawn along one edge of the map (fewer on a map with many edges — `MapScene.edgeDots`). */
 const MAP_EDGE_DOTS = 7;
+
+/**
+ * Most UI-list commands the zone map spends on its edges' dots: the rest of the list holds the
+ * nodes (six commands each, up to `core/data` `MAX_CAMPAIGN_ZONES`), the preview panel and the
+ * dialog over it — so even the largest map the content validation accepts fits in the list.
+ */
+const MAP_EDGE_DOT_BUDGET = 160;
 
 /** Half-period of the focused choice's blink on the map, in ticks. */
 const MAP_BLINK_TICKS = 16;
@@ -3582,6 +3589,11 @@ export class MapScene extends SceneBase {
   readonly nodeY: Int16Array;
   /** Per zone: its exits sorted top to bottom (the menu's order). */
   readonly exits: readonly (readonly number[])[];
+  /**
+   * Dots drawn along each edge: {@link MAP_EDGE_DOTS}, or fewer (at least one) when the map has so
+   * many edges that they would not fit in the UI list (`MAP_EDGE_DOT_BUDGET`).
+   */
+  readonly edgeDots: number;
   /** Ticks since the map opened (the blink's clock). */
   ticks = 0;
   /** Ticks since OK (the launch), -1 while choosing. */
@@ -3627,6 +3639,9 @@ export class MapScene extends SceneBase {
     }
     this.exits = exits;
     this.menus = menus;
+    const edges = campaign === null ? 0 : campaign.edges.length;
+    const fit = edges > 0 ? Math.floor(MAP_EDGE_DOT_BUDGET / edges) : MAP_EDGE_DOTS;
+    this.edgeDots = fit < 1 ? 1 : fit > MAP_EDGE_DOTS ? MAP_EDGE_DOTS : fit;
   }
 
   /** See {@link SceneBase.stringSlots}. */
@@ -3734,6 +3749,7 @@ export class MapScene extends SceneBase {
       : Math.floor(this.ticks / MAP_BLINK_TICKS) % 2 === 0;
     const hw = MAP_NODE_W >> 1;
     const edges = campaign.edges;
+    const dots = this.edgeDots;
     for (let e = 0; e < edges.length; e++) {
       const edge = edges[e];
       const a = edge.fromIndex;
@@ -3746,9 +3762,9 @@ export class MapScene extends SceneBase {
       const y0 = this.nodeY[a];
       const x1 = this.nodeX[b] - hw;
       const y1 = this.nodeY[b];
-      for (let k = 1; k <= MAP_EDGE_DOTS; k++) {
-        const x = Math.round(x0 + ((x1 - x0) * k) / (MAP_EDGE_DOTS + 1));
-        const y = Math.round(y0 + ((y1 - y0) * k) / (MAP_EDGE_DOTS + 1));
+      for (let k = 1; k <= dots; k++) {
+        const x = Math.round(x0 + ((x1 - x0) * k) / (dots + 1));
+        const y = Math.round(y0 + ((y1 - y0) * k) / (dots + 1));
         list.rect(x - 1, y - 1, 2, 2, color);
       }
     }

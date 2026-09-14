@@ -1,7 +1,8 @@
 # test/golden — golden replays
 
 Committed replays of zone A (AZURE VERGE) — and, since M2-07 / M2-08 / M2-09, of the
-`gimmick-range`, `raster-range`, `captain-range`, `raid-range` and `twin-range` dev stages —
+`gimmick-range`, `raster-range`, `captain-range`, `raid-range` and `twin-range` dev stages, and
+since M2-10 of `bonus-range` and `bonus-vault` —
 that pin down what the simulation does (plan M1-19, `shmup_feat.md` §24). Each `<scenario>.replay.json` is a `core/replay` document — the header (every
 sim-affecting `GameConfig` field, the stage, god mode as `assisted`), every tick's input
 (`held | pressed << 16` per player, run-length encoded, base64), a state hash every 600 ticks and
@@ -36,6 +37,9 @@ continues).
 | `raid-range-god` | 4-way playtest bot, god mode, full loadout | IRON LEVIATHAN (M2-09): the WARNING, the raid's boss-relative camera path, its death and the camera's return, LEVIATHAN HEART revealed by the blast and shot down |
 | `raid-range-escape` | 4-way playtest bot, god mode, no power-ups | the M2-09 boss timer: IRON LEVIATHAN escapes after its time limit — `EndingFlag.BossEscaped`, no heart, `stageClear` |
 | `twin-range-god` | 4-way playtest bot, god mode, full loadout | the M2-09 double boss: the EMBER and FROST twins take turns, the survivor enrages, both shot down |
+| `bonus-range-god` | 4-way playtest bot, god mode, full loadout | the M2-10 `ground` bonus entrance: the window's three turrets shot down, the entry recorded (the World plays on to the boss — the scene flow does the warp) |
+| `bonus-range-digit` | 4-way playtest bot, god mode, no power-ups | the M2-10 `digit` bonus entrance: the turrets survive, the score's thousands digit is 0 when the last window closes |
+| `bonus-vault-god` | 4-way playtest bot, god mode, full loadout | the M2-10 bonus stage: the vault carriers' 1,000-point bonus capsules and the 1UP collected, its `end` reached (no boss) |
 
 - `golden.test.ts` (part of `pnpm test`) plays every file back into a fresh session: every hash and
   the outcome must match. A failure means the simulation changed.

@@ -36,7 +36,12 @@
  * scrolling camera), `raid-range` with the full loadout (IRON LEVIATHAN's camera path, its death,
  * LEVIATHAN HEART revealed and shot down) and without power-ups (the battleship outlasts the bot
  * and escapes after its time limit — the ending flag), and `twin-range` with the full loadout (the
- * twins' turns, the survivor's enrage).
+ * twins' turns, the survivor's enrage). Three more (M2-10) fly the hidden bonus-stage dev stages
+ * with the 4-way bot and god mode: `bonus-range` with the full loadout (the three ground turrets
+ * shot down — the `ground` entrance opens) and without power-ups (the turrets survive, the score's
+ * thousands digit opens the `digit` entrance) — the World records the entry and plays on (the scene
+ * flow does the warp) —, and `bonus-vault` with the full loadout (its carriers' 1,000-point bonus
+ * capsules and the 1UP collected).
  *
  * @module
  */
@@ -383,6 +388,33 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = Object.freeze([
       'TWIN RANGE with god mode and the full loadout (M2-09): the EMBER and FROST twins take turns, the survivor enrages, both shot down',
     stageId: 'twin-range',
     config: { seed: 53, loadout: 'full' },
+    godMode: true,
+    bot: 'four-way',
+  },
+  {
+    name: 'bonus-range-god',
+    description:
+      'BONUS RANGE with god mode and the full loadout (M2-10): the three ground turrets shot down, the ground entrance to the vault opens, the stage runs on to its boss',
+    stageId: 'bonus-range',
+    config: { seed: 62, loadout: 'full' },
+    godMode: true,
+    bot: 'four-way',
+  },
+  {
+    name: 'bonus-range-digit',
+    description:
+      'BONUS RANGE with god mode and no power-ups (M2-10): the turrets survive, the score shows a thousands 0 at the digit window — that entrance opens',
+    stageId: 'bonus-range',
+    config: { seed: 61 },
+    godMode: true,
+    bot: 'four-way',
+  },
+  {
+    name: 'bonus-vault-god',
+    description:
+      'BONUS VAULT with god mode and the full loadout (M2-10): the vault carriers drop 1,000-point bonus capsules and a 1UP, the bot collects them to the end',
+    stageId: 'bonus-vault',
+    config: { seed: 65, loadout: 'full' },
     godMode: true,
     bot: 'four-way',
   },

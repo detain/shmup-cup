@@ -292,7 +292,8 @@ export function completeCampaign(
       const edge = edges[e];
       const from = edge.fromIndex ?? -1;
       const to = edge.toIndex ?? -1;
-      if (from < 0 || to < 0 || depth[from] < 0 || depth[to] < 0) continue;
+      // A self-loop is already reported (and was never made an exit).
+      if (from < 0 || to < 0 || from === to || depth[from] < 0 || depth[to] < 0) continue;
       if (depth[to] !== depth[from] + 1) {
         fail(
           'edges[' + String(e) + ']',
