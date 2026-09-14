@@ -2,8 +2,9 @@
 
 Committed replays of zone A (AZURE VERGE) — and, since M2-07 / M2-08 / M2-09, of the
 `gimmick-range`, `raster-range`, `captain-range`, `raid-range` and `twin-range` dev stages,
-since M2-10 of `bonus-range` and `bonus-vault`, and since M2-11 of zones B and C (BRINE NEBULA,
-DUNE EXPANSE) and zone B's bonus stage `brine-grotto` —
+since M2-10 of `bonus-range` and `bonus-vault`, since M2-11 of zones B and C (BRINE NEBULA,
+DUNE EXPANSE) and zone B's bonus stage `brine-grotto`, and since M2-12 of zones D and E (MAGMA
+DEEP, TEMPEST RIDGE) —
 that pin down what the simulation does (plan M1-19, `shmup_feat.md` §24). Each `<scenario>.replay.json` is a `core/replay` document — the header (every
 sim-affecting `GameConfig` field, the stage, god mode as `assisted`), every tick's input
 (`held | pressed << 16` per player, run-length encoded, base64), a state hash every 600 ticks and
@@ -45,6 +46,11 @@ continues).
 | `zone-b-deaths` | a weaving pilot that never dodges | BRINE NEBULA under the Arcade penalty (M2-11 tests): deaths among the bubbles, checkpoint restarts, `gameOver` |
 | `zone-c-god` | 4-way playtest bot, god mode | DUNE EXPANSE (M2-11) start to `stageClear`: the sand worms, the ceiling walkers, the sandstorm run, SANDGRAVE WIDOW shot down |
 | `zone-c-bot` | 4-way playtest bot | DUNE EXPANSE without god mode (M2-11 tests): a death and a Classic respawn in place, SANDGRAVE WIDOW shot down, `stageClear` |
+| `zone-d-god` | 4-way playtest bot, god mode | MAGMA DEEP (M2-12) start to `stageClear`: the erupting caldera fields, the dive into the caves, the brick maze, the lava river, CINDER BASTION shot down |
+| `zone-d-bot` | 4-way playtest bot | MAGMA DEEP without god mode (M2-12 tests): a death down in the caves and a Classic respawn in place there, CINDER BASTION shot down, `stageClear` |
+| `zone-d-boss` | 4-way playtest bot, full loadout | the stage skip into zone D's caves (M2-12 tests): CINDER BASTION under the Arcade penalty, its core shot through the turning shield arms |
+| `zone-e-god` | 4-way playtest bot, god mode | TEMPEST RIDGE (M2-12) start to `stageClear`: the storm front, the ridge pass, the thunderheads, the gale run, kites and jumpers from behind, SQUALL STEED shot down |
+| `zone-e-bot` | 4-way playtest bot | TEMPEST RIDGE without god mode (M2-12 tests): the rear attackers against a ship that can die, a death and a Classic respawn in place, SQUALL STEED shot down, `stageClear` |
 | `brine-grotto-god` | 4-way playtest bot, god mode, full loadout | PEARL GROTTO, zone B's hidden bonus stage (M2-11): the bonus capsules and the 1UP collected, its `end` reached (no boss) |
 
 - `golden.test.ts` (part of `pnpm test`) plays every file back into a fresh session: every hash and

@@ -49,7 +49,10 @@
  * and the 4-way bot through the whole of zone C (its deaths and respawns in place, the boss). Two
  * more (M2-12) fly the real zones D and E with the 4-way bot and god mode, start to stage clear —
  * `zone-d` (MAGMA DEEP: the dive into the caves, the brick maze, CINDER BASTION) and `zone-e`
- * (TEMPEST RIDGE: the rear attackers, SQUALL STEED).
+ * (TEMPEST RIDGE: the rear attackers, SQUALL STEED). Three more (M2-12 tests) fly them without god
+ * mode: the 4-way bot through the whole of zone D (a death and a Classic respawn in place down in
+ * the caves) and of zone E (the rear attackers against a ship that can die), and the stage skip
+ * into zone D's caves to CINDER BASTION with the full loadout under the Arcade penalty.
  *
  * @module
  */
@@ -481,6 +484,33 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = Object.freeze([
     bot: 'four-way',
   },
   {
+    name: 'zone-d-bot',
+    description:
+      'MAGMA DEEP without god mode (M2-12 tests): the 4-way bot from the start, Classic penalty, down the dive and through the brick maze — a death and a respawn in place down in the caves — to CINDER BASTION',
+    stageId: 'zone-d',
+    config: { seed: 77 },
+    godMode: false,
+    bot: 'four-way',
+  },
+  {
+    name: 'zone-d-boss',
+    description:
+      'the stage skip into the caves of MAGMA DEEP (M2-12 tests): CINDER BASTION with the full loadout under the Arcade penalty, its core shot through the turning shield arms',
+    stageId: 'zone-d',
+    config: { seed: 75, stageSkip: 'boss', loadout: 'full', deathPenalty: 'arcade' },
+    godMode: false,
+    bot: 'four-way',
+  },
+  {
+    name: 'zone-e-bot',
+    description:
+      'TEMPEST RIDGE without god mode (M2-12 tests): the 4-way bot from the start, Classic penalty, the rear attackers overtaking a ship that can die — a death and a respawn in place — to SQUALL STEED',
+    stageId: 'zone-e',
+    config: { seed: 74 },
+    godMode: false,
+    bot: 'four-way',
+  },
+  {
     name: 'brine-grotto-god',
     description:
       "PEARL GROTTO, zone B's hidden bonus stage, with god mode and the full loadout (M2-11): its carriers' bonus capsules and the 1UP collected to the end",
@@ -658,12 +688,15 @@ export function recordGolden(scenario: GoldenScenario): { replay: Replay; outcom
  * @param replay - The replay.
  * @param content - The content to play it on (default the shipped content; M2-08 tests pass a
  *   variant — the raster range without its presentation effects).
+ * @param observe - Called with the World after every tick (M2-12 tests: where the run was when
+ *   something happened — a death down in zone D's caves).
  * @returns The desync report, the outcome of the playback and the session's World after its last
  *   tick (for checks of what the run went through).
  */
 export function playGolden(
   replay: Replay,
   content: ContentDb = shippedContent(),
+  observe?: (world: Game['world']) => void,
 ): {
   report: DesyncReport;
   outcome: GoldenOutcome;
@@ -682,6 +715,7 @@ export function playGolden(
     game.events.clear();
     playback.check(game.world);
     watch.after();
+    observe?.(game.world);
   }
   return { report: playback.report, outcome: watch.outcome(), world: game.world };
 }

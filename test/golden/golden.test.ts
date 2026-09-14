@@ -3,7 +3,7 @@
  * `test/golden/<scenario>.replay.json` — zone A (and, since M2-07 / M2-08 / M2-09 / M2-10, the
  * `gimmick-range`, `raster-range`, `captain-range`, `raid-range`, `twin-range`, `bonus-range` and
  * `bonus-vault` dev stages; since M2-11 the real zones B and C and zone B's bonus stage; since
- * M2-12 zones D and E)
+ * M2-12 zones D and E, with and without god mode)
  * played by the 4-way bot and recorded with `core/replay` (the 4-way bot, or a careless weaving
  * pilot for the deaths) — plays back into a
  * fresh session with **every state hash** (one per 600 ticks and
@@ -328,6 +328,54 @@ describe('golden replays (zone A and the dev stages, playtest bots)', () => {
     const { world } = playGolden(readGolden('zone-d-god').replay);
     expect(world.camera.y).toBe(200);
     expect(world.stage?.stage.id).toBe('zone-d');
+  });
+
+  it('covers zones D and E without god mode (M2-12 tests): deaths in place, the caves, the skip', () => {
+    // MAGMA DEEP with the 4-way bot and no god mode: a death down in the caves (the camera at
+    // y 200), the Classic respawn in place — the camera stays down there — and the clear.
+    const bot = readGolden('zone-d-bot');
+    expect(bot.replay.header.assisted).toBe(false);
+    expect(bot.replay.header.config.deathPenalty).toBe('classic');
+    expect(bot.file.expected).toMatchObject({ status: 'stageClear', bossDefeated: true });
+    expect(bot.file.expected.deathTicks.length).toBeGreaterThanOrEqual(1);
+    expect(bot.file.expected.ticks / 60).toBeGreaterThanOrEqual(180);
+    expect(bot.file.expected.ticks / 60).toBeLessThanOrEqual(360);
+    const deathTicks = new Set(bot.file.expected.deathTicks);
+    const cameraAtDeath: number[] = [];
+    let respawnY = -1;
+    playGolden(bot.replay, undefined, (world) => {
+      // The watch records a death on the tick before the one the ship turned `dying`.
+      if (deathTicks.has(world.tick - 1)) cameraAtDeath.push(world.camera.y);
+      const ship = world.players[0];
+      if (respawnY < 0 && cameraAtDeath.length > 0 && ship.state === 'alive') {
+        respawnY = world.camera.y;
+      }
+    });
+    expect(cameraAtDeath).toContain(200);
+    expect(respawnY).toBe(200);
+    // The stage skip into the caves: CINDER BASTION shot down, no checkpoint restart needed.
+    const skip = readGolden('zone-d-boss');
+    expect(skip.replay.header.config).toMatchObject({
+      stageSkip: 'boss',
+      loadout: 'full',
+      deathPenalty: 'arcade',
+    });
+    expect(skip.file.expected).toMatchObject({ status: 'stageClear', bossDefeated: true });
+    expect(skip.file.expected.ticks).toBeLessThan(bot.file.expected.ticks / 4);
+    let deepest = Number.POSITIVE_INFINITY;
+    const skipped = playGolden(skip.replay, undefined, (world) => {
+      deepest = Math.min(deepest, world.camera.y);
+    });
+    expect(deepest).toBe(200); // never above the caves
+    expect(skipped.world.stage?.stage.id).toBe('zone-d');
+    // TEMPEST RIDGE with the 4-way bot and no god mode: a death, a respawn in place, the clear.
+    const ridge = readGolden('zone-e-bot');
+    expect(ridge.replay.header.assisted).toBe(false);
+    expect(ridge.file.expected).toMatchObject({ status: 'stageClear', bossDefeated: true });
+    expect(ridge.file.expected.deathTicks.length).toBeGreaterThanOrEqual(1);
+    expect(ridge.file.expected.lives).toBeGreaterThanOrEqual(1);
+    expect(ridge.file.expected.ticks / 60).toBeGreaterThanOrEqual(180);
+    expect(ridge.file.expected.ticks / 60).toBeLessThanOrEqual(360);
   });
 
   it('covers zones B and C without god mode (M2-11 tests): deaths and restarts, a clear with a death', () => {

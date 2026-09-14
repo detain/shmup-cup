@@ -954,7 +954,8 @@ const rearSwoop = defineBehavior(
     const row = self.y - camera.y;
     const ahead = p.turnX - (self.x - camera.x);
     api.setMover(MoverKind.Waypoint, p.turnX, row, speed, hold, -p.leaveSpeed, 0);
-    const approach = ahead > 0 ? Math.ceil(ahead / speed) | 0 : 0;
+    // The straight distance either way: one spawned right of `turnX` flies back to it first.
+    const approach = Math.ceil((ahead > 0 ? ahead : -ahead) / speed) | 0;
     yield approach + (hold >> 1) + 1;
     if (ways > 0) {
       faceTarget(api);
@@ -2013,7 +2014,8 @@ const STEED_FIRST_LAUNCH = 10;
  * One script per phase, sleeping until the soonest of its three timers (the chest, the launches,
  * the snout); every phase starts with the chest shut and the lids at rest. The bob is the boss
  * system's `orbit` (per-tick motion; it starts from the angle of where the boss is, so a phase
- * change never makes it jump).
+ * change moves it at most the change of the ellipse's radii — 2 px between the shipped phases,
+ * whose `ry` grows 14 → 16 → 18).
  */
 const bossSteed = defineBossBehavior(
   'boss.steed',

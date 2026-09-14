@@ -3109,6 +3109,30 @@ Goal of the milestone: every **[P1]** feature. Steps are ordered so systems land
     the ship reaches the column (zone D's caves are rows 200–399).
   - **Bundle:** the Tizen `app.js` is 313.5 KB gzip of its 350 KB budget (was 307.5 after M2-11:
     the two zones' stages, songs and rosters add ≈ 6 KB gzip).
+  - **Test round:** `behaviors-zones-de-edge.test.ts` (the three behaviours' defaults; the rear
+    attacker's timing — the turn point on tick ⌈distance / speed⌉, the shot on hold tick
+    `(hold >> 1) + 1`, also on a scrolling camera —, `ways` / `hold` / `speed` floors, the settle
+    rule; the bastion's spin rounded and set only on the hub, `reverseTicks` floored, the arms'
+    angle kept through a phase change, lanes attached to their emitter in turn, floored spreads,
+    ring offsets, tracking margins; the seahorse's ellipse, a still bob, the phase-change move ≤
+    the radii's change, sub-1 chest timers, the 10-tick first launch, floored minis per opening,
+    the foal's homing phases, snout spreads and rings only as the chest shuts, floored lid gape,
+    every phase starting shut), `zones-de-runtime-edge.test.ts` (every practice start of D and E
+    in open space at its camera height, the stage skip into the caves, Arcade restarts in the caves
+    — the maze rolled back — and before the dive — back on the surface, diving again —, jumper
+    needles only in view), `zones-de-direct.test.ts` (the MANTA clears both zones in Direct mode,
+    each stage's own plan handed out in order), `procedural-zones-de-edge.test.ts` (kebab names,
+    frames that animate, the rain tiling both ways, the registry, zone A's bricks in the zone
+    tilesets), the browser spec `zones-de.spec.ts` (the peaks, the lava lake rising with the dive,
+    the storm clouds and ridge, both bosses, both on the Tizen build) and three more goldens —
+    `zone-d-bot` (the 4-way bot without god mode: a death and a respawn down in the caves, the
+    clear), `zone-d-boss` (the stage skip into the caves, full loadout, Arcade penalty) and
+    `zone-e-bot` (the 4-way bot without god mode: a death, the clear). No existing golden changed.
+    **Fixed:** a `rear.swoop` spawned right of its `turnX` timed its shot as if it stood there
+    already, so the shot fell inside the settle time and was dropped (it now times the approach from
+    the distance either way); the squall jumper's two frames were identical (the flame drawn under
+    the fuselage), so its jet now flickers; `boss.steed`'s docs no longer claim a phase change never
+    moves it (a new `ry` moves it up to the radii's change, 2 px between the shipped phases).
   - **Gotcha:** `StageRunner.jumpTo` moves the camera, not the ships — in zone D a jump past the dive
     leaves a ship spawned at the surface clamped to the top of the view (inside the cave roof); a
     test that jumps there calls `spawnPlayer(ship, camera)` again. The game's own starts (the stage

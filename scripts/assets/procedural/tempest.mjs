@@ -108,7 +108,7 @@ export function generate() {
       hitFlash: true,
       animations: { flap: [0, 1] },
     }),
-    makeSprite('enemies/squall-jumper', [jumperFrame(2), jumperFrame(4)], 'tempest', {
+    makeSprite('enemies/squall-jumper', [jumperFrame(1), jumperFrame(2)], 'tempest', {
       hitFlash: true,
       animations: { burn: [0, 1] },
     }),
@@ -314,9 +314,10 @@ function kiteFrame(tail) {
 
 /**
  * The squall jumper: a slate swept-wing jet pointing left with a canopy and a jet flame of
- * `flame` px at its tail.
+ * `flame` px behind its tail (x 14 on; the fuselage and the wings cover everything left of it, so
+ * the flame must differ there for the two frames to flicker).
  *
- * @param {number} flame - Flame length in pixels.
+ * @param {number} flame - Flame length in pixels (1 or 2).
  * @returns {Image} The frame.
  */
 function jumperFrame(flame) {
@@ -328,7 +329,7 @@ function jumperFrame(flame) {
   const canopy = color('#a8e0f0');
   const jet = color('#f0d870');
   const image = createImage(w, h);
-  drawLine(image, 14 - flame, 4, 15, 4, jet, 2);
+  drawLine(image, 14, 4, 13 + flame, 4, jet);
   // Swept wings: triangles from the middle of the fuselage back to the tail.
   for (let x = 6; x <= 12; x++) {
     const half = Math.round(((x - 6) * 4) / 6);

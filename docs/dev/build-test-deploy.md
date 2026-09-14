@@ -317,7 +317,11 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   `window.__shmupDebug`), and zones B and C: `?stage=zone-b`'s palette-cycled brine sea and, the
   stage jumped to its end, GALVANIC MAW's hull fighting with its mouth opening, `?stage=zone-c`'s
   dune ridge and SANDGRAVE WIDOW, `?stage=brine-grotto`'s reef over the brine sea, and the widow
-  drawn on the Tizen build from `file://` (`zones-bc.spec.ts`, M2-11). The gameplay specs
+  drawn on the Tizen build from `file://` (`zones-bc.spec.ts`, M2-11), and zones D and E:
+  `?stage=zone-d`'s volcano peaks, its palette-cycled lava lake rising into view with the dive and
+  CINDER BASTION's hull fighting down in the caves with its shield arms turning, `?stage=zone-e`'s
+  palette-cycled storm clouds over the jagged ridge and SQUALL STEED opening its chest, and both
+  bosses drawn on the Tizen build from `file://` (`zones-de.spec.ts`, M2-12). The gameplay specs
   open `?scene=flight` (bare gameplay, open space unless `?stage=` names a stage) since M1-16;
   specs comparing captures a set number of ticks apart freeze the sim and step exact ticks
   (`test/e2e/frame-advance.ts`, M1-19) instead of counting rAF frames. Since M1-19 the suite runs
