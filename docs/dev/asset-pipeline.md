@@ -226,6 +226,10 @@ roster of M1-08 included), so `pnpm content:check` passes.
   The packer picks the smallest page that holds everything (smallest area, then the
   squarer, then the wider) and only spills onto further pages when a 2048² page is full.
   Pages are named `main.png`, `main-1.png`, `main-2.png`, …
+- Speed: a trial of a candidate page size stops at the first cell that does not fit, and
+  after each placement only the new free rectangles are tested for containment (the others
+  cannot be contained — see `MaxRectsBin.split`). Both leave the layout byte-identical; the
+  full atlas builds in about 0.3 s instead of 0.5 s.
 - Manifest coordinates (`x`, `y`, `w`, `h`) are the frame itself, inside its border.
 
 ## The manifest (`assets/generated/atlas/main.json`)

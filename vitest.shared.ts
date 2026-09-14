@@ -13,6 +13,17 @@ import { clientConditions, serverConditions } from './vite.shared.js';
 
 export { SOURCE_CONDITION } from './vite.shared.js';
 
+/**
+ * Default per-test timeout (ms) for every project: 30 s instead of Vitest's 5 s.
+ *
+ * @remarks
+ * `pnpm test` runs every package's suite at once (Turborepo), so on a 4-vCPU CI runner a
+ * CPU-bound test — a full atlas build, a headless stage run — can take ten times its local
+ * time: the shell's 0.5 s atlas-name check hit 5.2 s in CI. A test that needs longer still
+ * passes its own timeout as the last argument of `it`.
+ */
+export const TEST_TIMEOUT_MS = 30_000;
+
 /** Options accepted by {@link defineShmupProject}. */
 export interface ShmupProjectOptions {
   /** Vitest environment; everything runs headless in Node by default. */
@@ -28,7 +39,8 @@ export interface ShmupProjectOptions {
 
 /**
  * Builds a Vitest project config with the repo conventions: tests live in
- * `test/` (never next to sources) and workspace packages resolve to source.
+ * `test/` (never next to sources), workspace packages resolve to source, and a test
+ * may run for {@link TEST_TIMEOUT_MS} before it times out.
  *
  * @remarks
  * Both the client and the SSR resolver get the `@shmup/source` condition first, so a
@@ -61,6 +73,7 @@ export function defineShmupProject(
     test: {
       name,
       environment: options.environment ?? 'node',
+      testTimeout: TEST_TIMEOUT_MS,
       include: [...(options.include ?? ['test/**/*.test.ts'])],
       ...(options.execArgv === undefined ? {} : { execArgv: [...options.execArgv] }),
     },

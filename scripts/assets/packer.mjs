@@ -118,11 +118,28 @@ class MaxRectsBin {
    * Removes a used rectangle from the free list (splitting every free rectangle it
    * overlaps into up to four maximal remainders), then prunes contained rectangles.
    *
+   * @remarks
+   * Only the new remainders need the containment test: the free list holds no rectangle
+   * contained in another before the split, so an untouched rectangle `A` can neither lie
+   * inside another untouched one nor inside a remainder `N` (that would put `A` inside
+   * the split rectangle `N` came from). Testing just the remainders against the whole
+   * list gives exactly the full pairwise prune in O(new × all) instead of O(all²), which
+   * kept the atlas build fast as the sprite set grew.
+   *
    * @param {Rect} used - The placed cell.
    */
   split(used) {
     /** @type {Rect[]} */
     const next = [];
+    /** @type {boolean[]} Whether `next[i]` is a new remainder (not an untouched rectangle). */
+    const added = [];
+    /**
+     * @param {Rect} r - A remainder of a split rectangle.
+     */
+    const add = (r) => {
+      next.push(r);
+      added.push(true);
+    };
     for (const f of this.free) {
       if (
         used.x >= f.x + f.w ||
@@ -131,19 +148,21 @@ class MaxRectsBin {
         used.y + used.h <= f.y
       ) {
         next.push(f);
+        added.push(false);
         continue;
       }
-      if (used.x > f.x) next.push({ x: f.x, y: f.y, w: used.x - f.x, h: f.h });
+      if (used.x > f.x) add({ x: f.x, y: f.y, w: used.x - f.x, h: f.h });
       if (used.x + used.w < f.x + f.w) {
-        next.push({ x: used.x + used.w, y: f.y, w: f.x + f.w - used.x - used.w, h: f.h });
+        add({ x: used.x + used.w, y: f.y, w: f.x + f.w - used.x - used.w, h: f.h });
       }
-      if (used.y > f.y) next.push({ x: f.x, y: f.y, w: f.w, h: used.y - f.y });
+      if (used.y > f.y) add({ x: f.x, y: f.y, w: f.w, h: used.y - f.y });
       if (used.y + used.h < f.y + f.h) {
-        next.push({ x: f.x, y: used.y + used.h, w: f.w, h: f.y + f.h - used.y - used.h });
+        add({ x: f.x, y: used.y + used.h, w: f.w, h: f.y + f.h - used.y - used.h });
       }
     }
     // Prune rectangles contained in another (keep the first of two equal ones).
     this.free = next.filter((a, i) => {
+      if (!added[i]) return true;
       for (let j = 0; j < next.length; j++) {
         if (i === j) continue;
         const b = next[j];
@@ -232,10 +251,12 @@ export function packRects(items, options = {}) {
    * @param {typeof cells} list - Cells in packing order.
    * @param {number} w - Page width.
    * @param {number} h - Page height.
+   * @param {boolean} [trial] - Stop at the first cell that does not fit: a trial of a
+   *   candidate page size only needs to know whether everything fits.
    * @returns {{ placed: Map<number, Rect>, rest: typeof cells }} Placed cells by input
-   *   index, and the cells that did not fit.
+   *   index, and the cells that did not fit (for a failed trial: just the first miss).
    */
-  const packPage = (list, w, h) => {
+  const packPage = (list, w, h, trial = false) => {
     const bin = new MaxRectsBin(w + padding, h + padding);
     /** @type {Map<number, Rect>} */
     const placed = new Map();
@@ -243,8 +264,10 @@ export function packRects(items, options = {}) {
     const rest = [];
     for (const cell of list) {
       const rect = bin.insert(cell.cw, cell.ch);
-      if (rect === null) rest.push(cell);
-      else placed.set(cell.index, rect);
+      if (rect === null) {
+        rest.push(cell);
+        if (trial) break;
+      } else placed.set(cell.index, rect);
     }
     return { placed, rest };
   };
@@ -267,7 +290,7 @@ export function packRects(items, options = {}) {
     for (const size of sizes) {
       // Cheap rejections before a full packing attempt.
       if (size.w * size.h < area || size.w < widest || size.h < tallest) continue;
-      const attempt = packPage(remaining, size.w, size.h);
+      const attempt = packPage(remaining, size.w, size.h, true);
       if (attempt.rest.length === 0) {
         page = { size, ...attempt };
         break;
