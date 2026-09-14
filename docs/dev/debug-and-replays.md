@@ -346,10 +346,11 @@ the replay contains them (a session recorded through `createReplayGame` has no k
 
 ## Golden replays (`test/golden/`)
 
-Thirty-eight committed runs — seventeen of zone A, since M2-07 three of the `gimmick-range` dev
+Forty-six committed runs — seventeen of zone A, since M2-07 three of the `gimmick-range` dev
 stage, since M2-08 one of the `raster-range` dev stage, since M2-09 four of the advanced-boss
 dev stages, since M2-10 three of the bonus-stage dev stages, since M2-11 five of the real zones
-B and C and since M2-12 five of the real zones D and E — pin down what the simulation does (`test/golden/golden.ts` `GOLDEN_SCENARIOS`, recorded
+B and C, since M2-12 five of the real zones D and E and since M2-13 eight of the real zones F and G
+— pin down what the simulation does (`test/golden/golden.ts` `GOLDEN_SCENARIOS`, recorded
 from the M1-18 playtest bots with the build id `'golden'`):
 
 | File | Who plays | Covers | Ends |
@@ -392,6 +393,14 @@ from the M1-18 playtest bots with the build id `'golden'`):
 | `zone-d-bot.replay.json` (M2-12 tests) | 4-way bot, no god mode (seed 77) | a death down in the caves and a Classic respawn in place there, CINDER BASTION shot down | `stageClear` after 14,634 ticks, 55,330 points, one death (9,564) |
 | `zone-d-boss.replay.json` (M2-12 tests) | 4-way bot, full loadout, Arcade penalty, `stageSkip: 'boss'` (seed 75) | the stage skip into the caves: CINDER BASTION's core shot through the turning arms | `stageClear` after 1,301 ticks, 40,200 points, no deaths |
 | `zone-e-bot.replay.json` (M2-12 tests) | 4-way bot, no god mode (seed 74) | the rear attackers against a ship that can die, a death and a Classic respawn in place, SQUALL STEED shot down | `stageClear` after 14,427 ticks, 56,040 points, one death (8,961) |
+| `zone-f-god.replay.json` (M2-13) | 4-way bot, god mode, `stage: 'zone-f'` (seed 1) | CELL VAULT start to clear: the membrane's chasing and dividing cells, the regenerating tissue walls, the tentacle garden, the pulse run, MANTLE REGENT's three phases | `stageClear` after 13,190 ticks, 65,260 points, no deaths |
+| `zone-g-god.replay.json` (M2-13; re-blessed by its review fix) | 4-way bot, god mode, `stage: 'zone-g'` (seed 1) | PRISM LABYRINTH start to clear: the prism field, the gallery, the crystal labyrinth, the cube rush stacking into its pillars, the refraction run, FACET MONARCH | `stageClear` after 14,043 ticks, 54,060 points, no deaths |
+| `glimmer-cache-god.replay.json` (M2-13) | 4-way bot, god mode, full loadout, `stage: 'glimmer-cache'` (seed 81) | GLIMMER CACHE, zone G's bonus stage: its carriers' bonus capsules and the 1UP, a cube rush and its cube walls, no boss | `stageClear` after 1,815 ticks, 16,210 points, no deaths |
+| `zone-f-arcade.replay.json` (M2-13 tests) | 4-way bot, Arcade difficulty, no god mode (seed 91) | CELL VAULT against the rank-scaled fire, tissue shot open, MANTLE REGENT shot down | `stageClear` after 13,316 ticks, 60,130 points, no deaths |
+| `zone-f-deaths.replay.json` (M2-13 tests) | `weaverBot()`, Easy, Arcade penalty (seed 91) | deaths in the membrane and at the first tissue walls, restarts at the start and at 2,200 rolling the shot-open tissue back, game over | `gameOver` after 7,274 ticks (deaths at 1,411 / 4,204 / 5,189 / 6,173 / 7,181) |
+| `zone-f-boss.replay.json` (M2-13 tests) | 4-way bot, full loadout, Arcade penalty, `stageSkip: 'boss'` (seed 95) | MANTLE REGENT's three phases, the eye shot between the curls of its tentacles | `stageClear` after 1,716 ticks, 46,300 points, no deaths |
+| `zone-g-boss.replay.json` (M2-13 tests) | 4-way bot, full loadout, Arcade penalty, `stageSkip: 'boss'` (seed 95) | FACET MONARCH's crystals broken, then its core through three phases | `stageClear` after 2,003 ticks, 47,390 points, no deaths |
+| `zone-g-bot.replay.json` (M2-13 tests) | 4-way bot, no god mode (seed 91) | a death in the cube rush and a Classic respawn in place, FACET MONARCH shot down | `stageClear` after 14,138 ticks, 56,070 points, one death (7,284) |
 
 The 4-way bot survives zone A even at Arcade, which is why the death scenario uses a careless
 weaving pilot. The files were re-blessed on purpose by M2-01 (`b31fac5`): rank growth changes
@@ -471,6 +480,18 @@ outcomes) and added `zone-d-god` and `zone-e-god`; its test round added `zone-d-
 per-tick observer since then (`golden.test.ts` checks that `zone-d-bot`'s death happened down in
 the caves — camera y 200 — and its respawn in place there); the file-name rule allows `zone-d-*`
 and `zone-e-*` ([zones-d-and-e.md](zones-d-and-e.md#determinism-hashing-and-golden-replays)).
+M2-13 re-blessed them all once more (`31f35db`: the zone F / G sprites and behaviour scripts shift
+the sorted ids — all 38 older files kept their inputs, tick counts, headers and outcomes) and added
+`zone-f-god`, `zone-g-god` and `glimmer-cache-god`; its review fix (`db2e5b0`, the turret before the
+prism gallery moved from x 2,000 to 1,830) re-blessed `zone-g-god` alone — the bot's inputs and the
+hashes changed, its 14,043 ticks, 54,060 points and `stageClear` did not. The test round added
+`zone-f-arcade`, `zone-f-deaths`, `zone-f-boss`, `zone-g-boss` and `zone-g-bot` without changing any
+other file; `golden.test.ts` checks both zones cleared in 3–6 minutes, tissue shot open on the way,
+the cache's items without a boss, the weaver's restarts rolling the tissue back (at the start, then
+at 2,200), `zone-g-bot`'s death between the cube rush's checkpoint and the refraction run's with a
+respawn in place, and the skips fighting all three phases; the file-name rule allows `zone-f-*`,
+`zone-g-*` and `glimmer-cache-*`
+([zones-f-and-g.md](zones-f-and-g.md#determinism-hashing-and-golden-replays)).
 Each file is an encoded replay plus the scenario's `description` and its
 `expected` outcome (status, ticks, player 1's score and lives, death ticks, boss killed — and for
 a co-op run player 2's score, lives, death ticks and continues).
@@ -515,7 +536,7 @@ timing needs a quiet machine. CI runs it after `pnpm build`.
 
 | Budget | Constant | Limit | At M1-19 |
 |---|---|---|---|
-| `app.js` gzipped | `APP_JS_GZIP_BUDGET` | 350 KB (launch ≤ 10 s, `shmup_feat.md` §23) | 228.6 KB (773.6 KB raw); **307.5 KB after M2-11**, **313.5 KB after M2-12** (the inlined content grows with every zone — ≈ 6 KB a pair) |
+| `app.js` gzipped | `APP_JS_GZIP_BUDGET` | 350 KB (launch ≤ 10 s, `shmup_feat.md` §23) | 228.6 KB (773.6 KB raw); **307.5 KB after M2-11**, **313.5 KB after M2-12**, **320.3 KB after M2-13** (the inlined content grows with every zone — ≈ 6 KB a pair) |
 | Atlas page edge | `ATLAS_PAGE_MAX_SIZE` | 2048 px (and every page must be a readable PNG — `pngSize` reads its IHDR) | one page |
 | Whole `dist/` | `DIST_BUDGET` | 8 MB | 812.4 KB |
 
@@ -636,10 +657,10 @@ testers in [../client/debug-tools.md](../client/debug-tools.md#the-m1-release-ch
 - **M2-09** (done) — `hashWorld` mixes every boss slot, the raid camera, the boss rush and the
   World's ending flags; the debug outlines cover every boss slot; golden replays re-blessed, four
   advanced-boss scenarios added ([advanced-bosses.md](advanced-bosses.md)).
-- **M2-10** / **M2-11** / **M2-12** (done) — the bonus-stage and zone B–E goldens (above); every
-  simulation change re-blessed the files in the same commit.
-- **M2-13 / M2-14** — every simulation change re-blesses the golden replays in the same commit;
-  zones F–I add golden replays each.
+- **M2-10** / **M2-11** / **M2-12** / **M2-13** (done) — the bonus-stage and zone B–G goldens
+  (above); every simulation change re-blessed the files in the same commit.
+- **M2-14** — every simulation change re-blesses the golden replays in the same commit; zones H and
+  I add golden replays each.
 - **M2-15** — attract mode plays bundled replays (and the scene flow gets recorded).
 - **M2-17** — the device info (model, firmware) in the debug overlay.
 - **M2-18** — cross-engine determinism: golden replays in Chromium and Firefox.

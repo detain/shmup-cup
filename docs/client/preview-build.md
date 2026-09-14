@@ -60,11 +60,19 @@ a river of lava and the battleship **CINDER BASTION**, whose core hides behind *
 arms** ([Zone D: MAGMA DEEP](#zone-d-magma-deep)) — and **TEMPEST RIDGE** (E) — a storm over jagged
 mountains with rain and rolling clouds, enemies that come **from behind** and overtake your ship,
 and the seahorse **SQUALL STEED**, which opens its chest to send out little homing seahorses
-([Zone E: TEMPEST RIDGE](#zone-e-tempest-ridge)). Zones F to I are still **short stand-ins** (about
-a minute each, with zone A's enemies and bosses you already know) so every one of the 16 routes
-can be flown to the end; the real ones follow in the next builds.
-**Zone B hides a secret bonus stage**, PEARL GROTTO, with an extra ship and 1,000-point capsules —
-the way in is a gap at the very top of the screen — and the browser's *Bonus Range* shows all three
+([Zone E: TEMPEST RIDGE](#zone-e-tempest-ridge)). **Zones F and G are real too**: **CELL VAULT**
+(F) — the inside of a living vault, with cells that **chase** your ship, cells that **divide** in
+two when shot, **walls of tissue that grow back** after you shoot through them, **grabbing
+tentacles** and the squid **MANTLE REGENT**, whose tentacles curl in front of its eye to guard it
+([Zone F: CELL VAULT](#zone-f-cell-vault)) — and **PRISM LABYRINTH** (G) — a maze of **crystal
+walls** from the ceiling and the floor, a **rush of crystal cubes** that stick where they hit and
+build walls, and the crystal core **FACET MONARCH**, which hides its core behind two crystals and
+waves two arms like claws ([Zone G: PRISM LABYRINTH](#zone-g-prism-labyrinth)). Zones H and I are
+still **short stand-ins** (about a minute each, with zone A's enemies and bosses you already know)
+so every one of the 16 routes can be flown to the end; the real ones follow in the next build.
+**Zones B and G hide secret bonus stages** with an extra ship and 1,000-point capsules — in zone B,
+PEARL GROTTO, the way in is a gap at the very top of the screen; in zone G, GLIMMER CACHE, you must
+shoot down every turret of a crystal gallery — and the browser's *Bonus Range* shows all three
 kinds of secret entrance ([Hidden bonus stages](#hidden-bonus-stages)).
 
 Along the way your ship shoots the enemies down ([Your weapons](#your-weapons)), powers up with
@@ -113,7 +121,7 @@ The earlier start-up pictures are still there: **free flight** straight away wit
 the animated **sprite showcase** and the **calibration screen**, plus the **effects gallery**
 that shows every explosion and screen effect in turn (see [below](#other-screens-browser-only)).
 
-This build is version **0.1.0** — the end of the first milestone — plus the first twelve steps of
+This build is version **0.1.0** — the end of the first milestone — plus the first thirteen steps of
 the second: the difficulties, extra ships and continues, then the colour-blind bullet colours and
 points for cancelled bullets, then the **weapon types** and the WEAPON SELECT screen, then four
 kinds of **Options**, five **shields**, the **Option Hunter** that steals Options and the rare
@@ -134,7 +142,10 @@ BRINE NEBULA with its mid-boss SPUME HERALD, its boss GALVANIC MAW and the secre
 GROTTO, and DUNE EXPANSE with its boss SANDGRAVE WIDOW, each with its own music (AZURE VERGE itself
 plays as before), and now the **real zones D and E**: MAGMA DEEP with its dive into the caves, its
 brick maze and its boss CINDER BASTION, and TEMPEST RIDGE with its enemies from behind, its storm
-and its boss SQUALL STEED, again each with its own music.
+and its boss SQUALL STEED, again each with its own music, and now the **real zones F and G**:
+CELL VAULT with its chasing cells, regrowing tissue walls, grabbing tentacles and its boss MANTLE
+REGENT, and PRISM LABYRINTH with its crystal walls, its cube rush, the second secret bonus stage
+GLIMMER CACHE and its boss FACET MONARCH, each with its own music.
 For checking it on the monitors
 there is a **debug build** with developer tools — a panel with the frame rate, frame times and
 start-up time, hit-area outlines, invincibility, a freeze with single steps, slow motion and
@@ -1157,16 +1168,16 @@ there are **16 different routes**:
 | C | DUNE EXPANSE | **The real zone** — sand worms, a canyon with beetles on its ceiling, the boss SANDGRAVE WIDOW ([below](#zone-c-dune-expanse)) |
 | D | MAGMA DEEP | **The real zone** — volcanoes, a dive into the caves, a brick maze, a lava river, the boss CINDER BASTION ([below](#zone-d-magma-deep)) |
 | E | TEMPEST RIDGE | **The real zone** — a storm over jagged peaks, enemies from behind, the boss SQUALL STEED ([below](#zone-e-tempest-ridge)) |
-| F | CELL VAULT | Stand-in with a floor; HALCYON BULWARK |
-| G | PRISM LABYRINTH | Stand-in, open space; the EMBER AND FROST TWINS |
+| F | CELL VAULT | **The real zone** — chasing and dividing cells, tissue walls that grow back, grabbing tentacles, the boss MANTLE REGENT ([below](#zone-f-cell-vault)) |
+| G | PRISM LABYRINTH | **The real zone** — crystal walls, a rush of cubes that build walls, the boss FACET MONARCH and a secret bonus stage ([below](#zone-g-prism-labyrinth)) |
 | H | IRON CITADEL | Final zone — stand-in with a floor; HALCYON BULWARK |
 | I | ABYSSAL THRONE | Final zone — stand-in, open space; the battleship IRON LEVIATHAN (the view flies round it; it escapes if you take too long) |
 
-Zones A to E are real zones of about three and a half to four minutes each. The stand-ins F–I
+Zones A to G are real zones of about three and a half to four minutes each. The stand-ins H and I
 are short — about a minute of zone A's enemies (small pods, red saucers with capsules, fan fliers,
 an arrowhead fighter, a ring spinner; turrets and walkers where there is a floor) and then the
 WARNING and a boss you know from zone A or the browser's boss ranges. They play zone A's music.
-The real zones replace them in the next builds; their names and the text on the map are already
+The real zones replace them in the next build; their names and the text on the map are already
 the real ones.
 
 **A zone, start to end:**
@@ -1230,8 +1241,9 @@ before its WARNING, so a run is five boss fights (add `&loadout=full`); the debu
 (or the remote's unlock sequence — [debug-tools.md](debug-tools.md)) jumps to the boss in any
 zone. `?stage=zone-b` … `?stage=zone-i` plays one zone on its own (like a test stage, without the
 map) — `zone-b` and `zone-c` are the real BRINE NEBULA and DUNE EXPANSE, `zone-d` and `zone-e` the
-real MAGMA DEEP and TEMPEST RIDGE (with `&skip=boss`, MAGMA DEEP starts down in the caves), and
-`?stage=brine-grotto` plays zone B's secret bonus stage.
+real MAGMA DEEP and TEMPEST RIDGE (with `&skip=boss`, MAGMA DEEP starts down in the caves), `zone-f`
+and `zone-g` the real CELL VAULT and PRISM LABYRINTH, and `?stage=brine-grotto` and
+`?stage=glimmer-cache` play the secret bonus stages of zones B and G.
 
 What "good" looks like:
 
@@ -1516,6 +1528,159 @@ What "good" looks like in zones D and E:
   report the zone and the time of any spot where you could not get out of the way.
 - Each zone, boss included, takes about three and a half to four minutes when nothing goes wrong.
 
+## Zone F: CELL VAULT
+
+The zone after D or E on the upper route: the inside of a **living vault** — a far wall of cells
+that **pulses** through its colours and gently sways, soft folds of flesh in front of it, dark olive
+rock with a pale-green edge —, cells that chase your ship, walls of tissue that **grow back**,
+**grabbing tentacles** and, at the end, the squid **MANTLE REGENT**. About three and a half minutes.
+Times from the start of the zone (about):
+
+| Time | What happens |
+|---|---|
+| 0–45 s | **The membrane.** Streams of pale **motes** drift through; **chasing cells** drift in along their row and then **follow your ship** for about two seconds before they swim straight on; big **dividing cells** split into two chasing cells when shot; fleshy **polyps** on the floor and the ceiling shoot at you. Red saucers bring capsules as in zone A |
+| about 45 s | **The tissue passage** begins. Checkpoint |
+| about 1:00–1:25 | **Seven walls of tissue**, one after the other. **Every wall has a gap** — at a different height each time —, so you can zigzag through; or **shoot a way through**: a tissue cell breaks after 3 hits (10 points) — but it **grows back** about four seconds later (never on top of your ship). Chasing cells and motes between the walls |
+| about 1:38 | **The tentacle garden.** **Tentacles** on the floor and the ceiling: when your ship comes near, a **claw on a chain lunges** at you and tugs your ship towards it for a moment, then pulls back. **Spore sacs** hover near the right edge and puff fans of slow spores at you before they drift away up or down. Checkpoint |
+| about 2:32 | **The pulse run.** The scrolling nearly doubles its speed for about 20 seconds; long streams of motes, groups of chasing cells, dividing cells. Checkpoint |
+| about 2:52 | **The calm.** Two red saucers — the capsules for the boss |
+| about 3:08 | **The WARNING** (`GIANT HOSTILE "MANTLE REGENT"` · `CLOSING IN - CODE MR-06`), then the boss and its own theme |
+
+A checkpoint restart (ARCADE, or CONTINUE?) puts every tissue wall back whole at once.
+
+**The enemies of CELL VAULT:**
+
+| Enemy | Hits to destroy | Points | Shoots? |
+|---|---|---|---|
+| Mote (streams) | 1 | 100 | No |
+| Chasing cell (alone, in groups, from a dividing cell or from the boss) | 2 | 200 | No — it drifts in, follows you for about two seconds (it cannot turn sharply), then swims straight on |
+| Dividing cell (a big cell with two nuclei) | 6 | 600 | No — shot, it **splits into two chasing cells** |
+| Tentacle claw (floor or ceiling, on a chain) | 5 | 400 | No — it lunges at you when you come near and tugs your ship towards it; the claw is deadly to touch |
+| Polyp (floor or ceiling) | 4 | 300 | One **pink round** bullet aimed at you about every three seconds |
+| Spore sac (hovering on the right) | 4 | 500 | A fan of three slow **purple spores** aimed at you, every three and a half seconds or so |
+| Red saucer (as in zone A) | 3 | 200 | No — it always leaves a capsule |
+
+### MANTLE REGENT (MR-06)
+
+A giant squid on the right that **follows your ship's height**: a long mantle trailing off to the
+right with a tail fin, a great **eye** at its head, and two **tentacles** reaching out to the left,
+one above and one below the eye:
+
+| Part | Looks like | What your shots do |
+|---|---|---|
+| **Mantle** | The long olive body with pale spots, the tail fin behind it | Nothing, ever (a small spark bounces back) |
+| **Eye** | The great eye with an amber iris | 90 hits in all — whenever no tentacle is in front of it. Destroying it destroys the boss (40,000 points) |
+| **Tentacle roots** | The thick joints where each tentacle meets the body | 24 hits each, 1,500 points — breaking one makes the **whole tentacle fall off** |
+| **Tentacles** | Round segments with pale suckers and a barbed tip | Nothing — they are armour |
+
+**How it fights.** The tentacles stay straight for about two seconds — **that is when to shoot the
+eye** —, then curl in until their tips meet in front of the eye, guard it for about a second (shots
+clink off them) and uncurl again. All the while the eye fires fans of three **red ovals** at you.
+Once a tentacle has fallen off (or the eye has taken about 30 hits) it changes: the tentacle tips
+lash out **pink needles** and every three seconds or so the eye sends out a **chasing cell**. After
+about 60 hits on the eye (or with both tentacles gone) the tentacles curl twice as fast, the fans
+have five ovals, and each time the tentacles open the eye bursts a **ring of ten** purple bullets.
+
+**Tip:** stay level with the eye and fire while the tentacles are open; a tentacle root in your row
+is worth breaking — fewer needles, and a gap in the guard. Shoot the chasing cells as they come, or
+step out of their way at the last moment — they cannot turn sharply.
+
+## Zone G: PRISM LABYRINTH
+
+The zone after D or E on the lower route: a **crystal maze** — a far wall of crystal facets that
+**glint** one after another, crystal spires shimmering in front of it, deep-blue crystal rock with an
+ice-blue edge —, walls of crystal from the ceiling and the floor, a **rush of crystal cubes** that
+build walls where they hit, a **secret bonus stage** and, at the end, the crystal core **FACET
+MONARCH**. About four minutes. Times from the start of the zone (about):
+
+| Time | What happens |
+|---|---|
+| 0–45 s | **The prism field.** Streams of **sparkles**; crystal **turrets** on the floor and the ceiling; a **prism lens** hovers near the right edge and fans needles at you, then drifts away; a round **geode** that shatters into shards when shot; a **halo crystal** looping through, sending out rings of bullets. Red saucers bring capsules |
+| about 46 s | **The prism gallery.** Checkpoint. From about 0:48 to 1:05 **four crystal turrets** come by, two on the floor and two hanging from the ceiling — **shoot down all four** and the secret bonus stage opens ([below](#the-secret-bonus-stage-glimmer-cache)) |
+| about 1:13–1:34 | **The crystal labyrinth.** Seven walls of solid crystal (they cannot be shot), hanging from the ceiling and rising from the floor **in turn** — zigzag up and down between them. Prism lenses high and low |
+| about 1:43 | **The cube rush.** Checkpoint. Four times a rush of **crystal cubes** comes at you — each cube flies at your ship and, where it hits rock, **sticks as a crystal block**, so the short crystal pillars grow into walls. Blocks break after 2 hits (10 points). Sparkles, a geode, a low lens |
+| about 2:32 | **The refraction run.** The scrolling nearly doubles its speed for about 20 seconds over jagged spires; long streams of sparkles, lenses, halo crystals, a turret, a geode. Checkpoint |
+| about 2:55 | **The calm.** Two red saucers for the boss |
+| about 3:10 | **The WARNING** (`GIANT HOSTILE "FACET MONARCH"` · `CLOSING IN - CODE FM-07`), then the boss and its own theme |
+
+**The enemies of PRISM LABYRINTH:**
+
+| Enemy | Hits to destroy | Points | Shoots? |
+|---|---|---|---|
+| Sparkle (streams) | 1 | 100 | No |
+| Crystal cube (the cube rush) | 1 | 60 | No — it flies at you and sticks where it hits rock, as a crystal block (2 hits, 10 points) |
+| Crystal turret (floor or ceiling) | 4 | 300 | One **pink round** bullet aimed at you about every three seconds |
+| Halo crystal (looping through) | 6 | 600 | A **ring of eight** slow purple bullets every two seconds |
+| Prism lens (hovering on the right) | 5 | 500 | Two quick fans of four **purple needles**, aimed so that the **gap in the middle** of each fan is where you are |
+| Geode (a round rock) | 8 | 700 | No — shot, it **shatters into three shards** (1 hit, 50 points each) that drift on |
+| Red saucer (as in zone A) | 3 | 200 | No — it always leaves a capsule |
+
+### FACET MONARCH (FM-07)
+
+A crystal core on the right that **follows your ship's height**: a big hexagonal crystal housing,
+the glowing core in front of it behind two long **crystals**, and two **arms** of crystal beads with
+pointed claws, one above and one below, that open and close like a pair of claws:
+
+| Part | Looks like | What your shots do |
+|---|---|---|
+| **Housing** | The big hexagonal crystal | Nothing, ever (armour behind the core) |
+| **Crystals** | Two long crystal facets in front of the core | 22 hits each, 1,000 points. They shield the core — **shoot them first** |
+| **Core** | The glowing core | Nothing while a crystal stands; then 72 hits. Destroying it destroys the boss (40,000 points) |
+| **Arms** | Crystal beads with a pointed claw at the end | Nothing — they are armour; they sweep in front of the boss |
+
+**How it fights.** At first the arms wave slowly and each claw fires a single **purple needle** at
+you every second and a half. Once both crystals are broken (or after about 25 seconds) the arms wave
+faster, the claws fire fans of three needles and the core sends out **rings of eight** red bullets.
+After the core has taken 34 hits the rings have ten bullets and every few seconds the core fires a
+**lane laser**: a thin blinking warning line straight across the screen along its row, then a beam
+for about ⅔ of a second — it **stays where it was fired** while the boss keeps moving, so step up or
+down out of that row.
+
+**Tip:** break the crystals quickly while the attacks are still slow, then stay level with the core
+and fire between the sweeps of the arms; when a laser line blinks in your row, step out, then back.
+
+### The secret bonus stage: GLIMMER CACHE
+
+Zone G's secret is not a gap to fly into but a **target to clear**: in the **prism gallery**,
+about 0:48 to 1:05 into the zone (just after the second checkpoint), four crystal turrets come by —
+two on the floor, two hanging from the ceiling. **Shoot down all four** before they scroll off the
+left edge. When the gallery has passed (about 1:07) the power-up chime sounds and about ⅔ of a
+second later the picture switches to **GLIMMER CACHE**, with **BONUS STAGE** / **GLIMMER CACHE** on
+the title card. Only these four turrets count — the turret shortly before the gallery and the other
+enemies do not. With one of the four left standing, nothing happens and the zone simply goes on.
+
+The cache is a short crystal cave, about half a minute long: carriers fly across leaving **gold
+capsules** worth **1,000 points** each, one bigger carrier leaves a green **1UP** capsule (**one
+extra ship**), a rush of crystal cubes comes at you (they still hurt if they hit you), a geode and a
+sparkle drift through, and two crystal walls — one high, one low — stand in the way; fly round them.
+At its end the zone counts as **cleared**: FACET MONARCH is **skipped**, the zone result and the
+ZONE MAP follow, and the ending card will show **BONUS STAGE CLEARED**. Lose a ship in the cache and you are back in PRISM LABYRINTH at the gallery about a
+second later, and the entrance stays shut for the rest of the zone (RETRY STAGE opens it again). A
+checkpoint restart in the gallery (ARCADE, or CONTINUE?) starts the gallery over: the turrets you
+shot before count for nothing, shoot all four again.
+
+What "good" looks like in zones F and G:
+
+- The wall of cells pulses and sways, the crystal facets glint and the spires shimmer **behind**
+  everything — never over your ship, the enemies, the bullets or the HUD.
+- Every tissue wall has a gap you can reach with single ▲ / ▼ presses; shot tissue disappears cell
+  by cell where it was hit and grows back about four seconds later — **never on top of your ship**.
+- A dividing cell splits into two exactly where it was shot; chasing cells follow you only for a
+  while and never turn on the spot.
+- The tentacle claws lunge only when your ship comes near, tug it briefly and pull back, their
+  chains following.
+- MANTLE REGENT's two tentacles curl in and out together, mirrored above and below, and never jump
+  — also when the boss changes its attacks; a broken tentacle falls off whole.
+- Shooting all four gallery turrets always opens GLIMMER CACHE; with one left standing it never
+  opens.
+- The rush cubes stick where they hit rock and can be shot away; after a restart the stuck cubes are
+  gone.
+- FACET MONARCH's arms wave smoothly and never jump when the crystals break; shots clink on the
+  arms and the housing, and the core reacts only after both crystals are gone.
+- Every bullet, laser, claw and chasing cell can be dodged with single arrow presses — please report
+  the zone and the time of any spot where you could not get out of the way.
+- Each zone, boss included, takes about three and a half to four minutes when nothing goes wrong.
+
 ## On the Samsung Smart Monitor / TV
 
 The TV build is installed from the development PC like the input probe — see
@@ -1536,8 +1701,8 @@ the first install it appears in the monitor's **Apps** list as **Shmup Cup**.
 On the TV, every game starts in **AZURE VERGE** ([The first zone](#the-first-zone-azure-verge)), with
 enemies, capsules, the boss and the zone's music, and goes on across the **ZONE MAP** through
 four more zones to an ending ([The zone map](#the-zone-map-a-run-through-nine-zones)). The normal
-TV build has no shortcut to the boss — it comes after about three minutes in zones A to E and
-about a minute in the stand-in zones F–I; the debug build has one (key 8 once the developer tools are open —
+TV build has no shortcut to the boss — it comes after about three minutes in zones A to G and
+about a minute in the stand-in zones H and I; the debug build has one (key 8 once the developer tools are open —
 [debug-tools.md](debug-tools.md)).
 
 Things to check on the monitor and report:
@@ -1788,7 +1953,7 @@ Things to check on the monitor and report:
    power-ups are exactly what they were before the map. Zone B (BRINE NEBULA) or C (DUNE EXPANSE)
    plays for about three minutes before its WARNING and its own boss (checks 57–60), then the result
    and the map again — and the same for zone D (MAGMA DEEP) or E (TEMPEST RIDGE) after it (checks
-   61–64).
+   61–64) and zone F (CELL VAULT) or G (PRISM LABYRINTH) after that (checks 65–69).
 55. **A whole run** (new): play on through D or E, F or G, to **H or I** (the debug build's key 8
    saves time). After the final zone's result the **ENDING** card shows the ending's name, your
    route, your score and `THANK YOU FOR PLAYING`; OK (after a second) returns to the title — with
@@ -1840,15 +2005,47 @@ Things to check on the monitor and report:
    lids open and close together with the chest, every time; shots clink while the chest is shut and
    hit it while open; the little seahorses come only out of the open chest and can be outrun or
    shot. Report the time the fight took.
+65. **CELL VAULT** (new): after D or E choose F on the map. The title card reads **ZONE F** /
+   **CELL VAULT** and its own tune plays. The wall of cells at the back pulses through its colours
+   and sways gently (background only). Chasing cells drift in, follow the ship for a moment and swim
+   on; a dividing cell splits in two where it is shot. About a minute in, fly the seven tissue walls
+   with the remote: every wall has a gap you can reach with single ▲ / ▼ presses; shoot a hole into
+   one and watch it grow back about four seconds later — never on top of your ship. Report whether
+   the tissue is easy to tell from the rock on the TV.
+66. **The tentacles and MANTLE REGENT** (new): from about 1:38 the claws on the floor and ceiling
+   lunge at the ship as it passes and tug it for a moment — report whether you can fly on against
+   the tug with the remote. After the WARNING the squid comes with its own boss tune: its two
+   tentacles curl in front of the eye and open again, together and smoothly; shots clink on the
+   curled tentacles and hit the eye while they are open; breaking a tentacle root makes the whole
+   tentacle fall off. With BOSS HP ON the bar moves only when the eye is hit (not the roots).
+67. **PRISM LABYRINTH** (new): choose G on the map (in a new game, after D or E). Its own tune; the
+   crystal facets at the back glint one after another and the spires shimmer (background only).
+   About 1:13 in, the crystal walls hang from the ceiling and rise from the floor in turn — zigzag
+   through with single presses. From about 1:47 the cube rushes: cubes fly at the ship and stick to
+   the crystal pillars as blocks, which break after two hits. Report whether the stuck cubes are easy
+   to see coming on the TV.
+68. **The second secret bonus stage** (new): in PRISM LABYRINTH, about 0:48 to 1:05 in (the debug
+   build: key 7 once — the second checkpoint —, then a few seconds), shoot down all **four** crystal
+   turrets of the gallery, two on the floor and two on the ceiling. When the gallery has passed
+   (about 1:07): the chime, then **BONUS STAGE** / **GLIMMER CACHE**. Collect the gold capsules
+   (+1,000 each) and the 1UP (one more ship icon), fly round the two crystal walls; at the end the
+   zone result follows without FACET MONARCH and the map opens. Then play the zone again and leave
+   one turret standing: nothing happens and the zone goes on. Report whether the ceiling turrets are
+   easy to hit with the remote.
+69. **FACET MONARCH** (new): after the WARNING the crystal core comes with its own boss tune. Shots
+   clink on the core until both crystals in front of it are broken; the arms open and close like
+   claws smoothly, also when the crystals break; in the last phase each blinking laser line can be
+   avoided by one step up or down and stays where it was fired. With BOSS HP ON the bar counts the
+   two crystals and the core together. Report the time the fight took.
 
 The fully powered ship (`?loadout=full`), the shortcut to each zone's boss (`?skip=boss`), the
 twelve test stages (the Test Range, the Boss Range with its test boss, the Hunter Range with the
 Option Hunters and the blue capsule, the Direct Range with the MANTA's pincer waves, the Gimmick
 Range with the later zones' stage mechanics, the Raster Range with the picture effects, the
 Captain, Raid, Twin and Gauntlet Ranges with the advanced bosses, and the Bonus Range with its
-Bonus Vault), a single zone on its own (`?stage=zone-b` … `?stage=zone-e`, the stand-ins up to
-`zone-i`) and zone B's bonus stage on its own
-(`?stage=brine-grotto`), free flight, the showcase, the
+Bonus Vault), a single zone on its own (`?stage=zone-b` … `?stage=zone-g`, the stand-ins
+`zone-h` and `zone-i`) and the zones' bonus stages on their own
+(`?stage=brine-grotto`, `?stage=glimmer-cache`), free flight, the showcase, the
 calibration screen and the effects gallery can only be opened in a browser — the monitor's own
 web browser works too, pointed at a PC running `pnpm dev` (below).
 
@@ -2734,10 +2931,12 @@ What "good" looks like in these stages:
 ## Hidden bonus stages
 
 Some zones hide a **secret entrance** to a short **bonus stage** full of points and extra ships.
-The first real one is in **zone B, BRINE NEBULA** — a marked gap at the top of the screen into
-**PEARL GROTTO**, on every device ([The secret bonus stage: PEARL
-GROTTO](#the-secret-bonus-stage-pearl-grotto)); zone G gets another in a later build. All three
-kinds of entrance can be tried in a browser test stage: open
+The real zones have two, on every device: **zone B, BRINE NEBULA** — a marked gap at the top of
+the screen into **PEARL GROTTO** ([The secret bonus stage: PEARL
+GROTTO](#the-secret-bonus-stage-pearl-grotto)) — and **zone G, PRISM LABYRINTH** — all four turrets
+of its crystal gallery shot down, into **GLIMMER CACHE** ([The secret bonus stage: GLIMMER
+CACHE](#the-secret-bonus-stage-glimmer-cache)). All three kinds of entrance can be tried in a
+browser test stage: open
 http://localhost:5173/?stage=bonus-range and choose 1 PLAYER (add `&loadout=full` to have the
 firepower for the second entrance).
 
@@ -2825,7 +3024,7 @@ will be replaced by finished sound and music later.
 
 | Where | Sound effects | Music |
 |---|---|---|
-| **TV** | From the start | The title theme on the title; in a game AZURE VERGE's theme, the boss theme, the stage-clear and game-over tunes — and in zones B and C their own stage and boss themes |
+| **TV** | From the start | The title theme on the title; in a game AZURE VERGE's theme, the boss theme, the stage-clear and game-over tunes — and in zones B to G their own stage and boss themes |
 | **Browser** | After your first key press or click | The title theme from that first key press; in a game the same as on the TV |
 | **Browser**, `?stage=test-range` or `?stage=test-boss` | After your first key press or click | The title theme, then the stage theme when the game starts; the boss theme, the stage-clear and game-over tunes |
 | **Browser**, `?scene=flight` (free flight) | After your first key press or click | None in open space; with `&stage=…` the stage theme starts with the first key press |
@@ -2854,15 +3053,15 @@ What you should hear:
 | **Mega Crash** | A long, deep roar |
 | You lose your ship | A heavy explosion; the music goes quiet for about two seconds and comes back up |
 | The boss **WARNING** | The stage music fades out within half a second and a **siren** wails three times, once a second, with the red pulses |
-| The boss glides in | The boss theme, **BULWARK ASSAULT**, starts (GALVANIC MAW: **MAW OF THE NEBULA**; SANDGRAVE WIDOW: **SANDGRAVE ASSAULT**; CINDER BASTION: **BASTION OF CINDERS**; SQUALL STEED: **STEED OF THE SQUALL**) |
+| The boss glides in | The boss theme, **BULWARK ASSAULT**, starts (GALVANIC MAW: **MAW OF THE NEBULA**; SANDGRAVE WIDOW: **SANDGRAVE ASSAULT**; CINDER BASTION: **BASTION OF CINDERS**; SQUALL STEED: **STEED OF THE SQUALL**; MANTLE REGENT: **REGENT OF THE VAULT**; FACET MONARCH: **THRONE OF FACETS**) |
 | The boss is destroyed | The boss music fades out over a second while the explosions crackle over it; with the final blast's `20000` a short, cheerful **stage-clear tune** (VERGE SECURED) plays, then it is quiet |
 | The menus | A soft click for each move of the highlight (and each step of a volume or the control profile in the Options screen), a short chime when you choose an entry, a lower "back" sound for Back, NO and a greyed-out entry; a short sound when the pause menu opens and closes. Menu sounds come from the middle and follow the SFX volume |
 | The title screen | The title theme, **SHMUP CUP**; it fades out when a game starts |
 | **GAME OVER** screen | A short, sad tune (**SILENT VERGE**) |
 | **STAGE CLEAR** screen, the **zone result** | The stage-clear tune (if it is not playing already) |
 | The **ZONE MAP** | The music fades out — the map is quiet for now (its own tune comes later); a chime when you choose, the menu click for ▲ / ▼ |
-| The next zone starts | Its zone theme from the start of the zone: **BRINE NEBULA** in zone B, **DUNE EXPANSE** in zone C, **MAGMA DEEP** in zone D, **TEMPEST RIDGE** in zone E (the stand-in zones F–I use AZURE VERGE's theme and BULWARK ASSAULT) |
-| Entering a secret bonus stage | The power-up chime when the entrance opens; the 1UP capsule plays the extra-ship jingle. PEARL GROTTO keeps zone B's music going (it has no tune of its own) |
+| The next zone starts | Its zone theme from the start of the zone: **BRINE NEBULA** in zone B, **DUNE EXPANSE** in zone C, **MAGMA DEEP** in zone D, **TEMPEST RIDGE** in zone E, **CELL VAULT** in zone F, **PRISM LABYRINTH** in zone G (the stand-in zones H and I use AZURE VERGE's theme and BULWARK ASSAULT) |
+| Entering a secret bonus stage | The power-up chime when the entrance opens; the 1UP capsule plays the extra-ship jingle. PEARL GROTTO keeps zone B's music going and GLIMMER CACHE zone G's (they have no tunes of their own) |
 | The **ending** card | The rest of the stage-clear tune, then quiet (the ending music comes with the real endings) |
 
 **The stage theme** (AZURE VERGE — in the zone of the same name and in both browser test stages)
@@ -2970,7 +3169,16 @@ mean the build itself is broken; they are not caused by anything you did.
 | OK on the KESTREL opened a WEAPON SELECT screen instead of the game | Expected: START is highlighted, so OK starts the game with the weapons shown; ▲ / ▼ and ◀ / ▶ change them first if you like ([Choosing your weapons](#choosing-your-weapons)) |
 | My ship flew off to the right on its own after the boss | Expected: the fly-out at the end of every zone — the zone result follows |
 | A **ZONE MAP** appeared instead of the title after the boss | Expected since this build: choose the next zone with ▲ / ▼ and press OK ([The zone map](#the-zone-map-a-run-through-nine-zones)); Back → YES returns to the title |
-| Zone F (or another zone after D or E) is very short and has zone A's enemies and boss | Expected: zones F–I are stand-ins until the real zones come. Zones B to E are the real BRINE NEBULA, DUNE EXPANSE, MAGMA DEEP and TEMPEST RIDGE — if one of them is short, please report it |
+| Zone H or I is very short and has zone A's enemies and boss | Expected: zones H and I are stand-ins until the real zones come. Zones B to G are the real BRINE NEBULA, DUNE EXPANSE, MAGMA DEEP, TEMPEST RIDGE, CELL VAULT and PRISM LABYRINTH — if one of them is short, please report it |
+| A hole I shot into a tissue wall closed again (zone F) | Expected — CELL VAULT's tissue grows back about four seconds after it was shot. Every wall also has a gap; fly through the gap or through your hole quickly. Tissue never grows back on top of your ship |
+| Something grabbed my ship and pulled it (zone F) | A tentacle's claw: it lunges when you come near and tugs your ship for a moment, then lets go. Fly on against the tug, or shoot the claw (5 hits). Touching the claw costs a ship |
+| A cell followed me (zone F) | Expected — the chasing cells follow your ship for about two seconds, then swim straight on. They cannot turn sharply: step out of the way at the last moment, or shoot them (2 hits). A big dividing cell splits into two of them when shot |
+| Shots do nothing to MANTLE REGENT | Expected on the mantle and on the tentacles (armour) — and on the eye while the tentacles are curled in front of it: wait for them to open. The tentacle roots can be broken (24 hits) |
+| I shot all the turrets in the crystal gallery and no bonus stage came (zone G) | The secret entrance opens only when the gallery has **passed** (about 1:07), and only if all **four** gallery turrets — two on the floor, two on the ceiling — were shot down. It never opens again after a ship was lost in GLIMMER CACHE (RETRY STAGE resets that); after a checkpoint restart the turrets shot before it do not count |
+| I cannot shoot through a crystal wall (zone G) | Expected: the labyrinth's walls are solid. They hang from the ceiling and rise from the floor in turn — fly under one, over the next |
+| Blocks of crystal appeared out of nowhere (zone G) | Expected: the cubes of the cube rush stick where they hit rock and become crystal blocks. Shoot them away (2 hits each) or fly round them. After a restart they are gone |
+| Shots do nothing to FACET MONARCH | Expected on the housing and the arms (armour), and on the core until both crystals in front of it are broken: shoot the crystals first |
+| The wall of cells (CELL VAULT) or the crystal facets (PRISM LABYRINTH) change colour or sway | Expected — the zones' picture effects, behind everything. Report it if the ship, enemies, bullets or the HUD ever change colour or wobble |
 | The scrolling stopped and the picture sank down (zone D) | Expected: the dive into MAGMA DEEP's caves, about 1:17 in. The zone carries on down there. Report it if your ship was pushed into rock or the picture jumped instead of sliding |
 | I cannot get through a brick wall (zone D) | Every wall has a gap — look for it higher or lower — or shoot through: each brick breaks after 4 hits. After a restart the broken bricks are back (expected) |
 | A rock fell on me out of the cave roof (zone D) | Expected — the hanging rocks drop when your ship comes near. Watch the roof and step down early, or shoot them (2 hits) |

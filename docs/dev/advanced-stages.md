@@ -498,5 +498,11 @@ terrain.destroyed; // → 0; terrain.resets → 1
   the caves) and the **destructible brick maze** (seven `brick` walls written as `rle` rows over the
   generated caves, each with a 48-px gap; the checkpoint rollback rebuilds them)
   ([zones-d-and-e.md](zones-d-and-e.md#the-dive)).
-- **M2-13 / M2-14** — the other zones: CELL VAULT (tissue walls, tentacles), PRISM LABYRINTH (the
-  cube rush), IRON CITADEL (moving floors) — authored by hand or in Tiled.
+- **M2-13** (done) — CELL VAULT: seven regenerating **`tissue` walls** (hp 3, `regen` 240 — never
+  grown into a ship — written as `rle` rows, each with a 56-px gap; the rollback rebuilds them at a
+  restart), `tentacle.grab` claws on floors and ceilings, `bubble.split` cells whose child chases the
+  ship; PRISM LABYRINTH: four seeded **cube rushes** (`cube.stack` formations, `drop: null`) stacking
+  onto 22 short crystal pillars as breakable `cube` tiles (the rush needs rock in the cubes' path —
+  aimed at the ship, most of them flew off the left edge before the pillars), geodes splitting into
+  shards, and the prism gallery's `ground` bonus entrance ([zones-f-and-g.md](zones-f-and-g.md)).
+- **M2-14** — IRON CITADEL (moving floors, hatches, laser emitters) — authored by hand or in Tiled.

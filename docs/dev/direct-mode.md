@@ -403,4 +403,8 @@ for (let t = 0; t < 600; t++) stepWorld(world, input);
   `zones-de-direct.test.ts` flies both with the MANTA — down MAGMA DEEP's dive, through its brick
   maze and past TEMPEST RIDGE's rear attackers — and its weapons shoot CINDER BASTION and SQUALL
   STEED down ([zones-d-and-e.md](zones-d-and-e.md#direct-mode-item-plans)).
-- **M2-13 / M2-14** — the other zones' `directItems` plans and carrier waves.
+- **M2-13** (done) — zones F and G have their own `directItems` plans (26 entries each);
+  `zones-fg-direct.test.ts` flies both with the MANTA — through CELL VAULT's tissue walls and
+  tentacle garden and PRISM LABYRINTH's crystal walls and cube rush — and its weapons shoot MANTLE
+  REGENT and FACET MONARCH down ([zones-f-and-g.md](zones-f-and-g.md#direct-mode-item-plans)).
+- **M2-14** — the final zones' `directItems` plans and carrier waves.

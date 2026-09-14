@@ -382,7 +382,10 @@ The zone bosses of M2-11 fire from the standing **core** parts (a mouth, a head)
 minions and lanes from the guns ([zones-b-and-c.md](zones-b-and-c.md#the-new-behaviours-corebehaviors));
 those of M2-12 ([zones-d-and-e.md](zones-d-and-e.md#the-new-behaviours-corebehaviors)) take lanes
 from the guns and spreads from the core (the bastion), or minis from the core and spreads from the
-gun (the seahorse):
+gun (the seahorse); those of M2-13 ([zones-f-and-g.md](zones-f-and-g.md#the-new-behaviours-corebehaviors))
+curl **arms** — chains of circle-hit parts hung from a part that is not one, every segment turned
+alike and mirrored above and below ([the curling-arm rule](zones-f-and-g.md#the-curling-arm-rule))
+— and fire spreads, rings, launches and lanes from the core, needles from the guns at the arms' tips:
 
 | Behaviour | Tunables (defaults) | What it does |
 |---|---|---|
@@ -390,6 +393,8 @@ gun (the seahorse):
 | `boss.widow` (M2-11, SANDGRAVE WIDOW) | `stepTicks` 100, `minX` 250, `maxX` 320, `minY` 56, `maxY` 144, `fireTicks` 80, `bulletSpeed` 1.3, `ways` 3, `spread` 40, `launchTicks` 160, `count` 1, `laserTicks` 0 (never), `laserLength` 384, `laserWidth` 6, `telegraph` 50, `active` 40 | Every `stepTicks` a `moveTo` a random whole-pixel point of its box (gameplay RNG, 60 % of the step); each core spits aimed `ways`-ways of red ovals every `fireTicks`; drones (the `minion`) from up to `count` guns in turn every `launchTicks`; with `laserTicks` ≥ 1 the next standing gun spins a detached horizontal laser to the left every `laserTicks` |
 | `boss.bastion` (M2-12, CINDER BASTION) | `trackSpeed` 0.35, `margin` 44, `spin` 4, `reverseTicks` 0 (never), `laserTicks` 120, `firstLaser` 60, `laserLength` 384, `laserWidth` 8, `telegraph` 45, `active` 50, `fireTicks` 100, `ways` 0 (none), `spread` 40, `bulletSpeed` 1.3, `ring` 0 (none), `ringTicks` 150, `ringSpeed` 1 | Tracks like `boss.bulwark`; `spinPart` on every standing part whose parent is a core (the shield arms' hub — its armoured arm segments ride it) at `spin` units a tick (rounded), set when the phase starts — the arms keep their angle — and reversed every `reverseTicks`; attached lane lasers to the left from the standing guns in turn; with `ways` ≥ 1 aimed spreads of red ovals from the cores, with `ring` ≥ 1 rings of round purple bullets, each turned half a gap from the last |
 | `boss.steed` (M2-12, SQUALL STEED) | `cx` 296, `cy` 100, `rx` 8, `ry` 40, `bobSpeed` 3, `closedTicks` 150, `openTicks` 110, `launchTicks` 45, `minis` 2, `fireTicks` 80, `ways` 3, `spread` 44, `bulletSpeed` 1.3, `ring` 0 (none), `ringSpeed` 1, `gape` 0 (still) | Bobs on the ellipse (`api.orbit`, `bobSpeed` units a tick); its `whenOpen` parts (the chest — the core) shut and open in turn; while open each standing core launches the `minion` (the first 10 ticks after opening, then every `launchTicks`, at most `minis` per opening); aimed spreads of pink ovals from the standing guns (the snout); with `ring` ≥ 1 a ring of round red bullets from the guns each time the chest shuts; `gape` moves the parts attached to a core (the lids) apart from their rest offsets while open |
+| `boss.squid` (M2-13, MANTLE REGENT) | `trackSpeed` 0.35, `margin` 48, `curl` 1, `sweepTicks` 48, `guardTicks` 60, `openTicks` 100, `fireTicks` 70, `ways` 3, `spread` 40, `bulletSpeed` 1.3, `gunTicks` 0 (never), `ring` 0 (none), `ringSpeed` 1, `launchTicks` 0 (never), `count` 1 | Tracks the nearest player's height; its tentacles (the arms) stay straight for `openTicks`, curl in at `curl` units a tick per segment (rounded, at least 1) for `sweepTicks` until the tips meet in front of the core, guard for `guardTicks` and uncurl in `sweepTicks` — each phase starts by uncurling from wherever the last left them; aimed `ways`-ways of red ovals from the standing cores every `fireTicks`; with `gunTicks` ≥ 1 an aimed pink needle from each standing gun (the tips); with `ring` ≥ 1 a ring of round purple bullets from the cores each time the tentacles open (alternating half a gap); with `launchTicks` ≥ 1 `count` of the `minion` per standing core. A broken root takes its tentacle with it — the content's phase change (`partsDestroyed` with `count` 1) |
+| `boss.facet` (M2-13, FACET MONARCH) | `trackSpeed` 0.3, `margin` 50, `wave` 1, `waveTicks` 40, `fireTicks` 90, `ways` 1, `spread` 32, `bulletSpeed` 1.25, `ring` 0 (none), `ringTicks` 150, `ringSpeed` 1, `laserTicks` 0 (never), `laserLength` 384, `laserWidth` 6, `telegraph` 50, `active` 40 | Tracks; its arms wave at `wave` units a tick (rounded, at least 1), `waveTicks` from straight to a turn point — from `wave × waveTicks` curled away from the core's row to as much towards it and back, like claws — carried on from wherever the last phase left them; aimed `ways`-ways of purple needles from the standing guns (the tips); with `ring` ≥ 1 rings of round red bullets from every standing core (armoured or not) every `ringTicks`; with `laserTicks` ≥ 1 a **detached** telegraphed lane to the left from each standing core, one at a time |
 
 `boss.hover` closes every `whenOpen` part when its phase starts (so a new hover phase closes what
 the last one opened — on its first tick, the tick after the change); `boss.lanes` leaves them as
@@ -668,3 +673,8 @@ free flight).
   circle-hurtbox arms on it — and attached lane lasers) and `boss.steed` (SQUALL STEED: a bob on an
   ellipse, a `whenOpen` chest launching homing minis as minions); no engine change
   ([zones-d-and-e.md](zones-d-and-e.md)).
+- **M2-13** (done) — the zone bosses `boss.squid` (MANTLE REGENT, the squid: tentacles of circle-hit
+  parts curling in front of its eye; breaking one ends the first phase) and `boss.facet` (FACET
+  MONARCH, the crystal core: `afterParts` of two crystals, an armoured hull part without a sprite
+  behind the core, waving arms, detached lanes) on one curling-arm rule; no engine change
+  ([zones-f-and-g.md](zones-f-and-g.md)).

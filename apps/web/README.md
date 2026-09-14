@@ -80,8 +80,12 @@ zones B and C are real — `?stage=zone-b` is BRINE NEBULA (GALVANIC MAW, the mi
 the gap into `?stage=brine-grotto`, PEARL GROTTO) and `?stage=zone-c` DUNE EXPANSE (SANDGRAVE WIDOW);
 (guide: [`docs/dev/zones-b-and-c.md`](../../docs/dev/zones-b-and-c.md)); since M2-12 `?stage=zone-d` is
 MAGMA DEEP (the dive into the caves, the brick maze, CINDER BASTION — with `&skip=boss` it starts
-down in the caves) and `?stage=zone-e` TEMPEST RIDGE (rear attackers, SQUALL STEED); F–I are still
-stubs (guide: [`docs/dev/zones-d-and-e.md`](../../docs/dev/zones-d-and-e.md)). Since M1-14 hits
+down in the caves) and `?stage=zone-e` TEMPEST RIDGE (rear attackers, SQUALL STEED) (guide:
+[`docs/dev/zones-d-and-e.md`](../../docs/dev/zones-d-and-e.md)); since M2-13 `?stage=zone-f` is CELL
+VAULT (regenerating tissue walls, grabbing tentacles, MANTLE REGENT) and `?stage=zone-g` PRISM
+LABYRINTH (crystal walls, the cube rush, FACET MONARCH; its prism gallery's four turrets open
+`?stage=glimmer-cache`, GLIMMER CACHE); H and I are still stubs (guide:
+[`docs/dev/zones-f-and-g.md`](../../docs/dev/zones-f-and-g.md)). Since M1-14 hits
 have **game feel**: explosions, sparks, debris, cancel sparkles and a muzzle flash from the
 presets of `content/fx/`, the screen shake of a lost ship or a boss's final blast, flashes
 (behind a ≤ 3-a-second limiter), the WARNING's dim and rising score numbers;

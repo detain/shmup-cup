@@ -81,7 +81,9 @@ boss rushes) in [`docs/dev/advanced-bosses.md`](../../docs/dev/advanced-bosses.m
 (`rocket.homing`, `worm.burst`, `boss.maw`, `boss.widow`) and `BossPart.restX` / `restY` (M2-11) in
 [`docs/dev/zones-b-and-c.md`](../../docs/dev/zones-b-and-c.md); zones D and E's behaviours (`rear.swoop`,
 `boss.bastion` — rotating shield arms as parts on a spinning hub —, `boss.steed`, M2-12) in
-[`docs/dev/zones-d-and-e.md`](../../docs/dev/zones-d-and-e.md); the enemies, formations,
+[`docs/dev/zones-d-and-e.md`](../../docs/dev/zones-d-and-e.md); zones F and G's behaviours (`cell.chase`,
+`boss.squid`, `boss.facet` — tentacle arms on the curling-arm rule —, M2-13) in
+[`docs/dev/zones-f-and-g.md`](../../docs/dev/zones-f-and-g.md); the enemies, formations,
 behaviour coroutines, movers and spline paths (`enemies`, `patterns`, `behaviors`, the
 `enemies` / `paths` data and `data/paths.ts`) in
 [`docs/dev/enemies-and-behaviors.md`](../../docs/dev/enemies-and-behaviors.md); the enemy

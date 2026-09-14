@@ -514,7 +514,12 @@ hashWorld(game.world); // covers every slot, the raid camera, the rush and the e
   sprite) that `boss.bastion` spins with `spinPart` per phase (and reverses), four armoured arm
   segments on it hit as circles; SQUALL STEED bobs with `api.orbit` and launches its homing minis
   as `minion`s from its chest ([zones-d-and-e.md](zones-d-and-e.md#the-rotating-shield-arms-are-data)).
-- **M2-13** — the other zones' mid-bosses (captains) and bosses with the new mechanics.
+- **M2-13** (done) — CELL VAULT's MANTLE REGENT and PRISM LABYRINTH's FACET MONARCH curl
+  **tentacle arms** with the turned parts of this page and no engine change: chains of circle-hit
+  parts, each attached to the one before, whose segments `boss.squid` / `boss.facet` turn by the
+  same amount relative to their parents with `spinPart` and set exactly at each turn point with
+  `setPartAngle`, mirrored above and below; the squid launches its chasing cells as `minion`s from
+  its eye ([zones-f-and-g.md](zones-f-and-g.md#the-curling-arm-rule)).
 - **M2-14** — IRON CITADEL's parade of earlier bosses in reduced form and ABYSSAL THRONE's
   whale-class raid with a boss-inside-boss finale; the endings read the flags.
 - **M2-15** — a practice start at a boss; the attract mode's demo plays.

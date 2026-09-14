@@ -424,7 +424,8 @@ and `behaviors-rocket-worm-alloc.test.ts` (homing rockets and waiting / bursting
 The Tizen `app.js` is **307.5 KB gzip of its 350 KB budget** after this step: the stages, songs
 and rosters are inlined into the bundle (`virtual:shmup-content`), ≈ 6 KB gzip for both zones.
 Zones D–I will need the same care (D and E brought it to 313.5 KB —
-[zones-d-and-e.md](zones-d-and-e.md#bundle-budget)); M2-17 / M2-18 own the budget
+[zones-d-and-e.md](zones-d-and-e.md#bundle-budget) —, F and G to 320.3 KB —
+[zones-f-and-g.md](zones-f-and-g.md#bundle-budget)); M2-17 / M2-18 own the budget
 ([build-test-deploy.md](build-test-deploy.md)).
 
 ## Running it
@@ -458,7 +459,10 @@ The recipe these two zones followed:
 
 1. **Stage** `content/stages/zone-<x>.stage.json` over the stub: 3–6 minutes (2.5–4.5 minutes of
    scroll to the WARNING), ≥ 4 checkpoints, a high-speed key, a calm with two carriers, its own
-   `tilemap.tileset`, `parallax` bands, optional `raster` / `cycles`, a `directItems` plan.
+   `tilemap.tileset`, `parallax` bands, optional `raster` / `cycles`, a `directItems` plan. A
+   `ground` bonus entrance needs every ground enemy of an earlier event off screen when its window
+   arms (M2-13 — [zones-f-and-g.md](zones-f-and-g.md#the-prism-gallery-and-glimmer-cache); the
+   content test checks it).
 2. **Roster** `content/enemies/zone-<x>.enemies.json` (sorts after zone A's — spec indices of
    earlier files never move): 4–6 new types by sprite, existing behaviours where they fit, bosses
    with three phases; every aimed speed ≤ 2 px/tick. Paths and DSL patterns in their folders.
@@ -512,6 +516,9 @@ The recipe these two zones followed:
 - **M2-12** (done) — zones D (MAGMA DEEP) and E (TEMPEST RIDGE) on the same recipe, plus a taller
   map with a dive, a destructible maze, rear attackers and rotating shield arms built from parts
   ([zones-d-and-e.md](zones-d-and-e.md)).
-- **M2-13 / M2-14** — zones F–I, G's hidden bonus stage, the ending scenes.
+- **M2-13** (done) — zones F (CELL VAULT) and G (PRISM LABYRINTH, with G's hidden bonus stage
+  GLIMMER CACHE behind a `ground` entrance) on the same recipe, plus regenerating walls, a seeded cube
+  rush and bosses with curling arms ([zones-f-and-g.md](zones-f-and-g.md)).
+- **M2-14** — zones H and I, the ending scenes.
 - **M2-15** — the practice select (`startPractice` already starts any zone at a checkpoint).
 - **M2-17 / M2-18** — the bundle and texture budgets for nine real zones.

@@ -443,7 +443,13 @@ The bending laser, cancel point and palette suites are listed on their home page
   one `fire` aimed at 0.85 px/tick, then three `sequence` fires — direction +0, speed +0.25 — so
   the streak ends at 1.6; then a ranked 150-tick wait); CINDER BASTION and SQUALL STEED are still TS
   behaviours ([zones-d-and-e.md](zones-d-and-e.md)).
-- **M2-13 / M2-14** (zones F–I) — bosses built on the DSL, the bending lasers and the colour-blind
+- **M2-13** (done) — zone F's `spore-sac` runs `vault.spores` (a fan of three round purple spores
+  56 units apart round the aim, `($i - 1) * 56`, at 0.75 px/tick, then a ranked 170-tick wait) and
+  zone G's `prism-lens` runs `prism.fan` (two fans of four purple needles 18 ticks apart at
+  `($i * 2 - 3) * 20` units round the aim — no bullet on the aimed line — at 1.15, then a ranked
+  140-tick wait); MANTLE REGENT and FACET MONARCH are still TS behaviours
+  ([zones-f-and-g.md](zones-f-and-g.md)).
+- **M2-14** (zones H and I) — bosses built on the DSL, the bending lasers and the colour-blind
   palettes' real-art variants (a PNG override of a bullet sprite needs its own `@<palette>`
   variants).
 - **M2-16** (options) — the bullet palette joins the display options group.

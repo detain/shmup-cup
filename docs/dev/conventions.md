@@ -249,7 +249,9 @@ ES5 and linted with `ecmaVersion: 5`.
   `defineShmupProject(name, { execArgv })`) — every per-tick or per-frame entry point gets a
   test asserting its bytes stay under budget ([sim-world.md](sim-world.md#zero-allocation-and-the-allocation-guard)).
   It keeps the steadiest of three measured windows by default (`attempts`, stopping at the
-  first within `settled` = 32 KiB); give short, cheap loops a long `warmup` (e.g. 20,000), and
+  first within `settled` = 32 KiB — a guard that is only flaky under the full suite's load may ask
+  for more: M2-13's `boss.squid` / `boss.facet` guards take five, their best of three came in at
+  66 KB of 64 now and then); give short, cheap loops a long `warmup` (e.g. 20,000), and
   never move its measured loop into a separate helper — V8 optimises the warm-up loop on stack
   with `fn` inlined, and only that code runs allocation-free.
 

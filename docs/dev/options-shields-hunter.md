@@ -231,7 +231,7 @@ the shipped content has it only in the `hunter-range` dev stage (a `blueCapsule`
 | `scripts/assets/procedural/items.mjs`, `shields.mjs` | `items/capsule-blue` (the capsule pill in blue); `shields/pod` (8×8 gem, 4 wear frames) and `shields/reduce` (20×14 dotted ring, 2 frames) |
 
 **Zone A is unchanged** — its 4-way design rules and playtest budgets were tuned without hunters;
-zones B–E (M2-11, M2-12) place none either; later zones may. New engine sprites (`STOLEN_OPTION_SPRITE`,
+zones B–G (M2-11 … M2-13) place none either; later zones may. New engine sprites (`STOLEN_OPTION_SPRITE`,
 `BLUE_CAPSULE_SPRITE`, `SHIELD_POD_SPRITE`, `REDUCE_SPRITE` through `ITEM_SPRITES` /
 `SHIELD_SPRITES`) are part of `ENGINE_SPRITES`, so `pnpm content:check` checks them against the
 atlas.
@@ -367,5 +367,6 @@ world.powerups.detonateMegaCrash(0); // kills it; its Options come back as ItemK
   tuned without them — [zones-b-and-c.md](zones-b-and-c.md)).
 - **M2-12** (done) — zones D and E place none either
   ([zones-d-and-e.md](zones-d-and-e.md)).
-- **M2-13 / M2-14** — the other zones may place Option Hunters and blue capsules in their stages.
+- **M2-13** (done) — zones F and G place none either ([zones-f-and-g.md](zones-f-and-g.md)).
+- **M2-14** — the final zones may place Option Hunters and blue capsules in their stages.
 - **M3** — option recovery after death.

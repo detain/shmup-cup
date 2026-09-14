@@ -1015,7 +1015,14 @@ const rearSwoop = defineBehavior(
  * the turn cap keeps it from following a ship that changes lanes, the time limit ends the chase,
  * and the straight run after it is a `Homing` mover with a turn rate of 0 (it keeps its course
  * without a jump, like `rocket.homing`). A `speed` of 0 or less is 1 px/tick; the tick counts below
- * 1 are one tick, `turnRate` below 0 is 0. Guide: `docs/dev/zones-f-and-g.md`.
+ * 1 are one tick, `turnRate` is floored and below 0 is 0. The content test holds `speed` to the
+ * 2-px/tick rule of aimed shots (it flies at the ship). Guide: `docs/dev/zones-f-and-g.md`.
+ *
+ * @example
+ * ```json
+ * { "id": "chaser-cell", "hp": 2, "score": 200, "script": "cell.chase",
+ *   "params": { "speed": 1.05, "enterTicks": 46, "turnRate": 5, "chaseTicks": 130 } }
+ * ```
  */
 const cellChase = defineBehavior(
   'cell.chase',
@@ -2288,7 +2295,18 @@ const SQUID_OPENING = 3;
  * when they arrive (a curl that is not a multiple of the new speed is rounded down, then set — less
  * than one step). The curl is mirrored: the arms above the core turn counter-clockwise, those below
  * it clockwise (`armSide`). `curl` is rounded to whole units (at least 1); `sweepTicks`,
- * `openTicks` and `guardTicks` below 1 are one tick. Guide: `docs/dev/zones-f-and-g.md`.
+ * `openTicks` and `guardTicks` below 1 are one tick. Seen from outside, every hold of the cycle
+ * (straight, guarding) lasts one tick longer than its timer: a sweep reaches its end on its last
+ * tick, where the next state begins (the M2-13 test round pins the shipped cycle —
+ * `behaviors-zones-fg-edge.test.ts`). A broken tentacle leaves the other's cycle exactly as it was.
+ * Guide: `docs/dev/zones-f-and-g.md`.
+ *
+ * @example
+ * ```json
+ * { "script": "boss.squid",
+ *   "params": { "curl": 2, "sweepTicks": 15, "guardTicks": 50, "ring": 10, "launchTicks": 180 },
+ *   "until": { "hpBelow": 28, "partsDestroyed": ["root-top", "root-bottom"] } }
+ * ```
  */
 const bossSquid = defineBossBehavior(
   'boss.squid',
@@ -2410,7 +2428,14 @@ const bossSquid = defineBossBehavior(
  * them jump; each turn point is set exactly when reached (`setArmCurl` — the rest of a curl that is
  * not a multiple of the new `wave`, less than one step). `wave` is rounded to whole units (at least
  * 1), `waveTicks` below 1 is one tick. One lane at a time while `laserTicks` outlasts a lane
- * (telegraph + grow + active + fade). Guide: `docs/dev/zones-f-and-g.md`.
+ * (telegraph + grow + active + fade). The arms only turn: a phase change (the crystals breaking)
+ * carries them on without a jump. Guide: `docs/dev/zones-f-and-g.md`.
+ *
+ * @example
+ * ```json
+ * { "script": "boss.facet",
+ *   "params": { "wave": 2, "waveTicks": 30, "ways": 3, "ring": 10, "laserTicks": 220 } }
+ * ```
  */
 const bossFacet = defineBossBehavior(
   'boss.facet',

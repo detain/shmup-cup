@@ -247,6 +247,32 @@ versions before 1.0 may change anything between minor releases. Development foll
   re-blessed (new sprites and scripts shift ids — inputs, tick counts and outcomes unchanged) and
   five zone D / E runs were added (38 in all). The Tizen `app.js` is 313.5 KB gzip of its 350 KB
   budget.
+- **Zone F, CELL VAULT** (M2-13) replaces its stand-in: about 3½ minutes inside a living vault —
+  cells that **chase** the ship, big cells that **divide** into two chasers when shot, a passage of
+  **tissue walls that grow back** after you shoot through them (a gap in each), **grabbing
+  tentacles** that lunge and tug the ship, spore sacs and a fast pulse run; the boss **MANTLE
+  REGENT** is a squid whose two tentacles curl in front of its eye to guard it — break one and it
+  changes its attacks, launching chasing cells. Its own stage and boss music.
+- **Zone G, PRISM LABYRINTH** (M2-13) replaces its stand-in: about 4 minutes in a crystal maze —
+  crystal walls from the ceiling and the floor in turn, **rushes of cubes** that stick where they hit
+  and build walls, lenses fanning needles, geodes that shatter —; the boss **FACET MONARCH** hides
+  its core behind two crystals and waves two arms like claws, with lane lasers at the end. **The
+  second secret bonus stage**, GLIMMER CACHE (1,000-point capsules, an extra ship), opens when all
+  four turrets of the prism gallery are shot down. Its own music.
+- For content authors (M2-13): the behaviours `cell.chase` (a chasing cell: in along its row, a
+  capped-turn chase, then straight on), `boss.squid` and `boss.facet` (tentacle arms as chains of
+  circle-hit parts, curled alike and mirrored, carried across phase changes without a jump); the
+  patterns `vault.spores` and `prism.fan`; the tilesets `terrain-vault` / `terrain-prism`; songs for
+  zones F and G; the bonus stage `glimmer-cache`; the rule that no ground enemy of an earlier event
+  may still stand when a `ground` bonus window arms
+  ([`content/stages/README.md`](content/stages/README.md),
+  [`content/enemies/README.md`](content/enemies/README.md)).
+- Behaviour change for tools and tests (M2-13): the content test's zones block covers B–G (the
+  chasing cells' and claws' speeds in the 2-px/tick check) and plays every shipped stage with a
+  `ground` entrance to hold it to the rule above. The golden replays were re-blessed (new sprites and
+  scripts shift ids — inputs, tick counts and outcomes unchanged; the review fix re-blessed
+  `zone-g-god` once more, ticks and outcome unchanged) and eight zone F / G runs were added (46 in
+  all). The Tizen `app.js` is 320.3 KB gzip of its 350 KB budget.
 
 ### Documentation
 
@@ -287,7 +313,12 @@ versions before 1.0 may change anything between minor releases. Development foll
   [Zone C: DUNE EXPANSE](docs/client/preview-build.md#zone-c-dune-expanse) (M2-11); the developer
   guide [`docs/dev/zones-d-and-e.md`](docs/dev/zones-d-and-e.md) and the tester guide's
   [Zone D: MAGMA DEEP](docs/client/preview-build.md#zone-d-magma-deep) and
-  [Zone E: TEMPEST RIDGE](docs/client/preview-build.md#zone-e-tempest-ridge) (M2-12).
+  [Zone E: TEMPEST RIDGE](docs/client/preview-build.md#zone-e-tempest-ridge) (M2-12); the developer
+  guide [`docs/dev/zones-f-and-g.md`](docs/dev/zones-f-and-g.md) and the tester guide's
+  [Zone F: CELL VAULT](docs/client/preview-build.md#zone-f-cell-vault) and
+  [Zone G: PRISM LABYRINTH](docs/client/preview-build.md#zone-g-prism-labyrinth) with the secret
+  bonus stage [GLIMMER CACHE](docs/client/preview-build.md#the-secret-bonus-stage-glimmer-cache)
+  (M2-13).
 
 ## [0.1.0] — M1: playable vertical slice
 

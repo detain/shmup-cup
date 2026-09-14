@@ -152,10 +152,13 @@ loop), `boss` (BULWARK ASSAULT, `Boss` — 2.7 s + 21.3 s), `title` (SHMUP CUP, 
 EXPANSE) and `boss-c` (SANDGRAVE ASSAULT) with `["zone-c"]` — the stage themes 6.4 s intro + 44.8 s
 loop, the boss themes in the shape of BULWARK ASSAULT. Since M2-12 four more in the same forms:
 `zone-d` (MAGMA DEEP) and `boss-d` (BASTION OF CINDERS) with `["zone-d"]`, `zone-e` (TEMPEST
-RIDGE) and `boss-e` (STEED OF THE SQUALL) with `["zone-e"]`. They win over the defaults only in
-their zone; every other stage (zone A, the dev stages, the stub zones F–I, zone B's bonus stage
-played alone) uses the defaults ([zones-b-and-c.md](zones-b-and-c.md#songs),
-[zones-d-and-e.md](zones-d-and-e.md#songs)).
+RIDGE) and `boss-e` (STEED OF THE SQUALL) with `["zone-e"]`, and since M2-13 `zone-f` (CELL VAULT)
+and `boss-f` (REGENT OF THE VAULT) with `["zone-f"]`, `zone-g` (PRISM LABYRINTH) and `boss-g`
+(THRONE OF FACETS) with `["zone-g"]`. They win over the defaults only in their zone; every other
+stage (zone A, the dev stages, the stub zones H and I, a zone's bonus stage played alone) uses the
+defaults — reached from its zone, a bonus stage (PEARL GROTTO, GLIMMER CACHE) plays the zone's
+resident set ([zones-b-and-c.md](zones-b-and-c.md#songs),
+[zones-d-and-e.md](zones-d-and-e.md#songs), [zones-f-and-g.md](zones-f-and-g.md#songs)).
 
 ## The synth (`synth`)
 
@@ -441,5 +444,7 @@ song's loop points and render time. Options: `--out DIR`, `--only NAME` (one cue
   ([zones-b-and-c.md](zones-b-and-c.md#songs)).
 - **M2-12** (done) — zones D and E's own stage and boss songs, the same way
   ([zones-d-and-e.md](zones-d-and-e.md#songs)).
-- **M2-13 / M2-14** — the other zones' own songs.
+- **M2-13** (done) — zones F and G's own stage and boss songs, the same way; GLIMMER CACHE plays
+  zone G's resident set ([zones-f-and-g.md](zones-f-and-g.md#songs)).
+- **M2-14** — the final zones' own songs, the ending and credits songs.
 - **M3-03** — tracker music.

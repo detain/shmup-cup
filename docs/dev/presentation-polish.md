@@ -488,8 +488,12 @@ const refresh = createRefreshMonitor();
   `to` the dive, a `wave` on the lake `from` it) and TEMPEST RIDGE's heavy weather (two storm-cloud
   bands painted only in `STORM_RAMP` and cycled on the far layer with a `wave`, a mountain band,
   three rows of rain) ([zones-d-and-e.md](zones-d-and-e.md)).
-- **M2-13 / M2-14** — glowing cores (CELL VAULT) and the other zones through `raster` / `cycles`
-  in their stage files.
+- **M2-13** (done) — CELL VAULT's pulsing wall of cells (`bg/vault-membrane`, painted only in
+  `VAULT_RAMP`, three rows on the far layer, cycled every 12 ticks, a slow `wave` so it breathes) and
+  PRISM LABYRINTH's glinting crystal facets (`bg/prism-facets`, each facet one `PRISM_RAMP` colour by a
+  position hash, so the cycle lights them in turn) with a `haze` over the spires band
+  ([zones-f-and-g.md](zones-f-and-g.md)).
+- **M2-14** — the final zones through `raster` / `cycles` in their stage files.
 - **M2-16** — the remaining option groups (controls rebinding, game options).
 - **M2-17** — Electron's window, fullscreen and refresh settings.
 - **M3-02** — the CRT filter (`EffectSettings.crt`) and Mode 7-style floors as further filters.

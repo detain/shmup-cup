@@ -125,8 +125,9 @@ the boot error screen), and — since M1-19 — the **budgets** hold: `app.js` �
 (`APP_JS_GZIP_BUDGET`), every atlas page a readable PNG of at most 2048² (`ATLAS_PAGE_MAX_SIZE`),
 the whole `dist/` ≤ 8 MB (`DIST_BUDGET`). The OK line prints the sizes against them
 (M1-19: `app.js` 773.6 KB, 228.6 KB gzipped; `dist/` 812.4 KB; after M2-11 `app.js` is 307.5 KB
-gzipped and after M2-12 313.5 KB — the content of every zone is inlined, each pair of zones adds
-≈ 6 KB — so zones F–I need the same care: [zones-d-and-e.md](zones-d-and-e.md#bundle-budget)). A release build must also carry
+gzipped, after M2-12 313.5 KB and after M2-13 320.3 KB — the content of every zone is inlined, each
+pair of zones adds ≈ 6–7 KB — so zones H and I need the same care:
+[zones-f-and-g.md](zones-f-and-g.md#bundle-budget)). A release build must also carry
 no debug code (`tizen-build.test.ts` looks for `__shmupDebug` / `debug-overlay`).
 `apps/tizen/test/build/tizen-build.test.ts` also executes the bundle in a V8 realm with
 `globalThis` deleted.
@@ -228,15 +229,20 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   checks the recovery rule at their eight checkpoints (the shared `recovery.ts` —
   [zones-b-and-c.md](zones-b-and-c.md#playtests-the-recovery-rule-and-the-harness)); since M2-12
   `zone-d` / `zone-e.test.ts` and `zone-de-recovery.test.ts` do the same for zones D and E (zone
-  D's camera reaching the caves — [zones-d-and-e.md](zones-d-and-e.md#playtests-and-the-recovery-rule)).
+  D's camera reaching the caves — [zones-d-and-e.md](zones-d-and-e.md#playtests-and-the-recovery-rule));
+  since M2-13 `zone-f` / `zone-g.test.ts` and `zone-fg-recovery.test.ts` for zones F and G (shots
+  breaking tissue, the claws lunging, the rush stacking cubes —
+  [zones-f-and-g.md](zones-f-and-g.md#playtests-and-the-recovery-rule)).
   `pnpm exec vitest run --project integration test/playtest --reporter=verbose` prints the runs —
   see [zone-a-and-playtest.md](zone-a-and-playtest.md#the-playtest-testplaytest).
 - **Golden replays** (M1-19, plan §1.3): `test/golden/golden.test.ts` plays the committed
-  replays — thirty-eight since M2-12: seventeen of zone A, three of the `gimmick-range` dev stage,
+  replays — forty-six since M2-13: seventeen of zone A, three of the `gimmick-range` dev stage,
   one of the `raster-range` dev stage, four of the advanced-boss dev stages (`captain-range`,
   `raid-range` twice, `twin-range`), three of the bonus-stage dev stages (`bonus-range` twice,
   `bonus-vault`), five of zones B and C (`zone-b` twice, `zone-c` twice, `brine-grotto`), five
-  of zones D and E (`zone-d` three times — god mode, without, the boss —, `zone-e` twice)
+  of zones D and E (`zone-d` three times — god mode, without, the boss —, `zone-e` twice), eight
+  of zones F and G (`zone-f` four times — god mode, Arcade difficulty, the weaver's deaths, the boss
+  —, `zone-g` three times — god mode, without, the boss —, `glimmer-cache`)
   (`test/golden/*.replay.json`) — back and requires every state hash and the
   recorded outcome to match — part of `pnpm test` (the `integration` project). A failure means
   the simulation changed; re-bless an intended change with `pnpm golden:update` and say why in

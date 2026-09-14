@@ -519,3 +519,13 @@ the rear attackers, six parallax bands), `enemies/zone-d.enemies.json` / `zone-e
 `tilesets/terrain-magma` / `terrain-ridge.tileset.json` and four stage-scoped songs. A boss part
 with neither `hurtbox` nor `radius` (CINDER BASTION's `hub`) was already valid: it is never hit or
 touched, only placed — and turned ([zones-d-and-e.md](zones-d-and-e.md)).
+
+M2-13 (done) — still **no schema change**: zones F and G are content on the existing kinds —
+`stages/zone-f.stage.json` (seven regenerating `tissue` walls as `rle` rows over the heightfield)
+and `zone-g.stage.json` (crystal walls and pillars as `rle` rows, a `bonus` event with
+`"entrance": "ground"`, four `cube.stack` formations), `stages/glimmer-cache.stage.json` (a bonus
+stage), `enemies/zone-f.enemies.json` / `zone-g.enemies.json` (sorting after the earlier zones),
+`vault.spores` and `prism.fan` in `patterns/zones.patterns.json`, `tilesets/terrain-vault` /
+`terrain-prism.tileset.json` and four stage-scoped songs; no path file (the halo crystals fly zone
+A's). Boss arms are ordinary parts with a `radius` attached to one another; FACET MONARCH's armour
+is a part with a hurtbox and no sprite, which was already valid ([zones-f-and-g.md](zones-f-and-g.md)).
