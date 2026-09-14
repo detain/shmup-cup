@@ -12,15 +12,19 @@ concurrency:
 permissions:
   contents: read
 
+# Every check runs in its own job, in parallel: the run takes as long as its slowest job (an e2e
+# shard) instead of the sum of all checks. Each job installs on its own (the pnpm store is cached
+# by actions/setup-node, so an install takes seconds).
+env:
+  # Electron is only type-checked and compiled in CI — never download its binary.
+  ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+  TURBO_TELEMETRY_DISABLED: '1'
+
 jobs:
-  build:
-    name: lint · typecheck · test · build
+  lint:
+    name: format · lint
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    env:
-      # Electron is only type-checked and compiled in CI — never download its binary.
-      ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
-      TURBO_TELEMETRY_DISABLED: '1'
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
 
@@ -35,33 +39,97 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
+      - name: Format check
+        run: pnpm format:check
+
       - name: Lint
         run: pnpm lint
+
+  typecheck:
+    name: typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
 
       - name: Typecheck
         run: pnpm typecheck
 
+  test:
+    # Unit and integration tests (golden replays included), split over three runners by Vitest's
+    # --shard (test files by path hash).
+    name: test ${{ matrix.shard }}/3
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
       - name: Test
-        run: pnpm test
+        run: pnpm test --shard=${{ matrix.shard }}/3
+
+  build:
+    name: build · benchmark
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
 
       - name: Build
         run: pnpm build
 
       # Plan M1-19: 20,000 stress ticks (512 bullets, 64 enemies, full loadout, lasers) — fails
-      # when the median reaches 1.0 ms/tick or the heap grows by 512 KB after the warm-up.
+      # when the median reaches 1.0 ms/tick or the heap grows by 512 KB after the warm-up. It has
+      # this runner to itself, so the timing is not disturbed by other checks.
       - name: Benchmark
         run: pnpm bench
 
   e2e:
     # Browser smoke tests (plan §1.4): builds the web and Tizen apps (`build:test` — dev / test
     # builds with the debug tools and window.__shmupDebug, plan M1-19) and opens them in headless
-    # Chromium with SwiftShader WebGL (web via `vite preview`, Tizen via file://).
-    name: e2e · headless Chromium (web + Tizen builds)
+    # Chromium with SwiftShader WebGL (web via `vite preview`, Tizen via file://). The tests are
+    # split over five runners with Playwright's --shard; each builds its own test builds (faster
+    # than passing them between jobs).
+    name: e2e ${{ matrix.shard }}/5 · headless Chromium (web + Tizen builds)
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    env:
-      ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
-      TURBO_TELEMETRY_DISABLED: '1'
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5]
     steps:
       - uses: actions/checkout@v5
 
@@ -79,7 +147,7 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Browser smoke tests
-        run: pnpm test:e2e
+        run: pnpm test:e2e --shard=${{ matrix.shard }}/5
 
   input-probe:
     # tools/input-probe is a standalone npm project (not in the pnpm workspace), so it gets its own job.
