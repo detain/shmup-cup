@@ -24,7 +24,11 @@
  *   is clamped to the camera view minus `spec.margins` (world-space coordinates, D26).
  * - The bank frame follows the vertical intent, one bank step per tick up to `spec.bankFrames`.
  * - `entering` / `respawning`: an uncontrollable `spec.enterTicks`-tick fly-in from the left edge
- *   ({@link ENTER_START_X} → {@link ENTER_END_X}, camera-relative, cubic ease-out), then `alive`.
+ *   ({@link ENTER_START_X} → {@link ENTER_END_X}, camera-relative, cubic ease-out), then `alive` —
+ *   the zone's launch intro.
+ * - `leaving` (M2-10): the stage-clear fly-out ({@link flyOutPlayer}) — uncontrollable, the ship
+ *   accelerates to the right ({@link LEAVE_ACCELERATION} up to {@link LEAVE_MAX_SPEED} over the
+ *   scroll) until it is past the view ({@link LEAVE_END_X}); it is neither hit nor firing.
  *
  * **Hits (M1-07).** {@link playerHit} is the single entry point for anything that would kill the
  * ship (terrain, enemy contact, bullets, lasers). It records the hit on the ship (`hitCause`,
@@ -57,7 +61,7 @@
  * in both modes.
  *
  * **Implements.**
- * - shmup_feat.md §5 Player ship
+ * - shmup_feat.md §5 Player ship (the launch fly-in and, since M2-10, the stage-clear fly-out)
  * - shmup_feat.md §10 Death, respawn & checkpoints
  * - shmup_feat.md §16 2-player simultaneous co-op — player 2's ship in slot 1, with its own lives
  *   and shield (M2-06; joining, leaving and continuing are `core/world`'s)
@@ -68,7 +72,9 @@
  * {@link playerBankFrame}, {@link resolvePlayerShip}, {@link DEFAULT_PLAYER_SHIP},
  * {@link DIAGONAL_SCALE}, {@link ENTER_START_X}, {@link ENTER_END_X}, {@link SPAWN_Y},
  * {@link playerHit}, {@link PlayerHitCause}, {@link PLAYER_HIT_CAUSE_NAMES}, {@link killPlayer},
- * {@link respawnPlayer}, {@link playerOut}, {@link PLAYER_DYING_TICKS}, {@link PLAYER_DEAD_TICKS}.
+ * {@link respawnPlayer}, {@link playerOut}, {@link PLAYER_DYING_TICKS}, {@link PLAYER_DEAD_TICKS};
+ * the fly-out (M2-10) {@link flyOutPlayer}, {@link LEAVE_ACCELERATION}, {@link LEAVE_MAX_SPEED},
+ * {@link LEAVE_END_X}.
  *
  * **Planned API.** None (joining co-op mid-game and the per-player continues live in
  * `core/world`: `joinPlayer`, `continueWorld` — M2-01 / M2-06).
@@ -96,7 +102,7 @@ export const moduleInfo = defineModule({
 });
 
 /** Life-cycle state of a ship (see the module docs' life cycle). */
-export type PlayerState = 'entering' | 'alive' | 'dying' | 'dead' | 'respawning';
+export type PlayerState = 'entering' | 'alive' | 'dying' | 'dead' | 'respawning' | 'leaving';
 
 /** Every {@link PlayerState}, in a fixed order (the index is the state's code in state hashes). */
 export const PLAYER_STATES: readonly PlayerState[] = Object.freeze([
@@ -105,6 +111,7 @@ export const PLAYER_STATES: readonly PlayerState[] = Object.freeze([
   'dying',
   'dead',
   'respawning',
+  'leaving',
 ] as PlayerState[]);
 
 /**
@@ -130,6 +137,20 @@ export const PLAYER_DYING_TICKS = 24;
 
 /** Ticks a ship stays `dead` before the World respawns it (plan M1-12). */
 export const PLAYER_DEAD_TICKS = 60;
+
+/**
+ * Acceleration of the stage-clear fly-out (plan M2-10, shmup_feat.md §5 "stage-clear fly-out"):
+ * a `leaving` ship's speed over the scroll grows by this many px/tick every tick.
+ */
+export const LEAVE_ACCELERATION = 0.125;
+
+/** Top speed of the fly-out over the scroll, px/tick. */
+export const LEAVE_MAX_SPEED = 8;
+
+/**
+ * Camera-relative x where a `leaving` ship stops — past the playfield's right edge, out of view.
+ */
+export const LEAVE_END_X = PLAYFIELD_W + 32;
 
 /** Runtime state of one player ship. */
 export interface PlayerShip {
@@ -490,6 +511,27 @@ export function spawnPlayer(
 }
 
 /**
+ * Starts the stage-clear fly-out (plan M2-10): the ship is `leaving` — out of the player's
+ * control, it accelerates to the right until it is past the view ({@link LEAVE_END_X}); it cannot
+ * be hit (only `alive` ships can) and does not fire. The World starts it for every `alive` ship on
+ * the ticks after its status turned `stageClear`.
+ *
+ * @param ship - The ship.
+ *
+ * @example
+ * ```ts
+ * if (world.status === 'stageClear' && ship.state === 'alive') flyOutPlayer(ship);
+ * ```
+ */
+export function flyOutPlayer(ship: PlayerShip): void {
+  if (!ship.active) return;
+  setPlayerState(ship, 'leaving');
+  ship.invulnTicks = 0;
+  ship.bank = 0;
+  ship.moving = false;
+}
+
+/**
  * Sprite frame of a bank step: 0 = level, `1 … bankFrames` = banking up (steeper), then
  * `bankFrames + 1 … 2·bankFrames` = banking down (the `ships/kestrel` frame order).
  *
@@ -554,6 +596,15 @@ export function updatePlayer(
   }
   if (state === 'dying') {
     if (ship.stateTicks >= PLAYER_DYING_TICKS) setPlayerState(ship, 'dead');
+    return;
+  }
+  if (state === 'leaving') {
+    // The fly-out (M2-10): ride the scroll and speed up to the right until out of view.
+    const boost = LEAVE_ACCELERATION * ship.stateTicks;
+    ship.x += camera.dx + (boost < LEAVE_MAX_SPEED ? boost : LEAVE_MAX_SPEED);
+    ship.y += camera.dy;
+    const end = camera.x + LEAVE_END_X;
+    if (ship.x > end) ship.x = end;
     return;
   }
   if (state !== 'alive') return;

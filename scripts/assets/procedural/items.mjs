@@ -8,6 +8,10 @@
  * The point item `items/point` (5×5, 2 frames, plan M2-02): a small gold diamond with a dark
  * rim that cancelled bullets turn into; frame 1 is its twinkle (a white centre and tips).
  *
+ * The bonus stages' items (plan M2-10): `items/capsule-bonus` (12×8, 2 frames) — the pill in gold,
+ * worth 1,000 points — and `items/1up` (12×8, 2 frames) — the pill in green with a white `+`, an
+ * extra life.
+ *
  * @module
  */
 import { createImage, setPixel } from '../image.mjs';
@@ -39,13 +43,16 @@ function insidePill(x, y, w, h, inset) {
 const CAPSULE_COLORS = {
   red: { rim: '#5a1408', body: ['#e04a18', '#ff7a30'], band: ['#f89850', '#ffd080'] },
   blue: { rim: '#08164a', body: ['#2458d8', '#4c8cff'], band: ['#78b0ff', '#e0f0ff'] },
+  gold: { rim: '#5a3a04', body: ['#d8a018', '#ffd040'], band: ['#f8d878', '#fff4c0'] },
+  green: { rim: '#0a3a10', body: ['#28a838', '#50e060'], band: ['#90f098', '#e0ffe0'] },
 };
 
 /**
  * Draws one capsule frame.
  *
  * @param {boolean} bright - The lit blink frame.
- * @param {'red' | 'blue'} [tint] - The capsule's colours (default the red power capsule).
+ * @param {'red' | 'blue' | 'gold' | 'green'} [tint] - The capsule's colours (default the red
+ *   power capsule).
  * @returns {Image} 12×8 frame.
  */
 function capsule(bright, tint = 'red') {
@@ -67,6 +74,22 @@ function capsule(bright, tint = 'red') {
   if (bright) {
     setPixel(image, 3, 2, glint);
     setPixel(image, 4, 2, glint);
+  }
+  return image;
+}
+
+/**
+ * Draws one 1UP frame: the green pill with a white `+` in its middle.
+ *
+ * @param {boolean} bright - The lit blink frame.
+ * @returns {Image} 12×8 frame.
+ */
+function oneUp(bright) {
+  const image = capsule(bright, 'green');
+  const white = color('#ffffff');
+  for (let d = -2; d <= 2; d++) {
+    setPixel(image, 6 + d, 4, white);
+    setPixel(image, 6, 4 + (d < 0 ? d : d > 1 ? 1 : d), white);
   }
   return image;
 }
@@ -97,7 +120,8 @@ function point(twinkle) {
 /**
  * Generates the item sprites.
  *
- * @returns {SpriteDef[]} `items/capsule`, `items/point` and `items/capsule-blue`.
+ * @returns {SpriteDef[]} `items/capsule`, `items/point`, `items/capsule-blue`,
+ *   `items/capsule-bonus` and `items/1up`.
  */
 export function generate() {
   return [
@@ -108,6 +132,12 @@ export function generate() {
       animations: { twinkle: [0, 1] },
     }),
     makeSprite('items/capsule-blue', [capsule(false, 'blue'), capsule(true, 'blue')], 'items', {
+      animations: { blink: [0, 1] },
+    }),
+    makeSprite('items/capsule-bonus', [capsule(false, 'gold'), capsule(true, 'gold')], 'items', {
+      animations: { blink: [0, 1] },
+    }),
+    makeSprite('items/1up', [oneUp(false), oneUp(true)], 'items', {
       animations: { blink: [0, 1] },
     }),
   ];

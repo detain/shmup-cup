@@ -122,6 +122,13 @@ export const SimEventKind = {
    * pixels), `param` 0. No tally; a stage boss's escape sets the World's `BossEscaped` ending flag.
    */
   BossEscaped: 14,
+  /**
+   * Prepare the presentation of a stage that is about to be played (M2-10 — the zone map, while
+   * the player's choice launches): `id` = the stage's `ContentDb.stages` index. The host loads
+   * what the stage needs before its World starts — its music set (`@shmup/shell` asks the audio
+   * engine to prepare it, keeping the title theme); the tileset art is resident in the one atlas.
+   */
+  PrepareStage: 15,
 } as const;
 
 /** One of the {@link SimEventKind} codes. */
@@ -144,6 +151,7 @@ export const SIM_EVENT_KIND_NAMES: readonly string[] = Object.freeze([
   'score',
   'userOption',
   'bossEscaped',
+  'prepareStage',
 ]);
 
 /**

@@ -106,7 +106,9 @@ describe('core/powerups Direct mode — the tables', () => {
   it('numbers the colour items 3–8 after the capsules and freed Options, 300 points each', () => {
     expect(DIRECT_ITEM_KINDS).toEqual([3, 4, 5, 6, 7, 8]);
     expect([ItemKind.DirectRed, ItemKind.DirectOctagon]).toEqual([3, 8]);
-    expect(ITEM_KINDS).toHaveLength(ItemKind.DirectOctagon + 1);
+    // M2-10 appended the bonus stages' 1UP and bonus capsule after the colour items.
+    expect(ITEM_KINDS).toHaveLength(ItemKind.BonusCapsule + 1);
+    expect([ItemKind.OneUp, ItemKind.BonusCapsule]).toEqual([9, 10]);
     for (let i = 0; i < DIRECT_ITEMS.length; i++) {
       const spec = ITEM_KINDS[DIRECT_ITEM_KINDS[i]];
       expect(spec).toEqual({ sprite: 'items/direct-' + DIRECT_ITEMS[i], frames: 2, score: 300 });

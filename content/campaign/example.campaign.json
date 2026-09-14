@@ -1,0 +1,28 @@
+{
+  "formatVersion": 1,
+  "kind": "campaign",
+  "id": "example",
+  "name": "SAMPLE MAP",
+  "start": "start",
+  "zones": [
+    { "id": "start", "label": "S", "name": "SAMPLE START", "stage": "example" },
+    {
+      "id": "upper",
+      "label": "U",
+      "name": "UPPER ROUTE",
+      "stage": "example",
+      "preview": ["THE HIGH ROAD.", "TWO LINES AT MOST THREE."]
+    },
+    { "id": "lower", "label": "L", "name": "LOWER ROUTE", "stage": "example" }
+  ],
+  "edges": [
+    { "from": "start", "to": "upper" },
+    { "from": "start", "to": "lower" }
+  ],
+  "endings": [
+    { "id": "upper-flawless", "name": "A FLAWLESS FLIGHT", "zone": "upper", "all": ["noDeath"] },
+    { "id": "upper", "name": "THE HIGH ROAD", "zone": "upper" },
+    { "id": "lower", "name": "THE LOW ROAD", "zone": "lower", "none": ["bossEscaped"] },
+    { "id": "lower-escape", "name": "IT GOT AWAY", "zone": "lower" }
+  ]
+}

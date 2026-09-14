@@ -55,6 +55,32 @@
  *     the game-over screen.
  *   - {@link GameOverScene} (overlay): OK (after a short lock) or 10 s → title.
  *
+ *   **Campaign runs (M2-10).** When the host config's stage is the start zone of the content's
+ *   campaign (`ContentDb.campaign` — the shipped game), a game is a **run** across the zone map
+ *   ({@link SceneFlow.run}, `./run.ts` {@link RunState}): every zone is a fresh World built from
+ *   the run state (`runWorldConfig` / `prepareRunWorld`: the zone's stage, the rank's stage term,
+ *   the players carried in — score, lives, loadout, meter cursor, shield). The game scene shows the
+ *   zone's title card (`ZONE B` / its name, {@link ZONE_CARD_TICKS}) during the launch fly-in; after
+ *   the boss (the ships fly out — `core/player` `flyOutPlayer`) the stage-clear screen is the
+ *   **zone result tally** (kill rate and boss time bonus, paid, the players carried out), then:
+ *   - {@link MapScene}: the node graph of the campaign, Up / Down choose one of the cleared zone's
+ *     exits, OK launches (`SimEventKind.PrepareStage` — the host prepares the next zone's music
+ *     meanwhile), Back asks "quit to title?";
+ *   - {@link EndingScene} after the final zone: the ending `core/data` `selectCampaignEnding`
+ *     picked from the final zone and the run's flags (no death, no continue, a bonus stage
+ *     cleared, a boss escaped), the route and the score — the run is recorded then.
+ *
+ *   **Hidden bonus stages (M2-10).** A World's opened bonus entrance (`core/stage`
+ *   `BonusEntrances`) flies the players into the bonus stage after {@link BONUS_WARP_TICKS} (the
+ *   game scene swaps its World, carrying the players); a death there brings them back to the
+ *   entrance after {@link BONUS_FAIL_TICKS}, the zone's entrances locked; clearing it counts as the
+ *   zone's clear (the boss is skipped) — `BONUS STAGE CLEAR` in the tally. Single-stage runs have
+ *   bonus stages too (their clear is the M1 stage clear).
+ *
+ *   **Practice (M2-10 plumbing).** {@link SceneFlow.startPractice} plays one campaign zone from a
+ *   checkpoint (its rank stage term, a fresh loadout): its clear returns to the title and nothing is
+ *   recorded (M2-15 brings the practice select and its table).
+ *
  *   **Saves (M1-17).** The flow plays with a `core/save` {@link SaveStore} (the host's, loaded
  *   before the title — or a memory-only one): the session hi-score of each difficulty starts from
  *   the saved best of its table ({@link SceneFlow.modeKey}: power-up mode and difficulty); when a
@@ -107,6 +133,8 @@
  *   too); Back or BACK: save and close.
  * - **Confirm** — Left / Up: YES, Right / Down: NO; OK: answer; Back: NO.
  * - **Stage clear** — OK: skip ahead. **Game over** — OK or Back (after a 30-tick lock): title.
+ * - **Zone map** (M2-10) — Up / Down: choose the next zone; OK: launch; Back: "quit to title?".
+ * - **Ending** (M2-10) — OK (after a 60-tick lock): title.
  *
  * **Implements.**
  * - shmup_feat.md §17 Screens, UI flow & HUD — scene flow, title / pause / game over / stage clear
@@ -119,6 +147,9 @@
  * - shmup_feat.md §5 — ship selection: the meter ship or the Direct-mode ship (M2-05)
  * - shmup_feat.md §16 — 2-player simultaneous co-op: `2 PLAYERS` on the title, the drop-in join,
  *   per-player continues and both players' scores on the end screens (M2-06)
+ * - shmup_feat.md §14 — the branching zone map, the run carried between zones, hidden bonus stages
+ *   (entry, lock-out, the boss skipped); §17 — zone map, zone result tally, ending; §5 — the zone's
+ *   launch intro card; §15 — the time bonus and the ending chosen by route and flags (M2-10)
  *
  * **Public API.** {@link SceneStack}, {@link createSceneStack}, {@link SCENE_STACK_DEPTH},
  * {@link Scene}, {@link SceneId}, {@link SceneFlow}, {@link SceneFlowHost}, {@link SceneStart},
@@ -140,14 +171,22 @@
  * {@link FLASH_LABELS}, M2-08) and the timing constants ({@link STAGE_CLEAR_DELAY_TICKS},
  * {@link GAME_OVER_DELAY_TICKS}, {@link GAME_OVER_TIMEOUT_TICKS}, {@link GAME_OVER_LOCK_TICKS},
  * {@link STAGE_CLEAR_TALLY_TICKS}, {@link STAGE_CLEAR_CONTINUED_TICKS}, {@link PAUSE_DIM},
- * {@link CONTINUE_COUNTDOWN_TICKS}, {@link CONTINUE_LOCK_TICKS}).
+ * {@link CONTINUE_COUNTDOWN_TICKS}, {@link CONTINUE_LOCK_TICKS}); M2-10: {@link MapScene},
+ * {@link EndingScene}, {@link BONUS_WARP_TICKS}, {@link BONUS_FAIL_TICKS}, {@link ZONE_CARD_TICKS},
+ * {@link ZONE_TALLY_TICKS}, {@link MAP_LAUNCH_TICKS}, {@link ENDING_LOCK_TICKS},
+ * {@link ENDING_TIMEOUT_TICKS} and, from `./run.ts`, {@link RunState}, {@link CarryState},
+ * {@link CarriedPlayer}, {@link captureCarry}, {@link applyCarry}, {@link copyShieldState},
+ * {@link worldDeaths}, {@link ZoneResult}, {@link tallyZone}, {@link awardZoneBonus},
+ * {@link runWorldConfig}, {@link prepareRunWorld}, {@link RunFlag},
+ * {@link KILL_BONUS_PER_PERCENT}, {@link TIME_BONUS_PAR_TICKS}, {@link TIME_BONUS_PER_SECOND}.
  *
  * **Co-op (M2-06).** {@link SceneFlow.coop} is the title's choice; {@link SceneFlow.inputSeats}
  * tells the host's input adapter whether player 2's seat is routed (a co-op game or its continue
  * countdown on top). A co-op game records its scores with the hi-score mode `2p`.
  *
- * **Planned.** Attract mode, the mode select, the zone map, name entry, hi-score table, ending and
- * credits (M2); more option groups (controls rebinding, game — M2-16).
+ * **Planned.** Attract mode, the mode select, name entry, the hi-score table, the practice select
+ * (M2-15), the ending scenes and credits (M2-14); more option groups (controls rebinding, game —
+ * M2-16).
  *
  * @module
  */
@@ -178,12 +217,16 @@ import {
   type UserOptions,
   type WeaponEdit,
 } from '../config/index.js';
-import type {
-  ContentDb,
-  PlayerShipSpec,
-  WeaponPresetSpec,
-  WeaponSlot,
-  WeaponSpec,
+import {
+  MAX_ZONE_PREVIEW_LINES,
+  campaignZoneIndex,
+  selectCampaignEnding,
+  type CampaignSpec,
+  type ContentDb,
+  type PlayerShipSpec,
+  type WeaponPresetSpec,
+  type WeaponSlot,
+  type WeaponSpec,
 } from '../data/index.js';
 import { createDebugFlags, type DebugFlags } from '../debug/index.js';
 import {
@@ -259,6 +302,36 @@ import {
   stepWorld,
   type World,
 } from '../world/index.js';
+import {
+  RunFlag,
+  RunState,
+  awardZoneBonus,
+  captureCarry,
+  prepareRunWorld,
+  runWorldConfig,
+  tallyZone,
+  worldDeaths,
+  type CarryState,
+} from './run.js';
+
+export {
+  CarriedPlayer,
+  CarryState,
+  KILL_BONUS_PER_PERCENT,
+  RunFlag,
+  RunState,
+  TIME_BONUS_PAR_TICKS,
+  TIME_BONUS_PER_SECOND,
+  ZoneResult,
+  applyCarry,
+  awardZoneBonus,
+  captureCarry,
+  copyShieldState,
+  prepareRunWorld,
+  runWorldConfig,
+  tallyZone,
+  worldDeaths,
+} from './run.js';
 
 /** Module descriptor (see {@link defineModule}). */
 export const moduleInfo = defineModule({
@@ -278,8 +351,8 @@ export const moduleInfo = defineModule({
 
 /**
  * Scene identifiers (the M1 set, the difficulty menu and continue countdown of M2-01, the weapon
- * select and its order editor of M2-03, the ship select of M2-05, plus the M2 screens already
- * named by the spec).
+ * select and its order editor of M2-03, the ship select of M2-05, the zone map and the ending of
+ * M2-10, plus the M2 screens already named by the spec).
  */
 export type SceneId =
   | 'boot'
@@ -775,6 +848,37 @@ export const STAGE_CLEAR_CONTINUED_TICKS = 240;
 /** Dim of the world under the pause menu and the dialogs. */
 export const PAUSE_DIM = 0.5;
 
+/**
+ * Ticks the game runs on after a hidden bonus-stage entrance opened before the players are in the
+ * bonus stage (the warp — M2-10).
+ */
+export const BONUS_WARP_TICKS = 40;
+
+/**
+ * Ticks after the first death in a bonus stage before the players are back in the zone, the
+ * entrance locked (M2-10 — "dying locks you out"; shorter than a death's explosion and dead time,
+ * so the bonus stage never reaches its game over).
+ */
+export const BONUS_FAIL_TICKS = 60;
+
+/** World ticks the zone title card shows at the start of a campaign zone (the launch intro). */
+export const ZONE_CARD_TICKS = 150;
+
+/** Ticks of the zone result tally (M2-10) before the zone map, the ending or the title. */
+export const ZONE_TALLY_TICKS = 300;
+
+/**
+ * Ticks between the zone map's OK and the next zone: the next stage is prepared meanwhile
+ * (`SimEventKind.PrepareStage`) and `LAUNCH` blinks.
+ */
+export const MAP_LAUNCH_TICKS = 60;
+
+/** Ticks the ending ignores OK (so a mashed button does not skip it). */
+export const ENDING_LOCK_TICKS = 60;
+
+/** Ticks the ending stays before it returns to the title by itself (20 s). */
+export const ENDING_TIMEOUT_TICKS = 1200;
+
 /** Ticks of the continue countdown (10 s — shmup_feat.md §17 "continue countdown"). */
 export const CONTINUE_COUNTDOWN_TICKS = 600;
 
@@ -802,11 +906,17 @@ const WARNING_BAND_Y = 76;
 /** Height of the WARNING band. */
 const WARNING_BAND_H = 48;
 
+/** Screen row of the zone title card's top edge (above the ship's fly-in row). */
+const ZONE_CARD_Y = 36;
+
 /** Frame centre x. */
 const CX = 192;
 
-/** String slots of the UI list. */
-const UI_STRINGS = 192;
+/** String slots of the UI list (M2-10: 224 — the zone map, the zone tally and the ending). */
+const UI_STRINGS = 224;
+
+/** Commands of the UI list (M2-10: 384 — the zone map's graph). */
+const UI_COMMANDS = 384;
 
 /** Where the title menu is drawn (a constant: redrawing allocates nothing). */
 const TITLE_MENU_LAYOUT: MenuLayout = Object.freeze({
@@ -875,6 +985,38 @@ interface FlowControl {
   readonly autoOrder: AutoOrderScene;
   /** The continue countdown. */
   readonly continueScreen: ContinueScene;
+  /** The zone map between the zones of a campaign run (M2-10). */
+  readonly map: MapScene;
+  /** The ending after a campaign run's final zone (M2-10). */
+  readonly ending: EndingScene;
+  /** The run in progress (M2-10: zone, route, carried players, bonus stage, flags). */
+  readonly run: RunState;
+  /**
+   * The campaign the runs follow (M2-10): the content's, when the host config's stage is its start
+   * zone's stage — else `null` (a single-stage run: the M1 stage clear, no map).
+   */
+  readonly campaign: CampaignSpec | null;
+  /** Starts a new run (a game start from the menus): the campaign's first zone or the stage. */
+  beginRun(): void;
+  /**
+   * Creates the World the run plays now — the current zone's stage, the bonus stage while inside
+   * one — with the rank's stage term, the practice checkpoint or the bonus entrance to return to,
+   * the entrances' lock, and the carried players (a transition: allocates the World).
+   *
+   * @param carry - The players to carry in (`null` or invalid: the config's fresh start).
+   * @returns The World at tick 0.
+   */
+  createRunWorld(carry: CarryState | null): World;
+  /** Flies the players into the bonus stage the game World's entrance opened (M2-10). */
+  enterBonus(): void;
+  /** A death in the bonus stage: back to its zone at the entrance, now locked (M2-10). */
+  failBonus(): void;
+  /**
+   * Moves the run to a zone the map chose and marks the game scene to play it (M2-10).
+   *
+   * @param zone - Campaign zone index.
+   */
+  advanceZone(zone: number): void;
   /** The save the flow plays with. */
   readonly save: SaveStore;
   /**
@@ -948,9 +1090,10 @@ interface FlowControl {
   userOption(kind: number, value: number): void;
   /**
    * A game ended on its end screen: records every playing player's score in the mode's table,
-   * counts the statistic and writes the save when it changed.
+   * counts the statistic and writes the save when it changed. A practice run (M2-10) records
+   * nothing.
    *
-   * @param cleared - `true` for a stage clear, `false` for a game over.
+   * @param cleared - `true` for a stage clear (a run's final zone), `false` for a game over.
    * @returns Player 1's rank in the table (0 = best), or -1 when the score did not enter.
    */
   recordRun(cleared: boolean): number;
@@ -1292,6 +1435,16 @@ export class GameScene extends SceneBase {
   private endTicks = 0;
   /** What the WARNING band shows: 0 nothing, 1 red text, 2 yellow text. */
   private warningLook = 0;
+  /** Ticks since the World's bonus entrance opened (the warp — M2-10). */
+  private bonusTicks = 0;
+  /** Ticks since the first death in a bonus stage (M2-10). */
+  private failTicks = 0;
+  /** Whether the zone title card shows (M2-10): 0 no, 1 yes. */
+  private cardLook = 0;
+  /** The title card's first line (`ZONE B`, `BONUS STAGE`; built per World). */
+  private cardTitle = '';
+  /** The title card's second line (the zone's or stage's name). */
+  private cardName = '';
 
   /**
    * Creates the scene with a placeholder World (so `world` is never null).
@@ -1306,13 +1459,24 @@ export class GameScene extends SceneBase {
 
   /** See {@link SceneBase.stringSlots}. */
   get stringSlots(): number {
-    return 1;
+    return 3;
   }
 
-  /** A new game: a fresh World. */
+  /**
+   * A new game — a fresh run (counted as a game start) — or the next zone of the run the zone map
+   * or practice prepared (M2-10): its World.
+   */
   override enter(): void {
     super.enter();
-    this.restart();
+    const flow = this.flow;
+    const run = flow.run;
+    if (run.pendingStart) {
+      run.pendingStart = false;
+    } else {
+      flow.beginRun();
+      flow.save.count('gamesStarted');
+    }
+    this.restart(false);
   }
 
   /** The game ends: its score joins the session hi-score. */
@@ -1321,26 +1485,70 @@ export class GameScene extends SceneBase {
   }
 
   /**
-   * Starts over with a fresh World (a new game, RETRY STAGE): the music fades out (the new
-   * World queues its stage theme), the session hi-score carries over.
+   * Starts the run's current zone over with a fresh World (RETRY STAGE; with `retry` `false` the
+   * start of a zone from {@link GameScene.enter}): the music fades out (the new World queues its
+   * stage theme), the session hi-score carries over.
    *
    * @remarks
-   * Allocates the new World (a scene transition, never a tick). The old World's best score is
-   * recorded first (into the session hi-score — the saved tables only take finished games); the
-   * end-screen delay and the WARNING look reset, the HUD is invalidated; the save counts a game
-   * start (written with the next save write).
+   * Allocates the new World (a scene transition, never a tick) through
+   * `FlowControl.createRunWorld` with the zone's entry state (M2-10: the players carried in from
+   * the zone before — none at a run's first zone). The old World's best score is recorded first
+   * (into the session hi-score — the saved tables only take finished games); a retry counts the
+   * old World's deaths and continues for the run, leaves a bonus stage (its lock lifted — the zone
+   * starts over) and counts a game start in the save (written with the next save write); the
+   * end-screen delay, the WARNING look and the bonus timers reset, the HUD is invalidated.
+   *
+   * @param retry - `true` (default) for RETRY STAGE.
    */
-  restart(): void {
+  restart(retry = true): void {
     this.recordHiScore();
     const flow = this.flow;
+    const run = flow.run;
+    if (retry) {
+      run.noteWorldEnd(this.world);
+      run.leaveBonus(false);
+      flow.save.count('gamesStarted');
+    }
     flow.music(MUSIC_CUES.Silence, MUSIC_FADE_TICKS);
-    const world = flow.host.createWorld(flow.worldConfig);
-    world.scoring.board.setHiScore(flow.hiScore);
-    this.world = world;
+    this.useWorld(flow.createRunWorld(run.entry));
     this.starts++;
-    flow.save.count('gamesStarted');
+  }
+
+  /**
+   * Plays another World from now on (M2-10: into a bonus stage and back — the stage's own theme
+   * comes with it): the timers reset, the HUD is invalidated. A transition.
+   *
+   * @param world - The World (built by `FlowControl.createRunWorld`).
+   */
+  swapWorld(world: World): void {
+    this.recordHiScore();
+    this.useWorld(world);
+  }
+
+  /**
+   * Makes a World the one this scene steps and draws.
+   *
+   * @param world - The World.
+   */
+  private useWorld(world: World): void {
+    world.scoring.board.setHiScore(this.flow.hiScore);
+    this.world = world;
+    const run = this.flow.run;
+    const campaign = run.campaign;
+    this.cardTitle = 'STAGE';
+    this.cardName = world.stage === null ? '' : world.stage.stage.name;
+    if (run.inBonus) {
+      this.cardTitle = 'BONUS STAGE';
+    } else if (campaign !== null && run.zone >= 0) {
+      const zone = campaign.zones[run.zone];
+      this.cardTitle = 'ZONE ' + zone.label;
+      this.cardName = zone.name;
+    }
     this.endTicks = 0;
     this.warningLook = 0;
+    this.bonusTicks = 0;
+    this.failTicks = 0;
+    this.cardLook = campaign !== null ? 1 : 0;
     this.hud.invalidate();
     this.uiRevision++;
   }
@@ -1383,6 +1591,31 @@ export class GameScene extends SceneBase {
     }
     stepWorld(world, input);
     const status = world.status;
+    const run = flow.run;
+    if (run.inBonus) {
+      // A death in a bonus stage locks the players out (shmup_feat.md §14): back to the zone —
+      // even when the bonus stage ends meanwhile (a death always comes before its clear screen:
+      // BONUS_FAIL_TICKS < STAGE_CLEAR_DELAY_TICKS).
+      if (worldDeaths(world) > 0) {
+        this.failTicks++;
+        if (this.failTicks >= BONUS_FAIL_TICKS) {
+          flow.failBonus();
+          return;
+        }
+      }
+    } else if (world.bonus.entered >= 0 && (status === 'playing' || status === 'bossWarning')) {
+      // A hidden entrance opened (M2-10): a short warp, then the bonus stage.
+      this.bonusTicks++;
+      if (this.bonusTicks >= BONUS_WARP_TICKS) {
+        flow.enterBonus();
+        return;
+      }
+    }
+    const card = run.campaign !== null && world.tick < ZONE_CARD_TICKS ? 1 : 0;
+    if (card !== this.cardLook) {
+      this.cardLook = card;
+      this.uiRevision++;
+    }
     if (status === 'stageClear' || status === 'gameOver') {
       this.endTicks++;
       const delay = status === 'stageClear' ? STAGE_CLEAR_DELAY_TICKS : GAME_OVER_DELAY_TICKS;
@@ -1407,11 +1640,14 @@ export class GameScene extends SceneBase {
   }
 
   /**
-   * Draws the boss WARNING band while it plays (its text in red / yellow every 16 ticks).
+   * Draws the zone title card at a campaign zone's start (M2-10 — `ZONE B` over the zone's name,
+   * or `BONUS STAGE` over the bonus stage's, for {@link ZONE_CARD_TICKS} World ticks) and the boss
+   * WARNING band while it plays (its text in red / yellow every 16 ticks).
    *
    * @param list - The UI list.
    */
   drawUi(list: DrawList): void {
+    if (this.cardLook === 1) this.drawCard(list);
     const look = this.warningLook;
     if (look === 0) return;
     list.setString(this.stringBase, this.world.bosses.warning.text);
@@ -1425,6 +1661,20 @@ export class GameScene extends SceneBase {
       look === 1 ? UI_COLORS.alert : UI_COLORS.focus,
       TextAlign.Center,
     );
+  }
+
+  /**
+   * Draws the zone title card (its strings are built when a World starts, never here).
+   *
+   * @param list - The UI list.
+   */
+  private drawCard(list: DrawList): void {
+    const base = this.stringBase;
+    list.setString(base + 1, this.cardTitle);
+    list.setString(base + 2, this.cardName);
+    list.rect(0, ZONE_CARD_Y, 384, 32, 0x000000, 128);
+    list.text(base + 1, CX, ZONE_CARD_Y + 5, UI_COLORS.focus, TextAlign.Center);
+    list.text(base + 2, CX, ZONE_CARD_Y + 18, UI_COLORS.title, TextAlign.Center);
   }
 }
 
@@ -1744,16 +1994,41 @@ export class OptionsScene extends SceneBase {
 /** Stage-clear phases. */
 const ClearPhase = { Tally: 0, Continued: 1 } as const;
 
+/** Where the stage-clear screen goes after its tally (M2-10). */
+const ClearNext = {
+  /** `TO BE CONTINUED`, then the title (a single-stage run — the M1 screen). */
+  Continued: 0,
+  /** The zone map (a campaign zone with exits). */
+  Map: 1,
+  /** The ending (the campaign's final zone). */
+  Ending: 2,
+  /** The title (a practice run). */
+  Title: 3,
+} as const;
+
 /**
- * Stage clear: the tally, then `TO BE CONTINUED` (M1), then the title.
+ * Stage clear: the tally, then `TO BE CONTINUED` (a single stage — M1), or — in a campaign run —
+ * the **zone result tally** and then the zone map, the ending or the title (M2-10).
  *
  * @remarks
- * An overlay (dim 0.25) over the frozen game: a panel with `STAGE CLEAR`, player 1's score and
- * the hi-score for {@link STAGE_CLEAR_TALLY_TICKS}, then `TO BE CONTINUED` for
- * {@link STAGE_CLEAR_CONTINUED_TICKS}, then the title; OK skips each phase at once (Back does
- * nothing). Queues the stage-clear jingle with no fade (a boss's death already started it; the
- * music player does not restart a playing track). Entering it ends the run (M1 has one zone): the
- * score goes into the saved hi-score table and the save is written.
+ * An overlay (dim 0.25) over the frozen game (the ships flew out — `core/player` `flyOutPlayer`).
+ * Queues the stage-clear jingle with no fade (a boss's death already started it; the music player
+ * does not restart a playing track).
+ *
+ * - **A single-stage run** (no campaign): a panel with `STAGE CLEAR`, player 1's score and the
+ *   hi-score for {@link STAGE_CLEAR_TALLY_TICKS}, then `TO BE CONTINUED` for
+ *   {@link STAGE_CLEAR_CONTINUED_TICKS}, then the title; OK skips each phase at once (Back does
+ *   nothing). Entering it ends the run: the score goes into the saved hi-score table and the save
+ *   is written.
+ * - **A campaign zone** (M2-10): entering it tallies the zone (`ZoneResult`: the kill rate and the
+ *   boss time bonus, paid to every player in play — `awardZoneBonus`), counts the World's deaths,
+ *   continues and flags for the run, and carries the players' state out (`captureCarry`). The panel
+ *   shows `ZONE X CLEAR` (`BONUS STAGE CLEAR` after a bonus stage — which skipped the zone's
+ *   boss), the zone's name, the score(s), the kill rate and both bonuses for
+ *   {@link ZONE_TALLY_TICKS} (OK skips). Then: a zone with exits → the zone map (counted as a
+ *   cleared stage in the save); the final zone → the ending picked by `core/data`
+ *   `selectCampaignEnding` from the run's flags (the run is recorded now); a practice run → the
+ *   title (nothing recorded).
  */
 export class StageClearScene extends SceneBase {
   /** See {@link Scene.id}. */
@@ -1768,29 +2043,82 @@ export class StageClearScene extends SceneBase {
   ticks = 0;
   /** Player 1's rank in the saved table (0 = best), or -1 when the score did not enter. */
   rank = -1;
+  /** Whether the screen is the zone result tally of a campaign run (M2-10). */
+  zoneMode = false;
+  /** Where the screen goes after the tally (a `ClearNext` code). */
+  next: number = ClearNext.Continued;
+  /** The zone tally's title (`ZONE B CLEAR`, `BONUS STAGE CLEAR`; built when it opens). */
+  private title = '';
+  /** The zone's name. */
+  private zoneName = '';
 
   /** See {@link SceneBase.stringSlots}. */
   get stringSlots(): number {
-    return 6;
+    return 14;
   }
 
   /**
-   * The tally starts; the run's scores are recorded (and saved); the stage-clear jingle plays (not
-   * restarted when already playing).
+   * The tally starts — a single stage records the run; a campaign zone is tallied, paid and
+   * carried out (see the class docs); the stage-clear jingle plays (not restarted when already
+   * playing).
    */
   override enter(): void {
     super.enter();
     this.phase = ClearPhase.Tally;
     this.ticks = 0;
-    this.rank = this.flow.recordRun(true);
-    this.flow.music(MUSIC_CUES.StageClear, 0);
+    const flow = this.flow;
+    const run = flow.run;
+    const campaign = run.campaign;
+    this.zoneMode = campaign !== null;
+    this.rank = -1;
+    if (campaign === null) {
+      this.next = ClearNext.Continued;
+      this.rank = flow.recordRun(true);
+    } else {
+      const world = flow.game.world;
+      const bonus = run.inBonus;
+      tallyZone(world, run.result, bonus);
+      awardZoneBonus(world, run.result);
+      run.noteWorldEnd(world);
+      if (bonus) run.flags |= RunFlag.Bonus;
+      captureCarry(world, run.carry);
+      const zone = run.zone >= 0 ? campaign.zones[run.zone] : null;
+      this.title = bonus
+        ? 'BONUS STAGE CLEAR'
+        : 'ZONE ' + (zone === null ? '' : zone.label) + ' CLEAR';
+      this.zoneName = zone === null ? '' : zone.name;
+      if (run.practice) {
+        this.next = ClearNext.Title;
+      } else if (run.finalZone) {
+        this.next = ClearNext.Ending;
+        run.ending = selectCampaignEnding(campaign, run.zone, run.endingFlags);
+        this.rank = flow.recordRun(true);
+      } else {
+        this.next = ClearNext.Map;
+        flow.save.count('stagesCleared');
+        void flow.save.flush();
+      }
+    }
+    flow.music(MUSIC_CUES.StageClear, 0);
   }
 
-  /** Tally → `TO BE CONTINUED` → title, by time or OK. */
+  /**
+   * Single stage: tally → `TO BE CONTINUED` → title, by time or OK. Campaign zone: tally → the map,
+   * the ending or the title, by time or OK.
+   */
   tick(): void {
     const flow = this.flow;
     this.ticks++;
     const ok = (flow.menuInput.pressed & Action.Confirm) !== 0;
+    if (this.zoneMode) {
+      if (ok || this.ticks >= ZONE_TALLY_TICKS) {
+        if (ok) flow.sfx(SFX_CUES.MenuSelect);
+        if (this.next === ClearNext.Map) flow.stack.reset(flow.map);
+        else if (this.next === ClearNext.Ending) flow.stack.reset(flow.ending);
+        else flow.toTitle();
+      }
+      return;
+    }
     if (this.phase === ClearPhase.Tally) {
       if (ok || this.ticks >= STAGE_CLEAR_TALLY_TICKS) {
         this.phase = ClearPhase.Continued;
@@ -1808,11 +2136,15 @@ export class StageClearScene extends SceneBase {
 
   /**
    * Draws `STAGE CLEAR` with the score (both players' in a co-op game — M2-06) and hi-score, or
-   * `TO BE CONTINUED`.
+   * `TO BE CONTINUED` — or the zone result tally of a campaign run (M2-10).
    *
    * @param list - The UI list.
    */
   drawUi(list: DrawList): void {
+    if (this.zoneMode) {
+      this.drawZoneTally(list);
+      return;
+    }
     const base = this.stringBase;
     const world = this.flow.game.world;
     drawPanel(list, CX - 88, 64, 176, 72);
@@ -1842,6 +2174,50 @@ export class StageClearScene extends SceneBase {
     } else {
       list.text(base + 3, CX, 96, UI_COLORS.focus, TextAlign.Center);
     }
+  }
+
+  /**
+   * Draws the zone result tally (M2-10): title, zone name, score(s), kill rate and bonuses.
+   *
+   * @param list - The UI list.
+   */
+  private drawZoneTally(list: DrawList): void {
+    const base = this.stringBase + 6;
+    const world = this.flow.game.world;
+    const result = this.flow.run.result;
+    const scores = world.scoring.board.scores;
+    const coop = world.players.length > 1 && world.players[1].active && scores.length > 1;
+    const left = CX - 92;
+    const right = CX + 92;
+    drawPanel(list, CX - 100, 44, 200, coop ? 124 : 112);
+    list.setString(base, this.title);
+    list.setString(base + 1, this.zoneName);
+    list.setString(base + 2, coop ? '1P' : 'SCORE');
+    list.setString(base + 3, '2P');
+    list.setString(base + 4, 'KILLS');
+    list.setString(base + 5, '%');
+    list.setString(base + 6, 'KILL BONUS');
+    list.setString(base + 7, result.bossSeconds >= 0 ? 'TIME BONUS' : 'NO BOSS TIME');
+    list.text(base, CX, 52, UI_COLORS.focus, TextAlign.Center);
+    list.text(base + 1, CX, 64, UI_COLORS.title, TextAlign.Center);
+    let y = 82;
+    list.text(base + 2, left, y, UI_COLORS.title);
+    list.number(scores[0].score, right, y, 8, UI_COLORS.text, TextAlign.Right);
+    if (coop) {
+      y += 12;
+      list.text(base + 3, left, y, UI_COLORS.title);
+      list.number(scores[1].score, right, y, 8, UI_COLORS.text, TextAlign.Right);
+    }
+    y += 18;
+    list.text(base + 4, left, y, UI_COLORS.text);
+    list.number(result.killPercent, right - 8, y, 0, UI_COLORS.text, TextAlign.Right);
+    list.text(base + 5, right, y, UI_COLORS.text, TextAlign.Right);
+    y += 12;
+    list.text(base + 6, left, y, UI_COLORS.text);
+    list.number(result.killBonus, right, y, 0, UI_COLORS.focus, TextAlign.Right);
+    y += 12;
+    list.text(base + 7, left, y, UI_COLORS.text);
+    list.number(result.timeBonus, right, y, 0, UI_COLORS.focus, TextAlign.Right);
   }
 }
 
@@ -3122,6 +3498,410 @@ export class AutoOrderScene extends SceneBase {
   }
 }
 
+// ------------------------------------------------------------------------------ zone map
+
+/** Screen x of the first and the last depth column of the zone map. */
+const MAP_LEFT = 40;
+
+/** Screen x of the last depth column. */
+const MAP_RIGHT = 344;
+
+/** Screen y of the top of the zone map's rows. */
+const MAP_TOP = 40;
+
+/** Screen y of the bottom of the zone map's rows. */
+const MAP_BOTTOM = 136;
+
+/** A zone node's box: width. */
+const MAP_NODE_W = 18;
+
+/** A zone node's box: height. */
+const MAP_NODE_H = 12;
+
+/** Dots drawn along one edge of the map. */
+const MAP_EDGE_DOTS = 7;
+
+/** Half-period of the focused choice's blink on the map, in ticks. */
+const MAP_BLINK_TICKS = 16;
+
+/** The zone map's preview panel: left, top, width, height. */
+const MAP_PANEL = Object.freeze({ x: 24, y: 146, w: 336, h: 60 });
+
+/**
+ * The zone map (shmup_feat.md §14 "branching zone map", §17 "zone map"; plan M2-10): after a
+ * campaign zone's tally, the player chooses the next zone.
+ *
+ * @remarks
+ * A full screen (the title's drifting starfield behind it). The campaign's zones are drawn as a
+ * node graph — one column per depth, the zones of a depth spread top to bottom in file order,
+ * dotted edges between them — with the route so far lit, the zone just cleared in yellow, the
+ * zones it leads to outlined and the focused one blinking; under the graph a panel previews the
+ * focused zone (`ZONE C`, its name, its preview lines). Up / Down move between the exits of the
+ * cleared zone (sorted top to bottom, wrapping, the UI kit's auto-repeat — `menuTick`), OK
+ * launches: the chosen zone's stage is prepared (`SimEventKind.PrepareStage`, so the host loads
+ * its music now), `LAUNCH` blinks for {@link MAP_LAUNCH_TICKS}, then the run moves on
+ * (`FlowControl.advanceZone`: the carried players become the zone's entry state) and the game
+ * scene plays it. Back asks "quit to title?" (the {@link ConfirmDialog}). Entering it fades the
+ * music out. Drawing reads precomputed node positions and the content's own strings — it never
+ * builds one.
+ */
+export class MapScene extends SceneBase {
+  /** See {@link Scene.id}. */
+  readonly id = 'map' as const;
+  /** The campaign it draws (`null`: an empty map — the content has none). */
+  readonly campaign: CampaignSpec | null;
+  /** Per zone: its node's centre x. */
+  readonly nodeX: Int16Array;
+  /** Per zone: its node's centre y. */
+  readonly nodeY: Int16Array;
+  /** Per zone: its exits sorted top to bottom (the menu's order). */
+  readonly exits: readonly (readonly number[])[];
+  /** Ticks since the map opened (the blink's clock). */
+  ticks = 0;
+  /** Ticks since OK (the launch), -1 while choosing. */
+  launch = -1;
+  /** The zone just cleared (the run's current zone when the map opened). */
+  zone = -1;
+  /** One menu per zone over its sorted exits (Up / Down, OK). */
+  private readonly menus: readonly ListMenu[];
+
+  /**
+   * Lays the campaign's graph out.
+   *
+   * @param flow - The flow.
+   */
+  constructor(flow: FlowControl) {
+    super(flow);
+    const campaign = flow.host.content.campaign;
+    this.campaign = campaign;
+    const zones = campaign === null ? [] : campaign.zones;
+    const depths = campaign === null ? 1 : campaign.depths;
+    this.nodeX = new Int16Array(zones.length);
+    this.nodeY = new Int16Array(zones.length);
+    const perDepth: number[] = [];
+    for (const zone of zones) perDepth[zone.depth] = (perDepth[zone.depth] ?? 0) + 1;
+    const exits: number[][] = [];
+    const menus: ListMenu[] = [];
+    for (let i = 0; i < zones.length; i++) {
+      const zone = zones[i];
+      const x =
+        depths > 1
+          ? MAP_LEFT + (zone.depth * (MAP_RIGHT - MAP_LEFT)) / (depths - 1)
+          : (MAP_LEFT + MAP_RIGHT) / 2;
+      const rows = perDepth[zone.depth] ?? 1;
+      const y = MAP_TOP + ((zone.row + 0.5) * (MAP_BOTTOM - MAP_TOP)) / rows;
+      this.nodeX[i] = Math.round(x);
+      this.nodeY[i] = Math.round(y);
+      const sorted = zone.exits.slice().sort((a, b) => zones[a].row - zones[b].row);
+      exits.push(sorted);
+      const labels: string[] = [];
+      for (const exit of sorted) labels.push(zones[exit].name);
+      if (labels.length === 0) labels.push('-');
+      menus.push(createListMenu(labels, { wrap: true }));
+    }
+    this.exits = exits;
+    this.menus = menus;
+  }
+
+  /** See {@link SceneBase.stringSlots}. */
+  get stringSlots(): number {
+    return 8 + MAX_ZONE_PREVIEW_LINES + (this.campaign === null ? 0 : this.campaign.zones.length);
+  }
+
+  /** The focused exit (a zone index), or -1 without one. */
+  get focusedZone(): number {
+    if (this.zone < 0 || this.zone >= this.exits.length) return -1;
+    const list = this.exits[this.zone];
+    const menu = this.menus[this.zone];
+    return list.length === 0 ? -1 : (list[menu.focus] ?? list[0]);
+  }
+
+  /** The map opens on the run's zone: its first exit focused, locked for 2 ticks, music out. */
+  override enter(): void {
+    super.enter();
+    const flow = this.flow;
+    this.zone = flow.run.zone;
+    this.ticks = 0;
+    this.launch = -1;
+    const menu = this.zone >= 0 ? this.menus[this.zone] : undefined;
+    if (menu !== undefined) {
+      menu.focus = 0;
+      menu.open(MENU_OPEN_LOCK_TICKS);
+    }
+    flow.music(MUSIC_CUES.Silence, MUSIC_FADE_TICKS);
+  }
+
+  /** The "quit to title?" dialog answered NO: the choice takes input again. */
+  override uncover(): void {
+    super.uncover();
+    if (this.zone >= 0 && this.zone < this.menus.length) {
+      this.menus[this.zone].open(MENU_OPEN_LOCK_TICKS);
+    }
+  }
+
+  /**
+   * Up / Down choose, OK launches (then the next zone), Back asks "quit to title?". Never
+   * allocates (the launch's transition creates the zone's World).
+   */
+  tick(): void {
+    const flow = this.flow;
+    this.ticks++;
+    if (this.launch >= 0) {
+      this.launch++;
+      if (this.launch % 8 === 0) this.uiRevision++;
+      if (this.launch >= MAP_LAUNCH_TICKS) {
+        const next = this.focusedZone;
+        if (next >= 0) {
+          flow.advanceZone(next);
+          flow.stack.reset(flow.game);
+        } else {
+          flow.toTitle();
+        }
+      }
+      return;
+    }
+    if (this.ticks % MAP_BLINK_TICKS === 0) this.uiRevision++;
+    if (this.zone < 0 || this.zone >= this.menus.length) {
+      if ((flow.menuInput.pressed & (Action.Confirm | Action.Back)) !== 0) flow.toTitle();
+      return;
+    }
+    const menu = this.menus[this.zone];
+    const before = menu.revision;
+    const result = menuTick(menu, flow.menuInput);
+    if (menu.revision !== before) this.uiRevision++;
+    if (result === MenuResult.Back) {
+      flow.ask(ConfirmPurpose.QuitToTitle);
+      return;
+    }
+    if (result === MenuResult.Confirmed) {
+      const next = this.focusedZone;
+      if (next < 0 || this.campaign === null) return;
+      flow.sfx(SFX_CUES.MenuSelect);
+      // The next zone's music (and whatever else it needs) is prepared while LAUNCH blinks.
+      flow.host.events.push(SimEventKind.PrepareStage, this.campaign.zones[next].stageId, 0, 0, 0);
+      this.launch = 0;
+      this.uiRevision++;
+      return;
+    }
+    flow.menuSound(result);
+  }
+
+  /**
+   * Draws the title, the graph (edges, then nodes) and the preview panel.
+   *
+   * @param list - The UI list.
+   */
+  drawUi(list: DrawList): void {
+    const campaign = this.campaign;
+    const base = this.stringBase;
+    list.setString(base, campaign === null ? 'ZONE MAP' : campaign.name);
+    list.setString(base + 1, 'CHOOSE YOUR COURSE');
+    list.text(base, CX, 10, UI_COLORS.title, TextAlign.Center);
+    if (campaign === null) return;
+    const launching = this.launch >= 0;
+    list.text(base + 1, CX, 22, UI_COLORS.disabled, TextAlign.Center);
+    const zones = campaign.zones;
+    const route = this.flow.run.route;
+    const focused = this.focusedZone;
+    const blinkOn = launching
+      ? ((this.launch >> 3) & 1) === 0
+      : Math.floor(this.ticks / MAP_BLINK_TICKS) % 2 === 0;
+    const hw = MAP_NODE_W >> 1;
+    const edges = campaign.edges;
+    for (let e = 0; e < edges.length; e++) {
+      const edge = edges[e];
+      const a = edge.fromIndex;
+      const b = edge.toIndex;
+      let color: number = UI_COLORS.disabled;
+      if (onRoute(route, a, b)) color = UI_COLORS.title;
+      else if (a === this.zone) color = b === focused ? UI_COLORS.focus : UI_COLORS.text;
+      if (a === this.zone && b === focused && !blinkOn) color = UI_COLORS.text;
+      const x0 = this.nodeX[a] + hw;
+      const y0 = this.nodeY[a];
+      const x1 = this.nodeX[b] - hw;
+      const y1 = this.nodeY[b];
+      for (let k = 1; k <= MAP_EDGE_DOTS; k++) {
+        const x = Math.round(x0 + ((x1 - x0) * k) / (MAP_EDGE_DOTS + 1));
+        const y = Math.round(y0 + ((y1 - y0) * k) / (MAP_EDGE_DOTS + 1));
+        list.rect(x - 1, y - 1, 2, 2, color);
+      }
+    }
+    const choices = this.zone >= 0 && this.zone < this.exits.length ? this.exits[this.zone] : null;
+    for (let i = 0; i < zones.length; i++) {
+      const x = this.nodeX[i] - hw;
+      const y = this.nodeY[i] - (MAP_NODE_H >> 1);
+      const cleared = route.indexOf(i) >= 0;
+      const choice = choices === null ? -1 : choices.indexOf(i);
+      let fill: number = UI_COLORS.track;
+      let border: number = UI_COLORS.disabled;
+      let text: number = UI_COLORS.disabled;
+      if (i === this.zone) {
+        fill = UI_COLORS.panel;
+        border = UI_COLORS.focus;
+        text = UI_COLORS.focus;
+      } else if (cleared) {
+        fill = UI_COLORS.panel;
+        border = UI_COLORS.title;
+        text = UI_COLORS.title;
+      } else if (choice >= 0) {
+        fill = UI_COLORS.panel;
+        border = i === focused && blinkOn ? UI_COLORS.focus : UI_COLORS.text;
+        text = i === focused ? UI_COLORS.focus : UI_COLORS.text;
+      }
+      drawPanel(list, x, y, MAP_NODE_W, MAP_NODE_H, fill, border, 255);
+      const slot = base + 8 + MAX_ZONE_PREVIEW_LINES + i;
+      list.setString(slot, zones[i].label);
+      list.text(slot, this.nodeX[i], y + 2, text, TextAlign.Center);
+    }
+    const p = MAP_PANEL;
+    drawPanel(list, p.x, p.y, p.w, p.h);
+    if (focused < 0) return;
+    const zone = zones[focused];
+    list.setString(base + 2, 'ZONE');
+    list.setString(base + 3, zone.label);
+    list.setString(base + 4, zone.name);
+    list.setString(base + 5, launching ? 'LAUNCH' : 'UP/DOWN: CHOOSE  OK: LAUNCH');
+    list.text(base + 2, p.x + 10, p.y + 6, UI_COLORS.title);
+    list.text(base + 3, p.x + 44, p.y + 6, UI_COLORS.focus);
+    list.text(base + 4, p.x + 64, p.y + 6, UI_COLORS.focus);
+    for (let l = 0; l < MAX_ZONE_PREVIEW_LINES; l++) {
+      const line = zone.preview[l];
+      if (line === undefined) continue;
+      list.setString(base + 8 + l, line);
+      list.text(base + 8 + l, p.x + 10, p.y + 18 + l * 10, UI_COLORS.text);
+    }
+    if (!launching || blinkOn) {
+      list.text(
+        base + 5,
+        p.x + p.w - 8,
+        p.y + p.h - 10,
+        launching ? UI_COLORS.focus : UI_COLORS.disabled,
+        TextAlign.Right,
+      );
+    }
+  }
+}
+
+/**
+ * Whether an edge lies on the route so far (its two zones follow each other in it).
+ *
+ * @param route - Zone indices of the run.
+ * @param a - The edge's first zone.
+ * @param b - Its second zone.
+ * @returns `true` when `b` directly follows `a` in the route.
+ */
+function onRoute(route: readonly number[], a: number, b: number): boolean {
+  for (let i = 0; i + 1 < route.length; i++) if (route[i] === a && route[i + 1] === b) return true;
+  return false;
+}
+
+// ------------------------------------------------------------------------------ ending
+
+/** The ending's panel: left, top, width, height. */
+const ENDING_PANEL = Object.freeze({ x: 40, y: 24, w: 304, h: 168 });
+
+/** The ending's flag lines, in `RunFlag` bit order. */
+const ENDING_FLAG_LABELS: readonly string[] = Object.freeze([
+  'A BOSS ESCAPED',
+  'NO MISS',
+  'NO CONTINUE',
+  'BONUS STAGE CLEARED',
+]);
+
+/**
+ * The ending after a campaign run's final zone (plan M2-10 — the selection hook; the ending
+ * scenes, texts and credits themselves are M2-14's).
+ *
+ * @remarks
+ * A full screen: `ENDING`, the name of the ending the run earned (`RunState.ending` — chosen by
+ * `core/data` `selectCampaignEnding` from the final zone and the run's flags when the zone was
+ * cleared), the route taken (the zones' labels), the final score(s), a line for each run flag set
+ * (no miss, no continue, a bonus stage cleared, a boss escaped) and `THANK YOU FOR PLAYING`. OK
+ * (after {@link ENDING_LOCK_TICKS}) or {@link ENDING_TIMEOUT_TICKS} → the title. The run was
+ * recorded in the hi-score table when the final zone was cleared.
+ */
+export class EndingScene extends SceneBase {
+  /** See {@link Scene.id}. */
+  readonly id = 'ending' as const;
+  /** Ticks since it opened. */
+  ticks = 0;
+  /** The route as zone labels (`A B D F H`; built when it opens). */
+  private routeText = '';
+
+  /** See {@link SceneBase.stringSlots}. */
+  get stringSlots(): number {
+    return 8 + ENDING_FLAG_LABELS.length;
+  }
+
+  /** Builds the route line (a transition). */
+  override enter(): void {
+    super.enter();
+    this.ticks = 0;
+    const run = this.flow.run;
+    const campaign = run.campaign;
+    const labels: string[] = [];
+    if (campaign !== null) for (const zone of run.route) labels.push(campaign.zones[zone].label);
+    this.routeText = labels.join(' ');
+  }
+
+  /** OK after the lock, or the timeout → title. Never allocates. */
+  tick(): void {
+    const flow = this.flow;
+    this.ticks++;
+    if (this.ticks === ENDING_LOCK_TICKS + 1) this.uiRevision++; // `OK: TITLE` appears
+    const ok = (flow.menuInput.pressed & Action.Confirm) !== 0 && this.ticks > ENDING_LOCK_TICKS;
+    if (ok || this.ticks >= ENDING_TIMEOUT_TICKS) {
+      if (ok) flow.sfx(SFX_CUES.MenuSelect);
+      flow.toTitle();
+    }
+  }
+
+  /**
+   * Draws the ending card.
+   *
+   * @param list - The UI list.
+   */
+  drawUi(list: DrawList): void {
+    const base = this.stringBase;
+    const run = this.flow.run;
+    const p = ENDING_PANEL;
+    drawPanel(list, p.x, p.y, p.w, p.h, UI_COLORS.panel, UI_COLORS.border, 255);
+    list.setString(base, 'ENDING');
+    list.setString(base + 1, run.ending === null ? 'THE END' : run.ending.name);
+    list.setString(base + 2, 'ROUTE');
+    list.setString(base + 3, this.routeText);
+    list.setString(base + 4, '1P');
+    list.setString(base + 5, '2P');
+    list.setString(base + 6, 'THANK YOU FOR PLAYING');
+    list.setString(base + 7, 'OK: TITLE');
+    list.text(base, CX, p.y + 8, UI_COLORS.title, TextAlign.Center);
+    list.text(base + 1, CX, p.y + 22, UI_COLORS.focus, TextAlign.Center);
+    list.text(base + 2, p.x + 16, p.y + 42, UI_COLORS.title);
+    list.text(base + 3, p.x + 64, p.y + 42, UI_COLORS.text);
+    const players = run.carry.players;
+    list.text(base + 4, p.x + 16, p.y + 56, UI_COLORS.title);
+    list.number(players[0].score, p.x + p.w - 16, p.y + 56, 8, UI_COLORS.text, TextAlign.Right);
+    let y = p.y + 68;
+    if (players.length > 1 && players[1].active) {
+      list.text(base + 5, p.x + 16, y, UI_COLORS.title);
+      list.number(players[1].score, p.x + p.w - 16, y, 8, UI_COLORS.text, TextAlign.Right);
+      y += 12;
+    }
+    y += 6;
+    const flags = run.endingFlags;
+    for (let i = 0; i < ENDING_FLAG_LABELS.length; i++) {
+      if ((flags & (1 << i)) === 0) continue;
+      list.setString(base + 8 + i, ENDING_FLAG_LABELS[i]);
+      list.text(base + 8 + i, CX, y, UI_COLORS.focus, TextAlign.Center);
+      y += 11;
+    }
+    list.text(base + 6, CX, p.y + p.h - 30, UI_COLORS.text, TextAlign.Center);
+    if (this.ticks > ENDING_LOCK_TICKS) {
+      list.text(base + 7, CX, p.y + p.h - 14, UI_COLORS.disabled, TextAlign.Center);
+    }
+  }
+}
+
 /** The M1 scene flow (see the module docs). */
 export interface SceneFlow {
   /** The scene stack. */
@@ -3152,6 +3932,32 @@ export interface SceneFlow {
   readonly autoOrder: AutoOrderScene;
   /** The continue countdown (M2-01). */
   readonly continueScreen: ContinueScene;
+  /** The zone map between the zones of a campaign run (M2-10). */
+  readonly map: MapScene;
+  /** The ending after a campaign run's final zone (M2-10). */
+  readonly ending: EndingScene;
+  /**
+   * The run in progress (M2-10): the campaign zone, the route, the players carried between zones,
+   * the bonus-stage state and the run's flags.
+   */
+  readonly run: RunState;
+  /**
+   * The campaign the runs follow (M2-10): the content's (`ContentDb.campaign`) when the host
+   * config's stage is its start zone's stage — the shipped game —, else `null`: single-stage runs
+   * (a dev stage, open space) with the M1 stage-clear screen.
+   */
+  readonly campaign: CampaignSpec | null;
+  /**
+   * Practice plumbing (plan M2-10; the practice select is M2-15): starts a practice run of one
+   * campaign zone at a checkpoint with the next game's config — the zone's rank stage term, a fresh
+   * start, no hi-score; its clear returns to the title.
+   *
+   * @param zone - A campaign zone id (the content's campaign, even outside campaign mode).
+   * @param checkpoint - Index into the zone stage's checkpoints (-1 = its start; default).
+   * @returns `true` when the practice game starts (on the next applied transition); `false`
+   *   without a campaign, for an unknown zone or an out-of-range checkpoint.
+   */
+  startPractice(zone: string, checkpoint?: number): boolean;
   /**
    * The save the flow plays with (the host's store, or a memory-only one): options, hi-score
    * tables, stats.
@@ -3358,6 +4164,15 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
       armed[i] = withCoop(config, control.coop);
     }
   };
+  // The campaign (M2-10): when the host's stage is its start zone's stage, games are campaign runs.
+  const contentCampaign = host.content.campaign;
+  const campaign =
+    contentCampaign !== null &&
+    host.config.stage !== null &&
+    contentCampaign.zones[contentCampaign.startIndex].stage === host.config.stage
+      ? contentCampaign
+      : null;
+  const run = new RunState();
   const setup = host.inputProfiles ?? null;
   const profiles: readonly InputProfileChoice[] = setup === null ? [] : setup.choices;
   let activeProfile = -1;
@@ -3371,6 +4186,37 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     sprites: resolveUiSprites(host.content),
     menuInput,
     save,
+    run,
+    campaign,
+    beginRun(): void {
+      run.begin(campaign, control.worldConfig.stage);
+    },
+    createRunWorld(carry: CarryState | null): World {
+      const world = host.createWorld(runWorldConfig(control.worldConfig, run));
+      return prepareRunWorld(world, run, carry);
+    },
+    enterBonus(): void {
+      const world = control.game.world;
+      const spec = host.content.stages[world.bonus.enteredStage()];
+      if (spec === undefined) return;
+      run.noteWorldEnd(world);
+      captureCarry(world, run.carry);
+      run.bonusReturnX = world.bonus.enteredX();
+      run.inBonus = true;
+      run.bonusStage = spec.id;
+      control.game.swapWorld(control.createRunWorld(run.carry));
+    },
+    failBonus(): void {
+      const world = control.game.world;
+      run.noteWorldEnd(world);
+      captureCarry(world, run.carry);
+      run.leaveBonus(true);
+      control.game.swapWorld(control.createRunWorld(run.carry));
+    },
+    advanceZone(zone: number): void {
+      run.advance(zone);
+      run.pendingStart = true;
+    },
     difficulty: host.config.difficulty,
     coop: host.config.coop,
     choosePlayers(coop: boolean): void {
@@ -3425,6 +4271,8 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
       events.push(SimEventKind.UserOption, kind, 0, 0, value);
     },
     recordRun(cleared: boolean): number {
+      // A practice run is not a real game (M2-10; its own table comes with M2-15).
+      if (run.practice) return -1;
       const world = control.game.world;
       const scores = world.scoring.board.scores;
       const reached = world.stage === null ? '' : world.stage.stage.id;
@@ -3480,6 +4328,8 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
   control.weaponSelect = new WeaponSelectScene(control);
   control.autoOrder = new AutoOrderScene(control);
   control.continueScreen = new ContinueScene(control);
+  control.map = new MapScene(control);
+  control.ending = new EndingScene(control);
   control.game.world.scoring.board.setHiScore(control.hiScore);
   // The placeholder World queued its stage theme; the flow does not start in the stage.
   events.clear();
@@ -3498,6 +4348,8 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     control.weaponSelect,
     control.autoOrder,
     control.continueScreen,
+    control.map,
+    control.ending,
   ];
   let base = 0;
   for (const scene of scenes) {
@@ -3506,7 +4358,7 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
   }
   if (base > UI_STRINGS) throw new RangeError(`the scenes need ${base} string slots`);
 
-  const ui = createDrawList(256, UI_STRINGS);
+  const ui = createDrawList(UI_COMMANDS, UI_STRINGS);
   const emptyHud = createDrawList(1, 1);
   const view: {
     tick: number;
@@ -3543,6 +4395,25 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     weaponSelect: control.weaponSelect,
     autoOrder: control.autoOrder,
     continueScreen: control.continueScreen,
+    map: control.map,
+    ending: control.ending,
+    run,
+    campaign,
+    startPractice(zone: string, checkpoint = -1): boolean {
+      const practice = host.content.campaign;
+      if (practice === null) return false;
+      const index = campaignZoneIndex(practice, zone);
+      if (index < 0) return false;
+      const stage = host.content.stages[practice.zones[index].stageId];
+      if (stage === undefined) return false;
+      if (!Number.isInteger(checkpoint) || checkpoint < -1) return false;
+      if (checkpoint >= stage.checkpoints.length) return false;
+      run.beginPractice(practice, index, checkpoint);
+      run.pendingStart = true;
+      save.count('gamesStarted');
+      stack.reset(control.game);
+      return true;
+    },
     save,
     get modeKey(): string {
       return control.modeKey;

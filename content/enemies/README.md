@@ -52,7 +52,7 @@ or falling; `land` = `pass` / `stop` (default) / `shatter`).
       "anim": { "frames": 2, "ticks": 8 }, // optional: loop frames 0…1, 8 ticks each (default: frame 0)
       "params": { "amp": 20 },         // optional: behaviour tunables by name (defaults in core/behaviors)
       "mover": { "type": "sine", "vx": -1, "amp": 16, "period": 90 }, // optional starting mover
-      "drop": null,                    // "capsule" | "blueCapsule" | "powerup" | null
+      "drop": null,                    // "capsule" | "blueCapsule" | "powerup" | "oneUp" | "bonusCapsule" | null
       "ground": null,                  // optional: "floor" | "ceiling" | null (flying, default)
       "settleTicks": 30,               // optional: ticks on screen before it may fire (default 30)
       "explosion": "small",            // optional: "small" (default) | "medium" | "large"
@@ -123,6 +123,11 @@ drift free and can be picked up again). Give it the `hunter.option` behaviour, a
 hurtbox and no `megaCrashImmune`.
 
 Several files may exist (e.g. one per theme); ids must be unique across all of them.
+The bonus stages' drops (M2-10): `"drop": "oneUp"` leaves a 1UP (an extra life, up to 9) and
+`"drop": "bonusCapsule"` a gold bonus capsule worth 1,000 points — world-space items like the
+capsule, in both power-up modes. `bonus.enemies.json` holds the bonus vault's carriers
+(`vault-carrier` → a bonus capsule, `vault-carrier-1up` → a 1UP).
+
 Formation-kill drops and bonuses are configured on the stage event (`formation`), not here.
 
 ## Bosses (M1-13)

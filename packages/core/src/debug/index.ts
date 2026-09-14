@@ -768,7 +768,33 @@ export function hashWorld(world: World): number {
   mixFxAndScores(world);
   mixBosses(world);
   mixGimmicks(world.gimmicks);
+  mixBonus(world);
   return accumulator[0];
+}
+
+/**
+ * Mixes the M2-10 state: the enemy totals (the zone tally's kill rate and the `ground` bonus
+ * entrance read them) and the bonus entrances' armed windows, entry and lock.
+ *
+ * @param world - The world.
+ */
+function mixBonus(world: World): void {
+  const stats = world.enemies.stats;
+  mixNumber(stats.spawned);
+  mixNumber(stats.killed);
+  mixNumber(stats.groundSpawned);
+  mixNumber(stats.groundKilled);
+  const bonus = world.bonus;
+  mixWord(bonus.count);
+  for (let e = 0; e < bonus.count; e++) {
+    mixWord(bonus.armed[e]);
+    if (bonus.armed[e] === 0) continue;
+    mixWord(bonus.groundSpawned0[e]);
+    mixWord(bonus.groundKilled0[e]);
+  }
+  mixNumber(bonus.entered);
+  mixNumber(bonus.enteredTick);
+  mixWord(bonus.locked ? 1 : 0);
 }
 
 /**

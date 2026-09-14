@@ -2788,6 +2788,100 @@ Goal of the milestone: every **[P1]** feature. Steps are ordered so systems land
 - **Acceptance:** graph validation (every route reaches a final zone), run-state carry-over, map navigation headless,
   bonus entrance/lock-out rules, all 16 routes completable by the bot with god mode.
 - **Refs:** `shmup_feat.md` §14 (branching map, bonus stages), §5 (launch/fly-out), §17 (scene flow).
+- **As built:**
+  - **Campaign file.** `content/campaign/main.campaign.json` (the content naming rule
+    `<folder>/<name>.<kind>.json`; + README, `example.campaign.json`), kind `campaign` owned by
+    `core/data` (`data/campaign.ts`, `ContentDb.campaign`, one file per content set): `start`,
+    `zones` (`id`, `label` — the map node's 1–2 letters —, `name`, `stage`, ≤ 3 `preview` lines),
+    `edges` (`from` / `to`), `endings` (`zone`, optional run-flag conditions `all` / `none` over
+    `RUN_FLAG_NAMES` = `bossEscaped`, `noDeath`, `noContinue`, `bonus`). Graph validation: unique
+    ids, known start / edge zones, no self-loops or duplicates, ≤ 4 exits, every zone reachable and
+    **every edge one depth deeper** (depth = shortest distance — so no cycles and every route ends
+    in a final zone, a zone without exits), an unconditional ending per final zone, a zone's stage
+    not a bonus stage. Derived: `depth`, `row`, `exits`, `final`, `depths`, `routes` (16);
+    helpers `campaignRoutes`, `countCampaignRoutes`, `campaignZoneIndex`, `runFlagMask` and the
+    ending hook `selectCampaignEnding` (the first ending of the final zone whose flags match).
+  - **Campaign runs.** A flow game is a campaign run when the host config's stage is the start
+    zone's stage (the shipped game — zone A); any other stage (the `?stage=` dev stages, open
+    space) keeps the M1 single-stage flow and its stage-clear screen unchanged. The run state is
+    `core/scenes` `run.ts` (`RunState`, `SceneFlow.run`): each zone is a fresh World
+    (`runWorldConfig` — the zone's stage in the chosen config — and `prepareRunWorld`), the players
+    are **carried** (`captureCarry` / `applyCarry`: score with the continue digit and next extend,
+    lives, loadout — meter weapons, Options, the Direct-mode levels and family —, speed level,
+    meter cursor, shield; a player down respawns blinking, an out player stays out, an unjoined
+    player 2 stays inactive), `world.rankInputs.stage` = zones cleared + 1 (M2-01's stage term),
+    RETRY STAGE restarts the zone from its entry state. The run's deaths, continues and ending flags
+    (`World.endingFlags`, a cleared bonus stage) accumulate for the ending (`RunFlag`,
+    `RunState.endingFlags`).
+  - **Launch intro / fly-out.** The launch is the existing fly-in plus a **zone title card**
+    (`ZONE B` / the zone's name, `ZONE_CARD_TICKS` 150, `BONUS STAGE` in a bonus stage). The
+    fly-out is a new `PlayerState` **`leaving`** (appended, code 5; `core/player` `flyOutPlayer`,
+    `LEAVE_ACCELERATION` 0.125, `LEAVE_MAX_SPEED` 8, `LEAVE_END_X`): from the tick after the status
+    turns `stageClear` every `alive` ship leaves right, uncontrollable, unhittable, not firing, its
+    Options trailing (a ship still flying in leaves after its fly-in). It changes only ticks after a
+    stage clear (never in a golden recording).
+  - **Zone result tally** (campaign runs only): the stage-clear screen in zone mode
+    (`StageClearScene.zoneMode`, `ZONE_TALLY_TICKS` 300): `ZONE X CLEAR` / `BONUS STAGE CLEAR`, the
+    score(s), the kill rate of the World's regular enemies (the new hashed `EnemySystem.stats` —
+    `EnemyStats`: spawned, killed by a player, ground ones apart; never reset) × 100 points and the
+    boss time bonus (100 points per whole second a defeated — not escaped — stage boss's fight
+    stayed under 90 s), paid to every player in play (`tallyZone`, `awardZoneBonus`, extends
+    checked). Then the map (a zone with exits; the save counts a cleared stage), the ending (final
+    zone — the run is recorded in the hi-score table only now) or the title (practice).
+  - **Zone map** (`MapScene`, id `map`, a full screen over the title's starfield): the graph —
+    one column per depth, the zones of a depth in file order, dotted edges, the route lit, the
+    cleared zone yellow, its exits outlined, the focused one blinking — and a preview panel (label,
+    name, preview lines). Up / Down (sorted top to bottom, wrapping, the UI kit's repeat), OK
+    launches (`LAUNCH` blinks `MAP_LAUNCH_TICKS` 60), Back → "quit to title?". The UI list grew to
+    384 commands / 224 string slots. The map fades the music out (no `ZoneMap` track yet).
+  - **Next zone prepared on the map:** OK pushes the new `SimEventKind.PrepareStage` (15, id = the
+    stage index); `@shmup/shell` `connectStagePreparation` has the audio engine prepare that
+    stage's music set plus the title theme (one set resident). Tilesets need nothing: every tile
+    is in the one atlas (per-zone texture unloading is M2-17).
+  - **Hidden bonus-stage framework.** Stage `type: 'bonus'` (no boss / warning / entrance events,
+    an `end`); a `bonus` event (appended `STAGE_EVENT_TYPES` / `StageEventCode.Bonus` 10) names the
+    bonus stage and its entrance — `gap` (a living ship's centre in `region`), `ground` (every ground
+    enemy of the window destroyed by the players, ≥ 1), `digit` (`floor(score / place) mod 10` of a
+    playing ship when the window closes; `place` 10 … 100,000, default 100) — with defaulted
+    `until`s; at most 8 per stage. The World side is `core/stage` `bonus.ts` (`BonusEntrances`,
+    `World.bonus`: armed by the stage hook, tested in phase 3, hashed; a restart re-arms the windows
+    it lands in). The flow: an opened entrance → after `BONUS_WARP_TICKS` (40) the game scene swaps
+    to the bonus stage's World (players carried); its clear is the zone's clear (the boss skipped;
+    run flag `bonus`); the first death there → after `BONUS_FAIL_TICKS` (60, before the bonus
+    stage's game over or clear screen could come) back to the zone's World at the entrance's `x`,
+    entrances locked (`BonusEntrances.lock`). Items: content drops `oneUp` and `bonusCapsule`
+    (`DropKind` 4 / 5 — `FreeOption` is 6 now), `ItemKind.OneUp` (9: +1 life, cap 9) and
+    `ItemKind.BonusCapsule` (10: 1,000 points), world-space in both modes; sprites `items/1up` and
+    `items/capsule-bonus` from the `items` generator (engine sprites). Shipped dev content:
+    `bonus-range` (one entrance of each kind) and `bonus-vault` (bonus-capsule carriers, a 1UP
+    carrier, brick barriers), `content/enemies/bonus.enemies.json`. No campaign zone has an entrance
+    yet (M2-11 puts one in zone B).
+  - **Ending hook.** `EndingScene` (id `ending`): the ending `selectCampaignEnding` picked for the
+    final zone and the run's flags, the route's labels, the score(s), the flag lines, `THANK YOU FOR
+    PLAYING`; OK after `ENDING_LOCK_TICKS` or `ENDING_TIMEOUT_TICKS` → title. The shipped endings are
+    placeholders (H: flawless / plain; I: flawless / boss escaped / plain) until M2-14.
+  - **Practice plumbing:** `SceneFlow.startPractice(zoneId, checkpoint)` — one campaign zone at a
+    checkpoint with the zone's rank stage term and a fresh start; its clear returns to the title;
+    `recordRun` records nothing for practice (the practice select and its table are M2-15).
+  - **Stub zones B–I** (`zone-b … zone-i.stage.json`, ≈ 45–70 s each): zone A's roster (popcorn,
+    capsule carriers, a fan, a rammer, an orbiter; floor turrets and walkers where there is a
+    floor), heightfield floors / caves, then the WARNING and a reused boss (HALCYON BULWARK in
+    B / D / F / H, the EMBER AND FROST TWINS in C / E / G, IRON LEVIATHAN in I). Names from M2-11 …
+    M2-14.
+  - **Playtests.** `test/playtest/campaign.ts` plays a run's zones exactly as the flow builds them
+    (`runWorldConfig` + `prepareRunWorld`, tally, carry) and walks the route tree (31 zone runs for
+    the 16 routes, zone A once); `campaign-routes-b` / `-c.test.ts` fly all 16 routes with the 4-way
+    bot in god mode (every zone cleared, rank terms 1–5, the score growing, an ending each);
+    `test/integration/campaign-flow.test.ts` drives the real flow through A-C-E-G-I (map Down + OK).
+    The bot now faces the first **fighting** boss slot (`mainBoss`) — it used to look at slot 0 only
+    and never found the survivor of a double boss in slot 1.
+  - **Goldens re-blessed:** the hash layout grew (the bonus entrances, the enemy totals), the two
+    new engine sprites shift the sorted sprite ids and `bonus.enemies.json` shifts zone A's enemy
+    spec indices; every zone A scenario kept its inputs, tick count and outcome (only hashes
+    changed). `captain-range-god`, `raid-range-god` and `twin-range-god` were re-recorded with the
+    improved bot (same outcomes; shorter fights).
+  - Shell tests used `campaign` as the example of a foreign kind nobody owns; they use `strings`
+    (M2-16's kind) now. App tests that drop zone A from the content drop the campaign with it.
 
 ### M2-11 — Zones B & C
 

@@ -196,6 +196,16 @@
  * {@link World.hitboxBatch}, refilled in phase 9 by {@link syncWorldView}). The simulation never
  * reads either and `hashWorld` skips them.
  *
+ * **Campaign support (M2-10).** {@link World.bonus} (`core/stage` `BonusEntrances`) holds the
+ * stage's hidden bonus-stage entrances: the stage hook arms them (`bonus` events), phase 3 tests them
+ * after the stage runner (a ship in a marked gap, every ground enemy of a window destroyed, a
+ * score digit) and a checkpoint restart re-arms the open windows behind the camera; the scene flow
+ * reads the entry. The enemy system counts its spawns and kills (`EnemySystem.stats`, the zone
+ * tally's kill rate). Once the status is `stageClear` every ship in control flies out on the next
+ * phase 2 (`core/player` `flyOutPlayer`). The campaign sets {@link World.rankInputs}'s `stage` to
+ * the zone's depth + 1 (`core/scenes` `prepareRunWorld`). `hashWorld` covers the entrances and
+ * the enemy totals.
+ *
  * **Zero allocation.** Everything is allocated by {@link createWorld}; {@link stepWorld} and the
  * systems only write numbers into existing objects and typed arrays.
  *
@@ -214,6 +224,7 @@
  *   triggers wired into the tick (M2-07, {@link World.gimmicks})
  * - shmup_feat.md §18 / §21 — the view's presentation mirrors for raster effects, palette cycling
  *   and the hitbox display option (M2-08; drawn by the renderer, never read by the sim)
+ * - shmup_feat.md §14 — hidden bonus-stage entrances; §5 — the stage-clear fly-out (M2-10)
  *
  * **Public API.** {@link createWorld}, {@link WorldOptions}, {@link stepWorld}, {@link World},
  * {@link WorldCamera},
@@ -296,6 +307,7 @@ import {
   PlayerHitCause,
   createPlayer,
   createPlayerIntent,
+  flyOutPlayer,
   killPlayer,
   playerBankFrame,
   playerHit,
@@ -336,6 +348,7 @@ import { createRngStreams, type RngStreams } from '../rng/index.js';
 import {
   GIMMICK_SPRITES,
   StageEventCode,
+  createBonusEntrances,
   createParallaxView,
   createStageCamera,
   createStageEffectsView,
@@ -344,6 +357,7 @@ import {
   createStageTerrain,
   createTerrainView,
   updateParallaxView,
+  type BonusEntrances,
   type StageGimmicks,
   type StageHooks,
   type StageParallaxView,
@@ -487,6 +501,12 @@ export interface World {
    * {@link World.terrain}, the moving blocks, the pull fields and chains of enemy scripts.
    */
   readonly gimmicks: StageGimmicks;
+  /**
+   * The stage's hidden bonus-stage entrances (M2-10, `core/stage` `BonusEntrances`): armed by its
+   * `bonus` events, tested in phase 3; {@link BonusEntrances.entered} tells the scene flow to fly
+   * the players into the bonus stage. None in free flight.
+   */
+  readonly bonus: BonusEntrances;
   /** The enemies (spawns, formations, scripts, movers, contact; `core/enemies`). */
   readonly enemies: EnemySystem;
   /** Enemy bullets and lasers (`core/bullets`). */
@@ -658,15 +678,22 @@ const inputSystem: WorldSystem = (world, input) => {
 };
 
 /**
- * Phase 2: moves the ships and advances their state timers, then the life cycle (respawns and
- * game over — `lifecycleSystem`), then the PowerUp presses equip the meter (before the
- * weapons, so a new weapon or Option fires on this tick), then the weapons follow the ships:
- * option trails, autofire.
+ * Phase 2: once the stage is cleared, every ship in control starts its fly-out (M2-10 —
+ * `core/player` `flyOutPlayer`); then it moves the ships and advances their state timers, then the
+ * life cycle (respawns and game over — `lifecycleSystem`), then the PowerUp presses equip the
+ * meter (before the weapons, so a new weapon or Option fires on this tick), then the weapons
+ * follow the ships: option trails, autofire.
  *
  * @param world - The world.
  */
 const playersSystem: WorldSystem = (world) => {
   const players = world.players;
+  // The stage-clear fly-out (M2-10): every ship in control leaves once the stage is cleared.
+  if (world.status === 'stageClear') {
+    for (let i = 0; i < players.length; i++) {
+      if (players[i].active && players[i].state === 'alive') flyOutPlayer(players[i]);
+    }
+  }
   for (let i = 0; i < players.length; i++) {
     updatePlayer(players[i], world.ship, world.intents[i], world.camera);
   }
@@ -749,6 +776,8 @@ function clearSession(world: World): void {
   world.scoring.clear();
   // The stage's own terrain again, no fields or chains, the blocks before the camera (M2-07).
   world.gimmicks.clear(world.stage, world.camera.x);
+  // The bonus entrances behind the camera with an open window re-arm (M2-10).
+  world.bonus.clear(world.stage, world.camera.x);
 }
 
 /**
@@ -779,6 +808,8 @@ const stageSystem: WorldSystem = (world) => {
   }
   // Region triggers, moving blocks, terrain regrowth (M2-07).
   world.gimmicks.updateStage(stage);
+  // The hidden bonus-stage entrances (M2-10).
+  world.bonus.update();
   enemies.spawnPending();
   updateWorldRank(world);
 };
@@ -1339,6 +1370,7 @@ type WorldUnderConstruction = Omit<
   | 'bosses'
   | 'laserSources'
   | 'gimmicks'
+  | 'bonus'
 > & {
   /** See {@link World.stage}. */
   stage: StageRunner | null;
@@ -1360,6 +1392,8 @@ type WorldUnderConstruction = Omit<
   laserSources: readonly LaserSource[];
   /** See {@link World.gimmicks}. */
   gimmicks: StageGimmicks;
+  /** See {@link World.bonus}. */
+  bonus: BonusEntrances;
 };
 
 /**
@@ -1483,6 +1517,7 @@ export function createWorld(
     scoring: null as unknown as ScoringSystem,
     bosses: null as unknown as BossSystem,
     gimmicks: null as unknown as StageGimmicks,
+    bonus: null as unknown as BonusEntrances,
     laserSources: [],
     rank: 0,
     rankInputs: createRankInputs(config),
@@ -1504,6 +1539,7 @@ export function createWorld(
   // Every boss slot's parts (M2-09: four slots of 16), after the enemy slots.
   world.laserSources = Object.freeze([...world.enemies.enemies, ...world.bosses.parts]);
   world.gimmicks = createStageGimmicks(world, world.enemies.enemies, stageSpec, terrain, content);
+  world.bonus = createBonusEntrances(world, world.enemies.stats, stageSpec);
   if (stageSpec !== null && terrain !== null) {
     view.terrain = createTerrainView(terrain, stageSpec, content, world.gimmicks.destructible);
   }
@@ -1580,6 +1616,8 @@ function createWorldStageHooks(world: WorldUnderConstruction): StageHooks {
         world.bosses.startWarning((event as StageBossEvent).enemyId);
       } else if (code === StageEventCode.Boss) {
         world.bosses.startBoss((event as StageBossEvent).enemyId);
+      } else if (code === StageEventCode.Bonus) {
+        world.bonus.arm(index);
       }
     },
     /**

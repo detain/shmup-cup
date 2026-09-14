@@ -1,0 +1,164 @@
+{
+  "formatVersion": 1,
+  "kind": "stage",
+  "id": "bonus-range",
+  "name": "BONUS RANGE",
+  "music": {
+    "stage": "Stage",
+    "boss": "Boss"
+  },
+  "length": 2800,
+  "camera": [
+    {
+      "x": 0,
+      "speed": 1,
+      "ramp": 30
+    },
+    {
+      "x": 2200,
+      "speed": 0.75,
+      "ramp": 60
+    }
+  ],
+  "checkpoints": [
+    {
+      "x": 0
+    },
+    {
+      "x": 1000
+    }
+  ],
+  "parallax": [
+    {
+      "layer": "far",
+      "sprite": "bg/stars-far",
+      "factor": 0.25,
+      "y": 0,
+      "spacing": 128
+    },
+    {
+      "layer": "far",
+      "sprite": "bg/stars-far",
+      "factor": 0.25,
+      "y": 128,
+      "spacing": 128
+    },
+    {
+      "layer": "mid",
+      "sprite": "bg/stars-mid",
+      "factor": 0.5,
+      "y": 0,
+      "spacing": 128
+    },
+    {
+      "layer": "mid",
+      "sprite": "bg/stars-mid",
+      "factor": 0.5,
+      "y": 128,
+      "spacing": 128
+    }
+  ],
+  "tilemap": {
+    "tileSize": 8,
+    "tileset": "terrain-a",
+    "rowsTall": 25,
+    "generator": {
+      "type": "heightfield",
+      "segments": [
+        {
+          "from": 960,
+          "to": 2000,
+          "floor": {
+            "base": 24,
+            "amp": 8,
+            "period": 320,
+            "seed": 7
+          }
+        }
+      ]
+    }
+  },
+  "events": [
+    {
+      "x": 100,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 100
+    },
+    {
+      "x": 400,
+      "type": "block",
+      "screenX": 400,
+      "y": 0,
+      "w": 16,
+      "h": 24,
+      "tile": "brick"
+    },
+    {
+      "x": 400,
+      "type": "block",
+      "screenX": 480,
+      "y": 0,
+      "w": 16,
+      "h": 24,
+      "tile": "brick"
+    },
+    {
+      "x": 420,
+      "type": "bonus",
+      "stage": "bonus-vault",
+      "entrance": "gap",
+      "region": {
+        "x": 816,
+        "y": 0,
+        "w": 64,
+        "h": 24
+      }
+    },
+    {
+      "x": 1000,
+      "type": "bonus",
+      "stage": "bonus-vault",
+      "entrance": "ground",
+      "until": 1800
+    },
+    {
+      "x": 1100,
+      "type": "spawn",
+      "enemy": "picket"
+    },
+    {
+      "x": 1250,
+      "type": "spawn",
+      "enemy": "picket"
+    },
+    {
+      "x": 1400,
+      "type": "spawn",
+      "enemy": "picket"
+    },
+    {
+      "x": 1600,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 80
+    },
+    {
+      "x": 2000,
+      "type": "bonus",
+      "stage": "bonus-vault",
+      "entrance": "digit",
+      "digit": 0,
+      "place": 1000
+    },
+    {
+      "x": 2400,
+      "type": "warning",
+      "enemy": "halcyon-bulwark"
+    },
+    {
+      "x": 2800,
+      "type": "end"
+    }
+  ]
+}

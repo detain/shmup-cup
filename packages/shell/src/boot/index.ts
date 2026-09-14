@@ -157,6 +157,7 @@ import {
   applyAudioOptions,
   applyDisplayOptions,
   connectAudioEvents,
+  connectStagePreparation,
   connectFxEvents,
   connectOptionEvents,
   createEventDispatcher,
@@ -914,6 +915,8 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   if (flowView !== null) {
     connectFxEvents(events, readyRenderer);
     connectAudioEvents(events, engine, flowView.camera);
+    // The zone map prepares the next zone's music while its choice launches (M2-10).
+    connectStagePreparation(events, engine, game.content.stages, stageMusicCues);
     // The Options screen's changes, live (plan M1-17). The profile event carries an index into
     // the same `profileChoices` the flow was given; out-of-range indices are ignored.
     connectOptionEvents(

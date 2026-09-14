@@ -43,6 +43,12 @@
  * | `UserOption` `ScreenShake` / `ReduceFlashing` (`param` 1 = on, M2-08) | `display.effects.settings.screenShake` / `.reduceFlashing` |
  * | `UserOption` `ShowHitbox` (`param` 1 = on, M2-08) | `display.setShowHitbox` |
  *
+ * **Stages (M2-10).** {@link connectStagePreparation} answers `PrepareStage` (the zone map pushes
+ * it while its choice launches, `id` = the stage's `ContentDb.stages` index): the audio engine
+ * prepares that stage's music set together with the title theme (the one-set-resident rule would
+ * otherwise drop it); a failure is reported to the host's callback and never breaks the game (the
+ * stage then plays silent cues).
+ *
  * {@link applyAudioOptions} sets all three volumes from saved options at boot;
  * {@link applyDisplayOptions} (M2-08) hands the saved display options to the renderer (the bullet
  * palette, the scale mode, shake, flash reduction and the hitbox markers).
@@ -55,12 +61,14 @@
  * {@link SimEventHandler}, {@link connectFxEvents}, {@link FxTargets},
  * {@link connectAudioEvents}, {@link AudioEventTarget}, {@link CameraPosition},
  * {@link connectOptionEvents}, {@link applyAudioOptions}, {@link VolumeTarget},
- * {@link applyDisplayOptions}, {@link DisplayTarget} (M2-08).
+ * {@link applyDisplayOptions}, {@link DisplayTarget} (M2-08), {@link connectStagePreparation},
+ * {@link StagePreparationTarget} (M2-10).
  *
  * @module
  */
 import {
   BULLET_PALETTES,
+  MUSIC_CUES,
   SCALE_MODES,
   SIM_EVENT_KIND_NAMES,
   SimEventKind,
@@ -74,6 +82,7 @@ import {
   type EventQueue,
   type ScaleMode,
   type SimEvent,
+  type StageSpec,
 } from '@shmup/core';
 import {
   BONUS_POPUP_COLOR,
@@ -357,6 +366,52 @@ export function connectAudioEvents(
     connected = false;
     for (const unregister of off) unregister();
   };
+}
+
+/** What prepares a stage's music (`@shmup/audio-web` `AudioEngine` has it). */
+export interface StagePreparationTarget {
+  /**
+   * Prepares a loading phase's music set (releases the rest).
+   *
+   * @param stageId - The stage about to run.
+   * @param cues - The cues to prepare.
+   * @returns Resolves when the set is ready.
+   */
+  prepareMusic(stageId: string | null, cues?: readonly number[]): Promise<void>;
+}
+
+/**
+ * Registers the `PrepareStage` handler (M2-10 — the zone map's launch): the stage's music set
+ * (`cuesOf(stage)` — the shell passes `@shmup/audio-web` `stageMusicCues`) plus the title theme
+ * is prepared in the background. An index outside `stages` is ignored.
+ *
+ * @param dispatcher - The dispatcher.
+ * @param audio - The audio engine.
+ * @param stages - The content's stages (`ContentDb.stages`).
+ * @param cuesOf - The music cues a stage can ask for.
+ * @param onError - Called when the preparation fails (default: ignored — the cues stay silent).
+ * @returns A function that unregisters the handler.
+ *
+ * @example
+ * ```ts
+ * connectStagePreparation(events, engine, game.content.stages, stageMusicCues);
+ * ```
+ */
+export function connectStagePreparation(
+  dispatcher: EventDispatcher,
+  audio: StagePreparationTarget,
+  stages: readonly StageSpec[],
+  cuesOf: (stage: StageSpec) => number[],
+  onError: (error: unknown) => void = () => {},
+): () => void {
+  return dispatcher.on(SimEventKind.PrepareStage, (event) => {
+    const stage = stages[event.id];
+    if (stage === undefined) return;
+    const cues = cuesOf(stage);
+    // The title theme stays resident: the run returns to the title afterwards.
+    cues.unshift(MUSIC_CUES.Title);
+    audio.prepareMusic(stage.id, cues).catch(onError);
+  });
 }
 
 /** Where volumes go — the audio back-end (`IAudio` has it). */

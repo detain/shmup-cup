@@ -49,11 +49,13 @@ export {
   applyDisplayOptions,
   connectFxEvents,
   connectOptionEvents,
+  connectStagePreparation,
   createEventDispatcher,
   type DisplayTarget,
   type EventDispatcher,
   type FxTargets,
   type SimEventHandler,
+  type StagePreparationTarget,
   type VolumeTarget,
 } from './dispatch/index.js';
 export {

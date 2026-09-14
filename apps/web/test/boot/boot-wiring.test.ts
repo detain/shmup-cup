@@ -515,7 +515,10 @@ describe('web/boot bootWebApp wiring', () => {
   it('flies in open space when the content has no zone A (M1-18)', async () => {
     const withoutZoneA: WebAppResources = {
       ...resources,
-      contentFiles: resources.contentFiles.filter((f) => f.path !== 'stages/zone-a.stage.json'),
+      // Without zone A — and so without the campaign that starts there (M2-10).
+      contentFiles: resources.contentFiles.filter(
+        (f) => f.path !== 'stages/zone-a.stage.json' && f.path !== 'campaign/main.campaign.json',
+      ),
     };
     const app = await bootWebApp({} as HTMLCanvasElement, withoutZoneA, win as unknown as Window);
     expect(app.game.config.stage).toBeNull();

@@ -1,0 +1,179 @@
+{
+  "formatVersion": 1,
+  "kind": "stage",
+  "id": "bonus-vault",
+  "name": "BONUS VAULT",
+  "type": "bonus",
+  "music": {
+    "stage": "Stage",
+    "boss": "Boss"
+  },
+  "length": 1600,
+  "camera": [
+    {
+      "x": 0,
+      "speed": 1,
+      "ramp": 30
+    }
+  ],
+  "checkpoints": [
+    {
+      "x": 0
+    }
+  ],
+  "parallax": [
+    {
+      "layer": "far",
+      "sprite": "bg/stars-far",
+      "factor": 0.25,
+      "y": 0,
+      "spacing": 128
+    },
+    {
+      "layer": "far",
+      "sprite": "bg/stars-far",
+      "factor": 0.25,
+      "y": 128,
+      "spacing": 128
+    },
+    {
+      "layer": "mid",
+      "sprite": "bg/stars-mid",
+      "factor": 0.5,
+      "y": 0,
+      "spacing": 128
+    },
+    {
+      "layer": "mid",
+      "sprite": "bg/stars-mid",
+      "factor": 0.5,
+      "y": 128,
+      "spacing": 128
+    }
+  ],
+  "tilemap": {
+    "tileSize": 8,
+    "tileset": "terrain-a",
+    "rowsTall": 25,
+    "rle": [
+      "90*0, 2*18, 58*0, 2*18, 96*0",
+      "90*0, 2*18, 58*0, 2*18, 96*0",
+      "90*0, 2*18, 58*0, 2*18, 96*0",
+      "90*0, 2*18, 58*0, 2*18, 96*0",
+      "90*0, 2*18, 58*0, 2*18, 96*0",
+      "90*0, 2*18, 58*0, 2*18, 96*0",
+      "90*0, 2*18, 58*0, 2*18, 96*0",
+      "90*0, 2*18, 58*0, 2*18, 96*0",
+      "90*0, 2*18, 58*0, 2*18, 96*0",
+      "90*0, 2*18, 58*0, 2*18, 96*0",
+      "248*0",
+      "248*0",
+      "248*0",
+      "248*0",
+      "248*0",
+      "248*0",
+      "90*0, 2*18, 58*0, 2*18, 96*0",
+      "90*0, 2*18, 58*0, 2*18, 96*0",
+      "90*0, 2*18, 58*0, 2*18, 96*0",
+      "90*0, 2*18, 58*0, 2*18, 96*0",
+      "90*0, 2*18, 58*0, 2*18, 96*0",
+      "90*0, 2*18, 58*0, 2*18, 96*0",
+      "90*0, 2*18, 58*0, 2*18, 96*0",
+      "90*0, 2*18, 58*0, 2*18, 96*0",
+      "90*0, 2*18, 58*0, 2*18, 96*0"
+    ]
+  },
+  "events": [
+    {
+      "x": 80,
+      "type": "formation",
+      "enemy": "vault-carrier",
+      "count": 3,
+      "interval": 24,
+      "y": 60,
+      "drop": null
+    },
+    {
+      "x": 200,
+      "type": "formation",
+      "enemy": "vault-carrier",
+      "count": 3,
+      "interval": 24,
+      "y": 140,
+      "drop": null
+    },
+    {
+      "x": 320,
+      "type": "formation",
+      "enemy": "vault-carrier",
+      "count": 3,
+      "interval": 24,
+      "y": 100,
+      "drop": null
+    },
+    {
+      "x": 440,
+      "type": "formation",
+      "enemy": "vault-carrier",
+      "count": 3,
+      "interval": 24,
+      "y": 50,
+      "drop": null
+    },
+    {
+      "x": 560,
+      "type": "formation",
+      "enemy": "vault-carrier",
+      "count": 3,
+      "interval": 24,
+      "y": 150,
+      "drop": null
+    },
+    {
+      "x": 700,
+      "type": "formation",
+      "enemy": "vault-carrier",
+      "count": 3,
+      "interval": 24,
+      "y": 100,
+      "drop": null
+    },
+    {
+      "x": 820,
+      "type": "spawn",
+      "enemy": "vault-carrier-1up",
+      "y": 100
+    },
+    {
+      "x": 980,
+      "type": "formation",
+      "enemy": "vault-carrier",
+      "count": 3,
+      "interval": 24,
+      "y": 70,
+      "drop": null
+    },
+    {
+      "x": 1100,
+      "type": "formation",
+      "enemy": "vault-carrier",
+      "count": 3,
+      "interval": 24,
+      "y": 130,
+      "drop": null
+    },
+    {
+      "x": 1220,
+      "type": "formation",
+      "enemy": "vault-carrier",
+      "count": 3,
+      "interval": 24,
+      "y": 100,
+      "drop": null
+    },
+    {
+      "x": 1600,
+      "type": "end"
+    }
+  ]
+}

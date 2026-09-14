@@ -599,14 +599,15 @@ describe('shell/boot failures (boot error screen)', () => {
   it('reports content from a foreign kind nobody owns, unless an owner accepts it', async () => {
     const foreign = [
       ...contentFiles,
-      { path: 'campaign/main.campaign.json', data: { formatVersion: 1, kind: 'campaign' } },
+      // A kind a later step brings (the string tables of M2-16); `campaign` is the core's (M2-10).
+      { path: 'strings/en.strings.json', data: { formatVersion: 1, kind: 'strings' } },
     ];
     await expect(boot({ contentFiles: foreign }).promise).rejects.toThrow(
-      /no loader for content kind "campaign"/,
+      /no loader for content kind "strings"/,
     );
-    const owned = await boot({ contentFiles: foreign, contentOwners: { campaign: () => [] } })
+    const owned = await boot({ contentFiles: foreign, contentOwners: { strings: () => [] } })
       .promise;
-    // The input profiles, fx presets and audio are validated by the shell; `campaign` by the one
+    // The input profiles, fx presets and audio are validated by the shell; `strings` by the one
     // passed.
     expect(owned.content.foreign.map((file) => file.path)).toEqual([
       'audio/main.sfx.json',
@@ -615,9 +616,9 @@ describe('shell/boot failures (boot error screen)', () => {
       'audio/music/stage-clear.music.json',
       'audio/music/title.music.json',
       'audio/music/zone-a.music.json',
-      'campaign/main.campaign.json',
       'fx/particles.fx.json',
       'input/remote.input-profiles.json',
+      'strings/en.strings.json',
     ]);
   });
 

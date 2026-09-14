@@ -114,7 +114,11 @@
  * runner.restartAt(runner.checkpoint); // after a death with the `arcade` penalty
  * ```
  *
- * **Planned API.** Bonus stages and the zone map (M2-10).
+ * **Bonus entrances (M2-10, `./bonus.ts`).** {@link BonusEntrances}, {@link BonusEntrancesHost},
+ * {@link createBonusEntrances}, {@link BonusEntrance}: a stage's `bonus` events (hidden bonus-stage
+ * entrances — a marked gap, all ground targets destroyed, a score digit) armed through the World's
+ * stage hook ({@link StageEventCode}.Bonus) and tested in phase 3; the scene flow runs the bonus
+ * stage itself.
  *
  * @module
  */
@@ -153,6 +157,12 @@ export {
   createStageGimmicks,
   type StageGimmicksHost,
 } from './systems.js';
+export {
+  BonusEntrance,
+  BonusEntrances,
+  createBonusEntrances,
+  type BonusEntrancesHost,
+} from './bonus.js';
 
 /** Module descriptor (see {@link defineModule}). */
 export const moduleInfo = defineModule({
@@ -186,6 +196,8 @@ export const StageEventCode = {
   Trigger: 8,
   /** `block` — a moving block (the World's `MovingBlockSystem`, M2-07). */
   Block: 9,
+  /** `bonus` — a hidden bonus-stage entrance arms (the World's `BonusEntrances`, M2-10). */
+  Bonus: 10,
 } as const;
 
 /** A {@link StageEventCode} value. */

@@ -61,10 +61,10 @@
     "AJUL"
   ],
   "hashes": [
-    31562992,
-    1612433000
+    3338657104,
+    1867775002
   ],
-  "finalHash": 1524339096,
+  "finalHash": 1134289908,
   "description": "GIMMICK RANGE, a weaving pilot that never dodges, Arcade penalty (M2-07): checkpoint restarts roll the terrain back",
   "expected": {
     "status": "gameOver",

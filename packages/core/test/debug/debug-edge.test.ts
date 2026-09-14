@@ -396,6 +396,22 @@ function referenceHash(w: World): number {
     for (const value of [g.chainOwnerTick[i], g.chainX[i], g.chainY[i]]) num(value);
     word(g.chainLinks[i]);
   }
+  // M2-10: the enemy totals, then the bonus entrances (armed windows, entry, lock).
+  const stats = w.enemies.stats;
+  for (const value of [stats.spawned, stats.killed, stats.groundSpawned, stats.groundKilled]) {
+    num(value);
+  }
+  const bonus = w.bonus;
+  word(bonus.count);
+  for (let e = 0; e < bonus.count; e++) {
+    word(bonus.armed[e]);
+    if (bonus.armed[e] === 0) continue;
+    word(bonus.groundSpawned0[e]);
+    word(bonus.groundKilled0[e]);
+  }
+  num(bonus.entered);
+  num(bonus.enteredTick);
+  word(bonus.locked ? 1 : 0);
   let h = FNV_OFFSET_BASIS;
   for (const b of bytes) h = Math.imul(h ^ b, FNV_PRIME) >>> 0;
   return h;

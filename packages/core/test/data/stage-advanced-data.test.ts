@@ -230,7 +230,8 @@ describe('core/data — branches and triggers (M2-07)', () => {
     expect(stage.branches).toEqual([{ id: 'b', flag: 'zeta', flagId: 2, value: true }]);
     expect(stage.events.map((e) => ('flagId' in e ? e.flagId : null))).toEqual([1, 0, null]);
     expect(stage.events.map((e) => e.branchId)).toEqual([-1, -1, 0]);
-    expect(STAGE_EVENT_TYPES.slice(-2)).toEqual(['trigger', 'block']);
+    // M2-07 appended trigger and block, M2-10 bonus.
+    expect(STAGE_EVENT_TYPES.slice(-3)).toEqual(['trigger', 'block', 'bonus']);
   });
 
   it('refuses duplicate branch ids, unknown branches and a trigger that disarms before it arms', () => {

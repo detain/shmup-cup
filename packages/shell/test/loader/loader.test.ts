@@ -162,8 +162,8 @@ describe('shell/loader loadGameContent', () => {
         path: 'input/remote.input-profiles.json',
         data: { formatVersion: 1, kind: 'input-profiles' },
       },
-      { path: 'campaign/main.campaign.json', data: { formatVersion: 1, kind: 'campaign' } },
-      { path: 'campaign/more.campaign.json', data: { formatVersion: 1, kind: 'campaign' } },
+      { path: 'strings/en.strings.json', data: { formatVersion: 1, kind: 'strings' } },
+      { path: 'strings/fr.strings.json', data: { formatVersion: 1, kind: 'strings' } },
     ];
     const seen: string[][] = [];
     const result = loadGameContent(files, {
@@ -176,9 +176,9 @@ describe('shell/loader loadGameContent', () => {
     });
     expect(seen).toEqual([['input/remote.input-profiles.json']]);
     expect(result.issues).toEqual([
-      { path: 'campaign/main.campaign.json', message: 'no loader for content kind "campaign"' },
-      { path: 'campaign/more.campaign.json', message: 'no loader for content kind "campaign"' },
       { path: 'input/remote.input-profiles.json:profiles[0]', message: 'bad profile' },
+      { path: 'strings/en.strings.json', message: 'no loader for content kind "strings"' },
+      { path: 'strings/fr.strings.json', message: 'no loader for content kind "strings"' },
     ]);
     expect(result.foreign).toHaveLength(3);
   });

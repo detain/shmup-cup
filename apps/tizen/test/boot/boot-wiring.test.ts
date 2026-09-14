@@ -296,7 +296,10 @@ describe('tizen/boot bootTizenApp wiring', () => {
       {} as HTMLCanvasElement,
       {
         ...resources,
-        contentFiles: resources.contentFiles.filter((f) => f.path !== 'stages/zone-a.stage.json'),
+        // Without zone A — and so without the campaign that starts there (M2-10).
+        contentFiles: resources.contentFiles.filter(
+          (f) => f.path !== 'stages/zone-a.stage.json' && f.path !== 'campaign/main.campaign.json',
+        ),
       },
       win as unknown as Window,
     );

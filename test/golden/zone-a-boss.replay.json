@@ -61,9 +61,9 @@
     "AIwH"
   ],
   "hashes": [
-    4065096259
+    2554635454
   ],
-  "finalHash": 631831050,
+  "finalHash": 1321125039,
   "description": "the stage skip to HALCYON BULWARK with the full loadout and the Arcade penalty",
   "expected": {
     "status": "stageClear",

@@ -278,6 +278,7 @@ describe('integration: content/ validates', () => {
       tilesets: ['tileset'],
       rules: ['rules'],
       patterns: ['patterns'],
+      campaign: ['campaign'],
       input: ['input-profiles'],
       fx: ['fx'],
       // The SFX bank next to the music folder (audio/main.sfx.json, audio/music/*.music.json).
@@ -412,6 +413,54 @@ describe('integration: content/ validates', () => {
     const kestrel = db.ships[db.shipIndex.get('kestrel') ?? -1];
     expect(kestrel?.speeds).toEqual([1.5, 2, 2.5, 3, 3.5, 4]);
     expect(kestrel?.hurtRadius).toBe(1.5);
+  });
+
+  it('ships the zone map of decision D9: A → B|C → D|E → F|G → H|I, 16 routes, two finales (M2-10)', () => {
+    const { db } = loadContent(shippedFiles);
+    const campaign = db.campaign;
+    expect(campaign).not.toBeNull();
+    if (campaign === null) return;
+    expect(campaign.zones.map((z) => z.label).join('')).toBe('ABCDEFGHI');
+    expect(campaign.zones[campaign.startIndex].stage).toBe('zone-a');
+    expect([campaign.depths, campaign.routes]).toEqual([5, 16]);
+    expect(campaign.zones.filter((z) => z.final).map((z) => z.name)).toEqual([
+      'IRON CITADEL',
+      'ABYSSAL THRONE',
+    ]);
+    expect(campaign.zones.map((z) => z.stage)).toEqual(
+      ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'].map((id) => 'zone-' + id),
+    );
+    for (const zone of campaign.zones) {
+      expect(zone.depth).toBe(
+        'ABCDEFGHI'.indexOf(zone.label) === 0 ? 0 : Math.ceil('ABCDEFGHI'.indexOf(zone.label) / 2),
+      );
+      expect(zone.preview.length).toBeGreaterThan(0);
+      const stage = db.stages[zone.stageId];
+      expect(stage.type).toBe('normal');
+      // Every zone ends with a boss fight (the WARNING) and its clear.
+      expect(stage.events.some((e) => e.type === 'warning')).toBe(true);
+    }
+    // Each final zone has an unconditional ending and a no-miss variant.
+    for (const final of ['h', 'i']) {
+      const endings = campaign.endings.filter((e) => e.zone === final);
+      expect(endings.some((e) => e.all.length === 0 && e.none.length === 0)).toBe(true);
+      expect(endings.some((e) => e.all.includes('noDeath'))).toBe(true);
+    }
+    // The bonus-stage framework's dev stages: a range with the three entrances and its vault.
+    const range = db.stages[db.stageIndex.get('bonus-range') ?? -1];
+    const vault = db.stages[db.stageIndex.get('bonus-vault') ?? -1];
+    expect(vault.type).toBe('bonus');
+    const entrances = range.events.filter((e) => e.type === 'bonus');
+    expect(entrances.map((e) => (e.type === 'bonus' ? e.entrance : ''))).toEqual([
+      'gap',
+      'ground',
+      'digit',
+    ]);
+    expect(
+      vault.events
+        .filter((e) => e.type === 'spawn' || e.type === 'formation')
+        .map((e) => ('enemy' in e ? e.enemy : '')),
+    ).toContain('vault-carrier-1up');
   });
 });
 

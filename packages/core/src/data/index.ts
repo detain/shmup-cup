@@ -3,8 +3,8 @@
  *
  * **Status: partial.** The loader, the schema combinators and the `player`, `weapons`,
  * `enemies` (with its boss section, M1-13), `paths`, `stage`, `tileset`, `rules` (M2-01, its
- * `scoring` section M2-02) and `patterns` (M2-02) formats are implemented; later steps add their
- * kinds.
+ * `scoring` section M2-02), `patterns` (M2-02) and `campaign` (M2-10) formats are implemented;
+ * later steps add their kinds.
  *
  * **Responsibility.** Data-driven content (design pillar 4). Declares the shape of every
  * file under `content/`, validates it at load time with the in-house combinators in
@@ -60,6 +60,17 @@
  * list of bosses one after another ({@link StageRushEntry}). The reference pass checks that
  * partners, inner bosses and rush entries are bosses of role `boss`, minions are regular enemies,
  * no `warning` event names a captain and no inner-boss chain loops.
+ *
+ * **Campaign and bonus stages (M2-10).** A `campaign` file (`content/campaign/*.campaign.json`,
+ * one per content set — `./campaign.ts`) holds the zone map: zones (a stage each, a map label,
+ * a name, preview lines), the edges between them and the endings; the loader checks the graph
+ * (every zone reachable, every edge one level deeper — so every route ends in a final zone —,
+ * an unconditional ending per final zone) and derives depths, rows, exits and the route count
+ * into {@link ContentDb.campaign}; a zone's stage must not be a bonus stage. A stage may be of
+ * type `bonus` (a hidden bonus stage: no boss, no entrances, an `end`) and any stage may carry
+ * `bonus` events ({@link StageBonusEvent}: an entrance — a marked `gap`, all `ground` targets
+ * destroyed, a score `digit` — naming the bonus stage, at most {@link MAX_BONUS_ENTRANCES});
+ * enemies may drop `oneUp` and `bonusCapsule`.
  *
  * **Rules (M2-01).** A `rules` file (`content/rules/*.rules.json`) holds game-wide tables; its
  * optional `difficulty` section gives the four difficulty presets (`core/config`
@@ -157,7 +168,16 @@
  * and resolves it into {@link PlayerShipSpec.spriteP2Id}; `pnpm content:check` verifies the atlas
  * has it like every other sprite name the content uses.
  *
- * **Planned API (later steps).** Kinds `campaign`, `strings` (M2); `input-profiles`,
+ * M2-10: {@link CampaignSpec} and its parts ({@link CampaignZoneSpec}, {@link CampaignEdgeSpec},
+ * {@link CampaignEndingSpec}), {@link RUN_FLAG_NAMES}, {@link RunFlagName}, {@link runFlagMask},
+ * {@link campaignRoutes}, {@link countCampaignRoutes}, {@link campaignZoneIndex},
+ * {@link selectCampaignEnding}, {@link completeCampaign}, the limits ({@link MAX_CAMPAIGN_ZONES},
+ * {@link MAX_ZONE_EXITS}, {@link MAX_ZONE_PREVIEW_LINES}, {@link MAX_CAMPAIGN_ENDINGS}), the bonus
+ * entrances ({@link StageBonusEvent}, {@link BonusEntranceName}, {@link BONUS_ENTRANCES},
+ * {@link BONUS_PLACES}, {@link DEFAULT_BONUS_WINDOW}, {@link DEFAULT_BONUS_PLACE},
+ * {@link MAX_BONUS_ENTRANCES}).
+ *
+ * **Planned API (later steps).** Kind `strings` (M2-16); `input-profiles`,
  * `sfx`/`music` and `fx` files stay *foreign* here and are validated by their owning packages
  * (see plan §3.5). Hosts pass
  * `knownScripts` (`core/behaviors` `KNOWN_SCRIPT_IDS`) so script ids are checked; M1-03 checks
@@ -195,12 +215,39 @@ import {
   type PatternBank,
 } from '../patterns/dsl.js';
 import { MAX_BULLET_CANCEL_POINTS, type ScoringRules } from '../scoring/index.js';
+import {
+  MAX_CAMPAIGN_ENDINGS,
+  MAX_CAMPAIGN_ZONES,
+  MAX_ZONE_EXITS,
+  MAX_ZONE_PREVIEW_LINES,
+  RUN_FLAG_NAMES,
+  completeCampaign,
+  type CampaignSpec,
+} from './campaign.js';
 import { bakePath, type PathTable } from './paths.js';
 import { s, type RefSite, type Schema, type ValidationIssue } from './schema.js';
 import { buildTilesetTables, expandTilemap, type TilesetTables } from './tilemap.js';
 
 export type { TilesetTables } from './tilemap.js';
 export { MAX_PATH_LENGTH, PATH_SAMPLE_STEP, bakePath, type PathTable } from './paths.js';
+export {
+  MAX_CAMPAIGN_ENDINGS,
+  MAX_CAMPAIGN_ZONES,
+  MAX_ZONE_EXITS,
+  MAX_ZONE_PREVIEW_LINES,
+  RUN_FLAG_NAMES,
+  campaignRoutes,
+  campaignZoneIndex,
+  completeCampaign,
+  countCampaignRoutes,
+  runFlagMask,
+  selectCampaignEnding,
+  type CampaignEdgeSpec,
+  type CampaignEndingSpec,
+  type CampaignSpec,
+  type CampaignZoneSpec,
+  type RunFlagName,
+} from './campaign.js';
 
 export {
   s,
@@ -253,6 +300,7 @@ export const CONTENT_KINDS = Object.freeze([
   'tileset',
   'rules',
   'patterns',
+  'campaign',
 ] as const);
 
 /** Kinds of content file this module owns (`content/player/`, `weapons/`, …). */
@@ -613,10 +661,16 @@ export const ENEMY_EXPLOSIONS = Object.freeze(['small', 'medium', 'large'] as co
  * mode-agnostic power-up: a capsule in meter mode, the stage's next planned item in Direct mode
  * (the direct ship has no meter, so a `capsule` becomes that item too).
  */
-export type EnemyDrop = 'capsule' | 'blueCapsule' | 'powerup';
+export type EnemyDrop = 'capsule' | 'blueCapsule' | 'powerup' | 'oneUp' | 'bonusCapsule';
 
 /** Every {@link EnemyDrop}, in code order (the index + 1 is the drop code; 0 = none). */
-export const ENEMY_DROPS = Object.freeze(['capsule', 'blueCapsule', 'powerup'] as const);
+export const ENEMY_DROPS = Object.freeze([
+  'capsule',
+  'blueCapsule',
+  'powerup',
+  'oneUp',
+  'bonusCapsule',
+] as const);
 
 /** Default {@link EnemySpec.settleTicks}: half a second on screen before an enemy may fire. */
 export const DEFAULT_SETTLE_TICKS = 30;
@@ -1536,6 +1590,61 @@ export interface StageBlockEvent extends StageEventBase {
   readonly phase?: number;
 }
 
+/**
+ * How a hidden bonus stage's entrance opens (M2-10, shmup_feat.md §14 "hidden bonus stages"):
+ * `gap` — a living ship flies into a marked region; `ground` — every ground enemy that appeared in
+ * the window was destroyed by the players; `digit` — a playing ship's score shows a given digit
+ * when the window closes.
+ */
+export type BonusEntranceName = 'gap' | 'ground' | 'digit';
+
+/** Every {@link BonusEntranceName}, in code order (the index is the entrance's code). */
+export const BONUS_ENTRANCES = Object.freeze(['gap', 'ground', 'digit'] as const);
+
+/** Default length of a `ground` entrance's window, in camera pixels. */
+export const DEFAULT_BONUS_WINDOW = 600;
+
+/** Default place of a `digit` entrance's digit (100 = the hundreds). */
+export const DEFAULT_BONUS_PLACE = 100;
+
+/** Places a `digit` entrance may read (the last digit is the continue count — never read). */
+export const BONUS_PLACES = Object.freeze([10, 100, 1000, 10000, 100000] as const);
+
+/** Most `bonus` events one stage may have. */
+export const MAX_BONUS_ENTRANCES = 8;
+
+/**
+ * A **hidden bonus-stage entrance** (M2-10, shmup_feat.md §14): from the camera reaching `x`
+ * until it passes `until`, the entrance waits for its condition ({@link BonusEntranceName}); when
+ * it opens the World records it (`core/stage` `BonusEntrances.entered`) and the scene flow flies
+ * the players into `stage` (a stage of type `bonus`). Clearing the bonus stage skips the zone's
+ * boss; a death in it sends the players back here and locks the entrance.
+ */
+export interface StageBonusEvent extends StageEventBase {
+  /** Camera X that arms the entrance. */
+  readonly x: number;
+  /** Discriminator. */
+  readonly type: 'bonus';
+  /** The bonus stage (a stage of type `bonus`). */
+  readonly stage: string;
+  /** Resolved `ContentDb.stages` index of {@link StageBonusEvent.stage}. */
+  readonly stageId: number;
+  /** What opens it. */
+  readonly entrance: BonusEntranceName;
+  /** `gap`: the world rectangle a living ship's centre must enter. */
+  readonly region?: StageRegion;
+  /**
+   * Camera x where the window closes (the loader fills the default: `gap` the region's right
+   * edge, `ground` `x +` {@link DEFAULT_BONUS_WINDOW}, `digit` `x` — the digit is read on
+   * arrival).
+   */
+  readonly until: number;
+  /** `digit`: the digit 0–9 the score must show. */
+  readonly digit?: number;
+  /** `digit`: which place ({@link BONUS_PLACES}; the loader fills {@link DEFAULT_BONUS_PLACE}). */
+  readonly place: number;
+}
+
 /** One entry of a stage timeline, fired when the camera reaches its `x`. */
 export type StageEvent =
   | StageSpawnEvent
@@ -1546,9 +1655,13 @@ export type StageEvent =
   | StageFlagEvent
   | StageEndEvent
   | StageTriggerEvent
-  | StageBlockEvent;
+  | StageBlockEvent
+  | StageBonusEvent;
 
-/** Every stage event `type`, in schema order (M2-07 appended `trigger` and `block`). */
+/**
+ * Every stage event `type`, in schema order (M2-07 appended `trigger` and `block`, M2-10
+ * `bonus`).
+ */
 export const STAGE_EVENT_TYPES = Object.freeze([
   'spawn',
   'formation',
@@ -1560,6 +1673,7 @@ export const STAGE_EVENT_TYPES = Object.freeze([
   'end',
   'trigger',
   'block',
+  'bonus',
 ] as const);
 
 /** Most distinct flags one stage may use (they are bits of one 32-bit mask). */
@@ -1599,12 +1713,13 @@ export interface StageBranch {
 /**
  * What kind of stage it is (M2-09): `normal` — a zone with its timeline; `bossRush` — a boss-rush
  * sequence (shmup_feat.md §13 "boss rush stage"): its `rush` bosses come one after another and the
- * last one's death clears the stage.
+ * last one's death clears the stage; `bonus` (M2-10) — a hidden bonus stage entered from a zone's
+ * `bonus` event: no boss, no rush, an `end` event, no entrances of its own (shmup_feat.md §14).
  */
-export type StageType = 'normal' | 'bossRush';
+export type StageType = 'normal' | 'bossRush' | 'bonus';
 
-/** Every {@link StageType}. */
-export const STAGE_TYPES = Object.freeze(['normal', 'bossRush'] as const);
+/** Every {@link StageType} (M2-10 appended `bonus`). */
+export const STAGE_TYPES = Object.freeze(['normal', 'bossRush', 'bonus'] as const);
 
 /** Most bosses one boss rush may list. */
 export const MAX_RUSH_BOSSES = 16;
@@ -1814,6 +1929,12 @@ export interface ContentDb {
    * pattern files.
    */
   readonly patterns: PatternBank;
+  /**
+   * The zone map of the `content/campaign/` file (M2-10, `data/campaign` {@link CampaignSpec}):
+   * zones, edges and endings — or `null` when no file has one (the scene flow then plays single
+   * stages).
+   */
+  readonly campaign: CampaignSpec | null;
 }
 
 /** Options of {@link loadContent}. */
@@ -2335,7 +2456,7 @@ const WORLD_COORD = s.num({ min: -4096, max: 1001000 });
 
 /** One entry of `events` in a `stage` file (every variant may name a `branch` — M2-07). */
 const STAGE_EVENT_SCHEMA: Schema<
-  Omit<StageEvent, 'enemyId' | 'cueId' | 'flagId' | 'pathId' | 'tileId'>
+  Omit<StageEvent, 'enemyId' | 'cueId' | 'flagId' | 'pathId' | 'tileId' | 'stageId'>
 > = s.oneOf('type', {
   spawn: s.object(
     {
@@ -2436,6 +2557,25 @@ const STAGE_EVENT_SCHEMA: Schema<
       branch: STAGE_NAME,
     },
     { optional: ['screenX', 'tile', 'vx', 'vy', 'dx', 'dy', 'period', 'phase', 'branch'] },
+  ),
+  bonus: s.object(
+    {
+      x: EVENT_X,
+      type: s.enumOf(['bonus'] as const),
+      stage: s.ref('stage'),
+      entrance: s.enumOf(BONUS_ENTRANCES),
+      region: s.object({
+        x: WORLD_COORD,
+        y: WORLD_COORD,
+        w: s.num({ min: 1, max: 65536 }),
+        h: s.num({ min: 1, max: 65536 }),
+      }),
+      until: EVENT_X,
+      digit: s.int({ min: 0, max: 9 }),
+      place: s.int({ min: 10, max: 100000 }),
+      branch: STAGE_NAME,
+    },
+    { optional: ['region', 'until', 'digit', 'place', 'branch'] },
   ),
 });
 
@@ -2644,6 +2784,50 @@ const RULES_FILE_SCHEMA = s.object(
   { optional: ['difficulty', 'scoring'] },
 );
 
+/** A campaign zone id (lower-case kebab). */
+const ZONE_ID = s.str({ maxLength: 32, pattern: /^[a-z][a-z0-9-]*$/ });
+
+/** A `content/campaign/*.campaign.json` file (M2-10 — `data/campaign`). */
+const CAMPAIGN_FILE_SCHEMA = s.object(
+  {
+    ...HEADER_SHAPE,
+    kind: s.enumOf(['campaign'] as const),
+    id: s.str({ maxLength: 32 }),
+    name: s.str({ maxLength: 24 }),
+    start: ZONE_ID,
+    zones: s.array(
+      s.object(
+        {
+          id: ZONE_ID,
+          label: s.str({ maxLength: 2, pattern: /^[A-Z0-9]+$/ }),
+          name: s.str({ maxLength: 24 }),
+          stage: s.ref('stage'),
+          preview: s.array(s.str({ maxLength: 40 }), { max: MAX_ZONE_PREVIEW_LINES }),
+        },
+        { optional: ['preview'] },
+      ),
+      { min: 1, max: MAX_CAMPAIGN_ZONES },
+    ),
+    edges: s.array(s.object({ from: ZONE_ID, to: ZONE_ID }), {
+      max: MAX_CAMPAIGN_ZONES * MAX_ZONE_EXITS,
+    }),
+    endings: s.array(
+      s.object(
+        {
+          id: ZONE_ID,
+          name: s.str({ maxLength: 32 }),
+          zone: ZONE_ID,
+          all: s.array(s.enumOf(RUN_FLAG_NAMES), { max: RUN_FLAG_NAMES.length }),
+          none: s.array(s.enumOf(RUN_FLAG_NAMES), { max: RUN_FLAG_NAMES.length }),
+        },
+        { optional: ['all', 'none'] },
+      ),
+      { min: 1, max: MAX_CAMPAIGN_ENDINGS },
+    ),
+  },
+  { optional: ['name'] },
+);
+
 /** Mutable working copy of a {@link ContentDb} while a load runs. */
 interface DbBuilder {
   /** Collected player ships (see {@link ContentDb.ships}). */
@@ -2690,6 +2874,10 @@ interface DbBuilder {
   scoring: ScoringRules | null;
   /** Every valid `patterns` file, in path order (compiled once all files are collected). */
   patternFiles: CollectedPatterns[];
+  /** The campaign (the first `campaign` file — M2-10), or `null`. */
+  campaign: CampaignSpec | null;
+  /** Repo-relative path of the campaign's file (issue paths of the reference pass). */
+  campaignPath: string;
 }
 
 /** Empty {@link StringTable}. */
@@ -2729,6 +2917,7 @@ export const EMPTY_CONTENT_DB: ContentDb = Object.freeze({
   difficulty: null,
   scoring: null,
   patterns: EMPTY_PATTERN_BANK,
+  campaign: null,
 });
 
 /** `Object.prototype.hasOwnProperty` (Chromium 69 has no `Object.hasOwn`). */
@@ -3043,6 +3232,8 @@ export function loadContent(
     difficulty: null,
     scoring: null,
     patternFiles: [],
+    campaign: null,
+    campaignPath: '',
   };
 
   const sorted = files.slice().sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
@@ -3089,6 +3280,8 @@ export function loadContent(
   }
   checkBossReferences(db, issues);
   checkWeaponFamilies(db, issues);
+  checkBonusReferences(db, issues);
+  checkCampaignStages(db, issues);
   expandStageTerrains(db, issues);
 
   return {
@@ -3114,6 +3307,7 @@ export function loadContent(
       difficulty: db.difficulty,
       scoring: db.scoring,
       patterns,
+      campaign: db.campaign,
     },
     issues,
     foreign,
@@ -3152,6 +3346,8 @@ function parseFile(
       return RULES_FILE_SCHEMA.parse(data, '', issues, refs);
     case 'patterns':
       return PATTERNS_FILE_SCHEMA.parse(data, '', issues, refs);
+    case 'campaign':
+      return CAMPAIGN_FILE_SCHEMA.parse(data, '', issues, refs);
   }
 }
 
@@ -3340,6 +3536,68 @@ function collect(
     case 'patterns':
       db.patternFiles.push({ path, file: parsed });
       return;
+    case 'campaign': {
+      if (db.campaign !== null) {
+        issue(issues, at(path, 'id'), 'the campaign is already defined by another file');
+        return;
+      }
+      const campaign = completeCampaign(parsed, (inner) => at(path, inner), issues);
+      if (campaign === null) return;
+      db.campaign = campaign;
+      db.campaignPath = path;
+      return;
+    }
+  }
+}
+
+/**
+ * The M2-10 part of the reference pass for the campaign: every zone's stage resolved to a stage
+ * that is not a bonus stage (a zone is a full stage; bonus stages are entered from inside one).
+ *
+ * @param db - The builder (references already resolved).
+ * @param issues - Collector.
+ */
+function checkCampaignStages(db: DbBuilder, issues: ValidationIssue[]): void {
+  const campaign = db.campaign;
+  if (campaign === null) return;
+  const zones = campaign.zones;
+  for (let i = 0; i < zones.length; i++) {
+    const id = zones[i].stageId;
+    if (id < 0 || id >= db.stages.length) continue; // an unknown id is already an issue
+    if (db.stages[id].type === 'bonus') {
+      issue(
+        issues,
+        at(db.campaignPath, 'zones[' + String(i) + '].stage'),
+        'is a bonus stage: a zone plays a normal or bossRush stage',
+      );
+    }
+  }
+}
+
+/**
+ * The M2-10 part of the reference pass for the bonus entrances: a `bonus` event must name a
+ * stage of type `bonus`.
+ *
+ * @param db - The builder (references already resolved).
+ * @param issues - Collector.
+ */
+function checkBonusReferences(db: DbBuilder, issues: ValidationIssue[]): void {
+  const stages = db.stages;
+  for (let s = 0; s < stages.length; s++) {
+    const events = stages[s].events;
+    for (let i = 0; i < events.length; i++) {
+      const event = events[i];
+      if (event.type !== 'bonus') continue;
+      const target = event.stageId;
+      if (target < 0 || target >= stages.length) continue; // already an issue
+      if (stages[target].type !== 'bonus') {
+        issue(
+          issues,
+          at(db.stagePaths[s], 'events[' + String(i) + '].stage'),
+          'must name a stage of type "bonus"',
+        );
+      }
+    }
   }
 }
 
@@ -4057,6 +4315,7 @@ function checkStage(stage: MutableStage, file: string, issues: ValidationIssue[]
   }
   const events = stage.events;
   let triggers = 0;
+  let bonuses = 0;
   for (let i = 0; i < events.length; i++) {
     const event = events[i];
     const base = 'events[' + String(i) + ']';
@@ -4086,6 +4345,9 @@ function checkStage(stage: MutableStage, file: string, issues: ValidationIssue[]
           'must be >= x (the trigger disarms when the camera passes it)',
         );
       }
+    } else if (event.type === 'bonus') {
+      bonuses++;
+      if (!checkBonusEvent(event, base, file, issues)) ok = false;
     } else if (event.type === 'block') {
       if (stage.tilemap === null) {
         ok = issue(issues, at(file, base), 'a block needs the stage to have a tilemap');
@@ -4105,6 +4367,13 @@ function checkStage(stage: MutableStage, file: string, issues: ValidationIssue[]
         );
       }
     }
+  }
+  if (bonuses > MAX_BONUS_ENTRANCES) {
+    ok = issue(
+      issues,
+      at(file, 'events'),
+      'has ' + String(bonuses) + ' bonus entrances (at most ' + String(MAX_BONUS_ENTRANCES) + ')',
+    );
   }
   if (triggers > MAX_STAGE_TRIGGERS) {
     ok = issue(
@@ -4183,11 +4452,73 @@ function checkStageRush(stage: MutableStage, file: string, issues: ValidationIss
   } else if (rush.length > 0) {
     ok = issue(issues, at(file, 'rush'), 'is only used by a bossRush stage (type "bossRush")');
   }
+  if (stage.type === 'bonus') {
+    // A hidden bonus stage (M2-10): no boss, no entrances of its own, an end to clear it by.
+    const events = stage.events;
+    let ends = 0;
+    for (let i = 0; i < events.length; i++) {
+      const type = events[i].type;
+      if (type === 'end') ends++;
+      else if (type === 'warning' || type === 'boss' || type === 'bonus') {
+        ok = issue(
+          issues,
+          at(file, 'events[' + String(i) + ']'),
+          'a bonus stage has no ' + type + ' event',
+        );
+      }
+    }
+    if (ends === 0) ok = issue(issues, at(file, 'events'), 'a bonus stage needs an end event');
+  }
   for (const entry of rush) {
     if (entry.delay === undefined) entry.delay = DEFAULT_RUSH_DELAY;
     if (entry.warning === undefined) entry.warning = false;
   }
   stage.rush = rush;
+  return ok;
+}
+
+/**
+ * Checks and completes one `bonus` event (M2-10) in place: a `gap` needs its `region`, a `digit`
+ * its `digit`, `place` must be one of {@link BONUS_PLACES}; `until` (defaulting as
+ * {@link StageBonusEvent.until} says) must not lie before `x`. That `stage` names a bonus stage is
+ * checked once the references are resolved.
+ *
+ * @param event - The parsed event (completed in place).
+ * @param base - Its JSON path inside the file (`events[3]`).
+ * @param file - Repo-relative file path.
+ * @param issues - Collector.
+ * @returns `true` when the event is usable.
+ */
+function checkBonusEvent(
+  event: StageBonusEvent,
+  base: string,
+  file: string,
+  issues: ValidationIssue[],
+): boolean {
+  let ok = true;
+  const e = event as { -readonly [K in keyof StageBonusEvent]?: StageBonusEvent[K] };
+  const region = event.region;
+  if (event.entrance === 'gap' && region === undefined) {
+    ok = issue(issues, at(file, base + '.region'), 'a gap entrance needs its region');
+  }
+  if (event.entrance === 'digit' && event.digit === undefined) {
+    ok = issue(issues, at(file, base + '.digit'), 'a digit entrance needs its digit');
+  }
+  if (e.place === undefined) e.place = DEFAULT_BONUS_PLACE;
+  else if ((BONUS_PLACES as readonly number[]).indexOf(e.place) < 0) {
+    ok = issue(issues, at(file, base + '.place'), 'must be one of ' + BONUS_PLACES.join(', '));
+  }
+  if (e.until === undefined) {
+    e.until =
+      event.entrance === 'gap' && region !== undefined
+        ? region.x + region.w
+        : event.entrance === 'ground'
+          ? event.x + DEFAULT_BONUS_WINDOW
+          : event.x;
+  }
+  if ((e.until ?? 0) < event.x) {
+    ok = issue(issues, at(file, base + '.until'), 'must be >= x (the window closes there)');
+  }
   return ok;
 }
 

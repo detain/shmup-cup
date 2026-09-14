@@ -1729,6 +1729,11 @@ class WeaponSystemImpl implements WeaponSystem {
         else group.follow(ship, camera, loadout.options, true);
         continue;
       }
+      if (state === 'leaving') {
+        // The stage-clear fly-out (M2-10): the Options trail the ship out; nothing fires.
+        group.follow(ship, camera, loadout.options, true);
+        continue;
+      }
       if (state !== 'alive') {
         group.hide();
         continue;

@@ -70,7 +70,8 @@ describe('core/player', () => {
   it('describes itself', () => {
     expect(moduleInfo.name).toBe('player');
     expect(moduleInfo.status).toBe('implemented');
-    expect(PLAYER_STATES).toEqual(['entering', 'alive', 'dying', 'dead', 'respawning']);
+    // M2-10 appended the stage-clear fly-out.
+    expect(PLAYER_STATES).toEqual(['entering', 'alive', 'dying', 'dead', 'respawning', 'leaving']);
   });
 
   it('reads direction bits into unit intents (opposites cancel)', () => {

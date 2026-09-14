@@ -138,6 +138,22 @@ function mark(scan: LaneScan, y: number, reach: number, slot: number): void {
 }
 
 /**
+ * The boss the bot faces: boss slot 0 while it flies in or fights, else the first other slot
+ * that does (M2-10 — the survivor of a double boss, a boss inside a boss in another slot).
+ *
+ * @param world - The World.
+ * @returns The boss, or `null` when none is in its intro or fight.
+ */
+function mainBoss(world: World): World['bosses']['boss'] | null {
+  const slots = world.bosses.slots;
+  for (let i = 0; i < slots.length; i++) {
+    const boss = slots[i];
+    if (boss.state === BossState.Intro || boss.state === BossState.Fight) return boss;
+  }
+  return null;
+}
+
+/**
  * Scans the lanes in front of the ship (see the module docs): bullets and enemy bodies are
  * followed along their current velocity (flying things ride the camera with the ship, ground
  * enemies scroll past), boss parts and laser lanes are marked for the slots they are dangerous in
@@ -188,8 +204,8 @@ export function scanLanes(world: World, scan: LaneScan, player = 0): void {
     }
   }
 
-  const boss = world.bosses.boss;
-  if (boss.state === BossState.Intro || boss.state === BossState.Fight) {
+  const boss = mainBoss(world);
+  if (boss !== null) {
     for (let i = 0; i < boss.partCount; i++) {
       const part = boss.parts[i];
       if (!part.active || part.destroyed || !part.hurtbox) continue;
@@ -341,8 +357,8 @@ export function fourWayBot(player = 0): PlaytestBot {
         if (ix < sx - 6 || ix > sx + 220) continue;
         bonus[laneOf(itf.y[i] - camera.y)] += 40;
       }
-      const boss = world.bosses.boss;
-      if (boss.state === BossState.Fight) {
+      const boss = mainBoss(world);
+      if (boss !== null && boss.state === BossState.Fight) {
         for (let i = 0; i < boss.partCount; i++) {
           const part = boss.parts[i];
           if (!part.core || part.destroyed) continue;

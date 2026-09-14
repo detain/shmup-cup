@@ -104,6 +104,12 @@
  * `landed`, and — through the World's {@link EnemyGimmicks} host — `pull` / `release` (pull fields),
  * `chain` (a drawn arm), `placeTile` and `tileId` (tiles placed into the terrain).
  *
+ * **Totals (M2-10).** {@link EnemySystem.stats} ({@link EnemyStats}) counts every regular spawn
+ * and every kill credited to a player — ground enemies apart too — for the World's life (a
+ * checkpoint restart keeps counting): the zone tally's kill rate and the `ground` bonus-stage
+ * entrance read them. The content drops gained `oneUp` and `bonusCapsule` ({@link DropKind}
+ * `OneUp` 4, `BonusCapsule` 5 — `FreeOption` is 6 now), the bonus stages' items.
+ *
  * **Zero allocation.** Every enemy, script API, track and table is built by
  * {@link createEnemySystem}; the per-tick methods only write numbers. The allocations left are
  * inherent to the coroutines of decision D29: spawning an enemy with a behaviour creates its
@@ -125,7 +131,7 @@
  * {@link MAX_ENEMIES}, {@link MAX_FORMATIONS}, {@link DEFAULT_SPAWN_SCREEN_X},
  * {@link DESPAWN_MARGIN}, {@link UNSEEN_MARGIN}, {@link UNSEEN_TICKS}, {@link GHOST_MARGIN},
  * {@link HIT_FLASH_TICKS}; M2-04: {@link MAX_CARRIED_OPTIONS}, {@link CARRIED_OPTION_SPACING},
- * {@link CARRIED_BATCH_CAPACITY}; M2-07: {@link EnemyGimmicks}.
+ * {@link CARRIED_BATCH_CAPACITY}; M2-07: {@link EnemyGimmicks}; M2-10: {@link EnemyStats}.
  *
  * **Planned API.** More behaviours' needs with the zones of M2 (M2-11 … M2-14).
  *
@@ -295,12 +301,32 @@ export const DropKind = {
    * meter mode, the stage's next planned item in Direct mode.
    */
   PowerUp: 3,
+  /** A 1UP (content `oneUp`, M2-10 — the bonus stages' extra lives). */
+  OneUp: 4,
+  /** A bonus capsule worth 1,000 points (content `bonusCapsule`, M2-10 — the bonus stages). */
+  BonusCapsule: 5,
   /**
-   * One Option a dead Option Hunter carried, drifting free to be re-collected (M2-04; code 4
-   * since M2-05 — the content drops come first).
+   * One Option a dead Option Hunter carried, drifting free to be re-collected (M2-04; code 6
+   * since M2-10 — the content drops come first).
    */
-  FreeOption: 4,
+  FreeOption: 6,
 } as const;
+
+/**
+ * Running totals of one World's regular enemies (M2-10): what the zone result tally's kill rate
+ * and the `ground` bonus-stage entrance read. A class (monomorphic number fields); never reset —
+ * a checkpoint restart keeps counting (the re-spawned enemies count again). Hashed.
+ */
+export class EnemyStats {
+  /** Regular enemies spawned (stage events, formations, scripts; not bosses). */
+  spawned = 0;
+  /** Of those, killed with the kill credited to a player (shots, Mega Crash, blue capsule). */
+  killed = 0;
+  /** Ground enemies (a `ground` anchor) spawned. */
+  groundSpawned = 0;
+  /** Ground enemies killed with the kill credited to a player. */
+  groundKilled = 0;
+}
 
 /** Options one Option Hunter can carry. */
 export const MAX_CARRIED_OPTIONS = 8;
@@ -975,6 +1001,12 @@ export interface EnemySystem {
   readonly carriedBatch: SpriteBatch;
   /** The mover context (camera, terrain, paths). */
   readonly movers: MoverContext;
+  /**
+   * Running totals of the World's regular enemies — spawned, killed by the players, and the same
+   * for ground enemies (M2-10: the zone tally's kill rate, the `ground` bonus entrance). Never
+   * reset, hashed.
+   */
+  readonly stats: EnemyStats;
   /**
    * Spawns one enemy at a world position, outside any formation (tests, debug tools).
    *
@@ -1883,6 +1915,8 @@ class EnemySystemImpl implements EnemySystem {
   private readonly carriedSprite: number;
   /** See {@link EnemySystem.movers}. */
   readonly movers: MoverContext;
+  /** See {@link EnemySystem.stats}. */
+  readonly stats = new EnemyStats();
   /** The World. */
   readonly host: EnemyHost;
   /** The fire origin every script API shares (set before each primitive). */
@@ -2105,6 +2139,9 @@ class EnemySystemImpl implements EnemySystem {
     enemy.script = behavior === null ? null : behavior.create(api, specs.params[enemyIndex]);
     enemy.wakeTick = fromScript ? tick + 1 : tick;
     this.used++;
+    const stats = this.stats;
+    stats.spawned++;
+    if (anchor !== BodyAnchor.Air) stats.groundSpawned++;
     if (hunter) {
       // The Option Hunter's alarm (shmup_feat.md §11 "audible cue").
       host.events.push(SimEventKind.Sfx, SFX_CUES.OptionHunter, Math.floor(x) | 0, 0, 0);
@@ -2562,6 +2599,11 @@ class EnemySystemImpl implements EnemySystem {
     // A dead Option Hunter lets go of what it carried: each Option drifts free (M2-04).
     for (let c = 0; c < enemy.carried; c++) o.addDrop(DropKind.FreeOption, x, y);
     enemy.carried = 0;
+    if (by >= 0) {
+      const stats = this.stats;
+      stats.killed++;
+      if (enemy.anchor !== BodyAnchor.Air) stats.groundKilled++;
+    }
     if (by >= 0 && !this.crashing && specs.revenge[spec] !== 0) this.revenge(enemy, spec);
     // A death behaviour (M2-07 — splitting bubbles) acts while the enemy still stands there.
     const behavior = specs.behavior[spec];

@@ -331,6 +331,9 @@ describe('core/powerups edge — meter helpers', () => {
       'items/direct-orange',
       'items/direct-yellow',
       'items/direct-octagon',
+      // The bonus stages' items (M2-10).
+      'items/1up',
+      'items/capsule-bonus',
     ]);
     expect(ENGINE_SPRITES).toContain(CAPSULE_SPRITE);
     expect(Object.keys(ITEM_SCHEMA).sort()).toEqual(['age', 'flags', 'kind', 'vx', 'vy', 'x', 'y']);

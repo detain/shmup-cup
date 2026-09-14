@@ -553,7 +553,30 @@ describe('scripts/assets/procedural/weapons (M2-03)', () => {
 });
 
 describe('scripts/assets/procedural/items', () => {
-  const [capsule, point, blue] = items.generate();
+  const [capsule, point, blue, bonus, oneUp] = items.generate();
+
+  it('draws the bonus stages` gold bonus capsule and green 1UP in the capsule`s shape (M2-10)', () => {
+    expect([bonus.name, oneUp.name]).toEqual(['items/capsule-bonus', 'items/1up']);
+    for (const sprite of [bonus, oneUp]) {
+      expect(sprite.animations).toEqual({ blink: [0, 1] });
+      expect(sprite.frames).toHaveLength(2);
+      for (let f = 0; f < 2; f++) {
+        const a = sprite.frames[f];
+        const b = capsule.frames[f];
+        expect([a.width, a.height]).toEqual([b.width, b.height]);
+        for (let y = 0; y < a.height; y++) {
+          for (let x = 0; x < a.width; x++) expect(opaque(a, x, y)).toBe(opaque(b, x, y));
+        }
+      }
+    }
+    const gold = hue(getPixel(bonus.frames[0], 3, 5));
+    expect(gold > 30 && gold < 60, `hue ${gold}`).toBe(true);
+    const green = hue(getPixel(oneUp.frames[0], 2, 5));
+    expect(green > 90 && green < 150, `hue ${green}`).toBe(true);
+    // The 1UP's white plus in the middle.
+    expect(getPixel(oneUp.frames[0], 6, 4)).toEqual([255, 255, 255, 255]);
+    expect(getPixel(oneUp.frames[0], 4, 4)).toEqual([255, 255, 255, 255]);
+  });
 
   it('draws the blue capsule as the capsule`s shape in blue (M2-04)', () => {
     expect(blue.name).toBe('items/capsule-blue');

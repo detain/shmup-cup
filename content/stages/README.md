@@ -62,6 +62,56 @@ the screen: the camera pans round it, and its final blast reveals LEVIATHAN HEAR
 taking turns; the survivor enrages) and `gauntlet-range.stage.json` (**GAUNTLET RANGE**, a boss
 rush: TRIAL WARDEN with its WARNING, LEVIATHAN HEART, the twins). `?stage=<id>` plays each.
 
+**The campaign's zones (M2-10).** `zone-b.stage.json` … `zone-i.stage.json` are the zones B–I of
+the zone map ([`content/campaign/`](../campaign/README.md)) as short **placeholders** (about a
+minute: popcorn, capsule carriers, a fan formation, a rammer, an orbiter — zone A's roster —, some
+floors or caves from the heightfield generator, then the WARNING and a boss: HALCYON BULWARK, the
+EMBER AND FROST TWINS or, in zone I, IRON LEVIATHAN), so every route of the map can be played end to
+end now; M2-11 … M2-14 replace them with the real zones (BRINE NEBULA, DUNE EXPANSE, MAGMA DEEP,
+TEMPEST RIDGE, CELL VAULT, PRISM LABYRINTH, IRON CITADEL, ABYSSAL THRONE).
+
+**Hidden bonus stages (M2-10).** A stage of `"type": "bonus"` is a hidden bonus stage: no `warning`
+/ `boss` events, no entrances of its own, and an `end` event (reaching it is the bonus stage's
+clear, which counts as the clear of the zone it was entered from — the zone's boss is skipped). A
+`bonus` event in any other stage is a secret **entrance** to one: from its `x` until the camera
+passes `until` it waits for its condition — `"entrance": "gap"` (a living ship's centre inside
+`region`, world pixels — mark the gap with terrain or blocks; `until` defaults to the region's right
+edge), `"ground"` (every ground enemy that appeared in the window destroyed by the players, at
+least one; `until` defaults to `x + 600`) or `"digit"` (a playing ship's score shows `digit` at
+`place` — 10, 100 — the default —, 1,000, 10,000 or 100,000 — when the window closes; `until`
+defaults to `x`). The first entrance to open flies the players into its `stage` after a short warp,
+their score, lives and loadout carried; a death in the bonus stage sends them back to the entrance
+and locks every entrance of the stage. Enemies of a bonus stage drop `"oneUp"` (an extra life) and
+`"bonusCapsule"` (1,000 points). `bonus-range.stage.json` (`?stage=bonus-range`) has one entrance
+of each kind — a gap between two brick blocks at the top, three floor turrets, the thousands digit
+0 — into `bonus-vault.stage.json` (carriers dropping bonus capsules, a 1UP carrier, two brick
+barriers to shoot through).
+
+```jsonc
+{
+  "formatVersion": 1,
+  "kind": "stage",
+  "id": "bonus-sample",
+  "name": "BONUS SAMPLE",
+  "music": { "stage": "Stage", "boss": "Boss" },
+  "length": 2000,
+  "camera": [{ "x": 0, "speed": 1 }],
+  "checkpoints": [{ "x": 0 }],
+  "parallax": [],
+  "tilemap": null,
+  "events": [
+    // a gap: a ship flies into the marked region between x 816 and 880 at the top
+    { "x": 420, "type": "bonus", "stage": "bonus-vault", "entrance": "gap",
+      "region": { "x": 816, "y": 0, "w": 64, "h": 24 } },
+    // every ground enemy that appears from x 1000 to 1600 destroyed
+    { "x": 1000, "type": "bonus", "stage": "bonus-vault", "entrance": "ground", "until": 1600 },
+    // the hundreds digit of the score is 7 when the camera reaches x 1800
+    { "x": 1800, "type": "bonus", "stage": "bonus-vault", "entrance": "digit", "digit": 7 },
+    { "x": 2000, "type": "end" }
+  ]
+}
+```
+
 **Boss rushes (M2-09).** A stage of `"type": "bossRush"` (default `normal`) runs its `rush` list
 (1–16 entries, each a stage boss — role `boss`): each boss comes `delay` ticks (default 60) after
 the stage start or after the last one's end — with the WARNING when `warning` is `true` (default:
@@ -176,6 +226,7 @@ tick, in file order.
 | `flag` | `flag` (lower-case kebab), optional `value` (default `true`) | set / clear a stage flag (branches, M2; ≤ 32 per stage) |
 | `end` | — | the stage is cleared |
 | `trigger` | `flag`, `region` `{ x, y, w, h }` (world pixels), optional `value` (default `true`), `until` (camera x; default `region.x + region.w`) | M2-07: from its `x` until the camera passes `until`, the first living ship whose centre enters the region sets / clears the flag (once) |
+| `bonus` | `stage` (a `bonus` stage), `entrance` (`gap` / `ground` / `digit`), `region` (gap), `digit` + optional `place` (digit), optional `until` | M2-10: a hidden bonus-stage entrance (see above); at most 8 per stage |
 | `block` | `y` (world, top edge), `w`, `h` (multiples of 8, ≤ 64 tiles), optional `screenX` (default 400: left edge = `x + screenX`), `tile` (tileset tile name, default `solid`), `vx`, `vy` (drift px/tick), `dx`, `dy` (swing px), `period` (ticks, default 120), `phase` | M2-07: a moving block of that tile — terrain for the ship, shots, bullets and crawlers; needs a tilemap |
 
 Every event may also name a **`branch`** (M2-07): it then fires only while that branch is taken.
@@ -264,6 +315,10 @@ Since M2-07 also: `yOver` without `yTo` or together with `yTicks`, a `hold` on a
 duplicate branch ids and events naming an unknown branch, a trigger whose `until` lies before its
 `x`, more than 32 triggers, a block without a tilemap, off the tile grid, over 64 tiles or naming a
 tile the tileset does not have.
+
+Since M2-10 also: a `bonus` event naming a stage that is not of type `bonus`, a `gap` without its
+`region`, a `digit` without its `digit`, a `place` other than 10 … 100,000, an `until` before the
+event's `x`, more than 8 entrances, and a bonus stage with a boss, an entrance or no `end`.
 
 Since M2-08 also: a raster effect or cycle with `bottom ≤ top` or `to ≤ from` (`from` defaulting
 to 0), a `wave` / `haze` without `amplitude` and `wavelength`, a `lines` without `factorTop` and

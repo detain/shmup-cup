@@ -1,0 +1,105 @@
+{
+  "formatVersion": 1,
+  "kind": "campaign",
+  "id": "main",
+  "name": "ZONE MAP",
+  "start": "a",
+  "zones": [
+    {
+      "id": "a",
+      "label": "A",
+      "name": "AZURE VERGE",
+      "stage": "zone-a",
+      "preview": ["THE RIM OF THE HOME SYSTEM.", "FIRST CONTACT WITH THE SWARM."]
+    },
+    {
+      "id": "b",
+      "label": "B",
+      "name": "BRINE NEBULA",
+      "stage": "zone-b",
+      "preview": ["A DRIFTING SEA OF GAS AND BUBBLES.", "WATCH FOR WHAT HIDES INSIDE."]
+    },
+    {
+      "id": "c",
+      "label": "C",
+      "name": "DUNE EXPANSE",
+      "stage": "zone-c",
+      "preview": ["SAND WORLDS UNDER TWIN SUNS.", "THE GROUND ITSELF MOVES."]
+    },
+    {
+      "id": "d",
+      "label": "D",
+      "name": "MAGMA DEEP",
+      "stage": "zone-d",
+      "preview": ["ERUPTING PEAKS, THEN THE CAVES", "BENEATH THEM."]
+    },
+    {
+      "id": "e",
+      "label": "E",
+      "name": "TEMPEST RIDGE",
+      "stage": "zone-e",
+      "preview": ["STORM CLOUDS OVER JAGGED RIDGES.", "ENEMIES STRIKE FROM BEHIND."]
+    },
+    {
+      "id": "f",
+      "label": "F",
+      "name": "CELL VAULT",
+      "stage": "zone-f",
+      "preview": ["LIVING WALLS THAT GROW BACK.", "SOMETHING IN THERE IS HUNGRY."]
+    },
+    {
+      "id": "g",
+      "label": "G",
+      "name": "PRISM LABYRINTH",
+      "stage": "zone-g",
+      "preview": ["CRYSTAL CORRIDORS AND", "A RUSH OF FALLING CUBES."]
+    },
+    {
+      "id": "h",
+      "label": "H",
+      "name": "IRON CITADEL",
+      "stage": "zone-h",
+      "preview": ["THE ENEMY FORTRESS.", "ITS MASTER WAITS INSIDE."]
+    },
+    {
+      "id": "i",
+      "label": "I",
+      "name": "ABYSSAL THRONE",
+      "stage": "zone-i",
+      "preview": ["THE FLAGSHIP OF THE DEEP.", "STRIKE AT ITS HEART."]
+    }
+  ],
+  "edges": [
+    { "from": "a", "to": "b" },
+    { "from": "a", "to": "c" },
+    { "from": "b", "to": "d" },
+    { "from": "b", "to": "e" },
+    { "from": "c", "to": "d" },
+    { "from": "c", "to": "e" },
+    { "from": "d", "to": "f" },
+    { "from": "d", "to": "g" },
+    { "from": "e", "to": "f" },
+    { "from": "e", "to": "g" },
+    { "from": "f", "to": "h" },
+    { "from": "f", "to": "i" },
+    { "from": "g", "to": "h" },
+    { "from": "g", "to": "i" }
+  ],
+  "endings": [
+    {
+      "id": "citadel-flawless",
+      "name": "THE CITADEL FALLS SILENT",
+      "zone": "h",
+      "all": ["noDeath"]
+    },
+    { "id": "citadel", "name": "THE CITADEL FALLS", "zone": "h" },
+    { "id": "throne-flawless", "name": "THE DEEP IS STILL", "zone": "i", "all": ["noDeath"] },
+    {
+      "id": "throne-escape",
+      "name": "THE FLAGSHIP SLIPS AWAY",
+      "zone": "i",
+      "all": ["bossEscaped"]
+    },
+    { "id": "throne", "name": "THE THRONE IS BROKEN", "zone": "i" }
+  ]
+}

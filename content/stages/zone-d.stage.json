@@ -1,0 +1,188 @@
+{
+  "formatVersion": 1,
+  "kind": "stage",
+  "id": "zone-d",
+  "name": "MAGMA DEEP",
+  "music": {
+    "stage": "Stage",
+    "boss": "Boss"
+  },
+  "length": 2000,
+  "camera": [
+    {
+      "x": 0,
+      "speed": 0.9,
+      "ramp": 60
+    },
+    {
+      "x": 1500,
+      "speed": 0.75,
+      "ramp": 90
+    }
+  ],
+  "checkpoints": [
+    {
+      "x": 0
+    },
+    {
+      "x": 800
+    }
+  ],
+  "parallax": [
+    {
+      "layer": "far",
+      "sprite": "bg/stars-far",
+      "factor": 0.25,
+      "y": 0,
+      "spacing": 128
+    },
+    {
+      "layer": "far",
+      "sprite": "bg/stars-far",
+      "factor": 0.25,
+      "y": 128,
+      "spacing": 128
+    },
+    {
+      "layer": "mid",
+      "sprite": "bg/stars-mid",
+      "factor": 0.5,
+      "y": 0,
+      "spacing": 128
+    },
+    {
+      "layer": "mid",
+      "sprite": "bg/stars-mid",
+      "factor": 0.5,
+      "y": 128,
+      "spacing": 128
+    }
+  ],
+  "tilemap": {
+    "tileSize": 8,
+    "tileset": "terrain-a",
+    "rowsTall": 25,
+    "generator": {
+      "type": "heightfield",
+      "segments": [
+        {
+          "from": 200,
+          "to": 1580,
+          "floor": {
+            "base": 22,
+            "amp": 10,
+            "period": 360,
+            "seed": 61
+          },
+          "ceiling": {
+            "base": 22,
+            "amp": 10,
+            "period": 300,
+            "seed": 62
+          }
+        }
+      ]
+    }
+  },
+  "events": [
+    {
+      "x": 120,
+      "type": "formation",
+      "enemy": "skeet",
+      "count": 5,
+      "interval": 18,
+      "y": 80,
+      "bonus": 300
+    },
+    {
+      "x": 300,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 120
+    },
+    {
+      "x": 460,
+      "type": "formation",
+      "enemy": "skeet",
+      "count": 5,
+      "interval": 18,
+      "y": 120,
+      "bonus": 300
+    },
+    {
+      "x": 620,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 80
+    },
+    {
+      "x": 800,
+      "type": "formation",
+      "enemy": "vane",
+      "count": 5,
+      "interval": 10,
+      "y": 150,
+      "path": "vane-arc-up",
+      "bonus": 1000
+    },
+    {
+      "x": 900,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 100
+    },
+    {
+      "x": 980,
+      "type": "spawn",
+      "enemy": "picket"
+    },
+    {
+      "x": 1060,
+      "type": "spawn",
+      "enemy": "lancer",
+      "y": 80
+    },
+    {
+      "x": 1160,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 120
+    },
+    {
+      "x": 1240,
+      "type": "formation",
+      "enemy": "skeet-chain",
+      "count": 6,
+      "interval": 12,
+      "y": 100,
+      "drop": null
+    },
+    {
+      "x": 1300,
+      "type": "spawn",
+      "enemy": "strider"
+    },
+    {
+      "x": 1380,
+      "type": "spawn",
+      "enemy": "gyre",
+      "y": 60,
+      "path": "gyre-orbit-down"
+    },
+    {
+      "x": 1480,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 90
+    },
+    {
+      "x": 1680,
+      "type": "warning",
+      "enemy": "halcyon-bulwark"
+    },
+    {
+      "x": 2000,
+      "type": "end"
+    }
+  ]
+}

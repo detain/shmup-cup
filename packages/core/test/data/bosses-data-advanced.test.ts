@@ -96,7 +96,7 @@ const issuesOf = (...files: ContentFile[]): readonly ValidationIssue[] => loadCo
 describe('core/data — advanced bosses (M2-09)', () => {
   it('exports the roles, limits and defaults', () => {
     expect([...BOSS_ROLES]).toEqual(['boss', 'captain']);
-    expect([...STAGE_TYPES]).toEqual(['normal', 'bossRush']);
+    expect([...STAGE_TYPES]).toEqual(['normal', 'bossRush', 'bonus']);
     expect([MAX_RAID_SEGMENTS, MAX_RUSH_BOSSES, MAX_TURN_FRAMES]).toEqual([16, 16, 64]);
     expect([DEFAULT_RAID_SEGMENT_TICKS, DEFAULT_RUSH_DELAY]).toEqual([120, 60]);
     expect([DEFAULT_ENRAGE_FIRE_RATE, DEFAULT_ENRAGE_SPEED]).toEqual([0.625, 1.5]);

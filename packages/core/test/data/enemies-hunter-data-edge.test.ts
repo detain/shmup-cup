@@ -128,7 +128,7 @@ describe('core/data M2-04: the `optionHunter` flag and the blue capsule drop', (
     expect(issues).toEqual([
       {
         path: 'stages/s.stage.json:events[1].drop',
-        message: 'must be one of: capsule, blueCapsule, powerup',
+        message: 'must be one of: capsule, blueCapsule, powerup, oneUp, bonusCapsule',
       },
     ]);
     expect(db.stages).toEqual([]); // a bad event fails its whole file

@@ -213,6 +213,8 @@ describe('core/data M2-07 edges — branches and flags', () => {
       { x: 7, type: 'flag', flag: 'g', ...branch },
       { x: 8, type: 'trigger', flag: 'g', region: { x: 0, y: 0, w: 8, h: 8 }, until: 8, ...branch },
       { x: 9, type: 'block', y: 0, w: 8, h: 8, ...branch },
+      // M2-10: a hidden bonus-stage entrance.
+      { x: 9, type: 'bonus', stage: 'bonus', entrance: 'digit', digit: 0, ...branch },
       { x: 10, type: 'end', ...branch },
     ];
     expect(new Set(events.map((e) => e.type))).toEqual(new Set(STAGE_EVENT_TYPES));

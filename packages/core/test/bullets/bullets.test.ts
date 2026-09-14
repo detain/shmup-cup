@@ -222,6 +222,9 @@ describe('core/bullets', () => {
       'items/direct-orange',
       'items/direct-yellow',
       'items/direct-octagon',
+      // The bonus stages' 1UP and bonus capsule (M2-10).
+      'items/1up',
+      'items/capsule-bonus',
       'shields/force-field',
       'shields/pod',
       'shields/reduce',

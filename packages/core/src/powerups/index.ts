@@ -123,6 +123,12 @@
  * speed level through its `speeds` (the MANTA: 2.25 → 2.75 → 1.75 px/tick) with the meter ding;
  * the PowerUp press does nothing. The death penalty is {@link applyDirectDeathPenalty}.
  *
+ * **Bonus-stage items (M2-10, shmup_feat.md §14 "1UPs, bonus capsules (1,000 pts)").** The
+ * content drops `oneUp` and `bonusCapsule` become world-space items like the capsule, in both
+ * power-up modes: {@link ItemKind.OneUp} (`items/1up`, +1 life up to 9 with the critical `ExtraLife`
+ * cue; at the cap only the pickup sound) and {@link ItemKind.BonusCapsule} (`items/capsule-bonus`,
+ * {@link BONUS_CAPSULE_SCORE} points with the pickup sound).
+ *
  * **Death penalty** (M1-12, decision D6): {@link applyDeathPenalty} — called by the World when a
  * ship dies — takes the shield in every preset, and `arcade` everything else too (cursor back to
  * -1), `classic` one level ({@link loseOneLevel}: Option → Double / Laser → Missile → Speed),
@@ -170,7 +176,8 @@
  * M2-05: {@link DIRECT_ITEMS}, {@link DIRECT_ITEM_KINDS}, {@link directItemKind},
  * {@link DIRECT_ITEM_SPRITES}, {@link DIRECT_ITEM_SCORE}, {@link DIRECT_ITEM_TICKS},
  * {@link DIRECT_ITEM_DRIFT}, {@link DEFAULT_DIRECT_ITEM_PLAN}, {@link DIRECT_POWER_UP_EVENT_BASE},
- * {@link applyDirectDeathPenalty}, {@link directMaxLevel}.
+ * {@link applyDirectDeathPenalty}, {@link directMaxLevel}. M2-10: {@link ONE_UP_SPRITE},
+ * {@link BONUS_CAPSULE_SPRITE}, {@link BONUS_CAPSULE_SCORE}.
  *
  * **Co-op (M2-06).** Every player has its own meter (or Direct-mode levels) and shield; an item
  * goes to whoever touches it first (player 1 when both touch it on the same tick). While two ships
@@ -407,6 +414,15 @@ export const CAPSULE_SPRITE = 'items/capsule';
 /** The blue capsule's sprite (an engine sprite, M2-04). */
 export const BLUE_CAPSULE_SPRITE = 'items/capsule-blue';
 
+/** The 1UP item's sprite (an engine sprite, M2-10 — the bonus stages). */
+export const ONE_UP_SPRITE = 'items/1up';
+
+/** The bonus capsule's sprite (an engine sprite, M2-10 — the bonus stages). */
+export const BONUS_CAPSULE_SPRITE = 'items/capsule-bonus';
+
+/** Points a bonus capsule is worth (shmup_feat.md §14 / §15 "bonus capsule 1,000"). */
+export const BONUS_CAPSULE_SCORE = 1000;
+
 /**
  * Ticks a freed Option drifts before it vanishes (it blinks for the last
  * {@link ITEM_EXPIRY_BLINK_TICKS}).
@@ -493,6 +509,13 @@ export const ItemKind = {
   DirectYellow: 7,
   /** Direct mode: the red octagon — the next main-shot family. */
   DirectOctagon: 8,
+  /**
+   * A 1UP (M2-10 — the hidden bonus stages, shmup_feat.md §14): +1 life (up to `MAX_LIVES`) in
+   * either power-up mode. World-space like a capsule.
+   */
+  OneUp: 9,
+  /** A bonus capsule (M2-10): {@link BONUS_CAPSULE_SCORE} points, nothing else. World-space. */
+  BonusCapsule: 10,
 } as const;
 
 /** An {@link ItemKind} code. */
@@ -542,6 +565,8 @@ export const ITEM_KINDS: readonly ItemKindSpec[] = Object.freeze([
   ...DIRECT_ITEM_SPRITES.map((sprite) =>
     Object.freeze({ sprite, frames: 2, score: DIRECT_ITEM_SCORE }),
   ),
+  Object.freeze({ sprite: ONE_UP_SPRITE, frames: 2, score: 0 }),
+  Object.freeze({ sprite: BONUS_CAPSULE_SPRITE, frames: 2, score: BONUS_CAPSULE_SCORE }),
 ]);
 
 /** The sprites of every item kind (part of the World's `ENGINE_SPRITES`). */
@@ -1347,7 +1372,8 @@ class PowerUpSystemImpl implements PowerUpSystem {
       this.itemSprite[k] = sprites.get(spec.sprite) ?? -1;
       this.itemFrames[k] = spec.frames;
       this.itemScore[k] = spec.score;
-      const drifts = k === ItemKind.FreeOption || k >= ItemKind.DirectRed;
+      const drifts =
+        k === ItemKind.FreeOption || (k >= ItemKind.DirectRed && k <= ItemKind.DirectOctagon);
       this.itemDrift[k] = drifts ? 1 : 0;
       this.itemLife[k] =
         k === ItemKind.FreeOption ? FREE_OPTION_TICKS : drifts ? DIRECT_ITEM_TICKS : 0;
@@ -1668,6 +1694,10 @@ class PowerUpSystemImpl implements PowerUpSystem {
         }
       } else if (kind === DropKind.BlueCapsule) {
         this.spawnItem(ItemKind.BlueCapsule, o.dropX[d], o.dropY[d]);
+      } else if (kind === DropKind.OneUp) {
+        this.spawnItem(ItemKind.OneUp, o.dropX[d], o.dropY[d]);
+      } else if (kind === DropKind.BonusCapsule) {
+        this.spawnItem(ItemKind.BonusCapsule, o.dropX[d], o.dropY[d]);
       } else if (kind === DropKind.FreeOption) {
         const i = this.spawnItem(ItemKind.FreeOption, o.dropX[d], o.dropY[d]);
         if (i >= 0) {
@@ -1842,7 +1872,8 @@ class PowerUpSystemImpl implements PowerUpSystem {
       else if (kind === ItemKind.FreeOption) this.regainOption(o.pickupPlayer[k]);
       else if (kind >= ItemKind.DirectRed && kind <= ItemKind.DirectOctagon) {
         this.collectDirect(o.pickupPlayer[k], kind - ItemKind.DirectRed);
-      }
+      } else if (kind === ItemKind.OneUp) this.collectOneUp(o.pickupPlayer[k]);
+      else if (kind === ItemKind.BonusCapsule) this.collectBonus(o.pickupPlayer[k]);
     }
     const pending = this.megaPending;
     for (let p = 0; p < pending.length; p++) {
@@ -1866,6 +1897,34 @@ class PowerUpSystemImpl implements PowerUpSystem {
       }
     }
     this.takeDrops();
+  }
+
+  /**
+   * A 1UP was collected (M2-10): +1 life up to `MAX_LIVES` with the critical `ExtraLife` cue; at
+   * the cap only the pickup sound (its 0 points are the item's).
+   *
+   * @param player - The collector's slot.
+   */
+  private collectOneUp(player: number): void {
+    if (!this.valid(player)) return;
+    const ship = this.host.players[player];
+    if (ship.lives < MAX_LIVES) {
+      ship.lives++;
+      this.pushAtShip(SimEventKind.Sfx, SFX_CUES.ExtraLife, ship, SfxPriority.Critical);
+    } else {
+      this.pushAtShip(SimEventKind.Sfx, SFX_CUES.CapsulePickup, ship, 0);
+    }
+  }
+
+  /**
+   * A bonus capsule was collected (M2-10): the pickup sound (its {@link BONUS_CAPSULE_SCORE}
+   * points are the item's, credited with the tick's score).
+   *
+   * @param player - The collector's slot.
+   */
+  private collectBonus(player: number): void {
+    if (!this.valid(player)) return;
+    this.pushAtShip(SimEventKind.Sfx, SFX_CUES.CapsulePickup, this.host.players[player], 0);
   }
 
   /** See {@link PowerUpSystem.clearScreen}. */
