@@ -1,0 +1,403 @@
+{
+  "formatVersion": 1,
+  "kind": "enemies",
+  "enemies": [
+    {
+      "id": "glint-mote",
+      "hp": 1,
+      "score": 100,
+      "hurtbox": {
+        "hw": 3,
+        "hh": 3
+      },
+      "script": "drifter.sine",
+      "sprite": "enemies/glint-mote",
+      "anim": {
+        "frames": 2,
+        "ticks": 6
+      },
+      "params": {
+        "speed": 1.2,
+        "amp": 14,
+        "period": 110,
+        "memberPhase": 30
+      },
+      "drop": null
+    },
+    {
+      "id": "prism-cube",
+      "hp": 1,
+      "score": 60,
+      "hurtbox": {
+        "hw": 3,
+        "hh": 3
+      },
+      "script": "cube.stack",
+      "sprite": "enemies/prism-cube",
+      "anim": {
+        "frames": 2,
+        "ticks": 8
+      },
+      "params": {
+        "speed": 1.5,
+        "margin": 48
+      },
+      "drop": null
+    },
+    {
+      "id": "facet-turret",
+      "hp": 4,
+      "score": 300,
+      "hurtbox": {
+        "hw": 6,
+        "hh": 5
+      },
+      "script": "turret.floor",
+      "sprite": "enemies/facet-turret",
+      "params": {
+        "fireTicks": 180,
+        "bulletSpeed": 1.2
+      },
+      "drop": null,
+      "ground": "floor",
+      "explosion": "medium"
+    },
+    {
+      "id": "facet-turret-ceiling",
+      "hp": 4,
+      "score": 300,
+      "hurtbox": {
+        "hw": 6,
+        "hh": 5
+      },
+      "script": "turret.floor",
+      "sprite": "enemies/facet-turret",
+      "params": {
+        "fireTicks": 180,
+        "bulletSpeed": 1.2
+      },
+      "drop": null,
+      "ground": "ceiling",
+      "explosion": "medium"
+    },
+    {
+      "id": "halo-crystal",
+      "hp": 6,
+      "score": 600,
+      "hurtbox": {
+        "hw": 6,
+        "hh": 6
+      },
+      "script": "orbiter.loop",
+      "sprite": "enemies/halo-crystal",
+      "anim": {
+        "frames": 2,
+        "ticks": 10
+      },
+      "params": {
+        "speed": 1.1,
+        "ringTicks": 120,
+        "ringCount": 8,
+        "bulletSpeed": 0.95
+      },
+      "drop": null,
+      "explosion": "medium"
+    },
+    {
+      "id": "prism-lens",
+      "hp": 5,
+      "score": 500,
+      "hurtbox": {
+        "hw": 7,
+        "hh": 5
+      },
+      "script": "pattern.loop",
+      "sprite": "enemies/prism-lens",
+      "anim": {
+        "frames": 2,
+        "ticks": 12
+      },
+      "params": {
+        "restTicks": 40
+      },
+      "mover": {
+        "type": "waypoint",
+        "x": 300,
+        "y": 52,
+        "speed": 1,
+        "hold": 360,
+        "leaveVx": 0,
+        "leaveVy": -0.6
+      },
+      "pattern": "prism.fan",
+      "drop": null,
+      "explosion": "medium"
+    },
+    {
+      "id": "prism-lens-low",
+      "hp": 5,
+      "score": 500,
+      "hurtbox": {
+        "hw": 7,
+        "hh": 5
+      },
+      "script": "pattern.loop",
+      "sprite": "enemies/prism-lens",
+      "anim": {
+        "frames": 2,
+        "ticks": 12
+      },
+      "params": {
+        "restTicks": 40
+      },
+      "mover": {
+        "type": "waypoint",
+        "x": 300,
+        "y": 148,
+        "speed": 1,
+        "hold": 360,
+        "leaveVx": 0,
+        "leaveVy": 0.6
+      },
+      "pattern": "prism.fan",
+      "drop": null,
+      "explosion": "medium"
+    },
+    {
+      "id": "geode",
+      "hp": 8,
+      "score": 700,
+      "hurtbox": {
+        "hw": 7,
+        "hh": 7
+      },
+      "script": "bubble.split",
+      "sprite": "enemies/geode",
+      "params": {
+        "speed": 0.5,
+        "amp": 8,
+        "period": 160,
+        "count": 3,
+        "splitSpeed": 1,
+        "spread": 320,
+        "scatterTicks": 30
+      },
+      "drop": null,
+      "child": "geode-shard",
+      "explosion": "medium"
+    },
+    {
+      "id": "geode-shard",
+      "hp": 1,
+      "score": 50,
+      "hurtbox": {
+        "hw": 3,
+        "hh": 2
+      },
+      "script": "bubble.split",
+      "sprite": "enemies/geode-shard",
+      "params": {
+        "speed": 0.9,
+        "amp": 10,
+        "period": 100,
+        "count": 0
+      },
+      "drop": null
+    },
+    {
+      "id": "facet-monarch",
+      "boss": {
+        "code": "FM-07",
+        "displayName": "FACET MONARCH",
+        "introTicks": 150,
+        "score": 40000,
+        "x": 300,
+        "y": 100,
+        "parts": [
+          {
+            "name": "body",
+            "x": 18,
+            "sprite": "bosses/facet-body"
+          },
+          {
+            "name": "hull",
+            "parent": "body",
+            "x": 12,
+            "vulnerable": "never",
+            "hurtbox": {
+              "hw": 12,
+              "hh": 26
+            }
+          },
+          {
+            "name": "core",
+            "parent": "body",
+            "x": -12,
+            "hp": 72,
+            "hurtbox": {
+              "hw": 7,
+              "hh": 7
+            },
+            "vulnerable": "afterParts",
+            "requires": ["crystal-top", "crystal-bottom"],
+            "core": true,
+            "sprite": "bosses/facet-core",
+            "anim": {
+              "frames": 2,
+              "ticks": 12
+            },
+            "score": 5000,
+            "explosion": "large"
+          },
+          {
+            "name": "crystal-top",
+            "parent": "body",
+            "x": -32,
+            "y": -8,
+            "hp": 22,
+            "hurtbox": {
+              "hw": 4,
+              "hh": 9
+            },
+            "sprite": "bosses/facet-crystal",
+            "score": 1000
+          },
+          {
+            "name": "crystal-bottom",
+            "parent": "body",
+            "x": -32,
+            "y": 8,
+            "hp": 22,
+            "hurtbox": {
+              "hw": 4,
+              "hh": 9
+            },
+            "sprite": "bosses/facet-crystal",
+            "score": 1000
+          },
+          {
+            "name": "arm-top-1",
+            "parent": "body",
+            "x": -14,
+            "y": -28,
+            "radius": 5,
+            "vulnerable": "never",
+            "sprite": "bosses/facet-segment"
+          },
+          {
+            "name": "arm-top-2",
+            "parent": "arm-top-1",
+            "x": -10,
+            "radius": 5,
+            "vulnerable": "never",
+            "sprite": "bosses/facet-segment"
+          },
+          {
+            "name": "arm-top-3",
+            "parent": "arm-top-2",
+            "x": -10,
+            "radius": 5,
+            "vulnerable": "never",
+            "sprite": "bosses/facet-segment"
+          },
+          {
+            "name": "arm-top-tip",
+            "parent": "arm-top-3",
+            "x": -10,
+            "radius": 4,
+            "vulnerable": "never",
+            "gun": true,
+            "sprite": "bosses/facet-tip"
+          },
+          {
+            "name": "arm-bottom-1",
+            "parent": "body",
+            "x": -14,
+            "y": 28,
+            "radius": 5,
+            "vulnerable": "never",
+            "sprite": "bosses/facet-segment"
+          },
+          {
+            "name": "arm-bottom-2",
+            "parent": "arm-bottom-1",
+            "x": -10,
+            "radius": 5,
+            "vulnerable": "never",
+            "sprite": "bosses/facet-segment"
+          },
+          {
+            "name": "arm-bottom-3",
+            "parent": "arm-bottom-2",
+            "x": -10,
+            "radius": 5,
+            "vulnerable": "never",
+            "sprite": "bosses/facet-segment"
+          },
+          {
+            "name": "arm-bottom-tip",
+            "parent": "arm-bottom-3",
+            "x": -10,
+            "radius": 4,
+            "vulnerable": "never",
+            "gun": true,
+            "sprite": "bosses/facet-tip"
+          }
+        ],
+        "phases": [
+          {
+            "script": "boss.facet",
+            "params": {
+              "trackSpeed": 0.3,
+              "wave": 1,
+              "waveTicks": 56,
+              "fireTicks": 90,
+              "ways": 1,
+              "bulletSpeed": 1.2
+            },
+            "until": {
+              "partsDestroyed": ["crystal-top", "crystal-bottom"],
+              "ticks": 1500
+            }
+          },
+          {
+            "script": "boss.facet",
+            "params": {
+              "trackSpeed": 0.35,
+              "wave": 2,
+              "waveTicks": 28,
+              "fireTicks": 80,
+              "ways": 3,
+              "spread": 32,
+              "bulletSpeed": 1.25,
+              "ring": 8,
+              "ringTicks": 170,
+              "ringSpeed": 1
+            },
+            "until": {
+              "hpBelow": 38
+            }
+          },
+          {
+            "script": "boss.facet",
+            "params": {
+              "trackSpeed": 0.4,
+              "wave": 2,
+              "waveTicks": 30,
+              "fireTicks": 75,
+              "ways": 3,
+              "spread": 32,
+              "bulletSpeed": 1.3,
+              "ring": 10,
+              "ringTicks": 150,
+              "ringSpeed": 1.05,
+              "laserTicks": 220,
+              "telegraph": 50,
+              "active": 40
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

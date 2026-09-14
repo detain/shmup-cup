@@ -158,6 +158,26 @@ and the boss **SQUALL STEED** (`squall-steed`, SS-05 — `boss.steed`: a seahors
 ellipse; its chest, the `whenOpen` core, opens with its lids and launches the homing foals, the
 snout — the gun — fires spreads and, in the last phase, a ring as the chest shuts).
 
+`zone-f.enemies.json` and `zone-g.enemies.json` (M2-13) are the rosters of the real zones F and G.
+CELL VAULT: `lymph-mote` (`drifter.sine` popcorn), `chaser-cell` (`cell.chase`: drifts in along its
+row, then chases the nearest ship with a capped turn for a while, then swims straight on),
+`mitosis-cell` (`bubble.split` whose `child` is the chaser: shot, it divides into two chasing
+cells), `vault-claw` / `vault-claw-ceiling` (`tentacle.grab` on the floor / ceiling),
+`polyp-turret` / `polyp-turret-ceiling` (`turret.floor`), `spore-sac` / `spore-sac-low`
+(`pattern.loop` + `vault.spores` on a `waypoint` mover: it hovers at the right, then drifts off up /
+down) and the boss **MANTLE REGENT** (`mantle-regent`, MR-06 — `boss.squid`: a squid whose two
+tentacles — a breakable root, three armoured segments and a gun at the tip, circle-hit parts chained
+from the mantle — curl in front of its eye (the core) and uncurl in a cycle; breaking a tentacle
+ends the first phase; from the second phase the eye launches chasing cells, its `minion`). PRISM
+LABYRINTH: `glint-mote` (`drifter.sine`), `prism-cube` (`cube.stack`: a formation is a seeded cube
+rush), `facet-turret` / `facet-turret-ceiling` (`turret.floor`), `halo-crystal` (`orbiter.loop` on a
+path, rings), `prism-lens` / `prism-lens-low` (`pattern.loop` + `prism.fan` on a `waypoint` mover),
+`geode` (`bubble.split` into three `geode-shard`s — a `bubble.split` with `count` 0 that only
+drifts) and the boss **FACET MONARCH** (`facet-monarch`, FM-07 — `boss.facet`: a crystal core
+`afterParts` of two crystals in front of it, an armoured hull behind it, and two armoured tentacle
+arms waving like claws with guns at their tips; rings and, in the last phase, lane lasers from the
+core).
+
 Several files may exist (e.g. one per theme); ids must be unique across all of them.
 The bonus stages' drops (M2-10): `"drop": "oneUp"` leaves a 1UP (an extra life, up to 9) and
 `"drop": "bonusCapsule"` a gold bonus capsule worth 1,000 points — world-space items like the

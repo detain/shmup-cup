@@ -52,7 +52,11 @@
  * (TEMPEST RIDGE: the rear attackers, SQUALL STEED). Three more (M2-12 tests) fly them without god
  * mode: the 4-way bot through the whole of zone D (a death and a Classic respawn in place down in
  * the caves) and of zone E (the rear attackers against a ship that can die), and the stage skip
- * into zone D's caves to CINDER BASTION with the full loadout under the Arcade penalty.
+ * into zone D's caves to CINDER BASTION with the full loadout under the Arcade penalty. Three more
+ * (M2-13) fly the real zones F and G with the 4-way bot and god mode, start to stage clear —
+ * `zone-f` (CELL VAULT: the chasing cells, the tissue walls, the grabbing tentacles, MANTLE REGENT)
+ * and `zone-g` (PRISM LABYRINTH: the crystal labyrinth, the cube rush, FACET MONARCH) — and zone
+ * G's hidden bonus stage `glimmer-cache` with the full loadout.
  *
  * @module
  */
@@ -516,6 +520,33 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = Object.freeze([
       "PEARL GROTTO, zone B's hidden bonus stage, with god mode and the full loadout (M2-11): its carriers' bonus capsules and the 1UP collected to the end",
     stageId: 'brine-grotto',
     config: { seed: 71, loadout: 'full' },
+    godMode: true,
+    bot: 'four-way',
+  },
+  {
+    name: 'zone-f-god',
+    description:
+      'CELL VAULT start to stage clear with god mode (M2-13): the 4-way bot through the membrane, the regenerating tissue walls, the tentacle garden and the pulse run, then MANTLE REGENT shot down',
+    stageId: 'zone-f',
+    config: { seed: 1 },
+    godMode: true,
+    bot: 'four-way',
+  },
+  {
+    name: 'zone-g-god',
+    description:
+      'PRISM LABYRINTH start to stage clear with god mode (M2-13): the 4-way bot through the prism field, the gallery, the crystal labyrinth, the cube rush stacking into its pillars and the refraction run, then FACET MONARCH shot down',
+    stageId: 'zone-g',
+    config: { seed: 1 },
+    godMode: true,
+    bot: 'four-way',
+  },
+  {
+    name: 'glimmer-cache-god',
+    description:
+      "GLIMMER CACHE, zone G's hidden bonus stage, with god mode and the full loadout (M2-13): its carriers' bonus capsules and the 1UP collected to the end, a cube rush and its cube walls",
+    stageId: 'glimmer-cache',
+    config: { seed: 81, loadout: 'full' },
     godMode: true,
     bot: 'four-way',
   },

@@ -330,6 +330,35 @@ describe('golden replays (zone A and the dev stages, playtest bots)', () => {
     expect(world.stage?.stage.id).toBe('zone-d');
   });
 
+  it('covers the real zones F and G of M2-13: both cleared in 3–6 minutes, their bosses shot down, the cache', () => {
+    for (const [name, stage] of [
+      ['zone-f-god', 'zone-f'],
+      ['zone-g-god', 'zone-g'],
+    ] as const) {
+      const { file, replay } = readGolden(name);
+      expect(replay.header.stageId).toBe(stage);
+      expect(replay.header.assisted).toBe(true);
+      expect(file.expected).toMatchObject({
+        status: 'stageClear',
+        bossDefeated: true,
+        deathTicks: [],
+      });
+      expect(file.expected.ticks / 60).toBeGreaterThanOrEqual(180);
+      expect(file.expected.ticks / 60).toBeLessThanOrEqual(360);
+    }
+    // CELL VAULT's run shot tissue cells open on the way (breaks since the last restore).
+    const vault = playGolden(readGolden('zone-f-god').replay);
+    expect(vault.world.gimmicks.destructible?.destroyed ?? 0).toBeGreaterThan(0);
+    // Zone G's hidden bonus stage: the bonus capsules and the 1UP collected, no boss.
+    const cache = readGolden('glimmer-cache-god');
+    const { world, outcome } = playGolden(cache.replay);
+    expect(world.stage?.stage.type).toBe('bonus');
+    expect(outcome).toMatchObject({ status: 'stageClear', bossDefeated: false, deathTicks: [] });
+    const p1 = world.scoring.board.scores[0];
+    expect(outcome.lives - 3 - p1.extendsEarned).toBeGreaterThanOrEqual(1);
+    expect(outcome.score).toBeGreaterThan(5 * BONUS_CAPSULE_SCORE);
+  });
+
   it('covers zones D and E without god mode (M2-12 tests): deaths in place, the caves, the skip', () => {
     // MAGMA DEEP with the 4-way bot and no god mode: a death down in the caves (the camera at
     // y 200), the Classic respawn in place — the camera stays down there — and the clear.

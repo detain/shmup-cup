@@ -82,8 +82,15 @@
  * - `rear.swoop` — enters from behind the view, overtakes the ship along its row to a turn point,
  *   holds, fires an aimed shot back and leaves to the left.
  *
+ * **Zone F (M2-13)** — CELL VAULT's chasing cells:
+ *
+ * - `cell.chase` — drifts in along its row [`speed` 1.1, `enterTicks` 50], then chases the nearest
+ *   player (turn-rate capped [`turnRate` 6], for [`chaseTicks` 150]) and swims straight on; one
+ *   thrown out of a dividing cell flies out for [`scatterTicks` 24] first.
+ *
  * `drifter.sine`, `fan.loop`, `carrier.straight`, `hatch.spawner`, `rammer.aimed`,
- * `hunter.option`, `cube.pincer`, the M2-07 gimmicks and the M2-11 rockets and worms do not fire.
+ * `hunter.option`, `cube.pincer`, the M2-07 gimmicks, the M2-11 rockets and worms and the M2-13
+ * chasing cells do not fire.
  * Every shot goes through the primitives, so nothing fires off screen or before `settleTicks`.
  *
  * **Boss behaviours** (M1-13, {@link DEFAULT_BOSS_BEHAVIORS}; a boss phase's `script`, its
@@ -171,6 +178,24 @@
  *   80] and, with [`ring` 0 = none] ≥ 1, a ring at [`ringSpeed` 1] as the chest shuts; [`gape` 0]
  *   moves the chest's lids apart while it is open.
  *
+ * **Zone bosses (M2-13)** — both curl **arms**: chains of circle-hit parts attached to another
+ * part, pointing left; every segment turns by the same amount, so an arm curls like a tentacle,
+ * mirrored above and below its parent's row:
+ *
+ * - `boss.squid` — MANTLE REGENT (zone F), the squid: tracks [`trackSpeed` 0.35, `margin` 48];
+ *   its tentacles guard the core in a cycle — straight [`openTicks` 100], curling in at [`curl` 1]
+ *   unit a tick for [`sweepTicks` 48], curled in front of the core [`guardTicks` 60], uncurling —;
+ *   the cores fire aimed [`ways` 3]-ways of ovals [`spread` 40, `bulletSpeed` 1.3] every
+ *   [`fireTicks` 70], the tips an aimed needle every [`gunTicks` 0 = never], a [`ring` 0 = none]
+ *   at [`ringSpeed` 1] bursts from the cores as the tentacles open and every [`launchTicks` 0 =
+ *   never] the cores launch [`count` 1] `minion`s.
+ * - `boss.facet` — FACET MONARCH (zone G), the crystal core: tracks [`trackSpeed` 0.3, `margin`
+ *   50]; its arms wave at [`wave` 1] unit a tick, [`waveTicks` 40] from straight to a turn point;
+ *   the tips fire aimed [`ways` 1]-ways of needles [`spread` 32, `bulletSpeed` 1.25] every
+ *   [`fireTicks` 90]; the cores a [`ring` 0 = none] at [`ringSpeed` 1] every [`ringTicks` 150] and,
+ *   every [`laserTicks` 0 = never], a detached lane laser [`laserLength` 384, `laserWidth` 6,
+ *   `telegraph` 50, `active` 40].
+ *
  * **Implements.**
  * - shmup_feat.md §11 — archetypes (popcorn, formation fliers, capsule carriers, turrets,
  *   walkers, hatches, rammers, orbiters, the Option Hunter — M2-04) as coroutine scripts
@@ -184,6 +209,10 @@
  * - shmup_feat.md §11 — zone E's rear attackers (M2-12)
  * - shmup_feat.md §13 — the zone bosses CINDER BASTION (core battleship: rotating shield arms,
  *   lane lasers) and SQUALL STEED (seahorse: a chest that opens to launch homing minis) (M2-12)
+ * - shmup_feat.md §14 — zone F's chasing cells (M2-13)
+ * - shmup_feat.md §13 — the zone bosses MANTLE REGENT (squid: tentacles guard the weak point,
+ *   breaking one changes its behaviour) and FACET MONARCH (crystal core: tentacle arms, the core
+ *   behind crystals) (M2-13)
  * - shmup_tech.md §4.6 — TS generator coroutines
  * - shmup_feat.md §13 — boss phases driven by behaviour scripts (the pattern set changes with the
  *   phase)
@@ -195,19 +224,19 @@
  * {@link DEFAULT_BOSS_BEHAVIOR_DEFS}, {@link BOSS_BEHAVIOR_IDS}, {@link WEAPON_SCRIPT_IDS},
  * {@link KNOWN_SCRIPT_IDS}, {@link checkEnemyBehaviors}.
  *
- * **Planned API.** More behaviours with the zones of M2 (M2-13, M2-14).
+ * **Planned API.** More behaviours with the final zones of M2 (M2-14).
  *
  * @module
  */
 import { BulletKind, LASER_FADE_TICKS, LASER_GROW_TICKS } from '../bullets/index.js';
 import { WEAPON_SCRIPT_IDS } from '../weapons/index.js';
-import type { BossBehavior, BossBehaviorLookup, BossScriptApi } from '../bosses/index.js';
+import type { BossBehavior, BossBehaviorLookup, BossPart, BossScriptApi } from '../bosses/index.js';
 import { PLAYFIELD_H, PLAYFIELD_W } from '../config/index.js';
-import type { ContentDb, ValidationIssue } from '../data/index.js';
+import { MAX_BOSS_PARTS, type ContentDb, type ValidationIssue } from '../data/index.js';
 import type { EnemyBehavior, EnemyBehaviorLookup, ScriptApi } from '../enemies/index.js';
 import { EnemyFlag } from '../enemies/index.js';
 import { defineModule } from '../module-info.js';
-import { ANGLE_UNITS, atan2B, cosB, quantizeAngle, sinB } from '../math/index.js';
+import { ANGLE_MASK, ANGLE_UNITS, atan2B, cosB, quantizeAngle, sinB } from '../math/index.js';
 import {
   BallisticLand,
   BodyAnchor,
@@ -969,6 +998,43 @@ const rearSwoop = defineBehavior(
   },
 );
 
+// ------------------------------------------------------------------------------ zone F (M2-13)
+
+/**
+ * `cell.chase` (M2-13) — a **chasing cell** (zone F, shmup_feat.md §14 "organic cells: chasing
+ * cells"): it drifts in along its row to the left at [`speed` 1.1] px/tick for [`enterTicks` 50]
+ * ticks, then chases the nearest living player — a `Homing` mover at `speed`, turning at most
+ * [`turnRate` 6] binary units a tick — for [`chaseTicks` 150] ticks, and then swims straight on
+ * along its last heading until it leaves the view. A cell thrown out of a dividing cell (a
+ * `bubble.split` parent — the mitosis cell — set a straight mover on it) first flies out for
+ * [`scatterTicks` 24] ticks instead of drifting in; one launched by a boss (`BossScriptApi.launch`
+ * — MANTLE REGENT's) drifts in from where it was launched. It never fires; its body is the danger.
+ *
+ * @remarks
+ * Three wakes in its life. The chase is dodgeable with four directions (shmup_feat.md §4 rule 2):
+ * the turn cap keeps it from following a ship that changes lanes, the time limit ends the chase,
+ * and the straight run after it is a `Homing` mover with a turn rate of 0 (it keeps its course
+ * without a jump, like `rocket.homing`). A `speed` of 0 or less is 1 px/tick; the tick counts below
+ * 1 are one tick, `turnRate` below 0 is 0. Guide: `docs/dev/zones-f-and-g.md`.
+ */
+const cellChase = defineBehavior(
+  'cell.chase',
+  { speed: 1.1, enterTicks: 50, turnRate: 6, chaseTicks: 150, scatterTicks: 24 },
+  function* chase(api, p): Script {
+    const speed = p.speed > 0 ? p.speed : 1;
+    if (api.self.mover === MoverKind.Straight) {
+      yield p.scatterTicks >= 1 ? Math.floor(p.scatterTicks) : 1;
+    } else {
+      api.setMover(MoverKind.Straight, -speed, 0);
+      yield p.enterTicks >= 1 ? Math.floor(p.enterTicks) : 1;
+    }
+    api.setMover(MoverKind.Homing, speed, p.turnRate >= 0 ? Math.floor(p.turnRate) : 0);
+    yield p.chaseTicks >= 1 ? Math.floor(p.chaseTicks) : 1;
+    api.setMover(MoverKind.Homing, speed, 0);
+    yield SLEEP_FOREVER;
+  },
+);
+
 /** The roster's definitions (see the module docs), e.g. to extend a registry in tests. */
 export const DEFAULT_BEHAVIOR_DEFS: readonly BehaviorDef[] = Object.freeze([
   drifterSine,
@@ -991,6 +1057,7 @@ export const DEFAULT_BEHAVIOR_DEFS: readonly BehaviorDef[] = Object.freeze([
   rocketHoming,
   wormBurst,
   rearSwoop,
+  cellChase,
 ]);
 
 /** The roster as a registry (what the World uses). */
@@ -2098,9 +2165,340 @@ const bossSteed = defineBossBehavior(
   },
 );
 
+// ------------------------------------------------------------------------- zones F and G (M2-13)
+
+/**
+ * Whether a boss part is a segment of a **curling arm** (M2-13): a circle-hit part (`radius` > 0)
+ * attached to another part — a tentacle's root, its segments and its tip.
+ *
+ * @param parts - The boss's parts.
+ * @param index - Part index.
+ * @returns `true` for an arm segment.
+ */
+function isArm(parts: readonly BossPart[], index: number): boolean {
+  const part = parts[index];
+  return part.radius > 0 && part.parent >= 0;
+}
+
+/**
+ * The side an arm segment curls to (M2-13): its arm's **root** — the first segment of its chain,
+ * whose parent is not an arm segment — hangs above its parent (rest `restY` < 0: the arm curls
+ * down, turning counter-clockwise, −1) or below it (+1, clockwise). The arms point to the left, so
+ * "curling" brings every arm towards its parent's row — mirrored above and below.
+ *
+ * @param parts - The boss's parts.
+ * @param index - An arm segment's index.
+ * @returns −1 or 1.
+ */
+function armSide(parts: readonly BossPart[], index: number): number {
+  let root = index;
+  for (let k = 0; k < MAX_BOSS_PARTS && parts[root].parent >= 0; k++) {
+    const parent = parts[root].parent;
+    if (!isArm(parts, parent)) break;
+    root = parent;
+  }
+  return parts[root].restY < 0 ? -1 : 1;
+}
+
+/**
+ * Sets the curl speed of every standing arm segment (M2-13): each turns at `speed` units a tick
+ * towards its side ({@link armSide}) — every segment of a chain turns by the same amount relative
+ * to its parent, so the arm curls more towards its tip, like a tentacle.
+ *
+ * @param api - The boss's API.
+ * @param speed - Binary units per tick (whole; positive curls in, negative uncurls, 0 = still).
+ */
+function curlArms(api: BossScriptApi, speed: number): void {
+  const parts = api.self.parts;
+  for (let i = 0; i < api.partCount; i++) {
+    if (isArm(parts, i) && !parts[i].destroyed) api.spinPart(i, speed * armSide(parts, i));
+  }
+}
+
+/**
+ * Puts every standing arm segment at a curl (M2-13): its own turn becomes `units` towards its side
+ * — what a sweep ends on, so a sweep that started from a fraction of its step (a phase change
+ * mid-sweep) lands exactly.
+ *
+ * @param api - The boss's API.
+ * @param units - Binary units (whole; 0 = straight, at rest).
+ */
+function setArmCurl(api: BossScriptApi, units: number): void {
+  const parts = api.self.parts;
+  for (let i = 0; i < api.partCount; i++) {
+    if (isArm(parts, i) && !parts[i].destroyed) api.setPartAngle(i, units * armSide(parts, i));
+  }
+}
+
+/**
+ * The curl of the arms now (M2-13): the turn of the first standing arm segment, measured towards
+ * its side, in `[-512, 512)` binary units (0 without a standing segment).
+ *
+ * @param api - The boss's API.
+ * @returns Binary units (whole).
+ */
+function armCurl(api: BossScriptApi): number {
+  const parts = api.self.parts;
+  for (let i = 0; i < api.partCount; i++) {
+    if (!isArm(parts, i) || parts[i].destroyed) continue;
+    let a = Math.floor(parts[i].angle) & ANGLE_MASK;
+    if (a >= ANGLE_UNITS / 2) a -= ANGLE_UNITS;
+    return a * armSide(parts, i);
+  }
+  return 0;
+}
+
+/** `boss.squid`'s tentacle state: straight, the core exposed. */
+const SQUID_OPEN = 0;
+
+/** `boss.squid`'s tentacle state: curling in. */
+const SQUID_CLOSING = 1;
+
+/** `boss.squid`'s tentacle state: curled in front of the core. */
+const SQUID_GUARD = 2;
+
+/** `boss.squid`'s tentacle state: uncurling. */
+const SQUID_OPENING = 3;
+
+/**
+ * `boss.squid` (M2-13) — MANTLE REGENT (MR-06, zone F), the **squid** archetype (shmup_feat.md §13
+ * "tentacles guard weak point; break one = changes behavior"): it follows the nearest player's
+ * height at [`trackSpeed` 0.35] px/tick, [`margin` 48] px inside the playfield. Its **tentacles** —
+ * chains of circle-hit parts pointing left from its body, above and below the core (each a
+ * destructible root with armoured segments and a tip) — **guard the core** in a cycle: straight for
+ * [`openTicks` 100] ticks (the core exposed), curling in at [`curl` 1] binary units a tick per
+ * segment for [`sweepTicks` 48] ticks until the tips meet in front of the core, holding there for
+ * [`guardTicks` 60] ticks (shots clink off the armoured segments) and uncurling again in
+ * `sweepTicks`. Every [`fireTicks` 70] ticks (rank-scaled) each standing core fires an aimed
+ * [`ways` 3]-way of red ovals [`spread` 40] at [`bulletSpeed` 1.3]; with [`gunTicks` 0 = never] ≥ 1
+ * every `gunTicks` each standing gun — the tentacle tips — lashes an aimed pink needle at
+ * `bulletSpeed`; with [`ring` 0 = none] ≥ 1 each core bursts a ring of `ring` round purple bullets
+ * at [`ringSpeed` 1] every time the tentacles open (each turned half a gap from the last); and with
+ * [`launchTicks` 0 = never] ≥ 1 every `launchTicks` (rank-scaled) each standing core launches up to
+ * [`count` 1] of the boss's `minion` (the chasing cells). A broken tentacle — its root destroyed
+ * takes its segments and tip with it — is the content's phase change (`until.partsDestroyed` with
+ * `count` 1).
+ *
+ * @remarks
+ * One script per phase, sleeping until the soonest of its four timers (the tentacles, the core's
+ * spreads, the tips, the launches); every timer is a whole number. A phase starts by **uncurling**
+ * the tentacles from wherever the last phase left them (`armCurl`), so a phase change never makes
+ * them jump: they uncurl at the new `curl` and are put exactly straight when they arrive (a curl
+ * that is not a multiple of the new speed is rounded down, then set — less than one step). The
+ * curl is mirrored: the arms above the core turn counter-clockwise, those below it clockwise
+ * (`armSide`). `curl` is rounded to whole units (at least 1); `sweepTicks`, `openTicks` and
+ * `guardTicks` below 1 are one tick. Guide: `docs/dev/zones-f-and-g.md`.
+ */
+const bossSquid = defineBossBehavior(
+  'boss.squid',
+  {
+    trackSpeed: 0.35,
+    margin: 48,
+    curl: 1,
+    sweepTicks: 48,
+    guardTicks: 60,
+    openTicks: 100,
+    fireTicks: 70,
+    ways: 3,
+    spread: 40,
+    bulletSpeed: 1.3,
+    gunTicks: 0,
+    ring: 0,
+    ringSpeed: 1,
+    launchTicks: 0,
+    count: 1,
+  },
+  function* squid(api, p): Script {
+    api.track(p.trackSpeed, p.margin, PLAYFIELD_H - p.margin);
+    const curl = p.curl >= 1 ? Math.round(p.curl) : 1;
+    const sweep = p.sweepTicks >= 1 ? Math.floor(p.sweepTicks) : 1;
+    const guard = p.guardTicks >= 1 ? Math.floor(p.guardTicks) : 1;
+    const openTicks = p.openTicks >= 1 ? Math.floor(p.openTicks) : 1;
+    const full = curl * sweep;
+    const ways = p.ways >= 1 ? Math.floor(p.ways) : 1;
+    const ring = p.ring >= 1 ? Math.floor(p.ring) : 0;
+    const count = p.count >= 1 ? Math.floor(p.count) : 0;
+    const half = ring > 0 ? Math.floor(ANGLE_UNITS / ring / 2) : 0;
+    const parts = api.self.parts;
+    let rings = 0;
+    // Uncurl from wherever the last phase left the tentacles.
+    let now = armCurl(api);
+    if (now < 0) now = 0;
+    else if (now > full) now = full;
+    let state = SQUID_OPENING;
+    let armIn = Math.floor(now / curl);
+    curlArms(api, armIn > 0 ? -curl : 0);
+    let fireIn = api.fireWait(p.fireTicks);
+    let gunIn = p.gunTicks >= 1 ? api.fireWait(p.gunTicks) : NEVER_TICKS;
+    let launchIn = p.launchTicks >= 1 && count > 0 ? api.fireWait(p.launchTicks) : NEVER_TICKS;
+    for (;;) {
+      let wait = armIn < fireIn ? armIn : fireIn;
+      if (gunIn < wait) wait = gunIn;
+      if (launchIn < wait) wait = launchIn;
+      if (wait > 0) yield wait;
+      armIn -= wait;
+      fireIn -= wait;
+      gunIn -= wait;
+      launchIn -= wait;
+      if (armIn <= 0) {
+        if (state === SQUID_OPENING) {
+          setArmCurl(api, 0);
+          curlArms(api, 0);
+          state = SQUID_OPEN;
+          armIn = openTicks;
+          if (ring > 0) {
+            ringCores(api, ring, p.ringSpeed, BulletKind.RoundPurple, (rings & 1) * half);
+            rings++;
+          }
+        } else if (state === SQUID_OPEN) {
+          curlArms(api, curl);
+          state = SQUID_CLOSING;
+          armIn = sweep;
+        } else if (state === SQUID_CLOSING) {
+          setArmCurl(api, full);
+          curlArms(api, 0);
+          state = SQUID_GUARD;
+          armIn = guard;
+        } else {
+          curlArms(api, -curl);
+          state = SQUID_OPENING;
+          armIn = sweep;
+        }
+      }
+      if (fireIn <= 0) {
+        fireCores(api, ways, p.spread, p.bulletSpeed, BulletKind.OvalRed);
+        fireIn = api.fireWait(p.fireTicks);
+      }
+      if (gunIn <= 0) {
+        fireGuns(api, 1, 0, p.bulletSpeed, BulletKind.NeedlePink);
+        gunIn = api.fireWait(p.gunTicks);
+      }
+      if (launchIn <= 0) {
+        for (let i = 0; i < api.partCount; i++) {
+          if (!parts[i].core || parts[i].destroyed) continue;
+          for (let k = 0; k < count; k++) api.launch(i);
+        }
+        launchIn = api.fireWait(p.launchTicks);
+      }
+    }
+  },
+);
+
+/**
+ * `boss.facet` (M2-13) — FACET MONARCH (FM-07, zone G), the **crystal-core** archetype
+ * (shmup_feat.md §13 "tentacle arms, core behind crystals"): its core hides behind crystal facets
+ * (the content makes it `afterParts` of them), and two **tentacle arms** — chains of armoured
+ * circle-hit segments pointing left from its body, above and below the core — wave: every segment
+ * turns at [`wave` 1] binary units a tick, [`waveTicks` 40] ticks from straight to the turn point,
+ * so each arm sweeps from `wave × waveTicks` units curled away from the core's row to as much curled
+ * towards it and back (mirrored above and below — the arms open and close like a pair of claws).
+ * It follows the nearest player's height at [`trackSpeed` 0.3] px/tick, [`margin` 50] px inside
+ * the playfield. Every [`fireTicks` 90] ticks (rank-scaled) each standing gun — the arms' tips —
+ * fires an aimed [`ways` 1]-way of purple needles [`spread` 32] at [`bulletSpeed` 1.25]; with
+ * [`ring` 0 = none] ≥ 1 every [`ringTicks` 150] each standing core fires a ring of `ring` round red
+ * bullets at [`ringSpeed` 1] (each turned half a gap from the last — an armoured core fires too);
+ * with [`laserTicks` 0 = never] ≥ 1 every `laserTicks` (rank-scaled) each standing core fires a
+ * telegraphed horizontal laser to the left in its lane, left where it was fired ([`laserLength`
+ * 384], [`laserWidth` 6], [`telegraph` 50] warning ticks, [`active` 40] beam ticks).
+ *
+ * @remarks
+ * One script per phase, sleeping until the soonest of its four timers (the wave's turn points, the
+ * tips, the rings, the lanes). A phase takes the arms from wherever the last phase left them
+ * (`armCurl`, clamped to the new sweep) on towards the curled-in turn point — the one straight
+ * ahead unless they are already there — so a phase change never makes them jump; each turn point
+ * is set exactly when reached (`setArmCurl` — the rest of a curl that is not a multiple of the new
+ * `wave`, less than one step). `wave` is rounded to whole units (at least 1), `waveTicks` below 1 is
+ * one tick. One lane at a time while `laserTicks` outlasts a lane (telegraph + grow + active +
+ * fade). Guide: `docs/dev/zones-f-and-g.md`.
+ */
+const bossFacet = defineBossBehavior(
+  'boss.facet',
+  {
+    trackSpeed: 0.3,
+    margin: 50,
+    wave: 1,
+    waveTicks: 40,
+    fireTicks: 90,
+    ways: 1,
+    spread: 32,
+    bulletSpeed: 1.25,
+    ring: 0,
+    ringTicks: 150,
+    ringSpeed: 1,
+    laserTicks: 0,
+    laserLength: 384,
+    laserWidth: 6,
+    telegraph: 50,
+    active: 40,
+  },
+  function* facet(api, p): Script {
+    api.track(p.trackSpeed, p.margin, PLAYFIELD_H - p.margin);
+    const wave = p.wave >= 1 ? Math.round(p.wave) : 1;
+    const waveTicks = p.waveTicks >= 1 ? Math.floor(p.waveTicks) : 1;
+    const reach = wave * waveTicks;
+    const ways = p.ways >= 1 ? Math.floor(p.ways) : 1;
+    const ring = p.ring >= 1 ? Math.floor(p.ring) : 0;
+    const half = ring > 0 ? Math.floor(ANGLE_UNITS / ring / 2) : 0;
+    const parts = api.self.parts;
+    let rings = 0;
+    // On from wherever the last phase left the arms: towards the curled-in turn point.
+    let now = armCurl(api);
+    if (now < -reach) now = -reach;
+    else if (now > reach) now = reach;
+    let dir = now < reach ? 1 : -1;
+    let turnIn = Math.floor((dir > 0 ? reach - now : now + reach) / wave);
+    curlArms(api, dir * wave);
+    let fireIn = api.fireWait(p.fireTicks);
+    let ringIn = ring > 0 ? api.fireWait(p.ringTicks) : NEVER_TICKS;
+    let laserIn = p.laserTicks >= 1 ? api.fireWait(p.laserTicks) : NEVER_TICKS;
+    for (;;) {
+      let wait = turnIn < fireIn ? turnIn : fireIn;
+      if (ringIn < wait) wait = ringIn;
+      if (laserIn < wait) wait = laserIn;
+      if (wait > 0) yield wait;
+      turnIn -= wait;
+      fireIn -= wait;
+      ringIn -= wait;
+      laserIn -= wait;
+      if (turnIn <= 0) {
+        setArmCurl(api, dir * reach);
+        dir = -dir;
+        curlArms(api, dir * wave);
+        turnIn = 2 * waveTicks;
+      }
+      if (fireIn <= 0) {
+        fireGuns(api, ways, p.spread, p.bulletSpeed, BulletKind.NeedlePurple);
+        fireIn = api.fireWait(p.fireTicks);
+      }
+      if (ringIn <= 0) {
+        ringCores(api, ring, p.ringSpeed, BulletKind.RoundRed, (rings & 1) * half);
+        rings++;
+        ringIn = api.fireWait(p.ringTicks);
+      }
+      if (laserIn <= 0) {
+        for (let i = 0; i < api.partCount; i++) {
+          if (!parts[i].core || parts[i].destroyed) continue;
+          api.laser(
+            i,
+            ANGLE_UNITS / 2,
+            p.laserLength,
+            p.laserWidth,
+            p.telegraph,
+            LASER_GROW_TICKS,
+            p.active,
+            LASER_FADE_TICKS,
+            false,
+          );
+        }
+        laserIn = api.fireWait(p.laserTicks);
+      }
+    }
+  },
+);
+
 /**
  * The boss roster's definitions: M1's, the captains and raid turrets of M2-09 and the zone bosses
- * of M2-11 and M2-12.
+ * of M2-11, M2-12 and M2-13.
  */
 export const DEFAULT_BOSS_BEHAVIOR_DEFS: readonly BossBehaviorDef[] = Object.freeze([
   bossHover,
@@ -2115,6 +2513,8 @@ export const DEFAULT_BOSS_BEHAVIOR_DEFS: readonly BossBehaviorDef[] = Object.fre
   bossWidow,
   bossBastion,
   bossSteed,
+  bossSquid,
+  bossFacet,
 ]);
 
 /** The boss roster as a registry (what the World uses). */

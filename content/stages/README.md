@@ -63,12 +63,11 @@ taking turns; the survivor enrages) and `gauntlet-range.stage.json` (**GAUNTLET 
 rush: TRIAL WARDEN with its WARNING, LEVIATHAN HEART, the twins). `?stage=<id>` plays each.
 
 **The campaign's zones (M2-10).** `zone-b.stage.json` … `zone-i.stage.json` are the zones B–I of
-the zone map ([`content/campaign/`](../campaign/README.md)). F–I are still short **placeholders**
-(about a minute: popcorn, capsule carriers, a fan formation, a rammer, an orbiter — zone A's roster —,
-some floors or caves from the heightfield generator, then the WARNING and a boss: HALCYON BULWARK,
-the EMBER AND FROST TWINS or, in zone I, IRON LEVIATHAN), so every route of the map can be played
-end to end; M2-13 and M2-14 replace them with the real zones (CELL VAULT, PRISM LABYRINTH, IRON
-CITADEL, ABYSSAL THRONE).
+the zone map ([`content/campaign/`](../campaign/README.md)). H and I are still short
+**placeholders** (about a minute: popcorn, capsule carriers, a fan formation, a rammer, an orbiter —
+zone A's roster —, some floors or caves from the heightfield generator, then the WARNING and a boss:
+the EMBER AND FROST TWINS or, in zone I, IRON LEVIATHAN), so every route of the map can be played end
+to end; M2-14 replaces them with the real zones (IRON CITADEL, ABYSSAL THRONE).
 
 **Zones B and C (M2-11)** are the real zones, each ≈ 3½–4 minutes with the 4-way bot, four
 checkpoints, a high-speed section, a calm with two carriers before the WARNING, their own tileset,
@@ -120,6 +119,37 @@ section, a calm with two carriers, their own tileset, songs, item plan and roste
   then **SQUALL STEED** (SS-05). Heavy weather: two storm-cloud bands (`bg/storm-clouds`, painted in
   the four colours of their palette cycle, rolled by a `wave`), a mountain band (`bg/storm-ridge`)
   and three rows of slanting rain (`bg/storm-rain`) scrolling almost at the playfield's speed.
+
+**Zones F and G (M2-13)** are real zones on the same recipe (four checkpoints, a high-speed
+section, a calm with two carriers, their own tileset, songs, item plan and roster —
+[`content/enemies/zone-f.enemies.json`](../enemies/zone-f.enemies.json), `zone-g.enemies.json`):
+
+- `zone-f.stage.json` — **CELL VAULT** (9,600 px, `terrain-vault`): the membrane (`lymph-mote`
+  streams, `chaser-cell`s that drift in and then chase the ship, `mitosis-cell`s that divide into
+  two chasing cells when shot, `polyp-turret`s on the floor and ceiling), the **tissue passage**
+  (checkpoint 2,200: seven **regenerating tissue walls** — the tileset's `tissue` tile, hp 3, grows
+  back 240 ticks after it was shot open, never into a ship — written as `rle` rows at world x
+  2,896–3,872, each 16 px thick with a 56-px gap at another height), the **tentacle garden**
+  (checkpoint 4,400: `vault-claw` grabbing tentacles on the floor and ceiling — a claw on a chain
+  that lunges at a ship in reach and drags it with a short pull — and hovering `spore-sac`s puffing
+  fans of spores), the pulse run (checkpoint 6,800: 1.3 px/tick), the calm, then **MANTLE REGENT**
+  (MR-06). The far band `bg/vault-membrane` (a wall of cells painted in its palette cycle's four
+  colours) pulses and a slow `wave` makes it breathe; the fleshy folds `bg/vault-folds` scroll in
+  front of it.
+- `zone-g.stage.json` — **PRISM LABYRINTH** (9,800 px, `terrain-prism`): the prism field over
+  crystal spires (`glint-mote` streams, `halo-crystal` orbiters on zone A's `gyre-orbit-*` loops,
+  `prism-lens`es that hover at the right fanning needles, then drift off up or down, `geode`s that
+  shatter into shards, `facet-turret`s), the **prism gallery** (checkpoint 2,200: four
+  `facet-turret`s on the floor and ceiling — shoot every one down before the camera passes 3,100
+  and the `ground` entrance opens the **hidden bonus stage** `glimmer-cache.stage.json`, **GLIMMER
+  CACHE**: carriers dropping bonus capsules, a 1UP carrier, a cube rush and two cube walls), the
+  **crystal labyrinth** (seven solid crystal walls at world x 3,392–4,272, hanging from the ceiling
+  and rising from the floor in turn — the route zigzags), the **cube rush** (checkpoint 4,600: four
+  seeded `prism-cube` rushes — `cube.stack` formations — whose cubes stack onto short crystal
+  pillars on the floor and ceiling as breakable `cube` tiles), the refraction run (checkpoint 6,800:
+  1.3 px/tick over jagged spires), the calm, then **FACET MONARCH** (FM-07). The facet wall
+  `bg/prism-facets` glints through its palette cycle; a heat `haze` shimmers over the spires band
+  `bg/prism-spires`.
 
 **Hidden bonus stages (M2-10).** A stage of `"type": "bonus"` is a hidden bonus stage: no `warning`
 / `boss` events, no entrances of its own, and an `end` event (reaching it is the bonus stage's

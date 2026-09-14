@@ -186,9 +186,10 @@ describe('scripts/assets/pipeline — buildAtlas', () => {
     // blue carrier and the Option Hunter (M2-04), the Direct mode's carrier cube (M2-05), and the
     // stage gimmicks' rock, lava stone, bubbles, volcano, suction pod, tentacle and rush cube
     // (M2-07) — plus their chain link, an engine sprite outside `enemies/` —, zones B and C's
-    // seven each (M2-11, the `brine` / `dune` generators) and zones D's seven and E's six (M2-12,
-    // the `magma` / `tempest` generators).
-    expect(enemies).toHaveLength(47);
+    // seven each (M2-11, the `brine` / `dune` generators), zones D's seven and E's six (M2-12,
+    // the `magma` / `tempest` generators) and zones F's six and G's seven (M2-13, the `vault` /
+    // `prism` generators).
+    expect(enemies).toHaveLength(60);
     expect(count('gimmicks/chain-link')).toBe(1);
     expect(manifest.sprites['enemies/bubble'].flash).toBe('enemies/bubble@flash');
     // The Direct-mode ship MANTA (M2-05): level, banking up, banking down.

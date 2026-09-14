@@ -61,15 +61,15 @@
     "ALwi"
   ],
   "hashes": [
-    2877643435,
-    2180151389,
-    1847226092,
-    1438183861,
-    3692680274,
-    2725259032,
-    195344082
+    2351404171,
+    3731776765,
+    3267826124,
+    3063017173,
+    47003890,
+    92799864,
+    1654716178
   ],
-  "finalHash": 2762706719,
+  "finalHash": 3531343704,
   "description": "BRINE NEBULA, a weaving pilot that never dodges, Arcade penalty (M2-11 tests): deaths among the bubbles, the checkpoint restarts, game over",
   "expected": {
     "status": "gameOver",

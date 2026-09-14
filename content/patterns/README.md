@@ -104,4 +104,7 @@ bullet may `bulletRef` itself (no params) — the 512-bullet pool bounds it.
 `brine.jelly-ring` (zone B's `reef-jelly`: a six-bullet ring, the first aimed, at 0.85 px/tick) and
 `dune.whirl` (zone C's `dust-devil`: a short two-armed spiral of needles at 1.1 px/tick); M2-12 added
 `tempest.bolt` (zone E's `thunderhead`: a streak of four aimed needles, 0.85 → 1.6 px/tick — the
-first fire aimed, the others `sequence` 0 in direction and +0.25 in speed).
+first fire aimed, the others `sequence` 0 in direction and +0.25 in speed); M2-13 added
+`vault.spores` (zone F's `spore-sac`: a fan of three round spores, 56 units apart, aimed, at 0.75
+px/tick) and `prism.fan` (zone G's `prism-lens`: two fans of four needles 18 ticks apart, 40 units
+apart round the aim — no bullet on the aimed line — at 1.15 px/tick).

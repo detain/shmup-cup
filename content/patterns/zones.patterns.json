@@ -113,6 +113,70 @@
           "ranked": true
         }
       ]
+    },
+    {
+      "id": "vault.spores",
+      "body": [
+        {
+          "op": "repeat",
+          "times": 3,
+          "body": [
+            {
+              "op": "fire",
+              "direction": {
+                "type": "aim",
+                "value": "($i - 1) * 56"
+              },
+              "speed": 0.75,
+              "bullet": {
+                "kind": "round-purple"
+              }
+            }
+          ]
+        },
+        {
+          "op": "wait",
+          "ticks": 170,
+          "ranked": true
+        }
+      ]
+    },
+    {
+      "id": "prism.fan",
+      "body": [
+        {
+          "op": "repeat",
+          "times": 2,
+          "body": [
+            {
+              "op": "repeat",
+              "times": 4,
+              "body": [
+                {
+                  "op": "fire",
+                  "direction": {
+                    "type": "aim",
+                    "value": "($i * 2 - 3) * 20"
+                  },
+                  "speed": 1.15,
+                  "bullet": {
+                    "kind": "needle-purple"
+                  }
+                }
+              ]
+            },
+            {
+              "op": "wait",
+              "ticks": 18
+            }
+          ]
+        },
+        {
+          "op": "wait",
+          "ticks": 140,
+          "ranked": true
+        }
+      ]
     }
   ]
 }

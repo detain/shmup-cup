@@ -53,6 +53,7 @@ import {
   powerRank,
   resolveGameConfig,
   terrainAt,
+  type BossPartSpec,
   type ContentDb,
   type ContentFile,
   type StageSpec,
@@ -197,6 +198,8 @@ describe('integration: content/ validates', () => {
       'audio/music/boss-c.music.json',
       'audio/music/boss-d.music.json',
       'audio/music/boss-e.music.json',
+      'audio/music/boss-f.music.json',
+      'audio/music/boss-g.music.json',
       'audio/music/boss.music.json',
       'audio/music/game-over.music.json',
       'audio/music/stage-clear.music.json',
@@ -206,6 +209,8 @@ describe('integration: content/ validates', () => {
       'audio/music/zone-c.music.json',
       'audio/music/zone-d.music.json',
       'audio/music/zone-e.music.json',
+      'audio/music/zone-f.music.json',
+      'audio/music/zone-g.music.json',
       'fx/particles.fx.json',
       'input/remote.input-profiles.json',
     ]);
@@ -496,6 +501,8 @@ describe('integration: content/audio (M1-15)', () => {
       'boss-c',
       'boss-d',
       'boss-e',
+      'boss-f',
+      'boss-g',
       'game-over',
       'stage-clear',
       'title',
@@ -504,6 +511,8 @@ describe('integration: content/audio (M1-15)', () => {
       'zone-c',
       'zone-d',
       'zone-e',
+      'zone-f',
+      'zone-g',
     ]);
     const { db } = loadContent(shippedFiles);
     for (const stage of db.stages) {
@@ -590,12 +599,16 @@ describe('integration: content/audio (M1-15)', () => {
       'boss-c',
       'boss-d',
       'boss-e',
+      'boss-f',
+      'boss-g',
       'title',
       'zone-a',
       'zone-b',
       'zone-c',
       'zone-d',
       'zone-e',
+      'zone-f',
+      'zone-g',
     ]);
     for (const track of looping) {
       const song = track.song;
@@ -1007,7 +1020,7 @@ describe('integration: zone A holds to the 4-way design rules (M1-18)', () => {
   });
 });
 
-describe('integration: zones B–E hold to the plan and the 4-way design rules (M2-11, M2-12)', () => {
+describe('integration: zones B–G hold to the plan and the 4-way design rules (M2-11 … M2-13)', () => {
   const db = shippedDb();
   const stageOf = (id: string): StageSpec => db.stages[db.stageIndex.get(id) ?? -1];
   const zoneA = new Set(
@@ -1067,6 +1080,24 @@ describe('integration: zones B–E hold to the plan and the 4-way design rules (
       tileset: 'terrain-ridge',
       earlier: ['zone-a', 'zone-b', 'zone-c'],
       lanes: 0,
+    },
+    {
+      id: 'zone-f',
+      name: 'CELL VAULT',
+      code: 'MR-06',
+      boss: 'MANTLE REGENT',
+      tileset: 'terrain-vault',
+      earlier: ['zone-a', 'zone-b', 'zone-c', 'zone-d', 'zone-e'],
+      lanes: 0,
+    },
+    {
+      id: 'zone-g',
+      name: 'PRISM LABYRINTH',
+      code: 'FM-07',
+      boss: 'FACET MONARCH',
+      tileset: 'terrain-prism',
+      earlier: ['zone-a', 'zone-b', 'zone-c', 'zone-d', 'zone-e'],
+      lanes: 1,
     },
   ];
 
@@ -1302,6 +1333,192 @@ describe('integration: zones B–E hold to the plan and the 4-way design rules (
     for (const phase of boss?.phases ?? []) expect(phase.params.minis ?? 2).toBeGreaterThan(0);
   });
 
+  /**
+   * The **arms** of a boss (M2-13): chains of circle-hit parts, each hung from a part that is not
+   * one (its root's parent), as lists of part indices from the root to the tip.
+   */
+  const bossArms = (parts: readonly BossPartSpec[]): number[][] => {
+    const isArm = (i: number): boolean => parts[i].radius > 0 && parts[i].parentIndex >= 0;
+    const arms: number[][] = [];
+    parts.forEach((_part, root) => {
+      if (!isArm(root) || isArm(parts[root].parentIndex)) return;
+      const chain = [root];
+      for (;;) {
+        const last = chain[chain.length - 1];
+        const next = parts.findIndex((p, i) => isArm(i) && p.parentIndex === last);
+        if (next < 0) break;
+        chain.push(next);
+      }
+      arms.push(chain);
+    });
+    return arms;
+  };
+
+  /**
+   * The map columns of a zone that hold a tile, each as the list of map rows holding it.
+   *
+   * @param id - Stage id.
+   * @param tile - Tile id (1-based; 0 = none).
+   * @returns Rows per column that has the tile.
+   */
+  const tileColumns = (id: string, tile: number): number[][] => {
+    const game = createGame(createHeadlessPlatform(), { seed: 1, stage: id }, db);
+    const map = game.world.terrain;
+    if (map === null) throw new Error('no terrain');
+    const columns: number[][] = [];
+    for (let col = 0; col < map.cols; col++) {
+      const rows: number[] = [];
+      for (let row = 0; row < map.rows; row++)
+        if (map.tiles[row * map.cols + col] === tile) rows.push(row);
+      if (rows.length > 0) columns.push(rows);
+    }
+    return columns;
+  };
+
+  it('gives CELL VAULT chasing cells, regenerating tissue walls, grabbing tentacles and a squid guarding its eye', () => {
+    const stage = stageOf('zone-f');
+    const events = stage.events.filter((e) => e.type === 'spawn' || e.type === 'formation');
+    const script = (e: (typeof events)[number]): string =>
+      'enemyId' in e ? db.enemies[e.enemyId].script : '';
+    // Chasing cells: placed alone and in formations, and the halves of the dividing cells.
+    expect(events.filter((e) => script(e) === 'cell.chase').length).toBeGreaterThanOrEqual(6);
+    const dividers = events.filter((e) => script(e) === 'bubble.split');
+    expect(dividers.length).toBeGreaterThanOrEqual(3);
+    for (const e of dividers) {
+      const child = 'enemyId' in e ? db.enemies[e.enemyId].childId : -1;
+      expect(db.enemies[child]?.script).toBe('cell.chase');
+    }
+    // Regenerating tissue walls: the tileset's tissue (breakable, grows back), each column with a
+    // gap the ship fits through.
+    const tileset = db.tilesets.find((t) => t.id === stage.tilemap?.tileset);
+    const tissue = (tileset?.tiles.findIndex((t) => t.name === 'tissue') ?? -1) + 1;
+    expect(tileset?.tiles[tissue - 1]?.hp ?? 0).toBeGreaterThan(0);
+    expect(tileset?.tiles[tissue - 1]?.regen ?? 0).toBeGreaterThan(0);
+    const walls = tileColumns('zone-f', tissue);
+    expect(walls.length).toBeGreaterThanOrEqual(10);
+    for (const rows of walls) {
+      let gap = 0;
+      for (let k = 1; k < rows.length; k++) gap = Math.max(gap, rows[k] - rows[k - 1] - 1);
+      expect(gap * 8).toBeGreaterThanOrEqual(48);
+    }
+    // Grabbing tentacles on the floor and on the ceiling.
+    const claws = events.filter((e) => script(e) === 'tentacle.grab');
+    expect(claws.length).toBeGreaterThanOrEqual(4);
+    const anchors = new Set(
+      claws.map((e) => ('enemyId' in e ? db.enemies[e.enemyId].ground : null)),
+    );
+    expect([...anchors].sort()).toEqual(['ceiling', 'floor']);
+    // MANTLE REGENT: an eye (the core) and two tentacles — a breakable root, armoured segments, a
+    // gun at the tip; breaking one ends the first phase.
+    const warning = stage.events.find((e) => e.type === 'warning');
+    const boss = warning?.type === 'warning' ? db.enemies[warning.enemyId].boss : null;
+    expect(boss?.phases.every((p) => p.script === 'boss.squid')).toBe(true);
+    const parts = boss?.parts ?? [];
+    const cores = parts.filter((p) => p.core);
+    expect(cores).toHaveLength(1);
+    expect(cores[0].vulnerable).toBe('always');
+    const arms = bossArms(parts);
+    expect(arms).toHaveLength(2);
+    for (const arm of arms) {
+      expect(arm.length).toBeGreaterThanOrEqual(4);
+      const root = parts[arm[0]];
+      expect(root.vulnerable).toBe('always');
+      expect(root.hp).toBeGreaterThan(0);
+      for (const i of arm.slice(1)) expect(parts[i].vulnerable).toBe('never');
+      expect(parts[arm[arm.length - 1]].gun).toBe(true);
+    }
+    const first = boss?.phases[0].until;
+    expect([...(first?.partsDestroyed ?? [])].sort()).toEqual(
+      arms.map((arm) => parts[arm[0]].name).sort(),
+    );
+    expect(first?.count).toBe(1);
+    expect(db.enemies[boss?.minionId ?? -1]?.script).toBe('cell.chase');
+  });
+
+  it('gives PRISM LABYRINTH crystal walls, a seeded cube rush, a crystal core with tentacle arms and a hidden bonus stage', () => {
+    const stage = stageOf('zone-g');
+    // Crystal walls: rock hanging from the ceiling past the playfield's middle row, and rising
+    // from the floor past it, in turn — the labyrinth (drawn with the tileset's wall edges).
+    const game = createGame(createHeadlessPlatform(), { seed: 1, stage: 'zone-g' }, db);
+    const map = game.world.terrain;
+    if (map === null) throw new Error('no terrain');
+    const middle = Math.floor(PLAYFIELD_H / 16);
+    const rock = (col: number, from: number, to: number): boolean => {
+      for (let row = from; row <= to; row++)
+        if (map.tiles[row * map.cols + col] === 0) return false;
+      return true;
+    };
+    let hanging = 0;
+    let rising = 0;
+    for (let col = 0; col < map.cols; col++) {
+      if (rock(col, 0, middle)) hanging++;
+      if (rock(col, middle, map.rows - 1)) rising++;
+    }
+    expect(hanging).toBeGreaterThanOrEqual(6);
+    expect(rising).toBeGreaterThanOrEqual(6);
+    // A seeded cube rush: formations of cubes that stack into the tileset's breakable cube tiles.
+    const rushes = stage.events.filter(
+      (e) => e.type === 'formation' && db.enemies[e.enemyId].script === 'cube.stack',
+    );
+    expect(rushes.length).toBeGreaterThanOrEqual(3);
+    for (const rush of rushes) {
+      if (rush.type !== 'formation') continue;
+      expect(rush.count).toBeGreaterThanOrEqual(6);
+      expect(rush.drop).toBeNull();
+    }
+    const tileset = db.tilesets.find((t) => t.id === stage.tilemap?.tileset);
+    expect(tileset?.tiles.find((t) => t.name === 'cube')?.hp ?? 0).toBeGreaterThan(0);
+    // FACET MONARCH: the core behind crystals, two tentacle arms with guns at their tips.
+    const warning = stage.events.find((e) => e.type === 'warning');
+    const boss = warning?.type === 'warning' ? db.enemies[warning.enemyId].boss : null;
+    expect(boss?.phases.every((p) => p.script === 'boss.facet')).toBe(true);
+    const parts = boss?.parts ?? [];
+    const core = parts.find((p) => p.core);
+    expect(core?.vulnerable).toBe('afterParts');
+    expect(core?.requires.length).toBeGreaterThanOrEqual(2);
+    for (const name of core?.requires ?? []) {
+      const crystal = parts.find((p) => p.name === name);
+      expect(crystal?.sprite).toBe('bosses/facet-crystal');
+      expect((crystal?.x ?? 0) + (crystal?.hurtbox?.hw ?? 0)).toBeLessThan(core?.x ?? 0); // in front
+    }
+    const arms = bossArms(parts);
+    expect(arms).toHaveLength(2);
+    for (const arm of arms) {
+      expect(arm.length).toBeGreaterThanOrEqual(4);
+      for (const i of arm) expect(parts[i].vulnerable).toBe('never');
+      expect(parts[arm[arm.length - 1]].gun).toBe(true);
+    }
+    // The second hidden bonus stage: a `ground` entrance — shoot down every turret of the prism
+    // gallery (floor and ceiling, no other ground enemy in the window) — into a bonus stage with
+    // bonus capsules and a 1UP.
+    const entrances = stage.events.filter((e) => e.type === 'bonus');
+    expect(entrances).toHaveLength(1);
+    const entrance = entrances[0];
+    if (entrance.type !== 'bonus') return;
+    expect(entrance.entrance).toBe('ground');
+    const window = stage.events.filter(
+      (e) =>
+        (e.type === 'spawn' || e.type === 'formation') &&
+        e.x >= entrance.x &&
+        e.x <= entrance.until &&
+        db.enemies[e.enemyId].ground !== null,
+    );
+    expect(window.length).toBeGreaterThanOrEqual(4);
+    expect(
+      new Set(window.map((e) => ('enemyId' in e ? db.enemies[e.enemyId].sprite : ''))),
+    ).toEqual(new Set(['enemies/facet-turret']));
+    const grounds = new Set(
+      window.map((e) => ('enemyId' in e ? db.enemies[e.enemyId].ground : '')),
+    );
+    expect([...grounds].sort()).toEqual(['ceiling', 'floor']);
+    const cache = stageOf(entrance.stage);
+    expect(cache.type).toBe('bonus');
+    expect(cache.id).not.toBe('brine-grotto'); // its own, not zone B's
+    const drops = [...stageEnemies(db, cache)].map((index) => db.enemies[index].drop);
+    expect(drops).toContain('bonusCapsule');
+    expect(drops).toContain('oneUp');
+  });
+
   it.each(zones)(
     'keeps every aimed bullet of $name at 2 px/tick or less (tunables and patterns)',
     (zone) => {
@@ -1322,6 +1539,9 @@ describe('integration: zones B–E hold to the plan and the 4-way design rules (
         if (enemy.script === 'rocket.homing' || enemy.script === 'rammer.aimed')
           speeds.push(params.speed);
         if (enemy.script === 'rear.swoop') speeds.push(params.speed, params.leaveSpeed);
+        // M2-13: chasing cells and the lunging claws of the grabbing tentacles.
+        if (enemy.script === 'cell.chase') speeds.push(params.speed);
+        if (enemy.script === 'tentacle.grab') speeds.push(params.speed, params.retractSpeed);
       }
       expect(speeds.length).toBeGreaterThanOrEqual(4);
       for (const speed of speeds) expect(speed).toBeLessThanOrEqual(MAX_AIMED_BULLET_SPEED);
@@ -1409,10 +1629,11 @@ describe('integration: zones B–E hold to the plan and the 4-way design rules (
     },
   );
 
-  it('draws every zone B–E sprite with its hit flash; the zone tilesets have every tile', () => {
+  it('draws every zone B–G sprite with its hit flash; the zone tilesets have every tile', () => {
     const { manifest } = buildAtlas();
     const sprites = new Set<string>();
-    for (const id of ['zone-b', 'zone-c', 'brine-grotto', 'zone-d', 'zone-e']) {
+    const stages = ['zone-b', 'zone-c', 'brine-grotto', 'zone-d', 'zone-e', 'zone-f', 'zone-g'];
+    for (const id of [...stages, 'glimmer-cache']) {
       for (const index of zoneEnemies(stageOf(id))) {
         const enemy = db.enemies[index];
         if (enemy.boss === null) sprites.add(enemy.sprite);
@@ -1424,7 +1645,7 @@ describe('integration: zones B–E hold to the plan and the 4-way design rules (
         }
       }
     }
-    expect(sprites.size).toBeGreaterThanOrEqual(40);
+    expect(sprites.size).toBeGreaterThanOrEqual(60);
     for (const sprite of sprites) {
       const frames = manifest.sprites[sprite]?.frames.length ?? 0;
       expect(frames, sprite).toBeGreaterThan(0);
@@ -1433,7 +1654,8 @@ describe('integration: zones B–E hold to the plan and the 4-way design rules (
       expect(manifest.sprites[flash ?? '']?.frames.length, sprite).toBe(frames);
     }
     const a = db.tilesets.find((t) => t.id === 'terrain-a');
-    for (const id of ['terrain-reef', 'terrain-dune', 'terrain-magma', 'terrain-ridge']) {
+    const zoneSets = ['terrain-reef', 'terrain-dune', 'terrain-magma', 'terrain-ridge'];
+    for (const id of [...zoneSets, 'terrain-vault', 'terrain-prism']) {
       const tileset = db.tilesets.find((t) => t.id === id);
       expect(tileset?.tiles.map((t) => t.name)).toEqual(a?.tiles.map((t) => t.name));
       expect(manifest.sprites[tileset?.sprite ?? '']?.frames.length).toBe(a?.tiles.length);

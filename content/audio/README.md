@@ -23,6 +23,8 @@ Listen to everything with `pnpm audio:preview` (WAV files in `assets/generated/a
 | `music/zone-c.music.json`, `music/boss-c.music.json` | `music` | DUNE EXPANSE and SANDGRAVE ASSAULT — zone C's stage and boss themes (`"stages": ["zone-c"]`, M2-11) |
 | `music/zone-d.music.json`, `music/boss-d.music.json` | `music` | MAGMA DEEP and BASTION OF CINDERS — zone D's stage and boss themes (`"stages": ["zone-d"]`, M2-12) |
 | `music/zone-e.music.json`, `music/boss-e.music.json` | `music` | TEMPEST RIDGE and STEED OF THE SQUALL — zone E's stage and boss themes (`"stages": ["zone-e"]`, M2-12) |
+| `music/zone-f.music.json`, `music/boss-f.music.json` | `music` | CELL VAULT and REGENT OF THE VAULT — zone F's stage and boss themes (`"stages": ["zone-f"]`, M2-13) |
+| `music/zone-g.music.json`, `music/boss-g.music.json` | `music` | PRISM LABYRINTH and THRONE OF FACETS — zone G's stage and boss themes (`"stages": ["zone-g"]`, M2-13; GLIMMER CACHE, its bonus stage, plays zone G's resident set) |
 
 ## SFX bank (kind `sfx`, formatVersion 1)
 

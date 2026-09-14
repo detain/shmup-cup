@@ -10,7 +10,8 @@ swoop — `-up` / `-down` mirror each other) and the `gyre-orbit-*` orbiter loop
 `zone-d.paths.json` zone D's (M2-12): the `cinder-bat` swoops `bat-swoop-down` / `bat-swoop-up`;
 `zone-e.paths.json` zone E's (M2-12): the rear-entering `gale-kite` loops `kite-overtake-high` /
 `kite-overtake-low` — they start behind the ship (spawned at a negative `screenX`), overtake it,
-curl round near the right edge and fly back along another row;
+curl round near the right edge and fly back along another row (zone G's `halo-crystal`s fly zone
+A's `gyre-orbit-*` loops — M2-13 added no path);
 `test-range.paths.json` those of the dev stage.
 
 A path is a list of **control points relative to where the mover starts** (normally the spawn

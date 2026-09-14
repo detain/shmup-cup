@@ -14,6 +14,10 @@ colours (`tiles/terrain-reef`, `tiles/terrain-dune` — the generator's `TERRAIN
 `terrain-magma.tileset.json` and `terrain-ridge.tileset.json` (M2-12) are zone D's basalt with an
 ember rim and zone E's storm-grey granite with a pale frost rim (`tiles/terrain-magma`,
 `tiles/terrain-ridge`). Zone D's brick maze uses their `brick` tile (hp 4).
+`terrain-vault.tileset.json` and `terrain-prism.tileset.json` (M2-13) are zone F's dark olive flesh
+with a pale-green rim and zone G's deep-blue crystal with an ice-blue rim (`tiles/terrain-vault`,
+`tiles/terrain-prism`). Zone F's regenerating walls use their `tissue` tile (hp 3, regen 240), zone
+G's cube rush stacks into their `cube` tile (hp 2).
 
 ## Format (formatVersion 1)
 

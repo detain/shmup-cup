@@ -61,16 +61,16 @@
     "AMwp"
   ],
   "hashes": [
-    2229603668,
-    2649825645,
-    3367151021,
-    1471654966,
-    2584336852,
-    3042021653,
-    3602482615,
-    3907223267
+    2855849076,
+    1503244812,
+    126327437,
+    3905910550,
+    1584042868,
+    1338778037,
+    2531116119,
+    2850657091
   ],
-  "finalHash": 2881155535,
+  "finalHash": 1537352624,
   "description": "a weaving pilot that never dodges, Classic penalty: deaths, respawns in place, game over",
   "expected": {
     "status": "gameOver",

@@ -7,17 +7,32 @@
     "stage": "Stage",
     "boss": "Boss"
   },
-  "length": 2000,
+  "length": 9600,
   "camera": [
     {
       "x": 0,
-      "speed": 0.9,
+      "speed": 0.8,
       "ramp": 60
     },
     {
-      "x": 1500,
+      "x": 2200,
+      "speed": 0.7,
+      "ramp": 60
+    },
+    {
+      "x": 4400,
       "speed": 0.75,
-      "ramp": 90
+      "ramp": 60
+    },
+    {
+      "x": 6800,
+      "speed": 1.3,
+      "ramp": 120
+    },
+    {
+      "x": 8400,
+      "speed": 0.75,
+      "ramp": 120
     }
   ],
   "checkpoints": [
@@ -25,73 +40,148 @@
       "x": 0
     },
     {
-      "x": 800
+      "x": 2200
+    },
+    {
+      "x": 4400
+    },
+    {
+      "x": 6800
     }
   ],
   "parallax": [
     {
       "layer": "far",
-      "sprite": "bg/stars-far",
-      "factor": 0.25,
+      "sprite": "bg/vault-membrane",
+      "factor": 0.2,
       "y": 0,
       "spacing": 128
     },
     {
       "layer": "far",
-      "sprite": "bg/stars-far",
-      "factor": 0.25,
+      "sprite": "bg/vault-membrane",
+      "factor": 0.2,
+      "y": 64,
+      "spacing": 128
+    },
+    {
+      "layer": "far",
+      "sprite": "bg/vault-membrane",
+      "factor": 0.2,
       "y": 128,
       "spacing": 128
     },
     {
       "layer": "mid",
-      "sprite": "bg/stars-mid",
-      "factor": 0.5,
-      "y": 0,
-      "spacing": 128
-    },
-    {
-      "layer": "mid",
-      "sprite": "bg/stars-mid",
-      "factor": 0.5,
-      "y": 128,
+      "sprite": "bg/vault-folds",
+      "factor": 0.45,
+      "y": 152,
       "spacing": 128
     }
   ],
   "tilemap": {
     "tileSize": 8,
-    "tileset": "terrain-a",
+    "tileset": "terrain-vault",
     "rowsTall": 25,
     "generator": {
       "type": "heightfield",
       "segments": [
         {
-          "from": 200,
-          "to": 1580,
+          "from": 100,
+          "to": 2140,
           "floor": {
-            "base": 22,
+            "base": 24,
             "amp": 10,
-            "period": 360,
-            "seed": 81
+            "period": 260,
+            "seed": 101
           },
           "ceiling": {
-            "base": 22,
-            "amp": 10,
+            "base": 20,
+            "amp": 8,
             "period": 300,
-            "seed": 82
+            "seed": 102
+          }
+        },
+        {
+          "from": 2200,
+          "to": 4380,
+          "floor": {
+            "base": 30,
+            "amp": 8,
+            "period": 300,
+            "seed": 103
+          },
+          "ceiling": {
+            "base": 30,
+            "amp": 8,
+            "period": 280,
+            "seed": 104
+          }
+        },
+        {
+          "from": 4440,
+          "to": 6760,
+          "floor": {
+            "base": 30,
+            "amp": 12,
+            "period": 220,
+            "seed": 105
+          },
+          "ceiling": {
+            "base": 28,
+            "amp": 10,
+            "period": 240,
+            "seed": 106
+          }
+        },
+        {
+          "from": 6820,
+          "to": 8380,
+          "floor": {
+            "base": 18,
+            "amp": 8,
+            "period": 260,
+            "seed": 107
           }
         }
       ]
-    }
+    },
+    "rle": [
+      "",
+      "",
+      "362*0, 2*20, 18*0, 2*20, 18*0, 2*20, 18*0, 2*20, 18*0, 2*20, 18*0, 2*20, 18*0, 2*20",
+      "362*0, 2*20, 18*0, 2*20, 18*0, 2*20, 18*0, 2*20, 18*0, 2*20, 18*0, 2*20, 18*0, 2*20",
+      "362*0, 2*20, 18*0, 2*20, 18*0, 2*20, 18*0, 2*20, 18*0, 2*20, 18*0, 2*20, 18*0, 2*20",
+      "382*0, 2*20, 18*0, 2*20, 18*0, 2*20, 18*0, 2*20, 18*0, 2*20, 18*0, 2*20",
+      "382*0, 2*20, 18*0, 2*20, 18*0, 2*20, 38*0, 2*20, 18*0, 2*20",
+      "382*0, 2*20, 18*0, 2*20, 18*0, 2*20, 38*0, 2*20",
+      "382*0, 2*20, 38*0, 2*20, 38*0, 2*20",
+      "382*0, 2*20, 38*0, 2*20, 38*0, 2*20",
+      "382*0, 2*20, 38*0, 2*20, 38*0, 2*20",
+      "382*0, 2*20, 38*0, 2*20",
+      "362*0, 2*20, 18*0, 2*20, 38*0, 2*20",
+      "362*0, 2*20, 58*0, 2*20, 18*0, 2*20",
+      "362*0, 2*20, 78*0, 2*20, 38*0, 2*20",
+      "362*0, 2*20, 38*0, 2*20, 38*0, 2*20, 38*0, 2*20",
+      "362*0, 2*20, 38*0, 2*20, 38*0, 2*20, 38*0, 2*20",
+      "362*0, 2*20, 38*0, 2*20, 38*0, 2*20, 38*0, 2*20",
+      "362*0, 2*20, 38*0, 2*20, 38*0, 2*20, 18*0, 2*20, 18*0, 2*20",
+      "362*0, 2*20, 38*0, 2*20, 38*0, 2*20, 18*0, 2*20, 18*0, 2*20",
+      "362*0, 2*20, 18*0, 2*20, 18*0, 2*20, 38*0, 2*20, 18*0, 2*20, 18*0, 2*20",
+      "362*0, 2*20, 18*0, 2*20, 18*0, 2*20, 18*0, 2*20, 18*0, 2*20, 18*0, 2*20, 18*0, 2*20",
+      "362*0, 2*20, 18*0, 2*20, 18*0, 2*20, 18*0, 2*20, 18*0, 2*20, 18*0, 2*20, 18*0, 2*20",
+      "",
+      ""
+    ]
   },
   "events": [
     {
-      "x": 120,
+      "x": 140,
       "type": "formation",
-      "enemy": "skeet",
+      "enemy": "lymph-mote",
       "count": 5,
-      "interval": 18,
-      "y": 90,
+      "interval": 16,
+      "y": 60,
       "bonus": 300
     },
     {
@@ -102,87 +192,396 @@
     },
     {
       "x": 460,
-      "type": "formation",
-      "enemy": "skeet",
-      "count": 5,
-      "interval": 18,
-      "y": 110,
-      "bonus": 300
+      "type": "spawn",
+      "enemy": "chaser-cell",
+      "y": 80
     },
     {
-      "x": 620,
+      "x": 540,
+      "type": "spawn",
+      "enemy": "chaser-cell",
+      "y": 130
+    },
+    {
+      "x": 640,
       "type": "spawn",
       "enemy": "tender",
-      "y": 90
+      "y": 70
     },
     {
-      "x": 800,
+      "x": 760,
+      "type": "spawn",
+      "enemy": "polyp-turret"
+    },
+    {
+      "x": 880,
       "type": "formation",
-      "enemy": "vane",
-      "count": 5,
-      "interval": 10,
-      "y": 150,
-      "path": "vane-arc-up",
-      "bonus": 1000
+      "enemy": "lymph-mote",
+      "count": 6,
+      "interval": 14,
+      "y": 130,
+      "bonus": 400
     },
     {
-      "x": 900,
+      "x": 1020,
       "type": "spawn",
-      "enemy": "tender",
-      "y": 100
-    },
-    {
-      "x": 980,
-      "type": "spawn",
-      "enemy": "picket"
-    },
-    {
-      "x": 1060,
-      "type": "spawn",
-      "enemy": "lancer",
+      "enemy": "mitosis-cell",
       "y": 90
     },
     {
       "x": 1160,
       "type": "spawn",
       "enemy": "tender",
-      "y": 110
-    },
-    {
-      "x": 1240,
-      "type": "formation",
-      "enemy": "skeet-chain",
-      "count": 6,
-      "interval": 12,
-      "y": 100,
-      "drop": null
+      "y": 120
     },
     {
       "x": 1300,
       "type": "spawn",
-      "enemy": "strider"
+      "enemy": "polyp-turret-ceiling"
     },
     {
-      "x": 1380,
-      "type": "spawn",
-      "enemy": "gyre",
+      "x": 1420,
+      "type": "formation",
+      "enemy": "chaser-cell",
+      "count": 3,
+      "interval": 30,
       "y": 60,
-      "path": "gyre-orbit-down"
+      "bonus": 500
     },
     {
-      "x": 1480,
+      "x": 1560,
       "type": "spawn",
       "enemy": "tender",
       "y": 90
     },
     {
-      "x": 1680,
-      "type": "warning",
-      "enemy": "halcyon-bulwark"
+      "x": 1700,
+      "type": "spawn",
+      "enemy": "mitosis-cell",
+      "y": 130
     },
     {
-      "x": 2000,
+      "x": 1840,
+      "type": "formation",
+      "enemy": "lymph-mote",
+      "count": 6,
+      "interval": 14,
+      "y": 80,
+      "drop": null
+    },
+    {
+      "x": 1980,
+      "type": "spawn",
+      "enemy": "polyp-turret"
+    },
+    {
+      "x": 2240,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 100
+    },
+    {
+      "x": 2360,
+      "type": "spawn",
+      "enemy": "polyp-turret-ceiling"
+    },
+    {
+      "x": 2460,
+      "type": "spawn",
+      "enemy": "chaser-cell",
+      "y": 100
+    },
+    {
+      "x": 2560,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 80
+    },
+    {
+      "x": 2680,
+      "type": "formation",
+      "enemy": "lymph-mote",
+      "count": 5,
+      "interval": 14,
+      "y": 100,
+      "bonus": 500
+    },
+    {
+      "x": 2800,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 120
+    },
+    {
+      "x": 3100,
+      "type": "formation",
+      "enemy": "lymph-mote",
+      "count": 5,
+      "interval": 16,
+      "y": 100,
+      "drop": null
+    },
+    {
+      "x": 3500,
+      "type": "spawn",
+      "enemy": "chaser-cell",
+      "y": 60
+    },
+    {
+      "x": 3700,
+      "type": "spawn",
+      "enemy": "chaser-cell",
+      "y": 140
+    },
+    {
+      "x": 4000,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 100
+    },
+    {
+      "x": 4120,
+      "type": "spawn",
+      "enemy": "polyp-turret"
+    },
+    {
+      "x": 4240,
+      "type": "formation",
+      "enemy": "lymph-mote",
+      "count": 6,
+      "interval": 14,
+      "y": 70,
+      "bonus": 500
+    },
+    {
+      "x": 4440,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 100
+    },
+    {
+      "x": 4560,
+      "type": "spawn",
+      "enemy": "vault-claw"
+    },
+    {
+      "x": 4700,
+      "type": "spawn",
+      "enemy": "spore-sac",
+      "y": 40
+    },
+    {
+      "x": 4820,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 130
+    },
+    {
+      "x": 4960,
+      "type": "spawn",
+      "enemy": "vault-claw-ceiling"
+    },
+    {
+      "x": 5080,
+      "type": "formation",
+      "enemy": "chaser-cell",
+      "count": 3,
+      "interval": 30,
+      "y": 100,
+      "bonus": 500
+    },
+    {
+      "x": 5220,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 80
+    },
+    {
+      "x": 5360,
+      "type": "spawn",
+      "enemy": "vault-claw"
+    },
+    {
+      "x": 5480,
+      "type": "spawn",
+      "enemy": "spore-sac-low",
+      "y": 160
+    },
+    {
+      "x": 5760,
+      "type": "spawn",
+      "enemy": "mitosis-cell",
+      "y": 100
+    },
+    {
+      "x": 5900,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 110
+    },
+    {
+      "x": 6040,
+      "type": "spawn",
+      "enemy": "vault-claw-ceiling"
+    },
+    {
+      "x": 6180,
+      "type": "formation",
+      "enemy": "lymph-mote",
+      "count": 6,
+      "interval": 14,
+      "y": 120,
+      "drop": null
+    },
+    {
+      "x": 6320,
+      "type": "spawn",
+      "enemy": "spore-sac",
+      "y": 40
+    },
+    {
+      "x": 6460,
+      "type": "spawn",
+      "enemy": "vault-claw"
+    },
+    {
+      "x": 6840,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 100
+    },
+    {
+      "x": 6960,
+      "type": "formation",
+      "enemy": "lymph-mote",
+      "count": 8,
+      "interval": 10,
+      "y": 60,
+      "bonus": 600
+    },
+    {
+      "x": 7100,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 140
+    },
+    {
+      "x": 7240,
+      "type": "formation",
+      "enemy": "chaser-cell",
+      "count": 4,
+      "interval": 24,
+      "y": 120,
+      "bonus": 600
+    },
+    {
+      "x": 7400,
+      "type": "spawn",
+      "enemy": "mitosis-cell",
+      "y": 70
+    },
+    {
+      "x": 7560,
+      "type": "formation",
+      "enemy": "lymph-mote",
+      "count": 8,
+      "interval": 10,
+      "y": 140,
+      "drop": null
+    },
+    {
+      "x": 7700,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 70
+    },
+    {
+      "x": 7840,
+      "type": "spawn",
+      "enemy": "spore-sac-low",
+      "y": 160
+    },
+    {
+      "x": 7980,
+      "type": "formation",
+      "enemy": "chaser-cell",
+      "count": 4,
+      "interval": 24,
+      "y": 60,
+      "drop": null
+    },
+    {
+      "x": 8160,
+      "type": "spawn",
+      "enemy": "mitosis-cell",
+      "y": 120
+    },
+    {
+      "x": 8520,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 80
+    },
+    {
+      "x": 8760,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 130
+    },
+    {
+      "x": 9100,
+      "type": "warning",
+      "enemy": "mantle-regent"
+    },
+    {
+      "x": 9600,
       "type": "end"
+    }
+  ],
+  "directItems": [
+    "red",
+    "green",
+    "blue",
+    "red",
+    "green",
+    "blue",
+    "red",
+    "green",
+    "octagon",
+    "blue",
+    "red",
+    "green",
+    "blue",
+    "red",
+    "yellow",
+    "green",
+    "blue",
+    "red",
+    "green",
+    "blue",
+    "orange",
+    "red",
+    "green",
+    "blue",
+    "red",
+    "green"
+  ],
+  "raster": [
+    {
+      "layer": "far",
+      "kind": "wave",
+      "top": 0,
+      "bottom": 192,
+      "amplitude": 1,
+      "wavelength": 40,
+      "period": 150
+    }
+  ],
+  "cycles": [
+    {
+      "layer": "far",
+      "colors": ["#18261e", "#203428", "#2a4434", "#385a44"],
+      "ticks": 12
     }
   ]
 }

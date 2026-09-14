@@ -3147,6 +3147,102 @@ Goal of the milestone: every **[P1]** feature. Steps are ordered so systems land
   rush; boss crystal-core archetype with tentacle arms). Second hidden bonus stage in G. Same deliverable list as M2-11.
 - **Acceptance:** as M2-11.
 - **Refs:** `shmup_feat.md` §14, §11, §13.
+- **As built:**
+  - **Zone F — CELL VAULT** (`content/stages/zone-f.stage.json`, 9,600 px, `terrain-vault`, camera
+    keys `0.8 → 0.7 → 0.75 → 1.3 → 0.75`): the membrane (`lymph-mote` streams, `chaser-cell`s,
+    `mitosis-cell`s dividing into two chasing cells when shot, `polyp-turret`s), the **tissue
+    passage** (checkpoint 2,200: seven regenerating walls of the tileset's `tissue` tile — hp 3,
+    regen 240, never grown into a ship — written as `rle` rows at world x 2,896–3,872, 16 px thick,
+    each with a 56-px gap at another height), the **tentacle garden** (checkpoint 4,400: `vault-claw`
+    grabbing tentacles — M2-07's `tentacle.grab` — on the floor and ceiling, hovering `spore-sac`s
+    puffing `vault.spores`), the pulse run (checkpoint 6,800, 1.3 px/tick), the calm, then **MANTLE
+    REGENT** (MR-06). The far band `bg/vault-membrane` (a wall of cells in its palette cycle's four
+    colours) pulses and breathes (a slow `wave`), `bg/vault-folds` in front of it.
+  - **Zone G — PRISM LABYRINTH** (`zone-g.stage.json`, 9,800 px, `terrain-prism`, keys `0.8 → 0.7 →
+    0.75 → 1.3 → 0.75`): the prism field (`glint-mote` streams, `halo-crystal` orbiters on zone A's
+    `gyre-orbit-*` loops — no new path file —, `prism-lens`es, `geode`s shattering into
+    `geode-shard`s, `facet-turret`s), the **prism gallery** (checkpoint 2,200: four turrets on the
+    floor and ceiling in a `ground` entrance's window, x 2,300 until 3,100 — shoot every one down and
+    the **second hidden bonus stage** `glimmer-cache.stage.json`, **GLIMMER CACHE** (type `bonus`,
+    1,800 px: bonus-capsule carriers, a 1UP carrier, a cube rush, two `cube` block walls) opens), the
+    **crystal labyrinth** (seven solid crystal walls at world x 3,392–4,272, hanging from the ceiling
+    and rising from the floor in turn, drawn with the tileset's wall-edge, floor and ceiling tiles),
+    the **cube rush** (checkpoint 4,600: four seeded `prism-cube` rushes — `cube.stack` formations,
+    `drop: null` — stacking onto 22 short crystal pillars as breakable `cube` tiles), the refraction
+    run (checkpoint 6,800, 1.3 px/tick over jagged spires), the calm, then **FACET MONARCH**
+    (FM-07). B's entrance was a `gap`; G's is the `ground` kind, so the two hidden stages open
+    differently.
+  - **New behaviours** (`core/behaviors`): `cell.chase` (drifts in along its row, then chases the
+    nearest ship on a turn-rate-capped `Homing` mover for a while, then swims straight on; a cell
+    thrown out of a dividing cell — `bubble.split`'s straight mover — flies out first) and two boss
+    behaviours on a shared **curling-arm** rule — an arm is a chain of circle-hit parts hung from a
+    part that is not one; every segment turns by the same amount relative to its parent, mirrored
+    above and below (`armSide`, from the root's `restY`), so an arm curls like a tentacle; a phase
+    carries the curl on from where the last one left it (`armCurl`) and sets each turn point exactly
+    (`setArmCurl`), so a phase change never makes an arm jump: `boss.squid` (MANTLE REGENT: tracking,
+    the tentacles straight / curling in / guarding in front of the eye / uncurling in a cycle,
+    spreads from the eye, needles from the tips, rings as they open, chasing-cell launches) and
+    `boss.facet` (FACET MONARCH: tracking, the arms waving between two turn points like claws,
+    needles from the tips, rings and — last phase — detached lane lasers from the core). **No engine
+    change**: M2-09's turned parts (`spinPart`, `setPartAngle`, circle hurtboxes) carry both.
+  - **MANTLE REGENT**: mantle (armour), eye (the core, 90 hp), two tentacles of a breakable root
+    (24 hp), three armoured segments and an armoured gun at the tip (13 parts); the first phase ends
+    when a tentacle breaks (`partsDestroyed` of both roots, `count` 1) or the eye falls below 60 —
+    "break one = changes behaviour". **FACET MONARCH**: the hexagonal housing (decoration), an
+    armoured hull part without a sprite behind the core, the core `afterParts` of two crystals in
+    front of it (22 hp each), two armoured four-segment arms with gun tips. The first build hung the
+    armour hurtbox on the housing — it covered the core, whose hits then clinked; the hull now sits
+    behind the core.
+  - **Rosters** (`zone-f.enemies.json`, `zone-g.enemies.json`): six new types each by sprite — F:
+    lymph mote, chaser cell, mitosis cell, vault claw, polyp turret, spore sac; G: glint mote, prism
+    cube, facet turret, halo crystal, prism lens, geode (the shard is the geode's child, a
+    `bubble.split` with `count` 0); floor / ceiling and hover-high / hover-low variants share a
+    sprite; the carriers are zone A's `tender`. Patterns `vault.spores` and `prism.fan` in
+    `zones.patterns.json`; every speed ≤ 2 px/tick (the content test now also holds the chasing
+    cells' and the claws' `speed` / `retractSpeed` to it).
+  - **Art as code:** `scripts/assets/procedural/vault.mjs` and `prism.mjs` (14 sprites each; the
+    regent's tail fin and the monarch's housing are decoration without a hit flash),
+    `TERRAIN_PALETTES` `tiles/terrain-vault` / `-prism` with their tileset files (copies of
+    `terrain-a`'s tiles). The prism rock is lighter than the facet wall behind it (the first colours
+    let the labyrinth's walls vanish into the backdrop).
+  - **Songs:** `zone-f` (CELL VAULT), `boss-f` (REGENT OF THE VAULT), `zone-g` (PRISM LABYRINTH),
+    `boss-g` (THRONE OF FACETS) — `stages`-scoped chip songs in M2-11's forms (6.4 s intro + 44.8 s
+    loop; the boss themes' shape); GLIMMER CACHE plays zone G's resident set. **Direct-mode item
+    plans** (26 entries each) in both stages.
+  - **Playtests:** `test/playtest/zone-f.test.ts` / `zone-g.test.ts` (god mode: stage clear in 3–6
+    min, three boss phases, the 4-way rules; F's shots break tissue and its claws lunge, G's rush
+    stacks cubes; the no-god run reported) and `zone-fg-recovery.test.ts` (all eight checkpoints).
+    Measured: F 219.8 s (MANTLE REGENT 23.5 s), G 234.1 s (FACET MONARCH 34.8 s); without god mode
+    both clear with no death.
+  - **Balance found by the bot:** a turret passing over or under the ship fires straight down / up
+    its column, which a lane-only dodger cannot leave — fewer turrets, slower fire (170 / 180 ticks
+    at 1.2), none by the labyrinth's first wall (it moved to x 3,392, past the gallery); a lens or
+    sac drifting across the ship's column fired point-blank fans — they now hover at the right on a
+    `waypoint` mover, then drift off up or down; zone G's first stretch was too tight for its mote
+    streams (flatter floor, the ceiling from 800); the rush's cubes, aimed at the ship, mostly flew
+    off the left edge — the pillars give them rock to stack on (11 cubes stacked at once in the god
+    run, from 1).
+  - **Content check** (`content.test.ts`, the zones block now "B–G"): the table got F and G
+    (`earlier` A–E; `lanes` 0 / 1); new tests: F's chasing and dividing cells, the tissue walls (≥ 10
+    columns, each with a ≥ 48-px gap), claws on both floor and ceiling, the squid's two chained
+    tentacles and the tentacle-break phase change; G's hanging and rising crystal walls, ≥ 3 seeded
+    rushes, the core behind its crystals, the arms, the `ground` entrance (only the gallery's
+    turrets, floor and ceiling, in its window) into its own bonus stage with bonus capsules and a
+    1UP. Also `zones-fg-runtime.test.ts` (the gallery → GLIMMER CACHE through the scene flow from a
+    practice start — the zone's clear, FACET MONARCH skipped —, the entrance shut when a turret
+    survives, tissue growing back but not into a ship, a claw's chain, lunge, pull and retract, the
+    rush stacking and a restart rolling it back), `zones-fg-direct.test.ts` (the MANTA clears both,
+    each plan in order), `behaviors-zones-fg.test.ts`, allocation guards
+    `behaviors-squid-alloc` / `-facet-alloc` / `-chase-alloc`, `procedural-zones-fg.test.ts`.
+  - **Goldens:** new `zone-f-god` (13,190 ticks), `zone-g-god` (14,043) and `glimmer-cache-god`
+    (1,815, full loadout: the bonus capsules and the 1UP). **Re-blessed:** the new sprites and
+    scripts shift the sorted sprite / script ids hashed through the pools; all 38 older files kept
+    their inputs, tick counts, headers and outcomes (only hashes changed).
+  - Tests that pin shipped lists were updated: the music tracks (content test, `@shmup/shell` boot
+    / loader tests), the enemy and boss behaviour rosters, the atlas's enemy sprite count (60), the
+    zone tilesets of the terrain generator test, the golden file-name pattern. Zone G's map preview
+    now reads "A RUSH OF CUBES THAT BUILD WALLS." (its cubes charge, they do not fall).
+  - **Bundle:** the Tizen `app.js` is 320.3 KB gzip of its 350 KB budget (313.5 after M2-12).
 
 ### M2-14 — Final zones H & I, endings & credits
 

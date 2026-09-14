@@ -61,10 +61,10 @@
     "AJUK"
   ],
   "hashes": [
-    727653890,
-    2390312931
+    2047190606,
+    74369923
   ],
-  "finalHash": 1167999054,
+  "finalHash": 2797962542,
   "description": "the stage skip into the caves of MAGMA DEEP (M2-12 tests): CINDER BASTION with the full loadout under the Arcade penalty, its core shot through the turning shield arms",
   "expected": {
     "status": "stageClear",

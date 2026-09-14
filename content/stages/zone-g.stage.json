@@ -7,17 +7,32 @@
     "stage": "Stage",
     "boss": "Boss"
   },
-  "length": 2000,
+  "length": 9800,
   "camera": [
     {
       "x": 0,
-      "speed": 1.0,
+      "speed": 0.8,
       "ramp": 60
     },
     {
-      "x": 1500,
+      "x": 2200,
+      "speed": 0.7,
+      "ramp": 60
+    },
+    {
+      "x": 4600,
       "speed": 0.75,
-      "ramp": 90
+      "ramp": 60
+    },
+    {
+      "x": 6800,
+      "speed": 1.3,
+      "ramp": 120
+    },
+    {
+      "x": 8600,
+      "speed": 0.75,
+      "ramp": 120
     }
   ],
   "checkpoints": [
@@ -25,129 +40,537 @@
       "x": 0
     },
     {
-      "x": 800
+      "x": 2200
+    },
+    {
+      "x": 4600
+    },
+    {
+      "x": 6800
     }
   ],
   "parallax": [
     {
       "layer": "far",
-      "sprite": "bg/stars-far",
-      "factor": 0.25,
+      "sprite": "bg/prism-facets",
+      "factor": 0.2,
       "y": 0,
       "spacing": 128
     },
     {
       "layer": "far",
-      "sprite": "bg/stars-far",
-      "factor": 0.25,
+      "sprite": "bg/prism-facets",
+      "factor": 0.2,
+      "y": 64,
+      "spacing": 128
+    },
+    {
+      "layer": "far",
+      "sprite": "bg/prism-facets",
+      "factor": 0.2,
       "y": 128,
       "spacing": 128
     },
     {
       "layer": "mid",
-      "sprite": "bg/stars-mid",
-      "factor": 0.5,
-      "y": 0,
-      "spacing": 128
-    },
-    {
-      "layer": "mid",
-      "sprite": "bg/stars-mid",
-      "factor": 0.5,
-      "y": 128,
+      "sprite": "bg/prism-spires",
+      "factor": 0.4,
+      "y": 144,
       "spacing": 128
     }
   ],
-  "tilemap": null,
+  "tilemap": {
+    "tileSize": 8,
+    "tileset": "terrain-prism",
+    "rowsTall": 25,
+    "generator": {
+      "type": "heightfield",
+      "segments": [
+        {
+          "from": 120,
+          "to": 2140,
+          "floor": {
+            "base": 24,
+            "amp": 10,
+            "period": 120,
+            "seed": 111
+          }
+        },
+        {
+          "from": 800,
+          "to": 2140,
+          "ceiling": {
+            "base": 16,
+            "amp": 8,
+            "period": 140,
+            "seed": 112
+          }
+        },
+        {
+          "from": 2200,
+          "to": 4560,
+          "floor": {
+            "base": 28,
+            "amp": 8,
+            "period": 200,
+            "seed": 113
+          },
+          "ceiling": {
+            "base": 28,
+            "amp": 8,
+            "period": 220,
+            "seed": 114
+          }
+        },
+        {
+          "from": 4640,
+          "to": 6760,
+          "floor": {
+            "base": 30,
+            "amp": 8,
+            "period": 240,
+            "seed": 115
+          },
+          "ceiling": {
+            "base": 30,
+            "amp": 8,
+            "period": 260,
+            "seed": 116
+          }
+        },
+        {
+          "from": 6820,
+          "to": 8560,
+          "floor": {
+            "base": 18,
+            "amp": 12,
+            "period": 100,
+            "seed": 117
+          }
+        }
+      ]
+    },
+    "rle": [
+      "424*0, 2*1, 34*0, 2*1, 34*0, 2*1, 34*0, 2*1, 76*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1",
+      "424*0, 2*1, 34*0, 2*1, 34*0, 2*1, 34*0, 2*1, 76*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1",
+      "424*0, 2*1, 34*0, 2*1, 34*0, 2*1, 34*0, 2*1, 76*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1",
+      "424*0, 2*1, 34*0, 2*1, 34*0, 2*1, 34*0, 2*1, 76*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1",
+      "424*0, 2*1, 34*0, 2*1, 34*0, 2*1, 34*0, 2*1, 76*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1",
+      "424*0, 4, 5, 34*0, 4, 5, 34*0, 4, 5, 34*0, 4, 5, 76*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5",
+      "424*0, 4, 5, 34*0, 4, 5, 34*0, 4, 5, 34*0, 4, 5, 76*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5",
+      "424*0, 4, 5, 34*0, 4, 5, 34*0, 4, 5, 34*0, 4, 5, 76*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5",
+      "424*0, 4, 5, 34*0, 4, 5, 34*0, 4, 5, 34*0, 4, 5, 76*0, 2*3, 18*0, 2*3, 18*0, 2*3, 18*0, 2*3, 18*0, 2*3, 18*0, 2*3, 18*0, 2*3, 18*0, 2*3, 18*0, 2*3, 18*0, 2*3, 18*0, 2*3",
+      "424*0, 4, 5, 34*0, 4, 5, 34*0, 4, 5, 34*0, 4, 5",
+      "424*0, 4, 5, 34*0, 4, 5, 34*0, 4, 5, 34*0, 4, 5",
+      "424*0, 4, 5, 34*0, 4, 5, 34*0, 4, 5, 34*0, 4, 5",
+      "424*0, 2*3, 16*0, 2*2, 16*0, 2*3, 16*0, 2*2, 16*0, 2*3, 16*0, 2*2, 16*0, 2*3",
+      "442*0, 4, 5, 34*0, 4, 5, 34*0, 4, 5",
+      "442*0, 4, 5, 34*0, 4, 5, 34*0, 4, 5",
+      "442*0, 4, 5, 34*0, 4, 5, 34*0, 4, 5",
+      "442*0, 4, 5, 34*0, 4, 5, 34*0, 4, 5, 84*0, 2*2, 18*0, 2*2, 18*0, 2*2, 18*0, 2*2, 18*0, 2*2, 18*0, 2*2, 18*0, 2*2, 18*0, 2*2, 18*0, 2*2, 18*0, 2*2, 18*0, 2*2",
+      "442*0, 4, 5, 34*0, 4, 5, 34*0, 4, 5, 84*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5",
+      "442*0, 4, 5, 34*0, 4, 5, 34*0, 4, 5, 84*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5",
+      "442*0, 4, 5, 34*0, 4, 5, 34*0, 4, 5, 84*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5, 18*0, 4, 5",
+      "442*0, 2*1, 34*0, 2*1, 34*0, 2*1, 84*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1",
+      "442*0, 2*1, 34*0, 2*1, 34*0, 2*1, 84*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1",
+      "442*0, 2*1, 34*0, 2*1, 34*0, 2*1, 84*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1",
+      "442*0, 2*1, 34*0, 2*1, 34*0, 2*1, 84*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1",
+      "442*0, 2*1, 34*0, 2*1, 34*0, 2*1, 84*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1, 18*0, 2*1"
+    ]
+  },
   "events": [
     {
-      "x": 120,
+      "x": 140,
       "type": "formation",
-      "enemy": "skeet",
+      "enemy": "glint-mote",
       "count": 5,
-      "interval": 18,
-      "y": 60,
+      "interval": 16,
+      "y": 70,
       "bonus": 300
     },
     {
       "x": 300,
       "type": "spawn",
       "enemy": "tender",
-      "y": 140
+      "y": 110
     },
     {
-      "x": 460,
-      "type": "formation",
-      "enemy": "skeet",
-      "count": 5,
-      "interval": 18,
-      "y": 140,
-      "bonus": 300
+      "x": 440,
+      "type": "spawn",
+      "enemy": "facet-turret"
     },
     {
-      "x": 620,
+      "x": 680,
       "type": "spawn",
       "enemy": "tender",
-      "y": 60
+      "y": 80
     },
     {
-      "x": 800,
+      "x": 820,
       "type": "formation",
-      "enemy": "vane",
-      "count": 5,
-      "interval": 10,
-      "y": 150,
-      "path": "vane-arc-up",
-      "bonus": 1000
+      "enemy": "glint-mote",
+      "count": 6,
+      "interval": 14,
+      "y": 116,
+      "bonus": 400
     },
     {
-      "x": 900,
+      "x": 960,
+      "type": "spawn",
+      "enemy": "prism-lens",
+      "y": 40
+    },
+    {
+      "x": 1100,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 130
+    },
+    {
+      "x": 1240,
+      "type": "spawn",
+      "enemy": "facet-turret-ceiling"
+    },
+    {
+      "x": 1360,
+      "type": "spawn",
+      "enemy": "geode",
+      "y": 100
+    },
+    {
+      "x": 1500,
       "type": "spawn",
       "enemy": "tender",
       "y": 100
     },
     {
-      "x": 1060,
-      "type": "spawn",
-      "enemy": "lancer",
-      "y": 60
-    },
-    {
-      "x": 1160,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 140
-    },
-    {
-      "x": 1240,
+      "x": 1760,
       "type": "formation",
-      "enemy": "skeet-chain",
+      "enemy": "glint-mote",
       "count": 6,
-      "interval": 12,
-      "y": 100,
+      "interval": 14,
+      "y": 60,
       "drop": null
     },
     {
-      "x": 1380,
+      "x": 1880,
       "type": "spawn",
-      "enemy": "gyre",
-      "y": 60,
+      "enemy": "halo-crystal",
+      "y": 150,
+      "path": "gyre-orbit-up"
+    },
+    {
+      "x": 2000,
+      "type": "spawn",
+      "enemy": "facet-turret"
+    },
+    {
+      "x": 2240,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 100
+    },
+    {
+      "x": 2300,
+      "type": "bonus",
+      "stage": "glimmer-cache",
+      "entrance": "ground",
+      "until": 3100
+    },
+    {
+      "x": 2340,
+      "type": "spawn",
+      "enemy": "facet-turret"
+    },
+    {
+      "x": 2440,
+      "type": "spawn",
+      "enemy": "facet-turret-ceiling"
+    },
+    {
+      "x": 2540,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 80
+    },
+    {
+      "x": 2620,
+      "type": "spawn",
+      "enemy": "facet-turret"
+    },
+    {
+      "x": 2720,
+      "type": "spawn",
+      "enemy": "facet-turret-ceiling"
+    },
+    {
+      "x": 2800,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 120
+    },
+    {
+      "x": 2860,
+      "type": "formation",
+      "enemy": "glint-mote",
+      "count": 5,
+      "interval": 14,
+      "y": 100,
+      "bonus": 500
+    },
+    {
+      "x": 3000,
+      "type": "spawn",
+      "enemy": "prism-lens",
+      "y": 40
+    },
+    {
+      "x": 3600,
+      "type": "spawn",
+      "enemy": "prism-lens-low",
+      "y": 160
+    },
+    {
+      "x": 4300,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 100
+    },
+    {
+      "x": 4440,
+      "type": "spawn",
+      "enemy": "halo-crystal",
+      "y": 50,
       "path": "gyre-orbit-down"
     },
     {
-      "x": 1480,
+      "x": 4640,
       "type": "spawn",
       "enemy": "tender",
       "y": 90
     },
     {
-      "x": 1680,
-      "type": "warning",
-      "enemy": "twin-ember"
+      "x": 4760,
+      "type": "formation",
+      "enemy": "prism-cube",
+      "count": 8,
+      "interval": 22,
+      "drop": null
     },
     {
-      "x": 2000,
+      "x": 4960,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 130
+    },
+    {
+      "x": 5200,
+      "type": "formation",
+      "enemy": "glint-mote",
+      "count": 6,
+      "interval": 14,
+      "y": 100,
+      "bonus": 500
+    },
+    {
+      "x": 5340,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 70
+    },
+    {
+      "x": 5460,
+      "type": "formation",
+      "enemy": "prism-cube",
+      "count": 10,
+      "interval": 20,
+      "drop": null
+    },
+    {
+      "x": 5700,
+      "type": "spawn",
+      "enemy": "geode",
+      "y": 100
+    },
+    {
+      "x": 5960,
+      "type": "formation",
+      "enemy": "prism-cube",
+      "count": 10,
+      "interval": 20,
+      "drop": null
+    },
+    {
+      "x": 6200,
+      "type": "spawn",
+      "enemy": "prism-lens-low",
+      "y": 160
+    },
+    {
+      "x": 6340,
+      "type": "formation",
+      "enemy": "glint-mote",
+      "count": 6,
+      "interval": 14,
+      "y": 60,
+      "drop": null
+    },
+    {
+      "x": 6480,
+      "type": "formation",
+      "enemy": "prism-cube",
+      "count": 8,
+      "interval": 22,
+      "drop": null
+    },
+    {
+      "x": 6840,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 100
+    },
+    {
+      "x": 6960,
+      "type": "formation",
+      "enemy": "glint-mote",
+      "count": 8,
+      "interval": 10,
+      "y": 60,
+      "bonus": 600
+    },
+    {
+      "x": 7100,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 140
+    },
+    {
+      "x": 7240,
+      "type": "spawn",
+      "enemy": "prism-lens",
+      "y": 40
+    },
+    {
+      "x": 7300,
+      "type": "spawn",
+      "enemy": "facet-turret"
+    },
+    {
+      "x": 7380,
+      "type": "formation",
+      "enemy": "glint-mote",
+      "count": 8,
+      "interval": 10,
+      "y": 140,
+      "bonus": 600
+    },
+    {
+      "x": 7520,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 70
+    },
+    {
+      "x": 7660,
+      "type": "spawn",
+      "enemy": "halo-crystal",
+      "y": 60,
+      "path": "gyre-orbit-down"
+    },
+    {
+      "x": 7800,
+      "type": "spawn",
+      "enemy": "geode",
+      "y": 120
+    },
+    {
+      "x": 7960,
+      "type": "formation",
+      "enemy": "glint-mote",
+      "count": 8,
+      "interval": 10,
+      "y": 90,
+      "drop": null
+    },
+    {
+      "x": 8120,
+      "type": "spawn",
+      "enemy": "prism-lens-low",
+      "y": 160
+    },
+    {
+      "x": 8300,
+      "type": "spawn",
+      "enemy": "halo-crystal",
+      "y": 150,
+      "path": "gyre-orbit-up"
+    },
+    {
+      "x": 8720,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 80
+    },
+    {
+      "x": 8960,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 130
+    },
+    {
+      "x": 9300,
+      "type": "warning",
+      "enemy": "facet-monarch"
+    },
+    {
+      "x": 9800,
       "type": "end"
+    }
+  ],
+  "directItems": [
+    "blue",
+    "red",
+    "green",
+    "red",
+    "blue",
+    "green",
+    "red",
+    "octagon",
+    "blue",
+    "green",
+    "red",
+    "blue",
+    "green",
+    "yellow",
+    "red",
+    "blue",
+    "green",
+    "red",
+    "blue",
+    "orange",
+    "green",
+    "red",
+    "blue",
+    "green",
+    "red",
+    "blue"
+  ],
+  "raster": [
+    {
+      "layer": "mid",
+      "kind": "haze",
+      "top": 144,
+      "bottom": 200,
+      "amplitude": 1,
+      "wavelength": 9,
+      "period": 60
+    }
+  ],
+  "cycles": [
+    {
+      "layer": "far",
+      "colors": ["#0c1424", "#121c32", "#182842", "#203656"],
+      "ticks": 20
     }
   ]
 }

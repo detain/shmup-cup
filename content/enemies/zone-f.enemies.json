@@ -1,0 +1,423 @@
+{
+  "formatVersion": 1,
+  "kind": "enemies",
+  "enemies": [
+    {
+      "id": "lymph-mote",
+      "hp": 1,
+      "score": 100,
+      "hurtbox": {
+        "hw": 3,
+        "hh": 3
+      },
+      "script": "drifter.sine",
+      "sprite": "enemies/lymph-mote",
+      "anim": {
+        "frames": 2,
+        "ticks": 8
+      },
+      "params": {
+        "speed": 1.15,
+        "amp": 18,
+        "period": 104,
+        "memberPhase": 36
+      },
+      "drop": null
+    },
+    {
+      "id": "chaser-cell",
+      "hp": 2,
+      "score": 200,
+      "hurtbox": {
+        "hw": 5,
+        "hh": 5
+      },
+      "script": "cell.chase",
+      "sprite": "enemies/chaser-cell",
+      "anim": {
+        "frames": 2,
+        "ticks": 10
+      },
+      "params": {
+        "speed": 1.05,
+        "enterTicks": 46,
+        "turnRate": 5,
+        "chaseTicks": 130,
+        "scatterTicks": 24
+      },
+      "drop": null
+    },
+    {
+      "id": "mitosis-cell",
+      "hp": 6,
+      "score": 600,
+      "hurtbox": {
+        "hw": 8,
+        "hh": 6
+      },
+      "script": "bubble.split",
+      "sprite": "enemies/mitosis-cell",
+      "anim": {
+        "frames": 2,
+        "ticks": 16
+      },
+      "params": {
+        "speed": 0.6,
+        "amp": 12,
+        "period": 140,
+        "count": 2,
+        "splitSpeed": 1.1,
+        "spread": 256,
+        "scatterTicks": 24
+      },
+      "drop": null,
+      "child": "chaser-cell",
+      "explosion": "medium"
+    },
+    {
+      "id": "vault-claw",
+      "hp": 5,
+      "score": 400,
+      "hurtbox": {
+        "hw": 4,
+        "hh": 4
+      },
+      "script": "tentacle.grab",
+      "sprite": "enemies/vault-claw",
+      "params": {
+        "links": 8,
+        "reach": 72,
+        "speed": 1.4,
+        "turnRate": 8,
+        "extendTicks": 40,
+        "grabRadius": 36,
+        "grabPull": 0.45,
+        "retractSpeed": 1.25,
+        "restTicks": 80
+      },
+      "drop": null,
+      "ground": "floor",
+      "explosion": "medium"
+    },
+    {
+      "id": "vault-claw-ceiling",
+      "hp": 5,
+      "score": 400,
+      "hurtbox": {
+        "hw": 4,
+        "hh": 4
+      },
+      "script": "tentacle.grab",
+      "sprite": "enemies/vault-claw",
+      "params": {
+        "links": 8,
+        "reach": 72,
+        "speed": 1.4,
+        "turnRate": 8,
+        "extendTicks": 40,
+        "grabRadius": 36,
+        "grabPull": 0.45,
+        "retractSpeed": 1.25,
+        "restTicks": 80
+      },
+      "drop": null,
+      "ground": "ceiling",
+      "explosion": "medium"
+    },
+    {
+      "id": "polyp-turret",
+      "hp": 4,
+      "score": 300,
+      "hurtbox": {
+        "hw": 6,
+        "hh": 5
+      },
+      "script": "turret.floor",
+      "sprite": "enemies/polyp-turret",
+      "params": {
+        "fireTicks": 170,
+        "bulletSpeed": 1.2
+      },
+      "drop": null,
+      "ground": "floor",
+      "explosion": "medium"
+    },
+    {
+      "id": "polyp-turret-ceiling",
+      "hp": 4,
+      "score": 300,
+      "hurtbox": {
+        "hw": 6,
+        "hh": 5
+      },
+      "script": "turret.floor",
+      "sprite": "enemies/polyp-turret",
+      "params": {
+        "fireTicks": 170,
+        "bulletSpeed": 1.2
+      },
+      "drop": null,
+      "ground": "ceiling",
+      "explosion": "medium"
+    },
+    {
+      "id": "spore-sac",
+      "hp": 4,
+      "score": 500,
+      "hurtbox": {
+        "hw": 6,
+        "hh": 6
+      },
+      "script": "pattern.loop",
+      "sprite": "enemies/spore-sac",
+      "anim": {
+        "frames": 2,
+        "ticks": 14
+      },
+      "params": {
+        "restTicks": 40
+      },
+      "mover": {
+        "type": "waypoint",
+        "x": 292,
+        "y": 56,
+        "speed": 0.8,
+        "hold": 320,
+        "leaveVx": 0,
+        "leaveVy": -0.5
+      },
+      "pattern": "vault.spores",
+      "drop": null,
+      "explosion": "medium"
+    },
+    {
+      "id": "spore-sac-low",
+      "hp": 4,
+      "score": 500,
+      "hurtbox": {
+        "hw": 6,
+        "hh": 6
+      },
+      "script": "pattern.loop",
+      "sprite": "enemies/spore-sac",
+      "anim": {
+        "frames": 2,
+        "ticks": 14
+      },
+      "params": {
+        "restTicks": 40
+      },
+      "mover": {
+        "type": "waypoint",
+        "x": 292,
+        "y": 144,
+        "speed": 0.8,
+        "hold": 320,
+        "leaveVx": 0,
+        "leaveVy": 0.5
+      },
+      "pattern": "vault.spores",
+      "drop": null,
+      "explosion": "medium"
+    },
+    {
+      "id": "mantle-regent",
+      "boss": {
+        "code": "MR-06",
+        "displayName": "MANTLE REGENT",
+        "introTicks": 150,
+        "score": 40000,
+        "x": 296,
+        "y": 100,
+        "minion": "chaser-cell",
+        "parts": [
+          {
+            "name": "fin",
+            "x": 50,
+            "sprite": "bosses/regent-fin",
+            "anim": {
+              "frames": 2,
+              "ticks": 12
+            }
+          },
+          {
+            "name": "mantle",
+            "x": 24,
+            "vulnerable": "never",
+            "hurtbox": {
+              "hw": 26,
+              "hh": 13
+            },
+            "sprite": "bosses/regent-mantle"
+          },
+          {
+            "name": "eye",
+            "x": -10,
+            "hp": 90,
+            "hurtbox": {
+              "hw": 6,
+              "hh": 6
+            },
+            "core": true,
+            "sprite": "bosses/regent-eye",
+            "anim": {
+              "frames": 2,
+              "ticks": 20
+            },
+            "score": 5000,
+            "explosion": "large"
+          },
+          {
+            "name": "root-top",
+            "parent": "mantle",
+            "x": -12,
+            "y": -17,
+            "hp": 24,
+            "radius": 6,
+            "sprite": "bosses/regent-root",
+            "score": 1500,
+            "explosion": "medium"
+          },
+          {
+            "name": "seg-top-1",
+            "parent": "root-top",
+            "x": -11,
+            "radius": 5,
+            "vulnerable": "never",
+            "sprite": "bosses/regent-segment"
+          },
+          {
+            "name": "seg-top-2",
+            "parent": "seg-top-1",
+            "x": -10,
+            "radius": 5,
+            "vulnerable": "never",
+            "sprite": "bosses/regent-segment"
+          },
+          {
+            "name": "seg-top-3",
+            "parent": "seg-top-2",
+            "x": -10,
+            "radius": 5,
+            "vulnerable": "never",
+            "sprite": "bosses/regent-segment"
+          },
+          {
+            "name": "tip-top",
+            "parent": "seg-top-3",
+            "x": -10,
+            "radius": 4,
+            "vulnerable": "never",
+            "gun": true,
+            "sprite": "bosses/regent-tip"
+          },
+          {
+            "name": "root-bottom",
+            "parent": "mantle",
+            "x": -12,
+            "y": 17,
+            "hp": 24,
+            "radius": 6,
+            "sprite": "bosses/regent-root",
+            "score": 1500,
+            "explosion": "medium"
+          },
+          {
+            "name": "seg-bottom-1",
+            "parent": "root-bottom",
+            "x": -11,
+            "radius": 5,
+            "vulnerable": "never",
+            "sprite": "bosses/regent-segment"
+          },
+          {
+            "name": "seg-bottom-2",
+            "parent": "seg-bottom-1",
+            "x": -10,
+            "radius": 5,
+            "vulnerable": "never",
+            "sprite": "bosses/regent-segment"
+          },
+          {
+            "name": "seg-bottom-3",
+            "parent": "seg-bottom-2",
+            "x": -10,
+            "radius": 5,
+            "vulnerable": "never",
+            "sprite": "bosses/regent-segment"
+          },
+          {
+            "name": "tip-bottom",
+            "parent": "seg-bottom-3",
+            "x": -10,
+            "radius": 4,
+            "vulnerable": "never",
+            "gun": true,
+            "sprite": "bosses/regent-tip"
+          }
+        ],
+        "phases": [
+          {
+            "script": "boss.squid",
+            "params": {
+              "trackSpeed": 0.3,
+              "curl": 1,
+              "sweepTicks": 30,
+              "guardTicks": 70,
+              "openTicks": 120,
+              "fireTicks": 90,
+              "ways": 3,
+              "spread": 40,
+              "bulletSpeed": 1.2
+            },
+            "until": {
+              "hpBelow": 60,
+              "partsDestroyed": ["root-top", "root-bottom"],
+              "count": 1
+            }
+          },
+          {
+            "script": "boss.squid",
+            "params": {
+              "trackSpeed": 0.4,
+              "curl": 1,
+              "sweepTicks": 30,
+              "guardTicks": 60,
+              "openTicks": 110,
+              "fireTicks": 80,
+              "ways": 3,
+              "spread": 40,
+              "bulletSpeed": 1.25,
+              "gunTicks": 100,
+              "launchTicks": 200,
+              "count": 1
+            },
+            "until": {
+              "hpBelow": 28,
+              "partsDestroyed": ["root-top", "root-bottom"]
+            }
+          },
+          {
+            "script": "boss.squid",
+            "params": {
+              "trackSpeed": 0.5,
+              "curl": 2,
+              "sweepTicks": 15,
+              "guardTicks": 50,
+              "openTicks": 100,
+              "fireTicks": 70,
+              "ways": 5,
+              "spread": 36,
+              "bulletSpeed": 1.3,
+              "gunTicks": 80,
+              "ring": 10,
+              "ringSpeed": 1.05,
+              "launchTicks": 180,
+              "count": 1
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

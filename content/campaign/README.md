@@ -7,8 +7,9 @@ zones, the zone tally, the ending selection).
 
 [`main.campaign.json`](main.campaign.json) is the shipped map: the 9-zone diamond
 `A → B|C → D|E → F|G → H|I` — five zones per run, **16 routes**, two final zones (H IRON CITADEL,
-I ABYSSAL THRONE) with their own endings. Zones B–I are short placeholder stages
-(`content/stages/zone-b … zone-i.stage.json`, M2-10) until M2-11 … M2-14 replace them.
+I ABYSSAL THRONE) with their own endings. Zones B–G are real zones (M2-11 … M2-13); H and I are
+still short placeholder stages (`content/stages/zone-h`, `zone-i.stage.json`, M2-10) until M2-14
+replaces them.
 
 ## Format (formatVersion 1)
 

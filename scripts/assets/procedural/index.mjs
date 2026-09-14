@@ -10,7 +10,7 @@
  * generator: write `procedural/<id>.mjs` exporting `generate()`, register it here, and test
  * its shapes in `test/scripts/assets/procedural.test.ts` (a zone generator gets its own file —
  * `procedural-zones.test.ts` for `brine` / `dune` of M2-11, `procedural-zones-de.test.ts` for
- * `magma` / `tempest` of M2-12).
+ * `magma` / `tempest` of M2-12, `procedural-zones-fg.test.ts` for `vault` / `prism` of M2-13).
  *
  * @module
  */
@@ -27,12 +27,14 @@ import * as lasers from './lasers.mjs';
 import * as magma from './magma.mjs';
 import * as palettes from './palettes.mjs';
 import * as particles from './particles.mjs';
+import * as prism from './prism.mjs';
 import * as rasterBands from './raster-bands.mjs';
 import * as shields from './shields.mjs';
 import * as starfield from './starfield.mjs';
 import * as tempest from './tempest.mjs';
 import * as terrain from './terrain.mjs';
 import * as ui from './ui.mjs';
+import * as vault from './vault.mjs';
 import * as weapons from './weapons.mjs';
 
 /** @typedef {import('../sprite-source.mjs').SpriteDef} SpriteDef */
@@ -56,12 +58,14 @@ export const PROCEDURAL_GENERATORS = [
   { id: 'magma', generate: magma.generate },
   { id: 'palettes', generate: palettes.generate },
   { id: 'particles', generate: particles.generate },
+  { id: 'prism', generate: prism.generate },
   { id: 'raster-bands', generate: rasterBands.generate },
   { id: 'shields', generate: shields.generate },
   { id: 'starfield', generate: starfield.generate },
   { id: 'tempest', generate: tempest.generate },
   { id: 'terrain', generate: terrain.generate },
   { id: 'ui', generate: ui.generate },
+  { id: 'vault', generate: vault.generate },
   { id: 'weapons', generate: weapons.generate },
 ];
 

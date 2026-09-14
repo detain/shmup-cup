@@ -1,0 +1,78 @@
+{
+  "kind": "replay",
+  "header": {
+    "formatVersion": 1,
+    "buildId": "golden",
+    "seed": 81,
+    "stageId": "glimmer-cache",
+    "checkpoint": -1,
+    "loadout": "full",
+    "assisted": true,
+    "config": {
+      "internalWidth": 384,
+      "internalHeight": 216,
+      "tickRate": 60,
+      "maxTicksPerFrame": 4,
+      "seed": 81,
+      "difficulty": "normal",
+      "rankBase": 2,
+      "rankGrowth": 1,
+      "extendFirst": 20000,
+      "extendEvery": 70000,
+      "continues": 3,
+      "bulletSpeedMul": 1,
+      "powerUpMode": "meter",
+      "shipId": "kestrel",
+      "deathPenalty": "classic",
+      "startingLives": 3,
+      "autofire": true,
+      "remoteMode": true,
+      "stage": "glimmer-cache",
+      "stageSkip": "none",
+      "aimDirections": 32,
+      "autofireInterval": 4,
+      "missileInterval": 10,
+      "loadout": "full",
+      "autoPowerUp": false,
+      "autoPowerUpOrder": [
+        "speed",
+        "missile",
+        "laser",
+        "option",
+        "option",
+        "option",
+        "option",
+        "shield"
+      ],
+      "pickupMagnet": true,
+      "weaponPreset": "type-a",
+      "weaponEdit": null,
+      "megaChoice": "megaCrash",
+      "shieldChoice": "forceField",
+      "optionChoice": "trail",
+      "coop": false,
+      "coopExtra": 0.5
+    }
+  },
+  "ticks": 1815,
+  "hashInterval": 600,
+  "inputs": [
+    "ACiCgAgBAgEA5gSCgAgBAgUAmQGBgAQBAQUAJoKACAECA4GABAEBAwABgoAIAQILAHuCgAgBAgYARoGABAEBEgDFAYGABAEBDAAegoAIAQIFAHaCgAgBAgwA0wI=",
+    "AJcO"
+  ],
+  "hashes": [
+    1946349259,
+    1063199814,
+    673882032
+  ],
+  "finalHash": 161852773,
+  "description": "GLIMMER CACHE, zone G's hidden bonus stage, with god mode and the full loadout (M2-13): its carriers' bonus capsules and the 1UP collected to the end, a cube rush and its cube walls",
+  "expected": {
+    "status": "stageClear",
+    "ticks": 1815,
+    "score": 16210,
+    "lives": 4,
+    "deathTicks": [],
+    "bossDefeated": false
+  }
+}

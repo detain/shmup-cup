@@ -1,0 +1,191 @@
+{
+  "formatVersion": 1,
+  "kind": "stage",
+  "id": "glimmer-cache",
+  "name": "GLIMMER CACHE",
+  "type": "bonus",
+  "music": {
+    "stage": "Stage",
+    "boss": "Boss"
+  },
+  "length": 1800,
+  "camera": [
+    {
+      "x": 0,
+      "speed": 1,
+      "ramp": 30
+    }
+  ],
+  "checkpoints": [
+    {
+      "x": 0
+    }
+  ],
+  "parallax": [
+    {
+      "layer": "far",
+      "sprite": "bg/prism-facets",
+      "factor": 0.2,
+      "y": 0,
+      "spacing": 128
+    },
+    {
+      "layer": "far",
+      "sprite": "bg/prism-facets",
+      "factor": 0.2,
+      "y": 64,
+      "spacing": 128
+    },
+    {
+      "layer": "far",
+      "sprite": "bg/prism-facets",
+      "factor": 0.2,
+      "y": 128,
+      "spacing": 128
+    },
+    {
+      "layer": "mid",
+      "sprite": "bg/prism-spires",
+      "factor": 0.4,
+      "y": 144,
+      "spacing": 128
+    }
+  ],
+  "tilemap": {
+    "tileSize": 8,
+    "tileset": "terrain-prism",
+    "rowsTall": 25,
+    "generator": {
+      "type": "heightfield",
+      "segments": [
+        {
+          "from": 100,
+          "to": 2100,
+          "floor": {
+            "base": 20,
+            "amp": 10,
+            "period": 120,
+            "seed": 121
+          },
+          "ceiling": {
+            "base": 18,
+            "amp": 8,
+            "period": 140,
+            "seed": 122
+          }
+        }
+      ]
+    }
+  },
+  "events": [
+    {
+      "x": 80,
+      "type": "formation",
+      "enemy": "vault-carrier",
+      "count": 3,
+      "interval": 24,
+      "y": 60,
+      "drop": null
+    },
+    {
+      "x": 200,
+      "type": "spawn",
+      "enemy": "glint-mote",
+      "y": 140
+    },
+    {
+      "x": 300,
+      "type": "formation",
+      "enemy": "vault-carrier",
+      "count": 3,
+      "interval": 24,
+      "y": 130,
+      "drop": null
+    },
+    {
+      "x": 360,
+      "type": "block",
+      "screenX": 400,
+      "y": 32,
+      "w": 16,
+      "h": 72,
+      "tile": "cube"
+    },
+    {
+      "x": 520,
+      "type": "formation",
+      "enemy": "vault-carrier",
+      "count": 3,
+      "interval": 24,
+      "y": 150,
+      "drop": null
+    },
+    {
+      "x": 640,
+      "type": "formation",
+      "enemy": "prism-cube",
+      "count": 6,
+      "interval": 22,
+      "drop": null
+    },
+    {
+      "x": 760,
+      "type": "formation",
+      "enemy": "vault-carrier",
+      "count": 3,
+      "interval": 24,
+      "y": 90,
+      "drop": null
+    },
+    {
+      "x": 900,
+      "type": "spawn",
+      "enemy": "vault-carrier-1up",
+      "y": 100
+    },
+    {
+      "x": 1000,
+      "type": "block",
+      "screenX": 400,
+      "y": 96,
+      "w": 16,
+      "h": 72,
+      "tile": "cube"
+    },
+    {
+      "x": 1080,
+      "type": "formation",
+      "enemy": "vault-carrier",
+      "count": 3,
+      "interval": 24,
+      "y": 60,
+      "drop": null
+    },
+    {
+      "x": 1200,
+      "type": "spawn",
+      "enemy": "geode",
+      "y": 120
+    },
+    {
+      "x": 1300,
+      "type": "formation",
+      "enemy": "vault-carrier",
+      "count": 3,
+      "interval": 24,
+      "y": 120,
+      "drop": null
+    },
+    {
+      "x": 1800,
+      "type": "end"
+    }
+  ],
+  "cycles": [
+    {
+      "layer": "far",
+      "colors": ["#0c1424", "#121c32", "#182842", "#203656"],
+      "ticks": 14
+    }
+  ]
+}
