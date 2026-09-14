@@ -1,0 +1,81 @@
+{
+  "kind": "replay",
+  "header": {
+    "formatVersion": 1,
+    "buildId": "golden",
+    "seed": 53,
+    "stageId": "twin-range",
+    "checkpoint": -1,
+    "loadout": "full",
+    "assisted": true,
+    "config": {
+      "internalWidth": 384,
+      "internalHeight": 216,
+      "tickRate": 60,
+      "maxTicksPerFrame": 4,
+      "seed": 53,
+      "difficulty": "normal",
+      "rankBase": 2,
+      "rankGrowth": 1,
+      "extendFirst": 20000,
+      "extendEvery": 70000,
+      "continues": 3,
+      "bulletSpeedMul": 1,
+      "powerUpMode": "meter",
+      "shipId": "kestrel",
+      "deathPenalty": "classic",
+      "startingLives": 3,
+      "autofire": true,
+      "remoteMode": true,
+      "stage": "twin-range",
+      "stageSkip": "none",
+      "aimDirections": 32,
+      "autofireInterval": 4,
+      "missileInterval": 10,
+      "loadout": "full",
+      "autoPowerUp": false,
+      "autoPowerUpOrder": [
+        "speed",
+        "missile",
+        "laser",
+        "option",
+        "option",
+        "option",
+        "option",
+        "shield"
+      ],
+      "pickupMagnet": true,
+      "weaponPreset": "type-a",
+      "weaponEdit": null,
+      "megaChoice": "megaCrash",
+      "shieldChoice": "forceField",
+      "optionChoice": "trail",
+      "coop": false,
+      "coopExtra": 0.5
+    }
+  },
+  "ticks": 3758,
+  "hashInterval": 600,
+  "inputs": [
+    "ACiCgAgBAgEAugmBgAQBAQwAnwuCgAgBAgwAvQGCgAgBAgsAyAY=",
+    "AK4d"
+  ],
+  "hashes": [
+    1194881131,
+    1129305979,
+    10738156,
+    3784634543,
+    1737878180,
+    207585700
+  ],
+  "finalHash": 2247341631,
+  "description": "TWIN RANGE with god mode and the full loadout (M2-09): the EMBER and FROST twins take turns, the survivor enrages, both shot down",
+  "expected": {
+    "status": "stageClear",
+    "ticks": 3758,
+    "score": 36650,
+    "lives": 4,
+    "deathTicks": [],
+    "bossDefeated": true
+  }
+}

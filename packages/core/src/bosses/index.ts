@@ -2314,7 +2314,8 @@ class BossSystemImpl implements BossSystem {
 
   /**
    * An alternating pair's turn (the leader's clock ran out; cold path): the fighting one
-   * withdraws, the resting one comes forward.
+   * withdraws, the resting one comes forward. A partner still flying in (its intro longer than
+   * the turn) does not stop the turns: the leader keeps fighting and tries again a turn later.
    *
    * @param leader - The leader.
    */
@@ -2322,11 +2323,12 @@ class BossSystemImpl implements BossSystem {
     const entry = this.entries[leader.slot];
     if (entry === null) return;
     const mate = this.mateOf(leader);
-    if (mate === null || mate.state !== BossState.Fight || mate.enraged) return;
+    if (mate === null || mate.enraged) return;
+    leader.turnTicks = entry.alternate;
+    if (mate.state !== BossState.Fight) return;
     const leaderRests = !leader.resting;
     this.setResting(leader, leaderRests);
     this.setResting(mate, !leaderRests);
-    leader.turnTicks = entry.alternate;
   }
 
   /**

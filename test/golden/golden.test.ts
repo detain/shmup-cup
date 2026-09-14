@@ -1,7 +1,7 @@
 /**
  * The golden-replay test (plan M1-19, part of `pnpm test`): every committed
- * `test/golden/<scenario>.replay.json` — zone A (and, since M2-07 / M2-08, the `gimmick-range` and
- * `raster-range` dev stages)
+ * `test/golden/<scenario>.replay.json` — zone A (and, since M2-07 / M2-08 / M2-09, the
+ * `gimmick-range`, `raster-range`, `captain-range`, `raid-range` and `twin-range` dev stages)
  * played by the 4-way bot and recorded with `core/replay` (the 4-way bot, or a careless weaving
  * pilot for the deaths) — plays back into a
  * fresh session with **every state hash** (one per 600 ticks and
@@ -13,7 +13,15 @@
  * scenario from the bot and rewrites its file, then checks the new files the same way.
  */
 import { describe, expect, it } from 'vitest';
-import { ENGINE_SPRITES, KNOWN_SCRIPT_IDS, REPLAY_HASH_INTERVAL, loadContent } from '@shmup/core';
+import {
+  BossState,
+  ENGINE_SPRITES,
+  EndingFlag,
+  KNOWN_SCRIPT_IDS,
+  REPLAY_HASH_INTERVAL,
+  loadContent,
+} from '@shmup/core';
+import { shippedContent } from '../playtest/harness.js';
 import { readContentFiles } from '../../vite.shared.js';
 import {
   GOLDEN_BUILD_ID,
@@ -28,7 +36,7 @@ import {
 /** Whether this run re-blesses the files. */
 const updating = process.env[GOLDEN_UPDATE_ENV] === '1';
 
-describe('golden replays (zone A, the gimmick range and the raster range, playtest bots)', () => {
+describe('golden replays (zone A and the dev stages, playtest bots)', () => {
   it.each(GOLDEN_SCENARIOS.map((scenario) => [scenario.name, scenario] as const))(
     '%s reproduces every state hash and its outcome',
     (_name, scenario) => {
@@ -172,5 +180,60 @@ describe('golden replays (zone A, the gimmick range and the raster range, playte
     expect(plain.report).toMatchObject({ ok: true, finished: true, buildMatches: true });
     expect(plain.report.checked).toBe(replay.hashes.length + 1);
     expect(plain.outcome).toEqual(file.expected);
+  });
+
+  it('covers the advanced bosses of M2-09: captains, the raid and its heart, an escape, the twins', () => {
+    const db = shippedContent();
+    /**
+     * Plays an M2-09 golden back and reads its boss slots.
+     *
+     * @param name - Scenario name.
+     * @returns The outcome, the final World and each slot's boss id, state and flags.
+     */
+    const play = (name: string) => {
+      const { outcome, world } = playGolden(readGolden(name).replay);
+      const slots = world.bosses.slots.map((b) => ({
+        id: b.specIndex >= 0 ? db.enemies[b.specIndex].id : '',
+        state: b.state,
+        escaped: b.escaped,
+        enraged: b.enraged,
+      }));
+      return { outcome, world, slots };
+    };
+    // Captains ride the scrolling camera: the stage ran to its end, no ending flag.
+    const captains = play('captain-range-god');
+    expect(captains.outcome).toMatchObject({ status: 'stageClear', deathTicks: [] });
+    expect(captains.outcome.bossDefeated).toBe(true); // the ram, in slot 0
+    expect(captains.world.camera.x).toBe(captains.world.stage?.stage.length);
+    // Only captains ever took a slot; the first one (the ram, slot 0) was shot down.
+    const ids = captains.slots.map((s) => s.id).filter((id) => id !== '');
+    expect(ids.length).toBeGreaterThan(0);
+    for (const id of ids) expect(id.startsWith('captain-')).toBe(true);
+    expect(captains.slots[0].state).toBe(BossState.Dead);
+    expect(captains.world.endingFlags).toBe(0);
+    // The raid shot down: the heart revealed in slot 1 and shot down too; the camera handed back.
+    const raid = play('raid-range-god');
+    expect(raid.outcome).toMatchObject({ status: 'stageClear', bossDefeated: true });
+    expect(raid.slots.slice(0, 2)).toEqual([
+      { id: 'raid-leviathan', state: BossState.Dead, escaped: false, enraged: false },
+      { id: 'raid-heart', state: BossState.Dead, escaped: false, enraged: false },
+    ]);
+    expect([raid.world.endingFlags, raid.world.stage?.following]).toEqual([0, null]);
+    // Without power-ups the battleship escapes after its time limit: the ending flag, no heart.
+    const escape = play('raid-range-escape');
+    expect(escape.outcome).toMatchObject({ status: 'stageClear', bossDefeated: false });
+    expect(escape.slots[0]).toMatchObject({ id: 'raid-leviathan', escaped: true });
+    expect(escape.slots.some((s) => s.id === 'raid-heart')).toBe(false);
+    expect(escape.world.endingFlags & EndingFlag.BossEscaped).toBe(EndingFlag.BossEscaped);
+    expect(escape.world.stage?.following).toBeNull();
+    // The twins: both shot down, the survivor had enraged.
+    const twins = play('twin-range-god');
+    expect(twins.outcome).toMatchObject({ status: 'stageClear', bossDefeated: true });
+    expect(twins.slots.slice(0, 2).map((s) => [s.id, s.state, s.escaped])).toEqual([
+      ['twin-ember', BossState.Dead, false],
+      ['twin-frost', BossState.Dead, false],
+    ]);
+    expect(twins.slots.slice(0, 2).filter((s) => s.enraged)).toHaveLength(1);
+    expect(twins.world.endingFlags).toBe(0);
   });
 });

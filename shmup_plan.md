@@ -2738,7 +2738,9 @@ Goal of the milestone: every **[P1]** feature. Steps are ordered so systems land
   - **Double bosses** are a `partner` (entered with the leader's intro in another slot) with
     `alternate` turns: the resting one moves to `BOSS_REST_X` over `BOSS_TURN_TICKS`, is drawn from
     the new `bosses.backBatch` (`LayerId.GroundEnemies`), is not hit / touched, its script and phase
-    clock wait (and its motion before the turn resumes on its way back). The pair's link is cut
+    clock wait (and its motion before the turn resumes on its way back); a partner still flying in
+    when a turn comes (its intro longer than the turn) only delays the turns by another `alternate`
+    (M2-09 tests fix — they used to stop for good). The pair's link is cut
     both ways when either slot ends (a later boss in that slot is no mate). **Enrage**: the survivor
     of a death comes forward for good, `fireWait` × `enrage.fireRate`, track / orbit speed ×
     `enrage.speed`, a jump to `enrage.phase`.

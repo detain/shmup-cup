@@ -36,9 +36,13 @@ describe.skipIf(updating)('golden replays — file guards', () => {
   it('has one file per scenario and no file without one', () => {
     const names = GOLDEN_SCENARIOS.map((scenario) => scenario.name);
     expect(new Set(names).size).toBe(names.length);
-    // `<stage id>-…`: zone A and (M2-07) the gimmick range.
-    for (const name of names)
-      expect(name).toMatch(/^(zone-a|gimmick-range|raster-range)-[a-z0-9-]+$/);
+    // `<stage id>-…`: zone A and the dev stages of M2-07 (gimmicks), M2-08 (raster effects) and
+    // M2-09 (captains, the raid, the twins).
+    for (const name of names) {
+      expect(name).toMatch(
+        /^(zone-a|gimmick-range|raster-range|captain-range|raid-range|twin-range)-[a-z0-9-]+$/,
+      );
+    }
     for (const scenario of GOLDEN_SCENARIOS)
       expect(scenario.name.startsWith(scenario.stageId)).toBe(true);
     const files = readdirSync(folder)

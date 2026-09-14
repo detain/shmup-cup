@@ -7,13 +7,25 @@
  *   a few seconds later the camera has panned round it (another view of the hull, the camera's
  *   x and y moved), all without console errors or atlas warnings;
  * - **the boss HP bar** — with the saved `bossHpBar` display option, zone A's scene flow
- *   (`?skip=boss`) shows `BOSS` and the red bar in the top HUD bar while HALCYON BULWARK fights.
+ *   (`?skip=boss`) shows `BOSS` and the red bar in the top HUD bar while HALCYON BULWARK fights;
+ * - **a captain** — `?scene=flight&stage=captain-range`: CAPTAIN RAM fights while the camera keeps
+ *   scrolling (the scroll never locks), its parts drawn;
+ * - **the twins on the TV build** — the Tizen `dist/` from `file://` in open space
+ *   (`?scene=flight`; the TV has no `?stage=`), the EMBER twin brought in through the debug API: both
+ *   twins fly in, the resting one is drawn on the layer behind (`bosses.backBatch`), and at the
+ *   pair's turn they swap — without console errors.
  *
  * Screenshots are ×3 (viewport 1152×648): frame pixel (x, y) is screenshot pixel (3x + 1, 3y + 1).
  */
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { freezeSim, stepTo } from './frame-advance.js';
+
+/** The Tizen build's page, as a `file://` URL. */
+const TIZEN_INDEX = pathToFileURL(
+  fileURLToPath(new URL('../../apps/tizen/dist/index.html', import.meta.url)),
+).href;
 
 /** `bosses/raid-hull`'s steel (#46506a). */
 const STEEL = [0x46, 0x50, 0x6a] as const;
@@ -29,13 +41,95 @@ interface DebugWindow {
     readonly game: {
       readonly world: {
         readonly camera: { readonly x: number; readonly y: number };
+        readonly stage: { readonly locked: boolean } | null;
         readonly bosses: {
           readonly boss: { readonly state: number };
+          readonly slots: ReadonlyArray<{
+            readonly state: number;
+            readonly resting: boolean;
+            readonly role: number;
+          }>;
+          readonly batch: { readonly count: number };
+          readonly backBatch: { readonly count: number };
           readonly hpBar: { readonly visible: boolean };
         };
       };
     };
   };
+}
+
+/** `window` with the debug API's way to start a boss (the Tizen twins test). */
+interface TwinWindow {
+  readonly __shmupDebug: {
+    readonly game: {
+      readonly world: {
+        readonly content: { readonly enemyIndex: ReadonlyMap<string, number> };
+        readonly bosses: {
+          /** `BossSystem.startBoss`. */
+          startBoss(enemyIndex: number): boolean;
+        };
+      };
+    };
+  };
+}
+
+/** What {@link bossesNow} reads of the World. */
+interface BossesNow {
+  /** The World tick. */
+  readonly tick: number;
+  /** Camera x. */
+  readonly cameraX: number;
+  /** Whether the stage's scroll is locked. */
+  readonly locked: boolean;
+  /** Each slot's state. */
+  readonly states: number[];
+  /** Each slot's resting flag. */
+  readonly resting: boolean[];
+  /** Parts in the front batch. */
+  readonly front: number;
+  /** Parts in the back batch (resting bosses). */
+  readonly back: number;
+}
+
+/**
+ * Reads the boss slots and the camera from the test build's debug API.
+ *
+ * @param page - The page.
+ * @returns The snapshot.
+ */
+function bossesNow(page: Page): Promise<BossesNow> {
+  return page.evaluate(() => {
+    const api = (window as unknown as DebugWindow).__shmupDebug;
+    const world = api.game.world;
+    const bosses = world.bosses;
+    return {
+      tick: api.worldTick,
+      cameraX: world.camera.x,
+      locked: world.stage?.locked ?? false,
+      states: bosses.slots.map((b) => b.state),
+      resting: bosses.slots.map((b) => b.resting),
+      front: bosses.batch.count,
+      back: bosses.backBatch.count,
+    };
+  });
+}
+
+/**
+ * Steps the frozen sim in blocks until a slot's boss fights.
+ *
+ * @param page - The page (frozen).
+ * @param slot - The boss slot.
+ * @param blocks - Most blocks of 50 ticks.
+ * @returns The snapshot once it fights.
+ */
+async function stepUntilFight(page: Page, slot: number, blocks: number): Promise<BossesNow> {
+  let now = await bossesNow(page);
+  for (let i = 0; i < blocks && now.states[slot] !== 3; i++) {
+    await stepTo(page, now.tick + 50);
+    now = await bossesNow(page);
+  }
+  expect(now.states[slot], 'the boss in slot ' + String(slot) + ' never fought').toBe(3);
+  return now;
 }
 
 /**
@@ -237,6 +331,58 @@ test.describe('advanced bosses (web build)', () => {
     let label = 0;
     for (let fy = 0; fy < 8; fy++) for (let fx = 148; fx < 172; fx++) if (is(fx, fy)) label++;
     expect(label).toBeGreaterThan(10);
+    expect(errors).toEqual([]);
+  });
+
+  test('a captain: it fights while the camera keeps scrolling', async ({ page }) => {
+    test.setTimeout(120_000);
+    const errors = watchErrors(page);
+    await page.goto('./?scene=flight&stage=captain-range');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await freezeSim(page);
+    // CAPTAIN RAM's boss event at x 300 (≈ 315 ticks), then its 60-tick intro.
+    const fighting = await stepUntilFight(page, 0, 20);
+    expect(fighting.front).toBeGreaterThan(0);
+    await stepTo(page, fighting.tick + 60);
+    const later = await bossesNow(page);
+    // Still fighting (god mode is off, but nothing here shoots it down in a second) and the scroll
+    // went on at 1 px/tick: a captain never locks it.
+    expect(later.states[0]).toBe(3);
+    expect(later.locked).toBe(false);
+    expect(later.cameraX - fighting.cameraX).toBe(60);
+    expect(errors).toEqual([]);
+  });
+});
+
+test.describe('advanced bosses (Tizen build from file://)', () => {
+  test('the twins: the resting one drawn behind, and they swap at the pair’s turn', async ({
+    page,
+  }) => {
+    test.setTimeout(180_000);
+    const errors = watchErrors(page);
+    await page.goto(TIZEN_INDEX + '?scene=flight');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await freezeSim(page);
+    // The `boss` event's way in (no WARNING): the EMBER twin brings its partner.
+    const started = await page.evaluate(() => {
+      const world = (window as unknown as TwinWindow).__shmupDebug.game.world;
+      return world.bosses.startBoss(world.content.enemyIndex.get('twin-ember') ?? -1);
+    });
+    expect(started).toBe(true);
+    // A 150-tick intro; then the follower withdraws.
+    const fighting = await stepUntilFight(page, 0, 10);
+    expect(fighting.states[1]).toBe(3);
+    await stepTo(page, fighting.tick + 90);
+    const first = await bossesNow(page);
+    expect(first.resting).toEqual([false, true, false, false]);
+    expect(first.back).toBeGreaterThan(0);
+    expect(first.front).toBeGreaterThan(0);
+    // The turn comes every 300 fight ticks: by then the lead rests and the other fights.
+    await stepTo(page, fighting.tick + 400);
+    const second = await bossesNow(page);
+    expect(second.states.slice(0, 2)).toEqual([3, 3]);
+    expect(second.resting).toEqual([true, false, false, false]);
+    expect(second.back).toBeGreaterThan(0);
     expect(errors).toEqual([]);
   });
 });

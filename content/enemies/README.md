@@ -279,7 +279,7 @@ dev stages `captain-range`, `raid-range`, `twin-range` and the boss rush `gauntl
 | `timeLimit` | none | Fight ticks (60–36,000) after which the boss **escapes**: it flies off to the right, no tally; a stage boss's escape sets the World's `BossEscaped` ending flag and ends the encounter |
 | `raid` | none | A **battleship raid**: `segments` (1–16) of `x` / `y` (the camera's top-left minus the boss's origin), `ticks` (the eased move, default 120) and `hold` (default 0), `loop` (default `true`). The boss stays where it entered (the camera stops); from its fight the camera follows the segments (the stage's events past the point where it stopped wait — an `end` right after the boss is safe), and eases back when it dies or escapes. Its parts fire only while on screen |
 | `partner` | none | Another stage boss (without a partner or raid of its own) that enters with this one — a **double boss** |
-| `alternate` | none | With a `partner`: ticks each of the pair fights while the other withdraws behind the right edge (not hit, not touched, its script paused, drawn behind) |
+| `alternate` | none | With a `partner`: ticks each of the pair fights while the other withdraws behind the right edge (not hit, not touched, its script paused, drawn behind); a partner whose intro outlasts the first turn joins the turns at the next one |
 | `enrage` | `fireRate` 0.625, `speed` 1.5, no `phase` | When its partner dies: fire intervals × `fireRate`, motion × `speed`, and a jump to `phase` if it is later than the running one |
 | `inner` | none | A stage boss revealed by this one's final blast (**boss inside a boss**): it flies in from the first core; the stage clears after it |
 | `minion` | none | A regular enemy the behaviours launch from a part (`captain.launcher`) |

@@ -9,11 +9,15 @@
  *   the heart; and, left alone, its escape after its time limit (the ending flag, no tally);
  * - **TWIN RANGE** — the EMBER AND FROST TWINS take turns; one down, the survivor enrages;
  * - **GAUNTLET RANGE** — a boss rush: TRIAL WARDEN, LEVIATHAN HEART, the twins, then the clear;
+ * - BROOD LAUNCHER's minions: regular `bubble` enemies launched from its tubes while it fights;
+ * - the HP bar model over the shipped raid: filling through the intro, full at the fight's start
+ *   (the cores and what they require), empty while dying, then LEVIATHAN HEART's own bar;
  * - two sessions of the raid range stay in lockstep (`hashWorld`).
  */
 import {
   BossState,
   EndingFlag,
+  EnemyState,
   SimEventKind,
   checkEnemyBehaviors,
   createGame,
@@ -213,5 +217,80 @@ describe('integration: the advanced bosses of M2-09 on their dev stages', () => 
       play(b, 100, 900, () => false);
       expect(hashWorld(a.world), `block ${String(block)}`).toBe(hashWorld(b.world));
     }
+  });
+
+  it('CAPTAIN RANGE: BROOD LAUNCHER launches its bubbles from its tubes while it fights', () => {
+    const g = game('captain-range', 11, false);
+    const world = g.world;
+    const launcher = index('captain-launcher');
+    const bubble = index('bubble');
+    const slot = (): (typeof world.bosses.slots)[number] | undefined =>
+      world.bosses.slots.find((b) => b.specIndex === launcher && b.state === BossState.Fight);
+    play(g, 3000, 0, () => slot() !== undefined);
+    const boss = slot();
+    if (boss === undefined) throw new Error('BROOD LAUNCHER never fought');
+    const tubes = boss.parts.slice(1, 3);
+    let launched = 0;
+    let atTube = 0;
+    /**
+     * The slots of the live bubbles.
+     *
+     * @returns The slots.
+     */
+    const bubbles = (): Set<number> =>
+      new Set(
+        world.enemies.enemies
+          .filter((e) => e.specIndex === bubble && e.state === EnemyState.Live)
+          .map((e) => e.slot),
+      );
+    for (let t = 0; t < 400 && boss.state === BossState.Fight; t++) {
+      const before = bubbles();
+      play(g, 1, 0, () => false);
+      for (const e of world.enemies.enemies) {
+        if (e.specIndex !== bubble || e.state !== EnemyState.Live || before.has(e.slot)) continue;
+        launched++;
+        // Spawned at a tube's centre (it has moved at most a few pixels this tick).
+        if (tubes.some((p) => Math.abs(p.x - e.x) < 8 && Math.abs(p.y - e.y) < 8)) atTube++;
+      }
+    }
+    expect(launched).toBeGreaterThanOrEqual(2);
+    expect(atTube).toBe(launched);
+  });
+
+  it('RAID RANGE: the HP bar fills through the intro, counts the cores, then the heart', () => {
+    const g = game('raid-range', 12, false);
+    const world = g.world;
+    const bar = world.bosses.hpBar;
+    const [leviathan, heart] = world.bosses.slots;
+    play(g, 3000, 0, () => leviathan.state === BossState.Intro);
+    // Its first intro tick: shown, empty.
+    expect([bar.visible, bar.hp]).toEqual([true, 0]);
+    let last = -1;
+    while (leviathan.state === BossState.Intro) {
+      play(g, 1, 0, () => false);
+      expect(bar.hp).toBeGreaterThanOrEqual(last);
+      last = bar.hp;
+    }
+    expect([bar.visible, bar.bosses]).toEqual([true, 1]);
+    // The fight: every counted hit point is there (the cores and the parts they require).
+    const spec = DB.enemies[leviathan.specIndex].boss;
+    if (spec === null) throw new Error('no boss section');
+    const cores = spec.parts.filter((p) => p.core);
+    expect(bar.maxHp).toBeGreaterThanOrEqual(cores.reduce((sum, p) => sum + p.hp, 0));
+    expect(bar.hp).toBe(bar.maxHp);
+    world.bosses.defeat(0);
+    play(g, 1, 0, () => false);
+    expect([bar.visible, bar.hp]).toEqual([true, 0]);
+    // The heart's intro fills the bar again, with its own strength.
+    play(g, 400, 0, () => heart.state === BossState.Fight);
+    expect(heart.specIndex).toBe(index('raid-heart'));
+    play(g, 1, 0, () => false);
+    expect(bar.bosses).toBe(1);
+    const heartSpec = DB.enemies[heart.specIndex].boss;
+    if (heartSpec === null) throw new Error('no boss section');
+    expect(bar.maxHp).toBeGreaterThanOrEqual(
+      heartSpec.parts.filter((p) => p.core).reduce((sum, p) => sum + p.hp, 0),
+    );
+    expect(bar.hp).toBe(bar.maxHp);
   });
 });

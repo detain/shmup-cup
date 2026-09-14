@@ -31,7 +31,12 @@
  * and the weaving pilot without it under the Arcade penalty (deaths, the checkpoint restarts
  * rolling the terrain back, `gameOver`). One more (M2-08) flies the `raster-range` dev stage with
  * the 4-way bot and god mode: its raster effects and palette cycle never touch the simulation —
- * `golden.test.ts` also plays it back on the stage with them stripped.
+ * `golden.test.ts` also plays it back on the stage with them stripped. Four more (M2-09) fly the
+ * advanced-boss dev stages with the 4-way bot and god mode: `captain-range` (four captains on the
+ * scrolling camera), `raid-range` with the full loadout (IRON LEVIATHAN's camera path, its death,
+ * LEVIATHAN HEART revealed and shot down) and without power-ups (the battleship outlasts the bot
+ * and escapes after its time limit — the ending flag), and `twin-range` with the full loadout (the
+ * twins' turns, the survivor's enrage).
  *
  * @module
  */
@@ -342,6 +347,42 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = Object.freeze([
       'RASTER RANGE with god mode (M2-08): the 4-way bot flies the raster-effect dev stage — its wave, floor, haze and palette cycle are presentation only',
     stageId: 'raster-range',
     config: { seed: 41 },
+    godMode: true,
+    bot: 'four-way',
+  },
+  {
+    name: 'captain-range-god',
+    description:
+      'CAPTAIN RANGE with god mode (M2-09): four captains fly in on the scrolling camera, the 4-way bot fights them, the stage ends at its end',
+    stageId: 'captain-range',
+    config: { seed: 51 },
+    godMode: true,
+    bot: 'four-way',
+  },
+  {
+    name: 'raid-range-god',
+    description:
+      'RAID RANGE with god mode and the full loadout (M2-09): IRON LEVIATHAN’s camera path, its death, LEVIATHAN HEART revealed and shot down',
+    stageId: 'raid-range',
+    config: { seed: 52, loadout: 'full' },
+    godMode: true,
+    bot: 'four-way',
+  },
+  {
+    name: 'raid-range-escape',
+    description:
+      'RAID RANGE with god mode and no power-ups (M2-09): IRON LEVIATHAN outlasts the bot and escapes after its time limit — the ending flag',
+    stageId: 'raid-range',
+    config: { seed: 52 },
+    godMode: true,
+    bot: 'four-way',
+  },
+  {
+    name: 'twin-range-god',
+    description:
+      'TWIN RANGE with god mode and the full loadout (M2-09): the EMBER and FROST twins take turns, the survivor enrages, both shot down',
+    stageId: 'twin-range',
+    config: { seed: 53, loadout: 'full' },
     godMode: true,
     bot: 'four-way',
   },
