@@ -178,14 +178,21 @@ describe('render-pixi/layers parallax syncInterpolated', () => {
     const view = band();
     const binding = createParallaxBinding({ atlas: a, tables: createSpriteTables(a, NAMES), view });
     const blend = { alpha: 0, advance: -1 };
-    const bytes = measureAllocation((frame) => {
-      const tick = frame >> 1;
-      view.offsetX[0] = (tick * 0.3) % 16;
-      view.y[0] = (tick * 0.1) % 5;
-      blend.alpha = (frame & 1) * 0.5;
-      blend.advance = (frame & 1) === 0 ? 1 : 0;
-      binding.syncInterpolated(view, blend);
-    }, 5000);
+    // A long warm-up (20,000 frames): after the file's other tests, the probe's default 2,000 left
+    // V8 still tiering up during the measured windows — 47–71 KB, one run in ten over the budget
+    // even alone on an idle machine — where the settled code measures a steady ~40 KB.
+    const bytes = measureAllocation(
+      (frame) => {
+        const tick = frame >> 1;
+        view.offsetX[0] = (tick * 0.3) % 16;
+        view.y[0] = (tick * 0.1) % 5;
+        blend.alpha = (frame & 1) * 0.5;
+        blend.advance = (frame & 1) === 0 ? 1 : 0;
+        binding.syncInterpolated(view, blend);
+      },
+      5000,
+      20_000,
+    );
     expect(bytes).toBeLessThan(64 * 1024);
   });
 });

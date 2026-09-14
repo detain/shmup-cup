@@ -1,6 +1,7 @@
 /**
  * Invariants of the repo-root tooling: pnpm / Node pins, workspace membership, Turborepo
- * tasks, TypeScript and browser targets, CI steps and ignore rules.
+ * tasks, TypeScript and browser targets, CI steps and ignore rules, and the test concurrency
+ * model (one Vitest process over every project, fully parallel e2e, sharded CI jobs).
  *
  * Includes the regression test for review round 1 ("declared minimum Node version is
  * lower than the pinned toolchain supports"): the root `engines.node` range must be
@@ -137,7 +138,10 @@ describe('tooling: package manager and workspace', () => {
     for (const script of ['dev', 'build', 'typecheck', 'lint', 'test', 'format', 'clean']) {
       expect(root.scripts?.[script], script).toBeTruthy();
     }
-    expect(root.scripts?.test).toContain('test:integration');
+    // One Vitest process over every project of the root config, the repo-level `test/` suite
+    // (`integration`) included — see vitest.config.ts.
+    expect(root.scripts?.test).toBe('vitest run');
+    expect(read('vitest.config.ts')).toContain("projects: ['packages/*', 'apps/*', 'test']");
     // Plan M1-19: the benchmark, the golden re-bless, and e2e on the dev / test builds.
     expect(root.scripts?.bench).toBe('vitest run --config test/bench/vitest.config.ts');
     expect(root.scripts?.['golden:update']).toBe('node scripts/golden-update.mjs');
@@ -287,5 +291,15 @@ describe('tooling: CI and repository hygiene', () => {
   it('has .editorconfig and a Prettier config', () => {
     expect(read('.editorconfig')).toMatch(/root\s*=\s*true/);
     expect(() => readJson<object>('.prettierrc.json')).not.toThrow();
+  });
+});
+
+describe('tooling: test concurrency', () => {
+  it('runs every Playwright test in parallel and shards the e2e job in CI', () => {
+    expect(read('test/e2e/playwright.config.ts')).toContain('fullyParallel: true,');
+    const ci = read('.github/workflows/ci.yml');
+    expect(ci).toContain('pnpm test:e2e --shard=${{ matrix.shard }}/');
+    expect(ci).toContain('pnpm test --shard=${{ matrix.shard }}/');
+    expect(ci).toContain('cancel-in-progress: true');
   });
 });

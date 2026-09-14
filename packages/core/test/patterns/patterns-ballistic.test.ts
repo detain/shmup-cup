@@ -179,16 +179,23 @@ describe('core/patterns Ballistic mover', () => {
     ctx.targetX = 50;
     const bodies = [body(20, 10), body(60, 20), body(90, 5)];
     let k = 0;
-    const growth = measureHeapGrowth(() => {
-      for (const b of bodies) {
-        if (b.s0 === BALLISTIC_LANDED || k % 200 === 0) {
-          b.y = 10 + (k % 7);
-          setMover(b, ctx, MoverKind.Ballistic, 0.5, -1.25, 0.15, 3.5, 40, BallisticLand.Stop);
+    // A cheap loop, so a long warm-up (the helper's rule): with the default 1,000 calls the
+    // measured windows could still run before V8's background compile landed — 0.1–4 MB when
+    // the CPU was busy, where the optimised loop measures a few KB.
+    const growth = measureHeapGrowth(
+      () => {
+        for (const b of bodies) {
+          if (b.s0 === BALLISTIC_LANDED || k % 200 === 0) {
+            b.y = 10 + (k % 7);
+            setMover(b, ctx, MoverKind.Ballistic, 0.5, -1.25, 0.15, 3.5, 40, BallisticLand.Stop);
+          }
+          updateMover(b, ctx);
         }
-        updateMover(b, ctx);
-      }
-      k++;
-    }, 20_000);
+        k++;
+      },
+      20_000,
+      20_000,
+    );
     expect(growth.bytes).toBeLessThan(64 * 1024);
   });
 });

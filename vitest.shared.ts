@@ -2,9 +2,8 @@
  * Shared Vitest project settings for every workspace package and app.
  *
  * Each package's `vitest.config.ts` calls {@link defineShmupProject}; the root
- * `vitest.config.ts` lists all of them as Vitest *projects*, so `pnpm test:all`
- * runs the whole repo in one process while `pnpm test` (Turborepo) runs them
- * per package with caching.
+ * `vitest.config.ts` lists all of them as Vitest *projects*, so `pnpm test` runs the whole
+ * repo in one process with one shared worker pool, and `pnpm --filter <pkg> test` one package.
  *
  * @module
  */
@@ -17,10 +16,10 @@ export { SOURCE_CONDITION } from './vite.shared.js';
  * Default per-test timeout (ms) for every project: 30 s instead of Vitest's 5 s.
  *
  * @remarks
- * `pnpm test` runs every package's suite at once (Turborepo), so on a 4-vCPU CI runner a
- * CPU-bound test — a full atlas build, a headless stage run — can take ten times its local
- * time: the shell's 0.5 s atlas-name check hit 5.2 s in CI. A test that needs longer still
- * passes its own timeout as the last argument of `it`.
+ * On a 4-vCPU CI runner a CPU-bound test — a full atlas build, a headless stage run — can take
+ * many times its local time: the shell's 0.5 s atlas-name check hit 5.2 s in CI when `pnpm test`
+ * still ran every package's suite at once (Turborepo). A test that needs longer still passes its
+ * own timeout as the last argument of `it`.
  */
 export const TEST_TIMEOUT_MS = 30_000;
 

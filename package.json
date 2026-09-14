@@ -23,7 +23,7 @@
     "typecheck:root": "tsc -p tsconfig.json && tsc -p test/tsconfig.json",
     "lint": "turbo run lint lint:root",
     "lint:root": "eslint --max-warnings=0 --ignore-pattern \"packages/**\" --ignore-pattern \"apps/**\" .",
-    "test": "turbo run test test:integration",
+    "test": "vitest run",
     "test:integration": "vitest run --project integration",
     "content:check": "vitest run --project integration test/integration/content.test.ts",
     "content:tiled": "node scripts/content/tiled-import.mjs",
