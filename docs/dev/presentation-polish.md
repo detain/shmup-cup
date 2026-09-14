@@ -477,7 +477,9 @@ const refresh = createRefreshMonitor();
 
 ## Next steps that build on this page
 
-- **M2-09** — boss HP bars and other new HUD options follow the same display-option path.
+- **M2-09** (done) — the boss HP bar followed the display-option path (`display.bossHpBar`, the
+  BOSS HP row, `UserOptionKind.BossHpBar`), drawn by the core HUD from the saved value instead of
+  the renderer ([advanced-bosses.md](advanced-bosses.md#the-boss-hp-bar)).
 - **M2-11 … M2-14** — the zones use raster water (BRINE NEBULA), lava and glowing cores (MAGMA DEEP,
   CELL VAULT) through `raster` / `cycles` in their stage files.
 - **M2-16** — the remaining option groups (controls rebinding, game options).

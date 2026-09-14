@@ -244,7 +244,7 @@ bounding square:
 | `grid` | blue-grey `#7888b0` (translucent) | the broad-phase grid's cell lines (with `showGrid`) |
 | `items` | white | capsule radii |
 | `enemies` | red `#ff4848` | live, non-ghost enemy hurtboxes |
-| `boss` | orange `#ff9830` | boss parts that have a hurtbox and are not destroyed |
+| `boss` | orange `#ff9830` | boss parts that have a hurtbox and are not destroyed — since M2-09 of every boss slot (captains, both twins, an inner boss; 64 × 4 rects), a circle part as its bounding square |
 | `shots` | cyan `#48e0ff` | player-shot boxes (a laser's box spans its length) |
 | `lasers` | pink `#ff90c8` | active enemy lasers as 17 squares along the beam |
 | `bullets` | magenta `#ff50ff` | enemy bullet circles |
@@ -346,8 +346,9 @@ the replay contains them (a session recorded through `createReplayGame` has no k
 
 ## Golden replays (`test/golden/`)
 
-Twenty-one committed runs — seventeen of zone A, since M2-07 three of the `gimmick-range` dev
-stage and since M2-08 one of the `raster-range` dev stage — pin down what the simulation does (`test/golden/golden.ts` `GOLDEN_SCENARIOS`, recorded
+Twenty-five committed runs — seventeen of zone A, since M2-07 three of the `gimmick-range` dev
+stage, since M2-08 one of the `raster-range` dev stage and since M2-09 four of the advanced-boss
+dev stages — pin down what the simulation does (`test/golden/golden.ts` `GOLDEN_SCENARIOS`, recorded
 from the M1-18 playtest bots with the build id `'golden'`):
 
 | File | Who plays | Covers | Ends |
@@ -373,6 +374,10 @@ from the M1-18 playtest bots with the build id `'golden'`):
 | `gimmick-range-weaver.replay.json` (M2-07) | `weaverBot()`, god mode (seed 35) | the region trigger fired — the low branch — and a dozen bricks broken | `stageClear` after 2,906 ticks, 760 points |
 | `raster-range-god.replay.json` (M2-08) | 4-way bot, god mode, `stage: 'raster-range'` (seed 41) | the raster-effect dev stage to its end; `golden.test.ts` plays it back a second time on the stage with its `raster` / `cycles` stripped and every hash still matches — the effects are presentation only | `stageClear` after 3,630 ticks, 800 points, no deaths |
 | `gimmick-range-deaths.replay.json` (M2-07) | `weaverBot()`, the Arcade penalty (seed 33) | deaths on the gimmick range, checkpoint restarts rolling the terrain back | `gameOver` after 1,429 ticks (deaths at 238 / 782 / 1,336) |
+| `captain-range-god.replay.json` (M2-09) | 4-way bot, god mode, `stage: 'captain-range'` (seed 51) | the four captains flying in on the scrolling camera (only captains ever take a slot), the ram shot down; the stage runs to its `end` | `stageClear` after 6,415 ticks, 25,120 points, no deaths |
+| `raid-range-god.replay.json` (M2-09) | 4-way bot, god mode, full loadout, `stage: 'raid-range'` (seed 52) | IRON LEVIATHAN: the WARNING, the raid's boss-relative camera path, its death and the camera's return, LEVIATHAN HEART revealed by the blast (slot 1) and shot down, the camera handed back | `stageClear` after 3,591 ticks, 76,450 points, no deaths |
+| `raid-range-escape.replay.json` (M2-09) | 4-way bot, god mode, no power-ups (seed 52) | the boss timer: the battleship outlasts the bot and escapes after 5,400 fight ticks — `escaped`, `EndingFlag.BossEscaped`, no heart | `stageClear` after 6,325 ticks, 1,800 points, no boss killed |
+| `twin-range-god.replay.json` (M2-09) | 4-way bot, god mode, full loadout, `stage: 'twin-range'` (seed 53) | the EMBER and FROST twins taking turns, one down and the survivor enraged, both shot down | `stageClear` after 3,758 ticks, 36,650 points, no deaths |
 
 The 4-way bot survives zone A even at Arcade, which is why the death scenario uses a careless
 weaving pilot. The files were re-blessed on purpose by M2-01 (`b31fac5`): rank growth changes
@@ -422,6 +427,15 @@ added `raster-range-god` (the older files byte-identical; the name rule now allo
 `raster-range-*`) and `playGolden(replay, content?)` — `golden.test.ts` plays that run back on the
 stage with its `raster` / `cycles` stripped and every hash matches: the effects are presentation
 only.
+M2-09 re-blessed the twenty-one (`8cdc9eb`): the state-hash layout changed (four boss slots and
+their new fields, the part cooldown tables of 64 part slots, the rush state, the ending flags) and
+the new content shifts the sorted sprite and script ids — every replay's inputs, tick count and
+outcome stayed identical (only `hashes` / `finalHash` changed). Its test round added
+`captain-range-god`, `raid-range-god`, `raid-range-escape` and `twin-range-god` (`aba9a05`, the
+older files byte-identical; the name rule now allows `captain-range-*`, `raid-range-*`,
+`twin-range-*`), and `golden.test.ts` checks what each went through — which slots ran, escaped or
+enraged, the ending flags, the camera handed back
+([advanced-bosses.md](advanced-bosses.md#determinism-hashing-and-golden-replays)).
 Each file is an encoded replay plus the scenario's `description` and its
 `expected` outcome (status, ticks, player 1's score and lives, death ticks, boss killed — and for
 a co-op run player 2's score, lives, death ticks and continues).
@@ -584,7 +598,10 @@ testers in [../client/debug-tools.md](../client/debug-tools.md#the-m1-release-ch
 - **M2-08** (done) — `window.__shmupDebug.renderer`; golden replays re-blessed for two new
   content sprites, `raster-range-god` added and proven presentation-only
   ([presentation-polish.md](presentation-polish.md#determinism-hashing-and-golden-replays)).
-- **M2-09 … M2-14** — every simulation change re-blesses the golden replays in the same commit;
+- **M2-09** (done) — `hashWorld` mixes every boss slot, the raid camera, the boss rush and the
+  World's ending flags; the debug outlines cover every boss slot; golden replays re-blessed, four
+  advanced-boss scenarios added ([advanced-bosses.md](advanced-bosses.md)).
+- **M2-10 … M2-14** — every simulation change re-blesses the golden replays in the same commit;
   zones B–I add a golden replay each.
 - **M2-15** — attract mode plays bundled replays (and the scene flow gets recorded).
 - **M2-17** — the device info (model, firmware) in the debug overlay.

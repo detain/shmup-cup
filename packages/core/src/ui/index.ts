@@ -1842,11 +1842,19 @@ export class Hud {
    * save before every update). Default `false`.
    */
   showBossHp = false;
+  /** The World of the last build (a different one rebuilds). */
   private world: World | null = null;
+  /** The draw list of the last build (a different one rebuilds). */
   private list: DrawList | null = null;
+  /** The last build's highlight flash phase (-1 = none yet). */
   private flash = -1;
+  /** The last build's `PRESS START` blink phase (-1 = none yet). */
   private blink = -1;
-  /** The last build's boss HP bar fill (-1 = not drawn). */
+  /**
+   * The last build's boss HP bar fill in pixels (-1 = not drawn — the option is off or no boss is
+   * counted), so a hit that takes a pixel off the bar rebuilds the HUD and one that does not
+   * leaves it alone.
+   */
   private barFill = -1;
   /** The last build's per-player values ({@link HUD_PLAYER_FIELDS} per player). */
   private readonly shown = new Int32Array(2 * HUD_PLAYER_FIELDS);

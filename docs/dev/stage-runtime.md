@@ -6,8 +6,10 @@ it, the **stage runner** that moves the camera and fires the event timeline, inv
 the World, the renderer and the web app use all of it. Built in plan step **M1-07**; plan step
 **M2-07** added timed scroll stops (`hold`), diagonal pans (`yOver`), in-stage branches and region
 triggers, moving blocks inside the terrain queries, destructible tiles and a Tiled importer —
-their whole story is [advanced-stages.md](advanced-stages.md); this page keeps the runner-level
-facts current.
+their whole story is [advanced-stages.md](advanced-stages.md); plan step **M2-09** let the camera
+**follow a target** (a battleship raid's boss-relative camera path —
+[advanced-bosses.md](advanced-bosses.md#battleship-raids)) and added the `bossRush` stage type.
+This page keeps the runner-level facts current.
 
 This page is the *how and why*. Exact signatures are in
 [api-reference.md](api-reference.md#stage--stage-runtime); the TSDoc in
@@ -59,7 +61,9 @@ since M2-05, the optional `directItems` (the Direct-mode item plan — the runne
 and, since M2-08, the optional presentation lists `raster` (per-scanline offsets of a background or
 the terrain: wave, haze, line-band floor) and `cycles` (palette cycling) — the runner never reads
 them either; `createWorld` hands them to the renderer as `view.effects`
-([presentation-polish.md](presentation-polish.md#stage-data-coredata)).
+([presentation-polish.md](presentation-polish.md#stage-data-coredata)) — and, since M2-09, the
+optional `type` (`normal` / `bossRush`) and `rush` (the bosses of a boss rush, run by
+`core/bosses` — [advanced-bosses.md](advanced-bosses.md#boss-rushes)).
 The annotated format is in [`content/stages/README.md`](../../content/stages/README.md).
 
 `loadContent()` does three things beyond the schema (see
@@ -72,7 +76,9 @@ The annotated format is in [`content/stages/README.md`](../../content/stages/REA
    `yTicks`, `hold` not on a lock key, unique branch ids and events naming known branches, at
    most 32 triggers each with `until ≥ x`, and `block` events on the tile grid (≤ 64 tiles) in a
    stage with a tilemap. Since M2-08 the raster effects' and palette cycles' ranges, required
-   fields and colours (`checkStageEffects`). Every problem of one file is reported in one load; a
+   fields and colours (`checkStageEffects`). Since M2-09 the stage type and boss rush
+(`checkStageRush`: a `bossRush` stage needs a `rush` and has no `end` event, a `normal` one has
+no `rush`). Every problem of one file is reported in one load; a
    stage with any of them is skipped.
 2. **Flag numbering.** The distinct flag names of a stage — of `flag` and (M2-07) `trigger`
    events and of `branches` — are sorted into `stage.flagNames`; each gets `flagId` = its index
@@ -170,8 +176,11 @@ runner.restartAt(runner.checkpoint); // back to the last checkpoint passed
 3. **Move.** `dx = speed` (0 while locked or holding), clamped so the camera stops exactly at
    the first pending stop key (a lock or, since M2-07, a hold) — even when other keys lie before
    it within this tick's movement — and never passes `length`; a diagonal pan (`yOver`) sets y
-   from the new x. `camera.dx` / `vx` = `dx`, `camera.dy` / `vy` = the pan step.
-4. **Events.** Fire, in order, every event with `x ≤ camera.x`, exactly once; the runner
+   from the new x. `camera.dx` / `vx` = `dx`, `camera.dy` / `vy` = the pan step. While the
+   runner **follows a target** (M2-09) `dx` is `target.x − camera.x` (still capped by `length`)
+   and y is `target.y` — [below](#following-a-target-m2-09).
+4. **Events.** Fire, in order, every event with `x ≤ camera.x` (while following, `x ≤` the x
+   where the follow began), exactly once; the runner
    applies its own part (`speed`, `flag`, `end`, M2-07 `trigger` arming) and then calls
    `hooks.event(code, event, index)`. Several events may fire on one tick. An event whose branch
    is not taken is passed by (neither part runs). Then armed triggers the camera has passed
@@ -225,6 +234,38 @@ event fires — [bosses-and-warning.md](bosses-and-warning.md#the-brake)):
 
 The brake's state is three appended slots (`Braking`, `ResumeSpeed`, `BrakeRamp`), so it is
 hashed and replayed like the rest of the runner.
+
+### Following a target (M2-09)
+
+A battleship raid is bigger than the screen, so the camera has to fly around the boss rather
+than scroll past it. `runner.follow(target)` hands the camera to a **`StageCameraTarget`**
+(`{ x, y }` — the view's top-left corner in world pixels; `core/bosses` owns one, the
+`RaidCamera`, and writes it in phase 3 before the runner ticks):
+
+- **Step 3** puts the camera on the target: `dx = target.x − camera.x` (capped so x never passes
+  `length`), `y = target.y`, and records `dx` / `dy` as usual — so the ships, their shots and the
+  bullets ride along exactly as with scrolling. The speed, the ramp, pans and stop keys wait
+  (their slots keep their values). The boss system brakes to a lock first (`brake(0)`), so after
+  the follow the camera stays put until the encounter's `unlock()`.
+- **The timeline waits.** `follow(target)` records the camera x of that moment (`followX`,
+  a private field); while following, camera keys (step 1), events (step 4), trigger disarms and
+  checkpoints (step 5) go no further than `min(camera.x, followX)`. A pan beyond the boss
+  therefore never fires the stage's `end` (which would clear the stage mid-fight), never spends
+  the spawns and keys past the boss, and never moves the checkpoint on. Re-targeting while
+  following keeps the original x. A pan to the left of it changes nothing.
+- **`follow(null)`** hands the camera back: scrolling resumes from where the camera is. The
+  owner brings it back to `followX` first (a raid's return lands exactly there), and the
+  timeline carries on from that x; a camera handed back further on catches up with every key and
+  event on the next tick. `follow(null)` without a target is ignored.
+- A restart (`restartAt`, `jumpTo`) forgets the target. `following` tells whether one is set.
+- The target is **not** in `runner.state` — its owner hashes it (`mixBosses` hashes the raid
+  camera), and `followX` is the (hashed) camera x of the tick the follow began. `tick()` only
+  reads the target's fields; nothing allocates.
+
+Tests: `packages/core/test/stage/stage-follow.test.ts` (the camera on the target with its step,
+the held timeline — `end`, spawns, keys, checkpoints —, catching up, handing back, restarts) and
+`stage-follow-edge.test.ts` (triggers held armed, a `yOver` pan yielding to the target, a pan
+left of the start, a follow after a checkpoint restart, `follow(null)` alone).
 
 ### The event timeline
 
@@ -447,6 +488,15 @@ the raster effects and palette cycles: a waving, colour-cycling sea band, a line
 floor and a heat haze over the stars between camera x 1,200 and 2,400, with a few test-range
 formations — `?stage=raster-range`
 ([presentation-polish.md](presentation-polish.md#content-and-assets)).
+The advanced-boss ranges of M2-09 are open-space stages at speed 1 with three capsule carriers
+at the start: `captain-range.stage.json` (CAPTAIN RANGE, 6,400 px — the four captains come with
+`boss` events at x 300, 1,600, 3,000 and 4,400 while the camera scrolls on, `end` at 6,400),
+`raid-range.stage.json` (RAID RANGE, 2,400 px — the `warning` for IRON LEVIATHAN at x 400; its
+`end` at 2,400 lies inside the raid's pan and waits for the fight), `twin-range.stage.json`
+(TWIN RANGE, 1,800 px — the twins' `warning` at 400) and `gauntlet-range.stage.json` (GAUNTLET
+RANGE, the first **`bossRush`** stage: no `end` event, a `rush` of TRIAL WARDEN, LEVIATHAN HEART
+and the twins) — `?stage=<id>`
+([advanced-bosses.md](advanced-bosses.md)).
 
 Headless:
 
@@ -552,4 +602,7 @@ world.stage!.restartAt(1); // back to x 1500: speed, pan and flags as live play 
 - **M2-08** (done) — the stage's presentation lists `raster` and `cycles` (raster effects and
   palette cycles, never read by the runner) and the `raster-range` dev stage
   ([presentation-polish.md](presentation-polish.md)).
-- **M2-09 / M2-10** — raid camera segments; bonus stages and the zone map.
+- **M2-09** (done) — `follow(target)` for a battleship raid's camera path with the timeline held
+  where the follow began; the `bossRush` stage type and its `rush` list (run by `core/bosses`)
+  ([advanced-bosses.md](advanced-bosses.md)).
+- **M2-10** — bonus stages and the zone map.

@@ -230,6 +230,7 @@ Details: [sim-world.md](sim-world.md), [stage-runtime.md](stage-runtime.md),
 [powerups-and-shields.md](powerups-and-shields.md),
 [death-and-scoring.md](death-and-scoring.md),
 [bosses-and-warning.md](bosses-and-warning.md),
+[advanced-bosses.md](advanced-bosses.md),
 [difficulty-and-rank.md](difficulty-and-rank.md),
 [pattern-dsl.md](pattern-dsl.md).
 
@@ -332,7 +333,15 @@ system, status,
   the **WARNING** (status `bossWarning`, the camera braking into a lock, siren / dim / flash /
   music events, the game's own text in `view.warning`), then the invulnerable fly-in; the
   **death sequence** cancels bullets, chains explosions (cosmetic RNG), ends in a final blast
-  with hit-stop, the score tally and `stageClear`, and releases the lock.
+  with hit-stop, the score tally and `stageClear`, and releases the lock. Since M2-09
+  (`implemented`) the system has **four boss slots** and the Darius-style variety: turned parts
+  (binary-angle transforms from the sine table, circle hurtboxes, heading frames — sprites are never
+  rotated), **captains** (mid-bosses riding the scrolling camera, a short death, no stage clear),
+  **battleship raids** anchored in the world while the stage runner's camera follows their
+  boss-relative segments (`StageRunner.follow`; the timeline waits), a **boss inside a boss**,
+  **double bosses** (turns — the resting half drawn behind —, the survivor's enrage), **time
+  limits** (an escape, `World.endingFlags`), the **HP bar's** model and **boss-rush** stages
+  ([advanced-bosses.md](advanced-bosses.md)).
 - **`player`** — KESTREL movement from `content/player/`: speed levels (D3), diagonals × 0.7071
   (D4), no inertia, riding the camera scroll, clamped to the camera view minus margins,
   banking, a 40-tick fly-in; `playerHit` records hits (terrain contact since M1-07, enemy
@@ -643,21 +652,23 @@ a matching `test/<module>/` folder, and spec references that point at real numbe
 sections of `shmup_feat.md` / `shmup_tech.md`.
 
 Implemented or partial today: core `platform`, `input`, `config` (partial: `GameConfig` with the difficulty
-presets since M2-01 and, since M1-17, the `UserOptions` — display options later), `loop`, `game`,
+presets since M2-01 and, since M1-17, the `UserOptions` — the display options of M2-02 / M2-08 /
+M2-09 included; the rest in M2-16), `loop`, `game`,
 `presentation`, `rng`, `math`, `events`, `pools`, `save` (M1-17), `data` (partial: `rules` since M2-01, `patterns` since M2-02 —
 `campaign` and `strings` are missing), `world`, `stage`, `player` (implemented for P0 since
 M1-12; co-op joining lives in `world` since M2-06), `collision` (implemented with M2-07: moving blocks and destructible tiles — the bending lasers' circle chains live in `bullets`), `debug` (M1-19: state hash, switches, controls,
 counters, the stage skip and checkpoint jumps), `replay` (M1-19), `enemies` (partial: rank modifiers and revenge bullets since M2-01, the Option Hunter and
 the blue capsule's clear since M2-04), `patterns` (implemented with M2-02: runner, movers, fire primitives and the pattern DSL),
-`behaviors` (partial: the M1 enemy and boss rosters, `pattern.loop`, `hunter.option`, `cube.pincer`, the six stage gimmicks of M2-07), `bosses` (partial: the P0 mechanics —
-timers, escapes, the HP bar, mid-bosses and raids with M2-09), `bullets` (implemented: bending lasers and cancel
+`behaviors` (partial: the M1 enemy and boss rosters, `pattern.loop`, `hunter.option`, `cube.pincer`, the six stage gimmicks of M2-07), `bosses` (implemented with M2-09: the P0
+mechanics plus four slots, turned parts, captains, raids, double and inner bosses, timers, the HP
+bar's model and boss rushes), `bullets` (implemented: bending lasers and cancel
 into points since M2-02 — graze is P2), `rank` (implemented with M2-01: growth, power terms, per-enemy sensitivity), `weapons`
 (implemented: Types A–D and Weapon Edit with M2-03, the Direct-mode families with M2-05), `options` (implemented with M2-04: trail, Snake, Formation, Rotate — recovery after death in M3),
 `powerups` (implemented with M2-05: meter mode, the `!` / `?` choices since M2-03, the blue capsule and freed Options since M2-04, Direct mode's items, plan and Speed toggle), `shields` (implemented: the meter shields with M2-04, the Arm with M2-05), `scoring` (partial:
 scores, the session hi-score, extends and the continue digit — per player, co-op included, since M2-06), `fx` (partial: the
 hit-stop / shake / flash requests — slowdown later), `ui` (partial: the list menu, slider,
-toggle, choice and confirm widgets, builders and the HUD with the Direct-mode tier pips since M2-05 and the co-op halves since M2-06 —
-rebind prompt, name entry and the boss HP bar later), `scenes` (partial: the scene stack, the M1 flow, the Options screen, the difficulty
+toggle, choice and confirm widgets, builders and the HUD with the Direct-mode tier pips since M2-05, the co-op halves since M2-06
+and the boss HP bar since M2-09 — rebind prompt and name entry later), `scenes` (partial: the scene stack, the M1 flow, the Options screen, the difficulty
 menu and the continue countdown, the weapon select with its live preview and the Auto order editor
 (M2-03; its OPTION row M2-04), the ship select (M2-05), 1 PLAYER / 2 PLAYERS and the co-op rules (M2-06) — the other M2 screens later);
 input-web `keymap`, `keyboard`, `gamepad`, `web-input` (implemented with M2-06's seats), `remote`, `rebind`
@@ -692,7 +703,7 @@ plugins in `vite.shared.ts`) has no `moduleInfo`; it is covered by the tests und
 | A game action | Append a bit to `Action` (never renumber — masks are recorded in replays), add it to `ACTION_NAMES`, the shipped input profiles and the built-in bindings in `input-web/keymap` / `gamepad` |
 | An enemy, a path, a behaviour or a mover | Enemies and paths are JSON (`content/enemies/`, `content/paths/`); a behaviour is a `defineBehavior` coroutine added to `DEFAULT_BEHAVIOR_DEFS`; a mover a new `MoverKind` — [enemies-and-behaviors.md](enemies-and-behaviors.md#extending-it) |
 | A zone (a stage with its roster and boss) | JSON under `content/stages/`, `content/enemies/`, `content/paths/`; `pnpm content:check`; a playtest run with the 4-way bot (`test/playtest/`) and its design-rule checks — [zone-a-and-playtest.md](zone-a-and-playtest.md#extending-it) |
-| A boss or a boss behaviour | A boss is an `enemies` entry with a `boss` section (parts, weak points, phases) started by a stage `warning` event; a boss behaviour is a `defineBossBehavior` coroutine added to `DEFAULT_BOSS_BEHAVIOR_DEFS` — [bosses-and-warning.md](bosses-and-warning.md#extending-it) |
+| A boss or a boss behaviour | A boss is an `enemies` entry with a `boss` section (parts, weak points, phases) started by a stage `warning` event; a boss behaviour is a `defineBossBehavior` coroutine added to `DEFAULT_BOSS_BEHAVIOR_DEFS` — [bosses-and-warning.md](bosses-and-warning.md#extending-it); a captain, raid, double / inner boss, time limit or boss rush is data (M2-09) — [advanced-bosses.md](advanced-bosses.md#extending-it) |
 | An item kind, a meter slot rule or a shield kind | `ITEM_KINDS` / `ItemKind` (appended), the meter's `canEquipSlot` / `equipSlot` and Auto Power-Up rules, a `ShieldSpec` in `SHIELD_SPECS` — [powerups-and-shields.md](powerups-and-shields.md#extending-it); a Direct-mode colour item or plan — [direct-mode.md](direct-mode.md#extending-it) |
 | A player ship | A `content/player/` entry with its `mode` (`meter` / `direct`) and sprite — the ship select lists it ([direct-mode.md](direct-mode.md#extending-it)); the pipeline derives player 2's `<sprite>@p2` palette swap for every `ships/*` sprite ([coop.md](coop.md#player-2s-palette-swap)) |
 | A co-op rule (a join button, a leave, more players) | [coop.md](coop.md#extending-it) — anything that changes the sim must come through recorded input |

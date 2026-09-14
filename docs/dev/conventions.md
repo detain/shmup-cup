@@ -223,6 +223,15 @@ ES5 and linted with `ecmaVersion: 5`.
   `blendMode`) is set only at a range edge — or never, with one sprite per blend mode — and a
   data texture is re-uploaded only when its bytes changed
   ([presentation-polish.md](presentation-polish.md#zero-allocation-and-the-hot-path-rules)).
+  And from M2-09: a trig lookup done per part per tick reads a module-level `Float64Array` copy of
+  the committed sine table by whole index (a `sinB` call passes and returns fractions); cold script
+  code (a behaviour between yields runs in V8's lower tiers, which box every double they compute)
+  reads snapshots the hot phase already took (`BossPart.inView`) and hands fractional work to a
+  hot routine that owns it (`aimPart` → the bullet system's `aimFrom`), moving only whole numbers
+  itself; a camera target another system writes every tick is a class with plain fields
+  (`RaidCamera`), read, never copied; and a sprite that must show a direction uses heading
+  frames, never Pixi's rotation setter
+  ([advanced-bosses.md](advanced-bosses.md#zero-allocation-and-the-hot-path-rules)).
 - Behaviour coroutines (generators, D29) allocate a small result object on every resume:
   scripts **sleep** (`yield ticks`) and are resumed only when they wake; per-tick motion
   belongs in a mover (numbers on the body), never in a `yield 1` loop.

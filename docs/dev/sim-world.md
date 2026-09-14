@@ -100,9 +100,10 @@ event queue (`WorldOptions.events`) — [scenes-and-ui.md](scenes-and-ui.md#worl
 | `weapons` | The `WeaponSystem` (M1-10): the `playerShots` pool (96), one `Loadout` (`config.loadout` applied at creation) and one `OptionGroup` per player, autofire timers, the hit list, the player-shot and Option batches; since M2-03 the config's arsenal (`weaponPreset` / `weaponEdit` → `roleWeapons` — a bad Weapon Edit makes `createWorld` throw `RangeError`) and each player's Free Way direction ([weapons-and-options.md](weapons-and-options.md), [meter-arsenal.md](meter-arsenal.md)) |
 | `powerups` | The `PowerUpSystem` (M1-11): one `PowerMeter` per player, the `items` pool (32 capsules), pending Mega Crashes, the tick's pickup outcomes, the item and shield batches; the shields themselves live on the ships (`PlayerShip.shield`) ([powerups-and-shields.md](powerups-and-shields.md)) |
 | `scoring` | The `ScoringSystem` (M1-12): `board.scores[p]` (`score`, `displayDirty`; `nextExtend`, `extendsEarned`, `continues` since M2-01), the session `hiScore`, the credit counters ([death-and-scoring.md](death-and-scoring.md#score-corescoring)) |
-| `bosses`, `laserSources` | The `BossSystem` (M1-13): one boss slot with 16 parts, the WARNING (`view.warning`), the parts' batch; every laser source by id — the 64 enemies, then the 16 parts — so lasers can stay attached to either; `createWorld(config, content, { bossBehaviors })` swaps the boss roster ([bosses-and-warning.md](bosses-and-warning.md)) |
+| `bosses`, `laserSources` | The `BossSystem` (M1-13): one boss slot with 16 parts in M1, **four slots** since M2-09 (captains, double and inner bosses — `bosses.slots`), the WARNING (`view.warning`), the parts' batch and (M2-09) the resting half's `backBatch`, the HP bar model, the raid camera target and the stage's boss rush; every laser source by id — the 64 enemies, then every slot's part slots (16 in M1, 64 since M2-09) — so lasers can stay attached to either; `createWorld(config, content, { bossBehaviors })` swaps the boss roster ([bosses-and-warning.md](bosses-and-warning.md), [advanced-bosses.md](advanced-bosses.md)) |
+| `endingFlags` | M2-09 (hashed): `core/bosses` `EndingFlag` bits — `BossEscaped` when a stage boss escaped after its time limit; the campaign (M2-10) carries them between zones for the ending selection ([advanced-bosses.md](advanced-bosses.md#timers-and-escapes)) |
 | `enemies` | The `EnemySystem` (M1-08): 64 enemy slots, the formation table, the tick's kill / drop outcomes, the ground / air sprite batches (and since M2-04 the carried-Options batch of the Option Hunters) — spawned by the stage's `spawn` / `formation` events ([enemies-and-behaviors.md](enemies-and-behaviors.md)); `createWorld(config, content, { behaviors })` swaps the behaviour registry in tests |
-| `status` | `WorldStatus`: `'playing'` \| `'bossWarning'` \| `'stageClear'` \| `'gameOver'` (`'stageClear'` once a stage's `end` event fired; `'gameOver'` once every active ship is out — M1-12, from `playing` / `bossWarning` only; `'bossWarning'` for the 180 ticks of a boss WARNING — M1-13, from `playing` only, back to `playing` when the boss enters; the boss's death sequence also ends in `'stageClear'`) |
+| `status` | `WorldStatus`: `'playing'` \| `'bossWarning'` \| `'stageClear'` \| `'gameOver'` (`'stageClear'` once a stage's `end` event fired; `'gameOver'` once every active ship is out — M1-12, from `playing` / `bossWarning` only; `'bossWarning'` for the 180 ticks of a boss WARNING — M1-13, from `playing` only, back to `playing` when the boss enters; the boss's death sequence also ends in `'stageClear'` — since M2-09 the last stage boss's death or escape, or a boss rush's last entry; captains never) |
 | `hitStop` | Remaining hit-stop ticks — raised by `core/fx` `requestHitStop` (the player's death since M1-12) |
 | `fx` | `FxState` (M1-12): the shake and flash timers and `frozen` (this tick started frozen) — [death-and-scoring.md](death-and-scoring.md#game-feel-corefx) |
 | `debugFlags` | The session's debug switches (`WorldOptions.debugFlags` — `createGame` passes `game.debug`, a World alone gets `createDebugFlags()`): `godMode` (read by `playerHit` — the only one that changes a tick), `showHitboxes`, `showGrid`, `frameAdvance`, `slowMo`, `overlay` (M1-19 — [debug-and-replays.md](debug-and-replays.md)) |
@@ -166,7 +167,7 @@ restart (`clearAll`). A pool that is not registered is never flushed or hashed.
 
 `world.view` is created once — `{ camera, parallax, terrain, batches: [groundEnemies,
 airEnemies, playerShots, options, playerBatch, enemyBullets, shields, items, cancelPoints,
-bossParts, carriedOptions, chains, blocks?], lasers, bendingLasers, warning, effects, hitboxes }` (the point items' batch and
+restingBossParts, bossParts, carriedOptions, chains, blocks?], lasers, bendingLasers, warning, effects, hitboxes }` (the point items' batch and
 `bendingLasers` since M2-02 — both the bullet system's; the carried Options since M2-04 — the
 enemy system's `carriedBatch`, `LayerId.AirEnemies`, appended so the grey Options draw over
 the enemies; since M2-07 the stage gimmicks' chain links, `LayerId.GroundEnemies`, and — only on a
@@ -179,7 +180,9 @@ enemy system (M1-08), the player-shot batch (`LayerId.PlayerShots`) and the Opti
 `LaserView`) to the bullet system (M1-09), the shields' batch (`LayerId.Player`, listed after
 the ships so the Force Field draws over them) and the items' batch (`LayerId.Items`) to the
 power-up system (M1-11), and the boss parts' batch (`LayerId.AirEnemies`, appended last so the
-parts draw over the air enemies) and `warning` (the `WarningView`) to the boss system (M1-13) —
+parts draw over the air enemies — since M2-09 every slot's parts, with the resting half of a
+double boss in `bosses.backBatch`, `LayerId.GroundEnemies`, right before it) and `warning` (the
+`WarningView`) to the boss system (M1-13) —
 and keeps its identity
 forever, so the renderer binds it once. Phase 9 (and `createWorld` itself, so the first frame
 already shows the ship) scrolls the parallax bands with the camera, refills the enemy batches
@@ -406,9 +409,13 @@ little-endian IEEE-754 double bytes (so the hash is the same on every engine):
 13. the boss (M1-13): its state, spec index, position (world and playfield), state and phase
     timers, phase, script present + `wakeTick`, motion and its parameters, destroyed mask,
     killer, blast flag, part count, and per part its offset, position, hit points, destroyed /
-    open flags and hit flash; then the WARNING's `active` and `ticks`. (The piercing shots'
-    boss-part cooldown tables join their enemy tables in step 10; the stage brake's slots are in
-    step 4.)
+    open flags and hit flash; then the WARNING's `active` and `ticks`. Since M2-09 this runs for
+    every boss slot (an empty slot contributes its state only) with the new fields — role,
+    anchor, intro start, fight clock and escape, `afterMove`, orbit, the pair, the raid state, the
+    rush entry, and each part's angle and spin — and ends with the raid camera target, the boss
+    rush's index and delay and `world.endingFlags`. (The piercing shots' boss-part cooldown tables
+    — 64 part slots each since M2-09 — join their enemy tables in step 10; the stage brake's
+    slots are in step 4.)
 14. the stage gimmicks (M2-07, `mixGimmicks`): the destructible terrain (`0`, or `1` + `count`,
     `resets`, `destroyed`, the change ring and every tracked entry's state, cell, tile, damage and
     timer), the moving blocks (`0`, or `1` + per slot its event and, in use, its age and

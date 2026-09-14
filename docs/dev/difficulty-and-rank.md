@@ -463,7 +463,7 @@ ship's.
 
 - **M2-02** (done) — the pattern DSL reads `$rank` and `$loop` and scales like the primitives;
   cancel points and the `rules` kind's `scoring` section. Revenge bullets still use their three
-  built-in patterns — DSL revenge patterns are M2-09 material ([pattern-dsl.md](pattern-dsl.md)).
+  built-in patterns — DSL revenge patterns are still planned (not part of M2-09; with the zones of M2-11 … M2-14 — [pattern-dsl.md](pattern-dsl.md)).
 - **M2-03** (done) — the weapon select after the difficulty menu (one more OK to start; the
   loadout applied on top of every difficulty's config with `withArsenal`). The rank's power term
   counts roles, not weapons, so a Type B–D ship with the same meter levels has the same rank; of

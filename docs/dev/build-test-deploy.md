@@ -221,8 +221,9 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   `pnpm exec vitest run --project integration test/playtest --reporter=verbose` prints the runs —
   see [zone-a-and-playtest.md](zone-a-and-playtest.md#the-playtest-testplaytest).
 - **Golden replays** (M1-19, plan §1.3): `test/golden/golden.test.ts` plays the committed
-  replays — twenty-one since M2-08: seventeen of zone A, three of the `gimmick-range` dev stage,
-  one of the `raster-range` dev stage (`test/golden/*.replay.json`) — back and requires every state hash and the
+  replays — twenty-five since M2-09: seventeen of zone A, three of the `gimmick-range` dev stage,
+  one of the `raster-range` dev stage, four of the advanced-boss dev stages (`captain-range`,
+  `raid-range` twice, `twin-range`) (`test/golden/*.replay.json`) — back and requires every state hash and the
   recorded outcome to match — part of `pnpm test` (the `integration` project). A failure means
   the simulation changed; re-bless an intended change with `pnpm golden:update` and say why in
   the commit message ([debug-and-replays.md](debug-and-replays.md#golden-replays-testgolden)).
@@ -292,7 +293,11 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   in-range heat haze within 12 draw calls, `stretch` fills what `integer` letterboxes and the
   hitbox markers show only while on (`raster.spec.ts`, M2-08), and OPTIONS → SCALE / SHAKE /
   FLASHES / HITBOX apply live, are saved on Back and applied at the next boot on both builds
-  (`display-options.spec.ts`, M2-08). The gameplay specs
+  (`display-options.spec.ts`, M2-08), and the advanced bosses: IRON LEVIATHAN's hull across the
+  whole playfield and the camera panning round it, `BOSS` and the red HP bar in zone A's HUD with
+  the saved option, a captain fighting while the camera scrolls, and the twins on the Tizen build
+  from `file://` — the resting one on the back layer, the swap at the turn
+  (`advanced-bosses.spec.ts`, M2-09). The gameplay specs
   open `?scene=flight` (bare gameplay, open space unless `?stage=` names a stage) since M1-16;
   specs comparing captures a set number of ticks apart freeze the sim and step exact ticks
   (`test/e2e/frame-advance.ts`, M1-19) instead of counting rAF frames. Since M1-19 the suite runs
@@ -306,8 +311,11 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   blue capsule — M2-04, [options-shields-hunter.md](options-shields-hunter.md) —, or
   `direct-range` for the Direct mode's carriers — pick the MANTA in the ship select, M2-05,
   [direct-mode.md](direct-mode.md) —, `gimmick-range` for the advanced stage systems — M2-07,
-  [advanced-stages.md](advanced-stages.md) —, or `raster-range` for the raster effects and palette
-  cycles — M2-08, [presentation-polish.md](presentation-polish.md) — see
+  [advanced-stages.md](advanced-stages.md) —, `raster-range` for the raster effects and palette
+  cycles — M2-08, [presentation-polish.md](presentation-polish.md) —, or `captain-range`,
+  `raid-range`, `twin-range` and `gauntlet-range` for the captains, the battleship raid with its
+  inner boss and time limit, the double boss and a boss rush — M2-09,
+  [advanced-bosses.md](advanced-bosses.md) — see
   [stage-runtime.md](stage-runtime.md#running-a-stage) and
   [bosses-and-warning.md](bosses-and-warning.md#the-test-boss-and-stagetest-boss)), `?skip=boss`
   (the debug stage skip: every game starts about two seconds before the stage's WARNING — M1-18,

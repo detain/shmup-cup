@@ -7,11 +7,12 @@
  * particles, lasers, items), rank, gameplay RNG calls, the state hash taken every 60 ticks, the
  * WebGL version, boot ms, the build id, the active debug switches and a **frame graph** of the
  * last 60 frame times (hitches stand out in yellow / red); and the **outlines**: the ships' hurt
- * circles and terrain boxes, enemy and boss-part hurtboxes, player-shot boxes, enemy bullet
- * circles, item radii, active laser capsules and the broad-phase grid's cells. Both are sets of
- * core `DrawList`s ({@link buildDebugPanel}, {@link buildDebugOutlines} — pure, testable builders)
- * drawn through the `ui` module's quad pools, so the overlay needs no Pixi `Graphics`. Created
- * only by dev / test builds (the shell's debug tools), so a release bundle carries none of it.
+ * circles and terrain boxes, enemy and boss-part hurtboxes (every boss slot's — M2-09),
+ * player-shot boxes, enemy bullet circles, item radii, active laser capsules and the broad-phase
+ * grid's cells. Both are sets of core `DrawList`s ({@link buildDebugPanel},
+ * {@link buildDebugOutlines} — pure, testable builders) drawn through the `ui` module's quad
+ * pools, so the overlay needs no Pixi `Graphics`. Created only by dev / test builds (the shell's
+ * debug tools), so a release bundle carries none of it.
  *
  * **One colour per list.** Pixi's `tint` setter allocates, and a quad pool re-tints its quads
  * whenever the items it draws shift (a bullet leaves the view, a number gains a digit). So every
@@ -121,7 +122,10 @@ export interface DebugOutlineLists {
   readonly items: DrawList;
   /** Enemy hurtboxes. */
   readonly enemies: DrawList;
-  /** Boss-part hurtboxes. */
+  /**
+   * Boss-part hurtboxes: every boss slot's parts in use (M2-09 — up to 4 × 16; a circle part as its
+   * bounding square).
+   */
   readonly boss: DrawList;
   /** Player-shot boxes. */
   readonly shots: DrawList;
@@ -683,7 +687,8 @@ function outline(list: DrawList, color: number): void {
 /**
  * Rebuilds the outline lists from a World: with `flags.showHitboxes` the ships' hurt circles
  * (scaled by `shield.hurtScale`, so Reduce's smaller hurtbox shows — M2-04) and terrain boxes
- * (never scaled), enemy and boss-part hurtboxes, player-shot boxes (a laser shot spans its length),
+ * (never scaled), enemy and boss-part hurtboxes (the parts of every boss slot in use — M2-09),
+ * player-shot boxes (a laser shot spans its length),
  * bullet circles, item radii and active laser capsules (17 squares along each beam); with
  * `flags.showGrid` the broad-phase grid's cell lines. Clears every list first; never allocates.
  *

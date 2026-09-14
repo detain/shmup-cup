@@ -271,7 +271,8 @@ function* pattern(api, p): Script {          // tunables: restTicks 60, heading 
 ```
 
 It sets no mover — the enemy moves with its spec's `mover`. Boss behaviours and revenge bullets do
-not run DSL patterns yet (M2-09), and no DSL node fires a laser.
+not run DSL patterns yet (M2-09's advanced bosses did not need them — the zones' bosses may), and
+no DSL node fires a laser.
 
 ## Shipped content
 
@@ -387,7 +388,7 @@ defineBehavior('sentry.burst', { every: 120 }, function* burst(api, p): Script {
 | A variable | An `ExprOp` code, an entry in `VARIABLES`, its push in `evalExpr` (reading hashed World state only, never allocating); a `PatternHost` field if it needs one |
 | A node | A schema branch in `NODE` (dsl.ts), a `PatternOp` code (append — codes are data in the bank), its layout in the module docs, `PatternCompiler.node` / a helper, a case in `PatternVmImpl.exec` (numbers only), the README's node table, tests in `patterns-dsl*` / `patterns-vm*` |
 | Runner state | A typed array in `PatternVmImpl` (and `PatternRunners`), reset in `reset`, mixed in `core/debug` `mixPatternRunners` |
-| DSL-fired lasers / boss patterns | Planned: boss behaviours and revenge bullets running DSL patterns belong to M2-09; a `laser` / `bend` node would call `BulletSystem.fireLaser` / `fireBendingLaser` from `exec` |
+| DSL-fired lasers / boss patterns | Planned: boss behaviours and revenge bullets running DSL patterns (not part of M2-09 — with the zones' bosses of M2-11 … M2-14); a `laser` / `bend` node would call `BulletSystem.fireLaser` / `fireBendingLaser` from `exec` |
 
 ## Tests
 
@@ -430,8 +431,10 @@ The bending laser, cancel point and palette suites are listed on their home page
 
 - **M2-03 … M2-08** — new enemies of the later zones can be written as `pattern.loop` patterns
   instead of TS behaviours; the boss HP bar and raster effects do not touch the DSL.
-- **M2-09** (advanced bosses) — boss behaviours and revenge bullets running DSL patterns,
-  DSL-fired lasers and bending lasers in the boss roster.
+- **M2-09** (done — advanced bosses: captains, raids, double / inner bosses, timers, the HP bar,
+  boss rushes — [advanced-bosses.md](advanced-bosses.md)) added TS boss behaviours only; boss
+  behaviours and revenge bullets running DSL patterns, DSL-fired lasers and bending lasers in the
+  boss roster move to the zones' bosses (M2-11 … M2-14).
 - **M2-11 … M2-14** (zones B–I) — the first shipped enemies and bosses built on the DSL, the
   bending lasers and the colour-blind palettes' real-art variants (a PNG override of a bullet
   sprite needs its own `@<palette>` variants).

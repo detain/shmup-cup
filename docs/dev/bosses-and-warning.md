@@ -7,11 +7,14 @@ HP, destroyed parts or time, contact with the ships — the **WARNING** that bra
 a scroll lock before the boss flies in, the **death sequence** (bullet cancel, chained
 explosions, final blast with hit-stop, score tally, `stageClear`), the **boss behaviours** of
 `core/behaviors`, and how the World, the weapons, the stage runner and the flight scene take
-part. Built in plan step **M1-13**; `core/bosses` is `partial` (the P0 mechanics — timers,
-escapes, the HP bar, mid-bosses and raids are M2-09).
+part. Built in plan step **M1-13**; plan step **M2-09** made `core/bosses` `implemented` — four
+boss slots, turned parts, captains (mid-bosses), battleship raids, double and inner bosses, boss
+timers and escapes, the HP bar and boss rushes, described in
+[advanced-bosses.md](advanced-bosses.md). This page keeps the single-boss foundation they build on
+and notes where M2-09 changed it.
 
 This page is the *how and why*. Exact signatures are in
-[api-reference.md](api-reference.md#bosses--multi-part-bosses-the-warning-and-the-death-sequence-partial)
+[api-reference.md](api-reference.md#bosses--multi-part-bosses-the-warning-the-death-sequence-and-the-m2-09-variety)
 (`bosses`), [`behaviors`](api-reference.md#behaviors--enemy-and-boss-behaviour-registries-partial),
 [`data`](api-reference.md#data--content-schemas-and-loader) and
 [`stage`](api-reference.md#stage--stage-runtime); the TSDoc in
@@ -40,9 +43,10 @@ content/stages/test-boss.stage.json ────┘   ├─ completeEnemy: a bo
                                             └─ checkBossReferences: bosses only in warning / boss
 
 createWorld(config, db, { bossBehaviors = DEFAULT_BOSS_BEHAVIORS })               core/world
- └─ createBossSystem(world, bossBehaviors)                                         core/bosses
-     one Boss slot + 16 BossParts, the script API, the parts' batch (AIR_ENEMIES, 16), the
-     WarningState (= view.warning), every boss entry compiled (WARNING text, phase tables)
+ └─ createBossSystem(world, bossBehaviors, stage)                                  core/bosses
+     one Boss slot + 16 BossParts (M2-09: four slots), the script API, the parts' batch
+     (AIR_ENEMIES), the WarningState (= view.warning), every boss entry compiled (WARNING text,
+     phase tables)
 
 stage 'warning' event (phase 3) ─ startWarning: status bossWarning, stage.brake(60),
                                   MUSIC Silence, Dim 50 % / 180, siren + flash on 0 / 60 / 120
@@ -72,6 +76,7 @@ regular enemies, so stage events keep naming "an enemy". The annotated format is
 | `x`, `y` | 296, 100 (`DEFAULT_BOSS_X` / `_Y`) | Home of the boss's origin in playfield pixels (where the intro ends) |
 | `parts` | — | 1–16 (`MAX_BOSS_PARTS`), **parents first** — later parts are drawn over earlier ones |
 | `phases` | — | 1–8 (`MAX_BOSS_PHASES`), in order |
+| `role`, `timeLimit`, `raid`, `partner`, `alternate`, `enrage`, `inner`, `minion` | — | M2-09: captains, time limits, raids, double bosses, inner bosses, launched minions — [advanced-bosses.md](advanced-bosses.md#data-coredata) |
 
 | Part field | Default | Meaning |
 |---|---|---|
@@ -88,6 +93,7 @@ regular enemies, so stage events keep naming "an enemy". The annotated format is
 | `sprite`, `anim` | not drawn, 1 frame | Atlas sprite (→ `spriteId`) and its animation `{ frames, ticks }` |
 | `score` | 0 | Points for destroying the part |
 | `explosion` | `medium` | `small` \| `medium` \| `large` — its explosion event when destroyed |
+| `radius`, `angle`, `spin`, `turn` | 0 | M2-09: a circle hurtbox instead of the box, a turn, a spin, heading frames — [advanced-bosses.md](advanced-bosses.md#turned-parts) |
 
 | Phase field | Meaning |
 |---|---|
@@ -127,12 +133,16 @@ phase names a **boss** behaviour with known tunables and that no regular enemy n
 
 ## The boss system (`core/bosses`)
 
-`createBossSystem(host, behaviors)` is called by `createWorld` (`world.bosses`) with the World as
-its `BossHost` (tick, camera, players, ship spec, content, RNG streams, events, debug flags,
-bullets, fx, `hitStop`, `status`, the stage runner or `null`, the score board). It builds, once:
+`createBossSystem(host, behaviors, stage?)` is called by `createWorld` (`world.bosses`) with the
+World as its `BossHost` (tick, camera, players, ship spec, content, RNG streams, events, debug
+flags, bullets, fx, `hitStop`, `status`, the stage runner or `null`, the score board — since M2-09
+also `enemies.spawn`, `endingFlags` and the runner's `follow`) and the stage (its boss rush). It
+builds, once:
 
-- **one `Boss` slot** with its **16 `BossPart`s** — classes, so their numeric fields stay unboxed
-  and every method stays monomorphic; one boss per World at a time;
+- the **`Boss` slots** with their **16 `BossPart`s** each — classes, so their numeric fields stay
+  unboxed and every method stays monomorphic; one slot in M1, **four** since M2-09
+  (`bosses.slots`, slot 0 = `bosses.boss`; one *stage* boss at a time still —
+  [advanced-bosses.md](advanced-bosses.md#four-boss-slots));
 - the **script API** (`BossScriptApi`, one reused object) and the shared fire origin;
 - the parts' **sprite batch** (`LayerId.AirEnemies`, 16 sprites) — appended **last** to
   `view.batches`, so the parts draw over the air enemies;
@@ -153,16 +163,18 @@ bullets, fx, `hitStop`, `status`, the stage runner or `null`, the score board). 
 | 2 | `Intro` | The fly-in: parts drawn, touching them kills, **every hit clinks** |
 | 3 | `Fight` | Phases, scripts, motion, damage |
 | 4 | `Dying` | The death sequence: parts drawn (blinking) until the blast, no hits, no contact |
-| 5 | `Dead` | Defeated; a new boss may start |
+| 5 | `Dead` | Defeated (or escaped); a new boss may start |
+| 6 | `Escape` | M2-09: its time limit ran out — flying off, no hits, no contact ([advanced-bosses.md](advanced-bosses.md#timers-and-escapes)) |
 
-`BossSystem.active` is `true` from `Warning` to `Dying`. Its part of each tick phase:
+`BossSystem.active` is `true` while any slot is between `Warning` and `Dying` or escaping;
+`mainActive` (M2-09) only for a stage boss (role `boss`). Its part of each tick phase:
 
 | Phase | Call | What |
 |---|---|---|
 | 3 `stage` | `update()` — **before** the stage runner | The state timers: WARNING pulses → `enter()`, intro → `startFight()`, `phaseTicks++`, the death sequence. Then the stage hooks may start a boss (`startWarning` / `startBoss`) |
 | 4 `scripts` | `runScript()` | Resumes the phase's coroutine when it wakes (fight only) |
 | 5 `movement` | `move()` | Intro fly-in or fight motion, the camera ride, part transforms, animation frames, hit flash |
-| 6 `collision` | `insertColliders(grid)`, `collidePlayers()` | Refreshes each part's `target` / `armoured`, inserts the targets with ids `BOSS_PART_ID_BASE + index`; the ships × parts |
+| 6 `collision` | `insertColliders(grid)`, `collidePlayers()` | Refreshes each part's `target` / `armoured`, inserts the targets with ids `BOSS_PART_ID_BASE + part slot` (slot × 16 + index since M2-09); the ships × parts |
 | 7 `damage` | `damagePart()` (from `weapons.applyHits()`), then `resolve()` | Part hits, then the phase changes |
 | 9 `fx` | `sync()` | The parts' batch |
 
@@ -174,8 +186,9 @@ pauses the WARNING, the intro and the death sequence, as it pauses the player's 
 `enter()` copies the entry's parts into the slots (the unused slots are inactive). Every tick,
 `move()` puts the origin at `camera + (screenX, screenY)` — **the boss rides the camera**, its
 own motion changes its playfield position — and each part, parents first, at its parent (or the
-origin) + `localX` / `localY`: translation only in M1 (rotation is planned). A behaviour may move
-a part (`setPartOffset`). A part's `x` / `y` is its centre; its hurtbox is centred there.
+origin) + `localX` / `localY` — translation only in M1; since M2-09 the offset is turned by the
+parent's world angle ([turned parts](advanced-bosses.md#turned-parts)), and a raid is anchored at
+a world point instead of the camera. A behaviour may move a part (`setPartOffset`). A part's `x` / `y` is its centre; its hurtbox is centred there.
 
 **Destroying a part destroys the parts attached below it** (a single forward pass works because
 parents come first): each one explodes (`Sfx EnemyExplode*` + `Particles Explosion*` by its
@@ -185,10 +198,11 @@ part is no longer drawn, hit or touched.
 ### Weak points, hits and the clink
 
 Parts share the enemies' hit path. Their ids follow the 64 enemy slots — `BOSS_PART_ID_BASE`
-(64) + index, `MAX_HIT_TARGETS` 80 — in the World's grid, in the weapons' hit list and in the
+(64) + index in M1, `MAX_HIT_TARGETS` 80; since M2-09 `BOSS_PART_ID_BASE` + **part slot**
+(`BossPart.global` = boss slot × 16 + index), `MAX_HIT_TARGETS` 128 — in the World's grid, in the weapons' hit list and in the
 laser sources, so `core/weapons` needs no second collision pass: its grid visitor sends ids ≥ 64
 to a part branch, and `applyHits` sends those hits to **`BossSystem.damagePart(index, amount,
-by)`**, which answers a `BossHit`:
+by)`** (`index` = the part slot — the part's own index for boss slot 0), which answers a `BossHit`:
 
 | Answer | When | The shot |
 |---|---|---|
@@ -204,15 +218,17 @@ its phase-6 snapshot, which the weapons read: a piercing shot ignores its cooldo
 part (like armour on an enemy), so a laser dies on the first armoured part it touches.
 
 Piercing shots keep a **second cooldown table** for the parts, `WeaponSystem.partCooldowns`
-(`PIERCE_TABLES` × 16, same table index as the enemies' — whose layout did not change). A
+(`PIERCE_TABLES` × 16 in M1, × 64 part slots since M2-09; same table index as the enemies' —
+whose layout did not change). A
 non-piercing shot takes the **lowest** overlapping id, so an enemy in the same box is hit before a
 part; the shooter's player is credited (`shooter / SHOOTERS_PER_PLAYER` — an Option's hit is its
 player's). Details: [weapons-and-options.md](weapons-and-options.md#hits-phases-67-collide--applyhits).
 
 **Contact.** `collidePlayers()` tests each active, `alive` ship's hurt circle against every
-target part's box (closed: touching counts; brute force over ≤ 16 parts) during the intro **and**
-the fight and calls `playerHit(ship, Contact, …)` — at most one accepted hit per ship and tick. A
-dying boss touches nobody. Since M2-04 the circle is `hurtRadius × ship.shield.hurtScale` (Reduce
+target part's box (closed: touching counts; brute force over ≤ 16 parts per boss) — or, for a
+circle part (M2-09), its circle — during the intro **and** the fight (not while resting) and
+calls `playerHit(ship, Contact, …)` — at most one accepted hit per ship and tick. A dying (or
+escaping) boss touches nobody. Since M2-04 the circle is `hurtRadius × ship.shield.hurtScale` (Reduce
 shrinks it); shield pods do not stop boss parts
 ([options-shields-hunter.md](options-shields-hunter.md#shields-coreshields)).
 
@@ -238,6 +254,7 @@ which keeps `updateMover` monomorphic for the 64 enemies:
 | `Hold` | `api.hold()`, the default, the end of a `moveTo` | Stays at its playfield position (still riding the camera) |
 | `Track` | `api.track(speed, minY, maxY)` (speed ≤ 0 = hold) | Moves `screenY` toward the nearest living player's playfield height at ≤ `speed` px/tick, clamped to `[minY, maxY]` |
 | `MoveTo` | `api.moveTo(screenX, screenY, ticks)` (≤ 0 / `NaN` ticks = at once) | Eases (in-out quad) from where it was to the target, then `Hold` |
+| `Orbit` (M2-09) | `api.orbit(cx, cy, rx, ry, speed)` (0 / `NaN` speed = hold) | Circles an ellipse from the angle of where it is, `speed` binary units a tick (× the enrage factor) |
 
 **The intro.** The boss enters at `startX` — computed at load so the **leftmost part edge** is
 `BOSS_ENTRY_MARGIN` (8) px past the right edge of the view (a part without a hurtbox counts as
@@ -249,7 +266,9 @@ reaching 8 px left of its centre) — and eases to its home (`x`, `y`) with a cu
 A stage **`warning`** event (`StageEventCode.Warning`) calls `startWarning(enemyIndex)` — the
 WARNING of shmup_feat.md §13, then the boss. A **`boss`** event (`startBoss`) skips the WARNING
 and the brake: the boss flies in at once with its music. Either is **ignored** (`false`) while
-another boss sequence runs (`active`) and for an index that is not a boss.
+another stage boss is in play (`mainActive` — in M1 any boss sequence), when every slot is busy
+and for an index that is not a boss; a captain (M2-09) only comes with a `boss` event, keeps the
+stage music and never brakes the camera.
 
 | WARNING tick | What (`startWarning`, then `update()`) |
 |---|---|
@@ -323,7 +342,7 @@ ticks of the `Dying` state (counted in phase 3 from the next tick):
 | 1 … 119 | The parts blink (`SpriteFlag.Flash` every other 4 ticks) |
 | 120 | The **final blast**: `Particles FX_CUES.BossBlast` (7) + `SFX BossExplode` (`SfxPriority.High`) at the origin, `Rumble` (param 2) per active player, `requestFlash(FlashKind.BossBlast)` (24 ticks), `requestShake(Large, BOSS_BLAST_SHAKE_TICKS 40)`, **`requestHitStop(BOSS_BLAST_HIT_STOP_TICKS 5)`**; the parts are no longer drawn (`boss.blasted`) |
 | 121 (`BOSS_TALLY_TICKS`, the first after the hit-stop) | The **tally**: `addScore(killer, boss.score)` (nothing when `killer` is -1), `SimEventKind.BossDefeated` (`id` = the boss's enemy index, `x` / `y` = the origin, `param` = the points), `MUSIC StageClear` (the jingle) |
-| 180 (`BOSS_CLEAR_TICKS`) | State `Dead`; status **`stageClear`** (from `playing` / `bossWarning` — a `gameOver` stays); `stage.unlock()` |
+| 180 (`BOSS_CLEAR_TICKS`) | State `Dead`; status **`stageClear`** (from `playing` / `bossWarning` — a `gameOver` stays); `stage.unlock()` — since M2-09 only when it was the last stage boss in play (a partner, an inner boss or the next rush boss may follow); a captain's sequence is shorter and clears nothing ([advanced-bosses.md](advanced-bosses.md#captains-mid-bosses)) |
 
 With the blast's 5-tick hit-stop, `stageClear` comes **185 World ticks** after the killing tick.
 The stage then scrolls on to its `end` event (which sets `stageClear` again — harmless).
@@ -349,6 +368,7 @@ They drive the boss through the **`BossScriptApi`** — one reused object (D29):
 | `canFire(i)` | The boss fights (not intro, not dying) and part `i` stands |
 | `fireWait(ticks)` | `rankedWait` — an interval scaled by the rank |
 | `aimed`, `nWay`, `ring`, `spray`, `laser` | The `core/patterns` primitives from part `i`'s centre (rank-scaled, `AIM_AT_TARGET` default angles); no-ops (`-1` / `0`) while `canFire(i)` is false. `laser(i, …, attach = true)` stays attached to the part (its laser-source id is the part's hit id) and stops when the part goes; `attach = false` leaves it where it was fired (a lane) |
+| M2-09: `enraged`, `setPartAngle`, `spinPart`, `partAngle`, `aimPart`, `orbit`, `launch` | Turned parts and turrets, the circling motion, a captain's minions; `canFire` is also `false` while resting and for a raid part off screen, `fireWait` includes the enrage factor — [advanced-bosses.md](advanced-bosses.md#behaviours) |
 
 The M1 roster fires from the boss's **`gun` parts that still stand**:
 
@@ -438,7 +458,8 @@ with the web app's `?skip=boss` (the debug stage skip, `GameConfig.stageSkip`).
 - **Mega Crash leaves the boss alone** — the parts are not enemy slots, and the entry is
   `megaCrashImmune` anyway.
 - **Laser sources.** `BulletHost` gained an optional `laserSources`; the World's
-  `laserSources` lists the 64 enemies, then the 16 parts, so `fireLaser(…, src)` can attach a
+  `laserSources` lists the 64 enemies, then the boss parts (16 in M1; every slot's 64 part slots
+  since M2-09), so `fireLaser(…, src)` can attach a
   laser to either (`detachLasers(part.slot)` when the part goes).
 - **Checkpoint clear.** `clearSession` (a checkpoint restart, the `arcade` respawn) calls
   `bosses.clear()`: the boss and the WARNING are removed, `bossWarning` becomes `playing`, and —
@@ -449,8 +470,9 @@ with the web app's `?skip=boss` (the debug stage skip, `GameConfig.stageSkip`).
   the bullets and the fight goes on. Game over can come during `bossWarning` (M1-12 sets it from
   `playing` / `bossWarning`), and a `gameOver` status survives the end of the death sequence. The
   `arcade` restart clears the boss (above).
-- **The view.** The boss batch is the last of `view.batches`; `view.warning` is the
-  `WarningState`.
+- **The view.** The boss batch is the last of `view.batches` (since M2-09 right after
+  `bosses.backBatch`, the resting half of a double boss on the ground-enemy layer);
+  `view.warning` is the `WarningState`.
 
 ## Presentation events
 
@@ -485,7 +507,10 @@ out over 60 ticks at the kill and the stage-clear jingle plays at the tally
 state, spec index, position (world and playfield), state and phase timers, phase, script present
 + wake tick, motion and its parameters, destroyed mask, killer, blast flag, part count, and per
 part its offset, position, hit points, destroyed / open flags and hit flash; then the WARNING's
-active flag and ticks. The piercing shots' part cooldown tables join their enemy tables in
+active flag and ticks — since M2-09 for every slot, with the new fields, the raid camera, the
+boss rush and the World's ending flags
+([advanced-bosses.md](advanced-bosses.md#determinism-hashing-and-golden-replays)). The piercing
+shots' part cooldown tables join their enemy tables in
 `mixWeapons`; the brake's slots are in the runner's hashed state. A coroutine's position cannot be
 hashed — its `wakeTick` is. The chain explosions draw the cosmetic stream only, so they never move
 the gameplay RNG. `bosses.test.ts` and `test/integration/boss-runtime.test.ts` fight the shipped
@@ -547,8 +572,7 @@ free flight).
 | A fire primitive or part action for scripts | A `BossScriptApi` member + `BossScriptApiImpl` method; respect `canFire`; never allocate |
 | A phase condition | A field in `BossUntilSpec` + `BOSS_PHASE_SCHEMA` + its check in `completeBoss`, a typed array in `CompiledBoss`, the test in `phaseOver` |
 | A weak-point rule | Append to `BOSS_VULNERABILITIES` and `BossVulnerable` (never renumber), the branch in `armouredNow` |
-| Boss timers / escapes, the HP bar, mid-bosses, raids, multi-bosses (M2-09) | New `BossState`s appended (hashed); a second slot means a second parts id range after `BOSS_PART_ID_BASE + 16` (raise `MAX_HIT_TARGETS`, the laser sources, the part cooldown tables) |
-| Rotating parts | A per-part angle in `place()` (binary angles, `sinB` / `cosB`), hurtboxes as rotated boxes or circles |
+| Captains, raids, double / inner bosses, timers, the HP bar, boss rushes, turned parts, more slots, motions or ending flags | Done in M2-09 — see [advanced-bosses.md](advanced-bosses.md#extending-it) |
 
 ## Tests
 
@@ -558,6 +582,7 @@ free flight).
 | `packages/core/test/bosses/bosses-edge.test.ts` | The script API (lookups, bad indices, open / close, offsets, track bounds, `moveTo` easing and at-once, `canFire` per state, the primitives, attached / lane lasers), tunables merged over defaults, unknown phase scripts, cascades and several cores, `defeat`, the WARNING in free flight and from other statuses, hit-stop pausing the WARNING and the chain, cosmetic-only RNG inside the boxes, the dying blink, a second boss, a restart while dying, `clear()` music, `hashWorld` coverage, shots vs parts (enemy first, Option credit, a part gone mid-tick) |
 | `packages/core/test/bosses/bosses-behaviors*.test.ts` | The roster: registration next to the enemy roster, `boss.hover` spreads / tracking / open-close, `boss.lanes` lanes and spreads, `checkEnemyBehaviors` for boss phases; `ways` flooring, default `openTicks`, a new phase closing parts, lanes between standing guns only, separate registries |
 | `packages/core/test/bosses/bosses-alloc.test.ts` | The allocation guards above (own worker) |
+| `packages/core/test/bosses/bosses-advanced*.test.ts`, `bosses-escape-alloc.test.ts` and the other M2-09 suites | Captains, raids, double / inner bosses, timers, the HP bar, boss rushes, turned parts — listed in [advanced-bosses.md](advanced-bosses.md#tests) |
 | `packages/core/test/behaviors/behaviors-bulwark*.test.ts` | `boss.bulwark` (M1-18): defaults, lane geometry and timings, alternation over the standing guns, attached lanes following / vanishing with their gun, `firstLaser` / `ways` flooring, tracking bounds, the rank-scaled interval, timers restarted on HB-01's phase change; its allocation guard in its own file |
 | `test/integration/content.test.ts` (zone A block), `test/playtest/` | HB-01's data and lane geometry per phase; a whole HB-01 fight played by the 4-way bot with the design rules checked every tick ([zone-a-and-playtest.md](zone-a-and-playtest.md#the-4-way-design-rules)) |
 | `packages/core/test/data/bosses-data*.test.ts` | Completion (defaults, indices, masks, the regular fields), phase scripts as script refs, the section schema, the omitted / required fields, the reference pass; self-parents, limits and boundary values, several cores, later `requires`, duplicate `partsDestroyed` names (the regression), unknown section fields |
@@ -616,5 +641,8 @@ free flight).
   with its box, the lowest-id rule had given every ring to HALCYON BULWARK's fringe armour and
   Type B could not hurt the boss. Four golden replays fight HB-01 with the new weapons
   ([meter-arsenal.md](meter-arsenal.md#the-nine-behaviours)).
-- **M2-09** — boss behaviours running DSL patterns and bending lasers; boss timers and escapes, the optional HP bar, mid-bosses, battleship raids,
-  boss-inside-boss, double bosses, boss rush.
+- **M2-09** (done) — four boss slots, turned parts (circle hurtboxes, heading frames), captains,
+  battleship raids (`StageRunner.follow`), boss inside a boss, double bosses (turns, enrage), boss
+  timers and escapes (`EndingFlag.BossEscaped`), the optional HP bar, boss rushes
+  ([advanced-bosses.md](advanced-bosses.md)). Boss behaviours running DSL patterns and bending
+  lasers are still to come with the zones' bosses.

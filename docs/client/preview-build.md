@@ -20,8 +20,8 @@ title asks **EXIT SHMUP CUP?** before it closes the app. **OPTIONS** — on the 
 pause menu — sets the game's own volumes (MASTER, MUSIC, SFX), the control profile, the
 colours of the enemy bullets (**BULLETS**: the standard colours or one of three sets made for
 colour-blind players), how the picture fills the screen (**SCALE**), the screen **SHAKE**, gentler
-**FLASHES** and a **HITBOX** marker on your ship, and the game **remembers** them and your **high
-scores** between launches. Everything is drawn by the game
+**FLASHES**, a **HITBOX** marker on your ship and a **BOSS HP** bar in the top bar during boss
+fights, and the game **remembers** them and your **high scores** between launches. Everything is drawn by the game
 itself and works with the remote's arrows, OK and Back alone ([The title screen and the
 menus](#the-title-screen-and-the-menus), [Pausing, quitting and the end
 screens](#pausing-quitting-and-the-end-screens), [Difficulty, extra ships and
@@ -63,7 +63,7 @@ loops seamlessly, the boss theme, a short stage-clear tune and a game-over tune
 click.
 
 In a browser there is more to try: a shortcut straight to the zone's boss (`?skip=boss`), the
-fully powered ship (`?loadout=full`), and six test stages — the scrolling *Test Range*, with rocky
+fully powered ship (`?loadout=full`), and ten test stages — the scrolling *Test Range*, with rocky
 ground, caves, speed changes and the first enemy roster
 ([The scrolling test stage](#the-scrolling-test-stage-browser-only)), the short *Boss Range*
 with a test boss ([The boss range and the WARNING](#the-boss-range-and-the-warning-browser-only)),
@@ -76,12 +76,16 @@ tentacles, cubes that stack into walls, moving blocks, a stop with the view pann
 in the route and a very fast stretch ([The Gimmick range](#the-gimmick-range-browser-only)),
 and the *Raster Range*, a showcase of the SNES-style picture effects the later zones will use — a
 sea that waves and shimmers through its colours, a checkered floor that runs to the horizon like
-in old racing games, and heat haze over the stars ([The Raster range](#the-raster-range-browser-only)).
+in old racing games, and heat haze over the stars ([The Raster range](#the-raster-range-browser-only)),
+and four **boss ranges** with the boss variety of the later zones — mid-bosses that fight while the
+screen scrolls on, a battleship bigger than the screen that the view flies around (with a second
+boss inside it, and a time limit after which it escapes), twin bosses that take turns and a boss
+rush ([The advanced boss ranges](#the-advanced-boss-ranges-browser-only)).
 The earlier start-up pictures are still there: **free flight** straight away without the title,
 the animated **sprite showcase** and the **calibration screen**, plus the **effects gallery**
 that shows every explosion and screen effect in turn (see [below](#other-screens-browser-only)).
 
-This build is version **0.1.0** — the end of the first milestone — plus the first eight steps of
+This build is version **0.1.0** — the end of the first milestone — plus the first nine steps of
 the second: the difficulties, extra ships and continues, then the colour-blind bullet colours and
 points for cancelled bullets, then the **weapon types** and the WEAPON SELECT screen, then four
 kinds of **Options**, five **shields**, the **Option Hunter** that steals Options and the rare
@@ -89,10 +93,13 @@ kinds of **Options**, five **shields**, the **Option Hunter** that steals Option
 weapons and its **Arm** shield, and the **SHIP SELECT** box, then **two players at once**: the
 title's **2 PLAYERS**, a second player joining with START, each with their own ships, score and
 continues, then the **stage mechanics** of the later zones — for now only in the browser's
-*Gimmick Range* —, and now the **picture options** and **effects**: SCALE, SHAKE, FLASHES and
+*Gimmick Range* —, then the **picture options** and **effects**: SCALE, SHAKE, FLASHES and
 HITBOX in the Options screen, a Mega Crash flash that brightens the picture instead of covering
 it, smoother motion on 120 / 144 Hz monitors, and the SNES-style water, floor and haze effects of
-the browser's *Raster Range* (AZURE VERGE itself looks and plays as before). For checking it on the monitors
+the browser's *Raster Range*, and now the **advanced bosses**: mid-bosses, a battleship raid with
+a boss inside, twin bosses and a boss rush in the browser's four boss ranges, and the optional
+**BOSS HP** bar in the Options screen, which works on the TV too (AZURE VERGE itself plays as
+before). For checking it on the monitors
 there is a **debug build** with developer tools — a panel with the frame rate, frame times and
 start-up time, hit-area outlines, invincibility, a freeze with single steps, slow motion and
 jumps to the next checkpoint or the boss — opened on the remote with Play/Pause and then Ch ▲
@@ -541,6 +548,7 @@ darkened picture:
      SHAKE    ON
      FLASHES  NORMAL
      HITBOX   OFF
+     BOSS HP  OFF
      BACK
 ```
 
@@ -555,17 +563,20 @@ darkened picture:
 | **SHAKE** | **ON** (the start setting): the picture shakes for the big moments — your ship lost, a boss exploding; **OFF**: it never shakes |
 | **FLASHES** | **NORMAL** (the start setting) or **REDUCED**: at most one full-screen flash a second, and every flash much dimmer — for players sensitive to flashing light (even on NORMAL the game never flashes more than three times a second) |
 | **HITBOX** | **OFF** (the start setting) or **ON**: a small white square with a pink-red rim in the middle of your ship (and player 2's) shows the spot that must not be hit — only that spot counts for bullets and enemies |
+| **BOSS HP** | **OFF** (the start setting) or **ON**: during a boss fight the middle of the top bar shows `BOSS` and a red bar of the boss's remaining strength instead of `HI` — see [The boss HP bar](#the-boss-hp-bar-every-device) |
 | **BACK** | Keeps the settings and closes the box |
 
 - **▲ / ▼** move the highlight (MASTER is highlighted first). On a volume, **◀ / ▶** turn it down
   or up one step — the bar shrinks or grows and the number changes; holding the arrow keeps
   going, like in the other menus. On CONTROLS, BULLETS, SCALE and FLASHES, **◀ / ▶** (or OK) step
-  to the next choice. On SHAKE and HITBOX, **◀** is OFF, **▶** is ON and OK switches.
+  to the next choice. On SHAKE, HITBOX and BOSS HP, **◀** is OFF, **▶** is ON and OK
+  switches.
 - **Every change works at once**: the music gets quieter while you turn MUSIC down (on the title
   you hear the title music change), the clicks get quieter while you turn SFX or MASTER down, and a
   new control profile is used from the next button press, and new bullet colours, a new SCALE, the
   HITBOX marker and the SHAKE / FLASHES settings show on the very next picture or effect (over a
-  paused game too). OK on a volume does nothing.
+  paused game too). BOSS HP shows from when you leave the box with BACK. OK on a volume does
+  nothing.
 - The steps follow your hearing rather than a ruler: 5 sounds about half as loud as 10, and 0 is
   silent.
 - **BACK** — or the **Back** button anywhere in the box — keeps the settings, plays the "back"
@@ -601,7 +612,7 @@ the ship, disappears while the ship is exploding, and changes nothing about the 
 
 | What | When it is saved | Where |
 |---|---|---|
-| The three volumes, the control profile, the bullet colours and SCALE, SHAKE, FLASHES and HITBOX | When you leave the Options screen with BACK or Back | On the TV inside the app itself; in a browser (and the desktop app) in that browser's storage for the page |
+| The three volumes, the control profile, the bullet colours and SCALE, SHAKE, FLASHES, HITBOX and BOSS HP | When you leave the Options screen with BACK or Back | On the TV inside the app itself; in a browser (and the desktop app) in that browser's storage for the page |
 | High scores | When the **GAME OVER** or **STAGE CLEAR** screen appears | The same place |
 
 - **High scores**: the best ten of each kind of game are kept — each **difficulty** has its own
@@ -667,7 +678,20 @@ ship may move in four directions only; the game is designed to be fully playable
 
 ### What changed lately
 
-**New in this build: picture options and SNES-style effects.** The Options screen has four new
+**New in this build: the advanced bosses.** The Options screen has one more entry under HITBOX —
+**BOSS HP** (OFF / ON) — so BACK is one entry further down. With BOSS HP on, every boss fight
+shows `BOSS` and a red bar of the boss's remaining strength in the top bar, where `HI` usually is
+— on the TV too, for HALCYON BULWARK ([The boss HP bar](#the-boss-hp-bar-every-device)). And four
+new browser test stages show the boss variety of the later zones
+([The advanced boss ranges](#the-advanced-boss-ranges-browser-only)): the *Captain Range*
+(`?stage=captain-range` — four **mid-bosses** that fight while the screen keeps scrolling), the
+*Raid Range* (`?stage=raid-range` — **IRON LEVIATHAN**, a battleship longer than the screen that the
+view flies around while its turrets turn to aim at you; its reactor's explosion releases a second
+boss, and if you take longer than 90 seconds it **escapes**), the *Twin Range*
+(`?stage=twin-range` — two bosses that **take turns**, the survivor getting angry) and the
+*Gauntlet Range* (`?stage=gauntlet-range` — three bosses in a row). AZURE VERGE plays as before.
+
+Before that, **picture options and SNES-style effects.** The Options screen has four new
 entries under BULLETS — **SCALE** (INTEGER, FIT or STRETCH: how the picture fills the screen),
 **SHAKE** (ON / OFF), **FLASHES** (NORMAL / REDUCED) and **HITBOX** (OFF / ON: a marker on your
 ship's weak spot) — so BACK is now four entries further down. They work at once, over a paused
@@ -1303,7 +1327,7 @@ Things to check on the monitor and report:
    stays in the game, still firing but not moving. Plug it back in and press **A** on it: it flies
    player 2's ship again. Report anything unexpected.
 48. **The picture options** (new): OPTIONS now lists SCALE, SHAKE, FLASHES and HITBOX under
-   BULLETS, and all ten entries fit inside the box. Step SCALE through INTEGER, FIT and STRETCH with
+   BULLETS, and all entries fit inside the box. Step SCALE through INTEGER, FIT and STRETCH with
    ◀ / ▶: on the monitor's usual 1920 × 1080 picture all three should look the same, sharp and
    without a border — report the monitor model if the picture changes size or gets a border.
 49. **SHAKE and HITBOX** (new): set SHAKE to OFF and HITBOX to ON, press BACK and play: losing the
@@ -1314,11 +1338,20 @@ Things to check on the monitor and report:
    playfield brightens towards white for a moment, but the ship and the enemies stay visible
    through it. Then set FLASHES to REDUCED and do it again: a much dimmer flash. Report whether
    either is uncomfortable.
+51. **BOSS HP** (new): OPTIONS now lists BOSS HP under HITBOX, and all eleven entries fit inside
+   the box. Set it to ON, press BACK and play to HALCYON BULWARK (the debug build's key 8 jumps
+   there): while the boss glides in, `BOSS` and a red bar replace `HI` in the middle of the top
+   bar and the bar fills up; it gets shorter as the shield plates and then the core take hits,
+   empties when the core is destroyed and disappears with the big blast (`HI` is back). Report
+   whether the bar is easy to read from the sofa.
+52. **BOSS HP kept** (new): close and reopen the app — BOSS HP is still ON. Set it to OFF: `HI`
+   stays in the top bar through the whole boss fight.
 
-The fully powered ship (`?loadout=full`), the shortcut to the boss (`?skip=boss`), the six test
+The fully powered ship (`?loadout=full`), the shortcut to the boss (`?skip=boss`), the ten test
 stages (the Test Range, the Boss Range with its test boss, the Hunter Range with the Option
 Hunters and the blue capsule, the Direct Range with the MANTA's pincer waves, the Gimmick Range
-with the later zones' stage mechanics and the Raster Range with the picture effects), free flight, the showcase, the
+with the later zones' stage mechanics, the Raster Range with the picture effects and the Captain,
+Raid, Twin and Gauntlet Ranges with the advanced bosses), free flight, the showcase, the
 calibration screen and the effects gallery can only be opened in a browser — the monitor's own
 web browser works too, pointed at a PC running `pnpm dev` (below).
 
@@ -2093,6 +2126,113 @@ What "good" looks like:
 - The game stays as smooth as elsewhere. If a monitor or browser gets jerky here and not in
   AZURE VERGE, please report it with the device.
 
+## The advanced boss ranges (browser only)
+
+Four short stages in open space show the boss variety the later zones are built from: **mid-bosses**
+that fight while the screen keeps scrolling, a **battleship bigger than the screen** that the view
+flies around, a **boss inside a boss**, **twin bosses** that take turns, a boss that **escapes** if
+you take too long, and a **boss rush**. Everything here is a placeholder made for this project —
+names, pictures and sounds. None of it is in AZURE VERGE yet, and the TV cannot open these stages
+(the widget has no address bar; the **BOSS HP** option below works everywhere). Open each with
+1 PLAYER on the title (any difficulty and ship; add `&loadout=full` to fight fully powered). Each
+stage starts with three red saucers that leave power capsules.
+
+**Every hit count below is for the basic gun** (the laser and other weapons do more).
+
+### CAPTAIN RANGE — mid-bosses (`?stage=captain-range`)
+
+About 1 minute 50 of scrolling at normal speed. Four **mid-bosses** ("captains") fly in one after
+another from the right — **no WARNING, the scrolling never stops and the stage music keeps
+playing**. A captain stays until you destroy it; its end is a short burst of explosions, a small
+shake and a gold `3000` (no flash, no freeze), and the stage simply scrolls on. The stage ends —
+STAGE CLEAR — at about 1:47 whatever is still flying.
+
+| Time (about) | Captain | What it does | How to beat it |
+|---|---|---|---|
+| 5 s | **SURGE RAMMER** — a round orange shell with a blinking red eye | Fires three fans of five red bullets, then **dashes straight to the left side along your row** and flies back | Step up or down when it lines up with you; 40 hits |
+| 27 s | **BROOD LAUNCHER** — an orange shell with two tubes, above and below | Follows your height slowly; every second or so its tubes **launch bubbles** (the Gimmick Range's bubbles — they split when shot) and it fires fans of three pink bullets | The tubes take 10 hits each (500 points); once they are gone the bubbles come from the shell itself, which takes 36 |
+| 50 s | **ORBIT WARDEN** — a glowing cyan core with four round **orbs circling it** | The whole group **circles the screen** in a wide oval while firing rings of eight purple bullets, each ring turned a little | The orbs are armour — shots vanish on them; hit the core (30 hits) between them |
+| 74 s | **TIDE CRAB** — an orange shell with two grey **claws** in front | Hops to a new spot in the right part of the screen every second or so and fires rings of twelve red bullets whose gaps turn round | The claws (8 hits each, 300 points) catch your shots first; then the shell (40 hits) |
+
+### RAID RANGE — the battleship, and the boss inside it (`?stage=raid-range`)
+
+| Time (about) | What happens |
+|---|---|
+| 7 s | **The WARNING** (three seconds, as in the Boss Range): `GIANT HOSTILE "IRON LEVIATHAN"` · `CLOSING IN - CODE RL-01`. The scrolling stops |
+| 10 s | **IRON LEVIATHAN** glides in over four seconds: a long riveted steel hull across the lower part of the screen — **longer than the screen**, its far end out of sight — with **seven turrets** (four on top, three underneath) and a pulsing cyan **reactor** near its far end. It cannot be hurt while it glides in |
+| 14 s | **The raid.** The view starts to **move by itself**: up over the hull, along it to the right, back again, looping — pausing a couple of seconds at each end. Your ship moves with the view (you still steer it inside the picture). The turrets **turn their barrels towards you** and fire single pink bullets along them; only turrets on the screen fire. When the reactor has lost half its strength they fire fans of three, more often |
+
+- **Turrets**: 12 hits, 800 points each. **The reactor** cannot be hurt until **the two turrets
+  nearest it** (the last one on top and the last one underneath) are destroyed; then 60 hits
+  (5,000 points).
+- **When the reactor is destroyed**: the bullets turn into gold diamonds, the battleship blinks and
+  explodes for two seconds **while the view glides back** to where the raid began, then the big
+  blast and 40,000 points — and out of the blast, where the reactor was, comes **LEVIATHAN HEART**:
+  a spinning core with two armoured orbs circling it, which follows your height and fires fans of
+  three red bullets (40 hits; 5,000 + 20,000 points). STAGE CLEAR follows after the heart.
+- **Too slow?** If the battleship's fight lasts **90 seconds**, it gives up: it stops firing, your
+  shots pass through it, and it **flies off to the right** in a second and a half while the view
+  glides back — no points, no heart, and the stage ends (STAGE CLEAR). The game notes that the boss
+  escaped; the full game will use that to choose the ending. Without power-ups this is what usually
+  happens — try `&loadout=full` to beat it.
+
+### TWIN RANGE — two bosses taking turns (`?stage=twin-range`)
+
+| Time (about) | What happens |
+|---|---|
+| 7 s | **The WARNING**: `GIANT HOSTILE "EMBER AND FROST TWINS"` · `CLOSING IN - CODE TE-01` |
+| 10 s | **Two bosses glide in together**: EMBER in the upper half (its gun on top) and FROST in the lower half (its gun underneath) — each a dark block with a glowing cyan core on its left |
+| 12 s | The fight. **One of them withdraws** at once past the right edge of the screen (drawn **behind** the other enemies while any of it still shows): while it rests it cannot be hurt, cannot hurt you and does not fire. **Every five seconds they swap** — the fighting one pulls back, the resting one comes forward (a second's glide) |
+
+- The fighting twin fires fans of three red bullets about once a second; once its core is below
+  half, it fires **laser rows** to the left (a blinking warning line first — leave the row) and
+  purple needles.
+- **Cores** 30 hits (3,000 points), **guns** 12 hits (1,000 points); each twin is worth 15,000.
+- **Destroy one core and the other one gets angry**: it comes forward for good, fires **twice as
+  often** and switches to its laser rows at once. The music fades and STAGE CLEAR
+  comes only after both.
+
+### GAUNTLET RANGE — a boss rush (`?stage=gauntlet-range`)
+
+Three bosses one after another, and no end of the stage until the last one is down: after about
+6 s the WARNING and the **TRIAL WARDEN** (the Boss Range's test boss); two seconds after it
+explodes, **LEVIATHAN HEART** flies in without a WARNING; two seconds after that the WARNING again
+and the **EMBER AND FROST TWINS**. The stage-clear tune plays only after the twins. Losing a ship
+on ARCADE (or continuing) brings back the boss you were fighting.
+
+### The boss HP bar (every device)
+
+**OPTIONS → BOSS HP → ON** (it starts OFF) shows how much a boss has left: during a boss fight the
+middle of the top bar shows **`BOSS`** in red and a **red bar** instead of `HI` and the best score.
+It works on the TV too — in AZURE VERGE for HALCYON BULWARK.
+
+- The bar **fills up while the boss glides in**, is full when the fight starts, and **gets shorter
+  only when you damage what matters** — the core(s) and the parts protecting them (HALCYON
+  BULWARK's four shield plates and its core; IRON LEVIATHAN's reactor and the two turrets guarding
+  it). Hitting armour, guns or other extra parts does not move it. Any strength left shows at least
+  a sliver.
+- It **empties** when the last core is destroyed and **disappears with the big blast** — `HI`
+  comes back. A boss inside a boss, or the next boss of a rush, brings its own bar.
+- For the twins the bar counts **both**. For mid-bosses it shows the captain's strength (when no
+  big boss is fighting at the same time).
+- It follows the saved setting: after changing it, leave the Options screen with BACK.
+
+What "good" looks like in these stages:
+
+- Captains fly in smoothly from the right edge and the scrolling never stops for them; the stage
+  music keeps playing through their fights.
+- The battleship is one solid hull; the turret barrels visibly swing to point at your ship, and
+  the bullets leave along the barrels. When the view moves round the battleship, the stars, your
+  ship and the bullets move with it smoothly — nothing jumps. After the battleship's end the view
+  is back exactly where it was before the raid, and the stage carries on from there (nothing that
+  should have come during the raid is skipped).
+- The resting twin is drawn behind, is never hit, and never hurts your ship; the swap happens
+  every five seconds while both live.
+- The heart comes out of the reactor's explosion, not from the edge of the screen.
+- Every bullet pattern can be dodged with the four arrow directions — please report any spot
+  where you could not get out of the way (the rammer's dash and the rings included).
+- No magenta-and-black squares, and no part of a boss left floating after it exploded.
+
 ## Explosions, sparks, shake and flashes
 
 Hits look like hits — in AZURE VERGE on every device, and in the browser's *Test Range*
@@ -2302,6 +2442,16 @@ mean the build itself is broken; they are not caused by anything you did.
 | The Mega Crash flash is weak or the boss's blast barely flashes | **FLASHES** is REDUCED in OPTIONS (at most one dim flash a second) — set NORMAL for the full flashes |
 | The Mega Crash no longer turns the screen white | Expected since this build: the flash brightens the picture so you can still see the bullets; it should still be clearly visible |
 | The sea or the floor in the Raster range wobbles / changes colour | Expected — those are the stage's picture effects ([The Raster range](#the-raster-range-browser-only)). Report it if the ship, enemies, bullets or the HUD ever wobble or change colour |
+| `HI` vanished from the top bar during a boss, and `BOSS` with a red bar showed instead | **BOSS HP** is ON — the bar is the boss's remaining strength; `HI` comes back after the boss's big blast. OPTIONS → BOSS HP → OFF keeps `HI` there |
+| The boss HP bar did not move although I hit the boss | Expected on parts that do not matter for the kill — armour, guns, extra parts. Only the core(s) and the parts protecting them count (HALCYON BULWARK's shield plates and core) |
+| BOSS HP changed nothing in the paused game | It shows once you leave the Options screen with BACK (and resume) |
+| The scrolling did not stop for a boss (Captain range) | Expected: mid-bosses ("captains") fight while the screen scrolls on — no WARNING, the stage music keeps playing |
+| The view moved by itself and took my ship along (Raid range) | Expected: during the battleship fight the view flies around the battleship; it glides back when the fight is over |
+| The battleship flew away and the stage ended (Raid range) | Its 90-second time limit ran out — it escapes without points. Destroy the two turrets next to the reactor, then the reactor, faster (try `&loadout=full`) |
+| Another boss came out of the explosion (Raid range) | Expected: LEVIATHAN HEART, the boss inside the battleship |
+| One of the twins moved off to the right and cannot be hit (Twin range) | Expected: the twins take turns every five seconds; the resting one cannot be hit (and cannot hurt you) until it comes back |
+| Shots vanish on the round orbs (Captain and Raid ranges) | Expected: the orbs circling ORBIT WARDEN and LEVIATHAN HEART are armour — aim at the glowing core between them |
+| `?stage=raid-range` (or another boss range) does nothing on the TV | Expected: the TV widget has no address bar; the boss ranges are browser only for now — BOSS HP works on the TV in AZURE VERGE |
 | Motion looks smoother on my gaming monitor than on the TV | Expected: on monitors faster than 60 Hz the game draws the in-between positions; the TV shows 60 pictures a second and draws each one exactly |
 | The MANTA survived touching the rock | Expected while the **Arm** is up: it takes a hit for the ship, even from the rock (the KESTREL's shields do not) |
 | The MANTA's gun got weaker after a loss | Expected: a lost ship costs the Arm and, on NORMAL and HARD, one SHOT level (on ARCADE everything) — [The MANTA](#the-manta-colour-items-weapons-and-the-arm) |

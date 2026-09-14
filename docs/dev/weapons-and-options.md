@@ -316,12 +316,17 @@ piercing shots are hashed.
 
 **Boss parts** (M1-13) are hit targets too. The boss system inserts each part that is a target
 this tick into the same grid with the id `BOSS_PART_ID_BASE` (64) + part index (`MAX_HIT_TARGETS`
-80), after refreshing its `target` / `armoured` flags; the grid visitor sends ids ≥ 64 to a
-part branch (the same closed exact box test), and the hit list stores the id in `hitEnemy`, so
-a non-piercing shot still takes the **lowest** id — an enemy in the same box before a part.
-Piercing shots keep a second table set for the parts, `weapons.partCooldowns` (`PIERCE_TABLES`
-× `MAX_BOSS_PARTS` 16, the same table index — the enemy tables kept their layout), skipped for
-an `armoured` part like armour. `applyHits()` sends a part hit to
+80) — since M2-09 + **part slot** (`BossPart.global` = boss slot × 16 + index across the four boss
+slots, `MAX_HIT_TARGETS` 128) —, after refreshing its `target` / `armoured` flags; the grid
+visitor sends ids ≥ 64 to a part branch (the same closed exact box test — and, for a **circle**
+part of M2-09, a turned part hit by its `radius`, the shot box's nearest point must lie inside the
+circle), and the hit list stores the id in `hitEnemy`, so a non-piercing shot still takes the
+**lowest** id — an enemy in the same box before a part. The visitor reads `host.bosses.parts`
+(every slot's parts, flat). Piercing shots keep a second table set for the parts,
+`weapons.partCooldowns` (`PIERCE_TABLES` × `MAX_BOSS_PARTS` 16 in M1, × `BOSS_PART_SLOTS` 64
+since M2-09, the same table index — the enemy tables kept their layout), skipped for an
+`armoured` part like armour. A resting half of a double boss is not in the grid at all
+([advanced-bosses.md](advanced-bosses.md#four-boss-slots)). `applyHits()` sends a part hit to
 **`world.bosses.damagePart(part, damage, player)`** and reads its `BossHit` answer: `None` (the
 part went earlier this tick, or no boss is in its intro / fight) → the shot flies on; `Clink`
 (the intro, armour, an `afterParts` part with shields left, a closed `whenOpen` part) → the

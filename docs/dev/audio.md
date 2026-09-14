@@ -74,7 +74,7 @@ exactly the same game.
 | `Music Silence` + 30 ticks (the WARNING starts) | `playMusic(Silence, 30)` | The theme fades out over half a second |
 | `Music <boss cue>` (the boss's intro starts) | `playMusic(bossCue, 0)` | The boss theme (`music.boss`, else the generic `Boss`) |
 | `Music Silence` + 60 ticks (the last core destroyed) | fade-out | The boss theme fades over a second |
-| `Music StageClear` (the boss's score tally) | one-shot | The stage-clear jingle |
+| `Music StageClear` (the boss's score tally) | one-shot | The stage-clear jingle — since M2-09 only at the tally that ends the encounter (the last of a double boss, the inner boss after the outer, a boss rush's last entry), never for a captain, whose fight keeps the stage theme ([advanced-bosses.md](advanced-bosses.md#presentation-events)) |
 | `Music <stage theme>` (a checkpoint restart that removed a boss after it had changed the music) | `playMusic(theme, 0)` | The stage theme again |
 | `MusicDuck` + 120 ticks (the player's death) | `duckMusic(120)` | The music dips to 0.35 in 4 ticks, holds for 1 s, is back at full volume at 2 s |
 

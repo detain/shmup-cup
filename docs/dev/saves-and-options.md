@@ -7,7 +7,8 @@ them while the game runs: the versioned save document (`core/save`), the present
 apps offer, and the boot timing. Added by plan step **M1-17**; **M2-02** added the first display
 option — the enemy bullets' colour-blind palette (BULLETS); **M2-08** the scale mode, the
 screen-shake switch, reduced flashing and the hitbox marker (SCALE, SHAKE, FLASHES, HITBOX —
-what they draw is on [presentation-polish.md](presentation-polish.md#display-options)).
+what they draw is on [presentation-polish.md](presentation-polish.md#display-options)); **M2-09**
+the boss HP bar (BOSS HP — [advanced-bosses.md](advanced-bosses.md#the-boss-hp-bar)).
 
 This page is the *how and why*. Exact signatures are in
 [api-reference.md](api-reference.md#save--versioned-saves-hi-score-tables) (`save`),
@@ -69,7 +70,8 @@ tests use `createMemoryStorage()`. Electron's renderer runs the web build and us
       "scaleMode": "integer",
       "screenShake": true,
       "reduceFlashing": false,
-      "showHitbox": false
+      "showHitbox": false,
+      "bossHpBar": false
     }
   },
   "hiScores": {
@@ -84,7 +86,7 @@ tests use `createMemoryStorage()`. Electron's renderer runs the web build and us
 | Field | Meaning |
 |---|---|
 | `version` | `SAVE_VERSION` = 1. Drives the migrations; a document without it counts as version 0 |
-| `options` | The player's `UserOptions` (below): volume levels 0–10, the chosen key / remote profile id (or `null` = the platform default), display options (M2-02: `bulletPalette`; M2-08: `scaleMode`, `screenShake`, `reduceFlashing`, `showHitbox`) |
+| `options` | The player's `UserOptions` (below): volume levels 0–10, the chosen key / remote profile id (or `null` = the platform default), display options (M2-02: `bulletPalette`; M2-08: `scaleMode`, `screenShake`, `reduceFlashing`, `showHitbox`; M2-09: `bossHpBar`) |
 | `hiScores` | Tables by **mode key** (`hiScoreModeKey(config)` = `<powerUpMode>-<difficulty>`, `meter-normal` in M1; since M2-01 one per difficulty — `meter-easy`, `meter-normal`, `meter-hard`, `meter-arcade`; since M2-05 the Direct-mode MANTA's games in `direct-easy` … `direct-arcade` — no format change, the key was always `<powerUpMode>-<difficulty>`), each sorted best first, at most `HI_SCORE_TABLE_SIZE` = 10 rows, at most `MAX_HI_SCORE_TABLES` = 32 tables. A mode nobody scored in has no table |
 | `stats` | Counters: `gamesStarted` (START and RETRY STAGE), `gameOvers`, `stagesCleared` — whole numbers, capped at 2³¹−1 |
 
@@ -225,6 +227,7 @@ interface UserOptions {
     readonly screenShake: boolean; // M2-08
     readonly reduceFlashing: boolean; // M2-08
     readonly showHitbox: boolean; // M2-08
+    readonly bossHpBar: boolean; // M2-09
   };
 }
 ```
@@ -253,6 +256,13 @@ all five display fields in a fixed order. What each one does on screen — the v
 mode, the shake switch, the flash limiter's reduced mode, the hitbox marker — is on
 [presentation-polish.md](presentation-polish.md#display-options).
 
+**The boss HP bar (M2-09).** `display.bossHpBar` (default **`false`** — neither source game had
+one, so it is opt-in) is a boolean like the others: an older version-1 save resolves it to
+`false` with **no migration**, and `serializeSave` writes it after `showHitbox` (six display
+fields). It is not applied by the shell: the scene flow copies the saved value into the game
+HUD's `showBossHp` on every displayed frame
+([scenes-and-ui.md](scenes-and-ui.md#the-hud)).
+
 **The volume curve.** `volumeGain(level) = (level / 10)²` turns a slider level into the linear
 bus gain, so the slider's middle sounds about half as loud:
 
@@ -265,12 +275,13 @@ operator is banned in core).
 
 ## The Options screen (`OptionsScene`)
 
-An overlay (dim `PAUSE_DIM` = 0.5) with an opaque 288×182 panel at y 18 since M2-08 (288×128
-before, 112 px tall before M2-02), opened by **OPTIONS** on the title and on the pause menu —
+An overlay (dim `PAUSE_DIM` = 0.5) with an opaque 288×192 panel at y 12 since M2-09 (288×182 at
+y 18 in M2-08, 288×128 before, 112 px tall before M2-02; the menu's first row at y 38), opened by **OPTIONS** on the title and on the pause menu —
 both items are enabled since M1-17 (a game under the pause menu stays frozen). Items
 (`OptionsItem`): `Master 0`, `Music 1`, `Sfx 2`, `Controls 3`, `Bullets 4` (M2-02), `Scale 5`,
-`Shake 6`, `Flashes 7`, `Hitbox 8` (M2-08), `Back 9` (it was 5, and 4 before M2-02 — code that
-names `OptionsItem.Back` follows; a test or tool that counts rows does not).
+`Shake 6`, `Flashes 7`, `Hitbox 8` (M2-08), `BossHp 9` (M2-09), `Back 10` (9 in M2-08, 5 before,
+4 before M2-02 — code that names `OptionsItem.Back` follows; a test or tool that counts rows does
+not).
 
 ```text
             OPTIONS
@@ -283,6 +294,7 @@ names `OptionsItem.Back` follows; a test or tool that counts rows does not).
      SHAKE    ON
      FLASHES  NORMAL
      HITBOX   OFF
+     BOSS HP  OFF
      BACK
 ```
 
@@ -290,18 +302,18 @@ names `OptionsItem.Back` follows; a test or tool that counts rows does not).
   profile in use into CONTROLS, the saved bullet palette into BULLETS (a `Choice` of
   `BULLET_PALETTE_LABELS`: `STANDARD`, `DEUTERANOPIA`, `PROTANOPIA`, `TRITANOPIA`), and (M2-08)
   the saved display options into SCALE (a `Choice` of `SCALE_MODE_LABELS`: `INTEGER`, `FIT`,
-  `STRETCH`), SHAKE (a `Toggle`), FLASHES (a `Choice` of `FLASH_LABELS`: `NORMAL`, `REDUCED`) and
-  HITBOX (a `Toggle`), focuses MASTER and locks activation for 2 ticks (like every flow menu). The
+  `STRETCH`), SHAKE (a `Toggle`), FLASHES (a `Choice` of `FLASH_LABELS`: `NORMAL`, `REDUCED`),
+  HITBOX (a `Toggle`) and (M2-09) BOSS HP (a `Toggle`), focuses MASTER and locks activation for 2 ticks (like every flow menu). The
   screen re-reads the save every time it opens.
 - **Up / Down** move; **Left / Right** change the focused slider by one level (held directions
   auto-repeat — 18 / 6 ticks) or step CONTROLS through the profiles / BULLETS through the
-  palettes / SCALE and FLASHES through their labels, wrapping; on SHAKE and HITBOX Left = OFF,
+  palettes / SCALE and FLASHES through their labels, wrapping; on SHAKE, HITBOX and BOSS HP Left = OFF,
   Right = ON and OK flips (a press that changes nothing pushes nothing); **OK on a choice** steps
   forward too; OK on a slider does nothing and makes no sound.
 - **Every change applies at once**: a slider pushes a `UserOption` event with its new level, a
   CONTROLS step one with the profile's index, a BULLETS step one with the palette's
-  `BULLET_PALETTES` index, SCALE the mode's `SCALE_MODES` index, SHAKE / FLASHES / HITBOX 1 or 0
-  (below); all play the move sound, queued after the
+  `BULLET_PALETTES` index, SCALE the mode's `SCALE_MODES` index, SHAKE / FLASHES / HITBOX / BOSS
+  HP 1 or 0 (below); all play the move sound, queued after the
   change, so the MASTER and SFX sliders' clicks are already heard at their new volume.
 - **BACK or the Back button** stores the three levels, the display options and — only when CONTROLS
   ended on a different profile than it opened with — the chosen profile id in the save
@@ -339,6 +351,7 @@ drain. `SimEventKind.UserOption` = **13** (appended; `SIM_EVENT_KIND_NAMES[13]` 
 | `ScreenShake 6` (M2-08) | 1 = on, 0 = off | `display.effects.settings.screenShake = param !== 0` |
 | `ReduceFlashing 7` (M2-08) | 1 = reduced, 0 = normal | `display.effects.settings.reduceFlashing = param !== 0` |
 | `ShowHitbox 8` (M2-08) | 1 = on, 0 = off | `display.setShowHitbox(param !== 0)` |
+| `BossHpBar 9` (M2-09) | 1 = on, 0 = off | Nothing — ignored like an unknown kind: the HUD follows the **saved** option once BACK stores it |
 
 `applyAudioOptions(audio, options)` sets all four buses from saved levels at boot, and (M2-08)
 `applyDisplayOptions(renderer, display)` hands the saved display options to the renderer. The
@@ -468,7 +481,7 @@ title — the M1-17 acceptance test in `scenes-options.test.ts`.
 |---|---|
 | A field or format change | Bump `SAVE_VERSION`, append a `SaveMigration` to `SAVE_MIGRATIONS` (never edit a shipped step), read / default the field in `sanitizeSave`, write it in `serializeSave` in a **fixed** position, and add a fixture of the old version to `packages/core/test/save/fixtures/` with a migration test (M2-16 plans v2) |
 | A user option | A field in `UserOptions` / `DEFAULT_USER_OPTIONS`, read defensively in `resolveUserOptions`, serialised in `serializeSave`; if it changes live, a new `UserOptionKind` code (appended) and a case in `connectOptionEvents`; if it affects the simulation it belongs in `GameConfig` instead |
-| An Options item | A widget in `OptionsScene` (slider, toggle or choice), its index in `OptionsItem` (BACK moves down — M2-08 moved it to 9), a `userOption` push on `Changed`, the value in `close()`; keep within 31 items and the flow's string slots (the constructor throws otherwise), and within the panel (M2-08 grew it to ten rows — the next row needs a scrolling list or a sub-screen, M2-16) |
+| An Options item | A widget in `OptionsScene` (slider, toggle or choice), its index in `OptionsItem` (BACK moves down — M2-08 moved it to 9, M2-09 to 10), a `userOption` push on `Changed`, the value in `close()`; keep within 31 items and the flow's string slots (the constructor throws otherwise), and within the panel (M2-08 grew it to ten rows — the next row needs a scrolling list or a sub-screen, M2-16) |
 | A statistic | A counter in `SaveStats`, its default in `createDefaultSave`, `counter()` in `sanitizeSave`, a field in `serializeSave`, `save.count('…')` where it happens |
 | A hi-score mode | A config field that feeds `hiScoreModeKey` (practice, boss rush — M2; co-op shares the tables and tags its rows `2p` since M2-06); keys must stay lower-case kebab ≤ 32 characters |
 | Another storage (Electron files, M2-17) | Implement `PlatformStorage` (`get` / `set`, async); nothing in `core/save` changes. Keep failures as rejections or swallow them — `flush` handles both |
@@ -504,7 +517,8 @@ title — the M1-17 acceptance test in `scenes-options.test.ts`.
 | Volumes react, but the menu sounds ignore MASTER / MUSIC | Expected for MUSIC; MASTER scales everything; the menu sounds (`ui` bus) follow **SFX** |
 | A test's `Game` has an Options screen but nothing persists | `GameOptions.save` omitted: the flow plays with a memory-only store. Pass `createSaveStore(platform.storage, await loadSave(platform.storage))` |
 | An old `shmup-cup:input.profile` entry does nothing | Since M1-17 the choice lives in the save document; the old key is not read |
-| A test that pressed Down four (or five) times to reach BACK now lands on BULLETS (or SCALE) | M2-02 inserted BULLETS and M2-08 SCALE, SHAKE, FLASHES and HITBOX before BACK (`OptionsItem.Back` is 9) — navigate by `OptionsItem`, or press Back |
+| A test that pressed Down four (or five, or nine) times to reach BACK now lands on BULLETS (or SCALE, or BOSS HP) | M2-02 inserted BULLETS, M2-08 SCALE, SHAKE, FLASHES and HITBOX and M2-09 BOSS HP before BACK (`OptionsItem.Back` is 10) — navigate by `OptionsItem`, or press Back |
+| BOSS HP changed nothing in the running game until BACK | Intended: the HUD reads the saved option (`Hud.showBossHp` from `save.options.display`), and the live `BossHpBar` event has no consumer |
 | SHAKE / FLASHES in the save are ignored at boot | The host passed `ShellOptions.effects.screenShake` / `reduceFlashing` — an explicit host setting wins until the Options screen changes it |
 | BULLETS shows `STANDARD` after a relaunch although another palette was picked | The screen was not closed with BACK / Back (only closing writes), or the save predates the pick; the palette itself is applied live when stepped |
 | `data-shmup-boot-ms` is larger than `Shell.bootTiming.bootMs` | By design: the attribute is `readyMs` (since the page started, i.e. the launch), `bootMs` only the time inside `bootShell` |
@@ -528,6 +542,9 @@ title — the M1-17 acceptance test in `scenes-options.test.ts`.
 - **M2-08** (done) — the display options SCALE, SHAKE, FLASHES and HITBOX (`display.scaleMode`,
   `screenShake`, `reduceFlashing`, `showHitbox`), saved in format 1 without a migration, applied at
   boot (`applyDisplayOptions`) and live ([presentation-polish.md](presentation-polish.md#display-options)).
+- **M2-09** (done) — `display.bossHpBar` and the BOSS HP row (`OptionsItem.BossHp` 9, BACK 10,
+  `UserOptionKind.BossHpBar` 9), saved in format 1 without a migration; the HUD reads the saved
+  value ([advanced-bosses.md](advanced-bosses.md#the-boss-hp-bar)).
 - **M2-16** — game options (difficulty, lives, death penalty, auto power-up), per-device
   rebinding and the controls sub-screens; **save v2** with a migration from v1.
 - **M2-15** — the name entry replaces `---` and the hi-score table screen shows the tables.

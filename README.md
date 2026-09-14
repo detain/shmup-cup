@@ -9,7 +9,7 @@ with the browser and Electron as additional targets.
 The [implementation plan](shmup_plan.md) is approved and under way. Progress per step is tracked in
 [`shmup_progress.md`](shmup_progress.md); milestone **M1 — playable vertical slice** is code-complete
 as version **0.1.0** ([`CHANGELOG.md`](CHANGELOG.md)) — its on-device release check on the monitors
-is next — and **M2 — complete v1.0** is under way (M2-01 … M2-08 done).
+is next — and **M2 — complete v1.0** is under way (M2-01 … M2-09 done).
 
 <!--
   Keep this section scannable: one entry per plan step, in plan order — a bold headline with the
@@ -485,6 +485,28 @@ is next — and **M2 — complete v1.0** is under way (M2-01 … M2-08 done).
     [the Raster range](docs/client/preview-build.md#the-raster-range-browser-only) ·
     [authoring effects](content/stages/README.md#raster-effects-and-palette-cycles-m2-08)
 
+- **Advanced bosses: mid-bosses, raids, multi-bosses** (M2-09)
+  - **Four boss slots** (part hit ids `64 + slot × 16 + i`, `MAX_HIT_TARGETS` 128); **turned
+    parts** — binary-angle transforms from the sine table, spins, circle hurtboxes, heading frames
+    instead of rotated sprites (turrets that aim with `aimPart`).
+  - **Captains** (mid-bosses, `role: "captain"`): a `boss` event, riding the scrolling camera, a
+    short death, no lock, music or stage clear; four archetypes — `captain.ram`,
+    `captain.launcher`, `captain.circler`, `captain.crab`.
+  - **Battleship raids** larger than the screen: anchored where they enter, the camera following
+    boss-relative segments (`StageRunner.follow` — the stage timeline waits), eased back at the
+    end; turrets fire only on screen (`boss.raid`).
+  - **Double bosses** (turns, the resting half drawn behind, the survivor's enrage), a **boss
+    inside a boss**, **time limits** (an escape — `BossState.Escape`, `SimEventKind.BossEscaped`,
+    `World.endingFlags`), the **boss HP bar** in the top HUD bar (OPTIONS → BOSS HP, off by
+    default) and **boss rushes** (`type: "bossRush"` stages).
+  - Dev stages `?stage=captain-range`, `raid-range`, `twin-range`, `gauntlet-range` with the
+    procedural `bosses/*` art; zone A unchanged. Golden replays re-blessed (the hash layout —
+    same inputs, ticks and outcomes); four new advanced-boss runs.
+  - Docs: [developer guide](docs/dev/advanced-bosses.md) ·
+    [what testers should check](docs/client/preview-build.md#the-advanced-boss-ranges-browser-only) ·
+    [the boss HP bar](docs/client/preview-build.md#the-boss-hp-bar-every-device) ·
+    [authoring bosses](content/enemies/README.md#advanced-bosses-m2-09)
+
 ### Hardware spike
 
 - The **input probe** — a diagnostic Tizen app that measures the Samsung remote, gamepads and
@@ -530,6 +552,9 @@ Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/ar
 [Option types, shields & the Option Hunter](docs/dev/options-shields-hunter.md) ·
 [Direct mode, the MANTA & the ship select](docs/dev/direct-mode.md) ·
 [two-player co-op](docs/dev/coop.md) ·
+[advanced stage systems](docs/dev/advanced-stages.md) ·
+[presentation polish](docs/dev/presentation-polish.md) ·
+[advanced bosses](docs/dev/advanced-bosses.md) ·
 [input profiles](docs/dev/input-profiles.md) ·
 [API reference](docs/dev/api-reference.md) ·
 [build, test & deploy](docs/dev/build-test-deploy.md) · [conventions](docs/dev/conventions.md).
@@ -556,7 +581,7 @@ versions (`devEngines.runtime`).
 ```sh
 pnpm -v               # must print 12.x — an older global pnpm fails with ERR_PNPM_BROKEN_LOCKFILE
 pnpm install          # set ELECTRON_SKIP_BINARY_DOWNLOAD=1 to skip the Electron binary
-pnpm dev              # browser dev app → http://localhost:5173 (F1–F8: debug tools): the title (Enter five times — PRESS OK, 1 PLAYER, NORMAL, KESTREL in the ship select, START in the weapon select — starts zone A, AZURE VERGE; Down on the title picks 2 PLAYERS — a gamepad's START (or Enter with ?profile=keyboard-split) drops player 2 in; Down + Enter in the ship select flies the MANTA instead — its colour items power up on contact, Left Shift toggles its speed; in the weapon select ↑ / ←→ choose the weapon type, EDIT, the Option type, the ? shield, the ! choice and Auto Power-Up — V or a held Enter spreads FORMATION / ROTATE Options in the game; ?skip=boss starts right before its boss HALCYON BULWARK; Enter, Down, Down, Enter opens OPTIONS — volumes, controls, bullet colours, SCALE, SHAKE, FLASHES and HITBOX, saved in localStorage; Esc pauses), then fly the KESTREL (arrows/WASD, gamepad; the first key press turns the sound on; Enter/C takes a power-up; ?scene=flight skips the title; ?stage=test-range scrolls the test stage, its enemies, their bullets and the power capsules; ?stage=test-boss plays the WARNING and the test boss; ?stage=hunter-range&loadout=full sends in the Option Hunters; ?stage=direct-range (then the MANTA) sends pincer waves of item carriers; ?stage=gimmick-range tries the M2-07 stage systems — bricks to shoot through, regrowing walls, rocks, bubbles, a volcano, suction, tentacles, the cube rush, moving blocks, a pan, a fork; ?stage=raster-range shows the M2-08 raster effects and palette cycling — a waving, colour-rolling sea, a line-band floor, heat haze; ?profile=keyboard-remote-emulation feels like the TV remote; ?profile=keyboard-split puts two players on one keyboard; ?scene=showcase / ?scene=calibration / ?scene=fx-gallery)
+pnpm dev              # browser dev app → http://localhost:5173 (F1–F8: debug tools): the title (Enter five times — PRESS OK, 1 PLAYER, NORMAL, KESTREL in the ship select, START in the weapon select — starts zone A, AZURE VERGE; Down on the title picks 2 PLAYERS — a gamepad's START (or Enter with ?profile=keyboard-split) drops player 2 in; Down + Enter in the ship select flies the MANTA instead — its colour items power up on contact, Left Shift toggles its speed; in the weapon select ↑ / ←→ choose the weapon type, EDIT, the Option type, the ? shield, the ! choice and Auto Power-Up — V or a held Enter spreads FORMATION / ROTATE Options in the game; ?skip=boss starts right before its boss HALCYON BULWARK; Enter, Down, Down, Enter opens OPTIONS — volumes, controls, bullet colours, SCALE, SHAKE, FLASHES, HITBOX and BOSS HP, saved in localStorage; Esc pauses), then fly the KESTREL (arrows/WASD, gamepad; the first key press turns the sound on; Enter/C takes a power-up; ?scene=flight skips the title; ?stage=test-range scrolls the test stage, its enemies, their bullets and the power capsules; ?stage=test-boss plays the WARNING and the test boss; ?stage=hunter-range&loadout=full sends in the Option Hunters; ?stage=direct-range (then the MANTA) sends pincer waves of item carriers; ?stage=gimmick-range tries the M2-07 stage systems — bricks to shoot through, regrowing walls, rocks, bubbles, a volcano, suction, tentacles, the cube rush, moving blocks, a pan, a fork; ?stage=raster-range shows the M2-08 raster effects and palette cycling — a waving, colour-rolling sea, a line-band floor, heat haze; ?stage=captain-range / raid-range / twin-range / gauntlet-range play the M2-09 advanced bosses — mid-bosses on the scrolling screen, the IRON LEVIATHAN raid with its heart and time limit, the twins' turns, a boss rush; ?profile=keyboard-remote-emulation feels like the TV remote; ?profile=keyboard-split puts two players on one keyboard; ?scene=showcase / ?scene=calibration / ?scene=fx-gallery)
 pnpm lint             # ESLint (typescript-eslint + compat: chrome >= 69)
 pnpm typecheck        # tsc --noEmit everywhere
 pnpm test             # Vitest per package + repo integration tests
@@ -648,13 +673,13 @@ hitch in the overlay's frame graph, gamepad and keyboard — checklist in
 [`docs/client/debug-tools.md`](docs/client/debug-tools.md#the-m1-release-check). The M1 release
 is tagged `v0.1.0` on the final commit of step M1-19.
 
-Code: plan step **M2-09** (advanced bosses: mid-bosses, raids, multi-bosses) — M2-01
+Code: plan step **M2-10** (zone map, campaign flow, transitions & bonus stages) — M2-01
 (rank, difficulty presets, extends & continues) opened milestone **M2 — complete v1.0**, M2-02
 (pattern DSL, bending lasers, bullet cancel & readability), M2-03 (meter arsenal: loadouts B–D,
 Weapon Edit, parking & weapon select), M2-04 (Option & shield variants + Option Hunter), M2-05
 (Direct mode & ship select), M2-06 (two-player simultaneous co-op), M2-07 (advanced stage
-systems & Tiled import) and M2-08 (presentation polish: raster effects, palettes, visual options)
-followed; every simulation change re-blesses the golden replays in the same
+systems & Tiled import), M2-08 (presentation polish: raster effects, palettes, visual options) and
+M2-09 (advanced bosses: mid-bosses, raids, multi-bosses) followed; every simulation change re-blesses the golden replays in the same
 commit. The per-step status board is [`shmup_progress.md`](shmup_progress.md).
 
 Also on hardware (unchanged, and still the gate for the remote control scheme): package and
@@ -674,7 +699,8 @@ M2-02 the colour-blind **BULLETS** option and the points of cancelled bullets, s
 the remote's Ch+) and the pod shields and REDUCE, since M2-05 the SHIP SELECT box and the
 MANTA — its colour items, the Arm and the speed toggle on the remote's Ch−, and since M2-06
 **two players** — the remote plus a USB / Bluetooth gamepad joining with START — and since M2-08
-the Options screen's SCALE, SHAKE, FLASHES and HITBOX and the brighter Mega Crash flash (checklist in
+the Options screen's SCALE, SHAKE, FLASHES and HITBOX and the brighter Mega Crash flash, and since
+M2-09 the BOSS HP bar during HALCYON BULWARK (checklist in
 [`docs/client/preview-build.md`](docs/client/preview-build.md#on-the-samsung-smart-monitor--tv)).
 
 Desktop prerequisites: Git, Node 24 (22.12+), Tizen Studio **or** VS Code + Samsung Tizen extension (with a Samsung

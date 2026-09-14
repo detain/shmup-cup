@@ -479,10 +479,15 @@ document it in the module docblock and in `content/enemies/README.md`, and test 
 (`packages/core/test/behaviors/`). `yield SLEEP_FOREVER` once the mover can do the rest.
 
 **Boss behaviours** (M1-13) are a second roster in the same module — `defineBossBehavior`,
-`createBossBehaviorRegistry`, `DEFAULT_BOSS_BEHAVIORS` (`boss.hover`, `boss.lanes`, and
-`boss.bulwark` since M1-18) — driving a
+`createBossBehaviorRegistry`, `DEFAULT_BOSS_BEHAVIORS` (`boss.hover`, `boss.lanes`,
+`boss.bulwark` since M1-18, and since M2-09 the captains `captain.ram`, `captain.launcher`,
+`captain.circler`, `captain.crab` and the raid turrets' `boss.raid`) — driving a
 `BossScriptApi` instead of a `ScriptApi`; a boss phase's `script` names one. They follow the same
-coroutine rules ([bosses-and-warning.md](bosses-and-warning.md#boss-behaviours-corebehaviors)).
+coroutine rules ([bosses-and-warning.md](bosses-and-warning.md#boss-behaviours-corebehaviors),
+[advanced-bosses.md](advanced-bosses.md#behaviours)). A captain's `minion` (M2-09) is an ordinary
+regular enemy: `BossScriptApi.launch` spawns it at a boss part's centre through the enemy
+system's `spawn` (the World's `BossHost.enemies`), with its own script and mover — BROOD
+LAUNCHER launches the gimmick range's splitting `bubble`.
 
 ## The `test-range` roster
 

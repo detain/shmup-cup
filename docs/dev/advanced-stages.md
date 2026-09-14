@@ -479,7 +479,10 @@ terrain.destroyed; // → 0; terrain.resets → 1
 - **M2-08** (done) — raster effects and palette cycling can target the terrain layer (lava,
   water, glowing tissue); the block batch sits on `LayerId.Terrain` like the grid, so a terrain
   filter covers the blocks too ([presentation-polish.md](presentation-polish.md)).
-- **M2-09** — raids and boss camera segments on top of holds, locks and diagonal pans.
+- **M2-09** (done) — battleship raids: `StageRunner.follow` puts the camera on a boss-relative
+  target after a brake to a lock, with the timeline (events, keys, checkpoints, trigger disarms)
+  held where the follow began ([advanced-bosses.md](advanced-bosses.md#battleship-raids),
+  [stage-runtime.md](stage-runtime.md#following-a-target-m2-09)).
 - **M2-10** — the zone map, run-state flags beyond one stage, bonus-stage entrances (a marked gap,
   all ground targets destroyed) that can reuse region triggers and the destroyed count.
 - **M2-11 … M2-14** — the zones: BRINE NEBULA (splitting bubbles), MAGMA DEEP (volcanoes, falling

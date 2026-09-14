@@ -613,5 +613,7 @@ world.players[0].hits; // hits recorded by playerHit — each one a death since 
 - **M2-02** (done) — the pattern DSL and its bullet programs ([pattern-dsl.md](pattern-dsl.md)),
   bending lasers and cancel into point items (above), the colour-blind palettes of the bullet,
   beam and bend sprites ([rendering-and-shell.md](rendering-and-shell.md#colour-blind-bullet-palettes)).
-- **M2-09** — boss behaviours and revenge bullets running DSL patterns; DSL-fired lasers.
+- **M2-09** (done) — advanced bosses with TS behaviours ([advanced-bosses.md](advanced-bosses.md)); boss
+  behaviours and revenge bullets running DSL patterns and DSL-fired lasers are still planned (with the
+  zones' bosses, M2-11 … M2-14).
 - **P2** — graze scoring (`BulletFlag.Grazed`).

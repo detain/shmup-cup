@@ -130,7 +130,7 @@ Options screen's CONTROLS — disabled when omitted). `createGame` passes `GameO
 | `AutoOrderScene` (M2-03) | yes / 0.35 / menu | Panel on the right: `AUTO ORDER`, rows `1` … `12` (a meter slot or `-`), DONE | Up / Down move; Left / Right / OK step a row; DONE or Back store the rows and close | weapon select (`pop`) |
 | `GameScene` | no / 0 / **game** | The World (view + HUD), the boss WARNING band in the UI list | Pause or Back of any player → pause menu (that tick the World does not step) — except, in a co-op game (M2-06), the START / OK of a player who may drop in: the World joins it ([coop.md](coop.md#joining-coreworld)) | pause, stage clear (90 World ticks after `stageClear`), game over (30 after `gameOver`) — or, with continues left (`canContinue`), the continue countdown (M2-01) — all `push` |
 | `PauseScene` | yes / 0.5 / menu | Panel, `PAUSE`, RESUME / OPTIONS / RETRY STAGE / QUIT TO TITLE | Pause, Back, RESUME → resume; OPTIONS → Options (the game stays frozen); RETRY STAGE → `game.restart()` + pop (no confirmation); QUIT TO TITLE → confirm | game (`pop`), options, confirm (`push`) |
-| `OptionsScene` (M1-17) | yes / 0.5 / menu | Opaque panel, `OPTIONS`, MASTER / MUSIC / SFX sliders (0–10), CONTROLS (the input profile's label, a `Choice`), BULLETS (M2-02: the enemy bullet palette, a `Choice` of `BULLET_PALETTE_LABELS`), M2-08: SCALE (a `Choice` of `SCALE_MODE_LABELS`), SHAKE (a `Toggle`), FLASHES (a `Choice` of `FLASH_LABELS`), HITBOX (a `Toggle`) — ten rows on a 288×182 panel —, BACK | Up / Down move; Left / Right change a slider, step CONTROLS / BULLETS / SCALE / FLASHES (OK steps them too) or set SHAKE / HITBOX (OK flips them), each change pushed live as a `UserOption` event; BACK or Back store the options in the save, flush it and close | title / pause menu (`pop`) |
+| `OptionsScene` (M1-17) | yes / 0.5 / menu | Opaque panel, `OPTIONS`, MASTER / MUSIC / SFX sliders (0–10), CONTROLS (the input profile's label, a `Choice`), BULLETS (M2-02: the enemy bullet palette, a `Choice` of `BULLET_PALETTE_LABELS`), M2-08: SCALE (a `Choice` of `SCALE_MODE_LABELS`), SHAKE (a `Toggle`), FLASHES (a `Choice` of `FLASH_LABELS`), HITBOX (a `Toggle`), M2-09: BOSS HP (a `Toggle`) — eleven rows on a 288×192 panel —, BACK | Up / Down move; Left / Right change a slider, step CONTROLS / BULLETS / SCALE / FLASHES (OK steps them too) or set SHAKE / HITBOX / BOSS HP (OK flips them), each change pushed live as a `UserOption` event; BACK or Back store the options in the save, flush it and close | title / pause menu (`pop`) |
 | `StageClearScene` | yes / 0.25 / menu | `STAGE CLEAR`, `SCORE` (`1P` / `2P` once player 2 joined a co-op game, M2-06), `HI` for 240 ticks, then `TO BE CONTINUED` for 240 | OK skips a phase; entering it records the run in the save (M1's run ends here) | title (`reset`) |
 | `ContinueScene` (M2-01) | yes / 0.35 / menu | Red-edged panel, `CONTINUE?`, the seconds left (9 … 0, a tick sound each), `CREDITS` = continues left (`1P` / `2P` credits once player 2 joined, M2-06); the music fades out | OK / Back after 30 ticks: OK continues (`continueWorld` — checkpoint restart, fresh lives; in a co-op game only the players whose OK was pressed, M2-06), Back gives up | game (`pop`), game over (`replace`, also after 600 ticks) |
 | `GameOverScene` | yes / 0.35 / menu | Red-edged panel, `GAME OVER`, the final score (both players', `1P` / `2P`, once player 2 joined a co-op game — M2-06); `NEW HI-SCORE` below it for a new best (player 1's place) | OK / Back after 30 ticks; entering it records the run in the save | title (`reset`) after OK / Back or 600 ticks |
@@ -334,7 +334,27 @@ weapons (`SPREAD`, `TAIL`, `RIPPLE` for Type B, `2-WAY`, `VERTICAL`, `CYCLONE` f
 their symbols. Without the UI
 sprites (a content table that lacks them, `EMPTY_CONTENT_DB`) icons and slots become rectangles and
 the labels are left out. The worst case is 32 commands; the game scene's HUD list has
-`HUD_COMMAND_COUNT` (96 since M2-06) commands and `HUD_STRING_COUNT` (22 since M2-06) strings.
+`HUD_COMMAND_COUNT` (100 since M2-09; 96 in M2-06) commands and `HUD_STRING_COUNT` (23 since
+M2-09; 22 in M2-06) strings.
+
+**The boss HP bar (M2-09).** `buildHud(world, list, sprites, bossHp)`: with `bossHp` (the
+`bossHpBar` display option) and while `world.bosses.hpBar.visible` — a boss is flying in, fighting,
+escaping or dying before its blast — the middle of the top bar shows `BOSS` in red (string slot
+22) at x 148 and a 4-px frame (`HUD_COLORS.bossFrame`) `BOSS_HP_BAR_WIDTH` (64) px wide at x 176
+with a 2-px red fill (`bossFill`) of `bossHpBarFill(bar, 62)` pixels, **instead of** `HI` and the
+hi-score; when the bar goes, `HI` comes back. The fill is `⌈hp × width / maxHp⌉` (at least 1 px
+while any hit point is left, full only at full strength — it fills up during the intro).
+
+```text
+ x: 8    24          148   176                  292  308
+    1P   00012300    BOSS  [██████████▒▒▒▒▒▒]   2P   ------            ← top bar during a boss
+```
+
+`Hud.showBossHp` is the flag `update` passes on; the scene flow sets it from
+`save.options.display.bossHpBar` on every displayed frame (so the HUD follows the **saved** value —
+the Options screen's live `BossHpBar` event has no consumer), and `update` rebuilds only when the
+fill's pixel count changes. The bar's model (which bosses and parts count) is `core/bosses`
+`BossHpBar` — [advanced-bosses.md](advanced-bosses.md#the-boss-hp-bar).
 
 **Direct mode (M2-05).** With `powerUpMode: 'direct'` the bottom bar shows the **tier pips**
 instead of the meter and the Force Field pips:
@@ -365,7 +385,8 @@ list)` is the change detection around it: it rebuilds only when a dirty flag is 
 player's HUD state, whether it plays, its lives, meter cursor, equippable mask, shield hits / max /
 tier or — since M2-05 — its shot / sub levels, family or speed level changed (both players since
 M2-06, kept in two typed arrays), the flash phase (only while a slot is highlighted) or the
-`PRESS START` blink (only while a prompt shows) moved — or the World or list is another object
+`PRESS START` blink (only while a prompt shows) or — since M2-09, with `showBossHp` — the boss HP
+bar's fill in pixels moved — or the World or list is another object
 (`invalidate()` forces it; the game scene calls it on every new World). `builds` counts rebuilds
 for tests and debug overlays. It runs once per **displayed frame** (from `updateFrame`), never per
 tick.
@@ -459,6 +480,7 @@ outside the World.
 | `packages/core/test/ui/ui.test.ts`, `ui-edge.test.ts` | Navigation, wrap (also across disabled ends), disabled items and `Denied`, repeat timing over long holds / chords / latched taps, the Confirm buffer vs Back, a disabled item and a same-tick direction, lock lengths 1–4, sliders (overshoot, fractional steps, one-value ranges, NaN) and toggles, the YES / NO prompt, builder defaults, geometry, slot reuse and overflow |
 | `packages/core/test/ui/ui-hud.test.ts`, `ui-hud-edge.test.ts` | The exact meter commands, the flash, greyed slots, pips, stock boundaries (0, 5, > 5) with and without sprites, partial sprites, player 2, change detection, the worst case within 64 commands, labels written once, big scores |
 | `packages/core/test/ui/ui-alloc.test.ts` | Widgets, builders and the HUD without allocation |
+| `packages/core/test/ui/ui-boss-hp.test.ts`, `ui-boss-hp-edge.test.ts` | M2-09: `bossHpBarFill` (whole pixels, ≥ 1 px while anything is left, full only at full strength; unusable, infinite and fractional values), `BOSS` and the bar in place of the hi-score only with the option and while a boss counts, rebuilds only when the fill's pixels or the option change; the e2e check is in `test/e2e/advanced-bosses.spec.ts` |
 | `packages/core/test/scenes/scenes.test.ts`, `scenes-edge.test.ts` | Stack semantics, hook order, deferred vs immediate transitions, mid-tick self pop / pop + push / reset, exactly 8 queued, the runaway guard, transitions from hooks, a full stack, a throwing tick or hook, `mergeMenuInput` |
 | `packages/core/test/scenes/scenes-flow.test.ts`, `scenes-flow-edge.test.ts` | The headless run title → game → pause → quit → title from snapshot inputs; exit only after YES on a fake platform; resume → pause on every scene; retry; end screens and their delays (frozen while paused, reset by RETRY); the WARNING band; the dialog's sounds; the game-over lock boundary; the stage-clear tally; the session hi-score; the frame on every screen; player 2 driving menus; lockstep across menus and retries |
 | `packages/core/test/scenes/scenes-alloc.test.ts`, `scenes-menu-alloc.test.ts` | A whole game and 20,000 menu ticks without allocation |
@@ -524,6 +546,9 @@ outside the World.
   co-op game scene (a joinable player's START joins instead of pausing), the per-player continue
   countdown, both scores on the end screens with `2p` hi-score rows, `inputSeats`, the co-op HUD
   halves ([coop.md](coop.md)).
+- **M2-09** (done) — the boss HP bar in the top HUD bar (`bossHpBarFill`, `Hud.showBossHp`,
+  `HUD_STRING_COUNT` 23, `HUD_COMMAND_COUNT` 100) behind the display option BOSS HP
+  (`OptionsItem.BossHp` 9, BACK 10, the panel 288×192) ([advanced-bosses.md](advanced-bosses.md#the-boss-hp-bar)).
 - **M2-10 / M2-15** — the zone map, attract mode, mode select, name
   entry, the hi-score table; **M2-16** — rebinding and accessibility options (and the loadout
-  saved); the boss HP bar in the HUD (M2).
+  saved).

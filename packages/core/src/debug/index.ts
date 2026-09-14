@@ -44,13 +44,14 @@
  * fight clock and escape, orbit, pair (partner, resting, turning, turn clock, enrage), raid
  * camera state, rush entry and every part's turn and spin — plus the WARNING's active flag and
  * ticks, the raid camera target, the boss rush's index and delay and the World's ending flags;
- * the piercing shots' boss-part cooldown tables join their enemy tables above), then the stage gimmicks (M2-07: the destructible terrain's change and
+ * the piercing shots' boss-part cooldown tables — 64 part slots each since M2-09 — join their
+ * enemy tables above), then the stage gimmicks (M2-07: the destructible terrain's change and
  * reset counts, broken-cell count, change ring and every tracked cell — state, cell, tile, damage,
  * timer —, each moving block slot's event, age and position, each pull field's owner, owner spawn
  * tick, radius, strength and ticks, each chain's owner, spawn tick, anchor and links; the stage
- * runner's holds, diagonal pans and trigger masks are slots of its state array). Scripts are
- * covered by their `wakeTick`; a coroutine's internal position
- * cannot be hashed. Numbers are hashed as their little-endian IEEE-754 double bytes, so the hash
+ * runner's holds, diagonal pans and trigger masks are slots of its state array; its follow target
+ * is not — the raid camera target above is its only one). Scripts are covered by their
+ * `wakeTick`; a coroutine's internal position cannot be hashed. Numbers are hashed as their little-endian IEEE-754 double bytes, so the hash
  * is identical on every engine and platform, and two worlds that simulated the same inputs from
  * the same seed hash equal. Golden replays (M1-19) compare these hashes. The hash reads state only
  * — it never draws from an RNG — and works in module-level scratch buffers, so the only

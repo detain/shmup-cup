@@ -56,7 +56,7 @@ decides what that looks like, from data. Particles have their own RNG, are not p
 | `Flash` (`id` = `FlashKind`, `param` = ticks) — Mega Crash (12), each WARNING pulse (8), a boss's final blast (24) | `effects.flash(id, param)` | A full-screen flash over the playfield (under the HUD), in the kind's colour, fading linearly — unless the limiter drops it |
 | `Dim` (`id` = level in percent, `param` = ticks) — the boss WARNING (50 %, 180) | `effects.dim(id / 100, param)` | The playfield darkens (fade in 8 ticks, hold, fade out 16) |
 | `Score` (**new, 12**: `id` = player, `x` / `y` = where, `param` = points) — `core/scoring` for every credited kill, `core/bosses` for every destroyed part worth points | `popups.show(param, x, y, SCORE_POPUP_COLOR)` | A white number rising from the kill |
-| `FormationBonus` (`param` = bonus, at the last kill) · `BossDefeated` (`param` = the tally, where the boss exploded) | `popups.show(…, BONUS_POPUP_COLOR)` | A gold number |
+| `FormationBonus` (`param` = bonus, at the last kill) · `BossDefeated` (`param` = the tally, where the boss exploded — since M2-09 also a captain's, after its smaller blast: `ExplosionLarge` + `BossChain` particles and a medium shake, no flash or hit-stop) | `popups.show(…, BONUS_POPUP_COLOR)` | A gold number |
 
 Positions go on as whole world pixels (`Math.floor(x) | 0`); the renderer applies the camera when
 it draws. Since M1-15 `connectAudioEvents` plays the sounds themselves and handles `Music` /

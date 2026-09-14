@@ -27,7 +27,8 @@ work too, and every device drives both the game and the menus.
 > **OPTIONS** (on the title and in the pause menu) sets the game's volumes, lets you choose the
 > control profile (**CONTROLS**, [below](#control-profiles)) and the enemy bullets' colours
 > (**BULLETS** — standard or one of three colour-blind sets), how the picture fills the screen
-> (**SCALE**), the screen **SHAKE**, gentler **FLASHES** and a **HITBOX** marker on your ship
+> (**SCALE**), the screen **SHAKE**, gentler **FLASHES**, a **HITBOX** marker on your ship and the
+> **BOSS HP** bar in the top bar during boss fights
 > ([preview-build.md](preview-build.md#the-options-screen)); the game remembers all of them.
 > **Special** (Channel up on the remote, V on a keyboard, Y on a gamepad) spreads FORMATION and
 > ROTATE Options out and back in — as does **holding** PowerUp
@@ -46,7 +47,7 @@ and selects a menu entry in menus; Back pauses the game and goes back in menus.
 
 | Action | What it does |
 |---|---|
-| Move | Game: fly the ship (8 directions where the device allows it; diagonals are no faster than straight moves, and the ship stops as soon as you let go). Menus: move the highlight (▲ ▼; ◀ ▶ between YES and NO, in the Options screen ◀ ▶ turn a volume down / up, change the control profile, the bullet colours, SCALE or FLASHES, or set SHAKE / HITBOX off (◀) or on (▶), and in the WEAPON SELECT screen ◀ ▶ change the highlighted line's choice; in the SHIP SELECT box ▲ ▼ pick the ship) — holding a direction repeats the move after about a third of a second, then about ten times a second |
+| Move | Game: fly the ship (8 directions where the device allows it; diagonals are no faster than straight moves, and the ship stops as soon as you let go). Menus: move the highlight (▲ ▼; ◀ ▶ between YES and NO, in the Options screen ◀ ▶ turn a volume down / up, change the control profile, the bullet colours, SCALE or FLASHES, or set SHAKE / HITBOX / BOSS HP off (◀) or on (▶), and in the WEAPON SELECT screen ◀ ▶ change the highlighted line's choice; in the SHIP SELECT box ▲ ▼ pick the ship) — holding a direction repeats the move after about a third of a second, then about ten times a second |
 | Shot | Main gun. Today it fires **on its own** on every device (automatic fire is on by default, and always on with the TV remote), so you never need to press it; once automatic fire can be switched off in the Options menu, hold it to fire |
 | Sub | Missiles / sub-weapon, once you have them — automatic in the same way |
 | PowerUp | KESTREL: take the highlighted power-up of the power meter — one per press (holding the button never takes a second); a press on an empty or maxed-out slot does nothing. **Held** for a quarter of a second or more, it also spreads FORMATION / ROTATE Options for as long as you hold it. MANTA: nothing (its colour items work when you touch them) |

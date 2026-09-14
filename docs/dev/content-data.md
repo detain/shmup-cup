@@ -106,7 +106,8 @@ const game = createGame(platform, { seed }, db);
    (across all files of the kind) is an issue; the first file in path order wins. Enemies are
    completed here (`completeEnemy`: defaults; since M1-13 the fields a regular enemy must have,
    and a boss section checked and completed — part indices and masks, the regular fields filled
-   from it); one bad entry skips its whole file, like a schema failure. A `rules` file's
+   from it; since M2-09 also its role, time limit, raid, pair, enrage, inner boss and minion
+   fields and the parts' radius / angle / spin / turn — `completeAdvancedBoss`); one bad entry skips its whole file, like a schema failure. A `rules` file's
    `difficulty` section (M2-01) is checked (`aimDirections` powers of two), frozen and stored as
    `db.difficulty`; a second file defining it is an issue and is ignored. Its `scoring` section
    (M2-02: `bulletCancel`, the points of a bullet cancelled into a point item, 0–10,000) is
@@ -131,7 +132,10 @@ const game = createGame(platform, { seed }, db);
 8. **Resolve** every recorded reference and write the index into `<field>Id`.
 9. **Check boss references** (M1-13, `checkBossReferences`): a stage `spawn` / `formation`
    event or an enemy `child` naming a boss, and a `warning` / `boss` event naming a regular
-   enemy, are issues. Then (M2-05, `checkWeaponFamilies`) every weapon a Direct-mode family's
+   enemy, are issues; since M2-09 (`checkAdvancedBossReferences`) also a `warning` naming a
+   captain, a `partner` that is not another stage boss without a partner or raid of its own, an
+   `inner` boss that is not another stage boss or whose chain loops, a `minion` that is a boss and
+   a stage `rush` entry that is not a stage boss. Then (M2-05, `checkWeaponFamilies`) every weapon a Direct-mode family's
    level fires must belong in the family's slot (`main` / `sub`) — issue path
    `<file>:families[f].levels[l].shots[k].weapon`.
 10. **Expand stage terrain** (third pass, M1-07): every stage with a `tilemap` whose tileset
@@ -147,7 +151,9 @@ const game = createGame(platform, { seed }, db);
    `hp`, `regen`, `score`). Since M2-08 `checkStageEffects` also checks and completes a stage's
    `raster` effects and palette `cycles` (ranges, the fields each raster kind needs, `bands`,
    distinct and not-too-close cycle colours per layer, ≤ 8 per layer; defaults filled, colours
-   resolved to `rgb`). Details in
+   resolved to `rgb`); since M2-09 `checkStageRush` fills `type` (`normal`) and the rush entries'
+   defaults, requires a `rush` (and no `end` event) on a `bossRush` stage and refuses one
+   elsewhere. Details in
    [stage-runtime.md](stage-runtime.md#stage-data-and-loading),
    [advanced-stages.md](advanced-stages.md#content-coredata) and
    [presentation-polish.md](presentation-polish.md#stage-data-coredata).
@@ -469,3 +475,10 @@ M2-08 (done) — stages gained the optional presentation lists `raster` (`StageR
 `haze`, `lines` on `far` / `mid` / `terrain`) and `cycles` (`StageColorCycle`: `#rrggbb` ramps on
 `far` / `mid` / `terrain` / `ground` / `air`), both `[]` when omitted — no format change; the content
 file `stages/raster-range.stage.json` ([presentation-polish.md](presentation-polish.md)).
+
+M2-09 (done) — the boss section gained the optional `role` (`boss` / `captain`), `timeLimit`,
+`raid` (`segments`, `loop`), `partner` / `alternate` / `enrage`, `inner` and `minion` (the three
+references resolve into `partnerId` / `innerId` / `minionId`), boss parts `radius`, `angle`, `spin`
+and `turn`, and stages the optional `type` (`normal` / `bossRush`) and `rush` — every one
+defaulted, no format change; the content files `enemies/advanced-bosses.enemies.json` and
+`stages/{captain,raid,twin,gauntlet}-range.stage.json` ([advanced-bosses.md](advanced-bosses.md#data-coredata)).

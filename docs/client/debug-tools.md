@@ -124,7 +124,7 @@ simpler marker of the ship's hit spot: OPTIONS → **HITBOX** in every build —
 | Green square | Your ship's hit spot — a bullet has to touch this small spot to destroy the ship (with the REDUCE shield up it is smaller: a third, then two thirds of its size) |
 | Yellow box | Your ship's body against rock |
 | Red boxes | Enemies |
-| Orange boxes | The boss's parts that can be hit |
+| Orange boxes | The boss's parts that can be hit — of every boss on the screen (a mid-boss beside a boss, both twins, the boss inside a boss); round parts show as squares |
 | Magenta squares | Enemy bullets |
 | Pink squares | Firing lasers |
 | Cyan boxes | Your shots |

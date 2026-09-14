@@ -64,7 +64,13 @@ diagonal pan, a region trigger picking a branch and a 4 px/tick section (guide:
 `?stage=raster-range` (RASTER RANGE) shows the raster effects and palette cycling — a waving,
 colour-cycling sea, a line-band checker floor, a heat haze over the stars — and on a monitor over
 70 Hz the shell draws the world interpolated between ticks (guide:
-[`docs/dev/presentation-polish.md`](../../docs/dev/presentation-polish.md)). Since M1-14 hits
+[`docs/dev/presentation-polish.md`](../../docs/dev/presentation-polish.md)). Since M2-09 the
+advanced-boss ranges: `?stage=captain-range` (four mid-bosses on the scrolling camera),
+`?stage=raid-range` (IRON LEVIATHAN, a battleship wider than the screen that the camera flies
+around, with LEVIATHAN HEART inside and a 90-s time limit), `?stage=twin-range` (the EMBER AND
+FROST TWINS taking turns; the survivor enrages) and `?stage=gauntlet-range` (a boss rush); OPTIONS
+→ BOSS HP shows the boss HP bar in the top HUD bar (guide:
+[`docs/dev/advanced-bosses.md`](../../docs/dev/advanced-bosses.md)). Since M1-14 hits
 have **game feel**: explosions, sparks, debris, cancel sparkles and a muzzle flash from the
 presets of `content/fx/`, the screen shake of a lost ship or a boss's final blast, flashes
 (behind a ≤ 3-a-second limiter), the WARNING's dim and rising score numbers;
@@ -102,7 +108,7 @@ Guide: [`docs/dev/input-profiles.md`](../../docs/dev/input-profiles.md).
 
 ```sh
 pnpm dev                          # from the repo root (= turbo run dev --filter=@shmup/web)
-# → http://localhost:5173 (title → game) · ?scene=flight (free flight at once) · ?stage=test-range (scrolling test stage) · ?stage=test-boss (the WARNING and the test boss) · ?stage=hunter-range (the Option Hunters and the blue capsule) · ?stage=direct-range (the MANTA's item carriers) · ?stage=gimmick-range (the M2-07 stage systems) · ?stage=raster-range (the M2-08 raster effects and palette cycles) · &loadout=full (fully powered; with the MANTA both levels 8 and the Hyper Arm) · ?scene=showcase (sprite showcase) · ?scene=calibration (test pattern) · ?scene=fx-gallery (every particle preset and screen effect)
+# → http://localhost:5173 (title → game) · ?scene=flight (free flight at once) · ?stage=test-range (scrolling test stage) · ?stage=test-boss (the WARNING and the test boss) · ?stage=hunter-range (the Option Hunters and the blue capsule) · ?stage=direct-range (the MANTA's item carriers) · ?stage=gimmick-range (the M2-07 stage systems) · ?stage=raster-range (the M2-08 raster effects and palette cycles) · ?stage=captain-range / raid-range / twin-range / gauntlet-range (the M2-09 captains, battleship raid, double boss and boss rush) · &loadout=full (fully powered; with the MANTA both levels 8 and the Hyper Arm) · ?scene=showcase (sprite showcase) · ?scene=calibration (test pattern) · ?scene=fx-gallery (every particle preset and screen effect)
 pnpm --filter @shmup/web build    # → apps/web/dist (relocatable, base './'), release: no debug tools
 pnpm --filter @shmup/web build:test   # the same plus the debug tools (vite build --mode test — what pnpm test:e2e builds)
 pnpm --filter @shmup/web build:dev    # likewise, --mode development

@@ -38,7 +38,8 @@ dist/assets/atlas/*.png    emitted next to the bundle (web and Tizen builds)
 ```
 
 **Status today.** The whole pipeline, the initial sprite set (M1-03: 55 sprites, 272 frames on
-one 512×256 page — grown with every step since; one 512×512 page since the M1-16 logo), the pixel font, the Vite plugin and the sprite-name check in
+one 512×256 page — grown with every step since; one 512×512 page since the M1-16 logo, one
+1024×512 page since the M2-09 boss parts), the pixel font, the Vite plugin and the sprite-name check in
 `pnpm content:check` are done. Both apps register `shmupAssets()` and ship the pages; since
 M1-04 their `main.ts` imports `virtual:shmup-assets`, `@shmup/shell` loads the pages with
 `new Image()` and render-pixi's `createAtlas` turns them into textures, and the default scene
@@ -113,6 +114,7 @@ Each module exports `generate(): SpriteDef[]` and is registered in
 | `starfield` | `bg/stars-far`, `bg/stars-mid`, `bg/stars-near` — seamless 128×128 transparent tiles |
 | `backdrops` | M1-18: `bg/azure-verge` — zone A's far planet band, a 128×48 tile (`AZURE_TILE_W`, `AZURE_TILE_H`, anchored top-left) that repeats seamlessly along x: a translucent haze thickening towards a lit rim row (`AZURE_RIM_ROW` 10), then an opaque dark-azure-to-navy body with seeded cloud streaks that wrap round the tile edge. Dark and low in saturation so the pink / red / purple bullets and the gold capsules stay readable over it, never pure black |
 | `raster-bands` | M2-08 (`shmup_feat.md` §18): backdrops made for the raster effects and palette cycling — `bg/sea-swell` (`SEA_TILE_W` 128 × `SEA_TILE_H` 40, opaque, anchored top-left) painted **only** in the four colours of `SEA_RAMP` (`#183c78`, `#24569c`, `#3474bc`, `#5096d8`, dark → light — the exact ramp a stage's palette cycle names): 3-px rows whose ramp index steps with the row and bumps with a 32-px swell profile, so cycling the ramp rolls the swell and a `wave` effect wobbles it; `bg/checker-floor` (`FLOOR_TILE_W` 64 × `FLOOR_TILE_H` 48) — a checker floor in ten strips `FLOOR_BANDS` (2, 2, 3, 3, 4, 5, 6, 7, 8, 8 rows) whose squares `FLOOR_SQUARES` widen towards the bottom (4 → 32 px; each divides 32, so the tile repeats every 64 px), `FLOOR_COLORS` plus a horizon line — made for a `lines` effect with the same strips as its `bands`. Integer maths only ([presentation-polish.md](presentation-polish.md#content-and-assets)) |
+| `bosses` | M2-09 (`shmup_feat.md` §13, decision D24): the advanced bosses' parts, each with its `@flash` sibling — `bosses/turret` (16×16 × 16 heading frames: a round armoured base with a 3-px barrel of length 7 pointing `k × 22.5°` clockwise from +x — `DIRECTIONS_8` and their negations, no trig; a turned part's `turn: 16`, so a raid's turrets visibly aim), `bosses/orb` (12×12 × 2, `pulse`: a shaded armour orb — round art for spinning arms and rings of pods, which are never rotated), `bosses/raid-hull` (96×40, one riveted hull section of a battleship larger than the screen — rivets from the seeded `hash2`; sections side by side make IRON LEVIATHAN's 480-px body) and `bosses/captain-shell` (28×20 × 2, `blink`: a mid-boss's rounded carapace with a glowing eye slit) |
 | `terrain` | `tiles/terrain-a` — 20 8×8 tiles (solid, floor, ceiling, walls, 45° and 22.5° slopes, and since M2-07 the destructible `brick`, crystal `cube` and regrowing `tissue` — opaque full blocks in their own colours so players can tell what breaks); every tile is also a one-frame animation named after it (`floor → [1]`, list in `TERRAIN_TILES`); collision masks and frames live in `content/tilesets/terrain-a.tileset.json` — change both together |
 | `hud` | `hud/meter-slot` (40×8: `normal`, `highlighted`, `disabled`), `hud/meter-labels` (36×5 — the 7 slot labels in meter order, then since M2-03 the Types B–D weapon names `SPREAD 2-WAY TORPEDO TAIL VERTICAL FREE WAY RIPPLE CYCLONE TWIN`: 16 frames in the order of `@shmup/core` `METER_LABEL_FRAMES`, which a test keeps equal to `METER_LABELS`; original 3×5 micro glyphs, M2-03 added `C F V W Y 2 - space`) |
 | `weapons` | M2-03 (`shmup_feat.md` §7A): `shots/blast` (32×32 × 4, centred — the Spread Bomb's blast: a hot disc opening into a ring, cooling white-yellow → orange → red; an engine sprite), `shots/ripple` (24×44 × 6, centred — the Ripple's upright ring at half heights 4 → 20 with half the width; the engine picks the frame from the ring's size), `shots/cyclone` (8×9 × 4, anchored at the left end of the middle row — one Cyclone Laser segment, two violet strands twisting round a white core, one wave period per segment so it tiles; the engine steps the frames along the beam). Triangle waves and square roots only |
@@ -474,4 +476,9 @@ frames 17–19, tile ids 18–20), the eight gimmick enemy pixel maps and the en
 ([advanced-stages.md](advanced-stages.md#the-gimmick-range-dev-stage)); M2-08 (done) added the
 `raster-bands` generator (`bg/sea-swell`, `bg/checker-floor` — content sprites of the
 `raster-range` stage, which shifted the sorted sprite ids and re-blessed the goldens) — the page
-stays 512×512 ([presentation-polish.md](presentation-polish.md#content-and-assets)).
+stays 512×512 ([presentation-polish.md](presentation-polish.md#content-and-assets)); M2-09 (done)
+added the `bosses` generator (`bosses/turret` with 16 heading frames, `bosses/orb`,
+`bosses/raid-hull`, `bosses/captain-shell` — content sprites of the advanced-boss dev stages,
+which shift the sorted sprite ids; the goldens were re-blessed with the step's other hash changes)
+— the atlas page grew to 1024×512, well inside the 2048-px edge budget
+([advanced-bosses.md](advanced-bosses.md)).

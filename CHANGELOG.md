@@ -143,6 +143,30 @@ versions before 1.0 may change anything between minor releases. Development foll
   `effects` and `hitboxes`; `window.__shmupDebug.renderer`; the golden replays were re-blessed (two
   new content sprites shift the sprite ids — the simulation is unchanged) and a `raster-range` run
   was added.
+- **Boss HP bar** (M2-09): OPTIONS → **BOSS HP** (off by default) shows `BOSS` and a red bar of the
+  boss's remaining strength — its cores and the parts protecting them — in the top bar during boss
+  fights, in place of `HI`; on the TV too (HALCYON BULWARK).
+- **Advanced bosses** (M2-09, in the browser's test stages for now — AZURE VERGE is unchanged):
+  **mid-bosses** that fight while the screen keeps scrolling (`?stage=captain-range`: a rammer, a
+  bubble launcher, a circler, a ring-firing crab); **IRON LEVIATHAN**, a battleship longer than the
+  screen that the view flies around while its turrets turn to aim, with **LEVIATHAN HEART** inside
+  it and a **90-second time limit** after which it escapes (`?stage=raid-range`); the **EMBER AND
+  FROST TWINS**, who take turns while the other rests behind, the survivor getting angry
+  (`?stage=twin-range`); and a **boss rush** (`?stage=gauntlet-range`).
+- For content authors (M2-09): boss sections may give `role: "captain"`, `timeLimit`, `raid`
+  (boss-relative camera segments), `partner` / `alternate` / `enrage`, `inner` and `minion`; parts
+  `radius` (circle hurtboxes), `angle`, `spin` and `turn` (heading frames); stages `type:
+  "bossRush"` with a `rush` list —
+  [`content/enemies/README.md`](content/enemies/README.md#advanced-bosses-m2-09),
+  [`content/stages/README.md`](content/stages/README.md).
+- Behaviour change for tools and tests (M2-09): the boss system has four slots (`bosses.slots`;
+  `damagePart` / `isArmoured` take the part slot = slot × 16 + index), `MAX_HIT_TARGETS` is 128 and
+  the part cooldown tables have 64 part slots; `BossState.Escape` 6, `SimEventKind.BossEscaped` 14,
+  `World.endingFlags`, `StageRunner.follow`; `createBossSystem` takes the stage; `OptionsItem.BossHp`
+  9 and `Back` 10, `UserOptionKind.BossHpBar` 9, `UserOptions.display.bossHpBar` (save format 1, no
+  migration); `HUD_STRING_COUNT` 23, `HUD_COMMAND_COUNT` 100; the golden replays were re-blessed
+  (the hash layout and content ids changed — every input, tick count and outcome is unchanged) and
+  four advanced-boss runs were added.
 
 ### Documentation
 
@@ -169,7 +193,10 @@ versions before 1.0 may change anything between minor releases. Development foll
   developer guide [`docs/dev/presentation-polish.md`](docs/dev/presentation-polish.md), the tester
   guide's [Options screen](docs/client/preview-build.md#the-options-screen) (SCALE, SHAKE, FLASHES,
   HITBOX) and [The Raster range](docs/client/preview-build.md#the-raster-range-browser-only)
-  (M2-08).
+  (M2-08); the developer guide [`docs/dev/advanced-bosses.md`](docs/dev/advanced-bosses.md) and the
+  tester guide's
+  [The advanced boss ranges](docs/client/preview-build.md#the-advanced-boss-ranges-browser-only)
+  and [The boss HP bar](docs/client/preview-build.md#the-boss-hp-bar-every-device) (M2-09).
 
 ## [0.1.0] — M1: playable vertical slice
 

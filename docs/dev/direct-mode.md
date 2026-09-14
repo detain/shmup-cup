@@ -141,8 +141,10 @@ Every pickup pushes `SFX CapsulePickup`; an effect that changed something pushes
 the colour's index — the meter's slot codes stay below 16, so presentation can tell them apart.
 A bad player slot or colour index (negative, fractional, NaN, ≥ 6) does nothing at all — no cue.
 
-**Yellow and bosses.** The plan's "heavy damage to mid-bosses" waits for the mid-bosses of M2-09;
-today the yellow item is exactly Mega Crash's screen clear and a boss takes nothing from it.
+**Yellow and bosses.** The plan's "heavy damage to mid-bosses" is still to come: M2-09 brought the
+mid-bosses (captains — [advanced-bosses.md](advanced-bosses.md#captains-mid-bosses)) but not the
+damage, so today the yellow item is exactly Mega Crash's screen clear and no boss or captain takes
+anything from it.
 
 ## Families and firing (`core/weapons`)
 
@@ -380,7 +382,7 @@ for (let t = 0; t < 600; t++) stepWorld(world, input);
 | OK does nothing in the game with the MANTA | By design: Direct mode has no meter to equip; items act on pickup. Ch− is the only extra button |
 | The KESTREL's speed starts above 0 | Only in Direct mode does `startSpeedLevel` apply; the meter's Speed Ups start at 0 — check `powerUpMode` |
 | A red item gives points only | The current family is at its top level (level 8) — it keeps its level across the octagon, capped to the new family |
-| A yellow item did not hurt the boss | Expected until the mid-bosses of M2-09 |
+| A yellow item did not hurt the boss | Expected: neither bosses nor the captains of M2-09 take damage from it yet |
 | The Direct allocation guard grew after adding carriers to its stage | Spawns allocate their coroutine (D29); keep enemies out of that guard |
 | `pnpm test` timed out in `eslint-rules.test.ts` | Its ESLint instance is warmed up once in `beforeAll` (120 s hook timeout) since M2-05 — a first lint under the full test load was too slow; keep new lint checks inside that suite |
 | Golden hashes differ after adding a weapons / enemies file | Sprite ids and spec indices are hashed; an intended re-bless, with the reason in the commit message |
@@ -391,5 +393,6 @@ for (let t = 0; t < 600; t++) stepWorld(world, input);
   Arm and speed level are per player; a mid-game continue resets a Direct player's levels; the
   co-op HUD shows compact `SH` / `SB` / `AR` / `SP` pips per player; the co-op extra item is the
   plan's next one ([coop.md](coop.md)).
-- **M2-09** — mid-bosses: the yellow item's heavy damage to them.
+- **M2-09** (done) — mid-bosses (captains) exist; the yellow item's heavy damage to them is still
+  planned (with the zones' captains, M2-11 … M2-14).
 - **M2-11 … M2-14** — the zones of M2 get their own `directItems` plans and carrier waves.

@@ -451,6 +451,11 @@ export function applyDisplayOptions(target: DisplayTarget, display: DisplayOptio
  * `onBulletPalette` with the chosen bullet palette's name, or (M2-08) changes a display option of
  * `display`. Load time — registering allocates the handler; the events allocate nothing here.
  *
+ * @remarks
+ * `UserOptionKind.BossHpBar` (M2-09) — and any kind it does not know — is ignored: the boss HP
+ * bar is drawn by the core's HUD, which the scene flow points at the **saved** option every
+ * displayed frame (`Hud.showBossHp`), so nothing in the presentation needs the live event.
+ *
  * @param dispatcher - The shell's event dispatcher.
  * @param audio - The audio back-end.
  * @param onInputProfile - Applies the profile at an index of the flow's profile choices, or `null`
