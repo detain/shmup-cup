@@ -378,6 +378,7 @@ in the right half of the playfield, with no console errors or atlas warnings.
 | Symptom | Cause / fix |
 |---|---|
 | `?skip=boss` does nothing | Only the web build reads it (the TV has no query string); it must be exactly `boss`, lower case; a stage without a `warning` / `boss` event (open space, `test-range`) has nothing to skip to |
+| `?skip=boss` in zone H (IRON CITADEL) starts at the parade, not IRON SOVEREIGN | By design: the skip stops before the **first** `warning` or `boss` event — there the parade's first echo (as in zone B, before SPUME HERALD); the debug key 8 does the same ([zones-h-and-i.md](zones-h-and-i.md#gotchas)) |
 | A skipped session's hash differs from an unskipped one's | By design: `stageSkip` is sim-affecting (it lives in `GameConfig` and a replay carries it) |
 | After `jumpTo` the enemies of the skipped part are missing | By design: events between the old and the new position never fire, and `clear()` empties the pools |
 | `?scene=flight` flies in open space although the game plays zone A | The dev scenes keep open space unless `?stage=` names a stage — the gameplay e2e specs depend on it |
@@ -439,4 +440,8 @@ in the right half of the playfield, with no console errors or atlas warnings.
   and slower turrets, lenses and spore sacs hovering at the right edge instead of drifting across
   the ship, a flatter start to zone G, crystal pillars for the cube rush to stack on
   ([zones-f-and-g.md](zones-f-and-g.md#balance-found-by-the-bot)).
-- **M2-14** — the final zones H and I, the same way.
+- **M2-14** (done) — the final zones H and I, the same way (`zone-h.test.ts`, `zone-i.test.ts`,
+  `zone-hi-recovery.test.ts`); the bot's runs turned IRON SOVEREIGN's shield wheel 45° off the core's
+  lane, kept the ARK's turrets off the ship's column and the eels out of the undertow; zone I's
+  content fight flies fully powered (a bare ship cannot beat the ARK's time limit); the 16 routes
+  end in the real finales ([zones-h-and-i.md](zones-h-and-i.md#balance-found-by-the-bot)).

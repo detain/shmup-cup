@@ -659,10 +659,10 @@ M2-09 included; the rest in M2-16), `loop`, `game`,
 `strings` is missing), `world`, `stage`, `player` (implemented for P0 since
 M1-12; co-op joining lives in `world` since M2-06), `collision` (implemented with M2-07: moving blocks and destructible tiles — the bending lasers' circle chains live in `bullets`), `debug` (M1-19: state hash, switches, controls,
 counters, the stage skip and checkpoint jumps), `replay` (M1-19), `enemies` (partial: rank modifiers and revenge bullets since M2-01, the Option Hunter and
-the blue capsule's clear since M2-04), `patterns` (implemented with M2-02: runner, movers, fire primitives and the pattern DSL),
-`behaviors` (partial: the M1 enemy and boss rosters, `pattern.loop`, `hunter.option`, `cube.pincer`, the six stage gimmicks of M2-07, the captains and raid turrets of M2-09, zones B and C's `rocket.homing`, `worm.burst`, `boss.maw` and `boss.widow` of M2-11, zones D and E's `rear.swoop`, `boss.bastion` and `boss.steed` of M2-12, zones F and G's `cell.chase`, `boss.squid` and `boss.facet` of M2-13), `bosses` (implemented with M2-09: the P0
+the blue capsule's clear since M2-04, the proximity wake since M2-14), `patterns` (implemented with M2-02: runner, movers, fire primitives and the pattern DSL),
+`behaviors` (implemented with M2-14 — the roster of all nine zones: the M1 enemy and boss rosters, `pattern.loop`, `hunter.option`, `cube.pincer`, the six stage gimmicks of M2-07, the captains and raid turrets of M2-09, zones B and C's `rocket.homing`, `worm.burst`, `boss.maw` and `boss.widow` of M2-11, zones D and E's `rear.swoop`, `boss.bastion` and `boss.steed` of M2-12, zones F and G's `cell.chase`, `boss.squid` and `boss.facet` of M2-13, zones H and I's `emitter.laser`, `mine.burst`, `boss.sovereign`, `boss.ark` and `boss.angler` of M2-14), `bosses` (implemented with M2-09: the P0
 mechanics plus four slots, turned parts, captains, raids, double and inner bosses, timers, the HP
-bar's model and boss rushes), `bullets` (implemented: bending lasers and cancel
+bar's model and boss rushes; the spiral stream since M2-14), `bullets` (implemented: bending lasers and cancel
 into points since M2-02 — graze is P2), `rank` (implemented with M2-01: growth, power terms, per-enemy sensitivity), `weapons`
 (implemented: Types A–D and Weapon Edit with M2-03, the Direct-mode families with M2-05), `options` (implemented with M2-04: trail, Snake, Formation, Rotate — recovery after death in M3),
 `powerups` (implemented with M2-05: meter mode, the `!` / `?` choices since M2-03, the blue capsule and freed Options since M2-04, Direct mode's items, plan and Speed toggle), `shields` (implemented: the meter shields with M2-04, the Arm with M2-05), `scoring` (partial:
@@ -671,7 +671,7 @@ hit-stop / shake / flash requests — slowdown later), `ui` (partial: the list m
 toggle, choice and confirm widgets, builders and the HUD with the Direct-mode tier pips since M2-05, the co-op halves since M2-06
 and the boss HP bar since M2-09 — rebind prompt and name entry later), `scenes` (partial: the scene stack, the M1 flow, the Options screen, the difficulty
 menu and the continue countdown, the weapon select with its live preview and the Auto order editor
-(M2-03; its OPTION row M2-04), the ship select (M2-05), 1 PLAYER / 2 PLAYERS and the co-op rules (M2-06), campaign runs — the run state carried between zone Worlds, the zone tally, the zone map, the ending hook, hidden bonus stages, practice plumbing (M2-10) — the other M2 screens later);
+(M2-03; its OPTION row M2-04), the ship select (M2-05), 1 PLAYER / 2 PLAYERS and the co-op rules (M2-06), campaign runs — the run state carried between zone Worlds, the zone tally, the zone map, the ending hook, hidden bonus stages, practice plumbing (M2-10), the ending scenes and the credits (M2-14) — the other M2 screens later);
 input-web `keymap`, `keyboard`, `gamepad`, `web-input` (implemented with M2-06's seats), `remote`, `rebind`
 (partial: profiles, contexts, the selectable profiles of CONTROLS — the rebinding UI comes in
 M2-16); audio-web `web-audio` (partial; driven by the Options sliders since M1-17), `synth`, `sfx`,

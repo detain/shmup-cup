@@ -505,4 +505,5 @@ terrain.destroyed; // → 0; terrain.resets → 1
   onto 22 short crystal pillars as breakable `cube` tiles (the rush needs rock in the cubes' path —
   aimed at the ship, most of them flew off the left edge before the pillars), geodes splitting into
   shards, and the prism gallery's `ground` bonus entrance ([zones-f-and-g.md](zones-f-and-g.md)).
-- **M2-14** — IRON CITADEL (moving floors, hatches, laser emitters) — authored by hand or in Tiled.
+- **M2-14** (done) — IRON CITADEL's piston hall: eleven moving blocks swinging out of the floor and
+  ceiling, hatches and laser emitters — authored by hand ([zones-h-and-i.md](zones-h-and-i.md#the-piston-hall)).

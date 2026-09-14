@@ -449,7 +449,9 @@ The bending laser, cancel point and palette suites are listed on their home page
   `($i * 2 - 3) * 20` units round the aim — no bullet on the aimed line — at 1.15, then a ranked
   140-tick wait); MANTLE REGENT and FACET MONARCH are still TS behaviours
   ([zones-f-and-g.md](zones-f-and-g.md)).
-- **M2-14** (zones H and I) — bosses built on the DSL, the bending lasers and the colour-blind
-  palettes' real-art variants (a PNG override of a bullet sprite needs its own `@<palette>`
-  variants).
+- **M2-14** (done) — zone I's gulpers run `abyss.gulp` (three aimed 3-ways 14 ticks apart); the
+  finales' bosses stayed TS behaviours (IRON SOVEREIGN's fast spiral is the boss system's spiral
+  stream, not a DSL pattern — [zones-h-and-i.md](zones-h-and-i.md#the-spiral-stream-bossscriptapispiral)).
+  Bosses built on the DSL, the bending lasers in the zones and the colour-blind palettes' real-art
+  variants (a PNG override of a bullet sprite needs its own `@<palette>` variants) remain open.
 - **M2-16** (options) — the bullet palette joins the display options group.

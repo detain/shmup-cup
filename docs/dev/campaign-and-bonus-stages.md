@@ -12,7 +12,9 @@ and eight short **stub zones B–I**, so every route is playable end to end. Sin
 C are real ([zones-b-and-c.md](zones-b-and-c.md)) and zone B holds the first campaign bonus
 entrance; since M2-12 D and E are real too ([zones-d-and-e.md](zones-d-and-e.md)); since M2-13 F
 and G ([zones-f-and-g.md](zones-f-and-g.md)), zone G holding the second campaign bonus entrance —
-the first `ground` one; H and I are still stubs.
+the first `ground` one; since M2-14 the finales H and I are real too, and the ending hook drives
+real ending scenes, epilogues and the credits ([zones-h-and-i.md](zones-h-and-i.md#the-endings)) —
+no stub zone is left.
 
 This page is the *how and why* of that step and the map of its code. Exact signatures are in
 [api-reference.md](api-reference.md) (`data`, `scenes`, `stage`, `player`, `enemies`, `powerups`,
@@ -121,9 +123,11 @@ clear — `null` only for a zone that is not a final zone of a valid campaign.
 | 4 | `noContinue` | No continue was used (computed at the end) |
 | 8 | `bonus` | A hidden bonus stage was cleared |
 
-The shipped endings are placeholders until M2-14: zone H has *THE CITADEL FALLS SILENT*
-(`noDeath`) and *THE CITADEL FALLS*; zone I has *THE DEEP IS STILL* (`noDeath`, not
-`bossEscaped`), *THE FLAGSHIP SLIPS AWAY* (`bossEscaped`) and *THE THRONE IS BROKEN*.
+The shipped endings (real since M2-14 — each names a sprite `scene` and an epilogue `text`, and the
+campaign's `credits` scroll after them; [zones-h-and-i.md](zones-h-and-i.md#the-endings)): zone H
+has *THE CITADEL FALLS SILENT* (`noDeath`) and *THE CITADEL FALLS*; zone I has *THE DEEP IS STILL*
+(`noDeath`, not `bossEscaped` — the M2-14 review fix: an escape never earns the ending whose
+epilogue sinks the King), *THE FLAGSHIP SLIPS AWAY* (`bossEscaped`) and *THE THRONE IS BROKEN*.
 
 ## Campaign run or single-stage run
 
@@ -368,15 +372,20 @@ four facet turrets (floor and ceiling), into `glimmer-cache.stage.json` (GLIMMER
 carriers, a 1UP, a cube rush, two `cube` block walls; zone G's resident music) —
 [zones-f-and-g.md](zones-f-and-g.md#the-prism-gallery-and-glimmer-cache).
 
-## The ending hook (`EndingScene`, id `ending`)
+## The ending screen (`EndingScene`, id `ending`)
 
-A full screen after the final zone's tally: `ENDING`, the ending's name (`run.ending`, picked when
-the zone was cleared — `THE END` if none), `ROUTE` with the zones' labels (`A B D F H`, built in
-`enter`), the score(s) from `run.carry`, one line per run flag set (`NO MISS`, `NO CONTINUE`,
-`BONUS STAGE CLEARED`, `A BOSS ESCAPED`) and `THANK YOU FOR PLAYING`. OK after
-`ENDING_LOCK_TICKS` (60, then `OK: TITLE` appears) or `ENDING_TIMEOUT_TICKS` (1,200 = 20 s) → the
-title. The ending scenes, texts, credits and their music are M2-14's; this is only the selection
-and a placeholder card.
+After the final zone's tally. M2-10 built the **result card**: `ENDING`, the ending's name
+(`run.ending`, picked when the zone was cleared — `THE END` if none), `ROUTE` with the zones'
+labels (`A B D F H`, built in `enter`), the score(s) from `run.carry`, one line per run flag set
+(`NO MISS`, `NO CONTINUE`, `BONUS STAGE CLEARED`, `A BOSS ESCAPED`) and `THANK YOU FOR PLAYING`.
+OK after `ENDING_LOCK_TICKS` (60, then `OK: CREDITS` — or `OK: TITLE` without credits — appears)
+or `ENDING_TIMEOUT_TICKS` (1,200 = 20 s) moves on.
+
+M2-14 put a **story** before the card — the ending's sprite scene (`citadel` / `abyss`, with a dawn
+for a flawless run and the flagship sailing off after an escape) and its epilogue line by line —
+and the **credits** (`CreditsScene`) after it, both to the final zone's `music.ending` /
+`music.credits` themes. An ending without scene and text (the example campaign) still opens on the
+card. The whole story: [zones-h-and-i.md](zones-h-and-i.md#the-ending-screen-endingscene-id-ending).
 
 ## Practice plumbing
 
@@ -398,11 +407,12 @@ over). The practice select screen and its own table come with M2-15.
 
 ## The stub zones B–I
 
-**Since M2-13 only H and I are stubs**: `zone-b` and `zone-c` were replaced by the real BRINE
-NEBULA and DUNE EXPANSE in M2-11 ([zones-b-and-c.md](zones-b-and-c.md)), `zone-d` and `zone-e` by
-the real MAGMA DEEP and TEMPEST RIDGE in M2-12 ([zones-d-and-e.md](zones-d-and-e.md)), `zone-f` and
-`zone-g` by the real CELL VAULT and PRISM LABYRINTH in M2-13 ([zones-f-and-g.md](zones-f-and-g.md)).
-What follows describes the stubs as M2-10 built them.
+**Since M2-14 no stub is left**: `zone-b` and `zone-c` were replaced by the real BRINE NEBULA and
+DUNE EXPANSE in M2-11 ([zones-b-and-c.md](zones-b-and-c.md)), `zone-d` and `zone-e` by the real
+MAGMA DEEP and TEMPEST RIDGE in M2-12 ([zones-d-and-e.md](zones-d-and-e.md)), `zone-f` and `zone-g`
+by the real CELL VAULT and PRISM LABYRINTH in M2-13 ([zones-f-and-g.md](zones-f-and-g.md)), and
+`zone-h` and `zone-i` by the finales IRON CITADEL and ABYSSAL THRONE in M2-14
+([zones-h-and-i.md](zones-h-and-i.md)). What follows describes the stubs as M2-10 built them.
 
 `content/stages/zone-b … zone-i.stage.json` are short placeholders (≈ 45–70 s, 2,000 px, two
 checkpoints each, the shared `Stage` / `Boss` cues): zone A's roster (popcorn, capsule carriers,
@@ -530,7 +540,7 @@ the menus with action presses; `game.scenes.run` / `.map` / `.ending` expose the
 | A test counting drop codes sees `FreeOption` as 6 | M2-10 appended `oneUp` / `bonusCapsule` as content drops 4 / 5 |
 | A test that runs zone A to `stageClear` sees the ships move afterwards | The fly-out: from the tick after the clear every `alive` ship is `leaving` |
 | The zone tally shows `NO BOSS TIME` after a boss | The boss escaped (no time bonus), or it was a bonus stage (the boss was skipped) |
-| A new scene throws `RangeError` about string slots | The UI list has 224 string slots since M2-10 (the map needs `11 + zones`) |
+| A new scene throws `RangeError` about string slots | The UI list has 256 string slots since M2-14 (224 in M2-10 — the map needs `11 + zones`, the ending its epilogue lines, the credits 24) |
 | An entrance never opens after a death in its bonus stage | By design: the lock-out. RETRY STAGE lifts it |
 | A `ground` entrance opens with one of its targets still standing | A ground enemy of an earlier event was still up when the window armed and was shot in its place (the window compares totals). Keep ground enemies off screen at the window's `x` — `content.test.ts` plays every shipped `ground` stage and checks it (M2-13: zone G's turret moved from x 2,000 to 1,830) |
 | A `gap` entrance does not open with a ship in the gap | Only an `alive` ship counts (not one flying in, respawning or dying) and only while the camera is between `x` and `until` |
@@ -546,9 +556,10 @@ the menus with action presses; `game.scenes.run` / `.map` / `.ending` expose the
 - **M2-13** (done) — zones F (CELL VAULT) and G (PRISM LABYRINTH, with the second hidden bonus
   stage GLIMMER CACHE behind the first campaign `ground` entrance) replace their stubs, each with its
   own songs ([zones-f-and-g.md](zones-f-and-g.md)).
-- **M2-14** — the final zones H (IRON CITADEL) and I (ABYSSAL THRONE) replace the last stubs, each
-  with its own songs through `PrepareStage`; M2-14 turns the ending hook into ending scenes (one per
-  final zone plus a no-death variant) and credits.
+- **M2-14** (done) — the final zones H (IRON CITADEL) and I (ABYSSAL THRONE) replace the last
+  stubs, each with its own songs (and the ending and credits themes) through `PrepareStage`; the
+  ending hook drives ending scenes (one per final zone plus a no-death variant), epilogues and the
+  credits ([zones-h-and-i.md](zones-h-and-i.md)).
 - **M2-15** — the practice select (zone, checkpoint, loadout; its own table) on
   `startPractice`, name entry and the hi-score table showing the zone reached, attract demos per
   zone.

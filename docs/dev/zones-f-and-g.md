@@ -599,7 +599,8 @@ console.info(describeRun(run)); // zone-f four-way (god mode): stageClear after 
 
 ## Next steps that build on this page
 
-- **M2-14** — the final zones H (IRON CITADEL) and I (ABYSSAL THRONE) on the same recipe, the
-  ending scenes and the credits.
+- **M2-14** (done) — the final zones H (IRON CITADEL) and I (ABYSSAL THRONE) on the same recipe,
+  the ending scenes and the credits ([zones-h-and-i.md](zones-h-and-i.md)); THE HOLLOW KING's lure
+  sways on this page's curling-arm rule.
 - **M2-15** — the practice select (`startPractice` already starts any zone at a checkpoint).
 - **M2-17 / M2-18** — the bundle and texture budgets for nine real zones.

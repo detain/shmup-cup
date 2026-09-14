@@ -57,7 +57,7 @@ renderer.render(frame)                                                        re
 ## Stage data and loading
 
 A stage file (`content/stages/<id>.stage.json`, kind `stage`, format 1) holds `id`, `name`,
-`music: { stage, boss }` (`MUSIC_CUES` names), `length` (camera-x length in pixels), `camera`
+`music: { stage, boss }` (`MUSIC_CUES` names; since M2-14 optionally `ending` and `credits` — a final zone's themes for the ending screen and the credits, prepared with its set), `length` (camera-x length in pixels), `camera`
 (keys), `checkpoints`, `parallax` (bands), `tilemap` (or `null` for open space), `events` and,
 since M2-05, the optional `directItems` (the Direct-mode item plan — the runner never reads it;
 `core/powerups` does, [direct-mode.md](direct-mode.md#drop-resolution-and-the-item-plan-corepowerups))
@@ -444,7 +444,7 @@ pnpm dev
 # → http://localhost:5173/?stage=zone-c       one zone of the campaign alone (DUNE EXPANSE since M2-11)
 # → http://localhost:5173/?stage=zone-d       MAGMA DEEP alone — the dive into its caves (M2-12)
 # → http://localhost:5173/?stage=zone-g       PRISM LABYRINTH alone — its gallery opens glimmer-cache (M2-13)
-# → http://localhost:5173/?stage=zone-h       a stub zone of the campaign alone (M2-10)
+# → http://localhost:5173/?stage=zone-h       IRON CITADEL alone — its piston hall and the parade (M2-14)
 # → http://localhost:5173/?stage=bonus-range  the three bonus entrances into bonus-vault (M2-10)
 ```
 
@@ -544,6 +544,15 @@ the far layer with a `wave`, a 1.3 px/tick pulse run) and `zone-g.stage.json` (P
 9,800 px, `terrain-prism`, seven solid crystal walls and 22 short pillars as `rle` rows, a `ground`
 bonus event into `glimmer-cache.stage.json`, four `cube.stack` formations, a 1.3 px/tick refraction
 run) — content only, on the runner as it is ([zones-f-and-g.md](zones-f-and-g.md)).
+
+M2-14 replaced the last two, the finales: `zone-h.stage.json` (IRON CITADEL, 9,600 px,
+`terrain-citadel`, eleven moving-block **pistons** — `block` events of the tileset's `solid` tile
+swinging ±22 px out of a flat floor and ceiling —, four `boss` events for the parade's captains, a
+1.3 px/tick core run with a `haze`) and `zone-i.stage.json` (ABYSSAL THRONE, 9,600 px,
+`terrain-abyss`, a trench of floor and ceiling, open water from the calm on for the ARK's raid, two
+`wave` rasters, a 1.3 px/tick undertow). Both name the final zones' extra music cues,
+`"music": { "stage": "Stage", "boss": "FinalBoss", "ending": "Ending", "credits": "Credits" }` —
+content only, on the runner as it is ([zones-h-and-i.md](zones-h-and-i.md)).
 
 Headless:
 
@@ -666,4 +675,6 @@ world.stage!.restartAt(1); // back to x 1500: speed, pan and flags as live play 
 - **M2-13** (done) — the real zones F (regenerating tissue walls as `rle` rows) and G (crystal walls,
   the cube rush, a `ground` bonus entrance into GLIMMER CACHE) — content only
   ([zones-f-and-g.md](zones-f-and-g.md)).
-- **M2-14** — the final zones H and I (IRON CITADEL's moving floors).
+- **M2-14** (done) — the final zones H (IRON CITADEL's moving floors and ceilings as `block`
+  events) and I (a raid in open water); the stage `music` may name `ending` / `credits` — content
+  only ([zones-h-and-i.md](zones-h-and-i.md)).

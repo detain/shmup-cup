@@ -273,6 +273,45 @@ versions before 1.0 may change anything between minor releases. Development foll
   scripts shift ids — inputs, tick counts and outcomes unchanged; the review fix re-blessed
   `zone-g-god` once more, ticks and outcome unchanged) and eight zone F / G runs were added (46 in
   all). The Tizen `app.js` is 320.3 KB gzip of its 350 KB budget.
+- **Zone H, IRON CITADEL** (M2-14) replaces its stand-in — the first final zone: about 4 minutes in
+  the enemy fortress — running lights chasing along steel walls, hatches in the floor and the ceiling
+  releasing drones, a **piston hall** where floors and ceilings swing in and out while laser
+  emitters fire lanes along their rows, a **parade of four earlier bosses in reduced form**
+  (BULWARK, MAW, BASTION and REGENT ECHO — each leaves after 16 seconds) and a fast core run; the
+  final boss **IRON SOVEREIGN** is a real finale in four phases: shield plates and lanes, a turning
+  shield wheel with rings, drones from its hatches, then an overdrive spiral. Its own music.
+- **Zone I, ABYSSAL THRONE** (M2-14) replaces its stand-in — the other final zone: about 4½ minutes
+  in the deep — twinkling specks, gulpers, **depth mines** that arm when you come near and burst into
+  rings, eels bursting from a trench and an undertow; the **ABYSS ARK** is a whale-class battleship
+  the view flies along (turret rows, homing hooks) that sails away after 90 seconds, and its final
+  blast reveals **THE HOLLOW KING**, an anglerfish whose mouth opens to show its weak point and
+  whose lure sways and fires. Its own music.
+- **Endings and credits** (M2-14): after zone H or I the run ends with an **ending scene** — the
+  citadel breaking apart behind your ship, or your ship rising out of the deep while the ARK sinks
+  (or sails off, if it escaped) —, a **dawn** when no ship was lost, a five- or six-line epilogue,
+  the result card, and then the **credits** scrolling to their own song (OK or Back skips them).
+  Five endings: THE CITADEL FALLS SILENT / THE CITADEL FALLS (zone H), THE DEEP IS STILL / THE
+  FLAGSHIP SLIPS AWAY / THE THRONE IS BROKEN (zone I) — an escaped ARK always gives THE FLAGSHIP
+  SLIPS AWAY. New songs: the two final zones and their bosses, AFTER THE LAST WAVE (the ending) and
+  THANK YOU, PILOT (the credits).
+- For content authors (M2-14): the behaviours `emitter.laser` (a laser emitter's attached lanes),
+  `mine.burst` (a mine that arms when a ship comes near), `boss.sovereign`, `boss.ark` and
+  `boss.angler`; the pattern `abyss.gulp`; the tilesets `terrain-citadel` / `terrain-abyss`; a
+  campaign ending's `scene` (`none` / `citadel` / `abyss`) and `text` (the epilogue) and the
+  campaign's `credits`; a stage's optional `music.ending` / `music.credits` cues
+  ([`content/campaign/README.md`](content/campaign/README.md),
+  [`content/stages/README.md`](content/stages/README.md),
+  [`content/enemies/README.md`](content/enemies/README.md)).
+- Behaviour change for tools and tests (M2-14): `ScriptApi.sleepUntilNear` / `Enemy.nearRange` and
+  `BossScriptApi.spiral` / `Boss.spiral*` joined the state hash; `core/behaviors` is `implemented`;
+  the scene flow has a `credits` scene (`CreditsScene`) and 256 UI string slots; the ending screen
+  has a story phase before its card and moves on to the credits; `stageMusicCues` adds a final
+  zone's ending and credits cues; `UI_SPRITES` gained six `ui/ending-*` sprites; the heavy boss
+  allocation guards allow the bytes of their script's wakes (`WakeCount`). The golden replays were
+  re-blessed (new sprites and scripts shift ids, the hash gained the new fields — inputs, tick counts
+  and outcomes unchanged; the test round's `boss.ark` fix re-blessed `zone-i-god` once more) and
+  seven zone H / I runs were added (53 in all). The Tizen `app.js` is 331.5 KB gzip of its 350 KB
+  budget.
 
 ### Documentation
 
@@ -318,7 +357,10 @@ versions before 1.0 may change anything between minor releases. Development foll
   [Zone F: CELL VAULT](docs/client/preview-build.md#zone-f-cell-vault) and
   [Zone G: PRISM LABYRINTH](docs/client/preview-build.md#zone-g-prism-labyrinth) with the secret
   bonus stage [GLIMMER CACHE](docs/client/preview-build.md#the-secret-bonus-stage-glimmer-cache)
-  (M2-13).
+  (M2-13); the developer guide [`docs/dev/zones-h-and-i.md`](docs/dev/zones-h-and-i.md) and the
+  tester guide's [Zone H: IRON CITADEL](docs/client/preview-build.md#zone-h-iron-citadel),
+  [Zone I: ABYSSAL THRONE](docs/client/preview-build.md#zone-i-abyssal-throne) and
+  [The endings and the credits](docs/client/preview-build.md#the-endings-and-the-credits) (M2-14).
 
 ## [0.1.0] — M1: playable vertical slice
 

@@ -519,6 +519,6 @@ The recipe these two zones followed:
 - **M2-13** (done) — zones F (CELL VAULT) and G (PRISM LABYRINTH, with G's hidden bonus stage
   GLIMMER CACHE behind a `ground` entrance) on the same recipe, plus regenerating walls, a seeded cube
   rush and bosses with curling arms ([zones-f-and-g.md](zones-f-and-g.md)).
-- **M2-14** — zones H and I, the ending scenes.
+- **M2-14** (done) — zones H and I, the ending scenes and the credits ([zones-h-and-i.md](zones-h-and-i.md)).
 - **M2-15** — the practice select (`startPractice` already starts any zone at a checkpoint).
 - **M2-17 / M2-18** — the bundle and texture budgets for nine real zones.

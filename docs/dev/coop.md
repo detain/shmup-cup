@@ -389,7 +389,8 @@ the shell).
   regrowing rock out of their terrain boxes, pull fields pull both, the cube rush and the tentacle
   aim at the nearest living player, and a broken tile's points go to the player whose shot broke it
   ([advanced-stages.md](advanced-stages.md)).
-- **M2-08 … M2-14** — every new zone runs with two ships; anything per player (bosses aiming)
+- **M2-08 … M2-14** (done) — every new zone runs with two ships (the ending scenes draw player 2's
+  ship behind player 1's); anything per player (bosses aiming)
   targets the nearest living player like the aimed shots.
 - **M2-15** — the name entry and hi-score table screen show `2p` rows; a replay of the scene flow
   records the title's player choice.

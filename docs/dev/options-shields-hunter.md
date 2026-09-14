@@ -368,5 +368,6 @@ world.powerups.detonateMegaCrash(0); // kills it; its Options come back as ItemK
 - **M2-12** (done) — zones D and E place none either
   ([zones-d-and-e.md](zones-d-and-e.md)).
 - **M2-13** (done) — zones F and G place none either ([zones-f-and-g.md](zones-f-and-g.md)).
-- **M2-14** — the final zones may place Option Hunters and blue capsules in their stages.
+- **M2-14** (done) — the final zones place none either ([zones-h-and-i.md](zones-h-and-i.md)); every
+  zone of v1.0 is content now, so the Option Hunter stays in the browser's Hunter Range.
 - **M3** — option recovery after death.

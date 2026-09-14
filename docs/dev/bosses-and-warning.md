@@ -15,7 +15,7 @@ and notes where M2-09 changed it.
 
 This page is the *how and why*. Exact signatures are in
 [api-reference.md](api-reference.md#bosses--multi-part-bosses-the-warning-the-death-sequence-and-the-m2-09-variety)
-(`bosses`), [`behaviors`](api-reference.md#behaviors--enemy-and-boss-behaviour-registries-partial),
+(`bosses`), [`behaviors`](api-reference.md#behaviors--enemy-and-boss-behaviour-registries-implemented),
 [`data`](api-reference.md#data--content-schemas-and-loader) and
 [`stage`](api-reference.md#stage--stage-runtime); the TSDoc in
 `packages/core/src/{bosses,behaviors,data,stage,weapons,world}/index.ts` is the authoritative
@@ -369,6 +369,7 @@ They drive the boss through the **`BossScriptApi`** — one reused object (D29):
 | `fireWait(ticks)` | `rankedWait` — an interval scaled by the rank |
 | `aimed`, `nWay`, `ring`, `spray`, `laser` | The `core/patterns` primitives from part `i`'s centre (rank-scaled, `AIM_AT_TARGET` default angles); no-ops (`-1` / `0`) while `canFire(i)` is false. `laser(i, …, attach = true)` stays attached to the part (its laser-source id is the part's hit id) and stops when the part goes; `attach = false` leaves it where it was fired (a lane) |
 | M2-09: `enraged`, `setPartAngle`, `spinPart`, `partAngle`, `aimPart`, `orbit`, `launch` | Turned parts and turrets, the circling motion, a captain's minions; `canFire` is also `false` while resting and for a raid part off screen, `fireWait` includes the enrage factor — [advanced-bosses.md](advanced-bosses.md#behaviours) |
+| M2-14: `spiral(ways, every, step, speed, kind)` | Starts (or with `ways` ≤ 0 stops) the boss's **spiral stream**: every `every` ticks each standing core that may fire sends `ways` evenly spaced bullets, the pattern turned `step` units further each volley. The boss system fires it in `runScript` while the script sleeps — no wakes; a phase change stops it and resets its heading ([zones-h-and-i.md](zones-h-and-i.md#the-spiral-stream-bossscriptapispiral)) |
 
 The M1 roster fires from the boss's **`gun` parts that still stand**:
 
@@ -385,7 +386,11 @@ from the guns and spreads from the core (the bastion), or minis from the core an
 gun (the seahorse); those of M2-13 ([zones-f-and-g.md](zones-f-and-g.md#the-new-behaviours-corebehaviors))
 curl **arms** — chains of circle-hit parts hung from a part that is not one, every segment turned
 alike and mirrored above and below ([the curling-arm rule](zones-f-and-g.md#the-curling-arm-rule))
-— and fire spreads, rings, launches and lanes from the core, needles from the guns at the arms' tips:
+— and fire spreads, rings, launches and lanes from the core, needles from the guns at the arms' tips;
+the finales of M2-14 ([zones-h-and-i.md](zones-h-and-i.md#the-new-behaviours-corebehaviors)) turn a
+shield wheel and fire lanes, drones and a **spiral stream** (`boss.sovereign`), aim a raid's
+on-screen turret rows and cast hooks (`boss.ark`), or open a mouth and sway a lure — an arm
+(`boss.angler`):
 
 | Behaviour | Tunables (defaults) | What it does |
 |---|---|---|
@@ -395,6 +400,9 @@ alike and mirrored above and below ([the curling-arm rule](zones-f-and-g.md#the-
 | `boss.steed` (M2-12, SQUALL STEED) | `cx` 296, `cy` 100, `rx` 8, `ry` 40, `bobSpeed` 3, `closedTicks` 150, `openTicks` 110, `launchTicks` 45, `minis` 2, `fireTicks` 80, `ways` 3, `spread` 44, `bulletSpeed` 1.3, `ring` 0 (none), `ringSpeed` 1, `gape` 0 (still) | Bobs on the ellipse (`api.orbit`, `bobSpeed` units a tick); its `whenOpen` parts (the chest — the core) shut and open in turn; while open each standing core launches the `minion` (the first 10 ticks after opening, then every `launchTicks`, at most `minis` per opening); aimed spreads of pink ovals from the standing guns (the snout); with `ring` ≥ 1 a ring of round red bullets from the guns each time the chest shuts; `gape` moves the parts attached to a core (the lids) apart from their rest offsets while open |
 | `boss.squid` (M2-13, MANTLE REGENT) | `trackSpeed` 0.35, `margin` 48, `curl` 1, `sweepTicks` 48, `guardTicks` 60, `openTicks` 100, `fireTicks` 70, `ways` 3, `spread` 40, `bulletSpeed` 1.3, `gunTicks` 0 (never), `ring` 0 (none), `ringSpeed` 1, `launchTicks` 0 (never), `count` 1 | Tracks the nearest player's height; its tentacles (the arms) stay straight for `openTicks`, curl in at `curl` units a tick per segment (rounded, at least 1) for `sweepTicks` until the tips meet in front of the core, guard for `guardTicks` and uncurl in `sweepTicks` — each phase starts by uncurling from wherever the last left them; aimed `ways`-ways of red ovals from the standing cores every `fireTicks`; with `gunTicks` ≥ 1 an aimed pink needle from each standing gun (the tips); with `ring` ≥ 1 a ring of round purple bullets from the cores each time the tentacles open (alternating half a gap); with `launchTicks` ≥ 1 `count` of the `minion` per standing core. A broken root takes its tentacle with it — the content's phase change (`partsDestroyed` with `count` 1) |
 | `boss.facet` (M2-13, FACET MONARCH) | `trackSpeed` 0.3, `margin` 50, `wave` 1, `waveTicks` 40, `fireTicks` 90, `ways` 1, `spread` 32, `bulletSpeed` 1.25, `ring` 0 (none), `ringTicks` 150, `ringSpeed` 1, `laserTicks` 0 (never), `laserLength` 384, `laserWidth` 6, `telegraph` 50, `active` 40 | Tracks; its arms wave at `wave` units a tick (rounded, at least 1), `waveTicks` from straight to a turn point — from `wave × waveTicks` curled away from the core's row to as much towards it and back, like claws — carried on from wherever the last phase left them; aimed `ways`-ways of purple needles from the standing guns (the tips); with `ring` ≥ 1 rings of round red bullets from every standing core (armoured or not) every `ringTicks`; with `laserTicks` ≥ 1 a **detached** telegraphed lane to the left from each standing core, one at a time |
+| `boss.sovereign` (M2-14, IRON SOVEREIGN) | `trackSpeed` 0.3, `margin` 48, `spin` 0 (still), `reverseTicks` 0 (never), `laserTicks` 0 (never), `firstLaser` 60, `laserLength` 384, `laserWidth` 8, `telegraph` 45, `active` 50, `fireTicks` 110, `ways` 0 (none), `spread` 40, `bulletSpeed` 1.3, `ring` 0 (none), `ringTicks` 160, `ringSpeed` 1, `launchTicks` 0 (never), `count` 1, `spiral` 0 (none), `spiralTicks` 8, `spiralStep` 24, `spiralSpeed` 1.1 | Tracks the nearest player's height; the hubs on a core turn at `spin` (reversing every `reverseTicks`); attached lanes to the left from the standing guns in turn; aimed spreads of red ovals and alternating rings from the cores; the `minion` from up to `count` guns in turn; the spiral stream started once per phase — each phase switches on its own weapons |
+| `boss.ark` (M2-14, ABYSS ARK) | `fireTicks` 60, `bulletSpeed` 1.3, `ways` 1, `spread` 32, `aimStep` 0 (at once), `launchTicks` 0 (never), `count` 1, `ring` 0 (none), `ringTicks` 180, `ringSpeed` 1 | A raid: each standing gun on screen turns to the nearest player (`aimPart`) and fires a pink `ways`-way along its heading; hooks — the `minion` — from up to `count` distinct on-screen guns in turn; rings from on-screen cores |
+| `boss.angler` (M2-14, THE HOLLOW KING) | `trackSpeed` 0.35, `margin` 48, `closedTicks` 150, `openTicks` 100, `gape` 6, `fireTicks` 40, `ways` 3, `spread` 44, `bulletSpeed` 1.3, `ring` 0 (none), `ringSpeed` 1, `sway` 1, `swayTicks` 40, `gunTicks` 0 (never), `launchTicks` 0 (never), `count` 1 | Tracks; a `whenOpen` mouth on two timers, the jaws `gape` px apart while open; spreads from the cores while open (the first 12 ticks after it opens), a ring as it opens; the lure — an arm — swaying on the curling-arm rule; pink needles and the `minion` from the lure's gun |
 
 `boss.hover` closes every `whenOpen` part when its phase starts (so a new hover phase closes what
 the last one opened — on its first tick, the tick after the change); `boss.lanes` leaves them as
@@ -527,7 +535,9 @@ state, spec index, position (world and playfield), state and phase timers, phase
 part its offset, position, hit points, destroyed / open flags and hit flash; then the WARNING's
 active flag and ticks — since M2-09 for every slot, with the new fields, the raid camera, the
 boss rush and the World's ending flags
-([advanced-bosses.md](advanced-bosses.md#determinism-hashing-and-golden-replays)). The piercing
+([advanced-bosses.md](advanced-bosses.md#determinism-hashing-and-golden-replays)), since M2-14 the
+seven spiral-stream fields after the wake tick
+([zones-h-and-i.md](zones-h-and-i.md#determinism-hashing-and-golden-replays)). The piercing
 shots' part cooldown tables join their enemy tables in
 `mixWeapons`; the brake's slots are in the runner's hashed state. A coroutine's position cannot be
 hashed — its `wakeTick` is. The chain explosions draw the cosmetic stream only, so they never move
@@ -678,3 +688,9 @@ free flight).
   MONARCH, the crystal core: `afterParts` of two crystals, an armoured hull part without a sprite
   behind the core, waving arms, detached lanes) on one curling-arm rule; no engine change
   ([zones-f-and-g.md](zones-f-and-g.md)).
+- **M2-14** (done) — the finales `boss.sovereign` (IRON SOVEREIGN: four phases — plates, a turning
+  and reversing shield wheel, drones, the overdrive spiral), `boss.ark` (the ABYSS ARK raid: turret
+  rows, hooks, a 90-s time limit) and `boss.angler` (THE HOLLOW KING inside it: a mouth, jaws, a
+  swaying lure), the parade of four earlier bosses as captains, the FinalBoss cue in the final zones,
+  and the one engine addition the finale needed: the **spiral stream** (`BossScriptApi.spiral`,
+  `Boss.spiral*` — fired by the boss system, hashed) ([zones-h-and-i.md](zones-h-and-i.md)).

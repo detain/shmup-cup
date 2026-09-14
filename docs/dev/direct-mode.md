@@ -407,4 +407,5 @@ for (let t = 0; t < 600; t++) stepWorld(world, input);
   `zones-fg-direct.test.ts` flies both with the MANTA — through CELL VAULT's tissue walls and
   tentacle garden and PRISM LABYRINTH's crystal walls and cube rush — and its weapons shoot MANTLE
   REGENT and FACET MONARCH down ([zones-f-and-g.md](zones-f-and-g.md#direct-mode-item-plans)).
-- **M2-14** — the final zones' `directItems` plans and carrier waves.
+- **M2-14** (done) — the final zones' `directItems` plans (26 entries each) and carrier waves
+  ([zones-h-and-i.md](zones-h-and-i.md#direct-mode-item-plans)).

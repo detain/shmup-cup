@@ -549,7 +549,7 @@ console.info(describeRun(run)); // zone-e four-way (god mode): stageClear after 
 - **M2-13** (done) — zones F (CELL VAULT) and G (PRISM LABYRINTH, with the second hidden bonus
   stage GLIMMER CACHE) on the same recipe ([zones-f-and-g.md](zones-f-and-g.md)); their bundle took
   it to 320.3 KB gzip.
-- **M2-14** — the final zones H and I, the endings and the credits.
+- **M2-14** (done) — the final zones H and I, the endings and the credits ([zones-h-and-i.md](zones-h-and-i.md)).
 - **M2-15** — the practice select (`startPractice` already starts any zone at a checkpoint, zone D's
   caves included).
 - **M2-17 / M2-18** — the bundle and texture budgets for nine real zones.

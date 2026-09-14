@@ -9,7 +9,8 @@ with the browser and Electron as additional targets.
 The [implementation plan](shmup_plan.md) is approved and under way. Progress per step is tracked in
 [`shmup_progress.md`](shmup_progress.md); milestone **M1 — playable vertical slice** is code-complete
 as version **0.1.0** ([`CHANGELOG.md`](CHANGELOG.md)) — its on-device release check on the monitors
-is next — and **M2 — complete v1.0** is under way (M2-01 … M2-13 done).
+is next — and **M2 — complete v1.0** is under way (M2-01 … M2-14 done: all nine zones, the endings
+and the credits — the game can be played from the title to its credits).
 
 <!--
   Keep this section scannable: one entry per plan step, in plan order — a bold headline with the
@@ -602,6 +603,38 @@ is next — and **M2 — complete v1.0** is under way (M2-01 … M2-13 done).
     [zone G for testers](docs/client/preview-build.md#zone-g-prism-labyrinth) ·
     [authoring stages](content/stages/README.md)
 
+- **Zones H & I, the endings and the credits** (M2-14)
+  - **Zone H, IRON CITADEL**, the enemy fortress: running lights chasing along its steel walls,
+    floor and ceiling **hatches** releasing drones, a **piston hall** of eleven moving floors and
+    ceilings with **laser emitters** (the new `emitter.laser`), a **parade of four earlier bosses in
+    reduced form** (BULWARK, MAW, BASTION and REGENT ECHO — mid-bosses that leave after 16 s), a
+    core run, and the finale **IRON SOVEREIGN**: four phases — shield plates and lanes, a turning
+    and reversing shield wheel with rings, drones, then an overdrive spiral.
+  - **Zone I, ABYSSAL THRONE**, the deep: twinkling specks, gulpers, **depth mines** that arm when the
+    ship comes near (the new `mine.burst`), eels bursting from a trench, an undertow, and the **ABYSS
+    ARK** — a whale-class battleship raid (turret rows, homing hooks) that sails away after 90 s;
+    its final blast reveals **THE HOLLOW KING**, an anglerfish with a mouth that opens and a swaying
+    lure.
+  - **Endings and credits**: a sprite scene per final zone (the citadel falling behind the ship; the
+    ship rising out of the deep while the ARK sinks — or sails off after an escape), a dawn for a
+    no-death run, a five- or six-line epilogue, the result card, then the credits scrolling to their
+    own song — five endings chosen by the final zone and the run's flags (an escape never earns the
+    flawless zone I ending — the review fix).
+  - Engine: `ScriptApi.sleepUntilNear` (a proximity wake — a waiting mine costs no script wakes) and
+    `BossScriptApi.spiral` (a spiral stream the boss system fires itself); `core/behaviors` is
+    complete. Six songs (the final bosses on `FinalBoss`, `Ending`, `Credits`), procedural art
+    (`citadel.mjs`, `abyss.mjs`, `ending.mjs`), recoloured tilesets, Direct-mode item plans.
+  - The 4-way bot clears both in 3–6 minutes (and, without god mode, with no death); every one of
+    the 16 routes now ends in a real finale with its ending scene. The test round fixed the ARK's
+    hooks and the spiral's heading at a phase change. Golden replays re-blessed (ids and hash
+    fields — same inputs, ticks and outcomes); seven zone H / I runs added (53 in all). Tizen bundle
+    331.5 of 350 KB gzip.
+  - Docs: [developer guide](docs/dev/zones-h-and-i.md) ·
+    [zone H for testers](docs/client/preview-build.md#zone-h-iron-citadel) ·
+    [zone I for testers](docs/client/preview-build.md#zone-i-abyssal-throne) ·
+    [the endings for testers](docs/client/preview-build.md#the-endings-and-the-credits) ·
+    [authoring endings and credits](content/campaign/README.md)
+
 ### Hardware spike
 
 - The **input probe** — a diagnostic Tizen app that measures the Samsung remote, gamepads and
@@ -622,7 +655,7 @@ is next — and **M2 — complete v1.0** is under way (M2-01 … M2-13 done).
 | [`shmup_prompt.md`](shmup_prompt.md) | Paste-into-a-new-session prompt that drives execution of the plan (workflow: build → review/fix loop → tests → docs → CI gate per step, progress in `shmup_progress.md`) |
 | [`docs/`](docs/README.md) | Player and developer documentation (start with [`docs/dev/repo-layout.md`](docs/dev/repo-layout.md)) |
 
-Game docs — testers: [preview build (the title screen, menus, HUD and pause menu, the ship select (the KESTREL or the MANTA), the weapon select (weapon types A–D, Weapon Edit, the Option types, the `?` shields and `!` choices, Auto Power-Up), two players at once (2 PLAYERS, joining with START, the split keyboard), the Options screen — volumes, controls and the colour-blind bullet colours — and saved settings and high scores, the game-over and stage-clear screens, the difficulties, extra ships and continues, zone A — AZURE VERGE and its boss HALCYON BULWARK —, test stage, its enemies and their bullets, your weapons, power-ups, the MANTA's colour items, weapons and Arm, lives and score, the boss and its WARNING, the Option Hunter range, the Direct range, explosions, shake and flashes, sound and music)](docs/client/preview-build.md) ·
+Game docs — testers: [preview build (the title screen, menus, HUD and pause menu, the ship select (the KESTREL or the MANTA), the weapon select (weapon types A–D, Weapon Edit, the Option types, the `?` shields and `!` choices, Auto Power-Up), two players at once (2 PLAYERS, joining with START, the split keyboard), the Options screen — volumes, controls and the colour-blind bullet colours — and saved settings and high scores, the game-over and stage-clear screens, the difficulties, extra ships and continues, zone A — AZURE VERGE and its boss HALCYON BULWARK —, the zone map and the real zones B–I, the endings and the credits, test stage, its enemies and their bullets, your weapons, power-ups, the MANTA's colour items, weapons and Arm, lives and score, the boss and its WARNING, the Option Hunter range, the Direct range, explosions, shake and flashes, sound and music)](docs/client/preview-build.md) ·
 [controls](docs/client/controls.md) · [monitor setup & install](docs/client/install-on-tv.md).
 Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/architecture.md) ·
 [engine foundations](docs/dev/engine-foundations.md) · [content data](docs/dev/content-data.md) ·
@@ -654,6 +687,7 @@ Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/ar
 [zones B & C](docs/dev/zones-b-and-c.md) ·
 [zones D & E](docs/dev/zones-d-and-e.md) ·
 [zones F & G](docs/dev/zones-f-and-g.md) ·
+[zones H & I, endings & credits](docs/dev/zones-h-and-i.md) ·
 [input profiles](docs/dev/input-profiles.md) ·
 [API reference](docs/dev/api-reference.md) ·
 [build, test & deploy](docs/dev/build-test-deploy.md) · [conventions](docs/dev/conventions.md).
@@ -680,7 +714,7 @@ versions (`devEngines.runtime`).
 ```sh
 pnpm -v               # must print 12.x — an older global pnpm fails with ERR_PNPM_BROKEN_LOCKFILE
 pnpm install          # set ELECTRON_SKIP_BINARY_DOWNLOAD=1 to skip the Electron binary
-pnpm dev              # browser dev app → http://localhost:5173 (F1–F8: debug tools): the title (Enter five times — PRESS OK, 1 PLAYER, NORMAL, KESTREL in the ship select, START in the weapon select — starts zone A, AZURE VERGE, the first of a run across the zone map (after each boss the tally, then Up / Down + Enter on the ZONE MAP choose the next zone); Down on the title picks 2 PLAYERS — a gamepad's START (or Enter with ?profile=keyboard-split) drops player 2 in; Down + Enter in the ship select flies the MANTA instead — its colour items power up on contact, Left Shift toggles its speed; in the weapon select ↑ / ←→ choose the weapon type, EDIT, the Option type, the ? shield, the ! choice and Auto Power-Up — V or a held Enter spreads FORMATION / ROTATE Options in the game; ?skip=boss starts every zone right before its boss (HALCYON BULWARK in zone A); Enter, Down, Down, Enter opens OPTIONS — volumes, controls, bullet colours, SCALE, SHAKE, FLASHES, HITBOX and BOSS HP, saved in localStorage; Esc pauses), then fly the KESTREL (arrows/WASD, gamepad; the first key press turns the sound on; Enter/C takes a power-up; ?scene=flight skips the title; ?stage=test-range scrolls the test stage, its enemies, their bullets and the power capsules; ?stage=test-boss plays the WARNING and the test boss; ?stage=hunter-range&loadout=full sends in the Option Hunters; ?stage=direct-range (then the MANTA) sends pincer waves of item carriers; ?stage=gimmick-range tries the M2-07 stage systems — bricks to shoot through, regrowing walls, rocks, bubbles, a volcano, suction, tentacles, the cube rush, moving blocks, a pan, a fork; ?stage=raster-range shows the M2-08 raster effects and palette cycling — a waving, colour-rolling sea, a line-band floor, heat haze; ?stage=captain-range / raid-range / twin-range / gauntlet-range play the M2-09 advanced bosses — mid-bosses on the scrolling screen, the IRON LEVIATHAN raid with its heart and time limit, the twins' turns, a boss rush; ?stage=bonus-range tries the M2-10 hidden bonus entrances into the bonus vault; ?stage=zone-b / zone-c plays BRINE NEBULA / DUNE EXPANSE alone and ?stage=brine-grotto zone B's bonus stage PEARL GROTTO (M2-11); ?stage=zone-d / zone-e plays MAGMA DEEP (the dive, the brick maze, CINDER BASTION) / TEMPEST RIDGE (rear attackers, SQUALL STEED) alone (M2-12); ?stage=zone-f / zone-g plays CELL VAULT (tissue walls, tentacles, MANTLE REGENT) / PRISM LABYRINTH (crystal walls, the cube rush, FACET MONARCH — shoot the gallery's four turrets for ?stage=glimmer-cache, its bonus stage) alone (M2-13); ?stage=zone-h / zone-i plays one stub zone alone; ?profile=keyboard-remote-emulation feels like the TV remote; ?profile=keyboard-split puts two players on one keyboard; ?scene=showcase / ?scene=calibration / ?scene=fx-gallery)
+pnpm dev              # browser dev app → http://localhost:5173 (F1–F8: debug tools): the title (Enter five times — PRESS OK, 1 PLAYER, NORMAL, KESTREL in the ship select, START in the weapon select — starts zone A, AZURE VERGE, the first of a run across the zone map (after each boss the tally, then Up / Down + Enter on the ZONE MAP choose the next zone); Down on the title picks 2 PLAYERS — a gamepad's START (or Enter with ?profile=keyboard-split) drops player 2 in; Down + Enter in the ship select flies the MANTA instead — its colour items power up on contact, Left Shift toggles its speed; in the weapon select ↑ / ←→ choose the weapon type, EDIT, the Option type, the ? shield, the ! choice and Auto Power-Up — V or a held Enter spreads FORMATION / ROTATE Options in the game; ?skip=boss starts every zone right before its boss (HALCYON BULWARK in zone A); Enter, Down, Down, Enter opens OPTIONS — volumes, controls, bullet colours, SCALE, SHAKE, FLASHES, HITBOX and BOSS HP, saved in localStorage; Esc pauses), then fly the KESTREL (arrows/WASD, gamepad; the first key press turns the sound on; Enter/C takes a power-up; ?scene=flight skips the title; ?stage=test-range scrolls the test stage, its enemies, their bullets and the power capsules; ?stage=test-boss plays the WARNING and the test boss; ?stage=hunter-range&loadout=full sends in the Option Hunters; ?stage=direct-range (then the MANTA) sends pincer waves of item carriers; ?stage=gimmick-range tries the M2-07 stage systems — bricks to shoot through, regrowing walls, rocks, bubbles, a volcano, suction, tentacles, the cube rush, moving blocks, a pan, a fork; ?stage=raster-range shows the M2-08 raster effects and palette cycling — a waving, colour-rolling sea, a line-band floor, heat haze; ?stage=captain-range / raid-range / twin-range / gauntlet-range play the M2-09 advanced bosses — mid-bosses on the scrolling screen, the IRON LEVIATHAN raid with its heart and time limit, the twins' turns, a boss rush; ?stage=bonus-range tries the M2-10 hidden bonus entrances into the bonus vault; ?stage=zone-b / zone-c plays BRINE NEBULA / DUNE EXPANSE alone and ?stage=brine-grotto zone B's bonus stage PEARL GROTTO (M2-11); ?stage=zone-d / zone-e plays MAGMA DEEP (the dive, the brick maze, CINDER BASTION) / TEMPEST RIDGE (rear attackers, SQUALL STEED) alone (M2-12); ?stage=zone-f / zone-g plays CELL VAULT (tissue walls, tentacles, MANTLE REGENT) / PRISM LABYRINTH (crystal walls, the cube rush, FACET MONARCH — shoot the gallery's four turrets for ?stage=glimmer-cache, its bonus stage) alone (M2-13); ?stage=zone-h / zone-i plays the finales IRON CITADEL (the piston hall, the parade, IRON SOVEREIGN) / ABYSSAL THRONE (depth mines, the ABYSS ARK raid, THE HOLLOW KING) alone (M2-14 — a whole run from the title ends in an ending scene and the credits); ?profile=keyboard-remote-emulation feels like the TV remote; ?profile=keyboard-split puts two players on one keyboard; ?scene=showcase / ?scene=calibration / ?scene=fx-gallery)
 pnpm lint             # ESLint (typescript-eslint + compat: chrome >= 69)
 pnpm typecheck        # tsc --noEmit everywhere
 pnpm test             # Vitest per package + repo integration tests
@@ -772,14 +806,15 @@ hitch in the overlay's frame graph, gamepad and keyboard — checklist in
 [`docs/client/debug-tools.md`](docs/client/debug-tools.md#the-m1-release-check). The M1 release
 is tagged `v0.1.0` on the final commit of step M1-19.
 
-Code: plan step **M2-14** (final zones H & I, endings & credits) — M2-01
+Code: plan step **M2-15** (front-end screens & attract mode) — M2-01
 (rank, difficulty presets, extends & continues) opened milestone **M2 — complete v1.0**, M2-02
 (pattern DSL, bending lasers, bullet cancel & readability), M2-03 (meter arsenal: loadouts B–D,
 Weapon Edit, parking & weapon select), M2-04 (Option & shield variants + Option Hunter), M2-05
 (Direct mode & ship select), M2-06 (two-player simultaneous co-op), M2-07 (advanced stage
 systems & Tiled import), M2-08 (presentation polish: raster effects, palettes, visual options) and
 M2-09 (advanced bosses: mid-bosses, raids, multi-bosses), M2-10 (zone map, campaign flow,
-transitions & bonus stages), M2-11 (zones B & C), M2-12 (zones D & E) and M2-13 (zones F & G) followed; every simulation change re-blesses the golden replays in the same
+transitions & bonus stages), M2-11 (zones B & C), M2-12 (zones D & E), M2-13 (zones F & G) and M2-14 (final zones H & I, endings
+& credits) followed; every simulation change re-blesses the golden replays in the same
 commit. The per-step status board is [`shmup_progress.md`](shmup_progress.md).
 
 Also on hardware (unchanged, and still the gate for the remote control scheme): package and
@@ -806,7 +841,9 @@ the real zones **BRINE NEBULA** and **DUNE EXPANSE**, their bosses and zone B's 
 and since M2-12 **MAGMA DEEP** (the dive and the brick maze with the remote) and **TEMPEST RIDGE**
 (enemies from behind) with CINDER BASTION and SQUALL STEED, and since M2-13 **CELL VAULT** (the
 regrowing tissue walls and the tentacles' tug with the remote) and **PRISM LABYRINTH** (the crystal
-walls, the cube rush, the gallery into GLIMMER CACHE) with MANTLE REGENT and FACET MONARCH (checklist in
+walls, the cube rush, the gallery into GLIMMER CACHE) with MANTLE REGENT and FACET MONARCH, and
+since M2-14 the finales **IRON CITADEL** (the pistons and the parade) and **ABYSSAL THRONE** (the ARK
+raid and THE HOLLOW KING), the ending scenes and the credits — a whole run to its ending (checklist in
 [`docs/client/preview-build.md`](docs/client/preview-build.md#on-the-samsung-smart-monitor--tv)).
 
 Desktop prerequisites: Git, Node 24 (22.12+), Tizen Studio **or** VS Code + Samsung Tizen extension (with a Samsung

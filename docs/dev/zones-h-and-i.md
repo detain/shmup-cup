@@ -1,0 +1,773 @@
+# Zones H and I: IRON CITADEL, ABYSSAL THRONE, the endings and the credits
+
+How plan step **M2-14** replaced the last two stub zones of the campaign with the **two finales**
+and finished the game: **zone H, IRON CITADEL** (the enemy's mechanical fortress: floor and ceiling
+**hatches** releasing drones, **laser emitters** projecting lanes, a **piston hall** of moving floors
+and ceilings, a **parade** of four earlier bosses in reduced form, and **IRON SOVEREIGN**, a
+four-phase finale with a turning shield wheel and an overdrive spiral) and **zone I, ABYSSAL
+THRONE** (the deep: **depth mines** that arm when you come near, gulpers, trench eels, and the
+**ABYSS ARK**, a whale-class battleship raid whose final blast reveals **THE HOLLOW KING**, an
+anglerfish with a swaying lure — the boss inside a boss). After either finale the run now ends
+with a real **ending**: a sprite **scene** per final zone (the citadel falling, the ship rising out
+of the deep), a **no-death variant** (a dawn), an **epilogue** line by line, the result card, and
+the **credits** scroll to the ending and credits songs.
+
+Each zone brings its stage file, a roster, a Direct-mode item plan, a stage and a final boss song,
+a recoloured tileset and procedural placeholder art; five new behaviours (`emitter.laser`,
+`mine.burst`, `boss.sovereign`, `boss.ark`, `boss.angler`) carry them, and two small, hashed
+**engine additions** keep them allocation-free: `ScriptApi.sleepUntilNear` (a proximity wake) and
+`BossScriptApi.spiral` (a spiral stream the boss system fires itself). With them the behaviour
+roster is complete for v1.0 — `core/behaviors` is `implemented`.
+
+This page is the *how and why* and the map of the step's code and content. Exact signatures are in
+[api-reference.md](api-reference.md) (`data`, `enemies`, `behaviors`, `bosses`, `ui`, `scenes`, the
+audio loader and the repo tooling's asset pipeline, playtest and golden tables); the TSDoc of
+`packages/core/src/{behaviors,bosses,enemies,scenes,ui}/index.ts`,
+`packages/core/src/data/campaign.ts`, `scripts/assets/procedural/{citadel,abyss,ending,terrain}.mjs`
+and `test/golden/golden.ts` is the authoritative reference. The data formats for authors are next
+to the data — [`content/stages/README.md`](../../content/stages/README.md) (the final zones'
+`music.ending` / `music.credits`), [`content/campaign/README.md`](../../content/campaign/README.md)
+(the endings' `scene` / `text` and the `credits`),
+[`content/enemies/README.md`](../../content/enemies/README.md),
+[`content/patterns/README.md`](../../content/patterns/README.md),
+[`content/tilesets/README.md`](../../content/tilesets/README.md),
+[`content/audio/README.md`](../../content/audio/README.md). What testers see is in
+[`../client/preview-build.md`](../client/preview-build.md#zone-h-iron-citadel). The recipe these
+zones followed is in [zones-b-and-c.md](zones-b-and-c.md#building-the-next-zone-m2-12--m2-14)
+(M2-11), with what a taller map, a maze or rear attackers add in [zones-d-and-e.md](zones-d-and-e.md)
+(M2-12) and the curling-arm rule in [zones-f-and-g.md](zones-f-and-g.md#the-curling-arm-rule)
+(M2-13); the home pages of the systems used here:
+
+| Part | Home page |
+|---|---|
+| Stage files, camera keys, checkpoints, terrain, parallax | [stage-runtime.md](stage-runtime.md) |
+| Moving blocks (the pistons), the checkpoint rollback | [advanced-stages.md](advanced-stages.md) |
+| Enemies, movers (`Sine`, `Waypoint`), the script runner, the behaviour registry | [enemies-and-behaviors.md](enemies-and-behaviors.md) |
+| Raster effects and palette cycles | [presentation-polish.md](presentation-polish.md) |
+| Bosses, weak points (`afterParts`, `whenOpen`), phases, lane lasers, the WARNING | [bosses-and-warning.md](bosses-and-warning.md) |
+| Captains, raids, the boss inside a boss, timers and escapes, turned parts | [advanced-bosses.md](advanced-bosses.md) |
+| The campaign, run flags, the ending hook, `PrepareStage` | [campaign-and-bonus-stages.md](campaign-and-bonus-stages.md) |
+| The scene stack, the UI list, the UI kit | [scenes-and-ui.md](scenes-and-ui.md) |
+| Music cues, the prepared set | [audio.md](audio.md) |
+| The DSL patterns | [pattern-dsl.md](pattern-dsl.md) |
+| The 4-way bot, the rules, the harness | [zone-a-and-playtest.md](zone-a-and-playtest.md) |
+| Golden replays | [debug-and-replays.md](debug-and-replays.md#golden-replays-testgolden) |
+
+Background: `shmup_feat.md` §14 (the zone themes — "H IRON CITADEL: mechanical fortress, hatches,
+laser emitters, moving floors, a parade of earlier bosses", "I ABYSSAL THRONE: raid on a whale-class
+battleship, then a boss inside a boss"; stage length 3–6 minutes), §13 (the final boss — "make ours
+a real finale" —, raids, the boss inside a boss, the anglerfish's lure), §15 (multiple endings),
+§17 (the ending(s), the credits), §10 (checkpoints and the recovery rule), §4 rule 2 (4-way
+playable); decisions **D17** (aimed shots ≤ 2.0 px/tick on Normal), **D24** (placeholder art
+generated by committed code) and **D29** (behaviour coroutines allocate a result per wake).
+
+## The picture at a glance
+
+| What | Where |
+|---|---|
+| Zone H's stage | `content/stages/zone-h.stage.json` (IRON CITADEL, 9,600 px, tileset `terrain-citadel`) |
+| Zone I's stage | `content/stages/zone-i.stage.json` (ABYSSAL THRONE, 9,600 px, tileset `terrain-abyss`) |
+| Rosters and bosses | `content/enemies/zone-h.enemies.json` (with the four parade echoes), `zone-i.enemies.json` |
+| The zones' DSL pattern | `content/patterns/zones.patterns.json` (`abyss.gulp`) |
+| Tilesets | `content/tilesets/terrain-citadel.tileset.json`, `terrain-abyss.tileset.json` |
+| Songs | `content/audio/music/zone-h`, `boss-h`, `zone-i`, `boss-i`, `ending`, `credits` `.music.json` |
+| Endings and credits | `content/campaign/main.campaign.json` (`endings[].scene` / `text`, `credits`) |
+| New behaviours | `packages/core/src/behaviors/index.ts` (`emitter.laser`, `mine.burst`, `boss.sovereign`, `boss.ark`, `boss.angler`) |
+| Engine additions | `core/enemies` `ScriptApi.sleepUntilNear` / `Enemy.nearRange`; `core/bosses` `BossScriptApi.spiral` / `Boss.spiral*` |
+| Ending data | `packages/core/src/data/campaign.ts` (`ENDING_SCENES`, `CampaignCreditsSection`, `creditsLineCount`, the limits); `core/data` `StageMusic.ending` / `credits` |
+| Ending and credits screens | `packages/core/src/scenes/index.ts` (`EndingScene` — the scene, the epilogue, the card —, `CreditsScene`) |
+| UI sprites | `core/ui` `UI_SPRITES` / `UiSprites` (`ui/ending-*`) |
+| The prepared music set | `@shmup/audio-web` `stageMusicCues` (adds `music.ending` / `music.credits`) |
+| Art as code | `scripts/assets/procedural/citadel.mjs` (14 sprites), `abyss.mjs` (19), `ending.mjs` (6 UI sprites); `terrain.mjs` (`TERRAIN_PALETTES` `tiles/terrain-citadel` / `-abyss`) |
+| Playtests | `test/playtest/zone-h.test.ts`, `zone-i.test.ts`, `zone-hi-recovery.test.ts`; the 16 routes (`campaign-routes.ts`) now end in the real finales |
+| Goldens | `test/golden/zone-h-god`, `zone-h-boss`, `zone-h-arcade`, `zone-h-deaths`, `zone-i-god`, `zone-i-boss`, `zone-i-escape` |
+
+The tick pipeline gained two small things, both inside existing phases and both hashed: the
+enemy system's movement phase tests a **proximity wake** ([below](#the-proximity-wake-scriptapisleepuntilnear)),
+and the boss system's script phase fires a **spiral stream** ([below](#the-spiral-stream-bossscriptapispiral)).
+Everything else is content on the systems of M2-07 (moving blocks), M2-09 (captains, raids, the
+boss inside a boss, timers) and M2-10 (the ending hook).
+
+## Zone H: IRON CITADEL
+
+The enemy's fortress: a far wall of riveted steel panels whose **running lights chase** along it
+through the palette cycle, conduits and girders in front of it, steel plating with an amber hazard
+rim. Four checkpoints, the camera keys `0.8 → 0.7 → 0.6 → 1.3 → 0.75` px/tick. Times are the bare
+scroll from the start (the bot's whole run with the parade and the finale is ≈ 253 s):
+
+| Camera x | Time | Section |
+|---|---|---|
+| 0 – 2,200 | 0 – 46 s | **The outer walls** (checkpoint 0): `bolt-drone` streams, `rail-turret`s on the floor and ceiling, `hatch-bay`s on the floor and ceiling releasing `hatch-mite`s, a `sentinel-walker`, carriers (`tender`, zone A's capsule carrier) |
+| 2,200 – 4,400 | 46 – 99 s | **The piston hall** (checkpoint 2,200): a flat floor and ceiling, **eleven pistons** — moving floors and ceilings ([below](#the-piston-hall)) — and four `laser-emitter`s on the floor and ceiling; drones, a walker, a hatch |
+| 4,400 – 6,800 | 99 – 165 s | **The parade hangar** (checkpoint 4,400): open space at 0.6 px/tick; **four earlier bosses in reduced form**, one after another ([below](#the-parade)) — at ≈ 102, 117, 133 and 149 s; drone streams and carriers between them |
+| 6,800 – 8,400 | 165 – 186 s | **The core run** (checkpoint 6,800): 1.3 px/tick over rolling ground with a heat `haze` on the mid layer; drone streams of eight, emitters, a hatch, a rail turret, a walker |
+| 8,400 – 9,100 | 186 – 201 s | **The calm**: exactly two carriers (the capsules for the boss) |
+| 9,100 | ≈ 3:21 | The WARNING, then **IRON SOVEREIGN** (IS-08) |
+
+**Backdrops.** `bg/citadel-wall` three times on the far layer (factor 0.2, `y` 0 / 64 / 128 — the
+tile repeats down as well as across) and `bg/citadel-pipes` on the mid layer (0.45, `y` 152). Each
+wall panel's running light is painted in one of the four `CITADEL_RAMP` colours (a position hash),
+which the stage's `cycles` roll every 10 ticks — the lights chase along the wall.
+
+### The piston hall
+
+Eleven `block` events (M2-07's **moving blocks**, `tile` `solid`), 24 × 48 px, 160 px apart from
+event x 2,280 to 3,880, alternately rising out of the floor (`y` 138, `dy` −22) and hanging from
+the ceiling (`y` 14, `dy` +22): each swings 22 px out of the plating and back on a 200-tick period,
+with phases spread over the quarter turns, so the gap moves up and down as you fly through. The
+segment's floor and ceiling are flat (`amp` 0) so the pistons are the only thing that moves. The
+four `laser-emitter`s between them project lanes to the left along their row
+([`emitter.laser`](#emitterlaser)); the content keeps two emitters' beams from overlapping in
+time closer than the lane-gap rule allows. The blocks are M2-07's: part of the terrain queries (the
+ship dies on them, shots stop at them), placed every tick from their age, and after a checkpoint
+restart the ones whose events lie behind the camera come back at age 0
+([advanced-stages.md](advanced-stages.md#moving-blocks-terrainblocks-movingblocksystem)).
+
+### The parade
+
+The plan's "parade of earlier bosses in reduced form" is **four M2-09 captains** on `boss` events
+in the hangar — a `bossRush` stage type (M2-09) cannot hold a normal zone's timeline, so the parade
+is written as mid-bosses instead. Each **echo** reuses an earlier boss's sprites and behaviour with
+**fewer parts**, comes in on the scrolling camera without a WARNING, has 8,000 points and a
+**960-tick time limit** (16 s after its 90-tick intro), and leaves when the limit runs out — a
+captain's escape never sets the `bossEscaped` run flag (only a stage boss's does).
+
+| Event x | Echo | Code | The original | Reduced to | Behaviour (phase params) |
+|---|---|---|---|---|---|
+| 4,520 | BULWARK ECHO | HB-E1 | HALCYON BULWARK (10 parts) | 8 parts: two plates in front of a 20-hp core | `boss.bulwark` — lanes every 130, 3-ways every 140 at 1.3 |
+| 5,080 | MAW ECHO | GM-E2 | GALVANIC MAW (7) | 5: no rocket pods, the 22-hp mouth with its jaws (`gape` 4) | `boss.maw` — shut / open 110 each, spreads every 40 at 1.3, `count` 0 (no rockets) |
+| 5,640 | BASTION ECHO | CB-E3 | CINDER BASTION (9) | 5: two short arms on the hub round a 26-hp core, no emitters | `boss.bastion` — `spin` 5, 3-ways every 100, rings of 8 every 170 |
+| 6,200 | REGENT ECHO | MR-E4 | MANTLE REGENT (13) | 8: one segment per tentacle, 10-hp roots, a 24-hp eye | `boss.squid` — `sweepTicks` 26, guard 50, open 110, 3-ways every 90, tip needles every 120 |
+
+The echoes are 560 px apart at 0.6 px/tick (≈ 15.6 s), a little less than one echo's stay: an echo
+not yet shot down may overlap the next for a moment, never two more. The content test holds the
+parade to that ([below](#the-content-checks-testintegrationcontenttestts)).
+
+### The roster (`zone-h.enemies.json`)
+
+| Id | Behaviour | Hp / score | Notes |
+|---|---|---|---|
+| `bolt-drone` | `drifter.sine` | 1 / 100 | Steel drones in streams (`speed` 1.2, `amp` 16) |
+| `hatch-bay`, `hatch-bay-ceiling` | `hatch.spawner` (floor / ceiling) | 6 / 500 | Releases a `hatch-mite` (`hatch-mite-down` from the ceiling) every 100 ticks, at most 3 |
+| `hatch-mite`, `hatch-mite-down` | `rammer.aimed` | 1 / 60 | Climbs out of its hatch for 34 ticks, winds up 16, then rams at 1.6 |
+| `laser-emitter`, `laser-emitter-ceiling` | `emitter.laser` (floor / ceiling) | 6 / 600 | A lane to the left every 200 ticks (first after 50): telegraph 60, beam 36, 6 px wide |
+| `sentinel-walker` | `walker.floor` | 4 / 400 | Walks 100 ticks at 0.6, stops 50 and fires a fan (spread 48) at 1.2 |
+| `rail-turret`, `rail-turret-ceiling` | `turret.floor` | 4 / 300 | An aimed shot every 180 ticks at 1.2 |
+| `sovereign-drone` | `cell.chase` | 2 / 150 | IRON SOVEREIGN's `minion`: in for 30 ticks, chases for 120 (turn ≤ 5), then straight on |
+| `echo-bulwark` … `echo-regent` | captains | — | [The parade](#the-parade) |
+| `iron-sovereign` | boss (`boss.sovereign`) | — | IS-08, [below](#iron-sovereign-is-08) |
+
+Five new types by sprite (drone, hatch, emitter, walker, rail turret — the mite is the hatch's
+child), new to every zone a run can have flown before (A–G). The carriers are zone A's `tender`.
+
+### IRON SOVEREIGN (IS-08)
+
+The citadel's master and **the finale** of `shmup_feat.md` §13: a fortress hull, the red core behind
+two shield plates, two lane emitters above and below, and a **shield wheel** — four armoured pods on
+a hub — turning round the core. 60,000 points, a 180-tick intro; `minion` is `sovereign-drone`; the
+WARNING reads `GIANT HOSTILE "IRON SOVEREIGN"` / `CLOSING IN - CODE IS-08`. It enters at view
+(300, 100).
+
+| Part | Sprite | Role |
+|---|---|---|
+| `hull` | `bosses/sovereign-hull` | Decoration (x 36): no hurtbox |
+| `bulk` | — | Attached to the hull, **no sprite**: the armour (`never`, a 32 × 80 box) behind the core (the FACET MONARCH lesson — [zones-f-and-g.md](zones-f-and-g.md#facet-monarch-fm-07)) |
+| `core` | `bosses/sovereign-core` | The **core**, 150 hp, 8,000 points, `afterParts` of both plates |
+| `emitter-top`, `emitter-bottom` | `bosses/sovereign-emitter` | 30 hp each, 2,000 points, **guns** at (2, ∓38): the lanes and the drones come from them |
+| `hub` | — | Attached to the core, no sprite, no hurtbox, **`angle` 128** (45°): the wheel's centre, turned by the behaviour |
+| `pod-a … pod-d` | `bosses/sovereign-pod` | Armour circles (`radius` 6) 24 px out on the hub, a quarter turn apart |
+| `plate-1`, `plate-2` | `bosses/sovereign-plate` | 24 hp each, 1,000 points, at x −2 / −12 — **in front of** the core |
+
+| Phase | Until | `boss.sovereign` tunables |
+|---|---|---|
+| 1 | both plates broken | track 0.3; lanes from the emitters every 140 (first 60); 3-ways every 120 at 1.25 |
+| 2 | the core below 110 hp | track 0.35; the wheel turns (`spin` 5); lanes every 160 (first 50); 3-ways every 110 at 1.3; rings of 10 every 170 at 1 |
+| 3 | the core below 60 hp | track 0.4; `spin` −6, **reversing** every 220; 5-ways (spread 36) every 100 at 1.3; two drones every 170; rings of 10 every 190 |
+| 4 | — | track 0.45; `spin` 8 reversing every 180; lanes every 200 (first 80); 3-ways every 130; the **overdrive spiral** — three arms every 10 ticks, turning 22 units a volley, at 1 px/tick |
+
+The arc — plates and lanes, the wheel and rings, the hatches' drones, the overdrive — is written as
+data: one behaviour whose tunables switch its weapons on phase by phase. Destroyed emitters fire no
+more lanes and launch no more drones. The bot takes ≈ 42.8 s.
+
+**Why the hub starts turned 45°** (`angle` 128). In the first build the wheel's rest position put a
+pod straight in the core's line of fire: while the wheel stood still (phase 1) the pod sat in front
+of the core, and the bot spent 252 s on the plates behind it. Turned half a quarter, the pods rest
+above and below the core's row.
+
+## Zone I: ABYSSAL THRONE
+
+The deep: black-blue murk whose **bioluminescent specks twinkle** through the palette cycle and
+sway with a slow `wave`, rock spires and weed silhouetted in front of it (a `wave` of their own),
+black-teal rock with a faint glowing rim. Four checkpoints, the camera keys
+`0.8 → 0.7 → 0.75 → 1.3 → 0.75` (the bot's whole run with the raid and the king ≈ 271 s):
+
+| Camera x | Time | Section |
+|---|---|---|
+| 0 – 2,200 | 0 – 46 s | **The descent** (checkpoint 0): a rolling floor, no ceiling; `lumen-mote` streams, `depth-mine`s, `gulper`s hovering high or low, `abyss-turret`s, carriers |
+| 2,200 – 4,400 | 46 – 99 s | **The trench** (checkpoint 2,200): floor and ceiling; four bursts of **trench eels** (`worm.burst` formations of 6–7) out of the floor, ceiling and floor turrets, motes, mines |
+| 4,400 – 6,800 | 99 – 152 s | **The mine field** (checkpoint 4,400): open water; eleven mines in pairs and alone, gulpers high and low, mote streams |
+| 6,800 – 8,400 | 152 – 173 s | **The undertow** (checkpoint 6,800): 1.3 px/tick over a rolling floor; mote streams of six to eight, mines, a turret — **no eels** ([balance](#balance-found-by-the-bot)) |
+| 8,400 – 9,000 | 173 – 186 s | **The calm**: two carriers; open water from here on |
+| 9,000 | ≈ 3:06 | The WARNING, then the **ABYSS ARK** (AA-09) raid, then **THE HOLLOW KING** (HK-10) |
+
+**Backdrops.** `bg/abyss-murk` three times on the far layer (0.15, `y` 0 / 64 / 128) and
+`bg/abyss-spires` on the mid layer (0.4, `y` 144). The murk's specks take the four `ABYSS_RAMP`
+colours (a position hash), rolled every 14 ticks by the `cycles` entry, so they twinkle; a `wave`
+over the whole far layer (wavelength 60, period 240) and one over the spires (rows 140–200) make the
+water sway.
+
+### The roster (`zone-i.enemies.json`)
+
+| Id | Behaviour | Hp / score | Notes |
+|---|---|---|---|
+| `lumen-mote` | `drifter.sine` | 1 / 100 | Glowing plankton in streams (`speed` 1.1, `amp` 20) |
+| `depth-mine` | `mine.burst` | 3 / 300 | Drifts at 0.45 on a sine (`amp` 10, period 150); a ship within 60 px arms it: it stops, flashes 40 ticks and bursts into a ring of 8 round red bullets at 0.95 — gone without score or drop ([below](#mineburst)) |
+| `trench-eel` | `worm.burst` (floor) | 2 / 150 | M2-11's sand worm as an eel: the leader waits in the floor until a ship is within 190 px, bursts out on an arc (`vx` −0.75, `up` 3.2), the body follows |
+| `gulper`, `gulper-low` | `pattern.loop` + `abyss.gulp` | 6 / 600 | Hovers at view (300, 60) / (300, 140) on a `waypoint` mover for 340 ticks, then drifts off up / down; `abyss.gulp` = three aimed 3-ways of round red bullets 28 units apart, 14 ticks apart, at 1 px/tick, then 150 ranked ticks + 40 of rest |
+| `abyss-turret`, `abyss-turret-ceiling` | `turret.floor` | 4 / 300 | Barnacle turrets, an aimed shot every 180 ticks at 1.2 |
+| `ark-hook` | `rocket.homing` | 2 / 200 | The ARK's `minion`, the **hooks**: launched at 1 for 20 ticks, then homing at 1.2 (turn ≤ 4) for 70, then straight on |
+| `king-spawn` | `cell.chase` | 1 / 100 | THE HOLLOW KING's `minion` (the mote's sprite): in for 30 ticks, chases for 120, then straight on |
+| `abyss-ark` | boss (`boss.ark`) | — | AA-09, [below](#the-abyss-ark-aa-09) |
+| `hollow-king` | boss (`boss.angler`) | — | HK-10, the ARK's `inner` boss, [below](#the-hollow-king-hk-10) |
+
+Five new types by sprite (mote, mine, eel, gulper, turret), new to every zone a run can have flown
+before (A–G).
+
+### The ABYSS ARK (AA-09)
+
+The **whale-class battleship raid** of `shmup_feat.md` §13 ("circle it, turret rows, hooks"): a hull
+of four 96-px sections end to end — `bow`, `hull-2`, `hull-3`, `stern`, 384 px, the whole width of
+the screen —, **two turret rows** of three along its back and belly, and its **heart** amidships. 50,000
+points, a 240-tick intro, a **5,400-tick time limit** (90 s of fight), `minion` `ark-hook`, `inner`
+`hollow-king`. It sits at view (112, 100) and the raid's `raid` segments fly the camera round it
+(M2-09's boss-relative camera path): five segments panning ±12 px vertically and 80 px along the hull
+(`x` −100 → −60 → −20 → −60 → −100), 150–210 ticks each with 150–240-tick holds.
+
+| Part | Sprite | Role |
+|---|---|---|
+| `bow`, `hull-2`, `hull-3`, `stern` | `bosses/ark-bow`, `ark-hull`, `ark-stern` | Decoration: the hull the raid flies round — no hurtbox |
+| `turret-t1 … t3` | `bosses/ark-turret` | The top row, attached to the bow at x 36 / 132 / 228: 12 hp, 800 points, circles (`radius` 7), **guns** resting at `angle` 768 (up) and turning ≤ 16 units a tick, 16 heading frames |
+| `turret-b1 … b3` | `bosses/ark-turret` | The bottom row at x 84 / 180 / 276, resting at `angle` 256 (down) |
+| `heart` | `bosses/ark-heart` | The **core**, 130 hp, 8,000 points, a circle (`radius` 9) at x 156 — always vulnerable, when the camera shows it |
+
+| Phase | Until | `boss.ark` tunables |
+|---|---|---|
+| 1 | the heart below 70 hp | every 90 ticks each on-screen turret aims and fires one pink round at 1.1; one hook every 220 |
+| 2 | — | 3-ways (spread 40) every 72 at 1.25; two hooks every 170 from different turrets; rings of 8 round red bullets from the heart every 220 at 0.95 |
+
+Only what the camera shows fires (a raid's parts must be in view — `canFire`), so the fight is the
+raid's pan: the turret pair on screen shoots, then the next. **The escape.** If the heart still stands
+when the 90 s run out, the ARK leaves (M2-09's timer): the World's `endingFlags` gets
+`EndingFlag.BossEscaped`, THE HOLLOW KING never appears and the zone clears with the run flag
+`bossEscaped` — the campaign's *THE FLAGSHIP SLIPS AWAY* ([below](#the-endings)). The heart's final
+blast otherwise reveals the king (M2-09's `inner`).
+
+**Why the camera path keeps the turrets off the ship's column.** The first build's path flew the
+ship past turrets at point-blank range: a turret passing over or under the ship fires straight down
+its column, which a 4-way dodger cannot leave in time, and it killed the bot twice. The shipped path
+keeps the turret rows to the left of the ship's column.
+
+### THE HOLLOW KING (HK-10)
+
+The thing inside the ARK and the last boss of the throne route (§13 "boss inside a boss",
+"anglerfish: lure, opens to reveal"): an anglerfish body, a mouth with two jaws that opens to show
+its glowing throat, and a **lure** — three stalk beads hung from its brow ending in a glowing bulb —
+swaying in front of it. 60,000 points, a 150-tick intro, `minion` `king-spawn`. It enters at view
+(296, 100) after the ARK's blast.
+
+| Part | Sprite | Role |
+|---|---|---|
+| `body` | `bosses/king-body` | Decoration (x 26) |
+| `bulk` | — | Attached to the body, no sprite: the armour (`never`, a 28 × 40 box) behind the throat |
+| `maw` | `bosses/king-maw` | The **core**, 96 hp, 10,000 points, **`whenOpen`**: hurt only while the mouth is open |
+| `jaw-top`, `jaw-bottom` | `bosses/king-jaw-top` / `-bottom` | Armour attached to the maw at (−14, −9) / (−14, 10); they part by `gape` px while the mouth is open |
+| `stalk-1 … 3` | `bosses/king-stalk` | Armour circles (`radius` 4): the lure's stalk, the root hung from the **body** (not from the core, whose jaws move) |
+| `lure` | `bosses/king-lure` | 30 hp, 3,000 points, a circle (`radius` 5), a **gun**: the needles and the spawn come from it |
+
+| Phase | Until | `boss.angler` tunables |
+|---|---|---|
+| 1 | the maw below 66 hp | track 0.3; shut 150 / open 110; 3-ways every 44 at 1.25 while open; sway 1 × 40; a lure needle every 100 |
+| 2 | the maw below 30 hp | track 0.4; shut 130 / open 110; 3-ways every 38 at 1.3; a ring of 8 as it opens; sway 1 × 32; needles every 90; a spawn every 190 |
+| 3 | — | track 0.5; shut 100 / open 120; 5-ways (spread 38) every 36 at 1.35; a ring of 10 at 1.05 as it opens; sway 2 × 30; needles every 90; a spawn every 160 |
+
+The lure is an **arm** in the sense of M2-13's curling-arm rule
+([zones-f-and-g.md](zones-f-and-g.md#the-curling-arm-rule)): `boss.angler` sways it like
+`boss.facet`'s wave, carrying the curl on from phase to phase without a jump. Shooting the bulb off
+ends the needles and the spawn.
+
+## The new behaviours (`core/behaviors`)
+
+All five follow the coroutine rules of D29 (sleep until the next thing to do, whole-tick timers, no
+allocation per wake). Defaults in brackets; the zone content overrides many of them.
+
+### `emitter.laser`
+
+A laser emitter. Every [`laserTicks` 150] ticks (rank-scaled; the first after [`firstTicks` 40])
+while it may fire it projects a telegraphed straight laser from its centre, heading [`heading` 512 =
+left], [`laserLength` 384] long and [`laserWidth` 6] wide: [`telegraph` 50] warning ticks, the grow,
+[`active` 40] beam ticks, the fade. The beam is **attached** to the emitter — on a floor or ceiling
+emitter it scrolls with the terrain — and vanishes with it. A ground emitter stands still (`MoverKind.None`),
+an air one keeps its spec's `mover`. One wake per beam; `laserTicks` and `firstTicks` below 1 are one
+tick, `heading` is masked to `[0, 1024)`.
+
+### `mine.burst`
+
+A depth mine. It drifts left on a sine [`speed` 0.5, `amp` 10, `period` 140] until the nearest living
+player comes within [`trigger` 64] px horizontally **and** vertically while it may fire; then it
+**arms** — stops, flashes for [`fuse` 36] ticks — and bursts into a ring of [`ring` 8] round red
+bullets at [`bulletSpeed` 1], destroying itself with an explosion but **no score and no drop** (shoot
+it before it arms for those). `trigger` 0 = it never arms (a drifting obstacle); `fuse` below 1 is
+one tick, `ring` below 1 fires nothing. The ring's 45° gaps are wide enough to step through with four
+directions.
+
+The waiting is `yield api.sleepUntilNear(trigger)` — the first build polled every 6 ticks like
+`tentacle.grab`, and four waiting mines allocated 294 KB per 10,000 ticks in the allocation guard
+(every wake allocates, D29). A mine now wakes **twice** in its life: when armed and when the fuse
+runs out.
+
+### `boss.sovereign`
+
+IRON SOVEREIGN's script: tracking [`trackSpeed` 0.3, `margin` 48]; every part attached to a core
+(the wheel's hub) turns at [`spin` 0 = still] units a tick (rounded), reversing every
+[`reverseTicks` 0 = never]; with [`laserTicks` 0 = never] ≥ 1 the standing guns fire **attached**
+lane lasers to the left **in turn** ([`firstLaser` 60], then every `laserTicks`, rank-scaled;
+[`laserLength` 384, `laserWidth` 8, `telegraph` 45, `active` 50]), skipping a destroyed gun; with
+[`ways` 0 = none] ≥ 1 aimed `ways`-ways of red ovals from every standing core every [`fireTicks` 110]
+[`spread` 40, `bulletSpeed` 1.3]; with [`ring` 0 = none] ≥ 1 rings of round purple bullets every
+[`ringTicks` 160] at [`ringSpeed` 1], each turned half a gap; with [`launchTicks` 0 = never] ≥ 1 up
+to [`count` 1] standing guns in turn launch the `minion`; with [`spiral` 0 = none] ≥ 1 the **spiral
+stream** — `spiral` purple ovals from every core every [`spiralTicks` 8] ticks at [`spiralSpeed`
+1.1], turned [`spiralStep` 24] units further each volley.
+
+One script per phase, sleeping until the soonest of its five timers (the reverse, the lanes, the
+spreads, the rings, the launches). The spiral is **not** one of them: the phase starts the boss
+system's stream once (`api.spiral(…)`), which fires it without waking the script. The wheel keeps the
+angle it has when a phase starts (no jump); the spiral restarts from heading 0 each phase (the test
+round's fix, [below](#bugs-found-by-the-test-round)).
+
+### `boss.ark`
+
+The ABYSS ARK's script: it holds still (the raid's camera moves); every [`fireTicks` 60] ticks
+(rank-scaled) each standing gun **on screen** turns to the nearest player — by at most [`aimStep`
+0 = at once] units, its heading frames following — and fires a [`ways` 1]-way of pink rounds
+[`spread` 32] at [`bulletSpeed` 1.3] along its new heading; with [`launchTicks` 0 = never] ≥ 1 the
+next on-screen guns cast up to [`count` 1] hooks (the `minion`), **each gun at most once a launch**,
+the next launch starting after the last caster; with [`ring` 0 = none] ≥ 1 every on-screen core
+fires a ring of round red bullets every [`ringTicks` 180] at [`ringSpeed` 1], each turned half a gap.
+One script per phase, three timers.
+
+### `boss.angler`
+
+THE HOLLOW KING's script: tracking [`trackSpeed` 0.35, `margin` 48]; the `whenOpen` mouth shut for
+[`closedTicks` 150] and open for [`openTicks` 100] in turn, the jaws (the parts attached to the core)
+[`gape` 6] px apart while open (from their rest offsets, like `boss.maw`); while open, aimed
+[`ways` 3]-ways of red ovals [`spread` 44, `bulletSpeed` 1.3] from every core every [`fireTicks` 40]
+(the first 12 ticks after it opens), and with [`ring` 0 = none] ≥ 1 a ring of round purple bullets
+at [`ringSpeed` 1] as it opens; the lure sways at [`sway` 1] unit a tick per segment, [`swayTicks`
+40] from straight to a turn point (the `boss.facet` wave, mirrored by the lure's side); with
+[`gunTicks` 0 = never] ≥ 1 its standing guns fire an aimed pink needle every `gunTicks`, and with
+[`launchTicks` 0 = never] ≥ 1 they launch [`count` 1] minions every `launchTicks` (rank-scaled).
+
+Every phase starts with the mouth shut and the jaws at rest, and takes the lure on from wherever the
+last phase left it (`armCurl`, never clamped). `sway` is rounded (at least 1), tick counts below 1
+are one tick. The lure's root must hang from a part that is **not** a core, or the jaws' gape would
+move it (the content test checks it).
+
+### Shared helpers
+
+The M2-11 … M2-13 helpers are reused — `fireCores` / `ringCores` / `fireGuns`
+([zones-b-and-c.md](zones-b-and-c.md#shared-helpers)), `spinHubs` (M2-12's hub rule:
+`boss.bastion`), `launchFromGuns`, `setJaws` (`boss.maw`), `curlArms` / `setArmCurl` / `armCurl`
+(M2-13).
+
+## The engine additions
+
+Both are small, both change what the simulation hashes (the goldens were re-blessed —
+[below](#determinism-hashing-and-golden-replays)).
+
+### The proximity wake (`ScriptApi.sleepUntilNear`)
+
+`yield api.sleepUntilNear(range)` puts an enemy's script to sleep for good (`SLEEP_FOREVER`) and
+sets `Enemy.nearRange`. In the enemy system's **movement phase** (phase 5, next to the landing test
+of M2-07's falling rocks), an enemy with `nearRange > 0` that may fire (on screen **and** settled —
+the fire rule) is checked against the nearest living player: when the ship's centre is within
+`range` px of the enemy's centre on **both** axes (the edge counts), the field is cleared and the
+script is woken on the **next** tick, once. One axis is not enough; a dying ship wakes nothing; in
+co-op player 2 counts. A range ≤ 0 or NaN never wakes. A woken script may wait again; a reused slot
+starts with `nearRange` 0. The test is a handful of comparisons on plain numbers per waiting enemy —
+no script wake while it waits.
+
+This is the pattern for any behaviour that waits on a condition (the M2-07 lesson again — "a
+condition tested every tick is mover state, not a script loop",
+[conventions.md](conventions.md#performance-zero-allocation-in-hot-paths)).
+
+### The spiral stream (`BossScriptApi.spiral`)
+
+`api.spiral(ways, every, step, speed, kind)` starts — or with `ways` ≤ 0 stops — a boss's **spiral
+stream**: every `every` ticks of the fight (floored, at least 1; the first volley `every` ticks after
+the call) each standing core that may fire sends out `ways` (floored) evenly spaced bullets of `kind`
+at `speed` × the rank's speed scale, the whole pattern turned `step` binary units further each volley
+(floored; negative = counter-clockwise; the heading wraps into `[0, 1024)`). The fields live on the
+boss (`Boss.spiralWays`, `spiralEvery`, `spiralStep`, `spiralSpeed`, `spiralKind`, `spiralAngle`,
+`spiralClock`) and the boss system fires the volley **in `runScript`** every tick it is due — while
+the script sleeps — through a reused `BulletShot` (`fireSpiral`), from cores only (never a gun, the
+armour or a destroyed core). A phase change stops the stream and turns its heading back to 0; a boss's
+death stops it; a new boss starts with none.
+
+The first `boss.sovereign` fired its spiral from the script: a volley every 10 ticks woke the
+coroutine that often, at ≈ 80 bytes a wake — the overdrive alone allocated several KB per second.
+
+## The endings
+
+M2-10 gave the campaign its **ending hook** — `selectCampaignEnding(campaign, zone, flags)` picks the
+first ending of the final zone (file order) whose `all` flags are set and whose `none` flags are
+clear — and a placeholder card ([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md#the-ending-screen-endingscene-id-ending)).
+M2-14 fills it in.
+
+**Data** (`core/data` `campaign.ts`, validated by `CAMPAIGN_FILE_SCHEMA`):
+
+| Field | Meaning | Limits |
+|---|---|---|
+| `endings[].scene` | The sprite scene of the ending screen: `ENDING_SCENES` — `none` (the card alone, the default), `citadel`, `abyss` | an enum |
+| `endings[].text` | The epilogue, line by line (default none) | ≤ `MAX_ENDING_TEXT_LINES` 8 lines of ≤ `MAX_ENDING_LINE_LENGTH` 40 characters |
+| `credits` | The credits scroll after every ending (`CampaignCreditsSection`: a `title` and its `lines`; default none — no scroll) | ≤ `MAX_CREDITS_SECTIONS` 24 sections of ≤ `MAX_CREDITS_LINES` 16 lines, every line and title ≤ `MAX_CREDITS_LINE_LENGTH` 60 characters |
+
+`completeCampaign` fills the defaults (`scene` `'none'`, `text` `[]`, `credits` `[]`, a section's
+`lines` `[]`); `creditsLineCount(credits)` counts the scroll's rows (per section its title, its lines
+and a blank row). A stage's `music` may name two more optional cues, `ending` and `credits`
+(`StageMusic.ending` / `endingId`, `credits` / `creditsId`, `-1` = none) — a final zone names them
+so the host prepares them with the zone's music set ([below](#the-ending-and-credits-music)).
+
+**The shipped endings** (`main.campaign.json`, in selection order):
+
+| Id | Final zone | Name | When | Scene |
+|---|---|---|---|---|
+| `citadel-flawless` | H | THE CITADEL FALLS SILENT | `noDeath` | `citadel`, at dawn |
+| `citadel` | H | THE CITADEL FALLS | always | `citadel` |
+| `throne-flawless` | I | THE DEEP IS STILL | `noDeath`, **not** `bossEscaped` | `abyss`, at dawn, the ARK sinking |
+| `throne-escape` | I | THE FLAGSHIP SLIPS AWAY | `bossEscaped` | `abyss`, the ARK sailing off (at dawn too when no ship was lost) |
+| `throne` | I | THE THRONE IS BROKEN | always | `abyss`, the ARK sinking |
+
+Each has a five- or six-line epilogue. **The review fix.** The ARK's time limit clears zone I with no
+death, so a player who lost no ship but let the ARK escape had both `noDeath` and `bossEscaped` set;
+`throne-flawless` came first and had no exclusion, so it won — and its epilogue sank a Hollow King who
+never appeared, while the scene drew the ARK sailing away. `throne-flawless` now lists
+`"none": ["bossEscaped"]`, so an escape always gets `throne-escape`; the content test checks the
+selection under all 16 flag masks and pins the exclusion. The scene draws its own variants from the
+flags (the dawn for `noDeath`, the escape for `bossEscaped`), independent of which ending was picked.
+
+### The ending screen (`EndingScene`, id `ending`)
+
+When the final zone's tally closes, the flow opens `EndingScene` with `RunState.ending` (chosen when
+the zone was cleared) and `RunState.endingFlags`. It has two phases:
+
+1. **Story** — only when the ending has a scene or text. The scene plays in the upper part of the
+   screen, drawn into the UI list from the `ui/ending-*` UI sprites and the run's ship (player 2's a
+   little behind in a co-op run), as arithmetic on the tick count over fixed tables (no randomness):
+   - `citadel`: the fortress (`ui/ending-citadel`) on the horizon under chained blasts
+     (`ui/ending-blast`, four at a time round a fixed table of 8 positions, 24 ticks from flash to
+     smoke) while the ship flies off to the right, accelerating after 1 s; from tick 360 the citadel
+     sinks, at tick 480 (`ENDING_SCENE_TICKS`) it has fallen in a last, wider cluster of blasts;
+   - `abyss`: dark water under the sea's surface (`ui/ending-surface`, tiled and drifting),
+     bubbles rising (`ui/ending-bubble`, eight columns from a fixed table), the ARK's silhouette
+     (`ui/ending-ark`) sinking — or, when a boss escaped, sailing off to the right — and the ship
+     rising 80 px towards the light over 480 ticks, then flying off;
+   - a flawless run (`noDeath`) adds the dawn sun (`ui/ending-sun`): rising over the citadel's
+     horizon, above the surface in the deep.
+
+   The epilogue's lines appear one every `ENDING_LINE_TICKS` (90) in a panel under the scene
+   (centred on the screen when the scene is `none`). OK (after `ENDING_LOCK_TICKS`, 60) shows every
+   line at once; OK again — or `ENDING_STORY_HOLD_TICKS` (240) after the last line — moves on.
+2. **Result** — the M2-10 card: `ENDING`, the ending's name, the route's labels, the score(s), a line
+   per run flag, `THANK YOU FOR PLAYING`, then after the lock `OK: CREDITS` (or `OK: TITLE` for a
+   campaign without credits). OK or `ENDING_TIMEOUT_TICKS` (1,200 — now counted from the card) opens
+   the credits, or the title without them.
+
+An ending without scene and text (M2-10 content, the example campaign) opens on the card at once.
+The screen redraws every other tick while a scene plays; its string slots are the card's 8, the four
+flag lines and `MAX_ENDING_TEXT_LINES` epilogue lines. Nothing allocates per tick or redraw: the lines
+and names are the content's strings, the route line is built on `enter`.
+
+### The credits (`CreditsScene`, id `credits`)
+
+The campaign's `credits` scroll up from just below the screen (row y 216): a section's title in the
+title colour, its lines in the text colour, a blank row after each section, `CREDITS_ROW_HEIGHT` (11)
+px a row, **1 px every `CREDITS_SCROLL_TICKS` (2) ticks** (30 px a second). When the last row has
+come up to the middle of the screen (y 100 — `scrollEnd`) the scroll stops for `CREDITS_HOLD_TICKS`
+(240), then the title. OK or Back after `CREDITS_LOCK_TICKS` (60) skip to the title. The rows are
+flattened once, when the flow is built; only the rows on screen are drawn, each through one of
+`CREDITS_STRING_SLOTS` (24) string slots taken by row number — a long list costs no more than a short
+one. The shipped credits (12 sections, 68 rows, ≈ 33 s with the hold): the game, **the zones**, **the
+giants** (every zone boss by name and code), design, the engine packages, **every placeholder-art
+generator** of `scripts/assets/procedural/`, the pixel maps and the font, music and sound, the
+platforms, the tools, special thanks and `THANK YOU FOR PLAYING`.
+
+**The UI list** has 256 string slots now (224 since M2-10): the epilogue's lines and the credits'
+rows need their own ranges next to the map's.
+
+### The ending and credits music
+
+`MUSIC_CUES.Ending` / `Credits` existed since M1-15; two global songs now play them — `ending` (AFTER
+THE LAST WAVE, 3.7 s intro + 37.3 s loop) and `credits` (THANK YOU, PILOT, 3.2 s + 38.4 s). The
+**audio engine keeps one music set resident** and the final zone's set is the one loaded when its
+clear opens the ending, so the final zones name the cues in their stage file (`"music": { …,
+"ending": "Ending", "credits": "Credits" }`) and `@shmup/audio-web` `stageMusicCues` appends
+`music.endingId` and `music.creditsId` to the prepared set (after `StageClear` / `GameOver`, no
+duplicates, `-1` and `Silence` left out). `EndingScene.enter` plays the final zone's ending cue with
+the usual fade, `CreditsScene.enter` its credits cue; a stage without them keeps whatever plays (the
+stage-clear jingle's tail).
+
+The final zones' boss songs use the **`FinalBoss`** cue (`stages`-scoped), not `Boss`: `boss-h` (SOVEREIGN
+OF STEEL) and `boss-i` (THE HOLLOW KING), 2.7 s intro + 21.3 s loop; the stage themes `zone-h` (IRON
+CITADEL, 6.4 s + 44.8 s) and `zone-i` (ABYSSAL THRONE, 7.5 s + 52.3 s).
+
+## Placeholder art (`scripts/assets/procedural/`)
+
+Everything new is drawn by code (decision D24) — no pixel maps:
+
+- **`citadel.mjs`** (`CITADEL_SPRITES`, 14): `bg/citadel-wall` (`WALL_TILE_W` 128 × `WALL_TILE_H`
+  64: riveted steel panels on a 32 × 16 grid, lit and dark seams, a 3 × 2 running light per panel in
+  one of the four `CITADEL_RAMP` colours — the only ramp pixels), `bg/citadel-pipes` (`PIPES_TILE_W`
+  128 × `PIPES_TILE_H` 48: three pipes with flanges every 32 px, struts to a girder), the enemies
+  `bolt-drone`, `hatch-bay` (shut / open), `hatch-mite`, `laser-emitter` (its lens glowing),
+  `sentinel-walker`, `rail-turret` and IRON SOVEREIGN's `sovereign-hull`, `-core` (pulsing),
+  `-plate`, `-pod`, `-emitter` and `-hatch` (drawn, not placed by the shipped content — the drones
+  come out of the emitters).
+- **`abyss.mjs`** (`ABYSS_SPRITES`, 19): `bg/abyss-murk` (`MURK_TILE_W` 128 × `MURK_TILE_H` 64:
+  black-blue water in soft bands, specks in the four `ABYSS_RAMP` colours), `bg/abyss-spires`
+  (`SPIRES_TILE_W` 128 × `SPIRES_TILE_H` 56: rock spires and weed whose periods divide the tile width),
+  the enemies `lumen-mote`, `depth-mine` (its light blinking), `trench-eel`, `gulper` (its jaw
+  working), `abyss-turret`, `ark-hook`, the ARK's `ark-bow`, `ark-hull`, `ark-stern` (decoration),
+  `ark-turret` (**16 heading frames**, like M2-09's raid turret — sprites are never rotated at run
+  time) and `ark-heart`, and THE HOLLOW KING's `king-body`, `king-jaw-top` / `-bottom`, `king-maw`,
+  `king-stalk`, `king-lure`.
+- **`ending.mjs`** (`ENDING_SPRITES`, 6 UI sprites, anchored at their centres — `core/ui`
+  `UI_SPRITES` / `UiSprites.ending*`): `ui/ending-citadel` (128 × 72), `ui/ending-ark` (112 × 36),
+  `ui/ending-blast` (24 × 24, 4 frames), `ui/ending-bubble` (6 × 6), `ui/ending-sun` (64 × 32),
+  `ui/ending-surface` (64 × 8, tiling). They are part of the core's `ENGINE_SPRITES`, so every host
+  interns them; a content table without them draws the scenes without those pieces (`-1`).
+- **`terrain.mjs`** draws the last two `TERRAIN_PALETTES` sets: `tiles/terrain-citadel` (steel
+  plating with an amber hazard rim) and `tiles/terrain-abyss` (black-teal rock with a faint glowing
+  rim); the tileset files are copies of `terrain-a.tileset.json` naming the other sprite.
+
+Every sprite that can be hit has its `@flash` sibling; geometry uses only `+ − × ÷` and `Math.sqrt`,
+randomness `hash2` seeded from the sprite names, so the pixels are identical on every engine. The
+three generators are registered in `procedural/index.mjs`; the atlas's enemy sprite count is 72
+(60 after M2-13). **The credits list every generator** — the content test compares the credits'
+text with `PROCEDURAL_GENERATORS`, so a new generator needs a line in the credits too.
+
+## Direct-mode item plans
+
+Both stages have a `directItems` plan of 26 entries, handed out in order by the carriers and
+completed formations when the MANTA plays (M2-05).
+
+## Balance found by the bot
+
+Deaths without god mode are reported, never asserted, but a zone should be survivable with four
+directions. The bot's runs changed the content in four places:
+
+- **IRON SOVEREIGN's wheel** rested with a pod in the core's lane: the hub starts turned 45°
+  ([above](#iron-sovereign-is-08)).
+- **The ARK's camera path** flew the turrets over and under the ship at point-blank range: the path
+  keeps them off the ship's column ([above](#the-abyss-ark-aa-09)).
+- **The undertow** (zone I at 1.3 px/tick) had eels: at that speed the bot met a rising eel with no
+  time to step aside; the eels stay in the trench.
+- **The zone I fight** is flown fully powered in the content check: a bare ship cannot bring the
+  heart down within the ARK's 90 s — the escape is another ending, not a failure.
+
+## Bugs found by the test round
+
+- **`boss.ark`'s hook launch** searched the parts from `next` while moving `next` inside the loop, so
+  with `count` above 1 it skipped guns and could cast two hooks from the same gun at the same spot
+  (with one gun on screen, every hook of a launch came out of it). The search now runs once round
+  the parts from a fixed start, each on-screen gun casting at most once a launch. `zone-i-god` was
+  re-blessed for it.
+- **The spiral stream** kept its heading across a phase change, so a later phase's spiral carried on
+  from the old heading instead of starting at 0 as `boss.sovereign`'s docs say. The phase change now
+  resets `spiralAngle`; the shipped IRON SOVEREIGN spirals in its last phase only, from 0 already, so
+  no golden changed.
+
+## Playtests and the recovery rule
+
+- **`zone-h.test.ts`, `zone-i.test.ts`** — the 4-way bot with **god mode**: `stageClear` in 3–6
+  minutes, never diagonal, the ship at x ≈ 64, the 4-way rules on every tick. H: IRON SOVEREIGN's four
+  phases, all four echoes fought, the pistons swinging, emitter lanes, hatch mites. I: the raid
+  followed, both ARK phases, THE HOLLOW KING's three, mines armed, eels risen. **Without god mode**
+  the run is recorded, replays to the same deaths and hash, and its deaths are **reported**.
+  Measured: H 252.9 s (IRON SOVEREIGN 42.8 s), I 270.9 s; without god mode both clear with no death.
+- **`zone-hi-recovery.test.ts`** — the recovery rule (≥ 3 capsule sources within 900 px of every
+  checkpoint, all of them really dropped) at all eight checkpoints through the shared
+  `test/playtest/recovery.ts`.
+- **The 16 routes** (`campaign-routes-b.test.ts`, `campaign-routes-c.test.ts`) now end in the real
+  finales (H ≈ 239 s, I ≈ 248 s with the loadout carried from the earlier zones) and check that every
+  ending reached has its scene and its epilogue.
+- **`campaign-flow.test.ts`** drives A-C-E-G-I through the real flow, the ending's story, the card and
+  the credits to the title.
+
+```sh
+pnpm exec vitest run --project integration test/playtest/zone-h.test.ts test/playtest/zone-i.test.ts --reporter=verbose
+# [playtest] zone-h four-way (god mode): stageClear after 252… s, boss 42… s, 0 death(s), … — 4 parade captain(s), …
+```
+
+## The content checks (`test/integration/content.test.ts`)
+
+A new block, **"zones H and I, the finales, hold to the plan and the 4-way rules (M2-14)"**:
+
+| Check | What it asks |
+|---|---|
+| Plan | Each final zone: its name, type `normal`, ≥ 4 checkpoints, its own tileset, the boss's code and name; 2.5–4.5 min of scroll to the WARNING; a camera key ≥ 1.25 px/tick; exactly two carriers in the calm; ≥ 20 `directItems`; its own `Stage` song and its `boss-<letter>` as **`FinalBoss`**; `music.ending` / `music.credits` = `Ending` / `Credits`, resolving to `ending` / `credits` and in `stageMusicCues` |
+| New types | 4–6 enemy sprites no earlier zone (A–G) placed |
+| H's archetypes | ≥ 3 hatches and ≥ 4 emitters, on both floor and ceiling; ≥ 8 moving blocks, ≥ 3 from the floor and ≥ 3 from the ceiling; ≥ 4 captains before the WARNING, each with a time limit, **every sprite an earlier zone boss's and fewer parts than that boss**, spaced at least half a stay apart in a hangar slower than 0.75 px/tick; the finale — ≥ 4 phases of `boss.sovereign`, the core `afterParts` of plates in front of it, a hub on the core with ≥ 4 armoured circle pods, ≥ 2 guns, the first phase ending on the plates, a spiral in the last, a spin and a launch somewhere |
+| I's archetypes | ≥ 10 mines, ≥ 4 eel formations, ≥ 3 `pattern.loop` enemies; the ARK — a raid of ≥ 3 segments, a time limit, `boss.ark` phases, a `rocket.homing` minion, ≥ 6 guns with ≥ 3 above and ≥ 3 below the keel, every gun with heading frames; **no rock** from the calm to the end; the king — HK-10, three `boss.angler` phases, a `whenOpen` core with two jaws, a lure of ≥ 3 circle parts whose root does not hang from the core, a gun on it |
+| Speeds | Every aimed bullet, ring and spiral of the zones' enemies and bosses (minions and the inner boss included), the hooks', mites' and drones' `speed`, ≤ 2 px/tick |
+| Recovery | ≥ 12 capsule sources before the boss, ≥ 3 within 900 px of every checkpoint |
+| Rock | Every ground enemy stands on rock; ≥ 8 of them |
+| Fights | The boss fight under the 4-way rules (the bot, god mode, `stageSkip: 'boss'`), every phase of every boss reached; zone I flown with `loadout: 'full'` and **both** bosses fought |
+| Art | Every zone H and I sprite and its hit flash in the atlas (≥ 24); the two tilesets have every tile; the ending UI sprites exist |
+| Endings | Per final zone: the no-death ending first, an unconditional one last, every ending with its zone's scene and 3–8 lines of text; `throne-flawless` excludes `bossEscaped`; the selection under **all 16 flag masks** |
+| Credits | ≥ 6 sections, ≥ 40 rows; every `PROCEDURAL_GENERATORS` id as `<id>.mjs`, every zone's name, every zone boss's name and THE HOLLOW KING |
+
+Lists that pin shipped content were updated: the music tracks (content test, `@shmup/shell` boot /
+loader tests), the behaviour and boss behaviour rosters (and `behaviors` `implemented`), the UI
+sprites, the atlas's enemy sprite count (72), the zone tilesets, the golden file-name pattern;
+`test/e2e/campaign-run.spec.ts` walks the ending, the card and the credits.
+
+## Determinism, hashing and golden replays
+
+- The new behaviours use whole-tick timers only; the mines, eels, echoes and bosses use no RNG.
+- `hashWorld` gained the enemies' `nearRange` and the bosses' seven spiral fields (`core/debug`
+  `mixEnemy` / `mixBosses`). The ending selection, the ending scene and the credits are outside the
+  simulation (the scene flow), so the review fix changed no golden.
+- **Re-blessed** (`dc6c908`): the new sprites, UI sprites and behaviour scripts shift the sorted
+  sprite / script ids hashed through the pools, and the hash layout grew; all 49 older files kept
+  their inputs, tick counts, headers and outcomes — only hashes changed. The test round's `boss.ark`
+  fix (`9061af0`) re-blessed `zone-i-god` once more: the ARK's second phase casts its hooks from
+  other turrets now (stage clear in 16,146 ticks instead of 16,256, 145,550 points, still no death);
+  every other file was re-recorded byte for byte.
+- **New goldens** (53 files in all):
+
+| File | Run | Outcome |
+|---|---|---|
+| `zone-h-god` | 4-way bot, god mode, seed 1 — the outer walls, the piston hall, the parade, the core run, IRON SOVEREIGN's four phases | `stageClear` after 15,174 ticks, 128,200 points, no deaths |
+| `zone-i-god` | 4-way bot, god mode, seed 1 — the descent, the trench, the mine field, the undertow, the ARK raid and THE HOLLOW KING | `stageClear` after 16,146 ticks, 145,550 points, no deaths |
+| `zone-h-boss` (test round) | stage skip (lands before the parade), full loadout, Arcade penalty, seed 95 — the four echoes shot down, the core run, IRON SOVEREIGN | `stageClear` after 9,289 ticks, 123,460 points |
+| `zone-h-arcade` (test round) | 4-way bot, Arcade difficulty, no god mode, seed 91 | `stageClear` after 15,996 ticks, 126,920 points, no deaths |
+| `zone-h-deaths` (test round) | the weaver, Easy, Arcade penalty, seed 91 — deaths at the outer walls, every restart back at the start | `gameOver` after 5,575 ticks (deaths at 1,034 / 2,122 / 3,267 / 4,394 / 5,482) |
+| `zone-i-boss` (test round) | stage skip, full loadout, Arcade penalty, seed 95 — the raid's two phases, the king's three | `stageClear` after 5,031 ticks, 140,150 points |
+| `zone-i-escape` (test round) | a weaving pilot, god mode, no power-ups, stage skip, seed 52 — the ARK escapes after 90 s | `stageClear` after 6,038 ticks, `EndingFlag.BossEscaped`, no king, the boss not defeated |
+
+## Zero allocation
+
+The new scripts keep every value in whole-number `let`s, loop over the boss's part array by index
+and never build closures, arrays or strings per wake; the mine wakes twice in its life and the spiral
+wakes nothing. The ending and credits scenes allocate nothing per tick or redraw (`scenes-ending-alloc`).
+The guards, each in its own file: `behaviors-mine-emitter-alloc.test.ts` (four laser emitters
+firing their attached lanes over and over, four mines waiting just out of the weaving ship's reach —
+never waking), `behaviors-sovereign-alloc.test.ts` (the last phase: the wheel turning and reversing,
+lanes, spreads and the spiral stream, with the fully powered KESTREL's Laser and Options clinking on
+the pods), `behaviors-ark-alloc.test.ts` (the second phase: the raid's camera path, the turret rows
+turning and firing 3-ways, rings from the heart) and `behaviors-angler-alloc.test.ts` (the last
+phase: the mouth and jaws, spreads and rings, the lure swaying and firing) — launches switched off,
+since every spawn allocates its coroutine (D29).
+
+**The heavy boss guards allow the bytes of their script's wakes.** A boss phase that wakes often (a
+volley every few dozen ticks) spends tens of KB per 10,000 ticks on its generator's results alone —
+by design (D29) —, which made the heavy guards flaky under the full suite's load (M2-13's
+`boss.facet` failed once more at 66,648 bytes during this step). `test/helpers/alloc.ts` now has
+`WakeCount` (`see(wakeTick)` once per guarded call counts the wakes) and `SCRIPT_WAKE_BYTES` (96 —
+measured ≈ 80 bytes a wake); the sovereign, ark, angler, facet and squid guards assert
+`bytes < 64 KB + wakes.allowance(iterations)`. A real per-tick allocation still fails: it grows with
+the calls, not with the wakes.
+
+## Bundle budget
+
+The Tizen `app.js` is **331.5 KB gzip of its 350 KB budget** after this step (320.3 after M2-13):
+the two zones' stages, the endings and credits, the songs and rosters are inlined through
+`virtual:shmup-content`. All nine zones are in; M2-17 / M2-18 own the rest of the budget
+([build-test-deploy.md](build-test-deploy.md)).
+
+## Running it
+
+```sh
+pnpm dev
+# → http://localhost:5173/?stage=zone-h                IRON CITADEL alone (STAGE CLEAR at the end)
+# → http://localhost:5173/?stage=zone-h&skip=boss      from just before the PARADE (the skip stops at the first boss event)
+# → http://localhost:5173/?stage=zone-i                ABYSSAL THRONE alone
+# → http://localhost:5173/?stage=zone-i&skip=boss&loadout=full   the ARK raid and THE HOLLOW KING
+# → http://localhost:5173/?skip=boss                   a run of five boss fights — then the ending and the credits
+pnpm exec vitest run --project integration test/playtest/zone-hi-recovery.test.ts
+pnpm exec vitest run --project integration test/golden -t zone-i
+pnpm exec vitest run --project core packages/core/test/scenes/scenes-ending.test.ts
+pnpm audio:preview --only ending        # the ending theme to a WAV
+```
+
+Headless, the ending of a run:
+
+```ts
+import { RunFlag, selectCampaignEnding } from '@shmup/core';
+
+// `db`: the shipped content, loaded as in zones-hi-runtime-edge.test.ts.
+const campaign = db.campaign!;
+const i = campaign.zones.findIndex((z) => z.id === 'i');
+selectCampaignEnding(campaign, i, RunFlag.NoDeath)?.name; // → 'THE DEEP IS STILL'
+selectCampaignEnding(campaign, i, RunFlag.NoDeath | RunFlag.BossEscaped)?.name; // → 'THE FLAGSHIP SLIPS AWAY'
+```
+
+## Extending it
+
+| To … | Do |
+|---|---|
+| Add an ending | An entry in `endings` with its `zone`, `all` / `none` flags, a `scene` and ≤ 8 lines of `text`; flagged endings **before** the unconditional one (file order decides), and exclude every flag its epilogue contradicts (`throne-flawless`'s `none: [bossEscaped]`) |
+| Add an ending scene | A new `ENDING_SCENES` name, its UI sprites (a generator in `ending.mjs`, the names in `core/ui` `UI_SPRITES` / `UiSprites`), and a `draw…` method in `EndingScene` — arithmetic on the tick count over fixed tables, no randomness, no allocation |
+| Change the credits | Edit `credits` in `main.campaign.json` (≤ 24 sections, ≤ 16 lines of ≤ 60 characters); keep every generator listed |
+| Make another stage a final zone | Name `"ending"` / `"credits"` in its `music`, or the ending plays over the stage-clear tune |
+| Wait for a ship in a behaviour | `yield api.sleepUntilNear(range)`, never a polling `yield n` loop |
+| Fire a fast repeating boss pattern | Hand it to the boss system as a stream (`api.spiral`) rather than waking the script per volley; a new stream kind would be a new set of `Boss` fields fired in `runScript`, hashed |
+
+## Tests
+
+| File | Covers |
+|---|---|
+| `packages/core/test/behaviors/behaviors-zones-hi.test.ts` | The five behaviours on the shipped rosters: an emitter's attached lane, a mine arming and bursting, IRON SOVEREIGN's phases (the plates first, the wheel turning and reversing, the drones, the spiral), the ARK's on-screen turrets and hooks, THE HOLLOW KING's mouth, jaws and lure |
+| `packages/core/test/behaviors/behaviors-zones-hi-edge.test.ts` | `emitter.laser` clamps, masked headings, air vs ground emitters, no lane before it settles, the lane dying with it; `mine.burst` trigger 0, ring 0 / floored, a one-tick fuse, a burst scoring and dropping nothing; `boss.sovereign` spin rounded and reversing, lanes from the guns in turn skipping a destroyed one, the spiral's tunables, `count` 0 / 2; `boss.ark` only on-screen guns fire and launch, `ways` < 1, `aimStep`, rings turned half a gap, hooks from distinct guns in turn; `boss.angler` a short open mouth firing nothing, `gape` 0 / floored, rings, every phase starting shut |
+| `packages/core/test/bosses/bosses-spiral-edge.test.ts` | The spiral stream: timing with no wakes, floored tunables, `ways` ≤ 0 / NaN stopping it, bullets from standing cores only, the heading wrapping both ways, the rank's speed scale, stopped by a phase change and by death, reset for a new boss, hashed |
+| `packages/core/test/enemies/enemies-near-edge.test.ts` | The proximity wake: both axes (the edge counts), once, the next tick, ranges ≤ 0 / NaN, only once settled, living ships only (player 2 counts), no wakes while waiting, waiting again, a reused slot, hashed |
+| `behaviors-mine-emitter-alloc`, `-sovereign-alloc`, `-ark-alloc`, `-angler-alloc` `.test.ts` (and M2-13's `-facet-alloc` / `-squid-alloc` with `WakeCount`) | Zero allocation |
+| `packages/core/test/data/campaign-ending.test.ts`, `campaign-ending-edge.test.ts` | Scenes, texts and credits through the schema (inclusive limits, empty epilogue / credits, empty lines rejected, unknown keys), `completeCampaign` defaults, `creditsLineCount`; the review fix's selection under all flag masks (and that without the exclusion it would fail); the shipped endings' structure |
+| `packages/core/test/scenes/scenes-ending.test.ts`, `scenes-ending-edge.test.ts`, `scenes-ending-alloc.test.ts` | The story (lines in turn, OK revealing then moving on, the hold), the card, `OK: CREDITS` / `OK: TITLE`, the credits' scroll, stop and hold, OK / Back after the lock, the ending and credits cues (and none keeping the music); a bare ending opening on its card; both scenes played out over time (sun, ship, the citadel falling, blasts, the ARK sinking or sailing off), player 2's ship, no UI sprites; credits with more rows than string slots, the scroll stopping exactly at `scrollEnd`; zero allocation |
+| `packages/core/test/ui/ui.test.ts`, `ui-hud-edge.test.ts` | The UI sprites (`ui/ending-*`) |
+| `packages/audio-web/test/loader/loader.test.ts`, `loader-edge.test.ts` | `stageMusicCues` with a final zone's ending / credits cues (absent, −1, `Silence`, one theme for both, first-use order) |
+| `test/integration/content.test.ts` | The checks above |
+| `test/integration/zones-hi-runtime-edge.test.ts` | Every practice start of H and I in open space (the pistons included), both stage skips, an echo outlasting its time limit without `bossEscaped`, and the review fix end to end — a flawless campaign run whose ARK escaped ends with THE FLAGSHIP SLIPS AWAY, the ARK sailing off under the dawn, its epilogue, the ending theme |
+| `test/integration/campaign-flow.test.ts` | A-C-E-G-I through the ending, the card and the credits to the title |
+| `test/playtest/zone-h.test.ts`, `zone-i.test.ts`, `zone-hi-recovery.test.ts`, `campaign-routes-*.test.ts` | The playtests, the recovery rule, the 16 routes to their endings |
+| `test/scripts/assets/procedural-zones-hi.test.ts`, `procedural-zones-hi-edge.test.ts` | The three generators: names, sizes, frames, hit flashes, determinism, the ramps, bands that tile, the ARK turret's sixteen distinct headings, the ending pieces, the registry, every sprite the zone H / I content names in the atlas, the two tilesets |
+| `test/golden/*` | The seven goldens above |
+| `test/e2e/zones-hi.spec.ts` | In headless Chromium: the cycling citadel wall and IRON SOVEREIGN, the cycling murk and the ARK raid, the ending scenes drawn (the flagship sailing off under the dawn, the citadel under its blasts); IRON SOVEREIGN, the ARK and the citadel's ending on the Tizen build from `file://` |
+| `test/e2e/campaign-run.spec.ts` | A whole run to the ending's story, the card and the credits |
+| `packages/shell/test/boot/boot.test.ts`, `loader/loader.test.ts` | The new music files in the shipped lists |
+
+## Gotchas
+
+| Symptom | Cause / fix |
+|---|---|
+| `?skip=boss` in zone H starts at the parade, not at IRON SOVEREIGN | The stage skip stops before the first `warning` **or `boss`** event — the parade's first echo (as zone B's skip lands before SPUME HERALD). A skipped zone H still flies the parade and the core run; the debug key 8 behaves the same — pressed **after** the parade it jumps back to it (`skipToBoss` takes the first such event, wherever the camera is). To test IRON SOVEREIGN, jump to the last checkpoint (key 7 three times) and fly on |
+| A flawless zone I run gets the escape ending | By design since the review fix: an escape (`bossEscaped`) always wins over the flawless ending, whose epilogue has the King sink; the scene still draws the dawn |
+| The ending plays over the stage-clear tune, no ending theme | The final zone's stage names no `music.ending` (or `credits`): only one music set is resident, and the ending's cue must be in the final zone's set |
+| The content test fails on the credits after adding a generator | The credits must list every `PROCEDURAL_GENERATORS` id as `<id>.mjs` — add it to `PLACEHOLDER ART GENERATORS` in `main.campaign.json` |
+| A behaviour that waits for the ship allocates in its guard | A polling `yield n` loop wakes the script every `n` ticks (D29); use `sleepUntilNear` |
+| A boss's spiral starts mid-turn in a later phase | It must not: a phase change resets `spiralAngle` (the test round's fix). A new stream field must be reset there too |
+| An ARK turret fires straight down the ship's column | A raid's camera path brought it over or under the ship; keep the turret rows off the ship's column |
+| THE HOLLOW KING never appears | The ARK escaped (90 s); fly zone I powered up, or test with `loadout: 'full'` |
+| A heavy boss allocation guard fails at ≈ 66 KB | Wake bytes: give it a `WakeCount` and the allowance; a real leak fails in every window, alone too |
+| A scene throws `RangeError` about string slots | The UI list has 256 string slots since M2-14 |
+| Every golden fails after adding a sprite or a behaviour | The sorted sprite and script ids moved; re-bless (`pnpm golden:update`) and check that inputs, ticks and outcomes are unchanged |
+| The Tizen bundle check fails on size | 331.5 of 350 KB gzip after M2-14; the content is inlined — trim or wait for M2-17's budget work |
+
+## Next steps that build on this page
+
+- **M2-15** — the front end: attract mode (demo replays recorded by the bot per zone), name entry,
+  the hi-score tables showing the zone reached, the practice select on `startPractice`.
+- **M2-17** — per-zone texture unloading between zones; the bundle budget for nine zones.
+- **M2-18** — the release-candidate audits over all 16 routes × both ships (the endings included).
+- **M3-02** — an escape sequence after the final boss (`shmup_feat.md` §14).

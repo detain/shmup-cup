@@ -71,8 +71,8 @@ around, with LEVIATHAN HEART inside and a 90-s time limit), `?stage=twin-range` 
 FROST TWINS taking turns; the survivor enrages) and `?stage=gauntlet-range` (a boss rush); OPTIONS
 → BOSS HP shows the boss HP bar in the top HUD bar (guide:
 [`docs/dev/advanced-bosses.md`](../../docs/dev/advanced-bosses.md)). Since M2-10 a game on zone A
-(the default) is a **campaign run** across the zone map — the zone tally, the ZONE MAP, stub zones
-B–I, the ending; `?skip=boss` then starts every zone near its boss — while any other `?stage=`
+(the default) is a **campaign run** across the zone map — the zone tally, the ZONE MAP, the zones
+B–I (stubs at first), the ending; `?skip=boss` then starts every zone near its boss — while any other `?stage=`
 plays alone; `?stage=zone-b` … `zone-i` flies one zone alone, and `?stage=bonus-range` has the three
 hidden bonus-stage entrances into `bonus-vault` (guide:
 [`docs/dev/campaign-and-bonus-stages.md`](../../docs/dev/campaign-and-bonus-stages.md)). Since M2-11
@@ -84,8 +84,12 @@ down in the caves) and `?stage=zone-e` TEMPEST RIDGE (rear attackers, SQUALL STE
 [`docs/dev/zones-d-and-e.md`](../../docs/dev/zones-d-and-e.md)); since M2-13 `?stage=zone-f` is CELL
 VAULT (regenerating tissue walls, grabbing tentacles, MANTLE REGENT) and `?stage=zone-g` PRISM
 LABYRINTH (crystal walls, the cube rush, FACET MONARCH; its prism gallery's four turrets open
-`?stage=glimmer-cache`, GLIMMER CACHE); H and I are still stubs (guide:
-[`docs/dev/zones-f-and-g.md`](../../docs/dev/zones-f-and-g.md)). Since M1-14 hits
+`?stage=glimmer-cache`, GLIMMER CACHE) (guide:
+[`docs/dev/zones-f-and-g.md`](../../docs/dev/zones-f-and-g.md)); since M2-14 `?stage=zone-h` is IRON
+CITADEL (the piston hall, the parade of four earlier bosses, IRON SOVEREIGN — with `&skip=boss` it
+starts before the parade) and `?stage=zone-i` ABYSSAL THRONE (depth mines, the ABYSS ARK raid, THE
+HOLLOW KING — add `&loadout=full` to beat the ARK's 90 s); a whole run ends with the ending scene
+and the credits (guide: [`docs/dev/zones-h-and-i.md`](../../docs/dev/zones-h-and-i.md)). Since M1-14 hits
 have **game feel**: explosions, sparks, debris, cancel sparkles and a muzzle flash from the
 presets of `content/fx/`, the screen shake of a lost ship or a boss's final blast, flashes
 (behind a ≤ 3-a-second limiter), the WARNING's dim and rising score numbers;

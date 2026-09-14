@@ -138,8 +138,10 @@ for the same stage (or both as its default). A track with an issue is left out.
   to the running stage wins over the cue's default (`Silence` is always −1).
 - `stageMusicCues(stage)` → every cue a stage can make the sim ask for, in first-use order: its
   `music.stage` theme, its `music.boss` theme (the generic `Boss` when it names none — what the
-  sim plays), the cue of each of its `music` events, then `StageClear` and `GameOver`;
-  `Silence` and duplicates left out. This is the set the shell prepares — review round 1 of
+  sim plays), the cue of each of its `music` events, then `StageClear` and `GameOver`, and — since
+  M2-14, for a final zone of the campaign — its `music.ending` and `music.credits` themes (the ending
+  screen and the credits play them after the zone's clear, while its set is still the resident one);
+  `Silence`, unresolved (`-1`) cues and duplicates left out. This is the set the shell prepares — review round 1 of
   M1-15 replaced a fixed `STAGE_MUSIC_CUES` list, which left a stage's `FinalBoss` theme or a
   mid-stage `music` event silent. `STAGE_MUSIC_CUES` (`Stage`, `Boss`, `StageClear`,
   `GameOver`) is now only `prepareMusic`'s default.
@@ -154,10 +156,16 @@ loop, the boss themes in the shape of BULWARK ASSAULT. Since M2-12 four more in 
 `zone-d` (MAGMA DEEP) and `boss-d` (BASTION OF CINDERS) with `["zone-d"]`, `zone-e` (TEMPEST
 RIDGE) and `boss-e` (STEED OF THE SQUALL) with `["zone-e"]`, and since M2-13 `zone-f` (CELL VAULT)
 and `boss-f` (REGENT OF THE VAULT) with `["zone-f"]`, `zone-g` (PRISM LABYRINTH) and `boss-g`
-(THRONE OF FACETS) with `["zone-g"]`. They win over the defaults only in their zone; every other
-stage (zone A, the dev stages, the stub zones H and I, a zone's bonus stage played alone) uses the
+(THRONE OF FACETS) with `["zone-g"]`, and since M2-14 the finales' `zone-h` (IRON CITADEL) with
+`boss-h` (SOVEREIGN OF STEEL) and `zone-i` (ABYSSAL THRONE, 7.5 s + 52.3 s) with `boss-i` (THE
+HOLLOW KING) — the final bosses on the **`FinalBoss`** cue, which the final zones' `music.boss`
+names — plus two global songs, `ending` (AFTER THE LAST WAVE, `Ending`, 3.7 s + 37.3 s) and
+`credits` (THANK YOU, PILOT, `Credits`, 3.2 s + 38.4 s), which the final zones name as their
+`music.ending` / `music.credits`. They win over the defaults only in their zone; every other
+stage (zone A, the dev stages, a zone's bonus stage played alone) uses the
 defaults — reached from its zone, a bonus stage (PEARL GROTTO, GLIMMER CACHE) plays the zone's
 resident set ([zones-b-and-c.md](zones-b-and-c.md#songs),
+[zones-h-and-i.md](zones-h-and-i.md#the-ending-and-credits-music),
 [zones-d-and-e.md](zones-d-and-e.md#songs), [zones-f-and-g.md](zones-f-and-g.md#songs)).
 
 ## The synth (`synth`)
@@ -416,6 +424,7 @@ song's loop points and render time. Options: `--out DIR`, `--only NAME` (one cue
 | An allocation guard fails in audio code | A fractional value passed across a call (a pan, a gain); pass whole pixels / ticks and compute inside — see the M1-15 finding above |
 | `AUDIO FAILED TO LOAD` | A `file` sound or track could not be fetched (a wrong relative URL, a file missing from the build) or decoded (`OfflineAudioContext` missing, a corrupt OGG). The line names the URL |
 | A sound is too quiet or silent although the content's volume is right | The player's Options volumes: MASTER scales everything, MUSIC the music, SFX the effects **and** the menu sounds; level 0 is silent. Check `shell.save.options.audio` (or clear `shmup-cup:save.v1`) |
+| The ending plays over the stage-clear tune (no ending theme), or the credits are silent | The final zone's stage names no `music.ending` / `music.credits`: only one set is resident, so the themes must be prepared with the final zone's set — `stageMusicCues` adds them when the stage names them (M2-14) |
 | The music keeps playing while paused | By design (M1-16): the pause menu freezes the World, not the music. At `GAME OVER` the game-over tune replaces it once the game-over screen opens (the scene flow; `?scene=flight` has no screens, so there the stage theme keeps playing) |
 
 ## Next steps that build on this page
@@ -446,5 +455,8 @@ song's loop points and render time. Options: `--out DIR`, `--only NAME` (one cue
   ([zones-d-and-e.md](zones-d-and-e.md#songs)).
 - **M2-13** (done) — zones F and G's own stage and boss songs, the same way; GLIMMER CACHE plays
   zone G's resident set ([zones-f-and-g.md](zones-f-and-g.md#songs)).
-- **M2-14** — the final zones' own songs, the ending and credits songs.
+- **M2-14** (done) — the final zones' own songs (the final bosses on `FinalBoss`), the ending and
+  credits songs, prepared with the final zone's set through its stage's `music.ending` /
+  `music.credits` (`stageMusicCues`) and played by `EndingScene` / `CreditsScene`
+  ([zones-h-and-i.md](zones-h-and-i.md#the-ending-and-credits-music)).
 - **M3-03** — tracker music.

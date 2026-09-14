@@ -520,6 +520,10 @@ hashWorld(game.world); // covers every slot, the raid camera, the rush and the e
   same amount relative to their parents with `spinPart` and set exactly at each turn point with
   `setPartAngle`, mirrored above and below; the squid launches its chasing cells as `minion`s from
   its eye ([zones-f-and-g.md](zones-f-and-g.md#the-curling-arm-rule)).
-- **M2-14** — IRON CITADEL's parade of earlier bosses in reduced form and ABYSSAL THRONE's
-  whale-class raid with a boss-inside-boss finale; the endings read the flags.
+- **M2-14** (done) — IRON CITADEL's **parade** of four earlier bosses in reduced form is four
+  captains on `boss` events with 960-tick time limits (a `bossRush` stage cannot hold a normal
+  zone's timeline); ABYSSAL THRONE's ABYSS ARK is a whale-class raid (turret rows with heading
+  frames, hooks as its `minion`, a 90-s time limit) whose `inner` boss is THE HOLLOW KING; its escape
+  sets `EndingFlag.BossEscaped` and the campaign's *THE FLAGSHIP SLIPS AWAY* reads it (a captain's
+  escape never does); the new `BossScriptApi.spiral` stream ([zones-h-and-i.md](zones-h-and-i.md)).
 - **M2-15** — a practice start at a boss; the attract mode's demo plays.

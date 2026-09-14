@@ -306,6 +306,7 @@ One reused object per slot (D29):
 | `destroy(explode = true)`, `landed()` | M2-07: remove this enemy without a kill (no score, drop, revenge or death behaviour; a formation member counts as escaped); whether its `Ballistic` body has landed |
 | `pull(radius, strength, ticks)`, `release()`, `chain(anchorX, anchorY, links)` | M2-07: a pull field on the `alive` ships around this enemy (≤ 8 fields in a World); a drawn chain from a world point to it (≤ 8 chains of ≤ 16 links) — both end with the enemy; `false` without a free slot or the World's gimmick host |
 | `placeTile(x, y, tile)`, `tileId(name)` | M2-07: put a tileset tile into the empty terrain cell at a world point (never onto a ship; the checkpoint rollback removes it); the stage tileset's tile id by name (-1 = none) |
+| `sleepUntilNear(range)` | M2-14: → `SLEEP_FOREVER` to yield; the enemy system wakes the script on the tick after the nearest living player's centre is within `range` px of the enemy's on **both** axes while it may fire — once (`Enemy.nearRange`, hashed; ≤ 0 / NaN never wakes). The test runs in phase 5 (below), so a waiting enemy costs no script wake — zone I's depth mines ([zones-h-and-i.md](zones-h-and-i.md#the-proximity-wake-scriptapisleepuntilnear)) |
 | `bullets` | The World's `BulletSystem` for raw access (`setMotion`, `setChange`, custom patterns) |
 
 Every wrapper shares the system's one `BulletOrigin`, set to the enemy's centre just before the
@@ -329,6 +330,12 @@ is `⌊age / anim.ticks⌋ mod anim.frames`, then the view rules:
 | Ghost removed | more than `GHOST_MARGIN` (128) px outside the view |
 
 An escaped formation member counts in `escaped`, so its formation can no longer pay out.
+
+Two wake tests ride on this phase, so the scripts waiting for them sleep for good instead of
+polling: a landed `Ballistic` body (M2-07) wakes its script on the next tick, and since M2-14 an
+enemy with `nearRange > 0` that may fire (on screen and settled) wakes its script on the next tick
+once the nearest living player is within `nearRange` px on both axes (`sleepUntilNear`), the field
+cleared.
 
 ### Collision and damage (phases 6–7)
 
@@ -437,7 +444,7 @@ builds a lookup (throws on duplicate ids). `DEFAULT_BEHAVIORS` (from `DEFAULT_BE
 is what the World uses; `createWorld(config, db, { behaviors })` swaps in another registry
 (tests, tools — not part of `GameConfig`, so never in a real session).
 
-The roster — the eight of M1, M2-02's `pattern.loop`, M2-04's `hunter.option`, M2-05's `cube.pincer` and the six stage gimmicks of M2-07 (`rock.fall`, `bubble.split`, `volcano.lob`, `field.suction`, `tentacle.grab`, `cube.stack` — tunables and what they do in [advanced-stages.md](advanced-stages.md#gimmick-behaviours-corebehaviors-and-the-script-api)) and M2-11's `rocket.homing` and `worm.burst` (rows below; the whole story in [zones-b-and-c.md](zones-b-and-c.md#the-new-behaviours-corebehaviors)) and M2-12's `rear.swoop` (row below; [zones-d-and-e.md](zones-d-and-e.md#rearswoop)) and M2-13's `cell.chase` (row below; [zones-f-and-g.md](zones-f-and-g.md#cellchase)) (tunables and their defaults in brackets; the fire patterns are M1-09's — they go
+The roster — the eight of M1, M2-02's `pattern.loop`, M2-04's `hunter.option`, M2-05's `cube.pincer` and the six stage gimmicks of M2-07 (`rock.fall`, `bubble.split`, `volcano.lob`, `field.suction`, `tentacle.grab`, `cube.stack` — tunables and what they do in [advanced-stages.md](advanced-stages.md#gimmick-behaviours-corebehaviors-and-the-script-api)) and M2-11's `rocket.homing` and `worm.burst` (rows below; the whole story in [zones-b-and-c.md](zones-b-and-c.md#the-new-behaviours-corebehaviors)) and M2-12's `rear.swoop` (row below; [zones-d-and-e.md](zones-d-and-e.md#rearswoop)) and M2-13's `cell.chase` (row below; [zones-f-and-g.md](zones-f-and-g.md#cellchase)) and M2-14's `emitter.laser` and `mine.burst` (rows below; [zones-h-and-i.md](zones-h-and-i.md#the-new-behaviours-corebehaviors)) — complete for v1.0 (tunables and their defaults in brackets; the fire patterns are M1-09's — they go
 through the `ScriptApi` primitives, so nothing fires off screen or before `settleTicks`; bullet
 speeds are px/tick and intervals ticks, both Normal values scaled by the rank):
 
@@ -457,6 +464,8 @@ speeds are px/tick and intervals ticks, both Normal values scaled by the rank):
 | `worm.burst` | sand worm (M2-11, floor) | a `formation` is one worm: the leader (member 0 or a lone spawn) waits on a `Ballistic` mover until a player is within [`trigger` 128] px horizontally (0 = at once), then bursts out at ([`vx` −0.8], −[`up` 3.4]) with [`gravity` 0.075], ≤ [`maxFall` 4], passing through the terrain (`BallisticLand.Pass`); the other members `Follow` its track (a dead leader's ghost keeps recording); never fires |
 | `rear.swoop` | rear attacker / jumper (M2-12, zone E's `squall-jumper`) | spawned behind the view (a negative `screenX`): one `Waypoint` mover along its spawn row to view x [`turnX` 280] at [`speed` 1.6] (0 → 1), a hold of [`hold` 18] ticks (below 1 → 1), then away to the left at [`leaveSpeed` 1.4]; the script wakes once, `⌈|turnX − x| / speed⌉ + (hold >> 1) + 1` ticks in — the distance either way —, faces the nearest player and fires an aimed [`ways` 1]-way (floored; 0 = none) of pink needles [`spread` 40, `bulletSpeed` 1.3] |
 | `cell.chase` | chasing cell (M2-13, zone F's `chaser-cell`; MANTLE REGENT's minion and the mitosis cell's child) | drifts in along its row to the left at [`speed` 1.1] (≤ 0 → 1) for [`enterTicks` 50], then a `Homing` mover on the nearest living player at `speed`, turning ≤ [`turnRate` 6] units a tick (floored, < 0 → 0), for [`chaseTicks` 150], then `Homing` with turn rate 0 — straight on with its heading kept; one thrown out of a dividing cell (a `Straight` mover already set by `bubble.split`) flies out for [`scatterTicks` 24] instead of drifting in; tick counts below 1 are one tick; three wakes, never fires |
+| `emitter.laser` | laser emitter (M2-14, zone H's `laser-emitter`; floor / ceiling) | every [`laserTicks` 150] ticks (rank-scaled; the first after [`firstTicks` 40]) while it may fire, a telegraphed straight laser heading [`heading` 512 = left], [`laserLength` 384] × [`laserWidth` 6], [`telegraph` 50] warning ticks and [`active` 40] beam ticks, **attached** to the emitter (it scrolls with the terrain and dies with it); a ground emitter stands still, an air one keeps its spec's `mover`; one wake per beam |
+| `mine.burst` | depth mine (M2-14, zone I's `depth-mine`) | a `Sine` drift left [`speed` 0.5, `amp` 10, `period` 140]; `sleepUntilNear` [`trigger` 64] (0 = never arms), then it stops, flashes [`fuse` 36] ticks and bursts into a ring of [`ring` 8] round red bullets at [`bulletSpeed` 1], destroying itself with no score and no drop — two wakes in its life |
 | `hunter.option` | Option Hunter (M2-04; its spec's `optionHunter` brings the rules) | [`variant` 0] rear / 1 front / 2 dive: for [`lineUpTicks` 90] re-aims a `Waypoint` mover every 6 ticks at its line-up point — view x [`lineX` 48] (front: `384 − lineX`) on the nearest player's row, or view y [`lineY` 24] over its column, 12 px inside the playfield — at [`speed` 2]; the last aim holds [`windup` 24] and charges at [`chargeSpeed` 4.5] until it leaves the view; never fires. The shipped hunters are in `content/enemies/option-hunters.enemies.json`, flown by the `hunter-range` dev stage ([options-shields-hunter.md](options-shields-hunter.md#the-option-hunter-coreenemies-corebehaviors)) |
 
 Writing one:
@@ -488,7 +497,8 @@ document it in the module docblock and in `content/enemies/README.md`, and test 
 `captain.circler`, `captain.crab` and the raid turrets' `boss.raid`, since M2-11 the zone bosses
 `boss.maw` and `boss.widow` — [zones-b-and-c.md](zones-b-and-c.md#bossmaw) —, since M2-12
 `boss.bastion` and `boss.steed` — [zones-d-and-e.md](zones-d-and-e.md#the-new-behaviours-corebehaviors) —, since M2-13
-`boss.squid` and `boss.facet` on the shared curling-arm rule — [zones-f-and-g.md](zones-f-and-g.md#the-curling-arm-rule)) — driving a
+`boss.squid` and `boss.facet` on the shared curling-arm rule — [zones-f-and-g.md](zones-f-and-g.md#the-curling-arm-rule) —, since M2-14
+the finales `boss.sovereign`, `boss.ark` and `boss.angler` — [zones-h-and-i.md](zones-h-and-i.md#the-new-behaviours-corebehaviors)) — driving a
 `BossScriptApi` instead of a `ScriptApi`; a boss phase's `script` names one. They follow the same
 coroutine rules ([bosses-and-warning.md](bosses-and-warning.md#boss-behaviours-corebehaviors),
 [advanced-bosses.md](advanced-bosses.md#behaviours)). A captain's `minion` (M2-09) is an ordinary
@@ -498,7 +508,10 @@ LAUNCHER launches the gimmick range's splitting `bubble`; zone B's SPUME HERALD 
 bubbles, GALVANIC MAW its homing rockets and SANDGRAVE WIDOW its spider drones the same way (M2-11),
 and SQUALL STEED its homing minis (`steed-foal`, `rocket.homing`) from its chest (M2-12),
 and MANTLE REGENT its chasing cells (`chaser-cell`, `cell.chase`) from its eye (M2-13) — a launched
-cell has no `Straight` mover yet, so it drifts in from where it was launched.
+cell has no `Straight` mover yet, so it drifts in from where it was launched; IRON SOVEREIGN launches
+drones (`sovereign-drone`, `cell.chase`) from its emitters, the ABYSS ARK its hooks (`ark-hook`,
+`rocket.homing`) from its on-screen turrets and THE HOLLOW KING its spawn (`king-spawn`,
+`cell.chase`) from its lure (M2-14).
 
 ## The `test-range` roster
 
@@ -588,6 +601,18 @@ edge, then drift off up or down), `orbiter.loop` halo crystals on zone A's `gyre
 `cube.stack` formations as the seeded cube rushes — and the bosses. The carriers are zone A's
 `tender`; the bonus stage GLIMMER CACHE uses M2-10's `vault-carrier` / `vault-carrier-1up`. Tables:
 [zones-f-and-g.md](zones-f-and-g.md).
+
+## The zone H and I rosters
+
+`content/enemies/zone-h.enemies.json` and `zone-i.enemies.json` (M2-14) play the finales on existing
+behaviours plus `emitter.laser` and `mine.burst`: `drifter.sine` drones and motes, `hatch.spawner`
+hatches on floors and ceilings releasing `rammer.aimed` mites, `emitter.laser` laser emitters,
+`walker.floor` sentinels, `turret.floor` rail and barnacle turrets, `mine.burst` depth mines,
+`worm.burst` trench eels, `pattern.loop` gulpers on the DSL pattern `abyss.gulp` with a `waypoint`
+mover, and the bosses — zone H's four parade **echoes** (captains reusing the bosses of zones A, B,
+D and F), IRON SOVEREIGN, the ABYSS ARK and THE HOLLOW KING — with their minions (`sovereign-drone`,
+`ark-hook`, `king-spawn`). The carriers are zone A's `tender`. Tables:
+[zones-h-and-i.md](zones-h-and-i.md).
 
 ## Zero allocation and the hot-path rules
 
@@ -706,5 +731,7 @@ code):
 - **M2-13** (done) — zones F and G: `cell.chase` (chasing cells), the boss behaviours
   `boss.squid` / `boss.facet` on the curling-arm rule and the zone rosters
   ([zones-f-and-g.md](zones-f-and-g.md)).
-- **M2-14** — the final zones H and I: their rosters and whatever behaviours IRON CITADEL's hatches,
-  laser emitters and boss parade and ABYSSAL THRONE's raid need.
+- **M2-14** (done) — the final zones H and I: `emitter.laser`, `mine.burst` on the proximity wake
+  `ScriptApi.sleepUntilNear` (`Enemy.nearRange`, tested in phase 5 — hashed), the boss behaviours
+  `boss.sovereign` / `boss.ark` / `boss.angler` and the zone rosters; the roster is complete for
+  v1.0 (`core/behaviors` `implemented`) ([zones-h-and-i.md](zones-h-and-i.md)).

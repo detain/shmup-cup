@@ -123,7 +123,8 @@ The two stage jumps act only while a stage is being played: the World has a stag
 the pause menu or an end screen). Otherwise `run` returns `false` and nothing happens.
 
 - `skipToBoss(world)` (M1-18) jumps the stage runner to `BOSS_SKIP_LEAD` (96) px before the
-  stage's first `warning` / `boss` event ([zone-a-and-playtest.md](zone-a-and-playtest.md#the-debug-stage-skip)).
+  stage's first `warning` / `boss` event ([zone-a-and-playtest.md](zone-a-and-playtest.md#the-debug-stage-skip))
+  — a captain's `boss` event counts, so in zone H it lands before the parade, not IRON SOVEREIGN.
 - `jumpToCheckpoint(world, index)` restarts the stage at a checkpoint (`StageRunner.restartAt`,
   `-1` = the stage start; `false` for an index outside `[-1, checkpoints.length)` or free flight);
   `jumpToNextCheckpoint(world)` picks the checkpoint after the last one the camera passed
@@ -346,11 +347,11 @@ the replay contains them (a session recorded through `createReplayGame` has no k
 
 ## Golden replays (`test/golden/`)
 
-Forty-six committed runs — seventeen of zone A, since M2-07 three of the `gimmick-range` dev
+Fifty-three committed runs — seventeen of zone A, since M2-07 three of the `gimmick-range` dev
 stage, since M2-08 one of the `raster-range` dev stage, since M2-09 four of the advanced-boss
 dev stages, since M2-10 three of the bonus-stage dev stages, since M2-11 five of the real zones
-B and C, since M2-12 five of the real zones D and E and since M2-13 eight of the real zones F and G
-— pin down what the simulation does (`test/golden/golden.ts` `GOLDEN_SCENARIOS`, recorded
+B and C, since M2-12 five of the real zones D and E, since M2-13 eight of the real zones F and G
+and since M2-14 seven of the final zones H and I — pin down what the simulation does (`test/golden/golden.ts` `GOLDEN_SCENARIOS`, recorded
 from the M1-18 playtest bots with the build id `'golden'`):
 
 | File | Who plays | Covers | Ends |
@@ -401,6 +402,13 @@ from the M1-18 playtest bots with the build id `'golden'`):
 | `zone-f-boss.replay.json` (M2-13 tests) | 4-way bot, full loadout, Arcade penalty, `stageSkip: 'boss'` (seed 95) | MANTLE REGENT's three phases, the eye shot between the curls of its tentacles | `stageClear` after 1,716 ticks, 46,300 points, no deaths |
 | `zone-g-boss.replay.json` (M2-13 tests) | 4-way bot, full loadout, Arcade penalty, `stageSkip: 'boss'` (seed 95) | FACET MONARCH's crystals broken, then its core through three phases | `stageClear` after 2,003 ticks, 47,390 points, no deaths |
 | `zone-g-bot.replay.json` (M2-13 tests) | 4-way bot, no god mode (seed 91) | a death in the cube rush and a Classic respawn in place, FACET MONARCH shot down | `stageClear` after 14,138 ticks, 56,070 points, one death (7,284) |
+| `zone-h-god.replay.json` (M2-14) | 4-way bot, god mode, `stage: 'zone-h'` (seed 1) | IRON CITADEL start to clear: the outer walls' hatches, the piston hall's moving floors and laser emitters, the parade of four earlier bosses in reduced form, the core run, IRON SOVEREIGN's four phases | `stageClear` after 15,174 ticks, 128,200 points, no deaths |
+| `zone-i-god.replay.json` (M2-14; re-blessed by its test round's `boss.ark` fix) | 4-way bot, god mode, `stage: 'zone-i'` (seed 1) | ABYSSAL THRONE start to clear: the descent, the trench's eels, the mine field, the undertow, the ABYSS ARK raid and THE HOLLOW KING its final blast reveals | `stageClear` after 16,146 ticks, 145,550 points, no deaths |
+| `zone-h-boss.replay.json` (M2-14 tests) | 4-way bot, full loadout, Arcade penalty, `stageSkip: 'boss'` (seed 95) | the skip lands before the parade: the four echoes shot down before their time limits (no ending flag), the core run, IRON SOVEREIGN's four phases | `stageClear` after 9,289 ticks, 123,460 points, no deaths |
+| `zone-h-arcade.replay.json` (M2-14 tests) | 4-way bot, Arcade difficulty, no god mode (seed 91) | IRON CITADEL against the rank-scaled fire | `stageClear` after 15,996 ticks, 126,920 points, no deaths |
+| `zone-h-deaths.replay.json` (M2-14 tests) | `weaverBot()`, Easy, Arcade penalty (seed 91) | deaths at the outer walls, every restart back at the start, game over | `gameOver` after 5,575 ticks (deaths at 1,034 / 2,122 / 3,267 / 4,394 / 5,482) |
+| `zone-i-boss.replay.json` (M2-14 tests) | 4-way bot, full loadout, Arcade penalty, `stageSkip: 'boss'` (seed 95) | the raid's two phases, then THE HOLLOW KING's three | `stageClear` after 5,031 ticks, 140,150 points, no deaths |
+| `zone-i-escape.replay.json` (M2-14 tests) | `weaverBot()`, god mode, no power-ups, `stageSkip: 'boss'` (seed 52) | the ARK outlasts the pilot for its whole 90-s time limit and escapes — `EndingFlag.BossEscaped` (the campaign's THE FLAGSHIP SLIPS AWAY), no king, the camera handed back | `stageClear` after 6,038 ticks, 4,200 points, the boss not defeated |
 
 The 4-way bot survives zone A even at Arcade, which is why the death scenario uses a careless
 weaving pilot. The files were re-blessed on purpose by M2-01 (`b31fac5`): rank growth changes
@@ -492,6 +500,18 @@ at 2,200), `zone-g-bot`'s death between the cube rush's checkpoint and the refra
 respawn in place, and the skips fighting all three phases; the file-name rule allows `zone-f-*`,
 `zone-g-*` and `glimmer-cache-*`
 ([zones-f-and-g.md](zones-f-and-g.md#determinism-hashing-and-golden-replays)).
+M2-14 re-blessed them all once more (`dc6c908`: the zone H / I sprites, the ending UI sprites and the
+new behaviour scripts shift the sorted ids, and the hash gained the enemies' `nearRange` and the
+bosses' seven spiral-stream fields — all 49 older files kept their inputs, tick counts, headers and
+outcomes) and added `zone-h-god` and `zone-i-god`; its test round (`9061af0`) added `zone-h-boss`,
+`zone-h-arcade`, `zone-h-deaths`, `zone-i-boss` and `zone-i-escape` and re-blessed `zone-i-god` for
+its `boss.ark` fix (the ARK's second phase casts its hooks from other turrets: 16,146 ticks instead
+of 16,256, still no death) — every other file byte-identical. `golden.test.ts` checks both zones
+cleared in 3–6 minutes, IRON SOVEREIGN dead in its last phase, the king dead and no ending flag,
+zone H's skip landing between the hangar's checkpoint and BULWARK ECHO with all four echoes shot
+down, the weaver's deaths all before 2,200 with every restart back at the start, and the escape's
+flag with no king; the file-name rule allows `zone-h-*` and `zone-i-*`
+([zones-h-and-i.md](zones-h-and-i.md#determinism-hashing-and-golden-replays)).
 Each file is an encoded replay plus the scenario's `description` and its
 `expected` outcome (status, ticks, player 1's score and lives, death ticks, boss killed — and for
 a co-op run player 2's score, lives, death ticks and continues).
@@ -659,8 +679,10 @@ testers in [../client/debug-tools.md](../client/debug-tools.md#the-m1-release-ch
   advanced-boss scenarios added ([advanced-bosses.md](advanced-bosses.md)).
 - **M2-10** / **M2-11** / **M2-12** / **M2-13** (done) — the bonus-stage and zone B–G goldens
   (above); every simulation change re-blessed the files in the same commit.
-- **M2-14** — every simulation change re-blesses the golden replays in the same commit; zones H and
-  I add golden replays each.
+- **M2-14** (done) — seven goldens of the final zones H and I (`zone-h-god`, `-boss`, `-arcade`,
+  `-deaths`, `zone-i-god`, `-boss`, `-escape`); the hash gained the enemies' `nearRange` and the
+  bosses' spiral fields, and every file was re-blessed in the same commit
+  ([zones-h-and-i.md](zones-h-and-i.md#determinism-hashing-and-golden-replays)).
 - **M2-15** — attract mode plays bundled replays (and the scene flow gets recorded).
 - **M2-17** — the device info (model, firmware) in the debug overlay.
 - **M2-18** — cross-engine determinism: golden replays in Chromium and Firefox.

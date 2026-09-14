@@ -67,9 +67,17 @@ tentacles** and the squid **MANTLE REGENT**, whose tentacles curl in front of it
 ([Zone F: CELL VAULT](#zone-f-cell-vault)) — and **PRISM LABYRINTH** (G) — a maze of **crystal
 walls** from the ceiling and the floor, a **rush of crystal cubes** that stick where they hit and
 build walls, and the crystal core **FACET MONARCH**, which hides its core behind two crystals and
-waves two arms like claws ([Zone G: PRISM LABYRINTH](#zone-g-prism-labyrinth)). Zones H and I are
-still **short stand-ins** (about a minute each, with zone A's enemies and bosses you already know)
-so every one of the 16 routes can be flown to the end; the real ones follow in the next build.
+waves two arms like claws ([Zone G: PRISM LABYRINTH](#zone-g-prism-labyrinth)). **And the two
+final zones are real now**: **IRON CITADEL** (H) — the enemy fortress, with hatches that let out
+drones, a hall of **floors and ceilings that swing in and out**, laser emitters, a **parade of four
+earlier bosses** in smaller form and the finale **IRON SOVEREIGN**, whose core hides behind a
+turning shield wheel ([Zone H: IRON CITADEL](#zone-h-iron-citadel)) — and **ABYSSAL THRONE** (I) —
+the deep, with **mines** that burst when you come near, eels from a trench, and the battleship
+**ABYSS ARK**, which the view flies along and which sails away if you take too long, with **THE
+HOLLOW KING** inside it ([Zone I: ABYSSAL THRONE](#zone-i-abyssal-throne)). Every run now ends with
+a real **ending**: a scene of your ship leaving the fallen citadel or rising out of the deep, a
+short story, the result card and the **credits** ([The endings and the
+credits](#the-endings-and-the-credits)).
 **Zones B and G hide secret bonus stages** with an extra ship and 1,000-point capsules — in zone B,
 PEARL GROTTO, the way in is a gap at the very top of the screen; in zone G, GLIMMER CACHE, you must
 shoot down every turret of a crystal gallery — and the browser's *Bonus Range* shows all three
@@ -121,7 +129,7 @@ The earlier start-up pictures are still there: **free flight** straight away wit
 the animated **sprite showcase** and the **calibration screen**, plus the **effects gallery**
 that shows every explosion and screen effect in turn (see [below](#other-screens-browser-only)).
 
-This build is version **0.1.0** — the end of the first milestone — plus the first thirteen steps of
+This build is version **0.1.0** — the end of the first milestone — plus the first fourteen steps of
 the second: the difficulties, extra ships and continues, then the colour-blind bullet colours and
 points for cancelled bullets, then the **weapon types** and the WEAPON SELECT screen, then four
 kinds of **Options**, five **shields**, the **Option Hunter** that steals Options and the rare
@@ -136,7 +144,7 @@ the browser's *Raster Range*, and now the **advanced bosses**: mid-bosses, a bat
 a boss inside, twin bosses and a boss rush in the browser's four boss ranges, and the optional
 **BOSS HP** bar in the Options screen, which works on the TV too, then the **zone map**: a
 run through five of nine zones with the zone title card, the fly-out after each boss, the zone
-result, the ZONE MAP, short stand-in zones, a placeholder ending after zone H or I, and
+result, the ZONE MAP, short stand-in zones (all replaced since), an ending card after zone H or I, and
 the secret **bonus stages** of the browser's *Bonus Range*, and now the **real zones B and C**:
 BRINE NEBULA with its mid-boss SPUME HERALD, its boss GALVANIC MAW and the secret bonus stage PEARL
 GROTTO, and DUNE EXPANSE with its boss SANDGRAVE WIDOW, each with its own music (AZURE VERGE itself
@@ -145,7 +153,11 @@ brick maze and its boss CINDER BASTION, and TEMPEST RIDGE with its enemies from 
 and its boss SQUALL STEED, again each with its own music, and now the **real zones F and G**:
 CELL VAULT with its chasing cells, regrowing tissue walls, grabbing tentacles and its boss MANTLE
 REGENT, and PRISM LABYRINTH with its crystal walls, its cube rush, the second secret bonus stage
-GLIMMER CACHE and its boss FACET MONARCH, each with its own music.
+GLIMMER CACHE and its boss FACET MONARCH, each with its own music, and now the **final zones H and
+I**: IRON CITADEL with its moving floors, laser emitters, the parade of earlier bosses and its
+boss IRON SOVEREIGN, and ABYSSAL THRONE with its depth mines, the ABYSS ARK raid and THE HOLLOW
+KING, each with its own music — and the **ending scenes**, the epilogues and the **credits**, with
+their own songs.
 For checking it on the monitors
 there is a **debug build** with developer tools — a panel with the frame rate, frame times and
 start-up time, hit-area outlines, invincibility, a freeze with single steps, slow motion and
@@ -1170,15 +1182,11 @@ there are **16 different routes**:
 | E | TEMPEST RIDGE | **The real zone** — a storm over jagged peaks, enemies from behind, the boss SQUALL STEED ([below](#zone-e-tempest-ridge)) |
 | F | CELL VAULT | **The real zone** — chasing and dividing cells, tissue walls that grow back, grabbing tentacles, the boss MANTLE REGENT ([below](#zone-f-cell-vault)) |
 | G | PRISM LABYRINTH | **The real zone** — crystal walls, a rush of cubes that build walls, the boss FACET MONARCH and a secret bonus stage ([below](#zone-g-prism-labyrinth)) |
-| H | IRON CITADEL | Final zone — stand-in with a floor; HALCYON BULWARK |
-| I | ABYSSAL THRONE | Final zone — stand-in, open space; the battleship IRON LEVIATHAN (the view flies round it; it escapes if you take too long) |
+| H | IRON CITADEL | **The final zone** of the upper route — hatches, moving floors and ceilings, laser emitters, a parade of four earlier bosses, the boss IRON SOVEREIGN ([below](#zone-h-iron-citadel)) |
+| I | ABYSSAL THRONE | **The final zone** of the lower route — depth mines, trench eels, the battleship ABYSS ARK (the view flies along it; it escapes if you take too long) and THE HOLLOW KING inside it ([below](#zone-i-abyssal-throne)) |
 
-Zones A to G are real zones of about three and a half to four minutes each. The stand-ins H and I
-are short — about a minute of zone A's enemies (small pods, red saucers with capsules, fan fliers,
-an arrowhead fighter, a ring spinner; turrets and walkers where there is a floor) and then the
-WARNING and a boss you know from zone A or the browser's boss ranges. They play zone A's music.
-The real zones replace them in the next build; their names and the text on the map are already
-the real ones.
+Every zone is a real zone now, each about three and a half to four and a half minutes long with
+its own music — a whole run of five zones takes about twenty minutes.
 
 **A zone, start to end:**
 
@@ -1216,13 +1224,14 @@ next zone blinking; a player who had no ships left stays out (and may continue).
 PLAYERS** game, a second player who has not joined yet can still join in any zone. The game also
 gets a little harder with every zone you clear.
 
-**The ending.** After the final zone's result a full-screen card shows **ENDING** and the name
-of the ending your run earned, your **ROUTE** (for example `A B D F H`), your score, a line for
-each thing you managed — **NO MISS** (no ship lost in the whole run), **NO CONTINUE**, **BONUS
-STAGE CLEARED**, and **A BOSS ESCAPED** if IRON LEVIATHAN got away — and **THANK YOU FOR
-PLAYING**. After a second `OK: TITLE` appears; **OK** (or waiting 20 seconds) returns to the title.
-The endings are placeholders for now — the real ending scenes and credits come later — but which
-one you get already depends on the route and the run:
+**The ending.** After the final zone's result the **ending scene** plays — the citadel falling
+behind your ship, or your ship rising out of the deep — with a short story, then a full-screen card
+shows **ENDING** and the name of the ending your run earned, your **ROUTE** (for example
+`A B D F H`), your score, a line for each thing you managed — **NO MISS** (no ship lost in the whole
+run), **NO CONTINUE**, **BONUS STAGE CLEARED**, and **A BOSS ESCAPED** if the ABYSS ARK got away —
+and **THANK YOU FOR PLAYING**; then the **credits** scroll and the title comes back. Everything
+about them is in [The endings and the credits](#the-endings-and-the-credits). Which ending you get
+depends on the route and the run:
 
 | Final zone | Ending | When |
 |---|---|---|
@@ -1242,7 +1251,10 @@ before its WARNING, so a run is five boss fights (add `&loadout=full`); the debu
 zone. `?stage=zone-b` … `?stage=zone-i` plays one zone on its own (like a test stage, without the
 map) — `zone-b` and `zone-c` are the real BRINE NEBULA and DUNE EXPANSE, `zone-d` and `zone-e` the
 real MAGMA DEEP and TEMPEST RIDGE (with `&skip=boss`, MAGMA DEEP starts down in the caves), `zone-f`
-and `zone-g` the real CELL VAULT and PRISM LABYRINTH, and `?stage=brine-grotto` and
+and `zone-g` the real CELL VAULT and PRISM LABYRINTH, `zone-h` and `zone-i` the finales IRON
+CITADEL and ABYSSAL THRONE (with `&skip=boss`, IRON CITADEL starts just before its **parade**, not
+its last boss; played alone they end on STAGE CLEAR — the ending and the credits need a whole run),
+and `?stage=brine-grotto` and
 `?stage=glimmer-cache` play the secret bonus stages of zones B and G.
 
 What "good" looks like:
@@ -1258,8 +1270,8 @@ What "good" looks like:
   the zone — no silence, no zone A title music. After an ending (or a game over) and a new game,
   zone A's music plays again as normal.
 - Score, ships and power-ups are the same after the map as before it.
-- All 16 routes can be finished; each ends with an ending card whose route line matches the
-  zones you flew.
+- All 16 routes can be finished; each ends with its final zone's ending scene and an ending card
+  whose route line matches the zones you flew, then the credits.
 
 ## Zone B: BRINE NEBULA
 
@@ -1681,6 +1693,229 @@ What "good" looks like in zones F and G:
   the zone and the time of any spot where you could not get out of the way.
 - Each zone, boss included, takes about three and a half to four minutes when nothing goes wrong.
 
+## Zone H: IRON CITADEL
+
+One of the two **final zones** — the one after F or G on the upper route: the enemy's **fortress**
+— a far wall of riveted steel panels whose little amber **running lights chase** along it, pipes
+and girders in front of it, steel plating with an amber hazard edge —, hatches that let out drones,
+a hall of **moving floors and ceilings**, **laser emitters**, a **parade of four earlier bosses**
+and, at the end, the fortress's master **IRON SOVEREIGN**. About four minutes (a little more with
+the boss). Times from the start of the zone (about):
+
+| Time | What happens |
+|---|---|
+| 0–46 s | **The outer walls.** Streams of small steel **drones**; **rail turrets** on the floor and the ceiling; **hatches** in the floor and the ceiling that open and let out little **mites**, which climb out and then ram straight at you; a two-legged **sentinel** walking on the floor. Red saucers bring capsules as in zone A |
+| about 46 s | **The piston hall** begins. Checkpoint. From about 0:48 to 1:26 eleven **pistons** — blocks rising out of the floor and hanging from the ceiling, in turn — **swing in and out** as you pass, so the gap between them moves up and down; touching one costs a ship. Four **laser emitters** on the floor and the ceiling fire lanes along their row |
+| about 1:39 | **The parade hangar.** Checkpoint. Open space, slow scrolling: **four earlier bosses come back in reduced form**, one after another — at about 1:42, 1:57, 2:13 and 2:29 ([below](#the-parade)) |
+| about 2:45 | **The core run.** Checkpoint. The scrolling nearly doubles its speed for about 20 seconds over rolling ground, with a heat shimmer; long drone streams, emitters, a hatch, a walker |
+| about 3:06 | **The calm.** Two red saucers — the capsules for the boss |
+| about 3:21 | **The WARNING** (`GIANT HOSTILE "IRON SOVEREIGN"` · `CLOSING IN - CODE IS-08`), then the boss and its own theme, **SOVEREIGN OF STEEL** |
+
+A checkpoint restart (ARCADE, or CONTINUE?) puts the pistons back where they were when you first
+passed them.
+
+**The enemies of IRON CITADEL:**
+
+| Enemy | Hits to destroy | Points | Shoots? |
+|---|---|---|---|
+| Drone (streams) | 1 | 100 | No |
+| Hatch (floor or ceiling) | 6 | 500 | No — it opens every second and a half or so and lets out a mite, at most three |
+| Mite (from a hatch) | 1 | 60 | No — it climbs out for a moment, then **rams straight at you**: step out of its line |
+| Laser emitter (floor or ceiling, a dome with a glowing lens) | 6 | 600 | A **lane laser** to the left along its row about every 3½ seconds: a thin blinking warning line for a second, then the beam for about ½ second — step up or down out of that row |
+| Sentinel (walks on the floor) | 4 | 400 | Walks, stops, and fires a fan of three **red ovals** aimed at you |
+| Rail turret (floor or ceiling) | 4 | 300 | One **pink round** bullet aimed at you every three seconds |
+| Red saucer (as in zone A) | 3 | 200 | No — it always leaves a capsule |
+
+### The parade
+
+In the hangar four bosses you may have met on the way come back as smaller **echoes** — each
+comes in **without a WARNING** while the screen keeps scrolling, is worth **8,000 points**, and
+**leaves after about 16 seconds** if you do not destroy it (that costs you nothing but the points).
+The next one can arrive just as the last one leaves.
+
+| Echo | Looks like | Its weak point |
+|---|---|---|
+| **BULWARK ECHO** | HALCYON BULWARK (zone A) with only two shield plates | Shoot the two plates (8 hits each), then the core (20 hits); watch its lane lasers |
+| **MAW ECHO** | GALVANIC MAW (zone B) without its rocket pods | The mouth, only while it is open (22 hits) |
+| **BASTION ECHO** | CINDER BASTION (zone D) with two short shield arms | The core between the turning arms (26 hits); rings of eight bullets |
+| **REGENT ECHO** | MANTLE REGENT (zone F) with short tentacles | The eye while the tentacles are open (24 hits); a tentacle root breaks after 10 |
+
+### IRON SOVEREIGN (IS-08)
+
+The citadel's master, and a real **finale in four parts**: a huge grey fortress hull on the right
+that **follows your ship's height**, its red **core** behind two tall **shield plates**, a lane
+**emitter** above and below it, and a **shield wheel** — four round armoured pods on a hub — round
+the core:
+
+| Part | Looks like | What your shots do |
+|---|---|---|
+| **Hull** | The fortress behind everything | Nothing, ever (a small spark bounces back) |
+| **Shield plates** | Two tall plates in front of the core | 24 hits each, 1,000 points — **shoot them first** |
+| **Core** | The pulsing red core | Nothing while a plate stands; then 150 hits. Destroying it destroys the boss (60,000 points) |
+| **Emitters** | Two lens domes, above and below | 30 hits each, 2,000 points — the lanes and the drones come from them; with both gone, no more lanes or drones |
+| **Shield wheel** | Four round grey pods circling the core | Nothing — armour; it blocks your shots when a pod passes in front of the core |
+
+**How it fights.**
+1. **The plates.** The emitters fire **lane lasers** along their rows in turn (a blinking warning
+   line, then the beam) and the core fires fans of three **red ovals** at you. The wheel stands
+   still, its pods above and below the core's row.
+2. **The wheel.** Once both plates are broken, the wheel **turns round the core** — shoot between
+   the pods — the lanes go on, and the core adds **rings of ten** purple bullets.
+3. **The drones.** After about 40 hits on the core the wheel turns the other way and **changes
+   direction** every few seconds, the fans have five ovals, and every three seconds the emitters let
+   out two **drones** that follow you for two seconds, then fly straight on (2 hits, 150 points).
+4. **The overdrive.** After about 90 hits the wheel spins fast, the lanes come back, and the core
+   pours out a **turning three-armed spiral** of purple ovals — move round with the turn, a step at a
+   time.
+
+**Tip:** the emitters are worth 2,000 points each and take the lanes and the drones with them; in
+the overdrive, stay level with the core and fire whenever a gap in the wheel passes in front of it.
+
+## Zone I: ABYSSAL THRONE
+
+The other **final zone** — after F or G on the lower route: **the deep** — black-blue water where
+tiny **glowing specks twinkle** and the whole picture sways gently, rock spires and weed in front of
+it, black-teal rock with a faint glowing edge —, **depth mines**, eels bursting out of a trench and,
+at the end, the enemy's flagship, the **ABYSS ARK**, and the thing that lives inside it, **THE HOLLOW
+KING**. About four and a half minutes with both bosses. Times from the start of the zone (about):
+
+| Time | What happens |
+|---|---|
+| 0–46 s | **The descent.** Streams of glowing **motes**; **depth mines** drifting in; **gulpers** — big-mouthed fish — hovering high or low near the right edge; barnacle turrets on the floor; red saucers with capsules |
+| about 46 s | **The trench.** Checkpoint. A floor and a ceiling close in; four times (about 0:50, 1:04, 1:13, 1:26) a chain of **trench eels** bursts out of the floor in front of the ship and dives back in; turrets on the floor and the ceiling, motes, mines |
+| about 1:39 | **The mine field.** Checkpoint. Open water full of **depth mines**, alone and in pairs; gulpers, mote streams |
+| about 2:32 | **The undertow.** Checkpoint. The scrolling nearly doubles its speed for about 20 seconds; long mote streams, mines, a turret |
+| about 2:53 | **The calm.** Two red saucers for the bosses; open water from here on |
+| about 3:06 | **The WARNING** (`GIANT HOSTILE "ABYSS ARK"` · `CLOSING IN - CODE AA-09`), then the raid on the ARK, then THE HOLLOW KING, with their own theme, **THE HOLLOW KING** |
+
+**The enemies of ABYSSAL THRONE:**
+
+| Enemy | Hits to destroy | Points | Shoots? |
+|---|---|---|---|
+| Mote (streams) | 1 | 100 | No |
+| Depth mine (a spiked ball with a blinking light) | 3 | 300 | When your ship comes **close** (within about a quarter of the screen's height, above, below or ahead) it **stops, flashes for about ⅔ second and bursts into a ring of eight red bullets** — step through a gap between them, or keep away. A mine that bursts gives no points: shoot it before it arms |
+| Trench eel (a chain bursting out of the floor) | 2 | 150 | No — like zone C's sand worms: watch for the head and step out of its arc |
+| Gulper (hovering high or low on the right) | 6 | 600 | Three quick fans of three **red round** bullets aimed at you, then a rest; after about six seconds it drifts away up or down |
+| Barnacle turret (floor or ceiling) | 4 | 300 | One **pink round** bullet aimed at you every three seconds |
+| Red saucer (as in zone A) | 3 | 200 | No — it always leaves a capsule |
+
+### The ABYSS ARK (AA-09)
+
+A **whale-class battleship** as long as the screen is wide: a pale bone-and-rust hull lying across the
+water, **three turrets on its back and three on its belly**, and its glowing **heart** amidships. The
+scrolling stops and the **view glides along the ship** — back and forth along the hull and a little
+up and down —, so different turrets come into sight; only the turrets you can see fire.
+
+| Part | Looks like | What your shots do |
+|---|---|---|
+| **Hull** | The long whale-shaped ship | Nothing — your shots fly past it |
+| **Turrets** | Round turrets with barrels that turn to face you | 12 hits each, 800 points |
+| **Heart** | The glowing heart in the middle of the hull | 130 hits; destroying it destroys the ship (50,000 points) — and reveals what is inside |
+
+**How it fights.** The turrets on screen turn to you and fire **pink round** bullets every second and
+a half, and every four seconds or so a turret casts a **hook** — a harpoon drone that flies out and
+**homes in on your ship** for a little over a second, then flies straight on (2 hits, 200 points).
+After about 60 hits on the heart the turrets fire fans of three, two hooks come out at a time (from
+different turrets) and the heart bursts **rings of eight** red bullets.
+
+**Too slow?** The ARK gives you **90 seconds**. If its heart still beats then, it stops firing and
+**sails away** — no points, THE HOLLOW KING never appears, and the zone ends (the ending will be
+**THE FLAGSHIP SLIPS AWAY**, [below](#the-endings-and-the-credits)). Without power-ups that is what
+usually happens: power up in the zone, and aim at the heart whenever the view shows it.
+
+### THE HOLLOW KING (HK-10)
+
+When the heart dies, the ARK's final blast sets free the thing inside it: a huge black **anglerfish**
+on the right that **follows your ship's height**, with a **mouth** that opens to show its glowing
+throat and a **lure** — a glowing bulb on a thin stalk — swaying in front of its face:
+
+| Part | Looks like | What your shots do |
+|---|---|---|
+| **Body and jaws** | The dark fish and its two jaws | Nothing, ever |
+| **Throat** | The glow inside the open mouth | 96 hits, **only while the mouth is open**. Destroying it destroys the boss (60,000 points) |
+| **Lure** | The glowing bulb on its stalk | 30 hits, 3,000 points — the needles and the spawn come from it; the stalk itself is armour |
+
+**How it fights.** The mouth stays shut for about 2½ seconds and opens for nearly 2 — while it is
+open it spits fans of three **red ovals** at you, and the lure fires a **pink needle** every second
+and a half. After about 30 hits it bursts a **ring of eight** purple bullets each time it opens and
+the lure lets out little glowing **spawn** that chase you for two seconds (1 hit, 100 points). After
+about 66 hits it opens longer, the fans have five ovals, the rings ten, and the lure sways twice as
+fast.
+
+**Tip:** stay level with the mouth and fire the moment it opens; shoot the lure off early — fewer
+needles, no spawn.
+
+What "good" looks like in zones H and I:
+
+- The citadel's running lights chase along the wall and the deep's specks twinkle and sway **behind**
+  everything — never over your ship, the enemies, the bullets or the HUD.
+- The pistons swing smoothly, never jump, and there is always a gap you can reach with single ▲ / ▼
+  presses; after a restart they are where they were.
+- Every laser line blinks before its beam comes, and one step up or down gets you out of it.
+- Each echo of the parade leaves after about 16 seconds if you do not destroy it, and never two of
+  them fire at you for long at once.
+- IRON SOVEREIGN's wheel turns smoothly round the core, changing direction without jumping; shots
+  clink on the pods and the hull.
+- A depth mine only arms when you come near, and its ring always has gaps you can step through.
+- The ARK's turrets turn to face you before they fire, and never fire from off the screen; a hook
+  can be outrun or shot.
+- THE HOLLOW KING's jaws open apart and close together with the mouth, every time; the lure sways
+  smoothly, also when the boss changes its attacks.
+- Every bullet, laser, mine ring, hook and drone can be dodged with single arrow presses — please
+  report the zone and the time of any spot where you could not get out of the way.
+
+## The endings and the credits
+
+After zone H or I the run is over: the final zone's result card (ZONE H CLEAR or ZONE I CLEAR,
+with its bonuses) is followed by the **ending** — no map. The music changes to the ending theme,
+**AFTER THE LAST WAVE**, and the screen tells the end of the story:
+
+1. **The ending scene** fills the upper part of the screen:
+   - after **IRON CITADEL**: the fortress stands on the horizon while explosions tear through it,
+     your ship (and player 2's, a little behind, in a two-player game) flies off to the right, faster
+     and faster, and after about six seconds the citadel sinks and falls in a last cluster of blasts;
+   - after **ABYSSAL THRONE**: dark water under the light of the surface, bubbles rising, the ARK's
+     dark shape **sinking** into the deep — or, if it escaped, **sailing off** to the right — while
+     your ship rises towards the light and then flies away;
+   - if **no ship was lost in the whole run**, a pale-gold **dawn sun** rises over the scene.
+2. **The epilogue** — five or six lines of story — appears below the scene, one line every second
+   and a half. **OK** (after the first second) shows all the lines at once; **OK** again, or waiting
+   four seconds after the last line, goes on.
+3. **The result card** — **ENDING**, the ending's name, your **ROUTE** (for example `A B D F H`),
+   your score, a line for each thing you managed (**NO MISS**, **NO CONTINUE**, **BONUS STAGE
+   CLEARED**, **A BOSS ESCAPED**) and **THANK YOU FOR PLAYING**. After a second `OK: CREDITS`
+   appears; **OK** (or waiting 20 seconds) starts the credits.
+4. **The credits** scroll up from the bottom of the screen to their own song, **THANK YOU, PILOT**:
+   the game, the nine zones, the giants you fought with their codes, the engine, the programs that
+   draw the placeholder art, the music and sound, the platforms and the tools — about half a minute.
+   When the last line reaches the middle of the screen they stop for four seconds, then the title
+   comes back. **OK** or **Back** (after the first second) skips straight to the title.
+
+Back does nothing during the ending scene and the card — only OK moves on (so a mashed Back button
+never skips the story). Which ending you get depends on the final zone and on how you played:
+
+| Final zone | Ending | When |
+|---|---|---|
+| H | THE CITADEL FALLS SILENT | No ship lost in the whole run (the dawn) |
+| H | THE CITADEL FALLS | Otherwise |
+| I | THE DEEP IS STILL | No ship lost in the whole run, and the ABYSS ARK did not escape (the dawn) |
+| I | THE FLAGSHIP SLIPS AWAY | The ABYSS ARK escaped — even with no ship lost (then with the dawn too) |
+| I | THE THRONE IS BROKEN | Otherwise |
+
+The run's score is saved when the final zone is cleared, before the ending
+([What the game remembers](#what-the-game-remembers)).
+
+What "good" looks like:
+
+- The scene moves smoothly; the ship, the citadel, the ARK and the sun look like themselves (no
+  magenta squares); in a two-player game both ships fly.
+- The epilogue's lines are readable from the sofa and stay inside their panel; each line appears
+  once, in order.
+- The ending theme starts with the scene and the credits theme with the credits; neither stops
+  suddenly.
+- The credits scroll smoothly, every line readable, and end on the title screen with the title
+  music; the title's `HI` shows the run's score if it was a new best.
+
 ## On the Samsung Smart Monitor / TV
 
 The TV build is installed from the development PC like the input probe — see
@@ -1701,8 +1936,8 @@ the first install it appears in the monitor's **Apps** list as **Shmup Cup**.
 On the TV, every game starts in **AZURE VERGE** ([The first zone](#the-first-zone-azure-verge)), with
 enemies, capsules, the boss and the zone's music, and goes on across the **ZONE MAP** through
 four more zones to an ending ([The zone map](#the-zone-map-a-run-through-nine-zones)). The normal
-TV build has no shortcut to the boss — it comes after about three minutes in zones A to G and
-about a minute in the stand-in zones H and I; the debug build has one (key 8 once the developer tools are open —
+TV build has no shortcut to the boss — it comes after about three minutes in every zone; the debug
+build has one (key 8 once the developer tools are open —
 [debug-tools.md](debug-tools.md)).
 
 Things to check on the monitor and report:
@@ -1953,12 +2188,14 @@ Things to check on the monitor and report:
    power-ups are exactly what they were before the map. Zone B (BRINE NEBULA) or C (DUNE EXPANSE)
    plays for about three minutes before its WARNING and its own boss (checks 57–60), then the result
    and the map again — and the same for zone D (MAGMA DEEP) or E (TEMPEST RIDGE) after it (checks
-   61–64) and zone F (CELL VAULT) or G (PRISM LABYRINTH) after that (checks 65–69).
+   61–64), zone F (CELL VAULT) or G (PRISM LABYRINTH) after that (checks 65–69) and the final zone H
+   (IRON CITADEL) or I (ABYSSAL THRONE) last (checks 70–73).
 55. **A whole run** (new): play on through D or E, F or G, to **H or I** (the debug build's key 8
-   saves time). After the final zone's result the **ENDING** card shows the ending's name, your
-   route, your score and `THANK YOU FOR PLAYING`; OK (after a second) returns to the title — with
-   the title music — and the title's `HI` shows the run's score. Start a new game: zone A's own
-   music plays again from the start. Report the route and the ending name.
+   saves time). After the final zone's result the **ending** plays (checks 74–75): the ending scene
+   and its story, then the **ENDING** card with the ending's name, your route, your score and
+   `THANK YOU FOR PLAYING`, then the credits; at the end the title comes back — with the title
+   music — and the title's `HI` shows the run's score. Start a new game: zone A's own music plays
+   again from the start. Report the route and the ending name.
 56. **Game over in a later zone** (new): lose all ships in zone B or later: CONTINUE? and GAME OVER
    work as in zone A, and the run's score is saved.
 57. **BRINE NEBULA** (new): choose B on the map. The title card reads **ZONE B** / **BRINE NEBULA**
@@ -2037,14 +2274,46 @@ Things to check on the monitor and report:
    claws smoothly, also when the crystals break; in the last phase each blinking laser line can be
    avoided by one step up or down and stays where it was fired. With BOSS HP ON the bar counts the
    two crystals and the core together. Report the time the fight took.
+70. **IRON CITADEL** (new): after F or G choose H on the map. The title card reads **ZONE H** /
+   **IRON CITADEL** and its own tune plays. The little amber lights run along the steel wall at the
+   back (background only). Hatches open and let out mites that ram at the ship; about 48 seconds in,
+   the **pistons** swing in and out of the floor and the ceiling — fly between them with single
+   ▲ / ▼ presses — while the laser emitters blink their warning lines. Report whether the moving
+   pistons are easy to see coming on the TV.
+71. **The parade and IRON SOVEREIGN** (new): from about 1:42 four smaller copies of earlier bosses
+   come in one after another without a WARNING, each leaving after about 16 seconds. After the
+   WARNING, IRON SOVEREIGN comes with its own boss tune: shots clink on the core until both plates
+   are broken; the shield wheel turns round the core smoothly and changes direction without
+   jumping; in the last part the purple spiral turns and can be dodged by moving with it. With BOSS
+   HP ON the bar counts the plates and the core. Report the time the fight took.
+72. **ABYSSAL THRONE** (new): choose I on the map (in a new game, after F or G). Its own tune; the
+   glowing specks at the back twinkle and the water sways gently (background only). A depth mine
+   stops and flashes when the ship comes close, then bursts into a ring with gaps; from about 0:50
+   eels burst out of the trench floor. Report whether the mines' flash is easy to see on the TV.
+73. **The ABYSS ARK and THE HOLLOW KING** (new): after the WARNING the scrolling stops and the view
+   glides along the long battleship; its turrets turn to the ship before they fire, and the hooks
+   can be outrun or shot. With a powered-up ship bring the heart down within 90 seconds: the blast
+   reveals the anglerfish, whose jaws open and close with its mouth and whose lure sways smoothly;
+   shots hurt it only while the mouth is open. Then play zone I again and let the ARK's 90 seconds
+   run out: it stops firing and sails off to the right, and the zone ends without THE HOLLOW KING.
+74. **The ending scenes** (new): finish a run in zone H and one in zone I. After the result the
+   ending theme starts: IRON CITADEL — explosions on the fortress, your ship flying off to the
+   right, the citadel falling; ABYSSAL THRONE — bubbles, your ship rising to the light, the ARK
+   sinking (or sailing off, after an escape). The story's lines appear one by one under the scene
+   and are readable from the sofa; OK shows them all, OK again the result card. A run without a
+   single lost ship adds the rising sun and the ending **THE CITADEL FALLS SILENT** / **THE DEEP IS
+   STILL**. Report the ending names you got and whether anything in the scenes looks wrong.
+75. **The credits** (new): OK on the result card (`OK: CREDITS`) starts the credits with their own
+   tune; the lines scroll up smoothly and are readable; they stop in the middle, then the title
+   comes back. In another run press OK or Back during the credits: straight to the title.
 
 The fully powered ship (`?loadout=full`), the shortcut to each zone's boss (`?skip=boss`), the
 twelve test stages (the Test Range, the Boss Range with its test boss, the Hunter Range with the
 Option Hunters and the blue capsule, the Direct Range with the MANTA's pincer waves, the Gimmick
 Range with the later zones' stage mechanics, the Raster Range with the picture effects, the
 Captain, Raid, Twin and Gauntlet Ranges with the advanced bosses, and the Bonus Range with its
-Bonus Vault), a single zone on its own (`?stage=zone-b` … `?stage=zone-g`, the stand-ins
-`zone-h` and `zone-i`) and the zones' bonus stages on their own
+Bonus Vault), a single zone on its own (`?stage=zone-b` … `?stage=zone-i`) and the zones' bonus
+stages on their own
 (`?stage=brine-grotto`, `?stage=glimmer-cache`), free flight, the showcase, the
 calibration screen and the effects gallery can only be opened in a browser — the monitor's own
 web browser works too, pointed at a PC running `pnpm dev` (below).
@@ -2868,7 +3137,8 @@ STAGE CLEAR — at about 1:47 whatever is still flying.
 - **Too slow?** If the battleship's fight lasts **90 seconds**, it gives up: it stops firing, your
   shots pass through it, and it **flies off to the right** in a second and a half while the view
   glides back — no points, no heart, and the stage ends (STAGE CLEAR). The game notes that the boss
-  escaped; the full game will use that to choose the ending. Without power-ups this is what usually
+  escaped; in a real run that chooses the ending — zone I's ABYSS ARK escaping gives **THE FLAGSHIP
+  SLIPS AWAY** ([The endings and the credits](#the-endings-and-the-credits)). Without power-ups this is what usually
   happens — try `&loadout=full` to beat it.
 
 ### TWIN RANGE — two bosses taking turns (`?stage=twin-range`)
@@ -3053,16 +3323,17 @@ What you should hear:
 | **Mega Crash** | A long, deep roar |
 | You lose your ship | A heavy explosion; the music goes quiet for about two seconds and comes back up |
 | The boss **WARNING** | The stage music fades out within half a second and a **siren** wails three times, once a second, with the red pulses |
-| The boss glides in | The boss theme, **BULWARK ASSAULT**, starts (GALVANIC MAW: **MAW OF THE NEBULA**; SANDGRAVE WIDOW: **SANDGRAVE ASSAULT**; CINDER BASTION: **BASTION OF CINDERS**; SQUALL STEED: **STEED OF THE SQUALL**; MANTLE REGENT: **REGENT OF THE VAULT**; FACET MONARCH: **THRONE OF FACETS**) |
+| The boss glides in | The boss theme, **BULWARK ASSAULT**, starts (GALVANIC MAW: **MAW OF THE NEBULA**; SANDGRAVE WIDOW: **SANDGRAVE ASSAULT**; CINDER BASTION: **BASTION OF CINDERS**; SQUALL STEED: **STEED OF THE SQUALL**; MANTLE REGENT: **REGENT OF THE VAULT**; FACET MONARCH: **THRONE OF FACETS**; IRON SOVEREIGN: **SOVEREIGN OF STEEL**; the ABYSS ARK and THE HOLLOW KING: **THE HOLLOW KING**, which keeps playing when the king appears) |
 | The boss is destroyed | The boss music fades out over a second while the explosions crackle over it; with the final blast's `20000` a short, cheerful **stage-clear tune** (VERGE SECURED) plays, then it is quiet |
 | The menus | A soft click for each move of the highlight (and each step of a volume or the control profile in the Options screen), a short chime when you choose an entry, a lower "back" sound for Back, NO and a greyed-out entry; a short sound when the pause menu opens and closes. Menu sounds come from the middle and follow the SFX volume |
 | The title screen | The title theme, **SHMUP CUP**; it fades out when a game starts |
 | **GAME OVER** screen | A short, sad tune (**SILENT VERGE**) |
 | **STAGE CLEAR** screen, the **zone result** | The stage-clear tune (if it is not playing already) |
 | The **ZONE MAP** | The music fades out — the map is quiet for now (its own tune comes later); a chime when you choose, the menu click for ▲ / ▼ |
-| The next zone starts | Its zone theme from the start of the zone: **BRINE NEBULA** in zone B, **DUNE EXPANSE** in zone C, **MAGMA DEEP** in zone D, **TEMPEST RIDGE** in zone E, **CELL VAULT** in zone F, **PRISM LABYRINTH** in zone G (the stand-in zones H and I use AZURE VERGE's theme and BULWARK ASSAULT) |
+| The next zone starts | Its zone theme from the start of the zone: **BRINE NEBULA** in zone B, **DUNE EXPANSE** in zone C, **MAGMA DEEP** in zone D, **TEMPEST RIDGE** in zone E, **CELL VAULT** in zone F, **PRISM LABYRINTH** in zone G, **IRON CITADEL** in zone H, **ABYSSAL THRONE** in zone I |
 | Entering a secret bonus stage | The power-up chime when the entrance opens; the 1UP capsule plays the extra-ship jingle. PEARL GROTTO keeps zone B's music going and GLIMMER CACHE zone G's (they have no tunes of their own) |
-| The **ending** card | The rest of the stage-clear tune, then quiet (the ending music comes with the real endings) |
+| The **ending** (after zone H or I) | The ending theme, **AFTER THE LAST WAVE**, starts with the ending scene and plays on under the story and the result card |
+| The **credits** | Their own tune, **THANK YOU, PILOT**; the title theme comes back with the title |
 
 **The stage theme** (AZURE VERGE — in the zone of the same name and in both browser test stages)
 starts with a short intro of about six seconds and then repeats a 45-second part over and over.
@@ -3169,7 +3440,15 @@ mean the build itself is broken; they are not caused by anything you did.
 | OK on the KESTREL opened a WEAPON SELECT screen instead of the game | Expected: START is highlighted, so OK starts the game with the weapons shown; ▲ / ▼ and ◀ / ▶ change them first if you like ([Choosing your weapons](#choosing-your-weapons)) |
 | My ship flew off to the right on its own after the boss | Expected: the fly-out at the end of every zone — the zone result follows |
 | A **ZONE MAP** appeared instead of the title after the boss | Expected since this build: choose the next zone with ▲ / ▼ and press OK ([The zone map](#the-zone-map-a-run-through-nine-zones)); Back → YES returns to the title |
-| Zone H or I is very short and has zone A's enemies and boss | Expected: zones H and I are stand-ins until the real zones come. Zones B to G are the real BRINE NEBULA, DUNE EXPANSE, MAGMA DEEP, TEMPEST RIDGE, CELL VAULT and PRISM LABYRINTH — if one of them is short, please report it |
+| A zone is very short and has zone A's enemies and boss | Not expected any more: every zone B to I is the real one (the stand-ins are gone) — please report the zone and the route |
+| Bosses I already beat came back in zone H | Expected — IRON CITADEL's **parade**: four smaller echoes of earlier bosses, each leaving after about 16 seconds. The zone's own boss, IRON SOVEREIGN, comes after the WARNING at the end |
+| `?skip=boss` (or the debug key 8) in zone H started at the parade, not at IRON SOVEREIGN | Expected: the shortcut stops before the zone's **first** boss, which in IRON CITADEL is the parade's first echo. Fly on for about 1½ minutes; in the debug build the quickest way is key 7 three times (the last checkpoint) and about 35 seconds of flying — key 8 pressed after the parade jumps back to it |
+| I got hit by something coming out of the floor or the ceiling in the piston hall | The pistons: blocks that swing in and out of the plating. Watch the gap move and stay in the middle of it; touching a piston costs a ship like rock |
+| A mine exploded into a ring of bullets right next to me (zone I) | Expected — depth mines arm when you come close. Shoot them from further away (3 hits, 300 points), or step through a gap in the ring |
+| The ABYSS ARK flew away and the zone ended without another boss | Expected when the ARK's heart still stands after 90 seconds: it escapes, THE HOLLOW KING never appears and the ending is THE FLAGSHIP SLIPS AWAY. Power up during the zone and aim at the heart whenever the view shows it |
+| THE HOLLOW KING takes no damage | Expected while its mouth is shut — shoot the glow inside the open mouth |
+| The ending came without its scene or story | Not expected after zone H or I — please report the final zone and the ending name. (A browser test stage or `?stage=zone-h` played alone ends on STAGE CLEAR: the ending needs a whole run) |
+| Back does nothing on the ending screen | Expected: only OK moves the story and the card on (so a mashed button never skips it); in the credits OK and Back both skip to the title |
 | A hole I shot into a tissue wall closed again (zone F) | Expected — CELL VAULT's tissue grows back about four seconds after it was shot. Every wall also has a gap; fly through the gap or through your hole quickly. Tissue never grows back on top of your ship |
 | Something grabbed my ship and pulled it (zone F) | A tentacle's claw: it lunges when you come near and tugs your ship for a moment, then lets go. Fly on against the tug, or shoot the claw (5 hits). Touching the claw costs a ship |
 | A cell followed me (zone F) | Expected — the chasing cells follow your ship for about two seconds, then swim straight on. They cannot turn sharply: step out of the way at the last moment, or shoot them (2 hits). A big dividing cell splits into two of them when shot |
@@ -3194,7 +3473,7 @@ mean the build itself is broken; they are not caused by anything you did.
 | The sea (BRINE NEBULA) or the dunes and suns (DUNE EXPANSE) wobble or shimmer | Expected — the zones' picture effects. Report it if the ship, enemies, bullets or the HUD ever wobble |
 | A browser test stage (`?stage=…`) ended with STAGE CLEAR, not the zone map | Expected: test stages are played on their own; only a normal game (no `?stage=`, or `?stage=zone-a`) is a run across the map |
 | The next zone started silent, or with the wrong tune | Not expected — please report the route (e.g. `A C E`), the device and whether it happened after a previous run ended |
-| The ending screen came without an ending I expected | The ending depends on the final zone and the run: THE … FALLS SILENT / THE DEEP IS STILL need no ship lost in the **whole** run (a RETRY STAGE after a loss still counts the loss) |
+| The ending screen came without an ending I expected | The ending depends on the final zone and the run: THE … FALLS SILENT / THE DEEP IS STILL need no ship lost in the **whole** run (a RETRY STAGE after a loss still counts the loss); if the ABYSS ARK escaped, zone I always ends with THE FLAGSHIP SLIPS AWAY |
 | An entrance in the Bonus Range did not open | Only the first entrance you open counts, and after a loss in the Bonus Vault none opens again (RETRY STAGE resets that). The gap needs the ship itself in the gap while it passes; the ground entrance needs **all three** turrets |
 | `?stage=bonus-range` (or a zone) does nothing on the TV | Expected: the TV widget has no address bar; the zones (and zone B's secret bonus stage) are reached through the map, the Bonus Range is browser only for now |
 | OK does nothing in the game | Expected with the **MANTA**: it has no power meter — its colour items work when you fly into them. With the KESTREL OK needs a highlighted box on the power meter ([Power-ups](#power-ups)) |

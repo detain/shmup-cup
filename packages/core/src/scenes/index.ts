@@ -369,7 +369,7 @@ export const moduleInfo = defineModule({
 /**
  * Scene identifiers (the M1 set, the difficulty menu and continue countdown of M2-01, the weapon
  * select and its order editor of M2-03, the ship select of M2-05, the zone map and the ending of
- * M2-10, plus the M2 screens already named by the spec).
+ * M2-10, the credits of M2-14, plus the M2 screens already named by the spec).
  */
 export type SceneId =
   | 'boot'

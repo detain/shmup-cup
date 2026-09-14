@@ -241,6 +241,14 @@ ES5 and linted with `ecmaVersion: 5`.
   of plain numbers incremented in place (`EnemyStats`); and a host handler never modifies an array
   a content picker returned (it may be memoised) — it builds its own on the cold path
   ([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md#zero-allocation-and-the-hot-path-rules)).
+  And from M2-14: a script that waits for a condition sleeps for good and lets the system test the
+  condition in its tick (`ScriptApi.sleepUntilNear` — the enemy system's movement phase wakes it
+  once; a polling `mine.burst` allocated 294 KB per 10,000 ticks with four mines waiting); a pattern
+  repeated every few ticks is state the system fires (`BossScriptApi.spiral` — the boss system's
+  spiral stream in `runScript`), not a script woken per volley (≈ 80 bytes a wake); and a screen
+  that grows with content draws only what is on screen through a fixed ring of string slots taken
+  by row number (`CreditsScene`, 24 slots for any number of rows)
+  ([zones-h-and-i.md](zones-h-and-i.md#zero-allocation)).
 - Behaviour coroutines (generators, D29) allocate a small result object on every resume:
   scripts **sleep** (`yield ticks`) and are resumed only when they wake; per-tick motion
   belongs in a mover (numbers on the body), never in a `yield 1` loop.
@@ -251,7 +259,10 @@ ES5 and linted with `ecmaVersion: 5`.
   It keeps the steadiest of three measured windows by default (`attempts`, stopping at the
   first within `settled` = 32 KiB — a guard that is only flaky under the full suite's load may ask
   for more: M2-13's `boss.squid` / `boss.facet` guards take five, their best of three came in at
-  66 KB of 64 now and then); give short, cheap loops a long `warmup` (e.g. 20,000), and
+  66 KB of 64 now and then). A guard of a script that wakes often allows the bytes of its wakes
+  on top of its budget (M2-14: `WakeCount` counts them — `see(wakeTick)` per call — and
+  `allowance(iterations)` gives `SCRIPT_WAKE_BYTES` 96 per wake; the heavy boss guards use it) —
+  those bytes are D29's by design, a real leak grows with the calls; give short, cheap loops a long `warmup` (e.g. 20,000), and
   never move its measured loop into a separate helper — V8 optimises the warm-up loop on stack
   with `fn` inlined, and only that code runs allocation-free.
 
