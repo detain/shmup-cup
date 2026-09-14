@@ -53,9 +53,16 @@ wobbling sea, a mid-boss that fights while the screen scrolls on and the boss **
 mechanical fish whose weak point is its mouth ([Zone B: BRINE NEBULA](#zone-b-brine-nebula)) — and
 **DUNE EXPANSE** (C) — sand worms that burst out of the dunes, beetles walking on the ceiling and
 the boss **SANDGRAVE WIDOW**, a giant spider that sends out spider drones
-([Zone C: DUNE EXPANSE](#zone-c-dune-expanse)) —, each with its own music. Zones D to I are still
-**short stand-ins** (about a minute each, with zone A's enemies and bosses you already know) so
-every one of the 16 routes can be flown to the end; the real ones follow in the next builds.
+([Zone C: DUNE EXPANSE](#zone-c-dune-expanse)) —, each with its own music. **Zones D and E are
+real now as well**: **MAGMA DEEP** (D) — erupting volcanoes, then a **dive** from the surface down
+into the caves, rocks falling from the cave roof, a **maze of brick walls** you can shoot through,
+a river of lava and the battleship **CINDER BASTION**, whose core hides behind **turning shield
+arms** ([Zone D: MAGMA DEEP](#zone-d-magma-deep)) — and **TEMPEST RIDGE** (E) — a storm over jagged
+mountains with rain and rolling clouds, enemies that come **from behind** and overtake your ship,
+and the seahorse **SQUALL STEED**, which opens its chest to send out little homing seahorses
+([Zone E: TEMPEST RIDGE](#zone-e-tempest-ridge)). Zones F to I are still **short stand-ins** (about
+a minute each, with zone A's enemies and bosses you already know) so every one of the 16 routes
+can be flown to the end; the real ones follow in the next builds.
 **Zone B hides a secret bonus stage**, PEARL GROTTO, with an extra ship and 1,000-point capsules —
 the way in is a gap at the very top of the screen — and the browser's *Bonus Range* shows all three
 kinds of secret entrance ([Hidden bonus stages](#hidden-bonus-stages)).
@@ -106,7 +113,7 @@ The earlier start-up pictures are still there: **free flight** straight away wit
 the animated **sprite showcase** and the **calibration screen**, plus the **effects gallery**
 that shows every explosion and screen effect in turn (see [below](#other-screens-browser-only)).
 
-This build is version **0.1.0** — the end of the first milestone — plus the first eleven steps of
+This build is version **0.1.0** — the end of the first milestone — plus the first twelve steps of
 the second: the difficulties, extra ships and continues, then the colour-blind bullet colours and
 points for cancelled bullets, then the **weapon types** and the WEAPON SELECT screen, then four
 kinds of **Options**, five **shields**, the **Option Hunter** that steals Options and the rare
@@ -125,7 +132,9 @@ result, the ZONE MAP, short stand-in zones, a placeholder ending after zone H or
 the secret **bonus stages** of the browser's *Bonus Range*, and now the **real zones B and C**:
 BRINE NEBULA with its mid-boss SPUME HERALD, its boss GALVANIC MAW and the secret bonus stage PEARL
 GROTTO, and DUNE EXPANSE with its boss SANDGRAVE WIDOW, each with its own music (AZURE VERGE itself
-plays as before).
+plays as before), and now the **real zones D and E**: MAGMA DEEP with its dive into the caves, its
+brick maze and its boss CINDER BASTION, and TEMPEST RIDGE with its enemies from behind, its storm
+and its boss SQUALL STEED, again each with its own music.
 For checking it on the monitors
 there is a **debug build** with developer tools — a panel with the frame rate, frame times and
 start-up time, hit-area outlines, invincibility, a freeze with single steps, slow motion and
@@ -1146,14 +1155,14 @@ there are **16 different routes**:
 | A | AZURE VERGE | The real zone ([above](#the-first-zone-azure-verge)) |
 | B | BRINE NEBULA | **The real zone** — bubbles, a reef tunnel, the mid-boss SPUME HERALD, the boss GALVANIC MAW and a secret bonus stage ([below](#zone-b-brine-nebula)) |
 | C | DUNE EXPANSE | **The real zone** — sand worms, a canyon with beetles on its ceiling, the boss SANDGRAVE WIDOW ([below](#zone-c-dune-expanse)) |
-| D | MAGMA DEEP | Stand-in with a floor and a cave; HALCYON BULWARK |
-| E | TEMPEST RIDGE | Stand-in with a floor; the EMBER AND FROST TWINS |
+| D | MAGMA DEEP | **The real zone** — volcanoes, a dive into the caves, a brick maze, a lava river, the boss CINDER BASTION ([below](#zone-d-magma-deep)) |
+| E | TEMPEST RIDGE | **The real zone** — a storm over jagged peaks, enemies from behind, the boss SQUALL STEED ([below](#zone-e-tempest-ridge)) |
 | F | CELL VAULT | Stand-in with a floor; HALCYON BULWARK |
 | G | PRISM LABYRINTH | Stand-in, open space; the EMBER AND FROST TWINS |
 | H | IRON CITADEL | Final zone — stand-in with a floor; HALCYON BULWARK |
 | I | ABYSSAL THRONE | Final zone — stand-in, open space; the battleship IRON LEVIATHAN (the view flies round it; it escapes if you take too long) |
 
-Zones A, B and C are real zones of about three and a half to four minutes each. The stand-ins D–I
+Zones A to E are real zones of about three and a half to four minutes each. The stand-ins F–I
 are short — about a minute of zone A's enemies (small pods, red saucers with capsules, fan fliers,
 an arrowhead fighter, a ring spinner; turrets and walkers where there is a floor) and then the
 WARNING and a boss you know from zone A or the browser's boss ranges. They play zone A's music.
@@ -1220,8 +1229,9 @@ zone works as before: CONTINUE? (if you have continues) carries on at the zone's
 before its WARNING, so a run is five boss fights (add `&loadout=full`); the debug build's key 8
 (or the remote's unlock sequence — [debug-tools.md](debug-tools.md)) jumps to the boss in any
 zone. `?stage=zone-b` … `?stage=zone-i` plays one zone on its own (like a test stage, without the
-map) — `zone-b` and `zone-c` are the real BRINE NEBULA and DUNE EXPANSE, and `?stage=brine-grotto`
-plays zone B's secret bonus stage.
+map) — `zone-b` and `zone-c` are the real BRINE NEBULA and DUNE EXPANSE, `zone-d` and `zone-e` the
+real MAGMA DEEP and TEMPEST RIDGE (with `&skip=boss`, MAGMA DEEP starts down in the caves), and
+`?stage=brine-grotto` plays zone B's secret bonus stage.
 
 What "good" looks like:
 
@@ -1375,6 +1385,137 @@ What "good" looks like in zones B and C:
   the zone and the time of any spot where you could not get out of the way.
 - Each zone, boss included, takes about three and a half to four minutes when nothing goes wrong.
 
+## Zone D: MAGMA DEEP
+
+The zone after B or C on the upper middle route: a field of **volcanoes** under a dark sky —
+distant cones with glowing craters shimmering in the heat, dark basalt rock with an ember-orange
+edge —, then a **dive** down into the caves over a **lake of lava**, a maze of **brick walls** and,
+at the end, the battleship **CINDER BASTION**. About three and a half minutes. Times from the start
+of the zone (about):
+
+| Time | What happens |
+|---|---|
+| 0–45 s | **The caldera fields.** Streams of glowing **embers** drift through; flocks of ash **bats** swoop down (or up) and away; **erupting cones** on the ground throw **lava bombs** in arcs; a basalt **turret** on the ground. Red saucers bring capsules as in zone A |
+| about 45 s | **The eruption field.** More cones and bats; an armoured slag **beetle** walks on the ground. Checkpoint |
+| about 1:17 | **The dive.** The scrolling **stops** over a pit and for about 2½ seconds the whole view **sinks down into the caves** — your ship goes down with it. Below, the **lava lake** rises into the bottom of the picture and rolls through its colours from then on |
+| about 1:30 | **The caves.** A rock roof above, cave floor below; cracked **rocks hang from the roof** and drop when your ship comes near. Checkpoint |
+| about 1:55 | **The brick maze.** Seven walls of bricks, one after the other. **Every wall has a gap** — at a different height each time —, so you can zigzag through; or **shoot a way through**: a brick breaks after 4 hits (10 points) |
+| about 2:20 | Past the maze: a beetle walking upside down on the roof, a turret hanging from it, more falling rocks |
+| about 2:50 | **The lava river.** The scrolling nearly doubles its speed for about 20 seconds; embers, bats and a turret on the roof. Checkpoint |
+| about 3:10 | **The calm.** Two red saucers — the capsules for the boss |
+| about 3:25 | **The WARNING** (`GIANT HOSTILE "CINDER BASTION"` · `CLOSING IN - CODE CB-04`), then the boss and its own theme |
+
+The zone stays down in the caves after the dive: a checkpoint restart (ARCADE, or CONTINUE?) at
+the caves' checkpoint starts down there, one at the checkpoint before it starts on the surface and
+dives again; broken bricks stand again after a restart.
+
+**The enemies of MAGMA DEEP:**
+
+| Enemy | Hits to destroy | Points | Shoots? |
+|---|---|---|---|
+| Ember (streams) | 1 | 100 | No |
+| Ash bat (flocks on curved paths) | 1 | 150 | No |
+| Erupting cone (on the ground) | 12 | 800 | Throws three **lava bombs** in arcs about every 1½ seconds (one hit each, 30 points; they burst on the ground) |
+| Hanging rock (cave roof) | 2 | 100 | No — it **drops** when your ship comes near |
+| Slag beetle (ground or cave roof) | 3 | 250 | A fan of three **red ovals** each time it stops |
+| Basalt turret (ground or cave roof) | 4 | 300 | One **pink round** bullet aimed at you about every 2½ seconds |
+| Red saucer (as in zone A) | 3 | 200 | No — it always leaves a capsule |
+
+### CINDER BASTION (CB-04)
+
+An iron battleship on the right that **follows your ship's height**; its glowing **core** sits in
+front of the hull, and a bar of four round **shield segments** turns round the core like the hands
+of a clock:
+
+| Part | Looks like | What your shots do |
+|---|---|---|
+| **Hull** | The iron hull with its glowing vents, behind the core | Nothing, ever (a small spark bounces back) |
+| **Shield arms** | Four round segments on a bar through the core, **turning** | Nothing — they are armour; they sweep in front of the core |
+| **Core** | The glowing magma core | 80 hits in all — whenever no arm is in front of it. Destroying it destroys the boss (35,000 points) |
+| **Laser emitters** | Two emitters, above and below the front of the hull | 18 hits each, 1,000 points — each one destroyed means fewer lasers |
+
+**How it fights.** The emitters take turns firing a **lane laser** straight to the left along their
+row: a thin blinking warning line for about ¾ of a second, then a beam for almost a second — step
+up or down out of that row. The arms turn slowly at first; after the core has taken 26 hits they
+turn faster, **change direction** every few seconds, and the core adds fans of three **red ovals**;
+after 56 hits they turn faster still and the core also sends out **rings of ten** purple bullets.
+
+**Tip:** stay level with the core and keep firing — the arms let every other stretch of shots
+through. When a laser line blinks in your row, step out, then step back.
+
+## Zone E: TEMPEST RIDGE
+
+The zone after B or C on the lower middle route: a **storm** over jagged, snow-capped mountains —
+heavy clouds that roll and change colour at the top of the picture, rain slanting across the whole
+screen, steep grey peaks and overhangs —, enemies that come **from behind**, and at the end the
+seahorse **SQUALL STEED**. About four minutes. Times from the start of the zone (about):
+
+| Time | What happens |
+|---|---|
+| 0–45 s | **The storm front.** **Hailstones** drift through in streams; flocks of **kites** come in **from the left, behind your ship**, overtake it, curl round near the right edge and fly back along another row; **jets** come from behind along one row, stop near the right edge, fire one needle back at you and fly back the way they came; granite **turrets** on the peaks. Red saucers bring capsules |
+| about 45 s | **The ridge pass.** Rock overhangs above, jagged peaks below; turrets on both; more jets from behind. Checkpoint |
+| about 1:43 | **The thunderheads.** Small storm clouds with lightning inside drift through, each firing a **streak of four needles** in a line at you. More kites from behind. Checkpoint |
+| about 2:30 | **The gale run.** The scrolling nearly doubles its speed for about 20 seconds; hail, kites and jets from behind. Checkpoint |
+| about 2:50 | **The calm.** Two red saucers for the boss |
+| about 3:06 | **The WARNING** (`GIANT HOSTILE "SQUALL STEED"` · `CLOSING IN - CODE SS-05`), then the boss and its own theme |
+
+**Enemies from behind** keep to one row while they pass your ship and again when they fly back:
+**step up or down out of their row** as they come — the jet's needle is the only shot they fire.
+
+**The enemies of TEMPEST RIDGE:**
+
+| Enemy | Hits to destroy | Points | Shoots? |
+|---|---|---|---|
+| Hailstone (streams) | 1 | 100 | No |
+| Kite (flocks from behind) | 1 | 150 | No — they fly past you and back |
+| Jet (from behind, alone) | 2 | 200 | One **pink needle** aimed back at you from near the right edge |
+| Granite turret (peak or overhang) | 3 | 300 | One **pink round** bullet aimed at you about every two seconds |
+| Thunderhead (small storm cloud) | 5 | 500 | A **streak of four pink needles** in a line, aimed at you, every three seconds or so |
+| Red saucer (as in zone A) | 3 | 200 | No — it always leaves a capsule |
+| Little seahorse (from the boss) | 1 | 100 | No — it chases you for about a second, then flies straight on |
+
+### SQUALL STEED (SS-05)
+
+A giant seahorse on the right that **bobs gently up and down**:
+
+| Part | Looks like | What your shots do |
+|---|---|---|
+| **Body** and **head** | The plated trunk with its fin and curled tail, the crowned head | Nothing, ever |
+| **Chest** | A glowing hatch in the front of the body, with a **lid** above and below | Nothing while it is **shut**; while it is **open** (the lids move apart) it takes the hits: 64 in all. Destroying it destroys the boss (35,000 points) |
+| **Snout** | The long tube snout on the head | 24 hits, 1,000 points — without it, no more fans or rings |
+
+**How it fights.** The chest stays shut for about two seconds and opens for about two: **that is
+when to shoot**. While it is open, **little seahorses** come out of it one or two at a time; each
+chases your ship for about a second, then flies straight on — shoot it (one hit) or step out of its
+way. All the while the snout fires fans of three **pink ovals** at you. After the chest has taken
+20 hits two little seahorses come out each time and the bobbing gets a little higher; after 46 hits
+the fans have five ovals and every time the chest **shuts**, the snout fires a **ring of ten** red
+bullets.
+
+**Tip:** stay level with the chest and fire whenever it opens; take the little seahorses out as
+they come — they cannot turn sharply, so a single step at the last moment also gets you out of
+their way.
+
+What "good" looks like in zones D and E:
+
+- The dive is smooth: the scrolling stops, the whole picture — rock, enemies, your ship — goes down
+  together for about 2½ seconds, and the lava lake comes up from the bottom; your ship is never
+  pushed into rock by it.
+- Every brick wall has a gap you can fly through with single up / down presses, and shot bricks
+  disappear one by one where they were hit.
+- Hanging rocks drop only when your ship comes near; lava bombs burst on the ground.
+- CINDER BASTION's arms turn smoothly round the core — in the later phases they change direction
+  without jumping —, shots clink on the arms and hit the core between them.
+- Kites and jets from behind always come from the left edge, never out of nowhere in the middle of
+  the picture; the jets fire only once they are on screen.
+- The storm clouds roll and the rain slants **behind** everything — never over your ship, the
+  enemies, the bullets or the HUD.
+- SQUALL STEED's lids always open and close together with its chest; shots clink on the shut chest
+  and hit the open one; the little seahorses come only out of the open chest.
+- Every bullet, laser, rock and little seahorse can be dodged with single arrow presses — please
+  report the zone and the time of any spot where you could not get out of the way.
+- Each zone, boss included, takes about three and a half to four minutes when nothing goes wrong.
+
 ## On the Samsung Smart Monitor / TV
 
 The TV build is installed from the development PC like the input probe — see
@@ -1395,8 +1536,8 @@ the first install it appears in the monitor's **Apps** list as **Shmup Cup**.
 On the TV, every game starts in **AZURE VERGE** ([The first zone](#the-first-zone-azure-verge)), with
 enemies, capsules, the boss and the zone's music, and goes on across the **ZONE MAP** through
 four more zones to an ending ([The zone map](#the-zone-map-a-run-through-nine-zones)). The normal
-TV build has no shortcut to the boss — it comes after about three minutes in zones A, B and C and
-about a minute in the stand-in zones D–I; the debug build has one (key 8 once the developer tools are open —
+TV build has no shortcut to the boss — it comes after about three minutes in zones A to E and
+about a minute in the stand-in zones F–I; the debug build has one (key 8 once the developer tools are open —
 [debug-tools.md](debug-tools.md)).
 
 Things to check on the monitor and report:
@@ -1646,7 +1787,8 @@ Things to check on the monitor and report:
    the top while the ship flies in; the music starts with the zone; your score, spare ships and
    power-ups are exactly what they were before the map. Zone B (BRINE NEBULA) or C (DUNE EXPANSE)
    plays for about three minutes before its WARNING and its own boss (checks 57–60), then the result
-   and the map again.
+   and the map again — and the same for zone D (MAGMA DEEP) or E (TEMPEST RIDGE) after it (checks
+   61–64).
 55. **A whole run** (new): play on through D or E, F or G, to **H or I** (the debug build's key 8
    saves time). After the final zone's result the **ENDING** card shows the ending's name, your
    route, your score and `THANK YOU FOR PLAYING`; OK (after a second) returns to the title — with
@@ -1678,13 +1820,34 @@ Things to check on the monitor and report:
    At the end SANDGRAVE WIDOW scuttles about with its own boss tune; its head reacts only after
    both fangs are gone, and then the blinking silk lines come one at a time — each avoidable by a
    single step up or down.
+61. **MAGMA DEEP** (new): after B or C choose D on the map. The title card reads **ZONE D** /
+   **MAGMA DEEP** and its own tune plays. The volcano peaks shimmer (background only); cones throw
+   lava bombs in arcs. About 1:17 in the scrolling stops and the whole picture sinks down into the
+   caves for about 2½ seconds — smoothly, with no flicker and your ship never pushed into rock —
+   and the lava lake rises into view and rolls its colours. Fly the brick maze with the remote:
+   every wall has a gap you can reach with single ▲ / ▼ presses, and shot bricks break. Report
+   whether the bricks are easy to tell from the cave rock on the TV.
+62. **CINDER BASTION** (new): after the WARNING the battleship comes with its own boss tune. Its
+   shield arms turn smoothly round the core (faster later, changing direction without jumping);
+   shots clink on the arms and hit the core between them; each blinking laser line can be avoided
+   by one step up or down. With BOSS HP ON the bar moves only when the core is hit.
+63. **TEMPEST RIDGE** (new): choose E on the map (in a new game, after B or C). Its own tune; the
+   storm clouds roll and change colour, the rain slants across the picture — all behind the ship,
+   the enemies and the HUD. Kites and jets come in **from the left edge behind the ship** and pass
+   it; stepping out of their row avoids them. Report whether you can see them coming in time on
+   the TV.
+64. **SQUALL STEED** (new): after the WARNING the seahorse bobs gently with its own boss tune. Its
+   lids open and close together with the chest, every time; shots clink while the chest is shut and
+   hit it while open; the little seahorses come only out of the open chest and can be outrun or
+   shot. Report the time the fight took.
 
 The fully powered ship (`?loadout=full`), the shortcut to each zone's boss (`?skip=boss`), the
 twelve test stages (the Test Range, the Boss Range with its test boss, the Hunter Range with the
 Option Hunters and the blue capsule, the Direct Range with the MANTA's pincer waves, the Gimmick
 Range with the later zones' stage mechanics, the Raster Range with the picture effects, the
 Captain, Raid, Twin and Gauntlet Ranges with the advanced bosses, and the Bonus Range with its
-Bonus Vault), a single zone on its own (`?stage=zone-b` …) and zone B's bonus stage on its own
+Bonus Vault), a single zone on its own (`?stage=zone-b` … `?stage=zone-e`, the stand-ins up to
+`zone-i`) and zone B's bonus stage on its own
 (`?stage=brine-grotto`), free flight, the showcase, the
 calibration screen and the effects gallery can only be opened in a browser — the monitor's own
 web browser works too, pointed at a PC running `pnpm dev` (below).
@@ -2691,14 +2854,14 @@ What you should hear:
 | **Mega Crash** | A long, deep roar |
 | You lose your ship | A heavy explosion; the music goes quiet for about two seconds and comes back up |
 | The boss **WARNING** | The stage music fades out within half a second and a **siren** wails three times, once a second, with the red pulses |
-| The boss glides in | The boss theme, **BULWARK ASSAULT**, starts (GALVANIC MAW: **MAW OF THE NEBULA**; SANDGRAVE WIDOW: **SANDGRAVE ASSAULT**) |
+| The boss glides in | The boss theme, **BULWARK ASSAULT**, starts (GALVANIC MAW: **MAW OF THE NEBULA**; SANDGRAVE WIDOW: **SANDGRAVE ASSAULT**; CINDER BASTION: **BASTION OF CINDERS**; SQUALL STEED: **STEED OF THE SQUALL**) |
 | The boss is destroyed | The boss music fades out over a second while the explosions crackle over it; with the final blast's `20000` a short, cheerful **stage-clear tune** (VERGE SECURED) plays, then it is quiet |
 | The menus | A soft click for each move of the highlight (and each step of a volume or the control profile in the Options screen), a short chime when you choose an entry, a lower "back" sound for Back, NO and a greyed-out entry; a short sound when the pause menu opens and closes. Menu sounds come from the middle and follow the SFX volume |
 | The title screen | The title theme, **SHMUP CUP**; it fades out when a game starts |
 | **GAME OVER** screen | A short, sad tune (**SILENT VERGE**) |
 | **STAGE CLEAR** screen, the **zone result** | The stage-clear tune (if it is not playing already) |
 | The **ZONE MAP** | The music fades out — the map is quiet for now (its own tune comes later); a chime when you choose, the menu click for ▲ / ▼ |
-| The next zone starts | Its zone theme from the start of the zone: **BRINE NEBULA** in zone B, **DUNE EXPANSE** in zone C (the stand-in zones D–I use AZURE VERGE's theme and BULWARK ASSAULT) |
+| The next zone starts | Its zone theme from the start of the zone: **BRINE NEBULA** in zone B, **DUNE EXPANSE** in zone C, **MAGMA DEEP** in zone D, **TEMPEST RIDGE** in zone E (the stand-in zones F–I use AZURE VERGE's theme and BULWARK ASSAULT) |
 | Entering a secret bonus stage | The power-up chime when the entrance opens; the 1UP capsule plays the extra-ship jingle. PEARL GROTTO keeps zone B's music going (it has no tune of its own) |
 | The **ending** card | The rest of the stage-clear tune, then quiet (the ending music comes with the real endings) |
 
@@ -2807,7 +2970,14 @@ mean the build itself is broken; they are not caused by anything you did.
 | OK on the KESTREL opened a WEAPON SELECT screen instead of the game | Expected: START is highlighted, so OK starts the game with the weapons shown; ▲ / ▼ and ◀ / ▶ change them first if you like ([Choosing your weapons](#choosing-your-weapons)) |
 | My ship flew off to the right on its own after the boss | Expected: the fly-out at the end of every zone — the zone result follows |
 | A **ZONE MAP** appeared instead of the title after the boss | Expected since this build: choose the next zone with ▲ / ▼ and press OK ([The zone map](#the-zone-map-a-run-through-nine-zones)); Back → YES returns to the title |
-| Zone D (or another zone after B or C) is very short and has zone A's enemies and boss | Expected: zones D–I are stand-ins until the real zones come. Zones B and C are the real BRINE NEBULA and DUNE EXPANSE — if one of them is short, please report it |
+| Zone F (or another zone after D or E) is very short and has zone A's enemies and boss | Expected: zones F–I are stand-ins until the real zones come. Zones B to E are the real BRINE NEBULA, DUNE EXPANSE, MAGMA DEEP and TEMPEST RIDGE — if one of them is short, please report it |
+| The scrolling stopped and the picture sank down (zone D) | Expected: the dive into MAGMA DEEP's caves, about 1:17 in. The zone carries on down there. Report it if your ship was pushed into rock or the picture jumped instead of sliding |
+| I cannot get through a brick wall (zone D) | Every wall has a gap — look for it higher or lower — or shoot through: each brick breaks after 4 hits. After a restart the broken bricks are back (expected) |
+| A rock fell on me out of the cave roof (zone D) | Expected — the hanging rocks drop when your ship comes near. Watch the roof and step down early, or shoot them (2 hits) |
+| Shots do nothing to CINDER BASTION | Expected on the hull and on the turning shield arms (armour): fire at the core while no arm covers it. The laser emitters can be destroyed too |
+| An enemy hit me from behind (zone E) | Kites and jets in TEMPEST RIDGE come in from the left edge behind your ship and pass it along one row — step up or down out of that row as they come |
+| Shots do nothing to SQUALL STEED | Expected while its chest is shut (a clink) and on the body, head and lids, which are armour: wait for the chest to open. The snout can be destroyed too |
+| The clouds (TEMPEST RIDGE) or the lava (MAGMA DEEP) change colour, the rain moves over the picture | Expected — the zones' picture effects, behind everything. Report it if the ship, enemies, bullets or the HUD ever change colour or wobble |
 | Shots do nothing to GALVANIC MAW | Expected while its mouth is shut (a clink) and on the hull and jaws, which are armour: wait for the mouth to open. The rocket pods can be destroyed too |
 | SANDGRAVE WIDOW's head takes no damage | Expected until both fangs in front of it are destroyed |
 | A sand worm came out of the ground right in front of me | Expected — worms burst out when your ship comes near. Watch for the head and step up out of its arc |

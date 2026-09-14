@@ -79,7 +79,9 @@ hitbox mirror and the display options (M2-08):
 M2-09 (four boss slots, turned parts, captains, raids, double and inner bosses, timers, the HP bar,
 boss rushes) in [`docs/dev/advanced-bosses.md`](../../docs/dev/advanced-bosses.md); zones B and C's behaviours
 (`rocket.homing`, `worm.burst`, `boss.maw`, `boss.widow`) and `BossPart.restX` / `restY` (M2-11) in
-[`docs/dev/zones-b-and-c.md`](../../docs/dev/zones-b-and-c.md); the enemies, formations,
+[`docs/dev/zones-b-and-c.md`](../../docs/dev/zones-b-and-c.md); zones D and E's behaviours (`rear.swoop`,
+`boss.bastion` — rotating shield arms as parts on a spinning hub —, `boss.steed`, M2-12) in
+[`docs/dev/zones-d-and-e.md`](../../docs/dev/zones-d-and-e.md); the enemies, formations,
 behaviour coroutines, movers and spline paths (`enemies`, `patterns`, `behaviors`, the
 `enemies` / `paths` data and `data/paths.ts`) in
 [`docs/dev/enemies-and-behaviors.md`](../../docs/dev/enemies-and-behaviors.md); the enemy

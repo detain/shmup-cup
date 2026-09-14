@@ -509,8 +509,12 @@ hashWorld(game.world); // covers every slot, the raid camera, the rush and the e
   (launching brood bubbles, a 30-s time limit); GALVANIC MAW and SANDGRAVE WIDOW launch their homing
   rockets and spider drones as `minion`s through `BossScriptApi.launch`; `BossPart.restX` / `restY`
   keep a moved part's data offsets ([zones-b-and-c.md](zones-b-and-c.md)).
-- **M2-12 … M2-13** — the other zones' mid-bosses (captains) and bosses with the new mechanics
-  (MAGMA DEEP's rotating shield arms — turned parts).
+- **M2-12** (done) — MAGMA DEEP's CINDER BASTION turns its **rotating shield arms** with the
+  turned parts of this page and no engine change: a `hub` part attached to the core (no hurtbox, no
+  sprite) that `boss.bastion` spins with `spinPart` per phase (and reverses), four armoured arm
+  segments on it hit as circles; SQUALL STEED bobs with `api.orbit` and launches its homing minis
+  as `minion`s from its chest ([zones-d-and-e.md](zones-d-and-e.md#the-rotating-shield-arms-are-data)).
+- **M2-13** — the other zones' mid-bosses (captains) and bosses with the new mechanics.
 - **M2-14** — IRON CITADEL's parade of earlier bosses in reduced form and ABYSSAL THRONE's
   whale-class raid with a boss-inside-boss finale; the endings read the flags.
 - **M2-15** — a practice start at a boss; the attract mode's demo plays.

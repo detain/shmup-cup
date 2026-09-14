@@ -483,7 +483,12 @@ const refresh = createRefreshMonitor();
 - **M2-11** (done) — BRINE NEBULA's wavy water (a `wave` on the palette-cycled `bg/brine-sea`, painted
   only in its cycle's four colours, and on the nebula band) and DUNE EXPANSE's heat `haze` over the
   suns and the dune ridge ([zones-b-and-c.md](zones-b-and-c.md)).
-- **M2-12 … M2-14** — lava and glowing cores (MAGMA DEEP, CELL VAULT) through `raster` / `cycles`
+- **M2-12** (done) — MAGMA DEEP's palette-cycled lava lake (`bg/magma-lava`, painted only in
+  `MAGMA_RAMP`, placed below the surface's view so it rises with the dive; a `haze` on the peaks
+  `to` the dive, a `wave` on the lake `from` it) and TEMPEST RIDGE's heavy weather (two storm-cloud
+  bands painted only in `STORM_RAMP` and cycled on the far layer with a `wave`, a mountain band,
+  three rows of rain) ([zones-d-and-e.md](zones-d-and-e.md)).
+- **M2-13 / M2-14** — glowing cores (CELL VAULT) and the other zones through `raster` / `cycles`
   in their stage files.
 - **M2-16** — the remaining option groups (controls rebinding, game options).
 - **M2-17** — Electron's window, fullscreen and refresh settings.

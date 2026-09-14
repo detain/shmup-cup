@@ -10,7 +10,8 @@ bonus-stage framework** (three kinds of secret entrance, bonus stages, 1UPs and 
 capsules, the lock-out after a death), the **ending selection hook**, the **practice plumbing**
 and eight short **stub zones B–I**, so every route is playable end to end. Since M2-11 zones B and
 C are real ([zones-b-and-c.md](zones-b-and-c.md)) and zone B holds the first campaign bonus
-entrance; D–I are still stubs.
+entrance; since M2-12 D and E are real too ([zones-d-and-e.md](zones-d-and-e.md)); F–I are still
+stubs.
 
 This page is the *how and why* of that step and the map of its code. Exact signatures are in
 [api-reference.md](api-reference.md) (`data`, `scenes`, `stage`, `player`, `enemies`, `powerups`,
@@ -392,9 +393,10 @@ over). The practice select screen and its own table come with M2-15.
 
 ## The stub zones B–I
 
-**Since M2-11 only D–I are stubs**: `zone-b` and `zone-c` were replaced by the real BRINE NEBULA
-and DUNE EXPANSE ([zones-b-and-c.md](zones-b-and-c.md)). What follows describes the stubs as M2-10
-built them.
+**Since M2-12 only F–I are stubs**: `zone-b` and `zone-c` were replaced by the real BRINE NEBULA
+and DUNE EXPANSE in M2-11 ([zones-b-and-c.md](zones-b-and-c.md)), `zone-d` and `zone-e` by the real
+MAGMA DEEP and TEMPEST RIDGE in M2-12 ([zones-d-and-e.md](zones-d-and-e.md)). What follows
+describes the stubs as M2-10 built them.
 
 `content/stages/zone-b … zone-i.stage.json` are short placeholders (≈ 45–70 s, 2,000 px, two
 checkpoints each, the shared `Stage` / `Boss` cues): zone A's roster (popcorn, capsule carriers,
@@ -531,8 +533,11 @@ the menus with action presses; `game.scenes.run` / `.map` / `.ending` expose the
 - **M2-11** (done) — zones B (BRINE NEBULA, with the first hidden bonus stage of a real zone, PEARL
   GROTTO) and C (DUNE EXPANSE) replace their stubs, each with its own songs through `PrepareStage`
   ([zones-b-and-c.md](zones-b-and-c.md)).
-- **M2-12 … M2-14** — the other real zones replace the stubs (D MAGMA DEEP, E TEMPEST RIDGE,
-  F CELL VAULT, G PRISM LABYRINTH with the second hidden bonus stage, H IRON CITADEL, I ABYSSAL THRONE), each with its own songs through `PrepareStage`; M2-14
+- **M2-12** (done) — zones D (MAGMA DEEP — a zone whose third checkpoint lies 200 px down in its
+  caves: practice starts, the stage skip and restarts there put the camera at that height) and E
+  (TEMPEST RIDGE) replace their stubs, each with its own songs ([zones-d-and-e.md](zones-d-and-e.md)).
+- **M2-13 / M2-14** — the other real zones replace the stubs (F CELL VAULT, G PRISM LABYRINTH with
+  the second hidden bonus stage, H IRON CITADEL, I ABYSSAL THRONE), each with its own songs through `PrepareStage`; M2-14
   turns the ending hook into ending scenes (one per final zone plus a no-death variant) and credits.
 - **M2-15** — the practice select (zone, checkpoint, loadout; its own table) on
   `startPractice`, name entry and the hi-score table showing the zone reached, attract demos per

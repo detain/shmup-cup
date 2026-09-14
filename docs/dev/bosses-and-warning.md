@@ -379,12 +379,17 @@ The M1 roster fires from the boss's **`gun` parts that still stand**:
 | `boss.bulwark` (M1-18, HALCYON BULWARK) | `trackSpeed` 0.35, `margin` 40, `laserTicks` 110, `firstLaser` 60, `laserLength` 384, `laserWidth` 8, `telegraph` 45, `active` 50, `fireTicks` 120, `bulletSpeed` 1.5, `ways` 0 (none), `spread` 40 | Tracks the nearest player's height slowly; the first lane after `firstLaser` ticks (not rank-scaled), then every `laserTicks` the next standing gun in turn fires a telegraphed horizontal laser to the left **attached** to the gun, so the lane moves with the boss; with `ways` ≥ 1 every `fireTicks` each gun an aimed `ways`-way of purple needles — [zone-a-and-playtest.md](zone-a-and-playtest.md#bossbulwark) |
 
 The zone bosses of M2-11 fire from the standing **core** parts (a mouth, a head) and take their
-minions and lanes from the guns ([zones-b-and-c.md](zones-b-and-c.md#the-new-behaviours-corebehaviors)):
+minions and lanes from the guns ([zones-b-and-c.md](zones-b-and-c.md#the-new-behaviours-corebehaviors));
+those of M2-12 ([zones-d-and-e.md](zones-d-and-e.md#the-new-behaviours-corebehaviors)) take lanes
+from the guns and spreads from the core (the bastion), or minis from the core and spreads from the
+gun (the seahorse):
 
 | Behaviour | Tunables (defaults) | What it does |
 |---|---|---|
 | `boss.maw` (M2-11, GALVANIC MAW) | `trackSpeed` 0.4, `margin` 44, `closedTicks` 140, `openTicks` 90, `fireTicks` 36, `bulletSpeed` 1.4, `ways` 3, `spread` 48, `ring` 0 (none), `ringSpeed` 1, `launchTicks` 150, `count` 1, `gape` 0 (still) | Tracks the nearest player's height; its `whenOpen` parts (the mouth — the core) shut for `closedTicks` and open for `openTicks` in turn; while open each core fires aimed `ways`-ways of purple needles every `fireTicks` (the first 12 ticks after opening) and, with `ring` ≥ 1, a ring of round red bullets as it opens; every `launchTicks` up to `count` guns in turn launch the `minion`; with `gape` > 0 the parts attached to a core move `gape` px apart while open — placed from `restX` / `restY`, and every phase starts shut and at rest |
 | `boss.widow` (M2-11, SANDGRAVE WIDOW) | `stepTicks` 100, `minX` 250, `maxX` 320, `minY` 56, `maxY` 144, `fireTicks` 80, `bulletSpeed` 1.3, `ways` 3, `spread` 40, `launchTicks` 160, `count` 1, `laserTicks` 0 (never), `laserLength` 384, `laserWidth` 6, `telegraph` 50, `active` 40 | Every `stepTicks` a `moveTo` a random whole-pixel point of its box (gameplay RNG, 60 % of the step); each core spits aimed `ways`-ways of red ovals every `fireTicks`; drones (the `minion`) from up to `count` guns in turn every `launchTicks`; with `laserTicks` ≥ 1 the next standing gun spins a detached horizontal laser to the left every `laserTicks` |
+| `boss.bastion` (M2-12, CINDER BASTION) | `trackSpeed` 0.35, `margin` 44, `spin` 4, `reverseTicks` 0 (never), `laserTicks` 120, `firstLaser` 60, `laserLength` 384, `laserWidth` 8, `telegraph` 45, `active` 50, `fireTicks` 100, `ways` 0 (none), `spread` 40, `bulletSpeed` 1.3, `ring` 0 (none), `ringTicks` 150, `ringSpeed` 1 | Tracks like `boss.bulwark`; `spinPart` on every standing part whose parent is a core (the shield arms' hub — its armoured arm segments ride it) at `spin` units a tick (rounded), set when the phase starts — the arms keep their angle — and reversed every `reverseTicks`; attached lane lasers to the left from the standing guns in turn; with `ways` ≥ 1 aimed spreads of red ovals from the cores, with `ring` ≥ 1 rings of round purple bullets, each turned half a gap from the last |
+| `boss.steed` (M2-12, SQUALL STEED) | `cx` 296, `cy` 100, `rx` 8, `ry` 40, `bobSpeed` 3, `closedTicks` 150, `openTicks` 110, `launchTicks` 45, `minis` 2, `fireTicks` 80, `ways` 3, `spread` 44, `bulletSpeed` 1.3, `ring` 0 (none), `ringSpeed` 1, `gape` 0 (still) | Bobs on the ellipse (`api.orbit`, `bobSpeed` units a tick); its `whenOpen` parts (the chest — the core) shut and open in turn; while open each standing core launches the `minion` (the first 10 ticks after opening, then every `launchTicks`, at most `minis` per opening); aimed spreads of pink ovals from the standing guns (the snout); with `ring` ≥ 1 a ring of round red bullets from the guns each time the chest shuts; `gape` moves the parts attached to a core (the lids) apart from their rest offsets while open |
 
 `boss.hover` closes every `whenOpen` part when its phase starts (so a new hover phase closes what
 the last one opened — on its first tick, the tick after the change); `boss.lanes` leaves them as
@@ -658,3 +663,8 @@ free flight).
   the mid-boss SPUME HERALD on `captain.launcher`, homing rockets as minions, and
   `BossPart.restX` / `restY` — the rest offsets a moved part is placed from
   ([zones-b-and-c.md](zones-b-and-c.md)).
+- **M2-12** (done) — the zone bosses `boss.bastion` (CINDER BASTION, a second core battleship:
+  rotating shield arms built from parts — a hub on the core that the behaviour spins, armoured
+  circle-hurtbox arms on it — and attached lane lasers) and `boss.steed` (SQUALL STEED: a bob on an
+  ellipse, a `whenOpen` chest launching homing minis as minions); no engine change
+  ([zones-d-and-e.md](zones-d-and-e.md)).

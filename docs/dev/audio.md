@@ -150,9 +150,12 @@ loop), `boss` (BULWARK ASSAULT, `Boss` — 2.7 s + 21.3 s), `title` (SHMUP CUP, 
 (SILENT VERGE, jingle). Since M2-11 four **stage-scoped** songs join them: `zone-b` (BRINE NEBULA,
 `Stage`) and `boss-b` (MAW OF THE NEBULA, `Boss`) with `"stages": ["zone-b"]`, `zone-c` (DUNE
 EXPANSE) and `boss-c` (SANDGRAVE ASSAULT) with `["zone-c"]` — the stage themes 6.4 s intro + 44.8 s
-loop, the boss themes in the shape of BULWARK ASSAULT. They win over the defaults only in their
-zone; every other stage (zone A, the dev stages, the stub zones D–I, zone B's bonus stage played
-alone) uses the defaults ([zones-b-and-c.md](zones-b-and-c.md#songs)).
+loop, the boss themes in the shape of BULWARK ASSAULT. Since M2-12 four more in the same forms:
+`zone-d` (MAGMA DEEP) and `boss-d` (BASTION OF CINDERS) with `["zone-d"]`, `zone-e` (TEMPEST
+RIDGE) and `boss-e` (STEED OF THE SQUALL) with `["zone-e"]`. They win over the defaults only in
+their zone; every other stage (zone A, the dev stages, the stub zones F–I, zone B's bonus stage
+played alone) uses the defaults ([zones-b-and-c.md](zones-b-and-c.md#songs),
+[zones-d-and-e.md](zones-d-and-e.md#songs)).
 
 ## The synth (`synth`)
 
@@ -436,5 +439,7 @@ song's loop points and render time. Options: `--out DIR`, `--only NAME` (one cue
 - **M2-11** (done) — zones B and C's own stage and boss songs (`stages`-scoped tracks), prepared on
   the map by `PrepareStage`; zone B's bonus stage plays the zone's resident set
   ([zones-b-and-c.md](zones-b-and-c.md#songs)).
-- **M2-12 … M2-14** — the other zones' own songs.
+- **M2-12** (done) — zones D and E's own stage and boss songs, the same way
+  ([zones-d-and-e.md](zones-d-and-e.md#songs)).
+- **M2-13 / M2-14** — the other zones' own songs.
 - **M3-03** — tracker music.

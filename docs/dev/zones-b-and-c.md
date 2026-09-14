@@ -423,7 +423,8 @@ and `behaviors-rocket-worm-alloc.test.ts` (homing rockets and waiting / bursting
 
 The Tizen `app.js` is **307.5 KB gzip of its 350 KB budget** after this step: the stages, songs
 and rosters are inlined into the bundle (`virtual:shmup-content`), ≈ 6 KB gzip for both zones.
-Zones D–I will need the same care; M2-17 / M2-18 own the budget
+Zones D–I will need the same care (D and E brought it to 313.5 KB —
+[zones-d-and-e.md](zones-d-and-e.md#bundle-budget)); M2-17 / M2-18 own the budget
 ([build-test-deploy.md](build-test-deploy.md)).
 
 ## Running it
@@ -466,7 +467,8 @@ The recipe these two zones followed:
 4. **Art** in a new `scripts/assets/procedural/<zone>.mjs` registered in `procedural/index.mjs`
    (hit flashes on everything hittable), a `TERRAIN_PALETTES` entry plus a tileset file.
 5. **Songs** `content/audio/music/zone-<x>` / `boss-<x>` with `"stages": ["zone-<x>"]`.
-6. **Checks**: extend the `zones` table of the content test (or a new block for new archetypes),
+6. **Checks**: extend the `zones` table of the content test — since M2-12 with the zones a run can
+   have flown before (`earlier`) and the boss's lane limit (`lanes`) — (or a new test for new archetypes),
    add `test/playtest/zone-<x>.test.ts` and the zone's checkpoints to a recovery test, golden
    replays `zone-<x>-god` (+ a no-god run), a browser spec for the backdrop and the boss.
 7. **Re-bless** the goldens whose hashes move (new sprites / scripts shift ids) — with the reason
@@ -507,7 +509,9 @@ The recipe these two zones followed:
 
 ## Next steps that build on this page
 
-- **M2-12** — zones D (MAGMA DEEP) and E (TEMPEST RIDGE) on the same recipe.
+- **M2-12** (done) — zones D (MAGMA DEEP) and E (TEMPEST RIDGE) on the same recipe, plus a taller
+  map with a dive, a destructible maze, rear attackers and rotating shield arms built from parts
+  ([zones-d-and-e.md](zones-d-and-e.md)).
 - **M2-13 / M2-14** — zones F–I, G's hidden bonus stage, the ending scenes.
 - **M2-15** — the practice select (`startPractice` already starts any zone at a checkpoint).
 - **M2-17 / M2-18** — the bundle and texture budgets for nine real zones.

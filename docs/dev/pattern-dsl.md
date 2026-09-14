@@ -439,6 +439,11 @@ The bending laser, cancel point and palette suites are listed on their home page
   (`brine.jelly-ring`) and zone C's `dust-devil` (`dune.whirl`), both `pattern.loop` runners from
   `content/patterns/zones.patterns.json`; the zone bosses are still TS behaviours
   ([zones-b-and-c.md](zones-b-and-c.md)).
-- **M2-12 … M2-14** (zones D–I) — bosses built on the DSL, the bending lasers and the colour-blind palettes' real-art variants (a PNG override of a bullet
-  sprite needs its own `@<palette>` variants).
+- **M2-12** (done) — zone E's `thunderhead` runs `tempest.bolt` (a streak of four aimed needles:
+  one `fire` aimed at 0.85 px/tick, then three `sequence` fires — direction +0, speed +0.25 — so
+  the streak ends at 1.6; then a ranked 150-tick wait); CINDER BASTION and SQUALL STEED are still TS
+  behaviours ([zones-d-and-e.md](zones-d-and-e.md)).
+- **M2-13 / M2-14** (zones F–I) — bosses built on the DSL, the bending lasers and the colour-blind
+  palettes' real-art variants (a PNG override of a bullet sprite needs its own `@<palette>`
+  variants).
 - **M2-16** (options) — the bullet palette joins the display options group.

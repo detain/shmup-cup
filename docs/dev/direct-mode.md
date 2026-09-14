@@ -399,4 +399,8 @@ for (let t = 0; t < 600; t++) stepWorld(world, input);
   by zone A's `tender` carriers and completed formations; `zones-bc-direct.test.ts` flies both with
   the MANTA ([zones-b-and-c.md](zones-b-and-c.md#direct-mode-item-plans)). The yellow item's damage
   to mid-bosses is still planned.
-- **M2-12 … M2-14** — the other zones' `directItems` plans and carrier waves.
+- **M2-12** (done) — zones D and E have their own `directItems` plans (26 entries each);
+  `zones-de-direct.test.ts` flies both with the MANTA — down MAGMA DEEP's dive, through its brick
+  maze and past TEMPEST RIDGE's rear attackers — and its weapons shoot CINDER BASTION and SQUALL
+  STEED down ([zones-d-and-e.md](zones-d-and-e.md#direct-mode-item-plans)).
+- **M2-13 / M2-14** — the other zones' `directItems` plans and carrier waves.

@@ -346,10 +346,10 @@ the replay contains them (a session recorded through `createReplayGame` has no k
 
 ## Golden replays (`test/golden/`)
 
-Thirty-three committed runs — seventeen of zone A, since M2-07 three of the `gimmick-range` dev
+Thirty-eight committed runs — seventeen of zone A, since M2-07 three of the `gimmick-range` dev
 stage, since M2-08 one of the `raster-range` dev stage, since M2-09 four of the advanced-boss
-dev stages, since M2-10 three of the bonus-stage dev stages and since M2-11 five of the real zones
-B and C — pin down what the simulation does (`test/golden/golden.ts` `GOLDEN_SCENARIOS`, recorded
+dev stages, since M2-10 three of the bonus-stage dev stages, since M2-11 five of the real zones
+B and C and since M2-12 five of the real zones D and E — pin down what the simulation does (`test/golden/golden.ts` `GOLDEN_SCENARIOS`, recorded
 from the M1-18 playtest bots with the build id `'golden'`):
 
 | File | Who plays | Covers | Ends |
@@ -387,6 +387,11 @@ from the M1-18 playtest bots with the build id `'golden'`):
 | `brine-grotto-god.replay.json` (M2-11) | 4-way bot, god mode, full loadout, `stage: 'brine-grotto'` (seed 71) | PEARL GROTTO, zone B's bonus stage: its carriers' bonus capsules and the 1UP, no boss | `stageClear` after 1,815 ticks, 10,400 points, no deaths |
 | `zone-b-deaths.replay.json` (M2-11 tests) | `weaverBot()`, Arcade penalty (seed 72) | deaths among the bubbles, checkpoint restarts, game over | `gameOver` after 4,412 ticks (deaths at 2,718 / 3,382 / 4,319) |
 | `zone-c-bot.replay.json` (M2-11 tests) | 4-way bot, no god mode (seed 73) | a death and a Classic respawn in place, SANDGRAVE WIDOW shot down | `stageClear` after 14,783 ticks, 57,340 points, one death (4,565) |
+| `zone-d-god.replay.json` (M2-12) | 4-way bot, god mode, `stage: 'zone-d'` (seed 1) | MAGMA DEEP start to clear: the erupting caldera fields, the dive into the caves, the brick maze, the lava river, CINDER BASTION's three phases | `stageClear` after 13,698 ticks, 54,000 points, no deaths |
+| `zone-e-god.replay.json` (M2-12) | 4-way bot, god mode, `stage: 'zone-e'` (seed 1) | TEMPEST RIDGE start to clear: kites and jumpers from behind, the thunderheads, the gale run, SQUALL STEED's three phases | `stageClear` after 14,736 ticks, 54,590 points, no deaths |
+| `zone-d-bot.replay.json` (M2-12 tests) | 4-way bot, no god mode (seed 77) | a death down in the caves and a Classic respawn in place there, CINDER BASTION shot down | `stageClear` after 14,634 ticks, 55,330 points, one death (9,564) |
+| `zone-d-boss.replay.json` (M2-12 tests) | 4-way bot, full loadout, Arcade penalty, `stageSkip: 'boss'` (seed 75) | the stage skip into the caves: CINDER BASTION's core shot through the turning arms | `stageClear` after 1,301 ticks, 40,200 points, no deaths |
+| `zone-e-bot.replay.json` (M2-12 tests) | 4-way bot, no god mode (seed 74) | the rear attackers against a ship that can die, a death and a Classic respawn in place, SQUALL STEED shot down | `stageClear` after 14,427 ticks, 56,040 points, one death (8,961) |
 
 The 4-way bot survives zone A even at Arcade, which is why the death scenario uses a careless
 weaving pilot. The files were re-blessed on purpose by M2-01 (`b31fac5`): rank growth changes
@@ -459,6 +464,13 @@ points (was 70,450) —, and its test round added `zone-b-deaths` and `zone-c-bo
 any other file. `golden.test.ts` checks both zones cleared in 3–6 minutes with their bosses shot
 down, the grotto's items, and the deaths and restarts of the two no-god runs
 ([zones-b-and-c.md](zones-b-and-c.md#determinism-hashing-and-golden-replays)).
+M2-12 re-blessed them all again (`022d0b6`: the zone D / E sprites and behaviour scripts shift the
+sorted sprite and script ids — all 33 older files kept their inputs, tick counts, headers and
+outcomes) and added `zone-d-god` and `zone-e-god`; its test round added `zone-d-bot`,
+`zone-d-boss` and `zone-e-bot` without changing any other file. `playGolden` takes an optional
+per-tick observer since then (`golden.test.ts` checks that `zone-d-bot`'s death happened down in
+the caves — camera y 200 — and its respawn in place there); the file-name rule allows `zone-d-*`
+and `zone-e-*` ([zones-d-and-e.md](zones-d-and-e.md#determinism-hashing-and-golden-replays)).
 Each file is an encoded replay plus the scenario's `description` and its
 `expected` outcome (status, ticks, player 1's score and lives, death ticks, boss killed — and for
 a co-op run player 2's score, lives, death ticks and continues).
@@ -503,7 +515,7 @@ timing needs a quiet machine. CI runs it after `pnpm build`.
 
 | Budget | Constant | Limit | At M1-19 |
 |---|---|---|---|
-| `app.js` gzipped | `APP_JS_GZIP_BUDGET` | 350 KB (launch ≤ 10 s, `shmup_feat.md` §23) | 228.6 KB (773.6 KB raw); **307.5 KB after M2-11** (the inlined content grows with every zone — zones B and C ≈ 6 KB) |
+| `app.js` gzipped | `APP_JS_GZIP_BUDGET` | 350 KB (launch ≤ 10 s, `shmup_feat.md` §23) | 228.6 KB (773.6 KB raw); **307.5 KB after M2-11**, **313.5 KB after M2-12** (the inlined content grows with every zone — ≈ 6 KB a pair) |
 | Atlas page edge | `ATLAS_PAGE_MAX_SIZE` | 2048 px (and every page must be a readable PNG — `pngSize` reads its IHDR) | one page |
 | Whole `dist/` | `DIST_BUDGET` | 8 MB | 812.4 KB |
 
@@ -624,10 +636,10 @@ testers in [../client/debug-tools.md](../client/debug-tools.md#the-m1-release-ch
 - **M2-09** (done) — `hashWorld` mixes every boss slot, the raid camera, the boss rush and the
   World's ending flags; the debug outlines cover every boss slot; golden replays re-blessed, four
   advanced-boss scenarios added ([advanced-bosses.md](advanced-bosses.md)).
-- **M2-10** / **M2-11** (done) — the bonus-stage and zone B / C goldens (above); every simulation
-  change re-blessed the files in the same commit.
-- **M2-12 … M2-14** — every simulation change re-blesses the golden replays in the same commit;
-  zones D–I add golden replays each.
+- **M2-10** / **M2-11** / **M2-12** (done) — the bonus-stage and zone B–E goldens (above); every
+  simulation change re-blessed the files in the same commit.
+- **M2-13 / M2-14** — every simulation change re-blesses the golden replays in the same commit;
+  zones F–I add golden replays each.
 - **M2-15** — attract mode plays bundled replays (and the scene flow gets recorded).
 - **M2-17** — the device info (model, firmware) in the debug overlay.
 - **M2-18** — cross-engine determinism: golden replays in Chromium and Firefox.

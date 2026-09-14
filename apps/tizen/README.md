@@ -41,8 +41,8 @@ the polyfill, `config.xml` / `icon.png` are present, every other file lives unde
 page exists under `dist/assets/atlas/` (the shell cannot boot without it), and — since M1-19 — the
 **budgets** hold: `app.js` ≤ 350 KB gzipped, every atlas page a PNG of at most 2048², the whole
 `dist/` ≤ 8 MB (`APP_JS_GZIP_BUDGET`, `ATLAS_PAGE_MAX_SIZE`, `DIST_BUDGET`; at M1-19 `app.js` is
-228.6 KB gzipped and `dist/` 812.4 KB; after M2-11 `app.js` is 307.5 KB gzipped — the shipped content
-is inlined, so every new zone adds to it). The checks are also exported as `checkTizenBundle(distDir)`
+228.6 KB gzipped and `dist/` 812.4 KB; after M2-11 `app.js` is 307.5 KB gzipped, after M2-12 313.5 KB
+— the shipped content is inlined, so every new zone adds to it). The checks are also exported as `checkTizenBundle(distDir)`
 (and `pngSize`) for the tests.
 
 ## Debug build (M1-19)
@@ -98,7 +98,8 @@ remote arrows and OK only; its OPTION row since M2-04, whose FORMATION / ROTATE 
 remote's Ch+ spreads in the game), and OK on its START plays **zone A, AZURE VERGE** (M1-18 — `@shmup/shell`
 `defaultStageId`; the dev scenes still fly in open space) and, since M2-10, the rest of the run
 across the zone map (the zone tally, the ZONE MAP driven by the remote's ▲ / ▼, OK and Back, since
-M2-11 the real zones B and C with zone B's secret bonus stage, the stub zones D–I, the ending) with
+M2-11 the real zones B and C with zone B's secret bonus stage, since M2-12 the real zones D — its
+dive into the caves and brick maze — and E, the stub zones F–I, the ending) with
 the remote's
 directional pad, its main gun firing on its own (`remoteMode` forces autofire,
 `shmup_feat.md` §4 rule 1), under the core HUD with the power meter. **Back** goes through the

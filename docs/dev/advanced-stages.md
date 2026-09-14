@@ -492,5 +492,11 @@ terrain.destroyed; // → 0; terrain.resets → 1
   and its sand worms (`worm.burst`: a `Ballistic` leader with a proximity trigger landing
   `BallisticLand.Pass`); zone B's bonus `gap` marked by two static blocks
   ([zones-b-and-c.md](zones-b-and-c.md)).
-- **M2-12 … M2-14** — the other zones: MAGMA DEEP (volcanoes, falling rocks, a destructible maze), CELL VAULT (tissue walls, tentacles), PRISM LABYRINTH (the cube
-  rush), IRON CITADEL (moving floors) — authored by hand or in Tiled.
+- **M2-12** (done) — MAGMA DEEP: erupting `magma-cone`s (`volcano.lob` throwing `rock.fall`
+  bombs), `cinder-rock`s dropping from the cave roofs (`rock.fall`, `trigger` 60), **the dive** (a
+  `hold` key with a `yTo` pan of 200 px into a 50-row map — checkpoints after it restart down in
+  the caves) and the **destructible brick maze** (seven `brick` walls written as `rle` rows over the
+  generated caves, each with a 48-px gap; the checkpoint rollback rebuilds them)
+  ([zones-d-and-e.md](zones-d-and-e.md#the-dive)).
+- **M2-13 / M2-14** — the other zones: CELL VAULT (tissue walls, tentacles), PRISM LABYRINTH (the
+  cube rush), IRON CITADEL (moving floors) — authored by hand or in Tiled.

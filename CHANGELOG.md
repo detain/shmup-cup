@@ -221,6 +221,32 @@ versions before 1.0 may change anything between minor releases. Development foll
   replays were re-blessed (the new sprites and scripts shift ids — inputs, tick counts and outcomes
   unchanged) and five zone B / C runs were added. The Tizen `app.js` is 307.5 KB gzip of its
   350 KB budget.
+- **Zone D, MAGMA DEEP** (M2-12) replaces its stand-in: about 3½ minutes over erupting volcanoes
+  throwing lava bombs, then a **dive** — the scrolling stops and the view sinks down into the caves
+  — with rocks dropping from the roof, a **maze of brick walls** (a gap in each, or shoot your way
+  through), a lava river over a colour-rolling lake of lava; the boss **CINDER BASTION** is a
+  battleship whose core hides behind turning shield arms, with lane lasers from two emitters. Its
+  own stage and boss music.
+- **Zone E, TEMPEST RIDGE** (M2-12) replaces its stand-in: about 4 minutes in a storm over jagged
+  mountains — rolling clouds, slanting rain —, kites and jets that come **from behind** and overtake
+  the ship, thunderheads firing needle streaks and a gale run; the boss **SQUALL STEED** is a
+  seahorse whose chest can only be hit while open, sending out little homing seahorses. Its own
+  music.
+- For content authors (M2-12): the behaviours `rear.swoop` (a rear attacker: in from behind along
+  its row, one shot back, away), `boss.bastion` (rotating shield arms as boss parts on a spinning
+  hub, attached lane lasers) and `boss.steed` (a bob, a `whenOpen` chest launching minis); taller
+  maps with a dive (`tilemap.rowsTall`, a `hold` key with a `yTo` pan), destructible walls as `rle`
+  rows, spawns behind the view (a negative `screenX`), rear-entry paths; the pattern `tempest.bolt`;
+  the tilesets `terrain-magma` / `terrain-ridge`; songs for zones D and E
+  ([`content/stages/README.md`](content/stages/README.md),
+  [`content/enemies/README.md`](content/enemies/README.md)).
+- Behaviour change for tools and tests (M2-12): the content test's zones block covers B–E (new types
+  counted against every zone a run can have flown before, ground enemies checked at the camera
+  height their event fires at, a lane limit per boss); the stage-runtime corridor check measures the
+  rows the camera shows; `playGolden` takes an optional per-tick observer. The golden replays were
+  re-blessed (new sprites and scripts shift ids — inputs, tick counts and outcomes unchanged) and
+  five zone D / E runs were added (38 in all). The Tizen `app.js` is 313.5 KB gzip of its 350 KB
+  budget.
 
 ### Documentation
 
@@ -258,7 +284,10 @@ versions before 1.0 may change anything between minor releases. Development foll
   (M2-10); the developer guide [`docs/dev/zones-b-and-c.md`](docs/dev/zones-b-and-c.md) and the
   tester guide's [Zone B: BRINE NEBULA](docs/client/preview-build.md#zone-b-brine-nebula) (with
   the secret bonus stage PEARL GROTTO) and
-  [Zone C: DUNE EXPANSE](docs/client/preview-build.md#zone-c-dune-expanse) (M2-11).
+  [Zone C: DUNE EXPANSE](docs/client/preview-build.md#zone-c-dune-expanse) (M2-11); the developer
+  guide [`docs/dev/zones-d-and-e.md`](docs/dev/zones-d-and-e.md) and the tester guide's
+  [Zone D: MAGMA DEEP](docs/client/preview-build.md#zone-d-magma-deep) and
+  [Zone E: TEMPEST RIDGE](docs/client/preview-build.md#zone-e-tempest-ridge) (M2-12).
 
 ## [0.1.0] — M1: playable vertical slice
 

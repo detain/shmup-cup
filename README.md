@@ -9,7 +9,7 @@ with the browser and Electron as additional targets.
 The [implementation plan](shmup_plan.md) is approved and under way. Progress per step is tracked in
 [`shmup_progress.md`](shmup_progress.md); milestone **M1 — playable vertical slice** is code-complete
 as version **0.1.0** ([`CHANGELOG.md`](CHANGELOG.md)) — its on-device release check on the monitors
-is next — and **M2 — complete v1.0** is under way (M2-01 … M2-11 done).
+is next — and **M2 — complete v1.0** is under way (M2-01 … M2-12 done).
 
 <!--
   Keep this section scannable: one entry per plan step, in plan order — a bold headline with the
@@ -549,6 +549,29 @@ is next — and **M2 — complete v1.0** is under way (M2-01 … M2-11 done).
     [zone C for testers](docs/client/preview-build.md#zone-c-dune-expanse) ·
     [authoring enemies](content/enemies/README.md)
 
+- **Zones D & E** (M2-12)
+  - **Zone D, MAGMA DEEP**: erupting volcanoes, ember streams and ash-bat swoops over the caldera,
+    then **the dive** — a scroll stop that pans the camera 200 px down into the caves of a 400-px-tall
+    map —, rocks falling from the cave roofs, a **destructible brick maze** (seven walls, a gap in
+    each, shoot through for the shortcut), a lava river over a palette-cycled lake that rises with
+    the dive, and the core battleship **CINDER BASTION** — its **rotating shield arms** are plain
+    boss parts on a spinning hub, plus attached lane lasers.
+  - **Zone E, TEMPEST RIDGE**: storm clouds, rain and jagged peaks in six parallax bands, **rear
+    attackers** (kites on rear-entry paths, jets on the new `rear.swoop`) that overtake the ship,
+    thunderheads firing needle streaks, a gale run and the seahorse **SQUALL STEED** — a chest that
+    opens to launch homing minis.
+  - New behaviours `rear.swoop`, `boss.bastion`, `boss.steed`; no engine change. Both zones with their
+    own songs, recoloured tilesets, Direct-mode item plans and procedural art (`magma.mjs`,
+    `tempest.mjs`).
+  - The 4-way bot clears both in 3–6 minutes (and, without god mode, with one death each); its runs
+    shaped the balance (gaps in every maze wall, a lower seahorse bob, a tougher core). The content
+    and corridor checks measure at the camera's height. Golden replays re-blessed (ids — same inputs,
+    ticks and outcomes); five zone D / E runs added. Tizen bundle 313.5 of 350 KB gzip.
+  - Docs: [developer guide](docs/dev/zones-d-and-e.md) ·
+    [zone D for testers](docs/client/preview-build.md#zone-d-magma-deep) ·
+    [zone E for testers](docs/client/preview-build.md#zone-e-tempest-ridge) ·
+    [authoring stages](content/stages/README.md)
+
 ### Hardware spike
 
 - The **input probe** — a diagnostic Tizen app that measures the Samsung remote, gamepads and
@@ -599,6 +622,7 @@ Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/ar
 [advanced bosses](docs/dev/advanced-bosses.md) ·
 [zone map, campaign runs & bonus stages](docs/dev/campaign-and-bonus-stages.md) ·
 [zones B & C](docs/dev/zones-b-and-c.md) ·
+[zones D & E](docs/dev/zones-d-and-e.md) ·
 [input profiles](docs/dev/input-profiles.md) ·
 [API reference](docs/dev/api-reference.md) ·
 [build, test & deploy](docs/dev/build-test-deploy.md) · [conventions](docs/dev/conventions.md).
@@ -625,7 +649,7 @@ versions (`devEngines.runtime`).
 ```sh
 pnpm -v               # must print 12.x — an older global pnpm fails with ERR_PNPM_BROKEN_LOCKFILE
 pnpm install          # set ELECTRON_SKIP_BINARY_DOWNLOAD=1 to skip the Electron binary
-pnpm dev              # browser dev app → http://localhost:5173 (F1–F8: debug tools): the title (Enter five times — PRESS OK, 1 PLAYER, NORMAL, KESTREL in the ship select, START in the weapon select — starts zone A, AZURE VERGE, the first of a run across the zone map (after each boss the tally, then Up / Down + Enter on the ZONE MAP choose the next zone); Down on the title picks 2 PLAYERS — a gamepad's START (or Enter with ?profile=keyboard-split) drops player 2 in; Down + Enter in the ship select flies the MANTA instead — its colour items power up on contact, Left Shift toggles its speed; in the weapon select ↑ / ←→ choose the weapon type, EDIT, the Option type, the ? shield, the ! choice and Auto Power-Up — V or a held Enter spreads FORMATION / ROTATE Options in the game; ?skip=boss starts every zone right before its boss (HALCYON BULWARK in zone A); Enter, Down, Down, Enter opens OPTIONS — volumes, controls, bullet colours, SCALE, SHAKE, FLASHES, HITBOX and BOSS HP, saved in localStorage; Esc pauses), then fly the KESTREL (arrows/WASD, gamepad; the first key press turns the sound on; Enter/C takes a power-up; ?scene=flight skips the title; ?stage=test-range scrolls the test stage, its enemies, their bullets and the power capsules; ?stage=test-boss plays the WARNING and the test boss; ?stage=hunter-range&loadout=full sends in the Option Hunters; ?stage=direct-range (then the MANTA) sends pincer waves of item carriers; ?stage=gimmick-range tries the M2-07 stage systems — bricks to shoot through, regrowing walls, rocks, bubbles, a volcano, suction, tentacles, the cube rush, moving blocks, a pan, a fork; ?stage=raster-range shows the M2-08 raster effects and palette cycling — a waving, colour-rolling sea, a line-band floor, heat haze; ?stage=captain-range / raid-range / twin-range / gauntlet-range play the M2-09 advanced bosses — mid-bosses on the scrolling screen, the IRON LEVIATHAN raid with its heart and time limit, the twins' turns, a boss rush; ?stage=bonus-range tries the M2-10 hidden bonus entrances into the bonus vault; ?stage=zone-b / zone-c plays BRINE NEBULA / DUNE EXPANSE alone and ?stage=brine-grotto zone B's bonus stage PEARL GROTTO (M2-11); ?stage=zone-d … zone-i plays one stub zone alone; ?profile=keyboard-remote-emulation feels like the TV remote; ?profile=keyboard-split puts two players on one keyboard; ?scene=showcase / ?scene=calibration / ?scene=fx-gallery)
+pnpm dev              # browser dev app → http://localhost:5173 (F1–F8: debug tools): the title (Enter five times — PRESS OK, 1 PLAYER, NORMAL, KESTREL in the ship select, START in the weapon select — starts zone A, AZURE VERGE, the first of a run across the zone map (after each boss the tally, then Up / Down + Enter on the ZONE MAP choose the next zone); Down on the title picks 2 PLAYERS — a gamepad's START (or Enter with ?profile=keyboard-split) drops player 2 in; Down + Enter in the ship select flies the MANTA instead — its colour items power up on contact, Left Shift toggles its speed; in the weapon select ↑ / ←→ choose the weapon type, EDIT, the Option type, the ? shield, the ! choice and Auto Power-Up — V or a held Enter spreads FORMATION / ROTATE Options in the game; ?skip=boss starts every zone right before its boss (HALCYON BULWARK in zone A); Enter, Down, Down, Enter opens OPTIONS — volumes, controls, bullet colours, SCALE, SHAKE, FLASHES, HITBOX and BOSS HP, saved in localStorage; Esc pauses), then fly the KESTREL (arrows/WASD, gamepad; the first key press turns the sound on; Enter/C takes a power-up; ?scene=flight skips the title; ?stage=test-range scrolls the test stage, its enemies, their bullets and the power capsules; ?stage=test-boss plays the WARNING and the test boss; ?stage=hunter-range&loadout=full sends in the Option Hunters; ?stage=direct-range (then the MANTA) sends pincer waves of item carriers; ?stage=gimmick-range tries the M2-07 stage systems — bricks to shoot through, regrowing walls, rocks, bubbles, a volcano, suction, tentacles, the cube rush, moving blocks, a pan, a fork; ?stage=raster-range shows the M2-08 raster effects and palette cycling — a waving, colour-rolling sea, a line-band floor, heat haze; ?stage=captain-range / raid-range / twin-range / gauntlet-range play the M2-09 advanced bosses — mid-bosses on the scrolling screen, the IRON LEVIATHAN raid with its heart and time limit, the twins' turns, a boss rush; ?stage=bonus-range tries the M2-10 hidden bonus entrances into the bonus vault; ?stage=zone-b / zone-c plays BRINE NEBULA / DUNE EXPANSE alone and ?stage=brine-grotto zone B's bonus stage PEARL GROTTO (M2-11); ?stage=zone-d / zone-e plays MAGMA DEEP (the dive, the brick maze, CINDER BASTION) / TEMPEST RIDGE (rear attackers, SQUALL STEED) alone (M2-12); ?stage=zone-f … zone-i plays one stub zone alone; ?profile=keyboard-remote-emulation feels like the TV remote; ?profile=keyboard-split puts two players on one keyboard; ?scene=showcase / ?scene=calibration / ?scene=fx-gallery)
 pnpm lint             # ESLint (typescript-eslint + compat: chrome >= 69)
 pnpm typecheck        # tsc --noEmit everywhere
 pnpm test             # Vitest per package + repo integration tests
@@ -717,14 +741,14 @@ hitch in the overlay's frame graph, gamepad and keyboard — checklist in
 [`docs/client/debug-tools.md`](docs/client/debug-tools.md#the-m1-release-check). The M1 release
 is tagged `v0.1.0` on the final commit of step M1-19.
 
-Code: plan step **M2-12** (zones D & E) — M2-01
+Code: plan step **M2-13** (zones F & G) — M2-01
 (rank, difficulty presets, extends & continues) opened milestone **M2 — complete v1.0**, M2-02
 (pattern DSL, bending lasers, bullet cancel & readability), M2-03 (meter arsenal: loadouts B–D,
 Weapon Edit, parking & weapon select), M2-04 (Option & shield variants + Option Hunter), M2-05
 (Direct mode & ship select), M2-06 (two-player simultaneous co-op), M2-07 (advanced stage
 systems & Tiled import), M2-08 (presentation polish: raster effects, palettes, visual options) and
 M2-09 (advanced bosses: mid-bosses, raids, multi-bosses), M2-10 (zone map, campaign flow,
-transitions & bonus stages) and M2-11 (zones B & C) followed; every simulation change re-blesses the golden replays in the same
+transitions & bonus stages), M2-11 (zones B & C) and M2-12 (zones D & E) followed; every simulation change re-blesses the golden replays in the same
 commit. The per-step status board is [`shmup_progress.md`](shmup_progress.md).
 
 Also on hardware (unchanged, and still the gate for the remote control scheme): package and
@@ -747,8 +771,9 @@ MANTA — its colour items, the Arm and the speed toggle on the remote's Ch−, 
 the Options screen's SCALE, SHAKE, FLASHES and HITBOX and the brighter Mega Crash flash, and since
 M2-09 the BOSS HP bar during HALCYON BULWARK, and since M2-10 a whole **run across the zone map**
 with the remote — the zone tally, the ZONE MAP, the stub zones and an ending —, and since M2-11
-the real zones **BRINE NEBULA** and **DUNE EXPANSE**, their bosses and zone B's secret bonus stage
-(checklist in
+the real zones **BRINE NEBULA** and **DUNE EXPANSE**, their bosses and zone B's secret bonus stage,
+and since M2-12 **MAGMA DEEP** (the dive and the brick maze with the remote) and **TEMPEST RIDGE**
+(enemies from behind) with CINDER BASTION and SQUALL STEED (checklist in
 [`docs/client/preview-build.md`](docs/client/preview-build.md#on-the-samsung-smart-monitor--tv)).
 
 Desktop prerequisites: Git, Node 24 (22.12+), Tizen Studio **or** VS Code + Samsung Tizen extension (with a Samsung

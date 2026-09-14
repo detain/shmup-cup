@@ -78,7 +78,10 @@ hidden bonus-stage entrances into `bonus-vault` (guide:
 [`docs/dev/campaign-and-bonus-stages.md`](../../docs/dev/campaign-and-bonus-stages.md)). Since M2-11
 zones B and C are real — `?stage=zone-b` is BRINE NEBULA (GALVANIC MAW, the mid-boss SPUME HERALD,
 the gap into `?stage=brine-grotto`, PEARL GROTTO) and `?stage=zone-c` DUNE EXPANSE (SANDGRAVE WIDOW);
-D–I are still stubs (guide: [`docs/dev/zones-b-and-c.md`](../../docs/dev/zones-b-and-c.md)). Since M1-14 hits
+(guide: [`docs/dev/zones-b-and-c.md`](../../docs/dev/zones-b-and-c.md)); since M2-12 `?stage=zone-d` is
+MAGMA DEEP (the dive into the caves, the brick maze, CINDER BASTION — with `&skip=boss` it starts
+down in the caves) and `?stage=zone-e` TEMPEST RIDGE (rear attackers, SQUALL STEED); F–I are still
+stubs (guide: [`docs/dev/zones-d-and-e.md`](../../docs/dev/zones-d-and-e.md)). Since M1-14 hits
 have **game feel**: explosions, sparks, debris, cancel sparkles and a muzzle flash from the
 presets of `content/fx/`, the screen shake of a lost ship or a boss's final blast, flashes
 (behind a ≤ 3-a-second limiter), the WARNING's dim and rising score numbers;

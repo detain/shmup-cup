@@ -322,6 +322,7 @@ with a second bot; `scanLanes(world, scan, player)` scans from that ship).
 | `zone-a.test.ts` | God mode: the bot kills HB-01 and reaches `stageClear` in 3–6 minutes, never diagonal, x within ±4 of 64, the rules hold, and HB-01's last phase really overlaps two lanes. Without god mode: the run is recorded, `replayStage` reproduces its deaths and hash, the deaths are **printed, not asserted** (they measure the balance). With `stageSkip: 'boss'`: everything but the fight takes < 15 s |
 | `zone-a-recovery.test.ts` | The recovery rule at runtime: restarted at each zone A checkpoint and played perfectly (every enemy killed on its first on-screen tick), the capsules dropped before the next source beyond 900 px are exactly the ≥ 3 sources of the window — since M2-11 through the shared helper `recovery.ts` (`capsuleSources`, `perfectFrom`, `recoveryAt`) |
 | `zone-b.test.ts`, `zone-c.test.ts`, `zone-bc-recovery.test.ts` (M2-11) | The same for BRINE NEBULA and DUNE EXPANSE: god-mode clears in 3–6 minutes with the boss's three phases (and zone B's captain), the rules on every tick, a reported no-god run; the recovery rule at all eight checkpoints ([zones-b-and-c.md](zones-b-and-c.md#playtests-the-recovery-rule-and-the-harness)) |
+| `zone-d.test.ts`, `zone-e.test.ts`, `zone-de-recovery.test.ts` (M2-12) | The same for MAGMA DEEP (the camera reaching the caves, y 200) and TEMPEST RIDGE (the rear attackers): god-mode clears in 3–6 minutes (228 s and 246 s), the rules on every tick, a reported no-god run (one death each); the recovery rule at all eight checkpoints — zone D's third restarts down in the caves ([zones-d-and-e.md](zones-d-and-e.md#playtests-and-the-recovery-rule)) |
 | `campaign-routes-b.test.ts`, `campaign-routes-c.test.ts` (M2-10) | All 16 routes of the zone map flown in god mode with the campaign harness `campaign.ts` (`playRunZone`, `walkCampaignRoutes` — each zone a fresh World built as the scene flow builds it, the players carried): every zone cleared, the rank stage term = depth + 1, the score growing, an ending per route ([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md#using-it-headlessly)) |
 | `harness.test.ts`, `four-way-bot.test.ts`, `rules.test.ts` | The tooling itself: scripted bots, the tick limit, a terrain death to `gameOver` that replays; lane geometry, the danger scan, the decisions (including the two regressions), one-tick presses; the rules on hand-made lasers and bullets (merging, clipping, the off-playfield beam regression, the violation cap) |
 
@@ -364,7 +365,7 @@ in the right half of the playfield, with no console errors or atlas warnings.
 
 | To add… | Do this |
 |---|---|
-| A zone | The full recipe is in [zones-b-and-c.md](zones-b-and-c.md#building-the-next-zone-m2-12--m2-14). In short: `content/stages/<id>.stage.json` + its `enemies` / `paths` files (formats in the content READMEs); `pnpm content:check` (the corridor check of `stage-runtime.test.ts` covers every stage with terrain, and every shipped stage plays to `stageClear`); fly it with `?stage=<id>`, reach its boss with `&skip=boss`; add a `runStage('<id>', fourWayBot(), { godMode: true, observe: rules.observe })` test beside `zone-a.test.ts`, and its own 4-way / capsule-budget checks to `content.test.ts` |
+| A zone | The full recipe is in [zones-b-and-c.md](zones-b-and-c.md#building-the-next-zone-m2-12--m2-14) (and what a taller map, a maze or rear attackers add to it in [zones-d-and-e.md](zones-d-and-e.md)). In short: `content/stages/<id>.stage.json` + its `enemies` / `paths` files (formats in the content READMEs); `pnpm content:check` (the corridor check of `stage-runtime.test.ts` covers every stage with terrain, and every shipped stage plays to `stageClear`); fly it with `?stage=<id>`, reach its boss with `&skip=boss`; add a `runStage('<id>', fourWayBot(), { godMode: true, observe: rules.observe })` test beside `zone-a.test.ts`, and its own 4-way / capsule-budget checks to `content.test.ts` |
 | Another default stage | `DEFAULT_STAGE_ID` in `@shmup/shell`; since M2-10 only a stage that is the campaign's `start` zone gives campaign runs (else the flow plays it as a single stage) |
 | A boss built on `boss.bulwark` | An `enemies` entry whose phases name it, with two or more `gun` parts (the lanes alternate between them in part order); keep the guns ≥ 16 px + beam width + 2 × hurt radius apart and the core between them if the lanes may overlap — the content test's geometry check shows how |
 | A new rule for the 4-way checks | A pure function of the World in `rules.ts`, collected in `createRuleWatch`, with a hand-made test in `rules.test.ts` |
@@ -425,4 +426,10 @@ in the right half of the playfield, with no console errors or atlas warnings.
 - **M2-11** (done) — zones B and C, each with a playtest run, its own block of design-rule checks
   in `content.test.ts` and its recovery checkpoints; the harness reads the main encounter; the
   recovery rule moved into `recovery.ts` ([zones-b-and-c.md](zones-b-and-c.md)).
-- **M2-12 … M2-14** — the other real zones, the same way.
+- **M2-12** (done) — zones D and E the same way; the content block became "zones B–E" (new types
+  counted against every zone flown before, ground placement at the camera y, per-boss lane
+  limits) and the corridor check measures the camera's rows ([zones-d-and-e.md](zones-d-and-e.md)).
+  The bot's runs changed the content: gaps in every maze wall, no turrets or crawlers between the
+  walls, a lower seahorse bob, a tougher bastion core
+  ([zones-d-and-e.md](zones-d-and-e.md#balance-found-by-the-bot)).
+- **M2-13 / M2-14** — the other real zones, the same way.

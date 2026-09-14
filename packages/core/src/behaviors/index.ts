@@ -930,9 +930,13 @@ const wormBurst = defineBehavior(
  *
  * @remarks
  * The motion is one `Waypoint` mover (approach, hold, leave), so the script wakes once: at the
- * shot. The wake is timed from the straight distance to the turn point (whole ticks). A rear
- * attacker is dodged like anything else with four directions: it keeps its row, so the ship
- * leaves that row while it overtakes and again while it flies back.
+ * shot, `⌈|turnX − x| / speed⌉ + (hold >> 1) + 1` ticks after it starts. The distance counts
+ * either way — one spawned right of `turnX` flies back to it first and still fires half-way
+ * through its hold (M2-12 test round: timing it as if it stood there already put the shot inside
+ * the settle time, where it was dropped). A `hold` below 1 is one tick, a `speed` of 0 or less is
+ * 1 px/tick, `ways` is floored. A rear attacker is dodged like anything else with four
+ * directions: it keeps its row, so the ship leaves that row while it overtakes and again while it
+ * flies back. Guide: `docs/dev/zones-d-and-e.md`.
  */
 const rearSwoop = defineBehavior(
   'rear.swoop',

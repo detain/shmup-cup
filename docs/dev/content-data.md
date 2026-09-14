@@ -510,3 +510,12 @@ M2-11 (done) — **no schema change**: zones B and C are content on the existing
 `paths/zone-c.paths.json`, `patterns/zones.patterns.json`, `tilesets/terrain-reef` /
 `terrain-dune.tileset.json` and four stage-scoped songs in `audio/music/`. The shell's boot and
 loader tests list the new files among the shipped ones ([zones-b-and-c.md](zones-b-and-c.md)).
+
+M2-12 (done) — again **no schema change**: zones D and E are content on the existing kinds —
+`stages/zone-d.stage.json` (a 50-row map — `tilemap.rowsTall` — with `rle` brick rows over its
+heightfield, a `hold` key with a `yTo` pan) and `zone-e.stage.json` (negative `screenX` spawns for
+the rear attackers, six parallax bands), `enemies/zone-d.enemies.json` / `zone-e.enemies.json`,
+`paths/zone-d.paths.json` / `zone-e.paths.json`, `tempest.bolt` in `patterns/zones.patterns.json`,
+`tilesets/terrain-magma` / `terrain-ridge.tileset.json` and four stage-scoped songs. A boss part
+with neither `hurtbox` nor `radius` (CINDER BASTION's `hub`) was already valid: it is never hit or
+touched, only placed — and turned ([zones-d-and-e.md](zones-d-and-e.md)).

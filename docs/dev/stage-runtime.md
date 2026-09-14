@@ -442,7 +442,8 @@ pnpm dev
 # → http://localhost:5173                      START plays zone A (M1-18); ?skip=boss starts near its boss
 # → http://localhost:5173/?stage=test-range   (or ?stage=test-boss — the boss range, M1-13)
 # → http://localhost:5173/?stage=zone-c       one zone of the campaign alone (DUNE EXPANSE since M2-11)
-# → http://localhost:5173/?stage=zone-d       a stub zone of the campaign alone (M2-10)
+# → http://localhost:5173/?stage=zone-d       MAGMA DEEP alone — the dive into its caves (M2-12)
+# → http://localhost:5173/?stage=zone-f       a stub zone of the campaign alone (M2-10)
 # → http://localhost:5173/?stage=bonus-range  the three bonus entrances into bonus-vault (M2-10)
 ```
 
@@ -528,6 +529,14 @@ cycle, a `boss` event for the captain SPUME HERALD, two `block`s marking a `gap`
 EXPANSE, 9,600 px, `terrain-dune`, four checkpoints, a 1.3 px/tick sandstorm run, `haze` rasters)
 ([zones-b-and-c.md](zones-b-and-c.md)).
 
+M2-12 replaced D and E: `zone-d.stage.json` (MAGMA DEEP, 9,600 px, `terrain-magma`, a **50-row map**
+— `tilemap.rowsTall` — whose camera key at 3,560 holds 150 ticks while it pans 200 px down, `yTo`
+200: **the dive** into the caves, where the camera stays; seven `brick` walls written as `rle` rows
+over the heightfield — the destructible maze —, a 1.3 px/tick lava river) and `zone-e.stage.json`
+(TEMPEST RIDGE, 9,800 px, `terrain-ridge`, steep heightfield floors, six parallax bands, rear
+attackers spawned at a negative `screenX`, a 1.4 px/tick gale run) — content only, on the runner as
+it is; a checkpoint behind the dive restarts at camera y 200 ([zones-d-and-e.md](zones-d-and-e.md#the-dive)).
+
 Headless:
 
 ```ts
@@ -566,7 +575,7 @@ world.stage!.restartAt(1); // back to x 1500: speed, pan and flags as live play 
 | `packages/core/test/debug/` | `hashWorld` covers the stage state and the players' hit fields |
 | `packages/render-pixi/test/layers/layers-stage*.test.ts`, `renderer/` | The terrain ring and parallax bands ([rendering-and-shell.md](rendering-and-shell.md#tests)) |
 | `packages/shell/test/flight/`, `apps/web/test/boot/` | The flight scene with a stage (no starfield, stage name, the World's views); `stageFromSearch`, `contentStageIds`, the unknown-id warning |
-| `test/integration/stage-terrain.test.ts`, `stage-runtime.test.ts` | Tileset masks = atlas pixels; `test-range` expands with existing frames and a pinned grid fingerprint; **every shipped stage with terrain** (`test-range`, and zone A since M1-18) leaves a ≥ 48-px corridor in every pixel column and a clear spawn at every checkpoint; every shipped stage plays to `stageClear` deterministically, also after a restart at each checkpoint; the World collides with the tiles the renderer draws |
+| `test/integration/stage-terrain.test.ts`, `stage-runtime.test.ts` | Tileset masks = atlas pixels; `test-range` expands with existing frames and a pinned grid fingerprint; **every shipped stage with terrain** (`test-range`, and zone A since M1-18) leaves a ≥ 48-px corridor in every pixel column and a clear spawn at every checkpoint — since M2-12 measured in the rows the camera shows when the ship (view x ≈ 64) reaches the column (a stage runner alongside; zone D's caves are map rows 200–399); every shipped stage plays to `stageClear` deterministically, also after a restart at each checkpoint; the World collides with the tiles the renderer draws |
 | `test/e2e/stage.spec.ts` | In Chromium: `?stage=test-range` shows terrain inside the playfield only and scrolls it while the ship stays put (captures 30 frames apart since M1-08 — see Gotchas); an unknown id boots free flight |
 | `test/e2e/gimmicks.spec.ts` | M2-07: `?stage=gimmick-range` draws the brick pillar; breaking it in the sim takes it off the next frame, the rollback draws it again |
 
@@ -595,6 +604,8 @@ world.stage!.restartAt(1); // back to x 1500: speed, pan and flags as live play 
 | The skipped part of a stage never spawned after `jumpTo` | By design: events between the old and the new x never fire (the debug stage skip jumps over them) |
 | An event with a `branch` never fires | Its branch's flag did not have the branch's value when the camera reached it — the event is passed by for good (it does not wait for the flag) |
 | The camera stops without a lock or a boss | A `hold` key (M2-07): it scrolls on after `hold` ticks |
+| After `jumpTo` past a `yTo` pan, the ship sits in rock at the top of the view | `jumpTo` moves the camera, not the ships (zone D's dive, M2-12): spawn the ship again at the new view (`spawnPlayer(ship, world.camera)`, or `core/debug` `jumpToCheckpoint`, which does) |
+| A check of open space or ground at "the playfield rows" fails on a taller map | Rows 0–215 are only the camera's rows before a vertical pan; measure at the camera y the runner has at that x (run a stage runner alongside) |
 | The `test-range` fingerprint test fails | The stage file or the generator changed. If intended, re-pin the value in `stage-runtime.test.ts` and say why in the commit |
 | A browser test that measures the scroll between two screenshots misses the shift | With enemies drawn and e2e files running in parallel, the frame loop may run up to 4 ticks per frame, so a frame count says little about the ticks run. Freeze the sim and step exact ticks (`freezeSim` / `stepTo` in `test/e2e/frame-advance.ts`): the stage test captures at tick 90 and 30 ticks later and expects a 30 px shift |
 
@@ -642,3 +653,5 @@ world.stage!.restartAt(1); // back to x 1500: speed, pan and flags as live play 
   `bonus-range` / `bonus-vault` dev stages ([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md)).
 - **M2-11** (done) — the real zones B and C and zone B's bonus stage — content only, on the runner
   as it is ([zones-b-and-c.md](zones-b-and-c.md)).
+- **M2-12** (done) — the real zones D (a taller map and a dive — a `hold` key with a `yTo` pan) and
+  E (rear attackers at a negative `screenX`) — content only ([zones-d-and-e.md](zones-d-and-e.md)).
