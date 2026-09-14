@@ -298,6 +298,18 @@ records as `assisted` ([debug-and-replays.md](debug-and-replays.md#release-build
   same commit** with `pnpm golden:update`, and the commit message says why; never edit the files
   by hand (Prettier skips them). An unintended golden failure is a bug, not a re-bless
   ([debug-and-replays.md](debug-and-replays.md#golden-replays-testgolden)).
+- **Tests run in parallel** ([build-test-deploy.md](build-test-deploy.md#test-concurrency)):
+  every Vitest file in its own forked worker, every Playwright test in its own browser context,
+  in any order — a test never depends on another test or file having run first, and never
+  writes to a fixed path another test reads (use a temp dir). A Playwright file whose tests
+  truly must share state says so with `test.describe.configure({ mode: 'serial' })`; none does
+  today.
+- **Allocation guards** run in the shared worker pool, next to everything else: a guard of a
+  cheap loop (microseconds a call) gets a long warm-up, e.g. 20,000 calls — with the default the
+  measured windows can still run before V8's background compile has landed, and the guard fails
+  for nothing the code does (render-pixi's `sprites-interpolation` guard did one run in ten even
+  on an idle machine, core's `patterns-ballistic` guard on a busy one; both warm up 20,000 calls
+  since).
 - Browser specs that compare two captures a known number of ticks apart freeze the sim and step
   exact ticks (`test/e2e/frame-advance.ts` — `freezeSim`, `stepTo`); never count rAF frames, the
   loop runs 1–4 ticks per frame under load.

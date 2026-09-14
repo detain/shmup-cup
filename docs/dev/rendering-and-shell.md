@@ -784,8 +784,9 @@ pnpm test:e2e                                        # builds web + tizen, then 
   frame is letterboxed and no marker shows.
 - `frame-advance.ts` (M1-19) — `freezeSim(page)` and `stepTo(page, tick)`: specs that compare two
   captures a set number of ticks apart freeze the sim and run exact ticks, because under load the
-  frame loop runs 1–4 ticks per rAF frame. Playwright uses half the cores, at most 8 workers
-  (SwiftShader is itself multi-threaded).
+  frame loop runs 1–4 ticks per rAF frame. Playwright runs every test in parallel on one browser
+  per five cores, at least two (`E2E_WORKERS` overrides; SwiftShader is itself multi-threaded —
+  [build-test-deploy.md](build-test-deploy.md#test-concurrency)).
 
 Chromium flags (why each exists is in the config's docblock): `--use-angle=swiftshader
 --enable-unsafe-swiftshader` (software WebGL), `--allow-file-access-from-files` (see

@@ -40,10 +40,10 @@ desktop app, run `pnpm rebuild electron` without the variable set.
 | `pnpm build` | `turbo run build`: packages (`tsc` → `dist/`), `apps/web` (Vite), `apps/tizen` (Vite + bundle check), `apps/electron` (`tsc` + copy of the web build) |
 | `pnpm typecheck` | Every project's `tsc --noEmit` for `src/` and `test/`, plus the root tooling (`typecheck:root`) |
 | `pnpm lint` | ESLint `--max-warnings=0` per project, plus root files (`lint:root`) |
-| `pnpm test` | Every project's `vitest run` plus `test:integration` (repo-level `test/`) |
-| `pnpm test:all` | One Vitest process over all projects (root `vitest.config.ts`) — quickest full run |
+| `pnpm test` | `vitest run`: every project — packages, apps and the repo-level `test/` (`integration`) — in one Vitest process with one shared worker pool ([Test concurrency](#test-concurrency)) |
+| `pnpm test:all` | The same run (kept as an alias) |
 | `pnpm test:integration` | Only the repo-level `test/` project |
-| `pnpm test:e2e` | Browser smoke tests: `turbo run build:test` for `@shmup/web` and `@shmup/tizen` (test builds — the release code plus the debug tools and `window.__shmupDebug`, M1-19), then Playwright (`test/e2e/playwright.config.ts`) in headless Chromium with SwiftShader WebGL — the web build via `vite preview` (port 4173) and the Tizen `dist/index.html` via `file://`. Needs Chromium once per machine: `pnpm exec playwright install --with-deps chromium`. See [rendering-and-shell.md](rendering-and-shell.md#browser-tests-pnpm-teste2e) |
+| `pnpm test:e2e` | Browser smoke tests: `turbo run build:test` for `@shmup/web` and `@shmup/tizen` (test builds — the release code plus the debug tools and `window.__shmupDebug`, M1-19), then Playwright (`test/e2e/playwright.config.ts`) in headless Chromium with SwiftShader WebGL — the web build via `vite preview` (port 4173) and the Tizen `dist/index.html` via `file://`; every test in parallel ([Test concurrency](#test-concurrency)). Extra arguments go to Playwright (`pnpm test:e2e --shard=1/5`, `pnpm test:e2e boss`). Needs Chromium once per machine: `pnpm exec playwright install --with-deps chromium`. See [rendering-and-shell.md](rendering-and-shell.md#browser-tests-pnpm-teste2e) |
 | `pnpm golden:update` | Re-blesses the golden replays (`scripts/golden-update.mjs`: Vitest on `test/golden` with `SHMUP_GOLDEN_UPDATE=1` — re-records every scenario of `test/golden/golden.ts` from its bot, rewrites `test/golden/*.replay.json`, then checks them). Only for an **intended** simulation change, in the same commit, with the reason in the commit message — see [debug-and-replays.md](debug-and-replays.md#golden-replays-testgolden) |
 | `pnpm bench` | The stress benchmark (`test/bench/`, own Vitest config, `--expose-gc`): 20,000 ticks with 512 bullets, 64 enemies, the full loadout and four lasers; prints ms/tick and heap growth, fails at a median ≥ 1.0 ms/tick or ≥ 512 KB heap growth. Not part of `pnpm test`; CI runs it after the build — see [debug-and-replays.md](debug-and-replays.md#the-stress-benchmark-pnpm-bench) |
 | `pnpm format` / `pnpm format:check` | Prettier write / check (research docs at the root are ignored) |
@@ -77,7 +77,10 @@ never contains them. Extra arguments go to the tool:
   costs one hash when nothing changed ([asset-pipeline.md](asset-pipeline.md#running-it)).
 - `typecheck`, `lint` and `test` depend on the no-op `transit` task, so their caches are
   invalidated by upstream *source* changes without forcing upstream builds — they read
-  workspace packages from source (`@shmup/source` condition), not from `dist/`.
+  workspace packages from source (`@shmup/source` condition), not from `dist/`. `pnpm test`
+  itself does not go through Turborepo (one Vitest process instead, see
+  [Test concurrency](#test-concurrency)); the per-package `test` tasks remain for
+  `pnpm turbo run test --filter=<pkg>`.
 - Root tasks (`//#typecheck:root`, `//#lint:root`, `//#test:integration`) and `dev` /
   `clean` are never cached.
 - `globalDependencies` (`eslint.config.js`, `tsconfig.base.json`, `.browserslistrc`,
@@ -89,7 +92,7 @@ never contains them. Extra arguments go to the tool:
   only a content file or a sprite would replay a cached `dist/` with stale inlined data.
   Any new root-level input a task reads belongs here too.
 
-A cache hit prints `cache hit, replaying logs`. To force a rerun: `pnpm turbo run test --force`.
+A cache hit prints `cache hit, replaying logs`. To force a rerun: `pnpm turbo run build --force`.
 
 ## Build outputs
 
@@ -210,7 +213,8 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   `packages/core/test/helpers/alloc.ts` measures the bytes a hot path allocates (heap growth
   plus what in-loop GCs reclaimed, via V8's `GCProfiler`). It needs `--expose-gc`, which
   `defineShmupProject(name, { execArgv: ['--expose-gc'] })` passes to the Vitest workers of
-  `@shmup/core` and `@shmup/shell`. `stepWorld` must stay under 256 KB per 10,000 ticks, a
+  `@shmup/core` and `@shmup/shell`. A cheap loop (microseconds a call) needs a long warm-up
+  ([conventions.md](conventions.md#tests)). `stepWorld` must stay under 256 KB per 10,000 ticks, a
   64-enemy World under 64 KB — see
   [sim-world.md](sim-world.md#zero-allocation-and-the-allocation-guard) and
   [enemies-and-behaviors.md](enemies-and-behaviors.md#zero-allocation-and-the-hot-path-rules).
@@ -338,7 +342,8 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   open `?scene=flight` (bare gameplay, open space unless `?stage=` names a stage) since M1-16;
   specs comparing captures a set number of ticks apart freeze the sim and step exact ticks
   (`test/e2e/frame-advance.ts`, M1-19) instead of counting rAF frames. Since M1-19 the suite runs
-  on the **test builds** (`build:test`), and Playwright uses half the cores, at most 8 workers.
+  on the **test builds** (`build:test`), every test in parallel on one browser per five cores
+  ([Test concurrency](#test-concurrency)).
   Output goes to `test/e2e/test-results/` (git- and Prettier-ignored).
 - **Dev query parameters** of the web build (`pnpm dev`, `vite preview`; without `?scene=` the
   game starts on the title — the scene flow, M1-16 — and START plays zone A, AZURE VERGE, M1-18):
@@ -368,17 +373,61 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   override) — see [input-profiles.md](input-profiles.md#choosing-the-active-profile). The TV
   widget starts without a query string.
 
+## Test concurrency
+
+**Vitest** (`pnpm test`, root `vitest.config.ts`): one process runs every project with one pool
+of `cores − 1` forked workers (47 on the 48-vCPU dev box, 3 on a CI runner), and starts the
+test files **longest first** across all projects (`LongestFirstSequencer`, from the durations
+Vitest cached on the last run; files that failed last time or are new go first) — so the
+whole-campaign playtests do not end the run alone. `pnpm --filter <pkg> test` runs one package's
+config the same way.
+
+`pnpm test` used to be `turbo run test test:integration`: nine Vitest processes at once, each
+with a worker per core — about nine busy workers per core. That starved V8's background compiler
+threads, so the allocation guards' short measured windows ran in the lower tiers (which box
+doubles) and failed now and then for nothing the code did. One pool keeps the machine at about
+one worker per core: the guards passed 21 full runs in a row (a separate low-parallelism group
+for them, also tried, added 8–12 s a run and was no steadier), and the run needs ~40 % less CPU.
+The wall time shrank less than the CPU (53–56 s, before 63–71 s): the dev box's throughput (48
+vCPUs on hyper-threaded host cores) and the longest files (the campaign playtests, ~27 s alone)
+bound it. Keep test files independent of each other and of their order — see
+[conventions.md](conventions.md#tests).
+
+**Playwright** (`pnpm test:e2e`, `test/e2e/playwright.config.ts`): `fullyParallel` — every test
+(each has its own browser context: fresh `localStorage`, its own page on the shared
+`vite preview` server) can run on any worker — on `max(2, ⌊cores / 5⌋)` browsers (9 on the dev
+box, 2 on a CI runner). SwiftShader renders each page on up to 16 threads of its own, so the run
+is CPU-bound: on 48 cores 8–12 browsers took 150–180 s, while 16 and 24 made frame-paced tests
+time out. CI splits the tests over five runners (`--shard=i/5`).
+
+| Variable | Default | Effect |
+|---|---|---|
+| `VITEST_MAX_WORKERS` | `cores − 1` | Vitest's own: the worker pool of `pnpm test` (lower it to share a busy machine) |
+| `E2E_WORKERS` | `max(2, ⌊cores / 5⌋)` | Playwright browsers of `pnpm test:e2e` |
+
+Do not turn on Vitest's `fsModuleCache`: with it render-pixi's `sprites-interpolation` guard
+measured over its budget one run in four (the cached module code tiers up differently).
+
 ## CI
 
-`.github/workflows/ci.yml` on every push to `master` and every pull request:
-`pnpm/action-setup` (version from `packageManager`) → `actions/setup-node` (`.nvmrc`,
-pnpm cache) → `pnpm install --frozen-lockfile` → `pnpm lint` → `pnpm typecheck` →
-`pnpm test` (golden replays included) → `pnpm build` (Tizen budgets included) → `pnpm bench`
-(M1-19), with `ELECTRON_SKIP_BINARY_DOWNLOAD=1` (Electron is only
-type-checked, tested and compiled) and Turborepo telemetry off. A parallel **`e2e`** job
-installs the same way, runs `pnpm exec playwright install --with-deps chromium` and then
-`pnpm test:e2e` (test builds); the `input-probe` job builds and tests `tools/input-probe` with npm. Commit `pnpm-lock.yaml`
-whenever dependencies change, or the frozen install fails.
+`.github/workflows/ci.yml` on every push to `master` and every pull request, as parallel jobs
+on GitHub's 4-vCPU runners — the run takes as long as its slowest job. Each job installs on its
+own: `pnpm/action-setup` (version from `packageManager`) → `actions/setup-node` (`.nvmrc`, pnpm
+cache) → `pnpm install --frozen-lockfile`, with `ELECTRON_SKIP_BINARY_DOWNLOAD=1` (Electron is
+only type-checked, tested and compiled) and Turborepo telemetry off.
+
+| Job | Runs |
+|---|---|
+| `format · lint` | `pnpm format:check`, `pnpm lint` |
+| `typecheck` | `pnpm typecheck` |
+| `test 1/3` … `3/3` | `pnpm test --shard=<i>/3` (golden replays included): Vitest's shards split the test files by path hash |
+| `build · benchmark` | `pnpm build` (Tizen budgets included), then `pnpm bench` (M1-19) alone on its runner |
+| `e2e 1/5` … `5/5` | `pnpm exec playwright install --with-deps chromium`, then `pnpm test:e2e --shard=<i>/5`: each shard builds its own test builds and runs a fifth of the tests (one retry on CI) |
+| `input probe` | `tools/input-probe` with npm |
+
+The matrices do not fail fast, so every shard reports. A newer push to the same branch cancels
+the running workflow (`concurrency`). Commit `pnpm-lock.yaml` whenever dependencies change, or
+the frozen install fails.
 
 ## Troubleshooting
 
@@ -405,7 +454,7 @@ whenever dependencies change, or the frozen install fails.
 | `pnpm test:e2e` hangs or times out creating WebGL contexts | A stale `DISPLAY` (forwarded X display of an SSH session) — the config already strips it for the browser; if you launch Chromium by hand, unset `DISPLAY` |
 | `pnpm test:e2e`: port 4173 already in use | Another `vite preview` is running; locally it is reused (`reuseExistingServer`), so make sure it serves a current `apps/web/dist`, or stop it |
 | A test fails with `measureHeapGrowth needs node --expose-gc` | The package's `vitest.config.ts` lacks `defineShmupProject(name, { execArgv: ['--expose-gc'] })` |
-| An allocation test (`… toBeLessThan(…)` on `growth.bytes`) fails | A hot path allocates: a new object / array / closure per tick, or a fractional number V8 boxes (a fractional `let` in a closure, a mixed ternary, a fractional argument) — see [sim-world.md](sim-world.md#zero-allocation-and-the-allocation-guard). If it fails only now and then in a full `pnpm test` (Turborepo runs every package at once) and always passes alone (`pnpm --filter <package> test`), it is JIT / GC noise under load — seen occasionally in core's `game-world.test.ts` and render-pixi's `sprites-edge.test.ts`; rerun, and report it if it keeps happening |
+| An allocation test (`… toBeLessThan(…)` on `growth.bytes`) fails | A hot path allocates: a new object / array / closure per tick, or a fractional number V8 boxes (a fractional `let` in a closure, a mixed ternary, a fractional argument) — see [sim-world.md](sim-world.md#zero-allocation-and-the-allocation-guard). If it fails only now and then and always passes alone (`pnpm --filter <package> test <file>`), it is JIT noise: a cheap loop needs a long warm-up (e.g. 20,000 calls — V8's optimised code must land before the measured windows), a guard flaky under load may take more windows (`attempts`); report it if it keeps happening. A machine busy with something else (a second `pnpm test`, Playwright) makes every guard less steady — `VITEST_MAX_WORKERS=<n>` leaves it room |
 | `golden.test.ts` fails: a hash or the outcome differs | The simulation changed. Unintended: find the change (the report names the first diverging hash tick). Intended: `pnpm golden:update`, review the diff of `test/golden/*.replay.json`, commit it with the reason — [debug-and-replays.md](debug-and-replays.md#gotchas) |
 | `pnpm bench` fails on the median | Timing: run it alone on a quiet machine. On the heap: something in the tick allocates — see the allocation guard rows above |
 | Tizen build fails with `app.js is … gzipped, over the … budget` (or an atlas page / `dist/` budget) | The bundle grew past a plan budget (`check-bundle.mjs` rule 8). Find what grew (a new dependency, inlined data); raising a budget is a plan decision, not a fix |

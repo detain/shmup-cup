@@ -25,10 +25,10 @@ shmup-cup/
 ├── eslint.config.js        flat config: typescript-eslint (type-aware), compat (chrome >= 69), jsdoc, core purity rules
 ├── vite.shared.ts          @shmup/source resolve conditions shared by Vite + Vitest; shmupContent() → virtual:shmup-content; shmupAssets() → virtual:shmup-assets + dist/assets/atlas/; shmupBuildInfo() → __SHMUP_DEV__ / __SHMUP_BUILD__ (M1-19)
 ├── vitest.shared.ts        defineShmupProject(): per-project Vitest defaults (tests in test/, Node env, optional worker execArgv such as --expose-gc)
-├── vitest.config.ts        Vitest *projects*: packages/*, apps/*, test (→ `pnpm test:all`)
+├── vitest.config.ts        Vitest *projects*: packages/*, apps/*, test — one process, one worker pool, longest file first (→ `pnpm test` / `pnpm test:all`)
 ├── .browserslistrc         chrome >= 69 (Tizen 5.5) for eslint-plugin-compat
 ├── .editorconfig  .prettierrc.json  .prettierignore  .nvmrc (Node 24)  .gitignore
-├── .github/workflows/ci.yml   install (frozen) → lint → typecheck → test (golden replays) → build (Tizen budgets) → bench; job e2e (Playwright Chromium → pnpm test:e2e on the test builds); ELECTRON_SKIP_BINARY_DOWNLOAD=1
+├── .github/workflows/ci.yml   parallel jobs, each installing (frozen): format + lint, typecheck, test ×3 shards (golden replays), build (Tizen budgets) + bench, e2e ×5 shards (Playwright Chromium → pnpm test:e2e on the test builds), input probe; ELECTRON_SKIP_BINARY_DOWNLOAD=1
 │
 ├── packages/               reusable libraries (the "engine + game")
 │   ├── core/               @shmup/core — PURE TS: no DOM/WebGL/audio/Node/platform APIs, no clocks, no Math.random
@@ -172,7 +172,7 @@ Each package's `exports` has a custom **`@shmup/source`** condition pointing at
 pnpm install            # also links workspace packages
 pnpm dev                # browser dev app on http://localhost:5173
 pnpm lint | typecheck | test | build
-pnpm test:all           # every Vitest project in one process
+pnpm test:all           # same as pnpm test: every Vitest project in one process
 pnpm test:e2e           # build web + tizen test builds, then browser smoke tests (headless Chromium, Playwright)
 pnpm --filter @shmup/tizen build    # TV bundle (release) + bundle check with size budgets
 pnpm --filter @shmup/tizen build:dev  # TV debug build (debug tools behind Pause, Ch+ ×3) for on-device checks

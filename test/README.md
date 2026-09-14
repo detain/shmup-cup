@@ -83,8 +83,8 @@ live in each package's own `test/` folder (never next to sources).
 | `e2e/smoke.spec.ts` (Playwright, `pnpm test:e2e`) | The M1 gameplay smoke (M1-19) on the web build and the Tizen `dist/` via `file://`: title → OK, OK → hold → then ↑ for 2.5 s each → `window.__shmupDebug.sceneId === 'game'`, the World ticked, the ship alive or flying in → no console errors; F1 / F2 on the web (overlay, god mode); on the TV build the tools stay locked until Pause, Ch+, Ch+, Ch+ (key codes 10252 / 427), then show the overlay and answer the number keys |
 | `e2e/debug-tools.spec.ts` (Playwright, `pnpm test:e2e`) | The debug tools (M1-19): web — F4 freezes the World, each F5 runs one tick, `game.requestStep(n)` exactly n, F7 / F8 move the camera to the next checkpoint / just before the WARNING, F3 / F6 cycle, F4 again runs; Tizen from disk — after the unlock 4 freezes and 5 steps one tick; the `frame-advance.ts` helpers (`freezeSim` holds a dev scene, `stepTo` reaches the exact tick) |
 
-Run: `pnpm test:integration` (part of `pnpm test`), or `pnpm test:all` to run every
-Vitest project (all packages + this one) in one process. The playtest's run summaries (`[playtest]
+Run: `pnpm test:integration` (part of `pnpm test`, which runs every Vitest project — all
+packages + this one — in one process). The playtest's run summaries (`[playtest]
 zone-a four-way (god mode): stageClear after … s, …` and the deaths of the run without god mode)
 show with the verbose reporter: `pnpm exec vitest run --project integration test/playtest
 --reporter=verbose` — guide: [`docs/dev/zone-a-and-playtest.md`](../docs/dev/zone-a-and-playtest.md). The golden

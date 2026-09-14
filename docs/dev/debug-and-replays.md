@@ -586,8 +586,10 @@ in dist/ (812.4 KB of 8192.0 KB)`. `checkTizenBundle(dir)` also returns `gzipByt
   apart use them (`stage.spec.ts`: captures at World tick 90 and 30 ticks later, expecting a
   29–31 px shift; `enemies.spec.ts`: 15-tick steps until the drifters show, then 20 ticks) —
   the frame loop runs 1–4 ticks per rAF frame under load, so counting frames was flaky.
-- `playwright.config.ts` caps the workers at half the cores, at most 8 (SwiftShader is itself
-  multi-threaded; more workers only starve the pages).
+- `playwright.config.ts` runs every test in parallel (`fullyParallel`) on one browser per five
+  cores, at least two (`E2E_WORKERS` overrides): SwiftShader is itself multi-threaded, and more
+  browsers starve the frame-paced pages — see
+  [build-test-deploy.md](build-test-deploy.md#test-concurrency).
 
 ## Version 0.1.0 and the M1 release check
 
