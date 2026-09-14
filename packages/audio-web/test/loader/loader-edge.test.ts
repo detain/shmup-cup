@@ -2,9 +2,10 @@
  * Edge cases of the audio loader (plan M1-15): schema errors of both content kinds with their
  * JSON paths, relative-URL rules, frozen results, bindings of invalid tracks not claimed, cue
  * resolution whatever the file order, `stageMusicCues` corner cases (Silence themes, the sim's own
- * cues first named by events), `toAudioBuffer` of an empty sound, every XHR outcome, callback-only
- * decoders, and the default OGG path through the **global** `XMLHttpRequest` and
- * `OfflineAudioContext(2, 1, 32000)` (decision D22) with loop points scaled to the decoded rate.
+ * cues first named by events, a final zone's ending and credits themes — M2-14), `toAudioBuffer`
+ * of an empty sound, every XHR outcome, callback-only decoders, and the default OGG path through
+ * the **global** `XMLHttpRequest` and `OfflineAudioContext(2, 1, 32000)` (decision D22) with loop
+ * points scaled to the decoded rate.
  */
 import {
   MUSIC_CUES,
@@ -375,6 +376,54 @@ describe('audio-web/loader stageMusicCues (edge)', () => {
         ]),
       ),
     ).toEqual([MUSIC_CUES.Stage, MUSIC_CUES.GameOver, MUSIC_CUES.StageClear, MUSIC_CUES.Escape]);
+  });
+
+  it("adds a final zone's ending and credits themes once, last; Silence, -1 and absent add nothing (M2-14)", () => {
+    const final = (
+      ending: number | undefined,
+      credits: number | undefined,
+      events: StageEvent[] = [],
+    ): Pick<StageSpec, 'music' | 'events'> => ({
+      music: {
+        stage: '',
+        stageId: MUSIC_CUES.Stage,
+        boss: '',
+        bossId: MUSIC_CUES.FinalBoss,
+        ...(ending === undefined ? {} : { ending: '', endingId: ending }),
+        ...(credits === undefined ? {} : { credits: '', creditsId: credits }),
+      },
+      events,
+    });
+    const base = [
+      MUSIC_CUES.Stage,
+      MUSIC_CUES.FinalBoss,
+      MUSIC_CUES.StageClear,
+      MUSIC_CUES.GameOver,
+    ];
+    // Absent on a hand-built spec, unresolved (-1) or Silence: nothing more.
+    expect(stageMusicCues(final(undefined, undefined))).toEqual(base);
+    expect(stageMusicCues(final(-1, -1))).toEqual(base);
+    expect(stageMusicCues(final(MUSIC_CUES.Silence, MUSIC_CUES.Silence))).toEqual(base);
+    // One theme for both: listed once.
+    expect(stageMusicCues(final(MUSIC_CUES.Ending, MUSIC_CUES.Ending))).toEqual([
+      ...base,
+      MUSIC_CUES.Ending,
+    ]);
+    // Only the credits theme.
+    expect(stageMusicCues(final(undefined, MUSIC_CUES.Credits))).toEqual([
+      ...base,
+      MUSIC_CUES.Credits,
+    ]);
+    // A theme the stage already uses keeps its first-use place (a music event, the boss theme).
+    expect(
+      stageMusicCues(final(MUSIC_CUES.Ending, MUSIC_CUES.FinalBoss, [music(MUSIC_CUES.Ending)])),
+    ).toEqual([
+      MUSIC_CUES.Stage,
+      MUSIC_CUES.FinalBoss,
+      MUSIC_CUES.Ending,
+      MUSIC_CUES.StageClear,
+      MUSIC_CUES.GameOver,
+    ]);
   });
 
   it('returns a new array each time', () => {

@@ -951,7 +951,8 @@ export interface BossScriptApi {
    * evenly spaced bullets of `kind` at `speed` (× the rank's speed scale), the pattern turned `step`
    * binary units further each volley (negative = counter-clockwise). The boss system fires it
    * every tick (`runScript`), so a fast spiral costs the script no wakes — the coroutine starts it
-   * once per phase. A phase change stops it; the first volley comes `every` ticks after the call.
+   * once per phase. A phase change stops it and turns its heading back to 0 (the next phase's
+   * stream starts there); the first volley comes `every` ticks after the call.
    *
    * @param ways - Bullets per volley per core (floored; ≤ 0 = stop).
    * @param every - Ticks between volleys (floored, at least 1).
@@ -2291,8 +2292,10 @@ class BossSystemImpl implements BossSystem {
     const entry = this.entries[boss.slot];
     boss.phase = phase;
     boss.phaseTicks = 0;
-    // A phase's stream is its script's to start (M2-14): the last phase's stops here.
+    // A phase's stream is its script's to start (M2-14): the last phase's stops here, and the next
+    // one's turns from heading 0 (`boss.sovereign`: "the spiral restarts from heading 0 each phase").
     boss.spiralWays = 0;
+    boss.spiralAngle = 0;
     const def = entry === null ? null : entry.behaviors[phase];
     boss.script =
       def === null || entry === null || def === undefined

@@ -3,8 +3,8 @@
  * `test/golden/<scenario>.replay.json` — zone A (and, since M2-07 / M2-08 / M2-09 / M2-10, the
  * `gimmick-range`, `raster-range`, `captain-range`, `raid-range`, `twin-range`, `bonus-range` and
  * `bonus-vault` dev stages; since M2-11 the real zones B and C and zone B's bonus stage; since
- * M2-12 zones D and E, since M2-13 zones F and G and zone G's bonus stage, with and without god
- * mode)
+ * M2-12 zones D and E, since M2-13 zones F and G and zone G's bonus stage, since M2-14 the final
+ * zones H and I, with and without god mode)
  * played by the 4-way bot and recorded with `core/replay` (the 4-way bot, or a careless weaving
  * pilot for the deaths) — plays back into a
  * fresh session with **every state hash** (one per 600 ticks and
@@ -363,6 +363,129 @@ describe('golden replays (zone A and the dev stages, playtest bots)', () => {
     );
     expect(king?.state).toBe(BossState.Dead);
     expect(king?.escaped).toBe(false);
+  });
+
+  it('covers zones H and I without god mode (M2-14 tests): the skips, Arcade rank, restarts, the escape', () => {
+    const db = shippedContent();
+    /**
+     * Plays a golden back and follows its bosses: every `<id>:<phase>` fought, each boss's last
+     * state, and the leftmost camera x.
+     *
+     * @param name - Scenario name.
+     * @returns The outcome, the final World, the phases fought, the bosses' last states and the
+     *   leftmost camera x.
+     */
+    const follow = (name: string) => {
+      const phases = new Set<string>();
+      const last = new Map<string, { state: number; escaped: boolean }>();
+      let first = Number.POSITIVE_INFINITY;
+      const { outcome, world } = playGolden(readGolden(name).replay, undefined, (w) => {
+        first = Math.min(first, w.camera.x);
+        for (const b of w.bosses.slots) {
+          if (b.specIndex < 0 || b.state === BossState.None) continue;
+          const id = db.enemies[b.specIndex].id;
+          if (b.state === BossState.Fight) phases.add(id + ':' + String(b.phase));
+          last.set(id, { state: b.state, escaped: b.escaped });
+        }
+      });
+      return { outcome, world, phases, last, first };
+    };
+    // The skip into IRON CITADEL lands before the parade's first echo (the skip stops before a
+    // `boss` event too): the four echoes of earlier bosses, each shot down before its time limit
+    // (captains: no ending flag), the core run, then IRON SOVEREIGN through all four phases.
+    const h = follow('zone-h-boss');
+    expect(readGolden('zone-h-boss').replay.header.config).toMatchObject({
+      stageSkip: 'boss',
+      loadout: 'full',
+      deathPenalty: 'arcade',
+    });
+    expect(h.outcome).toMatchObject({ status: 'stageClear', bossDefeated: true, deathTicks: [] });
+    expect(h.first).toBeGreaterThan(4400); // the parade hangar's checkpoint …
+    expect(h.first).toBeLessThan(4520); // … before BULWARK ECHO's `boss` event
+    for (const echo of ['echo-bulwark', 'echo-maw', 'echo-bastion', 'echo-regent']) {
+      expect(h.phases.has(echo + ':0'), echo).toBe(true);
+      expect(h.last.get(echo), echo).toEqual({ state: BossState.Dead, escaped: false });
+    }
+    expect([...h.phases].filter((p) => p.startsWith('iron-sovereign:')).sort()).toEqual([
+      'iron-sovereign:0',
+      'iron-sovereign:1',
+      'iron-sovereign:2',
+      'iron-sovereign:3',
+    ]);
+    expect(h.world.endingFlags).toBe(0);
+    // The skip to the ABYSS ARK: the raid in both phases, then the king in his three.
+    const i = follow('zone-i-boss');
+    expect(i.outcome).toMatchObject({ status: 'stageClear', bossDefeated: true, deathTicks: [] });
+    expect(i.first).toBeGreaterThan(8800); // skipped to the WARNING at 9,000
+    expect([...i.phases].sort()).toEqual([
+      'abyss-ark:0',
+      'abyss-ark:1',
+      'hollow-king:0',
+      'hollow-king:1',
+      'hollow-king:2',
+    ]);
+    expect(i.last.get('abyss-ark')).toEqual({ state: BossState.Dead, escaped: false });
+    expect(i.last.get('hollow-king')).toEqual({ state: BossState.Dead, escaped: false });
+    expect(i.world.endingFlags).toBe(0);
+    // Both skips take far less than a whole zone.
+    expect(i.outcome.ticks).toBeLessThan(h.outcome.ticks);
+    expect(h.outcome.ticks).toBeLessThan(readGolden('zone-h-god').file.expected.ticks);
+    // IRON CITADEL at Arcade difficulty: the 4-way bot survives the rank-scaled fire to the clear.
+    const arcade = readGolden('zone-h-arcade');
+    expect(arcade.replay.header).toMatchObject({ assisted: false });
+    expect(arcade.replay.header.config.difficulty).toBe('arcade');
+    expect(arcade.file.expected).toMatchObject({
+      status: 'stageClear',
+      bossDefeated: true,
+      deathTicks: [],
+    });
+    expect(arcade.file.expected.ticks / 60).toBeGreaterThanOrEqual(180);
+    expect(arcade.file.expected.ticks / 60).toBeLessThanOrEqual(360);
+    // The weaving pilot on Easy under the Arcade penalty: every death at the outer walls sends
+    // it back to the start (it never reaches the piston hall's checkpoint), until the game is over.
+    const deaths = readGolden('zone-h-deaths');
+    expect(deaths.replay.header.config).toMatchObject({
+      deathPenalty: 'arcade',
+      difficulty: 'easy',
+    });
+    expect(deaths.file.expected).toMatchObject({
+      status: 'gameOver',
+      lives: 0,
+      bossDefeated: false,
+    });
+    expect(deaths.file.expected.deathTicks.length).toBeGreaterThanOrEqual(4);
+    const deathTicks = new Set(deaths.file.expected.deathTicks);
+    const died: number[] = [];
+    const back: number[] = [];
+    let alive = true;
+    playGolden(deaths.replay, undefined, (world) => {
+      const ship = world.players[0];
+      if (deathTicks.has(world.tick - 1)) died.push(world.camera.x);
+      if (!alive && ship.state === 'alive') back.push(world.camera.x);
+      alive = ship.state === 'alive';
+    });
+    expect(died).toHaveLength(deathTicks.size);
+    expect(back).toHaveLength(died.length); // the start's fly-in, then one per restart but the last
+    for (const x of died) expect(x).toBeLessThan(2200);
+    for (const x of back) expect(x).toBeLessThan(60);
+    // The ARK outlasts a weaving pilot without power-ups: it escapes after its time limit — the
+    // ending flag the campaign's THE FLAGSHIP SLIPS AWAY is chosen by —, the king never appears,
+    // and the zone still clears.
+    const escape = follow('zone-i-escape');
+    expect(readGolden('zone-i-escape').replay.header.assisted).toBe(true);
+    expect(escape.outcome).toMatchObject({
+      status: 'stageClear',
+      bossDefeated: false,
+      deathTicks: [],
+    });
+    expect(escape.last.get('abyss-ark')).toEqual({ state: BossState.Dead, escaped: true });
+    expect(escape.last.has('hollow-king')).toBe(false);
+    expect(escape.world.endingFlags & EndingFlag.BossEscaped).toBe(EndingFlag.BossEscaped);
+    expect(escape.world.stage?.following).toBeNull();
+    // It fought the ARK for its whole 90-s time limit.
+    const ark = db.enemies[db.enemyIndex.get('abyss-ark') ?? -1];
+    expect(ark.boss?.timeLimit).toBe(5400);
+    expect(escape.outcome.ticks).toBeGreaterThan(5400);
   });
 
   it('covers the real zones F and G of M2-13: both cleared in 3–6 minutes, their bosses shot down, the cache', () => {

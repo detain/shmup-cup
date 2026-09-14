@@ -65,7 +65,12 @@
  * zones H and I with the 4-way bot and god mode, start to stage clear — `zone-h` (IRON CITADEL:
  * the piston hall, the parade of earlier bosses in reduced form, IRON SOVEREIGN's four-phase
  * finale) and `zone-i` (ABYSSAL THRONE: the depth mines, the trench eels, the ABYSS ARK raid and
- * THE HOLLOW KING inside it).
+ * THE HOLLOW KING inside it). Five more (M2-14 tests): the stage skips into zone H's parade hangar
+ * and to zone I's ARK with the full loadout under the Arcade penalty (the four echoes, IRON
+ * SOVEREIGN's four phases; the raid and THE HOLLOW KING), the 4-way bot through the whole of zone
+ * H at Arcade difficulty without god mode, the weaving pilot in zone H on Easy under the Arcade
+ * penalty (deaths, the restarts, `gameOver`) and, with god mode and no power-ups, the weaving pilot
+ * that lets the ARK escape after its time limit (the `bossEscaped` ending flag, no king).
  *
  * @module
  */
@@ -621,6 +626,51 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = Object.freeze([
     config: { seed: 95, stageSkip: 'boss', loadout: 'full', deathPenalty: 'arcade' },
     godMode: false,
     bot: 'four-way',
+  },
+  {
+    name: 'zone-h-boss',
+    description:
+      'the stage skip into the parade hangar of IRON CITADEL (M2-14 tests): the full loadout under the Arcade penalty, the four echoes of earlier bosses shot down, the core run, then IRON SOVEREIGN through its four phases',
+    stageId: 'zone-h',
+    config: { seed: 95, stageSkip: 'boss', loadout: 'full', deathPenalty: 'arcade' },
+    godMode: false,
+    bot: 'four-way',
+  },
+  {
+    name: 'zone-h-arcade',
+    description:
+      'IRON CITADEL at Arcade difficulty without god mode (M2-14 tests): the 4-way bot from the start against the rank-scaled fire — the piston hall, the laser emitters, the parade — to IRON SOVEREIGN shot down',
+    stageId: 'zone-h',
+    config: { seed: 91, difficulty: 'arcade' },
+    godMode: false,
+    bot: 'four-way',
+  },
+  {
+    name: 'zone-h-deaths',
+    description:
+      'IRON CITADEL on Easy under the Arcade penalty with a weaving pilot that never dodges (M2-14 tests): deaths at the outer walls, every restart back at the start, game over',
+    stageId: 'zone-h',
+    config: { seed: 91, deathPenalty: 'arcade', difficulty: 'easy' },
+    godMode: false,
+    bot: 'weaver',
+  },
+  {
+    name: 'zone-i-boss',
+    description:
+      'the stage skip to the ABYSS ARK (M2-14 tests): the full loadout under the Arcade penalty, the raid shot down in its two phases, then THE HOLLOW KING its final blast reveals through its three',
+    stageId: 'zone-i',
+    config: { seed: 95, stageSkip: 'boss', loadout: 'full', deathPenalty: 'arcade' },
+    godMode: false,
+    bot: 'four-way',
+  },
+  {
+    name: 'zone-i-escape',
+    description:
+      'the stage skip to the ABYSS ARK with a weaving pilot, god mode and no power-ups (M2-14 tests): the ARK outlasts it and sails off after its 90-s time limit — EndingFlag.BossEscaped, THE HOLLOW KING never revealed, stageClear',
+    stageId: 'zone-i',
+    config: { seed: 52, stageSkip: 'boss' },
+    godMode: true,
+    bot: 'weaver',
   },
 ]);
 

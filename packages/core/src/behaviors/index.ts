@@ -2854,13 +2854,17 @@ const bossArk = defineBossBehavior(
         fireIn = api.fireWait(p.fireTicks);
       }
       if (launchIn <= 0) {
+        // Each on-screen gun casts at most once a launch: the search runs once round the parts
+        // from `next` (kept fixed while it runs), and the next launch starts after the last caster.
         let launched = 0;
+        let after = next;
         for (let k = 0; k < n && launched < count; k++) {
           const i = (next + k) % n;
           if (!parts[i].gun || parts[i].destroyed || !api.launch(i)) continue;
           launched++;
-          next = i + 1;
+          after = i + 1;
         }
+        next = after;
         launchIn = api.fireWait(p.launchTicks);
       }
       if (ringIn <= 0) {

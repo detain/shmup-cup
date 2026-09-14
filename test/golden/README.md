@@ -4,8 +4,9 @@ Committed replays of zone A (AZURE VERGE) — and, since M2-07 / M2-08 / M2-09, 
 `gimmick-range`, `raster-range`, `captain-range`, `raid-range` and `twin-range` dev stages,
 since M2-10 of `bonus-range` and `bonus-vault`, since M2-11 of zones B and C (BRINE NEBULA,
 DUNE EXPANSE) and zone B's bonus stage `brine-grotto`, since M2-12 of zones D and E (MAGMA
-DEEP, TEMPEST RIDGE), and since M2-13 of zones F and G (CELL VAULT, PRISM LABYRINTH) and zone G's
-bonus stage `glimmer-cache` —
+DEEP, TEMPEST RIDGE), since M2-13 of zones F and G (CELL VAULT, PRISM LABYRINTH) and zone G's
+bonus stage `glimmer-cache`, and since M2-14 of the final zones H and I (IRON CITADEL, ABYSSAL
+THRONE) —
 that pin down what the simulation does (plan M1-19, `shmup_feat.md` §24). Each `<scenario>.replay.json` is a `core/replay` document — the header (every
 sim-affecting `GameConfig` field, the stage, god mode as `assisted`), every tick's input
 (`held | pressed << 16` per player, run-length encoded, base64), a state hash every 600 ticks and
@@ -61,6 +62,13 @@ continues).
 | `zone-g-bot` | 4-way playtest bot | PRISM LABYRINTH without god mode (M2-13 tests): a death in the cube rush and a Classic respawn in place, FACET MONARCH shot down, `stageClear` |
 | `zone-g-boss` | 4-way playtest bot, full loadout | the stage skip to FACET MONARCH (M2-13 tests) under the Arcade penalty: its crystals broken, the core behind them shot down through its three phases |
 | `glimmer-cache-god` | 4-way playtest bot, god mode, full loadout | GLIMMER CACHE, zone G's hidden bonus stage (M2-13): the bonus capsules and the 1UP collected, the cube rush and its cube walls, its `end` reached (no boss) |
+| `zone-h-god` | 4-way playtest bot, god mode | IRON CITADEL (M2-14) start to `stageClear`: the outer walls, the piston hall with its moving floors and laser emitters, the parade of four earlier bosses in reduced form, the core run, IRON SOVEREIGN shot down through its four phases |
+| `zone-h-boss` | 4-way playtest bot, full loadout | the stage skip into zone H's parade hangar (M2-14 tests) under the Arcade penalty: the four echoes shot down before their time limits, the core run, IRON SOVEREIGN's four phases |
+| `zone-h-arcade` | 4-way playtest bot | IRON CITADEL at Arcade difficulty without god mode (M2-14 tests): the rank-scaled fire survived through the piston hall and the parade, IRON SOVEREIGN shot down, `stageClear` |
+| `zone-h-deaths` | a weaving pilot that never dodges | IRON CITADEL on Easy under the Arcade penalty (M2-14 tests): deaths at the outer walls, every restart back at the start, `gameOver` |
+| `zone-i-god` | 4-way playtest bot, god mode | ABYSSAL THRONE (M2-14) start to `stageClear`: the descent, the trench's eels, the mine field, the undertow, the ABYSS ARK raid and THE HOLLOW KING its final blast reveals, both shot down |
+| `zone-i-boss` | 4-way playtest bot, full loadout | the stage skip to the ABYSS ARK (M2-14 tests) under the Arcade penalty: the raid's two phases, THE HOLLOW KING's three |
+| `zone-i-escape` | a weaving pilot, god mode, no power-ups | the stage skip to the ABYSS ARK (M2-14 tests): the ARK escapes after its 90-s time limit — `EndingFlag.BossEscaped` (the campaign's THE FLAGSHIP SLIPS AWAY), no king, `stageClear` |
 
 - `golden.test.ts` (part of `pnpm test`) plays every file back into a fresh session: every hash and
   the outcome must match. A failure means the simulation changed.

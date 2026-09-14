@@ -1,0 +1,90 @@
+{
+  "kind": "replay",
+  "header": {
+    "formatVersion": 1,
+    "buildId": "golden",
+    "seed": 91,
+    "stageId": "zone-h",
+    "checkpoint": -1,
+    "loadout": "default",
+    "assisted": false,
+    "config": {
+      "internalWidth": 384,
+      "internalHeight": 216,
+      "tickRate": 60,
+      "maxTicksPerFrame": 4,
+      "seed": 91,
+      "difficulty": "easy",
+      "rankBase": 0,
+      "rankGrowth": 0.5,
+      "extendFirst": 20000,
+      "extendEvery": 70000,
+      "continues": 5,
+      "bulletSpeedMul": 0.85,
+      "powerUpMode": "meter",
+      "shipId": "kestrel",
+      "deathPenalty": "arcade",
+      "startingLives": 5,
+      "autofire": true,
+      "remoteMode": true,
+      "stage": "zone-h",
+      "stageSkip": "none",
+      "aimDirections": 16,
+      "autofireInterval": 4,
+      "missileInterval": 10,
+      "loadout": "default",
+      "autoPowerUp": false,
+      "autoPowerUpOrder": [
+        "speed",
+        "missile",
+        "laser",
+        "option",
+        "option",
+        "option",
+        "option",
+        "shield"
+      ],
+      "pickupMagnet": true,
+      "weaponPreset": "type-a",
+      "weaponEdit": null,
+      "megaChoice": "megaCrash",
+      "shieldChoice": "forceField",
+      "optionChoice": "trail",
+      "coop": false,
+      "coopExtra": 0.5
+    }
+  },
+  "ticks": 5575,
+  "hashInterval": 600,
+  "inputs": [
+    "gYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIngYAEAQEngoAIAQIO",
+    "AMcr"
+  ],
+  "hashes": [
+    2456913582,
+    1443903817,
+    3655758598,
+    3429860222,
+    1074059801,
+    1473650804,
+    212260406,
+    4157719345,
+    1009685185
+  ],
+  "finalHash": 2938756934,
+  "description": "IRON CITADEL on Easy under the Arcade penalty with a weaving pilot that never dodges (M2-14 tests): deaths at the outer walls, every restart back at the start, game over",
+  "expected": {
+    "status": "gameOver",
+    "ticks": 5575,
+    "score": 5600,
+    "lives": 0,
+    "deathTicks": [
+      1034,
+      2122,
+      3267,
+      4394,
+      5482
+    ],
+    "bossDefeated": false
+  }
+}

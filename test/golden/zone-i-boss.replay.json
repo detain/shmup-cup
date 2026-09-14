@@ -1,0 +1,83 @@
+{
+  "kind": "replay",
+  "header": {
+    "formatVersion": 1,
+    "buildId": "golden",
+    "seed": 95,
+    "stageId": "zone-i",
+    "checkpoint": -1,
+    "loadout": "full",
+    "assisted": false,
+    "config": {
+      "internalWidth": 384,
+      "internalHeight": 216,
+      "tickRate": 60,
+      "maxTicksPerFrame": 4,
+      "seed": 95,
+      "difficulty": "normal",
+      "rankBase": 2,
+      "rankGrowth": 1,
+      "extendFirst": 20000,
+      "extendEvery": 70000,
+      "continues": 3,
+      "bulletSpeedMul": 1,
+      "powerUpMode": "meter",
+      "shipId": "kestrel",
+      "deathPenalty": "arcade",
+      "startingLives": 3,
+      "autofire": true,
+      "remoteMode": true,
+      "stage": "zone-i",
+      "stageSkip": "boss",
+      "aimDirections": 32,
+      "autofireInterval": 4,
+      "missileInterval": 10,
+      "loadout": "full",
+      "autoPowerUp": false,
+      "autoPowerUpOrder": [
+        "speed",
+        "missile",
+        "laser",
+        "option",
+        "option",
+        "option",
+        "option",
+        "shield"
+      ],
+      "pickupMagnet": true,
+      "weaponPreset": "type-a",
+      "weaponEdit": null,
+      "megaChoice": "megaCrash",
+      "shieldChoice": "forceField",
+      "optionChoice": "trail",
+      "coop": false,
+      "coopExtra": 0.5
+    }
+  },
+  "ticks": 5031,
+  "hashInterval": 600,
+  "inputs": [
+    "ACiCgAgBAgEAzQSBgAQBAQYAJIGABAEBBQBCgoAIAQIFABSCgAgBAgYALYKACAECCwBigYAEAQELABqBgAQBAQwABoGABAEBBgAQgoAIAQITAByBgAQBAQYAEIGABAGCgAgBAAmCgAgBgYAEAYKACAECBIGABAEBBAAOgYAEAQEFABKBgAQBgoAIAQIGAAqCgAgBAgwAHoGABAGCgAgBgYAEAQEMAAaBgAQBARIAMYGABAEBBQBUgYAEAYKACAGBgAQBAQYAHoKACAGBgAQBgoAIAQIMABqCgAgBAgKBgAQBgoAIAQIDAD6CgAgBgYAEAYKACAECAoGABAEBCABhgoAIAQISAC2CgAgBAgYAFIKACAECBQAmgYAEAQEFgoAIAQIFADOBgAQBAQUAJ4GABAEBBgBpgoAIAQIGAMIEgYAEAQEGABSBgAQBAQUAJoKACAGBgAQBgoAIAQIFAK4BgYAEAQEFAC+BgAQBAQYAP4KACAECBgChAYKACAGBgAQBAA+CgAgBAgUAc4KACAECBgACgYAEAQEMACeBgAQBAQYAOIKACAECBgB5goAIAQIFAAKBgAQBAQwAKoGABAEBBQAjgoAIAYGABAGCgAgBAgUAjwGBgAQBAQUANIGABAEBBQA3goAIAQIFACqCgAgBgYAEAYKACAECBQBBgoAIAQIGAKQBgoAIAQIFAEiCgAgBAgYAbIGABAEBBgB4gYAEAQEFAIsBgYAEAQEGAPQC",
+    "AKcn"
+  ],
+  "hashes": [
+    3071613594,
+    1213662497,
+    1304245123,
+    645299122,
+    2819260636,
+    2198668541,
+    721278812,
+    532013997
+  ],
+  "finalHash": 3661533664,
+  "description": "the stage skip to the ABYSS ARK (M2-14 tests): the full loadout under the Arcade penalty, the raid shot down in its two phases, then THE HOLLOW KING its final blast reveals through its three",
+  "expected": {
+    "status": "stageClear",
+    "ticks": 5031,
+    "score": 140150,
+    "lives": 5,
+    "deathTicks": [],
+    "bossDefeated": true
+  }
+}
