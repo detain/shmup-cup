@@ -100,4 +100,6 @@ bullet may `bulletRef` itself (no params) — the 512-bullet pool bounds it.
 [`common.patterns.json`](common.patterns.json) holds the shared library (`common.fan-5`,
 `common.spiral`, `common.ring`, `common.homing-ring`, `common.splitter`);
 [`test-sentry.enemies.json`](../enemies/test-sentry.enemies.json)'s `sentry` runs
-`common.spiral`.
+`common.spiral`. [`zones.patterns.json`](zones.patterns.json) (M2-11) holds the zones' own patterns:
+`brine.jelly-ring` (zone B's `reef-jelly`: a six-bullet ring, the first aimed, at 0.85 px/tick) and
+`dune.whirl` (zone C's `dust-devil`: a short two-armed spiral of needles at 1.1 px/tick).

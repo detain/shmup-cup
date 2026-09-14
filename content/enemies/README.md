@@ -122,6 +122,25 @@ grey, until it leaves the view (they are lost) or dies to a Mega Crash or a blue
 drift free and can be picked up again). Give it the `hunter.option` behaviour, a generous
 hurtbox and no `megaCrashImmune`.
 
+`zone-b.enemies.json` and `zone-c.enemies.json` (M2-11) are the rosters of the real zones B and C.
+BRINE NEBULA: `froth` (a splitting bubble → two `froth-bead`s, `bubble.split`), `froth-bead` (a small
+bubble, also flown in popcorn streams), `brood-bubble` (a bubble with a `gill-dart` fish inside —
+`bubble.split` with `count` 1), `gill-dart` (`rammer.aimed`), `reef-jelly` (`pattern.loop` on a sine
+mover: the `brine.jelly-ring` pattern of `content/patterns/zones.patterns.json`), `urchin` /
+`urchin-ceiling` (`turret.floor`), `maw-rocket` (`rocket.homing`: launched away from the middle
+row, homing for a while, then straight on), the captain **SPUME HERALD** (`spume-herald`,
+`captain.launcher` launching brood bubbles, a 30-s time limit) and the boss **GALVANIC MAW**
+(`galvanic-maw`, GM-02 — `boss.maw`: a mechanical fish tracking the player's height; its mouth, the
+`whenOpen` core, opens with its jaws — the parts attached to it — moving apart, fires cutters and,
+from the second phase, rings while open; the two rocket pods launch its `minion`, the homing
+rockets). DUNE EXPANSE: `dune-worm` (`worm.burst` on the floor: a formation is one worm),
+`husk-crawler` / `husk-crawler-floor` (`walker.floor` on the ceiling / floor), `sand-skimmer`
+(`fan.loop`), `dust-devil` (`pattern.loop`, the `dune.whirl` spiral), `sand-geyser` (`volcano.lob`)
+and its `sand-clod`s (`rock.fall`), `widow-drone` (`rammer.aimed`) and the boss **SANDGRAVE WIDOW**
+(`sandgrave-widow`, SW-03 — `boss.widow`: scuttling inside a box, spreads from its head — which
+takes damage only once its two fangs are gone —, spider drones launched from its spinnerets and,
+from the second phase, silk lines — telegraphed horizontal lasers, one at a time).
+
 Several files may exist (e.g. one per theme); ids must be unique across all of them.
 The bonus stages' drops (M2-10): `"drop": "oneUp"` leaves a 1UP (an extra life, up to 9) and
 `"drop": "bonusCapsule"` a gold bonus capsule worth 1,000 points — world-space items like the

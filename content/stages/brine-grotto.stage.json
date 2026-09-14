@@ -1,0 +1,193 @@
+{
+  "formatVersion": 1,
+  "kind": "stage",
+  "id": "brine-grotto",
+  "name": "PEARL GROTTO",
+  "type": "bonus",
+  "music": {
+    "stage": "Stage",
+    "boss": "Boss"
+  },
+  "length": 1800,
+  "camera": [
+    {
+      "x": 0,
+      "speed": 1,
+      "ramp": 30
+    }
+  ],
+  "checkpoints": [
+    {
+      "x": 0
+    }
+  ],
+  "parallax": [
+    {
+      "layer": "far",
+      "sprite": "bg/stars-far",
+      "factor": 0.25,
+      "y": 0,
+      "spacing": 128
+    },
+    {
+      "layer": "far",
+      "sprite": "bg/stars-far",
+      "factor": 0.25,
+      "y": 128,
+      "spacing": 128
+    },
+    {
+      "layer": "mid",
+      "sprite": "bg/brine-sea",
+      "factor": 0.4,
+      "y": 152,
+      "spacing": 128
+    }
+  ],
+  "tilemap": {
+    "tileSize": 8,
+    "tileset": "terrain-reef",
+    "rowsTall": 25,
+    "generator": {
+      "type": "heightfield",
+      "segments": [
+        {
+          "from": 100,
+          "to": 2100,
+          "floor": {
+            "base": 20,
+            "amp": 8,
+            "period": 260,
+            "seed": 66
+          },
+          "ceiling": {
+            "base": 20,
+            "amp": 8,
+            "period": 220,
+            "seed": 67
+          }
+        }
+      ]
+    }
+  },
+  "events": [
+    {
+      "x": 80,
+      "type": "formation",
+      "enemy": "vault-carrier",
+      "count": 3,
+      "interval": 24,
+      "y": 60,
+      "drop": null
+    },
+    {
+      "x": 200,
+      "type": "spawn",
+      "enemy": "froth",
+      "y": 140
+    },
+    {
+      "x": 300,
+      "type": "formation",
+      "enemy": "vault-carrier",
+      "count": 3,
+      "interval": 24,
+      "y": 130,
+      "drop": null
+    },
+    {
+      "x": 360,
+      "type": "block",
+      "screenX": 400,
+      "y": 32,
+      "w": 16,
+      "h": 72,
+      "tile": "brick"
+    },
+    {
+      "x": 520,
+      "type": "formation",
+      "enemy": "vault-carrier",
+      "count": 3,
+      "interval": 24,
+      "y": 150,
+      "drop": null
+    },
+    {
+      "x": 640,
+      "type": "spawn",
+      "enemy": "froth",
+      "y": 60
+    },
+    {
+      "x": 760,
+      "type": "formation",
+      "enemy": "vault-carrier",
+      "count": 3,
+      "interval": 24,
+      "y": 90,
+      "drop": null
+    },
+    {
+      "x": 900,
+      "type": "spawn",
+      "enemy": "vault-carrier-1up",
+      "y": 100
+    },
+    {
+      "x": 1000,
+      "type": "block",
+      "screenX": 400,
+      "y": 96,
+      "w": 16,
+      "h": 72,
+      "tile": "brick"
+    },
+    {
+      "x": 1080,
+      "type": "formation",
+      "enemy": "vault-carrier",
+      "count": 3,
+      "interval": 24,
+      "y": 60,
+      "drop": null
+    },
+    {
+      "x": 1200,
+      "type": "spawn",
+      "enemy": "froth",
+      "y": 120
+    },
+    {
+      "x": 1300,
+      "type": "formation",
+      "enemy": "vault-carrier",
+      "count": 3,
+      "interval": 24,
+      "y": 120,
+      "drop": null
+    },
+    {
+      "x": 1800,
+      "type": "end"
+    }
+  ],
+  "raster": [
+    {
+      "layer": "mid",
+      "kind": "wave",
+      "top": 152,
+      "bottom": 200,
+      "amplitude": 3,
+      "wavelength": 18,
+      "period": 100
+    }
+  ],
+  "cycles": [
+    {
+      "layer": "mid",
+      "colors": ["#10323e", "#184658", "#225c6e", "#2e7486"],
+      "ticks": 10
+    }
+  ]
+}

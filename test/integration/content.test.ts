@@ -193,11 +193,15 @@ describe('integration: content/ validates', () => {
     // Foreign kinds go to their owner; a kind nobody owns must not silently fall through.
     expect(foreign.map((file) => file.path)).toEqual([
       'audio/main.sfx.json',
+      'audio/music/boss-b.music.json',
+      'audio/music/boss-c.music.json',
       'audio/music/boss.music.json',
       'audio/music/game-over.music.json',
       'audio/music/stage-clear.music.json',
       'audio/music/title.music.json',
       'audio/music/zone-a.music.json',
+      'audio/music/zone-b.music.json',
+      'audio/music/zone-c.music.json',
       'fx/particles.fx.json',
       'input/remote.input-profiles.json',
     ]);
@@ -484,10 +488,14 @@ describe('integration: content/audio (M1-15)', () => {
     expect(issues).toEqual([]);
     expect(content.tracks.map((track) => track.id).sort()).toEqual([
       'boss',
+      'boss-b',
+      'boss-c',
       'game-over',
       'stage-clear',
       'title',
       'zone-a',
+      'zone-b',
+      'zone-c',
     ]);
     const { db } = loadContent(shippedFiles);
     for (const stage of db.stages) {
@@ -568,7 +576,15 @@ describe('integration: content/audio (M1-15)', () => {
   it('loops every looping song sample-exactly (the loop region = the unrolled steady state)', () => {
     const { content } = loadMusicContent(audioFiles('music'));
     const looping = content.tracks.filter((track) => typeof track.song?.loopFromOrder === 'number');
-    expect(looping.map((track) => track.id).sort()).toEqual(['boss', 'title', 'zone-a']);
+    expect(looping.map((track) => track.id).sort()).toEqual([
+      'boss',
+      'boss-b',
+      'boss-c',
+      'title',
+      'zone-a',
+      'zone-b',
+      'zone-c',
+    ]);
     for (const track of looping) {
       const song = track.song;
       if (song === null) continue;
@@ -975,6 +991,306 @@ describe('integration: zone A holds to the 4-way design rules (M1-18)', () => {
       const flash = manifest.sprites[sprite]?.flash ?? null;
       expect(flash, sprite).not.toBeNull();
       expect(manifest.sprites[flash ?? '']?.frames.length, sprite).toBe(frames(sprite));
+    }
+  });
+});
+
+describe('integration: zones B and C hold to the plan and the 4-way design rules (M2-11)', () => {
+  const db = shippedDb();
+  const stageOf = (id: string): StageSpec => db.stages[db.stageIndex.get(id) ?? -1];
+  const zoneA = new Set(
+    [...stageEnemies(db, stageOf('zone-a'))].map((index) => db.enemies[index].id),
+  );
+  /** Everything a zone's timeline can bring in, its boss's and captains' minions included. */
+  const zoneEnemies = (stage: StageSpec): Set<number> => {
+    const used = stageEnemies(db, stage);
+    for (const index of [...used]) {
+      const minion = db.enemies[index].boss?.minionId ?? -1;
+      if (minion >= 0) {
+        used.add(minion);
+        const child = db.enemies[minion].childId;
+        if (child >= 0) used.add(child);
+      }
+    }
+    return used;
+  };
+  const zones = [
+    {
+      id: 'zone-b',
+      name: 'BRINE NEBULA',
+      code: 'GM-02',
+      boss: 'GALVANIC MAW',
+      tileset: 'terrain-reef',
+    },
+    {
+      id: 'zone-c',
+      name: 'DUNE EXPANSE',
+      code: 'SW-03',
+      boss: 'SANDGRAVE WIDOW',
+      tileset: 'terrain-dune',
+    },
+  ];
+
+  it.each(zones)(
+    'ships $name with $boss ($code): 3–6 minutes, checkpoints, its own tileset and songs',
+    (zone) => {
+      const stage = stageOf(zone.id);
+      expect(stage.name).toBe(zone.name);
+      expect(stage.type).toBe('normal');
+      expect(stage.checkpoints.length).toBeGreaterThanOrEqual(4);
+      expect(stage.tilemap?.tileset).toBe(zone.tileset);
+      const warning = stage.events.find((e) => e.type === 'warning');
+      const boss = warning?.type === 'warning' ? db.enemies[warning.enemyId].boss : null;
+      expect(boss?.code).toBe(zone.code);
+      expect(boss?.displayName).toBe(zone.boss);
+      expect(boss?.phases).toHaveLength(3);
+      // The scroll takes 2.5–4.5 minutes to the WARNING; the fight brings the run to 3–6 minutes.
+      const runner = createStageRunner(stage, { event() {}, clear() {} });
+      let ticks = 0;
+      while (runner.camera.x < (warning?.x ?? 0) && ticks < 60 * 60 * 10) {
+        runner.tick();
+        ticks++;
+      }
+      expect(ticks / 60).toBeGreaterThanOrEqual(2.5 * 60);
+      expect(ticks / 60).toBeLessThanOrEqual(4.5 * 60);
+      // A high-speed section, then a calm before the WARNING with exactly two carriers.
+      expect(Math.max(...stage.camera.map((k) => k.speed))).toBeGreaterThanOrEqual(1.25);
+      const calmX = stage.camera[stage.camera.length - 1].x;
+      const calm = stage.events.filter(
+        (e) =>
+          e.x >= calmX && e.x < (warning?.x ?? 0) && (e.type === 'spawn' || e.type === 'formation'),
+      );
+      expect(calm.map((e) => ('enemyId' in e ? db.enemies[e.enemyId].script : ''))).toEqual([
+        'carrier.straight',
+        'carrier.straight',
+      ]);
+      // Its own Direct-mode item plan, stage theme and boss theme (stage-scoped tracks).
+      expect(stage.directItems?.length).toBeGreaterThanOrEqual(20);
+      const { content } = loadMusicContent(
+        shippedFiles.filter((file) => (file.data as { kind?: unknown }).kind === 'music'),
+      );
+      const table = resolveMusicCues(content, zone.id);
+      const letter = zone.id.slice(-1);
+      expect(content.tracks[table[MUSIC_CUES.Stage]]?.id).toBe(zone.id);
+      expect(content.tracks[table[MUSIC_CUES.Boss]]?.id).toBe(`boss-${letter}`);
+      // Zone A keeps its own.
+      const a = resolveMusicCues(content, 'zone-a');
+      expect(content.tracks[a[MUSIC_CUES.Stage]]?.id).toBe('zone-a');
+      expect(content.tracks[a[MUSIC_CUES.Boss]]?.id).toBe('boss');
+    },
+  );
+
+  it.each(zones)('brings 4–6 new enemy types to $name', (zone) => {
+    const stage = stageOf(zone.id);
+    const placed = new Set<string>();
+    for (const event of stage.events) {
+      if (event.type !== 'spawn' && event.type !== 'formation') continue;
+      const enemy = db.enemies[event.enemyId];
+      if (!zoneA.has(enemy.id)) placed.add(enemy.sprite);
+    }
+    expect(placed.size).toBeGreaterThanOrEqual(4);
+    expect(placed.size).toBeLessThanOrEqual(6);
+  });
+
+  it('gives BRINE NEBULA its bubbles, a fish inside a bubble, wavy water, a mid-boss and a hidden bonus stage', () => {
+    const stage = stageOf('zone-b');
+    const used = [...zoneEnemies(stage)].map((index) => db.enemies[index]);
+    const bubbles = used.filter((e) => e.script === 'bubble.split');
+    // Splitting bubbles (a bubble whose child is a bubble) and an enemy inside one.
+    expect(
+      bubbles.some((e) => e.childId >= 0 && db.enemies[e.childId].script === 'bubble.split'),
+    ).toBe(true);
+    expect(
+      bubbles.some((e) => e.childId >= 0 && db.enemies[e.childId].script !== 'bubble.split'),
+    ).toBe(true);
+    // Wavy raster water on the sea band, its colours cycling.
+    expect(stage.raster.some((r) => r.kind === 'wave' && r.layer === 'mid')).toBe(true);
+    expect(stage.cycles).toHaveLength(1);
+    // The mid-boss: a captain flying in with a `boss` event before the second half.
+    const captains = stage.events.filter(
+      (e) => e.type === 'boss' && db.enemies[e.enemyId].boss?.role === 'captain',
+    );
+    expect(captains).toHaveLength(1);
+    expect(captains[0].x).toBeLessThan(stage.length / 2);
+    // The boss: a mechanical fish with a mouth that opens (the core) and homing rockets.
+    const warning = stage.events.find((e) => e.type === 'warning');
+    const boss = warning?.type === 'warning' ? db.enemies[warning.enemyId].boss : null;
+    expect(boss?.parts.find((p) => p.core)?.vulnerable).toBe('whenOpen');
+    expect(boss?.phases.every((p) => p.script === 'boss.maw')).toBe(true);
+    expect(db.enemies[boss?.minionId ?? -1]?.script).toBe('rocket.homing');
+    // One hidden bonus stage: a gap entrance marked by two blocks, into a bonus stage.
+    const entrances = stage.events.filter((e) => e.type === 'bonus');
+    expect(entrances).toHaveLength(1);
+    const entrance = entrances[0];
+    if (entrance.type !== 'bonus') return;
+    expect(entrance.entrance).toBe('gap');
+    expect(stageOf(entrance.stage).type).toBe('bonus');
+    const region = entrance.region;
+    expect(region).not.toBeNull();
+    if (region === null || region === undefined) return;
+    const edges = stage.events
+      .filter((e) => e.type === 'block')
+      .map((e) => (e.type === 'block' ? e.x + (e.screenX ?? 400) : 0));
+    expect(edges).toContain(region.x - 16);
+    expect(edges).toContain(region.x + region.w);
+    // The bonus stage: bonus capsules and a 1UP.
+    const grotto = stageOf(entrance.stage);
+    const drops = [...stageEnemies(db, grotto)].map((index) => db.enemies[index].drop);
+    expect(drops).toContain('bonusCapsule');
+    expect(drops).toContain('oneUp');
+  });
+
+  it('gives DUNE EXPANSE sand worms from the dunes, ceiling walkers and a spider-spawning boss', () => {
+    const stage = stageOf('zone-c');
+    const worms = stage.events.filter(
+      (e) => e.type === 'formation' && db.enemies[e.enemyId].script === 'worm.burst',
+    );
+    expect(worms.length).toBeGreaterThanOrEqual(6);
+    for (const worm of worms)
+      expect(db.enemies[worm.type === 'formation' ? worm.enemyId : 0].ground).toBe('floor');
+    const walkers = stage.events.filter(
+      (e) =>
+        e.type === 'spawn' &&
+        db.enemies[e.enemyId].script === 'walker.floor' &&
+        db.enemies[e.enemyId].ground === 'ceiling',
+    );
+    expect(walkers.length).toBeGreaterThanOrEqual(4);
+    const warning = stage.events.find((e) => e.type === 'warning');
+    const boss = warning?.type === 'warning' ? db.enemies[warning.enemyId].boss : null;
+    expect(boss?.phases.every((p) => p.script === 'boss.widow')).toBe(true);
+    expect(db.enemies[boss?.minionId ?? -1]?.id).toBe('widow-drone');
+    // The head needs its two fangs gone first.
+    const head = boss?.parts.find((p) => p.core);
+    expect(head?.vulnerable).toBe('afterParts');
+    expect([...(head?.requires ?? [])].sort()).toEqual(['fang-bottom', 'fang-top']);
+  });
+
+  it.each(zones)(
+    'keeps every aimed bullet of $name at 2 px/tick or less (tunables and patterns)',
+    (zone) => {
+      const speeds: number[] = [];
+      for (const index of zoneEnemies(stageOf(zone.id))) {
+        const enemy = db.enemies[index];
+        const phases = enemy.boss?.phases ?? [];
+        for (const phase of phases) {
+          const params = { ...DEFAULT_BOSS_BEHAVIORS.get(phase.script)?.params, ...phase.params };
+          for (const key of ['bulletSpeed', 'ringSpeed', 'speed']) {
+            if (key in params) speeds.push(params[key]);
+          }
+        }
+        if (enemy.boss !== null) continue;
+        const params = { ...DEFAULT_BEHAVIORS.get(enemy.script)?.params, ...enemy.params };
+        if ('bulletSpeed' in params) speeds.push(params.bulletSpeed);
+        // Bodies that chase or dash at the ship are held to the same speed.
+        if (enemy.script === 'rocket.homing' || enemy.script === 'rammer.aimed')
+          speeds.push(params.speed);
+      }
+      expect(speeds.length).toBeGreaterThanOrEqual(4);
+      for (const speed of speeds) expect(speed).toBeLessThanOrEqual(MAX_AIMED_BULLET_SPEED);
+      // The DSL patterns the zone's enemies run (every `speed` literal of their fire ops).
+      const patterns = JSON.stringify(
+        shippedFiles.find((file) => file.path === 'patterns/zones.patterns.json')?.data,
+      );
+      for (const match of patterns.matchAll(/"speed":\s*([0-9.]+)/g)) {
+        expect(Number(match[1])).toBeLessThanOrEqual(MAX_AIMED_BULLET_SPEED);
+      }
+    },
+  );
+
+  it.each(zones)(
+    'places the capsules of $name for recovery: ≥ 12 before the boss, ≥ 3 after every checkpoint',
+    (zone) => {
+      const stage = stageOf(zone.id);
+      const capsule = (event: StageSpec['events'][number]): boolean =>
+        event.type === 'spawn'
+          ? db.enemies[event.enemyId].drop === 'capsule'
+          : event.type === 'formation' && event.drop !== null;
+      const warningX = stage.events.find((e) => e.type === 'warning')?.x ?? 0;
+      const sources = stage.events.filter(capsule).map((e) => e.x);
+      expect(sources.filter((x) => x < warningX).length).toBeGreaterThanOrEqual(12);
+      for (const checkpoint of stage.checkpoints) {
+        const after = sources.filter((x) => x >= checkpoint.x && x < checkpoint.x + 900);
+        expect(after.length, `checkpoint ${String(checkpoint.x)}`).toBeGreaterThanOrEqual(3);
+      }
+    },
+  );
+
+  it.each(zones)('stands the ground enemies of $name on rock', (zone) => {
+    const stage = stageOf(zone.id);
+    const game = createGame(createHeadlessPlatform(), { seed: 1, stage: zone.id }, db);
+    const map = game.world.terrain;
+    expect(map).not.toBeNull();
+    if (map === null) return;
+    let ground = 0;
+    for (const event of stage.events) {
+      if (event.type !== 'spawn' && event.type !== 'formation') continue;
+      const enemy = db.enemies[event.enemyId];
+      if (enemy.ground === null) continue;
+      ground++;
+      const x = event.x + (event.screenX ?? 400);
+      // Rock in the lower (floor) or upper (ceiling) third of the playfield below / above it.
+      const rows = enemy.ground === 'floor' ? [PLAYFIELD_H - 1, PLAYFIELD_H - 8] : [0, 7];
+      expect(
+        rows.some((y) => terrainAt(map, x, y) !== TerrainType.Empty),
+        `${enemy.id} at ${String(event.x)}`,
+      ).toBe(true);
+    }
+    expect(ground).toBeGreaterThanOrEqual(8);
+  });
+
+  it.each(zones)(
+    "holds $boss's fight to the 4-way rules (the bot, god mode, stage skip)",
+    (zone) => {
+      const rules = createRuleWatch();
+      const phases = new Set<number>();
+      const run = runStage(zone.id, fourWayBot(), {
+        godMode: true,
+        stageSkip: 'boss',
+        observe(world) {
+          rules.observe(world);
+          for (const boss of world.bosses.slots) {
+            if (boss.state === BossState.Fight && boss.role === 0) phases.add(boss.phase);
+          }
+        },
+      });
+      expect(run.bossDefeated).toBe(true);
+      expect([...phases].sort()).toEqual([0, 1, 2]);
+      expect(rules.violations).toEqual([]);
+      expect(rules.maxBulletSpeed).toBeGreaterThan(0);
+      expect(rules.maxBulletSpeed).toBeLessThanOrEqual(MAX_AIMED_BULLET_SPEED);
+      // At most one silk line at a time (the widow), none from the fish.
+      expect(rules.maxSeparate).toBeLessThanOrEqual(1);
+    },
+  );
+
+  it('draws every zone B and C sprite with its hit flash; the zone tilesets have every tile', () => {
+    const { manifest } = buildAtlas();
+    const sprites = new Set<string>();
+    for (const id of ['zone-b', 'zone-c', 'brine-grotto']) {
+      for (const index of zoneEnemies(stageOf(id))) {
+        const enemy = db.enemies[index];
+        if (enemy.boss === null) sprites.add(enemy.sprite);
+        for (const part of enemy.boss?.parts ?? []) {
+          // Parts that can be hit flash; decoration (no hurtbox: a tail fin, the legs) never is.
+          if (part.sprite !== undefined && part.hurtbox !== null) {
+            sprites.add(part.sprite);
+          }
+        }
+      }
+    }
+    expect(sprites.size).toBeGreaterThanOrEqual(20);
+    for (const sprite of sprites) {
+      const frames = manifest.sprites[sprite]?.frames.length ?? 0;
+      expect(frames, sprite).toBeGreaterThan(0);
+      const flash = manifest.sprites[sprite]?.flash ?? null;
+      expect(flash, sprite).not.toBeNull();
+      expect(manifest.sprites[flash ?? '']?.frames.length, sprite).toBe(frames);
+    }
+    const a = db.tilesets.find((t) => t.id === 'terrain-a');
+    for (const id of ['terrain-reef', 'terrain-dune']) {
+      const tileset = db.tilesets.find((t) => t.id === id);
+      expect(tileset?.tiles.map((t) => t.name)).toEqual(a?.tiles.map((t) => t.name));
+      expect(manifest.sprites[tileset?.sprite ?? '']?.frames.length).toBe(a?.tiles.length);
     }
   });
 });

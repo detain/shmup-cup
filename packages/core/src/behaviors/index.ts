@@ -68,8 +68,17 @@
  * - `cube.stack` — a cube of a seeded cube rush: a random row, aimed at the player, and where it
  *   meets the terrain it becomes the tileset's `cube` tile — the rush stacks into walls.
  *
+ * **Zones B and C (M2-11)** — the new archetypes of BRINE NEBULA and DUNE EXPANSE:
+ *
+ * - `rocket.homing` — a homing rocket: launched diagonally away from the middle row, it homes on
+ *   the nearest player for a while (turn-rate capped), then flies straight on (GALVANIC MAW's
+ *   minion).
+ * - `worm.burst` — a segment of a sand worm: a formation's leader lies in a dune until a player
+ *   comes near, then bursts out on a ballistic arc through the terrain; the other segments follow
+ *   its track.
+ *
  * `drifter.sine`, `fan.loop`, `carrier.straight`, `hatch.spawner`, `rammer.aimed`,
- * `hunter.option`, `cube.pincer` and the M2-07 gimmicks do not fire.
+ * `hunter.option`, `cube.pincer`, the M2-07 gimmicks and the M2-11 rockets and worms do not fire.
  * Every shot goes through the primitives, so nothing fires off screen or before `settleTicks`.
  *
  * **Boss behaviours** (M1-13, {@link DEFAULT_BOSS_BEHAVIORS}; a boss phase's `script`, its
@@ -123,6 +132,23 @@
  *   frames follow) and fires a [`ways` 1]-way [`spread` 32] at [`bulletSpeed` 1.5] along its new
  *   heading.
  *
+ * **Zone bosses (M2-11)** — the core fires from the standing **core** parts (a mouth, a head), the
+ * minions and lanes come from the standing guns:
+ *
+ * - `boss.maw` — GALVANIC MAW (zone B), the mechanical fish: tracks the player's height
+ *   [`trackSpeed` 0.4, `margin` 44]; its `whenOpen` mouth opens for [`openTicks` 90] after every
+ *   [`closedTicks` 140]; while open the cores fire aimed [`ways` 3]-ways of needles [`spread` 48,
+ *   `bulletSpeed` 1.4] every [`fireTicks` 36] (and a [`ring` 0 = none] of round bullets at
+ *   [`ringSpeed` 1] as it opens); every [`launchTicks` 150] up to [`count` 1] guns in turn launch
+ *   the `minion` (homing rockets); with [`gape` 0 = still] > 0 the parts attached to the mouth
+ *   (the jaws) move `gape` px apart while it is open.
+ * - `boss.widow` — SANDGRAVE WIDOW (zone C), the arachnid: scuttles to a random point of its box
+ *   every [`stepTicks` 100] [`minX` 250 … `maxX` 320, `minY` 56 … `maxY` 144]; the cores spit aimed
+ *   [`ways` 3]-ways of ovals [`spread` 40, `bulletSpeed` 1.3] every [`fireTicks` 80]; every
+ *   [`launchTicks` 160] up to [`count` 1] guns in turn launch the `minion` (spider drones); with
+ *   [`laserTicks` 0 = never] ≥ 1 the guns in turn spin silk lines — detached horizontal lasers
+ *   [`laserLength` 384, `laserWidth` 6, `telegraph` 50, `active` 40].
+ *
  * **Implements.**
  * - shmup_feat.md §11 — archetypes (popcorn, formation fliers, capsule carriers, turrets,
  *   walkers, hatches, rammers, orbiters, the Option Hunter — M2-04) as coroutine scripts
@@ -140,7 +166,7 @@
  * {@link DEFAULT_BOSS_BEHAVIOR_DEFS}, {@link BOSS_BEHAVIOR_IDS}, {@link WEAPON_SCRIPT_IDS},
  * {@link KNOWN_SCRIPT_IDS}, {@link checkEnemyBehaviors}.
  *
- * **Planned API.** More behaviours with the zones of M2 (M2-11 … M2-14).
+ * **Planned API.** More behaviours with the zones of M2 (M2-12 … M2-14).
  *
  * @module
  */
@@ -795,6 +821,73 @@ const cubeStack = defineBehavior(
   },
 );
 
+// ------------------------------------------------------------------------- zones B and C (M2-11)
+
+/**
+ * `rocket.homing` (M2-11) — a homing rocket (GALVANIC MAW's minion in zone B): it launches
+ * diagonally away from the playfield's middle row and to the left — up-left above the middle,
+ * down-left below it — at [`launchSpeed` 1] px/tick for [`launchTicks` 24] ticks, then homes on
+ * the nearest living player at [`speed` 1.25] px/tick, turning at most [`turnRate` 5] binary units
+ * a tick, for [`homeTicks` 60] ticks, and then flies straight on along its last heading until it
+ * leaves the view. It never fires; its body is the danger (shoot it, or outturn it: the turn cap
+ * and the time limit keep it dodgeable with four directions — shmup_feat.md §4 rule 2).
+ *
+ * @remarks
+ * The straight run after the homing is a `Homing` mover with a turn rate of 0 — the mover derives
+ * its heading from the velocity it had, so the rocket keeps its course without a jump.
+ */
+const rocketHoming = defineBehavior(
+  'rocket.homing',
+  { launchTicks: 24, launchSpeed: 1, speed: 1.25, turnRate: 5, homeTicks: 60 },
+  function* rocket(api, p): Script {
+    const self = api.self;
+    const out = p.launchSpeed * Math.SQRT1_2;
+    const above = self.y < api.camera.y + PLAYFIELD_H / 2;
+    api.setMover(MoverKind.Straight, -out, above ? -out : out);
+    yield p.launchTicks >= 1 ? Math.floor(p.launchTicks) : 1;
+    api.setMover(MoverKind.Homing, p.speed, p.turnRate >= 0 ? Math.floor(p.turnRate) : 0);
+    yield p.homeTicks >= 1 ? Math.floor(p.homeTicks) : 1;
+    api.setMover(MoverKind.Homing, p.speed, 0);
+    yield SLEEP_FOREVER;
+  },
+);
+
+/**
+ * `worm.burst` (M2-11) — a segment of a **sand worm** bursting from a dune (zone C, shmup_feat.md
+ * §11 "segmented worms"): a `formation` of floor enemies makes one worm. The leader (member 0, or
+ * a lone spawn) lies in the sand where it spawned until the nearest living player comes within
+ * [`trigger` 128] px horizontally (0 = at once), then bursts out on a `Ballistic` arc — [`vx` −0.8]
+ * px/tick sideways (world frame), [`up` 3.4] px/tick up, [`gravity` 0.075], at most [`maxFall` 4] —
+ * that passes through the terrain, diving back into the ground and out of the view; every other
+ * member replays the leader's recorded track (`Follow`), so the body rises out of the same hole
+ * segment by segment and follows the head down. It never fires.
+ *
+ * @remarks
+ * Ground bodies move in the world, so the arc is fixed to the dune it came from while the stage
+ * scrolls. A dead or departed leader keeps recording as a ghost (`core/enemies`), so the rest of
+ * the worm still follows the arc.
+ */
+const wormBurst = defineBehavior(
+  'worm.burst',
+  { trigger: 128, vx: -0.8, up: 3.4, gravity: 0.075, maxFall: 4 },
+  function* worm(api, p): Script {
+    if (api.self.member > 0) {
+      api.setMover(MoverKind.Follow);
+    } else {
+      api.setMover(
+        MoverKind.Ballistic,
+        p.vx,
+        -p.up,
+        p.gravity,
+        p.maxFall,
+        p.trigger > 0 ? p.trigger : 0,
+        BallisticLand.Pass,
+      );
+    }
+    yield SLEEP_FOREVER;
+  },
+);
+
 /** The roster's definitions (see the module docs), e.g. to extend a registry in tests. */
 export const DEFAULT_BEHAVIOR_DEFS: readonly BehaviorDef[] = Object.freeze([
   drifterSine,
@@ -814,6 +907,8 @@ export const DEFAULT_BEHAVIOR_DEFS: readonly BehaviorDef[] = Object.freeze([
   fieldSuction,
   tentacleGrab,
   cubeStack,
+  rocketHoming,
+  wormBurst,
 ]);
 
 /** The roster as a registry (what the World uses). */
@@ -1410,7 +1505,305 @@ const bossRaid = defineBossBehavior(
   },
 );
 
-/** The boss roster's definitions: M1's, and the captains and raid turrets of M2-09. */
+/**
+ * Fires an aimed spread from every standing **core** part of the boss (a mouth, a head).
+ *
+ * @param api - The boss's API.
+ * @param ways - Bullets per core.
+ * @param spread - Units between neighbours.
+ * @param speed - Speed on Normal.
+ * @param kind - `BulletKind`.
+ * @returns Bullets fired.
+ */
+function fireCores(
+  api: BossScriptApi,
+  ways: number,
+  spread: number,
+  speed: number,
+  kind: number,
+): number {
+  const parts = api.self.parts;
+  let fired = 0;
+  for (let i = 0; i < api.partCount; i++) {
+    if (parts[i].core && !parts[i].destroyed) fired += api.nWay(i, ways, spread, speed, kind);
+  }
+  return fired;
+}
+
+/**
+ * Fires a ring from every standing core part of the boss.
+ *
+ * @param api - The boss's API.
+ * @param count - Bullets per ring.
+ * @param speed - Speed on Normal.
+ * @param kind - `BulletKind`.
+ * @param offset - First heading.
+ * @returns Bullets fired.
+ */
+function ringCores(
+  api: BossScriptApi,
+  count: number,
+  speed: number,
+  kind: number,
+  offset: number,
+): number {
+  const parts = api.self.parts;
+  let fired = 0;
+  for (let i = 0; i < api.partCount; i++) {
+    if (parts[i].core && !parts[i].destroyed) fired += api.ring(i, count, speed, kind, offset);
+  }
+  return fired;
+}
+
+/**
+ * Launches the boss's `minion` from up to `count` standing guns, taking them in turn from `next`.
+ *
+ * @param api - The boss's API.
+ * @param next - The gun (part index) to start the search from.
+ * @param count - Launches wanted.
+ * @returns The part index after the last gun used (the next call's `next`).
+ */
+function launchFromGuns(api: BossScriptApi, next: number, count: number): number {
+  const parts = api.self.parts;
+  const n = api.partCount;
+  let launched = 0;
+  let after = next;
+  for (let k = 0; k < n && launched < count; k++) {
+    const i = (next + k) % n;
+    if (!parts[i].gun || parts[i].destroyed) continue;
+    api.launch(i);
+    launched++;
+    after = i + 1;
+  }
+  return after;
+}
+
+/**
+ * Whether a core part of the boss is open (a `whenOpen` mouth left open by the last phase).
+ *
+ * @param api - The boss's API.
+ * @returns `true` when a standing core is open.
+ */
+function mouthOpen(api: BossScriptApi): boolean {
+  const parts = api.self.parts;
+  for (let i = 0; i < api.partCount; i++) {
+    if (parts[i].core && !parts[i].destroyed && parts[i].open) return true;
+  }
+  return false;
+}
+
+/**
+ * Moves the parts attached to a core part (the jaws) `by` px away from the core's row: a part
+ * above its core up, one below it down (a negative `by` moves them back).
+ *
+ * @param api - The boss's API.
+ * @param by - Pixels (whole).
+ */
+function moveJaws(api: BossScriptApi, by: number): void {
+  const parts = api.self.parts;
+  for (let i = 0; i < api.partCount; i++) {
+    const part = parts[i];
+    const parent = part.parent;
+    if (parent < 0 || !parts[parent].core) continue;
+    const dy = part.localY < 0 ? -by : part.localY > 0 ? by : 0;
+    if (dy !== 0) api.setPartOffset(i, part.localX, part.localY + dy);
+  }
+}
+
+/** Ticks from the mouth opening to `boss.maw`'s first cutters. */
+const MAW_FIRST_CUTTERS = 12;
+
+/**
+ * `boss.maw` (M2-11) — GALVANIC MAW (GM-02, zone B), the mechanical-fish archetype
+ * (shmup_feat.md §13 "tracks Y, mouth weak point, homing rockets, cutters"): it follows the
+ * nearest player's height at [`trackSpeed` 0.4] px/tick, [`margin` 44] px from the playfield's top
+ * and bottom; its `whenOpen` parts — the mouth, its core — stay shut for [`closedTicks` 140] and
+ * open for [`openTicks` 90] in turn (shots clink off the shut mouth). While the mouth is open, every
+ * [`fireTicks` 36] ticks (rank-scaled) each core fires an aimed [`ways` 3]-way of purple needles —
+ * the cutters — [`spread` 48] units apart at [`bulletSpeed` 1.4], and with [`ring` 0 = none] ≥ 1 the
+ * mouth also fires a ring of `ring` round red bullets at [`ringSpeed` 1] as it opens. Every
+ * [`launchTicks` 150] ticks (rank-scaled) up to [`count` 1] of the standing guns — the rocket pods
+ * — in turn launch the boss's `minion` (the homing rockets, `rocket.homing`); `count` 0 = none.
+ *
+ * @remarks
+ * One script per phase, sleeping until the soonest of its three timers (the mouth, the cutters,
+ * the rockets); the first cutters come 12 ticks after the mouth opens, and none while it is shut.
+ * Every timer is a whole number (a never-running timer is `NEVER_TICKS`, see `boss.hover`). With
+ * [`gape` 0] > 0 the jaws open visibly: every part attached to a core (its `parent`) moves `gape` px
+ * away from the core's row as the mouth opens — a part above the core up, one below it down — and
+ * back as it shuts; a phase that starts while the mouth is open (the previous phase's script ended
+ * mid-gape) shuts it first, so the jaws never drift.
+ */
+const bossMaw = defineBossBehavior(
+  'boss.maw',
+  {
+    trackSpeed: 0.4,
+    margin: 44,
+    closedTicks: 140,
+    openTicks: 90,
+    fireTicks: 36,
+    bulletSpeed: 1.4,
+    ways: 3,
+    spread: 48,
+    ring: 0,
+    ringSpeed: 1,
+    launchTicks: 150,
+    count: 1,
+    gape: 0,
+  },
+  function* maw(api, p): Script {
+    api.track(p.trackSpeed, p.margin, PLAYFIELD_H - p.margin);
+    const gape = p.gape > 0 ? Math.floor(p.gape) : 0;
+    if (gape > 0 && mouthOpen(api)) moveJaws(api, -gape);
+    const ways = p.ways >= 1 ? Math.floor(p.ways) : 1;
+    const ring = p.ring >= 1 ? Math.floor(p.ring) : 0;
+    const count = p.count >= 1 ? Math.floor(p.count) : 0;
+    const openTicks = p.openTicks >= 1 ? Math.floor(p.openTicks) : 1;
+    const closedTicks = p.closedTicks >= 1 ? Math.floor(p.closedTicks) : 1;
+    const half = ring > 0 ? Math.floor(ANGLE_UNITS / ring / 2) : 0;
+    let open = false;
+    api.setOpenAll(false);
+    let rings = 0;
+    let next = 0;
+    let toggleIn = closedTicks;
+    let fireIn = NEVER_TICKS;
+    let launchIn = count > 0 ? api.fireWait(p.launchTicks) : NEVER_TICKS;
+    for (;;) {
+      let wait = toggleIn < fireIn ? toggleIn : fireIn;
+      if (launchIn < wait) wait = launchIn;
+      yield wait;
+      toggleIn -= wait;
+      fireIn -= wait;
+      launchIn -= wait;
+      if (toggleIn <= 0) {
+        open = !open;
+        api.setOpenAll(open);
+        if (gape > 0) moveJaws(api, open ? gape : -gape);
+        toggleIn = open ? openTicks : closedTicks;
+        fireIn = open ? MAW_FIRST_CUTTERS : NEVER_TICKS;
+        if (open && ring > 0) {
+          ringCores(api, ring, p.ringSpeed, BulletKind.RoundRed, (rings & 1) * half);
+          rings++;
+        }
+      }
+      if (fireIn <= 0) {
+        fireCores(api, ways, p.spread, p.bulletSpeed, BulletKind.NeedlePurple);
+        fireIn = api.fireWait(p.fireTicks);
+      }
+      if (launchIn <= 0) {
+        next = launchFromGuns(api, next, count);
+        launchIn = api.fireWait(p.launchTicks);
+      }
+    }
+  },
+);
+
+/**
+ * `boss.widow` (M2-11) — SANDGRAVE WIDOW (SW-03, zone C), the insect / arachnid archetype
+ * (shmup_feat.md §13 "spawns spiders"): every [`stepTicks` 100] ticks it scuttles to a random
+ * whole-pixel point of the box [`minX` 250 … `maxX` 320, `minY` 56 … `maxY` 144] (the gameplay
+ * RNG, in 60 % of the step); every [`fireTicks` 80] ticks (rank-scaled) each standing core — the
+ * head — spits an aimed [`ways` 3]-way of red ovals [`spread` 40] at [`bulletSpeed` 1.3]; every
+ * [`launchTicks` 160] ticks (rank-scaled) up to [`count` 1] of its standing guns — the spinnerets
+ * — in turn launch the boss's `minion` (the spider drones); and with [`laserTicks` 0 = never] ≥ 1,
+ * every `laserTicks` ticks (rank-scaled) the next standing gun in turn spins a silk line: a
+ * telegraphed horizontal laser to the left in its lane, left where it was fired ([`laserLength`
+ * 384], [`laserWidth` 6], [`telegraph` 50] warning ticks, [`active` 40] beam ticks).
+ *
+ * @remarks
+ * One lane at a time as long as `laserTicks` outlasts a lane (telegraph + grow + active + fade),
+ * each dodged by moving up or down (4-way). The script sleeps until the soonest of its four timers;
+ * every timer is a whole number.
+ */
+const bossWidow = defineBossBehavior(
+  'boss.widow',
+  {
+    stepTicks: 100,
+    minX: 250,
+    maxX: 320,
+    minY: 56,
+    maxY: 144,
+    fireTicks: 80,
+    bulletSpeed: 1.3,
+    ways: 3,
+    spread: 40,
+    launchTicks: 160,
+    count: 1,
+    laserTicks: 0,
+    laserLength: 384,
+    laserWidth: 6,
+    telegraph: 50,
+    active: 40,
+  },
+  function* widow(api, p): Script {
+    api.hold();
+    const stepTicks = p.stepTicks >= 1 ? Math.floor(p.stepTicks) : 1;
+    const ways = p.ways >= 1 ? Math.floor(p.ways) : 1;
+    const count = p.count >= 1 ? Math.floor(p.count) : 0;
+    const lanes = p.laserTicks >= 1;
+    const minX = Math.floor(p.minX < p.maxX ? p.minX : p.maxX);
+    const maxX = Math.floor(p.minX < p.maxX ? p.maxX : p.minX);
+    const minY = Math.floor(p.minY < p.maxY ? p.minY : p.maxY);
+    const maxY = Math.floor(p.minY < p.maxY ? p.maxY : p.minY);
+    const parts = api.self.parts;
+    const n = api.partCount;
+    let nextLaunch = 0;
+    let nextLane = 0;
+    let stepIn = stepTicks;
+    let fireIn = api.fireWait(p.fireTicks);
+    let launchIn = count > 0 ? api.fireWait(p.launchTicks) : NEVER_TICKS;
+    let laserIn = lanes ? api.fireWait(p.laserTicks) : NEVER_TICKS;
+    for (;;) {
+      let wait = stepIn < fireIn ? stepIn : fireIn;
+      if (launchIn < wait) wait = launchIn;
+      if (laserIn < wait) wait = laserIn;
+      yield wait;
+      stepIn -= wait;
+      fireIn -= wait;
+      launchIn -= wait;
+      laserIn -= wait;
+      if (stepIn <= 0) {
+        const x = api.rng.rangeInt(minX, maxX);
+        const y = api.rng.rangeInt(minY, maxY);
+        api.moveTo(x, y, Math.floor((stepTicks * 3) / 5));
+        stepIn = stepTicks;
+      }
+      if (fireIn <= 0) {
+        fireCores(api, ways, p.spread, p.bulletSpeed, BulletKind.OvalRed);
+        fireIn = api.fireWait(p.fireTicks);
+      }
+      if (launchIn <= 0) {
+        nextLaunch = launchFromGuns(api, nextLaunch, count);
+        launchIn = api.fireWait(p.launchTicks);
+      }
+      if (laserIn <= 0) {
+        for (let k = 0; k < n; k++) {
+          const i = (nextLane + k) % n;
+          if (!parts[i].gun || parts[i].destroyed) continue;
+          api.laser(
+            i,
+            ANGLE_UNITS / 2,
+            p.laserLength,
+            p.laserWidth,
+            p.telegraph,
+            LASER_GROW_TICKS,
+            p.active,
+            LASER_FADE_TICKS,
+            false,
+          );
+          nextLane = i + 1;
+          break;
+        }
+        laserIn = api.fireWait(p.laserTicks);
+      }
+    }
+  },
+);
+
+/**
+ * The boss roster's definitions: M1's, the captains and raid turrets of M2-09 and the zone bosses
+ * of M2-11.
+ */
 export const DEFAULT_BOSS_BEHAVIOR_DEFS: readonly BossBehaviorDef[] = Object.freeze([
   bossHover,
   bossLanes,
@@ -1420,6 +1813,8 @@ export const DEFAULT_BOSS_BEHAVIOR_DEFS: readonly BossBehaviorDef[] = Object.fre
   captainLauncher,
   captainCircler,
   captainCrab,
+  bossMaw,
+  bossWidow,
 ]);
 
 /** The boss roster as a registry (what the World uses). */

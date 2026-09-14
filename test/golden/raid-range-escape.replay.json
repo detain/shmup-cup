@@ -61,18 +61,18 @@
     "ALUx"
   ],
   "hashes": [
-    996753366,
-    3459864893,
-    1763921270,
-    1588873093,
-    1897530401,
-    1270408836,
-    782008261,
-    743563251,
-    315903201,
-    3476050627
+    4275888470,
+    4047702845,
+    1969379766,
+    2509565609,
+    4062820833,
+    1966662404,
+    576155497,
+    39176767,
+    2310560953,
+    2555961987
   ],
-  "finalHash": 77612578,
+  "finalHash": 3013415414,
   "description": "RAID RANGE with god mode and no power-ups (M2-09): IRON LEVIATHAN outlasts the bot and escapes after its time limit — the ending flag",
   "expected": {
     "status": "stageClear",

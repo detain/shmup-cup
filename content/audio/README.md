@@ -19,6 +19,8 @@ Listen to everything with `pnpm audio:preview` (WAV files in `assets/generated/a
 | `music/title.music.json` | `music` | SHMUP CUP — the title theme (`Title`, played by the title scene since M1-16; the shell prepares it at boot) |
 | `music/stage-clear.music.json` | `music` | VERGE SECURED — the stage-clear jingle (`StageClear`, no loop) |
 | `music/game-over.music.json` | `music` | SILENT VERGE — game over (`GameOver`, no loop) |
+| `music/zone-b.music.json`, `music/boss-b.music.json` | `music` | BRINE NEBULA and MAW OF THE NEBULA — zone B's stage and boss themes (`Stage` / `Boss`, `"stages": ["zone-b"]` — they win over the defaults there; M2-11) |
+| `music/zone-c.music.json`, `music/boss-c.music.json` | `music` | DUNE EXPANSE and SANDGRAVE ASSAULT — zone C's stage and boss themes (`"stages": ["zone-c"]`, M2-11) |
 
 ## SFX bank (kind `sfx`, formatVersion 1)
 

@@ -63,12 +63,36 @@ taking turns; the survivor enrages) and `gauntlet-range.stage.json` (**GAUNTLET 
 rush: TRIAL WARDEN with its WARNING, LEVIATHAN HEART, the twins). `?stage=<id>` plays each.
 
 **The campaign's zones (M2-10).** `zone-b.stage.json` … `zone-i.stage.json` are the zones B–I of
-the zone map ([`content/campaign/`](../campaign/README.md)) as short **placeholders** (about a
-minute: popcorn, capsule carriers, a fan formation, a rammer, an orbiter — zone A's roster —, some
-floors or caves from the heightfield generator, then the WARNING and a boss: HALCYON BULWARK, the
-EMBER AND FROST TWINS or, in zone I, IRON LEVIATHAN), so every route of the map can be played end to
-end now; M2-11 … M2-14 replace them with the real zones (BRINE NEBULA, DUNE EXPANSE, MAGMA DEEP,
-TEMPEST RIDGE, CELL VAULT, PRISM LABYRINTH, IRON CITADEL, ABYSSAL THRONE).
+the zone map ([`content/campaign/`](../campaign/README.md)). D–I are still short **placeholders**
+(about a minute: popcorn, capsule carriers, a fan formation, a rammer, an orbiter — zone A's roster —,
+some floors or caves from the heightfield generator, then the WARNING and a boss: HALCYON BULWARK,
+the EMBER AND FROST TWINS or, in zone I, IRON LEVIATHAN), so every route of the map can be played
+end to end; M2-12 … M2-14 replace them with the real zones (MAGMA DEEP, TEMPEST RIDGE, CELL VAULT,
+PRISM LABYRINTH, IRON CITADEL, ABYSSAL THRONE).
+
+**Zones B and C (M2-11)** are the real zones, each ≈ 3½–4 minutes with the 4-way bot, four
+checkpoints, a high-speed section, a calm with two carriers before the WARNING, their own tileset,
+songs (`stages`-scoped tracks), Direct-mode item plan and roster
+([`content/enemies/zone-b.enemies.json`](../enemies/zone-b.enemies.json), `zone-c.enemies.json`):
+
+- `zone-b.stage.json` — **BRINE NEBULA** (9,800 px, `terrain-reef`): the shallows (splitting `froth`
+  bubbles, popcorn bead streams, `brood-bubble`s with a `gill-dart` fish inside, carriers), a reef
+  tunnel with `urchin` turrets on its floor and ceiling (checkpoint 2,000), the mid-boss **SPUME
+  HERALD** (a captain launching brood bubbles, `boss` event at 3,800), the deep current with
+  `reef-jelly` ring-firers and the **hidden bonus entrance** — a `gap` at the top between two reef
+  blocks (world x 5,616–5,680, y 0–24: fly under the left block, then up into it) into
+  `brine-grotto.stage.json` (**PEARL GROTTO**, type `bonus`: bonus capsules, a 1UP, bubbles, two
+  brick barriers) — (checkpoint 4,600), a 1.4 px/tick riptide (checkpoint 6,800), the calm, then
+  **GALVANIC MAW** (GM-02). A `wave` raster effect makes the sea band (`bg/brine-sea`, painted in its
+  palette cycle's four colours) and the nebula (`bg/brine-nebula`) wobble.
+- `zone-c.stage.json` — **DUNE EXPANSE** (9,600 px, `terrain-dune`): dunes with `dune-worm` sand
+  worms (a formation is one worm: its head lies in the sand until a ship comes within 190 px, then
+  bursts out on an arc and dives back through the ground, the segments following) and `sand-skimmer`
+  swoops on `content/paths/zone-c.paths.json` curves, a canyon with `husk-crawler` walkers on its
+  ceiling and floor, `dust-devil` spirals and `sand-geyser`s (checkpoint 2,200), the worm field
+  (checkpoint 4,400), a 1.3 px/tick sandstorm run (checkpoint 6,600), the calm, then **SANDGRAVE
+  WIDOW** (SW-03). Heat `haze` raster effects shimmer over the twin suns (`bg/dune-suns`) and the dune
+  ridge band (`bg/dune-ridge`).
 
 **Hidden bonus stages (M2-10).** A stage of `"type": "bonus"` is a hidden bonus stage: no `warning`
 / `boss` events, no entrances of its own, and an `end` event (reaching it is the bonus stage's

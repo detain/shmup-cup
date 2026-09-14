@@ -107,12 +107,15 @@ describe('core/behaviors registry', () => {
       'pattern.loop',
       'rammer.aimed',
       'rock.fall',
+      'rocket.homing',
       'tentacle.grab',
       'turret.floor',
       'volcano.lob',
       'walker.floor',
+      'worm.burst',
     ]);
-    expect(DEFAULT_BEHAVIOR_DEFS).toHaveLength(17);
+    // Zones B and C added the homing rocket and the sand worm (M2-11).
+    expect(DEFAULT_BEHAVIOR_DEFS).toHaveLength(19);
     expect(DEFAULT_BEHAVIORS.get('volcano.lob')?.needsChild).toBe(true);
     expect(typeof DEFAULT_BEHAVIORS.get('bubble.split')?.death).toBe('function');
     expect(DEFAULT_BEHAVIORS.get('drifter.sine')?.death).toBeUndefined();

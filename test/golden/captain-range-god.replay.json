@@ -61,18 +61,18 @@
     "AI8y"
   ],
   "hashes": [
-    2016493998,
-    4111590252,
-    1037349691,
-    2091651403,
-    3181138610,
-    3203779424,
-    2939775123,
-    923211993,
-    2811831539,
-    3148771729
+    3117989521,
+    2115865452,
+    3700913019,
+    2269686409,
+    1459746100,
+    2821902496,
+    2923215517,
+    874410292,
+    2636574319,
+    2066789521
   ],
-  "finalHash": 37861393,
+  "finalHash": 1284842649,
   "description": "CAPTAIN RANGE with god mode (M2-09): four captains fly in on the scrolling camera, the 4-way bot fights them, the stage ends at its end",
   "expected": {
     "status": "stageClear",

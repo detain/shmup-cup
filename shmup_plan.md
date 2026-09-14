@@ -2916,6 +2916,90 @@ Goal of the milestone: every **[P1]** feature. Steps are ordered so systems land
 - **Acceptance:** content check, sprite coverage, 4-way playtest completes both zones with god mode within 3–6 min,
   recovery rule after checkpoints, golden replay per zone.
 - **Refs:** `shmup_feat.md` §14 (themes), §11, §13 (roster).
+- **As built:**
+  - **Zone B — BRINE NEBULA** (`content/stages/zone-b.stage.json`, 9,800 px, `terrain-reef`): the
+    shallows (splitting `froth` bubbles → `froth-bead`s, bead popcorn streams, `brood-bubble`s with a
+    `gill-dart` fish inside, carriers), a floor-and-ceiling reef tunnel with `urchin` turrets
+    (checkpoint 2,000), the mid-boss **SPUME HERALD** (SH-02 — a captain on the M2-09
+    `captain.launcher`, launching brood bubbles; `boss` event at 3,800, 30-s time limit), the deep
+    current with `reef-jelly` ring-firers (`pattern.loop` + the new DSL pattern `brine.jelly-ring`)
+    and the **hidden bonus entrance** (checkpoint 4,600), a 1.4 px/tick riptide (checkpoint 6,800),
+    a calm with two carriers, then **GALVANIC MAW** (GM-02). Wavy water: a `wave` raster effect on
+    the new sea band `bg/brine-sea` (painted in its palette cycle's four colours) and on the far
+    nebula band `bg/brine-nebula`. "Enemies inside bubbles" is content: `bubble.split` with
+    `count` 1 and a fish as its `child`.
+  - **The bonus stage.** One `gap` entrance: a region at the top of the view (world x 5,616–5,680,
+    y 0–24) marked by two 16×24 reef blocks — a ship flies under the left block, then up into the
+    gap — into `brine-grotto.stage.json` (**PEARL GROTTO**, type `bonus`, 1,800 px: the bonus
+    vault's carriers dropping bonus capsules, its 1UP carrier, froth bubbles, two brick barriers on a
+    reef floor and ceiling); it uses the zone's music set (no own track, see M2-10's gotcha).
+  - **Zone C — DUNE EXPANSE** (`zone-c.stage.json`, 9,600 px, `terrain-dune`): dunes with sand
+    worms and `sand-skimmer` swoops on the new `content/paths/zone-c.paths.json`, a canyon with
+    `husk-crawler` walkers on its ceiling (and floor), `dust-devil` spirals (`dune.whirl`) and
+    `sand-geyser`s (a `volcano.lob` throwing `sand-clod`s) (checkpoint 2,200), the worm field
+    (checkpoint 4,400), a 1.3 px/tick sandstorm run (checkpoint 6,600), the calm, then
+    **SANDGRAVE WIDOW** (SW-03). Heat `haze` raster effects over the twin suns (`bg/dune-suns`) and
+    the dune ridge band (`bg/dune-ridge`). No mid-boss (the plan names one only for B).
+  - **New behaviours** (`core/behaviors`): `rocket.homing` (launched diagonally away from the
+    middle row, homes turn-rate-capped for `homeTicks`, then flies straight on — a `Homing` mover
+    with turn rate 0), `worm.burst` (a formation is one worm: the leader lies in the dune on a
+    `Ballistic` mover with a proximity `trigger` — 190 px in the content, so the arc comes down in
+    front of the ship — and passes through the terrain; the other members `Follow` its track), and
+    the boss behaviours `boss.maw` (tracking; the `whenOpen` mouth — the core — opens / shuts on two
+    timers, cutters (aimed needles) only while open, a ring as it opens from phase 1, the `minion`
+    launched from the guns in turn; tunable `gape` moves the parts attached to a core — the jaws —
+    apart while open, and a phase starting mid-gape shuts them first so they never drift) and
+    `boss.widow` (random sidesteps inside a box, spreads from the core — the head, `afterParts` of
+    its two fangs, which stand in its lane like HB-01's plates —, spider drones from the guns — the
+    spinnerets —, and from phase 1 detached silk-line lasers, one at a time). **Homing rockets are
+    minions** (shootable enemies launched with `api.launch`), not homing bullets: `BossScriptApi`
+    has no homing-bullet primitive and the minion route needed no engine change.
+  - **Rosters** (`content/enemies/zone-b.enemies.json`, `zone-c.enemies.json`; the new files sort
+    after zone A's, so zone A's spec indices did not move): six new types placed in B (froth,
+    froth bead, brood bubble, gill dart, reef jelly, urchin) and five in C (dune worm, husk
+    crawler, sand skimmer, dust devil, sand geyser) — the content test counts distinct sprites, so
+    a floor and a ceiling variant are one type; the carriers are zone A's `tender`. Every bullet,
+    rocket and dash stays ≤ 2 px/tick; patterns in `content/patterns/zones.patterns.json`.
+  - **Art as code:** two new generators `scripts/assets/procedural/brine.mjs` and `dune.mjs`
+    (backdrop bands, the enemies, the boss parts, the captain's shell — all procedural rather than
+    pixel maps), shape helpers `fillEllipse` / `drawLine` in `common.mjs`, and `terrain.mjs` draws
+    three tilesets from `TERRAIN_PALETTES` (`tiles/terrain-a` unchanged, `-reef`, `-dune`; the
+    tileset files are copies of `terrain-a` with the other sprite).
+  - **Songs** (chip songs, `stages`-scoped so they win over the defaults only in their zone and the
+    map's `PrepareStage` loads them): `zone-b` (BRINE NEBULA) and `boss-b` (MAW OF THE NEBULA),
+    `zone-c` (DUNE EXPANSE) and `boss-c` (SANDGRAVE ASSAULT) — 6.4 s intro + 44.8 s loop for the
+    stage themes, the boss themes in the shipped boss song's form.
+  - **Direct-mode item plans** (`directItems`, 26 entries each) in both stages.
+  - **Playtests:** `test/playtest/zone-b.test.ts` / `zone-c.test.ts` (god mode: stage clear in
+    3–6 min, three boss phases, the 4-way rules on every tick; the no-god-mode run is reported).
+    Measured with the 4-way bot: B 225 s (GALVANIC MAW 24 s), C 243 s (SANDGRAVE WIDOW 51 s);
+    without god mode B clears with no death, C with one. The harness's boss statistics now follow
+    the stage's main encounter (a boss of role `boss` in any slot) — zone B's captain comes first
+    in slot 0. The recovery rule is `test/playtest/recovery.ts` (zone A's test uses it too) +
+    `zone-bc-recovery.test.ts` (every checkpoint of B and C). The 4-way bot does not predict the
+    vertical motion of ground enemies (a rising worm) — the worms' trigger keeps their dive ahead
+    of its column; balance deaths are reported, never asserted.
+  - **Content check** (`content.test.ts`, block "zones B and C"): names, bosses, 3 phases, 2.5–4.5 min
+    to the WARNING, a high-speed key, exactly two carriers in the calm, own tileset / songs / item
+    plan, 4–6 new types, the zone's archetypes (splitting bubbles, a non-bubble child, a mid-boss
+    captain in the first half, the `whenOpen` mouth and the rocket minion; worm formations,
+    ceiling walkers, the fangs), the gap marked by its blocks into a bonus stage with bonus capsules and a 1UP, every speed
+    tunable and DSL literal ≤ 2, the capsule budget, ground enemies standing on rock, each boss
+    fight with the bot under the 4-way rules (at most one lane at a time), every hittable sprite's
+    hit flash and the zone tilesets' frames. Also `zones-bc-runtime.test.ts` (the gap → PEARL
+    GROTTO through the scene flow from a practice start, the captain on the scrolling camera, the
+    worms rising), `behaviors-zones.test.ts` + allocation guards `behaviors-maw-alloc` /
+    `behaviors-widow-alloc` (minion launches off), `procedural-zones.test.ts`.
+  - **Goldens:** new `zone-b-god`, `zone-c-god` (4-way bot, god mode, start to stage clear) and
+    `brine-grotto-god` (full loadout). **Re-blessed:** the new sprites and scripts shift the sorted
+    sprite / script ids hashed through the pools; all 28 older files kept their inputs, tick counts,
+    headers and outcomes (only hashes changed).
+  - Tests that pin shipped lists were updated: the music tracks, the foreign content files
+    (`@shmup/shell` boot / loader tests), the enemy and boss behaviour rosters, the atlas's enemy
+    sprite count.
+  - **Bundle:** the Tizen `app.js` is now 307.5 KB gzip of its 350 KB budget (the zone B / C
+    content adds ≈ 6 KB gzip — the stages, songs and rosters are inlined); zones D–I will need the
+    same care (M2-17 / M2-18 own the budget).
 
 ### M2-12 — Zones D & E
 

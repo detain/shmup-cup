@@ -41,7 +41,10 @@
  * shot down — the `ground` entrance opens) and without power-ups (the turrets survive, the score's
  * thousands digit opens the `digit` entrance) — the World records the entry and plays on (the scene
  * flow does the warp) —, and `bonus-vault` with the full loadout (its carriers' 1,000-point bonus
- * capsules and the 1UP collected).
+ * capsules and the 1UP collected). Three more (M2-11) fly the real zones B and C with the 4-way bot and
+ * god mode — `zone-b` (BRINE NEBULA: its mid-boss and GALVANIC MAW) and `zone-c` (DUNE EXPANSE: the
+ * sand worms and SANDGRAVE WIDOW) start to stage clear — and zone B's hidden bonus stage
+ * `brine-grotto` with the full loadout.
  *
  * @module
  */
@@ -415,6 +418,33 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = Object.freeze([
       'BONUS VAULT with god mode and the full loadout (M2-10): the vault carriers drop 1,000-point bonus capsules and a 1UP, the bot collects them to the end',
     stageId: 'bonus-vault',
     config: { seed: 65, loadout: 'full' },
+    godMode: true,
+    bot: 'four-way',
+  },
+  {
+    name: 'zone-b-god',
+    description:
+      'BRINE NEBULA start to stage clear with god mode (M2-11): the 4-way bot through the bubbles, the reef tunnel, SPUME HERALD, the deep current and the riptide, then GALVANIC MAW shot down',
+    stageId: 'zone-b',
+    config: { seed: 1 },
+    godMode: true,
+    bot: 'four-way',
+  },
+  {
+    name: 'zone-c-god',
+    description:
+      "DUNE EXPANSE start to stage clear with god mode (M2-11): the 4-way bot past the sand worms, the canyon's ceiling walkers, the worm field and the sandstorm run, then SANDGRAVE WIDOW shot down",
+    stageId: 'zone-c',
+    config: { seed: 1 },
+    godMode: true,
+    bot: 'four-way',
+  },
+  {
+    name: 'brine-grotto-god',
+    description:
+      "PEARL GROTTO, zone B's hidden bonus stage, with god mode and the full loadout (M2-11): its carriers' bonus capsules and the 1UP collected to the end",
+    stageId: 'brine-grotto',
+    config: { seed: 71, loadout: 'full' },
     godMode: true,
     bot: 'four-way',
   },

@@ -8,7 +8,9 @@ floor").
 
 `terrain-a.tileset.json` describes the placeholder tileset `tiles/terrain-a` the asset
 pipeline draws (`scripts/assets/procedural/terrain.mjs`): solid rock, flat floor / ceiling /
-wall edges, and 45° and 22.5° slopes for floors and ceilings.
+wall edges, and 45° and 22.5° slopes for floors and ceilings. `terrain-reef.tileset.json` and
+`terrain-dune.tileset.json` (M2-11) are the same tiles in zone B's coral-and-stone and zone C's sand
+colours (`tiles/terrain-reef`, `tiles/terrain-dune` — the generator's `TERRAIN_PALETTES`).
 
 ## Format (formatVersion 1)
 

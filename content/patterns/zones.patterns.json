@@ -1,0 +1,78 @@
+{
+  "formatVersion": 1,
+  "kind": "patterns",
+  "actions": [
+    {
+      "id": "brine.jelly-ring",
+      "body": [
+        {
+          "op": "repeat",
+          "times": 6,
+          "body": [
+            {
+              "op": "fire",
+              "direction": {
+                "type": "aim",
+                "value": "$i * 1024 / 6"
+              },
+              "speed": 0.85,
+              "bullet": {
+                "kind": "round-purple"
+              }
+            }
+          ]
+        },
+        {
+          "op": "wait",
+          "ticks": 170,
+          "ranked": true
+        }
+      ]
+    },
+    {
+      "id": "dune.whirl",
+      "body": [
+        {
+          "op": "repeat",
+          "times": 10,
+          "body": [
+            {
+              "op": "fire",
+              "direction": {
+                "type": "sequence",
+                "value": 52
+              },
+              "speed": 1.1,
+              "bullet": {
+                "kind": "needle-pink"
+              }
+            },
+            {
+              "op": "fire",
+              "direction": {
+                "type": "sequence",
+                "value": 512
+              },
+              "speed": {
+                "type": "sequence",
+                "value": 0
+              },
+              "bullet": {
+                "kind": "needle-pink"
+              }
+            },
+            {
+              "op": "wait",
+              "ticks": 7
+            }
+          ]
+        },
+        {
+          "op": "wait",
+          "ticks": 110,
+          "ranked": true
+        }
+      ]
+    }
+  ]
+}

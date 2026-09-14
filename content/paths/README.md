@@ -6,6 +6,7 @@ spline paths, arc-length parameterized").
 
 `zone-a.paths.json` holds zone A's curves (M1-18): the `vane-*` fan flights (arcs, loops, a
 swoop — `-up` / `-down` mirror each other) and the `gyre-orbit-*` orbiter loops;
+`zone-c.paths.json` zone C's (M2-11): the `sand-skimmer` swoops `skim-dip` / `skim-rise` (mirrors);
 `test-range.paths.json` those of the dev stage.
 
 A path is a list of **control points relative to where the mover starts** (normally the spawn

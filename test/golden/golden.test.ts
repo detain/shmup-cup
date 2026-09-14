@@ -2,7 +2,7 @@
  * The golden-replay test (plan M1-19, part of `pnpm test`): every committed
  * `test/golden/<scenario>.replay.json` — zone A (and, since M2-07 / M2-08 / M2-09 / M2-10, the
  * `gimmick-range`, `raster-range`, `captain-range`, `raid-range`, `twin-range`, `bonus-range` and
- * `bonus-vault` dev stages)
+ * `bonus-vault` dev stages; since M2-11 the real zones B and C and zone B's bonus stage)
  * played by the 4-way bot and recorded with `core/replay` (the 4-way bot, or a careless weaving
  * pilot for the deaths) — plays back into a
  * fresh session with **every state hash** (one per 600 ticks and
@@ -280,5 +280,30 @@ describe('golden replays (zone A and the dev stages, playtest bots)', () => {
     expect(vault.world.enemies.stats.killed).toBeGreaterThan(10);
     expect(vault.outcome.score).toBeGreaterThan(10 * BONUS_CAPSULE_SCORE);
     expect(vault.world.bonus.count).toBe(0);
+  });
+
+  it('covers the real zones B and C of M2-11: both cleared in 3–6 minutes, their bosses shot down, the grotto', () => {
+    for (const [name, stage] of [
+      ['zone-b-god', 'zone-b'],
+      ['zone-c-god', 'zone-c'],
+    ] as const) {
+      const { file, replay } = readGolden(name);
+      expect(replay.header.stageId).toBe(stage);
+      expect(file.expected).toMatchObject({
+        status: 'stageClear',
+        bossDefeated: true,
+        deathTicks: [],
+      });
+      expect(file.expected.ticks / 60).toBeGreaterThanOrEqual(180);
+      expect(file.expected.ticks / 60).toBeLessThanOrEqual(360);
+    }
+    // Zone B's hidden bonus stage: the bonus capsules and the 1UP collected, no boss.
+    const grotto = readGolden('brine-grotto-god');
+    const { world, outcome } = playGolden(grotto.replay);
+    expect(world.stage?.stage.type).toBe('bonus');
+    expect(outcome).toMatchObject({ status: 'stageClear', bossDefeated: false, deathTicks: [] });
+    const p1 = world.scoring.board.scores[0];
+    expect(outcome.lives - 3 - p1.extendsEarned).toBeGreaterThanOrEqual(1);
+    expect(outcome.score).toBeGreaterThan(5 * BONUS_CAPSULE_SCORE);
   });
 });

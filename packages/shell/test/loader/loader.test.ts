@@ -128,11 +128,15 @@ describe('shell/loader loadGameContent', () => {
     expect(shipped.issues).toEqual([]);
     expect(shipped.foreign.map((file) => file.path)).toEqual([
       'audio/main.sfx.json',
+      'audio/music/boss-b.music.json',
+      'audio/music/boss-c.music.json',
       'audio/music/boss.music.json',
       'audio/music/game-over.music.json',
       'audio/music/stage-clear.music.json',
       'audio/music/title.music.json',
       'audio/music/zone-a.music.json',
+      'audio/music/zone-b.music.json',
+      'audio/music/zone-c.music.json',
       'fx/particles.fx.json',
       'input/remote.input-profiles.json',
     ]);

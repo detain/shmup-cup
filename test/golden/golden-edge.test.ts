@@ -37,10 +37,11 @@ describe.skipIf(updating)('golden replays — file guards', () => {
     const names = GOLDEN_SCENARIOS.map((scenario) => scenario.name);
     expect(new Set(names).size).toBe(names.length);
     // `<stage id>-…`: zone A and the dev stages of M2-07 (gimmicks), M2-08 (raster effects),
-    // M2-09 (captains, the raid, the twins) and M2-10 (the bonus range and its vault).
+    // M2-09 (captains, the raid, the twins) and M2-10 (the bonus range and its vault); zones B and
+    // C and zone B's bonus stage (M2-11).
     for (const name of names) {
       expect(name).toMatch(
-        /^(zone-a|gimmick-range|raster-range|captain-range|raid-range|twin-range|bonus-range|bonus-vault)-[a-z0-9-]+$/,
+        /^(zone-[abc]|gimmick-range|raster-range|captain-range|raid-range|twin-range|bonus-range|bonus-vault|brine-grotto)-[a-z0-9-]+$/,
       );
     }
     for (const scenario of GOLDEN_SCENARIOS)

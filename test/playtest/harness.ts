@@ -16,6 +16,7 @@
  */
 import {
   Action,
+  BossRole,
   BossState,
   KNOWN_SCRIPT_IDS,
   ENGINE_SPRITES,
@@ -194,6 +195,23 @@ function directionCount(mask: number): number {
 }
 
 /**
+ * The stage's main encounter (M2-11: a zone may have a mid-boss): the first boss slot of role
+ * `boss` — never a captain — that is in its fight or death sequence.
+ *
+ * @param world - The World.
+ * @returns The boss, or `null` when no stage boss fights or dies.
+ */
+function stageBoss(world: World): World['bosses']['boss'] | null {
+  const slots = world.bosses.slots;
+  for (let i = 0; i < slots.length; i++) {
+    const boss = slots[i];
+    if (boss.role !== BossRole.Boss) continue;
+    if (boss.state === BossState.Fight || boss.state === BossState.Dying) return boss;
+  }
+  return null;
+}
+
+/**
  * Plays a stage with a bot until it is cleared, the game is over or the tick limit.
  *
  * @param stageId - A shipped stage id (e.g. `zone-a`).
@@ -213,7 +231,8 @@ function directionCount(mask: number): number {
  * `stageSkip` from the flags override the same fields of `flags.config`; god mode is set on
  * `world.debugFlags` after creation (it is not part of the config, so a replay must pass it
  * again). A death is a tick on which player 1 went from `alive` to `dying`; `boss` is true when
- * the boss was in its fight then.
+ * a stage boss was in its fight then. The boss statistics follow the stage's main encounter — a
+ * boss of role `boss` in any slot —, never a captain (M2-11: zone B's mid-boss comes first).
  *
  * @example
  * ```ts
@@ -233,7 +252,6 @@ export function runStage(
   const maxTicks = flags.maxTicks ?? DEFAULT_MAX_TICKS;
   const inputs = new Uint16Array(maxTicks);
   const ship = world.players[0];
-  const boss = world.bosses.boss;
   const deaths: PlaytestDeath[] = [];
   const equips = [0, 0, 0, 0, 0, 0, 0];
   let pickups = 0;
@@ -263,7 +281,7 @@ export function runStage(
         cameraX: Math.round(world.camera.x),
         cause: PLAYER_HIT_CAUSE_NAMES[ship.hitCause] ?? 'unknown',
         y: Math.round(ship.y - world.camera.y),
-        boss: boss.state === BossState.Fight,
+        boss: stageBoss(world)?.state === BossState.Fight,
         livesLeft: ship.lives,
       });
     }
@@ -272,8 +290,9 @@ export function runStage(
       if (x < minX) minX = x;
       if (x > maxX) maxX = x;
     }
-    if (fightStart < 0 && boss.state === BossState.Fight) fightStart = tick;
-    if (killTick < 0 && fightStart >= 0 && boss.state === BossState.Dying) killTick = tick;
+    const boss = stageBoss(world);
+    if (fightStart < 0 && boss?.state === BossState.Fight) fightStart = tick;
+    if (killTick < 0 && fightStart >= 0 && boss?.state === BossState.Dying) killTick = tick;
     flags.observe?.(world);
     if (world.status === 'stageClear' && clearTick < 0) clearTick = ticks;
     if (world.status === 'stageClear' || world.status === 'gameOver') break;

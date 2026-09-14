@@ -99,12 +99,14 @@ const T = { vent: 3, core: 4, gunTop: 7, gunBottom: 8 } as const;
 describe('core/behaviors — the boss roster (M1-13)', () => {
   it('registers the boss roster, frozen, next to the enemy roster', () => {
     // boss.bulwark (HB-01) joined with the zone A content of M1-18; the captains and the raid
-    // turrets with M2-09.
+    // turrets with M2-09; the zone B and C bosses with M2-11.
     expect(BOSS_BEHAVIOR_IDS).toEqual([
       'boss.bulwark',
       'boss.hover',
       'boss.lanes',
+      'boss.maw',
       'boss.raid',
+      'boss.widow',
       'captain.circler',
       'captain.crab',
       'captain.launcher',
