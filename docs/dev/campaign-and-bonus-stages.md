@@ -122,8 +122,8 @@ clear — `null` only for a zone that is not a final zone of a valid campaign.
 | 8 | `bonus` | A hidden bonus stage was cleared |
 
 The shipped endings are placeholders until M2-14: zone H has *THE CITADEL FALLS SILENT*
-(`noDeath`) and *THE CITADEL FALLS*; zone I has *THE DEEP IS STILL* (`noDeath`), *THE FLAGSHIP
-SLIPS AWAY* (`bossEscaped`) and *THE THRONE IS BROKEN*.
+(`noDeath`) and *THE CITADEL FALLS*; zone I has *THE DEEP IS STILL* (`noDeath`, not
+`bossEscaped`), *THE FLAGSHIP SLIPS AWAY* (`bossEscaped`) and *THE THRONE IS BROKEN*.
 
 ## Campaign run or single-stage run
 

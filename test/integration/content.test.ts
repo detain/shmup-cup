@@ -2126,8 +2126,11 @@ describe('integration: zones H and I, the finales, hold to the plan and the 4-wa
         expect(ending.text.length, ending.id).toBeLessThanOrEqual(MAX_ENDING_TEXT_LINES);
       }
     }
-    // Selection under all 16 flag masks: a flawless run gets the flawless ending, an escape (zone I)
-    // the flagship's, everything else the plain one.
+    // Zone I's flawless epilogue has the Hollow King sink with its ARK: an escape (the King never
+    // shows) must not reach it, however flawless the run.
+    expect(campaign.endings.find((e) => e.id === 'throne-flawless')?.none).toEqual(['bossEscaped']);
+    // Selection under all 16 flag masks: an escape (zone I) gets the flagship's ending whatever
+    // else, a flawless run the flawless ending, everything else the plain one.
     const h = campaign.zones.findIndex((z) => z.id === 'h');
     const i = campaign.zones.findIndex((z) => z.id === 'i');
     for (let flags = 0; flags < 16; flags++) {
@@ -2137,7 +2140,7 @@ describe('integration: zones H and I, the finales, hold to the plan and the 4-wa
         noDeath ? 'citadel-flawless' : 'citadel',
       );
       expect(selectCampaignEnding(campaign, i, flags)?.id).toBe(
-        noDeath ? 'throne-flawless' : escaped ? 'throne-escape' : 'throne',
+        escaped ? 'throne-escape' : noDeath ? 'throne-flawless' : 'throne',
       );
     }
   });

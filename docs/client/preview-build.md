@@ -1228,8 +1228,8 @@ one you get already depends on the route and the run:
 |---|---|---|
 | H | THE CITADEL FALLS SILENT | No ship lost in the whole run |
 | H | THE CITADEL FALLS | Otherwise |
-| I | THE DEEP IS STILL | No ship lost in the whole run |
-| I | THE FLAGSHIP SLIPS AWAY | IRON LEVIATHAN escaped |
+| I | THE DEEP IS STILL | No ship lost in the whole run, and the ABYSS ARK did not escape |
+| I | THE FLAGSHIP SLIPS AWAY | The ABYSS ARK escaped (even with no ship lost) |
 | I | THE THRONE IS BROKEN | Otherwise |
 
 The run's score is saved (with the zone it reached) when the final zone is cleared or on the

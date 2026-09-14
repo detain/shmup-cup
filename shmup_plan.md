@@ -3349,11 +3349,11 @@ Goal of the milestone: every **[P1]** feature. Steps are ordered so systems land
     string slots, hold, title; OK / Back skip after 60 ticks). The final stage's cues play (`Ending`
     / `Credits`); a stage without them keeps the music playing. The UI list has 256 string slots
     (224). The shipped endings: H *THE CITADEL FALLS SILENT* (`noDeath`) / *THE CITADEL FALLS*; I
-    *THE DEEP IS STILL* (`noDeath`) / *THE FLAGSHIP SLIPS AWAY* (`bossEscaped`) / *THE THRONE IS
-    BROKEN*, each with its scene and a five- or six-line epilogue; the credits (12 sections) list
-    the zones, the bosses, the engine packages and every placeholder-asset generator of
-    `scripts/assets/procedural/` (the content test checks the generator list against
-    `PROCEDURAL_GENERATORS`).
+    *THE DEEP IS STILL* (`noDeath`, not `bossEscaped`: its epilogue sinks the King with the ARK) /
+    *THE FLAGSHIP SLIPS AWAY* (`bossEscaped`) / *THE THRONE IS BROKEN*, each with its scene and a
+    five- or six-line epilogue; the credits (12 sections) list the zones, the bosses, the engine
+    packages and every placeholder-asset generator of `scripts/assets/procedural/` (the content
+    test checks the generator list against `PROCEDURAL_GENERATORS`).
   - **Art as code:** `scripts/assets/procedural/citadel.mjs` (14 sprites; the wall's running lights
     in `CITADEL_RAMP`, cycled), `abyss.mjs` (19; the murk's specks in `ABYSS_RAMP`, cycled; the ARK
     turret's 16 heading frames) and `ending.mjs` (6 UI sprites, core `UI_SPRITES` /

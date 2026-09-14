@@ -455,12 +455,13 @@ describe('core/data campaign edges: the shipped endings (M2-10)', () => {
       expect(atH, 'flags ' + String(flags)).toBe(
         (flags & noDeath) !== 0 ? 'citadel-flawless' : 'citadel',
       );
-      // A flawless run beats an escaped boss (the flawless ending is listed first).
+      // An escaped boss beats a flawless run: the flawless epilogue has the Hollow King sink with
+      // its ARK, so it excludes `bossEscaped` (the escape scene still draws the dawn of a flawless run).
       expect(atI, 'flags ' + String(flags)).toBe(
-        (flags & noDeath) !== 0
-          ? 'throne-flawless'
-          : (flags & escaped) !== 0
-            ? 'throne-escape'
+        (flags & escaped) !== 0
+          ? 'throne-escape'
+          : (flags & noDeath) !== 0
+            ? 'throne-flawless'
             : 'throne',
       );
     }

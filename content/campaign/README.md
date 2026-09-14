@@ -9,8 +9,10 @@ zones, the zone tally, the ending selection).
 `A → B|C → D|E → F|G → H|I` — five zones per run, **16 routes**, two final zones (H IRON CITADEL,
 I ABYSSAL THRONE) with their own endings. Every zone is a real zone (B–G since M2-11 … M2-13, the
 finales H and I since M2-14). Each final zone has a no-death ending and a plain one — zone I also
-*THE FLAGSHIP SLIPS AWAY* when a boss escaped — each with its sprite scene (`citadel` / `abyss`) and
-its epilogue, and the file's `credits` scroll after every ending (M2-14).
+*THE FLAGSHIP SLIPS AWAY* when the ABYSS ARK escaped, even in a no-death run (zone I's no-death
+ending has the Hollow King sink with the ARK, so it excludes `bossEscaped`) — each with its sprite
+scene (`citadel` / `abyss`) and its epilogue, and the file's `credits` scroll after every ending
+(M2-14).
 
 ## Format (formatVersion 1)
 
