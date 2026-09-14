@@ -56,7 +56,12 @@
  * (M2-13) fly the real zones F and G with the 4-way bot and god mode, start to stage clear —
  * `zone-f` (CELL VAULT: the chasing cells, the tissue walls, the grabbing tentacles, MANTLE REGENT)
  * and `zone-g` (PRISM LABYRINTH: the crystal labyrinth, the cube rush, FACET MONARCH) — and zone
- * G's hidden bonus stage `glimmer-cache` with the full loadout.
+ * G's hidden bonus stage `glimmer-cache` with the full loadout. Five more (M2-13 tests) fly them
+ * without god mode: the 4-way bot through the whole of zone F at Arcade difficulty (it survives
+ * the rank-scaled fire) and of zone G (a death in the cube rush and a Classic respawn in place),
+ * the weaving pilot in zone F on Easy under the Arcade penalty (deaths, the checkpoint restarts
+ * rolling the tissue it shot open back, `gameOver`), and the stage skips to MANTLE REGENT and
+ * FACET MONARCH with the full loadout under the Arcade penalty.
  *
  * @module
  */
@@ -548,6 +553,51 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = Object.freeze([
     stageId: 'glimmer-cache',
     config: { seed: 81, loadout: 'full' },
     godMode: true,
+    bot: 'four-way',
+  },
+  {
+    name: 'zone-f-arcade',
+    description:
+      'CELL VAULT at Arcade difficulty without god mode (M2-13 tests): the 4-way bot from the start against the rank-scaled fire — the chasing cells, the tissue walls, the grabbing tentacles — to MANTLE REGENT shot down',
+    stageId: 'zone-f',
+    config: { seed: 91, difficulty: 'arcade' },
+    godMode: false,
+    bot: 'four-way',
+  },
+  {
+    name: 'zone-f-deaths',
+    description:
+      'CELL VAULT on Easy under the Arcade penalty with a weaving pilot that never dodges (M2-13 tests): deaths in the membrane and at the first tissue walls, the checkpoint restarts at 2,200 rolling the tissue it shot open back, game over',
+    stageId: 'zone-f',
+    config: { seed: 91, deathPenalty: 'arcade', difficulty: 'easy' },
+    godMode: false,
+    bot: 'weaver',
+  },
+  {
+    name: 'zone-f-boss',
+    description:
+      'the stage skip to MANTLE REGENT (M2-13 tests): the full loadout under the Arcade penalty, the eye shot between the curls of its tentacles',
+    stageId: 'zone-f',
+    config: { seed: 95, stageSkip: 'boss', loadout: 'full', deathPenalty: 'arcade' },
+    godMode: false,
+    bot: 'four-way',
+  },
+  {
+    name: 'zone-g-bot',
+    description:
+      'PRISM LABYRINTH without god mode (M2-13 tests): the 4-way bot from the start, Classic penalty, through the crystal labyrinth — a death in the cube rush and a respawn in place — to FACET MONARCH',
+    stageId: 'zone-g',
+    config: { seed: 91 },
+    godMode: false,
+    bot: 'four-way',
+  },
+  {
+    name: 'zone-g-boss',
+    description:
+      'the stage skip to FACET MONARCH (M2-13 tests): the full loadout under the Arcade penalty, its crystals broken, then the core behind them shot down',
+    stageId: 'zone-g',
+    config: { seed: 95, stageSkip: 'boss', loadout: 'full', deathPenalty: 'arcade' },
+    godMode: false,
     bot: 'four-way',
   },
 ]);

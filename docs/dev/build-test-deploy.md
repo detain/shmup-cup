@@ -324,7 +324,11 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   `?stage=zone-d`'s volcano peaks, its palette-cycled lava lake rising into view with the dive and
   CINDER BASTION's hull fighting down in the caves with its shield arms turning, `?stage=zone-e`'s
   palette-cycled storm clouds over the jagged ridge and SQUALL STEED opening its chest, and both
-  bosses drawn on the Tizen build from `file://` (`zones-de.spec.ts`, M2-12). The gameplay specs
+  bosses drawn on the Tizen build from `file://` (`zones-de.spec.ts`, M2-12), and zones F and G:
+  `?stage=zone-f`'s palette-cycled cell wall (its pixels recoloured as the cycle steps) over the
+  fleshy folds and MANTLE REGENT fighting with its tentacles curling in, `?stage=zone-g`'s
+  palette-cycled crystal facets over the spires and FACET MONARCH waving its arms, and both bosses
+  drawn on the Tizen build from `file://` (`zones-fg.spec.ts`, M2-13). The gameplay specs
   open `?scene=flight` (bare gameplay, open space unless `?stage=` names a stage) since M1-16;
   specs comparing captures a set number of ticks apart freeze the sim and step exact ticks
   (`test/e2e/frame-advance.ts`, M1-19) instead of counting rAF frames. Since M1-19 the suite runs

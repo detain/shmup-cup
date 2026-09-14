@@ -3,7 +3,8 @@
  * `test/golden/<scenario>.replay.json` — zone A (and, since M2-07 / M2-08 / M2-09 / M2-10, the
  * `gimmick-range`, `raster-range`, `captain-range`, `raid-range`, `twin-range`, `bonus-range` and
  * `bonus-vault` dev stages; since M2-11 the real zones B and C and zone B's bonus stage; since
- * M2-12 zones D and E, with and without god mode)
+ * M2-12 zones D and E, since M2-13 zones F and G and zone G's bonus stage, with and without god
+ * mode)
  * played by the 4-way bot and recorded with `core/replay` (the 4-way bot, or a careless weaving
  * pilot for the deaths) — plays back into a
  * fresh session with **every state hash** (one per 600 ticks and
@@ -357,6 +358,113 @@ describe('golden replays (zone A and the dev stages, playtest bots)', () => {
     const p1 = world.scoring.board.scores[0];
     expect(outcome.lives - 3 - p1.extendsEarned).toBeGreaterThanOrEqual(1);
     expect(outcome.score).toBeGreaterThan(5 * BONUS_CAPSULE_SCORE);
+  });
+
+  it('covers zones F and G without god mode (M2-13 tests): Arcade rank, restarts, deaths in place, the skips', () => {
+    // CELL VAULT at Arcade difficulty: the 4-way bot survives the rank-scaled fire to the clear,
+    // shooting tissue open on the way.
+    const arcade = readGolden('zone-f-arcade');
+    expect(arcade.replay.header.assisted).toBe(false);
+    expect(arcade.replay.header.config.difficulty).toBe('arcade');
+    expect(arcade.file.expected).toMatchObject({
+      status: 'stageClear',
+      bossDefeated: true,
+      deathTicks: [],
+    });
+    expect(arcade.file.expected.ticks / 60).toBeGreaterThanOrEqual(180);
+    expect(arcade.file.expected.ticks / 60).toBeLessThanOrEqual(360);
+    expect(playGolden(arcade.replay).world.gimmicks.destructible?.destroyed ?? 0).toBeGreaterThan(
+      0,
+    );
+    // The weaving pilot on Easy under the Arcade penalty: its restarts go back to the start until
+    // it passes the checkpoint at 2,200, then to that checkpoint — with the tissue it shot open at
+    // the first walls standing again —, until the game is over.
+    const deaths = readGolden('zone-f-deaths');
+    expect(deaths.replay.header.config).toMatchObject({
+      deathPenalty: 'arcade',
+      difficulty: 'easy',
+    });
+    expect(deaths.file.expected).toMatchObject({
+      status: 'gameOver',
+      lives: 0,
+      bossDefeated: false,
+    });
+    expect(deaths.file.expected.deathTicks.length).toBeGreaterThanOrEqual(4);
+    const deathTicks = new Set(deaths.file.expected.deathTicks);
+    const died: { x: number; broken: number }[] = [];
+    const back: { x: number; broken: number }[] = [];
+    let alive = true;
+    playGolden(deaths.replay, undefined, (world) => {
+      const ship = world.players[0];
+      const broken = world.gimmicks.destructible?.destroyed ?? 0;
+      if (deathTicks.has(world.tick - 1)) died.push({ x: world.camera.x, broken });
+      if (!alive && ship.state === 'alive') back.push({ x: world.camera.x, broken });
+      alive = ship.state === 'alive';
+    });
+    expect(died).toHaveLength(deaths.file.expected.deathTicks.length);
+    expect(back).toHaveLength(died.length); // the start's fly-in, then one per restart but the last
+    const restarts = back.slice(1);
+    for (let k = 0; k < restarts.length; k++) {
+      // Back to a checkpoint — the start or 2,200 — never ahead of where it died, the shot-open
+      // tissue standing again (the ship flies in for a few dozen pixels of scroll).
+      const checkpoint = restarts[k].x >= 2200 ? 2200 : 0;
+      expect(restarts[k].x - checkpoint, `restart ${String(k)}`).toBeLessThan(60);
+      expect(restarts[k].x, `restart ${String(k)}`).toBeLessThan(died[k].x + 100);
+      expect(restarts[k].broken, `restart ${String(k)}`).toBe(0);
+    }
+    expect(restarts.filter((r) => r.x < 60).length).toBeGreaterThanOrEqual(1);
+    expect(restarts.filter((r) => r.x >= 2200).length).toBeGreaterThanOrEqual(2);
+    expect(died.some((d) => d.x >= 2700 && d.broken > 0)).toBe(true);
+    // PRISM LABYRINTH with the 4-way bot and no god mode: a death in the cube rush, the Classic
+    // respawn in place (the camera scrolled on — no checkpoint restart), the clear.
+    const bot = readGolden('zone-g-bot');
+    expect(bot.replay.header.assisted).toBe(false);
+    expect(bot.replay.header.config.deathPenalty).toBe('classic');
+    expect(bot.file.expected).toMatchObject({ status: 'stageClear', bossDefeated: true });
+    expect(bot.file.expected.deathTicks).toHaveLength(1);
+    expect(bot.file.expected.ticks / 60).toBeGreaterThanOrEqual(180);
+    expect(bot.file.expected.ticks / 60).toBeLessThanOrEqual(360);
+    const death = bot.file.expected.deathTicks[0];
+    let deathX = -1;
+    let respawnX = -1;
+    playGolden(bot.replay, undefined, (world) => {
+      if (world.tick - 1 === death) deathX = world.camera.x;
+      if (deathX >= 0 && respawnX < 0 && world.players[0].state === 'alive') {
+        respawnX = world.camera.x;
+      }
+    });
+    expect(deathX).toBeGreaterThanOrEqual(4600); // the cube rush's checkpoint …
+    expect(deathX).toBeLessThan(6800); // … before the refraction run's
+    expect(respawnX).toBeGreaterThan(deathX);
+    // The stage skips to MANTLE REGENT and FACET MONARCH: the full loadout under the Arcade
+    // penalty, all three phases of each fought, no death.
+    for (const [name, boss] of [
+      ['zone-f-boss', 'mantle-regent'],
+      ['zone-g-boss', 'facet-monarch'],
+    ] as const) {
+      const skip = readGolden(name);
+      expect(skip.replay.header.config, name).toMatchObject({
+        stageSkip: 'boss',
+        loadout: 'full',
+        deathPenalty: 'arcade',
+      });
+      expect(skip.file.expected, name).toMatchObject({
+        status: 'stageClear',
+        bossDefeated: true,
+        deathTicks: [],
+      });
+      expect(skip.file.expected.ticks, name).toBeLessThan(arcade.file.expected.ticks / 4);
+      const phases = new Set<number>();
+      const index = shippedContent().enemyIndex.get(boss);
+      let first = Number.POSITIVE_INFINITY;
+      playGolden(skip.replay, undefined, (world) => {
+        first = Math.min(first, world.camera.x);
+        const slot = world.bosses.boss;
+        if (slot.state === BossState.Fight && slot.specIndex === index) phases.add(slot.phase);
+      });
+      expect([...phases].sort(), name).toEqual([0, 1, 2]);
+      expect(first, name).toBeGreaterThan(9000); // skipped to the WARNING
+    }
   });
 
   it('covers zones D and E without god mode (M2-12 tests): deaths in place, the caves, the skip', () => {

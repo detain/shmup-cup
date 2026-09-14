@@ -3,8 +3,9 @@
 Committed replays of zone A (AZURE VERGE) — and, since M2-07 / M2-08 / M2-09, of the
 `gimmick-range`, `raster-range`, `captain-range`, `raid-range` and `twin-range` dev stages,
 since M2-10 of `bonus-range` and `bonus-vault`, since M2-11 of zones B and C (BRINE NEBULA,
-DUNE EXPANSE) and zone B's bonus stage `brine-grotto`, and since M2-12 of zones D and E (MAGMA
-DEEP, TEMPEST RIDGE) —
+DUNE EXPANSE) and zone B's bonus stage `brine-grotto`, since M2-12 of zones D and E (MAGMA
+DEEP, TEMPEST RIDGE), and since M2-13 of zones F and G (CELL VAULT, PRISM LABYRINTH) and zone G's
+bonus stage `glimmer-cache` —
 that pin down what the simulation does (plan M1-19, `shmup_feat.md` §24). Each `<scenario>.replay.json` is a `core/replay` document — the header (every
 sim-affecting `GameConfig` field, the stage, god mode as `assisted`), every tick's input
 (`held | pressed << 16` per player, run-length encoded, base64), a state hash every 600 ticks and
@@ -52,6 +53,14 @@ continues).
 | `zone-e-god` | 4-way playtest bot, god mode | TEMPEST RIDGE (M2-12) start to `stageClear`: the storm front, the ridge pass, the thunderheads, the gale run, kites and jumpers from behind, SQUALL STEED shot down |
 | `zone-e-bot` | 4-way playtest bot | TEMPEST RIDGE without god mode (M2-12 tests): the rear attackers against a ship that can die, a death and a Classic respawn in place, SQUALL STEED shot down, `stageClear` |
 | `brine-grotto-god` | 4-way playtest bot, god mode, full loadout | PEARL GROTTO, zone B's hidden bonus stage (M2-11): the bonus capsules and the 1UP collected, its `end` reached (no boss) |
+| `zone-f-god` | 4-way playtest bot, god mode | CELL VAULT (M2-13) start to `stageClear`: the chasing and dividing cells, the regenerating tissue walls, the grabbing tentacles, the pulse run, MANTLE REGENT shot down |
+| `zone-f-arcade` | 4-way playtest bot | CELL VAULT at Arcade difficulty without god mode (M2-13 tests): the rank-scaled fire survived, tissue shot open, MANTLE REGENT shot down, `stageClear` |
+| `zone-f-deaths` | a weaving pilot that never dodges | CELL VAULT on Easy under the Arcade penalty (M2-13 tests): deaths in the membrane and at the first tissue walls, checkpoint restarts at the start and at 2,200 rolling the shot-open tissue back, `gameOver` |
+| `zone-f-boss` | 4-way playtest bot, full loadout | the stage skip to MANTLE REGENT (M2-13 tests) under the Arcade penalty: its three phases, the eye shot between the curls of its tentacles |
+| `zone-g-god` | 4-way playtest bot, god mode | PRISM LABYRINTH (M2-13) start to `stageClear`: the prism field, the gallery, the crystal labyrinth, the cube rush stacking into its pillars, the refraction run, FACET MONARCH shot down |
+| `zone-g-bot` | 4-way playtest bot | PRISM LABYRINTH without god mode (M2-13 tests): a death in the cube rush and a Classic respawn in place, FACET MONARCH shot down, `stageClear` |
+| `zone-g-boss` | 4-way playtest bot, full loadout | the stage skip to FACET MONARCH (M2-13 tests) under the Arcade penalty: its crystals broken, the core behind them shot down through its three phases |
+| `glimmer-cache-god` | 4-way playtest bot, god mode, full loadout | GLIMMER CACHE, zone G's hidden bonus stage (M2-13): the bonus capsules and the 1UP collected, the cube rush and its cube walls, its `end` reached (no boss) |
 
 - `golden.test.ts` (part of `pnpm test`) plays every file back into a fresh session: every hash and
   the outcome must match. A failure means the simulation changed.

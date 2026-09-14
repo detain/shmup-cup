@@ -3252,6 +3252,39 @@ Goal of the milestone: every **[P1]** feature. Steps are ordered so systems land
     zone tilesets of the terrain generator test, the golden file-name pattern. Zone G's map preview
     now reads "A RUSH OF CUBES THAT BUILD WALLS." (its cubes charge, they do not fall).
   - **Bundle:** the Tizen `app.js` is 320.3 KB gzip of its 350 KB budget (313.5 after M2-12).
+  - **Test round:** `behaviors-zones-fg-edge.test.ts` (the three behaviours' defaults; the chasing
+    cell's timeline — 50 ticks in, 150 chasing at 6 units, then straight on with its heading kept
+    —, `speed` ≤ 0 → 1 px/tick, tick counts below 1 → one tick, `turnRate` floored and below 0 →
+    no turn, the turn cap per tick, a dividing cell's halves flying out for the child's floored
+    `scatterTicks`, a launched cell drifting in; the squid's cycle — open, sweep, guard, sweep, each
+    hold one tick longer than its timer —, `curl` rounded, timers floored, the arms mirrored and
+    every segment alike, a broken tentacle leaving the other's cycle as it was, floored spreads,
+    needles from the standing tips, rings as the tentacles open turned half a gap, floored
+    launches from the eye; the facet wave's turn points `2 × waveTicks` apart, `wave` rounded,
+    floored needles from both tips, rings from the armoured core, detached lanes from the core one
+    at a time, the shipped arms carried through the crystals breaking without a jump; tracking in
+    the margins), `zones-fg-runtime-edge.test.ts` (every practice start of F and G in open space,
+    the stage skips with every boss part in view, an Arcade restart in the tissue passage rolling
+    the walls back before their `regen`, an Arcade restart in the prism gallery re-arming it afresh
+    — all four turrets open it, three keep it shut —, a death in GLIMMER CACHE back to the gallery
+    locked out, MANTLE REGENT's launches 200 ticks apart), `procedural-zones-fg-edge.test.ts`
+    (kebab names, every frame visible and deterministic, square arm segments, ramps of their own,
+    the registry, zone A's destructible tiles in the zone tilesets, seven distinct rims), the
+    browser spec `zones-fg.spec.ts` (the cell wall and the crystal facets recoloured by their
+    cycles over the folds and spires, MANTLE REGENT curling its tentacles, FACET MONARCH waving
+    its arms, both bosses on the Tizen build) and five more goldens — `zone-f-arcade` (the 4-way
+    bot at Arcade difficulty without god mode: no death, the clear), `zone-f-deaths` (the weaver on
+    Easy under the Arcade penalty: restarts at the start and at 2,200 rolling the shot-open tissue
+    back, game over), `zone-f-boss` / `zone-g-boss` (the stage skips, full loadout, Arcade
+    penalty: all three phases) and `zone-g-bot` (the 4-way bot without god mode: a death in the
+    cube rush, a respawn in place, the clear). No existing golden changed. **Fixed:** a
+    `boss.squid` / `boss.facet` phase clamped the arms' curl to its own sweep, so a phase with a
+    smaller sweep than the curl the last one left (or a squid phase after a facet wave had curled
+    the arms away from the core's row) snapped the arms at its first turn point — a 50-unit jump
+    in the test's squid, 67 in its facet; the arms now turn from wherever they are, however far
+    (the shipped phases never exceeded their sweeps, so no golden changed). The `boss.facet` /
+    `boss.squid` allocation guards now measure five windows: under the full suite's load their best
+    of three came in at 66 KB of the 64 KB budget now and then (before this round's fix too).
 
 ### M2-14 — Final zones H & I, endings & credits
 

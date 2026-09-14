@@ -2282,12 +2282,13 @@ const SQUID_OPENING = 3;
  * @remarks
  * One script per phase, sleeping until the soonest of its four timers (the tentacles, the core's
  * spreads, the tips, the launches); every timer is a whole number. A phase starts by **uncurling**
- * the tentacles from wherever the last phase left them (`armCurl`), so a phase change never makes
- * them jump: they uncurl at the new `curl` and are put exactly straight when they arrive (a curl
- * that is not a multiple of the new speed is rounded down, then set — less than one step). The
- * curl is mirrored: the arms above the core turn counter-clockwise, those below it clockwise
- * (`armSide`). `curl` is rounded to whole units (at least 1); `sweepTicks`, `openTicks` and
- * `guardTicks` below 1 are one tick. Guide: `docs/dev/zones-f-and-g.md`.
+ * the tentacles from wherever the last phase left them (`armCurl`, however far — past the new
+ * sweep too; arms a `boss.facet` phase left curled away from the core's row curl back in), so a
+ * phase change never makes them jump: they turn at the new `curl` and are put exactly straight
+ * when they arrive (a curl that is not a multiple of the new speed is rounded down, then set — less
+ * than one step). The curl is mirrored: the arms above the core turn counter-clockwise, those below
+ * it clockwise (`armSide`). `curl` is rounded to whole units (at least 1); `sweepTicks`,
+ * `openTicks` and `guardTicks` below 1 are one tick. Guide: `docs/dev/zones-f-and-g.md`.
  */
 const bossSquid = defineBossBehavior(
   'boss.squid',
@@ -2321,13 +2322,13 @@ const bossSquid = defineBossBehavior(
     const half = ring > 0 ? Math.floor(ANGLE_UNITS / ring / 2) : 0;
     const parts = api.self.parts;
     let rings = 0;
-    // Uncurl from wherever the last phase left the tentacles.
-    let now = armCurl(api);
-    if (now < 0) now = 0;
-    else if (now > full) now = full;
+    // Straighten from wherever the last phase left the tentacles, however far: curled in (past
+    // this phase's sweep, too) they uncurl, curled away from the core's row (a facet wave) they
+    // curl back in — never clamped, so the arms never jump.
+    const now = armCurl(api);
     let state = SQUID_OPENING;
-    let armIn = Math.floor(now / curl);
-    curlArms(api, armIn > 0 ? -curl : 0);
+    let armIn = Math.floor((now < 0 ? -now : now) / curl);
+    curlArms(api, armIn > 0 ? (now > 0 ? -curl : curl) : 0);
     let fireIn = api.fireWait(p.fireTicks);
     let gunIn = p.gunTicks >= 1 ? api.fireWait(p.gunTicks) : NEVER_TICKS;
     let launchIn = p.launchTicks >= 1 && count > 0 ? api.fireWait(p.launchTicks) : NEVER_TICKS;
@@ -2404,12 +2405,12 @@ const bossSquid = defineBossBehavior(
  * @remarks
  * One script per phase, sleeping until the soonest of its four timers (the wave's turn points, the
  * tips, the rings, the lanes). A phase takes the arms from wherever the last phase left them
- * (`armCurl`, clamped to the new sweep) on towards the curled-in turn point — the one straight
- * ahead unless they are already there — so a phase change never makes them jump; each turn point
- * is set exactly when reached (`setArmCurl` — the rest of a curl that is not a multiple of the new
- * `wave`, less than one step). `wave` is rounded to whole units (at least 1), `waveTicks` below 1 is
- * one tick. One lane at a time while `laserTicks` outlasts a lane (telegraph + grow + active +
- * fade). Guide: `docs/dev/zones-f-and-g.md`.
+ * (`armCurl`, however far — never clamped to the new sweep) on towards the curled-in turn point —
+ * the one straight ahead unless they are already there or past it — so a phase change never makes
+ * them jump; each turn point is set exactly when reached (`setArmCurl` — the rest of a curl that is
+ * not a multiple of the new `wave`, less than one step). `wave` is rounded to whole units (at least
+ * 1), `waveTicks` below 1 is one tick. One lane at a time while `laserTicks` outlasts a lane
+ * (telegraph + grow + active + fade). Guide: `docs/dev/zones-f-and-g.md`.
  */
 const bossFacet = defineBossBehavior(
   'boss.facet',
@@ -2441,10 +2442,10 @@ const bossFacet = defineBossBehavior(
     const half = ring > 0 ? Math.floor(ANGLE_UNITS / ring / 2) : 0;
     const parts = api.self.parts;
     let rings = 0;
-    // On from wherever the last phase left the arms: towards the curled-in turn point.
-    let now = armCurl(api);
-    if (now < -reach) now = -reach;
-    else if (now > reach) now = reach;
+    // On from wherever the last phase left the arms, however far (never clamped to this phase's
+    // sweep, so the arms never jump): towards the curled-in turn point — the other one when they
+    // are there already or past it.
+    const now = armCurl(api);
     let dir = now < reach ? 1 : -1;
     let turnIn = Math.floor((dir > 0 ? reach - now : now + reach) / wave);
     curlArms(api, dir * wave);
