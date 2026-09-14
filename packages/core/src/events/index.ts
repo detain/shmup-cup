@@ -124,7 +124,9 @@ export const SimEventKind = {
   BossEscaped: 14,
   /**
    * Prepare the presentation of a stage that is about to be played (M2-10 — the zone map, while
-   * the player's choice launches): `id` = the stage's `ContentDb.stages` index. The host loads
+   * the player's choice launches; the title, for the next run's start stage; a run or practice
+   * start, for its own stage — each only when the stage differs from the one last prepared):
+   * `id` = the stage's `ContentDb.stages` index. The host loads
    * what the stage needs before its World starts — its music set (`@shmup/shell` asks the audio
    * engine to prepare it, keeping the title theme); the tileset art is resident in the one atlas.
    */

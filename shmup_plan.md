@@ -2836,8 +2836,12 @@ Goal of the milestone: every **[P1]** feature. Steps are ordered so systems land
     384 commands / 224 string slots. The map fades the music out (no `ZoneMap` track yet).
   - **Next zone prepared on the map:** OK pushes the new `SimEventKind.PrepareStage` (15, id = the
     stage index); `@shmup/shell` `connectStagePreparation` has the audio engine prepare that
-    stage's music set plus the title theme (one set resident). Tilesets need nothing: every tile
-    is in the one atlas (per-zone texture unloading is M2-17).
+    stage's music set plus the title theme (one set resident). The set follows the stage about to
+    play (`FlowControl.prepareStage`, deduplicated against the last prepared stage — the host
+    config's at boot): the title prepares the next run's start stage again, a run start and
+    `startPractice` prepare their own stage, so a second run never plays through the last zone's
+    set. Tilesets need nothing: every tile is in the one atlas (per-zone texture unloading is
+    M2-17).
   - **Hidden bonus-stage framework.** Stage `type: 'bonus'` (no boss / warning / entrance events,
     an `end`); a `bonus` event (appended `STAGE_EVENT_TYPES` / `StageEventCode.Bonus` 10) names the
     bonus stage and its entrance — `gap` (a living ship's centre in `region`), `ground` (every ground

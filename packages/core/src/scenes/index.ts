@@ -66,6 +66,10 @@
  *   - {@link MapScene}: the node graph of the campaign, Up / Down choose one of the cleared zone's
  *     exits, OK launches (`SimEventKind.PrepareStage` — the host prepares the next zone's music
  *     meanwhile), Back asks "quit to title?";
+ *   - the host's music set follows the stage about to play: the title prepares the next run's
+ *     start stage again (a run that went through the map left the last zone's set resident), a
+ *     run start and a practice start prepare their own stage — each `PrepareStage` only when the
+ *     stage differs from the one last prepared (the host config's stage at boot);
  *   - {@link EndingScene} after the final zone: the ending `core/data` `selectCampaignEnding`
  *     picked from the final zone and the run's flags (no death, no continue, a bonus stage
  *     cleared, a boss escaped), the route and the score — the run is recorded then.
@@ -996,8 +1000,25 @@ interface FlowControl {
    * zone's stage — else `null` (a single-stage run: the M1 stage clear, no map).
    */
   readonly campaign: CampaignSpec | null;
-  /** Starts a new run (a game start from the menus): the campaign's first zone or the stage. */
+  /**
+   * Starts a new run (a game start from the menus): the campaign's first zone or the stage — its
+   * music set prepared ({@link FlowControl.prepareStage}).
+   */
   beginRun(): void;
+  /**
+   * The content stage index whose music set the host last prepared (M2-10): the host config's
+   * stage's at boot (the shell prepares it while loading), -1 for none (open space).
+   */
+  readonly preparedStage: number;
+  /**
+   * Has the host prepare a stage's music set (`SimEventKind.PrepareStage`, id = its content index)
+   * unless it is the set last prepared ({@link FlowControl.preparedStage}); an unknown or `null`
+   * stage changes nothing. The zone map's launch, the title (the next run's start stage), a run
+   * start and a practice start call it. Never allocates.
+   *
+   * @param stage - A stage id (`null`: none).
+   */
+  prepareStage(stage: string | null): void;
   /**
    * Creates the World the run plays now — the current zone's stage, the bonus stage while inside
    * one — with the rank's stage term, the practice checkpoint or the bonus entrance to return to,
@@ -1306,12 +1327,17 @@ export class TitleScene extends SceneBase {
     return 3 + menuStringSlots(this.menu);
   }
 
-  /** Back to `PRESS OK`, title music. */
+  /**
+   * Back to `PRESS OK`, title music; the next run's start stage (the host config's) has its music
+   * set prepared again when another stage's was prepared since (M2-10: a run through the zone
+   * map, a practice run).
+   */
   override enter(): void {
     super.enter();
     this.phase = TitlePhase.Prompt;
     this.ticks = 0;
     this.flow.music(MUSIC_CUES.Title, MUSIC_FADE_TICKS);
+    this.flow.prepareStage(this.flow.host.config.stage);
   }
 
   /** The dialog closed (answered NO): the menu takes input again after a short lock. */
@@ -3678,7 +3704,7 @@ export class MapScene extends SceneBase {
       if (next < 0 || this.campaign === null) return;
       flow.sfx(SFX_CUES.MenuSelect);
       // The next zone's music (and whatever else it needs) is prepared while LAUNCH blinks.
-      flow.host.events.push(SimEventKind.PrepareStage, this.campaign.zones[next].stageId, 0, 0, 0);
+      flow.prepareStage(this.campaign.zones[next].stage);
       this.launch = 0;
       this.uiRevision++;
       return;
@@ -4190,6 +4216,17 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     campaign,
     beginRun(): void {
       run.begin(campaign, control.worldConfig.stage);
+      // Pushed before the World's stage theme: a set already resident switches at once.
+      control.prepareStage(run.stage);
+    },
+    // The shell prepares the host config's stage while loading.
+    preparedStage:
+      host.config.stage === null ? -1 : (host.content.stageIndex.get(host.config.stage) ?? -1),
+    prepareStage(stage: string | null): void {
+      const index = stage === null ? -1 : (host.content.stageIndex.get(stage) ?? -1);
+      if (index < 0 || index === control.preparedStage) return;
+      control.preparedStage = index;
+      events.push(SimEventKind.PrepareStage, index, 0, 0, 0);
     },
     createRunWorld(carry: CarryState | null): World {
       const world = host.createWorld(runWorldConfig(control.worldConfig, run));
@@ -4410,6 +4447,7 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
       if (checkpoint >= stage.checkpoints.length) return false;
       run.beginPractice(practice, index, checkpoint);
       run.pendingStart = true;
+      control.prepareStage(run.stage);
       save.count('gamesStarted');
       stack.reset(control.game);
       return true;

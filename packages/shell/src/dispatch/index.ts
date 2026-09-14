@@ -44,7 +44,9 @@
  * | `UserOption` `ShowHitbox` (`param` 1 = on, M2-08) | `display.setShowHitbox` |
  *
  * **Stages (M2-10).** {@link connectStagePreparation} answers `PrepareStage` (the zone map pushes
- * it while its choice launches, `id` = the stage's `ContentDb.stages` index): the audio engine
+ * it while its choice launches, the title for the next run's start stage, a run or practice start
+ * for its own stage — each only when the set changes; `id` = the stage's `ContentDb.stages`
+ * index): the audio engine
  * prepares that stage's music set together with the title theme (the one-set-resident rule would
  * otherwise drop it); a failure is reported to the host's callback and never breaks the game (the
  * stage then plays silent cues).
@@ -381,7 +383,8 @@ export interface StagePreparationTarget {
 }
 
 /**
- * Registers the `PrepareStage` handler (M2-10 — the zone map's launch): the stage's music set
+ * Registers the `PrepareStage` handler (M2-10 — the zone map's launch, the title's return to the
+ * start stage, a run or practice start): the stage's music set
  * (`cuesOf(stage)` — the shell passes `@shmup/audio-web` `stageMusicCues`) plus the title theme
  * is prepared in the background. An index outside `stages` is ignored.
  *

@@ -64,5 +64,7 @@ continue used), `bonus` (a hidden bonus stage cleared).
 - After a zone's boss: the **zone result tally** (kill rate × 100 points, the boss time bonus —
   100 points per second under 90 s), then the **zone map**: Up / Down choose one of the zone's
   exits, OK launches (the next zone's music is prepared meanwhile), Back asks "quit to title?".
+  Back on the title (after the ending, a game over or a practice), the start zone's music is
+  prepared again, so a zone's own `stages`-scoped track never leaks into the next run.
 - The final zone's clear picks the ending (the first match for the run's flags) and records the
   run in the hi-score table.

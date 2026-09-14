@@ -206,6 +206,74 @@ describe('core/scenes campaign run (M2-10)', () => {
     expect(s.uiTexts()).toEqual(['ZONE L', 'LOWER ZONE']);
   });
 
+  it('prepares the start stage again on the title after a run through the map (review round 1)', () => {
+    const s = new Session();
+    const prepared = (from = 0): number[] =>
+      s.events.slice(from).flatMap((e) => (e[0] === SimEventKind.PrepareStage ? [e[1]] : []));
+    const index = (id: string): number => s.game.content.stageIndex.get(id) ?? -2;
+    // The first run plays the host config's stage: the set the shell loaded, nothing to prepare.
+    expect(prepared()).toEqual([]);
+    s.until('map', 3000);
+    s.hold(0, 3);
+    s.press(Action.Confirm); // U
+    s.until('game');
+    expect(prepared()).toEqual([index('t-u')]);
+    s.until('stageClear');
+    s.press(Action.Confirm);
+    expect(s.top).toBe('ending');
+    s.hold(0, ENDING_LOCK_TICKS);
+    s.press(Action.Confirm);
+    expect(s.top).toBe('title');
+    // The title brings the next run's start stage back (U's set was resident).
+    expect(prepared()).toEqual([index('t-u'), index('t-s')]);
+    const from = s.events.length;
+    s.flow.stack.reset(s.flow.title);
+    s.hold(0, 2);
+    s.flow.stack.reset(s.flow.game); // a new run
+    s.hold(0);
+    expect(s.stageId).toBe('t-s');
+    expect(prepared(from)).toEqual([]); // already prepared
+  });
+
+  it('a practice start and a run start prepare their own stage before its theme', () => {
+    const s = new Session();
+    const prepared = (from = 0): number[] =>
+      s.events.slice(from).flatMap((e) => (e[0] === SimEventKind.PrepareStage ? [e[1]] : []));
+    const index = (id: string): number => s.game.content.stageIndex.get(id) ?? -2;
+    expect(s.flow.startPractice('l')).toBe(true);
+    s.hold(0);
+    expect(s.stageId).toBe('t-l');
+    expect(prepared()).toEqual([index('t-l')]);
+    // A run started without passing the title: the start stage, queued before the World's theme.
+    const from = s.events.length;
+    s.flow.stack.reset(s.flow.game);
+    s.hold(0);
+    expect(s.stageId).toBe('t-s');
+    expect(s.flow.run.practice).toBe(false);
+    const tail = s.events.slice(from);
+    const prepare = tail.findIndex((e) => e[0] === SimEventKind.PrepareStage);
+    const theme = tail.findIndex((e) => e[0] === SimEventKind.Music && e[1] === MUSIC_CUES.Stage);
+    expect(tail[prepare]).toEqual([SimEventKind.PrepareStage, index('t-s'), 0]);
+    expect(theme).toBeGreaterThan(prepare);
+    // A practice clear returns to the title, which prepares the start stage again.
+    expect(s.flow.startPractice('u')).toBe(true);
+    s.hold(0);
+    s.until('stageClear');
+    s.press(Action.Confirm);
+    expect(s.top).toBe('title');
+    expect(prepared()).toEqual([index('t-l'), index('t-s'), index('t-u'), index('t-s')]);
+  });
+
+  it('prepares nothing for single-stage runs (the host stage is the one loaded)', () => {
+    const s = new Session(content(), 't-u');
+    s.until('stageClear');
+    s.press(Action.Confirm);
+    s.until('title');
+    s.flow.stack.reset(s.flow.game);
+    s.hold(0);
+    expect(s.events.some((e) => e[0] === SimEventKind.PrepareStage)).toBe(false);
+  });
+
   it('Back on the map asks "quit to title?"', () => {
     const s = new Session();
     s.until('map', 3000);
