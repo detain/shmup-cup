@@ -22,6 +22,11 @@
  * and a stale forwarded display (an SSH session's `localhost:11.0`) makes ANGLE's SwiftShader
  * Vulkan back-end try XCB, fail, and leave every WebGL context creation hanging.
  *
+ * Concurrency: every test is independent (its own browser context: fresh `localStorage`, its own
+ * page on the shared `vite preview` server or `file://` build), so the tests of one spec file run
+ * in parallel too (`fullyParallel`), on {@link WORKERS} browsers (`E2E_WORKERS` overrides it).
+ * CI splits the run over several machines with `--shard=i/n`.
+ *
  * @module
  */
 import { availableParallelism } from 'node:os';
@@ -41,12 +46,33 @@ for (const [name, value] of Object.entries(process.env)) {
 }
 
 /**
- * Parallel browsers: half the cores (Playwright's default), but at most 8. Each page renders
- * with SwiftShader, which is itself multi-threaded, so on a many-core machine the default (24
- * workers on 48 cores) starves the pages of CPU. Eight is as fast in wall time here: the
- * longest spec files, not the worker count, bound the run.
+ * Parallel browsers: one per five cores, at least two — or the `E2E_WORKERS` environment
+ * variable (a positive integer).
+ *
+ * @remarks
+ * Each page renders with SwiftShader, which runs up to 16 threads of its own, so the run is
+ * CPU-bound and a browser needs several cores: measured on 48 cores (M2-14, 92 tests), 8
+ * browsers took 158–180 s, 10 took 153 s and 12 took 150 s, while 16 and 24 made the machine so
+ * busy that frame-paced tests timed out (2 and 7 failures). One per five cores (9 there) keeps
+ * that margin on any machine; a 4-vCPU CI runner gets 2, as before.
  */
-const WORKERS = Math.max(1, Math.min(8, Math.floor(availableParallelism() / 2)));
+export const WORKERS = resolveWorkers(
+  process.env.E2E_WORKERS,
+  Math.max(2, Math.floor(availableParallelism() / 5)),
+);
+
+/**
+ * A worker count from an environment variable, or the default when it is unset or not a
+ * positive integer.
+ *
+ * @param value - The variable's value.
+ * @param fallback - The default.
+ * @returns The worker count.
+ */
+function resolveWorkers(value: string | undefined, fallback: number): number {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
 
 /** Running on CI (stricter: no `test.only`, one retry, never reuse a server). */
 const ci = process.env.CI !== undefined && process.env.CI !== '';
@@ -55,7 +81,7 @@ export default defineConfig({
   testDir: '.',
   testMatch: '*.spec.ts',
   outputDir: './test-results',
-  fullyParallel: false,
+  fullyParallel: true,
   workers: WORKERS,
   forbidOnly: ci,
   retries: ci ? 1 : 0,
