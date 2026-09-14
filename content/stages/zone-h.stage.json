@@ -5,19 +5,36 @@
   "name": "IRON CITADEL",
   "music": {
     "stage": "Stage",
-    "boss": "Boss"
+    "boss": "FinalBoss",
+    "ending": "Ending",
+    "credits": "Credits"
   },
-  "length": 2000,
+  "length": 9600,
   "camera": [
     {
       "x": 0,
-      "speed": 1.0,
+      "speed": 0.8,
       "ramp": 60
     },
     {
-      "x": 1500,
-      "speed": 0.75,
+      "x": 2200,
+      "speed": 0.7,
+      "ramp": 60
+    },
+    {
+      "x": 4400,
+      "speed": 0.6,
       "ramp": 90
+    },
+    {
+      "x": 6800,
+      "speed": 1.3,
+      "ramp": 120
+    },
+    {
+      "x": 8400,
+      "speed": 0.75,
+      "ramp": 120
     }
   ],
   "checkpoints": [
@@ -25,60 +42,92 @@
       "x": 0
     },
     {
-      "x": 800
+      "x": 2200
+    },
+    {
+      "x": 4400
+    },
+    {
+      "x": 6800
     }
   ],
   "parallax": [
     {
       "layer": "far",
-      "sprite": "bg/stars-far",
-      "factor": 0.25,
+      "sprite": "bg/citadel-wall",
+      "factor": 0.2,
       "y": 0,
       "spacing": 128
     },
     {
       "layer": "far",
-      "sprite": "bg/stars-far",
-      "factor": 0.25,
+      "sprite": "bg/citadel-wall",
+      "factor": 0.2,
+      "y": 64,
+      "spacing": 128
+    },
+    {
+      "layer": "far",
+      "sprite": "bg/citadel-wall",
+      "factor": 0.2,
       "y": 128,
       "spacing": 128
     },
     {
       "layer": "mid",
-      "sprite": "bg/stars-mid",
-      "factor": 0.5,
-      "y": 0,
-      "spacing": 128
-    },
-    {
-      "layer": "mid",
-      "sprite": "bg/stars-mid",
-      "factor": 0.5,
-      "y": 128,
+      "sprite": "bg/citadel-pipes",
+      "factor": 0.45,
+      "y": 152,
       "spacing": 128
     }
   ],
   "tilemap": {
     "tileSize": 8,
-    "tileset": "terrain-a",
+    "tileset": "terrain-citadel",
     "rowsTall": 25,
     "generator": {
       "type": "heightfield",
       "segments": [
         {
-          "from": 200,
-          "to": 1580,
+          "from": 100,
+          "to": 2160,
           "floor": {
             "base": 22,
-            "amp": 10,
-            "period": 360,
-            "seed": 101
+            "amp": 6,
+            "period": 320,
+            "seed": 121
           },
           "ceiling": {
-            "base": 22,
-            "amp": 10,
-            "period": 300,
-            "seed": 102
+            "base": 18,
+            "amp": 6,
+            "period": 360,
+            "seed": 122
+          }
+        },
+        {
+          "from": 2200,
+          "to": 4380,
+          "floor": {
+            "base": 24,
+            "amp": 0,
+            "period": 64,
+            "seed": 123
+          },
+          "ceiling": {
+            "base": 24,
+            "amp": 0,
+            "period": 64,
+            "seed": 124
+          }
+        },
+        {
+          "from": 6820,
+          "to": 8400,
+          "floor": {
+            "base": 20,
+            "amp": 6,
+            "period": 200,
+            "seed": 125
           }
         }
       ]
@@ -86,103 +135,548 @@
   },
   "events": [
     {
-      "x": 120,
+      "x": 140,
       "type": "formation",
-      "enemy": "skeet",
+      "enemy": "bolt-drone",
       "count": 5,
-      "interval": 18,
-      "y": 80,
+      "interval": 16,
+      "y": 60,
       "bonus": 300
     },
     {
       "x": 300,
       "type": "spawn",
       "enemy": "tender",
-      "y": 120
+      "y": 110
     },
     {
       "x": 460,
+      "type": "spawn",
+      "enemy": "rail-turret"
+    },
+    {
+      "x": 560,
       "type": "formation",
-      "enemy": "skeet",
+      "enemy": "bolt-drone",
       "count": 5,
-      "interval": 18,
-      "y": 120,
+      "interval": 16,
+      "y": 130,
       "bonus": 300
     },
     {
-      "x": 620,
+      "x": 660,
       "type": "spawn",
       "enemy": "tender",
-      "y": 80
+      "y": 70
     },
     {
       "x": 800,
+      "type": "spawn",
+      "enemy": "hatch-bay"
+    },
+    {
+      "x": 960,
       "type": "formation",
-      "enemy": "vane",
-      "count": 5,
-      "interval": 10,
-      "y": 150,
-      "path": "vane-arc-up",
-      "bonus": 1000
+      "enemy": "bolt-drone",
+      "count": 6,
+      "interval": 14,
+      "y": 90,
+      "bonus": 400
     },
     {
-      "x": 900,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 100
-    },
-    {
-      "x": 980,
-      "type": "spawn",
-      "enemy": "picket"
-    },
-    {
-      "x": 1060,
-      "type": "spawn",
-      "enemy": "lancer",
-      "y": 80
-    },
-    {
-      "x": 1160,
+      "x": 1100,
       "type": "spawn",
       "enemy": "tender",
       "y": 120
     },
     {
       "x": 1240,
-      "type": "formation",
-      "enemy": "skeet-chain",
-      "count": 6,
-      "interval": 12,
-      "y": 100,
-      "drop": null
-    },
-    {
-      "x": 1300,
       "type": "spawn",
-      "enemy": "strider"
+      "enemy": "rail-turret-ceiling"
     },
     {
       "x": 1380,
       "type": "spawn",
-      "enemy": "gyre",
-      "y": 60,
-      "path": "gyre-orbit-down"
+      "enemy": "sentinel-walker"
     },
     {
-      "x": 1480,
+      "x": 1520,
+      "type": "formation",
+      "enemy": "bolt-drone",
+      "count": 6,
+      "interval": 14,
+      "y": 60,
+      "drop": null
+    },
+    {
+      "x": 1600,
       "type": "spawn",
-      "enemy": "tender",
-      "y": 90
+      "enemy": "hatch-bay-ceiling"
     },
     {
       "x": 1680,
-      "type": "warning",
-      "enemy": "halcyon-bulwark"
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 100
     },
     {
-      "x": 2000,
+      "x": 1900,
+      "type": "formation",
+      "enemy": "bolt-drone",
+      "count": 6,
+      "interval": 14,
+      "y": 140,
+      "bonus": 400
+    },
+    {
+      "x": 2040,
+      "type": "spawn",
+      "enemy": "rail-turret"
+    },
+    {
+      "x": 2240,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 100
+    },
+    {
+      "x": 2280,
+      "type": "block",
+      "y": 138,
+      "w": 24,
+      "h": 48,
+      "tile": "solid",
+      "dy": -22,
+      "period": 200,
+      "phase": 0
+    },
+    {
+      "x": 2340,
+      "type": "spawn",
+      "enemy": "laser-emitter"
+    },
+    {
+      "x": 2440,
+      "type": "block",
+      "y": 14,
+      "w": 24,
+      "h": 48,
+      "tile": "solid",
+      "dy": 22,
+      "period": 200,
+      "phase": 512
+    },
+    {
+      "x": 2560,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 80
+    },
+    {
+      "x": 2600,
+      "type": "block",
+      "y": 138,
+      "w": 24,
+      "h": 48,
+      "tile": "solid",
+      "dy": -22,
+      "period": 200,
+      "phase": 256
+    },
+    {
+      "x": 2680,
+      "type": "formation",
+      "enemy": "bolt-drone",
+      "count": 5,
+      "interval": 16,
+      "y": 100,
+      "bonus": 500
+    },
+    {
+      "x": 2760,
+      "type": "block",
+      "y": 14,
+      "w": 24,
+      "h": 48,
+      "tile": "solid",
+      "dy": 22,
+      "period": 200,
+      "phase": 768
+    },
+    {
+      "x": 2800,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 120
+    },
+    {
+      "x": 2920,
+      "type": "block",
+      "y": 138,
+      "w": 24,
+      "h": 48,
+      "tile": "solid",
+      "dy": -22,
+      "period": 200,
+      "phase": 512
+    },
+    {
+      "x": 2960,
+      "type": "spawn",
+      "enemy": "laser-emitter-ceiling"
+    },
+    {
+      "x": 3080,
+      "type": "block",
+      "y": 14,
+      "w": 24,
+      "h": 48,
+      "tile": "solid",
+      "dy": 22,
+      "period": 200,
+      "phase": 0
+    },
+    {
+      "x": 3120,
+      "type": "spawn",
+      "enemy": "sentinel-walker"
+    },
+    {
+      "x": 3200,
+      "type": "formation",
+      "enemy": "bolt-drone",
+      "count": 5,
+      "interval": 16,
+      "y": 100,
+      "drop": null
+    },
+    {
+      "x": 3240,
+      "type": "block",
+      "y": 138,
+      "w": 24,
+      "h": 48,
+      "tile": "solid",
+      "dy": -22,
+      "period": 200,
+      "phase": 768
+    },
+    {
+      "x": 3400,
+      "type": "block",
+      "y": 14,
+      "w": 24,
+      "h": 48,
+      "tile": "solid",
+      "dy": 22,
+      "period": 200,
+      "phase": 256
+    },
+    {
+      "x": 3440,
+      "type": "spawn",
+      "enemy": "laser-emitter"
+    },
+    {
+      "x": 3560,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 100
+    },
+    {
+      "x": 3560,
+      "type": "block",
+      "y": 138,
+      "w": 24,
+      "h": 48,
+      "tile": "solid",
+      "dy": -22,
+      "period": 200,
+      "phase": 0
+    },
+    {
+      "x": 3640,
+      "type": "spawn",
+      "enemy": "hatch-bay"
+    },
+    {
+      "x": 3720,
+      "type": "block",
+      "y": 14,
+      "w": 24,
+      "h": 48,
+      "tile": "solid",
+      "dy": 22,
+      "period": 200,
+      "phase": 512
+    },
+    {
+      "x": 3760,
+      "type": "formation",
+      "enemy": "bolt-drone",
+      "count": 6,
+      "interval": 14,
+      "y": 80,
+      "bonus": 500
+    },
+    {
+      "x": 3840,
+      "type": "spawn",
+      "enemy": "laser-emitter-ceiling"
+    },
+    {
+      "x": 3880,
+      "type": "block",
+      "y": 138,
+      "w": 24,
+      "h": 48,
+      "tile": "solid",
+      "dy": -22,
+      "period": 200,
+      "phase": 256
+    },
+    {
+      "x": 4040,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 130
+    },
+    {
+      "x": 4420,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 100
+    },
+    {
+      "x": 4460,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 60
+    },
+    {
+      "x": 4520,
+      "type": "boss",
+      "enemy": "echo-bulwark"
+    },
+    {
+      "x": 4700,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 150
+    },
+    {
+      "x": 4860,
+      "type": "formation",
+      "enemy": "bolt-drone",
+      "count": 5,
+      "interval": 16,
+      "y": 40,
+      "drop": null
+    },
+    {
+      "x": 5080,
+      "type": "boss",
+      "enemy": "echo-maw"
+    },
+    {
+      "x": 5300,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 60
+    },
+    {
+      "x": 5420,
+      "type": "formation",
+      "enemy": "bolt-drone",
+      "count": 5,
+      "interval": 16,
+      "y": 160,
+      "drop": null
+    },
+    {
+      "x": 5640,
+      "type": "boss",
+      "enemy": "echo-bastion"
+    },
+    {
+      "x": 5860,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 140
+    },
+    {
+      "x": 5980,
+      "type": "formation",
+      "enemy": "bolt-drone",
+      "count": 5,
+      "interval": 16,
+      "y": 50,
+      "drop": null
+    },
+    {
+      "x": 6200,
+      "type": "boss",
+      "enemy": "echo-regent"
+    },
+    {
+      "x": 6440,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 100
+    },
+    {
+      "x": 6620,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 60
+    },
+    {
+      "x": 6840,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 100
+    },
+    {
+      "x": 6960,
+      "type": "formation",
+      "enemy": "bolt-drone",
+      "count": 8,
+      "interval": 10,
+      "y": 60,
+      "bonus": 600
+    },
+    {
+      "x": 7080,
+      "type": "spawn",
+      "enemy": "rail-turret"
+    },
+    {
+      "x": 7140,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 140
+    },
+    {
+      "x": 7260,
+      "type": "formation",
+      "enemy": "bolt-drone",
+      "count": 8,
+      "interval": 10,
+      "y": 140,
+      "bonus": 600
+    },
+    {
+      "x": 7400,
+      "type": "spawn",
+      "enemy": "laser-emitter"
+    },
+    {
+      "x": 7520,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 70
+    },
+    {
+      "x": 7620,
+      "type": "spawn",
+      "enemy": "hatch-bay"
+    },
+    {
+      "x": 7760,
+      "type": "formation",
+      "enemy": "bolt-drone",
+      "count": 8,
+      "interval": 10,
+      "y": 90,
+      "drop": null
+    },
+    {
+      "x": 7780,
+      "type": "spawn",
+      "enemy": "laser-emitter"
+    },
+    {
+      "x": 7900,
+      "type": "spawn",
+      "enemy": "sentinel-walker"
+    },
+    {
+      "x": 8180,
+      "type": "formation",
+      "enemy": "bolt-drone",
+      "count": 8,
+      "interval": 10,
+      "y": 50,
+      "drop": null
+    },
+    {
+      "x": 8520,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 80
+    },
+    {
+      "x": 8760,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 130
+    },
+    {
+      "x": 9100,
+      "type": "warning",
+      "enemy": "iron-sovereign"
+    },
+    {
+      "x": 9600,
       "type": "end"
+    }
+  ],
+  "directItems": [
+    "red",
+    "green",
+    "blue",
+    "red",
+    "green",
+    "blue",
+    "red",
+    "green",
+    "octagon",
+    "blue",
+    "red",
+    "green",
+    "blue",
+    "red",
+    "yellow",
+    "green",
+    "blue",
+    "red",
+    "green",
+    "blue",
+    "orange",
+    "red",
+    "green",
+    "blue",
+    "red",
+    "green"
+  ],
+  "raster": [
+    {
+      "layer": "mid",
+      "kind": "haze",
+      "top": 150,
+      "bottom": 200,
+      "amplitude": 1,
+      "wavelength": 11,
+      "period": 80,
+      "from": 6800,
+      "to": 8400
+    }
+  ],
+  "cycles": [
+    {
+      "layer": "far",
+      "colors": ["#402a10", "#6a4418", "#a86a20", "#e8a030"],
+      "ticks": 10
     }
   ]
 }

@@ -41,8 +41,10 @@ import {
   ENGINE_SPRITES,
   EnemyState,
   KNOWN_SCRIPT_IDS,
+  MAX_ENDING_TEXT_LINES,
   MUSIC_CUES,
   PLAYFIELD_H,
+  RunFlag,
   SFX_CUE_NAMES,
   TerrainType,
   WARNING_PULSE_TICKS,
@@ -52,12 +54,15 @@ import {
   createHeadlessPlatform,
   computeRank,
   createStageRunner,
+  creditsLineCount,
   loadContent,
   powerRank,
   resolveGameConfig,
+  selectCampaignEnding,
   spawnPlayer,
   terrainAt,
   type BossPartSpec,
+  type BossSpec,
   type ContentDb,
   type ContentFile,
   type StageSpec,
@@ -89,6 +94,7 @@ import { fourWayBot } from '../playtest/four-way-bot.js';
 import { runStage } from '../playtest/harness.js';
 import { createRuleWatch, MAX_AIMED_BULLET_SPEED, MIN_LANE_GAP } from '../playtest/rules.js';
 import { buildAtlas } from '../../scripts/assets/pipeline.mjs';
+import { PROCEDURAL_GENERATORS } from '../../scripts/assets/procedural/index.mjs';
 import { readContentFiles } from '../../vite.shared.js';
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -204,7 +210,11 @@ describe('integration: content/ validates', () => {
       'audio/music/boss-e.music.json',
       'audio/music/boss-f.music.json',
       'audio/music/boss-g.music.json',
+      'audio/music/boss-h.music.json',
+      'audio/music/boss-i.music.json',
       'audio/music/boss.music.json',
+      'audio/music/credits.music.json',
+      'audio/music/ending.music.json',
       'audio/music/game-over.music.json',
       'audio/music/stage-clear.music.json',
       'audio/music/title.music.json',
@@ -215,6 +225,8 @@ describe('integration: content/ validates', () => {
       'audio/music/zone-e.music.json',
       'audio/music/zone-f.music.json',
       'audio/music/zone-g.music.json',
+      'audio/music/zone-h.music.json',
+      'audio/music/zone-i.music.json',
       'fx/particles.fx.json',
       'input/remote.input-profiles.json',
     ]);
@@ -547,6 +559,10 @@ describe('integration: content/audio (M1-15)', () => {
       'boss-e',
       'boss-f',
       'boss-g',
+      'boss-h',
+      'boss-i',
+      'credits',
+      'ending',
       'game-over',
       'stage-clear',
       'title',
@@ -557,6 +573,8 @@ describe('integration: content/audio (M1-15)', () => {
       'zone-e',
       'zone-f',
       'zone-g',
+      'zone-h',
+      'zone-i',
     ]);
     const { db } = loadContent(shippedFiles);
     for (const stage of db.stages) {
@@ -568,6 +586,9 @@ describe('integration: content/audio (M1-15)', () => {
       // the prepared set would play silence (nothing is rendered mid-stage).
       const prepared = stageMusicCues(stage);
       const referenced = [stage.music.stageId, stage.music.bossId];
+      // M2-14: a final zone's ending and credits themes, played after its clear.
+      if ((stage.music.endingId ?? -1) >= 0) referenced.push(stage.music.endingId ?? -1);
+      if ((stage.music.creditsId ?? -1) >= 0) referenced.push(stage.music.creditsId ?? -1);
       for (const event of stage.events) if (event.type === 'music') referenced.push(event.cueId);
       for (const cue of referenced) {
         if (cue === MUSIC_CUES.Silence) continue;
@@ -645,6 +666,10 @@ describe('integration: content/audio (M1-15)', () => {
       'boss-e',
       'boss-f',
       'boss-g',
+      'boss-h',
+      'boss-i',
+      'credits',
+      'ending',
       'title',
       'zone-a',
       'zone-b',
@@ -653,6 +678,8 @@ describe('integration: content/audio (M1-15)', () => {
       'zone-e',
       'zone-f',
       'zone-g',
+      'zone-h',
+      'zone-i',
     ]);
     for (const track of looping) {
       const song = track.song;
@@ -1704,5 +1731,428 @@ describe('integration: zones B–G hold to the plan and the 4-way design rules (
       expect(tileset?.tiles.map((t) => t.name)).toEqual(a?.tiles.map((t) => t.name));
       expect(manifest.sprites[tileset?.sprite ?? '']?.frames.length).toBe(a?.tiles.length);
     }
+  });
+});
+
+describe('integration: zones H and I, the finales, hold to the plan and the 4-way rules (M2-14)', () => {
+  const db = shippedDb();
+  const stageOf = (id: string): StageSpec => db.stages[db.stageIndex.get(id) ?? -1];
+  const bossOf = (stage: StageSpec): BossSpec | null => {
+    const warning = stage.events.find((e) => e.type === 'warning');
+    return warning?.type === 'warning' ? db.enemies[warning.enemyId].boss : null;
+  };
+  /** Everything a zone can bring in: its timeline's enemies, the bosses inside and the minions. */
+  const zoneEnemies = (stage: StageSpec): Set<number> => {
+    const used = stageEnemies(db, stage);
+    for (let pass = 0; pass < 3; pass++) {
+      for (const index of [...used]) {
+        const boss = db.enemies[index].boss;
+        if (boss === null) continue;
+        for (const id of [boss.minionId, boss.innerId]) {
+          if (id < 0) continue;
+          used.add(id);
+          const child = db.enemies[id].childId;
+          if (child >= 0) used.add(child);
+        }
+      }
+    }
+    return used;
+  };
+  const earlierZones = ['a', 'b', 'c', 'd', 'e', 'f', 'g'].map((z) => 'zone-' + z);
+  const zones = [
+    {
+      id: 'zone-h',
+      name: 'IRON CITADEL',
+      code: 'IS-08',
+      boss: 'IRON SOVEREIGN',
+      tileset: 'terrain-citadel',
+    },
+    {
+      id: 'zone-i',
+      name: 'ABYSSAL THRONE',
+      code: 'AA-09',
+      boss: 'ABYSS ARK',
+      tileset: 'terrain-abyss',
+    },
+  ];
+  const { content: music } = loadMusicContent(
+    shippedFiles.filter((file) => (file.data as { kind?: unknown }).kind === 'music'),
+  );
+
+  it.each(zones)(
+    'ships $name with $boss ($code): 3–6 minutes, checkpoints, its own tileset, songs and ending themes',
+    (zone) => {
+      const stage = stageOf(zone.id);
+      expect(stage.name).toBe(zone.name);
+      expect(stage.type).toBe('normal');
+      expect(stage.checkpoints.length).toBeGreaterThanOrEqual(4);
+      expect(stage.tilemap?.tileset).toBe(zone.tileset);
+      const boss = bossOf(stage);
+      expect(boss?.code).toBe(zone.code);
+      expect(boss?.displayName).toBe(zone.boss);
+      const warning = stage.events.find((e) => e.type === 'warning');
+      const runner = createStageRunner(stage, { event() {}, clear() {} });
+      let ticks = 0;
+      while (runner.camera.x < (warning?.x ?? 0) && ticks < 60 * 60 * 10) {
+        runner.tick();
+        ticks++;
+      }
+      expect(ticks / 60).toBeGreaterThanOrEqual(2.5 * 60);
+      expect(ticks / 60).toBeLessThanOrEqual(4.5 * 60);
+      expect(Math.max(...stage.camera.map((k) => k.speed))).toBeGreaterThanOrEqual(1.25);
+      const calmX = stage.camera[stage.camera.length - 1].x;
+      const calm = stage.events.filter(
+        (e) =>
+          e.x >= calmX && e.x < (warning?.x ?? 0) && (e.type === 'spawn' || e.type === 'formation'),
+      );
+      expect(calm.map((e) => ('enemyId' in e ? db.enemies[e.enemyId].script : ''))).toEqual([
+        'carrier.straight',
+        'carrier.straight',
+      ]);
+      expect(stage.directItems?.length).toBeGreaterThanOrEqual(20);
+      // Its own stage theme, the final boss theme (FinalBoss) and — a final zone — the ending and
+      // credits themes, all in the set the host prepares for the zone.
+      const table = resolveMusicCues(music, zone.id);
+      const letter = zone.id.slice(-1);
+      expect(stage.music.bossId).toBe(MUSIC_CUES.FinalBoss);
+      expect(music.tracks[table[MUSIC_CUES.Stage]]?.id).toBe(zone.id);
+      expect(music.tracks[table[MUSIC_CUES.FinalBoss]]?.id).toBe(`boss-${letter}`);
+      expect(stage.music.endingId).toBe(MUSIC_CUES.Ending);
+      expect(stage.music.creditsId).toBe(MUSIC_CUES.Credits);
+      expect(music.tracks[table[MUSIC_CUES.Ending]]?.id).toBe('ending');
+      expect(music.tracks[table[MUSIC_CUES.Credits]]?.id).toBe('credits');
+      expect(stageMusicCues(stage)).toEqual(
+        expect.arrayContaining([MUSIC_CUES.Ending, MUSIC_CUES.Credits, MUSIC_CUES.FinalBoss]),
+      );
+    },
+  );
+
+  it.each(zones)('brings 4–6 new enemy types to $name', (zone) => {
+    const stage = stageOf(zone.id);
+    const earlier = new Set(
+      earlierZones.flatMap((id) => [...stageEnemies(db, stageOf(id))].map((i) => db.enemies[i].id)),
+    );
+    const earlierSprites = new Set(
+      [...earlier].map((id) => db.enemies[db.enemyIndex.get(id) ?? -1].sprite),
+    );
+    const placed = new Set<string>();
+    for (const event of stage.events) {
+      if (event.type !== 'spawn' && event.type !== 'formation') continue;
+      const enemy = db.enemies[event.enemyId];
+      if (!earlier.has(enemy.id) && !earlierSprites.has(enemy.sprite)) placed.add(enemy.sprite);
+    }
+    expect(placed.size).toBeGreaterThanOrEqual(4);
+    expect(placed.size).toBeLessThanOrEqual(6);
+  });
+
+  it('gives IRON CITADEL hatches, laser emitters, moving floors and ceilings, a parade and a real finale', () => {
+    const stage = stageOf('zone-h');
+    const placed = (script: string): Array<{ ground: string | null; x: number }> =>
+      stage.events.flatMap((e) =>
+        (e.type === 'spawn' || e.type === 'formation') && db.enemies[e.enemyId].script === script
+          ? [{ ground: db.enemies[e.enemyId].ground, x: e.x }]
+          : [],
+      );
+    // Hatches releasing drones, laser emitters projecting lanes: on the floor and on the ceiling.
+    const hatches = placed('hatch.spawner');
+    expect(hatches.length).toBeGreaterThanOrEqual(3);
+    expect(new Set(hatches.map((h) => h.ground))).toEqual(new Set(['floor', 'ceiling']));
+    const emitters = placed('emitter.laser');
+    expect(emitters.length).toBeGreaterThanOrEqual(4);
+    expect(new Set(emitters.map((h) => h.ground))).toEqual(new Set(['floor', 'ceiling']));
+    // Moving floors and ceilings: blocks swinging up and down, out of the floor and the ceiling.
+    const pistons = stage.events.filter((e) => e.type === 'block' && (e.dy ?? 0) !== 0);
+    expect(pistons.length).toBeGreaterThanOrEqual(8);
+    const low = pistons.filter((e) => e.type === 'block' && e.y > PLAYFIELD_H / 2);
+    expect(low.length).toBeGreaterThanOrEqual(3);
+    expect(pistons.length - low.length).toBeGreaterThanOrEqual(3);
+    // The parade: four earlier bosses in reduced form, captains one after another, each leaving
+    // after its time limit — every sprite an earlier zone boss's, fewer parts than the original.
+    const earlierBosses = earlierZones.map((id) => bossOf(stageOf(id)));
+    const earlierSprites = new Set(
+      earlierBosses.flatMap((b) => (b?.parts ?? []).map((p) => p.sprite ?? '')),
+    );
+    const parade = stage.events.filter(
+      (e) => e.type === 'boss' && db.enemies[e.enemyId].boss?.role === 'captain',
+    );
+    expect(parade.length).toBeGreaterThanOrEqual(4);
+    const warningX = stage.events.find((e) => e.type === 'warning')?.x ?? 0;
+    for (const event of parade) {
+      if (event.type !== 'boss') continue;
+      const echo = db.enemies[event.enemyId].boss;
+      expect(echo?.timeLimit ?? 0).toBeGreaterThan(0);
+      expect(event.x).toBeLessThan(warningX);
+      const sprites = (echo?.parts ?? []).flatMap((p) =>
+        p.sprite === undefined ? [] : [p.sprite],
+      );
+      expect(sprites.length).toBeGreaterThan(0);
+      for (const sprite of sprites) expect(earlierSprites, sprite).toContain(sprite);
+      const original = earlierBosses.find((b) =>
+        (b?.parts ?? []).some((p) => p.sprite === sprites[0]),
+      );
+      expect(echo?.parts.length ?? 0).toBeLessThan(original?.parts.length ?? 0);
+    }
+    // Spread out one after another: the next comes at least half its predecessor's stay (intro +
+    // time limit, at the parade's scroll speed) later — never more than two up at once.
+    const keys = stage.camera.filter((k) => k.x <= parade[0].x);
+    const speed = keys[keys.length - 1].speed;
+    expect(speed).toBeLessThan(0.75); // a slow hangar
+    for (let i = 1; i < parade.length; i++) {
+      const before = parade[i - 1];
+      const limit = before.type === 'boss' ? db.enemies[before.enemyId].boss : null;
+      expect(parade[i].x - before.x).toBeGreaterThanOrEqual(
+        ((limit?.timeLimit ?? 0) + (limit?.introTicks ?? 0)) * speed * 0.5,
+      );
+    }
+    // IRON SOVEREIGN: four phases of `boss.sovereign` — the core behind plates, a turning shield
+    // wheel on it, lane emitters, and a spiral in the last phase.
+    const boss = bossOf(stage);
+    expect(boss?.phases.length).toBeGreaterThanOrEqual(4);
+    expect(boss?.phases.every((p) => p.script === 'boss.sovereign')).toBe(true);
+    const parts = boss?.parts ?? [];
+    const core = parts.find((p) => p.core);
+    expect(core?.vulnerable).toBe('afterParts');
+    for (const name of core?.requires ?? []) {
+      const plate = parts.find((p) => p.name === name);
+      expect((plate?.x ?? 0) + (plate?.hurtbox?.hw ?? 0)).toBeLessThan(core?.x ?? 0);
+    }
+    const coreIndex = parts.indexOf(core ?? parts[0]);
+    const hub = parts.findIndex(
+      (p) => p.parentIndex === coreIndex && p.hurtbox === null && p.radius === 0,
+    );
+    expect(hub).toBeGreaterThanOrEqual(0);
+    const pods = parts.filter((p) => p.parentIndex === hub);
+    expect(pods.length).toBeGreaterThanOrEqual(4);
+    for (const pod of pods) expect([pod.vulnerable, pod.radius > 0]).toEqual(['never', true]);
+    expect(parts.filter((p) => p.gun).length).toBeGreaterThanOrEqual(2);
+    const phases = boss?.phases ?? [];
+    expect(phases[0].until?.partsDestroyed?.length ?? 0).toBeGreaterThan(0);
+    expect(phases[phases.length - 1].params.spiral ?? 0).toBeGreaterThan(0);
+    expect(phases.some((p) => (p.params.spin ?? 0) !== 0)).toBe(true);
+    expect(phases.some((p) => (p.params.launchTicks ?? 0) > 0)).toBe(true);
+  });
+
+  it('gives ABYSSAL THRONE mines, trench eels, a whale-class raid and a boss inside it', () => {
+    const stage = stageOf('zone-i');
+    const count = (script: string): number =>
+      stage.events.filter(
+        (e) =>
+          (e.type === 'spawn' || e.type === 'formation') && db.enemies[e.enemyId].script === script,
+      ).length;
+    expect(count('mine.burst')).toBeGreaterThanOrEqual(10);
+    expect(count('worm.burst')).toBeGreaterThanOrEqual(4);
+    expect(count('pattern.loop')).toBeGreaterThanOrEqual(3);
+    // The ABYSS ARK: a raid (the camera flies round it), turret rows above and below its keel,
+    // hooks (a homing minion), a time limit (its escape is the `bossEscaped` ending) and a boss
+    // inside it.
+    const ark = bossOf(stage);
+    expect(ark?.raid?.segments.length ?? 0).toBeGreaterThanOrEqual(3);
+    expect(ark?.timeLimit ?? 0).toBeGreaterThan(0);
+    expect(ark?.phases.every((p) => p.script === 'boss.ark')).toBe(true);
+    expect(db.enemies[ark?.minionId ?? -1]?.script).toBe('rocket.homing');
+    const guns = (ark?.parts ?? []).filter((p) => p.gun);
+    expect(guns.length).toBeGreaterThanOrEqual(6);
+    expect(guns.filter((p) => p.y < 0).length).toBeGreaterThanOrEqual(3);
+    expect(guns.filter((p) => p.y > 0).length).toBeGreaterThanOrEqual(3);
+    for (const gun of guns) expect(gun.turn).toBeGreaterThan(1); // heading frames
+    // Open water round the raid: no terrain from the calm on (the camera pans up and down).
+    const map = createGame(createHeadlessPlatform(), { seed: 1, stage: 'zone-i' }, db).world
+      .terrain;
+    if (map === null) throw new Error('no terrain');
+    const calmX = stage.camera[stage.camera.length - 1].x;
+    for (let x = calmX; x < stage.length + 384; x += 8) {
+      for (let y = 0; y < PLAYFIELD_H; y += 8) {
+        expect(terrainAt(map, x, y), `rock at ${String(x)}, ${String(y)}`).toBe(TerrainType.Empty);
+      }
+    }
+    // THE HOLLOW KING inside it: an anglerfish — a mouth that opens (the core) with jaws on it and a
+    // lure (a chain of circle-hit parts hung from its body, a gun at its end), three phases.
+    const king = db.enemies[ark?.innerId ?? -1]?.boss ?? null;
+    expect(king?.code).toBe('HK-10');
+    expect(king?.phases).toHaveLength(3);
+    expect(king?.phases.every((p) => p.script === 'boss.angler')).toBe(true);
+    const parts = king?.parts ?? [];
+    const core = parts.findIndex((p) => p.core);
+    expect(parts[core]?.vulnerable).toBe('whenOpen');
+    expect(parts.filter((p) => p.parentIndex === core && p.hurtbox !== null)).toHaveLength(2);
+    const lure = parts.filter((p) => p.radius > 0 && p.parentIndex >= 0);
+    expect(lure.length).toBeGreaterThanOrEqual(3);
+    const root = lure.find((p) => !(parts[p.parentIndex].radius > 0));
+    expect(root).toBeDefined();
+    expect(parts[root?.parentIndex ?? core].core).toBe(false);
+    expect(lure.some((p) => p.gun)).toBe(true);
+  });
+
+  it.each(zones)('keeps every aimed bullet of $name at 2 px/tick or less', (zone) => {
+    const speeds: number[] = [];
+    for (const index of zoneEnemies(stageOf(zone.id))) {
+      const enemy = db.enemies[index];
+      for (const phase of enemy.boss?.phases ?? []) {
+        const params = { ...DEFAULT_BOSS_BEHAVIORS.get(phase.script)?.params, ...phase.params };
+        for (const key of ['bulletSpeed', 'ringSpeed', 'spiralSpeed']) {
+          if (key in params) speeds.push(params[key]);
+        }
+      }
+      if (enemy.boss !== null) continue;
+      const params = { ...DEFAULT_BEHAVIORS.get(enemy.script)?.params, ...enemy.params };
+      if ('bulletSpeed' in params) speeds.push(params.bulletSpeed);
+      if (['rocket.homing', 'rammer.aimed', 'cell.chase'].includes(enemy.script))
+        speeds.push(params.speed);
+    }
+    expect(speeds.length).toBeGreaterThanOrEqual(6);
+    for (const speed of speeds) expect(speed).toBeLessThanOrEqual(MAX_AIMED_BULLET_SPEED);
+  });
+
+  it.each(zones)(
+    'places the capsules of $name for recovery: ≥ 12 before the boss, ≥ 3 after every checkpoint',
+    (zone) => {
+      const stage = stageOf(zone.id);
+      const sources = stage.events
+        .filter((e) =>
+          e.type === 'spawn'
+            ? db.enemies[e.enemyId].drop === 'capsule'
+            : e.type === 'formation' && e.drop !== null,
+        )
+        .map((e) => e.x);
+      const warningX = stage.events.find((e) => e.type === 'warning')?.x ?? 0;
+      expect(sources.filter((x) => x < warningX).length).toBeGreaterThanOrEqual(12);
+      for (const checkpoint of stage.checkpoints) {
+        const after = sources.filter((x) => x >= checkpoint.x && x < checkpoint.x + 900);
+        expect(after.length, `checkpoint ${String(checkpoint.x)}`).toBeGreaterThanOrEqual(3);
+      }
+    },
+  );
+
+  it.each(zones)('stands the ground enemies of $name on rock', (zone) => {
+    const stage = stageOf(zone.id);
+    const map = createGame(createHeadlessPlatform(), { seed: 1, stage: zone.id }, db).world.terrain;
+    if (map === null) throw new Error('no terrain');
+    let ground = 0;
+    for (const event of stage.events) {
+      if (event.type !== 'spawn' && event.type !== 'formation') continue;
+      const enemy = db.enemies[event.enemyId];
+      if (enemy.ground === null) continue;
+      ground++;
+      const x = event.x + (event.screenX ?? 400);
+      const rows = enemy.ground === 'floor' ? [PLAYFIELD_H - 1, PLAYFIELD_H - 8] : [0, 7];
+      expect(
+        rows.some((y) => terrainAt(map, x, y) !== TerrainType.Empty),
+        `${enemy.id} at ${String(event.x)}`,
+      ).toBe(true);
+    }
+    expect(ground).toBeGreaterThanOrEqual(8);
+  });
+
+  it.each(zones)(
+    "holds $boss's fight to the 4-way rules (the bot, god mode, stage skip)",
+    (zone) => {
+      const rules = createRuleWatch();
+      const fought = new Set<string>();
+      // The ARK is a raid with a time limit: a bare ship cannot bring its heart down before it
+      // escapes, so zone I's fight is flown fully powered (its escape is another ending).
+      const run = runStage(zone.id, fourWayBot(), {
+        config: zone.id === 'zone-i' ? { loadout: 'full' } : {},
+        godMode: true,
+        stageSkip: 'boss',
+        observe(world) {
+          rules.observe(world);
+          for (const boss of world.bosses.slots) {
+            if (boss.state === BossState.Fight && boss.role === 0) {
+              fought.add(`${db.enemies[boss.specIndex].id}:${String(boss.phase)}`);
+            }
+          }
+        },
+      });
+      expect(run.status).toBe('stageClear');
+      expect(run.bossDefeated).toBe(true);
+      const bosses = new Set([...fought].map((key) => key.split(':')[0]));
+      for (const id of bosses) {
+        const phases = db.enemies[db.enemyIndex.get(id) ?? -1].boss?.phases.length ?? 0;
+        expect(
+          [...fought].filter((key) => key.startsWith(id + ':')),
+          id,
+        ).toHaveLength(phases);
+      }
+      // Zone I's final blast reveals the king: both bosses fought through every phase.
+      expect(bosses.size).toBe(zone.id === 'zone-i' ? 2 : 1);
+      expect(rules.violations).toEqual([]);
+      expect(rules.maxBulletSpeed).toBeLessThanOrEqual(MAX_AIMED_BULLET_SPEED);
+      expect(rules.narrowestGap).toBeGreaterThanOrEqual(MIN_LANE_GAP);
+    },
+  );
+
+  it('draws every zone H and I sprite with its hit flash; the zone tilesets have every tile', () => {
+    const { manifest } = buildAtlas();
+    const sprites = new Set<string>();
+    for (const id of ['zone-h', 'zone-i']) {
+      for (const index of zoneEnemies(stageOf(id))) {
+        const enemy = db.enemies[index];
+        if (enemy.boss === null) sprites.add(enemy.sprite);
+        for (const part of enemy.boss?.parts ?? []) {
+          if (part.sprite !== undefined && part.hurtbox !== null) sprites.add(part.sprite);
+        }
+      }
+    }
+    expect(sprites.size).toBeGreaterThanOrEqual(24);
+    for (const sprite of sprites) {
+      const frames = manifest.sprites[sprite]?.frames.length ?? 0;
+      expect(frames, sprite).toBeGreaterThan(0);
+      const flash = manifest.sprites[sprite]?.flash ?? null;
+      expect(flash, sprite).not.toBeNull();
+      expect(manifest.sprites[flash ?? '']?.frames.length, sprite).toBe(frames);
+    }
+    const a = db.tilesets.find((t) => t.id === 'terrain-a');
+    for (const id of ['terrain-citadel', 'terrain-abyss']) {
+      const tileset = db.tilesets.find((t) => t.id === id);
+      expect(tileset?.tiles.map((t) => t.name)).toEqual(a?.tiles.map((t) => t.name));
+      expect(manifest.sprites[tileset?.sprite ?? '']?.frames.length).toBe(a?.tiles.length);
+    }
+    // The ending scenes' pieces (UI sprites).
+    for (const sprite of ['ui/ending-citadel', 'ui/ending-ark', 'ui/ending-blast', 'ui/ending-sun'])
+      expect(manifest.sprites[sprite]?.frames.length ?? 0, sprite).toBeGreaterThan(0);
+  });
+
+  it('gives each final zone its scene and epilogue per ending, the no-death variant first (ending selection)', () => {
+    const campaign = db.campaign;
+    if (campaign === null) throw new Error('no campaign');
+    const scenes = { h: 'citadel', i: 'abyss' } as const;
+    for (const zone of ['h', 'i'] as const) {
+      const endings = campaign.endings.filter((e) => e.zone === zone);
+      expect(endings[0].all).toEqual(['noDeath']);
+      expect(endings[endings.length - 1].all).toEqual([]);
+      for (const ending of endings) {
+        expect(ending.scene, ending.id).toBe(scenes[zone]);
+        expect(ending.text.length, ending.id).toBeGreaterThanOrEqual(3);
+        expect(ending.text.length, ending.id).toBeLessThanOrEqual(MAX_ENDING_TEXT_LINES);
+      }
+    }
+    // Selection under all 16 flag masks: a flawless run gets the flawless ending, an escape (zone I)
+    // the flagship's, everything else the plain one.
+    const h = campaign.zones.findIndex((z) => z.id === 'h');
+    const i = campaign.zones.findIndex((z) => z.id === 'i');
+    for (let flags = 0; flags < 16; flags++) {
+      const noDeath = (flags & RunFlag.NoDeath) !== 0;
+      const escaped = (flags & RunFlag.BossEscaped) !== 0;
+      expect(selectCampaignEnding(campaign, h, flags)?.id).toBe(
+        noDeath ? 'citadel-flawless' : 'citadel',
+      );
+      expect(selectCampaignEnding(campaign, i, flags)?.id).toBe(
+        noDeath ? 'throne-flawless' : escaped ? 'throne-escape' : 'throne',
+      );
+    }
+  });
+
+  it('rolls credits that list every placeholder-asset generator, the zones and the bosses', () => {
+    const campaign = db.campaign;
+    if (campaign === null) throw new Error('no campaign');
+    expect(campaign.credits.length).toBeGreaterThanOrEqual(6);
+    const text = campaign.credits.flatMap((s) => [s.title, ...s.lines]).join('\n');
+    for (const generator of PROCEDURAL_GENERATORS) expect(text).toContain(generator.id + '.mjs');
+    for (const zone of campaign.zones) expect(text).toContain(zone.name);
+    for (const id of ['zone-a', ...earlierZones.slice(1), 'zone-h']) {
+      expect(text).toContain(bossOf(stageOf(id))?.displayName ?? '?');
+    }
+    expect(text).toContain('THE HOLLOW KING');
+    expect(creditsLineCount(campaign.credits)).toBeGreaterThanOrEqual(40);
   });
 });

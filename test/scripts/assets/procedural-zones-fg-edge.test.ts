@@ -210,9 +210,9 @@ describe('scripts/assets/procedural/terrain — zones F and G tilesets (M2-13)',
     }
   });
 
-  it('gives all seven sets distinct rims and rock', () => {
+  it('gives every set distinct rims and rock (nine since M2-14)', () => {
     const palettes = Object.values(terrain.TERRAIN_PALETTES);
-    expect(palettes).toHaveLength(7);
+    expect(palettes).toHaveLength(9);
     expect(new Set(palettes.map((p) => p.surface)).size).toBe(palettes.length);
     expect(new Set(palettes.map((p) => p.rock.join())).size).toBe(palettes.length);
   });

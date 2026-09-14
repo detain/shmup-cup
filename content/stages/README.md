@@ -63,11 +63,9 @@ taking turns; the survivor enrages) and `gauntlet-range.stage.json` (**GAUNTLET 
 rush: TRIAL WARDEN with its WARNING, LEVIATHAN HEART, the twins). `?stage=<id>` plays each.
 
 **The campaign's zones (M2-10).** `zone-b.stage.json` … `zone-i.stage.json` are the zones B–I of
-the zone map ([`content/campaign/`](../campaign/README.md)). H and I are still short
-**placeholders** (about a minute: popcorn, capsule carriers, a fan formation, a rammer, an orbiter —
-zone A's roster —, some floors or caves from the heightfield generator, then the WARNING and a boss:
-the EMBER AND FROST TWINS or, in zone I, IRON LEVIATHAN), so every route of the map can be played end
-to end; M2-14 replaces them with the real zones (IRON CITADEL, ABYSSAL THRONE).
+the zone map ([`content/campaign/`](../campaign/README.md)). M2-10 shipped them as short
+placeholders so every route could be played end to end; M2-11 … M2-14 replaced every one of them
+with a real zone (below).
 
 **Zones B and C (M2-11)** are the real zones, each ≈ 3½–4 minutes with the 4-way bot, four
 checkpoints, a high-speed section, a calm with two carriers before the WARNING, their own tileset,
@@ -151,6 +149,33 @@ section, a calm with two carriers, their own tileset, songs, item plan and roste
   1.3 px/tick over jagged spires), the calm, then **FACET MONARCH** (FM-07). The facet wall
   `bg/prism-facets` glints through its palette cycle; a heat `haze` shimmers over the spires band
   `bg/prism-spires`.
+
+**Zones H and I (M2-14)** are the two **final zones** — each route ends in one of them, and its
+clear leads to an ending and the credits. Same recipe (four checkpoints, a high-speed section, a
+calm with two carriers, their own tileset, songs, item plan and roster —
+[`content/enemies/zone-h.enemies.json`](../enemies/zone-h.enemies.json), `zone-i.enemies.json`), and
+their `music` also names the `ending` and `credits` cues (the ending screen's and the credits'
+themes, prepared with the zone's set):
+
+- `zone-h.stage.json` — **IRON CITADEL** (9,600 px, `terrain-citadel`): the outer walls (`bolt-drone`
+  streams, `rail-turret`s, `hatch-bay`s releasing `hatch-mite`s, `sentinel-walker`s), the **piston
+  hall** (checkpoint 2,200: moving floors and ceilings — `block` events swinging up and down out of
+  the plating — and `laser-emitter`s on the floor and ceiling projecting telegraphed lane lasers
+  along their rows), the **parade hangar** (checkpoint 4,400: open space at 0.6 px/tick where four
+  earlier bosses come back in reduced form one after another — BULWARK, MAW, BASTION and REGENT
+  ECHO, captains on `boss` events that ride the camera and leave after 16 s), the core run
+  (checkpoint 6,800: 1.3 px/tick), the calm, then **IRON SOVEREIGN** (IS-08), the four-phase
+  finale. The far band `bg/citadel-wall`'s running lights chase round the wall (a palette cycle); a
+  heat `haze` shimmers over the conduits `bg/citadel-pipes` during the core run.
+- `zone-i.stage.json` — **ABYSSAL THRONE** (9,600 px, `terrain-abyss`): the descent (`lumen-mote`
+  streams, `gulper`s hovering at the right coughing aimed fans, `depth-mine`s that arm when a ship
+  comes near and burst into rings, `abyss-turret`s), the **trench** (checkpoint 2,200: a floor and
+  ceiling, `trench-eel`s bursting out of the floor), the **mine field** (checkpoint 4,400: open
+  water full of drifting mines), the undertow (checkpoint 6,800: 1.3 px/tick), the calm, then the
+  **ABYSS ARK** (AA-09), a whale-class battleship raid the camera flies round — its final blast
+  reveals **THE HOLLOW KING** (HK-10) inside it; left alone for 90 s of fight the ARK escapes (the
+  run flag `bossEscaped`: the ending *THE FLAGSHIP SLIPS AWAY*). The deep's bioluminescent specks
+  (`bg/abyss-murk`) twinkle through a palette cycle; slow `wave`s sway the murk and the spires.
 
 **Hidden bonus stages (M2-10).** A stage of `"type": "bonus"` is a hidden bonus stage: no `warning`
 / `boss` events, no entrances of its own, and an `end` event (reaching it is the bonus stage's
@@ -241,7 +266,7 @@ orange 1UP).
   "kind": "stage",
   "id": "example",                 // unique id, referenced by the zone map
   "name": "Example Orbit",         // shown on the stage intro / zone map
-  "music": { "stage": "Stage", "boss": "Boss" }, // MUSIC_CUES names
+  "music": { "stage": "Stage", "boss": "Boss" }, // MUSIC_CUES names (+ optional "ending", "credits" — M2-14)
   "length": 4096,                  // camera-X length in pixels; the camera stops there
   "camera": [                      // camera keys, strictly sorted by x, the first at 0
     { "x": 0, "speed": 1, "ramp": 60 },            // speed in px/tick, reached over `ramp` ticks

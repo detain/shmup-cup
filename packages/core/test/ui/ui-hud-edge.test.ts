@@ -57,7 +57,19 @@ const DB: ContentDb = (() => {
 const SPRITES = resolveUiSprites(DB);
 
 /** No UI sprite at all. */
-const NONE: UiSprites = { life: -1, lifeP2: -1, meterSlot: -1, meterLabels: -1, logo: -1 };
+const NONE: UiSprites = {
+  life: -1,
+  lifeP2: -1,
+  meterSlot: -1,
+  meterLabels: -1,
+  logo: -1,
+  endingCitadel: -1,
+  endingArk: -1,
+  endingBlast: -1,
+  endingBubble: -1,
+  endingSun: -1,
+  endingSurface: -1,
+};
 
 /**
  * A world of the test content.

@@ -104,6 +104,11 @@
  * `landed`, and — through the World's {@link EnemyGimmicks} host — `pull` / `release` (pull fields),
  * `chain` (a drawn arm), `placeTile` and `tileId` (tiles placed into the terrain).
  *
+ * **Proximity wake (M2-14).** {@link ScriptApi.sleepUntilNear} puts a script to sleep until the
+ * nearest living player is within a range of the enemy while it may fire ({@link Enemy.nearRange}):
+ * the test runs in phase 5 next to the landing check and wakes the script once, so a waiting enemy
+ * (zone I's depth mines) costs no script wakes.
+ *
  * **Totals (M2-10).** {@link EnemySystem.stats} ({@link EnemyStats}) counts every regular spawn
  * and every kill credited to a player — ground enemies apart too — for the World's life (a
  * checkpoint restart keeps counting): the zone tally's kill rate and the `ground` bonus-stage
@@ -188,6 +193,7 @@ import {
   BALLISTIC_LANDED,
   BallisticLand,
   BodyAnchor,
+  SLEEP_FOREVER,
   FOLLOW_HISTORY,
   FollowTrack,
   MoverKind,
@@ -423,6 +429,12 @@ export class Enemy implements MoverBody, ScriptHolder {
   camY = 0;
   /** Options an Option Hunter carries (M2-04; freed as drops when it dies, lost when it leaves). */
   carried = 0;
+  /**
+   * Proximity wake (M2-14, {@link ScriptApi.sleepUntilNear}): while > 0, the script sleeps until
+   * the nearest living player is within this many pixels (horizontally and vertically) of the
+   * enemy while it may fire; the enemy system wakes it on the next tick and clears the field.
+   */
+  nearRange = 0;
 
   /**
    * Creates a free slot (the enemy system builds all {@link MAX_ENEMIES} at load time).
@@ -544,6 +556,22 @@ export interface ScriptApi {
    * @returns `true` once landed.
    */
   landed(): boolean;
+  /**
+   * Sleeps until the nearest living player comes near (M2-14 — `mine.burst`): the enemy system
+   * wakes the script on the tick after a player's centre is within `range` px of the enemy's centre
+   * horizontally **and** vertically while the enemy may fire (on screen and settled — the fire
+   * rule). The test runs inside the tick's movement phase, so a waiting enemy costs no script wake
+   * (a polling `yield n` loop would allocate a result every wake — decision D29).
+   *
+   * @param range - Pixels (≤ 0 or NaN: never — the script sleeps for good).
+   * @returns The sleep to yield (`SLEEP_FOREVER`: the proximity wakes it).
+   *
+   * @example
+   * ```ts
+   * yield api.sleepUntilNear(64); // woken when a ship is within 64 px
+   * ```
+   */
+  sleepUntilNear(range: number): number;
   /**
    * Starts a **pull field** around this enemy (M2-07: the suction field, the tentacle's grab):
    * every living ship whose centre is within `radius` px is drawn towards the enemy by
@@ -1650,6 +1678,12 @@ class EnemyScriptApi implements ScriptApi {
     this.system.destroy(this.self, explode);
   }
 
+  /** See {@link ScriptApi.sleepUntilNear}. */
+  sleepUntilNear(range: number): number {
+    this.self.nearRange = range > 0 ? range : 0;
+    return SLEEP_FOREVER;
+  }
+
   /** See {@link ScriptApi.landed}. */
   landed(): boolean {
     const self = this.self;
@@ -2105,6 +2139,7 @@ class EnemySystemImpl implements EnemySystem {
     // An Option Hunter is armoured: shots clink off it, only a screen clear kills it.
     enemy.flags = hunter ? EnemyFlag.Invulnerable : 0;
     enemy.carried = 0;
+    enemy.nearRange = 0;
     enemy.firstSeenTick = -1;
     enemy.spriteId = specs.sprite[enemyIndex];
     enemy.animFrame = 0;
@@ -2363,6 +2398,21 @@ class EnemySystemImpl implements EnemySystem {
           this.destroy(e, true);
           continue;
         }
+        const wake = this.host.tick + 1;
+        if (e.script !== null && e.wakeTick > wake) e.wakeTick = wake;
+      }
+      // A script sleeping until a player comes near (M2-14 — `ScriptApi.sleepUntilNear`): the
+      // proximity test is part of the tick, so a waiting enemy costs no script wakes (D29).
+      const near = e.nearRange;
+      if (
+        near > 0 &&
+        target !== null &&
+        (e.flags & (EnemyFlag.OnScreen | EnemyFlag.Settled)) ===
+          (EnemyFlag.OnScreen | EnemyFlag.Settled) &&
+        Math.abs(target.x - e.x) <= near &&
+        Math.abs(target.y - e.y) <= near
+      ) {
+        e.nearRange = 0;
         const wake = this.host.tick + 1;
         if (e.script !== null && e.wakeTick > wake) e.wakeTick = wake;
       }

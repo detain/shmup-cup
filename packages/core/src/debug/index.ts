@@ -446,6 +446,7 @@ function mixEnemy(e: Enemy): void {
   mixNumber(e.camX);
   mixNumber(e.camY);
   mixNumber(e.carried);
+  mixNumber(e.nearRange);
 }
 
 /**
@@ -604,6 +605,13 @@ function mixBosses(world: World): void {
     mixWord(b.escaped ? 1 : 0);
     mixWord(b.script === null ? 0 : 1);
     mixNumber(b.wakeTick);
+    mixNumber(b.spiralWays);
+    mixNumber(b.spiralEvery);
+    mixNumber(b.spiralStep);
+    mixNumber(b.spiralSpeed);
+    mixNumber(b.spiralKind);
+    mixNumber(b.spiralAngle);
+    mixNumber(b.spiralClock);
     mixWord(b.motion);
     mixWord(b.afterMove);
     mixNumber(b.trackSpeed);

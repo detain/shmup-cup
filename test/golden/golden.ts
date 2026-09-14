@@ -61,7 +61,11 @@
  * the rank-scaled fire) and of zone G (a death in the cube rush and a Classic respawn in place),
  * the weaving pilot in zone F on Easy under the Arcade penalty (deaths, the checkpoint restarts
  * rolling the tissue it shot open back, `gameOver`), and the stage skips to MANTLE REGENT and
- * FACET MONARCH with the full loadout under the Arcade penalty.
+ * FACET MONARCH with the full loadout under the Arcade penalty. Two more (M2-14) fly the final
+ * zones H and I with the 4-way bot and god mode, start to stage clear — `zone-h` (IRON CITADEL:
+ * the piston hall, the parade of earlier bosses in reduced form, IRON SOVEREIGN's four-phase
+ * finale) and `zone-i` (ABYSSAL THRONE: the depth mines, the trench eels, the ABYSS ARK raid and
+ * THE HOLLOW KING inside it).
  *
  * @module
  */
@@ -552,6 +556,24 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = Object.freeze([
       "GLIMMER CACHE, zone G's hidden bonus stage, with god mode and the full loadout (M2-13): its carriers' bonus capsules and the 1UP collected to the end, a cube rush and its cube walls",
     stageId: 'glimmer-cache',
     config: { seed: 81, loadout: 'full' },
+    godMode: true,
+    bot: 'four-way',
+  },
+  {
+    name: 'zone-h-god',
+    description:
+      'IRON CITADEL start to stage clear with god mode (M2-14): the 4-way bot through the outer walls, the piston hall with its moving floors and laser emitters, the parade of four earlier bosses in reduced form and the core run, then IRON SOVEREIGN shot down through its four phases',
+    stageId: 'zone-h',
+    config: { seed: 1 },
+    godMode: true,
+    bot: 'four-way',
+  },
+  {
+    name: 'zone-i-god',
+    description:
+      'ABYSSAL THRONE start to stage clear with god mode (M2-14): the 4-way bot through the descent, the trench, the mine field and the undertow, then the ABYSS ARK raid and THE HOLLOW KING its final blast reveals, both shot down',
+    stageId: 'zone-i',
+    config: { seed: 1 },
     godMode: true,
     bot: 'four-way',
   },

@@ -70,36 +70,219 @@
     }
   ],
   "edges": [
-    { "from": "a", "to": "b" },
-    { "from": "a", "to": "c" },
-    { "from": "b", "to": "d" },
-    { "from": "b", "to": "e" },
-    { "from": "c", "to": "d" },
-    { "from": "c", "to": "e" },
-    { "from": "d", "to": "f" },
-    { "from": "d", "to": "g" },
-    { "from": "e", "to": "f" },
-    { "from": "e", "to": "g" },
-    { "from": "f", "to": "h" },
-    { "from": "f", "to": "i" },
-    { "from": "g", "to": "h" },
-    { "from": "g", "to": "i" }
+    {
+      "from": "a",
+      "to": "b"
+    },
+    {
+      "from": "a",
+      "to": "c"
+    },
+    {
+      "from": "b",
+      "to": "d"
+    },
+    {
+      "from": "b",
+      "to": "e"
+    },
+    {
+      "from": "c",
+      "to": "d"
+    },
+    {
+      "from": "c",
+      "to": "e"
+    },
+    {
+      "from": "d",
+      "to": "f"
+    },
+    {
+      "from": "d",
+      "to": "g"
+    },
+    {
+      "from": "e",
+      "to": "f"
+    },
+    {
+      "from": "e",
+      "to": "g"
+    },
+    {
+      "from": "f",
+      "to": "h"
+    },
+    {
+      "from": "f",
+      "to": "i"
+    },
+    {
+      "from": "g",
+      "to": "h"
+    },
+    {
+      "from": "g",
+      "to": "i"
+    }
   ],
   "endings": [
     {
       "id": "citadel-flawless",
       "name": "THE CITADEL FALLS SILENT",
       "zone": "h",
-      "all": ["noDeath"]
+      "all": ["noDeath"],
+      "scene": "citadel",
+      "text": [
+        "IRON SOVEREIGN IS GONE, AND WITH IT",
+        "THE HEART OF THE SWARM'S FORTRESS.",
+        "NOT ONE SHIP WAS LOST ON THE WAY IN.",
+        "AS THE WALLS FOLD INTO THE DARK,",
+        "A NEW SUN RISES OVER THE HOME SYSTEM.",
+        "THE PILOT FLIES HOME IN THE DAWN."
+      ]
     },
-    { "id": "citadel", "name": "THE CITADEL FALLS", "zone": "h" },
-    { "id": "throne-flawless", "name": "THE DEEP IS STILL", "zone": "i", "all": ["noDeath"] },
+    {
+      "id": "citadel",
+      "name": "THE CITADEL FALLS",
+      "zone": "h",
+      "scene": "citadel",
+      "text": [
+        "IRON SOVEREIGN BREAKS APART IN FIRE.",
+        "ITS FORTRESS BURNS BEHIND THE SHIP",
+        "AS THE LAST OF THE SWARM SCATTERS.",
+        "THE COST WAS HIGH. THE VERGE IS SAFE.",
+        "ONE SHIP TURNS FOR HOME."
+      ]
+    },
+    {
+      "id": "throne-flawless",
+      "name": "THE DEEP IS STILL",
+      "zone": "i",
+      "all": ["noDeath"],
+      "scene": "abyss",
+      "text": [
+        "THE HOLLOW KING SINKS WITH ITS ARK",
+        "INTO WATERS NO LIGHT HAS EVER REACHED.",
+        "NO SHIP WAS LOST TO THE DEEP.",
+        "THE PILOT RISES THROUGH THE DARK",
+        "AND BREAKS THE SURFACE AT SUNRISE."
+      ]
+    },
     {
       "id": "throne-escape",
       "name": "THE FLAGSHIP SLIPS AWAY",
       "zone": "i",
-      "all": ["bossEscaped"]
+      "all": ["bossEscaped"],
+      "scene": "abyss",
+      "text": [
+        "THE ABYSS ARK TURNS AND DIVES,",
+        "ITS MASTER STILL SLEEPING IN ITS HOLD.",
+        "THE THRONE STANDS EMPTY - FOR NOW.",
+        "SOMEWHERE BELOW, SOMETHING WAITS.",
+        "THE WAR IS NOT OVER."
+      ]
     },
-    { "id": "throne", "name": "THE THRONE IS BROKEN", "zone": "i" }
+    {
+      "id": "throne",
+      "name": "THE THRONE IS BROKEN",
+      "zone": "i",
+      "scene": "abyss",
+      "text": [
+        "THE HOLLOW KING'S LIGHT GOES OUT.",
+        "THE ARK FALLS INTO THE TRENCH.",
+        "THE SWARM HAS LOST ITS THRONE.",
+        "BATTERED, ONE SHIP CLIMBS",
+        "TOWARDS THE DISTANT LIGHT."
+      ]
+    }
+  ],
+  "credits": [
+    {
+      "title": "SHMUP CUP",
+      "lines": ["A HORIZONTAL SHOOTING GAME", "FOR THE TV REMOTE, THE GAMEPAD AND THE KEYBOARD"]
+    },
+    {
+      "title": "THE ZONES",
+      "lines": [
+        "A  AZURE VERGE",
+        "B  BRINE NEBULA        C  DUNE EXPANSE",
+        "D  MAGMA DEEP          E  TEMPEST RIDGE",
+        "F  CELL VAULT          G  PRISM LABYRINTH",
+        "H  IRON CITADEL        I  ABYSSAL THRONE"
+      ]
+    },
+    {
+      "title": "THE GIANTS",
+      "lines": [
+        "HALCYON BULWARK  HB-01",
+        "SPUME HERALD  SH-02    GALVANIC MAW  GM-02",
+        "SANDGRAVE WIDOW  SW-03",
+        "CINDER BASTION  CB-04",
+        "SQUALL STEED  SS-05",
+        "MANTLE REGENT  MR-06",
+        "FACET MONARCH  FM-07",
+        "IRON SOVEREIGN  IS-08",
+        "ABYSS ARK  AA-09",
+        "THE HOLLOW KING  HK-10"
+      ]
+    },
+    {
+      "title": "GAME DESIGN, PROGRAMMING AND TESTING",
+      "lines": ["THE SHMUP CUP PROJECT", "BUILT WITH CLAUDE CODE"]
+    },
+    {
+      "title": "THE ENGINE",
+      "lines": [
+        "@shmup/core - the deterministic simulation",
+        "@shmup/render-pixi - the renderer",
+        "@shmup/audio-web - the chip synth and the mixer",
+        "@shmup/input-web - remote, gamepad and keyboard",
+        "@shmup/shell - the browser host"
+      ]
+    },
+    {
+      "title": "PLACEHOLDER ART GENERATORS",
+      "lines": [
+        "scripts/assets/procedural/",
+        "abyss.mjs  backdrops.mjs  bosses.mjs",
+        "brine.mjs  bullets.mjs  citadel.mjs",
+        "direct.mjs  dune.mjs  ending.mjs",
+        "explosions.mjs  hud.mjs  items.mjs",
+        "lasers.mjs  magma.mjs  palettes.mjs",
+        "particles.mjs  prism.mjs  raster-bands.mjs",
+        "shields.mjs  starfield.mjs  tempest.mjs",
+        "terrain.mjs  ui.mjs  vault.mjs",
+        "weapons.mjs"
+      ]
+    },
+    {
+      "title": "PIXEL MAPS AND THE FONT",
+      "lines": ["assets/source/sprites/ - pixel maps", "assets/source/fonts/pixel6x8.font.json"]
+    },
+    {
+      "title": "MUSIC AND SOUND",
+      "lines": [
+        "chip songs and synthesized sound effects,",
+        "rendered from content/audio/ when the game loads"
+      ]
+    },
+    {
+      "title": "PLATFORMS",
+      "lines": ["SAMSUNG TIZEN TV", "WEB BROWSERS", "ELECTRON DESKTOP"]
+    },
+    {
+      "title": "MADE WITH",
+      "lines": ["TYPESCRIPT  PIXIJS  VITE  VITEST  PLAYWRIGHT", "PNPM  TURBOREPO  ESLINT  PRETTIER"]
+    },
+    {
+      "title": "SPECIAL THANKS",
+      "lines": ["EVERY PILOT WHO FLEW THIS WITH A TV REMOTE"]
+    },
+    {
+      "title": "THANK YOU FOR PLAYING",
+      "lines": []
+    }
   ]
 }

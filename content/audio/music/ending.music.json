@@ -1,0 +1,193 @@
+{
+  "formatVersion": 1,
+  "kind": "music",
+  "id": "ending",
+  "title": "AFTER THE LAST WAVE",
+  "cue": "Ending",
+  "song": {
+    "speed": 7,
+    "volume": 0.38,
+    "instruments": {
+      "lead": {
+        "wave": "pulse50",
+        "volume": 0.7,
+        "attack": 0.03,
+        "decay": 0.2,
+        "sustain": 0.55,
+        "release": 0.18,
+        "vibrato": {
+          "depth": 0.35,
+          "rate": 4,
+          "delay": 0.3
+        }
+      },
+      "arp-min": {
+        "wave": "pulse12",
+        "volume": 0.5,
+        "attack": 0.002,
+        "decay": 0.16,
+        "sustain": 0.35,
+        "release": 0.04,
+        "arpeggio": [0, 3, 7, 12],
+        "arpeggioTicks": 2
+      },
+      "arp-maj": {
+        "wave": "pulse12",
+        "volume": 0.5,
+        "attack": 0.002,
+        "decay": 0.16,
+        "sustain": 0.35,
+        "release": 0.04,
+        "arpeggio": [0, 4, 7, 12],
+        "arpeggioTicks": 2
+      },
+      "arp-dom": {
+        "wave": "pulse12",
+        "volume": 0.5,
+        "attack": 0.002,
+        "decay": 0.16,
+        "sustain": 0.35,
+        "release": 0.04,
+        "arpeggio": [0, 4, 7, 10],
+        "arpeggioTicks": 2
+      },
+      "bass": {
+        "wave": "triangle",
+        "volume": 1,
+        "attack": 0.002,
+        "decay": 0.05,
+        "sustain": 0.85,
+        "release": 0.04
+      },
+      "pad": {
+        "wave": "triangle",
+        "volume": 0.45,
+        "attack": 0.35,
+        "decay": 0.5,
+        "sustain": 0.7,
+        "release": 0.4
+      },
+      "hat": {
+        "wave": "noise",
+        "volume": 0.3,
+        "attack": 0,
+        "decay": 0.035,
+        "sustain": 0,
+        "release": 0.01
+      },
+      "snare": {
+        "wave": "noise",
+        "volume": 0.6,
+        "attack": 0,
+        "decay": 0.13,
+        "sustain": 0,
+        "release": 0.02
+      },
+      "kick": {
+        "wave": "noise",
+        "volume": 0.85,
+        "attack": 0,
+        "decay": 0.07,
+        "sustain": 0,
+        "release": 0.01,
+        "sweep": -90
+      }
+    },
+    "channels": [
+      {
+        "instrument": "lead",
+        "volume": 0.75
+      },
+      {
+        "instrument": "arp-maj",
+        "volume": 0.45
+      },
+      {
+        "instrument": "bass",
+        "volume": 0.9
+      },
+      {
+        "instrument": "hat",
+        "volume": 0.65
+      },
+      {
+        "instrument": "pad",
+        "volume": 0.5
+      }
+    ],
+    "patterns": {
+      "intro": {
+        "rows": 32,
+        "tracks": [
+          ".:16 D5:8 G5:8",
+          "G3:4@arp-maj G3:4@arp-maj G3:4@arp-maj G3:4@arp-maj G3:4@arp-maj G3:4@arp-maj G3:4@arp-maj G3:4@arp-maj",
+          "G2:6 G3:2 G2:8 G2:6 G3:2 G2:8",
+          ".:16 C2:4@kick C8:4@hat C8:4@hat C8:4@hat",
+          "B3:16 B3:16"
+        ]
+      },
+      "a1": {
+        "rows": 32,
+        "tracks": [
+          "B5:12 A5:4 G5:8 F#5:8",
+          "G3:4@arp-maj G3:4@arp-maj G3:4@arp-maj G3:4@arp-maj D3:4@arp-maj D3:4@arp-maj D3:4@arp-maj D3:4@arp-maj",
+          "G2:6 G3:2 G2:8 D2:6 D3:2 D2:8",
+          "C2:4@kick C8:4@hat C8:4@hat C8:4@hat C2:4@kick C8:4@hat C8:4@hat C8:4@hat",
+          "B3:16 F#3:16"
+        ]
+      },
+      "a2": {
+        "rows": 32,
+        "tracks": [
+          "G5:8 E5:8 E5:6 D5:2 C5:8",
+          "E3:4@arp-min E3:4@arp-min E3:4@arp-min E3:4@arp-min C3:4@arp-maj C3:4@arp-maj C3:4@arp-maj C3:4@arp-maj",
+          "E2:6 E3:2 E2:8 C2:6 C3:2 C2:8",
+          "C2:4@kick C8:4@hat C8:4@hat C8:4@hat C2:4@kick C8:4@hat C8:4@hat C8:4@hat",
+          "G3:16 E3:16"
+        ]
+      },
+      "a3": {
+        "rows": 32,
+        "tracks": [
+          "B5:6 C6:2 D6:8 F#5:8 A5:8",
+          "G3:4@arp-maj G3:4@arp-maj G3:4@arp-maj G3:4@arp-maj D3:4@arp-maj D3:4@arp-maj D3:4@arp-maj D3:4@arp-maj",
+          "G2:4 B2:4 D3:4 B2:4 D2:4 F#2:4 A2:4 F#2:4",
+          "C2:4@kick C8:4@hat C8:4@hat C8:4@hat C2:4@kick C8:4@hat C8:4@hat C8:4@hat",
+          "B3:16 F#3:16"
+        ]
+      },
+      "a4": {
+        "rows": 32,
+        "tracks": [
+          "E6:8 D6:8 C6:4 B5:4 A5:8",
+          "C3:4@arp-maj C3:4@arp-maj C3:4@arp-maj C3:4@arp-maj D3:4@arp-maj D3:4@arp-maj D3:4@arp-maj D3:4@arp-maj",
+          "C2:4 E2:4 G2:4 E2:4 D2:4 F#2:4 A2:4 F#2:4",
+          "C2:4@kick C8:4@hat C8:4@hat C8:4@hat C5:2@snare C5:2@snare C5@snare C5@snare C5:2@snare C5:2@snare C5:2@snare C5:2@snare C5:2@snare",
+          "E3:16 F#3:16"
+        ]
+      },
+      "b1": {
+        "rows": 32,
+        "tracks": [
+          "G5:8 B5:8 D6:8 B5:8",
+          "E3:4@arp-min E3:4@arp-min E3:4@arp-min E3:4@arp-min B2:4@arp-min B2:4@arp-min B2:4@arp-min B2:4@arp-min",
+          "E2:4 G2:4 B2:4 G2:4 B1:4 D2:4 F#2:4 D2:4",
+          "C2:2@kick C8:2@hat C5:2@snare C8:2@hat C2:2@kick C2:2@kick C5:2@snare C8:2@hat C2:2@kick C8:2@hat C5:2@snare C8:2@hat C2:2@kick C2:2@kick C5:2@snare C8:2@hat",
+          "G3:16 D3:16"
+        ]
+      },
+      "b2": {
+        "rows": 32,
+        "tracks": [
+          "E6:12 D6:4 C6:8 A5:8",
+          "C3:4@arp-maj C3:4@arp-maj C3:4@arp-maj C3:4@arp-maj D3:4@arp-maj D3:4@arp-maj D3:4@arp-maj D3:4@arp-maj",
+          "C2:4 E2:4 G2:4 E2:4 D2:4 F#2:4 A2:4 F#2:4",
+          "C2:2@kick C8:2@hat C5:2@snare C8:2@hat C2:2@kick C2:2@kick C5:2@snare C8:2@hat C5:2@snare C5:2@snare C5@snare C5@snare C5:2@snare C5:2@snare C5:2@snare C5:2@snare C5:2@snare",
+          "E3:16 F#3:16"
+        ]
+      }
+    },
+    "order": ["intro", "a1", "a2", "a3", "a4", "b1", "b2", "a1", "a2", "a3", "a4"],
+    "loopFromOrder": 1
+  }
+}

@@ -1,0 +1,885 @@
+{
+  "formatVersion": 1,
+  "kind": "enemies",
+  "enemies": [
+    {
+      "id": "bolt-drone",
+      "hp": 1,
+      "score": 100,
+      "hurtbox": {
+        "hw": 4,
+        "hh": 4
+      },
+      "script": "drifter.sine",
+      "sprite": "enemies/bolt-drone",
+      "anim": {
+        "frames": 2,
+        "ticks": 6
+      },
+      "params": {
+        "speed": 1.2,
+        "amp": 16,
+        "period": 100,
+        "memberPhase": 32
+      },
+      "drop": null
+    },
+    {
+      "id": "hatch-bay",
+      "hp": 6,
+      "score": 500,
+      "hurtbox": {
+        "hw": 8,
+        "hh": 4
+      },
+      "script": "hatch.spawner",
+      "sprite": "enemies/hatch-bay",
+      "anim": {
+        "frames": 2,
+        "ticks": 30
+      },
+      "params": {
+        "interval": 100,
+        "max": 3
+      },
+      "drop": null,
+      "ground": "floor",
+      "child": "hatch-mite",
+      "explosion": "medium"
+    },
+    {
+      "id": "hatch-bay-ceiling",
+      "hp": 6,
+      "score": 500,
+      "hurtbox": {
+        "hw": 8,
+        "hh": 4
+      },
+      "script": "hatch.spawner",
+      "sprite": "enemies/hatch-bay",
+      "anim": {
+        "frames": 2,
+        "ticks": 30
+      },
+      "params": {
+        "interval": 100,
+        "max": 3
+      },
+      "drop": null,
+      "ground": "ceiling",
+      "child": "hatch-mite-down",
+      "explosion": "medium"
+    },
+    {
+      "id": "hatch-mite",
+      "hp": 1,
+      "score": 60,
+      "hurtbox": {
+        "hw": 4,
+        "hh": 3
+      },
+      "script": "rammer.aimed",
+      "sprite": "enemies/hatch-mite",
+      "anim": {
+        "frames": 2,
+        "ticks": 6
+      },
+      "mover": {
+        "type": "straight",
+        "vx": -0.5,
+        "vy": -0.9
+      },
+      "params": {
+        "enterTicks": 34,
+        "windup": 16,
+        "speed": 1.6
+      },
+      "drop": null
+    },
+    {
+      "id": "hatch-mite-down",
+      "hp": 1,
+      "score": 60,
+      "hurtbox": {
+        "hw": 4,
+        "hh": 3
+      },
+      "script": "rammer.aimed",
+      "sprite": "enemies/hatch-mite",
+      "anim": {
+        "frames": 2,
+        "ticks": 6
+      },
+      "mover": {
+        "type": "straight",
+        "vx": -0.5,
+        "vy": 0.9
+      },
+      "params": {
+        "enterTicks": 34,
+        "windup": 16,
+        "speed": 1.6
+      },
+      "drop": null
+    },
+    {
+      "id": "laser-emitter",
+      "hp": 6,
+      "score": 600,
+      "hurtbox": {
+        "hw": 5,
+        "hh": 5
+      },
+      "script": "emitter.laser",
+      "sprite": "enemies/laser-emitter",
+      "anim": {
+        "frames": 2,
+        "ticks": 12
+      },
+      "params": {
+        "firstTicks": 50,
+        "laserTicks": 200,
+        "telegraph": 60,
+        "active": 36,
+        "laserWidth": 6
+      },
+      "drop": null,
+      "ground": "floor",
+      "explosion": "medium"
+    },
+    {
+      "id": "laser-emitter-ceiling",
+      "hp": 6,
+      "score": 600,
+      "hurtbox": {
+        "hw": 5,
+        "hh": 5
+      },
+      "script": "emitter.laser",
+      "sprite": "enemies/laser-emitter",
+      "anim": {
+        "frames": 2,
+        "ticks": 12
+      },
+      "params": {
+        "firstTicks": 50,
+        "laserTicks": 200,
+        "telegraph": 60,
+        "active": 36,
+        "laserWidth": 6
+      },
+      "drop": null,
+      "ground": "ceiling",
+      "explosion": "medium"
+    },
+    {
+      "id": "sentinel-walker",
+      "hp": 4,
+      "score": 400,
+      "hurtbox": {
+        "hw": 5,
+        "hh": 6
+      },
+      "script": "walker.floor",
+      "sprite": "enemies/sentinel-walker",
+      "anim": {
+        "frames": 2,
+        "ticks": 12
+      },
+      "params": {
+        "speed": 0.6,
+        "walkTicks": 100,
+        "stopTicks": 50,
+        "bulletSpeed": 1.2,
+        "spread": 48
+      },
+      "drop": null,
+      "ground": "floor",
+      "explosion": "medium"
+    },
+    {
+      "id": "rail-turret",
+      "hp": 4,
+      "score": 300,
+      "hurtbox": {
+        "hw": 6,
+        "hh": 4
+      },
+      "script": "turret.floor",
+      "sprite": "enemies/rail-turret",
+      "params": {
+        "fireTicks": 180,
+        "bulletSpeed": 1.2
+      },
+      "drop": null,
+      "ground": "floor",
+      "explosion": "medium"
+    },
+    {
+      "id": "rail-turret-ceiling",
+      "hp": 4,
+      "score": 300,
+      "hurtbox": {
+        "hw": 6,
+        "hh": 4
+      },
+      "script": "turret.floor",
+      "sprite": "enemies/rail-turret",
+      "params": {
+        "fireTicks": 180,
+        "bulletSpeed": 1.2
+      },
+      "drop": null,
+      "ground": "ceiling",
+      "explosion": "medium"
+    },
+    {
+      "id": "sovereign-drone",
+      "hp": 2,
+      "score": 150,
+      "hurtbox": {
+        "hw": 4,
+        "hh": 4
+      },
+      "script": "cell.chase",
+      "sprite": "enemies/bolt-drone",
+      "anim": {
+        "frames": 2,
+        "ticks": 4
+      },
+      "params": {
+        "speed": 1.1,
+        "enterTicks": 30,
+        "turnRate": 5,
+        "chaseTicks": 120,
+        "scatterTicks": 20
+      },
+      "drop": null
+    },
+    {
+      "id": "echo-bulwark",
+      "boss": {
+        "code": "HB-E1",
+        "displayName": "BULWARK ECHO",
+        "role": "captain",
+        "introTicks": 90,
+        "score": 8000,
+        "x": 304,
+        "y": 100,
+        "timeLimit": 960,
+        "parts": [
+          {
+            "name": "hull",
+            "x": 28,
+            "hurtbox": {
+              "hw": 22,
+              "hh": 14
+            },
+            "vulnerable": "never",
+            "sprite": "bosses/bulwark-hull"
+          },
+          {
+            "name": "wing-top",
+            "parent": "hull",
+            "x": -6,
+            "y": -23,
+            "hurtbox": {
+              "hw": 26,
+              "hh": 6
+            },
+            "vulnerable": "never",
+            "sprite": "bosses/bulwark-wing-top"
+          },
+          {
+            "name": "wing-bottom",
+            "parent": "hull",
+            "x": -6,
+            "y": 23,
+            "hurtbox": {
+              "hw": 26,
+              "hh": 6
+            },
+            "vulnerable": "never",
+            "sprite": "bosses/bulwark-wing-bottom"
+          },
+          {
+            "name": "emitter-top",
+            "parent": "wing-top",
+            "x": -34,
+            "y": -2,
+            "hurtbox": {
+              "hw": 8,
+              "hh": 4
+            },
+            "vulnerable": "never",
+            "gun": true,
+            "sprite": "bosses/bulwark-emitter",
+            "anim": {
+              "frames": 2,
+              "ticks": 16
+            }
+          },
+          {
+            "name": "emitter-bottom",
+            "parent": "wing-bottom",
+            "x": -34,
+            "y": 2,
+            "hurtbox": {
+              "hw": 8,
+              "hh": 4
+            },
+            "vulnerable": "never",
+            "gun": true,
+            "sprite": "bosses/bulwark-emitter",
+            "anim": {
+              "frames": 2,
+              "ticks": 16
+            }
+          },
+          {
+            "name": "core",
+            "hp": 20,
+            "hurtbox": {
+              "hw": 7,
+              "hh": 7
+            },
+            "vulnerable": "afterParts",
+            "requires": ["plate-1", "plate-2"],
+            "core": true,
+            "sprite": "bosses/core",
+            "anim": {
+              "frames": 2,
+              "ticks": 12
+            },
+            "score": 2000,
+            "explosion": "large"
+          },
+          {
+            "name": "plate-1",
+            "x": -11,
+            "hp": 8,
+            "hurtbox": {
+              "hw": 3,
+              "hh": 9
+            },
+            "sprite": "bosses/bulwark-plate",
+            "score": 300,
+            "explosion": "medium"
+          },
+          {
+            "name": "plate-2",
+            "x": -17,
+            "hp": 8,
+            "hurtbox": {
+              "hw": 3,
+              "hh": 9
+            },
+            "sprite": "bosses/bulwark-plate",
+            "score": 300,
+            "explosion": "medium"
+          }
+        ],
+        "phases": [
+          {
+            "script": "boss.bulwark",
+            "params": {
+              "trackSpeed": 0.35,
+              "laserTicks": 130,
+              "firstLaser": 50,
+              "ways": 3,
+              "fireTicks": 140,
+              "bulletSpeed": 1.3
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "echo-maw",
+      "boss": {
+        "code": "GM-E2",
+        "displayName": "MAW ECHO",
+        "role": "captain",
+        "introTicks": 90,
+        "score": 8000,
+        "x": 304,
+        "y": 100,
+        "timeLimit": 960,
+        "parts": [
+          {
+            "name": "hull",
+            "x": 26,
+            "vulnerable": "never",
+            "hurtbox": {
+              "hw": 28,
+              "hh": 18
+            },
+            "sprite": "bosses/maw-hull"
+          },
+          {
+            "name": "fin",
+            "parent": "hull",
+            "x": 38,
+            "sprite": "bosses/maw-fin"
+          },
+          {
+            "name": "maw",
+            "x": -6,
+            "hp": 22,
+            "hurtbox": {
+              "hw": 6,
+              "hh": 6
+            },
+            "vulnerable": "whenOpen",
+            "core": true,
+            "sprite": "bosses/maw-core",
+            "anim": {
+              "frames": 2,
+              "ticks": 10
+            },
+            "score": 2000,
+            "explosion": "large"
+          },
+          {
+            "name": "jaw-top",
+            "parent": "maw",
+            "x": -8,
+            "y": -9,
+            "vulnerable": "never",
+            "hurtbox": {
+              "hw": 12,
+              "hh": 4
+            },
+            "sprite": "bosses/maw-jaw-top"
+          },
+          {
+            "name": "jaw-bottom",
+            "parent": "maw",
+            "x": -8,
+            "y": 9,
+            "vulnerable": "never",
+            "hurtbox": {
+              "hw": 12,
+              "hh": 4
+            },
+            "sprite": "bosses/maw-jaw-bottom"
+          }
+        ],
+        "phases": [
+          {
+            "script": "boss.maw",
+            "params": {
+              "trackSpeed": 0.4,
+              "closedTicks": 110,
+              "openTicks": 110,
+              "fireTicks": 40,
+              "bulletSpeed": 1.3,
+              "count": 0,
+              "gape": 4
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "echo-bastion",
+      "boss": {
+        "code": "CB-E3",
+        "displayName": "BASTION ECHO",
+        "role": "captain",
+        "introTicks": 90,
+        "score": 8000,
+        "x": 304,
+        "y": 100,
+        "timeLimit": 960,
+        "parts": [
+          {
+            "name": "hull",
+            "x": 30,
+            "vulnerable": "never",
+            "hurtbox": {
+              "hw": 24,
+              "hh": 16
+            },
+            "sprite": "bosses/bastion-hull"
+          },
+          {
+            "name": "core",
+            "x": -10,
+            "hp": 26,
+            "hurtbox": {
+              "hw": 7,
+              "hh": 7
+            },
+            "core": true,
+            "sprite": "bosses/bastion-core",
+            "anim": {
+              "frames": 2,
+              "ticks": 10
+            },
+            "score": 2000,
+            "explosion": "large"
+          },
+          {
+            "name": "hub",
+            "parent": "core"
+          },
+          {
+            "name": "arm-a",
+            "parent": "hub",
+            "x": 19,
+            "radius": 5,
+            "vulnerable": "never",
+            "sprite": "bosses/bastion-arm"
+          },
+          {
+            "name": "arm-b",
+            "parent": "hub",
+            "x": -19,
+            "radius": 5,
+            "vulnerable": "never",
+            "sprite": "bosses/bastion-arm"
+          }
+        ],
+        "phases": [
+          {
+            "script": "boss.bastion",
+            "params": {
+              "trackSpeed": 0.4,
+              "spin": 5,
+              "ways": 3,
+              "fireTicks": 100,
+              "bulletSpeed": 1.3,
+              "ring": 8,
+              "ringTicks": 170,
+              "ringSpeed": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "echo-regent",
+      "boss": {
+        "code": "MR-E4",
+        "displayName": "REGENT ECHO",
+        "role": "captain",
+        "introTicks": 90,
+        "score": 8000,
+        "x": 304,
+        "y": 100,
+        "timeLimit": 960,
+        "parts": [
+          {
+            "name": "mantle",
+            "x": 24,
+            "vulnerable": "never",
+            "hurtbox": {
+              "hw": 26,
+              "hh": 13
+            },
+            "sprite": "bosses/regent-mantle"
+          },
+          {
+            "name": "eye",
+            "x": -10,
+            "hp": 24,
+            "hurtbox": {
+              "hw": 6,
+              "hh": 6
+            },
+            "core": true,
+            "sprite": "bosses/regent-eye",
+            "anim": {
+              "frames": 2,
+              "ticks": 20
+            },
+            "score": 2000,
+            "explosion": "large"
+          },
+          {
+            "name": "root-top",
+            "parent": "mantle",
+            "x": -12,
+            "y": -17,
+            "hp": 10,
+            "radius": 6,
+            "sprite": "bosses/regent-root",
+            "score": 600,
+            "explosion": "medium"
+          },
+          {
+            "name": "seg-top",
+            "parent": "root-top",
+            "x": -11,
+            "radius": 5,
+            "vulnerable": "never",
+            "sprite": "bosses/regent-segment"
+          },
+          {
+            "name": "tip-top",
+            "parent": "seg-top",
+            "x": -10,
+            "radius": 4,
+            "vulnerable": "never",
+            "gun": true,
+            "sprite": "bosses/regent-tip"
+          },
+          {
+            "name": "root-bottom",
+            "parent": "mantle",
+            "x": -12,
+            "y": 17,
+            "hp": 10,
+            "radius": 6,
+            "sprite": "bosses/regent-root",
+            "score": 600,
+            "explosion": "medium"
+          },
+          {
+            "name": "seg-bottom",
+            "parent": "root-bottom",
+            "x": -11,
+            "radius": 5,
+            "vulnerable": "never",
+            "sprite": "bosses/regent-segment"
+          },
+          {
+            "name": "tip-bottom",
+            "parent": "seg-bottom",
+            "x": -10,
+            "radius": 4,
+            "vulnerable": "never",
+            "gun": true,
+            "sprite": "bosses/regent-tip"
+          }
+        ],
+        "phases": [
+          {
+            "script": "boss.squid",
+            "params": {
+              "trackSpeed": 0.35,
+              "curl": 1,
+              "sweepTicks": 26,
+              "guardTicks": 50,
+              "openTicks": 110,
+              "fireTicks": 90,
+              "ways": 3,
+              "spread": 40,
+              "bulletSpeed": 1.25,
+              "gunTicks": 120
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "iron-sovereign",
+      "boss": {
+        "code": "IS-08",
+        "displayName": "IRON SOVEREIGN",
+        "introTicks": 180,
+        "score": 60000,
+        "x": 300,
+        "y": 100,
+        "minion": "sovereign-drone",
+        "parts": [
+          {
+            "name": "hull",
+            "x": 36,
+            "sprite": "bosses/sovereign-hull"
+          },
+          {
+            "name": "bulk",
+            "parent": "hull",
+            "x": 14,
+            "vulnerable": "never",
+            "hurtbox": {
+              "hw": 16,
+              "hh": 40
+            }
+          },
+          {
+            "name": "core",
+            "x": 15,
+            "hp": 150,
+            "hurtbox": {
+              "hw": 8,
+              "hh": 8
+            },
+            "vulnerable": "afterParts",
+            "requires": ["plate-1", "plate-2"],
+            "core": true,
+            "sprite": "bosses/sovereign-core",
+            "anim": {
+              "frames": 2,
+              "ticks": 10
+            },
+            "score": 8000,
+            "explosion": "large"
+          },
+          {
+            "name": "emitter-top",
+            "x": 2,
+            "y": -38,
+            "hp": 30,
+            "hurtbox": {
+              "hw": 8,
+              "hh": 5
+            },
+            "gun": true,
+            "sprite": "bosses/sovereign-emitter",
+            "score": 2000,
+            "explosion": "medium"
+          },
+          {
+            "name": "emitter-bottom",
+            "x": 2,
+            "y": 38,
+            "hp": 30,
+            "hurtbox": {
+              "hw": 8,
+              "hh": 5
+            },
+            "gun": true,
+            "sprite": "bosses/sovereign-emitter",
+            "score": 2000,
+            "explosion": "medium"
+          },
+          {
+            "name": "hub",
+            "parent": "core",
+            "angle": 128
+          },
+          {
+            "name": "pod-a",
+            "parent": "hub",
+            "x": -24,
+            "radius": 6,
+            "vulnerable": "never",
+            "sprite": "bosses/sovereign-pod"
+          },
+          {
+            "name": "pod-b",
+            "parent": "hub",
+            "y": -24,
+            "radius": 6,
+            "vulnerable": "never",
+            "sprite": "bosses/sovereign-pod"
+          },
+          {
+            "name": "pod-c",
+            "parent": "hub",
+            "x": 24,
+            "radius": 6,
+            "vulnerable": "never",
+            "sprite": "bosses/sovereign-pod"
+          },
+          {
+            "name": "pod-d",
+            "parent": "hub",
+            "y": 24,
+            "radius": 6,
+            "vulnerable": "never",
+            "sprite": "bosses/sovereign-pod"
+          },
+          {
+            "name": "plate-1",
+            "x": -2,
+            "hp": 24,
+            "hurtbox": {
+              "hw": 4,
+              "hh": 14
+            },
+            "sprite": "bosses/sovereign-plate",
+            "score": 1000,
+            "explosion": "medium"
+          },
+          {
+            "name": "plate-2",
+            "x": -12,
+            "hp": 24,
+            "hurtbox": {
+              "hw": 4,
+              "hh": 14
+            },
+            "sprite": "bosses/sovereign-plate",
+            "score": 1000,
+            "explosion": "medium"
+          }
+        ],
+        "phases": [
+          {
+            "script": "boss.sovereign",
+            "params": {
+              "trackSpeed": 0.3,
+              "laserTicks": 140,
+              "firstLaser": 60,
+              "ways": 3,
+              "fireTicks": 120,
+              "bulletSpeed": 1.25
+            },
+            "until": {
+              "partsDestroyed": ["plate-1", "plate-2"]
+            }
+          },
+          {
+            "script": "boss.sovereign",
+            "params": {
+              "trackSpeed": 0.35,
+              "spin": 5,
+              "laserTicks": 160,
+              "firstLaser": 50,
+              "ways": 3,
+              "fireTicks": 110,
+              "bulletSpeed": 1.3,
+              "ring": 10,
+              "ringTicks": 170,
+              "ringSpeed": 1
+            },
+            "until": {
+              "hpBelow": 110
+            }
+          },
+          {
+            "script": "boss.sovereign",
+            "params": {
+              "trackSpeed": 0.4,
+              "spin": -6,
+              "reverseTicks": 220,
+              "ways": 5,
+              "spread": 36,
+              "fireTicks": 100,
+              "bulletSpeed": 1.3,
+              "launchTicks": 170,
+              "count": 2,
+              "ring": 10,
+              "ringTicks": 190,
+              "ringSpeed": 1
+            },
+            "until": {
+              "hpBelow": 60
+            }
+          },
+          {
+            "script": "boss.sovereign",
+            "params": {
+              "trackSpeed": 0.45,
+              "spin": 8,
+              "reverseTicks": 180,
+              "laserTicks": 200,
+              "firstLaser": 80,
+              "ways": 3,
+              "fireTicks": 130,
+              "bulletSpeed": 1.3,
+              "spiral": 3,
+              "spiralTicks": 10,
+              "spiralStep": 22,
+              "spiralSpeed": 1
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

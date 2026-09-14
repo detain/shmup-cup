@@ -13,7 +13,7 @@ import { resolveGameConfig } from '../../src/config/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
 import { Action, commitPlayerInput, createInputSnapshot } from '../../src/input/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld } from '../../src/world/index.js';
-import { measureHeapGrowth } from '../helpers/alloc.js';
+import { WakeCount, measureHeapGrowth } from '../helpers/alloc.js';
 
 /**
  * A shipped content file.
@@ -77,12 +77,14 @@ describe('core/behaviors boss.facet allocation (M2-13)', () => {
     stepWorld(w, input);
     expect(boss.phase).toBe(2);
     let t = 0;
+    const wakes = new WakeCount();
     const growth = measureHeapGrowth(
       () => {
         commitPlayerInput(input.players[0], (t / 48) % 2 < 1 ? Action.Up : Action.Down);
         if (parts[core].hp < 20) parts[core].hp = 1000;
         t++;
         stepWorld(w, input);
+        wakes.see(boss.wakeTick);
         w.events.clear();
       },
       10_000,
@@ -95,6 +97,7 @@ describe('core/behaviors boss.facet allocation (M2-13)', () => {
     );
     expect(boss.state).toBe(BossState.Fight);
     expect(boss.phase).toBe(2);
-    expect(growth.bytes).toBeLessThan(64 * 1024);
+    // The wakes of the phase's coroutine may allocate their results (D29); nothing else may.
+    expect(growth.bytes).toBeLessThan(64 * 1024 + wakes.allowance(10_000));
   }, 120_000);
 });

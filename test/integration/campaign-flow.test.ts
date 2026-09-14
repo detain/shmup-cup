@@ -5,12 +5,18 @@
  * A is a campaign run: the title card, the zone result tally, the map — Down chooses the lower
  * exit, OK launches and asks the host to prepare the next stage — then zones C, E, G and I with
  * the players carried in (score, lives, loadout) and the rank's stage term growing, and the ending
- * of zone I at the end; the run lands in the saved hi-score table then (and only then).
+ * of zone I at the end; the run lands in the saved hi-score table then (and only then). Since
+ * M2-14 the ending plays its scene and epilogue, then the result card, then the credits roll to
+ * the title.
  */
 import {
   Action,
+  ENDING_LINE_TICKS,
+  ENDING_LOCK_TICKS,
+  ENDING_STORY_HOLD_TICKS,
   ENGINE_SPRITES,
   KNOWN_SCRIPT_IDS,
+  MUSIC_CUES,
   SimEventKind,
   commitPlayerInput,
   createGame,
@@ -108,5 +114,30 @@ describe('integration: the zone map in the scene flow (M2-10)', () => {
     expect(table).toHaveLength(1);
     expect(table[0].reached).toBe('zone-i');
     expect(save.data.stats.stagesCleared).toBe(5);
+    // M2-14: the ending the flags chose (no ship lost in god mode) plays the deep's scene and its
+    // epilogue to the ending theme, then the result card, then the credits to theirs, then the title.
+    expect(flow.run.ending?.id).toBe('throne-flawless');
+    expect(flow.run.ending?.scene).toBe('abyss');
+    const music: number[] = [];
+    const step = (held: number): void => {
+      commitPlayerInput(player, held);
+      game.step();
+      game.events.drain((e) => {
+        if (e.kind === SimEventKind.Music) music.push(e.id);
+      });
+    };
+    const lines = flow.run.ending?.text.length ?? 0;
+    expect(lines).toBeGreaterThan(0);
+    for (let t = 0; t < lines * ENDING_LINE_TICKS + 1; t++) step(0);
+    expect(flow.ending.shown).toBe(lines);
+    for (let t = 0; t < ENDING_STORY_HOLD_TICKS + ENDING_LOCK_TICKS + 2; t++) step(0);
+    expect(flow.ending.phase).toBe(1); // the result card
+    step(Action.Confirm);
+    step(0);
+    expect(flow.stack.top?.id).toBe('credits');
+    expect(flow.credits.rows.length).toBeGreaterThanOrEqual(40);
+    expect(music).toEqual(expect.arrayContaining([MUSIC_CUES.Credits]));
+    for (let t = 0; t < 60 * 60 * 2 && flow.stack.top?.id === 'credits'; t++) step(0);
+    expect(flow.stack.top?.id).toBe('title');
   }, 60_000);
 });

@@ -331,6 +331,40 @@ describe('golden replays (zone A and the dev stages, playtest bots)', () => {
     expect(world.stage?.stage.id).toBe('zone-d');
   });
 
+  it('covers the final zones H and I of M2-14: both cleared in 3–6 minutes, their finales shot down', () => {
+    for (const [name, stage] of [
+      ['zone-h-god', 'zone-h'],
+      ['zone-i-god', 'zone-i'],
+    ] as const) {
+      const { file, replay } = readGolden(name);
+      expect(replay.header.stageId).toBe(stage);
+      expect(replay.header.assisted).toBe(true);
+      expect(file.expected).toMatchObject({
+        status: 'stageClear',
+        bossDefeated: true,
+        deathTicks: [],
+      });
+      expect(file.expected.ticks / 60).toBeGreaterThanOrEqual(180);
+      expect(file.expected.ticks / 60).toBeLessThanOrEqual(360);
+    }
+    // IRON SOVEREIGN died in its last phase; the parade's four captains went before it.
+    const citadel = playGolden(readGolden('zone-h-god').replay).world;
+    const sovereign = citadel.bosses.slots.find(
+      (b) => citadel.content.enemies[b.specIndex]?.id === 'iron-sovereign',
+    );
+    expect(sovereign?.state).toBe(BossState.Dead);
+    expect(sovereign?.phase).toBe(3);
+    expect(sovereign?.escaped).toBe(false);
+    // The ARK did not escape: its final blast revealed THE HOLLOW KING, who fell too.
+    const throne = playGolden(readGolden('zone-i-god').replay).world;
+    expect(throne.endingFlags).toBe(0);
+    const king = throne.bosses.slots.find(
+      (b) => throne.content.enemies[b.specIndex]?.id === 'hollow-king',
+    );
+    expect(king?.state).toBe(BossState.Dead);
+    expect(king?.escaped).toBe(false);
+  });
+
   it('covers the real zones F and G of M2-13: both cleared in 3–6 minutes, their bosses shot down, the cache', () => {
     for (const [name, stage] of [
       ['zone-f-god', 'zone-f'],

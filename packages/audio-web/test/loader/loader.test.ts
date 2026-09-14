@@ -278,6 +278,31 @@ describe('audio-web/loader music content', () => {
       MUSIC_CUES.StageClear,
       MUSIC_CUES.GameOver,
     ]);
+    // A final zone (M2-14) adds its ending and credits themes (unresolved ones are left out).
+    const final: Pick<StageSpec, 'music' | 'events'> = {
+      music: {
+        stage: '',
+        stageId: MUSIC_CUES.Stage,
+        boss: '',
+        bossId: MUSIC_CUES.FinalBoss,
+        ending: 'Ending',
+        endingId: MUSIC_CUES.Ending,
+        credits: 'Credits',
+        creditsId: MUSIC_CUES.Credits,
+      },
+      events: [],
+    };
+    expect(stageMusicCues(final)).toEqual([
+      MUSIC_CUES.Stage,
+      MUSIC_CUES.FinalBoss,
+      MUSIC_CUES.StageClear,
+      MUSIC_CUES.GameOver,
+      MUSIC_CUES.Ending,
+      MUSIC_CUES.Credits,
+    ]);
+    expect(
+      stageMusicCues({ ...final, music: { ...final.music, endingId: -1, creditsId: -1 } }),
+    ).toEqual([MUSIC_CUES.Stage, MUSIC_CUES.FinalBoss, MUSIC_CUES.StageClear, MUSIC_CUES.GameOver]);
   });
 
   it('parses a file track with its loop points', () => {

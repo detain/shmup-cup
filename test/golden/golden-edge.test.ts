@@ -42,7 +42,7 @@ describe.skipIf(updating)('golden replays — file guards', () => {
     // stage (M2-13).
     for (const name of names) {
       expect(name).toMatch(
-        /^(zone-[a-g]|gimmick-range|raster-range|captain-range|raid-range|twin-range|bonus-range|bonus-vault|brine-grotto|glimmer-cache)-[a-z0-9-]+$/,
+        /^(zone-[a-i]|gimmick-range|raster-range|captain-range|raid-range|twin-range|bonus-range|bonus-vault|brine-grotto|glimmer-cache)-[a-z0-9-]+$/,
       );
     }
     for (const scenario of GOLDEN_SCENARIOS)

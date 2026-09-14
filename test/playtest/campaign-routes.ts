@@ -4,7 +4,8 @@
  * exits with the campaign harness (`campaign.ts`) — each zone a fresh World with the players
  * carried in, as the scene flow builds it — and every zone must reach its stage clear, the rank's
  * stage term must follow the zones cleared, the score must only grow along a route, and every
- * route must end in a final zone with an ending.
+ * route must end in a final zone with an ending — since M2-14 one with its sprite scene and
+ * epilogue.
  *
  * @module
  */
@@ -38,7 +39,11 @@ export function flyRoutesThrough(exitLabel: string): RouteOutcome[] {
     const last = campaign.zones[route.route[route.route.length - 1]];
     expect(last.final).toBe(true);
     expect(route.ending, route.labels).not.toBeNull();
-    expect(campaign.endings.find((e) => e.id === route.ending)?.zone).toBe(last.id);
+    const ending = campaign.endings.find((e) => e.id === route.ending);
+    expect(ending?.zone).toBe(last.id);
+    // M2-14: every ending a route reaches has its scene and epilogue.
+    expect(ending?.scene, route.labels).not.toBe('none');
+    expect(ending?.text.length ?? 0, route.labels).toBeGreaterThan(0);
     route.zones.forEach((zone, depth) => {
       expect(zone.status).toBe('stageClear');
       expect(zone.rankStage).toBe(depth + 1);

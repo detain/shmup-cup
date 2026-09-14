@@ -178,6 +178,32 @@ drifts) and the boss **FACET MONARCH** (`facet-monarch`, FM-07 — `boss.facet`:
 arms waving like claws with guns at their tips; rings and, in the last phase, lane lasers from the
 core).
 
+`zone-h.enemies.json` and `zone-i.enemies.json` (M2-14) are the rosters of the final zones H and I.
+IRON CITADEL: `bolt-drone` (`drifter.sine` popcorn), `hatch-bay` / `hatch-bay-ceiling`
+(`hatch.spawner` releasing `hatch-mite` / `hatch-mite-down` — `rammer.aimed` beetles leaving up out
+of a floor hatch or down out of a ceiling one), `laser-emitter` / `laser-emitter-ceiling`
+(`emitter.laser`: a telegraphed lane laser to the left along its row, attached, every 200 ticks),
+`sentinel-walker` (`walker.floor`), `rail-turret` / `rail-turret-ceiling` (`turret.floor`),
+`sovereign-drone` (`cell.chase`, the boss's `minion`), the **parade** — four earlier bosses in
+reduced form, captains with a 16-s time limit that reuse the originals' sprites and behaviours
+with fewer parts: `echo-bulwark` (BULWARK ECHO, two plates, `boss.bulwark`), `echo-maw` (MAW ECHO,
+the mouth and its jaws, `boss.maw`), `echo-bastion` (BASTION ECHO, a two-arm wheel,
+`boss.bastion`), `echo-regent` (REGENT ECHO, two short tentacles, `boss.squid`) — and the boss
+**IRON SOVEREIGN** (`iron-sovereign`, IS-08 — `boss.sovereign`, four phases: the core behind two
+shield plates with lane lasers from its emitters; then a shield wheel of four armoured pods turning
+round the core and rings; then the wheel reversing, 5-ways and drones launched from the emitters;
+then the overdrive — a turning three-arm spiral, the boss system's spiral stream). ABYSSAL THRONE:
+`lumen-mote` (`drifter.sine`), `depth-mine` (`mine.burst`: drifts until a ship comes within 60 px,
+then stops, flashes and bursts into a ring of eight), `trench-eel` (`worm.burst`: a formation is one
+eel bursting out of the trench floor), `gulper` / `gulper-low` (`pattern.loop` + `abyss.gulp` on a
+`waypoint` mover), `abyss-turret` / `abyss-turret-ceiling` (`turret.floor`), `ark-hook`
+(`rocket.homing`, the ARK's hooks), `king-spawn` (`cell.chase`, the king's `minion`), the raid boss
+**ABYSS ARK** (`abyss-ark`, AA-09 — `boss.ark`: a whale-class battleship of four hull sections the
+camera flies round, two turret rows of three with heading frames, a heart — the core — and hooks;
+a 90-s time limit; `inner` → the king) and **THE HOLLOW KING** (`hollow-king`, HK-10 —
+`boss.angler`: an anglerfish whose `whenOpen` mouth — the core — opens with its jaws, a lure of
+chained beads ending in a gun swaying in front of it; three phases).
+
 Several files may exist (e.g. one per theme); ids must be unique across all of them.
 The bonus stages' drops (M2-10): `"drop": "oneUp"` leaves a 1UP (an extra life, up to 9) and
 `"drop": "bonusCapsule"` a gold bonus capsule worth 1,000 points — world-space items like the

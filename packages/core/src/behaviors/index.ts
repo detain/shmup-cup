@@ -88,6 +88,15 @@
  *   player (turn-rate capped [`turnRate` 6], for [`chaseTicks` 150]) and swims straight on; one
  *   thrown out of a dividing cell flies out for [`scatterTicks` 24] first.
  *
+ * **Zones H and I (M2-14)** — IRON CITADEL's laser emitters and ABYSSAL THRONE's depth mines:
+ *
+ * - `emitter.laser` — every [`laserTicks` 150] (the first after [`firstTicks` 40]) a telegraphed
+ *   straight laser, [`heading` 512 = left], attached to the emitter ([`laserLength` 384,
+ *   `laserWidth` 6, `telegraph` 50, `active` 40]); a ground emitter stands still.
+ * - `mine.burst` — drifts on a sine [`speed` 0.5, `amp` 10, `period` 140]; a living player within
+ *   [`trigger` 64] px arms it: it stops, flashes for [`fuse` 36] ticks and bursts into a ring of
+ *   [`ring` 8] round red bullets at [`bulletSpeed` 1], gone without score or drop.
+ *
  * `drifter.sine`, `fan.loop`, `carrier.straight`, `hatch.spawner`, `rammer.aimed`,
  * `hunter.option`, `cube.pincer`, the M2-07 gimmicks, the M2-11 rockets and worms and the M2-13
  * chasing cells do not fire.
@@ -196,6 +205,27 @@
  *   every [`laserTicks` 0 = never], a detached lane laser [`laserLength` 384, `laserWidth` 6,
  *   `telegraph` 50, `active` 40].
  *
+ * **Zone bosses (M2-14)** — the finales:
+ *
+ * - `boss.sovereign` — IRON SOVEREIGN (zone H), the multi-phase finale: tracking [`trackSpeed`
+ *   0.3, `margin` 48], a shield wheel on its core turning at [`spin` 0] (reversing every
+ *   [`reverseTicks` 0 = never]), attached lanes from its guns in turn [`laserTicks` 0 = never,
+ *   `firstLaser` 60, `laserLength` 384, `laserWidth` 8, `telegraph` 45, `active` 50], aimed
+ *   [`ways` 0 = none]-ways from the cores [`fireTicks` 110, `spread` 40, `bulletSpeed` 1.3], rings
+ *   [`ring` 0 = none, `ringTicks` 160, `ringSpeed` 1], [`count` 1] minions from the guns every
+ *   [`launchTicks` 0 = never] and a rotating [`spiral` 0 = none]-arm spiral from the cores
+ *   [`spiralTicks` 8, `spiralStep` 24, `spiralSpeed` 1.1] — each phase switches on its own set.
+ * - `boss.ark` — ABYSS ARK (zone I), the whale-class raid: every [`fireTicks` 60] each on-screen
+ *   gun (the turret rows) aims and fires a [`ways` 1]-way [`spread` 32, `bulletSpeed` 1.3,
+ *   `aimStep` 0]; every [`launchTicks` 0 = never] the next on-screen guns cast [`count` 1] hooks
+ *   (the `minion`); on-screen cores ring every [`ringTicks` 180] [`ring` 0 = none, `ringSpeed` 1].
+ * - `boss.angler` — THE HOLLOW KING (zone I), the boss inside the ARK: tracking [`trackSpeed`
+ *   0.35, `margin` 48], a `whenOpen` mouth shut [`closedTicks` 150] / open [`openTicks` 100] with
+ *   its jaws [`gape` 6] apart, aimed [`ways` 3]-ways from the cores while open [`fireTicks` 40,
+ *   `spread` 44, `bulletSpeed` 1.3] and a [`ring` 0 = none] as it opens [`ringSpeed` 1]; its lure
+ *   (an arm) sways [`sway` 1, `swayTicks` 40]; the lure's gun fires a needle every [`gunTicks` 0 =
+ *   never] and launches [`count` 1] minions every [`launchTicks` 0 = never].
+ *
  * **Implements.**
  * - shmup_feat.md §11 — archetypes (popcorn, formation fliers, capsule carriers, turrets,
  *   walkers, hatches, rammers, orbiters, the Option Hunter — M2-04) as coroutine scripts
@@ -213,6 +243,10 @@
  * - shmup_feat.md §13 — the zone bosses MANTLE REGENT (squid: tentacles guard the weak point,
  *   breaking one changes its behaviour) and FACET MONARCH (crystal core: tentacle arms, the core
  *   behind crystals) (M2-13)
+ * - shmup_feat.md §14 — zone H's laser emitters and zone I's mines (M2-14)
+ * - shmup_feat.md §13 — the final bosses: IRON SOVEREIGN (a real multi-phase finale), the ABYSS
+ *   ARK raid (whale battleship: turret rows, hooks) and THE HOLLOW KING inside it (an anglerfish
+ *   with a lure — the boss inside a boss) (M2-14)
  * - shmup_tech.md §4.6 — TS generator coroutines
  * - shmup_feat.md §13 — boss phases driven by behaviour scripts (the pattern set changes with the
  *   phase)
@@ -224,7 +258,7 @@
  * {@link DEFAULT_BOSS_BEHAVIOR_DEFS}, {@link BOSS_BEHAVIOR_IDS}, {@link WEAPON_SCRIPT_IDS},
  * {@link KNOWN_SCRIPT_IDS}, {@link checkEnemyBehaviors}.
  *
- * **Planned API.** More behaviours with the final zones of M2 (M2-14).
+ * The roster is complete for v1.0 (M2-14); `moduleInfo.status` is `implemented`.
  *
  * @module
  */
@@ -248,7 +282,7 @@ import {
 /** Module descriptor (see {@link defineModule}). */
 export const moduleInfo = defineModule({
   name: 'behaviors',
-  status: 'partial',
+  status: 'implemented',
   specRefs: [
     'shmup_feat.md §11',
     'shmup_tech.md §4.6',
@@ -1042,6 +1076,97 @@ const cellChase = defineBehavior(
   },
 );
 
+// ------------------------------------------------------------------------- zones H and I (M2-14)
+
+/**
+ * `emitter.laser` (M2-14) — a **laser emitter** (zone H, shmup_feat.md §14 "fortress: laser
+ * emitters"): every [`laserTicks` 150] ticks (rank-scaled; the first [`firstTicks` 40] ticks after
+ * it starts) while it may fire it projects a telegraphed straight laser from its centre, heading
+ * [`heading` 512 = left] binary units, [`laserLength` 384] long and [`laserWidth` 6] wide:
+ * [`telegraph` 50] warning ticks, the grow, [`active` 40] beam ticks, the fade. The beam stays
+ * **attached** to the emitter — on a floor or ceiling emitter it scrolls with the terrain — and
+ * vanishes with it. A ground emitter stands still; an air one moves with its spec's `mover`.
+ *
+ * @remarks
+ * One wake per beam; every timer is a whole number. Leftward lanes along the emitter's row are
+ * dodged by moving up or down (4-way, shmup_feat.md §4 rule 2) — the content keeps two emitters'
+ * beams from overlapping in time closer than the lane-gap rule allows. `laserTicks` and
+ * `firstTicks` below 1 are one tick. Guide: `docs/dev/zones-h-and-i.md`.
+ *
+ * @example
+ * ```json
+ * { "id": "laser-emitter", "hp": 6, "score": 500, "ground": "floor", "script": "emitter.laser",
+ *   "params": { "laserTicks": 180, "telegraph": 60, "active": 36 } }
+ * ```
+ */
+const emitterLaser = defineBehavior(
+  'emitter.laser',
+  {
+    firstTicks: 40,
+    laserTicks: 150,
+    heading: ANGLE_UNITS / 2,
+    laserLength: 384,
+    laserWidth: 6,
+    telegraph: 50,
+    active: 40,
+  },
+  function* emitter(api, p): Script {
+    if (api.self.anchor !== BodyAnchor.Air) api.setMover(MoverKind.None);
+    const heading = Math.floor(p.heading) & ANGLE_MASK;
+    const laserTicks = p.laserTicks >= 1 ? Math.floor(p.laserTicks) : 1;
+    yield p.firstTicks >= 1 ? Math.floor(p.firstTicks) : 1;
+    for (;;) {
+      if (api.canFire()) {
+        api.laser(
+          heading,
+          p.laserLength,
+          p.laserWidth,
+          p.telegraph,
+          LASER_GROW_TICKS,
+          p.active,
+          LASER_FADE_TICKS,
+        );
+      }
+      yield api.fireWait(laserTicks);
+    }
+  },
+);
+
+/**
+ * `mine.burst` (M2-14) — a **depth mine** (zone I, shmup_feat.md §13 "splitting orbs, mines"): it
+ * drifts left on a sine wave [`speed` 0.5, `amp` 10, `period` 140] until the nearest living player
+ * comes within [`trigger` 64] px (horizontally and vertically) while it may fire; then it **arms** —
+ * stops where it is in the view, flashing — and [`fuse` 36] ticks later bursts into a ring of
+ * [`ring` 8] round red bullets at [`bulletSpeed` 1] and is gone (no score, no drop — shoot it before
+ * it arms for those). `trigger` 0 = it never arms (a plain drifting obstacle).
+ *
+ * @remarks
+ * A waiting mine sleeps until the enemy system's proximity wake (`ScriptApi.sleepUntilNear` —
+ * tested in the tick's movement phase, so a waiting mine costs no script wakes); the fuse is one
+ * more sleep. The ring's gaps (45° at 8 bullets) are wide enough to step through with four
+ * directions. `fuse` below 1 is one tick, `ring` below 1 fires nothing.
+ * Guide: `docs/dev/zones-h-and-i.md`.
+ */
+const mineBurst = defineBehavior(
+  'mine.burst',
+  { speed: 0.5, amp: 10, period: 140, trigger: 64, fuse: 36, ring: 8, bulletSpeed: 1 },
+  function* mine(api, p): Script {
+    const self = api.self;
+    api.setMover(MoverKind.Sine, -p.speed, p.amp, p.period, 0);
+    const trigger = p.trigger > 0 ? p.trigger : 0;
+    if (trigger === 0) yield SLEEP_FOREVER;
+    const fuse = p.fuse >= 1 ? Math.floor(p.fuse) : 1;
+    const ring = p.ring >= 1 ? Math.floor(p.ring) : 0;
+    // Woken by the enemy system when a ship comes within `trigger` px (no polling wakes).
+    yield api.sleepUntilNear(trigger);
+    api.setMover(MoverKind.None);
+    self.flashTicks = fuse;
+    yield fuse;
+    if (ring > 0) api.ring(ring, p.bulletSpeed, BulletKind.RoundRed, 0);
+    api.destroy(true);
+  },
+);
+
 /** The roster's definitions (see the module docs), e.g. to extend a registry in tests. */
 export const DEFAULT_BEHAVIOR_DEFS: readonly BehaviorDef[] = Object.freeze([
   drifterSine,
@@ -1065,6 +1190,8 @@ export const DEFAULT_BEHAVIOR_DEFS: readonly BehaviorDef[] = Object.freeze([
   wormBurst,
   rearSwoop,
   cellChase,
+  emitterLaser,
+  mineBurst,
 ]);
 
 /** The roster as a registry (what the World uses). */
@@ -2522,9 +2649,357 @@ const bossFacet = defineBossBehavior(
   },
 );
 
+// ------------------------------------------------------------------------- zones H and I (M2-14)
+
+/**
+ * `boss.sovereign` (M2-14) — IRON SOVEREIGN (IS-08, zone H), the final core battleship of the
+ * citadel and the **multi-phase finale** of shmup_feat.md §13 ("make ours a real finale"): one
+ * behaviour whose tunables switch its weapons on phase by phase, so the content writes the finale's
+ * arc — plates and lanes, then the turning shield wheel, then the hatches, then the overdrive.
+ * It tracks the nearest player's height at [`trackSpeed` 0.3] px/tick, [`margin` 48] px inside the
+ * playfield; every part attached to a core (the wheel's hub) turns at [`spin` 0 = still] binary
+ * units a tick (rounded), reversing every [`reverseTicks` 0 = never]; with [`laserTicks` 0 =
+ * never] ≥ 1 its standing guns (the emitters) fire telegraphed lane lasers to the left in turn,
+ * **attached** to them ([`firstLaser` 60] ticks into the phase, then every `laserTicks`,
+ * rank-scaled; [`laserLength` 384], [`laserWidth` 8], [`telegraph` 45], [`active` 50]); with
+ * [`ways` 0 = none] ≥ 1 every [`fireTicks` 110] ticks each standing core spits an aimed `ways`-way
+ * of red ovals [`spread` 40] at [`bulletSpeed` 1.3]; with [`ring` 0 = none] ≥ 1 every [`ringTicks`
+ * 160] each core fires a ring of round purple bullets at [`ringSpeed` 1], each turned half a gap
+ * from the last; with [`launchTicks` 0 = never] ≥ 1 up to [`count` 1] standing guns in turn launch
+ * the boss's `minion` (drones from the hatches); and with [`spiral` 0 = none] ≥ 1 every
+ * [`spiralTicks` 8] ticks each core fires `spiral` evenly spaced purple ovals at [`spiralSpeed`
+ * 1.1], the pattern turned [`spiralStep` 24] units further each time — a rotating spiral whose
+ * arms are dodged by moving with the turn.
+ *
+ * @remarks
+ * One script per phase, sleeping until the soonest of its five timers (every timer a whole number,
+ * `NEVER_TICKS` for one that never runs). The spiral is not one of them: the phase starts the boss
+ * system's **spiral stream** (`BossScriptApi.spiral`), which fires it every tick it is due — a
+ * volley every few ticks would otherwise wake the script that often (every wake allocates,
+ * decision D29). The wheel keeps the angle it has when a phase starts, so a phase change never
+ * makes it jump; the spiral restarts from heading 0 each phase. Lanes go to the
+ * standing guns in turn and skip a destroyed one (one lane at a time while `laserTicks` outlasts a
+ * lane — telegraph + grow + active + fade). The finale's phase changes are the content's `until`s:
+ * the plates broken, then hit-point thresholds of the core. Guide: `docs/dev/zones-h-and-i.md`.
+ *
+ * @example
+ * ```json
+ * { "script": "boss.sovereign",
+ *   "params": { "spin": -6, "ring": 12, "spiral": 3, "spiralTicks": 10, "laserTicks": 170 } }
+ * ```
+ */
+const bossSovereign = defineBossBehavior(
+  'boss.sovereign',
+  {
+    trackSpeed: 0.3,
+    margin: 48,
+    spin: 0,
+    reverseTicks: 0,
+    laserTicks: 0,
+    firstLaser: 60,
+    laserLength: 384,
+    laserWidth: 8,
+    telegraph: 45,
+    active: 50,
+    fireTicks: 110,
+    ways: 0,
+    spread: 40,
+    bulletSpeed: 1.3,
+    ring: 0,
+    ringTicks: 160,
+    ringSpeed: 1,
+    launchTicks: 0,
+    count: 1,
+    spiral: 0,
+    spiralTicks: 8,
+    spiralStep: 24,
+    spiralSpeed: 1.1,
+  },
+  function* sovereign(api, p): Script {
+    api.track(p.trackSpeed, p.margin, PLAYFIELD_H - p.margin);
+    let spin = Math.round(p.spin);
+    spinHubs(api, spin);
+    const ways = p.ways >= 1 ? Math.floor(p.ways) : 0;
+    const ring = p.ring >= 1 ? Math.floor(p.ring) : 0;
+    const half = ring > 0 ? Math.floor(ANGLE_UNITS / ring / 2) : 0;
+    const count = p.count >= 1 ? Math.floor(p.count) : 0;
+    const spiral = p.spiral >= 1 ? Math.floor(p.spiral) : 0;
+    const spiralTicks = p.spiralTicks >= 1 ? Math.floor(p.spiralTicks) : 1;
+    const spiralStep = Math.floor(p.spiralStep);
+    const reverseTicks = p.reverseTicks >= 1 ? Math.floor(p.reverseTicks) : 0;
+    const parts = api.self.parts;
+    const n = api.partCount;
+    let nextLane = 0;
+    let nextLaunch = 0;
+    let rings = 0;
+    // The spiral is the boss system's stream: it fires every tick it is due, no script wakes.
+    api.spiral(spiral, spiralTicks, spiralStep, p.spiralSpeed, BulletKind.OvalPurple);
+    let laserIn =
+      p.laserTicks >= 1 ? (p.firstLaser >= 1 ? Math.floor(p.firstLaser) : 1) : NEVER_TICKS;
+    let fireIn = ways > 0 ? api.fireWait(p.fireTicks) : NEVER_TICKS;
+    let ringIn = ring > 0 ? api.fireWait(p.ringTicks) : NEVER_TICKS;
+    let launchIn = p.launchTicks >= 1 && count > 0 ? api.fireWait(p.launchTicks) : NEVER_TICKS;
+    let reverseIn = reverseTicks > 0 ? reverseTicks : NEVER_TICKS;
+    for (;;) {
+      let wait = laserIn < fireIn ? laserIn : fireIn;
+      if (ringIn < wait) wait = ringIn;
+      if (launchIn < wait) wait = launchIn;
+      if (reverseIn < wait) wait = reverseIn;
+      yield wait;
+      laserIn -= wait;
+      fireIn -= wait;
+      ringIn -= wait;
+      launchIn -= wait;
+      reverseIn -= wait;
+      if (reverseIn <= 0) {
+        spin = -spin;
+        spinHubs(api, spin);
+        reverseIn = reverseTicks;
+      }
+      if (laserIn <= 0) {
+        for (let k = 0; k < n; k++) {
+          const i = (nextLane + k) % n;
+          if (!parts[i].gun || parts[i].destroyed) continue;
+          api.laser(
+            i,
+            ANGLE_UNITS / 2,
+            p.laserLength,
+            p.laserWidth,
+            p.telegraph,
+            LASER_GROW_TICKS,
+            p.active,
+            LASER_FADE_TICKS,
+            true,
+          );
+          nextLane = i + 1;
+          break;
+        }
+        laserIn = api.fireWait(p.laserTicks);
+      }
+      if (fireIn <= 0) {
+        fireCores(api, ways, p.spread, p.bulletSpeed, BulletKind.OvalRed);
+        fireIn = api.fireWait(p.fireTicks);
+      }
+      if (ringIn <= 0) {
+        ringCores(api, ring, p.ringSpeed, BulletKind.RoundPurple, (rings & 1) * half);
+        rings++;
+        ringIn = api.fireWait(p.ringTicks);
+      }
+      if (launchIn <= 0) {
+        nextLaunch = launchFromGuns(api, nextLaunch, count);
+        launchIn = api.fireWait(p.launchTicks);
+      }
+    }
+  },
+);
+
+/**
+ * `boss.ark` (M2-14) — ABYSS ARK (AA-09, zone I), the **whale-class battleship raid**
+ * (shmup_feat.md §13 "Whale battleship: raid — circle it, turret rows, hooks"): the camera flies
+ * round it (its `raid` data) while every [`fireTicks` 60] ticks (rank-scaled) each standing gun
+ * **on screen** — the turret rows along its hull — turns to the nearest player (by at most
+ * [`aimStep` 0 = at once] units; its heading frames follow) and fires a [`ways` 1]-way of pink
+ * rounds [`spread` 32] at [`bulletSpeed` 1.3] along its new heading; with [`launchTicks` 0 = never]
+ * ≥ 1 every `launchTicks` (rank-scaled) the next on-screen guns in turn cast up to [`count` 1] of
+ * the boss's `minion` — the **hooks**, harpoon drones that home on the ship for a while; with
+ * [`ring` 0 = none] ≥ 1 every [`ringTicks` 180] each standing core on screen fires a ring of round
+ * red bullets at [`ringSpeed` 1], each turned half a gap from the last.
+ *
+ * @remarks
+ * Parts off screen never fire or launch (`canFire` — a raid's parts must be in view), so what
+ * shoots is what the camera shows. One script per phase, sleeping until the soonest of its three
+ * timers. Guide: `docs/dev/zones-h-and-i.md`.
+ */
+const bossArk = defineBossBehavior(
+  'boss.ark',
+  {
+    fireTicks: 60,
+    bulletSpeed: 1.3,
+    ways: 1,
+    spread: 32,
+    aimStep: 0,
+    launchTicks: 0,
+    count: 1,
+    ring: 0,
+    ringTicks: 180,
+    ringSpeed: 1,
+  },
+  function* ark(api, p): Script {
+    api.hold();
+    const ways = p.ways >= 1 ? Math.floor(p.ways) : 1;
+    const count = p.count >= 1 ? Math.floor(p.count) : 0;
+    const ring = p.ring >= 1 ? Math.floor(p.ring) : 0;
+    const half = ring > 0 ? Math.floor(ANGLE_UNITS / ring / 2) : 0;
+    const parts = api.self.parts;
+    const n = api.partCount;
+    let next = 0;
+    let rings = 0;
+    let fireIn = api.fireWait(p.fireTicks);
+    let launchIn = p.launchTicks >= 1 && count > 0 ? api.fireWait(p.launchTicks) : NEVER_TICKS;
+    let ringIn = ring > 0 ? api.fireWait(p.ringTicks) : NEVER_TICKS;
+    for (;;) {
+      let wait = fireIn < launchIn ? fireIn : launchIn;
+      if (ringIn < wait) wait = ringIn;
+      yield wait;
+      fireIn -= wait;
+      launchIn -= wait;
+      ringIn -= wait;
+      if (fireIn <= 0) {
+        for (let i = 0; i < n; i++) {
+          if (!parts[i].gun || !api.canFire(i)) continue;
+          const heading = api.aimPart(i, p.aimStep);
+          if (heading < 0) continue;
+          api.nWay(i, ways, p.spread, p.bulletSpeed, BulletKind.RoundPink, heading);
+        }
+        fireIn = api.fireWait(p.fireTicks);
+      }
+      if (launchIn <= 0) {
+        let launched = 0;
+        for (let k = 0; k < n && launched < count; k++) {
+          const i = (next + k) % n;
+          if (!parts[i].gun || parts[i].destroyed || !api.launch(i)) continue;
+          launched++;
+          next = i + 1;
+        }
+        launchIn = api.fireWait(p.launchTicks);
+      }
+      if (ringIn <= 0) {
+        const offset = (rings & 1) * half;
+        for (let i = 0; i < n; i++) {
+          if (parts[i].core && !parts[i].destroyed && api.canFire(i)) {
+            api.ring(i, ring, p.ringSpeed, BulletKind.RoundRed, offset);
+          }
+        }
+        rings++;
+        ringIn = api.fireWait(p.ringTicks);
+      }
+    }
+  },
+);
+
+/** Ticks from the mouth opening to `boss.angler`'s first spread. */
+const ANGLER_FIRST_SPREAD = 12;
+
+/**
+ * `boss.angler` (M2-14) — THE HOLLOW KING (HK-10, zone I), the thing inside the ABYSS ARK and the
+ * last boss of the throne route (shmup_feat.md §13 "boss inside a boss", "anglerfish: lure, opens
+ * to reveal"): an anglerfish whose **lure** — a chain of circle-hit parts hung from its brow,
+ * ending in a glowing gun — sways in front of it like a claw, while its `whenOpen` mouth (the core)
+ * opens and shuts. It follows the nearest player's height at [`trackSpeed` 0.35] px/tick,
+ * [`margin` 48] px inside the playfield; the mouth stays shut [`closedTicks` 150] and open
+ * [`openTicks` 100] in turn, its jaws (the parts attached to the core) [`gape` 6] px apart while
+ * open (from their rest offsets, like `boss.maw`'s); while open, every [`fireTicks` 40] ticks
+ * (rank-scaled, the first 12 ticks after it opens) each core fires an aimed [`ways` 3]-way of red
+ * ovals [`spread` 44] at [`bulletSpeed` 1.3], and with [`ring` 0 = none] ≥ 1 a ring of round purple
+ * bullets at [`ringSpeed` 1] as it opens. The lure sways at [`sway` 1] unit a tick per segment,
+ * [`swayTicks` 40] from straight to a turn point (the `boss.facet` wave, mirrored by the lure's
+ * side); with [`gunTicks` 0 = never] ≥ 1 its standing guns — the lure's bulb — fire an aimed pink
+ * needle at `bulletSpeed` every `gunTicks`, and with [`launchTicks` 0 = never] ≥ 1 they launch
+ * [`count` 1] of the boss's `minion` every `launchTicks` (rank-scaled).
+ *
+ * @remarks
+ * One script per phase, sleeping until the soonest of its five timers; every phase starts with
+ * the mouth shut, the jaws at rest, and takes the lure on from wherever the last phase left it
+ * (`armCurl`, never clamped — no jump). `sway` is rounded (at least 1), the tick counts below 1
+ * are one tick. The lure's root must hang from a part that is not a core (else the jaws' gape
+ * would move it). Guide: `docs/dev/zones-h-and-i.md`.
+ */
+const bossAngler = defineBossBehavior(
+  'boss.angler',
+  {
+    trackSpeed: 0.35,
+    margin: 48,
+    closedTicks: 150,
+    openTicks: 100,
+    gape: 6,
+    fireTicks: 40,
+    ways: 3,
+    spread: 44,
+    bulletSpeed: 1.3,
+    ring: 0,
+    ringSpeed: 1,
+    sway: 1,
+    swayTicks: 40,
+    gunTicks: 0,
+    launchTicks: 0,
+    count: 1,
+  },
+  function* angler(api, p): Script {
+    api.track(p.trackSpeed, p.margin, PLAYFIELD_H - p.margin);
+    const gape = p.gape > 0 ? Math.floor(p.gape) : 0;
+    setJaws(api, 0);
+    api.setOpenAll(false);
+    const ways = p.ways >= 1 ? Math.floor(p.ways) : 1;
+    const ring = p.ring >= 1 ? Math.floor(p.ring) : 0;
+    const half = ring > 0 ? Math.floor(ANGLE_UNITS / ring / 2) : 0;
+    const count = p.count >= 1 ? Math.floor(p.count) : 0;
+    const openTicks = p.openTicks >= 1 ? Math.floor(p.openTicks) : 1;
+    const closedTicks = p.closedTicks >= 1 ? Math.floor(p.closedTicks) : 1;
+    const sway = p.sway >= 1 ? Math.round(p.sway) : 1;
+    const swayTicks = p.swayTicks >= 1 ? Math.floor(p.swayTicks) : 1;
+    const reach = sway * swayTicks;
+    const parts = api.self.parts;
+    let open = false;
+    let rings = 0;
+    // The lure goes on from wherever the last phase left it (see `boss.facet`).
+    const now = armCurl(api);
+    let dir = now < reach ? 1 : -1;
+    let turnIn = Math.floor((dir > 0 ? reach - now : now + reach) / sway);
+    curlArms(api, dir * sway);
+    let toggleIn = closedTicks;
+    let fireIn = NEVER_TICKS;
+    let gunIn = p.gunTicks >= 1 ? api.fireWait(p.gunTicks) : NEVER_TICKS;
+    let launchIn = p.launchTicks >= 1 && count > 0 ? api.fireWait(p.launchTicks) : NEVER_TICKS;
+    for (;;) {
+      let wait = toggleIn < fireIn ? toggleIn : fireIn;
+      if (turnIn < wait) wait = turnIn;
+      if (gunIn < wait) wait = gunIn;
+      if (launchIn < wait) wait = launchIn;
+      if (wait > 0) yield wait;
+      toggleIn -= wait;
+      fireIn -= wait;
+      turnIn -= wait;
+      gunIn -= wait;
+      launchIn -= wait;
+      if (turnIn <= 0) {
+        setArmCurl(api, dir * reach);
+        dir = -dir;
+        curlArms(api, dir * sway);
+        turnIn = 2 * swayTicks;
+      }
+      if (toggleIn <= 0) {
+        open = !open;
+        api.setOpenAll(open);
+        if (gape > 0) setJaws(api, open ? gape : 0);
+        toggleIn = open ? openTicks : closedTicks;
+        fireIn = open ? ANGLER_FIRST_SPREAD : NEVER_TICKS;
+        if (open && ring > 0) {
+          ringCores(api, ring, p.ringSpeed, BulletKind.RoundPurple, (rings & 1) * half);
+          rings++;
+        }
+      }
+      if (fireIn <= 0) {
+        fireCores(api, ways, p.spread, p.bulletSpeed, BulletKind.OvalRed);
+        fireIn = api.fireWait(p.fireTicks);
+      }
+      if (gunIn <= 0) {
+        fireGuns(api, 1, 0, p.bulletSpeed, BulletKind.NeedlePink);
+        gunIn = api.fireWait(p.gunTicks);
+      }
+      if (launchIn <= 0) {
+        for (let i = 0; i < api.partCount; i++) {
+          if (!parts[i].gun || parts[i].destroyed) continue;
+          for (let k = 0; k < count; k++) api.launch(i);
+        }
+        launchIn = api.fireWait(p.launchTicks);
+      }
+    }
+  },
+);
+
 /**
  * The boss roster's definitions: M1's, the captains and raid turrets of M2-09 and the zone bosses
- * of M2-11, M2-12 and M2-13.
+ * of M2-11, M2-12, M2-13 and M2-14.
  */
 export const DEFAULT_BOSS_BEHAVIOR_DEFS: readonly BossBehaviorDef[] = Object.freeze([
   bossHover,
@@ -2541,6 +3016,9 @@ export const DEFAULT_BOSS_BEHAVIOR_DEFS: readonly BossBehaviorDef[] = Object.fre
   bossSteed,
   bossSquid,
   bossFacet,
+  bossSovereign,
+  bossArk,
+  bossAngler,
 ]);
 
 /** The boss roster as a registry (what the World uses). */

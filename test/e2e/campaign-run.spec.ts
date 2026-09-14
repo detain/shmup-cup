@@ -4,7 +4,8 @@
  * playing it out, or to open an entrance):
  *
  * - web build, a whole run: zones A → B → D → F → H cleared one after another (each clear's tally,
- *   the map, Enter launching the top exit), the ending of zone H, Enter after its lock → the title;
+ *   the map, Enter launching the top exit), the ending of zone H (M2-14: its scene and epilogue,
+ *   the result card), the credits, the title;
  *   the run lands in the saved hi-score table (`localStorage`) with the zone it reached;
  * - web build, `?stage=bonus-range`: the digit entrance opened through the debug API (the stage
  *   jumped to its window, a score whose thousands digit is 0) flies the ship into `bonus-vault`;
@@ -259,7 +260,16 @@ test.describe('campaign run (web build)', () => {
     expect(end.route).toEqual([0, 1, 3, 5, 7]);
     // No ship lost: the flawless ending of the citadel.
     expect(end.ending).toBe('citadel-flawless');
+    // M2-14: the citadel's scene and the epilogue, OK shows every line, OK again the result card;
+    // after its lock OK the credits, after theirs OK the title.
     await waitFrames(page, 90); // past the ending's lock
+    await tap(page, 'Enter'); // the whole epilogue
+    await tap(page, 'Enter'); // the result card
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'ending');
+    await waitFrames(page, 90);
+    await tap(page, 'Enter');
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'credits');
+    await waitFrames(page, 90);
     await tap(page, 'Enter');
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
     const saved = await page.evaluate((key) => window.localStorage.getItem(key), SAVE_KEY);

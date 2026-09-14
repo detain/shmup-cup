@@ -25,6 +25,10 @@ Listen to everything with `pnpm audio:preview` (WAV files in `assets/generated/a
 | `music/zone-e.music.json`, `music/boss-e.music.json` | `music` | TEMPEST RIDGE and STEED OF THE SQUALL — zone E's stage and boss themes (`"stages": ["zone-e"]`, M2-12) |
 | `music/zone-f.music.json`, `music/boss-f.music.json` | `music` | CELL VAULT and REGENT OF THE VAULT — zone F's stage and boss themes (`"stages": ["zone-f"]`, M2-13) |
 | `music/zone-g.music.json`, `music/boss-g.music.json` | `music` | PRISM LABYRINTH and THRONE OF FACETS — zone G's stage and boss themes (`"stages": ["zone-g"]`, M2-13; GLIMMER CACHE, its bonus stage, plays zone G's resident set) |
+| `music/zone-h.music.json`, `music/boss-h.music.json` | `music` | IRON CITADEL and SOVEREIGN OF STEEL — zone H's stage theme and its final boss theme (`Stage` / `FinalBoss`, `"stages": ["zone-h"]`, M2-14) |
+| `music/zone-i.music.json`, `music/boss-i.music.json` | `music` | ABYSSAL THRONE and THE HOLLOW KING — zone I's stage theme and its final boss theme (`Stage` / `FinalBoss`, `"stages": ["zone-i"]`, M2-14) |
+| `music/ending.music.json` | `music` | AFTER THE LAST WAVE — the ending theme (`Ending`, M2-14): the final zones name it as their stage's `music.ending`, so it is prepared with their set |
+| `music/credits.music.json` | `music` | THANK YOU, PILOT — the credits theme (`Credits`, M2-14; the final zones' `music.credits`) |
 
 ## SFX bank (kind `sfx`, formatVersion 1)
 

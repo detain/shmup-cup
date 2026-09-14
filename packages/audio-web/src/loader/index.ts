@@ -109,8 +109,10 @@ export const STAGE_MUSIC_CUES: readonly number[] = Object.freeze([
  * Every music cue a stage can make the sim ask for while it runs, prepared together during its
  * loading phase (nothing is rendered or decoded mid-stage): the stage's own `music.stage` theme and
  * `music.boss` theme, the cue of each of its `music` timeline events, then the stage-clear jingle
- * and game over (which the sim emits for every stage). `Silence` (no track) and unresolved cues are
- * left out; the list has no duplicates.
+ * and game over (which the sim emits for every stage), and — for a final zone of the campaign
+ * (M2-14) — its `music.ending` and `music.credits` themes, which the ending screen and the credits
+ * play after the zone's clear. `Silence` (no track) and unresolved cues are left out; the list has
+ * no duplicates.
  *
  * @param stage - The stage's validated spec (its `music` and `events`).
  * @returns `MUSIC_CUES` ids, in first-use order.
@@ -138,6 +140,9 @@ export function stageMusicCues(stage: Pick<StageSpec, 'music' | 'events'>): numb
   }
   add(MUSIC_CUES.StageClear);
   add(MUSIC_CUES.GameOver);
+  // A final zone's ending and credits themes (M2-14): the ending screen plays them after its clear.
+  add(stage.music.endingId ?? -1);
+  add(stage.music.creditsId ?? -1);
   return cues;
 }
 

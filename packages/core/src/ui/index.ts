@@ -118,8 +118,9 @@ export type { TextMetrics } from '../presentation/index.js';
 /**
  * Atlas sprites the UI kit draws: the HUD's stock icon (and player 2's palette swap of it —
  * M2-06), meter slot box (frames normal / highlighted / disabled) and slot labels (one frame per
- * slot), and the title logo. Part of the
- * core's `ENGINE_SPRITES`, so every host interns them.
+ * slot), the title logo and — M2-14 — the ending scenes' pieces (the citadel's and the ARK's
+ * silhouettes, a blast, a bubble, the dawn sun, the sea's surface). Part of the core's
+ * `ENGINE_SPRITES`, so every host interns them.
  */
 export const UI_SPRITES: readonly string[] = Object.freeze([
   'hud/life',
@@ -127,6 +128,12 @@ export const UI_SPRITES: readonly string[] = Object.freeze([
   'hud/meter-slot',
   'hud/meter-labels',
   'ui/logo',
+  'ui/ending-citadel',
+  'ui/ending-ark',
+  'ui/ending-blast',
+  'ui/ending-bubble',
+  'ui/ending-sun',
+  'ui/ending-surface',
 ]);
 
 /** Sprite ids of {@link UI_SPRITES} in a content table (-1 = not interned: drawn without it). */
@@ -141,6 +148,18 @@ export interface UiSprites {
   readonly meterLabels: number;
   /** `ui/logo` — the title logo (anchor: its centre). */
   readonly logo: number;
+  /** `ui/ending-citadel` — the citadel's silhouette of the ending scene (M2-14; its centre). */
+  readonly endingCitadel: number;
+  /** `ui/ending-ark` — the ABYSS ARK's silhouette of the ending scene (M2-14). */
+  readonly endingArk: number;
+  /** `ui/ending-blast` — a blast of the ending scene, frames 0–3 (M2-14). */
+  readonly endingBlast: number;
+  /** `ui/ending-bubble` — a rising bubble of the deep's ending scene (M2-14). */
+  readonly endingBubble: number;
+  /** `ui/ending-sun` — the dawn of a flawless run's ending (M2-14). */
+  readonly endingSun: number;
+  /** `ui/ending-surface` — the sea's surface seen from below, 64 px wide, tiling (M2-14). */
+  readonly endingSurface: number;
 }
 
 /**
@@ -167,6 +186,12 @@ export function resolveUiSprites(content: ContentDb): UiSprites {
     meterSlot: id('hud/meter-slot'),
     meterLabels: id('hud/meter-labels'),
     logo: id('ui/logo'),
+    endingCitadel: id('ui/ending-citadel'),
+    endingArk: id('ui/ending-ark'),
+    endingBlast: id('ui/ending-blast'),
+    endingBubble: id('ui/ending-bubble'),
+    endingSun: id('ui/ending-sun'),
+    endingSurface: id('ui/ending-surface'),
   });
 }
 
@@ -177,6 +202,12 @@ const NO_SPRITES: UiSprites = Object.freeze({
   meterSlot: -1,
   meterLabels: -1,
   logo: -1,
+  endingCitadel: -1,
+  endingArk: -1,
+  endingBlast: -1,
+  endingBubble: -1,
+  endingSun: -1,
+  endingSurface: -1,
 });
 
 // ------------------------------------------------------------------------------ input

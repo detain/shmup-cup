@@ -177,6 +177,12 @@
  * {@link BONUS_PLACES}, {@link DEFAULT_BONUS_WINDOW}, {@link DEFAULT_BONUS_PLACE},
  * {@link MAX_BONUS_ENTRANCES}).
  *
+ * M2-14: the endings' scenes and texts and the campaign's credits ({@link ENDING_SCENES},
+ * {@link EndingSceneName}, {@link CampaignCreditsSection}, {@link creditsLineCount} and the limits
+ * {@link MAX_ENDING_TEXT_LINES}, {@link MAX_ENDING_LINE_LENGTH}, {@link MAX_CREDITS_SECTIONS},
+ * {@link MAX_CREDITS_LINES}, {@link MAX_CREDITS_LINE_LENGTH}); a stage's music may name the
+ * `ending` and `credits` cues its final zone needs ({@link StageMusic}).
+ *
  * **Planned API (later steps).** Kind `strings` (M2-16); `input-profiles`,
  * `sfx`/`music` and `fx` files stay *foreign* here and are validated by their owning packages
  * (see plan §3.5). Hosts pass
@@ -216,8 +222,14 @@ import {
 } from '../patterns/dsl.js';
 import { MAX_BULLET_CANCEL_POINTS, type ScoringRules } from '../scoring/index.js';
 import {
+  ENDING_SCENES,
   MAX_CAMPAIGN_ENDINGS,
   MAX_CAMPAIGN_ZONES,
+  MAX_CREDITS_LINES,
+  MAX_CREDITS_LINE_LENGTH,
+  MAX_CREDITS_SECTIONS,
+  MAX_ENDING_LINE_LENGTH,
+  MAX_ENDING_TEXT_LINES,
   MAX_ZONE_EXITS,
   MAX_ZONE_PREVIEW_LINES,
   RUN_FLAG_NAMES,
@@ -231,8 +243,14 @@ import { buildTilesetTables, expandTilemap, type TilesetTables } from './tilemap
 export type { TilesetTables } from './tilemap.js';
 export { MAX_PATH_LENGTH, PATH_SAMPLE_STEP, bakePath, type PathTable } from './paths.js';
 export {
+  ENDING_SCENES,
   MAX_CAMPAIGN_ENDINGS,
   MAX_CAMPAIGN_ZONES,
+  MAX_CREDITS_LINES,
+  MAX_CREDITS_LINE_LENGTH,
+  MAX_CREDITS_SECTIONS,
+  MAX_ENDING_LINE_LENGTH,
+  MAX_ENDING_TEXT_LINES,
   MAX_ZONE_EXITS,
   MAX_ZONE_PREVIEW_LINES,
   RUN_FLAG_NAMES,
@@ -240,12 +258,15 @@ export {
   campaignZoneIndex,
   completeCampaign,
   countCampaignRoutes,
+  creditsLineCount,
   runFlagMask,
   selectCampaignEnding,
+  type CampaignCreditsSection,
   type CampaignEdgeSpec,
   type CampaignEndingSpec,
   type CampaignSpec,
   type CampaignZoneSpec,
+  type EndingSceneName,
   type RunFlagName,
 } from './campaign.js';
 
@@ -1320,6 +1341,17 @@ export interface StageMusic {
   readonly boss: string;
   /** Resolved music cue id of {@link StageMusic.boss}. */
   readonly bossId: number;
+  /**
+   * Cue of the ending theme the campaign's ending screen plays after this stage (M2-14 — a final
+   * zone names `Ending`, so the host prepares it with the zone's set; absent for other stages).
+   */
+  readonly ending?: string;
+  /** Resolved music cue id of {@link StageMusic.ending} (-1 = none; absent on hand-built specs). */
+  readonly endingId?: number;
+  /** Cue of the credits theme that follows the ending (M2-14; absent = none). */
+  readonly credits?: string;
+  /** Resolved music cue id of {@link StageMusic.credits} (-1 = none). */
+  readonly creditsId?: number;
 }
 
 /** One wave profile of a heightfield segment (floor or ceiling). */
@@ -2667,7 +2699,15 @@ const STAGE_FILE_SCHEMA = s.object(
     kind: s.enumOf(['stage'] as const),
     id: s.str(),
     name: s.str(),
-    music: s.object({ stage: s.ref('music'), boss: s.ref('music') }),
+    music: s.object(
+      {
+        stage: s.ref('music'),
+        boss: s.ref('music'),
+        ending: s.ref('music'),
+        credits: s.ref('music'),
+      },
+      { optional: ['ending', 'credits'] },
+    ),
     length: s.int({ min: 1, max: 1000000 }),
     camera: s.array(
       s.object(
@@ -2819,13 +2859,29 @@ const CAMPAIGN_FILE_SCHEMA = s.object(
           zone: ZONE_ID,
           all: s.array(s.enumOf(RUN_FLAG_NAMES), { max: RUN_FLAG_NAMES.length }),
           none: s.array(s.enumOf(RUN_FLAG_NAMES), { max: RUN_FLAG_NAMES.length }),
+          scene: s.enumOf(ENDING_SCENES),
+          text: s.array(s.str({ maxLength: MAX_ENDING_LINE_LENGTH }), {
+            max: MAX_ENDING_TEXT_LINES,
+          }),
         },
-        { optional: ['all', 'none'] },
+        { optional: ['all', 'none', 'scene', 'text'] },
       ),
       { min: 1, max: MAX_CAMPAIGN_ENDINGS },
     ),
+    credits: s.array(
+      s.object(
+        {
+          title: s.str({ maxLength: MAX_CREDITS_LINE_LENGTH }),
+          lines: s.array(s.str({ maxLength: MAX_CREDITS_LINE_LENGTH }), {
+            max: MAX_CREDITS_LINES,
+          }),
+        },
+        { optional: ['lines'] },
+      ),
+      { max: MAX_CREDITS_SECTIONS },
+    ),
   },
-  { optional: ['name'] },
+  { optional: ['name', 'credits'] },
 );
 
 /** Mutable working copy of a {@link ContentDb} while a load runs. */

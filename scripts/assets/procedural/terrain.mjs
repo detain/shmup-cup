@@ -1,8 +1,8 @@
 /**
- * The placeholder 8×8 terrain tilesets — `tiles/terrain-a` and, since M2-11 … M2-13, its
- * recoloured zone sets `tiles/terrain-reef`, `-dune`, `-magma`, `-ridge`, `-vault` and `-prism`:
- * solid rock, flat floor / ceiling / wall edges, and slopes at 45° and 22.5° (two tiles per 22.5°
- * slope) for floors and ceilings in both directions.
+ * The placeholder 8×8 terrain tilesets — `tiles/terrain-a` and, since M2-11 … M2-14, its
+ * recoloured zone sets `tiles/terrain-reef`, `-dune`, `-magma`, `-ridge`, `-vault`, `-prism`,
+ * `-citadel` and `-abyss`: solid rock, flat floor / ceiling / wall edges, and slopes at 45° and
+ * 22.5° (two tiles per 22.5° slope) for floors and ceilings in both directions.
  *
  * Frame `i` is tile {@link TERRAIN_TILES}`[i]`; the manifest also lists every tile as a
  * one-frame animation named after it (`floor → [1]`), so tileset content can refer to
@@ -26,7 +26,9 @@
  * `tiles/terrain-magma` (MAGMA DEEP's dark basalt with an ember-orange rim) and
  * `tiles/terrain-ridge` (TEMPEST RIDGE's storm-grey granite with a pale frost rim); plan M2-13 two
  * more: `tiles/terrain-vault` (CELL VAULT's dark olive flesh with a pale-green rim) and
- * `tiles/terrain-prism` (PRISM LABYRINTH's deep-blue crystal with an ice-blue rim). Only the
+ * `tiles/terrain-prism` (PRISM LABYRINTH's deep-blue crystal with an ice-blue rim); plan M2-14
+ * the last two: `tiles/terrain-citadel` (IRON CITADEL's steel plating with an amber hazard rim)
+ * and `tiles/terrain-abyss` (ABYSSAL THRONE's black-teal rock with a faint glowing rim). Only the
  * rock colours differ (the rock texture's hash is seeded per set); the destructible blocks look
  * the same in every set, so a brick reads as a brick in every zone. A new zone set is one more
  * {@link TERRAIN_PALETTES} entry (plus a `content/tilesets/` file naming the sprite).
@@ -83,7 +85,7 @@ export const TILE_SIZE = 8;
 
 /**
  * The generated tilesets by sprite name and their rock colours: zone A's `tiles/terrain-a` (M1-03)
- * and the zone sets of M2-11 … M2-13. Kept low in saturation next to the pink / red / purple
+ * and the zone sets of M2-11 … M2-14. Kept low in saturation next to the pink / red / purple
  * bullets and the capsules (shmup_feat.md §12, §18).
  *
  * @type {Readonly<Record<string, TerrainPalette>>}
@@ -123,6 +125,16 @@ export const TERRAIN_PALETTES = Object.freeze({
     surface: '#b8e0f8',
     subsurface: '#6a9ac8',
     rock: ['#2c4468', '#263c5e', '#344e76'],
+  },
+  'tiles/terrain-citadel': {
+    surface: '#e0a040',
+    subsurface: '#8a8e98',
+    rock: ['#4a4e58', '#3c404a', '#565a66'],
+  },
+  'tiles/terrain-abyss': {
+    surface: '#6ad0c8',
+    subsurface: '#2a6a70',
+    rock: ['#1a2a34', '#14222c', '#22343e'],
   },
 });
 

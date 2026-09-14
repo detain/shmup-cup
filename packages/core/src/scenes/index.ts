@@ -72,7 +72,11 @@
  *     stage differs from the one last prepared (the host config's stage at boot);
  *   - {@link EndingScene} after the final zone: the ending `core/data` `selectCampaignEnding`
  *     picked from the final zone and the run's flags (no death, no continue, a bonus stage
- *     cleared, a boss escaped), the route and the score — the run is recorded then.
+ *     cleared, a boss escaped), the route and the score — the run is recorded then. Since M2-14
+ *     it plays the ending's sprite scene (the citadel falling, the ship rising out of the deep —
+ *     a dawn for a flawless run, the flagship sailing off when a boss escaped) and its epilogue,
+ *     then the result card, then {@link CreditsScene}: the campaign's credits scrolling up to the
+ *     ending and credits themes.
  *
  *   **Hidden bonus stages (M2-10).** A World's opened bonus entrance (`core/stage`
  *   `BonusEntrances`) flies the players into the bonus stage after {@link BONUS_WARP_TICKS} (the
@@ -138,7 +142,9 @@
  * - **Confirm** — Left / Up: YES, Right / Down: NO; OK: answer; Back: NO.
  * - **Stage clear** — OK: skip ahead. **Game over** — OK or Back (after a 30-tick lock): title.
  * - **Zone map** (M2-10) — Up / Down: choose the next zone; OK: launch; Back: "quit to title?".
- * - **Ending** (M2-10) — OK (after a 60-tick lock): title.
+ * - **Ending** (M2-10; M2-14) — OK (after a 60-tick lock): the whole epilogue, then the result card,
+ *   then the credits (or the title without credits).
+ * - **Credits** (M2-14) — OK or Back (after a 60-tick lock): title.
  *
  * **Implements.**
  * - shmup_feat.md §17 Screens, UI flow & HUD — scene flow, title / pause / game over / stage clear
@@ -154,6 +160,8 @@
  * - shmup_feat.md §14 — the branching zone map, the run carried between zones, hidden bonus stages
  *   (entry, lock-out, the boss skipped); §17 — zone map, zone result tally, ending; §5 — the zone's
  *   launch intro card; §15 — the time bonus and the ending chosen by route and flags (M2-10)
+ * - shmup_feat.md §17 — the ending(s) and the credits; §15 — multiple endings: one scene per final
+ *   zone and a no-death variant (M2-14)
  *
  * **Public API.** {@link SceneStack}, {@link createSceneStack}, {@link SCENE_STACK_DEPTH},
  * {@link Scene}, {@link SceneId}, {@link SceneFlow}, {@link SceneFlowHost}, {@link SceneStart},
@@ -178,7 +186,10 @@
  * {@link CONTINUE_COUNTDOWN_TICKS}, {@link CONTINUE_LOCK_TICKS}); M2-10: {@link MapScene},
  * {@link EndingScene}, {@link BONUS_WARP_TICKS}, {@link BONUS_FAIL_TICKS}, {@link ZONE_CARD_TICKS},
  * {@link ZONE_TALLY_TICKS}, {@link MAP_LAUNCH_TICKS}, {@link ENDING_LOCK_TICKS},
- * {@link ENDING_TIMEOUT_TICKS} and, from `./run.ts`, {@link RunState}, {@link CarryState},
+ * {@link ENDING_TIMEOUT_TICKS}; M2-14: {@link CreditsScene}, {@link ENDING_LINE_TICKS},
+ * {@link ENDING_STORY_HOLD_TICKS}, {@link CREDITS_SCROLL_TICKS}, {@link CREDITS_ROW_HEIGHT},
+ * {@link CREDITS_LOCK_TICKS}, {@link CREDITS_HOLD_TICKS}, {@link CREDITS_STRING_SLOTS} and, from
+ * `./run.ts`, {@link RunState}, {@link CarryState},
  * {@link CarriedPlayer}, {@link captureCarry}, {@link applyCarry}, {@link copyShieldState},
  * {@link worldDeaths}, {@link ZoneResult}, {@link tallyZone}, {@link awardZoneBonus},
  * {@link runWorldConfig}, {@link prepareRunWorld}, {@link RunFlag},
@@ -189,8 +200,7 @@
  * countdown on top). A co-op game records its scores with the hi-score mode `2p`.
  *
  * **Planned.** Attract mode, the mode select, name entry, the hi-score table, the practice select
- * (M2-15), the ending scenes and credits (M2-14); more option groups (controls rebinding, game —
- * M2-16).
+ * (M2-15); more option groups (controls rebinding, game — M2-16).
  *
  * @module
  */
@@ -222,6 +232,7 @@ import {
   type WeaponEdit,
 } from '../config/index.js';
 import {
+  MAX_ENDING_TEXT_LINES,
   MAX_ZONE_PREVIEW_LINES,
   campaignZoneIndex,
   selectCampaignEnding,
@@ -882,8 +893,38 @@ export const MAP_LAUNCH_TICKS = 60;
 /** Ticks the ending ignores OK (so a mashed button does not skip it). */
 export const ENDING_LOCK_TICKS = 60;
 
-/** Ticks the ending stays before it returns to the title by itself (20 s). */
+/**
+ * Ticks the ending's result card stays before it moves on by itself (20 s — to the credits, or the
+ * title without them; M2-14: counted from the card, after the story).
+ */
 export const ENDING_TIMEOUT_TICKS = 1200;
+
+/** Ticks between two lines of an ending's epilogue appearing (M2-14). */
+export const ENDING_LINE_TICKS = 90;
+
+/** Ticks the whole epilogue stays after its last line before the result card (M2-14). */
+export const ENDING_STORY_HOLD_TICKS = 240;
+
+/** Ticks per pixel of the credits scroll (M2-14: 2 — 30 px a second). */
+export const CREDITS_SCROLL_TICKS = 2;
+
+/** Height of one credits row in pixels (M2-14). */
+export const CREDITS_ROW_HEIGHT = 11;
+
+/** Ticks the credits ignore OK and Back (M2-14). */
+export const CREDITS_LOCK_TICKS = 60;
+
+/** Ticks the credits hold after the scroll stopped, before the title (M2-14). */
+export const CREDITS_HOLD_TICKS = 240;
+
+/** String slots of the credits: rows on screen at once, taken by row number (M2-14). */
+export const CREDITS_STRING_SLOTS = 24;
+
+/** Screen row of the first credits row before the scroll (just below the screen). */
+const CREDITS_TOP = 216;
+
+/** Screen row the last credits row scrolls up to before the scroll stops. */
+const CREDITS_STOP_Y = 100;
 
 /** Ticks of the continue countdown (10 s — shmup_feat.md §17 "continue countdown"). */
 export const CONTINUE_COUNTDOWN_TICKS = 600;
@@ -918,8 +959,11 @@ const ZONE_CARD_Y = 36;
 /** Frame centre x. */
 const CX = 192;
 
-/** String slots of the UI list (M2-10: 224 — the zone map, the zone tally and the ending). */
-const UI_STRINGS = 224;
+/**
+ * String slots of the UI list (M2-10: 224 — the zone map, the zone tally and the ending; M2-14:
+ * 256 — the ending's epilogue lines and the credits' rows).
+ */
+const UI_STRINGS = 256;
 
 /** Commands of the UI list (M2-10: 384 — the zone map's graph). */
 const UI_COMMANDS = 384;
@@ -995,6 +1039,8 @@ interface FlowControl {
   readonly map: MapScene;
   /** The ending after a campaign run's final zone (M2-10). */
   readonly ending: EndingScene;
+  /** The credits scroll after the ending (M2-14). */
+  readonly credits: CreditsScene;
   /** The run in progress (M2-10: zone, route, carried players, bonus stage, flags). */
   readonly run: RunState;
   /**
@@ -3844,6 +3890,9 @@ function onRoute(route: readonly number[], a: number, b: number): boolean {
 /** The ending's panel: left, top, width, height. */
 const ENDING_PANEL = Object.freeze({ x: 40, y: 24, w: 304, h: 168 });
 
+/** The epilogue's panel under the sprite scene: left, top, width, height (M2-14). */
+const ENDING_TEXT_PANEL = Object.freeze({ x: 40, y: 124, w: 304, h: 88 });
+
 /** The ending's flag lines, in `RunFlag` bit order. */
 const ENDING_FLAG_LABELS: readonly string[] = Object.freeze([
   'A BOSS ESCAPED',
@@ -3852,60 +3901,205 @@ const ENDING_FLAG_LABELS: readonly string[] = Object.freeze([
   'BONUS STAGE CLEARED',
 ]);
 
+/** Ending scene phases (M2-14): the sprite scene and its epilogue, then the result card. */
+const EndingPhase = { Story: 0, Result: 1 } as const;
+
+/** Sprite scene kinds, as codes (the `core/data` `ENDING_SCENES` order). */
+const EndingSceneCode = { None: 0, Citadel: 1, Abyss: 2 } as const;
+
 /**
- * The ending after a campaign run's final zone (plan M2-10 — the selection hook; the ending
- * scenes, texts and credits themselves are M2-14's).
+ * Where the citadel scene's blasts go off, relative to the citadel's centre: x, y pairs, taken in
+ * turn (a fixed table — no randomness in a scene).
+ */
+const CITADEL_BLASTS: readonly number[] = Object.freeze([
+  -40, -12, 22, -28, -8, 10, 44, 4, -26, 22, 8, -30, 34, 18, -48, 2,
+]);
+
+/** The deep scene's bubbles: x, speed (px per 8 ticks), start offset — in turn (fixed). */
+const ABYSS_BUBBLES: readonly number[] = Object.freeze([
+  24, 3, 0, 70, 5, 40, 118, 4, 80, 166, 3, 20, 214, 6, 60, 262, 4, 10, 310, 5, 90, 350, 3, 50,
+]);
+
+/** Ticks the sprite scenes play before the citadel has fallen / the ship reaches the light. */
+const ENDING_SCENE_TICKS = 480;
+
+/**
+ * The ending after a campaign run's final zone (plan M2-10 — the selection hook; M2-14 — the
+ * ending scenes, the epilogue and the way to the credits).
  *
  * @remarks
- * A full screen: `ENDING`, the name of the ending the run earned (`RunState.ending` — chosen by
- * `core/data` `selectCampaignEnding` from the final zone and the run's flags when the zone was
- * cleared), the route taken (the zones' labels), the final score(s), a line for each run flag set
- * (no miss, no continue, a bonus stage cleared, a boss escaped) and `THANK YOU FOR PLAYING`. OK
- * (after {@link ENDING_LOCK_TICKS}) or {@link ENDING_TIMEOUT_TICKS} → the title. The run was
- * recorded in the hi-score table when the final zone was cleared.
+ * The ending the run earned (`RunState.ending` — chosen by `core/data` `selectCampaignEnding` from
+ * the final zone and the run's flags when the zone was cleared) names a **sprite scene**
+ * (`core/data` `ENDING_SCENES`) and an **epilogue**:
+ *
+ * 1. **Story** (an ending with a scene or text): the scene plays in the upper part of the screen —
+ *    `citadel`: the fortress breaking apart in chained blasts while the ship flies away; `abyss`:
+ *    the ship rising out of the deep towards the light while the flagship's wreck sinks (or, when
+ *    a boss escaped, sails off) — with a dawn sun for a flawless (`noDeath`) run; the epilogue's
+ *    lines appear below it one every {@link ENDING_LINE_TICKS}. OK (after
+ *    {@link ENDING_LOCK_TICKS}) shows every line at once, then moves on; so does the end of the
+ *    last line's {@link ENDING_STORY_HOLD_TICKS}.
+ * 2. **Result**: the card — `ENDING`, the ending's name, the route taken (the zones' labels), the
+ *    final score(s), a line for each run flag set (no miss, no continue, a bonus stage cleared, a
+ *    boss escaped) and `THANK YOU FOR PLAYING`. OK (after {@link ENDING_LOCK_TICKS}) or
+ *    {@link ENDING_TIMEOUT_TICKS} → the **credits** ({@link CreditsScene}) when the campaign has
+ *    any, else the title.
+ *
+ * An ending without scene and text (M2-10 content) opens on the result card at once. The final
+ * zone's ending theme (its stage's `music.ending` cue — `Ending` in the shipped zones H and I)
+ * starts when it opens. The run was recorded in the hi-score table when
+ * the final zone was cleared. Nothing allocates per tick or redraw: the lines and names are the
+ * content's strings, the route line is built on `enter`, the scene is arithmetic on the tick
+ * count over fixed tables.
  */
 export class EndingScene extends SceneBase {
   /** See {@link Scene.id}. */
   readonly id = 'ending' as const;
   /** Ticks since it opened. */
   ticks = 0;
+  /** Ticks since the current phase began. */
+  phaseTicks = 0;
+  /** 0 = the story (scene and epilogue), 1 = the result card. */
+  phase: number = EndingPhase.Story;
+  /** Epilogue lines shown so far. */
+  shown = 0;
+  /** The sprite scene playing (an `EndingSceneCode`: 0 none, 1 citadel, 2 abyss). */
+  scene: number = EndingSceneCode.None;
   /** The route as zone labels (`A B D F H`; built when it opens). */
   private routeText = '';
+  /** Whether the run lost no ship (the dawn). */
+  private flawless = false;
+  /** Whether a boss escaped (the flagship sails off). */
+  private escaped = false;
 
   /** See {@link SceneBase.stringSlots}. */
   get stringSlots(): number {
-    return 8 + ENDING_FLAG_LABELS.length;
+    return 8 + ENDING_FLAG_LABELS.length + MAX_ENDING_TEXT_LINES;
   }
 
-  /** Builds the route line (a transition). */
+  /** The epilogue of the ending shown (empty without one). */
+  get lines(): readonly string[] {
+    const ending = this.flow.run.ending;
+    return ending === null ? NO_LINES : ending.text;
+  }
+
+  /** Builds the route line, picks the scene and its variants, plays the ending theme. */
   override enter(): void {
     super.enter();
     this.ticks = 0;
+    this.phaseTicks = 0;
+    this.shown = 0;
     const run = this.flow.run;
     const campaign = run.campaign;
     const labels: string[] = [];
     if (campaign !== null) for (const zone of run.route) labels.push(campaign.zones[zone].label);
     this.routeText = labels.join(' ');
+    const ending = run.ending;
+    const name = ending === null ? 'none' : ending.scene;
+    this.scene =
+      name === 'citadel'
+        ? EndingSceneCode.Citadel
+        : name === 'abyss'
+          ? EndingSceneCode.Abyss
+          : EndingSceneCode.None;
+    const flags = run.endingFlags;
+    this.flawless = (flags & RunFlag.NoDeath) !== 0;
+    this.escaped = (flags & RunFlag.BossEscaped) !== 0;
+    const story = this.scene !== EndingSceneCode.None || this.lines.length > 0;
+    this.phase = story ? EndingPhase.Story : EndingPhase.Result;
+    // The final zone's ending theme (its stage's `music.ending`, prepared with its set).
+    const cue = finalZoneCue(this.flow, false);
+    if (cue > MUSIC_CUES.Silence) this.flow.music(cue, MUSIC_FADE_TICKS);
   }
 
-  /** OK after the lock, or the timeout → title. Never allocates. */
+  /** Whether the credits follow (the campaign has some). */
+  private get creditsNext(): boolean {
+    const campaign = this.flow.run.campaign;
+    return campaign !== null && campaign.credits.length > 0;
+  }
+
+  /**
+   * The story: lines in turn, OK reveals / moves on; the result: OK after the lock or the
+   * timeout → credits (or the title). Never allocates.
+   */
   tick(): void {
     const flow = this.flow;
     this.ticks++;
-    if (this.ticks === ENDING_LOCK_TICKS + 1) this.uiRevision++; // `OK: TITLE` appears
-    const ok = (flow.menuInput.pressed & Action.Confirm) !== 0 && this.ticks > ENDING_LOCK_TICKS;
-    if (ok || this.ticks >= ENDING_TIMEOUT_TICKS) {
+    this.phaseTicks++;
+    // The scene moves: redraw every other tick while one plays.
+    if (this.scene !== EndingSceneCode.None && (this.ticks & 1) === 0) this.uiRevision++;
+    const confirm = (flow.menuInput.pressed & Action.Confirm) !== 0;
+    if (this.phase === EndingPhase.Story) {
+      const count = this.lines.length;
+      if (this.shown < count && this.phaseTicks >= (this.shown + 1) * ENDING_LINE_TICKS) {
+        this.shown++;
+        this.uiRevision++;
+      }
+      const ok = confirm && this.ticks > ENDING_LOCK_TICKS;
+      if (ok && this.shown < count) {
+        flow.sfx(SFX_CUES.MenuSelect);
+        this.shown = count;
+        this.phaseTicks = count * ENDING_LINE_TICKS;
+        this.uiRevision++;
+        return;
+      }
+      const done = this.phaseTicks >= count * ENDING_LINE_TICKS + ENDING_STORY_HOLD_TICKS;
+      if (ok || done) {
+        if (ok) flow.sfx(SFX_CUES.MenuSelect);
+        this.phase = EndingPhase.Result;
+        this.phaseTicks = 0;
+        this.uiRevision++;
+      }
+      return;
+    }
+    if (this.phaseTicks === ENDING_LOCK_TICKS + 1) this.uiRevision++; // `OK: …` appears
+    const ok = confirm && this.phaseTicks > ENDING_LOCK_TICKS;
+    if (ok || this.phaseTicks >= ENDING_TIMEOUT_TICKS) {
       if (ok) flow.sfx(SFX_CUES.MenuSelect);
-      flow.toTitle();
+      if (this.creditsNext) flow.stack.reset(flow.credits);
+      else flow.toTitle();
     }
   }
 
   /**
-   * Draws the ending card.
+   * Draws the scene, then the epilogue or the result card.
    *
    * @param list - The UI list.
    */
   drawUi(list: DrawList): void {
+    if (this.scene === EndingSceneCode.Citadel) this.drawCitadel(list);
+    else if (this.scene === EndingSceneCode.Abyss) this.drawAbyss(list);
+    if (this.phase === EndingPhase.Story) this.drawStory(list);
+    else this.drawResult(list);
+  }
+
+  /**
+   * The epilogue's lines shown so far, in a panel under the scene (centred on the screen without
+   * one).
+   *
+   * @param list - The UI list.
+   */
+  private drawStory(list: DrawList): void {
+    const lines = this.lines;
+    if (lines.length === 0) return;
+    const base = this.stringBase + 8 + ENDING_FLAG_LABELS.length;
+    const p = ENDING_TEXT_PANEL;
+    const top = this.scene === EndingSceneCode.None ? 108 - lines.length * 5 : p.y + 5;
+    if (this.scene !== EndingSceneCode.None) {
+      drawPanel(list, p.x, p.y, p.w, p.h, UI_COLORS.panel, UI_COLORS.border, 255);
+    }
+    for (let i = 0; i < this.shown && i < lines.length; i++) {
+      list.setString(base + i, lines[i]);
+      list.text(base + i, CX, top + i * 10, UI_COLORS.text, TextAlign.Center);
+    }
+  }
+
+  /**
+   * The result card.
+   *
+   * @param list - The UI list.
+   */
+  private drawResult(list: DrawList): void {
     const base = this.stringBase;
     const run = this.flow.run;
     const p = ENDING_PANEL;
@@ -3917,7 +4111,7 @@ export class EndingScene extends SceneBase {
     list.setString(base + 4, '1P');
     list.setString(base + 5, '2P');
     list.setString(base + 6, 'THANK YOU FOR PLAYING');
-    list.setString(base + 7, 'OK: TITLE');
+    list.setString(base + 7, this.creditsNext ? 'OK: CREDITS' : 'OK: TITLE');
     list.text(base, CX, p.y + 8, UI_COLORS.title, TextAlign.Center);
     list.text(base + 1, CX, p.y + 22, UI_COLORS.focus, TextAlign.Center);
     list.text(base + 2, p.x + 16, p.y + 42, UI_COLORS.title);
@@ -3940,8 +4134,247 @@ export class EndingScene extends SceneBase {
       y += 11;
     }
     list.text(base + 6, CX, p.y + p.h - 30, UI_COLORS.text, TextAlign.Center);
-    if (this.ticks > ENDING_LOCK_TICKS) {
+    if (this.phaseTicks > ENDING_LOCK_TICKS) {
       list.text(base + 7, CX, p.y + p.h - 14, UI_COLORS.disabled, TextAlign.Center);
+    }
+  }
+
+  /**
+   * Draws player 1's ship (and player 2's, a little behind it, in a co-op run).
+   *
+   * @param list - The UI list.
+   * @param x - Player 1's centre x.
+   * @param y - Its centre y.
+   */
+  private drawShips(list: DrawList, x: number, y: number): void {
+    const world = this.flow.game.world;
+    const ship = world.ship;
+    if (ship.spriteId >= 0) list.sprite(ship.spriteId, 0, x, y);
+    const players = this.flow.run.carry.players;
+    if (players.length > 1 && players[1].active) {
+      const p2 = ship.spriteP2Id >= 0 ? ship.spriteP2Id : ship.spriteId;
+      if (p2 >= 0) list.sprite(p2, 0, x - 22, y + 14);
+    }
+  }
+
+  /**
+   * The citadel scene: the fortress on the horizon, chained blasts over it until it falls in a
+   * last cluster, the ship flying away to the right, a dawn sun rising for a flawless run.
+   *
+   * @param list - The UI list.
+   */
+  private drawCitadel(list: DrawList): void {
+    const sprites = this.flow.sprites;
+    const t = this.ticks;
+    if (this.flawless && sprites.endingSun >= 0) {
+      const rise = t < 120 ? 0 : t > 420 ? 30 : Math.floor((t - 120) / 10);
+      list.sprite(sprites.endingSun, 0, 292, 118 - rise);
+    }
+    list.rect(0, 104, 384, 16, 0x0c1018);
+    const fallen = t >= ENDING_SCENE_TICKS;
+    if (!fallen && sprites.endingCitadel >= 0) {
+      const sink = t < 360 ? 0 : Math.floor((t - 360) / 8);
+      list.sprite(sprites.endingCitadel, 0, 100, 68 + sink);
+    }
+    if (sprites.endingBlast >= 0 && t < ENDING_SCENE_TICKS + 64) {
+      // Four blasts at a time, each 24 ticks from a flash to smoke, round the fixed table.
+      const count = CITADEL_BLASTS.length >> 1;
+      for (let k = 0; k < 4; k++) {
+        const age = t + k * 6;
+        const n = Math.floor(age / 24) % count;
+        const frame = (age % 24) >> 3;
+        if (frame > 3) continue;
+        const spread = fallen ? 2 : 1;
+        const bx = 100 + CITADEL_BLASTS[n * 2] * spread;
+        const by = 68 + CITADEL_BLASTS[n * 2 + 1];
+        list.sprite(sprites.endingBlast, frame, bx, by);
+      }
+    }
+    const x = t < 60 ? 150 : 150 + Math.floor(((t - 60) * (t - 60)) / 240);
+    if (x < 420) this.drawShips(list, x, 64);
+  }
+
+  /**
+   * The deep's scene: dark water under the surface's light, bubbles rising, the flagship's wreck
+   * sinking — or sailing off when a boss escaped —, the ship rising towards the light, a dawn sun
+   * above the surface for a flawless run.
+   *
+   * @param list - The UI list.
+   */
+  private drawAbyss(list: DrawList): void {
+    const sprites = this.flow.sprites;
+    const t = this.ticks;
+    list.rect(0, 16, 384, 104, 0x061420);
+    if (this.flawless && sprites.endingSun >= 0) {
+      list.sprite(sprites.endingSun, 0, 300, 0);
+    }
+    if (sprites.endingSurface >= 0) {
+      const drift = (t >> 2) % 64;
+      for (let k = -1; k < 6; k++) list.sprite(sprites.endingSurface, 0, k * 64 + 32 + drift, 20);
+    }
+    if (sprites.endingArk >= 0) {
+      if (this.escaped) {
+        const ax = 250 + (t >> 2);
+        if (ax < 460) list.sprite(sprites.endingArk, 0, ax, 74);
+      } else {
+        const ay = 74 + Math.floor(t / 8);
+        if (ay < 112) list.sprite(sprites.endingArk, 0, 250, ay);
+      }
+    }
+    if (sprites.endingBubble >= 0) {
+      const count = ABYSS_BUBBLES.length / 3;
+      for (let k = 0; k < count; k++) {
+        const rise =
+          (Math.floor((t * ABYSS_BUBBLES[k * 3 + 1]) / 8) + ABYSS_BUBBLES[k * 3 + 2]) % 92;
+        list.sprite(sprites.endingBubble, 0, ABYSS_BUBBLES[k * 3], 116 - rise);
+      }
+    }
+    const up = t < ENDING_SCENE_TICKS ? Math.floor((t * 80) / ENDING_SCENE_TICKS) : 80;
+    const x = t < ENDING_SCENE_TICKS ? 110 : 110 + (((t - ENDING_SCENE_TICKS) * 3) >> 1);
+    if (x < 420) this.drawShips(list, x, 110 - up);
+  }
+}
+
+/** An empty epilogue (an ending without text). */
+const NO_LINES: readonly string[] = Object.freeze([]);
+
+/**
+ * The ending or credits theme of the run's final zone: its stage's `music.ending` /
+ * `music.credits` cue (M2-14 — the host prepared it with the zone's music set), -1 when the stage
+ * names none (then the music playing goes on).
+ *
+ * @param flow - The flow (its game World plays the final zone's stage).
+ * @param credits - The credits theme instead of the ending's.
+ * @returns A `MUSIC_CUES` id, or -1.
+ */
+function finalZoneCue(flow: FlowControl, credits: boolean): number {
+  const stage = flow.game.world.stage;
+  if (stage === null) return -1;
+  const music = stage.stage.music;
+  return (credits ? music.creditsId : music.endingId) ?? -1;
+}
+
+// ------------------------------------------------------------------------------ credits
+
+/**
+ * The credits scroll after an ending (plan M2-14, shmup_feat.md §17 "credits"): the campaign's
+ * `credits` (`core/data` `CampaignCreditsSection`) scroll up from below the screen, a section's
+ * title in the title colour, its lines under it, a blank row between sections, one pixel every
+ * {@link CREDITS_SCROLL_TICKS} ticks; when the last row has come up to the middle of the screen the
+ * scroll stops for {@link CREDITS_HOLD_TICKS}, then the title. OK or Back (after
+ * {@link CREDITS_LOCK_TICKS}) skip to the title. The final zone's credits theme (its stage's
+ * `music.credits` cue — `Credits` in the shipped zones) plays.
+ *
+ * @remarks
+ * The rows are flattened once, when the flow is built (the content's own strings — nothing is built
+ * per tick); only the rows on screen are drawn, each through one of
+ * {@link CREDITS_STRING_SLOTS} string slots taken by row number, so a long list costs no more than
+ * a short one. A campaign without credits never opens it (the ending goes to the title).
+ */
+export class CreditsScene extends SceneBase {
+  /** See {@link Scene.id}. */
+  readonly id = 'credits' as const;
+  /** Ticks since it opened. */
+  ticks = 0;
+  /** The rows' texts (a title, its lines, `''` for the blank row after a section). */
+  readonly rows: readonly string[];
+  /** Per row: 1 for a section's title, 0 otherwise. */
+  private readonly titles: Uint8Array;
+
+  /**
+   * Flattens the campaign's credits into rows.
+   *
+   * @param flow - The flow.
+   */
+  constructor(flow: FlowControl) {
+    super(flow);
+    const campaign = flow.host.content.campaign;
+    const credits = campaign === null ? [] : campaign.credits;
+    const rows: string[] = [];
+    const titles: number[] = [];
+    for (const section of credits) {
+      rows.push(section.title);
+      titles.push(1);
+      for (const line of section.lines) {
+        rows.push(line);
+        titles.push(0);
+      }
+      rows.push('');
+      titles.push(0);
+    }
+    this.rows = rows;
+    this.titles = Uint8Array.from(titles);
+  }
+
+  /** See {@link SceneBase.stringSlots}. */
+  get stringSlots(): number {
+    return CREDITS_STRING_SLOTS;
+  }
+
+  /** Pixels scrolled so far (stops when the last row reached the middle of the screen). */
+  get scroll(): number {
+    const moved = Math.floor(this.ticks / CREDITS_SCROLL_TICKS);
+    return moved < this.scrollEnd ? moved : this.scrollEnd;
+  }
+
+  /** The scroll at which the last row stands in the middle of the screen. */
+  get scrollEnd(): number {
+    return CREDITS_TOP + this.rows.length * CREDITS_ROW_HEIGHT - CREDITS_STOP_Y;
+  }
+
+  /** Whether the scroll has stopped (the hold before the title). */
+  get stopped(): boolean {
+    return Math.floor(this.ticks / CREDITS_SCROLL_TICKS) >= this.scrollEnd;
+  }
+
+  /** Starts from the bottom with the credits theme (the final zone's `music.credits`). */
+  override enter(): void {
+    super.enter();
+    this.ticks = 0;
+    const cue = finalZoneCue(this.flow, true);
+    if (cue > MUSIC_CUES.Silence) this.flow.music(cue, MUSIC_FADE_TICKS);
+  }
+
+  /** Scrolls; OK / Back after the lock, or the end of the hold → title. Never allocates. */
+  tick(): void {
+    const flow = this.flow;
+    this.ticks++;
+    if (this.ticks % CREDITS_SCROLL_TICKS === 0) this.uiRevision++;
+    const skip =
+      this.ticks > CREDITS_LOCK_TICKS &&
+      (flow.menuInput.pressed & (Action.Confirm | Action.Back)) !== 0;
+    const over =
+      this.ticks >=
+      (this.scrollEnd > 0 ? this.scrollEnd : 0) * CREDITS_SCROLL_TICKS + CREDITS_HOLD_TICKS;
+    if (skip || over) {
+      if (skip) flow.sfx(SFX_CUES.MenuSelect);
+      flow.toTitle();
+    }
+  }
+
+  /**
+   * Draws the rows on screen.
+   *
+   * @param list - The UI list.
+   */
+  drawUi(list: DrawList): void {
+    const base = this.stringBase;
+    const scroll = this.scroll;
+    const rows = this.rows;
+    for (let r = 0; r < rows.length; r++) {
+      const y = CREDITS_TOP + r * CREDITS_ROW_HEIGHT - scroll;
+      if (y <= -CREDITS_ROW_HEIGHT || y >= 216) continue;
+      const text = rows[r];
+      if (text.length === 0) continue;
+      const slot = base + (r % CREDITS_STRING_SLOTS);
+      list.setString(slot, text);
+      list.text(
+        slot,
+        CX,
+        y,
+        this.titles[r] === 1 ? UI_COLORS.title : UI_COLORS.text,
+        TextAlign.Center,
+      );
     }
   }
 }
@@ -3980,6 +4413,8 @@ export interface SceneFlow {
   readonly map: MapScene;
   /** The ending after a campaign run's final zone (M2-10). */
   readonly ending: EndingScene;
+  /** The credits scroll after the ending (M2-14). */
+  readonly credits: CreditsScene;
   /**
    * The run in progress (M2-10): the campaign zone, the route, the players carried between zones,
    * the bonus-stage state and the run's flags.
@@ -4385,6 +4820,7 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
   control.continueScreen = new ContinueScene(control);
   control.map = new MapScene(control);
   control.ending = new EndingScene(control);
+  control.credits = new CreditsScene(control);
   control.game.world.scoring.board.setHiScore(control.hiScore);
   // The placeholder World queued its stage theme; the flow does not start in the stage.
   events.clear();
@@ -4405,6 +4841,7 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     control.continueScreen,
     control.map,
     control.ending,
+    control.credits,
   ];
   let base = 0;
   for (const scene of scenes) {
@@ -4452,6 +4889,7 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     continueScreen: control.continueScreen,
     map: control.map,
     ending: control.ending,
+    credits: control.credits,
     run,
     campaign,
     startPractice(zone: string, checkpoint = -1): boolean {

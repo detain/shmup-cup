@@ -129,3 +129,58 @@ export function measureHeapGrowth(
   }
   return best;
 }
+
+/**
+ * Bytes one resume of a sleeping behaviour coroutine may allocate: the generator's result object
+ * (decision D29 — "every wake allocates the generator's result"), plus the boxed doubles its body
+ * computes in V8's lower tiers, where generators stay. Measured at ≈ 80 bytes a wake on a boss
+ * phase (M2-14: the same boss phase with a volley every 10, 20, 40 and 1,000 ticks).
+ */
+export const SCRIPT_WAKE_BYTES = 96;
+
+/**
+ * Counts the wakes of a boss script across a guard's calls (M2-14), so the guard can allow the
+ * bytes each wake costs by decision D29 and nothing else: a boss phase that wakes often (a volley
+ * every few dozen ticks) spends tens of KB per 10,000 ticks on its generator's results alone, which
+ * made the heavy boss guards flaky under the full suite's load (M2-13's `boss.facet` / `boss.squid`
+ * at 66 KB of 64).
+ *
+ * @example
+ * ```ts
+ * const wakes = new WakeCount();
+ * const growth = measureHeapGrowth(() => { stepWorld(w, input); wakes.see(boss.wakeTick); }, 10_000);
+ * expect(growth.bytes).toBeLessThan(64 * 1024 + wakes.allowance(10_000));
+ * ```
+ */
+export class WakeCount {
+  /** Wakes seen (the watched wake tick changed). */
+  wakes = 0;
+  /** Calls seen. */
+  calls = 0;
+  /** The wake tick seen last. */
+  private last = -1;
+
+  /**
+   * Call once per guarded call with the script's wake tick (a change = the script woke).
+   *
+   * @param wakeTick - The boss's `wakeTick` after the call.
+   */
+  see(wakeTick: number): void {
+    this.calls++;
+    if (wakeTick !== this.last) {
+      if (this.last >= 0) this.wakes++;
+      this.last = wakeTick;
+    }
+  }
+
+  /**
+   * The bytes the wakes of one measured window may allocate: the wakes per call × the window's
+   * calls × {@link SCRIPT_WAKE_BYTES}.
+   *
+   * @param iterations - Calls in one measured window.
+   * @returns Bytes.
+   */
+  allowance(iterations: number): number {
+    return this.calls === 0 ? 0 : (this.wakes / this.calls) * iterations * SCRIPT_WAKE_BYTES;
+  }
+}

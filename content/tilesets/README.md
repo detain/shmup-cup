@@ -17,7 +17,10 @@ ember rim and zone E's storm-grey granite with a pale frost rim (`tiles/terrain-
 `terrain-vault.tileset.json` and `terrain-prism.tileset.json` (M2-13) are zone F's dark olive flesh
 with a pale-green rim and zone G's deep-blue crystal with an ice-blue rim (`tiles/terrain-vault`,
 `tiles/terrain-prism`). Zone F's regenerating walls use their `tissue` tile (hp 3, regen 240), zone
-G's cube rush stacks into their `cube` tile (hp 2).
+G's cube rush stacks into their `cube` tile (hp 2). `terrain-citadel.tileset.json` and
+`terrain-abyss.tileset.json` (M2-14) are zone H's steel plating with an amber hazard rim and zone
+I's black-teal rock with a faint glowing rim (`tiles/terrain-citadel`, `tiles/terrain-abyss`); zone
+H's pistons are moving blocks of their `solid` tile.
 
 ## Format (formatVersion 1)
 

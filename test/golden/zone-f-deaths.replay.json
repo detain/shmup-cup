@@ -61,20 +61,20 @@
     "AOo4"
   ],
   "hashes": [
-    229341945,
-    2267310301,
-    2275747997,
-    3965419191,
-    2811441754,
-    1077432559,
-    1107369496,
-    1679953274,
-    1101785306,
-    2805474953,
-    332920931,
-    721574594
+    4038928089,
+    3094408020,
+    3069869597,
+    4253162519,
+    1871890203,
+    3890685743,
+    1017910685,
+    3420044059,
+    2312617626,
+    3207210025,
+    1464751395,
+    3155786894
   ],
-  "finalHash": 1463403363,
+  "finalHash": 1269553379,
   "description": "CELL VAULT on Easy under the Arcade penalty with a weaving pilot that never dodges (M2-13 tests): deaths in the membrane and at the first tissue walls, the checkpoint restarts at 2,200 rolling the tissue it shot open back, game over",
   "expected": {
     "status": "gameOver",

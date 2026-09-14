@@ -92,7 +92,7 @@ function spawn(w: World, id: string, sx: number, sy: number, path?: string): Ene
 describe('core/behaviors registry', () => {
   it('describes itself and registers the M1 roster (plus the M2 behaviours and gimmicks)', () => {
     expect(moduleInfo.name).toBe('behaviors');
-    expect(moduleInfo.status).toBe('partial');
+    expect(moduleInfo.status).toBe('implemented');
     expect(BEHAVIOR_IDS).toEqual([
       'bubble.split',
       'carrier.straight',
@@ -100,10 +100,12 @@ describe('core/behaviors registry', () => {
       'cube.pincer',
       'cube.stack',
       'drifter.sine',
+      'emitter.laser',
       'fan.loop',
       'field.suction',
       'hatch.spawner',
       'hunter.option',
+      'mine.burst',
       'orbiter.loop',
       'pattern.loop',
       'rammer.aimed',
@@ -117,8 +119,9 @@ describe('core/behaviors registry', () => {
       'worm.burst',
     ]);
     // Zones B and C added the homing rocket and the sand worm (M2-11), zone E the rear attacker
-    // (M2-12), zone F the chasing cell (M2-13).
-    expect(DEFAULT_BEHAVIOR_DEFS).toHaveLength(21);
+    // (M2-12), zone F the chasing cell (M2-13), zones H and I the laser emitter and the depth mine
+    // (M2-14).
+    expect(DEFAULT_BEHAVIOR_DEFS).toHaveLength(23);
     expect(DEFAULT_BEHAVIORS.get('volcano.lob')?.needsChild).toBe(true);
     expect(typeof DEFAULT_BEHAVIORS.get('bubble.split')?.death).toBe('function');
     expect(DEFAULT_BEHAVIORS.get('drifter.sine')?.death).toBeUndefined();

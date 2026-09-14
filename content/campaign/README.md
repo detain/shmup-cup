@@ -7,9 +7,10 @@ zones, the zone tally, the ending selection).
 
 [`main.campaign.json`](main.campaign.json) is the shipped map: the 9-zone diamond
 `A → B|C → D|E → F|G → H|I` — five zones per run, **16 routes**, two final zones (H IRON CITADEL,
-I ABYSSAL THRONE) with their own endings. Zones B–G are real zones (M2-11 … M2-13); H and I are
-still short placeholder stages (`content/stages/zone-h`, `zone-i.stage.json`, M2-10) until M2-14
-replaces them.
+I ABYSSAL THRONE) with their own endings. Every zone is a real zone (B–G since M2-11 … M2-13, the
+finales H and I since M2-14). Each final zone has a no-death ending and a plain one — zone I also
+*THE FLAGSHIP SLIPS AWAY* when a boss escaped — each with its sprite scene (`citadel` / `abyss`) and
+its epilogue, and the file's `credits` scroll after every ending (M2-14).
 
 ## Format (formatVersion 1)
 
@@ -36,10 +37,21 @@ replaces them.
     { "from": "a", "to": "c" }
   ],
   "endings": [                           // the first ending of the final zone whose flags match
-    { "id": "b-flawless", "name": "A FLAWLESS FLIGHT", "zone": "b", "all": ["noDeath"] },
-    { "id": "b", "name": "THE UPPER ROAD", "zone": "b" },
+    {
+      "id": "b-flawless",
+      "name": "A FLAWLESS FLIGHT",           // ≤ 32 characters
+      "zone": "b",
+      "all": ["noDeath"],
+      "scene": "citadel",                    // optional (M2-14): none (default) | citadel | abyss
+      "text": ["UP TO EIGHT LINES", "OF ≤ 40 CHARACTERS."] // optional (M2-14): the epilogue
+    },
+    { "id": "b", "name": "THE UPPER ROAD", "zone": "b", "scene": "citadel" },
     { "id": "c", "name": "THE LOWER ROAD", "zone": "c", "none": ["bossEscaped"] },
-    { "id": "c-escape", "name": "IT GOT AWAY", "zone": "c" }
+    { "id": "c-escape", "name": "IT GOT AWAY", "zone": "c", "scene": "abyss" }
+  ],
+  "credits": [                           // optional (M2-14): scrolls after every ending
+    { "title": "SAMPLE CREDITS", "lines": ["UP TO SIXTEEN LINES", "OF ≤ 60 CHARACTERS"] },
+    { "title": "THANK YOU FOR PLAYING" }  // `lines` is optional
   ]
 }
 ```
@@ -56,6 +68,18 @@ every zone's `stage` must be a stage that is not of type `bonus`.
 escaped when its time limit ran out), `noDeath` (no ship lost in the whole run), `noContinue` (no
 continue used), `bonus` (a hidden bonus stage cleared).
 
+**Endings and credits (M2-14).** An ending's `scene` is the sprite scene its screen plays above
+the epilogue: `citadel` (the fortress breaking apart in chained blasts as the ship flies away) or
+`abyss` (the ship rising out of the deep towards the light while the flagship's wreck sinks); the
+scene shows a **dawn** after a flawless (`noDeath`) run and, in `abyss`, the flagship **sailing
+off** when a boss escaped. Its `text` (0–8 lines of ≤ 40 characters) appears line by line; then the
+result card (the ending's name, the route, the score, the flags); then the `credits` — up to 24
+sections of a `title` and ≤ 16 `lines` of ≤ 60 characters, scrolling up to the credits theme. An
+ending without scene and text shows the card at once; a campaign without credits goes back to the
+title after the card. The ending and credits themes are the final zone's stage `music.ending` /
+`music.credits` cues (see [`content/stages/README.md`](../stages/README.md)), prepared with the
+zone's music set.
+
 ## How the map is played
 
 - A game whose stage is the campaign's start zone (the shipped game: zone A) is a **campaign run**;
@@ -68,4 +92,4 @@ continue used), `bonus` (a hidden bonus stage cleared).
   Back on the title (after the ending, a game over or a practice), the start zone's music is
   prepared again, so a zone's own `stages`-scoped track never leaks into the next run.
 - The final zone's clear picks the ending (the first match for the run's flags) and records the
-  run in the hi-score table.
+  run in the hi-score table; the ending screen, then the credits follow.

@@ -86,6 +86,12 @@ describe('core/ui', () => {
       'hud/meter-slot',
       'hud/meter-labels',
       'ui/logo',
+      'ui/ending-citadel',
+      'ui/ending-ark',
+      'ui/ending-blast',
+      'ui/ending-bubble',
+      'ui/ending-sun',
+      'ui/ending-surface',
     ]);
     expect(resolveUiSprites(EMPTY_CONTENT_DB)).toEqual({
       life: -1,
@@ -93,6 +99,12 @@ describe('core/ui', () => {
       meterSlot: -1,
       meterLabels: -1,
       logo: -1,
+      endingCitadel: -1,
+      endingArk: -1,
+      endingBlast: -1,
+      endingBubble: -1,
+      endingSun: -1,
+      endingSurface: -1,
     });
     const { db } = loadContent([], { extraSprites: UI_SPRITES });
     const sprites = resolveUiSprites(db);

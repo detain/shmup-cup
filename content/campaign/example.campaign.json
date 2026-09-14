@@ -5,7 +5,12 @@
   "name": "SAMPLE MAP",
   "start": "start",
   "zones": [
-    { "id": "start", "label": "S", "name": "SAMPLE START", "stage": "example" },
+    {
+      "id": "start",
+      "label": "S",
+      "name": "SAMPLE START",
+      "stage": "example"
+    },
     {
       "id": "upper",
       "label": "U",
@@ -13,16 +18,57 @@
       "stage": "example",
       "preview": ["THE HIGH ROAD.", "TWO LINES AT MOST THREE."]
     },
-    { "id": "lower", "label": "L", "name": "LOWER ROUTE", "stage": "example" }
+    {
+      "id": "lower",
+      "label": "L",
+      "name": "LOWER ROUTE",
+      "stage": "example"
+    }
   ],
   "edges": [
-    { "from": "start", "to": "upper" },
-    { "from": "start", "to": "lower" }
+    {
+      "from": "start",
+      "to": "upper"
+    },
+    {
+      "from": "start",
+      "to": "lower"
+    }
   ],
   "endings": [
-    { "id": "upper-flawless", "name": "A FLAWLESS FLIGHT", "zone": "upper", "all": ["noDeath"] },
-    { "id": "upper", "name": "THE HIGH ROAD", "zone": "upper" },
-    { "id": "lower", "name": "THE LOW ROAD", "zone": "lower", "none": ["bossEscaped"] },
-    { "id": "lower-escape", "name": "IT GOT AWAY", "zone": "lower" }
+    {
+      "id": "upper-flawless",
+      "name": "A FLAWLESS FLIGHT",
+      "zone": "upper",
+      "all": ["noDeath"],
+      "scene": "citadel",
+      "text": ["THE SAMPLE RUN ENDS WITHOUT A SCRATCH.", "A NEW DAY BEGINS."]
+    },
+    {
+      "id": "upper",
+      "name": "THE HIGH ROAD",
+      "zone": "upper"
+    },
+    {
+      "id": "lower",
+      "name": "THE LOW ROAD",
+      "zone": "lower",
+      "none": ["bossEscaped"]
+    },
+    {
+      "id": "lower-escape",
+      "name": "IT GOT AWAY",
+      "zone": "lower",
+      "scene": "abyss"
+    }
+  ],
+  "credits": [
+    {
+      "title": "SAMPLE CREDITS",
+      "lines": ["A LINE OF THE CREDITS", "ANOTHER ONE"]
+    },
+    {
+      "title": "THANK YOU FOR PLAYING"
+    }
   ]
 }

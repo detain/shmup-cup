@@ -61,10 +61,10 @@
     "ALQN"
   ],
   "hashes": [
-    1671047065,
-    1445952771
+    3029869433,
+    185420906
   ],
-  "finalHash": 594637805,
+  "finalHash": 2311653197,
   "description": "the stage skip to MANTLE REGENT (M2-13 tests): the full loadout under the Arcade penalty, the eye shot between the curls of its tentacles",
   "expected": {
     "status": "stageClear",

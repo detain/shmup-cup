@@ -1,0 +1,174 @@
+{
+  "formatVersion": 1,
+  "kind": "music",
+  "id": "boss-i",
+  "title": "THE HOLLOW KING",
+  "cue": "FinalBoss",
+  "stages": ["zone-i"],
+  "song": {
+    "speed": 5,
+    "volume": 0.38,
+    "instruments": {
+      "lead": {
+        "wave": "pulse50",
+        "volume": 0.85,
+        "attack": 0.004,
+        "decay": 0.08,
+        "sustain": 0.7,
+        "release": 0.07,
+        "vibrato": {
+          "depth": 0.3,
+          "rate": 7,
+          "delay": 0.15
+        }
+      },
+      "arp-min": {
+        "wave": "pulse12",
+        "volume": 0.5,
+        "attack": 0.002,
+        "decay": 0.16,
+        "sustain": 0.35,
+        "release": 0.04,
+        "arpeggio": [0, 3, 7, 12],
+        "arpeggioTicks": 2
+      },
+      "arp-maj": {
+        "wave": "pulse12",
+        "volume": 0.5,
+        "attack": 0.002,
+        "decay": 0.16,
+        "sustain": 0.35,
+        "release": 0.04,
+        "arpeggio": [0, 4, 7, 12],
+        "arpeggioTicks": 2
+      },
+      "arp-dom": {
+        "wave": "pulse12",
+        "volume": 0.5,
+        "attack": 0.002,
+        "decay": 0.16,
+        "sustain": 0.35,
+        "release": 0.04,
+        "arpeggio": [0, 4, 7, 10],
+        "arpeggioTicks": 2
+      },
+      "bass": {
+        "wave": "triangle",
+        "volume": 1,
+        "attack": 0.002,
+        "decay": 0.04,
+        "sustain": 0.7,
+        "release": 0.03
+      },
+      "stab": {
+        "wave": "saw",
+        "volume": 0.4,
+        "attack": 0.002,
+        "decay": 0.2,
+        "sustain": 0.4,
+        "release": 0.08
+      },
+      "hat": {
+        "wave": "noise",
+        "volume": 0.3,
+        "attack": 0,
+        "decay": 0.035,
+        "sustain": 0,
+        "release": 0.01
+      },
+      "snare": {
+        "wave": "noise",
+        "volume": 0.6,
+        "attack": 0,
+        "decay": 0.13,
+        "sustain": 0,
+        "release": 0.02
+      },
+      "kick": {
+        "wave": "noise",
+        "volume": 0.85,
+        "attack": 0,
+        "decay": 0.07,
+        "sustain": 0,
+        "release": 0.01,
+        "sweep": -90
+      }
+    },
+    "channels": [
+      {
+        "instrument": "lead",
+        "volume": 0.75
+      },
+      {
+        "instrument": "arp-maj",
+        "volume": 0.45
+      },
+      {
+        "instrument": "bass",
+        "volume": 0.9
+      },
+      {
+        "instrument": "hat",
+        "volume": 0.65
+      },
+      {
+        "instrument": "stab",
+        "volume": 0.5
+      }
+    ],
+    "patterns": {
+      "intro": {
+        "rows": 32,
+        "tracks": [
+          "=:32",
+          ".:32",
+          "F2:2 F2:1 F2:1 F3:2 F2:2 F2:2 F2:1 F2:1 F3:2 F2:2 E2:2 E2:1 E2:1 E3:2 E2:2 E2:2 E2:1 E2:1 E3:2 E2:2",
+          "C2:2@kick C8@hat C8@hat C5:2@snare C8:2@hat C2@kick C2@kick C8:2@hat C5:2@snare C5@snare C8@hat C5:2@snare C5:2@snare C5@snare C5@snare C5:2@snare C5:2@snare C5:2@snare C5:2@snare C5:2@snare",
+          "G#3:16 G#3:16"
+        ]
+      },
+      "a1": {
+        "rows": 32,
+        "tracks": [
+          "F5:4 G#5:4 C6:8 A#5:4 G#5:4 F5:8",
+          "F3:4@arp-min F3:4@arp-min F3:4@arp-min F3:4@arp-min C#3:4@arp-maj C#3:4@arp-maj C#3:4@arp-maj C#3:4@arp-maj",
+          "F2:2 F2:1 F2:1 F3:2 F2:2 F2:2 F2:1 F2:1 F3:2 F2:2 C#2:2 C#2:1 C#2:1 C#3:2 C#2:2 C#2:2 C#2:1 C#2:1 C#3:2 C#2:2",
+          "C2:2@kick C8@hat C8@hat C5:2@snare C8:2@hat C2@kick C2@kick C8:2@hat C5:2@snare C5@snare C8@hat C2:2@kick C8@hat C8@hat C5:2@snare C8:2@hat C2@kick C2@kick C8:2@hat C5:2@snare C5@snare C8@hat",
+          "G#3:16 F3:16"
+        ]
+      },
+      "a2": {
+        "rows": 32,
+        "tracks": [
+          "C#6:4 C6:4 A#5:4 G#5:4 G5:8 E5:8",
+          "A#2:4@arp-min A#2:4@arp-min A#2:4@arp-min A#2:4@arp-min C3:4@arp-maj C3:4@arp-maj C3:4@arp-maj C3:4@arp-maj",
+          "A#1:2 A#1:1 A#1:1 A#2:2 A#1:2 A#1:2 A#1:1 A#1:1 A#2:2 A#1:2 C2:2 C2:1 C2:1 C3:2 C2:2 C2:2 C2:1 C2:1 C3:2 C2:2",
+          "C2:2@kick C8@hat C8@hat C5:2@snare C8:2@hat C2@kick C2@kick C8:2@hat C5:2@snare C5@snare C8@hat C5:2@snare C5:2@snare C5@snare C5@snare C5:2@snare C5:2@snare C5:2@snare C5:2@snare C5:2@snare",
+          "C#3:16 E3:16"
+        ]
+      },
+      "b1": {
+        "rows": 32,
+        "tracks": [
+          "F6:8 D#6:4 C#6:4 C6:8 G#5:8",
+          "C#3:4@arp-maj C#3:4@arp-maj C#3:4@arp-maj C#3:4@arp-maj G#2:4@arp-maj G#2:4@arp-maj G#2:4@arp-maj G#2:4@arp-maj",
+          "C#2:2 C#2:1 C#2:1 C#3:2 C#2:2 C#2:2 C#2:1 C#2:1 C#3:2 C#2:2 G#1:2 G#1:1 G#1:1 G#2:2 G#1:2 G#1:2 G#1:1 G#1:1 G#2:2 G#1:2",
+          "C2:2@kick C8@hat C8@hat C5:2@snare C8:2@hat C2@kick C2@kick C8:2@hat C5:2@snare C5@snare C8@hat C2:2@kick C8@hat C8@hat C5:2@snare C8:2@hat C2@kick C2@kick C8:2@hat C5:2@snare C5@snare C8@hat",
+          "F3:16 C3:16"
+        ]
+      },
+      "b2": {
+        "rows": 32,
+        "tracks": [
+          "C#6:4 D#6:4 F6:4 G6:4 E6:8 C6:8",
+          "A#2:4@arp-min A#2:4@arp-min A#2:4@arp-min A#2:4@arp-min C3:4@arp-maj C3:4@arp-maj C3:4@arp-maj C3:4@arp-maj",
+          "A#1:2 A#1:1 A#1:1 A#2:2 A#1:2 A#1:2 A#1:1 A#1:1 A#2:2 A#1:2 C2:2 C2:1 C2:1 C3:2 C2:2 C2:2 C2:1 C2:1 C3:2 C2:2",
+          "C2:2@kick C8@hat C8@hat C5:2@snare C8:2@hat C2@kick C2@kick C8:2@hat C5:2@snare C5@snare C8@hat C5:2@snare C5:2@snare C5@snare C5@snare C5:2@snare C5:2@snare C5:2@snare C5:2@snare C5:2@snare",
+          "C#3:16 E3:16"
+        ]
+      }
+    },
+    "order": ["intro", "a1", "a2", "a1", "a2", "b1", "b2", "b1", "b2"],
+    "loopFromOrder": 1
+  }
+}

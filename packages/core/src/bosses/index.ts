@@ -102,6 +102,12 @@
  * - shmup_feat.md §20 — clink on invulnerable parts, big explosions, bullet cancel on boss death,
  *   rumble on boss kill, screen shake used sparingly
  *
+ * **Spiral stream (M2-14).** {@link BossScriptApi.spiral} starts a boss's spiral stream — evenly
+ * spaced bullets from every standing core every few ticks, the heading turning each volley — that
+ * the boss system fires itself in phase 4 (`runScript`), so a fast spiral wakes no coroutine; a
+ * phase change stops it (IRON SOVEREIGN's overdrive, `boss.sovereign`). Its fields
+ * (`Boss.spiral*`) are hashed.
+ *
  * **Public API.** {@link createBossSystem}, {@link BossSystem}, {@link BossHost}, {@link Boss},
  * {@link BossPart}, {@link BossState}, {@link BOSS_STATE_NAMES}, {@link BossRole},
  * {@link BossVulnerable}, {@link BossHit}, {@link BossMotion}, {@link BossScriptApi},
@@ -123,6 +129,7 @@
 import {
   AIM_AT_TARGET,
   BulletOrigin,
+  BulletShot,
   CancelMode,
   LASER_ACTIVE_TICKS,
   LASER_FADE_TICKS,
@@ -634,6 +641,24 @@ export class Boss implements ScriptHolder {
   turning = false;
   /** Ticks until the pair's next turn (the leader's; M2-09). */
   turnTicks = 0;
+  /**
+   * Spiral stream (M2-14, {@link BossScriptApi.spiral}): bullets per volley from each standing
+   * core, 0 = none. Fired by the boss system every {@link Boss.spiralEvery} ticks of the fight —
+   * no script wakes.
+   */
+  spiralWays = 0;
+  /** Ticks between two spiral volleys. */
+  spiralEvery = 0;
+  /** Binary units the spiral turns per volley (negative = counter-clockwise). */
+  spiralStep = 0;
+  /** Spiral bullet speed on Normal (px/tick). */
+  spiralSpeed = 0;
+  /** Spiral bullet `BulletKind`. */
+  spiralKind = 0;
+  /** Heading of the next volley's first bullet, whole binary units `[0, 1024)`. */
+  spiralAngle = 0;
+  /** Ticks until the next volley. */
+  spiralClock = 0;
   /** Its partner died: faster (M2-09). */
   enraged = false;
   /** Fire-interval factor while enraged. */
@@ -920,6 +945,26 @@ export interface BossScriptApi {
    * @returns Bullets fired.
    */
   ring(index: number, count: number, speed: number, kind: number, offset?: number): number;
+  /**
+   * Starts — or with `ways` ≤ 0 stops — the boss's **spiral stream** (M2-14 — IRON SOVEREIGN's
+   * finale): every `every` ticks of the fight each standing core that may fire sends out `ways`
+   * evenly spaced bullets of `kind` at `speed` (× the rank's speed scale), the pattern turned `step`
+   * binary units further each volley (negative = counter-clockwise). The boss system fires it
+   * every tick (`runScript`), so a fast spiral costs the script no wakes — the coroutine starts it
+   * once per phase. A phase change stops it; the first volley comes `every` ticks after the call.
+   *
+   * @param ways - Bullets per volley per core (floored; ≤ 0 = stop).
+   * @param every - Ticks between volleys (floored, at least 1).
+   * @param step - Turn per volley in binary units (floored).
+   * @param speed - Speed on Normal (px/tick).
+   * @param kind - `BulletKind`.
+   *
+   * @example
+   * ```ts
+   * api.spiral(3, 10, 22, 1, BulletKind.OvalPurple); // a turning three-arm spiral
+   * ```
+   */
+  spiral(ways: number, every: number, step: number, speed: number, kind: number): void;
   /**
    * A random spray from a part (`fireSpray`, gameplay RNG).
    *
@@ -1693,6 +1738,19 @@ class BossScriptApiImpl implements BossScriptApi {
     return gun === null ? 0 : fireRing(this.system.host.bullets, gun, count, speed, kind, offset);
   }
 
+  /** See {@link BossScriptApi.spiral}. */
+  spiral(ways: number, every: number, step: number, speed: number, kind: number): void {
+    const self = this.self;
+    const n = ways >= 1 ? Math.floor(ways) : 0;
+    self.spiralWays = n;
+    if (n === 0) return;
+    self.spiralEvery = every >= 1 ? Math.floor(every) : 1;
+    self.spiralStep = Math.floor(step) | 0;
+    self.spiralSpeed = speed;
+    self.spiralKind = kind;
+    self.spiralClock = self.spiralEvery;
+  }
+
   /** See {@link BossScriptApi.spray}. */
   spray(
     index: number,
@@ -1779,6 +1837,8 @@ class BossSystemImpl implements BossSystem {
   readonly host: BossHost;
   /** The fire origin the script APIs share. */
   readonly origin = new BulletOrigin();
+  /** The spiral stream's reused shot (M2-14 — `fireSpiral`). */
+  private readonly spiralShot = new BulletShot();
   /** Compiled boss entries by `ContentDb.enemies` index (`null` for regular enemies). */
   private readonly compiled: ReadonlyArray<CompiledBoss | null>;
   /** The script API of each slot. */
@@ -2132,6 +2192,9 @@ class BossSystemImpl implements BossSystem {
     boss.escaped = false;
     boss.script = null;
     boss.wakeTick = 0;
+    boss.spiralWays = 0;
+    boss.spiralClock = 0;
+    boss.spiralAngle = 0;
     boss.motion = BossMotion.Hold;
     boss.afterMove = BossMotion.Hold;
     boss.trackSpeed = 0;
@@ -2228,6 +2291,8 @@ class BossSystemImpl implements BossSystem {
     const entry = this.entries[boss.slot];
     boss.phase = phase;
     boss.phaseTicks = 0;
+    // A phase's stream is its script's to start (M2-14): the last phase's stops here.
+    boss.spiralWays = 0;
     const def = entry === null ? null : entry.behaviors[phase];
     boss.script =
       def === null || entry === null || def === undefined
@@ -2768,10 +2833,42 @@ class BossSystemImpl implements BossSystem {
     const slots = this.slots;
     for (let s = 0; s < slots.length; s++) {
       const boss = slots[s];
-      if (boss.state !== BossState.Fight || boss.script === null) continue;
-      if (boss.resting || boss.turning || boss.wakeTick > tick) continue;
+      if (boss.state !== BossState.Fight || boss.resting || boss.turning) continue;
+      // The spiral stream (M2-14) runs here every tick, not in the script: no wakes.
+      if (boss.spiralWays > 0 && --boss.spiralClock <= 0) this.fireSpiral(boss);
+      if (boss.script === null || boss.wakeTick > tick) continue;
       resumeScript(boss, tick);
     }
+  }
+
+  /**
+   * One volley of a boss's spiral stream (M2-14, {@link BossScriptApi.spiral}): `spiralWays`
+   * evenly spaced bullets from every standing core that may fire, starting at `spiralAngle`; the
+   * heading then turns `spiralStep` and the clock restarts. The shot goes through the bullet
+   * system's reused {@link BulletShot} (`launch`), so a volley allocates nothing.
+   *
+   * @param boss - The fighting boss.
+   */
+  private fireSpiral(boss: Boss): void {
+    boss.spiralClock = boss.spiralEvery;
+    const bullets = this.host.bullets;
+    const api = this.apis[boss.slot];
+    const parts = boss.parts;
+    const shot = this.spiralShot;
+    const ways = boss.spiralWays;
+    shot.speed = boss.spiralSpeed * bullets.speedScale;
+    for (let i = 0; i < boss.partCount; i++) {
+      const part = parts[i];
+      if (!part.core || part.destroyed || !api.canFire(i)) continue;
+      shot.x = part.x;
+      shot.y = part.y;
+      for (let k = 0; k < ways; k++) {
+        shot.angle = boss.spiralAngle + Math.floor((k * ANGLE_UNITS) / ways);
+        bullets.launch(shot, boss.spiralKind);
+      }
+    }
+    boss.spiralAngle =
+      (((boss.spiralAngle + boss.spiralStep) % ANGLE_UNITS) + ANGLE_UNITS) % ANGLE_UNITS;
   }
 
   /** See {@link BossSystem.move}. */

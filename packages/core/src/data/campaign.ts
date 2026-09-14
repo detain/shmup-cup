@@ -28,15 +28,28 @@
  * `core/bosses` `EndingFlag.BossEscaped`). The scene flow (`core/scenes`) accumulates them over a
  * run and picks the ending with {@link selectCampaignEnding}.
  *
+ * **Endings and credits (M2-14).** An ending also names the sprite **scene** the ending screen
+ * plays ({@link ENDING_SCENES}: `none` — the plain card —, `citadel`, `abyss`) and its epilogue
+ * **text** (0–{@link MAX_ENDING_TEXT_LINES} lines of ≤ {@link MAX_ENDING_LINE_LENGTH}
+ * characters); the campaign's **credits** ({@link CampaignCreditsSection}: up to
+ * {@link MAX_CREDITS_SECTIONS} sections of a title and ≤ {@link MAX_CREDITS_LINES} lines of ≤
+ * {@link MAX_CREDITS_LINE_LENGTH} characters) scroll after the ending (`core/scenes`
+ * `CreditsScene`). Both are optional: an ending without them shows the card, a campaign without
+ * credits skips the scroll.
+ *
  * **Implements.** shmup_feat.md §14 — the branching zone map with multiple final zones; §15 —
- * multiple endings chosen by route and flags (the selection hook).
+ * multiple endings chosen by route and flags (the selection hook); §17 — the ending(s) and the
+ * credits (M2-14).
  *
  * **Public API.** Re-exported by `core/data`: {@link CampaignSpec}, {@link CampaignZoneSpec},
  * {@link CampaignEdgeSpec}, {@link CampaignEndingSpec}, {@link RUN_FLAG_NAMES},
  * {@link RunFlagName}, {@link runFlagMask}, {@link MAX_CAMPAIGN_ZONES}, {@link MAX_ZONE_EXITS},
  * {@link MAX_ZONE_PREVIEW_LINES}, {@link MAX_CAMPAIGN_ENDINGS}, {@link completeCampaign},
  * {@link campaignRoutes}, {@link countCampaignRoutes}, {@link campaignZoneIndex},
- * {@link selectCampaignEnding}.
+ * {@link selectCampaignEnding}; M2-14: {@link ENDING_SCENES}, {@link EndingSceneName},
+ * {@link CampaignCreditsSection}, {@link MAX_ENDING_TEXT_LINES}, {@link MAX_ENDING_LINE_LENGTH},
+ * {@link MAX_CREDITS_SECTIONS}, {@link MAX_CREDITS_LINES}, {@link MAX_CREDITS_LINE_LENGTH},
+ * {@link creditsLineCount}.
  *
  * @remarks
  * Load time only: nothing here runs per tick, so it allocates freely.
@@ -73,6 +86,44 @@ export const MAX_ZONE_PREVIEW_LINES = 3;
 
 /** Most endings one campaign may list. */
 export const MAX_CAMPAIGN_ENDINGS = 32;
+
+/**
+ * The sprite scenes an ending screen can play (M2-14, `core/scenes` `EndingScene`), by name:
+ * - `none` — no scene: the ending card alone;
+ * - `citadel` — the fortress breaking apart behind the ship as it flies away (zone H);
+ * - `abyss` — the ship rising out of the deep towards the light, the flagship's wreck sinking
+ *   (zone I).
+ *
+ * The scene draws variants from the run's flags: a flawless run (`noDeath`) ends at dawn, and in
+ * `abyss` an escaped flagship (`bossEscaped`) sails off instead of sinking.
+ */
+export const ENDING_SCENES = Object.freeze(['none', 'citadel', 'abyss'] as const);
+
+/** An {@link ENDING_SCENES} entry. */
+export type EndingSceneName = (typeof ENDING_SCENES)[number];
+
+/** Most epilogue lines one ending may have (M2-14). */
+export const MAX_ENDING_TEXT_LINES = 8;
+
+/** Most characters of one epilogue line (40 × 6-px glyphs fit the ending panel). */
+export const MAX_ENDING_LINE_LENGTH = 40;
+
+/** Most sections of the credits (M2-14). */
+export const MAX_CREDITS_SECTIONS = 24;
+
+/** Most lines of one credits section. */
+export const MAX_CREDITS_LINES = 16;
+
+/** Most characters of a credits line or title (60 × 6-px glyphs fit the 384-px frame). */
+export const MAX_CREDITS_LINE_LENGTH = 60;
+
+/** One section of the credits scroll (M2-14): a title and its lines. */
+export interface CampaignCreditsSection {
+  /** The heading (drawn in the title colour). */
+  readonly title: string;
+  /** The lines under it (0–{@link MAX_CREDITS_LINES}). */
+  readonly lines: readonly string[];
+}
 
 /** One zone of the map. */
 export interface CampaignZoneSpec {
@@ -128,6 +179,10 @@ export interface CampaignEndingSpec {
   readonly allMask: number;
   /** {@link CampaignEndingSpec.none} as a bit mask. */
   readonly noneMask: number;
+  /** The sprite scene of the ending screen (M2-14; default `none`). */
+  readonly scene: EndingSceneName;
+  /** The epilogue, line by line (M2-14; 0–{@link MAX_ENDING_TEXT_LINES} lines, default none). */
+  readonly text: readonly string[];
 }
 
 /** The campaign (`content/campaign/*.campaign.json` — one file only). */
@@ -146,6 +201,8 @@ export interface CampaignSpec {
   readonly edges: readonly CampaignEdgeSpec[];
   /** The endings, in file order (the selection takes the first that matches). */
   readonly endings: readonly CampaignEndingSpec[];
+  /** The credits scroll after an ending (M2-14; empty = no scroll). */
+  readonly credits: readonly CampaignCreditsSection[];
   /** Number of depth levels (the zones of a run: the longest route has this many). */
   readonly depths: number;
   /** Number of distinct routes from the start to a final zone. */
@@ -203,7 +260,10 @@ interface RawCampaign {
     zoneIndex?: number;
     allMask?: number;
     noneMask?: number;
+    scene?: EndingSceneName;
+    text?: string[];
   }>;
+  credits?: Array<{ title: string; lines?: string[] }>;
   startIndex?: number;
   depths?: number;
   routes?: number;
@@ -344,6 +404,8 @@ export function completeCampaign(
     ending.none = ending.none ?? [];
     ending.allMask = runFlagMask(ending.all);
     ending.noneMask = runFlagMask(ending.none);
+    ending.scene = ending.scene ?? 'none';
+    ending.text = ending.text ?? [];
     if (zone === undefined) {
       fail(path + '.zone', 'no zone "' + ending.zone + '" in zones');
       continue;
@@ -366,6 +428,9 @@ export function completeCampaign(
   raw.startIndex = start;
   raw.depths = depths;
   raw.name = raw.name ?? 'ZONE MAP';
+  const credits = raw.credits ?? [];
+  for (const section of credits) section.lines = section.lines ?? [];
+  raw.credits = credits;
   const spec = raw as unknown as CampaignSpec;
   raw.routes = countCampaignRoutes(spec);
   return spec;
@@ -427,6 +492,24 @@ export function campaignZoneIndex(campaign: CampaignSpec, id: string): number {
   const zones = campaign.zones;
   for (let i = 0; i < zones.length; i++) if (zones[i].id === id) return i;
   return -1;
+}
+
+/**
+ * The number of rows the credits scroll (M2-14): per section its title, its lines and one blank
+ * row after it.
+ *
+ * @param credits - The campaign's credits.
+ * @returns Rows (0 for no credits).
+ *
+ * @example
+ * ```ts
+ * creditsLineCount([{ title: 'MUSIC', lines: ['CHIP SONGS'] }]); // → 3
+ * ```
+ */
+export function creditsLineCount(credits: readonly CampaignCreditsSection[]): number {
+  let rows = 0;
+  for (const section of credits) rows += 2 + section.lines.length;
+  return rows;
 }
 
 /**

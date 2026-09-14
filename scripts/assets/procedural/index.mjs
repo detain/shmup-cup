@@ -10,16 +10,20 @@
  * generator: write `procedural/<id>.mjs` exporting `generate()`, register it here, and test
  * its shapes in `test/scripts/assets/procedural.test.ts` (a zone generator gets its own file —
  * `procedural-zones.test.ts` for `brine` / `dune` of M2-11, `procedural-zones-de.test.ts` for
- * `magma` / `tempest` of M2-12, `procedural-zones-fg.test.ts` for `vault` / `prism` of M2-13).
+ * `magma` / `tempest` of M2-12, `procedural-zones-fg.test.ts` for `vault` / `prism` of M2-13,
+ * `procedural-zones-hi.test.ts` for `citadel` / `abyss` and the ending scenes' `ending` of M2-14).
  *
  * @module
  */
+import * as abyss from './abyss.mjs';
 import * as backdrops from './backdrops.mjs';
 import * as bosses from './bosses.mjs';
 import * as brine from './brine.mjs';
 import * as bullets from './bullets.mjs';
+import * as citadel from './citadel.mjs';
 import * as direct from './direct.mjs';
 import * as dune from './dune.mjs';
+import * as ending from './ending.mjs';
 import * as explosions from './explosions.mjs';
 import * as hud from './hud.mjs';
 import * as items from './items.mjs';
@@ -45,12 +49,15 @@ import * as weapons from './weapons.mjs';
  * @type {readonly { id: string, generate: () => SpriteDef[] }[]}
  */
 export const PROCEDURAL_GENERATORS = [
+  { id: 'abyss', generate: abyss.generate },
   { id: 'backdrops', generate: backdrops.generate },
   { id: 'bosses', generate: bosses.generate },
   { id: 'brine', generate: brine.generate },
   { id: 'bullets', generate: bullets.generate },
+  { id: 'citadel', generate: citadel.generate },
   { id: 'direct', generate: direct.generate },
   { id: 'dune', generate: dune.generate },
+  { id: 'ending', generate: ending.generate },
   { id: 'explosions', generate: explosions.generate },
   { id: 'hud', generate: hud.generate },
   { id: 'items', generate: items.generate },

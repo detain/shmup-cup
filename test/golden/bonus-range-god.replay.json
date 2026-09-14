@@ -61,13 +61,13 @@
     "ALkZ"
   ],
   "hashes": [
-    394475950,
-    2984906554,
-    3627079630,
-    1225446822,
-    603335323
+    1724203182,
+    893340730,
+    787212110,
+    2773318054,
+    1732856095
   ],
-  "finalHash": 237600420,
+  "finalHash": 2042664324,
   "description": "BONUS RANGE with god mode and the full loadout (M2-10): the three ground turrets shot down, the ground entrance to the vault opens, the stage runs on to its boss",
   "expected": {
     "status": "stageClear",
