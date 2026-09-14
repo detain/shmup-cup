@@ -248,6 +248,61 @@ describe('core/behaviors — zones B and C (M2-11)', () => {
     expect(boss.parts[jaw].localY).toBe(jawY + 4);
   });
 
+  it('boss.maw: after every phase change the shut jaws stand at their spec offsets, whatever the gapes', () => {
+    const w = fighting('galvanic-maw');
+    const boss = w.bosses.boss;
+    const maw = part(w, 'maw');
+    const top = part(w, 'jaw-top');
+    const bottom = part(w, 'jaw-bottom');
+    // The shipped spec: the jaws rest 9 px above and below the mouth; gape 4, 4, then 5.
+    const spec = DB.enemies[DB.enemyIndex.get('galvanic-maw') ?? -1].boss?.parts ?? [];
+    const topY = spec[top].y;
+    const bottomY = spec[bottom].y;
+    expect([topY, bottomY]).toEqual([-9, 9]);
+    expect(boss.parts[top].restY).toBe(topY);
+    expect(boss.parts[bottom].restY).toBe(bottomY);
+    const gapes = (DB.enemies[DB.enemyIndex.get('galvanic-maw') ?? -1].boss?.phases ?? []).map(
+      (phase) => phase.params.gape,
+    );
+    expect(gapes).toEqual([4, 4, 5]);
+    /**
+     * Steps until the mouth is open (or shut).
+     *
+     * @param open - The state awaited.
+     */
+    const until = (open: boolean): void => {
+      for (let t = 0; t < 400 && boss.parts[maw].open !== open; t++) run(w, 1);
+      expect(boss.parts[maw].open).toBe(open);
+    };
+    /**
+     * The jaws stand `apart` px beyond their spec offsets.
+     *
+     * @param apart - Pixels.
+     */
+    const jaws = (apart: number): void => {
+      expect(boss.parts[top].localY).toBe(topY - apart);
+      expect(boss.parts[bottom].localY).toBe(bottomY + apart);
+    };
+    // Each phase change comes while the mouth is open (only then does the core take damage).
+    for (const [phase, hp] of [
+      [1, 39],
+      [2, 15],
+    ] as const) {
+      until(true);
+      jaws(gapes[phase - 1]);
+      expect(w.bosses.damagePart(maw, boss.parts[maw].hp - hp, 0)).toBe(BossHit.Damaged);
+      run(w, 3);
+      expect(boss.phase).toBe(phase);
+      expect(boss.parts[maw].open).toBe(false);
+      jaws(0);
+      // The new phase's first gape and the shut after it, measured from the spec.
+      until(true);
+      jaws(gapes[phase]);
+      until(false);
+      jaws(0);
+    }
+  });
+
   it('boss.widow: scuttles inside its box, launches spider drones, spins silk lines without its fangs', () => {
     const w = fighting('sandgrave-widow');
     const boss = w.bosses.boss;

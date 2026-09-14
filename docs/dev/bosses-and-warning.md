@@ -188,7 +188,7 @@ pauses the WARNING, the intro and the death sequence, as it pauses the player's 
 own motion changes its playfield position — and each part, parents first, at its parent (or the
 origin) + `localX` / `localY` — translation only in M1; since M2-09 the offset is turned by the
 parent's world angle ([turned parts](advanced-bosses.md#turned-parts)), and a raid is anchored at
-a world point instead of the camera. A behaviour may move a part (`setPartOffset`). A part's `x` / `y` is its centre; its hurtbox is centred there.
+a world point instead of the camera. A behaviour may move a part (`setPartOffset`); the offsets from the boss data stay in `restX` / `restY` (M2-11), so a move measured from them — `boss.maw`'s jaws — never drifts across phases. A part's `x` / `y` is its centre; its hurtbox is centred there.
 
 **Destroying a part destroys the parts attached below it** (a single forward pass works because
 parents come first): each one explodes (`Sfx EnemyExplode*` + `Particles Explosion*` by its

@@ -1579,34 +1579,23 @@ function launchFromGuns(api: BossScriptApi, next: number, count: number): number
 }
 
 /**
- * Whether a core part of the boss is open (a `whenOpen` mouth left open by the last phase).
+ * Puts the parts attached to a core part (the jaws) `apart` px farther from the core's row than
+ * their rest offsets in the boss data (`restY`): a part above its core up, one below it down;
+ * `apart` 0 = shut, at rest. Absolute, not relative to where they stand, so the jaws can never
+ * drift — whatever gape the phase before used.
  *
  * @param api - The boss's API.
- * @returns `true` when a standing core is open.
+ * @param apart - Pixels (whole, ≥ 0).
  */
-function mouthOpen(api: BossScriptApi): boolean {
-  const parts = api.self.parts;
-  for (let i = 0; i < api.partCount; i++) {
-    if (parts[i].core && !parts[i].destroyed && parts[i].open) return true;
-  }
-  return false;
-}
-
-/**
- * Moves the parts attached to a core part (the jaws) `by` px away from the core's row: a part
- * above its core up, one below it down (a negative `by` moves them back).
- *
- * @param api - The boss's API.
- * @param by - Pixels (whole).
- */
-function moveJaws(api: BossScriptApi, by: number): void {
+function setJaws(api: BossScriptApi, apart: number): void {
   const parts = api.self.parts;
   for (let i = 0; i < api.partCount; i++) {
     const part = parts[i];
     const parent = part.parent;
     if (parent < 0 || !parts[parent].core) continue;
-    const dy = part.localY < 0 ? -by : part.localY > 0 ? by : 0;
-    if (dy !== 0) api.setPartOffset(i, part.localX, part.localY + dy);
+    const rest = part.restY;
+    const dy = rest < 0 ? -apart : rest > 0 ? apart : 0;
+    if (rest !== 0) api.setPartOffset(i, part.localX, rest + dy);
   }
 }
 
@@ -1631,8 +1620,10 @@ const MAW_FIRST_CUTTERS = 12;
  * Every timer is a whole number (a never-running timer is `NEVER_TICKS`, see `boss.hover`). With
  * [`gape` 0] > 0 the jaws open visibly: every part attached to a core (its `parent`) moves `gape` px
  * away from the core's row as the mouth opens — a part above the core up, one below it down — and
- * back as it shuts; a phase that starts while the mouth is open (the previous phase's script ended
- * mid-gape) shuts it first, so the jaws never drift.
+ * back as it shuts. The jaws are placed from their rest offsets in the boss data (`restY`), never
+ * moved relative to where they stand, and every phase starts with the mouth shut and the jaws at
+ * rest — so a phase that starts mid-gape (the previous phase's script ended with the mouth open,
+ * maybe with another `gape`) cannot make them drift.
  */
 const bossMaw = defineBossBehavior(
   'boss.maw',
@@ -1654,7 +1645,7 @@ const bossMaw = defineBossBehavior(
   function* maw(api, p): Script {
     api.track(p.trackSpeed, p.margin, PLAYFIELD_H - p.margin);
     const gape = p.gape > 0 ? Math.floor(p.gape) : 0;
-    if (gape > 0 && mouthOpen(api)) moveJaws(api, -gape);
+    setJaws(api, 0);
     const ways = p.ways >= 1 ? Math.floor(p.ways) : 1;
     const ring = p.ring >= 1 ? Math.floor(p.ring) : 0;
     const count = p.count >= 1 ? Math.floor(p.count) : 0;
@@ -1678,7 +1669,7 @@ const bossMaw = defineBossBehavior(
       if (toggleIn <= 0) {
         open = !open;
         api.setOpenAll(open);
-        if (gape > 0) moveJaws(api, open ? gape : -gape);
+        if (gape > 0) setJaws(api, open ? gape : 0);
         toggleIn = open ? openTicks : closedTicks;
         fireIn = open ? MAW_FIRST_CUTTERS : NEVER_TICKS;
         if (open && ring > 0) {

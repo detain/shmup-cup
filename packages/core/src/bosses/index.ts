@@ -445,6 +445,13 @@ export class BossPart {
   localX = 0;
   /** Y offset from the parent. */
   localY = 0;
+  /**
+   * X offset from the parent in the boss data (set on activation; M2-11) — the rest position a
+   * behaviour that moves the part (`setPartOffset`) measures from, so its moves never drift.
+   */
+  restX = 0;
+  /** Y offset from the parent in the boss data (see {@link BossPart.restX}). */
+  restY = 0;
   /** World x of the part's centre (phase 5). */
   x = 0;
   /** World y of the part's centre. */
@@ -784,7 +791,9 @@ export interface BossScriptApi {
    */
   setOpenAll(open: boolean): void;
   /**
-   * Moves a part relative to its parent (before the parent's turn).
+   * Moves a part relative to its parent (before the parent's turn). The offsets from the boss
+   * data stay in the part's `restX` / `restY` (M2-11): measure a move from them, not from the
+   * current `localX` / `localY`, and a later phase can put the part back where it belongs.
    *
    * @param index - Part index.
    * @param localX - X offset from the parent.
@@ -2084,6 +2093,8 @@ class BossSystemImpl implements BossSystem {
       part.parent = source.parentIndex;
       part.localX = source.x;
       part.localY = source.y;
+      part.restX = source.x;
+      part.restY = source.y;
       part.radius = radius > 0 ? radius : 0;
       part.hurtbox = source.hurtbox !== null || part.radius > 0;
       part.hw = source.hurtbox !== null ? source.hurtbox.hw : part.radius;

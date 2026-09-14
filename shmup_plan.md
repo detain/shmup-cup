@@ -2948,7 +2948,8 @@ Goal of the milestone: every **[P1]** feature. Steps are ordered so systems land
     the boss behaviours `boss.maw` (tracking; the `whenOpen` mouth — the core — opens / shuts on two
     timers, cutters (aimed needles) only while open, a ring as it opens from phase 1, the `minion`
     launched from the guns in turn; tunable `gape` moves the parts attached to a core — the jaws —
-    apart while open, and a phase starting mid-gape shuts them first so they never drift) and
+    apart while open, placed from their rest offsets in the boss data — the new `BossPart.restX` /
+    `restY` — so a phase starting mid-gape with another `gape` cannot make them drift) and
     `boss.widow` (random sidesteps inside a box, spreads from the core — the head, `afterParts` of
     its two fangs, which stand in its lane like HB-01's plates —, spider drones from the guns — the
     spinnerets —, and from phase 1 detached silk-line lasers, one at a time). **Homing rockets are
