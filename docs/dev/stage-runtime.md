@@ -8,7 +8,10 @@ the World, the renderer and the web app use all of it. Built in plan step **M1-0
 triggers, moving blocks inside the terrain queries, destructible tiles and a Tiled importer —
 their whole story is [advanced-stages.md](advanced-stages.md); plan step **M2-09** let the camera
 **follow a target** (a battleship raid's boss-relative camera path —
-[advanced-bosses.md](advanced-bosses.md#battleship-raids)) and added the `bossRush` stage type.
+[advanced-bosses.md](advanced-bosses.md#battleship-raids)) and added the `bossRush` stage type;
+plan step **M2-10** added the `bonus` stage type and the `bonus` event (hidden bonus-stage
+entrances) and made zone A the start of a campaign run whose later zones the zone map picks
+([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md)).
 This page keeps the runner-level facts current.
 
 This page is the *how and why*. Exact signatures are in
@@ -62,8 +65,9 @@ and, since M2-08, the optional presentation lists `raster` (per-scanline offsets
 the terrain: wave, haze, line-band floor) and `cycles` (palette cycling) — the runner never reads
 them either; `createWorld` hands them to the renderer as `view.effects`
 ([presentation-polish.md](presentation-polish.md#stage-data-coredata)) — and, since M2-09, the
-optional `type` (`normal` / `bossRush`) and `rush` (the bosses of a boss rush, run by
-`core/bosses` — [advanced-bosses.md](advanced-bosses.md#boss-rushes)).
+optional `type` (`normal` / `bossRush`, and since M2-10 `bonus` — a hidden bonus stage) and `rush`
+(the bosses of a boss rush, run by `core/bosses` —
+[advanced-bosses.md](advanced-bosses.md#boss-rushes)).
 The annotated format is in [`content/stages/README.md`](../../content/stages/README.md).
 
 `loadContent()` does three things beyond the schema (see
@@ -78,7 +82,10 @@ The annotated format is in [`content/stages/README.md`](../../content/stages/REA
    stage with a tilemap. Since M2-08 the raster effects' and palette cycles' ranges, required
    fields and colours (`checkStageEffects`). Since M2-09 the stage type and boss rush
 (`checkStageRush`: a `bossRush` stage needs a `rush` and has no `end` event, a `normal` one has
-no `rush`). Every problem of one file is reported in one load; a
+no `rush`; since M2-10 a `bonus` stage has no `warning` / `boss` / `bonus` event and at least one
+`end`). Since M2-10 also the `bonus` events (`checkBonusEvent`: a `gap` needs its `region`, a
+`digit` its `digit`, `place` one of 10 … 100,000, the defaulted `until` not before `x`, at most 8
+per stage; that the named stage is of type `bonus` is checked after the references resolve). Every problem of one file is reported in one load; a
    stage with any of them is skipped.
 2. **Flag numbering.** The distinct flag names of a stage — of `flag` and (M2-07) `trigger`
    events and of `branches` — are sorted into `stage.flagNames`; each gets `flagId` = its index
@@ -273,8 +280,8 @@ Events are pre-sorted by `x` (the loader checks it) and consumed through a curso
 (`runner.eventCursor`), so each tick looks at the next event only. The runner hands **every**
 event to its hooks as a numeric `StageEventCode` (`Spawn 0, Formation 1, Warning 2, Boss 3,
 Music 4, Speed 5, Flag 6, End 7` — the `STAGE_EVENT_TYPES` order) plus the content object and
-its index — since M2-07 also `Trigger 8, Block 9`, and only while the event's branch is taken
-(`runner.eventActive(index)`):
+its index — since M2-07 also `Trigger 8, Block 9`, since M2-10 `Bonus 10` — and only while the
+event's branch is taken (`runner.eventActive(index)`):
 
 | `type` | Runner's own part | The World's hook today |
 |---|---|---|
@@ -286,6 +293,7 @@ its index — since M2-07 also `Trigger 8, Block 9`, and only while the event's 
 | `end` | `runner.ended = true` | `world.status = 'stageClear'` |
 | `trigger` (M2-07) | arms its region (bit in `triggersArmed`); the World probes it with its `alive` ships every tick (`runner.probe(ship)`): the first ship inside sets / clears `flagId` once | — |
 | `block` (M2-07) | — | `world.gimmicks.blocks.spawn(index)`: a moving block ([advanced-stages.md](advanced-stages.md#moving-blocks-terrainblocks-movingblocksystem)) |
+| `bonus` (M2-10) | — | `world.bonus.arm(index)`: a hidden bonus-stage entrance starts waiting for its condition (a ship in a gap, every ground enemy of the window destroyed, a score digit) until the camera passes its `until`; a checkpoint restart re-arms the open windows behind the camera ([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md#the-world-side-corestage-bonusts-worldbonus)) |
 
 The World also queues the stage theme (`stage.music.stageId`) as a `Music` event when it is
 created. A hook may call `restartAt()`: the current tick's event loop stops there.
@@ -422,13 +430,19 @@ itself is unchanged ([presentation-polish.md](presentation-polish.md)).
 `resolveWorldStage(config, db)` does the lookup. The scene flow (M1-16) does not pick stages
 itself — START creates a World from the same config, so a game runs `config.stage` (open space when
 it is `null`). Since M1-18 both apps pass zone A there in the scene flow (`@shmup/shell`
-`defaultStageId(contentFiles)` → `'zone-a'`); the zone map picks stages from M2-10. The dev entry
-point is the web app:
+`defaultStageId(contentFiles)` → `'zone-a'`). Since M2-10 zone A is the campaign's start zone, so
+that game is a **campaign run** and the flow builds each later zone's World itself
+(`core/scenes` `runWorldConfig` — the chosen config with the zone's stage — and
+`prepareRunWorld`); any other `config.stage` is played alone
+([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md#campaign-run-or-single-stage-run)).
+The dev entry point is the web app:
 
 ```sh
 pnpm dev
 # → http://localhost:5173                      START plays zone A (M1-18); ?skip=boss starts near its boss
 # → http://localhost:5173/?stage=test-range   (or ?stage=test-boss — the boss range, M1-13)
+# → http://localhost:5173/?stage=zone-c       one stub zone of the campaign alone (M2-10)
+# → http://localhost:5173/?stage=bonus-range  the three bonus entrances into bonus-vault (M2-10)
 ```
 
 `apps/web` reads `?stage=<id>` with `stageFromSearch` and checks it against the raw content's
@@ -498,6 +512,14 @@ RANGE, the first **`bossRush`** stage: no `end` event, a `rush` of TRIAL WARDEN,
 and the twins) — `?stage=<id>`
 ([advanced-bosses.md](advanced-bosses.md)).
 
+M2-10 added the campaign's stub zones `zone-b.stage.json` … `zone-i.stage.json` (2,000 px each,
+two checkpoints, zone A's roster, heightfield floors / caves in C, D, E, F, H, the WARNING and a
+reused boss) and two dev stages: `bonus-range.stage.json` (BONUS RANGE, 2,800 px — a `gap`
+entrance between two brick blocks at the top, a `ground` window with three floor turrets, a
+`digit` entrance on the thousands digit 0, then HALCYON BULWARK) and `bonus-vault.stage.json`
+(BONUS VAULT, type `bonus`, 1,600 px — bonus-capsule carriers, a 1UP carrier, brick barriers)
+([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md#shipped-dev-content)).
+
 Headless:
 
 ```ts
@@ -560,7 +582,8 @@ world.stage!.restartAt(1); // back to x 1500: speed, pan and flags as live play 
 | Per-tick terrain queries allocate | Fractional arguments to a non-inlined call are boxed; pass floored / ceiled whole pixels (`terrainRectHit`) |
 | `stage "x": unknown event type` `RangeError` | A `StageSpec` that did not come through `loadContent` (hand-made in a test) with a type the runtime does not know |
 | A stage loads without terrain | Its tileset id did not resolve, the tile sizes differ, or its RLE rows failed — all reported as issues; the heightfield issues (missing tile names or masks) keep the terrain |
-| `?stage=` does nothing on the TV | The widget has no query string: START plays zone A (`defaultStageId`, M1-18) and the zone map picks stages from M2-10 |
+| `?stage=` does nothing on the TV | The widget has no query string: START plays zone A (`defaultStageId`, M1-18) and, since M2-10, the zone map picks the later zones |
+| `?stage=zone-b` ends with `TO BE CONTINUED`, not the map | By design: only a game on the campaign's start zone is a campaign run; any other stage is a single-stage run |
 | The skipped part of a stage never spawned after `jumpTo` | By design: events between the old and the new x never fire (the debug stage skip jumps over them) |
 | An event with a `branch` never fires | Its branch's flag did not have the branch's value when the camera reached it — the event is passed by for good (it does not wait for the flag) |
 | The camera stops without a lock or a boss | A `hold` key (M2-07): it scrolls on after `hold` ticks |
@@ -588,7 +611,7 @@ world.stage!.restartAt(1); // back to x 1500: speed, pan and flags as live play 
 - **M1-16** (done) — the scene flow runs the stage `config.stage` names on START and on RETRY
   STAGE (a fresh World each time); the stage's `end` event and a boss's death set `stageClear`,
   which opens the stage-clear screen ([scenes-and-ui.md](scenes-and-ui.md)). Picking stages from
-  the flow comes with the zone map (M2-10).
+  the flow came with the zone map (M2-10).
 - **M1-18** (done) — zone A, AZURE VERGE, the stage both apps play by default; `jumpTo(x)` and the
   debug stage skip (`GameConfig.stageSkip`, `?skip=boss`); the corridor check covers every stage
   with terrain ([zone-a-and-playtest.md](zone-a-and-playtest.md)).
@@ -605,4 +628,7 @@ world.stage!.restartAt(1); // back to x 1500: speed, pan and flags as live play 
 - **M2-09** (done) — `follow(target)` for a battleship raid's camera path with the timeline held
   where the follow began; the `bossRush` stage type and its `rush` list (run by `core/bosses`)
   ([advanced-bosses.md](advanced-bosses.md)).
-- **M2-10** — bonus stages and the zone map.
+- **M2-10** (done) — the zone map picks the stages of a campaign run (a fresh World per zone,
+  the rank's stage term set); stage type `bonus`, the `bonus` event (`StageEventCode.Bonus` 10)
+  and `core/stage` `bonus.ts` (`BonusEntrances`, `World.bonus`); the stub zones B–I and the
+  `bonus-range` / `bonus-vault` dev stages ([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md)).

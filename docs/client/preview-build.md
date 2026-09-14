@@ -15,7 +15,7 @@ score, the best score and the second player's slot along the top, your spare shi
 meter** with the Force Field's strength (the KESTREL) or the MANTA's **power pips** along the bottom. **Back** (or Pause) opens the **pause
 menu** over the frozen game: resume, retry, or quit to the title. When the last ship is lost a
 **CONTINUE?** countdown lets you carry on from the last checkpoint (if the difficulty gives
-continues), then a **GAME OVER** screen appears, after a boss a **STAGE CLEAR** screen, and on the TV Back on the
+continues), then a **GAME OVER** screen appears, after a zone's boss the **zone result** and the **ZONE MAP**, and on the TV Back on the
 title asks **EXIT SHMUP CUP?** before it closes the app. **OPTIONS** — on the title and in the
 pause menu — sets the game's own volumes (MASTER, MUSIC, SFX), the control profile, the
 colours of the enemy bullets (**BULLETS**: the standard colours or one of three sets made for
@@ -31,7 +31,7 @@ With **2 PLAYERS** a second player joins the running game whenever they like wit
 gamepad (in a browser also with Enter on the **SPLIT KEYBOARD**), flies the same ship in other
 colours and has their own ships, score, power-ups and continues ([Two players](#two-players)).
 
-**Every game plays the first real zone, AZURE VERGE** — on the TV too: about three minutes of
+**Every game starts in the first real zone, AZURE VERGE** — on the TV too: about three minutes of
 scrolling over rolling ground, through a long cave and a high-speed stretch, with enemies that fly
 and walk past and shoot at you, power capsules to collect, and at the end the **WARNING** and the
 zone's boss, the battleship **HALCYON BULWARK** ([The first zone: AZURE
@@ -40,6 +40,19 @@ and every laser can be dodged with the four arrow directions alone. On every dev
 whole chain — the menus and the controls respond quickly and reliably, the 60 ticks per second
 simulation runs smoothly, the picture is pixel-perfect at the monitor's resolution — and it is the
 first real test of how the game plays with the remote.
+
+**And then the run goes on.** A game is now a **run through five of nine zones**: each zone opens
+with its name on a title card while your ship flies in, and after its boss your ship flies off to
+the right, a **zone result** adds a bonus for the enemies you shot down and for a quick boss
+fight, and the **ZONE MAP** lets you choose which of two zones comes next — up to one of two final
+zones, H or I, and an **ending** that depends on your route and on how you played. Your score,
+ships and power-ups carry over from zone to zone. For now zones B to I are **short stand-ins** (about
+a minute each, with zone A's enemies and bosses you already know) so every one of the 16 routes can
+be flown to the end today; the real zones follow in the next builds ([The zone map: a run through
+nine zones](#the-zone-map-a-run-through-nine-zones)). Some zones will hide a **secret bonus
+stage** with extra ships and 1,000-point capsules — none of the zones has one yet, but the browser's
+*Bonus Range* shows all three kinds of secret entrance ([Hidden bonus
+stages](#hidden-bonus-stages-browser-only-for-now)).
 
 Along the way your ship shoots the enemies down ([Your weapons](#your-weapons)), powers up with
 the capsules some enemies leave behind, taken with the remote's OK button
@@ -62,8 +75,8 @@ loops seamlessly, the boss theme, a short stage-clear tune and a game-over tune
 ([Sound and music](#sound-and-music)). In a browser the sound starts with your first key press or
 click.
 
-In a browser there is more to try: a shortcut straight to the zone's boss (`?skip=boss`), the
-fully powered ship (`?loadout=full`), and ten test stages — the scrolling *Test Range*, with rocky
+In a browser there is more to try: a shortcut straight to each zone's boss (`?skip=boss`), the
+fully powered ship (`?loadout=full`), and twelve test stages — the scrolling *Test Range*, with rocky
 ground, caves, speed changes and the first enemy roster
 ([The scrolling test stage](#the-scrolling-test-stage-browser-only)), the short *Boss Range*
 with a test boss ([The boss range and the WARNING](#the-boss-range-and-the-warning-browser-only)),
@@ -80,12 +93,14 @@ in old racing games, and heat haze over the stars ([The Raster range](#the-raste
 and four **boss ranges** with the boss variety of the later zones — mid-bosses that fight while the
 screen scrolls on, a battleship bigger than the screen that the view flies around (with a second
 boss inside it, and a time limit after which it escapes), twin bosses that take turns and a boss
-rush ([The advanced boss ranges](#the-advanced-boss-ranges-browser-only)).
+rush ([The advanced boss ranges](#the-advanced-boss-ranges-browser-only)), and the *Bonus Range*
+with its three secret entrances into the *Bonus Vault*, a bonus stage full of 1,000-point capsules
+and an extra ship ([Hidden bonus stages](#hidden-bonus-stages-browser-only-for-now)).
 The earlier start-up pictures are still there: **free flight** straight away without the title,
 the animated **sprite showcase** and the **calibration screen**, plus the **effects gallery**
 that shows every explosion and screen effect in turn (see [below](#other-screens-browser-only)).
 
-This build is version **0.1.0** — the end of the first milestone — plus the first nine steps of
+This build is version **0.1.0** — the end of the first milestone — plus the first ten steps of
 the second: the difficulties, extra ships and continues, then the colour-blind bullet colours and
 points for cancelled bullets, then the **weapon types** and the WEAPON SELECT screen, then four
 kinds of **Options**, five **shields**, the **Option Hunter** that steals Options and the rare
@@ -98,8 +113,11 @@ HITBOX in the Options screen, a Mega Crash flash that brightens the picture inst
 it, smoother motion on 120 / 144 Hz monitors, and the SNES-style water, floor and haze effects of
 the browser's *Raster Range*, and now the **advanced bosses**: mid-bosses, a battleship raid with
 a boss inside, twin bosses and a boss rush in the browser's four boss ranges, and the optional
-**BOSS HP** bar in the Options screen, which works on the TV too (AZURE VERGE itself plays as
-before). For checking it on the monitors
+**BOSS HP** bar in the Options screen, which works on the TV too, and now the **zone map**: a
+run through five of nine zones with the zone title card, the fly-out after each boss, the zone
+result, the ZONE MAP, eight short stand-in zones B–I, a placeholder ending after zone H or I, and
+the secret **bonus stages** of the browser's *Bonus Range* (AZURE VERGE itself plays as before).
+For checking it on the monitors
 there is a **debug build** with developer tools — a panel with the frame rate, frame times and
 start-up time, hit-area outlines, invincibility, a freeze with single steps, slow motion and
 jumps to the next checkpoint or the boss — opened on the remote with Play/Pause and then Ch ▲
@@ -191,7 +209,7 @@ about half and shows the **PAUSE** menu in a framed box, with a short sound:
 |---|---|
 | **RESUME** | Back to the game exactly where it stopped (highlighted first). **Back** or **Pause** do the same |
 | **OPTIONS** | Opens the **Options screen** over the frozen game ([below](#the-options-screen)); BACK returns to the pause menu |
-| **RETRY STAGE** | Starts the stage (or open space) again from the beginning with a fresh ship, the difficulty's full number of ships and a zero score — no question asked |
+| **RETRY STAGE** | Starts the zone (or test stage, or open space) again from the beginning — no question asked. In zone A (and in every test stage) that is a fresh start: a fresh ship, the difficulty's full number of ships and a zero score; in a later zone you get back the score, ships and power-ups you had when that zone began. Inside a bonus stage it starts the zone the bonus stage was entered from |
 | **QUIT TO TITLE** | Asks **QUIT TO TITLE?** (YES / NO, NO highlighted); YES ends the game and shows the title |
 
 The music keeps playing while the game is paused. Leaving the app with **Home** on the TV (or
@@ -206,11 +224,19 @@ plays. If the score is a new best for this device, **NEW HI-SCORE** shows in yel
 title; after ten seconds it goes back by itself. The score is saved as soon as the screen appears
 ([What the game remembers](#what-the-game-remembers)), and the title's `HI` shows the best one.
 
-**Stage clear.** When a stage ends — AZURE VERGE and the Boss Range after their boss, the Test
-Range after its 75 seconds — the game plays on for a second and a half, then a box shows **STAGE CLEAR** with your
-**SCORE** and the **HI** score for four seconds, then **TO BE CONTINUED** for four seconds (this
-preview has only one zone), and then the title. **OK** skips ahead. The score is saved like a
-game over's (this screen ends the run in this preview).
+**Zone clear.** When a zone's boss is destroyed your ship (and a second player's) flies off to
+the right on its own, a second and a half later a box shows **ZONE A CLEAR** with the zone's
+name, your score, how many of the zone's enemies you shot down and the bonuses for that — the
+**zone result** —, and after five seconds (or **OK**) the **ZONE MAP** opens, where you choose the
+next zone; after the last zone the **ending** comes instead ([The zone map: a run through nine
+zones](#the-zone-map-a-run-through-nine-zones)). A run's score is saved when it ends — at the
+ending or on the GAME OVER screen.
+
+**Stage clear (test stages).** The browser's test stages are single stages, not part of the zone
+map. When one ends — the Boss Range after its boss, the Test Range after its 75 seconds — the ship
+flies out the same way, then a box shows **STAGE CLEAR** with your **SCORE** and the **HI** score
+for four seconds, then **TO BE CONTINUED** for four seconds, and then the title. **OK** skips
+ahead. The score is saved like a game over's.
 
 ## Difficulty, extra ships and continues
 
@@ -613,7 +639,7 @@ the ship, disappears while the ship is exploding, and changes nothing about the 
 | What | When it is saved | Where |
 |---|---|---|
 | The three volumes, the control profile, the bullet colours and SCALE, SHAKE, FLASHES, HITBOX and BOSS HP | When you leave the Options screen with BACK or Back | On the TV inside the app itself; in a browser (and the desktop app) in that browser's storage for the page |
-| High scores | When the **GAME OVER** or **STAGE CLEAR** screen appears | The same place |
+| High scores | When a run ends: the **GAME OVER** screen, or clearing the last zone (before the ending) — in a browser test stage the **STAGE CLEAR** screen | The same place |
 
 - **High scores**: the best ten of each kind of game are kept — each **difficulty** has its own
   list, separately for the KESTREL and the MANTA; the title's `HI` (and the HUD's) shows the best
@@ -622,12 +648,15 @@ the ship, disappears while the ship is exploding, and changes nothing about the 
   look at come with a later build.
 - **The difficulty and the ship you chose** are not remembered yet: after the app is closed the
   DIFFICULTY box opens on NORMAL and the SHIP SELECT box on the KESTREL again.
-- **Only finished games count**, like in the arcade: a game you leave with QUIT TO TITLE or start
-  over with RETRY STAGE is not saved. (Its score can still show as `HI` until you close the app.)
+- **Only finished games count**, like in the arcade: a game you leave with QUIT TO TITLE (in a
+  zone or on the ZONE MAP) or start over with RETRY STAGE is not saved. (Its score can still show
+  as `HI` until you close the app.)
 - Nothing needs saving when you close the app — Back → YES, Home, or even pulling the plug loses
   nothing that was already saved.
-- **On the TV** games play AZURE VERGE since this build, so they score: a game that ends on GAME
-  OVER or STAGE CLEAR is saved, and `HI` shows it after the app is closed and opened again.
+- **On the TV** games play the zone map from AZURE VERGE, so they score: a run that ends on GAME
+  OVER or reaches its ending is saved (with the zone it reached), and `HI` shows it after the app
+  is closed and opened again. Clearing a zone on the way does not save a score yet — the run is
+  still going.
 - **In a browser** each browser (and each address — the TV build on port 5174 is separate from
   the browser build on 5173) keeps its own; a private window forgets everything when it closes.
 - If the saved data is ever damaged (or comes from a newer version of the game), the game simply
@@ -1065,12 +1094,13 @@ before the beam comes.
 
 **When the core is destroyed** everything happens as with the test boss: every bullet and laser
 disappears — each bullet leaving a gold diamond that flies to your score (+10 each) — the boss blinks and explodes for two seconds, a big white blast with a strong shake,
-**30,000 points** (a gold `30000`), the stage-clear tune, and a few seconds later the **STAGE
-CLEAR** screen and the title ([the end screens](#pausing-quitting-and-the-end-screens)).
+**30,000 points** (a gold `30000`), the stage-clear tune, your ship flies off to the right, and a
+few seconds later the **ZONE A CLEAR** result and then the **ZONE MAP** ([The zone map: a run
+through nine zones](#the-zone-map-a-run-through-nine-zones)).
 
 **In a browser you can go straight to the boss:** http://localhost:5173/?skip=boss starts every
-game (START, and RETRY STAGE) about two seconds before the WARNING — add `&loadout=full` to fight
-it fully powered. The normal TV build has no such shortcut: play through the zone (three
+zone (and RETRY STAGE) about two seconds before its WARNING — so a whole run is five boss fights
+in a row — add `&loadout=full` to fight them fully powered. The normal TV build has no such shortcut: play through the zone (three
 minutes) — or use the debug build's key 8 ([debug-tools.md](debug-tools.md)).
 
 What "good" looks like:
@@ -1087,6 +1117,116 @@ What "good" looks like:
   flash white when hit and burst when destroyed; the core only reacts once all four plates are
   gone; each laser always blinks as a warning line first.
 - The whole zone, boss included, takes about three and a half minutes when nothing goes wrong.
+
+## The zone map: a run through nine zones
+
+A game is a **run** from zone A to one of two final zones. The zones form a diamond — after A you
+choose B or C, then D or E, then F or G, then H or I — so every run is **five zones** long and
+there are **16 different routes**:
+
+```
+          B ── D ── F ── H
+        ╱   ╲ ╱  ╲ ╱  ╲ ╱
+      A      ╳    ╳    ╳
+        ╲   ╱ ╲  ╱ ╲  ╱ ╲
+          C ── E ── G ── I
+```
+
+| Zone | Name | For now |
+|---|---|---|
+| A | AZURE VERGE | The real zone ([above](#the-first-zone-azure-verge)) |
+| B | BRINE NEBULA | Stand-in, open space; boss HALCYON BULWARK |
+| C | DUNE EXPANSE | Stand-in with a rolling floor; the EMBER AND FROST TWINS |
+| D | MAGMA DEEP | Stand-in with a floor and a cave; HALCYON BULWARK |
+| E | TEMPEST RIDGE | Stand-in with a floor; the EMBER AND FROST TWINS |
+| F | CELL VAULT | Stand-in with a floor; HALCYON BULWARK |
+| G | PRISM LABYRINTH | Stand-in, open space; the EMBER AND FROST TWINS |
+| H | IRON CITADEL | Final zone — stand-in with a floor; HALCYON BULWARK |
+| I | ABYSSAL THRONE | Final zone — stand-in, open space; the battleship IRON LEVIATHAN (the view flies round it; it escapes if you take too long) |
+
+The stand-ins are short — about a minute of zone A's enemies (small pods, red saucers with
+capsules, fan fliers, an arrowhead fighter, a ring spinner; turrets and walkers where there is a
+floor) and then the WARNING and a boss you know from zone A or the browser's boss ranges. They
+play zone A's music. The real zones replace them in the next builds; their names and the text on
+the map are already the real ones.
+
+**A zone, start to end:**
+
+1. **Launch.** Your ship flies in from the left as before, and for about 2½ seconds a dark band
+   near the top shows **ZONE B** in yellow over the zone's name.
+2. **The zone** scrolls by, ending with the WARNING and the boss.
+3. **Fly-out.** When the boss is destroyed, your ship (and a second player's) stops answering the
+   controls and speeds off to the right until it is out of the picture — it cannot be hit and does
+   not fire meanwhile. Its Options follow it out.
+4. **Zone result** (about 1½ seconds later, over the empty playfield): **ZONE B CLEAR**, the
+   zone's name, your score (`1P` and `2P` in a two-player game), **KILLS** — the share of the zone's
+   enemies you shot down, in percent —, the **KILL BONUS** (100 points per percent: 10,000 for all
+   of them) and the **TIME BONUS** (100 points for every second the boss fight took less than 90
+   seconds; `NO BOSS TIME` when no boss was destroyed). Both bonuses are added to the score of
+   every player still in the game — you can see the score jump — and can earn an extra ship. After
+   five seconds, or **OK**, the map opens.
+5. **The ZONE MAP.** The music fades out. The top says **ZONE MAP** and `CHOOSE YOUR COURSE`;
+   the zones are small boxes with their letters, left to right, joined by dotted lines. The zones
+   you have flown are lit, the one you just cleared is yellow, and the two you can go to next have
+   a white outline — the chosen one blinks yellow, and so does the dotted line to it. The panel at
+   the bottom shows the chosen zone's letter and name and two lines about it, and
+   `UP/DOWN: CHOOSE  OK: LAUNCH`.
+   - **▲ / ▼** choose between the two next zones (holding repeats; from the last it wraps round).
+   - **OK** launches: `LAUNCH` blinks for a second while the game gets the next zone ready, then
+     that zone starts with its title card.
+   - **Back** asks **QUIT TO TITLE?** — NO (highlighted) goes back to the map, YES ends the run
+     (the score is not saved).
+6. After **H or I** there is no map: the **ending** follows the zone result.
+
+**What carries over from zone to zone:** your score (and the best score), your spare ships, the
+power-ups you have — the weapons, the Options, the shield and how many hits it has left, your
+speed, where the power meter's highlight is (the MANTA: its weapon levels, its Arm and its weapon)
+—, and the continues you have used. A ship that was just lost when the zone ended flies into the
+next zone blinking; a player who had no ships left stays out (and may continue). In a **2
+PLAYERS** game, a second player who has not joined yet can still join in any zone. The game also
+gets a little harder with every zone you clear.
+
+**The ending.** After the final zone's result a full-screen card shows **ENDING** and the name
+of the ending your run earned, your **ROUTE** (for example `A B D F H`), your score, a line for
+each thing you managed — **NO MISS** (no ship lost in the whole run), **NO CONTINUE**, **BONUS
+STAGE CLEARED**, and **A BOSS ESCAPED** if IRON LEVIATHAN got away — and **THANK YOU FOR
+PLAYING**. After a second `OK: TITLE` appears; **OK** (or waiting 20 seconds) returns to the title.
+The endings are placeholders for now — the real ending scenes and credits come later — but which
+one you get already depends on the route and the run:
+
+| Final zone | Ending | When |
+|---|---|---|
+| H | THE CITADEL FALLS SILENT | No ship lost in the whole run |
+| H | THE CITADEL FALLS | Otherwise |
+| I | THE DEEP IS STILL | No ship lost in the whole run |
+| I | THE FLAGSHIP SLIPS AWAY | IRON LEVIATHAN escaped |
+| I | THE THRONE IS BROKEN | Otherwise |
+
+The run's score is saved (with the zone it reached) when the final zone is cleared or on the
+GAME OVER screen ([What the game remembers](#what-the-game-remembers)). A **game over** in any
+zone works as before: CONTINUE? (if you have continues) carries on at the zone's last checkpoint.
+
+**Quicker ways through (browser):** http://localhost:5173/?skip=boss starts every zone just
+before its WARNING, so a run is five boss fights (add `&loadout=full`); the debug build's key 8
+(or the remote's unlock sequence — [debug-tools.md](debug-tools.md)) jumps to the boss in any
+zone. `?stage=zone-b` … `?stage=zone-i` plays one stand-in zone on its own (like a test stage,
+without the map).
+
+What "good" looks like:
+
+- The title card is readable and disappears after about 2½ seconds; it never shows in the
+  browser's test stages.
+- After each boss, every ship flies out smoothly to the right — no ship is hit or lost after the
+  boss has gone.
+- The zone result's numbers add up: the score after it is the score before plus the two bonuses.
+- On the map, ▲ / ▼ always move between exactly the zones the dotted lines lead to from the yellow
+  zone; the lit path matches the zones you flew; the text in the panel belongs to the blinking zone.
+- OK on the map starts the chosen zone after about a second, with its **music** from the start of
+  the zone — no silence, no zone A title music. After an ending (or a game over) and a new game,
+  zone A's music plays again as normal.
+- Score, ships and power-ups are the same after the map as before it.
+- All 16 routes can be finished; each ends with an ending card whose route line matches the
+  zones you flew.
 
 ## On the Samsung Smart Monitor / TV
 
@@ -1105,10 +1245,12 @@ the first install it appears in the monitor's **Apps** list as **Shmup Cup**.
 | Everything else | Read by the game every tick, but nothing reacts to it yet (the gun fires without any button) |
 | A **gamepad** (USB or Bluetooth, optional) | Menus and 1 PLAYER games: works like the remote (player 1). In a **2 PLAYERS** game: START (or A) makes it **player 2's** and brings player 2 in ([Two players](#two-players), checks 45–47) |
 
-On the TV, every game plays **AZURE VERGE** ([The first zone](#the-first-zone-azure-verge)), with
-enemies, capsules, the boss and the zone's music. The normal TV build has no shortcut to the
-boss — it comes after about three minutes; the debug build has one (key 8 once the developer
-tools are open — [debug-tools.md](debug-tools.md)).
+On the TV, every game starts in **AZURE VERGE** ([The first zone](#the-first-zone-azure-verge)), with
+enemies, capsules, the boss and the zone's music, and goes on across the **ZONE MAP** through
+four more zones to an ending ([The zone map](#the-zone-map-a-run-through-nine-zones)). The normal
+TV build has no shortcut to the boss — it comes after about three minutes in zone A and about a
+minute in the stand-in zones; the debug build has one (key 8 once the developer tools are open —
+[debug-tools.md](debug-tools.md)).
 
 Things to check on the monitor and report:
 
@@ -1204,8 +1346,8 @@ Things to check on the monitor and report:
    BULWARK glides in and its theme starts. Each laser first blinks as a thin line along its row —
    step up or down out of it — and then fires; shoot the four plates in front of the glowing core,
    then the core. Report whether the WARNING text is readable from the sofa, whether the lasers'
-   warning comes early enough, and roughly how long the fight took. After the final blast the
-   **STAGE CLEAR** screen shows your score.
+   warning comes early enough, and roughly how long the fight took. After the final blast your
+   ship flies out and the **ZONE A CLEAR** result shows your score (checks 53–56 go on from there).
 24. **Losing ships and high scores on the TV** (new): bullets, enemies and rock now destroy the
    ship — it flies in again blinking, a spare-ship icon goes, and after the last one comes
    **GAME OVER** (with **NEW HI-SCORE** for a new best). Close the app (Back on the title → YES),
@@ -1346,12 +1488,31 @@ Things to check on the monitor and report:
    whether the bar is easy to read from the sofa.
 52. **BOSS HP kept** (new): close and reopen the app — BOSS HP is still ON. Set it to OFF: `HI`
    stays in the top bar through the whole boss fight.
+53. **The zone result and the map** (new): after zone A's boss the ship flies off to the right,
+   then **ZONE A CLEAR** shows the score, `KILLS` in percent and the two bonuses; the score jumps
+   by their sum. After five seconds (or OK) the **ZONE MAP** opens and the music fades. Check with
+   the remote: ▲ / ▼ switch between B and C (the blinking box and the dotted line to it move
+   together, the panel shows the chosen zone's name and text), Back asks **QUIT TO TITLE?** (NO
+   goes back to the map), OK blinks `LAUNCH` and starts the chosen zone about a second later.
+   Report whether the map is readable from the sofa.
+54. **The next zone** (new): the zone starts with **ZONE B** (or C) and its name on a band near
+   the top while the ship flies in; the music starts with the zone; your score, spare ships and
+   power-ups are exactly what they were before the map. About a minute later the WARNING and a
+   boss you know come, then the result and the map again.
+55. **A whole run** (new): play on through D or E, F or G, to **H or I** (the debug build's key 8
+   saves time). After the final zone's result the **ENDING** card shows the ending's name, your
+   route, your score and `THANK YOU FOR PLAYING`; OK (after a second) returns to the title — with
+   the title music — and the title's `HI` shows the run's score. Start a new game: zone A's own
+   music plays again from the start. Report the route and the ending name.
+56. **Game over in a later zone** (new): lose all ships in zone B or later: CONTINUE? and GAME OVER
+   work as in zone A, and the run's score is saved.
 
-The fully powered ship (`?loadout=full`), the shortcut to the boss (`?skip=boss`), the ten test
-stages (the Test Range, the Boss Range with its test boss, the Hunter Range with the Option
-Hunters and the blue capsule, the Direct Range with the MANTA's pincer waves, the Gimmick Range
-with the later zones' stage mechanics, the Raster Range with the picture effects and the Captain,
-Raid, Twin and Gauntlet Ranges with the advanced bosses), free flight, the showcase, the
+The fully powered ship (`?loadout=full`), the shortcut to each zone's boss (`?skip=boss`), the
+twelve test stages (the Test Range, the Boss Range with its test boss, the Hunter Range with the
+Option Hunters and the blue capsule, the Direct Range with the MANTA's pincer waves, the Gimmick
+Range with the later zones' stage mechanics, the Raster Range with the picture effects, the
+Captain, Raid, Twin and Gauntlet Ranges with the advanced bosses, and the Bonus Range with its
+Bonus Vault), a single stand-in zone on its own (`?stage=zone-b` …), free flight, the showcase, the
 calibration screen and the effects gallery can only be opened in a browser — the monitor's own
 web browser works too, pointed at a PC running `pnpm dev` (below).
 
@@ -1376,7 +1537,8 @@ Open http://localhost:5173 (other devices on the same network can use the PC's I
 address, e.g. `http://192.168.1.20:5173`): the title screen appears. Press **Enter** five times
 (past `PRESS OK`, 1 PLAYER, NORMAL in the DIFFICULTY box — or ▼ to choose another —, the KESTREL in
 the SHIP SELECT box — or ▼ for the MANTA, which starts at once — and START in the WEAPON SELECT
-screen — or ▲ to change the weapons first) to play AZURE VERGE and fly with the arrow keys, W A S D or a gamepad;
+screen — or ▲ to change the weapons first) to play AZURE VERGE (and after its boss the ZONE MAP:
+▲ / ▼ and Enter choose the next zone) and fly with the arrow keys, W A S D or a gamepad;
 **Esc** (or P, Backspace) pauses. http://localhost:5173/?skip=boss starts every game a moment
 before the zone's WARNING, to try the boss without playing the three minutes before it. The browser version has no EXIT entry — a browser tab cannot close itself — so
 Back (Esc) on the title only goes back from the menu to `PRESS OK`. To skip the title and fly
@@ -1388,7 +1550,7 @@ the window to see the whole-number scaling at work: the picture snaps between si
 stretching. Switching to another tab freezes the game (and its sound); coming back during a
 game shows the pause menu. The Options screen works the same as on the TV (Enter
 for OK, Esc or Backspace for Back); the settings and high scores are kept in this browser
-([What the game remembers](#what-the-game-remembers)): finish a game on GAME OVER or STAGE CLEAR,
+([What the game remembers](#what-the-game-remembers)): finish a run on GAME OVER or at its ending,
 reload the page, and the title's `HI` shows it.
 
 **Sound in a browser starts with your first key press or click** into the page — browsers do
@@ -2233,6 +2395,46 @@ What "good" looks like in these stages:
   where you could not get out of the way (the rammer's dash and the rings included).
 - No magenta-and-black squares, and no part of a boss left floating after it exploded.
 
+## Hidden bonus stages (browser only for now)
+
+Some zones of the finished game hide a **secret entrance** to a short **bonus stage** full of
+points and extra ships. None of the nine zones has one yet (zone B gets the first in a coming
+build), so this build shows them in a test stage: open http://localhost:5173/?stage=bonus-range
+and choose 1 PLAYER (add `&loadout=full` to have the firepower for the second entrance).
+
+The *Bonus Range* scrolls over a floor and has **three secret entrances**, each of another kind —
+the first one you open is the one you take:
+
+| About | Entrance | How to open it |
+|---|---|---|
+| 8–14 s | **A marked gap** | Two brick blocks sit at the very top of the screen with a gap between them — fly your ship into that gap while it passes |
+| 17–30 s | **All ground targets** | Three gun turrets stand on the floor — shoot down **all three** before the view has moved on past them |
+| about 33 s | **A score digit** | If your score's **thousands** digit is **0** at that moment (e.g. 10,250 or 20,900 points), the entrance opens |
+
+When an entrance opens you hear the power-up chime; about ⅔ of a second later the picture
+switches to the **Bonus Vault**, with **BONUS STAGE** / **BONUS VAULT** on the title card (your
+score, ships and power-ups come along). Nothing shoots at you there: waves of carriers fly
+across, each leaving a **gold capsule** worth **1,000 points**, one bigger carrier leaves a green
+**1UP** capsule with a white `+` (**one extra ship**, with the extra-ship chime — at nine ships only
+the pickup sound), and two brick walls have to be shot through. After about half a minute the
+vault ends: **STAGE CLEAR** — in a real zone this would be the zone's clear, the boss **skipped**,
+and the ending's **BONUS STAGE CLEARED** line.
+
+**Dying in the bonus stage locks you out:** a second after the first ship is lost there you are
+back in the Bonus Range at the entrance you took, and no entrance of that stage opens any more —
+the stage then goes on to its WARNING and HALCYON BULWARK. (RETRY STAGE in the pause menu starts
+the Bonus Range over, with the entrances open again.) If no entrance opens at all, the range
+simply ends with its boss.
+
+What "good" looks like:
+
+- Each of the three entrances opens only when its condition is met — not for a ship that merely
+  touches the bricks, not with one of the three turrets left, not with another thousands digit.
+- The switch into the vault and back is quick and clean: no leftover bullets or enemies of the
+  other stage, the ship keeps its power-ups, and its score is the same.
+- The gold capsules add exactly 1,000 points each; the 1UP adds one ship icon at the bottom left.
+- After a death in the vault no entrance of the range opens again.
+
 ## Explosions, sparks, shake and flashes
 
 Hits look like hits — in AZURE VERGE on every device, and in the browser's *Test Range*
@@ -2318,7 +2520,11 @@ What you should hear:
 | The menus | A soft click for each move of the highlight (and each step of a volume or the control profile in the Options screen), a short chime when you choose an entry, a lower "back" sound for Back, NO and a greyed-out entry; a short sound when the pause menu opens and closes. Menu sounds come from the middle and follow the SFX volume |
 | The title screen | The title theme, **SHMUP CUP**; it fades out when a game starts |
 | **GAME OVER** screen | A short, sad tune (**SILENT VERGE**) |
-| **STAGE CLEAR** screen | The stage-clear tune (if it is not playing already) |
+| **STAGE CLEAR** screen, the **zone result** | The stage-clear tune (if it is not playing already) |
+| The **ZONE MAP** | The music fades out — the map is quiet for now (its own tune comes later); a chime when you choose, the menu click for ▲ / ▼ |
+| The next zone starts | Its zone theme from the start of the zone (the stand-in zones B–I use AZURE VERGE's theme and BULWARK ASSAULT) |
+| Entering a secret bonus stage | The power-up chime when the entrance opens; the 1UP capsule plays the extra-ship jingle |
+| The **ending** card | The rest of the stage-clear tune, then quiet (the ending music comes with the real endings) |
 
 **The stage theme** (AZURE VERGE — in the zone of the same name and in both browser test stages)
 starts with a short intro of about six seconds and then repeats a 45-second part over and over.
@@ -2423,6 +2629,14 @@ mean the build itself is broken; they are not caused by anything you did.
 | 1 PLAYER opened a DIFFICULTY box instead of the game | Expected: choose a difficulty with ▲ / ▼ and press OK (Back returns to the title menu) — then OK on a ship in the SHIP SELECT box and, for the KESTREL, OK once more on START in the WEAPON SELECT screen |
 | OK on a difficulty opened a SHIP SELECT box instead of the game | Expected since this build: the KESTREL is highlighted, so OK goes on to the WEAPON SELECT screen as before; ▼ and OK choose the MANTA, which starts at once ([Choosing your ship](#choosing-your-ship)) |
 | OK on the KESTREL opened a WEAPON SELECT screen instead of the game | Expected: START is highlighted, so OK starts the game with the weapons shown; ▲ / ▼ and ◀ / ▶ change them first if you like ([Choosing your weapons](#choosing-your-weapons)) |
+| My ship flew off to the right on its own after the boss | Expected: the fly-out at the end of every zone — the zone result follows |
+| A **ZONE MAP** appeared instead of the title after the boss | Expected since this build: choose the next zone with ▲ / ▼ and press OK ([The zone map](#the-zone-map-a-run-through-nine-zones)); Back → YES returns to the title |
+| Zone B (or another zone after A) is very short and has zone A's enemies and boss | Expected: zones B–I are stand-ins until the real zones come |
+| A browser test stage (`?stage=…`) ended with STAGE CLEAR, not the zone map | Expected: test stages are played on their own; only a normal game (no `?stage=`, or `?stage=zone-a`) is a run across the map |
+| The next zone started silent, or with the wrong tune | Not expected — please report the route (e.g. `A C E`), the device and whether it happened after a previous run ended |
+| The ending screen came without an ending I expected | The ending depends on the final zone and the run: THE … FALLS SILENT / THE DEEP IS STILL need no ship lost in the **whole** run (a RETRY STAGE after a loss still counts the loss) |
+| An entrance in the Bonus Range did not open | Only the first entrance you open counts, and after a loss in the Bonus Vault none opens again (RETRY STAGE resets that). The gap needs the ship itself in the gap while it passes; the ground entrance needs **all three** turrets |
+| `?stage=bonus-range` (or a zone) does nothing on the TV | Expected: the TV widget has no address bar; the zones are reached through the map, the Bonus Range is browser only for now |
 | OK does nothing in the game | Expected with the **MANTA**: it has no power meter — its colour items work when you fly into them. With the KESTREL OK needs a highlighted box on the power meter ([Power-ups](#power-ups)) |
 | Ch ▼ does nothing | Expected with the KESTREL (it speeds up with SPEED UP on the power meter). With the MANTA each press should switch its speed and light the SPD squares — if not, please report it with the remote model |
 | A colour item vanished before I got to it | Expected after about ten seconds (it blinks for the last two) — items do not wait |
@@ -2487,7 +2701,7 @@ mean the build itself is broken; they are not caused by anything you did.
 | The menu clicks are very quiet | They follow the **SFX** volume — turn it up in OPTIONS |
 | OK on MASTER, MUSIC or SFX does nothing | Expected: the volumes change with ◀ / ▶; OK only works on CONTROLS and BACK |
 | The ship stutters while I hold a direction after choosing FAST 8-WAY (TV) | This remote needs the hiccup protection: choose SAFE 4-WAY again under OPTIONS → CONTROLS, and please report the remote model |
-| My high score is gone | Only games that end on the GAME OVER or STAGE CLEAR screen are saved — QUIT TO TITLE and RETRY STAGE are not. In a browser, a private window or cleared site data forgets them, and another browser has its own. On the TV, removing the app deletes them; if they vanish otherwise, please report it |
+| My high score is gone | Only runs that end on the GAME OVER screen or reach their ending (in a browser test stage: the STAGE CLEAR screen) are saved — QUIT TO TITLE (also on the ZONE MAP) and RETRY STAGE are not. In a browser, a private window or cleared site data forgets them, and another browser has its own. On the TV, removing the app deletes them; if they vanish otherwise, please report it |
 | The settings and high scores were back to the start after an update | Installing a new build over the old one should keep them; please report it with how the build was installed. After removing and reinstalling the app this is expected |
 | The ship does not move | Wait until it has finished flying in (⅔ of a second). In a browser, click once into the page so it has the keyboard focus; with a gamepad, press any button first. On the TV, report it together with the remote model |
 | The ship moves only up, down, left and right | Normal on remotes that report one direction at a time, and with `?profile=keyboard-remote-emulation` in a browser. With a keyboard or gamepad and no `?profile=` in the address, please report it |

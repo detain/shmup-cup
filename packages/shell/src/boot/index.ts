@@ -39,7 +39,10 @@
  * prepares the running stage's music set (`stageMusicCues`: the theme and boss cues the stage
  * names, the cue of each of its `music` events, stage clear and game over; nothing in open
  * space; the scene flow adds the title theme, and in open space the stage-clear and game-over
- * jingles), behind the progress bar; nothing is rendered or decoded later. Once the app's
+ * jingles), behind the progress bar; nothing is rendered or decoded during play. Since M2-10 the
+ * scene flow's `PrepareStage` events (`connectStagePreparation`: the zone map's launch, the title
+ * after a run through the map, a run or practice start on another stage) have the engine prepare
+ * another stage's set, plus the title theme, between Worlds. Once the app's
  * `audio.unlock()` has created the context (first gesture on the web, at boot on TV) the engine
  * attaches to the web-audio buses; in the scene flow and free flight the `Sfx`, `Music` and
  * `MusicDuck` events (the World's, and in the flow the menus' sounds and the scenes' music) play
@@ -304,8 +307,10 @@ export function sceneFromSearch(search: string): ShellScene {
 }
 
 /**
- * The stage a game plays when the host names none: zone A, AZURE VERGE (plan M1-18 — the M1
- * vertical slice is one zone; the zone map of M2-10 picks stages later).
+ * The stage a game plays when the host names none: zone A, AZURE VERGE (plan M1-18). Since M2-10
+ * it is also what makes a game a campaign run: it is the start zone's stage of
+ * `content/campaign/main.campaign.json`, so the scene flow plays the zone map from it (a
+ * `?stage=` dev stage keeps the single-stage flow).
  */
 export const DEFAULT_STAGE_ID = 'zone-a';
 
@@ -915,7 +920,8 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   if (flowView !== null) {
     connectFxEvents(events, readyRenderer);
     connectAudioEvents(events, engine, flowView.camera);
-    // The zone map prepares the next zone's music while its choice launches (M2-10).
+    // `PrepareStage` (M2-10): the music set follows the stage about to play — the zone map's
+    // launch, the title's return to the start stage, a run or practice start on another stage.
     connectStagePreparation(events, engine, game.content.stages, stageMusicCues);
     // The Options screen's changes, live (plan M1-17). The profile event carries an index into
     // the same `profileChoices` the flow was given; out-of-range indices are ignored.

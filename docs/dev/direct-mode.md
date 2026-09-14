@@ -83,7 +83,7 @@ exactly what it played.
 | `PlayerShipSpec` | `mode` (`meter` default / `direct`) and `startSpeedLevel` (default 0, must index `speeds` — an issue otherwise). `manta.player.json`: speeds 1.75 / 2.25 / 2.75 px/tick, `startSpeedLevel` 1 — D3's "fixed 2.25 with a 3-step toggle" as data |
 | `weapons` files | `families` (`WeaponFamilySpec`: `id`, optional `name` ≤ 16, `label` ≤ 5 characters for the HUD, `slot` `main` \| `sub`, 1–`MAX_FAMILY_LEVELS` (9) `levels`); a level (`WeaponLevelSpec`) is one volley of 1–`MAX_LEVEL_SHOTS` (8) emitters (`WeaponEmitterSpec` `{ weapon, angle?, ox?, oy? }`) with optional `refireTicks` and `volleys` (1–16) → `ContentDb.weaponFamilies` / `weaponFamilyIndex`. A fifth loader pass (`checkWeaponFamilies`) reports a weapon of another slot in a family |
 | `stage` files | `directItems` (1–`MAX_DIRECT_ITEM_PLAN` (256) of `DIRECT_ITEMS`: `red`, `green`, `blue`, `orange`, `yellow`, `octagon`); omitted → `StageSpec.directItems` `[]` = the engine's `DEFAULT_DIRECT_ITEM_PLAN` |
-| `EnemyDrop` | `powerup` — `DropKind.PowerUp` 3. **`DropKind.FreeOption` moved from 3 to 4**: the content drops keep their codes (`ENEMY_DROPS` index + 1); freed Options are never content and never saved |
+| `EnemyDrop` | `powerup` — `DropKind.PowerUp` 3. **`DropKind.FreeOption` moved from 3 to 4**: the content drops keep their codes (`ENEMY_DROPS` index + 1); freed Options are never content and never saved (M2-10 appended `oneUp` 4 / `bonusCapsule` 5, so `FreeOption` is **6** now) |
 
 `direct.weapons.json` holds the MANTA's 20 weapons and the three families, level by level after
 §7B:
@@ -377,7 +377,7 @@ for (let t = 0; t < 600; t++) stepWorld(world, input);
 |---|---|
 | A flow test or e2e spec stops on a panel titled `SHIP SELECT` | With the shipped content (two ships) every START takes one more OK — press it (KESTREL is focused first). Subset content with one ship skips the screen |
 | Code reading `liveCounts[shooter * WEAPON_ROLE_COUNT + role]` counts the wrong shots | The stride is `WEAPON_ROLE_SLOTS` (36) since M2-05 |
-| A test that checks drop codes sees `FreeOption` as 4 | `DropKind.PowerUp` took 3 (content drops first) |
+| A test that checks drop codes sees `FreeOption` as 4 (or 6) | `DropKind.PowerUp` took 3 (content drops first); since M2-10 `OneUp` 4 and `BonusCapsule` 5 come before it too — `FreeOption` is 6 |
 | The MANTA's first items repeat the plan's start after a checkpoint | They should not — the cursor never rewinds; if they do, it is a bug |
 | OK does nothing in the game with the MANTA | By design: Direct mode has no meter to equip; items act on pickup. Ch− is the only extra button |
 | The KESTREL's speed starts above 0 | Only in Direct mode does `startSpeedLevel` apply; the meter's Speed Ups start at 0 — check `powerUpMode` |

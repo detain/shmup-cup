@@ -235,7 +235,10 @@ same — [debug-and-replays.md](debug-and-replays.md#the-debug-controls)).
 
 `@shmup/shell` exports `DEFAULT_STAGE_ID` (`'zone-a'`) and `defaultStageId(files)` — `'zone-a'`
 when the raw content files (before validation) contain a `stage` file with that id, else `null`.
-The M1 vertical slice is one zone; the zone map of M2-10 will choose stages instead.
+The M1 vertical slice was one zone; since M2-10 zone A is also the **start zone of the campaign**
+(`content/campaign/main.campaign.json`), so a game on it is a campaign run across the zone map —
+the later zones come from the map, not from the host config
+([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md#campaign-run-or-single-stage-run)).
 
 | Host | `gameConfig.stage` |
 |---|---|
@@ -297,7 +300,9 @@ with a second bot; `scanLanes(world, scan, player)` scans from that ship).
 - **Choice**: each lane's cost = terrain + the **trip** (every lane crossed, while the ship is in
   it, at its speed) + the **stay** (the destination's centre from arrival on, sooner threats
   weigh more) + distance + a pull towards the middle − preferences (a capsule ahead +40, the
-  boss's core lane +60 and its neighbours +15, the next flying enemy ahead +12). A threat that
+  boss's core lane +60 and its neighbours +15, the next flying enemy ahead +12). The boss it aims
+  at is the first boss slot in its intro or fight (`mainBoss` — since M2-10; it used to read slot
+  0 only and never found a double boss's survivor in slot 1). A threat that
   hits the ship's current spot before it could leave does not penalise leaving (the M1-18 test
   round's fix — the bot used to freeze inside a beam). Hysteresis: the target lane changes only
   for a lane at least 20 cheaper.
@@ -314,6 +319,7 @@ with a second bot; `scanLanes(world, scan, player)` scans from that ship).
 |---|---|
 | `zone-a.test.ts` | God mode: the bot kills HB-01 and reaches `stageClear` in 3–6 minutes, never diagonal, x within ±4 of 64, the rules hold, and HB-01's last phase really overlaps two lanes. Without god mode: the run is recorded, `replayStage` reproduces its deaths and hash, the deaths are **printed, not asserted** (they measure the balance). With `stageSkip: 'boss'`: everything but the fight takes < 15 s |
 | `zone-a-recovery.test.ts` | The recovery rule at runtime: restarted at each zone A checkpoint and played perfectly (every enemy killed on its first on-screen tick), the capsules dropped before the next source beyond 900 px are exactly the ≥ 3 sources of the window |
+| `campaign-routes-b.test.ts`, `campaign-routes-c.test.ts` (M2-10) | All 16 routes of the zone map flown in god mode with the campaign harness `campaign.ts` (`playRunZone`, `walkCampaignRoutes` — each zone a fresh World built as the scene flow builds it, the players carried): every zone cleared, the rank stage term = depth + 1, the score growing, an ending per route ([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md#using-it-headlessly)) |
 | `harness.test.ts`, `four-way-bot.test.ts`, `rules.test.ts` | The tooling itself: scripted bots, the tick limit, a terrain death to `gameOver` that replays; lane geometry, the danger scan, the decisions (including the two regressions), one-tick presses; the rules on hand-made lasers and bullets (merging, clipping, the off-playfield beam regression, the violation cap) |
 
 At the time of writing the bot clears zone A in ≈ 210 s (HB-01 in ≈ 22 s) with no death, also
@@ -356,7 +362,7 @@ in the right half of the playfield, with no console errors or atlas warnings.
 | To add… | Do this |
 |---|---|
 | A zone | `content/stages/<id>.stage.json` + its `enemies` / `paths` files (formats in the content READMEs); `pnpm content:check` (the corridor check of `stage-runtime.test.ts` covers every stage with terrain, and every shipped stage plays to `stageClear`); fly it with `?stage=<id>`, reach its boss with `&skip=boss`; add a `runStage('<id>', fourWayBot(), { godMode: true, observe: rules.observe })` test beside `zone-a.test.ts`, and its own 4-way / capsule-budget checks to `content.test.ts` |
-| Another default stage | `DEFAULT_STAGE_ID` in `@shmup/shell` (until the zone map of M2-10 picks stages) |
+| Another default stage | `DEFAULT_STAGE_ID` in `@shmup/shell`; since M2-10 only a stage that is the campaign's `start` zone gives campaign runs (else the flow plays it as a single stage) |
 | A boss built on `boss.bulwark` | An `enemies` entry whose phases name it, with two or more `gun` parts (the lanes alternate between them in part order); keep the guns ≥ 16 px + beam width + 2 × hurt radius apart and the core between them if the lanes may overlap — the content test's geometry check shows how |
 | A new rule for the 4-way checks | A pure function of the World in `rules.ts`, collected in `createRuleWatch`, with a hand-made test in `rules.test.ts` |
 | A different playtester (8-way, a sloppy player) | Another `PlaytestBot` (`decide(world)` → mask); reuse `scanLanes`; the harness records and replays any bot |
@@ -408,5 +414,9 @@ in the right half of the playfield, with no console errors or atlas warnings.
   while player 1 plays on), and `fourWayBot(player)` flies either slot; the co-op drop scaling
   adds capsules while two ships play, so the capsule budget per checkpoint only grows
   ([coop.md](coop.md)).
-- **M2-10 / M2-11 … M2-14** — the zone map picks stages (replacing `DEFAULT_STAGE_ID`); the other
-  zones, each with a playtest run and its own design-rule checks.
+- **M2-10** (done) — zone A is the campaign's start zone; the map picks the other stages (stub
+  zones B–I on zone A's roster — loaded, corridor-checked and flown to their clear like every
+  shipped stage; the zone-A-only design-rule suite does not cover them yet); the bot faces the first
+  fighting boss slot; the route playtests fly all 16 routes
+  ([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md)).
+- **M2-11 … M2-14** — the real zones, each with a playtest run and its own design-rule checks.

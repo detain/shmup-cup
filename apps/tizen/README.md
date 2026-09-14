@@ -95,7 +95,9 @@ difficulty opens the ship select (M2-05 — the KESTREL, or the Direct-mode MANT
 once and whose speed the remote's Ch− toggles), OK on the KESTREL opens the weapon select (M2-03 —
 remote arrows and OK only; its OPTION row since M2-04, whose FORMATION / ROTATE Options the
 remote's Ch+ spreads in the game), and OK on its START plays **zone A, AZURE VERGE** (M1-18 — `@shmup/shell`
-`defaultStageId`; the dev scenes still fly in open space) with the remote's
+`defaultStageId`; the dev scenes still fly in open space) and, since M2-10, the rest of the run
+across the zone map (the zone tally, the ZONE MAP driven by the remote's ▲ / ▼, OK and Back, the
+stub zones B–I, the ending) with the remote's
 directional pad, its main gun firing on its own (`remoteMode` forces autofire,
 `shmup_feat.md` §4 rule 1), under the core HUD with the power meter. **Back** goes through the
 scene stack — game → pause menu, pause → resume, menus → back, title → **EXIT SHMUP CUP?** →

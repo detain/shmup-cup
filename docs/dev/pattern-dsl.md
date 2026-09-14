@@ -119,7 +119,7 @@ unary `-` / `+`, parentheses, the functions `floor`, `round`, `abs`, `min`, `max
 |---|---|
 | `$rank` | `world.rank` (0–31) when the expression runs |
 | `$rand` | one gameplay-RNG draw in `[0, 1)` per occurrence and evaluation (replay-safe) |
-| `$loop` | `world.rankInputs.loop` (1 until the campaign of M2-10) |
+| `$loop` | `world.rankInputs.loop` (1 — the campaign of M2-10 sets only the stage term; loops come later) |
 | `$i` | the innermost running `repeat`'s index, from 0 (0 outside any) |
 | `$1` … `$9` | the `params` of the reference that inlined the node (0 in a pattern run on its own) |
 

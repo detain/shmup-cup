@@ -164,7 +164,7 @@ Fields (`ITEM_SCHEMA`, hashed in sorted name order):
 |---|---|---|
 | `x`, `y` | f64 | World centre |
 | `vx`, `vy` | f64 | Own velocity (0 for capsules: they stay with the terrain) |
-| `kind` | u8 | `ItemKind` (`Capsule` 0, M2-04: `BlueCapsule` 1, `FreeOption` 2, M2-05: the Direct-mode colour items `DirectRed` 3 … `DirectOctagon` 8 — hashed: append, never renumber) |
+| `kind` | u8 | `ItemKind` (`Capsule` 0, M2-04: `BlueCapsule` 1, `FreeOption` 2, M2-05: the Direct-mode colour items `DirectRed` 3 … `DirectOctagon` 8, M2-10: `OneUp` 9, `BonusCapsule` 10 — hashed: append, never renumber) |
 | `age` | i32 | Ticks since the drop |
 | `flags` | u8 | `ItemFlag`: `Dead` 1 (collected / culled this tick, freed in phase 8), `Magnet` 2 (pulled this tick) |
 
@@ -181,6 +181,13 @@ screen dies — no bullet cancel, no meter advance) instead of `collect`; the **
 carried) drifts with the view, bounces off the playfield's top and bottom, expires after
 `FREE_OPTION_TICKS` (600, blinking the last 120) and gives an Option back (`regainOption`) —
 [options-shields-hunter.md](options-shields-hunter.md#the-option-hunter-coreenemies-corebehaviors).
+Since M2-10 the hidden bonus stages' items: `drop: "oneUp"` → `ItemKind.OneUp` (9, `items/1up`
+— `ONE_UP_SPRITE`, 0 points, +1 life up to `MAX_LIVES` 9 with the critical `ExtraLife` cue, at the
+cap only the pickup sound) and `drop: "bonusCapsule"` → `ItemKind.BonusCapsule` (10,
+`items/capsule-bonus` — `BONUS_CAPSULE_SPRITE`, `BONUS_CAPSULE_SCORE` 1,000 points, the pickup
+sound); both are world-space and taken like a capsule in **both** power-up models (neither
+advances the meter nor becomes a Direct-mode item) —
+[campaign-and-bonus-stages.md](campaign-and-bonus-stages.md#items-corepowerups).
 
 - **Where capsules come from.** The enemy system records every drop of the tick in
   `EnemySystem.outcomes` (`drop: "capsule"` carriers where they die; a formation whose members
@@ -414,7 +421,7 @@ powerups.detonateMegaCrash(0); // debug: clear the screen now
 | To add… | Do this |
 |---|---|
 | An item kind | Append an `ItemKind` code (hashed) and an `ITEM_KINDS` entry (sprite, frames, score) — `ITEM_SPRITES` and `ENGINE_SPRITES` follow; its art in `scripts/assets/procedural/`; what it does in `resolve()`'s pickup switch (capsules `collect`, blue capsules `clearScreen`, freed Options `regainOption` — M2-04, colour items `collectDirect` — M2-05) and, if it drifts and expires, its `itemDrift` / `itemLife` entries (set in the constructor) |
-| A drop kind | `DropKind` in `core/enemies` (M1-08 — content drops first: M2-05 moved `FreeOption` to 4 behind `PowerUp` 3), then map it in `takeDrops` (per power-up model if it differs — `powerup`: a capsule or `dropDirect`) |
+| A drop kind | `DropKind` in `core/enemies` (M1-08 — content drops first: M2-05 moved `FreeOption` to 4 behind `PowerUp` 3, M2-10 to 6 behind `OneUp` 4 / `BonusCapsule` 5), then map it in `takeDrops` (per power-up model if it differs — `powerup`: a capsule or `dropDirect`) |
 | A meter slot rule | `canEquipSlot` / `equipSlot`, the matching `nextAutoSlot` rule, `METER_LABELS` and the `hud/meter-labels` art (`core/ui` `METER_LABEL_FRAMES`); a new slot also needs `METER_SLOT_NAMES` / `MeterSlotName` in `core/config` |
 | A `!` choice | `MegaChoice` / `MEGA_CHOICES` in `core/config` and `MegaEffect` here (same order), its rule in `canEquipMega` and its effect in `applyMega`, a label in `core/scenes` `MEGA_CHOICE_LABELS` ([meter-arsenal.md](meter-arsenal.md#extending-it)) |
 | A shield kind | Append a `ShieldKind` code and name, a `ShieldSpec` in `SHIELD_SPECS` (`absorbsTerrain: true` like the Arm of M2-05; `pods` / `hurtSteps` as the M2-04 kinds show; tiers as `ShieldState.tier` / `charge` and `collectArm` show), its sprite in `SHIELD_SPRITES`, grant it from its slot; keep `absorbShieldHit` / `absorbPodHit` allocation-free and hash any new state in `mixPowerUps` — [options-shields-hunter.md](options-shields-hunter.md#extending-it) |

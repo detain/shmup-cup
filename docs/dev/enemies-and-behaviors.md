@@ -569,7 +569,7 @@ code):
 | A mover | Append the name to `MOVER_TYPES` (`core/data`) and a code to `MoverKind` (never renumber), a variant in `MOVER_SCHEMA`, its parameters in `compileSpecs` (`core/enemies`), its start state in `setMover` and a `move…` function in `updateMover` (numbers only, whole-number calls), the docs (module docblock, `content/enemies/README.md`, this page), tests incl. the allocation guard |
 | An enemy spec field | `EnemySpec` + `ENEMY_SCHEMA` (+ `optional` and a default in `completeEnemy`), a typed array in the `SpecTable` if per-tick code needs it, the README sample and `example.enemies.json` |
 | An `Enemy` field | The class field, its reset in the spawn function, and `mixEnemy` in `core/debug` (in a fixed place — or replays diverge unnoticed) |
-| A drop kind | Append to `ENEMY_DROPS` and `DropKind` (code = position + 1), the schema picks it up; map it to an item in `core/powerups` `takeDrops` (capsules and, since M2-04, blue capsules and freed Options; since M2-05 `powerup` — per power-up model — [powerups-and-shields.md](powerups-and-shields.md#extending-it)). Content drops come first: M2-05 put `PowerUp` at 3 and moved the engine-only `FreeOption` to 4 |
+| A drop kind | Append to `ENEMY_DROPS` and `DropKind` (code = position + 1), the schema picks it up; map it to an item in `core/powerups` `takeDrops` (capsules and, since M2-04, blue capsules and freed Options; since M2-05 `powerup` — per power-up model — [powerups-and-shields.md](powerups-and-shields.md#extending-it)). Content drops come first: M2-05 put `PowerUp` at 3 and moved the engine-only `FreeOption` to 4, M2-10 put `OneUp` 4 / `BonusCapsule` 5 before it (`FreeOption` 6) |
 | An Option Hunter | An entry with `"optionHunter": true`, `"script": "hunter.option"` and a `variant`, no `megaCrashImmune` (only Mega Crash and the blue capsule can kill it) — [options-shields-hunter.md](options-shields-hunter.md#extending-it) |
 | A particle cue | Append to `FX_CUES` (never renumber) and bind it to presets in `content/fx/` ([fx-and-game-feel.md](fx-and-game-feel.md#extending-it)); a visual for an existing sound needs only an `sfx` trigger there |
 | A new use of the tick outcomes | Read `world.enemies.outcomes` after phase 7 of the same tick (it is reset in the next phase 3) |
@@ -643,6 +643,10 @@ code):
   (`DropKind.PowerUp` 3, `FreeOption` now 4) and `cube.pincer` for the Direct mode's pincer waves
   ([direct-mode.md](direct-mode.md)); **M2-07** (done) — the `Ballistic` mover, `destroy`,
   death behaviours, the gimmick calls of the script API and six gimmick behaviours
-  ([advanced-stages.md](advanced-stages.md)).
+  ([advanced-stages.md](advanced-stages.md)); **M2-10** (done) — the running totals
+  `EnemySystem.stats` (`EnemyStats`: regular enemies spawned and killed by the players, ground
+  ones apart; never reset, hashed — the zone tally's kill rate and the `ground` bonus entrance
+  read them) and the bonus stages' drops `oneUp` / `bonusCapsule` (`DropKind` 4 / 5, `FreeOption`
+  now 6) ([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md)).
 - **M1-18** (done) — zone A's roster on these behaviours, its paths, and HALCYON BULWARK's
   `boss.bulwark` ([zone-a-and-playtest.md](zone-a-and-playtest.md)).

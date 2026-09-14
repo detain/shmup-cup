@@ -108,10 +108,10 @@ shmup-cup/
 │   └── generated/          pipeline output (atlas/main.png + main.json, cache) — ignored
 ├── scripts/                repo-level Node scripts: clean.mjs, generate-assets.mjs (pnpm assets) + assets/ (PNG encoder, sprite sources, procedural generators, packer, font, the `@flash` and — M2-06, coop.mjs — player 2's `@p2` palette-swap siblings; the raster-bands generator — M2-08; the bosses generator — turret heading frames, orb, raid hull, captain shell — M2-09), gen-trig-tables.mjs, audio-preview.mjs (pnpm audio:preview → WAV files), golden-update.mjs (pnpm golden:update), content/tiled-import.mjs (pnpm content:tiled: a Tiled map → stage JSON — M2-07)
 ├── types/                  ambient declarations for the Vite virtual modules (virtual:shmup-content, virtual:shmup-assets) and the build-info defines (build-info.d.ts: __SHMUP_DEV__, __SHMUP_BUILD__)
-├── test/                   cross-package integration tests (Vitest project "integration", part of `pnpm test`); playtest/ = headless playtest harness + 4-way bot + design rules (M1-18, same project); golden/ = golden replays + their test (M1-19, same project; two co-op runs since M2-06, three gimmick-range runs since M2-07, one raster-range run since M2-08, four advanced-boss runs since M2-09); scripts/content/ = the Tiled importer's tests + its fixture map and expected JSON (M2-07); bench/ = `pnpm bench` stress benchmark (own Vitest config, not in `pnpm test`); e2e/ = Playwright browser smoke tests (`pnpm test:e2e`)
+├── test/                   cross-package integration tests (Vitest project "integration", part of `pnpm test`); playtest/ = headless playtest harness + 4-way bot + design rules (M1-18, same project); golden/ = golden replays + their test (M1-19, same project; two co-op runs since M2-06, three gimmick-range runs since M2-07, one raster-range run since M2-08, four advanced-boss runs since M2-09, three bonus-stage runs since M2-10); playtest/campaign.ts = the zone-map route harness (M2-10); scripts/content/ = the Tiled importer's tests + its fixture map and expected JSON (M2-07); bench/ = `pnpm bench` stress benchmark (own Vitest config, not in `pnpm test`); e2e/ = Playwright browser smoke tests (`pnpm test:e2e`)
 ├── docs/
 │   ├── client/             player/tester docs
-│   └── dev/                contributor docs (this file, architecture, engine-foundations, content-data, asset-pipeline, rendering-and-shell, sim-world, stage-runtime, enemies-and-behaviors, fx-and-game-feel, scenes-and-ui, saves-and-options, zone-a-and-playtest, debug-and-replays, difficulty-and-rank, pattern-dsl, meter-arsenal, options-shields-hunter, direct-mode, coop, advanced-stages, presentation-polish, api-reference, …)
+│   └── dev/                contributor docs (this file, architecture, engine-foundations, content-data, asset-pipeline, rendering-and-shell, sim-world, stage-runtime, enemies-and-behaviors, fx-and-game-feel, scenes-and-ui, saves-and-options, zone-a-and-playtest, debug-and-replays, difficulty-and-rank, pattern-dsl, meter-arsenal, options-shields-hunter, direct-mode, coop, advanced-stages, presentation-polish, advanced-bosses, campaign-and-bonus-stages, api-reference, …)
 ├── tools/                  standalone tools, NOT workspace members (own package.json/lockfile, npm not pnpm)
 │   └── input-probe/        Tizen diagnostic .wgt: remote/gamepad/display measurements (see input-probe.md)
 └── shmup_feat.md  shmup_tech.md  input_probe_spec.md  shmup_plan.md  shmup_progress.md  CHANGELOG.md  README.md  LICENSE (MPL-2.0)
@@ -202,5 +202,8 @@ DSL, bending lasers, cancel points, colour-blind palettes), [meter-arsenal.md](m
 (Option types, meter shields, the Option Hunter, the blue capsule), [direct-mode.md](direct-mode.md)
 (Direct mode, the MANTA, the ship select), [coop.md](coop.md) (two-player co-op, player seats, the
 split keyboard), [advanced-stages.md](advanced-stages.md) (destructible terrain, moving blocks,
-branches, stage gimmicks, the Tiled importer), [api-reference.md](api-reference.md) and
+branches, stage gimmicks, the Tiled importer), [advanced-bosses.md](advanced-bosses.md) (captains,
+raids, double / inner bosses, timers, the HP bar, boss rushes),
+[campaign-and-bonus-stages.md](campaign-and-bonus-stages.md) (the zone map, campaign runs, the zone
+tally, bonus stages, the ending hook), [api-reference.md](api-reference.md) and
 [conventions.md](conventions.md).

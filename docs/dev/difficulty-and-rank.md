@@ -131,7 +131,7 @@ rank = base + floor(growth × (8·(loop − 1) + (stage − 1) + power + special
 |---|---|---|
 | `difficultyBase` | `config.rankBase` | Easy 0, Normal 2, Hard 4, Arcade 6 (rounded) |
 | `growth` | `config.rankGrowth` | Easy 0.5, the others 1; 0 = a constant rank |
-| `loop`, `stage` | the campaign | 1 and 1 — M2-10 sets them (`world.rankInputs.loop / stage`) |
+| `loop`, `stage` | the campaign | `stage` = the zones cleared before + 1 in a campaign run (M2-10 — `core/scenes` `prepareRunWorld`; 1 in single-stage runs and practice at zone A); `loop` stays 1 (loops are M3) |
 | `power` | `powerRank(…)` of the most powerful active ship | written every tick by `updateWorldRank` |
 | `special` | no-miss streaks, loop bonuses, debug overrides | 0 |
 
@@ -184,7 +184,7 @@ penalty is applied in phase 7 of the death tick, so from the next phase 3 its re
 lowers the rank. `createWorld` computes the rank once from the inputs and calls `updateWorldRank`
 again after the starting loadout is applied, so `loadout: 'full'` counts from tick 0;
 `continueWorld` calls it after the continue. Code that changes `rankInputs` outside a tick (the
-campaign's loop / stage in M2-10) calls `updateWorldRank` itself.
+campaign's stage term — M2-10's `prepareRunWorld`, at tick 0 of each zone's World) calls `updateWorldRank` itself.
 
 The debug overlay's `RANK` (`core/debug` `DebugCounters.rank`) now moves during a run.
 
@@ -479,7 +479,7 @@ ship's.
 - **M2-06** (done) — per-player continues (`continuesLeft`, a mid-game continue with START in
   co-op, `continueWorld`'s player mask, the countdown's per-player OKs); the rank's power term is
   still the strongest active ship's ([coop.md](coop.md)).
-- **M2-10** — the campaign sets `rankInputs.loop` / `stage` (8 per loop, 1 per stage).
+- **M2-10** (done) — a campaign run sets `rankInputs.stage` to the zones cleared + 1 in every zone's World (so zone A plays at 1 and a final zone at 5 — +4 rank at growth 1); a practice run uses the practice zone's depth + 1; the loop stays 1 ([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md#carrying-the-players)).
 - **M2-15 / M3-01** — recording the scene flow (continues included) in replays.
 - **M2-16** — the chosen difficulty saved with the options; the Options screen's `deathPenalty` /
   `startingLives`.

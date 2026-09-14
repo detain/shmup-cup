@@ -22,7 +22,9 @@ work too, and every device drives both the game and the menus.
 > ([preview-build.md](preview-build.md#pausing-quitting-and-the-end-screens)). Losing a ship needs
 > no button: the next one flies in by itself; with continues left, OK on the **CONTINUE?**
 > countdown carries on from the last checkpoint (Back gives up), and after **GAME OVER** OK
-> returns to the title. In a **2 PLAYERS** game a second player joins at any time with START on a
+> returns to the title. After a zone's boss the **ZONE MAP** opens: ▲ ▼ choose the next zone, OK
+> launches it, Back asks **QUIT TO TITLE?**; after the last zone OK leaves the **ending** for the
+> title ([preview-build.md](preview-build.md#the-zone-map-a-run-through-nine-zones)). In a **2 PLAYERS** game a second player joins at any time with START on a
 > gamepad (or Enter on the SPLIT KEYBOARD in a browser) — [Two players](#two-players).
 > **OPTIONS** (on the title and in the pause menu) sets the game's volumes, lets you choose the
 > control profile (**CONTROLS**, [below](#control-profiles)) and the enemy bullets' colours
@@ -47,15 +49,15 @@ and selects a menu entry in menus; Back pauses the game and goes back in menus.
 
 | Action | What it does |
 |---|---|
-| Move | Game: fly the ship (8 directions where the device allows it; diagonals are no faster than straight moves, and the ship stops as soon as you let go). Menus: move the highlight (▲ ▼; ◀ ▶ between YES and NO, in the Options screen ◀ ▶ turn a volume down / up, change the control profile, the bullet colours, SCALE or FLASHES, or set SHAKE / HITBOX / BOSS HP off (◀) or on (▶), and in the WEAPON SELECT screen ◀ ▶ change the highlighted line's choice; in the SHIP SELECT box ▲ ▼ pick the ship) — holding a direction repeats the move after about a third of a second, then about ten times a second |
+| Move | Game: fly the ship (8 directions where the device allows it; diagonals are no faster than straight moves, and the ship stops as soon as you let go). Menus: move the highlight (▲ ▼; ◀ ▶ between YES and NO, in the Options screen ◀ ▶ turn a volume down / up, change the control profile, the bullet colours, SCALE or FLASHES, or set SHAKE / HITBOX / BOSS HP off (◀) or on (▶), and in the WEAPON SELECT screen ◀ ▶ change the highlighted line's choice; in the SHIP SELECT box ▲ ▼ pick the ship; on the ZONE MAP ▲ ▼ choose the next zone — ◀ ▶ do nothing there) — holding a direction repeats the move after about a third of a second, then about ten times a second |
 | Shot | Main gun. Today it fires **on its own** on every device (automatic fire is on by default, and always on with the TV remote), so you never need to press it; once automatic fire can be switched off in the Options menu, hold it to fire |
 | Sub | Missiles / sub-weapon, once you have them — automatic in the same way |
 | PowerUp | KESTREL: take the highlighted power-up of the power meter — one per press (holding the button never takes a second); a press on an empty or maxed-out slot does nothing. **Held** for a quarter of a second or more, it also spreads FORMATION / ROTATE Options for as long as you hold it. MANTA: nothing (its colour items work when you touch them) |
 | Special | Spread FORMATION / ROTATE Options out, and back in on the next press (a press, never a hold); TRAIL and SNAKE Options ignore it |
 | Speed | MANTA: switch to its next speed — middle → fast → slow → middle — one step per press, with a ding. KESTREL: nothing (it speeds up with the power meter's SPEED UP) |
 | Pause | Pause / resume (the pause menu: RESUME, OPTIONS, RETRY STAGE, QUIT TO TITLE) |
-| Confirm | Menus: select the highlighted entry; on the title first leaves `PRESS OK`; in the WEAPON SELECT screen OK also steps the highlighted choice, opens ORDER and, on START, begins the game. A press made while a menu is just appearing is remembered for a moment, not lost |
-| Back | Menus: previous screen (in the pause menu: resume; in a YES / NO question: NO; in the Options screen: keep the settings and close it, like BACK; in the DIFFICULTY box: back to the title menu; in the SHIP SELECT box: back to the DIFFICULTY box; in the WEAPON SELECT screen: back to the SHIP SELECT box; in its AUTO ORDER box: keep the order and close it, like DONE; on the CONTINUE? countdown: give up — GAME OVER); on the TV's title screen it asks **EXIT SHMUP CUP?** — only YES quits |
+| Confirm | Menus: select the highlighted entry; on the title first leaves `PRESS OK`; in the WEAPON SELECT screen OK also steps the highlighted choice, opens ORDER and, on START, begins the game; on the zone result OK skips ahead, on the ZONE MAP it launches the chosen zone, on the ending card (after a second) it returns to the title. A press made while a menu is just appearing is remembered for a moment, not lost |
+| Back | Menus: previous screen (in the pause menu: resume; in a YES / NO question: NO; in the Options screen: keep the settings and close it, like BACK; in the DIFFICULTY box: back to the title menu; in the SHIP SELECT box: back to the DIFFICULTY box; in the WEAPON SELECT screen: back to the SHIP SELECT box; in its AUTO ORDER box: keep the order and close it, like DONE; on the CONTINUE? countdown: give up — GAME OVER; on the ZONE MAP: ask **QUIT TO TITLE?**); on the TV's title screen it asks **EXIT SHMUP CUP?** — only YES quits |
 
 If you are holding a button at the moment a menu opens (or closes), it keeps doing only what
 it does in both sets until you let go — holding the Sub key while the pause menu appears will

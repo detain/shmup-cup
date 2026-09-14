@@ -218,12 +218,17 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   `fourWayBot(player)` flies either slot — the co-op golden replays fly player 2 with a second bot). Part of the
   `integration` project, so of `pnpm test`; the zone A run with god mode must kill HALCYON
   BULWARK and reach the stage clear in 3–6 minutes, the run without it only reports its deaths.
+  Since M2-10 `campaign-routes-b` / `-c.test.ts` fly all 16 routes of the zone map in god mode
+  with the campaign harness (`test/playtest/campaign.ts` — each zone built as the scene flow
+  builds it, the players carried), split in two files so the halves run in parallel
+  ([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md#tests)).
   `pnpm exec vitest run --project integration test/playtest --reporter=verbose` prints the runs —
   see [zone-a-and-playtest.md](zone-a-and-playtest.md#the-playtest-testplaytest).
 - **Golden replays** (M1-19, plan §1.3): `test/golden/golden.test.ts` plays the committed
-  replays — twenty-five since M2-09: seventeen of zone A, three of the `gimmick-range` dev stage,
+  replays — twenty-eight since M2-10: seventeen of zone A, three of the `gimmick-range` dev stage,
   one of the `raster-range` dev stage, four of the advanced-boss dev stages (`captain-range`,
-  `raid-range` twice, `twin-range`) (`test/golden/*.replay.json`) — back and requires every state hash and the
+  `raid-range` twice, `twin-range`), three of the bonus-stage dev stages (`bonus-range` twice,
+  `bonus-vault`) (`test/golden/*.replay.json`) — back and requires every state hash and the
   recorded outcome to match — part of `pnpm test` (the `integration` project). A failure means
   the simulation changed; re-bless an intended change with `pnpm golden:update` and say why in
   the commit message ([debug-and-replays.md](debug-and-replays.md#golden-replays-testgolden)).
@@ -297,7 +302,13 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   whole playfield and the camera panning round it, `BOSS` and the red HP bar in zone A's HUD with
   the saved option, a captain fighting while the camera scrolls, and the twins on the Tizen build
   from `file://` — the resting one on the back layer, the swap at the turn
-  (`advanced-bosses.spec.ts`, M2-09). The gameplay specs
+  (`advanced-bosses.spec.ts`, M2-09), and the zone map: zone A's clear (the tally, then the map;
+  ArrowDown + Enter launches zone C), the remote's Back on the map asking and OK launching zone B
+  (`zone-map.spec.ts`), a whole run A → B → D → F → H to the ending and the saved run with the zone
+  it reached, `?stage=bonus-range`'s digit entrance flying into `bonus-vault` with the 1UP and
+  bonus capsule drawn in their colours, and the Tizen build's OK skipping a tally and launching
+  the next zone (`campaign-run.spec.ts`, M2-10 — the specs clear zones through
+  `window.__shmupDebug`). The gameplay specs
   open `?scene=flight` (bare gameplay, open space unless `?stage=` names a stage) since M1-16;
   specs comparing captures a set number of ticks apart freeze the sim and step exact ticks
   (`test/e2e/frame-advance.ts`, M1-19) instead of counting rAF frames. Since M1-19 the suite runs

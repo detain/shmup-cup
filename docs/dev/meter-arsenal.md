@@ -435,7 +435,7 @@ resolveArsenal(db, edited)[WeaponRole.Missile]?.name; // → 'PHOTON TORPEDO'
 | The HUD shows `MISSILE` for a Type B ship | The content's weapon uses a behaviour without a label frame, or the atlas is older than the 16-frame `hud/meter-labels` — run `pnpm assets` |
 | The preview makes no sound / never loses its ship | By design: own event queue (cleared every tick) and its own god mode |
 | The weapon select allocation guard fails after adding targets to the range | Spawns create coroutines (D29) — the guard flies a copy of the range without targets |
-| `RangeError: the scenes need N string slots` | The flow's UI list has 192 slots since M2-05 (160 in M2-03); a new row or scene must fit |
+| `RangeError: the scenes need N string slots` | The flow's UI list has 224 slots since M2-10 (192 since M2-05, 160 in M2-03); a new row or scene must fit |
 | A script or spec that starts a game from the title stops on `SHIP SELECT` | Since M2-05 the shipped content has two ships: OK on the KESTREL (focused first) opens this screen — five OKs from `PRESS OK` |
 | Code reading `liveCounts[shooter * 4 + role]` broke | Since M2-05 the stride is `WEAPON_ROLE_SLOTS` (36): the Direct-mode roles follow the four meter roles |
 

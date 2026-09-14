@@ -194,8 +194,11 @@ and caps the score, name `---` until the name entry of M2-15). `SaveStore.record
 entry)` does the insertion in the store and refuses a malformed mode key or a 33rd table;
 `hiScores(modeKey)` / `bestScore(modeKey)` read a table.
 
-What the scene flow records (`FlowControl.recordRun`, when the game-over or stage-clear screen
-opens — M1's run ends at the stage clear, since there is one zone):
+What the scene flow records (`FlowControl.recordRun`, when the game-over screen opens, when a
+single-stage run's stage-clear screen opens, or — M2-10 — when a campaign run's **final** zone is
+cleared, just before its ending; a zone cleared on the way to the zone map only counts
+`stagesCleared` and flushes; a practice run records nothing —
+[campaign-and-bonus-stages.md](campaign-and-bonus-stages.md#saves-and-hi-scores)):
 
 - a row per playing player: player 1 always, player 2 when active — `reached` = the World's
   stage id (`''` in open space), `mode` `1p` (`2p` for both rows of a co-op game — M2-06; they go

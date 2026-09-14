@@ -151,8 +151,9 @@
  *
  * **Rank, extends and continues (M2-01).** At the end of phase 3 the World recomputes its rank
  * ({@link updateWorldRank}): `core/rank` `computeRank` over {@link World.rankInputs} — the
- * config's `rankBase` / `rankGrowth`, the loop and stage number (1 / 1 until the campaign of
- * M2-10 sets them) and the power term of the most powerful active ship (`powerRank`: Missile,
+ * config's `rankBase` / `rankGrowth`, the loop and stage number (1 / 1 at creation; a campaign
+ * run — M2-10, `core/scenes` `prepareRunWorld` — sets the stage term to the zones cleared + 1, the
+ * loop stays 1) and the power term of the most powerful active ship (`powerRank`: Missile,
  * Double / Laser, Options, shield) — and hands a changed rank to the bullet system, so the fire
  * primitives of phase 4 use it. The scores give extra lives (`core/scoring` extends). When the
  * game is over and continues are left ({@link canContinue}: `config.continues` minus

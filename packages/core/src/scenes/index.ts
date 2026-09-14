@@ -350,6 +350,8 @@ export const moduleInfo = defineModule({
     'shmup_feat.md §16',
     'shmup_feat.md §10',
     'shmup_feat.md §5',
+    'shmup_feat.md §14',
+    'shmup_feat.md §15',
   ],
 });
 

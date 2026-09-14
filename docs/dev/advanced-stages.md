@@ -437,7 +437,7 @@ terrain.destroyed; // → 0; terrain.resets → 1
 | A new block motion | Extend the `block` event schema, `MovingBlockSystem`'s compiled arrays and `place()` (whole-pixel boxes); remember the restart respawn |
 | A trigger shape other than a rectangle | Compile it next to `triggerX0…` in `compileStage` and test it in `probe()`; keep the ordinal ≤ 32 (one mask) |
 | Another camera-key feature | See [stage-runtime.md](stage-runtime.md#extending-it): compiled array, `applyKey` **and** the restart replay, new `StageSlot`s appended |
-| Branches that persist between zones | The zone map of M2-10 (run-state flags); stage flags stay per stage |
+| Branches that persist between zones | A run flag of the campaign (M2-10: `RUN_FLAG_NAMES` / `core/scenes` `RunFlag`, accumulated by `RunState` — [campaign-and-bonus-stages.md](campaign-and-bonus-stages.md#extending-it)); stage flags stay per stage |
 | Another Tiled class | A branch in `convertTiledMap`, its fields list, the module docblock, the fixture map and its expected JSON |
 
 ## Tests
@@ -483,8 +483,10 @@ terrain.destroyed; // → 0; terrain.resets → 1
   target after a brake to a lock, with the timeline (events, keys, checkpoints, trigger disarms)
   held where the follow began ([advanced-bosses.md](advanced-bosses.md#battleship-raids),
   [stage-runtime.md](stage-runtime.md#following-a-target-m2-09)).
-- **M2-10** — the zone map, run-state flags beyond one stage, bonus-stage entrances (a marked gap,
-  all ground targets destroyed) that can reuse region triggers and the destroyed count.
+- **M2-10** (done) — the zone map, run flags beyond one stage, and the hidden bonus-stage entrances
+  (a marked gap, all ground targets destroyed, a score digit) as their own `bonus` stage events
+  (`core/stage` `BonusEntrances` — a gap is marked with terrain or moving blocks, as in
+  `bonus-range`) ([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md#hidden-bonus-stages)).
 - **M2-11 … M2-14** — the zones: BRINE NEBULA (splitting bubbles), MAGMA DEEP (volcanoes, falling
   rocks, a destructible maze), CELL VAULT (tissue walls, tentacles), PRISM LABYRINTH (the cube
   rush), IRON CITADEL (moving floors) — authored by hand or in Tiled.

@@ -52,7 +52,9 @@ content on every machine.
 since M2-01 the `rules` kind holds the difficulty presets and enemies may carry `revenge` bullets
 (see [difficulty-and-rank.md](difficulty-and-rank.md#the-rules-kind-coredata)), and since M2-02
 the `patterns` kind holds the bullet pattern DSL (compiled at load into one program bank — see
-[pattern-dsl.md](pattern-dsl.md)), the `rules` kind a `scoring` section and enemies a `pattern`. Both
+[pattern-dsl.md](pattern-dsl.md)), the `rules` kind a `scoring` section and enemies a `pattern`, and
+since M2-10 the `campaign` kind holds the zone map (see
+[campaign-and-bonus-stages.md](campaign-and-bonus-stages.md#the-campaign-file-coredata-campaign)). Both
 apps register the plugin and their
 `main.ts` imports `virtual:shmup-content`; `@shmup/shell`'s `bootShell()` validates it with
 `loadGameContent()` (core kinds through `loadContent()`, foreign kinds through the
@@ -66,7 +68,7 @@ when there is any issue, and passes `db` to `createGame` (M1-04,
   selects the schema; the loader does not care about folder or file name (the content test
   does: files must be named `<folder>/<name>.<kind>.json`).
 - Core kinds (`CONTENT_KINDS`): `player`, `weapons`, `enemies`, `paths`, `stage`, `tileset`,
-  `rules` (M2-01), `patterns` (M2-02). Any other kind is
+  `rules` (M2-01), `patterns` (M2-02), `campaign` (M2-10). Any other kind is
   returned untouched in `foreign`, in path order, for its owning package to validate
   (`input-profiles` → input-web `rebind` since M1-05 — see
   [input-profiles.md](input-profiles.md); `fx` → render-pixi `particles` since M1-14 — see
@@ -115,7 +117,11 @@ const game = createGame(platform, { seed }, db);
    **collected** here (in path order) — it is compiled after interning, below. Since M2-05 a
    ship without `mode` / `startSpeedLevel` gets `'meter'` / 0 (a `startSpeedLevel` past its
    `speeds` is an issue and the ship is left out), a `weapons` file's `families` join
-   `db.weaponFamilies`, and a stage without `directItems` gets `[]`.
+   `db.weaponFamilies`, and a stage without `directItems` gets `[]`. Since M2-10 the first
+   `campaign` file is checked as a graph and completed (`completeCampaign`: depths, rows, exits,
+   finals, route count, ending masks) into `db.campaign` — a second one is an issue and is
+   ignored — and each stage's `bonus` events are checked and their defaults filled
+   (`checkBonusEvent`).
 7. **Intern** sprite and script names: every distinct name gets an index in *sorted* order
    (`db.sprites`, `db.scripts`), independent of which file mentioned it first. The names in
    `options.extraSprites` join the sprite names first (M1-09: hosts pass `core/world`
@@ -137,7 +143,9 @@ const game = createGame(platform, { seed }, db);
    `inner` boss that is not another stage boss or whose chain loops, a `minion` that is a boss and
    a stage `rush` entry that is not a stage boss. Then (M2-05, `checkWeaponFamilies`) every weapon a Direct-mode family's
    level fires must belong in the family's slot (`main` / `sub`) — issue path
-   `<file>:families[f].levels[l].shots[k].weapon`.
+   `<file>:families[f].levels[l].shots[k].weapon`. Then (M2-10) `checkBonusReferences` — a
+   `bonus` event must name a stage of type `bonus` — and `checkCampaignStages` — a campaign zone's
+   stage must not be one (issue path `<campaign file>:zones[i].stage`).
 10. **Expand stage terrain** (third pass, M1-07): every stage with a `tilemap` whose tileset
    resolved gets its tile grid built from the `heightfield` generator and / or RLE rows into
    `StageSpec.terrain` (`core/data/tilemap.ts`); since M2-07 the same pass resolves each
@@ -226,7 +234,9 @@ list plus an id → position map: `ships`/`shipIndex`, `weapons`/`weaponIndex`,
 `createGame` uses `core/config` `DEFAULT_DIFFICULTY_TABLE`) and `scoring` (M2-02: a frozen
 `ScoringRules`, or `null` — the bullet system then uses `DEFAULT_SCORING_RULES`); from the
 `patterns` kind (M2-02) `patterns`, the compiled `PatternBank` (`code`, `actions`,
-`actionIndex`, `entries`, `bullets`; `EMPTY_PATTERN_BANK` without pattern files). Lists are
+`actionIndex`, `entries`, `bullets`; `EMPTY_PATTERN_BANK` without pattern files); from the
+`campaign` kind (M2-10) `campaign`, the completed `CampaignSpec` (or `null` without a campaign
+file — the scene flow then plays single stages). Lists are
 in path-then-document order. Systems resolve what they need **once** (at session or stage
 start) and keep the numbers; per-tick code indexes arrays only — no `Map.get`, no string
 compares (zero-allocation rule, [conventions.md](conventions.md#performance-zero-allocation-in-hot-paths)).
@@ -482,3 +492,13 @@ references resolve into `partnerId` / `innerId` / `minionId`), boss parts `radiu
 and `turn`, and stages the optional `type` (`normal` / `bossRush`) and `rush` — every one
 defaulted, no format change; the content files `enemies/advanced-bosses.enemies.json` and
 `stages/{captain,raid,twin,gauntlet}-range.stage.json` ([advanced-bosses.md](advanced-bosses.md#data-coredata)).
+
+M2-10 (done) — the new core kind `campaign` (`content/campaign/main.campaign.json` + README +
+`example.campaign.json`; `ContentDb.campaign`), the stage type `bonus`, the stage event `bonus`
+(appended to `STAGE_EVENT_TYPES`; a new `s.ref('stage')` site, so `stageId` is resolved on it too),
+the drops `oneUp` / `bonusCapsule` (`ENEMY_DROPS` codes 4 / 5); the content files
+`stages/zone-b … zone-i.stage.json`, `stages/bonus-range.stage.json`,
+`stages/bonus-vault.stage.json` and `enemies/bonus.enemies.json` — which sorts before `zone-a…`,
+so zone A's enemy spec indices shifted and the goldens were re-blessed. Shell tests that needed
+an unowned foreign kind now use `strings` (M2-16's kind) instead of `campaign`
+([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md)).

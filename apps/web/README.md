@@ -70,7 +70,12 @@ advanced-boss ranges: `?stage=captain-range` (four mid-bosses on the scrolling c
 around, with LEVIATHAN HEART inside and a 90-s time limit), `?stage=twin-range` (the EMBER AND
 FROST TWINS taking turns; the survivor enrages) and `?stage=gauntlet-range` (a boss rush); OPTIONS
 → BOSS HP shows the boss HP bar in the top HUD bar (guide:
-[`docs/dev/advanced-bosses.md`](../../docs/dev/advanced-bosses.md)). Since M1-14 hits
+[`docs/dev/advanced-bosses.md`](../../docs/dev/advanced-bosses.md)). Since M2-10 a game on zone A
+(the default) is a **campaign run** across the zone map — the zone tally, the ZONE MAP, stub zones
+B–I, the ending; `?skip=boss` then starts every zone near its boss — while any other `?stage=`
+plays alone; `?stage=zone-b` … `zone-i` flies one stub zone, and `?stage=bonus-range` has the three
+hidden bonus-stage entrances into `bonus-vault` (guide:
+[`docs/dev/campaign-and-bonus-stages.md`](../../docs/dev/campaign-and-bonus-stages.md)). Since M1-14 hits
 have **game feel**: explosions, sparks, debris, cancel sparkles and a muzzle flash from the
 presets of `content/fx/`, the screen shake of a lost ship or a boss's final blast, flashes
 (behind a ≤ 3-a-second limiter), the WARNING's dim and rising score numbers;

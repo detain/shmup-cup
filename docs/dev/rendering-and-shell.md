@@ -446,7 +446,7 @@ const shell = await bootShell({
 | 4 | `createPixiRenderer(...)` — WebGL1 first; `fxSeed` = the game's seed xor a salt, `effects` = `ShellOptions.effects`, `countDrawCalls` only with `ShellOptions.debugTools` (M1-19) | `WEBGL IS NOT AVAILABLE` |
 | 5 | `options.platform(renderer)`; then (M1-17) `loadSave(platform.storage)` — never fails: a corrupt or unreadable save means defaults, its text copied to `save.corrupt` — `createSaveStore`, `applyAudioOptions(audio, save.options.audio)`, and with `options.inputProfiles` its `choices()`, `apply(savedId, 'save')` and `active()`; then `createGame(platform, gameConfig, content.db, options)` — `{ scenes: 'boot', save, inputProfiles: { choices, active } }` for the default scene `game` (the scene flow, M1-16), none for the dev scenes (bare gameplay) — [saves-and-options.md](saves-and-options.md#the-shells-side) | `SHMUP CUP FAILED TO START` (the platform factory, the profile callbacks or `createGame` threw) |
 | 5a | Audio (M1-15): `createAudioEngine({ sfx, music, loader })`, `engine.loadSfx()` (bar labelled `LOADING SOUND`), then for a booted stage `engine.prepareMusic(stage.id, stageMusicCues(stage))` (`LOADING MUSIC`; open space prepares none); the scene flow adds the title theme (and the stage-clear / game-over jingles in open space), then `game.scenes.finishBoot()` — [audio.md](audio.md#the-shells-wiring) | `AUDIO FAILED TO LOAD` (`AudioLoadError: could not load <url>: …`) |
-| 6 | `renderer.setFxContent(shell.fx)`; `applyDisplayOptions(renderer, save.options.display)` (M2-02: the bullet palette — before the sprite names are resolved; M2-08: the scale mode, shake, flashing and hitbox markers — then `ShellOptions.effects.screenShake` / `reduceFlashing` override them), `renderer.setInterpolation(interpolation === 'on')` and the refresh probe (M2-08); scene set up (the scene flow: `createSceneView(game)`, its name table + `bindWorld(view.backdrop)`; free flight / showcase / fx gallery: the scene's name table + `bindWorld(scene.world)`; calibration: content's names and a frame without a world), dispatcher created — in the scene flow and free flight with `connectFxEvents` (M1-14) and `connectAudioEvents(events, engine, camera)` (M1-15; the flow's `sceneView.camera`, free flight's `world.view.camera`); in the scene flow also `connectOptionEvents(events, audio, …)` (M1-17: the Options screen's volumes and profile, live; M2-02: the bullet palette → `renderer.setBulletPalette`; M2-08: the renderer as the display target — scale mode, shake, flashing, hitbox markers) | — |
+| 6 | `renderer.setFxContent(shell.fx)`; `applyDisplayOptions(renderer, save.options.display)` (M2-02: the bullet palette — before the sprite names are resolved; M2-08: the scale mode, shake, flashing and hitbox markers — then `ShellOptions.effects.screenShake` / `reduceFlashing` override them), `renderer.setInterpolation(interpolation === 'on')` and the refresh probe (M2-08); scene set up (the scene flow: `createSceneView(game)`, its name table + `bindWorld(view.backdrop)`; free flight / showcase / fx gallery: the scene's name table + `bindWorld(scene.world)`; calibration: content's names and a frame without a world), dispatcher created — in the scene flow and free flight with `connectFxEvents` (M1-14) and `connectAudioEvents(events, engine, camera)` (M1-15; the flow's `sceneView.camera`, free flight's `world.view.camera`); in the scene flow also `connectOptionEvents(events, audio, …)` (M1-17: the Options screen's volumes and profile, live; M2-02: the bullet palette → `renderer.setBulletPalette`; M2-08: the renderer as the display target — scale mode, shake, flashing, hitbox markers) and `connectStagePreparation(events, engine, stages, stageMusicCues)` (M2-10: `PrepareStage` → the stage's music set) | — |
 | 7 | Suspend → `input.clear()` + `audio.suspend()`; resume → `audio.resume()`; window `blur` → `input.clear()` (M1-17 — a window without focus never sends its key-ups); audio unlock (first `keydown` / `pointerdown` in the capture phase, or immediately) followed by `engine.attach(audio)` right after `unlock()` returns and again when it resolves; `resize` → `renderer.resize()` | — |
 | 8 | rAF loop started, overlay removed, canvas marked `running`, `data-shmup-scene` = the top scene (`title`) or the dev scene, and `data-shmup-boot-ms` = the launch-to-ready time (M1-17, `Shell.bootTiming`); then, in dev / test builds, the debug tools from `ShellOptions.debugTools` (M1-19: keys, `window.__shmupDebug`, the overlay — before the first frame, which rAF runs later) | — |
 
@@ -547,8 +547,14 @@ the app's `inputProfiles.apply(id, 'options')`, and since M2-02 the `BulletPalet
 `renderer.setBulletPalette(BULLET_PALETTES[param])`, and since M2-08 the `ScaleMode`,
 `ScreenShake`, `ReduceFlashing` and `ShowHitbox` events → the renderer (`setScaleMode`,
 `effects.settings`, `setShowHitbox`)
-([saves-and-options.md](saves-and-options.md#live-changes-the-useroption-event)). Only `HitStop`,
-`Rumble` and `PowerUp` are still counted as unhandled.
+([saves-and-options.md](saves-and-options.md#live-changes-the-useroption-event)). Since M2-10 the
+scene flow also registers `connectStagePreparation(events, engine, game.content.stages,
+stageMusicCues)`: `PrepareStage` (`id` = a `ContentDb.stages` index — the zone map's launch, the
+title after a run through the map, a run or practice start on another stage) → `engine.prepareMusic(stage.id,
+[Title, …stageMusicCues(stage)])` in the background (a new list — the picker's array is never
+modified; an unknown index is ignored; a rejection goes to the optional `onError`, default
+ignored) ([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md#preparing-the-next-zone-simeventkindpreparestage)).
+Only `HitStop`, `Rumble` and `PowerUp` are still counted as unhandled.
 
 ### Scenes
 
@@ -962,3 +968,7 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
   interpolation (`setInterpolation`, the `syncInterpolated` bindings) switched by the shell's
   refresh probe; `applyDisplayOptions` at boot and the display target of `connectOptionEvents`
   ([presentation-polish.md](presentation-polish.md)).
+- **M2-10** (done) — `connectStagePreparation` (the music set follows the stage about to play),
+  `DEFAULT_STAGE_ID` as the campaign's start zone; the renderer needed nothing new (the zone map,
+  the tally and the ending are UI draw lists; the two new item sprites are engine sprites)
+  ([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md)).

@@ -256,8 +256,9 @@ the fight only — never during the intro) reaches it:
   still counted by the HP bar.
 - `finishEscape` (90 ticks later): `Dead` with `Boss.escaped`, **`SimEventKind.BossEscaped`
   (14)** (`id` = enemy index, `x` / `y` = its origin, `param` 0), **no tally**; a stage boss sets
-  **`EndingFlag.BossEscaped`** (bit 1) in the World's new **`endingFlags`** (hashed; the campaign of
-  M2-10 carries it between zones and the ending selection reads it) and ends the encounter like a
+  **`EndingFlag.BossEscaped`** (bit 1) in the World's new **`endingFlags`** (hashed; since M2-10 the
+  campaign's `RunState.noteWorldEnd` carries it between zones as the run flag `bossEscaped` and the
+  ending selection reads it) and ends the encounter like a
   death (lock released, `stageClear` or the next rush boss).
 
 A boss already dying never escapes. IRON LEVIATHAN escapes after 90 s of fight — the
@@ -384,8 +385,8 @@ pixels, or — for a raid — the world point where it entered.
 | An escape ends | `BossEscaped` (14: `id` = enemy index, `x` / `y`, `param` 0) |
 | The tally of a rush boss before the last | `BossDefeated` only (the jingle waits for the last) |
 
-The audio and FX layers need nothing new: `BossEscaped` has no sound or particles yet (the
-outro of M2-10 may use it).
+The audio and FX layers need nothing new: `BossEscaped` has no sound or particles yet (M2-10's
+fly-out did not need it; the zone tally shows `NO BOSS TIME` after an escape).
 
 ## Determinism, hashing and golden replays
 
@@ -499,8 +500,11 @@ hashWorld(game.world); // covers every slot, the raid camera, the rush and the e
 
 ## Next steps that build on this page
 
-- **M2-10** — the campaign carries `World.endingFlags` between zones (the ending selection hook);
-  bonus stages skip the boss.
+- **M2-10** (done) — the campaign carries `World.endingFlags` between zones (the run flag
+  `bossEscaped` of the ending selection hook — zone I's *THE FLAGSHIP SLIPS AWAY*); a cleared
+  bonus stage skips the zone's boss; the zone tally's time bonus counts defeated, not escaped,
+  stage bosses; the 4-way playtest bot faces the first fighting boss slot
+  ([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md)).
 - **M2-11 … M2-13** — the zones' mid-bosses (captains) and bosses with the new mechanics
   (BRINE NEBULA's mid-boss, MAGMA DEEP's rotating shield arms — turned parts).
 - **M2-14** — IRON CITADEL's parade of earlier bosses in reduced form and ABYSSAL THRONE's

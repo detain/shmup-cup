@@ -167,6 +167,36 @@ versions before 1.0 may change anything between minor releases. Development foll
   migration); `HUD_STRING_COUNT` 23, `HUD_COMMAND_COUNT` 100; the golden replays were re-blessed
   (the hash layout and content ids changed — every input, tick count and outcome is unchanged) and
   four advanced-boss runs were added.
+- **The zone map** (M2-10): a game is now a **run** across a branching map of nine zones — AZURE
+  VERGE, then B or C, D or E, F or G and one of two final zones, H or I (five zones per run, 16
+  routes). Each zone opens with a **title card** during the fly-in; after its boss the ships **fly
+  out** to the right, the **zone result** pays a kill bonus (100 points per percent of the zone's
+  enemies shot down) and a **time bonus** (100 points per second the boss fight stayed under 90
+  s), and the **ZONE MAP** lets you choose the next zone with ▲ / ▼ and OK (Back asks "quit to
+  title?"); score, ships, power-ups and shield carry over. The final zone leads to a placeholder
+  **ending** chosen by the route and the run (no ship lost, a boss that escaped). Zones B–I are
+  short **stand-ins** for now (zone A's enemies, known bosses) so every route can be finished. A
+  run's score is saved when it ends (game over or the ending). RETRY STAGE restarts the current
+  zone with what you entered it with.
+- **Hidden bonus stages** (M2-10, in the browser's `?stage=bonus-range` for now): three kinds of
+  secret entrance — fly into a marked gap, destroy every ground target of a stretch, have a given
+  score digit — lead into a bonus stage of **1,000-point capsules** and a **1UP**; clearing it
+  would skip the zone's boss, and losing a ship there sends you back and locks the entrances.
+- For content authors (M2-10): the new content kind **`campaign`**
+  ([`content/campaign/README.md`](content/campaign/README.md): zones, edges, endings with run-flag
+  conditions — the loader checks that every route reaches a final zone); stages `type: "bonus"`
+  and the `bonus` event (`gap` / `ground` / `digit` entrances), the drops `oneUp` and
+  `bonusCapsule` ([`content/stages/README.md`](content/stages/README.md)).
+- Behaviour change for tools and tests (M2-10): a game on the campaign's start zone (zone A) is a
+  campaign run — the stage-clear screen becomes the zone tally and leads to the map; any other
+  stage keeps the single-stage flow. `PlayerState` gained `leaving` (the fly-out, from the tick after
+  `stageClear`); `DropKind.FreeOption` is 6 (`OneUp` 4, `BonusCapsule` 5), `ItemKind` gained
+  `OneUp` 9 / `BonusCapsule` 10, `StageEventCode.Bonus` 10, `SimEventKind.PrepareStage` 15
+  (`@shmup/shell` `connectStagePreparation`); `EnemySystem.stats`, `World.bonus`; the scene flow's
+  UI list has 384 commands / 224 string slots; the golden replays were re-blessed (the hash layout,
+  two new engine sprites and a new enemies file shift ids — zone A's inputs, tick counts and
+  outcomes are unchanged; three boss-range runs were re-recorded with the improved playtest bot)
+  and three bonus-stage runs were added.
 
 ### Documentation
 
@@ -196,7 +226,12 @@ versions before 1.0 may change anything between minor releases. Development foll
   (M2-08); the developer guide [`docs/dev/advanced-bosses.md`](docs/dev/advanced-bosses.md) and the
   tester guide's
   [The advanced boss ranges](docs/client/preview-build.md#the-advanced-boss-ranges-browser-only)
-  and [The boss HP bar](docs/client/preview-build.md#the-boss-hp-bar-every-device) (M2-09).
+  and [The boss HP bar](docs/client/preview-build.md#the-boss-hp-bar-every-device) (M2-09); the
+  developer guide [`docs/dev/campaign-and-bonus-stages.md`](docs/dev/campaign-and-bonus-stages.md),
+  the map format for authors in [`content/campaign/README.md`](content/campaign/README.md), and the
+  tester guide's [The zone map](docs/client/preview-build.md#the-zone-map-a-run-through-nine-zones)
+  and [Hidden bonus stages](docs/client/preview-build.md#hidden-bonus-stages-browser-only-for-now)
+  (M2-10).
 
 ## [0.1.0] — M1: playable vertical slice
 

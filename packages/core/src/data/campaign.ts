@@ -172,7 +172,11 @@ export function runFlagMask(names: readonly string[]): number {
   return mask;
 }
 
-/** A parsed campaign file before {@link completeCampaign}. */
+/**
+ * A parsed campaign file before {@link completeCampaign}: the fields of {@link CampaignSpec} and
+ * its parts, with the derived ones (`stageId`, `depth`, `row`, `exits`, `final`, the indices,
+ * masks and counts) optional and mutable until the completion writes them.
+ */
 interface RawCampaign {
   id: string;
   name?: string;

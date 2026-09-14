@@ -232,6 +232,15 @@ ES5 and linted with `ecmaVersion: 5`.
   (`RaidCamera`), read, never copied; and a sprite that must show a direction uses heading
   frames, never Pixi's rotation setter
   ([advanced-bosses.md](advanced-bosses.md#zero-allocation-and-the-hot-path-rules)).
+  And from M2-10: state that must survive from one World to the next (a campaign run's players)
+  is copied field by field into a preallocated class on the scene transition (`CarryState`), never
+  kept by reference to the old World; a screen whose drawing grows with the content (the zone map's
+  edges) derives its per-item cost from a fixed budget of the draw list at construction
+  (`MapScene.edgeDots`) so the largest content the validation accepts still fits, and builds its
+  strings on `enter` or reads the content's own; a counter a condition reads every tick is a class
+  of plain numbers incremented in place (`EnemyStats`); and a host handler never modifies an array
+  a content picker returned (it may be memoised) — it builds its own on the cold path
+  ([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md#zero-allocation-and-the-hot-path-rules)).
 - Behaviour coroutines (generators, D29) allocate a small result object on every resume:
   scripts **sleep** (`yield ticks`) and are resumed only when they wake; per-tick motion
   belongs in a mover (numbers on the body), never in a `yield 1` loop.

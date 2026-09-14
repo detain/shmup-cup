@@ -310,6 +310,14 @@ last (cleared by `stop()` at once), `playing` whether it is audible now.
    save and calls `applyAudioOptions(audio, save.options.audio)`: `master`, `music`, and `sfx` +
    `ui` from the SFX level. On the web the context does not exist yet; `WebAudio` remembers the
    gains and applies them when the unlock creates it.
+8. **Stage preparation** (M2-10) — in the scene flow `connectStagePreparation(events, engine,
+   game.content.stages, stageMusicCues)` answers `SimEventKind.PrepareStage`: `prepareMusic(stage.id,
+   [Title, …stageMusicCues(stage)])` in the background, between Worlds (the zone map's launch, the
+   title after a run through the map, a run or practice start on another stage). The one-set
+   rule then drops the old stage's `stages`-scoped tracks; the title theme stays. A failure is
+   ignored (the cues stay silent) unless an `onError` is passed. The flow pushes the event only when
+   the stage differs from the one last prepared (at boot: the host config's stage)
+   ([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md#preparing-the-next-zone-simeventkindpreparestage)).
 
 What that means per build: in a browser nothing is audible until the first key press or click
 (gamepad buttons are not a user activation); sounds requested before are dropped, but the stage
@@ -385,6 +393,7 @@ song's loop points and render time. Options: `--out DIR`, `--only NAME` (one cue
 |---|---|
 | No sound at all in a browser | Autoplay policy: nothing plays before the first key press or click (gamepad buttons do not count). Sounds requested before are dropped; the stage theme starts with the gesture |
 | No stage music in a game | Since M1-18 a game plays zone A (theme `zone-a`, boss theme `boss`) on the TV, in a browser and on the desktop; only open space (`?scene=flight` without `?stage=`, an unknown `?stage=`) has none. In a browser press a key first |
+| A later zone of a campaign run plays silence, or the previous zone's theme | Its set was not prepared: a new way into a stage must go through the flow's `prepareStage` (the map, `beginRun`, `startPractice` and the title do). A bonus warp prepares nothing — a bonus stage's own `stages`-scoped track would not be resident; bind bonus stages to the zone's cues |
 | A stage's music event (or boss theme) plays silence | The cue has no track (`content:check` says so for shipped stages) or it was not prepared: a host preparing a stage must pass `stageMusicCues(stage)`, not the default `STAGE_MUSIC_CUES`. `engine.missedMusic` counts ignored requests |
 | A new cue plays nothing | Not bound in `main.sfx.json`, or bound on a context that has no buffer yet — check `engine.attached` |
 | The boot tests' app is silent | Expected: their fake context has no `createBuffer` / `createBufferSource`, so `isPlaybackContext` fails and the engine stays silent instead of throwing |
@@ -415,4 +424,9 @@ song's loop points and render time. Options: `--out DIR`, `--only NAME` (one cue
   the music and a continue restarts the stage theme ([difficulty-and-rank.md](difficulty-and-rank.md)).
 - **M2-05** (done) — Direct mode: `CapsulePickup` for every colour item, the Speed toggle's ding
   ([direct-mode.md](direct-mode.md)); no new cue.
+- **M2-10** (done) — `SimEventKind.PrepareStage` and the shell's `connectStagePreparation`: the
+  resident set follows the stage about to play; the map fades the music out (no `ZoneMap` track
+  yet); a bonus capsule / 1UP reuse `CapsulePickup` / `ExtraLife`, an opened bonus entrance
+  `PowerUpEquip` ([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md)).
+- **M2-11 … M2-14** — the zones' own songs (`stages`-scoped tracks), prepared on the map.
 - **M3-03** — tracker music.
