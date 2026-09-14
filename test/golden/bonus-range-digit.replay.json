@@ -61,15 +61,15 @@
     "AI8i"
   ],
   "hashes": [
-    2880828749,
-    3898121068,
-    1060371217,
-    1599096387,
-    3446235819,
-    1940479832,
-    3775593406
+    2965818157,
+    2527555148,
+    2334258065,
+    157499043,
+    1839349120,
+    2928222776,
+    688185438
   ],
-  "finalHash": 3101410435,
+  "finalHash": 883576099,
   "description": "BONUS RANGE with god mode and no power-ups (M2-10): the turrets survive, the score shows a thousands 0 at the digit window — that entrance opens",
   "expected": {
     "status": "stageClear",

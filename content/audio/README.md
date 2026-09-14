@@ -21,6 +21,8 @@ Listen to everything with `pnpm audio:preview` (WAV files in `assets/generated/a
 | `music/game-over.music.json` | `music` | SILENT VERGE — game over (`GameOver`, no loop) |
 | `music/zone-b.music.json`, `music/boss-b.music.json` | `music` | BRINE NEBULA and MAW OF THE NEBULA — zone B's stage and boss themes (`Stage` / `Boss`, `"stages": ["zone-b"]` — they win over the defaults there; M2-11) |
 | `music/zone-c.music.json`, `music/boss-c.music.json` | `music` | DUNE EXPANSE and SANDGRAVE ASSAULT — zone C's stage and boss themes (`"stages": ["zone-c"]`, M2-11) |
+| `music/zone-d.music.json`, `music/boss-d.music.json` | `music` | MAGMA DEEP and BASTION OF CINDERS — zone D's stage and boss themes (`"stages": ["zone-d"]`, M2-12) |
+| `music/zone-e.music.json`, `music/boss-e.music.json` | `music` | TEMPEST RIDGE and STEED OF THE SQUALL — zone E's stage and boss themes (`"stages": ["zone-e"]`, M2-12) |
 
 ## SFX bank (kind `sfx`, formatVersion 1)
 

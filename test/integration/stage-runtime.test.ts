@@ -21,6 +21,7 @@ import {
   TerrainType,
   boxHitsTerrain,
   createGame,
+  createStageRunner,
   createHeadlessPlatform,
   hashWorld,
   loadContent,
@@ -76,19 +77,35 @@ describe('integration: test-range terrain', () => {
 
   it('leaves a flyable corridor in every pixel column and a clear spawn at every checkpoint', () => {
     // Every shipped stage with terrain (test-range; zone A's floors and corridor since M1-18).
+    // Measured in the rows the camera shows when the ship (x ≈ 64 in the view) reaches the column
+    // — zone D (M2-12) dives 200 px into its caves on the way.
     const db = shipped();
     const stages = db.stages.filter((s) => s.terrain !== null);
-    expect(stages.map((s) => s.id)).toEqual(expect.arrayContaining(['test-range', 'zone-a']));
+    expect(stages.map((s) => s.id)).toEqual(
+      expect.arrayContaining(['test-range', 'zone-a', 'zone-d']),
+    );
     for (const stage of stages) {
       const game = createGame(createHeadlessPlatform(), { seed: 1, stage: stage.id }, db);
       const map = game.world.terrain;
       expect(map, stage.id).not.toBeNull();
       if (map === null) return;
+      // The camera's top edge by camera x (the last value seen at each x — after a pan's hold).
+      const top = new Float64Array(stage.length + 385);
+      const runner = createStageRunner(stage, { event() {}, clear() {} });
+      let filled = 0;
+      for (let t = 0; t < 60 * 60 * 20 && filled <= stage.length; t++) {
+        runner.tick();
+        const reached = Math.min(stage.length, Math.floor(runner.camera.x));
+        for (let x = filled; x <= reached; x++) top[x] = runner.camera.y;
+        if (reached >= filled) filled = reached;
+      }
+      for (let x = filled; x < top.length; x++) top[x] = runner.camera.y;
       let narrowest = Number.POSITIVE_INFINITY;
       for (let x = 0; x < stage.length + 384; x++) {
+        const y0 = Math.round(top[x < 64 ? 0 : x - 64]);
         let run = 0;
         let best = 0;
-        for (let y = 0; y < PLAYFIELD_H; y++) {
+        for (let y = y0; y < y0 + PLAYFIELD_H; y++) {
           run = terrainAt(map, x, y) === TerrainType.Empty ? run + 1 : 0;
           if (run > best) best = run;
         }
@@ -97,9 +114,10 @@ describe('integration: test-range terrain', () => {
       expect(narrowest, stage.id).toBeGreaterThanOrEqual(48);
       const box = game.world.ship.terrainBox;
       for (const checkpoint of stage.checkpoints) {
+        const y = SPAWN_Y + Math.round(top[checkpoint.x]);
         for (let dx = -24; dx <= ENTER_END_X; dx += 4) {
           expect(
-            boxHitsTerrain(map, checkpoint.x + dx, SPAWN_Y, box.hw, box.hh),
+            boxHitsTerrain(map, checkpoint.x + dx, y, box.hw, box.hh),
             `${stage.id} checkpoint ${String(checkpoint.x)} + ${String(dx)}`,
           ).toBe(TerrainType.Empty);
         }

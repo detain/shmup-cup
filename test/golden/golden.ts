@@ -46,7 +46,10 @@
  * sand worms and SANDGRAVE WIDOW) start to stage clear — and zone B's hidden bonus stage
  * `brine-grotto` with the full loadout. Two more (M2-11 tests) fly them without god mode: the
  * weaving pilot in zone B under the Arcade penalty (deaths, the checkpoint restarts, `gameOver`)
- * and the 4-way bot through the whole of zone C (its deaths and respawns in place, the boss).
+ * and the 4-way bot through the whole of zone C (its deaths and respawns in place, the boss). Two
+ * more (M2-12) fly the real zones D and E with the 4-way bot and god mode, start to stage clear —
+ * `zone-d` (MAGMA DEEP: the dive into the caves, the brick maze, CINDER BASTION) and `zone-e`
+ * (TEMPEST RIDGE: the rear attackers, SQUALL STEED).
  *
  * @module
  */
@@ -457,6 +460,24 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = Object.freeze([
     stageId: 'zone-c',
     config: { seed: 73 },
     godMode: false,
+    bot: 'four-way',
+  },
+  {
+    name: 'zone-d-god',
+    description:
+      'MAGMA DEEP start to stage clear with god mode (M2-12): the 4-way bot over the erupting caldera fields, down the dive into the caves, through the brick maze and along the lava river, then CINDER BASTION shot down',
+    stageId: 'zone-d',
+    config: { seed: 1 },
+    godMode: true,
+    bot: 'four-way',
+  },
+  {
+    name: 'zone-e-god',
+    description:
+      'TEMPEST RIDGE start to stage clear with god mode (M2-12): the 4-way bot through the storm front, the ridge pass, the thunderheads and the gale run, kites and jumpers coming from behind, then SQUALL STEED shot down',
+    stageId: 'zone-e',
+    config: { seed: 1 },
+    godMode: true,
     bot: 'four-way',
   },
   {

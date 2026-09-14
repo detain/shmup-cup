@@ -1,0 +1,321 @@
+{
+  "formatVersion": 1,
+  "kind": "enemies",
+  "enemies": [
+    {
+      "id": "hail-drifter",
+      "hp": 1,
+      "score": 100,
+      "hurtbox": {
+        "hw": 4,
+        "hh": 4
+      },
+      "script": "drifter.sine",
+      "sprite": "enemies/hail-drifter",
+      "anim": {
+        "frames": 2,
+        "ticks": 8
+      },
+      "params": {
+        "speed": 1.2,
+        "amp": 14,
+        "period": 90,
+        "memberPhase": 32
+      },
+      "drop": null
+    },
+    {
+      "id": "gale-kite",
+      "hp": 1,
+      "score": 150,
+      "hurtbox": {
+        "hw": 6,
+        "hh": 4
+      },
+      "script": "fan.loop",
+      "sprite": "enemies/gale-kite",
+      "anim": {
+        "frames": 2,
+        "ticks": 6
+      },
+      "params": {
+        "speed": 1.6
+      },
+      "drop": null
+    },
+    {
+      "id": "squall-jumper",
+      "hp": 2,
+      "score": 200,
+      "hurtbox": {
+        "hw": 6,
+        "hh": 4
+      },
+      "script": "rear.swoop",
+      "sprite": "enemies/squall-jumper",
+      "anim": {
+        "frames": 2,
+        "ticks": 4
+      },
+      "params": {
+        "speed": 1.6,
+        "turnX": 290,
+        "hold": 20,
+        "ways": 1,
+        "bulletSpeed": 1.25,
+        "leaveSpeed": 1.3
+      },
+      "drop": null
+    },
+    {
+      "id": "crag-turret",
+      "hp": 3,
+      "score": 300,
+      "hurtbox": {
+        "hw": 5,
+        "hh": 5
+      },
+      "script": "turret.floor",
+      "sprite": "enemies/crag-turret",
+      "params": {
+        "fireTicks": 130,
+        "bulletSpeed": 1.25
+      },
+      "drop": null,
+      "ground": "floor",
+      "explosion": "medium"
+    },
+    {
+      "id": "crag-turret-ceiling",
+      "hp": 3,
+      "score": 300,
+      "hurtbox": {
+        "hw": 5,
+        "hh": 5
+      },
+      "script": "turret.floor",
+      "sprite": "enemies/crag-turret",
+      "params": {
+        "fireTicks": 130,
+        "bulletSpeed": 1.25
+      },
+      "drop": null,
+      "ground": "ceiling",
+      "explosion": "medium"
+    },
+    {
+      "id": "thunderhead",
+      "hp": 5,
+      "score": 500,
+      "hurtbox": {
+        "hw": 9,
+        "hh": 6
+      },
+      "script": "pattern.loop",
+      "sprite": "enemies/thunderhead",
+      "anim": {
+        "frames": 3,
+        "ticks": 8
+      },
+      "mover": {
+        "type": "sine",
+        "vx": -0.45,
+        "amp": 16,
+        "period": 160
+      },
+      "params": {
+        "restTicks": 40
+      },
+      "pattern": "tempest.bolt",
+      "drop": null,
+      "explosion": "medium"
+    },
+    {
+      "id": "steed-foal",
+      "hp": 1,
+      "score": 100,
+      "hurtbox": {
+        "hw": 3,
+        "hh": 4
+      },
+      "script": "rocket.homing",
+      "sprite": "enemies/steed-foal",
+      "anim": {
+        "frames": 2,
+        "ticks": 6
+      },
+      "params": {
+        "launchTicks": 16,
+        "launchSpeed": 1,
+        "speed": 1.2,
+        "turnRate": 4,
+        "homeTicks": 70
+      },
+      "drop": null
+    },
+    {
+      "id": "squall-steed",
+      "boss": {
+        "code": "SS-05",
+        "displayName": "SQUALL STEED",
+        "introTicks": 150,
+        "score": 35000,
+        "x": 304,
+        "y": 100,
+        "minion": "steed-foal",
+        "parts": [
+          {
+            "name": "tail",
+            "x": 10,
+            "y": 38,
+            "sprite": "bosses/steed-tail"
+          },
+          {
+            "name": "body",
+            "x": 6,
+            "y": 4,
+            "vulnerable": "never",
+            "hurtbox": {
+              "hw": 13,
+              "hh": 24
+            },
+            "sprite": "bosses/steed-body"
+          },
+          {
+            "name": "fin",
+            "parent": "body",
+            "x": 16,
+            "y": -2,
+            "sprite": "bosses/steed-fin",
+            "anim": {
+              "frames": 2,
+              "ticks": 12
+            }
+          },
+          {
+            "name": "head",
+            "x": -4,
+            "y": -30,
+            "vulnerable": "never",
+            "hurtbox": {
+              "hw": 11,
+              "hh": 8
+            },
+            "sprite": "bosses/steed-head"
+          },
+          {
+            "name": "snout",
+            "parent": "head",
+            "x": -17,
+            "y": 3,
+            "hp": 24,
+            "hurtbox": {
+              "hw": 7,
+              "hh": 4
+            },
+            "gun": true,
+            "sprite": "bosses/steed-snout",
+            "score": 1000
+          },
+          {
+            "name": "chest",
+            "x": -9,
+            "y": 2,
+            "hp": 64,
+            "hurtbox": {
+              "hw": 7,
+              "hh": 10
+            },
+            "vulnerable": "whenOpen",
+            "core": true,
+            "sprite": "bosses/steed-chest",
+            "anim": {
+              "frames": 2,
+              "ticks": 10
+            },
+            "score": 5000,
+            "explosion": "large"
+          },
+          {
+            "name": "lid-top",
+            "parent": "chest",
+            "x": -3,
+            "y": -11,
+            "vulnerable": "never",
+            "hurtbox": {
+              "hw": 5,
+              "hh": 3
+            },
+            "sprite": "bosses/steed-lid-top"
+          },
+          {
+            "name": "lid-bottom",
+            "parent": "chest",
+            "x": -3,
+            "y": 11,
+            "vulnerable": "never",
+            "hurtbox": {
+              "hw": 5,
+              "hh": 3
+            },
+            "sprite": "bosses/steed-lid-bottom"
+          }
+        ],
+        "phases": [
+          {
+            "script": "boss.steed",
+            "params": {
+              "closedTicks": 130,
+              "openTicks": 130,
+              "launchTicks": 50,
+              "minis": 1,
+              "fireTicks": 90,
+              "bulletSpeed": 1.25,
+              "gape": 3,
+              "ry": 14,
+              "bobSpeed": 2
+            },
+            "until": {
+              "hpBelow": 44
+            }
+          },
+          {
+            "script": "boss.steed",
+            "params": {
+              "closedTicks": 120,
+              "openTicks": 130,
+              "launchTicks": 40,
+              "minis": 2,
+              "fireTicks": 80,
+              "bulletSpeed": 1.3,
+              "gape": 3,
+              "ry": 16,
+              "bobSpeed": 3
+            },
+            "until": {
+              "hpBelow": 18
+            }
+          },
+          {
+            "script": "boss.steed",
+            "params": {
+              "closedTicks": 100,
+              "openTicks": 140,
+              "launchTicks": 36,
+              "minis": 2,
+              "fireTicks": 70,
+              "ways": 5,
+              "spread": 36,
+              "bulletSpeed": 1.35,
+              "ring": 10,
+              "ringSpeed": 1.05,
+              "gape": 4,
+              "ry": 18,
+              "bobSpeed": 3
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

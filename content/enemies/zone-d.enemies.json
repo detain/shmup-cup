@@ -1,0 +1,358 @@
+{
+  "formatVersion": 1,
+  "kind": "enemies",
+  "enemies": [
+    {
+      "id": "ember-wisp",
+      "hp": 1,
+      "score": 100,
+      "hurtbox": {
+        "hw": 4,
+        "hh": 4
+      },
+      "script": "drifter.sine",
+      "sprite": "enemies/ember-wisp",
+      "anim": {
+        "frames": 2,
+        "ticks": 6
+      },
+      "params": {
+        "speed": 1.15,
+        "amp": 20,
+        "period": 110,
+        "memberPhase": 40
+      },
+      "drop": null
+    },
+    {
+      "id": "cinder-bat",
+      "hp": 1,
+      "score": 150,
+      "hurtbox": {
+        "hw": 6,
+        "hh": 4
+      },
+      "script": "fan.loop",
+      "sprite": "enemies/cinder-bat",
+      "anim": {
+        "frames": 2,
+        "ticks": 5
+      },
+      "params": {
+        "speed": 1.5
+      },
+      "drop": null
+    },
+    {
+      "id": "magma-cone",
+      "hp": 12,
+      "score": 800,
+      "hurtbox": {
+        "hw": 10,
+        "hh": 6
+      },
+      "script": "volcano.lob",
+      "sprite": "enemies/magma-cone",
+      "anim": {
+        "frames": 2,
+        "ticks": 18
+      },
+      "params": {
+        "interval": 100,
+        "count": 3,
+        "minUp": 2.3,
+        "maxUp": 3.1,
+        "spread": 1.1,
+        "gravity": 0.08,
+        "maxFall": 3
+      },
+      "drop": null,
+      "ground": "floor",
+      "child": "magma-bomb",
+      "explosion": "large"
+    },
+    {
+      "id": "magma-bomb",
+      "hp": 1,
+      "score": 30,
+      "hurtbox": {
+        "hw": 2,
+        "hh": 2
+      },
+      "script": "rock.fall",
+      "sprite": "enemies/magma-bomb",
+      "anim": {
+        "frames": 2,
+        "ticks": 6
+      },
+      "params": {
+        "trigger": 0
+      },
+      "drop": null,
+      "ground": "floor"
+    },
+    {
+      "id": "cinder-rock",
+      "hp": 2,
+      "score": 100,
+      "hurtbox": {
+        "hw": 5,
+        "hh": 5
+      },
+      "script": "rock.fall",
+      "sprite": "enemies/cinder-rock",
+      "params": {
+        "trigger": 60,
+        "gravity": 0.14,
+        "maxFall": 3.5
+      },
+      "drop": null,
+      "ground": "ceiling",
+      "explosion": "medium"
+    },
+    {
+      "id": "slag-crawler",
+      "hp": 3,
+      "score": 250,
+      "hurtbox": {
+        "hw": 7,
+        "hh": 4
+      },
+      "script": "walker.floor",
+      "sprite": "enemies/slag-crawler",
+      "anim": {
+        "frames": 2,
+        "ticks": 10
+      },
+      "params": {
+        "speed": 0.55,
+        "walkTicks": 90,
+        "stopTicks": 50,
+        "bulletSpeed": 1.2,
+        "spread": 48
+      },
+      "drop": null,
+      "explosion": "medium",
+      "ground": "ceiling"
+    },
+    {
+      "id": "slag-crawler-floor",
+      "hp": 3,
+      "score": 250,
+      "hurtbox": {
+        "hw": 7,
+        "hh": 4
+      },
+      "script": "walker.floor",
+      "sprite": "enemies/slag-crawler",
+      "anim": {
+        "frames": 2,
+        "ticks": 10
+      },
+      "params": {
+        "speed": 0.55,
+        "walkTicks": 90,
+        "stopTicks": 50,
+        "bulletSpeed": 1.2,
+        "spread": 48
+      },
+      "drop": null,
+      "explosion": "medium",
+      "ground": "floor"
+    },
+    {
+      "id": "basalt-turret",
+      "hp": 4,
+      "score": 300,
+      "hurtbox": {
+        "hw": 6,
+        "hh": 5
+      },
+      "script": "turret.floor",
+      "sprite": "enemies/basalt-turret",
+      "params": {
+        "fireTicks": 150,
+        "bulletSpeed": 1.25
+      },
+      "drop": null,
+      "ground": "floor",
+      "explosion": "medium"
+    },
+    {
+      "id": "basalt-turret-ceiling",
+      "hp": 4,
+      "score": 300,
+      "hurtbox": {
+        "hw": 6,
+        "hh": 5
+      },
+      "script": "turret.floor",
+      "sprite": "enemies/basalt-turret",
+      "params": {
+        "fireTicks": 150,
+        "bulletSpeed": 1.25
+      },
+      "drop": null,
+      "ground": "ceiling",
+      "explosion": "medium"
+    },
+    {
+      "id": "cinder-bastion",
+      "boss": {
+        "code": "CB-04",
+        "displayName": "CINDER BASTION",
+        "introTicks": 150,
+        "score": 35000,
+        "x": 300,
+        "y": 100,
+        "parts": [
+          {
+            "name": "hull",
+            "x": 30,
+            "vulnerable": "never",
+            "hurtbox": {
+              "hw": 24,
+              "hh": 16
+            },
+            "sprite": "bosses/bastion-hull"
+          },
+          {
+            "name": "emitter-top",
+            "parent": "hull",
+            "x": -34,
+            "y": -25,
+            "hp": 18,
+            "hurtbox": {
+              "hw": 8,
+              "hh": 4
+            },
+            "gun": true,
+            "sprite": "bosses/bastion-emitter",
+            "anim": {
+              "frames": 2,
+              "ticks": 14
+            },
+            "score": 1000
+          },
+          {
+            "name": "emitter-bottom",
+            "parent": "hull",
+            "x": -34,
+            "y": 25,
+            "hp": 18,
+            "hurtbox": {
+              "hw": 8,
+              "hh": 4
+            },
+            "gun": true,
+            "sprite": "bosses/bastion-emitter",
+            "anim": {
+              "frames": 2,
+              "ticks": 14
+            },
+            "score": 1000
+          },
+          {
+            "name": "core",
+            "x": -10,
+            "hp": 80,
+            "hurtbox": {
+              "hw": 7,
+              "hh": 7
+            },
+            "core": true,
+            "sprite": "bosses/bastion-core",
+            "anim": {
+              "frames": 2,
+              "ticks": 10
+            },
+            "score": 5000,
+            "explosion": "large"
+          },
+          {
+            "name": "hub",
+            "parent": "core"
+          },
+          {
+            "name": "arm-a-inner",
+            "parent": "hub",
+            "x": 19,
+            "radius": 5,
+            "vulnerable": "never",
+            "sprite": "bosses/bastion-arm"
+          },
+          {
+            "name": "arm-a-outer",
+            "parent": "arm-a-inner",
+            "x": 9,
+            "radius": 5,
+            "vulnerable": "never",
+            "sprite": "bosses/bastion-arm"
+          },
+          {
+            "name": "arm-b-inner",
+            "parent": "hub",
+            "x": -19,
+            "radius": 5,
+            "vulnerable": "never",
+            "sprite": "bosses/bastion-arm"
+          },
+          {
+            "name": "arm-b-outer",
+            "parent": "arm-b-inner",
+            "x": -9,
+            "radius": 5,
+            "vulnerable": "never",
+            "sprite": "bosses/bastion-arm"
+          }
+        ],
+        "phases": [
+          {
+            "script": "boss.bastion",
+            "params": {
+              "trackSpeed": 0.35,
+              "spin": 4,
+              "laserTicks": 120,
+              "firstLaser": 60
+            },
+            "until": {
+              "hpBelow": 54
+            }
+          },
+          {
+            "script": "boss.bastion",
+            "params": {
+              "trackSpeed": 0.45,
+              "spin": -6,
+              "reverseTicks": 240,
+              "laserTicks": 115,
+              "firstLaser": 40,
+              "ways": 3,
+              "fireTicks": 110,
+              "bulletSpeed": 1.3
+            },
+            "until": {
+              "hpBelow": 24
+            }
+          },
+          {
+            "script": "boss.bastion",
+            "params": {
+              "trackSpeed": 0.55,
+              "spin": 8,
+              "reverseTicks": 180,
+              "laserTicks": 115,
+              "firstLaser": 30,
+              "ways": 3,
+              "fireTicks": 90,
+              "bulletSpeed": 1.35,
+              "ring": 10,
+              "ringTicks": 140,
+              "ringSpeed": 1.1
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

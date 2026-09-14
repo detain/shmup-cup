@@ -63,12 +63,12 @@ taking turns; the survivor enrages) and `gauntlet-range.stage.json` (**GAUNTLET 
 rush: TRIAL WARDEN with its WARNING, LEVIATHAN HEART, the twins). `?stage=<id>` plays each.
 
 **The campaign's zones (M2-10).** `zone-b.stage.json` … `zone-i.stage.json` are the zones B–I of
-the zone map ([`content/campaign/`](../campaign/README.md)). D–I are still short **placeholders**
+the zone map ([`content/campaign/`](../campaign/README.md)). F–I are still short **placeholders**
 (about a minute: popcorn, capsule carriers, a fan formation, a rammer, an orbiter — zone A's roster —,
 some floors or caves from the heightfield generator, then the WARNING and a boss: HALCYON BULWARK,
 the EMBER AND FROST TWINS or, in zone I, IRON LEVIATHAN), so every route of the map can be played
-end to end; M2-12 … M2-14 replace them with the real zones (MAGMA DEEP, TEMPEST RIDGE, CELL VAULT,
-PRISM LABYRINTH, IRON CITADEL, ABYSSAL THRONE).
+end to end; M2-13 and M2-14 replace them with the real zones (CELL VAULT, PRISM LABYRINTH, IRON
+CITADEL, ABYSSAL THRONE).
 
 **Zones B and C (M2-11)** are the real zones, each ≈ 3½–4 minutes with the 4-way bot, four
 checkpoints, a high-speed section, a calm with two carriers before the WARNING, their own tileset,
@@ -93,6 +93,33 @@ songs (`stages`-scoped tracks), Direct-mode item plan and roster
   (checkpoint 4,400), a 1.3 px/tick sandstorm run (checkpoint 6,600), the calm, then **SANDGRAVE
   WIDOW** (SW-03). Heat `haze` raster effects shimmer over the twin suns (`bg/dune-suns`) and the dune
   ridge band (`bg/dune-ridge`).
+
+**Zones D and E (M2-12)** are real zones on the same recipe (four checkpoints, a high-speed
+section, a calm with two carriers, their own tileset, songs, item plan and roster —
+[`content/enemies/zone-d.enemies.json`](../enemies/zone-d.enemies.json), `zone-e.enemies.json`):
+
+- `zone-d.stage.json` — **MAGMA DEEP** (9,600 px, `terrain-magma`, a 400-px-tall map — `rowsTall`
+  50): the caldera fields on the surface (`ember-wisp` streams, `cinder-bat` swoops on the
+  `content/paths/zone-d.paths.json` curves, erupting `magma-cone`s lobbing lava bombs, a
+  `basalt-turret`), the eruption field (checkpoint 2,200), then **the dive**: a camera key at 3,560
+  with `hold` 150 and `yTo` 200 stops the scroll over the pit and pans the camera 200 px down into
+  the caves, where it stays. In the caves (checkpoint 4,000): `cinder-rock`s that drop from the roof,
+  `slag-crawler`s, then the **destructible maze** — seven brick walls (the tileset's `brick`, hp 4,
+  written as `rle` rows over the generated caves at world x 4,800–5,776), each with a 48-px gap at
+  another height: the route zigzags, shooting through a wall is the shortcut. The lava river
+  (checkpoint 6,800: 1.3 px/tick over the palette-cycled lava lake `bg/magma-lava`, whose band sits
+  below the surface's view — `y` 256 — and rises into view with the dive), the calm, then **CINDER
+  BASTION** (CB-04). A heat `haze` shimmers over the volcano peaks (`bg/magma-peaks`) until the dive,
+  a slow `wave` rolls the lava after it.
+- `zone-e.stage.json` — **TEMPEST RIDGE** (9,800 px, `terrain-ridge`): the storm front over jagged
+  peaks (steep heightfield floors — `amp` 9–18 % of the `period` — with `crag-turret`s,
+  `hail-drifter` streams and the **rear attackers**: `gale-kite` formations and `squall-jumper`s
+  spawned behind the ship — a negative `screenX` — that overtake it), the ridge pass between jagged
+  floors and overhangs (checkpoint 2,200), the thunderheads (checkpoint 4,600: `thunderhead`
+  clouds firing the `tempest.bolt` streak), the gale run (checkpoint 6,800: 1.4 px/tick), the calm,
+  then **SQUALL STEED** (SS-05). Heavy weather: two storm-cloud bands (`bg/storm-clouds`, painted in
+  the four colours of their palette cycle, rolled by a `wave`), a mountain band (`bg/storm-ridge`)
+  and three rows of slanting rain (`bg/storm-rain`) scrolling almost at the playfield's speed.
 
 **Hidden bonus stages (M2-10).** A stage of `"type": "bonus"` is a hidden bonus stage: no `warning`
 / `boss` events, no entrances of its own, and an `end` event (reaching it is the bonus stage's

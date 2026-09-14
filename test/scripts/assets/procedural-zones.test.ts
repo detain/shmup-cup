@@ -204,12 +204,14 @@ describe('scripts/assets/procedural/dune (M2-11)', () => {
 describe('scripts/assets/procedural/terrain — the zone tilesets (M2-11)', () => {
   const sets = terrain.generate();
 
-  it('draws terrain-a, terrain-reef and terrain-dune with the same tiles in their own colours', () => {
+  it('draws terrain-a and the zone sets (M2-11, M2-12) with the same tiles in their own colours', () => {
     expect(sets.map((s) => s.name)).toEqual(Object.keys(terrain.TERRAIN_PALETTES));
     expect(sets.map((s) => s.name)).toEqual([
       'tiles/terrain-a',
       'tiles/terrain-reef',
       'tiles/terrain-dune',
+      'tiles/terrain-magma',
+      'tiles/terrain-ridge',
     ]);
     const [a, ...zones] = sets;
     for (const set of zones) {

@@ -130,6 +130,8 @@ describe('shell/loader loadGameContent', () => {
       'audio/main.sfx.json',
       'audio/music/boss-b.music.json',
       'audio/music/boss-c.music.json',
+      'audio/music/boss-d.music.json',
+      'audio/music/boss-e.music.json',
       'audio/music/boss.music.json',
       'audio/music/game-over.music.json',
       'audio/music/stage-clear.music.json',
@@ -137,6 +139,8 @@ describe('shell/loader loadGameContent', () => {
       'audio/music/zone-a.music.json',
       'audio/music/zone-b.music.json',
       'audio/music/zone-c.music.json',
+      'audio/music/zone-d.music.json',
+      'audio/music/zone-e.music.json',
       'fx/particles.fx.json',
       'input/remote.input-profiles.json',
     ]);

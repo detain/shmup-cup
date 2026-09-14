@@ -1,0 +1,251 @@
+{
+  "formatVersion": 1,
+  "kind": "music",
+  "id": "zone-d",
+  "title": "MAGMA DEEP",
+  "cue": "Stage",
+  "stages": ["zone-d"],
+  "song": {
+    "speed": 6,
+    "volume": 0.38,
+    "instruments": {
+      "lead": {
+        "wave": "pulse12",
+        "volume": 0.85,
+        "attack": 0.004,
+        "decay": 0.1,
+        "sustain": 0.65,
+        "release": 0.08,
+        "vibrato": {
+          "depth": 0.35,
+          "rate": 6,
+          "delay": 0.12
+        }
+      },
+      "arp-min": {
+        "wave": "pulse12",
+        "volume": 0.5,
+        "attack": 0.002,
+        "decay": 0.16,
+        "sustain": 0.35,
+        "release": 0.04,
+        "arpeggio": [0, 3, 7, 12],
+        "arpeggioTicks": 2
+      },
+      "arp-maj": {
+        "wave": "pulse12",
+        "volume": 0.5,
+        "attack": 0.002,
+        "decay": 0.16,
+        "sustain": 0.35,
+        "release": 0.04,
+        "arpeggio": [0, 4, 7, 12],
+        "arpeggioTicks": 2
+      },
+      "arp-dom": {
+        "wave": "pulse12",
+        "volume": 0.5,
+        "attack": 0.002,
+        "decay": 0.16,
+        "sustain": 0.35,
+        "release": 0.04,
+        "arpeggio": [0, 4, 7, 10],
+        "arpeggioTicks": 2
+      },
+      "bass": {
+        "wave": "triangle",
+        "volume": 1,
+        "attack": 0.002,
+        "decay": 0.05,
+        "sustain": 0.8,
+        "release": 0.03
+      },
+      "drone": {
+        "wave": "pulse50",
+        "volume": 0.25,
+        "attack": 0.2,
+        "decay": 0.3,
+        "sustain": 0.7,
+        "release": 0.2
+      },
+      "hat": {
+        "wave": "noise",
+        "volume": 0.3,
+        "attack": 0,
+        "decay": 0.035,
+        "sustain": 0,
+        "release": 0.01
+      },
+      "snare": {
+        "wave": "noise",
+        "volume": 0.6,
+        "attack": 0,
+        "decay": 0.13,
+        "sustain": 0,
+        "release": 0.02
+      },
+      "kick": {
+        "wave": "noise",
+        "volume": 0.85,
+        "attack": 0,
+        "decay": 0.07,
+        "sustain": 0,
+        "release": 0.01,
+        "sweep": -90
+      }
+    },
+    "channels": [
+      {
+        "instrument": "lead",
+        "volume": 0.72
+      },
+      {
+        "instrument": "arp-maj",
+        "volume": 0.5
+      },
+      {
+        "instrument": "bass",
+        "volume": 0.9
+      },
+      {
+        "instrument": "hat",
+        "volume": 0.65
+      },
+      {
+        "instrument": "drone",
+        "volume": 0.5
+      }
+    ],
+    "patterns": {
+      "intro-1": {
+        "rows": 32,
+        "tracks": [
+          "=:32",
+          "D4:4@arp-min D4:4@arp-min D4:4@arp-min D4:4@arp-min D4:4@arp-min D4:4@arp-min D4:4@arp-min D4:4@arp-min",
+          "D2:8 .:8 D2:8 .:8",
+          "C2:4@kick C8:4@hat C8:4@hat C8:4@hat C2:4@kick C8:4@hat C8:4@hat C8:4@hat",
+          "A3:32"
+        ]
+      },
+      "intro-2": {
+        "rows": 32,
+        "tracks": [
+          ".:16 A4:4 C5:4 D5:4 E5:4",
+          "Bb3:4@arp-maj Bb3:4@arp-maj Bb3:4@arp-maj Bb3:4@arp-maj A3:4@arp-maj A3:4@arp-maj A3:4@arp-maj A3:4@arp-maj",
+          "Bb2:2 Bb3:2 Bb2:2 Bb3:2 Bb2:2 Bb3:2 Bb2:2 Bb3:2 A2:2 A3:2 A2:2 A3:2 A2:2 A3:2 A2:2 A3:2",
+          "C2:2@kick C8:2@hat C5:2@snare C8:2@hat C2:2@kick C2:2@kick C5:2@snare C8:2@hat C5:2@snare C5:2@snare C5@snare C5@snare C5:2@snare C5:2@snare C5:2@snare C5:2@snare C5:2@snare",
+          "Bb3:16 A3:16"
+        ]
+      },
+      "a1": {
+        "rows": 32,
+        "tracks": [
+          "D5:6 E5:2 F5:4 A5:4 G5:6 F5:2 E5:4 D5:4",
+          "D4:4@arp-min D4:4@arp-min D4:4@arp-min D4:4@arp-min Bb3:4@arp-maj Bb3:4@arp-maj Bb3:4@arp-maj Bb3:4@arp-maj",
+          "D2:2 D3:2 D2:2 D3:2 D2:2 D3:2 D2:2 D3:2 Bb2:2 Bb3:2 Bb2:2 Bb3:2 Bb2:2 Bb3:2 Bb2:2 Bb3:2",
+          "C2:2@kick C8:2@hat C8:2@hat C5:2@snare C8:2@hat C2:2@kick C5:2@snare C8:2@hat C2:2@kick C8:2@hat C8:2@hat C5:2@snare C8:2@hat C2:2@kick C5:2@snare C8:2@hat",
+          "A3:16 Bb3:16"
+        ]
+      },
+      "a2": {
+        "rows": 32,
+        "tracks": [
+          "Bb4:4 D5:4 G5:8 E5:4 C#5:4 A4:8",
+          "G3:4@arp-min G3:4@arp-min G3:4@arp-min G3:4@arp-min A3:4@arp-maj A3:4@arp-maj A3:4@arp-maj A3:4@arp-maj",
+          "G2:2 G3:2 G2:2 G3:2 G2:2 G3:2 G2:2 G3:2 A2:2 A3:2 A2:2 A3:2 A2:2 A3:2 A2:2 A3:2",
+          "C2:2@kick C8:2@hat C8:2@hat C5:2@snare C8:2@hat C2:2@kick C5:2@snare C8:2@hat C2:2@kick C8:2@hat C8:2@hat C5:2@snare C8:2@hat C2:2@kick C5:2@snare C8:2@hat",
+          "G3:16 A3:16"
+        ]
+      },
+      "a3": {
+        "rows": 32,
+        "tracks": [
+          "D5:4 F5:4 A5:6 G5:2 G5:4 F5:4 Eb5:8",
+          "D4:4@arp-min D4:4@arp-min D4:4@arp-min D4:4@arp-min Eb4:4@arp-maj Eb4:4@arp-maj Eb4:4@arp-maj Eb4:4@arp-maj",
+          "D2:2 D3:2 D2:2 D3:2 D2:2 D3:2 D2:2 D3:2 Eb2:2 Eb3:2 Eb2:2 Eb3:2 Eb2:2 Eb3:2 Eb2:2 Eb3:2",
+          "C2:2@kick C8:2@hat C8:2@hat C5:2@snare C8:2@hat C2:2@kick C5:2@snare C8:2@hat C2:2@kick C8:2@hat C8:2@hat C5:2@snare C8:2@hat C2:2@kick C5:2@snare C8:2@hat",
+          "A3:16 Bb3:16"
+        ]
+      },
+      "a4": {
+        "rows": 32,
+        "tracks": [
+          "D5:6 C5:2 Bb4:4 A4:4 A4:16",
+          "G3:4@arp-min G3:4@arp-min G3:4@arp-min G3:4@arp-min A3:4@arp-maj A3:4@arp-maj A3:4@arp-maj A3:4@arp-maj",
+          "G2:2 G3:2 G2:2 G3:2 G2:2 G3:2 G2:2 G3:2 A2:2 A3:2 A2:2 A3:2 A2:2 A3:2 A2:2 A3:2",
+          "C2:2@kick C8:2@hat C5:2@snare C8:2@hat C2:2@kick C2:2@kick C5:2@snare C8:2@hat C5:2@snare C5:2@snare C5@snare C5@snare C5:2@snare C5:2@snare C5:2@snare C5:2@snare C5:2@snare",
+          "D4:16 C#4:16"
+        ]
+      },
+      "b1": {
+        "rows": 32,
+        "tracks": [
+          "F5:4 D5:4 Bb4:8 C5:4 E5:4 G5:8",
+          "Bb3:4@arp-maj Bb3:4@arp-maj Bb3:4@arp-maj Bb3:4@arp-maj C4:4@arp-maj C4:4@arp-maj C4:4@arp-maj C4:4@arp-maj",
+          "Bb2:2 Bb3:2 Bb2:2 Bb3:2 Bb2:2 Bb3:2 Bb2:2 Bb3:2 C2:2 C3:2 C2:2 C3:2 C2:2 C3:2 C2:2 C3:2",
+          "C2:4@kick C8:4@hat C5:4@snare C8:4@hat C2:4@kick C8:4@hat C5:4@snare C8:4@hat",
+          "F4:16 E4:16"
+        ]
+      },
+      "b2": {
+        "rows": 32,
+        "tracks": [
+          "A5:8 F5:4 D5:4 E5:8 C#5:8",
+          "D4:4@arp-min D4:4@arp-min D4:4@arp-min D4:4@arp-min A3:4@arp-maj A3:4@arp-maj A3:4@arp-maj A3:4@arp-maj",
+          "D2:2 D3:2 D2:2 D3:2 D2:2 D3:2 D2:2 D3:2 A2:2 A3:2 A2:2 A3:2 A2:2 A3:2 A2:2 A3:2",
+          "C2:4@kick C8:4@hat C5:4@snare C8:4@hat C2:4@kick C8:4@hat C5:4@snare C8:4@hat",
+          "D4:16 C#4:16"
+        ]
+      },
+      "b3": {
+        "rows": 32,
+        "tracks": [
+          "G5:8 Eb5:4 Bb4:4 A4:4 C#5:4 E5:8",
+          "Eb4:4@arp-maj Eb4:4@arp-maj Eb4:4@arp-maj Eb4:4@arp-maj A3:4@arp-maj A3:4@arp-maj A3:4@arp-maj A3:4@arp-maj",
+          "Eb2:2 Eb3:2 Eb2:2 Eb3:2 Eb2:2 Eb3:2 Eb2:2 Eb3:2 A2:2 A3:2 A2:2 A3:2 A2:2 A3:2 A2:2 A3:2",
+          "C2:2@kick C8:2@hat C5:2@snare C8:2@hat C2:2@kick C2:2@kick C5:2@snare C8:2@hat C5:2@snare C5:2@snare C5@snare C5@snare C5:2@snare C5:2@snare C5:2@snare C5:2@snare C5:2@snare",
+          "Eb4:16 E4:16"
+        ]
+      },
+      "c1": {
+        "rows": 32,
+        "tracks": [
+          "- .:31",
+          "D4:4@arp-min D4:4@arp-min D4:4@arp-min D4:4@arp-min D4:4@arp-min D4:4@arp-min D4:4@arp-min D4:4@arp-min",
+          "D2:2 D3:2 D2:2 D3:2 D2:2 D3:2 D2:2 D3:2 D2:2 D3:2 D2:2 D3:2 D2:2 D3:2 D2:2 D3:2",
+          "C2:4@kick C8:4@hat C8:4@hat C8:4@hat C2:4@kick C8:4@hat C8:4@hat C8:4@hat",
+          "A3:32"
+        ]
+      },
+      "c2": {
+        "rows": 32,
+        "tracks": [
+          "D6:12 C6:4 Bb5:8 A5:8",
+          "Bb3:4@arp-maj Bb3:4@arp-maj Bb3:4@arp-maj Bb3:4@arp-maj A3:4@arp-maj A3:4@arp-maj A3:4@arp-maj A3:4@arp-maj",
+          "Bb2:2 Bb3:2 Bb2:2 Bb3:2 Bb2:2 Bb3:2 Bb2:2 Bb3:2 A2:2 A3:2 A2:2 A3:2 A2:2 A3:2 A2:2 A3:2",
+          "C2:2@kick C8:2@hat C5:2@snare C8:2@hat C2:2@kick C2:2@kick C5:2@snare C8:2@hat C5:2@snare C5:2@snare C5@snare C5@snare C5:2@snare C5:2@snare C5:2@snare C5:2@snare C5:2@snare",
+          "D4:16 C#4:16"
+        ]
+      }
+    },
+    "order": [
+      "intro-1",
+      "intro-2",
+      "a1",
+      "a2",
+      "a3",
+      "a4",
+      "b1",
+      "b2",
+      "b1",
+      "b3",
+      "c1",
+      "c2",
+      "a1",
+      "a2",
+      "a3",
+      "a4"
+    ],
+    "loopFromOrder": 2
+  }
+}

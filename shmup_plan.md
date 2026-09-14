@@ -3024,6 +3024,95 @@ Goal of the milestone: every **[P1]** feature. Steps are ordered so systems land
   homing minis from its chest). Same deliverable list as M2-11.
 - **Acceptance:** as M2-11.
 - **Refs:** `shmup_feat.md` §14, §11, §13.
+- **As built:**
+  - **Zone D — MAGMA DEEP** (`content/stages/zone-d.stage.json`, 9,600 px, `terrain-magma`, a
+    400-px-tall map — `rowsTall` 50): the caldera fields on the surface (`ember-wisp` streams,
+    `cinder-bat` swoops on the new `content/paths/zone-d.paths.json`, erupting `magma-cone`s —
+    M2-07's `volcano.lob` — lobbing `magma-bomb`s, a `basalt-turret`), the eruption field
+    (checkpoint 2,200), then **the dive**: a camera key at 3,560 with `hold` 150 and `yTo` 200 stops
+    the scroll over the pit (the surface floor's heightfield ramps down into it) and pans the camera
+    200 px down into the caves, where it stays. The caves (checkpoint 4,000): `cinder-rock`s dropping
+    from the roof (`rock.fall`), `slag-crawler`s, then the **destructible maze** — seven brick walls
+    (the tileset's `brick`, hp 4, written as `rle` rows over the generated caves at world x
+    4,800–5,776), each with a 48-px gap at another height; the lava river (checkpoint 6,800,
+    1.3 px/tick), the calm, then **CINDER BASTION** (CB-04). Backdrops: `bg/magma-peaks` (a heat
+    `haze` until the dive) and the palette-cycled lava lake `bg/magma-lava`, placed below the surface
+    view (`y` 256, factor 0.5) so it rises into view with the dive (a slow `wave` after it).
+  - **Zone E — TEMPEST RIDGE** (`zone-e.stage.json`, 9,800 px, `terrain-ridge`): the storm front
+    over jagged peaks (heightfield floors with `amp` 9–18 % of the `period`), the ridge pass
+    between jagged floors and overhangs (checkpoint 2,200), the thunderheads (checkpoint 4,600), the
+    gale run (checkpoint 6,800, 1.4 px/tick), the calm, then **SQUALL STEED** (SS-05). **Rear
+    attackers** throughout: `gale-kite` formations (`fan.loop` on the new rear-entry paths
+    `kite-overtake-high` / `-low` of `content/paths/zone-e.paths.json`) and `squall-jumper`s (the new
+    behaviour `rear.swoop`), both spawned behind the ship (a negative `screenX`) and overtaking it.
+    **Heavy weather**: six parallax bands — two rows of storm clouds (`bg/storm-clouds`, painted in
+    their palette cycle's four colours, rolled by a `wave`), a mountain band (`bg/storm-ridge`) and
+    three rows of slanting rain (`bg/storm-rain`, factor 0.9).
+  - **New behaviours** (`core/behaviors`): `rear.swoop` (one `Waypoint` mover: in along its row to
+    `turnX`, a hold with one aimed shot half-way through it, then away to the left — the script
+    wakes once); the boss behaviours `boss.bastion` (tracking, lane lasers from the guns in turn —
+    attached, like HB-01's —, spreads and rings from the core; its **rotating shield arms** are data:
+    a `hub` part attached to the core, with no hurtbox and no sprite, and four armoured arm segments
+    with circle hurtboxes attached to it — the behaviour only sets the hub's `spin` per phase and
+    reverses it every `reverseTicks`, so a phase change never makes the arms jump) and `boss.steed`
+    (a bob on a tall ellipse — the boss system's `orbit` —, a `whenOpen` chest opening and shutting
+    with its lids — `setJaws`, from the rest offsets —, the homing minis launched from the chest
+    only while it is open, spreads from the snout, rings from it as the chest shuts). **No engine
+    change**: the M2-09 part turns and the M2-11 minion route carried both bosses. The seahorse's
+    orbit speed is the tunable `bobSpeed`, not `speed` — the content test reads a boss phase's
+    `speed` as px/tick.
+  - **Rosters** (`zone-d.enemies.json`, `zone-e.enemies.json`): six new types placed in D (ember
+    wisp, cinder bat, magma cone, cinder rock, slag crawler, basalt turret) and five in E (hail
+    drifter, gale kite, squall jumper, crag turret, thunderhead), new to every zone a run can have
+    flown before (A–C); the carriers are zone A's `tender`; patterns: `tempest.bolt` in
+    `zones.patterns.json` (a streak of four aimed needles, 0.85 → 1.6 px/tick).
+  - **Art as code:** generators `scripts/assets/procedural/magma.mjs` (13 sprites) and
+    `tempest.mjs` (17), registered in `procedural/index.mjs`; `TERRAIN_PALETTES` entries
+    `tiles/terrain-magma` / `-ridge` with their tileset files (copies of `terrain-a`'s tiles).
+  - **Songs:** `zone-d` (MAGMA DEEP), `boss-d` (BASTION OF CINDERS), `zone-e` (TEMPEST RIDGE),
+    `boss-e` (STEED OF THE SQUALL) — `stages`-scoped chip songs in the forms of M2-11's (6.4 s intro +
+    44.8 s loop; the boss themes' shape).
+  - **Direct-mode item plans** (26 entries each) in both stages.
+  - **Playtests:** `test/playtest/zone-d.test.ts` / `zone-e.test.ts` (god mode: stage clear in 3–6
+    min, three boss phases, the 4-way rules on every tick; zone D's camera reaching y 200; the no-god
+    run reported) and `zone-de-recovery.test.ts` (every checkpoint of D and E — zone D's third in the
+    caves). Measured: D 228 s (CINDER BASTION 14 s), E 246 s (SQUALL STEED 51 s); without god mode
+    both clear with one death.
+  - **Balance found by the bot** (deaths reported, never asserted, but a zone should be survivable):
+    a maze wall without a gap killed the 4-way bot — its lane-centred ship straddles two tile rows,
+    so a one-row hole shot through a wall does not fit it — so every wall has a gap (48 px: the
+    stage-runtime test's flyable-corridor rule) and shooting through is the shortcut; the turrets
+    and crawlers left the maze (a turret passing under the ship fires straight up its column, which
+    a lane-only dodger cannot leave); SQUALL STEED's first bob (40 px) made its fight last three
+    minutes (the chest moved out of the lane while the shots flew), the shipped one bobs 14–18 px;
+    CINDER BASTION's core got 80 hit points (a 60-hp core fell in 10 s once the bot had an Option).
+  - **Content check** (`content.test.ts`, the zones block now "B–E"): the table got D and E; the
+    "4–6 new types" count compares with every zone flown before (`earlier`); "ground enemies stand on
+    rock" measures at the camera y each event fires at (zone D dives); the boss fight allows the
+    bastion's two lanes to overlap for a moment (`lanes`, never under the 16-px gap); the rear
+    attackers' speeds join the 2-px/tick check. New tests: D's volcanoes, falling rocks, the dive,
+    the maze (every brick wall in the caves with a ≥ 24-px gap), the shield arms on a hub; E's rear
+    attackers, weather bands, jagged floors, the seahorse's chest and minis. Also
+    `zones-de-runtime.test.ts` (the dive at a scroll stop, a practice start in the caves, the maze's
+    bricks broken by shots, jumpers and kites overtaking the ship), `behaviors-zones-de.test.ts`,
+    allocation guards `behaviors-bastion-alloc` / `-steed-alloc` / `-swoop-alloc`,
+    `procedural-zones-de.test.ts`.
+  - **Goldens:** new `zone-d-god` (13,698 ticks) and `zone-e-god` (14,736 ticks), the 4-way bot with
+    god mode from the start to the stage clear. **Re-blessed:** the new sprites and scripts shift the
+    sorted sprite / script ids hashed through the pools; all 33 older files kept their inputs, tick
+    counts, headers and outcomes (only hashes changed).
+  - Tests that pin shipped lists were updated: the music tracks (content test, `@shmup/shell` boot /
+    loader tests), the enemy and boss behaviour rosters, the atlas's enemy sprite count (47), the
+    zone tilesets of the terrain generator test, the golden file-name pattern. The flyable-corridor
+    check of `stage-runtime.test.ts` (≥ 48 open px in every column, a clear spawn at every
+    checkpoint) measured the rows 0–199 of every map; it now measures the rows the camera shows when
+    the ship reaches the column (zone D's caves are rows 200–399).
+  - **Bundle:** the Tizen `app.js` is 313.5 KB gzip of its 350 KB budget (was 307.5 after M2-11:
+    the two zones' stages, songs and rosters add ≈ 6 KB gzip).
+  - **Gotcha:** `StageRunner.jumpTo` moves the camera, not the ships — in zone D a jump past the dive
+    leaves a ship spawned at the surface clamped to the top of the view (inside the cave roof); a
+    test that jumps there calls `spawnPlayer(ship, camera)` again. The game's own starts (the stage
+    skip, a practice start, checkpoint restarts) spawn the ship where the camera is.
 
 ### M2-13 — Zones F & G
 

@@ -141,6 +141,23 @@ and its `sand-clod`s (`rock.fall`), `widow-drone` (`rammer.aimed`) and the boss 
 takes damage only once its two fangs are gone —, spider drones launched from its spinnerets and,
 from the second phase, silk lines — telegraphed horizontal lasers, one at a time).
 
+`zone-d.enemies.json` and `zone-e.enemies.json` (M2-12) are the rosters of the real zones D and E.
+MAGMA DEEP: `ember-wisp` (`drifter.sine` popcorn), `cinder-bat` (`fan.loop` on the `bat-swoop-*`
+paths), `magma-cone` (`volcano.lob` on the floor) and its `magma-bomb`s (`rock.fall`, `trigger` 0),
+`cinder-rock` (`rock.fall` hanging from a cave roof, `trigger` 60), `slag-crawler` /
+`slag-crawler-floor` (`walker.floor`), `basalt-turret` / `basalt-turret-ceiling` (`turret.floor`)
+and the boss **CINDER BASTION** (`cinder-bastion`, CB-04 — `boss.bastion`: a core battleship whose
+core is guarded by **rotating shield arms** — a `hub` part attached to the core, no hurtbox and no
+sprite, turned by the behaviour, and four armoured arm segments with circle hurtboxes attached to
+it — plus two lane-laser emitters, the guns; the arms reverse in the later phases, spreads and rings
+come from the core). TEMPEST RIDGE: `hail-drifter` (`drifter.sine`), `gale-kite` (`fan.loop` on the
+rear-entry `kite-overtake-*` paths), `squall-jumper` (`rear.swoop`: in from behind along its row,
+a shot back from its turn point, then away left), `crag-turret` / `crag-turret-ceiling`
+(`turret.floor`), `thunderhead` (`pattern.loop` + `tempest.bolt`), `steed-foal` (`rocket.homing`)
+and the boss **SQUALL STEED** (`squall-steed`, SS-05 — `boss.steed`: a seahorse bobbing on a tall
+ellipse; its chest, the `whenOpen` core, opens with its lids and launches the homing foals, the
+snout — the gun — fires spreads and, in the last phase, a ring as the chest shuts).
+
 Several files may exist (e.g. one per theme); ids must be unique across all of them.
 The bonus stages' drops (M2-10): `"drop": "oneUp"` leaves a 1UP (an extra life, up to 9) and
 `"drop": "bonusCapsule"` a gold bonus capsule worth 1,000 points — world-space items like the

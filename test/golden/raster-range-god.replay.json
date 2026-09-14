@@ -61,14 +61,14 @@
     "AK4c"
   ],
   "hashes": [
-    200000317,
-    1247198984,
-    1779320826,
-    2200870206,
-    1768813147,
-    2180774900
+    2755459037,
+    535378856,
+    1188538906,
+    2958340574,
+    3224459771,
+    1623063124
   ],
-  "finalHash": 666453504,
+  "finalHash": 3782192544,
   "description": "RASTER RANGE with god mode (M2-08): the 4-way bot flies the raster-effect dev stage — its wave, floor, haze and palette cycle are presentation only",
   "expected": {
     "status": "stageClear",

@@ -73,6 +73,46 @@
           "ranked": true
         }
       ]
+    },
+    {
+      "id": "tempest.bolt",
+      "body": [
+        {
+          "op": "fire",
+          "direction": {
+            "type": "aim"
+          },
+          "speed": 0.85,
+          "bullet": {
+            "kind": "needle-pink"
+          }
+        },
+        {
+          "op": "repeat",
+          "times": 3,
+          "body": [
+            {
+              "op": "fire",
+              "direction": {
+                "type": "sequence",
+                "value": 0
+              },
+              "speed": {
+                "type": "sequence",
+                "value": 0.25
+              },
+              "bullet": {
+                "kind": "needle-pink"
+              }
+            }
+          ]
+        },
+        {
+          "op": "wait",
+          "ticks": 150,
+          "ranked": true
+        }
+      ]
     }
   ]
 }

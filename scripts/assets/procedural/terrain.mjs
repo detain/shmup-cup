@@ -1,7 +1,7 @@
 /**
- * The placeholder 8×8 terrain tilesets — `tiles/terrain-a` and, since M2-11, its recoloured
- * zone sets `tiles/terrain-reef` and `tiles/terrain-dune`: solid rock, flat floor /
- * ceiling / wall edges, and slopes at 45° and 22.5° (two tiles per 22.5° slope) for
+ * The placeholder 8×8 terrain tilesets — `tiles/terrain-a` and, since M2-11 / M2-12, its
+ * recoloured zone sets `tiles/terrain-reef`, `-dune`, `-magma` and `-ridge`: solid rock, flat
+ * floor / ceiling / wall edges, and slopes at 45° and 22.5° (two tiles per 22.5° slope) for
  * floors and ceilings in both directions.
  *
  * Frame `i` is tile {@link TERRAIN_TILES}`[i]`; the manifest also lists every tile as a
@@ -22,9 +22,11 @@
  *
  * Plan M2-11 added two recoloured sets with the same tiles, frames and shapes for the zones'
  * own terrain ({@link TERRAIN_PALETTES}): `tiles/terrain-reef` (BRINE NEBULA's pale coral over
- * deep blue-grey stone) and `tiles/terrain-dune` (DUNE EXPANSE's sand). Only the rock colours
- * differ (the rock texture's hash is seeded per set); the destructible blocks look the same in
- * every set, so a brick reads as a brick in every zone. A new zone set is one more
+ * deep blue-grey stone) and `tiles/terrain-dune` (DUNE EXPANSE's sand); plan M2-12 two more:
+ * `tiles/terrain-magma` (MAGMA DEEP's dark basalt with an ember-orange rim) and
+ * `tiles/terrain-ridge` (TEMPEST RIDGE's storm-grey granite with a pale frost rim). Only the
+ * rock colours differ (the rock texture's hash is seeded per set); the destructible blocks look
+ * the same in every set, so a brick reads as a brick in every zone. A new zone set is one more
  * {@link TERRAIN_PALETTES} entry (plus a `content/tilesets/` file naming the sprite).
  *
  * **Public API.** {@link generate}, {@link TERRAIN_TILES}, {@link TILE_SIZE},
@@ -99,6 +101,16 @@ export const TERRAIN_PALETTES = Object.freeze({
     surface: '#ecd08c',
     subsurface: '#c49a5c',
     rock: ['#8a6232', '#7a542a', '#9a6e3a'],
+  },
+  'tiles/terrain-magma': {
+    surface: '#e0703a',
+    subsurface: '#8a3a24',
+    rock: ['#3a2a2a', '#2c2020', '#4a3432'],
+  },
+  'tiles/terrain-ridge': {
+    surface: '#c8d4e0',
+    subsurface: '#7c8898',
+    rock: ['#4a5260', '#3c4452', '#58606e'],
   },
 });
 
@@ -222,7 +234,8 @@ function transpose(image) {
  * Generates the tilesets.
  *
  * @returns {SpriteDef[]} `tiles/terrain-a`, then the M2-11 sets `tiles/terrain-reef` and
- *   `tiles/terrain-dune` (anchor top-left, frame `i` = {@link TERRAIN_TILES}`[i]`).
+ *   `tiles/terrain-dune` and the M2-12 sets `tiles/terrain-magma` and `tiles/terrain-ridge`
+ *   (anchor top-left, frame `i` = {@link TERRAIN_TILES}`[i]`).
  */
 export function generate() {
   return Object.keys(TERRAIN_PALETTES).map(tileset);

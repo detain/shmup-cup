@@ -77,6 +77,11 @@
  *   comes near, then bursts out on a ballistic arc through the terrain; the other segments follow
  *   its track.
  *
+ * **Zone E (M2-12)** — TEMPEST RIDGE's rear attackers:
+ *
+ * - `rear.swoop` — enters from behind the view, overtakes the ship along its row to a turn point,
+ *   holds, fires an aimed shot back and leaves to the left.
+ *
  * `drifter.sine`, `fan.loop`, `carrier.straight`, `hatch.spawner`, `rammer.aimed`,
  * `hunter.option`, `cube.pincer`, the M2-07 gimmicks and the M2-11 rockets and worms do not fire.
  * Every shot goes through the primitives, so nothing fires off screen or before `settleTicks`.
@@ -149,6 +154,23 @@
  *   [`laserTicks` 0 = never] ≥ 1 the guns in turn spin silk lines — detached horizontal lasers
  *   [`laserLength` 384, `laserWidth` 6, `telegraph` 50, `active` 40].
  *
+ * **Zone bosses (M2-12)**:
+ *
+ * - `boss.bastion` — CINDER BASTION (zone D), a core battleship with **rotating shield arms**:
+ *   every part attached to a core (the arms' pivot) turns at [`spin` 4] units a tick, reversing
+ *   every [`reverseTicks` 0 = never]; it tracks like `boss.bulwark` [`trackSpeed` 0.35, `margin`
+ *   44], its guns fire attached lane lasers in turn every [`laserTicks` 120] (the first after
+ *   [`firstLaser` 60]; [`laserLength` 384, `laserWidth` 8, `telegraph` 45, `active` 50]), and the
+ *   cores add aimed [`ways` 0 = none]-ways of ovals [`spread` 40, `bulletSpeed` 1.3] every
+ *   [`fireTicks` 100] and rings of [`ring` 0 = none] at [`ringSpeed` 1] every [`ringTicks` 150].
+ * - `boss.steed` — SQUALL STEED (zone E), the seahorse: bobs on the ellipse [`cx` 296, `cy` 100,
+ *   `rx` 8, `ry` 40] at [`bobSpeed` 3] units a tick; its `whenOpen` chest opens for
+ *   [`openTicks` 110] after every [`closedTicks` 150] and, while open, each core launches the
+ *   `minion` (homing minis) every [`launchTicks` 45], at most [`minis` 2] per opening; the guns
+ *   (the snout) fire aimed [`ways` 3]-ways [`spread` 44, `bulletSpeed` 1.3] every [`fireTicks`
+ *   80] and, with [`ring` 0 = none] ≥ 1, a ring at [`ringSpeed` 1] as the chest shuts; [`gape` 0]
+ *   moves the chest's lids apart while it is open.
+ *
  * **Implements.**
  * - shmup_feat.md §11 — archetypes (popcorn, formation fliers, capsule carriers, turrets,
  *   walkers, hatches, rammers, orbiters, the Option Hunter — M2-04) as coroutine scripts
@@ -159,6 +181,9 @@
  *   (M2-11)
  * - shmup_feat.md §13 — the zone bosses GALVANIC MAW (mechanical fish: mouth weak point, homing
  *   rockets, cutters) and SANDGRAVE WIDOW (arachnid: spider drones, silk-line lasers) (M2-11)
+ * - shmup_feat.md §11 — zone E's rear attackers (M2-12)
+ * - shmup_feat.md §13 — the zone bosses CINDER BASTION (core battleship: rotating shield arms,
+ *   lane lasers) and SQUALL STEED (seahorse: a chest that opens to launch homing minis) (M2-12)
  * - shmup_tech.md §4.6 — TS generator coroutines
  * - shmup_feat.md §13 — boss phases driven by behaviour scripts (the pattern set changes with the
  *   phase)
@@ -170,7 +195,7 @@
  * {@link DEFAULT_BOSS_BEHAVIOR_DEFS}, {@link BOSS_BEHAVIOR_IDS}, {@link WEAPON_SCRIPT_IDS},
  * {@link KNOWN_SCRIPT_IDS}, {@link checkEnemyBehaviors}.
  *
- * **Planned API.** More behaviours with the zones of M2 (M2-12 … M2-14).
+ * **Planned API.** More behaviours with the zones of M2 (M2-13, M2-14).
  *
  * @module
  */
@@ -892,6 +917,53 @@ const wormBurst = defineBehavior(
   },
 );
 
+// ------------------------------------------------------------------------- zones D and E (M2-12)
+
+/**
+ * `rear.swoop` (M2-12) — a **rear attacker** (zone E, shmup_feat.md §11 "rear attackers / jumpers
+ * — enter from behind"): spawned behind the view (a negative `screenX`), it flies along its spawn
+ * row to the right at [`speed` 1.6] px/tick, overtaking the ship, to view x [`turnX` 280]; there it
+ * holds [`hold` 18] ticks, turns to the nearest player and — half-way through the hold — fires an
+ * aimed [`ways` 1]-way of pink needles [`spread` 40 binary units apart] at [`bulletSpeed` 1.3]
+ * (`ways` 0 = none), then leaves to the left at [`leaveSpeed` 1.4] px/tick, back through the
+ * playfield along its row.
+ *
+ * @remarks
+ * The motion is one `Waypoint` mover (approach, hold, leave), so the script wakes once: at the
+ * shot. The wake is timed from the straight distance to the turn point (whole ticks). A rear
+ * attacker is dodged like anything else with four directions: it keeps its row, so the ship
+ * leaves that row while it overtakes and again while it flies back.
+ */
+const rearSwoop = defineBehavior(
+  'rear.swoop',
+  {
+    speed: 1.6,
+    turnX: 280,
+    hold: 18,
+    ways: 1,
+    spread: 40,
+    bulletSpeed: 1.3,
+    leaveSpeed: 1.4,
+  },
+  function* swoop(api, p): Script {
+    const self = api.self;
+    const camera = api.camera;
+    const speed = p.speed > 0 ? p.speed : 1;
+    const hold = p.hold >= 1 ? Math.floor(p.hold) : 1;
+    const ways = p.ways >= 1 ? Math.floor(p.ways) : 0;
+    const row = self.y - camera.y;
+    const ahead = p.turnX - (self.x - camera.x);
+    api.setMover(MoverKind.Waypoint, p.turnX, row, speed, hold, -p.leaveSpeed, 0);
+    const approach = ahead > 0 ? Math.ceil(ahead / speed) | 0 : 0;
+    yield approach + (hold >> 1) + 1;
+    if (ways > 0) {
+      faceTarget(api);
+      api.nWay(ways, p.spread, p.bulletSpeed, BulletKind.NeedlePink);
+    }
+    yield SLEEP_FOREVER;
+  },
+);
+
 /** The roster's definitions (see the module docs), e.g. to extend a registry in tests. */
 export const DEFAULT_BEHAVIOR_DEFS: readonly BehaviorDef[] = Object.freeze([
   drifterSine,
@@ -913,6 +985,7 @@ export const DEFAULT_BEHAVIOR_DEFS: readonly BehaviorDef[] = Object.freeze([
   cubeStack,
   rocketHoming,
   wormBurst,
+  rearSwoop,
 ]);
 
 /** The roster as a registry (what the World uses). */
@@ -1796,8 +1869,232 @@ const bossWidow = defineBossBehavior(
 );
 
 /**
+ * Sets the turn speed of every standing part attached to a core (the pivot of a rotating arm — its
+ * own children turn with it).
+ *
+ * @param api - The boss's API.
+ * @param speed - Binary units per tick (negative = counter-clockwise, 0 = still).
+ */
+function spinHubs(api: BossScriptApi, speed: number): void {
+  const parts = api.self.parts;
+  for (let i = 0; i < api.partCount; i++) {
+    const parent = parts[i].parent;
+    if (parent >= 0 && parts[parent].core && !parts[i].destroyed) api.spinPart(i, speed);
+  }
+}
+
+/**
+ * `boss.bastion` (M2-12) — CINDER BASTION (CB-04, zone D), the second **core battleship**
+ * (shmup_feat.md §13 "shield plates in front of cores; lasers; pattern changes as cores die"):
+ * where HALCYON BULWARK hides its core behind plates, this one guards it with **rotating shield
+ * arms**. Every part attached to a core — the arms' pivot — turns at [`spin` 4] binary units a
+ * tick (rounded to whole units; its armoured arm segments sweep in front of the core and clink the
+ * shots that meet them), reversing every [`reverseTicks` 0 = never] ticks. It tracks the nearest
+ * player's height at [`trackSpeed` 0.35] px/tick, [`margin` 44] px inside the playfield; every
+ * [`laserTicks` 120] ticks
+ * (rank-scaled; the first after [`firstLaser` 60]) the next standing gun — the emitters — fires a
+ * telegraphed lane laser to the left that stays **attached** to it ([`laserLength` 384],
+ * [`laserWidth` 8], [`telegraph` 45], [`active` 50]); with [`ways` 0 = none] ≥ 1 every [`fireTicks`
+ * 100] ticks each standing core spits an aimed `ways`-way of red ovals [`spread` 40] at
+ * [`bulletSpeed` 1.3] through its arms; with [`ring` 0 = none] ≥ 1 every [`ringTicks` 150] ticks
+ * each core fires a ring of `ring` round purple bullets at [`ringSpeed` 1], each turned half a gap
+ * from the last.
+ *
+ * @remarks
+ * One script per phase, sleeping until the soonest of its four timers (every timer a whole number,
+ * `NEVER_TICKS` for one that never runs). The spin is set when the phase starts — the arms keep the
+ * angle they have, so a phase change never makes them jump. Lanes go to the standing guns in turn
+ * and skip a destroyed one, like `boss.bulwark`'s; one lane at a time while `laserTicks` outlasts a
+ * lane (telegraph + grow + active + fade).
+ */
+const bossBastion = defineBossBehavior(
+  'boss.bastion',
+  {
+    trackSpeed: 0.35,
+    margin: 44,
+    spin: 4,
+    reverseTicks: 0,
+    laserTicks: 120,
+    firstLaser: 60,
+    laserLength: 384,
+    laserWidth: 8,
+    telegraph: 45,
+    active: 50,
+    fireTicks: 100,
+    ways: 0,
+    spread: 40,
+    bulletSpeed: 1.3,
+    ring: 0,
+    ringTicks: 150,
+    ringSpeed: 1,
+  },
+  function* bastion(api, p): Script {
+    api.track(p.trackSpeed, p.margin, PLAYFIELD_H - p.margin);
+    let spin = Math.round(p.spin);
+    spinHubs(api, spin);
+    const ways = p.ways >= 1 ? Math.floor(p.ways) : 0;
+    const ring = p.ring >= 1 ? Math.floor(p.ring) : 0;
+    const half = ring > 0 ? Math.floor(ANGLE_UNITS / ring / 2) : 0;
+    const reverseTicks = p.reverseTicks >= 1 ? Math.floor(p.reverseTicks) : 0;
+    const parts = api.self.parts;
+    const n = api.partCount;
+    let next = 0;
+    let rings = 0;
+    let laserIn = p.firstLaser >= 1 ? Math.floor(p.firstLaser) : 1;
+    let fireIn = ways > 0 ? api.fireWait(p.fireTicks) : NEVER_TICKS;
+    let ringIn = ring > 0 ? api.fireWait(p.ringTicks) : NEVER_TICKS;
+    let reverseIn = reverseTicks > 0 ? reverseTicks : NEVER_TICKS;
+    for (;;) {
+      let wait = laserIn < fireIn ? laserIn : fireIn;
+      if (ringIn < wait) wait = ringIn;
+      if (reverseIn < wait) wait = reverseIn;
+      yield wait;
+      laserIn -= wait;
+      fireIn -= wait;
+      ringIn -= wait;
+      reverseIn -= wait;
+      if (reverseIn <= 0) {
+        spin = -spin;
+        spinHubs(api, spin);
+        reverseIn = reverseTicks;
+      }
+      if (laserIn <= 0) {
+        for (let k = 0; k < n; k++) {
+          const i = (next + k) % n;
+          if (!parts[i].gun || parts[i].destroyed) continue;
+          api.laser(
+            i,
+            ANGLE_UNITS / 2,
+            p.laserLength,
+            p.laserWidth,
+            p.telegraph,
+            LASER_GROW_TICKS,
+            p.active,
+            LASER_FADE_TICKS,
+            true,
+          );
+          next = i + 1;
+          break;
+        }
+        laserIn = api.fireWait(p.laserTicks);
+      }
+      if (fireIn <= 0) {
+        fireCores(api, ways, p.spread, p.bulletSpeed, BulletKind.OvalRed);
+        fireIn = api.fireWait(p.fireTicks);
+      }
+      if (ringIn <= 0) {
+        ringCores(api, ring, p.ringSpeed, BulletKind.RoundPurple, (rings & 1) * half);
+        rings++;
+        ringIn = api.fireWait(p.ringTicks);
+      }
+    }
+  },
+);
+
+/** Ticks from the chest opening to `boss.steed`'s first launch. */
+const STEED_FIRST_LAUNCH = 10;
+
+/**
+ * `boss.steed` (M2-12) — SQUALL STEED (SS-05, zone E), the **seahorse** archetype (shmup_feat.md
+ * §13 "opens chest to launch homing minis"): it bobs on a tall, narrow ellipse round view point
+ * [`cx` 296, `cy` 100] with radii [`rx` 8, `ry` 40] at [`bobSpeed` 3] binary units a tick (it
+ * should start at `cx + rx`, `cy` — its home); its `whenOpen` chest — the core — stays shut for
+ * [`closedTicks` 150] and opens for [`openTicks` 110] in turn (shots clink off it while shut).
+ * While the chest is open each standing core launches the boss's `minion` — the homing minis
+ * (`rocket.homing`) — every [`launchTicks` 45] ticks (rank-scaled, the first 10 ticks after it
+ * opens), at most [`minis` 2] per opening (0 = none). Every [`fireTicks` 80] ticks (rank-scaled)
+ * each standing gun — the snout — fires an aimed [`ways` 3]-way of pink ovals [`spread` 44] at
+ * [`bulletSpeed` 1.3]; with [`ring` 0 = none] ≥ 1 each gun also fires a ring of `ring` round red
+ * bullets at [`ringSpeed` 1] every time the chest shuts, each turned half a gap from the last. With
+ * [`gape` 0 = still] > 0 the parts attached to the chest (its lids) move `gape` px apart while it
+ * is open (from their rest offsets, like `boss.maw`'s jaws).
+ *
+ * @remarks
+ * One script per phase, sleeping until the soonest of its three timers (the chest, the launches,
+ * the snout); every phase starts with the chest shut and the lids at rest. The bob is the boss
+ * system's `orbit` (per-tick motion; it starts from the angle of where the boss is, so a phase
+ * change never makes it jump).
+ */
+const bossSteed = defineBossBehavior(
+  'boss.steed',
+  {
+    cx: 296,
+    cy: 100,
+    rx: 8,
+    ry: 40,
+    bobSpeed: 3,
+    closedTicks: 150,
+    openTicks: 110,
+    launchTicks: 45,
+    minis: 2,
+    fireTicks: 80,
+    ways: 3,
+    spread: 44,
+    bulletSpeed: 1.3,
+    ring: 0,
+    ringSpeed: 1,
+    gape: 0,
+  },
+  function* steed(api, p): Script {
+    api.orbit(p.cx, p.cy, p.rx, p.ry, p.bobSpeed);
+    const gape = p.gape > 0 ? Math.floor(p.gape) : 0;
+    setJaws(api, 0);
+    api.setOpenAll(false);
+    const minis = p.minis >= 1 ? Math.floor(p.minis) : 0;
+    const ways = p.ways >= 1 ? Math.floor(p.ways) : 1;
+    const ring = p.ring >= 1 ? Math.floor(p.ring) : 0;
+    const half = ring > 0 ? Math.floor(ANGLE_UNITS / ring / 2) : 0;
+    const openTicks = p.openTicks >= 1 ? Math.floor(p.openTicks) : 1;
+    const closedTicks = p.closedTicks >= 1 ? Math.floor(p.closedTicks) : 1;
+    const parts = api.self.parts;
+    let open = false;
+    let launched = 0;
+    let rings = 0;
+    let toggleIn = closedTicks;
+    let launchIn = NEVER_TICKS;
+    let fireIn = api.fireWait(p.fireTicks);
+    for (;;) {
+      let wait = toggleIn < launchIn ? toggleIn : launchIn;
+      if (fireIn < wait) wait = fireIn;
+      yield wait;
+      toggleIn -= wait;
+      launchIn -= wait;
+      fireIn -= wait;
+      if (toggleIn <= 0) {
+        open = !open;
+        api.setOpenAll(open);
+        if (gape > 0) setJaws(api, open ? gape : 0);
+        toggleIn = open ? openTicks : closedTicks;
+        launched = 0;
+        launchIn = open && minis > 0 ? STEED_FIRST_LAUNCH : NEVER_TICKS;
+        if (!open && ring > 0) {
+          const offset = (rings & 1) * half;
+          for (let i = 0; i < api.partCount; i++) {
+            if (parts[i].gun && !parts[i].destroyed) {
+              api.ring(i, ring, p.ringSpeed, BulletKind.RoundRed, offset);
+            }
+          }
+          rings++;
+        }
+      }
+      if (launchIn <= 0) {
+        for (let i = 0; i < api.partCount; i++) {
+          if (parts[i].core && !parts[i].destroyed) api.launch(i);
+        }
+        launched++;
+        launchIn = launched < minis ? api.fireWait(p.launchTicks) : NEVER_TICKS;
+      }
+      if (fireIn <= 0) {
+        fireGuns(api, ways, p.spread, p.bulletSpeed, BulletKind.OvalPink);
+        fireIn = api.fireWait(p.fireTicks);
+      }
+    }
+  },
+);
+
+/**
  * The boss roster's definitions: M1's, the captains and raid turrets of M2-09 and the zone bosses
- * of M2-11.
+ * of M2-11 and M2-12.
  */
 export const DEFAULT_BOSS_BEHAVIOR_DEFS: readonly BossBehaviorDef[] = Object.freeze([
   bossHover,
@@ -1810,6 +2107,8 @@ export const DEFAULT_BOSS_BEHAVIOR_DEFS: readonly BossBehaviorDef[] = Object.fre
   captainCrab,
   bossMaw,
   bossWidow,
+  bossBastion,
+  bossSteed,
 ]);
 
 /** The boss roster as a registry (what the World uses). */

@@ -7,6 +7,10 @@ spline paths, arc-length parameterized").
 `zone-a.paths.json` holds zone A's curves (M1-18): the `vane-*` fan flights (arcs, loops, a
 swoop — `-up` / `-down` mirror each other) and the `gyre-orbit-*` orbiter loops;
 `zone-c.paths.json` zone C's (M2-11): the `sand-skimmer` swoops `skim-dip` / `skim-rise` (mirrors);
+`zone-d.paths.json` zone D's (M2-12): the `cinder-bat` swoops `bat-swoop-down` / `bat-swoop-up`;
+`zone-e.paths.json` zone E's (M2-12): the rear-entering `gale-kite` loops `kite-overtake-high` /
+`kite-overtake-low` — they start behind the ship (spawned at a negative `screenX`), overtake it,
+curl round near the right edge and fly back along another row;
 `test-range.paths.json` those of the dev stage.
 
 A path is a list of **control points relative to where the mover starts** (normally the spawn

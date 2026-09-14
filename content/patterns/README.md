@@ -102,4 +102,6 @@ bullet may `bulletRef` itself (no params) — the 512-bullet pool bounds it.
 [`test-sentry.enemies.json`](../enemies/test-sentry.enemies.json)'s `sentry` runs
 `common.spiral`. [`zones.patterns.json`](zones.patterns.json) (M2-11) holds the zones' own patterns:
 `brine.jelly-ring` (zone B's `reef-jelly`: a six-bullet ring, the first aimed, at 0.85 px/tick) and
-`dune.whirl` (zone C's `dust-devil`: a short two-armed spiral of needles at 1.1 px/tick).
+`dune.whirl` (zone C's `dust-devil`: a short two-armed spiral of needles at 1.1 px/tick); M2-12 added
+`tempest.bolt` (zone E's `thunderhead`: a streak of four aimed needles, 0.85 → 1.6 px/tick — the
+first fire aimed, the others `sequence` 0 in direction and +0.25 in speed).

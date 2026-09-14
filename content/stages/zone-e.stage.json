@@ -7,17 +7,32 @@
     "stage": "Stage",
     "boss": "Boss"
   },
-  "length": 2000,
+  "length": 9800,
   "camera": [
     {
       "x": 0,
-      "speed": 1.1,
+      "speed": 0.8,
       "ramp": 60
     },
     {
-      "x": 1500,
+      "x": 2200,
+      "speed": 0.7,
+      "ramp": 60
+    },
+    {
+      "x": 4600,
+      "speed": 0.8,
+      "ramp": 60
+    },
+    {
+      "x": 6800,
+      "speed": 1.4,
+      "ramp": 120
+    },
+    {
+      "x": 8600,
       "speed": 0.75,
-      "ramp": 90
+      "ramp": 120
     }
   ],
   "checkpoints": [
@@ -25,54 +40,110 @@
       "x": 0
     },
     {
-      "x": 800
+      "x": 2200
+    },
+    {
+      "x": 4600
+    },
+    {
+      "x": 6800
     }
   ],
   "parallax": [
     {
       "layer": "far",
-      "sprite": "bg/stars-far",
-      "factor": 0.25,
+      "sprite": "bg/storm-clouds",
+      "factor": 0.12,
       "y": 0,
       "spacing": 128
     },
     {
       "layer": "far",
-      "sprite": "bg/stars-far",
-      "factor": 0.25,
-      "y": 128,
+      "sprite": "bg/storm-clouds",
+      "factor": 0.2,
+      "y": 40,
       "spacing": 128
     },
     {
       "layer": "mid",
-      "sprite": "bg/stars-mid",
-      "factor": 0.5,
+      "sprite": "bg/storm-ridge",
+      "factor": 0.35,
+      "y": 152,
+      "spacing": 128
+    },
+    {
+      "layer": "mid",
+      "sprite": "bg/storm-rain",
+      "factor": 0.9,
       "y": 0,
-      "spacing": 128
+      "spacing": 64
     },
     {
       "layer": "mid",
-      "sprite": "bg/stars-mid",
-      "factor": 0.5,
+      "sprite": "bg/storm-rain",
+      "factor": 0.9,
+      "y": 64,
+      "spacing": 64
+    },
+    {
+      "layer": "mid",
+      "sprite": "bg/storm-rain",
+      "factor": 0.9,
       "y": 128,
-      "spacing": 128
+      "spacing": 64
     }
   ],
   "tilemap": {
     "tileSize": 8,
-    "tileset": "terrain-a",
+    "tileset": "terrain-ridge",
     "rowsTall": 25,
     "generator": {
       "type": "heightfield",
       "segments": [
         {
-          "from": 200,
-          "to": 1580,
+          "from": 120,
+          "to": 2140,
           "floor": {
-            "base": 18,
-            "amp": 10,
-            "period": 320,
-            "seed": 71
+            "base": 40,
+            "amp": 30,
+            "period": 170,
+            "seed": 91
+          }
+        },
+        {
+          "from": 2200,
+          "to": 4560,
+          "floor": {
+            "base": 34,
+            "amp": 22,
+            "period": 150,
+            "seed": 92
+          },
+          "ceiling": {
+            "base": 34,
+            "amp": 18,
+            "period": 180,
+            "seed": 93
+          }
+        },
+        {
+          "from": 4620,
+          "to": 6760,
+          "floor": {
+            "base": 30,
+            "amp": 20,
+            "period": 140,
+            "seed": 94
+          }
+        },
+        {
+          "from": 6820,
+          "to": 8560,
+          "floor": {
+            "base": 20,
+            "amp": 12,
+            "period": 130,
+            "seed": 95
           }
         }
       ]
@@ -80,11 +151,11 @@
   },
   "events": [
     {
-      "x": 120,
+      "x": 140,
       "type": "formation",
-      "enemy": "skeet",
+      "enemy": "hail-drifter",
       "count": 5,
-      "interval": 18,
+      "interval": 16,
       "y": 50,
       "bonus": 300
     },
@@ -92,91 +163,442 @@
       "x": 300,
       "type": "spawn",
       "enemy": "tender",
-      "y": 100
+      "y": 90
     },
     {
-      "x": 460,
+      "x": 440,
       "type": "formation",
-      "enemy": "skeet",
+      "enemy": "gale-kite",
       "count": 5,
-      "interval": 18,
-      "y": 100,
-      "bonus": 300
+      "interval": 14,
+      "y": 30,
+      "bonus": 400,
+      "path": "kite-overtake-high",
+      "screenX": -24
     },
     {
-      "x": 620,
+      "x": 600,
       "type": "spawn",
       "enemy": "tender",
-      "y": 50
+      "y": 60
     },
     {
-      "x": 800,
+      "x": 720,
+      "type": "spawn",
+      "enemy": "crag-turret"
+    },
+    {
+      "x": 860,
       "type": "formation",
-      "enemy": "vane",
-      "count": 5,
-      "interval": 10,
-      "y": 150,
-      "path": "vane-arc-up",
-      "bonus": 1000
-    },
-    {
-      "x": 900,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 100
-    },
-    {
-      "x": 980,
-      "type": "spawn",
-      "enemy": "picket"
-    },
-    {
-      "x": 1060,
-      "type": "spawn",
-      "enemy": "lancer",
-      "y": 50
-    },
-    {
-      "x": 1160,
-      "type": "spawn",
-      "enemy": "tender",
-      "y": 100
-    },
-    {
-      "x": 1240,
-      "type": "formation",
-      "enemy": "skeet-chain",
+      "enemy": "hail-drifter",
       "count": 6,
-      "interval": 12,
+      "interval": 14,
       "y": 100,
-      "drop": null
+      "bonus": 400
+    },
+    {
+      "x": 1000,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 110
+    },
+    {
+      "x": 1140,
+      "type": "formation",
+      "enemy": "gale-kite",
+      "count": 5,
+      "interval": 14,
+      "y": 120,
+      "bonus": 500,
+      "path": "kite-overtake-low",
+      "screenX": -24
     },
     {
       "x": 1300,
       "type": "spawn",
-      "enemy": "strider"
+      "enemy": "crag-turret"
     },
     {
-      "x": 1380,
+      "x": 1420,
       "type": "spawn",
-      "enemy": "gyre",
-      "y": 60,
-      "path": "gyre-orbit-down"
+      "enemy": "squall-jumper",
+      "y": 50,
+      "screenX": -24
     },
     {
-      "x": 1480,
+      "x": 1560,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 80
+    },
+    {
+      "x": 1700,
+      "type": "formation",
+      "enemy": "hail-drifter",
+      "count": 6,
+      "interval": 14,
+      "y": 40,
+      "drop": null
+    },
+    {
+      "x": 1860,
+      "type": "spawn",
+      "enemy": "squall-jumper",
+      "y": 110,
+      "screenX": -24
+    },
+    {
+      "x": 1980,
+      "type": "spawn",
+      "enemy": "crag-turret"
+    },
+    {
+      "x": 2240,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 100
+    },
+    {
+      "x": 2360,
+      "type": "spawn",
+      "enemy": "crag-turret-ceiling"
+    },
+    {
+      "x": 2480,
+      "type": "spawn",
+      "enemy": "squall-jumper",
+      "y": 80,
+      "screenX": -24
+    },
+    {
+      "x": 2600,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 110
+    },
+    {
+      "x": 2720,
+      "type": "spawn",
+      "enemy": "crag-turret"
+    },
+    {
+      "x": 2860,
+      "type": "formation",
+      "enemy": "hail-drifter",
+      "count": 5,
+      "interval": 14,
+      "y": 96,
+      "bonus": 500
+    },
+    {
+      "x": 3000,
+      "type": "spawn",
+      "enemy": "crag-turret-ceiling"
+    },
+    {
+      "x": 3080,
       "type": "spawn",
       "enemy": "tender",
       "y": 90
     },
     {
-      "x": 1680,
-      "type": "warning",
-      "enemy": "twin-ember"
+      "x": 3260,
+      "type": "spawn",
+      "enemy": "squall-jumper",
+      "y": 120,
+      "screenX": -24
     },
     {
-      "x": 2000,
+      "x": 3380,
+      "type": "spawn",
+      "enemy": "crag-turret"
+    },
+    {
+      "x": 3520,
+      "type": "formation",
+      "enemy": "hail-drifter",
+      "count": 6,
+      "interval": 14,
+      "y": 100,
+      "drop": null
+    },
+    {
+      "x": 3660,
+      "type": "spawn",
+      "enemy": "squall-jumper",
+      "y": 80,
+      "screenX": -24
+    },
+    {
+      "x": 3780,
+      "type": "spawn",
+      "enemy": "crag-turret-ceiling"
+    },
+    {
+      "x": 3900,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 100
+    },
+    {
+      "x": 3960,
+      "type": "spawn",
+      "enemy": "crag-turret"
+    },
+    {
+      "x": 4060,
+      "type": "spawn",
+      "enemy": "squall-jumper",
+      "y": 110,
+      "screenX": -24
+    },
+    {
+      "x": 4640,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 90
+    },
+    {
+      "x": 4760,
+      "type": "spawn",
+      "enemy": "thunderhead",
+      "y": 60
+    },
+    {
+      "x": 4900,
+      "type": "formation",
+      "enemy": "gale-kite",
+      "count": 5,
+      "interval": 14,
+      "y": 40,
+      "bonus": 500,
+      "path": "kite-overtake-high",
+      "screenX": -24
+    },
+    {
+      "x": 5040,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 130
+    },
+    {
+      "x": 5180,
+      "type": "spawn",
+      "enemy": "thunderhead",
+      "y": 140
+    },
+    {
+      "x": 5320,
+      "type": "spawn",
+      "enemy": "crag-turret"
+    },
+    {
+      "x": 5460,
+      "type": "formation",
+      "enemy": "hail-drifter",
+      "count": 6,
+      "interval": 14,
+      "y": 70,
+      "bonus": 400
+    },
+    {
+      "x": 5600,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 100
+    },
+    {
+      "x": 5740,
+      "type": "spawn",
+      "enemy": "thunderhead",
+      "y": 90
+    },
+    {
+      "x": 5880,
+      "type": "formation",
+      "enemy": "gale-kite",
+      "count": 5,
+      "interval": 14,
+      "y": 150,
+      "drop": null,
+      "path": "kite-overtake-low",
+      "screenX": -24
+    },
+    {
+      "x": 6020,
+      "type": "spawn",
+      "enemy": "crag-turret"
+    },
+    {
+      "x": 6160,
+      "type": "spawn",
+      "enemy": "thunderhead",
+      "y": 60
+    },
+    {
+      "x": 6300,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 110
+    },
+    {
+      "x": 6440,
+      "type": "spawn",
+      "enemy": "squall-jumper",
+      "y": 140,
+      "screenX": -24
+    },
+    {
+      "x": 6840,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 100
+    },
+    {
+      "x": 6960,
+      "type": "formation",
+      "enemy": "hail-drifter",
+      "count": 8,
+      "interval": 10,
+      "y": 60,
+      "bonus": 600
+    },
+    {
+      "x": 7100,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 140
+    },
+    {
+      "x": 7240,
+      "type": "formation",
+      "enemy": "gale-kite",
+      "count": 6,
+      "interval": 12,
+      "y": 40,
+      "bonus": 600,
+      "path": "kite-overtake-high",
+      "screenX": -24
+    },
+    {
+      "x": 7400,
+      "type": "spawn",
+      "enemy": "squall-jumper",
+      "y": 120,
+      "screenX": -24
+    },
+    {
+      "x": 7560,
+      "type": "formation",
+      "enemy": "hail-drifter",
+      "count": 8,
+      "interval": 10,
+      "y": 140,
+      "drop": null
+    },
+    {
+      "x": 7700,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 70
+    },
+    {
+      "x": 7840,
+      "type": "spawn",
+      "enemy": "squall-jumper",
+      "y": 60,
+      "screenX": -24
+    },
+    {
+      "x": 7980,
+      "type": "formation",
+      "enemy": "gale-kite",
+      "count": 6,
+      "interval": 12,
+      "y": 160,
+      "drop": null,
+      "path": "kite-overtake-low",
+      "screenX": -24
+    },
+    {
+      "x": 8160,
+      "type": "spawn",
+      "enemy": "thunderhead",
+      "y": 100
+    },
+    {
+      "x": 8320,
+      "type": "spawn",
+      "enemy": "squall-jumper",
+      "y": 140,
+      "screenX": -24
+    },
+    {
+      "x": 8720,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 80
+    },
+    {
+      "x": 8960,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 130
+    },
+    {
+      "x": 9300,
+      "type": "warning",
+      "enemy": "squall-steed"
+    },
+    {
+      "x": 9800,
       "type": "end"
+    }
+  ],
+  "directItems": [
+    "blue",
+    "red",
+    "green",
+    "blue",
+    "red",
+    "green",
+    "blue",
+    "red",
+    "octagon",
+    "green",
+    "blue",
+    "red",
+    "green",
+    "blue",
+    "yellow",
+    "red",
+    "green",
+    "blue",
+    "red",
+    "green",
+    "orange",
+    "blue",
+    "red",
+    "green",
+    "blue",
+    "red"
+  ],
+  "raster": [
+    {
+      "layer": "far",
+      "kind": "wave",
+      "top": 0,
+      "bottom": 96,
+      "amplitude": 2,
+      "wavelength": 30,
+      "period": 180
+    }
+  ],
+  "cycles": [
+    {
+      "layer": "far",
+      "colors": ["#1c2230", "#262e40", "#323c52", "#46526a"],
+      "ticks": 14
     }
   ]
 }

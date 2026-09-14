@@ -2,7 +2,8 @@
  * The golden-replay test (plan M1-19, part of `pnpm test`): every committed
  * `test/golden/<scenario>.replay.json` — zone A (and, since M2-07 / M2-08 / M2-09 / M2-10, the
  * `gimmick-range`, `raster-range`, `captain-range`, `raid-range`, `twin-range`, `bonus-range` and
- * `bonus-vault` dev stages; since M2-11 the real zones B and C and zone B's bonus stage)
+ * `bonus-vault` dev stages; since M2-11 the real zones B and C and zone B's bonus stage; since
+ * M2-12 zones D and E)
  * played by the 4-way bot and recorded with `core/replay` (the 4-way bot, or a careless weaving
  * pilot for the deaths) — plays back into a
  * fresh session with **every state hash** (one per 600 ticks and
@@ -305,6 +306,28 @@ describe('golden replays (zone A and the dev stages, playtest bots)', () => {
     const p1 = world.scoring.board.scores[0];
     expect(outcome.lives - 3 - p1.extendsEarned).toBeGreaterThanOrEqual(1);
     expect(outcome.score).toBeGreaterThan(5 * BONUS_CAPSULE_SCORE);
+  });
+
+  it('covers the real zones D and E of M2-12: both cleared in 3–6 minutes, their bosses shot down', () => {
+    for (const [name, stage] of [
+      ['zone-d-god', 'zone-d'],
+      ['zone-e-god', 'zone-e'],
+    ] as const) {
+      const { file, replay } = readGolden(name);
+      expect(replay.header.stageId).toBe(stage);
+      expect(replay.header.assisted).toBe(true);
+      expect(file.expected).toMatchObject({
+        status: 'stageClear',
+        bossDefeated: true,
+        deathTicks: [],
+      });
+      expect(file.expected.ticks / 60).toBeGreaterThanOrEqual(180);
+      expect(file.expected.ticks / 60).toBeLessThanOrEqual(360);
+    }
+    // MAGMA DEEP's run went down into the caves: its World ends with the camera 200 px down.
+    const { world } = playGolden(readGolden('zone-d-god').replay);
+    expect(world.camera.y).toBe(200);
+    expect(world.stage?.stage.id).toBe('zone-d');
   });
 
   it('covers zones B and C without god mode (M2-11 tests): deaths and restarts, a clear with a death', () => {

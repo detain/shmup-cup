@@ -195,6 +195,8 @@ describe('integration: content/ validates', () => {
       'audio/main.sfx.json',
       'audio/music/boss-b.music.json',
       'audio/music/boss-c.music.json',
+      'audio/music/boss-d.music.json',
+      'audio/music/boss-e.music.json',
       'audio/music/boss.music.json',
       'audio/music/game-over.music.json',
       'audio/music/stage-clear.music.json',
@@ -202,6 +204,8 @@ describe('integration: content/ validates', () => {
       'audio/music/zone-a.music.json',
       'audio/music/zone-b.music.json',
       'audio/music/zone-c.music.json',
+      'audio/music/zone-d.music.json',
+      'audio/music/zone-e.music.json',
       'fx/particles.fx.json',
       'input/remote.input-profiles.json',
     ]);
@@ -490,12 +494,16 @@ describe('integration: content/audio (M1-15)', () => {
       'boss',
       'boss-b',
       'boss-c',
+      'boss-d',
+      'boss-e',
       'game-over',
       'stage-clear',
       'title',
       'zone-a',
       'zone-b',
       'zone-c',
+      'zone-d',
+      'zone-e',
     ]);
     const { db } = loadContent(shippedFiles);
     for (const stage of db.stages) {
@@ -580,10 +588,14 @@ describe('integration: content/audio (M1-15)', () => {
       'boss',
       'boss-b',
       'boss-c',
+      'boss-d',
+      'boss-e',
       'title',
       'zone-a',
       'zone-b',
       'zone-c',
+      'zone-d',
+      'zone-e',
     ]);
     for (const track of looping) {
       const song = track.song;
@@ -995,7 +1007,7 @@ describe('integration: zone A holds to the 4-way design rules (M1-18)', () => {
   });
 });
 
-describe('integration: zones B and C hold to the plan and the 4-way design rules (M2-11)', () => {
+describe('integration: zones B–E hold to the plan and the 4-way design rules (M2-11, M2-12)', () => {
   const db = shippedDb();
   const stageOf = (id: string): StageSpec => db.stages[db.stageIndex.get(id) ?? -1];
   const zoneA = new Set(
@@ -1014,6 +1026,11 @@ describe('integration: zones B and C hold to the plan and the 4-way design rules
     }
     return used;
   };
+  /** The ids of the enemies the timelines of some stages place (their types). */
+  const placedIn = (ids: readonly string[]): Set<string> =>
+    new Set(ids.flatMap((id) => [...stageEnemies(db, stageOf(id))].map((i) => db.enemies[i].id)));
+  // `earlier`: the zones a run can have flown before (a zone's "new" types are new to them);
+  // `lanes`: the most separate laser lanes the boss may have up at once.
   const zones = [
     {
       id: 'zone-b',
@@ -1021,6 +1038,8 @@ describe('integration: zones B and C hold to the plan and the 4-way design rules
       code: 'GM-02',
       boss: 'GALVANIC MAW',
       tileset: 'terrain-reef',
+      earlier: ['zone-a'],
+      lanes: 1,
     },
     {
       id: 'zone-c',
@@ -1028,6 +1047,26 @@ describe('integration: zones B and C hold to the plan and the 4-way design rules
       code: 'SW-03',
       boss: 'SANDGRAVE WIDOW',
       tileset: 'terrain-dune',
+      earlier: ['zone-a'],
+      lanes: 1,
+    },
+    {
+      id: 'zone-d',
+      name: 'MAGMA DEEP',
+      code: 'CB-04',
+      boss: 'CINDER BASTION',
+      tileset: 'terrain-magma',
+      earlier: ['zone-a', 'zone-b', 'zone-c'],
+      lanes: 2,
+    },
+    {
+      id: 'zone-e',
+      name: 'TEMPEST RIDGE',
+      code: 'SS-05',
+      boss: 'SQUALL STEED',
+      tileset: 'terrain-ridge',
+      earlier: ['zone-a', 'zone-b', 'zone-c'],
+      lanes: 0,
     },
   ];
 
@@ -1082,12 +1121,17 @@ describe('integration: zones B and C hold to the plan and the 4-way design rules
 
   it.each(zones)('brings 4–6 new enemy types to $name', (zone) => {
     const stage = stageOf(zone.id);
+    const earlier = placedIn(zone.earlier);
+    const earlierSprites = new Set(
+      [...earlier].map((id) => db.enemies[db.enemyIndex.get(id) ?? -1].sprite),
+    );
     const placed = new Set<string>();
     for (const event of stage.events) {
       if (event.type !== 'spawn' && event.type !== 'formation') continue;
       const enemy = db.enemies[event.enemyId];
-      if (!zoneA.has(enemy.id)) placed.add(enemy.sprite);
+      if (!earlier.has(enemy.id) && !earlierSprites.has(enemy.sprite)) placed.add(enemy.sprite);
     }
+    expect(zoneA.size).toBeGreaterThan(0);
     expect(placed.size).toBeGreaterThanOrEqual(4);
     expect(placed.size).toBeLessThanOrEqual(6);
   });
@@ -1165,6 +1209,99 @@ describe('integration: zones B and C hold to the plan and the 4-way design rules
     expect([...(head?.requires ?? [])].sort()).toEqual(['fang-bottom', 'fang-top']);
   });
 
+  it('gives MAGMA DEEP erupting volcanoes, falling rocks, a dive into a destructible maze and a shielded core battleship', () => {
+    const stage = stageOf('zone-d');
+    const placed = (script: string, ground: string): number =>
+      stage.events.filter(
+        (e) =>
+          (e.type === 'spawn' || e.type === 'formation') &&
+          db.enemies[e.enemyId].script === script &&
+          db.enemies[e.enemyId].ground === ground,
+      ).length;
+    // Erupting volcanoes on the surface floor, rocks that drop from the cave roofs.
+    expect(placed('volcano.lob', 'floor')).toBeGreaterThanOrEqual(5);
+    expect(placed('rock.fall', 'ceiling')).toBeGreaterThanOrEqual(6);
+    // The dive: a map taller than the playfield, a scroll stop that pans the camera down into it.
+    expect(stage.tilemap?.rowsTall ?? 0).toBeGreaterThanOrEqual(50);
+    const dive = stage.camera.find((k) => (k.yTo ?? 0) >= 150);
+    expect(dive?.hold ?? 0).toBeGreaterThan(0);
+    const warningX = stage.events.find((e) => e.type === 'warning')?.x ?? 0;
+    expect(dive?.x ?? warningX).toBeLessThan(warningX / 2);
+    // The destructible maze below: brick walls (breakable tiles), each with an open gap.
+    const game = createGame(createHeadlessPlatform(), { seed: 1, stage: 'zone-d' }, db);
+    const map = game.world.terrain;
+    const tileset = db.tilesets.find((t) => t.id === stage.tilemap?.tileset);
+    const brick = (tileset?.tiles.findIndex((t) => t.name === 'brick') ?? -1) + 1;
+    expect(tileset?.tiles[brick - 1]?.hp ?? 0).toBeGreaterThan(0);
+    if (map === null) throw new Error('no terrain');
+    const walls: number[][] = [];
+    for (let col = 0; col < map.cols; col++) {
+      const rows: number[] = [];
+      for (let row = 0; row < map.rows; row++)
+        if (map.tiles[row * map.cols + col] === brick) rows.push(row);
+      if (rows.length > 0) walls.push(rows);
+    }
+    expect(walls.length).toBeGreaterThanOrEqual(10);
+    for (const rows of walls) {
+      expect(rows[0]).toBeGreaterThanOrEqual(PLAYFIELD_H / 8); // below the surface: in the caves
+      let gap = 0;
+      for (let k = 1; k < rows.length; k++) gap = Math.max(gap, rows[k] - rows[k - 1] - 1);
+      expect(gap * 8).toBeGreaterThanOrEqual(24); // a gap the ship fits through
+    }
+    // CINDER BASTION: the core guarded by armoured arms on a pivot that turns, two lane emitters.
+    const warning = stage.events.find((e) => e.type === 'warning');
+    const boss = warning?.type === 'warning' ? db.enemies[warning.enemyId].boss : null;
+    expect(boss?.phases.every((p) => p.script === 'boss.bastion')).toBe(true);
+    const parts = boss?.parts ?? [];
+    const core = parts.findIndex((p) => p.core);
+    const hubs = parts.filter(
+      (p) => p.parentIndex === core && p.hurtbox === null && p.radius === 0,
+    );
+    expect(hubs).toHaveLength(1);
+    const hub = parts.indexOf(hubs[0]);
+    const onHub = (index: number): boolean =>
+      index >= 0 && (parts[index].parentIndex === hub || onHub(parts[index].parentIndex));
+    const arms = parts.filter((_p, i) => onHub(i));
+    expect(arms.length).toBeGreaterThanOrEqual(4);
+    for (const arm of arms) {
+      expect(arm.vulnerable).toBe('never');
+      expect(arm.radius).toBeGreaterThan(0); // turned parts are hit as circles
+    }
+    expect(parts.filter((p) => p.gun)).toHaveLength(2);
+    for (const phase of boss?.phases ?? []) expect(phase.params.spin ?? 4).not.toBe(0);
+  });
+
+  it('gives TEMPEST RIDGE rear attackers, heavy weather, jagged ridges and a seahorse launching homing minis', () => {
+    const stage = stageOf('zone-e');
+    // Rear attackers: enemies spawned behind the view that overtake the ship.
+    const rear = stage.events.filter(
+      (e) => (e.type === 'spawn' || e.type === 'formation') && (e.screenX ?? 400) < 0,
+    );
+    expect(rear.length).toBeGreaterThanOrEqual(12);
+    expect(rear.some((e) => 'enemyId' in e && db.enemies[e.enemyId].script === 'rear.swoop')).toBe(
+      true,
+    );
+    expect(rear.some((e) => 'enemyId' in e && db.enemies[e.enemyId].script === 'fan.loop')).toBe(
+      true,
+    );
+    // Heavy weather: several cloud and rain bands, the clouds roiling (a palette cycle, a wave).
+    expect(stage.parallax.length).toBeGreaterThanOrEqual(5);
+    expect(stage.cycles.some((c) => c.layer === 'far')).toBe(true);
+    expect(stage.raster.some((r) => r.kind === 'wave')).toBe(true);
+    // Jagged mountains: floors whose waves are steep (amplitude ≥ a tenth of the wavelength).
+    const floors = stage.tilemap?.generator?.segments.map((seg) => seg.floor) ?? [];
+    expect(
+      floors.filter((f) => f !== undefined && f.amp / f.period >= 0.1).length,
+    ).toBeGreaterThanOrEqual(3);
+    // SQUALL STEED: a chest (the core) that opens, homing minis launched from it.
+    const warning = stage.events.find((e) => e.type === 'warning');
+    const boss = warning?.type === 'warning' ? db.enemies[warning.enemyId].boss : null;
+    expect(boss?.phases.every((p) => p.script === 'boss.steed')).toBe(true);
+    expect(boss?.parts.find((p) => p.core)?.vulnerable).toBe('whenOpen');
+    expect(db.enemies[boss?.minionId ?? -1]?.script).toBe('rocket.homing');
+    for (const phase of boss?.phases ?? []) expect(phase.params.minis ?? 2).toBeGreaterThan(0);
+  });
+
   it.each(zones)(
     'keeps every aimed bullet of $name at 2 px/tick or less (tunables and patterns)',
     (zone) => {
@@ -1181,9 +1318,10 @@ describe('integration: zones B and C hold to the plan and the 4-way design rules
         if (enemy.boss !== null) continue;
         const params = { ...DEFAULT_BEHAVIORS.get(enemy.script)?.params, ...enemy.params };
         if ('bulletSpeed' in params) speeds.push(params.bulletSpeed);
-        // Bodies that chase or dash at the ship are held to the same speed.
+        // Bodies that chase, dash at or fly back through the ship are held to the same speed.
         if (enemy.script === 'rocket.homing' || enemy.script === 'rammer.aimed')
           speeds.push(params.speed);
+        if (enemy.script === 'rear.swoop') speeds.push(params.speed, params.leaveSpeed);
       }
       expect(speeds.length).toBeGreaterThanOrEqual(4);
       for (const speed of speeds) expect(speed).toBeLessThanOrEqual(MAX_AIMED_BULLET_SPEED);
@@ -1221,15 +1359,21 @@ describe('integration: zones B and C hold to the plan and the 4-way design rules
     const map = game.world.terrain;
     expect(map).not.toBeNull();
     if (map === null) return;
+    // The camera y each event fires at (zone D dives 200 px into its caves).
+    const runner = createStageRunner(stage, { event() {}, clear() {} });
     let ground = 0;
     for (const event of stage.events) {
       if (event.type !== 'spawn' && event.type !== 'formation') continue;
+      for (let t = 0; t < 60 * 60 * 10 && runner.camera.x < event.x; t++) runner.tick();
       const enemy = db.enemies[event.enemyId];
       if (enemy.ground === null) continue;
       ground++;
       const x = event.x + (event.screenX ?? 400);
+      const top = Math.round(runner.camera.y);
       // Rock in the lower (floor) or upper (ceiling) third of the playfield below / above it.
-      const rows = enemy.ground === 'floor' ? [PLAYFIELD_H - 1, PLAYFIELD_H - 8] : [0, 7];
+      const rows = (enemy.ground === 'floor' ? [PLAYFIELD_H - 1, PLAYFIELD_H - 8] : [0, 7]).map(
+        (y) => top + y,
+      );
       expect(
         rows.some((y) => terrainAt(map, x, y) !== TerrainType.Empty),
         `${enemy.id} at ${String(event.x)}`,
@@ -1258,15 +1402,17 @@ describe('integration: zones B and C hold to the plan and the 4-way design rules
       expect(rules.violations).toEqual([]);
       expect(rules.maxBulletSpeed).toBeGreaterThan(0);
       expect(rules.maxBulletSpeed).toBeLessThanOrEqual(MAX_AIMED_BULLET_SPEED);
-      // At most one silk line at a time (the widow), none from the fish.
-      expect(rules.maxSeparate).toBeLessThanOrEqual(1);
+      // At most one silk line at a time (the widow), none from the fish or the seahorse; the
+      // bastion's two lanes may overlap for a moment, never under the 16-px gap.
+      expect(rules.maxSeparate).toBeLessThanOrEqual(zone.lanes);
+      if (zone.lanes > 1) expect(rules.narrowestGap).toBeGreaterThanOrEqual(MIN_LANE_GAP);
     },
   );
 
-  it('draws every zone B and C sprite with its hit flash; the zone tilesets have every tile', () => {
+  it('draws every zone B–E sprite with its hit flash; the zone tilesets have every tile', () => {
     const { manifest } = buildAtlas();
     const sprites = new Set<string>();
-    for (const id of ['zone-b', 'zone-c', 'brine-grotto']) {
+    for (const id of ['zone-b', 'zone-c', 'brine-grotto', 'zone-d', 'zone-e']) {
       for (const index of zoneEnemies(stageOf(id))) {
         const enemy = db.enemies[index];
         if (enemy.boss === null) sprites.add(enemy.sprite);
@@ -1278,7 +1424,7 @@ describe('integration: zones B and C hold to the plan and the 4-way design rules
         }
       }
     }
-    expect(sprites.size).toBeGreaterThanOrEqual(20);
+    expect(sprites.size).toBeGreaterThanOrEqual(40);
     for (const sprite of sprites) {
       const frames = manifest.sprites[sprite]?.frames.length ?? 0;
       expect(frames, sprite).toBeGreaterThan(0);
@@ -1287,7 +1433,7 @@ describe('integration: zones B and C hold to the plan and the 4-way design rules
       expect(manifest.sprites[flash ?? '']?.frames.length, sprite).toBe(frames);
     }
     const a = db.tilesets.find((t) => t.id === 'terrain-a');
-    for (const id of ['terrain-reef', 'terrain-dune']) {
+    for (const id of ['terrain-reef', 'terrain-dune', 'terrain-magma', 'terrain-ridge']) {
       const tileset = db.tilesets.find((t) => t.id === id);
       expect(tileset?.tiles.map((t) => t.name)).toEqual(a?.tiles.map((t) => t.name));
       expect(manifest.sprites[tileset?.sprite ?? '']?.frames.length).toBe(a?.tiles.length);

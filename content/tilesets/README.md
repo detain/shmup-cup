@@ -10,7 +10,10 @@ floor").
 pipeline draws (`scripts/assets/procedural/terrain.mjs`): solid rock, flat floor / ceiling /
 wall edges, and 45° and 22.5° slopes for floors and ceilings. `terrain-reef.tileset.json` and
 `terrain-dune.tileset.json` (M2-11) are the same tiles in zone B's coral-and-stone and zone C's sand
-colours (`tiles/terrain-reef`, `tiles/terrain-dune` — the generator's `TERRAIN_PALETTES`).
+colours (`tiles/terrain-reef`, `tiles/terrain-dune` — the generator's `TERRAIN_PALETTES`);
+`terrain-magma.tileset.json` and `terrain-ridge.tileset.json` (M2-12) are zone D's basalt with an
+ember rim and zone E's storm-grey granite with a pale frost rim (`tiles/terrain-magma`,
+`tiles/terrain-ridge`). Zone D's brick maze uses their `brick` tile (hp 4).
 
 ## Format (formatVersion 1)
 
