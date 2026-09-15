@@ -1,6 +1,8 @@
 # Shmup Cup — Implementation Plan
 
-> **Status:** **approved — executing** (2026-09-10). Progress is tracked in [`shmup_progress.md`](shmup_progress.md).
+> **Status:** **approved — executing** (since 2026-09-10). As of 2026-09-15: **M1 and M2 complete** (`1.0.0-rc.1`),
+> **M3-01 done**, next **M3-02** then M3-03 — 38 of 40 steps. Progress, the resume point and open risks are in
+> [`shmup_progress.md`](shmup_progress.md); to continue, run [`shmup_prompt.md`](shmup_prompt.md) in a new session.
 > Turns the feature catalog
 > ([`shmup_feat.md`](shmup_feat.md)) into an ordered sequence of agent-sized build steps on top of the
 > monorepo skeleton and the input probe that already exist.

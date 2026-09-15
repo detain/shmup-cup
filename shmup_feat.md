@@ -1,7 +1,10 @@
 # Shmup Cup — Feature & Functionality Catalog
 
-> **Status:** research draft (2026-09-10). This is the *feature list* phase — the raw catalog of everything a
-> Gradius III / Darius Twin–style horizontal shmup needs. It will be turned into a phased build plan later.
+> **Status:** research catalog (2026-09-10), now **implemented through [`shmup_plan.md`](shmup_plan.md)**: every
+> [P0] feature shipped in M1 and every [P1] feature in M2 (`1.0.0-rc.1`). The [P2] features are M3, which is under way
+> (2026-09-15: M3-01 done, M3-02 and M3-03 remaining). Where the build differs from this catalog, the plan's
+> "As built" notes and [`shmup_progress.md`](shmup_progress.md) are authoritative. The catalog is the raw list of
+> everything a Gradius III / Darius Twin–style horizontal shmup needs.
 >
 > **Goal:** a modern TypeScript 2D horizontal-scrolling shoot-'em-up that plays like a blend of
 > **Gradius III** (Konami, 1989 arcade / 1990 SNES) and **Darius Twin** (Taito, SNES 1991) — retro

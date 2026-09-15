@@ -5,6 +5,65 @@
 >
 > **Status values:** `pending` · `in progress` · `done` · `done (review capped)` · `blocked`
 
+## Current state — resume point (2026-09-15)
+
+- **Done: 38 of 40 steps.** M1 (playable vertical slice) and M2 (complete v1.0) are finished; `package.json` is at
+  **`1.0.0-rc.1`**. M3-01 is done. **Next step: M3-02**, then M3-03 (the last one).
+- **`master` = `edd5383`**, CI green (run 35022311884, 13 jobs, ~7 min). Working tree clean, no agent worktrees.
+- **To continue:** open a new Claude Code session in the repo root and paste [`shmup_prompt.md`](shmup_prompt.md)
+  (everything below its line). With `SCOPE = all remaining steps` it runs its preflight and then a single batch of
+  M3-02 and M3-03.
+- **Board:** GitHub Project [Shmup Cup](https://github.com/users/detain/projects/4) (private) has one issue per step
+  (#2 = M1-01 … #41 = M3-03), repo milestones M1/M2 (closed) and M3 (open). Statuses mirror this file. The pipeline
+  agents do not update GitHub; the orchestrator re-syncs it after each batch (see the prompt's "Running batches").
+
+### Infrastructure changes made between batches (not plan steps)
+
+- **Test concurrency** (after M2-14): `pnpm test` is one `vitest run` over every project with a single forked worker
+  pool (cores − 1, `VITEST_MAX_WORKERS` overrides) and a longest-file-first sequencer. e2e runs `fullyParallel` with
+  `max(2, ⌊cores / 5⌋)` workers (`E2E_WORKERS` overrides). CI runs parallel jobs: format·lint, typecheck, 3 test
+  shards, build·benchmark, 5 Chromium e2e shards, a Firefox determinism job and the input probe. CI went from
+  16–18 min to about 5–8 min. Details: [`docs/dev/build-test-deploy.md`](docs/dev/build-test-deploy.md#test-concurrency).
+  Commits `c13f931`, `41f7fb5`, `af4d360`, `9f8b23d`.
+- **Allocation guards** now all use one helper, `packages/core/test/helpers/alloc.ts` `measureHeapGrowth`:
+  - it runs GC + `%FinalizeOptimization()` before every round, excludes the compiled-code heap spaces, and runs every
+    measured window on fresh indices;
+  - workers need `ALLOCATION_GUARD_EXEC_ARGV` (`--expose-gc --allow-natives-syntax`);
+  - the rules are in [`docs/dev/conventions.md`](docs/dev/conventions.md).
+  - Three review rounds; 60+ back-to-back full runs green. Commits `c171189`, `0e42287`, `84c3248`, `ee5ed35`,
+    `6c7411b`.
+- **Node 24.15+ only** (`db93b10`): `engines` / `devEngines` = `^24.15.0 || >=26.0.0`. The guards fail on Node 22's
+  V8, so pnpm now refuses Node 22 (the Windows deploy desktop needs Node 24). `tools/input-probe` keeps `>=20.19`.
+- **`pnpm test:e2e` needs both browsers** since M2-18: `pnpm exec playwright install --with-deps chromium firefox`.
+
+### Open items and risks for the remaining steps
+
+- **Tizen bundle size:** `app.js` is at **374.7 KB gzip of its 384 KB budget** (`APP_JS_GZIP_BUDGET`, already raised
+  from 350 KB during M2). M3-02 adds an affine-floor shader, a pseudo-3D stage, a CRT filter and new bosses. Expect
+  to need lazy content or trimming, or a deliberate, documented budget decision.
+- **M3-03 has parts no agent can finish:** TV Seller Office submission and alpha test, Steamworks with a real Steam
+  app id, LG webOS on real hardware, and Steam Deck verification. The agents should build the code, adapters with
+  fakes, scripts and docs, and leave the account- and hardware-only actions as a checklist for the user. That is
+  not `blocked`.
+- **Follow-up (not must-fix):** the render-pixi debug-overlay allocation guard
+  (`packages/render-pixi/test/debug/debug-alloc.test.ts`) cycles its camera over 64 positions, so a value-keyed
+  cache there goes unseen. It is debug-only code and not in release bundles.
+- **CI warning:** `pnpm/action-setup@v4` targets the deprecated Node 20 runtime (GitHub forces it onto Node 24).
+  Harmless for now.
+- **Manual, on the M7 monitors** (no agent can do these): run the input probe first (plan §8.2), then the M1 checks
+  (§8.4), the M2 checks (§8.5) and store readiness (§8.6), from the Windows desktop per
+  [`docs/client/install-on-tv.md`](docs/client/install-on-tv.md).
+
+### Batch history
+
+| Batch | Steps | Result |
+| --- | --- | --- |
+| `wf_ad4fced7-5d7` | M1-01 … M1-09 | done (stopped by request after M1-09, once for a reboot) |
+| `wf_a877d723-7ec` | M1-10 … M1-19 | done — M1 complete |
+| `wf_c7021ba8-423` | M2-01 … M2-14 | done (stopped by request after M2-14 for the test-concurrency work) |
+| `wf_b0f423dd-f75` | M2-15 … M2-18 | done — M2 complete, `1.0.0-rc.1` |
+| `wf_7ef7476a-6cf` | M3-01 | done (stopped by request after M3-01 to hand over to a new session) |
+
 ## Steps
 
 | Step | Title | Status | Review rounds | Tests | Commits | Notes |

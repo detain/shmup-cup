@@ -4,6 +4,11 @@
 > Sizes marked **(m)** = measured (esbuild minify + gzip, whole package imported); **(b)** = bundlephobia.
 > **[UNVERIFIED]** = vendor claim or inference not yet confirmed on a real TV.
 > Companion doc: [`shmup_feat.md`](shmup_feat.md) (feature catalog).
+>
+> **Implementation status (2026-09-15):** the stack chosen here is built and in use (see [`shmup_plan.md`](shmup_plan.md)
+> and [`shmup_progress.md`](shmup_progress.md)). Later decisions that override this snapshot live in the plan's
+> "As built" notes — for example, dev machines need **Node 24.15+**, not Node 22. The **[UNVERIFIED]** items are still
+> unverified: they wait on the input probe run and the on-device checks (plan §8), which need the M7 monitors.
 
 ---
 
