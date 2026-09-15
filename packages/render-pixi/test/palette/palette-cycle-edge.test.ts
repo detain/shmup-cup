@@ -6,7 +6,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { colorCycleStep, writeColorUnit, writeCycleColors } from '../../src/palette/index.js';
-import { measureAllocation } from '../helpers.js';
+import { measureHeapGrowth } from '../../../core/test/helpers/alloc.js';
 
 /**
  * Reads triple `k` of an array back as 0xRRGGBB.
@@ -98,11 +98,15 @@ describe('render-pixi/palette writeCycleColors (edges)', () => {
     const to = new Float32Array(24);
     const a = [0x183c78, 0x24569c, 0x3474bc, 0x5096d8];
     const b = [0xff0000, 0xff8000, 0xffff00];
-    const bytes = measureAllocation((tick) => {
-      let count = writeCycleColors(a, colorCycleStep(tick, 8, a.length), from, to, 0);
-      count = writeCycleColors(b, colorCycleStep(tick, 5, b.length), from, to, count);
-      if (count !== 7) throw new Error('bad count');
-    }, 10_000);
+    const bytes = measureHeapGrowth(
+      (tick) => {
+        let count = writeCycleColors(a, colorCycleStep(tick, 8, a.length), from, to, 0);
+        count = writeCycleColors(b, colorCycleStep(tick, 5, b.length), from, to, count);
+        if (count !== 7) throw new Error('bad count');
+      },
+      10_000,
+      20_000,
+    ).bytes;
     expect(bytes).toBeLessThan(64 * 1024);
   });
 });

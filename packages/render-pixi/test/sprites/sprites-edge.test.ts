@@ -19,7 +19,8 @@ import {
   resolveFrame,
   type SpriteTables,
 } from '../../src/sprites/index.js';
-import { measureAllocation, pageImages, testManifest } from '../helpers.js';
+import { pageImages, testManifest } from '../helpers.js';
+import { measureHeapGrowth } from '../../../core/test/helpers/alloc.js';
 
 /** Sprite name table: 0 = ships/a (3 frames + flash), 1 = bg/tile (1 frame), 2 = unknown. */
 const NAMES = ['ships/a', 'bg/tile', 'ghost'];
@@ -340,13 +341,17 @@ describe('render-pixi/sprites createQuadPool (edge)', () => {
     const a = atlas();
     const pool = createQuadPool({ atlas: a, capacity: 40 });
     const glyph = a.spriteBase('font/pixel');
-    const bytes = measureAllocation(() => {
-      pool.begin();
-      pool.rect(0, 0, 384, 8, 0x1d2a5c, 255);
-      for (let i = 0; i < 32; i++) pool.frame(glyph + (i % 16), i * 6, 0, 0, 0xf8d030, 255);
-      pool.rect(0, 208, 384, 8, 0x1d2a5c, 255);
-      pool.end();
-    }, 10_000);
+    const bytes = measureHeapGrowth(
+      () => {
+        pool.begin();
+        pool.rect(0, 0, 384, 8, 0x1d2a5c, 255);
+        for (let i = 0; i < 32; i++) pool.frame(glyph + (i % 16), i * 6, 0, 0, 0xf8d030, 255);
+        pool.rect(0, 208, 384, 8, 0x1d2a5c, 255);
+        pool.end();
+      },
+      10_000,
+      20_000,
+    ).bytes;
     // Assigning the same tint to all 34 quads every pass was ~22 MB here.
     expect(bytes).toBeLessThan(1024 * 1024);
   });
@@ -356,20 +361,24 @@ describe('render-pixi/sprites per-frame allocation (edge)', () => {
   it('syncing a moving batch allocates next to nothing', () => {
     const { b } = binding(16, 0);
     const batch = createSpriteBatch(LayerId.Fx, 16);
-    const bytes = measureAllocation((tick) => {
-      batch.count = 0;
-      for (let i = 0; i < 12; i++) {
-        pushSprite(
-          batch,
-          i * 9 + (tick % 7),
-          tick % 200,
-          i % 2,
-          tick % 3,
-          i === 3 ? SpriteFlag.FlipX : 0,
-        );
-      }
-      b.sync(batch, tick % 13, 0);
-    }, 10_000);
+    const bytes = measureHeapGrowth(
+      (tick) => {
+        batch.count = 0;
+        for (let i = 0; i < 12; i++) {
+          pushSprite(
+            batch,
+            i * 9 + (tick % 7),
+            tick % 200,
+            i % 2,
+            tick % 3,
+            i === 3 ? SpriteFlag.FlipX : 0,
+          );
+        }
+        b.sync(batch, tick % 13, 0);
+      },
+      10_000,
+      20_000,
+    ).bytes;
     expect(bytes).toBeLessThan(512 * 1024);
   });
 });

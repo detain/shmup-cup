@@ -23,6 +23,18 @@ export { SOURCE_CONDITION } from './vite.shared.js';
  */
 export const TEST_TIMEOUT_MS = 30_000;
 
+/**
+ * Worker `node` flags of every project with allocation guards (`measureHeapGrowth` in
+ * `packages/core/test/helpers/alloc.ts` — `@shmup/core`, `@shmup/shell`, `@shmup/render-pixi`
+ * and `@shmup/input-web`): `--expose-gc` for `gc()`, and `--allow-natives-syntax` for V8's
+ * `%FinalizeOptimization()`, which lands the background compiles before every round the guard
+ * measures. Neither changes how the code under test runs; the guard throws without them.
+ */
+export const ALLOCATION_GUARD_EXEC_ARGV: readonly string[] = [
+  '--expose-gc',
+  '--allow-natives-syntax',
+];
+
 /** Options accepted by {@link defineShmupProject}. */
 export interface ShmupProjectOptions {
   /** Vitest environment; everything runs headless in Node by default. */
@@ -30,8 +42,8 @@ export interface ShmupProjectOptions {
   /** Test file globs, relative to the project directory. */
   readonly include?: readonly string[];
   /**
-   * Extra `node` arguments for the test workers, e.g. `['--expose-gc']` for the allocation
-   * guard of `@shmup/core` (`test/helpers/alloc.ts`).
+   * Extra `node` arguments for the test workers, e.g. {@link ALLOCATION_GUARD_EXEC_ARGV} for the
+   * allocation guard (`packages/core/test/helpers/alloc.ts`).
    */
   readonly execArgv?: readonly string[];
 }
@@ -46,8 +58,8 @@ export interface ShmupProjectOptions {
  * test importing `@shmup/core` runs `packages/core/src` directly — no package build is
  * needed before `pnpm test`.
  *
- * `execArgv` is passed to Vitest's worker pool unchanged; `@shmup/core` and `@shmup/shell`
- * use it for `--expose-gc`, which the allocation guard (`measureHeapGrowth`) needs.
+ * `execArgv` is passed to Vitest's worker pool unchanged; the projects with allocation guards
+ * pass {@link ALLOCATION_GUARD_EXEC_ARGV}, which `measureHeapGrowth` needs.
  *
  * @param name - Project name shown in Vitest output (e.g. `core`).
  * @param options - Optional overrides (environment, test globs, worker `execArgv`).
@@ -56,10 +68,10 @@ export interface ShmupProjectOptions {
  * @example
  * ```ts
  * // packages/foo/vitest.config.ts
- * import { defineShmupProject } from '../../vitest.shared.js';
+ * import { ALLOCATION_GUARD_EXEC_ARGV, defineShmupProject } from '../../vitest.shared.js';
  * export default defineShmupProject('foo');
  * // or, with the allocation guard available in the workers:
- * export default defineShmupProject('foo', { execArgv: ['--expose-gc'] });
+ * export default defineShmupProject('foo', { execArgv: ALLOCATION_GUARD_EXEC_ARGV });
  * ```
  */
 export function defineShmupProject(

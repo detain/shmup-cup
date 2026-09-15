@@ -263,7 +263,7 @@ describe('core/options types allocation', () => {
         }
       },
       50_000,
-      20_000,
+      50_000,
     );
     expect(growth.bytes).toBeLessThan(64 * 1024);
   });

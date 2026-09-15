@@ -24,7 +24,8 @@ import type * as Pixi from 'pixi.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createAtlas, type Atlas } from '../../src/atlas/index.js';
 import { createPixiRenderer, type PixiRenderer } from '../../src/renderer/index.js';
-import { forceGc, measureAllocation, pageImages, testManifest } from '../helpers.js';
+import { pageImages, testManifest } from '../helpers.js';
+import { forceGc, measureHeapGrowth } from '../../../core/test/helpers/alloc.js';
 
 const record = vi.hoisted(() => ({
   /** The option objects passed to `render()`, by identity (only while `keep` is set). */
@@ -219,7 +220,7 @@ describe('render-pixi/renderer per-frame work (edge)', () => {
     frame.hud.setString(0, 'AB');
     animate(frame, player, bullets, 12);
     record.keep = false;
-    const bytes = measureAllocation(() => renderer.render(frame), 10_000);
+    const bytes = measureHeapGrowth(() => renderer.render(frame), 10_000, 20_000).bytes;
     // Two option literals per frame were ~1.7 MB here; the reused objects leave ~0.1 MB of noise.
     expect(bytes).toBeLessThan(512 * 1024);
   });
@@ -234,7 +235,7 @@ describe('render-pixi/renderer per-frame work (edge)', () => {
       animate(frame, player, bullets, tick);
       renderer.render(frame);
     };
-    const bytes = measureAllocation(step, 10_000);
+    const bytes = measureHeapGrowth(step, 10_000, 20_000).bytes;
     forceGc();
     const before = process.memoryUsage().heapUsed;
     for (let tick = 0; tick < 10_000; tick++) step(tick);

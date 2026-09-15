@@ -121,6 +121,8 @@ describe('audio-web engine through connectAudioEvents: allocation', () => {
       },
       10_000,
       20_000,
+      3,
+      16 * 1024,
     );
     expect(frames.bytes).toBeLessThan(32 * 1024);
     engine.destroy();

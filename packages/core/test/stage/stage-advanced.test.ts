@@ -468,7 +468,7 @@ describe('core/stage — region triggers', () => {
         r.probe(ship);
       },
       10_000,
-      10_000,
+      20_000,
     );
     expect(growth.bytes).toBeLessThan(64 * 1024);
   });

@@ -19,7 +19,8 @@ import { describe, expect, it } from 'vitest';
 import { createAtlas, type Atlas } from '../../src/atlas/index.js';
 import { createParallaxBinding, createTerrainBinding } from '../../src/layers/index.js';
 import { createSpriteLayerBinding, createSpriteTables } from '../../src/sprites/index.js';
-import { measureAllocation, pageImages, testManifest } from '../helpers.js';
+import { pageImages, testManifest } from '../helpers.js';
+import { measureHeapGrowth } from '../../../core/test/helpers/alloc.js';
 
 /** Sprite names: 0 = ships/a (the "tileset", 3 frames), 1 = bg/tile, 2 = unknown. */
 const NAMES = ['ships/a', 'bg/tile', 'ghost'];
@@ -177,10 +178,14 @@ describe('render-pixi/layers terrain binding', () => {
     const view = terrainView(2000, 25, cells);
     const binding = createTerrainBinding({ atlas: a, tables, view });
     const camera = { x: 0, y: 0.5 };
-    const bytes = measureAllocation((tick) => {
-      camera.x = (tick * 1.25) % 15000;
-      binding.sync(view, camera);
-    }, 10_000);
+    const bytes = measureHeapGrowth(
+      (tick) => {
+        camera.x = (tick * 1.25) % 15000;
+        binding.sync(view, camera);
+      },
+      10_000,
+      20_000,
+    ).bytes;
     expect(bytes).toBeLessThan(256 * 1024);
   });
 });
@@ -245,11 +250,15 @@ describe('render-pixi/layers parallax binding', () => {
     const tables = createSpriteTables(a, NAMES);
     const view = parallaxView();
     const binding = createParallaxBinding({ atlas: a, tables, view });
-    const bytes = measureAllocation((tick) => {
-      view.offsetX[0] = (tick * 0.25) % 16;
-      view.offsetX[1] = (tick * 0.5) % 128;
-      binding.sync(view);
-    }, 10_000);
+    const bytes = measureHeapGrowth(
+      (tick) => {
+        view.offsetX[0] = (tick * 0.25) % 16;
+        view.offsetX[1] = (tick * 0.5) % 128;
+        binding.sync(view);
+      },
+      10_000,
+      20_000,
+    ).bytes;
     expect(bytes).toBeLessThan(256 * 1024);
   });
 });

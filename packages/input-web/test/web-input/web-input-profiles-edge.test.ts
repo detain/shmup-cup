@@ -17,7 +17,8 @@ import {
 } from '../../src/rebind/index.js';
 import type { InputTuning } from '../../src/remote/index.js';
 import { createWebInput, type WebInput } from '../../src/web-input/index.js';
-import { key, measureAllocation, pad } from '../helpers.js';
+import { key, pad } from '../helpers.js';
+import { measureHeapGrowth } from '../../../core/test/helpers/alloc.js';
 
 /** One simulation tick at 60 Hz, in ms. */
 const TICK = 1000 / 60;
@@ -388,10 +389,9 @@ describe('input-web/web-input allocations (plan §1.3)', () => {
       if (tick % 97 === 0) input.setContext(input.context === 'game' ? 'menu' : 'game');
       input.poll();
     };
-    // Best of three runs after a long warm-up: JIT tier-ups and a stray old-space step can add
-    // a few hundred KB to one run, while a real per-poll allocation shows in every run.
-    let bytes = measureAllocation(step, 10_000, 20_000);
-    for (let run = 0; run < 2; run++) bytes = Math.min(bytes, measureAllocation(step, 10_000, 500));
+    // Best of three windows after a long warm-up: a tier-up can still cost one window (the warm-up's
+    // first round measures ~100 KB), while a real per-poll allocation shows in every window.
+    const { bytes } = measureHeapGrowth(step, 10_000, 20_000, 3);
     // One 16-byte heap number per poll would be ~160 KB here, a literal or array ≥ 240 KB.
     expect(bytes).toBeLessThan(128 * 1024);
   });

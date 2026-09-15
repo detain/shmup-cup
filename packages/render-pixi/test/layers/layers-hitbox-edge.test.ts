@@ -12,7 +12,8 @@ import { describe, expect, it } from 'vitest';
 import { createAtlas, type Atlas } from '../../src/atlas/index.js';
 import { createHitboxBinding } from '../../src/layers/index.js';
 import { INTERPOLATION_MAX_STEP } from '../../src/sprites/index.js';
-import { measureAllocation, pageImages, testManifest } from '../helpers.js';
+import { pageImages, testManifest } from '../helpers.js';
+import { measureHeapGrowth } from '../../../core/test/helpers/alloc.js';
 
 /** @returns The test atlas (warnings silenced). */
 function atlas(): Atlas {
@@ -161,7 +162,7 @@ describe('render-pixi/layers hitbox markers syncInterpolated', () => {
     view.radius[1] = 0.5;
     const camera = { x: 0, y: 0 };
     const blend = { alpha: 0, advance: -1 };
-    const bytes = measureAllocation(
+    const bytes = measureHeapGrowth(
       (frame) => {
         const tick = frame >> 1;
         if ((frame & 1) === 0) {
@@ -177,7 +178,7 @@ describe('render-pixi/layers hitbox markers syncInterpolated', () => {
       },
       5000,
       20_000,
-    );
+    ).bytes;
     expect(bytes).toBeLessThan(64 * 1024);
   });
 });

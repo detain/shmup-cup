@@ -1,9 +1,11 @@
 /**
  * Self-test of the allocation guard (`helpers/alloc.ts`): it must see allocations — retained
- * or already garbage — and report (close to) nothing for an empty loop.
+ * or already garbage — and report (close to) nothing for an empty loop; its rounds run the calls
+ * and indices it documents.
  */
+import { getHeapSpaceStatistics } from 'node:v8';
 import { describe, expect, it } from 'vitest';
-import { measureHeapGrowth } from './alloc.js';
+import { JIT_SPACES, WARMUP_ROUNDS, measureHeapGrowth } from './alloc.js';
 
 describe('test helper measureHeapGrowth', () => {
   it('reports (almost) nothing for a loop that does not allocate', () => {
@@ -54,19 +56,40 @@ describe('test helper measureHeapGrowth', () => {
     // One object per call over 10,000 calls is well over the default 32 KiB: every window runs.
     const growth = measureHeapGrowth(steady, 10_000, 10);
     expect(growth.bytes).toBeGreaterThan(32 * 1024);
+    expect(growth.windows).toBe(3);
     expect(calls).toBe(10 + 3 * 10_000);
     calls = 0;
-    measureHeapGrowth(steady, 10_000, 10, 1);
+    expect(measureHeapGrowth(steady, 10_000, 10, 1).windows).toBe(1);
     expect(calls).toBe(10 + 10_000);
     // A loop that does not allocate settles in its first window …
     let quiet = 0;
     const count = (): void => void quiet++;
-    expect(measureHeapGrowth(count, 10_000, 20_000).bytes).toBeLessThanOrEqual(32 * 1024);
+    const settled = measureHeapGrowth(count, 10_000, 20_000);
+    expect(settled.bytes).toBeLessThanOrEqual(32 * 1024);
+    expect(settled.windows).toBe(1);
     expect(quiet).toBe(20_000 + 10_000);
     // … unless nothing counts as settled.
     quiet = 0;
-    measureHeapGrowth(count, 10_000, 20_000, 3, -1);
+    expect(measureHeapGrowth(count, 10_000, 20_000, 3, -1).windows).toBe(3);
     expect(quiet).toBe(20_000 + 3 * 10_000);
+  });
+
+  it('passes the warm-up indices once, split into rounds, then 0 … iterations − 1 per window', () => {
+    const seen: number[] = [];
+    measureHeapGrowth((i) => void seen.push(i), 4, 11, 2, -1);
+    const warmup = Array.from({ length: 11 }, (_, i) => i);
+    expect(seen).toEqual([...warmup, 0, 1, 2, 3, 0, 1, 2, 3]);
+    expect(WARMUP_ROUNDS).toBeGreaterThanOrEqual(2);
+  });
+
+  it('leaves out the spaces of compiled code, which V8 still has under these names', () => {
+    const names = getHeapSpaceStatistics().map((space) => space.space_name);
+    // A renamed space would be counted again: the guard would see V8 compiling, not fail open.
+    expect(names).toEqual(expect.arrayContaining(['code_space', 'trusted_space']));
+    expect(JIT_SPACES.has('new_space') || JIT_SPACES.has('old_space')).toBe(false);
+    expect(JIT_SPACES.has('large_object_space') || JIT_SPACES.has('new_large_object_space')).toBe(
+      false,
+    );
   });
 
   it('counts garbage that a collection already reclaimed', () => {

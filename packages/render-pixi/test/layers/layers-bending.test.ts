@@ -16,7 +16,8 @@ import { describe, expect, it } from 'vitest';
 import { createAtlas, type Atlas } from '../../src/atlas/index.js';
 import { createBendingLaserBinding } from '../../src/layers/index.js';
 import { createSpriteTables } from '../../src/sprites/index.js';
-import { measureAllocation, pageImages, testManifest } from '../helpers.js';
+import { pageImages, testManifest } from '../helpers.js';
+import { measureHeapGrowth } from '../../../core/test/helpers/alloc.js';
 
 /** Sprite names: 0 = ships/a (16×9 frames, anchor 8,4). */
 const NAMES = ['ships/a', 'bg/tile'];
@@ -158,16 +159,20 @@ describe('render-pixi/layers bending laser binding', () => {
       v.filled[s] = 40;
     }
     const camera = cameraAt(0.5, 0);
-    const bytes = measureAllocation((i) => {
-      for (let s = 0; s < 8; s++) {
-        v.head[s] = (v.head[s] + 1) & 63;
-        v.x[s * 64 + v.head[s]] = 100 + (i % 200) * 0.7;
-        v.y[s * 64 + v.head[s]] = 20 + s * 20 + (i % 13) * 0.3;
-        v.filled[s] = 20 + ((i + s) % 40);
-      }
-      camera.x = (i % 50) * 0.5;
-      binding.sync(v, camera);
-    }, 5000);
+    const bytes = measureHeapGrowth(
+      (i) => {
+        for (let s = 0; s < 8; s++) {
+          v.head[s] = (v.head[s] + 1) & 63;
+          v.x[s * 64 + v.head[s]] = 100 + (i % 200) * 0.7;
+          v.y[s * 64 + v.head[s]] = 20 + s * 20 + (i % 13) * 0.3;
+          v.filled[s] = 20 + ((i + s) % 40);
+        }
+        camera.x = (i % 50) * 0.5;
+        binding.sync(v, camera);
+      },
+      5000,
+      20_000,
+    ).bytes;
     expect(bytes).toBeLessThan(64 * 1024);
   });
 });

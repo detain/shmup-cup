@@ -570,7 +570,7 @@ describe('core/stage allocation', () => {
         runner.tick();
       },
       10_000,
-      10_000,
+      20_000,
     );
     expect(fired).toBeGreaterThan(100);
     expect(growth.bytes).toBeLessThan(64 * 1024);

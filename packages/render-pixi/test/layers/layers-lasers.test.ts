@@ -22,7 +22,8 @@ import {
   createLayerStack,
 } from '../../src/layers/index.js';
 import { createSpriteTables } from '../../src/sprites/index.js';
-import { measureAllocation, pageImages, testManifest } from '../helpers.js';
+import { pageImages, testManifest } from '../helpers.js';
+import { measureHeapGrowth } from '../../../core/test/helpers/alloc.js';
 
 /** Sprite names: 0 = ships/a (3 frames of 16×9 — the "beam", bands 1…3 px), 1 = bg/tile. */
 const NAMES = ['ships/a', 'bg/tile'];
@@ -187,19 +188,23 @@ describe('render-pixi/layers laser binding', () => {
       view.spriteId[i] = 0;
     }
     const camera = cameraAt(0, 0);
-    const bytes = measureAllocation((tick) => {
-      camera.x = tick * 0.5;
-      for (let i = 0; i < 16; i++) {
-        // A 64-tick life per slot: 40 ticks of blinking warning, a 4-tick grow, the beam, a fade;
-        // each new life has a new angle and origin.
-        const t = (tick + i * 4) % 64;
-        view.x[i] = camera.x + 300 + ((tick >> 6) % 7);
-        view.angle[i] = ((tick >> 6) * 96 + i * 64) & 1023;
-        view.flags[i] = t < 40 && (t & 4) !== 0 ? SpriteFlag.Hidden : 0;
-        view.width[i] = t < 40 ? 0 : t < 44 ? (t - 39) * 0.7 : t < 58 ? 3 : (64 - t) * 0.45;
-      }
-      binding.sync(view, camera);
-    }, 10_000);
+    const bytes = measureHeapGrowth(
+      (tick) => {
+        camera.x = tick * 0.5;
+        for (let i = 0; i < 16; i++) {
+          // A 64-tick life per slot: 40 ticks of blinking warning, a 4-tick grow, the beam, a fade;
+          // each new life has a new angle and origin.
+          const t = (tick + i * 4) % 64;
+          view.x[i] = camera.x + 300 + ((tick >> 6) % 7);
+          view.angle[i] = ((tick >> 6) * 96 + i * 64) & 1023;
+          view.flags[i] = t < 40 && (t & 4) !== 0 ? SpriteFlag.Hidden : 0;
+          view.width[i] = t < 40 ? 0 : t < 44 ? (t - 39) * 0.7 : t < 58 ? 3 : (64 - t) * 0.45;
+        }
+        binding.sync(view, camera);
+      },
+      10_000,
+      20_000,
+    ).bytes;
     expect(bytes).toBeLessThan(256 * 1024);
   });
 });

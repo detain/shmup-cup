@@ -10,7 +10,8 @@ import { describe, expect, it } from 'vitest';
 import { createAtlas, type Atlas } from '../../src/atlas/index.js';
 import { createTerrainBinding } from '../../src/layers/index.js';
 import { createSpriteTables } from '../../src/sprites/index.js';
-import { measureAllocation, pageImages, testManifest } from '../helpers.js';
+import { pageImages, testManifest } from '../helpers.js';
+import { measureHeapGrowth } from '../../../core/test/helpers/alloc.js';
 
 /** Sprite names: 0 = ships/a (the "tileset", 3 frames). */
 const NAMES = ['ships/a', 'bg/tile', 'ghost'];
@@ -133,12 +134,16 @@ describe('render-pixi/layers terrain binding — the change log (M2-07)', () => 
     const { view: v, log } = view();
     const binding = createTerrainBinding({ atlas: a, tables, view: v });
     const camera = { x: 0, y: 0 };
-    const bytes = measureAllocation((tick) => {
-      const cell = 24 * 200 + (tick % 48);
-      v.tiles[cell] = v.tiles[cell] === 0 ? 1 : 0;
-      change(log, cell);
-      binding.sync(v, camera);
-    }, 10_000);
+    const bytes = measureHeapGrowth(
+      (tick) => {
+        const cell = 24 * 200 + (tick % 48);
+        v.tiles[cell] = v.tiles[cell] === 0 ? 1 : 0;
+        change(log, cell);
+        binding.sync(v, camera);
+      },
+      10_000,
+      20_000,
+    ).bytes;
     expect(bytes).toBeLessThan(256 * 1024);
   });
 });

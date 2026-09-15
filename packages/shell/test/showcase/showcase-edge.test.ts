@@ -6,8 +6,6 @@
  * custom starfield tile sizes still cover the playfield, and update() reuses its views and
  * retains no memory.
  */
-import { setFlagsFromString } from 'node:v8';
-import { runInNewContext } from 'node:vm';
 import {
   DrawOp,
   PLAYFIELD_H,
@@ -25,6 +23,7 @@ import {
 } from '@shmup/render-pixi';
 import { describe, expect, it } from 'vitest';
 import { buildAtlas } from '../../../../scripts/assets/pipeline.mjs';
+import { forceGc } from '../../../core/test/helpers/alloc.js';
 import { SHOWCASE_SPRITES, createShowcase } from '../../src/showcase/index.js';
 
 const { manifest } = buildAtlas();
@@ -160,8 +159,6 @@ describe('shell/showcase capacity and layout (edge)', () => {
   });
 
   it('update() reuses every view object and retains no memory over 10,000 ticks', () => {
-    setFlagsFromString('--expose-gc');
-    const gc = runInNewContext('gc') as () => void;
     const showcase = createShowcase();
     const source = gameFrame(0) as { tick: number } & RenderFrame;
     const arrays = showcase.world.batches.map((batch) => [batch.x, batch.y, batch.flags]);
@@ -172,12 +169,10 @@ describe('shell/showcase capacity and layout (edge)', () => {
       }
     };
     run(0, 2000);
-    gc();
-    gc();
+    forceGc();
     const before = process.memoryUsage().heapUsed;
     run(2000, 12_000);
-    gc();
-    gc();
+    forceGc();
     expect(process.memoryUsage().heapUsed - before).toBeLessThan(128 * 1024);
     showcase.world.batches.forEach((batch, i) => {
       expect([batch.x, batch.y, batch.flags]).toEqual(arrays[i]);

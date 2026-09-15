@@ -1,11 +1,10 @@
 /**
  * Shared fixtures for the render-pixi tests: a small hand-written atlas manifest (two pages,
  * a sprite with a hit-flash sibling, the fallback sprites and a tiny bitmap font) and fake page
- * images, so atlases can be built in Node without a GPU or real PNGs — plus an allocation probe
- * for the zero-allocation rule of the per-frame paths (plan §1.3).
+ * images, so atlases can be built in Node without a GPU or real PNGs. The allocation guards of
+ * the per-frame paths (plan §1.3) use the core's `measureHeapGrowth`
+ * (`packages/core/test/helpers/alloc.ts`).
  */
-import { setFlagsFromString } from 'node:v8';
-import { runInNewContext } from 'node:vm';
 import type { AtlasFrameInfo, AtlasManifest, AtlasPageImage } from '../src/atlas/index.js';
 
 /**
@@ -104,67 +103,4 @@ export function fakeImage(width: number, height: number): AtlasPageImage {
  */
 export function pageImages(manifest: AtlasManifest): AtlasPageImage[] {
   return manifest.pages.map((page) => fakeImage(page.w, page.h));
-}
-
-/** `gc()` of the V8 isolate (exposed on first use through `--expose-gc`). */
-let collect: (() => void) | null = null;
-
-/**
- * Runs a full garbage collection.
- */
-export function forceGc(): void {
-  if (collect === null) {
-    setFlagsFromString('--expose-gc');
-    collect = runInNewContext('gc') as () => void;
-  }
-  collect();
-  collect();
-}
-
-/**
- * Estimates the bytes `step` allocates over `iterations` calls, after `warmUp` calls (JIT).
- *
- * @remarks
- * Samples `heapUsed` every 100 calls and sums only the growing intervals, so a scavenge in the
- * middle loses one interval instead of hiding the whole run — the estimate can err low by at
- * most ~100 calls' worth per collection, never high. Short-lived garbage counts (that is the
- * point: per-frame code must not produce any), retained memory counts too.
- *
- * The measured calls run in `rounds` windows of `iterations` calls each (garbage collected
- * before the warm-up and before every window) and the smallest window wins: allocation by the
- * code under test happens in every window, while V8's tier-up (the first windows can still run
- * in the lower tiers, which box doubles — hundreds of kilobytes) and collections clearing
- * earlier tests' hidden classes (which deoptimise shared code) only disturb some. One window
- * made these guards flaky.
- *
- * @param step - The per-frame work; receives the iteration index.
- * @param iterations - Measured calls per window.
- * @param warmUp - Unmeasured calls first (default 2000).
- * @param rounds - Measured windows (default 3).
- * @returns Estimated bytes allocated by `iterations` calls in the steadiest window.
- */
-export function measureAllocation(
-  step: (i: number) => void,
-  iterations: number,
-  warmUp = 2000,
-  rounds = 3,
-): number {
-  forceGc();
-  for (let i = 0; i < warmUp; i++) step(i);
-  let best = Number.POSITIVE_INFINITY;
-  let index = warmUp;
-  for (let round = 0; round < rounds; round++) {
-    forceGc();
-    let previous = process.memoryUsage().heapUsed;
-    let total = 0;
-    for (let done = 0; done < iterations;) {
-      const end = Math.min(iterations, done + 100);
-      for (; done < end; done++) step(index++);
-      const now = process.memoryUsage().heapUsed;
-      if (now > previous) total += now - previous;
-      previous = now;
-    }
-    if (total < best) best = total;
-  }
-  return best;
 }

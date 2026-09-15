@@ -156,7 +156,9 @@ describe('core/enemies M2-01 allocation', () => {
         b.clearShooterRank();
       },
       100_000,
-      20_000,
+      100_000,
+      3,
+      16 * 1024,
     );
     expect(sum).toBeGreaterThan(0);
     expect(growth.bytes).toBeLessThan(32 * 1024); // a boxed scale per call would be ≥ 1.6 MB

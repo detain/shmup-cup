@@ -53,6 +53,8 @@ describe('core/ui Direct-mode HUD allocation', () => {
       },
       12_000,
       24_000,
+      3,
+      16 * 1024,
     );
     expect(hud.builds).toBeGreaterThan(15_000);
     expect(growth.bytes).toBeLessThan(32 * 1024);

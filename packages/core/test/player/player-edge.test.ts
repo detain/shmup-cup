@@ -454,7 +454,7 @@ describe('core/player allocation', () => {
         }
       },
       40_000,
-      20_000,
+      40_000,
     );
     expect(growth.bytes).toBeLessThan(64 * 1024);
   });

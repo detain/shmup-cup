@@ -141,7 +141,13 @@ describe('shell/fx-gallery', () => {
 
   it('allocates nothing per frame', () => {
     const fx = fakeFx();
-    const gallery = createFxGallery({ ...fx, particles: { ...fx.particles, emit: () => 0 } });
+    // Fakes that record nothing: `fakeFx`'s call log (a rest array and a growing list per call)
+    // would be most of what this guard measures — ~53 KB per 10,000 frames from the popups alone.
+    const gallery = createFxGallery({
+      ...fx,
+      particles: { ...fx.particles, emit: () => 0 },
+      popups: { show: () => true } as unknown as ScorePopups,
+    });
     const frame = source(0);
     const growth = measureHeapGrowth(
       (tick) => {

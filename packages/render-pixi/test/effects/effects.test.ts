@@ -37,7 +37,8 @@ import {
   moduleInfo,
 } from '../../src/effects/index.js';
 import { createBitmapFont } from '../../src/text/index.js';
-import { measureAllocation, pageImages, testManifest } from '../helpers.js';
+import { pageImages, testManifest } from '../helpers.js';
+import { measureHeapGrowth } from '../../../core/test/helpers/alloc.js';
 
 describe('render-pixi/effects screen shake', () => {
   it('describes itself', () => {
@@ -198,7 +199,7 @@ describe('render-pixi/effects flash and dim', () => {
 
   it('never allocates when effects are requested and stepped', () => {
     const effects = createScreenEffects();
-    const bytes = measureAllocation(
+    const bytes = measureHeapGrowth(
       (tick) => {
         if (tick % 30 === 0) effects.shake(ShakeMagnitude.Medium, 20);
         if (tick % 45 === 0) effects.flash(tick % 3, 12);
@@ -210,7 +211,7 @@ describe('render-pixi/effects flash and dim', () => {
       },
       10_000,
       20_000,
-    );
+    ).bytes;
     expect(bytes).toBeLessThan(64 * 1024);
   });
 });
@@ -292,7 +293,7 @@ describe('render-pixi/effects score popups', () => {
   it('shows, ages and draws popups without allocating', () => {
     const popups = createScorePopups({ atlas, font });
     const camera = { x: 0, y: 0 };
-    const bytes = measureAllocation(
+    const bytes = measureHeapGrowth(
       (tick) => {
         if (tick % 5 === 0) popups.show(100 * (1 + (tick % 7)), 50 + (tick % 300), 90, 0xf8f8f8);
         popups.step(1);
@@ -301,7 +302,7 @@ describe('render-pixi/effects score popups', () => {
       },
       10_000,
       20_000,
-    );
+    ).bytes;
     expect(bytes).toBeLessThan(256 * 1024);
   });
 });

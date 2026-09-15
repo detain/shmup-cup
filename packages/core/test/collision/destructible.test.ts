@@ -252,13 +252,17 @@ describe('core/collision DestructibleTerrain — placing and the rollback', () =
   it('breaks, heals, regrows and places without allocating', () => {
     const d = destructible(['tttttt', 'tttttt', 'bbbbbb', 'bbbbbb']);
     let x = 0;
-    const { bytes } = measureHeapGrowth(() => {
-      d.hit(x % 48, 4, 1);
-      d.hit((x * 7) % 48, 20, 1);
-      d.update();
-      if (x % 97 === 0) d.place(x % 6, 0, 1);
-      x++;
-    }, 20_000);
+    const { bytes } = measureHeapGrowth(
+      () => {
+        d.hit(x % 48, 4, 1);
+        d.hit((x * 7) % 48, 20, 1);
+        d.update();
+        if (x % 97 === 0) d.place(x % 6, 0, 1);
+        x++;
+      },
+      20_000,
+      20_000,
+    );
     expect(bytes).toBeLessThan(64 * 1024);
   });
 });
@@ -324,13 +328,17 @@ describe('core/collision TerrainBlocks — in every terrain query', () => {
     for (let i = 0; i < 8; i++) blocks.set(i, i * 4, 10, i * 4 + 7, 13, TerrainType.Solid);
     let k = 0;
     let sink = 0;
-    const { bytes } = measureHeapGrowth(() => {
-      const x = k % 48;
-      sink += terrainAt(map, x, 12) + terrainRectHit(map, x, 8, x + 4, 16);
-      sink += findFloor(map, x, 9, 20) | 0;
-      sink += findCeiling(map, x, 20, 20) | 0;
-      k++;
-    }, 50_000);
+    const { bytes } = measureHeapGrowth(
+      () => {
+        const x = k % 48;
+        sink += terrainAt(map, x, 12) + terrainRectHit(map, x, 8, x + 4, 16);
+        sink += findFloor(map, x, 9, 20) | 0;
+        sink += findCeiling(map, x, 20, 20) | 0;
+        k++;
+      },
+      50_000,
+      50_000,
+    );
     expect(sink).toBeGreaterThan(0);
     expect(bytes).toBeLessThan(64 * 1024);
   });

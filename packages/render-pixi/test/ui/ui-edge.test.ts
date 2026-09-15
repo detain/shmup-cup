@@ -13,7 +13,8 @@ import { createAtlas } from '../../src/atlas/index.js';
 import { createSpriteTables } from '../../src/sprites/index.js';
 import { createBitmapFont } from '../../src/text/index.js';
 import { createDrawListView } from '../../src/ui/index.js';
-import { measureAllocation, pageImages, testManifest } from '../helpers.js';
+import { pageImages, testManifest } from '../helpers.js';
+import { measureHeapGrowth } from '../../../core/test/helpers/alloc.js';
 
 /**
  * A draw-list view over the test atlas: sprite ids 0 = ships/a, 1 = bg/tile.
@@ -173,15 +174,19 @@ describe('render-pixi/ui list handling (edge)', () => {
     const { drawListView } = view(64);
     const hud = createDrawList(32, 4);
     hud.setString(0, '1P');
-    const bytes = measureAllocation((tick) => {
-      hud.clear();
-      hud.rect(0, 0, 384, 8, 0x1d2a5c);
-      hud.text(0, 4, 0, 0x38c8e8);
-      hud.number(tick * 10, 20, 0, 8);
-      hud.sprite(0, tick % 3, 200, 4, tick % 16 < 8 ? 0 : SpriteFlag.FlipX);
-      hud.rect(0, 208, 384, 8, 0x1d2a5c);
-      drawListView.draw(hud);
-    }, 10_000);
+    const bytes = measureHeapGrowth(
+      (tick) => {
+        hud.clear();
+        hud.rect(0, 0, 384, 8, 0x1d2a5c);
+        hud.text(0, 4, 0, 0x38c8e8);
+        hud.number(tick * 10, 20, 0, 8);
+        hud.sprite(0, tick % 3, 200, 4, tick % 16 < 8 ? 0 : SpriteFlag.FlipX);
+        hud.rect(0, 208, 384, 8, 0x1d2a5c);
+        drawListView.draw(hud);
+      },
+      10_000,
+      20_000,
+    ).bytes;
     // Re-tinting every quad through Pixi's Color path on each redraw was ~9 MB here.
     expect(bytes).toBeLessThan(1.5 * 1024 * 1024);
   });

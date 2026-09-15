@@ -18,7 +18,8 @@ import {
   createSpriteLayerBinding,
   createSpriteTables,
 } from '../../src/sprites/index.js';
-import { measureAllocation, pageImages, testManifest } from '../helpers.js';
+import { pageImages, testManifest } from '../helpers.js';
+import { measureHeapGrowth } from '../../../core/test/helpers/alloc.js';
 
 /** Sprite names: 0 = ships/a (anchor 8, 4), 1 = bg/tile (anchor 0, 0). */
 const NAMES = ['ships/a', 'bg/tile'];
@@ -117,15 +118,19 @@ describe('render-pixi/sprites syncInterpolated', () => {
     const camera = { x: 0, y: 0 };
     const blend = { alpha: 0, advance: -1 };
     binding.syncInterpolated(batch, camera, blend);
-    const bytes = measureAllocation((frame) => {
-      const tick = frame >> 1;
-      if ((frame & 1) === 0) for (let i = 0; i < 64; i++) batch.x[i] = (i * 5 + tick * 1.5) % 400;
-      camera.x = tick * 0.75;
-      camera.y = 0.25;
-      blend.alpha = (frame & 1) * 0.5;
-      blend.advance = (frame & 1) === 0 ? 1 : 0;
-      binding.syncInterpolated(batch, camera, blend);
-    }, 5000);
+    const bytes = measureHeapGrowth(
+      (frame) => {
+        const tick = frame >> 1;
+        if ((frame & 1) === 0) for (let i = 0; i < 64; i++) batch.x[i] = (i * 5 + tick * 1.5) % 400;
+        camera.x = tick * 0.75;
+        camera.y = 0.25;
+        blend.alpha = (frame & 1) * 0.5;
+        blend.advance = (frame & 1) === 0 ? 1 : 0;
+        binding.syncInterpolated(batch, camera, blend);
+      },
+      5000,
+      20_000,
+    ).bytes;
     expect(bytes).toBeLessThan(64 * 1024);
   });
 });
@@ -181,7 +186,7 @@ describe('render-pixi/layers parallax syncInterpolated', () => {
     // A long warm-up (20,000 frames): after the file's other tests, the probe's default 2,000 left
     // V8 still tiering up during the measured windows — 47–71 KB, one run in ten over the budget
     // even alone on an idle machine — where the settled code measures a steady ~40 KB.
-    const bytes = measureAllocation(
+    const bytes = measureHeapGrowth(
       (frame) => {
         const tick = frame >> 1;
         view.offsetX[0] = (tick * 0.3) % 16;
@@ -192,7 +197,7 @@ describe('render-pixi/layers parallax syncInterpolated', () => {
       },
       5000,
       20_000,
-    );
+    ).bytes;
     expect(bytes).toBeLessThan(64 * 1024);
   });
 });

@@ -14,7 +14,8 @@ import type { GamepadLike } from '../../src/gamepad/index.js';
 import { loadInputProfiles, type InputProfile } from '../../src/rebind/index.js';
 import * as inputWeb from '../../src/index.js';
 import { PAD_SEAT_NONE, PAD_SEAT_P2, createWebInput } from '../../src/web-input/index.js';
-import { key, measureAllocation, pad } from '../helpers.js';
+import { key, pad } from '../helpers.js';
+import { measureHeapGrowth } from '../../../core/test/helpers/alloc.js';
 
 const shipped = loadInputProfiles([
   {
@@ -213,10 +214,10 @@ describe('input-web/web-input split keyboard (M2-06)', () => {
       input.splitKeyboard.handleEvent((i & 4) === 0 ? down : up);
       input.poll();
     };
-    // Best of three after a long warm-up, like the profiles' guard (JIT noise hits one run; a real
-    // per-poll allocation shows in every run — one heap number per poll would be ~160 KB).
-    let bytes = measureAllocation(step, 10_000, 20_000);
-    for (let run = 0; run < 2; run++) bytes = Math.min(bytes, measureAllocation(step, 10_000, 500));
+    // Best of three windows after a long warm-up, like the profiles' guard (a tier-up can cost one
+    // window; a real per-poll allocation shows in every window — one heap number per poll would be
+    // ~160 KB).
+    const { bytes } = measureHeapGrowth(step, 10_000, 20_000, 3);
     expect(bytes).toBeLessThan(128 * 1024);
   });
 });

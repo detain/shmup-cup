@@ -22,7 +22,8 @@ import { describe, expect, it } from 'vitest';
 import { createAtlas } from '../../src/atlas/index.js';
 import { createDebugOverlay } from '../../src/debug/index.js';
 import { createLayerStack } from '../../src/layers/index.js';
-import { measureAllocation, pageImages, testManifest } from '../helpers.js';
+import { pageImages, testManifest } from '../helpers.js';
+import { measureHeapGrowth } from '../../../core/test/helpers/alloc.js';
 
 /**
  * Measures one fresh overlay (on a test atlas, over a World with 200 bullets, every switch on): the
@@ -45,7 +46,7 @@ function measureOverlay(warmUp: number, rounds: number): number {
   flags.showHitboxes = true;
   flags.showGrid = true;
   const counters = createDebugCounters();
-  const bytes = measureAllocation(
+  const bytes = measureHeapGrowth(
     (i) => {
       overlay.stats.fps = 60 - (i & 3);
       overlay.stats.tickMs = (i & 7) * 0.13;
@@ -57,7 +58,7 @@ function measureOverlay(warmUp: number, rounds: number): number {
     2000,
     warmUp,
     rounds,
-  );
+  ).bytes;
   // Not destroyed: destroying Pixi objects mid-file changes their shapes (what the throwaway run
   // is there to settle).
   return bytes;

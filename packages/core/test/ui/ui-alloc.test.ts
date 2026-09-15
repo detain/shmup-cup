@@ -60,6 +60,8 @@ describe('core/ui allocation', () => {
       },
       20_000,
       20_000,
+      3,
+      16 * 1024,
     );
     expect(hud.builds).toBeGreaterThan(20_000);
     expect(growth.bytes).toBeLessThan(32 * 1024);
@@ -94,6 +96,8 @@ describe('core/ui allocation', () => {
       },
       20_000,
       20_000,
+      3,
+      16 * 1024,
     );
     expect(growth.bytes).toBeLessThan(32 * 1024);
   });

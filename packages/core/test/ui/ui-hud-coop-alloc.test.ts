@@ -69,6 +69,8 @@ describe('core/ui co-op HUD allocation (M2-06)', () => {
       },
       12_000,
       24_000,
+      3,
+      16 * 1024,
     );
     expect(hud.builds).toBeGreaterThan(9_000);
     expect(list.dropped).toBe(0);

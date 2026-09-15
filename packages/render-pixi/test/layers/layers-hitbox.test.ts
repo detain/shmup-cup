@@ -7,7 +7,8 @@ import type { Sprite } from 'pixi.js';
 import { describe, expect, it } from 'vitest';
 import { createAtlas, type Atlas } from '../../src/atlas/index.js';
 import { HITBOX_CORE_TINT, HITBOX_RIM_TINT, createHitboxBinding } from '../../src/layers/index.js';
-import { measureAllocation, pageImages, testManifest } from '../helpers.js';
+import { pageImages, testManifest } from '../helpers.js';
+import { measureHeapGrowth } from '../../../core/test/helpers/alloc.js';
 
 /** @returns The test atlas (warnings silenced). */
 function atlas(): Atlas {
@@ -53,16 +54,20 @@ describe('render-pixi/layers hitbox markers', () => {
     const view = createHitboxBatch(2);
     view.count = 2;
     const camera = { x: 0, y: 0 };
-    const bytes = measureAllocation((tick) => {
-      view.x[0] = 50 + (tick % 100) * 0.7;
-      view.y[0] = 80;
-      view.radius[0] = 1.5;
-      view.x[1] = 150;
-      view.y[1] = 90 + (tick % 7) * 0.3;
-      view.radius[1] = 0.75;
-      camera.x = tick * 0.25;
-      binding.sync(view, camera);
-    }, 5000);
+    const bytes = measureHeapGrowth(
+      (tick) => {
+        view.x[0] = 50 + (tick % 100) * 0.7;
+        view.y[0] = 80;
+        view.radius[0] = 1.5;
+        view.x[1] = 150;
+        view.y[1] = 90 + (tick % 7) * 0.3;
+        view.radius[1] = 0.75;
+        camera.x = tick * 0.25;
+        binding.sync(view, camera);
+      },
+      5000,
+      20_000,
+    ).bytes;
     expect(bytes).toBeLessThan(64 * 1024);
   });
 });

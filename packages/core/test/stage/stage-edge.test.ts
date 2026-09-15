@@ -1041,7 +1041,7 @@ describe('core/stage edge — allocation', () => {
         if (runner.locked && runner.ticks % 5 === 0) runner.unlock();
       },
       20_000,
-      10_000,
+      20_000,
     );
     expect(fired).toBeGreaterThan(50);
     expect(growth.bytes).toBeLessThan(64 * 1024);

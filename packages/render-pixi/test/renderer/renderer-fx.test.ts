@@ -24,7 +24,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { createAtlas, type Atlas } from '../../src/atlas/index.js';
 import { parseFxContent, type FxContent } from '../../src/particles/index.js';
 import { createPixiRenderer, type PixiRenderer } from '../../src/renderer/index.js';
-import { measureAllocation, pageImages, testManifest } from '../helpers.js';
+import { pageImages, testManifest } from '../helpers.js';
+import { measureHeapGrowth } from '../../../core/test/helpers/alloc.js';
 
 vi.mock('pixi.js', async (importOriginal) => {
   const real = await importOriginal<typeof Pixi>();
@@ -296,7 +297,7 @@ describe('render-pixi/renderer game feel (plan M1-14)', () => {
     const particles = renderer.particles;
     const popups = renderer.popups;
     if (particles === null || popups === null) throw new Error('fx parts missing');
-    const bytes = measureAllocation(
+    const bytes = measureHeapGrowth(
       (tick) => {
         frame.tick = tick;
         camera.x = tick % 64;
@@ -308,7 +309,7 @@ describe('render-pixi/renderer game feel (plan M1-14)', () => {
       },
       10_000,
       20_000,
-    );
+    ).bytes;
     // The renderer's own guard for an animated world is 1.5 MB (Pixi plumbing when sprites blink).
     expect(bytes).toBeLessThan(1.5 * 1024 * 1024);
   });

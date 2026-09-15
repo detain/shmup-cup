@@ -16,7 +16,8 @@ import { describe, expect, it } from 'vitest';
 import { createAtlas, type Atlas } from '../../src/atlas/index.js';
 import { createParallaxBinding, createTerrainBinding } from '../../src/layers/index.js';
 import { createSpriteTables } from '../../src/sprites/index.js';
-import { measureAllocation, pageImages, testManifest } from '../helpers.js';
+import { pageImages, testManifest } from '../helpers.js';
+import { measureHeapGrowth } from '../../../core/test/helpers/alloc.js';
 
 /** Sprite names: 0 = ships/a (the "tileset", 3 frames), 1 = bg/tile. */
 const NAMES = ['ships/a', 'bg/tile'];
@@ -180,11 +181,15 @@ describe('render-pixi/layers terrain binding edge — the ring', () => {
     const view = randomView(2000, 30, 13);
     const binding = createTerrainBinding({ atlas: a, tables, view });
     const kept: unknown[] = new Array<unknown>(1);
-    const bytes = measureAllocation((tick) => {
-      const camera = { x: (tick * 1.75) % 15000, y: 0 }; // a fresh object per frame
-      binding.sync(view, camera);
-      kept[0] = camera;
-    }, 10_000);
+    const bytes = measureHeapGrowth(
+      (tick) => {
+        const camera = { x: (tick * 1.75) % 15000, y: 0 }; // a fresh object per frame
+        binding.sync(view, camera);
+        kept[0] = camera;
+      },
+      10_000,
+      2000,
+    ).bytes;
     expect(bytes).toBeGreaterThan(10_000 * 16);
   });
 
@@ -194,11 +199,15 @@ describe('render-pixi/layers terrain binding edge — the ring', () => {
     const view = randomView(2000, 60, 11);
     const binding = createTerrainBinding({ atlas: a, tables, view });
     const camera = { x: 0, y: 0 };
-    const bytes = measureAllocation((tick) => {
-      camera.x = (tick * 1.75) % 15000;
-      camera.y = (tick * 0.35) % 250;
-      binding.sync(view, camera);
-    }, 10_000);
+    const bytes = measureHeapGrowth(
+      (tick) => {
+        camera.x = (tick * 1.75) % 15000;
+        camera.y = (tick * 0.35) % 250;
+        binding.sync(view, camera);
+      },
+      10_000,
+      20_000,
+    ).bytes;
     expect(bytes).toBeLessThan(256 * 1024);
   });
 });
@@ -292,13 +301,17 @@ describe('render-pixi/layers parallax binding edge', () => {
     const tables = createSpriteTables(a, NAMES);
     const view = bands([128, 128, 64, 64]);
     const binding = createParallaxBinding({ atlas: a, tables, view });
-    const bytes = measureAllocation((tick) => {
-      for (let b = 0; b < 4; b++) {
-        view.offsetX[b] = (tick * (0.25 + b * 0.25)) % view.spacing[b];
-        view.y[b] = ((tick * 0.1) % 40) - 20;
-      }
-      binding.sync(view);
-    }, 10_000);
+    const bytes = measureHeapGrowth(
+      (tick) => {
+        for (let b = 0; b < 4; b++) {
+          view.offsetX[b] = (tick * (0.25 + b * 0.25)) % view.spacing[b];
+          view.y[b] = ((tick * 0.1) % 40) - 20;
+        }
+        binding.sync(view);
+      },
+      10_000,
+      20_000,
+    ).bytes;
     expect(bytes).toBeLessThan(256 * 1024);
   });
 });

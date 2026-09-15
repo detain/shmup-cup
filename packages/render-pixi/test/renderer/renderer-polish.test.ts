@@ -26,7 +26,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { createAtlas, type Atlas } from '../../src/atlas/index.js';
 import { createRasterTable, type LayerEffectFilter } from '../../src/effects/index.js';
 import { createPixiRenderer, type PixiRenderer } from '../../src/renderer/index.js';
-import { measureAllocation, pageImages, testManifest } from '../helpers.js';
+import { pageImages, testManifest } from '../helpers.js';
+import { measureHeapGrowth } from '../../../core/test/helpers/alloc.js';
 
 /** Containers of the present pass (the frame quad's parent), recorded by the fake renderer. */
 const presented = vi.hoisted((): { screen: unknown } => ({ screen: null }));
@@ -333,7 +334,7 @@ describe('render-pixi/renderer render interpolation (plan M2-08)', () => {
     const { renderer } = await makeRenderer({ interpolation: true, showHitbox: true });
     const { frame, camera, enemies, parallax } = frameWithWorld();
     renderer.render(frame);
-    const bytes = measureAllocation(
+    const bytes = measureHeapGrowth(
       (step) => {
         const tick = step >> 1;
         frame.tick = tick;
@@ -346,7 +347,7 @@ describe('render-pixi/renderer render interpolation (plan M2-08)', () => {
       },
       10_000,
       20_000,
-    );
+    ).bytes;
     // The renderer's guard for an animated world (see renderer-fx.test.ts).
     expect(bytes).toBeLessThan(1.5 * 1024 * 1024);
   });

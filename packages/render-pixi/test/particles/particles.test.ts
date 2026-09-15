@@ -25,7 +25,8 @@ import {
   parseFxContent,
   type FxContent,
 } from '../../src/particles/index.js';
-import { measureAllocation, pageImages, testManifest } from '../helpers.js';
+import { pageImages, testManifest } from '../helpers.js';
+import { measureHeapGrowth } from '../../../core/test/helpers/alloc.js';
 
 const contentRoot = join(
   dirname(fileURLToPath(import.meta.url)),
@@ -433,17 +434,17 @@ describe('render-pixi/particles system', () => {
     );
     const system = createParticleSystem({ atlas: testAtlas(), content, capacity: 64 });
     const camera = { x: 0, y: 0 };
-    const simBytes = measureAllocation(
+    const simBytes = measureHeapGrowth(
       (tick) => {
         system.emit(tick & 1, 100 + (tick % 50), 80, 1);
         system.step(1);
       },
       10_000,
       20_000,
-    );
+    ).bytes;
     expect(system.recycled).toBeGreaterThan(0);
     expect(simBytes).toBeLessThan(64 * 1024);
-    const frameBytes = measureAllocation(
+    const frameBytes = measureHeapGrowth(
       (tick) => {
         system.emit(tick & 1, 100 + (tick % 50), 80, 1);
         system.step(1);
@@ -452,7 +453,7 @@ describe('render-pixi/particles system', () => {
       },
       10_000,
       20_000,
-    );
+    ).bytes;
     // A branch on the burst radius merging a small-integer x with a fractional one was ~1.3 MB.
     expect(frameBytes).toBeLessThan(128 * 1024);
   }, 60_000); // 2 × 30,000 measured ticks: 3–5 s on a busy CI runner

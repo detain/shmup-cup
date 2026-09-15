@@ -259,7 +259,7 @@ describe('core/options allocation', () => {
         if (i % 1009 === 0) group.reset(s, cam);
       },
       50_000,
-      20_000,
+      50_000,
     );
     expect(growth.bytes).toBeLessThan(64 * 1024);
   });

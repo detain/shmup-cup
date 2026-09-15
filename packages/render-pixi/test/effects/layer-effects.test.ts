@@ -22,7 +22,7 @@ import {
   type LayerEffectFilter,
 } from '../../src/effects/index.js';
 import { createLayerStack } from '../../src/layers/index.js';
-import { measureAllocation } from '../helpers.js';
+import { measureHeapGrowth } from '../../../core/test/helpers/alloc.js';
 
 /** What a fake filter recorded. */
 interface FakeFilter extends LayerEffectFilter {
@@ -240,10 +240,14 @@ describe('render-pixi/effects layer effects', () => {
     });
     const cam = { x: 0, y: 0 };
     effects.sync(0, cam, 0, true);
-    const bytes = measureAllocation((tick) => {
-      cam.x = tick * 0.5;
-      effects.sync(tick, cam, tick & 1, true);
-    }, 5000);
+    const bytes = measureHeapGrowth(
+      (tick) => {
+        cam.x = tick * 0.5;
+        effects.sync(tick, cam, tick & 1, true);
+      },
+      5000,
+      20_000,
+    ).bytes;
     expect(bytes).toBeLessThan(64 * 1024);
     // (A draw list import keeps the core's render contract types in this test's graph.)
     expect(createDrawList(1, 1).count).toBe(0);

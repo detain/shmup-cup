@@ -14,7 +14,7 @@ import {
   encodeRasterTable,
   stageEffectActive,
 } from '../../src/effects/index.js';
-import { measureAllocation } from '../helpers.js';
+import { measureHeapGrowth } from '../../../core/test/helpers/alloc.js';
 
 /**
  * A camera at an x.
@@ -258,14 +258,18 @@ describe('render-pixi/effects raster table encoding', () => {
       wrap: 64,
     });
     const camera = cam(0);
-    const bytesUsed = measureAllocation((tick) => {
-      camera.x = tick * 0.75;
-      clearRasterTable(table);
-      addRasterEffect(table, wave, tick, camera);
-      addRasterEffect(table, haze, tick, camera);
-      addRasterEffect(table, floor, tick, camera);
-      encodeRasterTable(table, bytes);
-    }, 5000);
+    const bytesUsed = measureHeapGrowth(
+      (tick) => {
+        camera.x = tick * 0.75;
+        clearRasterTable(table);
+        addRasterEffect(table, wave, tick, camera);
+        addRasterEffect(table, haze, tick, camera);
+        addRasterEffect(table, floor, tick, camera);
+        encodeRasterTable(table, bytes);
+      },
+      5000,
+      20_000,
+    ).bytes;
     expect(bytesUsed).toBeLessThan(64 * 1024);
   });
 });

@@ -27,7 +27,7 @@ describe('shell/frame-loop refresh monitor allocation', () => {
         if (monitor.ready && monitor.hz > INTERPOLATION_MIN_HZ) fast++;
       },
       20_000,
-      5000,
+      20_000,
     );
     expect(growth.bytes).toBeLessThan(64 * 1024);
     expect(fast).toBeGreaterThan(0);
