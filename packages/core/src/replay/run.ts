@@ -703,6 +703,14 @@ export function createReplayLibrary(storage: PlatformStorage | null): ReplayLibr
     }
   };
   /**
+   * A slot's text.
+   *
+   * @param slot - The slot (anything but a whole number 0 … {@link REPLAY_SLOTS} − 1 is empty).
+   * @returns The text, or `null` for an empty or unknown slot.
+   */
+  const slotText = (slot: number): string | null =>
+    slot >= 0 && slot < REPLAY_SLOTS && slot % 1 === 0 ? texts[slot] : null;
+  /**
    * Characters the kept slots hold together.
    *
    * @returns The total.
@@ -751,11 +759,11 @@ export function createReplayLibrary(storage: PlatformStorage | null): ReplayLibr
       }
     },
     replay(slot: number): RunReplay | null {
-      const text = slot >= 0 && slot < REPLAY_SLOTS ? texts[slot] : null;
+      const text = slotText(slot);
       return text === null ? null : parseRunReplayText(text);
     },
     exportText(slot: number): string | null {
-      return slot >= 0 && slot < REPLAY_SLOTS ? texts[slot] : null;
+      return slotText(slot);
     },
     storeLast(run: RunReplay): ReplayStoreResult {
       const text = runReplayText(run);
@@ -764,7 +772,7 @@ export function createReplayLibrary(storage: PlatformStorage | null): ReplayLibr
       return ReplayStoreResult.Ok;
     },
     keep(slot: number): number {
-      const text = slot >= 0 && slot < REPLAY_SLOTS ? texts[slot] : null;
+      const text = slotText(slot);
       if (text === null) return -1;
       const target = freeSlot(text.length);
       if (target < 0) return -1;
@@ -782,7 +790,7 @@ export function createReplayLibrary(storage: PlatformStorage | null): ReplayLibr
       return ReplayStoreResult.Ok;
     },
     remove(slot: number): void {
-      if (!(slot >= 0 && slot < REPLAY_SLOTS) || texts[slot] === null) return;
+      if (slotText(slot) === null) return;
       put(slot, null, null, true);
     },
   };

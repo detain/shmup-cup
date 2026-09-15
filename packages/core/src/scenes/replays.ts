@@ -487,7 +487,8 @@ export class RunReplayPlayback {
 
   /**
    * Starts the next segment: creates its World from the header, applies the start state and its
-   * hi-score, checks a zero-tick segment's final hash. A transition.
+   * hi-score and the actions recorded before its first tick (at tick count 0), checks a zero-tick
+   * segment's final hash. A transition.
    *
    * @returns `true` when a segment started; `false` at the end of the run (the report is then
    *   finished) or when a segment cannot start (the report records a desync at tick 0).
@@ -529,6 +530,8 @@ export class RunReplayPlayback {
     this.playback = createPlayback(segment.replay);
     this.nextAction = 0;
     if (segment.replay.ticks === 0) this.finishSegment();
+    // Actions the flow took before the World's first tick (recorded at tick count 0).
+    else this.applyActions(0);
     return true;
   }
 
