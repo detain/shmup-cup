@@ -210,8 +210,9 @@ title — [scenes-and-ui.md](scenes-and-ui.md)). Since M2-01, when continues are
 (`core/world` `canContinue`) the flow opens the **continue countdown** instead, and a continue
 (`continueWorld`) gives every active ship `startingLives` again, restarts at the last checkpoint
 with the arcade penalty's empty loadout (then the starting loadout) and marks the score's last
-digit ([difficulty-and-rank.md](difficulty-and-rank.md#continues)); name entry (M2-15) comes
-later. Bare gameplay (`?scene=flight`) still just keeps simulating.
+digit ([difficulty-and-rank.md](difficulty-and-rank.md#continues)); since M2-15 a score that
+enters its table is named in the name entry after the end screen
+([front-end-and-attract.md](front-end-and-attract.md#the-name-entry)). Bare gameplay (`?scene=flight`) still just keeps simulating.
 
 ## Score (`core/scoring`)
 
@@ -443,8 +444,9 @@ The next `game.step()` runs that tick, and its phase 7 turns the recorded hit in
   session hi-score across games) ([scenes-and-ui.md](scenes-and-ui.md)).
 - **M1-17** (done) — the saved hi-score tables: finished games recorded, the session hi-score
   starting from the saved best ([saves-and-options.md](saves-and-options.md)).
-- **M2-15 / M2-16** — the name entry and the hi-score table screen; the Options screen's
-  `deathPenalty` / `startingLives`.
+- **M2-15** (done) — the name entry and the hi-score table screens; a table per difficulty × ship ×
+  mode ([front-end-and-attract.md](front-end-and-attract.md)).
+- **M2-16** — the Options screen's `deathPenalty` / `startingLives`.
 - **M2-01** (done) — extends (cap 9, the critical `ExtraLife` sound), continues (the countdown,
   the checkpoint restart, the score's last digit), the difficulty presets choosing lives and
   penalty, rank falling with the power a death takes

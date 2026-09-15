@@ -1,9 +1,9 @@
 /**
  * # replay/format — replay headers, recording, playback and the file format
  *
- * **Responsibility.** The parts of `core/replay` that need no game session (see the module docs of
- * `./index.ts`): the {@link ReplayHeader}, the per-tick input {@link createReplayRecorder | recorder},
- * the {@link createPlayback | playback} with its desync report, and the JSON file format
+ * **Responsibility.** The parts of `core/replay` that need no game session (see the module docs
+ * of `./index.ts`): the {@link ReplayHeader}, the per-tick input
+ * {@link createReplayRecorder | recorder}, the {@link createPlayback | playback} with its desync report, and the JSON file format
  * ({@link encodeReplay} / {@link decodeReplay}, RLE + varints + base64). Split out in M2-15 so the
  * scene flow's attract mode (`core/scenes`, which `core/game` imports) can decode and play the
  * bundled demos without importing `core/game` back; `./index.ts` re-exports all of it.

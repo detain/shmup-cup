@@ -42,7 +42,7 @@ page exists under `dist/assets/atlas/` (the shell cannot boot without it), and �
 **budgets** hold: `app.js` ≤ 350 KB gzipped, every atlas page a PNG of at most 2048², the whole
 `dist/` ≤ 8 MB (`APP_JS_GZIP_BUDGET`, `ATLAS_PAGE_MAX_SIZE`, `DIST_BUDGET`; at M1-19 `app.js` is
 228.6 KB gzipped and `dist/` 812.4 KB; after M2-11 `app.js` is 307.5 KB gzipped, after M2-12 313.5 KB,
-after M2-13 320.3 KB, after M2-14 331.5 KB — the shipped content is inlined, so every new zone adds to it). The checks are also exported as `checkTizenBundle(distDir)`
+after M2-13 320.3 KB, after M2-14 331.5 KB, after M2-15 343.8 KB — the shipped content is inlined, so every new zone adds to it; M2-15 added the front end's scenes and the nine attract demos). The checks are also exported as `checkTizenBundle(distDir)`
 (and `pngSize`) for the tests.
 
 ## Debug build (M1-19)
@@ -102,7 +102,10 @@ M2-11 the real zones B and C with zone B's secret bonus stage, since M2-12 the r
 dive into the caves and brick maze — and E, since M2-13 the real zones F — its regrowing tissue
 walls and tentacles — and G with zone G's secret bonus stage, since M2-14 the final zones H — the
 piston hall, the parade, IRON SOVEREIGN — and I — the ABYSS ARK raid and THE HOLLOW KING —, the
-ending scenes and the credits) with
+ending scenes and the credits; since M2-15 the front end — left alone on `PRESS OK` the title plays
+the attract loop (a zone demo, the high-score tables, the story; the remote's OK returns), a high
+score is named with the remote's arrows and OK, and the mode select offers PRACTICE and SOUND TEST
+besides 1 PLAYER, 2 PLAYERS, OPTIONS and EXIT) with
 the remote's
 directional pad, its main gun firing on its own (`remoteMode` forces autofire,
 `shmup_feat.md` §4 rule 1), under the core HUD with the power meter. **Back** goes through the

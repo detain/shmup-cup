@@ -51,7 +51,7 @@ audio.setBusVolume('music', 0.6);
 | `sfx` | implemented | Pre-rendered SFX buffers, per-frame dedupe, per-cue instance caps (oldest restarted), 14-voice global cap stealing the lowest tier then the oldest (`critical` never stolen, a higher tier never stolen), stereo pan from a whole-pixel x (`shmup_feat.md` §19) |
 | `music` | implemented | One resident track, intro + sample-accurate loop (`loopStart` / `loopEnd` from samples), fade in / out and ducking as `AudioParam` ramps |
 | `loader` | implemented | The `sfx` / `music` content kinds (validation with issue paths, tracks bound to cues per stage — `resolveMusicCues`, `stageMusicCues`, which since M2-14 adds a final zone's `music.ending` / `music.credits` themes), rendering during loading phases, the OGG path (XHR `arraybuffer` → `OfflineAudioContext(2, 1, 32000)` decode, loop points scaled) |
-| `engine` | implemented | `createAudioEngine`: the SFX bank + one stage's music set, attached to the buses after the unlock; `playSfx` / `playMusic` / `duckMusic` / `endFrame` — what the shell's dispatch feeds with sim events, allocation-free unless a sound starts |
+| `engine` | implemented | `createAudioEngine`: the SFX bank + one stage's music set, attached to the buses after the unlock; `playSfx` / `playMusic` / `duckMusic` / `endFrame` — what the shell's dispatch feeds with sim events, allocation-free unless a sound starts; since M2-15 `playTrack(index)` for the sound test (any library track, loaded on demand and kept as the one extra track beside the prepared set) |
 
 Listen to the placeholder sounds with `pnpm audio:preview` (WAV files in
 `assets/generated/audio-preview/`). The content format is in

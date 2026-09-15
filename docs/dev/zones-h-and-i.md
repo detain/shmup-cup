@@ -766,8 +766,10 @@ selectCampaignEnding(campaign, i, RunFlag.NoDeath | RunFlag.BossEscaped)?.name; 
 
 ## Next steps that build on this page
 
-- **M2-15** — the front end: attract mode (demo replays recorded by the bot per zone), name entry,
-  the hi-score tables showing the zone reached, the practice select on `startPractice`.
+- **M2-15** (done) — the front end: attract mode (demo replays recorded by the bot per zone), name
+  entry after the credits, the hi-score tables showing the zone reached, the practice select on
+  `startPractice`, the story crawl reusing this step's ending sprites
+  ([front-end-and-attract.md](front-end-and-attract.md)).
 - **M2-17** — per-zone texture unloading between zones; the bundle budget for nine zones.
 - **M2-18** — the release-candidate audits over all 16 routes × both ships (the endings included).
 - **M3-02** — an escape sequence after the final boss (`shmup_feat.md` §14).

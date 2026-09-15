@@ -1501,8 +1501,9 @@ export class TitleScene extends SceneBase {
   /** See {@link Scene.id}. */
   readonly id = 'title' as const;
   /**
-   * The title menu (1 PLAYER / 2 PLAYERS / OPTIONS / EXIT — EXIT only when the platform can quit;
-   * M2-06 added 2 PLAYERS).
+   * The title menu — the mode select ({@link TitleItem} order): 1 PLAYER / 2 PLAYERS / PRACTICE /
+   * OPTIONS / SOUND TEST / EXIT — EXIT only when the platform can quit, PRACTICE disabled without
+   * a campaign (M2-06 added 2 PLAYERS, M2-15 PRACTICE and SOUND TEST).
    */
   readonly menu: ListMenu;
   /** 0 = `PRESS OK`, 1 = the menu. */
@@ -2792,9 +2793,10 @@ export class DifficultyScene extends SceneBase {
  * is over and continues are left (`core/world` `canContinue`). It fades the music out and counts
  * down {@link CONTINUE_COUNTDOWN_TICKS} ticks, showing the seconds left (9 … 0, a tick sound on
  * every change; the last three flash) over a draining time bar, the score and the continues left,
- * and — once OK counts — a blinking `PRESS OK` and `BACK: GIVE UP`. After {@link CONTINUE_LOCK_TICKS} ticks OK continues —
- * `continueWorld`: the stage restarts at its last checkpoint with fresh lives, the score's last
- * digit counts the continue — and closes the countdown (the game runs on); Back gives up. Giving up
+ * and — once OK counts — a blinking `PRESS OK` and `BACK: GIVE UP`. After
+ * {@link CONTINUE_LOCK_TICKS} ticks OK continues — `continueWorld`: the stage restarts at its last
+ * checkpoint with fresh lives, the score's last digit counts the continue — and closes the
+ * countdown (the game runs on); Back gives up. Giving up
  * or running out of time replaces it with the {@link GameOverScene} (which records the run). In a
  * co-op game (M2-06) each player's OK continues that player with its own continues (the panel
  * shows both players' credits); a player who does not press stays out and may drop back in later.
@@ -2869,8 +2871,10 @@ export class ContinueScene extends SceneBase {
   }
 
   /**
-   * Draws `CONTINUE?`, the seconds left and the continues left — each player's in a co-op game
-   * (M2-06).
+   * Draws `CONTINUE?`, the seconds left (the last three flashing, M2-15) over a 120-px time bar
+   * draining to empty (red for the last three seconds), the score and the continues left — each
+   * player's continues in a co-op game (M2-06) — and, once OK counts, a blinking `PRESS OK` and
+   * `BACK: GIVE UP` (M2-15).
    *
    * @param list - The UI list.
    */
@@ -4494,8 +4498,8 @@ function finalZoneCue(flow: FlowControl, credits: boolean): number {
  * title in the title colour, its lines under it, a blank row between sections, one pixel every
  * {@link CREDITS_SCROLL_TICKS} ticks; when the last row has come up to the middle of the screen the
  * scroll stops for {@link CREDITS_HOLD_TICKS}, then the name entry (the run's score entered its
- * table — M2-15) or the title. OK or Back (after {@link CREDITS_LOCK_TICKS}) skip ahead. The final zone's credits theme (its stage's
- * `music.credits` cue — `Credits` in the shipped zones) plays.
+ * table — M2-15) or the title. OK or Back (after {@link CREDITS_LOCK_TICKS}) skip ahead. The
+ * final zone's credits theme (its stage's `music.credits` cue — `Credits` in the shipped zones) plays.
  *
  * @remarks
  * The rows are flattened once, when the flow is built (the content's own strings — nothing is built
@@ -4745,8 +4749,8 @@ class PracticeChoice {
  * A full screen over the starfield: `NEW HI-SCORE`, whose score (`1P` / `2P` in a co-op game) and
  * rank, and the `core/ui` {@link NameEntry} — Up / Down pick a letter, Right / OK move on, Left (or
  * Back) goes back, OK on `END` finishes — **four directions and OK only**, so the remote enters a
- * name. The entry also finishes by itself after {@link NAME_ENTRY_TIMEOUT_TICKS}. The name goes into
- * the row the game recorded (`core/save` `SaveStore.renameScore` — `---` for a blank name); in a
+ * name. The entry also finishes by itself after {@link NAME_ENTRY_TIMEOUT_TICKS}. The name goes
+ * into the row the game recorded (`core/save` `SaveStore.renameScore` — `---` for a blank name); in a
  * co-op game player 2's row is named next (either controller types — menus merge the input). Then
  * the save is written and the {@link HiScoreScene} shows the table with the new rows lit. A row
  * that left the table meanwhile (player 2's score pushed player 1's tenth place out) is skipped.
@@ -5642,10 +5646,14 @@ const SOUND_TEST_MENU_LAYOUT: MenuLayout = Object.freeze({
  *
  * @remarks
  * An overlay over the title (dim {@link PAUSE_DIM}): MUSIC (the host's music library by title —
- * {@link SoundTestSetup}; disabled without one), SFX (every `SFX_CUES` cue, {@link SFX_TEST_LABELS}),
- * STOP and BACK. Left / Right choose a track or a sound, **OK plays it** — the track through a
+ * {@link SoundTestSetup}; disabled without one), SFX (every `SFX_CUES` cue,
+ * {@link SFX_TEST_LABELS}), STOP and BACK. Left / Right choose a track or a sound, **OK plays it** — the track through a
  * `SimEventKind.SoundTest` event (the host loads it if needed and plays it), the sound as an `Sfx`
- * event at the playfield's centre (panned to the middle); STOP fades the music out; BACK or Back brings the title theme back and closes the screen.
+ * event at the playfield's centre (panned to the middle); STOP fades the music out (`Music`
+ * `Silence`); BACK or Back brings the title theme back and closes the screen.
+ *
+ * OK on MUSIC / SFX is masked out of the input {@link menuTick} reads (a reused copy of the menu
+ * input), so it plays without also stepping the choice the way OK steps other menus' choices.
  */
 export class SoundTestScene extends SceneBase {
   /** See {@link Scene.id}. */
@@ -5958,10 +5966,14 @@ export interface SceneFlowView {
   readonly tick: number;
   /**
    * The game's World view while the game scene is visible, the weapon select's preview while that
-   * is visible (M2-03), else `null`.
+   * is visible (M2-03), the attract loop's demo World while the demo play is on screen (M2-15),
+   * else `null`.
    */
   readonly world: WorldView | null;
-  /** The HUD list while the game scene is visible, else an empty list. */
+  /**
+   * The HUD list while the game scene is visible — or the demo play's own HUD while that is on
+   * screen (M2-15) —, else an empty list.
+   */
   readonly hud: DrawList;
   /** Every visible scene's widgets. */
   readonly ui: DrawList;
@@ -5977,12 +5989,16 @@ export interface SceneFlowView {
  * queued presentation events are dropped — the flow starts on the boot screen or the title, not in
  * the stage; note that this clears the whole `host.events` queue). `start` `'boot'` waits for
  * {@link SceneFlow.finishBoot}; `'title'` starts on the title (title music queued); `'game'`
- * starts a game at once (dev / tests). Each scene gets its own range of the UI list's 96 string
- * slots. The session hi-score starts from `host.save`'s best score of the config's mode (a
- * memory-only store with the defaults when the host has none). `core/game`
- * `createGame(…, { scenes, save, inputProfiles })` calls this for you.
+ * starts a game at once (dev / tests). Each scene gets its own range of the UI list's 384 string
+ * slots (256 until M2-15's front end). The session hi-score starts from `host.save`'s best score
+ * of the config's mode (a memory-only store with the defaults when the host has none). The
+ * content's demos are decoded here once (`ContentDb.demos` → {@link SceneFlow.demos}; one that
+ * does not decode or names a missing stage is left out), and the campaign's story is flattened
+ * into the {@link StoryScene}'s rows. `core/game`
+ * `createGame(…, { scenes, save, inputProfiles, soundTest })` calls this for you.
  *
- * @param host - The session: config, content, event queue, exit, World factory, save, profiles.
+ * @param host - The session: config, content, event queue, exit, World factory, save, profiles,
+ *   the sound test's music titles.
  * @param start - First scene (default `'boot'`).
  * @returns The running flow.
  * @throws {RangeError} When the scenes need more string slots than the UI list has (a
@@ -6064,7 +6080,7 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     try {
       demos.push(decodeReplay(demo.document));
     } catch (_error) {
-      // A broken demo is skipped (`pnpm content:check` plays every shipped one).
+      // A broken demo is skipped (`test/golden/demos.test.ts` plays every shipped one).
     }
   }
   // The hi-score rows' zone column (M2-15): a stage's campaign label.

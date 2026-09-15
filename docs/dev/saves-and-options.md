@@ -87,7 +87,7 @@ tests use `createMemoryStorage()`. Electron's renderer runs the web build and us
 |---|---|
 | `version` | `SAVE_VERSION` = 1. Drives the migrations; a document without it counts as version 0 |
 | `options` | The player's `UserOptions` (below): volume levels 0–10, the chosen key / remote profile id (or `null` = the platform default), display options (M2-02: `bulletPalette`; M2-08: `scaleMode`, `screenShake`, `reduceFlashing`, `showHitbox`; M2-09: `bossHpBar`) |
-| `hiScores` | Tables by **mode key** (`hiScoreModeKey(config)` = `<powerUpMode>-<difficulty>`, `meter-normal` in M1; since M2-01 one per difficulty — `meter-easy`, `meter-normal`, `meter-hard`, `meter-arcade`; since M2-05 the Direct-mode MANTA's games in `direct-easy` … `direct-arcade` — no format change, the key was always `<powerUpMode>-<difficulty>`), each sorted best first, at most `HI_SCORE_TABLE_SIZE` = 10 rows, at most `MAX_HI_SCORE_TABLES` = 32 tables. A mode nobody scored in has no table |
+| `hiScores` | Tables by **mode key** (`hiScoreModeKey(config)` = `<powerUpMode>-<difficulty>`, `meter-normal` in M1; since M2-01 one per difficulty — `meter-easy`, `meter-normal`, `meter-hard`, `meter-arcade`; since M2-05 the Direct-mode MANTA's games in `direct-easy` … `direct-arcade` — no format change, the key was always `<powerUpMode>-<difficulty>`; since M2-15 `hiScoreModeKey(config, mode)` appends `-2p` for co-op games and `-practice` for practice runs — `meter-normal-2p`, `direct-hard-practice`: one table per difficulty × ship × mode, still no format change), each sorted best first, at most `HI_SCORE_TABLE_SIZE` = 10 rows, at most `MAX_HI_SCORE_TABLES` = 32 tables. A mode nobody scored in has no table |
 | `stats` | Counters: `gamesStarted` (START and RETRY STAGE), `gameOvers`, `stagesCleared` — whole numbers, capped at 2³¹−1 |
 
 The key stays `save.v1` for the whole format family: a new format bumps the document's
@@ -190,21 +190,35 @@ written when it changed (`shmup_feat.md` §23).
 row enters when the table has fewer than 10 rows or its score **beats** the 10th; it goes **below**
 rows with the same score (the older record keeps its place); a score of 0 never enters (a game
 that scored nothing leaves no row). `createHiScoreEntry(score, fields)` normalises a row (floors
-and caps the score, name `---` until the name entry of M2-15). `SaveStore.recordScore(modeKey,
+and caps the score, name `---` until named). `SaveStore.recordScore(modeKey,
 entry)` does the insertion in the store and refuses a malformed mode key or a 33rd table;
-`hiScores(modeKey)` / `bestScore(modeKey)` read a table.
+`hiScores(modeKey)` / `bestScore(modeKey)` read a table. Since M2-15
+`SaveStore.renameScore(modeKey, row, name)` names a row already in a table — found by **object
+identity**, so a row recorded after it (player 2's) cannot misplace it — by replacing it with a
+renamed copy (→ its rank, or −1 when the row has left the table; the name cut to 8, empty → `---`);
+`parseHiScoreModeKey(key)` splits a key back into `{ powerUpMode, difficulty, mode }`.
+
+**Rows of older co-op games move (M2-15).** Before M2-15 a co-op game's rows (mode `2p`) went into
+the one-player tables. `sanitizeSave` now files every row of mode `2p` / `practice` found in a
+one-player table into that table's `-2p` / `-practice` table before it sorts and cuts — so the
+first load after the update moves them, and the next flush writes the tidy document. The save
+stays version 1 (the key names never changed shape); save v2 is M2-16's.
 
 What the scene flow records (`FlowControl.recordRun`, when the game-over screen opens, when a
 single-stage run's stage-clear screen opens, or — M2-10 — when a campaign run's **final** zone is
 cleared, just before its ending; a zone cleared on the way to the zone map only counts
-`stagesCleared` and flushes; a practice run records nothing —
-[campaign-and-bonus-stages.md](campaign-and-bonus-stages.md#saves-and-hi-scores)):
+`stagesCleared` and flushes; since M2-15 a practice run records into its own table and counts no
+statistic — [campaign-and-bonus-stages.md](campaign-and-bonus-stages.md#saves-and-hi-scores)):
 
-- a row per playing player: player 1 always, player 2 when active — `reached` = the World's
-  stage id (`''` in open space), `mode` `1p` (`2p` for both rows of a co-op game — M2-06; they go
-  into the same table as one-player games), `difficulty` = the World's (since M2-01 the preset
-  chosen under START), into that preset's table (`hiScoreModeKey(world.config)`);
-- the statistic (`gameOvers` or `stagesCleared`), then `flush()`;
+- a row per playing player: player 1 always, player 2 when active — named `---`, `reached` = the
+  World's stage id (`''` in open space), `mode` `1p` (`2p` for both rows of a co-op game — M2-06;
+  `practice` for a practice run — M2-15), `difficulty` = the World's (since M2-01 the preset chosen
+  under START), into the World's own table (`hiScoreModeKey(world.config, mode)` — since M2-15 the
+  co-op and practice rows in their own `-2p` / `-practice` tables); each row that entered is kept
+  as a pending name (by identity) for the name entry
+  ([front-end-and-attract.md](front-end-and-attract.md#the-screen-and-the-pending-rows));
+- the statistic (`gameOvers` or `stagesCleared`; none for practice), then `flush()` — the score is
+  saved before the name entry opens, which renames the row and flushes again;
 - player 1's rank is kept on the screen (`GameOverScene.rank`, `StageClearScene.rank`): the
   game-over screen shows **`NEW HI-SCORE`** under its panel when it is 0.
 
@@ -214,8 +228,9 @@ The session hi-score (the title's `HI`, the HUD's `HI`) starts from `save.bestSc
 when the flow is created — since M2-01 one per difficulty preset, each from its own table, and
 since M2-05 one per power-up mode and preset (the ship select's choice picks the mode); the
 title shows the chosen ship's and preset's and the difficulty menu the focused preset's. The table is chosen by
-the config's power-up mode and difficulty, not the stage: the Test Range, the Boss Range and open
-space on Normal all share `meter-normal`. A score recorded after a continue ends in the number
+the config's power-up mode and difficulty (and since M2-15 the game mode), not the stage: the Test
+Range, the Boss Range and open space on Normal all share `meter-normal`. Co-op games and practice
+runs play against their own table's best and never raise the (1P) session hi-score (M2-15). A score recorded after a continue ends in the number
 of continues used ([difficulty-and-rank.md](difficulty-and-rank.md#the-continue-digit-markcontinue)).
 
 ## User options (`core/config`)
@@ -486,7 +501,7 @@ title — the M1-17 acceptance test in `scenes-options.test.ts`.
 | A user option | A field in `UserOptions` / `DEFAULT_USER_OPTIONS`, read defensively in `resolveUserOptions`, serialised in `serializeSave`; if it changes live, a new `UserOptionKind` code (appended) and a case in `connectOptionEvents`; if it affects the simulation it belongs in `GameConfig` instead |
 | An Options item | A widget in `OptionsScene` (slider, toggle or choice), its index in `OptionsItem` (BACK moves down — M2-08 moved it to 9, M2-09 to 10), a `userOption` push on `Changed`, the value in `close()`; keep within 31 items and the flow's string slots (the constructor throws otherwise), and within the panel (M2-08 grew it to ten rows — the next row needs a scrolling list or a sub-screen, M2-16) |
 | A statistic | A counter in `SaveStats`, its default in `createDefaultSave`, `counter()` in `sanitizeSave`, a field in `serializeSave`, `save.count('…')` where it happens |
-| A hi-score mode | A config field that feeds `hiScoreModeKey` (practice, boss rush — M2; co-op shares the tables and tags its rows `2p` since M2-06); keys must stay lower-case kebab ≤ 32 characters |
+| A hi-score mode | Append it to `HI_SCORE_MODES` (and the hi-score screen's `HI_SCORE_MODE_LABELS`), pick it in the flow's `recordRun` and `GameScene.useWorld` / `recordHiScore` (1P, co-op and practice have theirs since M2-15); keys must stay lower-case kebab ≤ 32 characters and the tables ≤ `MAX_HI_SCORE_TABLES` |
 | Another storage (Electron files, M2-17) | Implement `PlatformStorage` (`get` / `set`, async); nothing in `core/save` changes. Keep failures as rejections or swallow them — `flush` handles both |
 | A selectable profile | A `keyboard` / `remote` profile whose menu table binds the six menu actions in the host's key space (`byCode` on the web, `byKeyCode` on the TV) appears in CONTROLS by itself |
 
@@ -499,6 +514,7 @@ title — the M1-17 acceptance test in `scenes-options.test.ts`.
 | `packages/core/test/ui/ui-choice.test.ts`, `-edge.test.ts` | The `Choice` widget: 1–255 labels, index clamping, Left / Right wrap and held repeat, Up / Down never changing it, Confirm stepping, two-label toggling, a disabled item, the dimmed label, the string slot rewritten only on a label change |
 | `packages/core/test/scenes/scenes-options.test.ts`, `-edge.test.ts`, `scenes-options-display-edge.test.ts` | Opening from the title and the pause menu and back, drawing, the live `UserOption` events (M2-02: BULLETS stepping the palettes, its event and the palette saved on BACK; M2-08: SCALE / SHAKE / FLASHES / HITBOX — wraps, no-op toggles, the Back button, the pause menu, the ten rows' layout), Back during the open lock, sliders at their ends, a single profile, a profile stepped away and back, unknown / `null` active profiles, saving on BACK, the save re-read per open; hi-scores — recorded on game over and stage clear, `NEW HI-SCORE`, quitting and RETRY recording nothing, starts counted, a Hard game's table, the stage reached, a failing storage never breaking the flow, **the hi-score persisting across a new game instance on the same memory storage** |
 | `packages/core/test/scenes/scenes-options-alloc.test.ts` | The Options screen without allocation |
+| `packages/core/test/save/save-hiscore-modes.test.ts`, `-edge.test.ts` | M2-15: keys per ship, difficulty and mode and `parseHiScoreModeKey`; insertion per table; `renameScore` by identity (a moved row, a row renamed twice, a row pushed out, written on the next flush); the co-op / practice rows moving out of the one-player tables in `sanitizeSave` (merged, sorted, cut, the 32-character and 32-table limits) |
 | `packages/input-web/test/rebind/rebind-choices.test.ts`, `-edge.test.ts` | Selectable profiles per key space, gamepads never offered, packed keys, order, the default suffix, the `extra` profile, fresh arrays |
 | `packages/shell/test/dispatch/dispatch-options.test.ts`, `-edge.test.ts`, `dispatch-options-palette.test.ts`, `dispatch-options-display*.test.ts` | The event → bus table (fake audio), SFX driving `sfx` + `ui`, clamped levels, raw profile indices, unregistering, `applyAudioOptions` at every level; M2-02: every palette by its index, indices outside the list and a missing callback ignored, nothing after disconnecting |
 | `packages/shell/test/boot/boot.test.ts` | The save at boot (fake audio volumes, fake app profiles, corrupt / unreadable / v0 saves, a failing storage, `choices()` asked once, dev scenes, no app profiles, a throwing `apply` as the start error), Options end to end, `blur`, boot timing and `data-shmup-boot-ms`, a game over writing the hi-score to the platform storage |
@@ -512,6 +528,8 @@ title — the M1-17 acceptance test in `scenes-options.test.ts`.
 | Symptom | Cause / fix |
 |---|---|
 | A change in the Options screen is heard but gone after a reload | The screen was left some other way than BACK / Back (the page reloaded or the app was killed while it was open) — only closing it writes. Or storage failed: the web / TV adapters switch to memory for the session on the first `localStorage` error (private mode, quota), so writes "succeed" but vanish |
+| A co-op game's rows vanished from the `meter-normal` table after the update | M2-15 moved them into `meter-normal-2p` (`sanitizeSave`): each mode has its own table now |
+| A saved row is still `---` | The name entry was skipped (the game was left on the name entry by closing the app — the row was saved at the game's end) or left blank; or the test kept the old row object — `renameScore` replaces it |
 | The title's `HI` shows a score that is gone after a reload | That game was quit or retried: the session hi-score takes it, the saved table only takes games that reached the game-over or stage-clear screen |
 | An unchanged save is written again at every flush after a reload | `serializeSave` lost its canonical order (a new field or table written in insertion order), so the text never equals the stored one. A save the sanitiser had to repair (or a migrated one) is rewritten **once**, at the first flush — expected |
 | `save.corrupt` appeared | The stored text was not JSON, not an object, from a newer build, or had a bad `version`; the game ran with defaults and the next flush replaced the main key. Read `loaded.reason` (`Shell.loadedSave`) for why |
@@ -550,6 +568,9 @@ title — the M1-17 acceptance test in `scenes-options.test.ts`.
   value ([advanced-bosses.md](advanced-bosses.md#the-boss-hp-bar)).
 - **M2-16** — game options (difficulty, lives, death penalty, auto power-up), per-device
   rebinding and the controls sub-screens; **save v2** with a migration from v1.
-- **M2-15** — the name entry replaces `---` and the hi-score table screen shows the tables.
+- **M2-15** (done) — the name entry names the recorded rows (`renameScore`), the hi-score screens
+  show the tables, co-op games and practice runs have tables of their own (`-2p`, `-practice`; old
+  co-op rows move when a save is read) — still format 1
+  ([front-end-and-attract.md](front-end-and-attract.md)).
 - **M2-17** — Electron's file store (`PlatformStorage` over JSON in `userData`), storage quota checks,
   debug save export / import.

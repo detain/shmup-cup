@@ -389,13 +389,21 @@ card. The whole story: [zones-h-and-i.md](zones-h-and-i.md#the-ending-screen-end
 
 ## Practice plumbing
 
-`SceneFlow.startPractice(zoneId, checkpoint = -1)` starts a practice run of one zone of the
+`SceneFlow.startPractice(zoneId, checkpoint = -1, loadout = null)` (the loadout since M2-15) starts a practice run of one zone of the
 content's campaign (even when the flow is not in campaign mode) at a checkpoint of its stage, with
 the next game's config: the zone's rank stage term (`depth + 1`), a fresh start (no carry). It
 returns `false` without a campaign, for an unknown zone or an out-of-range / non-integer checkpoint.
 On success the stage is prepared, a game start is counted and the stack resets to the game. The
-clear's tally returns to the title; `recordRun` records nothing for a practice run (clear or game
-over). The practice select screen and its own table come with M2-15.
+clear's tally returns to the title (M2-15: through `finishGame()` — the name entry when the score
+entered its table).
+
+**M2-15** put the **practice select** on it (PRACTICE on the mode select: ZONE, CHECKPOINT,
+LOADOUT, START → the difficulty / ship / weapon select; `FlowControl.launchGame()` starts the run
+with `RunState.loadout`, which `runWorldConfig` applies) and gave practice **its own tables**:
+`recordRun` records a practice run into `hiScoreModeKey(config, 'practice')` (`meter-normal-practice`
+…) with the name entry, counts no `gameOvers` / `stagesCleared`, and a practice World plays against
+that table's best and never raises the session hi-score — see
+[front-end-and-attract.md](front-end-and-attract.md#the-practice-select).
 
 ## Saves and hi-scores
 
@@ -403,7 +411,10 @@ over). The practice select screen and its own table come with M2-15.
   game over — `reached` is the World's stage id (e.g. `zone-h`). A zone cleared on the way to the
   map only counts `stagesCleared` (and flushes the save).
 - Single-stage runs record at their stage clear, as in M1.
-- Practice records nothing. RETRY STAGE and QUIT TO TITLE still record nothing.
+- Practice records into its own tables since M2-15 (`…-practice`, no statistic) — before, it
+  recorded nothing. RETRY STAGE and QUIT TO TITLE still record nothing.
+- Since M2-15 every recorded row goes through the name entry and the hi-score table screen, whose
+  zone column shows the campaign label of the stage reached (`H`, `I` …).
 
 ## The stub zones B–I
 
@@ -508,7 +519,7 @@ the menus with action presses; `game.scenes.run` / `.map` / `.ending` expose the
 | An entrance kind | Append to `BONUS_ENTRANCES` and `BonusEntrance`, give `checkBonusEvent` its required fields and default `until`, and test it in `BonusEntrances.update` (typed arrays only) and `hashWorld` if it has state |
 | A bonus item | A content drop (`ENEMY_DROPS` + `DropKind`, content drops first), an `ItemKind` (append), its row in the item table and its collect path in `core/powerups`, an engine sprite in a generator |
 | Something else to prepare between zones | Handle `SimEventKind.PrepareStage` in the shell (`dispatcher.on`), keep it a background task that never blocks the flow |
-| The practice select (M2-15) | Call `SceneFlow.startPractice(zone, checkpoint)` from the new screen; give practice its own table in `recordRun` |
+| Another way into practice (a boss-rush pick, a stage select) | Fill `FlowControl.practice` (zone, checkpoint, loadout, `active`) and let the chain's last OK call `launchGame()`, or call `SceneFlow.startPractice(zone, checkpoint, loadout)` directly; the practice table and the isolation follow from `run.practice` (M2-15) |
 
 ## Tests
 
@@ -560,8 +571,9 @@ the menus with action presses; `game.scenes.run` / `.map` / `.ending` expose the
   stubs, each with its own songs (and the ending and credits themes) through `PrepareStage`; the
   ending hook drives ending scenes (one per final zone plus a no-death variant), epilogues and the
   credits ([zones-h-and-i.md](zones-h-and-i.md)).
-- **M2-15** — the practice select (zone, checkpoint, loadout; its own table) on
-  `startPractice`, name entry and the hi-score table showing the zone reached, attract demos per
-  zone.
+- **M2-15** (done) — the practice select (zone, checkpoint, loadout; its own table) on
+  `startPractice`, the name entry and the hi-score tables showing the zone reached (the campaign
+  label), attract demos per zone and the campaign's `story`
+  ([front-end-and-attract.md](front-end-and-attract.md)).
 - **M2-17** — per-zone texture pages unloaded between zones (the other half of "prepared on the
   map").

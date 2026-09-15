@@ -31,6 +31,14 @@ With **2 PLAYERS** a second player joins the running game whenever they like wit
 gamepad (in a browser also with Enter on the **SPLIT KEYBOARD**), flies the same ship in other
 colours and has their own ships, score, power-ups and continues ([Two players](#two-players)).
 
+**New in this build: the complete front end.** The title's menu now also offers **PRACTICE** (one
+zone from a checkpoint of your choice, with its own high-score tables) and a **SOUND TEST** (every
+tune and sound effect). Left alone for 12 seconds, the title shows a **demo** of a zone played by
+the computer, the **high-score tables** and a short **story** before it comes back. After a high
+score you **type your initials** with the arrows and OK, and the table shows your new row; every
+difficulty, ship and kind of game (one player, two players, practice) keeps its own table. The
+CONTINUE? countdown got a draining time bar ([The front end](#the-front-end-attract-mode-high-scores-practice-and-the-sound-test)).
+
 **Every game starts in the first real zone, AZURE VERGE** — on the TV too: about three minutes of
 scrolling over rolling ground, through a long cave and a high-speed stretch, with enemies that fly
 and walk past and shoot at you, power capsules to collect, and at the end the **WARNING** and the
@@ -129,7 +137,7 @@ The earlier start-up pictures are still there: **free flight** straight away wit
 the animated **sprite showcase** and the **calibration screen**, plus the **effects gallery**
 that shows every explosion and screen effect in turn (see [below](#other-screens-browser-only)).
 
-This build is version **0.1.0** — the end of the first milestone — plus the first fourteen steps of
+This build is version **0.1.0** — the end of the first milestone — plus the first fifteen steps of
 the second: the difficulties, extra ships and continues, then the colour-blind bullet colours and
 points for cancelled bullets, then the **weapon types** and the WEAPON SELECT screen, then four
 kinds of **Options**, five **shields**, the **Option Hunter** that steals Options and the rare
@@ -157,7 +165,9 @@ GLIMMER CACHE and its boss FACET MONARCH, each with its own music, and now the *
 I**: IRON CITADEL with its moving floors, laser emitters, the parade of earlier bosses and its
 boss IRON SOVEREIGN, and ABYSSAL THRONE with its depth mines, the ABYSS ARK raid and THE HOLLOW
 KING, each with its own music — and the **ending scenes**, the epilogues and the **credits**, with
-their own songs.
+their own songs, and now the **front end**: the attract loop (demo play, high-score tables, story),
+typing your initials, high-score tables per difficulty, ship and kind of game, PRACTICE and the
+SOUND TEST.
 For checking it on the monitors
 there is a **debug build** with developer tools — a panel with the frame rate, frame times and
 start-up time, hit-area outlines, invincibility, a freeze with single steps, slow motion and
@@ -188,9 +198,12 @@ stays black.
 | **Stars** | Behind everything | Three layers of stars drift slowly to the left, as in the game |
 | **SHMUP CUP** logo | Upper middle | Big blocky letters, yellow at the top turning orange and red towards the bottom, with a dark outline and a shadow; crisp square pixels |
 | **PRESS OK** | Under the logo | Blinks on and off about once a second |
-| **HI** and a number | Bottom | The best score kept on this device for the difficulty and the kind of ship you chose last (NORMAL and the KESTREL at first) — from earlier launches too (0 on a fresh install) |
+| **HI** and a number | Bottom | The best one-player score kept on this device for the difficulty and the kind of ship you chose last (NORMAL and the KESTREL at first) — from earlier launches too (0 on a fresh install) |
 
-The title music (SHMUP CUP) plays — in a browser from your first key press or click.
+The title music (SHMUP CUP) plays — in a browser from your first key press or click. Left alone on
+`PRESS OK` for 12 seconds, the title starts the **attract loop** — a demo of a zone, the high-score
+tables and the story; any button brings the title back
+([When nobody plays](#when-nobody-plays-the-attract-loop)).
 
 **OK** (Enter on a keyboard, A / Cross on a gamepad) replaces `PRESS OK` with the **menu**:
 
@@ -198,7 +211,9 @@ The title music (SHMUP CUP) plays — in a browser from your first key press or 
 |---|---|
 | **1 PLAYER** | A game for one player (it was called **START** in earlier builds). Opens the **DIFFICULTY** box (highlighted first); OK there opens the **SHIP SELECT** box; OK on the KESTREL opens the **WEAPON SELECT** screen, whose START begins the game — OK on the MANTA begins it at once — see [Difficulty, extra ships and continues](#difficulty-extra-ships-and-continues), [Choosing your ship](#choosing-your-ship) and [Choosing your weapons](#choosing-your-weapons) |
 | **2 PLAYERS** | The same, but the game is a **two-player** one: a second player joins with START on a gamepad (or Enter on the SPLIT KEYBOARD) — see [Two players](#two-players) |
+| **PRACTICE** | Practise one zone from a checkpoint of your choice, with its own high-score tables — see [Practice](#practice) |
 | **OPTIONS** | Opens the **Options screen**: the volumes and the control profile — see [The Options screen](#the-options-screen) |
+| **SOUND TEST** | Plays any tune or sound effect of the game — see [The sound test](#the-sound-test) |
 | **EXIT** | Only on the TV: asks **EXIT SHMUP CUP?** — see below |
 
 - The highlighted entry is yellow with a small arrow `→` in front of it. **▲ / ▼** move the
@@ -261,8 +276,10 @@ never continues while you are not looking.
 you still have continues, the **CONTINUE?** countdown comes first
 ([Continues](#continues)) — and a red-edged box shows **GAME OVER** and your final **SCORE**; a short, sad tune (SILENT VERGE)
 plays. If the score is a new best for this device, **NEW HI-SCORE** shows in yellow under the box
-(your first game with any points always is). After half a second **OK** (or Back) returns to the
-title; after ten seconds it goes back by itself. The score is saved as soon as the screen appears
+(your first game with any points always is). After half a second **OK** (or Back) goes on; after
+ten seconds it goes on by itself — to the **name entry** when the score is among the ten best of its
+table ([Typing your initials](#typing-your-initials)), then that table, then the title; otherwise
+straight to the title. The score is saved as soon as the screen appears
 ([What the game remembers](#what-the-game-remembers)), and the title's `HI` shows the best one.
 
 **Zone clear.** When a zone's boss is destroyed your ship (and a second player's) flies off to
@@ -276,8 +293,8 @@ ending or on the GAME OVER screen.
 **Stage clear (test stages).** The browser's test stages are single stages, not part of the zone
 map. When one ends — the Boss Range after its boss, the Test Range after its 75 seconds — the ship
 flies out the same way, then a box shows **STAGE CLEAR** with your **SCORE** and the **HI** score
-for four seconds, then **TO BE CONTINUED** for four seconds, and then the title. **OK** skips
-ahead. The score is saved like a game over's.
+for four seconds, then **TO BE CONTINUED** for four seconds, and then the title (through the name
+entry for a high score). **OK** skips ahead. The score is saved like a game over's.
 
 ## Difficulty, extra ships and continues
 
@@ -342,8 +359,9 @@ spare-ship icon appears in the bottom bar. You can hold at most **nine** ships.
 
 When your last ship is lost and the difficulty still has continues, the game darkens a little
 and a red-edged box shows **CONTINUE?**, a big red number counting down from **9** to **0** (a
-tick each second, ten seconds in all) and **CREDITS** with the continues you have left. The music
-fades out.
+tick each second, ten seconds in all) over a **time bar** that drains to empty (red, with the number
+flashing, for the last three seconds), your **SCORE** and **CREDITS** with the continues you have
+left; once OK counts, `PRESS OK` blinks under them with `BACK: GIVE UP`. The music fades out.
 
 - **OK** continues (it only counts after the first half second, so a button you were still
   pressing does not decide for you): the stage goes back to its last invisible checkpoint — in
@@ -680,13 +698,15 @@ the ship, disappears while the ship is exploding, and changes nothing about the 
 | What | When it is saved | Where |
 |---|---|---|
 | The three volumes, the control profile, the bullet colours and SCALE, SHAKE, FLASHES, HITBOX and BOSS HP | When you leave the Options screen with BACK or Back | On the TV inside the app itself; in a browser (and the desktop app) in that browser's storage for the page |
-| High scores | When a run ends: the **GAME OVER** screen, or clearing the last zone (before the ending) — in a browser test stage the **STAGE CLEAR** screen | The same place |
+| High scores | When a run ends: the **GAME OVER** screen, or clearing the last zone (before the ending) — in a browser test stage the **STAGE CLEAR** screen, in practice its GAME OVER or zone result; the name you type afterwards when you finish it | The same place |
 
 - **High scores**: the best ten of each kind of game are kept — each **difficulty** has its own
-  list, separately for the KESTREL and the MANTA; the title's `HI` (and the HUD's) shows the best
-  one of the difficulty and the ship you chose last. A
-  score that needed continues ends in the number of continues used. Names are `---` for now — typing your initials and a high-score table to
-  look at come with a later build.
+  tables, separately for the KESTREL and the MANTA and for **1 PLAYER**, **2 PLAYERS** and
+  **PRACTICE** games; the title's `HI` (and the HUD's in a one-player game) shows the best
+  one-player score of the difficulty and the ship you chose last. A score that needed continues ends
+  in the number of continues used. Each row carries the **initials** typed after the game (`---`
+  when none were typed) and the zone reached; the tables are shown after a high score and in the
+  attract loop ([The high-score tables](#the-high-score-tables)).
 - **The difficulty and the ship you chose** are not remembered yet: after the app is closed the
   DIFFICULTY box opens on NORMAL and the SHIP SELECT box on the KESTREL again.
 - **Only finished games count**, like in the arcade: a game you leave with QUIT TO TITLE (in a
@@ -748,7 +768,17 @@ ship may move in four directions only; the game is designed to be fully playable
 
 ### What changed lately
 
-**New in this build: the advanced bosses.** The Options screen has one more entry under HITBOX —
+**New in this build: the front end.** The title menu reads 1 PLAYER / 2 PLAYERS / **PRACTICE** /
+OPTIONS / **SOUND TEST** / EXIT — so OPTIONS is one ▼ further down again (the fourth entry). Left
+alone on `PRESS OK` for 12 seconds the title plays a silent **demo** of a zone, shows the
+**high-score tables** and a short **story**, then comes back; any button returns. A high score now
+asks for your **initials** (▲ ▼ letter, ▶ / OK next, ◀ / Back back, OK on END) and shows its table.
+One-player, two-player and practice games keep separate tables, per difficulty and ship. PRACTICE
+plays one zone from a chosen checkpoint with STANDARD or FULL POWER; the SOUND TEST plays every tune
+and sound. The CONTINUE? box has a draining time bar and a `PRESS OK` prompt. The zones play as
+before ([The front end](#the-front-end-attract-mode-high-scores-practice-and-the-sound-test)).
+
+Before that, **the advanced bosses.** The Options screen has one more entry under HITBOX —
 **BOSS HP** (OFF / ON) — so BACK is one entry further down. With BOSS HP on, every boss fight
 shows `BOSS` and a red bar of the boss's remaining strength in the top bar, where `HI` usually is
 — on the TV too, for HALCYON BULWARK ([The boss HP bar](#the-boss-hp-bar-every-device)). And four
@@ -1888,8 +1918,9 @@ with its bonuses) is followed by the **ending** — no map. The music changes to
 4. **The credits** scroll up from the bottom of the screen to their own song, **THANK YOU, PILOT**:
    the game, the nine zones, the giants you fought with their codes, the engine, the programs that
    draw the placeholder art, the music and sound, the platforms and the tools — about half a minute.
-   When the last line reaches the middle of the screen they stop for four seconds, then the title
-   comes back. **OK** or **Back** (after the first second) skips straight to the title.
+   When the last line reaches the middle of the screen they stop for four seconds, then the name
+   entry follows when the run's score made its table ([Typing your initials](#typing-your-initials)),
+   then the table and the title. **OK** or **Back** (after the first second) skips the credits.
 
 Back does nothing during the ending scene and the card — only OK moves on (so a mashed Back button
 never skips the story). Which ending you get depends on the final zone and on how you played:
@@ -1913,8 +1944,121 @@ What "good" looks like:
   once, in order.
 - The ending theme starts with the scene and the credits theme with the credits; neither stops
   suddenly.
-- The credits scroll smoothly, every line readable, and end on the title screen with the title
-  music; the title's `HI` shows the run's score if it was a new best.
+- The credits scroll smoothly, every line readable, and end on the name entry (for a score among
+  the ten best) or the title screen with the title music; the title's `HI` shows the run's score if
+  it was a new best.
+
+## The front end: attract mode, high scores, practice and the sound test
+
+The game now has the complete arcade front end: it shows itself off when nobody plays, lets you
+type your initials after a high score, keeps separate high-score tables for every difficulty, ship
+and kind of game, lets you practise a single zone, and has a sound test. Everything works with the
+remote's arrows, OK and Back alone.
+
+### When nobody plays: the attract loop
+
+Leave the title on the blinking `PRESS OK` for **12 seconds** without touching anything. The game
+then cycles through three screens and comes back to the title:
+
+1. **The demo play.** A zone plays itself — the computer flies the KESTREL (in zones B, E and H the
+   MANTA) through the first 40 seconds of a zone, with its own HUD and the zone's title card at the
+   start. `DEMO PLAY` and `PRESS OK` take turns at the top. The demo is **silent** (the title music
+   fades out); explosions, sparks and the shake are shown as in a game. Each round plays the next
+   zone: A, then B, … up to I, then A again.
+2. **The high-score tables** (`HI-SCORES`): first the 1 PLAYER table of the difficulty and the ship
+   you chose last, then up to three more tables that hold scores — five seconds each. The title
+   music plays again.
+3. **The story**: three short pages of the game's story crawl up through a box at the bottom of the
+   screen while a picture plays above them — a star rising over a quiet sea, the enemy fortress and
+   its flagship closing in through explosions, and your two ships launching one after the other
+   before the logo appears. About 17 seconds.
+
+**Any button returns to the title at once** — OK, Back, an arrow, any gamepad button — and Back
+here never asks EXIT SHMUP CUP?. While you hold a button on the title, or once the title's menu is
+open, the loop does not start.
+
+### Typing your initials
+
+When a game ends — GAME OVER, the end of the credits, the end of a browser test stage or a practice
+run — and your score is among the ten best of its table, a **NEW HI-SCORE!** box appears: `1P` (or
+`2P`), your **SCORE** and **RANK** (`1ST` … `10TH`), **ENTER YOUR NAME**, three letter boxes and
+`END`. The first box shows `A`, the others `_`; small arrows ↑ ↓ mark the letter you are changing.
+
+| Button | What it does |
+|---|---|
+| ▲ / ▼ | Change the letter: A–Z, then 0–9, `.`, `-`, `!` and a space, round and round (holding the button repeats) |
+| ▶ or OK | Next letter (up to `END`) |
+| ◀ or Back | Previous letter |
+| OK on `END` | Done |
+
+Letters left as `_` are left out, so `A`, OK, OK, OK, OK enters just `A`; a name left empty shows as
+`---`. After **30 seconds** (the `TIME` counter) the name is taken as it stands. In a two-player game
+player 1 names their row first, then player 2 — either controller can type. Then the table appears
+with your new row **blinking**; after a moment OK or Back returns to the title (after 15 seconds it
+goes by itself).
+
+The score itself is saved the moment the game ends, the name when you finish typing it — if the app
+is closed during the name entry, the score stays in the table as `---`.
+
+### The high-score tables
+
+Every **difficulty**, **ship** and **kind of game** has its own table of ten: `KESTREL  NORMAL
+1 PLAYER`, `MANTA  HARD  2 PLAYERS`, `KESTREL  EASY  PRACTICE` and so on. Each row shows the rank,
+the name, the score and the **zone reached** (the zone's letter, `-` for a browser test stage). A
+2 PLAYERS game records both players' scores in the 2 PLAYERS table; a practice run records into the
+PRACTICE table. The title's `HI` (and the HUD's in a one-player game) is the best of the 1 PLAYER
+table for the difficulty and ship you chose last; a two-player game or a practice run plays against
+its own table's best and never changes the title's `HI`. Two-player scores from earlier builds (which
+shared the one-player tables) move into the 2 PLAYERS tables by themselves the first time the new
+build starts.
+
+### Practice
+
+**PRACTICE** (the third entry of the title menu) opens a box over the title:
+
+| Line | Choices |
+|---|---|
+| **ZONE** | `A AZURE VERGE` … `I ABYSSAL THRONE` |
+| **CHECKPOINT** | `START`, then `CHECKPOINT 1`, `CHECKPOINT 2` … — as many as the chosen zone has (◀ on `START` goes to the zone's last one) |
+| **LOADOUT** | `STANDARD` (the ship as it starts a game) or `FULL POWER` |
+| **START** | Goes on to the DIFFICULTY box, the SHIP SELECT box and (for the KESTREL) the WEAPON SELECT screen, as for a normal game |
+
+▲ / ▼ move between the lines, ◀ / ▶ (or OK) change the highlighted one, **Back** closes the box. The
+last OK starts the chosen zone at the chosen checkpoint — always a one-player game. It is **one zone
+only**: after its boss comes the zone result and then the title (through the name entry, if the
+score made the practice table) — no zone map. Losing all ships works as in a game (CONTINUE?, then
+GAME OVER). `SCORES GO TO THE PRACTICE TABLES` reminds you that practice scores are kept apart: they
+never appear in the 1 PLAYER tables and never raise the title's `HI`.
+
+### The sound test
+
+**SOUND TEST** (the fifth entry of the title menu) lists everything the game can play:
+
+| Line | ◀ / ▶ | OK |
+|---|---|---|
+| **MUSIC** | The music tracks by name (for example SHMUP CUP, AZURE VERGE, BULWARK ASSAULT) | Plays the track from its beginning (the first time a track may take a moment to prepare) |
+| **SFX** | Every sound effect by name (`PLAYER SHOT`, `ENEMY HIT`, `WARNING SIREN`, …) | Plays the sound, from the middle of the picture |
+| **STOP** | — | Stops the music |
+| **BACK** | — | Closes the box; the title music comes back (Back does the same) |
+
+### The CONTINUE? countdown
+
+The CONTINUE? box now also shows a **time bar** that drains under the number (it turns red for the
+last three seconds, when the number flashes), your **SCORE**, and — as soon as OK counts, after half
+a second — a blinking `PRESS OK` and `BACK: GIVE UP` ([Continues](#continues)).
+
+What "good" looks like:
+
+- The attract loop starts after about 12 seconds on `PRESS OK` and never while you hold a button;
+  any button brings the title back at once.
+- The demo looks exactly like a game (the ship flies smoothly, enemies explode, the HUD counts the
+  score) and is silent; after a few rounds every zone has been shown.
+- The story's lines are readable and stay inside their box; the pictures change with the pages.
+- The name entry reacts to every press, the letters are readable from the sofa, and the new row
+  blinks in the table with the name you typed.
+- Practice starts exactly where you chose, with the chosen loadout; its scores appear only in the
+  PRACTICE tables.
+- Every sound-test track and sound plays; the sounds come from the middle, not from one side.
 
 ## On the Samsung Smart Monitor / TV
 
@@ -1924,9 +2068,9 @@ the first install it appears in the monitor's **Apps** list as **Shmup Cup**.
 
 | Remote button | What it does in the preview |
 |---|---|
-| Directional pad (◀ ▲ ▶ ▼) | Menus: moves the highlight. Game: flies the ship |
+| Directional pad (◀ ▲ ▶ ▼) | Menus: moves the highlight. Game: flies the ship. Name entry: ▲ ▼ change the letter, ◀ ▶ move between the letters |
 | **OK** (centre) | Menus: chooses the highlighted entry (on the title first `PRESS OK`). Game: takes the highlighted power-up once you have collected capsules (see checks 9 and 20); with nothing to take, a short low "no" buzz |
-| **Back** (↩) | Game: opens the pause menu. Pause menu: resumes. A question: answers NO. Title: asks **EXIT SHMUP CUP?** — YES closes the app and returns to the monitor's home screen. On the loading and error screens it closes the app at once |
+| **Back** (↩) | Game: opens the pause menu. Pause menu: resumes. A question: answers NO. Title: asks **EXIT SHMUP CUP?** — YES closes the app and returns to the monitor's home screen. Attract loop (demo, high scores, story): back to the title. Name entry: back one letter. On the loading and error screens it closes the app at once |
 | **Play/Pause** ⏯ (if your remote has it) | Pauses and resumes the game |
 | **Home** | Leaves the app; everything freezes (and falls silent) while it is in the background. Reopening it brings you back where you were — during a game, to the pause menu — and nothing jumps ahead |
 | **Volume +/−, Mute** | The monitor's own volume, as in any app. The game's own volumes (MASTER, MUSIC, SFX) are under **OPTIONS** |
@@ -1983,8 +2127,8 @@ Things to check on the monitor and report:
    or noticeably late, and whether they ever crackle, stutter, drop out or stop. The **title
    music** (SHMUP CUP) plays on the title screen and fades out when a game starts; then AZURE
    VERGE's own theme plays, and at the WARNING the siren and the boss theme (BULWARK ASSAULT).
-12. **The title menu**: OK on `PRESS OK` shows 1 PLAYER / 2 PLAYERS / OPTIONS / EXIT with 1 PLAYER
-   highlighted; ▲ / ▼ move the highlight, each move with a soft click; holding ▼ keeps moving it
+12. **The title menu**: OK on `PRESS OK` shows 1 PLAYER / 2 PLAYERS / PRACTICE / OPTIONS / SOUND
+   TEST / EXIT with 1 PLAYER highlighted; ▲ / ▼ move the highlight, each move with a soft click; holding ▼ keeps moving it
    after a moment. Report any skipped or doubled step, or a press that did nothing.
 13. **Pause**: in a game, **Back** freezes and darkens the picture and shows PAUSE with
    RESUME / OPTIONS / RETRY STAGE / QUIT TO TITLE. Back again (or RESUME) continues exactly where
@@ -2138,7 +2282,8 @@ Things to check on the monitor and report:
    without the Arm and one SHOT level lower. Report anything unexpected.
 44. **The new title menu** (new): OK on `PRESS OK` shows **1 PLAYER** / **2 PLAYERS** / OPTIONS /
    EXIT with 1 PLAYER highlighted; OK on 1 PLAYER plays exactly as START did before (DIFFICULTY,
-   SHIP SELECT, …), and OPTIONS is now the third entry.
+   SHIP SELECT, …), and OPTIONS is now the third entry (the fourth since the front end added
+   PRACTICE — check 80).
 45. **Two players on the TV** (new — you need a gamepad connected to the monitor by USB or
    Bluetooth; press one of its buttons once so the monitor notices it): on the title choose
    **2 PLAYERS**, then NORMAL, the KESTREL and START with the remote. The game starts with one ship,
@@ -2305,7 +2450,44 @@ Things to check on the monitor and report:
    STILL**. Report the ending names you got and whether anything in the scenes looks wrong.
 75. **The credits** (new): OK on the result card (`OK: CREDITS`) starts the credits with their own
    tune; the lines scroll up smoothly and are readable; they stop in the middle, then the title
-   comes back. In another run press OK or Back during the credits: straight to the title.
+   comes back (since the front end build through the name entry — check 78). In another run press
+   OK or Back during the credits: the credits end at once.
+76. **The attract loop** (new): on the title, leave `PRESS OK` alone for about 12 seconds. A zone
+   starts playing by itself — `DEMO PLAY` and `PRESS OK` take turns at the top, the zone's title
+   card shows, the HUD counts the computer's score — **without any sound**. After about 40 seconds
+   the `HI-SCORES` table appears (five seconds per table), then the story crawls up over its
+   pictures (the rising star, the fortress and explosions, the two ships and the logo), then the
+   title. Press **OK** during the demo, **Back** during the tables and an **arrow** during the story:
+   each time the title comes back at once (Back never asks EXIT SHMUP CUP? there). Report anything
+   that looks wrong in the demo (a ship flying into walls, a frozen picture) and whether the story's
+   lines are readable.
+77. **Every zone's demo** (new): let the loop run several times: each round shows the next zone (A,
+   B, C … I). The MANTA flies zones B, E and H. Report a zone whose demo ends after a few seconds
+   (the tables coming early) — that would mean the recording no longer fits the game.
+78. **Your initials with the remote** (new): play a game on EASY until GAME OVER with some points
+   (a new device or an empty table: any score counts). After the GAME OVER box, **NEW HI-SCORE!**
+   asks for your name: the first box shows `A`. Use **▲ / ▼** to pick a letter, **▶** or **OK** for
+   the next one, **◀** or **Back** to go back, and OK on `END`. The table appears with your row
+   blinking, then OK returns to the title. Close and reopen the app: the table still has your name
+   (the attract loop shows it). Also try doing nothing for 30 seconds: the name is taken as it is.
+79. **The high-score tables** (new): after a few games on different difficulties, with both ships
+   and in a 2 PLAYERS game, watch the tables in the attract loop: each is titled with the ship, the
+   difficulty and `1 PLAYER` / `2 PLAYERS` / `PRACTICE`, holds at most ten rows best first with the
+   zone reached (`A`, `B` …). In a 2 PLAYERS game with a gamepad both players type their initials in
+   turn, and the rows land in the 2 PLAYERS table, not the 1 PLAYER one.
+80. **Practice** (new): on the title choose **PRACTICE**. Set ZONE to `B BRINE NEBULA`, CHECKPOINT to
+   `CHECKPOINT 1` (◀ on `START` jumps to the zone's last checkpoint), LOADOUT to `FULL POWER`, then
+   OK on START, NORMAL, the KESTREL and START: zone B starts at its first checkpoint with a fully
+   powered ship. Lose all ships (decline the continue): the name entry opens for the **practice**
+   table, and the title's `HI` does not change. After the zone's boss a practice run returns to the
+   title (no zone map). Report a zone or checkpoint that does not start where the box said.
+81. **The sound test** (new): on the title choose **SOUND TEST**. On MUSIC press ◀ / ▶ to pick a
+   tune and OK to play it (the first play of a tune may take a moment); STOP silences it. On SFX
+   pick sounds and press OK: each one plays **from the middle** (not from one speaker). BACK (or
+   Back) closes the box and the title music comes back. Report any tune or sound that does not play.
+82. **The CONTINUE? countdown's new look** (new): lose your last ship on NORMAL. The box shows the
+   number over a draining bar (red for the last three seconds, the number flashing), your score and
+   the continues; after half a second `PRESS OK` blinks with `BACK: GIVE UP` under it.
 
 The fully powered ship (`?loadout=full`), the shortcut to each zone's boss (`?skip=boss`), the
 twelve test stages (the Test Range, the Boss Range with its test boss, the Hunter Range with the
@@ -3304,6 +3486,10 @@ In a browser (and the desktop app) nothing can be heard before the first key pre
 browsers do not allow a page to make sound before that, and a gamepad button does not count.
 Sounds of that first moment are simply skipped.
 
+The attract loop's **demo play is silent** on purpose (the title music fades out while it plays and
+comes back with the high-score tables). Every tune and sound effect can be played on its own in the
+title menu's **SOUND TEST** ([The sound test](#the-sound-test)).
+
 What you should hear:
 
 | When | What you hear |
@@ -3439,6 +3625,13 @@ mean the build itself is broken; they are not caused by anything you did.
 | OK on a difficulty opened a SHIP SELECT box instead of the game | Expected since this build: the KESTREL is highlighted, so OK goes on to the WEAPON SELECT screen as before; ▼ and OK choose the MANTA, which starts at once ([Choosing your ship](#choosing-your-ship)) |
 | OK on the KESTREL opened a WEAPON SELECT screen instead of the game | Expected: START is highlighted, so OK starts the game with the weapons shown; ▲ / ▼ and ◀ / ▶ change them first if you like ([Choosing your weapons](#choosing-your-weapons)) |
 | My ship flew off to the right on its own after the boss | Expected: the fly-out at the end of every zone — the zone result follows |
+| The title started a game by itself / a zone plays without me | That is the **attract loop's demo** (after 12 seconds on `PRESS OK`): the computer plays, silently, with `DEMO PLAY` at the top. Press any button to get the title back ([When nobody plays](#when-nobody-plays-the-attract-loop)) |
+| After GAME OVER a **NEW HI-SCORE!** box asks for a name | Expected since the front end build: type your initials with ▲ ▼ and ▶, OK on `END` ([Typing your initials](#typing-your-initials)). Doing nothing takes the name as it is after 30 seconds |
+| OK in the name entry does not finish | OK moves to the next letter; press it until the cursor is on `END`, then OK once more (or ▶ to reach `END` faster) |
+| My score is not in the table I looked at | Every difficulty, ship and kind of game has its own table — a 2 PLAYERS game's scores are in the `2 PLAYERS` table, practice scores in the `PRACTICE` table |
+| A practice score did not change the title's `HI` | Expected: practice (and 2 PLAYERS) scores stay in their own tables; the title's `HI` is the one-player best |
+| OPTIONS opens something else | The title menu gained PRACTICE (third) and SOUND TEST (fifth): OPTIONS is the fourth entry now |
+| A sound-test tune does not start at once | The first play of a tune prepares it (a moment); in a browser press a key once first so sound is allowed |
 | A **ZONE MAP** appeared instead of the title after the boss | Expected since this build: choose the next zone with ▲ / ▼ and press OK ([The zone map](#the-zone-map-a-run-through-nine-zones)); Back → YES returns to the title |
 | A zone is very short and has zone A's enemies and boss | Not expected any more: every zone B to I is the real one (the stand-ins are gone) — please report the zone and the route |
 | Bosses I already beat came back in zone H | Expected — IRON CITADEL's **parade**: four smaller echoes of earlier bosses, each leaving after about 16 seconds. The zone's own boss, IRON SOVEREIGN, comes after the WARNING at the end |

@@ -2967,7 +2967,8 @@ const U32_SCHEMA = s.int({ min: 0, max: 0xffffffff });
  * A `content/demos/*.replay.json` file (M2-15): a `core/replay` document (`encodeReplay`'s
  * fields) with the content header, an `id` and a `description`. The structure is checked here;
  * the recording itself (config, input runs, hash count) is decoded by `core/replay` `decodeReplay`
- * when the attract loop plays it — `pnpm content:check` plays every shipped demo.
+ * when the attract loop plays it — `test/golden/demos.test.ts` (part of `pnpm test`) plays every
+ * shipped demo back with every state hash.
  */
 const DEMO_FILE_SCHEMA = s.object(
   {

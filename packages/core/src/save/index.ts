@@ -46,6 +46,8 @@
  * - shmup_feat.md §21 Saves — hi-scores + options persisted, versioned JSON with migrations
  * - shmup_feat.md §23 — storage abstraction (`storage.get/set`), Tizen lifecycle (the save is
  *   written when a change happens, not on exit)
+ * - shmup_feat.md §15 — the hi-score tables: top 10 (name, score, zone reached) per difficulty /
+ *   mode; §16 — practice's separate score table (M2-15)
  *
  * **Public API.** {@link SaveData}, {@link HiScoreEntry}, {@link SaveStats}, {@link SaveMigration},
  * {@link SAVE_MIGRATIONS}, {@link SAVE_VERSION}, {@link SAVE_STORAGE_KEY}, {@link SAVE_CORRUPT_KEY},
@@ -79,7 +81,7 @@ export type { HiScoreEntry } from '../scoring/index.js';
 export const moduleInfo = defineModule({
   name: 'save',
   status: 'implemented',
-  specRefs: ['shmup_feat.md §21', 'shmup_feat.md §23'],
+  specRefs: ['shmup_feat.md §21', 'shmup_feat.md §23', 'shmup_feat.md §15', 'shmup_feat.md §16'],
 });
 
 /** The save format this build writes. */
@@ -356,6 +358,12 @@ export function sanitizeSave(data: Readonly<Record<string, unknown>>): SaveData 
     // table of their own mode.
     const rows: Record<string, unknown[]> = Object.create(null) as Record<string, unknown[]>;
     const order: string[] = [];
+    /**
+     * Files a raw row under a table key (the key's first row also records the key's order).
+     *
+     * @param key - The table the row goes to.
+     * @param row - The raw row (sanitised later with its table).
+     */
     const add = (key: string, row: unknown): void => {
       if (rows[key] === undefined) {
         rows[key] = [];
@@ -667,15 +675,16 @@ export function insertHiScore(table: readonly HiScoreEntry[], entry: HiScoreEntr
  * (M2-15 — one table per difficulty × ship × mode, shmup_feat.md §15). Since M2-01 each difficulty
  * preset has its own table (`meter-easy` … `meter-arcade` — the scene flow passes the World's
  * config, whose preset was chosen under START); since M2-05 the Direct-mode MANTA's games play
- * into their own (`direct-easy` … `direct-arcade`): the power-up model names the ship (one ship per
- * model in the content). Co-op games (M2-06) shared the one-player tables until M2-15, each row with
- * the mode `2p` — {@link sanitizeSave} moves such rows into their `-2p` table when a save is read.
+ * into their own (`direct-easy` … `direct-arcade`): the power-up model names the ship (one ship
+ * per model in the content). Co-op games (M2-06) shared the one-player tables until M2-15, each
+ * row with the mode `2p` — {@link sanitizeSave} moves such rows into their `-2p` table when a save is read.
  *
  * @example
  * ```ts
  * hiScoreModeKey(resolveGameConfig({ difficulty: 'hard' })); // → 'meter-hard'
  * hiScoreModeKey({ powerUpMode: 'direct', difficulty: 'normal' }, '2p'); // → 'direct-normal-2p'
- * hiScoreModeKey({ powerUpMode: 'meter', difficulty: 'easy' }, 'practice'); // → 'meter-easy-practice'
+ * hiScoreModeKey({ powerUpMode: 'meter', difficulty: 'easy' }, 'practice');
+ * // → 'meter-easy-practice'
  * ```
  *
  * @param config - The session config.
@@ -710,7 +719,10 @@ export interface HiScoreKeyParts {
  *
  * @example
  * ```ts
- * parseHiScoreModeKey('direct-hard-2p'); // → { powerUpMode: 'direct', difficulty: 'hard', mode: '2p' }
+ * parseHiScoreModeKey('direct-hard-2p');
+ * // → { powerUpMode: 'direct', difficulty: 'hard', mode: '2p' }
+ * parseHiScoreModeKey('meter-normal'); // → { …, mode: '1p' }
+ * parseHiScoreModeKey('meter-normal-1p'); // → null (a one-player key has no suffix)
  * ```
  */
 export function parseHiScoreModeKey(key: string): HiScoreKeyParts | null {
@@ -837,7 +849,13 @@ export class SaveStore {
    *
    * @param modeKey - The row's table.
    * @param entry - The row (the object the table holds).
-   * @param name - The name (cut to {@link HI_SCORE_NAME_MAX}; empty → {@link DEFAULT_HI_SCORE_NAME}).
+   * @param name - The name (cut to {@link HI_SCORE_NAME_MAX}; empty →
+   *   {@link DEFAULT_HI_SCORE_NAME}).
+   *
+   * @remarks
+   * Builds a new row and a new frozen document (a cold path — once per finished name entry). The
+   * row the table held is replaced by the renamed copy, so a caller that keeps the row to find it
+   * again must take `hiScores(modeKey)[rank]` afterwards (the scene flow's name entry does).
    * @returns The row's rank (0 = best), or -1 when the table does not hold it.
    *
    * @example

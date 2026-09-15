@@ -392,7 +392,10 @@ the shell).
 - **M2-08 … M2-14** (done) — every new zone runs with two ships (the ending scenes draw player 2's
   ship behind player 1's); anything per player (bosses aiming)
   targets the nearest living player like the aimed shots.
-- **M2-15** — the name entry and hi-score table screen show `2p` rows; a replay of the scene flow
-  records the title's player choice.
+- **M2-15** (done) — co-op games have their own tables (`meter-normal-2p` …; old `2p` rows move
+  there when a save is read), both players name their rows in the name entry in turn, a co-op World
+  plays against its own table's best and never raises the one-player session hi-score
+  ([front-end-and-attract.md](front-end-and-attract.md#hi-score-tables-per-difficulty--ship--mode-coresave)).
+- **M3-01** — a replay of the scene flow records the title's player choice.
 - **M2-16** — the Options screen's control groups (rebinding per device) sit on the same profiles,
   seats included; the chosen player count may be remembered with the game options.

@@ -11,10 +11,18 @@ user options and their live application are [saves-and-options.md](saves-and-opt
 Power-Up order editor — and the HUD meter's weapon names (the arsenal itself is
 [meter-arsenal.md](meter-arsenal.md)). **M2-05** added the **ship select** between the difficulty
 menu and the weapon select, per-mode session hi-scores and the HUD's Direct-mode **tier pips**
-(Direct mode itself is [direct-mode.md](direct-mode.md)).
+(Direct mode itself is [direct-mode.md](direct-mode.md)). **M2-10** added campaign runs (the zone
+map, the zone tally, the ending hook — [campaign-and-bonus-stages.md](campaign-and-bonus-stages.md)),
+**M2-14** the ending scenes and the credits ([zones-h-and-i.md](zones-h-and-i.md#the-endings)).
+**M2-15** completed the front end: the title's menu became the **mode select** (1 PLAYER /
+2 PLAYERS / PRACTICE / OPTIONS / SOUND TEST / EXIT), and the flow gained the **attract loop** (demo
+play, hi-score tables, story crawl), the **name entry**, the **hi-score tables** per difficulty ×
+ship × mode, the **practice select**, the **sound test** and the polished continue countdown — the
+whole story is [front-end-and-attract.md](front-end-and-attract.md); this page keeps the flow's
+overview up to date.
 
 This page is the *how and why*. Exact signatures are in
-[api-reference.md](api-reference.md#scenes--scene-stack-and-the-m1-flow-partial) (`scenes`) and
+[api-reference.md](api-reference.md#scenes--scene-stack-and-the-scene-flow-implemented) (`scenes`) and
 [api-reference.md](api-reference.md#ui--canvas-ui-kit-and-the-hud-partial) (`ui`); the TSDoc in
 the sources (`packages/core/src/scenes`, `ui`, `game`; `packages/shell/src/scene-view`, `boot`;
 `apps/tizen/src/boot`) is the authoritative reference. How draw lists reach the screen is
@@ -41,7 +49,7 @@ outside the playfield).
 │      │ (YES/NO)│   │ (overlay)│   │ (HUD,   │ (fresh per     │───►│  events.drain(dispatch)    │
 │      └─────────┘   └──────────┘   │ WARNING)│  start/retry)  │    │  sceneView.update(         │
 │      stageClear / continue / gameOver (overlays, frozen game)│    │    game.renderFrame())     │
-│      boot → title (PRESS OK, START/OPTIONS/EXIT) → difficulty│    │  → renderer.render(frame)  │
+│      boot → title (PRESS OK, the mode select) → difficulty   │    │  → renderer.render(frame)  │
 │      → ship select → weapon select (preview World, ORDER)    │    │                            │
 │  step(): poll → flow.tick(input) → top scene only            │    │ canvas data-shmup-scene    │
 │  renderFrame(): flow.updateFrame() → world view + HUD while  │    └────────────────────────────┘
@@ -109,26 +117,28 @@ is on top) and `uiRevision` (bumped whenever `drawUi` would draw something else)
 
 ## The M1 flow (`createSceneFlow`)
 
-`createSceneFlow(host, start)` creates the sixteen scenes (eight in M1, the difficulty menu and the
-continue countdown since M2-01, the weapon select and its order editor since M2-03, the ship
-select since M2-05, the zone map and the ending since M2-10, the credits since M2-14), their menus,
-the UI draw list (384 commands since M2-10 — 256 before —, 256 string slots since M2-14 — 224 in
-M2-10, 192 before, 160 string slots before M2-05, 96 before M2-03), the run state (`SceneFlow.run`, M2-10) and the game scene's
-placeholder World once, then `reset`s the stack to
-the start scene. Since M2-10 it also decides whether games are **campaign runs**: when
+`createSceneFlow(host, start)` creates the twenty-two scenes (eight in M1, the difficulty menu and
+the continue countdown since M2-01, the weapon select and its order editor since M2-03, the ship
+select since M2-05, the zone map and the ending since M2-10, the credits since M2-14, the name
+entry, the hi-score tables, the demo play, the story crawl, the practice select and the sound test
+since M2-15), their menus, the UI draw list (384 commands since M2-10 — 256 before —, 384 string
+slots since M2-15 — 256 in M2-14, 224 in M2-10, 192 before, 160 before M2-05, 96 before M2-03), the
+run state (`SceneFlow.run`, M2-10), the decoded attract demos (`SceneFlow.demos`, M2-15) and the
+game scene's placeholder World once, then `reset`s the stack to the start scene. Since M2-10 it also decides whether games are **campaign runs**: when
 `content.campaign` exists and `config.stage` is its start zone's stage, `SceneFlow.campaign` is set
 and a game goes zone by zone across the map; otherwise games are single stages as in M1
 ([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md)). `SceneFlowHost` is what the flow needs from the session: `config`, `content`,
 `events`, `exit` (`platform.exit` or `null`), `createWorld(config?)` (since M2-01 with the chosen
 difficulty's config) and, since M1-17, `save` (a `core/save`
 `SaveStore` — a memory-only one when omitted) and `inputProfiles` (`{ choices, active }` for the
-Options screen's CONTROLS — disabled when omitted). `createGame` passes `GameOptions.save` /
-`inputProfiles` through.
+Options screen's CONTROLS — disabled when omitted), and since M2-15 `soundTest` (`{ music }` — the
+music library's titles for the sound test's MUSIC row; disabled when omitted). `createGame` passes
+`GameOptions.save` / `inputProfiles` / `soundTest` through.
 
 | Scene | Overlay / dim / context | Shows | Input (any player) | Leads to |
 |---|---|---|---|---|
 | `BootScene` | no / 0 / menu | `LOADING` (or a label) and a progress bar (`setBootProgress`) | — | title on the tick after `finishBoot()` (`replace`) |
-| `TitleScene` | no / 0 / menu | `ui/logo` (or `SHMUP CUP` as text), `PRESS OK` blinking (32-tick half period), then the menu 1 PLAYER / 2 PLAYERS / OPTIONS / EXIT at y 118 (M2-06 — 1 PLAYER was START); `HI` and the session hi-score (the save's best at start) at the bottom | OK: prompt → menu (locked 2 ticks, focus 1 PLAYER); 1 PLAYER / 2 PLAYERS → `choosePlayers` (every difficulty's config `withCoop`, M2-06), then the difficulty menu (M2-01; before, the game); OPTIONS → Options; EXIT → confirm; Back: confirm if the platform can exit, else menu → `PRESS OK` | difficulty, options, confirm (`push`) |
+| `TitleScene` | no / 0 / menu | `ui/logo` (or `SHMUP CUP` as text), `PRESS OK` blinking (32-tick half period), then the **mode select** 1 PLAYER / 2 PLAYERS / PRACTICE / OPTIONS / SOUND TEST / EXIT at y 118 (M2-06 — 1 PLAYER was START; M2-15 PRACTICE — disabled without a campaign — and SOUND TEST); `HI` and the session hi-score (the save's best at start) at the bottom | OK: prompt → menu (locked 2 ticks, focus 1 PLAYER); 1 PLAYER / 2 PLAYERS → `choosePlayers` (every difficulty's config `withCoop`, M2-06), then the difficulty menu (M2-01; before, the game); PRACTICE → the practice select; OPTIONS → Options; SOUND TEST → the sound test; EXIT → confirm; Back: confirm if the platform can exit, else menu → `PRESS OK`. **M2-15:** `TITLE_ATTRACT_TICKS` (720) on `PRESS OK` without a press or a held key → the attract loop | difficulty, practice select, options, sound test, confirm (`push`); demo play or hi-score tables (`reset`) |
 | `DifficultyScene` (M2-01) | yes / 0.5 / menu | Opaque panel, `DIFFICULTY`, EASY / NORMAL / HARD / ARCADE (focus on the preset chosen last, at first the host config's), the focused preset's `LIVES`, `CONTINUES` and `HI` | Up / Down move (wrap); OK chooses the preset; Back closes | ship select (`push`, M2-05; with a single ship in the content the weapon select — M2-03 — or, for a Direct-mode config, the game), title menu (`pop`) |
 | `ShipSelectScene` (M2-05) | yes / 0.5 / menu | Opaque 208×136 panel, `SHIP SELECT`, the content's ships by name (KESTREL, MANTA; focus on the ship chosen last, at first the host config's `shipId`), the focused ship's picture (frame 0 of its sprite), its model (`POWER METER` / `DIRECT ITEMS`) and three hints, `OK: CHOOSE` | Up / Down move (wrap); OK chooses the ship (`withShip` for every difficulty's config); Back closes | weapon select (`push`, a meter ship), game (`reset`, a Direct-mode ship — no loadout to choose), difficulty menu (`pop`) |
 | `WeaponSelectScene` (M2-03) | no / 0 / menu | Panel on the left: `WEAPON SELECT`, TYPE (`TYPE A` … `TYPE D`, `EDIT`), MISSILE / DOUBLE / LASER (the type's weapons, disabled unless EDIT), OPTION (M2-04: `TRAIL` / `SNAKE` / `FORMATION` / `ROTATE`), `? SLOT` (five shields since M2-04), `! SLOT`, AUTO, ORDER (one-letter summary), START, two hints; behind it, full screen, the live preview World (no HUD) | Up / Down move (disabled rows skipped); Left / Right / OK change a value; OK on ORDER → the editor; OK on START starts; Back closes. Opens focused on START (2-tick lock) | game (`reset` — its World on the difficulty's config with this loadout, `withArsenal`, and the chosen ship), order editor (`push`), ship select (`pop`; the difficulty menu when it was skipped) |
@@ -136,13 +146,19 @@ Options screen's CONTROLS — disabled when omitted). `createGame` passes `GameO
 | `GameScene` | no / 0 / **game** | The World (view + HUD), the boss WARNING band in the UI list; in a campaign run (M2-10) the zone title card (`ZONE B` / the name, `BONUS STAGE` in a bonus stage) for the first 150 World ticks. Owns the run's Worlds: `enter` starts a run (`beginRun`) or plays the zone the map / practice prepared (`run.pendingStart`); an opened bonus entrance swaps to the bonus stage's World after 40 ticks, a death there back to the zone after 60 (`swapWorld`) | Pause or Back of any player → pause menu (that tick the World does not step) — except, in a co-op game (M2-06), the START / OK of a player who may drop in: the World joins it ([coop.md](coop.md#joining-coreworld)) | pause, stage clear (90 World ticks after `stageClear`), game over (30 after `gameOver`) — or, with continues left (`canContinue`), the continue countdown (M2-01) — all `push` |
 | `PauseScene` | yes / 0.5 / menu | Panel, `PAUSE`, RESUME / OPTIONS / RETRY STAGE / QUIT TO TITLE | Pause, Back, RESUME → resume; OPTIONS → Options (the game stays frozen); RETRY STAGE → `game.restart()` + pop (no confirmation); QUIT TO TITLE → confirm | game (`pop`), options, confirm (`push`) |
 | `OptionsScene` (M1-17) | yes / 0.5 / menu | Opaque panel, `OPTIONS`, MASTER / MUSIC / SFX sliders (0–10), CONTROLS (the input profile's label, a `Choice`), BULLETS (M2-02: the enemy bullet palette, a `Choice` of `BULLET_PALETTE_LABELS`), M2-08: SCALE (a `Choice` of `SCALE_MODE_LABELS`), SHAKE (a `Toggle`), FLASHES (a `Choice` of `FLASH_LABELS`), HITBOX (a `Toggle`), M2-09: BOSS HP (a `Toggle`) — eleven rows on a 288×192 panel —, BACK | Up / Down move; Left / Right change a slider, step CONTROLS / BULLETS / SCALE / FLASHES (OK steps them too) or set SHAKE / HITBOX / BOSS HP (OK flips them), each change pushed live as a `UserOption` event; BACK or Back store the options in the save, flush it and close | title / pause menu (`pop`) |
-| `StageClearScene` | yes / 0.25 / menu | Single-stage run: `STAGE CLEAR`, `SCORE` (`1P` / `2P` once player 2 joined a co-op game, M2-06), `HI` for 240 ticks, then `TO BE CONTINUED` for 240. Campaign run (M2-10, `zoneMode`): the **zone result tally** — `ZONE X CLEAR` / `BONUS STAGE CLEAR`, the zone's name, the score(s), `KILLS %`, `KILL BONUS`, `TIME BONUS` — for 300 ticks (entering it tallies, pays, notes the World's deaths / continues / flags and carries the players out) | OK skips a phase; entering it records a single-stage run (or a campaign run's final zone) in the save | title (`reset`); campaign run: the zone map (a zone with exits), the ending (the final zone) or the title (practice) — `reset` |
+| `StageClearScene` | yes / 0.25 / menu | Single-stage run: `STAGE CLEAR`, `SCORE` (`1P` / `2P` once player 2 joined a co-op game, M2-06), `HI` for 240 ticks, then `TO BE CONTINUED` for 240. Campaign run (M2-10, `zoneMode`): the **zone result tally** — `ZONE X CLEAR` / `BONUS STAGE CLEAR`, the zone's name, the score(s), `KILLS %`, `KILL BONUS`, `TIME BONUS` — for 300 ticks (entering it tallies, pays, notes the World's deaths / continues / flags and carries the players out) | OK skips a phase; entering it records a single-stage run (or a campaign run's final zone) in the save | M2-15: `finishGame()` — the name entry when a score entered its table, else the title (`reset`); campaign run: the zone map (a zone with exits), the ending (the final zone) or `finishGame()` (practice) — `reset` |
 | `MapScene` (M2-10) | no / 0 / menu | Full screen over the starfield: the campaign's name, `CHOOSE YOUR COURSE`, the node graph (a column per depth, dotted edges, the route lit, the cleared zone yellow, its exits outlined, the focused one blinking) and a preview panel (label, name, preview lines, hints); fades the music out | Up / Down choose one of the cleared zone's exits (wrap, auto-repeat); OK pushes `PrepareStage` for its stage and blinks `LAUNCH` for 60 ticks; Back → confirm "quit to title?" | game (`reset`, the next zone — `advanceZone`), confirm (`push`) |
-| `EndingScene` (M2-10; M2-14) | no / 0 / menu | Since M2-14 first the **story** (an ending with a scene or text): the ending's sprite scene (`citadel` / `abyss`, a dawn for a flawless run, the flagship sailing off after an escape) and its epilogue, a line every 90 ticks; then the full-screen card: `ENDING`, the ending's name (`run.ending`), `ROUTE` and the zones' labels, the score(s), a line per run flag set, `THANK YOU FOR PLAYING`, `OK: CREDITS` (or `OK: TITLE`) after 60 ticks. The final zone's ending theme plays | Story: OK after 60 ticks shows every line, then moves on (or 240 ticks after the last line); card: OK after 60 ticks or 1,200 ticks → credits | credits (`reset`), or the title without credits |
-| `CreditsScene` (M2-14) | no / 0 / menu | The campaign's credits scrolling up, 1 px every 2 ticks, section titles in the title colour; stops when the last row reaches mid-screen and holds 240 ticks. The final zone's credits theme plays | OK / Back after 60 ticks, or the end of the hold → title | title (`reset`) |
-| `ContinueScene` (M2-01) | yes / 0.35 / menu | Red-edged panel, `CONTINUE?`, the seconds left (9 … 0, a tick sound each), `CREDITS` = continues left (`1P` / `2P` credits once player 2 joined, M2-06); the music fades out | OK / Back after 30 ticks: OK continues (`continueWorld` — checkpoint restart, fresh lives; in a co-op game only the players whose OK was pressed, M2-06), Back gives up | game (`pop`), game over (`replace`, also after 600 ticks) |
-| `GameOverScene` | yes / 0.35 / menu | Red-edged panel, `GAME OVER`, the final score (both players', `1P` / `2P`, once player 2 joined a co-op game — M2-06); `NEW HI-SCORE` below it for a new best (player 1's place) | OK / Back after 30 ticks; entering it records the run in the save | title (`reset`) after OK / Back or 600 ticks |
+| `EndingScene` (M2-10; M2-14) | no / 0 / menu | Since M2-14 first the **story** (an ending with a scene or text): the ending's sprite scene (`citadel` / `abyss`, a dawn for a flawless run, the flagship sailing off after an escape) and its epilogue, a line every 90 ticks; then the full-screen card: `ENDING`, the ending's name (`run.ending`), `ROUTE` and the zones' labels, the score(s), a line per run flag set, `THANK YOU FOR PLAYING`, `OK: CREDITS` (or `OK: TITLE`) after 60 ticks. The final zone's ending theme plays | Story: OK after 60 ticks shows every line, then moves on (or 240 ticks after the last line); card: OK after 60 ticks or 1,200 ticks → credits | credits (`reset`), or — without credits — `finishGame()` (M2-15) |
+| `CreditsScene` (M2-14) | no / 0 / menu | The campaign's credits scrolling up, 1 px every 2 ticks, section titles in the title colour; stops when the last row reaches mid-screen and holds 240 ticks. The final zone's credits theme plays | OK / Back after 60 ticks, or the end of the hold → `finishGame()` (M2-15) | name entry or title (`reset`) |
+| `ContinueScene` (M2-01) | yes / 0.35 / menu | Red-edged panel, `CONTINUE?`, the seconds left (9 … 0, a tick sound each; the last three flashing — M2-15) over a draining 120-px time bar (red for the last three seconds — M2-15), the score (M2-15) and `CREDITS` = continues left (`1P` / `2P` credits once player 2 joined, M2-06), a blinking `PRESS OK` and `BACK: GIVE UP` once OK counts (M2-15); the music fades out | OK / Back after 30 ticks: OK continues (`continueWorld` — checkpoint restart, fresh lives; in a co-op game only the players whose OK was pressed, M2-06), Back gives up | game (`pop`), game over (`replace`, also after 600 ticks) |
+| `GameOverScene` | yes / 0.35 / menu | Red-edged panel, `GAME OVER`, the final score (both players', `1P` / `2P`, once player 2 joined a co-op game — M2-06); `NEW HI-SCORE` below it for a new best (player 1's place) | OK / Back after 30 ticks; entering it records the run in the save | `finishGame()` after OK / Back or 600 ticks (M2-15): the name entry when a score entered its table, else the title (`reset`) |
 | `ConfirmDialog` | yes / 0.5 / menu | Opaque panel, `EXIT SHMUP CUP?` or `QUIT TO TITLE?`, YES / NO focused on **NO** | Left / Up → YES, Right / Down → NO; OK answers; Back = NO | `Exit`: pop, then `host.exit()`; `QuitToTitle`: title (`reset`); NO: pop |
+| `NameEntryScene` (M2-15) | no / 0 / menu | Panel: `NEW HI-SCORE!`, `1P` / `2P`, the score and rank, `ENTER YOUR NAME`, the `core/ui` letter picker, a hint, the seconds left; the title theme | Up / Down: the letter; Right or OK: next; Left or Back: back; OK on `END`: done; 1,800 ticks: taken as it stands | each pending row in turn (`renameScore`), then the save flushed and the hi-score table (`reset`) |
+| `HiScoreScene` (M2-15) | no / 0 / menu | `HI-SCORES`, the table's ship / difficulty / mode, ten rows (rank, name, score, zone label); attract: up to 4 tables, 300 ticks each; result: the game's table, its new rows blinking | Attract: any press → title; result: OK / Back after 30 ticks, or 900 ticks | attract: the story (or the title); result: title (`reset`) |
+| `DemoScene` (M2-15) | no / 0 / menu | A bundled demo's World and its own HUD (`SceneFlowView.world` / `hud`), `DEMO PLAY` / `PRESS OK`, the zone card; silent (sounds and music are not forwarded) | Any press → title | the hi-score tables at the recording's end or a desync (`reset`) |
+| `StoryScene` (M2-15) | no / 0 / menu | The campaign's story crawling up a panel under its pages' sprite scenes (`dawn`, `invasion`, `launch`); the title theme | Any press → title | title (`reset`) after the crawl and a 90-tick hold |
+| `PracticeScene` (M2-15) | yes / 0.5 / menu | Opaque 240×116 panel: `PRACTICE`, ZONE, CHECKPOINT, LOADOUT, START, `SCORES GO TO THE PRACTICE TABLES` | Up / Down move; Left / Right / OK change (CHECKPOINT kept within the focused zone's, wrapping both ways); OK on START; Back closes | difficulty menu (`push`; the practice run starts at the chain's last OK — `launchGame()`), title menu (`pop`) |
+| `SoundTestScene` (M2-15) | yes / 0.5 / menu | Opaque 256×112 panel: `SOUND TEST`, MUSIC (the host's titles), SFX (every cue in words), STOP, BACK, `← → CHOOSE   OK PLAY` | Left / Right choose; OK on MUSIC / SFX plays (`SoundTest` event / a centred `Sfx`), on STOP fades the music out, on BACK closes; Back closes | title menu (`pop`, the title theme back) |
 
 OPTIONS is **enabled** in both menus since M1-17 and pushes the `OptionsScene` over them (the
 title or the paused game stays drawn under it). The disabled-item rule — the focus skips the item,
@@ -155,7 +171,11 @@ game's mode (`SceneFlow.modeKey`) — since M2-01 one per difficulty preset (`me
 `meter-arcade`), since M2-05 one per power-up mode and preset (the MANTA's `direct-easy` …
 `direct-arcade`), the chosen ship's and preset's shown on the title and the difficulty menu; the game-over and stage-clear screens
 insert every playing player's score into its World's table, count the statistic and flush the save; every game start and
-RETRY STAGE counts `gamesStarted`; QUIT TO TITLE and RETRY record no score. Details, the Options
+RETRY STAGE counts `gamesStarted`; QUIT TO TITLE and RETRY record no score. Since M2-15 co-op games
+and practice runs have tables of their own (`meter-normal-2p`, `meter-normal-practice` —
+`hiScoreModeKey(config, mode)`), play against their own table's best and never raise the (1P)
+session hi-score; rows are recorded as `---` and named by the name entry afterwards
+([front-end-and-attract.md](front-end-and-attract.md#hi-score-tables-per-difficulty--ship--mode-coresave)). Details, the Options
 screen and the live `UserOption` events are in [saves-and-options.md](saves-and-options.md).
 
 ### Back, Pause and the platform
@@ -172,8 +192,12 @@ screen and the live `UserOption` events are in [saves-and-options.md](saves-and-
 | Weapon select (M2-03) | back to the difficulty menu (the choice made so far is kept, but only START hands it to a game) | — |
 | Auto order editor (M2-03) | store the rows (like DONE) and close | — |
 | Continue countdown (M2-01) | give up → game over (after the 30-tick lock) | — |
-| Game over | title (after the 30-tick lock) | — |
+| Game over | the name entry or the title (after the 30-tick lock) | — |
 | Stage clear | — | — |
+| Demo play, hi-score tables, story (the attract loop, M2-15) | title (any press does — never the exit confirmation) | title |
+| Name entry (M2-15) | back one letter (never leaves the entry) | — |
+| Hi-score table after a game (M2-15) | title (after the 30-tick lock) | — |
+| Practice select, sound test (M2-15) | back to the title menu (the sound test brings the title theme back) | — |
 
 **Tizen.** `apps/tizen` no longer exits on Back by itself. Its `watchBackKey` watcher is installed
 before boot — the loading and boot error screens are the root screen, so Back exits there — and
@@ -227,9 +251,9 @@ stage theme again.
 
 | Frame field | While the game scene is visible (on top or under overlays) | Otherwise (boot, title) |
 |---|---|---|
-| `world` | the World's view | `null` — or, while the weapon select is visible (also under its order editor), its preview World's view (M2-03) |
-| `tick` | the **World's** tick — frozen under the pause menu and the end screens, back to 0 for a new World | the flow's own tick count (the preview's tick while it shows) |
-| `hud` | the game scene's HUD list (`Hud.update` — rebuilt only on a change) | an empty list |
+| `world` | the World's view | `null` — or, while the weapon select is visible (also under its order editor), its preview World's view (M2-03), or while the attract loop's demo play is visible the demo World's view (M2-15) |
+| `tick` | the **World's** tick — frozen under the pause menu and the end screens, back to 0 for a new World | the flow's own tick count (the preview's or the demo World's tick while it shows) |
+| `hud` | the game scene's HUD list (`Hud.update` — rebuilt only on a change) | an empty list — the demo play's own HUD list while it shows (M2-15) |
 | `ui` | every visible scene's widgets (one list) | same |
 | `screen.dim` | the top scene's `dim` | same |
 
@@ -243,7 +267,7 @@ The visible scenes are the topmost non-overlay scene and every overlay above it 
 the pause menu under the dialog). `updateFrame()` rebuilds the UI list — `clear()`, then each
 visible scene's `drawUi(list)` bottom to top — **only when** the visible set changed or one of
 their `uiRevision`s moved since the last build; otherwise the list keeps its `revision` and the
-renderer skips it. Each scene owns a disjoint range of the 256 string slots (224 before M2-14, 192 before M2-10, 160 before M2-05, 96 before M2-03; `stringBase`,
+renderer skips it. Each scene owns a disjoint range of the 384 string slots (256 before M2-15, 224 before M2-14, 192 before M2-10, 160 before M2-05, 96 before M2-03; `stringBase`,
 `stringSlots`, assigned in the flow's constructor — it throws if they do not fit), so scenes drawn
 together never overwrite each other's text. That is why the confirm dialog sits over the still
 visible pause menu; its panel is opaque (alpha 255) so the menu's text does not show through.
@@ -444,7 +468,8 @@ only up for the first tick; the loading before the renderer exists stays on the 
 
 The canvas carries `data-shmup-scene` (`SCENE_ATTRIBUTE`): the top scene's id (`boot`, `title`,
 `difficulty`, `weaponSelect`, `autoOrder`, `game`, `pause`, `options`, `confirm`, `stageClear`,
-`gameOver`, …) or the dev scene's name — the e2e tests wait
+`gameOver`, since M2-15 `demo`, `hiScore`, `story`, `nameEntry`, `practice`, `soundTest`, …) or
+the dev scene's name — the e2e tests wait
 on it. `?scene=flight` keeps the old bare-gameplay free flight with its own dev HUD (`FREE
 FLIGHT`, `ARROWS MOVE`, `GAME OVER` in the top bar); the gameplay e2e specs of M1-06…M1-15 open it.
 
@@ -476,12 +501,18 @@ outside the World.
   armed configs), plus, in the shell, one wrapper view per open-space World. Since M1-17 also the
   save's new document when the Options screen closes or a game ends (menu actions, never ticks);
   the Options screen itself ticks and redraws allocation-free (`scenes-options-alloc.test.ts`).
+- M2-15: the attract loop's demo play (its World is created when a demo starts — a transition —
+  and stepped, its events forwarded and its HUD composed without allocating), the hi-score tables,
+  the story, the name entry, the practice select and the sound test tick and redraw
+  allocation-free (`scenes-attract-alloc.test.ts`, `scenes-front-end-alloc.test.ts`); a finished
+  name builds its string and the save's new document once
+  ([front-end-and-attract.md](front-end-and-attract.md#zero-allocation)).
 
 ## Extending it
 
 | To add… | Do this |
 |---|---|
-| A new scene (the M2 screens; `OptionsScene` is the latest example) | A `SceneBase` subclass in `core/scenes` with its `id` (already in `SceneId` for the planned screens), `overlay` / `dim` / `inputContext`, `stringSlots`, `tick` (read `flow.menuInput`; request transitions on `flow.stack`) and `drawUi` (only its own string slots); create it in `createSceneFlow`, add it to the `scenes` array (the string-slot assignment) and to `SceneFlow`; bump `uiRevision` whenever its look changes |
+| A new scene (`PracticeScene` / `SoundTestScene` are recent overlay examples, `HiScoreScene` a full screen) | A `SceneBase` subclass in `core/scenes` with its `id` (add it to `SceneId`), `overlay` / `dim` / `inputContext`, `stringSlots`, `tick` (read `flow.menuInput`; request transitions on `flow.stack`) and `drawUi` (only its own string slots); create it in `createSceneFlow`, add it to the `scenes` array (the string-slot assignment) and to `SceneFlow`; bump `uiRevision` whenever its look changes |
 | An Options item, a saved option | See [saves-and-options.md](saves-and-options.md#extending-it) |
 | A menu with sliders, toggles or choices | `createListMenu([{ label: 'MUSIC', slider: createSlider(0, 10, 1, 7) }, { label: 'CONTROLS', choice: createChoice(['A', 'B']) }, …])`; `menuTick` returns `Changed` — read the item's `slider.value` / `toggle.value` / `choice.index`; give `drawMenu` a frozen layout with a `valueX`, and count `menuStringSlots(menu)` for the scene's slots (one per choice more) |
 | A HUD element | Draw it in `buildHud` (keep within the HUD list's 64 commands) and add what it depends on to `Hud.update`'s comparison, or it will not redraw |
@@ -506,6 +537,7 @@ outside the World.
 | `packages/core/test/scenes/scenes-coop.test.ts`, `scenes-coop-edge.test.ts`, `packages/core/test/ui/ui-hud-coop*.test.ts` | M2-06: 2 PLAYERS vs 1 PLAYER, the seats per scene, joining without pausing, the per-player continue countdown, both scores and `2p` rows on the end screens; the co-op HUD (the prompt, both halves, `hudPlayerState`, allocation) — see [coop.md](coop.md#tests) |
 | `packages/core/test/scenes/scenes-campaign.test.ts`, `scenes-campaign-edge.test.ts`, `scenes-map-alloc.test.ts`, `scenes-run.test.ts`, `scenes-run-edge.test.ts` | M2-10: campaign runs on a small map (the card, the zone tally, the map's layout / input / `LAUNCH` / Back → YES, the ending, `PrepareStage` across runs, practice, bonus warp and lock-out, RETRY inside a bonus stage), the run state and the carry; the map ticked and redrawn without allocation ([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md#tests)) |
 | `packages/core/test/scenes/scenes-ending.test.ts`, `scenes-ending-edge.test.ts`, `scenes-ending-alloc.test.ts` | M2-14: the ending's story (the scene, the epilogue line by line, OK revealing then moving on), the card, the credits' scroll, stop, hold and skip, the ending and credits themes, zero allocation ([zones-h-and-i.md](zones-h-and-i.md#tests)) |
+| `packages/core/test/scenes/scenes-attract.test.ts`, `-edge`, `scenes-front-end.test.ts`, `-edge`, `scenes-attract-alloc.test.ts`, `scenes-front-end-alloc.test.ts`; `packages/core/test/ui/ui-name-entry*.test.ts` | M2-15: the attract loop's timings and rules, the demo in sync and silent, the name entry, the hi-score screens, the practice select and its isolation, the sound test, the continue polish, zero allocation — see [front-end-and-attract.md](front-end-and-attract.md#tests) |
 | `packages/core/test/game/game-scenes.test.ts`, `game-scenes-edge.test.ts` | `GameOptions.scenes`, `game.world` / `inputContext` across transitions, EXIT only with `platform.exit`, the dim cleared on resume, bare gameplay ignoring a game over |
 | `packages/shell/test/boot/`, `scene-view/` | The flow's boot (title theme prepared, `finishBoot`, `data-shmup-scene`), the scene view (backdrop drift per layer, open-space starfield frozen under pause, the followed camera before a frame and after quitting, `worldChanges`; since M2-03 the weapon select's preview view — `scene-view-preview.test.ts`) |
 | `apps/*/test/boot/boot-wiring.test.ts` | Title start and Back through the stack (Tizen: the exit confirmation, `exit` only after YES; a direct exit only from the boot error screen) |
@@ -527,9 +559,12 @@ outside the World.
 | OK on the title does nothing the first time | Expected: the first OK only leaves `PRESS OK`; the menu then locks activation for 2 ticks (an OK in that window is buffered, not lost) |
 | Back on the title does nothing in a browser | Expected on `PRESS OK`; in the menu it goes back to `PRESS OK`. The exit confirmation needs `platform.exit` (the TV) |
 | OK on an Options slider does nothing | Expected: sliders change with Left / Right; OK is silent on them (it steps CONTROLS and activates BACK) |
-| A new scene throws `RangeError` about string slots at flow creation | The scenes together need more than the UI list's 256 string slots (224 before M2-14, 192 before M2-10, 160 before M2-05, 96 before M2-03) — a choice item takes one slot more than `items + 3`; the zone map takes `11 + zones` |
+| A new scene throws `RangeError` about string slots at flow creation | The scenes together need more than the UI list's 384 string slots (256 before M2-15, 224 before M2-14, 192 before M2-10, 160 before M2-05, 96 before M2-03) — a choice item takes one slot more than `items + 3`; the zone map takes `11 + zones` |
 | The zone map loses nodes or its panel on a big campaign | The UI list has 384 commands; the map thins its edge dots to a 160-command budget (`MapScene.edgeDots`) — a new map element must fit what is left |
-| The renderer shows a World while no game runs | The weapon select's live preview (M2-03) — `SceneFlowView.world` is its view while that screen is visible |
+| The renderer shows a World while no game runs | The weapon select's live preview (M2-03) or the attract loop's demo play (M2-15) — `SceneFlowView.world` is its view while that screen is visible |
+| A spec walking the title menu opens the wrong screen | M2-15 inserted PRACTICE before OPTIONS and SOUND TEST before EXIT (`TitleItem.Options` 3, `Exit` 5) — count with `TitleItem` |
+| A test expecting the title after GAME OVER finds `nameEntry` | Since M2-15 an end screen goes through `finishGame()`: a score that entered its table opens the name entry, then the result table — pass both (OK on `END`, then OK after the table's 30-tick lock) |
+| The title leaves by itself after 12 s in a test | The attract loop (M2-15): `TITLE_ATTRACT_TICKS` without input on `PRESS OK` — open the menu (OK) or keep a key held |
 | The HUD never updates | Something else clears the scores' dirty flags (another HUD over the same World), or the new state is not in `Hud.update`'s comparison |
 | The HUD shows rectangles instead of the meter boxes | The content was loaded without `ENGINE_SPRITES` (the UI sprites are in it since M1-16) or the atlas lacks them |
 | Explosions of the last game show after RETRY | The host did not clear its particles on a new World — watch `sceneView.worldChanges` (the shell does) |
@@ -574,6 +609,10 @@ outside the World.
 - **M2-14** (done) — the ending's sprite scenes and epilogue before its card, the `CreditsScene`
   after it, the ending and credits themes, the `ui/ending-*` UI sprites, 256 UI string slots
   ([zones-h-and-i.md](zones-h-and-i.md#the-endings)).
-- **M2-15** — attract mode, mode select, name
-  entry, the hi-score table, the practice select; **M2-16** — rebinding and accessibility options (and the loadout
-  saved).
+- **M2-15** (done) — the mode select (`TitleItem` Practice 2, Options 3, SoundTest 4, Exit 5), the
+  attract loop (`DemoScene`, `HiScoreScene`, `StoryScene`), the name entry (`NameEntryScene`,
+  `core/ui` `NameEntry`), the hi-score tables per difficulty × ship × mode, the practice select, the
+  sound test, the continue polish, `finishGame()`, 384 UI string slots
+  ([front-end-and-attract.md](front-end-and-attract.md)).
+- **M2-16** — rebinding and accessibility options (the key-rebind prompt in the UI kit, every UI
+  string in `content/strings/en.json`, the chosen difficulty, ship and loadout saved).

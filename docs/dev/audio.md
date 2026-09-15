@@ -93,8 +93,11 @@ Title` (30-tick fade) when the title shows, `Music Silence` (30 ticks) when a ga
 World then queues its stage theme), `Music StageClear` / `Music GameOver` (no fade) with the end
 screens. The music keeps playing under the pause menu. Since M1-17 the Options screen's
 `UserOption` events set the bus volumes (the shell's `connectOptionEvents`, not the engine — the
-engine never touches volumes). `HitStop`, `Rumble` and `PowerUp` events still have no audio
-meaning.
+engine never touches volumes). Since M2-15 the sound test pushes `SoundTest` (a library track by
+index — `playTrack`) and `Sfx` events of any cue at x 192 (centred), the attract loop's demo play
+forwards none of its World's sounds or music (silent — the music fades out when it starts), and
+the hi-score tables and the story push `Music Title` again (the playing theme goes on). `HitStop`,
+`Rumble` and `PowerUp` events still have no audio meaning.
 
 ## The content (`content/audio/`, kinds `sfx` and `music`)
 
@@ -248,6 +251,7 @@ The object the shell talks to; it composes the loader and the two players:
 | `playSfx(cue, screenX, priority)` | Per `Sfx` event | A positional cue → `SfxPlayer.playAt(cue, screenX, priority)` (pan ±`DEFAULT_PAN_WIDTH` = 0.6 at the playfield edges), a whole-screen or `ui` cue → `play(cue, 0, priority)`; −1 when not attached |
 | `playMusic(cue, fadeTicks)` | Per `Music` event | `Silence` → fade out over `fadeTicks`; a cue outside the prepared set → ignored, `missedMusic++`; the track already playing → nothing; else the new track starts (fade in over `fadeTicks`) and the previous one stops at once. Before `attach` the cue is remembered |
 | `duckMusic(ticks)` | Per `MusicDuck` event | `MusicPlayer.duck(DEFAULT_DUCK_LEVEL = 0.35, ticks)` |
+| `playTrack(index, fadeTicks = 0)` | Per `SoundTest` event (M2-15, the sound test's MUSIC row) | → `Promise<boolean>`. Loads a track outside the resident set first (rendered or decoded — a menu, never a stage), keeps it as **the one extra track** (every other resident track outside the prepared set is released; the prepared set — `prepareMusic`'s last, tracked in `prepared` — never is), then plays it from its start (a playing one restarts). `false` for an unknown index, when not attached (the track is loaded all the same) or destroyed meanwhile; rejects with the loader's `AudioLoadError`. `musicCue` becomes −1, so the next `Music` cue (the title theme when the sound test closes, `Silence` on STOP) takes over |
 | `endFrame()` | After each drain | Closes the SFX dedupe window |
 | `destroy()` | `shell.stop()` | Stops everything; inert afterwards |
 
@@ -337,6 +341,13 @@ last (cleared by `stop()` at once), `playing` whether it is audible now.
    ignored (the cues stay silent) unless an `onError` is passed. The flow pushes the event only when
    the stage differs from the one last prepared (at boot: the host config's stage)
    ([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md#preparing-the-next-zone-simeventkindpreparestage)).
+9. **The sound test** (M2-15) — the boot hands the flow the music library's titles
+   (`GameOptions.soundTest = { music: musicContent.tracks.map((t) => t.title) }`), and
+   `connectSoundTest(events, engine)` answers `SimEventKind.SoundTest` (`id` = the library index)
+   with `engine.playTrack(id, 0)` in the background (a failure goes to its `onError`, never into
+   the menu). The sound test's SFX row pushes ordinary `Sfx` events at the playfield's centre
+   (x 192), so the positional cues play centred on the title, where the backdrop camera stays at 0
+   ([front-end-and-attract.md](front-end-and-attract.md#the-sound-test)).
 
 What that means per build: in a browser nothing is audible until the first key press or click
 (gamepad buttons are not a user activation); sounds requested before are dropped, but the stage
@@ -398,6 +409,8 @@ song's loop points and render time. Options: `--out DIR`, `--only NAME` (one cue
 | `packages/audio-web/test/music/music.test.ts`, `music-edge.test.ts` | The graph, loop points from sample indices, one-shots ending, one track resident, fade-in / fade-out ramps, a fade-out over a fade-out (the second `stop()` guarded — regression), a new track over a fading one, ducks (over a duck, level clamping, attack length), bad fade lengths, nothing scheduled after `destroy()` |
 | `packages/audio-web/test/loader/loader.test.ts`, `loader-edge.test.ts` | Both schemas with issue paths, the relative-URL rule, cue bindings and `resolveMusicCues` (independent of file order), `stageMusicCues` corners, rendering with baked volume, every XHR outcome, callback-only decoders, the default OGG path through the global `XMLHttpRequest` and `OfflineAudioContext(2, 1, 32000)` with loop points scaled / clamped, progress |
 | `packages/audio-web/test/engine/engine.test.ts`, `engine-edge.test.ts` | One music set resident, missed cues, music requested before `attach`, SFX only once attached, positional vs centred cues, no restart of the playing track, `Silence`, ducking, silent on a context without buffer playback, the review round 1 regression at engine level (a `FinalBoss` theme and a mid-stage `ZoneMap` cue) |
+| `packages/audio-web/test/engine/engine-sound-test.test.ts`, `engine-sound-test-edge.test.ts` | M2-15, `playTrack`: any track by index, one loaded outside the set and kept as the one extra (surviving a loading phase while it plays, replaced by the next, not loaded twice), nothing for an unknown index, before the unlock or after `destroy` (also mid-load), the loader's rejection, again after STOP, the title theme not restarted |
+| `packages/shell/test/dispatch/dispatch-sound-test.test.ts`, `dispatch-sound-test-runtime.test.ts` | M2-15: `connectSoundTest` (the named track from its start, a failed load reported); the sound test through the flow and a real engine — a library track, a centred SFX cue, STOP, the title theme back |
 | `packages/audio-web/test/web-audio/web-audio-playback.test.ts` | `isPlaybackContext` |
 | `packages/audio-web/test/helpers/fake-context.ts` | The recording Web Audio fake every suite uses: a settable clock, real `Float32Array` buffers, nodes logging connections, starts, stops and every scheduled parameter change |
 | `packages/shell/test/dispatch/dispatch-audio*.test.ts` | The event → engine mapping and unregistering; two allocation guards; `dispatch-audio-runtime`: the shipped boss range end to end (`createGame` → drained events → `connectAudioEvents` → a real engine): zone theme, WARNING silence, every siren pulse heard, boss theme, silence, stage-clear jingle, no music missed; the round 1 regression through the real sim |
@@ -425,6 +438,8 @@ song's loop points and render time. Options: `--out DIR`, `--only NAME` (one cue
 | `AUDIO FAILED TO LOAD` | A `file` sound or track could not be fetched (a wrong relative URL, a file missing from the build) or decoded (`OfflineAudioContext` missing, a corrupt OGG). The line names the URL |
 | A sound is too quiet or silent although the content's volume is right | The player's Options volumes: MASTER scales everything, MUSIC the music, SFX the effects **and** the menu sounds; level 0 is silent. Check `shell.save.options.audio` (or clear `shmup-cup:save.v1`) |
 | The ending plays over the stage-clear tune (no ending theme), or the credits are silent | The final zone's stage names no `music.ending` / `music.credits`: only one set is resident, so the themes must be prepared with the final zone's set — `stageMusicCues` adds them when the stage names them (M2-14) |
+| The sound test's SFX all come from the left speaker | An `Sfx` event pushed at x 0 while the camera is at 0 pans −0.6 — push menu-side cues at the playfield's centre (`PLAYFIELD_W / 2`), as the sound test does (M2-15), or bind them to the `ui` bus |
+| A sound-test track plays silence or never starts | It is loaded on demand: a recorded (`file`) track needs its fetch and decode first; a failure is reported to `connectSoundTest`'s `onError` (ignored by default). In a browser nothing plays before the first key press |
 | The music keeps playing while paused | By design (M1-16): the pause menu freezes the World, not the music. At `GAME OVER` the game-over tune replaces it once the game-over screen opens (the scene flow; `?scene=flight` has no screens, so there the stage theme keeps playing) |
 
 ## Next steps that build on this page
@@ -459,4 +474,8 @@ song's loop points and render time. Options: `--out DIR`, `--only NAME` (one cue
   credits songs, prepared with the final zone's set through its stage's `music.ending` /
   `music.credits` (`stageMusicCues`) and played by `EndingScene` / `CreditsScene`
   ([zones-h-and-i.md](zones-h-and-i.md#the-ending-and-credits-music)).
+- **M2-15** (done) — the sound test: `AudioEngine.playTrack` (any library track, loaded on demand
+  as the one extra track), `SimEventKind.SoundTest` and the shell's `connectSoundTest`; the attract
+  demo is silent (its sounds and music are not forwarded) and the title theme plays through the
+  hi-score tables and the story ([front-end-and-attract.md](front-end-and-attract.md)).
 - **M3-03** — tracker music.

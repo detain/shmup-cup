@@ -13,7 +13,7 @@ This page is the *how and why*. Exact signatures are in
 [`rank`](api-reference.md#rank--rank--dynamic-difficulty),
 [`scoring`](api-reference.md#scoring--scores-extends-continues-and-the-session-hi-score-partial),
 [`world`](api-reference.md#world--the-gameplay-session-and-the-tick-pipeline) and
-[`scenes`](api-reference.md#scenes--scene-stack-and-the-m1-flow-partial); the TSDoc in
+[`scenes`](api-reference.md#scenes--scene-stack-and-the-scene-flow-implemented); the TSDoc in
 `packages/core/src/{config,rank,scoring,world,bullets,enemies,scenes}/index.ts` is the
 authoritative reference. The format for authors is next to the data:
 [`content/rules/README.md`](../../content/rules/README.md) (the table) and
@@ -338,7 +338,9 @@ the game really ends (game over, stage clear), so the continue digit is part of 
 score. On **Arcade** (`continues: 0`) the game-over screen opens directly.
 
 The continue is decided by the scene flow **between** World ticks, so bare-gameplay replays (one
-World, ending at the game over) do not contain it; recording the flow is M2-15 / M3-01 work.
+World, ending at the game over) do not contain it; recording the flow is M3-01 work (M2-15's
+attract demos are bare-World recordings too). Since M2-15 the countdown also shows a draining time
+bar, the score and a `PRESS OK` prompt ([front-end-and-attract.md](front-end-and-attract.md#the-continue-countdown-polished)).
 
 ## The difficulty menu (`DifficultyScene`)
 
@@ -480,6 +482,9 @@ ship's.
   co-op, `continueWorld`'s player mask, the countdown's per-player OKs); the rank's power term is
   still the strongest active ship's ([coop.md](coop.md)).
 - **M2-10** (done) — a campaign run sets `rankInputs.stage` to the zones cleared + 1 in every zone's World (so zone A plays at 1 and a final zone at 5 — +4 rank at growth 1); a practice run uses the practice zone's depth + 1; the loop stays 1 ([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md#carrying-the-players)).
-- **M2-15 / M3-01** — recording the scene flow (continues included) in replays.
+- **M2-15** (done) — the continue countdown's polish (the draining bar, the flashing last seconds,
+  the score, `PRESS OK`), per-difficulty tables per mode (1 PLAYER, 2 PLAYERS, PRACTICE) with the
+  name entry ([front-end-and-attract.md](front-end-and-attract.md)).
+- **M3-01** — recording the scene flow (continues included) in replays.
 - **M2-16** — the chosen difficulty saved with the options; the Options screen's `deathPenalty` /
   `startingLives`.

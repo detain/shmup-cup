@@ -77,7 +77,9 @@
  * M2-05: {@link HUD_FAMILY_COLORS}, {@link HUD_ARM_COLORS}, {@link HUD_STRING_COUNT},
  * {@link HUD_COMMAND_COUNT}. M2-06: {@link HudPlayerState}, {@link hudPlayerState},
  * {@link METER_SHORT_LABELS}, {@link HUD_PROMPT_BLINK_TICKS}. M2-09: {@link BOSS_HP_BAR_WIDTH},
- * {@link BossHpBarView}, {@link bossHpBarFill}.
+ * {@link BossHpBarView}, {@link bossHpBarFill}. M2-15: {@link NameEntry}, {@link createNameEntry},
+ * {@link nameEntryTick}, {@link drawNameEntry}, {@link NAME_ENTRY_GLYPHS}, {@link NAME_ENTRY_LENGTH},
+ * {@link NAME_ENTRY_STRING_SLOTS}.
  *
  * **Boss HP bar (M2-09).** With the `bossHpBar` display option ({@link Hud.showBossHp}, the
  * `buildHud` argument) the top bar shows `BOSS` and a bar filled by {@link bossHpBarFill} of the
@@ -1290,8 +1292,8 @@ const NAME_CELL_PITCH = 16;
  * and below it (hidden while `blinkOff`), `END` highlighted when the cursor is on it.
  *
  * @remarks
- * Uses the string slots `stringBase … stringBase + NAME_ENTRY_STRING_SLOTS − 1` (the letters, `END`,
- * `↑`, `↓`, `_`) and writes them only when changed (the letters are the glyph table's own
+ * Uses the string slots `stringBase … stringBase + NAME_ENTRY_STRING_SLOTS − 1` (the letters,
+ * `END`, `↑`, `↓`, `_`) and writes them only when changed (the letters are the glyph table's own
  * strings). Never allocates.
  *
  * @param list - Target draw list.

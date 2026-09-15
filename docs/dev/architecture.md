@@ -655,10 +655,10 @@ sections of `shmup_feat.md` / `shmup_tech.md`.
 Implemented or partial today: core `platform`, `input`, `config` (partial: `GameConfig` with the difficulty
 presets since M2-01 and, since M1-17, the `UserOptions` — the display options of M2-02 / M2-08 /
 M2-09 included; the rest in M2-16), `loop`, `game`,
-`presentation`, `rng`, `math`, `events`, `pools`, `save` (M1-17), `data` (partial: `rules` since M2-01, `patterns` since M2-02, `campaign` since M2-10 —
+`presentation`, `rng`, `math`, `events`, `pools`, `save` (M1-17; the per-mode tables and the name entry's rows since M2-15), `data` (partial: `rules` since M2-01, `patterns` since M2-02, `campaign` since M2-10, `replay` — the attract demos — since M2-15 —
 `strings` is missing), `world`, `stage`, `player` (implemented for P0 since
 M1-12; co-op joining lives in `world` since M2-06), `collision` (implemented with M2-07: moving blocks and destructible tiles — the bending lasers' circle chains live in `bullets`), `debug` (M1-19: state hash, switches, controls,
-counters, the stage skip and checkpoint jumps), `replay` (M1-19), `enemies` (partial: rank modifiers and revenge bullets since M2-01, the Option Hunter and
+counters, the stage skip and checkpoint jumps), `replay` (M1-19; the attract playback `replay/demo.ts` and the session-free `replay/format.ts` since M2-15), `enemies` (partial: rank modifiers and revenge bullets since M2-01, the Option Hunter and
 the blue capsule's clear since M2-04, the proximity wake since M2-14), `patterns` (implemented with M2-02: runner, movers, fire primitives and the pattern DSL),
 `behaviors` (implemented with M2-14 — the roster of all nine zones: the M1 enemy and boss rosters, `pattern.loop`, `hunter.option`, `cube.pincer`, the six stage gimmicks of M2-07, the captains and raid turrets of M2-09, zones B and C's `rocket.homing`, `worm.burst`, `boss.maw` and `boss.widow` of M2-11, zones D and E's `rear.swoop`, `boss.bastion` and `boss.steed` of M2-12, zones F and G's `cell.chase`, `boss.squid` and `boss.facet` of M2-13, zones H and I's `emitter.laser`, `mine.burst`, `boss.sovereign`, `boss.ark` and `boss.angler` of M2-14), `bosses` (implemented with M2-09: the P0
 mechanics plus four slots, turned parts, captains, raids, double and inner bosses, timers, the HP
@@ -669,14 +669,14 @@ into points since M2-02 — graze is P2), `rank` (implemented with M2-01: growth
 scores, the session hi-score, extends and the continue digit — per player, co-op included, since M2-06), `fx` (partial: the
 hit-stop / shake / flash requests — slowdown later), `ui` (partial: the list menu, slider,
 toggle, choice and confirm widgets, builders and the HUD with the Direct-mode tier pips since M2-05, the co-op halves since M2-06
-and the boss HP bar since M2-09 — rebind prompt and name entry later), `scenes` (partial: the scene stack, the M1 flow, the Options screen, the difficulty
+and the boss HP bar since M2-09, the name entry since M2-15 — the rebind prompt later), `scenes` (implemented since M2-15: the scene stack, the M1 flow, the Options screen, the difficulty
 menu and the continue countdown, the weapon select with its live preview and the Auto order editor
-(M2-03; its OPTION row M2-04), the ship select (M2-05), 1 PLAYER / 2 PLAYERS and the co-op rules (M2-06), campaign runs — the run state carried between zone Worlds, the zone tally, the zone map, the ending hook, hidden bonus stages, practice plumbing (M2-10), the ending scenes and the credits (M2-14) — the other M2 screens later);
+(M2-03; its OPTION row M2-04), the ship select (M2-05), 1 PLAYER / 2 PLAYERS and the co-op rules (M2-06), campaign runs — the run state carried between zone Worlds, the zone tally, the zone map, the ending hook, hidden bonus stages, practice plumbing (M2-10), the ending scenes and the credits (M2-14), the mode select, the attract loop — demo play, hi-score tables, story crawl —, the name entry, the practice select and the sound test (M2-15) — more option groups with M2-16);
 input-web `keymap`, `keyboard`, `gamepad`, `web-input` (implemented with M2-06's seats), `remote`, `rebind`
 (partial: profiles, contexts, the selectable profiles of CONTROLS — the rebinding UI comes in
 M2-16); audio-web `web-audio` (partial; driven by the Options sliders since M1-17), `synth`, `sfx`,
 `music`, `loader`,
-`engine`;
+`engine` (the sound test's `playTrack` since M2-15);
 render-pixi `renderer`, `viewport` (the scale modes since M2-08), `test-pattern`, `palette` (the colour-blind bullet
 palette tables since M2-02, palette cycling since M2-08), `atlas`, `layers`, `sprites`,
 `text`, `ui`, `particles`, `effects` (shake, flash, dim, popups; raster and palette-cycle layer

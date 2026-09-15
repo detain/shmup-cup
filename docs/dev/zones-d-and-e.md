@@ -550,6 +550,6 @@ console.info(describeRun(run)); // zone-e four-way (god mode): stageClear after 
   stage GLIMMER CACHE) on the same recipe ([zones-f-and-g.md](zones-f-and-g.md)); their bundle took
   it to 320.3 KB gzip.
 - **M2-14** (done) — the final zones H and I, the endings and the credits ([zones-h-and-i.md](zones-h-and-i.md)).
-- **M2-15** — the practice select (`startPractice` already starts any zone at a checkpoint, zone D's
-  caves included).
+- **M2-15** (done) — the practice select starts any zone at any checkpoint, zone D's caves included,
+  and the attract loop plays a demo of each zone ([front-end-and-attract.md](front-end-and-attract.md)).
 - **M2-17 / M2-18** — the bundle and texture budgets for nine real zones.

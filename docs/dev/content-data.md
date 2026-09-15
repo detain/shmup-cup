@@ -2,7 +2,7 @@
 
 How game data gets from a JSON file under `content/` to numbers the simulation can read
 every tick. Filled in by plan step **M1-02**; every later step that adds a content kind
-(paths, tilesets, rules, patterns, campaign, strings) extends the same machinery.
+(paths, tilesets, rules, patterns, campaign, replay, strings) extends the same machinery.
 
 This page is the *how and why*. File formats for content authors are in each folder's
 README ([`content/README.md`](../../content/README.md) and the `player/`, `weapons/`,
@@ -54,7 +54,9 @@ since M2-01 the `rules` kind holds the difficulty presets and enemies may carry 
 the `patterns` kind holds the bullet pattern DSL (compiled at load into one program bank — see
 [pattern-dsl.md](pattern-dsl.md)), the `rules` kind a `scoring` section and enemies a `pattern`, and
 since M2-10 the `campaign` kind holds the zone map (see
-[campaign-and-bonus-stages.md](campaign-and-bonus-stages.md#the-campaign-file-coredata-campaign)). Both
+[campaign-and-bonus-stages.md](campaign-and-bonus-stages.md#the-campaign-file-coredata-campaign)), and
+since M2-15 the `replay` kind holds the attract loop's demos (see
+[front-end-and-attract.md](front-end-and-attract.md#demos-are-content-contentdemos-kind-replay)). Both
 apps register the plugin and their
 `main.ts` imports `virtual:shmup-content`; `@shmup/shell`'s `bootShell()` validates it with
 `loadGameContent()` (core kinds through `loadContent()`, foreign kinds through the
@@ -68,7 +70,7 @@ when there is any issue, and passes `db` to `createGame` (M1-04,
   selects the schema; the loader does not care about folder or file name (the content test
   does: files must be named `<folder>/<name>.<kind>.json`).
 - Core kinds (`CONTENT_KINDS`): `player`, `weapons`, `enemies`, `paths`, `stage`, `tileset`,
-  `rules` (M2-01), `patterns` (M2-02), `campaign` (M2-10). Any other kind is
+  `rules` (M2-01), `patterns` (M2-02), `campaign` (M2-10), `replay` (M2-15). Any other kind is
   returned untouched in `foreign`, in path order, for its owning package to validate
   (`input-profiles` → input-web `rebind` since M1-05 — see
   [input-profiles.md](input-profiles.md); `fx` → render-pixi `particles` since M1-14 — see
@@ -121,7 +123,10 @@ const game = createGame(platform, { seed }, db);
    `campaign` file is checked as a graph and completed (`completeCampaign`: depths, rows, exits,
    finals, route count, ending masks) into `db.campaign` — a second one is an issue and is
    ignored — and each stage's `bonus` events are checked and their defaults filled
-   (`checkBonusEvent`).
+   (`checkBonusEvent`); since M2-15 the campaign's `story` pages get their `scene` / `lines`
+   defaults, and each `replay` file (an attract demo — `DEMO_FILE_SCHEMA`: the replay document's
+   structure, `ticks` ≤ `MAX_DEMO_TICKS`, one input string per player, 32-bit hashes) joins
+   `db.demos` under its `id` (a duplicate is an issue).
 7. **Intern** sprite and script names: every distinct name gets an index in *sorted* order
    (`db.sprites`, `db.scripts`), independent of which file mentioned it first. The names in
    `options.extraSprites` join the sprite names first (M1-09: hosts pass `core/world`
@@ -145,7 +150,9 @@ const game = createGame(platform, { seed }, db);
    level fires must belong in the family's slot (`main` / `sub`) — issue path
    `<file>:families[f].levels[l].shots[k].weapon`. Then (M2-10) `checkBonusReferences` — a
    `bonus` event must name a stage of type `bonus` — and `checkCampaignStages` — a campaign zone's
-   stage must not be one (issue path `<campaign file>:zones[i].stage`).
+   stage must not be one (issue path `<campaign file>:zones[i].stage`). Then (M2-15)
+   `checkDemoStages`: a demo's `header.stageId` must be a stage of the content (issue path
+   `<demo file>:header.stageId`, `unknown stage id "…"`), and its `stageIndex` is filled.
 10. **Expand stage terrain** (third pass, M1-07): every stage with a `tilemap` whose tileset
    resolved gets its tile grid built from the `heightfield` generator and / or RLE rows into
    `StageSpec.terrain` (`core/data/tilemap.ts`); since M2-07 the same pass resolves each
@@ -236,7 +243,9 @@ list plus an id → position map: `ships`/`shipIndex`, `weapons`/`weaponIndex`,
 `patterns` kind (M2-02) `patterns`, the compiled `PatternBank` (`code`, `actions`,
 `actionIndex`, `entries`, `bullets`; `EMPTY_PATTERN_BANK` without pattern files); from the
 `campaign` kind (M2-10) `campaign`, the completed `CampaignSpec` (or `null` without a campaign
-file — the scene flow then plays single stages). Lists are
+file — the scene flow then plays single stages); from the `replay` kind (M2-15) `demos` /
+`demoIndex` (`DemoSpec`s in path order — the validated replay document; `core/replay` decodes it
+when the attract loop plays it). Lists are
 in path-then-document order. Systems resolve what they need **once** (at session or stage
 start) and keep the numbers; per-tick code indexes arrays only — no `Map.get`, no string
 compares (zero-allocation rule, [conventions.md](conventions.md#performance-zero-allocation-in-hot-paths)).
@@ -529,3 +538,12 @@ stage), `enemies/zone-f.enemies.json` / `zone-g.enemies.json` (sorting after the
 `terrain-prism.tileset.json` and four stage-scoped songs; no path file (the halo crystals fly zone
 A's). Boss arms are ordinary parts with a `radius` attached to one another; FACET MONARCH's armour
 is a part with a hurtbox and no sprite, which was already valid ([zones-f-and-g.md](zones-f-and-g.md)).
+
+M2-15 (done) — the new core kind **`replay`**: the attract loop's demos
+(`content/demos/zone-a … zone-i.replay.json` + README + `example.replay.json`; `ContentDb.demos` /
+`demoIndex`, `DemoSpec`, `MAX_DEMO_TICKS`) — `core/replay` documents recorded by
+`test/golden/demos.ts`, re-recorded by `pnpm golden:update`, skipped by Prettier and locked by
+`test/golden/demos.test.ts`; and the campaign's optional **`story`** (`CampaignStoryPage`,
+`STORY_SCENES`, ≤ 8 pages of ≤ 6 lines of ≤ 40 characters — three pages in
+`main.campaign.json`). The content test maps the folder `demos` to the kind `replay`
+([front-end-and-attract.md](front-end-and-attract.md)).

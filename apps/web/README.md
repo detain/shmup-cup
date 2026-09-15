@@ -89,7 +89,11 @@ LABYRINTH (crystal walls, the cube rush, FACET MONARCH; its prism gallery's four
 CITADEL (the piston hall, the parade of four earlier bosses, IRON SOVEREIGN — with `&skip=boss` it
 starts before the parade) and `?stage=zone-i` ABYSSAL THRONE (depth mines, the ABYSS ARK raid, THE
 HOLLOW KING — add `&loadout=full` to beat the ARK's 90 s); a whole run ends with the ending scene
-and the credits (guide: [`docs/dev/zones-h-and-i.md`](../../docs/dev/zones-h-and-i.md)). Since M1-14 hits
+and the credits (guide: [`docs/dev/zones-h-and-i.md`](../../docs/dev/zones-h-and-i.md)); since M2-15 the
+title left alone for 12 s plays the attract loop (a bundled zone demo, the high-score tables, the
+story crawl — any key returns), a high score is named in the name entry (arrow keys and Enter), and
+the mode select adds PRACTICE (a zone from a checkpoint, its own tables) and SOUND TEST (guide:
+[`docs/dev/front-end-and-attract.md`](../../docs/dev/front-end-and-attract.md)). Since M1-14 hits
 have **game feel**: explosions, sparks, debris, cancel sparkles and a muzzle flash from the
 presets of `content/fx/`, the screen shake of a lost ship or a boss's final blast, flashes
 (behind a ≤ 3-a-second limiter), the WARNING's dim and rising score numbers;

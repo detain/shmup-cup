@@ -312,6 +312,39 @@ versions before 1.0 may change anything between minor releases. Development foll
   and outcomes unchanged; the test round's `boss.ark` fix re-blessed `zone-i-god` once more) and
   seven zone H / I runs were added (53 in all). The Tizen `app.js` is 331.5 KB gzip of its 350 KB
   budget.
+- **The mode select** (M2-15): the title's menu now reads 1 PLAYER / 2 PLAYERS / **PRACTICE** /
+  OPTIONS / **SOUND TEST** / EXIT (EXIT on the TV only) — OPTIONS is one ▼ further down.
+- **Attract mode** (M2-15): left alone for 12 seconds on `PRESS OK`, the title plays a **demo** of a
+  zone (a recording of the computer player, one zone after the other, silent, `DEMO PLAY`), then the
+  **high-score tables**, then an original **story** crawling up over three picture scenes, and comes
+  back; any button returns to the title.
+- **Name entry and high-score tables** (M2-15): a score that makes its table is named with three
+  letters — ▲ ▼ pick a letter, ▶ or OK go on, ◀ or Back go back, OK on `END` finishes (30 s time
+  limit) — then the table is shown with the new row blinking. Tables are kept per difficulty, ship
+  **and mode**: one-player games, two-player games (both players name their rows) and practice each
+  have their own; two-player rows of older saves move into the two-player tables by themselves.
+  The zone column shows the zone reached.
+- **Practice** (M2-15): choose a ZONE, a CHECKPOINT and a LOADOUT (STANDARD or FULL POWER), then the
+  difficulty, ship and weapons as usual; one zone is played from there, its scores go to the
+  practice tables and never change the title's `HI`.
+- **Sound test** (M2-15): every music track and every sound effect, played with OK; STOP silences
+  the music, BACK brings the title theme back.
+- **CONTINUE?** (M2-15) shows a time bar that drains (red for the last three seconds, the number
+  flashing), your score, and a blinking `PRESS OK` / `BACK: GIVE UP` once OK counts.
+- For content authors (M2-15): the new content kind `replay` — the attract demos in
+  `content/demos/` (recorded by `test/golden/demos.ts`, never edited by hand) — and a campaign's
+  optional `story` (up to 8 pages, each a picture scene `none` / `dawn` / `invasion` / `launch` and
+  up to 6 lines) ([`content/demos/README.md`](content/demos/README.md),
+  [`content/campaign/README.md`](content/campaign/README.md)).
+- Behaviour change for tools and tests (M2-15): `TitleItem` is Start 0, TwoPlayers 1, Practice 2,
+  Options 3, SoundTest 4, Exit 5; every end of a game goes through `finishGame()` — the name entry
+  (when a score entered its table) and the result table before the title; `hiScoreModeKey(config,
+  mode)` names `-2p` / `-practice` tables; `SimEventKind.SoundTest` (16), `GameOptions.soundTest`,
+  `AudioEngine.playTrack` and the shell's `connectSoundTest` are new; `core/replay` was split into
+  `format.ts` and `demo.ts` (`createDemoPlayback`, `DemoPlayback`) with the same public API;
+  `pnpm golden:update` also re-records the demos; `core/scenes` is `implemented`, with 384 UI string
+  slots. No simulation change — the golden replays are unchanged. The Tizen `app.js` is 343.8 KB gzip
+  of its 350 KB budget.
 
 ### Documentation
 
@@ -360,7 +393,12 @@ versions before 1.0 may change anything between minor releases. Development foll
   (M2-13); the developer guide [`docs/dev/zones-h-and-i.md`](docs/dev/zones-h-and-i.md) and the
   tester guide's [Zone H: IRON CITADEL](docs/client/preview-build.md#zone-h-iron-citadel),
   [Zone I: ABYSSAL THRONE](docs/client/preview-build.md#zone-i-abyssal-throne) and
-  [The endings and the credits](docs/client/preview-build.md#the-endings-and-the-credits) (M2-14).
+  [The endings and the credits](docs/client/preview-build.md#the-endings-and-the-credits) (M2-14);
+  the developer guide [`docs/dev/front-end-and-attract.md`](docs/dev/front-end-and-attract.md), the
+  demo format for authors in [`content/demos/README.md`](content/demos/README.md) and the tester
+  guide's
+  [The front end](docs/client/preview-build.md#the-front-end-attract-mode-high-scores-practice-and-the-sound-test)
+  (M2-15).
 
 ## [0.1.0] — M1: playable vertical slice
 

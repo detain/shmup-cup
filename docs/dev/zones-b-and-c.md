@@ -520,5 +520,6 @@ The recipe these two zones followed:
   GLIMMER CACHE behind a `ground` entrance) on the same recipe, plus regenerating walls, a seeded cube
   rush and bosses with curling arms ([zones-f-and-g.md](zones-f-and-g.md)).
 - **M2-14** (done) — zones H and I, the ending scenes and the credits ([zones-h-and-i.md](zones-h-and-i.md)).
-- **M2-15** — the practice select (`startPractice` already starts any zone at a checkpoint).
+- **M2-15** (done) — the practice select starts any zone at any checkpoint, and the attract loop
+  plays a demo of each zone ([front-end-and-attract.md](front-end-and-attract.md)).
 - **M2-17 / M2-18** — the bundle and texture budgets for nine real zones.

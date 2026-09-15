@@ -268,7 +268,14 @@ nothing. `renderer.drawCalls` is the last frame's count over both passes, `-1` w
 ## Replays (`core/replay`)
 
 A replay reproduces a session tick for tick from its input (`shmup_feat.md` §21). It is the one
-playback path for golden tests, the future cross-engine check (M2-18) and attract mode (M2-15).
+playback path for golden tests, the future cross-engine check (M2-18) and — since M2-15 — the
+attract loop's demo play.
+
+**Files (M2-15).** The session-free parts — header, recorder, playback and the file format — live
+in `replay/format.ts`, which does not import `core/game`, so `core/scenes` (which `core/game`
+imports) can decode and play demos without a cycle; the attract playback is `replay/demo.ts`
+(`createDemoPlayback`, `DemoPlayback`, `DEMO_BUILD_ID`); `replay/index.ts` keeps
+`createReplayGame` / `playReplay` and re-exports everything — the public API did not move.
 
 **Header** (`createReplayHeader(config, { buildId, checkpoint, assisted })`, frozen):
 
@@ -322,7 +329,15 @@ report.ok; // false → report.desyncTick, expectedHash, actualHash
 - `playReplay(replay, content, options)` plays a whole replay headless → `{ report, game }`.
 - **Build lock.** `DesyncReport.buildMatches` compares `header.buildId` with the running build's
   (`null` when none is given). Whether a mismatch refuses the replay is the host's decision; the
-  core only reports it. Golden replays use the fixed id `'golden'` and trust their hashes.
+  core only reports it. Golden replays use the fixed id `'golden'` and the attract demos
+  `DEMO_BUILD_ID` (`'demo'`); both trust their hashes.
+- **Attract playback (M2-15).** `createDemoPlayback(replay, content, { events })` builds the World
+  a header describes the way `createReplayGame` does (the config re-resolved over the content's
+  difficulty table, god mode from `assisted`, the checkpoint) but as a bare World with its **own**
+  debug switches and the event queue it is given; `DemoPlayback.step()` plays one tick, hashes
+  checked — `running` turns false at the recording's end or the first mismatching hash, so the
+  scene flow's `DemoScene` moves on instead of showing a desynced demo
+  ([front-end-and-attract.md](front-end-and-attract.md#attract-playback-corereplay)).
 
 **File format** (`encodeReplay` → `ReplayJson`, plain JSON):
 `{ kind: 'replay', header, ticks, hashInterval, inputs, hashes, finalHash }`. Each player's words
@@ -339,9 +354,9 @@ ticks; doubles beyond); `poll()` and `check()` of recorder and playback write in
 a hash boxes one number every 600 ticks. Encoding, decoding and `finish()` allocate (cold) —
 guarded in `packages/core/test/replay/replay-alloc.test.ts`.
 
-**Not covered yet.** Replays record **bare-gameplay sessions** (one World). Recording the scene
-flow (menus, retries, several Worlds) is later work: dev auto-record and attract mode (M2-15),
-replay save / share / fast-forward (M3-01). God mode toggled **mid-run** is not reproducible —
+**Not covered yet.** Replays record **bare-gameplay sessions** (one World) — the attract demos of
+M2-15 are such recordings (one zone, no menus). Recording the scene flow (menus, retries, several
+Worlds), dev auto-record and replay save / share / fast-forward are later work (M3-01). God mode toggled **mid-run** is not reproducible —
 record with it fixed (the header's `assisted`); the debug stage jumps are reproducible only when
 the replay contains them (a session recorded through `createReplayGame` has no key handling).
 
@@ -531,6 +546,12 @@ a co-op run player 2's score, lives, death ticks and continues).
   diff after `golden:update` *is* the behaviour change — review it.
 - The files are generated (`JSON.stringify` with a two-space indent) and excluded from Prettier
   (`.prettierignore`); never edit them by hand.
+- **The attract demos (M2-15)** are recorded and locked the same way: `test/golden/demos.ts`
+  (`DEMO_SCENARIOS` — nine zones, the 4-way bot with god mode, 2,400 ticks each) writes
+  `content/demos/<id>.replay.json` (bundled content, kind `replay`), `demos.test.ts` plays each back
+  through `createDemoPlayback` and `playReplay` with every hash, and `pnpm golden:update` re-records
+  them with the goldens — so a simulation change re-blesses both in one commit
+  ([front-end-and-attract.md](front-end-and-attract.md#demos-are-content-contentdemos-kind-replay)).
 
 ## The stress benchmark (`pnpm bench`)
 
@@ -556,7 +577,7 @@ timing needs a quiet machine. CI runs it after `pnpm build`.
 
 | Budget | Constant | Limit | At M1-19 |
 |---|---|---|---|
-| `app.js` gzipped | `APP_JS_GZIP_BUDGET` | 350 KB (launch ≤ 10 s, `shmup_feat.md` §23) | 228.6 KB (773.6 KB raw); **307.5 KB after M2-11**, **313.5 KB after M2-12**, **320.3 KB after M2-13** (the inlined content grows with every zone — ≈ 6 KB a pair) |
+| `app.js` gzipped | `APP_JS_GZIP_BUDGET` | 350 KB (launch ≤ 10 s, `shmup_feat.md` §23) | 228.6 KB (773.6 KB raw); **307.5 KB after M2-11**, **313.5 KB after M2-12**, **320.3 KB after M2-13** (the inlined content grows with every zone — ≈ 6 KB a pair), **331.5 KB after M2-14**, **343.8 KB after M2-15** (~9 KB of front-end scene code, ~3 KB of demos) |
 | Atlas page edge | `ATLAS_PAGE_MAX_SIZE` | 2048 px (and every page must be a readable PNG — `pngSize` reads its IHDR) | one page |
 | Whole `dist/` | `DIST_BUDGET` | 8 MB | 812.4 KB |
 
@@ -685,7 +706,11 @@ testers in [../client/debug-tools.md](../client/debug-tools.md#the-m1-release-ch
   `-deaths`, `zone-i-god`, `-boss`, `-escape`); the hash gained the enemies' `nearRange` and the
   bosses' spiral fields, and every file was re-blessed in the same commit
   ([zones-h-and-i.md](zones-h-and-i.md#determinism-hashing-and-golden-replays)).
-- **M2-15** — attract mode plays bundled replays (and the scene flow gets recorded).
+- **M2-15** (done) — attract mode plays bundled replays: nine bot demos in `content/demos/`,
+  `createDemoPlayback` / `DemoPlayback` on the ordinary playback path, `replay/format.ts` split
+  out, the demos re-recorded by `pnpm golden:update` and locked by `test/golden/demos.test.ts`
+  ([front-end-and-attract.md](front-end-and-attract.md)). The scene flow itself is still not
+  recorded (M3-01).
 - **M2-17** — the device info (model, firmware) in the debug overlay.
 - **M2-18** — cross-engine determinism: golden replays in Chromium and Firefox.
 - **M3-01** — replay save / share / browser, fast-forward, assists flagged as `assisted`.

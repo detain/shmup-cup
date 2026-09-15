@@ -249,6 +249,14 @@ ES5 and linted with `ecmaVersion: 5`.
   that grows with content draws only what is on screen through a fixed ring of string slots taken
   by row number (`CreditsScene`, 24 slots for any number of rows)
   ([zones-h-and-i.md](zones-h-and-i.md#zero-allocation)).
+  And from M2-15: a screen that plays a private World (the attract demo) gives it its own event
+  queue and debug switches and forwards that queue through a closure bound once in its constructor,
+  filtering kinds through a `Uint8Array` table (`DEMO_SILENT_KINDS`); a name, a page title or a zone
+  card is built on a transition and never per frame (the name entry's letters are one-character
+  strings built once); and an allocation guard of a World must not run after a long
+  replay-*recording* session in the same worker — V8 feedback from the recorder made every later
+  World allocate ~12 bytes a tick — so it plays a synthetic recording (`packReplayInput`) instead
+  ([front-end-and-attract.md](front-end-and-attract.md#zero-allocation)).
 - Behaviour coroutines (generators, D29) allocate a small result object on every resume:
   scripts **sleep** (`yield ticks`) and are resumed only when they wake; per-tick motion
   belongs in a mover (numbers on the body), never in a `yield 1` loop.
@@ -310,7 +318,8 @@ records as `assisted` ([debug-and-replays.md](debug-and-replays.md#release-build
   worlds fed the same input.
 - Generated sources that are committed (today `packages/core/src/math/trig-table.ts`) get
   a test that regenerates them and diffs the committed copy.
-- **Golden replays** (M1-19, plan §1.3 / §1.5): `test/golden/*.replay.json` must replay with
+- **Golden replays** (M1-19, plan §1.3 / §1.5): `test/golden/*.replay.json` — and since M2-15 the
+  attract demos `content/demos/*.replay.json` (`test/golden/demos.test.ts`) — must replay with
   every state hash equal. A change that alters what the simulation does re-blesses them **in the
   same commit** with `pnpm golden:update`, and the commit message says why; never edit the files
   by hand (Prettier skips them). An unintended golden failure is a bug, not a re-bless

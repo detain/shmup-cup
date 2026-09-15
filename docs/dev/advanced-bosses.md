@@ -526,4 +526,5 @@ hashWorld(game.world); // covers every slot, the raid camera, the rush and the e
   frames, hooks as its `minion`, a 90-s time limit) whose `inner` boss is THE HOLLOW KING; its escape
   sets `EndingFlag.BossEscaped` and the campaign's *THE FLAGSHIP SLIPS AWAY* reads it (a captain's
   escape never does); the new `BossScriptApi.spiral` stream ([zones-h-and-i.md](zones-h-and-i.md)).
-- **M2-15** — a practice start at a boss; the attract mode's demo plays.
+- **M2-15** (done) — practice from any of a zone's checkpoints (the last one is the nearest to its
+  boss), the attract demos ([front-end-and-attract.md](front-end-and-attract.md)).

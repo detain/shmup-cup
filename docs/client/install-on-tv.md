@@ -89,7 +89,10 @@ More options (custom `tizen`/`sdb` paths): [`apps/tizen/README.md`](../../apps/t
 its high scores on the monitor itself, inside the app's own storage. Installing a newer build over
 the old one should keep them (the app stays the same app) — please report it if an update loses
 them. **Removing the app deletes them** (the TV does that for every app), so the next install starts
-with the default settings and no high scores. Each monitor keeps its own.
+with the default settings and no high scores. Each monitor keeps its own. (The first launch of the
+front-end build moves two-player scores that older builds kept in the one-player tables into the new
+2 PLAYERS tables — they are not lost, just listed separately; rows saved before initials existed
+show `---`.)
 
 **The debug build (developer tools).** For the on-device checks of a milestone, build with
 `build:dev` instead of `build` and package and install as above:

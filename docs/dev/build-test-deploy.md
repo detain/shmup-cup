@@ -44,7 +44,7 @@ desktop app, run `pnpm rebuild electron` without the variable set.
 | `pnpm test:all` | The same run (kept as an alias) |
 | `pnpm test:integration` | Only the repo-level `test/` project |
 | `pnpm test:e2e` | Browser smoke tests: `turbo run build:test` for `@shmup/web` and `@shmup/tizen` (test builds — the release code plus the debug tools and `window.__shmupDebug`, M1-19), then Playwright (`test/e2e/playwright.config.ts`) in headless Chromium with SwiftShader WebGL — the web build via `vite preview` (port 4173) and the Tizen `dist/index.html` via `file://`; every test in parallel ([Test concurrency](#test-concurrency)). Extra arguments go to Playwright (`pnpm test:e2e --shard=1/5`, `pnpm test:e2e boss`). Needs Chromium once per machine: `pnpm exec playwright install --with-deps chromium`. See [rendering-and-shell.md](rendering-and-shell.md#browser-tests-pnpm-teste2e) |
-| `pnpm golden:update` | Re-blesses the golden replays (`scripts/golden-update.mjs`: Vitest on `test/golden` with `SHMUP_GOLDEN_UPDATE=1` — re-records every scenario of `test/golden/golden.ts` from its bot, rewrites `test/golden/*.replay.json`, then checks them). Only for an **intended** simulation change, in the same commit, with the reason in the commit message — see [debug-and-replays.md](debug-and-replays.md#golden-replays-testgolden) |
+| `pnpm golden:update` | Re-blesses the golden replays (`scripts/golden-update.mjs`: Vitest on `test/golden` with `SHMUP_GOLDEN_UPDATE=1` — re-records every scenario of `test/golden/golden.ts` from its bot, rewrites `test/golden/*.replay.json`, then checks them — since M2-15 also the attract demos of `test/golden/demos.ts` into `content/demos/*.replay.json`). Only for an **intended** simulation change, in the same commit, with the reason in the commit message — see [debug-and-replays.md](debug-and-replays.md#golden-replays-testgolden) |
 | `pnpm bench` | The stress benchmark (`test/bench/`, own Vitest config, `--expose-gc`): 20,000 ticks with 512 bullets, 64 enemies, the full loadout and four lasers; prints ms/tick and heap growth, fails at a median ≥ 1.0 ms/tick or ≥ 512 KB heap growth. Not part of `pnpm test`; CI runs it after the build — see [debug-and-replays.md](debug-and-replays.md#the-stress-benchmark-pnpm-bench) |
 | `pnpm format` / `pnpm format:check` | Prettier write / check (research docs at the root are ignored) |
 | `pnpm clean` | Removes `dist/`, `coverage/`, `.turbo/` everywhere (never `node_modules`) |
@@ -128,9 +128,12 @@ the boot error screen), and — since M1-19 — the **budgets** hold: `app.js` �
 (`APP_JS_GZIP_BUDGET`), every atlas page a readable PNG of at most 2048² (`ATLAS_PAGE_MAX_SIZE`),
 the whole `dist/` ≤ 8 MB (`DIST_BUDGET`). The OK line prints the sizes against them
 (M1-19: `app.js` 773.6 KB, 228.6 KB gzipped; `dist/` 812.4 KB; after M2-11 `app.js` is 307.5 KB
-gzipped, after M2-12 313.5 KB, after M2-13 320.3 KB and after M2-14 331.5 KB — the content of every
-zone is inlined, each pair of zones adds ≈ 6–11 KB; all nine zones and the endings are in:
-[zones-h-and-i.md](zones-h-and-i.md#bundle-budget)). A release build must also carry
+gzipped, after M2-12 313.5 KB, after M2-13 320.3 KB, after M2-14 331.5 KB and after M2-15
+**343.8 KB** — the content of every zone is inlined, each pair of zones adds ≈ 6–11 KB; all nine
+zones and the endings are in: [zones-h-and-i.md](zones-h-and-i.md#bundle-budget); M2-15's front
+end added ~9 KB of scene code and ~3 KB of demos —
+[front-end-and-attract.md](front-end-and-attract.md#budgets-string-slots-and-the-bundle); 6.2 KB
+of headroom remain). A release build must also carry
 no debug code (`tizen-build.test.ts` looks for `__shmupDebug` / `debug-overlay`).
 `apps/tizen/test/build/tizen-build.test.ts` also executes the bundle in a V8 realm with
 `globalThis` deleted.
@@ -252,7 +255,9 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   of zones F and G (`zone-f` four times — god mode, Arcade difficulty, the weaver's deaths, the boss
   —, `zone-g` three times — god mode, without, the boss —, `glimmer-cache`)
   (`test/golden/*.replay.json`) — back and requires every state hash and the
-  recorded outcome to match — part of `pnpm test` (the `integration` project). A failure means
+  recorded outcome to match — part of `pnpm test` (the `integration` project). Since M2-15
+  `test/golden/demos.test.ts` does the same for the nine attract demos in `content/demos/`
+  (through the attract playback, `createDemoPlayback`). A failure means
   the simulation changed; re-bless an intended change with `pnpm golden:update` and say why in
   the commit message ([debug-and-replays.md](debug-and-replays.md#golden-replays-testgolden)).
 - **Benchmark** (M1-19): `pnpm bench` (above) — not part of `pnpm test`; CI runs it.
@@ -477,7 +482,7 @@ the frozen install fails.
 | `pnpm test:e2e`: port 4173 already in use | Another `vite preview` is running; locally it is reused (`reuseExistingServer`), so make sure it serves a current `apps/web/dist`, or stop it |
 | A test fails with `the allocation guard needs node --expose-gc --allow-natives-syntax` | The package's `vitest.config.ts` lacks `defineShmupProject(name, { execArgv: ALLOCATION_GUARD_EXEC_ARGV })` (`vitest.shared.ts`) |
 | An allocation test (`… toBeLessThan(…)` on `growth.bytes`) fails | A hot path allocates: a new object / array / closure per tick, or a fractional number V8 boxes (a fractional `let` in a closure, a mixed ternary, a fractional argument) — see [sim-world.md](sim-world.md#zero-allocation-and-the-allocation-guard). Check the test's own fakes too: a fake that logs its calls allocates (the fx gallery guard measured its popups fake). If it fails only now and then and always passes alone (`pnpm --filter <package> test <file>`), the guard is too close to its steady state: a cheap loop needs a warm-up of at least `max(iterations, 20_000)` calls, and a window whose calls meet paths the warm-up never ran may need more windows (`attempts`) — or the guard picks paths by the size of its index instead of its remainders (the windows run indices the warm-up never ran); never raise the budget for it, and report it if it keeps happening. Compiles landing in a window (V8's background threads starved by the load) no longer count — the guard lands them before each round and leaves compiled code out |
-| `golden.test.ts` fails: a hash or the outcome differs | The simulation changed. Unintended: find the change (the report names the first diverging hash tick). Intended: `pnpm golden:update`, review the diff of `test/golden/*.replay.json`, commit it with the reason — [debug-and-replays.md](debug-and-replays.md#gotchas) |
+| `golden.test.ts` or `demos.test.ts` fails: a hash or the outcome differs | The simulation changed (the demos in `content/demos/` are locked like the goldens since M2-15). Unintended: find the change (the report names the first diverging hash tick). Intended: `pnpm golden:update`, review the diff of `test/golden/*.replay.json`, commit it with the reason — [debug-and-replays.md](debug-and-replays.md#gotchas) |
 | `pnpm bench` fails on the median | Timing: run it alone on a quiet machine. On the heap: something in the tick allocates — see the allocation guard rows above |
 | Tizen build fails with `app.js is … gzipped, over the … budget` (or an atlas page / `dist/` budget) | The bundle grew past a plan budget (`check-bundle.mjs` rule 8). Find what grew (a new dependency, inlined data); raising a budget is a plan decision, not a fix |
 | `pnpm test:e2e` specs time out waiting for `window.__shmupDebug` | They ran against release builds (e.g. `playwright test` by hand after `pnpm build`). Run `pnpm test:e2e`, which builds `build:test` first |

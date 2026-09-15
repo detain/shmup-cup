@@ -16,13 +16,17 @@
  *    the music player (on the `music` bus) and starts the music requested meanwhile. Sounds
  *    requested before that are dropped; a context without buffer playback (test fakes) leaves the
  *    engine silent instead of failing.
- * 4. **Sound test** (M2-15). {@link AudioEngine.playTrack} plays any track of the library by index
- *    — loading it first when it is not resident (a menu) and keeping it as the one extra track.
  * 3. **Playback.** {@link AudioEngine.playSfx} pans a positional cue from the event's screen x
  *    ({@link DEFAULT_PAN_WIDTH} at the playfield edges), {@link AudioEngine.playMusic} maps a
  *    `MUSIC_CUES` id to the stage's track (`Silence` fades out; the track already playing is not
  *    restarted), {@link AudioEngine.duckMusic} ducks to {@link DEFAULT_DUCK_LEVEL}, and
  *    {@link AudioEngine.endFrame} closes the SFX dedupe window (once per drained frame).
+ * 4. **Sound test** (M2-15). {@link AudioEngine.playTrack} plays any track of the library by index
+ *    — loading it first when it is not resident (a menu, never a stage) and keeping it as the one
+ *    extra track: every other track outside the prepared set is released, the prepared set itself
+ *    is never touched, so a stage's music stays resident while the sound test browses the library.
+ *    The shell's `connectSoundTest` calls it for the scene flow's `SoundTest` events; a `Music`
+ *    `Silence` cue (the sound test's STOP) fades it out like any track.
  *
  * Bus volumes stay with the web-audio back-end (`setBusVolume`): since M1-17 the shell sets them
  * from the saved options at boot and from the Options screen's `UserOption` events
@@ -256,7 +260,11 @@ export function createAudioEngine(options: AudioEngineOptions): AudioEngine {
   let playingTrack = -1;
   let missedMusic = 0;
   let destroyed = false;
-  // The tracks of the prepared set (the sound test never releases them — M2-15).
+  /**
+   * The track indices of the last {@link AudioEngine.prepareMusic} set:
+   * {@link AudioEngine.playTrack} (the sound test, M2-15) never releases them when it drops its
+   * previous extra track.
+   */
   const prepared = new Set<number>();
 
   /** Copies prepared SFX samples into buffers (when attached). */
