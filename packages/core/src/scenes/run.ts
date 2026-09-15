@@ -570,7 +570,8 @@ export class RunState {
  * practice select's starting loadout (M2-15). A config `base` already matches keeps the `base`
  * object (the first zone of a campaign run, every single-stage run).
  *
- * @param base - The config of the run's games (`SceneFlow.gameConfig`).
+ * @param base - The config of the run (the flow's `runConfig`: `SceneFlow.gameConfig` when the
+ *   run began — M2-16).
  * @param run - The run.
  * @returns The config (allocates only for another stage — a transition).
  * @throws {RangeError} Never for a valid `base` (the stage id is not checked here — `createWorld`

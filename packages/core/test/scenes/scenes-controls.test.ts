@@ -470,6 +470,104 @@ describe('core/scenes GAME page (M2-16)', () => {
     expect(t.flow.weaponSelect.menu.enabled(WeaponSelectItem.Auto)).toBe(false);
   });
 
+  it('over the pause menu DIFFICULTY is disabled: the run keeps its difficulty and table (review round 1)', () => {
+    const save = createSaveStore(null);
+    const s = new Session(save);
+    s.press(Action.Confirm);
+    s.press(Action.Confirm); // 1 PLAYER
+    s.press(Action.Confirm); // NORMAL
+    s.hold(0);
+    s.press(Action.Confirm); // START in the weapon select
+    s.hold(0, 5);
+    expect(s.ids).toEqual(['game']);
+    const world = s.game.world;
+    const key = s.flow.modeKey;
+    s.press(Action.Pause);
+    s.press(Action.Down); // OPTIONS
+    s.press(Action.Confirm);
+    s.hold(0, 2);
+    s.openPage(OptionsItem.Game);
+    expect(s.ids).toEqual(['game', 'pause', 'options', 'gameOptions']);
+    const page = s.flow.gameOptionsPage;
+    expect(page.inGame).toBe(true);
+    expect(page.menu.enabled(GameOptionsItem.Difficulty)).toBe(false);
+    expect(page.difficulty.label).toBe('NORMAL');
+    // The focus skipped DIFFICULTY: Right changes LIVES (the review's Right > Back > Back).
+    expect(page.menu.focus).toBe(GameOptionsItem.Lives);
+    s.press(Action.Up); // wraps past DIFFICULTY
+    expect(page.menu.focus).toBe(GameOptionsItem.Back);
+    s.press(Action.Down);
+    expect(page.menu.focus).toBe(GameOptionsItem.Lives);
+    s.press(Action.Right); // LIVES 1
+    expect(page.difficulty.label).toBe('NORMAL');
+    s.press(Action.Back);
+    s.hold(0, 2);
+    s.press(Action.Back); // the Options screen
+    expect(s.ids).toEqual(['game', 'pause']);
+    expect(s.flow.difficulty).toBe('normal');
+    expect(s.flow.modeKey).toBe(key);
+    // The difficulty menu's NORMAL stays the remembered one.
+    expect(save.options.game).toMatchObject({ difficulty: 'normal', lives: 1 });
+    expect(s.game.world).toBe(world);
+    // RETRY STAGE takes the new LIVES — on the run's difficulty.
+    s.hold(0, 2);
+    s.press(Action.Down); // RETRY STAGE
+    s.press(Action.Confirm);
+    expect(s.game.world).not.toBe(world);
+    expect(s.game.world.config).toMatchObject({ difficulty: 'normal', startingLives: 1 });
+    expect(s.flow.modeKey).toBe(key);
+    // Back on the title the row is enabled again.
+    const title = new Session(save);
+    title.openOptions();
+    title.openPage(OptionsItem.Game);
+    expect(title.flow.gameOptionsPage.inGame).toBe(false);
+    expect(title.flow.gameOptionsPage.menu.enabled(GameOptionsItem.Difficulty)).toBe(true);
+    expect(title.flow.gameOptionsPage.menu.focus).toBe(GameOptionsItem.Difficulty);
+  });
+
+  it('the difficulty menu shows the LIVES the game starts with (review round 1)', () => {
+    const save = createSaveStore(null);
+    save.setOptions({ ...save.options, game: { ...save.options.game, lives: 5 } });
+    const s = new Session(save);
+    // The panel's LIVES then CONTINUES (the screen's only numbers drawn without zero padding).
+    const drawn = (): number[] => {
+      const ui = s.game.renderFrame().ui;
+      const out: number[] = [];
+      for (let i = 0; i < ui.count; i++) {
+        if (ui.op[i] === DrawOp.Number && ui.frame[i] === 0) out.push(ui.value[i]);
+      }
+      return out;
+    };
+    s.press(Action.Confirm);
+    s.press(Action.Confirm); // 1 PLAYER → the difficulty menu
+    s.hold(0, 2);
+    expect(s.ids).toEqual(['title', 'difficulty']);
+    expect(s.flow.difficultyMenu.focused).toBe('normal');
+    // The preset alone has 3 (below); the GAME page's LIVES 5 is what the game gets.
+    expect(s.flow.gameConfig.startingLives).toBe(5);
+    expect(drawn()[0]).toBe(5);
+    s.press(Action.Down); // HARD
+    expect(drawn()[0]).toBe(5);
+    s.press(Action.Up);
+    s.press(Action.Confirm); // NORMAL
+    s.hold(0);
+    s.press(Action.Confirm); // START in the weapon select
+    s.hold(0, 5);
+    expect(s.ids).toEqual(['game']);
+    expect(s.game.world.players[0].lives).toBe(5);
+    // Without the option the menu shows the preset's.
+    const plain = new Session();
+    plain.press(Action.Confirm);
+    plain.press(Action.Confirm);
+    plain.hold(0, 2);
+    const ui = plain.game.renderFrame().ui;
+    const lives: number[] = [];
+    for (let i = 0; i < ui.count; i++) {
+      if (ui.op[i] === DrawOp.Number && ui.frame[i] === 0) lives.push(ui.value[i]);
+    }
+    expect(lives[0]).toBe(3);
+  });
+
   it('an untouched page keeps the unset options unset', () => {
     const save = createSaveStore(null);
     const s = new Session(save);

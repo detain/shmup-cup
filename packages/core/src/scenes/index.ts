@@ -54,7 +54,10 @@
  *     moved or swapped, reset — the host's {@link ControlsSetup}) and the {@link InputTestScene};
  *     {@link DisplayScene} — bullets, scale, shake, flashes, hitbox, boss HP (live); and
  *     {@link GameOptionsScene} — difficulty, lives, death penalty, Auto Power-Up, magnet and the
- *     one-button preset (the next games' configs — `core/config` `withUserGameOptions`).
+ *     one-button preset (the next games' configs — `core/config` `withUserGameOptions`). A run
+ *     keeps the config it began with for all its Worlds (`FlowControl.runConfig` — the next zone,
+ *     a bonus stage); only a RETRY STAGE takes options changed since, at the run's difficulty (over
+ *     the pause menu the GAME page's DIFFICULTY is disabled).
  *   - {@link StageClearScene} (overlay): the tally (score, hi-score), then `TO BE CONTINUED` (M1
  *     has one zone), then the title; OK skips ahead.
  *   - {@link ContinueScene} (overlay, M2-01): a game over with continues left counts down 10 s;
@@ -1665,6 +1668,25 @@ interface FlowControl {
    * select's loadout ({@link FlowControl.arsenal}).
    */
   readonly worldConfig: GameConfig;
+  /**
+   * The configs the next games get per difficulty preset, in {@link DIFFICULTY_PRESETS} order:
+   * {@link FlowControl.configs} with the loadout, the ship, one or two players and the save's
+   * sim-affecting options (M2-16) — what the difficulty menu previews.
+   */
+  readonly armedConfigs: readonly GameConfig[];
+  /**
+   * The config of the run in progress (M2-16): {@link FlowControl.worldConfig} when the run began
+   * ({@link FlowControl.beginRun}, a practice start). Every World of the run — the next zone, a
+   * bonus stage and back — is built from it, so options changed from the pause menu never switch
+   * the game in play (its difficulty, its hi-score table); a RETRY STAGE takes them
+   * ({@link FlowControl.rearmRun}).
+   */
+  readonly runConfig: GameConfig;
+  /**
+   * RETRY STAGE (M2-16): the run takes the options chosen since it began — the armed config of
+   * the **run's** difficulty (a run never changes its difficulty). A transition.
+   */
+  rearmRun(): void;
   /** The loadout chosen in the weapon select (empty until the first START — M2-03). */
   readonly arsenal: ArsenalChoice;
   /** The input profiles CONTROLS offers (empty: CONTROLS disabled). */
@@ -2129,7 +2151,8 @@ export class GameScene extends SceneBase {
    * the zone before — none at a run's first zone). The old World's best score is recorded first
    * (into the session hi-score — the saved tables only take finished games); a retry counts the
    * old World's deaths and continues for the run, leaves a bonus stage (its lock lifted — the zone
-   * starts over) and counts a game start in the save (written with the next save write); the
+   * starts over), counts a game start in the save (written with the next save write) and takes the
+   * options chosen since the run began at the run's difficulty (`FlowControl.rearmRun`, M2-16); the
    * end-screen delay, the WARNING look and the bonus timers reset, the HUD is invalidated.
    *
    * @param retry - `true` (default) for RETRY STAGE.
@@ -2142,6 +2165,8 @@ export class GameScene extends SceneBase {
       run.noteWorldEnd(this.world);
       run.leaveBonus(false);
       flow.save.count('gamesStarted');
+      // The options chosen since the run began (M2-16), at the run's difficulty.
+      flow.rearmRun();
     }
     flow.music(MUSIC_CUES.Silence, MUSIC_FADE_TICKS);
     this.useWorld(flow.createRunWorld(run.entry));
@@ -2770,8 +2795,9 @@ function rateIndex(interval: number): number {
  * the player's rebinding of it); SOCD and DEBOUNCE are stored in the save at once and applied live
  * (`UserOption` `InputSettings` — the host re-applies the save's `options.input`). AUTOFIRE and
  * RATE are sim-affecting: they are stored when the page closes and reach the configs of the games
- * started afterwards (a RETRY included — `core/config` `withUserGameOptions`), never the World in
- * play. AUTOFIRE is disabled on a remote-mode host (the TV: the remote has no fire button, autofire
+ * started afterwards (a RETRY STAGE included — `core/config` `withUserGameOptions`), never the
+ * World in play nor the next zone or bonus stage of the run in progress (`FlowControl.runConfig`).
+ * AUTOFIRE is disabled on a remote-mode host (the TV: the remote has no fire button, autofire
  * stays always on). REBIND KEYS / PAD are disabled without the host's `ControlsSetup` or its
  * device. BACK or Back stores the page (the profile id only when it changed), writes the save when
  * it changed and returns to the Options screen.
@@ -3012,9 +3038,11 @@ export class ControlsScene extends SceneBase {
  * difficulty chosen last, the next game's Auto Power-Up and magnet for rows the save leaves unset).
  * The options are sim-affecting: BACK or Back stores them — a toggle only when it was changed, so
  * an untouched row keeps following the host config and the weapon select — re-arms the configs
- * of the games started afterwards (`core/config` `withUserGameOptions`; a RETRY included, never the
- * World in play), chooses the difficulty, writes the save when it changed and returns to the
- * Options screen.
+ * of the games started afterwards (`core/config` `withUserGameOptions`; a RETRY STAGE included,
+ * never the World in play nor the next zone or bonus stage of the run in progress —
+ * `FlowControl.runConfig`), chooses the difficulty, writes the save when it changed and returns to
+ * the Options screen. Over the pause menu (a game in progress) DIFFICULTY is disabled: a run keeps
+ * the difficulty it started on (and its hi-score table), the choice is made before the next game.
  */
 export class GameOptionsScene extends SceneBase {
   /** See {@link Scene.id}. */
@@ -3043,6 +3071,8 @@ export class GameOptionsScene extends SceneBase {
   private openedAuto = false;
   /** MAGNET's value when the page opened. */
   private openedMagnet = true;
+  /** Whether the page opened over a game in progress (the pause menu): DIFFICULTY is disabled. */
+  inGame = false;
 
   /**
    * Creates the page.
@@ -3072,12 +3102,18 @@ export class GameOptionsScene extends SceneBase {
     return 3 + menuStringSlots(this.menu);
   }
 
-  /** Reads the save's game options; focus on DIFFICULTY, locked for 2 ticks. */
+  /**
+   * Reads the save's game options (DIFFICULTY: the run's over a game in progress); focus on
+   * DIFFICULTY (LIVES in a game), locked for 2 ticks.
+   */
   override enter(): void {
     super.enter();
     const flow = this.flow;
     const game = flow.save.options.game;
-    const preset = DIFFICULTY_PRESETS.indexOf(flow.difficulty);
+    this.inGame = flow.stack.contains(flow.game);
+    const preset = DIFFICULTY_PRESETS.indexOf(
+      this.inGame ? flow.runConfig.difficulty : flow.difficulty,
+    );
     this.difficulty.index = preset >= 0 ? preset : 0;
     this.openedDifficulty = this.difficulty.index;
     this.lives.index = game.lives ?? 0;
@@ -3090,8 +3126,10 @@ export class GameOptionsScene extends SceneBase {
     this.magnet.value = game.pickupMagnet ?? base.pickupMagnet;
     this.openedMagnet = this.magnet.value;
     this.oneButton.value = game.oneButton;
+    this.menu.setDisabled(GameOptionsItem.Difficulty, this.inGame);
     this.syncDisabled();
     this.menu.focus = GameOptionsItem.Difficulty;
+    this.menu.focusFirstEnabled(GameOptionsItem.Difficulty);
     this.menu.open(MENU_OPEN_LOCK_TICKS);
   }
 
@@ -3102,7 +3140,10 @@ export class GameOptionsScene extends SceneBase {
     this.menu.setDisabled(GameOptionsItem.Penalty, on);
   }
 
-  /** Stores the game options, re-arms the next games' configs, writes the save and closes. */
+  /**
+   * Stores the game options, re-arms the next games' configs, chooses the difficulty (not over a
+   * game in progress — its run keeps its own), writes the save and closes.
+   */
   private close(): void {
     const flow = this.flow;
     const save = flow.save;
@@ -3110,11 +3151,13 @@ export class GameOptionsScene extends SceneBase {
     const preset = DIFFICULTY_PRESETS[this.difficulty.index] ?? 'normal';
     const lives = this.lives.index;
     const penalty = this.penalty.index;
+    const inGame = this.inGame;
     save.setOptions({
       ...save.options,
       game: {
-        difficulty:
-          this.difficulty.index !== this.openedDifficulty || game.difficulty !== null
+        difficulty: inGame
+          ? game.difficulty
+          : this.difficulty.index !== this.openedDifficulty || game.difficulty !== null
             ? preset
             : null,
         lives: lives === 0 ? null : lives,
@@ -3126,7 +3169,7 @@ export class GameOptionsScene extends SceneBase {
         oneButton: this.oneButton.value,
       },
     });
-    flow.chooseDifficulty(preset);
+    if (!inGame) flow.chooseDifficulty(preset);
     flow.applyOptions();
     void save.flush();
     flow.sfx(SFX_CUES.MenuBack);
@@ -3994,7 +4037,8 @@ const DIFFICULTY_PANEL = Object.freeze({ x: CX - 88, y: 56, w: 176, h: 112 });
  * @remarks
  * An overlay over the title (dim {@link PAUSE_DIM}) with an opaque panel: `DIFFICULTY`, the four
  * presets, and for the focused one its starting lives, continues and saved / session hi-score
- * (from the flow's per-preset configs — `core/config` `withDifficulty`). Opening it focuses the
+ * (from the flow's per-preset configs as the game gets them — `core/config` `withDifficulty`, then
+ * the GAME page's options: `FlowControl.armedConfigs`, M2-16). Opening it focuses the
  * difficulty chosen last (at first the host config's) and locks activation for 2 ticks. OK
  * chooses the focused preset and opens the {@link ShipSelectScene} (M2-05; then the
  * {@link WeaponSelectScene} of M2-03 for a meter ship), whose choice starts the game on that
@@ -4071,7 +4115,8 @@ export class DifficultyScene extends SceneBase {
     const base = this.stringBase;
     const p = DIFFICULTY_PANEL;
     const index = this.menu.focus;
-    const config = this.flow.configs[index] ?? this.flow.worldConfig;
+    // The config the game will get (M2-16: the GAME page's LIVES, the one-button preset …).
+    const config = this.flow.armedConfigs[index] ?? this.flow.worldConfig;
     const t = this.flow.text;
     drawPanel(list, p.x, p.y, p.w, p.h, UI_COLORS.panel, UI_COLORS.border, 255);
     list.setString(base, t.difficultyTitle);
@@ -7425,7 +7470,8 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     run,
     campaign,
     beginRun(): void {
-      run.begin(campaign, control.worldConfig.stage);
+      control.runConfig = control.worldConfig;
+      run.begin(campaign, control.runConfig.stage);
       // Rows of an earlier game are named already (or were never asked for — a quit).
       control.pendingCount = 0;
       // Pushed before the World's stage theme: a set already resident switches at once.
@@ -7440,8 +7486,13 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
       control.preparedStage = index;
       events.push(SimEventKind.PrepareStage, index, 0, 0, 0);
     },
+    // The run's config (M2-16): taken by `beginRun` / a practice start (set after the first rearm).
+    runConfig: host.config,
+    rearmRun(): void {
+      control.runConfig = armed[presetIndex(control.runConfig.difficulty)];
+    },
     createRunWorld(carry: CarryState | null): World {
-      const world = host.createWorld(runWorldConfig(control.worldConfig, run));
+      const world = host.createWorld(runWorldConfig(control.runConfig, run));
       return prepareRunWorld(world, run, carry);
     },
     enterBonus(): void {
@@ -7475,6 +7526,7 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
       rearm();
     },
     configs,
+    armedConfigs: armed,
     bests,
     get worldConfig(): GameConfig {
       return armed[presetIndex(control.difficulty)];
@@ -7617,6 +7669,7 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
       if (stage === undefined) return false;
       if (!Number.isInteger(checkpoint) || checkpoint < -1) return false;
       if (checkpoint >= stage.checkpoints.length) return false;
+      control.runConfig = control.worldConfig;
       run.beginPractice(practice, zone, checkpoint, loadout);
       run.pendingStart = true;
       control.pendingCount = 0;
@@ -7674,6 +7727,7 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
   control.inputTest = new InputTestScene(control);
   // The save's sim-affecting options (M2-16) reach the first game too.
   rearm();
+  control.runConfig = control.worldConfig;
   control.game.world.scoring.board.setHiScore(control.hiScore);
   // The placeholder World queued its stage theme; the flow does not start in the stage.
   events.clear();

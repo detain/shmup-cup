@@ -3549,8 +3549,13 @@ Goal of the milestone: every **[P1]** feature. Steps are ordered so systems land
     `options.game` (`UserGameOptions`, `null` = the host config's / the preset's) and the flow folds them — with the
     controls' autofire mode and rate — into every difficulty's config (`core/config` `userGameOverrides` /
     `withUserGameOptions`, applied in the flow's `rearm`: the next game or a RETRY STAGE, never the World in play — a
-    replay header records the result). The one-button preset forces autofire always, Auto Power-Up and the casual
-    penalty (their rows are disabled while it is on). The difficulty menu's choice is remembered in the save
+    replay header records the result). A run keeps the config it began with (`FlowControl.runConfig`, taken by
+    `beginRun` / a practice start) for its next zones and bonus stages; RETRY STAGE re-takes it at the run's own
+    difficulty (`rearmRun`), and over the pause menu the GAME page's DIFFICULTY row is disabled, so a run is always
+    recorded in the table of the difficulty it started on (review round 1). The difficulty menu previews the armed
+    configs (`FlowControl.armedConfigs`: LIVES as the game gets it). The one-button preset forces autofire always,
+    Auto Power-Up and the casual penalty (their rows are disabled while it is on). The difficulty menu's choice is
+    remembered in the save
     (`options.game.difficulty` — M2-01's "saved with the options of M2-16"); the weapon select's loadout and the ship
     choice stay session-only (not listed in this step's deliverables).
   - **Rebinding.** Overrides are stored per profile and context as `core/config` `BindingOverrides` (action → its whole
