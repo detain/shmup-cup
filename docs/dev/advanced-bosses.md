@@ -528,3 +528,7 @@ hashWorld(game.world); // covers every slot, the raid camera, the rush and the e
   escape never does); the new `BossScriptApi.spiral` stream ([zones-h-and-i.md](zones-h-and-i.md)).
 - **M2-15** (done) — practice from any of a zone's checkpoints (the last one is the nearest to its
   boss), the attract demos ([front-end-and-attract.md](front-end-and-attract.md)).
+- **M3-01** (done) — the EXTRA menu's **BOSS RUSH** is a shipped `bossRush` stage on this machinery
+  (`content/stages/boss-rush.stage.json`: the nine zone bosses A–I, each with its WARNING), with its
+  own hi-score table; the 4-way bot clears it (`test/playtest/boss-rush.test.ts`)
+  ([extra-modes-and-replays.md](extra-modes-and-replays.md#boss-rush-content-boss-rushstagejson)).

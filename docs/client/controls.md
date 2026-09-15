@@ -231,7 +231,34 @@ motion, and jumps to the next checkpoint and the boss. The normal build has none
 
 On the TV the number keys do nothing until the tools are open (a keyboard's F1–F8 work then
 too). In a browser F5 does not reload the page while the game has focus. Details and how to read
-the panel: [debug-tools.md](debug-tools.md).
+the panel: [debug-tools.md](debug-tools.md). A game in which **Next checkpoint** or **Skip to the
+boss** was used is not kept as a replay (the jump cannot be replayed).
+
+## Extra modes, replays and secret codes
+
+The title's **EXTRA** menu and its screens use the menu controls
+([extra-modes-and-replays.md](extra-modes-and-replays.md)):
+
+| Where | Remote | Keyboard | Gamepad |
+|---|---|---|---|
+| EXTRA: move / change CARAVAN's zone or ARCADE's loop | ▲ ▼ / ◀ ▶ | arrows | D-pad or stick |
+| EXTRA: start the highlighted mode, open REPLAYS | OK | Enter | A / Cross |
+| REPLAYS: choose a slot, then PLAY / KEEP / SHARE / DELETE | ▲ ▼, OK | arrows, Enter | D-pad, A |
+| Watching a replay: faster / slower (×1, ×2, ×4) | ▶ / ◀ | → / ← | D-pad → / ← |
+| Watching a replay: pause / go on | OK | Enter | A |
+| Back out (replay → list → EXTRA → title) | Back | Esc | B / Circle |
+
+**Secret codes** are eight single presses of the arrows — no other button in between:
+
+| Code | Where | Presses |
+|---|---|---|
+| Seven ships for the next games | Title | ▲ ▶ ▼ ◀ ▲ ▶ ▼ ◀ |
+| Unlock Extra Edit | Title | ▼ ◀ ▲ ▶ ▼ ◀ ▲ ▶ |
+| Full power (once per zone) | Pause menu | ◀ ▶ ▶ ◀ ◀ ▶ ▶ ◀ |
+| Self destruct (a joke — it costs a ship) | Pause menu | ▶ ◀ ◀ ▶ ▶ ◀ ◀ ▶ |
+
+**Rumble:** a gamepad that can rumble does so when your ship is destroyed and at a boss's final
+explosion; OPTIONS → CONTROLS → **RUMBLE** turns it off. The TV remote never rumbles.
 
 ## Control profiles
 
@@ -438,4 +465,8 @@ directions alone; no button is ever needed except to pause. It applies from the 
 | The title plays a zone by itself | The attract loop's demo (after 12 seconds untouched on `PRESS OK`) — any button returns to the title |
 | I cannot get past the name entry | OK moves letter by letter; on `END` OK finishes. ▶ jumps towards `END` too. After 30 seconds the entry finishes by itself |
 | OK on a tune in the SOUND TEST box changes the tune instead of playing it | Not expected — OK plays, ◀ ▶ change. Please report the device |
-| ▼ in the WEAPON SELECT screen jumps over MISSILE, DOUBLE and LASER | Expected: those lines show the chosen type's weapons and can only be changed with TYPE set to **EDIT** — see [preview-build.md](preview-build.md#choosing-your-weapons) |
+| ▼ ▼ ▼ ▼ ▼ from 1 PLAYER lands on EXTRA, not EXIT | Expected since the extra-modes build: the menu is 1 PLAYER, 2 PLAYERS, PRACTICE, OPTIONS, SOUND TEST, EXTRA (and EXIT on the TV and in the desktop app) |
+| A secret code does nothing | Eight single arrow presses in a row, with nothing else in between (no OK, no two arrows at once) — see [Extra modes, replays and secret codes](#extra-modes-replays-and-secret-codes) |
+| ◀ ▶ in a replay do nothing | They step the speed ×1 ↔ ×2 ↔ ×4, so ▶ at ×4 and ◀ at ×1 do nothing; on the `REPLAY END` message only OK or Back work (they return to the list) |
+| My gamepad does not rumble | RUMBLE is OFF (OPTIONS → CONTROLS), or the pad or the browser cannot rumble |
+| ▼ in the WEAPON SELECT screen jumps over MISSILE, DOUBLE and LASER | Expected: those lines show the chosen type's weapons and can only be changed with TYPE set to **EDIT** (or **EXTRA**, once unlocked) — see [preview-build.md](preview-build.md#choosing-your-weapons) |

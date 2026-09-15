@@ -562,3 +562,9 @@ record of ids to 1–48-character texts). The loader imports `core/ui/strings.ts
 cycle) for `UI_TEXT_IDS` and `MAX_UI_TEXT_LENGTH`; `pnpm content:check` keeps `en.strings.json`
 equal to `DEFAULT_UI_TEXT`. The shell's loader test uses a made-up `locale` kind for "a kind nobody
 owns" ([options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md)).
+- **M3-01** (done) — a stage's optional `remix` list and `minLoop` / `maxLoop` on any event
+  (`checkStageRemix`, `stageEventInLoop`, `stageForLoop`, `MAX_STAGE_REMIX`), a weapon's `extra`
+  flag (the Extra Edit), the `rules` file's `scoring.repeatKills` / `repeatPercent` (the
+  score-milking cap) and a demo header's optional `assists` — every one optional, so no format
+  change; the shipped `boss-rush` stage and `types-extra` weapons
+  ([extra-modes-and-replays.md](extra-modes-and-replays.md)).

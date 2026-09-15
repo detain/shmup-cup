@@ -338,8 +338,10 @@ the game really ends (game over, stage clear), so the continue digit is part of 
 score. On **Arcade** (`continues: 0`) the game-over screen opens directly.
 
 The continue is decided by the scene flow **between** World ticks, so bare-gameplay replays (one
-World, ending at the game over) do not contain it; recording the flow is M3-01 work (M2-15's
-attract demos are bare-World recordings too). Since M2-15 the countdown also shows a draining time
+World, ending at the game over) do not contain it; since M3-01 the scene flow records whole runs,
+with the continue as a between-tick action (`RunAction.Continue`) —
+[extra-modes-and-replays.md](extra-modes-and-replays.md#whole-run-replays-corereplay-runts) (M2-15's attract demos stay bare-World
+recordings). Since M2-15 the countdown also shows a draining time
 bar, the score and a `PRESS OK` prompt ([front-end-and-attract.md](front-end-and-attract.md#the-continue-countdown-polished)).
 
 ## The difficulty menu (`DifficultyScene`)
@@ -491,7 +493,11 @@ ship's.
 - **M2-15** (done) — the continue countdown's polish (the draining bar, the flashing last seconds,
   the score, `PRESS OK`), per-difficulty tables per mode (1 PLAYER, 2 PLAYERS, PRACTICE) with the
   name entry ([front-end-and-attract.md](front-end-and-attract.md)).
-- **M3-01** — recording the scene flow (continues included) in replays.
+- **M3-01** (done) — the loop term in use: `GameConfig.loop` (the ARCADE mode) sets
+  `rankInputs.loop` (`createRankInputs`), lifting the loop-1 cap; from loop 2 enemy bullets fly
+  `loopBulletSpeedScale` faster and **every** enemy a player shoots down fires a revenge bullet at
+  any rank (its own pattern, else one aimed shot); whole runs — continues included — recorded by the
+  scene flow ([extra-modes-and-replays.md](extra-modes-and-replays.md)).
 - **M2-16** (done) — the chosen difficulty saved with the options, the GAME page's LIVES /
   PENALTY over the presets, the difficulty menu previewing the armed configs
   ([options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md)).

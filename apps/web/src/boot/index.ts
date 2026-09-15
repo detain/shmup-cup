@@ -57,13 +57,20 @@
  * (`@shmup/shell` `installDeterminismCheck`: golden replays played in the page's engine, no WebGL
  * needed — `test/e2e/determinism.spec.ts` runs it in Chromium and Firefox).
  *
+ * **Replays (M3-01).** `main.ts` passes the build id the replays record
+ * ({@link WebAppResources.buildId}); the replay browser's SHARE copies a replay's text to the
+ * clipboard ({@link copyReplayText} — `navigator.clipboard`, a secure context), and text pasted
+ * anywhere on the page that holds `"run-replay"` is imported into the first free kept slot
+ * ({@link listenForPastedReplays} → `Shell.replays.importText`; removed by `WebApp.stop`). The
+ * replays live in `localStorage` next to the save (`shmup-cup:replay.last`, `replay.1`–`3`).
+ *
  * **Implements.** shmup_feat.md §23 (web dev target), §3 (rAF-driven fixed step, pause on
  * visibility change, integer scaling), §19 (resume audio on first input), §4 (input profiles).
  *
  * **Public API.** {@link bootWebApp}, {@link WebApp}, {@link WebAppResources},
  * {@link inputOverridesFromSearch}, {@link InputOverrides}, {@link stageFromSearch},
  * {@link contentStageIds}, {@link loadoutFromSearch}, {@link stageSkipFromSearch},
- * {@link determinismFromSearch}.
+ * {@link determinismFromSearch}; M3-01: {@link copyReplayText}, {@link listenForPastedReplays}.
  *
  * @module
  */

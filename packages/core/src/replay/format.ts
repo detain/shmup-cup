@@ -8,6 +8,11 @@
  * scene flow's attract mode (`core/scenes`, which `core/game` imports) can decode and play the
  * bundled demos without importing `core/game` back; `./index.ts` re-exports all of it.
  *
+ * M3-01: the header gained {@link ReplayHeader.assists} (the run's `AssistFlag` bits —
+ * informative; {@link createReplayHeader} defaults it from `assisted` and `GameConfig.invincible`,
+ * {@link decodeReplay} reads a replay without it as god mode when `assisted`, else 0). A whole
+ * run's replay (`./run.ts`) is a list of these single-World replays.
+ *
  * **Implements.** shmup_feat.md §21 Replays, §22 determinism (see `./index.ts`).
  *
  * @module

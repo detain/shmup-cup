@@ -61,6 +61,7 @@
  * - shmup_feat.md §17 — the 3-letter name entry of the hi-score table (M2-15)
  * - shmup_feat.md §4 — [P1] rebinding per device with conflict detection and reset; §21 — full
  *   remapping, the string table for localization (M2-16)
+ * - shmup_feat.md §16 — the caravan's clock in the HUD (M3-01)
  *
  * **Public API.** Widgets: {@link ListMenu}, {@link MenuItem}, {@link MenuItemKind},
  * {@link Slider}, {@link Toggle}, {@link Choice}, {@link Confirm}, {@link ConfirmChoice},
@@ -87,7 +88,10 @@
  * {@link CaptureStatus}, {@link REBINDABLE_ACTIONS}, {@link REBIND_CAPTURE_TICKS},
  * {@link METER_SHORT_IDS} and the string table ({@link UiText}, {@link UiTextId},
  * {@link DEFAULT_UI_TEXT}, {@link UI_TEXT_IDS}, {@link resolveUiText}, {@link formatUiText},
- * {@link MAX_UI_TEXT_LENGTH}, {@link DEFAULT_LANGUAGE}).
+ * {@link MAX_UI_TEXT_LENGTH}, {@link DEFAULT_LANGUAGE}). M3-01: {@link hudClockSeconds} (the
+ * caravan's clock, drawn as `TIME` and its seconds in player 2's place — slot `time` of
+ * {@link HUD_STRING_SLOTS}, red for the last ten) and the Extra Edit weapons' meter labels at the
+ * end of {@link METER_LABEL_FRAMES} / {@link METER_SHORT_IDS}.
  *
  * **Boss HP bar (M2-09).** With the `bossHpBar` display option ({@link Hud.showBossHp}, the
  * `buildHud` argument) the top bar shows `BOSS` and a bar filled by {@link bossHpBarFill} of the

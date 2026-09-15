@@ -170,7 +170,10 @@ type MutableRankInputs = { -readonly [K in keyof RankInputs]: RankInputs[K] };
  * ```
  */
 export function createRankInputs(
-  config: Pick<GameConfig, 'rankBase' | 'rankGrowth'> & { readonly loop?: number },
+  config: Pick<GameConfig, 'rankBase' | 'rankGrowth'> & {
+    /** The loop (`GameConfig.loop`; absent in hand-made test configs = loop 1). */
+    readonly loop?: number;
+  },
 ): MutableRankInputs {
   // M3-01: the config's loop (loop 2+ of the ARCADE mode); a config without one is loop 1.
   const loop = config.loop;

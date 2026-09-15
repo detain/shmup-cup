@@ -58,6 +58,10 @@
  * allocation left is the engine boxing the returned unsigned 32-bit value (a 16-byte heap number
  * when it does not fit a small integer); call it every few ticks, not per entity.
  *
+ * M3-01 added two terms, each hashed **only when in use** so every World recorded before them
+ * hashes as it did: a loadout's Spread Gun level (`Loadout.spread`, when non-zero) and the
+ * caravan's clock (`World.timeLeft`, `timeUp`, `clockPaid` — only in a World with a time limit).
+ *
  * **Stage jumps.** {@link skipToBoss} jumps a World's stage to {@link BOSS_SKIP_LEAD} px before its
  * first `warning` / `boss` event and {@link jumpToCheckpoint} / {@link jumpToNextCheckpoint}
  * restart it at a checkpoint (`StageRunner.jumpTo` / `restartAt`: speed, pan and flags
@@ -65,7 +69,9 @@
  * `createWorld` calls `skipToBoss` when `GameConfig.stageSkip` is `'boss'` — a sim option, so a
  * replay of a skipped session skips too — which is how the e2e smoke and the playtest reach the
  * boss quickly; a replay that starts at a checkpoint (`ReplayHeader.checkpoint`) is set up with
- * `jumpToCheckpoint` before its first tick (`core/replay` `createReplayGame`).
+ * `jumpToCheckpoint` before its first tick (`core/replay` `createReplayGame`). Since M3-01 a jump
+ * made through {@link createDebugControls} tells the scene flow (`SceneFlow.noteWorldEdited`): the
+ * run's replay cannot repeat a change made outside a tick, so it is not saved.
  *
  * **Frame advance and slow motion (M1-19).** `Game.frame` reads {@link DebugFlags.frameAdvance}
  * (only the ticks queued with `Game.requestStep` run) and {@link DebugFlags.slowMo} (the frame

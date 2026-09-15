@@ -328,8 +328,9 @@ frozen ones included (plan §3.2), but not on the tick of their request — a re
 popups ([fx-and-game-feel.md](fx-and-game-feel.md)); `SimEventKind.Score` (12, `'score'`) is new
 there and not hashed. Since M1-15 the death is heard — `PlayerDeath` (`critical`, never cut by
 another cue) — and the `MusicDuck` dips the music to 0.35 in 4 ticks, holds it for 60 ticks and
-brings it back at 120 ([audio.md](audio.md#which-event-plays-what)); the `Rumble` event has no
-consumer yet — rumble through `vibrationActuator` is M3-01's.
+brings it back at 120 ([audio.md](audio.md#which-event-plays-what)); since M3-01 the `Rumble`
+event rumbles the player's gamepads through `vibrationActuator` while the save's RUMBLE option is
+on (the shell's `connectRumbleEvents` → `WebInput.rumble` — [extra-modes-and-replays.md](extra-modes-and-replays.md#rumble-shmupinput-web-shmupshell)).
 
 ## Determinism and hashing
 
@@ -458,6 +459,11 @@ The next `game.step()` runs that tick, and its phase 7 turns the recorded hit in
 - **M2-02** (done) — the `rules` content's `scoring` section and cancel point items credited
   through `addScore` (a boss's death, a Mega Crash); the player's death keeps `CancelMode.Sparkle`
   ([bullets-and-patterns.md](bullets-and-patterns.md#cancel)).
+- **M3-01** (done) — the score-milking cap (`ScoringRules.repeatKills` / `repeatPercent`: enemies a
+  script or a boss spawned score 10 % after 40 kills of a kind in a World), the invincibility assist
+  (`PlayerShip.invincible` — `playerHit` ignores every hit), option recovery (the Options a death
+  penalty takes drop as Free Option items), assisted hi-score rows, the caravan's time bonus and
+  gamepad rumble ([extra-modes-and-replays.md](extra-modes-and-replays.md)).
 - **M2-03** (done) — the `!` choice LIFE OPTION spends lives: `min(lives − 1, 4 − options)`
   spare ships become Options (the stock icons drop at once; extends still add lives up to
   `MAX_LIVES`); the death penalties act on whichever weapons the session's arsenal holds, since

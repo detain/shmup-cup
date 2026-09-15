@@ -184,6 +184,14 @@
  *   difficulty menu; Back: mode select.
  * - **Sound test** (M2-15) — Up / Down: move; Left / Right: choose; OK: play (MUSIC, SFX) / stop
  *   (STOP) / close (BACK); Back: close.
+ * - **EXTRA** (M3-01) — Up / Down: move; Left / Right: the CARAVAN's zone, the ARCADE's loop
+ *   (LOOP 2 only once unlocked); OK: start the mode (→ the difficulty menu) or open REPLAYS; Back:
+ *   mode select. **Replays** — Up / Down: a slot; OK: its actions (PLAY, KEEP, SHARE, DELETE,
+ *   BACK); Back: the slot list, then EXTRA. **Replay** — Right / Left: faster / slower (×1 / ×2 /
+ *   ×4); OK: pause; Back: the browser.
+ * - **Secret codes** (M3-01) — eight single direction presses in a row ({@link SECRET_CODES}; any
+ *   other press starts over): EXTRA SHIPS and EXTRA EDIT on the title, FULL POWER and SELF DESTRUCT
+ *   in the pause menu ({@link SecretCodeTracker}).
  *
  * **Implements.**
  * - shmup_feat.md §17 Screens, UI flow & HUD — scene flow, title / pause / game over / stage clear
@@ -208,6 +216,10 @@
  * - shmup_feat.md §21 — the Options menu's Controls (rebind, autofire mode & rate, SOCD, remote
  *   profile and debounce, input test), Display and Game groups, one-button play; §4 — rebinding per
  *   device and context with conflict detection and reset (M2-16)
+ * - shmup_feat.md §16 — boss rush, score attack / caravan, Loop 2 / Arcade mode; §21 — the replay
+ *   browser, save / share replays, fast-forward, the game-speed and invincibility assists flagging
+ *   scores and replays, unlocks; §7A — Extra Edit as an unlock; §4 — secret codes and rumble;
+ *   §8 — option recovery (M3-01)
  *
  * **Public API.** {@link SceneStack}, {@link createSceneStack}, {@link SCENE_STACK_DEPTH},
  * {@link Scene}, {@link SceneId}, {@link SceneFlow}, {@link SceneFlowHost}, {@link SceneStart},
@@ -263,6 +275,26 @@
  * lists built from it ({@link SceneLabels}, {@link buildSceneLabels}; the exported English label
  * constants are the built-in table's). The flow re-arms the next games' configs with the save's
  * sim-affecting options and remembers the difficulty menu's choice in the save.
+ *
+ * **Extra modes and replays (M3-01).** The title's EXTRA ({@link TitleItem}.Extra 5, EXIT 6) opens
+ * the {@link ExtraScene} ({@link ExtraItem}): BOSS RUSH ({@link BOSS_RUSH_STAGE}), CARAVAN (a zone
+ * against {@link CARAVAN_TICKS}), ARCADE (the looping campaign) and REPLAYS; the flow plays the
+ * chosen {@link RunMode} ({@link SceneFlow.chooseMode}, `RunState.mode` / `loop` / `timeLimit` —
+ * `./run.ts` {@link RUN_MODES}, {@link WorldStart}, {@link prepareWorldStart}). Every run is
+ * recorded ({@link SceneFlow.recorder} — `./replays.ts` {@link RunRecorder}; the flow's
+ * between-tick actions as `core/replay` `RunAction`s) and, when it ends, stored as the host
+ * library's last game ({@link SceneFlowHost.replays}, {@link SceneFlow.lastReplay}); the
+ * {@link ReplaysScene} ({@link ReplayActionItem}) browses the library, keeps, shares
+ * ({@link SceneFlowHost.shareReplay}) and deletes, and the {@link ReplayScene} plays a run back
+ * ({@link RunReplayPlayback}, {@link REPLAY_SPEEDS}, {@link REPLAY_END_TICKS}). The secret codes
+ * are {@link SecretCode}, {@link SECRET_CODES}, {@link SECRET_CODE_LENGTH},
+ * {@link SecretCodeTracker}, {@link SECRET_SHIPS}, {@link SECRET_MESSAGE_TICKS}; the pause menu's
+ * go through `core/world` {@link grantFullPower} / {@link selfDestruct}. The Options pages gained
+ * {@link GameOptionsItem} OptionRecovery / Speed / Invincible and {@link ControlsItem} Rumble
+ * (`core/config` `PlayOptions`); {@link SceneFlow.speedPercent} slows `core/game`'s clock. An
+ * assisted run ({@link AssistFlag}, {@link runAssisted}) marks its hi-score rows. Reaching an
+ * ending unlocks the weapon select's EXTRA and the ARCADE's LOOP 2 (`core/save` `unlocks`); the
+ * debug stage jumps tell the flow ({@link SceneFlow.noteWorldEdited}) and the run is not saved.
  *
  * @module
  */
@@ -500,8 +532,9 @@ export const moduleInfo = defineModule({
  * M2-10, the credits of M2-14, and the front end of M2-15 — the attract loop's demo play and story
  * crawl, the name entry, the hi-score tables, the practice select and the sound test; the
  * placeholder ids `attract` and `select` of the skeleton became `demo` / `story` and the title's
- * mode select), and the Options pages of M2-16 — CONTROLS, DISPLAY, GAME, the rebind screen and the
- * input test.
+ * mode select), the Options pages of M2-16 — CONTROLS, DISPLAY, GAME, the rebind screen and the
+ * input test —, and M3-01's EXTRA menu, replay browser and replay playback (`extra`, `replays`,
+ * `replay`).
  */
 export type SceneId =
   | 'boot'
@@ -1052,6 +1085,7 @@ export const TitleItem = {
   SoundTest: 4,
   /** EXTRA (M3-01): the {@link ExtraScene} — boss rush, caravan, arcade, replays. */
   Extra: 5,
+  /** EXIT (only where the platform can quit — the TV, the desktop app): 6 since M3-01. */
   Exit: 6,
 } as const;
 

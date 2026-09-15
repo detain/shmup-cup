@@ -207,6 +207,19 @@
  * the zone's depth + 1 (`core/scenes` `prepareRunWorld`). `hashWorld` covers the entrances and
  * the enemy totals.
  *
+ * **Extra modes and assists (M3-01).** A World of loop 2+ (`GameConfig.loop` — the ARCADE mode)
+ * plays its stage with the loops' remix merged in (`core/data` `stageForLoop`, applied in
+ * {@link createWorld}; loop 1 plays the stage as it is) and passes the loop to the rank, the stage
+ * runner, the enemy system (revenge bullets from every kill) and the bullet system (faster
+ * bullets). A World with a time limit (`GameConfig.timeLimit` — the CARAVAN) counts
+ * {@link World.timeLeft} down in phase 9 while the stage is played; at 0 it ends as `stageClear`
+ * with {@link World.timeUp}; a stage cleared with time left pays {@link CARAVAN_TIME_BONUS} a whole
+ * second to every player in play, once ({@link World.clockPaid}). `GameConfig.invincible` makes
+ * every ship ignore hits (the assist), and with `GameConfig.optionRecovery` the Options a death
+ * penalty takes drop at the wreck as Free Option items. Between ticks the scene flow may call
+ * {@link grantFullPower} and {@link selfDestruct} (the pause menu's secret codes — a run replay
+ * records them as flow actions).
+ *
  * **Zero allocation.** Everything is allocated by {@link createWorld}; {@link stepWorld} and the
  * systems only write numbers into existing objects and typed arrays.
  *
@@ -226,6 +239,9 @@
  * - shmup_feat.md §18 / §21 — the view's presentation mirrors for raster effects, palette cycling
  *   and the hitbox display option (M2-08; drawn by the renderer, never read by the sim)
  * - shmup_feat.md §14 — hidden bonus-stage entrances; §5 — the stage-clear fly-out (M2-10)
+ * - shmup_feat.md §15 — the 2nd loop's remixed layouts, faster bullets and revenge bullets;
+ *   §16 — the caravan's time limit; §4 — the pause-menu secrets; §8 — option recovery; §21 — the
+ *   invincibility assist (M3-01)
  *
  * **Public API.** {@link createWorld}, {@link WorldOptions}, {@link stepWorld}, {@link World},
  * {@link WorldCamera},
@@ -235,7 +251,8 @@
  * {@link ENGINE_SPRITES}, {@link DEATH_HIT_STOP_TICKS}, {@link DEATH_SHAKE_TICKS},
  * {@link DEATH_MUSIC_DUCK_TICKS}, {@link updateWorldRank}, {@link canContinue},
  * {@link continueWorld}; co-op (M2-06): {@link JOIN_ACTIONS}, {@link playerCanJoin},
- * {@link joinPlayer}, {@link continuesLeft}.
+ * {@link joinPlayer}, {@link continuesLeft}; M3-01: {@link grantFullPower},
+ * {@link selfDestruct}, {@link CARAVAN_TIME_BONUS}.
  *
  * @module
  */

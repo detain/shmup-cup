@@ -89,6 +89,15 @@
  * today's single placeholder page nothing is unloaded). The debug tools get the save store (the
  * save export / import of `window.__shmupDebug.save`).
  *
+ * **Replays and rumble (M3-01).** Right after the save the shell creates and loads the replay
+ * library (`core/replay` `createReplayLibrary` over `platform.storage` — keys `replay.last`,
+ * `replay.1`–`3`; an unreadable or oversize slot is empty) and hands it to the scene flow, which
+ * stores every finished run there; {@link Shell.replays} lets an app import a shared replay (the
+ * web app's paste). {@link ShellOptions.shareReplay} is the replay browser's SHARE (the web app's
+ * clipboard; the TV passes none) and {@link ShellOptions.buildId} the build id the replays record.
+ * When the input adapter can rumble ({@link ShellInput.rumble}) the core's `Rumble` events reach it
+ * through `connectRumbleEvents` while the save's RUMBLE option (`options.play.rumble`) is on.
+ *
  * **Boot time.** The shell measures its boot (`ShellOptions.now`, default `performance.now()` —
  * whose origin is the page's start, i.e. the app launch on the TV) and exposes it as
  * {@link Shell.bootTiming} for the debug overlay (M1-19) and on the canvas
@@ -111,7 +120,8 @@
  * - shmup_feat.md §19 — audio unlocked by the first user gesture on the web; SFX and music fed by
  *   sim events, prepared during loading
  * - shmup_feat.md §21 — saved options and hi-scores loaded before the title; the Options screen
- *   applied live
+ *   applied live; the saved replays loaded before the title (M3-01)
+ * - shmup_feat.md §4 — rumble via `vibrationActuator` (M3-01)
  *
  * **Public API.** {@link bootShell}, {@link Shell}, {@link ShellOptions}, {@link ShellAssets},
  * {@link ShellInput}, {@link ShellInputProfiles}, {@link ShellScene}, {@link SHELL_SCENES},

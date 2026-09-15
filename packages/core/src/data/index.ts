@@ -116,7 +116,8 @@
  *   {@link BossEnrageSpec}, {@link MAX_RAID_SEGMENTS}, {@link DEFAULT_RAID_SEGMENT_TICKS},
  *   {@link DEFAULT_ENRAGE_FIRE_RATE}, {@link DEFAULT_ENRAGE_SPEED}, {@link MAX_TURN_FRAMES}),
  *   {@link StageType}, {@link STAGE_TYPES}, {@link StageRushEntry}, {@link MAX_RUSH_BOSSES},
- *   {@link DEFAULT_RUSH_DELAY} (M2-09), {@link PathSpec}
+ *   {@link DEFAULT_RUSH_DELAY} (M2-09), {@link MAX_STAGE_REMIX}, {@link stageEventInLoop},
+ *   {@link stageForLoop} (M3-01), {@link PathSpec}
  *   ({@link PathPointSpec}, {@link PathTable}, {@link bakePath}, {@link PATH_SAMPLE_STEP},
  *   {@link MAX_PATH_LENGTH}), {@link StageSpec} and its parts ({@link StageMusic},
  *   {@link StageCameraKey}, {@link StageCheckpoint}, {@link StageParallaxLayer},
@@ -194,6 +195,15 @@
  * M2-16: kind `strings` — the UI string tables (`content/strings/<language>.strings.json`,
  * {@link UiStringsSpec}, {@link ContentDb.uiStrings}): known ids only (`core/ui` `UI_TEXT_IDS`),
  * the bitmap font's glyphs only, one table per language.
+ *
+ * M3-01: the loops and the Extra Edit. A stage may carry a loop **remix** ({@link StageSpec.remix}:
+ * up to {@link MAX_STAGE_REMIX} `spawn` / `formation` events, sorted, no branch) and any event may
+ * name the loops it plays in (`minLoop` / `maxLoop` on {@link StageEventBase}, 1 – `MAX_LOOP`);
+ * {@link stageEventInLoop} tests an event and {@link stageForLoop} builds the timeline of a loop
+ * (loop 1 is the stage itself, so its event indices never change). A weapon may be an **Extra
+ * Edit** weapon ({@link WeaponSpec.extra}). A `rules` file's `scoring` section gained the
+ * score-milking cap (`repeatKills` / `repeatPercent` — `core/scoring` `ScoringRules`), and a demo's
+ * header the optional `assists` flags (`core/replay` `ReplayHeader.assists`).
  *
  * **Other kinds.** `input-profiles`, `sfx`/`music` and `fx` files stay *foreign* here and are
  * validated by their owning packages (see plan §3.5). Hosts pass `knownScripts` (`core/behaviors`
@@ -4589,7 +4599,12 @@ type MutableStage = Omit<
   | 'remix'
 > & {
   /** See {@link StageSpec.remix} (optional in the file — M3-01). */
-  remix?: Array<StageEvent & { branchId?: number }>;
+  remix?: Array<
+    StageEvent & {
+      /** Always -1 once checked: a remix event never names a branch. */
+      branchId?: number;
+    }
+  >;
   /** See {@link StageSpec.type} (optional in the file). */
   type?: StageType;
   /** See {@link StageSpec.rush} (optional in the file; the loader fills the defaults). */

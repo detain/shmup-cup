@@ -19,7 +19,11 @@ window and packaging, the TV's game-mode build, device info and live reload, sto
 and the memory budget — and the v1.0 hardening: every route with both ships, the release audit,
 cross-engine determinism, the soak, the release checks, the icons). Its on-device checklist
 (plan §8.5, §8.6) on the monitors is next — the player-facing guide with the checklist is
-[`docs/client/release-candidate.md`](docs/client/release-candidate.md).
+[`docs/client/release-candidate.md`](docs/client/release-candidate.md). Milestone **M3 — extras**
+has begun: M3-01 added the title's EXTRA menu (boss rush, the caravan score attack, the looping
+arcade mode), whole-run replays with a browser, fast-forward and sharing, the Extra Edit weapons,
+secret codes and the game-speed / invincibility assists
+([`docs/client/extra-modes-and-replays.md`](docs/client/extra-modes-and-replays.md)).
 
 <!--
   Keep this section scannable: one entry per plan step, in plan order — a bold headline with the
@@ -749,6 +753,26 @@ cross-engine determinism, the soak, the release checks, the icons). Its on-devic
     [API reference](docs/dev/api-reference.md) (`determinism`, `passArmour`, the playtest and bench
     additions)
 
+- **Extra modes & replay features** (M3-01)
+  - **EXTRA** on the title: **BOSS RUSH** (the nine zone bosses in a row — the shipped `boss-rush`
+    stage), **CARAVAN** (one zone against a three-minute clock — `GameConfig.timeLimit`, TIME UP, a
+    time bonus) and **ARCADE** (the campaign looping on — `GameConfig.loop`: each zone's `remix`
+    waves, faster bullets, a revenge bullet from every kill), each with its own hi-score tables.
+  - **Replays of whole runs** (`core/replay` `run.ts`): one segment per World with its start state
+    and the flow's between-tick actions; the last game and three kept ones in platform storage,
+    sized to the storage adapter; a browser with PLAY (×1 / ×2 / ×4), KEEP, SHARE (the web's
+    clipboard and paste) and DELETE.
+  - **Extra Edit** weapons (seven, the Spread Gun equipped twice) and **LOOP 2**, unlocked by an
+    ending; four original **secret codes**; a **score-milking cap** on spawned enemies.
+  - **Assists** — game speed (the clock only) and invincibility, flagged in hi-score rows and the
+    replay header's `assists` —, **option recovery** and gamepad **rumble** (`vibrationActuator`).
+  - Six new golden replays (loop 2, the caravan, the Extra Edit, option recovery, invincibility);
+    every golden re-blessed for its header, `captain-range-god` for the milking cap.
+  - Docs: [developer guide](docs/dev/extra-modes-and-replays.md) ·
+    [the extra modes and replays for players](docs/client/extra-modes-and-replays.md) ·
+    [API reference](docs/dev/api-reference.md) (`replay/run.ts`, the EXTRA scenes, `PlayOptions`,
+    rumble)
+
 ### Hardware spike
 
 - The **input probe** — a diagnostic Tizen app that measures the Samsung remote, gamepads and
@@ -772,7 +796,8 @@ cross-engine determinism, the soak, the release checks, the icons). Its on-devic
 Game docs — testers: [preview build (the title screen, menus, HUD and pause menu, the ship select (the KESTREL or the MANTA), the weapon select (weapon types A–D, Weapon Edit, the Option types, the `?` shields and `!` choices, Auto Power-Up), two players at once (2 PLAYERS, joining with START, the split keyboard), the Options screen — volumes, controls and the colour-blind bullet colours — and saved settings and high scores, the game-over and stage-clear screens, the difficulties, extra ships and continues, zone A — AZURE VERGE and its boss HALCYON BULWARK —, the zone map and the real zones B–I, the endings and the credits, the front end — the attract loop, typing your initials, the high-score tables, practice and the sound test —, test stage, its enemies and their bullets, your weapons, power-ups, the MANTA's colour items, weapons and Arm, lives and score, the boss and its WARNING, the Option Hunter range, the Direct range, explosions, shake and flashes, sound and music)](docs/client/preview-build.md) ·
 [controls](docs/client/controls.md) · [monitor setup & install](docs/client/install-on-tv.md) ·
 [debug tools & release checks](docs/client/debug-tools.md) · [the desktop app](docs/client/desktop-app.md) ·
-[the v1.0 release candidate & checklist](docs/client/release-candidate.md).
+[the v1.0 release candidate & checklist](docs/client/release-candidate.md) ·
+[extra modes, replays & assists](docs/client/extra-modes-and-replays.md).
 Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/architecture.md) ·
 [engine foundations](docs/dev/engine-foundations.md) · [content data](docs/dev/content-data.md) ·
 [asset pipeline](docs/dev/asset-pipeline.md) ·
@@ -808,6 +833,7 @@ Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/ar
 [options, rebinding & accessibility](docs/dev/options-rebinding-and-accessibility.md) ·
 [platform polish: Electron, Tizen extras, storage & memory](docs/dev/platform-polish.md) ·
 [v1.0 hardening & the release candidate](docs/dev/release-hardening.md) ·
+[extra modes, replays & assists](docs/dev/extra-modes-and-replays.md) ·
 [input profiles](docs/dev/input-profiles.md) ·
 [API reference](docs/dev/api-reference.md) ·
 [build, test & deploy](docs/dev/build-test-deploy.md) · [conventions](docs/dev/conventions.md).
@@ -834,7 +860,7 @@ versions (`devEngines.runtime`).
 ```sh
 pnpm -v               # must print 12.x — an older global pnpm fails with ERR_PNPM_BROKEN_LOCKFILE
 pnpm install          # set ELECTRON_SKIP_BINARY_DOWNLOAD=1 to skip the Electron binary
-pnpm dev              # browser dev app → http://localhost:5173 (F1–F8: debug tools): the title (Enter five times — PRESS OK, 1 PLAYER, NORMAL, KESTREL in the ship select, START in the weapon select — starts zone A, AZURE VERGE, the first of a run across the zone map (after each boss the tally, then Up / Down + Enter on the ZONE MAP choose the next zone); Down on the title picks 2 PLAYERS — a gamepad's START (or Enter with ?profile=keyboard-split) drops player 2 in; Down + Enter in the ship select flies the MANTA instead — its colour items power up on contact, Left Shift toggles its speed; in the weapon select ↑ / ←→ choose the weapon type, EDIT, the Option type, the ? shield, the ! choice and Auto Power-Up — V or a held Enter spreads FORMATION / ROTATE Options in the game; ?skip=boss starts every zone right before its boss (HALCYON BULWARK in zone A); Enter, Down ×3, Enter opens OPTIONS — volumes and the CONTROLS (profile, AUTOFIRE always / toggle / hold, RATE, SOCD, DEBOUNCE, REBIND KEYS / PAD — press a key to rebind, Esc cancels —, INPUT TEST — hold P / Esc to leave), DISPLAY (bullet colours, SCALE, SHAKE, FLASHES, HITBOX, BOSS HP) and GAME (difficulty, LIVES, PENALTY, AUTO POWER, MAGNET, ONE BUTTON — from the next game) pages (M2-16), saved in localStorage; Enter, Down ×2, Enter opens PRACTICE and Enter, Down ×4, Enter the SOUND TEST; left alone for 12 s the title plays the attract loop — a zone demo, the high-score tables, the story; after a high score type your initials with the arrows and Enter (M2-15); Esc pauses), then fly the KESTREL (arrows/WASD, gamepad; the first key press turns the sound on; Enter/C takes a power-up; ?scene=flight skips the title; ?stage=test-range scrolls the test stage, its enemies, their bullets and the power capsules; ?stage=test-boss plays the WARNING and the test boss; ?stage=hunter-range&loadout=full sends in the Option Hunters; ?stage=direct-range (then the MANTA) sends pincer waves of item carriers; ?stage=gimmick-range tries the M2-07 stage systems — bricks to shoot through, regrowing walls, rocks, bubbles, a volcano, suction, tentacles, the cube rush, moving blocks, a pan, a fork; ?stage=raster-range shows the M2-08 raster effects and palette cycling — a waving, colour-rolling sea, a line-band floor, heat haze; ?stage=captain-range / raid-range / twin-range / gauntlet-range play the M2-09 advanced bosses — mid-bosses on the scrolling screen, the IRON LEVIATHAN raid with its heart and time limit, the twins' turns, a boss rush; ?stage=bonus-range tries the M2-10 hidden bonus entrances into the bonus vault; ?stage=zone-b / zone-c plays BRINE NEBULA / DUNE EXPANSE alone and ?stage=brine-grotto zone B's bonus stage PEARL GROTTO (M2-11); ?stage=zone-d / zone-e plays MAGMA DEEP (the dive, the brick maze, CINDER BASTION) / TEMPEST RIDGE (rear attackers, SQUALL STEED) alone (M2-12); ?stage=zone-f / zone-g plays CELL VAULT (tissue walls, tentacles, MANTLE REGENT) / PRISM LABYRINTH (crystal walls, the cube rush, FACET MONARCH — shoot the gallery's four turrets for ?stage=glimmer-cache, its bonus stage) alone (M2-13); ?stage=zone-h / zone-i plays the finales IRON CITADEL (the piston hall, the parade, IRON SOVEREIGN) / ABYSSAL THRONE (depth mines, the ABYSS ARK raid, THE HOLLOW KING) alone (M2-14 — a whole run from the title ends in an ending scene and the credits); ?profile=keyboard-remote-emulation feels like the TV remote; ?profile=keyboard-split puts two players on one keyboard; ?scene=showcase / ?scene=calibration / ?scene=fx-gallery)
+pnpm dev              # browser dev app → http://localhost:5173 (F1–F8: debug tools): the title (Enter five times — PRESS OK, 1 PLAYER, NORMAL, KESTREL in the ship select, START in the weapon select — starts zone A, AZURE VERGE, the first of a run across the zone map (after each boss the tally, then Up / Down + Enter on the ZONE MAP choose the next zone); Down on the title picks 2 PLAYERS — a gamepad's START (or Enter with ?profile=keyboard-split) drops player 2 in; Down + Enter in the ship select flies the MANTA instead — its colour items power up on contact, Left Shift toggles its speed; in the weapon select ↑ / ←→ choose the weapon type, EDIT, the Option type, the ? shield, the ! choice and Auto Power-Up — V or a held Enter spreads FORMATION / ROTATE Options in the game; ?skip=boss starts every zone right before its boss (HALCYON BULWARK in zone A); Enter, Down ×3, Enter opens OPTIONS — volumes and the CONTROLS (profile, AUTOFIRE always / toggle / hold, RATE, SOCD, DEBOUNCE, REBIND KEYS / PAD — press a key to rebind, Esc cancels —, INPUT TEST — hold P / Esc to leave), DISPLAY (bullet colours, SCALE, SHAKE, FLASHES, HITBOX, BOSS HP) and GAME (difficulty, LIVES, PENALTY, AUTO POWER, MAGNET, ONE BUTTON — from the next game) pages (M2-16), saved in localStorage; Enter, Down ×2, Enter opens PRACTICE, Enter, Down ×4, Enter the SOUND TEST and Enter, Down ×5, Enter the EXTRA menu — BOSS RUSH, CARAVAN, ARCADE and REPLAYS (the last game at ×1 / ×2 / ×4 with → / ←; SHARE copies it, Ctrl+V on the page loads a shared one — M3-01); left alone for 12 s the title plays the attract loop — a zone demo, the high-score tables, the story; after a high score type your initials with the arrows and Enter (M2-15); Esc pauses), then fly the KESTREL (arrows/WASD, gamepad; the first key press turns the sound on; Enter/C takes a power-up; ?scene=flight skips the title; ?stage=test-range scrolls the test stage, its enemies, their bullets and the power capsules; ?stage=test-boss plays the WARNING and the test boss; ?stage=hunter-range&loadout=full sends in the Option Hunters; ?stage=direct-range (then the MANTA) sends pincer waves of item carriers; ?stage=gimmick-range tries the M2-07 stage systems — bricks to shoot through, regrowing walls, rocks, bubbles, a volcano, suction, tentacles, the cube rush, moving blocks, a pan, a fork; ?stage=raster-range shows the M2-08 raster effects and palette cycling — a waving, colour-rolling sea, a line-band floor, heat haze; ?stage=captain-range / raid-range / twin-range / gauntlet-range play the M2-09 advanced bosses — mid-bosses on the scrolling screen, the IRON LEVIATHAN raid with its heart and time limit, the twins' turns, a boss rush; ?stage=bonus-range tries the M2-10 hidden bonus entrances into the bonus vault; ?stage=zone-b / zone-c plays BRINE NEBULA / DUNE EXPANSE alone and ?stage=brine-grotto zone B's bonus stage PEARL GROTTO (M2-11); ?stage=zone-d / zone-e plays MAGMA DEEP (the dive, the brick maze, CINDER BASTION) / TEMPEST RIDGE (rear attackers, SQUALL STEED) alone (M2-12); ?stage=zone-f / zone-g plays CELL VAULT (tissue walls, tentacles, MANTLE REGENT) / PRISM LABYRINTH (crystal walls, the cube rush, FACET MONARCH — shoot the gallery's four turrets for ?stage=glimmer-cache, its bonus stage) alone (M2-13); ?stage=zone-h / zone-i plays the finales IRON CITADEL (the piston hall, the parade, IRON SOVEREIGN) / ABYSSAL THRONE (depth mines, the ABYSS ARK raid, THE HOLLOW KING) alone (M2-14 — a whole run from the title ends in an ending scene and the credits); ?profile=keyboard-remote-emulation feels like the TV remote; ?profile=keyboard-split puts two players on one keyboard; ?scene=showcase / ?scene=calibration / ?scene=fx-gallery)
 pnpm lint             # ESLint (typescript-eslint + compat: chrome >= 69)
 pnpm typecheck        # tsc --noEmit everywhere
 pnpm test             # every package's Vitest tests + repo integration tests, one process, one worker pool (VITEST_MAX_WORKERS=n to throttle)
@@ -946,7 +972,7 @@ Weapon Edit, parking & weapon select), M2-04 (Option & shield variants + Option 
 systems & Tiled import), M2-08 (presentation polish: raster effects, palettes, visual options) and
 M2-09 (advanced bosses: mid-bosses, raids, multi-bosses), M2-10 (zone map, campaign flow,
 transitions & bonus stages), M2-11 (zones B & C), M2-12 (zones D & E), M2-13 (zones F & G), M2-14 (final zones H & I, endings
-& credits), M2-15 (front-end screens & attract mode), M2-16 (options, rebinding & accessibility), M2-17 (platform polish: Electron, Tizen extras, storage) and M2-18 followed; next is the M3 backlog; every simulation change re-blesses the golden replays in the same
+& credits), M2-15 (front-end screens & attract mode), M2-16 (options, rebinding & accessibility), M2-17 (platform polish: Electron, Tizen extras, storage) and M2-18 followed. Milestone **M3** is under way: M3-01 (extra modes & replay features) is done, next is **M3-02** (visual & mechanic extras); every simulation change re-blesses the golden replays in the same
 commit. The per-step status board is [`shmup_progress.md`](shmup_progress.md).
 
 Also on hardware (unchanged, and still the gate for the remote control scheme): package and
@@ -980,7 +1006,9 @@ M2-15 the attract loop, typing initials with the remote's arrows and OK, the hig
 practice and the sound test, and since M2-16 the Options pages — rebinding remote buttons, the input
 test, RATE, DEBOUNCE and the GAME options with the remote —, and since M2-17 the game-mode build's
 latency A/B test, the debug panel's device line, the memory over a long run and live reload
-(`tizen:watch`) (checklist in
+(`tizen:watch`), and since M3-01 the EXTRA modes, a replay played back and kept across a relaunch,
+the secret codes on the remote, SPEED 50 % and a gamepad's rumble
+([`docs/client/extra-modes-and-replays.md`](docs/client/extra-modes-and-replays.md#on-the-tv)) (checklist in
 [`docs/client/preview-build.md`](docs/client/preview-build.md#on-the-samsung-smart-monitor--tv)).
 
 Desktop prerequisites: Git, Node 24.15+, Tizen Studio **or** VS Code + Samsung Tizen extension (with a Samsung

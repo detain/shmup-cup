@@ -174,7 +174,9 @@
  * {@link weaponsOfSlot}, {@link weaponLabel}, {@link WEAPON_BEHAVIOR_LABELS},
  * {@link SPREAD_BLAST_SPRITE}, {@link WEAPON_SPRITES}, {@link RIPPLE_RING_WIDTH}; M2-05:
  * {@link applyDirectLoadout}, {@link DIRECT_MAX_LEVEL}, {@link MAX_DIRECT_WEAPONS},
- * {@link WEAPON_ROLE_SLOTS}, {@link resolveFamilies}.
+ * {@link WEAPON_ROLE_SLOTS}, {@link resolveFamilies}; M3-01: the Extra Edit's
+ * {@link ShotKind}s (`Control`, `Upper`, `HawkWind`, `SpreadGun`), {@link SPREAD_GUN_BEHAVIOR} and
+ * {@link Loadout.spread}.
  *
  * @module
  */

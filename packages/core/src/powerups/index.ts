@@ -179,6 +179,12 @@
  * {@link applyDirectDeathPenalty}, {@link directMaxLevel}. M2-10: {@link ONE_UP_SPRITE},
  * {@link BONUS_CAPSULE_SPRITE}, {@link BONUS_CAPSULE_SCORE}.
  *
+ * **Spread Gun (M3-01).** The Extra Edit's Spread Gun (`core/weapons` `SPREAD_GUN_BEHAVIOR`) on the
+ * Double role may be equipped twice ({@link MeterChoices.doubleLevels} 2, set from
+ * {@link PowerUpHost}'s `weapons.roleWeapons`): the first equip gives the diagonals, the second
+ * sets `Loadout.spread` (forward too); {@link canEquipSlot} keeps DOUBLE equippable until then, and
+ * equipping the laser clears it.
+ *
  * **Co-op (M2-06).** Every player has its own meter (or Direct-mode levels) and shield; an item
  * goes to whoever touches it first (player 1 when both touch it on the same tick). While two ships
  * are in play, power-up drops are scaled by `GameConfig.coopExtra`

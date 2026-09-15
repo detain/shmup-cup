@@ -10,7 +10,7 @@ Plan step **M1-19** closes the first milestone with the developer tooling of `sh
   Ch+, Ch+ on the TV, and `window.__shmupDebug` for tests and the remote inspector;
 - **replays** (`core/replay`): a session's input per tick, a header with everything needed to
   recreate its start, state hashes to detect a desync;
-- **golden replays** (`test/golden/` — fifty-five since M2-16: zone A and every later zone, the dev ranges, the autofire modes) checked by every `pnpm test`, re-blessed with
+- **golden replays** (`test/golden/` — sixty-one since M3-01: zone A and every later zone, the dev ranges, the autofire modes, the extra modes and assists) checked by every `pnpm test`, re-blessed with
   `pnpm golden:update`;
 - **budgets**: `pnpm bench` (ms per tick and heap growth under maximum load) and the Tizen bundle
   check's size limits;
@@ -150,6 +150,13 @@ does — every tick still polls input once and runs the whole pipeline, so deter
   argument would be boxed every frame), so at 60 Hz a tick runs every 2nd / 4th frame.
 - **Switching** between the three modes resets the loop's accumulator, so leaving frame advance
   or slow motion never releases a burst of catch-up ticks.
+
+**The game-speed assist (M3-01)** uses the same machinery: with the scene flow, a speed below 100 %
+(`SceneFlow.speedPercent` — the save's `options.play.speed` while the game scene is on top) is a
+timing mode of its own that feeds the loop a clock advancing `delta × percent / 100`. `Game.frame`
+is one of two functions picked at creation — `bareFrame` (bare gameplay, the M1-19 frame above) or
+`flowFrame` (which also checks the speed) — so the bare one stays small enough for V8 to inline
+([extra-modes-and-replays.md](extra-modes-and-replays.md#assists-and-feel-playoptions-the-game-and-controls-pages)).
 
 `game.step()` ignores all of it (tests and tools drive ticks directly). Frame advance also
 freezes the scene flow's menus (they tick with the game), so a frozen title does not react to OK
@@ -292,7 +299,7 @@ imports) can decode and play demos without a cycle; the attract playback is `rep
 (`createDemoPlayback`, `DemoPlayback`, `DEMO_BUILD_ID`); `replay/index.ts` keeps
 `createReplayGame` / `playReplay` and re-exports everything — the public API did not move.
 
-**Header** (`createReplayHeader(config, { buildId, checkpoint, assisted })`, frozen):
+**Header** (`createReplayHeader(config, { buildId, checkpoint, assisted, assists })`, frozen):
 
 | Field | Meaning |
 |---|---|
@@ -304,6 +311,7 @@ imports) can decode and play demos without a cycle; the attract playback is `rep
 | `checkpoint` | `-1` = the stage start, else the checkpoint the run started from |
 | `loadout` | `config.loadout` |
 | `assisted` | god mode was on **for the whole run** (playback turns it on) |
+| `assists` | since M3-01: the run's `AssistFlag` bits — 1 god mode, 2 the invincibility assist, 4 the game-speed assist, 8 a secret code. Informative (playback reads only `assisted` and the config, whose `invincible` *is* the assist); defaults to 1 when `assisted` plus 2 when `config.invincible`; a replay recorded before M3-01 decodes as 1 when `assisted`, else 0 |
 
 **Body.** Per tick and per player (`MAX_PLAYERS` arrays) one 32-bit word `held | pressed << 16`
 (`packReplayInput`); `released` is derived on playback exactly as `commitPlayerInput` derives it
@@ -369,11 +377,18 @@ ticks; doubles beyond); `poll()` and `check()` of recorder and playback write in
 a hash boxes one number every 600 ticks. Encoding, decoding and `finish()` allocate (cold) —
 guarded in `packages/core/test/replay/replay-alloc.test.ts`.
 
-**Not covered yet.** Replays record **bare-gameplay sessions** (one World) — the attract demos of
-M2-15 are such recordings (one zone, no menus). Recording the scene flow (menus, retries, several
-Worlds), dev auto-record and replay save / share / fast-forward are later work (M3-01). God mode toggled **mid-run** is not reproducible —
-record with it fixed (the header's `assisted`); the debug stage jumps are reproducible only when
-the replay contains them (a session recorded through `createReplayGame` has no key handling).
+**Whole runs (M3-01).** These replays record **one World** (bare gameplay — the golden replays,
+the attract demos). A game played through the scene flow is recorded as a **run replay**
+(`replay/run.ts`): one of these replays per World — zone, bonus stage, retry — plus the start
+state the flow gave the World (the carried players, the rank's stage term, a checkpoint) and the
+flow's between-tick actions (a continue, the pause menu's secret codes); the flow records every run,
+the shell keeps the last game and three kept ones in `Platform.storage`, and EXTRA → REPLAYS plays
+them back with fast-forward. The format, the recorder, the library and its storage budget are in
+[extra-modes-and-replays.md](extra-modes-and-replays.md#whole-run-replays-corereplay-runts). God
+mode toggled **mid-run** is not reproducible — record with it fixed (the header's `assisted`); the
+debug stage jumps are reproducible only when the replay contains them (a session recorded through
+`createReplayGame` has no key handling; a flow run in which the tools jumped is not saved —
+`SceneFlow.noteWorldEdited`).
 
 ## Golden replays (`test/golden/`)
 
@@ -614,7 +629,7 @@ heap without V8's code spaces — `dataHeapBytes()` — flat within 1 MB), one f
 
 | Budget | Constant | Limit | At M1-19 |
 |---|---|---|---|
-| `app.js` gzipped | `APP_JS_GZIP_BUDGET` | **384 KB since M2-16** (350 KB before; launch ≤ 10 s, `shmup_feat.md` §23 — M2-18's boot-time check still guards the launch) | 228.6 KB (773.6 KB raw); **307.5 KB after M2-11**, **313.5 KB after M2-12**, **320.3 KB after M2-13** (the inlined content grows with every zone — ≈ 6 KB a pair), **331.5 KB after M2-14**, **343.8 KB after M2-15** (~9 KB of front-end scene code, ~3 KB of demos), **359.3 KB after M2-16** (the two UI string tables ≈ 6 KB, the Options pages and the rebinding ≈ 9 KB) |
+| `app.js` gzipped | `APP_JS_GZIP_BUDGET` | **384 KB since M2-16** (350 KB before; launch ≤ 10 s, `shmup_feat.md` §23 — M2-18's boot-time check still guards the launch) | 228.6 KB (773.6 KB raw); **307.5 KB after M2-11**, **313.5 KB after M2-12**, **320.3 KB after M2-13** (the inlined content grows with every zone — ≈ 6 KB a pair), **331.5 KB after M2-14**, **343.8 KB after M2-15** (~9 KB of front-end scene code, ~3 KB of demos), **359.3 KB after M2-16** (the two UI string tables ≈ 6 KB, the Options pages and the rebinding ≈ 9 KB), **374.7 KB after M3-01** (the extra modes, the run replays and their screens, the zones' remixes — the budget was not raised) |
 | Atlas page edge | `ATLAS_PAGE_MAX_SIZE` | 2048 px (and every page must be a readable PNG — `pngSize` reads its IHDR) | one page |
 | Whole `dist/` | `DIST_BUDGET` | 8 MB | 812.4 KB |
 
@@ -752,4 +767,8 @@ testers in [../client/debug-tools.md](../client/debug-tools.md#the-m1-release-ch
   WebGL) as the overlay's sixth line, `window.__shmupDebug.save` (the save export / import and the
   storage usage); no simulation change, no golden re-bless ([platform-polish.md](platform-polish.md)).
 - **M2-18** — cross-engine determinism: golden replays in Chromium and Firefox.
-- **M3-01** — replay save / share / browser, fast-forward, assists flagged as `assisted`.
+- **M3-01** (done) — whole-run replays recorded by the scene flow (`replay/run.ts`), the replay
+  library, browser and playback with fast-forward, SHARE on the web; the header's `assists`; a
+  debug stage jump marks the run unsaveable; six goldens of the extra modes and assists, every file
+  re-blessed for its header (`captain-range-god` also for the score-milking cap)
+  ([extra-modes-and-replays.md](extra-modes-and-replays.md)).

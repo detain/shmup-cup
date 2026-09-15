@@ -60,6 +60,11 @@
  * (remote Ch−), wrapping, instead of the meter's Speed Ups. Movement reads the level the same way
  * in both modes.
  *
+ * **Invincibility assist (M3-01).** A ship created with `invincible` ({@link createPlayer}'s third
+ * argument, from `GameConfig.invincible` — the GAME page's INVINCIBLE row) ignores every hit in
+ * {@link playerHit}, like the debug god mode; the run is flagged assisted (`core/replay`
+ * `AssistFlag.Invincible`).
+ *
  * **Implements.**
  * - shmup_feat.md §5 Player ship (the launch fly-in and, since M2-10, the stage-clear fly-out)
  * - shmup_feat.md §10 Death, respawn & checkpoints

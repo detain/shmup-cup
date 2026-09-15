@@ -270,6 +270,13 @@ ES5 and linted with `ecmaVersion: 5`.
   (≈ 1.7 MB per 20,000 calls, caught in review). `DebugOverlay.setDevice` keeps the last input and
   returns at once when it is the same string
   ([platform-polish.md](platform-polish.md#the-debug-overlays-device-line-shmuprender-pixi-debug-shmupshell-debug)).
+  And from M3-01: a hot function that gains a branch for a feature only one mode uses (the
+  game-speed assist in `Game.frame`) can grow past what V8 inlines, and then the fractional
+  argument it receives (`nowMs`) is boxed on every call — keep the small version for the mode
+  that does not need the branch and pick one function at creation (`bareFrame` / `flowFrame`)
+  instead of testing the mode inside; a new piece of per-tick state that older recordings do not
+  have is hashed only when in use (the caravan clock, `Loadout.spread`) so their hashes stay valid
+  ([extra-modes-and-replays.md](extra-modes-and-replays.md#zero-allocation)).
 - Behaviour coroutines (generators, D29) allocate a small result object on every resume:
   scripts **sleep** (`yield ticks`) and are resumed only when they wake; per-tick motion
   belongs in a mover (numbers on the body), never in a `yield 1` loop.
@@ -313,7 +320,9 @@ Library code takes such tooling as an optional **factory** (`ShellOptions.debugT
 a static import from the boot path; `apps/tizen/test/build/tizen-build.test.ts` checks that the
 release `app.js` holds no debug code. Sim-affecting debug options belong in `GameConfig` (so a
 replay records them); the only sim-affecting debug switch is god mode, which a replay header
-records as `assisted` ([debug-and-replays.md](debug-and-replays.md#release-builds-and-dev--test-builds)).
+records as `assisted` ([debug-and-replays.md](debug-and-replays.md#release-builds-and-dev--test-builds))
+— and, since M3-01, as bit 1 of `assists`; the assists a player chooses (invincibility, option
+recovery) are `GameConfig` fields, the game speed only slows the clock.
 
 ## Tests
 

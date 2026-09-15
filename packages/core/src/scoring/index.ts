@@ -69,7 +69,11 @@
  * {@link ScoringHost}, {@link createScoringSystem}, {@link MAX_SCORE}, {@link MAX_LIVES},
  * {@link HiScoreEntry}; the rules of `content/rules/` (M2-02) {@link ScoringRules},
  * {@link DEFAULT_SCORING_RULES}, {@link MAX_BULLET_CANCEL_POINTS} — the points of a bullet
- * cancelled into a point item (credited by `core/bullets` through {@link addScore}).
+ * cancelled into a point item (credited by `core/bullets` through {@link addScore}); M3-01 the
+ * score-milking cap ({@link ScoringRules.repeatKills} / {@link ScoringRules.repeatPercent},
+ * {@link MAX_REPEAT_KILLS}, {@link DEFAULT_REPEAT_KILLS}, {@link DEFAULT_REPEAT_PERCENT} — applied
+ * by `core/enemies` to script- and boss-spawned enemies) and the assisted mark of a hi-score row
+ * ({@link HiScoreEntry.assisted}).
  *
  * **Planned API.** Rare 1UP items (Direct mode, M2-05). (The planned `insertHiScore` became
  * `core/save`'s in M1-17.)

@@ -517,9 +517,12 @@ In a browser the save is `localStorage["shmup-cup:save.v1"]`; in a dev / test bu
 - **M2-17** (done) — the Electron file store under the same save document (format 2 — the bindings
   and game options land in `save.v1.json`), storage quota checks, debug save export / import
   ([platform-polish.md](platform-polish.md)).
-- **M2-18** — the v1.0 hardening pass: the boot-time and bundle budgets (≈ 359 of 384 KB), the
+- **M2-18** (done) — the v1.0 hardening pass: the boot-time and bundle budgets (≈ 359 of 384 KB), the
   release checklist on the TV (the CONTROLS / GAME pages and the rebind screen with the remote).
-- **M3-01** — assists (game speed, invincibility) as more game options, flagged as assisted in
-  replays; recording the scene flow.
+- **M3-01** (done) — the GAME page's OPT RECOVERY, SPEED and INVINCIBLE (`GameOptionsItem` 6–8,
+  BACK 9) and the CONTROLS page's RUMBLE (`ControlsItem.Rumble` 8, BACK 9) — `options.play`
+  (`PlayOptions`), still save format 2; assisted runs flagged in hi-score rows and replay headers;
+  the scene flow recorded as whole-run replays; the new labels in the string table
+  ([extra-modes-and-replays.md](extra-modes-and-replays.md#assists-and-feel-playoptions-the-game-and-controls-pages)).
 - **M3-03** — localization: a language option picking a `content/strings/` table and bitmap font
   atlases for more glyphs.

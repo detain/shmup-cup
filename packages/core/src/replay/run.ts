@@ -41,6 +41,12 @@
  *
  * Pure: the storage arrives as a `PlatformStorage`; nothing here reads a clock.
  *
+ * **Public API** (re-exported by `./index.ts` and the package root): the list above plus
+ * {@link RunSegment}, {@link RunSegmentJson}, {@link RunReplayJson}, {@link RunAction},
+ * {@link ReplaySummary}, {@link ReplayStoreResult}, {@link replayStorageKey}, {@link REPLAY_SLOTS},
+ * {@link KEPT_REPLAY_SLOTS}, {@link SEGMENT_CAPACITY}, {@link MAX_RUN_SEGMENTS},
+ * {@link MAX_SEGMENT_ACTIONS}, {@link RUN_REPLAY_KIND}, {@link RUN_REPLAY_FORMAT_VERSION}.
+ *
  * **Implements.** shmup_feat.md §21 Replays — "[P2] save/share replays, replay browser,
  * fast-forward" (the browser and the fast-forward are `core/scenes`'), "header: … all sim-affecting
  * options", "periodic state hash embedded to detect desyncs"; §21 accessibility — assisted flags.

@@ -84,6 +84,7 @@ open the difficulty menu.
 | PRACTICE | `PracticeScene` (overlay) → its START: the same difficulty / ship / weapon chain | the title menu |
 | OPTIONS | `OptionsScene` (overlay) | the title menu |
 | SOUND TEST | `SoundTestScene` (overlay) | the title menu (the title theme comes back) |
+| EXTRA (M3-01 — `TitleItem.Extra` 5, EXIT moved to **6**) | `ExtraScene` (overlay): BOSS RUSH, CARAVAN, ARCADE → the same difficulty / ship / weapon chain; REPLAYS ([extra-modes-and-replays.md](extra-modes-and-replays.md#the-extra-menu-corescenes-extrascene)) | the title menu |
 | EXIT | the exit confirmation | — |
 
 The last OK of the chain (the difficulty menu with a Direct-mode config, the ship select with a
@@ -494,5 +495,8 @@ through the loop (`test/e2e/frame-advance.ts`). The saved tables are in `localSt
   became the v1 → v2 migration); the rebind widget joined the UI kit
   ([options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md)).
 - **M2-17** — platform polish (Electron's file store for the save — the tables included).
-- **M3-01** — replays of the scene flow (menus, continues) and save / share / fast-forward; the
-  demos stay bare-World recordings.
+- **M3-01** (done) — the title's EXTRA (BOSS RUSH, CARAVAN, ARCADE, REPLAYS) with its own hi-score
+  modes (`bossrush`, `caravan`, `arcade`), assisted rows marked `*` in the tables, the title's secret
+  codes; whole runs of the scene flow recorded (continues and pause codes included) with a replay
+  browser, save / share and fast-forward — the demos stay bare-World recordings
+  ([extra-modes-and-replays.md](extra-modes-and-replays.md)).

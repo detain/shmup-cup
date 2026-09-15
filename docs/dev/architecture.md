@@ -384,7 +384,11 @@ system, status,
 - **`replay`** (M1-19) — a header recreating the start (the whole `GameConfig`, stage,
   checkpoint, `assisted`), `held | pressed << 16` per tick and player, a state hash every 600
   ticks; the recorder and the playback are `PlatformInput`s, so a replay is fed through the same
-  `platform.input.poll()` as live play.
+  `platform.input.poll()` as live play. Since M3-01 a game played through the scene flow is
+  recorded as a **run replay** (`replay/run.ts`): one such replay per World plus the start state
+  the flow gave it and the flow's between-tick actions, kept by the shell's replay library in
+  `Platform.storage` and played back by the replay screen
+  ([extra-modes-and-replays.md](extra-modes-and-replays.md)).
 
 ### Content pipeline (`content/` → `core/data`)
 
@@ -662,7 +666,8 @@ These are enforced now so that replays, golden tests and attract mode work later
   (`test/playtest/`, M1-18) records a bot's input per tick and replays it to the same deaths and
   final hash.
 - **Debug tools never desync**: the only sim-affecting switch is god mode (a replay header's
-  `assisted`); the stage jumps are cold restarts a replay reproduces when it contains them; frame
+  `assisted`; a player's assists — invincibility, option recovery — are `GameConfig` fields since
+  M3-01, and the game-speed assist only slows the clock); the stage jumps are cold restarts a replay reproduces when it contains them; frame
   advance and slow motion only change how many ticks a displayed frame runs. The tools exist
   only in dev / test builds (`__SHMUP_DEV__`).
 - **Across engines** (M2-18): `test/e2e/determinism.spec.ts` plays every golden replay and attract

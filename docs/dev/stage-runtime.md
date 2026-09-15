@@ -678,3 +678,8 @@ world.stage!.restartAt(1); // back to x 1500: speed, pan and flags as live play 
 - **M2-14** (done) — the final zones H (IRON CITADEL's moving floors and ceilings as `block`
   events) and I (a raid in open water); the stage `music` may name `ending` / `credits` — content
   only ([zones-h-and-i.md](zones-h-and-i.md)).
+- **M3-01** (done) — loops: `createStageRunner(stage, hooks, camera, loop)` / `StageRunner.loop`
+  skip the events whose `minLoop` / `maxLoop` leave the loop out (like a branch not taken), and
+  `core/data` `stageForLoop` merges a stage's `remix` events into its timeline from loop 2 — loop 1
+  plays the stage as before, indices and hashes included; every zone ships a remix
+  ([extra-modes-and-replays.md](extra-modes-and-replays.md#arcade--loops-gameconfigloop)).

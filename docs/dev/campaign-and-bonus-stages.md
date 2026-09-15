@@ -577,3 +577,8 @@ the menus with action presses; `game.scenes.run` / `.map` / `.ending` expose the
   ([front-end-and-attract.md](front-end-and-attract.md)).
 - **M2-17** — per-zone texture pages unloaded between zones (the other half of "prepared on the
   map").
+- **M3-01** (done) — run modes (`RunState.mode`: `bossRush`, `caravan` — one zone with a clock,
+  `beginZone` —, `arcade` — `nextLoop()` back to the first zone after the ending), the start state
+  of every World as data (`WorldStart`, `prepareWorldStart` — what `prepareRunWorld` runs) so a run
+  replay can rebuild each World, `CarriedPlayer.spread`, and the tally sealing the World's replay
+  segment before it pays ([extra-modes-and-replays.md](extra-modes-and-replays.md)).

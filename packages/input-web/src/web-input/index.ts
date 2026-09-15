@@ -49,6 +49,11 @@
  * screen's rebind prompt reads it through the shell and binds the result (`rebind`
  * `captureToken` / `rebindAction`).
  *
+ * **Rumble (M3-01).** {@link WebInput.rumble} rumbles the gamepads of a player (`gamepad`
+ * `rumblePad` — `vibrationActuator.playEffect('dual-rumble')`): with two seats player 2's seated
+ * pad and player 1's every other pad, with one seat every pad for player 1. The shell calls it for
+ * the core's `SimEventKind.Rumble` events while the save's RUMBLE option is on.
+ *
  * **Public API.** {@link createWebInput}, {@link WebInput}, {@link WebInputOptions},
  * {@link PAD_SEAT_NONE}, {@link PAD_SEAT_P2}; M2-16: {@link CaptureKind},
  * {@link InputCaptureState}.

@@ -95,23 +95,33 @@ Before M2-17 Electron used the web build's `localStorage`; that save is not migr
       "reduceFlashing": false,
       "showHitbox": false,
       "bossHpBar": false
-    }
+    },
+    "play": { "speed": 100, "invincible": false, "optionRecovery": null, "rumble": true }
   },
   "hiScores": {
     "meter-normal": [
       { "name": "---", "score": 48200, "reached": "test-range", "mode": "1p", "difficulty": "normal" }
+    ],
+    "meter-normal-caravan": [
+      { "name": "JOE", "score": 91450, "reached": "C", "mode": "caravan", "difficulty": "normal", "assisted": true }
     ]
   },
-  "stats": { "gamesStarted": 12, "gameOvers": 9, "stagesCleared": 2 }
+  "stats": { "gamesStarted": 12, "gameOvers": 9, "stagesCleared": 2 },
+  "unlocks": { "extraEdit": true, "loop2": true }
 }
 ```
 
 | Field | Meaning |
 |---|---|
 | `version` | `SAVE_VERSION` = **2** since M2-16 (1 before). Drives the migrations; a document without it counts as version 0 |
-| `options` | The player's `UserOptions` (below): volume levels 0–10, the chosen key / remote profile id (or `null` = the platform default), display options (M2-02: `bulletPalette`; M2-08: `scaleMode`, `screenShake`, `reduceFlashing`, `showHitbox`; M2-09: `bossHpBar`); M2-16: the controls (`input.autofire`, `autofireInterval`, `socd`, `releaseDebounce` — `null` = the host config's / the profile's —, `bindings` — the rebinding per profile and context) and the game options (`game.difficulty`, `lives`, `deathPenalty`, `autoPowerUp`, `pickupMagnet` — `null` = the host config's / the preset's —, `oneButton`) |
-| `hiScores` | Tables by **mode key** (`hiScoreModeKey(config)` = `<powerUpMode>-<difficulty>`, `meter-normal` in M1; since M2-01 one per difficulty — `meter-easy`, `meter-normal`, `meter-hard`, `meter-arcade`; since M2-05 the Direct-mode MANTA's games in `direct-easy` … `direct-arcade` — no format change, the key was always `<powerUpMode>-<difficulty>`; since M2-15 `hiScoreModeKey(config, mode)` appends `-2p` for co-op games and `-practice` for practice runs — `meter-normal-2p`, `direct-hard-practice`: one table per difficulty × ship × mode, still no format change), each sorted best first, at most `HI_SCORE_TABLE_SIZE` = 10 rows, at most `MAX_HI_SCORE_TABLES` = 32 tables. A mode nobody scored in has no table |
+| `options` | The player's `UserOptions` (below): volume levels 0–10, the chosen key / remote profile id (or `null` = the platform default), display options (M2-02: `bulletPalette`; M2-08: `scaleMode`, `screenShake`, `reduceFlashing`, `showHitbox`; M2-09: `bossHpBar`); M2-16: the controls (`input.autofire`, `autofireInterval`, `socd`, `releaseDebounce` — `null` = the host config's / the profile's —, `bindings` — the rebinding per profile and context) and the game options (`game.difficulty`, `lives`, `deathPenalty`, `autoPowerUp`, `pickupMagnet` — `null` = the host config's / the preset's —, `oneButton`); M3-01: the assists and feel (`play.speed` 100 / 75 / 50, `invincible`, `optionRecovery` — `null` = the host config's —, `rumble`) — resolved when missing, so no new format |
+| `hiScores` | Tables by **mode key** (`hiScoreModeKey(config)` = `<powerUpMode>-<difficulty>`, `meter-normal` in M1; since M2-01 one per difficulty — `meter-easy`, `meter-normal`, `meter-hard`, `meter-arcade`; since M2-05 the Direct-mode MANTA's games in `direct-easy` … `direct-arcade` — no format change, the key was always `<powerUpMode>-<difficulty>`; since M2-15 `hiScoreModeKey(config, mode)` appends `-2p` for co-op games and `-practice` for practice runs — `meter-normal-2p`, `direct-hard-practice`: one table per difficulty × ship × mode, still no format change; since M3-01 also `-bossrush`, `-caravan` and `-arcade` for the EXTRA modes), each sorted best first, at most `HI_SCORE_TABLE_SIZE` = 10 rows, at most `MAX_HI_SCORE_TABLES` = 64 tables (32 before M3-01). A mode nobody scored in has no table. Since M3-01 a row set with an assist carries `"assisted": true` (left out otherwise) |
 | `stats` | Counters: `gamesStarted` (START and RETRY STAGE), `gameOvers`, `stagesCleared` — whole numbers, capped at 2³¹−1 |
+| `unlocks` | M3-01 (`SaveUnlocks`): `extraEdit` (the weapon select's EXTRA) and `loop2` (the ARCADE mode's LOOP 2 start) — set by reaching an ending (or the title's EXTRA EDIT code), never taken back; written only once something is unlocked, so a save without it simply has nothing unlocked ([extra-modes-and-replays.md](extra-modes-and-replays.md#extra-edit-weapons-contentweaponstypes-extraweaponsjson)) |
+
+The replays are **not** in this document: the replay library keeps each one under its own key
+(`replay.last`, `replay.1`–`3`), sized so it can never crowd the save out of the storage budget
+([extra-modes-and-replays.md](extra-modes-and-replays.md#the-replay-library-createreplaylibrary-replaylibrary)).
 
 The key stays `save.v1` for the whole format family: a new format bumps the document's
 `version`, not the key, so an older save is always found and migrated. Hi-score rows reuse the
@@ -647,3 +657,8 @@ title — the M1-17 acceptance test in `scenes-options.test.ts`.
   TV (a full storage keeps only that value in memory), and the debug save export / import
   (`__shmupDebug.save`, `exportSaveText` / `importSaveText`, the new `SaveStore.replace`) — no save
   format change ([platform-polish.md](platform-polish.md)).
+- **M3-01** (done) — `options.play` (the GAME page's OPT RECOVERY, SPEED, INVINCIBLE and the
+  CONTROLS page's RUMBLE — `PlayOptions`), the EXTRA modes' tables (`-bossrush`, `-caravan`,
+  `-arcade`; `MAX_HI_SCORE_TABLES` 64), assisted rows (`assisted`, drawn as `*`) and `unlocks` —
+  all in format 2 without a migration; the replay library under its own keys beside the save
+  ([extra-modes-and-replays.md](extra-modes-and-replays.md)).

@@ -27,7 +27,10 @@
  * **Saves (M1-17).** Options and hi-scores live in `localStorage` (deleted with the app on
  * uninstall); the save is written when the Options screen closes and when a game ends, so
  * quitting with Back → YES loses nothing. Since M2-17 the storage has quota checks (the shell's
- * `createWebStorage`, through the platform adapter).
+ * `createWebStorage`, through the platform adapter). Since M3-01 the replay library keeps the last
+ * game and three kept replays there too (`replay.last`, `replay.1`–`3`, removed with the app like
+ * the save); `main.ts` passes the build id they record ({@link TizenAppResources.buildId}). The TV
+ * has no clipboard, so the replay browser offers no SHARE here.
  *
  * **Back key** (shmup_feat.md §17/§23). Once the game runs, Back is an ordinary remote key
  * (`Action.Back` in menus, `Action.Pause` in the game — the input profile) and the scene stack

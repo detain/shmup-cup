@@ -70,8 +70,8 @@ table, e.g. Z = Shot + Confirm).
 |---|---|---|
 | `keymap` | implemented | Built-in bindings, Tizen key codes, `code`/`keyCode` resolution |
 | `keyboard` | implemented | Held/latched masks from key events; debounce, direction policies, table swaps; the rebinding's `KeyCapture` (M2-16) |
-| `gamepad` | implemented | Gamepad → actions (deadzone, hysteresis, buttons held across a table swap) |
-| `web-input` | implemented | Merges sources into the `InputSnapshot`; profiles + contexts; player seats — every device drives player 1, or in a co-op game a pad (or the split keyboard's right half) takes player 2's seat with its START (M2-06); the rebinding capture `beginCapture` / `capture` / `endCapture` (M2-16) |
+| `gamepad` | implemented | Gamepad → actions (deadzone, hysteresis, buttons held across a table swap); rumble through `vibrationActuator.playEffect('dual-rumble')` — `rumblePad`, `RUMBLE_EFFECTS` (M3-01) |
+| `web-input` | implemented | Merges sources into the `InputSnapshot`; profiles + contexts; player seats — every device drives player 1, or in a co-op game a pad (or the split keyboard's right half) takes player 2's seat with its START (M2-06); the rebinding capture `beginCapture` / `capture` / `endCapture` (M2-16); `WebInput.rumble(player, strength)` — a player's pads by seat (M3-01) |
 | `remote` | implemented | Release debounce, diagonal policy, SOCD — tuned from the input-probe results |
 | `rebind` | implemented | Input profiles: validation, compiled `game`/`menu` tables, choice; the profiles an Options screen may offer (`selectableKeyProfiles`, `inputProfileChoices` — M1-17); a keyboard profile's optional `split` half for two players on one keyboard (`splitTables`, `keyboard-split` — M2-06); the player's rebinding (M2-16): `customizeInputProfile`, `applyBindingOverride`, `rebindAction`, `resetBindings`, `captureToken`, `actionTokens`, `findBindingConflicts`, `bindingTokenLabel` / `bindingKeysLabel`, `RESERVED_BINDING_TOKENS` |
 

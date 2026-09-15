@@ -669,3 +669,8 @@ rate, the game options) reach a World only through the config the flow resolves 
   ship and the loadout stay session-only), every UI label in the string table
   (`content/strings/en.strings.json`, `SceneFlow.text`), 512 UI string slots
   ([options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md)).
+- **M3-01** (done) — the title's EXTRA (`TitleItem.Extra` 5, EXIT 6) with the `ExtraScene`,
+  `ReplaysScene` and `ReplayScene`; `SecretCodeTracker` on the title and the pause menu; the run
+  recorder (`SceneFlow.recorder`) fed by the game scene every tick; `SceneFlow.speedPercent` slowing
+  `core/game`'s clock; the caravan's clock in the HUD (`hudClockSeconds`, `HUD_STRING_COUNT` 24)
+  ([extra-modes-and-replays.md](extra-modes-and-replays.md)).

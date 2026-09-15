@@ -23,7 +23,11 @@ pause menu — sets the game's own volumes (MASTER, MUSIC, SFX) and opens three 
 players —, how the picture fills the screen, the screen shake, gentler flashes, a hitbox marker on
 your ship and a boss HP bar) and **GAME** (difficulty, lives, what losing a ship costs, automatic
 power-ups, the capsule magnet and **one-button play**), and the game **remembers** them and your
-**high scores** between launches. Everything is drawn by the game
+**high scores** between launches. The title's **EXTRA** (the extra-modes build, M3-01) adds a
+**BOSS RUSH**, the **CARAVAN** score attack, the looping **ARCADE** mode and **REPLAYS** of your
+games; reaching an ending unlocks the **Extra Edit** weapons, and the GAME page gained a slower game
+speed, invincibility and option recovery ([extra-modes-and-replays.md](extra-modes-and-replays.md)).
+Everything is drawn by the game
 itself and works with the remote's arrows, OK and Back alone ([The title screen and the
 menus](#the-title-screen-and-the-menus), [Pausing, quitting and the end
 screens](#pausing-quitting-and-the-end-screens), [Difficulty, extra ships and
@@ -236,6 +240,7 @@ tables and the story; any button brings the title back
 | **PRACTICE** | Practise one zone from a checkpoint of your choice, with its own high-score tables — see [Practice](#practice) |
 | **OPTIONS** | Opens the **Options screen**: the volumes and the CONTROLS, DISPLAY and GAME pages — see [The Options screen](#the-options-screen) |
 | **SOUND TEST** | Plays any tune or sound effect of the game — see [The sound test](#the-sound-test) |
+| **EXTRA** | The extra modes — **BOSS RUSH**, **CARAVAN** (a zone against the clock), **ARCADE** (the run looping on, each loop harder) — and **REPLAYS** of your games — see [extra-modes-and-replays.md](extra-modes-and-replays.md) |
 | **EXIT** | On the TV and in the desktop app (not in a browser): asks **EXIT SHMUP CUP?** — see below |
 
 - The highlighted entry is yellow with a small arrow `→` in front of it. **▲ / ▼** move the
@@ -291,7 +296,9 @@ about half and shows the **PAUSE** menu in a framed box, with a short sound:
 | **RETRY STAGE** | Starts the zone (or test stage, or open space) again from the beginning — no question asked. In zone A (and in every test stage) that is a fresh start: a fresh ship, the difficulty's full number of ships and a zero score; in a later zone you get back the score, ships and power-ups you had when that zone began. Inside a bonus stage it starts the zone the bonus stage was entered from |
 | **QUIT TO TITLE** | Asks **QUIT TO TITLE?** (YES / NO, NO highlighted); YES ends the game and shows the title |
 
-The music keeps playing while the game is paused. Leaving the app with **Home** on the TV (or
+The pause menu also hides two **secret codes** of eight arrow presses (a full power-up and a joke) —
+see [extra-modes-and-replays.md](extra-modes-and-replays.md#secret-codes). The music keeps playing
+while the game is paused. Leaving the app with **Home** on the TV (or
 switching tabs in a browser) and coming back also brings you back to the pause menu, so a game
 never continues while you are not looking.
 
@@ -486,7 +493,11 @@ in what the power meter's **MISSILE**, **DOUBLE** and **LASER** boxes give you:
 | **TYPE C** | **2-WAY MISSILE** — two grey missiles at once, one climbing, one diving | **VERTICAL** — a second shot straight **up** | **CYCLONE LASER** — a thicker, longer beam with violet strands swirling round a white core; passes through enemies |
 | **TYPE D** | **PHOTON TORPEDO** — a fast violet torpedo that drops and slides along the ground, and keeps going through the small enemies it destroys | **FREE WAY** — a second shot in the **direction you last moved** (up, down, back, diagonally …) | **TWIN LASER** — pairs of short green beams side by side, fast (two pairs at a time) |
 
-The last TYPE choice, **EDIT** (Weapon Edit), makes MISSILE, DOUBLE and LASER white: you can then
+Once an ending has been reached, TYPE also offers **EXTRA** after EDIT: EDIT's choice plus seven
+**Extra Edit** weapons (the Control Missile, the Upper Missile, the Spread Gun …) —
+[extra-modes-and-replays.md](extra-modes-and-replays.md#the-extra-edit-weapons).
+
+The TYPE choice **EDIT** (Weapon Edit) makes MISSILE, DOUBLE and LASER white: you can then
 pick each of the three from **all four types** (for example the Spread Bomb, the Free Way and the
 Cyclone Laser together). The labels show the full names (`SPREAD BOMB`, `2-WAY MISSILE` …). EDIT
 starts from the weapons of the type you had chosen before it. While MISSILE is highlighted the
@@ -698,6 +709,7 @@ darkened picture with the three volumes and three **pages**:
      REBIND KEYS
      REBIND PAD
      INPUT TEST
+     RUMBLE   ON
      BACK
    AUTOFIRE / RATE: FROM THE NEXT GAME
 ```
@@ -711,8 +723,9 @@ many shots a second the gun fires (7.5 to 30; 15 at the start). **SOCD** decides
 directions held together do, **DEBOUNCE** how long the game waits before it believes a released
 button (the hiccup protection — AUTO keeps the profile's own). **REBIND KEYS** / **REBIND PAD**
 open the rebind box, where you give every action your own keys or buttons, and **INPUT TEST** shows
-what every button does. Everything on this page is explained in
-[controls.md](controls.md#the-controls-page-autofire-socd-and-the-hiccup-protection) and
+what every button does. **RUMBLE** (since the extra-modes build) lets a gamepad rumble when your
+ship is destroyed and at a boss's final explosion — if the pad can. Everything on this page is
+explained in [controls.md](controls.md#the-controls-page-autofire-socd-and-the-hiccup-protection) and
 [controls.md](controls.md#rebinding-keys-and-buttons).
 
 PROFILE, SOCD, DEBOUNCE and new keys work **at once**; AUTOFIRE and RATE apply from the **next
@@ -774,12 +787,15 @@ the ship, disappears while the ship is exploding, and changes nothing about the 
 
 ```text
                GAME
-   → DIFFICULTY NORMAL
-     LIVES      PRESET
-     PENALTY    PRESET
-     AUTO POWER OFF
-     MAGNET     ON
-     ONE BUTTON OFF
+   → DIFFICULTY   NORMAL
+     LIVES        PRESET
+     PENALTY      PRESET
+     AUTO POWER   OFF
+     MAGNET       ON
+     ONE BUTTON   OFF
+     OPT RECOVERY OFF
+     SPEED        100%
+     INVINCIBLE   OFF
      BACK
    ONE BUTTON: AUTOFIRE, AUTO POWER, CASUAL
    APPLIES FROM THE NEXT GAME
@@ -793,6 +809,9 @@ the ship, disappears while the ship is exploding, and changes nothing about the 
 | **AUTO POWER** | **Auto Power-Up**: ON takes power-ups by itself when the power meter reaches the next one of its order (the WEAPON SELECT screen's AUTO does the same for one session; once you change it here, this one counts) |
 | **MAGNET** | **ON** (the start setting): capsules and items close to your ship are pulled into it; **OFF**: you have to touch them |
 | **ONE BUTTON** | **ON**: the gun fires on its own, power-ups are taken automatically and losing a ship costs only the Force Field — a game played with the four directions alone ([controls.md](controls.md#one-button-play)). While it is on, AUTO POWER and PENALTY are greyed out |
+| **OPT RECOVERY** | **ON**: the Options a lost ship costs drift away from the wreck as grey items you can catch again |
+| **SPEED** | **100%**, **75%** or **50%** — the whole game runs slower (the menus do not); works at once. An **assist**: the game's scores and replay are marked `*` |
+| **INVINCIBLE** | **ON**: nothing can destroy your ship. An **assist**, marked like SPEED |
 | **BACK** | Keeps the settings and returns to OPTIONS |
 
 - **◀ / ▶** (or OK) change the highlighted line.
@@ -800,6 +819,8 @@ the ship, disappears while the ship is exploding, and changes nothing about the 
   A game already running keeps what it started with, also in its next zones.
 - The DIFFICULTY box shows the LIVES a game will really get, so with LIVES 5 it reads 5 on every
   difficulty.
+- While SPEED or INVINCIBLE is highlighted the note line reads `ASSISTS MARK SCORES AND REPLAYS`.
+  More about the three lines: [extra-modes-and-replays.md](extra-modes-and-replays.md#assists-option-recovery-and-rumble).
 
 ### What the game remembers
 
@@ -808,6 +829,7 @@ the ship, disappears while the ship is exploding, and changes nothing about the 
 | The three volumes, the CONTROLS page (the control profile, AUTOFIRE, RATE, SOCD, DEBOUNCE), the DISPLAY page (BULLETS, SCALE, SHAKE, FLASHES, HITBOX, BOSS HP) and the GAME page (DIFFICULTY, LIVES, PENALTY, AUTO POWER, MAGNET, ONE BUTTON) | When you leave the page — or the Options screen — with BACK or Back | On the TV inside the app itself; in a browser in that browser's storage for the page; in the desktop app in a file on the computer ([desktop-app.md](desktop-app.md#where-the-saves-live)) |
 | Your own keys and buttons (REBIND KEYS / REBIND PAD) | When you leave the rebind box with DONE or Back | The same place |
 | The difficulty you chose in the DIFFICULTY box | The next time something is saved (the Options screen closing, a game ending) | The same place |
+| What you unlocked (Extra Edit, LOOP 2) and your replays (the last game and three kept ones — [extra-modes-and-replays.md](extra-modes-and-replays.md)) | When an ending is reached / when a game ends and when you KEEP or DELETE a replay | The same place |
 | High scores | When a run ends: the **GAME OVER** screen, or clearing the last zone (before the ending) — in a browser test stage the **STAGE CLEAR** screen, in practice its GAME OVER or zone result; the name you type afterwards when you finish it | The same place |
 
 - **High scores**: the best ten of each kind of game are kept — each **difficulty** has its own
@@ -2161,6 +2183,10 @@ table for the difficulty and ship you chose last; a two-player game or a practic
 its own table's best and never changes the title's `HI`. Two-player scores from earlier builds (which
 shared the one-player tables) move into the 2 PLAYERS tables by themselves the first time the new
 build starts.
+
+Since the extra-modes build the **BOSS RUSH**, **CARAVAN** and **ARCADE** modes keep tables of their
+own too, and a score set with an assist (SPEED below 100 %, INVINCIBLE, or a secret code) shows a
+red `*` after it ([extra-modes-and-replays.md](extra-modes-and-replays.md#assists-option-recovery-and-rumble)).
 
 ### Practice
 

@@ -6,7 +6,44 @@ versions before 1.0 may change anything between minor releases. Development foll
 
 ## [Unreleased]
 
-Nothing yet — the next changes after the v1.0 release candidate go here.
+The changes after the v1.0 release candidate — milestone M3 (plan steps M3-01 …).
+
+### Game
+
+- **EXTRA menu** on the title (M3-01), between SOUND TEST and EXIT: **BOSS RUSH** (the nine zone
+  bosses A–I in a row — a new `boss-rush` stage), **CARAVAN** (one zone from its start against a
+  three-minute clock: TIME UP when it runs out, 1,000 points a whole second left when the boss falls
+  in time) and **ARCADE** (the run across the zone map looping on after its ending — each loop with
+  remixed enemy waves in every zone, bullets 15 % faster a loop (at most 60 %), a revenge bullet
+  from every enemy shot down and a higher rank). Each mode keeps its own hi-score tables.
+- **Replays** of whole games: every finished game is recorded; EXTRA → **REPLAYS** keeps the last
+  game and three kept ones, plays them back at ×1 / ×2 / ×4 with pause, and deletes them; in a
+  browser SHARE copies a replay as text and pasting one on the page loads it.
+- **Unlocks**: reaching an ending unlocks the **Extra Edit** (the weapon select's EXTRA: CONTROL
+  MISSILE, UPPER MISSILE, SMALL SPREAD, HAWK WIND, 2-WAY BACK, BACK DOUBLE and the SPREAD GUN,
+  equipped twice) and the ARCADE mode's **LOOP 2** start.
+- **Secret codes** (original sequences of eight arrow presses): seven ships and Extra Edit on the
+  title, full power and a self-destruct joke in the pause menu.
+- **Assists** on the GAME page — **SPEED** (100 / 75 / 50 %) and **INVINCIBLE** — plus **OPT
+  RECOVERY** (lost Options drift away to be caught again); the CONTROLS page's **RUMBLE** rumbles
+  a gamepad on deaths and boss blasts. Scores and replays made with an assist or a code are marked
+  `*`.
+- **Score-milking cap**: enemies spawned by a boss or a spawner score in full for the first 40 of a
+  kind in a zone, then 10 %.
+
+### For developers
+
+- `GameConfig` gained `loop`, `timeLimit`, `invincible` and `optionRecovery`; `startingLives` goes
+  up to 9. Stages may carry a `remix` and `minLoop` / `maxLoop` on any event; weapons an `extra`
+  flag; the `rules` file's `scoring` section `repeatKills` / `repeatPercent`.
+- Whole-run replays (`core/replay` `run.ts`: segments, start states, flow actions, the replay
+  library sized to the storage adapter) recorded by the scene flow; the replay header gained
+  `assists`.
+- The save stays format 2: `options.play`, `unlocks` and assisted rows resolve when missing;
+  `MAX_HI_SCORE_TABLES` 64.
+- Golden replays re-blessed: every file for its header (the new config fields and `assists`),
+  `captain-range-god` also for the milking cap (25,120 → 20,980); six new goldens of the extra modes
+  and assists.
 
 ## [1.0.0-rc.1] — M2: complete v1.0 (release candidate)
 

@@ -27,6 +27,10 @@
  * **Implements.** shmup_feat.md §21 Replays (save / share / browser / fast-forward — the scenes are
  * in `./index.ts`), §22 determinism.
  *
+ * **Public API** (re-exported by `./index.ts`): {@link RunRecorder}, {@link RunReplayMeta},
+ * {@link RunReplayPlayback}, {@link RunPlaybackReport}, {@link worldStartJson},
+ * {@link readWorldStart}, {@link ReadWorldStart}.
+ *
  * @module
  */
 import { DEFAULT_DIFFICULTY_TABLE, resolveGameConfig, type GameConfig } from '../config/index.js';

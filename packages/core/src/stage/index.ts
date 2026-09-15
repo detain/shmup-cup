@@ -63,6 +63,13 @@
  * its flag), and disarms when the camera passes its `until`. The armed / fired masks are slots of
  * the state array (hashed).
  *
+ * **Loops (M3-01).** A runner plays one loop ({@link StageRunner.loop}, `createStageRunner`'s
+ * `loop` — `GameConfig.loop`): an event whose `minLoop` / `maxLoop` leave that loop out is skipped
+ * exactly like an event of a branch not taken ({@link StageRunner.eventActive} is `false`). The
+ * remix's extra events reach the timeline through `core/data` `stageForLoop`, which `core/world`
+ * applies to the stage before it creates the runner; loop 1 plays the stage's own events, so its
+ * event indices and hashes are those of every build before M3-01.
+ *
  * **Restart order.** {@link StageRunner.restartAt} replays that order by x: keys and events
  * before the checkpoint at once, an event before a key at the same x (but the key at 0 before
  * the events at 0, as the first tick applies them); then the events at exactly the checkpoint's
@@ -758,6 +765,8 @@ class StageRunnerImpl implements StageRunner {
    * @param stage - The stage.
    * @param hooks - The hooks.
    * @param camera - The camera to drive (its fields are overwritten).
+   * @param loop - The loop being played (M3-01 — `GameConfig.loop`; below 1 counts as 1): events
+   *   whose `minLoop` / `maxLoop` leave it out are skipped like a branch not taken.
    * @throws {RangeError} When an event has a type the runtime does not know.
    */
   constructor(stage: StageSpec, hooks: StageHooks, camera: StageCamera, loop: number) {

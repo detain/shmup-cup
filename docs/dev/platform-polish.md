@@ -453,5 +453,11 @@ __shmupDebug.save.usage()                                    # { bytes, keys, qu
 - **§8.5 on device** — the `use.game.mode` A/B latency test (keep the better variant), the heap
   baseline against DevTools (correct `HEAP_BASELINE_BYTES` if it is off), the device line and the
   save export, and whether live reload keeps the widget's APIs.
+- **M3-01** (done) — the replay library stores up to four replays beside the save under their own
+  keys (`replay.last`, `replay.1`–`3`), sized to this adapter's limits: ≤ 120,000 characters a
+  replay (240,042 bytes with its key, under the 256 KiB a value) and ≤ 130,000 for the kept ones
+  together, so the library (≤ 500,150 bytes) never crowds `save.v1` and its corrupt copy out of the
+  1 MiB budget; an oversize slot left by an older build is cleared on load
+  ([extra-modes-and-replays.md](extra-modes-and-replays.md#the-replay-library-createreplaylibrary-replaylibrary)).
 - **M3-03** — Steamworks (`main/steam.ts`: achievements, Steam Cloud sync of the same save files) and
   the Steam Deck verification; the webOS adapter reuses `createWebStorage`.

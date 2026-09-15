@@ -454,3 +454,10 @@ resolveArsenal(db, edited)[WeaponRole.Missile]?.name; // → 'PHOTON TORPEDO'
 - **M2-16** (done) — the game options saved (the loadout and the Auto Power-Up order were not in its
   deliverables and stay session-only); the GAME page's AUTO POWER and the one-button preset override
   the weapon select's AUTO ([options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md)).
+- **M3-01** (done) — the **Extra Edit**: seven weapons marked `extra` (`content/weapons/
+  types-extra.weapons.json` — CONTROL MISSILE, UPPER MISSILE, SMALL SPREAD, HAWK WIND, 2-WAY BACK,
+  BACK DOUBLE, SPREAD GUN; `ShotKind` Control / Upper / HawkWind / SpreadGun and a `flip` tunable),
+  the weapon select's TYPE **EXTRA** after EDIT (every weapon of each slot; EDIT keeps the others),
+  locked until an ending or the title's code unlocks it (`SaveData.unlocks.extraEdit`); the Spread
+  Gun equipped twice (`MeterChoices.doubleLevels`, `Loadout.spread`)
+  ([extra-modes-and-replays.md](extra-modes-and-replays.md#extra-edit-weapons-contentweaponstypes-extraweaponsjson)).

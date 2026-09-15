@@ -115,6 +115,15 @@
  * entrance read them. The content drops gained `oneUp` and `bonusCapsule` ({@link DropKind}
  * `OneUp` 4, `BonusCapsule` 5 — `FreeOption` is 6 now), the bonus stages' items.
  *
+ * **Loops, milking cap, recovered Options (M3-01).** From loop 2 (`EnemyHost.config.loop` —
+ * `GameConfig.loop`) every enemy a player shoots down fires a revenge bullet at any rank — its own
+ * `revenge` pattern, or one aimed shot at {@link DEFAULT_REVENGE_SPEED} when it has none (never in
+ * a Mega Crash). The **score-milking cap** (shmup_feat.md §15) counts the kills of enemies spawned
+ * by a script or a boss ({@link Enemy.child}; the stage timeline's never count) per spec and World:
+ * after `ScoringRules.repeatKills` of them each records `repeatPercent` percent of its score,
+ * floored to tens. {@link EnemySystem.dropAt} records a drop that no kill made (the Options a death
+ * takes with the option-recovery assist — `core/world`).
+ *
  * **Zero allocation.** Every enemy, script API, track and table is built by
  * {@link createEnemySystem}; the per-tick methods only write numbers. The allocations left are
  * inherent to the coroutines of decision D29: spawning an enemy with a behaviour creates its
@@ -945,7 +954,10 @@ export interface EnemyHost {
    * The session config's loop (M3-01 — `GameConfig.loop`): from loop 2 every regular enemy shot
    * down fires a revenge bullet. Absent = loop 1.
    */
-  readonly config?: { readonly loop: number };
+  readonly config?: {
+    /** `GameConfig.loop` (1–8). */
+    readonly loop: number;
+  };
 }
 
 /**
