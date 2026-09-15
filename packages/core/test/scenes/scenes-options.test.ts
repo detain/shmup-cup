@@ -1,12 +1,13 @@
 /**
- * Headless tests of the Options screen and the saves in the scene flow (plan M1-17): OPTIONS opens
- * it from the title and the pause menu; the MASTER / MUSIC / SFX sliders and the CONTROLS profile
- * push `UserOption` events live; BACK and the Back button store the options and write the save only
- * when something changed; the game-over and stage-clear screens insert the score into the saved
- * table; the hi-score persists across a new game instance on the same memory storage.
+ * Headless tests of the Options screen and the saves in the scene flow (plan M1-17; the pages of
+ * M2-16): OPTIONS opens it from the title and the pause menu; the MASTER / MUSIC / SFX sliders and
+ * the CONTROLS page's profile push `UserOption` events live; BACK and the Back button store the
+ * options and write the save only when something changed; the game-over and stage-clear screens
+ * insert the score into the saved table; the hi-score persists across a new game instance on the
+ * same memory storage.
  */
 import { describe, expect, it } from 'vitest';
-import type { InputProfileChoice } from '../../src/config/index.js';
+import { DEFAULT_USER_OPTIONS, type InputProfileChoice } from '../../src/config/index.js';
 import { SFX_CUES, SimEventKind, UserOptionKind } from '../../src/events/index.js';
 import { createGame, type Game } from '../../src/game/index.js';
 import { Action, commitPlayerInput, type ActionMask } from '../../src/input/index.js';
@@ -26,6 +27,8 @@ import {
 } from '../../src/save/index.js';
 import {
   BULLET_PALETTE_LABELS,
+  ControlsItem,
+  DisplayItem,
   GAME_OVER_DELAY_TICKS,
   OptionsItem,
   PAUSE_DIM,
@@ -138,6 +141,17 @@ class Session {
     this.hold(0, 2);
   }
 
+  /**
+   * Opens a page of the Options screen (M2-16): the focus down to its row, OK, the open lock.
+   *
+   * @param item - An `OptionsItem` page row.
+   */
+  openPage(item: number): void {
+    while (this.flow.options.menu.focus !== item) this.press(Action.Down);
+    this.press(Action.Confirm);
+    this.hold(0, 2);
+  }
+
   /** The texts of the frame's UI list. */
   uiTexts(): string[] {
     const ui = this.game.renderFrame().ui;
@@ -171,20 +185,9 @@ function countingStorage() {
 const settle = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
 
 describe('core/scenes options: opening and drawing', () => {
-  it('opens from the title over the title, dimmed, with the saved volumes', () => {
+  it('opens from the title over the title, dimmed, with the saved volumes and the three pages', () => {
     const save = createSaveStore(null);
-    save.setOptions({
-      audio: { master: 6, music: 4, sfx: 9 },
-      input: save.options.input,
-      display: {
-        bulletPalette: 'standard',
-        scaleMode: 'integer',
-        screenShake: true,
-        reduceFlashing: false,
-        showHitbox: false,
-        bossHpBar: false,
-      },
-    });
+    save.setOptions({ ...save.options, audio: { master: 6, music: 4, sfx: 9 } });
     const s = new Session(save);
     s.openOptionsFromTitle();
     expect(s.ids).toEqual(['title', 'options']);
@@ -194,6 +197,7 @@ describe('core/scenes options: opening and drawing', () => {
     expect([o.master.value, o.music.value, o.sfx.value]).toEqual([6, 4, 9]);
     expect(o.menu.focus).toBe(OptionsItem.Master);
     const texts = s.uiTexts();
+    // M2-16: the sound sliders, then the CONTROLS / DISPLAY / GAME pages.
     expect(texts.slice(texts.lastIndexOf('OPTIONS'))).toEqual([
       'OPTIONS',
       '→',
@@ -201,20 +205,8 @@ describe('core/scenes options: opening and drawing', () => {
       'MUSIC',
       'SFX',
       'CONTROLS',
-      'SAFE 4-WAY (DEFAULT)',
-      'BULLETS',
-      'STANDARD',
-      'SCALE',
-      'INTEGER',
-      'SHAKE',
-      'ON',
-      'FLASHES',
-      'NORMAL',
-      'HITBOX',
-      'OFF',
-      // M2-09.
-      'BOSS HP',
-      'OFF',
+      'DISPLAY',
+      'GAME',
       'BACK',
     ]);
   });
@@ -234,27 +226,48 @@ describe('core/scenes options: opening and drawing', () => {
     expect(s.ids).toEqual(['game', 'pause']);
   });
 
-  it('shows the profile in use and disables CONTROLS without profiles', () => {
+  it('opens each page over the Options screen; Back returns to it', () => {
+    const s = new Session(createSaveStore(null));
+    s.openOptionsFromTitle();
+    s.openPage(OptionsItem.Controls);
+    expect(s.ids).toEqual(['title', 'options', 'controls']);
+    s.press(Action.Back);
+    expect(s.ids).toEqual(['title', 'options']);
+    s.hold(0, 2);
+    s.openPage(OptionsItem.Display);
+    expect(s.ids).toEqual(['title', 'options', 'display']);
+    s.press(Action.Back);
+    s.hold(0, 2);
+    s.openPage(OptionsItem.Game);
+    expect(s.ids).toEqual(['title', 'options', 'gameOptions']);
+    s.press(Action.Back);
+    expect(s.ids).toEqual(['title', 'options']);
+  });
+
+  it('shows the profile in use on the CONTROLS page and disables PROFILE without profiles', () => {
     const s = new Session(createSaveStore(null), 'title', {
       choices: PROFILES,
       active: 'tizen-remote-diagonal',
     });
     expect(s.flow.activeInputProfile).toBe(1);
     s.openOptionsFromTitle();
-    expect(s.flow.options.controls.label).toBe('FAST 8-WAY');
+    s.openPage(OptionsItem.Controls);
+    expect(s.flow.controlsPage.profile.label).toBe('FAST 8-WAY');
 
     const none = new Session(createSaveStore(null), 'title', null);
     expect(none.flow.inputProfiles).toEqual([]);
     expect(none.flow.activeInputProfile).toBe(-1);
     none.openOptionsFromTitle();
-    expect(none.flow.options.menu.enabled(OptionsItem.Controls)).toBe(false);
-    expect(none.flow.options.controls.label).toBe('DEFAULT');
-    none.press(Action.Down);
-    none.press(Action.Down);
-    none.press(Action.Down); // CONTROLS is skipped
-    expect(none.flow.options.menu.focus).toBe(OptionsItem.Bullets);
-    for (let i = 0; i < 6; i++) none.press(Action.Down); // SCALE … HITBOX, BOSS HP, BACK
-    expect(none.flow.options.menu.focus).toBe(OptionsItem.Back);
+    none.openPage(OptionsItem.Controls);
+    const page = none.flow.controlsPage;
+    expect(page.menu.enabled(ControlsItem.Profile)).toBe(false);
+    expect(page.profile.label).toBe('DEFAULT');
+    // No host controls setup: the rebind rows are off too; a remote-mode host (the default
+    // config) keeps autofire always on — the focus starts on RATE.
+    expect(page.menu.enabled(ControlsItem.Keys)).toBe(false);
+    expect(page.menu.enabled(ControlsItem.Pad)).toBe(false);
+    expect(page.menu.enabled(ControlsItem.Autofire)).toBe(false);
+    expect(page.menu.focus).toBe(ControlsItem.Rate);
   });
 });
 
@@ -291,8 +304,8 @@ describe('core/scenes options: live changes', () => {
   it('steps the input profile with Left / Right / OK (wrapping) and applies it live', () => {
     const s = new Session(createSaveStore(null));
     s.openOptionsFromTitle();
-    for (let i = 0; i < 3; i++) s.press(Action.Down);
-    expect(s.flow.options.menu.focus).toBe(OptionsItem.Controls);
+    s.openPage(OptionsItem.Controls);
+    expect(s.flow.controlsPage.menu.focus).toBe(ControlsItem.Profile);
     const from = s.events.length;
     s.press(Action.Right);
     expect(s.flow.activeInputProfile).toBe(1);
@@ -315,19 +328,21 @@ describe('core/scenes options: saving', () => {
     const save = createSaveStore(storage, await loadSave(storage));
     const s = new Session(save);
     s.openOptionsFromTitle();
-    for (let i = 0; i < 4; i++) s.press(Action.Down);
-    expect(s.flow.options.menu.focus).toBe(OptionsItem.Bullets);
+    s.openPage(OptionsItem.Display);
+    const page = s.flow.displayPage;
+    expect(page.menu.focus).toBe(DisplayItem.Bullets);
     const from = s.events.length;
     s.press(Action.Right); // DEUTERANOPIA
     s.press(Action.Right); // PROTANOPIA
     s.press(Action.Left); // DEUTERANOPIA
-    expect(s.flow.options.bullets.label).toBe('DEUTERANOPIA');
+    expect(page.bullets.label).toBe('DEUTERANOPIA');
     expect(s.options(from)).toEqual([
       [UserOptionKind.BulletPalette, 1],
       [UserOptionKind.BulletPalette, 2],
       [UserOptionKind.BulletPalette, 1],
     ]);
     s.press(Action.Back);
+    expect(s.ids).toEqual(['title', 'options']);
     expect(save.options.display).toEqual({
       bulletPalette: 'deuteranopia',
       scaleMode: 'integer',
@@ -337,9 +352,9 @@ describe('core/scenes options: saving', () => {
       bossHpBar: false,
     });
     s.hold(0, 3);
-    s.press(Action.Confirm);
+    s.press(Action.Confirm); // DISPLAY again (the root kept its focus)
     s.hold(0, 2);
-    expect(s.flow.options.bullets.index).toBe(1);
+    expect(page.bullets.index).toBe(1);
     expect(BULLET_PALETTE_LABELS).toEqual(['STANDARD', 'DEUTERANOPIA', 'PROTANOPIA', 'TRITANOPIA']);
   });
 
@@ -350,50 +365,54 @@ describe('core/scenes options: saving', () => {
     s.openOptionsFromTitle();
     s.press(Action.Down);
     s.press(Action.Left); // MUSIC 9
-    for (let i = 0; i < 2; i++) s.press(Action.Down);
-    s.press(Action.Right); // CONTROLS → FAST 8-WAY
-    s.press(Action.Down); // BULLETS
-    for (let i = 0; i < 6; i++) s.press(Action.Down); // SCALE … HITBOX, BOSS HP, BACK
+    s.openPage(OptionsItem.Controls);
+    s.press(Action.Right); // PROFILE → FAST 8-WAY
+    s.press(Action.Back); // stores the profile (and writes)
+    s.hold(0, 2);
+    while (s.flow.options.menu.focus !== OptionsItem.Back) s.press(Action.Down);
     const from = s.events.length;
     s.press(Action.Confirm);
     expect(s.ids).toEqual(['title']);
     expect(s.sounds(from)).toEqual([SFX_CUES.MenuBack]);
     expect(save.options).toEqual({
+      ...DEFAULT_USER_OPTIONS,
       audio: { master: 10, music: 9, sfx: 10 },
-      input: { profileId: 'tizen-remote-diagonal' },
-      display: {
-        bulletPalette: 'standard',
-        scaleMode: 'integer',
-        screenShake: true,
-        reduceFlashing: false,
-        showHitbox: false,
-        bossHpBar: false,
-      },
+      input: { ...DEFAULT_USER_OPTIONS.input, profileId: 'tizen-remote-diagonal' },
     });
     await settle();
-    expect(writes).toEqual([SAVE_STORAGE_KEY]);
+    // The CONTROLS page wrote the save, BACK wrote it again with the volume.
+    expect(writes).toEqual([SAVE_STORAGE_KEY, SAVE_STORAGE_KEY]);
     const stored = await loadSave(storage);
     expect(stored.data.options).toEqual(save.options);
 
     // Opened again (the title menu kept its focus on OPTIONS) and left with Back, nothing
-    // changed: no second write.
+    // changed: no further write.
     s.hold(0, 3);
     s.press(Action.Confirm);
     s.hold(0, 2);
     expect(s.ids).toEqual(['title', 'options']);
-    expect(s.flow.options.controls.index).toBe(1);
+    s.openPage(OptionsItem.Controls);
+    expect(s.flow.controlsPage.profile.index).toBe(1);
+    s.press(Action.Back);
+    s.hold(0, 2);
     s.press(Action.Back);
     expect(s.ids).toEqual(['title']);
     await settle();
-    expect(writes).toEqual([SAVE_STORAGE_KEY]);
+    expect(writes).toEqual([SAVE_STORAGE_KEY, SAVE_STORAGE_KEY]);
   });
 
-  it('keeps the saved profile when CONTROLS was not touched', () => {
+  it('keeps the saved profile when PROFILE was not touched', () => {
     const save = createSaveStore(null);
-    save.setOptions({ ...save.options, input: { profileId: 'keyboard-remote-emulation' } });
+    save.setOptions({
+      ...save.options,
+      input: { ...save.options.input, profileId: 'keyboard-remote-emulation' },
+    });
     const s = new Session(save);
     s.openOptionsFromTitle();
     s.press(Action.Left); // MASTER 9
+    s.openPage(OptionsItem.Controls);
+    s.press(Action.Back);
+    s.hold(0, 2);
     s.press(Action.Back);
     expect(save.options.input.profileId).toBe('keyboard-remote-emulation');
     expect(save.options.audio.master).toBe(9);
@@ -495,15 +514,16 @@ describe('core/scenes options: display options (plan M2-08)', () => {
     const save = createSaveStore(storage, await loadSave(storage));
     const s = new Session(save);
     s.openOptionsFromTitle();
-    const o = s.flow.options;
+    s.openPage(OptionsItem.Display);
+    const o = s.flow.displayPage;
     expect([o.scale.label, o.shake.value, o.flashes.label, o.hitbox.value]).toEqual([
       'INTEGER',
       true,
       'NORMAL',
       false,
     ]);
-    for (let i = 0; i < OptionsItem.Scale; i++) s.press(Action.Down);
-    expect(o.menu.focus).toBe(OptionsItem.Scale);
+    for (let i = 0; i < DisplayItem.Scale; i++) s.press(Action.Down);
+    expect(o.menu.focus).toBe(DisplayItem.Scale);
     const from = s.events.length;
     s.press(Action.Right); // FIT
     s.press(Action.Right); // STRETCH
@@ -523,7 +543,7 @@ describe('core/scenes options: display options (plan M2-08)', () => {
     expect(s.uiTexts()).toEqual(expect.arrayContaining(['STRETCH', 'OFF', 'REDUCED', 'ON']));
     s.press(Action.Down); // BOSS HP (M2-09), left OFF
     s.press(Action.Down);
-    expect(o.menu.focus).toBe(OptionsItem.Back);
+    expect(o.menu.focus).toBe(DisplayItem.Back);
     s.press(Action.Confirm);
     expect(save.options.display).toEqual({
       bulletPalette: 'standard',
@@ -534,10 +554,11 @@ describe('core/scenes options: display options (plan M2-08)', () => {
       bossHpBar: false,
     });
     await settle();
-    // The next session reads them back into the screen.
+    // The next session reads them back into the page.
     const again = new Session(createSaveStore(storage, await loadSave(storage)));
     again.openOptionsFromTitle();
-    const a = again.flow.options;
+    again.openPage(OptionsItem.Display);
+    const a = again.flow.displayPage;
     expect([a.scale.label, a.shake.value, a.flashes.label, a.hitbox.value]).toEqual([
       'STRETCH',
       false,
@@ -559,24 +580,27 @@ describe('core/scenes options: the boss HP bar (plan M2-09)', () => {
     s.press(Action.Confirm);
     s.hold(0, 2);
     expect(s.ids).toEqual(['game', 'pause', 'options']);
-    const o = s.flow.options;
+    s.openPage(OptionsItem.Display);
+    expect(s.ids).toEqual(['game', 'pause', 'options', 'display']);
+    const o = s.flow.displayPage;
     expect(o.bossHp.value).toBe(false);
-    while (o.menu.focus !== OptionsItem.BossHp) s.press(Action.Down);
+    while (o.menu.focus !== DisplayItem.BossHp) s.press(Action.Down);
     const from = s.events.length;
     s.press(Action.Confirm); // flips ON
     expect(s.options(from)).toEqual([[UserOptionKind.BossHpBar, 1]]);
     expect(s.uiTexts()).toEqual(expect.arrayContaining(['BOSS HP', 'ON']));
-    // The HUD reads the saved option: still off until the screen closes.
+    // The HUD reads the saved option: still off until the page closes.
     s.game.renderFrame();
     expect(s.flow.game.hud.showBossHp).toBe(false);
     s.press(Action.Back);
-    expect(s.ids).toEqual(['game', 'pause']);
+    expect(s.ids).toEqual(['game', 'pause', 'options']);
     expect(save.options.display.bossHpBar).toBe(true);
     s.game.renderFrame();
     expect(s.flow.game.hud.showBossHp).toBe(true);
     await settle();
     const again = new Session(createSaveStore(storage, await loadSave(storage)));
     again.openOptionsFromTitle();
-    expect(again.flow.options.bossHp.value).toBe(true);
+    again.openPage(OptionsItem.Display);
+    expect(again.flow.displayPage.bossHp.value).toBe(true);
   });
 });

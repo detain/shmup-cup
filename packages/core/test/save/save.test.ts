@@ -75,7 +75,7 @@ describe('core/save module', () => {
   });
 
   it('has one migration per older version, chained up to the current one', () => {
-    expect(SAVE_VERSION).toBe(1);
+    expect(SAVE_VERSION).toBe(2);
     expect(SAVE_STORAGE_KEY).toBe('save.v1');
     expect(SAVE_MIGRATIONS).toHaveLength(SAVE_VERSION);
     SAVE_MIGRATIONS.forEach((step, n) => expect([step.from, step.to]).toEqual([n, n + 1]));
@@ -84,7 +84,7 @@ describe('core/save module', () => {
   it('starts from defaults', () => {
     const data = createDefaultSave();
     expect(data).toEqual({
-      version: 1,
+      version: 2,
       options: DEFAULT_USER_OPTIONS,
       hiScores: {},
       stats: { gamesStarted: 0, gameOvers: 0, stagesCleared: 0 },
@@ -99,7 +99,23 @@ describe('core/save round trip', () => {
     const store = createSaveStore(storage, await loadSave(storage));
     store.setOptions({
       audio: { master: 7, music: 3, sfx: 0 },
-      input: { profileId: 'tizen-remote-diagonal' },
+      // The controls and game options of M2-16 round-trip too.
+      input: {
+        profileId: 'tizen-remote-diagonal',
+        autofire: 'toggle',
+        autofireInterval: 6,
+        socd: 'lastWins',
+        releaseDebounce: 3,
+        bindings: { 'tizen-remote-safe': { game: { PowerUp: ['key:427'], Special: ['key:13'] } } },
+      },
+      game: {
+        difficulty: 'hard',
+        lives: 5,
+        deathPenalty: 'casual',
+        autoPowerUp: true,
+        pickupMagnet: false,
+        oneButton: true,
+      },
       // The display options of M2-08 round-trip too.
       display: {
         bulletPalette: 'protanopia',
@@ -116,8 +132,12 @@ describe('core/save round trip', () => {
 
     const loaded = await loadSave(storage);
     expect(loaded.status).toBe('ok');
-    expect(loaded.fromVersion).toBe(1);
+    expect(loaded.fromVersion).toBe(2);
     expect(loaded.data).toEqual(store.data);
+    expect(loaded.data.options.input.bindings).toEqual({
+      'tizen-remote-safe': { game: { PowerUp: ['key:427'], Special: ['key:13'] } },
+    });
+    expect(loaded.data.options.game.oneButton).toBe(true);
     expect(loaded.text).toBe(serializeSave(store.data));
     expect(loaded.data.hiScores['meter-normal']).toEqual([
       { name: '---', score: 12300, reached: 'zone-a', mode: '1p', difficulty: '' },
@@ -141,7 +161,8 @@ describe('core/save round trip', () => {
         stats: {},
       }),
     );
-    expect(parsed.status).toBe('ok');
+    // Version 1 is migrated to version 2 (M2-16).
+    expect(parsed.status).toBe('migrated');
     expect(parsed.data.options.display).toEqual({
       bulletPalette: 'tritanopia',
       scaleMode: 'integer',
@@ -154,17 +175,32 @@ describe('core/save round trip', () => {
 
   it('serialises every field and parses its own output unchanged', () => {
     const data = sanitizeSave({
-      version: 1,
+      version: 2,
       options: { audio: { master: 2, music: 4, sfx: 6 }, input: { profileId: 'x' } },
       hiScores: { 'meter-hard': [{ name: 'ZED', score: 5 }] },
       stats: { gamesStarted: 3, gameOvers: 2, stagesCleared: 1 },
     });
     const text = serializeSave(data);
     expect(JSON.parse(text)).toEqual({
-      version: 1,
+      version: 2,
       options: {
         audio: { master: 2, music: 4, sfx: 6 },
-        input: { profileId: 'x' },
+        input: {
+          profileId: 'x',
+          autofire: null,
+          autofireInterval: null,
+          socd: null,
+          releaseDebounce: null,
+          bindings: {},
+        },
+        game: {
+          difficulty: null,
+          lives: null,
+          deathPenalty: null,
+          autoPowerUp: null,
+          pickupMagnet: null,
+          oneButton: false,
+        },
         display: {
           bulletPalette: 'standard',
           scaleMode: 'integer',
@@ -179,7 +215,7 @@ describe('core/save round trip', () => {
       },
       stats: { gamesStarted: 3, gameOvers: 2, stagesCleared: 1 },
     });
-    expect(parseSave(text)).toEqual({ data, status: 'ok', fromVersion: 1, reason: '' });
+    expect(parseSave(text)).toEqual({ data, status: 'ok', fromVersion: 2, reason: '' });
   });
 
   it('writeSave writes unconditionally under the save key', async () => {
@@ -191,14 +227,15 @@ describe('core/save round trip', () => {
 });
 
 describe('core/save migrations', () => {
-  it('migrates the version-0 fixture to version 1', async () => {
+  it('migrates the version-0 fixture to the current version (through version 1)', async () => {
     const { storage, writes } = recordingStorage({ [SAVE_STORAGE_KEY]: V0 });
     const loaded = await loadSave(storage);
     expect(loaded.status).toBe('migrated');
     expect(loaded.fromVersion).toBe(0);
     expect(loaded.data.options).toEqual({
       audio: { master: 8, music: 5, sfx: 10 },
-      input: { profileId: 'tizen-remote-diagonal' },
+      input: { ...DEFAULT_USER_OPTIONS.input, profileId: 'tizen-remote-diagonal' },
+      game: DEFAULT_USER_OPTIONS.game,
       display: {
         bulletPalette: 'standard',
         scaleMode: 'integer',
@@ -237,13 +274,15 @@ describe('core/save migrations', () => {
   it('chains custom migrations and reports a missing step', () => {
     const steps = [
       { from: 0, to: 1, migrate: (d: Readonly<Record<string, unknown>>) => ({ ...d, a: 1 }) },
+      { from: 1, to: 2, migrate: (d: Readonly<Record<string, unknown>>) => ({ ...d, b: 2 }) },
     ];
     expect(migrateSave({ version: 0 }, steps)).toEqual({
-      data: { version: 0, a: 1 },
+      data: { version: 0, a: 1, b: 2 },
       fromVersion: 0,
     });
     expect(() => migrateSave({ version: 0 }, [])).toThrow(RangeError);
-    expect(() => migrateSave({ version: 2 })).toThrow(/newer/);
+    expect(() => migrateSave({ version: 0 }, steps.slice(0, 1))).toThrow(/version 1/);
+    expect(() => migrateSave({ version: 3 })).toThrow(/newer/);
     expect(() => migrateSave({ version: -1 })).toThrow(RangeError);
     expect(() => migrateSave({ version: '1' })).toThrow(RangeError);
   });
@@ -322,7 +361,8 @@ describe('core/save sanitising', () => {
     });
     expect(data.options).toEqual({
       audio: { master: 10, music: 0, sfx: 10 },
-      input: { profileId: null },
+      input: DEFAULT_USER_OPTIONS.input,
+      game: DEFAULT_USER_OPTIONS.game,
       display: {
         bulletPalette: 'standard',
         scaleMode: 'integer',

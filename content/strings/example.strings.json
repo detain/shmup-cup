@@ -1,0 +1,14 @@
+{
+  "formatVersion": 1,
+  "kind": "strings",
+  "language": "fr",
+  "strings": {
+    "pressOk": "APPUYEZ SUR OK",
+    "titleOnePlayer": "1 JOUEUR",
+    "titleTwoPlayers": "2 JOUEURS",
+    "titleOptions": "OPTIONS",
+    "zoneCard": "ZONE {0}",
+    "gameOver": "FIN DE PARTIE",
+    "sfx.PlayerShot": "TIR"
+  }
+}

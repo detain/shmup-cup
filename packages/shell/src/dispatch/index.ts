@@ -42,6 +42,7 @@
  * | `UserOption` `ScaleMode` (`param` = `SCALE_MODES` index, M2-08) | `display.setScaleMode` |
  * | `UserOption` `ScreenShake` / `ReduceFlashing` (`param` 1 = on, M2-08) | `display.effects.settings.screenShake` / `.reduceFlashing` |
  * | `UserOption` `ShowHitbox` (`param` 1 = on, M2-08) | `display.setShowHitbox` |
+ * | `UserOption` `InputSettings` (M2-16: SOCD, debounce or a rebinding stored in the save) | the host's settings callback (re-applies the save's `options.input`) |
  *
  * **Stages (M2-10).** {@link connectStagePreparation} answers `PrepareStage` (the zone map pushes
  * it while its choice launches, the title for the next run's start stage, a run or practice start
@@ -554,8 +555,9 @@ export function applyDisplayOptions(target: DisplayTarget, display: DisplayOptio
 /**
  * Registers the Options screen's handler (plan M1-17, see the module docs): a `UserOption` event
  * sets a bus volume, calls `onInputProfile` with the chosen profile's index or (M2-02)
- * `onBulletPalette` with the chosen bullet palette's name, or (M2-08) changes a display option of
- * `display`. Load time — registering allocates the handler; the events allocate nothing here.
+ * `onBulletPalette` with the chosen bullet palette's name, (M2-08) changes a display option of
+ * `display`, or (M2-16) calls `onInputSettings` to re-apply the saved input settings. Load time —
+ * registering allocates the handler; the events allocate nothing here.
  *
  * @remarks
  * `UserOptionKind.BossHpBar` (M2-09) — and any kind it does not know — is ignored: the boss HP
@@ -572,6 +574,9 @@ export function applyDisplayOptions(target: DisplayTarget, display: DisplayOptio
  * @param display - The renderer's display options (M2-08: scale mode, shake, flash reduction,
  *   hitbox markers), or `null` / omitted (those events are ignored — so is a scale-mode index outside
  *   `SCALE_MODES`).
+ * @param onInputSettings - Re-applies the save's input settings (M2-16 — `UserOptionKind`
+ *   `InputSettings`: SOCD, the release debounce, the rebinding — already stored in the save), or
+ *   `null` / omitted (those events are ignored).
  * @returns A function that unregisters the handler (idempotent).
  *
  * @example
@@ -591,6 +596,7 @@ export function connectOptionEvents(
   onInputProfile: ((index: number) => void) | null,
   onBulletPalette: ((palette: BulletPalette) => void) | null = null,
   display: DisplayTarget | null = null,
+  onInputSettings: (() => void) | null = null,
 ): () => void {
   return dispatcher.on(SimEventKind.UserOption, (event) => {
     const value = event.param;
@@ -626,6 +632,9 @@ export function connectOptionEvents(
         break;
       case UserOptionKind.ShowHitbox:
         if (display !== null) display.setShowHitbox(value !== 0);
+        break;
+      case UserOptionKind.InputSettings:
+        if (onInputSettings !== null) onInputSettings();
         break;
       default:
         break;

@@ -288,6 +288,8 @@ describe('core/events — cue registries', () => {
       ShowHitbox: 8,
       // M2-09.
       BossHpBar: 9,
+      // M2-16.
+      InputSettings: 10,
     });
     expect(FX_CUES).toEqual({
       ExplosionSmall: 0,

@@ -44,13 +44,20 @@
  * co-op input: press Start to join, per-player device assignment, the split keyboard) and §16
  * (co-op).
  *
+ * **Rebinding capture (M2-16).** {@link WebInput.beginCapture} waits for the next new key or
+ * gamepad button ({@link WebInput.capture} — Escape and the remote's Back cancel it); the Options
+ * screen's rebind prompt reads it through the shell and binds the result (`rebind`
+ * `captureToken` / `rebindAction`).
+ *
  * **Public API.** {@link createWebInput}, {@link WebInput}, {@link WebInputOptions},
- * {@link PAD_SEAT_NONE}, {@link PAD_SEAT_P2}.
+ * {@link PAD_SEAT_NONE}, {@link PAD_SEAT_P2}; M2-16: {@link CaptureKind},
+ * {@link InputCaptureState}.
  *
  * @module
  */
 import {
   Action,
+  CaptureStatus,
   commitPlayerInput,
   createInputSnapshot,
   defineModule,
@@ -113,6 +120,32 @@ function joinButtonsOf(buttons: readonly ActionMask[]): number {
     if (((buttons[i] ?? 0) & (Action.Confirm | Action.Pause)) !== 0) mask |= 1 << i;
   }
   return mask;
+}
+
+/** What {@link WebInput.beginCapture} waits for: the next key, or the next gamepad button. */
+export type CaptureKind = 'keys' | 'buttons';
+
+/** The key codes that cancel a capture: the TV remote's Back. */
+const CANCEL_KEY_CODE = 10009;
+
+/** The `KeyboardEvent.code` that cancels a capture: Escape. */
+const CANCEL_CODE = 'Escape';
+
+/**
+ * The state of the rebinding capture (M2-16 — {@link WebInput.capture}). A class so its fields stay
+ * unboxed; the adapter updates it in `poll()`.
+ */
+export class InputCaptureState {
+  /** A `core/ui` `CaptureStatus` code: idle, waiting, captured or cancelled. */
+  status: number = CaptureStatus.Idle;
+  /** What the capture waits for. */
+  kind: CaptureKind = 'keys';
+  /** `KeyboardEvent.code` of the captured key (`''` for a TV remote key or a button). */
+  code = '';
+  /** Legacy key code of the captured key (0 for a button). */
+  keyCode = 0;
+  /** Standard-mapping index of the captured gamepad button (-1 for a key). */
+  button = -1;
 }
 
 /** Options for {@link createWebInput}. */
@@ -214,6 +247,22 @@ export interface WebInput extends PlatformInput {
    * ```
    */
   setContext(context: InputContext): void;
+  /**
+   * The rebinding capture's state (M2-16): after {@link WebInput.beginCapture} it waits
+   * (`CaptureStatus.Waiting`) until a `poll()` sees the next new key (kind `'keys'`) or gamepad
+   * button (kind `'buttons'`) pressed — `Captured`, with its `code` / `keyCode` or `button` — or
+   * Escape / the remote's Back (keyCode 10009) — `Cancelled`. Reused: read, never keep.
+   */
+  readonly capture: InputCaptureState;
+  /**
+   * Starts a rebinding capture (M2-16 — the Options screen's rebind prompt). Keys and buttons
+   * already held do not count; the captured press is also handled as usual.
+   *
+   * @param kind - `'keys'` (the keyboard / remote) or `'buttons'` (any connected gamepad).
+   */
+  beginCapture(kind: CaptureKind): void;
+  /** Ends a capture (the prompt timed out or closed): back to `CaptureStatus.Idle`. */
+  endCapture(): void;
   /** Clears all held input (blur, suspend, scene change). */
   clear(): void;
   /** Removes event listeners. */
@@ -277,6 +326,31 @@ export function createWebInput(options: WebInputOptions): WebInput {
   let padButtons: readonly ActionMask[] = DEFAULT_GAMEPAD_BUTTONS;
   let padPreviousButtons: readonly ActionMask[] = DEFAULT_GAMEPAD_BUTTONS;
   let padTuning: InputTuning = DEFAULT_INPUT_TUNING;
+  const capture = new InputCaptureState();
+  /** The keyboard capture's count when the capture began (a change is a caught key). */
+  let captureKeys = 0;
+
+  /**
+   * Checks the keyboard's catch while a capture waits: Escape / Back cancel, a key completes a
+   * key capture; during a button capture other keys are ignored (the keyboard re-arms).
+   */
+  const checkKeyCapture = (): void => {
+    const caught = keyboard.capture;
+    if (caught.count === captureKeys) return;
+    captureKeys = caught.count;
+    if (caught.code === CANCEL_CODE || caught.keyCode === CANCEL_KEY_CODE) {
+      capture.status = CaptureStatus.Cancelled;
+      return;
+    }
+    if (capture.kind === 'keys') {
+      capture.status = CaptureStatus.Captured;
+      capture.code = caught.code;
+      capture.keyCode = caught.keyCode;
+      capture.button = -1;
+      return;
+    }
+    caught.armed = true;
+  };
 
   /**
    * Switches the pads to another button table; buttons held right now become stale (they keep
@@ -300,6 +374,7 @@ export function createWebInput(options: WebInputOptions): WebInput {
    * @returns The adapter-owned snapshot for this tick.
    */
   const poll = (): InputSnapshot => {
+    if (capture.status === CaptureStatus.Waiting) checkKeyCapture();
     keyboard.advance();
     splitKeyboard.advance();
     const keyHeld = keyboard.held;
@@ -359,6 +434,15 @@ export function createWebInput(options: WebInputOptions): WebInput {
         const before = state.pressedButtons ?? 0;
         const raw = readGamepadActions(pad, state, padButtons, padPreviousButtons);
         const newly = (state.pressedButtons ?? 0) & ~before;
+        if (newly !== 0 && capture.status === CaptureStatus.Waiting && capture.kind === 'buttons') {
+          // The rebinding capture (M2-16): the lowest button pressed on this poll.
+          let bit = 0;
+          while (((newly >>> bit) & 1) === 0) bit++;
+          capture.status = CaptureStatus.Captured;
+          capture.button = bit;
+          capture.code = '';
+          capture.keyCode = 0;
+        }
         order.update(raw);
         const mask = resolveDirections(raw, order.order, padTuning.diagonals, padTuning.socd);
         padLast[i] = mask;
@@ -401,6 +485,20 @@ export function createWebInput(options: WebInputOptions): WebInput {
     keyboard,
     splitKeyboard,
     poll,
+    capture,
+    beginCapture(kind) {
+      capture.kind = kind === 'buttons' ? 'buttons' : 'keys';
+      capture.status = CaptureStatus.Waiting;
+      capture.code = '';
+      capture.keyCode = 0;
+      capture.button = -1;
+      captureKeys = keyboard.capture.count;
+      keyboard.capture.armed = true;
+    },
+    endCapture() {
+      capture.status = CaptureStatus.Idle;
+      keyboard.capture.armed = false;
+    },
     get context() {
       return context;
     },

@@ -101,7 +101,7 @@ describe('core/save hi-score tables per mode (M2-15)', () => {
     expect(store.hiScores('meter-normal')).toEqual([]);
   });
 
-  it('moves co-op and practice rows of a one-player table into their own tables when read', () => {
+  it('moves co-op and practice rows of a one-player table into their own tables (v1 → v2)', () => {
     const doc = {
       version: 1,
       hiScores: {
@@ -116,7 +116,9 @@ describe('core/save hi-score tables per mode (M2-15)', () => {
         'direct-hard-practice': [{ name: 'D', score: 50, mode: 'practice' }],
       },
     };
-    const data = sanitizeSave(doc);
+    // The version-1 → 2 migration (M2-16) moves them; a version-2 document is taken as it is.
+    const data = parseSave(JSON.stringify(doc)).data;
+    expect(sanitizeSave({ ...doc, version: 2 }).hiScores['meter-normal']).toHaveLength(4);
     expect(Object.keys(data.hiScores)).toEqual([
       'direct-hard-practice',
       'meter-normal',

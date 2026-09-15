@@ -20,7 +20,8 @@
  *   store (`options.save` — the Options screen's options, the title's HI, finished games recorded;
  *   a memory-only store when omitted) and offers the host's input profiles in CONTROLS
  *   (`options.inputProfiles`); since M2-15 the sound test gets the host's music titles
- *   (`options.soundTest`).
+ *   (`options.soundTest`); since M2-16 the rebind screen talks to the host's input through
+ *   `options.controls`.
  *
  * Every World of a session pushes into the same {@link EventQueue} ({@link Game.events}), so the
  * host drains one queue, and shares the session's debug switches ({@link Game.debug}, `core/debug`
@@ -71,6 +72,7 @@ import { defineModule } from '../module-info.js';
 import type { Platform } from '../platform/index.js';
 import {
   createSceneFlow,
+  type ControlsSetup,
   type InputProfileSetup,
   type SceneFlow,
   type SceneStart,
@@ -265,6 +267,12 @@ export interface GameOptions {
    * Ignored for bare gameplay.
    */
   readonly soundTest?: SoundTestSetup | null;
+  /**
+   * The rebinding side of the host's input (M2-16 — the Options screen's REBIND KEYS / PAD): its
+   * devices, key names, key capture and rebinding. Omitted or `null`: those rows are disabled.
+   * Ignored for bare gameplay.
+   */
+  readonly controls?: ControlsSetup | null;
 }
 
 /**
@@ -330,6 +338,7 @@ export function createGame(
             save: options.save ?? null,
             inputProfiles: options.inputProfiles ?? null,
             soundTest: options.soundTest ?? null,
+            controls: options.controls ?? null,
           },
           start,
         );

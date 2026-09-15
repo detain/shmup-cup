@@ -33,21 +33,27 @@
  * {@link DEFAULT_DIFFICULTY_TABLE}, {@link difficultyOverrides}, {@link withDifficulty},
  * {@link MAX_RANK_GROWTH}, {@link MAX_CONTINUES}, {@link MAX_EXTEND_SCORE},
  * {@link MIN_BULLET_SPEED_MUL}, {@link MAX_BULLET_SPEED_MUL}, {@link DEATH_PENALTY_PRESETS}), the
- * preset types ({@link StartingLoadout}, {@link StageSkip} …), the
- * power-meter slot names ({@link MeterSlotName}, {@link METER_SLOT_NAMES},
- * {@link DEFAULT_AUTO_POWER_UP_ORDER}, {@link MAX_AUTO_POWER_UP_ORDER}), the meter arsenal of
- * M2-03 ({@link MegaChoice}, {@link MEGA_CHOICES}, {@link ShieldChoice}, {@link SHIELD_CHOICES},
- * {@link WeaponEdit}, {@link WEAPON_EDIT_SLOTS}, {@link ArsenalChoice}, {@link withArsenal},
- * {@link arsenalMatches}; M2-04: {@link OptionChoice}, {@link OPTION_CHOICES}; M2-05: the ship
- * choice {@link ShipChoice}, {@link withShip}, {@link shipMatches}, {@link POWER_UP_MODES},
- * {@link DEFAULT_SHIP_ID}; M2-06: the co-op choice {@link withCoop}, {@link DEFAULT_COOP_EXTRA},
- * {@link MAX_COOP_EXTRA}) and the screen
- * layout constants {@link HUD_BAR_HEIGHT}, {@link PLAYFIELD_Y}, {@link PLAYFIELD_W},
+ * preset types ({@link StartingLoadout}, {@link StageSkip} …), the power-meter slot names
+ * ({@link MeterSlotName}, {@link METER_SLOT_NAMES}, {@link DEFAULT_AUTO_POWER_UP_ORDER},
+ * {@link MAX_AUTO_POWER_UP_ORDER}), the meter arsenal of M2-03 ({@link MegaChoice},
+ * {@link MEGA_CHOICES}, {@link ShieldChoice}, {@link SHIELD_CHOICES}, {@link WeaponEdit},
+ * {@link WEAPON_EDIT_SLOTS}, {@link ArsenalChoice}, {@link withArsenal}, {@link arsenalMatches};
+ * M2-04: {@link OptionChoice}, {@link OPTION_CHOICES}; M2-05: the ship choice {@link ShipChoice},
+ * {@link withShip}, {@link shipMatches}, {@link POWER_UP_MODES}, {@link DEFAULT_SHIP_ID}; M2-06:
+ * the co-op choice {@link withCoop}, {@link DEFAULT_COOP_EXTRA}, {@link MAX_COOP_EXTRA}) and the
+ * screen layout constants {@link HUD_BAR_HEIGHT}, {@link PLAYFIELD_Y}, {@link PLAYFIELD_W},
  * {@link PLAYFIELD_H} (decision D20: two 8-px HUD bars outside a 384×200 playfield). User options:
  * {@link UserOptions}, {@link AudioOptions}, {@link InputOptions}, {@link DisplayOptions},
  * {@link DEFAULT_USER_OPTIONS}, {@link VOLUME_LEVELS}, {@link volumeGain},
  * {@link resolveUserOptions}, {@link InputProfileChoice}, {@link INPUT_PROFILE_ID_PATTERN},
  * {@link BULLET_PALETTES}, {@link BulletPalette}, {@link SCALE_MODES}, {@link ScaleMode} (M2-08).
+ * M2-16: the autofire mode {@link AutofireMode} / {@link AUTOFIRE_MODES}
+ * ({@link GameConfig.autofireMode}) and rates {@link AUTOFIRE_INTERVALS}; the controls options
+ * ({@link SocdChoice}, {@link SOCD_CHOICES}, {@link MAX_DEBOUNCE_OPTION}, the rebinding
+ * {@link BindingOverrides}, {@link ProfileBindingOverride}, {@link ContextBindingOverride},
+ * {@link BINDING_TOKEN_PATTERN}, {@link MAX_BINDING_PROFILES}, {@link MAX_ACTION_TOKENS},
+ * {@link resolveBindingOverrides}); the game options ({@link UserGameOptions},
+ * {@link DEFAULT_USER_GAME_OPTIONS}, {@link userGameOverrides}, {@link withUserGameOptions}).
  *
  * **User options (M1-17).** {@link UserOptions} — the *presentation-only* options the player sets
  * in the Options screen and `core/save` persists (plan §1.5: sim-affecting options live in
@@ -72,10 +78,17 @@
  * {@link difficultyOverrides} gives one row as config fields and {@link withDifficulty} switches a
  * resolved config to another preset (the difficulty menu under START, `core/scenes`).
  *
- * **Planned API.** The remaining option groups of the Options screen (controls, game — M2-16).
+ * **Controls and game options (M2-16).** {@link InputOptions} grew the controls the Options screen
+ * sets — the autofire mode and rate (sim-affecting: applied to the next games' configs), the SOCD
+ * policy and the remote's release debounce (the input adapter's) and the player's rebinding
+ * ({@link BindingOverrides}: per profile and binding context, the keys of each rebound action) —
+ * and {@link UserOptions.game} the game options (difficulty, lives, death penalty, Auto Power-Up,
+ * pickup magnet, the one-button preset). The scene flow folds the sim-affecting ones into every
+ * game's config with {@link withUserGameOptions} (a replay header records the result).
  *
  * @module
  */
+import { ACTION_NAMES, type ActionName } from '../input/index.js';
 import { defineModule } from '../module-info.js';
 
 /** Module descriptor (see {@link defineModule}). */
@@ -389,6 +402,26 @@ export const DEFAULT_COOP_EXTRA = 0.5;
 /** Highest {@link GameConfig.coopExtra}. */
 export const MAX_COOP_EXTRA = 4;
 
+/**
+ * How autofire fires (M2-16 — {@link GameConfig.autofireMode}): with no button, toggled by `Shot`
+ * presses, or while `Shot` is held.
+ */
+export type AutofireMode = 'always' | 'toggle' | 'hold';
+
+/** Every {@link AutofireMode}, in menu order (the Options screen's AUTOFIRE). */
+export const AUTOFIRE_MODES: readonly AutofireMode[] = Object.freeze([
+  'always',
+  'toggle',
+  'hold',
+] as AutofireMode[]);
+
+/**
+ * The autofire rates the Options screen's RATE offers, as {@link GameConfig.autofireInterval}
+ * ticks between main shots, slowest first: 8, 6, 5, 4 (the default — 15 shots a second), 3, 2
+ * (M2-16).
+ */
+export const AUTOFIRE_INTERVALS: readonly number[] = Object.freeze([8, 6, 5, 4, 3, 2]);
+
 /** Parameters of one game session. All fields are sim-affecting and replay-recorded. */
 export interface GameConfig {
   /** Internal render width in pixels (384 → ×5 on 1080p). */
@@ -451,8 +484,21 @@ export interface GameConfig {
   readonly deathPenalty: DeathPenaltyPreset;
   /** Lives at game start (1–5; the preset's value — Normal 3). */
   readonly startingLives: number;
-  /** Always-on autofire (remote play requires it). */
+  /**
+   * Autofire on (remote play requires it): how it fires is {@link GameConfig.autofireMode}. `false`
+   * = the main shot and the missiles fire only while `Shot` / `Sub` are held (the same as the
+   * `'hold'` mode).
+   */
   readonly autofire: boolean;
+  /**
+   * How autofire works (shmup_feat.md §4 "[P0] Autofire: hold-to-fire, toggle mode, configurable
+   * rate"; M2-16 — the Options screen's AUTOFIRE): `'always'` (the default) fires with no button
+   * held; `'toggle'` — each `Shot` press switches firing on / off (it starts on, per player, and
+   * `Sub` held still fires the missiles); `'hold'` — fire while `Shot` (missiles: `Sub`) is held.
+   * {@link GameConfig.remoteMode} forces `'always'` (the remote has no fire button); with
+   * {@link GameConfig.autofire} `false` the mode is ignored (hold to fire).
+   */
+  readonly autofireMode: AutofireMode;
   /** Remote-first control scheme: forced autofire, 4-way-friendly defaults. */
   readonly remoteMode: boolean;
   /**
@@ -587,6 +633,7 @@ export const DEFAULT_GAME_CONFIG: GameConfig = Object.freeze({
   deathPenalty: 'classic',
   startingLives: 3,
   autofire: true,
+  autofireMode: 'always',
   remoteMode: true,
   stage: null,
   stageSkip: 'none',
@@ -697,8 +744,9 @@ export function withDifficulty(
  * {@link MeterSlotName}s — the result holds a frozen copy of it; `weaponPreset` must be a non-empty
  * string (whether the content has it is `core/weapons`' business), `weaponEdit` `null` or an object
  * of three non-empty weapon ids (frozen copy), `megaChoice` a {@link MegaChoice} and `shieldChoice`
- * a {@link ShieldChoice} (M2-03), `optionChoice` an {@link OptionChoice} (M2-04). Other string
- * presets and booleans are not validated at runtime — the types cover them.
+ * a {@link ShieldChoice} (M2-03), `optionChoice` an {@link OptionChoice} (M2-04),
+ * `autofireMode` an {@link AutofireMode} (M2-16). Other string presets and booleans are not
+ * validated at runtime — the types cover them.
  *
  * @param overrides - Fields to change.
  * @param table - The difficulty table the preset fields come from (default
@@ -710,8 +758,8 @@ export function withDifficulty(
  *   `stageSkip` is not a {@link StageSkip}, `loadout` is not a {@link StartingLoadout},
  *   `powerUpMode` is not a {@link PowerUpMode}, `shipId` is not a non-empty string,
  *   `autoPowerUpOrder` is not an array of meter slot names (or is too long), `weaponPreset`,
- *   `weaponEdit`, `megaChoice`, `shieldChoice` or `optionChoice` is malformed, `coop` is not a
- *   boolean or `coopExtra` is out of range.
+ *   `weaponEdit`, `megaChoice`, `shieldChoice`, `optionChoice` or `autofireMode` is malformed,
+ *   `coop` is not a boolean or `coopExtra` is out of range.
  *
  * @example
  * ```ts
@@ -828,6 +876,12 @@ export function resolveGameConfig(
   if (OPTION_CHOICES.indexOf(option as OptionChoice) < 0) {
     throw new RangeError(
       `GameConfig.optionChoice must be one of ${OPTION_CHOICES.join(', ')}, got ${String(option)}`,
+    );
+  }
+  const autofireMode: unknown = config.autofireMode;
+  if (AUTOFIRE_MODES.indexOf(autofireMode as AutofireMode) < 0) {
+    throw new RangeError(
+      `GameConfig.autofireMode must be one of ${AUTOFIRE_MODES.join(', ')}, got ${String(autofireMode)}`,
     );
   }
   const resolved: GameConfig = {
@@ -1046,14 +1100,126 @@ export interface AudioOptions {
   readonly sfx: number;
 }
 
-/** Input options. */
+/**
+ * How opposite directions held together resolve (shmup_feat.md §4 "[P1] SOCD resolution"): the
+ * `@shmup/input-web` policies `neutral` (they cancel) and `lastWins` (the later press wins).
+ */
+export type SocdChoice = 'neutral' | 'lastWins';
+
+/** Every {@link SocdChoice}, in menu order. */
+export const SOCD_CHOICES: readonly SocdChoice[] = Object.freeze([
+  'neutral',
+  'lastWins',
+] as SocdChoice[]);
+
+/** Highest release debounce the Options screen's DEBOUNCE offers, in ticks (M2-16). */
+export const MAX_DEBOUNCE_OPTION = 10;
+
+/**
+ * Shape of a **binding token** — one key or button of a rebound action (M2-16): `code:<code>` (a
+ * `KeyboardEvent.code`, e.g. `code:KeyZ` — keyboards), `key:<keyCode>` (a legacy key code, e.g.
+ * `key:13` — the TV remote) or `button:<index>` (a standard-mapping gamepad button 0–31).
+ */
+export const BINDING_TOKEN_PATTERN =
+  /^(?:code:[A-Za-z][A-Za-z0-9]{0,31}|key:[1-9][0-9]{0,5}|button:(?:[0-9]|[12][0-9]|3[01]))$/;
+
+/** Most profiles a save keeps binding overrides for (M2-16). */
+export const MAX_BINDING_PROFILES = 16;
+
+/** Most binding tokens one action keeps in an override (M2-16). */
+export const MAX_ACTION_TOKENS = 4;
+
+/**
+ * One binding context's rebound actions (M2-16): action name (`core/input` `ActionName`) → the
+ * binding tokens ({@link BINDING_TOKEN_PATTERN}) that trigger it — the action's whole key set in
+ * that context, replacing the profile's.
+ */
+export type ContextBindingOverride = Readonly<Partial<Record<ActionName, readonly string[]>>>;
+
+/** One input profile's rebound actions, per binding context (M2-16). */
+export interface ProfileBindingOverride {
+  /** The gameplay table's rebound actions (absent = the profile's own table). */
+  readonly game?: ContextBindingOverride;
+  /** The menu table's rebound actions (absent = the profile's own table). */
+  readonly menu?: ContextBindingOverride;
+}
+
+/**
+ * The player's rebinding (M2-16 — shmup_feat.md §4 "[P1] Rebinding per device … persistence"): the
+ * overrides of each input profile, by profile id. A profile without an entry keeps its content
+ * bindings.
+ */
+export type BindingOverrides = Readonly<Record<string, ProfileBindingOverride>>;
+
+/** Input options (M1-17 — the profile; M2-16 — autofire, SOCD, debounce, rebinding). */
 export interface InputOptions {
   /**
    * Id of the keyboard / remote input profile the player chose in the Options screen
    * (`content/input/`, e.g. `tizen-remote-safe`), or `null` for the platform's default.
    */
   readonly profileId: string | null;
+  /**
+   * AUTOFIRE (M2-16): the {@link GameConfig.autofireMode} of the next games, or `null` for the host
+   * config's (always on). Sim-affecting — applied to the configs of the games the flow starts
+   * ({@link withUserGameOptions}), so replays record it.
+   */
+  readonly autofire: AutofireMode | null;
+  /**
+   * RATE (M2-16): the {@link GameConfig.autofireInterval} of the next games (ticks between main
+   * shots, 1–60 — the screen offers {@link AUTOFIRE_INTERVALS}), or `null` for the host config's.
+   */
+  readonly autofireInterval: number | null;
+  /**
+   * SOCD (M2-16): how opposite directions resolve on every input profile, or `null` for each
+   * profile's own policy. Presentation-side (the input adapter), not recorded.
+   */
+  readonly socd: SocdChoice | null;
+  /**
+   * DEBOUNCE (M2-16, the advanced remote tuning): the release debounce of the keyboard / remote
+   * profile in ticks, `0…`{@link MAX_DEBOUNCE_OPTION}, or `null` for the profile's own
+   * (`tizen-remote-safe`: 2).
+   */
+  readonly releaseDebounce: number | null;
+  /** Rebound keys and buttons, per input profile ({@link BindingOverrides}; M2-16). */
+  readonly bindings: BindingOverrides;
 }
+
+/**
+ * Game options (M2-16 — shmup_feat.md §21 "Game: difficulty, starting lives, death-penalty preset,
+ * auto power-up"; §4 rule 4 / §21 accessibility "one-button play"). Sim-affecting: the flow applies
+ * them to the configs of the games it starts ({@link withUserGameOptions}), so replays record the
+ * result. `null` = the host config's (or the difficulty preset's) value.
+ */
+export interface UserGameOptions {
+  /**
+   * The difficulty preset the difficulty menu offers first — the last one chosen there (M2-01's
+   * "saved with the options of M2-16"), or `null` for the host config's.
+   */
+  readonly difficulty: DifficultyPreset | null;
+  /** Ships at game start, 1–5, replacing the preset's (`null` = the preset's). */
+  readonly lives: number | null;
+  /** The death penalty, replacing the preset's (`null` = the preset's). */
+  readonly deathPenalty: DeathPenaltyPreset | null;
+  /** Auto Power-Up (decision D2), or `null` for the host config's / the weapon select's. */
+  readonly autoPowerUp: boolean | null;
+  /** The pickup magnet (decision D33), or `null` for the host config's (on). */
+  readonly pickupMagnet: boolean | null;
+  /**
+   * The **one-button preset** (M2-16): autofire always on, Auto Power-Up on and the casual death
+   * penalty, whatever the other options say — a game played with the directions alone.
+   */
+  readonly oneButton: boolean;
+}
+
+/** Game options that change nothing: every field `null`, the one-button preset off. */
+export const DEFAULT_USER_GAME_OPTIONS: UserGameOptions = Object.freeze({
+  difficulty: null,
+  lives: null,
+  deathPenalty: null,
+  autoPowerUp: null,
+  pickupMagnet: null,
+  oneButton: false,
+});
 
 /**
  * The enemy bullet colour sets the renderer can draw (plan M2-02, shmup_feat.md §21 "colorblind
@@ -1119,12 +1285,28 @@ export interface UserOptions {
   readonly input: InputOptions;
   /** Display (empty in M1). */
   readonly display: DisplayOptions;
+  /**
+   * Game (M2-16): difficulty, lives, death penalty, Auto Power-Up, the pickup magnet, the
+   * one-button preset — sim-affecting choices the flow folds into the next games' configs.
+   */
+  readonly game: UserGameOptions;
 }
 
-/** Defaults: every volume at full level (the mix the audio content was made for), no profile. */
+/**
+ * Defaults: every volume at full level (the mix the audio content was made for), no profile, the
+ * profiles' own tuning and bindings, the host config's game settings.
+ */
 export const DEFAULT_USER_OPTIONS: UserOptions = Object.freeze({
   audio: Object.freeze({ master: VOLUME_LEVELS, music: VOLUME_LEVELS, sfx: VOLUME_LEVELS }),
-  input: Object.freeze({ profileId: null }),
+  input: Object.freeze({
+    profileId: null,
+    autofire: null,
+    autofireInterval: null,
+    socd: null,
+    releaseDebounce: null,
+    bindings: Object.freeze({}),
+  }),
+  game: DEFAULT_USER_GAME_OPTIONS,
   display: Object.freeze({
     bulletPalette: 'standard',
     scaleMode: 'integer',
@@ -1194,6 +1376,13 @@ function volumeLevel(value: unknown, fallback: number): number {
  * Whether the profile id names an existing profile is the host's business (an unknown one is
  * skipped when applied).
  *
+ * M2-16: `input.autofire` an {@link AutofireMode}, `input.autofireInterval` an integer 1–60,
+ * `input.socd` a {@link SocdChoice}, `input.releaseDebounce` an integer
+ * `0…`{@link MAX_DEBOUNCE_OPTION} — each else `null`; `input.bindings` through
+ * {@link resolveBindingOverrides}; `game.difficulty` a {@link DifficultyPreset}, `game.lives` an
+ * integer 1–5, `game.deathPenalty` a {@link DeathPenaltyPreset}, `game.autoPowerUp` /
+ * `game.pickupMagnet` booleans — each else `null`; `game.oneButton` a boolean, else `false`.
+ *
  * @param value - Candidate options (e.g. `JSON.parse(text).options`).
  * @returns Frozen, valid options.
  *
@@ -1208,6 +1397,7 @@ export function resolveUserOptions(value: unknown): UserOptions {
   const audio = isRecord(root.audio) ? root.audio : {};
   const input = isRecord(root.input) ? root.input : {};
   const display = isRecord(root.display) ? root.display : {};
+  const game = isRecord(root.game) ? root.game : {};
   const palette = display.bulletPalette;
   const scaleMode = display.scaleMode;
   const dd = DEFAULT_USER_OPTIONS.display;
@@ -1222,6 +1412,19 @@ export function resolveUserOptions(value: unknown): UserOptions {
     input: Object.freeze({
       profileId:
         typeof id === 'string' && id.length <= 64 && INPUT_PROFILE_ID_PATTERN.test(id) ? id : null,
+      autofire: oneOf(input.autofire, AUTOFIRE_MODES),
+      autofireInterval: wholeOrNull(input.autofireInterval, 1, 60),
+      socd: oneOf(input.socd, SOCD_CHOICES),
+      releaseDebounce: wholeOrNull(input.releaseDebounce, 0, MAX_DEBOUNCE_OPTION),
+      bindings: resolveBindingOverrides(input.bindings),
+    }),
+    game: Object.freeze({
+      difficulty: oneOf(game.difficulty, DIFFICULTY_PRESETS),
+      lives: wholeOrNull(game.lives, 1, 5),
+      deathPenalty: oneOf(game.deathPenalty, DEATH_PENALTY_PRESETS),
+      autoPowerUp: typeof game.autoPowerUp === 'boolean' ? game.autoPowerUp : null,
+      pickupMagnet: typeof game.pickupMagnet === 'boolean' ? game.pickupMagnet : null,
+      oneButton: game.oneButton === true,
     }),
     display: Object.freeze({
       bulletPalette:
@@ -1239,6 +1442,156 @@ export function resolveUserOptions(value: unknown): UserOptions {
       bossHpBar: typeof display.bossHpBar === 'boolean' ? display.bossHpBar : dd.bossHpBar,
     }),
   });
+}
+
+/**
+ * Reads a value that must be one of a list.
+ *
+ * @param value - Anything.
+ * @param list - The allowed values.
+ * @returns The value, or `null` when it is not in the list.
+ */
+function oneOf<T extends string>(value: unknown, list: readonly T[]): T | null {
+  return typeof value === 'string' && (list as readonly string[]).indexOf(value) >= 0
+    ? (value as T)
+    : null;
+}
+
+/**
+ * Reads a whole number within a range.
+ *
+ * @param value - Anything.
+ * @param min - Smallest allowed value.
+ * @param max - Largest allowed value.
+ * @returns The number, or `null` when it is not an integer in `min…max` (a `-0` reads as 0).
+ */
+function wholeOrNull(value: unknown, min: number, max: number): number | null {
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < min || value > max) {
+    return null;
+  }
+  // `value <= 0` turns a stored -0 into 0 (V8 boxes -0 like a fraction).
+  return value <= 0 ? 0 : value;
+}
+
+/**
+ * Reads one binding context's overrides defensively.
+ *
+ * @param value - Anything (`{ [actionName]: token[] }`).
+ * @returns The valid entries (known action names, valid tokens without duplicates, at most
+ *   {@link MAX_ACTION_TOKENS} each; an action with no valid token is kept as an empty list — the
+ *   action is unbound), or `null` when nothing is usable.
+ */
+function resolveContextOverride(value: unknown): ContextBindingOverride | null {
+  if (!isRecord(value)) return null;
+  const out: Partial<Record<ActionName, readonly string[]>> = {};
+  let count = 0;
+  for (const name of ACTION_NAMES) {
+    const list = value[name];
+    if (!Array.isArray(list)) continue;
+    const tokens: string[] = [];
+    for (const token of list as unknown[]) {
+      if (typeof token !== 'string' || !BINDING_TOKEN_PATTERN.test(token)) continue;
+      if (tokens.indexOf(token) >= 0 || tokens.length >= MAX_ACTION_TOKENS) continue;
+      tokens.push(token);
+    }
+    out[name] = Object.freeze(tokens);
+    count++;
+  }
+  return count === 0 ? null : Object.freeze(out);
+}
+
+/**
+ * Builds valid {@link BindingOverrides} from anything (a parsed save) — never throws.
+ *
+ * @remarks
+ * Keeps at most {@link MAX_BINDING_PROFILES} profiles (in key order) whose id matches
+ * {@link INPUT_PROFILE_ID_PATTERN} (≤ 64 characters); per profile the `game` and `menu` contexts,
+ * each `{ [actionName]: token[] }` with known action names (`core/input` `ACTION_NAMES`) and tokens
+ * matching {@link BINDING_TOKEN_PATTERN} (duplicates dropped, at most {@link MAX_ACTION_TOKENS}).
+ * Whether a profile or a key exists is the host's business (`@shmup/input-web` applies what it
+ * can). Unknown fields are dropped; a profile left without a context is dropped.
+ *
+ * @param value - Candidate overrides.
+ * @returns Frozen overrides (an empty object for anything unusable).
+ *
+ * @example
+ * ```ts
+ * resolveBindingOverrides({ 'keyboard-default': { game: { Shot: ['code:KeyJ'] } } });
+ * ```
+ */
+export function resolveBindingOverrides(value: unknown): BindingOverrides {
+  const out: Record<string, ProfileBindingOverride> = {};
+  if (!isRecord(value)) return Object.freeze(out);
+  let count = 0;
+  for (const id of Object.keys(value).sort()) {
+    if (count >= MAX_BINDING_PROFILES) break;
+    if (id.length > 64 || !INPUT_PROFILE_ID_PATTERN.test(id)) continue;
+    const entry = value[id];
+    if (!isRecord(entry)) continue;
+    const game = resolveContextOverride(entry.game);
+    const menu = resolveContextOverride(entry.menu);
+    if (game === null && menu === null) continue;
+    const profile: { game?: ContextBindingOverride; menu?: ContextBindingOverride } = {};
+    if (game !== null) profile.game = game;
+    if (menu !== null) profile.menu = menu;
+    out[id] = Object.freeze(profile);
+    count++;
+  }
+  return Object.freeze(out);
+}
+
+/**
+ * The {@link GameConfig} fields the saved options set (M2-16): the game options' lives, death
+ * penalty, Auto Power-Up and pickup magnet, the controls' autofire mode and rate — and the
+ * one-button preset over them (autofire always on, Auto Power-Up, the casual penalty).
+ *
+ * @param options - The player's options.
+ * @returns Only the fields the options set (`null` options set nothing; a fresh object).
+ */
+export function userGameOverrides(options: UserOptions): Partial<GameConfig> {
+  const game = options.game;
+  const input = options.input;
+  const out: {
+    -readonly [K in keyof GameConfig]?: GameConfig[K];
+  } = {};
+  if (game.lives !== null) out.startingLives = game.lives;
+  if (game.deathPenalty !== null) out.deathPenalty = game.deathPenalty;
+  if (game.autoPowerUp !== null) out.autoPowerUp = game.autoPowerUp;
+  if (game.pickupMagnet !== null) out.pickupMagnet = game.pickupMagnet;
+  if (input.autofire !== null) out.autofireMode = input.autofire;
+  if (input.autofireInterval !== null) out.autofireInterval = input.autofireInterval;
+  if (game.oneButton) {
+    out.autofire = true;
+    out.autofireMode = 'always';
+    out.autoPowerUp = true;
+    out.deathPenalty = 'casual';
+  }
+  return out;
+}
+
+/**
+ * Applies the player's sim-affecting options to a resolved config (M2-16 — what every game the
+ * scene flow starts gets): {@link userGameOverrides}; everything else stays.
+ *
+ * @param config - A resolved config (a difficulty's, with the loadout and ship chosen).
+ * @param options - The player's options (`core/save` `SaveStore.options`).
+ * @returns A frozen, validated config — the same object when the options change nothing.
+ * @throws RangeError when the result fails {@link resolveGameConfig} (never for resolved options).
+ *
+ * @example
+ * ```ts
+ * const options = resolveUserOptions({ game: { lives: 5, oneButton: true } });
+ * withUserGameOptions(resolveGameConfig(), options).deathPenalty; // → 'casual'
+ * ```
+ */
+export function withUserGameOptions(config: GameConfig, options: UserOptions): GameConfig {
+  const overrides = userGameOverrides(options);
+  const source = overrides as Readonly<Record<string, unknown>>;
+  const own = config as unknown as Readonly<Record<string, unknown>>;
+  let changed = false;
+  for (const key of Object.keys(source)) if (source[key] !== own[key]) changed = true;
+  if (!changed) return config;
+  return resolveGameConfig({ ...config, ...overrides });
 }
 
 /**

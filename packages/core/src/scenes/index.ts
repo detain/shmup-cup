@@ -46,9 +46,15 @@
  *     through the {@link ConfirmDialog}; Pause or Back resumes.
  *   - {@link OptionsScene} (overlay, M1-17 — from the title and the pause menu): MASTER / MUSIC /
  *     SFX sliders (levels 0–10, applied **live** through `UserOption` events the host turns into
- *     bus volumes), CONTROLS — the keyboard / remote input profile, shown by its label (applied
- *     live the same way) — and BACK, which (like the Back button) stores the options in the save
- *     and writes it when something changed (shmup_feat.md §21).
+ *     bus volumes), the pages CONTROLS / DISPLAY / GAME (M2-16) and BACK, which (like the Back
+ *     button) stores the options in the save and writes it when something changed (shmup_feat.md
+ *     §21). The pages (overlays over it, M2-16): {@link ControlsScene} — the input profile (live),
+ *     the autofire mode and rate (the next games' configs), SOCD and the release debounce (live),
+ *     REBIND KEYS / PAD ({@link RebindScene}: capture a key per action and context, conflicts
+ *     moved or swapped, reset — the host's {@link ControlsSetup}) and the {@link InputTestScene};
+ *     {@link DisplayScene} — bullets, scale, shake, flashes, hitbox, boss HP (live); and
+ *     {@link GameOptionsScene} — difficulty, lives, death penalty, Auto Power-Up, magnet and the
+ *     one-button preset (the next games' configs — `core/config` `withUserGameOptions`).
  *   - {@link StageClearScene} (overlay): the tally (score, hi-score), then `TO BE CONTINUED` (M1
  *     has one zone), then the title; OK skips ahead.
  *   - {@link ContinueScene} (overlay, M2-01): a game over with continues left counts down 10 s;
@@ -154,8 +160,13 @@
  * - **Game** — Pause or Back: pause menu; in a co-op game (M2-06) the START / OK of a player who
  *   may drop in joins instead (the World reads it — `core/world` `JOIN_ACTIONS`).
  * - **Pause** — Pause or Back: resume; OK: activate; Up / Down: move.
- * - **Options** — Up / Down: move; Left / Right: change the slider / profile (OK steps the profile
- *   too); Back or BACK: save and close.
+ * - **Options** — Up / Down: move; Left / Right: change a slider; OK on CONTROLS / DISPLAY / GAME:
+ *   open that page; Back or BACK: save and close. **Pages** (M2-16) — Up / Down: move; Left / Right
+ *   (or OK): change a choice or toggle; OK on REBIND KEYS / PAD / INPUT TEST: open it; Back or
+ *   BACK: store and return. **Rebind** — Up / Down: move; Left / Right on MODE: game / menu table;
+ *   OK on an action: the capture prompt (the next key; Escape / the remote's Back or 5 s cancel);
+ *   RESET, DONE; Back: done. **Input test** (the gameplay table) — every action lights; hold Pause
+ *   for a second to leave.
  * - **Confirm** — Left / Up: YES, Right / Down: NO; OK: answer; Back: NO.
  * - **Stage clear** — OK: skip ahead. **Game over** — OK or Back (after a 30-tick lock): the name
  *   entry (a new hi-score) or the title.
@@ -191,6 +202,9 @@
  *   mode select, name entry, hi-score tables, the continue countdown; §16 — attract / demo mode,
  *   practice (zone, checkpoint, loadout; separate score table); §15 — the hi-score table per
  *   difficulty / mode; §21 — the sound test (M2-15)
+ * - shmup_feat.md §21 — the Options menu's Controls (rebind, autofire mode & rate, SOCD, remote
+ *   profile and debounce, input test), Display and Game groups, one-button play; §4 — rebinding per
+ *   device and context with conflict detection and reset (M2-16)
  *
  * **Public API.** {@link SceneStack}, {@link createSceneStack}, {@link SCENE_STACK_DEPTH},
  * {@link Scene}, {@link SceneId}, {@link SceneFlow}, {@link SceneFlowHost}, {@link SceneStart},
@@ -236,13 +250,27 @@
  * tells the host's input adapter whether player 2's seat is routed (a co-op game or its continue
  * countdown on top). A co-op game records its scores with the hi-score mode `2p`.
  *
- * **Planned.** More option groups (controls rebinding, game — M2-16).
+ * **Options pages and the string table (M2-16).** {@link OptionsItem} (sound, then the pages),
+ * {@link ControlsItem}, {@link DisplayItem}, {@link GameOptionsItem}, the scenes
+ * {@link ControlsScene}, {@link DisplayScene}, {@link GameOptionsScene}, {@link RebindScene},
+ * {@link InputTestScene} ({@link INPUT_TEST_EXIT_TICKS}), the host's rebinding side
+ * {@link ControlsSetup} / {@link RebindDevice} / {@link RebindDeviceKind} / {@link RebindOutcome}
+ * (`SceneFlowHost.controls`); every label the scenes draw comes from the flow's UI string table
+ * ({@link SceneFlow.text} — the content's `strings` table over `core/ui` `DEFAULT_UI_TEXT`) and the
+ * lists built from it ({@link SceneLabels}, {@link buildSceneLabels}; the exported English label
+ * constants are the built-in table's). The flow re-arms the next games' configs with the save's
+ * sim-affecting options and remembers the difficulty menu's choice in the save.
  *
  * @module
  */
 import {
+  AUTOFIRE_INTERVALS,
+  AUTOFIRE_MODES,
   BULLET_PALETTES,
+  DEATH_PENALTY_PRESETS,
+  MAX_DEBOUNCE_OPTION,
   SCALE_MODES,
+  SOCD_CHOICES,
   DEFAULT_DIFFICULTY_TABLE,
   DIFFICULTY_PRESETS,
   MAX_AUTO_POWER_UP_ORDER,
@@ -259,6 +287,7 @@ import {
   withCoop,
   withDifficulty,
   withShip,
+  withUserGameOptions,
   type ArsenalChoice,
   type ShipChoice,
   type DifficultyPreset,
@@ -266,7 +295,6 @@ import {
   type StartingLoadout,
   type InputProfileChoice,
   type MeterSlotName,
-  type UserOptions,
   type WeaponEdit,
 } from '../config/index.js';
 import {
@@ -295,8 +323,10 @@ import {
 } from '../events/index.js';
 import {
   Action,
+  INPUT_CONTEXTS,
   MAX_PLAYERS,
   createInputSnapshot,
+  type ActionName,
   type InputContext,
   type InputSnapshot,
   type PlayerInput,
@@ -320,7 +350,14 @@ import { DEFAULT_PLAYER_SHIP } from '../player/index.js';
 import { MAX_SCORE } from '../scoring/index.js';
 import {
   CONFIRM_STRING_SLOTS,
+  CaptureStatus,
   ConfirmChoice,
+  DEFAULT_LANGUAGE,
+  DEFAULT_UI_TEXT,
+  REBINDABLE_ACTIONS,
+  REBIND_CAPTURE_TICKS,
+  RebindEvent,
+  RebindStatus,
   HUD_COMMAND_COUNT,
   HUD_STRING_COUNT,
   MenuResult,
@@ -334,15 +371,21 @@ import {
   createNameEntry,
   createSlider,
   createToggle,
+  createRebindPanel,
   drawConfirm,
   drawMenu,
   drawNameEntry,
   drawPanel,
+  drawRebindPanel,
+  formatUiText,
   menuResultSfx,
   menuStringSlots,
   menuTick,
   nameEntryTick,
+  rebindStringSlots,
+  rebindTick,
   resolveUiSprites,
+  resolveUiText,
   type Choice,
   type Confirm,
   type Hud,
@@ -350,9 +393,11 @@ import {
   type MenuItemSpec,
   type MenuLayout,
   type NameEntry,
+  type RebindPanel,
   type Slider,
   type Toggle,
   type UiSprites,
+  type UiText,
 } from '../ui/index.js';
 import {
   MainWeapon,
@@ -426,7 +471,8 @@ export const moduleInfo = defineModule({
  * M2-10, the credits of M2-14, and the front end of M2-15 — the attract loop's demo play and story
  * crawl, the name entry, the hi-score tables, the practice select and the sound test; the
  * placeholder ids `attract` and `select` of the skeleton became `demo` / `story` and the title's
- * mode select).
+ * mode select), and the Options pages of M2-16 — CONTROLS, DISPLAY, GAME, the rebind screen and the
+ * input test.
  */
 export type SceneId =
   | 'boot'
@@ -450,7 +496,12 @@ export type SceneId =
   | 'demo'
   | 'story'
   | 'practice'
-  | 'soundTest';
+  | 'soundTest'
+  | 'controls'
+  | 'display'
+  | 'gameOptions'
+  | 'rebind'
+  | 'inputTest';
 
 /** A scene on the stack. */
 export interface Scene {
@@ -828,6 +879,90 @@ export interface SceneFlowHost {
    * Omitted or `null` (or no titles): the sound test's MUSIC row is disabled.
    */
   readonly soundTest?: SoundTestSetup | null;
+  /**
+   * The rebinding side of the host's input (M2-16 — the CONTROLS page's REBIND KEYS / PAD and the
+   * rebind screen). Omitted or `null`: those rows are disabled.
+   */
+  readonly controls?: ControlsSetup | null;
+}
+
+/** The kind of a rebindable device (M2-16): what its profile drives. */
+export type RebindDeviceKind = 'keyboard' | 'remote' | 'gamepad';
+
+/** One device the rebind screen can rebind (M2-16 — {@link ControlsSetup.devices}). */
+export interface RebindDevice {
+  /** Its input profile's id (the rebinding is stored per profile). */
+  readonly id: string;
+  /** What the profile drives (the screen's title and prompt). */
+  readonly kind: RebindDeviceKind;
+}
+
+/** What {@link ControlsSetup.bindCaptured} answers (M2-16). */
+export interface RebindOutcome {
+  /** A `core/ui` `RebindStatus` code. */
+  readonly status: number;
+  /** The other action involved (the key's former action, or the one left without a key), or `null`. */
+  readonly other: ActionName | null;
+}
+
+/**
+ * The host side of the rebind screen (M2-16 — `@shmup/shell` implements it over
+ * `@shmup/input-web`): the devices, their keys' names, the key capture and the rebinding itself.
+ * The host stores every change in the save (`options.input.bindings`) and applies it to its input
+ * adapter at once.
+ *
+ * @remarks
+ * `pollCapture` runs every tick while the prompt is up and must not allocate; everything else is a
+ * menu action (a cold path).
+ */
+export interface ControlsSetup {
+  /**
+   * The rebindable devices now: the keyboard / remote profile in use, then the gamepad profile
+   * (either may be missing).
+   *
+   * @returns The devices (the screen reads them when a row opens it).
+   */
+  devices(): readonly RebindDevice[];
+  /**
+   * The keys an action has on a device, as the screen shows them (`Z  SPACE`, `-` for none).
+   *
+   * @param device - Index into {@link ControlsSetup.devices}.
+   * @param context - The binding context.
+   * @param action - The action.
+   * @returns The label.
+   */
+  keysLabel(device: number, context: InputContext, action: ActionName): string;
+  /**
+   * Starts listening for the next key (or button, for a gamepad).
+   *
+   * @param device - Index into {@link ControlsSetup.devices}.
+   */
+  beginCapture(device: number): void;
+  /**
+   * The capture's state this tick. Never allocates.
+   *
+   * @returns A `core/ui` `CaptureStatus` code.
+   */
+  pollCapture(): number;
+  /** Stops listening (the prompt closed). */
+  endCapture(): void;
+  /**
+   * Binds the key the capture caught to an action (with conflict detection), stores the change in
+   * the save and applies it.
+   *
+   * @param device - Index into {@link ControlsSetup.devices}.
+   * @param context - The binding context.
+   * @param action - The action.
+   * @returns The outcome.
+   */
+  bindCaptured(device: number, context: InputContext, action: ActionName): RebindOutcome;
+  /**
+   * Restores a device's bindings of one context to the content's, stores and applies it.
+   *
+   * @param device - Index into {@link ControlsSetup.devices}.
+   * @param context - The binding context.
+   */
+  reset(device: number, context: InputContext): void;
 }
 
 /** The input profiles a host lets the player choose from (the Options screen's CONTROLS). */
@@ -876,8 +1011,10 @@ export const TitleItem = {
 export const PauseItem = { Resume: 0, Options: 1, Retry: 2, Quit: 3 } as const;
 
 /**
- * Options screen items: the three volume sliders, the input profile, the bullet palette (M2-02),
- * the display options (M2-08), the boss HP bar (M2-09), BACK.
+ * Options screen items (M2-16 — regrouped): the three volume sliders, then the CONTROLS, DISPLAY
+ * and GAME pages, BACK. (Until M2-16 the rows went MASTER, MUSIC, SFX, CONTROLS — the profile —,
+ * BULLETS, SCALE, SHAKE, FLASHES, HITBOX, BOSS HP, BACK: the profile moved to the CONTROLS page
+ * — {@link ControlsItem} —, the display rows to the DISPLAY page — {@link DisplayItem}.)
  */
 export const OptionsItem = {
   /** MASTER volume slider. */
@@ -886,37 +1023,240 @@ export const OptionsItem = {
   Music: 1,
   /** SFX volume slider (menu sounds follow it). */
   Sfx: 2,
-  /** CONTROLS: the input profile choice (disabled when the host offers none). */
+  /** CONTROLS: the {@link ControlsScene} page. */
   Controls: 3,
-  /** BULLETS: the enemy bullet palette choice (M2-02). */
-  Bullets: 4,
-  /** SCALE: how the frame fills the display — `SCALE_MODES` (M2-08). */
-  Scale: 5,
-  /** SHAKE: screen shake on / off (M2-08). */
-  Shake: 6,
-  /** FLASHES: normal / reduced flashing (M2-08). */
-  Flashes: 7,
-  /** HITBOX: the ships' hitbox markers off / on (M2-08). */
-  Hitbox: 8,
-  /** BOSS HP: the boss HP bar in the top HUD bar off / on (M2-09). */
-  BossHp: 9,
-  /** BACK: store the options, write the save and close (index 10 since M2-09 — was 9, 5, 4). */
-  Back: 10,
+  /** DISPLAY: the {@link DisplayScene} page. */
+  Display: 4,
+  /** GAME: the {@link GameOptionsScene} page. */
+  Game: 5,
+  /** BACK: store the volumes, write the save and close. */
+  Back: 6,
 } as const;
 
-/** The Options screen's BULLETS labels, in `BULLET_PALETTES` order (M2-02). */
-export const BULLET_PALETTE_LABELS: readonly string[] = Object.freeze([
-  'STANDARD',
-  'DEUTERANOPIA',
-  'PROTANOPIA',
-  'TRITANOPIA',
-]);
+/** The DISPLAY page's items (M2-16 — the display rows of M2-02 / M2-08 / M2-09). */
+export const DisplayItem = {
+  /** BULLETS: the enemy bullet palette choice (M2-02). */
+  Bullets: 0,
+  /** SCALE: how the frame fills the display — `SCALE_MODES` (M2-08). */
+  Scale: 1,
+  /** SHAKE: screen shake on / off (M2-08). */
+  Shake: 2,
+  /** FLASHES: normal / reduced flashing (M2-08). */
+  Flashes: 3,
+  /** HITBOX: the ships' hitbox markers off / on (M2-08). */
+  Hitbox: 4,
+  /** BOSS HP: the boss HP bar in the top HUD bar off / on (M2-09). */
+  BossHp: 5,
+  /** BACK: store and return to the Options screen. */
+  Back: 6,
+} as const;
 
-/** The Options screen's SCALE labels, in `SCALE_MODES` order (M2-08). */
-export const SCALE_MODE_LABELS: readonly string[] = Object.freeze(['INTEGER', 'FIT', 'STRETCH']);
+/** The CONTROLS page's items (M2-16). */
+export const ControlsItem = {
+  /** PROFILE: the keyboard / remote input profile (disabled when the host offers none). */
+  Profile: 0,
+  /** AUTOFIRE: always / toggle / hold (disabled on a remote-mode host). */
+  Autofire: 1,
+  /** RATE: the autofire rate. */
+  Rate: 2,
+  /** SOCD: opposite directions — the profile's / neutral / last wins. */
+  Socd: 3,
+  /** DEBOUNCE: the release debounce — the profile's / 0–10 ticks. */
+  Debounce: 4,
+  /** REBIND KEYS: the rebind screen for the keyboard / remote. */
+  Keys: 5,
+  /** REBIND PAD: the rebind screen for the gamepad. */
+  Pad: 6,
+  /** INPUT TEST: the input test. */
+  InputTest: 7,
+  /** BACK: store and return to the Options screen. */
+  Back: 8,
+} as const;
+
+/** The GAME page's items (M2-16). */
+export const GameOptionsItem = {
+  /** DIFFICULTY: the preset the difficulty menu offers first. */
+  Difficulty: 0,
+  /** LIVES: the preset's, or 1–5. */
+  Lives: 1,
+  /** PENALTY: the preset's death penalty, or arcade / classic / casual. */
+  Penalty: 2,
+  /** AUTO POWER: Auto Power-Up. */
+  AutoPowerUp: 3,
+  /** MAGNET: the pickup magnet. */
+  Magnet: 4,
+  /** ONE BUTTON: the one-button preset. */
+  OneButton: 5,
+  /** BACK: store and return to the Options screen. */
+  Back: 6,
+} as const;
+
+/**
+ * The label lists the scenes show (M2-16), built from a UI string table by
+ * {@link buildSceneLabels} — the flow builds its own from the content's table; the exported
+ * English lists ({@link BULLET_PALETTE_LABELS} …) are the built-in table's.
+ */
+export interface SceneLabels {
+  /** The difficulty presets, in `DIFFICULTY_PRESETS` order. */
+  readonly difficulty: readonly string[];
+  /** The bullet palettes, in `BULLET_PALETTES` order. */
+  readonly bulletPalette: readonly string[];
+  /** The scale modes, in `SCALE_MODES` order. */
+  readonly scaleMode: readonly string[];
+  /** FLASHES: normal, reduced. */
+  readonly flash: readonly string[];
+  /** The ship select's power-up models, in `POWER_UP_MODES` order. */
+  readonly shipModes: readonly string[];
+  /** The ship select's three hints per power-up model. */
+  readonly shipHints: readonly (readonly string[])[];
+  /** The `!` choices, in `MEGA_CHOICES` order. */
+  readonly mega: readonly string[];
+  /** The `?` choices, in `SHIELD_CHOICES` order. */
+  readonly shield: readonly string[];
+  /** The Option types, in `OPTION_CHOICES` order. */
+  readonly option: readonly string[];
+  /** The order editor's rows: the meter slots, then `-`. */
+  readonly autoOrder: readonly string[];
+  /** The ORDER summary's one-letter codes, in meter slot order. */
+  readonly orderCodes: readonly string[];
+  /** The ending's run flag lines, in `RunFlag` bit order. */
+  readonly endingFlags: readonly string[];
+  /** The hi-score modes, in `HI_SCORE_MODES` order. */
+  readonly hiScoreModes: readonly string[];
+  /** The hi-score ranks, best first. */
+  readonly hiScoreRanks: readonly string[];
+  /** The practice loadouts, in {@link PRACTICE_LOADOUTS} order. */
+  readonly practiceLoadouts: readonly string[];
+  /** The sound test's SFX names, in `SFX_CUES` order. */
+  readonly sfx: readonly string[];
+  /** AUTOFIRE, in `AUTOFIRE_MODES` order (M2-16). */
+  readonly autofire: readonly string[];
+  /** RATE, in `AUTOFIRE_INTERVALS` order (shots a second). */
+  readonly rates: readonly string[];
+  /** SOCD: the profile's, then `SOCD_CHOICES`. */
+  readonly socd: readonly string[];
+  /** DEBOUNCE: the profile's, then 0 … `MAX_DEBOUNCE_OPTION` ticks. */
+  readonly debounce: readonly string[];
+  /** LIVES: the preset's, then 1–5. */
+  readonly lives: readonly string[];
+  /** PENALTY: the preset's, then `DEATH_PENALTY_PRESETS`. */
+  readonly penalty: readonly string[];
+  /** The binding contexts, in `INPUT_CONTEXTS` order. */
+  readonly contexts: readonly string[];
+  /** Every action's name (the rebind and input-test screens). */
+  readonly actions: Readonly<Record<ActionName, string>>;
+  /** The rebindable device kinds' names. */
+  readonly devices: Readonly<Record<RebindDeviceKind, string>>;
+}
+
+/**
+ * Builds the scenes' label lists from a UI string table (M2-16; a cold path — the flow does it
+ * once).
+ *
+ * @param t - The string table.
+ * @returns Frozen label lists.
+ */
+export function buildSceneLabels(t: UiText): SceneLabels {
+  const list = (...items: string[]): readonly string[] => Object.freeze(items);
+  const debounce: string[] = [t.debounceAuto];
+  for (let i = 0; i <= MAX_DEBOUNCE_OPTION; i++) debounce.push(formatUiText(t.debounceFormat, i));
+  const rates: string[] = [];
+  for (const interval of AUTOFIRE_INTERVALS) {
+    rates.push(formatUiText(t.rateFormat, ((600 / interval) | 0) / 10));
+  }
+  const sfx: string[] = [];
+  for (const cue of SFX_CUE_NAMES) sfx.push(t['sfx.' + cue] ?? cue.toUpperCase());
+  return Object.freeze({
+    difficulty: list(t.difficultyEasy, t.difficultyNormal, t.difficultyHard, t.difficultyArcade),
+    bulletPalette: list(
+      t.paletteStandard,
+      t.paletteDeuteranopia,
+      t.paletteProtanopia,
+      t.paletteTritanopia,
+    ),
+    scaleMode: list(t.scaleInteger, t.scaleFit, t.scaleStretch),
+    flash: list(t.flashNormal, t.flashReduced),
+    shipModes: list(t.shipModeMeter, t.shipModeDirect),
+    shipHints: Object.freeze([
+      list(t.shipHintMeter1, t.shipHintMeter2, t.shipHintMeter3),
+      list(t.shipHintDirect1, t.shipHintDirect2, t.shipHintDirect3),
+    ]),
+    mega: list(t.megaMegaCrash, t.megaNormal, t.megaSpeedDown, t.megaLifeOption, t.megaFullBarrier),
+    shield: list(
+      t.shieldForceField,
+      t.shieldShield,
+      t.shieldFreeShield,
+      t.shieldRotate,
+      t.shieldReduce,
+    ),
+    option: list(t.optionTrail, t.optionSnake, t.optionFormation, t.optionRotate),
+    autoOrder: list(
+      t.orderSpeed,
+      t.orderMissile,
+      t.orderDouble,
+      t.orderLaser,
+      t.orderOption,
+      '?',
+      '!',
+      '-',
+    ),
+    orderCodes: Object.freeze(t.orderCodes.split('')),
+    endingFlags: list(t.endingBossEscaped, t.endingNoMiss, t.endingNoContinue, t.endingBonus),
+    hiScoreModes: list(t.modeOnePlayer, t.modeTwoPlayers, t.modePractice),
+    hiScoreRanks: list(
+      t.rank1,
+      t.rank2,
+      t.rank3,
+      t.rank4,
+      t.rank5,
+      t.rank6,
+      t.rank7,
+      t.rank8,
+      t.rank9,
+      t.rank10,
+    ),
+    practiceLoadouts: list(t.loadoutStandard, t.loadoutFull),
+    sfx: Object.freeze(sfx),
+    autofire: list(t.autofireAlways, t.autofireToggle, t.autofireHold),
+    rates: Object.freeze(rates),
+    socd: list(t.socdProfile, t.socdNeutral, t.socdLastWins),
+    debounce: Object.freeze(debounce),
+    lives: list(t.livesPreset, '1', '2', '3', '4', '5'),
+    penalty: list(t.penaltyPreset, t.penaltyArcade, t.penaltyClassic, t.penaltyCasual),
+    contexts: list(t.contextGame, t.contextMenu),
+    actions: Object.freeze({
+      Up: t.actionUp,
+      Down: t.actionDown,
+      Left: t.actionLeft,
+      Right: t.actionRight,
+      Shot: t.actionShot,
+      Sub: t.actionSub,
+      PowerUp: t.actionPowerUp,
+      Special: t.actionSpecial,
+      Speed: t.actionSpeed,
+      Pause: t.actionPause,
+      Confirm: t.actionConfirm,
+      Back: t.actionBack,
+    }),
+    devices: Object.freeze({
+      keyboard: t.deviceKeyboard,
+      remote: t.deviceRemote,
+      gamepad: t.deviceGamepad,
+    }),
+  });
+}
+
+/** The scenes' label lists of the built-in English table (the exported label constants). */
+const ENGLISH: SceneLabels = buildSceneLabels(DEFAULT_UI_TEXT);
+
+/** The Options screen's BULLETS labels, in `BULLET_PALETTES` order (M2-02; English — M2-16). */
+export const BULLET_PALETTE_LABELS: readonly string[] = ENGLISH.bulletPalette;
+
+/** The Options screen's SCALE labels, in `SCALE_MODES` order (M2-08; English). */
+export const SCALE_MODE_LABELS: readonly string[] = ENGLISH.scaleMode;
 
 /** The Options screen's FLASHES labels (M2-08): index 0 = normal, 1 = reduced flashing. */
-export const FLASH_LABELS: readonly string[] = Object.freeze(['NORMAL', 'REDUCED']);
+export const FLASH_LABELS: readonly string[] = ENGLISH.flash;
 
 /** Ticks the game runs on after `stageClear` before the stage-clear screen opens. */
 export const STAGE_CLEAR_DELAY_TICKS = 90;
@@ -1030,9 +1370,10 @@ const CX = 192;
 /**
  * String slots of the UI list (M2-10: 224 — the zone map, the zone tally and the ending; M2-14:
  * 256 — the ending's epilogue lines and the credits' rows; M2-15: 384 — the name entry, the
- * hi-score table's rows, the story crawl, the practice select and the sound test).
+ * hi-score table's rows, the story crawl, the practice select and the sound test; M2-16: 512 — the
+ * Options pages, the rebind screen and the input test).
  */
-const UI_STRINGS = 384;
+const UI_STRINGS = 512;
 
 /** Commands of the UI list (M2-10: 384 — the zone map's graph). */
 const UI_COMMANDS = 384;
@@ -1074,6 +1415,34 @@ interface FlowControl {
   readonly stack: SceneStack;
   /** The session the flow runs on. */
   readonly host: SceneFlowHost;
+  /** The UI string table (the content's `strings` table over the built-in English one — M2-16). */
+  readonly text: UiText;
+  /** The label lists built from {@link FlowControl.text} (M2-16). */
+  readonly labels: SceneLabels;
+  /** The host's rebinding side (M2-16), or `null`. */
+  readonly controls: ControlsSetup | null;
+  /** The Options screen's CONTROLS page (M2-16). */
+  readonly controlsPage: ControlsScene;
+  /** The Options screen's DISPLAY page (M2-16). */
+  readonly displayPage: DisplayScene;
+  /** The Options screen's GAME page (M2-16). */
+  readonly gameOptionsPage: GameOptionsScene;
+  /** The rebind screen (M2-16). */
+  readonly rebind: RebindScene;
+  /** The input test (M2-16). */
+  readonly inputTest: InputTestScene;
+  /**
+   * Re-arms the configs of the next games with the save's sim-affecting options (M2-16 — the
+   * CONTROLS page's autofire, the GAME page; `core/config` `withUserGameOptions`). A transition.
+   */
+  applyOptions(): void;
+  /**
+   * Remembers the difficulty menu's choice in the save's game options (M2-16 — M2-01's "saved with
+   * the options"), written with the next save write.
+   *
+   * @param difficulty - The preset chosen.
+   */
+  rememberDifficulty(difficulty: DifficultyPreset): void;
   /** The UI kit's sprite ids in the session's content (logo, HUD pieces). */
   readonly sprites: UiSprites;
   /** Every player's input of the current tick merged ({@link mergeMenuInput}; reused). */
@@ -1446,8 +1815,8 @@ export class BootScene extends SceneBase {
   readonly id = 'boot' as const;
   /** Loading progress 0…1 shown by the bar. */
   progress = 0;
-  /** Text above the bar. */
-  label = 'LOADING';
+  /** Text above the bar (the string table's `loading` until the host sets one). */
+  label: string = this.flow.text.loading;
   /** Set by {@link SceneFlow.finishBoot}: the next tick shows the title. */
   done = false;
 
@@ -1523,8 +1892,10 @@ export class TitleScene extends SceneBase {
    */
   constructor(flow: FlowControl) {
     super(flow);
-    const items = ['1 PLAYER', '2 PLAYERS', 'PRACTICE', 'OPTIONS', 'SOUND TEST'];
-    if (flow.host.exit !== null) items.push('EXIT');
+    const t = flow.text;
+    const items = [t.titleOnePlayer, t.titleTwoPlayers, t.titlePractice, t.titleOptions];
+    items.push(t.titleSoundTest);
+    if (flow.host.exit !== null) items.push(t.titleExit);
     this.menu = createListMenu(items, {
       // Practice plays a campaign zone (M2-15).
       disabledMask: flow.host.content.campaign === null ? 1 << TitleItem.Practice : 0,
@@ -1639,9 +2010,10 @@ export class TitleScene extends SceneBase {
   drawUi(list: DrawList): void {
     const base = this.stringBase;
     const logo = this.flow.sprites.logo;
-    list.setString(base, 'SHMUP CUP');
-    list.setString(base + 1, 'PRESS OK');
-    list.setString(base + 2, 'HI');
+    const t = this.flow.text;
+    list.setString(base, t.gameTitle);
+    list.setString(base + 1, t.pressOk);
+    list.setString(base + 2, t.hi);
     if (logo >= 0) list.sprite(logo, 0, CX, 64);
     else list.text(base, CX, 60, UI_COLORS.focus, TextAlign.Center);
     if (this.phase === TitlePhase.Prompt) {
@@ -1649,7 +2021,7 @@ export class TitleScene extends SceneBase {
         list.text(base + 1, CX, 136, UI_COLORS.text, TextAlign.Center);
       }
     } else {
-      drawMenu(list, this.menu, base + 3, TITLE_MENU_LAYOUT);
+      drawMenu(list, this.menu, base + 3, TITLE_MENU_LAYOUT, t);
     }
     list.text(base + 2, CX - 40, 196, UI_COLORS.focus);
     list.number(this.flow.hiScore, CX - 24, 196, 8, UI_COLORS.text);
@@ -1715,7 +2087,7 @@ export class GameScene extends SceneBase {
    */
   constructor(flow: FlowControl) {
     super(flow);
-    this.hud = createHud(flow.sprites);
+    this.hud = createHud(flow.sprites, flow.text);
     this.world = flow.host.createWorld();
   }
 
@@ -1806,13 +2178,14 @@ export class GameScene extends SceneBase {
     this.world = world;
     this.worldPractice = run.practice;
     const campaign = run.campaign;
-    this.cardTitle = 'STAGE';
+    const t = flow.text;
+    this.cardTitle = t.stage;
     this.cardName = world.stage === null ? '' : world.stage.stage.name;
     if (run.inBonus) {
-      this.cardTitle = 'BONUS STAGE';
+      this.cardTitle = t.bonusStage;
     } else if (campaign !== null && run.zone >= 0) {
       const zone = campaign.zones[run.zone];
-      this.cardTitle = 'ZONE ' + zone.label;
+      this.cardTitle = formatUiText(t.zoneCard, zone.label);
       this.cardName = zone.name;
     }
     this.endTicks = 0;
@@ -1974,7 +2347,12 @@ export class PauseScene extends SceneBase {
   /** {@link PAUSE_DIM}. */
   override readonly dim = PAUSE_DIM;
   /** The pause menu. */
-  readonly menu: ListMenu = createListMenu(['RESUME', 'OPTIONS', 'RETRY STAGE', 'QUIT TO TITLE']);
+  readonly menu: ListMenu = createListMenu([
+    this.flow.text.pauseResume,
+    this.flow.text.pauseOptions,
+    this.flow.text.pauseRetry,
+    this.flow.text.pauseQuit,
+  ]);
 
   /** See {@link SceneBase.stringSlots}. */
   get stringSlots(): number {
@@ -2045,36 +2423,28 @@ export class PauseScene extends SceneBase {
   drawUi(list: DrawList): void {
     const base = this.stringBase;
     drawPanel(list, CX - 76, 60, 152, 84);
-    list.setString(base, 'PAUSE');
+    list.setString(base, this.flow.text.pauseTitle);
     list.text(base, CX, 68, UI_COLORS.title, TextAlign.Center);
-    drawMenu(list, this.menu, base + 1, PAUSE_MENU_LAYOUT);
+    drawMenu(list, this.menu, base + 1, PAUSE_MENU_LAYOUT, this.flow.text);
   }
 }
 
 /**
- * The Options screen: MASTER / MUSIC / SFX sliders, CONTROLS (the input profile), BULLETS (the
- * enemy bullet colour set — plan M2-02), the display options SCALE (integer / fit / stretch),
- * SHAKE (on / off), FLASHES (normal / reduced) and HITBOX (off / on) — plan M2-08 —, BOSS HP
- * (off / on — the boss HP bar in the top HUD bar, plan M2-09), BACK
- * (shmup_feat.md §21, plan M1-17).
+ * The Options screen (M1-17; regrouped in M2-16 — shmup_feat.md §21 "Options menu"): the MASTER /
+ * MUSIC / SFX sliders, then the three pages CONTROLS ({@link ControlsScene}), DISPLAY
+ * ({@link DisplayScene}) and GAME ({@link GameOptionsScene}), and BACK.
  *
  * @remarks
  * An overlay (dim {@link PAUSE_DIM}) with an opaque panel, opened from the title and from the pause
  * menu (both stay drawn under it; a game under the pause menu stays frozen). Opening it reads the
- * save's options into the sliders (levels `0…`{@link VOLUME_LEVELS}) and the profile in use into
- * CONTROLS, focuses MASTER and locks activation for 2 ticks. Every change applies **live**: a
- * slider pushes a `UserOption` event with its level (`MasterVolume` / `MusicVolume` /
- * `SfxVolume`), CONTROLS — Left / Right, or OK stepping forward, wrapping — one with the profile's
- * index (`InputProfile`), BULLETS one with the palette's index in `BULLET_PALETTES`
- * (`BulletPalette` — the host swaps the renderer's bullet sprites), SCALE / SHAKE / FLASHES /
- * HITBOX one with the choice's index (`ScaleMode` — the index in `SCALE_MODES` —,
- * `ScreenShake`, `ReduceFlashing`, `ShowHitbox` — 1 = on; the host applies them to the renderer —
- * SHAKE and HITBOX are toggles: Left = OFF, Right = ON, OK flips), BOSS HP one with 1 = on
- * (`BossHpBar`, M2-09 — a toggle; the game's HUD follows the saved value once the screen closes);
- * all play the move sound (at the new volume). BACK or the Back button stores the sliders, the
- * display options and — when it changed — the profile id in the save, writes the save when
- * anything differs from what is stored (`SaveStore.flush`), plays `MenuBack` and closes. CONTROLS
- * is disabled when the host offers no profiles (it then shows `DEFAULT`).
+ * save's volumes into the sliders (levels `0…`{@link VOLUME_LEVELS}), focuses MASTER and locks
+ * activation for 2 ticks. A slider change applies **live** — a `UserOption` event with its level
+ * (`MasterVolume` / `MusicVolume` / `SfxVolume`) and the move sound at the new volume; OK on a
+ * slider is silent. OK on CONTROLS / DISPLAY / GAME opens that page over the screen (each stores
+ * its own options when it closes). BACK or the Back button stores the volumes in the save, writes
+ * it when anything differs from what is stored (`SaveStore.flush`), plays `MenuBack` and closes.
+ * (Until M2-16 the profile and the display options were rows of this screen: they moved to the
+ * CONTROLS and DISPLAY pages.)
  */
 export class OptionsScene extends SceneBase {
   /** See {@link Scene.id}. */
@@ -2089,53 +2459,26 @@ export class OptionsScene extends SceneBase {
   readonly music: Slider = createSlider(0, VOLUME_LEVELS, 1, VOLUME_LEVELS);
   /** SFX level. */
   readonly sfx: Slider = createSlider(0, VOLUME_LEVELS, 1, VOLUME_LEVELS);
-  /** CONTROLS: the profile labels (`DEFAULT` alone when the host offers none). */
-  readonly controls: Choice;
-  /** BULLETS: the enemy bullet colour set (`BULLET_PALETTES`, M2-02). */
-  readonly bullets: Choice = createChoice(BULLET_PALETTE_LABELS, 0);
-  /** SCALE: the scale mode (`SCALE_MODES`, M2-08). */
-  readonly scale: Choice = createChoice(SCALE_MODE_LABELS, 0);
-  /** SHAKE: screen shake on / off (M2-08). */
-  readonly shake: Toggle = createToggle(true);
-  /** FLASHES: 0 = normal, 1 = reduced flashing (M2-08). */
-  readonly flashes: Choice = createChoice(FLASH_LABELS, 0);
-  /** HITBOX: the ships' hitbox markers on / off (M2-08). */
-  readonly hitbox: Toggle = createToggle(false);
-  /** BOSS HP: the boss HP bar on / off (M2-09). */
-  readonly bossHp: Toggle = createToggle(false);
-  /** The menu. */
+  /** The menu ({@link OptionsItem} order). */
   readonly menu: ListMenu;
-  /** The CONTROLS index when the screen opened (a different one on close is saved). */
-  private openedProfile = 0;
 
   /**
    * Creates the screen.
    *
-   * @param flow - The flow (its profile choices must be set).
+   * @param flow - The flow.
    */
   constructor(flow: FlowControl) {
     super(flow);
-    const profiles = flow.profiles;
-    const labels: string[] = [];
-    for (const profile of profiles) labels.push(profile.label);
-    if (labels.length === 0) labels.push('DEFAULT');
-    this.controls = createChoice(labels, 0);
-    this.menu = createListMenu(
-      [
-        { label: 'MASTER', slider: this.master },
-        { label: 'MUSIC', slider: this.music },
-        { label: 'SFX', slider: this.sfx },
-        { label: 'CONTROLS', choice: this.controls },
-        { label: 'BULLETS', choice: this.bullets },
-        { label: 'SCALE', choice: this.scale },
-        { label: 'SHAKE', toggle: this.shake },
-        { label: 'FLASHES', choice: this.flashes },
-        { label: 'HITBOX', toggle: this.hitbox },
-        { label: 'BOSS HP', toggle: this.bossHp },
-        'BACK',
-      ],
-      { disabledMask: profiles.length === 0 ? 1 << OptionsItem.Controls : 0 },
-    );
+    const t = flow.text;
+    this.menu = createListMenu([
+      { label: t.optMaster, slider: this.master },
+      { label: t.optMusic, slider: this.music },
+      { label: t.optSfx, slider: this.sfx },
+      t.optControls,
+      t.optDisplay,
+      t.optGame,
+      t.back,
+    ]);
   }
 
   /** See {@link SceneBase.stringSlots}. */
@@ -2143,60 +2486,38 @@ export class OptionsScene extends SceneBase {
     return 1 + menuStringSlots(this.menu);
   }
 
-  /** Reads the save's volumes and the profile in use; focus on MASTER, locked for 2 ticks. */
+  /** Reads the save's volumes; focus on MASTER, locked for 2 ticks. */
   override enter(): void {
     super.enter();
-    const flow = this.flow;
-    const audio = flow.save.options.audio;
+    const audio = this.flow.save.options.audio;
     this.master.value = audio.master;
     this.music.value = audio.music;
     this.sfx.value = audio.sfx;
-    this.controls.index = flow.activeProfile >= 0 ? flow.activeProfile : 0;
-    this.openedProfile = this.controls.index;
-    const display = flow.save.options.display;
-    const palette = BULLET_PALETTES.indexOf(display.bulletPalette);
-    this.bullets.index = palette >= 0 ? palette : 0;
-    const scale = SCALE_MODES.indexOf(display.scaleMode);
-    this.scale.index = scale >= 0 ? scale : 0;
-    this.shake.value = display.screenShake;
-    this.flashes.index = display.reduceFlashing ? 1 : 0;
-    this.hitbox.value = display.showHitbox;
-    this.bossHp.value = display.bossHpBar;
     this.menu.focus = OptionsItem.Master;
     this.menu.open(MENU_OPEN_LOCK_TICKS);
   }
 
-  /**
-   * Stores the options in the save, writes it when anything changed, and closes the screen.
-   */
+  /** A page closed: the menu takes input again after a short lock. */
+  override uncover(): void {
+    super.uncover();
+    this.menu.open(MENU_OPEN_LOCK_TICKS);
+  }
+
+  /** Stores the volumes in the save, writes it when anything changed, and closes the screen. */
   private close(): void {
     const flow = this.flow;
     const save = flow.save;
-    const chosen = this.controls.index;
-    const profileId =
-      chosen !== this.openedProfile && chosen < flow.profiles.length
-        ? flow.profiles[chosen].id
-        : save.options.input.profileId;
-    const options: UserOptions = {
+    save.setOptions({
+      ...save.options,
       audio: { master: this.master.value, music: this.music.value, sfx: this.sfx.value },
-      input: { profileId },
-      display: {
-        bulletPalette: BULLET_PALETTES[this.bullets.index] ?? 'standard',
-        scaleMode: SCALE_MODES[this.scale.index] ?? 'integer',
-        screenShake: this.shake.value,
-        reduceFlashing: this.flashes.index === 1,
-        showHitbox: this.hitbox.value,
-        bossHpBar: this.bossHp.value,
-      },
-    };
-    save.setOptions(options);
+    });
     void save.flush();
     flow.sfx(SFX_CUES.MenuBack);
     flow.stack.pop();
   }
 
   /**
-   * Moves the focus, applies a changed slider or profile at once, BACK / Back saves and closes.
+   * Moves the focus, applies a changed slider at once, opens a page, BACK / Back saves and closes.
    * Never allocates (closing builds the options object — a menu action, not a tick path).
    */
   tick(): void {
@@ -2212,45 +2533,30 @@ export class OptionsScene extends SceneBase {
       this.close();
       return;
     }
+    if (result === MenuResult.Confirmed) {
+      const page =
+        menu.focus === OptionsItem.Controls
+          ? flow.controlsPage
+          : menu.focus === OptionsItem.Display
+            ? flow.displayPage
+            : menu.focus === OptionsItem.Game
+              ? flow.gameOptionsPage
+              : null;
+      // OK on a slider changes nothing and makes no sound.
+      if (page === null) return;
+      flow.sfx(SFX_CUES.MenuSelect);
+      flow.stack.push(page);
+      return;
+    }
     if (result === MenuResult.Changed) {
-      switch (menu.focus) {
-        case OptionsItem.Master:
-          flow.userOption(UserOptionKind.MasterVolume, this.master.value);
-          break;
-        case OptionsItem.Music:
-          flow.userOption(UserOptionKind.MusicVolume, this.music.value);
-          break;
-        case OptionsItem.Sfx:
-          flow.userOption(UserOptionKind.SfxVolume, this.sfx.value);
-          break;
-        case OptionsItem.Controls:
-          flow.activeProfile = this.controls.index;
-          flow.userOption(UserOptionKind.InputProfile, this.controls.index);
-          break;
-        case OptionsItem.Bullets:
-          flow.userOption(UserOptionKind.BulletPalette, this.bullets.index);
-          break;
-        case OptionsItem.Scale:
-          flow.userOption(UserOptionKind.ScaleMode, this.scale.index);
-          break;
-        case OptionsItem.Shake:
-          flow.userOption(UserOptionKind.ScreenShake, this.shake.value ? 1 : 0);
-          break;
-        case OptionsItem.Flashes:
-          flow.userOption(UserOptionKind.ReduceFlashing, this.flashes.index);
-          break;
-        case OptionsItem.Hitbox:
-          flow.userOption(UserOptionKind.ShowHitbox, this.hitbox.value ? 1 : 0);
-          break;
-        case OptionsItem.BossHp:
-          flow.userOption(UserOptionKind.BossHpBar, this.bossHp.value ? 1 : 0);
-          break;
-        default:
-          break;
+      if (menu.focus === OptionsItem.Master) {
+        flow.userOption(UserOptionKind.MasterVolume, this.master.value);
+      } else if (menu.focus === OptionsItem.Music) {
+        flow.userOption(UserOptionKind.MusicVolume, this.music.value);
+      } else if (menu.focus === OptionsItem.Sfx) {
+        flow.userOption(UserOptionKind.SfxVolume, this.sfx.value);
       }
     }
-    // OK on a slider changes nothing and makes no sound.
-    if (result === MenuResult.Confirmed) return;
     flow.menuSound(result);
   }
 
@@ -2262,10 +2568,1008 @@ export class OptionsScene extends SceneBase {
   drawUi(list: DrawList): void {
     const base = this.stringBase;
     const p = OPTIONS_PANEL;
+    const t = this.flow.text;
     drawPanel(list, p.x, p.y, p.w, p.h, UI_COLORS.panel, UI_COLORS.border, 255);
-    list.setString(base, 'OPTIONS');
+    list.setString(base, t.optionsTitle);
     list.text(base, CX, p.y + 8, UI_COLORS.title, TextAlign.Center);
-    drawMenu(list, this.menu, base + 1, OPTIONS_MENU_LAYOUT);
+    drawMenu(list, this.menu, base + 1, OPTIONS_MENU_LAYOUT, t);
+  }
+}
+
+/**
+ * The Options screen's DISPLAY page (M2-16 — shmup_feat.md §21 "Display: scale mode, screen shake
+ * on/off, flash reduction, show hitbox"; accessibility "colorblind bullet palettes"): BULLETS (the
+ * enemy bullet colour set — M2-02), SCALE (integer / fit / stretch), SHAKE, FLASHES (normal /
+ * reduced), HITBOX (M2-08), BOSS HP (M2-09) and BACK.
+ *
+ * @remarks
+ * An overlay over the Options screen (opaque panel). Opening it reads the save's display options.
+ * Every change applies **live** through a `UserOption` event with the choice's index
+ * (`BulletPalette` — the index in `BULLET_PALETTES` —, `ScaleMode` — in `SCALE_MODES` —,
+ * `ScreenShake`, `ReduceFlashing`, `ShowHitbox`, `BossHpBar` — 1 = on; the host applies them to the
+ * renderer; the game's HUD follows the saved boss HP bar once the page closes). SHAKE, HITBOX and
+ * BOSS HP are toggles (Left = OFF, Right = ON, OK flips). BACK or Back stores them in the save,
+ * writes it when it changed and returns to the Options screen.
+ */
+export class DisplayScene extends SceneBase {
+  /** See {@link Scene.id}. */
+  readonly id = 'display' as const;
+  /** An overlay over the Options screen. */
+  override readonly overlay = true;
+  /** {@link PAUSE_DIM}. */
+  override readonly dim = PAUSE_DIM;
+  /** BULLETS: the enemy bullet colour set (`BULLET_PALETTES`). */
+  readonly bullets: Choice;
+  /** SCALE: the scale mode (`SCALE_MODES`). */
+  readonly scale: Choice;
+  /** SHAKE: screen shake on / off. */
+  readonly shake: Toggle = createToggle(true);
+  /** FLASHES: 0 = normal, 1 = reduced flashing. */
+  readonly flashes: Choice;
+  /** HITBOX: the ships' hitbox markers on / off. */
+  readonly hitbox: Toggle = createToggle(false);
+  /** BOSS HP: the boss HP bar on / off. */
+  readonly bossHp: Toggle = createToggle(false);
+  /** The menu ({@link DisplayItem} order). */
+  readonly menu: ListMenu;
+
+  /**
+   * Creates the page.
+   *
+   * @param flow - The flow.
+   */
+  constructor(flow: FlowControl) {
+    super(flow);
+    const t = flow.text;
+    const labels = flow.labels;
+    this.bullets = createChoice(labels.bulletPalette, 0);
+    this.scale = createChoice(labels.scaleMode, 0);
+    this.flashes = createChoice(labels.flash, 0);
+    this.menu = createListMenu([
+      { label: t.optBullets, choice: this.bullets },
+      { label: t.optScale, choice: this.scale },
+      { label: t.optShake, toggle: this.shake },
+      { label: t.optFlashes, choice: this.flashes },
+      { label: t.optHitbox, toggle: this.hitbox },
+      { label: t.optBossHp, toggle: this.bossHp },
+      t.back,
+    ]);
+  }
+
+  /** See {@link SceneBase.stringSlots}. */
+  get stringSlots(): number {
+    return 1 + menuStringSlots(this.menu);
+  }
+
+  /** Reads the save's display options; focus on BULLETS, locked for 2 ticks. */
+  override enter(): void {
+    super.enter();
+    const display = this.flow.save.options.display;
+    const palette = BULLET_PALETTES.indexOf(display.bulletPalette);
+    this.bullets.index = palette >= 0 ? palette : 0;
+    const scale = SCALE_MODES.indexOf(display.scaleMode);
+    this.scale.index = scale >= 0 ? scale : 0;
+    this.shake.value = display.screenShake;
+    this.flashes.index = display.reduceFlashing ? 1 : 0;
+    this.hitbox.value = display.showHitbox;
+    this.bossHp.value = display.bossHpBar;
+    this.menu.focus = DisplayItem.Bullets;
+    this.menu.open(MENU_OPEN_LOCK_TICKS);
+  }
+
+  /** Stores the display options, writes the save when it changed, and closes the page. */
+  private close(): void {
+    const flow = this.flow;
+    const save = flow.save;
+    save.setOptions({
+      ...save.options,
+      display: {
+        bulletPalette: BULLET_PALETTES[this.bullets.index] ?? 'standard',
+        scaleMode: SCALE_MODES[this.scale.index] ?? 'integer',
+        screenShake: this.shake.value,
+        reduceFlashing: this.flashes.index === 1,
+        showHitbox: this.hitbox.value,
+        bossHpBar: this.bossHp.value,
+      },
+    });
+    void save.flush();
+    flow.sfx(SFX_CUES.MenuBack);
+    flow.stack.pop();
+  }
+
+  /** Moves the focus, applies a change at once, BACK / Back stores and closes. Never allocates. */
+  tick(): void {
+    const flow = this.flow;
+    const menu = this.menu;
+    const before = menu.revision;
+    const result = menuTick(menu, flow.menuInput);
+    if (menu.revision !== before) this.uiRevision++;
+    if (
+      result === MenuResult.Back ||
+      (result === MenuResult.Confirmed && menu.focus === DisplayItem.Back)
+    ) {
+      this.close();
+      return;
+    }
+    if (result === MenuResult.Changed) {
+      switch (menu.focus) {
+        case DisplayItem.Bullets:
+          flow.userOption(UserOptionKind.BulletPalette, this.bullets.index);
+          break;
+        case DisplayItem.Scale:
+          flow.userOption(UserOptionKind.ScaleMode, this.scale.index);
+          break;
+        case DisplayItem.Shake:
+          flow.userOption(UserOptionKind.ScreenShake, this.shake.value ? 1 : 0);
+          break;
+        case DisplayItem.Flashes:
+          flow.userOption(UserOptionKind.ReduceFlashing, this.flashes.index);
+          break;
+        case DisplayItem.Hitbox:
+          flow.userOption(UserOptionKind.ShowHitbox, this.hitbox.value ? 1 : 0);
+          break;
+        case DisplayItem.BossHp:
+          flow.userOption(UserOptionKind.BossHpBar, this.bossHp.value ? 1 : 0);
+          break;
+        default:
+          break;
+      }
+    }
+    if (result === MenuResult.Confirmed) return;
+    flow.menuSound(result);
+  }
+
+  /**
+   * Draws the panel, `DISPLAY` and the menu.
+   *
+   * @param list - The UI list.
+   */
+  drawUi(list: DrawList): void {
+    const base = this.stringBase;
+    const p = OPTIONS_PANEL;
+    const t = this.flow.text;
+    drawPanel(list, p.x, p.y, p.w, p.h, UI_COLORS.panel, UI_COLORS.border, 255);
+    list.setString(base, t.displayTitle);
+    list.text(base, CX, p.y + 8, UI_COLORS.title, TextAlign.Center);
+    drawMenu(list, this.menu, base + 1, OPTIONS_MENU_LAYOUT, t);
+  }
+}
+
+/**
+ * Index of the autofire interval closest to `interval` in {@link AUTOFIRE_INTERVALS}.
+ *
+ * @param interval - Ticks between main shots.
+ * @returns The index (the first of equally close ones).
+ */
+function rateIndex(interval: number): number {
+  let best = 0;
+  for (let i = 1; i < AUTOFIRE_INTERVALS.length; i++) {
+    if (
+      Math.abs(AUTOFIRE_INTERVALS[i] - interval) < Math.abs(AUTOFIRE_INTERVALS[best] - interval)
+    ) {
+      best = i;
+    }
+  }
+  return best;
+}
+
+/**
+ * The Options screen's CONTROLS page (M2-16 — shmup_feat.md §21 "Controls: rebind, autofire mode &
+ * rate, SOCD, remote mode"; §4 "[P0] Autofire … configurable rate", "[P1] Rebinding per device",
+ * "[P1] SOCD resolution"): PROFILE (the keyboard / remote input profile — M1-17's CONTROLS),
+ * AUTOFIRE (always / toggle / hold), RATE, SOCD (the profile's / neutral / last wins), DEBOUNCE
+ * (the remote's release debounce — the profile's, or 0–10 ticks: the advanced tuning of decision
+ * D14), REBIND KEYS, REBIND PAD (the {@link RebindScene} for the key device and the gamepad), INPUT
+ * TEST ({@link InputTestScene}) and BACK.
+ *
+ * @remarks
+ * An overlay over the Options screen (opaque panel). Opening it reads the save's controls: the
+ * profile in use; AUTOFIRE / RATE show the next game's values (the saved choice, else the host
+ * config's); SOCD / DEBOUNCE the saved override or the profile's. PROFILE applies **live** (a
+ * `UserOption` `InputProfile` event with the choice's index — the host switches the profile, with
+ * the player's rebinding of it); SOCD and DEBOUNCE are stored in the save at once and applied live
+ * (`UserOption` `InputSettings` — the host re-applies the save's `options.input`). AUTOFIRE and
+ * RATE are sim-affecting: they are stored when the page closes and reach the configs of the games
+ * started afterwards (a RETRY included — `core/config` `withUserGameOptions`), never the World in
+ * play. AUTOFIRE is disabled on a remote-mode host (the TV: the remote has no fire button, autofire
+ * stays always on). REBIND KEYS / PAD are disabled without the host's `ControlsSetup` or its
+ * device. BACK or Back stores the page (the profile id only when it changed), writes the save when
+ * it changed and returns to the Options screen.
+ */
+export class ControlsScene extends SceneBase {
+  /** See {@link Scene.id}. */
+  readonly id = 'controls' as const;
+  /** An overlay over the Options screen. */
+  override readonly overlay = true;
+  /** {@link PAUSE_DIM}. */
+  override readonly dim = PAUSE_DIM;
+  /** PROFILE: the profile labels (`DEFAULT` alone when the host offers none). */
+  readonly profile: Choice;
+  /** AUTOFIRE: `core/config` `AUTOFIRE_MODES`. */
+  readonly autofire: Choice;
+  /** RATE: `core/config` `AUTOFIRE_INTERVALS` as shots a second. */
+  readonly rate: Choice;
+  /** SOCD: the profile's, then `core/config` `SOCD_CHOICES`. */
+  readonly socd: Choice;
+  /** DEBOUNCE: the profile's, then 0 … `MAX_DEBOUNCE_OPTION` ticks. */
+  readonly debounce: Choice;
+  /** The menu ({@link ControlsItem} order). */
+  readonly menu: ListMenu;
+  /** The PROFILE index when the page opened (a different one on close is saved). */
+  private openedProfile = 0;
+  /** The AUTOFIRE index when the page opened (a different one on close is saved). */
+  private openedAutofire = 0;
+  /** The RATE index when the page opened (a different one on close is saved). */
+  private openedRate = 0;
+
+  /**
+   * Creates the page.
+   *
+   * @param flow - The flow (its profile choices must be set).
+   */
+  constructor(flow: FlowControl) {
+    super(flow);
+    const t = flow.text;
+    const labels = flow.labels;
+    const profiles = flow.profiles;
+    const names: string[] = [];
+    for (const profile of profiles) names.push(profile.label);
+    if (names.length === 0) names.push(t.defaultLabel);
+    this.profile = createChoice(names, 0);
+    this.autofire = createChoice(labels.autofire, 0);
+    this.rate = createChoice(labels.rates, 0);
+    this.socd = createChoice(labels.socd, 0);
+    this.debounce = createChoice(labels.debounce, 0);
+    this.menu = createListMenu([
+      { label: t.optProfile, choice: this.profile },
+      { label: t.optAutofire, choice: this.autofire },
+      { label: t.optRate, choice: this.rate },
+      { label: t.optSocd, choice: this.socd },
+      { label: t.optDebounce, choice: this.debounce },
+      t.optKeys,
+      t.optPad,
+      t.optInputTest,
+      t.back,
+    ]);
+  }
+
+  /** See {@link SceneBase.stringSlots}. */
+  get stringSlots(): number {
+    return 2 + menuStringSlots(this.menu);
+  }
+
+  /**
+   * The index of the host's rebindable device of a kind ({@link ControlsSetup.devices}).
+   *
+   * @param pad - `true` for the gamepad, `false` for the keyboard / remote.
+   * @returns The index, or -1 when the host has none (or no controls setup).
+   */
+  deviceIndex(pad: boolean): number {
+    const controls = this.flow.controls;
+    if (controls === null) return -1;
+    const devices = controls.devices();
+    for (let i = 0; i < devices.length; i++) {
+      if ((devices[i].kind === 'gamepad') === pad) return i;
+    }
+    return -1;
+  }
+
+  /** Reads the save's controls and the next game's autofire; focus on PROFILE, locked for 2 ticks. */
+  override enter(): void {
+    super.enter();
+    const flow = this.flow;
+    const input = flow.save.options.input;
+    const config = flow.worldConfig;
+    this.profile.index = flow.activeProfile >= 0 ? flow.activeProfile : 0;
+    this.openedProfile = this.profile.index;
+    const mode = AUTOFIRE_MODES.indexOf(input.autofire ?? config.autofireMode);
+    this.autofire.index = mode >= 0 ? mode : 0;
+    this.openedAutofire = this.autofire.index;
+    this.rate.index = rateIndex(input.autofireInterval ?? config.autofireInterval);
+    this.openedRate = this.rate.index;
+    this.socd.index = input.socd === null ? 0 : 1 + SOCD_CHOICES.indexOf(input.socd);
+    this.debounce.index = input.releaseDebounce === null ? 0 : 1 + input.releaseDebounce;
+    this.syncDisabled();
+    this.menu.focusFirstEnabled(ControlsItem.Profile);
+    this.menu.open(MENU_OPEN_LOCK_TICKS);
+  }
+
+  /** The rebind screen or the input test closed: the rows take input again (the profile may have changed). */
+  override uncover(): void {
+    super.uncover();
+    this.syncDisabled();
+    this.menu.open(MENU_OPEN_LOCK_TICKS);
+  }
+
+  /** Disables what the host cannot offer: PROFILE, AUTOFIRE on a remote host, the rebind rows. */
+  private syncDisabled(): void {
+    const flow = this.flow;
+    const menu = this.menu;
+    menu.setDisabled(ControlsItem.Profile, flow.profiles.length === 0);
+    menu.setDisabled(ControlsItem.Autofire, flow.host.config.remoteMode);
+    menu.setDisabled(ControlsItem.Keys, this.deviceIndex(false) < 0);
+    menu.setDisabled(ControlsItem.Pad, this.deviceIndex(true) < 0);
+  }
+
+  /**
+   * Stores SOCD and DEBOUNCE in the save now and has the host apply them (`InputSettings`).
+   */
+  private storeTuning(): void {
+    const flow = this.flow;
+    const save = flow.save;
+    const socd = this.socd.index;
+    const debounce = this.debounce.index;
+    save.setOptions({
+      ...save.options,
+      input: {
+        ...save.options.input,
+        socd: socd === 0 ? null : (SOCD_CHOICES[socd - 1] ?? null),
+        releaseDebounce: debounce === 0 ? null : debounce - 1,
+      },
+    });
+    flow.userOption(UserOptionKind.InputSettings, 0);
+  }
+
+  /** Stores the page's options, re-arms the next games' configs, writes the save and closes. */
+  private close(): void {
+    const flow = this.flow;
+    const save = flow.save;
+    const input = save.options.input;
+    const chosen = this.profile.index;
+    const profileId =
+      chosen !== this.openedProfile && chosen < flow.profiles.length
+        ? flow.profiles[chosen].id
+        : input.profileId;
+    const autofire =
+      this.autofire.index !== this.openedAutofire
+        ? (AUTOFIRE_MODES[this.autofire.index] ?? null)
+        : input.autofire;
+    const interval =
+      this.rate.index !== this.openedRate
+        ? (AUTOFIRE_INTERVALS[this.rate.index] ?? null)
+        : input.autofireInterval;
+    save.setOptions({
+      ...save.options,
+      input: { ...input, profileId, autofire, autofireInterval: interval },
+    });
+    flow.applyOptions();
+    void save.flush();
+    flow.sfx(SFX_CUES.MenuBack);
+    flow.stack.pop();
+  }
+
+  /**
+   * Moves the focus; PROFILE, SOCD and DEBOUNCE apply at once; REBIND KEYS / PAD open the rebind
+   * screen, INPUT TEST the input test; BACK / Back stores and closes. Never allocates (a change
+   * builds the options object — a menu action, not a tick path).
+   */
+  tick(): void {
+    const flow = this.flow;
+    const menu = this.menu;
+    const before = menu.revision;
+    const result = menuTick(menu, flow.menuInput);
+    if (menu.revision !== before) this.uiRevision++;
+    if (
+      result === MenuResult.Back ||
+      (result === MenuResult.Confirmed && menu.focus === ControlsItem.Back)
+    ) {
+      this.close();
+      return;
+    }
+    if (result === MenuResult.Confirmed) {
+      if (menu.focus === ControlsItem.Keys || menu.focus === ControlsItem.Pad) {
+        const device = this.deviceIndex(menu.focus === ControlsItem.Pad);
+        if (device < 0) return;
+        flow.sfx(SFX_CUES.MenuSelect);
+        flow.rebind.prepare(device);
+        flow.stack.push(flow.rebind);
+      } else if (menu.focus === ControlsItem.InputTest) {
+        flow.sfx(SFX_CUES.MenuSelect);
+        flow.stack.push(flow.inputTest);
+      }
+      return;
+    }
+    if (result === MenuResult.Changed) {
+      if (menu.focus === ControlsItem.Profile) {
+        flow.activeProfile = this.profile.index;
+        flow.userOption(UserOptionKind.InputProfile, this.profile.index);
+      } else if (menu.focus === ControlsItem.Socd || menu.focus === ControlsItem.Debounce) {
+        this.storeTuning();
+      }
+    }
+    flow.menuSound(result);
+  }
+
+  /**
+   * Draws the panel, `CONTROLS`, the menu and the note on AUTOFIRE / RATE.
+   *
+   * @param list - The UI list.
+   */
+  drawUi(list: DrawList): void {
+    const base = this.stringBase;
+    const p = OPTIONS_PANEL;
+    const t = this.flow.text;
+    drawPanel(list, p.x, p.y, p.w, p.h, UI_COLORS.panel, UI_COLORS.border, 255);
+    list.setString(base, t.controlsTitle);
+    list.setString(base + 1, t.controlsHint);
+    list.text(base, CX, p.y + 8, UI_COLORS.title, TextAlign.Center);
+    drawMenu(list, this.menu, base + 2, OPTIONS_MENU_LAYOUT, t);
+    list.text(base + 1, CX, p.y + p.h - 14, UI_COLORS.disabled, TextAlign.Center);
+  }
+}
+
+/**
+ * The Options screen's GAME page (M2-16 — shmup_feat.md §21 "Game: difficulty, starting lives,
+ * death-penalty preset, auto power-up"; decisions D2, D6, D7, D33; accessibility "one-button play
+ * (autofire + auto power-up)"): DIFFICULTY (the preset the difficulty menu offers first), LIVES
+ * (the preset's, or 1–5), PENALTY (the preset's, or arcade / classic / casual), AUTO POWER (Auto
+ * Power-Up), MAGNET (the pickup magnet), ONE BUTTON (the one-button preset: autofire always on,
+ * Auto Power-Up and the casual penalty — the AUTO POWER and PENALTY rows are disabled while it is
+ * on) and BACK.
+ *
+ * @remarks
+ * An overlay over the Options screen (opaque panel). Opening it reads the save's game options (the
+ * difficulty chosen last, the next game's Auto Power-Up and magnet for rows the save leaves unset).
+ * The options are sim-affecting: BACK or Back stores them — a toggle only when it was changed, so
+ * an untouched row keeps following the host config and the weapon select — re-arms the configs
+ * of the games started afterwards (`core/config` `withUserGameOptions`; a RETRY included, never the
+ * World in play), chooses the difficulty, writes the save when it changed and returns to the
+ * Options screen.
+ */
+export class GameOptionsScene extends SceneBase {
+  /** See {@link Scene.id}. */
+  readonly id = 'gameOptions' as const;
+  /** An overlay over the Options screen. */
+  override readonly overlay = true;
+  /** {@link PAUSE_DIM}. */
+  override readonly dim = PAUSE_DIM;
+  /** DIFFICULTY: `DIFFICULTY_PRESETS`. */
+  readonly difficulty: Choice;
+  /** LIVES: the preset's, then 1–5. */
+  readonly lives: Choice;
+  /** PENALTY: the preset's, then `DEATH_PENALTY_PRESETS`. */
+  readonly penalty: Choice;
+  /** AUTO POWER: Auto Power-Up. */
+  readonly autoPowerUp: Toggle = createToggle(false);
+  /** MAGNET: the pickup magnet. */
+  readonly magnet: Toggle = createToggle(true);
+  /** ONE BUTTON: the one-button preset. */
+  readonly oneButton: Toggle = createToggle(false);
+  /** The menu ({@link GameOptionsItem} order). */
+  readonly menu: ListMenu;
+  /** DIFFICULTY's index when the page opened. */
+  private openedDifficulty = 0;
+  /** AUTO POWER's value when the page opened. */
+  private openedAuto = false;
+  /** MAGNET's value when the page opened. */
+  private openedMagnet = true;
+
+  /**
+   * Creates the page.
+   *
+   * @param flow - The flow.
+   */
+  constructor(flow: FlowControl) {
+    super(flow);
+    const t = flow.text;
+    const labels = flow.labels;
+    this.difficulty = createChoice(labels.difficulty, 0);
+    this.lives = createChoice(labels.lives, 0);
+    this.penalty = createChoice(labels.penalty, 0);
+    this.menu = createListMenu([
+      { label: t.optDifficulty, choice: this.difficulty },
+      { label: t.optLives, choice: this.lives },
+      { label: t.optPenalty, choice: this.penalty },
+      { label: t.optAutoPowerUp, toggle: this.autoPowerUp },
+      { label: t.optMagnet, toggle: this.magnet },
+      { label: t.optOneButton, toggle: this.oneButton },
+      t.back,
+    ]);
+  }
+
+  /** See {@link SceneBase.stringSlots}. */
+  get stringSlots(): number {
+    return 3 + menuStringSlots(this.menu);
+  }
+
+  /** Reads the save's game options; focus on DIFFICULTY, locked for 2 ticks. */
+  override enter(): void {
+    super.enter();
+    const flow = this.flow;
+    const game = flow.save.options.game;
+    const preset = DIFFICULTY_PRESETS.indexOf(flow.difficulty);
+    this.difficulty.index = preset >= 0 ? preset : 0;
+    this.openedDifficulty = this.difficulty.index;
+    this.lives.index = game.lives ?? 0;
+    this.penalty.index =
+      game.deathPenalty === null ? 0 : 1 + DEATH_PENALTY_PRESETS.indexOf(game.deathPenalty);
+    // Unset rows show what the next game gets from the host config and the weapon select.
+    const base = flow.configs[this.difficulty.index] ?? flow.worldConfig;
+    this.autoPowerUp.value = game.autoPowerUp ?? flow.arsenal.autoPowerUp ?? base.autoPowerUp;
+    this.openedAuto = this.autoPowerUp.value;
+    this.magnet.value = game.pickupMagnet ?? base.pickupMagnet;
+    this.openedMagnet = this.magnet.value;
+    this.oneButton.value = game.oneButton;
+    this.syncDisabled();
+    this.menu.focus = GameOptionsItem.Difficulty;
+    this.menu.open(MENU_OPEN_LOCK_TICKS);
+  }
+
+  /** The one-button preset decides Auto Power-Up and the penalty: their rows wait while it is on. */
+  private syncDisabled(): void {
+    const on = this.oneButton.value;
+    this.menu.setDisabled(GameOptionsItem.AutoPowerUp, on);
+    this.menu.setDisabled(GameOptionsItem.Penalty, on);
+  }
+
+  /** Stores the game options, re-arms the next games' configs, writes the save and closes. */
+  private close(): void {
+    const flow = this.flow;
+    const save = flow.save;
+    const game = save.options.game;
+    const preset = DIFFICULTY_PRESETS[this.difficulty.index] ?? 'normal';
+    const lives = this.lives.index;
+    const penalty = this.penalty.index;
+    save.setOptions({
+      ...save.options,
+      game: {
+        difficulty:
+          this.difficulty.index !== this.openedDifficulty || game.difficulty !== null
+            ? preset
+            : null,
+        lives: lives === 0 ? null : lives,
+        deathPenalty: penalty === 0 ? null : (DEATH_PENALTY_PRESETS[penalty - 1] ?? null),
+        autoPowerUp:
+          this.autoPowerUp.value !== this.openedAuto ? this.autoPowerUp.value : game.autoPowerUp,
+        pickupMagnet:
+          this.magnet.value !== this.openedMagnet ? this.magnet.value : game.pickupMagnet,
+        oneButton: this.oneButton.value,
+      },
+    });
+    flow.chooseDifficulty(preset);
+    flow.applyOptions();
+    void save.flush();
+    flow.sfx(SFX_CUES.MenuBack);
+    flow.stack.pop();
+  }
+
+  /** Moves the focus, changes a row, BACK / Back stores and closes. Never allocates. */
+  tick(): void {
+    const flow = this.flow;
+    const menu = this.menu;
+    const before = menu.revision;
+    const result = menuTick(menu, flow.menuInput);
+    if (result === MenuResult.Changed && menu.focus === GameOptionsItem.OneButton) {
+      this.syncDisabled();
+    }
+    if (menu.revision !== before) this.uiRevision++;
+    if (
+      result === MenuResult.Back ||
+      (result === MenuResult.Confirmed && menu.focus === GameOptionsItem.Back)
+    ) {
+      this.close();
+      return;
+    }
+    if (result === MenuResult.Confirmed) return;
+    flow.menuSound(result);
+  }
+
+  /**
+   * Draws the panel, `GAME`, the menu and the notes (when the options apply; the one-button
+   * preset).
+   *
+   * @param list - The UI list.
+   */
+  drawUi(list: DrawList): void {
+    const base = this.stringBase;
+    const p = OPTIONS_PANEL;
+    const t = this.flow.text;
+    drawPanel(list, p.x, p.y, p.w, p.h, UI_COLORS.panel, UI_COLORS.border, 255);
+    list.setString(base, t.gameOptionsTitle);
+    list.setString(base + 1, t.gameOptionsHint);
+    list.setString(base + 2, t.oneButtonHint);
+    list.text(base, CX, p.y + 8, UI_COLORS.title, TextAlign.Center);
+    drawMenu(list, this.menu, base + 3, OPTIONS_MENU_LAYOUT, t);
+    list.text(base + 2, CX, p.y + p.h - 26, UI_COLORS.disabled, TextAlign.Center);
+    list.text(base + 1, CX, p.y + p.h - 14, UI_COLORS.disabled, TextAlign.Center);
+  }
+}
+
+/** Where the rebind screen's rows go (labels left, keys from x 150). */
+const REBIND_MENU_LAYOUT: MenuLayout = Object.freeze({
+  x: 72,
+  y: 30,
+  lineHeight: 11,
+  cursorX: 62,
+  valueX: 150,
+});
+
+/**
+ * Ticks the rebind screen ignores the menu input after a capture while something is still held
+ * (the captured key must not also act on the rows — it may be OK or Back of the menu table).
+ */
+const REBIND_RELEASE_TICKS = 60;
+
+/**
+ * The rebind screen (M2-16 — shmup_feat.md §4 "[P1] Rebinding per device (keyboard / each
+ * gamepad / remote), conflict detection, reset to defaults, persistence"; §21 accessibility "full
+ * remapping"): the `core/ui` {@link RebindPanel} for one of the host's devices (the keyboard or TV
+ * remote profile in use, or the gamepad profile).
+ *
+ * @remarks
+ * An overlay over the CONTROLS page (opaque panel): `<DEVICE> CONTROLS`, MODE (GAME / MENU — the
+ * binding context shown, decision D15), a row per rebindable action with its keys (the host's
+ * `ControlsSetup.keysLabel`), RESET and DONE. OK on an action row puts the capture prompt up
+ * (`PRESS A KEY FOR SHOT` — `PRESS A BUTTON` for the gamepad) and asks the host for the next key
+ * (`ControlsSetup.beginCapture`); the host's capture answers on a later tick: a caught key is bound
+ * (`ControlsSetup.bindCaptured` — with conflict detection: the key is taken from another action or
+ * the two swap keys, or the binding is refused when it would leave a required action without a key)
+ * and the message line says what happened; Escape / the remote's Back cancel, and so does waiting
+ * {@link REBIND_CAPTURE_TICKS}. After a capture the rows ignore input until nothing is held (at
+ * most {@link REBIND_RELEASE_TICKS}). RESET restores the shown context's bindings of the content
+ * (`ControlsSetup.reset`). The host stores every change in the save and applies it to its input
+ * adapter at once; DONE or Back writes the save and closes. Ticking never allocates (a rebinding
+ * builds its labels and message — a menu action).
+ */
+export class RebindScene extends SceneBase {
+  /** See {@link Scene.id}. */
+  readonly id = 'rebind' as const;
+  /** An overlay over the CONTROLS page. */
+  override readonly overlay = true;
+  /** {@link PAUSE_DIM}. */
+  override readonly dim = PAUSE_DIM;
+  /** The rebind widget. */
+  readonly panel: RebindPanel;
+  /** Index of the device being rebound in the host's `ControlsSetup.devices()`. */
+  device = 0;
+  /** Ticks left of the wait for a release after a capture (0 = none). */
+  releaseTicks = 0;
+  /** The screen's title (`KEYBOARD CONTROLS`; built by {@link RebindScene.prepare}). */
+  private title = '';
+  /** Whether the device is a gamepad (the prompt asks for a button). */
+  private pad = false;
+
+  /**
+   * Creates the screen.
+   *
+   * @param flow - The flow.
+   */
+  constructor(flow: FlowControl) {
+    super(flow);
+    const t = flow.text;
+    const labels = flow.labels;
+    this.panel = createRebindPanel({
+      mode: t.rebindMode,
+      contexts: labels.contexts,
+      actions: labels.actions,
+      reset: t.rebindReset,
+      done: t.done,
+    });
+  }
+
+  /** See {@link SceneBase.stringSlots}. */
+  get stringSlots(): number {
+    return 2 + rebindStringSlots(this.panel);
+  }
+
+  /**
+   * Chooses the device the screen rebinds (before the push; a cold path — builds the title).
+   *
+   * @param device - Index into the host's `ControlsSetup.devices()`.
+   */
+  prepare(device: number): void {
+    const flow = this.flow;
+    const controls = flow.controls;
+    const info = controls === null ? undefined : controls.devices()[device];
+    this.device = device;
+    this.pad = info !== undefined && info.kind === 'gamepad';
+    const kind = info === undefined ? 'keyboard' : info.kind;
+    this.title = formatUiText(flow.text.rebindTitle, flow.labels.devices[kind]);
+    this.uiRevision++;
+  }
+
+  /** Shows the game context, the keys of every row read from the host; locked for 2 ticks. */
+  override enter(): void {
+    super.enter();
+    this.releaseTicks = 0;
+    this.panel.open('game', MENU_OPEN_LOCK_TICKS);
+    this.refresh();
+  }
+
+  /** A capture still running when the screen leaves is ended. */
+  override exit(): void {
+    if (this.panel.capturing) {
+      this.flow.controls?.endCapture();
+      this.panel.stopCapture();
+    }
+  }
+
+  /** Reads every row's keys from the host (a cold path — builds the labels). */
+  private refresh(): void {
+    const controls = this.flow.controls;
+    if (controls === null) return;
+    for (const context of INPUT_CONTEXTS) {
+      for (const action of REBINDABLE_ACTIONS[context]) {
+        this.panel.setKeys(context, action, controls.keysLabel(this.device, context, action));
+      }
+    }
+  }
+
+  /**
+   * The message line of a rebinding's outcome (a cold path — builds the text).
+   *
+   * @param status - A `core/ui` `RebindStatus`.
+   * @param action - The action rebound.
+   * @param other - The other action involved, or `null`.
+   * @returns The message.
+   */
+  private outcomeMessage(status: number, action: ActionName, other: ActionName | null): string {
+    const t = this.flow.text;
+    const names = this.flow.labels.actions;
+    const name = other === null ? '' : names[other];
+    switch (status) {
+      case RebindStatus.Moved:
+        return formatUiText(t.rebindMoved, name);
+      case RebindStatus.Swapped:
+        return formatUiText(t.rebindSwapped, name);
+      case RebindStatus.Refused:
+        return formatUiText(t.rebindRefused, name);
+      case RebindStatus.Unchanged:
+        return t.rebindUnchanged;
+      case RebindStatus.Rejected:
+        return t.rebindRejected;
+      default:
+        return formatUiText(t.rebindBound, names[action]);
+    }
+  }
+
+  /** Ends the capture: the prompt goes, the rows wait for a release. */
+  private endCapture(): void {
+    this.flow.controls?.endCapture();
+    this.panel.stopCapture();
+    this.releaseTicks = REBIND_RELEASE_TICKS;
+  }
+
+  /**
+   * The capture (the host's answer, the timeout), the wait for a release, then the rows: MODE,
+   * a capture, RESET, DONE / Back. Never allocates (a rebinding or a reset builds its labels).
+   */
+  tick(): void {
+    const flow = this.flow;
+    const panel = this.panel;
+    const controls = flow.controls;
+    const before = panel.revision;
+    if (panel.capturing) {
+      rebindTick(panel, flow.menuInput);
+      const status = controls === null ? CaptureStatus.Cancelled : controls.pollCapture();
+      const action = panel.focusedAction;
+      if (status === CaptureStatus.Captured && controls !== null && action !== null) {
+        const outcome = controls.bindCaptured(this.device, panel.context, action);
+        panel.say(this.outcomeMessage(outcome.status, action, outcome.other));
+        this.refresh();
+        this.endCapture();
+        const refused =
+          outcome.status === RebindStatus.Refused || outcome.status === RebindStatus.Rejected;
+        flow.sfx(refused ? SFX_CUES.MenuBack : SFX_CUES.MenuSelect);
+      } else if (
+        status === CaptureStatus.Cancelled ||
+        status === CaptureStatus.Idle ||
+        panel.captureTicks >= REBIND_CAPTURE_TICKS
+      ) {
+        panel.say(flow.text.rebindCancelled);
+        this.endCapture();
+        flow.sfx(SFX_CUES.MenuBack);
+      }
+      if (panel.revision !== before) this.uiRevision++;
+      return;
+    }
+    if (this.releaseTicks > 0) {
+      // The captured key may still be down (it can be OK or Back of the menu table).
+      this.releaseTicks = flow.menuInput.held === 0 ? 0 : this.releaseTicks - 1;
+      if (this.releaseTicks === 0) panel.menu.open(MENU_OPEN_LOCK_TICKS);
+      return;
+    }
+    const event = rebindTick(panel, flow.menuInput);
+    if (panel.revision !== before) this.uiRevision++;
+    if (event === RebindEvent.Done) {
+      void flow.save.flush();
+      flow.sfx(SFX_CUES.MenuBack);
+      flow.stack.pop();
+      return;
+    }
+    const action = panel.focusedAction;
+    if (event === RebindEvent.Capture && controls !== null && action !== null) {
+      flow.sfx(SFX_CUES.MenuSelect);
+      const t = flow.text;
+      panel.say('');
+      panel.startCapture(
+        formatUiText(
+          this.pad ? t.rebindPromptButton : t.rebindPromptKey,
+          flow.labels.actions[action],
+        ),
+      );
+      controls.beginCapture(this.device);
+      this.uiRevision++;
+      return;
+    }
+    if (event === RebindEvent.Reset && controls !== null) {
+      flow.sfx(SFX_CUES.MenuSelect);
+      controls.reset(this.device, panel.context);
+      this.refresh();
+      panel.say(flow.text.rebindResetDone);
+      this.uiRevision++;
+      return;
+    }
+    flow.menuSound(panel.result);
+  }
+
+  /**
+   * Draws the panel, the title, the widget and the hint.
+   *
+   * @param list - The UI list.
+   */
+  drawUi(list: DrawList): void {
+    const base = this.stringBase;
+    const p = OPTIONS_PANEL;
+    const t = this.flow.text;
+    drawPanel(list, p.x, p.y, p.w, p.h, UI_COLORS.panel, UI_COLORS.border, 255);
+    list.setString(base, this.title);
+    list.setString(base + 1, t.rebindHint);
+    list.text(base, CX, p.y + 6, UI_COLORS.title, TextAlign.Center);
+    drawRebindPanel(list, this.panel, base + 2, REBIND_MENU_LAYOUT, t.rebindCancelHint, t);
+    if (!this.panel.capturing) {
+      list.text(base + 1, CX, p.y + p.h - 10, UI_COLORS.disabled, TextAlign.Center);
+    }
+  }
+}
+
+/** Ticks Pause must be held to leave the input test (1 s). */
+export const INPUT_TEST_EXIT_TICKS = 60;
+
+/** Ticks an action stays lit on the input test after a press (a tap shorter than a frame shows). */
+const INPUT_TEST_FLASH_TICKS = 8;
+
+/** The input test's actions, in `REBINDABLE_ACTIONS.game` order (the game table's). */
+const INPUT_TEST_ACTIONS: readonly ActionName[] = REBINDABLE_ACTIONS.game;
+
+/**
+ * The input test (M2-16 — the Options screen's CONTROLS → INPUT TEST; shmup_feat.md §4 — see what
+ * the remote, a gamepad or the keyboard really sends through the active profile and the player's
+ * rebinding): every gameplay action lit while held (and for {@link INPUT_TEST_FLASH_TICKS} after a
+ * press, so a tap shows), the four directions as a cross (two light together on a diagonal — or
+ * not, under the profile's diagonal / SOCD policy), and the device that sent the last input.
+ *
+ * @remarks
+ * An overlay over the CONTROLS page with the **`'game'` binding context**, so it shows the
+ * gameplay table (OK = PowerUp on the remote, X = Sub on the keyboard …). Every key does what it
+ * does in a game — so leaving it takes **holding Pause** for {@link INPUT_TEST_EXIT_TICKS} (a bar
+ * fills; remote Back / Play-Pause, keyboard Esc / P / Backspace, pad START in the shipped
+ * profiles). The screen redraws only when what it shows changes. Never allocates.
+ */
+export class InputTestScene extends SceneBase {
+  /** See {@link Scene.id}. */
+  readonly id = 'inputTest' as const;
+  /** An overlay over the CONTROLS page. */
+  override readonly overlay = true;
+  /** {@link PAUSE_DIM}. */
+  override readonly dim = PAUSE_DIM;
+  /** `'game'`: the gameplay binding table, so every gameplay action can be tried. */
+  override readonly inputContext: InputContext = 'game';
+  /** Ticks Pause has been held (the exit). */
+  holdTicks = 0;
+  /** The actions lit now (held, or flashing after a press). */
+  lit = 0;
+  /** Per action ({@link REBINDABLE_ACTIONS} game order): ticks left of its press flash. */
+  private readonly flash = new Uint8Array(INPUT_TEST_ACTIONS.length);
+  /** The device shown (a `PlayerInput.device` kind). */
+  private device = 'none';
+
+  /** See {@link SceneBase.stringSlots}. */
+  get stringSlots(): number {
+    return 5 + INPUT_TEST_ACTIONS.length;
+  }
+
+  /** Nothing lit, the exit bar empty. */
+  override enter(): void {
+    super.enter();
+    this.holdTicks = 0;
+    this.lit = 0;
+    this.flash.fill(0);
+    this.device = 'none';
+  }
+
+  /** Lights what is held or was just pressed; holding Pause leaves. Never allocates. */
+  tick(): void {
+    const flow = this.flow;
+    const input = flow.menuInput;
+    let lit = input.held;
+    for (let i = 0; i < INPUT_TEST_ACTIONS.length; i++) {
+      const bit = Action[INPUT_TEST_ACTIONS[i]];
+      if ((input.pressed & bit) !== 0) this.flash[i] = INPUT_TEST_FLASH_TICKS;
+      else if (this.flash[i] > 0) this.flash[i]--;
+      if (this.flash[i] > 0) lit |= bit;
+    }
+    if (lit !== this.lit) {
+      this.lit = lit;
+      this.uiRevision++;
+    }
+    if (input.device !== 'none' && input.device !== this.device) {
+      this.device = input.device;
+      this.uiRevision++;
+    }
+    if ((input.held & Action.Pause) !== 0) {
+      this.holdTicks++;
+      if ((this.holdTicks & 3) === 0) this.uiRevision++;
+      if (this.holdTicks >= INPUT_TEST_EXIT_TICKS) {
+        flow.sfx(SFX_CUES.MenuBack);
+        flow.stack.pop();
+      }
+    } else if (this.holdTicks !== 0) {
+      this.holdTicks = 0;
+      this.uiRevision++;
+    }
+  }
+
+  /**
+   * Draws the panel, the device, the direction cross, the action boxes and the exit hint with its
+   * bar.
+   *
+   * @param list - The UI list.
+   */
+  drawUi(list: DrawList): void {
+    const base = this.stringBase;
+    const flow = this.flow;
+    const t = flow.text;
+    const p = OPTIONS_PANEL;
+    const lit = this.lit;
+    drawPanel(list, p.x, p.y, p.w, p.h, UI_COLORS.panel, UI_COLORS.border, 255);
+    list.setString(base, t.inputTestTitle);
+    list.setString(base + 1, t.inputTestDevice);
+    list.setString(
+      base + 2,
+      this.device === 'keyboard'
+        ? t.deviceKeyboard
+        : this.device === 'remote'
+          ? t.deviceRemote
+          : this.device === 'gamepad'
+            ? t.deviceGamepad
+            : '-',
+    );
+    list.setString(base + 3, t.inputTestHint);
+    list.text(base, CX, p.y + 8, UI_COLORS.title, TextAlign.Center);
+    list.text(base + 1, p.x + 20, p.y + 26, UI_COLORS.title);
+    list.text(base + 2, p.x + 80, p.y + 26, UI_COLORS.focus);
+    // The direction cross (left) and the buttons (right).
+    const cx = p.x + 70;
+    const cy = p.y + 86;
+    const on = UI_COLORS.focus;
+    const off = UI_COLORS.track;
+    list.rect(cx - 8, cy - 30, 16, 20, (lit & Action.Up) !== 0 ? on : off);
+    list.rect(cx - 8, cy + 10, 16, 20, (lit & Action.Down) !== 0 ? on : off);
+    list.rect(cx - 30, cy - 8, 20, 16, (lit & Action.Left) !== 0 ? on : off);
+    list.rect(cx + 10, cy - 8, 20, 16, (lit & Action.Right) !== 0 ? on : off);
+    list.rect(cx - 8, cy - 8, 16, 16, off);
+    const names = flow.labels.actions;
+    for (let i = 4; i < INPUT_TEST_ACTIONS.length; i++) {
+      const action = INPUT_TEST_ACTIONS[i];
+      const row = i - 4;
+      const x = p.x + 150;
+      const y = p.y + 44 + row * 18;
+      const held = (lit & Action[action]) !== 0;
+      list.rect(x, y, 110, 14, held ? on : off);
+      list.setString(base + 5 + i, names[action]);
+      list.text(
+        base + 5 + i,
+        x + 55,
+        y + 3,
+        held ? UI_COLORS.panel : UI_COLORS.text,
+        TextAlign.Center,
+      );
+    }
+    list.text(base + 3, CX, p.y + p.h - 26, UI_COLORS.disabled, TextAlign.Center);
+    const bar = Math.floor((160 * this.holdTicks) / INPUT_TEST_EXIT_TICKS);
+    list.rect(CX - 80, p.y + p.h - 14, 160, 3, UI_COLORS.track);
+    if (bar > 0) list.rect(CX - 80, p.y + p.h - 14, bar > 160 ? 160 : bar, 3, UI_COLORS.alert);
   }
 }
 
@@ -2363,8 +3667,8 @@ export class StageClearScene extends SceneBase {
       captureCarry(world, run.carry);
       const zone = run.zone >= 0 ? campaign.zones[run.zone] : null;
       this.title = bonus
-        ? 'BONUS STAGE CLEAR'
-        : 'ZONE ' + (zone === null ? '' : zone.label) + ' CLEAR';
+        ? flow.text.bonusStageClear
+        : formatUiText(flow.text.zoneClear, zone === null ? '' : zone.label);
       this.zoneName = zone === null ? '' : zone.name;
       if (run.practice) {
         // A practice clear goes into the practice table (M2-15), then the title.
@@ -2428,13 +3732,14 @@ export class StageClearScene extends SceneBase {
     }
     const base = this.stringBase;
     const world = this.flow.game.world;
+    const t = this.flow.text;
     drawPanel(list, CX - 88, 64, 176, 72);
-    list.setString(base, 'STAGE CLEAR');
-    list.setString(base + 1, 'SCORE');
-    list.setString(base + 2, 'HI');
-    list.setString(base + 3, 'TO BE CONTINUED');
-    list.setString(base + 4, '1P');
-    list.setString(base + 5, '2P');
+    list.setString(base, t.stageClear);
+    list.setString(base + 1, t.score);
+    list.setString(base + 2, t.hi);
+    list.setString(base + 3, t.toBeContinued);
+    list.setString(base + 4, t.p1);
+    list.setString(base + 5, t.p2);
     if (this.phase === ClearPhase.Tally) {
       const scores = world.scoring.board.scores;
       list.text(base, CX, 74, UI_COLORS.focus, TextAlign.Center);
@@ -2471,14 +3776,15 @@ export class StageClearScene extends SceneBase {
     const left = CX - 92;
     const right = CX + 92;
     drawPanel(list, CX - 100, 44, 200, coop ? 124 : 112);
+    const t = this.flow.text;
     list.setString(base, this.title);
     list.setString(base + 1, this.zoneName);
-    list.setString(base + 2, coop ? '1P' : 'SCORE');
-    list.setString(base + 3, '2P');
-    list.setString(base + 4, 'KILLS');
+    list.setString(base + 2, coop ? t.p1 : t.score);
+    list.setString(base + 3, t.p2);
+    list.setString(base + 4, t.kills);
     list.setString(base + 5, '%');
-    list.setString(base + 6, 'KILL BONUS');
-    list.setString(base + 7, result.bossSeconds >= 0 ? 'TIME BONUS' : 'NO BOSS TIME');
+    list.setString(base + 6, t.killBonus);
+    list.setString(base + 7, result.bossSeconds >= 0 ? t.timeBonus : t.noBossTime);
     list.text(base, CX, 52, UI_COLORS.focus, TextAlign.Center);
     list.text(base + 1, CX, 64, UI_COLORS.title, TextAlign.Center);
     let y = 82;
@@ -2565,12 +3871,13 @@ export class GameOverScene extends SceneBase {
     const world = this.flow.game.world;
     const scores = world.scoring.board.scores;
     const coop = world.players.length > 1 && world.players[1].active && scores.length > 1;
+    const t = this.flow.text;
     drawPanel(list, CX - 72, 80, 144, coop ? 56 : 44, UI_COLORS.panel, UI_COLORS.alert);
-    list.setString(base, 'GAME OVER');
-    list.setString(base + 1, 'SCORE');
-    list.setString(base + 2, 'NEW HI-SCORE');
-    list.setString(base + 3, '1P');
-    list.setString(base + 4, '2P');
+    list.setString(base, t.gameOver);
+    list.setString(base + 1, t.score);
+    list.setString(base + 2, t.newHiScore);
+    list.setString(base + 3, t.p1);
+    list.setString(base + 4, t.p2);
     list.text(base, CX, 88, UI_COLORS.alert, TextAlign.Center);
     if (coop) {
       // Co-op (M2-06): both players' final scores.
@@ -2622,8 +3929,9 @@ export class ConfirmDialog extends SceneBase {
    */
   prepare(purpose: ConfirmPurpose): void {
     this.purpose = purpose;
+    const t = this.flow.text;
     this.prompt.open(
-      purpose === ConfirmPurpose.Exit ? 'EXIT SHMUP CUP?' : 'QUIT TO TITLE?',
+      purpose === ConfirmPurpose.Exit ? t.confirmExit : t.confirmQuit,
       MENU_OPEN_LOCK_TICKS,
     );
     this.uiRevision++;
@@ -2664,7 +3972,7 @@ export class ConfirmDialog extends SceneBase {
    * @param list - The UI list.
    */
   drawUi(list: DrawList): void {
-    drawConfirm(list, this.prompt, this.stringBase, CX, 108);
+    drawConfirm(list, this.prompt, this.stringBase, CX, 108, this.flow.text);
   }
 }
 
@@ -2678,9 +3986,6 @@ const DIFFICULTY_MENU_LAYOUT: MenuLayout = Object.freeze({
 
 /** The difficulty menu's panel: left, top, width, height. */
 const DIFFICULTY_PANEL = Object.freeze({ x: CX - 88, y: 56, w: 176, h: 112 });
-
-/** The labels of the difficulty menu, in {@link DIFFICULTY_PRESETS} order. */
-const DIFFICULTY_LABELS: readonly string[] = Object.freeze(['EASY', 'NORMAL', 'HARD', 'ARCADE']);
 
 /**
  * The difficulty menu under START (shmup_feat.md §16 "difficulty select", plan M2-01): EASY /
@@ -2705,7 +4010,7 @@ export class DifficultyScene extends SceneBase {
   /** {@link PAUSE_DIM}. */
   override readonly dim = PAUSE_DIM;
   /** The presets, in {@link DIFFICULTY_PRESETS} order. */
-  readonly menu: ListMenu = createListMenu(DIFFICULTY_LABELS.slice());
+  readonly menu: ListMenu = createListMenu(this.flow.labels.difficulty.slice());
 
   /** See {@link SceneBase.stringSlots}. */
   get stringSlots(): number {
@@ -2740,6 +4045,7 @@ export class DifficultyScene extends SceneBase {
     if (result === MenuResult.Confirmed) {
       flow.sfx(SFX_CUES.MenuSelect);
       flow.chooseDifficulty(this.focused);
+      flow.rememberDifficulty(this.focused);
       // With a single ship there is nothing to choose (M2-05): straight to what it plays with.
       if (flow.ships.length > 1) flow.stack.push(flow.shipSelect);
       else if (flow.worldConfig.powerUpMode === 'direct') flow.launchGame();
@@ -2766,13 +4072,14 @@ export class DifficultyScene extends SceneBase {
     const p = DIFFICULTY_PANEL;
     const index = this.menu.focus;
     const config = this.flow.configs[index] ?? this.flow.worldConfig;
+    const t = this.flow.text;
     drawPanel(list, p.x, p.y, p.w, p.h, UI_COLORS.panel, UI_COLORS.border, 255);
-    list.setString(base, 'DIFFICULTY');
-    list.setString(base + 1, 'LIVES');
-    list.setString(base + 2, 'CONTINUES');
-    list.setString(base + 3, 'HI');
+    list.setString(base, t.difficultyTitle);
+    list.setString(base + 1, t.lives);
+    list.setString(base + 2, t.continues);
+    list.setString(base + 3, t.hi);
     list.text(base, CX, p.y + 8, UI_COLORS.title, TextAlign.Center);
-    drawMenu(list, this.menu, base + 4, DIFFICULTY_MENU_LAYOUT);
+    drawMenu(list, this.menu, base + 4, DIFFICULTY_MENU_LAYOUT, t);
     const y = p.y + p.h - 26;
     list.text(base + 1, p.x + 12, y, UI_COLORS.title);
     list.number(config.startingLives, p.x + 60, y, 0, UI_COLORS.text);
@@ -2883,13 +4190,14 @@ export class ContinueScene extends SceneBase {
     const world = this.flow.game.world;
     const scores = world.scoring.board.scores;
     drawPanel(list, CX - 80, 60, 160, 96, UI_COLORS.panel, UI_COLORS.alert);
-    list.setString(base, 'CONTINUE?');
-    list.setString(base + 1, 'CREDITS');
-    list.setString(base + 2, '1P');
-    list.setString(base + 3, '2P');
-    list.setString(base + 4, 'PRESS OK');
-    list.setString(base + 5, 'SCORE');
-    list.setString(base + 6, 'BACK: GIVE UP');
+    const t = this.flow.text;
+    list.setString(base, t.continueTitle);
+    list.setString(base + 1, t.credits);
+    list.setString(base + 2, t.p1);
+    list.setString(base + 3, t.p2);
+    list.setString(base + 4, t.pressOk);
+    list.setString(base + 5, t.score);
+    list.setString(base + 6, t.giveUp);
     list.text(base, CX, 68, UI_COLORS.focus, TextAlign.Center);
     // The seconds (M2-15 polish): the last three flash red / yellow, a bar drains under them.
     const seconds = this.seconds;
@@ -2927,15 +4235,12 @@ export class ContinueScene extends SceneBase {
  * The ship select's line for each power-up model, in `POWER_UP_MODES` order (M2-05): what the
  * focused ship plays with.
  */
-export const SHIP_MODE_LABELS: readonly string[] = Object.freeze(['POWER METER', 'DIRECT ITEMS']);
+export const SHIP_MODE_LABELS: readonly string[] = ENGLISH.shipModes;
 
 /**
  * The ship select's three hint lines for each power-up model, in `POWER_UP_MODES` order (M2-05).
  */
-export const SHIP_MODE_HINTS: readonly (readonly string[])[] = Object.freeze([
-  Object.freeze(['CAPSULES MOVE THE METER', 'OK EQUIPS THE LIT SLOT', 'OPTIONS COPY YOUR FIRE']),
-  Object.freeze(['COLOUR ITEMS POWER UP', 'BLUE: THE ARM SHIELD', 'CH-: SPEED TOGGLE']),
-]);
+export const SHIP_MODE_HINTS: readonly (readonly string[])[] = ENGLISH.shipHints;
 
 /** The ship select's panel: left, top, width, height. */
 const SHIP_PANEL = Object.freeze({ x: CX - 104, y: 44, w: 208, h: 136 });
@@ -3048,16 +4353,18 @@ export class ShipSelectScene extends SceneBase {
     const ship = this.focused;
     const mode = POWER_UP_MODES.indexOf(ship.mode);
     const m = mode >= 0 ? mode : 0;
-    const hints = SHIP_MODE_HINTS[m];
+    const t = this.flow.text;
+    const labels = this.flow.labels;
+    const hints = labels.shipHints[m];
     drawPanel(list, p.x, p.y, p.w, p.h, UI_COLORS.panel, UI_COLORS.border, 255);
-    list.setString(base, 'SHIP SELECT');
-    list.setString(base + 1, SHIP_MODE_LABELS[m]);
+    list.setString(base, t.shipSelectTitle);
+    list.setString(base + 1, labels.shipModes[m]);
     list.setString(base + 2, hints[0]);
     list.setString(base + 3, hints[1]);
     list.setString(base + 4, hints[2]);
-    list.setString(base + 5, 'OK: CHOOSE');
+    list.setString(base + 5, t.okChoose);
     list.text(base, CX, p.y + 8, UI_COLORS.title, TextAlign.Center);
-    drawMenu(list, this.menu, base + 6, SHIP_MENU_LAYOUT);
+    drawMenu(list, this.menu, base + 6, SHIP_MENU_LAYOUT, t);
     if (ship.spriteId >= 0) list.sprite(ship.spriteId, 0, CX + 52, SHIP_MENU_LAYOUT.y + 10);
     list.text(base + 1, CX, p.y + 72, UI_COLORS.focus, TextAlign.Center);
     list.text(base + 2, CX, p.y + 88, UI_COLORS.text, TextAlign.Center);
@@ -3094,33 +4401,16 @@ export const WeaponSelectItem = {
 } as const;
 
 /** The `!` choices' labels, in `config` `MEGA_CHOICES` order. */
-export const MEGA_CHOICE_LABELS: readonly string[] = Object.freeze([
-  'MEGA CRASH',
-  'NORMAL',
-  'SPEED DOWN',
-  'LIFE OPTION',
-  'FULL BARRIER',
-]);
+export const MEGA_CHOICE_LABELS: readonly string[] = ENGLISH.mega;
 
 /** The `?` choices' labels, in `config` `SHIELD_CHOICES` order. */
-export const SHIELD_CHOICE_LABELS: readonly string[] = Object.freeze([
-  'FORCE FIELD',
-  'SHIELD',
-  'FREE SHIELD',
-  'ROTATE',
-  'REDUCE',
-]);
+export const SHIELD_CHOICE_LABELS: readonly string[] = ENGLISH.shield;
 
 /** The Option types' labels, in `config` `OPTION_CHOICES` order (M2-04). */
-export const OPTION_CHOICE_LABELS: readonly string[] = Object.freeze([
-  'TRAIL',
-  'SNAKE',
-  'FORMATION',
-  'ROTATE',
-]);
+export const OPTION_CHOICE_LABELS: readonly string[] = ENGLISH.option;
 
-/** The TYPE choice's label for Weapon Edit. */
-export const WEAPON_EDIT_LABEL = 'EDIT';
+/** The TYPE choice's label for Weapon Edit (English — the flow's comes from its string table). */
+export const WEAPON_EDIT_LABEL = DEFAULT_UI_TEXT.weaponEdit;
 
 /** The stage the weapon select's live preview flies (free flight when the content lacks it). */
 export const WEAPON_RANGE_STAGE = 'weapon-range';
@@ -3147,19 +4437,7 @@ export const AUTO_ORDER_ROWS = 12;
  * Labels of an order editor row: the meter slots in `config` `METER_SLOT_NAMES` order, then `-`
  * (no entry — rows set to `-` are left out of the order).
  */
-export const AUTO_ORDER_LABELS: readonly string[] = Object.freeze([
-  'SPEED',
-  'MISSILE',
-  'DOUBLE',
-  'LASER',
-  'OPTION',
-  '?',
-  '!',
-  '-',
-]);
-
-/** One-letter codes of the meter slots for the ORDER summary, in slot order. */
-const ORDER_CODES: readonly string[] = Object.freeze(['S', 'M', 'D', 'L', 'O', '?', '!']);
+export const AUTO_ORDER_LABELS: readonly string[] = ENGLISH.autoOrder;
 
 /** Entries the ORDER summary spells out before `+`. */
 const ORDER_SUMMARY_ENTRIES = 8;
@@ -3297,6 +4575,8 @@ export class WeaponSelectScene extends SceneBase {
     super(flow);
     const content = flow.host.content;
     const config = flow.host.config;
+    const t = flow.text;
+    const labels = flow.labels;
     this.presets = content.weaponPresets;
     const presetRoles: (readonly (WeaponSpec | null)[])[] = [];
     const typeLabels: string[] = [];
@@ -3306,7 +4586,7 @@ export class WeaponSelectScene extends SceneBase {
     }
     if (presetRoles.length === 0) {
       presetRoles.push(Object.freeze(resolveRoleWeapons(content, null)));
-      typeLabels.push('DEFAULT');
+      typeLabels.push(t.defaultLabel);
     }
     this.presetRoles = presetRoles;
     const slots: WeaponSlot[] = ['missile', 'double', 'laser'];
@@ -3315,47 +4595,44 @@ export class WeaponSelectScene extends SceneBase {
     let editable = true;
     for (const slot of slots) {
       const list = weaponsOfSlot(content, slot);
-      const labels: string[] = [];
-      for (const weapon of list) labels.push(weaponLabel(weapon));
-      if (labels.length === 0) {
-        labels.push('NONE');
+      const names: string[] = [];
+      for (const weapon of list) names.push(weaponLabel(weapon));
+      if (names.length === 0) {
+        names.push(t.none);
         editable = false;
       }
       slotWeapons.push(Object.freeze(list));
-      slotChoices.push(createChoice(labels, 0));
+      slotChoices.push(createChoice(names, 0));
     }
     this.slotWeapons = slotWeapons;
     this.editIndex = editable ? typeLabels.length : -1;
-    if (editable) typeLabels.push(WEAPON_EDIT_LABEL);
+    if (editable) typeLabels.push(t.weaponEdit);
     this.type = createChoice(typeLabels, 0);
     this.missile = slotChoices[0];
     this.double = slotChoices[1];
     this.laser = slotChoices[2];
     this.option = createChoice(
-      OPTION_CHOICE_LABELS,
+      labels.option,
       Math.max(0, OPTION_CHOICES.indexOf(config.optionChoice)),
     );
     this.shield = createChoice(
-      SHIELD_CHOICE_LABELS,
+      labels.shield,
       Math.max(0, SHIELD_CHOICES.indexOf(config.shieldChoice)),
     );
-    this.mega = createChoice(
-      MEGA_CHOICE_LABELS,
-      Math.max(0, MEGA_CHOICES.indexOf(config.megaChoice)),
-    );
+    this.mega = createChoice(labels.mega, Math.max(0, MEGA_CHOICES.indexOf(config.megaChoice)));
     this.auto = createToggle(config.autoPowerUp);
     this.menu = createListMenu(
       [
-        { label: 'TYPE', choice: this.type },
-        { label: 'MISSILE', choice: this.missile },
-        { label: 'DOUBLE', choice: this.double },
-        { label: 'LASER', choice: this.laser },
-        { label: 'OPTION', choice: this.option },
-        { label: '? SLOT', choice: this.shield },
-        { label: '! SLOT', choice: this.mega },
-        { label: 'AUTO', toggle: this.auto },
-        'ORDER',
-        'START',
+        { label: t.wsType, choice: this.type },
+        { label: t.wsMissile, choice: this.missile },
+        { label: t.wsDouble, choice: this.double },
+        { label: t.wsLaser, choice: this.laser },
+        { label: t.wsOption, choice: this.option },
+        { label: t.wsShield, choice: this.shield },
+        { label: t.wsMega, choice: this.mega },
+        { label: t.wsAuto, toggle: this.auto },
+        t.wsOrder,
+        t.start,
       ],
       { focus: WeaponSelectItem.Start },
     );
@@ -3397,9 +4674,16 @@ export class WeaponSelectScene extends SceneBase {
     return this.type.index === this.editIndex;
   }
 
-  /** Focus on START, locked for 2 ticks; the preview World takes off. */
+  /**
+   * Focus on START, locked for 2 ticks; AUTO shows the next game's Auto Power-Up (M2-16: the GAME
+   * page's option and the one-button preset count — the row is disabled under the preset); the
+   * preview World takes off.
+   */
   override enter(): void {
     super.enter();
+    const flow = this.flow;
+    this.auto.value = flow.worldConfig.autoPowerUp;
+    this.menu.setDisabled(WeaponSelectItem.Auto, flow.save.options.game.oneButton);
     this.menu.focus = WeaponSelectItem.Start;
     this.menu.open(MENU_OPEN_LOCK_TICKS);
     this.ensurePreview();
@@ -3483,6 +4767,13 @@ export class WeaponSelectScene extends SceneBase {
     if (result === MenuResult.Confirmed) {
       if (menu.focus === WeaponSelectItem.Start) {
         flow.sfx(SFX_CUES.MenuSelect);
+        // AUTO edits the GAME page's Auto Power-Up when the player set that one (M2-16), so the
+        // saved option does not override what this screen shows.
+        const save = flow.save;
+        const game = save.options.game;
+        if (game.autoPowerUp !== null && game.autoPowerUp !== this.auto.value) {
+          save.setOptions({ ...save.options, game: { ...game, autoPowerUp: this.auto.value } });
+        }
         flow.chooseArsenal(this.arsenal());
         flow.launchGame();
         return;
@@ -3566,10 +4857,11 @@ export class WeaponSelectScene extends SceneBase {
    *   eight when there are more, or `NONE` when the order is empty.
    */
   private buildOrderLabel(): string {
-    if (this.orderLength === 0) return 'NONE';
+    if (this.orderLength === 0) return this.flow.text.none;
+    const codes = this.flow.labels.orderCodes;
     const parts: string[] = [];
     for (let i = 0; i < this.orderLength && i < ORDER_SUMMARY_ENTRIES; i++) {
-      parts.push(ORDER_CODES[this.orderSlots[i]]);
+      parts.push(codes[this.orderSlots[i]] ?? '?');
     }
     if (this.orderLength > ORDER_SUMMARY_ENTRIES) parts.push('+');
     return parts.join(' ');
@@ -3684,13 +4976,14 @@ export class WeaponSelectScene extends SceneBase {
     const base = this.stringBase;
     const p = WEAPON_PANEL;
     const layout = WEAPON_MENU_LAYOUT;
+    const t = this.flow.text;
     drawPanel(list, p.x, p.y, p.w, p.h, UI_COLORS.panel, UI_COLORS.border, 232);
-    list.setString(base, 'WEAPON SELECT');
+    list.setString(base, t.weaponSelectTitle);
     list.setString(base + 1, this.orderLabel);
-    list.setString(base + 2, 'LEFT/RIGHT: CHANGE');
-    list.setString(base + 3, 'OK ON START: GO');
+    list.setString(base + 2, t.wsHintChange);
+    list.setString(base + 3, t.wsHintGo);
     list.text(base, p.x + (p.w >> 1), p.y + 8, UI_COLORS.title, TextAlign.Center);
-    const y = drawMenu(list, this.menu, base + 4, layout);
+    const y = drawMenu(list, this.menu, base + 4, layout, t);
     const orderY = layout.y + WeaponSelectItem.Order * (layout.lineHeight ?? 12);
     const focused = this.menu.focus === WeaponSelectItem.Order;
     list.text(base + 1, layout.valueX ?? 72, orderY, focused ? UI_COLORS.focus : UI_COLORS.text);
@@ -3733,12 +5026,13 @@ export class AutoOrderScene extends SceneBase {
     super(flow);
     const entries: Choice[] = [];
     const items: MenuItemSpec[] = [];
+    const rows = flow.labels.autoOrder;
     for (let i = 0; i < AUTO_ORDER_ROWS; i++) {
-      const choice = createChoice(AUTO_ORDER_LABELS, AUTO_ORDER_LABELS.length - 1);
+      const choice = createChoice(rows, rows.length - 1);
       entries.push(choice);
       items.push({ label: String(i + 1), choice });
     }
-    items.push('DONE');
+    items.push(flow.text.done);
     this.entries = entries;
     this.menu = createListMenu(items);
   }
@@ -3802,9 +5096,9 @@ export class AutoOrderScene extends SceneBase {
     const base = this.stringBase;
     const p = ORDER_PANEL;
     drawPanel(list, p.x, p.y, p.w, p.h, UI_COLORS.panel, UI_COLORS.border, 255);
-    list.setString(base, 'AUTO ORDER');
+    list.setString(base, this.flow.text.autoOrderTitle);
     list.text(base, p.x + (p.w >> 1), p.y + 8, UI_COLORS.title, TextAlign.Center);
-    drawMenu(list, this.menu, base + 1, ORDER_MENU_LAYOUT);
+    drawMenu(list, this.menu, base + 1, ORDER_MENU_LAYOUT, this.flow.text);
   }
 }
 
@@ -4019,8 +5313,9 @@ export class MapScene extends SceneBase {
   drawUi(list: DrawList): void {
     const campaign = this.campaign;
     const base = this.stringBase;
-    list.setString(base, campaign === null ? 'ZONE MAP' : campaign.name);
-    list.setString(base + 1, 'CHOOSE YOUR COURSE');
+    const t = this.flow.text;
+    list.setString(base, campaign === null ? t.mapTitle : campaign.name);
+    list.setString(base + 1, t.mapSubtitle);
     list.text(base, CX, 10, UI_COLORS.title, TextAlign.Center);
     if (campaign === null) return;
     const launching = this.launch >= 0;
@@ -4083,10 +5378,10 @@ export class MapScene extends SceneBase {
     drawPanel(list, p.x, p.y, p.w, p.h);
     if (focused < 0) return;
     const zone = zones[focused];
-    list.setString(base + 2, 'ZONE');
+    list.setString(base + 2, t.zone);
     list.setString(base + 3, zone.label);
     list.setString(base + 4, zone.name);
-    list.setString(base + 5, launching ? 'LAUNCH' : 'UP/DOWN: CHOOSE  OK: LAUNCH');
+    list.setString(base + 5, launching ? t.launch : t.mapHint);
     list.text(base + 2, p.x + 10, p.y + 6, UI_COLORS.title);
     list.text(base + 3, p.x + 44, p.y + 6, UI_COLORS.focus);
     list.text(base + 4, p.x + 64, p.y + 6, UI_COLORS.focus);
@@ -4129,13 +5424,8 @@ const ENDING_PANEL = Object.freeze({ x: 40, y: 24, w: 304, h: 168 });
 /** The epilogue's panel under the sprite scene: left, top, width, height (M2-14). */
 const ENDING_TEXT_PANEL = Object.freeze({ x: 40, y: 124, w: 304, h: 88 });
 
-/** The ending's flag lines, in `RunFlag` bit order. */
-const ENDING_FLAG_LABELS: readonly string[] = Object.freeze([
-  'A BOSS ESCAPED',
-  'NO MISS',
-  'NO CONTINUE',
-  'BONUS STAGE CLEARED',
-]);
+/** The ending's flag lines, in `RunFlag` bit order (English; the flow's are its labels'). */
+const ENDING_FLAG_LABELS: readonly string[] = ENGLISH.endingFlags;
 
 /** Ending scene phases (M2-14): the sprite scene and its epilogue, then the result card. */
 const EndingPhase = { Story: 0, Result: 1 } as const;
@@ -4339,15 +5629,16 @@ export class EndingScene extends SceneBase {
     const base = this.stringBase;
     const run = this.flow.run;
     const p = ENDING_PANEL;
+    const t = this.flow.text;
     drawPanel(list, p.x, p.y, p.w, p.h, UI_COLORS.panel, UI_COLORS.border, 255);
-    list.setString(base, 'ENDING');
-    list.setString(base + 1, run.ending === null ? 'THE END' : run.ending.name);
-    list.setString(base + 2, 'ROUTE');
+    list.setString(base, t.endingTitle);
+    list.setString(base + 1, run.ending === null ? t.theEnd : run.ending.name);
+    list.setString(base + 2, t.route);
     list.setString(base + 3, this.routeText);
-    list.setString(base + 4, '1P');
-    list.setString(base + 5, '2P');
-    list.setString(base + 6, 'THANK YOU FOR PLAYING');
-    list.setString(base + 7, this.creditsNext ? 'OK: CREDITS' : 'OK: TITLE');
+    list.setString(base + 4, t.p1);
+    list.setString(base + 5, t.p2);
+    list.setString(base + 6, t.thankYou);
+    list.setString(base + 7, this.creditsNext ? t.okCredits : t.okTitle);
     list.text(base, CX, p.y + 8, UI_COLORS.title, TextAlign.Center);
     list.text(base + 1, CX, p.y + 22, UI_COLORS.focus, TextAlign.Center);
     list.text(base + 2, p.x + 16, p.y + 42, UI_COLORS.title);
@@ -4365,7 +5656,7 @@ export class EndingScene extends SceneBase {
     const flags = run.endingFlags;
     for (let i = 0; i < ENDING_FLAG_LABELS.length; i++) {
       if ((flags & (1 << i)) === 0) continue;
-      list.setString(base + 8 + i, ENDING_FLAG_LABELS[i]);
+      list.setString(base + 8 + i, this.flow.labels.endingFlags[i] ?? '');
       list.text(base + 8 + i, CX, y, UI_COLORS.focus, TextAlign.Center);
       y += 11;
     }
@@ -4669,31 +5960,16 @@ const STORY_PANEL = Object.freeze({ x: 40, y: 128, w: 304, h: 82 });
 const DEMO_CARD_TICKS = 180;
 
 /** The game modes' labels on the hi-score screen, in `core/save` `HI_SCORE_MODES` order. */
-export const HI_SCORE_MODE_LABELS: readonly string[] = Object.freeze([
-  '1 PLAYER',
-  '2 PLAYERS',
-  'PRACTICE',
-]);
+export const HI_SCORE_MODE_LABELS: readonly string[] = ENGLISH.hiScoreModes;
 
 /** The hi-score table's rank column, best first ({@link HI_SCORE_TABLE_SIZE} labels). */
-export const HI_SCORE_RANK_LABELS: readonly string[] = Object.freeze([
-  '1ST',
-  '2ND',
-  '3RD',
-  '4TH',
-  '5TH',
-  '6TH',
-  '7TH',
-  '8TH',
-  '9TH',
-  '10TH',
-]);
+export const HI_SCORE_RANK_LABELS: readonly string[] = ENGLISH.hiScoreRanks;
 
 /** The practice select's LOADOUT choices (`core/config` `StartingLoadout`s). */
 export const PRACTICE_LOADOUTS: readonly StartingLoadout[] = Object.freeze(['default', 'full']);
 
 /** The practice select's LOADOUT labels, in {@link PRACTICE_LOADOUTS} order. */
-export const PRACTICE_LOADOUT_LABELS: readonly string[] = Object.freeze(['STANDARD', 'FULL POWER']);
+export const PRACTICE_LOADOUT_LABELS: readonly string[] = ENGLISH.practiceLoadouts;
 
 /** The practice select's rows: ZONE, CHECKPOINT, LOADOUT, START. */
 export const PracticeItem = { Zone: 0, Checkpoint: 1, Loadout: 2, Start: 3 } as const;
@@ -4705,9 +5981,7 @@ export const SoundTestItem = { Music: 0, Sfx: 1, Stop: 2, Back: 3 } as const;
  * The sound test's SFX labels, in `SFX_CUES` order: the cue names in words (`PlayerShot` →
  * `PLAYER SHOT`).
  */
-export const SFX_TEST_LABELS: readonly string[] = Object.freeze(
-  SFX_CUE_NAMES.map((name) => name.replace(/([a-z0-9])([A-Z])/g, '$1 $2').toUpperCase()),
-);
+export const SFX_TEST_LABELS: readonly string[] = ENGLISH.sfx;
 
 /** What a host offers the sound test besides the SFX cues (M2-15). */
 export interface SoundTestSetup {
@@ -4845,15 +6119,16 @@ export class NameEntryScene extends SceneBase {
     const flow = this.flow;
     const item = flow.pendingNames[this.current < 0 ? 0 : this.current];
     const score = item.row === null ? 0 : item.row.score;
+    const t = flow.text;
     drawPanel(list, CX - 112, 28, 224, 164, UI_COLORS.panel, UI_COLORS.focus, 255);
-    list.setString(base, 'NEW HI-SCORE!');
-    list.setString(base + 1, item.player === 0 ? '1P' : '2P');
-    list.setString(base + 2, 'SCORE');
-    list.setString(base + 3, 'RANK');
-    list.setString(base + 4, HI_SCORE_RANK_LABELS[this.rank] ?? '');
-    list.setString(base + 5, 'ENTER YOUR NAME');
-    list.setString(base + 6, '↑↓ LETTER  → NEXT  ← BACK');
-    list.setString(base + 7, 'TIME');
+    list.setString(base, t.newHiScoreBang);
+    list.setString(base + 1, item.player === 0 ? t.p1 : t.p2);
+    list.setString(base + 2, t.score);
+    list.setString(base + 3, t.rank);
+    list.setString(base + 4, flow.labels.hiScoreRanks[this.rank] ?? '');
+    list.setString(base + 5, t.enterName);
+    list.setString(base + 6, t.nameHint);
+    list.setString(base + 7, t.time);
     list.text(base, CX, 38, UI_COLORS.focus, TextAlign.Center);
     list.text(base + 1, CX - 96, 60, UI_COLORS.title);
     list.text(base + 2, CX - 72, 60, UI_COLORS.text);
@@ -4862,7 +6137,7 @@ export class NameEntryScene extends SceneBase {
     list.text(base + 4, CX + 96, 74, UI_COLORS.focus, TextAlign.Right);
     list.text(base + 5, CX, 98, UI_COLORS.title, TextAlign.Center);
     const blinkOff = ((this.ticks >> 4) & 1) === 1;
-    drawNameEntry(list, this.entry, base + 8, CX, 126, blinkOff);
+    drawNameEntry(list, this.entry, base + 8, CX, 126, blinkOff, t);
     list.text(base + 6, CX, 158, UI_COLORS.disabled, TextAlign.Center);
     list.text(base + 7, CX - 20, 176, UI_COLORS.text);
     list.number(this.seconds, CX + 20, 176, 2, UI_COLORS.text, TextAlign.Right);
@@ -5006,13 +6281,14 @@ export class HiScoreScene extends SceneBase {
     const flow = this.flow;
     const key = this.key;
     const rows = key === '' ? NO_ROWS : flow.save.hiScores(key);
-    list.setString(base, 'HI-SCORES');
+    const t = flow.text;
+    list.setString(base, t.hiScoresTitle);
     list.setString(base + 1, this.titles[this.page] ?? '');
-    list.setString(base + 2, 'RANK');
-    list.setString(base + 3, 'NAME');
-    list.setString(base + 4, 'SCORE');
-    list.setString(base + 5, 'ZONE');
-    list.setString(base + 6, '---');
+    list.setString(base + 2, t.rank);
+    list.setString(base + 3, t.name);
+    list.setString(base + 4, t.score);
+    list.setString(base + 5, t.zone);
+    list.setString(base + 6, t.emptyName);
     drawPanel(list, CX - 124, 8, 248, 200, UI_COLORS.panel, UI_COLORS.border, 232);
     list.text(base, CX, 16, UI_COLORS.focus, TextAlign.Center);
     list.text(base + 1, CX, 30, UI_COLORS.title, TextAlign.Center);
@@ -5031,7 +6307,7 @@ export class HiScoreScene extends SceneBase {
       const lit = row !== null && this.mode === HiScoreScreen.Result && flow.isNewRow(row);
       const color = lit ? (blinkOff ? UI_COLORS.text : UI_COLORS.focus) : UI_COLORS.text;
       const rankSlot = base + 7 + i;
-      list.setString(rankSlot, HI_SCORE_RANK_LABELS[i]);
+      list.setString(rankSlot, flow.labels.hiScoreRanks[i] ?? '');
       list.text(rankSlot, rankX, y, i === 0 ? UI_COLORS.focus : UI_COLORS.title);
       if (row === null) {
         list.text(base + 6, nameX, y, UI_COLORS.disabled);
@@ -5096,7 +6372,7 @@ export class DemoScene extends SceneBase {
    */
   constructor(flow: FlowControl) {
     super(flow);
-    this.hud = createHud(flow.sprites);
+    this.hud = createHud(flow.sprites, flow.text);
     const target = flow.host.events;
     this.forward = (event) => {
       const kind = event.kind;
@@ -5133,7 +6409,7 @@ export class DemoScene extends SceneBase {
       this.demo = null;
       return;
     }
-    this.cardTitle = 'STAGE';
+    this.cardTitle = flow.text.stage;
     this.cardName = '';
     const world = this.demo.world;
     if (world.stage !== null) {
@@ -5143,7 +6419,7 @@ export class DemoScene extends SceneBase {
       if (campaign !== null) {
         for (const zone of campaign.zones) {
           if (zone.stage !== stage.id) continue;
-          this.cardTitle = 'ZONE ' + zone.label;
+          this.cardTitle = formatUiText(flow.text.zoneCard, zone.label);
           this.cardName = zone.name;
         }
       }
@@ -5190,8 +6466,8 @@ export class DemoScene extends SceneBase {
    */
   drawUi(list: DrawList): void {
     const base = this.stringBase;
-    list.setString(base, 'DEMO PLAY');
-    list.setString(base + 1, 'PRESS OK');
+    list.setString(base, this.flow.text.demoPlay);
+    list.setString(base + 1, this.flow.text.pressOk);
     list.setString(base + 2, this.cardTitle);
     list.setString(base + 3, this.cardName);
     if (Math.floor(this.ticks / PROMPT_BLINK_TICKS) % 2 === 0) {
@@ -5478,7 +6754,7 @@ export class PracticeScene extends SceneBase {
   /** CHECKPOINT: `START`, then `CHECKPOINT 1` … (as many as the zone with the most has). */
   readonly checkpoint: Choice;
   /** LOADOUT: {@link PRACTICE_LOADOUT_LABELS}. */
-  readonly loadout: Choice = createChoice(PRACTICE_LOADOUT_LABELS, 0);
+  readonly loadout: Choice = createChoice(this.flow.labels.practiceLoadouts, 0);
   /** The menu ({@link PracticeItem} order). */
   readonly menu: ListMenu;
   /**
@@ -5512,17 +6788,18 @@ export class PracticeScene extends SceneBase {
       if (list.length > most) most = list.length;
       checkpoints.push(Object.freeze(list));
     }
-    if (labels.length === 0) labels.push('NONE');
-    const points = ['START'];
-    for (let i = 1; i <= most; i++) points.push('CHECKPOINT ' + String(i));
+    const t = flow.text;
+    if (labels.length === 0) labels.push(t.none);
+    const points = [t.start];
+    for (let i = 1; i <= most; i++) points.push(formatUiText(t.checkpointFormat, i));
     this.checkpoints = Object.freeze(checkpoints);
     this.zone = createChoice(labels, 0);
     this.checkpoint = createChoice(points, 0);
     this.menu = createListMenu([
-      { label: 'ZONE', choice: this.zone },
-      { label: 'CHECKPOINT', choice: this.checkpoint },
-      { label: 'LOADOUT', choice: this.loadout },
-      'START',
+      { label: t.practiceZone, choice: this.zone },
+      { label: t.practiceCheckpoint, choice: this.checkpoint },
+      { label: t.practiceLoadout, choice: this.loadout },
+      t.start,
     ]);
   }
 
@@ -5612,12 +6889,13 @@ export class PracticeScene extends SceneBase {
   drawUi(list: DrawList): void {
     const base = this.stringBase;
     const p = PRACTICE_PANEL;
+    const t = this.flow.text;
     drawPanel(list, p.x, p.y, p.w, p.h, UI_COLORS.panel, UI_COLORS.border, 255);
-    list.setString(base, 'PRACTICE');
-    list.setString(base + 1, 'SCORES GO TO THE PRACTICE TABLES');
+    list.setString(base, t.practiceTitle);
+    list.setString(base + 1, t.practiceHint);
     list.setString(base + 2, '');
     list.text(base, CX, p.y + 8, UI_COLORS.title, TextAlign.Center);
-    drawMenu(list, this.menu, base + 3, PRACTICE_MENU_LAYOUT);
+    drawMenu(list, this.menu, base + 3, PRACTICE_MENU_LAYOUT, t);
     list.text(base + 1, CX, p.y + p.h - 16, UI_COLORS.disabled, TextAlign.Center);
   }
 }
@@ -5665,7 +6943,7 @@ export class SoundTestScene extends SceneBase {
   /** MUSIC: the host's track titles (`NONE` when it has none). */
   readonly music: Choice;
   /** SFX: {@link SFX_TEST_LABELS}. */
-  readonly sound: Choice = createChoice(SFX_TEST_LABELS, 0);
+  readonly sound: Choice = createChoice(this.flow.labels.sfx, 0);
   /** The menu ({@link SoundTestItem} order). */
   readonly menu: ListMenu;
   /** The input the menu reads: the menu input without OK on MUSIC / SFX (reused). */
@@ -5679,13 +6957,14 @@ export class SoundTestScene extends SceneBase {
   constructor(flow: FlowControl) {
     super(flow);
     const titles = flow.soundTracks;
-    this.music = createChoice(titles.length > 0 ? titles : ['NONE'], 0);
+    const t = flow.text;
+    this.music = createChoice(titles.length > 0 ? titles : [t.none], 0);
     this.menu = createListMenu(
       [
-        { label: 'MUSIC', choice: this.music },
-        { label: 'SFX', choice: this.sound },
-        'STOP',
-        'BACK',
+        { label: t.stMusic, choice: this.music },
+        { label: t.stSfx, choice: this.sound },
+        t.stStop,
+        t.back,
       ],
       { disabledMask: titles.length === 0 ? 1 << SoundTestItem.Music : 0 },
     );
@@ -5761,12 +7040,13 @@ export class SoundTestScene extends SceneBase {
   drawUi(list: DrawList): void {
     const base = this.stringBase;
     const p = SOUND_TEST_PANEL;
+    const t = this.flow.text;
     drawPanel(list, p.x, p.y, p.w, p.h, UI_COLORS.panel, UI_COLORS.border, 255);
-    list.setString(base, 'SOUND TEST');
-    list.setString(base + 1, '← → CHOOSE   OK PLAY');
+    list.setString(base, t.soundTestTitle);
+    list.setString(base + 1, t.soundTestHint);
     list.setString(base + 2, '');
     list.text(base, CX, p.y + 8, UI_COLORS.title, TextAlign.Center);
-    drawMenu(list, this.menu, base + 3, SOUND_TEST_MENU_LAYOUT);
+    drawMenu(list, this.menu, base + 3, SOUND_TEST_MENU_LAYOUT, t);
     list.text(base + 1, CX, p.y + p.h - 16, UI_COLORS.disabled, TextAlign.Center);
   }
 }
@@ -5819,6 +7099,23 @@ export interface SceneFlow {
   readonly practiceSelect: PracticeScene;
   /** The sound test (M2-15). */
   readonly soundTest: SoundTestScene;
+  /** The Options screen's CONTROLS page (M2-16). */
+  readonly controlsPage: ControlsScene;
+  /** The Options screen's DISPLAY page (M2-16). */
+  readonly displayPage: DisplayScene;
+  /** The Options screen's GAME page (M2-16). */
+  readonly gameOptionsPage: GameOptionsScene;
+  /** The rebind screen (M2-16). */
+  readonly rebind: RebindScene;
+  /** The input test (M2-16). */
+  readonly inputTest: InputTestScene;
+  /**
+   * The UI string table the scenes draw with (M2-16): the content's `strings` table of
+   * `core/ui` `DEFAULT_LANGUAGE` over the built-in English one.
+   */
+  readonly text: UiText;
+  /** The label lists built from {@link SceneFlow.text} (M2-16). */
+  readonly labels: SceneLabels;
   /**
    * The demos the attract loop plays, decoded from the content (`ContentDb.demos`, M2-15 — a demo
    * that does not decode is left out).
@@ -6017,6 +7314,13 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
   const events = host.events;
   const menuInput: PlayerInput = { held: 0, pressed: 0, released: 0, device: 'none' };
   const save = host.save ?? createSaveStore(null);
+  // The UI string table (M2-16): the content's table of the shipped language over English.
+  let strings: Readonly<Record<string, string>> | null = null;
+  for (const table of host.content.uiStrings) {
+    if (table.language === DEFAULT_LANGUAGE) strings = table.strings;
+  }
+  const text = resolveUiText(strings);
+  const labels = text === DEFAULT_UI_TEXT ? ENGLISH : buildSceneLabels(text);
   // One config per difficulty preset (the difficulty menu): the host's for its own preset.
   const table = host.content.difficulty ?? DEFAULT_DIFFICULTY_TABLE;
   const configs: GameConfig[] = [];
@@ -6052,15 +7356,16 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
   let firstShip = 0;
   for (let i = 0; i < ships.length; i++) if (ships[i].id === host.config.shipId) firstShip = i;
   /**
-   * Rebuilds every difficulty's armed config from the loadout and the ship chosen so far (a
-   * choice already in a config keeps its object).
+   * Rebuilds every difficulty's armed config from the loadout and the ship chosen so far, one or
+   * two players, and the save's sim-affecting options (M2-16) — a choice already in a config keeps
+   * its object.
    */
   const rearm = (): void => {
     for (let i = 0; i < configs.length; i++) {
       let config = configs[i];
       if (!arsenalMatches(config, control.arsenal)) config = withArsenal(config, control.arsenal);
       if (control.ship !== null) config = withShip(config, control.ship);
-      armed[i] = withCoop(config, control.coop);
+      armed[i] = withUserGameOptions(withCoop(config, control.coop), save.options);
     }
   };
   // The campaign (M2-10): when the host's stage is its start zone's stage, games are campaign runs.
@@ -6102,6 +7407,18 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
   const control = {
     stack,
     host,
+    text,
+    labels,
+    controls: host.controls ?? null,
+    applyOptions(): void {
+      rearm();
+      control.title.uiRevision++;
+    },
+    rememberDifficulty(difficulty: DifficultyPreset): void {
+      const game = save.options.game;
+      if (game.difficulty === difficulty) return;
+      save.setOptions({ ...save.options, game: { ...game, difficulty } });
+    },
     sprites: resolveUiSprites(host.content),
     menuInput,
     save,
@@ -6149,7 +7466,8 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
       run.advance(zone);
       run.pendingStart = true;
     },
-    difficulty: host.config.difficulty,
+    // The difficulty chosen last (M2-16: saved), else the host config's.
+    difficulty: save.options.game.difficulty ?? host.config.difficulty,
     coop: host.config.coop,
     choosePlayers(coop: boolean): void {
       if (control.coop === coop) return;
@@ -6277,8 +7595,8 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
         if (ships[i].mode === parts.powerUpMode) ship = ships[i].name.toUpperCase();
       }
       const preset = DIFFICULTY_PRESETS.indexOf(parts.difficulty as DifficultyPreset);
-      const difficulty = preset >= 0 ? DIFFICULTY_LABELS[preset] : parts.difficulty.toUpperCase();
-      const label = HI_SCORE_MODE_LABELS[HI_SCORE_MODES.indexOf(parts.mode)] ?? '';
+      const difficulty = preset >= 0 ? labels.difficulty[preset] : parts.difficulty.toUpperCase();
+      const label = labels.hiScoreModes[HI_SCORE_MODES.indexOf(parts.mode)] ?? '';
       return ship + '  ' + difficulty + '  ' + label;
     },
     zoneLabel(stage: string): string {
@@ -6349,6 +7667,13 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
   control.story = new StoryScene(control);
   control.practiceSelect = new PracticeScene(control);
   control.soundTest = new SoundTestScene(control);
+  control.controlsPage = new ControlsScene(control);
+  control.displayPage = new DisplayScene(control);
+  control.gameOptionsPage = new GameOptionsScene(control);
+  control.rebind = new RebindScene(control);
+  control.inputTest = new InputTestScene(control);
+  // The save's sim-affecting options (M2-16) reach the first game too.
+  rearm();
   control.game.world.scoring.board.setHiScore(control.hiScore);
   // The placeholder World queued its stage theme; the flow does not start in the stage.
   events.clear();
@@ -6376,6 +7701,11 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     control.story,
     control.practiceSelect,
     control.soundTest,
+    control.controlsPage,
+    control.displayPage,
+    control.gameOptionsPage,
+    control.rebind,
+    control.inputTest,
   ];
   let base = 0;
   for (const scene of scenes) {
@@ -6430,6 +7760,13 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     story: control.story,
     practiceSelect: control.practiceSelect,
     soundTest: control.soundTest,
+    controlsPage: control.controlsPage,
+    displayPage: control.displayPage,
+    gameOptionsPage: control.gameOptionsPage,
+    rebind: control.rebind,
+    inputTest: control.inputTest,
+    text,
+    labels,
     demos,
     run,
     campaign,

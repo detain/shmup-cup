@@ -19,7 +19,10 @@
  * `gamepad-standard`, and the platform registers the active profile's `register` keys (falling
  * back to `REMOTE_KEYS_TO_REGISTER` when the content has no remote profile). The Options screen's
  * CONTROLS offers the profiles whose menus the remote can drive (`SAFE 4-WAY (DEFAULT)`,
- * `FAST 8-WAY`) and switches live, registering the new profile's keys.
+ * `FAST 8-WAY`) and switches live, registering the new profile's keys. Since M2-16 the player's
+ * rebinding, SOCD policy and release debounce (the save's `options.input`) are applied to the
+ * remote and gamepad profiles, and the rebind screen rebinds them (the remote's Back never moves —
+ * it cancels a capture).
  *
  * **Saves (M1-17).** Options and hi-scores live in `localStorage` (deleted with the app on
  * uninstall); the save is written when the Options screen closes and when a game ends, so
@@ -58,9 +61,11 @@ import {
   chooseInputProfile,
   createInputProfileRegistry,
   createWebInput,
+  customizeInputProfile,
   inputProfileChoices,
   selectableKeyProfiles,
   type GamepadLike,
+  type InputCustomization,
   type InputProfile,
   type InputProfileRegistry,
   type WebInput,
@@ -205,22 +210,73 @@ function apiExit(tizen: TizenApi | null): (() => void) | null {
 }
 
 /**
+ * The input profiles in use and the player's settings for them (M2-16): applies a profile
+ * customised (`customizeInputProfile` — the rebinding, SOCD, debounce) and keeps the profile as
+ * written for the rebind screen.
+ */
+class ProfileState {
+  /** The player's settings (the save's `options.input`). */
+  settings: InputCustomization = { socd: null, releaseDebounce: null, bindings: {} };
+  /** The remote profile in use, as written in the content. */
+  keys: InputProfile | null = null;
+  /** The gamepad profile in use, as written in the content. */
+  pads: InputProfile | null = null;
+
+  /**
+   * Creates the state.
+   *
+   * @param input - The input adapter.
+   */
+  constructor(private readonly input: WebInput) {}
+
+  /**
+   * Applies a profile (remote or gamepad) with the player's settings.
+   *
+   * @param profile - The profile as written.
+   */
+  apply(profile: InputProfile): void {
+    if (profile.device === 'gamepad') this.pads = profile;
+    else this.keys = profile;
+    this.input.setProfile(customizeInputProfile(profile, this.settings));
+  }
+
+  /**
+   * Replaces the player's settings and re-applies both profiles.
+   *
+   * @param settings - The new settings.
+   */
+  customize(settings: InputCustomization): void {
+    this.settings = settings;
+    if (this.keys !== null) this.apply(this.keys);
+    if (this.pads !== null) this.apply(this.pads);
+  }
+
+  /** The profiles in use, as written (the remote's, then the gamepad's). */
+  get rebindable(): InputProfile[] {
+    const list: InputProfile[] = [];
+    if (this.keys !== null) list.push(this.keys);
+    if (this.pads !== null) list.push(this.pads);
+    return list;
+  }
+}
+
+/**
  * Applies the first matching remote profile and the gamepad profile to the input adapter.
  *
- * @param input - The input adapter.
+ * @param state - The profiles in use (applies with the player's settings).
  * @param profiles - The parsed profiles.
  * @param candidates - Remote / keyboard profile ids in priority order.
  * @returns The key profile applied, or `null` when none matched (built-in bindings stay).
  */
 function applyProfiles(
-  input: WebInput,
+  state: ProfileState,
   profiles: readonly InputProfile[],
   candidates: ReadonlyArray<string | null>,
 ): InputProfile | null {
   const keys = chooseInputProfile(profiles, candidates, KEY_PROFILE_DEVICES);
-  if (keys !== null) input.setProfile(keys);
+  if (keys !== null) state.apply(keys);
   const pads = chooseInputProfile(profiles, [DEFAULT_GAMEPAD_PROFILE_ID], ['gamepad']);
-  if (pads !== null) input.setProfile(pads);
+  if (pads !== null) state.apply(pads);
   return keys;
 }
 
@@ -277,6 +333,7 @@ export async function bootTizenApp(
   });
   const audio = createWebAudio();
   const profiles = createInputProfileRegistry();
+  const state = new ProfileState(input);
   const scene = sceneFromSearch(searchOf(win));
   const shell = await bootShell({
     canvas,
@@ -287,7 +344,7 @@ export async function bootTizenApp(
     audio,
     contentOwners: { [INPUT_PROFILES_KIND]: profiles.load },
     platform: (renderer) => {
-      const keyProfile = applyProfiles(input, profiles.profiles, [DEFAULT_REMOTE_PROFILE_ID]);
+      const keyProfile = applyProfiles(state, profiles.profiles, [DEFAULT_REMOTE_PROFILE_ID]);
       return createTizenPlatform({
         tizen,
         input,
@@ -324,10 +381,13 @@ export async function bootTizenApp(
         // Only a profile the remote can drive the menus with (never lock the player out).
         const offered = selectableKeyProfiles(profiles.profiles, 'keyCode');
         const chosen = chooseInputProfile(offered, [id], KEY_PROFILE_DEVICES);
-        if (chosen === null || chosen === input.keyProfile) return;
-        input.setProfile(chosen);
+        if (chosen === null || chosen === state.keys) return;
+        state.apply(chosen);
         if (tizen !== null) registerRemoteKeys(tizen, chosen.register);
       },
+      // The player's rebinding, SOCD and debounce (M2-16), on the remote and gamepad profiles.
+      customize: (settings) => state.customize(settings),
+      rebindable: () => state.rebindable,
     },
   });
   stopBack();

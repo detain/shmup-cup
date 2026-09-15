@@ -17,7 +17,22 @@ describe('core/config user options', () => {
     expect(VOLUME_LEVELS).toBe(10);
     expect(DEFAULT_USER_OPTIONS).toEqual({
       audio: { master: 10, music: 10, sfx: 10 },
-      input: { profileId: null },
+      input: {
+        profileId: null,
+        autofire: null,
+        autofireInterval: null,
+        socd: null,
+        releaseDebounce: null,
+        bindings: {},
+      },
+      game: {
+        difficulty: null,
+        lives: null,
+        deathPenalty: null,
+        autoPowerUp: null,
+        pickupMagnet: null,
+        oneButton: false,
+      },
       display: {
         bulletPalette: 'standard',
         scaleMode: 'integer',
@@ -100,7 +115,8 @@ describe('core/config user options', () => {
       }),
     ).toEqual({
       audio: { master: 4, music: 0, sfx: 10 },
-      input: { profileId: 'tizen-remote-safe' },
+      input: { ...DEFAULT_USER_OPTIONS.input, profileId: 'tizen-remote-safe' },
+      game: DEFAULT_USER_OPTIONS.game,
       display: {
         bulletPalette: 'standard',
         scaleMode: 'integer',

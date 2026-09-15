@@ -24,8 +24,11 @@
  * `e.repeat`, preventDefault, clear on blur, edge latching, SOCD) and remote-first rules 2–3
  * (4-way policy; robust key-state tracking from keydown/keyup only, release debounce).
  *
+ * **Rebinding capture (M2-16).** {@link KeyboardSource.capture} catches the next new key pressed,
+ * bound or not (the Options screen's rebind prompt — `WebInput.beginCapture`).
+ *
  * **Public API.** {@link createKeyboardSource}, {@link KeyboardSource},
- * {@link KeyEventLike}, {@link MAX_TRACKED_KEYS}.
+ * {@link KeyEventLike}, {@link MAX_TRACKED_KEYS}, {@link KeyCapture} (M2-16).
  *
  * @module
  */
@@ -67,8 +70,31 @@ export interface KeyEventLike {
   preventDefault(): void;
 }
 
+/**
+ * A one-shot catch of the next key pressed (M2-16 — the rebinding capture,
+ * `WebInput.beginCapture`). A class so its fields stay unboxed; the source fills it from its event
+ * handler.
+ */
+export class KeyCapture {
+  /** Whether the next new keydown is caught (cleared by the catch). */
+  armed = false;
+  /** Keys caught so far (increases with every catch — readers compare it). */
+  count = 0;
+  /** `KeyboardEvent.code` of the last caught key (`''` for many TV remote keys). */
+  code = '';
+  /** Legacy key code of the last caught key. */
+  keyCode = 0;
+}
+
 /** A keyboard (or TV remote) input source. */
 export interface KeyboardSource {
+  /**
+   * The rebinding capture (M2-16): while {@link KeyCapture.armed}, the next keydown of a key that
+   * is not already down (auto-repeats, a key still held or inside its release debounce — a TV
+   * remote's fake keyup / keydown pair — do not count) is caught — whether the tables bind it or
+   * not — and `preventDefault()`-ed; it is then handled as usual.
+   */
+  readonly capture: KeyCapture;
   /**
    * Actions currently held: every tracked key (down, or released inside the debounce window),
    * with the SOCD and diagonal policies applied. Computed on read, without allocating.
@@ -170,6 +196,7 @@ export function createKeyboardSource(
   const directionOrder = new Float64Array(DIRECTION_COUNT);
   let sequence = 0;
   let latched = 0;
+  const caught = new KeyCapture();
 
   /**
    * Finds the tracked slot of a physical key.
@@ -238,6 +265,14 @@ export function createKeyboardSource(
     // A key the table does not know is ignored — unless it is still tracked from a table swap
     // (its keyup must free the slot).
     const slot = findSlot(event.code, event.keyCode);
+    if (caught.armed && event.type === 'keydown' && !event.repeat && slot < 0) {
+      // The rebinding capture (M2-16): any new key, bound or not.
+      caught.armed = false;
+      caught.code = event.code;
+      caught.keyCode = event.keyCode;
+      caught.count++;
+      if (event.ctrlKey !== true && event.metaKey !== true) event.preventDefault();
+    }
     if (mask < 0 && slot < 0) return;
     // Keep browser/devtools shortcuts (Ctrl+R, Cmd+Alt+I, …) working.
     if (event.ctrlKey !== true && event.metaKey !== true) event.preventDefault();
@@ -280,6 +315,7 @@ export function createKeyboardSource(
   }
 
   return {
+    capture: caught,
     get held() {
       return readHeld();
     },

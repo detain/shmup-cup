@@ -452,11 +452,13 @@ function mixEnemy(e: Enemy): void {
 /**
  * Mixes the player weapons' own state (loadouts — the Direct-mode levels and family too, M2-05 —,
  * option groups, timers, the Free Way's last directions — M2-03 —, the cooldown tables of live
- * piercing shots) into {@link accumulator}.
+ * piercing shots — and, in the toggle autofire mode, each player's firing switch, M2-16) into
+ * {@link accumulator}.
  *
  * @param weapons - The World's weapon system.
+ * @param toggle - Whether the World's config uses the `'toggle'` autofire mode.
  */
-function mixWeapons(weapons: World['weapons']): void {
+function mixWeapons(weapons: World['weapons'], toggle: boolean): void {
   const loadouts = weapons.loadouts;
   for (let p = 0; p < loadouts.length; p++) {
     const l = loadouts[p];
@@ -485,6 +487,9 @@ function mixWeapons(weapons: World['weapons']): void {
   }
   mixArray(weapons.timers, weapons.timers.length);
   mixArray(weapons.freeWayHeading, weapons.freeWayHeading.length);
+  // The toggle autofire's per-player switch (M2-16), only in that mode: the other modes' hashes
+  // (every golden replay's) stay as they were.
+  if (toggle) mixArray(weapons.firing, weapons.firing.length);
   const f = weapons.pool.fields;
   const n = weapons.pool.count;
   const cooldowns = weapons.cooldowns;
@@ -771,7 +776,7 @@ export function hashWorld(world: World): number {
     if (e.state !== EnemyState.Free) mixEnemy(e);
   }
   mixFormations(world.enemies.formations);
-  mixWeapons(world.weapons);
+  mixWeapons(world.weapons, world.config.autofireMode === 'toggle');
   mixPowerUps(world);
   mixFxAndScores(world);
   mixBosses(world);

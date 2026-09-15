@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "options": {
+    "audio": { "master": 7, "music": 4, "sfx": 9 },
+    "input": { "profileId": "tizen-remote-diagonal" },
+    "display": {
+      "bulletPalette": "deuteranopia",
+      "scaleMode": "fit",
+      "screenShake": false,
+      "reduceFlashing": true,
+      "showHitbox": true,
+      "bossHpBar": true
+    }
+  },
+  "hiScores": {
+    "meter-normal": [
+      { "name": "ACE", "score": 91000, "reached": "zone-c", "mode": "1p", "difficulty": "normal" },
+      { "name": "DUO", "score": 64000, "reached": "zone-b", "mode": "2p", "difficulty": "normal" },
+      {
+        "name": "PRC",
+        "score": 12000,
+        "reached": "zone-d",
+        "mode": "practice",
+        "difficulty": "normal"
+      },
+      { "name": "BOB", "score": 48200, "reached": "zone-a", "mode": "1p", "difficulty": "normal" }
+    ],
+    "direct-hard": [
+      { "name": "MNT", "score": 30000, "reached": "zone-b", "mode": "1p", "difficulty": "hard" }
+    ]
+  },
+  "stats": { "gamesStarted": 12, "gameOvers": 9, "stagesCleared": 17 }
+}

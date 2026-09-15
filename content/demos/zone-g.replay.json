@@ -29,6 +29,7 @@
       "deathPenalty": "classic",
       "startingLives": 3,
       "autofire": true,
+      "autofireMode": "always",
       "remoteMode": true,
       "stage": "zone-g",
       "stageSkip": "none",

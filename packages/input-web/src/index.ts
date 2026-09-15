@@ -15,16 +15,25 @@
  * right half of the split keyboard profile `keyboard-split` — takes player 2's seat
  * ({@link PAD_SEAT_P2}, {@link WebInput.padSeat}).
  *
+ * Rebinding (M2-16 — `rebind`, `web-input`): the player's rebound keys and buttons, SOCD policy and
+ * release debounce are applied to a profile with {@link customizeInputProfile}; the Options
+ * screen's rebind prompt captures the next key or button ({@link WebInput.beginCapture}) and binds
+ * it with conflict detection ({@link rebindAction}, {@link resetBindings},
+ * {@link bindingTokenLabel}).
+ *
  * @packageDocumentation
  */
 export {
   createWebInput,
+  InputCaptureState,
   PAD_SEAT_NONE,
   PAD_SEAT_P2,
+  type CaptureKind,
   type WebInput,
   type WebInputOptions,
 } from './web-input/index.js';
 export {
+  KeyCapture,
   MAX_TRACKED_KEYS,
   createKeyboardSource,
   type KeyboardSource,
@@ -73,8 +82,18 @@ export {
   INPUT_PROFILE_STORAGE_KEY,
   KEY_PROFILE_DEVICES,
   REQUIRED_CONTEXT_ACTIONS,
+  RESERVED_BINDING_TOKENS,
   SYSTEM_REMOTE_KEYS,
+  actionTokens,
+  applyBindingOverride,
+  bindingKeysLabel,
+  bindingTokenLabel,
+  captureToken,
   chooseInputProfile,
+  customizeInputProfile,
+  findBindingConflicts,
+  rebindAction,
+  resetBindings,
   createInputProfileRegistry,
   inputProfileChoices,
   loadInputProfileChoice,
@@ -83,11 +102,15 @@ export {
   parseInputProfiles,
   saveInputProfileChoice,
   selectableKeyProfiles,
+  type BindingConflict,
+  type CapturedInput,
   type ContextTables,
+  type InputCustomization,
   type InputProfile,
   type InputProfileDevice,
   type InputProfileRegistry,
   type InputProfilesResult,
   type KeySpace,
   type ProfileBindings,
+  type RebindResult,
 } from './rebind/index.js';

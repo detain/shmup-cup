@@ -43,8 +43,12 @@ export const WIDGET_FILES = ['app.js', 'config.xml', 'icon.png', 'index.html'];
 /** First characters of the globalThis polyfill banner that must open app.js. */
 export const POLYFILL_BANNER = '/* Shmup Cup — globalThis polyfill';
 
-/** Most bytes `app.js` may take gzipped (350 KB — launch ≤ 10 s on the TV, shmup_feat.md §23). */
-export const APP_JS_GZIP_BUDGET = 350 * 1024;
+/**
+ * Most bytes `app.js` may take gzipped (launch ≤ 10 s on the TV, shmup_feat.md §23): 350 KB from
+ * M1-19, 384 KB since M2-16 (the Options pages, rebinding and the UI string table — the built-in
+ * English table and its content copy — took the bundle to ≈ 358 KB).
+ */
+export const APP_JS_GZIP_BUDGET = 384 * 1024;
 
 /** Largest atlas page edge in pixels (2048² — shmup_feat.md §22 budgets). */
 export const ATLAS_PAGE_MAX_SIZE = 2048;

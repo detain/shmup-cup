@@ -35,7 +35,10 @@
  * ({@link inputOverridesFromSearch}). The Options screen's CONTROLS offers the keyboard profiles
  * whose menus a desktop keyboard can drive (`KEYBOARD (DEFAULT)` = `keyboard-default`,
  * `KEYBOARD AS REMOTE` = `keyboard-remote-emulation`; plus a `?profile=` override in use) and
- * switches live.
+ * switches live. Since M2-16 the player's rebinding, SOCD policy and release debounce (the save's
+ * `options.input`) are applied to the key and gamepad profiles (`customizeInputProfile`), and the
+ * rebind screen rebinds the keyboard profile in use and the gamepad profile (the adapter captures
+ * the keys — `WebInput.beginCapture`).
  *
  * **Saves (M1-17).** Options and hi-scores live in `localStorage` (`shmup-cup:save.v1`); the
  * shell loads them before the title and applies the volumes.
@@ -71,10 +74,12 @@ import {
   chooseInputProfile,
   createInputProfileRegistry,
   createWebInput,
+  customizeInputProfile,
   inputProfileChoices,
   overrideInputTuning,
   selectableKeyProfiles,
   type GamepadLike,
+  type InputCustomization,
   type InputProfile,
   type InputProfileRegistry,
   type WebInput,
@@ -363,17 +368,35 @@ export async function bootWebApp(
   }
   /** The profile a `?profile=` override selected (offered in the Options screen too), if any. */
   let overrideProfile: InputProfile | null = null;
+  /** The player's rebinding, SOCD and debounce (M2-16 — the save's `options.input`). */
+  let settings: InputCustomization = { socd: null, releaseDebounce: null, bindings: {} };
+  /** The key profile in use, as the content wrote it (M2-16 — what the rebind screen rebinds). */
+  let baseKeys: InputProfile | null = null;
+  /** The gamepad profile in use, as the content wrote it. */
+  let basePads: InputProfile | null = null;
   /**
-   * Applies a keyboard / remote profile with the `?debounce=` override.
+   * Applies a keyboard / remote profile with the player's settings (M2-16) and the `?debounce=`
+   * override.
    *
-   * @param profile - The profile.
+   * @param profile - The profile (as written in the content).
    */
   const applyKeyProfile = (profile: InputProfile): void => {
+    baseKeys = profile;
+    const custom = customizeInputProfile(profile, settings);
     input.setProfile(
       overrides.debounce === null
-        ? profile
-        : overrideInputTuning(profile, { releaseDebounceTicks: overrides.debounce }),
+        ? custom
+        : overrideInputTuning(custom, { releaseDebounceTicks: overrides.debounce }),
     );
+  };
+  /**
+   * Applies the gamepad profile with the player's settings (M2-16).
+   *
+   * @param profile - The profile (as written in the content).
+   */
+  const applyPadProfile = (profile: InputProfile): void => {
+    basePads = profile;
+    input.setProfile(customizeInputProfile(profile, settings));
   };
   const shell = await bootShell({
     canvas,
@@ -398,7 +421,7 @@ export async function bootWebApp(
       if (keys !== null) applyKeyProfile(keys);
       if (keys !== null && keys.id === overrides.profile) overrideProfile = keys;
       const pads = chooseInputProfile(profiles.profiles, [DEFAULT_GAMEPAD_PROFILE_ID], ['gamepad']);
-      if (pads !== null) input.setProfile(pads);
+      if (pads !== null) applyPadProfile(pads);
       return createWebPlatform({
         input,
         audio,
@@ -441,6 +464,18 @@ export async function bootWebApp(
         if (overrideProfile !== null) offered.push(overrideProfile);
         const chosen = chooseInputProfile(offered, [id], KEY_PROFILE_DEVICES);
         if (chosen !== null && chosen.id !== input.keyProfile?.id) applyKeyProfile(chosen);
+      },
+      // The player's rebinding, SOCD and debounce (M2-16), on the key and gamepad profiles.
+      customize: (next) => {
+        settings = next;
+        if (baseKeys !== null) applyKeyProfile(baseKeys);
+        if (basePads !== null) applyPadProfile(basePads);
+      },
+      rebindable: () => {
+        const list: InputProfile[] = [];
+        if (baseKeys !== null) list.push(baseKeys);
+        if (basePads !== null) list.push(basePads);
+        return list;
       },
     },
   });

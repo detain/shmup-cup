@@ -26,6 +26,7 @@
       "deathPenalty": "classic",
       "startingLives": 3,
       "autofire": true,
+      "autofireMode": "always",
       "remoteMode": true,
       "stage": "captain-range",
       "stageSkip": "none",

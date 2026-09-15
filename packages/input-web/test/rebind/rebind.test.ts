@@ -114,7 +114,7 @@ const mask = (names: readonly ActionName[]): number =>
 describe('input-web/rebind', () => {
   it('describes itself and is exported from the package entry', () => {
     expect(moduleInfo.name).toBe('rebind');
-    expect(moduleInfo.status).toBe('partial');
+    expect(moduleInfo.status).toBe('implemented');
     expect(inputWeb.parseInputProfiles).toBe(parseInputProfiles);
     expect(inputWeb.createInputProfileRegistry).toBe(createInputProfileRegistry);
   });

@@ -6,8 +6,8 @@
  * the saved level; the boot time is on the canvas (`data-shmup-boot-ms`). A corrupt save boots the
  * title with defaults, is kept under `shmup-cup:save.corrupt` and is replaced by a valid document
  * when the Options screen closes. The Tizen build opened from disk (`file://`) does the same with
- * the remote only — arrows, OK, Back (10009) — and keeps SFX and the CONTROLS profile across a
- * relaunch (the manual check of plan M1-17, automated).
+ * the remote only — arrows, OK, Back (10009) — and keeps SFX and the CONTROLS page's profile
+ * (M2-16) across a relaunch (the manual check of plan M1-17, automated).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
@@ -208,7 +208,7 @@ test.describe('options and saves: corrupt save (web build)', () => {
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-scene', 'title');
     await expect.poll(async () => (await storedSave(page))?.options.audio.master).toBe(9);
     const save = await storedSave(page);
-    expect(save?.version).toBe(1);
+    expect(save?.version).toBe(2); // M2-16: save format version 2
     expect(save?.options.audio).toEqual({ master: 9, music: 10, sfx: 10 });
     expect(errors).toEqual([]);
   });
@@ -229,10 +229,14 @@ test.describe('options and saves (Tizen build from file://)', () => {
     await tap(page, 'ArrowDown'); // SFX
     await tap(page, 'ArrowLeft'); // 10 → 9
     await tap(page, 'ArrowLeft'); // → 8
-    await tap(page, 'ArrowDown'); // CONTROLS
-    await tap(page, 'ArrowRight'); // SAFE 4-WAY (DEFAULT) → FAST 8-WAY, live
-    expect(await storedSave(page)).toBeNull(); // written when the screen closes
-    await remoteTap(page, 10009); // Back: save and close — never an exit here
+    await tap(page, 'ArrowDown'); // CONTROLS (M2-16: a page)
+    await tap(page, 'Enter');
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'controls');
+    await tap(page, 'ArrowRight'); // PROFILE: SAFE 4-WAY (DEFAULT) → FAST 8-WAY, live
+    expect(await storedSave(page)).toBeNull(); // written when a screen closes
+    await remoteTap(page, 10009); // Back: the page stores and closes
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'options');
+    await remoteTap(page, 10009); // Back: the Options screen — never an exit here
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
     await expect.poll(async () => (await storedSave(page))?.options.audio.sfx).toBe(8);
     expect((await storedSave(page))?.options.input.profileId).toBe('tizen-remote-diagonal');
@@ -246,7 +250,7 @@ test.describe('options and saves (Tizen build from file://)', () => {
     await remoteTap(page, 10009);
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
     await expect.poll(async () => (await storedSave(page))?.options.audio.sfx).toBe(9);
-    // CONTROLS was not touched this time: the saved profile stays.
+    // PROFILE was not touched this time: the saved profile stays.
     expect((await storedSave(page))?.options.input.profileId).toBe('tizen-remote-diagonal');
     expect(errors).toEqual([]);
   });

@@ -26,6 +26,7 @@
       "deathPenalty": "arcade",
       "startingLives": 5,
       "autofire": true,
+      "autofireMode": "always",
       "remoteMode": true,
       "stage": "zone-f",
       "stageSkip": "none",

@@ -2,7 +2,8 @@
  * # save — persistent saves (hi-scores, options, stats)
  *
  * **Responsibility.** Persistence through `Platform.storage` (decision D31): the player's
- * {@link UserOptions} (volumes, the input profile, the bullet palette), the hi-score tables and a
+ * {@link UserOptions} (volumes, the controls — the input profile, autofire, SOCD, debounce and the
+ * rebinding —, the display and the game options), the hi-score tables and a
  * few play statistics, stored as one **versioned JSON document** with forward migrations and
  * **defensive parsing** — a corrupt, foreign or partly broken document never crashes the boot; it
  * falls back to defaults
@@ -10,14 +11,20 @@
  * inspection. Storage is async so Electron can use files (M2-17) and the web / Tizen
  * `localStorage`; Tizen deletes it on uninstall.
  *
- * - **Format** ({@link SaveData}, version {@link SAVE_VERSION} = 1) under the storage key
- *   {@link SAVE_STORAGE_KEY} (`save.v1`): `{ version, options: { audio: { master, music, sfx },
- *   input: { profileId }, display: { bulletPalette, scaleMode, screenShake, reduceFlashing,
- *   showHitbox, bossHpBar } }, hiScores: { [modeKey]: HiScoreEntry[≤ 10] }, stats: {
- *   gamesStarted, gameOvers, stagesCleared } }`. The display fields need no migration: a
- *   version-1 save written before `bulletPalette` (M2-02), the M2-08 fields or `bossHpBar`
- *   (M2-09) resolves the missing ones to their defaults (`standard`, `integer`, shake on, normal
- *   flashing, no hitbox marker, no boss HP bar — `core/config` `resolveUserOptions`).
+ * - **Format** ({@link SaveData}, version {@link SAVE_VERSION} = 2 since M2-16) under the storage
+ *   key {@link SAVE_STORAGE_KEY} (`save.v1` — the format family's key; the document's `version`
+ *   drives the migrations): `{ version, options: { audio: { master, music, sfx }, input: {
+ *   profileId, autofire, autofireInterval, socd, releaseDebounce, bindings }, display: {
+ *   bulletPalette, scaleMode, screenShake, reduceFlashing, showHitbox, bossHpBar }, game: {
+ *   difficulty, lives, deathPenalty, autoPowerUp, pickupMagnet, oneButton } }, hiScores: {
+ *   [modeKey]: HiScoreEntry[≤ 10] }, stats: { gamesStarted, gameOvers, stagesCleared } }`. The
+ *   display fields needed no migration: a version-1 save written before `bulletPalette` (M2-02),
+ *   the M2-08 fields or `bossHpBar` (M2-09) resolves the missing ones to their defaults
+ *   (`standard`, `integer`, shake on, normal flashing, no hitbox marker, no boss HP bar —
+ *   `core/config` `resolveUserOptions`). **Version 2** (M2-16) added the controls options (autofire
+ *   mode and rate, SOCD, the release debounce, the rebinding — `input.*`) and the game options
+ *   (`game.*`), and its migration moves the co-op and practice rows older builds kept in the
+ *   one-player tables into their own tables (see {@link SAVE_MIGRATIONS}).
  *   A mode key ({@link hiScoreModeKey}) names the table a game's score belongs to
  *   (`meter-normal` in M1; one per difficulty preset since M2-01 — `meter-easy` … `meter-arcade`;
  *   the Direct-mode MANTA's games since M2-05 — `direct-easy` … `direct-arcade`; since M2-15 the
@@ -61,16 +68,18 @@
  * {@link parseHiScoreModeKey}, {@link HiScoreKeyParts}, {@link SaveStore.renameScore}.
  *
  * **Planned.** Unlocks (Extra Edit, stages, ships — M2), the Electron file store (M2-17), more
- * stats and option groups as their screens arrive.
+ * stats as their screens arrive.
  *
  * @module
  */
 import {
   DEFAULT_USER_OPTIONS,
   resolveUserOptions,
+  type BindingOverrides,
   type GameConfig,
   type UserOptions,
 } from '../config/index.js';
+import { ACTION_NAMES, INPUT_CONTEXTS } from '../input/index.js';
 import { defineModule } from '../module-info.js';
 import type { PlatformStorage } from '../platform/index.js';
 import { MAX_SCORE, type HiScoreEntry } from '../scoring/index.js';
@@ -84,8 +93,8 @@ export const moduleInfo = defineModule({
   specRefs: ['shmup_feat.md §21', 'shmup_feat.md §23', 'shmup_feat.md §15', 'shmup_feat.md §16'],
 });
 
-/** The save format this build writes. */
-export const SAVE_VERSION = 1;
+/** The save format this build writes (2 since M2-16 — the controls and game options). */
+export const SAVE_VERSION = 2;
 
 /** `Platform.storage` key of the save document (the web adapter prefixes it: `shmup-cup:save.v1`). */
 export const SAVE_STORAGE_KEY = 'save.v1';
@@ -228,11 +237,94 @@ function migrateV0(data: Readonly<Record<string, unknown>>): Record<string, unkn
 }
 
 /**
+ * Files version-1 hi-score rows under the tables of their own mode: rows of mode `2p` or `practice`
+ * found in a one-player table (`<powerUpMode>-<difficulty>` — co-op games recorded there until
+ * M2-15, whose build moved them when reading) go to that table's `-2p` / `-practice` table, ahead
+ * of the rows it already has (older rows win a tie); every other row stays.
+ *
+ * @param tables - The version-1 `hiScores` (any shape; non-array tables are dropped).
+ * @returns The tables with the rows moved (raw rows — sanitised afterwards).
+ */
+function moveModeRows(tables: Readonly<Record<string, unknown>>): Record<string, unknown[]> {
+  const out = Object.create(null) as Record<string, unknown[]>;
+  const moved = Object.create(null) as Record<string, unknown[]>;
+  for (const key of Object.keys(tables).sort()) {
+    const list = tables[key];
+    if (!Array.isArray(list)) continue;
+    const parts = parseHiScoreModeKey(key);
+    const kept: unknown[] = [];
+    for (const row of list as unknown[]) {
+      const mode = asRecord(row)?.mode;
+      if (
+        parts !== null &&
+        parts.mode === '1p' &&
+        (mode === '2p' || mode === 'practice') &&
+        key.length + mode.length < 32
+      ) {
+        const target = key + '-' + mode;
+        (moved[target] ?? (moved[target] = [])).push(row);
+      } else {
+        kept.push(row);
+      }
+    }
+    out[key] = kept;
+  }
+  // The moved rows are older than the table's own: on a tie they keep the higher place.
+  for (const key of Object.keys(moved)) out[key] = moved[key].concat(out[key] ?? []);
+  return out;
+}
+
+/**
+ * Version 1 → 2 (M2-16). Version 2 adds the controls options (`options.input`: `autofire`,
+ * `autofireInterval`, `socd`, `releaseDebounce`, `bindings`) and the game options
+ * (`options.game`) — a version-1 document gets them unset (`null` / no rebinding / the one-button
+ * preset off: the host config's and the profiles' own values, as before) — and moves the co-op and
+ * practice rows of the one-player tables into their own tables ({@link hiScoreModeKey} with `2p` /
+ * `practice` — the move M2-15 did whenever a save was read, now done once here). Everything else
+ * (volumes, the input profile, the display options, the stats) carries over as is.
+ *
+ * @param data - A version-1 document.
+ * @returns The same data in the version-2 layout (sanitised afterwards).
+ */
+function migrateV1(data: Readonly<Record<string, unknown>>): Record<string, unknown> {
+  const options = asRecord(data.options) ?? {};
+  const input = asRecord(options.input) ?? {};
+  const tables = asRecord(data.hiScores);
+  return {
+    ...data,
+    version: 2,
+    options: {
+      ...options,
+      input: {
+        profileId: input.profileId,
+        autofire: null,
+        autofireInterval: null,
+        socd: null,
+        releaseDebounce: null,
+        bindings: {},
+      },
+      game: {
+        difficulty: null,
+        lives: null,
+        deathPenalty: null,
+        autoPowerUp: null,
+        pickupMagnet: null,
+        oneButton: false,
+      },
+    },
+    hiScores: tables === null ? {} : moveModeRows(tables),
+  };
+}
+
+/**
  * The migration steps: `SAVE_MIGRATIONS[n]` turns version `n` into `n + 1`. Append one (and bump
- * {@link SAVE_VERSION}) whenever the format changes; never edit a shipped step.
+ * {@link SAVE_VERSION}) whenever the format changes; never edit a shipped step. Version 0 → 1 is
+ * the skeleton's pre-release layout (M1-17); 1 → 2 adds the controls and game options and moves
+ * the older co-op / practice rows (M2-16).
  */
 export const SAVE_MIGRATIONS: readonly SaveMigration[] = Object.freeze([
   Object.freeze({ from: 0, to: 1, migrate: migrateV0 }),
+  Object.freeze({ from: 1, to: 2, migrate: migrateV1 }),
 ]);
 
 /**
@@ -343,9 +435,8 @@ function counter(value: unknown): number {
  * are read like {@link createHiScoreEntry} does (a missing or empty name becomes
  * {@link DEFAULT_HI_SCORE_NAME}, a long one is cut to {@link HI_SCORE_NAME_MAX});
  * each table is sorted best first and cut to {@link HI_SCORE_TABLE_SIZE}; empty tables are
- * dropped. Rows of mode `2p` or `practice` found in a one-player table (co-op games recorded them
- * there before M2-15) move into that table's `-2p` / `-practice` table first (M2-15). Stats:
- * whole numbers ≥ 0, else 0. Unknown fields are dropped.
+ * dropped (M2-16: the co-op / practice rows older builds kept in the one-player tables were moved
+ * by the version-1 → 2 migration). Stats: whole numbers ≥ 0, else 0. Unknown fields are dropped.
  *
  * @param data - A migrated document.
  * @returns A frozen, valid document at {@link SAVE_VERSION}.
@@ -354,42 +445,11 @@ export function sanitizeSave(data: Readonly<Record<string, unknown>>): SaveData 
   const hiScores: Record<string, readonly HiScoreEntry[]> = {};
   const tables = asRecord(data.hiScores);
   if (tables !== null) {
-    // Rows of another mode kept in a one-player table (co-op games before M2-15) move to the
-    // table of their own mode.
-    const rows: Record<string, unknown[]> = Object.create(null) as Record<string, unknown[]>;
-    const order: string[] = [];
-    /**
-     * Files a raw row under a table key (the key's first row also records the key's order).
-     *
-     * @param key - The table the row goes to.
-     * @param row - The raw row (sanitised later with its table).
-     */
-    const add = (key: string, row: unknown): void => {
-      if (rows[key] === undefined) {
-        rows[key] = [];
-        order.push(key);
-      }
-      rows[key].push(row);
-    };
-    for (const key of Object.keys(tables).sort()) {
-      if (key.length > 32 || !MODE_KEY_PATTERN.test(key)) continue;
-      const list = tables[key];
-      if (!Array.isArray(list)) continue;
-      const parts = parseHiScoreModeKey(key);
-      for (const row of list as unknown[]) {
-        const mode = asRecord(row)?.mode;
-        const moved =
-          parts !== null &&
-          parts.mode === '1p' &&
-          (mode === '2p' || mode === 'practice') &&
-          key.length + mode.length < 32;
-        add(moved ? key + '-' + mode : key, row);
-      }
-    }
     let count = 0;
-    for (const key of order.sort()) {
+    for (const key of Object.keys(tables).sort()) {
       if (count >= MAX_HI_SCORE_TABLES) break;
-      const table = sanitizeTable(rows[key]);
+      if (key.length > 32 || !MODE_KEY_PATTERN.test(key)) continue;
+      const table = sanitizeTable(tables[key]);
       if (table === null) continue;
       hiScores[key] = table;
       count++;
@@ -517,11 +577,28 @@ export function serializeSave(data: SaveData): string {
     }
     hiScores[key] = rows;
   }
+  const input = data.options.input;
+  const game = data.options.game;
   return JSON.stringify({
     version: data.version,
     options: {
       audio: { master: a.master, music: a.music, sfx: a.sfx },
-      input: { profileId: data.options.input.profileId },
+      input: {
+        profileId: input.profileId,
+        autofire: input.autofire,
+        autofireInterval: input.autofireInterval,
+        socd: input.socd,
+        releaseDebounce: input.releaseDebounce,
+        bindings: serializeBindings(input.bindings),
+      },
+      game: {
+        difficulty: game.difficulty,
+        lives: game.lives,
+        deathPenalty: game.deathPenalty,
+        autoPowerUp: game.autoPowerUp,
+        pickupMagnet: game.pickupMagnet,
+        oneButton: game.oneButton,
+      },
       display: {
         bulletPalette: display.bulletPalette,
         scaleMode: display.scaleMode,
@@ -538,6 +615,33 @@ export function serializeSave(data: SaveData): string {
       stagesCleared: data.stats.stagesCleared,
     },
   });
+}
+
+/**
+ * The rebinding in a canonical order for {@link serializeSave}: profiles by id, `game` before
+ * `menu`, actions in `core/input` `ACTION_NAMES` order.
+ *
+ * @param bindings - The overrides.
+ * @returns A plain object to stringify (prototype-free records).
+ */
+function serializeBindings(bindings: BindingOverrides): Record<string, unknown> {
+  const out = Object.create(null) as Record<string, unknown>;
+  for (const id of Object.keys(bindings).sort()) {
+    const profile = bindings[id];
+    const entry = Object.create(null) as Record<string, unknown>;
+    for (const context of INPUT_CONTEXTS) {
+      const table = profile[context];
+      if (table === undefined) continue;
+      const actions = Object.create(null) as Record<string, readonly string[]>;
+      for (const name of ACTION_NAMES) {
+        const tokens = table[name];
+        if (tokens !== undefined) actions[name] = tokens.slice();
+      }
+      entry[context] = actions;
+    }
+    out[id] = entry;
+  }
+  return out;
 }
 
 /** What {@link loadSave} returns. */

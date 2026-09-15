@@ -59,6 +59,8 @@
  * - shmup_feat.md §6B — the Direct-mode HUD's visible tier pips (M2-05)
  * - shmup_feat.md §17 — the co-op P2 HUD and the `PRESS START` join prompt (M2-06)
  * - shmup_feat.md §17 — the 3-letter name entry of the hi-score table (M2-15)
+ * - shmup_feat.md §4 — [P1] rebinding per device with conflict detection and reset; §21 — full
+ *   remapping, the string table for localization (M2-16)
  *
  * **Public API.** Widgets: {@link ListMenu}, {@link MenuItem}, {@link MenuItemKind},
  * {@link Slider}, {@link Toggle}, {@link Choice}, {@link Confirm}, {@link ConfirmChoice},
@@ -78,8 +80,14 @@
  * {@link HUD_COMMAND_COUNT}. M2-06: {@link HudPlayerState}, {@link hudPlayerState},
  * {@link METER_SHORT_LABELS}, {@link HUD_PROMPT_BLINK_TICKS}. M2-09: {@link BOSS_HP_BAR_WIDTH},
  * {@link BossHpBarView}, {@link bossHpBarFill}. M2-15: {@link NameEntry}, {@link createNameEntry},
- * {@link nameEntryTick}, {@link drawNameEntry}, {@link NAME_ENTRY_GLYPHS}, {@link NAME_ENTRY_LENGTH},
- * {@link NAME_ENTRY_STRING_SLOTS}.
+ * {@link nameEntryTick}, {@link drawNameEntry}, {@link NAME_ENTRY_GLYPHS},
+ * {@link NAME_ENTRY_LENGTH}, {@link NAME_ENTRY_STRING_SLOTS}. M2-16: {@link RebindPanel},
+ * {@link RebindPanelLabels}, {@link createRebindPanel}, {@link rebindTick},
+ * {@link rebindStringSlots}, {@link drawRebindPanel}, {@link RebindEvent}, {@link RebindStatus},
+ * {@link CaptureStatus}, {@link REBINDABLE_ACTIONS}, {@link REBIND_CAPTURE_TICKS},
+ * {@link METER_SHORT_IDS} and the string table ({@link UiText}, {@link UiTextId},
+ * {@link DEFAULT_UI_TEXT}, {@link UI_TEXT_IDS}, {@link resolveUiText}, {@link formatUiText},
+ * {@link MAX_UI_TEXT_LENGTH}, {@link DEFAULT_LANGUAGE}).
  *
  * **Boss HP bar (M2-09).** With the `bossHpBar` display option ({@link Hud.showBossHp}, the
  * `buildHud` argument) the top bar shows `BOSS` and a bar filled by {@link bossHpBarFill} of the
@@ -96,13 +104,29 @@
  * Right / OK move on, Left goes back, OK on `END` finishes ({@link NAME_ENTRY_GLYPHS},
  * {@link NAME_ENTRY_LENGTH}, {@link NAME_ENTRY_STRING_SLOTS}, {@link createNameEntry}).
  *
- * **Planned.** The key-rebind prompt (M2-16).
+ * **Rebind widget (M2-16).** {@link RebindPanel} / {@link rebindTick} / {@link drawRebindPanel}:
+ * the Options screen's rebinding — per binding context ({@link REBINDABLE_ACTIONS}) a row per
+ * action with its keys, MODE (game / menu), RESET and DONE, the capture prompt with its time bar
+ * ({@link REBIND_CAPTURE_TICKS}) and a message line for the outcome ({@link RebindStatus}; the
+ * capture's states are {@link CaptureStatus}). The scene flow drives the host's key capture and the
+ * bindings (`@shmup/input-web` `rebindAction`).
+ *
+ * **String table (M2-16).** Every word the kit and the HUD draw comes from a {@link UiText} table
+ * (`./strings.ts` — {@link DEFAULT_UI_TEXT}, {@link resolveUiText}, {@link formatUiText}): the
+ * builders and {@link createHud} take one (English by default), the scene flow passes the content's
+ * (`content/strings/`).
  *
  * @module
  */
 import type { ContentDb } from '../data/index.js';
 import { SFX_CUES } from '../events/index.js';
-import { Action, type PlayerInput } from '../input/index.js';
+import {
+  Action,
+  INPUT_CONTEXTS,
+  type ActionName,
+  type InputContext,
+  type PlayerInput,
+} from '../input/index.js';
 import { defineModule } from '../module-info.js';
 import { playerOut } from '../player/index.js';
 import { METER_SLOT_COUNT, MeterSlot, directMaxLevel } from '../powerups/index.js';
@@ -110,12 +134,30 @@ import { TextAlign, type DrawList } from '../presentation/index.js';
 import { ShieldKind, shieldActive } from '../shields/index.js';
 import { WEAPON_BEHAVIOR_LABELS, WeaponRole } from '../weapons/index.js';
 import type { World } from '../world/index.js';
+import { DEFAULT_UI_TEXT, type UiText, type UiTextId } from './strings.js';
+
+export {
+  DEFAULT_LANGUAGE,
+  DEFAULT_UI_TEXT,
+  MAX_UI_TEXT_LENGTH,
+  UI_TEXT_IDS,
+  formatUiText,
+  resolveUiText,
+  type UiText,
+  type UiTextId,
+} from './strings.js';
 
 /** Module descriptor (see {@link defineModule}). */
 export const moduleInfo = defineModule({
   name: 'ui',
   status: 'partial',
-  specRefs: ['shmup_feat.md §17', 'shmup_feat.md §4', 'shmup_tech.md §4.10', 'shmup_feat.md §6'],
+  specRefs: [
+    'shmup_feat.md §17',
+    'shmup_feat.md §4',
+    'shmup_tech.md §4.10',
+    'shmup_feat.md §6',
+    'shmup_feat.md §21',
+  ],
 });
 
 // Bitmap-font metrics for layout live in `presentation` (the renderer implements them).
@@ -1183,6 +1225,8 @@ export function menuStringSlots(menu: ListMenu): number {
  * @param menu - The menu.
  * @param stringBase - First string slot the menu may use.
  * @param layout - Position, row pitch, alignment, cursor and value columns.
+ * @param text - The UI string table (the toggles' `ON` / `OFF`; default {@link DEFAULT_UI_TEXT} —
+ *   M2-16).
  * @returns The y below the last row.
  *
  * @example
@@ -1196,6 +1240,7 @@ export function drawMenu(
   menu: ListMenu,
   stringBase: number,
   layout: MenuLayout,
+  text: UiText = DEFAULT_UI_TEXT,
 ): number {
   const items = menu.items;
   const n = items.length;
@@ -1206,8 +1251,8 @@ export function drawMenu(
   const onSlot = stringBase + n;
   const offSlot = onSlot + 1;
   const cursorSlot = onSlot + 2;
-  list.setString(onSlot, 'ON');
-  list.setString(offSlot, 'OFF');
+  list.setString(onSlot, text.on);
+  list.setString(offSlot, text.off);
   list.setString(cursorSlot, CURSOR);
   let choiceSlot = cursorSlot + 1;
   let y = layout.y;
@@ -1256,6 +1301,7 @@ export const CONFIRM_STRING_SLOTS = 4;
  * @param stringBase - First string slot the prompt may use.
  * @param cx - Centre x of the panel.
  * @param cy - Centre y of the panel.
+ * @param text - The UI string table (`YES` / `NO`; default {@link DEFAULT_UI_TEXT} — M2-16).
  */
 export function drawConfirm(
   list: DrawList,
@@ -1263,6 +1309,7 @@ export function drawConfirm(
   stringBase: number,
   cx: number,
   cy: number,
+  text: UiText = DEFAULT_UI_TEXT,
 ): void {
   const w = 176;
   const h = 52;
@@ -1270,8 +1317,8 @@ export function drawConfirm(
   const y = Math.round(cy - h / 2);
   drawPanel(list, x, y, w, h, UI_COLORS.panel, UI_COLORS.focus, 255);
   list.setString(stringBase, confirm.question);
-  list.setString(stringBase + 1, 'YES');
-  list.setString(stringBase + 2, 'NO');
+  list.setString(stringBase + 1, text.yes);
+  list.setString(stringBase + 2, text.no);
   list.setString(stringBase + 3, CURSOR);
   list.text(stringBase, cx, y + 7, UI_COLORS.text, TextAlign.Center);
   const yesX = Math.round(cx - 32);
@@ -1302,6 +1349,7 @@ const NAME_CELL_PITCH = 16;
  * @param cx - Centre x of the row.
  * @param y - Top of the letters.
  * @param blinkOff - Hide the cursor's arrows and the letter's highlight this frame (a blink).
+ * @param text - The UI string table (`END`; default {@link DEFAULT_UI_TEXT} — M2-16).
  */
 export function drawNameEntry(
   list: DrawList,
@@ -1310,13 +1358,14 @@ export function drawNameEntry(
   cx: number,
   y: number,
   blinkOff = false,
+  text: UiText = DEFAULT_UI_TEXT,
 ): void {
   const n = entry.length;
   const endSlot = stringBase + n;
   const upSlot = endSlot + 1;
   const downSlot = endSlot + 2;
   const blankSlot = endSlot + 3;
-  list.setString(endSlot, 'END');
+  list.setString(endSlot, text.end);
   list.setString(upSlot, '↑');
   list.setString(downSlot, '↓');
   list.setString(blankSlot, '_');
@@ -1348,6 +1397,389 @@ export function drawNameEntry(
     TextAlign.Center,
   );
   if (onEnd) list.rect(endX - 10, y + 10, 20, 1, UI_COLORS.focus);
+}
+
+// ------------------------------------------------------------------------------ rebind (M2-16)
+
+/**
+ * The actions each binding context lets the player rebind (M2-16 — shmup_feat.md §4 "[P1]
+ * Rebinding"), in the rebind screen's order: the game's directions, weapons, power-up, special,
+ * speed and pause; the menus' directions, OK, Back and pause.
+ */
+export const REBINDABLE_ACTIONS: Readonly<Record<InputContext, readonly ActionName[]>> =
+  Object.freeze({
+    game: Object.freeze([
+      'Up',
+      'Down',
+      'Left',
+      'Right',
+      'Shot',
+      'Sub',
+      'PowerUp',
+      'Special',
+      'Speed',
+      'Pause',
+    ] as ActionName[]),
+    menu: Object.freeze([
+      'Up',
+      'Down',
+      'Left',
+      'Right',
+      'Confirm',
+      'Back',
+      'Pause',
+    ] as ActionName[]),
+  });
+
+/**
+ * Outcomes of a rebinding (M2-16 — `@shmup/input-web` `rebindAction` returns them, the rebind
+ * screen shows them).
+ */
+export const RebindStatus = {
+  /** The action now has the key; nothing else had it. */
+  Bound: 0,
+  /** The key was taken from another action, which kept other keys (a conflict resolved). */
+  Moved: 1,
+  /** The other action had only that key: the two actions swapped keys (a conflict resolved). */
+  Swapped: 2,
+  /** Nothing changed: the other action needs a key and none was left to give it. */
+  Refused: 3,
+  /** Nothing changed: the action already had exactly that key. */
+  Unchanged: 4,
+  /** Nothing changed: the key cannot be bound (reserved, or not the device's kind). */
+  Rejected: 5,
+} as const;
+
+/** A {@link RebindStatus} code. */
+export type RebindStatus = (typeof RebindStatus)[keyof typeof RebindStatus];
+
+/**
+ * States of a rebinding capture (M2-16 — `@shmup/input-web` `WebInput.capture`, the scene flow's
+ * `ControlsSetup.pollCapture`).
+ */
+export const CaptureStatus = {
+  /** No capture running. */
+  Idle: 0,
+  /** Waiting for the next key or button. */
+  Waiting: 1,
+  /** A key or button was caught. */
+  Captured: 2,
+  /** Escape / the remote's Back cancelled it. */
+  Cancelled: 3,
+} as const;
+
+/** A {@link CaptureStatus} code. */
+export type CaptureStatus = (typeof CaptureStatus)[keyof typeof CaptureStatus];
+
+/** Ticks a rebind prompt waits for a key before it gives up (5 s). */
+export const REBIND_CAPTURE_TICKS = 300;
+
+/** What {@link rebindTick} reports. */
+export const RebindEvent = {
+  /** Nothing to act on (the panel may have moved — see {@link RebindPanel.result}). */
+  None: 0,
+  /** MODE changed: the other context's rows show. */
+  Context: 1,
+  /** OK on an action row: capture a key for {@link RebindPanel.focusedAction}. */
+  Capture: 2,
+  /** OK on RESET: reset the shown context's bindings. */
+  Reset: 3,
+  /** OK on DONE, or Back: close the screen. */
+  Done: 4,
+} as const;
+
+/** A {@link RebindEvent} code. */
+export type RebindEvent = (typeof RebindEvent)[keyof typeof RebindEvent];
+
+/** The labels a {@link RebindPanel} is built with (the UI string table's). */
+export interface RebindPanelLabels {
+  /** The MODE row. */
+  readonly mode: string;
+  /** The context names, in `INPUT_CONTEXTS` order (`GAME`, `MENU`). */
+  readonly contexts: readonly string[];
+  /** Each action's row label. */
+  readonly actions: Readonly<Record<ActionName, string>>;
+  /** The RESET row. */
+  readonly reset: string;
+  /** The DONE row. */
+  readonly done: string;
+}
+
+/**
+ * The rebind widget (M2-16 — plan "core `ui` + rebind widget"): per binding context a list of MODE
+ * (the context shown — a {@link Choice} both lists share), one row per {@link REBINDABLE_ACTIONS}
+ * action with its keys on the right ({@link RebindPanel.keys}, set by the scene from the host),
+ * RESET and DONE; plus the capture prompt's state and a message line. The scene drives the capture
+ * (the host's key source) and the bindings; the widget is the UI state machine ({@link rebindTick})
+ * and its look ({@link drawRebindPanel}). A class: nothing allocates after creation.
+ */
+export class RebindPanel {
+  /** MODE: the context shown (`INPUT_CONTEXTS` order). */
+  readonly contextChoice: Choice;
+  /** The rows of each context (`INPUT_CONTEXTS` order). */
+  readonly menus: readonly ListMenu[];
+  /** Per context, per action row: the keys shown (`Z  SPACE`; `-` unbound). */
+  readonly keys: readonly string[][];
+  /** Whether a capture prompt is up. */
+  capturing = false;
+  /** Ticks the prompt has been up. */
+  captureTicks = 0;
+  /** The prompt's question (`PRESS A KEY FOR SHOT`; set with {@link RebindPanel.startCapture}). */
+  prompt = '';
+  /** The message line under the rows (the last outcome; `''` = none). */
+  message = '';
+  /** The {@link MenuResult} of the last {@link rebindTick} (the scene plays its sound). */
+  result: MenuResult = MenuResult.None;
+  /** Increases whenever the panel's look changes. */
+  revision = 0;
+  /** String slots of the larger context's menu ({@link drawRebindPanel}'s first range). */
+  readonly menuSlots: number;
+  /** Action rows of the larger context (the keys' string slots). */
+  readonly maxRows: number;
+
+  /**
+   * Creates the panel (use {@link createRebindPanel}).
+   *
+   * @param labels - The labels.
+   */
+  constructor(labels: RebindPanelLabels) {
+    this.contextChoice = createChoice(labels.contexts.slice(0, INPUT_CONTEXTS.length), 0);
+    const menus: ListMenu[] = [];
+    const keys: string[][] = [];
+    for (const context of INPUT_CONTEXTS) {
+      const items: MenuItemSpec[] = [{ label: labels.mode, choice: this.contextChoice }];
+      const rows: string[] = [];
+      for (const action of REBINDABLE_ACTIONS[context]) {
+        items.push(labels.actions[action]);
+        rows.push('-');
+      }
+      items.push(labels.reset, labels.done);
+      menus.push(createListMenu(items));
+      keys.push(rows);
+    }
+    this.menus = menus;
+    this.keys = keys;
+    let menuSlots = 0;
+    let maxRows = 0;
+    for (let c = 0; c < menus.length; c++) {
+      menuSlots = Math.max(menuSlots, menuStringSlots(menus[c]));
+      maxRows = Math.max(maxRows, keys[c].length);
+    }
+    this.menuSlots = menuSlots;
+    this.maxRows = maxRows;
+  }
+
+  /** The context shown. */
+  get context(): InputContext {
+    return INPUT_CONTEXTS[this.contextChoice.index] ?? 'game';
+  }
+
+  /** The rows of the context shown. */
+  get menu(): ListMenu {
+    return this.menus[this.contextChoice.index] ?? this.menus[0];
+  }
+
+  /** The action of the focused row, or `null` on MODE, RESET and DONE. */
+  get focusedAction(): ActionName | null {
+    const actions = REBINDABLE_ACTIONS[this.context];
+    const row = this.menu.focus - 1;
+    return row >= 0 && row < actions.length ? actions[row] : null;
+  }
+
+  /** Index of the RESET row in the context shown (DONE is the next). */
+  get resetRow(): number {
+    return REBINDABLE_ACTIONS[this.context].length + 1;
+  }
+
+  /**
+   * Sets the keys shown for one action (a cold path — after a rebinding or when the screen opens).
+   *
+   * @param context - Its context.
+   * @param action - The action (one of the context's {@link REBINDABLE_ACTIONS}; others are
+   *   ignored).
+   * @param label - The keys' label.
+   */
+  setKeys(context: InputContext, action: ActionName, label: string): void {
+    const c = INPUT_CONTEXTS.indexOf(context);
+    const row = c < 0 ? -1 : REBINDABLE_ACTIONS[context].indexOf(action);
+    if (row < 0 || this.keys[c][row] === label) return;
+    this.keys[c][row] = label;
+    this.revision++;
+  }
+
+  /**
+   * Shows a message on the line under the rows (`''` clears it).
+   *
+   * @param message - The text (built by the scene on a rebinding — a cold path).
+   */
+  say(message: string): void {
+    if (message === this.message) return;
+    this.message = message;
+    this.revision++;
+  }
+
+  /**
+   * Puts the capture prompt up (the scene has asked its host for the next key).
+   *
+   * @param prompt - The question.
+   */
+  startCapture(prompt: string): void {
+    this.capturing = true;
+    this.captureTicks = 0;
+    this.prompt = prompt;
+    this.revision++;
+  }
+
+  /** Takes the capture prompt down; the rows take input again after a short lock. */
+  stopCapture(): void {
+    if (!this.capturing) return;
+    this.capturing = false;
+    this.menu.open(2);
+    this.revision++;
+  }
+
+  /**
+   * Opens the panel on a context: its MODE row focused, the message cleared, locked for a few
+   * ticks.
+   *
+   * @param context - The context to show first.
+   * @param lockTicks - Ticks activation waits for.
+   */
+  open(context: InputContext, lockTicks: number): void {
+    const c = INPUT_CONTEXTS.indexOf(context);
+    this.contextChoice.index = c < 0 ? 0 : c;
+    this.capturing = false;
+    this.message = '';
+    const menu = this.menu;
+    menu.focus = 0;
+    menu.open(lockTicks);
+    this.revision++;
+  }
+}
+
+/**
+ * Creates a rebind widget.
+ *
+ * @param labels - Its labels (the UI string table's).
+ * @returns The panel, showing the game context.
+ */
+export function createRebindPanel(labels: RebindPanelLabels): RebindPanel {
+  return new RebindPanel(labels);
+}
+
+/**
+ * Advances a rebind widget by one tick of menu input.
+ *
+ * @remarks
+ * While the capture prompt is up only its clock runs (the scene reads the host's capture and calls
+ * {@link RebindPanel.stopCapture}); otherwise the rows of the context shown take the input
+ * ({@link menuTick}; {@link RebindPanel.result} keeps its result for the sound): Back or OK on DONE
+ * → `Done`; a MODE change → `Context` (the other context's rows show, on MODE); OK on an action row
+ * → `Capture`; OK on RESET → `Reset`. Never allocates.
+ *
+ * @param panel - The panel.
+ * @param input - This tick's menu input.
+ * @returns What happened ({@link RebindEvent}).
+ */
+export function rebindTick(panel: RebindPanel, input: Readonly<PlayerInput>): RebindEvent {
+  panel.result = MenuResult.None;
+  if (panel.capturing) {
+    panel.captureTicks++;
+    if (panel.captureTicks % 30 === 0) panel.revision++; // the prompt's time bar
+    return RebindEvent.None;
+  }
+  const menu = panel.menu;
+  const before = menu.revision;
+  const result = menuTick(menu, input);
+  panel.result = result;
+  if (menu.revision !== before) panel.revision++;
+  if (result === MenuResult.Back) return RebindEvent.Done;
+  if (result === MenuResult.Changed && menu.focus === 0) {
+    // The other context's rows, focused on MODE.
+    const next = panel.menu;
+    next.focus = 0;
+    next.open(0);
+    panel.revision++;
+    return RebindEvent.Context;
+  }
+  if (result !== MenuResult.Confirmed) return RebindEvent.None;
+  const reset = panel.resetRow;
+  if (menu.focus === reset) return RebindEvent.Reset;
+  if (menu.focus === reset + 1) return RebindEvent.Done;
+  return panel.focusedAction !== null ? RebindEvent.Capture : RebindEvent.None;
+}
+
+/**
+ * String slots {@link drawRebindPanel} uses: the larger context's menu, one per action row's keys,
+ * the message, the prompt and its hint.
+ *
+ * @param panel - The panel.
+ * @returns The slot count.
+ */
+export function rebindStringSlots(panel: RebindPanel): number {
+  return panel.menuSlots + panel.maxRows + 3;
+}
+
+/**
+ * Draws a rebind widget: the context's rows ({@link drawMenu}) with each action's keys at the
+ * layout's value column, the message line below them and — while capturing — the prompt in a box
+ * over the rows with its hint and a bar draining over {@link REBIND_CAPTURE_TICKS}.
+ *
+ * @remarks
+ * Uses the string slots `stringBase … stringBase + rebindStringSlots(panel) − 1` and writes a slot
+ * only when its text changed. Never allocates.
+ *
+ * @param list - Target draw list.
+ * @param panel - The panel.
+ * @param stringBase - First string slot it may use.
+ * @param layout - Where the rows go (a frozen constant).
+ * @param hint - The prompt's hint line (`ESC / BACK OR WAIT: CANCEL`).
+ * @param text - The UI string table (the toggles' words; default {@link DEFAULT_UI_TEXT}).
+ */
+export function drawRebindPanel(
+  list: DrawList,
+  panel: RebindPanel,
+  stringBase: number,
+  layout: MenuLayout,
+  hint: string,
+  text: UiText = DEFAULT_UI_TEXT,
+): void {
+  const menu = panel.menu;
+  const bottom = drawMenu(list, menu, stringBase, layout, text);
+  const lineHeight = layout.lineHeight ?? 12;
+  const valueX = layout.valueX ?? layout.x + 80;
+  const keys = panel.keys[panel.contextChoice.index] ?? panel.keys[0];
+  const keyBase = stringBase + panel.menuSlots;
+  for (let i = 0; i < keys.length; i++) {
+    const row = i + 1;
+    const focused = menu.focus === row && !panel.capturing;
+    list.setString(keyBase + i, keys[i]);
+    list.text(
+      keyBase + i,
+      valueX,
+      layout.y + row * lineHeight,
+      focused ? UI_COLORS.focus : UI_COLORS.title,
+    );
+  }
+  const messageSlot = keyBase + panel.maxRows;
+  if (panel.message !== '') {
+    list.setString(messageSlot, panel.message);
+    list.text(messageSlot, 192, bottom + 4, UI_COLORS.focus, TextAlign.Center);
+  }
+  if (!panel.capturing) return;
+  const x = 72;
+  const y = 84;
+  const w = 240;
+  const h = 48;
+  drawPanel(list, x, y, w, h, UI_COLORS.panel, UI_COLORS.focus, 255);
+  list.setString(messageSlot + 1, panel.prompt);
+  list.setString(messageSlot + 2, hint);
+  list.text(messageSlot + 1, 192, y + 8, UI_COLORS.focus, TextAlign.Center);
+  list.text(messageSlot + 2, 192, y + 22, UI_COLORS.disabled, TextAlign.Center);
+  const left = REBIND_CAPTURE_TICKS - panel.captureTicks;
+  const bar = left > 0 ? Math.floor(((w - 40) * left) / REBIND_CAPTURE_TICKS) : 0;
+  list.rect(x + 20, y + h - 10, w - 40, 3, UI_COLORS.track);
+  if (bar > 0) list.rect(x + 20, y + h - 10, bar, 3, UI_COLORS.title);
 }
 
 // ------------------------------------------------------------------------------ HUD
@@ -1496,27 +1928,37 @@ export const METER_LABEL_FRAMES: readonly string[] = Object.freeze([
 ]);
 
 /**
- * The co-op HUD's compact meter labels (M2-06): two letters per {@link METER_LABEL_FRAMES} entry, in
- * the same order, drawn with the bitmap font in the 20-px slots of each player's half.
+ * The UI string ids of the co-op HUD's compact meter labels, in {@link METER_LABEL_FRAMES} order
+ * (M2-16: the labels are drawn from the string table; {@link METER_SHORT_LABELS} are the English
+ * ones).
  */
-export const METER_SHORT_LABELS: readonly string[] = Object.freeze([
-  'SP',
-  'MS',
-  'DB',
-  'LS',
-  'OP',
-  '?',
-  '!',
-  'SB',
-  '2W',
-  'TP',
-  'TL',
-  'VT',
-  'FW',
-  'RP',
-  'CY',
-  'TW',
-]);
+export const METER_SHORT_IDS: readonly UiTextId[] = Object.freeze([
+  'meterShortSpeed',
+  'meterShortMissile',
+  'meterShortDouble',
+  'meterShortLaser',
+  'meterShortOption',
+  'meterShortShield',
+  'meterShortMega',
+  'meterShortSpread',
+  'meterShortTwoWay',
+  'meterShortTorpedo',
+  'meterShortTail',
+  'meterShortVertical',
+  'meterShortFreeWay',
+  'meterShortRipple',
+  'meterShortCyclone',
+  'meterShortTwin',
+] as UiTextId[]);
+
+/**
+ * The co-op HUD's compact meter labels (M2-06): two letters per {@link METER_LABEL_FRAMES} entry, in
+ * the same order, drawn with the bitmap font in the 20-px slots of each player's half — the English
+ * ones of {@link METER_SHORT_IDS} (M2-16: the HUD draws its string table's).
+ */
+export const METER_SHORT_LABELS: readonly string[] = Object.freeze(
+  METER_SHORT_IDS.map((id) => DEFAULT_UI_TEXT[id]),
+);
 
 /**
  * The `hud/meter-labels` frame a meter slot shows in a World: the MISSILE / DOUBLE / LASER slots
@@ -1739,6 +2181,8 @@ export function hudPlayerState(world: World, slot: number): HudPlayerState {
  *   while the World's `bosses.hpBar` is visible, `BOSS` (red) at x 148 and a 4-px frame
  *   {@link BOSS_HP_BAR_WIDTH} wide at x 176 with a 2-px red fill of {@link bossHpBarFill} over
  *   the frame's inner width replace the hi-score.
+ * @param text - The UI string table the HUD's words come from (default {@link DEFAULT_UI_TEXT} —
+ *   M2-16).
  *
  * @example
  * ```ts
@@ -1750,13 +2194,14 @@ export function buildHud(
   list: DrawList,
   sprites: UiSprites = NO_SPRITES,
   bossHp = false,
+  text: UiText = DEFAULT_UI_TEXT,
 ): void {
   const L = HUD_LAYOUT;
   const S = HUD_STRING_SLOTS;
   list.clear();
-  list.setString(S.p1, '1P');
-  list.setString(S.hi, 'HI');
-  list.setString(S.p2, '2P');
+  list.setString(S.p1, text.p1);
+  list.setString(S.hi, text.hi);
+  list.setString(S.p2, text.p2);
   list.setString(S.dashes, '------');
   list.rect(0, L.topY, 384, 8, HUD_COLORS.bar);
   list.rect(0, L.bottomY, 384, 8, HUD_COLORS.bar);
@@ -1765,11 +2210,11 @@ export function buildHud(
   const blinkOn = ((world.tick / HUD_PROMPT_BLINK_TICKS) & 1) === 0;
   const state1 = hudPlayerState(world, 0);
   const state2 = hudPlayerState(world, 1);
-  topScore(list, board.scores[0].score, state1, S.p1, L.p1X, HUD_COLORS.p1, blinkOn);
+  topScore(list, board.scores[0].score, state1, S.p1, L.p1X, HUD_COLORS.p1, blinkOn, text);
   const bar = world.bosses.hpBar;
   if (bossHp && bar.visible) {
     // The boss HP bar (M2-09) replaces the hi-score during a boss fight.
-    list.setString(S.boss, 'BOSS');
+    list.setString(S.boss, text.hudBoss);
     list.text(S.boss, L.bossX, L.topY, HUD_COLORS.bossLabel);
     list.rect(L.bossBarX, L.topY + 2, BOSS_HP_BAR_WIDTH, 4, HUD_COLORS.bossFrame);
     const fill = bossHpBarFill(bar, BOSS_HP_BAR_WIDTH - 2);
@@ -1779,12 +2224,12 @@ export function buildHud(
     list.number(board.hiScore, L.hiX + 16, L.topY, L.digits, HUD_COLORS.number);
   }
   const score2 = board.scores.length > 1 ? board.scores[1].score : 0;
-  topScore(list, score2, state2, S.p2, L.p2X, HUD_COLORS.p2, blinkOn);
+  topScore(list, score2, state2, S.p2, L.p2X, HUD_COLORS.p2, blinkOn, text);
 
   if (players.length > 1 && players[0].active && players[1].active) {
     // Co-op (M2-06): each player's compact half.
-    coopHalf(world, list, sprites, 0, state1, blinkOn);
-    coopHalf(world, list, sprites, 1, state2, blinkOn);
+    coopHalf(world, list, sprites, 0, state1, blinkOn, text);
+    coopHalf(world, list, sprites, 1, state2, blinkOn, text);
     clearDirty(world);
     return;
   }
@@ -1804,7 +2249,7 @@ export function buildHud(
   }
 
   if (world.powerups.direct) {
-    buildDirectPips(world, list);
+    buildDirectPips(world, list, text);
     clearDirty(world);
     return;
   }
@@ -1866,6 +2311,7 @@ export function buildHud(
  * @param x - The label's x.
  * @param color - The label's colour.
  * @param blinkOn - The prompt's blink phase.
+ * @param text - The UI string table.
  */
 function topScore(
   list: DrawList,
@@ -1875,6 +2321,7 @@ function topScore(
   x: number,
   color: number,
   blinkOn: boolean,
+  text: UiText,
 ): void {
   const L = HUD_LAYOUT;
   const S = HUD_STRING_SLOTS;
@@ -1882,7 +2329,7 @@ function topScore(
   list.text(slot, x, L.topY, absent ? HUD_COLORS.inactive : color);
   if (state === HudPlayerState.Join) {
     // Written only when a co-op HUD needs it (a one-player HUD list may have 4 string slots).
-    list.setString(S.pressStart, 'PRESS START');
+    list.setString(S.pressStart, text.pressStart);
     if (blinkOn) list.text(S.pressStart, x + 16, L.topY, HUD_COLORS.prompt);
   } else if (state === HudPlayerState.Absent) {
     list.text(S.dashes, x + 16, L.topY, HUD_COLORS.inactive);
@@ -1901,6 +2348,7 @@ function topScore(
  * @param slot - The player slot (0 = left half, 1 = right half).
  * @param state - Its {@link HudPlayerState}.
  * @param blinkOn - The prompt's blink phase.
+ * @param text - The UI string table.
  */
 function coopHalf(
   world: World,
@@ -1909,6 +2357,7 @@ function coopHalf(
   slot: number,
   state: HudPlayerState,
   blinkOn: boolean,
+  text: UiText,
 ): void {
   const L = HUD_LAYOUT;
   const S = HUD_STRING_SLOTS;
@@ -1916,12 +2365,12 @@ function coopHalf(
   const y = L.bottomY;
   const centre = ox + (L.halfW >> 1);
   if (state === HudPlayerState.Continue) {
-    list.setString(S.pressStart, 'PRESS START');
+    list.setString(S.pressStart, text.pressStart);
     if (blinkOn) list.text(S.pressStart, centre, y, HUD_COLORS.prompt, TextAlign.Center);
     return;
   }
   if (state !== HudPlayerState.Playing) {
-    list.setString(S.gameOver, 'GAME OVER');
+    list.setString(S.gameOver, text.gameOver);
     list.text(S.gameOver, centre, y, HUD_COLORS.over, TextAlign.Center);
     return;
   }
@@ -1932,7 +2381,7 @@ function coopHalf(
   else list.rect(ox + L.coopStockX, y + 2, 8, 4, slot === 1 ? HUD_COLORS.p2 : HUD_COLORS.p1);
   list.number(stock, ox + L.coopStockX + 10, y, 0, HUD_COLORS.number);
   if (world.powerups.direct) {
-    coopDirectPips(world, list, slot, ox);
+    coopDirectPips(world, list, slot, ox, text);
     return;
   }
   const cursor = world.powerups.meters[slot].cursor;
@@ -1950,7 +2399,8 @@ function coopHalf(
       lit ? HUD_COLORS.slotLit : can ? HUD_COLORS.slotOn : HUD_COLORS.slotOff,
     );
     const label = S.meterShort + m;
-    list.setString(label, METER_SHORT_LABELS[meterLabelFrame(world, m)] ?? '');
+    const id = METER_SHORT_IDS[meterLabelFrame(world, m)];
+    list.setString(label, id === undefined ? '' : text[id]);
     list.text(
       label,
       x + (L.coopSlotW >> 1),
@@ -2030,8 +2480,9 @@ function familyIndex(world: World, slot: number): number {
  *
  * @param world - The World shown (Direct mode).
  * @param list - The HUD list.
+ * @param text - The UI string table.
  */
-function buildDirectPips(world: World, list: DrawList): void {
+function buildDirectPips(world: World, list: DrawList, text: UiText): void {
   const L = HUD_LAYOUT;
   const S = HUD_STRING_SLOTS;
   const y = L.bottomY;
@@ -2040,10 +2491,10 @@ function buildDirectPips(world: World, list: DrawList): void {
   const families = world.weapons.mainFamilies;
   const index = familyIndex(world, 0);
   const family = families.length > 0 ? (families[index] ?? null) : null;
-  list.setString(S.shot, 'SHOT');
-  list.setString(S.sub, 'SUB');
-  list.setString(S.arm, 'ARM');
-  list.setString(S.speed, 'SPD');
+  list.setString(S.shot, text.hudShot);
+  list.setString(S.sub, text.hudSub);
+  list.setString(S.arm, text.hudArm);
+  list.setString(S.speed, text.hudSpeed);
   list.text(S.shot, L.shotX, y, HUD_COLORS.pipLabel);
   const shotTop = directMaxLevel(family);
   const color = HUD_FAMILY_COLORS[index % HUD_FAMILY_COLORS.length] ?? HUD_COLORS.label;
@@ -2083,8 +2534,15 @@ function buildDirectPips(world: World, list: DrawList): void {
  * @param list - The HUD list.
  * @param slot - The player slot.
  * @param ox - The half's left edge.
+ * @param text - The UI string table.
  */
-function coopDirectPips(world: World, list: DrawList, slot: number, ox: number): void {
+function coopDirectPips(
+  world: World,
+  list: DrawList,
+  slot: number,
+  ox: number,
+  text: UiText,
+): void {
   const L = HUD_LAYOUT;
   const S = HUD_STRING_SLOTS;
   const y = L.bottomY;
@@ -2093,10 +2551,10 @@ function coopDirectPips(world: World, list: DrawList, slot: number, ox: number):
   const families = world.weapons.mainFamilies;
   const index = familyIndex(world, slot);
   const family = families.length > 0 ? (families[index] ?? null) : null;
-  list.setString(S.shortShot, 'SH');
-  list.setString(S.shortSub, 'SB');
-  list.setString(S.shortArm, 'AR');
-  list.setString(S.shortSpeed, 'SP');
+  list.setString(S.shortShot, text.hudShortShot);
+  list.setString(S.shortSub, text.hudShortSub);
+  list.setString(S.shortArm, text.hudShortArm);
+  list.setString(S.shortSpeed, text.hudShortSpeed);
   const color = HUD_FAMILY_COLORS[index % HUD_FAMILY_COLORS.length] ?? HUD_COLORS.label;
   list.text(S.shortShot, ox + L.coopShotX, y, HUD_COLORS.pipLabel);
   const shotTop = directMaxLevel(family);
@@ -2138,6 +2596,8 @@ const HUD_PLAYER_FIELDS = 12;
 export class Hud {
   /** The sprite ids the HUD draws with. */
   readonly sprites: UiSprites;
+  /** The UI string table the HUD's words come from (M2-16). */
+  readonly text: UiText;
   /** How many times the list was rebuilt (tests, debug overlays). */
   builds = 0;
   /**
@@ -2168,9 +2628,11 @@ export class Hud {
    * Creates the HUD (use {@link createHud}).
    *
    * @param sprites - UI sprite ids.
+   * @param text - The UI string table.
    */
-  constructor(sprites: UiSprites) {
+  constructor(sprites: UiSprites, text: UiText) {
     this.sprites = sprites;
+    this.text = text;
   }
 
   /**
@@ -2259,7 +2721,7 @@ export class Hud {
     this.blink = blink;
     this.barFill = barFill;
     this.builds++;
-    buildHud(world, list, this.sprites, this.showBossHp);
+    buildHud(world, list, this.sprites, this.showBossHp, this.text);
     return true;
   }
 
@@ -2274,6 +2736,7 @@ export class Hud {
  * Creates a HUD with change detection.
  *
  * @param sprites - UI sprite ids ({@link resolveUiSprites}; default: none — rectangles only).
+ * @param text - The UI string table (default {@link DEFAULT_UI_TEXT}; M2-16).
  * @returns The HUD.
  *
  * @example
@@ -2283,6 +2746,6 @@ export class Hud {
  * hud.update(game.world, hudList); // rebuilds only on a change
  * ```
  */
-export function createHud(sprites: UiSprites = NO_SPRITES): Hud {
-  return new Hud(sprites);
+export function createHud(sprites: UiSprites = NO_SPRITES, text: UiText = DEFAULT_UI_TEXT): Hud {
+  return new Hud(sprites, text);
 }

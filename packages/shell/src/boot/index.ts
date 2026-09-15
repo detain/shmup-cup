@@ -69,6 +69,14 @@
  * before the sprite tables are resolved (`applyDisplayOptions`; explicit
  * {@link ShellOptions.effects} still win over the saved shake / flash settings).
  *
+ * **Controls and rebinding (M2-16).** Right after the saved profile, the shell hands the app the
+ * save's input settings ({@link ShellInputProfiles.customize}: the rebinding, SOCD and release
+ * debounce), and again on every `UserOption` `InputSettings` event. When the app offers
+ * {@link ShellInputProfiles.rebindable} / `customize` and the adapter the rebinding capture
+ * ({@link ShellInput.capture}, `beginCapture`, `endCapture` — `WebInput`'s), the scene flow gets
+ * the rebind screen's host side (`controls` — `createShellControls`: key names, capture, rebinding
+ * with conflict detection, reset; every change stored in the save and applied at once).
+ *
  * **Render interpolation (M2-08).** The frame loop feeds a refresh-rate probe (`frame-loop`
  * `createRefreshMonitor`, the interquartile mean of the recent rAF deltas); with
  * {@link ShellOptions.interpolation} `'auto'` (the default) the renderer interpolates while the
@@ -134,6 +142,7 @@ import {
   type GameConfig,
   type IAudio,
   type InputContext,
+  type InputOptions,
   type InputProfileChoice,
   type LoadedSave,
   type SaveStore,
@@ -169,6 +178,8 @@ import {
   createEventDispatcher,
   type EventDispatcher,
 } from '../dispatch/index.js';
+import type { CaptureKind, InputProfile } from '@shmup/input-web';
+import { createShellControls, type ShellCaptureInput } from '../controls/index.js';
 import type { DebugTools, DebugToolsFactory } from '../debug/index.js';
 import { createBootOverlay, formatIssues, type BootOverlay } from '../error-screen/index.js';
 import {
@@ -265,6 +276,24 @@ export interface ShellInputProfiles {
    *   instead); `'options'`: the player picked it in the Options screen.
    */
   apply(id: string, source: 'save' | 'options'): void;
+  /**
+   * Applies the player's input settings (M2-16 — the save's `options.input`: the rebinding, SOCD,
+   * the release debounce) to the key and gamepad profiles — `@shmup/input-web`
+   * `customizeInputProfile` of the profiles as written; later profile switches keep them. The shell
+   * calls it at boot (after the saved profile) and whenever the Options screen changes them.
+   * Optional: without it the settings are stored but not applied (and the rebind rows are off).
+   *
+   * @param settings - The save's `options.input`.
+   */
+  customize?(settings: InputOptions): void;
+  /**
+   * The profiles the rebind screen may rebind now, as the content wrote them (M2-16): the key
+   * profile in use, then the gamepad profile. Optional: without it (or without
+   * {@link ShellInputProfiles.customize} or the adapter's capture) REBIND KEYS / PAD are disabled.
+   *
+   * @returns The profiles.
+   */
+  rebindable?(): readonly InputProfile[];
 }
 
 /**
@@ -366,6 +395,19 @@ export interface ShellInput extends PlatformInput {
    * @param count - 2 during a co-op game, else 1.
    */
   setSeats?(count: number): void;
+  /**
+   * The rebinding capture's state (M2-16 — `WebInput.capture`). Optional: without it (and
+   * {@link ShellInput.beginCapture} / {@link ShellInput.endCapture}) the rebind rows are off.
+   */
+  readonly capture?: ShellCaptureInput['capture'];
+  /**
+   * Starts a rebinding capture (M2-16 — `WebInput.beginCapture`).
+   *
+   * @param kind - `'keys'` or `'buttons'`.
+   */
+  beginCapture?(kind: CaptureKind): void;
+  /** Ends a rebinding capture (M2-16 — `WebInput.endCapture`). */
+  endCapture?(): void;
   /** Removes the adapter's event listeners. */
   destroy(): void;
 }
@@ -839,8 +881,32 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
       profileChoices = profiles.choices();
       const savedProfile = save.options.input.profileId;
       if (savedProfile !== null) profiles.apply(savedProfile, 'save');
+      // The player's rebinding, SOCD and debounce (M2-16).
+      profiles.customize?.(save.options.input);
       activeProfile = profiles.active();
     }
+    // The rebind screen's host side (M2-16), when the app and the adapter support it.
+    const capture = input.capture;
+    const controls =
+      profiles !== null &&
+      profiles.customize !== undefined &&
+      profiles.rebindable !== undefined &&
+      capture !== undefined &&
+      input.beginCapture !== undefined &&
+      input.endCapture !== undefined
+        ? createShellControls({
+            save,
+            input: {
+              capture,
+              beginCapture: (kind) => input.beginCapture?.(kind),
+              endCapture: () => input.endCapture?.(),
+            },
+            profiles: {
+              rebindable: () => profiles.rebindable?.() ?? [],
+              customize: (settings) => profiles.customize?.(settings),
+            },
+          })
+        : null;
     game = createGame(
       platform,
       options.gameConfig ?? {},
@@ -853,6 +919,7 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
             inputProfiles: { choices: profileChoices, active: activeProfile },
             // The sound test's MUSIC row (M2-15): the library's titles, in library order.
             soundTest: { music: musicContent.tracks.map((track) => track.title) },
+            controls,
           }
         : {},
     );
@@ -943,6 +1010,10 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
           },
       (palette) => readyRenderer.setBulletPalette(palette),
       readyRenderer,
+      // SOCD, the release debounce or a rebinding (M2-16): the save holds them already.
+      profiles === null || profiles.customize === undefined
+        ? null
+        : () => profiles.customize?.(save.options.input),
     );
   } else if (flight !== null) {
     connectFxEvents(events, readyRenderer);

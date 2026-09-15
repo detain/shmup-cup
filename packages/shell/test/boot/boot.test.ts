@@ -7,6 +7,7 @@
  */
 import {
   Action,
+  CaptureStatus,
   MUSIC_CUES,
   SAVE_CORRUPT_KEY,
   SAVE_STORAGE_KEY,
@@ -19,6 +20,7 @@ import {
   volumeGain,
   type IAudio,
   type InputContext,
+  type InputOptions,
   type Platform,
   type RenderFrame,
 } from '@shmup/core';
@@ -599,15 +601,15 @@ describe('shell/boot failures (boot error screen)', () => {
   it('reports content from a foreign kind nobody owns, unless an owner accepts it', async () => {
     const foreign = [
       ...contentFiles,
-      // A kind a later step brings (the string tables of M2-16); `campaign` is the core's (M2-10).
-      { path: 'strings/en.strings.json', data: { formatVersion: 1, kind: 'strings' } },
+      // A kind nobody owns (`campaign` is the core's since M2-10, `strings` since M2-16).
+      { path: 'locale/fr.locale.json', data: { formatVersion: 1, kind: 'locale' } },
     ];
     await expect(boot({ contentFiles: foreign }).promise).rejects.toThrow(
-      /no loader for content kind "strings"/,
+      /no loader for content kind "locale"/,
     );
-    const owned = await boot({ contentFiles: foreign, contentOwners: { strings: () => [] } })
+    const owned = await boot({ contentFiles: foreign, contentOwners: { locale: () => [] } })
       .promise;
-    // The input profiles, fx presets and audio are validated by the shell; `strings` by the one
+    // The input profiles, fx presets and audio are validated by the shell; `locale` by the one
     // passed.
     expect(owned.content.foreign.map((file) => file.path)).toEqual([
       'audio/main.sfx.json',
@@ -636,7 +638,7 @@ describe('shell/boot failures (boot error screen)', () => {
       'audio/music/zone-i.music.json',
       'fx/particles.fx.json',
       'input/remote.input-profiles.json',
-      'strings/en.strings.json',
+      'locale/fr.locale.json',
     ]);
   });
 
@@ -1197,7 +1199,7 @@ describe('shell/boot the scene flow (M1-16, the default scene)', () => {
 
 describe('shell/boot saves and options (M1-17)', () => {
   /** A save document's text. */
-  const saveText = (doc: Record<string, unknown>): string => JSON.stringify({ version: 1, ...doc });
+  const saveText = (doc: Record<string, unknown>): string => JSON.stringify({ version: 2, ...doc });
 
   /**
    * The audio fake with its bus volumes recorded.
@@ -1664,5 +1666,84 @@ describe('shell/boot display options and render interpolation (M2-08)', () => {
     const off = await boot({ interpolation: 'off' }).promise;
     for (let i = 0; i < 40; i++) win.frame((now += 1000 / 144));
     expect(off.renderer.interpolation).toBe(false);
+  });
+});
+
+describe('shell/boot controls and rebinding (M2-16)', () => {
+  /**
+   * An app side of the profiles with the M2-16 hooks: the settings it was customised with.
+   *
+   * @returns The profiles and the settings log.
+   */
+  function customizingProfiles() {
+    const customized: InputOptions[] = [];
+    const profiles: ShellInputProfiles = {
+      choices: () => [{ id: 'keyboard-default', label: 'KEYBOARD (DEFAULT)' }],
+      active: () => 'keyboard-default',
+      apply: () => {},
+      customize: (settings) => customized.push(settings),
+      rebindable: () => [],
+    };
+    return { profiles, customized };
+  }
+
+  /** Gives the input fake the adapter's rebinding capture. */
+  function withCapture(): { begun: string[] } {
+    const begun: string[] = [];
+    const capture = { status: CaptureStatus.Idle as number, code: '', keyCode: 0, button: -1 };
+    Object.assign(input, {
+      capture,
+      beginCapture: (kind: string) => {
+        begun.push(kind);
+        capture.status = CaptureStatus.Waiting;
+      },
+      endCapture: () => {
+        capture.status = CaptureStatus.Idle;
+      },
+    });
+    return { begun };
+  }
+
+  it('applies the saved rebinding, SOCD and debounce at boot and on InputSettings events', async () => {
+    await platform.storage.set(
+      SAVE_STORAGE_KEY,
+      JSON.stringify({
+        version: 2,
+        options: {
+          input: {
+            socd: 'lastWins',
+            releaseDebounce: 3,
+            bindings: { 'keyboard-default': { game: { Shot: ['code:KeyJ'] } } },
+          },
+        },
+      }),
+    );
+    withCapture();
+    const { profiles, customized } = customizingProfiles();
+    const shell = await boot({ scene: 'game', inputProfiles: profiles }).promise;
+    expect(customized).toHaveLength(1);
+    expect(customized[0]).toMatchObject({
+      socd: 'lastWins',
+      releaseDebounce: 3,
+      bindings: { 'keyboard-default': { game: { Shot: ['code:KeyJ'] } } },
+    });
+    shell.game.events.push(SimEventKind.UserOption, UserOptionKind.InputSettings, 0, 0, 0);
+    win.frame(1000);
+    expect(customized).toHaveLength(2);
+    expect(customized[1]).toBe(shell.save.options.input);
+  });
+
+  it('hands the scene flow a controls setup only when the app and the adapter support rebinding', async () => {
+    const plain = await boot({ scene: 'game', inputProfiles: customizingProfiles().profiles })
+      .promise;
+    // The input fake has no capture: REBIND KEYS / PAD are off.
+    expect(plain.game.scenes!.controlsPage.deviceIndex(false)).toBe(-1);
+    plain.stop();
+    const { begun } = withCapture();
+    const { profiles } = customizingProfiles();
+    const shell = await boot({ scene: 'game', inputProfiles: profiles }).promise;
+    // The app's rebindable list is empty: still no device — but the setup is there.
+    expect(shell.game.scenes!.controlsPage.deviceIndex(false)).toBe(-1);
+    expect(begun).toEqual([]);
   });
 });

@@ -702,14 +702,20 @@ describe('tizen/boot saves and the Options screen (M1-17 edge)', () => {
     tap(40); // SFX
     tap(37); // 10 → 9
     tap(37); // → 8
-    tap(40); // CONTROLS
-    tap(39); // → FAST 8-WAY (applied live)
+    tap(40); // CONTROLS (M2-16: a page)
+    tap(13);
+    frames(2);
+    expect(flow.stack.top?.id).toBe('controls');
+    tap(39); // PROFILE → FAST 8-WAY (applied live)
     expect(first.app.input.keyProfile?.id).toBe('tizen-remote-diagonal');
-    expect(win.stored.has('shmup-cup:save.v1')).toBe(false); // written when the screen closes
-    win.key('keydown', 10009); // Back: save and close (never an exit here)
-    frames(2);
-    win.key('keyup', 10009);
-    frames(2);
+    expect(win.stored.has('shmup-cup:save.v1')).toBe(false); // written when a screen closes
+    for (let i = 0; i < 2; i++) {
+      // Back: the page, then the Options screen — each stores and closes (never an exit here).
+      win.key('keydown', 10009);
+      frames(2);
+      win.key('keyup', 10009);
+      frames(2);
+    }
     expect(flow.stack.top?.id).toBe('title');
     expect(win.exits).toBe(0);
     await flush();

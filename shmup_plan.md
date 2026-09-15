@@ -3526,6 +3526,82 @@ Goal of the milestone: every **[P1]** feature. Steps are ordered so systems land
 - **Acceptance:** capture/conflict/reset tests, profile overrides persisted and applied, v1 → v2 migration, every option
   reaches its consumer (sim config or presentation), strings table covers every UI label.
 - **Refs:** `shmup_feat.md` §4 (rebinding, SOCD, autofire), §21 (options, accessibility).
+- **As built:**
+  - **Options screen regrouped.** Root: MASTER / MUSIC / SFX sliders, then the pages CONTROLS / DISPLAY / GAME, BACK
+    (`OptionsItem` Master 0 … Controls 3, Display 4, Game 5, Back 6). The M1-17 profile row moved to the CONTROLS page,
+    the M2-02 / M2-08 / M2-09 display rows to the DISPLAY page (`DisplayItem`); every test and e2e spec that navigated
+    the old flat screen was updated. Each page is an overlay scene (`controls`, `display`, `gameOptions`, plus `rebind`
+    and `inputTest`) that stores its group into the save when it closes; the root stores the volumes.
+  - **CONTROLS page** (`ControlsScene`, `ControlsItem`): PROFILE (live, as before), AUTOFIRE `ALWAYS / TOGGLE / HOLD`,
+    RATE (`AUTOFIRE_INTERVALS` 8 … 2 ticks, shown as shots a second), SOCD `PROFILE / NEUTRAL / LAST WINS`, DEBOUNCE
+    `AUTO / 0 … 10 TICKS` (the "advanced debounce slider" is a choice with the profile's value first), REBIND KEYS,
+    REBIND PAD, INPUT TEST, BACK. AUTOFIRE is disabled on a remote-mode host (the TV: the remote has no fire button).
+    SOCD / DEBOUNCE are stored at once and pushed as the new `UserOptionKind.InputSettings` (10); the host re-applies
+    the save's `options.input`.
+  - **Autofire modes are sim config.** `GameConfig.autofireMode` (`AUTOFIRE_MODES`, default `always`) joins the existing
+    `autofire` boolean (kept — `false` still means hold-to-fire, so the many tests using it stay valid) and
+    `autofireInterval` (the rate). `toggle` flips a per-player `WeaponSystem.firing` switch on each Shot press (on at the
+    start; Sub held still fires missiles), hashed **only in the toggle mode**, so every golden replay's hashes are
+    unchanged. `remoteMode` still forces always. Replay headers record the mode (format unchanged: a missing key is the
+    default).
+  - **GAME page** (`GameOptionsScene`, `GameOptionsItem`): DIFFICULTY, LIVES `PRESET / 1–5`, PENALTY `PRESET / ARCADE /
+    CLASSIC / CASUAL`, AUTO POWER, MAGNET, ONE BUTTON. They are sim-affecting, so they live in the save's new
+    `options.game` (`UserGameOptions`, `null` = the host config's / the preset's) and the flow folds them — with the
+    controls' autofire mode and rate — into every difficulty's config (`core/config` `userGameOverrides` /
+    `withUserGameOptions`, applied in the flow's `rearm`: the next game or a RETRY STAGE, never the World in play — a
+    replay header records the result). The one-button preset forces autofire always, Auto Power-Up and the casual
+    penalty (their rows are disabled while it is on). The difficulty menu's choice is remembered in the save
+    (`options.game.difficulty` — M2-01's "saved with the options of M2-16"); the weapon select's loadout and the ship
+    choice stay session-only (not listed in this step's deliverables).
+  - **Rebinding.** Overrides are stored per profile and context as `core/config` `BindingOverrides` (action → its whole
+    key set as binding tokens `code:<code>` / `key:<keyCode>` / `button:<index>`, `BINDING_TOKEN_PATTERN`; ≤ 16
+    profiles, ≤ 4 tokens an action, read defensively by `resolveBindingOverrides`). The logic lives in
+    `@shmup/input-web` `rebind` (→ implemented): `rebindAction` (conflict detection: a key another action has is
+    **moved**, or the two **swap** keys when the other had only that one; **refused** when a required action would end
+    up keyless; **rejected** for a key the device cannot hold or a reserved one), `resetBindings`, `applyBindingOverride`
+    / `customizeInputProfile` (with SOCD and debounce; an override that would leave a required action unbound keeps the
+    content's table — never a lock-out), `findBindingConflicts`, `captureToken`, `bindingTokenLabel` /
+    `bindingKeysLabel` (key names in the bitmap font). Escape and the remote's Back (`RESERVED_BINDING_TOKENS`) cancel a
+    capture and never move. Capture: `WebInput.beginCapture('keys' | 'buttons')` / `capture` / `endCapture` (a
+    `KeyCapture` in the keyboard source catches the next *new* key — a remote's fake keyup/keydown pair does not count —
+    and `poll()` catches the lowest newly pressed pad button). Devices = the key profile in use and the gamepad profile
+    ("each gamepad" = the one gamepad profile every pad uses; the split keyboard's player-2 half is not rebindable).
+  - **Core rebind widget** (`core/ui`: `RebindPanel`, `rebindTick`, `drawRebindPanel`, `RebindEvent`, `RebindStatus`,
+    `CaptureStatus`, `REBINDABLE_ACTIONS`, `REBIND_CAPTURE_TICKS` 300): MODE (GAME / MENU), one row per action with its
+    keys, RESET, DONE, the capture prompt with a draining bar and a message line. `RebindScene` drives it through the new
+    `SceneFlowHost.controls` (`ControlsSetup`: devices, key labels, capture, bind, reset — `GameOptions.controls`), which
+    `@shmup/shell`'s new module `controls` (`createShellControls`) implements over the app's profiles and the adapter;
+    the apps gained `ShellInputProfiles.customize` / `rebindable` (they keep the profiles as written and apply them
+    customised). After a capture the rows wait for a release (≤ 60 ticks), so the captured key never acts on the menu.
+  - **Input test** (`InputTestScene`): the gameplay binding context, every game action lit while held (and 8 ticks
+    after a press), the device, **hold Pause 1 s** to leave (every other key does what it does in a game).
+  - **Save v2.** `SAVE_VERSION` 2 (the storage key stays `save.v1` — the format family's). The 1 → 2 migration adds the
+    controls fields and `options.game` unset and **moves the co-op / practice rows** older builds kept in one-player
+    tables (the move `sanitizeSave` did on every read since M2-15 — the sanitiser no longer does it). Fixture
+    `test/save/fixtures/save-v1.json`.
+  - **String table.** The file is `content/strings/en.strings.json` (the content naming rule `<name>.<kind>.json`), new
+    core kind `strings` (`ContentDb.uiStrings`, `UiStringsSpec`: known ids only, the bitmap font's glyphs only, 1–48
+    characters, one table per language). `core/ui/strings.ts` holds the built-in English `DEFAULT_UI_TEXT` (290 ids,
+    `sfx.<Cue>` names generated from `SFX_CUE_NAMES`), `resolveUiText` (a content table over English), `formatUiText`
+    (`{0}` / `{1}`). Every scene and the UI kit / HUD draw from `SceneFlow.text` (the content's `en` table) — builders
+    take an optional table, `createHud(sprites, text)` — and the label lists come from `buildSceneLabels`; the exported
+    English label constants stay (derived from the table). `pnpm content:check` keeps `en.strings.json` equal to the
+    built-in table and a source scan (`core/test/ui/ui-strings.test.ts`) fails on any upper-case literal in the scenes /
+    UI kit outside it. The shell's DOM loading / error screens (before the game exists) are not in the table.
+  - **Budgets.** UI string slots 384 → 512. The Tizen `app.js` grew to ≈ 358 KB gzip (the two string tables ≈ 6 KB,
+    the pages / rebinding ≈ 9 KB): `APP_JS_GZIP_BUDGET` 350 → **384 KB** (M2-18's boot-time check still guards launch).
+    `drawRebindPanel` reads precomputed slot counts: `for … of` over arrays allocated iterator objects on every redraw
+    (the allocation guard caught ~600 bytes a redraw).
+  - **Goldens re-blessed** (`pnpm golden:update`): only the replay headers changed — every file gained
+    `"autofireMode": "always"`; every hash, tick count and outcome is identical (the simulation is unchanged).
+  - **Tests.** Core: `config-game-options`, `save-v2` (+ updated save tests), `weapons-autofire-modes`, `data-strings`,
+    `ui-strings` (table, coverage scan, a flow on a content table), `scenes-controls` (CONTROLS / GAME pages, the
+    rebind screen over a fake host, the input test), `scenes-options-pages-alloc` and `scenes-input-test-alloc`
+    guards, the regrouped `scenes-options*` suites. input-web: `rebind-rebinding` (capture tokens, bind / move / swap /
+    refuse / reject, reset, customise, conflicts, labels). Shell: `controls` (a real `WebInput` capture → bind → save →
+    applied), boot wiring. Integration: the en table equals the built-in one. E2E: `rebind.spec.ts` (web: SHOT → J,
+    saved, the input test, applied after a reload; Tizen from disk: POWER-UP ↔ CH− swap kept across a relaunch) and
+    the updated options / display-options / bullet-palette specs.
 
 ### M2-17 — Platform polish: Electron, Tizen extras, storage
 

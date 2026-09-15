@@ -197,6 +197,12 @@ export const UserOptionKind = {
   ShowHitbox: 8,
   /** BOSS HP (M2-09): `param` = 1 (draw the boss HP bar in the top HUD bar) or 0 (hide it). */
   BossHpBar: 9,
+  /**
+   * The input side of the controls changed (M2-16: SOCD, the release debounce, a rebinding or a
+   * reset): the host re-applies the save's `options.input` (already stored — `core/save`
+   * `SaveStore.options`) to its input adapter; `param` is unused (0).
+   */
+  InputSettings: 10,
 } as const;
 
 /** A {@link UserOptionKind} code. */

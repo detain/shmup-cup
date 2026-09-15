@@ -34,6 +34,12 @@ export {
   type ShellScene,
 } from './boot/index.js';
 export {
+  createShellControls,
+  type ShellCaptureInput,
+  type ShellControlsOptions,
+  type ShellRebindProfiles,
+} from './controls/index.js';
+export {
   AssetLoadError,
   DEFAULT_CONTENT_OWNERS,
   loadGameContent,

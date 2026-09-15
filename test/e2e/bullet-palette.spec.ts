@@ -137,9 +137,14 @@ test.describe('colour-blind bullet palettes (web build)', () => {
     await tap(page, 'Enter');
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'options');
     await waitFrames(page, 4);
-    for (let i = 0; i < 4; i++) await tap(page, 'ArrowDown'); // MUSIC, SFX, CONTROLS, BULLETS
+    for (let i = 0; i < 4; i++) await tap(page, 'ArrowDown'); // MUSIC, SFX, CONTROLS, DISPLAY
+    await tap(page, 'Enter'); // the DISPLAY page (M2-16), BULLETS first
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'display');
+    await waitFrames(page, 4);
     await tap(page, 'ArrowRight'); // STANDARD → DEUTERANOPIA
-    await tap(page, 'Escape'); // Back: save and close
+    await tap(page, 'Escape'); // Back: save and close the page
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'options');
+    await tap(page, 'Escape'); // Back: the Options screen
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
     await expect.poll(() => storedPalette(page)).toBe('deuteranopia');
 

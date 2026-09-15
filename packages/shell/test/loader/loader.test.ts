@@ -180,8 +180,9 @@ describe('shell/loader loadGameContent', () => {
         path: 'input/remote.input-profiles.json',
         data: { formatVersion: 1, kind: 'input-profiles' },
       },
-      { path: 'strings/en.strings.json', data: { formatVersion: 1, kind: 'strings' } },
-      { path: 'strings/fr.strings.json', data: { formatVersion: 1, kind: 'strings' } },
+      // A kind nobody owns (`strings` became the core's in M2-16).
+      { path: 'locale/en.locale.json', data: { formatVersion: 1, kind: 'locale' } },
+      { path: 'locale/fr.locale.json', data: { formatVersion: 1, kind: 'locale' } },
     ];
     const seen: string[][] = [];
     const result = loadGameContent(files, {
@@ -195,8 +196,8 @@ describe('shell/loader loadGameContent', () => {
     expect(seen).toEqual([['input/remote.input-profiles.json']]);
     expect(result.issues).toEqual([
       { path: 'input/remote.input-profiles.json:profiles[0]', message: 'bad profile' },
-      { path: 'strings/en.strings.json', message: 'no loader for content kind "strings"' },
-      { path: 'strings/fr.strings.json', message: 'no loader for content kind "strings"' },
+      { path: 'locale/en.locale.json', message: 'no loader for content kind "locale"' },
+      { path: 'locale/fr.locale.json', message: 'no loader for content kind "locale"' },
     ]);
     expect(result.foreign).toHaveLength(3);
   });

@@ -156,7 +156,8 @@ async function storedDisplay(page: Page): Promise<Record<string, unknown> | null
 }
 
 /**
- * Opens the title, then the Options screen through the title menu, and moves down to SCALE.
+ * Opens the title, then the Options screen through the title menu, its DISPLAY page (M2-16) and
+ * moves down to SCALE.
  *
  * @param page - The page.
  */
@@ -172,8 +173,12 @@ async function openScaleRow(page: Page): Promise<void> {
   await tap(page, 'Enter');
   await expect(canvas).toHaveAttribute('data-shmup-scene', 'options');
   await waitFrames(page, 4); // the menu's open lock
-  // MUSIC, SFX, CONTROLS, BULLETS, SCALE.
-  for (let i = 0; i < 5; i++) await tap(page, 'ArrowDown');
+  // MUSIC, SFX, CONTROLS, DISPLAY (M2-16: the display options' page).
+  for (let i = 0; i < 4; i++) await tap(page, 'ArrowDown');
+  await tap(page, 'Enter');
+  await expect(canvas).toHaveAttribute('data-shmup-scene', 'display');
+  await waitFrames(page, 4);
+  await tap(page, 'ArrowDown'); // BULLETS → SCALE
 }
 
 /**
@@ -244,8 +249,10 @@ test.describe('display options through the Options screen (web build)', () => {
       screenShake: false,
       reduceFlashing: true,
     });
-    expect(await storedDisplay(page)).toBeNull(); // written when the screen closes
-    await tap(page, 'Escape'); // Back: save and close
+    expect(await storedDisplay(page)).toBeNull(); // written when the page closes
+    await tap(page, 'Escape'); // Back: save and close the page
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-scene', 'options');
+    await tap(page, 'Escape'); // Back: the Options screen
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-scene', 'title');
     await expect
       .poll(() => storedDisplay(page))
@@ -306,7 +313,9 @@ test.describe('display options through the Options screen (Tizen build from file
     await tap(page, 'ArrowDown'); // HITBOX
     await tap(page, 'Enter'); // OK flips it ON
     expect(await rendererDisplay(page)).toMatchObject({ scaleMode: 'fit', showHitbox: true });
-    await remoteTap(page, 10009); // Back: save and close — never an exit here
+    await remoteTap(page, 10009); // Back: save and close the page
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-scene', 'options');
+    await remoteTap(page, 10009); // Back: the Options screen — never an exit here
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-scene', 'title');
     await expect.poll(async () => (await storedDisplay(page))?.scaleMode).toBe('fit');
     expect((await storedDisplay(page))?.showHitbox).toBe(true);

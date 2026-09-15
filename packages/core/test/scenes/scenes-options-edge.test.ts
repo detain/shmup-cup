@@ -7,7 +7,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import type { InputProfileChoice } from '../../src/config/index.js';
+import { DEFAULT_USER_OPTIONS, type InputProfileChoice } from '../../src/config/index.js';
 import { loadContent, type ContentDb } from '../../src/data/index.js';
 import { SFX_CUES, SimEventKind, UserOptionKind } from '../../src/events/index.js';
 import { createGame, type Game } from '../../src/game/index.js';
@@ -27,6 +27,7 @@ import {
   type SaveStore,
 } from '../../src/save/index.js';
 import {
+  ControlsItem,
   GAME_OVER_DELAY_TICKS,
   GAME_OVER_LOCK_TICKS,
   HI_SCORE_LOCK_TICKS,
@@ -167,6 +168,14 @@ class Session {
     expect(this.flow.options.menu.focus).toBe(item);
   }
 
+  /** From the Options screen: focuses CONTROLS and opens the page (M2-16), past its lock. */
+  openControls(): void {
+    this.focus(OptionsItem.Controls);
+    this.press(Action.Confirm);
+    this.hold(0, 2);
+    expect(this.ids[this.ids.length - 1]).toBe('controls');
+  }
+
   /**
    * Enters `A` in the name entry of a new hi-score (M2-15: OK four times — the entry's lock, then
    * OK past the empty letters and on END), then leaves the table after its lock: the title.
@@ -284,8 +293,8 @@ describe('core/scenes options (edge): opening and closing', () => {
     expect(s.ids).toEqual(['game', 'pause', 'options']);
     s.focus(OptionsItem.Sfx);
     s.press(Action.Left); // SFX 9
-    // Past CONTROLS, BULLETS (M2-02), the display rows (M2-08) and BOSS HP (M2-09).
-    for (let i = 0; i < 8; i++) s.press(Action.Down);
+    // Past the CONTROLS, DISPLAY and GAME pages (M2-16).
+    for (let i = 0; i < 4; i++) s.press(Action.Down);
     expect(s.flow.options.menu.focus).toBe(OptionsItem.Back);
     s.press(Action.Confirm);
     expect(s.ids).toEqual(['game', 'pause']);
@@ -313,18 +322,7 @@ describe('core/scenes options (edge): opening and closing', () => {
     s.press(Action.Back);
     expect(s.ids).toEqual(['title']);
     expect(s.sounds(from)).toEqual([SFX_CUES.MenuBack]);
-    expect(save.options).toEqual({
-      audio: { master: 10, music: 10, sfx: 10 },
-      input: { profileId: null },
-      display: {
-        bulletPalette: 'standard',
-        scaleMode: 'integer',
-        screenShake: true,
-        reduceFlashing: false,
-        showHitbox: false,
-        bossHpBar: false,
-      },
-    });
+    expect(save.options).toEqual(DEFAULT_USER_OPTIONS);
   });
 
   it('re-reads the save on every open and focuses MASTER again', () => {
@@ -342,11 +340,11 @@ describe('core/scenes options (edge): opening and closing', () => {
     expect(o.menu.focus).toBe(OptionsItem.Master);
   });
 
-  it('shows the chosen profile label and updates it when CONTROLS changes', () => {
+  it('shows the chosen profile label and updates it when PROFILE changes', () => {
     const s = new Session(createSaveStore(null));
     s.openFromTitle();
+    s.openControls();
     expect(s.uiTexts()).toContain('KEYBOARD (DEFAULT)');
-    s.focus(OptionsItem.Controls);
     s.press(Action.Right);
     const texts = s.uiTexts();
     expect(texts).toContain('KEYBOARD AS REMOTE');
@@ -380,27 +378,29 @@ describe('core/scenes options (edge): sliders and profiles', () => {
     expect(s.save.options.audio.music).toBe(0);
   });
 
-  it('a single profile: CONTROLS is enabled but never changes, and OK on it is silent', () => {
+  it('a single profile: PROFILE is enabled but never changes, and OK on it is silent', () => {
     const s = new Session(createSaveStore(null), {
       profiles: { choices: [PROFILES[0]], active: PROFILES[0].id },
     });
     s.openFromTitle();
-    expect(s.flow.options.menu.enabled(OptionsItem.Controls)).toBe(true);
-    s.focus(OptionsItem.Controls);
+    s.openControls();
+    const page = s.flow.controlsPage;
+    expect(page.menu.enabled(ControlsItem.Profile)).toBe(true);
+    expect(page.menu.focus).toBe(ControlsItem.Profile);
     const from = s.events.length;
     s.press(Action.Left);
     s.press(Action.Right);
     s.press(Action.Confirm);
     expect(s.options(from)).toEqual([]);
     expect(s.sounds(from)).toEqual([]);
-    expect(s.ids).toEqual(['title', 'options']);
+    expect(s.ids).toEqual(['title', 'options', 'controls']);
   });
 
   it('a profile stepped away and back is applied live but not stored', () => {
     const save = createSaveStore(null);
     const s = new Session(save);
     s.openFromTitle();
-    s.focus(OptionsItem.Controls);
+    s.openControls();
     const from = s.events.length;
     s.press(Action.Right);
     s.press(Action.Left);
@@ -418,13 +418,13 @@ describe('core/scenes options (edge): sliders and profiles', () => {
     const s = new Session(save, { profiles: { choices: PROFILES, active: 'gone-profile' } });
     expect(s.flow.activeInputProfile).toBe(-1);
     s.openFromTitle();
-    expect(s.flow.options.controls.index).toBe(0);
+    s.openControls();
+    expect(s.flow.controlsPage.profile.index).toBe(0);
     s.press(Action.Back);
     expect([save.options.input.profileId, s.flow.activeInputProfile]).toEqual([null, -1]);
     s.hold(0, 3);
-    s.press(Action.Confirm);
+    s.press(Action.Confirm); // CONTROLS again (the Options screen kept its focus)
     s.hold(0, 2);
-    s.focus(OptionsItem.Controls);
     s.press(Action.Right);
     expect(s.flow.activeInputProfile).toBe(1);
     s.press(Action.Back);
@@ -437,11 +437,12 @@ describe('core/scenes options (edge): sliders and profiles', () => {
     expect(s.flow.inputProfiles).toBe(PROFILES);
   });
 
-  it('an empty choice list disables CONTROLS like no profiles at all', () => {
+  it('an empty choice list disables PROFILE like no profiles at all', () => {
     const s = new Session(createSaveStore(null), { profiles: { choices: [], active: null } });
     s.openFromTitle();
-    expect(s.flow.options.menu.enabled(OptionsItem.Controls)).toBe(false);
-    expect(s.flow.options.controls.labels).toEqual(['DEFAULT']);
+    s.openControls();
+    expect(s.flow.controlsPage.menu.enabled(ControlsItem.Profile)).toBe(false);
+    expect(s.flow.controlsPage.profile.labels).toEqual(['DEFAULT']);
   });
 });
 

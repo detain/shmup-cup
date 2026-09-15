@@ -37,6 +37,7 @@ import {
   DEFAULT_BOSS_BEHAVIORS,
   DEFAULT_DIFFICULTY_TABLE,
   DEFAULT_SCORING_RULES,
+  DEFAULT_UI_TEXT,
   DIFFICULTY_PRESETS,
   ENGINE_SPRITES,
   EnemyState,
@@ -47,6 +48,7 @@ import {
   RunFlag,
   SFX_CUE_NAMES,
   TerrainType,
+  UI_TEXT_IDS,
   WARNING_PULSE_TICKS,
   checkEnemyBehaviors,
   checkWeaponBehaviors,
@@ -310,6 +312,8 @@ describe('integration: content/ validates', () => {
       campaign: ['campaign'],
       // The attract loop's demos (M2-15): replay recordings.
       demos: ['replay'],
+      // The UI string tables (M2-16).
+      strings: ['strings'],
       input: ['input-profiles'],
       fx: ['fx'],
       // The SFX bank next to the music folder (audio/main.sfx.json, audio/music/*.music.json).
@@ -407,6 +411,18 @@ describe('integration: content/ validates', () => {
     const sentry = db.enemies[db.enemyIndex.get('sentry') ?? -1];
     expect(sentry?.script).toBe('pattern.loop');
     expect(bank.actions[sentry?.patternId ?? -1]).toBe('common.spiral');
+  });
+
+  it('ships the English UI string table (M2-16), equal to the built-in one, every id present', () => {
+    const { db } = loadContent(shippedFiles);
+    const en = db.uiStrings.find((table) => table.language === 'en');
+    expect(en).toBeDefined();
+    expect(Object.keys(en?.strings ?? {})).toEqual(UI_TEXT_IDS);
+    expect(en?.strings).toEqual(DEFAULT_UI_TEXT);
+    // The example is a partial translation: its ids are known, the rest falls back to English.
+    const example = loadContent(read(['strings/example.strings.json']));
+    expect(example.issues).toEqual([]);
+    expect(example.db.uiStrings[0]?.language).toBe('fr');
   });
 
   it('ships the difficulty presets of plan M2-01, equal to the built-in table', () => {

@@ -103,10 +103,13 @@
  *
  * **Autofire** (shmup_feat.md §4 rule 1). While a ship is `alive`, every shooter fires its main
  * weapon whenever its timer allows (every `config.autofireInterval` ticks, or the weapon's
- * `refireTicks`) and its cap has room, if `config.autofire || config.remoteMode` or the player
- * holds `Shot`; missiles likewise every `config.missileInterval` ticks when equipped and
- * `autofire || remoteMode || held(Sub)`. Firing pushes the weapon's SFX cue, at most once every
- * {@link SFX_RATE_TICKS} ticks per cue.
+ * `refireTicks`) and its cap has room, if firing needs no button (`remoteMode`, or `autofire` with
+ * the `'always'` {@link GameConfig.autofireMode}) or the player holds `Shot`; missiles likewise
+ * every `config.missileInterval` ticks when equipped and without a button or with `Sub` held. In
+ * the `'toggle'` mode (M2-16) each `Shot` press flips the player's firing
+ * ({@link WeaponSystem.firing}, on at the start; hashed only in that mode) and a player whose
+ * firing is on fires as if no button were needed. Firing pushes the weapon's SFX cue, at most once
+ * every {@link SFX_RATE_TICKS} ticks per cue.
  *
  * **Frames.** Shots live in world pixels and ride the camera like enemy bullets (`x += camera.dx`
  * every tick), so their on-screen speed does not depend on the scroll; a sliding missile re-snaps
@@ -995,6 +998,12 @@ export interface WeaponSystem {
    */
   readonly freeWayHeading: Int32Array;
   /**
+   * Per player: 1 while the `'toggle'` autofire mode's firing is on (M2-16 — each `Shot` press
+   * flips it in phase 2; every player starts on), 0 while off. Unused (and not hashed) in the other
+   * modes.
+   */
+  readonly firing: Uint8Array;
+  /**
    * Live shots per shooter and role, `[shooter × WEAPON_ROLE_SLOTS + role]` (recounted at the
    * start of phase 2, raised by every shot fired; the Direct-mode roles after the meter ones).
    */
@@ -1468,6 +1477,8 @@ class WeaponSystemImpl implements WeaponSystem {
   readonly timers = new Int32Array(MAX_SHOOTERS * 2);
   /** See {@link WeaponSystem.freeWayHeading}. */
   readonly freeWayHeading = new Int32Array(MAX_PLAYERS).fill(-1);
+  /** See {@link WeaponSystem.firing}. */
+  readonly firing = new Uint8Array(MAX_PLAYERS).fill(1);
   /** See {@link WeaponSystem.liveCounts}. */
   readonly liveCounts = new Int32Array(MAX_SHOOTERS * WEAPON_ROLE_SLOTS);
   /** See {@link WeaponSystem.direct}. */
@@ -1502,8 +1513,10 @@ class WeaponSystemImpl implements WeaponSystem {
   private readonly sfxTicks: Float64Array;
   /** The role tables. */
   private readonly roles = new RoleTables();
-  /** Whether firing needs no button (`autofire || remoteMode`). */
+  /** Whether firing needs no button (`remoteMode`, or `autofire` in the `'always'` mode). */
   private readonly alwaysFire: boolean;
+  /** Whether `Shot` presses toggle firing (`autofire` in the `'toggle'` mode, no remote mode). */
+  private readonly toggleFire: boolean;
   /** The option sprite id (-1 = not drawn). */
   private readonly optionSprite: number;
   /** The Spread Bomb blast's sprite id (-1 = not drawn). */
@@ -1606,7 +1619,9 @@ class WeaponSystemImpl implements WeaponSystem {
       (id) => roleOfWeapon.get(id) ?? -1,
       host.config,
     );
-    this.alwaysFire = host.config.autofire || host.config.remoteMode;
+    const config = host.config;
+    this.alwaysFire = config.remoteMode || (config.autofire && config.autofireMode === 'always');
+    this.toggleFire = !config.remoteMode && config.autofire && config.autofireMode === 'toggle';
     this.optionSprite = content.sprites.index.get(OPTION_SPRITE) ?? -1;
     this.blastSprite = content.sprites.index.get(SPREAD_BLAST_SPRITE) ?? -1;
     this.sfxTicks = new Float64Array(SFX_CUE_NAMES.length).fill(-Infinity);
@@ -1757,13 +1772,17 @@ class WeaponSystemImpl implements WeaponSystem {
         }
       }
       const held = p < intents.length ? intents[p].held : 0;
+      // The toggle mode (M2-16): a Shot press flips the player's firing.
+      if (this.toggleFire && p < intents.length && (intents[p].pressed & Action.Shot) !== 0) {
+        this.firing[p] = this.firing[p] === 1 ? 0 : 1;
+      }
+      const free = this.alwaysFire || (this.toggleFire && this.firing[p] === 1);
       if (this.direct) {
-        this.fireDirect(p, held, 1 + group.count);
+        this.fireDirect(p, held, 1 + group.count, free);
         continue;
       }
-      const wantMain = this.alwaysFire || (held & Action.Shot) !== 0;
-      const wantSub =
-        missileReady && loadout.missile && (this.alwaysFire || (held & Action.Sub) !== 0);
+      const wantMain = free || (held & Action.Shot) !== 0;
+      const wantSub = missileReady && loadout.missile && (free || (held & Action.Sub) !== 0);
       if (!wantMain && !wantSub) continue;
       const main = this.mainRole(loadout.main);
       const base = p * SHOOTERS_PER_PLAYER;
@@ -1789,20 +1808,22 @@ class WeaponSystemImpl implements WeaponSystem {
 
   /**
    * Direct-mode firing of one alive player's shooters (M2-05): the main family's level volley and
-   * the sub family's, each when its timer allows and it is wanted (`autofire || remoteMode`, or
-   * `Shot` / `Sub` held); a volley that fired restarts its timer with the level's interval.
+   * the sub family's, each when its timer allows and it is wanted (no button needed, or `Shot` /
+   * `Sub` held); a volley that fired restarts its timer with the level's interval.
    *
    * @param p - Player slot.
    * @param held - The player's held actions.
    * @param shooters - The ship plus its Options in play.
+   * @param free - Whether firing needs no button (the `'always'` mode, remote mode, or the
+   *   `'toggle'` mode with the player's firing on — M2-16).
    */
-  private fireDirect(p: number, held: number, shooters: number): void {
+  private fireDirect(p: number, held: number, shooters: number, free: boolean): void {
     const loadout = this.loadouts[p];
     const ship = this.host.players[p];
     const group = this.options[p];
     const timers = this.timers;
-    const wantMain = this.alwaysFire || (held & Action.Shot) !== 0;
-    const wantSub = this.subIndex >= 0 && (this.alwaysFire || (held & Action.Sub) !== 0);
+    const wantMain = free || (held & Action.Shot) !== 0;
+    const wantSub = this.subIndex >= 0 && (free || (held & Action.Sub) !== 0);
     const mains = this.mainFamilies.length;
     const family = mains > 0 ? (loadout.family >= 0 ? loadout.family % mains : 0) : -1;
     const base = p * SHOOTERS_PER_PLAYER;

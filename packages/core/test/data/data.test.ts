@@ -138,6 +138,7 @@ describe('core/data module', () => {
       'patterns',
       'campaign',
       'replay',
+      'strings',
     ]);
     expect(isContentKind('weapons')).toBe(true);
     expect(isContentKind('replay')).toBe(true);

@@ -15,7 +15,7 @@
  * - `-0` leaked out of the defensive parsing (volume levels, statistics counters).
  */
 import { describe, expect, it } from 'vitest';
-import { resolveGameConfig } from '../../src/config/index.js';
+import { DEFAULT_USER_OPTIONS, resolveGameConfig } from '../../src/config/index.js';
 import { createMemoryStorage, type PlatformStorage } from '../../src/platform/index.js';
 import {
   DEFAULT_HI_SCORE_NAME,
@@ -219,6 +219,7 @@ describe('core/save migrateSave (edge)', () => {
   it('parseSave sanitises whatever a custom migration returns', () => {
     const garbage: SaveMigration[] = [
       { from: 0, to: 1, migrate: () => ({ options: 5, hiScores: [1, 2], stats: 'x' }) },
+      { from: 1, to: 2, migrate: (doc) => ({ ...doc }) },
     ];
     expect(parseSave('{}', garbage)).toEqual({
       data: createDefaultSave(),
@@ -241,7 +242,7 @@ describe('core/save parseSave (edge)', () => {
 
   it('never lets __proto__ keys reach a prototype', () => {
     const text =
-      '{"version":1,"__proto__":{"polluted":1},' +
+      '{"version":2,"__proto__":{"polluted":1},' +
       '"options":{"__proto__":{"audio":{"music":0}}},' +
       '"hiScores":{"__proto__":[{"score":5}],"meter-normal":[{"score":7,"__proto__":{"x":1}}]}}';
     const parsed = parseSave(text);
@@ -361,9 +362,20 @@ describe('core/save serialisation (edge)', () => {
       },
       stats: { stagesCleared: 3, gameOvers: 2, gamesStarted: 1, extra: 6 },
     } as unknown as SaveData;
-    expect(serializeSave(data)).toBe(
-      '{"version":1,"options":{"audio":{"master":1,"music":2,"sfx":3},' +
-        '"input":{"profileId":"keyboard-default"},"display":{}},"hiScores":{},' +
+    const full = {
+      ...data,
+      options: {
+        ...data.options,
+        input: { ...DEFAULT_USER_OPTIONS.input, ...data.options.input },
+        game: DEFAULT_USER_OPTIONS.game,
+      },
+    } as unknown as SaveData;
+    expect(serializeSave(full)).toBe(
+      '{"version":2,"options":{"audio":{"master":1,"music":2,"sfx":3},' +
+        '"input":{"profileId":"keyboard-default","autofire":null,"autofireInterval":null,' +
+        '"socd":null,"releaseDebounce":null,"bindings":{}},' +
+        '"game":{"difficulty":null,"lives":null,"deathPenalty":null,"autoPowerUp":null,' +
+        '"pickupMagnet":null,"oneButton":false},"display":{}},"hiScores":{},' +
         '"stats":{"gamesStarted":1,"gameOvers":2,"stagesCleared":3}}',
     );
   });
@@ -461,7 +473,7 @@ describe('core/save loadSave (edge)', () => {
   it('keeps the stored text with every status', async () => {
     const text = '{"version":1,"stats":{"gameOvers":4}}';
     const loaded = await loadSave(createMemoryStorage({ [SAVE_STORAGE_KEY]: text }));
-    expect(loaded).toMatchObject({ status: 'ok', text, fromVersion: 1 });
+    expect(loaded).toMatchObject({ status: 'migrated', text, fromVersion: 1 });
     expect(loaded.data.stats.gameOvers).toBe(4);
   });
 });
@@ -560,8 +572,9 @@ describe('core/save SaveStore (edge)', () => {
     const store = createSaveStore(null);
     const before = store.data;
     store.setOptions({
+      ...DEFAULT_USER_OPTIONS,
       audio: { master: 99, music: 4.4, sfx: -2 },
-      input: { profileId: 'NOT OK' },
+      input: { ...DEFAULT_USER_OPTIONS.input, profileId: 'NOT OK' },
       display: {
         bulletPalette: 'standard',
         scaleMode: 'integer',
@@ -573,7 +586,8 @@ describe('core/save SaveStore (edge)', () => {
     });
     expect(store.options).toEqual({
       audio: { master: 10, music: 4, sfx: 0 },
-      input: { profileId: null },
+      input: DEFAULT_USER_OPTIONS.input,
+      game: DEFAULT_USER_OPTIONS.game,
       display: {
         bulletPalette: 'standard',
         scaleMode: 'integer',

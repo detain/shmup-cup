@@ -190,11 +190,13 @@
  * attract **story** ({@link CampaignStoryPage}, {@link STORY_SCENES}, {@link StorySceneName},
  * {@link MAX_STORY_PAGES}, {@link MAX_STORY_LINES}, {@link MAX_STORY_LINE_LENGTH}).
  *
- * **Planned API (later steps).** Kind `strings` (M2-16); `input-profiles`,
- * `sfx`/`music` and `fx` files stay *foreign* here and are validated by their owning packages
- * (see plan §3.5). Hosts pass
- * `knownScripts` (`core/behaviors` `KNOWN_SCRIPT_IDS`) so script ids are checked; M1-03 checks
- * `db.sprites` against the atlas.
+ * M2-16: kind `strings` — the UI string tables (`content/strings/<language>.strings.json`,
+ * {@link UiStringsSpec}, {@link ContentDb.uiStrings}): known ids only (`core/ui` `UI_TEXT_IDS`),
+ * the bitmap font's glyphs only, one table per language.
+ *
+ * **Other kinds.** `input-profiles`, `sfx`/`music` and `fx` files stay *foreign* here and are
+ * validated by their owning packages (see plan §3.5). Hosts pass `knownScripts` (`core/behaviors`
+ * `KNOWN_SCRIPT_IDS`) so script ids are checked; M1-03 checks `db.sprites` against the atlas.
  *
  * @remarks
  * Nothing in this module runs per tick: it allocates freely, uses `Map`s and reports **all**
@@ -251,6 +253,7 @@ import {
 import { bakePath, type PathTable } from './paths.js';
 import { s, type RefSite, type Schema, type ValidationIssue } from './schema.js';
 import { buildTilesetTables, expandTilemap, type TilesetTables } from './tilemap.js';
+import { MAX_UI_TEXT_LENGTH, UI_TEXT_IDS } from '../ui/strings.js';
 
 export type { TilesetTables } from './tilemap.js';
 export { MAX_PATH_LENGTH, PATH_SAMPLE_STEP, bakePath, type PathTable } from './paths.js';
@@ -341,6 +344,7 @@ export const CONTENT_KINDS = Object.freeze([
   'patterns',
   'campaign',
   'replay',
+  'strings',
 ] as const);
 
 /** Kinds of content file this module owns (`content/player/`, `weapons/`, …). */
@@ -1993,7 +1997,29 @@ export interface ContentDb {
   readonly demos: readonly DemoSpec[];
   /** Demo id → index in {@link ContentDb.demos}. */
   readonly demoIndex: ReadonlyMap<string, number>;
+  /**
+   * The UI string tables (M2-16): one per `content/strings/*.strings.json` file (a language), in
+   * path order — the scene flow shows `core/ui` `DEFAULT_LANGUAGE`'s, over the built-in English
+   * table (`core/ui` `resolveUiText`). Empty without any.
+   */
+  readonly uiStrings: readonly UiStringsSpec[];
 }
+
+/**
+ * A UI string table (M2-16 — `content/strings/<language>.strings.json`, kind `strings`): the
+ * labels of the canvas UI by id (`core/ui` `UI_TEXT_IDS`) in one language. The loader checks every
+ * id is known and every text is 1–{@link MAX_UI_TEXT_LENGTH} characters of the bitmap font's glyph
+ * set (printable ASCII and `← ↑ → ↓ ● ★ ✕`); missing ids fall back to English when resolved.
+ */
+export interface UiStringsSpec {
+  /** Language id (`en`, `fr`, `pt-br` — lower-case ISO 639-1, optionally a region). */
+  readonly language: string;
+  /** Id → text. */
+  readonly strings: Readonly<Record<string, string>>;
+}
+
+/** The characters a UI string may use: the bitmap font's glyphs (M2-16). */
+const UI_TEXT_GLYPHS = /^[\x20-\x7e←↑→↓●★✕]*$/;
 
 /** Longest recording a demo file may hold: 5 minutes at 60 Hz (M2-15). */
 export const MAX_DEMO_TICKS = 18_000;
@@ -2995,6 +3021,17 @@ const DEMO_FILE_SCHEMA = s.object(
   { optional: ['description'] },
 );
 
+/** A `content/strings/*.strings.json` file (M2-16): a language's UI string table. */
+const STRINGS_FILE_SCHEMA = s.object({
+  ...HEADER_SHAPE,
+  kind: s.enumOf(['strings'] as const),
+  language: s.str({ maxLength: 5, pattern: /^[a-z]{2}(?:-[a-z]{2})?$/ }),
+  strings: s.record(
+    s.str({ minLength: 1, maxLength: MAX_UI_TEXT_LENGTH }),
+    /^[A-Za-z][A-Za-z0-9.]*$/,
+  ),
+});
+
 /** Mutable working copy of a {@link ContentDb} while a load runs. */
 interface DbBuilder {
   /** Collected player ships (see {@link ContentDb.ships}). */
@@ -3051,6 +3088,8 @@ interface DbBuilder {
   demoIndex: Map<string, number>;
   /** Repo-relative file path of every collected demo (issue paths of the reference pass). */
   demoPaths: string[];
+  /** Collected UI string tables (M2-16). */
+  uiStrings: UiStringsSpec[];
 }
 
 /** Empty {@link StringTable}. */
@@ -3093,6 +3132,7 @@ export const EMPTY_CONTENT_DB: ContentDb = Object.freeze({
   campaign: null,
   demos: Object.freeze([]),
   demoIndex: new Map<string, number>(),
+  uiStrings: Object.freeze([]),
 });
 
 /** `Object.prototype.hasOwnProperty` (Chromium 69 has no `Object.hasOwn`). */
@@ -3412,6 +3452,7 @@ export function loadContent(
     demos: [],
     demoIndex: new Map(),
     demoPaths: [],
+    uiStrings: [],
   };
 
   const sorted = files.slice().sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
@@ -3489,6 +3530,7 @@ export function loadContent(
       campaign: db.campaign,
       demos: db.demos,
       demoIndex: db.demoIndex,
+      uiStrings: db.uiStrings,
     },
     issues,
     foreign,
@@ -3531,6 +3573,8 @@ function parseFile(
       return CAMPAIGN_FILE_SCHEMA.parse(data, '', issues, refs);
     case 'replay':
       return DEMO_FILE_SCHEMA.parse(data, '', issues, refs);
+    case 'strings':
+      return STRINGS_FILE_SCHEMA.parse(data, '', issues, refs);
   }
 }
 
@@ -3751,7 +3795,49 @@ function collect(
       if (db.demos.length > before) db.demoPaths.push(path);
       return;
     }
+    case 'strings':
+      collectUiStrings(parsed, path, db, issues);
+      return;
   }
+}
+
+/**
+ * Collects a `strings` file (M2-16): every id must be a `core/ui` UI string id, every text drawable
+ * by the bitmap font; a second table of the same language is an issue. The file's valid entries
+ * are kept (a bad entry falls back to English when the table is resolved).
+ *
+ * @param parsed - The validated file.
+ * @param path - Repo-relative file path.
+ * @param db - The builder.
+ * @param issues - Collector.
+ */
+function collectUiStrings(
+  parsed: Record<string, unknown>,
+  path: string,
+  db: DbBuilder,
+  issues: ValidationIssue[],
+): void {
+  const language = parsed['language'] as string;
+  for (const table of db.uiStrings) {
+    if (table.language === language) {
+      issue(issues, at(path, 'language'), `UI strings for "${language}" are already defined`);
+      return;
+    }
+  }
+  const raw = parsed['strings'] as Record<string, string>;
+  const known = new Set(UI_TEXT_IDS);
+  const strings: Record<string, string> = {};
+  for (const id of Object.keys(raw)) {
+    const text = raw[id];
+    if (!known.has(id)) {
+      issue(issues, at(path, 'strings.' + id), `unknown UI string id "${id}"`);
+    } else if (!UI_TEXT_GLYPHS.test(text)) {
+      issue(issues, at(path, 'strings.' + id), 'uses a character the bitmap font does not have');
+    } else {
+      strings[id] = text;
+    }
+  }
+  db.uiStrings.push(Object.freeze({ language, strings: Object.freeze(strings) }));
 }
 
 /**

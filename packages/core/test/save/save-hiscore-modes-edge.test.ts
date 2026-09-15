@@ -20,10 +20,21 @@ import {
   hiScoreModeKey,
   loadSave,
   parseHiScoreModeKey,
-  sanitizeSave,
+  parseSave,
   type HiScoreEntry,
   type SaveStore,
 } from '../../src/save/index.js';
+
+/**
+ * Reads a version-1 document the way a stored save is read: its migration to version 2 (M2-16)
+ * moves the older co-op / practice rows, the sanitiser then checks everything.
+ *
+ * @param doc - The document.
+ * @returns The save as read.
+ */
+function readV1(doc: Readonly<Record<string, unknown>>): ReturnType<typeof parseSave>['data'] {
+  return parseSave(JSON.stringify(doc)).data;
+}
 
 describe('core/save hi-score mode keys — edge cases (M2-15)', () => {
   it('parses every key hiScoreModeKey makes back into the same parts', () => {
@@ -76,7 +87,7 @@ describe('core/save moving older co-op / practice rows — edge cases (M2-15)', 
       score: 1050 + i * 100,
       mode: '2p',
     }));
-    const data = sanitizeSave({
+    const data = readV1({
       version: 1,
       hiScores: {
         'meter-hard': [{ name: 'ONE', score: 10, mode: '1p' }, ...moved],
@@ -93,7 +104,7 @@ describe('core/save moving older co-op / practice rows — edge cases (M2-15)', 
   });
 
   it('a table left empty by the move is dropped; a tie keeps the moved (older) row first', () => {
-    const data = sanitizeSave({
+    const data = readV1({
       version: 1,
       hiScores: {
         'direct-easy': [{ name: 'MOV', score: 500, mode: '2p' }],
@@ -105,7 +116,7 @@ describe('core/save moving older co-op / practice rows — edge cases (M2-15)', 
   });
 
   it('leaves rows where they are when the table is not a one-player table or the mode is not one to move', () => {
-    const data = sanitizeSave({
+    const data = readV1({
       version: 1,
       hiScores: {
         // A co-op table holding a practice row, and a practice table holding a co-op row.
@@ -143,7 +154,7 @@ describe('core/save moving older co-op / practice rows — edge cases (M2-15)', 
     const long29 = 'abcdefghijklmn-opqrstuvwxyz01'; // 29 characters
     expect(long30).toHaveLength(30);
     expect(long29).toHaveLength(29);
-    const data = sanitizeSave({
+    const data = readV1({
       version: 1,
       hiScores: {
         [long30]: [
@@ -169,7 +180,7 @@ describe('core/save moving older co-op / practice rows — edge cases (M2-15)', 
         { name: 'TWO', score: 200, mode: '2p' },
       ];
     }
-    const data = sanitizeSave({ version: 1, hiScores });
+    const data = readV1({ version: 1, hiScores });
     const keys = Object.keys(data.hiScores);
     expect(keys).toHaveLength(MAX_HI_SCORE_TABLES);
     expect(keys).toEqual([...keys].sort());
@@ -184,7 +195,7 @@ describe('core/save moving older co-op / practice rows — edge cases (M2-15)', 
   });
 
   it('skips tables that are not arrays and rows that are not objects while moving', () => {
-    const data = sanitizeSave({
+    const data = readV1({
       version: 1,
       hiScores: {
         'meter-normal': [null, 'row', 7, { name: 'TWO', score: 3, mode: '2p' }],
