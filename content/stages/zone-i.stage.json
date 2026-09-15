@@ -606,5 +606,61 @@
       "colors": ["#0e2a34", "#16485a", "#2a7a8a", "#6ad8e0"],
       "ticks": 14
     }
+  ],
+  "remix": [
+    {
+      "x": 240,
+      "type": "formation",
+      "enemy": "lumen-mote",
+      "count": 5,
+      "interval": 16,
+      "y": 130,
+      "drop": null
+    },
+    {
+      "x": 1300,
+      "type": "formation",
+      "enemy": "lumen-mote",
+      "count": 6,
+      "interval": 14,
+      "y": 140,
+      "drop": null
+    },
+    {
+      "x": 3700,
+      "type": "formation",
+      "enemy": "lumen-mote",
+      "count": 6,
+      "interval": 14,
+      "y": 130,
+      "drop": null
+    },
+    {
+      "x": 5480,
+      "type": "formation",
+      "enemy": "lumen-mote",
+      "count": 6,
+      "interval": 14,
+      "y": 40,
+      "drop": null
+    },
+    {
+      "x": 7320,
+      "type": "formation",
+      "enemy": "lumen-mote",
+      "count": 6,
+      "interval": 12,
+      "y": 160,
+      "drop": null
+    },
+    {
+      "x": 8060,
+      "type": "formation",
+      "enemy": "lumen-mote",
+      "count": 8,
+      "interval": 10,
+      "y": 100,
+      "drop": null
+    }
   ]
 }

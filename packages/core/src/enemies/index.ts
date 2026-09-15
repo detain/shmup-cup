@@ -227,6 +227,11 @@ import {
 import { PlayerHitCause, playerHit, type PlayerCamera, type PlayerShip } from '../player/index.js';
 import { LayerId, SpriteFlag, createSpriteBatch, type SpriteBatch } from '../presentation/index.js';
 import type { Rng, RngStreams } from '../rng/index.js';
+import {
+  DEFAULT_REPEAT_KILLS,
+  DEFAULT_REPEAT_PERCENT,
+  DEFAULT_SCORING_RULES,
+} from '../scoring/index.js';
 import { POD_RADIUS, ShieldHit, absorbPodHit, type ShieldState } from '../shields/index.js';
 
 /** Module descriptor (see {@link defineModule}). */
@@ -435,6 +440,11 @@ export class Enemy implements MoverBody, ScriptHolder {
    * enemy while it may fire; the enemy system wakes it on the next tick and clears the field.
    */
   nearRange = 0;
+  /**
+   * Spawned by a script or a boss rather than the stage's timeline (M3-01): a source a player
+   * could farm, so its kills count towards the score-milking cap (`ScoringRules.repeatKills`).
+   */
+  child = false;
 
   /**
    * Creates a free slot (the enemy system builds all {@link MAX_ENEMIES} at load time).
@@ -931,6 +941,11 @@ export interface EnemyHost {
     /** One option group per player slot (the Options flying this tick). */
     readonly options: readonly OptionGroup[];
   };
+  /**
+   * The session config's loop (M3-01 — `GameConfig.loop`): from loop 2 every regular enemy shot
+   * down fires a revenge bullet. Absent = loop 1.
+   */
+  readonly config?: { readonly loop: number };
 }
 
 /**
@@ -1159,8 +1174,24 @@ export interface EnemySystem {
    * @param enemy - The enemy.
    * @param by - Player slot credited with the kill (default -1 = nobody).
    * @returns `true` when it was alive (and not a ghost).
+   *
+   * M3-01: a kill credited to a player also counts towards the score-milking cap when the enemy
+   * was spawned by a script or a boss ({@link Enemy.child} — `ScoringRules.repeatKills`: later such
+   * kills of its spec record `repeatPercent` percent of its score), and from loop 2
+   * (`GameConfig.loop`) every such kill fires a revenge bullet — its own pattern, else one aimed
+   * shot — at any rank.
    */
   kill(enemy: Enemy, by?: number): boolean;
+  /**
+   * Records a drop that no kill made (M3-01 — the Options a death takes with option recovery,
+   * `core/world`): the power-up system turns it into an item with the next tick's drops. Never
+   * allocates (a full outcome list drops it quietly).
+   *
+   * @param kind - A {@link DropKind} code.
+   * @param x - World x.
+   * @param y - World y.
+   */
+  dropAt(kind: DropKind, x: number, y: number): void;
   /**
    * Removes a live enemy without a kill (M2-07, `ScriptApi.destroy`: a shattered rock, a cube that
    * became terrain): no score, drop, revenge or death behaviour; a formation member counts as
@@ -1957,6 +1988,14 @@ class EnemySystemImpl implements EnemySystem {
   readonly origin = new BulletOrigin();
   /** `true` while {@link EnemySystemImpl.megaCrash} kills (no revenge bullets). */
   private crashing = false;
+  /** Loop 2+ (M3-01): every regular enemy shot down fires a revenge bullet, at any rank. */
+  private readonly loopRevenge: boolean;
+  /** The milking cap (M3-01 — `ScoringRules.repeatKills`; 0 = none). */
+  private readonly repeatKills: number;
+  /** Percent of the score a capped kill gives (`ScoringRules.repeatPercent`). */
+  private readonly repeatPercent: number;
+  /** Kills of script- / boss-spawned enemies per spec in this World (the milking cap's count). */
+  private readonly childKills: Int32Array;
   /** Script API per slot. */
   private readonly apis: readonly EnemyScriptApi[];
   /** The compiled specs. */
@@ -2000,6 +2039,13 @@ class EnemySystemImpl implements EnemySystem {
     this.specList = host.content.enemies;
     this.specs = compileSpecs(host.content.enemies, behaviors);
     this.spawnEvents = compileSpawnEvents(stage);
+    const config = host.config;
+    this.loopRevenge = config !== undefined && config.loop >= 2;
+    const rules = host.content.scoring ?? DEFAULT_SCORING_RULES;
+    const repeat = rules.repeatKills ?? DEFAULT_REPEAT_KILLS;
+    this.repeatKills = repeat > 0 ? repeat : 0;
+    this.repeatPercent = rules.repeatPercent ?? DEFAULT_REPEAT_PERCENT;
+    this.childKills = new Int32Array(host.content.enemies.length);
     this.formations = createFormationTable();
     this.outcomes = new OutcomeLists();
     this.groundBatch = createSpriteBatch(LayerId.GroundEnemies, MAX_ENEMIES);
@@ -2077,7 +2123,8 @@ class EnemySystemImpl implements EnemySystem {
 
   /** See {@link EnemySystem.spawn}. */
   spawn(enemyIndex: number, x: number, y: number, pathId = -1): Enemy | null {
-    return this.spawnEnemy(enemyIndex, x, y, pathId, -1, -1, false);
+    // A boss's minion (or a tool's spawn): outside the stage's timeline — a milkable source.
+    return this.spawnEnemy(enemyIndex, x, y, pathId, -1, -1, false, true);
   }
 
   /**
@@ -2090,6 +2137,8 @@ class EnemySystemImpl implements EnemySystem {
    * @param formation - Formation slot (-1 = none).
    * @param member - Member index (-1 = none).
    * @param fromScript - Spawned by a script during phase 4 (its script starts next tick).
+   * @param child - Spawned by a script or a boss rather than the stage's timeline (M3-01: its kills
+   *   count towards the score-milking cap — {@link EnemySystemImpl.kill}). Default `fromScript`.
    * @returns The enemy, or `null`.
    */
   spawnEnemy(
@@ -2100,6 +2149,7 @@ class EnemySystemImpl implements EnemySystem {
     formation: number,
     member: number,
     fromScript: boolean,
+    child: boolean = fromScript,
   ): Enemy | null {
     const specs = this.specs;
     // A whole index in range (a fractional one would read `undefined` from the spec tables); a
@@ -2140,6 +2190,7 @@ class EnemySystemImpl implements EnemySystem {
     enemy.flags = hunter ? EnemyFlag.Invulnerable : 0;
     enemy.carried = 0;
     enemy.nearRange = 0;
+    enemy.child = child;
     enemy.firstSeenTick = -1;
     enemy.spriteId = specs.sprite[enemyIndex];
     enemy.animFrame = 0;
@@ -2637,7 +2688,7 @@ class EnemySystemImpl implements EnemySystem {
       o.killSpec[k] = spec;
       o.killX[k] = x;
       o.killY[k] = y;
-      o.killScore[k] = specs.score[spec];
+      o.killScore[k] = this.killScore(enemy, spec, by);
       o.killBy[k] = by;
       o.killCount = k + 1;
     }
@@ -2654,7 +2705,10 @@ class EnemySystemImpl implements EnemySystem {
       stats.killed++;
       if (enemy.anchor !== BodyAnchor.Air) stats.groundKilled++;
     }
-    if (by >= 0 && !this.crashing && specs.revenge[spec] !== 0) this.revenge(enemy, spec);
+    // Loop 2+ (M3-01): every regular enemy shot down fires a revenge bullet.
+    if (by >= 0 && !this.crashing && (specs.revenge[spec] !== 0 || this.loopRevenge)) {
+      this.revenge(enemy, spec);
+    }
     // A death behaviour (M2-07 — splitting bubbles) acts while the enemy still stands there.
     const behavior = specs.behavior[spec];
     if (!this.crashing && behavior !== null && behavior.death !== undefined) {
@@ -2676,6 +2730,11 @@ class EnemySystemImpl implements EnemySystem {
     return true;
   }
 
+  /** See {@link EnemySystem.dropAt}. */
+  dropAt(kind: DropKind, x: number, y: number): void {
+    this.outcomes.addDrop(kind, x, y);
+  }
+
   /** See {@link EnemySystem.destroy}. */
   destroy(enemy: Enemy, explode = true): boolean {
     if (enemy.state !== EnemyState.Live || (enemy.flags & EnemyFlag.Ghost) !== 0) return false;
@@ -2692,6 +2751,27 @@ class EnemySystemImpl implements EnemySystem {
   }
 
   /**
+   * The score a kill records (M3-01 — the score-milking cap, shmup_feat.md §15): the spec's score,
+   * except for an enemy a script or a boss spawned ({@link Enemy.child}) killed by a player after
+   * `repeatKills` such kills of its spec in this World — then `repeatPercent` percent of it
+   * (floored to a multiple of 10, like every score). Counts the kill. Never allocates.
+   *
+   * @param enemy - The enemy being killed.
+   * @param spec - Its spec index.
+   * @param by - The killer's player slot (-1 = nobody: never capped, not counted).
+   * @returns The points.
+   */
+  private killScore(enemy: Enemy, spec: number, by: number): number {
+    const score = this.specs.score[spec];
+    if (!enemy.child || by < 0 || this.repeatKills === 0) return score;
+    const kills = this.childKills;
+    const n = kills[spec] + 1;
+    kills[spec] = n;
+    if (n <= this.repeatKills) return score;
+    return Math.floor((score * this.repeatPercent) / 1000) * 10;
+  }
+
+  /**
    * Fires an enemy's revenge bullets from where it died (see the module docs): only on screen and
    * at a rank of at least its `minRank`, with its own rank modifiers. Rank-scaled like every enemy
    * bullet; a full pool drops them quietly.
@@ -2702,7 +2782,8 @@ class EnemySystemImpl implements EnemySystem {
   private revenge(enemy: Enemy, spec: number): void {
     const specs = this.specs;
     const host = this.host;
-    if ((host.rank ?? 0) < specs.revengeRank[spec]) return;
+    // Loop 2+ (M3-01): at any rank.
+    if (!this.loopRevenge && (host.rank ?? 0) < specs.revengeRank[spec]) return;
     if ((enemy.flags & EnemyFlag.OnScreen) === 0) return;
     const bullets = host.bullets;
     const origin = this.origin;
@@ -2710,7 +2791,10 @@ class EnemySystemImpl implements EnemySystem {
     origin.y = enemy.y;
     bullets.setShooterRank(specs.rankSpeed, specs.rankFire, spec);
     const pattern = specs.revenge[spec];
-    if (pattern === RevengeCode.Aimed) {
+    if (pattern === 0) {
+      // No pattern of its own (loop 2+ — M3-01): one aimed parting shot.
+      fireAimed(bullets, origin, DEFAULT_REVENGE_SPEED, REVENGE_BULLET);
+    } else if (pattern === RevengeCode.Aimed) {
       fireAimed(bullets, origin, specs.revengeSpeed[spec], REVENGE_BULLET);
     } else if (pattern === RevengeCode.Spread3) {
       fireNWay(bullets, origin, 3, REVENGE_SPREAD_STEP, specs.revengeSpeed[spec], REVENGE_BULLET);

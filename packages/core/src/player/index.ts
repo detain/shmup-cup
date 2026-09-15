@@ -196,6 +196,11 @@ export interface PlayerShip {
    * player's power-up state that lives on the ship.
    */
   readonly shield: ShieldState;
+  /**
+   * The invincibility assist (M3-01 — `GameConfig.invincible`, set at creation): {@link playerHit}
+   * ignores every hit, like the debug god mode.
+   */
+  readonly invincible: boolean;
 }
 
 /**
@@ -306,9 +311,10 @@ export function resolvePlayerShip(content: ContentDb, id = 'kestrel'): PlayerShi
  *
  * @param slot - 0 = player 1, 1 = player 2.
  * @param lives - Ships at game start (`GameConfig.startingLives`).
+ * @param invincible - The invincibility assist (M3-01 — `GameConfig.invincible`; default `false`).
  * @returns The ship (inactive until the caller sets `active`).
  */
-export function createPlayer(slot: number, lives: number): PlayerShip {
+export function createPlayer(slot: number, lives: number, invincible = false): PlayerShip {
   return {
     slot,
     active: false,
@@ -326,6 +332,7 @@ export function createPlayer(slot: number, lives: number): PlayerShip {
     hitTick: -1,
     hits: 0,
     shield: createShieldState(),
+    invincible,
   };
 }
 
@@ -335,7 +342,8 @@ export function createPlayer(slot: number, lives: number): PlayerShip {
  *
  * @remarks
  * The hit is ignored when the ship is inactive, not `alive` (fly-in, dying, dead), still
- * invulnerable (`invulnTicks > 0`) or when the debug god mode is on. Otherwise the ship's
+ * invulnerable (`invulnTicks > 0`), when the debug god mode is on or the ship has the invincibility
+ * assist (M3-01 — {@link PlayerShip.invincible}). Otherwise the ship's
  * {@link PlayerShip.shield} gets it first (`core/shields` `absorbShieldHit`: the Force Field takes
  * bullets, lasers and contact — not terrain — and swallows hits during its shield-hit i-frames);
  * an absorbed hit is accepted (`true`) without touching the ship. A hit that gets through is
@@ -363,7 +371,13 @@ export function playerHit(
   tick: number,
   debug: Readonly<DebugFlags>,
 ): boolean {
-  if (!ship.active || ship.state !== 'alive' || ship.invulnTicks > 0 || debug.godMode) {
+  if (
+    !ship.active ||
+    ship.state !== 'alive' ||
+    ship.invulnTicks > 0 ||
+    debug.godMode ||
+    ship.invincible
+  ) {
     return false;
   }
   if (absorbShieldHit(ship.shield, cause === PlayerHitCause.Terrain, tick) !== ShieldHit.None) {

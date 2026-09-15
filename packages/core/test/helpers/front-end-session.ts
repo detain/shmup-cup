@@ -12,6 +12,7 @@ import { createGame, type Game } from '../../src/game/index.js';
 import { Action, commitPlayerInput, type ActionMask } from '../../src/input/index.js';
 import { createHeadlessPlatform, type HeadlessPlatform } from '../../src/platform/index.js';
 import { DrawOp } from '../../src/presentation/index.js';
+import type { ReplayLibrary } from '../../src/replay/index.js';
 import { createSaveStore, type SaveStore } from '../../src/save/index.js';
 import {
   GAME_OVER_DELAY_TICKS,
@@ -36,6 +37,10 @@ export interface FrontEndSessionOptions {
   readonly canExit?: boolean;
   /** The host's music titles for the sound test. */
   readonly soundTest?: SoundTestSetup | null;
+  /** The replay library (M3-01; default none). */
+  readonly replays?: ReplayLibrary | null;
+  /** The host's replay sharing (M3-01; default none). */
+  readonly shareReplay?: ((text: string) => boolean) | null;
 }
 
 /** A headless session of the scene flow, started on the title. */
@@ -69,7 +74,13 @@ export class FrontEndSession {
       this.platform,
       { seed: 9, stage: 't-s', continues: 0, ...options.config },
       options.db,
-      { scenes: 'title', save: this.save, soundTest: options.soundTest ?? null },
+      {
+        scenes: 'title',
+        save: this.save,
+        soundTest: options.soundTest ?? null,
+        replays: options.replays ?? null,
+        shareReplay: options.shareReplay ?? null,
+      },
     );
     this.flow = this.game.scenes!;
   }

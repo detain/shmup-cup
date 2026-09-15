@@ -125,6 +125,8 @@ describe('core/save round trip', () => {
         showHitbox: true,
         bossHpBar: false,
       },
+      // The assists and feel of M3-01 round-trip too.
+      play: { speed: 75, invincible: true, optionRecovery: false, rumble: false },
     });
     store.recordScore('meter-normal', createHiScoreEntry(12300, { reached: 'zone-a', mode: '1p' }));
     store.count('gameOvers');
@@ -209,6 +211,8 @@ describe('core/save round trip', () => {
           showHitbox: false,
           bossHpBar: false,
         },
+        // M3-01: the assists and feel.
+        play: { speed: 100, invincible: false, optionRecovery: null, rumble: true },
       },
       hiScores: {
         'meter-hard': [{ name: 'ZED', score: 5, reached: '', mode: '', difficulty: '' }],
@@ -244,6 +248,7 @@ describe('core/save migrations', () => {
         showHitbox: false,
         bossHpBar: false,
       },
+      play: DEFAULT_USER_OPTIONS.play,
     });
     // The flat list became the meter-normal table: sorted, ties keep their order, bad rows dropped.
     const rows = loaded.data.hiScores['meter-normal'];
@@ -371,6 +376,7 @@ describe('core/save sanitising', () => {
         showHitbox: false,
         bossHpBar: false,
       },
+      play: DEFAULT_USER_OPTIONS.play,
     });
     expect(data.hiScores).toEqual({
       'meter-normal': [

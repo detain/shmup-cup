@@ -8,6 +8,7 @@
     "checkpoint": -1,
     "loadout": "default",
     "assisted": true,
+    "assists": 1,
     "config": {
       "internalWidth": 384,
       "internalHeight": 216,
@@ -52,7 +53,11 @@
       "shieldChoice": "forceField",
       "optionChoice": "trail",
       "coop": false,
-      "coopExtra": 0.5
+      "coopExtra": 0.5,
+      "loop": 1,
+      "timeLimit": 0,
+      "invincible": false,
+      "optionRecovery": false
     }
   },
   "ticks": 6415,
@@ -69,16 +74,16 @@
     3553851617,
     3826095968,
     818319522,
-    1432009182,
-    4287550625,
-    2622818801
+    2476195406,
+    2487713552,
+    1153210820
   ],
-  "finalHash": 4102281047,
+  "finalHash": 3509854448,
   "description": "CAPTAIN RANGE with god mode (M2-09): four captains fly in on the scrolling camera, the 4-way bot fights them, the stage ends at its end",
   "expected": {
     "status": "stageClear",
     "ticks": 6415,
-    "score": 25120,
+    "score": 20980,
     "lives": 4,
     "deathTicks": [],
     "bossDefeated": true

@@ -53,10 +53,17 @@ Every preset extends at 20,000 points and then every 70,000 (decision D7); lives
   "formatVersion": 1,
   "kind": "rules",
   "scoring": {                           // optional section; defined by one file only
-    "bulletCancel": 10                   // 0–10,000 points per bullet cancelled into a point item
+    "bulletCancel": 10,                  // 0–10,000 points per bullet cancelled into a point item
+    "repeatKills": 40,                   // M3-01 score-milking cap: full-score kills per kind (0 = off)
+    "repeatPercent": 10                  // M3-01: 0–100 % of the score for each kill after the cap
   }
 }
 ```
+
+**Score-milking cap (M3-01, `shmup_feat.md` §15).** Enemies a script or a boss spawns (a
+spawner's brood, a boss's minions — never the stage timeline's own spawns) score in full for the
+first `repeatKills` kills of each kind in a World; every later kill of that kind scores
+`repeatPercent` % of its score (rounded down to tens). Both are optional (defaults 40 and 10).
 
 [`scoring.rules.json`](scoring.rules.json) is the shipped section (the built-in
 `DEFAULT_SCORING_RULES` of `packages/core/src/scoring` has the same value). When a boss dies or a

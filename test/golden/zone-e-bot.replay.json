@@ -8,6 +8,7 @@
     "checkpoint": -1,
     "loadout": "default",
     "assisted": false,
+    "assists": 0,
     "config": {
       "internalWidth": 384,
       "internalHeight": 216,
@@ -52,7 +53,11 @@
       "shieldChoice": "forceField",
       "optionChoice": "trail",
       "coop": false,
-      "coopExtra": 0.5
+      "coopExtra": 0.5,
+      "loop": 1,
+      "timeLimit": 0,
+      "invincible": false,
+      "optionRecovery": false
     }
   },
   "ticks": 14427,

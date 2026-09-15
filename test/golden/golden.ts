@@ -761,6 +761,65 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = Object.freeze([
     godMode: true,
     bot: 'burster',
   },
+  {
+    name: 'zone-a-loop2-god',
+    description:
+      'AZURE VERGE on loop 2 with god mode (M3-01): the remixed layout, faster bullets, revenge bullets from every kill, rank from 10 — the 4-way bot clears it',
+    stageId: 'zone-a',
+    config: { seed: 71, loop: 2 },
+    godMode: true,
+    bot: 'four-way',
+  },
+  {
+    name: 'zone-a-loop2-boss',
+    description:
+      'HALCYON BULWARK on loop 2 without power-ups or god mode (M3-01): the loop-2 rank, bullet speed and revenge bullets against the 4-way bot',
+    stageId: 'zone-a',
+    config: { seed: 72, loop: 2, stageSkip: 'boss' },
+    godMode: false,
+    bot: 'four-way',
+  },
+  {
+    name: 'zone-a-caravan',
+    description:
+      'the CARAVAN clock on AZURE VERGE (M3-01): one minute with god mode, then time up — status stageClear with the World timeUp',
+    stageId: 'zone-a',
+    config: { seed: 73, timeLimit: 3600 },
+    godMode: true,
+    bot: 'four-way',
+  },
+  {
+    name: 'zone-a-extra',
+    description:
+      'HALCYON BULWARK with an Extra Edit loadout (M3-01): the Hawk Wind rising over the middle and falling below it, god mode',
+    stageId: 'zone-a',
+    config: {
+      seed: 74,
+      stageSkip: 'boss',
+      loadout: 'full',
+      weaponEdit: { missile: 'missile.hawkWind', double: 'shot.spreadGun', laser: 'laser.pierce' },
+    },
+    godMode: true,
+    bot: 'four-way',
+  },
+  {
+    name: 'zone-a-recovery',
+    description:
+      'a weaving pilot with the full loadout and option recovery (M3-01): each death drops the Options it loses, drifting to be caught again',
+    stageId: 'zone-a',
+    config: { seed: 75, stageSkip: 'boss', loadout: 'full', optionRecovery: true },
+    godMode: false,
+    bot: 'weaver',
+  },
+  {
+    name: 'zone-a-invincible',
+    description:
+      'HALCYON BULWARK with the invincibility assist (M3-01): hits ignored like god mode, the replay header flags it in `assists` (not as god mode)',
+    stageId: 'zone-a',
+    config: { seed: 76, stageSkip: 'boss', loadout: 'full', invincible: true },
+    godMode: false,
+    bot: 'weaver',
+  },
 ]);
 
 /** Player 2's side of a co-op golden run (M2-06). */

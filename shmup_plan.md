@@ -3779,6 +3779,60 @@ Coarse steps; each will be split into agent-sized sub-steps (same format as M1/M
 - **Acceptance:** per-feature headless tests; golden replays for loop 2; assisted flags in replay headers.
 - **Refs:** `shmup_feat.md` §16, §7A (Extra Edit), §15 (loops, milking), §21 (replays, assists), §8, §4 (rumble,
   secrets).
+- **As built:**
+  - **EXTRA menu.** The title gained EXTRA (`TitleItem.Extra` 5, between SOUND TEST and EXIT, now 6), opening the
+    `ExtraScene`: BOSS RUSH, CARAVAN (choice: the zone), ARCADE (choice: LOOP 1 / LOOP 2), REPLAYS, BACK. A row whose
+    content is missing is disabled (no `boss-rush` stage, no campaign, no replay library); OK on a choice row starts
+    the mode (Left / Right change the choice). Each mode has its own one-player hi-score table (`HI_SCORE_MODES` gained
+    `bossrush`, `caravan`, `arcade`; `MAX_HI_SCORE_TABLES` 32 → 64).
+  - **Boss rush** is shipped content: `content/stages/boss-rush.stage.json` (`type: "bossRush"`, the nine zone bosses A
+    to I in turn, the M2-09 rush machinery). `test/playtest/boss-rush.test.ts`: the 4-way bot clears it with god mode
+    and the full loadout (≈ 5.8 min).
+  - **Caravan** = one campaign zone against a 3-minute clock (`CARAVAN_TICKS`): `GameConfig.timeLimit` (0 = none,
+    ≤ 216,000 ticks) drives `World.timeLeft`; at 0 the World ends as `stageClear` with `World.timeUp` (TIME UP card, no
+    bonus); a clear in time pays 1,000 points per whole second left (`CARAVAN_TIME_BONUS`). The HUD shows the seconds
+    in player 2's place. The clock is hashed only when there is one (older goldens keep their hashes).
+  - **Loops / ARCADE.** `GameConfig.loop` (1–8). Remixed layouts are a stage's optional `remix` list (spawn /
+    formation events merged into the timeline from loop 2 by `stageForLoop`, per World, so loop-1 event indices and
+    hashes are unchanged) plus `minLoop` / `maxLoop` on any event; all nine zones ship a remix. The rank's existing
+    loop term applies; bullets fly `1 + 0.15·(loop − 1)` faster (cap 1.6, `loopBulletSpeedScale`); from loop 2 every
+    player kill fires a revenge bullet whatever the rank (an aimed one for specs without `revenge`). The ARCADE run
+    goes from the ending straight into the next loop (no credits; `LOOP n  ZONE A` cards) and is recorded when it
+    ends. LOOP 2 as a start is locked until an ending (`SaveData.unlocks.loop2`).
+  - **Extra Edit** weapons live in `content/weapons/types-extra.weapons.json` (`"extra": true`); new `ShotKind`s
+    Control 10, Upper 11, HawkWind 12, SpreadGun 13, while Small Spread / 2-Way Back / Back Double reuse the Spread
+    Bomb / Two-Way / Double kinds with new `flip` art params. The Spread Gun is equipped twice on the meter
+    (`MeterChoices.doubleLevels`, `Loadout.spread` — hashed only when non-zero): diagonals, then forward too. The weapon
+    select's TYPE gained EXTRA after EDIT, skipped until `unlocks.extraEdit` (any ending, or a secret code).
+  - **Secret codes** are four original 8-press direction sequences (`SECRET_CODES`: ↑→↓←↑→↓← EXTRA SHIPS and ↓←↑→↓←↑→
+    EXTRA EDIT on the title; ←→→←←→→← FULL POWER and →←←→→←←→ SELF DESTRUCT in the pause menu). EXTRA SHIPS starts the
+    next games with 7 ships (`startingLives` now 1–9, the menus still offer 1–5); FULL POWER works once per World.
+    Both are recorded (FULL POWER / SELF DESTRUCT as run-replay actions) and EXTRA SHIPS / FULL POWER mark the run
+    assisted.
+  - **Score-milking cap** (`ScoringRules.repeatKills` 40, `repeatPercent` 10 in `content/rules/scoring.rules.json`):
+    only enemies spawned by a script or a boss count (never the timeline's), per kind per World; after 40 full-score
+    kills each scores 10 % (rounded down to tens). This changed `captain-range-god` (the captains' minions: score
+    25,120 → 20,980) — re-blessed; every other golden and demo changed only in its header (the new config fields and
+    `assists`).
+  - **Replays.** The M1-19 single-World header gained `assists` (1 god mode, 2 invincibility; decode defaults it from
+    `assisted`). Whole runs use a new `run-replay` format (`core/replay` `run.ts`): one segment per World with its
+    start state (carry, zone, loop …), RLE input, hashes and between-tick actions (continues, secrets), flags 4 speed /
+    8 secret added. The flow records every run (`SceneFlow.recorder`); the `ReplayLibrary` keeps the last game plus 3
+    kept replays in platform storage (`replay.last`, `replay.1`–`3`, ≤ 200,000 chars). EXTRA → REPLAYS browses them:
+    PLAY (the `ReplayScene`: Right / Left ×1 / ×2 / ×4, OK pause, desync message), KEEP, SHARE, DELETE. SHARE is a
+    host hook: the web app copies the text to the clipboard and imports a replay pasted on the page; the TV has none.
+  - **Assists & feel** are save options (`options.play`, save version stays 2 — every new field optional): the GAME
+    page's OPT RECOVERY, SPEED (100 / 75 / 50 %) and INVINCIBLE rows, the CONTROLS page's RUMBLE. The game speed slows
+    the frame clock like debug slow motion (every tick whole: simulation, replays and hashes unchanged, the run only
+    flagged); invincibility is sim config (`GameConfig.invincible`, `PlayerShip.invincible`). Assisted runs' hi-score
+    rows carry `assisted` (drawn with `*`).
+  - **Option recovery** (`GameConfig.optionRecovery`): each Option a death takes drops as a Free Option item at the
+    wreck.
+  - **Rumble**: `input-web` `rumblePad` / `WebInput.rumble` (`dual-rumble`, 260 / 520 ms) for the existing
+    `SimEventKind.Rumble` events (a death, a boss's final blast), wired by the shell's `connectRumbleEvents` while RUMBLE
+    is on.
+  - `Game.frame` became two functions (`bareFrame` / `flowFrame`) so bare gameplay's frame stays small enough to
+    inline (the allocation guard); the Tizen bundle is 374.6 KB gzip of its 384 KB budget (unchanged).
 
 ### M3-02 — Visual & mechanic extras
 

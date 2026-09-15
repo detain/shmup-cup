@@ -233,9 +233,10 @@ describe('core/scenes attract loop — input (M2-15 edge cases)', () => {
       'PRACTICE',
       'OPTIONS',
       'SOUND TEST',
+      'EXTRA',
       'EXIT',
     ]);
-    expect([TitleItem.SoundTest, TitleItem.Exit]).toEqual([4, 5]);
+    expect([TitleItem.SoundTest, TitleItem.Extra, TitleItem.Exit]).toEqual([4, 5, 6]);
     for (const screen of ['demo', 'hiScore', 'story']) {
       s.flow.stack.reset(s.flow.title);
       s.hold(0);

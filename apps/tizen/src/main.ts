@@ -34,6 +34,8 @@ bootTizenApp(canvas, {
   assets,
   // Dev / test builds only (Pause, Ch+, Ch+, Ch+ → the overlay); the release bundle folds it away.
   debugTools: __SHMUP_DEV__ ? tizenDebugTools(window, __SHMUP_BUILD__, canvas) : null,
+  // The build the replays record (M3-01).
+  buildId: __SHMUP_BUILD__,
 }).catch((error: unknown) => {
   // Visible in the Chrome DevTools remote inspector (sdb / Tizen extension).
   console.error('Shmup Cup failed to start', error);

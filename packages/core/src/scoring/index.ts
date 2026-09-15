@@ -107,13 +107,40 @@ export interface ScoringRules {
    * a boss's death, a Mega Crash), credited when the item reaches the player's score.
    */
   readonly bulletCancel: number;
+  /**
+   * The score-milking cap (M3-01 — shmup_feat.md §15 "[P2] score-milking guards … add caps"): the
+   * enemies a **script** spawned (a spawner's drones, a boss's minions, split bubbles, thrown rocks
+   * — the sources a player could farm forever) give their full score for the first `repeatKills`
+   * kills of each enemy kind in a World; every later kill of that kind gives
+   * {@link ScoringRules.repeatPercent} percent of it. Omitted: {@link DEFAULT_REPEAT_KILLS}; 0 = no
+   * cap.
+   */
+  readonly repeatKills?: number;
+  /** Percent of the score a capped kill still gives (0–100; omitted: {@link DEFAULT_REPEAT_PERCENT}). */
+  readonly repeatPercent?: number;
 }
 
 /** Highest {@link ScoringRules.bulletCancel} a rules file may give. */
 export const MAX_BULLET_CANCEL_POINTS = 10_000;
 
-/** The built-in scoring rules (what `content/rules/scoring.rules.json` ships with). */
-export const DEFAULT_SCORING_RULES: ScoringRules = Object.freeze({ bulletCancel: 10 });
+/** Highest {@link ScoringRules.repeatKills} a rules file may give. */
+export const MAX_REPEAT_KILLS = 1000;
+
+/** The milking cap's default kill count per spawned enemy kind and World (M3-01). */
+export const DEFAULT_REPEAT_KILLS = 40;
+
+/** The milking cap's default share of the score after the cap, in percent (M3-01). */
+export const DEFAULT_REPEAT_PERCENT = 10;
+
+/**
+ * The built-in scoring rules (what `content/rules/scoring.rules.json` ships with): 10 points per
+ * cancelled bullet; M3-01's milking cap — 40 full-score kills per spawned enemy kind, then 10 %.
+ */
+export const DEFAULT_SCORING_RULES: ScoringRules = Object.freeze({
+  bulletCancel: 10,
+  repeatKills: DEFAULT_REPEAT_KILLS,
+  repeatPercent: DEFAULT_REPEAT_PERCENT,
+});
 
 /** Score state of one player (a class: its fields stay unboxed numbers). */
 export class PlayerScore {
@@ -157,6 +184,12 @@ export interface HiScoreEntry {
   readonly mode: string;
   /** Difficulty preset of the run. */
   readonly difficulty: string;
+  /**
+   * The score was set with an assist (M3-01 — shmup_feat.md §21 "both flag scores/replays as
+   * assisted"): the game-speed or invincibility assist, a secret code or the debug god mode. The
+   * tables mark such rows. Present only when `true`.
+   */
+  readonly assisted?: boolean;
 }
 
 /** The scores of one session (a class: monomorphic fields). */

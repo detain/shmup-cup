@@ -222,7 +222,8 @@ describe('core/weapons', () => {
   it('describes itself and owns the weapon behaviour ids', () => {
     expect(moduleInfo.name).toBe('weapons');
     expect(moduleInfo.status).toBe('implemented');
-    // Type A (M1-10), the Types B–D behaviours (M2-03) and the Direct-mode ones (M2-05).
+    // Type A (M1-10), the Types B–D behaviours (M2-03), the Direct-mode ones (M2-05) and the
+    // Extra Edit ones (M3-01).
     expect(WEAPON_SCRIPT_IDS).toEqual([
       'direct.bolt',
       'direct.bomb',
@@ -230,12 +231,19 @@ describe('core/weapons', () => {
       'laser.cyclone',
       'laser.ripple',
       'laser.twin',
+      'missile.control',
       'missile.groundSlide',
+      'missile.hawkWind',
+      'missile.smallSpread',
       'missile.spreadBomb',
       'missile.torpedo',
       'missile.twoWay',
+      'missile.twoWayBack',
+      'missile.upper',
+      'shot.backDouble',
       'shot.double',
       'shot.freeWay',
+      'shot.spreadGun',
       'shot.straight',
       'shot.tailGun',
       'shot.vertical',

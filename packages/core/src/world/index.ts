@@ -257,15 +257,21 @@ import {
   type BulletSystem,
   type LaserSource,
 } from '../bullets/index.js';
-import type {
-  ContentDb,
-  PlayerShipSpec,
-  StageBossEvent,
-  StageMusicEvent,
-  StageSpec,
+import {
+  stageForLoop,
+  type ContentDb,
+  type PlayerShipSpec,
+  type StageBossEvent,
+  type StageMusicEvent,
+  type StageSpec,
 } from '../data/index.js';
 import { createDebugFlags, skipToBoss, type DebugFlags } from '../debug/index.js';
-import { createEnemySystem, type EnemyBehaviorLookup, type EnemySystem } from '../enemies/index.js';
+import {
+  DropKind,
+  createEnemySystem,
+  type EnemyBehaviorLookup,
+  type EnemySystem,
+} from '../enemies/index.js';
 import {
   ShakeMagnitude,
   createFxState,
@@ -283,7 +289,12 @@ import {
   createPowerUpSystem,
   type PowerUpSystem,
 } from '../powerups/index.js';
-import { createScoringSystem, markContinue, type ScoringSystem } from '../scoring/index.js';
+import {
+  addScore,
+  createScoringSystem,
+  markContinue,
+  type ScoringSystem,
+} from '../scoring/index.js';
 import { SHIELD_SPRITES, ShieldKind, shieldActive, shieldSpecOf } from '../shields/index.js';
 import {
   MainWeapon,
@@ -296,6 +307,7 @@ import {
 import { UI_SPRITES } from '../ui/index.js';
 import {
   FX_CUES,
+  MUSIC_CUES,
   SFX_CUES,
   SfxPriority,
   SimEventKind,
@@ -553,6 +565,19 @@ export interface World {
    * zones and picks the ending with them. Hashed.
    */
   endingFlags: number;
+  /**
+   * The caravan's clock (M3-01 — `GameConfig.timeLimit`): ticks left to play, -1 without a limit.
+   * Counted down in phase 9 while the stage is played (`playing` / `bossWarning`); at 0 the World
+   * ends ({@link World.timeUp}). Hashed only with a time limit.
+   */
+  timeLeft: number;
+  /** The caravan's time ran out (M3-01): the status became `stageClear` at the clock's 0. */
+  timeUp: boolean;
+  /**
+   * Whether the caravan's time bonus of a stage cleared with time left was paid (M3-01 —
+   * {@link CARAVAN_TIME_BONUS} per second left; once).
+   */
+  clockPaid: boolean;
   /** What the renderer draws: live references, refreshed at the end of every tick. */
   readonly view: WorldView;
 }
@@ -1237,13 +1262,75 @@ function killShip(world: World, slot: number): void {
   if (world.config.powerUpMode === 'direct') {
     applyDirectDeathPenalty(world.config.deathPenalty, ship, world.weapons.loadouts[slot]);
   } else {
-    applyDeathPenalty(
-      world.config.deathPenalty,
-      ship,
-      world.weapons.loadouts[slot],
-      world.powerups.meters[slot],
-    );
+    const loadout = world.weapons.loadouts[slot];
+    const options = loadout.options;
+    applyDeathPenalty(world.config.deathPenalty, ship, loadout, world.powerups.meters[slot]);
+    // Option recovery (M3-01): the Options the penalty took drift away from the wreck as grey
+    // items (the M2-04 freed Options — next tick's phase 3 turns the drops into items).
+    if (world.config.optionRecovery) {
+      for (let k = loadout.options; k < options; k++) {
+        world.enemies.dropAt(DropKind.FreeOption, x, y);
+      }
+    }
   }
+}
+
+/**
+ * The pause menu's FULL POWER secret (M3-01 — shmup_feat.md §4 "[P2] secrets: pause + code = full
+ * power-up"): an alive meter ship gets the `'full'` loadout (speed 2, Missile, Laser, four Options,
+ * the `?` choice's shield); a Direct-mode ship both levels at the top and the gold Arm. Called by
+ * the scene flow between ticks (a replay records it as a flow action — `core/replay`); cold path.
+ *
+ * @param world - The world.
+ * @param slot - The player slot.
+ * @returns `true` when the ship was alive and powered up.
+ *
+ * @example
+ * ```ts
+ * grantFullPower(world, 0); // → true: player 1 fully powered
+ * ```
+ */
+export function grantFullPower(world: World, slot: number): boolean {
+  const players = world.players;
+  if (!(slot >= 0 && slot < players.length && slot % 1 === 0)) return false;
+  const ship = players[slot];
+  if (!ship.active || ship.state !== 'alive') return false;
+  const config = world.config;
+  const loadout = world.weapons.loadouts[slot];
+  if (config.powerUpMode === 'direct') {
+    const speed = ship.speedLevel;
+    applyDirectLoadout(loadout, ship, 'full', world.ship.startSpeedLevel);
+    ship.speedLevel = speed;
+  } else {
+    applyLoadoutPreset(loadout, ship, 'full', shieldSpecOf(config.shieldChoice));
+  }
+  world.events.push(SimEventKind.Sfx, SFX_CUES.PowerUpEquip, 0, 0, SfxPriority.High);
+  updateWorldRank(world);
+  syncWorldView(world);
+  return true;
+}
+
+/**
+ * The pause menu's self-destruct joke (M3-01 — shmup_feat.md §4 "[P2] … self-destruct joke"): an
+ * alive ship is hit as if by a bullet the moment play resumes (its shield does not help; god mode
+ * and the invincibility assist still do). Called by the scene flow between ticks (recorded as a
+ * flow action like {@link grantFullPower}); cold path.
+ *
+ * @param world - The world.
+ * @param slot - The player slot.
+ * @returns `true` when the hit was recorded (the death sequence runs in the next tick's phase 7).
+ */
+export function selfDestruct(world: World, slot: number): boolean {
+  const players = world.players;
+  if (!(slot >= 0 && slot < players.length && slot % 1 === 0)) return false;
+  const ship = players[slot];
+  if (!ship.active || ship.state !== 'alive' || ship.invulnTicks > 0) return false;
+  if (world.debugFlags.godMode || ship.invincible) return false;
+  // Recorded for the next tick: its damage phase kills a ship hit "during" that tick.
+  ship.hitCause = PlayerHitCause.Bullet;
+  ship.hitTick = world.tick;
+  ship.hits++;
+  return true;
 }
 
 /**
@@ -1283,8 +1370,45 @@ const removalSystem: WorldSystem = (world) => {
  */
 const fxSystem: WorldSystem = (world) => {
   tickFx(world);
+  if (world.timeLeft >= 0) updateClock(world);
   syncWorldView(world);
 };
+
+/** Points per second left on the caravan's clock when its stage is cleared (M3-01). */
+export const CARAVAN_TIME_BONUS = 1000;
+
+/**
+ * Part of phase 9 in a World with a time limit (M3-01 — the caravan, shmup_feat.md §16 "score
+ * attack / caravan (time-limited)"): while the stage is played the clock counts down (hit-stop
+ * ticks too — it is the player's time); at 0 the World ends — status `stageClear`,
+ * {@link World.timeUp}, the enemy bullets cancelled, the stage-clear jingle queued (the ships then
+ * fly out like after a boss). A stage cleared another way with time left pays
+ * {@link CARAVAN_TIME_BONUS} per whole second left to every player in play, once. Never allocates.
+ *
+ * @param world - The world (its `timeLeft` ≥ 0).
+ */
+function updateClock(world: World): void {
+  const status = world.status;
+  if (status === 'playing' || status === 'bossWarning') {
+    if (world.timeLeft > 0) world.timeLeft--;
+    if (world.timeLeft > 0) return;
+    world.timeUp = true;
+    world.status = 'stageClear';
+    world.bullets.cancelAll(CancelMode.Sparkle);
+    world.events.push(SimEventKind.Music, MUSIC_CUES.StageClear, 0, 0, 0);
+    return;
+  }
+  if (status !== 'stageClear' || world.timeUp || world.clockPaid) return;
+  world.clockPaid = true;
+  const seconds = Math.floor(world.timeLeft / 60);
+  if (seconds <= 0) return;
+  const players = world.players;
+  for (let p = 0; p < players.length; p++) {
+    if (players[p].active && !playerOut(players[p]))
+      addScore(world, p, seconds * CARAVAN_TIME_BONUS);
+  }
+  world.scoring.checkExtends();
+}
 
 /**
  * The tick pipeline in its fixed order (plan §3.2). {@link stepWorld} runs it front to back;
@@ -1457,13 +1581,15 @@ export function createWorld(
   options: WorldOptions = {},
 ): World {
   const ship = resolvePlayerShip(content, config.shipId);
-  const stageSpec = resolveWorldStage(config, content);
+  // The loops' remix (M3-01): from loop 2 the stage's timeline has its remix merged in.
+  const contentStage = resolveWorldStage(config, content);
+  const stageSpec = contentStage === null ? null : stageForLoop(contentStage, config.loop);
   // A class instance, not a literal: see `createStageCamera` (keeps the fields unboxed doubles).
   const camera: WorldCamera = createStageCamera();
   const players: PlayerShip[] = [];
   const intents: PlayerIntent[] = [];
   for (let slot = 0; slot < MAX_PLAYERS; slot++) {
-    players.push(createPlayer(slot, config.startingLives));
+    players.push(createPlayer(slot, config.startingLives, config.invincible));
     intents.push(createPlayerIntent());
   }
   players[0].active = true;
@@ -1524,6 +1650,9 @@ export function createWorld(
     rankInputs: createRankInputs(config),
     continuesUsed: 0,
     endingFlags: 0,
+    timeLeft: config.timeLimit > 0 ? config.timeLimit : -1,
+    timeUp: false,
+    clockPaid: false,
     view,
   };
   world.rank = computeRank(world.rankInputs);
@@ -1575,7 +1704,7 @@ export function createWorld(
   view.bendingLasers = world.bullets.bending;
   view.warning = world.bosses.warning;
   if (stageSpec !== null) {
-    world.stage = createStageRunner(stageSpec, createWorldStageHooks(world), camera);
+    world.stage = createStageRunner(stageSpec, createWorldStageHooks(world), camera, config.loop);
     if (stageSpec.music.stageId >= 0) {
       world.events.push(SimEventKind.Music, stageSpec.music.stageId, 0, 0, 0);
     }

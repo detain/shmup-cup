@@ -1906,7 +1906,7 @@ export const HUD_ARM_COLORS: readonly number[] = Object.freeze([0x48d860, 0xc8d0
  * The frames of the `hud/meter-labels` sprite, by label (shmup_feat.md §6A; the asset pipeline's
  * `procedural/hud.mjs` draws them in this order): the seven slot labels of Type A, then the names
  * of the Types B–D weapons the MISSILE / DOUBLE / LASER slots may hold (M2-03 — `core/weapons`
- * `WEAPON_BEHAVIOR_LABELS`).
+ * `WEAPON_BEHAVIOR_LABELS`), then the Extra Edit weapons' (M3-01).
  */
 export const METER_LABEL_FRAMES: readonly string[] = Object.freeze([
   'SPEED',
@@ -1925,6 +1925,13 @@ export const METER_LABEL_FRAMES: readonly string[] = Object.freeze([
   'RIPPLE',
   'CYCLONE',
   'TWIN',
+  'CONTROL',
+  'UPPER',
+  'SMALL SP',
+  'HAWK',
+  '2-WAY BK',
+  'BACK DBL',
+  'SPR GUN',
 ]);
 
 /**
@@ -1949,6 +1956,13 @@ export const METER_SHORT_IDS: readonly UiTextId[] = Object.freeze([
   'meterShortRipple',
   'meterShortCyclone',
   'meterShortTwin',
+  'meterShortControl',
+  'meterShortUpper',
+  'meterShortSmallSpread',
+  'meterShortHawk',
+  'meterShortTwoWayBack',
+  'meterShortBackDouble',
+  'meterShortSpreadGun',
 ] as UiTextId[]);
 
 /**
@@ -2014,13 +2028,27 @@ export const HUD_STRING_SLOTS = Object.freeze({
   meterShort: 15,
   /** `BOSS` (M2-09) — after the seven compact meter labels. */
   boss: 22,
+  /** `TIME` (M3-01 — the caravan's clock, in player 2's place). */
+  time: 23,
 });
 
 /**
- * String slots a HUD list needs ({@link HUD_STRING_SLOTS}: the seven compact meter labels from 15,
- * then `BOSS` — M2-09).
+ * The whole seconds the HUD shows of a World's caravan clock (M3-01): `ceil(timeLeft / 60)`, 0 at
+ * the end. Never allocates.
+ *
+ * @param world - The World (its `timeLeft` ≥ 0).
+ * @returns Seconds.
  */
-export const HUD_STRING_COUNT = 23;
+export function hudClockSeconds(world: Readonly<Pick<World, 'timeLeft'>>): number {
+  const left = world.timeLeft;
+  return left > 0 ? ((left + 59) / 60) | 0 : 0;
+}
+
+/**
+ * String slots a HUD list needs ({@link HUD_STRING_SLOTS}: the seven compact meter labels from 15,
+ * then `BOSS` — M2-09 —, then `TIME` — M3-01).
+ */
+export const HUD_STRING_COUNT = 24;
 
 /**
  * Commands a HUD list needs in the worst case (the co-op Direct-mode HUD: both halves with every
@@ -2223,8 +2251,22 @@ export function buildHud(
     list.text(S.hi, L.hiX, L.topY, HUD_COLORS.hi);
     list.number(board.hiScore, L.hiX + 16, L.topY, L.digits, HUD_COLORS.number);
   }
-  const score2 = board.scores.length > 1 ? board.scores[1].score : 0;
-  topScore(list, score2, state2, S.p2, L.p2X, HUD_COLORS.p2, blinkOn, text);
+  if (world.timeLeft >= 0) {
+    // The caravan's clock (M3-01) in player 2's place: whole seconds left, red for the last ten.
+    const seconds = hudClockSeconds(world);
+    list.setString(S.time, text.time);
+    list.text(S.time, L.p2X, L.topY, HUD_COLORS.p2);
+    list.number(
+      seconds,
+      L.p2X + 24,
+      L.topY,
+      0,
+      seconds <= 10 ? HUD_COLORS.bossLabel : HUD_COLORS.number,
+    );
+  } else {
+    const score2 = board.scores.length > 1 ? board.scores[1].score : 0;
+    topScore(list, score2, state2, S.p2, L.p2X, HUD_COLORS.p2, blinkOn, text);
+  }
 
   if (players.length > 1 && players[0].active && players[1].active) {
     // Co-op (M2-06): each player's compact half.
@@ -2619,6 +2661,8 @@ export class Hud {
    * leaves it alone.
    */
   private barFill = -1;
+  /** The last build's caravan clock in whole seconds (-1 = no clock — M3-01). */
+  private clock = -1;
   /** The last build's per-player values ({@link HUD_PLAYER_FIELDS} per player). */
   private readonly shown = new Int32Array(2 * HUD_PLAYER_FIELDS);
   /** This update's per-player values (compared with {@link Hud.shown}). */
@@ -2702,6 +2746,7 @@ export class Hud {
     const hpBar = world.bosses.hpBar;
     const barFill =
       this.showBossHp && hpBar.visible ? bossHpBarFill(hpBar, BOSS_HP_BAR_WIDTH - 2) : -1;
+    const clock = world.timeLeft >= 0 ? hudClockSeconds(world) : -1;
     let dirty =
       world !== this.world ||
       list !== this.list ||
@@ -2710,7 +2755,8 @@ export class Hud {
       board.hiScoreDirty ||
       flash !== this.flash ||
       blink !== this.blink ||
-      barFill !== this.barFill;
+      barFill !== this.barFill ||
+      clock !== this.clock;
     const shown = this.shown;
     for (let i = 0; !dirty && i < next.length; i++) if (next[i] !== shown[i]) dirty = true;
     if (!dirty) return false;
@@ -2720,6 +2766,7 @@ export class Hud {
     this.flash = flash;
     this.blink = blink;
     this.barFill = barFill;
+    this.clock = clock;
     this.builds++;
     buildHud(world, list, this.sprites, this.showBossHp, this.text);
     return true;

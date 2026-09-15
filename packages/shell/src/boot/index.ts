@@ -140,6 +140,7 @@ import {
   DEFAULT_GAME_CONFIG,
   MUSIC_CUES,
   createGame,
+  createReplayLibrary,
   createSaveStore,
   defineModule,
   loadSave,
@@ -148,6 +149,7 @@ import {
   type GameConfig,
   type IAudio,
   type InputContext,
+  type ReplayLibrary,
   type InputOptions,
   type InputProfileChoice,
   type LoadedSave,
@@ -181,6 +183,7 @@ import {
   connectStagePreparation,
   connectFxEvents,
   connectOptionEvents,
+  connectRumbleEvents,
   createEventDispatcher,
   type EventDispatcher,
 } from '../dispatch/index.js';
@@ -421,6 +424,16 @@ export interface ShellInput extends PlatformInput {
   beginCapture?(kind: CaptureKind): void;
   /** Ends a rebinding capture (M2-16 — `WebInput.endCapture`). */
   endCapture?(): void;
+  /**
+   * Rumbles a player's gamepads (M3-01 — `WebInput.rumble`; the shell calls it for the core's
+   * `SimEventKind.Rumble` events while the save's RUMBLE option is on). Optional: an adapter without
+   * it never rumbles.
+   *
+   * @param player - The player slot.
+   * @param strength - 1 (a death) or 2 (a boss blast).
+   * @returns How many pads rumbled.
+   */
+  rumble?(player: number, strength: number): number;
   /** Removes the adapter's event listeners. */
   destroy(): void;
 }
@@ -517,6 +530,19 @@ export interface ShellOptions {
    * created once boot is done (see the `debug` module). Default `null`.
    */
   readonly debugTools?: DebugToolsFactory | null;
+  /**
+   * The build id the game's replays record (M3-01 — the apps pass `__SHMUP_BUILD__`; default
+   * `'dev'`).
+   */
+  readonly buildId?: string;
+  /**
+   * Hands a replay's text to the player (M3-01 — the replay browser's SHARE: the web app copies it
+   * to the clipboard). Omitted or `null`: no SHARE (the TV).
+   *
+   * @param text - The replay's text.
+   * @returns Whether it was handed over.
+   */
+  readonly shareReplay?: ((text: string) => boolean) | null;
 }
 
 /** A running shell. */
@@ -571,6 +597,12 @@ export interface Shell {
   readonly atlasResidency: AtlasResidency;
   /** The debug tools (dev / test builds — {@link ShellOptions.debugTools}), else `null`. */
   readonly debug: DebugTools | null;
+  /**
+   * The saved replays (M3-01 — `core/replay` `ReplayLibrary` over `platform.storage`, loaded before
+   * the title): the game stores every finished run as the last game; a host imports a shared one
+   * with {@link ReplayLibrary.importText} (the web app's paste).
+   */
+  readonly replays: ReplayLibrary;
   /**
    * Stops the frame loop and releases listeners, input, renderer, atlas, the audio engine and the
    * audio back-end (idempotent).
@@ -889,6 +921,9 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   // The save (plan M1-17): read before the title; a bad one falls back to defaults (never fails).
   const loadedSave = await loadSave(platform.storage);
   const save = createSaveStore(platform.storage, loadedSave);
+  // The saved replays (M3-01): read before the title too (an unreadable slot is empty).
+  const replays = createReplayLibrary(platform.storage);
+  await replays.load();
   applyAudioOptions(audio, save.options.audio);
   const profiles = options.inputProfiles ?? null;
   let profileChoices: readonly InputProfileChoice[] = [];
@@ -938,6 +973,10 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
             // The sound test's MUSIC row (M2-15): the library's titles, in library order.
             soundTest: { music: musicContent.tracks.map((track) => track.title) },
             controls,
+            // M3-01: the replays, sharing and the build the replays record.
+            replays,
+            shareReplay: options.shareReplay ?? null,
+            buildId: options.buildId ?? 'dev',
           }
         : {},
     );
@@ -1022,6 +1061,16 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     connectAtlasResidency(events, atlasResidency);
     // The sound test's tracks (M2-15): loaded on demand, played from their start.
     connectSoundTest(events, engine);
+    // Gamepad rumble (M3-01): the core's Rumble events while the save's RUMBLE option is on.
+    if (input.rumble !== undefined) {
+      connectRumbleEvents(
+        events,
+        (player, strength) => {
+          input.rumble?.(player, strength);
+        },
+        () => save.options.play.rumble,
+      );
+    }
     // The Options screen's changes, live (plan M1-17). The profile event carries an index into
     // the same `profileChoices` the flow was given; out-of-range indices are ignored.
     connectOptionEvents(
@@ -1211,6 +1260,7 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     bootTiming,
     refresh,
     atlasResidency,
+    replays,
     get debug() {
       return debug;
     },

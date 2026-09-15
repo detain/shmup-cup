@@ -558,5 +558,63 @@
     "blue",
     "red",
     "green"
+  ],
+  "remix": [
+    {
+      "x": 220,
+      "type": "formation",
+      "enemy": "skeet",
+      "count": 5,
+      "interval": 18,
+      "y": 130,
+      "drop": null
+    },
+    {
+      "x": 1140,
+      "type": "formation",
+      "enemy": "skeet-chain",
+      "count": 8,
+      "interval": 12,
+      "y": 140,
+      "drop": null
+    },
+    {
+      "x": 2340,
+      "type": "formation",
+      "enemy": "lancer",
+      "count": 3,
+      "interval": 30,
+      "y": 130,
+      "drop": null
+    },
+    {
+      "x": 3000,
+      "type": "formation",
+      "enemy": "vane",
+      "count": 6,
+      "interval": 10,
+      "y": 130,
+      "path": "vane-loop-down",
+      "drop": null
+    },
+    {
+      "x": 5540,
+      "type": "formation",
+      "enemy": "skeet",
+      "count": 5,
+      "interval": 18,
+      "y": 100,
+      "drop": null
+    },
+    {
+      "x": 7480,
+      "type": "formation",
+      "enemy": "vane",
+      "count": 5,
+      "interval": 10,
+      "y": 60,
+      "path": "vane-arc-up",
+      "drop": null
+    }
   ]
 }

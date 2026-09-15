@@ -84,6 +84,24 @@
  * - `laser.twin` — two short beams `gap` px apart that follow their shooter; a pair fires while two
  *   more fit under the cap (non-piercing in the shipped content).
  *
+ * **Extra Edit behaviours** (M3-01, shmup_feat.md §7A "[P2] Extra Edit (any combo) as an unlock" —
+ * the weapons marked `extra` in `content/weapons/`, offered by the weapon select's EXTRA):
+ *
+ * - `missile.control` — flies straight ahead and eases its height towards its shooter's every tick
+ *   (`track`, a fraction per tick): the missile follows the ship's vertical movement.
+ * - `missile.upper` — the Missile upside down: rises `angle` units up from forward, then slides
+ *   along the ceiling (`findCeiling`) at `slideSpeed`; drawn mirrored vertically (`flip` 2).
+ * - `missile.smallSpread` — a smaller Spread Bomb fired backwards and down (`angle` 448, `flip` 1).
+ * - `missile.hawkWind` — each shot rises like the Upper Missile when its shooter is above the
+ *   playfield's middle, else falls like the Missile; both then follow the terrain.
+ * - `missile.twoWayBack` — the 2-Way Missile fired backwards (`angle` 384: up-back and down-back).
+ * - `shot.backDouble` — a Double whose second shot flies up and back (`angle` 384).
+ * - `shot.spreadGun` — the two diagonals (`angle` up and down from forward) as one volley; equipped
+ *   again (the loadout's `spread` — `core/powerups`) forward too: 2-way, then 3-way.
+ *
+ * The `flip` tunable (1 = mirrored horizontally, 2 = vertically) lets these reuse the existing shot
+ * art: every M3-01 weapon draws a sprite of Types A–D.
+ *
  * **Direct mode** (M2-05, shmup_feat.md §7B — `GameConfig.powerUpMode: 'direct'`, the MANTA). The
  * content's shot **families** (`content/weapons/` `families`, `core/data` `WeaponFamilySpec`) are
  * compiled at creation: every weapon a family's volleys fire gets a **direct role** of its own
@@ -162,6 +180,7 @@
  */
 import {
   TerrainType,
+  findCeiling,
   findFloor,
   terrainAt,
   type SpatialGrid,
@@ -280,6 +299,17 @@ export const ShotKind = {
   Ripple: 8,
   /** `laser.twin`: two short parallel beams (M2-03). */
   Twin: 9,
+  /** `missile.control`: flies straight ahead, following its shooter's height (M3-01). */
+  Control: 10,
+  /** `missile.upper`: rises, then slides along the ceiling — the Missile upside down (M3-01). */
+  Upper: 11,
+  /**
+   * `missile.hawkWind` (a role's kind only, M3-01): each shot is a {@link ShotKind.Upper} when its
+   * shooter is above the playfield's middle, else a {@link ShotKind.Missile}.
+   */
+  HawkWind: 12,
+  /** `shot.spreadGun`: the two diagonals, and forward too once equipped again (M3-01). */
+  SpreadGun: 13,
 } as const;
 
 /** A {@link ShotKind} code. */
@@ -306,6 +336,13 @@ export const WEAPON_BEHAVIOR_KINDS: Readonly<Record<WeaponBehaviorId, ShotKind>>
   'laser.twin': ShotKind.Twin,
   'direct.bolt': ShotKind.Straight,
   'direct.bomb': ShotKind.SpreadBomb,
+  'missile.control': ShotKind.Control,
+  'missile.upper': ShotKind.Upper,
+  'missile.smallSpread': ShotKind.SpreadBomb,
+  'missile.hawkWind': ShotKind.HawkWind,
+  'missile.twoWayBack': ShotKind.TwoWay,
+  'shot.backDouble': ShotKind.Double,
+  'shot.spreadGun': ShotKind.SpreadGun,
 });
 
 /**
@@ -400,6 +437,42 @@ export const WEAPON_BEHAVIOR_PARAMS: Readonly<
     frames: 4,
     frame: 0,
   }),
+  'missile.control': Object.freeze({ track: 0.25, ox: 4, oy: 4, hw: 4, hh: 1.5, frames: 2 }),
+  'missile.upper': Object.freeze({
+    slideSpeed: 3,
+    angle: 128,
+    ox: 0,
+    oy: -4,
+    hw: 4,
+    hh: 1.5,
+    frames: 2,
+    flip: 2,
+  }),
+  'missile.smallSpread': Object.freeze({
+    angle: 448,
+    gravity: 0.12,
+    ox: -2,
+    oy: 4,
+    hw: 3,
+    hh: 3,
+    blastRadius: 8,
+    blastTicks: 10,
+    hitCooldownTicks: 5,
+    frames: 4,
+    flip: 1,
+  }),
+  'missile.hawkWind': Object.freeze({
+    slideSpeed: 3,
+    angle: 128,
+    ox: 0,
+    oy: 0,
+    hw: 4,
+    hh: 1.5,
+    frames: 2,
+  }),
+  'missile.twoWayBack': Object.freeze({ angle: 384, ox: -2, oy: 0, hw: 3, hh: 3, flip: 1 }),
+  'shot.backDouble': Object.freeze({ angle: 384, ox: 4, oy: -2, hw: 3, hh: 3, flip: 1 }),
+  'shot.spreadGun': Object.freeze({ angle: 128, ox: 4, oy: 0, hw: 3, hh: 3 }),
 });
 
 /** The loadout slot each behaviour belongs in (checked by {@link checkWeaponBehaviors}). */
@@ -420,6 +493,13 @@ export const WEAPON_BEHAVIOR_SLOTS: Readonly<Record<WeaponBehaviorId, readonly W
     'laser.twin': Object.freeze(['laser'] as WeaponSlot[]),
     'direct.bolt': Object.freeze(['main', 'sub'] as WeaponSlot[]),
     'direct.bomb': Object.freeze(['sub'] as WeaponSlot[]),
+    'missile.control': Object.freeze(['missile'] as WeaponSlot[]),
+    'missile.upper': Object.freeze(['missile'] as WeaponSlot[]),
+    'missile.smallSpread': Object.freeze(['missile'] as WeaponSlot[]),
+    'missile.hawkWind': Object.freeze(['missile'] as WeaponSlot[]),
+    'missile.twoWayBack': Object.freeze(['missile'] as WeaponSlot[]),
+    'shot.backDouble': Object.freeze(['double'] as WeaponSlot[]),
+    'shot.spreadGun': Object.freeze(['double'] as WeaponSlot[]),
   });
 
 /**
@@ -442,6 +522,13 @@ export const WEAPON_BEHAVIOR_LABELS: Readonly<Record<WeaponBehaviorId, string>> 
   'laser.twin': 'TWIN',
   'direct.bolt': 'BOLT',
   'direct.bomb': 'BOMB',
+  'missile.control': 'CONTROL',
+  'missile.upper': 'UPPER',
+  'missile.smallSpread': 'SMALL SP',
+  'missile.hawkWind': 'HAWK',
+  'missile.twoWayBack': '2-WAY BK',
+  'shot.backDouble': 'BACK DBL',
+  'shot.spreadGun': 'SPR GUN',
 });
 
 /**
@@ -449,6 +536,12 @@ export const WEAPON_BEHAVIOR_LABELS: Readonly<Record<WeaponBehaviorId, string>> 
  * around further than this is inside it and no longer hit.
  */
 export const RIPPLE_RING_WIDTH = 4;
+
+/**
+ * The Spread Gun's behaviour id (M3-01): a Double role firing it may be equipped twice
+ * (`core/powerups` `MeterChoices.doubleLevels`).
+ */
+export const SPREAD_GUN_BEHAVIOR = 'shot.spreadGun';
 
 /** The Spread Bomb's blast sprite (an engine sprite — see core `world` `ENGINE_SPRITES`). */
 export const SPREAD_BLAST_SPRITE = 'shots/blast';
@@ -597,6 +690,13 @@ export class Loadout {
    * first — Beam → Disc; the red octagon moves on to the next).
    */
   family = 0;
+  /**
+   * The Spread Gun's level (M3-01 — shmup_feat.md §7A "Spread Gun: equip twice: 2-way diagonals,
+   * then 3-way"): 0 = the first equip (the two diagonals), 1 = equipped again (forward too). Set by
+   * `core/powerups` `equipSlot` (a Double equip while the Double role is the Spread Gun and it is
+   * already equipped); 0 whenever the Double is equipped anew.
+   */
+  spread = 0;
 }
 
 /**
@@ -629,6 +729,7 @@ export function applyLoadoutPreset(
   loadout.main = full ? MainWeapon.Laser : MainWeapon.Basic;
   loadout.missile = full;
   loadout.options = full ? MAX_OPTIONS : 0;
+  loadout.spread = 0;
   loadout.shot = 0;
   loadout.sub = 0;
   loadout.family = 0;
@@ -668,6 +769,7 @@ export function applyDirectLoadout(
   loadout.main = MainWeapon.Basic;
   loadout.missile = false;
   loadout.options = 0;
+  loadout.spread = 0;
   loadout.shot = full ? DIRECT_MAX_LEVEL : 0;
   loadout.sub = full ? DIRECT_MAX_LEVEL : 0;
   loadout.family = 0;
@@ -1243,6 +1345,10 @@ class RoleTables {
   readonly frame0 = new Int32Array(WEAPON_ROLE_SLOTS);
   /** 1 = a piercing shot armour does not stop (`passArmour`, M2-18). */
   readonly passArmour = new Uint8Array(WEAPON_ROLE_SLOTS);
+  /** The Control Missile's height tracking per tick, 0–1 (`track`, M3-01). */
+  readonly track = new Float64Array(WEAPON_ROLE_SLOTS);
+  /** `SpriteFlag` mirror bits of the role's own shots (`flip`: 1 = FlipX, 2 = FlipY — M3-01). */
+  readonly flip = new Uint8Array(WEAPON_ROLE_SLOTS);
 }
 
 /**
@@ -1323,6 +1429,8 @@ function compileRole(t: RoleTables, r: number, spec: WeaponSpec | null, fallback
   t.turn[r] = 0;
   t.frame0[r] = 0;
   t.passArmour[r] = 0;
+  t.track[r] = 0;
+  t.flip[r] = 0;
   if (spec === null) return;
   const kind = Object.prototype.hasOwnProperty.call(WEAPON_BEHAVIOR_KINDS, spec.behavior)
     ? WEAPON_BEHAVIOR_KINDS[spec.behavior]
@@ -1367,6 +1475,9 @@ function compileRole(t: RoleTables, r: number, spec: WeaponSpec | null, fallback
   const frame0 = Math.floor(tunable(spec, 'frame'));
   t.frame0[r] = frame0 > 0 ? frame0 : 0;
   t.passArmour[r] = spec.pierce && tunable(spec, 'passArmour') > 0 ? 1 : 0;
+  const track = tunable(spec, 'track');
+  t.track[r] = track > 1 ? 1 : track > 0 ? track : 0;
+  t.flip[r] = Math.round(tunable(spec, 'flip')) & (SpriteFlag.FlipX | SpriteFlag.FlipY);
 }
 
 /**
@@ -1669,6 +1780,9 @@ class WeaponSystemImpl implements WeaponSystem {
       this.lane = 0;
       return i;
     }
+    if (kind === ShotKind.SpreadGun) {
+      return this.emit(role, shooter, (ANGLE_UNITS - t.angle[role]) & ANGLE_MASK, 0);
+    }
     return this.emit(role, shooter, this.launchHeading(role), 0);
   }
 
@@ -1680,7 +1794,11 @@ class WeaponSystemImpl implements WeaponSystem {
    */
   private launchHeading(role: number): number {
     const kind = this.roles.kind[role];
-    return kind === ShotKind.Missile || kind === ShotKind.Torpedo || kind === ShotKind.SpreadBomb
+    if (kind === ShotKind.Upper) return (ANGLE_UNITS - this.roles.angle[role]) & ANGLE_MASK;
+    return kind === ShotKind.Missile ||
+      kind === ShotKind.Torpedo ||
+      kind === ShotKind.SpreadBomb ||
+      kind === ShotKind.HawkWind
       ? this.roles.angle[role]
       : 0;
   }
@@ -1938,6 +2056,14 @@ class WeaponSystemImpl implements WeaponSystem {
       if (live > 0 || cap < 1) return false;
       fired = this.emit(role, s, (ANGLE_UNITS - t.angle[role]) & ANGLE_MASK, 0) >= 0;
       if (cap >= 2 && this.emit(role, s, t.angle[role], 0) >= 0) fired = true;
+    } else if (kind === ShotKind.SpreadGun) {
+      // The Spread Gun (M3-01): the two diagonals together, and forward too once equipped again;
+      // the next volley waits until every shot of it is gone.
+      if (live > 0 || cap < 1) return false;
+      const level = this.loadouts[(s / SHOOTERS_PER_PLAYER) | 0].spread;
+      fired = this.emit(role, s, (ANGLE_UNITS - t.angle[role]) & ANGLE_MASK, 0) >= 0;
+      if (cap >= 2 && this.emit(role, s, t.angle[role], 0) >= 0) fired = true;
+      if (level > 0 && cap >= 3 && this.emit(role, s, 0, 1) >= 0) fired = true;
     } else if (kind === ShotKind.Twin && cap >= 2) {
       // A pair of beams side by side while two more fit under the cap.
       if (live + 2 > cap) return false;
@@ -2011,11 +2137,28 @@ class WeaponSystemImpl implements WeaponSystem {
     }
     const f = this.pool.fields;
     const look = forward === 1 && t.kind[WeaponRole.Main] >= 0 ? WeaponRole.Main : role;
-    const kind = t.kind[role];
+    let kind = t.kind[role];
+    let a = angle & ANGLE_MASK;
+    // The role's mirror bits (M3-01 — backward and upside-down art); a Double's forward shot is
+    // drawn like the main shot.
+    let flip = forward === 1 ? 0 : t.flip[role];
+    if (kind === ShotKind.HawkWind) {
+      // Hawk Wind (M3-01): up above the playfield's middle, down below it.
+      if (this.fy < this.host.camera.y + PLAYFIELD_H / 2) {
+        kind = ShotKind.Upper;
+        a = (ANGLE_UNITS - t.angle[role]) & ANGLE_MASK;
+        flip |= SpriteFlag.FlipY;
+      } else {
+        kind = ShotKind.Missile;
+        a = t.angle[role] & ANGLE_MASK;
+      }
+    } else if (kind === ShotKind.SpreadGun && forward === 0 && a > 0 && a < ANGLE_UNITS / 2) {
+      // The Spread Gun's lower diagonal: its up-diagonal art mirrored.
+      flip |= SpriteFlag.FlipY;
+    }
     const lane = kind === ShotKind.Twin ? this.lane : 0;
     f.x[i] = this.fx + t.ox[look] + this.offX;
     f.y[i] = this.fy + t.oy[look] + lane + this.offY;
-    const a = angle & ANGLE_MASK;
     const speed = t.speed[role];
     if (kind === ShotKind.Laser || kind === ShotKind.Twin) {
       f.vx[i] = speed;
@@ -2049,7 +2192,7 @@ class WeaponSystemImpl implements WeaponSystem {
         : 0;
     const sprite = forward === 1 && t.sprite[look] >= 0 ? t.sprite[look] : t.sprite[role];
     f.sprite[i] = sprite < 0 ? 0 : sprite;
-    f.draw[i] = sprite < 0 ? SpriteFlag.Hidden : 0;
+    f.draw[i] = sprite < 0 ? SpriteFlag.Hidden : flip;
     f.table[i] = table;
     this.liveCounts[s * WEAPON_ROLE_SLOTS + role]++;
     return i;
@@ -2291,8 +2434,71 @@ class WeaponSystemImpl implements WeaponSystem {
         if (!(mx >= left && mx <= right && my >= top && my <= bottom)) this.kill(i);
         continue;
       }
-      // Straight flights: the main shot, the Double pairs (Tail Gun, Vertical, Free Way), the
-      // Two-Way missiles and the Ripple, whose ring grows as it flies.
+      if (kind === ShotKind.Upper) {
+        // The Upper Missile (M3-01): the Missile upside down — rises, slides along the ceiling.
+        const frames = t.frames[role];
+        f.frame[i] = frames > 1 ? (age >> 2) % frames : 0;
+        const hh = f.hh[i];
+        const foot = hh + 0.5;
+        if ((flags & ShotFlag.Sliding) === 0) {
+          const x = f.x[i] + dx + f.vx[i];
+          const y = f.y[i] + dy + f.vy[i];
+          f.x[i] = x;
+          f.y[i] = y;
+          if (map !== null && x - x === 0 && y - y === 0) {
+            const px = Math.floor(x) | 0;
+            const high = Math.floor(y - hh) | 0;
+            if (terrainAt(map, px, high) !== TerrainType.Empty) {
+              // Touched rock: the ceiling's underside above the contact, if any.
+              const scan = (Math.floor(y + hh) | 0) + t.step[role];
+              const surface = findCeiling(map, px, scan, scan - high);
+              if (!(surface <= scan)) {
+                // Flew into a wall.
+                this.hitTerrain(i, px, high);
+                this.kill(i);
+                continue;
+              }
+              f.y[i] = surface + foot;
+              f.flags[i] = flags | ShotFlag.Sliding;
+            }
+          }
+        } else if (map !== null) {
+          const x = f.x[i] + dx + t.slide[role];
+          const step = t.step[role];
+          // Scan rows surface + step + 1 … surface − step: a surface at the first row is a wall.
+          const scan = (Math.floor(f.y[i] - foot) | 0) + step + 1;
+          const surface = findCeiling(map, Math.floor(x) | 0, scan, 2 * step + 1);
+          f.x[i] = x;
+          if (surface !== surface) {
+            // The ceiling ends: rise again along the launch heading.
+            f.flags[i] = flags & ~ShotFlag.Sliding;
+            f.y[i] += dy;
+          } else if (!(surface <= scan)) {
+            this.hitTerrain(i, Math.floor(x) | 0, scan);
+            this.kill(i);
+            continue;
+          } else {
+            f.y[i] = surface + foot;
+          }
+        } else {
+          f.flags[i] = flags & ~ShotFlag.Sliding;
+        }
+        const ux = f.x[i];
+        const uy = f.y[i];
+        if (!(ux >= left && ux <= right && uy >= top && uy <= bottom)) this.kill(i);
+        continue;
+      }
+      if (kind === ShotKind.Control) {
+        // The Control Missile (M3-01): ahead at its speed, its height following the shooter's.
+        const frames = t.frames[role];
+        f.frame[i] = frames > 1 ? (age >> 2) % frames : 0;
+        if (this.locate(f.shooter[i])) {
+          f.y[i] += (this.fy + t.oy[role] - f.y[i]) * t.track[role];
+        }
+      }
+      // Straight flights: the main shot, the Double pairs (Tail Gun, Vertical, Free Way, Back
+      // Double), the Spread Gun, the Two-Way missiles, the Control Missile and the Ripple, whose
+      // ring grows as it flies.
       if (kind === ShotKind.Ripple) {
         const grown = t.startSize[role] + t.growth[role] * age;
         const size = grown < t.maxSize[role] ? grown : t.maxSize[role];

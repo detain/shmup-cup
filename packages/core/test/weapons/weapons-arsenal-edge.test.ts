@@ -370,6 +370,11 @@ describe('core/weapons arsenal edges (M2-03): the behaviour tables', () => {
       FreeWay: 7,
       Ripple: 8,
       Twin: 9,
+      // M3-01: the Extra Edit kinds, appended.
+      Control: 10,
+      Upper: 11,
+      HawkWind: 12,
+      SpreadGun: 13,
     });
     expect(ShotFlag.Blast).toBe(16);
     // The Tail Gun / Vertical are Double kinds, the Cyclone Laser a Laser kind.
@@ -380,8 +385,8 @@ describe('core/weapons arsenal edges (M2-03): the behaviour tables', () => {
 
   it('gives every behaviour one kind, slot list, label and tunables', () => {
     const ids = Object.keys(WEAPON_BEHAVIOR_KINDS).sort();
-    // Types A–D (13) and the two Direct-mode behaviours of M2-05.
-    expect(ids).toHaveLength(15);
+    // Types A–D (13), the two Direct-mode behaviours of M2-05 and the seven Extra Edit ones (M3-01).
+    expect(ids).toHaveLength(22);
     expect(WEAPON_SCRIPT_IDS).toEqual(ids);
     expect(Object.keys(WEAPON_BEHAVIOR_PARAMS).sort()).toEqual(ids);
     expect(Object.keys(WEAPON_BEHAVIOR_SLOTS).sort()).toEqual(ids);

@@ -33,6 +33,8 @@ const started: Promise<WebApp> | null = determinism
       assets,
       // Dev / test builds only (F1–F8, the overlay); a release build folds this to `null`.
       debugTools: __SHMUP_DEV__ ? debugToolsFactory({ buildId: __SHMUP_BUILD__ }) : null,
+      // The build the replays record (M3-01).
+      buildId: __SHMUP_BUILD__,
     });
 // Tested on the constant itself, so a release build drops the check with the branch.
 if (determinism) installDeterminismCheck(window, contentFiles, () => performance.now());

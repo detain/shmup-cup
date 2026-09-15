@@ -694,3 +694,48 @@ describe('golden replays (zone A and the dev stages, playtest bots)', () => {
     expect(bot.file.expected.ticks / 60).toBeLessThanOrEqual(360);
   });
 });
+
+describe('golden replays of the extra modes (M3-01)', () => {
+  it('loop 2: the remix, faster bullets and revenge bullets, cleared with god mode and without', () => {
+    const god = readGolden('zone-a-loop2-god');
+    expect(god.replay.header.config.loop).toBe(2);
+    expect(god.file.expected).toMatchObject({ status: 'stageClear', bossDefeated: true });
+    // The same seed on loop 1 plays a different run (the remix, the rank, the bullets).
+    const loop1 = readGolden('zone-a-god');
+    expect(god.file.expected.score).not.toBe(loop1.file.expected.score);
+    const boss = readGolden('zone-a-loop2-boss');
+    expect(boss.replay.header).toMatchObject({ assisted: false, assists: 0 });
+    expect(boss.replay.header.config).toMatchObject({ loop: 2, stageSkip: 'boss' });
+    expect(boss.file.expected.bossDefeated || boss.file.expected.status === 'gameOver').toBe(true);
+  });
+
+  it('the caravan clock ends the World at time up; the Extra Edit and option recovery play back', () => {
+    const caravan = readGolden('zone-a-caravan');
+    expect(caravan.replay.header.config.timeLimit).toBe(3600);
+    expect(caravan.file.expected.status).toBe('stageClear');
+    expect(caravan.file.expected.ticks).toBeLessThanOrEqual(3600 + 1);
+    const { world } = playGolden(caravan.replay);
+    expect([world.timeUp, world.timeLeft]).toEqual([true, 0]);
+    const extra = readGolden('zone-a-extra');
+    expect(extra.replay.header.config.weaponEdit).toMatchObject({ missile: 'missile.hawkWind' });
+    expect(extra.file.expected).toMatchObject({ status: 'stageClear', bossDefeated: true });
+    const recovery = readGolden('zone-a-recovery');
+    expect(recovery.replay.header.config.optionRecovery).toBe(true);
+    expect(recovery.file.expected.deathTicks.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('flags the assists in the replay headers: god mode, the invincibility assist', () => {
+    expect(readGolden('zone-a-loop2-god').replay.header).toMatchObject({
+      assisted: true,
+      assists: 1,
+    });
+    const invincible = readGolden('zone-a-invincible');
+    expect(invincible.replay.header).toMatchObject({ assisted: false, assists: 2 });
+    expect(invincible.replay.header.config.invincible).toBe(true);
+    // A pilot that never dodges, hit after hit ignored: no death (an extend on top).
+    expect(invincible.file.expected.deathTicks).toEqual([]);
+    expect(invincible.file.expected.lives).toBeGreaterThanOrEqual(
+      invincible.replay.header.config.startingLives,
+    );
+  });
+});

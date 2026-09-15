@@ -119,6 +119,8 @@ export interface TizenAppResources {
    * (`__SHMUP_DEV__` — `build:dev`, `build:test`) and `null` in a release build.
    */
   readonly debugTools?: DebugToolsFactory | null;
+  /** The build id the game's replays record (M3-01 — `main.ts` passes `__SHMUP_BUILD__`). */
+  readonly buildId?: string;
 }
 
 /**
@@ -457,6 +459,8 @@ export async function bootTizenApp(
     audioUnlock: 'immediate',
     preferWebGLVersion: 1,
     debugTools: resources.debugTools ?? null,
+    // The build the replays record (M3-01; the TV has no SHARE).
+    buildId: resources.buildId ?? 'dev',
     /**
      * The Options screen's CONTROLS (plan M1-17): the remote profiles whose menus the remote can
      * drive (`SAFE 4-WAY (DEFAULT)`, `FAST 8-WAY`); `apply` — for the saved choice at boot and the

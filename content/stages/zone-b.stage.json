@@ -618,5 +618,61 @@
       "colors": ["#10323e", "#184658", "#225c6e", "#2e7486"],
       "ticks": 10
     }
+  ],
+  "remix": [
+    {
+      "x": 1100,
+      "type": "formation",
+      "enemy": "gill-dart",
+      "count": 4,
+      "interval": 20,
+      "y": 100,
+      "drop": null
+    },
+    {
+      "x": 2620,
+      "type": "formation",
+      "enemy": "gill-dart",
+      "count": 4,
+      "interval": 18,
+      "y": 100,
+      "drop": null
+    },
+    {
+      "x": 4860,
+      "type": "formation",
+      "enemy": "froth",
+      "count": 3,
+      "interval": 40,
+      "y": 140,
+      "drop": null
+    },
+    {
+      "x": 5520,
+      "type": "formation",
+      "enemy": "gill-dart",
+      "count": 5,
+      "interval": 16,
+      "y": 140,
+      "drop": null
+    },
+    {
+      "x": 7060,
+      "type": "formation",
+      "enemy": "gill-dart",
+      "count": 6,
+      "interval": 12,
+      "y": 140,
+      "drop": null
+    },
+    {
+      "x": 8260,
+      "type": "formation",
+      "enemy": "gill-dart",
+      "count": 5,
+      "interval": 12,
+      "y": 100,
+      "drop": null
+    }
   ]
 }

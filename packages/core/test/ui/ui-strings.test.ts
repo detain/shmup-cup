@@ -150,6 +150,14 @@ describe('core/ui string table coverage (M2-16)', () => {
       'RIPPLE',
       'CYCLONE',
       'TWIN',
+      // M3-01: the Extra Edit weapons' frames.
+      'CONTROL',
+      'UPPER',
+      'SMALL SP',
+      'HAWK',
+      '2-WAY BK',
+      'BACK DBL',
+      'SPR GUN',
     ]);
     const found: string[] = [];
     for (const file of files) {

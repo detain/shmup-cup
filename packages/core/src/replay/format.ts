@@ -56,6 +56,14 @@ export interface ReplayHeader {
   readonly loadout: StartingLoadout;
   /** God mode was on for the whole run (playback turns it on; scores count as assisted). */
   readonly assisted: boolean;
+  /**
+   * What assisted the run it belongs to (M3-01 — `core/replay` `AssistFlag` bits: god mode, the
+   * invincibility and game-speed assists, a secret code; shmup_feat.md §21 "flag … replays as
+   * assisted"). Informative — playback reads only {@link ReplayHeader.assisted} and the config
+   * (whose `invincible` is the assist itself). A replay recorded before M3-01 reads as `GodMode`
+   * when `assisted`, else 0.
+   */
+  readonly assists: number;
 }
 
 /** What {@link createReplayHeader} needs beyond the config. */
@@ -66,6 +74,11 @@ export interface ReplayHeaderOptions {
   readonly checkpoint?: number;
   /** God mode on for the whole run (default `false`). */
   readonly assisted?: boolean;
+  /**
+   * The run's assist flags (M3-01 — `AssistFlag`; default: `GodMode` when `assisted`, the
+   * invincibility assist's bit when the config has it, else 0).
+   */
+  readonly assists?: number;
 }
 
 /**
@@ -74,7 +87,7 @@ export interface ReplayHeaderOptions {
  * @param config - The session's config (resolved with `resolveGameConfig` — it is frozen as is).
  * @param options - Build id, start checkpoint, assisted flag.
  * @returns The frozen header.
- * @throws {RangeError} When `checkpoint` is not an integer ≥ -1.
+ * @throws {RangeError} When `checkpoint` is not an integer ≥ -1, or `assists` is not a mask 0–255.
  *
  * @example
  * ```ts
@@ -93,6 +106,11 @@ export function createReplayHeader(
   if (!Number.isInteger(checkpoint) || checkpoint < -1) {
     throw new RangeError(`replay checkpoint must be an integer ≥ -1, got ${String(checkpoint)}`);
   }
+  const assisted = options.assisted === true;
+  const assists = options.assists ?? (assisted ? 1 : 0) | (config.invincible ? 2 : 0);
+  if (!Number.isInteger(assists) || assists < 0 || assists > 0xff) {
+    throw new RangeError(`replay assists must be a flag mask 0–255, got ${String(assists)}`);
+  }
   return Object.freeze({
     formatVersion: REPLAY_FORMAT_VERSION,
     buildId: options.buildId ?? 'dev',
@@ -101,7 +119,8 @@ export function createReplayHeader(
     stageId: config.stage,
     checkpoint,
     loadout: config.loadout,
-    assisted: options.assisted === true,
+    assisted,
+    assists,
   });
 }
 
@@ -674,6 +693,7 @@ export function encodeReplay(replay: Replay): ReplayJson {
       checkpoint: header.checkpoint,
       loadout: header.loadout,
       assisted: header.assisted,
+      assists: header.assists,
       config: config as unknown as GameConfig,
     },
     ticks: replay.ticks,
@@ -757,10 +777,19 @@ export function decodeReplay(data: unknown): Replay {
   if (typeof checkpoint !== 'number' || !Number.isInteger(checkpoint) || checkpoint < -1) {
     throw new RangeError('replay header.checkpoint must be an integer ≥ -1');
   }
+  const assists = h.assists;
+  if (
+    assists !== undefined &&
+    (typeof assists !== 'number' || !Number.isInteger(assists) || assists < 0 || assists > 0xff)
+  ) {
+    throw new RangeError('replay header.assists must be a flag mask 0–255');
+  }
   const header = createReplayHeader(config, {
     buildId: h.buildId,
     checkpoint,
     assisted: h.assisted,
+    // A replay recorded before M3-01 has none: god mode when `assisted`.
+    assists: assists ?? (h.assisted ? 1 : 0),
   });
   const ticks = data.ticks;
   if (typeof ticks !== 'number' || !Number.isInteger(ticks) || ticks < 0) {

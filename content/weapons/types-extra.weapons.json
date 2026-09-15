@@ -1,0 +1,101 @@
+{
+  "formatVersion": 1,
+  "kind": "weapons",
+  "weapons": [
+    {
+      "id": "missile.control",
+      "name": "CONTROL MISSILE",
+      "slot": "missile",
+      "behavior": "missile.control",
+      "damage": 2,
+      "speed": 3.5,
+      "cap": 2,
+      "pierce": false,
+      "sprite": "shots/missile",
+      "sfx": "PlayerMissile",
+      "extra": true,
+      "params": { "track": 0.25 }
+    },
+    {
+      "id": "missile.upper",
+      "name": "UPPER MISSILE",
+      "slot": "missile",
+      "behavior": "missile.upper",
+      "damage": 2,
+      "speed": 2.5,
+      "cap": 1,
+      "pierce": false,
+      "sprite": "shots/missile",
+      "sfx": "PlayerMissile",
+      "extra": true,
+      "params": { "slideSpeed": 3 }
+    },
+    {
+      "id": "missile.smallSpread",
+      "name": "SMALL SPREAD",
+      "slot": "missile",
+      "behavior": "missile.smallSpread",
+      "damage": 2,
+      "speed": 2.5,
+      "cap": 1,
+      "pierce": false,
+      "sprite": "shots/bomb",
+      "sfx": "PlayerMissile",
+      "extra": true,
+      "params": { "blastRadius": 8, "blastTicks": 10 }
+    },
+    {
+      "id": "missile.hawkWind",
+      "name": "HAWK WIND",
+      "slot": "missile",
+      "behavior": "missile.hawkWind",
+      "damage": 2,
+      "speed": 2.5,
+      "cap": 1,
+      "pierce": false,
+      "sprite": "shots/missile",
+      "sfx": "PlayerMissile",
+      "extra": true,
+      "params": { "slideSpeed": 3 }
+    },
+    {
+      "id": "missile.twoWayBack",
+      "name": "2-WAY BACK",
+      "slot": "missile",
+      "behavior": "missile.twoWayBack",
+      "damage": 2,
+      "speed": 3,
+      "cap": 2,
+      "pierce": false,
+      "sprite": "shots/two-way",
+      "sfx": "PlayerMissile",
+      "extra": true
+    },
+    {
+      "id": "shot.backDouble",
+      "name": "BACK DOUBLE",
+      "slot": "double",
+      "behavior": "shot.backDouble",
+      "damage": 1,
+      "speed": 7,
+      "cap": 2,
+      "pierce": false,
+      "sprite": "shots/double",
+      "sfx": "PlayerShot",
+      "extra": true
+    },
+    {
+      "id": "shot.spreadGun",
+      "name": "SPREAD GUN",
+      "slot": "double",
+      "behavior": "shot.spreadGun",
+      "damage": 1,
+      "speed": 7,
+      "cap": 3,
+      "pierce": false,
+      "sprite": "shots/double",
+      "sfx": "PlayerShot",
+      "extra": true
+    }
+  ]
+}

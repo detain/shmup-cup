@@ -72,6 +72,13 @@ presets of M2-03 (`shmup_feat.md` §7A — original names, Gradius III's roles):
 | `type-c` | `missile.twoWay` 2-WAY MISSILE | `shot.vertical` VERTICAL | `laser.cyclone` CYCLONE LASER |
 | `type-d` | `missile.torpedo` PHOTON TORPEDO | `shot.free` FREE WAY | `laser.twin` TWIN LASER |
 
+[`types-extra.weapons.json`](types-extra.weapons.json) holds the **Extra Edit** weapons (M3-01 —
+`"extra": true`): `missile.control` CONTROL MISSILE, `missile.upper` UPPER MISSILE,
+`missile.smallSpread` SMALL SPREAD, `missile.hawkWind` HAWK WIND, `missile.twoWayBack` 2-WAY
+BACK, `shot.backDouble` BACK DOUBLE and `shot.spreadGun` SPREAD GUN (equipped twice on the meter:
+two diagonals, then forward too). The weapon select's EXTRA type offers them once an ending (or a
+secret code) unlocked Extra Edit; EDIT lists only the others.
+
 The session's preset is `GameConfig.weaponPreset` (the weapon select's TYPE; a content without it
 falls back to its first preset, else the first weapon of each slot); `GameConfig.weaponEdit`
 (the weapon select's EDIT — Weapon Edit) replaces the MISSILE / DOUBLE / LASER weapons by any

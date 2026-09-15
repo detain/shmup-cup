@@ -469,6 +469,8 @@ function mixWeapons(weapons: World['weapons'], toggle: boolean): void {
     mixNumber(l.shot);
     mixNumber(l.sub);
     mixNumber(l.family);
+    // The Spread Gun's second level (M3-01), only when taken: older runs' hashes stay as they were.
+    if (l.spread !== 0) mixNumber(l.spread + 0x5b);
     const g = weapons.options[p];
     mixNumber(g.count);
     mixNumber(g.stolen);
@@ -782,6 +784,12 @@ export function hashWorld(world: World): number {
   mixBosses(world);
   mixGimmicks(world.gimmicks);
   mixBonus(world);
+  // The caravan's clock (M3-01), only in a World with a time limit (the other Worlds' hashes —
+  // every golden replay's of M1–M2 — stay as they were).
+  if (world.timeLeft >= 0) {
+    mixNumber(world.timeLeft);
+    mixWord((world.timeUp ? 1 : 0) | (world.clockPaid ? 2 : 0));
+  }
   return accumulator[0];
 }
 
@@ -1146,9 +1154,16 @@ export function createDebugControls(game: Game): DebugControls {
           return true;
         }
         case DebugCommand.NextCheckpoint:
-          return playingStage(game) && jumpToNextCheckpoint(game.world);
-        case DebugCommand.SkipToBoss:
-          return playingStage(game) && skipToBoss(game.world);
+        case DebugCommand.SkipToBoss: {
+          if (!playingStage(game)) return false;
+          const done =
+            command === DebugCommand.SkipToBoss
+              ? skipToBoss(game.world)
+              : jumpToNextCheckpoint(game.world);
+          // The run's replay cannot repeat a jump outside a tick (M3-01): it is not saved.
+          if (done) game.scenes?.noteWorldEdited();
+          return done;
+        }
         default:
           return false;
       }

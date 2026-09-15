@@ -41,6 +41,8 @@ describe('core/config user options', () => {
         showHitbox: false,
         bossHpBar: false,
       },
+      // M3-01: the assists and feel.
+      play: { speed: 100, invincible: false, optionRecovery: null, rumble: true },
     });
     expect(Object.isFrozen(DEFAULT_USER_OPTIONS.audio)).toBe(true);
   });
@@ -125,6 +127,7 @@ describe('core/config user options', () => {
         showHitbox: false,
         bossHpBar: false,
       },
+      play: DEFAULT_USER_OPTIONS.play,
     });
     for (const id of ['', 'Upper', 'a b', '-x', 'x'.repeat(65), 7, null]) {
       expect(resolveUserOptions({ input: { profileId: id } }).input.profileId, String(id)).toBe(

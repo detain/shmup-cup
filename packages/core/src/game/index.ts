@@ -34,6 +34,11 @@
  * accumulator (no catch-up burst). Every tick still polls input once and runs the whole pipeline,
  * so determinism and replays are unaffected; {@link Game.step} ignores both switches.
  *
+ * **Game-speed assist (M3-01).** With the scene flow, `SceneFlow.speedPercent` — the save's
+ * `options.play.speed` (75 or 50 %) while the game scene is on top — slows the same clock that
+ * feeds the fixed step, like slow motion: every tick still runs whole, so the simulation, its
+ * replays and hashes are those of the normal speed (the run is only marked as assisted).
+ *
  * Lifecycle: `platform.lifecycle.onSuspend` freezes the game (`state.suspended`);
  * `onResume` unfreezes it and resets the loop accumulator so no burst of catch-up
  * ticks runs (shmup_feat.md §3, Tizen certification). A user pause
@@ -78,6 +83,7 @@ import {
   type SceneStart,
   type SoundTestSetup,
 } from '../scenes/index.js';
+import type { ReplayLibrary } from '../replay/run.js';
 import type { SaveStore } from '../save/index.js';
 import { createWorld, stepWorld, type World } from '../world/index.js';
 import {
@@ -273,6 +279,19 @@ export interface GameOptions {
    * Ignored for bare gameplay.
    */
   readonly controls?: ControlsSetup | null;
+  /**
+   * The saved replays (M3-01 — `core/replay` `ReplayLibrary`, loaded by the host): finished runs
+   * are stored there, the EXTRA menu's REPLAYS browses them. Omitted or `null`: nothing is stored.
+   * Ignored for bare gameplay.
+   */
+  readonly replays?: ReplayLibrary | null;
+  /**
+   * Hands a replay's text to the player (M3-01 — the replay browser's SHARE; the web host copies
+   * it to the clipboard). Omitted or `null`: no SHARE. Ignored for bare gameplay.
+   */
+  readonly shareReplay?: ((text: string) => boolean) | null;
+  /** The build id the scene flow's replays record (`__SHMUP_BUILD__`; default `'dev'` — M3-01). */
+  readonly buildId?: string;
 }
 
 /**
@@ -339,6 +358,9 @@ export function createGame(
             inputProfiles: options.inputProfiles ?? null,
             soundTest: options.soundTest ?? null,
             controls: options.controls ?? null,
+            replays: options.replays ?? null,
+            shareReplay: options.shareReplay ?? null,
+            buildId: options.buildId ?? 'dev',
           },
           start,
         );
@@ -384,6 +406,11 @@ export function createGame(
   const timing = { mode: 1, slowStarted: false, pendingSteps: 0 };
   /** {@link timing}`.mode` while frame advance is on (otherwise the slow-motion factor). */
   const FRAME_ADVANCE_MODE = 0;
+  /**
+   * {@link timing}`.mode` of the game-speed assist (M3-01): this plus the speed in percent (75, 50),
+   * so every speed is its own mode (a change resets the loop like a slow-motion switch).
+   */
+  const SPEED_MODE_BASE = 1000;
 
   /**
    * Runs the due ticks of one frame under the debug timing switches.
@@ -392,7 +419,15 @@ export function createGame(
    * @returns Ticks run.
    */
   const debugFrame = (nowMs: number): number => {
-    const mode = debug.frameAdvance ? FRAME_ADVANCE_MODE : debug.slowMo > 1 ? debug.slowMo : 1;
+    // The game-speed assist (M3-01) slows the clock like slow motion, by its percentage.
+    const speed = flow !== null ? flow.speedPercent : 100;
+    const mode = debug.frameAdvance
+      ? FRAME_ADVANCE_MODE
+      : debug.slowMo > 1
+        ? debug.slowMo
+        : speed < 100
+          ? SPEED_MODE_BASE + speed
+          : 1;
     if (mode !== timing.mode) {
       // A switch: forget the accumulated time, so the new mode starts without a burst.
       timing.mode = mode;
@@ -417,11 +452,48 @@ export function createGame(
     } else {
       const delta = nowMs - slowClock[RAW];
       slowClock[RAW] = nowMs;
-      if (delta > 0) slowClock[SLOW] += delta / mode;
+      if (delta > 0) {
+        slowClock[SLOW] +=
+          mode > SPEED_MODE_BASE ? (delta * (mode - SPEED_MODE_BASE)) / 100 : delta / mode;
+      }
     }
     // Whole milliseconds (the loop snaps ±1 ms): a fractional argument would be boxed per frame.
     return loop.advance(Math.floor(slowClock[SLOW]));
   };
+
+  /**
+   * {@link Game.frame} of bare gameplay: the fixed step, unless a debug timing switch is on.
+   *
+   * @param nowMs - Frame timestamp.
+   * @returns Ticks run.
+   */
+  function bareFrame(nowMs: number): number {
+    if (isFrozen()) return 0;
+    if (timing.mode === 1 && !debug.frameAdvance && debug.slowMo === 1) {
+      return loop.advance(nowMs);
+    }
+    return debugFrame(nowMs);
+  }
+
+  /**
+   * {@link Game.frame} of the scene flow: also slowed by the game-speed assist (M3-01 —
+   * `SceneFlow.speedPercent`).
+   *
+   * @param nowMs - Frame timestamp.
+   * @returns Ticks run.
+   */
+  function flowFrame(nowMs: number): number {
+    if (isFrozen()) return 0;
+    if (
+      timing.mode === 1 &&
+      !debug.frameAdvance &&
+      debug.slowMo === 1 &&
+      (flow as SceneFlow).speedPercent >= 100
+    ) {
+      return loop.advance(nowMs);
+    }
+    return debugFrame(nowMs);
+  }
 
   const game: Game = {
     config,
@@ -442,13 +514,9 @@ export function createGame(
       return bareWorld !== null && bareWorld.config.coop ? 2 : 1;
     },
     step,
-    frame(nowMs) {
-      if (isFrozen()) return 0;
-      if (timing.mode === 1 && !debug.frameAdvance && debug.slowMo === 1) {
-        return loop.advance(nowMs);
-      }
-      return debugFrame(nowMs);
-    },
+    // Bare gameplay keeps the M1-19 frame (small enough for V8 to inline — a fractional `nowMs`
+    // passed to a call it does not inline is boxed); the scene flow's checks the game-speed assist.
+    frame: flow === null ? bareFrame : flowFrame,
     requestStep(count = 1) {
       if (debug.frameAdvance && Number.isInteger(count) && count > 0) timing.pendingSteps += count;
     },

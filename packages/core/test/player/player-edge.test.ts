@@ -348,7 +348,10 @@ describe('core/player edge cases — fly-in and state', () => {
       hitTick: -1,
       hits: 0,
       shield: createShieldState(),
+      // M3-01: the invincibility assist (off unless the config asks for it).
+      invincible: false,
     });
+    expect(createPlayer(0, 3, true).invincible).toBe(true);
   });
 });
 

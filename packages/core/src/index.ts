@@ -1352,3 +1352,91 @@ export {
   type SaveStats,
   type SaveStatus,
 } from './save/index.js';
+
+// ------------------------------------------------------------------------------ M3-01
+// Extra modes and replay features: loops, the caravan's clock, assists, Extra Edit, secret codes,
+// the score-milking cap, run replays and the replay library, rumble's option.
+
+export {
+  DEFAULT_PLAY_OPTIONS,
+  GAME_SPEEDS,
+  MAX_LOOP,
+  MAX_STARTING_LIVES,
+  MAX_TIME_LIMIT,
+  type PlayOptions,
+} from './config/index.js';
+
+export { MAX_STAGE_REMIX, stageEventInLoop, stageForLoop } from './data/index.js';
+
+export {
+  LOOP_BULLET_SPEED_MAX,
+  LOOP_BULLET_SPEED_STEP,
+  loopBulletSpeedScale,
+} from './rank/index.js';
+
+export { DEFAULT_REPEAT_KILLS, DEFAULT_REPEAT_PERCENT, MAX_REPEAT_KILLS } from './scoring/index.js';
+
+export { UNLOCK_IDS, type SaveUnlocks, type UnlockId } from './save/index.js';
+
+export { SPREAD_GUN_BEHAVIOR } from './weapons/index.js';
+
+export { CARAVAN_TIME_BONUS, grantFullPower, selfDestruct } from './world/index.js';
+
+export { hudClockSeconds } from './ui/index.js';
+
+export {
+  AssistFlag,
+  KEPT_REPLAY_SLOTS,
+  MAX_REPLAY_TEXT,
+  MAX_RUN_SEGMENTS,
+  MAX_SEGMENT_ACTIONS,
+  REPLAY_SLOTS,
+  RUN_REPLAY_FORMAT_VERSION,
+  RUN_REPLAY_KIND,
+  ReplayStoreResult,
+  RunAction,
+  SEGMENT_CAPACITY,
+  SegmentRecorder,
+  createReplayLibrary,
+  decodeRunReplay,
+  encodeRunReplay,
+  parseRunReplayText,
+  replayStorageKey,
+  runAssisted,
+  runReplayText,
+  type ReplayLibrary,
+  type ReplaySummary,
+  type RunReplay,
+  type RunReplayJson,
+  type RunSegment,
+  type RunSegmentJson,
+} from './replay/index.js';
+
+export {
+  BOSS_RUSH_STAGE,
+  CARAVAN_TICKS,
+  ExtraItem,
+  ExtraScene,
+  REPLAY_END_TICKS,
+  REPLAY_SPEEDS,
+  RUN_MODES,
+  ReplayActionItem,
+  ReplayScene,
+  ReplaysScene,
+  RunPlaybackReport,
+  RunRecorder,
+  RunReplayPlayback,
+  SECRET_CODES,
+  SECRET_CODE_LENGTH,
+  SECRET_MESSAGE_TICKS,
+  SECRET_SHIPS,
+  SecretCode,
+  SecretCodeTracker,
+  WorldStart,
+  prepareWorldStart,
+  readWorldStart,
+  worldStartJson,
+  type ReadWorldStart,
+  type RunMode,
+  type RunReplayMeta,
+} from './scenes/index.js';

@@ -184,14 +184,15 @@ describe('core/save moving older co-op / practice rows — edge cases (M2-15)', 
     const keys = Object.keys(data.hiScores);
     expect(keys).toHaveLength(MAX_HI_SCORE_TABLES);
     expect(keys).toEqual([...keys].sort());
-    // The first sixteen one-player tables and their co-op tables.
+    // The first half of the one-player tables and their co-op tables.
     expect(keys.slice(0, 4)).toEqual([
       'm00-normal',
       'm00-normal-2p',
       'm01-normal',
       'm01-normal-2p',
     ]);
-    expect(keys[keys.length - 1]).toBe('m15-normal-2p');
+    const half = String(MAX_HI_SCORE_TABLES / 2 - 1).padStart(2, '0');
+    expect(keys[keys.length - 1]).toBe('m' + half + '-normal-2p');
   });
 
   it('skips tables that are not arrays and rows that are not objects while moving', () => {

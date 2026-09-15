@@ -588,6 +588,7 @@ describe('core/save SaveStore (edge)', () => {
       audio: { master: 10, music: 4, sfx: 0 },
       input: DEFAULT_USER_OPTIONS.input,
       game: DEFAULT_USER_OPTIONS.game,
+      play: DEFAULT_USER_OPTIONS.play,
       display: {
         bulletPalette: 'standard',
         scaleMode: 'integer',

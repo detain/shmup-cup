@@ -545,5 +545,65 @@
       "wavelength": 8,
       "period": 40
     }
+  ],
+  "remix": [
+    {
+      "x": 220,
+      "type": "formation",
+      "enemy": "sand-skimmer",
+      "count": 5,
+      "interval": 14,
+      "y": 150,
+      "path": "skim-dip",
+      "drop": null
+    },
+    {
+      "x": 1440,
+      "type": "formation",
+      "enemy": "sand-skimmer",
+      "count": 6,
+      "interval": 12,
+      "y": 140,
+      "path": "skim-dip",
+      "drop": null
+    },
+    {
+      "x": 3800,
+      "type": "formation",
+      "enemy": "sand-skimmer",
+      "count": 5,
+      "interval": 14,
+      "y": 110,
+      "drop": null
+    },
+    {
+      "x": 5800,
+      "type": "formation",
+      "enemy": "sand-skimmer",
+      "count": 6,
+      "interval": 12,
+      "y": 150,
+      "path": "skim-dip",
+      "drop": null
+    },
+    {
+      "x": 7280,
+      "type": "formation",
+      "enemy": "sand-skimmer",
+      "count": 6,
+      "interval": 10,
+      "y": 60,
+      "drop": null
+    },
+    {
+      "x": 8000,
+      "type": "formation",
+      "enemy": "sand-skimmer",
+      "count": 6,
+      "interval": 10,
+      "y": 140,
+      "drop": null,
+      "path": "skim-dip"
+    }
   ]
 }

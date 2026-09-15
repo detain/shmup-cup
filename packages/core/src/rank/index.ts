@@ -47,7 +47,8 @@
  * {@link RANK_ARM_TIER} (M2-05), {@link rankScale},
  * {@link rankSensitivity}, {@link RankCurve}, {@link RANK_MAX}, {@link RANK_LOOP1_CAP},
  * {@link RANK_NORMAL}, {@link DIFFICULTY_RANK_BASE}, {@link BULLET_SPEED_RANK_CURVE},
- * {@link FIRE_RATE_RANK_CURVE}.
+ * {@link FIRE_RATE_RANK_CURVE}; M3-01: {@link loopBulletSpeedScale},
+ * {@link LOOP_BULLET_SPEED_STEP}, {@link LOOP_BULLET_SPEED_MAX} (the loops' faster bullets).
  *
  * @module
  */
@@ -90,6 +91,34 @@ export const RANK_LOOP1_CAP = 16;
 export const RANK_NORMAL = 2;
 
 /**
+ * Enemy bullet speed added per loop after the first (M3-01 — shmup_feat.md §15 "2nd loop … faster
+ * bullets"): × 1.15 on loop 2, × 1.3 on loop 3, up to {@link LOOP_BULLET_SPEED_MAX}. On top of the
+ * rank's curve and the preset's `bulletSpeedMul`.
+ */
+export const LOOP_BULLET_SPEED_STEP = 0.15;
+
+/** Highest loop bullet speed factor ({@link loopBulletSpeedScale}). */
+export const LOOP_BULLET_SPEED_MAX = 1.6;
+
+/**
+ * The enemy bullet speed factor of a loop (M3-01): `1 + LOOP_BULLET_SPEED_STEP × (loop − 1)`,
+ * at most {@link LOOP_BULLET_SPEED_MAX}; 1 on loop 1 (or a loop below it).
+ *
+ * @param loop - The loop (`GameConfig.loop`).
+ * @returns The factor `core/bullets` multiplies every enemy bullet's speed by (load time).
+ *
+ * @example
+ * ```ts
+ * loopBulletSpeedScale(2); // → 1.15
+ * ```
+ */
+export function loopBulletSpeedScale(loop: number): number {
+  if (!(loop > 1)) return 1;
+  const scale = 1 + LOOP_BULLET_SPEED_STEP * (Math.floor(loop) - 1);
+  return scale > LOOP_BULLET_SPEED_MAX ? LOOP_BULLET_SPEED_MAX : scale;
+}
+
+/**
  * Base rank of each difficulty preset in the built-in table (shmup_feat.md §15: Easy 0 / Normal 2
  * / Hard 4 / Very Hard 6 — the Arcade preset takes the Very Hard base). The content's
  * `rules` table may differ; sessions read `GameConfig.rankBase`.
@@ -128,10 +157,10 @@ export const RANK_POWER = Object.freeze({
 type MutableRankInputs = { -readonly [K in keyof RankInputs]: RankInputs[K] };
 
 /**
- * The rank inputs of a session start: the config's base and growth, loop 1, stage 1, no power,
- * nothing special.
+ * The rank inputs of a session start: the config's base and growth, its loop (M3-01 —
+ * `GameConfig.loop`, 1 when it has none), stage 1, no power, nothing special.
  *
- * @param config - The session config (`rankBase`, `rankGrowth`).
+ * @param config - The session config (`rankBase`, `rankGrowth`, `loop`).
  * @returns A fresh, **mutable** object (load time — allocates); the World writes its `power`
  *   (and, with the campaign of M2-10, `loop` / `stage`) every tick.
  *
@@ -141,12 +170,14 @@ type MutableRankInputs = { -readonly [K in keyof RankInputs]: RankInputs[K] };
  * ```
  */
 export function createRankInputs(
-  config: Pick<GameConfig, 'rankBase' | 'rankGrowth'>,
+  config: Pick<GameConfig, 'rankBase' | 'rankGrowth'> & { readonly loop?: number },
 ): MutableRankInputs {
+  // M3-01: the config's loop (loop 2+ of the ARCADE mode); a config without one is loop 1.
+  const loop = config.loop;
   return {
     difficultyBase: config.rankBase,
     growth: config.rankGrowth,
-    loop: 1,
+    loop: loop !== undefined && loop >= 1 ? Math.floor(loop) : 1,
     stage: 1,
     power: 0,
     special: 0,

@@ -21,7 +21,9 @@
  *
  * **Public API.** {@link readGamepadActions}, {@link GamepadLike},
  * {@link GamepadReadState}, {@link DEFAULT_GAMEPAD_BUTTONS}, {@link STICK_DEADZONE},
- * {@link STICK_HYSTERESIS}.
+ * {@link STICK_HYSTERESIS}; M3-01: rumble — {@link rumblePad}, {@link RUMBLE_EFFECTS},
+ * {@link RumbleEffect}, {@link GamepadHapticLike} (`vibrationActuator.playEffect('dual-rumble')`,
+ * shmup_feat.md §4 "[P2] Rumble").
  *
  * @module
  */
@@ -55,6 +57,74 @@ export interface GamepadLike {
   }>;
   /** Axes; `[0]` / `[1]` are the left stick X / Y (−1 … +1, +Y = down). */
   readonly axes: readonly number[];
+  /**
+   * The pad's rumble motors (M3-01 — `Gamepad.vibrationActuator`, a `GamepadHapticActuator`:
+   * Chrome 68+, Samsung TVs with a pad), when it has them.
+   */
+  readonly vibrationActuator?: GamepadHapticLike | null;
+}
+
+/** The parts of `GamepadHapticActuator` rumble uses (M3-01). */
+export interface GamepadHapticLike {
+  /**
+   * Plays an effect (`'dual-rumble'`).
+   *
+   * @param type - The effect type.
+   * @param params - Duration and the two motors' strengths.
+   * @returns Resolves when the effect ends (or is replaced).
+   */
+  playEffect?(type: 'dual-rumble', params: RumbleEffect): Promise<unknown>;
+}
+
+/** A `'dual-rumble'` effect's parameters (the `GamepadEffectParameters` rumble reads). */
+export interface RumbleEffect {
+  /** Delay before the effect, ms. */
+  readonly startDelay: number;
+  /** Length, ms. */
+  readonly duration: number;
+  /** The light (high-frequency) motor, 0–1. */
+  readonly weakMagnitude: number;
+  /** The heavy (low-frequency) motor, 0–1. */
+  readonly strongMagnitude: number;
+}
+
+/**
+ * The rumble effects by strength (M3-01 — the core's `SimEventKind.Rumble` `param`: 1 = a ship's
+ * death, 2 = a boss's final blast); index 0 is unused. Frozen constants: playing one allocates only
+ * what the browser's `playEffect` does.
+ */
+export const RUMBLE_EFFECTS: readonly RumbleEffect[] = Object.freeze([
+  Object.freeze({ startDelay: 0, duration: 0, weakMagnitude: 0, strongMagnitude: 0 }),
+  Object.freeze({ startDelay: 0, duration: 260, weakMagnitude: 0.6, strongMagnitude: 0.8 }),
+  Object.freeze({ startDelay: 0, duration: 520, weakMagnitude: 0.8, strongMagnitude: 1 }),
+]);
+
+/**
+ * Rumbles one pad (M3-01 — shmup_feat.md §4 "[P2] Rumble via `vibrationActuator.playEffect()`").
+ * Does nothing for a pad without motors; a rejected effect is ignored.
+ *
+ * @param pad - The pad.
+ * @param strength - 1 (a death) or 2 (a boss blast); clamped into {@link RUMBLE_EFFECTS}.
+ * @returns Whether an effect was started.
+ */
+export function rumblePad(pad: GamepadLike, strength: number): boolean {
+  const actuator = pad.vibrationActuator;
+  if (actuator === undefined || actuator === null || typeof actuator.playEffect !== 'function') {
+    return false;
+  }
+  const index = strength >= 2 ? 2 : 1;
+  try {
+    const done = actuator.playEffect('dual-rumble', RUMBLE_EFFECTS[index]);
+    if (done !== undefined && typeof done.catch === 'function') done.catch(ignoreRumbleError);
+  } catch (_error) {
+    return false;
+  }
+  return true;
+}
+
+/** Swallows a rejected rumble effect (a pad unplugged, an effect not supported). */
+function ignoreRumbleError(): void {
+  // Rumble is best effort.
 }
 
 /** Per-pad state carried between polls (stick hysteresis, buttons held across a table swap). */

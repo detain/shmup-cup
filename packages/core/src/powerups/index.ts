@@ -204,6 +204,7 @@ import {
   type PlayerShipSpec,
   type StageSpec,
   type WeaponFamilySpec,
+  type WeaponSpec,
 } from '../data/index.js';
 import { DropKind, type EnemyOutcomes } from '../enemies/index.js';
 import { FX_CUES, SFX_CUES, SfxPriority, SimEventKind, type EventQueue } from '../events/index.js';
@@ -240,7 +241,13 @@ import {
   tickShield,
   type ShieldSpec,
 } from '../shields/index.js';
-import { DIRECT_MAX_LEVEL, MainWeapon, type Loadout } from '../weapons/index.js';
+import {
+  DIRECT_MAX_LEVEL,
+  MainWeapon,
+  SPREAD_GUN_BEHAVIOR,
+  WeaponRole,
+  type Loadout,
+} from '../weapons/index.js';
 
 /**
  * How far below a power-up drop the co-op extra item appears, in pixels (M2-06 —
@@ -339,6 +346,12 @@ export class MeterChoices {
   mega: MegaEffect = MegaEffect.MegaCrash;
   /** The shield the `?` slot (and FULL BARRIER) grants. */
   shield: ShieldSpec = FORCE_FIELD;
+  /**
+   * How many times the DOUBLE slot may be equipped in a row (M3-01): 1, or 2 when the Double role
+   * fires the Spread Gun (`shot.spreadGun` — shmup_feat.md §7A "equip twice: 2-way diagonals, then
+   * 3-way"; the second equip sets `Loadout.spread`). The power-up system sets it from the arsenal.
+   */
+  doubleLevels = 1;
 }
 
 /** The defaults: Mega Crash on `!`, the Force Field on `?` (Type A of M1-11). */
@@ -708,7 +721,10 @@ export function canEquipSlot(
     case MeterSlot.Missile:
       return !loadout.missile;
     case MeterSlot.Double:
-      return loadout.main !== MainWeapon.Double;
+      // The Spread Gun (M3-01) takes a second equip: 2-way, then 3-way.
+      return (
+        loadout.main !== MainWeapon.Double || (choices.doubleLevels > 1 && loadout.spread === 0)
+      );
     case MeterSlot.Laser:
       return loadout.main !== MainWeapon.Laser;
     case MeterSlot.Option:
@@ -782,10 +798,17 @@ export function equipSlot(
       loadout.missile = true;
       break;
     case MeterSlot.Double:
-      loadout.main = MainWeapon.Double;
+      if (loadout.main === MainWeapon.Double) {
+        // A Spread Gun equipped again (M3-01): forward too.
+        loadout.spread = 1;
+      } else {
+        loadout.main = MainWeapon.Double;
+        loadout.spread = 0;
+      }
       break;
     case MeterSlot.Laser:
       loadout.main = MainWeapon.Laser;
+      loadout.spread = 0;
       break;
     case MeterSlot.Option:
       loadout.options++;
@@ -1059,6 +1082,11 @@ export interface PowerUpHost {
     readonly mainFamilies?: readonly WeaponFamilySpec[];
     /** The Direct-mode sub family (`WeaponSystem.subFamily`): the green items' cap. */
     readonly subFamily?: WeaponFamilySpec | null;
+    /**
+     * The weapon of each meter role (`WeaponSystem.roleWeapons`, M2-03): a Spread Gun on the
+     * Double role may be equipped twice (M3-01 — {@link MeterChoices.doubleLevels}). Absent: once.
+     */
+    readonly roleWeapons?: readonly (WeaponSpec | null)[];
     /**
      * Per player: the heading of the last 8-way direction held (`WeaponSystem.freeWayHeading`, -1
      * before any) — where a Free Shield pair attaches (M2-04). Absent: ahead.
@@ -1381,6 +1409,12 @@ class PowerUpSystemImpl implements PowerUpSystem {
     const config = host.config;
     this.coopExtra = config.coopExtra > 0 ? config.coopExtra : 0;
     this.choices = meterChoicesOf(config);
+    // The Spread Gun on the Double role may be equipped twice (M3-01).
+    const roleWeapons = host.weapons.roleWeapons;
+    const double = roleWeapons === undefined ? null : roleWeapons[WeaponRole.Double];
+    if (double !== null && double !== undefined && double.behavior === SPREAD_GUN_BEHAVIOR) {
+      this.choices.doubleLevels = 2;
+    }
     this.direct = config.powerUpMode === 'direct';
     const planned = stage !== null && stage.directItems.length > 0 ? stage.directItems : null;
     const plan = planned ?? DEFAULT_DIRECT_ITEM_PLAN;

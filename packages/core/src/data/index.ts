@@ -213,6 +213,7 @@ import {
   MAX_BULLET_SPEED_MUL,
   MAX_CONTINUES,
   MAX_EXTEND_SCORE,
+  MAX_LOOP,
   MAX_RANK_GROWTH,
   MIN_BULLET_SPEED_MUL,
   PLAYFIELD_H,
@@ -231,7 +232,7 @@ import {
   type CollectedPatterns,
   type PatternBank,
 } from '../patterns/dsl.js';
-import { MAX_BULLET_CANCEL_POINTS, type ScoringRules } from '../scoring/index.js';
+import { MAX_BULLET_CANCEL_POINTS, MAX_REPEAT_KILLS, type ScoringRules } from '../scoring/index.js';
 import {
   ENDING_SCENES,
   MAX_CAMPAIGN_ENDINGS,
@@ -617,6 +618,12 @@ export interface WeaponSpec {
   readonly sfxId?: number;
   /** Behaviour-specific tunables (e.g. laser length, missile slide speed). */
   readonly params?: Readonly<Record<string, number>>;
+  /**
+   * An **Extra Edit** weapon (M3-01 — shmup_feat.md §7A "[P2] Extra Edit (any combo) as an
+   * unlock"): the weapon select's EDIT leaves it out; its EXTRA (unlocked by reaching an ending, or
+   * by the title's secret code) offers every weapon of each slot, these included. Omitted = `false`.
+   */
+  readonly extra?: boolean;
 }
 
 /** A meter-mode loadout: which weapon each equip slot gives (shmup_feat.md §7A). */
@@ -1453,6 +1460,39 @@ export interface StageEventBase {
   readonly branch?: string;
   /** Index of {@link StageEventBase.branch} in {@link StageSpec.branches} (-1 = none). */
   readonly branchId?: number;
+  /**
+   * The first loop the event plays in (M3-01 — shmup_feat.md §15 "2nd loop with remixed layouts";
+   * `GameConfig.loop`): 1–8, omitted = 1. A `spawn` / `formation` event with `minLoop: 2` is part
+   * of the loops' remix; the camera passes it on loop 1 like an event of a branch not taken.
+   */
+  readonly minLoop?: number;
+  /**
+   * The last loop the event plays in (M3-01): 1–8, omitted = every loop. `maxLoop: 1` keeps a part
+   * of the layout that a loop remix replaces.
+   */
+  readonly maxLoop?: number;
+}
+
+/**
+ * Whether a stage event plays in a loop (M3-01): its `minLoop` (default 1) ≤ `loop` ≤ its `maxLoop`
+ * (default every loop).
+ *
+ * @param event - The event.
+ * @param loop - The loop (`GameConfig.loop`).
+ * @returns `true` when the stage runner fires it in that loop (its branch permitting).
+ *
+ * @example
+ * ```ts
+ * stageEventInLoop({ x: 0, minLoop: 2 }, 1); // → false (the loop-2 remix)
+ * ```
+ */
+export function stageEventInLoop(
+  event: Readonly<Pick<StageEventBase, 'minLoop' | 'maxLoop'>>,
+  loop: number,
+): boolean {
+  const min = event.minLoop ?? 1;
+  const max = event.maxLoop ?? MAX_LOOP;
+  return loop >= min && loop <= max;
 }
 
 /** Spawn one enemy when the camera reaches `x` (`core/enemies` spawns it). */
@@ -1781,6 +1821,9 @@ export const STAGE_TYPES = Object.freeze(['normal', 'bossRush', 'bonus'] as cons
 /** Most bosses one boss rush may list. */
 export const MAX_RUSH_BOSSES = 16;
 
+/** Most events one stage's loop remix may list (M3-01 — {@link StageSpec.remix}). */
+export const MAX_STAGE_REMIX = 64;
+
 /** Default wait before a boss of a rush comes (after the stage start or the last one's end). */
 export const DEFAULT_RUSH_DELAY = 60;
 
@@ -1827,6 +1870,15 @@ export interface StageSpec {
   readonly tilemap: StageTilemapSpec | null;
   /** Timeline, sorted by `x` (several events may share one `x`; they fire in file order). */
   readonly events: readonly StageEvent[];
+  /**
+   * The loops' **remix** (M3-01 — shmup_feat.md §15 "2nd loop with remixed layouts"): extra
+   * `spawn` / `formation` events, sorted by `x`, that join the timeline from loop 2
+   * (`GameConfig.loop` — {@link stageForLoop} merges them by `x` after the events of the same `x`;
+   * their own `minLoop` / `maxLoop` still apply). No `branch`, at most {@link MAX_STAGE_REMIX}.
+   * Omitted in the file = none. Loop 1 plays {@link StageSpec.events} alone, so the remix never
+   * changes it.
+   */
+  readonly remix: readonly StageEvent[];
   /**
    * Distinct flag names of the `flag` and `trigger` events and the branches, sorted (a flag's
    * index is its bit).
@@ -2149,8 +2201,9 @@ const WEAPON_SCHEMA: Schema<Omit<WeaponSpec, 'behaviorId' | 'spriteId' | 'sfxId'
     refireTicks: s.int({ min: 1, max: 600 }),
     sfx: s.nullable(s.ref('sfx')),
     params: s.record(s.num(), /^[a-zA-Z][a-zA-Z0-9]*$/),
+    extra: s.bool(),
   },
-  { optional: ['name', 'refireTicks', 'sfx', 'params'] },
+  { optional: ['name', 'refireTicks', 'sfx', 'params', 'extra'] },
 );
 
 /** One entry of `presets` in a `weapons` file. */
@@ -2558,6 +2611,9 @@ const SPAWN_Y = s.num({ min: -64, max: 320 });
 /** Spawn x in playfield pixels. */
 const SPAWN_SCREEN_X = s.num({ min: -128, max: 512 });
 
+/** A loop number of a remixed event (M3-01 — `minLoop` / `maxLoop`). */
+const LOOP_NUMBER = s.int({ min: 1, max: MAX_LOOP });
+
 /** A stage flag or branch name (lower-case kebab). */
 const STAGE_NAME = s.str({ maxLength: 64, pattern: /^[a-z][a-z0-9-]*$/ });
 
@@ -2577,8 +2633,10 @@ const STAGE_EVENT_SCHEMA: Schema<
       screenX: SPAWN_SCREEN_X,
       path: s.ref('path'),
       branch: STAGE_NAME,
+      minLoop: LOOP_NUMBER,
+      maxLoop: LOOP_NUMBER,
     },
-    { optional: ['y', 'screenX', 'path', 'branch'] },
+    { optional: ['y', 'screenX', 'path', 'branch', 'minLoop', 'maxLoop'] },
   ),
   formation: s.object(
     {
@@ -2593,8 +2651,10 @@ const STAGE_EVENT_SCHEMA: Schema<
       drop: s.nullable(s.enumOf(ENEMY_DROPS)),
       bonus: s.int({ min: 0, max: 1000000 }),
       branch: STAGE_NAME,
+      minLoop: LOOP_NUMBER,
+      maxLoop: LOOP_NUMBER,
     },
-    { optional: ['y', 'screenX', 'path', 'drop', 'bonus', 'branch'] },
+    { optional: ['y', 'screenX', 'path', 'drop', 'bonus', 'branch', 'minLoop', 'maxLoop'] },
   ),
   warning: s.object(
     { x: EVENT_X, type: s.enumOf(['warning'] as const), enemy: s.ref('enemy'), branch: STAGE_NAME },
@@ -2831,8 +2891,9 @@ const STAGE_FILE_SCHEMA = s.object(
       ),
       { min: 1, max: MAX_RUSH_BOSSES },
     ),
+    remix: s.array(STAGE_EVENT_SCHEMA, { max: MAX_STAGE_REMIX }),
   },
-  { optional: ['directItems', 'branches', 'raster', 'cycles', 'type', 'rush'] },
+  { optional: ['directItems', 'branches', 'raster', 'cycles', 'type', 'rush', 'remix'] },
 );
 
 /** One entry of `tiles` in a `tileset` file. */
@@ -2884,9 +2945,14 @@ const DIFFICULTY_TABLE_SCHEMA = s.object({
 });
 
 /** The `scoring` section of a `rules` file (plan M2-02, `core/scoring` {@link ScoringRules}). */
-const SCORING_RULES_SCHEMA = s.object({
-  bulletCancel: s.int({ min: 0, max: MAX_BULLET_CANCEL_POINTS }),
-});
+const SCORING_RULES_SCHEMA = s.object(
+  {
+    bulletCancel: s.int({ min: 0, max: MAX_BULLET_CANCEL_POINTS }),
+    repeatKills: s.int({ min: 0, max: MAX_REPEAT_KILLS }),
+    repeatPercent: s.int({ min: 0, max: 100 }),
+  },
+  { optional: ['repeatKills', 'repeatPercent'] },
+);
 
 /**
  * A `content/rules/*.rules.json` file (M2-01, plan §3.5): game-wide rule tables. Every section is
@@ -3004,16 +3070,21 @@ const DEMO_FILE_SCHEMA = s.object(
     kind: s.enumOf(['replay'] as const),
     id: s.str({ maxLength: 32, pattern: /^[a-z0-9][a-z0-9-]*$/ }),
     description: s.str({ maxLength: 200 }),
-    header: s.object({
-      formatVersion: s.int({ min: 1 }),
-      buildId: s.str({ minLength: 0, maxLength: 64 }),
-      seed: U32_SCHEMA,
-      stageId: s.nullable(s.str({ maxLength: 64 })),
-      checkpoint: s.int({ min: -1 }),
-      loadout: s.str({ maxLength: 16 }),
-      assisted: s.bool(),
-      config: JSON_OBJECT_SCHEMA,
-    }),
+    header: s.object(
+      {
+        formatVersion: s.int({ min: 1 }),
+        buildId: s.str({ minLength: 0, maxLength: 64 }),
+        seed: U32_SCHEMA,
+        stageId: s.nullable(s.str({ maxLength: 64 })),
+        checkpoint: s.int({ min: -1 }),
+        loadout: s.str({ maxLength: 16 }),
+        assisted: s.bool(),
+        // M3-01: the assist flags (`core/replay` `ReplayHeader.assists`; older demos have none).
+        assists: s.int({ min: 0, max: 255 }),
+        config: JSON_OBJECT_SCHEMA,
+      },
+      { optional: ['assists'] },
+    ),
     ticks: s.int({ min: 1, max: MAX_DEMO_TICKS }),
     hashInterval: s.int({ min: 1 }),
     inputs: s.array(s.str({ minLength: 0 }), { min: MAX_PLAYERS, max: MAX_PLAYERS }),
@@ -4515,7 +4586,10 @@ type MutableStage = Omit<
   | 'cycles'
   | 'type'
   | 'rush'
+  | 'remix'
 > & {
+  /** See {@link StageSpec.remix} (optional in the file — M3-01). */
+  remix?: Array<StageEvent & { branchId?: number }>;
   /** See {@link StageSpec.type} (optional in the file). */
   type?: StageType;
   /** See {@link StageSpec.rush} (optional in the file; the loader fills the defaults). */
@@ -4648,6 +4722,12 @@ function checkStage(stage: MutableStage, file: string, issues: ValidationIssue[]
     if (branch !== undefined && branchIds.indexOf(branch) < 0) {
       ok = issue(issues, at(file, base + '.branch'), 'no branch "' + branch + '" in branches');
     }
+    // M3-01: a remixed event's loops must leave at least one loop to play in.
+    if (event.minLoop !== undefined && event.maxLoop !== undefined) {
+      if (event.maxLoop < event.minLoop) {
+        ok = issue(issues, at(file, base + '.maxLoop'), 'must be >= minLoop');
+      }
+    }
     if (event.type === 'trigger') {
       triggers++;
       const until = event.until ?? event.region.x + event.region.w;
@@ -4725,6 +4805,8 @@ function checkStage(stage: MutableStage, file: string, issues: ValidationIssue[]
     }
   }
   stage.terrain = null;
+  // The loops' remix (M3-01): spawns and formations only, sorted, inside the stage, no branch.
+  if (!checkStageRemix(stage, file, issues)) ok = false;
   // Optional since M2-05: an empty plan means the engine's default one.
   if (stage.directItems === undefined) stage.directItems = [];
   // Boss rushes (M2-09).
@@ -4732,6 +4814,74 @@ function checkStage(stage: MutableStage, file: string, issues: ValidationIssue[]
   // Presentation effects (M2-08).
   if (!checkStageEffects(stage, file, issues)) ok = false;
   return ok;
+}
+
+/**
+ * Checks and completes a stage's loop remix (M3-01 — {@link StageSpec.remix}) in place: omitted →
+ * none; every entry a `spawn` or `formation` (no `branch`), sorted by `x`, inside the stage, with
+ * `minLoop ≤ maxLoop`; each gets `branchId` -1.
+ *
+ * @param stage - The parsed stage.
+ * @param file - Repo-relative file path.
+ * @param issues - Collector.
+ * @returns `true` when the remix is usable.
+ */
+function checkStageRemix(stage: MutableStage, file: string, issues: ValidationIssue[]): boolean {
+  let ok = true;
+  const remix = stage.remix ?? [];
+  stage.remix = remix;
+  for (let i = 0; i < remix.length; i++) {
+    const event = remix[i];
+    const path = 'remix[' + String(i) + ']';
+    if (event.type !== 'spawn' && event.type !== 'formation') {
+      ok = issue(issues, at(file, path + '.type'), 'a remix holds spawn and formation events only');
+    }
+    if (event.branch !== undefined) {
+      ok = issue(issues, at(file, path + '.branch'), 'a remix event cannot name a branch');
+    }
+    if (i > 0 && event.x < remix[i - 1].x) {
+      ok = issue(issues, at(file, path + '.x'), 'must be >= remix[' + String(i - 1) + '].x');
+    }
+    if (event.x > stage.length) ok = issue(issues, at(file, path + '.x'), 'must be <= length');
+    if (
+      event.minLoop !== undefined &&
+      event.maxLoop !== undefined &&
+      event.maxLoop < event.minLoop
+    ) {
+      ok = issue(issues, at(file, path + '.maxLoop'), 'must be >= minLoop');
+    }
+    event.branchId = -1;
+  }
+  return ok;
+}
+
+/**
+ * The stage a World of a loop plays (M3-01): the stage itself on loop 1 (or without a remix), else
+ * a copy whose timeline is its events with its {@link StageSpec.remix} merged in by `x` (a remix
+ * event after the events of its `x`). Load time (allocates the copy — `core/world` calls it once
+ * per World).
+ *
+ * @param stage - The stage.
+ * @param loop - The loop (`GameConfig.loop`).
+ * @returns The stage to run.
+ *
+ * @example
+ * ```ts
+ * stageForLoop(zoneA, 2).events.length; // → zone A's events + its remix
+ * ```
+ */
+export function stageForLoop(stage: StageSpec, loop: number): StageSpec {
+  const remix = stage.remix;
+  if (!(loop >= 2) || remix === undefined || remix.length === 0) return stage;
+  const events = stage.events;
+  const merged: StageEvent[] = [];
+  let r = 0;
+  for (const event of events) {
+    while (r < remix.length && remix[r].x < event.x) merged.push(remix[r++]);
+    merged.push(event);
+  }
+  while (r < remix.length) merged.push(remix[r++]);
+  return Object.freeze({ ...stage, events: Object.freeze(merged) });
 }
 
 /**

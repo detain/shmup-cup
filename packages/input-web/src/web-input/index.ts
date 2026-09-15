@@ -71,6 +71,7 @@ import {
 import {
   DEFAULT_GAMEPAD_BUTTONS,
   readGamepadActions,
+  rumblePad,
   type GamepadLike,
   type GamepadReadState,
 } from '../gamepad/index.js';
@@ -263,6 +264,16 @@ export interface WebInput extends PlatformInput {
   beginCapture(kind: CaptureKind): void;
   /** Ends a capture (the prompt timed out or closed): back to `CaptureStatus.Idle`. */
   endCapture(): void;
+  /**
+   * Rumbles the gamepads a player plays with (M3-01 — shmup_feat.md §4 "[P2] Rumble"): with two
+   * seats, player 2's seated pad for player 2 and every other connected pad for player 1; with one
+   * seat, every connected pad for player 1 (player 2 has none). Pads without motors are skipped.
+   *
+   * @param player - The player slot (0 or 1; the core's `SimEventKind.Rumble` `id`).
+   * @param strength - 1 (a death) or 2 (a boss blast — `param`).
+   * @returns How many pads were rumbled.
+   */
+  rumble(player: number, strength: number): number;
   /** Clears all held input (blur, suspend, scene change). */
   clear(): void;
   /** Removes event listeners. */
@@ -498,6 +509,21 @@ export function createWebInput(options: WebInputOptions): WebInput {
     endCapture() {
       capture.status = CaptureStatus.Idle;
       keyboard.capture.armed = false;
+    },
+    rumble(player, strength) {
+      if (getGamepads === undefined || (player !== 0 && player !== 1)) return 0;
+      if (player === 1 && seats < 2) return 0;
+      const pads = getGamepads();
+      let rumbled = 0;
+      for (let i = 0; i < pads.length && i < MAX_PADS; i++) {
+        const pad = pads[i];
+        if (pad === null || pad === undefined || !pad.connected) continue;
+        // Two seats: the seated pad is player 2's, every other one player 1's.
+        const p2 = seats >= 2 && padSeats[i] === PAD_SEAT_P2;
+        if ((player === 1) !== p2) continue;
+        if (rumblePad(pad, strength)) rumbled++;
+      }
+      return rumbled;
     },
     get context() {
       return context;

@@ -55,7 +55,16 @@
  * {@link encodeReplay}, {@link decodeReplay}, {@link packReplayInput}, {@link encodeInputRuns},
  * {@link decodeInputRuns}, {@link encodeBase64}, {@link decodeBase64}, {@link REPLAY_KIND},
  * {@link REPLAY_FORMAT_VERSION}, {@link REPLAY_HASH_INTERVAL}; M2-15: {@link DemoPlayback},
- * {@link createDemoPlayback}, {@link DemoPlaybackOptions}, {@link DEMO_BUILD_ID}.
+ * {@link createDemoPlayback}, {@link DemoPlaybackOptions}, {@link DEMO_BUILD_ID}; M3-01 (`./run.ts`):
+ * the whole-run replays {@link RunReplay} / {@link RunSegment} and their JSON
+ * ({@link encodeRunReplay}, {@link decodeRunReplay}, {@link runReplayText},
+ * {@link parseRunReplayText}, {@link RUN_REPLAY_KIND}, {@link RUN_REPLAY_FORMAT_VERSION}), the
+ * {@link SegmentRecorder} and its limits ({@link SEGMENT_CAPACITY}, {@link MAX_RUN_SEGMENTS},
+ * {@link MAX_SEGMENT_ACTIONS}), the flow actions {@link RunAction}, the assist flags
+ * {@link AssistFlag} / {@link runAssisted} (also `ReplayHeader.assists`) and the replay library
+ * ({@link ReplayLibrary}, {@link createReplayLibrary}, {@link ReplaySummary},
+ * {@link ReplayStoreResult}, {@link replayStorageKey}, {@link REPLAY_SLOTS},
+ * {@link KEPT_REPLAY_SLOTS}, {@link MAX_REPLAY_TEXT}).
  *
  * **Attract playback (M2-15).** The attract loop's demo play (shmup_feat.md §16) runs the bundled
  * demos (`content/demos/*.replay.json`, `core/data` `ContentDb.demos`) through this same playback
@@ -110,6 +119,33 @@ export {
   createDemoPlayback,
   type DemoPlaybackOptions,
 } from './demo.js';
+export {
+  AssistFlag,
+  KEPT_REPLAY_SLOTS,
+  MAX_REPLAY_TEXT,
+  MAX_RUN_SEGMENTS,
+  MAX_SEGMENT_ACTIONS,
+  REPLAY_SLOTS,
+  RUN_REPLAY_FORMAT_VERSION,
+  RUN_REPLAY_KIND,
+  ReplayStoreResult,
+  RunAction,
+  SEGMENT_CAPACITY,
+  SegmentRecorder,
+  createReplayLibrary,
+  decodeRunReplay,
+  encodeRunReplay,
+  parseRunReplayText,
+  replayStorageKey,
+  runAssisted,
+  runReplayText,
+  type ReplayLibrary,
+  type ReplaySummary,
+  type RunReplay,
+  type RunReplayJson,
+  type RunSegment,
+  type RunSegmentJson,
+} from './run.js';
 
 /** Module descriptor (see {@link defineModule}). */
 export const moduleInfo = defineModule({

@@ -8,7 +8,9 @@
 import {
   Action,
   CaptureStatus,
+  ExtraItem,
   MUSIC_CUES,
+  REPLAY_SLOTS,
   SAVE_CORRUPT_KEY,
   SAVE_STORAGE_KEY,
   SFX_CUES,
@@ -17,6 +19,7 @@ import {
   addScore,
   commitPlayerInput,
   createHeadlessPlatform,
+  replayStorageKey,
   volumeGain,
   type IAudio,
   type InputContext,
@@ -1745,5 +1748,52 @@ describe('shell/boot controls and rebinding (M2-16)', () => {
     // The app's rebindable list is empty: still no device — but the setup is there.
     expect(shell.game.scenes!.controlsPage.deviceIndex(false)).toBe(-1);
     expect(begun).toEqual([]);
+  });
+});
+
+describe('shell/boot rumble and replays (M3-01)', () => {
+  it('rumbles the adapter`s pads for Rumble events while the save`s RUMBLE is on', async () => {
+    const rumbles: Array<[number, number]> = [];
+    input.rumble = (player, strength) => {
+      rumbles.push([player, strength]);
+      return 1;
+    };
+    const shell = await boot({ scene: 'game' }).promise;
+    shell.game.events.push(SimEventKind.Rumble, 1, 0, 0, 2);
+    win.frame(1000);
+    expect(rumbles).toEqual([[1, 2]]);
+    const options = shell.save.options;
+    shell.save.setOptions({ ...options, play: { ...options.play, rumble: false } });
+    shell.game.events.push(SimEventKind.Rumble, 0, 0, 0, 1);
+    win.frame(1000 + STEP);
+    expect(rumbles).toEqual([[1, 2]]);
+  });
+
+  it('boots with an adapter that cannot rumble (the Rumble events are ignored)', async () => {
+    const shell = await boot({ scene: 'game' }).promise;
+    shell.game.events.push(SimEventKind.Rumble, 0, 0, 0, 1);
+    expect(() => win.frame(1000)).not.toThrow();
+  });
+
+  it('reads the replay library before the title and hands it, the share and the build to the flow', async () => {
+    await platform.storage.set(replayStorageKey(0), 'not a replay');
+    const shared: string[] = [];
+    const shell = await boot({
+      scene: 'game',
+      buildId: 'test-build',
+      shareReplay: (text) => {
+        shared.push(text);
+        return true;
+      },
+    }).promise;
+    expect(shell.replays.summaries).toHaveLength(REPLAY_SLOTS);
+    expect(shell.replays.summaries[0]).toBeNull(); // unreadable: an empty slot
+    const flow = shell.game.scenes!;
+    expect(flow.extra.menu.enabled(ExtraItem.Replays)).toBe(true);
+    // The dev scenes have no flow: no replays offered, the library is still there.
+    shell.stop();
+    const dev = await boot({ scene: 'flight' }).promise;
+    expect(dev.game.scenes).toBeNull();
+    expect(dev.replays.summaries).toHaveLength(REPLAY_SLOTS);
   });
 });

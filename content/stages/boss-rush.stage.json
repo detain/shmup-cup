@@ -1,0 +1,103 @@
+{
+  "formatVersion": 1,
+  "kind": "stage",
+  "id": "boss-rush",
+  "name": "BOSS RUSH",
+  "music": {
+    "stage": "Boss",
+    "boss": "Boss"
+  },
+  "length": 6000,
+  "camera": [
+    {
+      "x": 0,
+      "speed": 1,
+      "ramp": 30
+    }
+  ],
+  "checkpoints": [
+    {
+      "x": 0
+    }
+  ],
+  "parallax": [
+    {
+      "layer": "far",
+      "sprite": "bg/stars-far",
+      "factor": 0.25,
+      "y": 0,
+      "spacing": 128
+    },
+    {
+      "layer": "far",
+      "sprite": "bg/stars-far",
+      "factor": 0.25,
+      "y": 128,
+      "spacing": 128
+    },
+    {
+      "layer": "mid",
+      "sprite": "bg/stars-mid",
+      "factor": 0.5,
+      "y": 0,
+      "spacing": 128
+    },
+    {
+      "layer": "mid",
+      "sprite": "bg/stars-mid",
+      "factor": 0.5,
+      "y": 128,
+      "spacing": 128
+    }
+  ],
+  "tilemap": null,
+  "events": [],
+  "type": "bossRush",
+  "rush": [
+    {
+      "enemy": "halcyon-bulwark",
+      "delay": 360,
+      "warning": true
+    },
+    {
+      "enemy": "galvanic-maw",
+      "delay": 150,
+      "warning": true
+    },
+    {
+      "enemy": "sandgrave-widow",
+      "delay": 150,
+      "warning": true
+    },
+    {
+      "enemy": "cinder-bastion",
+      "delay": 150,
+      "warning": true
+    },
+    {
+      "enemy": "squall-steed",
+      "delay": 150,
+      "warning": true
+    },
+    {
+      "enemy": "mantle-regent",
+      "delay": 150,
+      "warning": true
+    },
+    {
+      "enemy": "facet-monarch",
+      "delay": 150,
+      "warning": true
+    },
+    {
+      "enemy": "iron-sovereign",
+      "delay": 150,
+      "warning": true
+    },
+    {
+      "enemy": "hollow-king",
+      "delay": 150,
+      "warning": true
+    }
+  ]
+}

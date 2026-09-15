@@ -222,6 +222,8 @@ describe('core/replay', () => {
       checkpoint: -1,
       loadout: 'full',
       assisted: true,
+      // M3-01: the assist flags (god mode here).
+      assists: 1,
     });
     expect(Object.isFrozen(header)).toBe(true);
     expect(createReplayHeader(config).buildId).toBe('dev');

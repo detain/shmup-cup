@@ -162,7 +162,13 @@ function checkArsenal(w: World, label: string, v: Violations, seen: Set<number>)
     counts[f.shooter[i] * WEAPON_ROLE_COUNT + role]++;
     const at = (): string => `${label} tick ${tick}: kind ${kind} at ${x}, ${y}`;
     v.check(Number.isFinite(x) && Number.isFinite(y), () => at() + ' is not finite');
-    v.check(WEAPON_BEHAVIOR_KINDS[spec.behavior] === kind, () => at() + ` in role ${role}`);
+    const roleKind = WEAPON_BEHAVIOR_KINDS[spec.behavior];
+    // Hawk Wind's shots (M3-01) are Missiles below the playfield's middle, Upper Missiles above.
+    const hawk = roleKind === ShotKind.HawkWind;
+    v.check(
+      hawk ? kind === ShotKind.Missile || kind === ShotKind.Upper : roleKind === kind,
+      () => at() + ` in role ${role}`,
+    );
     if ((flags & ShotFlag.Blast) !== 0) {
       // World-anchored for its 12 ticks: at most 12 camera steps behind the view.
       v.check(x >= left - 12 && y >= top && y <= bottom, () => at() + ' blast outside');
@@ -180,7 +186,17 @@ function checkArsenal(w: World, label: string, v: Violations, seen: Set<number>)
     }
     v.check(x >= left && x <= right, () => at() + ' outside the view horizontally');
     if (kind === ShotKind.Ripple) v.check(f.hh[i] <= 20, () => at() + ` ring ${f.hh[i]}`);
-    if ((flags & ShotFlag.Sliding) !== 0) {
+    if ((flags & ShotFlag.Sliding) !== 0 && kind === ShotKind.Upper) {
+      // The Upper Missile (M3-01) slides under the ceiling.
+      const surface = y - f.hh[i] - 0.5;
+      const px = Math.floor(x);
+      v.check(
+        Number.isInteger(surface) &&
+          terrainSolidAt(map, px, surface - 1) &&
+          !terrainSolidAt(map, px, surface),
+        () => at() + ' is not sliding under the ceiling',
+      );
+    } else if ((flags & ShotFlag.Sliding) !== 0) {
       const surface = y + f.hh[i] + 0.5;
       const px = Math.floor(x);
       v.check(
@@ -189,7 +205,7 @@ function checkArsenal(w: World, label: string, v: Violations, seen: Set<number>)
           !terrainSolidAt(map, px, surface - 1),
         () => at() + ' is not resting on the floor',
       );
-    } else if (kind !== ShotKind.Missile && kind !== ShotKind.Torpedo) {
+    } else if (kind !== ShotKind.Missile && kind !== ShotKind.Torpedo && kind !== ShotKind.Upper) {
       v.check(!terrainSolidAt(map, Math.floor(x), Math.floor(y)), () => at() + ' inside rock');
     }
   }
@@ -212,7 +228,8 @@ describe('integration: the meter arsenal on the shipped content (M2-03)', () => 
   it('ships four presets over named, drawn and labelled weapons', () => {
     expect(DB.weaponPresets.map((p) => p.id)).toEqual(['type-a', 'type-b', 'type-c', 'type-d']);
     for (const slot of ['missile', 'double', 'laser'] as const) {
-      const list = weaponsOfSlot(DB, slot);
+      // The Weapon Edit weapons (M3-01: the Extra Edit ones are marked `extra`).
+      const list = weaponsOfSlot(DB, slot).filter((weapon) => weapon.extra !== true);
       expect(list, slot).toHaveLength(4);
       for (const weapon of list) {
         expect(weapon.name, weapon.id).toMatch(/^[A-Z0-9 .-]{1,16}$/);
@@ -226,8 +243,11 @@ describe('integration: the meter arsenal on the shipped content (M2-03)', () => 
 
   it('every Weapon Edit flies the test range within its caps and bounds', () => {
     const v = new Violations();
+    // EDIT's weapons (the Extra Edit ones fly in the M3-01 test below).
     const ids = (slot: 'missile' | 'double' | 'laser'): string[] =>
-      weaponsOfSlot(DB, slot).map((w) => w.id);
+      weaponsOfSlot(DB, slot)
+        .filter((w) => w.extra !== true)
+        .map((w) => w.id);
     let arsenals = 0;
     for (const missile of ids('missile')) {
       for (const double of ids('double')) {
@@ -257,6 +277,46 @@ describe('integration: the meter arsenal on the shipped content (M2-03)', () => 
       }
     }
     expect(arsenals).toBe(64);
+    expect(v.list).toEqual([]);
+  });
+
+  it('every Extra Edit weapon (M3-01) flies the test range within its caps and bounds', () => {
+    const v = new Violations();
+    const extras = DB.weapons.filter((w) => w.extra === true);
+    expect(extras.map((w) => w.id).sort()).toEqual([
+      'missile.control',
+      'missile.hawkWind',
+      'missile.smallSpread',
+      'missile.twoWayBack',
+      'missile.upper',
+      'shot.backDouble',
+      'shot.spreadGun',
+    ]);
+    for (const weapon of extras) {
+      const edit = { missile: 'missile.ground', double: 'shot.double', laser: 'laser.pierce' };
+      if (weapon.slot === 'missile') edit.missile = weapon.id;
+      else edit.double = weapon.id;
+      const label = weapon.id;
+      const { g, platform } = game({ stage: 'test-range', loadout: 'full', weaponEdit: edit });
+      const w = g.world;
+      const seen = new Set<number>();
+      for (let t = 0; t < 240; t++) {
+        if (t === 120) w.weapons.loadouts[0].main = MainWeapon.Double;
+        commitPlayerInput(platform.snapshot.players[0], weave(t));
+        g.step();
+        w.events.clear();
+        checkArsenal(w, label, v, seen);
+      }
+      const role = weapon.slot === 'missile' ? WeaponRole.Missile : WeaponRole.Double;
+      const kind = WEAPON_BEHAVIOR_KINDS[w.weapons.roleWeapons[role]!.behavior];
+      // Hawk Wind's shots fly as Missiles or Upper Missiles, never as its role's own kind.
+      const fired =
+        kind === ShotKind.HawkWind
+          ? seen.has(ShotKind.Missile) || seen.has(ShotKind.Upper)
+          : seen.has(kind);
+      v.check(fired, () => `${label}: never fired`);
+      expect(METER_LABEL_FRAMES, weapon.id).toContain(WEAPON_BEHAVIOR_LABELS[weapon.behavior]);
+    }
     expect(v.list).toEqual([]);
   });
 

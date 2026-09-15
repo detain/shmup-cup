@@ -180,7 +180,8 @@ describe('core/scenes flow: boot and title', () => {
     expect(s.uiTexts()).toEqual(['HI']); // the off half of the blink
     s.press(Action.Confirm);
     expect(s.flow.title.menuOpen).toBe(true);
-    // The mode select (M2-15): PRACTICE (disabled — this content has no campaign) and SOUND TEST.
+    // The mode select (M2-15): PRACTICE (disabled — this content has no campaign) and SOUND TEST;
+    // EXTRA (M3-01 — disabled too: no boss rush, no campaign, no replays).
     expect(s.uiTexts()).toEqual([
       '→',
       '1 PLAYER',
@@ -188,9 +189,11 @@ describe('core/scenes flow: boot and title', () => {
       'PRACTICE',
       'OPTIONS',
       'SOUND TEST',
+      'EXTRA',
       'EXIT',
       'HI',
     ]);
+    expect(s.flow.title.menu.enabled(TitleItem.Extra)).toBe(false);
     expect(s.flow.title.menu.enabled(TitleItem.Options)).toBe(true);
     expect(s.flow.title.menu.enabled(TitleItem.Practice)).toBe(false);
     s.press(Action.Down);
@@ -219,6 +222,7 @@ describe('core/scenes flow: boot and title', () => {
       'PRACTICE',
       'OPTIONS',
       'SOUND TEST',
+      'EXTRA',
     ]);
     s.press(Action.Back);
     expect([s.top, s.flow.title.menuOpen]).toEqual(['title', false]);

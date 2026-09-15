@@ -678,5 +678,43 @@
       "colors": ["#402a10", "#6a4418", "#a86a20", "#e8a030"],
       "ticks": 10
     }
+  ],
+  "remix": [
+    {
+      "x": 400,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 90
+    },
+    {
+      "x": 2340,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 100
+    },
+    {
+      "x": 4140,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 70
+    },
+    {
+      "x": 4800,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 50
+    },
+    {
+      "x": 6720,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 140
+    },
+    {
+      "x": 8620,
+      "type": "spawn",
+      "enemy": "tender",
+      "y": 120
+    }
   ]
 }

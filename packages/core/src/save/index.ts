@@ -65,10 +65,17 @@
  * {@link createHiScoreEntry}, {@link insertHiScore}, {@link HiScoreInsert}, {@link hiScoreModeKey},
  * {@link SaveStore},
  * {@link createSaveStore}; M2-15: {@link HI_SCORE_MODES}, {@link HiScoreMode},
- * {@link parseHiScoreModeKey}, {@link HiScoreKeyParts}, {@link SaveStore.renameScore}.
+ * {@link parseHiScoreModeKey}, {@link HiScoreKeyParts}, {@link SaveStore.renameScore}; M3-01: the
+ * unlocks ({@link SaveUnlocks}, {@link UNLOCK_IDS}, {@link UnlockId}, {@link SaveStore.unlock},
+ * {@link SaveStore.unlocked}), the M3 modes' tables (`bossrush`, `caravan`, `arcade` in
+ * {@link HI_SCORE_MODES}) and assisted rows (`HiScoreEntry.assisted`).
  *
- * **Planned.** Unlocks (Extra Edit, stages, ships — M2), the Electron file store (M2-17), more
- * stats as their screens arrive.
+ * **M3-01 fields without a migration.** Like the display options of M2-08, the new fields resolve
+ * when missing, so the format stays version 2: `options.play` (the assists and feel — `core/config`
+ * `PlayOptions`), a hi-score row's `assisted` (written only when `true`) and `unlocks` (written only
+ * once something is unlocked).
+ *
+ * **Planned.** More stats as their screens arrive.
  *
  * @module
  */
@@ -114,9 +121,18 @@ export const DEFAULT_HI_SCORE_NAME = '---';
 /**
  * The game modes that keep hi-score tables of their own (M2-15 — shmup_feat.md §15 "per
  * difficulty / mode", §16 "practice: separate score table"): one-player games, co-op games and
- * practice runs. The value is also the `mode` field of the rows recorded in them.
+ * practice runs; since M3-01 (§16 "boss rush", "score attack / caravan", "Loop 2 / Arcade mode") the
+ * BOSS RUSH, the CARAVAN and the looping ARCADE mode too. The value is also the `mode` field of the
+ * rows recorded in them.
  */
-export const HI_SCORE_MODES = Object.freeze(['1p', '2p', 'practice'] as const);
+export const HI_SCORE_MODES = Object.freeze([
+  '1p',
+  '2p',
+  'practice',
+  'bossrush',
+  'caravan',
+  'arcade',
+] as const);
 
 /** A {@link HI_SCORE_MODES} entry. */
 export type HiScoreMode = (typeof HI_SCORE_MODES)[number];
@@ -124,8 +140,11 @@ export type HiScoreMode = (typeof HI_SCORE_MODES)[number];
 /** Longest name a hi-score entry keeps (longer names are cut). */
 export const HI_SCORE_NAME_MAX = 8;
 
-/** Most hi-score tables (mode keys) a save keeps; further ones are dropped when read. */
-export const MAX_HI_SCORE_TABLES = 32;
+/**
+ * Most hi-score tables (mode keys) a save keeps; further ones are dropped when read (64 since
+ * M3-01: two ships × four difficulties × six modes = 48 tables).
+ */
+export const MAX_HI_SCORE_TABLES = 64;
 
 /** Largest value a statistics counter keeps (it stops counting there). */
 const MAX_COUNTER = 0x7fffffff;
@@ -135,6 +154,24 @@ const ENTRY_TEXT_MAX = 32;
 
 /** Shape of a mode key. */
 const MODE_KEY_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+/**
+ * What the player has unlocked (M3-01 — shmup_feat.md §21 "[P1] Unlocks (Extra Edit, stages,
+ * ships)", §7A "Extra Edit as an unlock", §16 "Loop 2"): set by reaching an ending (or the title's
+ * secret code), never taken back.
+ */
+export interface SaveUnlocks {
+  /** The weapon select's EXTRA (every weapon of each slot, the Extra Edit weapons included). */
+  readonly extraEdit: boolean;
+  /** The ARCADE mode's LOOP 2 start. */
+  readonly loop2: boolean;
+}
+
+/** The {@link SaveUnlocks} ids, in a fixed order. */
+export const UNLOCK_IDS = Object.freeze(['extraEdit', 'loop2'] as const);
+
+/** One of {@link UNLOCK_IDS}. */
+export type UnlockId = (typeof UNLOCK_IDS)[number];
 
 /** Play statistics (counters, integers ≥ 0). */
 export interface SaveStats {
@@ -159,6 +196,11 @@ export interface SaveData {
   readonly hiScores: Readonly<Record<string, readonly HiScoreEntry[]>>;
   /** Play statistics. */
   readonly stats: SaveStats;
+  /**
+   * What is unlocked (M3-01). Present only once something is (a save without it has nothing
+   * unlocked — no migration needed, like the display options of M2-08).
+   */
+  readonly unlocks?: SaveUnlocks;
 }
 
 /** One migration step between save versions. */
@@ -398,6 +440,7 @@ function sanitizeTable(value: unknown): readonly HiScoreEntry[] | null {
         reached: typeof row.reached === 'string' ? row.reached : '',
         mode: typeof row.mode === 'string' ? row.mode : '',
         difficulty: typeof row.difficulty === 'string' ? row.difficulty : '',
+        assisted: row.assisted === true,
       }),
     );
   }
@@ -456,7 +499,9 @@ export function sanitizeSave(data: Readonly<Record<string, unknown>>): SaveData 
     }
   }
   const stats = asRecord(data.stats) ?? {};
-  return Object.freeze({
+  const doc: {
+    -readonly [K in keyof SaveData]: SaveData[K];
+  } = {
     version: SAVE_VERSION,
     options: resolveUserOptions(data.options),
     hiScores: Object.freeze(hiScores),
@@ -465,7 +510,25 @@ export function sanitizeSave(data: Readonly<Record<string, unknown>>): SaveData 
       gameOvers: counter(stats.gameOvers),
       stagesCleared: counter(stats.stagesCleared),
     }),
-  });
+  };
+  const unlocks = sanitizeUnlocks(data.unlocks);
+  if (unlocks !== null) doc.unlocks = unlocks;
+  return Object.freeze(doc);
+}
+
+/**
+ * Reads the unlocks defensively (M3-01).
+ *
+ * @param value - Anything (`unlocks` of a document).
+ * @returns Frozen unlocks when at least one of {@link UNLOCK_IDS} is `true`, else `null` (nothing
+ *   unlocked — the document leaves the field out).
+ */
+function sanitizeUnlocks(value: unknown): SaveUnlocks | null {
+  const row = asRecord(value);
+  if (row === null) return null;
+  const extraEdit = row.extraEdit === true;
+  const loop2 = row.loop2 === true;
+  return extraEdit || loop2 ? Object.freeze({ extraEdit, loop2 }) : null;
 }
 
 /**
@@ -567,18 +630,23 @@ export function serializeSave(data: SaveData): string {
   for (const key of Object.keys(data.hiScores).sort()) {
     const rows: HiScoreEntry[] = [];
     for (const row of data.hiScores[key]) {
-      rows.push({
+      const out: { -readonly [K in keyof HiScoreEntry]: HiScoreEntry[K] } = {
         name: row.name,
         score: row.score,
         reached: row.reached,
         mode: row.mode,
         difficulty: row.difficulty,
-      });
+      };
+      // M3-01: written only for an assisted row (older saves keep their text).
+      if (row.assisted === true) out.assisted = true;
+      rows.push(out);
     }
     hiScores[key] = rows;
   }
   const input = data.options.input;
   const game = data.options.game;
+  const play = data.options.play;
+  const unlocks = data.unlocks;
   return JSON.stringify({
     version: data.version,
     options: {
@@ -607,6 +675,16 @@ export function serializeSave(data: SaveData): string {
         showHitbox: display.showHitbox,
         bossHpBar: display.bossHpBar,
       },
+      // M3-01: the assists and feel (a save written before resolves them to their defaults).
+      play:
+        play === undefined
+          ? undefined
+          : {
+              speed: play.speed,
+              invincible: play.invincible,
+              optionRecovery: play.optionRecovery,
+              rumble: play.rumble,
+            },
     },
     hiScores,
     stats: {
@@ -614,6 +692,9 @@ export function serializeSave(data: SaveData): string {
       gameOvers: data.stats.gameOvers,
       stagesCleared: data.stats.stagesCleared,
     },
+    // M3-01: written only once something is unlocked.
+    unlocks:
+      unlocks === undefined ? undefined : { extraEdit: unlocks.extraEdit, loop2: unlocks.loop2 },
   });
 }
 
@@ -731,13 +812,16 @@ export function createHiScoreEntry(
   fields: Partial<Omit<HiScoreEntry, 'score'>> = {},
 ): HiScoreEntry {
   const name = fields.name ?? '';
-  return Object.freeze({
+  const entry: { -readonly [K in keyof HiScoreEntry]: HiScoreEntry[K] } = {
     name: name === '' ? DEFAULT_HI_SCORE_NAME : name.slice(0, HI_SCORE_NAME_MAX),
     score: score > 0 && Number.isFinite(score) ? Math.min(MAX_SCORE, Math.floor(score)) : 0,
     reached: (fields.reached ?? '').slice(0, ENTRY_TEXT_MAX),
     mode: (fields.mode ?? '').slice(0, ENTRY_TEXT_MAX),
     difficulty: (fields.difficulty ?? '').slice(0, ENTRY_TEXT_MAX),
-  });
+  };
+  // M3-01: an assisted row carries the flag (an unassisted one leaves it out).
+  if (fields.assisted === true) entry.assisted = true;
+  return Object.freeze(entry);
 }
 
 /**
@@ -1005,6 +1089,36 @@ export class SaveStore {
     hiScores[modeKey] = Object.freeze(next);
     this.current = Object.freeze({ ...this.current, hiScores: Object.freeze(hiScores) });
     return rank;
+  }
+
+  /**
+   * Whether something is unlocked (M3-01).
+   *
+   * @param id - One of {@link UNLOCK_IDS}.
+   * @returns `true` once {@link SaveStore.unlock} set it (or a loaded save had it).
+   */
+  unlocked(id: UnlockId): boolean {
+    const unlocks = this.current.unlocks;
+    return unlocks !== undefined && unlocks[id] === true;
+  }
+
+  /**
+   * Unlocks something for good (M3-01 — an ending reached: Extra Edit and the LOOP 2 start; the
+   * title's secret code: Extra Edit). Not written until {@link SaveStore.flush}.
+   *
+   * @param id - One of {@link UNLOCK_IDS}.
+   * @returns `true` when it was locked until now (the caller may tell the player).
+   */
+  unlock(id: UnlockId): boolean {
+    if (this.unlocked(id)) return false;
+    const own = this.current.unlocks;
+    const next: { -readonly [K in keyof SaveUnlocks]: boolean } = {
+      extraEdit: own !== undefined && own.extraEdit,
+      loop2: own !== undefined && own.loop2,
+    };
+    next[id] = true;
+    this.current = Object.freeze({ ...this.current, unlocks: Object.freeze(next) });
+    return true;
   }
 
   /**

@@ -50,6 +50,8 @@ describe('core/save version 2 (M2-16)', () => {
         showHitbox: true,
         bossHpBar: true,
       },
+      // M3-01: the assists and feel resolve to their defaults (no migration needed).
+      play: DEFAULT_USER_OPTIONS.play,
     });
     expect(loaded.data.stats).toEqual({ gamesStarted: 12, gameOvers: 9, stagesCleared: 17 });
   });
@@ -79,7 +81,8 @@ describe('core/save version 2 (M2-16)', () => {
     expect(text).toBe(serializeSave(store.data));
     const doc = JSON.parse(text ?? '{}') as { version: number; options: Record<string, unknown> };
     expect(doc.version).toBe(2);
-    expect(Object.keys(doc.options)).toEqual(['audio', 'input', 'game', 'display']);
+    // M3-01 added `play` (the assists and feel) after the display options.
+    expect(Object.keys(doc.options)).toEqual(['audio', 'input', 'game', 'display', 'play']);
     const again = await loadSave(storage);
     expect(again.status).toBe('ok');
     expect(again.data).toEqual(store.data);

@@ -33,12 +33,18 @@
  * {@link worldDeaths}, {@link ZoneResult}, {@link tallyZone}, {@link awardZoneBonus},
  * {@link runWorldConfig}, {@link prepareRunWorld},
  * {@link RunFlag}, {@link KILL_BONUS_PER_PERCENT}, {@link TIME_BONUS_PAR_TICKS},
- * {@link TIME_BONUS_PER_SECOND}.
+ * {@link TIME_BONUS_PER_SECOND}; M3-01: {@link RunMode}, {@link RUN_MODES},
+ * {@link RunState.nextLoop}, {@link WorldStart}, {@link prepareWorldStart}.
  *
  * @module
  */
 import { BossRole, BossState } from '../bosses/index.js';
-import { resolveGameConfig, type GameConfig, type StartingLoadout } from '../config/index.js';
+import {
+  MAX_LOOP,
+  resolveGameConfig,
+  type GameConfig,
+  type StartingLoadout,
+} from '../config/index.js';
 import type { CampaignEndingSpec, CampaignSpec } from '../data/index.js';
 import { jumpToCheckpoint } from '../debug/index.js';
 import { MAX_PLAYERS } from '../input/index.js';
@@ -105,6 +111,8 @@ export class CarriedPlayer {
   missile = false;
   /** Options owned. */
   options = 0;
+  /** The Spread Gun's level (M3-01 — `Loadout.spread`). */
+  spread = 0;
   /** Direct mode: the main shot's level. */
   shot = 0;
   /** Direct mode: the sub-weapon's level. */
@@ -160,6 +168,7 @@ export class CarryState {
       a.main = b.main;
       a.missile = b.missile;
       a.options = b.options;
+      a.spread = b.spread;
       a.shot = b.shot;
       a.sub = b.sub;
       a.family = b.family;
@@ -233,6 +242,7 @@ export function captureCarry(world: World, out: CarryState): CarryState {
     c.main = loadout.main;
     c.missile = loadout.missile;
     c.options = loadout.options;
+    c.spread = loadout.spread;
     c.shot = loadout.shot;
     c.sub = loadout.sub;
     c.family = loadout.family;
@@ -281,6 +291,7 @@ export function applyCarry(world: World, carry: CarryState): void {
     loadout.main = c.main as MainWeapon;
     loadout.missile = c.missile;
     loadout.options = c.options;
+    loadout.spread = c.spread;
     loadout.shot = c.shot;
     loadout.sub = c.sub;
     loadout.family = c.family;
@@ -315,6 +326,22 @@ export function worldDeaths(world: World): number {
   for (const ship of world.players) deaths += ship.hits;
   return deaths;
 }
+
+/**
+ * What kind of run the flow plays (M3-01 — shmup_feat.md §16 game modes): `normal` — the campaign
+ * (or a single stage) with the M2 rules; `bossRush` — the BOSS RUSH stage alone; `caravan` — one
+ * zone against the clock (`GameConfig.timeLimit`); `arcade` — the campaign looping on after its
+ * final zone, each loop harder (`GameConfig.loop`).
+ */
+export type RunMode = 'normal' | 'bossRush' | 'caravan' | 'arcade';
+
+/** Every {@link RunMode}. */
+export const RUN_MODES: readonly RunMode[] = Object.freeze([
+  'normal',
+  'bossRush',
+  'caravan',
+  'arcade',
+] as RunMode[]);
 
 /** The zone result tally (shmup_feat.md §15 "boss time bonus"; plan M2-10). */
 export class ZoneResult {
@@ -437,8 +464,21 @@ export class RunState {
   continuesAtStart = 0;
   /** The last zone's tally. */
   readonly result = new ZoneResult();
+  /** The start state of the World {@link prepareRunWorld} prepared last (M3-01 — run replays). */
+  readonly segmentStart = new WorldStart();
   /** The ending picked when the final zone was cleared (`null` before). */
   ending: CampaignEndingSpec | null = null;
+  /** What kind of run it is (M3-01 — {@link RunMode}). */
+  mode: RunMode = 'normal';
+  /** The loop the run plays (M3-01 — `GameConfig.loop` of its Worlds; the ARCADE mode's goes up). */
+  loop = 1;
+  /** The caravan's clock of the run's Worlds (M3-01 — `GameConfig.timeLimit`; 0 = none). */
+  timeLimit = 0;
+  /**
+   * What assisted the run so far (M3-01 — `core/replay` `AssistFlag`): the invincibility and
+   * game-speed assists, a secret code, god mode. Its hi-score rows and replay are marked.
+   */
+  assists = 0;
 
   /**
    * The flags the ending selection tests: the accumulated ones plus `NoDeath` / `NoContinue`
@@ -464,8 +504,21 @@ export class RunState {
    *
    * @param campaign - The campaign (`null`: a single-stage run of `stage`).
    * @param stage - The single stage (ignored with a campaign).
+   * @param mode - What kind of run (M3-01 — default `normal`).
+   * @param loop - The loop it starts on (M3-01 — default 1).
+   * @param timeLimit - The caravan's clock of its Worlds in ticks (M3-01 — default 0: none).
    */
-  begin(campaign: CampaignSpec | null, stage: string | null): void {
+  begin(
+    campaign: CampaignSpec | null,
+    stage: string | null,
+    mode: RunMode = 'normal',
+    loop = 1,
+    timeLimit = 0,
+  ): void {
+    this.mode = mode;
+    this.loop = loop >= 1 ? Math.floor(loop) : 1;
+    this.timeLimit = timeLimit > 0 ? Math.floor(timeLimit) : 0;
+    this.assists = 0;
     this.campaign = campaign;
     this.route.length = 0;
     if (campaign !== null) {
@@ -516,6 +569,24 @@ export class RunState {
   }
 
   /**
+   * Starts a run of one campaign zone (M3-01 — the CARAVAN): like {@link RunState.beginPractice}
+   * (the zone's rank stage term) but not a practice run — its mode names its table.
+   *
+   * @param campaign - The campaign.
+   * @param zone - Zone index.
+   * @param mode - The run's mode (`caravan`).
+   * @param timeLimit - The clock of its World in ticks.
+   */
+  beginZone(campaign: CampaignSpec, zone: number, mode: RunMode, timeLimit: number): void {
+    this.begin(campaign, null, mode, 1, timeLimit);
+    this.zone = zone;
+    this.stage = campaign.zones[zone].stage;
+    this.route.length = 0;
+    this.route.push(zone);
+    this.depth = campaign.zones[zone].depth;
+  }
+
+  /**
    * Moves the run on to the next zone (the zone map's choice): the carried state becomes the new
    * zone's entry state.
    *
@@ -529,6 +600,28 @@ export class RunState {
     this.route.push(zone);
     this.depth++;
     this.checkpoint = -1;
+    this.entry.copyFrom(this.carry);
+    this.bonusLocked = false;
+    this.leaveBonus(false);
+  }
+
+  /**
+   * The ARCADE mode's next loop (M3-01 — shmup_feat.md §15 "loops"): after the final zone the run
+   * goes on at the campaign's first zone, one loop higher (at most `core/config` `MAX_LOOP`), its
+   * zone count (the rank's stage term) starting again; the carried state becomes the zone's entry
+   * state. Does nothing without a campaign.
+   */
+  nextLoop(): void {
+    const campaign = this.campaign;
+    if (campaign === null) return;
+    if (this.loop < MAX_LOOP) this.loop++;
+    this.zone = campaign.startIndex;
+    this.stage = campaign.zones[this.zone].stage;
+    this.route.length = 0;
+    this.route.push(this.zone);
+    this.depth = 0;
+    this.checkpoint = -1;
+    this.ending = null;
     this.entry.copyFrom(this.carry);
     this.bonusLocked = false;
     this.leaveBonus(false);
@@ -567,8 +660,9 @@ export class RunState {
 /**
  * The config of the World a run plays now: `base` (the chosen difficulty, ship and loadout) with
  * the current zone's stage — or the bonus stage while inside one — and, in a practice run, the
- * practice select's starting loadout (M2-15). A config `base` already matches keeps the `base`
- * object (the first zone of a campaign run, every single-stage run).
+ * practice select's starting loadout (M2-15); since M3-01 with the run's loop and the caravan's
+ * clock (none in a bonus stage). A config `base` already matches keeps the `base` object (the first
+ * zone of a campaign run, every single-stage run).
  *
  * @param base - The config of the run (the flow's `runConfig`: `SceneFlow.gameConfig` when the
  *   run began — M2-16).
@@ -580,9 +674,15 @@ export class RunState {
 export function runWorldConfig(base: GameConfig, run: RunState): GameConfig {
   const stage = run.inBonus ? run.bonusStage : run.stage;
   const loadout = run.practice && run.loadout !== null ? run.loadout : base.loadout;
-  return stage === base.stage && loadout === base.loadout
+  // M3-01: the run's loop and the caravan's clock (a bonus stage has no clock).
+  const loop = run.loop;
+  const timeLimit = run.inBonus ? 0 : run.timeLimit;
+  return stage === base.stage &&
+    loadout === base.loadout &&
+    loop === base.loop &&
+    timeLimit === base.timeLimit
     ? base
-    : resolveGameConfig({ ...base, stage, loadout });
+    : resolveGameConfig({ ...base, stage, loadout, loop, timeLimit });
 }
 
 /**
@@ -604,21 +704,60 @@ export function runWorldConfig(base: GameConfig, run: RunState): GameConfig {
  * ```
  */
 export function prepareRunWorld(world: World, run: RunState, carry: CarryState | null): World {
-  if (run.campaign !== null) {
-    world.rankInputs.stage = run.depth + 1;
+  const start = run.segmentStart;
+  start.stageTerm = run.campaign !== null ? run.depth + 1 : -1;
+  start.returnX = -1;
+  start.checkpoint = -1;
+  start.locked = false;
+  if (!run.inBonus) {
+    if (run.bonusReturnX >= 0 && world.stage !== null) start.returnX = run.bonusReturnX;
+    else if (run.checkpoint >= 0) start.checkpoint = run.checkpoint;
+    // The CARAVAN (M3-01) plays the zone alone: its bonus entrances stay shut (the clock).
+    start.locked = run.bonusLocked || run.mode === 'caravan';
+  }
+  prepareWorldStart(world, start, carry);
+  run.continuesAtStart = carry !== null && carry.valid ? carry.continuesUsed : 0;
+  return world;
+}
+
+/**
+ * What the flow puts into a new World before its first tick (M3-01 — the start state a run
+ * replay's segment records; {@link prepareRunWorld} fills it for the World it prepares, the run
+ * replay's playback applies a recorded one through {@link prepareWorldStart}).
+ */
+export class WorldStart {
+  /** The rank's stage term (`rankInputs.stage`), or -1 to keep the World's own (outside a campaign). */
+  stageTerm = -1;
+  /** Stage x to jump to (a failed bonus stage's entrance), or -1. */
+  returnX = -1;
+  /** Checkpoint to start at (practice), or -1 (used only without {@link WorldStart.returnX}). */
+  checkpoint = -1;
+  /** Lock the stage's bonus entrances (a death in the zone's bonus stage). */
+  locked = false;
+}
+
+/**
+ * Puts a start state into a new World at tick 0: the rank's stage term, the jump to a bonus
+ * entrance or a checkpoint, the entrances' lock, then the carried players ({@link applyCarry} —
+ * none: the config's fresh start) and the view. Cold path; what {@link prepareRunWorld} runs, and
+ * what a run replay's playback runs with the segment's recorded start (M3-01).
+ *
+ * @param world - The new World.
+ * @param start - The start state.
+ * @param carry - The players to carry in (`null` or invalid: none).
+ */
+export function prepareWorldStart(
+  world: World,
+  start: Readonly<WorldStart>,
+  carry: CarryState | null,
+): void {
+  if (start.stageTerm >= 1) {
+    world.rankInputs.stage = start.stageTerm;
     updateWorldRank(world);
   }
-  if (!run.inBonus) {
-    if (run.bonusReturnX >= 0 && world.stage !== null) world.stage.jumpTo(run.bonusReturnX);
-    else if (run.checkpoint >= 0) jumpToCheckpoint(world, run.checkpoint);
-    if (run.bonusLocked) world.bonus.lock();
-  }
-  run.continuesAtStart = 0;
-  if (carry !== null && carry.valid) {
-    applyCarry(world, carry);
-    run.continuesAtStart = carry.continuesUsed;
-  } else {
-    syncWorldView(world);
-  }
-  return world;
+  if (start.returnX >= 0 && world.stage !== null) world.stage.jumpTo(start.returnX);
+  else if (start.checkpoint >= 0) jumpToCheckpoint(world, start.checkpoint);
+  if (start.locked) world.bonus.lock();
+  if (carry !== null && carry.valid) applyCarry(world, carry);
+  else syncWorldView(world);
 }

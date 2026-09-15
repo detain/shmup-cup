@@ -312,8 +312,8 @@ describe('core/scenes flow edge: construction', () => {
       }
       expect(next).toBeLessThanOrEqual(flow.view.ui.stringCapacity);
       // PRESS OK, HI, the logo's text, the cursor and the items (2 PLAYERS since M2-06, PRACTICE
-      // and SOUND TEST since M2-15).
-      expect(flow.title.stringSlots).toBe(canExit ? 12 : 11);
+      // and SOUND TEST since M2-15, EXTRA and the secret codes' message since M3-01).
+      expect(flow.title.stringSlots).toBe(canExit ? 14 : 13);
     }
   });
 

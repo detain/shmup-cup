@@ -70,7 +70,7 @@
  * {@link connectOptionEvents}, {@link applyAudioOptions}, {@link VolumeTarget},
  * {@link applyDisplayOptions}, {@link DisplayTarget} (M2-08), {@link connectStagePreparation},
  * {@link StagePreparationTarget} (M2-10), {@link connectSoundTest}, {@link SoundTestTarget}
- * (M2-15).
+ * (M2-15), {@link connectRumbleEvents} (M3-01 — gamepad rumble).
  *
  * @module
  */
@@ -463,6 +463,32 @@ export function connectSoundTest(
 ): () => void {
   return dispatcher.on(SimEventKind.SoundTest, (event) => {
     audio.playTrack(event.id, 0).catch(onError);
+  });
+}
+
+/**
+ * Connects the core's rumble events to a player's gamepads (M3-01 — shmup_feat.md §4 "[P2] Rumble
+ * via `vibrationActuator.playEffect()`"): each `SimEventKind.Rumble` (`id` = the player slot,
+ * `param` = the strength — 1 a death, 2 a boss blast) rumbles that player's pads while `enabled()`
+ * says so (the save's RUMBLE option).
+ *
+ * @param dispatcher - The shell's event dispatcher.
+ * @param rumble - Rumbles a player's pads (the input adapter's `rumble`).
+ * @param enabled - Whether rumble is on now (read at every event).
+ * @returns A function that unregisters the handler (idempotent).
+ *
+ * @example
+ * ```ts
+ * connectRumbleEvents(shell.events, (p, s) => input.rumble(p, s), () => save.options.play.rumble);
+ * ```
+ */
+export function connectRumbleEvents(
+  dispatcher: EventDispatcher,
+  rumble: (player: number, strength: number) => void,
+  enabled: () => boolean,
+): () => void {
+  return dispatcher.on(SimEventKind.Rumble, (event) => {
+    if (enabled()) rumble(event.id, event.param);
   });
 }
 

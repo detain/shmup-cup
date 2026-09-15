@@ -9,6 +9,7 @@ import {
   DEFAULT_HI_SCORE_NAME,
   HI_SCORE_MODES,
   HI_SCORE_TABLE_SIZE,
+  MAX_HI_SCORE_TABLES,
   createHiScoreEntry,
   createSaveStore,
   hiScoreModeKey,
@@ -21,7 +22,8 @@ import {
 
 describe('core/save hi-score tables per mode (M2-15)', () => {
   it('keys a table by ship (power-up model), difficulty and mode', () => {
-    expect(HI_SCORE_MODES).toEqual(['1p', '2p', 'practice']);
+    // M3-01: the EXTRA modes' tables after M2-15's three.
+    expect(HI_SCORE_MODES).toEqual(['1p', '2p', 'practice', 'bossrush', 'caravan', 'arcade']);
     const meter = { powerUpMode: 'meter', difficulty: 'normal' } as const;
     expect(hiScoreModeKey(meter)).toBe('meter-normal');
     expect(hiScoreModeKey(meter, '1p')).toBe('meter-normal');
@@ -36,7 +38,8 @@ describe('core/save hi-score tables per mode (M2-15)', () => {
           keys.add(hiScoreModeKey({ powerUpMode, difficulty }, mode));
       }
     }
-    expect(keys.size).toBe(24); // within MAX_HI_SCORE_TABLES
+    expect(keys.size).toBe(48); // within MAX_HI_SCORE_TABLES (64 since M3-01)
+    expect(keys.size).toBeLessThanOrEqual(MAX_HI_SCORE_TABLES);
   });
 
   it('parses a mode key back into its parts; refuses other shapes', () => {

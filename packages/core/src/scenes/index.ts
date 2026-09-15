@@ -276,6 +276,7 @@ import {
   SOCD_CHOICES,
   DEFAULT_DIFFICULTY_TABLE,
   DIFFICULTY_PRESETS,
+  GAME_SPEEDS,
   MAX_AUTO_POWER_UP_ORDER,
   MEGA_CHOICES,
   METER_SLOT_NAMES,
@@ -338,6 +339,14 @@ import { defineModule } from '../module-info.js';
 import { TextAlign, createDrawList, type DrawList, type WorldView } from '../presentation/index.js';
 import { createDemoPlayback, type DemoPlayback } from '../replay/demo.js';
 import { decodeReplay, type Replay } from '../replay/format.js';
+import {
+  AssistFlag,
+  REPLAY_SLOTS,
+  RunAction,
+  runAssisted,
+  type ReplayLibrary,
+  type RunReplay,
+} from '../replay/run.js';
 import {
   HI_SCORE_MODES,
   HI_SCORE_TABLE_SIZE,
@@ -415,10 +424,13 @@ import {
   continueWorld,
   continuesLeft,
   createWorld,
+  grantFullPower,
   playerCanJoin,
+  selfDestruct,
   stepWorld,
   type World,
 } from '../world/index.js';
+import { RunRecorder, RunReplayPlayback } from './replays.js';
 import {
   RunFlag,
   RunState,
@@ -429,26 +441,40 @@ import {
   tallyZone,
   worldDeaths,
   type CarryState,
+  type RunMode,
 } from './run.js';
 
 export {
   CarriedPlayer,
   CarryState,
   KILL_BONUS_PER_PERCENT,
+  RUN_MODES,
   RunFlag,
   RunState,
   TIME_BONUS_PAR_TICKS,
   TIME_BONUS_PER_SECOND,
+  WorldStart,
   ZoneResult,
   applyCarry,
   awardZoneBonus,
   captureCarry,
   copyShieldState,
   prepareRunWorld,
+  prepareWorldStart,
   runWorldConfig,
   tallyZone,
   worldDeaths,
+  type RunMode,
 } from './run.js';
+export {
+  RunPlaybackReport,
+  RunRecorder,
+  RunReplayPlayback,
+  readWorldStart,
+  worldStartJson,
+  type ReadWorldStart,
+  type RunReplayMeta,
+} from './replays.js';
 
 /** Module descriptor (see {@link defineModule}). */
 export const moduleInfo = defineModule({
@@ -504,7 +530,10 @@ export type SceneId =
   | 'display'
   | 'gameOptions'
   | 'rebind'
-  | 'inputTest';
+  | 'inputTest'
+  | 'extra'
+  | 'replays'
+  | 'replay';
 
 /** A scene on the stack. */
 export interface Scene {
@@ -887,6 +916,23 @@ export interface SceneFlowHost {
    * rebind screen). Omitted or `null`: those rows are disabled.
    */
   readonly controls?: ControlsSetup | null;
+  /**
+   * The saved replays (M3-01 — `core/replay` `ReplayLibrary`, loaded by the host before the
+   * title): every finished run is stored as the last game, the EXTRA menu's REPLAYS browses them.
+   * Omitted or `null`: runs are still recorded (the last one is {@link SceneFlow.lastReplay}) but
+   * nothing is stored and REPLAYS is disabled.
+   */
+  readonly replays?: ReplayLibrary | null;
+  /**
+   * Hands a replay's text to the player to share (M3-01 — the web host copies it to the
+   * clipboard). Omitted or `null`: the replay browser has no SHARE.
+   *
+   * @param text - The replay's text (`core/replay` `runReplayText`).
+   * @returns Whether it was handed over.
+   */
+  readonly shareReplay?: ((text: string) => boolean) | null;
+  /** The build id the flow's replays record (`__SHMUP_BUILD__`; default `'dev'` — M3-01). */
+  readonly buildId?: string;
 }
 
 /** The kind of a rebindable device (M2-16): what its profile drives. */
@@ -995,8 +1041,8 @@ export type ConfirmPurpose = (typeof ConfirmPurpose)[keyof typeof ConfirmPurpose
  * exists when the platform can quit — the TV): `1 PLAYER` (`Start`), `2 PLAYERS` (a co-op game —
  * M2-06; both open the difficulty menu), PRACTICE (the {@link PracticeScene} — M2-15; disabled
  * without a campaign), OPTIONS (the {@link OptionsScene}), SOUND TEST (the {@link SoundTestScene} —
- * M2-15), EXIT. OPTIONS and EXIT moved down one row in M2-06 and again (OPTIONS 3, EXIT 5) in
- * M2-15.
+ * M2-15), EXTRA (the {@link ExtraScene} — M3-01), EXIT. OPTIONS and EXIT moved down one row in
+ * M2-06 and again (OPTIONS 3, EXIT 5) in M2-15; EXIT moved to 6 in M3-01.
  */
 export const TitleItem = {
   Start: 0,
@@ -1004,7 +1050,9 @@ export const TitleItem = {
   Practice: 2,
   Options: 3,
   SoundTest: 4,
-  Exit: 5,
+  /** EXTRA (M3-01): the {@link ExtraScene} — boss rush, caravan, arcade, replays. */
+  Extra: 5,
+  Exit: 6,
 } as const;
 
 /**
@@ -1072,8 +1120,10 @@ export const ControlsItem = {
   Pad: 6,
   /** INPUT TEST: the input test. */
   InputTest: 7,
+  /** RUMBLE: gamepad rumble on / off (M3-01). */
+  Rumble: 8,
   /** BACK: store and return to the Options screen. */
-  Back: 8,
+  Back: 9,
 } as const;
 
 /** The GAME page's items (M2-16). */
@@ -1090,9 +1140,165 @@ export const GameOptionsItem = {
   Magnet: 4,
   /** ONE BUTTON: the one-button preset. */
   OneButton: 5,
+  /** OPT RECOVERY: option recovery after death (M3-01). */
+  OptionRecovery: 6,
+  /** SPEED: the game-speed assist — 100 / 75 / 50 % (M3-01). */
+  Speed: 7,
+  /** INVINCIBLE: the invincibility assist (M3-01). */
+  Invincible: 8,
   /** BACK: store and return to the Options screen. */
-  Back: 6,
+  Back: 9,
 } as const;
+
+/** The EXTRA menu's items (M3-01 — {@link ExtraScene}). */
+export const ExtraItem = {
+  /** BOSS RUSH: every zone's boss in a row. */
+  BossRush: 0,
+  /** CARAVAN: a zone against the clock (the choice: the zone). */
+  Caravan: 1,
+  /** ARCADE: the campaign looping on (the choice: the loop to start on). */
+  Arcade: 2,
+  /** REPLAYS: the replay browser. */
+  Replays: 3,
+  /** BACK: the title menu. */
+  Back: 4,
+} as const;
+
+/**
+ * The stage the BOSS RUSH plays (M3-01 — `content/stages/boss-rush.stage.json`, a `bossRush`
+ * stage with every zone's boss); the item is disabled when the content lacks it.
+ */
+export const BOSS_RUSH_STAGE = 'boss-rush';
+
+/** The CARAVAN's clock: three minutes (M3-01 — `GameConfig.timeLimit`). */
+export const CARAVAN_TICKS = 180 * 60;
+
+/** Ships a game starts with after the title's EXTRA SHIPS code (M3-01; shmup_feat.md §15). */
+export const SECRET_SHIPS = 7;
+
+/** Ticks a secret code's message stays on the title (M3-01). */
+export const SECRET_MESSAGE_TICKS = 150;
+
+/**
+ * The secret input codes (M3-01 — shmup_feat.md §4 "[P2] Konami-code-style secrets", with
+ * **original** sequences of the four directions only — remote-friendly, no chords): indices into
+ * {@link SECRET_CODES}.
+ */
+export const SecretCode = {
+  /** No code (yet). */
+  None: -1,
+  /** Title: ↑ → ↓ ← ↑ → ↓ ← (two turns clockwise) — the next games start with more ships. */
+  ExtraShips: 0,
+  /** Title: ↓ ← ↑ → ↓ ← ↑ → (two turns counter-clockwise) — unlocks Extra Edit. */
+  ExtraEdit: 1,
+  /** Pause: ← → → ← ← → → ← — full power-up, once per World. */
+  FullPower: 2,
+  /** Pause: → ← ← → → ← ← → — the self-destruct joke. */
+  SelfDestruct: 3,
+} as const;
+
+/** The sequences of {@link SecretCode}, as `Action` direction bits (8 presses each). */
+export const SECRET_CODES: readonly (readonly number[])[] = Object.freeze([
+  Object.freeze([
+    Action.Up,
+    Action.Right,
+    Action.Down,
+    Action.Left,
+    Action.Up,
+    Action.Right,
+    Action.Down,
+    Action.Left,
+  ]),
+  Object.freeze([
+    Action.Down,
+    Action.Left,
+    Action.Up,
+    Action.Right,
+    Action.Down,
+    Action.Left,
+    Action.Up,
+    Action.Right,
+  ]),
+  Object.freeze([
+    Action.Left,
+    Action.Right,
+    Action.Right,
+    Action.Left,
+    Action.Left,
+    Action.Right,
+    Action.Right,
+    Action.Left,
+  ]),
+  Object.freeze([
+    Action.Right,
+    Action.Left,
+    Action.Left,
+    Action.Right,
+    Action.Right,
+    Action.Left,
+    Action.Left,
+    Action.Right,
+  ]),
+]);
+
+/** Presses of every {@link SECRET_CODES} sequence. */
+export const SECRET_CODE_LENGTH = 8;
+
+/** The four direction bits (the only presses a secret code is made of). */
+const DIRECTION_BITS = Action.Up | Action.Down | Action.Left | Action.Right;
+
+/**
+ * Watches the menu input for the {@link SECRET_CODES} (M3-01): the last
+ * {@link SECRET_CODE_LENGTH} single-direction presses; any other press (OK, Back, two directions at
+ * once) starts over. A class: no allocation.
+ */
+export class SecretCodeTracker {
+  /** The last presses, oldest first (the first `count` entries). */
+  private readonly history = new Int32Array(SECRET_CODE_LENGTH);
+  /** Presses kept. */
+  private count = 0;
+
+  /** Forgets every press. */
+  reset(): void {
+    this.count = 0;
+  }
+
+  /**
+   * Feeds one tick's presses. Never allocates.
+   *
+   * @param pressed - The merged menu input's `pressed` bits.
+   * @param first - The first {@link SecretCode} this screen accepts.
+   * @param last - The last one.
+   * @returns The code the presses just completed, or {@link SecretCode}.None.
+   */
+  feed(pressed: number, first: number, last: number): number {
+    if (pressed === 0) return SecretCode.None;
+    const direction = pressed & DIRECTION_BITS;
+    // One direction alone (x & (x − 1) clears the lowest bit).
+    if (pressed !== direction || (direction & (direction - 1)) !== 0) {
+      this.count = 0;
+      return SecretCode.None;
+    }
+    const history = this.history;
+    if (this.count === SECRET_CODE_LENGTH) {
+      history.copyWithin(0, 1);
+      history[SECRET_CODE_LENGTH - 1] = direction;
+    } else {
+      history[this.count++] = direction;
+    }
+    if (this.count < SECRET_CODE_LENGTH) return SecretCode.None;
+    for (let code = first; code <= last; code++) {
+      const sequence = SECRET_CODES[code];
+      let match = true;
+      for (let i = 0; i < SECRET_CODE_LENGTH && match; i++) match = history[i] === sequence[i];
+      if (match) {
+        this.count = 0;
+        return code;
+      }
+    }
+    return SecretCode.None;
+  }
+}
 
 /**
  * The label lists the scenes show (M2-16), built from a UI string table by
@@ -1150,6 +1356,10 @@ export interface SceneLabels {
   readonly actions: Readonly<Record<ActionName, string>>;
   /** The rebindable device kinds' names. */
   readonly devices: Readonly<Record<RebindDeviceKind, string>>;
+  /** SPEED, in `core/config` `GAME_SPEEDS` order (M3-01). */
+  readonly gameSpeeds: readonly string[];
+  /** The ARCADE row's loops: `LOOP 1`, `LOOP 2` (M3-01). */
+  readonly arcadeLoops: readonly string[];
 }
 
 /**
@@ -1169,6 +1379,8 @@ export function buildSceneLabels(t: UiText): SceneLabels {
   }
   const sfx: string[] = [];
   for (const cue of SFX_CUE_NAMES) sfx.push(t['sfx.' + cue] ?? cue.toUpperCase());
+  const speeds: string[] = [];
+  for (const speed of GAME_SPEEDS) speeds.push(formatUiText(t.speedFormat, speed));
   return Object.freeze({
     difficulty: list(t.difficultyEasy, t.difficultyNormal, t.difficultyHard, t.difficultyArcade),
     bulletPalette: list(
@@ -1205,7 +1417,14 @@ export function buildSceneLabels(t: UiText): SceneLabels {
     ),
     orderCodes: Object.freeze(t.orderCodes.split('')),
     endingFlags: list(t.endingBossEscaped, t.endingNoMiss, t.endingNoContinue, t.endingBonus),
-    hiScoreModes: list(t.modeOnePlayer, t.modeTwoPlayers, t.modePractice),
+    hiScoreModes: list(
+      t.modeOnePlayer,
+      t.modeTwoPlayers,
+      t.modePractice,
+      t.modeBossRush,
+      t.modeCaravan,
+      t.modeArcade,
+    ),
     hiScoreRanks: list(
       t.rank1,
       t.rank2,
@@ -1246,6 +1465,8 @@ export function buildSceneLabels(t: UiText): SceneLabels {
       remote: t.deviceRemote,
       gamepad: t.deviceGamepad,
     }),
+    gameSpeeds: Object.freeze(speeds),
+    arcadeLoops: list(formatUiText(t.loopFormat, 1), formatUiText(t.loopFormat, 2)),
   });
 }
 
@@ -1759,6 +1980,53 @@ interface FlowControl {
    * @throws RangeError when the loadout fails `resolveGameConfig` (a programming error).
    */
   chooseArsenal(arsenal: ArsenalChoice): void;
+  /** The run recorder (M3-01 — every run's replay). */
+  readonly recorder: RunRecorder;
+  /** The host's replay library (M3-01), or `null`. */
+  readonly replays: ReplayLibrary | null;
+  /** The last finished run's replay (M3-01; `null` before the first, or when it could not be kept). */
+  lastReplay: RunReplay | null;
+  /** The EXTRA menu (M3-01). */
+  readonly extra: ExtraScene;
+  /** The replay browser (M3-01). */
+  readonly replaysScreen: ReplaysScene;
+  /** The replay playback screen (M3-01). */
+  readonly replayScreen: ReplayScene;
+  /** The kind of run the next game start plays (M3-01 — the EXTRA menu sets it; `normal` else). */
+  nextMode: RunMode;
+  /** The CARAVAN's zone (a campaign zone index — M3-01). */
+  caravanZone: number;
+  /** The loop the ARCADE mode starts on (1, or 2 once unlocked — M3-01). */
+  arcadeLoop: number;
+  /** The title's EXTRA SHIPS code was entered (M3-01): the next games start with more ships. */
+  secretShips: boolean;
+  /** Something was unlocked by the run that just reached its ending (M3-01; the card says so). */
+  unlockedNow: boolean;
+  /**
+   * The run's assists so far, noted every tick the game scene steps its World (M3-01 — the game
+   * speed read from the save, the invincibility assist and god mode from the World). Never
+   * allocates.
+   *
+   * @param world - The World being played.
+   */
+  noteAssists(world: World): void;
+  /** The game's speed in percent now (M3-01 — the save's assist while the game scene is on top). */
+  readonly speedPercent: number;
+  /** A run ended (the title came back): its replay is finished and stored (M3-01). A transition. */
+  endRun(): void;
+  /** The ARCADE mode's final zone was cleared: the next loop starts at the first zone (M3-01). */
+  nextLoop(): void;
+  /**
+   * A pause-menu secret code was entered (M3-01): FULL POWER powers every ship in play up once per
+   * World, SELF DESTRUCT (the joke) destroys them; recorded as replay actions, the run counts as
+   * assisted.
+   *
+   * @param code - {@link SecretCode}.FullPower or SelfDestruct.
+   * @returns Whether it did something.
+   */
+  pauseSecret(code: number): boolean;
+  /** The carry the last {@link FlowControl.createRunWorld} brought in (`null`: none). */
+  lastCarry: CarryState | null;
 }
 
 /**
@@ -1916,13 +2184,30 @@ export class TitleScene extends SceneBase {
     super(flow);
     const t = flow.text;
     const items = [t.titleOnePlayer, t.titleTwoPlayers, t.titlePractice, t.titleOptions];
-    items.push(t.titleSoundTest);
+    items.push(t.titleSoundTest, t.titleExtra);
     if (flow.host.exit !== null) items.push(t.titleExit);
+    const content = flow.host.content;
+    // EXTRA (M3-01) needs something to offer: the boss rush stage, a campaign or the replays.
+    const extra =
+      content.stageIndex.has(BOSS_RUSH_STAGE) ||
+      content.campaign !== null ||
+      (flow.host.replays ?? null) !== null;
     this.menu = createListMenu(items, {
       // Practice plays a campaign zone (M2-15).
-      disabledMask: flow.host.content.campaign === null ? 1 << TitleItem.Practice : 0,
+      disabledMask:
+        (content.campaign === null ? 1 << TitleItem.Practice : 0) |
+        (extra ? 0 : 1 << TitleItem.Extra),
     });
   }
+
+  /**
+   * The message a secret code shows under the logo (M3-01), and for how many more ticks.
+   */
+  secretMessage = '';
+  /** Ticks {@link TitleScene.secretMessage} stays. */
+  secretTicks = 0;
+  /** The title's secret codes (M3-01 — EXTRA SHIPS, EXTRA EDIT). */
+  readonly codes = new SecretCodeTracker();
 
   /** Whether the menu is showing (else `PRESS OK`). */
   get menuOpen(): boolean {
@@ -1931,19 +2216,22 @@ export class TitleScene extends SceneBase {
 
   /** See {@link SceneBase.stringSlots}. */
   get stringSlots(): number {
-    return 3 + menuStringSlots(this.menu);
+    return 4 + menuStringSlots(this.menu);
   }
 
   /**
    * Back to `PRESS OK`, title music; the next run's start stage (the host config's) has its music
    * set prepared again when another stage's was prepared since (M2-10: a run through the zone
-   * map, a practice run).
+   * map, a practice run). A run that came back here ends (M3-01 — its replay is stored).
    */
   override enter(): void {
     super.enter();
+    this.flow.endRun();
     this.phase = TitlePhase.Prompt;
     this.ticks = 0;
     this.idle = 0;
+    this.secretTicks = 0;
+    this.codes.reset();
     this.flow.music(MUSIC_CUES.Title, MUSIC_FADE_TICKS);
     this.flow.prepareStage(this.flow.host.config.stage);
   }
@@ -1965,6 +2253,9 @@ export class TitleScene extends SceneBase {
     const flow = this.flow;
     const input = flow.menuInput;
     this.ticks++;
+    if (this.secretTicks > 0 && --this.secretTicks === 0) this.uiRevision++;
+    const code = this.codes.feed(input.pressed, SecretCode.ExtraShips, SecretCode.ExtraEdit);
+    if (code !== SecretCode.None) this.secret(code);
     if (this.phase === TitlePhase.Prompt) {
       if (this.ticks % PROMPT_BLINK_TICKS === 0) this.uiRevision++;
       this.idle = input.pressed !== 0 || input.held !== 0 ? 0 : this.idle + 1;
@@ -2005,6 +2296,7 @@ export class TitleScene extends SceneBase {
       if (menu.focus === TitleItem.Start || menu.focus === TitleItem.TwoPlayers) {
         flow.sfx(SFX_CUES.MenuSelect);
         flow.practice.active = false;
+        flow.nextMode = 'normal';
         flow.choosePlayers(menu.focus === TitleItem.TwoPlayers);
         flow.stack.push(flow.difficultyMenu);
       } else if (menu.focus === TitleItem.Practice) {
@@ -2016,6 +2308,9 @@ export class TitleScene extends SceneBase {
       } else if (menu.focus === TitleItem.SoundTest) {
         flow.sfx(SFX_CUES.MenuSelect);
         flow.stack.push(flow.soundTest);
+      } else if (menu.focus === TitleItem.Extra) {
+        flow.sfx(SFX_CUES.MenuSelect);
+        flow.stack.push(flow.extra);
       } else if (menu.focus === TitleItem.Exit) {
         flow.ask(ConfirmPurpose.Exit);
       }
@@ -2047,6 +2342,36 @@ export class TitleScene extends SceneBase {
     }
     list.text(base + 2, CX - 40, 196, UI_COLORS.focus);
     list.number(this.flow.hiScore, CX - 24, 196, 8, UI_COLORS.text);
+    if (this.secretTicks > 0) {
+      list.setString(base + 3 + menuStringSlots(this.menu), this.secretMessage);
+      list.text(base + 3 + menuStringSlots(this.menu), CX, 96, UI_COLORS.alert, TextAlign.Center);
+    }
+  }
+
+  /**
+   * A secret code was entered on the title (M3-01 — shmup_feat.md §4 "[P2] secrets", §15 "secret
+   * code for more" lives): EXTRA SHIPS — the next games start with {@link SECRET_SHIPS} ships (an
+   * assisted run); EXTRA EDIT — the weapon select's EXTRA is unlocked for good (the save is
+   * written). A jingle and a message confirm it.
+   *
+   * @param code - The {@link SecretCode}.
+   */
+  private secret(code: number): void {
+    const flow = this.flow;
+    const t = flow.text;
+    if (code === SecretCode.ExtraShips) {
+      flow.secretShips = true;
+      flow.applyOptions();
+      this.secretMessage = formatUiText(t.secretShips, SECRET_SHIPS);
+    } else {
+      flow.save.unlock('extraEdit');
+      void flow.save.flush();
+      this.secretMessage = t.unlockExtraEdit;
+    }
+    this.secretTicks = SECRET_MESSAGE_TICKS;
+    this.idle = 0;
+    this.uiRevision++;
+    flow.sfx(SFX_CUES.ExtraLife);
   }
 }
 
@@ -2098,9 +2423,12 @@ export class GameScene extends SceneBase {
   /**
    * Whether {@link GameScene.world} is a practice run's World — the World's own, set when it is
    * adopted: the run's flag is reset by the next `beginRun` before the old World's score is
-   * recorded (M2-15: a practice score never raises the session hi-score).
+   * recorded (M2-15: a practice score never raises the session hi-score). Since M3-01 also true for
+   * the EXTRA modes' Worlds (their scores stay in their own tables too).
    */
   private worldPractice = false;
+  /** The pause menu's FULL POWER code was used in this World (M3-01 — once per World). */
+  secretUsed = false;
 
   /**
    * Creates the scene with a placeholder World (so `world` is never null).
@@ -2193,15 +2521,37 @@ export class GameScene extends SceneBase {
     const flow = this.flow;
     const run = flow.run;
     // A practice run or a co-op game plays against its own table's best (M2-15 — one table per
-    // mode); a one-player game against the session hi-score.
-    const mode: HiScoreMode = run.practice ? 'practice' : world.config.coop ? '2p' : '1p';
+    // mode), so do the EXTRA modes (M3-01); a one-player game against the session hi-score.
+    const mode: HiScoreMode = run.practice
+      ? 'practice'
+      : world.config.coop
+        ? '2p'
+        : run.mode === 'bossRush'
+          ? 'bossrush'
+          : run.mode === 'caravan'
+            ? 'caravan'
+            : run.mode === 'arcade'
+              ? 'arcade'
+              : '1p';
     world.scoring.board.setHiScore(
       mode === '1p'
         ? flow.hiScore
         : Math.min(MAX_SCORE, flow.save.bestScore(hiScoreModeKey(world.config, mode))),
     );
+    const previous = this.world;
     this.world = world;
-    this.worldPractice = run.practice;
+    this.worldPractice = mode !== '1p' && mode !== '2p';
+    this.secretUsed = false;
+    // The run's replay (M3-01): a segment per World, from its start state.
+    flow.recorder.beginSegment(
+      world,
+      previous,
+      run.segmentStart,
+      flow.lastCarry,
+      flow.host.buildId ?? 'dev',
+      world.debugFlags.godMode,
+      run.assists,
+    );
     const campaign = run.campaign;
     const t = flow.text;
     this.cardTitle = t.stage;
@@ -2210,7 +2560,11 @@ export class GameScene extends SceneBase {
       this.cardTitle = t.bonusStage;
     } else if (campaign !== null && run.zone >= 0) {
       const zone = campaign.zones[run.zone];
-      this.cardTitle = formatUiText(t.zoneCard, zone.label);
+      // The ARCADE mode's later loops (M3-01) name theirs.
+      this.cardTitle =
+        run.loop > 1
+          ? formatUiText(t.loopZoneCard, run.loop, zone.label)
+          : formatUiText(t.zoneCard, zone.label);
       this.cardName = zone.name;
     }
     this.endTicks = 0;
@@ -2265,7 +2619,12 @@ export class GameScene extends SceneBase {
       flow.stack.push(flow.pause);
       return;
     }
+    // The run's replay records the ticks the World steps (M3-01), the assists count.
+    const recorder = flow.recorder;
+    recorder.record(input);
     stepWorld(world, input);
+    recorder.check(world);
+    flow.noteAssists(world);
     const status = world.status;
     const run = flow.run;
     if (run.inBonus) {
@@ -2384,11 +2743,15 @@ export class PauseScene extends SceneBase {
     return 1 + menuStringSlots(this.menu);
   }
 
+  /** The pause menu's secret codes (M3-01 — FULL POWER, SELF DESTRUCT). */
+  readonly codes = new SecretCodeTracker();
+
   /** Focus on RESUME. */
   override enter(): void {
     super.enter();
     this.menu.focus = PauseItem.Resume;
     this.menu.open(MENU_OPEN_LOCK_TICKS);
+    this.codes.reset();
   }
 
   /** The dialog closed: the menu takes input again. */
@@ -2411,6 +2774,13 @@ export class PauseScene extends SceneBase {
     const flow = this.flow;
     const input = flow.menuInput;
     if ((input.pressed & Action.Pause) !== 0) {
+      this.resume();
+      return;
+    }
+    // A secret code (M3-01) acts on the ships and resumes the game.
+    const code = this.codes.feed(input.pressed, SecretCode.FullPower, SecretCode.SelfDestruct);
+    if (code !== SecretCode.None && flow.pauseSecret(code)) {
+      // The World pushed its own sound (FULL POWER's equip jingle; the explosion comes next tick).
       this.resume();
       return;
     }
@@ -2819,6 +3189,8 @@ export class ControlsScene extends SceneBase {
   readonly socd: Choice;
   /** DEBOUNCE: the profile's, then 0 … `MAX_DEBOUNCE_OPTION` ticks. */
   readonly debounce: Choice;
+  /** RUMBLE: gamepad rumble (M3-01 — `PlayOptions.rumble`). */
+  readonly rumble: Toggle = createToggle(true);
   /** The menu ({@link ControlsItem} order). */
   readonly menu: ListMenu;
   /** The PROFILE index when the page opened (a different one on close is saved). */
@@ -2855,6 +3227,7 @@ export class ControlsScene extends SceneBase {
       t.optKeys,
       t.optPad,
       t.optInputTest,
+      { label: t.optRumble, toggle: this.rumble },
       t.back,
     ]);
   }
@@ -2895,6 +3268,7 @@ export class ControlsScene extends SceneBase {
     this.openedRate = this.rate.index;
     this.socd.index = input.socd === null ? 0 : 1 + SOCD_CHOICES.indexOf(input.socd);
     this.debounce.index = input.releaseDebounce === null ? 0 : 1 + input.releaseDebounce;
+    this.rumble.value = flow.save.options.play.rumble;
     this.syncDisabled();
     this.menu.focusFirstEnabled(ControlsItem.Profile);
     this.menu.open(MENU_OPEN_LOCK_TICKS);
@@ -2957,6 +3331,7 @@ export class ControlsScene extends SceneBase {
     save.setOptions({
       ...save.options,
       input: { ...input, profileId, autofire, autofireInterval: interval },
+      play: { ...save.options.play, rumble: this.rumble.value },
     });
     flow.applyOptions();
     void save.flush();
@@ -3063,8 +3438,16 @@ export class GameOptionsScene extends SceneBase {
   readonly magnet: Toggle = createToggle(true);
   /** ONE BUTTON: the one-button preset. */
   readonly oneButton: Toggle = createToggle(false);
+  /** OPT RECOVERY: option recovery after death (M3-01). */
+  readonly optionRecovery: Toggle = createToggle(false);
+  /** SPEED: the game-speed assist, `core/config` `GAME_SPEEDS` (M3-01). */
+  readonly speed: Choice;
+  /** INVINCIBLE: the invincibility assist (M3-01). */
+  readonly invincible: Toggle = createToggle(false);
   /** The menu ({@link GameOptionsItem} order). */
   readonly menu: ListMenu;
+  /** OPT RECOVERY's value when the page opened. */
+  private openedRecovery = false;
   /** DIFFICULTY's index when the page opened. */
   private openedDifficulty = 0;
   /** AUTO POWER's value when the page opened. */
@@ -3086,6 +3469,7 @@ export class GameOptionsScene extends SceneBase {
     this.difficulty = createChoice(labels.difficulty, 0);
     this.lives = createChoice(labels.lives, 0);
     this.penalty = createChoice(labels.penalty, 0);
+    this.speed = createChoice(labels.gameSpeeds, 0);
     this.menu = createListMenu([
       { label: t.optDifficulty, choice: this.difficulty },
       { label: t.optLives, choice: this.lives },
@@ -3093,6 +3477,9 @@ export class GameOptionsScene extends SceneBase {
       { label: t.optAutoPowerUp, toggle: this.autoPowerUp },
       { label: t.optMagnet, toggle: this.magnet },
       { label: t.optOneButton, toggle: this.oneButton },
+      { label: t.optOptionRecovery, toggle: this.optionRecovery },
+      { label: t.optSpeed, choice: this.speed },
+      { label: t.optInvincible, toggle: this.invincible },
       t.back,
     ]);
   }
@@ -3126,6 +3513,13 @@ export class GameOptionsScene extends SceneBase {
     this.magnet.value = game.pickupMagnet ?? base.pickupMagnet;
     this.openedMagnet = this.magnet.value;
     this.oneButton.value = game.oneButton;
+    // M3-01: the assists and option recovery.
+    const play = flow.save.options.play;
+    this.optionRecovery.value = play.optionRecovery ?? base.optionRecovery;
+    this.openedRecovery = this.optionRecovery.value;
+    const speed = GAME_SPEEDS.indexOf(play.speed);
+    this.speed.index = speed >= 0 ? speed : 0;
+    this.invincible.value = play.invincible;
     this.menu.setDisabled(GameOptionsItem.Difficulty, this.inGame);
     this.syncDisabled();
     this.menu.focus = GameOptionsItem.Difficulty;
@@ -3167,6 +3561,15 @@ export class GameOptionsScene extends SceneBase {
         pickupMagnet:
           this.magnet.value !== this.openedMagnet ? this.magnet.value : game.pickupMagnet,
         oneButton: this.oneButton.value,
+      },
+      play: {
+        ...save.options.play,
+        speed: GAME_SPEEDS[this.speed.index] ?? 100,
+        invincible: this.invincible.value,
+        optionRecovery:
+          this.optionRecovery.value !== this.openedRecovery
+            ? this.optionRecovery.value
+            : save.options.play.optionRecovery,
       },
     });
     if (!inGame) flow.chooseDifficulty(preset);
@@ -3210,13 +3613,29 @@ export class GameOptionsScene extends SceneBase {
     drawPanel(list, p.x, p.y, p.w, p.h, UI_COLORS.panel, UI_COLORS.border, 255);
     list.setString(base, t.gameOptionsTitle);
     list.setString(base + 1, t.gameOptionsHint);
-    list.setString(base + 2, t.oneButtonHint);
+    // The assist rows (M3-01) have their own note while one is focused.
+    const focus = this.menu.focus;
+    list.setString(
+      base + 2,
+      focus === GameOptionsItem.Speed || focus === GameOptionsItem.Invincible
+        ? t.assistHint
+        : t.oneButtonHint,
+    );
     list.text(base, CX, p.y + 8, UI_COLORS.title, TextAlign.Center);
-    drawMenu(list, this.menu, base + 3, OPTIONS_MENU_LAYOUT, t);
+    drawMenu(list, this.menu, base + 3, GAME_OPTIONS_MENU_LAYOUT, t);
     list.text(base + 2, CX, p.y + p.h - 26, UI_COLORS.disabled, TextAlign.Center);
     list.text(base + 1, CX, p.y + p.h - 14, UI_COLORS.disabled, TextAlign.Center);
   }
 }
+
+/** Where the GAME page's rows go (M3-01: ten rows — a little tighter than the other pages). */
+const GAME_OPTIONS_MENU_LAYOUT: MenuLayout = Object.freeze({
+  x: 72,
+  y: 34,
+  lineHeight: 13,
+  cursorX: 62,
+  valueX: 150,
+});
 
 /** Where the rebind screen's rows go (labels left, keys from x 150). */
 const REBIND_MENU_LAYOUT: MenuLayout = Object.freeze({
@@ -3703,6 +4122,8 @@ export class StageClearScene extends SceneBase {
     } else {
       const world = flow.game.world;
       const bonus = run.inBonus;
+      // The run's replay ends this World's segment before the tally changes it (M3-01).
+      flow.recorder.seal(world);
       tallyZone(world, run.result, bonus);
       awardZoneBonus(world, run.result);
       run.noteWorldEnd(world);
@@ -3711,16 +4132,26 @@ export class StageClearScene extends SceneBase {
       const zone = run.zone >= 0 ? campaign.zones[run.zone] : null;
       this.title = bonus
         ? flow.text.bonusStageClear
-        : formatUiText(flow.text.zoneClear, zone === null ? '' : zone.label);
+        : world.timeUp
+          ? flow.text.timeUp
+          : formatUiText(flow.text.zoneClear, zone === null ? '' : zone.label);
       this.zoneName = zone === null ? '' : zone.name;
-      if (run.practice) {
-        // A practice clear goes into the practice table (M2-15), then the title.
+      if (run.practice || run.mode === 'caravan') {
+        // A practice clear goes into the practice table (M2-15), a CARAVAN's (its time up or its
+        // zone cleared — M3-01) into its own; then the title.
         this.next = ClearNext.Title;
         this.rank = flow.recordRun(true);
       } else if (run.finalZone) {
         this.next = ClearNext.Ending;
         run.ending = selectCampaignEnding(campaign, run.zone, run.endingFlags);
-        this.rank = flow.recordRun(true);
+        // An ending unlocks Extra Edit and the ARCADE mode's LOOP 2 start (M3-01).
+        const save = flow.save;
+        const extra = save.unlock('extraEdit');
+        const loop2 = save.unlock('loop2');
+        flow.unlockedNow = extra || loop2;
+        // The ARCADE mode's run goes on to the next loop (M3-01): it is recorded when it ends.
+        if (run.mode === 'arcade') void save.flush();
+        else this.rank = flow.recordRun(true);
       } else {
         this.next = ClearNext.Map;
         flow.save.count('stagesCleared');
@@ -4211,6 +4642,8 @@ export class ContinueScene extends SceneBase {
         who = -1; // One player: any controller's OK.
       }
       if (continueWorld(world, who)) {
+        // The run's replay repeats the continue between the same ticks (M3-01).
+        flow.recorder.action(RunAction.Continue, who & 0xff);
         flow.sfx(SFX_CUES.MenuSelect);
         flow.stack.pop();
         return;
@@ -4592,6 +5025,13 @@ export class WeaponSelectScene extends SceneBase {
   preview: World | null = null;
   /** The TYPE index of `EDIT` (-1 when Weapon Edit is not offered). */
   readonly editIndex: number;
+  /**
+   * The TYPE index of `EXTRA` (M3-01 — Extra Edit: every weapon of each slot, the content's
+   * `extra` weapons included; -1 when the content has none). Skipped until the save unlocks it.
+   */
+  readonly extraIndex: number;
+  /** Per slot (MISSILE, DOUBLE, LASER): how many of its weapons EDIT offers (the non-extra ones). */
+  private readonly editCounts = new Int32Array(3);
   /** The presets TYPE offers (content order). */
   private readonly presets: readonly WeaponPresetSpec[];
   /** The weapon of each role per preset (`core/weapons` `resolveRoleWeapons`). */
@@ -4638,8 +5078,15 @@ export class WeaponSelectScene extends SceneBase {
     const slotWeapons: (readonly WeaponSpec[])[] = [];
     const slotChoices: Choice[] = [];
     let editable = true;
-    for (const slot of slots) {
-      const list = weaponsOfSlot(content, slot);
+    let extras = false;
+    for (let k = 0; k < slots.length; k++) {
+      // EDIT's weapons first, then the Extra Edit ones (M3-01).
+      const all = weaponsOfSlot(content, slots[k]);
+      const list: WeaponSpec[] = [];
+      for (const weapon of all) if (weapon.extra !== true) list.push(weapon);
+      this.editCounts[k] = list.length;
+      for (const weapon of all) if (weapon.extra === true) list.push(weapon);
+      if (list.length > this.editCounts[k]) extras = true;
       const names: string[] = [];
       for (const weapon of list) names.push(weaponLabel(weapon));
       if (names.length === 0) {
@@ -4652,6 +5099,9 @@ export class WeaponSelectScene extends SceneBase {
     this.slotWeapons = slotWeapons;
     this.editIndex = editable ? typeLabels.length : -1;
     if (editable) typeLabels.push(t.weaponEdit);
+    for (let k = 0; k < 3; k++) if (this.editCounts[k] === 0) editable = false;
+    this.extraIndex = editable && extras ? typeLabels.length : -1;
+    if (this.extraIndex >= 0) typeLabels.push(t.weaponExtra);
     this.type = createChoice(typeLabels, 0);
     this.missile = slotChoices[0];
     this.double = slotChoices[1];
@@ -4697,6 +5147,8 @@ export class WeaponSelectScene extends SceneBase {
       for (let k = 0; k < 3; k++) {
         const at = slotWeapons[k].findIndex((weapon) => weapon.id === ids[k]);
         if (at >= 0) choices[k].index = at;
+        // An Extra Edit weapon: the loadout is an EXTRA one (M3-01).
+        if (at >= this.editCounts[k] && this.extraIndex >= 0) this.type.index = this.extraIndex;
       }
     }
     this.syncDisabled();
@@ -4714,9 +5166,14 @@ export class WeaponSelectScene extends SceneBase {
     return 4 + menuStringSlots(this.menu);
   }
 
-  /** Whether TYPE is on `EDIT` (Weapon Edit). */
+  /** Whether TYPE is on `EDIT` (Weapon Edit) — or on `EXTRA` (Extra Edit, M3-01). */
   get editing(): boolean {
-    return this.type.index === this.editIndex;
+    return this.type.index === this.editIndex || this.extra;
+  }
+
+  /** Whether TYPE is on `EXTRA` (M3-01 — Extra Edit: the content's `extra` weapons too). */
+  get extra(): boolean {
+    return this.extraIndex >= 0 && this.type.index === this.extraIndex;
   }
 
   /**
@@ -4809,6 +5266,8 @@ export class WeaponSelectScene extends SceneBase {
       flow.stack.pop();
       return;
     }
+    // A step goes backwards while Left is held (M3-01 — the skips of EXTRA / its weapons).
+    this.backwards = (flow.menuInput.held & Action.Left) !== 0;
     if (result === MenuResult.Confirmed) {
       if (menu.focus === WeaponSelectItem.Start) {
         flow.sfx(SFX_CUES.MenuSelect);
@@ -4842,10 +5301,35 @@ export class WeaponSelectScene extends SceneBase {
    * @param item - The {@link WeaponSelectItem} that changed.
    */
   private changed(item: number): void {
+    if (item === WeaponSelectItem.Type && this.extra && !this.flow.save.unlocked('extraEdit')) {
+      // EXTRA is locked (M3-01): step past it.
+      const count = this.type.labels.length;
+      this.type.index = this.backwards
+        ? (this.extraIndex - 1 + count) % count
+        : (this.extraIndex + 1) % count;
+    }
+    if (
+      (item === WeaponSelectItem.Missile ||
+        item === WeaponSelectItem.Double ||
+        item === WeaponSelectItem.Laser) &&
+      !this.extra
+    ) {
+      // EDIT offers the non-extra weapons only (M3-01): wrap within them.
+      const k = item - WeaponSelectItem.Missile;
+      const choice = k === 0 ? this.missile : k === 1 ? this.double : this.laser;
+      const n = this.editCounts[k];
+      if (n > 0 && choice.index >= n) choice.index = this.backwards ? n - 1 : 0;
+    }
     if (item === WeaponSelectItem.Type) {
       if (!this.editing) {
         this.basePreset = this.type.index;
         this.syncSlots();
+      } else if (!this.extra) {
+        // Back to EDIT from EXTRA: an Extra Edit weapon gives way to the slot's first (M3-01).
+        const choices = [this.missile, this.double, this.laser];
+        for (let k = 0; k < 3; k++) {
+          if (choices[k].index >= this.editCounts[k]) choices[k].index = 0;
+        }
       }
       this.syncDisabled();
       this.uiRevision++;
@@ -4860,6 +5344,9 @@ export class WeaponSelectScene extends SceneBase {
       this.applyOptionType();
     }
   }
+
+  /** Whether the last step went backwards (Left held — M3-01). */
+  private backwards = false;
 
   /** Hands the chosen Option type to the preview's ship (`OptionGroup.setFormation`, M2-04). */
   private applyOptionType(): void {
@@ -5542,6 +6029,8 @@ export class EndingScene extends SceneBase {
   private flawless = false;
   /** Whether a boss escaped (the flagship sails off). */
   private escaped = false;
+  /** The ARCADE mode's `OK: LOOP n` (built when it opens — M3-01). */
+  private nextLoopLabel = '';
 
   /** See {@link SceneBase.stringSlots}. */
   get stringSlots(): number {
@@ -5576,6 +6065,7 @@ export class EndingScene extends SceneBase {
     const flags = run.endingFlags;
     this.flawless = (flags & RunFlag.NoDeath) !== 0;
     this.escaped = (flags & RunFlag.BossEscaped) !== 0;
+    this.nextLoopLabel = formatUiText(this.flow.text.okNextLoop, run.loop + 1);
     const story = this.scene !== EndingSceneCode.None || this.lines.length > 0;
     this.phase = story ? EndingPhase.Story : EndingPhase.Result;
     // The final zone's ending theme (its stage's `music.ending`, prepared with its set).
@@ -5627,7 +6117,9 @@ export class EndingScene extends SceneBase {
     const ok = confirm && this.phaseTicks > ENDING_LOCK_TICKS;
     if (ok || this.phaseTicks >= ENDING_TIMEOUT_TICKS) {
       if (ok) flow.sfx(SFX_CUES.MenuSelect);
-      if (this.creditsNext) flow.stack.reset(flow.credits);
+      // The ARCADE mode (M3-01): no credits — the next loop starts at the first zone.
+      if (flow.run.mode === 'arcade') flow.nextLoop();
+      else if (this.creditsNext) flow.stack.reset(flow.credits);
       else flow.finishGame();
     }
   }
@@ -5682,8 +6174,13 @@ export class EndingScene extends SceneBase {
     list.setString(base + 3, this.routeText);
     list.setString(base + 4, t.p1);
     list.setString(base + 5, t.p2);
-    list.setString(base + 6, t.thankYou);
-    list.setString(base + 7, this.creditsNext ? t.okCredits : t.okTitle);
+    const arcade = run.mode === 'arcade';
+    // The unlocks of this ending (M3-01) take the thanks' line; the ARCADE mode's next loop the OK.
+    list.setString(base + 6, this.flow.unlockedNow ? t.unlockEnding : t.thankYou);
+    list.setString(
+      base + 7,
+      arcade ? this.nextLoopLabel : this.creditsNext ? t.okCredits : t.okTitle,
+    );
     list.text(base, CX, p.y + 8, UI_COLORS.title, TextAlign.Center);
     list.text(base + 1, CX, p.y + 22, UI_COLORS.focus, TextAlign.Center);
     list.text(base + 2, p.x + 16, p.y + 42, UI_COLORS.title);
@@ -6233,7 +6730,8 @@ export class HiScoreScene extends SceneBase {
 
   /** See {@link SceneBase.stringSlots}. */
   get stringSlots(): number {
-    return 7 + 3 * HI_SCORE_TABLE_SIZE;
+    // + the assisted mark (M3-01).
+    return 8 + 3 * HI_SCORE_TABLE_SIZE;
   }
 
   /** The mode key of the table showing (`''` without one). */
@@ -6365,6 +6863,11 @@ export class HiScoreScene extends SceneBase {
       list.text(nameSlot, nameX, y, color);
       list.number(row.score, scoreX, y, 8, color, TextAlign.Right);
       list.text(zoneSlot, zoneX, y, color, TextAlign.Center);
+      // An assisted score (M3-01) is marked after its number.
+      if (row.assisted === true) {
+        list.setString(base + 7 + 3 * HI_SCORE_TABLE_SIZE, t.assistedMark);
+        list.text(base + 7 + 3 * HI_SCORE_TABLE_SIZE, scoreX + 4, y, UI_COLORS.alert);
+      }
     }
   }
 }
@@ -7096,6 +7599,668 @@ export class SoundTestScene extends SceneBase {
   }
 }
 
+/** The EXTRA menu's panel: left, top, width, height (M3-01). */
+const EXTRA_PANEL = Object.freeze({ x: CX - 132, y: 44, w: 264, h: 128 });
+
+/** Where the EXTRA menu's rows go (M3-01). */
+const EXTRA_MENU_LAYOUT: MenuLayout = Object.freeze({
+  x: CX - 116,
+  y: 68,
+  lineHeight: 14,
+  cursorX: CX - 126,
+  valueX: CX - 32,
+});
+
+/**
+ * The EXTRA menu (M3-01 — shmup_feat.md §16 "boss rush", "score attack / caravan
+ * (time-limited)", "Loop 2 / Arcade mode"; §21 "replay browser"): EXTRA on the mode select.
+ *
+ * @remarks
+ * An overlay over the title (dim {@link PAUSE_DIM}) with an opaque panel:
+ *
+ * - **BOSS RUSH** — the {@link BOSS_RUSH_STAGE} stage alone (every zone's boss in a row, `core/data`
+ *   `bossRush`); its clear is the single-stage STAGE CLEAR. Disabled when the content lacks it.
+ * - **CARAVAN** (the choice: the campaign zone) — that zone from its start against a
+ *   {@link CARAVAN_TICKS} clock (`GameConfig.timeLimit`; the HUD shows it in player 2's place): the
+ *   time running out or the zone's clear ends the run (the time left pays
+ *   `core/world` `CARAVAN_TIME_BONUS` a second), no bonus stages.
+ * - **ARCADE** (the choice: `LOOP 1`, and `LOOP 2` once an ending unlocked it) — the campaign, and
+ *   after its final zone's ending the next loop from the first zone (`GameConfig.loop` + 1: remixed
+ *   layouts, faster bullets, revenge bullets everywhere) until the game is over.
+ * - **REPLAYS** — the {@link ReplaysScene} (disabled without the host's replay library).
+ *
+ * The three modes go on to the difficulty menu and the ship / weapon select as a normal start and
+ * play one player; each keeps its own hi-score tables (`core/save` modes `bossrush`, `caravan`,
+ * `arcade`). Back returns to the mode select. Disabled without a campaign: CARAVAN, ARCADE.
+ */
+export class ExtraScene extends SceneBase {
+  /** See {@link Scene.id}. */
+  readonly id = 'extra' as const;
+  /** An overlay: the title stays visible under it. */
+  override readonly overlay = true;
+  /** {@link PAUSE_DIM}. */
+  override readonly dim = PAUSE_DIM;
+  /** CARAVAN: the campaign's zones (`A AZURE VERGE` …). */
+  readonly zone: Choice;
+  /** ARCADE: `LOOP 1`, `LOOP 2`. */
+  readonly loop: Choice;
+  /** The menu ({@link ExtraItem} order). */
+  readonly menu: ListMenu;
+
+  /**
+   * Creates the menu from the content's campaign and stages.
+   *
+   * @param flow - The flow.
+   */
+  constructor(flow: FlowControl) {
+    super(flow);
+    const t = flow.text;
+    const content = flow.host.content;
+    const campaign = content.campaign;
+    const zones: string[] = [];
+    if (campaign !== null)
+      for (const zone of campaign.zones) zones.push(zone.label + ' ' + zone.name);
+    if (zones.length === 0) zones.push(t.none);
+    this.zone = createChoice(zones, campaign === null ? 0 : campaign.startIndex);
+    this.loop = createChoice(flow.labels.arcadeLoops, 0);
+    let disabled = 0;
+    if (!content.stageIndex.has(BOSS_RUSH_STAGE)) disabled |= 1 << ExtraItem.BossRush;
+    if (campaign === null) disabled |= (1 << ExtraItem.Caravan) | (1 << ExtraItem.Arcade);
+    if (flow.replays === null) disabled |= 1 << ExtraItem.Replays;
+    this.menu = createListMenu(
+      [
+        t.extraBossRush,
+        { label: t.extraCaravan, choice: this.zone },
+        { label: t.extraArcade, choice: this.loop },
+        t.extraReplays,
+        t.back,
+      ],
+      { disabledMask: disabled },
+    );
+  }
+
+  /** See {@link SceneBase.stringSlots}. */
+  get stringSlots(): number {
+    return 2 + menuStringSlots(this.menu);
+  }
+
+  /** Focus on the first enabled row, locked for 2 ticks. */
+  override enter(): void {
+    super.enter();
+    this.menu.focusFirstEnabled(ExtraItem.BossRush);
+    this.menu.open(MENU_OPEN_LOCK_TICKS);
+  }
+
+  /** Back from the difficulty menu or the replays: the menu takes input again. */
+  override uncover(): void {
+    super.uncover();
+    this.menu.open(MENU_OPEN_LOCK_TICKS);
+  }
+
+  /**
+   * Starts the mode's game setup (the difficulty menu) or opens the replays; LOOP 2 is skipped
+   * until unlocked; Back closes. OK on CARAVAN / ARCADE starts the mode like on the other rows —
+   * their zone and loop change with Left / Right only. Never allocates.
+   */
+  tick(): void {
+    const flow = this.flow;
+    const menu = this.menu;
+    const before = menu.revision;
+    // An OK that activates this tick (see `menuTick`): on a choice row it would step the choice.
+    const activating =
+      menu.lockTicks === 0 &&
+      (flow.menuInput.pressed & Action.Back) === 0 &&
+      (menu.confirmBuffer > 0 || (flow.menuInput.pressed & Action.Confirm) !== 0);
+    const zone = this.zone.index;
+    const loop = this.loop.index;
+    let result = menuTick(menu, flow.menuInput);
+    if (activating && result === MenuResult.Changed) {
+      this.zone.index = zone;
+      this.loop.index = loop;
+      result = MenuResult.Confirmed;
+    }
+    if (menu.revision !== before) this.uiRevision++;
+    if (result === MenuResult.Changed && menu.focus === ExtraItem.Arcade) {
+      // LOOP 2 needs an ending first (M3-01 unlocks).
+      if (this.loop.index > 0 && !flow.save.unlocked('loop2')) this.loop.index = 0;
+    }
+    if (
+      result === MenuResult.Back ||
+      (result === MenuResult.Confirmed && menu.focus === ExtraItem.Back)
+    ) {
+      flow.sfx(SFX_CUES.MenuBack);
+      flow.stack.pop();
+      return;
+    }
+    if (result === MenuResult.Confirmed) {
+      const focus = menu.focus;
+      if (focus === ExtraItem.Replays) {
+        flow.sfx(SFX_CUES.MenuSelect);
+        flow.stack.push(flow.replaysScreen);
+        return;
+      }
+      flow.nextMode =
+        focus === ExtraItem.BossRush
+          ? 'bossRush'
+          : focus === ExtraItem.Caravan
+            ? 'caravan'
+            : 'arcade';
+      flow.caravanZone = this.zone.index;
+      flow.arcadeLoop = this.loop.index + 1;
+      flow.practice.active = false;
+      flow.sfx(SFX_CUES.MenuSelect);
+      flow.choosePlayers(false);
+      flow.stack.push(flow.difficultyMenu);
+      return;
+    }
+    flow.menuSound(result);
+  }
+
+  /**
+   * Draws the panel, `EXTRA`, the rows and the focused row's hint.
+   *
+   * @param list - The UI list.
+   */
+  drawUi(list: DrawList): void {
+    const base = this.stringBase;
+    const p = EXTRA_PANEL;
+    const t = this.flow.text;
+    const focus = this.menu.focus;
+    drawPanel(list, p.x, p.y, p.w, p.h, UI_COLORS.panel, UI_COLORS.border, 255);
+    list.setString(base, t.extraTitle);
+    list.setString(
+      base + 1,
+      focus === ExtraItem.BossRush
+        ? t.extraBossRushHint
+        : focus === ExtraItem.Caravan
+          ? t.extraCaravanHint
+          : focus === ExtraItem.Arcade
+            ? t.extraArcadeHint
+            : focus === ExtraItem.Replays
+              ? t.extraReplaysHint
+              : '',
+    );
+    list.text(base, CX, p.y + 8, UI_COLORS.title, TextAlign.Center);
+    drawMenu(list, this.menu, base + 2, EXTRA_MENU_LAYOUT, t);
+    list.text(base + 1, CX, p.y + p.h - 16, UI_COLORS.disabled, TextAlign.Center);
+  }
+}
+
+/** The replay browser's actions (M3-01 — {@link ReplaysScene}'s second menu). */
+export const ReplayActionItem = {
+  /** PLAY: the {@link ReplayScene}. */
+  Play: 0,
+  /** KEEP: copy the last game into a free kept slot. */
+  Keep: 1,
+  /** SHARE: hand the replay's text to the host (the web host's clipboard). */
+  Share: 2,
+  /** DELETE: empty the slot. */
+  Delete: 3,
+  /** BACK: the slot list. */
+  Back: 4,
+} as const;
+
+/** The replay browser's panel (M3-01). */
+const REPLAYS_PANEL = Object.freeze({ x: CX - 164, y: 24, w: 328, h: 168 });
+
+/** Where the replay browser's slot rows go (M3-01). */
+const REPLAYS_MENU_LAYOUT: MenuLayout = Object.freeze({
+  x: CX - 148,
+  y: 52,
+  lineHeight: 20,
+  cursorX: CX - 158,
+});
+
+/** The replay browser's action panel, over the rows' right half (M3-01). */
+const REPLAY_ACTIONS_PANEL = Object.freeze({ x: CX + 60, y: 50, w: 88, h: 84 });
+
+/** Where the replay browser's action rows go (M3-01). */
+const REPLAY_ACTIONS_LAYOUT: MenuLayout = Object.freeze({
+  x: CX + 104,
+  y: 58,
+  lineHeight: 14,
+  align: TextAlign.Center,
+  cursorX: CX + 66,
+});
+
+/**
+ * The replay browser (M3-01 — shmup_feat.md §21 "[P2] save/share replays, replay browser"): the
+ * host's `core/replay` `ReplayLibrary` — the LAST GAME (every finished run replaces it) and the
+ * KEPT ones — each row with its ship and difficulty, its score, the zone it reached and an
+ * `ASSISTED` mark; OK on a row with a replay offers PLAY (the {@link ReplayScene}), KEEP (the last
+ * game into a free kept slot), SHARE (the host's `shareReplay`, when it has one) and DELETE, Back
+ * returns to the list, Back on the list to the EXTRA menu. A one-line message answers KEEP / SHARE /
+ * DELETE.
+ *
+ * @remarks
+ * An overlay over the EXTRA menu with an opaque panel. The rows' texts are built when it opens and
+ * after an action (transitions); ticking allocates nothing.
+ */
+export class ReplaysScene extends SceneBase {
+  /** See {@link Scene.id}. */
+  readonly id = 'replays' as const;
+  /** An overlay. */
+  override readonly overlay = true;
+  /** {@link PAUSE_DIM}. */
+  override readonly dim = PAUSE_DIM;
+  /** The slots, then BACK. */
+  readonly menu: ListMenu;
+  /** PLAY / KEEP / SHARE / DELETE / BACK for the chosen slot. */
+  readonly actions: ListMenu;
+  /** Whether the action row is up (else the slot list). */
+  choosing = false;
+  /** Per slot: its description (`KESTREL NORMAL  ZONE C`, `NO REPLAY`). */
+  private readonly rows: string[] = [];
+  /** The message line (`''` = none). */
+  private message = '';
+
+  /**
+   * Creates the browser.
+   *
+   * @param flow - The flow.
+   */
+  constructor(flow: FlowControl) {
+    super(flow);
+    const t = flow.text;
+    const items: string[] = [t.replayLast];
+    for (let i = 1; i < REPLAY_SLOTS; i++) items.push(formatUiText(t.replayKept, i));
+    items.push(t.back);
+    this.menu = createListMenu(items);
+    this.actions = createListMenu(
+      [t.replayPlay, t.replayKeep, t.replayShare, t.replayDelete, t.back],
+      { wrap: true },
+    );
+    for (let i = 0; i < REPLAY_SLOTS; i++) this.rows.push('');
+  }
+
+  /** See {@link SceneBase.stringSlots}. */
+  get stringSlots(): number {
+    return 4 + REPLAY_SLOTS + menuStringSlots(this.menu) + menuStringSlots(this.actions);
+  }
+
+  /** Reads the library into the rows; focus on LAST GAME. */
+  override enter(): void {
+    super.enter();
+    this.choosing = false;
+    this.message = '';
+    this.refresh();
+    this.menu.focus = 0;
+    this.menu.open(MENU_OPEN_LOCK_TICKS);
+  }
+
+  /** Back from a replay: the rows again. */
+  override uncover(): void {
+    super.uncover();
+    this.choosing = false;
+    this.refresh();
+    this.menu.open(MENU_OPEN_LOCK_TICKS);
+  }
+
+  /** Rebuilds the rows' descriptions from the library (a transition). */
+  private refresh(): void {
+    const library = this.flow.replays;
+    const t = this.flow.text;
+    for (let i = 0; i < REPLAY_SLOTS; i++) {
+      const summary = library === null ? null : library.summaries[i];
+      if (summary === null || summary === undefined) {
+        this.rows[i] = t.replayEmpty;
+        continue;
+      }
+      let row = summary.label;
+      if (summary.reached !== '') row += '  ' + formatUiText(t.zoneCard, summary.reached);
+      this.rows[i] = row;
+    }
+    this.uiRevision++;
+  }
+
+  /**
+   * The slot list or the action row. Never allocates (the actions rebuild the rows — transitions).
+   */
+  tick(): void {
+    const flow = this.flow;
+    const library = flow.replays;
+    if (!this.choosing) {
+      const menu = this.menu;
+      const before = menu.revision;
+      const result = menuTick(menu, flow.menuInput);
+      if (menu.revision !== before) this.uiRevision++;
+      const back =
+        result === MenuResult.Back ||
+        (result === MenuResult.Confirmed && menu.focus === REPLAY_SLOTS);
+      if (back) {
+        flow.sfx(SFX_CUES.MenuBack);
+        flow.stack.pop();
+        return;
+      }
+      if (result === MenuResult.Confirmed) {
+        const slot = menu.focus;
+        if (library === null || library.summaries[slot] === null) {
+          flow.sfx(SFX_CUES.PowerUpDenied);
+          return;
+        }
+        flow.sfx(SFX_CUES.MenuSelect);
+        this.choosing = true;
+        const actions = this.actions;
+        actions.setDisabled(ReplayActionItem.Keep, slot !== 0);
+        const share = flow.host.shareReplay;
+        actions.setDisabled(ReplayActionItem.Share, share === undefined || share === null);
+        actions.focus = ReplayActionItem.Play;
+        actions.open(MENU_OPEN_LOCK_TICKS);
+        this.message = '';
+        this.uiRevision++;
+        return;
+      }
+      flow.menuSound(result);
+      return;
+    }
+    const actions = this.actions;
+    const before = actions.revision;
+    const result = menuTick(actions, flow.menuInput);
+    if (actions.revision !== before) this.uiRevision++;
+    if (
+      result === MenuResult.Back ||
+      (result === MenuResult.Confirmed && actions.focus === ReplayActionItem.Back)
+    ) {
+      flow.sfx(SFX_CUES.MenuBack);
+      this.choosing = false;
+      this.menu.open(MENU_OPEN_LOCK_TICKS);
+      this.uiRevision++;
+      return;
+    }
+    if (result === MenuResult.Confirmed && library !== null) this.act(actions.focus, library);
+    else flow.menuSound(result);
+  }
+
+  /**
+   * Runs an action on the focused slot (a transition).
+   *
+   * @param action - The {@link ReplayActionItem}.
+   * @param library - The host's library.
+   */
+  private act(action: number, library: ReplayLibrary): void {
+    const flow = this.flow;
+    const t = flow.text;
+    const slot = this.menu.focus;
+    if (action === ReplayActionItem.Play) {
+      const run = library.replay(slot);
+      if (run === null) {
+        this.message = t.replayUnreadable;
+        flow.sfx(SFX_CUES.PowerUpDenied);
+      } else {
+        flow.sfx(SFX_CUES.MenuSelect);
+        flow.replayScreen.prepare(run);
+        flow.stack.push(flow.replayScreen);
+        return;
+      }
+    } else if (action === ReplayActionItem.Keep) {
+      const kept = library.keep(slot);
+      this.message = kept < 0 ? t.replayFull : formatUiText(t.replayKeptIn, kept);
+      flow.sfx(kept < 0 ? SFX_CUES.PowerUpDenied : SFX_CUES.MenuSelect);
+    } else if (action === ReplayActionItem.Share) {
+      const text = library.exportText(slot);
+      const share = flow.host.shareReplay;
+      const ok = text !== null && share !== undefined && share !== null && share(text);
+      this.message = ok ? t.replayShared : t.replayShareFailed;
+      flow.sfx(ok ? SFX_CUES.MenuSelect : SFX_CUES.PowerUpDenied);
+    } else if (action === ReplayActionItem.Delete) {
+      library.remove(slot);
+      this.message = t.replayDeleted;
+      flow.sfx(SFX_CUES.MenuBack);
+    }
+    this.choosing = false;
+    this.menu.open(MENU_OPEN_LOCK_TICKS);
+    this.refresh();
+  }
+
+  /**
+   * Draws the panel, `REPLAYS`, each slot with its description, score and mark, the action row
+   * and the message.
+   *
+   * @param list - The UI list.
+   */
+  drawUi(list: DrawList): void {
+    const base = this.stringBase;
+    const p = REPLAYS_PANEL;
+    const flow = this.flow;
+    const t = flow.text;
+    const library = flow.replays;
+    drawPanel(list, p.x, p.y, p.w, p.h, UI_COLORS.panel, UI_COLORS.border, 255);
+    list.setString(base, t.replaysTitle);
+    list.setString(base + 1, this.message);
+    list.setString(base + 2, t.assistedMark);
+    list.setString(base + 3, t.replaysHint);
+    list.text(base, CX, p.y + 8, UI_COLORS.title, TextAlign.Center);
+    drawMenu(list, this.menu, base + 4 + REPLAY_SLOTS, REPLAYS_MENU_LAYOUT, t);
+    for (let i = 0; i < REPLAY_SLOTS; i++) {
+      const y = REPLAYS_MENU_LAYOUT.y + i * 20 + 9;
+      const summary = library === null ? null : library.summaries[i];
+      list.setString(base + 4 + i, this.rows[i]);
+      list.text(base + 4 + i, CX - 140, y, summary === null ? UI_COLORS.disabled : UI_COLORS.text);
+      if (summary === null || summary === undefined) continue;
+      list.number(summary.score, p.x + p.w - 28, y - 9, 8, UI_COLORS.text, TextAlign.Right);
+      if (summary.assisted) list.text(base + 2, p.x + p.w - 22, y - 9, UI_COLORS.alert);
+    }
+    if (this.choosing) {
+      const a = REPLAY_ACTIONS_PANEL;
+      drawPanel(list, a.x, a.y, a.w, a.h, UI_COLORS.panel, UI_COLORS.focus, 255);
+      drawMenu(
+        list,
+        this.actions,
+        base + 4 + REPLAY_SLOTS + menuStringSlots(this.menu),
+        REPLAY_ACTIONS_LAYOUT,
+        t,
+      );
+    } else {
+      list.text(base + 3, CX, p.y + p.h - 26, UI_COLORS.disabled, TextAlign.Center);
+    }
+    list.text(base + 1, CX, p.y + p.h - 14, UI_COLORS.focus, TextAlign.Center);
+  }
+}
+
+/** Fast-forward speeds of the replay screen (M3-01 — ticks played per displayed tick). */
+export const REPLAY_SPEEDS: readonly number[] = Object.freeze([1, 2, 4]);
+
+/** Ticks the replay screen shows `REPLAY END` (or the desync) before the browser (M3-01). */
+export const REPLAY_END_TICKS = 150;
+
+/**
+ * Per `SimEventKind`: 1 for the kinds a replay does **not** forward at all (host requests other
+ * than the stage preparation, rumble); {@link REPLAY_FAST_SILENT_KINDS} drops the sounds too while
+ * fast-forwarding (M3-01).
+ */
+const REPLAY_SILENT_KINDS: Uint8Array = (() => {
+  const kinds = new Uint8Array(32);
+  kinds[SimEventKind.Rumble] = 1;
+  kinds[SimEventKind.UserOption] = 1;
+  kinds[SimEventKind.SoundTest] = 1;
+  return kinds;
+})();
+
+/** {@link REPLAY_SILENT_KINDS} plus the sound effects and the ducking (fast-forward — M3-01). */
+const REPLAY_FAST_SILENT_KINDS: Uint8Array = (() => {
+  const kinds = REPLAY_SILENT_KINDS.slice();
+  kinds[SimEventKind.Sfx] = 1;
+  kinds[SimEventKind.MusicDuck] = 1;
+  return kinds;
+})();
+
+/**
+ * The replay screen (M3-01 — shmup_feat.md §21 "[P2] … replay browser, fast-forward"): plays a run
+ * replay through {@link RunReplayPlayback} — every World of the run in turn, hashes checked — with
+ * its HUD, `REPLAY` and the speed at the top (`ASSISTED` for an assisted run), Right / Left to go
+ * faster / slower ({@link REPLAY_SPEEDS}: ×1, ×2, ×4 — sound effects only at ×1), OK to pause, Back
+ * to leave. At the end (or a desync — a replay of another build or content) `REPLAY END` / `OUT OF
+ * SYNC` for {@link REPLAY_END_TICKS}, then the browser.
+ *
+ * @remarks
+ * A full screen: the flow shows the playback's World and the screen's own HUD. Its Worlds push
+ * into a private queue forwarded to the session's (the music too — each segment's stage music set
+ * is prepared before the segment starts). A segment's World is created when it starts (a
+ * transition); a tick plays up to four recorded ticks without allocating (apart from the stage
+ * spawns' coroutines — decision D29).
+ */
+export class ReplayScene extends SceneBase {
+  /** See {@link Scene.id}. */
+  readonly id = 'replay' as const;
+  /** The HUD draw list of the replay's World. */
+  readonly hudList: DrawList = createDrawList(HUD_COMMAND_COUNT, HUD_STRING_COUNT);
+  /** The HUD's change detection. */
+  readonly hud: Hud;
+  /** The playback (`null` while the screen is not up). */
+  playback: RunReplayPlayback | null = null;
+  /** Index into {@link REPLAY_SPEEDS}. */
+  speed = 0;
+  /** Whether the playback is paused. */
+  paused = false;
+  /** Ticks the end message has shown (-1 = still playing). */
+  endTicks = -1;
+  /** The run to play next ({@link ReplayScene.prepare}). */
+  private run: RunReplay | null = null;
+  /** The replay Worlds' own event queue. */
+  private readonly events: EventQueue = createEventQueue();
+  /** Forwards the playing Worlds' events (bound once). */
+  private readonly forward: (event: Readonly<SimEvent>) => void;
+  /** The status line (`REPLAY  X2`; built when the speed changes). */
+  private status = '';
+
+  /**
+   * Creates the screen.
+   *
+   * @param flow - The flow.
+   */
+  constructor(flow: FlowControl) {
+    super(flow);
+    this.hud = createHud(flow.sprites, flow.text);
+    const target = flow.host.events;
+    this.forward = (event) => {
+      const kind = event.kind;
+      const silent = this.speed > 0 || this.paused ? REPLAY_FAST_SILENT_KINDS : REPLAY_SILENT_KINDS;
+      if (silent[kind] === 1) return;
+      target.push(kind, event.id, event.x, event.y, event.param);
+    };
+  }
+
+  /** See {@link SceneBase.stringSlots}. */
+  get stringSlots(): number {
+    return 3;
+  }
+
+  /** The playback's World, or `null`. */
+  get world(): World | null {
+    return this.playback === null ? null : this.playback.world;
+  }
+
+  /**
+   * Sets the run the next {@link ReplayScene.enter} plays (the browser's PLAY).
+   *
+   * @param run - The run replay.
+   */
+  prepare(run: RunReplay): void {
+    this.run = run;
+  }
+
+  /** Starts the playback (×1); the music fades out until the first segment's stage theme. */
+  override enter(): void {
+    super.enter();
+    const flow = this.flow;
+    this.speed = 0;
+    this.paused = false;
+    this.endTicks = -1;
+    this.events.clear();
+    flow.music(MUSIC_CUES.Silence, MUSIC_FADE_TICKS);
+    this.playback =
+      this.run === null ? null : new RunReplayPlayback(this.run, flow.host.content, this.events);
+    this.buildStatus();
+    this.hud.invalidate();
+  }
+
+  /** Drops the playback, the title theme comes back. */
+  override exit(): void {
+    this.playback = null;
+    this.events.clear();
+    this.flow.music(MUSIC_CUES.Title, MUSIC_FADE_TICKS);
+  }
+
+  /** Builds the status line (a transition: the speed or the pause changed). */
+  private buildStatus(): void {
+    const t = this.flow.text;
+    this.status = this.paused
+      ? t.replayPaused
+      : formatUiText(t.replaySpeed, REPLAY_SPEEDS[this.speed] ?? 1);
+    this.uiRevision++;
+  }
+
+  /**
+   * Right / Left change the speed, OK pauses, Back leaves; the playback plays its ticks (the next
+   * segment's music set prepared first); its end shows the message, then the browser. Never
+   * allocates within a segment.
+   */
+  tick(): void {
+    const flow = this.flow;
+    const pressed = flow.menuInput.pressed;
+    if ((pressed & Action.Back) !== 0) {
+      flow.sfx(SFX_CUES.MenuBack);
+      flow.stack.pop();
+      return;
+    }
+    const playback = this.playback;
+    if (playback === null || this.endTicks >= 0) {
+      this.endTicks++;
+      if (this.endTicks === 1) this.uiRevision++;
+      if (this.endTicks >= REPLAY_END_TICKS || (pressed & Action.Confirm) !== 0) flow.stack.pop();
+      return;
+    }
+    if ((pressed & Action.Right) !== 0 && this.speed < REPLAY_SPEEDS.length - 1) {
+      this.speed++;
+      this.buildStatus();
+    } else if ((pressed & Action.Left) !== 0 && this.speed > 0) {
+      this.speed--;
+      this.buildStatus();
+    }
+    if ((pressed & Action.Confirm) !== 0) {
+      this.paused = !this.paused;
+      this.buildStatus();
+    }
+    if (!this.paused) {
+      const steps = REPLAY_SPEEDS[this.speed] ?? 1;
+      for (let i = 0; i < steps && playback.running; i++) {
+        const stage = playback.nextStage;
+        if (stage !== null) flow.prepareStage(stage);
+        playback.step();
+      }
+    }
+    this.events.drain(this.forward);
+    if (!playback.running) {
+      this.endTicks = 0;
+      this.uiRevision++;
+    }
+  }
+
+  /**
+   * Draws the status line (`REPLAY  X2`, `PAUSED`), `ASSISTED` for an assisted run, and the end
+   * message.
+   *
+   * @param list - The UI list.
+   */
+  drawUi(list: DrawList): void {
+    const base = this.stringBase;
+    const t = this.flow.text;
+    const run = this.run;
+    list.setString(base, this.status);
+    list.setString(base + 1, t.replayAssisted);
+    list.text(base, CX, 14, UI_COLORS.focus, TextAlign.Center);
+    if (run !== null && runAssisted(run.assists)) {
+      list.text(base + 1, CX + 120, 14, UI_COLORS.alert, TextAlign.Center);
+    }
+    if (this.endTicks < 0) return;
+    const playback = this.playback;
+    const desync = playback !== null && !playback.report.ok;
+    list.setString(base + 2, desync ? t.replayDesync : t.replayEnd);
+    drawPanel(list, CX - 80, 96, 160, 24);
+    list.text(base + 2, CX, 104, desync ? UI_COLORS.alert : UI_COLORS.focus, TextAlign.Center);
+  }
+}
+
 /** The M1 scene flow (see the module docs). */
 export interface SceneFlow {
   /** The scene stack. */
@@ -7154,6 +8319,37 @@ export interface SceneFlow {
   readonly rebind: RebindScene;
   /** The input test (M2-16). */
   readonly inputTest: InputTestScene;
+  /** The EXTRA menu (M3-01). */
+  readonly extra: ExtraScene;
+  /** The replay browser (M3-01). */
+  readonly replaysScreen: ReplaysScene;
+  /** The replay playback screen (M3-01). */
+  readonly replayScreen: ReplayScene;
+  /** The run recorder (M3-01): the replay of the run in progress. */
+  readonly recorder: RunRecorder;
+  /**
+   * The replay of the last finished run (M3-01 — also stored as the host library's last game), or
+   * `null` (none yet, or it could not be kept).
+   */
+  readonly lastReplay: RunReplay | null;
+  /**
+   * The speed the game runs at now, in percent (M3-01 — the save's game-speed assist while the game
+   * scene is on top, else 100): `core/game` slows the clock that feeds the fixed step by it.
+   */
+  readonly speedPercent: number;
+  /**
+   * The debug tools changed the World outside a tick (a checkpoint or boss jump — M3-01): the run's
+   * replay can no longer reproduce it and is not saved.
+   */
+  noteWorldEdited(): void;
+  /**
+   * Chooses the kind of run the next game start plays (M3-01 — the EXTRA menu; tests).
+   *
+   * @param mode - The {@link RunMode}.
+   * @param zone - The CARAVAN's campaign zone index (kept when omitted).
+   * @param loop - The ARCADE mode's first loop, 1 or 2 (kept when omitted).
+   */
+  chooseMode(mode: RunMode, zone?: number, loop?: number): void;
   /**
    * The UI string table the scenes draw with (M2-16): the content's `strings` table of
    * `core/ui` `DEFAULT_LANGUAGE` over the built-in English one.
@@ -7410,9 +8606,34 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
       let config = configs[i];
       if (!arsenalMatches(config, control.arsenal)) config = withArsenal(config, control.arsenal);
       if (control.ship !== null) config = withShip(config, control.ship);
-      armed[i] = withUserGameOptions(withCoop(config, control.coop), save.options);
+      config = withUserGameOptions(withCoop(config, control.coop), save.options);
+      // The title's EXTRA SHIPS code (M3-01).
+      if (control.secretShips && config.startingLives !== SECRET_SHIPS) {
+        config = resolveGameConfig({ ...config, startingLives: SECRET_SHIPS });
+      }
+      armed[i] = config;
     }
   };
+  /**
+   * The hi-score table mode of a run (M3-01: the EXTRA modes have their own tables).
+   *
+   * @param coop - Whether the World is a co-op one.
+   * @returns The mode.
+   */
+  const tableMode = (coop: boolean): HiScoreMode => {
+    if (run.practice) return 'practice';
+    if (coop) return '2p';
+    const mode = run.mode;
+    return mode === 'bossRush'
+      ? 'bossrush'
+      : mode === 'caravan'
+        ? 'caravan'
+        : mode === 'arcade'
+          ? 'arcade'
+          : '1p';
+  };
+  const bossRushStage = host.content.stageIndex.has(BOSS_RUSH_STAGE);
+  const buildId = host.buildId ?? 'dev';
   // The campaign (M2-10): when the host's stage is its start zone's stage, games are campaign runs.
   const contentCampaign = host.content.campaign;
   const campaign =
@@ -7455,6 +8676,72 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     text,
     labels,
     controls: host.controls ?? null,
+    recorder: new RunRecorder(),
+    replays: host.replays ?? null,
+    lastReplay: null,
+    nextMode: 'normal',
+    caravanZone: contentCampaign === null ? -1 : contentCampaign.startIndex,
+    arcadeLoop: 1,
+    secretShips: false,
+    unlockedNow: false,
+    lastCarry: null,
+    noteAssists(world: World): void {
+      let assists = run.assists;
+      if (save.options.play.speed < 100) assists |= AssistFlag.Speed;
+      if (world.config.invincible) assists |= AssistFlag.Invincible;
+      if (world.debugFlags.godMode) assists |= AssistFlag.GodMode;
+      run.assists = assists;
+    },
+    get speedPercent(): number {
+      return stack.top === control.game ? save.options.play.speed : 100;
+    },
+    endRun(): void {
+      const recorder = control.recorder;
+      if (!recorder.recording) return;
+      const world = control.game.world;
+      const config = world.config;
+      let ship = config.shipId.toUpperCase();
+      for (const spec of ships) if (spec.id === config.shipId) ship = spec.name.toUpperCase();
+      const preset = DIFFICULTY_PRESETS.indexOf(config.difficulty);
+      const reached = world.stage === null ? '' : control.zoneLabel(world.stage.stage.id);
+      const replay = recorder.finishRun(world, {
+        buildId,
+        mode: tableMode(config.coop),
+        label: ship + ' ' + (preset >= 0 ? labels.difficulty[preset] : config.difficulty),
+        score: world.scoring.board.scores[0].score,
+        reached: reached === '-' ? '' : reached,
+        assists: run.assists,
+      });
+      control.lastReplay = replay;
+      if (replay !== null && control.replays !== null) control.replays.storeLast(replay);
+    },
+    nextLoop(): void {
+      run.nextLoop();
+      run.pendingStart = true;
+      control.prepareStage(run.stage);
+      stack.reset(control.game);
+    },
+    pauseSecret(code: number): boolean {
+      const game = control.game;
+      const world = game.world;
+      const players = world.players;
+      let done = false;
+      for (let p = 0; p < players.length; p++) {
+        if (code === SecretCode.FullPower) {
+          if (game.secretUsed || !grantFullPower(world, p)) continue;
+          control.recorder.action(RunAction.FullPower, p);
+          done = true;
+        } else if (code === SecretCode.SelfDestruct && selfDestruct(world, p)) {
+          control.recorder.action(RunAction.SelfDestruct, p);
+          done = true;
+        }
+      }
+      if (done && code === SecretCode.FullPower) {
+        game.secretUsed = true;
+        run.assists |= AssistFlag.Secret;
+      }
+      return done;
+    },
     applyOptions(): void {
       rearm();
       control.title.uiRevision++;
@@ -7470,8 +8757,28 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     run,
     campaign,
     beginRun(): void {
+      // A run that never went back to the title (a flow started in the game): its replay first.
+      control.endRun();
       control.runConfig = control.worldConfig;
-      run.begin(campaign, control.runConfig.stage);
+      const mode = control.nextMode;
+      const zones = contentCampaign;
+      if (mode === 'bossRush' && bossRushStage) {
+        run.begin(null, BOSS_RUSH_STAGE, 'bossRush');
+      } else if (
+        mode === 'caravan' &&
+        zones !== null &&
+        control.caravanZone >= 0 &&
+        control.caravanZone < zones.zones.length
+      ) {
+        run.beginZone(zones, control.caravanZone, 'caravan', CARAVAN_TICKS);
+      } else if (mode === 'arcade' && campaign !== null) {
+        run.begin(campaign, control.runConfig.stage, 'arcade', control.arcadeLoop);
+      } else {
+        run.begin(campaign, control.runConfig.stage);
+      }
+      if (control.secretShips) run.assists |= AssistFlag.Secret;
+      control.unlockedNow = false;
+      control.recorder.beginRun();
       // Rows of an earlier game are named already (or were never asked for — a quit).
       control.pendingCount = 0;
       // Pushed before the World's stage theme: a set already resident switches at once.
@@ -7493,6 +8800,7 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     },
     createRunWorld(carry: CarryState | null): World {
       const world = host.createWorld(runWorldConfig(control.runConfig, run));
+      control.lastCarry = carry;
       return prepareRunWorld(world, run, carry);
     },
     enterBonus(): void {
@@ -7554,7 +8862,20 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     },
     get modeKey(): string {
       const config = control.worldConfig;
-      return hiScoreModeKey(config, config.coop ? '2p' : '1p');
+      const next = control.nextMode;
+      // M3-01: the EXTRA modes' tables (one-player games).
+      return hiScoreModeKey(
+        config,
+        config.coop
+          ? '2p'
+          : next === 'bossRush'
+            ? 'bossrush'
+            : next === 'caravan'
+              ? 'caravan'
+              : next === 'arcade'
+                ? 'arcade'
+                : '1p',
+      );
     },
     get hiScore(): number {
       return bests[control.bestIndex(control.difficulty)];
@@ -7578,9 +8899,11 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
       const scores = world.scoring.board.scores;
       const reached = world.stage === null ? '' : world.stage.stage.id;
       // The World's own table: its difficulty (chosen under START), ship and mode name it — a
-      // practice run has tables of its own (M2-15).
-      const mode: HiScoreMode = run.practice ? 'practice' : world.config.coop ? '2p' : '1p';
+      // practice run has tables of its own (M2-15), so have the EXTRA modes (M3-01).
+      const mode: HiScoreMode = tableMode(world.config.coop);
       const key = hiScoreModeKey(world.config, mode);
+      // M3-01: an assisted run's rows are marked.
+      const assisted = runAssisted(run.assists);
       control.resultKey = key;
       control.pendingCount = 0;
       let rank = -1;
@@ -7592,6 +8915,7 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
             reached,
             mode,
             difficulty: world.config.difficulty,
+            assisted,
           }),
         );
         if (p === 0) rank = r;
@@ -7669,8 +8993,11 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
       if (stage === undefined) return false;
       if (!Number.isInteger(checkpoint) || checkpoint < -1) return false;
       if (checkpoint >= stage.checkpoints.length) return false;
+      control.endRun();
       control.runConfig = control.worldConfig;
       run.beginPractice(practice, zone, checkpoint, loadout);
+      if (control.secretShips) run.assists |= AssistFlag.Secret;
+      control.recorder.beginRun();
       run.pendingStart = true;
       control.pendingCount = 0;
       control.prepareStage(run.stage);
@@ -7725,6 +9052,9 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
   control.gameOptionsPage = new GameOptionsScene(control);
   control.rebind = new RebindScene(control);
   control.inputTest = new InputTestScene(control);
+  control.extra = new ExtraScene(control);
+  control.replaysScreen = new ReplaysScene(control);
+  control.replayScreen = new ReplayScene(control);
   // The save's sim-affecting options (M2-16) reach the first game too.
   rearm();
   control.runConfig = control.worldConfig;
@@ -7760,6 +9090,9 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     control.gameOptionsPage,
     control.rebind,
     control.inputTest,
+    control.extra,
+    control.replaysScreen,
+    control.replayScreen,
   ];
   let base = 0;
   for (const scene of scenes) {
@@ -7819,6 +9152,24 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     gameOptionsPage: control.gameOptionsPage,
     rebind: control.rebind,
     inputTest: control.inputTest,
+    extra: control.extra,
+    replaysScreen: control.replaysScreen,
+    replayScreen: control.replayScreen,
+    recorder: control.recorder,
+    get lastReplay(): RunReplay | null {
+      return control.lastReplay;
+    },
+    get speedPercent(): number {
+      return control.speedPercent;
+    },
+    noteWorldEdited(): void {
+      control.recorder.invalidate();
+    },
+    chooseMode(mode: RunMode, zone?: number, loop?: number): void {
+      control.nextMode = mode;
+      if (zone !== undefined) control.caravanZone = zone;
+      if (loop !== undefined) control.arcadeLoop = loop >= 2 ? 2 : 1;
+    },
     text,
     labels,
     demos,
@@ -7886,18 +9237,29 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
       const game = control.game;
       const select = control.weaponSelect;
       const demo = control.demo;
+      const replay = control.replayScreen;
       let gameVisible = false;
       let selectVisible = false;
       let demoVisible = false;
+      let replayVisible = false;
       for (let i = bottom; i < depth; i++) {
         const scene = stack.sceneAt(i);
         if (scene === game) gameVisible = true;
         else if (scene === select) selectVisible = true;
         else if (scene === demo) demoVisible = true;
+        else if (scene === replay) replayVisible = true;
       }
       const preview = select.preview;
       const demoWorld = demo.world;
-      if (demoVisible && demoWorld !== null) {
+      const replayWorld = replay.world;
+      if (replayVisible && replayWorld !== null) {
+        // A replay (M3-01): its World and its own HUD.
+        view.tick = replayWorld.tick;
+        view.world = replayWorld.view;
+        replay.hud.showBossHp = control.save.options.display.bossHpBar;
+        replay.hud.update(replayWorld, replay.hudList);
+        view.hud = replay.hudList;
+      } else if (demoVisible && demoWorld !== null) {
         // The attract loop's demo (M2-15): its World and its own HUD.
         view.tick = demoWorld.tick;
         view.world = demoWorld.view;

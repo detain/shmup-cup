@@ -14,7 +14,14 @@ import {
 } from '../../src/config/index.js';
 
 type NumericField =
-  'internalWidth' | 'internalHeight' | 'tickRate' | 'maxTicksPerFrame' | 'seed' | 'startingLives';
+  | 'internalWidth'
+  | 'internalHeight'
+  | 'tickRate'
+  | 'maxTicksPerFrame'
+  | 'seed'
+  | 'startingLives'
+  | 'loop'
+  | 'timeLimit';
 
 const RANGES: ReadonlyArray<readonly [NumericField, number, number]> = [
   ['internalWidth', 16, 4096],
@@ -22,7 +29,11 @@ const RANGES: ReadonlyArray<readonly [NumericField, number, number]> = [
   ['tickRate', 1, 1000],
   ['maxTicksPerFrame', 1, 60],
   ['seed', 0, 0xffffffff],
-  ['startingLives', 1, 5],
+  // 1–9 since M3-01 (the title's secret code gives more ships than the menus' 1–5).
+  ['startingLives', 1, 9],
+  // M3-01: the loop and the caravan's clock.
+  ['loop', 1, 8],
+  ['timeLimit', 0, 216_000],
 ];
 
 describe('core/config resolveGameConfig boundaries', () => {
@@ -43,8 +54,8 @@ describe('core/config resolveGameConfig boundaries', () => {
   });
 
   it('names the field, the range and the value in the error message', () => {
-    expect(() => resolveGameConfig({ startingLives: 9 })).toThrow(
-      'GameConfig.startingLives must be an integer in [1, 5], got 9',
+    expect(() => resolveGameConfig({ startingLives: 10 })).toThrow(
+      'GameConfig.startingLives must be an integer in [1, 9], got 10',
     );
   });
 

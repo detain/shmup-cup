@@ -31,6 +31,8 @@
  * - shmup_feat.md §4 — [P0] autofire: hold-to-fire, toggle mode, configurable rate
  *   ({@link GameConfig.autofireMode}); [P1] rebinding per device + persistence and SOCD resolution
  *   (the saved {@link BindingOverrides} and {@link SocdChoice} — M2-16)
+ * - shmup_feat.md §15 / §16 — loops and the caravan's time limit; §21 — the game-speed and
+ *   invincibility assists; §8 — option recovery after death; §4 — rumble (M3-01)
  *
  * **Public API (implemented now).** {@link GameConfig}, {@link DEFAULT_GAME_CONFIG},
  * {@link resolveGameConfig}, the difficulty presets ({@link DIFFICULTY_PRESETS},
@@ -59,6 +61,11 @@
  * {@link BINDING_TOKEN_PATTERN}, {@link MAX_BINDING_PROFILES}, {@link MAX_ACTION_TOKENS},
  * {@link resolveBindingOverrides}); the game options ({@link UserGameOptions},
  * {@link DEFAULT_USER_GAME_OPTIONS}, {@link userGameOverrides}, {@link withUserGameOptions}).
+ * M3-01: the loop, the caravan's clock, the invincibility assist and option recovery
+ * ({@link GameConfig.loop}, {@link GameConfig.timeLimit}, {@link GameConfig.invincible},
+ * {@link GameConfig.optionRecovery}; {@link MAX_LOOP}, {@link MAX_TIME_LIMIT},
+ * {@link MAX_STARTING_LIVES}) and the assists / feel options ({@link PlayOptions},
+ * {@link DEFAULT_PLAY_OPTIONS}, {@link GAME_SPEEDS} — `UserOptions.play`).
  *
  * **User options (M1-17).** {@link UserOptions} — the *presentation-only* options the player sets
  * in the Options screen and `core/save` persists (plan §1.5: sim-affecting options live in
@@ -202,6 +209,24 @@ export const MAX_CONTINUES = 9;
 
 /** Highest extend threshold (the scores' clamp: 99,999,990). */
 export const MAX_EXTEND_SCORE = 99_999_990;
+
+/**
+ * Highest {@link GameConfig.loop} (M3-01 — shmup_feat.md §15 "loops"): the rank's loop term reaches
+ * its cap of 31 long before.
+ */
+export const MAX_LOOP = 8;
+
+/**
+ * Longest {@link GameConfig.timeLimit} in ticks (M3-01 — the caravan's clock; one hour at 60 Hz).
+ */
+export const MAX_TIME_LIMIT = 216_000;
+
+/**
+ * Most ships a game may start with (M3-01: {@link GameConfig.startingLives} reaches it through the
+ * title's secret code — shmup_feat.md §15 "secret code for more"; the menus offer 1–5). Equal to
+ * `core/scoring` `MAX_LIVES`.
+ */
+export const MAX_STARTING_LIVES = 9;
 
 /** Lowest {@link GameConfig.bulletSpeedMul}. */
 export const MIN_BULLET_SPEED_MUL = 0.25;
@@ -602,6 +627,37 @@ export interface GameConfig {
    * {@link MAX_COOP_EXTRA}; ignored with one ship in play.
    */
   readonly coopExtra: number;
+  /**
+   * The loop the World plays (M3-01 — shmup_feat.md §15 "loops: 2nd loop with remixed layouts,
+   * faster bullets, revenge bullets"; §16 "Loop 2 / Arcade mode"): 1 (the default) … {@link MAX_LOOP}.
+   * From loop 2 the rank's loop term counts (`core/rank` — `8 × (loop − 1)`, the loop-1 cap of 16
+   * lifted), enemy bullets fly faster (`core/rank` `loopBulletSpeedScale`), every regular enemy the
+   * players shoot down fires a revenge bullet (its own `revenge` pattern, else an aimed one — at any
+   * rank) and the stage plays its remixed timeline (events with `minLoop` / `maxLoop` — `core/data`
+   * `StageEventBase`). The ARCADE mode's run moves on to the next loop after its final zone.
+   */
+  readonly loop: number;
+  /**
+   * The caravan's clock (M3-01 — shmup_feat.md §16 "score attack / caravan (time-limited)"): ticks
+   * the World may play, 0 (the default: no limit) … {@link MAX_TIME_LIMIT}. When it runs out while
+   * the stage is being played the World ends with `stageClear` and `World.timeUp`; a stage cleared
+   * with time left pays `core/world` `CARAVAN_TIME_BONUS` points per second left.
+   */
+  readonly timeLimit: number;
+  /**
+   * The invincibility assist (M3-01 — shmup_feat.md §21 accessibility "[P2] invincibility assist"):
+   * nothing hurts the ships (like the debug god mode, but a game option — recorded in the replay
+   * header like everything here). A game played with it counts as **assisted** (its hi-score row and
+   * replay are flagged). Default `false`.
+   */
+  readonly invincible: boolean;
+  /**
+   * Option recovery after death (M3-01 — shmup_feat.md §8 "[P2] Option recovery after death (Gradius
+   * V style: options drift away and can be re-grabbed)"): the Options a death penalty takes drift
+   * away from the wreck as grey items any ship can collect again (`core/powerups` freed Options).
+   * Meter mode only (the Direct-mode ship has no Options). Default `false`.
+   */
+  readonly optionRecovery: boolean;
 }
 
 /** Height in pixels of each HUD bar outside the playfield (decision D20). */
@@ -662,6 +718,10 @@ export const DEFAULT_GAME_CONFIG: GameConfig = Object.freeze({
   optionChoice: 'trail',
   coop: false,
   coopExtra: DEFAULT_COOP_EXTRA,
+  loop: 1,
+  timeLimit: 0,
+  invincible: false,
+  optionRecovery: false,
 });
 
 /**
@@ -740,7 +800,7 @@ export function withDifficulty(
  * first ({@link difficultyOverrides}); explicit overrides of those fields win. Validated ranges
  * (integers unless noted, inclusive): `internalWidth` / `internalHeight`
  * 16–4096, `tickRate` 1–1000, `maxTicksPerFrame` 1–60, `seed` 0–0xFFFFFFFF,
- * `startingLives` 1–5, `aimDirections` a power of two in 4–1024, `autofireInterval` /
+ * `startingLives` 1–9, `aimDirections` a power of two in 4–1024, `autofireInterval` /
  * `missileInterval` 1–60, `rankBase` 0–31, `rankGrowth` a finite number 0–{@link MAX_RANK_GROWTH},
  * `extendFirst` / `extendEvery` 0–{@link MAX_EXTEND_SCORE}, `continues` 0–{@link MAX_CONTINUES},
  * `bulletSpeedMul` a finite number {@link MIN_BULLET_SPEED_MUL}–{@link MAX_BULLET_SPEED_MUL},
@@ -756,8 +816,10 @@ export function withDifficulty(
  * string (whether the content has it is `core/weapons`' business), `weaponEdit` `null` or an object
  * of three non-empty weapon ids (frozen copy), `megaChoice` a {@link MegaChoice} and `shieldChoice`
  * a {@link ShieldChoice} (M2-03), `optionChoice` an {@link OptionChoice} (M2-04),
- * `autofireMode` an {@link AutofireMode} (M2-16). Other string presets and booleans are not
- * validated at runtime — the types cover them.
+ * `autofireMode` an {@link AutofireMode} (M2-16); M3-01: `loop` an integer 1–{@link MAX_LOOP},
+ * `timeLimit` an integer 0–{@link MAX_TIME_LIMIT}, `invincible` / `optionRecovery` booleans, and
+ * `startingLives` reaches {@link MAX_STARTING_LIVES} (the secret code's lives). Other string presets
+ * and booleans are not validated at runtime — the types cover them.
  *
  * @param overrides - Fields to change.
  * @param table - The difficulty table the preset fields come from (default
@@ -796,7 +858,7 @@ export function resolveGameConfig(
   requireInteger('tickRate', config.tickRate, 1, 1000);
   requireInteger('maxTicksPerFrame', config.maxTicksPerFrame, 1, 60);
   requireInteger('seed', config.seed, 0, 0xffffffff);
-  requireInteger('startingLives', config.startingLives, 1, 5);
+  requireInteger('startingLives', config.startingLives, 1, MAX_STARTING_LIVES);
   requireInteger('aimDirections', config.aimDirections, 4, 1024);
   requireInteger('autofireInterval', config.autofireInterval, 1, 60);
   requireInteger('missileInterval', config.missileInterval, 1, 60);
@@ -812,9 +874,17 @@ export function resolveGameConfig(
     MAX_BULLET_SPEED_MUL,
   );
   requireNumber('coopExtra', config.coopExtra, 0, MAX_COOP_EXTRA);
+  requireInteger('loop', config.loop, 1, MAX_LOOP);
+  requireInteger('timeLimit', config.timeLimit, 0, MAX_TIME_LIMIT);
   const coop: unknown = config.coop;
   if (typeof coop !== 'boolean') {
     throw new RangeError(`GameConfig.coop must be a boolean, got ${String(coop)}`);
+  }
+  for (const name of ['invincible', 'optionRecovery'] as const) {
+    const flag: unknown = config[name];
+    if (typeof flag !== 'boolean') {
+      throw new RangeError(`GameConfig.${name} must be a boolean, got ${String(flag)}`);
+    }
   }
   if ((config.aimDirections & (config.aimDirections - 1)) !== 0) {
     throw new RangeError(
@@ -1286,6 +1356,43 @@ export interface DisplayOptions {
 }
 
 /**
+ * The game-speed assist's choices (M3-01 — shmup_feat.md §21 accessibility "[P2] game-speed assist
+ * (e.g. 75%)"): percent of the normal speed, normal first.
+ */
+export const GAME_SPEEDS: readonly number[] = Object.freeze([100, 75, 50]);
+
+/**
+ * Assists and feel (M3-01 — shmup_feat.md §21 accessibility "[P2] game-speed assist,
+ * invincibility assist — both flag scores/replays as assisted", §8 "[P2] option recovery after
+ * death", §4 "[P2] rumble"): the GAME page's SPEED / INVINCIBLE / OPT RECOVERY rows and the CONTROLS
+ * page's RUMBLE. The invincibility assist and option recovery are sim-affecting (folded into the
+ * next games' configs by {@link withUserGameOptions}); the game speed only slows the clock that
+ * feeds the fixed step (`core/game` — every tick still runs whole, so replays are unaffected) and
+ * marks the game's score and replay as assisted; rumble is the host's.
+ */
+export interface PlayOptions {
+  /** SPEED: the game's speed in percent — one of {@link GAME_SPEEDS} (100 = normal). */
+  readonly speed: number;
+  /** INVINCIBLE: the invincibility assist ({@link GameConfig.invincible}) of the next games. */
+  readonly invincible: boolean;
+  /**
+   * OPT RECOVERY: {@link GameConfig.optionRecovery} of the next games, or `null` for the host
+   * config's (off).
+   */
+  readonly optionRecovery: boolean | null;
+  /** RUMBLE: gamepads rumble on deaths and boss blasts (`vibrationActuator`; default on). */
+  readonly rumble: boolean;
+}
+
+/** Assists off, the normal speed, rumble on. */
+export const DEFAULT_PLAY_OPTIONS: PlayOptions = Object.freeze({
+  speed: 100,
+  invincible: false,
+  optionRecovery: null,
+  rumble: true,
+});
+
+/**
  * The player's presentation-only options (plan §1.5: they never affect the simulation, so they are
  * not in {@link GameConfig} or replays). Persisted by `core/save` (`SaveData.options`).
  */
@@ -1301,6 +1408,8 @@ export interface UserOptions {
    * one-button preset — sim-affecting choices the flow folds into the next games' configs.
    */
   readonly game: UserGameOptions;
+  /** Assists and feel (M3-01): game speed, invincibility, option recovery, rumble. */
+  readonly play: PlayOptions;
 }
 
 /**
@@ -1326,6 +1435,7 @@ export const DEFAULT_USER_OPTIONS: UserOptions = Object.freeze({
     showHitbox: false,
     bossHpBar: false,
   }),
+  play: DEFAULT_PLAY_OPTIONS,
 });
 
 /** Shape of an input profile id (lower-case kebab, as `content/input/` requires), ≤ 64 characters. */
@@ -1452,6 +1562,26 @@ export function resolveUserOptions(value: unknown): UserOptions {
       showHitbox: typeof display.showHitbox === 'boolean' ? display.showHitbox : dd.showHitbox,
       bossHpBar: typeof display.bossHpBar === 'boolean' ? display.bossHpBar : dd.bossHpBar,
     }),
+    play: resolvePlayOptions(root.play),
+  });
+}
+
+/**
+ * Reads the assists and feel (M3-01) defensively.
+ *
+ * @param value - Anything (`options.play` of a save).
+ * @returns Frozen options: `speed` one of {@link GAME_SPEEDS} (else 100), `invincible` / `rumble`
+ *   booleans (else their defaults), `optionRecovery` a boolean or `null`.
+ */
+function resolvePlayOptions(value: unknown): PlayOptions {
+  const play = isRecord(value) ? value : {};
+  const d = DEFAULT_PLAY_OPTIONS;
+  const speed = play.speed;
+  return Object.freeze({
+    speed: typeof speed === 'number' && GAME_SPEEDS.indexOf(speed) >= 0 ? speed : d.speed,
+    invincible: typeof play.invincible === 'boolean' ? play.invincible : d.invincible,
+    optionRecovery: typeof play.optionRecovery === 'boolean' ? play.optionRecovery : null,
+    rumble: typeof play.rumble === 'boolean' ? play.rumble : d.rumble,
   });
 }
 
@@ -1571,6 +1701,12 @@ export function userGameOverrides(options: UserOptions): Partial<GameConfig> {
   if (game.pickupMagnet !== null) out.pickupMagnet = game.pickupMagnet;
   if (input.autofire !== null) out.autofireMode = input.autofire;
   if (input.autofireInterval !== null) out.autofireInterval = input.autofireInterval;
+  // M3-01: the assists that change what a tick does (the game speed does not).
+  const play = options.play;
+  if (play !== undefined) {
+    if (play.invincible) out.invincible = true;
+    if (play.optionRecovery !== null) out.optionRecovery = play.optionRecovery;
+  }
   if (game.oneButton) {
     out.autofire = true;
     out.autofireMode = 'always';

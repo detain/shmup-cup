@@ -583,5 +583,43 @@
       "colors": ["#18261e", "#203428", "#2a4434", "#385a44"],
       "ticks": 12
     }
+  ],
+  "remix": [
+    {
+      "x": 1520,
+      "type": "formation",
+      "enemy": "chaser-cell",
+      "count": 3,
+      "interval": 30,
+      "y": 140,
+      "drop": null
+    },
+    {
+      "x": 5180,
+      "type": "formation",
+      "enemy": "chaser-cell",
+      "count": 3,
+      "interval": 30,
+      "y": 100,
+      "drop": null
+    },
+    {
+      "x": 7340,
+      "type": "formation",
+      "enemy": "chaser-cell",
+      "count": 4,
+      "interval": 24,
+      "y": 80,
+      "drop": null
+    },
+    {
+      "x": 8080,
+      "type": "formation",
+      "enemy": "chaser-cell",
+      "count": 4,
+      "interval": 24,
+      "y": 140,
+      "drop": null
+    }
   ]
 }

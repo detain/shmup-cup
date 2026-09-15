@@ -123,6 +123,55 @@ export interface WebAppResources {
    * (`__SHMUP_DEV__`) — F1–F8, the overlay, `window.__shmupDebug` — and `null` in a release build.
    */
   readonly debugTools?: DebugToolsFactory | null;
+  /** The build id the game's replays record (M3-01 — `main.ts` passes `__SHMUP_BUILD__`). */
+  readonly buildId?: string;
+}
+
+/**
+ * Copies a replay's text to the clipboard (M3-01 — the replay browser's SHARE on the web /
+ * desktop): `navigator.clipboard.writeText` when the page has it (a secure context).
+ *
+ * @param win - The window.
+ * @param text - The replay's text.
+ * @returns Whether the copy was started (it completes asynchronously; a refusal is ignored).
+ */
+export function copyReplayText(win: Window, text: string): boolean {
+  const clipboard = win.navigator.clipboard as Clipboard | undefined;
+  if (clipboard === undefined || typeof clipboard.writeText !== 'function') return false;
+  clipboard.writeText(text).catch(() => {
+    // The page lost focus or the permission was refused: nothing was copied.
+  });
+  return true;
+}
+
+/**
+ * Imports a pasted replay (M3-01 — the other half of SHARE): text pasted anywhere on the page that
+ * looks like a run replay goes into the first free kept slot of the replay library.
+ *
+ * @param win - The window (its `paste` events).
+ * @param importText - The library's `importText`.
+ * @returns A function that removes the listener.
+ */
+export function listenForPastedReplays(
+  win: Window,
+  importText: (text: string) => number,
+): () => void {
+  /**
+   * Handles one paste.
+   *
+   * @param event - The paste event.
+   */
+  const onPaste = (event: Event): void => {
+    const data = (event as ClipboardEvent).clipboardData;
+    const text = data === null || data === undefined ? '' : data.getData('text');
+    if (text.indexOf('"run-replay"') < 0) return;
+    importText(text);
+    event.preventDefault();
+  };
+  win.addEventListener('paste', onPaste);
+  return () => {
+    win.removeEventListener('paste', onPaste);
+  };
 }
 
 /** Handles to the running app (for HMR disposal and debugging in the console). */
@@ -478,6 +527,9 @@ export async function bootWebApp(
     // Electron's window allows audio without a gesture (`autoplayPolicy`); browsers do not.
     audioUnlock: electron === null ? 'gesture' : 'immediate',
     debugTools: resources.debugTools ?? null,
+    // M3-01: the build the replays record, SHARE through the clipboard.
+    buildId: resources.buildId ?? 'dev',
+    shareReplay: (text) => copyReplayText(win, text),
     /**
      * The Options screen's CONTROLS (plan M1-17): the keyboard profiles a desktop keyboard can
      * drive the menus with, plus a `?profile=` override in use; `apply` switches the key profile
@@ -517,6 +569,8 @@ export async function bootWebApp(
     },
   });
 
+  // A shared replay pasted on the page joins the kept replays (M3-01).
+  const stopPaste = listenForPastedReplays(win, (text) => shell.replays.importText(text));
   return {
     game: shell.game,
     renderer: shell.renderer,
@@ -525,6 +579,7 @@ export async function bootWebApp(
     profiles,
     shell,
     stop() {
+      stopPaste();
       shell.stop();
     },
   };

@@ -62,6 +62,15 @@ the screen: the camera pans round it, and its final blast reveals LEVIATHAN HEAR
 taking turns; the survivor enrages) and `gauntlet-range.stage.json` (**GAUNTLET RANGE**, a boss
 rush: TRIAL WARDEN with its WARNING, LEVIATHAN HEART, the twins). `?stage=<id>` plays each.
 
+**Loops (M3-01).** The ARCADE mode plays the campaign again on loop 2 and beyond
+(`GameConfig.loop`). A stage's optional `remix` list holds extra `spawn` and `formation` events
+(sorted by `x`, within the stage, no `branch`) merged into its timeline from loop 2 on, after the
+events of the same `x` (`stageForLoop`); any event may also carry `minLoop` / `maxLoop` (1–8) to
+play on some loops only. Every zone A–I ships a remix. From loop 2 enemy bullets fly faster
+(`LOOP_BULLET_SPEED_STEP` per loop) and every enemy a player kills fires a revenge bullet.
+[`boss-rush.stage.json`](boss-rush.stage.json) is the EXTRA menu's **BOSS RUSH**: every zone's
+boss, A to I, in turn.
+
 **The campaign's zones (M2-10).** `zone-b.stage.json` … `zone-i.stage.json` are the zones B–I of
 the zone map ([`content/campaign/`](../campaign/README.md)). M2-10 shipped them as short
 placeholders so every route could be played end to end; M2-11 … M2-14 replaced every one of them

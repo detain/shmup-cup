@@ -64,6 +64,7 @@ export {
   applyDisplayOptions,
   connectFxEvents,
   connectOptionEvents,
+  connectRumbleEvents,
   connectSoundTest,
   connectStagePreparation,
   createEventDispatcher,

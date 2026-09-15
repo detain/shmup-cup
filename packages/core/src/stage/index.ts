@@ -126,6 +126,7 @@ import { MAX_TERRAIN_BLOCKS, TerrainBlocks, type TerrainMap } from '../collision
 import { PLAYFIELD_W } from '../config/index.js';
 import {
   STAGE_EVENT_TYPES,
+  stageEventInLoop,
   type ContentDb,
   type StageCameraKey,
   type StageEvent,
@@ -374,9 +375,15 @@ export interface StageRunner {
   /** Advances the camera by one tick and fires the due events. Never allocates. */
   tick(): void;
   /**
+   * The loop the runner plays (M3-01 — `GameConfig.loop`): events whose `minLoop` / `maxLoop`
+   * exclude it (`core/data` `stageEventInLoop`) never fire.
+   */
+  readonly loop: number;
+  /**
    * Whether an event's branch is taken right now (M2-07): `true` for an event without a branch,
    * else whether its branch's flag has the branch's value. The timeline skips an event whose branch
-   * is not taken when the camera reaches it.
+   * is not taken when the camera reaches it. Since M3-01 an event of another loop (the remix of
+   * the loops — `minLoop` / `maxLoop`) is never active.
    *
    * @param index - Index in `stage.events`.
    * @returns `true` when it would fire.
@@ -732,6 +739,10 @@ class StageRunnerImpl implements StageRunner {
   private readonly hooks: StageHooks;
   /** The timeline as typed arrays. */
   private readonly compiled: CompiledStage;
+  /** See {@link StageRunner.loop}. */
+  readonly loop: number;
+  /** 1 per event of another loop than {@link StageRunnerImpl.loop} (M3-01 — never fires). */
+  private readonly outOfLoop: Uint8Array;
   /** See {@link StageRunner.following}. */
   following: StageCameraTarget | null = null;
   /**
@@ -749,13 +760,21 @@ class StageRunnerImpl implements StageRunner {
    * @param camera - The camera to drive (its fields are overwritten).
    * @throws {RangeError} When an event has a type the runtime does not know.
    */
-  constructor(stage: StageSpec, hooks: StageHooks, camera: StageCamera) {
+  constructor(stage: StageSpec, hooks: StageHooks, camera: StageCamera, loop: number) {
     this.stage = stage;
     this.hooks = hooks;
     this.camera = camera;
+    this.loop = loop >= 1 ? Math.floor(loop) : 1;
     this.state = new Float64Array(STAGE_STATE_SLOTS);
     this.compiled = compileStage(stage);
     this.eventCodes = this.compiled.eventCode;
+    // M3-01: the events of other loops (the remix) are skipped like a branch not taken.
+    const events = stage.events;
+    const outOfLoop = new Uint8Array(events.length);
+    for (let i = 0; i < events.length; i++) {
+      outOfLoop[i] = stageEventInLoop(events[i], this.loop) ? 0 : 1;
+    }
+    this.outOfLoop = outOfLoop;
     this.reset(-1, false);
     this.state[StageSlot.Restarts] = 0;
   }
@@ -931,6 +950,7 @@ class StageRunnerImpl implements StageRunner {
 
   /** See {@link StageRunner.eventActive}. */
   eventActive(index: number): boolean {
+    if (this.outOfLoop[index] === 1) return false;
     const bit = this.compiled.eventBranchBit[index];
     if (bit === 0 || bit === undefined) return true;
     const set = (this.state[StageSlot.Flags] & bit) !== 0;
@@ -1336,6 +1356,8 @@ class StageRunnerImpl implements StageRunner {
  * @param hooks - Receives every fired event and checkpoint clears.
  * @param camera - Camera object to drive (default: {@link createStageCamera}). Its fields are
  *   overwritten.
+ * @param loop - The loop it plays (M3-01 — `GameConfig.loop`, default 1): the events of other
+ *   loops (`minLoop` / `maxLoop`) never fire.
  * @returns The runner.
  * @throws {RangeError} When an event has a type the runtime does not know (content that did not
  *   come through `loadContent`).
@@ -1354,8 +1376,9 @@ export function createStageRunner(
   stage: StageSpec,
   hooks: StageHooks,
   camera: StageCamera = createStageCamera(),
+  loop = 1,
 ): StageRunner {
-  return new StageRunnerImpl(stage, hooks, camera);
+  return new StageRunnerImpl(stage, hooks, camera, loop);
 }
 
 /**

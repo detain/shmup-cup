@@ -65,7 +65,8 @@
  * **Rank.** {@link BulletSystem.speedScale} / {@link BulletSystem.fireScale} come from the rank
  * (`core/rank`, recomputed by the World whenever the rank changes — {@link BulletSystem.setRank})
  * and are applied by the pattern primitives, not by {@link BulletSystem.spawn}, which takes raw
- * values. The speed scale includes the preset's `GameConfig.bulletSpeedMul`. While an enemy's
+ * values. The speed scale includes the preset's `GameConfig.bulletSpeedMul` and, from loop 2 (M3-01),
+ * the loop's `core/rank` `loopBulletSpeedScale`. While an enemy's
  * script runs, the enemy system narrows both to that enemy's rank modifiers
  * ({@link BulletSystem.setShooterRank}: `1 + k · (scale − 1)`, `content/enemies/` `rank`) and
  * restores the session's afterwards ({@link BulletSystem.clearShooterRank}).
@@ -127,7 +128,12 @@ import {
   type LaserView,
   type SpriteBatchView,
 } from '../presentation/index.js';
-import { BULLET_SPEED_RANK_CURVE, FIRE_RATE_RANK_CURVE, rankScale } from '../rank/index.js';
+import {
+  BULLET_SPEED_RANK_CURVE,
+  FIRE_RATE_RANK_CURVE,
+  loopBulletSpeedScale,
+  rankScale,
+} from '../rank/index.js';
 import { DEFAULT_SCORING_RULES, addScore, type ScoreHost } from '../scoring/index.js';
 import { BULLET_COLORS, BULLET_SHAPES } from './kinds.js';
 
@@ -1199,7 +1205,8 @@ class BulletSystemImpl implements BulletSystem {
     this.aimDirections = host.config.aimDirections;
     // A host config without the field (hand-made test hosts) counts as × 1.
     const mul = host.config.bulletSpeedMul;
-    this.speedMul = mul > 0 ? mul : 1;
+    // M3-01: the loops' faster bullets (a host config without a loop counts as loop 1).
+    this.speedMul = (mul > 0 ? mul : 1) * loopBulletSpeedScale(host.config.loop);
     this.rankSpeedScale = this.speedMul;
     this.speedScale = this.speedMul;
     this.hurtRadius = host.ship.hurtRadius;

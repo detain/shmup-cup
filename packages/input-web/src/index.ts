@@ -41,11 +41,15 @@ export {
 } from './keyboard/index.js';
 export {
   DEFAULT_GAMEPAD_BUTTONS,
+  RUMBLE_EFFECTS,
   STICK_DEADZONE,
   STICK_HYSTERESIS,
   readGamepadActions,
+  rumblePad,
+  type GamepadHapticLike,
   type GamepadLike,
   type GamepadReadState,
+  type RumbleEffect,
 } from './gamepad/index.js';
 export {
   DEFAULT_CODE_BINDINGS,

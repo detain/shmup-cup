@@ -323,6 +323,7 @@ describe('web/boot bootWebApp wiring', () => {
       'PRACTICE',
       'OPTIONS',
       'SOUND TEST',
+      'EXTRA',
     ]);
   });
 
