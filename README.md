@@ -832,7 +832,7 @@ pnpm dev              # browser dev app → http://localhost:5173 (F1–F8: debu
 pnpm lint             # ESLint (typescript-eslint + compat: chrome >= 69)
 pnpm typecheck        # tsc --noEmit everywhere
 pnpm test             # every package's Vitest tests + repo integration tests, one process, one worker pool (VITEST_MAX_WORKERS=n to throttle)
-pnpm test:e2e         # build web + Tizen test builds, boot both in headless Chromium, tests in parallel (E2E_WORKERS=n; once: pnpm exec playwright install --with-deps chromium)
+pnpm test:e2e         # build web + Tizen test builds, boot both in headless Chromium (plus the determinism spec in headless Firefox), tests in parallel (E2E_WORKERS=n; --project=chromium / firefox for one engine; once: pnpm exec playwright install --with-deps chromium firefox)
 pnpm build            # packages → dist/, apps/web, apps/tizen (one ES2018 IIFE within its size budgets), apps/electron
 pnpm bench            # benchmarks: the stress run, every zone under stress, the 30-minute soak (ms per tick, heap)
 pnpm golden:update    # re-bless the golden replays and the attract demos (only for an intended simulation change)

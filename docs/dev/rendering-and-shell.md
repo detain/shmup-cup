@@ -643,15 +643,20 @@ holds at least one page — without it the widget can only show the boot error s
 ## Browser tests (`pnpm test:e2e`)
 
 ```sh
-pnpm exec playwright install --with-deps chromium   # once per machine
-pnpm test:e2e                                        # builds web + tizen, then runs Playwright
+pnpm exec playwright install --with-deps chromium firefox   # once per machine
+pnpm test:e2e                                                # builds web + tizen, then runs Playwright
+pnpm test:e2e --project=chromium                             # one engine only (or --project=firefox)
 ```
 
 `test:e2e` runs `turbo run build:test` for `@shmup/web` and `@shmup/tizen` (since M1-19 the
 **test builds** — release code plus the debug tools, so `window.__shmupDebug` exists), then
 `playwright test --config test/e2e/playwright.config.ts`: headless Chromium, 1152×648 viewport
 (×3, so frame pixel `(x, y)` is screenshot pixel `(3x + 1, 3y + 1)`), the web build served by
-`vite preview` on port 4173 and the Tizen `dist/index.html` opened via `file://`.
+`vite preview` on port 4173 and the Tizen `dist/index.html` opened via `file://`. That is the
+`chromium` project, which runs every spec; since M2-18 a `firefox` project runs only the
+cross-engine determinism spec (`determinism.spec.ts`, headless Firefox against the web build's
+renderer-free `?determinism` page — [release-hardening.md](release-hardening.md)), so a plain
+`pnpm test:e2e` needs both browsers installed.
 
 - `boot.spec.ts` — both builds reach `running`, the atlas page loads through its relative
   URL, the screenshot is not uniform and has known pixels (by default the title: the logo's
@@ -875,6 +880,7 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | Boot error `no loader for content kind "…"` | A content file of a kind no owner validates. Add the owner to `DEFAULT_CONTENT_OWNERS` or to both apps' `contentOwners` |
 | Opening `apps/tizen/dist/index.html` by double-click in desktop Chrome shows WebGL errors | Desktop Chrome treats each `file://` URL as its own origin, so WebGL refuses to upload the atlas page. Start Chrome with `--allow-file-access-from-files`, or use `pnpm --filter @shmup/tizen dev`; the TV serves the widget's files as same-origin |
 | `pnpm test:e2e` hangs creating WebGL contexts | A stale forwarded X display (`DISPLAY=localhost:11.0` in an SSH session) makes SwiftShader try XCB. The config already scrubs `DISPLAY` for the browser; unset it if you launch Chromium yourself |
+| `pnpm test:e2e`: every `[firefox]` test fails with `Executable doesn't exist … firefox` | Playwright's Firefox is not installed (the `firefox` project runs the determinism spec since M2-18): `pnpm exec playwright install --with-deps firefox`, or run `pnpm test:e2e --project=chromium` |
 | Allocation appears per frame in a profile | Pixi objects created in `render()` (a new `WorldView` each frame), a tint written every frame on a hand-made sprite, or option literals passed to Pixi — keep all three out of the frame |
 | Enemy bullets simulate but are invisible | The content was loaded without the engine's sprites — `loadGameContent` passes `ENGINE_SPRITES` by default; a hand-made `loadContent` call needs `extraSprites: ENGINE_SPRITES` |
 | Options fly and fire but are invisible | `options/orb` is an engine sprite: the content was loaded without `extraSprites: ENGINE_SPRITES` (the shell's `loadGameContent` passes it by default) |

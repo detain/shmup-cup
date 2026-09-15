@@ -176,7 +176,7 @@ pnpm install            # also links workspace packages
 pnpm dev                # browser dev app on http://localhost:5173
 pnpm lint | typecheck | test | build
 pnpm test:all           # same as pnpm test: every Vitest project in one process
-pnpm test:e2e           # build web + tizen test builds, then browser smoke tests (headless Chromium, Playwright)
+pnpm test:e2e           # build web + tizen test builds, then browser smoke tests (Playwright: headless Chromium, the determinism spec also in Firefox)
 pnpm --filter @shmup/tizen build    # TV bundle (release) + bundle check with size budgets
 pnpm --filter @shmup/tizen build:dev  # TV debug build (debug tools behind Pause, Ch+ ×3) for on-device checks
 pnpm --filter @shmup/tizen build:game-mode  # TV release build with the use.game.mode metadata (the §8.5 latency A/B test) — M2-17

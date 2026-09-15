@@ -43,7 +43,7 @@ desktop app, run `pnpm rebuild electron` without the variable set.
 | `pnpm test` | `vitest run`: every project — packages, apps and the repo-level `test/` (`integration`) — in one Vitest process with one shared worker pool ([Test concurrency](#test-concurrency)) |
 | `pnpm test:all` | The same run (kept as an alias) |
 | `pnpm test:integration` | Only the repo-level `test/` project |
-| `pnpm test:e2e` | Browser smoke tests: `turbo run build:test` for `@shmup/web` and `@shmup/tizen` (test builds — the release code plus the debug tools and `window.__shmupDebug`, M1-19), then Playwright (`test/e2e/playwright.config.ts`) in headless Chromium with SwiftShader WebGL — the web build via `vite preview` (port 4173) and the Tizen `dist/index.html` via `file://`; every test in parallel ([Test concurrency](#test-concurrency)). Extra arguments go to Playwright (`pnpm test:e2e --shard=1/5`, `pnpm test:e2e boss`). Needs Chromium once per machine: `pnpm exec playwright install --with-deps chromium`. See [rendering-and-shell.md](rendering-and-shell.md#browser-tests-pnpm-teste2e) |
+| `pnpm test:e2e` | Browser smoke tests: `turbo run build:test` for `@shmup/web` and `@shmup/tizen` (test builds — the release code plus the debug tools and `window.__shmupDebug`, M1-19), then Playwright (`test/e2e/playwright.config.ts`) with two projects: `chromium` runs every spec in headless Chromium with SwiftShader WebGL — the web build via `vite preview` (port 4173) and the Tizen `dist/index.html` via `file://` — and `firefox` runs only the cross-engine determinism spec (`determinism.spec.ts`, M2-18) in headless Firefox; every test in parallel ([Test concurrency](#test-concurrency)). Extra arguments go to Playwright (`pnpm test:e2e --shard=1/5`, `pnpm test:e2e boss`); `--project=chromium` / `--project=firefox` runs one engine only. Needs both browsers once per machine: `pnpm exec playwright install --with-deps chromium firefox` (Chromium alone is enough for `--project=chromium`). See [rendering-and-shell.md](rendering-and-shell.md#browser-tests-pnpm-teste2e) |
 | `pnpm golden:update` | Re-blesses the golden replays (`scripts/golden-update.mjs`: Vitest on `test/golden` with `SHMUP_GOLDEN_UPDATE=1` — re-records every scenario of `test/golden/golden.ts` from its bot, rewrites `test/golden/*.replay.json`, then checks them — since M2-15 also the attract demos of `test/golden/demos.ts` into `content/demos/*.replay.json`). Only for an **intended** simulation change, in the same commit, with the reason in the commit message — see [debug-and-replays.md](debug-and-replays.md#golden-replays-testgolden) |
 | `pnpm bench` | The stress benchmark (`test/bench/`, own Vitest config, `--expose-gc`): 20,000 ticks with 512 bullets, 64 enemies, the full loadout and four lasers; prints ms/tick and heap growth, fails at a median ≥ 1.0 ms/tick or ≥ 512 KB heap growth. Not part of `pnpm test`; CI runs it after the build — see [debug-and-replays.md](debug-and-replays.md#the-stress-benchmark-pnpm-bench) |
 | `pnpm format` / `pnpm format:check` | Prettier write / check (research docs at the root are ignored) |
@@ -485,7 +485,8 @@ close to its steady state: give it a longer warm-up or more windows, never a big
 `vite preview` server) can run on any worker — on `max(2, ⌊cores / 5⌋)` browsers (9 on the dev
 box, 2 on a CI runner). SwiftShader renders each page on up to 16 threads of its own, so the run
 is CPU-bound: on 48 cores 8–12 browsers took 150–180 s, while 16 and 24 made frame-paced tests
-time out. CI splits the tests over five runners (`--shard=i/5`).
+time out. CI splits the Chromium tests over five runners (`--project=chromium --shard=i/5`) and
+runs the Firefox project (the determinism spec) on a sixth (`--project=firefox`).
 
 | Variable | Default | Effect |
 |---|---|---|
@@ -510,7 +511,8 @@ only type-checked, tested and compiled) and Turborepo telemetry off.
 | `typecheck` | `pnpm typecheck` |
 | `test 1/3` … `3/3` | `pnpm test --shard=<i>/3` (golden replays included): Vitest's shards split the test files by path hash |
 | `build · benchmark` | `pnpm build` (Tizen budgets included), then `pnpm bench` (M1-19) alone on its runner |
-| `e2e 1/5` … `5/5` | `pnpm exec playwright install --with-deps chromium`, then `pnpm test:e2e --shard=<i>/5`: each shard builds its own test builds and runs a fifth of the tests (one retry on CI) |
+| `e2e 1/5` … `5/5` | `pnpm exec playwright install --with-deps chromium`, then `pnpm test:e2e --project=chromium --shard=<i>/5`: each shard builds its own test builds and runs a fifth of the Chromium tests (one retry on CI) |
+| `e2e · headless Firefox` (`e2e-firefox`, M2-18) | `pnpm exec playwright install --with-deps firefox`, then `pnpm test:e2e --project=firefox`: the cross-engine determinism spec — every golden replay and attract demo in SpiderMonkey against the web build's `?determinism` page ([release-hardening.md](release-hardening.md)) |
 | `input probe` | `tools/input-probe` with npm |
 
 The matrices do not fail fast, so every shard reports. A newer push to the same branch cancels
@@ -543,7 +545,8 @@ the frozen install fails.
 | `pnpm dev` keeps the old atlas after editing `scripts/assets/` | Vite should restart the server on its own; if it logged `restart the dev server to regenerate the atlas …`, restart `pnpm dev` |
 | Tizen build fails with `unexpected files outside dist/assets/` | Something (a new `public/` file, a plugin) put a file into `dist/` outside `assets/`; move it under `assets/` or keep it out of the widget |
 | The game shows a navy screen with a pink title such as `CONTENT ERRORS: 2 PROBLEMS` or `ATLAS PAGE FAILED TO LOAD` | The shell's boot error screen: every line is one problem (`<file>:<json path>: message` for content). Fix the listed content, rebuild a stale atlas (`ATLAS DOES NOT MATCH ITS MANIFEST`), or check WebGL (`WEBGL IS NOT AVAILABLE`). The console logs "Shmup Cup failed to start" with the `ShellBootError` — see [rendering-and-shell.md](rendering-and-shell.md#the-boot-sequence) |
-| `pnpm test:e2e`: `Executable doesn't exist … chromium` | Playwright's browser is not installed: `pnpm exec playwright install --with-deps chromium` |
+| `pnpm test:e2e`: `Executable doesn't exist … chromium` | Playwright's browser is not installed: `pnpm exec playwright install --with-deps chromium firefox` (both engines, once per machine) |
+| `pnpm test:e2e`: every `[firefox]` test fails with `Executable doesn't exist … firefox` | Since M2-18 the `firefox` project runs the determinism spec, so plain `pnpm test:e2e` needs Playwright's Firefox too: `pnpm exec playwright install --with-deps firefox` — or run `pnpm test:e2e --project=chromium` for the Chromium tests alone |
 | `pnpm test:e2e` hangs or times out creating WebGL contexts | A stale `DISPLAY` (forwarded X display of an SSH session) — the config already strips it for the browser; if you launch Chromium by hand, unset `DISPLAY` |
 | `pnpm test:e2e`: port 4173 already in use | Another `vite preview` is running; locally it is reused (`reuseExistingServer`), so make sure it serves a current `apps/web/dist`, or stop it |
 | A test fails with `the allocation guard needs node --expose-gc --allow-natives-syntax` | The package's `vitest.config.ts` lacks `defineShmupProject(name, { execArgv: ALLOCATION_GUARD_EXEC_ARGV })` (`vitest.shared.ts`) |
