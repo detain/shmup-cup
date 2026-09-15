@@ -64,7 +64,7 @@
  * {@link AssistFlag} / {@link runAssisted} (also `ReplayHeader.assists`) and the replay library
  * ({@link ReplayLibrary}, {@link createReplayLibrary}, {@link ReplaySummary},
  * {@link ReplayStoreResult}, {@link replayStorageKey}, {@link REPLAY_SLOTS},
- * {@link KEPT_REPLAY_SLOTS}, {@link MAX_REPLAY_TEXT}).
+ * {@link KEPT_REPLAY_SLOTS}, {@link MAX_REPLAY_TEXT}, {@link MAX_KEPT_REPLAY_TEXT}).
  *
  * **Attract playback (M2-15).** The attract loop's demo play (shmup_feat.md §16) runs the bundled
  * demos (`content/demos/*.replay.json`, `core/data` `ContentDb.demos`) through this same playback
@@ -122,6 +122,7 @@ export {
 export {
   AssistFlag,
   KEPT_REPLAY_SLOTS,
+  MAX_KEPT_REPLAY_TEXT,
   MAX_REPLAY_TEXT,
   MAX_RUN_SEGMENTS,
   MAX_SEGMENT_ACTIONS,

@@ -3818,8 +3818,10 @@ Coarse steps; each will be split into agent-sized sub-steps (same format as M1/M
     `assisted`). Whole runs use a new `run-replay` format (`core/replay` `run.ts`): one segment per World with its
     start state (carry, zone, loop …), RLE input, hashes and between-tick actions (continues, secrets), flags 4 speed /
     8 secret added. The flow records every run (`SceneFlow.recorder`); the `ReplayLibrary` keeps the last game plus 3
-    kept replays in platform storage (`replay.last`, `replay.1`–`3`, ≤ 200,000 chars). EXTRA → REPLAYS browses them:
-    PLAY (the `ReplayScene`: Right / Left ×1 / ×2 / ×4, OK pause, desync message), KEEP, SHARE, DELETE. SHARE is a
+    kept replays in platform storage (`replay.last`, `replay.1`–`3`; ≤ 120,000 chars each — under the web / Tizen
+    adapter's 256 KiB a value, UTF-16 — and ≤ 130,000 for the kept ones together, so the library never crowds the save
+    out of the 1 MiB budget; KEEP / import past it say the slots are full). EXTRA → REPLAYS browses them: PLAY (the
+    `ReplayScene`: Right / Left ×1 / ×2 / ×4, OK pause, desync message), KEEP, SHARE, DELETE. SHARE is a
     host hook: the web app copies the text to the clipboard and imports a replay pasted on the page; the TV has none.
   - **Assists & feel** are save options (`options.play`, save version stays 2 — every new field optional): the GAME
     page's OPT RECOVERY, SPEED (100 / 75 / 50 %) and INVINCIBLE rows, the CONTROLS page's RUMBLE. The game speed slows

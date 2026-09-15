@@ -67,7 +67,9 @@ export const STORAGE_PREFIX = 'shmup-cup:';
 /**
  * The app's own budget for all of its Web Storage keys together, in bytes (UTF-16: two bytes a
  * character) — 1 MiB, a fifth of the ~5 MB an origin gets; a full save (32 hi-score tables of
- * 10 rows) is about 26,000 characters.
+ * 10 rows) is about 26,000 characters. The replay library (M3-01, `core/replay`
+ * `MAX_REPLAY_TEXT` / `MAX_KEPT_REPLAY_TEXT`) takes at most 500,150 bytes of it, so the save and
+ * its corrupt copy still fit beside it even at {@link STORAGE_VALUE_MAX_BYTES} each.
  */
 export const STORAGE_QUOTA_BYTES = 1024 * 1024;
 

@@ -13,6 +13,7 @@ import { createMemoryStorage } from '../../src/platform/index.js';
 import {
   AssistFlag,
   KEPT_REPLAY_SLOTS,
+  MAX_KEPT_REPLAY_TEXT,
   MAX_REPLAY_TEXT,
   REPLAY_HASH_INTERVAL,
   REPLAY_SLOTS,
@@ -81,6 +82,21 @@ function runOf(segments: readonly RunSegment[], assists = 0): RunReplay {
     ticks,
     segments,
   };
+}
+
+/**
+ * A valid run replay whose text is exactly a length (its segment's start state padded).
+ *
+ * @param segment - The segment to pad.
+ * @param length - The text's length.
+ * @returns The run and its text.
+ */
+function paddedRun(segment: RunSegment, length: number): { run: RunReplay; text: string } {
+  const bare = runReplayText(runOf([{ ...segment, start: { pad: '' } }]));
+  const run = runOf([{ ...segment, start: { pad: 'x'.repeat(length - bare.length) } }]);
+  const text = runReplayText(run);
+  expect(text).toHaveLength(length);
+  return { run, text };
 }
 
 describe('core/replay SegmentRecorder (M3-01)', () => {
@@ -266,5 +282,55 @@ describe('core/replay ReplayLibrary (M3-01)', () => {
     expect(memory.summaries[0]).toBeNull();
     expect(memory.storeLast(run)).toBe(ReplayStoreResult.Ok);
     expect(memory.summaries[0]?.score).toBe(1230);
+  });
+
+  it('fits the storage adapter: one replay under 256 KiB a value, the kept ones under a shared budget', async () => {
+    // The web / Tizen adapter counts two bytes a UTF-16 character, the prefixed key included.
+    expect(
+      ('shmup-cup:' + replayStorageKey(0)).length * 2 + MAX_REPLAY_TEXT * 2,
+    ).toBeLessThanOrEqual(256 * 1024);
+    let library = 0;
+    for (let slot = 0; slot < REPLAY_SLOTS; slot++) {
+      library += ('shmup-cup:' + replayStorageKey(slot)).length * 2;
+    }
+    library += (MAX_REPLAY_TEXT + MAX_KEPT_REPLAY_TEXT) * 2;
+    // The rest of the 1 MiB is the save's and its corrupt copy's (256 KiB each at most).
+    expect(library + 2 * 256 * 1024).toBeLessThanOrEqual(1024 * 1024 - 16 * 1024);
+    const segment = recordSegment(5).segment!;
+    const big = paddedRun(segment, 60_000);
+    const small = paddedRun(segment, 20_000);
+    const storage = createMemoryStorage();
+    const replays = createReplayLibrary(storage);
+    expect(replays.storeLast(paddedRun(segment, MAX_REPLAY_TEXT).run)).toBe(ReplayStoreResult.Ok);
+    expect(replays.storeLast(paddedRun(segment, MAX_REPLAY_TEXT + 1).run)).toBe(
+      ReplayStoreResult.TooLong,
+    );
+    expect(replays.storeLast(big.run)).toBe(ReplayStoreResult.Ok);
+    expect(replays.keep(0)).toBe(1); // 60,000
+    expect(replays.keep(0)).toBe(2); // 120,000
+    expect(replays.keep(0)).toBe(-1); // 180,000 > 130,000: no room, though slot 3 is free
+    expect(replays.importText(big.text)).toBe(ReplayStoreResult.Full);
+    expect(replays.summaries[3]).toBeNull();
+    expect(replays.importText(small.text)).toBe(ReplayStoreResult.Full); // 140,000 > 130,000
+    replays.remove(2);
+    expect(replays.importText(small.text)).toBe(ReplayStoreResult.Ok);
+    expect(replays.summaries.map((s) => (s === null ? null : s.slot))).toEqual([0, 1, 2, null]);
+    // The last game keeps its own room whatever the kept ones hold.
+    expect(replays.storeLast(paddedRun(segment, MAX_REPLAY_TEXT).run)).toBe(ReplayStoreResult.Ok);
+    await Promise.resolve();
+    // An older build's texts over the caps are read as empty and their keys cleared.
+    const old = createMemoryStorage({
+      [replayStorageKey(0)]: paddedRun(segment, MAX_REPLAY_TEXT + 10).text,
+      [replayStorageKey(1)]: big.text,
+      [replayStorageKey(2)]: big.text, // 120,000: fits
+      [replayStorageKey(3)]: small.text, // 140,000: over the kept budget
+    });
+    const reader = createReplayLibrary(old);
+    await reader.load();
+    await Promise.resolve();
+    expect(reader.summaries.map((s) => (s === null ? null : s.slot))).toEqual([null, 1, 2, null]);
+    expect(await old.get(replayStorageKey(0))).toBe('');
+    expect(await old.get(replayStorageKey(1))).toBe(big.text);
+    expect(await old.get(replayStorageKey(3))).toBe('');
   });
 });

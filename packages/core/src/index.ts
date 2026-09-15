@@ -1387,6 +1387,7 @@ export { hudClockSeconds } from './ui/index.js';
 export {
   AssistFlag,
   KEPT_REPLAY_SLOTS,
+  MAX_KEPT_REPLAY_TEXT,
   MAX_REPLAY_TEXT,
   MAX_RUN_SEGMENTS,
   MAX_SEGMENT_ACTIONS,

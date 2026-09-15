@@ -29,8 +29,13 @@
  *   "[P2] save/share replays, replay browser"): slot 0 is the **last game** (every finished run
  *   replaces it), slots 1–{@link KEPT_REPLAY_SLOTS} are the ones the player **kept**; each lives
  *   under its own `Platform.storage` key ({@link replayStorageKey}) as the replay's text, at most
- *   {@link MAX_REPLAY_TEXT} characters (a longer run is not saved — the web / Tizen storage keeps
- *   256 KiB a value). **Sharing** is the text itself: {@link ReplayLibrary.exportText} /
+ *   {@link MAX_REPLAY_TEXT} characters (a longer run is not saved), the kept ones together at most
+ *   {@link MAX_KEPT_REPLAY_TEXT}. **Storage budget:** the web / Tizen storage adapter (shell
+ *   `storage`) counts two bytes a UTF-16 character, key included, against 256 KiB a value and
+ *   1 MiB for all of the app's keys — so one replay stays under the value limit (≈ 234 KiB) and
+ *   the whole library under ≈ 489 KiB: even a save (`save.v1`) and its corrupt copy at that value
+ *   limit each still fit beside it, so replays can never crowd the save out of the storage.
+ *   **Sharing** is the text itself: {@link ReplayLibrary.exportText} /
  *   {@link ReplayLibrary.importText} (the web host copies it to the clipboard and imports a pasted
  *   one — the replay is locked to its build only by its hashes).
  *
@@ -71,8 +76,21 @@ export const MAX_RUN_SEGMENTS = 48;
 /** Most flow actions one segment records ({@link RunAction}). */
 export const MAX_SEGMENT_ACTIONS = 64;
 
-/** Longest replay text the library stores (characters; a longer run is not saved). */
-export const MAX_REPLAY_TEXT = 200_000;
+/**
+ * Longest replay text the library stores, in characters (a longer run is not saved). Sized to the
+ * web / Tizen storage adapter's 256 KiB a value, which counts two bytes a UTF-16 character with
+ * the key: `('shmup-cup:replay.last'.length + 120,000) × 2` = 240,042 bytes.
+ */
+export const MAX_REPLAY_TEXT = 120_000;
+
+/**
+ * Most characters the kept replays (slots 1 – {@link KEPT_REPLAY_SLOTS}) take together — KEEP and
+ * a shared replay's import are refused beyond it ({@link ReplayStoreResult}.Full: delete one
+ * first). With the last game's own {@link MAX_REPLAY_TEXT} the library never holds more than
+ * 250,000 characters: 500,150 bytes in Web Storage with its keys, so the save and its corrupt
+ * copy (at most 256 KiB each) and the small keys still fit the app's 1 MiB budget beside it.
+ */
+export const MAX_KEPT_REPLAY_TEXT = 130_000;
 
 /** Slots of kept replays besides the last game's (slot 0). */
 export const KEPT_REPLAY_SLOTS = 3;
@@ -559,7 +577,10 @@ export const ReplayStoreResult = {
   TooLong: 1,
   /** The text is not a valid run replay. */
   Invalid: 2,
-  /** No kept slot is free (delete one first). */
+  /**
+   * No kept slot is free, or the kept replays would exceed {@link MAX_KEPT_REPLAY_TEXT} with it
+   * (delete one first).
+   */
   Full: 3,
 } as const;
 
@@ -576,7 +597,9 @@ export interface ReplayLibrary {
   readonly revision: number;
   /**
    * Reads every slot from the storage (the host awaits it before the title). Never rejects: an
-   * unreadable or invalid slot is empty.
+   * unreadable or invalid slot is empty. A slot over the size caps ({@link MAX_REPLAY_TEXT}, or a
+   * kept slot past {@link MAX_KEPT_REPLAY_TEXT} with the ones before it — an older build's) is
+   * empty too, and its key is cleared so it no longer takes the save's room.
    *
    * @returns Resolves once read.
    */
@@ -606,14 +629,16 @@ export interface ReplayLibrary {
    * Keeps a slot's replay in the first free kept slot (the browser's KEEP).
    *
    * @param slot - The slot to copy (normally 0).
-   * @returns The kept slot, or -1 (an empty slot, or no free kept slot).
+   * @returns The kept slot, or -1 (an empty slot, no free kept slot, or no room left under
+   *   {@link MAX_KEPT_REPLAY_TEXT}).
    */
   keep(slot: number): number;
   /**
    * Stores a shared replay's text in the first free kept slot (the web host's paste).
    *
    * @param text - The text.
-   * @returns {@link ReplayStoreResult}.
+   * @returns {@link ReplayStoreResult} (Full also when the kept replays have no room left for it
+   *   under {@link MAX_KEPT_REPLAY_TEXT}).
    */
   importText(text: string): ReplayStoreResult;
   /**
@@ -678,11 +703,23 @@ export function createReplayLibrary(storage: PlatformStorage | null): ReplayLibr
     }
   };
   /**
-   * The first empty kept slot.
+   * Characters the kept slots hold together.
    *
-   * @returns The slot, or -1.
+   * @returns The total.
    */
-  const freeSlot = (): number => {
+  const keptLength = (): number => {
+    let total = 0;
+    for (let i = 1; i < REPLAY_SLOTS; i++) total += texts[i]?.length ?? 0;
+    return total;
+  };
+  /**
+   * The first empty kept slot, when a text of a length fits the kept replays' budget.
+   *
+   * @param length - The text's length.
+   * @returns The slot, or -1 (no free slot, or no room).
+   */
+  const freeSlot = (length: number): number => {
+    if (keptLength() + length > MAX_KEPT_REPLAY_TEXT) return -1;
     for (let i = 1; i < REPLAY_SLOTS; i++) if (texts[i] === null) return i;
     return -1;
   };
@@ -694,6 +731,7 @@ export function createReplayLibrary(storage: PlatformStorage | null): ReplayLibr
     },
     async load(): Promise<void> {
       if (storage === null) return;
+      let kept = 0;
       for (let slot = 0; slot < REPLAY_SLOTS; slot++) {
         let text: string | null;
         try {
@@ -702,9 +740,14 @@ export function createReplayLibrary(storage: PlatformStorage | null): ReplayLibr
         } catch (_error) {
           text = null;
         }
-        const run =
-          text === null || text.length > MAX_REPLAY_TEXT ? null : parseRunReplayText(text);
-        put(slot, run === null ? null : text, run, false);
+        // Over the caps (an older build's text): empty, and its key cleared (the save's room).
+        const oversize =
+          text !== null &&
+          (text.length > MAX_REPLAY_TEXT ||
+            (slot > 0 && kept + text.length > MAX_KEPT_REPLAY_TEXT));
+        const run = text === null || oversize ? null : parseRunReplayText(text);
+        if (run !== null && text !== null && slot > 0) kept += text.length;
+        put(slot, run === null ? null : text, run, oversize);
       }
     },
     replay(slot: number): RunReplay | null {
@@ -723,7 +766,7 @@ export function createReplayLibrary(storage: PlatformStorage | null): ReplayLibr
     keep(slot: number): number {
       const text = slot >= 0 && slot < REPLAY_SLOTS ? texts[slot] : null;
       if (text === null) return -1;
-      const target = freeSlot();
+      const target = freeSlot(text.length);
       if (target < 0) return -1;
       put(target, text, parseRunReplayText(text), true);
       return target;
@@ -733,7 +776,7 @@ export function createReplayLibrary(storage: PlatformStorage | null): ReplayLibr
       if (trimmed.length > MAX_REPLAY_TEXT) return ReplayStoreResult.TooLong;
       const run = parseRunReplayText(trimmed);
       if (run === null) return ReplayStoreResult.Invalid;
-      const target = freeSlot();
+      const target = freeSlot(trimmed.length);
       if (target < 0) return ReplayStoreResult.Full;
       put(target, trimmed, run, true);
       return ReplayStoreResult.Ok;
