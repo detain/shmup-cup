@@ -509,7 +509,9 @@ It needs `node --expose-gc --allow-natives-syntax`: `defineShmupProject(name, { 
 ALLOCATION_GUARD_EXEC_ARGV })` passes both to the Vitest workers of `@shmup/core`,
 `@shmup/shell`, `@shmup/render-pixi` and `@shmup/input-web` (the last three import the helper by
 relative path). It runs the warm-up (two rounds) and up to `attempts` measured windows (default
-3) through one loop, and before every round it collects garbage twice and lands V8's background
+3) through one loop — every call on a new index, the windows on the ones after the warm-up's, so
+values a guard derives from its index (the camera, a tick, a clock) are new in every window as in
+play, and a cache keyed on one shows — and before every round it collects garbage twice and lands V8's background
 compiles (`%FinalizeOptimization()`); it leaves the heap spaces of compiled code
 (`JIT_SPACES`) out of the count, and returns the steadiest window, stopping at the first that
 measures at most `settled` bytes (default 32 KiB — at most half the guard's budget). So a
@@ -583,7 +585,7 @@ Inside the game, use `createGame(platform, overrides, db)` and `game.step()` /
 | `packages/core/test/collision/` | every shape test incl. edge contact and degenerate shapes, `segmentAabb` against an exact reference (4,000 cases), the layer matrix, grid = brute force (1,000 random boxes, several cell sizes, fractional origins), the 9-cell overflow, capacity, `build`/`query` protocol, zero allocation |
 | `packages/core/test/debug/` | `hashWorld` against an independent FNV-1a of the documented sequence, every hashed field matters, presentation state does not, NaN / ±0 / Infinity, purity, allocation bound |
 | `packages/core/test/game/game-world.test.ts` | `game.frame(now)` → one world tick per 1/60 s (capped), pause / suspend freeze the world, 5,000-tick sessions reproducible, the whole per-frame path within budget |
-| `packages/core/test/helpers/alloc.test.ts` | the allocation guard itself (zero loop, one object per iteration, garbage already collected; three windows by default, the early stop at `settled`, `attempts = 1`; the warm-up and window indices; the compiled-code spaces it leaves out still exist under those names) |
+| `packages/core/test/helpers/alloc.test.ts` | the allocation guard itself (zero loop, one object per iteration, garbage already collected; three windows by default, the early stop at `settled`, `attempts = 1`; the warm-up and window indices, none twice; a cache keyed on a value derived from the index, against the same calls on values the warm-up cached; the compiled-code spaces it leaves out still exist under those names) |
 | `packages/shell/test/flight/` | the scene's sprite ids, starfield drift / wrap / pause, HUD (score, `HI`, stock, `GAME OVER` — rebuilt only on a change), the WARNING band (M1-13), empty content, zero allocation per displayed frame |
 | `test/integration/world-flight.test.ts` | shipped KESTREL = plan tunables = built-in fallback, atlas has every bank frame, a remote session under `tizen-remote-safe` replays to an equal hash |
 | `test/e2e/flight.spec.ts`, `boot.spec.ts` | in Chromium: arrow keys move the ship (pixel diff on its hull colour), holding a direction stops it at the margin clear of the HUD, the Tizen build from `file://` too; free flight is the default scene |

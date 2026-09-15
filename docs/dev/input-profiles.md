@@ -387,9 +387,10 @@ nothing: the keyboard's slots are typed arrays created once, the debouncer is tw
 arrays, `resolveDirections` works on numbers, the per-pad state objects and direction
 trackers are created with the adapter. Profiles are compiled once at load; `setProfile()` is
 a load-time call. An allocation guard in `web-input-profiles-edge.test.ts` runs `poll()` with
-profiles, debounce, policies and pads through the core's `measureHeapGrowth` (a per-poll array
-would show as ~0.5 MB, one boxed number per poll as 160 KB against the 128 KB budget; today it
-measures ~4 KB).
+profiles, debounce, policies and pads — the pad's stick sweeping round, so its axes read new
+values on every poll as a real stick's do — through the core's `measureHeapGrowth` (a per-poll
+array would show as ~0.5 MB, one boxed number per poll as 160 KB against the 128 KB budget, a
+cache keyed on the stick's reading ~320 KB; today it measures ~4 KB).
 
 ## Extending it
 

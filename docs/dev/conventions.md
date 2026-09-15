@@ -258,8 +258,16 @@ ES5 and linted with `ecmaVersion: 5`.
   every per-tick or per-frame entry point gets a test asserting its bytes stay under budget
   ([sim-world.md](sim-world.md#zero-allocation-and-the-allocation-guard)). Its rules:
   - a **warm-up** of at least `max(iterations, 20_000)` calls for a cheap loop (microseconds a
-    call) — V8 promotes code to its top tier only after enough calls, and a window must not meet
-    indices the warm-up never ran; a heavy World guard warms up about two windows' worth;
+    call) — V8 promotes code to its top tier only after enough calls; a heavy World guard warms up
+    about two windows' worth;
+  - **new indices in every window**: the calls get indices that never repeat — `0 … warmup − 1`
+    in the warm-up, then `warmup + w × iterations …` in window `w` — so derive the per-call values
+    from the index the way the game produces them: what grows in play (a tick, the camera, a
+    clock, a score, a stick's reading) grows with the index, what is bounded (a screen position,
+    an animation frame, a pattern phase) may cycle (`i % n`). Pick the code's paths by the index's
+    remainders, which the warm-up has all met, never by its size. (Windows that replayed the
+    warm-up's indices never met a new value, so a cache keyed on one — a `Map` entry per camera
+    position — went unseen: render-pixi's hitbox guard passed with one in its `sync`.)
   - `settled` (default 32 KiB, the window that ends the search early) at most **half the
     budget** — the 32 KiB guards pass 16 KiB;
   - three windows by default (`attempts`); a guard whose windows still differ under the full

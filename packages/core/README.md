@@ -144,7 +144,8 @@ warmup?)` measures the bytes a hot path allocates (V8 `GCProfiler`, without comp
 `updatePlayer`, the grid, the stage runner, a 64-enemy World running every mover kind, a World
 with 512 live bullets and 16 lasers, a fully powered World firing lasers and missiles from
 four Options, a World collecting capsules, equipping the meter and wearing the Force Field down — one and two players, deaths and restarts, a whole boss fight — `hashWorld`, `game.frame` (also slowed and frame-advanced), the debug counters, replay recording and playback, the scene flow through a whole game and 20,000 menu ticks, the UI widgets and the HUD, rank-modified shooters and revenge kills, the difficulty menu and the continue countdown, every Types B–D weapon firing from four Options and the weapon select flying its live preview, the MANTA's family volleys, colour items, Arm and speed toggle and the HUD's tier pips) has a test that keeps it under budget. The helper
-runs its warm-up and windows through one loop, lands V8's background compiles before every round
+runs its warm-up and windows through one loop (every call on a new index, so values derived from
+it are new in every window, as in play), lands V8's background compiles before every round
 and keeps the steadiest of up to three measured windows (`attempts`, stopping at the first within
 `settled` bytes), so the full suite's load does not show in a guard
 ([docs/dev/build-test-deploy.md](../../docs/dev/build-test-deploy.md#test-concurrency)).

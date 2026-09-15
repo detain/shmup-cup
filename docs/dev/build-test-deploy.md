@@ -213,7 +213,8 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   settled?)` in `packages/core/test/helpers/alloc.ts` — the one guard of every package; shell,
   render-pixi and input-web import it by relative path — measures the bytes a hot path allocates
   (heap growth plus what in-loop GCs reclaimed, via V8's `GCProfiler`, without the heap spaces of
-  compiled code), the steadiest of up to three windows. It needs `--expose-gc` and
+  compiled code), the steadiest of up to three windows, each on call indices neither the warm-up
+  nor an earlier window ran (so values derived from them are new, as in play). It needs `--expose-gc` and
   `--allow-natives-syntax`: `defineShmupProject(name, { execArgv: ALLOCATION_GUARD_EXEC_ARGV })`
   passes both to the Vitest workers of `@shmup/core`, `@shmup/shell`, `@shmup/render-pixi` and
   `@shmup/input-web`. A cheap loop (microseconds a call) needs a long warm-up
@@ -405,8 +406,12 @@ hence `--allow-natives-syntax` in `ALLOCATION_GUARD_EXEC_ARGV`), leaves the heap
 compiled code out of its count, and runs the warm-up and the windows through one loop — see its
 module docs. Over 8 instrumented full runs every guard's result stayed within 71 % of its
 budget (before, over 13: up to 98 %), and 5 % of first windows went over a budget (before: 19 %);
-22 full runs in a row passed (52–61 s each). A guard that still wavers is too close to its steady
-state: give it a longer warm-up or more windows, never a bigger budget
+22 full runs in a row passed (52–61 s each). Its windows then replayed the warm-up's call
+indices, so a value a guard derives from its index (the camera, a tick) was never new in a window
+and a cache keyed on one went unseen; they now run the indices after the warm-up's, and the guards
+feed values that change as in play — 16 full runs in a row passed with that (52–63 s each), and
+`CI=1 taskset -c 0-3 pnpm test` (a 4-vCPU runner's pool) too. A guard that still wavers is too
+close to its steady state: give it a longer warm-up or more windows, never a bigger budget
 ([conventions.md](conventions.md#tests)).
 
 **Playwright** (`pnpm test:e2e`, `test/e2e/playwright.config.ts`): `fullyParallel` — every test
@@ -471,7 +476,7 @@ the frozen install fails.
 | `pnpm test:e2e` hangs or times out creating WebGL contexts | A stale `DISPLAY` (forwarded X display of an SSH session) — the config already strips it for the browser; if you launch Chromium by hand, unset `DISPLAY` |
 | `pnpm test:e2e`: port 4173 already in use | Another `vite preview` is running; locally it is reused (`reuseExistingServer`), so make sure it serves a current `apps/web/dist`, or stop it |
 | A test fails with `the allocation guard needs node --expose-gc --allow-natives-syntax` | The package's `vitest.config.ts` lacks `defineShmupProject(name, { execArgv: ALLOCATION_GUARD_EXEC_ARGV })` (`vitest.shared.ts`) |
-| An allocation test (`… toBeLessThan(…)` on `growth.bytes`) fails | A hot path allocates: a new object / array / closure per tick, or a fractional number V8 boxes (a fractional `let` in a closure, a mixed ternary, a fractional argument) — see [sim-world.md](sim-world.md#zero-allocation-and-the-allocation-guard). Check the test's own fakes too: a fake that logs its calls allocates (the fx gallery guard measured its popups fake). If it fails only now and then and always passes alone (`pnpm --filter <package> test <file>`), the guard is too close to its steady state: a cheap loop needs a warm-up of at least `max(iterations, 20_000)` calls, and a window whose calls meet paths the warm-up never ran may need more windows (`attempts`); never raise the budget for it, and report it if it keeps happening. Compiles landing in a window (V8's background threads starved by the load) no longer count — the guard lands them before each round and leaves compiled code out |
+| An allocation test (`… toBeLessThan(…)` on `growth.bytes`) fails | A hot path allocates: a new object / array / closure per tick, or a fractional number V8 boxes (a fractional `let` in a closure, a mixed ternary, a fractional argument) — see [sim-world.md](sim-world.md#zero-allocation-and-the-allocation-guard). Check the test's own fakes too: a fake that logs its calls allocates (the fx gallery guard measured its popups fake). If it fails only now and then and always passes alone (`pnpm --filter <package> test <file>`), the guard is too close to its steady state: a cheap loop needs a warm-up of at least `max(iterations, 20_000)` calls, and a window whose calls meet paths the warm-up never ran may need more windows (`attempts`) — or the guard picks paths by the size of its index instead of its remainders (the windows run indices the warm-up never ran); never raise the budget for it, and report it if it keeps happening. Compiles landing in a window (V8's background threads starved by the load) no longer count — the guard lands them before each round and leaves compiled code out |
 | `golden.test.ts` fails: a hash or the outcome differs | The simulation changed. Unintended: find the change (the report names the first diverging hash tick). Intended: `pnpm golden:update`, review the diff of `test/golden/*.replay.json`, commit it with the reason — [debug-and-replays.md](debug-and-replays.md#gotchas) |
 | `pnpm bench` fails on the median | Timing: run it alone on a quiet machine. On the heap: something in the tick allocates — see the allocation guard rows above |
 | Tizen build fails with `app.js is … gzipped, over the … budget` (or an atlas page / `dist/` budget) | The bundle grew past a plan budget (`check-bundle.mjs` rule 8). Find what grew (a new dependency, inlined data); raising a budget is a plan decision, not a fix |
