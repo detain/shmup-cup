@@ -25,7 +25,12 @@
  * - shmup_feat.md §16 (2-player simultaneous co-op — {@link GameConfig.coop}, the item count
  *   scaled for two ships — {@link GameConfig.coopExtra}; M2-06)
  * - shmup_feat.md §21 Options menu — audio master / music / SFX sliders, the controls profile
- *   (the presentation-only {@link UserOptions})
+ *   (the presentation-only {@link UserOptions}); M2-16: the Controls group (autofire mode & rate,
+ *   SOCD, the remote's debounce, the rebinding), the Game group (difficulty, lives, death penalty,
+ *   Auto Power-Up, pickup magnet) and the one-button preset ({@link UserGameOptions})
+ * - shmup_feat.md §4 — [P0] autofire: hold-to-fire, toggle mode, configurable rate
+ *   ({@link GameConfig.autofireMode}); [P1] rebinding per device + persistence and SOCD resolution
+ *   (the saved {@link BindingOverrides} and {@link SocdChoice} — M2-16)
  *
  * **Public API (implemented now).** {@link GameConfig}, {@link DEFAULT_GAME_CONFIG},
  * {@link resolveGameConfig}, the difficulty presets ({@link DIFFICULTY_PRESETS},
@@ -65,7 +70,12 @@
  * {@link SCALE_MODES} —, the screen-shake switch, reduced flashing and the hitbox marker).
  * {@link DEFAULT_USER_OPTIONS},
  * {@link resolveUserOptions} (defensive: anything malformed falls back field by field),
- * {@link InputProfileChoice} (one entry of the Options screen's profile selector).
+ * {@link InputProfileChoice} (one entry of the Options screen's profile selector). Since M2-16 the
+ * document also carries **sim-affecting** choices — the autofire mode and rate
+ * ({@link InputOptions.autofire}, {@link InputOptions.autofireInterval}) and the game options
+ * ({@link UserOptions.game}) — which never act on a World directly: the scene flow folds them into
+ * the configs of the games it starts ({@link withUserGameOptions}), so a replay header records the
+ * result and a World's hash never depends on the save.
  *
  * **Difficulty presets (M2-01).** Easy / Normal / Hard / Arcade ({@link DIFFICULTY_PRESETS},
  * shmup_feat.md §15) each map to a row of a {@link DifficultyTable} ({@link DifficultyRules}: rank
@@ -106,6 +116,7 @@ export const moduleInfo = defineModule({
     'shmup_feat.md §8',
     'shmup_feat.md §9',
     'shmup_feat.md §5',
+    'shmup_feat.md §4',
   ],
 });
 

@@ -430,7 +430,7 @@ const shell = await bootShell({
   scene: sceneFromSearch(location.search), // 'game' (default: the scene flow) | 'flight' | 'showcase' | 'calibration' | 'fx-gallery'
   audioUnlock: 'gesture', // 'immediate' on the TV
   contentOwners: { [INPUT_PROFILES_KIND]: profiles.load }, // optional: merged over DEFAULT_CONTENT_OWNERS
-  inputProfiles: { choices, active, apply }, // optional (M1-17): the Options screen's CONTROLS
+  inputProfiles: { choices, active, apply, customize, rebindable }, // optional (M1-17): CONTROLS; M2-16: the player's rebinding / SOCD / debounce and the rebind screen's profiles
   debugTools: __SHMUP_DEV__ ? debugToolsFactory({ buildId: __SHMUP_BUILD__ }) : null, // M1-19
 });
 ```
@@ -444,9 +444,9 @@ const shell = await bootShell({
 | 2 | `loadImages(pageUrls, () => new Image())` — all pages in parallel, the bar advances per page | `ATLAS PAGE FAILED TO LOAD` (`<url>: AssetLoadError: …`) |
 | 3 | `createAtlas(manifest, images)` | `ATLAS DOES NOT MATCH ITS MANIFEST` |
 | 4 | `createPixiRenderer(...)` — WebGL1 first; `fxSeed` = the game's seed xor a salt, `effects` = `ShellOptions.effects`, `countDrawCalls` only with `ShellOptions.debugTools` (M1-19) | `WEBGL IS NOT AVAILABLE` |
-| 5 | `options.platform(renderer)`; then (M1-17) `loadSave(platform.storage)` — never fails: a corrupt or unreadable save means defaults, its text copied to `save.corrupt` — `createSaveStore`, `applyAudioOptions(audio, save.options.audio)`, and with `options.inputProfiles` its `choices()`, `apply(savedId, 'save')` and `active()`; then `createGame(platform, gameConfig, content.db, options)` — `{ scenes: 'boot', save, inputProfiles: { choices, active } }` for the default scene `game` (the scene flow, M1-16), none for the dev scenes (bare gameplay) — [saves-and-options.md](saves-and-options.md#the-shells-side) | `SHMUP CUP FAILED TO START` (the platform factory, the profile callbacks or `createGame` threw) |
+| 5 | `options.platform(renderer)`; then (M1-17) `loadSave(platform.storage)` — never fails: a corrupt or unreadable save means defaults, its text copied to `save.corrupt` — `createSaveStore`, `applyAudioOptions(audio, save.options.audio)`, and with `options.inputProfiles` its `choices()`, `apply(savedId, 'save')`, (M2-16) `customize?.(save.options.input)` and `active()`; (M2-16) the rebind screen's host side `createShellControls(…)` when the app offers `customize` / `rebindable` and the adapter the capture; then `createGame(platform, gameConfig, content.db, options)` — `{ scenes: 'boot', save, inputProfiles: { choices, active }, soundTest, controls }` for the default scene `game` (the scene flow, M1-16), none for the dev scenes (bare gameplay) — [saves-and-options.md](saves-and-options.md#the-shells-side) | `SHMUP CUP FAILED TO START` (the platform factory, the profile callbacks or `createGame` threw) |
 | 5a | Audio (M1-15): `createAudioEngine({ sfx, music, loader })`, `engine.loadSfx()` (bar labelled `LOADING SOUND`), then for a booted stage `engine.prepareMusic(stage.id, stageMusicCues(stage))` (`LOADING MUSIC`; open space prepares none); the scene flow adds the title theme (and the stage-clear / game-over jingles in open space), then `game.scenes.finishBoot()` — [audio.md](audio.md#the-shells-wiring) | `AUDIO FAILED TO LOAD` (`AudioLoadError: could not load <url>: …`) |
-| 6 | `renderer.setFxContent(shell.fx)`; `applyDisplayOptions(renderer, save.options.display)` (M2-02: the bullet palette — before the sprite names are resolved; M2-08: the scale mode, shake, flashing and hitbox markers — then `ShellOptions.effects.screenShake` / `reduceFlashing` override them), `renderer.setInterpolation(interpolation === 'on')` and the refresh probe (M2-08); scene set up (the scene flow: `createSceneView(game)`, its name table + `bindWorld(view.backdrop)`; free flight / showcase / fx gallery: the scene's name table + `bindWorld(scene.world)`; calibration: content's names and a frame without a world), dispatcher created — in the scene flow and free flight with `connectFxEvents` (M1-14) and `connectAudioEvents(events, engine, camera)` (M1-15; the flow's `sceneView.camera`, free flight's `world.view.camera`); in the scene flow also `connectOptionEvents(events, audio, …)` (M1-17: the Options screen's volumes and profile, live; M2-02: the bullet palette → `renderer.setBulletPalette`; M2-08: the renderer as the display target — scale mode, shake, flashing, hitbox markers) and `connectStagePreparation(events, engine, stages, stageMusicCues)` (M2-10: `PrepareStage` → the stage's music set) | — |
+| 6 | `renderer.setFxContent(shell.fx)`; `applyDisplayOptions(renderer, save.options.display)` (M2-02: the bullet palette — before the sprite names are resolved; M2-08: the scale mode, shake, flashing and hitbox markers — then `ShellOptions.effects.screenShake` / `reduceFlashing` override them), `renderer.setInterpolation(interpolation === 'on')` and the refresh probe (M2-08); scene set up (the scene flow: `createSceneView(game)`, its name table + `bindWorld(view.backdrop)`; free flight / showcase / fx gallery: the scene's name table + `bindWorld(scene.world)`; calibration: content's names and a frame without a world), dispatcher created — in the scene flow and free flight with `connectFxEvents` (M1-14) and `connectAudioEvents(events, engine, camera)` (M1-15; the flow's `sceneView.camera`, free flight's `world.view.camera`); in the scene flow also `connectOptionEvents(events, audio, …)` (M1-17: the Options screen's volumes and profile, live; M2-02: the bullet palette → `renderer.setBulletPalette`; M2-08: the renderer as the display target — scale mode, shake, flashing, hitbox markers; M2-16: `InputSettings` → the app's `customize(save.options.input)`) and `connectStagePreparation(events, engine, stages, stageMusicCues)` (M2-10: `PrepareStage` → the stage's music set) | — |
 | 7 | Suspend → `input.clear()` + `audio.suspend()`; resume → `audio.resume()`; window `blur` → `input.clear()` (M1-17 — a window without focus never sends its key-ups); audio unlock (first `keydown` / `pointerdown` in the capture phase, or immediately) followed by `engine.attach(audio)` right after `unlock()` returns and again when it resolves; `resize` → `renderer.resize()` | — |
 | 8 | rAF loop started, overlay removed, canvas marked `running`, `data-shmup-scene` = the top scene (`title`) or the dev scene, and `data-shmup-boot-ms` = the launch-to-ready time (M1-17, `Shell.bootTiming`); then, in dev / test builds, the debug tools from `ShellOptions.debugTools` (M1-19: keys, `window.__shmupDebug`, the overlay — before the first frame, which rAF runs later) | — |
 
@@ -745,7 +745,7 @@ pnpm test:e2e                                        # builds web + tizen, then 
   ([difficulty-and-rank.md](difficulty-and-rank.md)). Every older spec that starts a game from
   the title presses one more Enter / OK for the difficulty menu — since M2-03 one more for
   the weapon select, and since M2-05 one more for the ship select.
-- `bullet-palette.spec.ts` (M2-02) — web build: OPTIONS → BULLETS steps STANDARD → DEUTERANOPIA,
+- `bullet-palette.spec.ts` (M2-02) — web build: OPTIONS → (DISPLAY since M2-16 →) BULLETS steps STANDARD → DEUTERANOPIA,
   Back writes `display.bulletPalette` to the save (`shmup-cup:save.v1`), and the next boot
   (`?stage=test-range`, whose turrets, walkers and orbiters fire pink, red and purple bullets)
   draws the enemy bullets in the deuteranopia variants' body colours with none of the standard
@@ -781,7 +781,7 @@ pnpm test:e2e                                        # builds web + tizen, then 
   letterboxes; the hitbox markers' rim colour shows on the ship only while shown. Screenshots with
   the effects on are attached to the report.
 - `display-options.spec.ts` (M2-08) — web keyboard and the Tizen build's remote key codes:
-  OPTIONS → SCALE / SHAKE / FLASHES / HITBOX reach the renderer live (`window.__shmupDebug.renderer`),
+  OPTIONS → (DISPLAY since M2-16 →) SCALE / SHAKE / FLASHES / HITBOX reach the renderer live (`window.__shmupDebug.renderer`),
   Back writes them to `display` in `shmup-cup:save.v1`, and the next boot applies them before the
   first frame (`stretch` fills the 1000×600 canvas, the markers on the ship); without a save the
   frame is letterboxed and no marker shows.
@@ -887,7 +887,7 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | Settings or the hi-score are back to the defaults after a reload | Nothing was written yet (the save is written when the Options screen closes and when a game ends), `localStorage` failed and the adapter fell back to memory, or the save was corrupt (look for `shmup-cup:save.corrupt`; `shell.loadedSave.status`) — [saves-and-options.md](saves-and-options.md#gotchas) |
 | `stage.spec.ts` / `enemies.spec.ts` fail with "not scrolling" / "not moving" on a busy machine | Fixed in M1-19: they no longer count rAF frames (the loop runs 1–4 ticks a frame under load) but freeze the sim and step exact ticks (`test/e2e/frame-advance.ts`). A new spec comparing two captures should do the same |
 | A raster effect / palette cycle never shows | The camera x is outside the effect's `[from, to)`, `renderer.effects.settings.rasterEffects` is off, or a scene's own `WorldView` dropped `effects` (the flight scene and the scene view pass it through) — [presentation-polish.md](presentation-polish.md#gotchas) |
-| The frame is stretched, or has no black border on a PC | The saved SCALE option is `fit` / `stretch`; OPTIONS → SCALE → INTEGER restores the letterbox (`renderer.scaleMode`) |
+| The frame is stretched, or has no black border on a PC | The saved SCALE option is `fit` / `stretch`; OPTIONS → DISPLAY → SCALE → INTEGER restores the letterbox (`renderer.scaleMode`) |
 | e2e specs time out waiting for `window.__shmupDebug` | The `dist/` folders are release builds (`pnpm build` ran after the test builds). `pnpm test:e2e` builds `build:test` first; do not run `playwright test` alone on release builds |
 
 ## Next steps that build on this page
@@ -980,3 +980,9 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
   renderer needed nothing new: the attract demo's World reaches it through `SceneFlowView.world`
   like the weapon select's preview, the other front-end screens are UI draw lists
   ([front-end-and-attract.md](front-end-and-attract.md)).
+- **M2-16** (done) — the shell's new module `controls` (`createShellControls`: the rebind screen's
+  host side over the app's profiles and the adapter's capture), `ShellInputProfiles.customize` /
+  `rebindable`, `ShellInput.capture` / `beginCapture` / `endCapture`, the `InputSettings` handler of
+  `connectOptionEvents`; the renderer needed nothing new (the Options pages, the rebind screen and
+  the input test are UI draw lists; the labels come from the core's string table)
+  ([options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md)).

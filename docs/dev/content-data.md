@@ -56,7 +56,9 @@ the `patterns` kind holds the bullet pattern DSL (compiled at load into one prog
 since M2-10 the `campaign` kind holds the zone map (see
 [campaign-and-bonus-stages.md](campaign-and-bonus-stages.md#the-campaign-file-coredata-campaign)), and
 since M2-15 the `replay` kind holds the attract loop's demos (see
-[front-end-and-attract.md](front-end-and-attract.md#demos-are-content-contentdemos-kind-replay)). Both
+[front-end-and-attract.md](front-end-and-attract.md#demos-are-content-contentdemos-kind-replay)), and
+since M2-16 the `strings` kind holds the UI string tables (see
+[options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md#the-string-table-coreuistringsts-content-kind-strings)). Both
 apps register the plugin and their
 `main.ts` imports `virtual:shmup-content`; `@shmup/shell`'s `bootShell()` validates it with
 `loadGameContent()` (core kinds through `loadContent()`, foreign kinds through the
@@ -70,7 +72,7 @@ when there is any issue, and passes `db` to `createGame` (M1-04,
   selects the schema; the loader does not care about folder or file name (the content test
   does: files must be named `<folder>/<name>.<kind>.json`).
 - Core kinds (`CONTENT_KINDS`): `player`, `weapons`, `enemies`, `paths`, `stage`, `tileset`,
-  `rules` (M2-01), `patterns` (M2-02), `campaign` (M2-10), `replay` (M2-15). Any other kind is
+  `rules` (M2-01), `patterns` (M2-02), `campaign` (M2-10), `replay` (M2-15), `strings` (M2-16). Any other kind is
   returned untouched in `foreign`, in path order, for its owning package to validate
   (`input-profiles` → input-web `rebind` since M1-05 — see
   [input-profiles.md](input-profiles.md); `fx` → render-pixi `particles` since M1-14 — see
@@ -126,7 +128,9 @@ const game = createGame(platform, { seed }, db);
    (`checkBonusEvent`); since M2-15 the campaign's `story` pages get their `scene` / `lines`
    defaults, and each `replay` file (an attract demo — `DEMO_FILE_SCHEMA`: the replay document's
    structure, `ticks` ≤ `MAX_DEMO_TICKS`, one input string per player, 32-bit hashes) joins
-   `db.demos` under its `id` (a duplicate is an issue).
+   `db.demos` under its `id` (a duplicate is an issue); since M2-16 each `strings` file
+   (`collectUiStrings`) joins `db.uiStrings` with its valid entries — an unknown UI string id, a
+   text with a character the bitmap font lacks, or a second table of a language is an issue.
 7. **Intern** sprite and script names: every distinct name gets an index in *sorted* order
    (`db.sprites`, `db.scripts`), independent of which file mentioned it first. The names in
    `options.extraSprites` join the sprite names first (M1-09: hosts pass `core/world`
@@ -245,7 +249,9 @@ list plus an id → position map: `ships`/`shipIndex`, `weapons`/`weaponIndex`,
 `campaign` kind (M2-10) `campaign`, the completed `CampaignSpec` (or `null` without a campaign
 file — the scene flow then plays single stages); from the `replay` kind (M2-15) `demos` /
 `demoIndex` (`DemoSpec`s in path order — the validated replay document; `core/replay` decodes it
-when the attract loop plays it). Lists are
+when the attract loop plays it); from the `strings` kind (M2-16) `uiStrings` (`UiStringsSpec`s in
+path order — `{ language, strings }`; the scene flow resolves the `en` one over the built-in English
+table). Lists are
 in path-then-document order. Systems resolve what they need **once** (at session or stage
 start) and keep the numbers; per-tick code indexes arrays only — no `Map.get`, no string
 compares (zero-allocation rule, [conventions.md](conventions.md#performance-zero-allocation-in-hot-paths)).
@@ -509,7 +515,8 @@ the drops `oneUp` / `bonusCapsule` (`ENEMY_DROPS` codes 4 / 5); the content file
 `stages/zone-b … zone-i.stage.json`, `stages/bonus-range.stage.json`,
 `stages/bonus-vault.stage.json` and `enemies/bonus.enemies.json` — which sorts before `zone-a…`,
 so zone A's enemy spec indices shifted and the goldens were re-blessed. Shell tests that needed
-an unowned foreign kind now use `strings` (M2-16's kind) instead of `campaign`
+an unowned foreign kind then used `strings` instead of `campaign` — and, since `strings` became a
+core kind in M2-16, a made-up `locale` kind
 ([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md)).
 
 M2-11 (done) — **no schema change**: zones B and C are content on the existing kinds —
@@ -547,3 +554,11 @@ M2-15 (done) — the new core kind **`replay`**: the attract loop's demos
 `STORY_SCENES`, ≤ 8 pages of ≤ 6 lines of ≤ 40 characters — three pages in
 `main.campaign.json`). The content test maps the folder `demos` to the kind `replay`
 ([front-end-and-attract.md](front-end-and-attract.md)).
+
+M2-16 (done) — the new core kind **`strings`**: the UI string tables
+(`content/strings/en.strings.json` + README + `example.strings.json` — a partial French table;
+`ContentDb.uiStrings`, `UiStringsSpec`; `STRINGS_FILE_SCHEMA`: a language id `xx` / `xx-yy` and a
+record of ids to 1–48-character texts). The loader imports `core/ui/strings.ts` (a leaf module, no
+cycle) for `UI_TEXT_IDS` and `MAX_UI_TEXT_LENGTH`; `pnpm content:check` keeps `en.strings.json`
+equal to `DEFAULT_UI_TEXT`. The shell's loader test uses a made-up `locale` kind for "a kind nobody
+owns" ([options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md)).

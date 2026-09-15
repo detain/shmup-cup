@@ -397,5 +397,7 @@ the shell).
   plays against its own table's best and never raises the one-player session hi-score
   ([front-end-and-attract.md](front-end-and-attract.md#hi-score-tables-per-difficulty--ship--mode-coresave)).
 - **M3-01** — a replay of the scene flow records the title's player choice.
-- **M2-16** — the Options screen's control groups (rebinding per device) sit on the same profiles,
-  seats included; the chosen player count may be remembered with the game options.
+- **M2-16** (done) — rebinding per device sits on the same profiles, seats included: on
+  `keyboard-split` player 1's half is rebindable and a key player 2's half binds is `Rejected` (one
+  key never drives both players; a hand-edited override skips it too); the player count is not
+  remembered ([options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md#rebinding-shmupinput-web-rebind)).

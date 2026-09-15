@@ -39,10 +39,10 @@ as a classic deferred script, **it parses with acorn as an ES2018 script**, it s
 the polyfill, `config.xml` / `icon.png` are present, every other file lives under
 `dist/assets/` (so nothing unexpected is packaged into the `.wgt`), and at least one atlas
 page exists under `dist/assets/atlas/` (the shell cannot boot without it), and — since M1-19 — the
-**budgets** hold: `app.js` ≤ 350 KB gzipped, every atlas page a PNG of at most 2048², the whole
+**budgets** hold: `app.js` ≤ 384 KB gzipped (350 KB until M2-16), every atlas page a PNG of at most 2048², the whole
 `dist/` ≤ 8 MB (`APP_JS_GZIP_BUDGET`, `ATLAS_PAGE_MAX_SIZE`, `DIST_BUDGET`; at M1-19 `app.js` is
 228.6 KB gzipped and `dist/` 812.4 KB; after M2-11 `app.js` is 307.5 KB gzipped, after M2-12 313.5 KB,
-after M2-13 320.3 KB, after M2-14 331.5 KB, after M2-15 343.8 KB — the shipped content is inlined, so every new zone adds to it; M2-15 added the front end's scenes and the nine attract demos). The checks are also exported as `checkTizenBundle(distDir)`
+after M2-13 320.3 KB, after M2-14 331.5 KB, after M2-15 343.8 KB, after M2-16 ≈ 359 KB — the shipped content is inlined, so every new zone adds to it; M2-15 added the front end's scenes and the nine attract demos, M2-16 the two UI string tables, the Options pages and the rebinding). The checks are also exported as `checkTizenBundle(distDir)`
 (and `pngSize`) for the tests.
 
 ## Debug build (M1-19)
@@ -169,7 +169,7 @@ and `internet`, application id `ShmpCupGam.ShmupCup` (package id = 10 alphanumer
 | Module | Status | Responsibility |
 |---|---|---|
 | `main.ts` | — | Entry (no `import.meta`, no top-level await); `tizenDebugTools` when `__SHMUP_DEV__` (M1-19) |
-| `boot` | implemented | Composition root: remote-first input (`tizen-remote-safe` profile, or the choice saved from OPTIONS → CONTROLS, applied when the shell has read the save — M1-17; `gamepad-standard`), Web Audio and the Tizen platform handed to `@shmup/shell`'s `bootShell` (content + atlas from `file://`, boot error screen, renderer, game, rAF loop, audio unlocked at boot — the shell's audio engine plays the sound effects from the start; the title theme plays in the scene flow, M1-16); Back goes through the scene stack (game → pause, menus → back, title → exit confirmation → `platform.exit()` after YES); only while the game is not running (loading, boot error screen) does Back exit directly |
+| `boot` | implemented | Composition root: remote-first input (`tizen-remote-safe` profile, or the choice saved from OPTIONS → CONTROLS, applied when the shell has read the save — M1-17; `gamepad-standard`; since M2-16 both applied with the player's rebinding, SOCD and debounce — `ProfileState`, `customizeInputProfile` — and offered to the rebind screen through `inputProfiles.customize` / `rebindable`: the remote's buttons are rebound with the remote itself, Back never moves), Web Audio and the Tizen platform handed to `@shmup/shell`'s `bootShell` (content + atlas from `file://`, boot error screen, renderer, game, rAF loop, audio unlocked at boot — the shell's audio engine plays the sound effects from the start; the title theme plays in the scene flow, M1-16); Back goes through the scene stack (game → pause, menus → back, title → exit confirmation → `platform.exit()` after YES); only while the game is not running (loading, boot error screen) does Back exit directly |
 | `platform` | partial | `registerKeyBatch` of the active input profile's `register` list (Play/Pause, Ch±; without a profile the fallback list adds the colour keys — never Exit/volume; falls back to per-key `registerKey` when the batch fails, so one key a model lacks does not block the rest), Back 10009 watcher, `visibilitychange` lifecycle, `exit()`, localStorage |
 | `device-info` | placeholder | UA / resolution / WebGL / product-info diagnostics |
 | `live-reload` | placeholder | Dev-only reload-on-change on the TV |

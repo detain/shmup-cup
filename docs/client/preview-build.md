@@ -17,11 +17,13 @@ menu** over the frozen game: resume, retry, or quit to the title. When the last 
 **CONTINUE?** countdown lets you carry on from the last checkpoint (if the difficulty gives
 continues), then a **GAME OVER** screen appears, after a zone's boss the **zone result** and the **ZONE MAP**, and on the TV Back on the
 title asks **EXIT SHMUP CUP?** before it closes the app. **OPTIONS** — on the title and in the
-pause menu — sets the game's own volumes (MASTER, MUSIC, SFX), the control profile, the
-colours of the enemy bullets (**BULLETS**: the standard colours or one of three sets made for
-colour-blind players), how the picture fills the screen (**SCALE**), the screen **SHAKE**, gentler
-**FLASHES**, a **HITBOX** marker on your ship and a **BOSS HP** bar in the top bar during boss
-fights, and the game **remembers** them and your **high scores** between launches. Everything is drawn by the game
+pause menu — sets the game's own volumes (MASTER, MUSIC, SFX) and opens three pages: **CONTROLS**
+(the control profile, how the gun fires, **your own keys and buttons**, an input test), **DISPLAY**
+(the colours of the enemy bullets — the standard colours or one of three sets made for colour-blind
+players —, how the picture fills the screen, the screen shake, gentler flashes, a hitbox marker on
+your ship and a boss HP bar) and **GAME** (difficulty, lives, what losing a ship costs, automatic
+power-ups, the capsule magnet and **one-button play**), and the game **remembers** them and your
+**high scores** between launches. Everything is drawn by the game
 itself and works with the remote's arrows, OK and Back alone ([The title screen and the
 menus](#the-title-screen-and-the-menus), [Pausing, quitting and the end
 screens](#pausing-quitting-and-the-end-screens), [Difficulty, extra ships and
@@ -31,7 +33,21 @@ With **2 PLAYERS** a second player joins the running game whenever they like wit
 gamepad (in a browser also with Enter on the **SPLIT KEYBOARD**), flies the same ship in other
 colours and has their own ships, score, power-ups and continues ([Two players](#two-players)).
 
-**New in this build: the complete front end.** The title's menu now also offers **PRACTICE** (one
+**New in this build: options, your own controls and accessibility.** OPTIONS now opens three
+pages. **CONTROLS**: besides the control profile, **AUTOFIRE** (in a browser: ALWAYS, TOGGLE — Shot
+switches firing off and on — or HOLD — fire while Shot is held; on the TV the gun always fires on
+its own), **RATE** (7.5 to 30 shots a second), **SOCD** (what Left + Right together do),
+**DEBOUNCE** (the remote's hiccup protection), **REBIND KEYS** / **REBIND PAD** — give every action
+of the game and of the menus your own keys, remote buttons or gamepad buttons; a key another action
+had is taken from it or the two swap, and RESET brings the standard keys back — and an **INPUT
+TEST** that lights every button you press. **DISPLAY** holds the picture settings of earlier
+builds. **GAME**: the difficulty (now remembered between launches), **LIVES** (1–5), the **PENALTY**
+for losing a ship, **AUTO POWER**, the capsule **MAGNET** and **ONE BUTTON** — autofire, automatic
+power-ups and the gentlest penalty, for a game played with the arrows alone. The game settings
+apply from the next game ([The Options screen](#the-options-screen),
+[controls.md](controls.md#rebinding-keys-and-buttons)).
+
+**Before that, the complete front end.** The title's menu now also offers **PRACTICE** (one
 zone from a checkpoint of your choice, with its own high-score tables) and a **SOUND TEST** (every
 tune and sound effect). Left alone for 12 seconds, the title shows a **demo** of a zone played by
 the computer, the **high-score tables** and a short **story** before it comes back. After a high
@@ -137,7 +153,7 @@ The earlier start-up pictures are still there: **free flight** straight away wit
 the animated **sprite showcase** and the **calibration screen**, plus the **effects gallery**
 that shows every explosion and screen effect in turn (see [below](#other-screens-browser-only)).
 
-This build is version **0.1.0** — the end of the first milestone — plus the first fifteen steps of
+This build is version **0.1.0** — the end of the first milestone — plus the first sixteen steps of
 the second: the difficulties, extra ships and continues, then the colour-blind bullet colours and
 points for cancelled bullets, then the **weapon types** and the WEAPON SELECT screen, then four
 kinds of **Options**, five **shields**, the **Option Hunter** that steals Options and the rare
@@ -167,7 +183,9 @@ boss IRON SOVEREIGN, and ABYSSAL THRONE with its depth mines, the ABYSS ARK raid
 KING, each with its own music — and the **ending scenes**, the epilogues and the **credits**, with
 their own songs, and now the **front end**: the attract loop (demo play, high-score tables, story),
 typing your initials, high-score tables per difficulty, ship and kind of game, PRACTICE and the
-SOUND TEST.
+SOUND TEST, and now the **Options pages**: CONTROLS (autofire modes and rate, SOCD, the hiccup
+protection, rebinding every key and button, the input test), DISPLAY and GAME (difficulty, lives,
+penalty, Auto Power-Up, the magnet, one-button play).
 For checking it on the monitors
 there is a **debug build** with developer tools — a panel with the frame rate, frame times and
 start-up time, hit-area outlines, invincibility, a freeze with single steps, slow motion and
@@ -212,7 +230,7 @@ tables and the story; any button brings the title back
 | **1 PLAYER** | A game for one player (it was called **START** in earlier builds). Opens the **DIFFICULTY** box (highlighted first); OK there opens the **SHIP SELECT** box; OK on the KESTREL opens the **WEAPON SELECT** screen, whose START begins the game — OK on the MANTA begins it at once — see [Difficulty, extra ships and continues](#difficulty-extra-ships-and-continues), [Choosing your ship](#choosing-your-ship) and [Choosing your weapons](#choosing-your-weapons) |
 | **2 PLAYERS** | The same, but the game is a **two-player** one: a second player joins with START on a gamepad (or Enter on the SPLIT KEYBOARD) — see [Two players](#two-players) |
 | **PRACTICE** | Practise one zone from a checkpoint of your choice, with its own high-score tables — see [Practice](#practice) |
-| **OPTIONS** | Opens the **Options screen**: the volumes and the control profile — see [The Options screen](#the-options-screen) |
+| **OPTIONS** | Opens the **Options screen**: the volumes and the CONTROLS, DISPLAY and GAME pages — see [The Options screen](#the-options-screen) |
 | **SOUND TEST** | Plays any tune or sound effect of the game — see [The sound test](#the-sound-test) |
 | **EXIT** | Only on the TV: asks **EXIT SHMUP CUP?** — see below |
 
@@ -324,8 +342,10 @@ entry for a high score). **OK** skips ahead. The score is saved like a game over
   scores (and the KESTREL and the MANTA keep separate ones).
 - **OK** chooses the highlighted difficulty (a chime) and opens the **SHIP SELECT** box
   ([Choosing your ship](#choosing-your-ship)); **Back** returns to the title menu.
-- The box opens on the difficulty you chose last — NORMAL the first time. The choice lasts until
-  the app is closed; remembering it between launches comes with a later build's game options.
+- The box opens on the difficulty you chose last — NORMAL the first time — and since the Options
+  build it is **remembered** between launches (OPTIONS → GAME → DIFFICULTY sets it too). The LIVES
+  shown are what the game will really get: with OPTIONS → GAME → LIVES set, that number on every
+  difficulty ([The GAME page](#the-game-page)).
 - Starting a game therefore takes five OKs with the KESTREL: OK (`PRESS OK`), OK (1 PLAYER), OK (the
   difficulty), OK (the KESTREL, highlighted first in the SHIP SELECT box), OK (START in the WEAPON
   SELECT screen, which is highlighted when it opens) — and four with the MANTA (▼ then OK in the
@@ -562,7 +582,7 @@ Who controls which ship:
 |---|---|---|
 | Samsung remote, keyboard | Player 1 | Player 1 |
 | A gamepad | Player 1 until you press **START** or **A** on it — from then on it is **player 2's** (until it is unplugged); any other gamepad stays player 1's | Player 1 — every gamepad, whichever one |
-| **SPLIT KEYBOARD** (browser only, OPTIONS → CONTROLS) | Left half (W A S D, F, G, Esc / Q) player 1; right half (arrows, K, L, Enter) player 2 | Both halves move through the menus |
+| **SPLIT KEYBOARD** (browser only, OPTIONS → CONTROLS → PROFILE) | Left half (W A S D, F, G, Esc / Q) player 1; right half (arrows, K, L, Enter) player 2 | Both halves move through the menus |
 
 **On the TV** a second player needs a **gamepad** connected to the monitor (USB or Bluetooth) —
 the remote is always player 1's. The button layouts are in
@@ -620,15 +640,84 @@ one-player scores; the **NEW HI-SCORE** line refers to player 1's score.
 ## The Options screen
 
 **OPTIONS** on the title menu — or in the pause menu during a game — opens a framed box over the
-darkened picture:
+darkened picture with the three volumes and three **pages**:
 
 ```text
             OPTIONS
    → MASTER   ▬▬▬▬▬▬▬▬▬▬  10
      MUSIC    ▬▬▬▬▬▬▬▬▬▬  10
      SFX      ▬▬▬▬▬▬▬▬▬▬  10
-     CONTROLS SAFE 4-WAY (DEFAULT)
-     BULLETS  STANDARD
+     CONTROLS
+     DISPLAY
+     GAME
+     BACK
+```
+
+| Entry | What it does |
+|---|---|
+| **MASTER** | The volume of everything the game plays, from 0 (silent) to 10 (full, the start setting) |
+| **MUSIC** | The music's volume, 0–10 |
+| **SFX** | The sound effects' volume, 0–10 — the menu clicks and chimes follow it too |
+| **CONTROLS** | Opens the **CONTROLS** page: the control profile, how the gun fires (AUTOFIRE, RATE), SOCD, the remote's hiccup protection (DEBOUNCE), **your own keys and buttons** (REBIND KEYS / REBIND PAD) and the INPUT TEST — see [controls.md](controls.md#the-controls-page-autofire-socd-and-the-hiccup-protection) |
+| **DISPLAY** | Opens the **DISPLAY** page: BULLETS, SCALE, SHAKE, FLASHES, HITBOX, BOSS HP — [below](#the-display-page) |
+| **GAME** | Opens the **GAME** page: DIFFICULTY, LIVES, PENALTY, AUTO POWER, MAGNET, ONE BUTTON — [below](#the-game-page) |
+| **BACK** | Keeps the settings and closes the box |
+
+- **▲ / ▼** move the highlight (MASTER is highlighted first). On a volume, **◀ / ▶** turn it down
+  or up one step — the bar shrinks or grows and the number changes; holding the arrow keeps
+  going, like in the other menus. The music gets quieter while you turn MUSIC down (on the title
+  you hear the title music change), the clicks get quieter while you turn SFX or MASTER down. OK on
+  a volume does nothing.
+- **OK on CONTROLS, DISPLAY or GAME** opens that page in the same box; its **BACK** (or the Back
+  button) keeps its settings and returns to OPTIONS.
+- The steps follow your hearing rather than a ruler: 5 sounds about half as loud as 10, and 0 is
+  silent.
+- **BACK** — or the **Back** button anywhere in the box — keeps the settings, plays the "back"
+  sound and returns to where you came from: the title menu, or the pause menu with the game still
+  frozen. The game **remembers** everything from then on, also after the app is closed.
+- The game's volumes come on top of the TV's (or the PC's) own volume: the remote's volume keys
+  still set the monitor's volume as always.
+- Every screen of the game is still drawn by the game itself and works with the remote's arrows, OK
+  and Back alone. (In earlier builds all the entries were in one long list; since the Options build
+  the picture settings are on DISPLAY and the control profile on CONTROLS.)
+
+### The CONTROLS page
+
+```text
+             CONTROLS
+   → PROFILE  SAFE 4-WAY (DEFAULT)
+     AUTOFIRE ALWAYS
+     RATE     15/S
+     SOCD     PROFILE
+     DEBOUNCE AUTO
+     REBIND KEYS
+     REBIND PAD
+     INPUT TEST
+     BACK
+   AUTOFIRE / RATE: FROM THE NEXT GAME
+```
+
+**PROFILE** is the control profile (on the TV **SAFE 4-WAY (DEFAULT)** or **FAST 8-WAY**, in a
+browser **KEYBOARD (DEFAULT)**, **KEYBOARD AS REMOTE** or **SPLIT KEYBOARD** — two players on one
+keyboard, [Two players](#two-players)). **AUTOFIRE** chooses how the gun fires — **ALWAYS** (on its
+own, the start setting), **TOGGLE** (each press of Shot switches it off and on) or **HOLD** (while
+Shot is held); on the TV it is greyed out, because the remote has no fire button. **RATE** sets how
+many shots a second the gun fires (7.5 to 30; 15 at the start). **SOCD** decides what opposite
+directions held together do, **DEBOUNCE** how long the game waits before it believes a released
+button (the hiccup protection — AUTO keeps the profile's own). **REBIND KEYS** / **REBIND PAD**
+open the rebind box, where you give every action your own keys or buttons, and **INPUT TEST** shows
+what every button does. Everything on this page is explained in
+[controls.md](controls.md#the-controls-page-autofire-socd-and-the-hiccup-protection) and
+[controls.md](controls.md#rebinding-keys-and-buttons).
+
+PROFILE, SOCD, DEBOUNCE and new keys work **at once**; AUTOFIRE and RATE apply from the **next
+game** (or RETRY STAGE) — a game already running keeps what it started with.
+
+### The DISPLAY page
+
+```text
+             DISPLAY
+   → BULLETS  STANDARD
      SCALE    INTEGER
      SHAKE    ON
      FLASHES  NORMAL
@@ -639,36 +728,19 @@ darkened picture:
 
 | Entry | What it does |
 |---|---|
-| **MASTER** | The volume of everything the game plays, from 0 (silent) to 10 (full, the start setting) |
-| **MUSIC** | The music's volume, 0–10 |
-| **SFX** | The sound effects' volume, 0–10 — the menu clicks and chimes follow it too |
-| **CONTROLS** | The control profile: on the TV **SAFE 4-WAY (DEFAULT)** or **FAST 8-WAY**, in a browser **KEYBOARD (DEFAULT)**, **KEYBOARD AS REMOTE** or **SPLIT KEYBOARD** (two players on one keyboard — [Two players](#two-players)) ([controls.md](controls.md#control-profiles)) |
 | **BULLETS** | The colours of the enemy bullets and lasers: **STANDARD** (pink, red and purple — the start setting), or a set made for a kind of colour blindness: **DEUTERANOPIA** and **PROTANOPIA** (red–green: light magenta, sky blue and near-white) or **TRITANOPIA** (blue–yellow: crimson, teal and near-white) — see below |
 | **SCALE** | How the picture fills the screen: **INTEGER** (the start setting — every game pixel is exactly the same size, with a black border where the screen does not fit a whole multiple), **FIT** (as large as possible without changing the shape — a thinner border or none, but some pixel rows and columns come out one screen pixel wider than others) or **STRETCH** (the whole screen, the shape stretched to fit) — see below |
 | **SHAKE** | **ON** (the start setting): the picture shakes for the big moments — your ship lost, a boss exploding; **OFF**: it never shakes |
 | **FLASHES** | **NORMAL** (the start setting) or **REDUCED**: at most one full-screen flash a second, and every flash much dimmer — for players sensitive to flashing light (even on NORMAL the game never flashes more than three times a second) |
 | **HITBOX** | **OFF** (the start setting) or **ON**: a small white square with a pink-red rim in the middle of your ship (and player 2's) shows the spot that must not be hit — only that spot counts for bullets and enemies |
 | **BOSS HP** | **OFF** (the start setting) or **ON**: during a boss fight the middle of the top bar shows `BOSS` and a red bar of the boss's remaining strength instead of `HI` — see [The boss HP bar](#the-boss-hp-bar-every-device) |
-| **BACK** | Keeps the settings and closes the box |
+| **BACK** | Keeps the settings and returns to OPTIONS |
 
-- **▲ / ▼** move the highlight (MASTER is highlighted first). On a volume, **◀ / ▶** turn it down
-  or up one step — the bar shrinks or grows and the number changes; holding the arrow keeps
-  going, like in the other menus. On CONTROLS, BULLETS, SCALE and FLASHES, **◀ / ▶** (or OK) step
-  to the next choice. On SHAKE, HITBOX and BOSS HP, **◀** is OFF, **▶** is ON and OK
-  switches.
-- **Every change works at once**: the music gets quieter while you turn MUSIC down (on the title
-  you hear the title music change), the clicks get quieter while you turn SFX or MASTER down, and a
-  new control profile is used from the next button press, and new bullet colours, a new SCALE, the
-  HITBOX marker and the SHAKE / FLASHES settings show on the very next picture or effect (over a
-  paused game too). BOSS HP shows from when you leave the box with BACK. OK on a volume does
-  nothing.
-- The steps follow your hearing rather than a ruler: 5 sounds about half as loud as 10, and 0 is
-  silent.
-- **BACK** — or the **Back** button anywhere in the box — keeps the settings, plays the "back"
-  sound and returns to where you came from: the title menu, or the pause menu with the game still
-  frozen. The game **remembers** them from then on, also after the app is closed.
-- The game's volumes come on top of the TV's (or the PC's) own volume: the remote's volume keys
-  still set the monitor's volume as always.
+- On BULLETS, SCALE and FLASHES, **◀ / ▶** (or OK) step to the next choice. On SHAKE, HITBOX and
+  BOSS HP, **◀** is OFF, **▶** is ON and OK switches.
+- **Every change works at once**: new bullet colours, a new SCALE, the HITBOX marker and the SHAKE /
+  FLASHES settings show on the very next picture or effect (over a paused game too). BOSS HP shows
+  from when you leave the page with BACK.
 
 **The bullet colours.** Enemy bullets come in three families — pink, red and purple — and the
 three colour-blind sets give each family a colour that stays distinct for that kind of colour
@@ -693,11 +765,44 @@ the ship, disappears while the ship is exploding, and changes nothing about the 
 *hit-area outlines* of the debug build are a different, developer-only tool —
 [debug-tools.md](debug-tools.md).)
 
+### The GAME page
+
+```text
+               GAME
+   → DIFFICULTY NORMAL
+     LIVES      PRESET
+     PENALTY    PRESET
+     AUTO POWER OFF
+     MAGNET     ON
+     ONE BUTTON OFF
+     BACK
+   ONE BUTTON: AUTOFIRE, AUTO POWER, CASUAL
+   APPLIES FROM THE NEXT GAME
+```
+
+| Entry | What it does |
+|---|---|
+| **DIFFICULTY** | EASY, NORMAL, HARD or ARCADE — the difficulty the DIFFICULTY box offers first ([Choosing a difficulty](#choosing-a-difficulty)). Greyed out when the page is opened from the pause menu: a game keeps the difficulty it started on (and its high-score table) |
+| **LIVES** | **PRESET** (the difficulty's own: 5 on EASY, 3 on NORMAL and HARD, 2 on ARCADE) or **1** to **5** ships for every difficulty |
+| **PENALTY** | What losing a ship costs: **PRESET** (the difficulty's own), **ARCADE** (all your power, and the stage goes back to its last checkpoint), **CLASSIC** (one step of power) or **CASUAL** (only the Force Field) |
+| **AUTO POWER** | **Auto Power-Up**: ON takes power-ups by itself when the power meter reaches the next one of its order (the WEAPON SELECT screen's AUTO does the same for one session; once you change it here, this one counts) |
+| **MAGNET** | **ON** (the start setting): capsules and items close to your ship are pulled into it; **OFF**: you have to touch them |
+| **ONE BUTTON** | **ON**: the gun fires on its own, power-ups are taken automatically and losing a ship costs only the Force Field — a game played with the four directions alone ([controls.md](controls.md#one-button-play)). While it is on, AUTO POWER and PENALTY are greyed out |
+| **BACK** | Keeps the settings and returns to OPTIONS |
+
+- **◀ / ▶** (or OK) change the highlighted line.
+- The GAME settings apply **from the next game** — or when you choose RETRY STAGE in the pause menu.
+  A game already running keeps what it started with, also in its next zones.
+- The DIFFICULTY box shows the LIVES a game will really get, so with LIVES 5 it reads 5 on every
+  difficulty.
+
 ### What the game remembers
 
 | What | When it is saved | Where |
 |---|---|---|
-| The three volumes, the control profile, the bullet colours and SCALE, SHAKE, FLASHES, HITBOX and BOSS HP | When you leave the Options screen with BACK or Back | On the TV inside the app itself; in a browser (and the desktop app) in that browser's storage for the page |
+| The three volumes, the CONTROLS page (the control profile, AUTOFIRE, RATE, SOCD, DEBOUNCE), the DISPLAY page (BULLETS, SCALE, SHAKE, FLASHES, HITBOX, BOSS HP) and the GAME page (DIFFICULTY, LIVES, PENALTY, AUTO POWER, MAGNET, ONE BUTTON) | When you leave the page — or the Options screen — with BACK or Back | On the TV inside the app itself; in a browser (and the desktop app) in that browser's storage for the page |
+| Your own keys and buttons (REBIND KEYS / REBIND PAD) | When you leave the rebind box with DONE or Back | The same place |
+| The difficulty you chose in the DIFFICULTY box | The next time something is saved (the Options screen closing, a game ending) | The same place |
 | High scores | When a run ends: the **GAME OVER** screen, or clearing the last zone (before the ending) — in a browser test stage the **STAGE CLEAR** screen, in practice its GAME OVER or zone result; the name you type afterwards when you finish it | The same place |
 
 - **High scores**: the best ten of each kind of game are kept — each **difficulty** has its own
@@ -707,8 +812,13 @@ the ship, disappears while the ship is exploding, and changes nothing about the 
   in the number of continues used. Each row carries the **initials** typed after the game (`---`
   when none were typed) and the zone reached; the tables are shown after a high score and in the
   attract loop ([The high-score tables](#the-high-score-tables)).
-- **The difficulty and the ship you chose** are not remembered yet: after the app is closed the
-  DIFFICULTY box opens on NORMAL and the SHIP SELECT box on the KESTREL again.
+- **The difficulty you chose** is remembered since the Options build: after the app is closed the
+  DIFFICULTY box opens on it again. **The ship and the weapons** are not remembered: the SHIP SELECT
+  box opens on the KESTREL and the WEAPON SELECT screen on TYPE A after a relaunch.
+- **An older save** (from a build before the Options build) is updated by itself at the first
+  launch: the volumes, the control profile, the picture settings and the high scores are kept, the
+  new settings start at their start values. Two-player and practice scores that very old builds
+  kept in the one-player tables move to their own tables then.
 - **Only finished games count**, like in the arcade: a game you leave with QUIT TO TITLE (in a
   zone or on the ZONE MAP) or start over with RETRY STAGE is not saved. (Its score can still show
   as `HI` until you close the app.)
@@ -768,7 +878,16 @@ ship may move in four directions only; the game is designed to be fully playable
 
 ### What changed lately
 
-**New in this build: the front end.** The title menu reads 1 PLAYER / 2 PLAYERS / **PRACTICE** /
+**New in this build: the Options pages.** OPTIONS lists MASTER, MUSIC, SFX, then **CONTROLS**,
+**DISPLAY** and **GAME**, then BACK. The control profile moved to CONTROLS (its first line,
+PROFILE), and BULLETS, SCALE, SHAKE, FLASHES, HITBOX and BOSS HP to DISPLAY — they work as before.
+New: AUTOFIRE and RATE, SOCD, DEBOUNCE, REBIND KEYS / REBIND PAD (your own keys and buttons, with
+conflicts moved or swapped, and RESET), the INPUT TEST (hold Pause to leave it), and on GAME the
+difficulty (remembered now), LIVES, PENALTY, AUTO POWER, MAGNET and ONE BUTTON — they apply from the
+next game. Your saved settings and high scores from earlier builds are kept
+([The Options screen](#the-options-screen)).
+
+Before that, **the front end.** The title menu reads 1 PLAYER / 2 PLAYERS / **PRACTICE** /
 OPTIONS / **SOUND TEST** / EXIT — so OPTIONS is one ▼ further down again (the fourth entry). Left
 alone on `PRESS OK` for 12 seconds the title plays a silent **demo** of a zone, shows the
 **high-score tables** and a short **story**, then comes back; any button returns. A high score now
@@ -2302,7 +2421,8 @@ Things to check on the monitor and report:
    stays in the game, still firing but not moving. Plug it back in and press **A** on it: it flies
    player 2's ship again. Report anything unexpected.
 48. **The picture options** (new): OPTIONS now lists SCALE, SHAKE, FLASHES and HITBOX under
-   BULLETS, and all entries fit inside the box. Step SCALE through INTEGER, FIT and STRETCH with
+   BULLETS, and all entries fit inside the box (since the Options build they are on the DISPLAY
+   page — check 83). Step SCALE through INTEGER, FIT and STRETCH with
    ◀ / ▶: on the monitor's usual 1920 × 1080 picture all three should look the same, sharp and
    without a border — report the monitor model if the picture changes size or gets a border.
 49. **SHAKE and HITBOX** (new): set SHAKE to OFF and HITBOX to ON, press BACK and play: losing the
@@ -2314,7 +2434,7 @@ Things to check on the monitor and report:
    through it. Then set FLASHES to REDUCED and do it again: a much dimmer flash. Report whether
    either is uncomfortable.
 51. **BOSS HP** (new): OPTIONS now lists BOSS HP under HITBOX, and all eleven entries fit inside
-   the box. Set it to ON, press BACK and play to HALCYON BULWARK (the debug build's key 8 jumps
+   the box (since the Options build on the DISPLAY page). Set it to ON, press BACK and play to HALCYON BULWARK (the debug build's key 8 jumps
    there): while the boss glides in, `BOSS` and a red bar replace `HI` in the middle of the top
    bar and the bar fills up; it gets shorter as the shield plates and then the core take hits,
    empties when the core is destroyed and disappears with the big blast (`HI` is back). Report
@@ -2488,6 +2608,31 @@ Things to check on the monitor and report:
 82. **The CONTINUE? countdown's new look** (new): lose your last ship on NORMAL. The box shows the
    number over a draining bar (red for the last three seconds, the number flashing), your score and
    the continues; after half a second `PRESS OK` blinks with `BACK: GIVE UP` under it.
+83. **The Options pages** (new): OPTIONS shows MASTER, MUSIC, SFX, CONTROLS, DISPLAY, GAME, BACK.
+   OK on each page opens it in the same box, Back returns to OPTIONS; every page fits inside the box
+   and is readable from the sofa. DISPLAY has the six picture settings of before and they still
+   work at once. Your volumes, profile and picture settings from the previous build are still there
+   (the save was updated, not reset) — report it if anything went back to its start value.
+84. **CONTROLS with the remote** (new): AUTOFIRE is greyed out (the ship always fires on its own).
+   Set RATE to 7.5/S, BACK, start a game: the ship fires visibly slower; set 30/S and start again:
+   faster. Set DEBOUNCE to 0 TICKS and hold an arrow in the game — report whether the ship ever
+   stutters (it should with a remote that has the hiccup); set it back to AUTO.
+85. **Rebinding the remote** (new): CONTROLS → REBIND KEYS shows `REMOTE CONTROLS` with MODE GAME.
+   OK on POWER-UP, then press **Ch ▼** within five seconds: the line reads `SWAPPED WITH SPEED` and
+   POWER-UP shows `CH-`, SPEED `OK`. In a game Ch ▼ now takes power-ups and OK switches the MANTA's
+   speed. Back while `PRESS A KEY FOR …` shows cancels (`CANCELLED`), and Back is never taken as a new
+   key. RESET brings OK back to POWER-UP. Close and reopen the app: a change you left in place is
+   still there. Report any remote button that was not accepted.
+86. **The input test** (new): CONTROLS → INPUT TEST: `DEVICE REMOTE`; each arrow lights its side of
+   the cross, OK lights POWER-UP, Ch ▲ SPECIAL, Ch ▼ SPEED, Play/Pause PAUSE. Press two arrows at
+   once: report whether two sides light (the remote reports diagonals) or only one. Holding Back
+   for a second closes the test.
+87. **The GAME page** (new): set LIVES to 5, PENALTY to ARCADE, BACK, then 1 PLAYER: the DIFFICULTY
+   box shows `LIVES 5` on every difficulty, the game starts with five ships, and losing one takes
+   all your power and sends you back to the checkpoint. Then from the pause menu open OPTIONS →
+   GAME: DIFFICULTY is greyed out. Set ONE BUTTON to ON: AUTO POWER and PENALTY grey out; RETRY
+   STAGE — capsules are now taken by themselves. Close and reopen the app: the GAME settings and the
+   difficulty you chose last are kept.
 
 The fully powered ship (`?loadout=full`), the shortcut to each zone's boss (`?skip=boss`), the
 twelve test stages (the Test Range, the Boss Range with its test boss, the Hunter Range with the
@@ -2551,7 +2696,7 @@ delay as on the TV — open http://localhost:5173/?profile=keyboard-remote-emula
 
 **Two players in a browser**: plug in a gamepad (press one of its buttons once so the browser
 notices it), choose **2 PLAYERS** and, in the game, press START (or A) on the pad — or, without a
-pad, choose **SPLIT KEYBOARD** under OPTIONS → CONTROLS (or open
+pad, choose **SPLIT KEYBOARD** under OPTIONS → CONTROLS → PROFILE (or open
 http://localhost:5173/?profile=keyboard-split): player 1 then flies with W A S D (F = OK, G =
 Back, Esc / Q = Pause), player 2 with the arrows (K = OK, L = Back, **Enter = START**) — see
 [Two players](#two-players) and [controls.md](controls.md#two-players).
@@ -3349,7 +3494,7 @@ on ARCADE (or continuing) brings back the boss you were fighting.
 
 ### The boss HP bar (every device)
 
-**OPTIONS → BOSS HP → ON** (it starts OFF) shows how much a boss has left: during a boss fight the
+**OPTIONS → DISPLAY → BOSS HP → ON** (it starts OFF) shows how much a boss has left: during a boss fight the
 middle of the top bar shows **`BOSS`** in red and a **red bar** instead of `HI` and the best score.
 It works on the TV too — in AZURE VERGE for HALCYON BULWARK.
 
@@ -3458,8 +3603,8 @@ What "good" looks like:
   where it was.
 - Explosions stay where the enemy was destroyed and scroll away with the ground.
 - The screen never flashes more than three times in one second (a built-in limit that protects
-  players sensitive to flashing light). **OPTIONS → FLASHES → REDUCED** tones them down further (at
-  most one a second, much dimmer) and **OPTIONS → SHAKE → OFF** turns the shake off
+  players sensitive to flashing light). **OPTIONS → DISPLAY → FLASHES → REDUCED** tones them down further (at
+  most one a second, much dimmer) and **OPTIONS → DISPLAY → SHAKE → OFF** turns the shake off
   ([The Options screen](#the-options-screen)). If the shake or the flashes are still
   uncomfortable, please say so.
 - Everything freezes when the game is paused (the pause menu, switching tabs, the TV's Home
@@ -3681,16 +3826,16 @@ mean the build itself is broken; they are not caused by anything you did.
 | The view stopped and moved down with no boss (Gimmick range) | Expected: a timed stop with a pan down into the dip; it scrolls on after three seconds |
 | `?stage=gimmick-range` does nothing on the TV | Expected: the TV widget has no address bar; the Gimmick range is browser only for now |
 | The picture has black borders on the sides and top (PC) | Expected with **SCALE → INTEGER** (the start setting) when the window is not a whole multiple of the game's picture; choose FIT (thinner or no border) or STRETCH (no border) in OPTIONS |
-| The picture looks stretched, or some pixels look wider than others | **SCALE** is FIT or STRETCH — expected; OPTIONS → SCALE → INTEGER gives the sharpest, evenly sized pixels |
+| The picture looks stretched, or some pixels look wider than others | **SCALE** is FIT or STRETCH — expected; OPTIONS → DISPLAY → SCALE → INTEGER gives the sharpest, evenly sized pixels |
 | SCALE changes nothing on the TV | Expected on a 1920 × 1080 picture: the game fits it exactly five times, so all three settings look the same |
-| A white square with a pink-red frame sits on my ship | **HITBOX** is ON — it shows the ship's weak spot. OPTIONS → HITBOX → OFF hides it |
+| A white square with a pink-red frame sits on my ship | **HITBOX** is ON — it shows the ship's weak spot. OPTIONS → DISPLAY → HITBOX → OFF hides it |
 | The picture no longer shakes when the ship is lost | **SHAKE** is OFF in OPTIONS |
 | The Mega Crash flash is weak or the boss's blast barely flashes | **FLASHES** is REDUCED in OPTIONS (at most one dim flash a second) — set NORMAL for the full flashes |
 | The Mega Crash no longer turns the screen white | Expected since this build: the flash brightens the picture so you can still see the bullets; it should still be clearly visible |
 | The sea or the floor in the Raster range wobbles / changes colour | Expected — those are the stage's picture effects ([The Raster range](#the-raster-range-browser-only)). Report it if the ship, enemies, bullets or the HUD ever wobble or change colour |
 | `HI` vanished from the top bar during a boss, and `BOSS` with a red bar showed instead | **BOSS HP** is ON — the bar is the boss's remaining strength; `HI` comes back after the boss's big blast. OPTIONS → BOSS HP → OFF keeps `HI` there |
 | The boss HP bar did not move although I hit the boss | Expected on parts that do not matter for the kill — armour, guns, extra parts. Only the core(s) and the parts protecting them count (HALCYON BULWARK's shield plates and core) |
-| BOSS HP changed nothing in the paused game | It shows once you leave the Options screen with BACK (and resume) |
+| BOSS HP changed nothing in the paused game | It shows once you leave the DISPLAY page with BACK (and resume) |
 | The scrolling did not stop for a boss (Captain range) | Expected: mid-bosses ("captains") fight while the screen scrolls on — no WARNING, the stage music keeps playing |
 | The view moved by itself and took my ship along (Raid range) | Expected: during the battleship fight the view flies around the battleship; it glides back when the fight is over |
 | The battleship flew away and the stage ended (Raid range) | Its 90-second time limit ran out — it escapes without points. Destroy the two turrets next to the reactor, then the reactor, faster (try `&loadout=full`) |
@@ -3728,11 +3873,19 @@ mean the build itself is broken; they are not caused by anything you did.
 | The game froze and darkened with a PAUSE box | You pressed Back or Play/Pause (Esc, P or Backspace on a keyboard), or the app came back from the background — choose RESUME or press Back again |
 | The pause menu has no effect on the music | Expected: the music keeps playing while the game is paused |
 | OPTIONS is grey | Not expected any more — OPTIONS opens the Options screen on the title and in the pause menu. Check that the installed build is the latest |
+| BULLETS, SCALE, SHAKE, FLASHES, HITBOX or BOSS HP are missing from OPTIONS | Expected since the Options build: they are on the **DISPLAY** page (OK on DISPLAY); the control profile is PROFILE on the **CONTROLS** page |
+| I changed LIVES, PENALTY, AUTO POWER, MAGNET, ONE BUTTON, AUTOFIRE or RATE and the game I paused did not change | Expected: they apply from the next game — or at once with RETRY STAGE. A game already running keeps what it started with, also in its next zones |
+| DIFFICULTY is grey on the GAME page | It was opened from the pause menu: a game keeps its difficulty. Change it from the title's OPTIONS, or in the DIFFICULTY box |
+| AUTOFIRE is grey on the CONTROLS page (TV) | Expected: the remote has no fire button, so the ship always fires on its own |
+| The ship stopped firing (browser) | AUTOFIRE is TOGGLE (press Shot again) or HOLD (hold Shot). With KEYBOARD AS REMOTE or the SPLIT KEYBOARD there is no Shot key — set AUTOFIRE back to ALWAYS ([controls.md](controls.md#the-controls-page-autofire-socd-and-the-hiccup-protection)) |
+| A button does something else than the tables in controls.md say | Somebody rebound it: OPTIONS → CONTROLS → REBIND KEYS (or REBIND PAD), MODE GAME or MENU, **RESET** puts the standard keys back; the INPUT TEST shows what each button does now |
+| `THAT KEY CANNOT BE USED` or `NOT POSSIBLE: … NEEDS A KEY` in the rebind box | Esc and the remote's Back cannot be moved, and every action the game needs keeps a key — see [controls.md](controls.md#rebinding-keys-and-buttons) |
+| I cannot leave the INPUT TEST | Hold Pause (Back or Play/Pause on the remote) for a whole second — the bar at the bottom fills |
 | A volume or the control profile went back to what it was after closing the app | The Options screen keeps its settings when you leave it with **BACK** or the Back button — changes made just before the app was closed some other way are lost. If they are lost after BACK, please report it (on the TV: and whether the app was reinstalled in between — removing the app deletes its saved data) |
 | No sound at all, or no music, but everything else works | Check OPTIONS: MASTER, MUSIC or SFX may be at `0` (0 is silent). Then the monitor's or PC's volume |
 | The menu clicks are very quiet | They follow the **SFX** volume — turn it up in OPTIONS |
 | OK on MASTER, MUSIC or SFX does nothing | Expected: the volumes change with ◀ / ▶; OK only works on CONTROLS and BACK |
-| The ship stutters while I hold a direction after choosing FAST 8-WAY (TV) | This remote needs the hiccup protection: choose SAFE 4-WAY again under OPTIONS → CONTROLS, and please report the remote model |
+| The ship stutters while I hold a direction after choosing FAST 8-WAY (TV) | This remote needs the hiccup protection: choose SAFE 4-WAY again under OPTIONS → CONTROLS → PROFILE (or set DEBOUNCE to AUTO), and please report the remote model |
 | My high score is gone | Only runs that end on the GAME OVER screen or reach their ending (in a browser test stage: the STAGE CLEAR screen) are saved — QUIT TO TITLE (also on the ZONE MAP) and RETRY STAGE are not. In a browser, a private window or cleared site data forgets them, and another browser has its own. On the TV, removing the app deletes them; if they vanish otherwise, please report it |
 | The settings and high scores were back to the start after an update | Installing a new build over the old one should keep them; please report it with how the build was installed. After removing and reinstalling the app this is expected |
 | The ship does not move | Wait until it has finished flying in (⅔ of a second). In a browser, click once into the page so it has the keyboard focus; with a gamepad, press any button first. On the TV, report it together with the remote model |
@@ -3745,7 +3898,7 @@ mean the build itself is broken; they are not caused by anything you did.
 | The game froze for a moment when the ship was hit | Expected: a short freeze (an eighth of a second) marks every loss |
 | All enemy bullets vanished at once | Expected after a loss (and after a Mega Crash or a destroyed boss, where they turn into gold diamonds that fly to your score) |
 | Small gold diamonds fly up to the top bar | Expected after a Mega Crash or a destroyed boss: each cancelled bullet is worth 10 points when its diamond reaches your score. Report one that stays on the screen for more than about three seconds |
-| The bullets have unusual colours, or a dark / bright dot in the middle | The **BULLETS** option is set to a colour-blind set — OPTIONS → BULLETS → STANDARD restores pink / red / purple. It is remembered between launches |
+| The bullets have unusual colours, or a dark / bright dot in the middle | The **BULLETS** option is set to a colour-blind set — OPTIONS → DISPLAY → BULLETS → STANDARD restores pink / red / purple. It is remembered between launches |
 | BULLETS changed nothing | The new colours show at once, also over a paused game; if they do not, please report it with the set you chose (the browser console, if any, names a missing picture) |
 | After a loss the ship lost an Option, the laser or a Speed Up | Expected: each loss costs one step of power, and always the Force Field ([Lives](#lives-losing-your-ship-and-the-score)) |
 | GAME OVER — how do I start again? | Press OK on the GAME OVER screen (after half a second) or wait ten seconds: the title appears, and 1 PLAYER plays again. In free flight (`?scene=flight`) reload the page |

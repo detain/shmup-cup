@@ -223,9 +223,9 @@
  * {@link PREVIEW_SPREAD_TICKS}), the ship select's labels ({@link SHIP_MODE_LABELS},
  * {@link SHIP_MODE_HINTS} — M2-05),
  * {@link InputProfileSetup}, the menu item indices ({@link TitleItem}, {@link PauseItem},
- * {@link OptionsItem} — BULLETS since M2-02, SCALE / SHAKE / FLASHES / HITBOX since M2-08, BOSS HP
- *   since M2-09 —),
- * the Options screen's labels ({@link BULLET_PALETTE_LABELS}, M2-02; {@link SCALE_MODE_LABELS},
+ * {@link OptionsItem} — regrouped in M2-16: the sliders, then the pages; the display rows of M2-02
+ * / M2-08 / M2-09 are {@link DisplayItem}'s since),
+ * the display labels ({@link BULLET_PALETTE_LABELS}, M2-02; {@link SCALE_MODE_LABELS},
  * {@link FLASH_LABELS}, M2-08) and the timing constants ({@link STAGE_CLEAR_DELAY_TICKS},
  * {@link GAME_OVER_DELAY_TICKS}, {@link GAME_OVER_TIMEOUT_TICKS}, {@link GAME_OVER_LOCK_TICKS},
  * {@link STAGE_CLEAR_TALLY_TICKS}, {@link STAGE_CLEAR_CONTINUED_TICKS}, {@link PAUSE_DIM},

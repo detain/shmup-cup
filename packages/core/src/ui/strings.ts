@@ -14,6 +14,10 @@
  * **Implements.** shmup_feat.md §21 accessibility / [P2] localization "JSON string tables + bitmap
  * font atlases" (the table infrastructure — plan M2-16; the language choice is M3).
  *
+ * **Public API.** Re-exported by `core/ui`: {@link UiText}, {@link UiTextId},
+ * {@link DEFAULT_UI_TEXT}, {@link UI_TEXT_IDS}, {@link MAX_UI_TEXT_LENGTH},
+ * {@link DEFAULT_LANGUAGE}, {@link resolveUiText}, {@link formatUiText}.
+ *
  * @module
  */
 import { SFX_CUE_NAMES } from '../events/index.js';
@@ -356,7 +360,8 @@ export const DEFAULT_LANGUAGE = 'en';
  * Resolves a UI string table: the given entries over {@link DEFAULT_UI_TEXT} — a missing, empty or
  * non-string entry keeps the English one, an unknown id is ignored.
  *
- * @param table - A content table (`ContentDb.strings` entry's `strings`), or `null` / `undefined`.
+ * @param table - A content table (a `ContentDb.uiStrings` entry's `strings`), or `null` /
+ *   `undefined`.
  * @returns A frozen table with every id ({@link DEFAULT_UI_TEXT} itself when nothing differs).
  *
  * @example

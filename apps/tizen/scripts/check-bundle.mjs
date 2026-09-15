@@ -46,7 +46,7 @@ export const POLYFILL_BANNER = '/* Shmup Cup — globalThis polyfill';
 /**
  * Most bytes `app.js` may take gzipped (launch ≤ 10 s on the TV, shmup_feat.md §23): 350 KB from
  * M1-19, 384 KB since M2-16 (the Options pages, rebinding and the UI string table — the built-in
- * English table and its content copy — took the bundle to ≈ 358 KB).
+ * English table and its content copy — took the bundle to ≈ 359 KB).
  */
 export const APP_JS_GZIP_BUDGET = 384 * 1024;
 

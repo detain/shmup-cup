@@ -111,7 +111,8 @@ motion, F7 next checkpoint, F8 skip to the boss, and `window.__shmupDebug` for t
 e2e suite. A release build (`pnpm build`) contains none of it — guide:
 [`docs/dev/debug-and-replays.md`](../../docs/dev/debug-and-replays.md).
 
-Since M1-17 **OPTIONS** opens the Options screen (MASTER / MUSIC / SFX volume sliders, CONTROLS),
+Since M1-17 **OPTIONS** opens the Options screen (MASTER / MUSIC / SFX volume sliders; since M2-16
+the CONTROLS, DISPLAY and GAME pages — autofire modes, rebinding, the input test, the game options),
 and the shell keeps the options and the hi-scores in a versioned save in `localStorage`
 (`shmup-cup:save.v1`, read before the title; a corrupt one is copied to `shmup-cup:save.corrupt`
 and replaced by defaults). This app gives the shell its `inputProfiles`: CONTROLS offers
@@ -127,6 +128,10 @@ the Samsung remote (arrows only, the second arrow replaces the first, Enter = OK
 Backspace = Back, P = Play/Pause) — and `?debounce=<ticks>` (0–10) overrides its release
 debounce. An unknown `?profile=` logs a `console.warn` and falls back to `keyboard-default`. A
 `?profile=` wins over the saved choice when the page loads (a pick in CONTROLS still switches).
+Since M2-16 the key and gamepad profiles are applied with the player's rebinding, SOCD and debounce
+(`customizeInputProfile`; `?debounce=` applied after them), and `inputProfiles.customize` /
+`rebindable` let the rebind screen rebind the key profile in use and `gamepad-standard`
+([`docs/dev/options-rebinding-and-accessibility.md`](../../docs/dev/options-rebinding-and-accessibility.md)).
 Guide: [`docs/dev/input-profiles.md`](../../docs/dev/input-profiles.md).
 
 ```sh

@@ -116,7 +116,7 @@ guide line and above) is one missed frame — a small hitch; a **red** bar is a 
 During normal play the graph should be a flat row of short green bars.
 
 **The outlines** (key 3) show what the game really checks for hits (players have their own,
-simpler marker of the ship's hit spot: OPTIONS → **HITBOX** in every build —
+simpler marker of the ship's hit spot: OPTIONS → DISPLAY → **HITBOX** in every build —
 [preview-build.md](preview-build.md#the-options-screen)):
 
 | Colour | What |

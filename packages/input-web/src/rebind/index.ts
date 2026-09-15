@@ -46,9 +46,12 @@
  *
  * **Implements.**
  * - shmup_feat.md §4 — remote-first rules 2–3 and 8 (tunable per device, menus fully
- *   D-pad + OK + Back navigable), [P1] rebinding per device + persistence (data side), the [P1]
- *   split-keyboard preset for 2-player co-op (M2-06)
- * - shmup_feat.md §21 — controls options (profile choice)
+ *   D-pad + OK + Back navigable), [P1] rebinding per device (keyboard / each gamepad / remote)
+ *   with conflict detection, reset to defaults and persistence (M2-16 — the data side was there
+ *   since M1-05), [P1] SOCD resolution chosen by the player (M2-16), the [P1] split-keyboard preset
+ *   for 2-player co-op (M2-06)
+ * - shmup_feat.md §21 — controls options (the profile choice — M1-17; rebinding, SOCD, the
+ *   remote's release debounce — M2-16) and the accessibility "full remapping"
  *
  * **Public API.** {@link InputProfile}, {@link ProfileBindings}, {@link ContextTables},
  * {@link InputProfileDevice}, {@link INPUT_PROFILE_DEVICES}, {@link KEY_PROFILE_DEVICES},

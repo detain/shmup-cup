@@ -85,14 +85,16 @@ If it opens on a navy screen with a pink error title instead, the build is broke
 **Back** to close the app, and see [preview-build.md](preview-build.md#when-the-app-shows-an-error-screen).
 More options (custom `tizen`/`sdb` paths): [`apps/tizen/README.md`](../../apps/tizen/README.md).
 
-**Saved settings and high scores.** The game keeps its Options (volumes, the control profile) and
-its high scores on the monitor itself, inside the app's own storage. Installing a newer build over
+**Saved settings and high scores.** The game keeps its Options (volumes, the control profile and
+the other CONTROLS, DISPLAY and GAME settings, your rebound remote buttons, the difficulty you chose)
+and its high scores on the monitor itself, inside the app's own storage. Installing a newer build over
 the old one should keep them (the app stays the same app) — please report it if an update loses
 them. **Removing the app deletes them** (the TV does that for every app), so the next install starts
 with the default settings and no high scores. Each monitor keeps its own. (The first launch of the
 front-end build moves two-player scores that older builds kept in the one-player tables into the new
 2 PLAYERS tables — they are not lost, just listed separately; rows saved before initials existed
-show `---`.)
+show `---`. The first launch of the Options build updates the saved data to its new form by itself:
+everything saved before is kept, the new settings start at their start values.)
 
 **The debug build (developer tools).** For the on-device checks of a milestone, build with
 `build:dev` instead of `build` and package and install as above:

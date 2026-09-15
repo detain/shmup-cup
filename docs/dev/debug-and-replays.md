@@ -10,7 +10,7 @@ Plan step **M1-19** closes the first milestone with the developer tooling of `sh
   Ch+, Ch+ on the TV, and `window.__shmupDebug` for tests and the remote inspector;
 - **replays** (`core/replay`): a session's input per tick, a header with everything needed to
   recreate its start, state hashes to detect a desync;
-- **golden replays** of zone A (`test/golden/` — seventeen since M2-06) checked by every `pnpm test`, re-blessed with
+- **golden replays** (`test/golden/` — fifty-five since M2-16: zone A and every later zone, the dev ranges, the autofire modes) checked by every `pnpm test`, re-blessed with
   `pnpm golden:update`;
 - **budgets**: `pnpm bench` (ms per tick and heap growth under maximum load) and the Tizen bundle
   check's size limits;
@@ -284,7 +284,7 @@ imports) can decode and play demos without a cycle; the attract playback is `rep
 | `formatVersion` | `REPLAY_FORMAT_VERSION` (1); another version is rejected |
 | `buildId` | the build that recorded it (`__SHMUP_BUILD__`; golden replays: `'golden'`) |
 | `seed` | `config.seed`, repeated for readability |
-| `config` | the session's **whole resolved `GameConfig`** — every sim-affecting option, so a new `GameConfig` field is recorded without touching the replay code (since M2-01 the difficulty preset's rank base / growth, lives, extends, continues, penalty, aim directions and bullet speed — a replay does not depend on the content's `rules` table; an M1 header without them decodes to its preset's values; since M2-05 the ship — `shipId` — and a `powerUpMode` that may be `'direct'`: a header without `shipId` decodes to `kestrel`, which is what it flew) |
+| `config` | the session's **whole resolved `GameConfig`** — every sim-affecting option, so a new `GameConfig` field is recorded without touching the replay code (since M2-01 the difficulty preset's rank base / growth, lives, extends, continues, penalty, aim directions and bullet speed — a replay does not depend on the content's `rules` table; an M1 header without them decodes to its preset's values; since M2-05 the ship — `shipId` — and a `powerUpMode` that may be `'direct'`: a header without `shipId` decodes to `kestrel`, which is what it flew; since M2-16 `autofireMode` — the save's autofire and game options reach a World only through this config; a header without it decodes to `'always'`) |
 | `stageId` | `config.stage` (`null` = free flight) |
 | `checkpoint` | `-1` = the stage start, else the checkpoint the run started from |
 | `loadout` | `config.loadout` |
@@ -424,6 +424,8 @@ from the M1-18 playtest bots with the build id `'golden'`):
 | `zone-h-deaths.replay.json` (M2-14 tests) | `weaverBot()`, Easy, Arcade penalty (seed 91) | deaths at the outer walls, every restart back at the start, game over | `gameOver` after 5,575 ticks (deaths at 1,034 / 2,122 / 3,267 / 4,394 / 5,482) |
 | `zone-i-boss.replay.json` (M2-14 tests) | 4-way bot, full loadout, Arcade penalty, `stageSkip: 'boss'` (seed 95) | the raid's two phases, then THE HOLLOW KING's three | `stageClear` after 5,031 ticks, 140,150 points, no deaths |
 | `zone-i-escape.replay.json` (M2-14 tests) | `weaverBot()`, god mode, no power-ups, `stageSkip: 'boss'` (seed 52) | the ARK outlasts the pilot for its whole 90-s time limit and escapes — `EndingFlag.BossEscaped` (the campaign's THE FLAGSHIP SLIPS AWAY), no king, the camera handed back | `stageClear` after 6,038 ticks, 4,200 points, the boss not defeated |
+| `zone-a-manta-toggle.replay.json` (M2-16 tests) | `fireButtonBot('tap')` (the 4-way bot tapping `Shot` every 150 ticks), god mode, full loadout, the MANTA, `remoteMode: false`, `autofireMode: 'toggle'`, `stageSkip: 'boss'` (seed 61) | the Direct-mode volleys switched off and on by the taps (the `firing` switch hashed in this mode), HALCYON BULWARK shot down | `stageClear` |
+| `zone-a-hold.replay.json` (M2-16 tests) | `fireButtonBot('burst')` (`Shot` / `Sub` held for 45 of every 90 ticks), god mode, full loadout, `remoteMode: false`, `autofireMode: 'hold'`, `autofireInterval: 2`, `stageSkip: 'boss'` (seed 62) | shots only while the buttons are held, HALCYON BULWARK shot down | `stageClear` |
 
 The 4-way bot survives zone A even at Arcade, which is why the death scenario uses a careless
 weaving pilot. The files were re-blessed on purpose by M2-01 (`b31fac5`): rank growth changes
@@ -527,6 +529,15 @@ zone H's skip landing between the hangar's checkpoint and BULWARK ECHO with all 
 down, the weaver's deaths all before 2,200 with every restart back at the start, and the escape's
 flag with no king; the file-name rule allows `zone-h-*` and `zone-i-*`
 ([zones-h-and-i.md](zones-h-and-i.md#determinism-hashing-and-golden-replays)).
+M2-16 re-blessed them all — and the attract demos — **for the header only** (`5d0ff2e`): the new
+`GameConfig.autofireMode` enters every replay header (`"autofireMode": "always"`); every hash, input,
+tick count and outcome is identical (the toggle switch is hashed only in the toggle mode, so the
+other modes' hash layout did not change). Its test round (`6ba7575`) added `zone-a-manta-toggle`
+and `zone-a-hold` (the autofire modes with `remoteMode: false`, the new pilots of `fireButtonBot`);
+`golden-autofire.test.ts` checks the mode in their headers, the toggle's switch flipping on each tap
+with shots only while on, the hold run's shots only while `Shot` is held, and that both desync when
+replayed under `'always'`
+([options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md#determinism)).
 Each file is an encoded replay plus the scenario's `description` and its
 `expected` outcome (status, ticks, player 1's score and lives, death ticks, boss killed — and for
 a co-op run player 2's score, lives, death ticks and continues).
@@ -577,7 +588,7 @@ timing needs a quiet machine. CI runs it after `pnpm build`.
 
 | Budget | Constant | Limit | At M1-19 |
 |---|---|---|---|
-| `app.js` gzipped | `APP_JS_GZIP_BUDGET` | 350 KB (launch ≤ 10 s, `shmup_feat.md` §23) | 228.6 KB (773.6 KB raw); **307.5 KB after M2-11**, **313.5 KB after M2-12**, **320.3 KB after M2-13** (the inlined content grows with every zone — ≈ 6 KB a pair), **331.5 KB after M2-14**, **343.8 KB after M2-15** (~9 KB of front-end scene code, ~3 KB of demos) |
+| `app.js` gzipped | `APP_JS_GZIP_BUDGET` | **384 KB since M2-16** (350 KB before; launch ≤ 10 s, `shmup_feat.md` §23 — M2-18's boot-time check still guards the launch) | 228.6 KB (773.6 KB raw); **307.5 KB after M2-11**, **313.5 KB after M2-12**, **320.3 KB after M2-13** (the inlined content grows with every zone — ≈ 6 KB a pair), **331.5 KB after M2-14**, **343.8 KB after M2-15** (~9 KB of front-end scene code, ~3 KB of demos), **359.3 KB after M2-16** (the two UI string tables ≈ 6 KB, the Options pages and the rebinding ≈ 9 KB) |
 | Atlas page edge | `ATLAS_PAGE_MAX_SIZE` | 2048 px (and every page must be a readable PNG — `pngSize` reads its IHDR) | one page |
 | Whole `dist/` | `DIST_BUDGET` | 8 MB | 812.4 KB |
 

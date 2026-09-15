@@ -366,7 +366,12 @@ preset, table)` for the others (the content's `rules` table, or the built-in one
   may run another preset (`game.world.config`).
 - `SceneFlow.difficulty` / `SceneFlow.gameConfig` name the preset and config of the next game;
   `SceneFlow.modeKey` is `hiScoreModeKey(gameConfig)`.
-- The choice lives for the session only — it is saved with the options of M2-16.
+- Since M2-16 the choice is **remembered**: the menu's OK stores it in the save
+  (`options.game.difficulty`, `FlowControl.rememberDifficulty`), the GAME page's DIFFICULTY row sets
+  it too, and the flow starts on it. The menu's `LIVES` / `CONTINUES` show the **armed** configs
+  (`FlowControl.armedConfigs` — with the GAME page's LIVES, the one-button preset …), what the game
+  will really get. A run keeps the difficulty it started on (over the pause menu the GAME page's
+  DIFFICULTY is disabled) ([options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md#sim-affecting-options-reach-the-next-game-never-the-one-in-play)).
 - Starting a game takes one more OK than in M1 (title OK, START, then OK on the preset) — and
   since M2-03 one more again (OK on the weapon select's START), and since M2-05 one more (OK on
   the ship select — KESTREL is focused first). Every flow test and e2e spec was updated each time.
@@ -421,7 +426,7 @@ ship's.
 | A revenge pattern | Append to `REVENGE_PATTERNS` (never reorder — the code is the index + 1), a `RevengeCode` and its branch in `EnemySystemImpl.revenge`; M2-02's DSL may replace the built-ins with pattern references |
 | A rank-dependent behaviour tunable | Prefer the fire primitives (they scale by the current scales); for anything else read `world.rank` in a cold place and convert once |
 | Another life source (like the Direct-mode orange 1UP of M2-05) | Give the life through the same cap (`MAX_LIVES`) and push `ExtraLife` with `SfxPriority.Critical` |
-| Saving the chosen difficulty (M2-16) | Store it with the options and pass it to `createSceneFlow` through the host config's `difficulty`, or call `chooseDifficulty` after creation |
+| Another saved game option on top of a preset (M2-16 did lives and the penalty) | A field of `UserGameOptions` mapped in `userGameOverrides` — it is applied over every preset's config by the flow's `rearm` ([options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md#extending-it)) |
 
 ## Tests
 
@@ -459,7 +464,8 @@ ship's.
 | START does not start the game | It opens the difficulty menu; OK on a preset opens the weapon select (M2-03), and OK on its START starts. From `PRESS OK` a game takes four OKs |
 | A replay of a game with a continue desyncs | Bare-gameplay replays end at the game over; the continue is a scene-flow action between ticks and is not recorded |
 | The difficulty menu's `HI` differs from the title's before choosing | The title shows the chosen preset's best (Normal at first); the menu shows the focused preset's |
-| The chosen difficulty is back to NORMAL after a restart of the app | Expected until M2-16 saves it with the options |
+| The chosen difficulty is back to NORMAL after a restart of the app | Not expected since M2-16 — the menu's OK saves it (written with the next flush: a finished game or the Options screen closing). A game quit before any flush keeps the old one |
+| The difficulty menu shows 5 `LIVES` for every preset | The GAME page's LIVES is set (M2-16): the menu previews the armed configs; set LIVES back to `PRESET` |
 
 ## Next steps that build on this page
 
@@ -486,5 +492,6 @@ ship's.
   the score, `PRESS OK`), per-difficulty tables per mode (1 PLAYER, 2 PLAYERS, PRACTICE) with the
   name entry ([front-end-and-attract.md](front-end-and-attract.md)).
 - **M3-01** — recording the scene flow (continues included) in replays.
-- **M2-16** — the chosen difficulty saved with the options; the Options screen's `deathPenalty` /
-  `startingLives`.
+- **M2-16** (done) — the chosen difficulty saved with the options, the GAME page's LIVES /
+  PENALTY over the presets, the difficulty menu previewing the armed configs
+  ([options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md)).

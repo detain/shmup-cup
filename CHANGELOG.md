@@ -345,6 +345,35 @@ versions before 1.0 may change anything between minor releases. Development foll
   `pnpm golden:update` also re-records the demos; `core/scenes` is `implemented`, with 384 UI string
   slots. No simulation change — the golden replays are unchanged. The Tizen `app.js` is 343.8 KB gzip
   of its 350 KB budget.
+- **The Options screen, regrouped** (M2-16): MASTER / MUSIC / SFX, then three pages — **CONTROLS**,
+  **DISPLAY** (BULLETS, SCALE, SHAKE, FLASHES, HITBOX, BOSS HP, as before) and **GAME** — and BACK.
+- **CONTROLS** (M2-16): the control profile, **AUTOFIRE** — ALWAYS (as before), TOGGLE (each Shot
+  press switches firing off and on) or HOLD (fire while Shot is held); the TV stays always-on —,
+  **RATE** (7.5 to 30 shots a second), **SOCD** (what opposite directions held together do),
+  **DEBOUNCE** (the remote's hiccup protection, 0–10 frames) and an **INPUT TEST** that lights every
+  game action you press (hold Pause to leave).
+- **Rebinding** (M2-16): **REBIND KEYS** / **REBIND PAD** give every action of the game and of the
+  menus your own keys, remote buttons or gamepad buttons — a 5-second capture prompt, conflicts
+  resolved by taking the key from the other action or swapping the two, never leaving an action the
+  game needs without a key; Esc and the remote's Back never move; RESET brings the standard keys
+  back. Kept per control profile, remembered.
+- **GAME** (M2-16): the difficulty (now remembered between launches), **LIVES** 1–5, the death
+  **PENALTY**, **AUTO POWER**, the pickup **MAGNET** and **ONE BUTTON** play (autofire, Auto
+  Power-Up and the casual penalty — a game with the directions alone). They apply from the next game
+  or a RETRY STAGE; a run keeps what it started with. The DIFFICULTY box shows the LIVES the game will
+  get.
+- For translators (M2-16): every word of the canvas UI is in a string table,
+  `content/strings/en.strings.json` (kind `strings`) — a `<language>.strings.json` file holds a
+  translation; choosing the language comes later ([`content/strings/README.md`](content/strings/README.md)).
+- Behaviour change for tools and tests (M2-16): `OptionsItem` is Master 0, Music 1, Sfx 2, Controls 3,
+  Display 4, Game 5, Back 6 (the display rows are `DisplayItem`s, the profile `ControlsItem.Profile`);
+  `GameConfig.autofireMode` is new (replay headers record it — older headers decode to `'always'`;
+  every golden replay and demo was re-blessed for the header only, same hashes and outcomes; two
+  autofire goldens were added); the save is **version 2** under the same key (`save.v1`), migrated
+  from version 1 (options kept, the co-op / practice rows of old one-player tables moved);
+  `UserOptionKind.InputSettings` (10), `GameOptions.controls`, `@shmup/input-web`'s rebinding API and
+  the shell's `createShellControls` are new; 512 UI string slots. The Tizen `app.js` is ≈ 359 KB gzip
+  of a budget raised to 384 KB.
 
 ### Documentation
 
@@ -398,7 +427,15 @@ versions before 1.0 may change anything between minor releases. Development foll
   demo format for authors in [`content/demos/README.md`](content/demos/README.md) and the tester
   guide's
   [The front end](docs/client/preview-build.md#the-front-end-attract-mode-high-scores-practice-and-the-sound-test)
-  (M2-15).
+  (M2-15); the developer guide
+  [`docs/dev/options-rebinding-and-accessibility.md`](docs/dev/options-rebinding-and-accessibility.md),
+  the string-table format for translators in [`content/strings/README.md`](content/strings/README.md),
+  the tester guide's [The Options screen](docs/client/preview-build.md#the-options-screen) (the
+  CONTROLS, DISPLAY and GAME pages) and the controls page's
+  [CONTROLS page](docs/client/controls.md#the-controls-page-autofire-socd-and-the-hiccup-protection),
+  [Rebinding](docs/client/controls.md#rebinding-keys-and-buttons),
+  [Input test](docs/client/controls.md#the-input-test) and
+  [One-button play](docs/client/controls.md#one-button-play) (M2-16).
 
 ## [0.1.0] — M1: playable vertical slice
 

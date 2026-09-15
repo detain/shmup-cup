@@ -124,16 +124,19 @@ exactly one script `app.js`, `index.html` loads it as a deferred classic script,
 `config.xml` / `icon.png` are present, every other file lives under `dist/assets/`
 (the atlas pages — anything else would be packaged into the `.wgt` by accident), and at
 least one atlas page exists under `dist/assets/atlas/` (without it the widget can only show
-the boot error screen), and — since M1-19 — the **budgets** hold: `app.js` ≤ 350 KB gzipped
-(`APP_JS_GZIP_BUDGET`), every atlas page a readable PNG of at most 2048² (`ATLAS_PAGE_MAX_SIZE`),
+the boot error screen), and — since M1-19 — the **budgets** hold: `app.js` ≤ 384 KB gzipped
+(`APP_JS_GZIP_BUDGET`; 350 KB until M2-16), every atlas page a readable PNG of at most 2048² (`ATLAS_PAGE_MAX_SIZE`),
 the whole `dist/` ≤ 8 MB (`DIST_BUDGET`). The OK line prints the sizes against them
 (M1-19: `app.js` 773.6 KB, 228.6 KB gzipped; `dist/` 812.4 KB; after M2-11 `app.js` is 307.5 KB
 gzipped, after M2-12 313.5 KB, after M2-13 320.3 KB, after M2-14 331.5 KB and after M2-15
 **343.8 KB** — the content of every zone is inlined, each pair of zones adds ≈ 6–11 KB; all nine
 zones and the endings are in: [zones-h-and-i.md](zones-h-and-i.md#bundle-budget); M2-15's front
 end added ~9 KB of scene code and ~3 KB of demos —
-[front-end-and-attract.md](front-end-and-attract.md#budgets-string-slots-and-the-bundle); 6.2 KB
-of headroom remain). A release build must also carry
+[front-end-and-attract.md](front-end-and-attract.md#budgets-string-slots-and-the-bundle); after
+M2-16 **≈ 359 KB** — the two UI string tables ≈ 6 KB, the Options pages and the rebinding ≈ 9 KB —,
+so M2-16 raised the budget to 384 KB
+([options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md#budgets); M2-18's
+boot-time check still guards the launch). A release build must also carry
 no debug code (`tizen-build.test.ts` looks for `__shmupDebug` / `debug-overlay`).
 `apps/tizen/test/build/tizen-build.test.ts` also executes the bundle in a V8 realm with
 `globalThis` deleted.
@@ -301,7 +304,7 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   difficulty menu, where ArrowDown + Enter starts on HARD, a game over opens the continue countdown
   and Enter continues in the web build while the remote's Back gives up in the Tizen build (M2-01
   — every spec that starts a game presses one more Enter / OK for the difficulty menu), and
-  OPTIONS → BULLETS = DEUTERANOPIA is saved on Back and the next boot's test-range bullets are
+  OPTIONS → BULLETS (DISPLAY since M2-16) = DEUTERANOPIA is saved on Back and the next boot's test-range bullets are
   drawn in that palette's colours, while a boot without a save shows none of them (M2-02), and
   the weapon select opens after the difficulty menu with its live preview, TYPE B draws Ripple
   rings, the remote's arrows alone choose a Weapon Edit, a `!` choice and an Auto order and START
@@ -325,7 +328,7 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   a real WebGL1 context, `?stage=raster-range` draws its wave, palette cycle, line-band floor and
   in-range heat haze within 12 draw calls, `stretch` fills what `integer` letterboxes and the
   hitbox markers show only while on (`raster.spec.ts`, M2-08), and OPTIONS → SCALE / SHAKE /
-  FLASHES / HITBOX apply live, are saved on Back and applied at the next boot on both builds
+  FLASHES / HITBOX (on the DISPLAY page since M2-16) apply live, are saved on Back and applied at the next boot on both builds
   (`display-options.spec.ts`, M2-08), and the advanced bosses: IRON LEVIATHAN's hull across the
   whole playfield and the camera panning round it, `BOSS` and the red HP bar in zone A's HUD with
   the saved option, a captain fighting while the camera scrolls, and the twins on the Tizen build
@@ -347,7 +350,14 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   `?stage=zone-f`'s palette-cycled cell wall (its pixels recoloured as the cycle steps) over the
   fleshy folds and MANTLE REGENT fighting with its tentacles curling in, `?stage=zone-g`'s
   palette-cycled crystal facets over the spires and FACET MONARCH waving its arms, and both bosses
-  drawn on the Tizen build from `file://` (`zones-fg.spec.ts`, M2-13). The gameplay specs
+  drawn on the Tizen build from `file://` (`zones-fg.spec.ts`, M2-13), and the Options pages of
+  M2-16: SHOT rebound to J on the web build, saved, shown in the input test and applied after a
+  reload, and on the Tizen build from `file://` POWER-UP swapped with CH− and kept across a
+  relaunch (`rebind.spec.ts`); a version-1 save booting and rewritten as version 2 with its co-op
+  row moved, LIVES 5 and ONE BUTTON reaching the next game, Escape cancelling a capture, RESET
+  restoring a key, SOCD / DEBOUNCE saved, and LIVES 1 set with the remote's keys on the Tizen build
+  (`game-options.spec.ts`) — the options, display-options and bullet-palette specs walk to the
+  DISPLAY page since. The gameplay specs
   open `?scene=flight` (bare gameplay, open space unless `?stage=` names a stage) since M1-16;
   specs comparing captures a set number of ticks apart freeze the sim and step exact ticks
   (`test/e2e/frame-advance.ts`, M1-19) instead of counting rAF frames. Since M1-19 the suite runs

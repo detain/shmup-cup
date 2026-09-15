@@ -496,6 +496,8 @@ const refresh = createRefreshMonitor();
 - **M2-14** (done) — the final zones through `raster` / `cycles` in their stage files: IRON CITADEL's
   running lights chasing along its wall and a `haze` over the core run, ABYSSAL THRONE's twinkling
   specks and two `wave`s ([zones-h-and-i.md](zones-h-and-i.md)).
-- **M2-16** — the remaining option groups (controls rebinding, game options).
+- **M2-16** (done) — the display rows moved to the Options screen's DISPLAY page (`DisplayItem`;
+  unchanged behaviour), next to the CONTROLS and GAME pages
+  ([options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md)).
 - **M2-17** — Electron's window, fullscreen and refresh settings.
 - **M3-02** — the CRT filter (`EffectSettings.crt`) and Mode 7-style floors as further filters.

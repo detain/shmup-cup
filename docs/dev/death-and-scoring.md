@@ -64,9 +64,11 @@ ship out of control for 132 ticks (2.2 s), and it is safe for another 150 (2.5 s
 
 Tunables of the ship (`content/player/kestrel.player.json`, `PlayerShipSpec`): `enterTicks` (40,
 the fly-in) and `respawnInvulnTicks` (**150** since M1-12 — 120 before; `DEFAULT_PLAYER_SHIP`
-matches). No app exposes the two config fields yet: the web and TV builds play `classic` with 3
-ships; the Options screen's Game group of M2-16 will offer them (the M1-17 Options screen has the
-audio sliders and the controls profile only).
+matches). Since M2-16 the Options screen's GAME page offers both — LIVES (`PRESET` or 1–5) and
+PENALTY (`PRESET`, `ARCADE`, `CLASSIC`, `CASUAL`; the one-button preset forces `casual`) — saved in
+`options.game` and folded into the next games' configs (`core/config` `withUserGameOptions`); left on
+`PRESET` the difficulty preset's values apply (NORMAL: `classic`, 3 ships)
+([options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md#game-and-the-one-button-preset)).
 
 ## The death sequence
 
@@ -326,8 +328,8 @@ frozen ones included (plan §3.2), but not on the tick of their request — a re
 popups ([fx-and-game-feel.md](fx-and-game-feel.md)); `SimEventKind.Score` (12, `'score'`) is new
 there and not hashed. Since M1-15 the death is heard — `PlayerDeath` (`critical`, never cut by
 another cue) — and the `MusicDuck` dips the music to 0.35 in 4 ticks, holds it for 60 ticks and
-brings it back at 120 ([audio.md](audio.md#which-event-plays-what)); rumble comes with the gamepad
-work of M2-16.
+brings it back at 120 ([audio.md](audio.md#which-event-plays-what)); the `Rumble` event has no
+consumer yet — rumble through `vibrationActuator` is M3-01's.
 
 ## Determinism and hashing
 
@@ -446,7 +448,9 @@ The next `game.step()` runs that tick, and its phase 7 turns the recorded hit in
   starting from the saved best ([saves-and-options.md](saves-and-options.md)).
 - **M2-15** (done) — the name entry and the hi-score table screens; a table per difficulty × ship ×
   mode ([front-end-and-attract.md](front-end-and-attract.md)).
-- **M2-16** — the Options screen's `deathPenalty` / `startingLives`.
+- **M2-16** (done) — the GAME page's LIVES and PENALTY (`startingLives`, `deathPenalty` from the save's
+  `options.game`), the one-button preset's casual penalty
+  ([options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md)).
 - **M2-01** (done) — extends (cap 9, the critical `ExtraLife` sound), continues (the countdown,
   the checkpoint restart, the score's last digit), the difficulty presets choosing lives and
   penalty, rank falling with the power a death takes

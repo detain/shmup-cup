@@ -546,8 +546,10 @@ changes nothing in the game.
 Details: [saves-and-options.md](saves-and-options.md).
 
 - **One versioned JSON document** under `Platform.storage` key `save.v1` (`shmup-cup:save.v1` in
-  `localStorage`): the player's `UserOptions` (volumes, the input profile), hi-score tables per mode
-  key (top 10, `meter-normal` in M1) and play statistics. Loading never fails the boot: JSON →
+  `localStorage`; format **2** since M2-16): the player's `UserOptions` (volumes, the input profile,
+  the display options; since M2-16 the controls — autofire mode and rate, SOCD, the debounce, the
+  rebinding — and the game options), hi-score tables per mode key (top 10; per difficulty × ship ×
+  mode since M2-15) and play statistics. Loading never fails the boot: JSON →
   forward migrations (`SAVE_MIGRATIONS`, the document's `version`) → a field-by-field sanitiser;
   a corrupt or unreadable text falls back to defaults and is copied to `save.corrupt`.
 - **The shell reads it before the title** (after the platform exists, before the game), applies
@@ -555,13 +557,24 @@ Details: [saves-and-options.md](saves-and-options.md).
   when the Options screen closes and when a game ends — `SaveStore.flush()` writes only when the
   canonical text changed, so nothing is lost when the TV app is killed and nothing is written for
   nothing.
-- **User options are presentation** (plan §1.5): not in `GameConfig`, replays or hashes. The
-  Options screen pushes each change as a `SimEventKind.UserOption` event through the one event
-  queue; the shell turns it into `setBusVolume`, asks the app to switch the input profile or —
+- **User options are presentation** (plan §1.5): not in `GameConfig`, replays or hashes — except the
+  sim-affecting choices of M2-16 (the autofire mode and rate, the game options), which the scene
+  flow folds into the configs of the next games (`withUserGameOptions`; a run keeps the config it
+  began with), so a replay header still records everything a World depends on. The Options screen
+  (the root and its CONTROLS / DISPLAY / GAME pages since M2-16 —
+  [options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md)) pushes each live
+  change as a `SimEventKind.UserOption` event through the one event queue; the shell turns it into `setBusVolume`, asks the app to switch the input profile or —
   since M2-02 — has the renderer swap in the chosen colour-blind bullet palette
   (`setBulletPalette`: other sprite variants, the same sprite ids) and — since M2-08 — change the
   scale mode, the shake switch, reduced flashing and the hitbox markers (the same options are
-  applied from the save at boot, `applyDisplayOptions`).
+  applied from the save at boot, `applyDisplayOptions`) and — since M2-16 — re-apply the save's
+  input settings (`InputSettings`: the app customises its key and gamepad profiles with the
+  rebinding, SOCD and debounce — `@shmup/input-web` `customizeInputProfile`). The rebind screen talks
+  to the host through `GameOptions.controls` (`@shmup/shell` `createShellControls`: the adapter's key
+  capture, conflict detection, reset).
+- **Every UI label is data** (M2-16): `core/ui/strings.ts` holds the built-in English table,
+  `content/strings/en.strings.json` the shipped copy (kind `strings`); the flow draws from the
+  content's table (`SceneFlow.text`) — the infrastructure for M3's localization.
 
 ## Lifecycle
 
@@ -571,7 +584,7 @@ Details: [saves-and-options.md](saves-and-options.md).
 | App hidden | tab hidden (`visibilitychange`) | Home, source switch, multitasking (`visibilitychange`) | `platform.lifecycle` suspend → `game.state.suspended = true` (no ticks), held input cleared, audio suspended |
 | App visible | tab visible | back to the app | resume → `suspended = false`, loop accumulator reset, audio resumed; with the game scene on top the scene flow opens the pause menu (M1-16) |
 | Window loses focus | `blur` (another window, devtools) | `blur` | held input cleared (M1-17) — the key-ups of a window without focus never arrive |
-| Options closed, game ended | BACK / Back on the Options screen; the game-over or stage-clear screen | same (remote only) | the save is written when it changed (M1-17); nothing is written on exit, and nothing needs to be |
+| Options closed, game ended | BACK / Back on the Options screen or one of its pages (M2-16), DONE on the rebind screen; the game-over or stage-clear screen | same (remote only) | the save is written when it changed (M1-17); nothing is written on exit, and nothing needs to be |
 | Pause menu | Esc / P / Backspace in the game | remote Back or Play/Pause in the game | the flow pushes `PauseScene` over the frozen, dimmed game; Pause / Back / RESUME close it (M1-16) |
 | Host pause | `game.pause()` (no UI; a debugger) | same | `state.paused`; survives suspend/resume — resuming the platform does not un-pause |
 | Back | Esc / Backspace (`keyboard-default`: `Pause` in the game, `Back` in menus); no exit | remote Back (10009): `tizen-remote-safe` maps it to `Pause` (game) / `Back` (menus); before the shell runs, `watchBackKey` exits (`tizen.application` directly) — the loading and boot error screens | The scene stack owns Back (M1-16): game → pause, pause → resume, menus → back, title → exit confirmation → `platform.exit()` after YES (the TV); in a browser the title's Back only backs out of its menu |
@@ -654,9 +667,9 @@ sections of `shmup_feat.md` / `shmup_tech.md`.
 
 Implemented or partial today: core `platform`, `input`, `config` (partial: `GameConfig` with the difficulty
 presets since M2-01 and, since M1-17, the `UserOptions` — the display options of M2-02 / M2-08 /
-M2-09 included; the rest in M2-16), `loop`, `game`,
-`presentation`, `rng`, `math`, `events`, `pools`, `save` (M1-17; the per-mode tables and the name entry's rows since M2-15), `data` (partial: `rules` since M2-01, `patterns` since M2-02, `campaign` since M2-10, `replay` — the attract demos — since M2-15 —
-`strings` is missing), `world`, `stage`, `player` (implemented for P0 since
+M2-09, the controls and game options, the autofire modes and `withUserGameOptions` of M2-16; the
+M3 assists and the language later), `loop`, `game`,
+`presentation`, `rng`, `math`, `events`, `pools`, `save` (M1-17; the per-mode tables and the name entry's rows since M2-15, format 2 with the v1 → v2 migration since M2-16), `data` (partial: `rules` since M2-01, `patterns` since M2-02, `campaign` since M2-10, `replay` — the attract demos — since M2-15, `strings` — the UI string tables — since M2-16), `world`, `stage`, `player` (implemented for P0 since
 M1-12; co-op joining lives in `world` since M2-06), `collision` (implemented with M2-07: moving blocks and destructible tiles — the bending lasers' circle chains live in `bullets`), `debug` (M1-19: state hash, switches, controls,
 counters, the stage skip and checkpoint jumps), `replay` (M1-19; the attract playback `replay/demo.ts` and the session-free `replay/format.ts` since M2-15), `enemies` (partial: rank modifiers and revenge bullets since M2-01, the Option Hunter and
 the blue capsule's clear since M2-04, the proximity wake since M2-14), `patterns` (implemented with M2-02: runner, movers, fire primitives and the pattern DSL),
@@ -669,19 +682,20 @@ into points since M2-02 — graze is P2), `rank` (implemented with M2-01: growth
 scores, the session hi-score, extends and the continue digit — per player, co-op included, since M2-06), `fx` (partial: the
 hit-stop / shake / flash requests — slowdown later), `ui` (partial: the list menu, slider,
 toggle, choice and confirm widgets, builders and the HUD with the Direct-mode tier pips since M2-05, the co-op halves since M2-06
-and the boss HP bar since M2-09, the name entry since M2-15 — the rebind prompt later), `scenes` (implemented since M2-15: the scene stack, the M1 flow, the Options screen, the difficulty
+and the boss HP bar since M2-09, the name entry since M2-15, the rebind widget and the string table (`ui/strings.ts`) since M2-16 — the language choice later), `scenes` (implemented since M2-15: the scene stack, the M1 flow, the Options screen, the difficulty
 menu and the continue countdown, the weapon select with its live preview and the Auto order editor
-(M2-03; its OPTION row M2-04), the ship select (M2-05), 1 PLAYER / 2 PLAYERS and the co-op rules (M2-06), campaign runs — the run state carried between zone Worlds, the zone tally, the zone map, the ending hook, hidden bonus stages, practice plumbing (M2-10), the ending scenes and the credits (M2-14), the mode select, the attract loop — demo play, hi-score tables, story crawl —, the name entry, the practice select and the sound test (M2-15) — more option groups with M2-16);
-input-web `keymap`, `keyboard`, `gamepad`, `web-input` (implemented with M2-06's seats), `remote`, `rebind`
-(partial: profiles, contexts, the selectable profiles of CONTROLS — the rebinding UI comes in
-M2-16); audio-web `web-audio` (partial; driven by the Options sliders since M1-17), `synth`, `sfx`,
+(M2-03; its OPTION row M2-04), the ship select (M2-05), 1 PLAYER / 2 PLAYERS and the co-op rules (M2-06), campaign runs — the run state carried between zone Worlds, the zone tally, the zone map, the ending hook, hidden bonus stages, practice plumbing (M2-10), the ending scenes and the credits (M2-14), the mode select, the attract loop — demo play, hi-score tables, story crawl —, the name entry, the practice select and the sound test (M2-15), the Options pages CONTROLS / DISPLAY / GAME, the rebind screen and the input test (M2-16));
+input-web `keymap`, `keyboard` (the rebinding's key capture since M2-16), `gamepad`, `web-input` (implemented with M2-06's seats; the capture since M2-16), `remote`, `rebind`
+(implemented with M2-16: profiles, contexts, the selectable profiles of CONTROLS, the rebinding with
+conflict detection and reset); audio-web `web-audio` (partial; driven by the Options sliders since M1-17), `synth`, `sfx`,
 `music`, `loader`,
 `engine` (the sound test's `playTrack` since M2-15);
 render-pixi `renderer`, `viewport` (the scale modes since M2-08), `test-pattern`, `palette` (the colour-blind bullet
 palette tables since M2-02, palette cycling since M2-08), `atlas`, `layers`, `sprites`,
 `text`, `ui`, `particles`, `effects` (shake, flash, dim, popups; raster and palette-cycle layer
 filters since M2-08), `debug` (the overlay, M1-19); shell `boot`, `loader`, `dispatch`, `error-screen`,
-`frame-loop`, `scene-view`, `flight`, `showcase`, `fx-gallery`, `debug` (M1-19);
+`frame-loop`, `scene-view`, `flight`, `showcase`, `fx-gallery`, `debug` (M1-19), `controls` (the
+rebind screen's host side, M2-16);
 the apps' `boot` and `platform`. Everything else declares its intended API only. The
 build-time tooling outside the packages (the asset pipeline in `scripts/assets/`, the Vite
 plugins in `vite.shared.ts`) has no `moduleInfo`; it is covered by the tests under

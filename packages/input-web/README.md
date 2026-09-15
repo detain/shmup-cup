@@ -19,6 +19,14 @@ per-tick `InputSnapshot`** (action bitmasks). The core never sees key codes
   co-op game) — the keyboard / remote drives player 1, and a pad's first A / START (or the right
   half of the `keyboard-split` profile) takes player 2's seat (`padSeat(i)` → `PAD_SEAT_P2`) until
   it disconnects; a seat change never makes a press.
+- **Rebinding** (M2-16): the player's rebound keys and buttons live in the `core/save` document
+  (`options.input.bindings` — per profile and context, binding tokens `code:<code>` /
+  `key:<keyCode>` / `button:<index>`); `customizeInputProfile(profile, settings)` applies them with
+  the player's SOCD policy and release debounce before `setProfile` (a context that would lose a
+  required action keeps the content's table). `beginCapture('keys' | 'buttons')` / `capture` /
+  `endCapture` catch the next new key or pad button (Escape / the remote's Back cancel);
+  `captureToken` names it the way the profile binds it, `rebindAction` binds it with **conflict
+  detection** (moved / swapped / refused / rejected), `resetBindings` restores the content's.
 - `poll()` reuses one snapshot object (no per-tick allocation).
 
 ```ts
@@ -61,11 +69,11 @@ table, e.g. Z = Shot + Confirm).
 | Module | Status | Responsibility |
 |---|---|---|
 | `keymap` | implemented | Built-in bindings, Tizen key codes, `code`/`keyCode` resolution |
-| `keyboard` | implemented | Held/latched masks from key events; debounce, direction policies, table swaps |
+| `keyboard` | implemented | Held/latched masks from key events; debounce, direction policies, table swaps; the rebinding's `KeyCapture` (M2-16) |
 | `gamepad` | implemented | Gamepad → actions (deadzone, hysteresis, buttons held across a table swap) |
-| `web-input` | implemented | Merges sources into the `InputSnapshot`; profiles + contexts; player seats — every device drives player 1, or in a co-op game a pad (or the split keyboard's right half) takes player 2's seat with its START (M2-06) |
+| `web-input` | implemented | Merges sources into the `InputSnapshot`; profiles + contexts; player seats — every device drives player 1, or in a co-op game a pad (or the split keyboard's right half) takes player 2's seat with its START (M2-06); the rebinding capture `beginCapture` / `capture` / `endCapture` (M2-16) |
 | `remote` | implemented | Release debounce, diagonal policy, SOCD — tuned from the input-probe results |
-| `rebind` | partial | Input profiles: validation, compiled `game`/`menu` tables, choice; the profiles an Options screen may offer (`selectableKeyProfiles`, `inputProfileChoices` — M1-17); a keyboard profile's optional `split` half for two players on one keyboard (`splitTables`, `keyboard-split` — M2-06) |
+| `rebind` | implemented | Input profiles: validation, compiled `game`/`menu` tables, choice; the profiles an Options screen may offer (`selectableKeyProfiles`, `inputProfileChoices` — M1-17); a keyboard profile's optional `split` half for two players on one keyboard (`splitTables`, `keyboard-split` — M2-06); the player's rebinding (M2-16): `customizeInputProfile`, `applyBindingOverride`, `rebindAction`, `resetBindings`, `captureToken`, `actionTokens`, `findBindingConflicts`, `bindingTokenLabel` / `bindingKeysLabel`, `RESERVED_BINDING_TOKENS` |
 
 Profile choice (done by the apps in their platform factory and through the shell's
 `inputProfiles`): the web uses `?profile=<id>` › the saved choice › `keyboard-default`, with
@@ -82,8 +90,10 @@ directions + Confirm + Back; gamepad profiles bind buttons only with debounce 0;
 profiles register keys, never `Exit` / volume; ids unique. A bad profile is dropped, the others
 kept, and the issue stops the boot on the error screen.
 
-`poll()`, `setContext()`, the key handlers and `advance()` never allocate; profiles are
-compiled once at load.
+`poll()`, `setContext()`, the key handlers and `advance()` never allocate (the capture included);
+profiles are compiled once at load — and again, customised, on a rebinding or a settings change
+(menu actions). Rebinding guide:
+[`docs/dev/options-rebinding-and-accessibility.md`](../../docs/dev/options-rebinding-and-accessibility.md#rebinding-shmupinput-web-rebind).
 
 Guide: [`docs/dev/input-profiles.md`](../../docs/dev/input-profiles.md) · exports:
 [`docs/dev/api-reference.md`](../../docs/dev/api-reference.md#shmupinput-web) · file format:

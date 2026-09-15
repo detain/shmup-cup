@@ -240,7 +240,9 @@ modes make 24 tables, within `MAX_HI_SCORE_TABLES` (32).
 **Old co-op rows move.** Before M2-15 co-op games recorded their rows (mode `2p`) into the 1P
 tables. `sanitizeSave` now files every row of mode `2p` / `practice` found in a one-player table
 into that table's `-2p` / `-practice` table first, then sorts and cuts as before. The save's
-version stays 1 (M2-16 owns save v2); the move is idempotent.
+version stays 1 (M2-16 owns save v2); the move is idempotent. (Since M2-16 the version-1 → 2
+migration does this move once and the sanitiser no longer does —
+[saves-and-options.md](saves-and-options.md#migrations-save_migrations).)
 
 **Isolation.** `recordRun` picks the World's own table — `run.practice ? 'practice' :
 world.config.coop ? '2p' : '1p'` — and practice counts no `gameOvers` / `stagesCleared`. A co-op or
@@ -383,8 +385,8 @@ game the two players' credits take the score's place.
   entry (8 + 7), the hi-score screen's 37 (7 + 30 row slots), the story's 10, the demo's 4 and the
   two new menus. `createSceneFlow` still throws `RangeError` when the scenes need more.
 - The Tizen `app.js` is **343.8 KB gzipped of its 350 KB budget** (331.5 after M2-14: ~9 KB of
-  scene code, ~3 KB of demos). M2-16 moves every UI string into `content/strings/en.json`; watch the
-  budget there ([build-test-deploy.md](build-test-deploy.md)).
+  scene code, ~3 KB of demos). M2-16 moved every UI string into `content/strings/en.strings.json`
+  and raised the budget to 384 KB (≈ 359 KB used) ([build-test-deploy.md](build-test-deploy.md)).
 
 ## Determinism
 
@@ -485,9 +487,12 @@ through the loop (`test/e2e/frame-advance.ts`). The saved tables are in `localSt
 
 ## Next steps that build on this page
 
-- **M2-16** — Options, rebinding and accessibility: every UI string of these screens moves to
-  `content/strings/en.json`; save v2 (the chosen difficulty, ship and loadout remembered); the key-
-  rebind prompt joins the UI kit.
+- **M2-16** (done) — Options, rebinding and accessibility: every UI string of these screens moved to
+  `content/strings/en.strings.json` (the hi-score modes and ranks and the SFX names — `sfx.<Cue>` —
+  included; the story's text stays campaign content); save v2 (the chosen
+  difficulty remembered — the ship and the loadout stay session-only; the co-op / practice row move
+  became the v1 → v2 migration); the rebind widget joined the UI kit
+  ([options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md)).
 - **M2-17** — platform polish (Electron's file store for the save — the tables included).
 - **M3-01** — replays of the scene flow (menus, continues) and save / share / fast-forward; the
   demos stay bare-World recordings.

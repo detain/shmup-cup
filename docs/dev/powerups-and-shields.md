@@ -80,8 +80,11 @@ shield mega` — `?` = `shield`, `!` = `mega`) live in `core/config`, so the con
 `core/powerups`; `core/powerups` numbers them (`MeterSlot` 0–6, `meterSlotOf(name)`). Since M2-03
 the **weapon select** before every game sets `autoPowerUp` (AUTO), `autoPowerUpOrder` (ORDER — the
 order editor's 12 rows), `megaChoice` (`! SLOT`) and `shieldChoice` (`? SLOT`) for the session
-([meter-arsenal.md](meter-arsenal.md#the-weapon-select-corescenes)); `pickupMagnet` and
-`powerUpMode` wait for the Options screen's Game group of M2-16, which will also save them.
+([meter-arsenal.md](meter-arsenal.md#the-weapon-select-corescenes)); since M2-05 the ship select sets
+`powerUpMode`, and since M2-16 the Options screen's GAME page sets and saves `autoPowerUp` (AUTO
+POWER — once changed it wins over the weapon select's AUTO) and `pickupMagnet` (MAGNET), and the
+one-button preset forces Auto Power-Up on
+([options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md#game-and-the-one-button-preset)).
 `meterChoicesOf(config)` turns the two choices into the system's `choices` (`MeterChoices`).
 
 ## The meter

@@ -8,8 +8,11 @@
  * runs the rAF frame loop that ticks the game, drains its events to registered handlers and
  * renders. It also reads the save before the title (volumes, input profile, hi-scores — M1-17).
  * Dev / test builds add the debug tools (M1-19, {@link debugToolsFactory}: F1–F8 or the TV's
- * Pause, Ch+, Ch+, Ch+, the overlay, `window.__shmupDebug`). The apps stay thin adapters (input,
- * audio, platform, Back key).
+ * Pause, Ch+, Ch+, Ch+, the overlay, `window.__shmupDebug`). Since M2-16 it applies the save's
+ * input settings through the app ({@link ShellInputProfiles}'s `customize`) and gives the scene
+ * flow the rebind screen's host side ({@link createShellControls} — key names, the adapter's
+ * capture, rebinding with conflict detection, reset). The apps stay thin adapters (input, audio,
+ * platform, Back key).
  *
  * Dependency direction: `apps/* → @shmup/shell → {render-pixi, audio-web, input-web} → core`.
  *

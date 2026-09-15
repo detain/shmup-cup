@@ -5,8 +5,12 @@ why the Samsung remote's mapping and quirks are **data**. Filled in by plan step
 Since **M1-17** the Options screen's CONTROLS lets the player pick a key / remote profile, and the
 choice is kept in the save ([the saved choice](#the-saved-choice)); **M2-06** added player seats
 (two-player co-op: which device drives which player) and the split keyboard
-([player seats and the split keyboard](#player-seats-and-the-split-keyboard-m2-06)); M2-16 adds a
-rebinding UI on top of the same profiles — nothing on this page changes shape for it.
+([player seats and the split keyboard](#player-seats-and-the-split-keyboard-m2-06)); **M2-16** added
+the player's rebinding, SOCD policy and release debounce on top of the same profiles — the apps
+keep every profile as written and hand the adapter a customised copy (`customizeInputProfile`),
+and the adapter captures the next key or button for the rebind screen
+([rebinding and the player's settings](#rebinding-and-the-players-settings-m2-16)); nothing else on
+this page changed shape.
 
 This page is the *how and why*. Exact signatures are in
 [api-reference.md](api-reference.md#shmupinput-web); the TSDoc in
@@ -69,12 +73,12 @@ headless game (`test/integration/input-profiles.test.ts`).
 
 | Module | Status | Owns |
 |---|---|---|
-| `rebind` | partial | Profile types, `parseInputProfiles` / `loadInputProfiles` (validation + compilation), the registry, `chooseInputProfile`, `overrideInputTuning`, the persistence hook. The rebinding UI helpers come with M2-16 |
+| `rebind` | implemented (M2-16) | Profile types, `parseInputProfiles` / `loadInputProfiles` (validation + compilation), the registry, `chooseInputProfile`, `overrideInputTuning`, the persistence hook; M2-16: the rebinding — `customizeInputProfile` / `applyBindingOverride`, `rebindAction` (conflict detection), `resetBindings`, `captureToken`, `actionTokens`, `findBindingConflicts`, `bindingTokenLabel` / `bindingKeysLabel`, `RESERVED_BINDING_TOKENS` |
 | `remote` | implemented | The quirk knobs as allocation-free building blocks: `createReleaseDebouncer`, `resolveDirections`, `createDirectionOrder`, `InputTuning` |
-| `keyboard` | implemented | Key events → 32 fixed key slots with the debounce; `setBindings` (table swap without phantom presses), `setTuning`, `advance` |
+| `keyboard` | implemented | Key events → 32 fixed key slots with the debounce; `setBindings` (table swap without phantom presses), `setTuning`, `advance`; M2-16: `capture` (a `KeyCapture` — the next new key, bound or not) |
 | `gamepad` | implemented | One pad → mask; `pressedButtons` / `staleButtons` for table swaps |
 | `keymap` | implemented | Built-in fallback tables, `TIZEN_KEY_CODES`, `findKeyActions` (`-1` unbound vs `0` known) |
-| `web-input` | implemented (M2-06) | The `PlatformInput`: `setProfile`, `setContext`, `context`, `keyProfile`, `gamepadProfile`, `poll`; the player seats — `seats`, `setSeats`, `padSeat` (`PAD_SEAT_NONE` / `PAD_SEAT_P2`) — and the split keyboard's second source `splitKeyboard` (M2-06) |
+| `web-input` | implemented (M2-06) | The `PlatformInput`: `setProfile`, `setContext`, `context`, `keyProfile`, `gamepadProfile`, `poll`; the player seats — `seats`, `setSeats`, `padSeat` (`PAD_SEAT_NONE` / `PAD_SEAT_P2`) — and the split keyboard's second source `splitKeyboard` (M2-06); the rebinding capture — `beginCapture('keys' \| 'buttons')`, `capture` (`InputCaptureState`), `endCapture` (M2-16) |
 
 Around it: core `input` owns `InputContext` / `INPUT_CONTEXTS`, core `game` the
 `Game.inputContext` and (M2-06) `Game.inputSeats` getters, `@shmup/shell` the per-frame context and seat forwarding and
@@ -392,6 +396,30 @@ values on every poll as a real stick's do — through the core's `measureHeapGro
 array would show as ~0.5 MB, one boxed number per poll as 160 KB against the 128 KB budget, a
 cache keyed on the stick's reading ~320 KB; today it measures ~4 KB).
 
+## Rebinding and the player's settings (M2-16)
+
+The profiles stay content; the player's changes live in the save (`options.input` of `core/save`
+format 2: `socd`, `releaseDebounce`, `bindings` — per profile id and context, each rebound action's
+whole key set as binding tokens `code:<code>` / `key:<keyCode>` / `button:<index>`). The apps keep
+the key and gamepad profiles **as written** and apply them through `customizeInputProfile(profile,
+settings)`: the profile's override (`applyBindingOverride`), then — only when set — the SOCD policy on
+every profile and the debounce on key profiles (`overrideInputTuning`). A profile switch in CONTROLS
+applies the new profile with its own override; the web's `?debounce=` is applied after the player's
+settings. An override that would leave a context without a key for an action it requires
+(`REQUIRED_CONTEXT_ACTIONS`) keeps the content's table — the lock-out rule the profile choice already
+followed ([choosing the active profile](#choosing-the-active-profile)); on `keyboard-split` a key
+player 2's half binds is never given to player 1.
+
+The rebind screen asks the adapter for the next key or button (`WebInput.beginCapture`: the
+keyboard source's `KeyCapture` catches a new keydown — never an auto-repeat, a held key or a key in
+its debounce window, so a remote's fake keyup / keydown pair does not count —; `poll()` catches the
+lowest newly pressed pad button; Escape and the remote's Back cancel), names it the way the profile
+binds that key (`captureToken` — `code:` or `key:`; `code:ArrowUp` and `key:38` are one key for the
+conflict detection) and binds it with `rebindAction` (moved, swapped, refused, rejected — reserved
+keys, a key the device cannot hold). The whole feature — tokens, statuses, the screen, the shell's
+`createShellControls`, the input test — is on
+[options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md#rebinding-shmupinput-web-rebind).
+
 ## Extending it
 
 | To… | Do this |
@@ -403,7 +431,7 @@ cache keyed on the stick's reading ~320 KB; today it measures ~4 KB).
 | Add a binding context | Extend `InputContext` / `INPUT_CONTEXTS` in core, the `context` schema and `compileProfile` in `rebind`, `REQUIRED_CONTEXT_ACTIONS`, and every shipped profile (the schema makes each context required) |
 | Add a device kind | Extend `InputProfileDevice` / `INPUT_PROFILE_DEVICES`, decide its rules in `checkProfile`, and route it in `WebInput.setProfile` |
 | Offer a new profile in CONTROLS | Nothing to do if its menu table binds the six menu actions in the host's key space (`byCode` for the web, `byKeyCode` for the TV) — `selectableKeyProfiles` picks it up; otherwise it stays reachable only through `?profile=` on the web |
-| Build the rebinding UI (M2-16) | Planned in `rebind`: capture the next input, conflict detection, reset to defaults, a per-device choice. Persist in the save document (save v2 — [saves-and-options.md](saves-and-options.md#extending-it)); apply with `WebInput.setProfile` (held keys are handled) |
+| Make an action rebindable | Append it to `core/ui` `REBINDABLE_ACTIONS[context]` (the rebind screen's rows follow); a new required action goes into `REQUIRED_CONTEXT_ACTIONS` too ([options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md#extending-it)) |
 | Another split preset | A `keyboard` profile with a `split` section (same format as `context`; no key in both halves; the required actions in each half) — `checkSplit` validates it, `WebInput` routes it by seats ([coop.md](coop.md#input-routing-shmupinput-web-shmupshell)) |
 | Another host | Implement `ShellInput.setContext` (and, for co-op, the optional `setSeats`) in its adapter; pass a registry's `load` as the `input-profiles` owner if the host needs the profiles, otherwise the shell's default owner still validates them |
 
@@ -413,12 +441,14 @@ cache keyed on the stick's reading ~320 KB; today it measures ~4 KB).
 |---|---|
 | `packages/input-web/test/remote/` | The exact debounce window for every tick count 0–10, per-slot ageing, resumes and re-releases inside the window, `setTicks`, capacities (incl. `NaN`); `resolveDirections` exhaustively against a reference model and its invariants; press-order numbering |
 | `packages/input-web/test/rebind/` | Every schema limit, the semantic checks alone and combined, dropped profiles never claiming ids, compiled tables (frozen, prototype-free, `0` placeholders, button gaps), path-order independence, the registry, `chooseInputProfile`, `overrideInputTuning` clamping, the persistence hook; `selectableKeyProfiles` / `inputProfileChoices` per key space (gamepads never offered, order, the default suffix, the `extra` profile — `rebind-choices*.test.ts`, M1-17) |
-| `packages/input-web/test/keyboard/`, `keymap/` | Fake pairs never renewing press order, pending releases across table / tuning switches, `0`-mask keys tracked and prevented, `findKeyActions` `-1` / `0` / fall-through |
+| `packages/input-web/test/rebind/rebind-rebinding*.test.ts` | M2-16: capture tokens per profile and context, bind / move / swap / refuse / reject / unchanged, `code:` ≡ `key:` holders, reserved keys, the split keyboard's player-2 keys, reset, `customizeInputProfile` (SOCD, debounce, the lock-out fallback), conflicts, key labels |
+| `packages/input-web/test/keyboard/`, `keymap/` | Fake pairs never renewing press order, pending releases across table / tuning switches, `0`-mask keys tracked and prevented, `findKeyActions` `-1` / `0` / fall-through; M2-16 `keyboard-capture.test.ts` (only new keys caught — repeats, held and debouncing keys ignored) |
 | `packages/input-web/test/web-input/` | The probe scenarios replayed as timed fake event sequences (clean hold, fake pairs 30 ms apart with debounce 2 vs 0, OK while an arrow is held, diagonal and SOCD policies, `game` vs `menu`), no phantom edges across switches, gamepad profiles, the debounce boundary at any poll phase, the allocation probe; player seats (M2-06, `web-input-seats*.test.ts`): the join press as an edge from the menu table, one pad per seat, seats given up by pads that disappear (also from a shorter list), no phantom presses across a seat change, the split keyboard |
 | `packages/shell/test/` | Context and seats (M2-06) forwarded before the frame's polls (context also while paused), an adapter without `setSeats`, a bad `input-profiles` file stops boot on the error screen, an app owner replaces the default owner |
 | `apps/*/test/boot/` | Profile choice per app, `?profile=` / `?debounce=` (incl. `inputOverridesFromSearch` edge cases), the saved choice through the save (M1-17), CONTROLS entries and live switches (the TV registering the new keys), a pick winning over `?profile=`, content without profiles (fallback), Tizen registration lists |
 | `test/integration/input-profiles.test.ts` | Every key and button of every shipped profile, in both contexts, reaches the core snapshot as exactly its actions; a fake-pair remote session records and replays tick for tick |
 | `test/integration/coop-remote-pad.test.ts` | Co-op (M2-06) through a real `WebInput` and the scene flow with the shell's per-frame forwarding: the remote plays player 1, a pad's START takes player 2's seat and joins, pausing / resuming with player 2's held START, an unplugged seated pad, each device's OK in the continue countdown |
+| `packages/input-web/test/web-input/web-input-capture.test.ts`, `packages/shell/test/controls/` | M2-16: key and button captures through `WebInput`, Escape / Back cancelling; a real capture → rebinding → save → applied |
 | `test/e2e/input.spec.ts` | The built web page: bound keys prevented, unbound keys not; `?profile=keyboard-remote-emulation` knows only the remote's keys; an unknown `?profile=` warns and boots |
 | `test/e2e/coop.spec.ts`, `coop-gamepad.spec.ts` | Co-op on the built web page (M2-06): the split keyboard; a fake `navigator.getGamepads()` pad that drives the menus with one seat, joins as player 2 with START, moves player 2 only, and pauses / resumes without a phantom second press |
 
@@ -439,6 +469,8 @@ cache keyed on the stick's reading ~320 KB; today it measures ~4 KB).
 | A pad drives player 1 in a co-op game | Expected until it presses a button its gamepad profile's **menu** table binds to Confirm or Pause (A, START) — that seats it as player 2. With the seat taken (another pad, or `keyboard-split` active) every other pad drives player 1 |
 | Player 2's START paused the game instead of joining | Player 2 cannot join right now (still flying, dying, out for good) — or the host never forwards `Game.inputSeats` (`setSeats` missing), so every device drives player 1 |
 | `…input-profiles.json:profiles[n].split.game.byCode.KeyW: is bound in both halves of the keyboard` | A split half may not reuse a key of the other half in the same context; `split` on a `remote` / `gamepad` profile is an issue too |
+| A rebound key does nothing, or the old key still acts | The token was built by hand as `key:38` while the profile binds `code:ArrowUp` (a `code:` entry with actions hides the key-code one) — always name a captured key with `captureToken(profile, captured, context, override)` |
+| The player's DEBOUNCE is ignored on the web | `?debounce=` is in the address — the dev override is applied after the player's settings |
 | A profile is missing from CONTROLS | Its menu table cannot be driven by this host's keys (a remote profile binds by `keyCode`, which the web key space does not consult) or it is a gamepad profile — by design ([the saved choice](#the-saved-choice)) |
 
 ## Next steps that build on this page
@@ -458,7 +490,9 @@ cache keyed on the stick's reading ~320 KB; today it measures ~4 KB).
 - **M2-06** (done) — player seats (`WebInput.setSeats` from `Game.inputSeats`; pads join as player
   2 with A / START), the split keyboard (`split`, `splitTables`, `keyboard-split`), no phantom
   presses across a seat change ([coop.md](coop.md)).
-- **M2-16** — Options: per-device rebinding, conflict detection, reset to defaults, the advanced
-  debounce slider.
+- **M2-16** (done) — per-device rebinding with conflict detection and reset, the player's SOCD
+  policy and debounce (DEBOUNCE — the advanced tuning of the remote), the rebinding capture in
+  `WebInput`, the input test; `rebind` → implemented
+  ([options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md)).
 - **On hardware** — run the input probe (plan §8.2) and set `releaseDebounceTicks` /
   `diagonals` / `register` from its verdicts.

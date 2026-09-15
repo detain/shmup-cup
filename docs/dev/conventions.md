@@ -257,6 +257,13 @@ ES5 and linted with `ecmaVersion: 5`.
   replay-*recording* session in the same worker — V8 feedback from the recorder made every later
   World allocate ~12 bytes a tick — so it plays a synthetic recording (`packReplayInput`) instead
   ([front-end-and-attract.md](front-end-and-attract.md#zero-allocation)).
+  And from M2-16: per-frame code never iterates with `for … of` — the rebind widget's first draw
+  did, and V8 allocated an iterator object on every redraw (~600 bytes, caught by the allocation
+  guard); use index loops, and have a widget precompute in its constructor the counts its draw
+  needs (`RebindPanel.menuSlots` / `maxRows`). A host call a screen makes every tick while it waits
+  (`ControlsSetup.pollCapture`) returns a number read from a field; a UI string template
+  (`formatUiText`) is filled on a transition, never per frame
+  ([options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md#zero-allocation)).
 - Behaviour coroutines (generators, D29) allocate a small result object on every resume:
   scripts **sleep** (`yield ticks`) and are resumed only when they wake; per-tick motion
   belongs in a mover (numbers on the body), never in a `yield 1` loop.
@@ -372,6 +379,7 @@ Only original names, art and music — never Konami or Taito names or assets
 | Every `script` id names a registered behaviour (`KNOWN_SCRIPT_IDS`), every enemy `params` name a tunable of its behaviour, every spawner a `child` | `pnpm content:check` and the shell's boot (`knownScripts`, `checkEnemyBehaviors`) |
 | Procedural generators seed from the sprite name (`seedOf`) and use only exactly rounded maths (no `Math.sin`/`cos`), so the atlas is byte-identical on every machine | review; `test/scripts/assets/pipeline*.test.ts` (byte-identical runs) |
 | A shipped zone is playable with four directions (`shmup_feat.md` §4 rule 2, D17): no aimed bullet over 2.0 px/tick on Normal, no two simultaneous laser lanes leaving under 16 px of gap (lanes widened by the ship's hurt radius), ≥ 3 capsule sources within 900 px after every checkpoint (§10); the 4-way playtest bot clears it in god mode | `pnpm content:check` (zone A block of `content.test.ts`), `test/playtest/` — [zone-a-and-playtest.md](zone-a-and-playtest.md#the-4-way-design-rules) |
+| Every label the canvas UI draws is a UI string id (`core/ui/strings.ts` `DEFAULT_UI_TEXT`, read through `SceneFlow.text` / the builders' `text` argument), never an upper-case literal in the scenes or the UI kit; `content/strings/en.strings.json` equals the built-in table; a `strings` file uses known ids and the bitmap font's glyphs only (M2-16) | `packages/core/test/ui/ui-strings.test.ts` (source scan), `pnpm content:check` (`test/integration/content.test.ts`), the loader — [options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md#the-string-table-coreuistringsts-content-kind-strings) |
 | Placeholder sounds and music are data, never audio binaries: synth parameter sets and chip songs in `content/audio/`, rendered at load by the deterministic `audio-web` synth (table sines, seeded noise). Every `SFX_CUES` cue is bound, every song loops sample-exactly, every cue a shipped stage names has a track | `pnpm content:check`; `packages/audio-web/test/synth/` (pinned hashes) — [audio.md](audio.md) |
 
 ## Checklists

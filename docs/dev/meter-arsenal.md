@@ -85,8 +85,10 @@ change (`REPLAY_FORMAT_VERSION` unchanged): a header written before M2-03 has no
 decodes to the defaults; a malformed one fails `decodeReplay` like any bad config.
 
 **Lifetime.** The loadout is **session-wide** (both players fly the same arsenal) and lives for
-the session only: the flow keeps it for RETRY and later games until the app closes. Saving it with
-the other game options is M2-16.
+the session only: the flow keeps it for RETRY and later games until the app closes. M2-16 saved the
+game options (difficulty, lives, penalty, Auto Power-Up, magnet) but not the loadout — it stays
+session-only; a saved AUTO POWER (the GAME page) is applied after the loadout and wins over the
+weapon select's AUTO.
 
 ## Content: presets and weapons
 
@@ -449,4 +451,6 @@ resolveArsenal(db, edited)[WeaponRole.Missile]?.name; // → 'PHOTON TORPEDO'
   screen ([direct-mode.md](direct-mode.md)).
 - **M2-06** (done) — both players fly the session's arsenal; each player's meter shows in its half
   of the co-op HUD with two-letter labels after the arsenal (`METER_SHORT_LABELS`) ([coop.md](coop.md)).
-- **M2-16** — the loadout and the Auto Power-Up order saved with the game options.
+- **M2-16** (done) — the game options saved (the loadout and the Auto Power-Up order were not in its
+  deliverables and stay session-only); the GAME page's AUTO POWER and the one-button preset override
+  the weapon select's AUTO ([options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md)).

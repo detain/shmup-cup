@@ -156,16 +156,21 @@ the kill credit is `floor(shooter / 5)`.
 2. **Timers.** Every autofire timer above 0 counts down (`timers[shooter × 2]` main,
    `[shooter × 2 + 1]` missile — hashed).
 3. **Per active ship** — its option group first (next section), then, only while it is
-   `alive`, firing: the main weapon is wanted when `config.autofire || config.remoteMode` or the
-   player holds `Shot`; the missile when the Missile role exists, the loadout has it and
-   `autofire || remoteMode` or `Sub` is held. Every shooter — ship first, then the Options in
+   `alive`, firing: the main weapon is wanted when firing needs no button — `config.remoteMode`, or
+   `config.autofire` with `autofireMode` `'always'` (M2-16; in the `'toggle'` mode while the
+   player's `firing` switch is on — each `Shot` press flips it) — or the player holds `Shot`; the
+   missile when the Missile role exists, the loadout has it and firing needs no button or `Sub` is
+   held. Every shooter — ship first, then the Options in
    order — fires a wanted role when its timer is 0 **and** its cap has room; a successful fire
    restarts that timer at the role's interval. A shooter blocked by its cap keeps its timer at
    0 and fires the tick a slot frees (so a cap-limited weapon refires as soon as a shot dies).
 
 Remote mode forces autofire (feat §4 rule 1, as `GameConfig.remoteMode` documents); the defaults
-have both on, so today every build fires without a button. With both off, `Shot` fires the
-main weapon and `Sub` the missiles while held.
+have both on, so the TV always fires without a button. With both off — or, since M2-16, with
+`autofireMode` `'hold'` (the Options screen's AUTOFIRE on the web) — `Shot` fires the main weapon
+and `Sub` the missiles while held; `'toggle'` switches firing with `Shot` presses
+([options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md#autofire-modes-coreconfig-coreweapons)).
+The Options screen's RATE sets `autofireInterval` (8 … 2 ticks).
 
 **Caps are per shooter and role.** The basic shot's cap 2 with four Options means up to ten
 basic shots per player; the Laser and the Missile allow one each per shooter. The pool

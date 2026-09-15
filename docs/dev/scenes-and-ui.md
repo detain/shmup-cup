@@ -18,8 +18,12 @@ map, the zone tally, the ending hook — [campaign-and-bonus-stages.md](campaign
 2 PLAYERS / PRACTICE / OPTIONS / SOUND TEST / EXIT), and the flow gained the **attract loop** (demo
 play, hi-score tables, story crawl), the **name entry**, the **hi-score tables** per difficulty ×
 ship × mode, the **practice select**, the **sound test** and the polished continue countdown — the
-whole story is [front-end-and-attract.md](front-end-and-attract.md); this page keeps the flow's
-overview up to date.
+whole story is [front-end-and-attract.md](front-end-and-attract.md). **M2-16** regrouped the
+Options screen into the CONTROLS / DISPLAY / GAME pages, added the rebind screen (the `core/ui`
+**rebind widget**) and the input test, folded the save's game options into the next games' configs
+and moved **every UI label into a string table** (`SceneFlow.text`) — see
+[options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md); this page keeps the
+flow's overview up to date.
 
 This page is the *how and why*. Exact signatures are in
 [api-reference.md](api-reference.md#scenes--scene-stack-and-the-scene-flow-implemented) (`scenes`) and
@@ -117,12 +121,15 @@ is on top) and `uiRevision` (bumped whenever `drawUi` would draw something else)
 
 ## The M1 flow (`createSceneFlow`)
 
-`createSceneFlow(host, start)` creates the twenty-two scenes (eight in M1, the difficulty menu and
+`createSceneFlow(host, start)` creates the twenty-seven scenes (eight in M1, the difficulty menu and
 the continue countdown since M2-01, the weapon select and its order editor since M2-03, the ship
 select since M2-05, the zone map and the ending since M2-10, the credits since M2-14, the name
 entry, the hi-score tables, the demo play, the story crawl, the practice select and the sound test
-since M2-15), their menus, the UI draw list (384 commands since M2-10 — 256 before —, 384 string
-slots since M2-15 — 256 in M2-14, 224 in M2-10, 192 before, 160 before M2-05, 96 before M2-03), the
+since M2-15, the Options screen's CONTROLS / DISPLAY / GAME pages, the rebind screen and the input
+test since M2-16), their menus, the UI draw list (384 commands since M2-10 — 256 before —, 512
+string slots since M2-16 — 384 in M2-15, 256 in M2-14, 224 in M2-10, 192 before, 160 before M2-05,
+96 before M2-03), the UI string table (`SceneFlow.text` — the content's `en` table over the
+built-in English one — and the label lists built from it, `SceneFlow.labels`, M2-16), the
 run state (`SceneFlow.run`, M2-10), the decoded attract demos (`SceneFlow.demos`, M2-15) and the
 game scene's placeholder World once, then `reset`s the stack to the start scene. Since M2-10 it also decides whether games are **campaign runs**: when
 `content.campaign` exists and `config.stage` is its start zone's stage, `SceneFlow.campaign` is set
@@ -132,8 +139,13 @@ and a game goes zone by zone across the map; otherwise games are single stages a
 difficulty's config) and, since M1-17, `save` (a `core/save`
 `SaveStore` — a memory-only one when omitted) and `inputProfiles` (`{ choices, active }` for the
 Options screen's CONTROLS — disabled when omitted), and since M2-15 `soundTest` (`{ music }` — the
-music library's titles for the sound test's MUSIC row; disabled when omitted). `createGame` passes
-`GameOptions.save` / `inputProfiles` / `soundTest` through.
+music library's titles for the sound test's MUSIC row; disabled when omitted), and since M2-16
+`controls` (a `ControlsSetup` — the rebind screen's host side; REBIND KEYS / PAD disabled when
+omitted). `createGame` passes `GameOptions.save` / `inputProfiles` / `soundTest` / `controls`
+through. Since M2-16 the flow also folds the save's sim-affecting options into every difficulty's
+config (`withUserGameOptions` in its `rearm`) — they reach the next game or a RETRY STAGE, never the
+World in play (a run keeps `FlowControl.runConfig`), and the difficulty menu previews those armed
+configs.
 
 | Scene | Overlay / dim / context | Shows | Input (any player) | Leads to |
 |---|---|---|---|---|
@@ -145,7 +157,12 @@ music library's titles for the sound test's MUSIC row; disabled when omitted). `
 | `AutoOrderScene` (M2-03) | yes / 0.35 / menu | Panel on the right: `AUTO ORDER`, rows `1` … `12` (a meter slot or `-`), DONE | Up / Down move; Left / Right / OK step a row; DONE or Back store the rows and close | weapon select (`pop`) |
 | `GameScene` | no / 0 / **game** | The World (view + HUD), the boss WARNING band in the UI list; in a campaign run (M2-10) the zone title card (`ZONE B` / the name, `BONUS STAGE` in a bonus stage) for the first 150 World ticks. Owns the run's Worlds: `enter` starts a run (`beginRun`) or plays the zone the map / practice prepared (`run.pendingStart`); an opened bonus entrance swaps to the bonus stage's World after 40 ticks, a death there back to the zone after 60 (`swapWorld`) | Pause or Back of any player → pause menu (that tick the World does not step) — except, in a co-op game (M2-06), the START / OK of a player who may drop in: the World joins it ([coop.md](coop.md#joining-coreworld)) | pause, stage clear (90 World ticks after `stageClear`), game over (30 after `gameOver`) — or, with continues left (`canContinue`), the continue countdown (M2-01) — all `push` |
 | `PauseScene` | yes / 0.5 / menu | Panel, `PAUSE`, RESUME / OPTIONS / RETRY STAGE / QUIT TO TITLE | Pause, Back, RESUME → resume; OPTIONS → Options (the game stays frozen); RETRY STAGE → `game.restart()` + pop (no confirmation); QUIT TO TITLE → confirm | game (`pop`), options, confirm (`push`) |
-| `OptionsScene` (M1-17) | yes / 0.5 / menu | Opaque panel, `OPTIONS`, MASTER / MUSIC / SFX sliders (0–10), CONTROLS (the input profile's label, a `Choice`), BULLETS (M2-02: the enemy bullet palette, a `Choice` of `BULLET_PALETTE_LABELS`), M2-08: SCALE (a `Choice` of `SCALE_MODE_LABELS`), SHAKE (a `Toggle`), FLASHES (a `Choice` of `FLASH_LABELS`), HITBOX (a `Toggle`), M2-09: BOSS HP (a `Toggle`) — eleven rows on a 288×192 panel —, BACK | Up / Down move; Left / Right change a slider, step CONTROLS / BULLETS / SCALE / FLASHES (OK steps them too) or set SHAKE / HITBOX / BOSS HP (OK flips them), each change pushed live as a `UserOption` event; BACK or Back store the options in the save, flush it and close | title / pause menu (`pop`) |
+| `OptionsScene` (M1-17; regrouped in M2-16) | yes / 0.5 / menu | Opaque 288×192 panel, `OPTIONS`, MASTER / MUSIC / SFX sliders (0–10), the pages CONTROLS / DISPLAY / GAME, BACK (the profile and the M2-02 / M2-08 / M2-09 display rows moved to the pages) | Up / Down move; Left / Right change a slider, pushed live as a `UserOption` event; OK on a page opens it; BACK or Back store the volumes, flush the save and close | a page (`push`), title / pause menu (`pop`) |
+| `ControlsScene` (M2-16) | yes / 0.5 / menu | The same panel: `CONTROLS`, PROFILE (the input profile, a `Choice`), AUTOFIRE (`ALWAYS` / `TOGGLE` / `HOLD`; disabled on a remote-mode host), RATE (`7.5/S` … `30/S`), SOCD, DEBOUNCE, REBIND KEYS, REBIND PAD, INPUT TEST, BACK, `AUTOFIRE / RATE: FROM THE NEXT GAME` | Up / Down move; Left / Right (or OK) change a choice — PROFILE live (`InputProfile`), SOCD / DEBOUNCE stored at once (`InputSettings`); OK on REBIND KEYS / PAD / INPUT TEST opens it; BACK or Back store the page (autofire into the next games' configs) and close | rebind screen, input test (`push`), Options (`pop`) |
+| `DisplayScene` (M2-16) | yes / 0.5 / menu | `DISPLAY`: BULLETS, SCALE, SHAKE, FLASHES, HITBOX, BOSS HP (the M2-02 / M2-08 / M2-09 rows), BACK | As before: every change live as a `UserOption` event; BACK or Back store them and close | Options (`pop`) |
+| `GameOptionsScene` (M2-16) | yes / 0.5 / menu | `GAME`: DIFFICULTY (disabled over the pause menu), LIVES (`PRESET` / 1–5), PENALTY, AUTO POWER, MAGNET, ONE BUTTON (AUTO POWER and PENALTY disabled while it is on), BACK, two notes | Up / Down move; Left / Right / OK change; BACK or Back store them, re-arm the next games' configs, choose the difficulty (not over a game) and close | Options (`pop`) |
+| `RebindScene` (M2-16) | yes / 0.5 / menu | `KEYBOARD CONTROLS` (`REMOTE` / `GAMEPAD`): the `core/ui` `RebindPanel` — MODE (GAME / MENU), a row per rebindable action with its keys, RESET, DONE, the message line; the capture prompt with its 5-s bar | OK on an action: capture the next key (Escape / Back / 5 s cancel), then the rows wait until nothing is held; RESET; DONE or Back flush the save and close | CONTROLS page (`pop`) |
+| `InputTestScene` (M2-16) | yes / 0.5 / **game** | `INPUT TEST`, the device, a direction cross and a box per game action lit while held (8 ticks after a press), `HOLD PAUSE TO EXIT` with a bar | Every key does what it does in a game; holding Pause 60 ticks leaves | CONTROLS page (`pop`) |
 | `StageClearScene` | yes / 0.25 / menu | Single-stage run: `STAGE CLEAR`, `SCORE` (`1P` / `2P` once player 2 joined a co-op game, M2-06), `HI` for 240 ticks, then `TO BE CONTINUED` for 240. Campaign run (M2-10, `zoneMode`): the **zone result tally** — `ZONE X CLEAR` / `BONUS STAGE CLEAR`, the zone's name, the score(s), `KILLS %`, `KILL BONUS`, `TIME BONUS` — for 300 ticks (entering it tallies, pays, notes the World's deaths / continues / flags and carries the players out) | OK skips a phase; entering it records a single-stage run (or a campaign run's final zone) in the save | M2-15: `finishGame()` — the name entry when a score entered its table, else the title (`reset`); campaign run: the zone map (a zone with exits), the ending (the final zone) or `finishGame()` (practice) — `reset` |
 | `MapScene` (M2-10) | no / 0 / menu | Full screen over the starfield: the campaign's name, `CHOOSE YOUR COURSE`, the node graph (a column per depth, dotted edges, the route lit, the cleared zone yellow, its exits outlined, the focused one blinking) and a preview panel (label, name, preview lines, hints); fades the music out | Up / Down choose one of the cleared zone's exits (wrap, auto-repeat); OK pushes `PrepareStage` for its stage and blinks `LAUNCH` for 60 ticks; Back → confirm "quit to title?" | game (`reset`, the next zone — `advanceZone`), confirm (`push`) |
 | `EndingScene` (M2-10; M2-14) | no / 0 / menu | Since M2-14 first the **story** (an ending with a scene or text): the ending's sprite scene (`citadel` / `abyss`, a dawn for a flawless run, the flagship sailing off after an escape) and its epilogue, a line every 90 ticks; then the full-screen card: `ENDING`, the ending's name (`run.ending`), `ROUTE` and the zones' labels, the score(s), a line per run flag set, `THANK YOU FOR PLAYING`, `OK: CREDITS` (or `OK: TITLE`) after 60 ticks. The final zone's ending theme plays | Story: OK after 60 ticks shows every line, then moves on (or 240 ticks after the last line); card: OK after 60 ticks or 1,200 ticks → credits | credits (`reset`), or — without credits — `finishGame()` (M2-15) |
@@ -162,8 +179,9 @@ music library's titles for the sound test's MUSIC row; disabled when omitted). `
 
 OPTIONS is **enabled** in both menus since M1-17 and pushes the `OptionsScene` over them (the
 title or the paused game stays drawn under it). The disabled-item rule — the focus skips the item,
-OK on it is `Denied` — is now used by the Options screen's CONTROLS when the host offers no
-profiles. EXIT exists only when `platform.exit` does (the TV, Electron later); in a browser the
+OK on it is `Denied` — is now used by the CONTROLS page's PROFILE when the host offers no profiles
+(and, since M2-16, AUTOFIRE on a remote-mode host, REBIND KEYS / PAD without the host's device, the
+GAME page's DIFFICULTY over a game and its rows the one-button preset decides). EXIT exists only when `platform.exit` does (the TV, Electron later); in a browser the
 title's Back only backs out of the menu to `PRESS OK`.
 
 **Saves in the flow (M1-17).** The flow's session hi-score starts from the save's best score of the
@@ -186,7 +204,10 @@ screen and the live `UserOption` events are in [saves-and-options.md](saves-and-
 | Title menu | exit confirmation (can exit) / back to `PRESS OK` (browser) | — |
 | Game | pause menu (the game table binds remote Back to `Pause`; `Action.Back` is checked too) | pause menu |
 | Pause menu | resume | resume |
-| Options screen | store the options, write the save if they changed, close (back to the title or the pause menu) | — |
+| Options screen | store the volumes, write the save if they changed, close (back to the title or the pause menu) | — |
+| Options pages (M2-16) | store the page's options, write the save if they changed, back to the Options screen | — |
+| Rebind screen (M2-16) | done (flush, back to CONTROLS); during a capture: cancel — Back never gets rebound | — |
+| Input test (M2-16) | what it does in a game (the `'game'` table) | hold 1 s to leave |
 | Confirm dialog | NO (close) | — |
 | Difficulty menu (M2-01) | back to the title menu | — |
 | Weapon select (M2-03) | back to the difficulty menu (the choice made so far is kept, but only START hands it to a game) | — |
@@ -267,7 +288,7 @@ The visible scenes are the topmost non-overlay scene and every overlay above it 
 the pause menu under the dialog). `updateFrame()` rebuilds the UI list — `clear()`, then each
 visible scene's `drawUi(list)` bottom to top — **only when** the visible set changed or one of
 their `uiRevision`s moved since the last build; otherwise the list keeps its `revision` and the
-renderer skips it. Each scene owns a disjoint range of the 384 string slots (256 before M2-15, 224 before M2-14, 192 before M2-10, 160 before M2-05, 96 before M2-03; `stringBase`,
+renderer skips it. Each scene owns a disjoint range of the 512 string slots (384 before M2-16, 256 before M2-15, 224 before M2-14, 192 before M2-10, 160 before M2-05, 96 before M2-03; `stringBase`,
 `stringSlots`, assigned in the flow's constructor — it throws if they do not fit), so scenes drawn
 together never overwrite each other's text. That is why the confirm dialog sits over the still
 visible pause menu; its panel is opaque (alpha 255) so the menu's text does not show through.
@@ -294,11 +315,19 @@ slots, so a menu can be ticked and redrawn every frame without allocating.
   (call it when a menu appears).
 - **`Slider`** (`createSlider(min, max, step, value)` — the volumes 0–10 of M1-17): Left / Right
   change it by `step`, clamped. **`Toggle`**: Left = off, Right = on, OK flips it.
-- **`Choice`** (`createChoice(labels, index)`, 1–255 labels — the Options screen's CONTROLS, M1-17, BULLETS, M2-02, and SCALE and FLASHES, M2-08):
+- **`Choice`** (`createChoice(labels, index)`, 1–255 labels — the Options screen's CONTROLS, M1-17, BULLETS, M2-02, SCALE and FLASHES, M2-08, and the M2-16 pages' rows):
   one of several labels; Left / Right step through them and **wrap**, OK steps forward; a single
   label never changes. A class, so its `index` stays a small integer.
 - **`Confirm`** (`createConfirm(question)`): YES / NO, focused on **NO** whenever it opens, so a
   stray OK never confirms something destructive.
+- **`RebindPanel`** (M2-16 — `createRebindPanel(labels)`, `rebindTick(panel, input)` →
+  `RebindEvent`, `drawRebindPanel(list, panel, stringBase, layout, hint, text?)`,
+  `rebindStringSlots(panel)`): a list per binding context (MODE — a `Choice` both share —, a row per
+  `REBINDABLE_ACTIONS` action with its keys at the value column, RESET, DONE), the capture prompt
+  (`startCapture(prompt)` / `stopCapture()`, a bar draining over `REBIND_CAPTURE_TICKS` 300) and a
+  message line (`say`). The scene drives the host's capture and the bindings; outcomes are
+  `RebindStatus` codes, the capture's states `CaptureStatus`
+  ([options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md#the-rebind-screen)).
 
 ### `menuTick(menu, input)` in order
 
@@ -335,6 +364,13 @@ cues play on the unpanned UI bus, unlike the positional `PowerUpDenied`). The fl
 | `drawPanel(list, x, y, w, h, fill?, border?, alpha = 232)` | a filled box and a 1-px border (5 rects) | — |
 | `drawMenu(list, menu, stringBase, layout)` | per item: the label (focused: `UI_COLORS.focus` and the `→` cursor at `cursorX`; disabled: dimmed), a slider's 50-px bar and value, a toggle's `ON` / `OFF`, a choice's current label at `valueX`; returns the y below the last row | `menuStringSlots(menu)` = items + 3 (`ON`, `OFF`, cursor) + one per choice item (its label, M1-17) |
 | `drawConfirm(list, confirm, stringBase, cx, cy)` | a 176×52 opaque panel centred at `(cx, cy)`, the question (up to two lines), YES / NO with the cursor | `CONFIRM_STRING_SLOTS` = 4 |
+
+Since M2-16 every builder (`drawMenu`, `drawConfirm`, `drawNameEntry`, `drawRebindPanel`, `buildHud`
+/ `createHud(sprites, text)`) takes an optional **UI string table** for its words (`ON` / `OFF`,
+`YES` / `NO`, `END`, the HUD's labels) — English (`DEFAULT_UI_TEXT`) by default; the flow passes its
+own (`SceneFlow.text`). No scene or builder writes an upper-case literal any more
+(`ui-strings.test.ts` checks it) — see
+[options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md#the-string-table-coreuistringsts-content-kind-strings).
 
 Builders write a string slot only when its text changed (`setString` compares), so redrawing is
 cheap. **A `MenuLayout` must be a constant** — the flow's are `Object.freeze`d module constants:
@@ -468,7 +504,8 @@ only up for the first tick; the loading before the renderer exists stays on the 
 
 The canvas carries `data-shmup-scene` (`SCENE_ATTRIBUTE`): the top scene's id (`boot`, `title`,
 `difficulty`, `weaponSelect`, `autoOrder`, `game`, `pause`, `options`, `confirm`, `stageClear`,
-`gameOver`, since M2-15 `demo`, `hiScore`, `story`, `nameEntry`, `practice`, `soundTest`, …) or
+`gameOver`, since M2-15 `demo`, `hiScore`, `story`, `nameEntry`, `practice`, `soundTest`, since
+M2-16 `controls`, `display`, `gameOptions`, `rebind`, `inputTest`, …) or
 the dev scene's name — the e2e tests wait
 on it. `?scene=flight` keeps the old bare-gameplay free flight with its own dev HUD (`FREE
 FLIGHT`, `ARROWS MOVE`, `GAME OVER` in the top bar); the gameplay e2e specs of M1-06…M1-15 open it.
@@ -480,8 +517,10 @@ presentation-side session state, not hashed, not in replays. A World created by 
 same as one created by bare gameplay from the same config — `game.world` hashes identically for the
 same inputs, and two flows fed the same snapshots through menus, pauses and retries stay in
 lockstep (`scenes-flow.test.ts`, `scenes-flow-edge.test.ts`). The session hi-score is not hashed (as before),
-and neither is anything the save holds: the options are presentation, the tables and stats live
-outside the World.
+and neither is anything the save holds: the presentation options stay outside `GameConfig`, the
+tables and stats live outside the World, and the sim-affecting options of M2-16 (autofire mode and
+rate, the game options) reach a World only through the config the flow resolves before creating it
+— what a replay header records.
 
 ## Zero allocation and the hot-path rules
 
@@ -500,7 +539,13 @@ outside the World.
   its range's spawns create their behaviour coroutines, D29) and its START (the loadout and the
   armed configs), plus, in the shell, one wrapper view per open-space World. Since M1-17 also the
   save's new document when the Options screen closes or a game ends (menu actions, never ticks);
-  the Options screen itself ticks and redraws allocation-free (`scenes-options-alloc.test.ts`).
+  the Options screen itself ticks and redraws allocation-free (`scenes-options-alloc.test.ts`; its
+  M2-16 pages, the rebind screen and the input test — `scenes-options-pages-alloc.test.ts`,
+  `scenes-input-test-alloc.test.ts`, the widget `ui-rebind-alloc.test.ts`).
+- M2-16: per-frame loops use indices, never `for … of` (the rebind widget's first draw allocated an
+  iterator object per redraw); a widget precomputes the counts it draws from in its constructor
+  (`RebindPanel.menuSlots` / `maxRows`); a `formatUiText` template is filled on a transition (a
+  rebinding's message, the rebind screen's title), never per frame.
 - M2-15: the attract loop's demo play (its World is created when a demo starts — a transition —
   and stepped, its events forwarded and its HUD composed without allocating), the hi-score tables,
   the story, the name entry, the practice select and the sound test tick and redraw
@@ -513,7 +558,8 @@ outside the World.
 | To add… | Do this |
 |---|---|
 | A new scene (`PracticeScene` / `SoundTestScene` are recent overlay examples, `HiScoreScene` a full screen) | A `SceneBase` subclass in `core/scenes` with its `id` (add it to `SceneId`), `overlay` / `dim` / `inputContext`, `stringSlots`, `tick` (read `flow.menuInput`; request transitions on `flow.stack`) and `drawUi` (only its own string slots); create it in `createSceneFlow`, add it to the `scenes` array (the string-slot assignment) and to `SceneFlow`; bump `uiRevision` whenever its look changes |
-| An Options item, a saved option | See [saves-and-options.md](saves-and-options.md#extending-it) |
+| An Options item, a saved option | See [saves-and-options.md](saves-and-options.md#extending-it) and [options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md#extending-it) |
+| A label on any screen | A UI string id (`core/ui/strings.ts` and `content/strings/en.strings.json` together) read from `flow.text` — never an upper-case literal (`ui-strings.test.ts`) |
 | A menu with sliders, toggles or choices | `createListMenu([{ label: 'MUSIC', slider: createSlider(0, 10, 1, 7) }, { label: 'CONTROLS', choice: createChoice(['A', 'B']) }, …])`; `menuTick` returns `Changed` — read the item's `slider.value` / `toggle.value` / `choice.index`; give `drawMenu` a frozen layout with a `valueX`, and count `menuStringSlots(menu)` for the scene's slots (one per choice more) |
 | A HUD element | Draw it in `buildHud` (keep within the HUD list's 64 commands) and add what it depends on to `Hud.update`'s comparison, or it will not redraw |
 | A UI sprite | Add its name to `UI_SPRITES` and a field to `UiSprites` / `resolveUiSprites`; the atlas must have it (`pnpm content:check`) — draw a fallback for id `-1` |
@@ -532,6 +578,7 @@ outside the World.
 | `packages/core/test/scenes/scenes-alloc.test.ts`, `scenes-menu-alloc.test.ts` | A whole game and 20,000 menu ticks without allocation |
 | `packages/core/test/ui/ui-choice.test.ts`, `ui-choice-edge.test.ts` | The `Choice` widget (M1-17): label limits, clamping, wrap and repeat, Confirm stepping, disabled, the label's string slot |
 | `packages/core/test/scenes/scenes-options.test.ts`, `scenes-options-edge.test.ts`, `scenes-options-alloc.test.ts` | The Options screen from the title and the pause menu, live `UserOption` events, saving on BACK / Back, hi-scores recorded on the end screens and `NEW HI-SCORE`, the hi-score persisting across game instances, allocation-free ticking (M1-17 — [saves-and-options.md](saves-and-options.md#tests)) |
+| `packages/core/test/scenes/scenes-controls.test.ts`, `-edge`, `scenes-run-config.test.ts`, `scenes-options-pages-alloc.test.ts`, `scenes-input-test-alloc.test.ts`; `packages/core/test/ui/ui-rebind*.test.ts`, `ui-strings.test.ts` | M2-16: the CONTROLS and GAME pages, the rebind screen and widget, the input test, a run keeping its config, the string table and its source scan, zero allocation — see [options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md#tests) |
 | `packages/core/test/scenes/scenes-weapon-select.test.ts`, `-edge`, `-alloc` | M2-03: the weapon select (flow, TYPE / EDIT / locked rows, `?` / `!` / AUTO / ORDER into the config, Back, RETRY keeping the loadout, the live preview, no weapons / no range) and the order editor; allocation-free with the preview flying — [meter-arsenal.md](meter-arsenal.md#tests) |
 | `packages/core/test/scenes/scenes-continue.test.ts`, `scenes-continue-edge.test.ts`, `scenes-continue-alloc.test.ts` | M2-01: the difficulty menu (order, wrap, sounds, Back, the World's preset, per-preset hi-scores) and the continue countdown (timing, lock, held OK, timeout, resume, the recorded score) — [difficulty-and-rank.md](difficulty-and-rank.md#tests) |
 | `packages/core/test/scenes/scenes-coop.test.ts`, `scenes-coop-edge.test.ts`, `packages/core/test/ui/ui-hud-coop*.test.ts` | M2-06: 2 PLAYERS vs 1 PLAYER, the seats per scene, joining without pausing, the per-player continue countdown, both scores and `2p` rows on the end screens; the co-op HUD (the prompt, both halves, `hudPlayerState`, allocation) — see [coop.md](coop.md#tests) |
@@ -558,8 +605,9 @@ outside the World.
 | The menu allocates every frame | A `MenuLayout` literal at the `drawMenu` call — make it a frozen constant |
 | OK on the title does nothing the first time | Expected: the first OK only leaves `PRESS OK`; the menu then locks activation for 2 ticks (an OK in that window is buffered, not lost) |
 | Back on the title does nothing in a browser | Expected on `PRESS OK`; in the menu it goes back to `PRESS OK`. The exit confirmation needs `platform.exit` (the TV) |
-| OK on an Options slider does nothing | Expected: sliders change with Left / Right; OK is silent on them (it steps CONTROLS and activates BACK) |
-| A new scene throws `RangeError` about string slots at flow creation | The scenes together need more than the UI list's 384 string slots (256 before M2-15, 224 before M2-14, 192 before M2-10, 160 before M2-05, 96 before M2-03) — a choice item takes one slot more than `items + 3`; the zone map takes `11 + zones` |
+| OK on an Options slider does nothing | Expected: sliders change with Left / Right; OK is silent on them (it opens a page and activates BACK) |
+| A spec walking OPTIONS lands on the wrong row | M2-16 regrouped the screen: MASTER / MUSIC / SFX, CONTROLS 3, DISPLAY 4, GAME 5, BACK 6 — the display rows are `DisplayItem`s on the DISPLAY page |
+| A new scene throws `RangeError` about string slots at flow creation | The scenes together need more than the UI list's 512 string slots (384 before M2-16, 256 before M2-15, 224 before M2-14, 192 before M2-10, 160 before M2-05, 96 before M2-03) — a choice item takes one slot more than `items + 3`; the zone map takes `11 + zones` |
 | The zone map loses nodes or its panel on a big campaign | The UI list has 384 commands; the map thins its edge dots to a 160-command budget (`MapScene.edgeDots`) — a new map element must fit what is left |
 | The renderer shows a World while no game runs | The weapon select's live preview (M2-03) or the attract loop's demo play (M2-15) — `SceneFlowView.world` is its view while that screen is visible |
 | A spec walking the title menu opens the wrong screen | M2-15 inserted PRACTICE before OPTIONS and SOUND TEST before EXIT (`TitleItem.Options` 3, `Exit` 5) — count with `TitleItem` |
@@ -614,5 +662,10 @@ outside the World.
   `core/ui` `NameEntry`), the hi-score tables per difficulty × ship × mode, the practice select, the
   sound test, the continue polish, `finishGame()`, 384 UI string slots
   ([front-end-and-attract.md](front-end-and-attract.md)).
-- **M2-16** — rebinding and accessibility options (the key-rebind prompt in the UI kit, every UI
-  string in `content/strings/en.json`, the chosen difficulty, ship and loadout saved).
+- **M2-16** (done) — the Options screen regrouped (`OptionsItem` Controls 3, Display 4, Game 5,
+  Back 6) with the `ControlsScene` / `DisplayScene` / `GameOptionsScene` pages, the `RebindScene`
+  over the `core/ui` `RebindPanel` and the `InputTestScene`, the save's game options folded into the
+  next games' configs (`armedConfigs`, `runConfig`, `rearmRun`), the chosen difficulty saved (the
+  ship and the loadout stay session-only), every UI label in the string table
+  (`content/strings/en.strings.json`, `SceneFlow.text`), 512 UI string slots
+  ([options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md)).

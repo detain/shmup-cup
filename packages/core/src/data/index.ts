@@ -86,6 +86,7 @@
  *   collision types and slope masks, parallax layers, sorted event timeline
  * - shmup_feat.md §10 — invisible checkpoints in the stage data
  * - shmup_feat.md §22 — data-driven content (`enemies.json`, `weapons.json`, `stages/*.json`)
+ * - shmup_feat.md §21 — localization "JSON string tables" (the `strings` kind — M2-16)
  * - shmup_feat.md §7 / §11 — weapons and enemies defined in data
  * - shmup_feat.md §13 — multi-part bosses with weak points and phases defined in data
  *
@@ -312,6 +313,7 @@ export const moduleInfo = defineModule({
     'shmup_feat.md §7',
     'shmup_feat.md §11',
     'shmup_feat.md §15',
+    'shmup_feat.md §21',
   ],
 });
 

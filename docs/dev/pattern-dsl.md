@@ -454,4 +454,5 @@ The bending laser, cancel point and palette suites are listed on their home page
   stream, not a DSL pattern — [zones-h-and-i.md](zones-h-and-i.md#the-spiral-stream-bossscriptapispiral)).
   Bosses built on the DSL, the bending lasers in the zones and the colour-blind palettes' real-art
   variants (a PNG override of a bullet sprite needs its own `@<palette>` variants) remain open.
-- **M2-16** (options) — the bullet palette joins the display options group.
+- **M2-16** (done) — the bullet palette (BULLETS) lives on the Options screen's DISPLAY page
+  ([options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md)).
