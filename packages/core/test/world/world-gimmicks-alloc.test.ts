@@ -43,6 +43,14 @@ function tissue(): string[] {
 }
 
 /**
+ * Stage length (px). At 0.1 px per tick the camera must stay inside the stage for the setup
+ * ticks, the whole warm-up and every measured window the helper may run (3 × 10,000 when the
+ * suite is loaded): 80 + 20,000 + 30,000 ticks ≈ 5,008 px. A shorter stage ends inside a
+ * later window and the blocks vanish — a false failure exactly when load forces more windows.
+ */
+const STAGE_LENGTH = 6400;
+
+/**
  * The KESTREL, Type A, `terrain-a`, the gimmick roster and a long, slow stage full of M2-07
  * systems.
  *
@@ -50,7 +58,7 @@ function tissue(): string[] {
  */
 function db(): ContentDb {
   const events: unknown[] = [];
-  for (let x = 0; x < 3000; x += 200) {
+  for (let x = 0; x < STAGE_LENGTH - 200; x += 200) {
     events.push({ x, type: 'block', screenX: 250, y: 40, w: 16, h: 8, dy: 24, period: 90 });
     events.push({
       x: x + 1,
@@ -73,7 +81,7 @@ function db(): ContentDb {
           id: 't',
           name: 'T',
           music: { stage: 'Stage', boss: 'Boss' },
-          length: 3200,
+          length: STAGE_LENGTH,
           camera: [
             { x: 0, speed: 0.1 },
             { x: 20, speed: 0.1, hold: 30, yTo: 8, yTicks: 20 },
@@ -88,7 +96,13 @@ function db(): ContentDb {
             rle: tissue(),
             generator: {
               type: 'heightfield',
-              segments: [{ from: 0, to: 3584, floor: { base: 24, amp: 0, period: 64, seed: 1 } }],
+              segments: [
+                {
+                  from: 0,
+                  to: STAGE_LENGTH + 384,
+                  floor: { base: 24, amp: 0, period: 64, seed: 1 },
+                },
+              ],
             },
           },
           events,
